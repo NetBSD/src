@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.60 1994/04/06 04:30:18 mycroft Exp $
+ *	$Id: locore.s,v 1.61 1994/04/06 04:46:55 mycroft Exp $
  */
 
 /*
@@ -65,8 +65,8 @@
 #define	SEL_RPL_MASK	0x0003
 
 /* XXX temporary kluge; these should not be here */
-#define	IOM_BEGIN	0x0a0000		/* Start of I/O Memory "hole" */
-#define	IOM_END		0x100000		/* End of I/O Memory "hole" */
+#define	IOM_BEGIN	0x0a0000	/* start of I/O memory "hole" */
+#define	IOM_END		0x100000	/* end of I/O memory "hole" */
 #define	IOM_SIZE	(IOM_END - IOM_BEGIN)
 
 
@@ -207,15 +207,15 @@ start:	movw	$0x1234,0x472			# warm boot
 
 1:	/* Use the `cpuid' instruction. */
 	xorl	%eax,%eax
-	.byte	0x0f,0xa2		/* cpuid 0 */
-	movl	%ebx,_cpu_vendor	/* store vendor string */
+	.byte	0x0f,0xa2		# cpuid 0
+	movl	%ebx,_cpu_vendor	# store vendor string
 	movl	%edx,_cpu_vendor+4
 	movl	%ecx,_cpu_vendor+8
 	movb	$0,_cpu_vendor+12
 
 	movl	$1,%eax
-	.byte	0x0f,0xa2		/* cpuid 1 */
-	rorl	$8,%eax			/* extract family type */
+	.byte	0x0f,0xa2		# cpuid 1
+	rorl	$8,%eax			# extract family type
 	andl	$15,%eax
 	cmpl	$5,%eax
 	jae	1f
@@ -498,21 +498,21 @@ reloc_gdt:
  * offset 0 in process 1's address space.
  */
 ENTRY(icode)
-	pushl	$0		/* envp for execve() */
+	pushl	$0			# envp for execve()
 
-#	pushl	$argv-_icode	/* can't do this 'cos gas 1.38 is broken */
-	movl	$(argv),%eax
-	subl	$(_icode),%eax
-	pushl	%eax		/* argp for execve() */
+#	pushl	$argv-_icode		# can't do this 'cos gas 1.38 is broken
+	movl	$argv,%eax
+	subl	$_icode,%eax
+	pushl	%eax			# argp for execve()
 
 #	pushl	$init-_icode
-	movl	$(init),%eax
-	subl	$(_icode),%eax
-	pushl	%eax		/* fname for execve() */
-	pushl	%eax		/* dummy return address */
+	movl	$init,%eax
+	subl	$_icode,%eax
+	pushl	%eax			# fname for execve()
+	pushl	%eax			# dummy return address
 	movl	$SYS_execve,%eax
 	LCALL(7,0)
-	/* exit if something botches up in the above exec */
+	/* Exit if something botches up in the above exec. */
 	movl	$SYS_exit,%eax
 	LCALL(7,0)
 
@@ -712,7 +712,7 @@ ENTRY(copyout)
 	movl	16(%esp),%esi
 	movl	20(%esp),%edi
 	movl	24(%esp),%ebx
-	testl	%ebx,%ebx	/* anything to do? */
+	testl	%ebx,%ebx		# anything to do?
 	jz	done_copyout
 
 	/*
@@ -732,7 +732,7 @@ ENTRY(copyout)
 #if defined(I486_CPU) || defined(I586_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
 	jne	3f
-#endif	/* I486_CPU || I586_CPU */
+#endif /* I486_CPU || I586_CPU */
 
 	/*
 	 * We have to check each PTE for (write) permission, since the CPU
@@ -865,7 +865,7 @@ ENTRY(copyoutstr)
 #if defined(I486_CPU) || defined(I586_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
 	jne	5f
-#endif	/* I486_CPU || I586_CPU */
+#endif /* I486_CPU || I586_CPU */
 
 1:	/*
 	 * Once per page, check that we are still within the bounds of user
@@ -959,7 +959,7 @@ ENTRY(copyoutstr)
 1:	/* edx is zero -- return ENAMETOOLONG. */
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
-#endif	/* I486_CPU || I586_CPU */
+#endif /* I486_CPU || I586_CPU */
 
 /*
  * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t int *lencopied);
@@ -1041,9 +1041,9 @@ ENTRY(copystr)
 	pushl	%esi
 	pushl	%edi
 
-	movl	12(%esp),%esi			/* %esi = from */
-	movl	16(%esp),%edi			/* %edi = to */
-	movl	20(%esp),%edx			/* %edx = maxlen */
+	movl	12(%esp),%esi		# esi = from
+	movl	16(%esp),%edi		# edi = to
+	movl	20(%esp),%edx		# edx = maxlen
 	incl	%edx
 
 1:	decl	%edx
@@ -1165,7 +1165,7 @@ ALTENTRY(suiword)
 #if defined(I486_CPU) || defined(I586_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
 	jne	2f
-#endif	/* I486_CPU || I586_CPU */
+#endif /* I486_CPU || I586_CPU */
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%edx		# fetch pte associated with address
@@ -1207,7 +1207,7 @@ susword1:
 #if defined(I486_CPU) || defined(I586_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
 	jne	2f
-#endif	/* I486_CPU || I586_CPU */
+#endif /* I486_CPU || I586_CPU */
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%edx		# calculate pte address
@@ -1263,7 +1263,7 @@ ALTENTRY(suibyte)
 #if defined(I486_CPU) || defined(I586_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
 	jne	2f
-#endif	/* I486_CPU || I586_CPU */
+#endif /* I486_CPU || I586_CPU */
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%edx		# calculate pte address
@@ -1579,7 +1579,7 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	leal	PCB_SAVEFPU(%esi),%ecx
 	pushl	%ecx
-	call	_npxsave		/* do it in a big C function */
+	call	_npxsave		# do it in a big C function
 	addl	$4,%esp
 1:
 #endif
@@ -1706,7 +1706,7 @@ ENTRY(savectx)
 	pushl	_cpl
 
 	/* Save the context. */
-	movl	20(%esp),%esi		/* esi = p2->p_addr */
+	movl	20(%esp),%esi		# esi = p2->p_addr
 
 	movl	%esp,PCB_ESP(%esi)
 	movl	%ebp,PCB_EBP(%esi)
@@ -1728,18 +1728,18 @@ ENTRY(savectx)
 	 * have to handle h/w bugs for reloading.  We used to lose the
 	 * parent's npx state for forks by forgetting to reload.
 	 */
-	movl	_curproc,%edi		/* edi = p1 */
+	movl	_curproc,%edi		# edi = p1
 	cmpl	%edi,_npxproc
 	jne	1f
 
-	leal	PCB_SAVEFPU(%esi),%ebx	/* ebx = esi->u_pcb.pcb_savefpu */
+	leal	PCB_SAVEFPU(%esi),%ebx	# ebx = esi->u_pcb.pcb_savefpu
 	pushl	%ebx
 	call	_npxsave
 	addl	$4,%esp
 
-	pushl	$108+8*2		/* XXX h/w state size + padding */
-	movl	P_ADDR(%edi),%edi	/* edi = p1->p_addr */
-	leal	PCB_SAVEFPU(%edi),%edi	/* edi = edi->u_pcb.pcb_savefpu */
+	pushl	$108+8*2		# XXX h/w state size + padding
+	movl	P_ADDR(%edi),%edi	# edi = p1->p_addr
+	leal	PCB_SAVEFPU(%edi),%edi	# edi = edi->u_pcb.pcb_savefpu
 	pushl	%edi
 	pushl	%ebx
 	call	_bcopy
@@ -1781,36 +1781,36 @@ ENTRY(savectx)
  * Update profiling information for the user process.
  */
 ENTRY(addupc)
-	movl	4(%esp),%eax		/* pc */
-	movl	8(%esp),%edx		/* up */
+	movl	4(%esp),%eax		# pc
+	movl	8(%esp),%edx		# up
 
-	subl	PR_OFF(%edx),%eax	/* pc -= up->pr_off */
-	jc	1f			/* if (pc < 0) return */
+	subl	PR_OFF(%edx),%eax	# pc -= up->pr_off
+	jc	1f			# if (pc < 0) return
 
-	shrl	$1,%eax			/* praddr = pc >> 1 */
-	imull	PR_SCALE(%edx),%eax	/* praddr *= up->pr_scale */
-	shrl	$15,%eax		/* praddr = praddr << 15 */
-	andl	$-2,%eax		/* praddr &= ~1 */
+	shrl	$1,%eax			# praddr = pc >> 1
+	imull	PR_SCALE(%edx),%eax	# praddr *= up->pr_scale
+	shrl	$15,%eax		# praddr = praddr << 15
+	andl	$-2,%eax		# praddr &= ~1
 
-	cmpl	PR_SIZE(%edx),%eax	/* if (praddr > up->pr_size) return */
+	cmpl	PR_SIZE(%edx),%eax	# if (praddr > up->pr_size) return
 	ja	1f
 
-/*	addl	%eax,%eax		 * praddr -> word offset */
-	addl	PR_BASE(%edx),%eax	/* praddr += up-> pr_base */
-	movl	12(%esp),%ecx		/* ticks */
+/*	addl	%eax,%eax		# praddr -> word offset */
+	addl	PR_BASE(%edx),%eax	# praddr += up-> pr_base
+	movl	12(%esp),%ecx		# ticks
 
 	movl	_curpcb,%edx
 	movl	$_proffault,PCB_ONFAULT(%edx)
-	addl	%ecx,(%eax)		/* storage location += ticks */
+	addl	%ecx,(%eax)		# storage location += ticks
 	movl	$0,PCB_ONFAULT(%edx)
 
 1:	ret
 
 ENTRY(proffault)
 	/* If we get a fault, then kill profiling all together. */
-	movl $0,PCB_ONFAULT(%edx)	/* squish the fault handler */
-	movl 8(%esp),%ecx
-	movl $0,PR_SCALE(%ecx)		/* up->pr_scale = 0 */
+	movl	$0,PCB_ONFAULT(%edx)	# squish the fault handler
+	movl	8(%esp),%ecx
+	movl	$0,PR_SCALE(%ecx)	# up->pr_scale = 0
 	ret
 
 /*****************************************************************************/
@@ -1857,11 +1857,11 @@ IDTVEC(dbg)
 #endif
 	subl	$4,%esp
 	pushl	%eax
-#	movl	%dr6,%eax	/* XXX stupid assembler! */
+/*	movl	%dr6,%eax		# XXX stupid assembler! */
 	.byte	0x0f, 0x21, 0xf0
 	movl	%eax,4(%esp)
 	andb	$~15,%al
-#	movl	%eax,%dr6	/* XXX stupid assembler! */
+/*	movl	%eax,%dr6		# XXX stupid assembler! */
 	.byte	0x0f, 0x23, 0xf0
 	popl	%eax
 	BPTTRAP(T_TRCTRAP)
@@ -1904,11 +1904,11 @@ IDTVEC(fpu)
 	 * error.  It would be better to handle npx interrupts as traps but
 	 * this is difficult for nested interrupts.
 	 */
-	pushl	$0		/* dummy error code */
+	pushl	$0			# dummy error code
 	pushl	$T_ASTFLT
 	INTRENTRY
 	pushl	_cpl
-	pushl	$0		/* dummy unit to finish building intr frame */
+	pushl	$0			# dummy unit to finish intr frame
 	incl	_cnt+V_TRAP
 	call	_npxintr
 	INTREXIT
