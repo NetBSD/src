@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_audio.c,v 1.1.1.1 2000/05/07 00:16:17 wiz Exp $	*/
+/*	$NetBSD: bktr_audio.c,v 1.2 2000/05/07 00:24:33 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.2 1999/10/28 13:58:14 roger Exp */
 /*
@@ -60,27 +60,30 @@ static int bootverbose = 1;
 #ifdef __FreeBSD__
 #include <machine/clock.h>		/* for DELAY */
 #include <pci/pcivar.h>
-#endif
 
 #if (__FreeBSD_version >=300000)
 #include <machine/bus_memio.h>		/* for bus space */
 #include <machine/bus.h>
 #include <sys/bus.h>
 #endif
+#endif
 
 #ifdef __NetBSD__
-#include <dev/ic/ioctl_meteor.h>	/* NetBSD location of .h files */
-#include <dev/ic/ioctl_bt848.h>
+#include <dev/ic/bt8xx.h>	/* NetBSD location of .h files */
+#include <dev/pci/bktr/bktr_reg.h>
+#include <dev/pci/bktr/bktr_core.h>
+#include <dev/pci/bktr/bktr_tuner.h>
+#include <dev/pci/bktr/bktr_card.h>
+#include <dev/pci/bktr/bktr_audio.h>
 #else
 #include <machine/ioctl_meteor.h>	/* Traditional location of .h files */
 #include <machine/ioctl_bt848.h>        /* extensions to ioctl_meteor.h */
-#endif
 #include <dev/bktr/bktr_reg.h>
 #include <dev/bktr/bktr_core.h>
 #include <dev/bktr/bktr_tuner.h>
 #include <dev/bktr/bktr_card.h>
 #include <dev/bktr/bktr_audio.h>
-
+#endif
 
 /*
  * Prototypes for the GV_BCTV specific functions.

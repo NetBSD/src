@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.1.1.1 2000/05/07 00:16:18 wiz Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.2 2000/05/07 00:24:33 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.106 2000/04/16 07:50:08 roger Exp */
 
@@ -177,14 +177,13 @@ typedef unsigned int uintptr_t;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 
 #include <sys/inttypes.h>		/* uintptr_t */
-#include <dev/ic/ioctl_meteor.h>
-#include <dev/ic/ioctl_bt848.h>		/* extensions to ioctl_meteor.h */
-#include <dev/bktr/bktr_reg.h>
-#include <dev/bktr/bktr_tuner.h>
-#include <dev/bktr/bktr_card.h>
-#include <dev/bktr/bktr_audio.h>
-#include <dev/bktr/bktr_core.h>
-#include <dev/bktr/bktr_os.h>
+#include <dev/ic/bt8xx.h>
+#include <dev/pci/bktr/bktr_reg.h>
+#include <dev/pci/bktr/bktr_tuner.h>
+#include <dev/pci/bktr/bktr_card.h>
+#include <dev/pci/bktr/bktr_audio.h>
+#include <dev/pci/bktr/bktr_core.h>
+#include <dev/pci/bktr/bktr_os.h>
 
 static int bootverbose = 1;
 
@@ -446,12 +445,16 @@ common_bktr_attach( bktr_ptr_t bktr, int unit, u_long pci_id, u_int rev )
 /***************************************/
 #if defined(__NetBSD__) || defined(__OpenBSD__)
         /* allocate space for dma program */
-        bktr->dma_prog = get_bktr_mem(bktr, &bktr->dm_prog, DMA_PROG_ALLOC);
-        bktr->odd_dma_prog = get_bktr_mem(bktr, &bktr->dm_oprog, DMA_PROG_ALLOC)
-;
-	/* allocte space for the VBI buffer */
-	bktr->vbidata  = get_bktr_mem(bktr, &bktr->dm_vbidata, VBI_DATA_SIZE);
-	bktr->vbibuffer = get_bktr_mem(bktr, &bktr->dm_vbibuffer, VBI_BUFFER_SIZE);
+        bktr->dma_prog = get_bktr_mem(bktr, &bktr->dm_prog,
+				      DMA_PROG_ALLOC);
+        bktr->odd_dma_prog = get_bktr_mem(bktr, &bktr->dm_oprog,
+					  DMA_PROG_ALLOC);
+
+	/* allocate space for the VBI buffer */
+	bktr->vbidata  = get_bktr_mem(bktr, &bktr->dm_vbidata,
+				      VBI_DATA_SIZE);
+	bktr->vbibuffer = get_bktr_mem(bktr, &bktr->dm_vbibuffer,
+				       VBI_BUFFER_SIZE);
 
         /* allocate space for pixel buffer */
         if ( BROOKTREE_ALLOC )
@@ -2668,7 +2671,7 @@ rgb_vbi_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	*dma_prog++ = 0;
 	for(i = 0; i < vbilines; i++) {
 		*dma_prog++ = OP_WRITE | OP_SOL | OP_EOL | vbisamples;
-		*dma_prog++ = (u_long) vtophys(bktr->vbidata +
+		*dma_prog++ = (u_long) vtophys((caddr_t)bktr->vbidata +
 					(i * VBI_LINE_SIZE));
 	}
 
@@ -2719,7 +2722,7 @@ rgb_vbi_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	*dma_prog++ = 0;
 	for(i = 0; i < vbilines; i++) {
 		*dma_prog++ = OP_WRITE | OP_SOL | OP_EOL | vbisamples;
-		*dma_prog++ = (u_long) vtophys(bktr->vbidata +
+		*dma_prog++ = (u_long) vtophys((caddr_t)bktr->vbidata +
 				((i+MAX_VBI_LINES) * VBI_LINE_SIZE));
 	}
 
@@ -4121,7 +4124,7 @@ i2cProbe( bktr_ptr_t bktr, int addr )
 			DELAY( BITD );		/* release clock */
 		}
 		else {
-			OUTL(bktr, BKTR_I2C_DATA_CTL, 0 ;
+			OUTL(bktr, BKTR_I2C_DATA_CTL, 0);
 			DELAY( BITD );		/* assert LO data */
 			OUTL(bktr, BKTR_I2C_DATA_CTL, 2);
 			DELAY( BITD );		/* strobe clock */

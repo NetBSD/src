@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_card.h,v 1.1.1.1 2000/05/07 00:16:18 wiz Exp $	*/
+/*	$NetBSD: bktr_card.h,v 1.2 2000/05/07 00:24:33 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_card.h,v 1.2 1999/09/27 08:04:55 roger Exp */
 
@@ -52,8 +52,8 @@
 /*
  * If probeCard() fails to detect the correct card on boot you can
  * override it by setting adding the following option to your kernel config
- *  options OVERRIDE_CARD  <card type>
- *  eg options OVERRIDE CARD=1
+ *  options BKTR_OVERRIDE_CARD  <card type>
+ *  eg options BKTR_OVERRIDE CARD=1
  *
  * or using the sysclt  hw.bt848.card
  *  eg sysctl -w hw.bt848.card=1
