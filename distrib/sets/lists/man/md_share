@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.84 2000/03/14 09:06:51 shin Exp $
+# $NetBSD: md_share,v 1.85 2000/04/17 17:07:51 augustss Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -94,6 +94,7 @@
 ./usr/share/man/cat4/hp300/rd.0
 ./usr/share/man/cat4/hp300/rmp.0
 ./usr/share/man/cat4/hp300/tc.0
+./usr/share/man/cat4/i386/PCIBIOS.0
 ./usr/share/man/cat4/i386/apm.0
 ./usr/share/man/cat4/i386/autoconf.0
 ./usr/share/man/cat4/i386/busmouse.0
@@ -432,6 +433,7 @@
 ./usr/share/man/man4/hp300/rd.4
 ./usr/share/man/man4/hp300/rmp.4
 ./usr/share/man/man4/hp300/tc.4
+./usr/share/man/man4/i386/PCIBIOS.4
 ./usr/share/man/man4/i386/apm.4
 ./usr/share/man/man4/i386/autoconf.4
 ./usr/share/man/man4/i386/busmouse.4
