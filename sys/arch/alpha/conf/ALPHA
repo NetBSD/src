@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.3 1995/03/08 00:38:55 cgd Exp $
+#	$NetBSD: ALPHA,v 1.4 1995/04/22 12:46:06 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -95,9 +95,9 @@ esp1	at	tcds? slot ?
 
 scsibus* at esp?
 
-sd*	at	scsibus? target ? drive ?
-st*	at	scsibus? target ? drive ?
-cd*	at	scsibus? target ? drive ?
+sd*	at	scsibus? target ? lun ?
+st*	at	scsibus? target ? lun ?
+cd*	at	scsibus? target ? lun ?
 
 pseudo-device	bpfilter
 pseudo-device	loop

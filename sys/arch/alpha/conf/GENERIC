@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.5 1995/03/26 01:48:21 cgd Exp $
+#	$NetBSD: GENERIC,v 1.6 1995/04/22 12:46:08 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -13,10 +13,10 @@ maxusers 8
 options		GENERIC
 
 # CPU Support
-options		DEC_3000_500	# Flamingo family:	3000/[4-9]00*
-options		DEC_2000_300	# "Jensen":		2000/300
-options		DEC_3000_300	# Pelican family:	3000/300*
-options		DEC_2100_A50	# "Avanti":		AlphaStation 400 4/233
+options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
+options		DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
+options		DEC_3000_300	# Pelican etc:	3000/300*
+options		DEC_2100_A50	# "Avanti":	AlphaStation 400 4/233
 
 # needs to be set per system
 options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
@@ -63,9 +63,9 @@ esp1	at	tcds? slot ?
 
 scsibus* at esp?
 
-sd*	at	scsibus? target ? drive ?
-st*	at	scsibus? target ? drive ?
-cd*	at	scsibus? target ? drive ?
+sd*	at	scsibus? target ? lun ?
+st*	at	scsibus? target ? lun ?
+cd*	at	scsibus? target ? lun ?
 
 pseudo-device	bpfilter
 pseudo-device	loop
