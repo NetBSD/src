@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.12 2000/03/28 05:14:04 simonb Exp $	*/
+/*	$NetBSD: msg.h,v 1.13 2000/06/02 15:53:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,9 @@ struct msqid_ds14 {
 	long	msg_pad3;
 	long	msg_pad4[4];
 };
+#endif
 
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 /*
  * Based on the configuration parameters described in an SVR2 (yes, two)
  * config(1m) man page.
@@ -129,15 +131,35 @@ struct msqid_ds14 {
  * two between 8 and 1024 inclusive (and panic's if it isn't).
  */
 struct msginfo {
-	int	msgmax,		/* max chars in a message */
-		msgmni,		/* max message queue identifiers */
-		msgmnb,		/* max chars in a queue */
-		msgtql,		/* max messages in system */
-		msgssz,		/* size of a message segment
+	int32_t	msgmax;		/* max chars in a message */
+	int32_t	msgmni;		/* max message queue identifiers */
+	int32_t	msgmnb;		/* max chars in a queue */
+	int32_t	msgtql;		/* max messages in system */
+	int32_t	msgssz;		/* size of a message segment
 				   (see notes above) */
-		msgseg;		/* number of message segments */
+	int32_t	msgseg;		/* number of message segments */
 };
-extern struct msginfo msginfo;
+
+/* Warning: 64-bit structure padding is needed here */
+struct msgid_ds_sysctl {
+	struct		ipc_perm_sysctl msg_perm;
+	u_int64_t	msg_qnum;
+	u_int64_t	msg_qbytes;
+	u_int64_t	_msg_cbytes;
+	pid_t		msg_lspid;
+	pid_t		msg_lrpid;
+	time_t		msg_stime;
+	time_t		msg_rtime;
+	time_t		msg_ctime;
+	int32_t		pad;
+};
+struct msg_sysctl_info {
+	struct	msginfo msginfo;
+	struct	msgid_ds_sysctl msgids[1];
+};
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+
+#ifdef _KERNEL
 
 #ifndef MSGSSZ
 #define MSGSSZ	8		/* Each segment must be 2^N long */
@@ -173,10 +195,11 @@ struct msgmap {
     				/* 0..(MSGSEG-1) -> index of next segment */
 };
 
-char *msgpool;			/* MSGMAX byte long msg buffer pool */
-struct msgmap *msgmaps;		/* MSGSEG msgmap structures */
-struct __msg *msghdrs;		/* MSGTQL msg headers */
-struct msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
+extern struct msginfo msginfo;
+extern char *msgpool;		/* MSGMAX byte long msg buffer pool */
+extern struct msgmap *msgmaps;	/* MSGSEG msgmap structures */
+extern struct __msg *msghdrs;	/* MSGTQL msg headers */
+extern struct msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
 
 #define MSG_LOCKED	01000	/* Is this msqid_ds locked? */
 
@@ -196,9 +219,6 @@ struct proc;
 
 void	msginit __P((void));
 int	msgctl1 __P((struct proc *, int, int, struct msqid_ds *));
-
-void	msqid_ds14_to_native __P((struct msqid_ds14 *, struct msqid_ds *));
-void	native_to_msqid_ds14 __P((struct msqid_ds *, struct msqid_ds14 *));
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_MSG_H_ */
