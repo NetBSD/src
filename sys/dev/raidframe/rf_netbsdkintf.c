@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.84 2000/05/28 01:03:22 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.85 2000/05/28 03:00:31 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2616,6 +2616,11 @@ rf_RewriteParityThread(raidPtr)
 		raidPtr->parity_good = RF_RAID_CLEAN;
 	}
 	raidPtr->parity_rewrite_in_progress = 0;
+
+	/* Anyone waiting for us to stop?  If so, inform them... */
+	if (raidPtr->waitShutdown) {
+		wakeup(&raidPtr->parity_rewrite_in_progress);
+	}
 
 	/* That's all... */
 	kthread_exit(0);        /* does not return */

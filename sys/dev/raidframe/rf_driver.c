@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.34 2000/03/07 02:28:05 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.35 2000/05/28 03:00:32 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -266,6 +266,13 @@ rf_Shutdown(raidPtr)
 		RF_WAIT_COND(raidPtr->outstandingCond, RF_FREELIST_MUTEX_OF(rf_rad_freelist));
 	}
 	RF_FREELIST_DO_UNLOCK(rf_rad_freelist);
+
+	/* Wait for any parity re-writes to stop... */
+	while (raidPtr->parity_rewrite_in_progress) {
+		printf("Waiting for parity re-write to exit...\n");
+		tsleep(&raidPtr->parity_rewrite_in_progress, PRIBIO,
+		       "rfprwshutdown", 0);
+	}
 
 	raidPtr->valid = 0;
 
