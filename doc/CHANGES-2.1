@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.29 2005/03/16 13:13:17 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.30 2005/03/16 15:19:50 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -774,4 +774,11 @@ xfree/xc/config/cf/Imake.rules			1.6
 	preprocessor's tendency to remove the following newline (Thomas Dickey,
 	Debian #259996). This is a partial fix for our PR misc/28444.
 	[fredb, ticket #1017]
+
+sys/arch/xen/i386/locore.S			1.10
+
+	Sync with i386/locore.S 1.33:
+	Check the passed in address as well as determining the maximum length
+	using VM_MAXUSER_ADDRESS in copyinstr and copyoutstr.
+	[bouyer, ticket #1321]
 
