@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscalls.c,v 1.2 2002/11/12 23:40:23 manu Exp $ */
+/* $NetBSD: darwin_syscalls.c,v 1.3 2002/11/14 21:47:15 manu Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_syscalls.c,v 1.2 2002/11/12 23:40:23 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_syscalls.c,v 1.3 2002/11/14 21:47:15 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -24,6 +24,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_syscalls.c,v 1.2 2002/11/12 23:40:23 manu Exp
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <compat/freebsd/freebsd_syscallargs.h>
 #endif /* _KERNEL_OPT */
 
 const char *const darwin_syscallnames[] = {
@@ -35,7 +36,7 @@ const char *const darwin_syscallnames[] = {
 	"open",			/* 5 = open */
 	"close",			/* 6 = close */
 	"wait4",			/* 7 = wait4 */
-	"compat_43_ocreat",	/* 8 = compat_43 ocreat */
+	"ocreat",			/* 8 = ocreat */
 	"link",			/* 9 = link */
 	"unlink",			/* 10 = unlink */
 	"#11 (unimplemented execv)",		/* 11 = unimplemented execv */
@@ -46,7 +47,7 @@ const char *const darwin_syscallnames[] = {
 	"chown",			/* 16 = chown */
 	"break",			/* 17 = break */
 	"getfsstat",			/* 18 = getfsstat */
-	"compat_43_olseek",	/* 19 = compat_43 olseek */
+	"olseek",			/* 19 = olseek */
 #ifdef COMPAT_43
 	"getpid",			/* 20 = getpid */
 #else
@@ -73,9 +74,9 @@ const char *const darwin_syscallnames[] = {
 	"fchflags",			/* 35 = fchflags */
 	"sync",			/* 36 = sync */
 	"kill",			/* 37 = kill */
-	"compat_43_stat43",	/* 38 = compat_43 stat43 */
+	"stat43",			/* 38 = stat43 */
 	"getppid",			/* 39 = getppid */
-	"compat_43_lstat43",	/* 40 = compat_43 lstat43 */
+	"lstat43",			/* 40 = lstat43 */
 	"dup",			/* 41 = dup */
 	"pipe",			/* 42 = pipe */
 	"getegid",			/* 43 = getegid */
@@ -85,36 +86,36 @@ const char *const darwin_syscallnames[] = {
 #else
 	"#45 (excluded ktrace)",		/* 45 = excluded ktrace */
 #endif
-	"compat_13_sigaction13",	/* 46 = compat_13 sigaction13 */
+	"sigaction13",			/* 46 = sigaction13 */
 #ifdef COMPAT_43
 	"getgid",			/* 47 = getgid */
 #else
 	"getgid",			/* 47 = getgid */
 #endif
-	"compat_13_sigprocmask13",	/* 48 = compat_13 sigprocmask13 */
+	"sigprocmask13",			/* 48 = sigprocmask13 */
 	"__getlogin",			/* 49 = __getlogin */
 	"setlogin",			/* 50 = setlogin */
 	"acct",			/* 51 = acct */
-	"compat_13_sigpending13",	/* 52 = compat_13 sigpending13 */
-	"compat_13_sigaltstack13",	/* 53 = compat_13 sigaltstack13 */
+	"sigpending13",			/* 52 = sigpending13 */
+	"sigaltstack13",			/* 53 = sigaltstack13 */
 	"ioctl",			/* 54 = ioctl */
-	"compat_12_oreboot",	/* 55 = compat_12 oreboot */
+	"oreboot",			/* 55 = oreboot */
 	"revoke",			/* 56 = revoke */
 	"symlink",			/* 57 = symlink */
 	"readlink",			/* 58 = readlink */
 	"execve",			/* 59 = execve */
 	"umask",			/* 60 = umask */
 	"chroot",			/* 61 = chroot */
-	"compat_43_fstat43",	/* 62 = compat_43 fstat43 */
+	"fstat43",			/* 62 = fstat43 */
 	"#63 (unimplemented)",		/* 63 = unimplemented */
-	"compat_43_ogetpagesize",	/* 64 = compat_43 ogetpagesize */
-	"compat_12_msync",	/* 65 = compat_12 msync */
+	"ogetpagesize",			/* 64 = ogetpagesize */
+	"msync",			/* 65 = msync */
 	"vfork",			/* 66 = vfork */
 	"#67 (obsolete vread)",		/* 67 = obsolete vread */
 	"#68 (obsolete vwrite)",		/* 68 = obsolete vwrite */
 	"sbrk",			/* 69 = sbrk */
 	"sstk",			/* 70 = sstk */
-	"compat_43_ommap",	/* 71 = compat_43 ommap */
+	"ommap",			/* 71 = ommap */
 	"vadvise",			/* 72 = vadvise */
 	"munmap",			/* 73 = munmap */
 	"mprotect",			/* 74 = mprotect */
@@ -127,12 +128,12 @@ const char *const darwin_syscallnames[] = {
 	"getpgrp",			/* 81 = getpgrp */
 	"setpgid",			/* 82 = setpgid */
 	"setitimer",			/* 83 = setitimer */
-	"compat_43_owait",	/* 84 = compat_43 owait */
-	"compat_12_oswapon",	/* 85 = compat_12 oswapon */
+	"owait",			/* 84 = owait */
+	"oswapon",			/* 85 = oswapon */
 	"getitimer",			/* 86 = getitimer */
-	"compat_43_ogethostname",	/* 87 = compat_43 ogethostname */
-	"compat_43_osethostname",	/* 88 = compat_43 osethostname */
-	"compat_43_ogetdtablesize",	/* 89 = compat_43 ogetdtablesize */
+	"ogethostname",			/* 87 = ogethostname */
+	"osethostname",			/* 88 = osethostname */
+	"ogetdtablesize",			/* 89 = ogetdtablesize */
 	"dup2",			/* 90 = dup2 */
 	"#91 (unimplemented)",		/* 91 = unimplemented */
 	"fcntl",			/* 92 = fcntl */
@@ -142,22 +143,22 @@ const char *const darwin_syscallnames[] = {
 	"setpriority",			/* 96 = setpriority */
 	"socket",			/* 97 = socket */
 	"connect",			/* 98 = connect */
-	"compat_43_oaccept",	/* 99 = compat_43 oaccept */
+	"oaccept",			/* 99 = oaccept */
 	"getpriority",			/* 100 = getpriority */
-	"compat_43_osend",	/* 101 = compat_43 osend */
-	"compat_43_orecv",	/* 102 = compat_43 orecv */
-	"compat_13_sigreturn13",	/* 103 = compat_13 sigreturn13 */
+	"osend",			/* 101 = osend */
+	"orecv",			/* 102 = orecv */
+	"sigreturn13",			/* 103 = sigreturn13 */
 	"bind",			/* 104 = bind */
 	"setsockopt",			/* 105 = setsockopt */
 	"listen",			/* 106 = listen */
 	"#107 (unimplemented)",		/* 107 = unimplemented */
-	"compat_43_osigvec",	/* 108 = compat_43 osigvec */
-	"compat_43_osigblock",	/* 109 = compat_43 osigblock */
-	"compat_43_osigsetmask",	/* 110 = compat_43 osigsetmask */
-	"compat_13_sigsuspend13",	/* 111 = compat_13 sigsuspend13 */
-	"compat_43_osigstack",	/* 112 = compat_43 osigstack */
-	"compat_43_orecvmsg",	/* 113 = compat_43 orecvmsg */
-	"compat_43_osendmsg",	/* 114 = compat_43 osendmsg */
+	"osigvec",			/* 108 = osigvec */
+	"osigblock",			/* 109 = osigblock */
+	"osigsetmask",			/* 110 = osigsetmask */
+	"sigsuspend13",			/* 111 = sigsuspend13 */
+	"osigstack",			/* 112 = osigstack */
+	"orecvmsg",			/* 113 = orecvmsg */
+	"osendmsg",			/* 114 = osendmsg */
 	"#115 (unimplemented)",		/* 115 = unimplemented */
 	"gettimeofday",			/* 116 = gettimeofday */
 	"getrusage",			/* 117 = getrusage */
@@ -168,12 +169,12 @@ const char *const darwin_syscallnames[] = {
 	"settimeofday",			/* 122 = settimeofday */
 	"fchown",			/* 123 = fchown */
 	"fchmod",			/* 124 = fchmod */
-	"compat_43_orecvfrom",	/* 125 = compat_43 orecvfrom */
+	"orecvfrom",			/* 125 = orecvfrom */
 	"setreuid",			/* 126 = setreuid */
 	"setregid",			/* 127 = setregid */
 	"rename",			/* 128 = rename */
-	"compat_43_otruncate",	/* 129 = compat_43 otruncate */
-	"compat_43_oftruncate",	/* 130 = compat_43 oftruncate */
+	"otruncate",			/* 129 = otruncate */
+	"oftruncate",			/* 130 = oftruncate */
 	"flock",			/* 131 = flock */
 	"mkfifo",			/* 132 = mkfifo */
 	"sendto",			/* 133 = sendto */
@@ -184,16 +185,16 @@ const char *const darwin_syscallnames[] = {
 	"utimes",			/* 138 = utimes */
 	"#139 (unimplemented futimes)",		/* 139 = unimplemented futimes */
 	"adjtime",			/* 140 = adjtime */
-	"compat_43_ogetpeername",	/* 141 = compat_43 ogetpeername */
-	"compat_43_ogethostid",	/* 142 = compat_43 ogethostid */
+	"ogetpeername",			/* 141 = ogetpeername */
+	"ogethostid",			/* 142 = ogethostid */
 	"#143 (unimplemented)",		/* 143 = unimplemented */
-	"compat_43_ogetrlimit",	/* 144 = compat_43 ogetrlimit */
-	"compat_43_osetrlimit",	/* 145 = compat_43 osetrlimit */
-	"compat_43_okillpg",	/* 146 = compat_43 okillpg */
+	"ogetrlimit",			/* 144 = ogetrlimit */
+	"osetrlimit",			/* 145 = osetrlimit */
+	"okillpg",			/* 146 = okillpg */
 	"setsid",			/* 147 = setsid */
 	"#148 (unimplemented)",		/* 148 = unimplemented */
 	"#149 (unimplemented)",		/* 149 = unimplemented */
-	"compat_43_ogetsockname",	/* 150 = compat_43 ogetsockname */
+	"ogetsockname",			/* 150 = ogetsockname */
 	"#151 (unimplemented getpgid)",		/* 151 = unimplemented getpgid */
 	"#152 (unimplemented setprivexec)",		/* 152 = unimplemented setprivexec */
 	"#153 (unimplemented pread)",		/* 153 = unimplemented pread */
@@ -203,14 +204,18 @@ const char *const darwin_syscallnames[] = {
 #else
 	"#155 (excluded nfssvc)",		/* 155 = excluded nfssvc */
 #endif
-	"compat_43_ogetdirentries",	/* 156 = compat_43 ogetdirentries */
+	"ogetdirentries",			/* 156 = ogetdirentries */
 	"statfs",			/* 157 = statfs */
 	"fstatfs",			/* 158 = fstatfs */
 	"#159 (unimplemented unmount)",		/* 159 = unimplemented unmount */
 	"#160 (unimplemented)",		/* 160 = unimplemented */
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 	"getfh",			/* 161 = getfh */
-	"compat_09_ogetdomainname",	/* 162 = compat_09 ogetdomainname */
-	"compat_09_osetdomainname",	/* 163 = compat_09 osetdomainname */
+#else
+	"#161 (excluded getfh)",		/* 161 = excluded getfh */
+#endif
+	"ogetdomainname",			/* 162 = ogetdomainname */
+	"osetdomainname",			/* 163 = osetdomainname */
 	"#164 (unimplemented)",		/* 164 = unimplemented */
 	"#165 (unimplemented quotactl)",		/* 165 = unimplemented quotactl */
 	"#166 (unimplemented)",		/* 166 = unimplemented */
@@ -235,15 +240,15 @@ const char *const darwin_syscallnames[] = {
 	"#185 (unimplemented)",		/* 185 = unimplemented */
 	"#186 (unimplemented)",		/* 186 = unimplemented */
 	"#187 (unimplemented)",		/* 187 = unimplemented */
-	"compat_12_stat12",	/* 188 = compat_12 stat12 */
-	"compat_12_fstat12",	/* 189 = compat_12 fstat12 */
-	"compat_12_lstat12",	/* 190 = compat_12 lstat12 */
+	"stat12",			/* 188 = stat12 */
+	"fstat12",			/* 189 = fstat12 */
+	"lstat12",			/* 190 = lstat12 */
 	"pathconf",			/* 191 = pathconf */
 	"fpathconf",			/* 192 = fpathconf */
 	"#193 (unimplemented getfsstat)",		/* 193 = unimplemented getfsstat */
 	"getrlimit",			/* 194 = getrlimit */
 	"setrlimit",			/* 195 = setrlimit */
-	"compat_12_getdirentries",	/* 196 = compat_12 getdirentries */
+	"getdirentries",			/* 196 = getdirentries */
 	"mmap",			/* 197 = mmap */
 	"#198 (unimplemented)",		/* 198 = unimplemented */
 	"lseek",			/* 199 = lseek */
