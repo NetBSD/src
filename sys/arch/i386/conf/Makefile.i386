@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.125 2002/11/22 15:23:36 fvdl Exp $
+#	$NetBSD: Makefile.i386,v 1.126 2002/11/24 18:56:01 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -75,7 +75,8 @@ LINKFORMAT=	-z
 ## (6) port specific target dependencies
 ##
 
-freebsd_sigcode.o ibcs2_sigcode.o linux_sigcode.o svr4_sigcode.o: assym.h
+freebsd_sigcode.o ibcs2_sigcode.o linux_sigcode.o: assym.h
+svr4_sigcode.o mach_sigcode.o: assym.h
 apmcall.o in_cksum.o pnpbioscall.o: assym.h
 
 ##
