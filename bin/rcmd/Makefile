@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1997/05/26 14:08:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1997/05/26 14:17:15 mrg Exp $
 
 PROG=	rcmd
 SRCS=	rsh.c
