@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.6 1998/08/18 23:52:30 thorpej Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.7 1998/10/17 17:40:44 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.6 1998/08/18 23:52:30 thorpej Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.7 1998/10/17 17:40:44 itohy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -240,7 +240,7 @@ fts_close(sp)
 	FTS *sp;
 {
 	FTSENT *freep, *p;
-	int saved_errno = 0;	/* pacify gcc */
+	int saved_errno = 0;
 
 	/*
 	 * This still works if we haven't read anything -- the dummy structure
@@ -265,15 +265,17 @@ fts_close(sp)
 
 	/* Return to original directory, save errno if necessary. */
 	if (!ISSET(FTS_NOCHDIR)) {
-		saved_errno = fchdir(sp->fts_rfd) ? errno : 0;
+		if (fchdir(sp->fts_rfd))
+			saved_errno = errno;
 		(void)close(sp->fts_rfd);
 	}
 
 	/* Free up the stream pointer. */
 	free(sp);
+	/* ISSET() is illegal after this, since the macro touches sp */
 
 	/* Set errno and return. */
-	if (!ISSET(FTS_NOCHDIR) && saved_errno) {
+	if (saved_errno) {
 		errno = saved_errno;
 		return (-1);
 	}
