@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.7 1997/10/19 23:45:10 lukem Exp $	*/
+/*	$NetBSD: reverse.c,v 1.8 1998/02/17 17:40:59 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: reverse.c,v 1.7 1997/10/19 23:45:10 lukem Exp $");
+__RCSID("$NetBSD: reverse.c,v 1.8 1998/02/17 17:40:59 augustss Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -131,7 +131,7 @@ r_reg(fp, style, off, sbp)
 	}
 
 	if ((start = mmap(NULL, (size_t)size,
-	    PROT_READ, 0, fileno(fp), (off_t)0)) == (caddr_t)-1) {
+	    PROT_READ, MAP_PRIVATE, fileno(fp), (off_t)0)) == (caddr_t)-1) {
 		err(0, "%s: %s", fname, strerror(EFBIG));
 		return;
 	}
