@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.1.2.1 2002/01/28 18:48:51 nathanw Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.1.2.2 2002/05/20 19:18:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,6 @@ ssize_t	_syscall_pwrite(int, const void *, size_t, off_t);
 ssize_t	_syscall_read(int, void *, size_t);
 ssize_t	_syscall_readv(int, const struct iovec *, int);
 int	_syscall_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
-int	_syscall___sigsuspend14(const sigset_t *);
 int	_syscall_wait4(pid_t, int *, int, struct rusage *);
 ssize_t	_syscall_write(int, const void *, size_t);
 ssize_t	_syscall_writev(int, const struct iovec *, int);
@@ -276,20 +275,6 @@ select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	self = pthread__self();
 	pthread__testcancel(self);
 	retval = _syscall_select(nfds, readfds, writefds, exceptfds, timeout);
-	pthread__testcancel(self);
-
-	return retval;
-}
-
-int
-__sigsuspend14(const sigset_t *sigmask)
-{
-	int retval;
-	pthread_t self;
-
-	self = pthread__self();
-	pthread__testcancel(self);
-	retval = _syscall___sigsuspend14(sigmask);
 	pthread__testcancel(self);
 
 	return retval;
