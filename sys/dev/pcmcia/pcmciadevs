@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.116 2001/01/28 07:14:47 ichiro Exp $
+$NetBSD: pcmciadevs,v 1.117 2001/01/29 11:23:13 ichiro Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -235,6 +235,7 @@ product SMC EZCARD		0x8022 SMC EZCard 10 PCMCIA
 
 /* Contec C-NET(PC) */
 product CONTEC CNETPC		0x0000 Contec C-NET(PC)C
+product	CONTEC FX_DS110_PCC	0x0008 Contec FLEXLAN/FX-DS110-PCC
 
 /* Roland */
 product ROLAND SCP55		0x0001 Roland SCP-55
