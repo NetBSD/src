@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.33 2001/01/23 17:35:58 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.34 2001/01/23 21:22:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -199,8 +199,8 @@ USB_DETACH(ucom)
 	int maj, mn;
 	int s;
 
-	DPRINTF(("ucom_detach: sc=%p flags=%d tp=%p\n", 
-		 sc, flags, sc->sc_tty));
+	DPRINTF(("ucom_detach: sc=%p flags=%d tp=%p, pipe=%d,%d\n", 
+		 sc, flags, sc->sc_tty, sc->sc_bulkin_no, sc->sc_bulkout_no));
 
 	sc->sc_dying = 1;
 
@@ -244,11 +244,12 @@ USB_DETACH(ucom)
 	return (0);
 }
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 ucom_activate(device_ptr_t self, enum devact act)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)self;
+
+	DPRINTFN(5,("ucom_activate: %d\n", act));
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -261,7 +262,6 @@ ucom_activate(device_ptr_t self, enum devact act)
 	}
 	return (0);
 }
-#endif
 
 void
 ucom_shutdown(struct ucom_softc *sc)
@@ -446,12 +446,16 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 
 fail_4:
 	usbd_free_xfer(sc->sc_oxfer);
+	sc->sc_oxfer = NULL;
 fail_3:
 	usbd_free_xfer(sc->sc_ixfer);
+	sc->sc_ixfer = NULL;
 fail_2:
 	usbd_close_pipe(sc->sc_bulkout_pipe);
+	sc->sc_bulkout_pipe = NULL;
 fail_1:
 	usbd_close_pipe(sc->sc_bulkin_pipe);
+	sc->sc_bulkin_pipe = NULL;
 fail_0:
 	sc->sc_opening = 0;
 	wakeup(&sc->sc_opening);
@@ -943,7 +947,7 @@ ucomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 
 	DPRINTFN(5,("ucomwritecb: status=%d\n", status));
 
-	if (status == USBD_CANCELLED)
+	if (status == USBD_CANCELLED || sc->sc_dying)
 		return;
 
 	if (status) {
@@ -1001,11 +1005,20 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 	u_char *cp;
 	int s;
 
-	if (status == USBD_CANCELLED)
+	DPRINTFN(5,("ucomreadcb: status=%d\n", status));
+
+	if (status == USBD_CANCELLED || status == USBD_IOERROR ||
+	    sc->sc_dying) {
+		DPRINTF(("ucomreadcb: dying\n"));
+		/* Send something to wake upper layer */
+		s = spltty();
+		(*rint)('\n', tp);
+		ttwakeup(tp);
+		splx(s);
 		return;
+	}
 
 	if (status) {
-		DPRINTF(("ucomreadcb: status=%d\n", status));
 		usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
 		/* XXX we should restart after some delay. */
 		return;
