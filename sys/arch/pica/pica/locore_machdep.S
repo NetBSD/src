@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.2 1996/09/30 02:21:23 jonathan Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.3 1997/06/18 13:16:13 jonathan Exp $	*/
 
 
 /*
@@ -6,6 +6,21 @@
  */
 
 #include <mips/asm.h>
+
+/*
+ * fillw(pat, addr, count)
+ */
+LEAF(fillw)
+1:
+	addiu	a2, a2, -1
+	sh	a0, 0(a1)
+	bne	a2,zero, 1b
+	addiu	a1, a1, 2
+
+	jr	ra
+	nop
+END(fillw)
+
 
 /*
  * Interrupt counters for vmstat.
