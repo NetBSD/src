@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.78 2003/02/26 06:31:11 matt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.79 2003/04/09 18:38:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.78 2003/02/26 06:31:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.79 2003/04/09 18:38:03 thorpej Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -154,9 +154,8 @@ int sokvawaiters;
 #define	SOCK_LOAN_CHUNK		65536
 
 static void
-sodoloanfree(caddr_t buf, size_t size)
+sodoloanfree(struct vm_page **pgs, caddr_t buf, size_t size)
 {
-	struct vm_page **pgs;
 	vaddr_t va, sva, eva;
 	vsize_t len;
 	paddr_t pa;
@@ -167,12 +166,14 @@ sodoloanfree(caddr_t buf, size_t size)
 	len = eva - sva;
 	npgs = len >> PAGE_SHIFT;
 
-	pgs = alloca(npgs * sizeof(*pgs));
+	if (__predict_false(pgs == NULL)) {
+		pgs = alloca(npgs * sizeof(*pgs));
 
-	for (i = 0, va = sva; va < eva; i++, va += PAGE_SIZE) {
-		if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
-			panic("sodoloanfree: va 0x%lx not mapped", va);
-		pgs[i] = PHYS_TO_VM_PAGE(pa);
+		for (i = 0, va = sva; va < eva; i++, va += PAGE_SIZE) {
+			if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+				panic("sodoloanfree: va 0x%lx not mapped", va);
+			pgs[i] = PHYS_TO_VM_PAGE(pa);
+		}
 	}
 
 	pmap_kremove(sva, len);
@@ -201,7 +202,9 @@ sodopendfree(struct socket *so)
 		splx(s);
 
 		rv += m->m_ext.ext_size;
-		sodoloanfree(m->m_ext.ext_buf, m->m_ext.ext_size);
+		sodoloanfree((m->m_flags & M_EXT_PAGES) ?
+		    m->m_ext.ext_pgs : NULL, m->m_ext.ext_buf,
+		    m->m_ext.ext_size);
 		s = splvm();
 		pool_cache_put(&mbpool_cache, m);
 	}
@@ -214,7 +217,9 @@ sodopendfree(struct socket *so)
 		splx(s);
 
 		rv += m->m_ext.ext_size;
-		sodoloanfree(m->m_ext.ext_buf, m->m_ext.ext_size);
+		sodoloanfree((m->m_flags & M_EXT_PAGES) ?
+		    m->m_ext.ext_pgs : NULL, m->m_ext.ext_buf,
+		    m->m_ext.ext_size);
 		s = splvm();
 		pool_cache_put(&mbpool_cache, m);
 	}
@@ -230,7 +235,7 @@ soloanfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 	int s;
 
 	if (m == NULL) {
-		sodoloanfree(buf, size);
+		sodoloanfree(NULL, buf, size);
 		return;
 	}
 
@@ -248,7 +253,6 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	struct iovec *iov = uio->uio_iov;
 	vaddr_t sva, eva;
 	vsize_t len;
-	struct vm_page **pgs;
 	vaddr_t lva, va;
 	int npgs, s, i, error;
 
@@ -264,6 +268,9 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	sva = trunc_page((vaddr_t) iov->iov_base);
 	len = eva - sva;
 	npgs = len >> PAGE_SHIFT;
+
+	/* XXX KDASSERT */
+	KASSERT(npgs <= M_EXT_MAXPAGES);
 
 	while (socurkva + len > somaxkva) {
 		if (sodopendfree(so))
@@ -281,10 +288,8 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 		return (0);
 	socurkva += len;
 
-	pgs = alloca(npgs * sizeof(*pgs));
-
 	error = uvm_loan(&uio->uio_procp->p_vmspace->vm_map, sva, len,
-	    pgs, UVM_LOAN_TOPAGE);
+	    m->m_ext.ext_pgs, UVM_LOAN_TOPAGE);
 	if (error) {
 		uvm_km_free(kernel_map, lva, len);
 		socurkva -= len;
@@ -292,12 +297,14 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	}
 
 	for (i = 0, va = lva; i < npgs; i++, va += PAGE_SIZE)
-		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pgs[i]), VM_PROT_READ);
+		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(m->m_ext.ext_pgs[i]),
+		    VM_PROT_READ);
 	pmap_update(pmap_kernel());
 
 	lva += (vaddr_t) iov->iov_base & PAGE_MASK;
 
 	MEXTADD(m, (caddr_t) lva, space, M_MBUF, soloanfree, so);
+	m->m_flags |= M_EXT_PAGES | M_EXT_ROMAP;
 
 	uio->uio_resid -= space;
 	/* uio_offset not updated, not set/used for write(2) */
