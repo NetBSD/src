@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.23 1999/11/15 19:38:14 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.24 2000/02/08 16:17:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -830,20 +830,21 @@ ntfs_fhtovp(
 	struct ucred **credanonp)
 #endif
 {
-	struct vnode *nvp;
 	struct ntfid *ntfhp = (struct ntfid *)fhp;
 	int error;
 
 	ddprintf(("ntfs_fhtovp(): %s: %d\n", mp->mnt_stat->f_mntonname,
 		ntfhp->ntfid_ino));
 
-	if ((error = VFS_VGET(mp, ntfhp->ntfid_ino, &nvp)) != 0) {
+	error = ntfs_vgetex(mp, ntfhp->ntfid_ino, ntfhp->ntfid_attr, NULL,
+			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp); /* XXX */
+	if (error != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
+
 	/* XXX as unlink/rmdir/mkdir/creat are not currently possible
 	 * with NTFS, we don't need to check anything else for now */
-	*vpp = nvp;
 	return (0);
 }
 
@@ -854,15 +855,20 @@ ntfs_vptofh(
 {
 	register struct ntnode *ntp;
 	register struct ntfid *ntfhp;
+	struct fnode *fn;
 
 	ddprintf(("ntfs_fhtovp(): %s: %p\n", vp->v_mount->mnt_stat->f_mntonname,
 		vp));
 
+	fn = VTOF(vp);
 	ntp = VTONT(vp);
 	ntfhp = (struct ntfid *)fhp;
 	ntfhp->ntfid_len = sizeof(struct ntfid);
 	ntfhp->ntfid_ino = ntp->i_number;
-	/* ntfhp->ntfid_gen = ntp->i_gen; */
+	ntfhp->ntfid_attr = fn->f_attrtype;
+#ifdef notyet
+	ntfhp->ntfid_gen = ntp->i_gen;
+#endif
 	return (0);
 }
 
@@ -985,7 +991,7 @@ ntfs_vget(
 	struct vnode **vpp) 
 {
 	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp);
+			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp); /* XXX */
 }
 
 #if defined(__FreeBSD__)
