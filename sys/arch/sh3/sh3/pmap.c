@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 2003/07/15 03:35:57 lukem Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49 2003/08/10 02:03:31 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 2003/07/15 03:35:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 2003/08/10 02:03:31 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,7 +440,7 @@ __pmap_map_change(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 /*
  * void __pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t vaddr):
- *	Insert phisical-virutal map to vm_page.
+ *	Insert physical-virtual map to vm_page.
  *	Assume pre-existed mapping is already removed.
  */
 void
@@ -503,7 +503,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 /*
  * void __pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t vaddr):
- *	Remove phisical-virutal map from vm_page.
+ *	Remove physical-virtual map from vm_page.
  */
 void
 __pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t vaddr)
