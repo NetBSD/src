@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.23 1999/06/18 05:06:45 simonb Exp $
+#	$NetBSD: special,v 1.24 1999/06/23 17:12:15 frueauf Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -89,7 +89,7 @@ games		type=dir mode=0755 uname=root gname=wheel optional
 hide		type=dir mode=0750 uname=root gname=games ignore optional
 ..	#usr/games/hide
 ..	#usr/games
-include		type=dir mode=0755 uname=root gname=root ignore
+include		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/include
 lib		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/lib
