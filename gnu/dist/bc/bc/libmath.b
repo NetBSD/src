@@ -15,10 +15,12 @@
 
     You should have received a copy of the GNU General Public License
     along with this program; see the file COPYING.  If not, write to
-    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+      The Free Software Foundation, Inc.
+      59 Temple Place, Suite 330
+      Boston, MA 02111 USA
 
     You may contact the author by:
-       e-mail:  phil@cs.wwu.edu
+       e-mail:  philnelson@acm.org
       us-mail:  Philip A. Nelson
                 Computer Science Department, 9062
                 Western Washington University
