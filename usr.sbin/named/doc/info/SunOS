@@ -1,4 +1,0 @@
-Installation on SunOS 4.1.x is covered in shres/sunos/{INSTALL,ISSUES,PROBLEMS}.
-
-(Even if you're not changing the shared library, there are SunOS issues
-such as UDP checksums that you should read about in shres/sunos/ISSUES.)
