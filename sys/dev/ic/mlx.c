@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.1 2001/02/04 17:05:12 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.2 2001/02/05 04:50:27 enami Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -94,6 +94,8 @@
 
 #include <machine/vmparam.h>
 #include <machine/bus.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/ldvar.h>
 
