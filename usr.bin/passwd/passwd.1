@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.1,v 1.8 1997/01/07 04:08:17 tls Exp $
+.\"	$NetBSD: passwd.1,v 1.9 1997/10/19 12:29:55 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,14 +40,14 @@
 .Nm passwd
 .Nd modify a user's password
 .Sh SYNOPSIS
-.Nm passwd
+.Nm
 .Op Fl l
 .Op Fl y
 .Op Ar user
 .Nm yppasswd
 .Op Ar user
 .Sh DESCRIPTION
-.Nm Passwd
+.Nm
 changes the user's local or YP password.  First, the user is prompted
 for their current password.
 If the current password is correctly typed, a new password is
@@ -74,7 +74,7 @@ the user has an entry in the local database.  The
 daemon should be running on the YP master server.
 .Nm yppasswd
 is the equivalent of
-.Nm passwd
+.Nm
 with the
 .Fl y
 flag.
@@ -107,6 +107,6 @@ Temporary copy of the password file
 .Re
 .Sh HISTORY
 A
-.Nm passwd
+.Nm
 command appeared in
 .At v6 .
