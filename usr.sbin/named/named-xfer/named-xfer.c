@@ -1,4 +1,4 @@
-/*	$NetBSD: named-xfer.c,v 1.5 1997/10/18 04:05:50 lukem Exp $	*/
+/*	$NetBSD: named-xfer.c,v 1.6 1998/03/30 02:31:22 mrg Exp $	*/
 
 /*
  * The original version of xfer by Kevin Dunlap.
@@ -175,7 +175,7 @@ cleanup_for_exit() {
 		(void) unlink(tmpname);
 }
 
-void
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
