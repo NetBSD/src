@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.19 1999/04/24 08:01:08 simonb Exp $	*/
+/*	$NetBSD: tz.c,v 1.20 1999/08/31 01:12:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -785,7 +785,7 @@ tzioctl(dev, cmd, data, flag, p)
 	int code, count;
 	static int tzops[] = {
 		SCSI_WRITE_EOF, SCSI_SPACE, SCSI_SPACE, SCSI_SPACE, SCSI_SPACE,
-		SCSI_REWIND, SCSI_REWIND, SCSI_TEST_UNIT_READY
+		SCSI_REWIND, SCSI_LOAD_UNLOAD, SCSI_TEST_UNIT_READY
 	};
 
 	switch (cmd) {
@@ -822,10 +822,14 @@ tzioctl(dev, cmd, data, flag, p)
 			break;
 
 		case MTREW:
-		case MTOFFL:
 		case MTNOP:
 			code = 0;
 			count = 0;
+			break;
+
+		case MTOFFL:
+			code = 0;
+			count = SCSI_LD_UNLOAD;
 			break;
 
 		default:
