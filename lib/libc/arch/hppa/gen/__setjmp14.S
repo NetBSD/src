@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.1 2002/06/06 20:31:21 fredette Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.2 2002/07/01 16:00:51 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __setjmp14.S,v 1.1 2002/06/06 20:31:21 fredette Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.2 2002/07/01 16:00:51 fredette Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -117,8 +117,8 @@ ENTRY(__setjmp14,0)
 	/* Recover our jmp_buf and extract SS_ONSTACK */
 	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
 	ldw	12(%r3), %r1		; get ss_flags
-	ldi	1, %r19			; SS_ONSTACK
-	and	%r1, %r19, %r1
+	ldi	1, %r20			; SS_ONSTACK
+	and	%r1, %r20, %r1
 	stw	%r1, 0(%arg0)		; sc.sc_onstack
 	
 	/* Get the signal mask. */

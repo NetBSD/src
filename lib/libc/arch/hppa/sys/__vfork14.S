@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.1 2002/06/06 20:31:23 fredette Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.2 2002/07/01 16:00:52 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,8 +68,7 @@ ENTRY(__vfork14, 0)
 	ldi	SYS___vfork14, t1
 	copy	t4, rp
 	comb,=,n r0, t1, __vfork14$noerr
-	ldil	L%errno, r1
-	stw	t1, R%errno(r1)
+	__SYSCALL_ERRNO
 	ldi	-1, ret0
 	bv	r0(rp)
 	ldi	-1, ret1

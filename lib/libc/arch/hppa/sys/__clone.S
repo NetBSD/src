@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1 2002/06/06 20:31:23 fredette Exp $	*/
+/*	$NetBSD: __clone.S,v 1.2 2002/07/01 16:00:52 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,8 +51,7 @@
 /* XXX - this is unimplemented at this time. */
 ENTRY(__clone, 0)
 	ldi	EINVAL, t1
-        ldil    L%errno, r1
-        stw     t1, R%errno(r1)
+	__SYSCALL_ERRNO
         ldi     -1, ret0
         bv      r0(rp)
         ldi     -1, ret1

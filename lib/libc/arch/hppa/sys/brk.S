@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.1 2002/06/06 20:31:23 fredette Exp $	*/
+/*	$NetBSD: brk.S,v 1.2 2002/07/01 16:00:52 fredette Exp $	*/
 
 /*	$OpenBSD: brk.S,v 1.7 2001/06/04 23:14:04 mickey Exp $	*/
 
@@ -36,7 +36,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: brk.S,v 1.1 2002/06/06 20:31:23 fredette Exp $")
+	RCSID("$NetBSD: brk.S,v 1.2 2002/07/01 16:00:52 fredette Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 	.import	curbrk, data
@@ -47,13 +47,19 @@
 #endif
 
 	.data
-	.export	minbrk, data
-minbrk
+	.export	__minbrk, data
+__minbrk
 	.long	end
 
 ENTRY(_brk,0)
-	ldil	L%minbrk, t1
-	ldw	R%minbrk(t1), t2
+#ifdef PIC
+	addil	LT%__minbrk, %r19
+	ldw	RT%__minbrk(%r1), %r1
+	ldw	0(%r1), t2
+#else  /* !PIC */
+	ldil	L%__minbrk, t1
+	ldw	R%__minbrk(t1), t2
+#endif /* !PIC */
 	sub,<<	t2, arg0, r0
 	copy	t2, arg0
 	stw	arg0, HPPA_FRAME_ARG(0)(sp)
@@ -61,9 +67,16 @@ ENTRY(_brk,0)
 	SYSCALL(break)
 
 	ldw	HPPA_FRAME_ARG(0)(sp), arg0
+#ifdef PIC
+	addil	LT%curbrk, %r19
+	ldw	RT%curbrk(%r1), %r1
+	bv	r0(rp)
+	stw	arg0, 0(r1)
+#else  /* !PIC */
 	ldil	L%curbrk, t1
 	bv	r0(rp)
 	stw	arg0, R%curbrk(t1)
+#endif /* !PIC */
 EXIT(brk)
 
 	.end

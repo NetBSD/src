@@ -1,10 +1,11 @@
-/*	$NetBSD: sigpending.S,v 1.1 2002/06/06 20:31:24 fredette Exp $	*/
+/*	$NetBSD: sigpending.S,v 1.2 2002/07/01 16:00:52 fredette Exp $	*/
 
-/*	$OpenBSD: sigpending.S,v 1.6 2001/06/04 23:14:05 mickey Exp $	*/
-
-/*
- * Copyright (c) 1999 Michael Shalayeff
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Matt Fredette.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,35 +17,40 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/errno.h>
 #include "SYS.h"
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigpending.S,v 1.1 2002/06/06 20:31:24 fredette Exp $")
-#endif /* LIBC_SCCS and not lint */
+	.import errno, data
 
-ENTRY(sigpending,0)
-	SYSCALL(sigpending)
-	ldw	HPPA_FRAME_ARG(0)(sp), t1
-	stw	ret0, 0(t1)
+WARN_REFERENCES(sigpending, \
+    "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
+
+ENTRY(sigpending, 0)
+	/*
+	 * AFAICT, since the hppa port came after __sigpending14, 
+	 * we shouldn't have to supply the compatability sigpending.
+	 */
+	ldi	EINVAL, t1
+	__SYSCALL_ERRNO
 	bv	r0(rp)
-	copy	r0, ret0
+	ldi	-1, ret0
 EXIT(sigpending)
-
-	.end
