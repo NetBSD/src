@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isapnp.c,v 1.2 1998/07/23 19:30:46 christos Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.3 1998/07/28 14:16:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ wss_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return isapnp_devmatch(aux, &isapnp_wss_dev);
+	return isapnp_devmatch(aux, &isapnp_wss_devinfo);
 }
 
 
@@ -107,7 +107,7 @@ wss_isapnp_attach(parent, self, aux)
 	}
 
 	sc->sc_iot = ipa->ipa_iot;
-        sc->sc_ioh = ipa->ipa_io[1].h;
+        sc->sc_ioh = ipa->ipa_io[0].h;
 
         sc->mad_chip_type = MAD_NONE;
 
@@ -115,7 +115,7 @@ wss_isapnp_attach(parent, self, aux)
 	sc->sc_ad1848.sc_ic  = ipa->ipa_ic;
 	sc->sc_ad1848.sc_iot = ipa->ipa_iot;
 	sc->sc_ad1848.sc_ioh = sc->sc_ioh;
-	sc->sc_ad1848.sc_iooffs = WSS_CODEC;
+	sc->sc_ad1848.sc_iooffs = 0;
 	sc->sc_ad1848.mode = 2;
 
         sc->wss_ic  = ipa->ipa_ic;
