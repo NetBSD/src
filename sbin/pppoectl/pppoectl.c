@@ -1,4 +1,4 @@
-/* $NetBSD: ispppcontrol.c,v 1.2 2001/04/29 10:30:41 martin Exp $ */
+/* $NetBSD: pppoectl.c,v 1.1 2001/12/10 17:22:09 martin Exp $ */
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
