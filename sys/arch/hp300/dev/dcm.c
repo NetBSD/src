@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.56 2002/10/23 09:11:03 jdolecek Exp $	*/
+/*	$NetBSD: dcm.c,v 1.57 2003/03/06 18:24:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.56 2002/10/23 09:11:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.57 2003/03/06 18:24:52 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -310,7 +310,16 @@ static	int dcmconsinit;			/* has been initialized */
 /* static	int dcm_lastcnpri = CN_DEAD; */	/* XXX last priority */
 
 static struct consdev dcm_cons = {
-       NULL, NULL, dcmcngetc, dcmcnputc, nullcnpollc, NULL, NODEV, CN_REMOTE
+       NULL,
+       NULL,
+       dcmcngetc,
+       dcmcnputc,
+       nullcnpollc,
+       NULL,
+       NULL,
+       NULL,
+       NODEV,
+       CN_REMOTE
 };
 int	dcmconscode;
 int	dcmdefaultrate = DEFAULT_BAUD_RATE;
