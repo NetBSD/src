@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.32 2002/07/05 18:45:20 matt Exp $
+#	$NetBSD: files.powerpc,v 1.33 2002/07/17 03:11:07 matt Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -14,6 +14,7 @@ file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
 file	arch/powerpc/powerpc/kgdb_machdep.c		kgdb
 file	arch/powerpc/powerpc/mem.c
 file	arch/powerpc/powerpc/openpic.c			openpic
+file	arch/powerpc/powerpc/pmap_subr.c		ppc_mpc6xx & !oldpmap
 file	arch/powerpc/powerpc/powerpc_machdep.c
 file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/sig_machdep.c
