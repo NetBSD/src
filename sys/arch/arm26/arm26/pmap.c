@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.18 2001/03/15 06:10:36 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.19 2001/04/13 15:09:35 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2001/03/15 06:10:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2001/04/13 15:09:35 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -808,19 +808,7 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 		return FALSE;
 	ppn = pv->pv_ppn;
 	ppv = &pv_table[ppn];
-	if (pmap == pmap_kernel()) {
-		/*
-		 * If we allow the kernel to access the page, we can't
-		 * stop it writing to it as well, so we have to handle
-		 * referenced and modified bits together.
-		 */
-		if ((ppv->pv_pflags & PV_REFERENCED) == 0 ||
-		    (ppv->pv_pflags & PV_MODIFIED) == 0) {
-			ppv->pv_pflags |= PV_REFERENCED | PV_MODIFIED;
-			pmap_update_page(ppn);
-			return TRUE;
-		}
-	} else {
+	if (pmap != pmap_kernel()) {
 		if ((ppv->pv_pflags & PV_REFERENCED) == 0) {
 			ppv->pv_pflags |= PV_REFERENCED;
 			pmap_update_page(ppn);
