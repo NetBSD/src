@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.1 2001/04/19 07:11:02 matt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.2 2001/06/08 06:14:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ARM32_INTR_H_
-#define _ARM32_INTR_H_
+#ifndef _NETWINDER_INTR_H_
+#define _NETWINDER_INTR_H_
 
 /* Define the various Interrupt Priority Levels */
 
@@ -66,6 +66,7 @@
 
 #define SOFTIRQ_BIT(x)	(1 << x)
 
+#include <machine/psl.h>
 #include <machine/irqhandler.h>
 
-#endif	/* _ARM32_INTR_H */
+#endif	/* _NETWINDER_INTR_H */
