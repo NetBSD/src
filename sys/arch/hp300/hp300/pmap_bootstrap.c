@@ -1,6 +1,6 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.23 2003/08/07 16:27:38 agc Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.24 2003/11/17 14:37:59 tsutsui Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.23 2003/08/07 16:27:38 agc Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.24 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -495,7 +495,7 @@ pmap_bootstrap(nextpa, firstpa)
 		 */
 		if (RELOC(mmutype, int) == MMU_68040) {
 			int num;
-			
+
 			kpm->pm_stfree = ~l2tobm(0);
 			num = roundup((nptpages + 1) * (NPTEPG / SG4_LEV3SIZE),
 				      SG4_LEV2SIZE) / SG4_LEV2SIZE;

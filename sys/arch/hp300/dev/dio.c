@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.25 2003/08/01 00:29:16 tsutsui Exp $	*/
+/*	$NetBSD: dio.c,v 1.26 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.25 2003/08/01 00:29:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.26 2003/11/17 14:37:59 tsutsui Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -130,12 +130,12 @@ dioattach(parent, self, aux)
 		 * the current select code unless:
 		 */
 		pa = dio_scodetopa(scode);
-                va = iomap(pa, PAGE_SIZE);
-                if (va == NULL) {
-                        printf("%s: can't map scode %d\n",
-                            self->dv_xname, scode);
-                        scode++;
-                        continue;
+		va = iomap(pa, PAGE_SIZE);
+		if (va == NULL) {
+			printf("%s: can't map scode %d\n",
+			    self->dv_xname, scode);
+			scode++;
+			continue;
 		}
 
 		/* Check for hardware. */

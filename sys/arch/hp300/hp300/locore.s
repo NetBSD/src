@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.132 2003/08/07 16:27:37 agc Exp $	*/
+/*	$NetBSD: locore.s,v 1.133 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -624,7 +624,7 @@ ENTRY_NOPROFILE(buserr60)
 	movl	%a0,%sp@(FR_SP)		|   in the savearea
 	movel	%sp@(FR_HW+12),%d0	| FSLW
 	btst	#2,%d0			| branch prediction error?
-	jeq	Lnobpe			
+	jeq	Lnobpe
 	movc	%cacr,%d2
 	orl	#IC60_CABC,%d2		| clear all branch cache entries
 	movc	%d2,%cacr
@@ -898,7 +898,7 @@ ENTRY_NOPROFILE(trap0)
 	movw	#SPL1,%sr
 	tstb	_C_LABEL(ssir)
 	jne	Lsir1
-Ltrap1:	
+Ltrap1:
 	movl	%sp@(FR_SP),%a0		| grab and restore
 	movl	%a0,%usp			|   user SP
 	moveml	%sp@+,#0x7FFF		| restore most registers
@@ -1204,7 +1204,7 @@ Lgotsir:
 	moveml	#0xFFFF,%sp@-		| save all registers
 	movl	%usp,%a1		| including
 	movl	%a1,%sp@(FR_SP)		|    the users SP
-Lsir1:	
+Lsir1:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_SSIR,%sp@-		| type == software interrupt

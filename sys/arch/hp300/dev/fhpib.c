@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.27 2003/08/07 16:27:28 agc Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.28 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.27 2003/08/07 16:27:28 agc Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.28 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
