@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.12 2002/06/20 03:39:51 nathanw Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.13 2002/06/21 06:26:35 gmcgarry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.12 2002/06/20 03:39:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.13 2002/06/21 06:26:35 gmcgarry Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -137,7 +137,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.12 2002/06/20 03:39:51 nath
 #include <sys/clist.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/syscallargs.h>
 #include <sys/user.h>
 #include <sys/msgbuf.h>
 #include <sys/conf.h>
@@ -148,6 +147,9 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.12 2002/06/20 03:39:51 nath
 
 #include <sys/sa.h>
 #include <sys/savar.h>
+
+#include <sys/syscallargs.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <mips/cache.h>
@@ -157,6 +159,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.12 2002/06/20 03:39:51 nath
 #include <mips/psl.h>
 #include <mips/pte.h>
 #include <machine/cpu.h>
+#include <mips/userret.h>
 
 #if defined(MIPS32) || defined(MIPS64)
 #include <mips/mipsNN.h>		/* MIPS32/MIPS64 registers */
@@ -1063,7 +1066,7 @@ setregs(l, pack, stack)
 	f->f_regs[A0] = (int) stack;
 	f->f_regs[A1] = 0;
 	f->f_regs[A2] = 0;
-	f->f_regs[A3] = (int)p->p_psstr;
+	f->f_regs[A3] = (int)l->l_proc->p_psstr;
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurproc)
 		fpcurproc = (struct lwp *)0;
