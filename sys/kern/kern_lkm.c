@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.18 1994/06/29 06:32:31 cgd Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.19 1994/09/22 02:22:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -91,7 +91,7 @@ lkmopen(dev, flag, devtype, p)
 	int error;
 
 	if (minor(dev) != 0)
-		return(ENXIO);		/* bad minor # */
+		return (ENXIO);		/* bad minor # */
 
 	/*
 	 * Use of the loadable kernel module device must be exclusive; we
@@ -100,18 +100,18 @@ lkmopen(dev, flag, devtype, p)
 	 */
 	while (lkm_v & LKM_ALLOC) {
 		if (flag & FNONBLOCK)		/* don't hang */
-			return(EBUSY);
+			return (EBUSY);
 		lkm_v |= LKM_WANT;
 		/*
 		 * Sleep pending unlock; we use tsleep() to allow
 		 * an alarm out of the open.
 		 */
 		if (error = tsleep((caddr_t)&lkm_v, TTIPRI|PCATCH, "lkmopn", 0))
-			return(error);	/* leave LKM_WANT set -- no problem */
+			return (error);	/* leave LKM_WANT set -- no problem */
 	}
 	lkm_v |= LKM_ALLOC;
 
-	return(0);		/* pseudo-device open */
+	return (0);		/* pseudo-device open */
 }
 
 /*
@@ -149,7 +149,7 @@ lkmclose(dev, flag, mode, p)
 #ifdef DEBUG
 		printf("LKM: close before open!\n");
 #endif	/* DEBUG */
-		return(EBADF);
+		return (EBADF);
 	}
 
 	/* do this before waking the herd... */
@@ -165,7 +165,7 @@ lkmclose(dev, flag, mode, p)
 	lkm_v &= ~LKM_ALLOC;
 	wakeup((caddr_t)&lkm_v);	/* thundering herd "problem" here */
 
-	return(0);		/* pseudo-device closed */
+	return (0);		/* pseudo-device closed */
 }
 
 /*ARGSUSED*/
@@ -440,7 +440,7 @@ int
 lkmnosys()
 {
 
-	return(nosys());
+	return (nosys());
 }
 
 /*
@@ -454,7 +454,7 @@ int
 lkmenodev()
 {
 
-	return(enodev());
+	return (enodev());
 }
 
 int
@@ -475,10 +475,10 @@ lkmexists(lkmtp)
 			continue;
 		if (!strcmp(lkmtp->private.lkm_any->lkm_name,
 			lkmods[i].private.lkm_any->lkm_name))
-			return(1);		/* already loaded... */
+			return (1);		/* already loaded... */
 	}
 
-	return(0);		/* module not loaded... */
+	return (0);		/* module not loaded... */
 }
 
 /*
@@ -499,7 +499,8 @@ _lkm_syscall(lkmtp, cmd)
 	case LKM_E_LOAD:
 		/* don't load twice! */
 		if (lkmexists(lkmtp))
-			return(EEXIST);
+			return (EEXIST);
+
 		if ((i = args->lkm_offset) == -1) {	/* auto */
 			/*
 			 * Search the table looking for a slot...
@@ -520,7 +521,7 @@ _lkm_syscall(lkmtp, cmd)
 		}
 
 		/* save old */
-		bcopy(&sysent[i], &(args->lkm_oldent), sizeof(struct sysent));
+		bcopy(&sysent[i], &args->lkm_oldent, sizeof(struct sysent));
 
 		/* replace with new */
 		bcopy(args->lkm_sysent, &sysent[i], sizeof(struct sysent));
@@ -535,7 +536,7 @@ _lkm_syscall(lkmtp, cmd)
 		i = args->lkm_offset;
 
 		/* replace current slot contents with old contents */
-		bcopy(&(args->lkm_oldent), &sysent[i], sizeof(struct sysent));
+		bcopy(&args->lkm_oldent, &sysent[i], sizeof(struct sysent));
 
 		break;
 
@@ -543,7 +544,7 @@ _lkm_syscall(lkmtp, cmd)
 		break;
 	}
 
-	return(err);
+	return (err);
 }
 
 /*
@@ -563,7 +564,7 @@ _lkm_vfs(lkmtp, cmd)
 	case LKM_E_LOAD:
 		/* don't load twice! */
 		if (lkmexists(lkmtp))
-			return(EEXIST);
+			return (EEXIST);
 
 		/* make sure there's no VFS in the table with this name */
 		for (i = 0; i < nvfssw; i++)
@@ -585,6 +586,7 @@ _lkm_vfs(lkmtp, cmd)
 		 * Set up file system
 		 */
 		vfssw[i] = args->lkm_vfsops;
+		vfssw[i]->vfs_refcount = 0;
 
 		/*
 		 * Call init function for this VFS...
@@ -596,23 +598,21 @@ _lkm_vfs(lkmtp, cmd)
 		break;
 
 	case LKM_E_UNLOAD:
-#ifdef notyet
 		/* current slot... */
 		i = args->lkm_offset;
 
+		if (vfssw[i]->vfs_refcount != 0)
+			return (EBUSY);
+
 		/* replace current slot contents with old contents */
 		vfssw[i] = (struct vfsops *)0;
-#else
-		/* it's not safe to remove a vfs */
-		err = EBUSY;
-#endif
 		break;
 
 	case LKM_E_STAT:	/* no special handling... */
 		break;
 	}
 
-	return(err);
+	return (err);
 }
 
 /*
@@ -633,7 +633,8 @@ _lkm_dev(lkmtp, cmd)
 	case LKM_E_LOAD:
 		/* don't load twice! */
 		if (lkmexists(lkmtp))
-			return(EEXIST);
+			return (EEXIST);
+
 		switch(args->lkm_devtype) {
 		case LM_DT_BLOCK:
 			if ((i = args->lkm_offset) == -1) {	/* auto */
@@ -656,7 +657,7 @@ _lkm_dev(lkmtp, cmd)
 			}
 
 			/* save old */
-			bcopy(&bdevsw[i], &(args->lkm_olddev.bdev), sizeof(struct bdevsw));
+			bcopy(&bdevsw[i], &args->lkm_olddev.bdev, sizeof(struct bdevsw));
 
 			/* replace with new */
 			bcopy(args->lkm_dev.bdev, &bdevsw[i], sizeof(struct bdevsw));
@@ -686,7 +687,7 @@ _lkm_dev(lkmtp, cmd)
 			}
 
 			/* save old */
-			bcopy(&cdevsw[i], &(args->lkm_olddev.cdev), sizeof(struct cdevsw));
+			bcopy(&cdevsw[i], &args->lkm_olddev.cdev, sizeof(struct cdevsw));
 
 			/* replace with new */
 			bcopy(args->lkm_dev.cdev, &cdevsw[i], sizeof(struct cdevsw));
@@ -709,12 +710,12 @@ _lkm_dev(lkmtp, cmd)
 		switch(args->lkm_devtype) {
 		case LM_DT_BLOCK:
 			/* replace current slot contents with old contents */
-			bcopy(&(args->lkm_olddev.bdev), &bdevsw[i], sizeof(struct bdevsw));
+			bcopy(&args->lkm_olddev.bdev, &bdevsw[i], sizeof(struct bdevsw));
 			break;
 
 		case LM_DT_CHAR:
 			/* replace current slot contents with old contents */
-			bcopy(&(args->lkm_olddev.cdev), &cdevsw[i], sizeof(struct cdevsw));
+			bcopy(&args->lkm_olddev.cdev, &cdevsw[i], sizeof(struct cdevsw));
 			break;
 
 		default:
@@ -727,7 +728,7 @@ _lkm_dev(lkmtp, cmd)
 		break;
 	}
 
-	return(err);
+	return (err);
 }
 
 #ifdef STREAMS
@@ -748,7 +749,7 @@ _lkm_strmod(lkmtp, cmd)
 	case LKM_E_LOAD:
 		/* don't load twice! */
 		if (lkmexists(lkmtp))
-			return(EEXIST);
+			return (EEXIST);
 		break;
 
 	case LKM_E_UNLOAD:
@@ -758,7 +759,7 @@ _lkm_strmod(lkmtp, cmd)
 		break;
 	}
 
-	return(err);
+	return (err);
 }
 #endif	/* STREAMS */
 
@@ -779,7 +780,8 @@ _lkm_exec(lkmtp, cmd)
 	case LKM_E_LOAD:
 		/* don't load twice! */
 		if (lkmexists(lkmtp))
-			return(EEXIST);
+			return (EEXIST);
+
 		if ((i = args->lkm_offset) == -1) {	/* auto */
 			/*
 			 * Search the table looking for a slot...
@@ -800,7 +802,7 @@ _lkm_exec(lkmtp, cmd)
 		}
 
 		/* save old */
-		bcopy(&execsw[i], &(args->lkm_oldexec), sizeof(struct execsw));
+		bcopy(&execsw[i], &args->lkm_oldexec, sizeof(struct execsw));
 
 		/* replace with new */
 		bcopy(args->lkm_exec, &execsw[i], sizeof(struct execsw));
@@ -818,7 +820,7 @@ _lkm_exec(lkmtp, cmd)
 		i = args->lkm_offset;
 
 		/* replace current slot contents with old contents */
-		bcopy(&(args->lkm_oldexec), &execsw[i], sizeof(struct execsw));
+		bcopy(&args->lkm_oldexec, &execsw[i], sizeof(struct execsw));
 
 		/* realize need to recompute max header size */
 		exec_maxhdrsz = 0;
@@ -829,7 +831,7 @@ _lkm_exec(lkmtp, cmd)
 		break;
 	}
 
-	return(err);
+	return (err);
 }
 
 /*
@@ -879,5 +881,5 @@ lkmdispatch(lkmtp, cmd)
 		break;
 	}
 
-	return(err);
+	return (err);
 }
