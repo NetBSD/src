@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.25 1998/07/12 06:26:37 jonathan Exp $	*/
+/*	$NetBSD: sfb.c,v 1.26 1998/09/07 19:52:49 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -250,8 +250,8 @@ sfbinit(fi, base, unit, silent)
 		return (0);
 
 	/* fetch sfb h_setup and v_setup for pixel dimensions */
-	h_setup = * (u_int32_t*) ( ((caddr_t)fi->fi_base) + 0x0064);
-	v_setup = * (u_int32_t*) ( ((caddr_t)fi->fi_base) + 0x0068);
+	h_setup = * (u_int32_t*) ( ((caddr_t)base) + SFB_VHORIZONTAL);
+	v_setup = * (u_int32_t*) ( ((caddr_t)base) + SFB_VVERTICAL);
 	x_pixels = (h_setup & 0x01ff) << 2;
 	y_pixels = (v_setup & 0x07ff);
 #if defined(DEBUG) || defined(SFBDEBUG)
@@ -297,7 +297,7 @@ sfbinit(fi, base, unit, silent)
 		MIPS_PHYS_TO_KSEG1(MIPS_KSEG0_TO_PHYS(&sfbu));
 
 	/* This is glass-tty state but it's in the shared structure. Ick. */
-	fi->fi_fbu->scrInfo.max_row = fi->fi_type.fb_width / 15;
+	fi->fi_fbu->scrInfo.max_row = fi->fi_type.fb_height / 15;
 	fi->fi_fbu->scrInfo.max_col = 80;
 
 #if defined(DEBUG) || defined(SFBDEBUG)
