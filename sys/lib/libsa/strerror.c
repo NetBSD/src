@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.4 1994/10/26 05:45:08 cgd Exp $	*/
+/*	$NetBSD: strerror.c,v 1.5 1995/02/21 07:38:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -58,13 +58,19 @@ static	char ebuf[1024];
 	case EUNLAB:
 		return "unlabeled";
 	case ENXIO:
-		return "bad device specification";
+		return "Device not configured";
 	case EPERM:
-		return "Permission Denied";
+		return "Operation not permitted";
 	case ENOENT:
 		return "No such file or directory";
 	case ESTALE:
 		return "Stale NFS file handle";
+	case EFTYPE:
+		return "Inappropriate file type or format";
+	case ENOEXEC:
+		return "Exec format error";
+	case EIO:
+		return "Input/output error";
 
 	default:
 		strcpy(ebuf, "Unknown error: code ");

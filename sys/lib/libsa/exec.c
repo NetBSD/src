@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.7 1995/02/21 07:14:37 mycroft Exp $	*/
+/*	$NetBSD: exec.c,v 1.8 1995/02/21 07:38:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,8 +78,7 @@ exec(path, loadaddr, howto)
 	i = read(io, (char *)&x, sizeof(x));
 	if (i != sizeof(x) ||
 	    N_BADMAG(x)) {
-		printf("exec: %s: Bad format\n", path);
-		errno = ENOEXEC;
+		errno = EFTYPE;
 		return;
 	}
 
@@ -126,12 +125,14 @@ exec(path, loadaddr, howto)
 		i -= sizeof(int);
 		addr += sizeof(int);
 		if (read(io, addr, i) != i)
-                    goto shread;
+                	goto shread;
 		addr += i;
 	}
 
 	/* and that many bytes of (debug symbols?) */
 	printf("+%d]", i);
+
+	close(io);
 
 #define	round_to_size(x) \
 	(((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
@@ -153,13 +154,11 @@ exec(path, loadaddr, howto)
 	machdep_start((char *)x.a_entry, howto, loadaddr, ssym, esym);
 
 	/* exec failed */
-	printf("%s: Cannot exec\n", path);
 	errno = ENOEXEC;
 	return;
 
 shread:
 	close(io);
-	printf("%s: Short read\n", path);
 	errno = EIO;
 	return;
 }
