@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.53 1997/10/15 19:06:59 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.54 1997/10/16 13:12:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -430,16 +430,14 @@ tulip_linkup(
     sc->tulip_probe_timeout = 3000;
     sc->tulip_probe_state = TULIP_PROBE_INACTIVE;
     sc->tulip_flags &= ~(TULIP_TXPROBE_ACTIVE|TULIP_TRYNWAY);
-    if (sc->tulip_probe_media != sc->tulip_media) {
+    if (sc->tulip_flags & TULIP_INRESET) {
+	tulip_media_set(sc, sc->tulip_media);
+    } else if (sc->tulip_probe_media != sc->tulip_media) {
 	/*
 	 * No reason to change media if we have the right media.
 	 */
-	if (sc->tulip_flags & TULIP_INRESET) {
-	    tulip_media_set(sc, sc->tulip_media);
-	} else {
-	    tulip_reset(sc);
-	    tulip_init(sc);
-	}
+	tulip_reset(sc);
+	tulip_init(sc);
     }
 }
 
