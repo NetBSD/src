@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.13 1998/03/01 02:24:15 fvdl Exp $	*/
+/*	$NetBSD: ucred.h,v 1.13.24.1 2002/02/09 19:19:56 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,24 +41,37 @@
 /*
  * Credentials.
  */
-struct ucred {
-	u_short	cr_ref;			/* reference count */
-	uid_t	cr_uid;			/* effective user id */
-	gid_t	cr_gid;			/* effective group id */
-	short	cr_ngroups;		/* number of groups */
-	gid_t	cr_groups[NGROUPS];	/* groups */
+
+/* Userland's view of credentials. This should not change */
+struct uucred {
+	u_short		cr_unused;		/* not used, compat */	
+	uid_t		cr_uid;			/* effective user id */
+	gid_t		cr_gid;			/* effective group id */
+	short		cr_ngroups;		/* number of groups */
+	gid_t		cr_groups[NGROUPS];	/* groups */
 };
+
+struct ucred {
+	u_int32_t	cr_ref;			/* reference count */
+	uid_t		cr_uid;			/* effective user id */
+	gid_t		cr_gid;			/* effective group id */
+	u_int32_t	cr_ngroups;		/* number of groups */
+	gid_t		cr_groups[NGROUPS];	/* groups */
+};
+
 #define NOCRED ((struct ucred *)-1)	/* no credential available */
 #define FSCRED ((struct ucred *)-2)	/* filesystem credential */
 
 #ifdef _KERNEL
 #define	crhold(cr)	(cr)->cr_ref++
 
-struct ucred	*crcopy __P((struct ucred *cr));
-struct ucred	*crdup __P((struct ucred *cr));
-void		crfree __P((struct ucred *cr));
+
+struct ucred	*crcopy __P((struct ucred *));
+struct ucred	*crdup __P((struct ucred *));
+void		crfree __P((struct ucred *));
 struct ucred	*crget __P((void));
-int		suser __P((struct ucred *cred, u_short *acflag));
+int		suser __P((struct ucred *, u_short *));
+void		crcvt __P((struct ucred *, const struct uucred *));
 #endif /* _KERNEL */
 
 #endif /* !_SYS_UCRED_H_ */
