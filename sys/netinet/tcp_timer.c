@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.22 1997/11/08 02:35:25 kml Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.23 1997/12/09 21:59:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -79,7 +79,7 @@ tcp_fasttimo()
 	if (inp)						/* XXX */
 	for (; inp != (struct inpcb *)&tcbtable.inpt_queue;
 	    inp = inp->inp_queue.cqe_next) {
-		if ((tp = (struct tcpcb *)inp->inp_ppcb) &&
+		if ((tp = intotcpcb(inp)) != NULL &&
 		    (tp->t_flags & TF_DELACK)) {
 			tp->t_flags &= ~TF_DELACK;
 			tp->t_flags |= TF_ACKNOW;
