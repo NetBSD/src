@@ -1,4 +1,4 @@
-/*	$NetBSD: getbsize.c,v 1.13 2000/01/22 22:19:10 mycroft Exp $	*/
+/*	$NetBSD: getbsize.c,v 1.14 2003/05/30 00:12:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getbsize.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getbsize.c,v 1.13 2000/01/22 22:19:10 mycroft Exp $");
+__RCSID("$NetBSD: getbsize.c,v 1.14 2003/05/30 00:12:09 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,6 @@ getbsize(headerlenp, blocksizep)
 	static char header[20];
 	long n, max, mul, blocksize;
 	char *ep, *p, *form;
-
-	_DIAGASSERT(headerlenp != NULL);
-	_DIAGASSERT(blocksizep != NULL);
 
 #define	KB	(1024L)
 #define	MB	(1024L * 1024L)
@@ -117,7 +114,10 @@ underflow:		warnx("%s: minimum blocksize is 512", p);
 	} else
 		blocksize = n = 512;
 
-	*headerlenp = snprintf(header, sizeof(header), "%ld%s-blocks", n, form);
-	*blocksizep = blocksize;
+	if (headerlenp)
+		*headerlenp =
+		    snprintf(header, sizeof(header), "%ld%s-blocks", n, form);
+	if (blocksizep)
+		*blocksizep = blocksize;
 	return (header);
 }
