@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.2 2003/04/10 22:06:56 christos Exp $
+#	$NetBSD: WALNUT,v 1.3 2003/07/16 00:52:59 simonb Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -75,7 +75,7 @@ file-system 	UNION		# union file system
 
 # File system options
 options 	QUOTA		# UFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
