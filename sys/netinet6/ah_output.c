@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.9.2.3 2001/02/26 21:55:45 he Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.9.2.4 2001/02/26 22:12:27 he Exp $	*/
 /*	$KAME: ah_output.c,v 1.23 2000/07/15 16:07:48 itojun Exp $	*/
 
 /*
@@ -551,8 +551,8 @@ ah4_finaldst(m)
 			break;
 		case IPOPT_LSRR:
 		case IPOPT_SSRR:
-			if (q[i + IPOPT_OLEN] <= 0
-			 || optlen - i < q[i + IPOPT_OLEN]) {
+			if (q[i + IPOPT_OLEN] < 2 + sizeof(struct in_addr) ||
+			    optlen - i < q[i + IPOPT_OLEN]) {
 				ipseclog((LOG_ERR,
 				    "ip_finaldst: invalid IP option "
 				    "(code=%02x len=%02x)\n",
@@ -562,8 +562,8 @@ ah4_finaldst(m)
 			i += q[i + IPOPT_OLEN] - sizeof(struct in_addr);
 			return (struct in_addr *)(q + i);
 		default:
-			if (q[i + IPOPT_OLEN] <= 0
-			 || optlen - i < q[i + IPOPT_OLEN]) {
+			if (q[i + IPOPT_OLEN] < 2 ||
+			    optlen - i < q[i + IPOPT_OLEN]) {
 				ipseclog((LOG_ERR,
 				    "ip_finaldst: invalid IP option "
 				    "(code=%02x len=%02x)\n",
