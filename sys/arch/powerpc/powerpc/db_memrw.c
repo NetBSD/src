@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.3 2000/06/29 07:48:18 mrg Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.4 2001/05/18 20:38:27 matt Exp $	*/
 /*	$OpenBSD: db_memrw.c,v 1.2 1996/12/28 06:21:52 rahnds Exp $	*/
 
 /* 
@@ -99,5 +99,6 @@ db_write_bytes(addr, size, data)
 		--size;
 		*dst++ = *data++;
 	}
+	__syncicache((void *)addr, size);
 }
 
