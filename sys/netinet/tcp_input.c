@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.3 1997/05/28 21:46:08 mellon Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.4 1997/06/26 18:38:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -33,6 +33,90 @@
  * SUCH DAMAGE.
  *
  *	@(#)tcp_input.c	8.5 (Berkeley) 4/10/94
+ */
+
+/*
+ *	TODO list for SYN cache stuff:
+ *
+ *	(a) Fix the socket queueing problem to not use SS_FORCE, which
+ *	    effectively removes the queue limit.  Instead, use the
+ *	    following approach:
+ *
+ *		(1) Shring sc_hash to 30 bits.  This isn't really a
+ *		    noticeable loss.
+ *		(2) Add a 1-bit field that indicates whether or not
+ *		    the ACK has been recieved (i.e. whether it's in
+ *		    SYN-RECEIVED or ESTABLISHED state).
+ *		(3) When we receive an ACK (i.e. tranitioning from
+ *		    SYN-RECEIVED to ESTABLISHED):
+ *			(a) If the socket queue is not full already,
+ *			    just do the normal processing.
+ *			(b) If the socket queue is full, discard any
+ *			    data in the packet (thus forcing a retransmit
+ *			    by failing to ack it), set the aforementioned
+ *			    bit, and leave the compressed TCB in the cache.
+ *		(4) When we remove an entry from the socket queue, pull
+ *		    the oldest cache entry in ESTABLISHED state and put it
+ *		    at the end of the socket queue.
+ *		(5) There is the problem that we end up discarding the window
+ *		    size, so if we expand the TCB, accept() the connection,
+ *		    and then toss some data at it, before receiving another
+ *		    packet from the remote machine, we don't know how large
+ *		    the window is.  This can be handled by, in this case
+ *		    only, setting the initial window to 0, and letting the
+ *		    zero window probe machinery take care of it.
+ *
+ *	(b) tcp_mss() _must_ take a u_int arguemnt; the change to u_int16_t
+ *	    is wrong, and will cause lossage.  In addition, a few
+ *	    u_short -> u_int16_t changes were reversed along the way.
+ *
+ *	(c) There's clearly a change to the tcp_respond() interface, but
+ *	    it's not clear to me exactly what the new semantics are, or
+ *	    that all of the callers get it correct.  Unfortunately, the
+ *	    change isn't DOCUMENTED, and I don't have time to figure it
+ *	    out.
+ *
+ *	(d) This is wrong:
+ *
+ *		IN_MULTICAST(ntohl(ti->ti_src.s_addr)) ||
+ *		IN_MULTICAST(ntohl(ti->ti_dst.s_addr)))
+ *
+ *	    Nuke the ntohl()s.
+ *
+ *	(e) Needs KNF.
+ *
+ *	(f) SS_FORCE/SS_PRIV use needs to die.  (See (a) above.)
+ *
+ *	(g) The definition of "struct syn_cache" says:
+ *
+ *		/* This structure should not exceeed 32 bytes. */
+ *
+ *	    but it's 40 bytes on the Alpha.  Can reduce memory use one
+ *	    of two ways:
+ *
+ *		(1) Use a dynamically-sized hash table, and handle
+ *		    collisions by rehashing.  Then sc_next is unnecessary.
+ *
+ *		(2) Allocate syn_cache structures in pages (or some other
+ *		    large chunk).  This would probably be desirable for
+ *		    maintaining locality of reference anyway.
+ *
+ *		    If you do this, you can change sc_next to a page/index
+ *		    value, and make it a 32-bit (or maybe even 16-bit)
+ *		    integer, thus partly obviating the need for the previous
+ *		    hack.
+ *
+ *	    It's also worth noting this this is necessary for IPv6, as well,
+ *	    where we use 32 bytes just for the IP addresses, so eliminating
+ *	    wastage is going to become more important.  (BTW, has anyone
+ *	    integreated these changes with one fo the IPv6 status that are
+ *	    available?)
+ *
+ *	(h) Find room for a "state" field, which is needed to keep a
+ *	    compressed state for TIME_WAIT TCBs.  It's been noted already
+ *	    that this is fairly important for very high-volume web and
+ *	    mail servers, which use a large number of short-lived
+ *	    connections.
  */
 
 #ifndef TUBA_INCLUDE
