@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <signal.h>
 #include <stdio.h>
 #include <sys/ucontext.h>
@@ -5,6 +6,7 @@
 void
 sigsegv(int signo, siginfo_t *info, void *ptr)
 {
+#ifdef DEBUG
 	printf("%d %p %p\n", signo, info, ptr);
 	if (info != NULL) {
 		printf("si_signo=%d\n", info->si_signo);
@@ -30,6 +32,12 @@ sigsegv(int signo, siginfo_t *info, void *ptr)
 			printf("uc_mcontext.greg[%d] 0x%x\n", i,
 			    mc->__gregs[i]);
 	}
+#endif
+	assert(info->si_signo == SIGSEGV);
+	assert(info->si_errno == 0);
+	assert(info->si_code == SEGV_MAPERR);
+	assert(info->si_addr == (void *)0x5a5a5a5a);
+	exit(0);
 }
 
 int
