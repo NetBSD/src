@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.54 2000/06/06 19:04:18 soren Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.54.2.1 2000/07/17 22:47:56 enami Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -240,7 +240,8 @@ osf1_sys_uname(p, v, retval)
 {
 	struct osf1_sys_uname_args *uap = v;
         struct osf1_utsname u;
-        char *cp, *dp, *ep;
+        const char *cp;
+        char *dp, *ep;
 
 	/* XXX would use stackgap, but our struct utsname is too big! */
 
