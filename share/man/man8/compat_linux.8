@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.26 2002/03/29 16:07:39 bjh21 Exp $
+.\"	$NetBSD: compat_linux.8,v 1.27 2003/01/08 17:34:15 jmmv Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -348,17 +348,17 @@ unexpectedly or even crash.
 .Pp
 Mount procfs on NetBSD using following command:
 .Bl -tag -width 123 -offset indent
-.It (me@netbsd) mount_procfs -o linux procfs /proc
+.It (me@netbsd) mount_procfs -o linux procfs /emul/linux/proc
 .El
 .Pp
-You can also setup system so that procfs is mounted automatically
-on system boot, by putting entry like below to
+You can also setup your system so that procfs is mounted automatically
+on system boot, by putting an entry like the one below to
 .Pa /etc/fstab .
 .Bl -tag -width 123 -offset indent
-.It procfs /proc procfs ro,linux
+.It procfs /emul/linux/proc procfs ro,linux
 .El
 .Pp
-See also
+See
 .Xr mount_procfs 8
 for further information.
 .Ss Setting up other files
@@ -512,7 +512,7 @@ The information about Linux distributions may become outdated.
 Pathnames pointed to by symbolic links are not looked up in the
 shadow root when running a Linux executable. This is not consistent.
 .Pp
-Linux executables can not handle directory offset cookies \*[Gt] 32 bits.
+Linux executables cannot handle directory offset cookies \*[Gt] 32 bits.
 Should such an offset occur, you will see the message
 .Dq linux_getdents: dir offset too large for emulated program .
 Currently, this can only
