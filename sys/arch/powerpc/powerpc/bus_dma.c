@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.10 2003/04/09 22:28:56 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.11 2003/04/18 09:16:05 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -325,7 +325,8 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 				error = EFBIG;
 				continue;
 			}
-			map->dm_segs[seg].ds_addr = lastaddr;
+			map->dm_segs[seg].ds_addr =
+			    PHYS_TO_BUS_MEM(t, lastaddr);
 			map->dm_segs[seg].ds_len = m->m_len;
 			lastaddr += m->m_len;
 			continue;
