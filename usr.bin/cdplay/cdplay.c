@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.16 2001/08/20 11:24:57 ad Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.17 2001/08/20 12:37:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.16 2001/08/20 11:24:57 ad Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.17 2001/08/20 12:37:21 ad Exp $");
 #endif /* not lint */
 
 #include <sys/endian.h>
@@ -453,7 +453,7 @@ play(const char *arg, int fromuser)
 	struct ioc_toc_header h;
 
 	if (shuffle && fromuser) {
-		warn("`play' not valid in shuffle mode");
+		warnx("`play' not valid in shuffle mode");
 		return (0);
 	}
 
