@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.33 1998/03/01 02:24:14 fvdl Exp $	*/
+/*	$NetBSD: stat.h,v 1.34 1998/03/19 18:39:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -263,8 +263,8 @@ int	mknod __P((const char *, mode_t, dev_t));
 #endif /* !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) */
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-int	chflags __P((const char *, u_long));
-int	fchflags __P((int, u_long));
+int	chflags __P((const char *, unsigned long));
+int	fchflags __P((int, unsigned long));
 int	lchmod __P((const char *, mode_t));
 #endif /* !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) */
 
