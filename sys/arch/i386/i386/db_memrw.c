@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.16 2004/02/13 11:36:13 wiz Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.17 2005/04/01 13:00:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.16 2004/02/13 11:36:13 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.17 2005/04/01 13:00:57 yamt Exp $");
 
 #include "opt_largepages.h"
 
@@ -67,6 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.16 2004/02/13 11:36:13 wiz Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
+#if defined(XEN)
+#include <machine/xenpmap.h>
+#endif
 
 #include <ddb/db_access.h>
 
@@ -116,7 +119,11 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		 * Get the PTE for the page.
 		 */
 		pte = kvtopte(addr);
+#if defined(XEN)
+		oldpte = PTE_GET_MA(pte);
+#else
 		oldpte = *pte;
+#endif
 
 		if ((oldpte & PG_V) == 0) {
 			printf(" address %p not a valid page\n", dst);
@@ -149,7 +156,11 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		size -= limit;
 
 		tmppte = (oldpte & ~PG_KR) | PG_KW;
+#if defined(XEN)
+		PTE_SET_MA(pte, (pt_entry_t *)vtomach((vaddr_t)pte), tmppte);
+#else
 		*pte = tmppte;
+#endif
 		pmap_update_pg(pgva);
 		/*
 		 * MULTIPROCESSOR: no shootdown required as the PTE continues to
@@ -166,7 +177,11 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		/*
 		 * Restore the old PTE.
 		 */
+#if defined(XEN)
+		PTE_SET_MA(pte, (pt_entry_t *)vtomach((vaddr_t)pte), oldpte);
+#else
 		*pte = oldpte;
+#endif
 
 #if 0 
 		/*
