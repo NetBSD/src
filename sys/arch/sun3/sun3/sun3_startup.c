@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.60 1997/01/27 21:59:54 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.61 1997/02/02 08:36:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -78,6 +78,9 @@ vm_offset_t avail_start, avail_end;
 /* used to skip the Sun3/50 video RAM */
 vm_offset_t hole_start, hole_size;
 int cache_size;
+
+/* m68k common code needs these */
+int	cputype, mmutype;
 
 /*
  * Now our own stuff.
@@ -553,6 +556,10 @@ _verify_hardware()
 		mon_printf("not a sun3?\n");
 		sunmon_abort();
 	}
+
+	/* Set cputype and mmutype for common m68k code. */
+	cputype = CPU_68020;
+	mmutype = MMU_SUN;
 
 	cpu_machine_id = machtype & SUN3_IMPL_MASK;
 	switch (cpu_machine_id) {
