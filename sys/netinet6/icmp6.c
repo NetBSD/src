@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.c,v 1.33.2.3 2000/08/16 01:22:25 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.131 2000/08/03 15:24:34 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.33.2.4 2000/09/19 19:52:25 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.144 2000/09/15 08:10:45 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1972,6 +1972,16 @@ icmp6_redirect_input(m, off)
 	bcopy(&reddst6, &sin6.sin6_addr, sizeof(reddst6));
 	rt = rtalloc1((struct sockaddr *)&sin6, 0);
 	if (rt) {
+		if (rt->rt_gateway == NULL ||
+		    rt->rt_gateway->sa_family != AF_INET6) {
+			log(LOG_ERR,
+			    "ICMP6 redirect rejected; no route "
+			    "with inet6 gateway found for redirect dst: %s\n",
+			    icmp6_redirect_diag(&src6, &reddst6, &redtgt6));
+			RTFREE(rt);
+			goto freeit;
+		}
+
 		gw6 = &(((struct sockaddr_in6 *)rt->rt_gateway)->sin6_addr);
 		if (bcmp(&src6, gw6, sizeof(struct in6_addr)) != 0) {
 			log(LOG_ERR,
