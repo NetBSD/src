@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.23 1998/04/24 05:27:24 scottr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.24 1998/12/22 08:47:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -128,7 +128,7 @@ typedef struct pmap	*pmap_t;
 #define	PMAP_ACTIVATE(pmap, loadhw)					\
 {									\
 	if ((loadhw))							\
-		loadustp(m68k_btop((vm_offset_t)(pmap)->pm_stpa));	\
+		loadustp(m68k_btop((paddr_t)(pmap)->pm_stpa));	\
 }
 
 /*
@@ -138,7 +138,7 @@ typedef struct pmap	*pmap_t;
 typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vm_offset_t	pv_va;		/* virtual address for mapping */
+	vaddr_t		pv_va;		/* virtual address for mapping */
 	st_entry_t	*pv_ptste;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
 	int		pv_flags;	/* flags */
@@ -184,29 +184,8 @@ extern struct pv_entry *pv_table;	/* array of entries, one per page */
 extern	pt_entry_t *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
 
-__BEGIN_DECLS
 /* pmap.c */
-void	mac68k_set_pte __P((vm_offset_t va, vm_offset_t pge));
-void	pmap_remove_mapping  __P((pmap_t, vm_offset_t, pt_entry_t *, int));
-boolean_t	pmap_testbit __P((vm_offset_t, int));
-void	pmap_changebit       __P((vm_offset_t, int, boolean_t));
-void	pmap_enter_ptpage    __P((pmap_t, vm_offset_t));
-vm_offset_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
-void	pmap_pvdump          __P((vm_offset_t));
-void	pmap_check_wiring    __P((char *, vm_offset_t));
-void	pmap_collect_pv __P((void));
-
-/* pmap_bootstrap.c */
-void	pmap_bootstrap __P((vm_offset_t, register vm_offset_t));
-void	bootstrap_mac68k __P((int));
-
-/* locore.s */
-void	loadustp __P((vm_offset_t));
-void	TBIA __P((void));
-void	TBIS __P((vm_offset_t));
-void	DCFP __P((vm_offset_t));
-void	ICPP __P((vm_offset_t));
-__END_DECLS
+vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 
 #endif	/* _KERNEL */
 

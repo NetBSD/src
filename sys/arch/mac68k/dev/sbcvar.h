@@ -1,4 +1,4 @@
-/*	$NetBSD: sbcvar.h,v 1.6 1998/11/19 21:46:24 thorpej Exp $	*/
+/*	$NetBSD: sbcvar.h,v 1.7 1998/12/22 08:47:05 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -57,8 +57,8 @@ struct sbc_pdma_handle {
 struct sbc_softc {
 	struct ncr5380_softc ncr_sc;
 	volatile struct sbc_regs *sc_regs;
-	volatile vm_offset_t	sc_drq_addr;
-	volatile vm_offset_t	sc_nodrq_addr;
+	volatile vaddr_t	sc_drq_addr;
+	volatile vaddr_t	sc_nodrq_addr;
 	void			(*sc_clrintr) __P((struct ncr5380_softc *));
 	int			sc_options;	/* options for this instance. */
 	struct sbc_pdma_handle sc_pdma[SCI_OPENINGS];

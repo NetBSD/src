@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1 1998/05/05 06:48:52 scottr Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.2 1998/12/22 08:47:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -65,7 +65,7 @@
  */
 int
 kgdb_acc(va, ulen)
-	vm_offset_t va;
+	vaddr_t va;
 	size_t ulen;
 {
 	int len, pgoff;
