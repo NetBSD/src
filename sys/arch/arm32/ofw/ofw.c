@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.8 1998/06/24 17:18:09 mark Exp $	*/
+/*	$NetBSD: ofw.c,v 1.9 1998/06/27 02:48:24 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -664,7 +664,7 @@ vm_offset_t ofw_getisadmamemory(size, align)
     vm_size_t         physsize,  physsizeal;
 
 #ifdef DEBUG
-    printf("getisadmamemory: %08x, %08x\n", size, align);
+    printf("getisadmamemory: %08lx, %08lx\n", size, align);
 #endif
 
     /* the memory allocated by this ofw_malloc will be lost.  sue me. */
@@ -682,7 +682,7 @@ vm_offset_t ofw_getisadmamemory(size, align)
       physsize = of_decode_int((unsigned char *)&physavail[region].size);
       physstart = of_decode_int((unsigned char *)&physavail[region].start);
 #ifdef DEBUG
-      printf("avail:   %08x %08x\n", physstart, physsize);
+      printf("avail:   %08lx %08lx\n", physstart, physsize);
 #endif
       /* do alignment now */
       physstartal = ((physstart + (align - 1)) & ~(align - 1));
@@ -691,14 +691,14 @@ vm_offset_t ofw_getisadmamemory(size, align)
       else
 	physsizeal  = physsize - (physstartal - physstart);
 #ifdef DEBUG
-      printf("aligned: %08x %08x\n", physstartal, physsizeal);
+      printf("aligned: %08lx %08lx\n", physstartal, physsizeal);
 #endif
       if ((size <= physsizeal) && 
 	  /* same function that's called by isadma.c: */
 	  !isa_machdep_dmarangecheck(physstartal, size)) {
 	/* we have a winner */
 #ifdef DEBUG
-	printf("we have a winner: %08x %08x\n", physstartal, size);
+	printf("we have a winner: %08lx %08lx\n", physstartal, size);
 #endif
 	if (ofw_claimphys(physstartal, size, 0) == -1)
 	  panic("ofw_getisadmamemory: get claim memory failed");
@@ -833,9 +833,9 @@ ofw_configisadma(vm_offset_t *pdma)
   printf("dma ranges size = %d\n", size);
 
   for (rangeidx = 0; rangeidx < nOFdmaranges; ++rangeidx) {
-    printf("%08x %08x\n", 
-	   OFdmaranges[rangeidx].start, 
-	   OFdmaranges[rangeidx].size);
+    printf("%08lx %08lx\n", 
+	   (u_long)OFdmaranges[rangeidx].start, 
+	   (u_long)OFdmaranges[rangeidx].size);
   }
 #endif
 
