@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.25 1993/07/11 07:54:47 mycroft Exp $
+ *	$Id: pccons.c,v 1.26 1993/07/11 09:45:07 mycroft Exp $
  */
 
 /*
@@ -301,7 +301,9 @@ pcopen(dev, flag, mode, p)
 	if (minor(dev) != 0)
 		return (ENXIO);
 	if(!pc_tty[0]) {
-		tp = pc_tty[0] = ttymalloc();
+		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
+		bzero(tp, sizeof(struct tty));
+		pc_tty[0] = tp;
 	} else {
 		tp = pc_tty[0];
 	}
@@ -458,7 +460,7 @@ pcxint(dev)
 pcstart(tp)
 register struct tty *tp;
 {
-	register struct clist *rbp;
+	register struct ringb *rbp;
 	int s, len, n;
 	char buf[PCBURST];
 
@@ -471,17 +473,17 @@ register struct tty *tp;
 	 * We need to do this outside spl since it could be fairly
 	 * expensive and we don't want our serial ports to overflow.
 	 */
-	rbp = &tp->t_outq;
-	len = q_to_b(rbp, buf, PCBURST);
+	rbp = &tp->t_out;
+	len = rb_cread(rbp, buf, PCBURST);
 	for (n = 0; n < len; n++)
 		if (buf[n]) sputc(buf[n] & 0xff, 0);
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-	if (rbp->c_cc) {
+	if (RB_LEN(rbp)) {
 		tp->t_state |= TS_TIMEOUT;
 		timeout(ttrstrt, tp, 1);
 	}
-	if (rbp->c_cc <= tp->t_lowat) {
+	if (RB_LEN(rbp) <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
 			wakeup((caddr_t)rbp);
