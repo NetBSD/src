@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.5 2000/10/16 21:42:21 jdolecek Exp $	*/
+/*	$NetBSD: msort.c,v 1.6 2000/10/17 15:16:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.5 2000/10/16 21:42:21 jdolecek Exp $");
+__RCSID("$NetBSD: msort.c,v 1.6 2000/10/17 15:16:27 jdolecek Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -255,23 +255,24 @@ order(infile, get, ftbl)
 	    struct field *));
 	struct field *ftbl;
 {
-	u_char *end;
+	u_char *crec_end, *prec_end, *trec_end;
 	int c;
 	struct recheader *crec, *prec, *trec;
 
 	if (!SINGL_FLD)
 		linebuf = malloc(DEFLLEN);
 	buffer = malloc(2 * (DEFLLEN + sizeof(TRECHEADER)));
-	end = buffer + 2 * (DEFLLEN + sizeof(TRECHEADER));
 	crec = (RECHEADER *) buffer;
+	crec_end = buffer + DEFLLEN + sizeof(TRECHEADER);
 	prec = (RECHEADER *) (buffer + DEFLLEN + sizeof(TRECHEADER));
+	prec_end = buffer + 2*(DEFLLEN + sizeof(TRECHEADER));
 	wts = ftbl->weights;
-	if (SINGL_FLD && ftbl->flags & F)
+	if (SINGL_FLD && (ftbl->flags & F))
 		wts1 = ftbl->flags & R ? Rascii : ascii;
 	else
 		wts1 = 0;
-	if (0 == get(-1, infile, 1, prec, end, ftbl))
-	while (0 == get(-1, infile, 1, crec, end, ftbl)) {
+	if (0 == get(-1, infile, 1, prec, prec_end, ftbl))
+	while (0 == get(-1, infile, 1, crec, crec_end, ftbl)) {
 		if (0 < (c = cmp(prec, crec))) {
 			crec->data[crec->length-1] = 0;
 			errx(1, "found disorder: %s", crec->data+crec->offset);
@@ -281,9 +282,17 @@ order(infile, get, ftbl)
 			errx(1, "found non-uniqueness: %s",
 			    crec->data+crec->offset);
 		}
+		/*
+		 * Swap pointers so that this record is on place pointed
+		 * to by prec and new record is read to place pointed to by
+		 * crec.
+		 */ 
 		trec = prec;
 		prec = crec;
 		crec = trec;
+		trec_end = prec_end;
+		prec_end = crec_end;
+		crec_end = trec_end;
 	}
 	exit(0);
 }
