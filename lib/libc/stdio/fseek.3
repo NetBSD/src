@@ -1,4 +1,4 @@
-.\"	$NetBSD: fseek.3,v 1.7 1997/03/08 13:43:30 mouse Exp $
+.\"	$NetBSD: fseek.3,v 1.7.2.1 1998/09/27 23:52:44 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,7 +142,9 @@ and
 returns the current offset.
 Otherwise, 
 .Fn fseek
-returns \-1 and 
+and
+.Fn ftell
+return \-1 and
 the others
 return a nonzero value and the global variable 
 .Va errno
