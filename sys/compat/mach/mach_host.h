@@ -1,11 +1,11 @@
-/*	$NetBSD: mach_types.h,v 1.4 2002/11/10 02:18:03 manu Exp $	 */
+/*	$NetBSD: mach_host.h,v 1.1 2002/11/10 02:18:03 manu Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Emmanuel Dreyfus
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,45 +36,69 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACH_TYPES_H_
-#define	_MACH_TYPES_H_
+#ifndef	_MACH_HOST_H_
+#define	_MACH_HOST_H_
 
-typedef int mach_port_t;
-typedef int mach_port_name_t;
-typedef int mach_kern_return_t;
-typedef int mach_clock_res_t;
-typedef int mach_boolean_t;
-typedef int mach_sleep_type_t;
-typedef int mach_timespec_t;
-typedef int mach_absolute_time_t;
-typedef int mach_integer_t;
-typedef int mach_cpu_type_t;
-typedef int mach_cpu_subtype_t;
-typedef unsigned int mach_msg_type_number_t;
-typedef unsigned int mach_vm_size_t;
-typedef unsigned long mach_vm_offset_t;
-typedef void *mach_cproc_t;	/* Unkown, see xnu/osfmk/ppc/hw_exception.s */
+#include <compat/mach/mach_types.h>
+#include <compat/mach/mach_message.h>
+
+typedef mach_integer_t mach_host_flavor_t;
 
 typedef struct {
-	u_int32_t	numer;
-	u_int32_t	denom;
-} mach_timebase_info_t;
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_host_flavor_t req_flavor;
+	mach_msg_type_number_t req_count;
+} mach_host_info_request_t;
 
 typedef struct {
-	u_int8_t       mig_vers;
-	u_int8_t       if_vers;
-	u_int8_t       reserved1;
-	u_int8_t       mig_encoding;
-	u_int8_t       int_rep;
-	u_int8_t       char_rep; 
-	u_int8_t       float_rep;
-	u_int8_t       reserved2;
-} mach_ndr_record_t;
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_type_number_t rep_count;
+	mach_integer_t rep_data[12];
+	mach_msg_trailer_t rep_trailer;
+} mach_host_info_reply_t;
 
-#ifdef DEBUG_MACH
-#define DPRINTF(a) uprintf a
-#else
-#define DPRINTF(a)
-#endif /* DEBUG_MACH */
+#define MACH_HOST_BASIC_INFO		1
+#define MACH_HOST_SCHED_INFO		3
+#define MACH_HOST_RESOURCE_SIZES	4
+#define MACH_HOST_PRIORITY_INFO		5
+#define MACH_HOST_SEMAPHORE_TRAPS	7
+#define MACH_HOST_MACH_MSG_TRAP		8
 
-#endif /* !_MACH_TYPES_H_ */
+struct mach_host_basic_info {
+	mach_integer_t		max_cpus;
+	mach_integer_t		avail_cpus;
+	mach_vm_size_t		memory_size;
+	mach_cpu_type_t		cpu_type;
+	mach_cpu_subtype_t	cpu_subtype;
+}; 
+
+struct mach_host_sched_info {
+	mach_integer_t		min_timeout;
+	mach_integer_t		min_quantum;
+};
+	
+struct mach_kernel_resource_sizes {
+	mach_vm_size_t	 task;
+	mach_vm_size_t	 thread;
+	mach_vm_size_t	 port;
+	mach_vm_size_t	 memory_region;
+	mach_vm_size_t	 memory_object;
+};
+
+struct mach_host_priority_info {
+	mach_integer_t	kernel_priority;
+	mach_integer_t	system_priority;
+	mach_integer_t	server_priority;
+	mach_integer_t	user_priority;
+	mach_integer_t	depress_priority;
+	mach_integer_t	idle_priority;
+	mach_integer_t	minimum_priority;
+	mach_integer_t	maximum_priority;
+};
+
+int mach_host_info __P((mach_msg_header_t *));
+
+#endif /* _MACH_HOST_H_ */
