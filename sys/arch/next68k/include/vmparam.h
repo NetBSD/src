@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 1998/08/28 23:05:54 dbj Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 1998/11/14 04:32:50 dbj Exp $	*/
 
 /*
  * This file was taken from from mvme68k/include/vmparam.h and
@@ -246,25 +246,14 @@
 /* Use new VM page bootstrap interface. */
 #define MACHINE_NEW_NONCONTIG
 
-#if 0
 /*
  * Constants which control the way the VM system deals with memory segments.
- * The mvme68k port has two physical memory segments: 1 for onboard RAM
- * and another for contiguous VMEbus RAM.
  */
-#define	VM_PHYSSEG_MAX		2
+#define	VM_PHYSSEG_MAX		5			/* @@@ should really come from N_SIMM */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
-#define	VM_PHYSSEG_NOADD
-
-#define	VM_NFREELIST		2
+#define	VM_PHYSSEG_NOADD				/* @@@ does the NeXT really need this? */
+#define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
-#define	VM_FREELIST_VMEMEM	1
-#else
-/* @@@ check and verify these, also get values from seglist.h */
-#define	VM_PHYSSEG_MAX		5
-#define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
-#define	VM_PHYSSEG_NOADD
-#endif
 /*
  * pmap-specific data stored in the vm_physmem[] array.
  */
