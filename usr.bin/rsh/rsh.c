@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.14 2001/02/19 23:03:51 cgd Exp $	*/
+/*	$NetBSD: rsh.c,v 1.15 2002/06/14 00:51:04 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.14 2001/02/19 23:03:51 cgd Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.15 2002/06/14 00:51:04 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,15 +60,11 @@ __RCSID("$NetBSD: rsh.c,v 1.14 2001/02/19 23:03:51 cgd Exp $");
 #include <errno.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "pathnames.h"
 
@@ -81,7 +77,7 @@ Key_schedule schedule;
 int use_kerberos = 1, doencrypt;
 char dst_realm_buf[REALM_SZ], *dest_realm;
 
-void	warning __P((const char *, ...));
+void	warning(const char *, ...);
 #endif
 
 /*
@@ -91,23 +87,21 @@ int	remerr;
 
 static int sigs[] = { SIGINT, SIGTERM, SIGQUIT };
 
-char   *copyargs __P((char **));
-void	sendsig __P((int));
-int	checkfd __P((struct pollfd *, int));
-void	talk __P((int, sigset_t *, pid_t, int));
-void	usage __P((void));
-int	main __P((int, char **));
+char   *copyargs(char **);
+void	sendsig(int);
+int	checkfd(struct pollfd *, int);
+void	talk(int, sigset_t *, pid_t, int);
+void	usage(void);
+int	main(int, char **);
 #ifdef IN_RCMD
-int	 orcmd __P((char **, int, const char *,
-    const char *, const char *, int *));
-int	 orcmd_af __P((char **, int, const char *,
-    const char *, const char *, int *, int));
+int	 orcmd(char **, int, const char *,
+    const char *, const char *, int *);
+int	 orcmd_af(char **, int, const char *,
+    const char *, const char *, int *, int);
 #endif
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct passwd *pw;
 	struct servent *sp;
@@ -400,9 +394,7 @@ try_connect:
 }
 
 int
-checkfd(fdp, outfd)
-	struct pollfd *fdp;
-	int outfd;
+checkfd(struct pollfd *fdp, int outfd)
 {
 	int nr, nw;
 	char buf[BUFSIZ];
@@ -440,11 +432,7 @@ checkfd(fdp, outfd)
 }
 
 void
-talk(nflag, oset, pid, rem)
-	int nflag;
-	sigset_t *oset;
-	pid_t pid;
-	int rem;
+talk(int nflag, sigset_t *oset, __pid_t pid, int rem)
 {
 	int nr, nw, nfds;
 	struct pollfd fds[2], *fdp = &fds[0];
@@ -533,8 +521,7 @@ done:
 }
 
 void
-sendsig(sig)
-	int sig;
+sendsig(int sig)
 {
 	char signo;
 
@@ -552,23 +539,11 @@ sendsig(sig)
 #ifdef KERBEROS
 /* VARARGS */
 void
-#ifdef __STDC__
 warning(const char *fmt, ...)
-#else
-warning(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	const char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#else
 	va_start(ap, fmt);
-#endif
-
 	(void) fprintf(stderr, "%s: warning, using standard rsh: ",
 	    getprogname());
 	(void) vfprintf(stderr, fmt, ap);
@@ -578,8 +553,7 @@ warning(va_alist)
 #endif
 
 char *
-copyargs(argv)
-	char **argv;
+copyargs(char **argv)
 {
 	int cc;
 	char **ap, *args, *p;
@@ -600,7 +574,7 @@ copyargs(argv)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
