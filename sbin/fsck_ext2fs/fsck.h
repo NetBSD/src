@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.11 2005/01/19 19:31:28 xtraeme Exp $	*/
+/*	$NetBSD: fsck.h,v 1.12 2005/02/09 22:55:45 ws Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -185,7 +185,7 @@ struct inoinfo {
 	ino_t	i_number;		/* inode number of this entry */
 	ino_t	i_parent;		/* inode number of parent */
 	ino_t	i_dotdot;		/* inode number of `..' */
-	size_t	i_isize;		/* size of inode */
+	u_int64_t i_isize;		/* size of inode */
 	u_int	i_numblks;		/* size of block array in bytes */
 	/* XXX ondisk32 */
 	int32_t	i_blks[1];		/* actually longer */
