@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75 2001/09/10 21:19:28 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76 2001/09/11 20:37:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -710,11 +710,10 @@ dumpsys()
 				printf("\r%4d", todo);
 
 			/* Make a temporary mapping for the page. */
-			pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
-			    VM_PROT_READ, 0);
+			pmap_kenter_pa(vmmap, paddr | PMAP_NC, VM_PROT_READ);
 			pmap_update(pmap_kernel());
 			error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
-			pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
+			pmap_kremove(vmmap, NBPG);
 			pmap_update(pmap_kernel());
 			if (error)
 				goto fail;
