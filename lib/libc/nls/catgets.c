@@ -1,4 +1,4 @@
-/*	$NetBSD: catgets.c,v 1.6 1995/02/27 13:06:39 cgd Exp $	*/
+/*	$NetBSD: catgets.c,v 1.7 1995/03/23 19:59:05 jtc Exp $	*/
 
 /*
  * Written by J.T. Conklin, 10/05/94
@@ -7,8 +7,8 @@
 
 #include <sys/cdefs.h>
 
-#ifdef __weak_reference
-__weak_reference(_catgets,catgets);
+#ifdef __indr_reference
+__indr_reference(_catgets,catgets);
 #else
 
 #include <nl_types.h>
