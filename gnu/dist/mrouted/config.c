@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.9 2002/08/01 23:47:46 itojun Exp $	*/
+/*	$NetBSD: config.c,v 1.1 2002/10/01 03:31:06 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file

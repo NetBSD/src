@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.5 1999/06/06 03:27:35 thorpej Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.1 2002/10/01 03:31:09 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
