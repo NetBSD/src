@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.13 1997/11/02 23:43:12 jonathan Exp $	*/
+/*	$NetBSD: net.c,v 1.14 1997/11/03 09:47:02 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -160,7 +160,9 @@ int config_network (void)
 		exit(1);
 	}
 	time(&now);
-	(void)fprintf (f, ";\n; BIND data file\n; Created by NetBSD sysinst on %s\n;\n", ctime(&now));
+	/* NB: ctime() returns a string ending in  '\n' */
+	(void)fprintf (f, ";\n; BIND data file\n; %s %s;\n", 
+		       "Created by NetBSD sysinst on", ctime(&now)); 
 	(void)fprintf (f, "nameserver %s\nlookup file bind\nsearch %s\n",
 		       net_namesvr, net_domain);
 	fclose (f);

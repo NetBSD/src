@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.4 1997/11/03 02:38:52 jonathan Exp $	*/
+/*	$NetBSD: target.c,v 1.5 1997/11/03 09:47:00 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -35,28 +35,96 @@
  *
  */
 
-/* target.c -- path-prefixing routines to access the target installation
-   filesystems. Makes  the install tools more ndependent of whether
-   we're installing into a separate filesystem hierarchy mounted under /mnt,
-   or into the currently active root mounted on /.    */
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: target.c,v 1.5 1997/11/03 09:47:00 jonathan Exp $");
+#endif
+
+
+/*
+ * target.c -- path-prefixing routines to access the target installation
+ *  filesystems. Makes  the install tools more ndependent of whether
+ *  we're installing into a separate filesystem hierarchy mounted under /mnt,
+ *  or into the currently active root mounted on /.
+ */
+
+#include <sys/param.h>			/* XXX vm_param.h always defines TRUE*/
+#include <sys/sysctl.h>
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <unistd.h>
-#include <curses.h>
+#include <curses.h>			/* defines TRUE, but checks  */
+
+
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+
 /*
  * local  prototypes 
  */
+static const char*	getroot __P((void));
 static void make_prefixed_dir __P((const char *prefix, const char *path));
 const char* target_prefix __P((void));
 static int do_target_chdir __P((const char *dir, int flag));
 static const char* concat_paths __P((const char *prefix, const char *suffix));
 static const char * target_expand __P((const char *pathname));
+
+
+/* get name of current root device  from kernel via sysctl. */
+const char*
+getroot()
+{
+	int mib[2];
+	static char rootstr[STRSIZE];
+	size_t varlen;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_ROOT_DEVICE;
+	varlen = sizeof(rootstr);
+	if (sysctl(mib, 2, rootstr, &varlen, NULL, 0) < 0)
+		return (NULL);
+
+#ifdef	DEBUG
+	printf("getroot(): sysctl returns %s\n", rootstr);
+#endif
+	return (rootstr);
+}
+
+/*
+ * Is the root we're running from the same as the root which the
+ * user has selected to install/upgrade?
+ * FIXME -- only checks root device, not booted partition. 
+ * disklabel-editing code assumes that partition 'a' is always root.
+ */
+int target_already_root()
+{
+	register int result;
+
+	result = is_active_rootpart(diskdev);
+	return(result);
+}
+
+
+/* Is this partname (e.g., "sd0a") mounted as root? */
+int is_active_rootpart(const char *partname)
+{
+	static const char *rootstr = 0;
+	int result;
+
+	if (rootstr == 0)
+		rootstr = getroot();
+
+	result = (strcmp(partname, rootstr) == 0);
+#ifdef DEBUG
+	printf("is_active_rootpart: root = %s, query=%s, answer=%d\n",
+	       rootstr, partname, result);
+#endif
+	return(result);
+}
 
 /*
  * Pathname  prefixing glue to support installation either 
@@ -73,8 +141,9 @@ const char* target_prefix(void)
 	 * XXX fetch sysctl variable for current root, and compare 
 	 * to the devicename of the instllal target disk.
 	 */
-	return("/mnt");
+	return(target_already_root() ? "" : "/mnt");
 }
+
 
 /*
  * concatenate two pathnames.
@@ -117,21 +186,6 @@ static const char*
 target_expand(const char *tgtpath)
 {
 	return concat_paths(target_prefix(), tgtpath);
-}
-
-
-/* Is the root we're running from is the root we're trying to upgrade? */
-int target_already_root()
-{
-	/* FIXME */
-	return(strcmp(target_prefix(), "/mnt") == 0);
-}
-
-/* Is this partname (e.g., "sd0a") mounted as root? */
-int is_active_rootpart(const char *partname)
-{
-	/* FIXME -- compare to kernel's sysctl string with current root. */
-	return(0);
 }
 
 
@@ -285,5 +339,10 @@ int target_mount(const char *fstype, const char *from, const char *on)
 
 int	target_collect_file(int kind, char **buffer, char *name)
 {
-	return collect(kind, buffer, target_expand(name));
+	register const char *realname =target_expand(name);
+
+#ifdef	DEBUG
+	printf("collect real name %s\n", realname);
+#endif
+	return collect(kind, buffer, realname);
 }
