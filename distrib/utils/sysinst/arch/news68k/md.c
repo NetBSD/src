@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 2002/03/16 08:42:52 tsutsui Exp $	*/
+/*	$NetBSD: md.c,v 1.12 2002/03/16 17:26:56 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -184,6 +184,7 @@ int
 md_update()
 {
 
+	move_aout_libs();
 	endwin();
 	md_copy_filesystem ();
 	md_post_newfs();
