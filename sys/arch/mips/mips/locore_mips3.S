@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.22 2000/04/12 01:05:35 nisimura Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.23 2000/04/21 02:39:55 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2209,9 +2209,10 @@ END(mips3_proc_trampoline)
 /*
  * void mips3_cpu_switch_resume(struct proc *newproc)
  *
- * Wiredown the USPACE of newproc with TLB entry#0.  Check
- * whether target USPACE is already refered by some TLB entry(s)
- * before that, and make sure TBIS(them) in the case.
+ * Wiredown the USPACE of newproc with TLB entry#0, and possibly #1
+ * if necessary.  Check whether target USPACE is already refered by
+ * some TLB entry(s) before that, and make sure TBIS(them) in the
+ * case.
  */
 LEAF_NOPROFILE(mips3_cpu_switch_resume)
 	lw	a1, P_MD_UPTE_0(a0)		# a1 = upte[0]
@@ -2251,7 +2252,8 @@ entry1set:
 	mtc0	s0, MIPS_COP_0_TLB_INDEX	# TLB entry #1
 	or	a2, MIPS3_PG_G
 	dmtc0	a2, MIPS_COP_0_TLB_LO0		# lo0: upte[1] | PG_G
-	dmtc0	zero, MIPS_COP_0_TLB_LO1	# lo1: none
+	li	a2, MIPS3_PG_G
+	dmtc0	a2, MIPS_COP_0_TLB_LO1		# lo1: none | PG_G
 	nop
 	nop
 	tlbwi					# set TLB entry #1
@@ -2308,6 +2310,7 @@ LEAF_NOPROFILE(mips3_TBIS)
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
 	dmfc0	t0, MIPS_COP_0_TLB_HI		# save current ASID
+	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# save current pgmask
 	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
 	and	a0, a0, v0			# make sure valid entryHi
 	dmtc0	a0, MIPS_COP_0_TLB_HI		# look for the vaddr & ASID
@@ -2324,6 +2327,7 @@ LEAF_NOPROFILE(mips3_TBIS)
 	dmtc0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid 
 	dmtc0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
 	dmtc0	zero, MIPS_COP_0_TLB_LO1	# zero out entryLo1
+	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# zero out pageMask
 	nop
 	nop
 	tlbwi
@@ -2331,6 +2335,7 @@ LEAF_NOPROFILE(mips3_TBIS)
 	nop
 1:
 	dmtc0	t0, MIPS_COP_0_TLB_HI		# restore current ASID
+	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgmask
 	nop
 	nop
 	j	ra
@@ -2350,6 +2355,7 @@ LEAF_NOPROFILE(mips3_TBIAP)
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	move	t2, a0
 	li	v0, MIPS_KSEG0_START		# invalid address
+	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# save current pgmask
 
 	# do {} while (t1 < t2)
 1:
@@ -2378,6 +2384,9 @@ LEAF_NOPROFILE(mips3_TBIAP)
 	bne	t1, t2, 1b
 	nop
 
+	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgmask
+	nop
+	nop
 	j	ra				# new ASID will be set soon
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	END(mips3_TBIAP)
@@ -2394,6 +2403,7 @@ LEAF_NOPROFILE(mips3_TBIA)
 	dmfc0	t0, MIPS_COP_0_TLB_HI		# save current ASID
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	li	v0, MIPS_KSEG0_START		# invalid address
+	mfc0	t2, MIPS_COP_0_TLB_PG_MASK	# save current pgmask
 
 	dmtc0	v0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	dmtc0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
@@ -2413,6 +2423,7 @@ LEAF_NOPROFILE(mips3_TBIA)
 	nop
 
 	dmtc0	t0, MIPS_COP_0_TLB_HI		# restore ASID
+	mtc0	t2, MIPS_COP_0_TLB_PG_MASK	# restore pgmask
 	nop
 	nop
 	j	ra
