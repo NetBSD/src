@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.202 1998/11/10 14:09:15 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.203 1998/11/12 21:12:34 rvb Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -518,7 +518,7 @@ lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 lms1	at isa? port 0x238 irq 5
 mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 mms1	at isa? port 0x238 irq 5
-#pms0	at pc? irq 12		# PS/2 auxiliary port mouse
+pms0	at pc? irq 12		# PS/2 auxiliary port mouse
 #pms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 
