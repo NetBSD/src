@@ -1,4 +1,4 @@
-/*	$NetBSD: vsnprintf.c,v 1.13 2000/01/22 22:19:19 mycroft Exp $	*/
+/*	$NetBSD: vsnprintf.c,v 1.13.4.1 2000/10/19 14:05:25 he Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vsnprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsnprintf.c,v 1.13 2000/01/22 22:19:19 mycroft Exp $");
+__RCSID("$NetBSD: vsnprintf.c,v 1.13.4.1 2000/10/19 14:05:25 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,11 +65,14 @@ vsnprintf(str, n, fmt, ap)
 	int ret;
 	FILE f;
 
-	_DIAGASSERT(str != NULL);
+	_DIAGASSERT(n == 0 || str != NULL);
 	_DIAGASSERT(fmt != NULL);
 
-	if ((int)n < 1)
+	if ((int)n < 0) {
+		errno = EINVAL;
 		return (-1);
+	}
+
 	f._file = -1;
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
