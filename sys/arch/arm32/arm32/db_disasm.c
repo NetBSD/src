@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.9 1997/01/03 23:17:40 mark Exp $ */
+/* $NetBSD: db_disasm.c,v 1.10 1997/01/12 14:21:44 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -346,6 +346,9 @@ db_disasm(loc, altfmt)
 			break;
 		case 'X':
 			db_printf("%s", insn_blktrans(insn));
+			break;
+		case 'Y':
+			db_printf("%s", insn_stkblktrans(insn));
 			break;
 		case 'c':
 			db_printf("0x%08x", (insn & 0x00ffffff));
