@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.15 1994/09/28 11:31:31 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.16 1994/12/27 21:53:31 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -685,7 +685,8 @@ dosdirempty(dep)
 			return (error);
 		dentp = (struct direntry *)bp->b_data;
 		for (dei = 0; dei < pmp->pm_depclust; dei++, dentp++) {
-			if (dentp->deName[0] != SLOT_DELETED) {
+			if (dentp->deName[0] != SLOT_DELETED &&
+			    (dentp->deAttributes & ATTR_VOLUME) == 0) {
 				/*
 				 * In dos directories an entry whose name
 				 * starts with SLOT_EMPTY (0) starts the
