@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio_ebus.c,v 1.1 2000/04/05 07:52:48 mrg Exp $	*/
+/*	$NetBSD: auxio_ebus.c,v 1.2 2000/04/05 14:23:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -85,7 +85,7 @@ auxio_ebus_attach(parent, self, aux)
 #define	SHOWIT(s) do { \
 	if (first) { \
 		first = 0; \
-		printf(": mapping"); \
+		printf(": found"); \
 	} \
 	printf(" %s", s); \
 } while (0)
