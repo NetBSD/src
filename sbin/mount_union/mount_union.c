@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_union.c,v 1.4 1997/09/15 06:13:40 lukem Exp $	*/
+/*	$NetBSD: mount_union.c,v 1.5 1997/09/16 12:32:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -44,9 +44,9 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)mount_union.c	8.5 (Berkeley) 3/27/94";
+static char sccsid[] = "@(#)mount_union.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_union.c,v 1.4 1997/09/15 06:13:40 lukem Exp $");
+__RCSID("$NetBSD: mount_union.c,v 1.5 1997/09/16 12:32:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ main(argc, argv)
 			args.mntflags |= UNMNT_BELOW;
 			break;
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags);
+			getmntopts(optarg, mopts, &mntflags, 0);
 			break;
 		case 'r':
 			args.mntflags &= ~UNMNT_OPMASK;
