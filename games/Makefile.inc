@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.10 2002/01/27 00:08:49 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2002/01/27 00:35:16 perry Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 5/31/93
 
-.if defined(HIDEGAME) && defined(PROG)
+MKHIDEGAME?=	no
+
+.if defined(HIDEGAME) && (MKHIDEGAME!=no) && defined(PROG)
 BINDIR=		/usr/games/hide
 BINGRP=		games
 .if defined(SETGIDGAME)
