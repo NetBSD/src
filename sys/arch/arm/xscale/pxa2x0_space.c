@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_space.c,v 1.4 2003/07/15 00:24:56 lukem Exp $ */
+/*	$NetBSD: pxa2x0_space.c,v 1.5 2004/06/07 19:45:22 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.4 2003/07/15 00:24:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.5 2004/06/07 19:45:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,10 @@ void
 pxa2x0_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
-	/* Nothing to do. */
+	if (bsh > (u_long)KERNEL_BASE) 
+		return;
+
+	uvm_km_free(kernel_map, bsh, size);
 }
 
 
