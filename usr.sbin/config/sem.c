@@ -1,6 +1,6 @@
-/*	$NetBSD: sem.c,v 1.4 1996/03/17 06:23:18 cgd Exp $	*/
+/*	$NetBSD: sem.c,v 1.5 1996/03/17 06:29:37 cgd Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -383,16 +383,16 @@ defdevattach(deva, dev, atlist, vectors, attrs)
 		goto bad;
 	}
 
-	deva->d_isdef = 1; 
+	deva->d_isdef = 1;
 	if (has_errobj(attrs, &errattr))
 		goto bad;
-        for (nv = attrs; nv != NULL; nv = nv->nv_next) {
-                a = nv->nv_ptr;
-                if (a == &errattr)
-                        continue;               /* already complained */
-                if (a->a_iattr)
-                        error("`%s' is not a plain attribute", a->a_name);
-        }
+	for (nv = attrs; nv != NULL; nv = nv->nv_next) {
+		a = nv->nv_ptr;
+		if (a == &errattr)
+			continue;		/* already complained */
+		if (a->a_iattr)
+			error("`%s' is not a plain attribute", a->a_name);
+	}
 
 	/* Committed!  Set up fields. */
 	deva->d_attrs = attrs;
@@ -535,7 +535,7 @@ exclude(nv, name, what)
 	return (0);
 }
 
-/* 
+/*
  * Map things like "ra0b" => makedev(major("ra"), 0*maxpartitions + 'b'-'a').
  * Handle the case where the device number is given but there is no
  * corresponding name, and map NULL to the default.

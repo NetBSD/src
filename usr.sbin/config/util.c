@@ -1,6 +1,6 @@
-/*	$NetBSD: util.c,v 1.2 1996/03/03 17:28:41 thorpej Exp $	*/
+/*	$NetBSD: util.c,v 1.3 1996/03/17 06:29:42 cgd Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -59,7 +59,7 @@
 static void nomem __P((void));
 static void vxerror __P((const char *, int, const char *, va_list));
 
-/* 
+/*
  * Malloc, with abort on error.
  */
 void *
@@ -73,7 +73,7 @@ emalloc(size)
 	return (p);
 }
 
-/* 
+/*
  * Realloc, with abort on error.
  */
 void *

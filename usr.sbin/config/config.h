@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.20 1996/03/17 02:08:22 thorpej Exp $	*/
+/*	$NetBSD: config.h,v 1.21 1996/03/17 06:29:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -141,7 +141,7 @@ struct deva {
 	struct	devi *d_ihead;		/* first instance, if any */
 	struct	devi **d_ipp;		/* used for tacking on more instances */
 };
-	
+
 /*
  * An "instance" of a device.  The same instance may be listed more
  * than once, e.g., "xx0 at isa? port FOO" + "xx0 at isa? port BAR".

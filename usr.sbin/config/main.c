@@ -1,6 +1,6 @@
-/*	$NetBSD: main.c,v 1.14 1996/03/17 02:08:29 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.15 1996/03/17 06:29:23 cgd Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

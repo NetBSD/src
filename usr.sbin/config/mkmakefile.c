@@ -1,6 +1,6 @@
-/*	$NetBSD: mkmakefile.c,v 1.27 1996/03/03 17:28:26 thorpej Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.28 1996/03/17 06:29:30 cgd Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
