@@ -1,6 +1,6 @@
 /* source.h
-   
-   Copyright (C) 2000  Free Software Foundation, Inc.
+
+   Copyright 2000, 2001 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -53,7 +53,7 @@ extern Source_File *source_file_lookup_name PARAMS ((const char *));
    MAX_WIDTH characters wide and for each source-line an annotation is
    obtained by invoking function ANNOTE.  ARG is an argument passed to
    ANNOTE that is left uninterpreted by annotate_source().
-  
+
    Returns a pointer to the output file (which maybe stdout) such
    that summary statistics can be printed.  If the returned file
    is not stdout, it should be closed when done with it.  */

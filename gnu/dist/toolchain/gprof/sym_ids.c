@@ -1,6 +1,6 @@
 /* sym_ids.c
 
-   Copyright (C) 2000  Free Software Foundation, Inc.
+   Copyright 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -31,7 +31,7 @@ struct sym_id
     char *spec;			/* Parsing modifies this.  */
     Table_Id which_table;
     bool has_right;
-    
+
     struct match
       {
 	int prev_index;		/* Index of prev match.  */
@@ -91,11 +91,11 @@ DEFUN (sym_id_add, (spec, which_table),
 
 /* A spec has the syntax FILENAME:(FUNCNAME|LINENUM).  As a convenience
    to the user, a spec without a colon is interpreted as:
-  
-        (i)   a FILENAME if it contains a dot
-        (ii)  a FUNCNAME if it starts with a non-digit character
-        (iii) a LINENUM if it starts with a digit
-  
+
+	(i)   a FILENAME if it contains a dot
+	(ii)  a FUNCNAME if it starts with a non-digit character
+	(iii) a LINENUM if it starts with a digit
+
    A FUNCNAME containing a dot can be specified by :FUNCNAME, a
    FILENAME not containing a dot can be specified by FILENAME.  */
 
@@ -106,21 +106,21 @@ DEFUN (parse_spec, (spec, sym), char *spec AND Sym * sym)
 
   sym_init (sym);
   colon = strrchr (spec, ':');
-  
+
   if (colon)
     {
       *colon = '\0';
-      
+
       if (colon > spec)
 	{
 	  sym->file = source_file_lookup_name (spec);
-	  
+
 	  if (!sym->file)
 	    sym->file = &non_existent_file;
 	}
-      
+
       spec = colon + 1;
-      
+
       if (strlen (spec))
 	{
 	  if (isdigit ((unsigned char) spec[0]))
@@ -135,7 +135,7 @@ DEFUN (parse_spec, (spec, sym), char *spec AND Sym * sym)
       if (strchr (spec, '.'))
 	{
 	  sym->file = source_file_lookup_name (spec);
-	  
+
 	  if (!sym->file)
 	    sym->file = &non_existent_file;
 	}
@@ -174,19 +174,19 @@ DEFUN (parse_id, (id), struct sym_id *id)
   if (debug_level & IDDEBUG)
     {
       printf ("%s:", id->left.sym.file ? id->left.sym.file->name : "*");
-      
+
       if (id->left.sym.name)
 	printf ("%s", id->left.sym.name);
       else if (id->left.sym.line_num)
 	printf ("%d", id->left.sym.line_num);
       else
 	printf ("*");
-      
+
       if (id->has_right)
 	{
 	  printf ("/%s:",
 		  id->right.sym.file ? id->right.sym.file->name : "*");
-	  
+
 	  if (id->right.sym.name)
 	    printf ("%s", id->right.sym.name);
 	  else if (id->right.sym.line_num)
@@ -194,7 +194,7 @@ DEFUN (parse_id, (id), struct sym_id *id)
 	  else
 	    printf ("*");
 	}
-      
+
       printf ("\n");
     }
 #endif
@@ -231,7 +231,7 @@ DEFUN (extend_match, (m, sym, tab, second_pass),
 	  tab->base[tab->len].next = m->first_match;
 	  m->first_match = &tab->base[tab->len];
 	}
-      
+
       ++tab->len;
     }
 
@@ -246,7 +246,7 @@ DEFUN (extend_match, (m, sym, tab, second_pass),
 /* Go through sym_id list produced by option processing and fill
    in the various symbol tables indicating what symbols should
    be displayed or suppressed for the various kinds of outputs.
-  
+
    This can potentially produce huge tables and in particulars
    tons of arcs, but this happens only if the user makes silly
    requests---you get what you ask for!  */
@@ -285,7 +285,7 @@ DEFUN_VOID (sym_id_parse)
 	  tab->len = 0;
 	}
     }
-  
+
   if (right_ids.len)
     {
       right_ids.base = (Sym *) xmalloc (right_ids.len * sizeof (Sym));
@@ -327,7 +327,7 @@ DEFUN_VOID (sym_id_parse)
 				(unsigned long) right->addr,
 				(unsigned long) right->end_addr,
 				table_name[id->which_table]));
-		  
+
 		  arc_add (left, right, (unsigned long) 0);
 		}
 	    }
@@ -362,6 +362,6 @@ DEFUN (sym_id_arc_is_present, (symtab, from, to),
 	  && arc_lookup (sym, to))
 	return TRUE;
     }
-  
+
   return FALSE;
 }

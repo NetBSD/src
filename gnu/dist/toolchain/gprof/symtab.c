@@ -1,6 +1,6 @@
 /* symtab.c
 
-   Copyright (C) 2000  Free Software Foundation, Inc.
+   Copyright 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -33,7 +33,7 @@ void
 DEFUN (sym_init, (sym), Sym * sym)
 {
   memset (sym, 0, sizeof (*sym));
-  
+
   /* It is not safe to assume that a binary zero corresponds
      to a floating-point 0.0, so initialize floats explicitly.  */
   sym->hist.time = 0.0;
@@ -86,7 +86,7 @@ DEFUN (symtab_finalize, (tab), Sym_Table * tab)
   /* Remove duplicate entries to speed-up later processing and
      set end_addr if its not set yet.  */
   prev_addr = tab->base[0].addr + 1;
-  
+
   for (src = dst = tab->base; src < tab->limit; ++src)
     {
       if (src->addr == prev_addr)
@@ -114,7 +114,7 @@ DEFUN (symtab_finalize, (tab), Sym_Table * tab)
 			   dst[-1].name, dst[-1].is_static ? 't' : 'T',
 			   dst[-1].is_func ? 'F' : 'f');
 		   printf (" (addr=%lx)\n", (unsigned long) src->addr));
-	      
+
 	      dst[-1] = *src;
 	    }
 	  else
@@ -142,7 +142,7 @@ DEFUN (symtab_finalize, (tab), Sym_Table * tab)
 	    }
 	}
     }
-  
+
   if (tab->len > 0 && dst[-1].end_addr == 0)
     dst[-1].end_addr = core_text_sect->vma + core_text_sect->_raw_size - 1;
 
@@ -157,11 +157,11 @@ DEFUN (symtab_finalize, (tab), Sym_Table * tab)
        unsigned int j;
 
        for (j = 0; j < tab->len; ++j)
-         {
+	 {
 	   printf ("[symtab_finalize] 0x%lx-0x%lx\t%s\n",
 		 (long) tab->base[j].addr, (long) tab->base[j].end_addr,
 		 tab->base[j].name);
-         }
+	 }
   );
 }
 
@@ -181,13 +181,13 @@ DEFUN (dbg_sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address
   for (low = 0, high = symtab->len - 1; low != high;)
     {
       mid = (high + low) >> 1;
-      
+
       fprintf (stderr, "[dbg_sym_lookup] low=0x%lx, mid=0x%lx, high=0x%lx\n",
 	       low, mid, high);
       fprintf (stderr, "[dbg_sym_lookup] sym[m]=0x%lx sym[m + 1]=0x%lx\n",
 	       (unsigned long) sym[mid].addr,
 	       (unsigned long) sym[mid + 1].addr);
-      
+
       if (sym[mid].addr <= address && sym[mid + 1].addr > address)
 	return &sym[mid];
 
@@ -196,9 +196,9 @@ DEFUN (dbg_sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address
       else
 	low = mid + 1;
     }
-  
+
   fprintf (stderr, "[dbg_sym_lookup] binary search fails???\n");
-  
+
   return 0;
 }
 
@@ -225,7 +225,7 @@ DEFUN (sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address)
     {
       DBG (LOOKUPDEBUG, ++probes);
       mid = (high + low) / 2;
-      
+
       if (sym[mid].addr <= address && sym[mid + 1].addr > address)
 	{
 	  if (address > sym[mid].end_addr)
@@ -242,13 +242,13 @@ DEFUN (sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address)
 	      return &sym[mid];
 	    }
 	}
-      
+
       if (sym[mid].addr > address)
 	high = mid;
       else
 	low = mid + 1;
     }
-  
+
   if (sym[mid + 1].addr <= address)
     {
       if (address > sym[mid + 1].end_addr)
@@ -263,6 +263,6 @@ DEFUN (sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address)
 	  return &sym[mid + 1];
 	}
     }
-  
+
   return 0;
 }
