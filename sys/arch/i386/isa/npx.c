@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.43 1995/05/04 00:30:56 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.44 1995/08/06 05:33:39 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -498,7 +498,8 @@ npxdna()
 	register struct pcb *pcb = &curproc->p_addr->u_pcb;
 
 	if ((pcb->pcb_cr0 & CR0_EM) != 0) {
-		if (npx_type != NPX_NONE) {
+		if ((curproc->p_md.md_flags & MDP_USEDFPU) == 0 &&
+		    npx_type != NPX_NONE) {
 			iprintf(("Init"));
 			npxinit();
 			return (1);
@@ -539,6 +540,17 @@ npxdna()
 }
 
 /*
+ * Drop the current FPU state on the floor.
+ */
+void
+npxdrop()
+{
+
+	npxproc->p_addr->u_pcb.pcb_cr0 |= CR0_EM|CR0_TS;
+	npxproc = 0;
+}
+
+/*
  * Save npxproc's FPU state.
  *
  * The FNSAVE instruction clears the FPU state.  Rather than reloading the FPU
@@ -572,14 +584,13 @@ npxsave()
 void
 npxinit()
 {
-	register struct pcb *pcb = &curproc->p_addr->u_pcb;
 	static u_short control = __INITIAL_NPXCW__;
 
 #ifdef DIAGNOSTIC
 	if (cpl != 0 || npx_nointr != 0)
 		panic("npxinit: masked");
 #endif
-	lcr0(pcb->pcb_cr0 &= ~(CR0_EM|CR0_TS));
+	lcr0(curproc->p_addr->u_pcb.pcb_cr0 &= ~(CR0_EM|CR0_TS));
 	if (npxproc != 0 && npxproc != curproc)
 		npxsave1();
 	else {
@@ -588,7 +599,7 @@ npxinit()
 		fwait();
 		npx_nointr = 0;
 	}
-	pcb->pcb_flags |= PCB_USEDFPU;
 	npxproc = curproc;
+	npxproc->p_md.md_flags |= MDP_USEDFPU;
 	fldcw(&control);
 }
