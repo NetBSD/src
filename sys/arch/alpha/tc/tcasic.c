@@ -1,4 +1,4 @@
-/*	$NetBSD: tcasic.c,v 1.15 1996/12/08 00:22:23 cgd Exp $	*/
+/* $NetBSD: tcasic.c,v 1.16 1997/04/06 22:32:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
