@@ -1,0 +1,33 @@
+External m.d. interface points:
+
+To config, code should configure 'gt' with a struct gtbus_attach_args
+filled in.  The code should have already set up the bus_space and
+bus_dma tags that are passed in.
+
+m.d. pci_chipset_tag_t should contain at least a copy of the
+gtpci_chipset_tag_t data structure.
+
+m.d. code must provide the following functions:
+
+pci_intr_map
+pci_intr_string
+pci_intr_establish,
+pci_intr_disestablish
+
+void *gtmpp_intr_establish(struct gt_softc *gt, int mpp_pin, int ipl,
+		     int (*handler)(void *), void *arg);
+	Add an interrupt attached to Discovery MPP pin <mpp_pin> at
+	the given ipl with the given handler.
+
+void gtmpp_intr_disestablish(struct gt_softc *gt, void *cookie);
+	Remove an interrupt attached to Discovery MPP pin.
+
+int gtget_macaddr(struct gt_softc *gt, int function, char *enaddr);
+	Get MAC for Discovery ethernet <function>
+
+void intr_enable(void);
+	Enable all interrupts (disregarding spls)
+
+void intr_disable(void);
+	Disable all interrupts (disregarding spls)
+
