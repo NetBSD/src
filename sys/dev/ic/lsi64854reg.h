@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854reg.h,v 1.4 1998/09/21 21:26:52 pk Exp $ */
+/*	$NetBSD: lsi64854reg.h,v 1.5 2001/03/29 02:58:39 petrov Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,9 @@
 #define  L64854_BURST_0		0x00080000	/*   no bursts (SCSI-only) */
 #define  L64854_BURST_16	0x00000000	/*   16-byte bursts */
 #define  L64854_BURST_32    	0x00040000	/*   32-byte bursts */
+#define  L64854_BURST_64	0x000c0000	/*   64-byte bursts (fas) */
+
+#define L64854_RST_FAS366	0x08000000	/* FAS366 hardware reset */
 
 #define L64854_DEVID		0xf0000000	/* device ID bits */
 
@@ -94,6 +97,7 @@
 #define D_EN_DMA	L64854_EN_DMA	/* enable DMA requests */
 #define D_EN_CNT	0x00002000	/* enable byte counter */
 #define D_TC		0x00004000	/* terminal count */
+#define D_WIDE_EN	0x00008000	/* enable wide mode SBUS DMA (fas) */
 #define D_DSBL_CSR_DRN	0x00010000	/* disable fifo drain on csr */
 #define D_DSBL_SCSI_DRN	0x00020000	/* disable fifo drain on reg */
 
@@ -102,15 +106,20 @@
 #define D_FASTER	0x00400000	/* 3 clocks per transfer */
 #define D_TCI_DIS	0x00800000	/* disable intr on D_TC */
 #define D_EN_NEXT	0x01000000	/* enable auto next address */
-#define D_DMA_ON	0x02000000	/* enable dma from scsi */
+#define D_DMA_ON	0x02000000	/* enable dma from scsi XXX */
+#define D_DSBL_PARITY_CHK \
+			0x02000000	/* disable checking for parity on bus (default 1:fas) */
 #define D_A_LOADED	0x04000000	/* address loaded */
 #define D_NA_LOADED	0x08000000	/* next address loaded */
+#define D_HW_RESET_FAS366 \
+			0x08000000	/* hardware reset FAS366 (fas) */
 #define D_DEV_ID	L64854_DEVID	/* device ID */
 #define  DMAREV_0	0x00000000	/* Sunray DMA */
 #define  DMAREV_ESC	0x40000000	/*  DMA ESC array */
 #define  DMAREV_1	0x80000000	/* 'DMA' */
 #define  DMAREV_PLUS	0x90000000	/* 'DMA+' */
 #define  DMAREV_2	0xa0000000	/* 'DMA2' */
+#define  DMAREV_HME     0xb0000000 	/* 'HME'  */
 
 /*
  * revisions 0,1 and ESC have different bits.
