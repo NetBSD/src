@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.33 2001/01/29 01:24:43 enami Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.34 2001/04/12 23:54:56 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -611,6 +611,7 @@ USB_DETACH(cue)
 	 * in the same thread as detach.
 	 */
 	usb_rem_task(sc->cue_udev, &sc->cue_tick_task);
+	usb_rem_task(sc->cue_udev, &sc->cue_stop_task);
 
 	if (!sc->cue_attached) {
 		/* Detached before attached finished, so just bail out. */
