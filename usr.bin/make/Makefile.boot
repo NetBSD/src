@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.boot,v 1.16 2004/05/06 23:15:46 ross Exp $
+#	$NetBSD: Makefile.boot,v 1.17 2004/05/07 00:04:38 ross Exp $
 #
 # a very simple makefile...
 #
@@ -18,8 +18,7 @@ MACHINE_ARCH=i386
 #MAKE_MACHINE_ARCH=hppa
 CFLAGS= -DTARGET_MACHINE=\"${MACHINE}\" \
 	-DTARGET_MACHINE_ARCH=\"${MACHINE_ARCH}\" \
-	-DMAKE_MACHINE=\"${MACHINE}\" \
-	-DMAKE_BOOTSTRAP
+	-DMAKE_MACHINE=\"${MACHINE}\"
 LIBS=
 
 OBJ=arch.o buf.o compat.o cond.o dir.o for.o hash.o job.o main.o make.o \
