@@ -1,6 +1,7 @@
-/*	$NetBSD: segments.h,v 1.11 1995/05/01 04:49:51 mycroft Exp $	*/
+/*	$NetBSD: segments.h,v 1.12 1995/05/01 07:37:43 mycroft Exp $	*/
 
 /*-
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1989, 1990 William F. Jolitz
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -47,22 +48,25 @@
 #ifndef _I386_SEGMENTS_H_
 #define _I386_SEGMENTS_H_
 
-#if __GNUC__ >= 2
-#pragma pack(1)
-#endif
-
 /*
  * Selectors
  */
 
-#define	ISPL(s)	((s)&3)		/* what is the priority level of a selector */
-#define	SEL_KPL	0		/* kernel priority level */	
-#define	SEL_UPL	3		/* user priority level */	
-#define	ISLDT(s)	((s)&SEL_LDT)	/* is it local or global */
-#define	SEL_LDT	4		/* local descriptor table */	
-#define	IDXSEL(s)	(((s)>>3) & 0x1fff)		/* index of selector */
-#define	LSEL(s,r)	(((s)<<3) | SEL_LDT | r)	/* a local selector */
-#define	GSEL(s,r)	(((s)<<3) | r)			/* a global selector */
+#define	ISPL(s)		((s) & SEL_RPL)	/* what is the priority level of a selector */
+#define	SEL_KPL		0		/* kernel privilege level */	
+#define	SEL_UPL		3		/* user privilege level */	
+#define	SEL_RPL		3		/* requester's privilege level mask */
+#define	ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
+#define	SEL_LDT		4		/* local descriptor table */	
+#define	IDXSEL(s)	(((s) >> 3) & 0x1fff)		/* index of selector */
+#define	GSEL(s,r)	(((s) << 3) | r)		/* a global selector */
+#define	LSEL(s,r)	(((s) << 3) | r | SEL_LDT)	/* a local selector */
+
+#ifndef LOCORE
+
+#if __GNUC__ >= 2
+#pragma pack(1)
+#endif
 
 /*
  * Memory and System segment descriptors
@@ -102,6 +106,46 @@ union descriptor {
 	struct gate_descriptor gd;
 };
 
+/*
+ * Software definitions are in this convenient format,
+ * which are translated into inconvenient segment descriptors
+ * when needed to be used by the 386 hardware
+ */
+struct soft_segment_descriptor {
+	unsigned ssd_base;		/* segment base address  */
+	unsigned ssd_limit;		/* segment extent */
+	unsigned ssd_type:5;		/* segment type */
+	unsigned ssd_dpl:2;		/* segment descriptor priority level */
+	unsigned ssd_p:1;		/* segment descriptor present */
+	unsigned ssd_xx:4;		/* unused */
+	unsigned ssd_xx1:2;		/* unused */
+	unsigned ssd_def32:1;		/* default 32 vs 16 bit size */
+	unsigned ssd_gran:1;		/* limit granularity (byte/page units)*/
+};
+
+/*
+ * region descriptors, used to load gdt/idt tables before segments yet exist.
+ */
+struct region_descriptor {
+	unsigned rd_limit:16;		/* segment extent */
+	unsigned rd_base:32;		/* base address  */
+};
+
+#if __GNUC__ >= 2
+#pragma pack(4)
+#endif
+
+#ifdef _KERNEL
+extern int currentldt;
+extern union descriptor gdt[], ldt[];
+extern struct gate_descriptor idt[];
+extern struct soft_segment_descriptor gdt_segs[], ldt_segs[];
+void ssdtosd __P((struct soft_segment_descriptor *, struct segment_descriptor *));
+void sdtossd __P((struct segment_descriptor *, struct soft_segment_descriptor *));
+#endif /* _KERNEL */
+
+#endif /* !LOCORE */
+
 /* system segments and gate types */
 #define	SDT_SYSNULL	 0	/* system null */
 #define	SDT_SYS286TSS	 1	/* system 286 TSS available */
@@ -139,15 +183,16 @@ union descriptor {
 #define	SDT_MEMERAC	31	/* memory execute read accessed conforming */
 
 /* is memory segment descriptor pointer ? */
-#define ISMEMSDP(s)	((s->d_type) >= SDT_MEMRO && (s->d_type) <= SDT_MEMERAC)
+#define ISMEMSDP(s)	((s->d_type) >= SDT_MEMRO && \
+			 (s->d_type) <= SDT_MEMERAC)
 
 /* is 286 gate descriptor pointer ? */
-#define IS286GDP(s)	(((s->d_type) >= SDT_SYS286CGT \
-				 && (s->d_type) < SDT_SYS286TGT))
+#define IS286GDP(s)	((s->d_type) >= SDT_SYS286CGT && \
+			 (s->d_type) < SDT_SYS286TGT)
 
 /* is 386 gate descriptor pointer ? */
-#define IS386GDP(s)	(((s->d_type) >= SDT_SYS386CGT \
-				&& (s->d_type) < SDT_SYS386TGT))
+#define IS386GDP(s)	((s->d_type) >= SDT_SYS386CGT && \
+			 (s->d_type) < SDT_SYS386TGT)
 
 /* is gate descriptor pointer ? */
 #define ISGDP(s)	(IS286GDP(s) || IS386GDP(s))
@@ -159,38 +204,11 @@ union descriptor {
 #define ISSYSSDP(s)	(!ISMEMSDP(s) && !ISGDP(s))
 
 /*
- * Software definitions are in this convenient format,
- * which are translated into inconvenient segment descriptors
- * when needed to be used by the 386 hardware
- */
-struct soft_segment_descriptor {
-	unsigned ssd_base;		/* segment base address  */
-	unsigned ssd_limit;		/* segment extent */
-	unsigned ssd_type:5;		/* segment type */
-	unsigned ssd_dpl:2;		/* segment descriptor priority level */
-	unsigned ssd_p:1;		/* segment descriptor present */
-	unsigned ssd_xx:4;		/* unused */
-	unsigned ssd_xx1:2;		/* unused */
-	unsigned ssd_def32:1;		/* default 32 vs 16 bit size */
-	unsigned ssd_gran:1;		/* limit granularity (byte/page units)*/
-};
-
-/*
- * region descriptors, used to load gdt/idt tables before segments yet exist.
- */
-struct region_descriptor {
-	unsigned rd_limit:16;		/* segment extent */
-	unsigned rd_base:32;		/* base address  */
-};
-
-/*
  * Segment Protection Exception code bits
  */
 #define	SEGEX_EXT	0x01	/* recursive or externally induced */
 #define	SEGEX_IDT	0x02	/* interrupt descriptor table */
 #define	SEGEX_TI	0x04	/* local descriptor table */
-				/* other bits are affected descriptor index */
-#define SEGEX_IDX(s)	((s)>>3)&0x1fff)
 
 /*
  * Entries in the Interrupt Descriptor Table (IDT)
@@ -201,41 +219,21 @@ struct region_descriptor {
 /*
  * Entries in the Global Descriptor Table (GDT)
  */
-#define	GNULL_SEL	0	/* Null Descriptor */
-#define	GCODE_SEL	1	/* Kernel Code Descriptor */
-#define	GDATA_SEL	2	/* Kernel Data Descriptor */
+#define	GNULL_SEL	0	/* Null descriptor */
+#define	GCODE_SEL	1	/* Kernel code descriptor */
+#define	GDATA_SEL	2	/* Kernel data descriptor */
 #define	GLDT_SEL	3	/* LDT - eventually one per process */
-#define	GTGATE_SEL	4	/* Process task switch gate */
-#define	GPANIC_SEL	5	/* Task state to consider panic from */
-#define	GPROC0_SEL	6	/* Task state process slot zero and up */
-#define	GUSERLDT_SEL	7	/* User LDT */
+#define	GPROC0_SEL	4	/* Task state process slot zero and up */
+#define	GUSERLDT_SEL	5	/* User LDT */
 #define	NGDT 		GUSERLDT_SEL+1
 
 /*
  * Entries in the Local Descriptor Table (LDT)
  */
-#define	LSYS5CALLS_SEL	0	/* forced by intel BCS */
-#define	LSYS5SIGR_SEL	1
-#define	L43BSDCALLS_SEL	2	/* notyet */
-#define	LUCODE_SEL	3
-#define	LUDATA_SEL	4
-#if 0
-/* XXX seperate stack, es,fs,gs sels ? */
-#define	LPOSIXCALLS_SEL	5	/* notyet */
-#endif
-#define NLDT		LUDATA_SEL+1
-
-#ifdef _KERNEL
-extern int currentldt;
-extern union descriptor gdt[NGDT], ldt[NLDT];
-extern struct gate_descriptor idt[];
-extern struct soft_segment_descriptor gdt_segs[];
-void ssdtosd __P((struct soft_segment_descriptor *, struct segment_descriptor *));
-void sdtossd __P((struct segment_descriptor *, struct soft_segment_descriptor *));
-#endif
-
-#if __GNUC__ >= 2
-#pragma pack(4)
-#endif
+#define	LSYS5CALLS_SEL	0	/* iBCS system call gate */
+#define	LSYS5SIGR_SEL	1	/* iBCS sigreturn gate */
+#define	LUCODE_SEL	2	/* User code descriptor */
+#define	LUDATA_SEL	3	/* User data descriptor */
+#define	NLDT		LUDATA_SEL+1
 
 #endif /* _I386_SEGMENTS_H_ */
