@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 1999/10/27 02:22:21 takemura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 1999/10/27 02:22:21 takemura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -194,7 +194,7 @@ mach_init(argc, argv, bi)
 
 	/* clear the BSS segment */
 #ifdef DDB
-	if (!strncmp(end,Elf_e_ident,Elf_e_siz)) {
+	if (!strncmp(end, ELFMAG, SELFMAG)) {
 		esym = end;
 		esym += ((Elf_Ehdr *)end)->e_entry;
 		kernend = (caddr_t)mips_round_page(esym);
