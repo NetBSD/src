@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.33.6.2 1997/11/22 03:59:35 mellon Exp $	*/
+/*	$NetBSD: dc.c,v 1.33.6.3 1998/11/24 06:03:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.33.6.2 1997/11/22 03:59:35 mellon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.33.6.3 1998/11/24 06:03:44 cgd Exp $");
 
 /*
  * devDC7085.c --
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.33.6.2 1997/11/22 03:59:35 mellon Exp $");
 
 #include <pmax/dev/dcvar.h>
 #include <pmax/dev/dc_cons.h>
+#include <pmax/dev/rconsvar.h>
 
 extern struct cfdriver mainbus_cd;
 
@@ -206,19 +207,10 @@ struct speedtab dcspeedtab[] = {
 extern int cold;
 dcregs *dc_cons_addr = 0;
 
-/*
- * Is there a framebuffer console device using this serial driver?
- * XXX used for ugly special-cased console input that should be redone
- * more cleanly.
- */
-static inline int raster_console __P((void));
+/* Test to see if active serial console on this unit. */
+#define CONSOLE_ON_UNIT(unit) \
+  (major(cn_tab->cn_dev) == DCDEV && SCCUNIT(cn_tab->cn_dev) == (unit))
 
-static inline int
-raster_console()
-{
-	return (cn_tab->cn_pri == CN_INTERNAL ||
-		cn_tab->cn_pri == CN_NORMAL);
-}
 
 
 /* XXX move back into dc_consinit when debugged */
@@ -327,23 +319,26 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	 * Special handling for consoles.
 	 */
 	if (sc->sc_dv.dv_unit == 0) {
-		if (raster_console()) {
+		if (major(cn_tab->cn_dev) == DCDEV) {
+			/* set params for serial console */
+			s = spltty();
+			dc_consinit(cn_tab->cn_dev, dcaddr);
+			dcaddr->dc_csr |= (CSR_MSE | CSR_TIE | CSR_RIE);
+			splx(s);
+		}
+		if ( 1 /*raster_console()*/) {
 			s = spltty();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B4800 | DCKBD_PORT;
 			wbflush();
+			DELAY(10000);
+			KBDReset(makedev(DCDEV, DCKBD_PORT), dcPutc);
+			DELAY(10000);
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_B4800 | LPR_OPAR |
 				LPR_PARENB | LPR_8_BIT_CHAR | DCMOUSE_PORT;
 			wbflush();
-			DELAY(1000);
-			KBDReset(makedev(DCDEV, DCKBD_PORT), dcPutc);
+			DELAY(10000);
 			MouseInit(makedev(DCDEV, DCMOUSE_PORT), dcPutc, dcGetc);
-			splx(s);
-		}
-		else if (major(cn_tab->cn_dev) == DCDEV) {
-			s = spltty();
-			dc_consinit(cn_tab->cn_dev, dcaddr);
-			dcaddr->dc_csr |= (CSR_MSE | CSR_TIE | CSR_RIE);
 			splx(s);
 		}
 	}
@@ -385,7 +380,6 @@ dcopen(dev, flag, mode, p)
 	register struct dc_softc *sc;
 	register int unit, line;
 	int s, error = 0;
-	int firstopen = 0;
 
 	unit = DCUNIT(dev);
 	line = DCLINE(dev);
@@ -407,7 +401,6 @@ dcopen(dev, flag, mode, p)
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
-		firstopen = 1;
 #ifndef PORTSELECTOR
 		if (tp->t_ispeed == 0) {
 #endif
@@ -445,17 +438,6 @@ dcopen(dev, flag, mode, p)
 	if (error)
 		return (error);
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
-
-#if NRASTERCONSOLE > 0
-	/*
-	 * Handle console cases specially.
-	 */
-	if (firstopen && raster_console() && 
-	    unit == 0 && tp == sc->dc_tty[DCKBD_PORT]) {
-	  	extern struct tty *fbconstty;
-		tp->t_winsize = fbconstty->t_winsize;
-	}
-#endif	/* NRASTERCONSOLE */
 	return (error);
 }
 
@@ -658,7 +640,7 @@ cold_dcparam(tp, t, dcaddr, allow_19200)
 	/*
 	 * Handle console cases specially.
 	 */
-	if (raster_console()) {
+	if (/*XXX*/ 1) {	/* XXX jrs */
 		if (unit == DCKBD_PORT) {
 			lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B4800 | DCKBD_PORT;
@@ -743,7 +725,7 @@ dcrint(sc)
 			overrun = 1;
 		}
 		/* the keyboard requires special translation */
-		if (raster_console() && tp == dc_tty[DCKBD_PORT]) {
+		if (tp == dc_tty[DCKBD_PORT]) {
 			if (cc == LK_DO) {
 #ifdef DDB
 				spl0();
@@ -761,6 +743,8 @@ dcrint(sc)
 			}
 			if ((cc = kbdMapChar(cc)) < 0)
 				return;
+			rcons_input(0, cc);
+			return;
 		} else if (tp == dc_tty[DCMOUSE_PORT] && dcMouseButtons) {
 			mouseInput(cc);
 			return;
@@ -889,25 +873,7 @@ dcstart(tp)
 	}
 	if (tp->t_outq.c_cc == 0)
 		goto out;
-	/* handle console specially */
-	if (raster_console() && tp == sc->dc_tty[DCKBD_PORT]) {
-		while (tp->t_outq.c_cc > 0) {
-			cc = getc(&tp->t_outq) & 0x7f;
-			cnputc(cc);
-		}
-		/*
-		 * After we flush the output queue we may need to wake
-		 * up the process that made the output.
-		 */
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-			if (tp->t_state & TS_ASLEEP) {
-				tp->t_state &= ~TS_ASLEEP;
-				wakeup((caddr_t)&tp->t_outq);
-			}
-			selwakeup(&tp->t_wsel);
-		}
-		goto out;
-	}
+
   	cc = ndqb(&tp->t_outq, 0);
 	if (cc == 0)
 		goto out;
