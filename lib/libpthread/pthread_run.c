@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.1.2.8 2001/07/31 00:17:43 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.1.2.9 2001/08/01 23:31:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@ pthread__block(pthread_t self, pt_spin_t *queuelock)
 	pthread_t next;
 
 	next = pthread__next(self);
-
 	pthread__locked_switch(self, next, queuelock);
 }
 
@@ -89,6 +88,7 @@ pthread__next(pthread_t self)
 void
 pthread__sched(pthread_t self, pthread_t thread)
 {
+
 	thread->pt_state = PT_STATE_RUNNABLE;
 	assert (thread->pt_type == PT_THREAD_NORMAL);
 	thread->rescheds++;
@@ -143,6 +143,7 @@ void
 pthread__sched_bulk(pthread_t self, pthread_t qhead)
 {
 	pthread_t next;
+
 	pthread_spinlock(self, &runqueue_lock);
 	for ( ; qhead && (qhead != self) ; qhead = next) {
 		next = qhead->pt_next;
