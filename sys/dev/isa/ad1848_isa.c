@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.12 1999/09/06 17:07:05 rh Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.13 1999/10/05 03:44:31 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -472,9 +472,23 @@ ad1848_isa_open(addr, flags)
 		state |= 2;
 	}
 
+#ifndef AUDIO_NO_POWER_CTL
+	/* Power-up chip */
+	if (isc->powerctl)
+		isc->powerctl(isc->powerarg, flags);
+#endif
+
+	/* Init and mute wave output */
+	ad1848_mute_wave_output(sc, WAVE_MUTE2_INIT, 1);
+
 	error = ad1848_open(sc, flags);
-	if (error)
+	if (error) {
+#ifndef AUDIO_NO_POWER_CTL
+		if (isc->powerctl)
+			isc->powerctl(isc->powerarg, 0);
+#endif
 		goto bad;
+	}
 
 	DPRINTF(("ad1848_isa_open: opened\n"));
 	return (0);
@@ -510,6 +524,12 @@ ad1848_isa_close(addr)
 
 	DPRINTF(("ad1848_isa_close: stop DMA\n"));
 	ad1848_close(sc);
+
+#ifndef AUDIO_NO_POWER_CTL
+	/* Power-down chip */
+	if (isc->powerctl)
+		isc->powerctl(isc->powerarg, 0);
+#endif
 }
 
 int
@@ -575,6 +595,9 @@ ad1848_isa_trigger_output(addr, start, end, blksize, intr, arg, param)
 	ad_write(sc, SP_LOWER_BASE_COUNT, blksize & 0xff);
 	ad_write(sc, SP_UPPER_BASE_COUNT, blksize >> 8);
 
+	/* Unmute wave output */
+	ad1848_mute_wave_output(sc, WAVE_MUTE2, 0);
+
 	reg = ad_read(sc, SP_INTERFACE_CONFIG);
 	ad_write(sc, SP_INTERFACE_CONFIG, PLAYBACK_ENABLE|reg);
 
@@ -605,6 +628,9 @@ ad1848_isa_halt_output(addr)
 	struct ad1848_softc *sc = &isc->sc_ad1848;
 
 	if (isc->sc_playrun) {
+		/* Mute wave output */
+		ad1848_mute_wave_output(sc, WAVE_MUTE2, 1);
+
 		ad1848_halt_output(sc);
 		isa_dmaabort(isc->sc_ic, isc->sc_playdrq);
 		isc->sc_playrun = 0;
