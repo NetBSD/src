@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.4 1998/03/28 00:14:51 mark Exp $	*/
+/*	$NetBSD: spl.S,v 1.5 1998/04/01 23:02:32 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -44,10 +44,6 @@
 #include "assym.h"
 #include <machine/psl.h>
 #include <machine/asm.h>
-
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
 
 	.text
 	.align	0
