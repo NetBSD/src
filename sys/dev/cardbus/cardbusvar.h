@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.18 2000/04/13 10:11:15 joda Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.19 2000/04/17 09:15:58 joda Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -331,6 +331,10 @@ struct cardbus_cis_info {
     } bar[7];
     unsigned int	funcid;
     union {
+	struct {
+	    int uart_type;
+	    int uart_present;
+	} serial;
 	struct {
 	    char netid[6];
 	    char netid_present;
