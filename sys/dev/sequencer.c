@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.11 1998/10/05 09:21:43 augustss Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.12 1998/10/20 21:19:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ int seq_do_sysex __P((struct sequencer_softc *, seq_event_rec *));
 int seq_do_fullsize __P((struct sequencer_softc *, seq_event_rec *, 
 			 struct uio *));
 int seq_timer __P((struct sequencer_softc *, int, int, seq_event_rec *));
-int seq_input_event __P((struct sequencer_softc *, seq_event_rec *));
+static int seq_input_event __P((struct sequencer_softc *, seq_event_rec *));
 int seq_drain __P((struct sequencer_softc *));
 void seq_startoutput __P((struct sequencer_softc *));
 void seq_timeout __P((void *));
@@ -326,7 +326,7 @@ sequencerclose(dev, flags, ifmt, p)
 	return (0);
 }
 
-int
+static int
 seq_input_event(sc, cmd)
 	struct sequencer_softc *sc;
 	seq_event_rec *cmd;
