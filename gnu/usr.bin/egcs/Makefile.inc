@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 1999/03/17 00:46:35 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.20 1999/07/30 04:07:23 mycroft Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -39,9 +39,6 @@ CPPFLAGS+=-DDEFAULT_ELF
 .endif
 
 HOST_CPPFLAGS=	${CPPFLAGS}
-
-LDADD+=		-lgnumalloc
-DPADD+=		${LIBGNUMALLOC}
 
 .PATH:		${.CURDIR}/../arch \
 		${DIST} \

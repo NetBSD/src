@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 1997/03/24 22:06:51 christos Exp $
+#	$NetBSD: Makefile,v 1.6 1999/07/30 04:07:23 mycroft Exp $
 
 PROG=	sort
-LDADD+=	-lgnumalloc
-DPADD+=	${LIBGNUMALLOC}
 
 .include <bsd.prog.mk>
