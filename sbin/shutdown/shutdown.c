@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.25 1998/03/23 05:00:16 fair Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.26 1998/04/01 15:17:31 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.25 1998/03/23 05:00:16 fair Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.26 1998/04/01 15:17:31 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: shutdown.c,v 1.25 1998/03/23 05:00:16 fair Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
 
