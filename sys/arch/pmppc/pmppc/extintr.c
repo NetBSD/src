@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.2 2002/05/31 11:00:38 augustss Exp $	*/
+/*	$NetBSD: extintr.c,v 1.3 2002/06/13 15:29:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -362,7 +362,7 @@ intr_calculatemasks()
 	 */
 	imask[IPL_IMP] |= imask[IPL_TTY];
 
-#if 0
+#ifdef IPL_AUDIO
 	imask[IPL_AUDIO] |= imask[IPL_IMP];
 #endif
 
@@ -371,8 +371,10 @@ intr_calculatemasks()
 	 * network, and disk drivers, clock > imp.
 	 */
 	imask[IPL_CLOCK] |= SPL_CLOCK;		/* block the clock */
-#if 0
+#ifdef IPL_AUDIO
 	imask[IPL_CLOCK] |= imask[IPL_AUDIO];
+#else
+	imask[IPL_CLOCK] |= imask[IPL_IMP];
 #endif
 
 	/*
