@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: alloc.c,v 1.1.1.6 2000/06/10 18:04:42 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: alloc.c,v 1.1.1.7 2000/06/24 06:38:26 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -192,12 +192,27 @@ struct hash_table *new_hash_table (count, file, line)
 	return rval;
 }
 
+struct hash_bucket *free_hash_buckets;
+
 struct hash_bucket *new_hash_bucket (file, line)
 	const char *file;
 	int line;
 {
-	struct hash_bucket *rval = dmalloc (sizeof (struct hash_bucket),
-					    file, line);
+	struct hash_bucket *rval;
+	int i;
+	if (!free_hash_buckets) {
+		rval = dmalloc (127 * sizeof (struct hash_bucket),
+				file, line);
+		if (!rval)
+			return rval;
+		for (i = 0; i < 127; i++) {
+			rval -> next = free_hash_buckets;
+			free_hash_buckets = rval;
+			rval++;
+		}
+	}
+	rval = free_hash_buckets;
+	free_hash_buckets = rval -> next;
 	return rval;
 }
 
@@ -206,7 +221,8 @@ void free_hash_bucket (ptr, file, line)
 	const char *file;
 	int line;
 {
-	dfree ((VOIDPTR)ptr, file, line);
+	ptr -> next = free_hash_buckets;
+	free_hash_buckets = ptr;
 }
 
 struct protocol *new_protocol (file, line)
@@ -755,7 +771,7 @@ int dns_host_entry_dereference (ptr, file, line)
 	}
 
 	(*ptr) -> refcnt--;
-	rc_register (file, line, ptr, bp, bp -> refcnt);
+	rc_register (file, line, ptr, *ptr, (*ptr) -> refcnt);
 	if (!(*ptr) -> refcnt)
 		dfree ((*ptr), file, line);
 	if ((*ptr) -> refcnt < 0) {
