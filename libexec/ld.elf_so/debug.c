@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.4 2003/06/05 10:41:32 simonb Exp $	*/
+/*	$NetBSD: debug.c,v 1.5 2003/09/22 14:37:57 enami Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -48,7 +48,7 @@ void
 debug_printf(const char *format, ...)
 {
 
-	if(debug) {
+	if (debug) {
 		va_list ap;
 
 		va_start(ap, format);
