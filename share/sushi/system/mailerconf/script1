@@ -1,16 +1,25 @@
 #!/bin/sh
-# $NetBSD: script1,v 1.1 2001/03/06 21:21:07 garbled Exp $
+# $NetBSD: script1,v 1.2 2001/04/23 09:07:49 garbled Exp $
+
+BIGLIST="exim postfix-current sendmail88"
 
 grep sendmail/sendmail /etc/mailer.conf >/dev/null
-if [ "$?" = "0" ]; then
+STATA="$?"
+if [ "$STATA" = "0" ]; then
 	echo "sendmail"
 	echo "postfix"
 fi
 
 grep postfix/sendmail /etc/mailer.conf >/dev/null
-if [ "$?" = "0" ]; then
+STATB="$?"
+if [ "$STATB" = "0" ]; then
 	echo "postfix"
 	echo "sendmail"
+fi
+
+if [ "$STATA" != "0" -a "$STATB" != "0" ]; then
+	echo "sendmail"
+	echo "postfix"
 fi
 
 for i in $BIGLIST
@@ -20,3 +29,4 @@ do
 		echo "$i"
 	fi
 done
+
