@@ -1,8 +1,8 @@
-/*	$NetBSD: simide.c,v 1.6 1998/06/28 07:27:57 thorpej Exp $	*/
+/*	$NetBSD: simide.c,v 1.7 1998/09/22 00:40:38 mark Exp $	*/
 
 /*
- * Copyright (c) 1997 Mark Brinicombe
- * Copyright (c) 1997 Causality Limited
+ * Copyright (c) 1997-1998 Mark Brinicombe
+ * Copyright (c) 1997-1998 Causality Limited
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,6 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -40,32 +41,18 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/buf.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
-#include <sys/syslog.h>
-#include <sys/proc.h>
-
-#include <vm/vm.h>
 
 #include <machine/irqhandler.h>
-#include <machine/katelib.h>
 #include <machine/io.h>
 #include <machine/bus.h>
 #include <arm32/podulebus/podulebus.h>
 #include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/simidereg.h>
 
-#include <arm32/dev/wdreg.h>
-#include <arm32/dev/wdlink.h>
+#include <dev/ic/wdcvar.h>
+
 
 /*
  * Simtec IDE podule device.
@@ -90,8 +77,8 @@ struct simide_softc {
 	int 			sc_podule_number;	/* Our podule number */
 	int			sc_ctl_reg;		/* Global ctl reg */
 	int			sc_version;		/* Card version */
-	bus_space_tag_t		sc_iot;			/* Bus tag */
-	bus_space_handle_t	sc_ctl_ioh;		/* control handle */
+	bus_space_tag_t		sc_ctliot;		/* Bus tag */
+	bus_space_handle_t	sc_ctlioh;		/* control handle */
 	struct bus_space 	sc_tag;			/* custom tag */
 };
 
@@ -112,6 +99,7 @@ struct simide_attach_args {
 	struct podule_attach_args *sa_pa;	/* podule info */
 	struct simide_softc *sa_softc;		/* parent softc */
 	bus_space_tag_t sa_iot;			/* bus space tag */
+	u_int sa_iobase;			/* I/O base address */
 	int sa_channel;      			/* IDE channel */
 };
 
@@ -174,7 +162,6 @@ simide_attach(parent, self, aux)
 	int status;
 
 	/* Note the podule number and validate */
-
 	if (pa->pa_podule_number == -1)
 		panic("Podule has disappeared !");
 
@@ -197,16 +184,15 @@ simide_attach(parent, self, aux)
 	 */
 
 	sc->sc_tag = *pa->pa_iot;
-	sc->sc_tag.bs_cookie = (void *) 7;
+	sc->sc_tag.bs_cookie = (void *) DRIVE_REGISTER_SPACING_SHIFT;
 	sc->sc_tag.bs_rm_2 = simide_bs_rm_2;
 	sc->sc_tag.bs_wm_2 = simide_bs_wm_2;
-	sc->sc_iot = &sc->sc_tag;
+	sc->sc_ctliot = pa->pa_iot;
 
 	/* Obtain bus space handles for all the control registers */
-
-	if (bus_space_map(sc->sc_iot, pa->pa_podule->mod_base +
+	if (bus_space_map(sc->sc_ctliot, pa->pa_podule->mod_base +
 	    CONTROL_REGISTERS_POFFSET, CONTROL_REGISTER_SPACE, 0,
-	    &sc->sc_ctl_ioh))
+	    &sc->sc_ctlioh))
 		panic("%s: Cannot map control registers\n", self->dv_xname);
 
 	/* Install a clean up handler to make sure IRQ's are disabled */
@@ -214,41 +200,48 @@ simide_attach(parent, self, aux)
 		panic("%s: Cannot install shutdown handler", self->dv_xname);
 
 	/* Set the interrupt info for this podule */
-
 	sc->sc_podule->irq_addr = pa->pa_podule->mod_base
-	    + CONTROL_REGISTERS_POFFSET + (STATUS_IRQ << 4);
+	    + CONTROL_REGISTERS_POFFSET + (CONTROL_REGISTER_OFFSET << 2);
 	sc->sc_podule->irq_mask = STATUS_IRQ;
 
 	sc->sc_ctl_reg = 0;
 
-	status = bus_space_read_1(sc->sc_iot, sc->sc_ctl_ioh, STATUS_REGISTER_OFFSET);
-/*
-	if (status & STATUS_RESET)
-		printf(" cable fault");
-	if (status & STATUS_ADDR_TEST)
-		printf(" card/cable fault (addr)");
-	if (status & STATUS_CS_TEST)
-		printf(" card/cable fault (cs)");
-	if (status & STATUS_RW_TEST)
-		printf(" card/cable fault (rw)");
-*/
-	if (status & (STATUS_FAULT))
-		printf("st=%02x", status);
+	status = bus_space_read_1(sc->sc_ctliot, sc->sc_ctlioh,
+	    STATUS_REGISTER_OFFSET);
+
+	/* If any of the bits in STATUS_FAULT are zero then we have a fault. */
+	if ((status & STATUS_FAULT) != STATUS_FAULT)
+		printf(" card/cable fault (%02x) -", status);
+
+	if (!(status & STATUS_RESET))
+		printf(" (reset)");
+	if (!(status & STATUS_ADDR_TEST))
+		printf(" (addr)");
+	if (!(status & STATUS_CS_TEST))
+		printf(" (cs)");
+	if (!(status & STATUS_RW_TEST))
+		printf(" (rw)");
+
 	printf("\n");
 
-/*	if (status & STATUS_FAULT)
+	/* Perhaps we should just abort at this point. */
+/*	if ((status & STATUS_FAULT) != STATUS_FAULT)
 		return;*/
 
+	/*
+	 * Enable IDE, Obey IORDY and disabled slow mode
+	 */
 	sc->sc_ctl_reg |= CONTROL_IDE_ENABLE | CONTROL_IORDY
-			| CONTROL_SLOW_MODE;
-	bus_space_write_1(sc->sc_iot, sc->sc_ctl_ioh, CONTROL_REGISTER_OFFSET,
-	    sc->sc_ctl_reg);
+			| CONTROL_SLOW_MODE_OFF;
+	bus_space_write_1(sc->sc_ctliot, sc->sc_ctlioh,
+	    CONTROL_REGISTER_OFFSET, sc->sc_ctl_reg);
 
 	/* Configure the children */
-
 	sa.sa_softc = sc;
 	sa.sa_pa = pa;
-	sa.sa_iot = sc->sc_iot;
+	sa.sa_iot = &sc->sc_tag;
+	sa.sa_iobase = pa->pa_podule->mod_base;
+
 	sa.sa_channel = 0;
 	config_found_sm(self, &sa, simide_print, NULL);
 
@@ -272,7 +265,7 @@ simide_shutdown(arg)
 	sc->sc_ctl_reg &= (CONTROL_PRIMARY_IRQ | CONTROL_SECONDARY_IRQ);
 
 	/* Disable card interrupts */
-	bus_space_write_1(sc->sc_iot, sc->sc_ctl_ioh,
+	bus_space_write_1(sc->sc_ctliot, sc->sc_ctlioh,
 	    CONTROL_REGISTER_OFFSET, sc->sc_ctl_reg);
 }
 
@@ -280,17 +273,13 @@ simide_shutdown(arg)
  * Simtec IDE probe and attach code for the wdc device.
  *
  * This provides a different pair of probe and attach functions
- * for attaching the wdc device (mainbus/wd.c) to the Simtec IDE card.
+ * for attaching the wdc device to the Simtec IDE card.
  */
 
-struct simwdc_softc {
-	struct wdc_softc	sc_wdc;			/* Device node */
+struct wdc_simide_softc {
+	struct wdc_softc	sc_wdcdev;		/* Device node */
+	struct wdc_attachment_data	sc_ad;		/* Attachment data */
 	irqhandler_t		sc_ih;			/* interrupt handler */
-	podule_t 		*sc_podule;		/* Our podule */
-	int 			sc_podule_number;	/* Our podule number */
-	bus_space_tag_t		sc_iot;			/* Bus space tag */
-	bus_space_handle_t	sc_ioh;			/* handle for registers */
-	bus_space_handle_t	sc_aux_ioh;		/* handle for aux registers */
 	int			sc_irqmask;		/* IRQ mask for this channel */
 	int			sc_channel;		/* channel number */
 	struct simide_softc	*sc_psoftc;		/* pointer to parent */
@@ -300,10 +289,8 @@ int	wdc_simide_probe	__P((struct device *, struct cfdata *, void *));
 void	wdc_simide_attach	__P((struct device *, struct device *, void *));
 int	wdc_simide_intr		__P((void *));
 
-extern int wdcintr __P((void *));
-
 struct cfattach wdc_sim_ca = {
-	sizeof(struct simwdc_softc), wdc_simide_probe, wdc_simide_attach
+	sizeof(struct wdc_simide_softc), wdc_simide_probe, wdc_simide_attach
 };
 
 /*
@@ -318,11 +305,9 @@ struct {
 	u_int aux_register;
 	u_int irq_mask;
 } simide_info[] = {
-	{ PRIMARY_DRIVE_REGISTERS_POFFSET,
-	  PRIMARY_AUX_REGISTER_POFFSET,
+	{ PRIMARY_DRIVE_REGISTERS_POFFSET, PRIMARY_AUX_REGISTER_POFFSET,
 	  CONTROL_PRIMARY_IRQ },
-	{ SECONDARY_DRIVE_REGISTERS_POFFSET,
-	  SECONDARY_AUX_REGISTER_POFFSET,
+	{ SECONDARY_DRIVE_REGISTERS_POFFSET, SECONDARY_AUX_REGISTER_POFFSET,
 	  CONTROL_SECONDARY_IRQ }
 };
 
@@ -340,14 +325,11 @@ wdc_simide_probe(parent, cf, aux)
 	void *aux;
 {
 	struct simide_attach_args *sa = (void *)aux;
-	struct podule_attach_args *pa = sa->sa_pa;
+	struct wdc_attachment_data ad;
 	struct simide_softc *sc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_space_handle_t aux_ioh;
-	int rv;
+	int result = 0;
 
-	iot = sa->sa_iot;
+	bzero(&ad, sizeof ad);
 	sc = sa->sa_softc;
 
 #ifdef DIAGNOSTIC
@@ -355,29 +337,30 @@ wdc_simide_probe(parent, cf, aux)
 		return(0);
 #endif /* DIAGNOSTIC */
 
-	if (bus_space_map(iot, pa->pa_podule->mod_base + 
+	ad.iot = sa->sa_iot;
+	if (bus_space_map(ad.iot, sa->sa_iobase + 
 	    simide_info[sa->sa_channel].drive_registers, DRIVE_REGISTERS_SPACE,
-	    0, &ioh))
+	    0, &ad.ioh))
 		return(0);
 
-	if (bus_space_map(iot, pa->pa_podule->mod_base +
-	    simide_info[sa->sa_channel].aux_register, 4, 0, &aux_ioh)) {
-		bus_space_unmap(iot, ioh, DRIVE_REGISTERS_SPACE);
+	ad.auxiot = sa->sa_iot;
+	if (bus_space_map(ad.auxiot, sa->sa_iobase +
+	    simide_info[sa->sa_channel].aux_register, 4, 0, &ad.auxioh)) {
+		bus_space_unmap(ad.iot, ad.ioh, DRIVE_REGISTERS_SPACE);
 		return(0);
 	}
 
 	/* Disable interrupts and clear any pending interrupts */
-
 	sc->sc_ctl_reg &= ~simide_info[sa->sa_channel].irq_mask;
 
-	bus_space_write_1(iot, sc->sc_ctl_ioh, CONTROL_REGISTER_OFFSET,
-	    sc->sc_ctl_reg);
+	bus_space_write_1(sc->sc_ctliot, sc->sc_ctlioh,
+	    CONTROL_REGISTER_OFFSET, sc->sc_ctl_reg);
 
-	rv = wdcprobe_internal(iot, ioh, aux_ioh, ioh, -1, "simide_probe");	/* XXX */
+	result = wdcprobe(&ad);
 
-	bus_space_unmap(iot, ioh, DRIVE_REGISTERS_SPACE);
-	bus_space_unmap(iot, aux_ioh, 4);
-	return(rv);
+	bus_space_unmap(ad.auxiot, ad.auxioh, DRIVE_REGISTERS_SPACE);
+	bus_space_unmap(ad.iot, ad.ioh, 4);
+	return(result);
 }
 
 /*
@@ -394,62 +377,54 @@ wdc_simide_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct simwdc_softc *wdc = (void *)self;
+	struct wdc_simide_softc *wdc = (void *)self;
 	struct simide_attach_args *sa = (void *)aux;
 	struct podule_attach_args *pa = sa->sa_pa;
 	struct simide_softc *sc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_space_handle_t aux_ioh;
 
-	/* Note the podule number and validate */
-
-	wdc->sc_podule_number = pa->pa_podule_number;
-	wdc->sc_podule = pa->pa_podule;
+	printf("\n");
 
 	wdc->sc_psoftc = sc = sa->sa_softc;
 
 	wdc->sc_channel = sa->sa_channel;
 	wdc->sc_irqmask = simide_info[wdc->sc_channel].irq_mask;
 
-	wdc->sc_iot = iot = sa->sa_iot;
+	bzero(&wdc->sc_ad, sizeof wdc->sc_ad);
+	wdc->sc_ad.iot = sa->sa_iot;
+	wdc->sc_ad.auxiot = sa->sa_iot;
 
-	if (bus_space_map(iot, pa->pa_podule->mod_base
-	    + simide_info[wdc->sc_channel].drive_registers,
-	    DRIVE_REGISTERS_SPACE, 0, &ioh))
+	if (bus_space_map(wdc->sc_ad.iot, sa->sa_iobase +
+	    simide_info[wdc->sc_channel].drive_registers,
+	    DRIVE_REGISTERS_SPACE, 0, &wdc->sc_ad.ioh))
 		panic("%s: Cannot map drive registers\n", self->dv_xname);
 
-	if (bus_space_map(iot, pa->pa_podule->mod_base +
-	    simide_info[wdc->sc_channel].aux_register, 4, 0, &aux_ioh))
+	if (bus_space_map(wdc->sc_ad.auxiot, sa->sa_iobase +
+	    simide_info[wdc->sc_channel].aux_register, 4, 0, &wdc->sc_ad.auxioh))
 		panic("%s: Cannot map auxilary register\n", self->dv_xname);
 
-	wdc->sc_ioh = ioh;
-	wdc->sc_aux_ioh = aux_ioh;
-
 	/* Disable interrupts and clear any pending interrupts */
-
 	sc->sc_ctl_reg &= ~wdc->sc_irqmask;
-	bus_space_write_1(iot, sc->sc_ctl_ioh, CONTROL_REGISTER_OFFSET,
-	    sc->sc_ctl_reg);
+	bus_space_write_1(sc->sc_ctliot, sc->sc_ctlioh,
+	    CONTROL_REGISTER_OFFSET, sc->sc_ctl_reg);
 
-	wdcattach_internal((struct wdc_softc *)wdc, iot, ioh, aux_ioh, ioh, -1, -1);
+	wdcattach(&wdc->sc_wdcdev, &wdc->sc_ad);
 
   	wdc->sc_ih.ih_func = wdc_simide_intr;
    	wdc->sc_ih.ih_arg = wdc;
    	wdc->sc_ih.ih_level = IPL_BIO;
    	wdc->sc_ih.ih_name = "simide";
-	wdc->sc_ih.ih_maskaddr = wdc->sc_podule->irq_addr;
+	wdc->sc_ih.ih_maskaddr = pa->pa_podule->irq_addr;
 	wdc->sc_ih.ih_maskbits = wdc->sc_irqmask;
 
-	if (irq_claim(IRQ_PODULE, &wdc->sc_ih))
-		panic("Cannot claim IRQ %d for %s\n", IRQ_PODULE, self->dv_xname);
+	if (irq_claim(pa->pa_podule->interrupt, &wdc->sc_ih))
+		panic("%s: Cannot claim interrupt %d\n", self->dv_xname,
+		    pa->pa_podule->interrupt);
 
 	/* clear any pending interrupts and enable interrupts */
-
 	sc->sc_ctl_reg |= wdc->sc_irqmask;
 
-	bus_space_write_1(iot, sc->sc_ctl_ioh, CONTROL_REGISTER_OFFSET,
-	    sc->sc_ctl_reg);
+	bus_space_write_1(sc->sc_ctliot, sc->sc_ctlioh,
+	    CONTROL_REGISTER_OFFSET, sc->sc_ctl_reg);
 }
 
 /*
@@ -457,14 +432,15 @@ wdc_simide_attach(parent, self, aux)
  *
  * If the interrupt was from our card pass it on to the wdc interrupt handler
  */
-
 int
 wdc_simide_intr(arg)
 	void *arg;
 {
-	struct simwdc_softc *wdc = arg;
+	struct wdc_simide_softc *wdc = arg;
+	volatile u_char *intraddr = (volatile u_char *)wdc->sc_ih.ih_maskaddr;
 
-	if (ReadByte(wdc->sc_ih.ih_maskaddr) & wdc->sc_ih.ih_maskbits)
+	/* XXX - not bus space yet - should really be handled by podulebus */
+	if ((*intraddr) & wdc->sc_ih.ih_maskbits)
 		wdcintr(arg);
 
 	return(0);

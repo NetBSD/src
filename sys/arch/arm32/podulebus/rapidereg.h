@@ -1,4 +1,4 @@
-/*	$NetBSD: rapidereg.h,v 1.2 1997/03/15 18:09:42 is Exp $	*/
+/*	$NetBSD: rapidereg.h,v 1.3 1998/09/22 00:40:38 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -14,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Mark Brinicombe.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
