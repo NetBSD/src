@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.12 2002/05/19 09:47:10 enami Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.13 2002/08/18 23:45:48 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -49,7 +49,6 @@ typedef struct {
 arg_t source_types[] = {
 	{ "???",     RND_TYPE_UNKNOWN },
 	{ "disk",    RND_TYPE_DISK },
-	{ "net",     RND_TYPE_NET },
 	{ "net",     RND_TYPE_NET },
 	{ "tape",    RND_TYPE_TAPE },
 	{ "tty",     RND_TYPE_TTY },
