@@ -1,4 +1,4 @@
-/*	$NetBSD: copypage.s,v 1.7 1999/11/10 23:17:21 thorpej Exp $	*/
+/*	$NetBSD: copypage.s,v 1.8 2001/05/18 15:31:38 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@ Lm16loop:
 ENTRY(copypage)
 	movl	%sp@(4),%a0		| source address
 	movl	%sp@(8),%a1		| destiniation address
+#ifndef	__mc68010__
 	movw	#NBPG/32-1,%d0		| number of 32 byte chunks - 1
 Lmlloop:
 	movl	%a0@+,%a1@+
@@ -84,6 +85,12 @@ Lmlloop:
 	movl	%a0@+,%a1@+
 	movl	%a0@+,%a1@+
 	dbf	%d0,Lmlloop
+#else	/* __mc68010__ */	
+	movw	#NBPG/4-1,%d0		| number of 4 byte chunks - 1
+Lmlloop:
+	movl	%a0@+,%a1@+
+	dbf	%d0,Lmlloop		| use the 68010 loop mode
+#endif	/* __mc68010__ */	
 	rts
 
 /*
@@ -93,6 +100,7 @@ Lmlloop:
  */
 ENTRY(zeropage)
 	movl	%sp@(4),%a0		| dest address
+#ifndef	__mc68010__
 	movql	#NBPG/256-1,%d0		| number of 256 byte chunks - 1
 	movml	%d2-%d7,%sp@-
 	movql	#0,%d1
@@ -115,4 +123,10 @@ Lzloop:
 	movml	%d1-%d7/%a1,%a0@-
 	dbf	%d0,Lzloop
 	movml	%sp@+,%d2-%d7
+#else	/* __mc68010__ */
+	movw	#NBPG/4-1,%d0		| number of 4 byte chunks - 1
+Lzloop:
+	clrl	%a0@+
+	dbf	%d0,Lzloop		| use the 68010 loop mode
+#endif	/* __mc68010__ */
 	rts
