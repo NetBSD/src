@@ -1,5 +1,5 @@
 /*
- * Ascii magic -- file types that we know based on keywords
+ * ASCII magic -- file types that we know based on keywords
  * that can appear anywhere in the file.
  *
  * Copyright (c) Ian F. Darwin, 1987.
@@ -36,7 +36,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: ascmagic.c,v 1.7 1995/04/30 19:39:37 christos Exp $";
+	"@(#)$Id: ascmagic.c,v 1.8 1995/05/21 00:13:27 christos Exp $";
 #endif	/* lint */
 
 			/* an optimisation over plain strcmp() */
@@ -109,11 +109,11 @@ int nbytes;	/* size actually read */
 
 	for (i = 0; i < nbytes; i++) {
 		if (!isascii(buf[i]))
-			return 0;	/* not all ascii */
+			return 0;	/* not all ASCII */
 	}
 
-	/* all else fails, but it is ascii... */
-	ckfputs("ascii text", stdout);
+	/* all else fails, but it is ASCII... */
+	ckfputs("ASCII text", stdout);
 	if (has_escapes) {
 		ckfputs(" (with escape sequences)", stdout);
 	}
