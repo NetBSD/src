@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.48 1999/09/16 19:20:34 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.49 1999/10/11 09:16:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -578,7 +578,8 @@ usbd_set_config_index(dev, index, msg)
 		goto bad;
 	}
 	selfpowered = 0;
-	if (cdp->bmAttributes & UC_SELF_POWERED) {
+	if (!(dev->quirks->uq_flags & UQ_BUS_POWERED) &&
+	    cdp->bmAttributes & UC_SELF_POWERED) {
 		/* May be self powered. */
 		if (cdp->bmAttributes & UC_BUS_POWERED) {
 			/* Must ask device. */
