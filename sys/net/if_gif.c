@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.39 2002/03/05 04:13:01 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.40 2002/03/26 16:05:03 christos Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.39 2002/03/05 04:13:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.40 2002/03/26 16:05:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -232,6 +232,11 @@ gif_encapcheck(m, off, proto, arg)
 	default:
 		return 0;
 	}
+
+	/* Bail on short packets */
+	KASSERT(m->m_flags & M_PKTHDR);
+	if (m->m_pkthdr.len < sizeof(ip))
+		return 0;
 
 	/* LINTED const cast */
 	m_copydata((struct mbuf *)m, 0, sizeof(ip), (caddr_t)&ip);
