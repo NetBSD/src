@@ -1,5 +1,5 @@
-/*	$NetBSD: pfctl_qstats.c,v 1.3 2004/06/23 04:38:43 itojun Exp $	*/
-/*	$OpenBSD: pfctl_qstats.c,v 1.29 2004/03/15 15:25:44 dhartmei Exp $ */
+/*	$NetBSD: pfctl_qstats.c,v 1.4 2004/11/14 11:26:48 yamt Exp $	*/
+/*	$OpenBSD: pfctl_qstats.c,v 1.30 2004/04/27 21:47:32 kjc Exp $ */
 
 /*
  * Copyright (c) Henning Brauer <henning@openbsd.org>
@@ -93,6 +93,8 @@ pfctl_show_altq(int dev, const char *iface, int opts, int verbose2)
 	if ((nodes = pfctl_update_qstats(dev, &root)) < 0)
 		return (-1);
 
+	if (nodes == 0)
+		printf("No queue in use\n");
 	for (node = root; node != NULL; node = node->next) {
 		if (iface != NULL && strcmp(node->altq.ifname, iface))
 			continue;
@@ -103,11 +105,11 @@ pfctl_show_altq(int dev, const char *iface, int opts, int verbose2)
 		pfctl_print_altq_node(dev, node, 0, opts);
 	}
 
-	while (verbose2) {
+	while (verbose2 && nodes > 0) {
 		printf("\n");
 		fflush(stdout);
 		sleep(STAT_INTERVAL);
-		if (pfctl_update_qstats(dev, &root) == -1)
+		if ((nodes = pfctl_update_qstats(dev, &root)) == -1)
 			return (-1);
 		for (node = root; node != NULL; node = node->next) {
 			if (iface != NULL && strcmp(node->altq.ifname, iface))

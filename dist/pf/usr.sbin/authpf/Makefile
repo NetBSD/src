@@ -1,19 +1,12 @@
-#	$NetBSD: Makefile,v 1.2 2004/06/25 00:06:09 itojun Exp $
-#	$OpenBSD: Makefile,v 1.10 2003/11/20 23:23:09 avsm Exp $
+#	$NetBSD: Makefile,v 1.3 2004/11/14 11:26:48 yamt Exp $
+#	$OpenBSD: Makefile,v 1.12 2004/04/25 19:24:52 deraadt Exp $
 
 PROG=	authpf
 MAN=	authpf.8
 BINOWN= root
 BINGRP= authpf
 BINMODE= 6555
-SRCS=	authpf.c parse.y pfctl_parser.c pf_print_state.c pfctl_altq.c
-SRCS+=	pfctl_radix.c pfctl_osfp.c
-CFLAGS+= -I${.CURDIR}/../../sbin/pfctl -Wall
-.PATH:  ${.CURDIR}/../../sbin/pfctl
-
-LDADD+= -lm
-DPADD+= ${LIBM}
-
-CLEANFILES+=y.tab.h
+SRCS=	authpf.c
+CFLAGS+= -Wall
 
 .include <bsd.prog.mk>

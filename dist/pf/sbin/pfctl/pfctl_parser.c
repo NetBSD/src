@@ -1,5 +1,5 @@
-/*	$NetBSD: pfctl_parser.c,v 1.4 2004/10/29 19:46:27 dsl Exp $	*/
-/*	$OpenBSD: pfctl_parser.c,v 1.194.2.1 2004/05/05 04:00:50 brad Exp $ */
+/*	$NetBSD: pfctl_parser.c,v 1.5 2004/11/14 11:26:48 yamt Exp $	*/
+/*	$OpenBSD: pfctl_parser.c,v 1.203 2004/07/16 23:44:25 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -223,6 +223,7 @@ const struct pf_timeout pf_timeouts[] = {
 	{ "tcp.closing",	PFTM_TCP_CLOSING },
 	{ "tcp.finwait",	PFTM_TCP_FIN_WAIT },
 	{ "tcp.closed",		PFTM_TCP_CLOSED },
+	{ "tcp.tsdiff",		PFTM_TS_DIFF },
 	{ "udp.first",		PFTM_UDP_FIRST_PACKET },
 	{ "udp.single",		PFTM_UDP_SINGLE },
 	{ "udp.multiple",	PFTM_UDP_MULTIPLE },
@@ -403,13 +404,13 @@ print_fromto(struct pf_rule_addr *src, pf_osfp_t osfp, struct pf_rule_addr *dst,
 	    PF_AZERO(&src->addr.v.a.mask, AF_INET6) &&
 	    PF_AZERO(&dst->addr.v.a.addr, AF_INET6) &&
 	    PF_AZERO(&dst->addr.v.a.mask, AF_INET6) &&
-	    !src->not && !dst->not &&
+	    !src->neg && !dst->neg &&
 	    !src->port_op && !dst->port_op &&
 	    osfp == PF_OSFP_ANY)
 		printf(" all");
 	else {
 		printf(" from ");
-		if (src->not)
+		if (src->neg)
 			printf("! ");
 		print_addr(&src->addr, af, verbose);
 		if (src->port_op)
@@ -421,7 +422,7 @@ print_fromto(struct pf_rule_addr *src, pf_osfp_t osfp, struct pf_rule_addr *dst,
 			    sizeof(buf)));
 
 		printf(" to ");
-		if (dst->not)
+		if (dst->neg)
 			printf("! ");
 		print_addr(&dst->addr, af, verbose);
 		if (dst->port_op)
@@ -665,7 +666,7 @@ print_src_node(struct pf_src_node *sn, int opts)
 }
 
 void
-print_rule(struct pf_rule *r, int verbose)
+print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 {
 	static const char *actiontypes[] = { "pass", "block", "scrub", "nat",
 	    "no nat", "binat", "no binat", "rdr", "no rdr" };
@@ -678,8 +679,8 @@ print_rule(struct pf_rule *r, int verbose)
 		printf("@%d ", r->nr);
 	if (r->action > PF_NORDR)
 		printf("action(%d)", r->action);
-	else if (r->anchorname[0])
-		printf("%s %s", anchortypes[r->action], r->anchorname);
+	else if (anchor_call[0])
+		printf("%s %s", anchortypes[r->action], anchor_call);
 	else {
 		printf("%s", actiontypes[r->action]);
 		if (r->natpass)
@@ -819,6 +820,21 @@ print_rule(struct pf_rule *r, int verbose)
 		printf(" modulate state");
 	else if (r->keep_state == PF_STATE_SYNPROXY)
 		printf(" synproxy state");
+	if (r->prob) {
+		char	buf[20];
+
+		snprintf(buf, sizeof(buf), "%f", r->prob*100.0/(UINT_MAX+1.0));
+		for (i = strlen(buf)-1; i > 0; i--) {
+			if (buf[i] == '0')
+				buf[i] = '\0';
+			else {
+				if (buf[i] == '.')
+					buf[i] = '\0';
+				break;
+			}
+		}
+		printf(" probability %s%%", buf);
+	}
 	opts = 0;
 	if (r->max_states || r->max_src_nodes || r->max_src_states)
 		opts = 1;
@@ -923,7 +939,7 @@ print_rule(struct pf_rule *r, int verbose)
 			printf(" !");
 		printf(" tagged %s", r->match_tagname);
 	}
-	if (!r->anchorname[0] && (r->action == PF_NAT ||
+	if (!anchor_call[0] && (r->action == PF_NAT ||
 	    r->action == PF_BINAT || r->action == PF_RDR)) {
 		printf(" -> ");
 		print_pool(&r->rpool, r->rpool.proxy_port[0],
@@ -990,9 +1006,7 @@ set_ipmask(struct node_host *h, u_int8_t b)
 	int		 i, j = 0;
 
 	m = &h->addr.v.a.mask;
-
-	for (i = 0; i < 4; i++)
-		m->addr32[i] = 0;
+	memset(m, 0, sizeof(*m));
 
 	while (b >= 32) {
 		m->addr32[j++] = 0xffffffff;
@@ -1044,8 +1058,6 @@ ifa_load(void)
 {
 	struct ifaddrs		*ifap, *ifa;
 	struct node_host	*n = NULL, *h = NULL;
-	struct pfr_buffer	 b;
-	struct pfi_if		*p;
 
 	if (getifaddrs(&ifap) < 0)
 		err(1, "getifaddrs");
@@ -1121,43 +1133,6 @@ ifa_load(void)
 		}
 	}
 
-	/* add interface groups, including clonable and dynamic stuff */
-	bzero(&b, sizeof(b));
-	b.pfrb_type = PFRB_IFACES;
-	for (;;) {
-		if (pfr_buf_grow(&b, b.pfrb_size))
-			err(1, "ifa_load: pfr_buf_grow");
-		b.pfrb_size = b.pfrb_msize;
-		if (pfi_get_ifaces(NULL, b.pfrb_caddr, &b.pfrb_size,
-		    PFI_FLAG_GROUP))
-			err(1, "ifa_load: pfi_get_ifaces");
-		if (b.pfrb_size <= b.pfrb_msize)
-			break;
-	}
-	PFRB_FOREACH(p, &b) {
-		n = calloc(1, sizeof(struct node_host));
-		if (n == NULL)
-			err(1, "address: calloc");
-		n->af = AF_LINK;
-		n->ifa_flags = PF_IFA_FLAG_GROUP;
-		if (p->pfif_flags & PFI_IFLAG_DYNAMIC)
-			n->ifa_flags |= PF_IFA_FLAG_DYNAMIC;
-		if (p->pfif_flags & PFI_IFLAG_CLONABLE)
-			n->ifa_flags |= PF_IFA_FLAG_CLONABLE;
-		if (!strcmp(p->pfif_name, "lo"))
-			n->ifa_flags |= IFF_LOOPBACK;
-		if ((n->ifname = strdup(p->pfif_name)) == NULL)
-			err(1, "ifa_load: strdup");
-		n->next = NULL;
-		n->tail = n;
-		if (h == NULL)
-			h = n;
-		else {
-			h->tail->next = n;
-			h->tail = n;
-		}
-	}
-
 	iftab = h;
 	freeifaddrs(ifap);
 }
@@ -1166,12 +1141,7 @@ struct node_host *
 ifa_exists(const char *ifa_name, int group_ok)
 {
 	struct node_host	*n;
-	char			*p, buf[IFNAMSIZ];
-	int			 group;
 
-	group = !isdigit((unsigned char)ifa_name[strlen(ifa_name) - 1]);
-	if (group && !group_ok)
-		return (NULL);
 	if (iftab == NULL)
 		ifa_load();
 
@@ -1179,19 +1149,7 @@ ifa_exists(const char *ifa_name, int group_ok)
 		if (n->af == AF_LINK && !strncmp(n->ifname, ifa_name, IFNAMSIZ))
 			return (n);
 	}
-	if (!group) {
-		/* look for clonable and/or dynamic interface */
-		strlcpy(buf, ifa_name, sizeof(buf));
-		for (p = buf + strlen(buf) - 1; p > buf && isdigit((unsigned char)*p); p--)
-			*p = '\0';
-		for (n = iftab; n != NULL; n = n->next)
-			if (n->af == AF_LINK &&
-			    !strncmp(n->ifname, buf, IFNAMSIZ))
-				break;
-		if (n != NULL && n->ifa_flags &
-		    (PF_IFA_FLAG_DYNAMIC | PF_IFA_FLAG_CLONABLE))
-			return (n);	/* XXX */
-	}
+
 	return (NULL);
 }
 
@@ -1459,7 +1417,7 @@ host_dns(const char *s, int v4mask, int v6mask)
 	char			*p, *ps;
 
 	if ((ps = strdup(s)) == NULL)
-		err(1, "host_if: strdup");
+		err(1, "host_dns: strdup");
 	if ((p = strrchr(ps, ':')) != NULL && !strcmp(p, ":0")) {
 		noalias = 1;
 		*p = '\0';
@@ -1468,8 +1426,10 @@ host_dns(const char *s, int v4mask, int v6mask)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM; /* DUMMY */
 	error = getaddrinfo(ps, NULL, &hints, &res0);
-	if (error)
+	if (error) {
+		free(ps);
 		return (h);
+	}
 
 	for (res = res0; res; res = res->ai_next) {
 		if (res->ai_family != AF_INET &&
@@ -1593,33 +1553,28 @@ append_addr_host(struct pfr_buffer *b, struct node_host *n, int test, int not)
 }
 
 int
-pfctl_add_trans(struct pfr_buffer *buf, int rs_num, const char *anchor,
-    const char *ruleset)
+pfctl_add_trans(struct pfr_buffer *buf, int rs_num, const char *anchor)
 {
 	struct pfioc_trans_e trans;
 
 	bzero(&trans, sizeof(trans));
 	trans.rs_num = rs_num;
 	if (strlcpy(trans.anchor, anchor,
-	    sizeof(trans.anchor)) >= sizeof(trans.anchor) ||
-	    strlcpy(trans.ruleset, ruleset,
-	    sizeof(trans.ruleset)) >= sizeof(trans.ruleset))
+	    sizeof(trans.anchor)) >= sizeof(trans.anchor))
 		errx(1, "pfctl_add_trans: strlcpy");
 
 	return pfr_buf_add(buf, &trans);
 }
 
 u_int32_t
-pfctl_get_ticket(struct pfr_buffer *buf, int rs_num, const char *anchor,
-    const char *ruleset)
+pfctl_get_ticket(struct pfr_buffer *buf, int rs_num, const char *anchor)
 {
 	struct pfioc_trans_e *p;
 
 	PFRB_FOREACH(p, buf)
-		if (rs_num == p->rs_num && !strcmp(anchor, p->anchor) &&
-		    !strcmp(ruleset, p->ruleset))
+		if (rs_num == p->rs_num && !strcmp(anchor, p->anchor))
 			return (p->ticket);
-	errx(1, "pfr_get_ticket: assertion failed");
+	errx(1, "pfctl_get_ticket: assertion failed");
 }
 
 int

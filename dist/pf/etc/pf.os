@@ -1,3 +1,4 @@
+# $NetBSD: pf.os,v 1.2 2004/11/14 11:26:47 yamt Exp $
 # $OpenBSD: pf.os,v 1.17 2004/04/28 01:01:27 deraadt Exp $
 # passive OS fingerprinting
 # -------------------------

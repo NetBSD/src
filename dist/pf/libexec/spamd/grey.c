@@ -1,5 +1,5 @@
-/*	$NetBSD: grey.c,v 1.3 2004/11/11 11:27:34 yamt Exp $	*/
-/*	$OpenBSD: grey.c,v 1.12 2004/03/13 17:46:15 beck Exp $	*/
+/*	$NetBSD: grey.c,v 1.4 2004/11/14 11:26:48 yamt Exp $	*/
+/*	$OpenBSD: grey.c,v 1.17 2004/08/15 21:49:45 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -38,6 +38,7 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <netdb.h>
 
 #include "grey.h"
 
@@ -57,8 +58,6 @@ static char *pargv[11]= {
 	"pfctl", "-p", "/dev/pf", "-q", "-t",
 	"spamd-white", "-T", "replace", "-f" "-", NULL
 };
-
-#define MIN(a, b)	((a) > (b) ? (b) : (a))
 
 int	configure_pf(char **, int);
 int	addwhiteaddr(char *);
@@ -160,27 +159,34 @@ freewhiteaddr(void)
 int
 addwhiteaddr(char *addr)
 {
-	struct in_addr	ia;
-	struct in6_addr	ia6;
+	struct addrinfo hints, *res;
 
-	if (inet_pton(AF_INET, addr, &ia) == 1) {
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;		/*for now*/
+	hints.ai_socktype = SOCK_DGRAM;		/*dummy*/
+	hints.ai_protocol = IPPROTO_UDP;	/*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+
+	if (getaddrinfo(addr, NULL, &hints, &res) == 0) {
 		if (whitecount == whitealloc) {
 			char **tmp;
 
 			tmp = realloc(whitelist,
 			    (whitealloc + 1024) * sizeof(char *));
-			if (tmp == NULL)
+			if (tmp == NULL) {
+				freeaddrinfo(res);
 				return(-1);
+			}
 			whitelist = tmp;
 			whitealloc += 1024;
 		}
 		whitelist[whitecount] = strdup(addr);
-		if (whitelist[whitecount] == NULL)
+		if (whitelist[whitecount] == NULL) {
+			freeaddrinfo(res);
 			return(-1);
+		}
 		whitecount++;
-	} else if (inet_pton(AF_INET6, addr, &ia6) == 1) {
-		/* XXX deal with v6 later */
-		return(-1);
+		freeaddrinfo(res);
 	} else
 		return(-1);
 	return(0);
@@ -216,7 +222,7 @@ greyscan(char *dbname)
 			return(-1);
 		}
 		memcpy(&gd, dbd.data, sizeof(gd));
-		if (gd.expire < now) {
+		if (gd.expire <= now) {
 			/* get rid of entry */
 			if (debug) {
 				memset(a, 0, sizeof(a));
@@ -271,6 +277,7 @@ greyscan(char *dbname)
 				db->sync(db, 0);
 				syslog_r(LOG_DEBUG, &sdata,
 				    "whitelisting %s in %s", a, dbname);
+
 			}
 			if (debug)
 				fprintf(stderr, "whitelisted %s\n", a);
@@ -378,7 +385,13 @@ greyreader(void)
 	char ip[32], from[MAX_MAIL], to[MAX_MAIL], *buf;
 	size_t len;
 	int state;
-	struct in_addr ia;
+	struct addrinfo hints, *res;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;		/*for now*/
+	hints.ai_socktype = SOCK_DGRAM;		/*dummy*/
+	hints.ai_protocol = IPPROTO_UDP;	/*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
 
 	state = 0;
 	if (grey == NULL) {
@@ -399,9 +412,10 @@ greyreader(void)
 			if (strncmp(buf, "IP:", 3) != 0)
 				break;
 			strlcpy(ip, buf+3, sizeof(ip));
-			if (inet_pton(AF_INET, ip, &ia) == 1)
+			if (getaddrinfo(ip, NULL, &hints, &res) == 0) {
+				freeaddrinfo(res);
 				state = 1;
-			else
+			} else
 				state = 0;
 			break;
 		case 1:
@@ -438,10 +452,9 @@ greyscanner(void)
 	for (;;) {
 		sleep(DB_SCAN_INTERVAL);
 		i = greyscan(PATH_SPAMD_DB);
-		if (i == -1) {
+		if (i == -1)
 			syslog_r(LOG_NOTICE, &sdata, "scan of %s failed",
 			    PATH_SPAMD_DB);
-		}
 	}
 	/* NOTREACHED */
 }
@@ -461,13 +474,13 @@ greywatcher(void)
 	if ((i = open(PATH_SPAMD_DB, O_RDWR, 0)) == -1 && errno == ENOENT) {
 		i = open(PATH_SPAMD_DB, O_RDWR|O_CREAT, 0644);
 		if (i == -1) {
-			syslog_r(LOG_ERR, &sdata, "create %s failed (%m)", 
+			syslog_r(LOG_ERR, &sdata, "create %s failed (%m)",
 			    PATH_SPAMD_DB);
 			exit(1);
 		}
 		/* if we are dropping privs, chown to that user */
 		if (pw && (fchown(i, pw->pw_uid, pw->pw_gid) == -1)) {
-			syslog_r(LOG_ERR, &sdata, "chown %s failed (%m)", 
+			syslog_r(LOG_ERR, &sdata, "chown %s failed (%m)",
 			    PATH_SPAMD_DB);
 			exit(1);
 		}
@@ -490,7 +503,7 @@ greywatcher(void)
 	db_pid = fork();
 	switch(db_pid) {
 	case -1:
-		syslog_r(LOG_ERR, &sdata, "fork failed (%m)"); 
+		syslog_r(LOG_ERR, &sdata, "fork failed (%m)");
 		exit(1);
 	case 0:
 		/*

@@ -1,5 +1,5 @@
-/*	$NetBSD: ftp-proxy.c,v 1.6 2004/11/11 09:50:00 yamt Exp $	*/
-/*	$OpenBSD: ftp-proxy.c,v 1.35 2004/03/14 21:51:44 dhartmei Exp $ */
+/*	$NetBSD: ftp-proxy.c,v 1.7 2004/11/14 11:26:47 yamt Exp $	*/
+/*	$OpenBSD: ftp-proxy.c,v 1.37 2004/07/11 01:54:36 brad Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -129,6 +129,8 @@ double xfer_start_time;
 struct sockaddr_in real_server_sa;
 struct sockaddr_in client_listen_sa;
 struct sockaddr_in server_listen_sa;
+struct sockaddr_in proxy_sa;
+struct in_addr src_addr;
 
 int client_listen_socket = -1;	/* Only used in PASV mode */
 int client_data_socket = -1;	/* Connected socket to real client */
@@ -139,6 +141,7 @@ int client_data_bytes, server_data_bytes;
 int AnonFtpOnly;
 int Verbose;
 int NatMode;
+int ReverseMode;
 
 char ClientName[NI_MAXHOST];
 char RealServerName[NI_MAXHOST];
@@ -174,10 +177,12 @@ usage(void)
 {
 	syslog(LOG_NOTICE,
 	    "usage: %s -i [-AnrVw] [-a address] [-D debuglevel [-g group]"
-	    " [-M maxport] [-m minport] [-t timeout] [-u user]", __progname);
+	    " [-M maxport] [-m minport] [-t timeout] [-u user]"
+	    " [-R address[:port]] [-S address]", __progname);
 	syslog(LOG_NOTICE,
 	    "usage: %s -p [-AnrVw] [-a address] [-D debuglevel [-g group]"
-	    " [-M maxport] [-m minport] [-t timeout] [-u user]", __progname);
+	    " [-M maxport] [-m minport] [-t timeout] [-u user]"
+	    " [-R address[:port]] [-S address]", __progname);
 	exit(EX_USAGE);
 }
 
@@ -567,7 +572,7 @@ connect_port_backchannel(void)
 
 		salen = 1;
 		listen_sa.sin_family = AF_INET;
-		bzero(&listen_sa.sin_addr, sizeof(struct in_addr));
+		bcopy(&src_addr, &listen_sa.sin_addr, sizeof(struct in_addr));
 		listen_sa.sin_port = htons(20);
 
 		if (setsockopt(client_data_socket, SOL_SOCKET, SO_REUSEADDR,
@@ -941,7 +946,10 @@ do_server_reply(struct csiob *server, struct csiob *client)
 
 		new_dataconn(0);
 		connection_mode = PASV_MODE;
-		iap = &(server->sa.sin_addr);
+		if (ReverseMode)
+			iap = &(proxy_sa.sin_addr);
+		else
+			iap = &(server->sa.sin_addr);
 
 		debuglog(1, "we want client to use %s:%u", inet_ntoa(*iap),
 		    htons(client_listen_sa.sin_port));
@@ -980,9 +988,10 @@ main(int argc, char *argv[])
 {
 	struct csiob client_iob, server_iob;
 	struct sigaction new_sa, old_sa;
-	int sval, ch, flags, i, err;
+	int sval, ch, flags, i;
 	socklen_t salen;
 	int one = 1;
+	int err;
 	int ipf = 0;
 	int pf = 0;
 	long timeout_seconds = 0;
@@ -991,7 +1000,7 @@ main(int argc, char *argv[])
 	int use_tcpwrapper = 0;
 #endif /* LIBWRAP */
 
-	while ((ch = getopt(argc, argv, "a:D:g:m:M:t:T:u:AinpVwr")) != -1) {
+	while ((ch = getopt(argc, argv, "a:D:g:m:M:R:S:t:u:AinpVwr")) != -1) {
 		char *p;
 		switch (ch) {
 		case 'a':
@@ -1044,6 +1053,41 @@ main(int argc, char *argv[])
 		case 'r':
 			Use_Rdns = 1; /* look up hostnames */
 			break;
+		case 'R': {
+			char *s, *t;
+
+			if (!*optarg)
+				usage();
+			if ((s = strdup(optarg)) == NULL) {
+				syslog (LOG_NOTICE,
+				    "Insufficient memory (malloc failed)");
+				exit(EX_UNAVAILABLE);
+			}
+			memset(&real_server_sa, 0, sizeof(real_server_sa));
+			real_server_sa.sin_len = sizeof(struct sockaddr_in);
+			real_server_sa.sin_family = AF_INET;
+			t = strchr(s, ':');
+			if (t == NULL)
+				real_server_sa.sin_port = htons(21);
+			else {
+				long port = strtol(t + 1, &p, 10);
+
+				if (*p || port <= 0 || port > 65535)
+					usage();
+				real_server_sa.sin_port = htons(port);
+				*t = 0;
+			}
+			real_server_sa.sin_addr.s_addr = inet_addr(s);
+			if (real_server_sa.sin_addr.s_addr == INADDR_NONE)
+				usage();
+			free(s);
+			ReverseMode = 1;
+			break;
+		}
+		case 'S':
+			if (!inet_aton(optarg, &src_addr))
+				usage();
+			break;
 		case 't':
 			timeout_seconds = strtol(optarg, &p, 10);
 			if (!*optarg || *p)
@@ -1086,10 +1130,32 @@ main(int argc, char *argv[])
 	memset(&client_iob, 0, sizeof(client_iob));
 	memset(&server_iob, 0, sizeof(server_iob));
 
-	if (pf && get_proxy_env(0, &real_server_sa, &client_iob.sa) == -1)
+	if (pf && get_proxy_env(0, &real_server_sa, &client_iob.sa,
+	    &proxy_sa) == -1)
 		exit(EX_PROTOCOL);
-	if (ipf && ipf_get_proxy_env(0, &real_server_sa, &client_iob.sa) == -1)
+	if (ipf && ipf_get_proxy_env(0, &real_server_sa, &client_iob.sa,
+	    &proxy_sa) == -1)
 		exit(EX_PROTOCOL);
+
+	/*
+	 * We may now drop root privs, as we have done our ioctl for
+	 * pf. If we do drop root, we can't make backchannel connections
+	 * for PORT and EPRT come from port 20, which is not strictly
+	 * RFC compliant. This shouldn't cause problems for all but
+	 * the stupidest ftp clients and the stupidest packet filters.
+	 */
+	drop_privs();
+
+	/*
+	 * We check_host after get_proxy_env so that checks are done
+	 * against the original destination endpoint, not the endpoint
+	 * of our side of the rdr. This allows the use of tcpwrapper
+	 * rules to restrict destinations as well as sources of connections
+	 * for ftp.
+	 */
+	if (Use_Rdns)
+		flags = 0;
+	else
 
 	/*
 	 * We may now drop root privs, as we have done our ioctl for

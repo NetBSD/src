@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.1 2004/06/30 13:29:43 darrenr Exp $	*/
+/*	$NetBSD: ipf.c,v 1.2 2004/11/14 11:26:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -55,14 +55,15 @@
 
 #include "util.h"
 
+extern int ReverseMode;
+
 static natlookup_t natlook;
 static int natfd;
 
 int
 ipf_get_proxy_env(int connected_fd, struct sockaddr_in *server,
-    struct sockaddr_in *client)
+    struct sockaddr_in *client, struct sockaddr_in *proxy_sa_ptr)
 {
-	struct sockaddr_in lsin;
 	socklen_t namelen;
 	ipfobj_t obj;
 
@@ -70,8 +71,8 @@ ipf_get_proxy_env(int connected_fd, struct sockaddr_in *server,
 	 * Get IP# and port # of the local end of the connection
 	 * (at the origin)
 	 */
-	namelen = sizeof(lsin);
-	if (getsockname(connected_fd, (struct sockaddr *)&lsin,
+	namelen = sizeof(*proxy_sa_ptr);
+	if (getsockname(connected_fd, (struct sockaddr *)proxy_sa_ptr,
 			&namelen) != 0) {
 		syslog(LOG_ERR, "getsockname() failed (%m)");
 		exit(EX_OSERR);
@@ -88,6 +89,9 @@ ipf_get_proxy_env(int connected_fd, struct sockaddr_in *server,
 		exit(EX_OSERR);
 	}
 
+	if (ReverseMode)
+		return(0);
+
 	/*
 	 * Build up the ipf object description structure.
 	 */
@@ -102,9 +106,9 @@ ipf_get_proxy_env(int connected_fd, struct sockaddr_in *server,
 	memset((void *)&natlook, 0, sizeof(natlook));
 	natlook.nl_flags = IPN_TCPUDP;
 	natlook.nl_outip = client->sin_addr;
-	natlook.nl_inip = lsin.sin_addr;
+	natlook.nl_inip = proxy_sa_ptr->sin_addr;
 	natlook.nl_outport = ntohs(client->sin_port);
-	natlook.nl_inport = ntohs(lsin.sin_port);
+	natlook.nl_inport = ntohs(proxy_sa_ptr->sin_port);
 
 	/*
 	 * Open the NAT device and lookup the mapping pair.
