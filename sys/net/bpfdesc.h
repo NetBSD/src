@@ -36,11 +36,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)bpfdesc.h	7.1 (Berkeley) 5/7/91
- * 	$Id: bpfdesc.h,v 1.5 1993/05/18 18:19:52 cgd Exp $
+ * 	$Id: bpfdesc.h,v 1.6 1993/09/09 09:43:18 davidg Exp $
  */
 
 #ifndef _NET_BPFDESC_H_
 #define _NET_BPFDESC_H_
+
+#include "select.h"
 
 /*
  * Descriptor associated with each open bpf file.
