@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.27 2002/04/05 19:51:05 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.28 2002/05/03 00:09:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #define	FXP_NTXCB		256
 #define	FXP_NTXCB_MASK		(FXP_NTXCB - 1)
 #define	FXP_NEXTTX(x)		((x + 1) & FXP_NTXCB_MASK)
-#define	FXP_NTXSEG		8
+#define	FXP_NTXSEG		16
 
 /*
  * Number of receive frame area buffers.  These are large, so
