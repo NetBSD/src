@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.1 2002/02/11 13:50:19 skrll Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.2 2002/04/11 16:34:00 skrll Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -78,4 +78,12 @@ Taille de la partition ? }
 message catsfspart
 {Nous avons maintenant vos partitions NetBSD sur %s comme suit
 (taille et Offset en %s) :
+}
+
+message emulbackup
+{Ou /emul/aout ou r\xe9pertoire d' /emul sur votre syst\xe8me \xe9tait un lien symbolique
+se dirigeant \xe0 un filesystem non-mont\xe9. Il a \xe9t\xe9 donn\xe9 une extension d' 'old'. Une
+fois que vous apportez votre copie de sauvegarde am\xe9lior\xe9e de syst\xe8me, vous
+pouvez devoir prendre soin de fusionner nouvellement cr\xe9\xe9 / r\xe9pertoire
+d' /emul/aout avec le vieil.
 }

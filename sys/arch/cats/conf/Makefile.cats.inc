@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.7 2002/04/04 16:04:22 skrll Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.8 2002/04/11 16:33:58 skrll Exp $
 
 GENASSYM_EXTRAS+=	${ARM}/footbridge/genassym.cf
 LOOSE_PROTOTYPES=	NO
@@ -14,10 +14,10 @@ LOOSE_PROTOTYPES=	NO
 # XXX ELF kernel cannot be booted itself.
 LOADADDRESS=0xF0000020
 
-SYSTEM_LD_TAIL_EXTRA=; \
+SYSTEM_LD_TAIL_EXTRA+=; \
 	${DBSYM} $@ || true; \
 	echo OBJCOPY=${OBJCOPY:Q} SIZE=${SIZE:Q} \
-	    ${ARM}/conf/elf2aout.sh $@ $@; \
+	    ${ARM}/conf/elf2aout.sh $@ $@.aout; \
 	OBJCOPY=${OBJCOPY:Q} SIZE=${SIZE:Q} \
-	    ${ARM}/conf/elf2aout.sh $@ $@
+	    ${ARM}/conf/elf2aout.sh $@ $@.aout
 .endif
