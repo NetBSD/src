@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2002/09/20 03:20:24 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.36 2002/12/09 16:30:40 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -13,6 +13,11 @@ CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
 CPPFLAGS+=	-DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
 CPPFLAGS+=	-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
 DBG=		-Os
+
+LIBCRT0=	# nothing
+LIBCRTBEGIN=	# nothing
+LIBCRTEND=	# nothing
+LIBC=		# nothing
 
 .PATH:		${S}/arch/powerpc/powerpc
 SRCS+=		ofwmagic.S
