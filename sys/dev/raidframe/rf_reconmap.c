@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.2 1999/01/26 02:34:01 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.3 1999/01/26 04:40:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,9 +37,6 @@
 #include <sys/time.h>
 #include "rf_general.h"
 #include "rf_utils.h"
-#if RF_DEMO > 0
-#include "rf_demo.h"
-#endif /* RF_DEMO > 0 */
 #include "rf_sys.h"
 
 /* special pointer values indicating that a reconstruction unit
@@ -372,16 +369,7 @@ void rf_PrintReconSchedule(mapPtr, starttime)
   if (new_pctg != old_pctg) {
     RF_GETTIME(tv);
     RF_TIMEVAL_DIFF(starttime, &tv, &diff);
-#if RF_DEMO > 0
-    if (rf_demoMode) {
-      rf_update_recon_meter(new_pctg);
-    }
-    else {
-      printf("%d %d.%06d\n",new_pctg, diff.tv_sec, diff.tv_usec);
-    }
-#else /* RF_DEMO > 0 */
     printf("%d %d.%06d\n",(int)new_pctg, (int)diff.tv_sec, (int)diff.tv_usec);
-#endif /* RF_DEMO > 0 */
     old_pctg = new_pctg;
   }
 }

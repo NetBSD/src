@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.2 1999/01/26 02:33:50 oster Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.3 1999/01/26 04:40:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -60,11 +60,6 @@
  * Khalil's performance-displaying demo stuff.
  * Relies on CMU meter tools.
  */
-#ifndef KERNEL
-#if RF_CMU_PDL > 0
-#define RF_DEMO 1
-#endif /* RF_CMU_PDL > 0 */
-#endif /* !KERNEL */
 
 #define RF_INCLUDE_EVENODD       1
 
