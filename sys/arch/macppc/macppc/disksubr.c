@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.17 2002/02/19 17:09:45 wiz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.18 2002/03/23 01:29:35 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -133,7 +133,7 @@ int fat_types[] = { MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
 		    -1 };
 
 static int getFreeLabelEntry __P((struct disklabel *));
-static int whichType __P((struct part_map_entry *));
+static int whichType __P((struct part_map_entry *, u_int8_t *, int *));
 static void setpartition __P((struct part_map_entry *,
 		struct partition *, int));
 static int getNamedType __P((struct part_map_entry *, int,
@@ -168,12 +168,16 @@ getFreeLabelEntry(lp)
  * figure out what the type of the given part is and return it
  */
 static int
-whichType(part)
-	struct part_map_entry *part;
+whichType(struct part_map_entry *part, u_int8_t *fstype, int *clust)
 {
 	struct blockzeroblock *bzb;
 	char typestr[32], *s;
 	int type;
+
+	/* Set default unix partition type. Certain partition types can
+	 * specify a different partition type. */
+	*fstype = FS_BSDFFS;
+	*clust = 0;	/* only A/UX partitions not in cluster 0 */
 
 	if (part->pmSig != PART_ENTRY_MAGIC || part->pmPartType[0] == '\0')
 		return 0;
@@ -193,13 +197,23 @@ whichType(part)
 	    strcmp(PART_TYPE_PARTMAP, typestr) == 0 ||
 	    strcmp(PART_TYPE_PATCHES, typestr) == 0)
 		type = 0;
-	else if (strcmp(PART_TYPE_NBSD_PPCBOOT, typestr) == 0)
+	else if (strcmp(PART_TYPE_NBSD_PPCBOOT, typestr) == 0) {
 		type = ROOT_PART;
-	else if (strcmp(PART_TYPE_NETBSD, typestr) == 0)
+		bzb = (struct blockzeroblock *)(&part->pmBootArgs);
+		if ((bzb->bzbMagic == BZB_MAGIC) &&
+		    (bzb->bzbType < FSMAXTYPES))
+			*fstype = bzb->bzbType;
+	} else if (strcmp(PART_TYPE_NETBSD, typestr) == 0 ||
+		 strcmp(PART_TYPE_NBSD_68KBOOT, typestr) == 0) {
 		type = UFS_PART;
-	else if (strcmp(PART_TYPE_UNIX, typestr) == 0) {
+		bzb = (struct blockzeroblock *)(&part->pmBootArgs);
+		if ((bzb->bzbMagic == BZB_MAGIC) &&
+		    (bzb->bzbType < FSMAXTYPES))
+			*fstype = bzb->bzbType;
+	} else if (strcmp(PART_TYPE_UNIX, typestr) == 0) {
 		/* unix part, swap, root, usr */
 		bzb = (struct blockzeroblock *)(&part->pmBootArgs);
+		*clust = bzb->bzbCluster;
 		if (bzb->bzbMagic != BZB_MAGIC)
 			type = 0;
 		else if (bzb->bzbFlags & BZB_ROOTFS)
@@ -219,9 +233,7 @@ whichType(part)
 }
 
 static void
-setpartition(part, pp, fstype)
-	struct part_map_entry *part;
-	struct partition *pp;
+setpartition(struct part_map_entry *part, struct partition *pp, int fstype)
 {
 	pp->p_size = part->pmPartBlkCnt;
 	pp->p_offset = part->pmPyPartStart;
@@ -239,24 +251,25 @@ getNamedType(part, num_parts, lp, type, alt, maxslot)
 	int *maxslot;
 {
 	struct blockzeroblock *bzb;
-	int i = 0;
+	int i = 0, clust;
+	u_int8_t realtype;
 
 	for (i = 0; i < num_parts; i++) {
-		if (whichType(part + i) != type)
+		if (whichType(part + i, &realtype, &clust) != type)
 			continue;
 
 		if (type == ROOT_PART) {
 			bzb = (struct blockzeroblock *)
 			    (&(part + i)->pmBootArgs);
-			if (alt >= 0 && alt != bzb->bzbCluster)
+			if (alt >= 0 && alt != clust)
 				continue;
-			setpartition(part + i, &lp->d_partitions[0], FS_BSDFFS);
+			setpartition(part + i, &lp->d_partitions[0], realtype);
 		} else if (type == UFS_PART) {
 			bzb = (struct blockzeroblock *)
 			    (&(part + i)->pmBootArgs);
-			if (alt >= 0 && alt != bzb->bzbCluster)
+			if (alt >= 0 && alt != clust)
 				continue;
-			setpartition(part + i, &lp->d_partitions[6], FS_BSDFFS);
+			setpartition(part + i, &lp->d_partitions[6], realtype);
 			if (*maxslot < 6)
 				*maxslot = 6;
 		} else if (type == SWAP_PART) {
@@ -310,7 +323,8 @@ read_mac_label(dev, strat, lp, osdep)
 	struct partition *pp;
 	struct buf *bp;
 	char *msg = NULL;
-	int i, slot, maxslot = 0;
+	int i, slot, maxslot = 0, clust;
+	u_int8_t realtype;
 
 	/* get buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize * NUM_PARTS);
@@ -347,14 +361,14 @@ read_mac_label(dev, strat, lp, osdep)
 
 		pp = &lp->d_partitions[slot];
 
-		switch (whichType(part + i)) {
+		switch (whichType(part + i, &realtype, &clust)) {
 		case ROOT_PART:
 		/*
 		 * another root part will turn into a plain old
 		 * UFS_PART partition, live with it.
 		 */
 		case UFS_PART:
-			setpartition(part + i, pp, FS_BSDFFS);
+			setpartition(part + i, pp, realtype);
 			break;
 		case SWAP_PART:
 			setpartition(part + i, pp, FS_SWAP);
