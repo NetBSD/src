@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2002/04/10 15:34:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2002/04/12 02:13:49 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -19,8 +19,8 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${.CURDIR}/../src/install.sh ${.CURDIR}/../src/upgrade.sh \
 		${DESTDIR}/usr/mdec/boot ${DESTDIR}/usr/mdec/bootxx_ffs \
 		${DESTDIR}/usr/share/misc/termcap \
-		${_SRC_TOP_}/distrib/utils/script-installer/dot.commonutils \
-		${_SRC_TOP_}/distrib/utils/script-installer/dot.instutils \
+		${DISTRIBDIR}/utils/script-installer/dot.commonutils \
+		${DISTRIBDIR}/utils/script-installer/dot.instutils \
 		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
 		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
 		${_SRC_TOP_}/etc/services
