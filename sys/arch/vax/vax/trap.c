@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.61 2001/03/15 06:10:53 chs Exp $     */
+/*	$NetBSD: trap.c,v 1.62 2001/05/29 21:27:25 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -228,6 +228,10 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		else
 			ftype = VM_PROT_READ;
 
+		if (umode)
+			KERNEL_PROC_LOCK(p);
+		else
+			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		rv = uvm_fault(map, addr, 0, ftype);
 		if (rv != 0) {
 			if (umode == 0) {
@@ -247,6 +251,10 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			}
 		} else
 			trapsig = 0;
+		if (umode) 
+			KERNEL_PROC_UNLOCK(p);
+		else
+			KERNEL_UNLOCK();
 		break;
 
 	case T_PTELEN:
@@ -298,7 +306,9 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			printf("pid %d (%s): sig %d: type %lx, code %lx, pc %lx, psl %lx\n",
 			       p->p_pid, p->p_comm, sig, frame->trap,
 			       frame->code, frame->pc, frame->psl);
+		KERNEL_PROC_LOCK(p);
 		trapsignal(p, sig, frame->code);
+		KERNEL_PROC_UNLOCK(p);
 	}
 
 	if (umode == 0)
@@ -330,6 +340,8 @@ syscall(struct trapframe *frame)
 	int err, rval[2], args[8];
 	struct trapframe *exptr;
 	struct proc *p = curproc;
+
+	KERNEL_PROC_LOCK(p);
 
 #ifdef TRAPDEBUG
 if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n",
@@ -392,7 +404,7 @@ bad:
 		break;
 
 	case EJUSTRETURN:
-		return;
+		break;
 
 	case ERESTART:
 		exptr->pc -= (exptr->code > 63 ? 4 : 2);
@@ -404,11 +416,15 @@ bad:
 		break;
 	}
 
+	KERNEL_PROC_UNLOCK(p);
 	userret(p, frame, oticks);
 
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p, frame->code, err, rval[0]);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }
 
@@ -417,10 +433,14 @@ child_return(void *arg)
 {
         struct proc *p = arg;
 
+	KERNEL_PROC_UNLOCK(p);
 	userret(p, p->p_addr->u_pcb.framep, 0);
 
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p, SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }
