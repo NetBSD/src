@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.28.2.1 1999/06/25 01:15:04 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.28.2.2 2000/10/19 16:27:30 he Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -53,7 +53,8 @@ void	cdup __P((int, char **));
 void	changetype __P((int, int));
 void	cmdabort __P((int));
 void	cmdscanner __P((int));
-int	command __P((const char *, ...));
+int	command __P((const char *, ...))
+     __attribute__((__format__(__printf__, 1, 2)));
 #ifndef NO_EDITCOMPLETE
 unsigned char complete __P((EditLine *, int));
 void	controlediting __P((void));
