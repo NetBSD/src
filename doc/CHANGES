@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.221 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.222 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -522,3 +522,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	arm: Enable alignment faults on arm32. Misaligned loads/stores
 		will now cause an exception instead of silently failing.
 		[scw 20031025]
+	sh3el: Switch to GDB 5.3.  [uwe 20030927]
