@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.61 1999/05/30 00:39:07 bad Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.62 1999/06/18 18:20:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -701,6 +701,8 @@ reply:
 	ah->ar_op = htons(ARPOP_REPLY);
 	ah->ar_pro = htons(ETHERTYPE_IP); /* let's be sure! */
 	m->m_flags &= ~(M_BCAST|M_MCAST); /* never reply by broadcast */
+	m->m_len = sizeof(*ah) + (2 * ah->ar_pln) + (2 * ah->ar_hln);
+	m->m_pkthdr.len = m->m_len;
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
