@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.4 2002/02/08 02:18:53 lukem Exp $
+#	$NetBSD: Makefile.image,v 1.5 2002/03/14 01:07:27 lukem Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -16,6 +16,7 @@
 #	MTREECONF	mtree specfiles to use to build a master specfile
 #
 # Optional variables:
+#	DESTDIR		destination directory
 #	MAKEFS_FLAGS	extra options to ${MAKEFS}
 #	POPULATEENV	environment variables to pass to the output of
 #			parselist.awk -v mode=populate
@@ -28,10 +29,10 @@ WORKBUILT?=	work.built
 
 POPULATEENV+=	_SRC_TOP_=${_SRC_TOP_:Q} \
 		DESTDIR=${DESTDIR:Q} \
+		CRUNCHBIN=${CRUNCHBIN:Q} \
 		CURDIR=${.CURDIR:Q} \
 		OBJDIR=${.OBJDIR:Q} \
-		TARGDIR=${.OBJDIR}/${WORKDIR:Q} \
-		CRUNCHBIN=${CRUNCHBIN:Q}
+		TARGDIR=${.OBJDIR}/${WORKDIR:Q}
 
 _PARSELIST=	${_SRC_TOP_}/distrib/common/parselist.awk
 

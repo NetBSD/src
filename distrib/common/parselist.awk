@@ -1,4 +1,4 @@
-#	$NetBSD: parselist.awk,v 1.6 2002/03/07 01:36:34 lukem Exp $
+#	$NetBSD: parselist.awk,v 1.7 2002/03/14 01:07:27 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,7 +39,7 @@
 # awk -f parselist.awk -v mode=MODE [var=val ...] file1 [...]
 #
 #	Parse list files file1 [...], generating different output,
-#	depending upon the setting of MODE:
+#	depending upon the value of MODE:
 #	    crunch	crunchgen(1) config
 #	    mtree	mtree(8) specfile
 #	    populate	sh(1) commands to populate ${TARGDIR} from ${CURDIR}
@@ -117,10 +117,10 @@ BEGIN \
 		print "	fi";
 		print "}";
 		print;
-		print "checkvarisset CURDIR";
-		print "checkvarisset TARGDIR";
-		print "checkvarisset OBJDIR";
 		print "checkvarisset CRUNCHBIN";
+		print "checkvarisset CURDIR";
+		print "checkvarisset OBJDIR";
+		print "checkvarisset TARGDIR";
 		print "cd ${CURDIR}";
 		print;
 	} else if (mode == "mtree") {
