@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.13 1998/11/12 16:19:42 christos Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.14 1998/12/01 20:13:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.13 1998/11/12 16:19:42 christos Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.14 1998/12/01 20:13:47 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,13 +61,6 @@ __weak_alias(fts_close,_fts_close);
 __weak_alias(fts_open,_fts_open);
 __weak_alias(fts_read,_fts_read);
 __weak_alias(fts_set,_fts_set);
-#else
-#error "XXX THESE ARE NOT RIGHT!"
-__weak_alias(__fts_children13,____fts_children13);
-__weak_alias(__fts_close13,____fts_close13);
-__weak_alias(__fts_open13,____fts_open13);
-__weak_alias(__fts_read13,____fts_read13);
-__weak_alias(__fts_set13,____fts_set13);
 #endif /* __LIBC12_SOURCE__ */
 #endif /* __weak_alias */
 
@@ -75,6 +68,19 @@ __weak_alias(__fts_set13,____fts_set13);
 #define	STAT	stat12
 #else
 #define	STAT	stat
+#endif
+
+#ifdef __LIBC12_SOURCE__
+__warn_references(fts_children,
+    "warning: reference to compatibility fts_children(); include <fts.h> for correct reference")
+__warn_references(fts_close,
+    "warning: reference to compatibility fts_close(); include <fts.h> for correct reference")
+__warn_references(fts_open,
+    "warning: reference to compatibility fts_open(); include <fts.h> for correct reference")
+__warn_references(fts_read,
+    "warning: reference to compatibility fts_read(); include <fts.h> for correct reference")
+__warn_references(fts_set,
+    "warning: reference to compatibility fts_set(); include <fts.h> for correct reference")
 #endif
 
 static FTSENT	*fts_alloc __P((FTS *, char *, size_t));
