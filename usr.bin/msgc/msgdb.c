@@ -1,4 +1,4 @@
-/*	$NetBSD: msgdb.c,v 1.1.1.1 1997/09/26 21:16:38 phil Exp $	*/
+/*	$NetBSD: msgdb.c,v 1.2 1997/10/03 16:37:25 enami Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,6 +40,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "defs.h"
 
 static struct id_rec *head = NULL, *tail = NULL;
