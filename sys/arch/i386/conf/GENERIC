@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.659 2005/02/20 18:39:41 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.660 2005/03/01 02:31:25 itojun Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.659 $"
+#ident 		"GENERIC-$Revision: 1.660 $"
 
 maxusers	32		# estimated number of users
 
@@ -961,6 +961,7 @@ ustir* at uhub? port ?
 irframe* at ustir?
 
 # USB Ethernet adapters
+atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
