@@ -79,13 +79,14 @@ all)
 	;;
 
 std)
-	rm -f console drum mem kmem null zero tty klog stdin stdout stderr acct
+	rm -f console drum mem kmem null zero io tty klog stdin stdout stderr acct
 	mknod console		c 0 0
 	mknod drum		c 4 0	; chmod 640 drum ; chgrp kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
 	mknod mem		c 2 0	; chmod 640 mem	; chgrp kmem mem
 	mknod null		c 2 2	; chmod 666 null
 	mknod zero		c 2 12	; chmod 666 zero
+	mknod io		c 2 14	; chmod 640 io ; chgrp kmem io
 	mknod tty		c 1 0	; chmod 666 tty
 	mknod klog		c 7 0	; chmod 600 klog
 	mknod stdin		c 22 0	; chmod 666 stdin
