@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.17 1993/10/27 21:22:29 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.18 1993/10/27 22:20:49 mycroft Exp $
  */
 
 /*
@@ -280,7 +280,7 @@ static void
 async_update()
 {
 
-	if (kernel) {
+	if (kernel || polling) {
 		if (async)
 			untimeout((timeout_t)do_async_update, 0);
 		do_async_update(1);
