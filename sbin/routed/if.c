@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.22 2001/03/10 23:52:45 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.23 2001/11/02 05:30:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #include "pathnames.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: if.c,v 1.22 2001/03/10 23:52:45 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.23 2001/11/02 05:30:56 lukem Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -215,14 +215,14 @@ ifwithname(char *name,			/* "ec0" or whatever */
 
 
 struct interface *
-ifwithindex(u_short index,
+ifwithindex(u_short ifindex,
 	    int rescan_ok)
 {
 	struct interface *ifp;
 
 	for (;;) {
 		for (ifp = ifnet; 0 != ifp; ifp = ifp->int_next) {
-			if (ifp->int_index == index)
+			if (ifp->int_index == ifindex)
 				return ifp;
 		}
 
