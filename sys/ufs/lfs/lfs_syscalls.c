@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.74 2002/12/17 14:37:49 yamt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.75 2002/12/18 14:05:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.74 2002/12/17 14:37:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.75 2002/12/18 14:05:50 yamt Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -476,8 +476,9 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			/* Pretend we used bread() to get it */
 			bp->b_blkno = fsbtodb(fs, blkp->bi_daddr);
 		} else {
-			/* Indirect block */
-			if (blkp->bi_size != fs->lfs_bsize)
+			/* Indirect block or ifile */
+			if (blkp->bi_size != fs->lfs_bsize &&
+			    ip->i_number != LFS_IFILE_INUM)
 				panic("lfs_markv: partial indirect block?"
 				    " size=%d\n", blkp->bi_size);
 			bp = getblk(vp, blkp->bi_lbn, blkp->bi_size, 0, 0);
@@ -1205,6 +1206,8 @@ lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uadd
 	int error;
 	
 	struct buf *obp;
+
+	KASSERT(VTOI(vp)->i_number != LFS_IFILE_INUM);
 
 	/*
 	 * make corresponding buffer busy to avoid
