@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.70 2003/06/29 22:32:24 fvdl Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.71 2003/08/06 01:02:26 manu Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -805,25 +805,28 @@ struct elf_args {
 #endif
 
 #ifdef EXEC_ELF32
-int	exec_elf32_makecmds __P((struct proc *, struct exec_package *));
-int	elf32_copyargs __P((struct proc *, struct exec_package *, struct ps_strings *,
-    char **, void *));
+int	exec_elf32_makecmds(struct proc *, struct exec_package *);
+int	elf32_copyargs(struct proc *, struct exec_package *, 
+    	    struct ps_strings *, char **, void *);
 
-int	coredump_elf32 __P((struct lwp *, struct vnode *, struct ucred *));
-int	coredump_writenote_elf32 __P((struct proc *, struct vnode *,
-	    struct ucred *, off_t, Elf32_Nhdr *, const char *, void *));
+int	coredump_elf32(struct lwp *, struct vnode *, struct ucred *);
+int	coredump_writenote_elf32(struct proc *, struct vnode *,
+	    struct ucred *, off_t, Elf32_Nhdr *, const char *, void *);
+
+int	elf32_check_header(Elf32_Ehdr *, int);
 #endif
 
 #ifdef EXEC_ELF64
-int	exec_elf64_makecmds __P((struct proc *, struct exec_package *));
-int	elf64_read_from __P((struct proc *, struct vnode *, u_long,
-    caddr_t, int));
-int	elf64_copyargs __P((struct proc *, struct exec_package *, struct ps_strings *,
-    char **, void *));
+int	exec_elf64_makecmds(struct proc *, struct exec_package *);
+int	elf64_read_from(struct proc *, struct vnode *, u_long, caddr_t, int);
+int	elf64_copyargs(struct proc *, struct exec_package *, 
+	    struct ps_strings *, char **, void *);
 
 int	coredump_elf64 __P((struct lwp *, struct vnode *, struct ucred *));
 int	coredump_writenote_elf64 __P((struct proc *, struct vnode *,
 	    struct ucred *, off_t, Elf64_Nhdr *, const char *, void *));
+
+int	elf64_check_header(Elf64_Ehdr *, int);
 #endif
 
 /* common */
