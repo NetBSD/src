@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.62 1996/10/27 20:51:18 gwr Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.63 1996/10/27 21:50:33 gwr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -614,7 +614,7 @@ iprintf(void (*pr)(const char *, ...), const char *fmt, ...)
 #else
 iprintf(pr, fmt, va_alist)
 	void (*pr)();
-	char *fmt;
+	const char *fmt;
 	va_dcl
 #endif
 {
