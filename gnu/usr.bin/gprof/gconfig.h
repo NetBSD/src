@@ -11,6 +11,4 @@
 #define VERSION "2.9.1"
 
 /* Whether this system uses the BSD 4.4 gmon.out format.  */
-#ifndef __ELF__
 #define BSD44_FORMAT 1
-#endif
