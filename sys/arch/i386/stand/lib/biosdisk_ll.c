@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.3 1997/06/13 13:36:06 drochner Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.4 1998/07/23 09:59:44 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -51,6 +51,10 @@ extern int biosread __P((int, int, int, int, int, char *));
 #define	SPT(di)		((di)&0xff)
 #define	HEADS(di)	((((di)>>8)&0xff)+1)
 
+#ifndef BIOSDISK_RETRIES
+#define BIOSDISK_RETRIES 5
+#endif
+
 int 
 set_geometry(d)
 	struct biosdisk_ll *d;
@@ -96,6 +100,7 @@ readsects(d, dblk, num, buf, cold)	/* reads ahead if (!cold) */
 			/* no, read from disk */
 			int             cyl, head, sec;
 			char           *trbuf;
+			int retries = BIOSDISK_RETRIES;
 
 			cyl = dblk / d->spc;
 			head = (dblk % d->spc) / d->spt;
@@ -119,7 +124,14 @@ readsects(d, dblk, num, buf, cold)	/* reads ahead if (!cold) */
 				diskbuf_user = &ra_dev;
 			}
 
-			if (biosread(d->dev, cyl, head, sec, nsec, trbuf)) {
+			while (biosread(d->dev, cyl, head, sec, nsec, trbuf)) {
+#ifdef DISK_DEBUG
+				if (!cold)
+					printf("read error C:%d H:%d S:%d-%d\n",
+					       cyl, head, sec, sec + nsec - 1);
+#endif
+				if (retries-- > 0)
+					continue;
 				if (!cold)
 					diskbuf_user = 0; /* mark invalid */
 				return (-1);	/* XXX cannot output here if
