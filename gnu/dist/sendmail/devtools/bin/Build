@@ -11,7 +11,7 @@
 # the sendmail distribution.
 #
 #
-#       Id: Build,v 8.155.4.3 2000/07/14 05:30:15 gshapiro Exp
+#       Id: Build,v 8.155.4.5 2000/12/27 00:44:35 gshapiro Exp
 #
 
 #
@@ -294,12 +294,6 @@ then
 	os=DomainOS
 	arch=$ISP
 	rel=`/usr/apollo/bin/bldt | grep Domain | awk '{ print $4 }' | sed -e 's/,//g'`
-elif [ `uname` = "CYGWIN_NT-4.0" -o `uname` = "CYGWIN_NT-5.0" ]
-then
-	# Windows NT 4.0 or Windows 2000
-	arch=`uname -m | sed -e 's/ //g' -e 's/\//-/g'`
-	os=`uname -s | sed -e 's/CYG//g' -e 's/ //g' -e 's/_//g' -e 's/-/./g'`
-	rel=`uname -r | sed -e 's/(/_/g' -e 's/)//g' -e 's/ //g' -e 's/\//-/g'` 
 fi
 
 if [ ! "$arch" -a ! "$os" -a ! "$rel" ]
@@ -631,10 +625,6 @@ then
 	echo "Creating $obj using $BUILDTOOLS/OS/$oscf"
 	${mkdir} $obj
 
-	# If this is WINNT then compile with relative paths
-	# (based on REL_SRC_DIR), so we don't need to do any "linking"
-	if [ ! $os = "WINNT.4.0" -a ! $os = "WINNT.5.0" -a ! $os = "WINNT" ]
-	then
 		ln="ln -s"
 		(cd $obj; $ln ${obj_rel_base_dir}/${src_dir}/*.[ch13458] .)
 		(cd $obj
@@ -651,38 +641,15 @@ then
 		then
 			(cd $obj; $ln ${obj_rel_base_dir}/${src_dir}/helpfile .)
 		fi
-	fi
 
 	rm -f $obj/.settings$$
 	echo 'divert(-1)' > $obj/.settings$$
 	cat $BUILDTOOLS/M4/header.m4 >> $obj/.settings$$
-	echo "define(\`OS', \`\`$os'')" >> $obj/.settings$$
-	echo "define(\`REL', \`\`$rel'')" >> $obj/.settings$$
-	echo "define(\`ARCH', \`\`$arch'')" >> $obj/.settings$$
+	echo "define(\`bldOS', \`\`$os'')" >> $obj/.settings$$
+	echo "define(\`bldREL', \`\`$rel'')" >> $obj/.settings$$
+	echo "define(\`bldARCH', \`\`$arch'')" >> $obj/.settings$$
 	cat $BUILDTOOLS/OS/$oscf >> $obj/.settings$$
 
-	if [ $os = "WINNT.4.0" -o $os = "WINNT.5.0" -o $os = "WINNT" ]
-	then
-		# Append C: onto pwd's which don't have the preceding //
-		# so that we can compile on non-network drives.
-		# (Is there a way to get the real drive letter?)
-
-		dir_prefix=`echo $absolute_base_dir | sed 's#\(..\).*#\1#'`
-		if [ ! $dir_prefix = "//" ]
-		then
-			absolute_base_dir="//C$absolute_base_dir"
-		fi
-
-	        # Convert sh's //X to X: drive letters to make make (and cl) happy
-		obj_rel_base_dir=`echo $absolute_base_dir | sed 's#^//\([a-zA-Z]\)#\1:#'`
-		cur_dir=`pwd`
-		cd $obj/..
-		absolute_obj_dir=`pwd | sed 's#/#\\\\\\\\#g'`
-		cd $cur_dir
-		echo "ifdef(\`bldABS_OBJ_DIR',,\`define(\`bldABS_OBJ_DIR', \`$absolute_obj_dir')')" >> $obj/.settings$$
-		rel_src_dir="$obj_rel_base_dir/$src_dir"
-		echo "define(\`bldREL_SRC_DIR', \`$rel_src_dir')" >> $obj/.settings$$
-	else
 		cur_dir=`pwd`
 		cd $obj/..
 		absolute_obj_dir=`pwd`
@@ -690,7 +657,6 @@ then
 		echo "ifdef(\`bldABS_OBJ_DIR',,\`define(\`bldABS_OBJ_DIR', \`$absolute_obj_dir')')" >> $obj/.settings$$
 		rel_src_dir="$obj_rel_base_dir/$src_dir"
 		echo "define(\`bldREL_SRC_DIR', \`$rel_src_dir')" >> $obj/.settings$$
-	fi
 
 	if [ ! -z "$pfx" ]
 	then
