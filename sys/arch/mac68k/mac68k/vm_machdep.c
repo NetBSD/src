@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.9 1994/10/26 08:47:22 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.10 1995/02/01 13:44:31 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -162,20 +162,27 @@ pagemove(from, to, size)
 	register caddr_t from, to;
 	int size;
 {
-	register struct pte *fpte, *tpte;
+	register vm_offset_t	pa;
 
-	if (size % CLBYTES)
+#ifdef DEBUG
+	if (size & CLOFFSET)
 		panic("pagemove");
-	fpte = kvtopte(from);
-	tpte = kvtopte(to);
+#endif
 	while (size > 0) {
-		*tpte++ = *fpte;
-		*(int *)fpte++ = PG_NV;
-		TBIS(from);
-		TBIS(to);
-		from += NBPG;
-		to += NBPG;
-		size -= NBPG;
+		pa = pmap_extract(kernel_pmap, (vm_offset_t) from);
+#ifdef DEBUG
+		if (pa == 0)
+			panic("pagemove 2");
+		if (pmap_extract(kernel_pmap, (vm_offset_t) to) != 0)
+			panic("pagemove 3");
+#endif
+		pmap_remove(kernel_pmap,
+				(vm_offset_t) from, (vm_offset_t) from + PAGE_SIZE);
+		pmap_enter(kernel_pmap,
+				(vm_offset_t) to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+		from += PAGE_SIZE;
+		to += PAGE_SIZE;
+		size -= PAGE_SIZE;
 	}
 	DCIS();
 }
