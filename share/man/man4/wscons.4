@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.15 2000/10/27 10:59:48 wiz Exp $
+.\" $NetBSD: wscons.4,v 1.16 2000/12/26 13:02:18 hubertf Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,6 +44,9 @@
 .Cd options \&"WSEMUL_DEFAULT=\e"xxx\e""
 .Cd options WS_KERNEL_FG=WSCOL_XXX
 .Cd options WS_KERNEL_BG=WSCOL_XXX
+.Cd options WS_KERNEL_COLATTR=\&"(WSATTR_XXX | WSATTR_YYY)"
+.Cd options WS_KERNEL_MONOATTR=\&"(WSATTR_XXX | WSATTR_YYY)"
+.Cd options WSCOMPAT_USL_SYNCTIMEOUT=nnn
 .Cd options WSDISPLAY_COMPAT_PCVT
 .Cd options WSDISPLAY_COMPAT_SYSCONS
 .Cd options WSDISPLAY_COMPAT_USL
