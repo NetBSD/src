@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.syspkg.mk,v 1.1.1.1 2002/01/07 22:48:30 jwise Exp $
+#	$NetBSD: bsd.syspkg.mk,v 1.2 2002/03/29 20:56:28 jwise Exp $
 #
 #	This file is derived from:
 #
@@ -22,6 +22,8 @@ __initialized__:
 .MAIN:		all
 .endif
 
+PREFIX:=		${DESTDIR}/${PREFIX}
+
 OPSYS=			NetBSD
 OS_VERSION!=		sh ${.PARSEDIR}/../../../sys/conf/osrelease.sh
 
@@ -31,8 +33,6 @@ NEED_OWN_INSTALL_TARGET=no
 ##### Some overrides of defaults below on a per-OS basis.
 
 DEINSTALLDEPENDS?=	NO	# add -R to pkg_delete
-
-X11BASE?=		${DESTDIR}/usr/X11R6
 
 PKGSRCDIR?=		${.CURDIR:C|/[^/]*/[^/]*$||}
 PKGVERSION?=		${OS_VERSION}.${TINY_VERSION}
@@ -51,7 +51,7 @@ PACKAGE_COOKIE=		${WRKDIR}/.package_done
 # Miscellaneous overridable commands:
 SHCOMMENT?=		${ECHO_MSG} >/dev/null '***'
 
-MAKE_ENV+=		PREFIX=${PREFIX} X11BASE=${X11BASE} CFLAGS="${CFLAGS}"
+MAKE_ENV+=		PREFIX=${PREFIX}
 
 TOUCH_FLAGS?=		-f
 
