@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 1997/03/15 18:10:06 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.136 1997/03/15 20:17:40 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -2402,6 +2402,8 @@ setmachdep()
 		via_reg(VIA1, vIER) = 0x6f;	/* disable VIA1 int */
 		/* Are we disabling something important? */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+		if (cputype == CPU_68040)
+			mac68k_machine.sonic = 1;
 		break;
 	case MACH_CLASSDUO:
 		/*
@@ -2421,6 +2423,7 @@ setmachdep()
 		break;
 	case MACH_CLASSQ:
         case MACH_CLASSQ2:
+		mac68k_machine.sonic = 1;
 	case MACH_CLASSAV:
 		VIA2 = 1;
 		IOBase = 0x50f00000;
