@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.4 2002/11/29 13:17:22 manu Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.5 2003/01/22 17:47:03 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.4 2002/11/29 13:17:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.5 2003/01/22 17:47:03 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,8 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.4 2002/11/29 13:17:22 manu Exp $
 #include <compat/darwin/darwin_syscallargs.h>
 
 int
-darwin_sys_sigaction(p, v, retval)
-	struct proc *p;
+darwin_sys_sigaction(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -71,6 +71,7 @@ darwin_sys_sigaction(p, v, retval)
 	struct sigaction sa;
 	struct sigaction *nsa, *osa;
 	struct sigaction13 sa13;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	int error;
 
@@ -98,7 +99,7 @@ darwin_sys_sigaction(p, v, retval)
 	SCARG(&cup, tramp) = dsa.darwin_sa_tramp;
 	SCARG(&cup, vers) = 1;
 
-	if ((error = sys___sigaction_sigtramp(p, &cup, retval)) !=0)
+	if ((error = sys___sigaction_sigtramp(l, &cup, retval)) !=0)
 		return error;
 
 	if (SCARG(uap, osa) == NULL)
