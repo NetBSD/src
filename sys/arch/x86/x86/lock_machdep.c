@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock_machdep.c,v 1.2 2003/07/14 22:32:40 lukem Exp $ */
+/* 	$NetBSD: lock_machdep.c,v 1.3 2003/10/26 11:28:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.2 2003/07/14 22:32:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.3 2003/10/26 11:28:21 yamt Exp $");
 
 /*
  * Machine-dependent spin lock operations.
@@ -88,6 +88,7 @@ __cpu_simple_lock(lockp)
 
 	while (x86_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED) ==
 	    __SIMPLELOCK_LOCKED) {
+		x86_pause();
 #if defined(DEBUG) && defined(DDB)
 		spincount++;
 		if (spincount == limit) {
