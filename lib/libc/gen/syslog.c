@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.21 1999/03/16 13:48:00 is Exp $	*/
+/*	$NetBSD: syslog.c,v 1.22 1999/03/16 14:00:58 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.21 1999/03/16 13:48:00 is Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.22 1999/03/16 14:00:58 is Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -299,7 +299,7 @@ openlog_unlocked(ident, logstat, logfac)
 	}
 	if (LogFile != -1 && !connected) {
 		if (connect(LogFile, (struct sockaddr *)&SyslogAddr,
-		    sizeof(SyslogAddr)) == -1) {
+		    SUN_LEN(&SyslogAddr)) == -1) {
 			(void)close(LogFile);
 			LogFile = -1;
 		} else
