@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 1997/09/20 06:16:27 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.27 1997/09/24 09:24:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.26 1997/09/20 06:16:27 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 1997/09/24 09:24:21 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,11 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	ufs_daddr_t n_ffree, n_bfree;
 	struct dups *dp;
 	struct zlncnt *zlnp;
+#ifdef LITE2BORKEN
 	int cylno, flags;
+#else
+	int cylno;
+#endif
 
 	if (preen && child)
 		(void)signal(SIGQUIT, voidquit);
@@ -296,6 +300,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 			bwrite(fswritefd, (char *)&sblock,
 			    fsbtodb(&sblock, cgsblock(&sblock, cylno)), SBSIZE);
 	}
+#if LITE2BORKEN
 	if (!hotroot()) {
 		ckfini(1);
 	} else {
@@ -309,6 +314,9 @@ checkfilesys(filesys, mntpt, auxdata, child)
 			flags = 0;
 		ckfini(flags & MNT_RDONLY);
 	}
+#else
+	ckfini(1);
+#endif
 	free(blockmap);
 	free(statemap);
 	free((char *)lncntp);
