@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.49 2000/05/18 08:34:26 pk Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.50 2000/06/27 17:52:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,8 +50,6 @@
 #include <sys/kernel.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.91 2000/06/10 18:27:04 assar Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.92 2000/06/27 17:52:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -55,7 +55,7 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 

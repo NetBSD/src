@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.77 2000/06/20 02:29:51 mrg Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.78 2000/06/27 17:52:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,8 +61,6 @@
 #include <sys/malloc.h>
 #include <sys/time.h>
 #include <sys/dirent.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
