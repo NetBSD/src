@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.32 1997/09/22 21:49:55 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.33 1997/10/10 01:51:07 explorer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -811,7 +811,8 @@ after_listen:
 			if (tiflags & TH_SYN &&
 			    tp->t_state == TCPS_TIME_WAIT &&
 			    SEQ_GT(ti->ti_seq, tp->rcv_nxt)) {
-				iss = tp->rcv_nxt + TCP_ISSINCR;
+				iss = tcp_new_iss(tp, sizeof(struct tcpcb),
+						  tp->rcv_nxt);
 				tp = tcp_close(tp);
 				/*
 				 * We have already advanced the mbuf
@@ -2038,8 +2039,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 	sc->sc_sport = ti->ti_sport;
 	sc->sc_dport = ti->ti_dport;
 	sc->sc_irs = ti->ti_seq;
-	sc->sc_iss = tcp_iss;
-	tcp_iss += TCP_ISSINCR/2;
+	sc->sc_iss = tcp_new_iss(sc, sizeof(struct syn_cache), 0);
 	sc->sc_peermaxseg = oi->maxseg;
 	sc->sc_ourmaxseg = tcp_mss_to_advertise(tp);
 	sc->sc_tstmp = (tcp_do_rfc1323 && (tb.t_flags & TF_RCVD_TSTMP)) ? 1 : 0;

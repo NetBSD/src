@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.28 1997/09/22 21:50:02 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.29 1997/10/10 01:51:09 explorer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -45,6 +45,7 @@
 #include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#include <sys/rnd.h>
 
 #include <net/route.h>
 #include <net/if.h>
@@ -79,7 +80,6 @@ void
 tcp_init()
 {
 
-	tcp_iss = 1;		/* XXX wrong */
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
 	if (max_protohdr < sizeof(struct tcpiphdr))
 		max_protohdr = sizeof(struct tcpiphdr);
@@ -631,4 +631,71 @@ tcp_rmx_rtt(tp)
 		    tp->t_rttmin, TCPTV_REXMTMAX);
 	}
 #endif
+}
+
+/*
+ * Get a new sequence value given a tcp control block
+ */
+tcp_seq
+tcp_new_iss(tp, len, addin)
+	void            *tp;
+	u_long           len;
+	tcp_seq		 addin;
+{
+	tcp_seq          tcp_iss;
+	static tcp_seq	 tcp_iss_seq = 0;
+
+#define TCP_ISS_RANDOM_MASK 0x003fffff
+#define TCP_ISS_INCR        0x00400000
+
+	/*
+	 * add randomness about this connection, but do not estimate
+	 * entropy from the timing, since the physical device driver would
+	 * have done that for us.
+	 */
+	if (tp != NULL)
+		rnd_add_data(NULL, tp, len, 0);
+
+	/*
+	 * randomize.
+	 */
+	rnd_extract_data(&tcp_iss, sizeof(tcp_iss), RND_EXTRACT_ANY);
+
+	/*
+	 * If we were asked to add some amount to a known value,
+	 * we will take a random value obtained above, mask off the upper
+	 * bits, and add in the known value.  We also add in a constant to
+	 * ensure that we are at least a certain distance from the original
+	 * value.
+	 *
+	 * This is used when an old connection is in timed wait
+	 * and we have a new one coming in, for instance.
+	 */
+	if (addin != 0) {
+#ifdef TCPISS_DEBUG
+		printf("Random %08x, ", tcp_iss);
+#endif
+		tcp_iss &= TCP_ISS_RANDOM_MASK;
+		tcp_iss = tcp_iss + addin + TCP_ISS_INCR;
+#ifdef TCPISS_DEBUG
+		printf("Old ISS %08x, ISS %08x\n", addin, tcp_iss);
+#endif
+	} else {
+		tcp_iss &= TCP_ISS_RANDOM_MASK;
+		tcp_iss_seq += TCP_ISS_INCR;
+		tcp_iss += tcp_iss_seq;
+#ifdef TCPISS_DEBUG
+		printf("ISS %08x\n", tcp_iss);
+#endif
+	}
+
+#ifdef TCP_COMPAT_42
+	/*
+	 * limit it to the positive range for really old TCP implementations
+	 */
+	if ((int)tcp_iss < 0)
+		tcp_iss &= 0x7fffffff;		/* XXX */
+#endif
+
+	return tcp_iss;
 }
