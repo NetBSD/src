@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: installboot.sh,v 1.2 2000/06/01 14:33:43 soren Exp $
+# $NetBSD: installkernel.sh,v 1.1.2.2 2000/06/20 00:24:12 soren Exp $
 
 EXT2_MOUNT=/stand
 NETBSD_KERNEL=netbsd
