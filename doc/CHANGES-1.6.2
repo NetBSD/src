@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.166 2003/10/02 09:29:50 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.167 2003/10/02 09:57:17 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2139,4 +2139,34 @@ crypto/dist/openssl/ssl/s3_srvr.c		1.6
 
 more fixes from 0.9.7c, from openbsd
 [itojun, ticket #1496]
+
+usr.bin/vmstat/vmstat.c				1.119
+
+	Extra columns appeared in one line of the "Memory statistics by type"
+	header in '94 and '97.  Grow the other line a little so that it looks
+	pretty again.
+	[simonb, ticket #1487]
+
+sys/arch/mips/mips/cpu_exec.c			1.34
+sys/arch/sh3/sh3/coff_exec.c			1.17
+sys/compat/common/compat_exec.c			1.7
+sys/compat/hpux/hpux_exec_aout.c		1.4
+sys/compat/ibcs2/ibcs2_exec_coff.c		1.5
+sys/compat/linux/common/linux_exec_aout.c	1.50
+sys/compat/linux/common/linux_uselib.c		1.7
+sys/compat/m68k4k/m68k4k_exec.c			1.10
+sys/compat/netbsd32/netbsd32_exec_aout.c	1.10
+sys/compat/sunos/sunos_exec_aout.c		1.6
+sys/kern/exec_aout.c				1.25
+sys/kern/exec_ecoff.c				1.18-1.19 (via patch)
+sys/kern/exec_elf32.c				1.76 (via patch)
+sys/kern/exec_macho.c				1.8
+sys/kern/exec_subr.c				1.31
+sys/kern/vfs_vnops.c				1.55
+sys/sys/vnode.h					1.96
+
+	count executable image pages as executable for vm-usage purposes.
+	also, always do the VTEXT vs. v_writecount mutual exclusion
+	(which we previously skipped if the text or data segment was empty).
+	[junyoung, ticket #1488]
 
