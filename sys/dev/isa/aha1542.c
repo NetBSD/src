@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.56 1996/03/17 00:52:54 thorpej Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.57 1996/03/19 03:28:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -878,7 +878,7 @@ aha_send_mbo(aha, cmd, ccb)
 	}
 
 	/* Link ccb to mbo. */
-	lto3b(KVTOPHYS(ccb), wmbo->ccb_addr);
+	_lto3b(KVTOPHYS(ccb), wmbo->ccb_addr);
 	ccb->mbx = wmbo;
 	wmbo->cmd = cmd;
 
@@ -1122,7 +1122,7 @@ aha_init(aha)
 	/*
 	 * Initialize mail box
 	 */
-	lto3b(KVTOPHYS(&aha->aha_mbx), ad);
+	_lto3b(KVTOPHYS(&aha->aha_mbx), ad);
 
 	aha_cmd(aha, 4, 0, 0, 0, AHA_MBX_INIT, AHA_MBX_SIZE,
 	    ad[0], ad[1], ad[2]);
@@ -1207,7 +1207,7 @@ aha_scsi_cmd(xs)
 	ccb->target_stat = 0x00;
 
 	if (xs->datalen && (flags & SCSI_RESET) == 0) {
-		lto3b(KVTOPHYS(ccb->scat_gath), ccb->data_addr);
+		_lto3b(KVTOPHYS(ccb->scat_gath), ccb->data_addr);
 		sg = ccb->scat_gath;
 		seg = 0;
 #ifdef	TFS
@@ -1216,8 +1216,8 @@ aha_scsi_cmd(xs)
 			datalen = ((struct uio *)xs->data)->uio_iovcnt;
 			xs->datalen = 0;
 			while (datalen && seg < AHA_NSEG) {
-				lto3b(iovp->iov_base, sg->seg_addr);
-				lto3b(iovp->iov_len, sg->seg_len);
+				_lto3b(iovp->iov_base, sg->seg_addr);
+				_lto3b(iovp->iov_len, sg->seg_len);
 				xs->datalen += iovp->iov_len;
 				SC_DEBUGN(sc_link, SDEV_DB4, ("UIO(0x%x@0x%x)",
 				    iovp->iov_len, iovp->iov_base));
@@ -1243,7 +1243,7 @@ aha_scsi_cmd(xs)
 				bytes_this_seg = 0;
 
 				/* put in the base address */
-				lto3b(thisphys, sg->seg_addr);
+				_lto3b(thisphys, sg->seg_addr);
 
 				SC_DEBUGN(sc_link, SDEV_DB4, ("0x%x", thisphys));
 
@@ -1283,12 +1283,12 @@ aha_scsi_cmd(xs)
 				 */
 				SC_DEBUGN(sc_link, SDEV_DB4,
 				    ("(0x%x)", bytes_this_seg));
-				lto3b(bytes_this_seg, sg->seg_len);
+				_lto3b(bytes_this_seg, sg->seg_len);
 				sg++;
 				seg++;
 			}
 		}
-		lto3b(seg * sizeof(struct aha_scat_gath), ccb->data_length);
+		_lto3b(seg * sizeof(struct aha_scat_gath), ccb->data_length);
 		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
 		if (datalen) {
 			/*
@@ -1301,11 +1301,11 @@ aha_scsi_cmd(xs)
 			return COMPLETE;
 		}
 	} else {		/* No data xfer, use non S/G values */
-		lto3b(0, ccb->data_addr);
-		lto3b(0, ccb->data_length);
+		_lto3b(0, ccb->data_addr);
+		_lto3b(0, ccb->data_length);
 	}
 	ccb->link_id = 0;
-	lto3b(0, ccb->link_addr);
+	_lto3b(0, ccb->link_addr);
 
 	/*
 	 * Put the scsi command in the ccb and start it
@@ -1454,7 +1454,7 @@ aha_bus_speed_check(aha, speed)
 	 * it's address. Read it onto the board
 	 */
 	for (loopcount = 100; loopcount; loopcount--) {
-		lto3b(KVTOPHYS(aha_test_string), ad);
+		_lto3b(KVTOPHYS(aha_test_string), ad);
 		aha_cmd(aha, 3, 0, 0, 0, AHA_WRITE_FIFO, ad[0], ad[1], ad[2]);
 
 		/*
@@ -1463,7 +1463,7 @@ aha_bus_speed_check(aha, speed)
 		 */
 		bzero(aha_scratch_buf, 54);
 
-		lto3b(KVTOPHYS(aha_scratch_buf), ad);
+		_lto3b(KVTOPHYS(aha_scratch_buf), ad);
 		aha_cmd(aha, 3, 0, 0, 0, AHA_READ_FIFO, ad[0], ad[1], ad[2]);
 
 		/*
