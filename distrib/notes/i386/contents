@@ -148,6 +148,36 @@ not be legal to distribute this set to locations outside of the United
 States and Canada.)
 	[ 798K gzipped, 2.4M uncompressed ]
 
+Since NetBSD 1.3, binary sets for the X Window system are also
+distributed with NetBSD. The binaries are based on X11R6.3,
+and XFree86 3.3.1 in the case of NetBSD/i386. You can not yet
+install them using the new automated install system. However,
+they are gzipped tarfiles, just like the other sets, so you
+can always simply extract them once you have your NetBSD
+system installed and running. The sets are:
+
+	xbase	The basic files needed for a complete X
+		client environment. This does not include
+		the X servers.
+		[ 2.5M gzipped, 7.7M uncompressed ]
+
+	xcomp	The extra libraries and include files needed
+		to compile X source code.
+		[ 1.7M gzipped, 7.3M uncompressed ]
+
+	xcontrib	Programs that were contributed to X.
+
+		[ 183k gzipped, 600k uncompressed ]
+
+	xfont	Fonts needed by X.
+		[ 5.8M gzipped, 7M uncompressed ]
+
+	xserver	All XFree86 X servers. Because all of them are
+		included, this set is large. However, you will
+		only need one of the servers provided in this
+		set (typically XF86_SVGA).
+		[ 12M gzipped, 29M unzipped ]
+
 The i386 binary distribution sets are distributed as gzipped tar files
 named with the extension ".tgz", e.g. "base.tgz". They are also
 available in split form -- catted together, the members of a split set
