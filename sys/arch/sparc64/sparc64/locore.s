@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.126 2001/07/16 18:59:33 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.127 2001/07/19 23:37:17 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -4081,7 +4081,7 @@ interrupt_vector:
 	 nop
 1:	
 #endif
-#ifdef DEBUG
+#ifdef NOT_DEBUG
 	tst	%g5
 	tz	56
 #endif
