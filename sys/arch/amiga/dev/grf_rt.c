@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_rt.c,v 1.15 1994/06/15 19:06:05 chopps Exp $
+ *	$Id: grf_rt.c,v 1.16 1994/06/23 05:39:09 chopps Exp $
  */
 
 #include "grfrt.h"
@@ -710,10 +710,10 @@ rt_load_mon(gp, md)
 	}
 
 	gp->g_data	= (caddr_t)md;
-	gi->gd_regaddr  = (caddr_t)ztwomap(ba);
+	gi->gd_regaddr  = (caddr_t)ztwopa(ba);
 	gi->gd_regsize  = 64*1024;
 
-	gi->gd_fbaddr   = (caddr_t)ztwomap(fb);
+	gi->gd_fbaddr   = (caddr_t)ztwopa(fb);
 #ifdef BANKEDDEVPAGER
 	gi->gd_fbsize	= 4*1024*1024;  /* XXX */
 	gi->gd_bank_size = 64*1024;
