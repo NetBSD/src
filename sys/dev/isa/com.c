@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.25 1994/03/18 05:13:26 cgd Exp $
+ *	$Id: com.c,v 1.26 1994/03/23 01:28:23 cgd Exp $
  */
 
 /*
@@ -40,6 +40,7 @@
  * uses National Semiconductor NS16450/NS16550AF UART
  */
 #include "com.h"
+#include "ast.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +70,6 @@ struct com_softc {
 	u_short sc_iobase;
 	u_char sc_hwflags;
 #define	COM_HW_MULTI	0x01
-#define	COM_HW_CONFIGBITS	COM_HW_MULTI
 #define	COM_HW_FIFO	0x02
 #define	COM_HW_CONSOLE	0x40
 	u_char sc_swflags;
@@ -163,6 +163,21 @@ comprobe(isa_dev)
 	struct com_softc *sc = &com_softc[isa_dev->id_unit];
 	u_short iobase = isa_dev->id_iobase;
 
+	if (isa_dev->id_parent) {
+		if (iobase == 0) {
+			/*
+			 * For multiport cards, the iobase may be left
+			 * unspecified (zero) for slave ports.  In
+			 * that case we calculate it from the master
+			 * (parent) iobase setting and the slave port
+			 * number (physid).
+			 */
+			iobase = isa_dev->id_iobase
+			    = isa_dev->id_parent->id_iobase +
+			    (8 * isa_dev->id_physid);
+		}
+	}
+
 	/* XXX HACK */
 	sprintf(sc->sc_dev.dv_xname, "%s%d", comdriver.name, isa_dev->id_unit);
 	sc->sc_dev.dv_unit = isa_dev->id_unit;
@@ -186,10 +201,24 @@ comattach(isa_dev)
 		delay(1000);
 
 	sc->sc_iobase = iobase;
-	sc->sc_hwflags = isa_dev->id_flags & COM_HW_CONFIGBITS;
+	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
 
 	printf("%s: ", sc->sc_dev.dv_xname);
+
+	printf("%s", sc->sc_dev.dv_xname);
+#if NAST > 0
+	if (isa_dev->id_parent) {
+		printf(" at 0x%x %s%d slave %d",
+		    isa_dev->id_iobase,
+		    isa_dev->id_parent->id_driver->name,
+		    isa_dev->id_parent->id_unit,
+		    isa_dev->id_physid);
+		astslave(isa_dev, unit);
+		sc->sc_hwflags |= COM_HW_MULTI;
+	}
+#endif
+	printf(": ");
 
 	/* look for a NS 16550AF UART with FIFOs */
 	outb(iobase + com_fifo,
@@ -295,8 +324,10 @@ comopen(dev, flag, mode, p)
 		(void) inb(iobase + com_lsr);
 		(void) inb(iobase + com_data);
 		/* you turn me on, baby */
-		outb(iobase + com_mcr,
-		    sc->sc_mcr = MCR_DTR | MCR_RTS | MCR_IENABLE);
+		sc->sc_mcr = MCR_DTR | MCR_RTS;
+		if (!(sc->sc_hwflags & COM_HW_MULTI))
+			sc->sc_mcr |= MCR_IENABLE;
+		outb(iobase + com_mcr, sc->sc_mcr);
 		outb(iobase + com_ier,
 		    IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC);
 
