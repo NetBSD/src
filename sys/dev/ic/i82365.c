@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.42 2000/02/04 09:45:34 itojun Exp $	*/
+/*	$NetBSD: i82365.c,v 1.43 2000/02/04 10:18:28 joda Exp $	*/
 
 #define	PCICDEBUG
 
@@ -930,12 +930,8 @@ pcic_chip_do_mem_map(h, win)
 	    (h->mem[win].addr >> PCIC_SYSMEM_ADDRX_SHIFT) & 0xff);
 	pcic_write(h, mem_map_index[win].sysmem_start_msb,
 	    ((h->mem[win].addr >> (PCIC_SYSMEM_ADDRX_SHIFT + 8)) &
-	    PCIC_SYSMEM_ADDRX_START_MSB_ADDR_MASK));
-
-#if 0
-	/* XXX do I want 16 bit all the time? */
-	PCIC_SYSMEM_ADDRX_START_MSB_DATASIZE_16BIT;
-#endif
+	    PCIC_SYSMEM_ADDRX_START_MSB_ADDR_MASK) |
+	    (mem8 ? 0 : PCIC_SYSTEM_ADDRX_START_MSB_DATASIZE_16BIT));
 
 	pcic_write(h, mem_map_index[win].sysmem_stop_lsb,
 	    ((h->mem[win].addr + h->mem[win].size) >>
@@ -955,8 +951,7 @@ pcic_chip_do_mem_map(h, win)
 	    PCIC_CARDMEM_ADDRX_MSB_REGACTIVE_ATTR : 0));
 
 	reg = pcic_read(h, PCIC_ADDRWIN_ENABLE);
-	reg |= (mem_map_index[win].memenable |
-	    (mem8 ? 0 : PCIC_ADDRWIN_ENABLE_MEMCS16));
+	reg |= (mem_map_index[win].memenable | PCIC_ADDRWIN_ENABLE_MEMCS16);
 	pcic_write(h, PCIC_ADDRWIN_ENABLE, reg);
 
 	delay(100);
