@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_msq.c,v 1.3 2004/01/21 00:33:37 bjh21 Exp $ */
+/* $NetBSD: ppbus_msq.c,v 1.4 2004/01/22 01:16:02 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 Nicolas Souchu
@@ -275,8 +275,8 @@ ppbus_MS_microseq(struct device * dev, struct device * busdev,
 		busdev;
 	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
 	struct ppbus_microseq * mi;		/* current microinstruction */
+	size_t cnt; 
 	int error;
-	int cnt; 
 
 	struct ppbus_xfer * xfer;
 
