@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.69 2003/10/19 00:35:26 lukem Exp $
+#	$NetBSD: Makefile,v 1.70 2003/10/19 00:43:02 lukem Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -89,12 +89,12 @@ NBCOMPATLIB=	-L${COMPATOBJDIR} -lnbcompat
 .endif
 
 mkinit: mkinit.c
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSG} "compile  ${.TARGET}"
 	${_MKCMD}\
 	${HOST_LINK.c} -o mkinit ${.IMPSRC} ${NBCOMPATLIB}
 
 mknodes: mknodes.c
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSG} "compile  ${.TARGET}"
 	${_MKCMD}\
 	${HOST_LINK.c} -o mknodes ${.IMPSRC} ${NBCOMPATLIB}
 
@@ -106,7 +106,7 @@ TARGET_CHARFLAG?= -DTARGET_CHAR="signed char"
 .endif
 
 mksyntax: mksyntax.c
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSG} "compile  ${.TARGET}"
 	${_MKCMD}\
 	${HOST_LINK.c} ${TARGET_CHARFLAG} -o mksyntax ${.IMPSRC} ${NBCOMPATLIB}
 
