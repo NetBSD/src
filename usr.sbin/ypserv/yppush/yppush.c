@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.11 1999/07/25 09:36:02 lukem Exp $	*/
+/*	$NetBSD: yppush.c,v 1.12 2000/06/03 14:33:18 fvdl Exp $	*/
 
 /*
  *
@@ -389,7 +389,7 @@ push(host, hostlen, ypi)
          * instead, the owner of the map is determined by the master value
          * currently cached on the slave server.
          */
-	close(transp->xp_sock);	/* close child's socket, we don't need it */
+	close(transp->xp_fd);	/* close child's socket, we don't need it */
 	/* don't wait for anything here, we will wait for child's exit */
 	tv.tv_sec = 0;
 	tv.tv_usec = 0;
