@@ -1,4 +1,4 @@
-/* $NetBSD: intrcnt.h,v 1.13 1998/06/05 02:13:41 thorpej Exp $ */
+/* $NetBSD: intrcnt.h,v 1.14 1998/06/24 01:14:55 ross Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -231,7 +231,39 @@
 		ASCIZ "dec 550 irq 44";					\
 		ASCIZ "dec 550 irq 45";					\
 		ASCIZ "dec 550 irq 46";					\
-		ASCIZ "dec 550 irq 47";
+		ASCIZ "dec 550 irq 47";					\
+		ASCIZ "dec 1000a irq 0";				\
+		ASCIZ "dec 1000a irq 1";				\
+		ASCIZ "dec 1000a irq 2";				\
+		ASCIZ "dec 1000a irq 3";				\
+/* 0x130 */	ASCIZ "dec 1000a irq 4";				\
+		ASCIZ "dec 1000a irq 5";				\
+		ASCIZ "dec 1000a irq 6";				\
+		ASCIZ "dec 1000a irq 7";				\
+		ASCIZ "dec 1000a irq 8";				\
+		ASCIZ "dec 1000a irq 9";				\
+		ASCIZ "dec 1000a irq 10";				\
+		ASCIZ "dec 1000a irq 11";				\
+		ASCIZ "dec 1000a irq 12";				\
+		ASCIZ "dec 1000a irq 13";				\
+		ASCIZ "dec 1000a irq 14";				\
+		ASCIZ "dec 1000a irq 15";				\
+		ASCIZ "dec 1000a irq 16";				\
+		ASCIZ "dec 1000a irq 17";				\
+		ASCIZ "dec 1000a irq 18";				\
+		ASCIZ "dec 1000a irq 19";				\
+/* 0x140 */	ASCIZ "dec 1000a irq 20";				\
+		ASCIZ "dec 1000a irq 21";				\
+		ASCIZ "dec 1000a irq 22";				\
+		ASCIZ "dec 1000a irq 23";				\
+		ASCIZ "dec 1000a irq 24";				\
+		ASCIZ "dec 1000a irq 25";				\
+		ASCIZ "dec 1000a irq 26";				\
+		ASCIZ "dec 1000a irq 27";				\
+		ASCIZ "dec 1000a irq 28";				\
+		ASCIZ "dec 1000a irq 29";				\
+		ASCIZ "dec 1000a irq 30";				\
+/* 0x14b*/	ASCIZ "dec 1000a irq 31";
 
 #define INTRCNT_DEFINITION						\
 /* 0x00 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
@@ -246,7 +278,9 @@
 /* 0x90 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x100 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x110 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
-/* 0x120 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+/* 0x120 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x130 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x140 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
 
 #define	INTRCNT_CLOCK		0
 #define	INTRCNT_ISA_IRQ		(INTRCNT_CLOCK + 1)
@@ -277,6 +311,9 @@
 #define	INTRCNT_DEC_550_IRQ	(INTRCNT_EB64PLUS_IRQ + \
 				    INTRCNT_EB64PLUS_IRQ_LEN)
 #define	INTRCNT_DEC_550_IRQ_LEN	48
+
+#define	INTRCNT_DEC_1000A_IRQ	(INTRCNT_DEC_550_IRQ + INTRCNT_DEC_550_IRQ_LEN)
+#define	INTRCNT_DEC_1000A_IRQ_LEN	32
 
 #ifndef _LOCORE
 extern volatile long intrcnt[];
