@@ -65,6 +65,8 @@ extern int	requests;	/* # of spool requests */
 extern char    *user[];	        /* users to process */
 extern int	users;		/* # of users in user array */
 
+extern uid_t	uid, euid;
+
 static int	col;		/* column on screen */
 static char	current[40];	/* current file being printed */
 static char	file[132];	/* print file name */
@@ -85,7 +87,7 @@ displayq(format)
 	int format;
 {
 	register struct queue *q;
-	register int i, nitems, fd;
+	register int i, nitems, fd, ret;
 	register char	*cp;
 	struct queue **queue;
 	struct stat statb;
@@ -118,16 +120,23 @@ displayq(format)
 	 * Print out local queue
 	 * Find all the control files in the spooling directory
 	 */
+	seteuid(euid);
 	if (chdir(SD) < 0)
 		fatal("cannot chdir to spooling directory");
+	seteuid(uid);
 	if ((nitems = getq(&queue)) < 0)
 		fatal("cannot examine spooling area\n");
-	if (stat(LO, &statb) >= 0) {
+	seteuid(euid);
+	ret = stat(LO, &statb);
+	seteuid(uid);
+	if (ret >= 0) {
 		if (statb.st_mode & 0100) {
 			if (sendtorem)
 				printf("%s: ", host);
 			printf("Warning: %s is down: ", printer);
+			seteuid(euid);
 			fd = open(ST, O_RDONLY);
+			seteuid(uid);
 			if (fd >= 0) {
 				(void) flock(fd, LOCK_SH);
 				while ((i = read(fd, line, sizeof(line))) > 0)
@@ -144,7 +153,9 @@ displayq(format)
 	}
 
 	if (nitems) {
+		seteuid(euid);
 		fp = fopen(LO, "r");
+		seteuid(uid);
 		if (fp == NULL)
 			warn();
 		else {
@@ -154,9 +165,13 @@ displayq(format)
 				cp++;
 			*cp = '\0';
 			i = atoi(current);
-			if (i <= 0 || kill(i, 0) < 0)
-				warn();
-			else {
+			if (i <= 0) {
+				seteuid(euid);
+				ret = kill(i, 0);
+				seteuid(uid);
+			}
+				ret = -1;
+			if (ret < 0) {
 				/* read current file name */
 				cp = current;
 				while ((*cp = getc(fp)) != EOF && *cp != '\n')
@@ -167,7 +182,9 @@ displayq(format)
 				 */
 				if (sendtorem)
 					printf("%s: ", host);
+				seteuid(euid);
 				fd = open(ST, O_RDONLY);
+				seteuid(uid);
 				if (fd >= 0) {
 					(void) flock(fd, LOCK_SH);
 					while ((i = read(fd, line, sizeof(line))) > 0)
@@ -266,8 +283,10 @@ inform(cf)
 	 * There's a chance the control file has gone away
 	 * in the meantime; if this is the case just keep going
 	 */
+	seteuid(euid);
 	if ((cfp = fopen(cf, "r")) == NULL)
 		return;
+	seteuid(uid);
 
 	if (rank < 0)
 		rank = 0;
@@ -396,8 +415,10 @@ dump(nfile, file, copies)
 		printf("%s", nfile);
 		col += n+fill;
 	}
+	seteuid(euid);
 	if (*file && !stat(file, &lbuf))
 		totsize += copies * lbuf.st_size;
+	seteuid(uid);
 }
 
 /*
