@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.19 2001/04/06 11:34:01 he Exp $
+.\"	$NetBSD: main,v 1.61.2.20 2001/05/01 13:36:06 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -266,6 +266,21 @@ among them improved interaction between IPF/Nat and IPSEC.
 The Heimdal
 .Xr kerberos 8
 implementation has been upgraded to version 0.3e.
+.It
+Support for Accton EN2242 and other AmdTek AN985 cards added
+to the
+.Xr tlp 4
+driver.
+.It
+Several country-specific optional keyboard mappings have been
+added for USB keyboards.
+.It
+A driver for Yamaha YMF724/740/744/745-based sound cards has
+been added, see
+.Xr yds 4 .
+.It
+The maximum number of BSD disklabel partitions on the i386 port
+has been increased from 8 to 16.
 .El
 In addition, many bugs have been fixed -- more than 75 problems
 reported through our problem tracking system have been fixed,
