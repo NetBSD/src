@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bswap.h,v 1.8 2001/07/26 07:55:54 lukem Exp $	*/
+/*	$NetBSD: ufs_bswap.h,v 1.9 2002/01/31 19:17:02 tv Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -36,7 +36,9 @@
 #include "opt_ffs.h"
 #endif
 
+#if !HAVE_CONFIG_H || HAVE_MACHINE_BSWAP_H
 #include <machine/bswap.h>
+#endif
 
 /* Macros to access UFS flags */
 #ifdef FFS_EI
