@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.284 2004/04/10 20:43:02 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.285 2004/04/10 20:51:24 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.284 2004/04/10 20:43:02 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.285 2004/04/10 20:51:24 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -7288,7 +7288,7 @@ pmap_copy_page4m(src, dst)
 	setpgt4m(cpuinfo.vpage_pte[0], spte);
 	setpgt4m(cpuinfo.vpage_pte[1], dpte);
 	qcopy(sva, dva, NBPG);	/* loads cache, so we must ... */
-	cache_flush_page((vaddr_t)sva, getcontext4m());
+	cpuinfo.sp_vcache_flush_page((vaddr_t)sva, getcontext4m());
 	sp_tlb_flush((int)sva, 0, ASI_SRMMUFP_L3);
 	setpgt4m(cpuinfo.vpage_pte[0], SRMMU_TEINVALID);
 	sp_tlb_flush((int)dva, 0, ASI_SRMMUFP_L3);
