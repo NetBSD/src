@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mace.c,v 1.7 2003/01/03 09:09:21 rafal Exp $	*/
+/*	$NetBSD: com_mace.c,v 1.8 2003/01/06 06:19:40 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -80,10 +80,6 @@ com_mace_match(parent, match, aux)
 	return 1;
 }
 
-extern void *crime_intr_establish(int, int, int, int (*)(void *), void *);
-
-int console = 0;
-
 static void
 com_mace_attach(parent, self, aux)
 	struct device *parent;
@@ -105,7 +101,7 @@ com_mace_attach(parent, self, aux)
 	com_attach_subr(sc);
 	delay(10000);
 
-	mace_intr_establish(maa->maa_intr, 4, comintr, sc);
+	mace_intr_establish(4, IPL_TTY, comintr, sc);
 	/*mace_intr_establish(maa->maa_intr, IPL_TTY, comintr, sc);*/
 
 	return;
