@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3 2002/09/27 15:35:55 provos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4 2003/03/06 05:25:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -43,109 +43,107 @@
 #include <sys/extent.h>
 #include <sys/mbuf.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/bus.h>
 
-static paddr_t bebox_memio_mmap (bus_space_tag_t, bus_addr_t, off_t, int, int);
-static int bebox_memio_map (bus_space_tag_t, bus_addr_t, bus_size_t, int,
+static paddr_t memio_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
+static int memio_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	bus_space_handle_t *);
-static void bebox_memio_unmap (bus_space_tag_t, bus_space_handle_t, bus_size_t);
-static int bebox_memio_alloc (bus_space_tag_t, bus_addr_t, bus_addr_t,
-	bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *,
-	bus_space_handle_t *);
-static void bebox_memio_free (bus_space_tag_t, bus_space_handle_t, bus_size_t);
+static void memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+static int memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
+	bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
+static void memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
-const struct powerpc_bus_space bebox_io_bs_tag = {
-	BEBOX_BUS_SPACE_IO, 0x80000000, 0x80000000, 0x3f800000,
-	bebox_memio_mmap,
-	bebox_memio_map, bebox_memio_unmap, bebox_memio_alloc, bebox_memio_free
+struct powerpc_bus_space bebox_io_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	BEBOX_BUS_SPACE_IO, 0x00000000, 0x3f800000,
+	NULL,
+	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
-const struct powerpc_bus_space bebox_isa_io_bs_tag = {
-	BEBOX_BUS_SPACE_IO, 0x80000000, 0x80000000, 0x00010000,
-	bebox_memio_mmap,
-	bebox_memio_map, bebox_memio_unmap, bebox_memio_alloc, bebox_memio_free
+struct powerpc_bus_space bebox_isa_io_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	BEBOX_BUS_SPACE_IO, 0x00000000, 0x00010000,
+	NULL,
+	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
-const struct powerpc_bus_space bebox_mem_bs_tag = {
-	BEBOX_BUS_SPACE_MEM, 0xc0000000, 0xc0000000, 0x3f000000,
-	bebox_memio_mmap,
-	bebox_memio_map, bebox_memio_unmap, bebox_memio_alloc, bebox_memio_free
+struct powerpc_bus_space bebox_mem_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	BEBOX_BUS_SPACE_MEM, 0x00000000, 0x3f000000,
+	NULL,
+	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
-const struct powerpc_bus_space bebox_isa_mem_bs_tag = {
-	BEBOX_BUS_SPACE_MEM, 0xc0000000, 0xc0000000, 0x01000000,
-	bebox_memio_mmap,
-	bebox_memio_map, bebox_memio_unmap, bebox_memio_alloc, bebox_memio_free
+struct powerpc_bus_space bebox_isa_mem_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	BEBOX_BUS_SPACE_MEM, 0x00000000, 0x01000000,
+	NULL,
+	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
-static long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 
-struct extent *ioport_ex;
-struct extent *iomem_ex;
+static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]
+    __attribute__((aligned(8)));
 
-static int ioport_malloc_safe;
+static int extent_flags;
 
 void
-bebox_bus_space_init()
+bebox_bus_space_init(void)
 {
 	int error;
 
-	ioport_ex = extent_create("ioport", 0, 0x3f7fffff, M_DEVBUF,
-	    (caddr_t)ioport_ex_storage, sizeof(ioport_ex_storage),
+	bebox_io_bs_tag.pbs_extent = extent_create("ioport",
+	    bebox_io_bs_tag.pbs_base, bebox_io_bs_tag.pbs_limit - 1,
+	    M_DEVBUF,
+	    ex_storage[0], sizeof(ex_storage[0]),
 	    EX_NOCOALESCE|EX_NOWAIT);
-	error = extent_alloc_region(ioport_ex, 0x10000, 0x7F0000, EX_NOWAIT);
+	error = extent_alloc_region(bebox_io_bs_tag.pbs_extent,
+	    0x10000, 0x7F0000, EX_NOWAIT);
 	if (error)
-		panic("bebox_bus_space_init: can't block out reserved I/O space 0x10000-0x7fffff: error=%d", error);
-	iomem_ex = extent_create("iomem", 0, 0x3effffff, M_DEVBUF,
-	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
+		panic("bebox_bus_space_init: can't block out reserved "
+		    " I/O space 0x10000-0x7fffff: error=%d", error);
+	bebox_mem_bs_tag.pbs_extent = extent_create("iomem",
+	    bebox_io_bs_tag.pbs_base, bebox_io_bs_tag.pbs_limit - 1,
+	    M_DEVBUF,
+	    ex_storage[1], sizeof(ex_storage[1]),
 	    EX_NOCOALESCE|EX_NOWAIT);
+
+	bebox_isa_io_bs_tag.pbs_extent = bebox_io_bs_tag.pbs_extent;
+	bebox_isa_mem_bs_tag.pbs_extent = bebox_mem_bs_tag.pbs_extent;
 }
 
 void
-bebox_bus_space_mallocok()
+bebox_bus_space_mallocok(void)
 {
-
-	ioport_malloc_safe = 1;
+	extent_flags = EX_MALLOCOK;
 }
 
-static paddr_t
-bebox_memio_mmap(t, bpa, offset, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	off_t offset;
-	int prot, flags;
+paddr_t
+memio_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t offset, int prot, int flags)
 {
-	return ((bpa + offset) >> PGSHIFT);
+	return (trunc_page(bpa + offset));
 }
 
-static int
-bebox_memio_map(t, bpa, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+int
+memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
+	bus_space_handle_t *bshp)
 {
 	int error;
-	struct extent *ex;
 
 	if (bpa + size > t->pbs_limit)
 		return (EINVAL);
+
 	/*
-	 * Pick the appropriate extent map.
+	 * Can't map I/O space as linear.
 	 */
-	if (t->pbs_type == BEBOX_BUS_SPACE_IO) {
-		if (flags & BUS_SPACE_MAP_LINEAR)
-			return (EOPNOTSUPP);
-		ex = ioport_ex;
-	} else if (t->pbs_type == BEBOX_BUS_SPACE_MEM) {
-		ex = iomem_ex;
-	} else
-		panic("bebox_memio_map: bad bus space tag");
+	if ((flags & BUS_SPACE_MAP_LINEAR) &&
+	    (t->pbs_flags & _BUS_SPACE_IO_TYPE))
+		return (EOPNOTSUPP);
 
 	/*
 	 * Before we go any further, let's make sure that this
 	 * region is available.
 	 */
-	error = extent_alloc_region(ex, bpa, size,
-	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0));
+	error = extent_alloc_region(t->pbs_extent, bpa, size,
+	    EX_NOWAIT | extent_flags);
 	if (error)
 		return (error);
 
@@ -154,69 +152,42 @@ bebox_memio_map(t, bpa, size, flags, bshp)
 	return (0);
 }
 
-static void
-bebox_memio_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+void
+memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
-	struct extent *ex;
-	bus_addr_t bpa;
+	bus_addr_t bpa = bsh - t->pbs_offset;
 
-	/*
-	 * Find the correct extent and bus physical address.
-	 */
-	if (t->pbs_type == BEBOX_BUS_SPACE_IO)
-		ex = ioport_ex;
-	else if (t->pbs_type == BEBOX_BUS_SPACE_MEM)
-		ex = iomem_ex;
-	else
-		panic("bebox_memio_unmap: bad bus space tag");
-
-	bpa = bsh - t->pbs_offset;
-
-	if (extent_free(ex, bpa, size,
-	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
-		printf("bebox_memio_unmap: %s 0x%lx, size 0x%lx\n",
-		    (t->pbs_type == BEBOX_BUS_SPACE_IO) ? "port" : "mem",
+	if (extent_free(t->pbs_extent, bpa, size, EX_NOWAIT | extent_flags)) {
+		printf("memio_unmap: %s 0x%lx, size 0x%lx\n",
+		    (t->pbs_flags & _BUS_SPACE_IO_TYPE) ? "port" : "mem",
 		    (unsigned long)bpa, (unsigned long)size);
-		printf("bebox_memio_unmap: can't free region\n");
+		printf("memio_unmap: can't free region\n");
 	}
 }
 
-static int
-bebox_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
-    bpap, bshp)
-	bus_space_tag_t t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int flags;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+int
+memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
+	bus_size_t size, bus_size_t alignment, bus_size_t boundary,
+	int flags, bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
-	struct extent *ex;
 	u_long bpa;
 	int error;
 
 	if (rstart + size > t->pbs_limit)
 		return (EINVAL);
 
-	if (t->pbs_type == BEBOX_BUS_SPACE_IO) {
-		if (flags & BUS_SPACE_MAP_LINEAR)
-			return (EOPNOTSUPP);
-		ex = ioport_ex;
-	} else if (t->pbs_type == BEBOX_BUS_SPACE_MEM) {
-		ex = iomem_ex;
-	} else
-		panic("bebox_memio_alloc: bad bus space tag");
+	/*
+	 * Can't map I/O space as linear.
+	 */
+	if ((flags & BUS_SPACE_MAP_LINEAR) &&
+	    (t->pbs_flags & _BUS_SPACE_IO_TYPE))
+		return (EOPNOTSUPP);
 
-	if (rstart < ex->ex_start || rend > ex->ex_end)
-		panic("bebox_memio_alloc: bad region start/end");
+	if (rstart < t->pbs_extent->ex_start || rend > t->pbs_extent->ex_end)
+		panic("memio_alloc: bad region start/end");
 
-	error = extent_alloc_subregion(ex, rstart, rend, size, alignment,
-	    boundary,
-	    EX_FAST | EX_NOWAIT | (ioport_malloc_safe ?  EX_MALLOCOK : 0),
-	    &bpa);
+	error = extent_alloc_subregion(t->pbs_extent, rstart, rend, size,
+	    alignment, boundary, EX_FAST | EX_NOWAIT | extent_flags, &bpa);
 
 	if (error)
 		return (error);
@@ -227,12 +198,9 @@ bebox_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
 	return (0);
 }
 
-static void
-bebox_memio_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+void
+memio_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
-	/* bebox_memio_unmap() does all that we need to do. */
-	bebox_memio_unmap(t, bsh, size);
+	/* memio_unmap() does all that we need to do. */
+	memio_unmap(t, bsh, size);
 }
