@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.71 1997/10/20 22:05:30 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.72 1997/10/21 18:56:44 thorpej Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -35,7 +35,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o link.o \
 	listen.o lutimes.o madvise.o mincore.o minherit.o \
 	mkdir.o mkfifo.o mknod.o mlock.o \
-	mount.o mprotect.o msgctl.o msgget.o msgrcv.o msgsnd.o \
+	mount.o mprotect.o msgctl.o msgget.o msgrcv.o msgsnd.o __msync13.o \
 	munlock.o munmap.o nanosleep.o nfssvc.o ntp_adjtime.o ntp_gettime.o \
 	open.o pathconf.o poll.o \
 	profil.o quotactl.o \
