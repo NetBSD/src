@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.S,v 1.1 2002/11/22 15:01:18 fvdl Exp $	*/
+/*	$NetBSD: svr4_sigcode.S,v 1.2 2002/11/23 02:05:51 lha Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,6 +140,11 @@
 	
 #define _CONCAT(a,b) a/**/b
 
+#if defined(MULTIPROCESSOR)
+#define CPUVAR(off) %fs:_CONCAT(CPU_INFO_,off)
+#else
+#define CPUVAR(off) _C_LABEL(cpu_info_primary)+_CONCAT(CPU_INFO_,off)
+#endif
 #define CHECK_ASTPENDING()		cmpl $0,CPUVAR(ASTPENDING)
 #define CLEAR_ASTPENDING()		movl $0,CPUVAR(ASTPENDING)
 	
