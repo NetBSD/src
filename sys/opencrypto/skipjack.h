@@ -1,4 +1,4 @@
-/*	$NetBSD: skipjack.h,v 1.1 2003/07/25 21:12:48 jonathan Exp $ */
+/*	$NetBSD: skipjack.h,v 1.2 2003/08/27 00:20:56 thorpej Exp $ */
 /*	$OpenBSD: skipjack.h,v 1.3 2002/03/14 01:26:51 millert Exp $	*/
 
 /* 
@@ -16,4 +16,4 @@
 
 extern void skipjack_forwards(u_int8_t *plain, u_int8_t *cipher, u_int8_t **key);
 extern void skipjack_backwards(u_int8_t *cipher, u_int8_t *plain, u_int8_t **key);
-extern void subkey_table_gen(u_int8_t *key, u_int8_t **key_tables);
+extern void subkey_table_gen(const u_int8_t *key, u_int8_t **key_tables);
