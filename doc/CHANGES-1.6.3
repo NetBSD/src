@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.59 2004/04/01 07:06:54 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.60 2004/04/01 15:53:33 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -357,3 +357,23 @@ gnu/dist/cvs/src/server.c			1.14
 	but the binary was the normal one.  Fixes PR#23471.
 	[jmc, ticket #1646]
 
+crypto/dist/openssl/apps/asn1pars.c		patch
+crypto/dist/openssl/certs/vsign3.pem		patch
+crypto/dist/openssl/crypto/asn1/a_strex.c	patch
+crypto/dist/openssl/crypto/bio/b_print.c	patch
+crypto/dist/openssl/crypto/evp/e_rc4.c		patch
+crypto/dist/openssl/crypto/pem/pem_lib.c	patch
+crypto/dist/openssl/crypto/x509/by_dir.c	patch
+crypto/dist/openssl/crypto/x509/x509type.c	patch
+crypto/dist/openssl/doc/crypto/BIO_f_ssl.pod	patch
+crypto/dist/openssl/doc/ssl/SSL_COMP_add_compression_method.pod		patch
+crypto/dist/openssl/ssl/s3_clnt.c		patch
+crypto/dist/openssl/ssl/s3_enc.c		patch
+crypto/dist/openssl/ssl/s3_pkt.c		patch
+crypto/dist/openssl/ssl/ssl.h			patch
+crypto/dist/openssl/ssl/ssl_cert.c		patch
+crypto/dist/openssl/ssl/ssl_ciph.c		patch
+
+	Pull up major differences from openssl 0.9.6l->0.9.6m. Major fix is
+	a null pointer check that can cause crashes.
+	[groo, ticket #1640]
