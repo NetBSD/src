@@ -15,25 +15,17 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_frexpf.c,v 1.7 1999/07/02 15:37:42 simonb Exp $");
+__RCSID("$NetBSD: s_frexpf.c,v 1.8 2002/05/26 22:01:56 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const float
-#else
-static float
-#endif
 two25 =  3.3554432000e+07; /* 0x4c000000 */
 
-#ifdef __STDC__
-	float frexpf(float x, int *eptr)
-#else
-	float frexpf(x, eptr)
-	float x; int *eptr;
-#endif
+float
+frexpf(float x, int *eptr)
 {
 	int32_t hx,ix;
 	GET_FLOAT_WORD(hx,x);

@@ -15,18 +15,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_lgammaf.c,v 1.6 2001/01/06 00:15:00 christos Exp $");
+__RCSID("$NetBSD: w_lgammaf.c,v 1.7 2002/05/26 22:02:02 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float lgammaf(float x)
-#else
-	float lgammaf(x)
-	float x;
-#endif
+float
+lgammaf(float x)
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_lgammaf_r(x,&signgam);

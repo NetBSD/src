@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_expf.c,v 1.8 1999/07/02 15:37:39 simonb Exp $");
+__RCSID("$NetBSD: e_expf.c,v 1.9 2002/05/26 22:01:49 wiz Exp $");
 #endif
 
 #include "math.h"
@@ -23,11 +23,7 @@ __RCSID("$NetBSD: e_expf.c,v 1.8 1999/07/02 15:37:39 simonb Exp $");
 
 static const float huge = 1.0e+30;
 
-#ifdef __STDC__
 static const float
-#else
-static float
-#endif
 one	= 1.0,
 halF[2]	= {0.5,-0.5,},
 twom100 = 7.8886090522e-31,      /* 2**-100=0x0d800000 */
@@ -44,12 +40,8 @@ P3   =  6.6137559770e-05, /* 0x388ab355 */
 P4   = -1.6533901999e-06, /* 0xb5ddea0e */
 P5   =  4.1381369442e-08; /* 0x3331bb4c */
 
-#ifdef __STDC__
-	float __ieee754_expf(float x)	/* default IEEE double exp */
-#else
-	float __ieee754_expf(x)	/* default IEEE double exp */
-	float x;
-#endif
+float
+__ieee754_expf(float x)	/* default IEEE double exp */
 {
 	float y,hi,lo,c,t;
 	int32_t k,xsb;

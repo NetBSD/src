@@ -15,24 +15,16 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_modff.c,v 1.6 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: s_modff.c,v 1.7 2002/05/26 22:01:57 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const float one = 1.0;
-#else
-static float one = 1.0;
-#endif
 
-#ifdef __STDC__
-	float modff(float x, float *iptr)
-#else
-	float modff(x, iptr)
-	float x,*iptr;
-#endif
+float
+modff(float x, float *iptr)
 {
 	int32_t i0,j0;
 	u_int32_t i;

@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_acosh.c,v 1.11 1999/07/02 15:37:38 simonb Exp $");
+__RCSID("$NetBSD: e_acosh.c,v 1.12 2002/05/26 22:01:48 wiz Exp $");
 #endif
 
 /* __ieee754_acosh(x)
@@ -32,20 +32,12 @@ __RCSID("$NetBSD: e_acosh.c,v 1.11 1999/07/02 15:37:38 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const double
-#else
-static double
-#endif
 one	= 1.0,
 ln2	= 6.93147180559945286227e-01;  /* 0x3FE62E42, 0xFEFA39EF */
 
-#ifdef __STDC__
-	double __ieee754_acosh(double x)
-#else
-	double __ieee754_acosh(x)
-	double x;
-#endif
+double
+__ieee754_acosh(double x)
 {
 	double t;
 	int32_t hx;

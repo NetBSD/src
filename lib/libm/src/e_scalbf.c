@@ -15,26 +15,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_scalbf.c,v 1.5 1999/07/02 15:37:41 simonb Exp $");
+__RCSID("$NetBSD: e_scalbf.c,v 1.6 2002/05/26 22:01:52 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
 #ifdef _SCALB_INT
-#ifdef __STDC__
-	float __ieee754_scalbf(float x, int fn)
+float
+__ieee754_scalbf(float x, int fn)
 #else
-	float __ieee754_scalbf(x,fn)
-	float x; int fn;
-#endif
-#else
-#ifdef __STDC__
-	float __ieee754_scalbf(float x, float fn)
-#else
-	float __ieee754_scalbf(x,fn)
-	float x, fn;
-#endif
+float
+__ieee754_scalbf(float x, float fn)
 #endif
 {
 #ifdef _SCALB_INT

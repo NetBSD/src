@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_sinh.c,v 1.8 1999/07/02 15:37:45 simonb Exp $");
+__RCSID("$NetBSD: w_sinh.c,v 1.9 2002/05/26 22:02:03 wiz Exp $");
 #endif
 
 /*
@@ -22,12 +22,8 @@ __RCSID("$NetBSD: w_sinh.c,v 1.8 1999/07/02 15:37:45 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	double sinh(double x)		/* wrapper sinh */
-#else
-	double sinh(x)			/* wrapper sinh */
-	double x;
-#endif
+double
+sinh(double x)		/* wrapper sinh */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_sinh(x);
