@@ -1,8 +1,8 @@
-/*	$NetBSD: mips_reloc.c,v 1.36 2002/09/26 20:41:34 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.37 2002/10/05 11:59:05 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
- * Portions copyright 2002 Charles M. Hannum.
+ * Portions copyright 2002 Charles M. Hannum <root@ihack.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
