@@ -1,5 +1,4 @@
-/*	$Id: machdep.c,v 1.120.2.1 1998/10/15 00:42:44 nisimura Exp $	*/
-/*	$NetBSD: machdep.c,v 1.120.2.1 1998/10/15 00:42:44 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.120.2.2 1998/10/20 02:46:41 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.1 1998/10/15 00:42:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.2 1998/10/20 02:46:41 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -108,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.1 1998/10/15 00:42:44 nisimura E
 
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/maxine.h>
 #include <dev/tc/tcvar.h>		/* XXX */
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
 #include <dev/tc/ioasicreg.h>		/* cycl-counter on kn03 stepping */
@@ -157,6 +155,7 @@ int	systype;		/* Mother board type */
 int	maxmem;			/* Max memory per process */
 int	physmem;		/* Max supported memory, changes to actual */
 int	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
+u_int32_t latched_cycle_cnt;	/* high resolution timer cycle counter */
 u_long	le_iomem;		/* 128K for lance chip via. IOASIC */
 volatile struct chiptime *mcclock_addr;
 
@@ -169,6 +168,7 @@ struct intrhand intrtab[MAX_DEV_NCOOKIES];
 u_int32_t iplmask[IPL_HIGH + 1];	/* interrupt mask bits for each IPL */
 u_int32_t oldiplmask[IPL_HIGH + 1];	/* old values for splx(s) */
 struct splsw *__spl;			/* model dependent spl call switch */
+unsigned (*clkread) __P((void));	/* model dependent clkread() */
 
 extern caddr_t esym;
 
@@ -181,6 +181,7 @@ void prom_halt __P((int, char *)) __attribute__((__noreturn__));
 int  initcpu __P((void));
 int  atoi __P((const char *));
 int  nullintr __P((void *));
+unsigned nullclkread __P((void));
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
@@ -207,8 +208,8 @@ mach_init(argc, argv, code, cv)
 	u_int code;
 	const struct callback *cv;
 {
-	register char *cp;
-	register int i;
+	char *cp;
+	int i;
 	u_long first, last;
 	caddr_t kernend, v;
 	vm_size_t size;
@@ -360,7 +361,6 @@ mach_init(argc, argv, code, cv)
 	/* check what model platform we are running on */
 	systype = ((i >> 16) & 0xff);
 
-
 	/*
 	 * Find out what hardware we're on, and do basic initialization.
 	 */
@@ -449,7 +449,7 @@ mach_init(argc, argv, code, cv)
 void
 cpu_startup()
 {
-	register unsigned i;
+	unsigned i;
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
@@ -628,6 +628,7 @@ cpu_startup()
 	}
 #endif /* NLE_IOASIC */
 
+	/* Initialize interrupt table array */
 	for (i = 0; i < MAX_DEV_NCOOKIES; i++) {
 		intrtab[i].ih_func = nullintr;
 		intrtab[i].ih_arg = (void *)i;
@@ -713,7 +714,7 @@ prom_halt(howto, bootstr)
 
 void
 cpu_reboot(howto, bootstr)
-	/*register*/ int howto;
+	int howto;
 	char *bootstr;
 {
 	extern int cold;
@@ -774,110 +775,9 @@ haltsys:
 	/*NOTREACHED*/
 }
 
-
-/*
- * Read a high-resolution clock, if one is available, and return
- * the current microsecond offset from time-of-day.
- */
-
-/* XXX clock hacks */
-#include "opt_dec_3maxplus.h"
 #include "opt_dec_3min.h"
 #include "opt_dec_maxine.h"
-
-#if !(defined(DEC_3MAXPLUS) || defined(DEC_MAXINE) ||defined(DEC_3MIN))
-#define	clkread()	(0)
-#else /* (defined(DEC_3MAXPLUS) || defined(DEC_MAXINE)) */
-
-static __inline u_long clkread __P((void));	/* get usec-resolution clock */
-
-/*
- * IOASIC TC cycle counter, latched on every interrupt from RTC chip.
- * [Or free-running microsecond counter on Maxine.]
- *
- * XXXjrs needs better MI hardware tier support.
- */
-u_long latched_cycle_cnt;
-
-/*
- * On a Decstation 5000/240,  use the turbochannel bus-cycle counter
- * to interpolate micro-seconds since the  last RTC clock tick.
- * The interpolation base is the copy of the bus cycle-counter taken
- * by the RTC interrupt handler.
- * On XINE, use the microsecond free-running counter.
- *
- */
-static __inline u_long
-clkread()
-{
-
-#ifdef DEC_3MAXPLUS
-	register u_long usec, cycles;	/* really 32 bits? */
-#endif
-
-#if defined(DEC_3MIN)
-	if (systype == DS_3MIN && CPUISMIPS3) {
-		extern u_int32_t mips3_cycle_count __P((void));
-		register u_int32_t mips3_cycles =
-		    mips3_cycle_count() - (u_int32_t)latched_cycle_cnt;
-		return (mips3_cycles / cpu_mhz);
-	} else
-#endif
-#ifdef DEC_MAXINE
-	if (systype == DS_MAXINE)
-		return (*(u_long*)(MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR)) -
-		    latched_cycle_cnt);
-	else
-#endif
-#ifdef DEC_3MAXPLUS
-	if (systype == DS_3MAXPLUS)
-		/* 5k/240 TC bus counter */
-		cycles = *(u_long*)IOASIC_REG_CTR(ioasic_base);
-	else
-#endif
-		return (0);
-
-#ifdef DEC_3MAXPLUS
-	/* Compute difference in cycle count from last hardclock() to now */
-#if 1
-	/* my code, using u_ints */
-	cycles = cycles - latched_cycle_cnt;
-#else
-	/* Mills code, using (signed) ints */
-	if (cycles >= latched_cycle_cnt)
-		cycles = cycles - latched_cycle_cnt;
-	else
-		cycles = latched_cycle_cnt - cycles;
-#endif
-
-	/*
-	 * Scale from 40ns to microseconds.
-	 * Avoid a kernel FP divide (by 25) using the approximation 
-	 * 1/25 = 40/1000 =~ 41/ 1024, which is good to 0.0975 %
-	 */
-	usec = cycles + (cycles << 3) + (cycles << 5);
-	usec = usec >> 10;
-
-#ifdef CLOCK_DEBUG
-	if (usec > 3906 +4) {
-		 addlog("clkread: usec %d, counter=%lx\n",
-			 usec, latched_cycle_cnt);
-		stacktrace();
-	}
-#endif /*CLOCK_DEBUG*/
-	return usec;
-#endif /* DEC_3MAXPLUS */
-}
-
-#if 0
-void
-microset()
-{
-	latched_cycle_cnt = *(u_long*)(IOASIC_REG_CTR(ioasic_base));
-}
-#endif	/* 0 */
-#endif	/* (defined(DEC_3MAXPLUS) || defined(DEC_MAXINE)) */
-
+#include "opt_dec_3maxplus.h"
 
 /*
  * Return the best possible estimate of the time in the timeval
@@ -887,13 +787,15 @@ microset()
  */
 void
 microtime(tvp)
-	register struct timeval *tvp;
+	struct timeval *tvp;
 {
 	int s = splclock();
 	static struct timeval lasttime;
 
 	*tvp = time;
-	tvp->tv_usec += clkread();
+#if (DEC_3MIN + DEC_MAXINE + DEC_3MAXPLUS) > 0
+	tvp->tv_usec += (*clkread)();
+#endif
 	if (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
 		tvp->tv_sec++;
@@ -909,11 +811,10 @@ microtime(tvp)
 	splx(s);
 }
 
-
 int
 initcpu()
 {
-	register volatile struct chiptime *c;
+	volatile struct chiptime *c;
 	int i = 0;
 
 	/*
@@ -938,7 +839,6 @@ initcpu()
 #endif
 }
 
-
 /*
  * Wait "n" microseconds. (scsi code needs this).
  */
@@ -948,7 +848,6 @@ delay(n)
 {
         DELAY(n);
 }
-
 
 /*
  * Convert an ASCII string into an integer.
@@ -1012,21 +911,21 @@ out:
 }
 
 /*
- *  Ensure all  platform vectors are always initialized.
+ *  Ensure all platform vectors are always initialized.
  */
 
 void
 unimpl_os_init() 
 {
-	panic("sysconf.init didnt set os_init\n");
+	panic("sysconf.init didnt set os_init");
 }
 
 void
 unimpl_bus_reset()
 {
-	panic("sysconf.init didnt set bus_reset\n");
+	panic("sysconf.init didnt set bus_reset");
 }
-    
+
 int
 unimpl_intr(mask, pc, statusreg, causereg)
 	u_int mask;
@@ -1034,34 +933,34 @@ unimpl_intr(mask, pc, statusreg, causereg)
 	u_int statusreg;
 	u_int causereg;
 {
-	panic("sysconf.init didnt set intr\n");	
+	panic("sysconf.init didnt set intr");	
 }
 
 void
 unimpl_cons_init()
 {
-	panic("sysconf.init didnt set cons_init\n");	
+	panic("sysconf.init didnt set cons_init");	
 }
 
 void
 unimpl_device_register(sc, arg)
-     struct device *sc;
-     void *arg;
+	struct device *sc;
+	void *arg;
 {
-	panic("sysconf.init didnt set device_register\n");	
+	panic("sysconf.init didnt set device_register");	
 }
 
 const char*
 unimpl_model_name()
 {
-	panic("sysconf.init didnt set model_name\n");	
+	panic("sysconf.init didnt set model_name");	
 }
 
 void
 unimpl_clockintr(arg)
 	void *arg;
 {
-	panic("sysconf.init didnt set clockintr\n");
+	panic("sysconf.init didnt set clockintr");
 }
 
 void
@@ -1069,13 +968,13 @@ unimpl_iointr(arg, arg2)
 	void *arg;
 	u_long arg2;
 {
-	panic("sysconf.init didnt set iointr\n");
+	panic("sysconf.init didnt set iointr");
 }
 
 void
 unimpl_errintr()
 {
-	panic("sysconf.init didnt set errintr_name\n");	
+	panic("sysconf.init didnt set errintr_name");	
 }
 
 int
@@ -1084,4 +983,10 @@ nullintr(v)
 {
 	printf("uncaught interrupt: cookie %d\n", (int)v);
 	return 1;
+}
+
+unsigned
+nullclkread()
+{
+	return 0;
 }
