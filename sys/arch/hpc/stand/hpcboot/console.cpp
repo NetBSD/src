@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: console.cpp,v 1.6 2001/05/21 15:54:25 uch Exp $ */
+/* -*-C++-*-	$NetBSD: console.cpp,v 1.7 2001/06/19 16:48:49 uch Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,6 +81,13 @@ Console::print(const TCHAR *fmt, ...)
 //
 // Serial console.
 //
+SerialConsole::SerialConsole()
+{
+	_handle = INVALID_HANDLE_VALUE;
+	// set default serial console.
+	setBootConsole(BI_CNUSE_SERIAL);
+}
+
 BOOL
 SerialConsole::init()
 {
