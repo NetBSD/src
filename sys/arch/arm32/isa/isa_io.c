@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.6 1999/04/22 10:12:41 ross Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.7 2000/04/17 17:39:18 drochner Exp $	*/
 
 /*
  * Copyright 1997
@@ -70,6 +70,9 @@ struct bus_space isa_io_bs_tag = {
 	/* allocation/deallocation */
 	isa_bs_alloc,
 	isa_bs_free,
+
+	/* get kernel virtual address */
+	isa_bs_vaddr,
 
 	/* barrier */
 	isa_bs_barrier,
@@ -145,6 +148,9 @@ struct bus_space isa_mem_bs_tag = {
 	/* allocation/deallocation */
 	isa_bs_alloc,
 	isa_bs_free,
+
+	/* get kernel virtual address */
+	isa_bs_vaddr,
 
 	/* barrier */
 	isa_bs_barrier,
@@ -286,6 +292,15 @@ isa_bs_free(t, bsh, size)
 	bus_size_t size;
 {
 	panic("isa_free(): Help!\n");
+}
+
+void *
+isa_bs_vaddr(t, bsh)
+	void *t;
+	bus_space_handle_t bsh;
+{
+
+	return ((void *)bsh);
 }
 
 void
