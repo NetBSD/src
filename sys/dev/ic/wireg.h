@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.49 2003/11/02 11:07:46 wiz Exp $	*/
+/*	$NetBSD: wireg.h,v 1.50 2003/12/14 10:04:33 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -227,6 +227,9 @@
 #define WI_HCR_RUN		0x0007
 #define WI_HCR_HOLD		0x000f
 #define WI_HCR_EEHOLD		0x00ce
+
+#define WI_TMD_COR		0x14	/* Prism COR (TMD) */
+#define WI_TMD_IO		0x18	/* Prism I/O space (TMD) */
 
 /*
  * PCI Host Interface Registers (HFA3842 Specific)
