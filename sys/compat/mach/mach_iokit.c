@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.1 2003/02/04 22:47:41 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.2 2003/02/05 23:58:09 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.1 2003/02/04 22:47:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.2 2003/02/05 23:58:09 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,13 +61,53 @@ mach_io_service_get_matching_services(args)
 	mach_io_service_get_matching_services_request_t *req = args->smsg;
 	mach_io_service_get_matching_services_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize; 
+	struct lwp *l = args->l;
+	struct mach_port *mp;
+	struct mach_right *mr;
 
+	mp = mach_port_get();
+	mp->mp_flags |= MACH_MP_INKERNEL;
+	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
+	
 	rep->rep_msgh.msgh_bits = 
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_io_object = (mach_io_object_t)0xfffffed0; /* XXX Why? */
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_match.name = (mach_port_t)mr->mr_name;
+	rep->rep_match.disposition = 0x11; /* XXX */
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_io_iterator_next(args)
+	struct mach_trap_args *args;
+{
+	mach_io_iterator_next_request_t *req = args->smsg;
+	mach_io_iterator_next_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+	struct lwp *l = args->l;
+	struct mach_port *mp;
+	struct mach_right *mr;
+
+	mp = mach_port_get();
+	mp->mp_flags |= MACH_MP_INKERNEL;
+	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
+	
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_object.name = (mach_port_t)mr->mr_name;
+	rep->rep_object.disposition = 0x11; /* XXX */
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
