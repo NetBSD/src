@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 1997/11/10 06:08:55 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.12 1997/11/10 08:16:21 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -395,12 +395,11 @@ void	md_copy_filesystem (void)
 	run_prog ("tar --one-file-system -cf - / |"
 		  "(cd /mnt ; tar --unlink -xpf - )");
 
-	/* make sure target has a copy of install kernel. */
-	dup_file_into_target("/netsbd");
-	/* pmax diskimage does not yet have a .hdprofile. */
-#if 0
-	run_prog ("/bin/cp /tmp/.hdprofile /mnt/.profile");
-#endif
+	/* Make sure target has a copy of install kernel. */
+	dup_file_into_target("/netbsd");
+
+	/* Copy next-stage profile into target /.profile. */
+	dup_file_into_target ("/tmp/.hdprofile" "/.profile");
 }
 
 
