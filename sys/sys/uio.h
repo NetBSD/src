@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.18 1998/08/03 14:27:50 kleink Exp $	*/
+/*	$NetBSD: uio.h,v 1.19 1998/08/22 20:25:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -53,13 +53,13 @@ enum uio_seg {
 };
 
 struct uio {
-	struct	iovec *uio_iov;
-	int	uio_iovcnt;
-	off_t	uio_offset;
-	size_t	uio_resid;
-	enum	uio_seg uio_segflg;
-	enum	uio_rw uio_rw;
-	struct	proc *uio_procp;
+	struct	iovec *uio_iov;	/* pointer to array of iovecs */
+	int	uio_iovcnt;	/* number of iovecs in array */
+	off_t	uio_offset;	/* offset into file this uio corresponds to */
+	size_t	uio_resid;	/* residual i/o count */
+	enum	uio_seg uio_segflg; /* see above */
+	enum	uio_rw uio_rw;	/* see above */
+	struct	proc *uio_procp;/* process if UIO_USERSPACE */
 };
 
 /*
