@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.19 1999/05/10 04:18:22 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.20 1999/05/10 21:41:07 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -521,7 +521,7 @@ struct osf1_timezone {
 
 #define osf1_major(x)		((((dev_t)(x)) >> 20) & 0x00000fff)
 #define osf1_minor(x)		((((dev_t)(x)) >>  0) & 0x000fffff)
-#define osf1_makedev(x,y)	((((dev_t)(x)) << 20) | ((dev_t)(x)))
+#define osf1_makedev(x,y)	((((dev_t)(x)) << 20) | ((dev_t)(y)))
 
 
 /* uio.h */
