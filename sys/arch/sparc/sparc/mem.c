@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6 1995/01/09 11:22:06 mycroft Exp $ */
+/*	$NetBSD: mem.c,v 1.7 1995/03/10 17:06:15 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,9 @@
 
 caddr_t zeropage;
 
+extern vm_offset_t prom_vstart;
+extern vm_offset_t prom_vend;
+
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
 	dev_t dev;
@@ -98,7 +101,7 @@ mmrw(dev, uio, flags)
 /* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
-			if (!managed(v)) {
+			if (!pmap_pa_exists(v)) {
 				error = EFAULT;
 				goto unlock;
 			}
@@ -117,6 +120,10 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			if (v >= MSGBUF_VA && v < MSGBUF_VA+NBPG) {
 				c = min(iov->iov_len, 4096);
+			} else if (v >= prom_vstart && v < prom_vend &&
+				   uio->uio_rw == UIO_READ) {
+				/* Allow read-only access to the PROM */
+				c = min(iov->iov_len, prom_vend - prom_vstart);
 			} else {
 				c = min(iov->iov_len, MAXPHYS);
 				if (!kernacc((caddr_t)v, c,
