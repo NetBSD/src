@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.14 2002/08/17 11:45:04 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.15 2002/08/23 12:18:46 scw Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -129,23 +129,6 @@ Contatenated disk devices, see
 RAIDframe disk devices, see
 .Xr \&raid 4
 . El
-.It Console ports :
-. Bl -tag -width 0123456789 -compact
-. It Ar ttyE#
-Wscons
-. El
-.It Pointing devices :
-. Bl -tag -width 0123456789 -compact
-. It Ar wsmouse#
-Wscons mouse events, see
-.Xr \&wsmouse 4
-. El
-.It Keyboard devices :
-. Bl -tag -width 0123456789 -compact
-. It Ar wskbd#
-Wscons keyboard events, see
-.Xr \&wskbd 4
-. El
 .It Terminal ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar com#
@@ -211,8 +194,6 @@ Loadable kernel modules interface, see
 . It Ar tun#
 Network tunnel driver, see
 .Xr \&tun 4
-. It Ar satlink#
-PlanetConnect satellite receiver driver
 . It Ar scsibus#
 SCSI busses, see
 .Xr \&scsi 4 ,
