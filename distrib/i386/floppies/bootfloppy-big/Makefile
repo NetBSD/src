@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2002/04/16 05:23:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2002/04/16 09:06:49 lukem Exp $
 
 # This Makefile builds a boot image on a 2.88M-sized image.
 #
@@ -19,6 +19,6 @@ FLOPPYSIZE=	5760
 FLOPPYPAD=	1
 FLOPPYKERNDIR=	kernel-ramdisk
 FLOPPYKERNEL=	netbsd.INSTALL.gz
-FLOPPYMETA!=	printf "USTAR.volsize.%o" ${FLOPPYSIZE}
+FLOPPYMETAFILE!=printf "USTAR.volsize.%o" ${FLOPPYSIZE}
 
 .include "${.CURDIR}/../common/Makefile.bootfloppy"
