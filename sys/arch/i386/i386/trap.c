@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134.2.16 2001/06/18 03:33:31 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.134.2.17 2001/06/18 04:49:05 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -322,14 +322,14 @@ copyfault:
 	case T_ALIGNFLT|T_USER:
 	case T_NMI|T_USER:
 		KERNEL_PROC_LOCK(p);
-		trapsignal(p, SIGBUS, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(p, SIGBUS, type & ~T_USER);
 		KERNEL_PROC_UNLOCK(p);		
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 		KERNEL_PROC_LOCK(p);
-		trapsignal(p, SIGILL, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(p, SIGILL, type & ~T_USER);
 		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
@@ -353,14 +353,14 @@ copyfault:
 			return;
 		}
 		KERNEL_PROC_LOCK(p);
-		trapsignal(p, rv, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(p, rv, type & ~T_USER);
 		KERNEL_PROC_UNLOCK(p);
 		goto out;
 #else
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
 		KERNEL_PROC_LOCK(p);		
-		trapsignal(p, SIGKILL, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(p, SIGKILL, type & ~T_USER);
 		KERNEL_PROC_UNLOCK(p);		
 		goto out;
 #endif
@@ -370,13 +370,13 @@ copyfault:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
 		KERNEL_PROC_LOCK(p);		
-		trapsignal(p, SIGFPE, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(p, SIGFPE, type & ~T_USER);
 		KERNEL_PROC_UNLOCK(p);		
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
 		KERNEL_PROC_LOCK(p);		
-		trapsignal(p, SIGFPE, frame.tf_err);
+		(*p->p_emul->e_trapsignal)(p, SIGFPE, frame.tf_err);
 		KERNEL_PROC_UNLOCK(p);		
 		goto out;
 
@@ -504,9 +504,9 @@ copyfault:
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, T_PAGEFLT);
+			(*p->p_emul->e_trapsignal)(p, SIGKILL, T_PAGEFLT);
 		} else {
-			trapsignal(p, SIGSEGV, T_PAGEFLT);
+			(*p->p_emul->e_trapsignal)(p, SIGSEGV, T_PAGEFLT);
 		}
 		if (type == T_PAGEFLT)
 			KERNEL_UNLOCK();
@@ -531,7 +531,7 @@ copyfault:
 	trace:
 #endif
 		KERNEL_PROC_LOCK(p);
-		trapsignal(p, SIGTRAP, type &~ T_USER);
+		(*p->p_emul->e_trapsignal)(p, SIGTRAP, type & ~T_USER);
 		KERNEL_PROC_UNLOCK(p);
 		break;
 

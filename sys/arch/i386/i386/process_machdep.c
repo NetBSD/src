@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.30.10.5 2001/06/18 03:33:31 sommerfeld Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.30.10.6 2001/06/18 04:49:05 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -116,10 +116,10 @@ process_read_regs(p, regs)
 	} else
 #endif
 	{
-		regs->r_gs = tf->tf_gs;
-		regs->r_fs = tf->tf_fs;
-		regs->r_es = tf->tf_es;
-		regs->r_ds = tf->tf_ds;
+		regs->r_gs = tf->tf_gs & 0xffff;
+		regs->r_fs = tf->tf_fs & 0xffff;
+		regs->r_es = tf->tf_es & 0xffff;
+		regs->r_ds = tf->tf_ds & 0xffff;
 		regs->r_eflags = tf->tf_eflags;
 	}
 	regs->r_edi = tf->tf_edi;
@@ -130,9 +130,9 @@ process_read_regs(p, regs)
 	regs->r_ecx = tf->tf_ecx;
 	regs->r_eax = tf->tf_eax;
 	regs->r_eip = tf->tf_eip;
-	regs->r_cs = tf->tf_cs;
+	regs->r_cs = tf->tf_cs & 0xffff;
 	regs->r_esp = tf->tf_esp;
-	regs->r_ss = tf->tf_ss;
+	regs->r_ss = tf->tf_ss & 0xffff;
 
 	return (0);
 }
@@ -192,7 +192,6 @@ process_write_regs(p, regs)
 	} else
 #endif
 	{
-
 		/*
 		 * Check for security violations.
 		 */

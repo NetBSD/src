@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.s,v 1.1.2.5 2001/05/27 17:11:18 sommerfeld Exp $	*/
+/*	$NetBSD: mptramp.s,v 1.1.2.6 2001/06/18 04:49:05 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -246,10 +246,9 @@ mp_cont:
 	
 	HALT(0x25)
 	/* Restore segment registers. */
-	movl	PCB_FS(%esi),%eax
+	xorl	%eax,%eax
 	HALTT(0x26,%eax)
 	movl	%ax,%fs
-	movl	PCB_GS(%esi),%eax
 	HALTT(0x27,%eax)	
 	movl	%ax,%gs
 	movl    PCB_CR0(%esi),%eax
