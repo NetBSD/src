@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.12 2002/04/16 19:20:51 groo Exp $	*/
+/*	$NetBSD: zdump.c,v 1.13 2002/05/26 11:49:58 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
@@ -6,7 +6,7 @@
 #if 0
 static char	elsieid[] = "@(#)zdump.c	7.29";
 #else
-__RCSID("$NetBSD: zdump.c,v 1.12 2002/04/16 19:20:51 groo Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.13 2002/05/26 11:49:58 wiz Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -119,12 +119,7 @@ __RCSID("$NetBSD: zdump.c,v 1.12 2002/04/16 19:20:51 groo Exp $");
 #endif /* !defined TZ_DOMAIN */
 
 #ifndef P
-#ifdef __STDC__
 #define P(x)	x
-#endif /* defined __STDC__ */
-#ifndef __STDC__
-#define P(x)	()
-#endif /* !defined __STDC__ */
 #endif /* !defined P */
 
 extern char **	environ;

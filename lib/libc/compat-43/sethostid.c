@@ -1,4 +1,4 @@
-/*	$NetBSD: sethostid.c,v 1.4 1997/07/21 14:06:29 jtc Exp $	*/
+/*	$NetBSD: sethostid.c,v 1.5 2002/05/26 11:52:12 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sethostid.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: sethostid.c,v 1.4 1997/07/21 14:06:29 jtc Exp $");
+__RCSID("$NetBSD: sethostid.c,v 1.5 2002/05/26 11:52:12 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,14 +47,8 @@ __RCSID("$NetBSD: sethostid.c,v 1.4 1997/07/21 14:06:29 jtc Exp $");
 #include <sys/sysctl.h>
 #include <unistd.h>
 
-#if __STDC__
 int
 sethostid(long hostid)
-#else
-int
-sethostid(hostid)
-	long hostid;
-#endif
 {
 	int mib[2];
 
