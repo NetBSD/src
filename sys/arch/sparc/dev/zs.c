@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.15 1994/10/15 05:49:08 deraadt Exp $
+ * $Id: zs.c,v 1.16 1994/11/02 04:54:19 deraadt Exp $
  */
 
 /*
@@ -114,44 +114,44 @@ struct zsinfo {
 struct tty *zs_tty[NZS * 2];		/* XXX should be dynamic */
 
 /* Definition of the driver for autoconfig. */
-static int	zsmatch(struct device *, struct cfdata *, void *);
-static void	zsattach(struct device *, struct device *, void *);
+static int	zsmatch __P((struct device *, struct cfdata *, void *));
+static void	zsattach __P((struct device *, struct device *, void *));
 struct cfdriver zscd =
     { NULL, "zs", zsmatch, zsattach, DV_TTY, sizeof(struct zsinfo) };
 
 /* Interrupt handlers. */
-static int	zshard(void *);
+static int	zshard __P((void *));
 static struct intrhand levelhard = { zshard };
-static int	zssoft(void *);
+static int	zssoft __P((void *));
 static struct intrhand levelsoft = { zssoft };
 
 struct zs_chanstate *zslist;
 
 /* Routines called from other code. */
-static void	zsiopen(struct tty *);
-static void	zsiclose(struct tty *);
-static void	zsstart(struct tty *);
-void		zsstop(struct tty *, int);
-static int	zsparam(struct tty *, struct termios *);
+static void	zsiopen __P((struct tty *));
+static void	zsiclose __P((struct tty *));
+static void	zsstart __P((struct tty *));
+void		zsstop __P((struct tty *, int));
+static int	zsparam __P((struct tty *, struct termios *));
 
 /* Routines purely local to this driver. */
-static int	zs_getspeed(volatile struct zschan *);
-static void	zs_reset(volatile struct zschan *, int, int);
-static void	zs_modem(struct zs_chanstate *, int);
-static void	zs_loadchannelregs(volatile struct zschan *, u_char *);
+static int	zs_getspeed __P((volatile struct zschan *));
+static void	zs_reset __P((volatile struct zschan *, int, int));
+static void	zs_modem __P((struct zs_chanstate *, int));
+static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
 
 /* Console stuff. */
 static struct tty *zs_ctty;	/* console `struct tty *' */
 static int zs_consin = -1, zs_consout = -1;
-static int zscnputc(int);	/* console putc function */
+static int zscnputc __P((int));	/* console putc function */
 static volatile struct zschan *zs_conschan;
-static struct tty *zs_checkcons(struct zsinfo *, int, struct zs_chanstate *);
+static struct tty *zs_checkcons __P((struct zsinfo *, int, struct zs_chanstate *));
 
 #ifdef KGDB
 /* KGDB stuff.  Must reboot to change zs_kgdbunit. */
 extern int kgdb_dev, kgdb_rate;
 static int zs_kgdb_savedspeed;
-static void zs_checkkgdb(int, struct zs_chanstate *, struct tty *);
+static void zs_checkkgdb __P((int, struct zs_chanstate *, struct tty *));
 #endif
 
 extern volatile struct zsdevice *findzs(int);
@@ -205,7 +205,10 @@ zs_write(zc, reg, val)
  * not set up the keyboard as ttya, etc.
  */
 static int
-zsmatch(struct device *parent, struct cfdata *cf, void *aux)
+zsmatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
@@ -225,7 +228,10 @@ zsmatch(struct device *parent, struct cfdata *cf, void *aux)
  * SOFT CARRIER, AND keyboard PROPERTY FOR KEYBOARD/MOUSE?
  */
 static void
-zsattach(struct device *parent, struct device *dev, void *aux)
+zsattach(parent, dev, aux)
+	struct device *parent;
+	struct device *dev;
+	void *aux;
 {
 	register int zs = dev->dv_unit, unit;
 	register struct zsinfo *zi;
@@ -441,7 +447,10 @@ zscnputc(c)
  * needed.  Return console tty if it is to receive console input.
  */
 static struct tty *
-zs_checkcons(struct zsinfo *zi, int unit, struct zs_chanstate *cs)
+zs_checkcons(zi, unit, cs)
+	struct zsinfo *zi;
+	int unit;
+	struct zs_chanstate *cs;
 {
 	register struct tty *tp;
 	char *i, *o;
@@ -487,7 +496,10 @@ zs_checkcons(struct zsinfo *zi, int unit, struct zs_chanstate *cs)
  * speed.
  */
 static void
-zs_checkkgdb(int unit, struct zs_chanstate *cs, struct tty *tp)
+zs_checkkgdb(unit, cs, tp)
+	int unit;
+	struct zs_chanstate *cs;
+	struct tty *tp;
 {
 
 	if (kgdb_dev == makedev(ZSMAJOR, unit)) {
@@ -519,7 +531,8 @@ zs_getspeed(zc)
  * Do an internal open.
  */
 static void
-zsiopen(struct tty *tp)
+zsiopen(tp)
+	struct tty *tp;
 {
 
 	(void) zsparam(tp, &tp->t_termios);
@@ -532,7 +545,8 @@ zsiopen(struct tty *tp)
  * ports on it are closed.
  */
 static void
-zsiclose(struct tty *tp)
+zsiclose(tp)
+	struct tty *tp;
 {
 
 	ttylclose(tp, 0);	/* ??? */
@@ -546,7 +560,11 @@ zsiclose(struct tty *tp)
  * the keyboard and mouse ports. (XXX)
  */
 int
-zsopen(dev_t dev, int flags, int mode, struct proc *p)
+zsopen(dev, flags, mode, p)
+	dev_t dev;
+	int flags;
+	int mode;
+	struct proc *p;
 {
 	register struct tty *tp;
 	register struct zs_chanstate *cs;
@@ -602,7 +620,11 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
  * Close a zs serial port.
  */
 int
-zsclose(dev_t dev, int flags, int mode, struct proc *p)
+zsclose(dev, flags, mode, p)
+	dev_t dev;
+	int flags;
+	int mode;
+	struct proc *p;
 {
 	register struct zs_chanstate *cs;
 	register struct tty *tp;
@@ -642,7 +664,10 @@ zsclose(dev_t dev, int flags, int mode, struct proc *p)
  * Read/write zs serial port.
  */
 int
-zsread(dev_t dev, struct uio *uio, int flags)
+zsread(dev, uio, flags)
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
 	register struct tty *tp = zs_tty[minor(dev)];
 
@@ -650,7 +675,10 @@ zsread(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-zswrite(dev_t dev, struct uio *uio, int flags)
+zswrite(dev, uio, flags)
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
 	register struct tty *tp = zs_tty[minor(dev)];
 
@@ -670,7 +698,8 @@ zswrite(dev_t dev, struct uio *uio, int flags)
  */
 /* ARGSUSED */
 int
-zshard(void *intrarg)
+zshard(intrarg)
+	void *intrarg;
 {
 	register struct zs_chanstate *a;
 #define	b (a + 1)
@@ -744,7 +773,9 @@ zshard(void *intrarg)
 }
 
 static int
-zsrint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
+zsrint(cs, zc)
+	register struct zs_chanstate *cs;
+	register volatile struct zschan *zc;
 {
 	register int c = zc->zc_data;
 
@@ -799,7 +830,9 @@ clearit:
 }
 
 static int
-zsxint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
+zsxint(cs, zc)
+	register struct zs_chanstate *cs;
+	register volatile struct zschan *zc;
 {
 	register int i = cs->cs_tbc;
 
@@ -819,7 +852,9 @@ zsxint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 }
 
 static int
-zssint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
+zssint(cs, zc)
+	register struct zs_chanstate *cs;
+	register volatile struct zschan *zc;
 {
 	register int rr0;
 
@@ -880,7 +915,8 @@ zsabort()
  * KGDB framing character received: enter kernel debugger.  This probably
  * should time out after a few seconds to avoid hanging on spurious input.
  */
-zskgdb(int unit)
+zskgdb(unit)
+	int unit;
 {
 
 	printf("zs%d%c: kgdb interrupt\n", unit >> 1, (unit & 1) + 'a');
@@ -892,7 +928,10 @@ zskgdb(int unit)
  * Print out a ring or fifo overrun error message.
  */
 static void
-zsoverrun(int unit, long *ptime, char *what)
+zsoverrun(unit, ptime, what)
+	int unit;
+	long *ptime;
+	char *what;
 {
 
 	if (*ptime != time.tv_sec) {
@@ -906,7 +945,8 @@ zsoverrun(int unit, long *ptime, char *what)
  * ZS software interrupt.  Scan all channels for deferred interrupts.
  */
 int
-zssoft(void *arg)
+zssoft(arg)
+	void *arg;
 {
 	register struct zs_chanstate *cs;
 	register volatile struct zschan *zc;
@@ -1028,7 +1068,12 @@ again:
 }
 
 int
-zsioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
+zsioctl(dev, cmd, data, flag, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	int unit = minor(dev);
 	struct zsinfo *zi = zscd.cd_devs[unit >> 1];
@@ -1044,39 +1089,26 @@ zsioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		return (error);
 
 	switch (cmd) {
-
 	case TIOCSBRK:
-		{
-			s = splzs();
-			cs->cs_preg[5] |= ZSWR5_BREAK;
-			cs->cs_creg[5] |= ZSWR5_BREAK;
-			ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
-			splx(s);
-			break;
-		}
-
+		s = splzs();
+		cs->cs_preg[5] |= ZSWR5_BREAK;
+		cs->cs_creg[5] |= ZSWR5_BREAK;
+		ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
+		splx(s);
+		break;
 	case TIOCCBRK:
-		{
-			s = splzs();
-			cs->cs_preg[5] &= ~ZSWR5_BREAK;
-			cs->cs_creg[5] &= ~ZSWR5_BREAK;
-			ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
-			splx(s);
-			break;
-		}
-
+		s = splzs();
+		cs->cs_preg[5] &= ~ZSWR5_BREAK;
+		cs->cs_creg[5] &= ~ZSWR5_BREAK;
+		ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
+		splx(s);
+		break;
 	case TIOCSDTR:
-
 	case TIOCCDTR:
-
 	case TIOCMSET:
-
 	case TIOCMBIS:
-
 	case TIOCMBIC:
-
 	case TIOCMGET:
-
 	default:
 		return (ENOTTY);
 	}
@@ -1087,7 +1119,8 @@ zsioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
  * Start or restart transmission.
  */
 static void
-zsstart(register struct tty *tp)
+zsstart(tp)
+	register struct tty *tp;
 {
 	register struct zs_chanstate *cs;
 	register int s, nch;
@@ -1147,7 +1180,9 @@ out:
  * Stop output, e.g., for ^S or output flush.
  */
 void
-zsstop(register struct tty *tp, int flag)
+zsstop(tp, flag)
+	register struct tty *tp;
+	int flag;
 {
 	register struct zs_chanstate *cs;
 	register int s, unit = minor(tp->t_dev);
@@ -1173,7 +1208,9 @@ zsstop(register struct tty *tp, int flag)
  * 1, 3, 4, 5, 9, 10, 11, 12, 13, 14, and 15 are written.
  */
 static int
-zsparam(register struct tty *tp, register struct termios *t)
+zsparam(tp, t)
+	register struct tty *tp;
+	register struct termios *t;
 {
 	int unit = minor(tp->t_dev);
 	struct zsinfo *zi = zscd.cd_devs[unit >> 1];
@@ -1277,7 +1314,9 @@ zsparam(register struct tty *tp, register struct termios *t)
  * in transmission, the change is deferred.
  */
 static void
-zs_modem(struct zs_chanstate *cs, int onoff)
+zs_modem(cs, onoff)
+	struct zs_chanstate *cs;
+	int onoff;
 {
 	int s, bis, and;
 
@@ -1309,7 +1348,9 @@ zs_modem(struct zs_chanstate *cs, int onoff)
  * be disabled for the time it takes to write all the registers.
  */
 static void
-zs_loadchannelregs(volatile struct zschan *zc, u_char *reg)
+zs_loadchannelregs(zc, reg)
+	volatile struct zschan *zc;
+	u_char *reg;
 {
 	int i;
 
@@ -1341,7 +1382,8 @@ zs_loadchannelregs(volatile struct zschan *zc, u_char *reg)
  * Get a character from the given kgdb channel.  Called at splhigh().
  */
 static int
-zs_kgdb_getc(void *arg)
+zs_kgdb_getc(arg)
+	void *arg;
 {
 	register volatile struct zschan *zc = (volatile struct zschan *)arg;
 
@@ -1354,7 +1396,9 @@ zs_kgdb_getc(void *arg)
  * Put a character to the given kgdb channel.  Called at splhigh().
  */
 static void
-zs_kgdb_putc(void *arg, int c)
+zs_kgdb_putc(arg, c)
+	void *arg;
+	int c;
 {
 	register volatile struct zschan *zc = (volatile struct zschan *)arg;
 
