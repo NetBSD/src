@@ -1,4 +1,6 @@
-#	$Id: Makefile.inc,v 1.1 1993/10/13 05:41:19 cgd Exp $
+#	$Id: Makefile.inc,v 1.2 1993/10/13 05:55:57 cgd Exp $
+#
+#	NOTE: $S must correspond to the top of the 'sys' tree
 
 NETBOOTDIR=	$S/lib/libnetboot
 

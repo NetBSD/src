@@ -1,7 +1,6 @@
-#	$Id: Makefile,v 1.1 1993/10/13 05:40:34 cgd Exp $
+#	$Id: Makefile,v 1.2 1993/10/13 05:55:19 cgd Exp $
 
 LIB=	kern
-LIBDIR=	${.CURDIR}/../arch/${MACHINE}/compile
 NOPIC=
 
 .if exists (${.CURDIR}/${MACHINE}/Makefile.inc)
@@ -16,7 +15,7 @@ NOPIC=
 .endif
 .endif
 
-LIBC=	${.CURDIR}/../../lib/libc
+LIBC=	${.CURDIR}/../../../lib/libc
 .PATH: ${LIBC}/string ${LIBC}/arch/${MACHINE}/string
 .PATH: ${LIBC}/net ${LIBC}/arch/${MACHINE}/net
 .PATH: ${LIBC}/gen ${LIBC}/arch/${MACHINE}/gen
@@ -25,11 +24,5 @@ LIBC=	${.CURDIR}/../../lib/libc
 AINC+=	-I${LIBC}/arch/${MACHINE}
 
 install:
-	install ${COPY} lib${LIB}.a ${LIBDIR}
-	${RANLIB} -t ${LIBDIR}/lib${LIB}.a
-.if !defined(NOPROFILE)
-	install ${COPY} lib${LIB}_p.a ${LIBDIR}
-	${RANLIB} -t ${LIBDIR}/lib${LIB}_p.a
-.endif
 
 .include <bsd.lib.mk>
