@@ -1,4 +1,4 @@
-/*	$NetBSD: xyvar.h,v 1.2 1997/12/01 23:25:37 pk Exp $	*/
+/*	$NetBSD: xyvar.h,v 1.3 1998/08/22 11:47:46 pk Exp $	*/
 
 /*
  *
@@ -43,35 +43,34 @@
 /*
  * i/o request: wrapper for hardware's iopb data structure
  */
-
 struct xy_iorq {
-  struct xy_iopb *iopb;             /* address of matching iopb */
-  struct xyc_softc *xyc;            /* who we are working with */
-  struct xy_softc *xy;              /* which disk */
-  int ttl;                          /* time to live */
-  int mode;                         /* current mode (state+other data) */
-  int tries;                        /* number of times we have tried it */
-  int errno;                        /* error number if we fail */
-  int lasterror;		    /* last error we got */
-  int blockno;                      /* starting block no for this xfer */
-  int sectcnt;                      /* number of sectors in xfer */
-  char *dbuf;                       /* KVA of data buffer (advances) */
-  struct buf *buf;                  /* for NORM */
-  bus_dmamap_t dmamap;		    /* DMA I/O handle */
+	struct xy_iopb *iopb;	/* address of matching iopb */
+	struct xy_iopb *dmaiopb;/* DMA address of above */
+	struct xyc_softc *xyc;	/* who we are working with */
+	struct xy_softc *xy;	/* which disk */
+	int ttl;		/* time to live */
+	int mode;		/* current mode (state+other data) */
+	int tries;		/* number of times we have tried it */
+	int errno;		/* error number if we fail */
+	int lasterror;		/* last error we got */
+	int blockno;		/* starting block no for this xfer */
+	int sectcnt;		/* number of sectors in xfer */
+	char *dbuf;		/* KVA of data buffer (advances) */
+	struct buf *buf;	/* for NORM */
+	bus_dmamap_t dmamap;	/* DMA I/O handle */
 };
 
 /*
  * state
  */
-
-#define XY_SUB_MASK 0xf0            /* mask bits for state */
-#define XY_SUB_FREE 0x00            /* free */
-#define XY_SUB_NORM 0x10            /* normal I/O request */
-#define XY_SUB_WAIT 0x20            /* normal I/O request in the
-                                             context of a process */
-#define XY_SUB_POLL 0x30            /* polled mode */
-#define XY_SUB_DONE 0x40            /* not active, but can't be free'd yet */
-#define XY_SUB_NOQ  0x50            /* don't queue, just submit (internal) */
+#define XY_SUB_MASK	0xf0	/* mask bits for state */
+#define XY_SUB_FREE	0x00	/* free */
+#define XY_SUB_NORM	0x10	/* normal I/O request */
+#define XY_SUB_WAIT	0x20	/* normal I/O request in the
+                                   context of a process */
+#define XY_SUB_POLL	0x30	/* polled mode */
+#define XY_SUB_DONE	0x40	/* not active, but can't be free'd yet */
+#define XY_SUB_NOQ	0x50	/* don't queue, just submit (internal) */
 
 #define XY_STATE(X) ((X) & XY_SUB_MASK) /* extract state from mode */
 #define XY_NEWSTATE(OLD, NEW) (((OLD) & ~XY_SUB_MASK) |(NEW)) /* new state */
@@ -80,42 +79,40 @@ struct xy_iorq {
 /*
  * other mode data
  */
-
-#define XY_MODE_VERBO 0x08          /* print error messages */
-#define XY_MODE_B144  0x04          /* handling a bad144 sector */
+#define XY_MODE_VERBO	0x08	/* print error messages */
+#define XY_MODE_B144	0x04	/* handling a bad144 sector */
 
 
 /*
  * software timers and flags
  */
-
-#define XYC_SUBWAITLIM 4   /* max number of "done" IOPBs there can be
-				where we still allow a SUB_WAIT command */
-#define XYC_TICKCNT (5*hz) /* call xyc_tick on this interval (5 sec) */
-#define XYC_MAXTTL     2   /* max number of xy ticks to live */
-#define XYC_NOUNIT (-1)    /* for xycmd: no unit number */
+#define XYC_SUBWAITLIM	4	/* max number of "done" IOPBs there can be
+				   where we still allow a SUB_WAIT command */
+#define XYC_TICKCNT	(5*hz)	/* call xyc_tick on this interval (5 sec) */
+#define XYC_MAXTTL	2	/* max number of xy ticks to live */
+#define XYC_NOUNIT	(-1)	/* for xycmd: no unit number */
 
 /*
  * a "xy_softc" structure contains per-disk state info.
  */
-
 struct xy_softc {
-  struct device sc_dev;            /* device struct, reqd by autoconf */
-  struct disk sc_dk;               /* generic disk info */
-  struct xyc_softc *parent;        /* parent */
-  u_short flags;                   /* flags */
-  u_short state;                   /* device state */
-  int xy_drive;                    /* unit number */
-  int drive_type;		   /* drive type (as per disk) */
-  /* geometry */
-  u_short ncyl, acyl, pcyl;        /* number of cyl's */
-  u_short sectpercyl;              /* nhead*nsect */
-  u_char nhead;                    /* number of heads */
-  u_char nsect;                    /* number of sectors per track */
-  u_char hw_spt;                   /* as above, but includes spare sectors */
-  struct xy_iorq *xyrq;		   /* this disk's ioreq structure */
-  struct buf xyq;		   /* queue'd I/O requests */
-  struct dkbad dkb;                /* bad144 sectors */
+	struct device sc_dev;	/* device struct, reqd by autoconf */
+	struct disk sc_dk;	/* generic disk info */
+	struct xyc_softc *parent;/* parent */
+	u_short flags;		/* flags */
+	u_short state;		/* device state */
+	int xy_drive;		/* unit number */
+	int drive_type;		/* drive type (as per disk) */
+
+	/* geometry */
+	u_short ncyl, acyl, pcyl;	/* number of cyl's */
+	u_short sectpercyl;	/* nhead*nsect */
+	u_char nhead;		/* number of heads */
+	u_char nsect;		/* number of sectors per track */
+	u_char hw_spt;		/* as above, but includes spare sectors */
+	struct xy_iorq *xyrq;	/* this disk's ioreq structure */
+	struct buf xyq;		/* queue'd I/O requests */
+	struct dkbad dkb;	/* bad144 sectors */
 };
 
 /*
