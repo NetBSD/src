@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.6 1998/09/12 21:48:57 wrstuden Exp $
+$NetBSD: isapnpdevs,v 1.7 1998/09/21 20:25:52 mark Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@ devlogic	ess	ESS1869		ESS1869
 /*
  * joy
  */
+devlogic	joy	CSC0001		CS4235
 devlogic	joy	CSCA801		Terratec EWS64XL
 devlogic	joy	CTL7002		Creative Vibra16CL
 devlogic	joy	ESS0001		ESS1868
