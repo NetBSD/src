@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.161 2004/02/13 11:36:23 wiz Exp $	*/
+/*	$NetBSD: tty.c,v 1.162 2004/02/22 17:51:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.161 2004/02/13 11:36:23 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.162 2004/02/22 17:51:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1239,9 +1239,11 @@ filt_ttyread(struct knote *kn, long hint)
 
 	tp = kn->kn_hook;
 	s = spltty();
-	TTY_LOCK(tp);
+	if ((hint & NOTE_SUBMIT) == 0)
+		TTY_LOCK(tp);
 	kn->kn_data = ttnread(tp);
-	TTY_UNLOCK(tp);
+	if ((hint & NOTE_SUBMIT) == 0)
+		TTY_UNLOCK(tp);
 	splx(s);
 	return (kn->kn_data > 0);
 }
@@ -1268,10 +1270,12 @@ filt_ttywrite(struct knote *kn, long hint)
 
 	tp = kn->kn_hook;
 	s = spltty();
-	TTY_LOCK(tp);
+	if ((hint & NOTE_SUBMIT) == 0)
+		TTY_LOCK(tp);
 	kn->kn_data = tp->t_outq.c_cn - tp->t_outq.c_cc;
 	canwrite = (tp->t_outq.c_cc <= tp->t_lowat) && CONNECTED(tp);
-	TTY_UNLOCK(tp);
+	if ((hint & NOTE_SUBMIT) == 0)
+		TTY_UNLOCK(tp);
 	splx(s);
 	return (canwrite);
 }
@@ -1405,7 +1409,7 @@ ttyflush(struct tty *tp, int rw)
 			(*cdev->d_stop)(tp, rw);
 		FLUSHQ(&tp->t_outq);
 		wakeup((caddr_t)&tp->t_outq);
-		selnotify(&tp->t_wsel, 0);
+		selnotify(&tp->t_wsel, NOTE_SUBMIT);
 	}
 }
 
@@ -2224,7 +2228,7 @@ void
 ttwakeup(struct tty *tp)
 {
 
-	selnotify(&tp->t_rsel, 0);
+	selnotify(&tp->t_rsel, NOTE_SUBMIT);
 	if (ISSET(tp->t_state, TS_ASYNC))
 		pgsignal(tp->t_pgrp, SIGIO, 1);
 	wakeup((caddr_t)&tp->t_rawq);
