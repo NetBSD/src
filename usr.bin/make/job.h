@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.18 2003/07/14 18:19:12 christos Exp $	*/
+/*	$NetBSD: job.h,v 1.19 2003/08/01 00:39:53 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -231,6 +231,9 @@ typedef struct Shell {
     const char   *exit;		/* exit on error */
 }               Shell;
 
+extern const char *shellPath;
+extern const char *shellName;
+
 extern int	job_pipe[2];	/* token pipe for jobs. */
 extern int	jobTokensRunning; /* tokens currently "out" */
 extern int	jobTokensFree;	/* tokens free but not yet released to pipe */
@@ -251,6 +254,7 @@ extern Lst  	stoppedJobs;	/* List of jobs that are stopped or didn't
 				 * quite get started */
 #endif
 
+void Shell_Init(void);
 void Job_Touch(GNode *, Boolean);
 Boolean Job_CheckCommands(GNode *, void (*abortProc )(const char *, ...));
 void Job_CatchChildren(Boolean);

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.14 2002/01/16 03:40:29 tv Exp $	*/
+/*	$NetBSD: config.h,v 1.15 2003/08/01 00:39:52 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -40,7 +40,9 @@
  *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
  */
 
+#ifndef DEFSHELL
 #define	DEFSHELL	1			/* Bourne shell */
+#endif
 
 /*
  * DEFMAXJOBS

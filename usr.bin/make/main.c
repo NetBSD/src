@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.89 2003/07/14 18:19:12 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.90 2003/08/01 00:39:53 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.89 2003/07/14 18:19:12 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.90 2003/08/01 00:39:53 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.89 2003/07/14 18:19:12 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.90 2003/08/01 00:39:53 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1224,10 +1224,12 @@ Cmd_Exec(const char *cmd, const char **err)
 
     *err = NULL;
 
+    if (!shellName)
+	Shell_Init();
     /*
      * Set up arguments for shell
      */
-    args[0] = "sh";
+    args[0] = shellName;
     args[1] = "-c";
     args[2] = cmd;
     args[3] = NULL;
@@ -1258,7 +1260,7 @@ Cmd_Exec(const char *cmd, const char **err)
 	(void) dup2(fds[1], 1);
 	(void) close(fds[1]);
 
-	(void) execv(_PATH_BSHELL, UNCONST(args));
+	(void) execv(shellPath, UNCONST(args));
 	_exit(1);
 	/*NOTREACHED*/
 

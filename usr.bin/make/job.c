@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.80 2003/07/16 07:16:24 itojun Exp $	*/
+/*	$NetBSD: job.c,v 1.81 2003/08/01 00:39:52 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.80 2003/07/16 07:16:24 itojun Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.81 2003/08/01 00:39:52 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.80 2003/07/16 07:16:24 itojun Exp $");
+__RCSID("$NetBSD: job.c,v 1.81 2003/08/01 00:39:52 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -209,6 +209,16 @@ static Shell    shells[] = {
     "e",
 },
     /*
+     * KSH description. 
+     */
+{
+    "ksh",
+    TRUE, "set +v", "set -v", "set +v", 6,
+    TRUE, "set -e", "set +e",
+    "v",
+    "e",
+},
+    /*
      * UNKNOWN.
      */
 {
@@ -223,10 +233,10 @@ static Shell 	*commandShell = &shells[DEFSHELL];/* this is the shell to
 						   * commands in the Makefile.
 						   * It is set by the
 						   * Job_ParseShell function */
-static const char *shellPath = NULL,		  /* full pathname of
+const char *shellPath = NULL,		  	  /* full pathname of
 						   * executable image */
-               	*shellName = NULL,	      	  /* last component of shell */
-		*shellArgv = NULL;		  /* Custom shell args */
+           *shellName = NULL;		      	  /* last component of shell */
+static const char *shellArgv = NULL;		  /* Custom shell args */
 
 
 static int  	maxJobs;    	/* The most children we can run at once */
@@ -2531,6 +2541,28 @@ Job_Make(GNode *gn)
     (void) JobStart(gn, 0, NULL);
 }
 
+void
+Shell_Init()
+{
+    if (shellPath == NULL) {
+	/*
+	 * The user didn't specify a shell to use, so we are using the
+	 * default one... Both the absolute path and the last component
+	 * must be set. The last component is taken from the 'name' field
+	 * of the default shell description pointed-to by commandShell.
+	 * All default shells are located in _PATH_DEFSHELLDIR.
+	 */
+	shellName = commandShell->name;
+	shellPath = str_concat(_PATH_DEFSHELLDIR, shellName, STR_ADDSLASH);
+    }
+    if (commandShell->exit == NULL) {
+	commandShell->exit = "";
+    }
+    if (commandShell->echo == NULL) {
+	commandShell->echo = "";
+    }
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Job_Init --
@@ -2581,24 +2613,7 @@ Job_Init(int maxproc, int maxlocal)
 	targFmt = TARG_FMT;
     }
 
-    if (shellPath == NULL) {
-	/*
-	 * The user didn't specify a shell to use, so we are using the
-	 * default one... Both the absolute path and the last component
-	 * must be set. The last component is taken from the 'name' field
-	 * of the default shell description pointed-to by commandShell.
-	 * All default shells are located in _PATH_DEFSHELLDIR.
-	 */
-	shellName = commandShell->name;
-	shellPath = str_concat(_PATH_DEFSHELLDIR, shellName, STR_ADDSLASH);
-    }
-
-    if (commandShell->exit == NULL) {
-	commandShell->exit = "";
-    }
-    if (commandShell->echo == NULL) {
-	commandShell->echo = "";
-    }
+    Shell_Init();
 
     if (pipe(exit_pipe) < 0)
 	Fatal("error in pipe: %s", strerror(errno));

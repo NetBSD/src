@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.82 2003/07/16 11:34:16 wiz Exp $
+.\"	$NetBSD: make.1,v 1.83 2003/08/01 00:39:54 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd July 14, 2003
+.Dd July 31, 2003
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1256,6 +1256,50 @@ If no sources are specified, the
 .Ic .PRECIOUS
 attribute is applied to every
 target in the file.
+.It Ic .SHELL
+Sets the shell that 
+.Nm
+will use to execute commands.  
+The sources are a set of 
+.Ar field=value
+pairs.  
+.Bl -tag -width hasErrCtls
+.It Ar name
+This is the minimal specification, used to select one of the builtin
+shell specs;
+.Ar sh ,
+.Ar ksh ,
+and
+.Ar csh .
+.It Ar path
+Specifies the path to the shell.
+.It Ar hasErrCtl
+Indicates whether the shell supports exit on error.
+.It Ar check
+The command to turn on error checking.
+.It Ar ignore
+The command to disable error checking.
+.It Ar echo
+The command to turn on echoing of commands executed.
+.It Ar quiet
+The command to turn off echoing of commands executed.
+.It Ar filter
+The output to filter after issuing the
+.Ar quiet
+command.  It is typically identical to 
+.Ar quiet .
+.It Ar errFlag
+The flag to pass the shell to enable error checking.
+.It Ar echoFlag
+The flag to pass the shell to enable command echoing.
+.El
+Example:
+.Bd -literal
+\&.SHELL: name=ksh path=/bin/ksh hasErrCtl=true \\
+	check="set -e" ignore="set +e" \\
+	echo="set -v" quiet="set +v" filter="set +v" \\
+	echoFlag=v errFlag=e
+.Ed
 .It Ic .SILENT
 Apply the
 .Ic .SILENT
