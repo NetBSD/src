@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.11 2004/07/23 06:44:56 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.12 2004/07/23 07:24:21 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -274,7 +274,6 @@ enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
 
 #define	IEEE80211_MSG_ANY	0xffffffff	/* anything */
 
-#define	IEEE80211_DEBUG
 #ifdef IEEE80211_DEBUG
 extern int ieee80211_debug;
 #define	IEEE80211_DPRINTF(_ic, _m, _args) do {		\
