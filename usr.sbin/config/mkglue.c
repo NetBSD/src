@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkglue.c	5.10 (Berkeley) 1/15/91";*/
-static char rcsid[] = "$Id: mkglue.c,v 1.6 1994/02/01 02:11:02 deraadt Exp $";
+static char rcsid[] = "$Id: mkglue.c,v 1.7 1994/02/22 23:03:28 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -359,7 +359,7 @@ vector() {
 
 	fprintf(fp, "\
 #define BUILD_VECTORS \\\n\
-	BUILD_VECTOR(clk, 0,0,0, _highmask, _clockintr,1,1,       al);\\\n");
+	BUILD_VECTOR(clk, 0,0,0, $1, _clockintr,1,1,       al);\\\n");
 
 	count=1;
 	for (dp = dtab; dp != 0; dp = dp->d_next) {
