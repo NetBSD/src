@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.1 2000/12/29 20:14:03 bjh21 Exp $ */
+/*	$NetBSD: ptrace.S,v 1.2 2001/01/09 19:47:28 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,7 +61,7 @@ L1:
 	ldmfd	sp!, {r0, r1}
 #endif /* _REENTRANT */
 
-	swi	SYS_ptrace
+	SYSTRAP(ptrace)
 	bcs	cerror
 #ifdef __APCS_26__
 	movs	pc, lr
