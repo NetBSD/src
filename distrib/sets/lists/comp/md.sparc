@@ -4,6 +4,7 @@
 ./usr/include/machine/autoconf.h
 ./usr/include/machine/bsd_audioio.h
 ./usr/include/machine/bsd_openprom.h
+./usr/include/machine/bus.h
 ./usr/include/machine/cdefs.h
 ./usr/include/machine/cgtworeg.h
 ./usr/include/machine/conf.h
