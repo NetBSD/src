@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.34 1998/01/31 12:45:07 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.35 1998/02/05 08:32:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.34 1998/01/31 12:45:07 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.35 1998/02/05 08:32:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,6 +105,7 @@ STATIC int varisset __P((char *, int));
 STATIC void varvalue __P((char *, int, int));
 STATIC void recordregion __P((int, int, int));
 STATIC void ifsbreakup __P((char *, struct arglist *));
+STATIC void ifsfree __P((void));
 STATIC void expandmeta __P((struct strlist *, int));
 STATIC void expmeta __P((char *, char *));
 STATIC void addfname __P((char *));
@@ -160,8 +161,10 @@ expandarg(arg, arglist, flag)
 	 * TODO - EXP_REDIR
 	 */
 	if (flag & EXP_FULL) {
-		if (!recorded && (flag & EXP_RECORD))
+		if (!recorded && (flag & EXP_RECORD)) {
+			ifsfree();
 			recordregion(0, expdest - p - 1, 0);
+		}
 		ifsbreakup(p, &exparg);
 		*exparg.lastp = NULL;
 		exparg.lastp = &exparg.list;
@@ -174,14 +177,7 @@ expandarg(arg, arglist, flag)
 		*exparg.lastp = sp;
 		exparg.lastp = &sp->next;
 	}
-	while (ifsfirst.next != NULL) {
-		struct ifsregion *ifsp;
-		INTOFF;
-		ifsp = ifsfirst.next->next;
-		ckfree(ifsfirst.next);
-		ifsfirst.next = ifsp;
-		INTON;
-	}
+	ifsfree();
 	*exparg.lastp = NULL;
 	if (exparg.list) {
 		*arglist->lastp = exparg.list;
@@ -317,15 +313,7 @@ expari(flag)
 	int result;
 	int quotes = flag & (EXP_FULL | EXP_CASE);
 
-	while (ifsfirst.next != NULL) {
-		struct ifsregion *ifsp;
-		INTOFF;
-		ifsp = ifsfirst.next->next;
-		ckfree(ifsfirst.next);
-		ifsfirst.next = ifsp;
-		INTON;
-	}
-	ifslastp = NULL;
+	ifsfree();
 
 	/*
 	 * This routine is slightly over-complicated for
@@ -936,6 +924,21 @@ ifsbreakup(string, arglist)
 		*arglist->lastp = sp;
 		arglist->lastp = &sp->next;
 	}
+}
+
+STATIC void
+ifsfree()
+{
+	while (ifsfirst.next != NULL) {
+		struct ifsregion *ifsp;
+		INTOFF;
+		ifsp = ifsfirst.next->next;
+		ckfree(ifsfirst.next);
+		ifsfirst.next = ifsp;
+		INTON;
+	}
+	ifslastp = NULL;
+	ifsfirst.next = NULL;
 }
 
 
