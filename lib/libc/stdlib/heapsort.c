@@ -1,6 +1,9 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Ronnie Kon at Mindcraft Inc., Kevin Lew and Elmer Yglesias.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +35,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)heapsort.c	5.1 (Berkeley) 6/4/91";*/
-static char *rcsid = "$Id: heapsort.c,v 1.3 1993/08/26 00:48:00 jtc Exp $";
+/*static char sccsid[] = "from: @(#)heapsort.c	8.1 (Berkeley) 6/4/93";*/
+static char *rcsid = "$Id: heapsort.c,v 1.4 1994/06/16 05:26:34 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stddef.h>
 
 /*
  * Swap two areas of size number of bytes.  Although qsort(3) permits random
@@ -48,13 +51,23 @@ static char *rcsid = "$Id: heapsort.c,v 1.3 1993/08/26 00:48:00 jtc Exp $";
  * isn't worth optimizing; the SWAP's get sped up by the cache, and pointer
  * arithmetic gets lost in the time required for comparison function calls.
  */
-#define	SWAP(a, b) { \
-	cnt = size; \
+#define	SWAP(a, b, count, size, tmp) { \
+	count = size; \
 	do { \
-		ch = *a; \
+		tmp = *a; \
 		*a++ = *b; \
-		*b++ = ch; \
-	} while (--cnt); \
+		*b++ = tmp; \
+	} while (--count); \
+}
+
+/* Copy one block of size size to another. */
+#define COPY(a, b, count, size, tmp1, tmp2) { \
+	count = size; \
+	tmp1 = a; \
+	tmp2 = b; \
+	do { \
+		*tmp1++ = *tmp2++; \
+	} while (--count); \
 }
 
 /*
@@ -63,21 +76,59 @@ static char *rcsid = "$Id: heapsort.c,v 1.3 1993/08/26 00:48:00 jtc Exp $";
  *
  * There two cases.  If j == nmemb, select largest of Ki and Kj.  If
  * j < nmemb, select largest of Ki, Kj and Kj+1.
- *
- * The initial value depends on if we're building the initial heap or
- * reconstructing it after saving a value.
  */
-#define	HEAP(initval) { \
-	for (i = initval; (j = i * 2) <= nmemb; i = j) { \
-		p = (char *)bot + j * size; \
-		if (j < nmemb && compar(p, p + size) < 0) { \
-			p += size; \
-			++j; \
+#define CREATE(initval, nmemb, par_i, child_i, par, child, size, count, tmp) { \
+	for (par_i = initval; (child_i = par_i * 2) <= nmemb; \
+	    par_i = child_i) { \
+		child = base + child_i * size; \
+		if (child_i < nmemb && compar(child, child + size) < 0) { \
+			child += size; \
+			++child_i; \
 		} \
-		t = (char *)bot + i * size; \
-		if (compar(p, t) <= 0) \
+		par = base + par_i * size; \
+		if (compar(child, par) <= 0) \
 			break; \
-		SWAP(t, p); \
+		SWAP(par, child, count, size, tmp); \
+	} \
+}
+
+/*
+ * Select the top of the heap and 'heapify'.  Since by far the most expensive
+ * action is the call to the compar function, a considerable optimization
+ * in the average case can be achieved due to the fact that k, the displaced
+ * elememt, is ususally quite small, so it would be preferable to first
+ * heapify, always maintaining the invariant that the larger child is copied
+ * over its parent's record.
+ *
+ * Then, starting from the *bottom* of the heap, finding k's correct place,
+ * again maintianing the invariant.  As a result of the invariant no element
+ * is 'lost' when k is assigned its correct place in the heap.
+ *
+ * The time savings from this optimization are on the order of 15-20% for the
+ * average case. See Knuth, Vol. 3, page 158, problem 18.
+ *
+ * XXX Don't break the #define SELECT line, below.  Reiser cpp gets upset.
+ */
+#define SELECT(par_i, child_i, nmemb, par, child, size, k, count, tmp1, tmp2) { \
+	for (par_i = 1; (child_i = par_i * 2) <= nmemb; par_i = child_i) { \
+		child = base + child_i * size; \
+		if (child_i < nmemb && compar(child, child + size) < 0) { \
+			child += size; \
+			++child_i; \
+		} \
+		par = base + par_i * size; \
+		COPY(par, child, count, size, tmp1, tmp2); \
+	} \
+	for (;;) { \
+		child_i = par_i; \
+		par_i = child_i / 2; \
+		child = base + child_i * size; \
+		par = base + par_i * size; \
+		if (child_i == 1 || compar(k, par) < 0) { \
+			COPY(child, k, count, size, tmp1, tmp2); \
+			break; \
+		} \
+		COPY(child, par, count, size, tmp1, tmp2); \
 	} \
 }
 
@@ -86,41 +137,49 @@ static char *rcsid = "$Id: heapsort.c,v 1.3 1993/08/26 00:48:00 jtc Exp $";
  * and worst.  While heapsort is faster than the worst case of quicksort,
  * the BSD quicksort does median selection so that the chance of finding
  * a data set that will trigger the worst case is nonexistent.  Heapsort's
- * only advantage over quicksort is that it requires no additional memory.
+ * only advantage over quicksort is that it requires little additional memory.
  */
-heapsort(bot, nmemb, size, compar)
-	register void *bot;
-	register size_t nmemb, size;
+int
+heapsort(vbase, nmemb, size, compar)
+	void *vbase;
+	size_t nmemb, size;
 	int (*compar) __P((const void *, const void *));
 {
-	register char *p, *t, ch;
 	register int cnt, i, j, l;
+	register char tmp, *tmp1, *tmp2;
+	char *base, *k, *p, *t;
 
 	if (nmemb <= 1)
 		return (0);
+
 	if (!size) {
 		errno = EINVAL;
 		return (-1);
 	}
+
+	if ((k = malloc(size)) == NULL)
+		return (-1);
+
 	/*
 	 * Items are numbered from 1 to nmemb, so offset from size bytes
 	 * below the starting address.
 	 */
-	bot -= size;
+	base = (char *)vbase - size;
 
 	for (l = nmemb / 2 + 1; --l;)
-		HEAP(l);
+		CREATE(l, nmemb, i, j, t, p, size, cnt, tmp);
 
 	/*
 	 * For each element of the heap, save the largest element into its
-	 * final slot, then recreate the heap.
+	 * final slot, save the displaced element (k), then recreate the
+	 * heap.
 	 */
 	while (nmemb > 1) {
-		p = (char *)bot + size;
-		t = (char *)bot + nmemb * size;
-		SWAP(p, t);
+		COPY(k, base + nmemb * size, cnt, size, tmp1, tmp2);
+		COPY(base + nmemb * size, base + size, cnt, size, tmp1, tmp2);
 		--nmemb;
-		HEAP(1);
+		SELECT(i, j, nmemb, t, p, size, k, cnt, tmp1, tmp2);
 	}
+	free(k);
 	return (0);
 }
