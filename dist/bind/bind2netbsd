@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.1 1999/11/12 23:58:56 veego Exp $
+#	$NetBSD: bind2netbsd,v 1.2 1999/11/14 08:04:34 veego Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,7 +63,7 @@ esac
 echo preparing directory $d
 rm -rf $d
 mkdir -p $d; cd $d
-mkdir -p man reload restart
+mkdir -p man
 
 cd $r/src
 pax -rvw bin include lib $d
@@ -77,37 +77,13 @@ find $d -name '.cvsignore' -exec rm {} \;
 find $d -name 'Makefile' -exec rm {} \;
 cd $d/lib/isc && rm *.mdoc
 
-### Create named.reload.sh
-cd $d/reload
-cat > named.reload.sh<<'__eof_reload'
-#	$NetBSD: bind2netbsd,v 1.1 1999/11/12 23:58:56 veego Exp $
-#
-#	from named.reload	5.2 (Berkeley) 6/27/89
-#	from: Id: named.reload.sh,v 8.1 1994/12/15 06:24:14 vixie Exp
-#
-
-exec /usr/sbin/ndc reload
-__eof_reload
-
-### Create named.restart.sh
-cd $d/restart
-cat > named.reload.sh<<'__eof_restart'
-#	$NetBSD: bind2netbsd,v 1.1 1999/11/12 23:58:56 veego Exp $
-#
-#	from named.restart	5.2 (Berkeley) 6/27/89
-#	from: Id: named.restart.sh,v 8.1 1994/12/15 06:24:14 vixie Exp
-#
-
-exec /usr/sbin/ndc restart
-__eof_restart
-
-### Remove the $'s around the Id: and add our $NetBSD: bind2netbsd,v 1.1 1999/11/12 23:58:56 veego Exp $
+### Remove the $'s around the Id: and add our $NetBSD: bind2netbsd,v 1.2 1999/11/14 08:04:34 veego Exp $
 find $d -name '*.[chly]' -print | while read c; do
 	sed -e ' s/\$\(Id.*\) \$/\1/' < $c > /tmp/bind2n$$ && mv /tmp/bind2n$$ $c && \
 	echo removed \$Id tag from $c
 	sed 1q < $c | grep -q '\$NetBSD' || (
 cat <<'__eof_header'  > /tmp/bind3n$$
-/*	$NetBSD: bind2netbsd,v 1.1 1999/11/12 23:58:56 veego Exp $	*/
+/*	$NetBSD: bind2netbsd,v 1.2 1999/11/14 08:04:34 veego Exp $	*/
 
 __eof_header
 cat $c  >> /tmp/bind3n$$
@@ -121,7 +97,7 @@ find $d/man -name '*.[0-9]' -print | while read m; do
 
 	sed 1q < $m | grep -q '\$NetBSD' || (
 cat <<'__eof_header' > /tmp/bind2m$$
-.\"	$NetBSD: bind2netbsd,v 1.1 1999/11/12 23:58:56 veego Exp $
+.\"	$NetBSD: bind2netbsd,v 1.2 1999/11/14 08:04:34 veego Exp $
 .\"
 __eof_header
 	cat $m >> /tmp/bind2m$$
