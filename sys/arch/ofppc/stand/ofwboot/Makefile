@@ -1,13 +1,18 @@
-#	$NetBSD: Makefile,v 1.9 2000/08/07 22:38:11 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.10 2001/10/23 03:31:26 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
-SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c vers.c
-.PATH:		${S}/arch/ofppc/ofppc
+FILES=		${PROG}.elf
+SRCS=		Locore.c alloc.c boot.c ofdev.c net.c netif_of.c vers.c
+CFLAGS+=	-msoft-float -Wno-main
+#CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
+CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -I${.CURDIR}
+DBG=		-Os -mmultiple
+
 SRCS+=		ofwmagic.S
 .PATH:		${S}/arch/powerpc/powerpc
-#CFLAGS+=	-DDEBUG -DNETIF_DEBUG
+
 MKMAN=		no
 STRIPFLAG=
 BINMODE=	444
@@ -19,13 +24,11 @@ RELOC=		20000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c
+CLEANFILES+=	vers.c ${PROG}.elf
 
-CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. -I${.OBJDIR}
+CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC}
 CPPFLAGS+=	-DFIRMWORKSBUGS
-CPPFLAGS+=	-DPOWERPC_BOOT_AOUT
-CPPFLAGS+=	-DPOWERPC_BOOT_ELF
 CPPFLAGS+=	-DCOMPAT_386BSD_MBRPART
 
 .BEGIN:
@@ -46,7 +49,7 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
-SAMISCMAKEFLAGS= SA_USE_CREAD=yes
+SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
@@ -55,7 +58,8 @@ vers.c: version
 	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
 	
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -X -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
+	${LD} -s -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG}.elf \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${OBJCOPY} -O binary ${PROG}.elf ${PROG}
 
 .include <bsd.prog.mk>
