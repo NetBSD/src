@@ -1,4 +1,4 @@
-/*	$NetBSD: chown.c,v 1.28 2003/08/07 11:25:14 agc Exp $	*/
+/*	$NetBSD: chown.c,v 1.29 2003/09/25 10:30:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994, 2003\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.28 2003/08/07 11:25:14 agc Exp $");
+__RCSID("$NetBSD: chown.c,v 1.29 2003/09/25 10:30:10 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -231,7 +231,7 @@ a_gid(s)
 
 	if (*s == '\0')			/* Argument was "uid[:.]". */
 		return;
-	gr = getgrnam(s);
+	gr = *s == '#' ? NULL : getgrnam(s);
 	if (gr == NULL)
 		gid = id(s, "group");
 	else
@@ -245,7 +245,7 @@ a_uid(s)
 {
 	if (*s == '\0')			/* Argument was "[:.]gid". */
 		return;
-	if (uid_from_user(s, &uid) == -1) {
+	if (*s == '#' || uid_from_user(s, &uid) == -1) {
 		uid = id(s, "user");
 	}
 	return;
@@ -259,6 +259,8 @@ id(name, type)
 	char *ep;
 
 	errno = 0;
+	if (*name == '#')
+		name++;
 	val = (id_t)strtoul(name, &ep, 10);
 	if (errno)
 		err(EXIT_FAILURE, "%s", name);
