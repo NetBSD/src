@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.44 1999/09/15 12:31:28 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.45 1999/09/15 13:57:26 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.44 1999/09/15 12:30:59 augustss Exp 
+ *	NetBSD: usbdevs,v 1.45 1999/09/15 13:57:09 augustss Exp 
  */
 
 /*
@@ -57,9 +57,9 @@
 #define	USB_VENDOR_NANAO	0x0440		/* NANAO Corp. */
 #define	USB_VENDOR_THRUST	0x044f		/* Thrustmaster */
 #define	USB_VENDOR_TI	0x0451		/* Texas Instruments */
-#define	USB_VENDOR_GENIUS	0x0458		/* KYE Systems Corp. */
+#define	USB_VENDOR_KYE	0x0458		/* KYE Systems Corp. */
 #define	USB_VENDOR_MICROSOFT	0x045e		/* Microsoft */
-#define	USB_VENDOR_KENSINGTON	0x0461		/* Primax Electronics */
+#define	USB_VENDOR_PRIMAX	0x0461		/* Primax Electronics */
 #define	USB_VENDOR_CHERRY	0x046a		/* Cherry Mikroschalter GmbH */
 #define	USB_VENDOR_LOGITECH	0x046d		/* Logitech Inc. */
 #define	USB_VENDOR_BTC	0x046e		/* Behavior Tech. Computer */
@@ -75,7 +75,7 @@
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
 #define	USB_VENDOR_CHICONY	0x04f2		/* Chicony Electronics Co., Ltd. */
 #define	USB_VENDOR_BROTHER	0x04f9		/* Brother Industries Corp. */
-#define	USB_VENDOR_JAZZ	0x04fa		/* Dallas Semiconductor */
+#define	USB_VENDOR_DALLAS	0x04fa		/* Dallas Semiconductor */
 #define	USB_VENDOR_BELKIN	0x050d		/* Belkin Components */
 #define	USB_VENDOR_KAWATSU	0x050f		/* Kawatsu Semiconductor, Inc. */
 #define	USB_VENDOR_APC	0x051d		/* American Power Conversion */
@@ -87,7 +87,7 @@
 #define	USB_VENDOR_WACOM	0x056a		/* WACOM Corp. Ltd. */
 #define	USB_VENDOR_ETEK	0x056c		/* e-TEK Labs */
 #define	USB_VENDOR_EIZO	0x056d		/* EIZO */
-#define	USB_VENDOR_AGILER	0x056e		/* Elecom Corp. Ltd. */
+#define	USB_VENDOR_ELECOM	0x056e		/* Elecom Corp. Ltd. */
 #define	USB_VENDOR_ROCKFIRE	0x0583		/* Rockfire */
 #define	USB_VENDOR_IOMEGA	0x059b		/* Iomega Corp. */
 #define	USB_VENDOR_OMNIVISION	0x05a9		/* OmniVision */
@@ -135,18 +135,18 @@
 /* Texas Intel products */
 #define	USB_PRODUCT_TI_UTUSB41	0x1446		/* UT-USB41 hub */
 
-/* Genius products */
-#define	USB_PRODUCT_GENIUS_NICHE	0x0001		/* Niche mouse */
-#define	USB_PRODUCT_GENIUS_FLIGHT2000	0x1004		/* Flight 2000 joystick */
+/* (KYE) Genius products */
+#define	USB_PRODUCT_KYE_NICHE	0x0001		/* Niche mouse */
+#define	USB_PRODUCT_KYE_FLIGHT2000	0x1004		/* Flight 2000 joystick */
 
 /* Microsoft products */
 #define	USB_PRODUCT_MICROSOFT_INTELLIMOUSE	0x0009		/* IntelliMouse */
 #define	USB_PRODUCT_MICROSOFT_NATURALKBD	0x000b		/* Natural Keyboard Elite */
 #define	USB_PRODUCT_MICROSOFT_DDS80	0x0014		/* Digital Sound System 80 */
 
-/* Kensington products */
-#define	USB_PRODUCT_KENSINGTON_COMFORT	0x4d01		/* Comfort */
-#define	USB_PRODUCT_KENSINGTON_MOUSEINABOX	0x4d02		/* Mouse-in-a-Box */
+/* Primax products */
+#define	USB_PRODUCT_PRIMAX_COMFORT	0x4d01		/* Comfort */
+#define	USB_PRODUCT_PRIMAX_MOUSEINABOX	0x4d02		/* Mouse-in-a-Box */
 
 /* Cherry products */
 #define	USB_PRODUCT_CHERRY_MY3000KBD	0x0001		/* My3000 keyboard */
@@ -194,8 +194,8 @@
 /* Brother Industries products */
 #define	USB_PRODUCT_BROTHER_HL1050	0x0002		/* HL-1050 laser printer */
 
-/* Jazz products */
-#define	USB_PRODUCT_JAZZ_J6502	0x4201		/* J-6502 speakers */
+/* Dallas Semiconductor products */
+#define	USB_PRODUCT_DALLAS_J6502	0x4201		/* J-6502 speakers */
 
 /* Kawatsu products */
 #define	USB_PRODUCT_KAWATSU_MH4000P	0x0003		/* MiniHub 4000P */
@@ -229,7 +229,7 @@
 #define	USB_PRODUCT_EIZO_MONITOR	0x0001		/* monitor */
 
 /* Agiler products */
-#define	USB_PRODUCT_AGILER_MOUSE29UO	0x0002		/* mouse 29UO */
+#define	USB_PRODUCT_ELECOM_MOUSE29UO	0x0002		/* mouse 29UO */
 
 /* Rockfire products */
 #define	USB_PRODUCT_ROCKFIRE_GAMEPAD	0x2033		/* gamepad 203USB */
