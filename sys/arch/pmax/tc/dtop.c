@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.1.2.2 1998/10/23 13:06:56 nisimura Exp $ */
+/*	$NetBSD: dtop.c,v 1.1.2.3 1998/10/23 15:58:19 nisimura Exp $ */
 
 /*
  * Copyright (c) 1996, 1998 Tohru Nishimura.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
+ *      This product includes software developed by Tohru Nishimura
  *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -29,6 +29,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.1.2.3 1998/10/23 15:58:19 nisimura Exp $");
 
 #include "opt_ddb.h"
 
