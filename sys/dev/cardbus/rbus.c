@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
+/*	$NetBSD: rbus.c,v 1.3 1999/11/06 06:20:53 soren Exp $	*/
 /*
  * Copyright (c) 1999
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -99,19 +99,11 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
   DPRINTF(("rbus_space_alloc: addr %lx, size %lx, mask %lx, align %lx\n",
 	   addr, size, mask, align));
 
-  if (size > align) {
-    return 1;			/* ??? size should be smaller than align */
-  }
-
   addr += rbt->rb_offset;
 
   if (mask == 0) {
     /* FULL Decode */
     decodesize = 0;
-  }
-
-  if (size > align) {
-    return 1;			/* ??? size should be smaller than align */
   }
 
   if (rbt->rb_flags == RBUS_SPACE_ASK_PARENT) {
