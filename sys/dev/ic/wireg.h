@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.32 2002/04/15 15:05:58 onoe Exp $	*/
+/*	$NetBSD: wireg.h,v 1.33 2002/04/16 07:24:07 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -612,6 +612,7 @@ struct wi_ltv_mcast {
 #define WI_INFO_NOTIFY		0xF000	/* Handover address */
 #define WI_INFO_COUNTERS	0xF100	/* Statistics counters */
 #define WI_INFO_SCAN_RESULTS	0xF101	/* Scan results */
+#define WI_INFO_HOST_SCAN_RESULTS	0xF104	/* Scan results */
 #define WI_INFO_LINK_STAT	0xF200	/* Link status */
 #define WI_INFO_ASSOC_STAT	0xF201	/* Association status */
 struct wi_assoc {
