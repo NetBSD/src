@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2003/05/30 17:35:24 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.9 2003/05/30 22:17:05 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -130,174 +130,13 @@ md_copy_filesystem(void)
 int
 md_make_bsd_partitions(void)
 {
-	int i, part;
-	int remain;
-	char isize[20];
-	int maxpart = getmaxpartitions();
-	int partstart, partsize;
+	return make_bsd_partitions();
+}
 
-	/*
-	 * Initialize global variables that track  space used on this disk.
-	 * Standard 4.3BSD 8-partition labels always cover whole disk.
-	 */
-	ptsize = dlsize - ptstart;
-
-	/* Ask for layout type -- standard or special */
-	msg_display (MSG_layout,
-			(1.0*ptsize*sectorsize)/MEG,
-			(1.0*minfsdmb*sectorsize)/MEG,
-			(1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
-	process_menu(MENU_layout);
-
-	if (layoutkind == 3) {
-		ask_sizemult(dlcylsize);
-	} else {
-		sizemult = MEG / sectorsize;
-		multname = msg_string(MSG_megname);
-	}
-
-
-	/* Build standard partitions */
-	emptylabel(bsdlabel);
-
-	/* Partitions C is predefined (whole  disk). */
-	bsdlabel[C].pi_fstype = FS_UNUSED;
-	bsdlabel[C].pi_offset = 0;
-	bsdlabel[C].pi_size = dlsize;
-	
-	/* Standard fstypes */
-	bsdlabel[A].pi_fstype = FS_BSDFFS;
-	bsdlabel[A].pi_bsize  = 8192;
-	bsdlabel[A].pi_fsize  = 1024;
-	bsdlabel[B].pi_fstype = FS_SWAP;
-	/* Conventionally, C is whole disk */
-	bsdlabel[D].pi_fstype = FS_UNUSED;	/* fill out below */
-	bsdlabel[E].pi_fstype = FS_UNUSED;
-	bsdlabel[F].pi_fstype = FS_UNUSED;
-	bsdlabel[G].pi_fstype = FS_UNUSED;
-	bsdlabel[H].pi_fstype = FS_UNUSED;
-
-
-	switch (layoutkind) {
-	case 1: /* standard: a root, b swap, c "unused", d /usr */
-	case 2: /* standard X: a root, b swap (big), c "unused", d /usr */
-		partstart = ptstart;
-
-		/* Root */
-		i = NUMSEC(24+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC(i/(MEG/sectorsize)+1, MEG/sectorsize,
-		    dlcylsize) - partstart;
-		bsdlabel[A].pi_offset = partstart;
-		bsdlabel[A].pi_size = partsize;
-		bsdlabel[A].pi_bsize = 8192;
-		bsdlabel[A].pi_fsize = 1024;
-		strcpy(fsmount[A], "/");
-		partstart += partsize;
-
-		/* swap */
-		i = NUMSEC(layoutkind * 2 * (rammb < 32 ? 32 : rammb),
-		    MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC(i/(MEG/sectorsize)+1, MEG/sectorsize,
-		    dlcylsize) - partstart;
-		bsdlabel[B].pi_offset = partstart;
-		bsdlabel[B].pi_size = partsize;
-		partstart += partsize;
-
-		/* /usr */
-		partsize = ptsize - (partstart - ptstart);
-		bsdlabel[D].pi_fstype = FS_BSDFFS;
-		bsdlabel[D].pi_offset = partstart;
-		bsdlabel[D].pi_size = partsize;
-		bsdlabel[D].pi_bsize = 8192;
-		bsdlabel[D].pi_fsize = 1024;
-		strcpy(fsmount[E], "/usr");
-
-		break;
-
-	case 3: /* custom: ask user for all sizes */
-		ask_sizemult(dlcylsize);
-		partstart = ptstart;
-		remain = ptsize;
-
-		/* root */
-		i = NUMSEC(24+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC(i/(MEG/sectorsize)+1, MEG/sectorsize,
-		    dlcylsize) - partstart;
-		snprintf(isize, 20, "%d", partsize / sizemult);
-		msg_prompt(MSG_askfsroot, isize, isize, 20,
-		    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize), sizemult, dlcylsize);
-		bsdlabel[A].pi_offset = partstart;
-		bsdlabel[A].pi_size = partsize;
-		bsdlabel[A].pi_bsize = 8192;
-		bsdlabel[A].pi_fsize = 1024;
-		strcpy(fsmount[A], "/");
-		partstart += partsize;
-		remain -= partsize;
-	
-		/* swap */
-		i = NUMSEC(4 * (rammb < 32 ? 32 : rammb),
-		    MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC(i/(MEG/sectorsize)+1, MEG/sectorsize,
-		    dlcylsize) - partstart;
-		snprintf(isize, 20, "%d", partsize/sizemult);
-		msg_prompt_add(MSG_askfsswap, isize, isize, 20,
-		    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
-		bsdlabel[B].pi_offset = partstart;
-		bsdlabel[B].pi_size = partsize;
-		partstart += partsize;
-		remain -= partsize;
-		
-		/* Others D, E, F, G, H */
-		part = D;
-		if (remain > 0)
-			msg_display(MSG_otherparts);
-		while (remain > 0 && part <= H) {
-			partsize = remain;
-			snprintf (isize, 20, "%d", partsize/sizemult);
-			msg_prompt_add(MSG_askfspart, isize, isize, 20,
-			    diskdev, partition_name(part), remain/sizemult,
-			    multname);
-			partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
-			if (partsize > 0) {
-				if (remain - partsize < sizemult)
-					partsize = remain;
-				bsdlabel[part].pi_fstype = FS_BSDFFS;
-				bsdlabel[part].pi_offset = partstart;
-				bsdlabel[part].pi_size = partsize;
-				bsdlabel[part].pi_bsize = 8192;
-				bsdlabel[part].pi_fsize = 1024;
-				if (part == D)
-					strcpy(fsmount[E], "/usr");
-				msg_prompt_add(MSG_mountpoint, fsmount[part],
-				    fsmount[part], 20);
-				partstart += partsize;
-				remain -= partsize;
-			}
-			part++;
-		}
-
-		break;
-	}
-
-	/*
-	 * OK, we have a partition table. Give the user the chance to
-	 * edit it and verify it's OK, or abort altogether.
-	 */
-	if (edit_and_check_label(bsdlabel, maxpart, RAW_PART, RAW_PART) == 0) {
-		msg_display(MSG_abort);
-		return 0;
-	}
-
-	/* Disk name */
-	msg_prompt(MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
-
-	/* save label to disk for MI code to update. */
-	(void) savenewlabel(bsdlabel, 8);	/* save 8-partition label */
-
-	/* Everything looks OK. */
-	return (1);
+int
+md_check_partitions(void)
+{
+	return 1;
 }
 
 

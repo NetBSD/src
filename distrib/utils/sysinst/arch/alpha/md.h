@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.12 2003/05/30 11:56:24 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.13 2003/05/30 22:17:01 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,6 +43,7 @@
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 50	/* XXXTHORPEJ */
+#define DEFROOTSIZE	128
 
 /*
  * Default filesets to fetch and install during installation
