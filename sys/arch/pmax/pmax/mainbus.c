@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 1996/03/18 01:47:06 jonathan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 1996/04/04 06:26:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -124,7 +124,7 @@ mbattach(parent, self, aux)
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
 		nca.ca_addr = 0;
-		if (config_found(self, &nca, mbprint))
+		if (config_found(self, &nca, mbprint) != NULL)
 			cpuattachcnt++;
 	}
 

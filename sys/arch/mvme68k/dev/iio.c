@@ -1,4 +1,4 @@
-/* $Id: iio.c,v 1.2 1996/03/17 01:35:02 thorpej Exp $ */
+/* $Id: iio.c,v 1.3 1996/04/04 06:25:40 cgd Exp $ */
 
 /*
  *
@@ -103,7 +103,7 @@ iioattach(parent, self, args)
 		panic("no pcc device configured");
 	config_attach(self, pcccf, NULL, NULL);
 
-	while (config_found(self, NULL, NULL))
+	while (config_found(self, NULL, NULL) != NULL)
 		;
 }
 

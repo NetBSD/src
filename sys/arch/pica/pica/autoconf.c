@@ -38,7 +38,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.1.1.1 1996/03/13 04:58:10 jonathan Exp $
+ *      $Id: autoconf.c,v 1.2 1996/04/04 06:25:51 cgd Exp $
  */
 
 /*
@@ -75,7 +75,7 @@ extern	int pica_boardtype;
 configure()
 {
 	(void)splhigh();	/* To be really shure.. */
-	if(config_rootfound("mainbus", "mainbus") == 0)
+	if(config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 	(void)spl0();
 

@@ -344,7 +344,7 @@ pcattach(struct isa_device *dev)
 	 * XXX Really should decouple keyboard controller
 	 * from the console code.
 	 */
-	while (config_found(self, NULL, NULL))
+	while (config_found(self, NULL, NULL) != NULL)
 		/* will break when no more children */ ;
 #endif /* PCVT_NETBSD > 110 */
 #else /* PCVT_NETBSD > 100 */

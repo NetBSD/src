@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 1996/04/04 00:27:29 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27 1996/04/04 06:25:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -148,7 +148,7 @@ configure(void)
 
      /*	startrtclock(); 	   swapped with adb_init (WRU) */
 
-	if (config_rootfound("mainbus", "mainbus") == 0)
+	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("No main device!");
 
 #if GENERIC
@@ -428,7 +428,7 @@ mainbus_attach(parent, self, aux)
 
 	printf("\n");
 	for (c=conf_data ; c->name ; c++) {
-		if (config_found(self, c, mbprint)) {
+		if (config_found(self, c, mbprint) != NULL) {
 		} else {
 			if (c->req) {
 				fail++;

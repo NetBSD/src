@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 1996/03/17 01:35:07 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.4 1996/04/04 06:25:45 cgd Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,7 +105,7 @@ mainbus_attach(parent, self, args)
 {
 	printf("\n");
 
-	while (config_found(self, NULL, NULL))
+	while (config_found(self, NULL, NULL) != NULL)
 		;
 }
 /*
@@ -116,7 +116,7 @@ configure()
 	init_sir();
 	isrinit();
 
-	if (!config_rootfound("mainbus", NULL))
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
 
 #if GENERIC

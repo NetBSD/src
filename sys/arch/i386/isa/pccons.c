@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.94 1996/03/30 07:51:51 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.95 1996/04/04 06:25:22 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -484,7 +484,7 @@ pcattach(parent, self, aux)
 	 * XXX Really should decouple keyboard controller
 	 * from the console code.
 	 */
-	while (config_found(self, NULL, NULL))
+	while (config_found(self, NULL, NULL) != NULL)
 		/* will break when no more children */ ;
 }
 

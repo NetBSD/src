@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49 1996/04/04 00:27:24 cgd Exp $ */
+/*	$NetBSD: autoconf.c,v 1.50 1996/04/04 06:26:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -881,7 +881,7 @@ configure()
 
 	oca.ca_ra.ra_node = node;
 	oca.ca_ra.ra_name = cp = "mainbus";
-	if (!config_rootfound(cp, (void *)&oca))
+	if (config_rootfound(cp, (void *)&oca) == NULL)
 		panic("mainbus not configured");
 	(void)spl0();
 
@@ -1161,7 +1161,7 @@ mainbus_attach(parent, dev, aux)
 
 		oca.ca_bustype = BUS_MAIN;
 		oca.ca_ra.ra_name = "obio";
-		if (!config_found(dev, (void *)&oca, mbprint))
+		if (config_found(dev, (void *)&oca, mbprint) == NULL)
 			panic("obio missing");
 
 		for (ssp = oldmon_special; (sp = *ssp) != NULL; ssp++) {
@@ -1228,7 +1228,7 @@ mainbus_attach(parent, dev, aux)
 		}
 		oca.ca_bustype = BUS_MAIN;
 		if (!romprop(&oca.ca_ra, sp, node) ||
-		    !config_found(dev, (void *)&oca, mbprint))
+		    (config_found(dev, (void *)&oca, mbprint) == NULL))
 			panic(sp);
 	}
 

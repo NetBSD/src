@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 1995/12/28 19:16:58 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 1996/04/04 06:25:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -171,7 +171,7 @@ configure()
 	 * Kick off autoconfiguration
 	 */
 	s = splhigh();
-	if (config_rootfound("mainbus", "mainbus") == 0)
+	if (config_rootfound("mainbus", "mainbus") == NULL)
 	    panic("no mainbus found");
 
 #if 0
