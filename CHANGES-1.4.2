@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.28 1999/09/19 15:56:37 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.29 1999/09/21 05:16:28 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -396,3 +396,58 @@ lib/libc/arch/arm32/gen/divsi3.S		1.3
 
   If the highest bit of the dividend is set, care must be taken when
   shifting the divisor.  Fixes PR#7760.  (is)
+
+usr.sbin/amd/AUTHORS				1.1.1.7
+usr.sbin/amd/Makefile				1.9-1.12
+usr.sbin/amd/amd/am_ops.c			1.9
+usr.sbin/amd/amd/amd.c				1.12
+usr.sbin/amd/amd/amfs_auto.c			1.1.1.3
+usr.sbin/amd/amd/amfs_program.c			1.1.1.3
+usr.sbin/amd/amd/amfs_toplvl.c			1.1.1.3
+usr.sbin/amd/amd/amq_subr.c			1.11
+usr.sbin/amd/amd/amq_svc.c			1.8
+usr.sbin/amd/amd/conf.c				1.7
+usr.sbin/amd/amd/conf_parse.y			1.6
+usr.sbin/amd/amd/info_hesiod.c			1.1.1.2
+usr.sbin/amd/amd/info_nis.c			1.14
+usr.sbin/amd/amd/map.c				1.12
+usr.sbin/amd/amd/mapc.c				1.12
+usr.sbin/amd/amd/nfs_prot_svc.c			1.8
+usr.sbin/amd/amd/nfs_start.c			1.10
+usr.sbin/amd/amd/ops_cdfs.c			1.8
+usr.sbin/amd/amd/ops_nfs.c			1.8
+usr.sbin/amd/amd/opts.c				1.9
+usr.sbin/amd/amd2netbsd				1.20-1.22
+usr.sbin/amd/amq/amq.c				1.13
+usr.sbin/amd/doc/Makefile			1.6-1.7
+usr.sbin/amd/doc/am-utils.info			deleted
+usr.sbin/amd/doc/am-utils.info-1		deleted
+usr.sbin/amd/doc/am-utils.info-2		deleted
+usr.sbin/amd/doc/am-utils.info-3		deleted
+usr.sbin/amd/doc/am-utils.info-4		deleted
+usr.sbin/amd/doc/am-utils.info-5		deleted
+usr.sbin/amd/doc/am-utils.info-6		deleted
+usr.sbin/amd/doc/am-utils.texi			1.1.1.6
+usr.sbin/amd/doc/hlfsd.ps			1.1.1.3
+usr.sbin/amd/doc/version.texi			1.1.1.6
+usr.sbin/amd/fixmount/fixmount.c		1.7
+usr.sbin/amd/fsinfo/fsi_gram.y			1.8
+usr.sbin/amd/fsinfo/fsinfo.c			1.11
+usr.sbin/amd/hlfsd/hlfsd.c			1.8
+usr.sbin/amd/include/am_compat.h		1.1.1.5
+usr.sbin/amd/include/am_defs.h			1.10
+usr.sbin/amd/include/am_utils.h			1.8
+usr.sbin/amd/include/amd.h			1.7
+usr.sbin/amd/include/amu_nfs_prot.h		1.7
+usr.sbin/amd/include/config.h			1.15
+usr.sbin/amd/libamu/mkconf			1.1.1.2
+usr.sbin/amd/libamu/mount_fs.c			1.1.1.7
+usr.sbin/amd/libamu/tranputil.c			1.1.1.7
+usr.sbin/amd/libamu/wire.c			1.1.1.5
+usr.sbin/amd/libamu/xutil.c			1.4
+usr.sbin/amd/mk-amd-map/mk-amd-map.c		1.11
+usr.sbin/amd/pawd/pawd.c			1.1.1.3
+usr.sbin/amd/wire-test/wire-test.c		1.5
+
+  Upgrade amd(8) and related software to fix expoitable stack overflows
+  in amq(8), as reported in BUGTRAQ and elsewhere.  (christos)
