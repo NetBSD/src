@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.14 1998/05/27 13:15:30 msaitoh Exp $
+.\"	$NetBSD: find.1,v 1.15 1999/01/03 14:11:54 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -252,7 +252,11 @@ These characters may be matched explicitly by escaping them with a
 backslash (``\e'').
 Slashes (``/'') are treated as normal characters and do not have to be
 matched explicitly.
-.It Ic -perm Op Fl Ns Ar mode 
+.It Xo
+.Ic -perm
+.Op Fl
+.Ns Ar mode 
+.Xc
 The
 .Ar mode
 may be either symbolic (see
