@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 1997/07/29 06:43:56 fair Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96 1997/08/12 16:52:12 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -697,7 +697,6 @@ dumpsys()
 	sh->pg_frame = PG_FRAME;
 	sh->pg_valid = PG_VALID;
 	pmap_get_ksegmap(sh->ksegmap);
-	/* XXX What about the ram_segs? */
 	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 	if (error)
 		goto fail;
