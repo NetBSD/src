@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_net.c,v 1.9 2003/09/13 08:15:25 jdolecek Exp $	 */
+/*	$NetBSD: svr4_32_net.c,v 1.10 2003/09/13 08:22:51 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.9 2003/09/13 08:15:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.10 2003/09/13 08:22:51 jdolecek Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -99,13 +99,8 @@ enum {
 
 int svr4_32_netattach __P((int));
 
-#if 0
-static int svr4_32_soo_close __P((struct file *, struct proc *));
-static int svr4_32_ptm_alloc __P((struct proc *));
-#else
 int svr4_soo_close __P((struct file *, struct proc *));
 int svr4_ptm_alloc __P((struct proc *));
-#endif
 
 static struct fileops svr4_32_netops = {
 	soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll,
@@ -122,181 +117,6 @@ svr4_32_netattach(n)
 {
 	return 0;
 }
-
-
-#if 0
-int
-svr4_32_netopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
-{
-	int type, protocol;
-	int fd;
-	struct file *fp;
-	struct socket *so;
-	int error;
-	int family;
-
-	DPRINTF(("netopen("));
-
-	if (p->p_dupfd >= 0)
-		return ENODEV;
-
-	switch (minor(dev)) {
-	case dev_udp:
-		family = AF_INET;
-		type = SOCK_DGRAM;
-		protocol = IPPROTO_UDP;
-		DPRINTF(("udp, "));
-		break;
-
-	case dev_tcp:
-		family = AF_INET;
-		type = SOCK_STREAM;
-		protocol = IPPROTO_TCP;
-		DPRINTF(("tcp, "));
-		break;
-
-	case dev_ip:
-	case dev_rawip:
-		family = AF_INET;
-		type = SOCK_RAW;
-		protocol = IPPROTO_IP;
-		DPRINTF(("ip, "));
-		break;
-
-	case dev_icmp:
-		family = AF_INET;
-		type = SOCK_RAW;
-		protocol = IPPROTO_ICMP;
-		DPRINTF(("icmp, "));
-		break;
-
-	case dev_unix_dgram:
-		family = AF_LOCAL;
-		type = SOCK_DGRAM;
-		protocol = 0;
-		DPRINTF(("unix-dgram, "));
-		break;
-
-	case dev_unix_stream:
-	case dev_unix_ord_stream:
-		family = AF_LOCAL;
-		type = SOCK_STREAM;
-		protocol = 0;
-		DPRINTF(("unix-stream, "));
-		break;
-
-	case dev_ptm:
-		DPRINTF(("ptm);\n"));
-		return svr4_ptm_alloc(p);
-
-	default:
-		DPRINTF(("%d);\n", minor(dev)));
-		return EOPNOTSUPP;
-	}
-
-	/* falloc() will use the descriptor for us */
-	if ((error = falloc(p, &fp, &fd)) != 0)
-		return error;
-
-	if ((error = socreate(family, &so, type, protocol)) != 0) {
-		DPRINTF(("socreate error %d\n", error));
-		fdremove(p->p_fd, fd);
-		FILE_UNUSE(fp, NULL);
-		ffree(fp);
-		return error;
-	}
-
-	fp->f_flag = FREAD|FWRITE;
-	fp->f_type = DTYPE_SOCKET;
-	fp->f_ops = &svr4_32_netops;
-
-	fp->f_data = (caddr_t)so;
-	(void) svr4_32_stream_get(fp);
-
-	DPRINTF(("ok);\n"));
-
-	p->p_dupfd = fd;
-	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp, p);
-	return ENXIO;
-}
-#endif
-
-#if 0
-static int
-svr4_32_soo_close(fp, p)
-	struct file *fp;
-	struct proc *p;
-{
-	struct socket *so = (struct socket *) fp->f_data;
-
-	svr4_32_delete_socket(p, fp);
-	free(so->so_internal, M_NETADDR);
-	return soo_close(fp, p);
-}
-#endif
-
-#if 0
-static int
-svr4_ptm_alloc(p)
-	struct proc *p;
-{
-	/*
-	 * XXX this is very, very ugly.  But I can't find a better
-	 * way that won't duplicate a big amount of code from
-	 * sys_open().  Ho hum...
-	 *
-	 * Fortunately for us, Solaris (at least 2.5.1) makes the
-	 * /dev/ptmx open automatically just open a pty, that (after
-	 * STREAMS I_PUSHes), is just a plain pty.  fstat() is used
-	 * to get the minor device number to map to a tty.
-	 * 
-	 * Cycle through the names. If sys_open() returns ENOENT (or
-	 * ENXIO), short circuit the cycle and exit.
-	 */
-	char ptyname[] = "/dev/ptyXX";
-	static const char ttyletters[] = "pqrstuvwxyzPQRST";
-	static const char ttynumbers[] = "0123456789abcdef";
-	caddr_t sg = stackgap_init(p, 0);
-	char *path = stackgap_alloc(p, &sg, sizeof(ptyname));
-	struct sys_open_args oa;
-	int l = 0, n = 0;
-	register_t fd = -1;
-	int error;
-
-	SCARG(&oa, path) = path;
-	SCARG(&oa, flags) = O_RDWR;
-	SCARG(&oa, mode) = 0;
-
-	while (fd == -1) {
-		ptyname[8] = ttyletters[l];
-		ptyname[9] = ttynumbers[n];
-
-		if ((error = copyout(ptyname, path, sizeof(ptyname))) != 0)
-			return error;
-
-		switch (error = sys_open(p, &oa, &fd)) {
-		case ENOENT:
-		case ENXIO:
-			return error;
-		case 0:
-			p->p_dupfd = fd;
-			return ENXIO;
-		default:
-			if (ttynumbers[++n] == '\0') {
-				if (ttyletters[++l] == '\0')
-					break;
-				n = 0;
-			}
-		}
-	}
-	return ENOENT;
-}
-#endif
 
 struct svr4_strm *
 svr4_32_stream_get(fp)
