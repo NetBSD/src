@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 2000/01/19 20:05:44 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 2000/03/03 08:36:21 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2000/01/19 20:05:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2000/03/03 08:36:21 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -304,12 +304,11 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
 	proc0.p_addr = proc0paddr = (struct user *)kernend;
-	proc0.p_md.md_regs =
-	    (struct frame *)((caddr_t)kernend + UPAGES * PAGE_SIZE) - 1;
+	proc0.p_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
 	curpcb = &proc0.p_addr->u_pcb;
-	memset(kernend, 0, UPAGES * PAGE_SIZE);
+	memset(proc0.p_addr, 0, USPACE);
 
-	kernend += UPAGES * PAGE_SIZE;
+	kernend += USPACE;
 
 	/*
 	 * Load the rest of the available pages into the VM system.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2000/02/22 11:25:57 soda Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2000/03/03 08:36:21 nisimura Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -489,12 +489,11 @@ mach_init(argc, argv, envv)
 	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
 	proc0.p_addr = proc0paddr = (struct user *)kernend;
-	proc0.p_md.md_regs =
-	    (struct frame *)((caddr_t)kernend + UPAGES * PAGE_SIZE) - 1;
+	proc0.p_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
 	curpcb = &proc0.p_addr->u_pcb;
-	memset(kernend, 0, UPAGES * PAGE_SIZE);
+	memset(proc0.p_addr, 0, USPACE);
 
-	kernend += UPAGES * PAGE_SIZE;
+	kernend += USPACE;
 
 	maxmem = physmem;
 
