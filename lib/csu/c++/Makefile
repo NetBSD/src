@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.14 2000/04/29 17:42:46 dmcmahill Exp $
+#	$NetBSD: Makefile,v 1.15 2004/02/14 08:41:58 simonb Exp $
 
 CPPFLAGS+=	-DLIBC_SCCS
+.if ${MKPIC} != "no"
 COPTS+=		-fPIC
+.endif
 OBJS=		c++rt0.o
 
 realall: ${OBJS}
