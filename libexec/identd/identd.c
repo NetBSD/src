@@ -1,5 +1,5 @@
 /*
-**	$NetBSD: identd.c,v 1.6 1996/08/30 17:41:34 thorpej Exp $
+**	$NetBSD: identd.c,v 1.7 1997/08/04 18:00:14 mycroft Exp $
 **
 ** identd.c                       A TCP/IP link identification protocol server
 **
@@ -164,7 +164,7 @@ alarm_handler()
   exit(0);
 }
 
-#if !defined(hpux) && !defined(__hpux) && !defined(SVR4) || defined(_CRAY)
+#if !defined(hpux) && !defined(__hpux) && !defined(SVR4) && !defined(__NetBSD__) || defined(_CRAY)
 /*
 ** This is used to clean up zombie child processes
 ** if the -w or -b options are used.
@@ -473,7 +473,7 @@ int main(argc,argv)
     ** handshake.
     */
 #if (defined(SVR4) || defined(hpux) || defined(__hpux) || \
-     defined(_CRAY) || defined(_AUX_SOURCE))
+     defined(__NetBSD__) || defined(_CRAY) || defined(_AUX_SOURCE))
     signal(SIGCHLD, SIG_IGN);
 #else
     signal(SIGCHLD, (SIGRETURN_TYPE (*)()) child_handler);
