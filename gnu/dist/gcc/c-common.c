@@ -1305,6 +1305,7 @@ check_format_info (info, params)
     return;
 
   /* We can only check the format if it's a string constant.  */
+ again:
   while (TREE_CODE (format_tree) == NOP_EXPR)
     format_tree = TREE_OPERAND (format_tree, 0); /* strip coercion */
 
@@ -1338,6 +1339,12 @@ check_format_info (info, params)
 		    format_tree = TREE_OPERAND (format_tree, 0);
 		}
 	  }
+    }
+
+  if (TREE_CODE (format_tree) == COND_EXPR) 
+    {
+      format_tree = TREE_OPERAND(format_tree, 1);
+      goto again;
     }
 
   if (integer_zerop (format_tree))
@@ -1428,7 +1435,10 @@ check_format_info (info, params)
 	  if (format_chars - TREE_STRING_POINTER (format_tree) != format_length)
 	    warning ("embedded `\\0' in format");
 	  if (info->first_arg_num != 0 && params != 0 && ! has_operand_number)
-	    warning ("too many arguments for format");
+	    {
+	      if (warn_format_extra_args)
+		warning ("too many arguments for format");
+	    }
 	  return;
 	}
       if (*format_chars++ != '%')

@@ -240,6 +240,7 @@ int warn_sign_compare;
 
 int warn_format;
 int warn_format_y2k;
+int warn_format_extra_args = 1;
 
 /* Warn about a subscript that has type char.  */
 
