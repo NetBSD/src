@@ -2,7 +2,7 @@
 # Distribution kernel (TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.14 2000/03/25 15:12:04 uch Exp $
+#	$NetBSD: TX3912,v 1.15 2000/04/09 14:14:50 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -52,19 +52,61 @@ options 	COMPAT_43
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 
-file-system	FFS		# fast filesystem with user and group quotas
-file-system	MFS		# memory-based filesystem
-file-system	KERNFS		# /kern (kernel informational filesystem)
-file-system	PROCFS		# /proc
-file-system	UNION
+options 	NTP			# network time protocol
+#options 	UCONSOLE		# users can redirect console (unsafe)
+
+# File systems
+file-system 	FFS		# UFS
+#file-system 	EXT2FS		# second extended file system (linux)
+#file-system 	LFS		# log-structured file system
+file-system 	MFS		# memory file system
+file-system 	NFS		# Network File System client
+#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
+file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern
+#file-system 	NULLFS		# loopback file system
+#file-system 	OVERLAY		# overlay file system
+#file-system 	PORTAL		# portal filesystem (still experimental)
+file-system 	PROCFS		# /proc
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system 	UNION		# union file system
+#file-system	CODA		# Coda File System; also needs vcoda (below)
+
+# Pull in config fragments for kernel crypto.  Use only one of these,
+# and adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
 
 # Networking options
-options 	INET		# Internet protocols
+#options 	GATEWAY		# IP packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+#options 	MROUTING	# Multicast routing support
+#options 	ISO		# OSI networking
+#options 	TPIP		# TPIP
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+
+options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
+#options 	SOFTDEP         # FFS soft updates support.
+#options 	QUOTA		# UFS quotas
+
+options 	NFS_BOOT_DHCP
 
 config		netbsd		root on ? type ?
 
 txsim*	at mainbus0
-
 #
 # System Internal Modules
 #
@@ -126,8 +168,6 @@ wskbd*		at btnmgr0 mux 1
 
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=4
-options 	WS_KERNEL_FG=WSCOL_GREEN
-#options 	FONT_VT220L8x8
 options 	FONT_VT220L8x10
 
 # PCMCIA bus support
@@ -140,31 +180,71 @@ wd*	at wdc? channel ? drive ? flags 0x0000
 # ATAPI bus support
 atapibus* at wdc? channel ?
 
-# PCMCIA network interfaces
-ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
-mbe*	at pcmcia? function ?		# MB8696x based Ethernet
-ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
-mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
-com*	at mhzc?
-sm*	at mhzc?
+# ATAPI devices
+# flags have the same meaning as for IDE drives.
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+#uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
-com*	at pcmcia? function ?		# Modems and serial cards
+# PCMCIA network interfaces
+#awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
+#cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
+#ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+#mbe*	at pcmcia? function ?		# MB8696x based Ethernet
+#ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+#ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
+#sm*	at pcmcia? function ?		# Megahertz Ethernet
+#wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+#xe*	at pcmcia? function ?		# Xircom PCMCIA cards
+
+#mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
+#com*	at mhzc?
+#sm*	at mhzc?
+
+# PCMCIA serial interfaces
+#com*	at pcmcia? function ?		# Modems and serial cards
+
+#pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
+#com*	at pcmcom? slave ?		# ...and the slave devices
 
 # PCMCIA SCSI interfaces
-aic*	at pcmcia? function ?
+aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
+esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
+
 scsibus* at aic?
+scsibus* at esp?
+
+# SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
+#st*	at scsibus? target ? lun ?	# SCSI tape drives
+#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#ch*	at scsibus? target ? lun ?	# SCSI autochangers
+#ss*	at scsibus? target ? lun ?	# SCSI scanners
+#uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # disk/mass storage pseudo-devices
-pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md		1	# memory disk
+pseudo-device	vnd		4	# disk-like interface to files
 
+# network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
-pseudo-device	pty		64	# pseudo ptys
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
 
+# a pseudo device needed for Coda	# also needs CODA (above)
+#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+# miscellaneous pseudo-devices
+pseudo-device   rnd                     # /dev/random and in-kernel generator
+pseudo-device	pty		64	# pseudo ptys
+
+# for IPv6
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
