@@ -257,3 +257,5 @@ sense buffer.
 [ write(1) ] Fix a security bug.
 
 [ kernel/i386 ] Fix bug that caused arguments to be left on the stack.
+
+[ C Library/YP ] Fix bug in ypserv and RPC timeout code.
