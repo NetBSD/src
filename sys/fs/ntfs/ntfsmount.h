@@ -1,7 +1,7 @@
-/*	$NetBSD: ntfs_vfsops.h,v 1.4 1999/10/10 14:20:33 jdolecek Exp $	*/
+/*	$NetBSD: ntfsmount.h,v 1.1 2002/12/23 17:38:34 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
+ * Copyright (c) 1998, 1999 Semen Ustimenko
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,15 +25,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: ntfs_vfsops.h,v 1.3 1999/05/12 09:43:06 semenu Exp
+ *	Id: ntfsmount.h,v 1.4 1999/05/12 09:43:09 semenu Exp
  */
-#define VG_DONTLOADIN	0x0001	/* Tells ntfs_vgetex to do not call */
-				/* ntfs_loadntnode() on ntnode, even if */
-				/* ntnode not loaded */
-#define	VG_DONTVALIDFN	0x0002	/* Tells ntfs_vgetex to do not validate */
-				/* fnode */
-#define	VG_EXT		0x0004	/* This is not main record */
 
-int ntfs_vgetex(struct mount *, ino_t, u_int32_t, char *, u_long, u_long,
-		struct proc *, struct vnode **);
-int ntfs_calccfree(struct ntfsmount *, cn_t *);
+#define	NTFS_MFLAG_CASEINS	0x00000001
+#define	NTFS_MFLAG_ALLNAMES	0x00000002
+
+struct ntfs_args {
+	char	*fspec;			/* block special device to mount */
+	struct	export_args export;	/* network export information */
+	uid_t	uid;			/* uid that owns ntfs files */
+	gid_t	gid;			/* gid that owns ntfs files */
+	mode_t	mode;			/* mask to be applied for ntfs perms */
+	u_long	flag;			/* additional flags */
+};
+
+#define NTFS_MFLAG_BITS	"\177\20" \
+    "b\00caseins\0b\01allnames"
