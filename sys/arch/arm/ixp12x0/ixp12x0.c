@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.7 2003/03/25 06:12:46 igy Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.8 2003/06/15 23:08:56 fvdl Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.7 2003/03/25 06:12:46 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.8 2003/06/15 23:08:56 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,6 +184,7 @@ ixp12x0_attach(sc)
 	pba.pba_iot = &sc->ia_pci_iot;
 	pba.pba_memt = &sc->ia_pci_memt;
 	pba.pba_dmat = &sc->ia_pci_dmat;
+	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;	/* bus number = 0 */
 	pba.pba_intrswiz = 0;	/* XXX */
 	pba.pba_intrtag = 0;

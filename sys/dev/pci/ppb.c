@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.25 2003/01/01 00:10:23 thorpej Exp $	*/
+/*	$NetBSD: ppb.c,v 1.26 2003/06/15 23:09:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.25 2003/01/01 00:10:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.26 2003/06/15 23:09:09 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ ppbattach(parent, self, aux)
 	pba.pba_iot = pa->pa_iot;
 	pba.pba_memt = pa->pa_memt;
 	pba.pba_dmat = pa->pa_dmat;
+	pba.pba_dmat64 = pa->pa_dmat64;
 	pba.pba_pc = pc;
 	pba.pba_flags = pa->pa_flags & ~PCI_FLAGS_MRM_OKAY;
 	pba.pba_bus = PPB_BUSINFO_SECONDARY(busdata);

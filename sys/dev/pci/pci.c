@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.79 2003/05/03 18:02:37 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.80 2003/06/15 23:09:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.79 2003/05/03 18:02:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.80 2003/06/15 23:09:09 fvdl Exp $");
 
 #include "opt_pci.h"
 
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.79 2003/05/03 18:02:37 thorpej Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#include <uvm/uvm_extern.h>
 
 #include "locators.h"
 
@@ -175,6 +177,7 @@ do {									\
 	sc->sc_iot = pba->pba_iot;
 	sc->sc_memt = pba->pba_memt;
 	sc->sc_dmat = pba->pba_dmat;
+	sc->sc_dmat64 = pba->pba_dmat64;
 	sc->sc_pc = pba->pba_pc;
 	sc->sc_bus = pba->pba_bus;
 	sc->sc_bridgetag = pba->pba_bridgetag;
@@ -275,6 +278,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	pa.pa_iot = sc->sc_iot;
 	pa.pa_memt = sc->sc_memt;
 	pa.pa_dmat = sc->sc_dmat;
+	pa.pa_dmat64 = sc->sc_dmat64;
 	pa.pa_pc = pc;
 	pa.pa_bus = bus;
 	pa.pa_device = device;
@@ -610,4 +614,15 @@ pci_vpd_write(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
 	}
 
 	return (0);
+}
+
+int
+pci_dma64_available(struct pci_attach_args *pa)
+{        
+#ifdef _PCI_HAVE_DMA64
+	if (BUS_DMA_TAG_VALID(pa->pa_dmat64) &&
+		((uint64_t)physmem << PAGE_SHIFT) > 0xffffffffULL)
+                        return 1;
+#endif
+        return 0;
 }

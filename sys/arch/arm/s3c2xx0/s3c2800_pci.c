@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.4 2003/05/12 07:49:10 bsh Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.5 2003/06/15 23:08:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -336,6 +336,7 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 	pci_pba.pba_iot = &sspci_io_tag;
 	pci_pba.pba_memt = &sspci_mem_tag;
 	pci_pba.pba_dmat = pci_dma_tag;
+	pci_pba.pba_dmat64 = NULL;
 	pci_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pci_pba.pba_bus = 0;
 	pci_pba.pba_bridgetag = NULL;

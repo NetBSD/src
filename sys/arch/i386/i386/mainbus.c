@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.51 2003/05/29 20:22:31 fvdl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.52 2003/06/15 23:09:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.51 2003/05/29 20:22:31 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.52 2003/06/15 23:09:01 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,6 +291,7 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = X86_BUS_SPACE_MEM;
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
+		mba.mba_pba.pba_dmat64 = NULL;
 		mba.mba_pba.pba_pc = NULL;
 		mba.mba_pba.pba_flags = pci_bus_flags();
 		mba.mba_pba.pba_bus = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 2003/05/29 20:22:33 fvdl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 2003/06/15 23:08:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -218,6 +218,7 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = X86_BUS_SPACE_MEM;
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
+		mba.mba_pba.pba_dmat64 = &pci_bus_dma64_tag;
 		mba.mba_pba.pba_pc = NULL;
 		mba.mba_pba.pba_flags = pci_bus_flags();
 		mba.mba_pba.pba_bus = 0;

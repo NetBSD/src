@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.7 2002/10/02 05:07:44 thorpej Exp $	*/
+/*	$NetBSD: gt.c,v 1.8 2003/06/15 23:08:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -83,6 +83,7 @@ gt_attach(parent, self, aux)
 #if NPCI > 0
 	pba.pba_busname = "pci";
 	pba.pba_dmat = &pci_bus_dma_tag;
+	pba.pba_dmat64 = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;

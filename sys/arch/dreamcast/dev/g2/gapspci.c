@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci.c,v 1.9 2003/01/01 01:28:29 thorpej Exp $	*/
+/*	$NetBSD: gapspci.c,v 1.10 2003/06/15 23:08:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -125,6 +125,7 @@ gaps_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_busname = "pci";
 	pba.pba_memt = sc->sc_memt;
 	pba.pba_dmat = &sc->sc_dmat;
+	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_MEM_ENABLED;
