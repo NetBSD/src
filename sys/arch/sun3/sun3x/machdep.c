@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 1997/04/04 20:49:06 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 1997/04/09 21:00:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -632,7 +632,8 @@ dumpsys()
 	struct bdevsw *dsw;
 	kcore_seg_t	*kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
-	cpu_ram_seg_t *crs_p;
+	struct sun3x_kcore_hdr *sh;
+	phys_ram_seg_t *crs_p;
 	char *vaddr;
 	vm_offset_t paddr;
 	int psize, todo, seg, segsz;
@@ -669,6 +670,7 @@ dumpsys()
 	 */
 	kseg_p = (kcore_seg_t *)KERNBASE;
 	chdr_p = (cpu_kcore_hdr_t *) (kseg_p + 1);
+	sh = &chdr_p->un._sun3x;
 	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
 	kseg_p->c_size = sizeof(*chdr_p);
 	pmap_set_kcore_hdr(chdr_p);
@@ -682,8 +684,8 @@ dumpsys()
 	todo = dumpsize;	/* pages */
 	vaddr = (char*)vmmap;	/* Borrow /dev/mem VA */
 
-	for (seg = 0; seg < NPHYS_RAM_SEGS; seg++) {
-		crs_p = &chdr_p->ram_segs[seg];
+	for (seg = 0; seg < SUN3X_NPHYS_RAM_SEGS; seg++) {
+		crs_p = &sh->ram_segs[seg];
 		paddr = crs_p->start;
 		segsz = crs_p->size;
 		/*
