@@ -1,3 +1,5 @@
+/*	$NetBSD: mdreloc.c,v 1.10 2002/09/11 14:19:31 junyoung Exp $	*/
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
