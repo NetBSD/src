@@ -1,4 +1,4 @@
-# $NetBSD: TODO.i18n,v 1.4 2004/01/02 21:09:44 itojun Exp $
+# $NetBSD: TODO.i18n,v 1.5 2004/01/20 12:08:13 yamt Exp $
 
 NetBSD I18N support status / TODO
 
@@ -137,7 +137,6 @@ LC_MONETARY                             should be supported.
 LC_NUMERIC                              should be supported.
 LC_TIME                                 should be supported.
 message catalog                         make consistent with LC_CTYPE names.
-libintl					support automatic iconv by LC_CTYPE.
 curses                                  support multibyte char.
 regexp                                  support multibyte char.
 regress                                 enrich test items.
