@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.16 1995/09/01 20:06:10 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.17 1995/09/07 21:55:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -399,7 +399,7 @@ linux_fakedev(dev)
 	dev_t dev;
 {
 	if (major(dev) == NETBSD_CONS_MAJOR)
-		return makedev(LINUX_CONS_MAJOR, minor(dev));
+		return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
 	return dev;
 }
 
@@ -500,7 +500,6 @@ linux_machdepioctl(p, uap, retval)
 		break;
 	case LINUX_VT_WAITACTIVE:
 		com = VT_WAITACTIVE;
-		SCARG(&bia, data) = (caddr_t)((int)SCARG(uap, data) + 1);
 		break;
 #endif
 	default:
