@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.24 1997/03/17 03:08:48 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.25 1997/03/18 00:37:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.24 1997/03/17 03:08:48 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.25 1997/03/18 00:37:34 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -630,8 +630,14 @@ domediaopt(val, clear)
 
 	ifmr.ifm_count = 1;
 	ifmr.ifm_ulist = &first_type;
-	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0)
-		err(1, "SIOCGIFMEDIA");
+	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
+		/*
+		 * If we get E2BIG, the kernel is telling us
+		 * that there are more, so we can ignore it.
+		 */
+		if (errno != E2BIG)
+			err(1, "SIOCGIFMEDIA");
+	}
 
 	if (ifmr.ifm_count == 0)
 		errx(1, "%s: no media types?", name);
