@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.17 1996/07/04 03:15:39 chuck Exp $	*/
+/*	$NetBSD: socket.h,v 1.18 1997/01/11 05:15:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -64,6 +64,7 @@
 #define	SO_LINGER	0x0080		/* linger on close if data present */
 #define	SO_OOBINLINE	0x0100		/* leave received OOB data in line */
 #define	SO_REUSEPORT	0x0200		/* allow local address & port reuse */
+#define	SO_TIMESTAMP	0x0400		/* timestamp received dgram traffic */
 
 /*
  * Additional options, not kept in so_options.
@@ -297,6 +298,7 @@ struct cmsghdr {
 
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
+#define	SCM_TIMESTAMP	0x02		/* timestamp (struct timeval) */
 
 /*
  * 4.3 compat sockaddr, move to compat file later
