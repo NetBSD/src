@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.11 1997/07/13 18:09:51 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.12 1997/07/13 18:32:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -63,6 +63,16 @@ typedef	_BSD_TIME_T_	time_t;
 #ifdef	_BSD_SIZE_T_
 typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
+#endif
+
+#ifdef	_BSD_CLOCKID_T_
+typedef	_BSD_CLOCKID_T_	clockid_t;
+#undef	_BSD_CLOCKID_T_
+#endif
+
+#ifdef	_BSD_TIMER_T_
+typedef	_BSD_TIMER_T_	timer_t;
+#undef	_BSD_TIMER_T_
 #endif
 
 #define CLOCKS_PER_SEC	100
