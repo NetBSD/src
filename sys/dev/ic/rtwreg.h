@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.5 2004/12/27 08:59:16 mycroft Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.6 2004/12/29 01:06:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -846,15 +846,15 @@
 
 /* Tx descriptor */ 
 struct rtw_txdesc {
-	u_int32_t	htx_ctl0;
-	u_int32_t	htx_ctl1;
-	u_int32_t	htx_buf;
-	u_int32_t	htx_len;
-	u_int32_t	htx_next;
-	u_int32_t	htx_rsvd[3];
+	u_int32_t	td_ctl0;
+	u_int32_t	td_ctl1;
+	u_int32_t	td_buf;
+	u_int32_t	td_len;
+	u_int32_t	td_next;
+	u_int32_t	td_rsvd[3];
 };
 
-#define htx_stat htx_ctl0
+#define td_stat td_ctl0
 
 #define RTW_TXCTL0_OWN			BIT(31)		/* 1: ready to Tx */
 #define RTW_TXCTL0_RSVD0		BIT(30)		/* reserved */
@@ -908,16 +908,16 @@ struct rtw_txdesc {
 
 /* Rx descriptor */ 
 struct rtw_rxdesc {
-    u_int32_t	hrx_ctl;
-    u_int32_t	hrx_rsvd0;
-    u_int32_t	hrx_buf;
-    u_int32_t	hrx_rsvd1;
+    u_int32_t	rd_ctl;
+    u_int32_t	rd_rsvd0;
+    u_int32_t	rd_buf;
+    u_int32_t	rd_rsvd1;
 };
 
-#define hrx_stat hrx_ctl
-#define hrx_rssi hrx_rsvd0
-#define hrx_tsftl hrx_buf	/* valid only when RTW_RXSTAT_LS is set */
-#define hrx_tsfth hrx_rsvd1	/* valid only when RTW_RXSTAT_LS is set */
+#define rd_stat rd_ctl
+#define rd_rssi rd_rsvd0
+#define rd_tsftl rd_buf		/* valid only when RTW_RXSTAT_LS is set */
+#define rd_tsfth rd_rsvd1	/* valid only when RTW_RXSTAT_LS is set */
 
 #define RTW_RXCTL_OWN		BIT(31)		/* 1: owned by NIC */
 #define RTW_RXCTL_EOR		BIT(30)		/* end of ring */
