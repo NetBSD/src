@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.19 2002/10/13 10:00:08 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.20 2002/11/24 13:33:45 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -103,7 +103,7 @@ static int vs_round_sr(u_long);
 static void vs_set_sr(struct vs_softc *sc, int);
 static inline void vs_set_po(struct vs_softc *sc, u_long);
 
-extern struct cfdata vs_cd;
+extern struct cfdriver vs_cd;
 
 CFATTACH_DECL(vs, sizeof(struct vs_softc),
     vs_match, vs_attach, NULL, NULL);
