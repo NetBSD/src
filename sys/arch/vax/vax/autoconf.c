@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38 1999/06/07 20:16:14 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.39 1999/06/20 00:50:08 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -49,6 +49,7 @@
 #include <machine/ka750.h>
 #include <machine/ka650.h>
 #include <machine/clock.h>
+#include <machine/rpb.h>
 
 #include <vax/vax/gencons.h>
 
@@ -388,3 +389,13 @@ struct	cfattach mem_mainbus_ca = {
 struct	cfattach mem_sbi_ca = {
 	sizeof(struct mem_softc), mem_match, mem_attach
 };
+
+void
+device_register(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	if ((B_TYPE(bootdev) == BDEV_QE) &&
+	    !strcmp("qe", dev->dv_cfdata->cf_driver->cd_name))
+		booted_from = dev;
+}
