@@ -696,6 +696,7 @@ misc-amd-examples	example configuration files for automatically mount file syste
 misc-bind-examples	example configuration files for bind
 misc-crypto-examples	example configuration files for cryptographic software
 misc-dhcpd-examples	example configuration files for dhcpd(8)
+misc-fstab-examples	example configuration files for file system tables
 misc-isdn-examples	example configuration files for isdn
 misc-krb5-examples	example configuration files for Kerberos5
 misc-netutil-examples	example configuration files for network software 
