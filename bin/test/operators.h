@@ -1,4 +1,4 @@
-/*	$Id: operators.h,v 1.2 1993/08/02 17:15:58 mycroft Exp $ */
+/*	$Id: operators.h,v 1.3 1993/09/23 22:51:18 mycroft Exp $ */
 
 #define NOT 0
 #define ISBLOCK 1
@@ -38,5 +38,6 @@
 
 extern char *const unary_op[];
 extern char *const binary_op[];
+extern char *const andor_op[];
 extern const char op_priority[];
 extern const char op_argflag[];
