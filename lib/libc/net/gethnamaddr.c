@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.30 2000/01/22 23:30:27 mycroft Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.31 2000/04/02 21:31:54 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.30 2000/01/22 23:30:27 mycroft Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.31 2000/04/02 21:31:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -565,7 +565,7 @@ gethostbyname2(name, af)
 				 * done a lookup.
 				 */
 				if (inet_pton(af, name,
-				    (char *)host_addr) <= 0) {
+				    (char *)(void *)host_addr) <= 0) {
 					h_errno = HOST_NOT_FOUND;
 					return (NULL);
 				}
@@ -576,7 +576,7 @@ gethostbyname2(name, af)
 				host.h_name = hostbuf;
 				host.h_aliases = host_aliases;
 				host_aliases[0] = NULL;
-				h_addr_ptrs[0] = (char *)host_addr;
+				h_addr_ptrs[0] = (char *)(void *)host_addr;
 				h_addr_ptrs[1] = NULL;
 				host.h_addr_list = h_addr_ptrs;
 				if (_res.options & RES_USE_INET6)
@@ -599,7 +599,7 @@ gethostbyname2(name, af)
 				 * done a lookup.
 				 */
 				if (inet_pton(af, name,
-				    (char *)host_addr) <= 0) {
+				    (char *)(void *)host_addr) <= 0) {
 					h_errno = HOST_NOT_FOUND;
 					return (NULL);
 				}
@@ -610,7 +610,7 @@ gethostbyname2(name, af)
 				host.h_name = hostbuf;
 				host.h_aliases = host_aliases;
 				host_aliases[0] = NULL;
-				h_addr_ptrs[0] = (char *)host_addr;
+				h_addr_ptrs[0] = (char *)(void *)host_addr;
 				h_addr_ptrs[1] = NULL;
 				host.h_addr_list = h_addr_ptrs;
 				h_errno = NETDB_SUCCESS;
@@ -647,8 +647,8 @@ gethostbyaddr(addr, len, af)
 	_DIAGASSERT(addr != NULL);
 
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
-	    (IN6_IS_ADDR_V4MAPPED((const struct in6_addr *)uaddr) ||
-	     IN6_IS_ADDR_V4COMPAT((const struct in6_addr *)uaddr))) {
+	    (IN6_IS_ADDR_V4MAPPED((const struct in6_addr *)(const void *)uaddr) ||
+	     IN6_IS_ADDR_V4COMPAT((const struct in6_addr *)(const void *)uaddr))) {
 		/* Unmap. */
 		addr += IN6ADDRSZ - INADDRSZ;
 		uaddr += IN6ADDRSZ - INADDRSZ;
@@ -725,12 +725,13 @@ _gethtent()
 	if (!(cp = strpbrk(p, " \t")))
 		goto again;
 	*cp++ = '\0';
-	if (inet_pton(AF_INET6, p, (char *)host_addr) > 0) {
+	if (inet_pton(AF_INET6, p, (char *)(void *)host_addr) > 0) {
 		af = AF_INET6;
 		len = IN6ADDRSZ;
-	} else if (inet_pton(AF_INET, p, (char *)host_addr) > 0) {
+	} else if (inet_pton(AF_INET, p, (char *)(void *)host_addr) > 0) {
 		if (_res.options & RES_USE_INET6) {
-			map_v4v6_address((char *)host_addr, (char *)host_addr);
+			map_v4v6_address((char *)(void *)host_addr,
+			    (char *)(void *)host_addr);
 			af = AF_INET6;
 			len = IN6ADDRSZ;
 		} else {
@@ -745,7 +746,7 @@ _gethtent()
 		goto again;
 	if (host.h_length != len)
 		goto again;
-	h_addr_ptrs[0] = (char *)host_addr;
+	h_addr_ptrs[0] = (char *)(void *)host_addr;
 	h_addr_ptrs[1] = NULL;
 	host.h_addr_list = h_addr_ptrs;
 	host.h_length = len;
@@ -854,7 +855,7 @@ _gethtbyname2(name, af)
 			}
 			*ptr++ = '\0';
 
-			ptr = (char *)ALIGN(ptr);
+			ptr = (char *)(void *)ALIGN(ptr);
 		}
 
 		(void)memcpy(ptr, p->h_addr_list[0], (size_t)p->h_length);
@@ -885,7 +886,7 @@ _gethtbyname2(name, af)
 	ptr++;
 	*cp = NULL;
 
-	ptr = (char *)ALIGN(ptr);
+	ptr = (char *)(void *)ALIGN(ptr);
 	cp = h_addr_ptrs;
 	while (num--) {
 		*cp++ = ptr;
@@ -1192,10 +1193,11 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 	hp->h_addrtype = af;
 	hp->h_length = len;
 	(void)memcpy(host_addr, uaddr, (size_t)len);
-	h_addr_ptrs[0] = (char *)host_addr;
-	h_addr_ptrs[1] = (char *)0;
+	h_addr_ptrs[0] = (char *)(void *)host_addr;
+	h_addr_ptrs[1] = NULL;
 	if (af == AF_INET && (_res.options & RES_USE_INET6)) {
-		map_v4v6_address((char *)host_addr, (char *)host_addr);
+		map_v4v6_address((char *)(void *)host_addr,
+		    (char *)(void *)host_addr);
 		hp->h_addrtype = AF_INET6;
 		hp->h_length = IN6ADDRSZ;
 	}
