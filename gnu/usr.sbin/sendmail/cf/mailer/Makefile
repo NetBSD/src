@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/09/19 03:09:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/03/24 15:04:04 atatat Exp $
 #	install these sources in /usr/share/sendmail/mailer
 
 .include <bsd.own.mk>
@@ -6,9 +6,10 @@
 DIST=		${NETBSDSRCDIR}/gnu/dist
 .PATH: ${DIST}/sendmail/cf/mailer
 
+.include <Makefile.inc>
+
 FILESDIR=	/usr/share/sendmail/mailer
-FILES=		cyrus.m4 fax.m4 local.m4 mail11.m4 phquery.m4 pop.m4 \
-		procmail.m4 qpage.m4 smtp.m4 usenet.m4 uucp.m4
+FILES=		${CF_MAILER_FILES} Makefile.inc
 
 all:
 

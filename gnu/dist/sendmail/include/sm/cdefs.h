@@ -44,7 +44,7 @@
 #  endif /* defined(__cplusplus) */
 #  if defined(__STDC__) || defined(__cplusplus)
 #   ifndef __P
-#    define	__P(protos)	protos
+/* #    define	__P(protos)	protos */
 #   endif /* __P */
 #   define	__CONCAT(x,y)	x ## y
 #   define	__STRING(x)	#x

@@ -1,19 +1,24 @@
+
+
+
 VACATION(1)                                           VACATION(1)
 
 
-
 NNAAMMEE
-       vacation - return ``I am not here'' indication
+       vacation - E-mail auto-responder
 
 SSYYNNOOPPSSIISS
-       vvaaccaattiioonn  [--ii]  [--II]  [--rr  _i_n_t_e_r_v_a_l]  [--xx]  [--aa _a_l_i_a_s] [--ff
-       _d_a_t_a_b_a_s_e] [--mm _m_e_s_s_a_g_e] [--ss _a_d_d_r_e_s_s] [--tt _t_i_m_e] [--zz] _l_o_g_i_n
+       vvaaccaattiioonn  [--aa  _a_l_i_a_s]  [--CC _c_f_f_i_l_e] [--dd] [--ff _d_a_t_a_b_a_s_e] [--ii]
+       [--II] [--ll] [--mm _m_e_s_s_a_g_e]  [--rr  _i_n_t_e_r_v_a_l]  [--ss  _a_d_d_r_e_s_s]  [--tt
+       _t_i_m_e] [--UU] [--xx] [--zz] _l_o_g_i_n
 
 DDEESSCCRRIIPPTTIIOONN
-       VVaaccaattiioonn returns a message to  the  sender  of  a  message
-       telling them that you are currently not reading your mail.
-       The intended use is in a _._f_o_r_w_a_r_d file.  For example, your
-       _._f_o_r_w_a_r_d file might have:
+       VVaaccaattiioonn returns a message, _~_/_._v_a_c_a_t_i_o_n_._m_s_g by default, to
+       the sender informing them that you are currently not read-
+       ing  your  mail.   The message is only sent to each sender
+       once per reply interval (see --rr below).  The intended  use
+       is  in  a  _._f_o_r_w_a_r_d file.  For example, your _._f_o_r_w_a_r_d file
+       might have:
 
               \eric, "|/usr/bin/vacation -a allman eric"
 
@@ -24,18 +29,54 @@ DDEESSCCRRIIPPTTIIOONN
        Available options:
 
        --aa _a_l_i_a_s
-              Handle  messages  for  _a_l_i_a_s  in the same manner as
+              Handle messages for _a_l_i_a_s in  the  same  manner  as
               those received for the user's login name.
+
+       --CC _c_f_p_a_t_h
+              Specify  pathname  of  the  sendmail  configuration
+              file.  This option is ignored if --UU  is  specified.
+              This  option defaults to the standard sendmail con-
+              figuration file, located  at  /etc/mail/sendmail.cf
+              on most systems.
+
+       --dd     Send error/debug messages to stderr instead of sys-
+              log.  Otherwise,  fatal  errors,  such  as  calling
+              vvaaccaattiioonn  with  incorrect  arguments,  or with non-
+              existent _l_o_g_i_ns, are logged in the system log file,
+              using  syslog(8).   This should only be used on the
+              command line, not in your _._f_o_r_w_a_r_d file.
 
        --ff _f_i_l_e_n_a_m_e
               Use _f_i_l_e_n_a_m_e as name of  the  database  instead  of
-              _~_/_._v_a_c_a_t_i_o_n_._d_b.   Unless the _f_i_l_e_n_a_m_e starts with /
-              it is relative to ~.
+              _~_/_._v_a_c_a_t_i_o_n_._d_b  or  _~_/_._v_a_c_a_t_i_o_n_._{_d_i_r_,_p_a_g_}.   Unless
+              the _f_i_l_e_n_a_m_e starts with / it is relative to ~.
 
        --ii     Initialize the vacation database files.  It  should
-              be used before you modify your _._f_o_r_w_a_r_d file.
+              be used before you modify your _._f_o_r_w_a_r_d file.  This
+              should only be used on the  command  line,  not  in
+              your _._f_o_r_w_a_r_d file.
 
-       --II     Same as --ii (for backwards compatibility).
+       --II     Same  as  --ii  (for  backwards compatibility).  This
+              should only be used on the  command  line,  not  in
+
+
+
+                   Date: 2002/06/21 21:28:06                 1
+
+
+
+
+
+VACATION(1)                                           VACATION(1)
+
+
+              your _._f_o_r_w_a_r_d file.
+
+       --ll     List  the  content  of  the  vacation database file
+              including the address and the  associated  time  of
+              the  last  auto-response  to  that  address.   This
+              should only be used on the  command  line,  not  in
+              your _._f_o_r_w_a_r_d file.
 
        --mm _f_i_l_e_n_a_m_e
               Use  _f_i_l_e_n_a_m_e  as  name  of the file containing the
@@ -46,7 +87,9 @@ DDEESSCCRRIIPPTTIIOONN
               Set  the  reply  interval  to  _i_n_t_e_r_v_a_l  days.  The
               default is one  week.   An  interval  of  ``0''  or
               ``infinite''  (actually, any non-numeric character)
-              will never send more than one reply.
+              will never send more than one reply.  The --rr option
+              should  only  be used when the vacation database is
+              initialized (see --ii above).
 
        --ss _a_d_d_r_e_s_s
               Use _a_d_d_r_e_s_s instead of the incoming message  sender
@@ -57,18 +100,42 @@ DDEESSCCRRIIPPTTIIOONN
               Ignored,  available  only  for  compatibility  with
               Sun's vacation program.
 
-       --xx     reads an exclusion list from stdin (one address per
+       --UU     Do  not  attempt  to  lookup  _l_o_g_i_n in the password
+              file.  The -f and -m options must be used to  spec-
+              ify the database and message file since there is no
+              home directory for the default settings  for  these
+              options.
+
+       --xx     Reads an exclusion list from stdin (one address per
               line).  Mails coming from an address in this exclu-
               sion  list  won't  get  a reply by vvaaccaattiioonn.  It is
               possible to exclude complete domains by  specifying
-              ``@domain'' as element of the exclusion list.
+              ``@domain'' as element of the exclusion list.  This
+              should only be used on the  command  line,  not  in
+              your _._f_o_r_w_a_r_d file.
 
        --zz     Set  the  sender  of the vacation message to ``<>''
               instead of the user.  This  probably  violates  the
               RFCs  since vacation messages are not required by a
               standards-track RFC to have a null reverse-path.
 
+       VVaaccaattiioonn reads the first line from the standard input  for
+       a UNIX ``From'' line to determine the sender.  Sendmail(8)
+       includes this ``From'' line automatically.
+
        No message will be sent unless _l_o_g_i_n (or an _a_l_i_a_s supplied
+
+
+
+                   Date: 2002/06/21 21:28:06                 2
+
+
+
+
+
+VACATION(1)                                           VACATION(1)
+
+
        using  the  --aa  option)  is  part of either the ``To:'' or
        ``Cc:''  headers  of   the   mail.    No   messages   from
        ``???-REQUEST'',       ``???-RELAY'',       ``???-OWNER'',
@@ -77,12 +144,13 @@ DDEESSCCRRIIPPTTIIOONN
        are case insensitive) nor is  a  notification  sent  if  a
        ``Precedence:  bulk''  or  ``Precedence:  junk''  line  is
        included in the mail headers.  The people  who  have  sent
-       you  messages  are  maintained  as a db(3) database in the
-       file _._v_a_c_a_t_i_o_n_._d_b in your home directory.
+       you  messages are maintained as a db(3) or dbm(3) database
+       in the file _._v_a_c_a_t_i_o_n_._d_b or  _._v_a_c_a_t_i_o_n_._{_d_i_r_,_p_a_g_}  in  your
+       home directory.
 
        VVaaccaattiioonn expects a file _._v_a_c_a_t_i_o_n_._m_s_g, in your home direc-
        tory, containing a message to be sent back to each sender.
-       It should be an entire message (including  headers).   For
+       It  should  be an entire message (including headers).  For
        example, it might contain:
 
               From: eric@CS.Berkeley.EDU (Eric Allman)
@@ -94,16 +162,11 @@ DDEESSCCRRIIPPTTIIOONN
               please contact Keith Bostic <bostic@CS.Berkeley.EDU>.
               --eric
 
-       VVaaccaattiioonn  reads the first line from the standard input for
-       a UNIX ``From'' line to determine the sender.  Sendmail(8)
-       includes this ``From'' line automatically.
-
-       Fatal  errors,  such  as  calling  vvaaccaattiioonn with incorrect
-       arguments, or with non-existent _l_o_g_i_ns, are logged in  the
-       system log file, using syslog(8).
-
 FFIILLEESS
-       ~/.vacation.db    default database file
+       ~/.vacation.db    default database file for db(3)
+
+       ~/.vacation.{dir,pag}
+                         default database file for dbm(3)
 
        ~/.vacation.msg   default message to send
 
@@ -115,4 +178,21 @@ HHIISSTTOORRYY
 
 
 
-                   Date: 2001/07/20 04:19:38       VACATION(1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   Date: 2002/06/21 21:28:06                 3
+
+

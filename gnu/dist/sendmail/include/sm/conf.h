@@ -867,7 +867,7 @@ extern unsigned int sleepX __P((unsigned int seconds));
 #  define HASSETSID	1	/* has the setsid(2) POSIX syscall */
 #  define USESETEUID	1	/* has usable seteuid(2) call */
 #  define HASFCHMOD	1	/* has fchmod(2) syscall */
-#  define HASFCHOWN	1	/* fchown(2) */
+#  define HASFCHOWN	1	/* has fchown(2) syscall */
 #  define HASUNAME	1	/* has uname(2) syscall */
 #  define HASSTRERROR	1	/* has strerror(3) */
 #  define HAS_ST_GEN	1	/* has st_gen field in stat struct */
@@ -2336,7 +2336,7 @@ typedef struct msgb		mblk_t;
 
 /* general POSIX defines */
 # ifdef _POSIX_VERSION
-#  define HASSETSID	1	/* has Posix setsid(2) call */
+#  define HASSETSID	1	/* has the setsid(2) POSIX syscall */
 #  define HASWAITPID	1	/* has Posix waitpid(2) call */
 #  if _POSIX_VERSION >= 199500 && !defined(USESETEUID)
 #   define USESETEUID	1	/* has usable seteuid(2) call */

@@ -1,4 +1,4 @@
-# $NetBSD: netbsd-proto.mc,v 1.10 2002/09/30 01:27:05 grant Exp $
+# $NetBSD: netbsd-proto.mc,v 1.11 2003/03/24 15:04:03 atatat Exp $
 
 divert(-1)
 #
@@ -42,18 +42,17 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)netbsd-proto.mc	$Revision: 1.10 $')
+VERSIONID(`@(#)netbsd-proto.mc	$Revision: 1.11 $')
 OSTYPE(bsd4.4)dnl
 DOMAIN(generic)dnl
-MAILER(local)dnl
-MAILER(smtp)dnl
-define(`confAUTO_REBUILD', True)dnl
 FEATURE(genericstable,DATABASE_MAP_TYPE` -o 'MAIL_SETTINGS_DIR`genericstable')
 FEATURE(mailertable,  DATABASE_MAP_TYPE` -o 'MAIL_SETTINGS_DIR`mailertable')
 FEATURE(virtusertable,DATABASE_MAP_TYPE` -o 'MAIL_SETTINGS_DIR`virtusertable')
 FEATURE(domaintable,  DATABASE_MAP_TYPE` -o 'MAIL_SETTINGS_DIR`domaintable')
-FEATURE(access_db,    DATABASE_MAP_TYPE` -o 'MAIL_SETTINGS_DIR`access')
+FEATURE(access_db,    DATABASE_MAP_TYPE` -T<TMPF> -o 'MAIL_SETTINGS_DIR`access')
 FEATURE(`redirect')
+MAILER(local)dnl
+MAILER(smtp)dnl
 
 # Enable IPv6.  IPv6 is marked as optional so the configuration file
 # can be used on IPV4-only kernel as well.

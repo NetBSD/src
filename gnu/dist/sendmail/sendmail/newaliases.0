@@ -1,5 +1,7 @@
-NEWALIASES(1)                                       NEWALIASES(1)
 
+
+
+NEWALIASES(1)                                       NEWALIASES(1)
 
 
 NNAAMMEE
@@ -20,6 +22,10 @@ DDEESSCCRRIIPPTTIIOONN
        The  nneewwaalliiaasseess  utility  exits 0 on success, and >0 if an
        error occurs.
 
+       Notice: do nnoott use mmaakkeemmaapp  to  create  the  aliases  data
+       base,  because  nneewwaalliiaasseess  puts  a special token into the
+       data base that is required by sseennddmmaaiill..
+
 FFIILLEESS
        /etc/mail/aliases   The mail aliases file
 
@@ -31,4 +37,30 @@ HHIISSTTOORRYY
 
 
 
-                   Date: 2000/12/14 23:08:15     NEWALIASES(1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   Date: 2001/10/10 03:23:17                 1
+
+
