@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.19 2001/04/26 08:50:00 kleink Exp $
+#	$NetBSD: inter.phone,v 1.20 2002/04/02 20:21:59 ragge Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -130,6 +130,7 @@
 46:31:Goteborg:Sweden
 46:40:Malmo:Sweden
 46:8:Stockholm:Sweden
+46:920:Lulea:Sweden
 47:2:Oslo:Norway
 47:5:Bergen:Norway
 47:7:Trondheim:Norway
