@@ -8,11 +8,18 @@
 
 #undef SDB_DEBUGGING_INFO
 #define SDB_DEBUGGING_INFO
+
 #undef DBX_DEBUGGING_INFO
 #define DBX_DEBUGGING_INFO
 
 #undef PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
+
+/* Don't generate XCOFF debugging information.  */
+#undef XCOFF_DEBUGGING_INFO
+
+/* Don't use the COFF object file format.  */
+#undef OBJECT_FORMAT_COFF
 
 /* Names to predefine in the preprocessor for this target machine.  */
 #undef	CPP_PREDEFINES
