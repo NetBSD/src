@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.6 1998/10/10 00:28:36 thorpej Exp $	*/
+/*	$NetBSD: cbsc.c,v 1.7 1998/11/14 21:48:22 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -144,8 +144,12 @@ cbscmatch(parent, cf, aux)
 	volatile u_char *regs;
 
 	zap = aux;
-	if (zap->manid != 0x2140 || zap->prodid != 12)
-		return(0);
+	if (zap->manid != 0x2140)
+		return(0);		/* It's not Phase5 */
+	if (zap->prodid != 12 && zap->prodid != 11)
+		return(0);		/* Not CyberStorm MKI SCSI */
+	if (zap->prodid == 11 && iszthreepa(zap->pa))
+		return(0);		/* Fastlane Z3! */
 	regs = &((volatile u_char *)zap->va)[0xf400];
 	if (badaddr((caddr_t)regs))
 		return(0);
