@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)def.h	8.2 (Berkeley) 3/21/94
- *	$Id: def.h,v 1.6 1994/06/29 05:09:16 deraadt Exp $
+ *	$Id: def.h,v 1.7 1995/05/02 01:40:14 mycroft Exp $
  */
 
 /*
@@ -45,7 +45,7 @@
 #include <sys/time.h>
 
 #include <signal.h>
-#include <sgtty.h>
+#include <termios.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
