@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.86 2003/02/02 20:33:05 kleink Exp $
+.\"	$NetBSD: sysctl.8,v 1.87 2003/02/27 01:43:10 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -171,7 +171,9 @@ privilege can change the value.
 .It hw.ncpu	integer	no
 .It hw.pagesize	integer	no
 .It hw.physmem	integer	no
+.It hw.physpages quad no
 .It hw.usermem	integer	no
+.It hw.userpages quad no
 .It hw.cnmagic	string	yes
 .It kern.argmax	integer	no
 .It kern.autonicetime	integer	yes
