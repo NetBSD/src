@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.16 1999/11/10 08:06:11 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.17 1999/11/29 11:12:14 uch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1204,7 +1204,7 @@ END(mips1_TLBGetPID)
  *
  *----------------------------------------------------------------------------
  */
-
+#ifndef ENABLE_MIPS_TX3900
 
 /*----------------------------------------------------------------------------
  *
@@ -1536,7 +1536,183 @@ LEAF(mips1_wbflush)
 	j	ra
 	nop
 END(mips1_wbflush)
+#else /* !ENABLE_MIPS_TX3900 */
+/*
+ *	The differences between R3900 and R3000.
+ *	1. Cache system
+ *		TX3912 I-cache 4KB/16B direct mapped
+ *		       D-cache 1KB/4B 2-way sa
+ *		TX3922 I-cache 16KB/16B 2-way sa
+ *		       D-cache 8KB/16B 2-way sa
+ *		(mips/mips/locore_mips1.S)
+ *
+ *	2. Coprocessor1
+ *	2.1	cache operation.
+ *		R3900 uses MIPSIII cache op like method.
+ *	2.2	R3900 specific CP0 register.	
+ *		(mips/include/r3900regs.h overrides cpuregs.h)
+ *	2.3	# of TLB entries
+ *		TX3912 32 entries
+ *		TX3922 64 entries
+ *
+ *	3. System address map
+ *		kseg2 0xff000000-0xfffeffff is reserved.
+ *		(mips/include/vmparam.h)
+ *		
+ *  If defined both MIPS1 and ENABLE_MIPS_TX3900, it generates kernel for
+ * R3900. If defined MIPS1 only, No R3900 feature include.
+ */
 
+/*
+ * void mips1_ConfigCache(void)	
+ */
+LEAF(mips1_ConfigCache)	
+	mfc0	t0, R3900_COP_0_CONFIG
+	li	t1, R3900_CONFIG_ICS_MASK
+	and	t1, t1, t0
+	srl	t1, t1, R3900_CONFIG_ICS_SHIFT
+	li	t2, R3900_MIN_CACHE_SIZE
+	sllv	t1, t2, t1
+	sw	t1, _C_LABEL(mips_L1ICacheSize)	
+
+	li	t1, R3900_CONFIG_DCS_MASK
+	and	t1, t1, t0
+	srl	t1, t1, R3900_CONFIG_DCS_SHIFT
+	li	t2, R3900_MIN_CACHE_SIZE 
+	sllv	t1, t2, t1
+	sw	t1, _C_LABEL(mips_L1DCacheSize)	
+
+	j	ra
+	nop
+END(mips1_ConfigCache)	
+
+/*
+ * R3900 2-way set-associative, line size 4byte(3900)/16byte(3920)
+ *	void mips1_FlushDCache(vaddr_t addr, vsize_t len)
+ */			
+LEAF(mips1_FlushDCache)
+	lw	t0, mips_L1DCacheLSize
+	addu	a1, a1, a0			# compute ending address
+1:
+	R3900_CACHE(R3900_CACHE_D_HITINVALIDATE, 0, CPUREG_A0)
+	addu	a0, a0, t0
+	bne	a0, a1, 1b
+	nop
+	
+	j	ra
+	nop
+END(mips1_FlushDCache)
+
+/*
+ * R3900 direct-mapped/2-way set-associative line size 16byte
+ *	void mips1_FlushICache(vaddr_t addr, vsize_t len)
+ */			
+LEAF(mips1_FlushICache)
+	mfc0	t0, MIPS_COP_0_STATUS		# Save SR
+	nop
+	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts.
+	nop
+	# Disable I-cache
+	li	t1, ~R3900_CONFIG_ICE
+	mfc0	t2, R3900_COP_0_CONFIG	
+	and	t1, t1, t2
+	nop
+	mtc0	t1, R3900_COP_0_CONFIG	
+	j	2f	# stop streaming
+	nop
+2:	
+	# Flush I-cache
+	addu	a1, 127
+	srl	a1, a1, 7	# Number of unrolled loops
+3:
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 0,   CPUREG_A0)
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 16,  CPUREG_A0)
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 32,  CPUREG_A0)
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 48,  CPUREG_A0)
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 64,  CPUREG_A0)
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 80,  CPUREG_A0)
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 96,  CPUREG_A0)
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 112, CPUREG_A0)
+	addu	a1, -1
+	bne	a1, zero, 3b
+	addu	a0, 128
+
+	# Enable I-cache
+	nop
+	mtc0	t2, R3900_COP_0_CONFIG	
+	nop
+	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts
+	j	ra				# return and run cached
+	nop
+END(mips1_FlushICache)
+
+/*
+ * 
+ *	void mips_FlushCache(void)
+ */			
+LEAF(mips1_FlushCache)
+	lw	t1, mips_L1ICacheSize
+	lw	t2, mips_L1DCacheSize
+#	lw	t3, mips_L1ICacheLSize
+#	lw	t4, mips_L1DCacheLSize
+	nop
+	mfc0	t7, MIPS_COP_0_STATUS		# Save SR
+	nop
+	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts.
+	nop
+	# Disable I-cache
+	li	t5, ~R3900_CONFIG_ICE
+	mfc0	t6, R3900_COP_0_CONFIG	
+	and	t5, t5, t6
+	nop
+	mtc0	t5, R3900_COP_0_CONFIG	
+	j	2f	# stop streaming
+	nop
+2:	
+	# Flush cache
+	li	t0, MIPS_KSEG0_START
+	addu	t1, t0, t1		# End address
+	subu	t1, t1, 128
+3:
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 0,   CPUREG_T0)
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 16,  CPUREG_T0)
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 32,  CPUREG_T0)
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 48,  CPUREG_T0)
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 64,  CPUREG_T0)
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 80,  CPUREG_T0)
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 96,  CPUREG_T0)
+	R3900_CACHE(R3900_CACHE_I_INDEXINVALIDATE, 112, CPUREG_T0)
+	bne	t0, t1, 3b
+	addu	t0, t0, 128
+
+	# Flush D-cache
+	la	t0, dummy_buffer
+	addu	t1, t0, t2		# End address
+4:	
+	lw	t2, 0(t0)
+	bne	t1, t0, 4b
+	addiu	t0, t0, 4
+
+	# Enable I-cache
+	nop
+	mtc0	t6, R3900_COP_0_CONFIG	
+	nop
+	mtc0	t7, MIPS_COP_0_STATUS		# enable interrupts
+	j	ra				# return and run cached
+	nop
+END(mips1_FlushCache)
+
+LEAF(mips1_wbflush)
+	nop
+	sync
+	nop
+	j	ra
+	nop
+END(mips1_wbflush)
+	
+	.comm dummy_buffer, R3900_MAX_DCACHE_SIZE
+	
+#endif /* !ENABLE_MIPS_TX3900 */
 /*
  * mips1_proc_trampoline
  *

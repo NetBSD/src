@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.23 1999/09/25 00:00:37 shin Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.24 1999/11/29 11:12:12 uch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -646,5 +646,9 @@
 #define MIPS_R3SONY	0x21	/* ? Sony R3000 based FPU	ISA I	*/
 #define MIPS_R3TOSH	0x22	/* ? Toshiba R3000 based FPU	ISA I	*/
 #define MIPS_R3NKK	0x23	/* ? NKK R3000 based FPU	ISA I	*/
+
+#ifdef ENABLE_MIPS_TX3900
+#include <mips/r3900regs.h>
+#endif
 
 #endif /* _MIPS_CPUREGS_H_ */
