@@ -1,4 +1,4 @@
-/*	$NetBSD: __main.c,v 1.3 1994/10/26 06:42:13 cgd Exp $	*/
+/*	$NetBSD: __main.c,v 1.4 1996/03/14 18:52:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,6 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+
+void __main __P((void));
+
+void
 __main()
 {
 }
