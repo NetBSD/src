@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.12 1994/07/18 21:38:16 cgd Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.13 1994/07/19 04:30:00 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -321,7 +321,7 @@ notfound:;
 			dp->de_fndoffset = slotoffset;
 			dp->de_fndclust = slotcluster;
 		}
-		/* dp->de_flag |= DE_UPD; /* never update dos directories */
+		/* dp->de_flag |= DE_UPDATE; /* never update dos directories */
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent)/* leave searched dir locked?	 */
 			VOP_UNLOCK(vdp);
