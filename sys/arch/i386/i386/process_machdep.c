@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.32.2.9 2002/07/12 01:39:32 nathanw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.32.2.10 2002/10/15 18:01:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32.2.9 2002/07/12 01:39:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32.2.10 2002/10/15 18:01:59 nathanw Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -477,7 +477,7 @@ ptrace_machdep_dorequest(p, lt, req, addr, data)
 
 	case PT_GETXMMREGS:
 		/* write = 0 done above. */
-		if (!process_machdep_validxmmregs(lt))
+		if (!process_machdep_validxmmregs(lt->l_proc))
 			return (EINVAL);
 		else {
 			iov.iov_base = addr;
@@ -548,11 +548,11 @@ process_machdep_doxmmregs(curp, l, uio)
 }
 
 int
-process_machdep_validxmmregs(l)
-	struct lwp *l;
+process_machdep_validxmmregs(p)
+	struct proc *p;
 {
 
-	if (l->l_proc->p_flag & P_SYSTEM)
+	if (p->p_flag & P_SYSTEM)
 		return (0);
 
 	return (i386_use_fxsave);

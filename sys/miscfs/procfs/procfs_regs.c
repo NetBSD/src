@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_regs.c,v 1.12.2.6 2002/07/12 01:40:26 nathanw Exp $	*/
+/*	$NetBSD: procfs_regs.c,v 1.12.2.7 2002/10/15 18:02:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.12.2.6 2002/07/12 01:40:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.12.2.7 2002/10/15 18:02:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -61,10 +61,10 @@ procfs_doregs(curp, l, pfs, uio)
 }
 
 int
-procfs_validregs(l, mp)
-	struct lwp *l;
+procfs_validregs(p, mp)
+	struct proc *p;
 	struct mount *mp;
 {
 
-	return (process_validregs(l));
+	return (process_validregs(p));
 }
