@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1999/12/26 19:59:23 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.17 2000/01/24 07:27:15 mycroft Exp $
 
 # for OBJECT_FMT, UNPRIVILEGED
 .include <bsd.own.mk>
@@ -104,7 +104,7 @@ LIB_PATH=		${LIBDIR} # passed to genscripts
 # The ldscripts need to be generated even if we don't build ld.
 .for _EMUL_ in ${ALL_EMULS}
 CLEANFILES+=		e${_EMUL_}.c
-all: e${_EMUL_}.c
+realall: e${_EMUL_}.c
 e${_EMUL_}.c: ${DIST}/ld/genscripts.sh ${DIST}/ld/emulparams/${_EMUL_}.sh
 	sh ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} \
 		${MACHINE_GNU_ARCH}-netbsd ${MACHINE_GNU_ARCH}-netbsd \
