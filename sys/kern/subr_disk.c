@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.37 2002/02/16 02:11:43 enami Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.38 2002/06/28 16:37:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.37 2002/02/16 02:11:43 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.38 2002/06/28 16:37:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -335,8 +335,8 @@ hp0g: hard error reading fsbn 12345 of 12344-12347 (hp0 bn %d cn %d tn %d sn %d)
  * or addlog, respectively.  There is no trailing space.
  */
 void
-diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
-    struct disklabel *lp)
+diskerr(const struct buf *bp, const char *dname, const char *what, int pri,
+    int blkdone, const struct disklabel *lp)
 {
 	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
 	void (*pr)(const char *, ...);
