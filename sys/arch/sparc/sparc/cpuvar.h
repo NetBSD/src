@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.55 2003/01/20 20:51:34 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.56 2003/01/23 18:49:08 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,9 +89,9 @@ struct module_info {
 };
 
 struct xpmsg {
-	struct simplelock	lock;
 	__volatile int tag;
-#define	XPMSG_FUNC			4
+#define	XPMSG15_PAUSECPU	1
+#define	XPMSG_FUNC		4
 
 	__volatile union {
 		struct xpmsg_func {
@@ -103,11 +103,6 @@ struct xpmsg {
 			int	retval;
 		} xpmsg_func;
 	} u;
-};
-
-struct xpmsg_lev15 {
-	__volatile int tag;
-#define	XPMSG15_PAUSECPU		1
 };
 
 /*
@@ -145,9 +140,8 @@ struct cpu_info {
 	 */
 	struct cpu_info * __volatile ci_self;
 
-	/* Inter-processor message areas */
-	struct xpmsg msg;
-	struct xpmsg_lev15 msg_lev15;
+	/* Primary Inter-processor message area */
+	struct xpmsg	msg;
 
 	int		ci_cpuid;	/* CPU index (see cpus[] array) */
 
@@ -247,6 +241,9 @@ struct cpu_info {
 	void	(*cache_enable)(void);
 
 	int	cpu_type;	/* Type: see CPUTYP_xxx below */
+
+	/* Inter-processor message area (high priority but used infrequently) */
+	struct xpmsg	msg_lev15;
 
 	/* CPU information */
 	int		node;		/* PROM node for this CPU */
