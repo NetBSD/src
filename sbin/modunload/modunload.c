@@ -1,4 +1,4 @@
-/*	$NetBSD: modunload.c,v 1.9 1995/05/28 05:23:05 jtc Exp $	*/
+/*	$NetBSD: modunload.c,v 1.10 1997/09/15 04:03:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -32,6 +32,11 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: modunload.c,v 1.10 1997/09/15 04:03:59 lukem Exp $");
+#endif /* not lint */
+
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
@@ -46,6 +51,10 @@
 #include <a.out.h>
 #include <unistd.h>
 #include "pathnames.h"
+
+void	cleanup __P((void));
+int	main __P((int, char *[]));
+void	usage __P((void));
 
 void
 usage()
@@ -75,7 +84,7 @@ main(argc, argv)
 	char *modname = NULL;
 	struct lmc_unload ulbuf;
 
-	while ((c = getopt(argc, argv, "i:n:")) != EOF) {
+	while ((c = getopt(argc, argv, "i:n:")) != -1) {
 		switch (c) {
 		case 'i':
 			modnum = atoi(optarg);
