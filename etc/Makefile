@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.161 2000/09/11 21:53:30 hubertf Exp $
+#	$NetBSD: Makefile,v 1.162 2000/10/01 05:51:09 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -167,7 +167,7 @@ distribution: distrib-dirs
 		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
 		ln ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
 		ln ${DESTDIR}/root/.profile ${DESTDIR}/.profile)
-	(cd default; ${MAKE} install)
+	(cd defaults; ${MAKE} install)
 	(cd mtree; ${MAKE} install)
 	(cd namedb; \
 		${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
