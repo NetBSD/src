@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.17 1996/09/01 23:47:57 mycroft Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.18 1996/09/05 09:26:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -243,6 +243,7 @@ int
 dead_select(v)
 	void *v;
 {
+#if 0
 	struct vop_select_args /* {
 		struct vnode *a_vp;
 		int a_which;
@@ -250,6 +251,7 @@ dead_select(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
+#endif
 
 	/*
 	 * Let the user find out that the descriptor is gone.

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.30 1996/09/01 23:48:28 mycroft Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.31 1996/09/05 09:26:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -470,9 +470,6 @@ spec_fsync(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
-	register struct buf *bp;
-	struct buf *nbp;
-	int s;
 
 	if (vp->v_type == VBLK)
 		vflushbuf(vp, ap->a_waitfor == MNT_WAIT);
