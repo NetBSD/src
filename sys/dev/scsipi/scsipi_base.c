@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.80 2002/10/04 03:41:50 soren Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.81 2002/11/09 19:02:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.80 2002/10/04 03:41:50 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.81 2002/11/09 19:02:27 thorpej Exp $");
 
 #include "opt_scsi.h"
 
@@ -327,7 +327,8 @@ scsipi_get_tag(xs)
 	struct scsipi_xfer *xs;
 {
 	struct scsipi_periph *periph = xs->xs_periph;
-	int word, bit, tag;
+	int bit, tag;
+	u_int word;
 
 	for (word = 0; word < PERIPH_NTAGWORDS; word++) {
 		bit = ffs(periph->periph_freetags[word]);
