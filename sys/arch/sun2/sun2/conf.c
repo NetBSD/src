@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2002/06/17 16:33:19 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 2002/07/19 16:38:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -272,7 +272,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPCONS,pcons),	/* 88: PROM console */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 89: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 90: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 90: system call tracing */
 #else
 	cdev_notdef(),			/* 90: system call tracing */
 #endif
