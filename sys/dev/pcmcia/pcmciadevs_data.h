@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.32 1998/12/29 08:59:14 marc Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.33 1999/01/01 19:30:52 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.29 1998/12/29 08:58:37 marc Exp 
+ *	NetBSD: pcmciadevs,v 1.30 1999/01/01 19:30:03 christos Exp 
  */
 
 /*-
@@ -267,6 +267,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "TDK Corporation",
 	    "Xircom CreditCard CE2 Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CNW,
+	    PCMCIA_CIS_TDK_XIR_CNW,
+	    0,
+	    "TDK Corporation",
+	    "Xircom CreditCard Netwave"	},
 	},
 	{
 	    PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_BASICS,
