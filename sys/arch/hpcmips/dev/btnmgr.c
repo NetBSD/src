@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.10 2000/10/01 03:45:33 takemura Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.11 2001/01/26 03:44:33 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -192,10 +192,11 @@ btnmgrattach(parent, self, aux)
 	/*
 	 * install button event listener
 	 */
-	for (id = 0; id < 16; id++)
-		sc->sc_hook_tag = config_hook(CONFIG_HOOK_BUTTONEVENT,
-					      id, CONFIG_HOOK_SHARE,
-					      btnmgr_hook, sc);
+	for (id = 0; id <= CONFIG_HOOK_MAX_ID; id++)
+		if (button_config[id].name != NULL)
+			sc->sc_hook_tag = config_hook(CONFIG_HOOK_BUTTONEVENT,
+						      id, CONFIG_HOOK_SHARE,
+						      btnmgr_hook, sc);
 
 	/*
 	 * attach wskbd
