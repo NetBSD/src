@@ -1,7 +1,7 @@
-/* $NetBSD: cpuswitch.S,v 1.2 1996/02/02 02:35:34 mycroft Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.3 1996/03/08 20:03:12 mark Exp $ */
 
 /*
- * Copyright (c) 1994,1995 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -41,9 +41,6 @@
  * cpu switching functions
  *
  * Created      : 15/10/94
- * Last updated : 02/01/95
- *
- *    $Id: cpuswitch.S,v 1.2 1996/02/02 02:35:34 mycroft Exp $
  */
 
 #include "assym.h"
@@ -79,28 +76,17 @@ _setrunqueue:
 #ifdef DIAGNOSTIC
 	ldr	r1, [r0, #(P_BACK)]
 	teq	r1, #0x00000000
-	bne	erg
+	bne	Lsetrunqueue_erg
 
 	ldr	r1, [r0, #(P_WCHAN)]
 	teq	r1, #0x00000000
-	bne	erg
+	bne	Lsetrunqueue_erg
 #endif
 
 /* Get the priority of the queue */
 
 	ldrb	r1, [r0, #(P_PRIORITY)]
 	mov	r1, r1, lsr #2
-
-#ifdef DIAGNOSTIC
-/*
-	stmfd	r13!, {r0-r3, lr}
-	mov	r2, r1
-	mov	r1, r0
-	add	r0, pc, #Ltext1 - . - 8
-	bl	_printf
-	ldmfd	r13!, {r0-r3, lr}
-*/
-#endif
 
 /* Indicate that there is a process on this queue */
 
@@ -121,8 +107,10 @@ _setrunqueue:
 	ldr	r2, [r1, #(P_BACK)]
 
 	str	r0, [r1, #(P_BACK)]
+#ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
-	beq	erg
+	beq	Lsetrunqueue_erg
+#endif
 	str	r0, [r2, #(P_FORW)]
 	str	r2, [r0, #(P_BACK)]
 
@@ -131,7 +119,7 @@ _setrunqueue:
 	mov	pc, lr
 
 #ifdef DIAGNOSTIC
-erg:
+Lsetrunqueue_erg:
 	mov	r2, r1
 	mov	r1, r0
 	add	r0, pc, #Ltext1 - . - 8
@@ -139,11 +127,13 @@ erg:
 
 	ldr	r2, Lqs
 	ldr	r1, [r2]
-	add	r0, pc, #Ltext1 - . - 8
+	add	r0, pc, #Ltext2 - . - 8
 	b	_panic	
 
 Ltext1:
-	.asciz	"setrunqueue %08x %08x\n"
+	.asciz	"setrunqueue : %08x %08x\n"
+Ltext2:
+	.asciz	"setrunqueue : [qs]=%08x qs=%08x\n"
 	.align	0
 #endif
 
@@ -162,15 +152,6 @@ _remrq:
 	ldrb	r1, [r0, #(P_PRIORITY)]
 	mov	r1, r1, lsr #2
 
-/*
-	stmfd	r13!, {r0-r3, lr}
-	mov	r2, r1
-	mov	r1, r0
-	add	r0, pc, #(Ltext2 - . - 8)
-	bl	_printf
-	ldmfd	r13!, {r0-r3, lr}
-*/
-
 /* Unhook the process */
 
 	ldr	r2, [r0, #(P_FORW)]
@@ -182,6 +163,8 @@ _remrq:
 /* If the queue is now empty clear the queue not empty flag */
 
 	teq	r2, r3
+
+/* This could be reworked to avoid the use of r4 */
 
 	ldreq	r4, Lwhichqs
 	ldreq	r2, [r4]
@@ -199,12 +182,6 @@ _remrq:
 
 	mov	pc, lr
 
-/*
-Ltext2:
-	.asciz	"rmrq %08x priority %d\n"
-	.align	0
-*/
-
 Lcurproc:
 	.word	_curproc
 
@@ -215,9 +192,6 @@ _curpcb:
 
 Lcurpcb:
 	.word	_curpcb
-
-Lspl_mask:
-	.word	_spl_mask
 
 Lwant_resched:
 	.word	_want_resched
@@ -259,7 +233,7 @@ idleloop:
 _cpu_switch:
 /*
  * r1 = oldproc
- * r2 = _spl_mask
+ * r2 = spl level
  * r3 = whichqs
  * r4 = queue
  * r5 = &qs[queue]
@@ -267,8 +241,6 @@ _cpu_switch:
  * r7 = scratch
  */
 	stmfd	sp!, {r4-r7, r8-r12, lr}
-
-	str	sp, [sp, #-0x0004]!
 
 /*
  * Get the current process and indicate that there is no longer a valid
@@ -285,12 +257,16 @@ _cpu_switch:
 	ldr	r7, Lcurpcb
 	str	r0, [r7]
 
-/* Grab the current spl_mask and push it on the stack. */
-/* Also lower the spl level to spl0 */
+/* Lower the spl level to spl0 and get the current spl level. */
 
 	mov	r7, r1
 
+#ifdef spl0
+	mov	r0, #(SPL_0)
+	bl	_splx
+#else
 	bl	_spl0
+#endif
 
 	str	r0, [sp, #-0x0004]!
 
@@ -312,6 +288,12 @@ switch_search:
 	beq	idle
 
 sw1:
+/*
+ * Paranoid debug time ....
+ * Is this overkill ? If we are not in SVC mode then things are
+ * very sick and will probably have already died.
+ */
+
 #ifdef DIAGNOSTIC
 	mrs	r4, cpsr_all
 	and	r4, r4, #(PSR_MODE)
@@ -474,22 +456,6 @@ findqueue:
 
 /* What else needs to be saved  Only FPA stuff when that is supported */
 
-#if 0
-/* Ok lets do a checksum now ... */
-
-	mov	r7, #0x00000000
-	mov	r4, #(USPACE)
-	sub	r4, r4, #0x00000001
-
-cs_checksumloop1:
-	ldrb	r5, [r1, r4]
-	add	r7, r7, r5
-	subs	r4, r4, #0x00000001
-	bpl	cs_checksumloop1
-
-	str	r7, [r0, #(P_SPARE)]
-#endif
-
 /* Third phase : restore saved context */
 
 switch_exited:
@@ -551,27 +517,6 @@ switch_exited:
 
 	ldr	sp, [r1, #(PCB_SP)]
 
-/*
- * Debugging code ... It did its jobs, I just have not got round
- * to removing it yet
- */
-
-	ldr	r7, Lkstack
-	ldr	r7, [r7]
-	sub	r7, r7, sp
-	cmp	r7, #0x1800
-	blt	kstacksizecheck
-
-	stmfd	r13!, {r0-r3, lr}
-	mov	r2, r1
-	mov	r1, sp
-	
-	add	r0, pc, #(Ltext30 - . - 8)
-	bl	_printf
-	ldmfd	r13!, {r0-r3, lr}
-
-kstacksizecheck:
-
 /* Remember the pcb currently in use */
 
 	ldr	r7, Lcurpcb
@@ -598,42 +543,12 @@ switch_return:
 	str	r6, [r7]
 */
 
-/* Get the spl_mask from the stack and update the spl level */
-/* This will always be a raise */
+/* Get the spl level from the stack and update the current spl level */
 
 	ldr	r0, [sp], #0x0004
 	bl	_splx
 
 /*	IRQenable*/
-
-/* More debugging */
-
-/* Validate the stack pointer */
-
-	ldr	r0, [sp], #0x0004
-	teq	r0, sp
-	beq	spok
-
-/* Ok we cannot realy trust the stack pointer now ... Should use a panic stack really */
-
-	mov	r1, sp
-	stmfd	r13!, {r0-r3, lr}
-	mov	r2, r0
-	
-	add	r0, pc, #(Ltext31 - . - 8)
-	bl	_printf
-	ldmfd	r13!, {r0-r3, lr}
-
-	mov	r0, r6
-	bl	_buried_alive
-
-	mov	r0, r6	
-	mov	r1, #SIGTRAP /* SIGEMT */
-	bl _sigexit
-
-/* Not reached */
-
-spok:	
 
 /* cpu_switch returns the proc it switched to. */
 
@@ -730,12 +645,6 @@ _switch_exit:
 
 	str	r0, [sp, #-0x0004]!
 
-/* debugging */
-/*	ldr	r2, Ltracedebug
-	ldr	r1, [r2]
-	orr	r1, r1, #0x00000400
-	str	r1, [r2]*/
-
 /* Thoroughly nuke the old process's resources. */
 
 /* This has to be done here, before we lose the pmap */
@@ -764,11 +673,6 @@ _switch_exit:
 	ldr	r0, [r0]
 	bl	_kmem_free
 
-/* debugging */
-/*	ldr	r0, Ltracedebug
-	mov	r1, #0x1000
-	str	r1, [r0]*/
-
 /* Paranoia */
 
 	mov	r0, #0x00000000
@@ -778,6 +682,9 @@ _switch_exit:
         ldr     r1, Lproc0
 	b	switch_search
 
+
+Lcurrent_spl_level:
+	.word	_current_spl_level
  
 	.global	_savectx
 
@@ -791,11 +698,9 @@ _savectx:
 
 	stmfd	sp!, {r4-r7, r8-r12, lr}
 
-	str	sp, [sp, #-0x0004]!
+/* Push the current spl level onto the stack */
 
-/* Push the spl_mask onto the stack */
-
-	ldr	r2, Lspl_mask
+	ldr	r2, Lcurrent_spl_level
 	ldr	r2, [r2] 
 
 	str	r2, [sp, #-0x0004]!
@@ -857,9 +762,6 @@ savectx_returnasparent:
 
 /* Skip the pushed spl mask */
 
-	add	sp, sp, #0x0000004
-
-/* stack pointer */
 	add	sp, sp, #0x0000004
 
 /* Pull the regs of the stack */
