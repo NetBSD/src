@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.47 2002/03/31 21:31:10 agc Exp $ */
+/* $NetBSD: user.c,v 1.48 2002/05/03 08:07:02 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.47 2002/03/31 21:31:10 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.48 2002/05/03 08:07:02 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -391,7 +391,7 @@ copydotfiles(char *skeldir, int uid, int gid, char *dir)
 	if (n == 0) {
 		warnx("No \"dot\" initialisation files found");
 	} else {
-		(void) asystem("cd %s; %s -rw -pe %s . %s", 
+		(void) asystem("cd %s && %s -rw -pe %s . %s", 
 				skeldir, PAX, (verbose) ? "-v" : "", dir);
 	}
 	(void) asystem("%s -R -h %d:%d %s", CHOWN, uid, gid, dir);
@@ -449,6 +449,7 @@ creategid(char *group, int gid, char *name)
 	(void) fclose(from);
 	(void) fclose(to);
 	if (rename(f, _PATH_GROUP) < 0) {
+		(void) unlink(f);
 		warn("can't create gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
 		return 0;
 	}
@@ -519,6 +520,7 @@ modify_gid(char *group, char *newent)
 	(void) fclose(from);
 	(void) fclose(to);
 	if (rename(f, _PATH_GROUP) < 0) {
+		(void) unlink(f);
 		warn("can't create gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
 		return 0;
 	}
@@ -611,6 +613,7 @@ append_group(char *user, int ngroups, char **groups)
 	(void) fclose(from);
 	(void) fclose(to);
 	if (rename(f, _PATH_GROUP) < 0) {
+		(void) unlink(f);
 		warn("can't create gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
 		return 0;
 	}
