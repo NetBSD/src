@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.76 1996/02/27 04:20:43 jonathan Exp $
+#	$NetBSD: files,v 1.77 1996/02/27 21:59:14 cgd Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -25,6 +25,13 @@ define	fddi
 define	pdq		# DEC FDDI chipset
 define	ncr5380sbc	# NCR 5380 SCSI Bus Controller
 define	aic7xxx		# Adaptec aic7770 and aic7870 SCSI controllers
+
+# Attributes which machine-independent bus support can be attached to.
+# These should be defined here, because some of these busses can have
+# devices which provide these attributes, and we'd like to avoid hairy
+# ordering constraints on inclusion of the busses' "files" files.
+define	eisabus { }			# EISA attachment
+define	tcbus { }			# TurboChannel attachment
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk
