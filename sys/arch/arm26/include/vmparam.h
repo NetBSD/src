@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 2000/11/30 12:16:00 bjh21 Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 2000/12/27 20:43:45 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -109,7 +109,7 @@
 
 /* Physical memory parameters */
 
-#define VM_PHYSSEG_MAX		2
+#define VM_PHYSSEG_MAX		3
 
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
