@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.43 1997/04/02 18:22:32 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -280,7 +280,6 @@ sys_fcntl(p, v, retval)
 		if (fl.l_whence == SEEK_CUR)
 			fl.l_start += fp->f_offset;
 		switch (fl.l_type) {
-
 		case F_RDLCK:
 			if ((fp->f_flag & FREAD) == 0)
 				return (EBADF);
@@ -312,6 +311,10 @@ sys_fcntl(p, v, retval)
 			return (error);
 		if (fl.l_whence == SEEK_CUR)
 			fl.l_start += fp->f_offset;
+		if (fl.l_type != F_RDLCK &&
+		    fl.l_type != F_WRLCK &&
+		    fl.l_type != F_UNLCK)
+			return (EINVAL);
 		error = VOP_ADVLOCK(vp, (caddr_t)p, F_GETLK, &fl, F_POSIX);
 		if (error)
 			return (error);
