@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.2 2001/11/13 02:09:07 lukem Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.3 2002/10/23 13:16:45 scw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.2 2001/11/13 02:09:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.3 2002/10/23 13:16:45 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,8 @@ netbsd32_select(p, v, retval)
 
 #define	getbits(name, x) \
 	if (SCARG(uap, name)) { \
-		error = copyin((caddr_t)(u_long)SCARG(uap, name), bits + ni * x, ni); \
+		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, name)), \
+		    bits + ni * x, ni); \
 		if (error) \
 			goto done; \
 	} else \
@@ -97,8 +98,8 @@ netbsd32_select(p, v, retval)
 #undef	getbits
 
 	if (SCARG(uap, tv)) {
-		error = copyin((caddr_t)(u_long)SCARG(uap, tv), (caddr_t)&tv32,
-			sizeof(tv32));
+		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, tv)),
+		    (caddr_t)&tv32, sizeof(tv32));
 		if (error)
 			goto done;
 		netbsd32_to_timeval(&tv32, &atv);
@@ -146,7 +147,8 @@ done:
 	if (error == 0) {
 #define	putbits(name, x) \
 		if (SCARG(uap, name)) { \
-			error = copyout(bits + ni * x, (caddr_t)(u_long)SCARG(uap, name), ni); \
+			error = copyout(bits + ni * x, \
+			    (caddr_t)NETBSD32PTR64(SCARG(uap, name)), ni); \
 			if (error) \
 				goto out; \
 		}
