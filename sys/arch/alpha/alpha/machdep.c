@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 1997/02/03 20:02:02 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 1997/03/12 04:42:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -393,6 +393,13 @@ unknown_cputype:
 		strcat(cpu_model, " family");		/* XXX */
 	}
 	cpu_model[sizeof cpu_model - 1] = '\0';
+
+	/* XXX SANITY CHECKING.  SHOULD GO AWAY */
+	/* XXX We should always be running on the the primary. */
+	assert(hwrpb->rpb_primary_cpu_id == alpha_pal_whami());		/*XXX*/
+	/* XXX On single-CPU boxes, the primary should always be CPU 0. */
+	if (cputype != ST_DEC_21000)					/*XXX*/
+		assert(hwrpb->rpb_primary_cpu_id == 0);			/*XXX*/
 
 #if NLE_IOASIC > 0
 	/*
