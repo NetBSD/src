@@ -1,14 +1,17 @@
-#	$NetBSD: Makefile,v 1.1 2004/02/15 19:52:27 skrll Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/25 22:11:14 matt Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
 
 LIB=		gcc_s
-NOSTATICLIB=	# defined
 NOPROFILE=	# defined
 NOPICINSTALL=	# defined
 
 .include <bsd.own.mk>
+
+.if ${MKPIC} != "no"
+NOSTATICLIB=	# defined
+.endif
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
