@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.3 2003/06/05 13:48:28 scw Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -536,7 +536,7 @@ struct pxa2x0_dma_desc {
 #define  GSR_MIINT	(1<<1)	/* modem in interrupt */
 #define  GSR_MOINT	(1<<2)	/* modem out interrupt */
 #define  GSR_PIINT	(1<<5)	/* PCM in interrupt */
-#define  GSR_POINT	(1<<6)	/* PCM in interrupt */
+#define  GSR_POINT	(1<<6)	/* PCM out interrupt */
 #define  GSR_MINT	(1<<7)	/* Mic in interrupt */
 #define  GSR_PCR	(1<<8)	/* primary code ready */
 #define  GSR_SCR	(1<<9)	/* secondary code ready */
@@ -557,8 +557,9 @@ struct pxa2x0_dma_desc {
 #define AC97_MCSR	0x0018	/* MIC-in status register */
 #define AC97_MICR	0x0100	/* Modem-in control register */
 #define AC97_MISR	0x0108	/* Modem-in status register */
-#define AC97_MOCR	0x0110	/* Modem-in control register */
+#define AC97_MOCR	0x0110	/* Modem-out control register */
 #define AC97_MOSR	0x0118	/* Modem-out status register */
+#define  AC97_FEFIE	(1<<3)	/* fifo error interrupt enable */
 #define  AC97_FIFOE	(1<<4)	/* fifo error */
 
 #define AC97_CAR  	0x0020	/* Codec access register */
@@ -566,7 +567,7 @@ struct pxa2x0_dma_desc {
 
 #define AC97_PCDR	0x0040	/* PCM data register */
 #define AC97_MCDR 	0x0060	/* MIC-in data register */
-#define AC97_MODR 	0x0060	/* Modem data register */
+#define AC97_MODR 	0x0140	/* Modem data register */
 
 /* address to access codec registers */
 #define AC97_PRIAUDIO	0x0200	/* Primary audio codec */
