@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.43 2001/02/21 00:06:22 cgd Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.44 2001/03/21 23:16:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.43 2001/02/21 00:06:22 cgd Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.44 2001/03/21 23:16:33 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -537,9 +537,11 @@ copy(from_fd, from_name, to_fd, to_name, size)
 				(void)unlink(to_name);
 				errx(1, "%s: %s", from_name, strerror(serrno));
 			}
+#ifdef MADV_SEQUENTIAL
 			if (madvise(p, (size_t)size, MADV_SEQUENTIAL) == -1
 			    && errno != EOPNOTSUPP)
 				warnx("madvise: %s", strerror(errno));
+#endif
 
 			if (write(to_fd, p, size) != size) {
 				serrno = errno;
