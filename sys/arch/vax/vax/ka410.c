@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.5 1997/03/22 23:02:09 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.6 1997/04/18 18:49:35 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -55,8 +55,6 @@ static	void	ka410_steal_pages __P((void));
 static	void	ka410_memerr __P((void));
 static	int	ka410_mchk __P((caddr_t));
 
-static struct	ka410_clock *ka410_clkptr;
-
 static	struct uc_map ka410_map[] = {
 	{ KA410_CFGTST,		KA410_CFGTST+1023,	1024,	0 },
 	{ KA410_ROM_BASE,	KA410_ROM_END,	KA410_ROM_SIZE, 0 },
@@ -87,8 +85,8 @@ struct	cpu_dep ka410_calls = {
 	ka410_mchk,
 	ka410_memerr, 
 	ka410_conf,
-	ka410_clkread,
-	ka410_clkwrite,
+	chip_clkread,
+	chip_clkwrite,
 	1,      /* ~VUPS */
 	(void*)KA410_INTREQ,      /* Used by vaxstation */
 	(void*)KA410_INTCLR,      /* Used by vaxstation */
@@ -141,6 +139,8 @@ void
 ka410_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail, avail_end;
+        extern  short *clk_page;
+        extern  int clk_adrshift, clk_tweak;
 	int	junk;
 
 	int	i;
@@ -176,6 +176,12 @@ ka410_steal_pages()
 	 * perform the mapping. The mapped address is assigned to junk.
 	 */
 	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE);
+
+	clk_adrshift = 1;       /* Addressed at long's... */
+	clk_tweak = 2;          /* ...and shift two */
+	MAPVIRT(clk_page, 2);
+	pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA410_WAT_BASE,
+	    (vm_offset_t)KA410_WAT_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
 	 * At top of physical memory there are some console-prom and/or
@@ -229,15 +235,4 @@ ka410_steal_pages()
 	KA410_CPU_BASE->ka410_mser = 1; 
 	/* (UVAXIIMSER_PEN | UVAXIIMSER_MERR | UVAXIIMSER_LEB); */
 
-	ka410_clkptr = (void*)uvax_phys2virt((u_long)KA410_WAT_BASE);
 }
-/*
- * define what we need and overwrite the uVAX_??? names
- */
-
-#define uVAX_clock	ka410_clock
-#define uVAX_clkptr	ka410_clkptr
-#define uVAX_clkread	ka410_clkread
-#define uVAX_clkwrite	ka410_clkwrite
-
-#include <arch/vax/vax/uvax_proto.c>
