@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.5 1997/07/06 18:25:32 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.6 1997/10/26 20:19:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.5 1997/07/06 18:25:32 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.6 1997/10/26 20:19:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -61,6 +61,7 @@ extern int errno;
 private int read__fixio		__P((int, int));
 private int read_preread	__P((EditLine *));
 private int read_getcmd		__P((EditLine *, el_action_t *, char *));
+private int read_char		__P((EditLine *, char *));
 
 #ifdef DEBUG_EDIT
 private void
@@ -255,6 +256,28 @@ read_getcmd(el, cmdnum, ch)
     return OKCMD;
 }
 
+/* read_char():
+ *	Read a character from the tty.
+ */
+private int
+read_char(el, cp)
+	EditLine *el;
+	char *cp;
+{
+    int num_read;
+    int tried = 0;
+
+    while ((num_read = read(el->el_infd, cp, 1)) == -1)
+	if (!tried && read__fixio(el->el_infd, errno) == 0)
+	    tried = 1;
+	else {
+	    *cp = '\0';
+	    return -1;
+	}
+
+    return num_read;
+}
+
 
 /* el_getc():
  *	Read a character
@@ -265,9 +288,6 @@ el_getc(el, cp)
     char *cp;
 {
     int num_read;
-    unsigned char tcp;
-    int tried = 0;
-
     c_macro_t *ma = &el->el_chared.c_macro;
 
     term__flush();
@@ -299,17 +319,10 @@ el_getc(el, cp)
 #ifdef DEBUG_READ
     (void) fprintf(el->el_errfile, "Reading a character\n");
 #endif /* DEBUG_READ */
-    while ((num_read = read(el->el_infd, (char *) &tcp, 1)) == -1)
-	if (!tried && read__fixio(el->el_infd, errno) == 0)
-	    tried = 1;
-	else {
-	    *cp = '\0';
-	    return -1;
-	}
+    num_read = read_char(el, cp);
 #ifdef DEBUG_READ
-    (void) fprintf(el->el_errfile, "Got it %c\n", tcp);
+    (void) fprintf(el->el_errfile, "Got it %c\n", cp);
 #endif /* DEBUG_READ */
-    *cp = tcp;
     return num_read;
 }
 
@@ -327,6 +340,21 @@ el_gets(el, nread)
 
     if (el->el_flags & HANDLE_SIGNALS)
 	sig_set(el);
+
+    if (!isatty(el->el_infd)) {
+	char *cp = el->el_line.buffer;
+
+	while (read_char(el, cp) == 1)
+		if (*cp++ == '\n' || cp == el->el_line.limit) {
+			--cp;
+			break;
+		}
+	el->el_line.cursor = el->el_line.lastchar = cp;
+	*cp = '\0';
+	if (nread)
+		*nread = el->el_line.cursor - el->el_line.buffer;
+	return el->el_line.buffer;
+    }
 
     re_clear_display(el);		/* reset the display stuff */
     ch_reset(el);
