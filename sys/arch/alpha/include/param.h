@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.29 2000/06/09 01:40:12 cgd Exp $ */
+/* $NetBSD: param.h,v 1.30 2000/06/09 16:03:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -154,10 +154,10 @@
 #define	alpha_btop(x)		((unsigned long)(x) >> PGSHIFT)
 #define	alpha_ptob(x)		((unsigned long)(x) << PGSHIFT)
 
-#include <machine/intr.h>
-
 #ifdef _KERNEL
 #ifndef _LOCORE
+
+#include <machine/intr.h>
 
 void	delay(unsigned long);
 #define	DELAY(n)	delay(n)
