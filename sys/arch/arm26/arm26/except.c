@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.36 2001/06/26 19:37:18 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.37 2001/08/26 14:15:07 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.36 2001/06/26 19:37:18 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.37 2001/08/26 14:15:07 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -427,8 +427,6 @@ do_fault(struct trapframe *tf, struct proc *p,
 			    (register_t)curpcb->pcb_onfault;
 			return;
 		}
-		if (curpcb->pcb_onfault_lj != NULL)
-			longjmp(curpcb->pcb_onfault_lj);
 		trapsignal(p, SIGSEGV, va);
 	}
 }
