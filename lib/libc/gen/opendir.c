@@ -33,11 +33,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)opendir.c	8.7 (Berkeley) 12/10/94";*/
-static char rcsid[] = "$Id: opendir.c,v 1.5 1994/12/28 03:06:05 mycroft Exp $";
+static char rcsid[] = "$Id: opendir.c,v 1.6 1994/12/28 03:22:37 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
 
 #include <dirent.h>
 #include <errno.h>
@@ -63,13 +64,14 @@ __opendir2(name, flags)
 {
 	DIR *dirp;
 	int fd;
+	struct stat sb;
 	int pagesz;
 	int incr;
 	int unionstack;
 
 	if ((fd = open(name, O_RDONLY)) == -1)
 		return (NULL);
-	if (fstat(fd, &statb) || !S_ISDIR(statb.st_mode)) {
+	if (fstat(fd, &sb) || !S_ISDIR(sb.st_mode)) {
 		errno = ENOTDIR;
 		close(fd);
 		return (NULL);
