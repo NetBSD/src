@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.312 2001/01/28 05:55:02 jwise Exp $
+# $NetBSD: mi,v 1.313 2001/01/28 06:09:28 jwise Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1497,11 +1497,6 @@
 ./usr/share/man/cat8/ypxfr.0			man-nis-catman
 ./usr/share/man/cat8/zdump.0			man-sysutil-catman
 ./usr/share/man/cat8/zic.0			man-sysutil-catman
-./usr/share/man/cat9/i386/bioscall.0		man-sys-catman
-./usr/share/man/cat9/sun3/isr_add.0		man-sys-catman
-./usr/share/man/cat9/sun3/isr_add_autovect.0	man-sys-catman
-./usr/share/man/cat9/sun3/isr_add_custom.0	man-sys-catman
-./usr/share/man/cat9/sun3/isr_add_vectored.0	man-sys-catman
 ./usr/share/man/man1/Mail.1
 ./usr/share/man/man1/[.1
 ./usr/share/man/man1/alias.1
@@ -2971,8 +2966,3 @@
 ./usr/share/man/man8/ypxfr.8
 ./usr/share/man/man8/zdump.8
 ./usr/share/man/man8/zic.8
-./usr/share/man/man9/i386/bioscall.9
-./usr/share/man/man9/sun3/isr_add.9
-./usr/share/man/man9/sun3/isr_add_autovect.9
-./usr/share/man/man9/sun3/isr_add_custom.9
-./usr/share/man/man9/sun3/isr_add_vectored.9
