@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.5 1998/06/26 21:28:57 drochner Exp $ */
+/*	$NetBSD: smg.c,v 1.6 1998/06/30 11:29:37 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -13,8 +13,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
- *      Lule}, Sweden and its contributors.
+ *	This product includes software developed at Ludd, University of 
+ *	Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -40,6 +40,7 @@
 #include <sys/time.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/kernel.h>
 
 #include <dev/cons.h>
 
@@ -52,10 +53,10 @@
 
 #include "lkc.h"
 
-#define	SM_COLS		128	/* char width of screen */
-#define	SM_ROWS		57	/* rows of char on screen */
-#define	SM_CHEIGHT	15	/* lines a char consists of */
-#define	SM_NEXTROW	(SM_COLS * SM_CHEIGHT)
+#define SM_COLS		128	/* char width of screen */
+#define SM_ROWS		57	/* rows of char on screen */
+#define SM_CHEIGHT	15	/* lines a char consists of */
+#define SM_NEXTROW	(SM_COLS * SM_CHEIGHT)
 
 static	int smg_match __P((struct device *, struct cfdata *, void *));
 static	void smg_attach __P((struct device *, struct device *, void *));
@@ -89,10 +90,10 @@ const struct wsdisplay_emulops smg_emulops = {
 };
 
 const struct wsscreen_descr smg_stdscreen = {
-        "128x57", 128, 57,
-        &smg_emulops,
-        8, 15,
-        0, /* WSSCREEN_UNDERLINE??? */
+	"128x57", SM_COLS, SM_ROWS,
+	&smg_emulops,
+	8, SM_CHEIGHT,
+	WSSCREEN_UNDERLINE|WSSCREEN_REVERSE,
 };
 
 const struct wsscreen_descr *_smg_scrlist[] = {
@@ -104,13 +105,21 @@ const struct wsscreen_list smg_screenlist = {
 	_smg_scrlist,
 };
 
+extern char q_font[];
+#define QCHAR(c) (c < 32 ? 32 : (c > 127 ? c - 66 : c - 32))
+#define QFONT(c,line)	q_font[QCHAR(c) * 15 + line]
+#define	SM_ADDR(row, col, line) \
+	sm_addr[col + (row * SM_CHEIGHT * SM_COLS) + line * SM_COLS]
+
+
 static int	smg_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 static int	smg_mmap __P((void *, off_t, int));
 static int	smg_alloc_screen __P((void *, const struct wsscreen_descr *,
-                                      void **, int *, int *, long *));
+				      void **, int *, int *, long *));
 static void	smg_free_screen __P((void *, void *));
 static void	smg_show_screen __P((void *, void *));
 static int	smg_load_font __P((void *, void *, int, int, int, void *));
+static void	smg_crsr_blink __P((void *));
 
 const struct wsdisplay_accessops smg_accessops = {
 	smg_ioctl,
@@ -125,6 +134,7 @@ struct	smg_screen {
 	int	ss_curx;
 	int	ss_cury;
 	u_char	ss_image[SM_ROWS][SM_COLS];	/* Image of current screen */
+	u_char	ss_attr[SM_ROWS][SM_COLS];	/* Reversed etc... */
 };
 
 static	struct smg_screen smg_conscreen;
@@ -136,7 +146,7 @@ smg_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct  vsbus_attach_args *va = aux;
+	struct	vsbus_attach_args *va = aux;
 
 	if (va->va_type != INR_VF)
 		return 0;
@@ -159,8 +169,21 @@ smg_attach(parent, self, aux)
 	aa.console = !(vax_confdata & 0x20);
 	aa.scrdata = &smg_screenlist;
 	aa.accessops = &smg_accessops;
+	timeout(smg_crsr_blink, 0, hz/2);
 
 	config_found(self, &aa, wsemuldisplaydevprint);
+}
+
+static	u_char *cursor;
+static	int cur_on;
+
+static void
+smg_crsr_blink(arg)
+	void *arg;
+{
+	if (cur_on)
+		*cursor ^= 255;
+	timeout(smg_crsr_blink, 0, hz/2);
 }
 
 void
@@ -170,10 +193,15 @@ smg_cursor(id, on, row, col)
 {
 	struct smg_screen *ss = id;
 
+	if (ss == curscr) {
+		SM_ADDR(ss->ss_cury, ss->ss_curx, 14) =
+		    QFONT(ss->ss_image[ss->ss_cury][ss->ss_curx], 14);
+		cursor = &SM_ADDR(row, col, 14);
+		if ((cur_on = on))
+			*cursor ^= 255;
+	}
 	ss->ss_curx = col;
 	ss->ss_cury = row;
-	if (ss == curscr)
-		sm_addr[(row * 15 * 128) + col + (14 * 128)] = on ? 255 : 0;
 }
 
 unsigned int
@@ -195,16 +223,21 @@ smg_putchar(id, row, col, c, attr)
 {
 	struct smg_screen *ss = id;
 	int i;
-	extern char q_font[];
 
 	c &= 0xff;
 
 	ss->ss_image[row][col] = c;
+	ss->ss_attr[row][col] = attr;
 	if (ss != curscr)
 		return;
-	for (i = 0; i < 15; i++)
-		sm_addr[col + (row * 15 * 128) + i * 128] =
-			q_font[(c - 32) * 15 + i];
+	for (i = 0; i < 15; i++) {
+		unsigned char ch = QFONT(c, i);
+
+		SM_ADDR(row, col, i) = (attr & WSATTR_REVERSE ? ~ch : ch);
+		
+	}
+	if (attr & WSATTR_UNDERLINE)
+		SM_ADDR(row, col, 14) ^= SM_ADDR(row, col, 14);
 }
 
 /*
@@ -219,12 +252,11 @@ smg_copycols(id, row, srccol, dstcol, ncols)
 	int i;
 
 	bcopy(&ss->ss_image[row][srccol], &ss->ss_image[row][dstcol], ncols);
+	bcopy(&ss->ss_attr[row][srccol], &ss->ss_attr[row][dstcol], ncols);
 	if (ss != curscr)
 		return;
 	for (i = 0; i < SM_CHEIGHT; i++)
-		bcopy(&sm_addr[(row * SM_NEXTROW) + srccol + (i * 128)],
-		    &sm_addr[(row * SM_NEXTROW) + dstcol + i*128], ncols);
-	
+		bcopy(&SM_ADDR(row,srccol, i), &SM_ADDR(row, dstcol, i),ncols);
 }
 
 /*
@@ -240,10 +272,11 @@ smg_erasecols(id, row, startcol, ncols, fillattr)
 	int i;
 
 	bzero(&ss->ss_image[row][startcol], ncols);
+	bzero(&ss->ss_attr[row][startcol], ncols);
 	if (ss != curscr)
 		return;
 	for (i = 0; i < SM_CHEIGHT; i++)
-		bzero(&sm_addr[(row * SM_NEXTROW) + startcol + i * 128], ncols);
+		bzero(&SM_ADDR(row, startcol, i), ncols);
 }
 
 static void
@@ -254,7 +287,10 @@ smg_copyrows(id, srcrow, dstrow, nrows)
 	struct smg_screen *ss = id;
 	int frows;
 
-	bcopy(&ss->ss_image[srcrow][0], &ss->ss_image[dstrow][0], nrows * 128);
+	bcopy(&ss->ss_image[srcrow][0], &ss->ss_image[dstrow][0],
+	    nrows * SM_COLS);
+	bcopy(&ss->ss_attr[srcrow][0], &ss->ss_attr[dstrow][0],
+	    nrows * SM_COLS);
 	if (ss != curscr)
 		return;
 	if (nrows > 25) {
@@ -288,7 +324,8 @@ smg_eraserows(id, startrow, nrows, fillattr)
 	struct smg_screen *ss = id;
 	int frows;
 
-	bzero(&ss->ss_image[startrow][0], nrows * 128);
+	bzero(&ss->ss_image[startrow][0], nrows * SM_COLS);
+	bzero(&ss->ss_attr[startrow][0], nrows * SM_COLS);
 	if (ss != curscr)
 		return;
 	if (nrows > 25) {
@@ -307,6 +344,7 @@ smg_alloc_attr(id, fg, bg, flags, attrp)
 	int flags;
 	long *attrp;
 {
+	*attrp = flags;
 	return 0;
 }
 
@@ -358,23 +396,24 @@ smg_show_screen(v, cookie)
 {
 	struct smg_screen *ss = cookie;
 	int row, col, line;
-	extern char q_font[];
 
 	if (ss == curscr)
 		return;
 
-	for (row = 0; row < 57; row++)
-		for (line = 0; line < 15; line++)
-			for (col = 0; col < 128; col++) {
-				u_char c = ss->ss_image[row][col];
+	for (row = 0; row < SM_ROWS; row++)
+		for (line = 0; line < SM_CHEIGHT; line++)
+			for (col = 0; col < SM_COLS; col++) {
+				u_char s, c = ss->ss_image[row][col];
 
-				if (c > 0x9f)
-					c -= 64;
-				else if (c > 0x1f)
-					c -= 32;
-				sm_addr[row * 128 * 15 + line * 128 + col] =
-					q_font[c * 15 + line];
+				if (c < 32)
+					c = 32;
+				s = QFONT(c, line);
+				if (ss->ss_attr[row][col] & WSATTR_REVERSE)
+					s ^= 255;
+				SM_ADDR(row, col, line) = s;
 			}
+	cursor = &sm_addr[(ss->ss_cury * SM_CHEIGHT * SM_COLS) + ss->ss_curx +
+	    ((SM_CHEIGHT - 1) * SM_COLS)];
 	curscr = ss;
 }
 
@@ -390,11 +429,11 @@ smg_load_font(v, cookie, first, num, stride, data)
 
 cons_decl(smg);
 
-#define	WSCONSOLEMAJOR 68
+#define WSCONSOLEMAJOR 68
 
 void
 smgcninit(cndev)
-	struct  consdev *cndev;
+	struct	consdev *cndev;
 {
 	extern void lkccninit __P((struct consdev *));
 	extern int lkccngetc __P((dev_t));
