@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.37 2004/04/25 16:20:33 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.38 2004/04/26 03:01:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.37 2004/04/25 16:20:33 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.38 2004/04/26 03:01:55 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -249,7 +249,7 @@ main(int argc, char **argv)
 		case '1': case '2': case '3':
 		case '4': case '5': case '6':
 		case '7': case '8': case '9':
-			numflag = ch;
+			numflag = ch - '0';
 			break;
 #ifndef SMALL
 		case 'f':
@@ -448,8 +448,8 @@ gz_compress(FILE *in, int out, off_t *gsizep, const char *origname, time_t mtime
 	memset(&z, 0, sizeof z);
 	z.next_out = outbuf;
 	z.avail_out = sizeof outbuf;
-	z.zalloc = NULL;
-	z.zfree = NULL;
+	z.zalloc = Z_NULL;
+	z.zfree = Z_NULL;
 	z.opaque = 0;
 
 	error = deflateInit2(&z, numflag, Z_DEFLATED,
@@ -483,7 +483,7 @@ gz_compress(FILE *in, int out, off_t *gsizep, const char *origname, time_t mtime
 
 		error = deflate(&z, Z_NO_FLUSH);
 		if (error != Z_OK && error != Z_STREAM_END)
-			maybe_errx(1, "deflate failed2 (%d)", error);
+			maybe_errx(1, "deflate failed");
 	}
 
 	/* clean up */
@@ -492,7 +492,7 @@ gz_compress(FILE *in, int out, off_t *gsizep, const char *origname, time_t mtime
 
 		error = deflate(&z, Z_FINISH);
 		if (error != Z_OK && error != Z_STREAM_END)
-			maybe_errx(1, "deflate failed1 (%d)", error);
+			maybe_errx(1, "deflate failed");
 
 		len = sizeof outbuf - z.avail_out;
 
@@ -726,7 +726,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep)
 				break;
 			}
 			if (error < 0) {
-				maybe_warnx("decompression error (%d)\n", error);
+				maybe_warnx("decompression error\n");
 				out_tot = -1;
 				goto stop;
 			}
