@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.42 1999/09/02 22:07:43 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.43 1999/09/14 22:06:44 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	aNetBSD: usbdevs,v 1.41 1999/09/02 19:13:43 augustss Exp 
+ *	NetBSD: usbdevs,v 1.43 1999/09/14 22:06:21 augustss Exp 
  */
 
 /*
@@ -73,18 +73,20 @@
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
 #define	USB_VENDOR_BROTHER	0x04f9		/* Brother Industries Corp. */
 #define	USB_VENDOR_JAZZ	0x04fa		/* Dallas Semiconductor */
+#define	USB_VENDOR_BELKIN	0x050d		/* Belkin Components */
 #define	USB_VENDOR_KAWATSU	0x050f		/* Kawatsu Semiconductor, Inc. */
 #define	USB_VENDOR_AKS	0x0529		/* Fast Security AG */
 #define	USB_VENDOR_VISION	0x0533		/* Alcatel Mobile Phones */
 #define	USB_VENDOR_ATEN	0x0557		/* ATEN International Corp. Ltd. */
 #define	USB_VENDOR_PERACOM	0x0565		/* Peracom Networks Inc. */
 #define	USB_VENDOR_WACOM	0x056a		/* WACOM Corp. Ltd. */
+#define	USB_VENDOR_ETEK	0x056c		/* e-TEK Labs */
 #define	USB_VENDOR_EIZO	0x056d		/* EIZO */
 #define	USB_VENDOR_AGILER	0x056e		/* Elecom Corp. Ltd. */
 #define	USB_VENDOR_ROCKFIRE	0x0583		/* Rockfire */
 #define	USB_VENDOR_IOMEGA	0x059b		/* Iomega Corp. */
 #define	USB_VENDOR_OMNIVISION	0x05a9		/* OmniVision */
-#define	USB_VENDOR_BELKIN	0x05ab		/* In-System Design */
+#define	USB_VENDOR_INSYSTEM	0x05ab		/* In-System Design */
 #define	USB_VENDOR_APPLE	0x05ac		/* Apple Computer */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
 #define	USB_VENDOR_PIENGINEERING	0x05f3		/* P.I. Engineering */
@@ -195,6 +197,9 @@
 /* Wacom products */
 #define	USB_PRODUCT_WACOM_CT0405U	0x0000		/* CT-0405-U Tablet */
 
+/* e-TEK Labs products */
+#define	USB_PRODUCT_ETEK_1COM	0x8007		/* Serial port */
+
 /* EIZO products */
 #define	USB_PRODUCT_EIZO_HUB	0x0000		/* hub */
 #define	USB_PRODUCT_EIZO_MONITOR	0x0001		/* monitor */
@@ -211,9 +216,8 @@
 /* OmniVision Technologies Inc. products */
 #define	USB_PRODUCT_OMNIVISION_OV511	0x0511		/* OV511 Camera */
 
-/* Belkin products */
-#define	USB_PRODUCT_BELKIN_F5U002	0x0002		/* Parallel printer adapter */
-#define	USB_PRODUCT_BELKIN_1COM	0x8007		/* Serial port */
+/* In-System products */
+#define	USB_PRODUCT_INSYSTEM_F5U002	0x0002		/* Parallel printer adapter */
 
 /* Logitech products */
 #define	USB_PRODUCT_LOGITECH_M2452	0x0203		/* M2452 keyboard */
