@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.6 2000/02/14 22:01:38 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.7 2000/02/24 22:54:39 tron Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -1576,7 +1576,9 @@ softdep_setup_freeblocks(ip, length)
 	struct buf *bp;
 	struct fs *fs = ip->i_fs;
 	int i, error;
+#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
+#endif
 
 	if (length != 0)
 		panic("softdep_setup_freeblocks: non-zero length");
@@ -1610,10 +1612,12 @@ softdep_setup_freeblocks(ip, length)
 	    fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
 	    (int)fs->fs_bsize, NOCRED, &bp)) != 0)
 		softdep_error("softdep_setup_freeblocks", error);
+#ifdef FFS_EI
 	if (needswap)
 		ffs_dinode_swap(&ip->i_din.ffs_din,
 		    (struct dinode *)bp->b_data+ino_to_fsbo(fs, ip->i_number));
 	else
+#endif
 		*((struct dinode *)bp->b_data + ino_to_fsbo(fs, ip->i_number)) =
 		    ip->i_din.ffs_din;
 	/*
