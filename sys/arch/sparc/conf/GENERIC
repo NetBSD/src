@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.109 2000/06/21 13:46:43 pk Exp $
+# 	$NetBSD: GENERIC,v 1.110 2000/06/22 20:27:56 fvdl Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.109 $"
+#ident 		"GENERIC-$Revision: 1.110 $"
 
 maxusers	32
 
@@ -157,7 +157,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

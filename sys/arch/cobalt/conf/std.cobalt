@@ -1,10 +1,6 @@
-#	$NetBSD: std.cobalt,v 1.1 2000/03/19 23:07:45 soren Exp $
+#	$NetBSD: std.cobalt,v 1.2 2000/06/22 20:27:51 fvdl Exp $
 
 machine cobalt mips
-
-prefix ../gnu/sys
-cinclude "conf/files.softdep"
-prefix
 
 options MIPS3
 options MIPS3_5200
