@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300.oldconf,v 1.18 1995/04/11 09:54:47 mellon Exp $
+#	$NetBSD: files.hp300.oldconf,v 1.19 1995/05/10 17:02:52 christos Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard
@@ -49,13 +49,25 @@ arch/hp300/dev/hil.c			standard
 arch/hp300/dev/hil_keymaps.c		standard
 arch/hp300/dev/ite.c			optional ite needs-count # XXX? d-d?
 arch/hp300/dev/ite_subr.c		optional ite needs-count # XXX? d-d?
-arch/hp300/hpux/hpux_compat.c		optional compat_hpux
-arch/hp300/hpux/hpux_net.c		optional compat_hpux
-arch/hp300/hpux/hpux_sig.c		optional compat_hpux
-arch/hp300/hpux/hpux_syscalls.c		optional compat_hpux
-arch/hp300/hpux/hpux_sysent.c		optional compat_hpux
-arch/hp300/hpux/hpux_tty.c		optional compat_hpux
 arch/m68k/m68k/copy.s			standard
 dev/cons.c				standard
 dev/cninit.c				standard
 thisisfor_in_proto.c			optional hy
+
+#
+# Compatibility modules
+# 
+  
+# HPUX Binary Compatibility (COMPAT_HPUX)
+# XXX: Cannot use an include directive yet. When the upgrade to the 
+#      new config is complete, the include line should be uncommented
+#      and the others should be removed
+#
+# include "../../../compat/hpux/files.hpux"
+
+compat/hpux/hpux_compat.c		optional compat_hpux
+compat/hpux/hpux_net.c			optional compat_hpux
+compat/hpux/hpux_sig.c			optional compat_hpux
+compat/hpux/hpux_syscalls.c		optional compat_hpux
+compat/hpux/hpux_sysent.c		optional compat_hpux
+compat/hpux/hpux_tty.c			optional compat_hpux
