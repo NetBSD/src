@@ -29,49 +29,76 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $Id: yppoll.8,v 1.2 1994/10/28 16:49:52 deraadt Exp $
+.\"     $Id: ypbind.8,v 1.1 1994/10/28 16:49:49 deraadt Exp $
 .\"
 .Dd October 25, 1994
-.Dt YPPOLL 8
+.Dt YPBIND 8
 .Os
 .Sh NAME
-.Nm yppoll
-.Nd ask version of YP map from YP server
+.Nm ypbind
+.Nd create and maintain a binding to a YP server
 .Sh SYNOPSIS
-.Nm yppoll
-.Op Fl h Ar host
-.Op Fl d Ar domain
-.Ar mapname
+.Nm ypbind
+.Op Fl ypset
+.Nm ypbind
+.Op Fl ypsetme
 .Sh DESCRIPTION
-.Nm Yppoll
-asks a YP server process for the order number and which host is the master
-server for
-.Ar mapname .
+.Nm Ypbind
+finds the server for a particular YP domain and stores information about it
+in a
+.Pa binding file.
+This binding information includes the IP address of the server associated with
+that particular domain and which port the server is using.  This information
+is stored in the directory
+.Pa /var/yp/binding
+in a file named with the convention
+.Pa domainname.version.
+(The YP system only supplies information on version 2.)
+.Pp
+When
+.Nm ypbind
+starts, it broadcasts looking for a process willing to serve maps for the
+client's domain.  Once a binding is established,
+.Nm ypbind
+maintains this binding by periodically communicating with the server to which
+it is bound.  If the binding is somehow lost, e.g by server reboot,
+.Nm ypbind
+marks the domain as unbound and attempts to re-establish the binding.
+When the binding is once again successful,
+.Nm ypbind
+marks the domain as bound and resumes its periodic check.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl h Ar host
-Ask the YP server process running on
-.Ar host
-for information about
-.Ar mapname .
-If
-.Ar host
-is not specified, the server polled is the default server returned by
-.Xr ypwhich 1 .
-.It Fl d Ar domain
-Use the YP domain
-.Ar domain
-instead of the default domain as returned by
-.Xr domainname 1 .
+.It Fl ypset
+.Xr ypset 8
+may be used to change the server to which a domain is bound.
+.It Fl ypsetme
+.Xr ypset 8
+may be used only from this machine to change the server
+to which a domain is bound.
 .El
+.Pp
+The
+.Fl ypset
+and
+.Fl ypsetme
+options are dangerous and should be avoided.
+.Pp
+If the directory
+.Pa /var/yp
+exists, YP is started automatically at boot time by
+.Pa /etc/rc .
+.Sh FILES
+.Pa /var/yp/bindings/domainname.version
+- binding file for domainname
 .Sh SEE ALSO
 .Xr domainname 1 ,
-.Xr ypbind 8 ,
 .Xr ypcat 1 ,
 .Xr ypmatch 1 ,
+.Xr yppoll 8 ,
 .Xr ypset 8 ,
 .Xr ypwhich 1 ,
 .Xr yp 8
-.Sh AUTHORS
-Theo De Raadt and John Brezak
+.Sh AUTHOR
+Theo De Raadt
