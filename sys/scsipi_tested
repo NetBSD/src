@@ -1,0 +1,51 @@
+i386: ide, atapi cd: tested (Tue Jul  1)
+      scsi sd, cd: tested (Tue Jul  1)
+	  scsi st, ch, ss, uk, se: compile (Tue Jul  1)
+      aha, bha, ncr, ahc scsi drivers: tested (Tue Jul  1)
+	  ahb, aic, sea, uha, wds, isp: compile (Tue Jul  1)
+arm32:
+	sd, cd, st, ch, ss, uk, se: ?
+	asc, cosc, csc, ptsc, oak: ?
+hp300:
+	HP300 uses "old scsi", and it seems it didn't get affected
+	A sanity compile check would be good, though.
+mvme68k:
+	wdsc: ?
+	sd, cd, st, ch, ss, uk, se: ?
+pmax:
+	sii, asc : ?
+sun3:
+	sd, cd, st, ch, ss, uk, se: ?
+	si: ?
+x68k:
+	spc : ?
+	sd, cd, st, ch, ss, uk, se: ?
+alpha:
+	aha, ahb, ahc, asc, bha, isp, ncr, uha: ?
+	sd, cd, st, ch, ss, uk, se: ?
+atari:
+	sd, cd, st, ch, ss, uk, se: ?
+	atari5380, ncr5380 : ?
+mac68k:
+	ncrscsi, sbc, esp: ?
+	sd, cd, st, ch, ss, uk, se: ?
+pc532:
+	sd, cd, st, ch, ss, uk, se: ?
+	aic, ncr: ?
+powerpc:
+	Not affected by scsipi ?
+sun3x:
+	sd, cd, st, ch, ss, uk, se: ?
+	esp : ?
+amiga:
+	sd, cd, st, ch, ss, uk, se: ?
+	gtsc, ahsc, atzsc, wstsc, ivsc, mlhsc, otgsc, zssc, mgnsc, wesc, afsc, aftsc, flsc, bzsc, bztzsc, empsc, idesc, drsc: ?
+pica:
+	asc: ?
+	sd, cd, st, ch, ss, uk, se: ?
+sparc:
+	esp, isp, si, sw: ?
+	sd, cd, st, ch, ss, uk, se: ?
+vax:
+	ncr : ?
+	sd, cd, st, ch, ss, uk, se: ?
