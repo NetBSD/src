@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.582 2003/06/14 08:04:43 nonaka Exp $
+#	$NetBSD: mi,v 1.583 2003/06/20 07:06:48 jdc Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1800,6 +1800,7 @@
 ./usr/share/man/cat3/curses_insdelln.0		comp-c-catman
 ./usr/share/man/cat3/curses_insertch.0		comp-c-catman
 ./usr/share/man/cat3/curses_insertln.0		comp-c-catman
+./usr/share/man/cat3/curses_keyname.0		comp-c-catman
 ./usr/share/man/cat3/curses_line.0		comp-c-catman
 ./usr/share/man/cat3/curses_pad.0		comp-c-catman
 ./usr/share/man/cat3/curses_print.0		comp-c-catman
@@ -2380,6 +2381,7 @@
 ./usr/share/man/cat3/jrand48.0	comp-c-catman
 ./usr/share/man/cat3/kafs.0	comp-krb5-catman
 ./usr/share/man/cat3/kerberos.0 comp-krb4-catman
+./usr/share/man/cat3/keyname.0		comp-c-catman
 ./usr/share/man/cat3/keypad.0		comp-c-catman
 ./usr/share/man/cat3/killchar.0		comp-c-catman
 ./usr/share/man/cat3/killpg.0	comp-c-catman
@@ -2787,6 +2789,7 @@
 ./usr/share/man/cat3/nodelay.0		comp-c-catman
 ./usr/share/man/cat3/noecho.0		comp-c-catman
 ./usr/share/man/cat3/nonl.0		comp-c-catman
+./usr/share/man/cat3/noqiflush.0	comp-c-catman
 ./usr/share/man/cat3/noraw.0		comp-c-catman
 ./usr/share/man/cat3/notimeout.0		comp-c-catman
 ./usr/share/man/cat3/nrand48.0	comp-c-catman
@@ -2953,6 +2956,7 @@
 ./usr/share/man/cat3/pwcache_userdb.0	comp-c-catman
 ./usr/share/man/cat3/qabs.0	comp-c-catman
 ./usr/share/man/cat3/qdiv.0	comp-c-catman
+./usr/share/man/cat3/qiflush.0	comp-c-catman
 ./usr/share/man/cat3/qsort.0	comp-c-catman
 ./usr/share/man/cat3/queue.0	comp-c-catman
 ./usr/share/man/cat3/radixsort.0	comp-c-catman
@@ -5138,6 +5142,7 @@
 ./usr/share/man/man3/curses_insdelln.3		comp-c-man
 ./usr/share/man/man3/curses_insertch.3		comp-c-man
 ./usr/share/man/man3/curses_insertln.3		comp-c-man
+./usr/share/man/man3/curses_keyname.3		comp-c-man
 ./usr/share/man/man3/curses_line.3		comp-c-man
 ./usr/share/man/man3/curses_pad.3		comp-c-man
 ./usr/share/man/man3/curses_print.3		comp-c-man
@@ -5718,6 +5723,7 @@
 ./usr/share/man/man3/jrand48.3		comp-c-man
 ./usr/share/man/man3/kafs.3		comp-krb5-man
 ./usr/share/man/man3/kerberos.3		comp-krb4-man
+./usr/share/man/man3/keyname.3		comp-c-man
 ./usr/share/man/man3/keypad.3		comp-c-man
 ./usr/share/man/man3/killchar.3		comp-c-man
 ./usr/share/man/man3/killpg.3		comp-c-man
@@ -6125,6 +6131,7 @@
 ./usr/share/man/man3/nodelay.3		comp-c-man
 ./usr/share/man/man3/noecho.3		comp-c-man
 ./usr/share/man/man3/nonl.3		comp-c-man
+./usr/share/man/man3/noqiflush.3	comp-c-man
 ./usr/share/man/man3/noraw.3		comp-c-man
 ./usr/share/man/man3/notimeout.3		comp-c-man
 ./usr/share/man/man3/nrand48.3		comp-c-man
@@ -6291,6 +6298,7 @@
 ./usr/share/man/man3/pwcache_userdb.3	comp-c-man
 ./usr/share/man/man3/qabs.3		comp-c-man
 ./usr/share/man/man3/qdiv.3		comp-c-man
+./usr/share/man/man3/qiflush.3		comp-c-man
 ./usr/share/man/man3/qsort.3		comp-c-man
 ./usr/share/man/man3/queue.3		comp-c-man
 ./usr/share/man/man3/radixsort.3		comp-c-man
