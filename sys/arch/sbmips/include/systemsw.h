@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.h,v 1.2 2002/03/06 07:35:13 simonb Exp $ */
+/* $NetBSD: systemsw.h,v 1.3 2002/06/01 14:38:27 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -49,9 +49,11 @@ struct systemsw {
 	void	*s_clock_arg;
 	void	(*s_clock_init)(void *);
 
+	void	*s_statclock_arg;
 	void	(*s_statclock_init)(void *);
 	void	(*s_statclock_setrate)(void *, int);
 
+	void	*s_todr_arg;
 	void	(*s_inittodr)(void *, time_t);
 	void	(*s_resettodr)(void *);
 
@@ -60,7 +62,8 @@ struct systemsw {
 };
 extern struct systemsw systemsw;
 
-int	system_set_clockfns(void *, void (*init)(void *));
+int	system_set_clockfns(void *, void (*)(void *));
+int	system_set_todrfns(void *, void (*)(void *, time_t), void (*)(void *));
 
 #define	delay(n)	((*systemsw.s_delay)(n))
 #define	DELAY(n)	((*systemsw.s_delay)(n))
