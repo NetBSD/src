@@ -165,7 +165,7 @@
 /* #define has_sigblock ? */ /* Does sigblock() work?  */
 /* #define sigmask(s) (1 << ((s)-1)) */ /* Yield mask for signal number.  */
 #define has_sys_siglist 1 /* Does sys_siglist[] work?  */
-typedef ssize_t fread_type; /* type returned by fread() and fwrite() */
+typedef size_t fread_type; /* type returned by fread() and fwrite() */
 typedef size_t freadarg_type; /* type of their size arguments */
 typedef void *malloc_type; /* type returned by malloc() */
 #define has_getcwd 1 /* Does getcwd() work?  */
