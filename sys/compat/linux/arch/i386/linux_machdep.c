@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.55 2000/12/18 14:47:38 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.56 2000/12/22 22:58:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -150,7 +150,6 @@ linux_sendsig(catcher, sig, mask, code)
 	struct proc *p = curproc;
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
-	struct sigacts *psp = p->p_sigacts;
 
 	tf = p->p_md.md_regs;
 
@@ -214,7 +213,7 @@ linux_sendsig(catcher, sig, mask, code)
 	 */
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)psp->ps_sigcode;
+	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
@@ -306,7 +305,7 @@ linux_sys_sigreturn(p, v, retval)
 	tf->tf_ss = context.sc_ss;
 
 	/* Restore signal stack. */
-	p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	linux_old_to_native_sigset(&context.sc_mask, &mask);
