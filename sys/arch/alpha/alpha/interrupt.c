@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.59 2001/04/28 06:10:49 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.60 2001/05/14 19:56:22 ross Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.59 2001/04/28 06:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.60 2001/05/14 19:56:22 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.59 2001/04/28 06:10:49 thorpej Exp $
 #include <sys/sched.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/time.h>
 
 #include <machine/cpuvar.h>
 
@@ -180,7 +181,8 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 	case ALPHA_INTR_ERROR:	/* Machine Check or Correctable Error */
 		atomic_add_ulong(&ci->ci_intrdepth, 1);
 		a0 = alpha_pal_rdmces();
-		if (platform.mcheck_handler)
+		if (platform.mcheck_handler != NULL &&
+		    (void *)framep->tf_regs[FRAME_PC] != XentArith)
 			(*platform.mcheck_handler)(a0, framep, a1, a2);
 		else
 			machine_check(a0, framep, a1, a2);
@@ -245,6 +247,7 @@ machine_check(unsigned long mces, struct trapframe *framep,
 {
 	const char *type;
 	struct mchkinfo *mcp;
+	static struct timeval ratelimit[1];
 
 	mcp = &curcpu()->ci_mcinfo;
 	/* Make sure it's an error we know about. */
@@ -277,8 +280,11 @@ machine_check(unsigned long mces, struct trapframe *framep,
 	return;
 
 fatal:
-	/* Clear pending machine checks and correctable errors */
 	alpha_pal_wrmces(mces);
+	if ((void *)framep->tf_regs[FRAME_PC] == XentArith) {
+		rlprintf(ratelimit, "Stray machine check\n");
+		return;
+	}
 
 	printf("\n");
 	printf("%s:\n", type);
@@ -559,4 +565,17 @@ softintr_disestablish(void *arg)
 	splx(s);
 
 	free(sih, M_DEVBUF);
+}
+
+/*
+ * Security sensitive rate limiting printf
+ */
+void
+rlprintf(struct timeval *t, const char *fmt, ...)
+{
+	va_list ap;
+	static const struct timeval msgperiod[1] = {{ 5, 0 }};
+
+	if (ratecheck(t, msgperiod))
+		vprintf(fmt, ap);
 }
