@@ -1,4 +1,5 @@
-/*	$NetBSD: crc.c,v 1.1 2000/01/28 19:32:47 itojun Exp $	*/
+/*	$NetBSD: crc.c,v 1.2 2000/12/04 07:09:35 itojun Exp $	*/
+/*	$KAME: crc.c,v 1.4 2000/12/04 06:45:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.

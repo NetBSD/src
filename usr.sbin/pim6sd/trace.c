@@ -1,4 +1,5 @@
-/*	$NetBSD: trace.c,v 1.1 2000/01/28 19:32:52 itojun Exp $	*/
+/*	$NetBSD: trace.c,v 1.2 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: trace.c,v 1.12 2000/12/04 06:45:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -63,8 +64,6 @@
 /*
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
- *
- *  KAME Id: trace.c,v 1.7 1999/09/16 08:45:45 jinmei Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -78,25 +77,30 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include "vif.h"
-#include "inet6.h"
 #include <sys/ioctl.h>
 #include <sys/uio.h>
-#include <errno.h>
+#include <sys/queue.h>
 #include <net/if.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <net/if_var.h>
 #endif
+#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/icmp6.h>
 #include <netinet/ip6.h>
+#include <netinet/ip_mroute.h>
 #include <netinet6/ip6_mroute.h>
 #include <netinet6/in6_var.h>
 #include <arpa/inet.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <syslog.h>
 #include <string.h>
+#include <stdio.h>
 #include "defs.h"
+#include "vif.h"
+#include "mrt.h"
+#include "inet6.h"
 #include "mld6.h"
 #include "kern.h"
 #include "debug.h"
@@ -310,11 +314,9 @@ accept_mtrace(src, dst, group, ifindex, data, no, datalen)
     
 	/* copy the packet to the sending buffer */
 	p = mld6_send_buf + sizeof(struct mld6_hdr);
-    
 	bcopy(data, p, datalen);
-    
 	p += datalen;
-    
+
 	/*
 	 * If there is no room to insert our reply, coopt the previous hop
 	 * error indication to relay this fact.

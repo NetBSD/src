@@ -1,4 +1,5 @@
-/*	$NetBSD: trace.h,v 1.1 2000/01/28 19:32:52 itojun Exp $	*/
+/*	$NetBSD: trace.h,v 1.2 2000/12/04 07:09:37 itojun Exp $	*/
+/*	$KAME: trace.h,v 1.4 2000/12/04 06:45:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -63,8 +64,6 @@
 /*
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
- *
- *  KAME Id: trace.h,v 1.2 1999/09/09 15:47:11 jinmei Exp
  */
 /*
  * Part of this program has been derived from mrouted.

@@ -1,4 +1,5 @@
-/*	$NetBSD: cfparse.y,v 1.2 2000/05/19 10:43:46 itojun Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.3 2000/12/04 07:09:35 itojun Exp $	*/
+/*	$KAME: cfparse.y,v 1.13 2000/12/04 06:45:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -30,17 +31,21 @@
  */
 %{
 #include <sys/types.h>
-
+#include <sys/socket.h>
+#include <net/if.h>
+#include <net/route.h>
 #include <netinet/in.h>
-
+#include <netinet/ip_mroute.h>
+#include <netinet6/ip6_mroute.h>
 #include <arpa/inet.h>
-
 #include <string.h>
 #include <syslog.h>
+#include <stdio.h>
 
 #include "defs.h"
-#include "rp.h"
 #include "vif.h"
+#include "mrt.h"
+#include "rp.h"
 
 #include "var.h"
 #include "vmbuf.h"
@@ -641,6 +646,10 @@ phyint_config()
 		}
 	}
 
+	/* IPv6 PIM needs one global unicast address (at least for now) */
+	if (max_global_address() == NULL)
+		log(LOG_ERR, 0, "There's no global address available");
+
 	return(0);
 }
 
@@ -689,7 +698,7 @@ rp_config()
 	}
 
 	if (!sa6_rp)
-		sa6_rp = max_global_address(); /* this MUST suceed */
+		sa6_rp = max_global_address(); /* this MUST succeed */
 	my_cand_rp_address = *sa6_rp;
 
 	/*
@@ -790,7 +799,7 @@ bsr_config()
 	}
 
 	if (!sa6_bsr)
-		sa6_bsr = max_global_address(); /* this MUST suceed */
+		sa6_bsr = max_global_address(); /* this MUST succeed */
 	my_bsr_address = *sa6_bsr;
 	MASKLEN_TO_MASK6(my_bsr_hash_masklen, my_bsr_hash_mask);
 

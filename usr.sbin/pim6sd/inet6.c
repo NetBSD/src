@@ -1,4 +1,5 @@
-/*	$NetBSD: inet6.c,v 1.2 2000/05/19 10:43:47 itojun Exp $	*/
+/*	$NetBSD: inet6.c,v 1.3 2000/12/04 07:09:35 itojun Exp $	*/
+/*	$KAME: inet6.c,v 1.9 2000/12/04 06:45:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -47,6 +48,12 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/param.h>
+#include <net/if.h>
+#include <net/route.h>
+#include <netinet/in.h>
+#include <netinet/ip_mroute.h>
+#include <netinet6/ip6_mroute.h>
 #include <stdio.h>
 #include <netdb.h>
 #include <string.h>

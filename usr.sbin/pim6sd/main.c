@@ -1,4 +1,5 @@
-/*	$NetBSD: main.c,v 1.4 2000/10/12 06:33:24 augustss Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: main.c,v 1.14 2000/12/04 07:01:08 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -58,8 +59,15 @@
  *
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <net/route.h>
+#include <netinet/in.h>
+#include <netinet/ip_mroute.h>
+#include <netinet6/ip6_mroute.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -67,6 +75,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include "pathnames.h"
 #include "defs.h"
 #include "debug.h"
@@ -80,6 +89,7 @@
 #include "rp.h"
 #include "kern.h"
 #include "cfparse.h"
+#include "pim6_proto.h"
 
 char            	configfilename[256] = _PATH_PIM6D_CONF;
 char            	versionstring[100];
@@ -674,17 +684,25 @@ timer(i)
 static void
 cleanup()
 {
+    vifi_t vifi;
+    struct uvif *v;
+
+    /* inform all neighbors that I'm going to die */
+    for (vifi = 0, v = uvifs; vifi < numvifs; ++vifi, ++v) {
+	if ((v->uv_flags & (VIFF_DOWN|VIFF_DISABLED|MIFF_REGISTER)) == 0)
+	    send_pim6_hello(v, 0);
+    }
 
     /*
      * TODO: XXX (not in the spec): if I am the BSR, somehow inform the other
      * routers I am going down and need to elect another BSR? (probably by
      * sending a the Cand-RP-set with my_priority=LOWEST?)
      * 
-     */ 
-	
-     k_stop_pim(mld6_socket);
-}
+     */
+    ;
 
+    k_stop_pim(mld6_socket);
+}
 
 /*
  * Signal handler.  Take note of the fact that the signal arrived so that the
