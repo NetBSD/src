@@ -24,7 +24,7 @@ all: ${SUBDIR}
 ${SUBDIR}: FRC
 	cd $@; make ${MFLAGS}
 
-all clean cleandir depend install lint tags:
+all clean cleandir depend install lint tags obj:
 	for i in ${SUBDIR}; do \
 		(cd $$i; make ${MFLAGS} DESTDIR=${DESTDIR} $@); \
 	done
