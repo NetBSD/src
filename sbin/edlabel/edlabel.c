@@ -1,4 +1,4 @@
-/*	$NetBSD: edlabel.c,v 1.5 1997/09/29 06:20:09 lukem Exp $	*/
+/*	$NetBSD: edlabel.c,v 1.6 1997/12/20 21:49:30 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -459,7 +459,7 @@ label_modify(dl, dn)
 	     && !strcmp(dl->d_packname, "fictitious"))
 		scsi_fict = 1;
 
-	printf(modify_cmds, 'a' + maxpartitions,
+	printf(modify_cmds, 'a' + maxpartitions - 1,
 		scsi_fict ? " s   : standarize geometry\n" : "");
 	for (;;) {
 		printf("edlabel/modify> ");
