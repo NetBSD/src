@@ -1,4 +1,4 @@
-/* $NetBSD: pkcs5_pbkdf2.c,v 1.5 2004/03/17 01:29:13 dan Exp $ */
+/* $NetBSD: pkcs5_pbkdf2.c,v 1.6 2005/01/04 04:55:18 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.5 2004/03/17 01:29:13 dan Exp $");
+__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.6 2005/01/04 04:55:18 elric Exp $");
 #endif
 
 #include <sys/resource.h>
@@ -180,7 +180,7 @@ pkcs5_pbkdf2(u_int8_t **r, int dkLen, const u_int8_t *P, int Plen,
 					 */
 
 /*
- * We return the user time in milliseconds that c iterations
+ * We return the user time in microseconds that c iterations
  * of the algorithm take.
  */
 
@@ -207,7 +207,7 @@ pkcs5_pbkdf2_time(int dkLen, int c)
 }
 
 int
-pkcs5_pbkdf2_calibrate(int dkLen, int milliseconds)
+pkcs5_pbkdf2_calibrate(int dkLen, int microseconds)
 {
 	int	c;
 	int	t = 0;
@@ -225,7 +225,7 @@ pkcs5_pbkdf2_calibrate(int dkLen, int milliseconds)
 	}
 
 	/* Now that we know that, we scale it. */
-	ret = (int) ((u_int64_t) c * milliseconds / t);
+	ret = (int) ((u_int64_t) c * microseconds / t);
 
 	/*
 	 * Since it is quite important to not get this wrong,
@@ -235,7 +235,7 @@ pkcs5_pbkdf2_calibrate(int dkLen, int milliseconds)
 	t = pkcs5_pbkdf2_time(dkLen, ret);
 
 	/* if we are over 5% off, return an error */
-	if (abs(milliseconds - t) > (milliseconds / 20))
+	if (abs(microseconds - t) > (microseconds / 20))
 		return -1;
 
 	return ret;
