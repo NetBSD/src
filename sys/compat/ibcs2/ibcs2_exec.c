@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.11 1996/05/03 17:05:19 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.12 1996/10/12 02:13:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -37,6 +37,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/resourcevar.h>
