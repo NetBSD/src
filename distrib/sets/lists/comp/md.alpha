@@ -48,3 +48,4 @@
 ./usr/include/alpha/vmparam.h
 ./usr/include/alpha/vuid_event.h
 ./usr/include/alpha/z8530var.h
+./usr/include/alpha/sysarch.h
