@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.subr.8,v 1.1 2002/02/25 12:05:13 lukem Exp $
+.\" 	$NetBSD: rc.subr.8,v 1.2 2002/02/25 12:49:33 lukem Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -265,7 +265,7 @@ as well as any word listed in the optional variable
 If
 .Sy pidfile
 or
-.Sy command
+.Sy procname
 is set, also allow:
 .Dl status poll
 .Pp
@@ -290,7 +290,7 @@ tests failing .
 .Ic run_rc_command
 uses the following shell variables to control its behaviour.
 Unless otherwise stated, these are optional.
-.Bl -tag -width command -offset indent
+.Bl -tag -width procname -offset indent
 .It Sy name
 The name of this script.
 This is not optional.
@@ -316,13 +316,17 @@ Used to determine the PID(s) of the running command.
 If
 .Sy pidfile
 is set, use
-.Dl check_pidfile $pidfile $command
+.Dl check_pidfile $pidfile $procname
 to find the PID.
 Otherwise, if
 .Sy command
 is set, use
-.Dl check_process $command
+.Dl check_process $procname
 to find the PID.
+.It Sy procname
+Process name to check for.
+Defaults to the value of
+.Sy command .
 .It Sy required_dirs
 Check for the existence of the listed directories
 before running the default start method.
