@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.10 2002/08/27 10:37:33 lukem Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.11 2002/09/24 13:06:07 mycroft Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -296,6 +296,7 @@ xwarnx(const char *fmt, ...)
 	(void) write(2, "\n", 1);
 }
 
+#ifdef DEBUG
 void
 xassert(file, line, failedexpr)
 	const char *file;
@@ -307,4 +308,5 @@ xassert(file, line, failedexpr)
 	abort();
 	/* NOTREACHED */
 }
+#endif
 #endif
