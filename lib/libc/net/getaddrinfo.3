@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.41.2.1 2005/03/21 23:07:20 tron Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.41.2.2 2005/03/21 23:08:53 tron Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"	$OpenBSD: getaddrinfo.3,v 1.35 2004/12/21 03:40:31 jaredy Exp $
 .\"
@@ -17,7 +17,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd December 20, 2004
+.Dd March 21, 2005
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -25,8 +25,6 @@
 .Nm freeaddrinfo
 .Nd host and service name to socket address structure
 .Sh SYNOPSIS
-.In sys/types.h
-.In sys/socket.h
 .In netdb.h
 .Ft int
 .Fn getaddrinfo "const char * restrict hostname" \
