@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.8 2001/07/13 10:23:41 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.9 2001/07/17 01:37:44 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.8 2001/07/13 10:23:41 sato Exp $";
+    "$NetBSD: hpcfb.c,v 1.9 2001/07/17 01:37:44 toshii Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ struct hpcfb_tvrow {
 };
 
 struct hpcfb_devconfig {
-	struct rasops_info	dc_rinfo;	/* rasops infomation */
+	struct rasops_info	dc_rinfo;	/* rasops information */
 
 	int		dc_blanked;	/* currently had video disabled */
 	struct hpcfb_softc *dc_sc;

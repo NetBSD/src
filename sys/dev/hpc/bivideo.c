@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.9 2001/07/07 09:19:39 toshii Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.10 2001/07/17 01:37:43 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: bivideo.c,v 1.9 2001/07/07 09:19:39 toshii Exp $";
+    "$NetBSD: bivideo.c,v 1.10 2001/07/17 01:37:43 toshii Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ bivideo_init(struct hpcfb_fbconf *fb)
 	    bootinfo->fb_line_bytes == 0 ||
 	    bootinfo->fb_width == 0 ||
 	    bootinfo->fb_height == 0) {
-		printf("no frame buffer infomation.\n");
+		printf("no frame buffer information.\n");
 		return (-1);
 	}
 

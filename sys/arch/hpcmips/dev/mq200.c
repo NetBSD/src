@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.15 2001/06/11 09:21:15 sato Exp $	*/
+/*	$NetBSD: mq200.c,v 1.16 2001/07/17 01:41:38 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -327,7 +327,7 @@ mq200_fbinit(fb)
 	    bootinfo->fb_line_bytes == 0 ||
 	    bootinfo->fb_width == 0 ||
 	    bootinfo->fb_height == 0) {
-		printf("no frame buffer infomation.\n");
+		printf("no frame buffer information.\n");
 		return (-1);
 	}
 
