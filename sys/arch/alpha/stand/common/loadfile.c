@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.7 1997/09/06 14:03:57 drochner Exp $ */
+/* $NetBSD: loadfile.c,v 1.8 1997/10/18 22:27:46 cjs Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -165,7 +165,10 @@ coff_exec(fd, coff, entryp)
 
 	/* Read in text. */
 	(void)printf("%lu", coff->a.tsize);
-	(void)lseek(fd, ECOFF_TXTOFF(coff), 0);
+	if (lseek(fd, ECOFF_TXTOFF(coff), SEEK_SET) == -1)  {
+		(void)printf("lseek text: %s\n", strerror(errno));
+		return (1);
+	}
 	if (read(fd, (void *)coff->a.text_start, coff->a.tsize) !=
 	    coff->a.tsize) {
 		(void)printf("read text: %s\n", strerror(errno));
@@ -217,7 +220,11 @@ elf_exec(fd, elf, entryp)
 
 	for (i = 0; i < elf->e_phnum; i++) {
 		Elf_Phdr phdr;
-		(void)lseek(fd, elf->e_phoff + sizeof(phdr) * i, 0);
+		if (lseek(fd, elf->e_phoff + sizeof(phdr) * i, SEEK_SET)
+		    == -1)  {
+			(void)printf("lseek phdr: %s\n", strerror(errno));
+			return (1);
+		}
 		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr)) {
 			(void)printf("read phdr: %s\n", strerror(errno));
 			return (1);
@@ -228,7 +235,10 @@ elf_exec(fd, elf, entryp)
 
 		/* Read in segment. */
 		(void)printf("%s%lu", first ? "" : "+", phdr.p_filesz);
-		(void)lseek(fd, phdr.p_offset, 0);
+		if (lseek(fd, phdr.p_offset, SEEK_SET) == -1)  {
+		    (void)printf("lseek text: %s\n", strerror(errno));
+		    return (1);
+		}
 		if (read(fd, (void *)phdr.p_vaddr, phdr.p_filesz) !=
 		    phdr.p_filesz) {
 			(void)printf("read text: %s\n", strerror(errno));
@@ -252,7 +262,10 @@ elf_exec(fd, elf, entryp)
 	ssym = ffp_save;
 	bcopy(elf, (void *)ffp_save, sizeof(Elf_Ehdr));
 	ffp_save += sizeof(Elf_Ehdr);
-	(void)lseek(fd, elf->e_shoff, SEEK_SET);
+	if (lseek(fd, elf->e_shoff, SEEK_SET) == -1)  {
+		printf("lseek section headers: %s\n", strerror(errno));
+		return (1);
+	}
 	if (read(fd, (void *)ffp_save, elf->e_shnum * sizeof(Elf_Shdr)) !=
 	    elf->e_shnum * sizeof(Elf_Shdr)) {
 		printf("read section headers: %s\n", strerror(errno));
@@ -271,7 +284,11 @@ elf_exec(fd, elf, entryp)
 		if (shp[i].sh_type == Elf_sht_symtab ||
 		    shp[i].sh_type == Elf_sht_strtab) {
 			printf("%s%ld", first ? " [" : "+", shp[i].sh_size);
-			(void)lseek(fd, shp[i].sh_offset, SEEK_SET);
+			if (lseek(fd, shp[i].sh_offset, SEEK_SET) == -1)  {
+				printf("\nlseek symbols: %s\n",
+				    strerror(errno));
+				return (1);
+			}
 			if (read(fd, (void *)ffp_save, shp[i].sh_size) !=
 			    shp[i].sh_size) {
 				printf("\nread symbols: %s\n",
