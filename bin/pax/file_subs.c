@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.40 2004/02/13 08:27:12 matt Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.41 2004/02/13 23:10:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.40 2004/02/13 08:27:12 matt Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.41 2004/02/13 23:10:14 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,8 @@ __RCSID("$NetBSD: file_subs.c,v 1.40 2004/02/13 08:27:12 matt Exp $");
 #include "pax.h"
 #include "extern.h"
 #include "options.h"
+
+char *xtmp_name;
 
 static int
 mk_link(char *,struct stat *,char *, int);
@@ -96,6 +98,9 @@ file_creat(ARCHD *arcn)
 		syswarn(1, errno, "Cannot malloc %d bytes", arcn->nlen + 8);
 		return(-1);
 	}
+	if (xtmp_name)
+		abort();
+	xtmp_name = arcn->tmp_name;
 
 	for (;;) {
 		/*
@@ -178,6 +183,7 @@ file_close(ARCHD *arcn, int fd)
 
 	free(arcn->tmp_name);
 	arcn->tmp_name = NULL;
+	xtmp_name = NULL;
 }
 
 /*
