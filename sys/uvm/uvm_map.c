@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.28 1998/08/31 01:54:14 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.29 1998/10/11 23:14:47 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -377,8 +377,9 @@ register vaddr_t    start;
 
 	uvm_map_entry_link(map, entry->prev, new_entry);
 				 
-	if (UVM_ET_ISMAP(entry)) {
-		 uvm_map_reference(new_entry->object.share_map);
+	if (UVM_ET_ISSUBMAP(entry)) {
+		/* ... unlikely to happen, but play it safe */
+		 uvm_map_reference(new_entry->object.sub_map);
 	} else {
 		if (UVM_ET_ISOBJ(entry) && 
 		    entry->object.uvm_obj->pgops &&
@@ -424,8 +425,9 @@ uvm_map_clip_end(map, entry, end)
 
 	uvm_map_entry_link(map, entry, new_entry);
 
-	if (UVM_ET_ISMAP(entry)) {
-	 	uvm_map_reference(new_entry->object.share_map);
+	if (UVM_ET_ISSUBMAP(entry)) {
+		/* ... unlikely to happen, but play it safe */
+	 	uvm_map_reference(new_entry->object.sub_map);
 	} else {
 		if (UVM_ET_ISOBJ(entry) &&
 		    entry->object.uvm_obj->pgops &&
@@ -566,7 +568,7 @@ uvm_map(map, startp, size, uobj, uoffset, flags)
 		    (prev_entry->end - prev_entry->start) != uoffset)
 			goto step3;
 
-		if (UVM_ET_ISMAP(prev_entry))
+		if (UVM_ET_ISSUBMAP(prev_entry))
 			goto step3;
 
 		if (prev_entry->protection != prot || 
@@ -893,26 +895,18 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, fixed)
  *
  * => caller must check alignment and size 
  * => map must be locked by caller
- * => if the "start"/"stop" range lie within a mapping of a share map,
- *    then the unmap takes place within the context of that share map
- *    rather than in the main map, unless the "mainonly" flag is set.
- *    (e.g. the "exit" system call would want to set "mainonly").
  * => we return a list of map entries that we've remove from the map
  *    in "entry_list"
  */
 
 int
-uvm_unmap_remove(map, start, end, mainonly, entry_list)
+uvm_unmap_remove(map, start, end, entry_list)
 	vm_map_t map;
 	vaddr_t start,end;
-	boolean_t mainonly;
 	vm_map_entry_t *entry_list;	/* OUT */
 {
-	int result, refs;
 	vm_map_entry_t entry, first_entry, next;
 	vaddr_t len;
-	boolean_t already_removed;
-	struct uvm_object *uobj;
 	UVMHIST_FUNC("uvm_unmap_remove");
 	UVMHIST_CALLED(maphist);
 
@@ -925,25 +919,7 @@ uvm_unmap_remove(map, start, end, mainonly, entry_list)
 	 * find first entry
 	 */
 	if (uvm_map_lookup_entry(map, start, &first_entry) == TRUE) {
-		/*
-		 * start lies within a mapped region.   first check to see if
-		 * it is within a sharemap (in which case we recurse and unmap
-		 * within the context of the share map).
-		 */
-		if (UVM_ET_ISMAP(first_entry) &&
-		    !UVM_ET_ISSUBMAP(first_entry) &&
-		    mainonly == 0 && end <= first_entry->end) {
-			/*
-			 * is a share map and in range ... 
-			 * XXX: do address transforms if share VA's != main VA's
-			 * note: main map kept locked during share map unlock
-			 */
-			result = uvm_unmap(first_entry->object.share_map,
-			    start, end, 0);
-			*entry_list = NULL;
-			return(result);
-		}
-		/* non-share map: clip and go... */
+		/* clip and go... */
 		entry = first_entry;
 		UVM_MAP_CLIP_START(map, entry, start);
 		/* critical!  prevents stale hint */
@@ -1068,8 +1044,6 @@ uvm_unmap_remove(map, start, end, mainonly, entry_list)
 			entry->start - vm_map_min(kernel_map),
 			entry->end - vm_map_min(kernel_map));
 
-			already_removed = TRUE;
-
 			/*
 			 * null out kernel_object reference, we've just
 			 * dropped it
@@ -1077,48 +1051,16 @@ uvm_unmap_remove(map, start, end, mainonly, entry_list)
 			entry->etype &= ~UVM_ET_OBJ;
 			entry->object.uvm_obj = NULL;	/* to be safe */
 
-		} else
-			already_removed = FALSE;
-
-		/*
-		 * remove mappings now.   for sharemaps, check to see if
-		 * the reference count is one (i.e. not being shared right
-		 * now).   if so, use the cheaper pmap_remove() rather than
-		 * the more expensive share_protect functions.
-		 */
-
-		if (!map->is_main_map) {
-			simple_lock(&map->ref_lock);
-			refs = map->ref_count;
-			simple_unlock(&map->ref_lock);
-		}
-#if defined(sparc)
-		else
-			refs = 0; /* XXX: gcc */
-#endif
-
-		if (map->is_main_map || (!map->is_main_map && refs == 1)) {
-			if (!already_removed)
-				pmap_remove(map->pmap, entry->start,
-				    entry->end);
 		} else {
-			/* share map... must remove all mappings */
-			if (entry->aref.ar_amap) {
-				simple_lock(&entry->aref.ar_amap->am_l);
-				amap_share_protect(entry, VM_PROT_NONE);
-				simple_unlock(&entry->aref.ar_amap->am_l);
-			}
-			if (UVM_ET_ISOBJ(entry)) {
-				uobj = entry->object.uvm_obj;
-				simple_lock(&uobj->vmobjlock);
-				uobj->pgops->pgo_shareprot(entry, VM_PROT_NONE);
-				simple_unlock(&uobj->vmobjlock);
-			}
+			/*
+		 	 * remove mappings the standard way.
+		 	 */
+			pmap_remove(map->pmap, entry->start, entry->end);
 		}
 
 		/*
-		 * remove from map and put it on our list of entries that
-		 * we've nuked.  then go do next entry.
+		 * remove entry from map and put it on our list of entries 
+		 * that we've nuked.  then go do next entry.
 		 */
 		UVMHIST_LOG(maphist, "  removed map entry 0x%x", entry, 0, 0,0);
 		uvm_map_entry_unlink(map, entry);
@@ -1164,9 +1106,10 @@ uvm_unmap_detach(first_entry, amap_unref_flags)
 #endif
 
 		UVMHIST_LOG(maphist,
-		    "  detach 0x%x: amap=0x%x, obj=0x%x, map?=%d", first_entry,
-		    first_entry->aref.ar_amap, first_entry->object.uvm_obj,
-		UVM_ET_ISMAP(first_entry));
+		    "  detach 0x%x: amap=0x%x, obj=0x%x, submap?=%d", 
+		    first_entry, first_entry->aref.ar_amap, 
+		    first_entry->object.uvm_obj,
+		    UVM_ET_ISSUBMAP(first_entry));
 
 		/*
 		 * drop reference to amap, if we've got one
@@ -1179,8 +1122,9 @@ uvm_unmap_detach(first_entry, amap_unref_flags)
 		 * drop reference to our backing object, if we've got one
 		 */
 		
-		if (UVM_ET_ISMAP(first_entry)) {
-			uvm_map_deallocate(first_entry->object.share_map);
+		if (UVM_ET_ISSUBMAP(first_entry)) {
+			/* ... unlikely to happen, but play it safe */
+			uvm_map_deallocate(first_entry->object.sub_map);
 		} else {
 			if (UVM_ET_ISOBJ(first_entry) &&
 			    first_entry->object.uvm_obj->pgops->pgo_detach)
@@ -1694,7 +1638,7 @@ bad2:			/* src already unlocked */
 	if (chain)
 		uvm_unmap_detach(chain,
 		    (flags & UVM_EXTRACT_QREF) ? AMAP_REFALL : 0);
-	uvm_unmap(dstmap, dstaddr, dstaddr+len, 1);   /* ??? */
+	uvm_unmap(dstmap, dstaddr, dstaddr+len);   /* ??? */
 	return(error);
 }
 
@@ -1746,7 +1690,7 @@ uvm_map_submap(map, start, end, submap)
 		/*
 		 * doit!
 		 */
-		entry->etype |= (UVM_ET_MAP|UVM_ET_SUBMAP);
+		entry->etype |= UVM_ET_SUBMAP;
 		entry->object.sub_map = submap;
 		entry->offset = 0;
 		uvm_map_reference(submap);
@@ -1831,73 +1775,11 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 		 */
 
 		if (current->protection != old_prot) {
-			if (UVM_ET_ISMAP(current) &&
-			    !UVM_ET_ISSUBMAP(current)) {
-				/* share map?   gotta go down a level */
-				vm_map_entry_t  share_entry;
-				vaddr_t     share_end;
-				
-				/*
-				 * note: a share map has its own address
-				 * space (starting at zero). current->offset
-				 * is the offset into the share map our
-				 * mapping starts.    the length of our
-				 * mapping is (current->end - current->start).
-				 * thus, our mapping goes from current->offset
-				 * to share_end (which is: current->offset +
-				 * length) in the share map's address space.
-				 *
-				 * thus for any share_entry we need to make
-				 * sure that the addresses we've got fall in
-				 * the range we want.   we use:
-				 *  max(any share_entry->start, current->offset)
-				 *  min(any share_entry->end, share_end)
-				 *
-				 * of course to change our pmap we've got to
-				 * convert the share * map address back to
-				 * our map's virtual address space using:
-				 *  our_va = share_va -
-				 *     current->offset + current->start
-				 *
-				 * XXXCDC: protection change in sharemap may
-				 * require use of pmap_page_protect.   needs
-				 * a rethink.
-				 */
 
-				vm_map_lock(current->object.share_map);
-				/*
-				 * note: current->offset is offset into
-				 * share map
-				 */
-				(void)uvm_map_lookup_entry(
-				    current->object.share_map,
-				    current->offset, &share_entry);
-				share_end = current->offset +
-				    (current->end - current->start);
-				while ((share_entry !=
-				    &current->object.share_map->header) &&
-				       (share_entry->start < share_end)) {
+			/* update pmap! */
+			pmap_protect(map->pmap, current->start, current->end,
+			    current->protection & MASK(entry));
 
-					pmap_protect(map->pmap,
-					    (max(share_entry->start,
-					      current->offset) -
-					    current->offset + current->start),
-					    min(share_entry->end, share_end) -
-					    current->offset + current->start,
-					    current->protection &
-					    MASK(share_entry));
-
-					share_entry = share_entry->next;
-				}
-				vm_map_unlock(current->object.share_map);
-
-			} else {             /* not share map! */
-
-				pmap_protect(map->pmap, current->start,
-				    current->end,
-				    current->protection & MASK(entry));
-
-			}
 		}
 		current = current->next;
 	}
@@ -2092,14 +1974,11 @@ uvm_map_pageable(map, start, end, new_pageable)
 			 * perform actions of vm_map_lookup that need the
 			 * write lock on the map: create an anonymous map
 			 * for a copy-on-write region, or an anonymous map
-			 * for a zero-fill region.
-			 *
-			 * we don't have to do this for entries that point
-			 * to sharing maps, because we won't hold the lock
-			 * on the sharing map.  
+			 * for a zero-fill region.  (XXXCDC: submap case
+			 * ok?)
 			 */
 			
-			if (!UVM_ET_ISMAP(entry)) {      /* not sharing map */
+			if (!UVM_ET_ISSUBMAP(entry)) {  /* not submap */
 				/*
 				 * XXXCDC: protection vs. max_protection??
 				 * (wirefault uses max?)
@@ -2266,27 +2145,10 @@ uvm_map_clean(map, start, end, flags)
 		size = (end <= current->end ? end : current->end) - start;
 
 		/*
-		 * get object/offset.   special case to handle share maps.
+		 * get object/offset.  can't be submap (checked above).
 		 */
-		if (UVM_ET_ISMAP(current)) {   /* share map? */
-			register vm_map_t smap;
-			vm_map_entry_t tentry;
-			vsize_t tsize;
-
-			smap = current->object.share_map;
-			vm_map_lock_read(smap);
-			(void) uvm_map_lookup_entry(smap, offset, &tentry);
-			tsize = tentry->end - offset;
-			if (tsize < size)
-				size = tsize;
-			object = tentry->object.uvm_obj;
-			offset = tentry->offset + (offset - tentry->start);
-			simple_lock(&object->vmobjlock);
-			vm_map_unlock_read(smap);
-		} else {
-			object = current->object.uvm_obj;
-			simple_lock(&object->vmobjlock);
-		}
+		object = current->object.uvm_obj;
+		simple_lock(&object->vmobjlock);
 
 		/*
 		 * flush pages if writing is allowed.   note that object is
@@ -2501,7 +2363,7 @@ uvmspace_exec(p)
 		/*
 		 * now unmap the old program
 		 */
-		uvm_unmap(map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS, 0);
+		uvm_unmap(map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
 
 	} else {
 
@@ -2570,7 +2432,7 @@ uvmspace_free(vm)
 		if (vm->vm_map.nentries) {
 			(void)uvm_unmap_remove(&vm->vm_map,
 			    vm->vm_map.min_offset, vm->vm_map.max_offset,
-			    TRUE, &dead_entries);
+			    &dead_entries);
 			if (dead_entries != NULL)
 				uvm_unmap_detach(dead_entries, 0);
 		}
@@ -2635,19 +2497,11 @@ uvmspace_fork(vm1)
 		 * first, some sanity checks on the old entry
 		 */
 		if (UVM_ET_ISSUBMAP(old_entry))
-	panic("fork: encountered a submap during fork (illegal)");
-		else if (UVM_ET_ISMAP(old_entry)) {
-			if (UVM_ET_ISNEEDSCOPY(old_entry))
-	panic("fork: encountered a share map entry that needs_copy (illegal)");
-			if (UVM_ET_ISCOPYONWRITE(old_entry))
-	panic("fork: encountered a copy_on_write share map entry (illegal)");
-			if (old_entry->aref.ar_amap)
-	panic("fork: detected share map entry that has an amap (illegal)");
-		} else {
-			if (!UVM_ET_ISCOPYONWRITE(old_entry) &&
+		    panic("fork: encountered a submap during fork (illegal)");
+
+		if (!UVM_ET_ISCOPYONWRITE(old_entry) &&
 			    UVM_ET_ISNEEDSCOPY(old_entry))
 	panic("fork: non-copy_on_write map entry marked needs_copy (illegal)");
-		}
 
 
 		switch (old_entry->inheritance) {
@@ -2685,11 +2539,9 @@ uvmspace_fork(vm1)
 			new_entry->wired_count = 0;
 
 			/*
-			 * gain reference to objects backing the map
+			 * gain reference to object backing the map (can't
+			 * be a submap, already checked this case).
 			 */
-			if (UVM_ET_ISMAP(new_entry)) {   /* share map? */
-				uvm_map_reference(old_entry->object.share_map);
-			} else {
 			if (new_entry->aref.ar_amap)
 				/* share reference */
 				amap_ref(new_entry, AMAP_SHARED);
@@ -2699,7 +2551,6 @@ uvmspace_fork(vm1)
 				new_entry->object.uvm_obj->
 				    pgops->pgo_reference(
 				        new_entry->object.uvm_obj);
-			}
 
 			/* insert entry at end of new_map's entry list */
 			uvm_map_entry_link(new_map, new_map->header.prev,
@@ -2722,23 +2573,9 @@ uvmspace_fork(vm1)
 			/*
 			 * copy-on-write the mapping (using mmap's
 			 * MAP_PRIVATE semantics)
-			 */
-
-			/*
-			 * share maps: we special case it (handled by
-			 * uvm_map_sharemapcopy)
-			 */
-
-			if (UVM_ET_ISMAP(old_entry)) {   /* share map? */
-				uvm_map_sharemapcopy(old_map, old_entry,
-				    new_map);
-				break;
-			}
-
-			/*
-			 * not a share map.   allocate new_entry, adjust
-			 * reference counts.  (note that new references
-			 * are read-only).
+			 *
+			 * allocate new_entry, adjust reference counts.  
+			 * (note that new references are read-only).
 			 */
 
 			new_entry = uvm_mapent_alloc(new_map);
@@ -2935,176 +2772,6 @@ uvmspace_fork(vm1)
 }
 
 
-/*
- * uvm_map_sharemapcopy: handle the copying of a share map during a
- * fork.  this is a helper function for uvmspace_fork.  it is called
- * when we are doing a fork and we have encountered a map entry which
- * has two attributes: [1] its inherit code is VM_INHERIT_COPY, and
- * [2] it points to a share map (i.e. is_a_map is true).  in this case
- * we must traverse the area of the share map pointed to by the
- * old_entry and make private copies of the map entries in the share
- * map.  this is somewhat similar to what happens in the non-share map
- * case in fork, but it has to handle multiple map entries which may
- * not be the proper size.  it was seperated out into its own function
- * in order to make the main body of the fork code easier to read and
- * understand!
- *
- * main_entry->offset = starting VA in share map for our mapping
- *
- * => main map is locked by caller.
- * => we lock share map.
- * => new map isn't in use yet (still being set up for the first time).
- */
-
-void
-uvm_map_sharemapcopy(main_map, main_entry, new_map)
-	vm_map_t main_map, new_map;
-	vm_map_entry_t main_entry;
-{
-	vm_map_t share_map = main_entry->object.share_map;
-	vm_map_entry_t share_entry, new_entry;
-	vaddr_t shend = main_entry->offset + 
-		(main_entry->end - main_entry->start);
-	int refs;
-
-	/*
-	 * lock share map.  find first map entry of interest.   clip if needed.
-	 */
-
-	vm_map_lock(share_map);
-	if (uvm_map_lookup_entry(share_map, main_entry->offset, &share_entry))
-		UVM_MAP_CLIP_START(share_map, share_entry, main_entry->offset);
-
-	while (share_entry != &share_map->header &&
-	    share_entry->start < shend) {
-
-		/*
-		 * at this point we have a map entry that we need to make a
-		 * copy of.
-		 */
-
-		/* may need to clip? */
-		UVM_MAP_CLIP_END(share_map, share_entry, shend);
-		new_entry = uvm_mapent_alloc(new_map);
-
-		/* share_entry -> new_entry */
-		uvm_mapent_copy(share_entry, new_entry);
-
-		/* convert share map addresses back to main map addresses */
-		new_entry->start = main_entry->start +
-			(new_entry->start - main_entry->offset);
-		new_entry->end = main_entry->start +
-		    (new_entry->end - main_entry->offset);
-
-		/* gain references */
-		if (new_entry->aref.ar_amap) {
-			amap_ref(new_entry, 0);
-		}
-		if (new_entry->object.uvm_obj &&
-		    new_entry->object.uvm_obj->pgops->pgo_reference)
-			new_entry->object.uvm_obj->
-			    pgops->pgo_reference(new_entry->object.uvm_obj);
-
-		/* init rest of new entry and insert at end of new map */
-		new_entry->wired_count = 0;
-		new_entry->etype |= (UVM_ET_COPYONWRITE|UVM_ET_NEEDSCOPY);
-		uvm_map_entry_link(new_map, new_map->header.prev, new_entry);
-			
-		/*
-		 * don't bother trying to defer the copy in the share map case
-		 */
-		/* XXXCDC: WAITOK? */
-		amap_copy(new_map, new_entry, M_WAITOK, FALSE, 0, 0);
-
-		/* just like non-share case: can't COW wired memory */
-		if (share_entry->wired_count != 0 &&
-		    UVM_ET_ISCOPYONWRITE(share_entry)) {
-			amap_cow_now(new_map, new_entry);
-		} else {
-			
-			/* just like non-share case */
-			if (UVM_ET_ISCOPYONWRITE(share_entry)) {
-
-				if (!UVM_ET_ISNEEDSCOPY(share_entry)) {
-
-					/*
-					 * must write protect pages.   if we
-					 * have the sole reference to the share
-					 * map we can use good old pmap_protect.
-					 * if we don't, then we have to use
-					 * pmap_page_protect.  note that the VA
-					 * new_entry->start (starting entry of
-					 * this segment of the share map in
-					 * child process) is the same virtual
-					 * address it is mapped in in the parent
-					 * (thus we can mix main_map and
-					 * new_entry in the pmap_protect call
-					 * below).
-					 */
-
-					simple_lock(&share_map->ref_lock);
-					refs = share_map->ref_count;
-					simple_unlock(&share_map->ref_lock);
-					if (refs == 1) {
-						pmap_protect(main_map->pmap,
-						    new_entry->start,
-						    new_entry->end,
-						share_entry->protection &
-						    ~VM_PROT_WRITE);
-					} else {
-						if (share_entry->aref.ar_amap) {
-					simple_lock(
-					    &share_entry->aref.ar_amap->am_l);
-					amap_share_protect(share_entry,
-					    share_entry->protection &
-					    ~VM_PROT_WRITE);
-					simple_unlock(
-					    &share_entry->aref.ar_amap->am_l);
-						}
-						if (share_entry->object.uvm_obj)
-						{
-#ifdef DIAGNOSTIC
-				if (!share_entry->object.uvm_obj->pgops->
-				    pgo_shareprot)
-			panic("fork: share_entry with no prot function");
-#endif
-				simple_lock(
-				    &share_entry->object.uvm_obj->vmobjlock);
-				share_entry->object.uvm_obj->pgops->
-				    pgo_shareprot(share_entry, 
-				share_entry->protection & ~VM_PROT_WRITE);
-				simple_unlock(
-				    &share_entry->object.uvm_obj->vmobjlock);
-						}
-					}
-					share_entry->etype |= UVM_ET_NEEDSCOPY;
-				}
-			}
-
-			/*
-			 * now copy the mappings: note address are the same
-			 * in both main_map and new_map 
-			 */
-			pmap_copy(new_map->pmap, main_map->pmap,
-			    new_entry->start,
-			    (new_entry->end - new_entry->start),
-			    new_entry->start);
-
-			/* just like non-share case */
-			if (!UVM_ET_ISCOPYONWRITE(share_entry)) {
-				pmap_protect(new_map->pmap, new_entry->start,
-				    new_entry->end,
-				    new_entry->protection & ~VM_PROT_WRITE);
-			}
-		}
-
-		/* next entry in share map, please */
-		share_entry = share_entry->next;
-
-	}
-	/* done! */
-}
-
 #if defined(DDB)
 
 /*
@@ -3137,9 +2804,8 @@ uvm_map_printit(map, full, pr)
 	vm_map_entry_t entry;
 
 	(*pr)("MAP %p: [0x%lx->0x%lx]\n", map, map->min_offset,map->max_offset);
-	(*pr)("\t#ent=%d, sz=%d, ref=%d, main=%c, version=%d\n",
-	    map->nentries, map->size, map->ref_count,
-	    (map->is_main_map) ? 'T' : 'F', map->timestamp);
+	(*pr)("\t#ent=%d, sz=%d, ref=%d, version=%d\n",
+	    map->nentries, map->size, map->ref_count, map->timestamp);
 #ifdef pmap_resident_count
 	(*pr)("\tpmap=%p(resident=%d)\n", map->pmap, 
 	    pmap_resident_count(map->pmap));
@@ -3155,8 +2821,7 @@ uvm_map_printit(map, full, pr)
 		    entry, entry->start, entry->end, entry->object.uvm_obj,
 		    entry->offset, entry->aref.ar_amap, entry->aref.ar_slotoff);
 		(*pr)(
-"\tmap=%c, submap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, wc=%d, adv=%d\n",
-		    (entry->etype & UVM_ET_MAP) ? 'T' : 'F', 
+"\tsubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, wc=%d, adv=%d\n",
 		    (entry->etype & UVM_ET_SUBMAP) ? 'T' : 'F',
 		    (entry->etype & UVM_ET_COPYONWRITE) ? 'T' : 'F', 
 		    (entry->etype & UVM_ET_NEEDSCOPY) ? 'T' : 'F',
