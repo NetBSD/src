@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.15 2002/09/27 18:56:56 christos Exp $	*/
+/*	$NetBSD: shell.h,v 1.16 2003/01/22 20:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,12 +44,12 @@
  *	SHORTNAMES -> 1 if your linker cannot handle long names.
  *	define BSD if you are running 4.2 BSD or later.
  *	define SYSV if you are running under System V.
- *	define DEBUG=1 to compile in debugging (set global "debug" to turn on)
+ *	define DEBUG=1 to compile in debugging ('set -o debug' to turn on)
  *	define DEBUG=2 to compile in and turn on debugging.
  *	define DO_SHAREDVFORK to indicate that vfork(2) shares its address
  *	       with its parent.
  *
- * When debugging is on, debugging info will be written to $HOME/trace and
+ * When debugging is on, debugging info will be written to ./trace and
  * a quit signal will generate a core dump.
  */
 
@@ -80,6 +80,8 @@ extern char nullstr[1];		/* null string */
 
 #ifdef DEBUG
 #define TRACE(param)	trace param
+#define TRACEV(param)	tracev param
 #else
 #define TRACE(param)
+#define TRACEV(param)
 #endif

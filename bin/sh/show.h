@@ -1,4 +1,4 @@
-/*	$NetBSD: show.h,v 1.5 2002/11/24 22:35:43 christos Exp $	*/
+/*	$NetBSD: show.h,v 1.6 2003/01/22 20:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -35,9 +35,12 @@
  *	@(#)show.h	1.1 (Berkeley) 5/4/95
  */
 
+#include <stdarg.h>
+
 union node;
 void showtree(union node *);
 void trace(const char *, ...);
+void tracev(const char *, va_list);
 void trargs(char **);
 #ifdef DEBUG
 void trputc(int);

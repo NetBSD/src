@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.69 2002/11/25 21:55:58 agc Exp $	*/
+/*	$NetBSD: eval.c,v 1.70 2003/01/22 20:36:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.69 2002/11/25 21:55:58 agc Exp $");
+__RCSID("$NetBSD: eval.c,v 1.70 2003/01/22 20:36:03 dsl Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdlib.h>
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -52,6 +53,7 @@ __RCSID("$NetBSD: eval.c,v 1.69 2002/11/25 21:55:58 agc Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/sysctl.h>
 
 /*
  * Evaluate a command.
@@ -200,7 +202,8 @@ evaltree(union node *n, int flags)
 #ifndef SMALL
 	displayhist = 1;	/* show history substitutions done with fc */
 #endif
-	TRACE(("pid %d, evaltree(%p: %d) called\n", getpid(), n, n->type));
+	TRACE(("pid %d, evaltree(%p: %d, %d) called\n",
+	    getpid(), n, n->type, flags));
 	switch (n->type) {
 	case NSEMI:
 		evaltree(n->nbinary.ch1, flags & EV_TESTED);
@@ -210,11 +213,8 @@ evaltree(union node *n, int flags)
 		break;
 	case NAND:
 		evaltree(n->nbinary.ch1, EV_TESTED);
-		if (evalskip || exitstatus != 0) {
-			/* don't bomb out on "set -e; false && true" */
-			flags |= EV_TESTED;
+		if (evalskip || exitstatus != 0)
 			goto out;
-		}
 		evaltree(n->nbinary.ch2, flags | EV_TESTED);
 		break;
 	case NOR:
@@ -265,7 +265,6 @@ evaltree(union node *n, int flags)
 		evaltree(n->nnot.com, EV_TESTED);
 		exitstatus = !exitstatus;
 		break;
-
 	case NPIPE:
 		evalpipe(n);
 		break;
@@ -579,6 +578,60 @@ out:
 		result->fd, result->buf, result->nleft, result->jp));
 }
 
+static const char *
+syspath(void)
+{
+	static char *sys_path = NULL;
+	static int mib[] = {CTL_USER, USER_CS_PATH};
+	int len;
+
+	if (sys_path == NULL) {
+		if (sysctl(mib, 2, 0, &len, 0, 0) != -1 &&
+		    (sys_path = ckmalloc(len + 5)) != NULL &&
+		    sysctl(mib, 2, sys_path + 5, &len, 0, 0) != -1) {
+			memcpy(sys_path, "PATH=", 5);
+		} else {
+			ckfree(sys_path);
+			/* something to keep things happy */
+			sys_path = "PATH=/usr/bin:/bin:/usr/sbin:/sbin";
+		}
+	}
+	return sys_path;
+}
+
+static int
+parse_command_args(int argc, char **argv, int *use_syspath)
+{
+	int sv_argc = argc;
+	char *cp, c;
+
+	*use_syspath = 0;
+
+	for (;;) {
+		argv++;
+		if (--argc == 0)
+			break;
+		cp = *argv;
+		if (*cp++ != '-')
+			break;
+		if (*cp == '-' && cp[1] == 0) {
+			argv++;
+			argc--;
+			break;
+		}
+		while ((c = *cp++)) {
+			switch (c) {
+			case 'p':
+				*use_syspath = 1;
+				break;
+			default:
+				/* run 'typecmd' for other options */
+				return 0;
+			}
+		}
+	}
+	return sv_argc - argc;
+}
 
 int vforked = 0;
 
@@ -609,6 +662,8 @@ evalcommand(union node *cmd, int flags, struct backcmd *backcmd)
 	struct localvar *volatile savelocalvars;
 	volatile int e;
 	char *lastarg;
+	const char *path = pathval();
+	int temp_path;
 #if __GNUC__
 	/* Avoid longjmp clobbering */
 	(void) &argv;
@@ -672,14 +727,19 @@ evalcommand(union node *cmd, int flags, struct backcmd *backcmd)
 
 	/* Print the command if xflag is set. */
 	if (xflag) {
-		outc('+', &errout);
+		char sep = 0;
+		out2str(ps4val());
 		for (sp = varlist.list ; sp ; sp = sp->next) {
-			outc(' ', &errout);
+			if (sep != 0)
+				outc(sep, &errout);
 			out2str(sp->text);
+			sep = ' ';
 		}
 		for (sp = arglist.list ; sp ; sp = sp->next) {
-			outc(' ', &errout);
+			if (sep != 0)
+				outc(sep, &errout);
 			out2str(sp->text);
+			sep = ' ';
 		}
 		outc('\n', &errout);
 		flushout(&errout);
@@ -687,42 +747,49 @@ evalcommand(union node *cmd, int flags, struct backcmd *backcmd)
 
 	/* Now locate the command. */
 	if (argc == 0) {
-		cmdentry.cmdtype = CMDBUILTIN;
+		cmdentry.cmdtype = CMDSPLBLTIN;
 		cmdentry.u.bltin = bltincmd;
 	} else {
 		static const char PATH[] = "PATH=";
-		const char *path = pathval();
+		int cmd_flags = DO_ERR;
 
 		/*
 		 * Modify the command lookup path, if a PATH= assignment
 		 * is present
 		 */
-		for (sp = varlist.list ; sp ; sp = sp->next)
+		for (sp = varlist.list; sp; sp = sp->next)
 			if (strncmp(sp->text, PATH, sizeof(PATH) - 1) == 0)
 				path = sp->text + sizeof(PATH) - 1;
 
-		find_command(argv[0], &cmdentry, DO_ERR, path);
-		if (cmdentry.cmdtype == CMDUNKNOWN) {	/* command not found */
-			exitstatus = 127;
-			flushout(&errout);
-			return;
-		}
-		/* implement the 'command' (was bltin) builtin here */
-		while (cmdentry.cmdtype == CMDBUILTIN && cmdentry.u.bltin == bltincmd) {
-			argv++;
-			if (--argc == 0)
-				break;
-			if ((cmdentry.u.bltin = find_builtin(*argv)) != 0)
-				continue;
-			if ((cmdentry.u.bltin = find_splbltin(*argv)) == 0) {
-				outfmt(&errout, "%s: not found\n", *argv);
+		do {
+			int argsused, use_syspath;
+			find_command(argv[0], &cmdentry, cmd_flags, path);
+			if (cmdentry.cmdtype == CMDUNKNOWN) {
 				exitstatus = 127;
 				flushout(&errout);
-				return;
+				goto out;
 			}
-			cmdentry.cmdtype = CMDSPLBLTIN;
-			break;
-		}
+
+			/* implement the 'command' builtin here */
+			if (cmdentry.cmdtype != CMDBUILTIN ||
+			    cmdentry.u.bltin != bltincmd)
+				break;
+			cmd_flags |= DO_NOFUNC;
+			argsused = parse_command_args(argc, argv, &use_syspath);
+			if (argsused == 0) {
+				/* use 'type' builting to display info */
+				cmdentry.u.bltin = typecmd;
+				break;
+			}
+			argc -= argsused;
+			argv += argsused;
+			if (use_syspath)
+				path = syspath() + 5;
+		} while (argc != 0);
+		if (cmdentry.cmdtype == CMDSPLBLTIN && cmd_flags & DO_NOFUNC)
+			/* posix mandates that 'command <splbltin>' act as if
+			   <splbltin> was a normal builtin */
+			cmdentry.cmdtype = CMDBUILTIN;
 	}
 
 	/* Fork off a child process if necessary. */
@@ -775,8 +842,7 @@ evalcommand(union node *cmd, int flags, struct backcmd *backcmd)
 				}
 				savehandler = handler;
 				handler = &jmploc;
-				for (sp = varlist.list; sp; sp = sp->next)
-					mklocal(sp->text, VEXPORT);
+				listmklocal(varlist.list, VEXPORT | VNOFUNC);
 				forkchild(jp, cmd, mode, vforked);
 				break;
 			default:
@@ -819,7 +885,8 @@ normal_fork:
 
 	/* This is the child process if a fork occurred. */
 	/* Execute the command. */
-	if (cmdentry.cmdtype == CMDFUNCTION) {
+	switch (cmdentry.cmdtype) {
+	case CMDFUNCTION:
 #ifdef DEBUG
 		trputs("Shell function:  ");  trargs(argv);
 #endif
@@ -849,9 +916,10 @@ normal_fork:
 		}
 		savehandler = handler;
 		handler = &jmploc;
-		for (sp = varlist.list ; sp ; sp = sp->next)
-			mklocal(sp->text, 0);
-		funcnest++;
+		listmklocal(varlist.list, 0);
+		/* stop shell blowing its stack */
+		if (++funcnest > 1000)
+			error("too many nested function calls");
 		evaltree(cmdentry.u.func, flags & EV_TESTED);
 		funcnest--;
 		INTOFF;
@@ -868,7 +936,10 @@ normal_fork:
 		}
 		if (flags & EV_EXIT)
 			exitshell(exitstatus);
-	} else if (cmdentry.cmdtype == CMDBUILTIN || cmdentry.cmdtype == CMDSPLBLTIN) {
+		break;
+
+	case CMDBUILTIN:
+	case CMDSPLBLTIN:
 #ifdef DEBUG
 		trputs("builtin command:  ");  trargs(argv);
 #endif
@@ -879,10 +950,22 @@ normal_fork:
 			memout.bufsize = 64;
 			mode |= REDIR_BACKQ;
 		}
+		e = -1;
 		savehandler = handler;
 		handler = &jmploc;
-		e = -1;
 		if (!setjmp(jmploc.loc)) {
+			/* We need to ensure the command hash table isn't
+			 * corruped by temporary PATH assignments.
+			 * However we must ensure the 'local' command works!
+			 */
+			if (path != pathval() && (cmdentry.u.bltin == hashcmd ||
+			    cmdentry.u.bltin == typecmd)) {
+				savelocalvars = localvars;
+				localvars = 0;
+				mklocal(path - 5 /* PATH= */, 0);
+				temp_path = 1;
+			} else
+				temp_path = 0;
 			redirect(cmd->ncmd.redirect, mode);
 
 			savecmdname = commandname;
@@ -901,32 +984,27 @@ normal_fork:
 			exitstatus = cmdentry.u.bltin(argc, argv);
 		} else {
 			e = exception;
-			exitstatus = e == EXINT ? SIGINT+128 :
+			exitstatus = e == EXINT ? SIGINT + 128 :
 					e == EXEXEC ? exerrno : 2;
 		}
+		handler = savehandler;
 		flushall();
 		out1 = &output;
 		out2 = &errout;
 		freestdout();
+		if (temp_path) {
+			poplocalvars();
+			localvars = savelocalvars;
+		}
 		cmdenviron = NULL;
 		if (e != EXSHELLPROC) {
 			commandname = savecmdname;
 			if (flags & EV_EXIT)
 				exitshell(exitstatus);
 		}
-		handler = savehandler;
 		if (e != -1) {
 			if ((e != EXERROR && e != EXEXEC)
-			    || cmdentry.cmdtype == CMDSPLBLTIN
-			    || cmdentry.u.bltin == bltincmd)
-#if 0
-			   || cmdentry.u.bltin == dotcmd
-			   || cmdentry.u.bltin == evalcmd
-#ifndef SMALL
-			   || cmdentry.u.bltin == histcmd
-#endif
-			   || cmdentry.u.bltin == execcmd)
-#endif
+			    || cmdentry.cmdtype == CMDSPLBLTIN)
 				exraise(e);
 			FORCEINTON;
 		}
@@ -937,7 +1015,9 @@ normal_fork:
 			backcmd->nleft = memout.nextc - memout.buf;
 			memout.buf = NULL;
 		}
-	} else {
+		break;
+
+	default:
 #ifdef DEBUG
 		trputs("normal command:  ");  trargs(argv);
 #endif
@@ -947,7 +1027,8 @@ normal_fork:
 			for (sp = varlist.list ; sp ; sp = sp->next)
 				setvareq(sp->text, VEXPORT|VSTACK);
 		envp = environment();
-		shellexec(argv, envp, pathval(), cmdentry.u.index, vforked);
+		shellexec(argv, envp, path, cmdentry.u.index, vforked);
+		break;
 	}
 	goto out;
 
@@ -963,6 +1044,10 @@ parent:	/* parent process gets here (if we forked) */
 
 out:
 	if (lastarg)
+		/* dsl: I think this is intended to be used to support
+		 * '_' in 'vi' command mode during line editing...
+		 * However I implemented that within libedit itself.
+		 */
 		setvar("_", lastarg, 0);
 	popstackmark(&smark);
 
@@ -997,15 +1082,12 @@ prehash(union node *n)
  */
 
 /*
- * No command given, or a bltin command with no arguments.  Set the
- * specified variables.
+ * No command given.
  */
 
 int
 bltincmd(int argc, char **argv)
 {
-	/* "command" isn't a special builtin.... */
-	listsetvar(cmdenviron, 0);
 	/*
 	 * Preserve exitstatus of a previous possible redirection
 	 * as POSIX mandates
@@ -1086,7 +1168,7 @@ execcmd(int argc, char **argv)
 		iflag = 0;		/* exit on error */
 		mflag = 0;
 		optschanged();
-		for (sp = cmdenviron; sp ; sp = sp->next)
+		for (sp = cmdenviron; sp; sp = sp->next)
 			setvareq(sp->text, VEXPORT|VSTACK);
 		shellexec(argv + 1, environment(), pathval(), 0, 0);
 	}
