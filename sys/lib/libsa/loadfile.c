@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.15 2001/07/31 20:03:03 bjh21 Exp $ */
+/* $NetBSD: loadfile.c,v 1.16 2001/07/31 21:09:52 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -273,7 +273,6 @@ elf_exec(fd, elf, marks, flags)
 	int flags;
 {
 	Elf_Shdr *shp;
-	Elf_Off off;
 	int i, j;
 	size_t sz;
 	int first;
@@ -376,8 +375,6 @@ elf_exec(fd, elf, marks, flags)
 		 * string table that isn't referenced by a symbol
 		 * table.
 		 */
-		off = roundup((sizeof(Elf_Ehdr) + sz), sizeof(long));
-
 		for (first = 1, i = 0; i < elf->e_shnum; i++) {
 			switch (shp[i].sh_type) {
 			case SHT_STRTAB:
@@ -404,10 +401,9 @@ elf_exec(fd, elf, marks, flags)
 						return 1;
 					}
 				}
+				shp[i].sh_offset = maxp - elfp;
 				maxp += roundup(shp[i].sh_size,
 				    sizeof(long));
-				shp[i].sh_offset = off;
-				off += roundup(shp[i].sh_size, sizeof(long));
 				first = 0;
 			}
 		}
