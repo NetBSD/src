@@ -266,7 +266,7 @@ override_options ()
 	static int const cache_latency[][4] = 
 	{
 	  { 3, 30, -1 },	/* ev4 -- Bcache is a guess */
-	  { 2, 12, 38 },	/* ev5 -- Bcache from PC164 LMbench numbers */
+	  { 3, 12, 38 },	/* ev5 -- Bcache from PC164 LMbench numbers */
 	  { 3, 13, -1 },	/* ev6 -- Ho hum, doesn't exist yet */
 	};
 
