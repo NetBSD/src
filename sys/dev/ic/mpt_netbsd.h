@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.h,v 1.1 2003/04/16 22:03:00 thorpej Exp $	*/
+/*	$NetBSD: mpt_netbsd.h,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -241,6 +241,11 @@ typedef struct mpt_softc {
 	/* To restore configuration after hard reset. */
 	void			(*sc_set_config_regs)(struct mpt_softc *);
 } mpt_softc_t;
+
+#define	MPT_SYNC_REQ(mpt, req, ops)				\
+	bus_dmamap_sync((mpt)->sc_dmat, (mpt)->request_dmap,	\
+	    (req)->req_pbuf - (mpt)->request_phys,		\
+	    MPT_REQUEST_AREA, (ops))
 
 #define	mpt_read(mpt, reg)					\
 	bus_space_read_4((mpt)->sc_st, (mpt)->sc_sh, (reg))
