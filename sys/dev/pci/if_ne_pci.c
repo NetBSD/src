@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.16 2000/03/22 20:58:29 ws Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.17 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -286,8 +286,7 @@ ne_pci_attach(parent, self, aux)
 	ne2000_attach(nsc, NULL, media, nmedia, defmedia);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", dsc->sc_dev.dv_xname);
 		return;
 	}

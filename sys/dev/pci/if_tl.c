@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.38 2000/12/14 06:42:57 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.39 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -390,8 +390,7 @@ tl_pci_attach(parent, self, aux)
 	    ether_sprintf(sc->tl_enaddr));
 
 	/* Map and establish interrupts */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &intrhandle)) {
+	if (pci_intr_map(pa, &intrhandle)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

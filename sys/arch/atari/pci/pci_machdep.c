@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.27 2000/09/28 07:26:49 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.28 2000/12/28 22:59:08 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -625,12 +625,12 @@ pci_conf_write(pc, tag, reg, data)
 }
 
 int
-pci_intr_map(pc, intrtag, pin, line, ihp)
-	pci_chipset_tag_t pc;
-	pcitag_t intrtag;
-	int pin, line;
+pci_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
+	int line = pa->pa_intrline;
+
 	/*
 	 * According to the PCI-spec, 255 means `unknown' or `no connection'.
 	 * Interpret this as 'no interrupt assigned'.

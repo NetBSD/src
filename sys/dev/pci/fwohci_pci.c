@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.5 2000/12/13 11:30:14 enami Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.6 2000/12/28 22:59:12 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,8 +114,7 @@ fwohci_pci_attach(struct device *parent, struct device *self, void *aux)
                        csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
         	printf("%s: couldn't map interrupt\n", self->dv_xname);
 		return;
 	}

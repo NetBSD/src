@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.29 2000/12/17 22:23:12 thorpej Exp $ */
+/* $NetBSD: tga.c,v 1.30 2000/12/28 22:59:15 sommerfeld Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -387,8 +387,7 @@ tgaattach(parent, self, aux)
 
 	/* XXX say what's going on. */
 	intrstr = NULL;
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &intrh)) {
+	if (pci_intr_map(pa, &intrh)) {
 		printf(": couldn't map interrupt");
 		return;
 	}

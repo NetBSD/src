@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.4 2000/06/04 19:14:31 cgd Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.5 2000/12/28 22:59:08 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -66,7 +66,7 @@ void		footbridge_pci_decompose_tag __P((void *, pcitag_t, int *,
 pcireg_t	footbridge_pci_conf_read __P((void *, pcitag_t, int));
 void		footbridge_pci_conf_write __P((void *, pcitag_t, int,
 		    pcireg_t));
-int		footbridge_pci_intr_map __P((void *, pcitag_t, int, int,
+int		footbridge_pci_intr_map __P((struct pci_attach_args *,
 		    pci_intr_handle_t *));
 const char	*footbridge_pci_intr_string __P((void *, pci_intr_handle_t));
 const struct evcnt *footbridge_pci_intr_evcnt __P((void *, pci_intr_handle_t));
@@ -241,12 +241,13 @@ footbridge_pci_conf_write(pcv, tag, reg, data)
 }
 
 int
-footbridge_pci_intr_map(pcv, intrtag, pin, line, ihp)
-	void *pcv;
-	pcitag_t intrtag;
-	int pin, line;
+footbridge_pci_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
+	void *pcv = pa->pa_pc;
+	pcitag_t intrtag = pa->pa_intrtag;
+	int pin = pa->pa_intrpin, line = pa->pa_intrline;
 	int intr = -1;
 
 #ifdef PCI_DEBUG

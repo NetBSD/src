@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.6 2000/06/13 13:36:50 ad Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.7 2000/12/28 22:59:11 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1999 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.6 2000/06/13 13:36:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.7 2000/12/28 22:59:11 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,8 +120,7 @@ dpt_pci_attach(parent, self, aux)
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("can't map interrupt\n");
 		return;
 	}

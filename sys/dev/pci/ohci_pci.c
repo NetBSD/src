@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.17 2000/09/06 00:17:23 augustss Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.18 2000/12/28 22:59:14 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,8 +122,7 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", devname);
 		return;
 	}
