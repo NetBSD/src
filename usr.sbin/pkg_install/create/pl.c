@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.25 2003/01/05 21:49:54 agc Exp $	*/
+/*	$NetBSD: pl.c,v 1.26 2003/06/12 13:29:32 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.25 2003/01/05 21:49:54 agc Exp $");
+__RCSID("$NetBSD: pl.c,v 1.26 2003/06/12 13:29:32 agc Exp $");
 #endif
 #endif
 
@@ -149,7 +149,10 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 			if (update_pkgdb) {
 				char   *s, t[FILENAME_MAX];
 
-				(void) snprintf(t, sizeof(t), "%s/%s", cwd, p->name);
+				(void) snprintf(t, sizeof(t), "%s%s%s",
+					cwd,
+					(strcmp(cwd, "/") == 0) ? "" : "/",
+					p->name);
 
 				s = pkgdb_retrieve(t);
 #ifdef PKGDB_DEBUG
@@ -172,7 +175,10 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 			} else {
 				/* after @cwd */
 				/* prepend DESTDIR if set?  - HF */
-				(void) snprintf(name, sizeof(name), "%s/%s", cwd, p->name);
+				(void) snprintf(name, sizeof(name), "%s%s%s",
+					cwd,
+					(strcmp(cwd, "/") == 0) ? "" : "/",
+					p->name);
 			}
 			if (lstat(name, &st) < 0) {
 				warnx("can't stat `%s'", name);
