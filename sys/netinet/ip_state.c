@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.13 1998/05/29 20:24:38 veego Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.14 1998/05/29 20:28:17 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -473,8 +473,8 @@ u_short sp, dp;
 		     (!out && is->is_ifpin == ifp)) &&
 		    (is->is_dst.s_addr == dst.s_addr) &&
 		    (is->is_src.s_addr == src.s_addr) &&
-		    (!tcp || (sp == is->is_sport) &&
-		     (dp == is->is_dport))) {
+		    (!tcp || ((sp == is->is_sport) &&
+		     (dp == is->is_dport)))) {
 			ret = 1;
 		}
 	} else {
@@ -482,8 +482,8 @@ u_short sp, dp;
 		     (!out && is->is_ifpout == ifp)) &&
 		    (is->is_dst.s_addr == src.s_addr) &&
 		    (is->is_src.s_addr == dst.s_addr) &&
-		    (!tcp || (sp == is->is_dport) &&
-		     (dp == is->is_sport))) {
+		    (!tcp || ((sp == is->is_dport) &&
+		     (dp == is->is_sport)))) {
 			ret = 1;
 		}
 	}
