@@ -1,3 +1,4 @@
+/*	$NetBSD: pfvar.h,v 1.2 2004/06/22 14:17:08 itojun Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.187 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -38,8 +39,18 @@
 #include <sys/tree.h>
 
 #include <net/radix.h>
+#ifdef __OpenBSD__
 #include <netinet/ip_ipsp.h>
+#endif
 #include <netinet/tcp_fsm.h>
+
+#ifdef __NetBSD__
+union sockaddr_union {
+	struct sockaddr         sa;
+	struct sockaddr_in      sin;
+	struct sockaddr_in6     sin6;
+};
+#endif
 
 struct ip;
 
@@ -125,6 +136,15 @@ struct pf_addr_wrap {
 };
 
 #ifdef _KERNEL
+
+#ifdef __NetBSD__
+struct hook_desc {
+	TAILQ_ENTRY(hook_desc) hd_list;
+	void	(*hd_fn)(void *);
+	void	*hd_arg;
+};
+TAILQ_HEAD(hook_desc_head, hook_desc);
+#endif
 
 struct pfi_dynaddr {
 	struct pf_addr		 pfid_addr4;
@@ -811,6 +831,9 @@ struct pfi_kif {
 	struct ifnet			*pfik_ifp;
 	int				 pfik_states;
 	int				 pfik_rules;
+#ifdef __NetBSD__
+	struct hook_desc_head		*pfik_ifaddrhooks;
+#endif
 };
 #define pfik_name	pfik_if.pfif_name
 #define pfik_packets	pfik_if.pfif_packets
@@ -1449,6 +1472,11 @@ struct pf_pool_limit {
 };
 extern struct pf_pool_limit	pf_pool_limits[PF_LIMIT_MAX];
 
+#ifdef __NetBSD__
+int pfil4_wrapper(void *, struct mbuf **, struct ifnet *, int);
+int pfil6_wrapper(void *, struct mbuf **, struct ifnet *, int);
+int pfil_if_wrapper(void *, struct mbuf **, struct ifnet *, int);
+#endif
 #endif /* _KERNEL */
 
 /* The fingerprint functions can be linked into userland programs (tcpdump) */

@@ -1,3 +1,4 @@
+/*	$NetBSD: pf_osfp.c,v 1.2 2004/06/22 14:17:08 itojun Exp $	*/
 /*	$OpenBSD: pf_osfp.c,v 1.9 2004/01/04 20:08:42 pvalchev Exp $ */
 
 /*
@@ -16,6 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/socket.h>
