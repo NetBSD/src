@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.1 2001/03/05 22:49:42 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.2 2001/04/08 20:53:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -765,15 +765,15 @@ void
 preempt(struct lwp *newl)
 {
 	struct lwp *l = curproc;
-	int s;
+	int r, s;
 
 	SCHED_LOCK(s);
 	l->l_priority = l->l_usrpri;
 	l->l_stat = LSRUN;
 	setrunqueue(l);
 	l->l_proc->p_stats->p_ru.ru_nivcsw++;
-	mi_switch(l, newl);
-	if (l->l_flag & L_SA)
+	r = mi_switch(l, newl);
+	if (r && (l->l_flag & L_SA))
 		sa_upcall(l, SA_UPCALL_PREEMPTED, l, NULL, 0, 0);
 	SCHED_ASSERT_UNLOCKED();
 	splx(s);
@@ -785,8 +785,10 @@ preempt(struct lwp *newl)
  * the sched_lock held.
  * Switch to "new" if non-NULL, otherwise let cpu_switch choose
  * the next lwp.
+ * 
+ * Returns 1 if another process was actually run.
  */
-void
+int
 mi_switch(struct lwp *l, struct lwp *new)
 {
 	struct schedstate_percpu *spc;
@@ -797,6 +799,7 @@ mi_switch(struct lwp *l, struct lwp *new)
 	int hold_count;
 #endif
 	struct proc *p = l->l_proc;
+	int retval;
 
 	SCHED_ASSERT_LOCKED();
 
@@ -876,10 +879,12 @@ mi_switch(struct lwp *l, struct lwp *new)
 	 * run again, we'll return back here.
 	 */
 	uvmexp.swtch++;
-	if (new == NULL)
-		cpu_switch(l);
-	else
+	if (new == NULL) {
+		retval = cpu_switch(l);
+	} else {
 		cpu_preempt(l, new);
+		retval = 0;
+	}
 
 	/*
 	 * Make sure that MD code released the scheduler lock before
@@ -905,6 +910,8 @@ mi_switch(struct lwp *l, struct lwp *new)
 	if (p->p_flag & P_BIGLOCK)
 		spinlock_acquire_count(&kernel_lock, hold_count);
 #endif
+
+	return retval;
 }
 
 /*
