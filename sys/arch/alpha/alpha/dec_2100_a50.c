@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a50.c,v 1.45 2001/03/25 05:52:39 nathanw Exp $ */
+/* $NetBSD: dec_2100_a50.c,v 1.46 2001/04/19 18:25:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.45 2001/03/25 05:52:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.46 2001/04/19 18:25:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,15 @@ static void dec_2100_a50_mcheck_handler
 static void dec_2100_a50_mcheck __P((unsigned long, unsigned long,
 				     unsigned long, struct trapframe *));
 
+
+#ifdef KGDB
+#include <machine/db_machdep.h>
+
+static const char *kgdb_devlist[] = {
+	"com",
+	NULL,
+};
+#endif /* KGDB */
 
 const struct alpha_variation_table dec_2100_a50_variations[] = {
 	{ SV_ST_AVANTI,	"AlphaStation 400 4/233 (\"Avanti\")" },
@@ -174,6 +183,10 @@ dec_2100_a50_cons_init()
 		panic("consinit: unknown console type %ld\n",
 		    ctb->ctb_term_type);
 	}
+#ifdef KGDB
+	/* Attach the KGDB device. */
+	alpha_kgdb_init(kgdb_devlist, &acp->ac_iot);
+#endif /* KGDB */
 }
 
 static void
