@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.19 2002/06/18 07:56:14 tshiozak Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.20 2002/11/22 15:23:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -203,20 +203,6 @@ extern struct i386_bus_dma_tag isa_bus_dma_tag;
 #define	MONO_BUF	0xB0000
 #define	CGA_BASE	0x3D4
 #define	CGA_BUF		0xB8000
-
-/*
- * Interrupt handler chains.  isa_intr_establish() inserts a handler into
- * the list.  The handler is called with its (single) argument.
- */
-
-struct intrhand {
-	int	(*ih_fun)(void *);
-	void	*ih_arg;
-	u_long	ih_count;
-	struct	intrhand *ih_next;
-	int	ih_level;
-	int	ih_irq;
-};
 
 /*
  * Variables and macros to deal with the ISA I/O hole.

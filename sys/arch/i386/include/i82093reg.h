@@ -1,4 +1,4 @@
-/* $NetBSD: i82093reg.h,v 1.2 2002/10/01 12:57:05 fvdl Exp $ */
+/* $NetBSD: i82093reg.h,v 1.3 2002/11/22 15:23:46 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,3 +118,7 @@
 #define IMCR_REGISTER		0x70
 #define		IMCR_PIC	0x00
 #define 	IMCR_APIC	0x01
+
+
+#define ioapic_asm_ack(num) \
+	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI

@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.2 2002/10/01 12:57:05 fvdl Exp $ */
+/* $NetBSD: i82093var.h,v 1.3 2002/11/22 15:23:46 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,17 +45,15 @@
 
 struct ioapic_pin 
 {
-	struct intrhand		*ip_handler; 
-	struct ioapic_pin	*ip_next; /* next pin on this vector */
+	struct ioapic_pin	*ip_next;	/* next pin on this vector */
 	struct mp_intr_map 	*ip_map;
-	int			ip_vector; /* IDT vector */
+	int			ip_vector;	/* IDT vector */
 	int			ip_type;
-	int			ip_minlevel;
-	int			ip_maxlevel;
+	struct cpu_info		*ip_cpu;	/* target CPU */
 };
 
 struct ioapic_softc {
-	struct device		sc_dev;	/* generic device glue */
+	struct pic		sc_pic;
 	struct ioapic_softc	*sc_next;
 	int			sc_apicid;
 	int			sc_apic_vers;
@@ -83,6 +81,8 @@ struct ioapic_softc {
 
 #define APIC_IRQ_APIC(x) ((x & APIC_INT_APIC_MASK) >> APIC_INT_APIC_SHIFT)
 #define APIC_IRQ_PIN(x) ((x & APIC_INT_PIN_MASK) >> APIC_INT_PIN_SHIFT)
+#define APIC_IRQ_ISLEGACY(x) (!((x) & APIC_INT_VIA_APIC))
+#define APIC_IRQ_LEGACY_IRQ(x) ((x) & 0xff)
 
 void *apic_intr_establish __P((int, int, int, int (*)(void *), void *)); 
 void apic_intr_disestablish __P((void *));

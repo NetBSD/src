@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.5 2002/10/25 12:01:56 fvdl Exp $ */
+/* $NetBSD: cpu.c,v 1.6 2002/11/22 15:23:39 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -268,6 +268,10 @@ cpu_attach(parent, self, aux)
 	ci->ci_dev = self;
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_func = caa->cpu_func;
+
+	simple_lock_init(&ci->ci_slock);
+
+	cpu_intr_init(ci);
 
 #if defined(MULTIPROCESSOR)
 	/*
@@ -569,16 +573,17 @@ cpu_hatch(void *v)
 #endif
 
 	lcr0(ci->ci_idle_pcb->pcb_cr0);
+	cpu_init_idt();
 	lapic_set_lvt();
 	gdt_init_cpu(ci);
 	npxinit(ci);
-	cpu_init_idt();
 
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 
 	cpu_init(ci);
 
 	s = splhigh();
+	lapic_tpr = 0;
 	enable_intr();
 
 	printf("%s: CPU %ld running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
@@ -658,7 +663,7 @@ cpu_init_tss(struct i386tss *tss, void *stack, void *func)
 typedef void (vector)(void);
 extern vector IDTVEC(tss_trap08);
 #ifdef DDB
-extern vector Xintr_tss_ddbipi;
+extern vector Xintrddbipi;
 extern int ddb_vec;
 #endif
 
@@ -686,7 +691,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	 */
 	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE);
 	cpu_init_tss(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
-	    Xintr_tss_ddbipi);
+	    Xintrddbipi);
 
 	setsegment(&sd, &ci->ci_ddbipi_tss, sizeof(struct i386tss) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.5 2002/10/06 20:38:37 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.6 2002/11/22 15:23:43 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1042,7 +1042,7 @@ mpbios_int(ent, enttype, mpi)
 			if ((altmpi->type != type) ||
 			    (altmpi->flags != flags)) {
 				printf("%s: conflicting map entries for pin %d\n",
-				    sc->sc_dev.dv_xname, pin);
+				    sc->sc_pic.pic_dev.dv_xname, pin);
 			}
 		} else {
 			sc->sc_pins[pin].ip_map = mpi;
@@ -1060,7 +1060,8 @@ mpbios_int(ent, enttype, mpi)
 		char buf[256];
 
 		printf("%s: int%d attached to %s",
-		    sc? sc->sc_dev.dv_xname : "local apic", pin, mpb->mb_name);
+		    sc ? sc->sc_pic.pic_dev.dv_xname : "local apic",
+		    pin, mpb->mb_name);
 
 		if (mpb->mb_idx != -1)
 			printf("%d", mpb->mb_idx);

@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.87 2002/10/05 21:28:34 fvdl Exp $	*/
+/*	$NetBSD: npx.c,v 1.88 2002/11/22 15:23:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.87 2002/10/05 21:28:34 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.88 2002/11/22 15:23:50 fvdl Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -68,11 +68,11 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.87 2002/10/05 21:28:34 fvdl Exp $");
 #include <machine/trap.h>
 #include <machine/specialreg.h>
 #include <machine/pio.h>
+#include <machine/i8259.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <i386/isa/icu.h>
 #include <i386/isa/npxvar.h>
 
 /*
@@ -162,6 +162,11 @@ npxdna_empty(struct cpu_info *ci)
 
 int    (*npxdna_func)(struct cpu_info *) = npxdna_notset;
 
+/*
+ * This calls i8259_* directly, but currently we can count on systems
+ * having a i8259 compatible setup all the time. Maybe have to change
+ * that in the future.
+ */
 enum npx_type
 npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 {
@@ -169,9 +174,9 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 	struct gate_descriptor save_idt_npxtrap;
 	enum npx_type rv = NPX_NONE;
 	u_long	save_eflags;
-	unsigned save_imen;
 	int control;
 	int status;
+	unsigned irqmask;
 
 	save_eflags = read_eflags();
 	disable_intr();
@@ -181,9 +186,8 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 	    GSEL(GCODE_SEL, SEL_KPL));
 	setgate(&idt[16].gd, probetrap, 0, SDT_SYS386TGT, SEL_KPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
-	save_imen = imen;
-	imen = ~((1 << IRQ_SLAVE) | (1 << irq));
-	SET_ICUS();
+
+	irqmask = i8259_setmask(~((1 << IRQ_SLAVE) | (1 << irq)));
 
 	/*
 	 * Partially reset the coprocessor, if any.  Some BIOS's don't reset
@@ -254,9 +258,11 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 	disable_intr();
 	lcr0(rcr0() | (CR0_EM|CR0_TS));
 
-	imen = save_imen;
-	SET_ICUS();
+	irqmask = i8259_setmask(irqmask);
+
 	idt[NRSVIDT + irq].gd = save_idt_npxintr;
+	idt_allocmap[NRSVIDT + irq] = 1;
+
 	idt[16].gd = save_idt_npxtrap;
 	write_eflags(save_eflags);
 
@@ -318,12 +324,12 @@ npxattach(struct npx_softc *sc)
  * IRQ13 exception handling makes exceptions even less precise than usual.
  */
 int
-npxintr(void *arg)
+npxintr(void *arg, struct intrframe iframe)
 {
 	struct cpu_info *ci = curcpu();
 	struct proc *p = ci->ci_fpcurproc;
 	union savefpu *addr;
-	struct intrframe *frame = arg;
+	struct intrframe *frame = &iframe;
 	struct npx_softc *sc;
 	int code;
 
@@ -684,8 +690,8 @@ npxsave_proc(struct proc *p, int save)
 		while (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		{
 			spincount++;
-			delay(1000); /* XXX */
-			if (spincount > 10000) {
+			delay(10); /* XXX */
+			if (spincount > 1000000) {
 				panic("fp_save ipi didn't");
 			}
 		}

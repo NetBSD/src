@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.64 2002/10/01 12:56:47 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.65 2002/11/22 15:23:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2002/10/01 12:56:47 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.65 2002/11/22 15:23:38 fvdl Exp $");
 
 #include "opt_compat_oldboot.h"
 
@@ -76,9 +76,14 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2002/10/01 12:56:47 fvdl Exp $");
 #include <machine/bootinfo.h>
 
 #include "ioapic.h"
+#include "lapic.h"
 
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
+#endif
+
+#if NLAPIC > 0
+#include <machine/i82489var.h>
 #endif
 
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
@@ -134,11 +139,12 @@ cpu_configure()
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    (u_short)IMASK(IPL_BIO), (u_short)IMASK(IPL_NET),
-	    (u_short)IMASK(IPL_TTY));
+#ifdef INTRDEBUG
+	intr_printconfig();
+#endif
 
 #if NIOAPIC > 0
+	lapic_set_lvt();
 	ioapic_enable();
 #endif
 	/* resync cr0 after FPU configuration */
@@ -149,6 +155,9 @@ cpu_configure()
 #endif
 
 	spl0();
+#if NLAPIC > 0
+	lapic_tpr = 0;
+#endif
 
 	/* XXX Finish deferred buffer cache allocation. */
 	i386_bufinit();

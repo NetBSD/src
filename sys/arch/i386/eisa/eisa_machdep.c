@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.16 2002/10/01 12:56:46 fvdl Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.17 2002/11/22 15:23:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.16 2002/10/01 12:56:46 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.17 2002/11/22 15:23:37 fvdl Exp $");
 
 #include "ioapic.h"
 
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.16 2002/10/01 12:56:46 fvdl Exp $
 #define _I386_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
-#include <i386/isa/icu.h>
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/eisa/eisavar.h>
@@ -151,11 +150,7 @@ eisa_intr_map(ec, irq, ihp)
 	u_int irq;
 	eisa_intr_handle_t *ihp;
 {
-#if NIOAPIC > 0
-	struct mp_intr_map *mip;
-#endif
-
-	if (irq >= ICU_LEN) {
+	if (irq >= NUM_LEGACY_IRQS) {
 		printf("eisa_intr_map: bad IRQ %d\n", irq);
 		*ihp = -1;
 		return 1;
@@ -166,35 +161,17 @@ eisa_intr_map(ec, irq, ihp)
 	}
 
 #if NIOAPIC > 0
+
 	if (mp_busses != NULL) {
-		int bus = mp_eisa_bus;
-
-		if (bus != -1) {
-			for (mip = mp_busses[bus].mb_intrs; mip != NULL;
-			     mip=mip->next) {
-				if (mip->bus_pin == irq) {
-					*ihp = mip->ioapic_ih | irq;
-					return 0;
-				}
-			}
-		}
-
-		bus = mp_isa_bus;
-		
-		if (bus != -1) {
-			for (mip = mp_busses[bus].mb_intrs; mip != NULL;
-			     mip=mip->next) {
-				if (mip->bus_pin == irq) {
-					*ihp = mip->ioapic_ih | irq;
-					return 0;
-				}
-			}
-		}
-
-		printf("eisa_intr_map: no MP mapping found\n");
+		if (intr_find_mpmapping(mp_eisa_bus, irq, ihp) == 0 ||
+		    intr_find_mpmapping(mp_isa_bus, irq, ihp) == 0) {
+			*ihp |= irq;
+			return 0;
+		} else
+			printf("eisa_intr_map: no MP mapping found\n");
 	}
+	printf("eisa_intr_map: no MP mapping found\n");
 #endif
-	
 
 	*ihp = irq;
 	return 0;
@@ -207,7 +184,7 @@ eisa_intr_string(ec, ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
-	if (ih == 0 || (ih & 0xff) >= ICU_LEN || ih == 2)
+	if (ih == 0 || (ih & 0xff) >= NUM_LEGACY_IRQS || ih == 2)
 		panic("eisa_intr_string: bogus handle 0x%x", ih);
 
 #if NIOAPIC > 0
@@ -240,19 +217,28 @@ eisa_intr_establish(ec, ih, type, level, func, arg)
 	int type, level, (*func) __P((void *));
 	void *arg;
 {
-	if (ih != -1) {
+	int pin, irq;
+	struct pic *pic;
+
+	pic = &i8259_pic;
+	pin = irq = ih;
+
 #if NIOAPIC > 0
-		if (ih & APIC_INT_VIA_APIC) {
-			return apic_intr_establish(ih, type, level,
-			    func, arg);
+	if (ih & APIC_INT_VIA_APIC) {
+		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(ih));
+		if (pic == NULL) {
+			printf("eisa_intr_establish: bad ioapic %d\n",
+			    APIC_IRQ_APIC(ih));
+			return NULL;
 		}
-#endif
+		pin = APIC_IRQ_PIN(ih);
+		irq = APIC_IRQ_LEGACY_IRQ(ih);
+		if (irq < 0 || irq >= NUM_LEGACY_IRQS)
+			irq = -1;
 	}
+#endif
 
-	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("eisa_intr_establish: bogus handle 0x%x", ih);
-
-	return isa_intr_establish(NULL, ih, type, level, func, arg);
+	return intr_establish(irq, pic, pin, type, level, func, arg);
 }
 
 void
@@ -261,7 +247,7 @@ eisa_intr_disestablish(ec, cookie)
 	void *cookie;
 {
 
-	isa_intr_disestablish(NULL, cookie);
+	intr_disestablish(cookie);
 }
 
 int
