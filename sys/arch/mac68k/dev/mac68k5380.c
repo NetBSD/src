@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.4 1995/09/02 19:29:42 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.5 1995/09/03 03:36:35 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -46,7 +46,7 @@
 /*
  * Include the driver definitions
  */
-#include <atari/dev/ncr5380reg.h>
+#include <mac68k/dev/ncr5380reg.h>
 
 #include <machine/stdarg.h>
 
@@ -488,4 +488,4 @@ scsi_timeout_error:
 #endif /* if USE_PDMA */
 
 /* Include general routines. */
-#include <atari/dev/ncr5380.c>
+#include <mac68k/dev/ncr5380.c>
