@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.166 2002/12/31 02:21:31 dsainty Exp $	*/
+/*	$NetBSD: uhci.c,v 1.167 2003/01/01 16:25:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.166 2002/12/31 02:21:31 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.167 2003/01/01 16:25:59 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -743,6 +743,7 @@ uhci_power(int why, void *v)
 		UHCICMD(sc, cmd | UHCI_CMD_FGR); /* force global resume */
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
 		UHCICMD(sc, cmd & ~UHCI_CMD_EGSM); /* back to normal */
+		UHCICMD(sc, UHCI_CMD_MAXP);
 		UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE |
 			UHCI_INTR_IOCE | UHCI_INTR_SPIE); /* re-enable intrs */
 		uhci_run(sc, 1); /* and start traffic again */
