@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.105 2000/01/21 00:48:41 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.106 2000/01/23 13:54:44 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -2581,11 +2581,12 @@ sys/dev/eisa/eisadevs_data.h			regenerate
   Add vendor entries for AT&T, NEC and DPT.  Add product entries
   for various EATA SCSI adapters.
 
-distrib/utils/sysinst/defs.h			1.49
-distrib/utils/sysinst/run.c			1.25
+distrib/utils/sysinst/defs.h			1.50
+distrib/utils/sysinst/run.c			1.26-1.28
 
   Get rid of the side and bottom borders on command output windows,
-  so this works better on a terminal.
+  so this works better on a terminal.  Also fix bugs that could
+  cause the display to be partially blanked after a suspend/resume.
 
 sys/dev/pci/if_ex_pci.c				1.10
 
@@ -2820,3 +2821,116 @@ sbin/fsck_lfs/pass1.c				1.4
 sys/dev/isa/ioat66.c				1.1
 
   Add a driver for BOCA 6-port ISA serial adapter.
+
+usr.sbin/portmap/portmap.8			1.8-1.10
+
+  Fix cross-references, and grammar fixes.
+
+bin/ksh/sh.h					1.4
+games/hunt/hunt/hunt.c				1.9
+games/hunt/huntd/hunt.h				1.6
+lib/libntp/msyslog.c				1.6
+lib/libntp/syssignal.c				1.5
+lib/libwrap/hosts_access.c			1.11
+lib/libwrap/workarounds.c			1.6
+libexec/telnetd/telnetd.h			1.6
+sbin/init/init.c				1.36
+usr.bin/file/file.h				1.18
+usr.bin/mail/lex.c				1.14
+usr.bin/make/compat.c				1.29
+usr.bin/make/job.c				1.32
+usr.bin/systat/vmstat.c				1.24
+usr.bin/telnet/externs.h			1.16
+usr.bin/tftp/tftp.c				1.11 via patch
+usr.bin/tn3270/sys_curses/system.c		1.14
+usr.bin/top/commands.c				1.5
+usr.sbin/edquota/edquota.c			1.20
+usr.sbin/mtrace/mtrace.c			1.14
+usr.sbin/repquota/repquota.c			1.16
+usr.sbin/sup/source/scm.c			1.9
+usr.sbin/sup/source/scmio.c			1.7
+usr.sbin/sup/source/supcdefs.h			1.9
+usr.sbin/sup/source/supfilesrv.c		1.19
+usr.sbin/tcpdchk/percent_m.c			1.4
+usr.sbin/timed/timed/globals.h			1.5
+usr.sbin/timed/timedc/timedc.h			1.6
+usr.sbin/xntp/include/config.h			1.7
+usr.sbin/xntp/ntpdate/ntpdate.c			1.8
+usr.sbin/xntp/ntptrace/ntptrace.c		1.8
+usr.sbin/xntp/xntpd/ntp_filegen.c		1.4
+usr.sbin/xntp/xntpd/ntp_intres.c		1.4
+usr.sbin/xntp/xntpd/ntp_io.c			1.11
+usr.sbin/xntp/xntpd/ntp_util.c			1.4
+include/errno.h					1.2
+
+  Always do the errno indirection hack, so that non-threaded
+  libraries get the right errno value when linked with -lpthread.
+  This means "always include <errno.h> and never declare errno
+  yourself".
+
+usr.sbin/amd/libamu/xutil.c			1.5
+
+  Check for buffer overflow in real_plog(), in case it could be
+  called with a malicious string.  No known exploit, and it's
+  not obvious it's possible.
+
+sys/dev/ata/ata.c				1.11
+sys/dev/ata/ata_wdc.c				1.23
+sys/dev/ata/atavar.h				1.15
+sys/dev/scsipi/atapi_wdc.c			1.30 via patch
+sys/dev/ic/wdc.c				1.78 (partial) via patch
+
+  Improve the downgrade logic to work better in some cases (especially
+  for Acer Labs M5229 controllers with Ultra-DMA/66 disks).
+
+sys/dev/ic/wdc.c				1.78 (2nd part) via patch
+
+  Issue a blank IDENTIFY before the real one, for drives which
+  reject the first IDENTIFY after a reset.
+
+usr.sbin/tcpdump/print-tcp.c			1.11
+
+  Fix LP64 and aliasing problems in checksum verification code.
+
+sys/dev/scsipi/scsi_base.c			1.71
+sys/dev/scsipi/scsipi_base.c			1.29 via patch
+sys/dev/scsipi/scsipiconf.h			1.36 via patch
+
+  Use SCSIPIRETRIES instead of hard-coded value '2' for number of
+  retries in common routines, and define it as 4 so that ATAPI
+  command will succeed after several downgrade.
+
+usr.bin/make/job.c				1.26-1.31
+
+  Several fixes:
+   o SystemV portability
+   o Avoid non-portable use of 'sh -q'
+   o Job control fixes when USE_PGRP is in use
+   o Fix stack overflow bugs, use snprintf (fixes PR#8259)
+   o Don't bother freeing mem right before exit()
+   o Be caseful when creating temporary files, to avoid
+     security problem.
+
+sys/arch/amiga/dev/if_ne_zbus.c			1.2
+
+  Add support for X-surf board.
+
+sys/dev/scsipi/st.c				1.118
+
+  Recognize (indirectly) HP4000s via density code and do the right
+  QIC type dance.  Fixes PR#9271.
+
+gnu/usr.bin/tar/list.c				1.7
+
+  Only skip some bytes if the associated object is not a directory.
+  Needed for some tar files.  Fixes PR#9274.
+
+sys/dev/scsipi/sdvar.h				1.11
+
+  Fix a size inconsistency of "struct sd_softc" if the "random"
+  pseudo-device is enabled, leading to data corruption.
+
+sys/arch/alpha/alpha/machdep.c			1.192
+
+  Fix netisr processing for PPP when only one device is configured.
+  Fixes PR#9257.
