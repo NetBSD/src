@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.5 2000/04/10 03:49:57 matt Exp $ */
+/* $NetBSD: sgmap.c,v 1.6 2000/05/17 21:22:20 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -249,7 +249,19 @@ vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
 		/*
 		 * Load the current PTE with this page.
 		 */
-		*pte = (pa >> VAX_PGSHIFT) | PG_V;
+		if (sgmap->aps_flags & SGMAP_KA49) {
+			unsigned long pte0 = (pa & ~VAX_PGOFSET);
+			unsigned long tmp = pte0 >> VAX_PGSHIFT;
+			int cnt;
+
+			for (cnt = 0; tmp != 0; tmp >>= 1) {
+				cnt += (tmp & 1);
+			}
+			*pte = pte0 | PG_V | ((cnt & 1) ? 0 : 0x10000000);
+			printf("%p: 0x%08lx\n", pte, *pte);
+		} else {
+			*pte = (pa >> VAX_PGSHIFT) | PG_V;
+		}
 	}
 	/* The VS4000 SCSI prefetcher doesn't like to end on a page boundary
 	 * so add an extra page to quiet it down.

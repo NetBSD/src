@@ -1,4 +1,4 @@
-/* $NetBSD: vsbus_dma.c,v 1.4 2000/04/23 16:38:54 matt Exp $ */
+/* $NetBSD: vsbus_dma.c,v 1.5 2000/05/17 21:22:20 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -129,9 +129,10 @@ vsbus_dma_init(sc, ptecnt)
 		memset(pte, 0, mapsize);
 		*(int *) (sc->sc_vsregs + 8) = segs->ds_addr;	/* set MAP BASE 0x2008008 */
 	} else {
+		sc->sc_sgmap.aps_flags |= SGMAP_KA49;
 		pte = (struct pte *) vax_map_physmem(KA49_SCSIMAP, mapsize / VAX_NBPG);
-		for (; ptecnt > 0; ) {
-			((u_int32_t *) pte)[--ptecnt] = 0;
+		for (nsegs = ptecnt; nsegs > 0; ) {
+			((u_int32_t *) pte)[--nsegs] = 0x88000000;
 		}
 		segs->ds_addr = KA49_SCSIMAP;
 	}
