@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 1998/08/22 22:05:00 tv Exp $
+#	$NetBSD: Makefile,v 1.65 1998/08/22 22:06:23 tv Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -59,7 +59,7 @@ build: beforeinstall
 	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
 	(cd ${.CURDIR}/gnu/lib && \
 	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
-.if defined(USE_EGCS)
+.if defined(USE_EGCS) && (${HAVE_GCC28} != "")
 	(cd ${.CURDIR}/gnu/lib/libgcc && \
 	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
 .else
