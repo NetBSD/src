@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2004/01/05 08:59:55 jdolecek Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2004/04/23 02:58:28 simonb Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -898,7 +898,7 @@ sw_qnempty:
 	copy	%arg1, %t2
 	/*
 	 * Either we must be switching to the same LWP, or
-	 * the the new LWP's kernel stack must be reasonable.
+	 * the new LWP's kernel stack must be reasonable.
 	 */
 	comb,=,n %arg1, %arg2, kstack_ok
 	ldw	L_MD_REGS(%arg1), %t1

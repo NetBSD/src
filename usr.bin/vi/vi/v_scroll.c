@@ -1,4 +1,4 @@
-/*	$NetBSD: v_scroll.c,v 1.9 2002/04/09 01:47:36 thorpej Exp $	*/
+/*	$NetBSD: v_scroll.c,v 1.10 2004/04/23 02:58:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)v_scroll.c	10.9 (Berkeley) 4/27/96";
 #else
-__RCSID("$NetBSD: v_scroll.c,v 1.9 2002/04/09 01:47:36 thorpej Exp $");
+__RCSID("$NetBSD: v_scroll.c,v 1.10 2004/04/23 02:58:29 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -390,7 +390,7 @@ v_pagedown(sp, vp)
  * !!!
  * Historic vi did not move to the SOF if the screen couldn't move, i.e.
  * if SOF was already displayed on the screen.  This implementation does
- * move to SOF in that case, making ^B more like the the historic ^U.
+ * move to SOF in that case, making ^B more like the historic ^U.
  *
  * PUBLIC: int v_pageup __P((SCR *, VICMD *));
  */

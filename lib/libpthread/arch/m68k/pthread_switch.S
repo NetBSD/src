@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.6 2003/09/17 20:08:07 cl Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.7 2004/04/23 02:58:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  * thread is stored near the top of the stack. When the kernel
  * preempts a thread, it stores the ucontext_t just above the current
  * top-of-stack and passes the upcall handler the pointer to the
- * ucontext_t, and the upcall handler stores it in the the pt_uc field
+ * ucontext_t, and the upcall handler stores it in the pt_uc field
  * of the thread structure. When user-level code voluntairly switches
  * from one thread to another, the ucontext_t is just below the top of
  * the stack, and we impose a limit on the amount of stack space above

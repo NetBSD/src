@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.12 2004/04/22 00:17:11 itojun Exp $	*/
+/*	$NetBSD: iopl.c,v 1.13 2004/04/23 02:58:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.12 2004/04/22 00:17:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.13 2004/04/23 02:58:29 simonb Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -334,7 +334,7 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 	iop_initiator_register(iop, &sc->sc_ii_tx);
 
 	/*
-	 * Determine some of the the capabilities of the interface - in
+	 * Determine some of the capabilities of the interface - in
 	 * particular, the maximum number of segments per S/G list, and how
 	 * much buffer context we'll need to transmit frames (some adapters
 	 * may need the destination address in the buffer context).

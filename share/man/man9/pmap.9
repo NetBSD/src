@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.25 2004/01/20 10:40:03 pooka Exp $
+.\"	$NetBSD: pmap.9,v 1.26 2004/04/23 02:58:27 simonb Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -721,7 +721,7 @@ In this case, the call may be deleted using a C pre-processor macro in
 .It void Fn "pmap_activate" "struct lwp *l"
 Activate the physical map used by the process behind lwp
 .Fa l .
-This is called by the virtual memory system when the the
+This is called by the virtual memory system when the
 virtual memory context for a process is changed, and is also
 often used by machine-dependent context switch code to program
 the memory management hardware with the process's page table

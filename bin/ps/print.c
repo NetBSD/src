@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.89 2004/03/27 14:55:24 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.90 2004/04/23 02:58:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.89 2004/03/27 14:55:24 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.90 2004/04/23 02:58:27 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ printheader(void)
 }
 
 /*
- * Return 1 if the the command name in the argument vector (u-area) does
+ * Return 1 if the command name in the argument vector (u-area) does
  * not match the command name (p_comm)
  */
 static int

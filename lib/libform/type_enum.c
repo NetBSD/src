@@ -1,4 +1,4 @@
-/*	$NetBSD: type_enum.c,v 1.8 2004/03/22 18:59:48 jdc Exp $	*/
+/*	$NetBSD: type_enum.c,v 1.9 2004/04/23 02:58:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_enum.c,v 1.8 2004/03/22 18:59:48 jdc Exp $");
+__RCSID("$NetBSD: type_enum.c,v 1.9 2004/04/23 02:58:27 simonb Exp $");
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -125,7 +125,7 @@ create_enum_args(va_list *args)
 }
 
 /*
- * Copy the the enum argument structure.
+ * Copy the enum argument structure.
  */
 static char *
 copy_enum_args(char *args)

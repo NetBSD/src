@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.30 2003/06/30 12:10:40 wiz Exp $
+.\" $NetBSD: bus_dma.9,v 1.31 2004/04/23 02:58:27 simonb Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -447,7 +447,7 @@ for more information on this subject.
 .Pp
 On platforms which implement a weak memory access ordering model,
 .Fn bus_dmamap_sync
-will always cause the the appropriate memory barriers to be issued.
+will always cause the appropriate memory barriers to be issued.
 .Pp
 This function exists to ensure that the host and the device have
 a consistent view of a range of DMA memory, before and after

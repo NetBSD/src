@@ -1,4 +1,4 @@
-/*	$NetBSD: type_alpha.c,v 1.7 2003/03/09 00:57:19 lukem Exp $	*/
+/*	$NetBSD: type_alpha.c,v 1.8 2004/04/23 02:58:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_alpha.c,v 1.7 2003/03/09 00:57:19 lukem Exp $");
+__RCSID("$NetBSD: type_alpha.c,v 1.8 2004/04/23 02:58:27 simonb Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -65,7 +65,7 @@ create_alpha_args(va_list *args)
 }
 
 /*
- * Copy the the alpha argument structure.
+ * Copy the alpha argument structure.
  */
 static char *
 copy_alpha_args(char *args)

@@ -1,4 +1,4 @@
-/* $NetBSD: if_eireg.h,v 1.2 2001/12/21 22:33:28 bjh21 Exp $ */
+/* $NetBSD: if_eireg.h,v 1.3 2004/04/23 02:58:29 simonb Exp $ */
 
 /*
  * 2000 Ben Harris
@@ -52,10 +52,9 @@
 #define EI_SCP_ADDR	IE_SCP_ADDR % EI_MEMSIZE
 
 /*
- * The ROM on the Ether1 is a bit oddly wired, in that the interrupt
- * line is wired up as the high-order address line, so as to allow the
- * interrupt status bit the the first byte to reflect the actual
- * interrupt status.
+ * The ROM on the Ether1 is a bit oddly wired, in that the interrupt line
+ * is wired up as the high-order address line, so as to allow the interrupt
+ * status bit the first byte to reflect the actual interrupt status.
  */
 
 #define EI_ROMSIZE	0x20

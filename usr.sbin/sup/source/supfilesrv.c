@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.28 2004/04/21 01:05:48 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.29 2004/04/23 02:58:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -103,7 +103,7 @@
  * 	the local_file() call (when the file is local) at the same time the
  * 	crypt key is read.  This change disallows non-local files for the
  * 	crypt key to plug a security hole involving the usage of the uid/gid
- * 	of the crypt file to define who the the file server should run as.  If
+ * 	of the crypt file to define who the file server should run as.  If
  * 	the saved uid/gid are both valid, then the server will set its uid/gid
  * 	to these values.
  * 	[90/04/18            dlc]
@@ -1820,7 +1820,7 @@ fmttime(time_t time)
  * Currently, the cases that we try to distinguish are RFS, AFS, NFS and
  * UFS, where the latter is considered a trusted file.  We assume that the
  * caller has disabled link following and will detect an attempt to access
- * a file through an RFS link, except in the case the the last component is
+ * a file through an RFS link, except in the case the last component is
  * an RFS link.  With link following disabled, the last component itself is
  * interpreted as a regular file if it is really an RFS link, so we
  * disallow the RFS link identified by group "symlink" and mode "IEXEC by

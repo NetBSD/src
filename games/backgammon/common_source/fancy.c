@@ -1,4 +1,4 @@
-/*	$NetBSD: fancy.c,v 1.11 2003/08/07 09:36:57 agc Exp $	*/
+/*	$NetBSD: fancy.c,v 1.12 2004/04/23 02:58:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fancy.c,v 1.11 2003/08/07 09:36:57 agc Exp $");
+__RCSID("$NetBSD: fancy.c,v 1.12 2004/04/23 02:58:27 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -591,7 +591,7 @@ fancyc(c)
 		addbuf(c);
 		return;
 	}
-	/* process tabs, use spaces if the the tab should be erasing things,
+	/* process tabs, use spaces if the tab should be erasing things,
 	 * otherwise use cursor movement routines.  Note this does not use
 	 * hardware tabs at all. */
 	if (c == '\t') {

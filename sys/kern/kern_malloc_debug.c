@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.11 2003/10/24 00:53:43 yamt Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.12 2004/04/23 02:58:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -41,7 +41,7 @@
  * more types will also add to the complexity of the code.
  *
  * This is really simple. Every malloc() allocates two virtual pages,
- * the second page is left unmapped, and the the value returned is aligned
+ * the second page is left unmapped, and the value returned is aligned
  * so that it ends at (or very close to) the page boundary to catch overflows.
  * Every free() changes the protection of the first page to VM_PROT_NONE so
  * that we can catch any dangling writes to it.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.11 2003/10/24 00:53:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.12 2004/04/23 02:58:29 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.39 2004/04/21 18:40:41 itojun Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.40 2004/04/23 02:58:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.39 2004/04/21 18:40:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.40 2004/04/23 02:58:29 simonb Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -833,8 +833,8 @@ vlan_start(struct ifnet *ifp)
 
 /*
  * Given an Ethernet frame, find a valid vlan interface corresponding to the
- * given source interface and tag, then run the the real packet through
- * the parent's input routine.
+ * given source interface and tag, then run the real packet through the 
+ * parent's input routine.
  */
 void
 vlan_input(struct ifnet *ifp, struct mbuf *m)
