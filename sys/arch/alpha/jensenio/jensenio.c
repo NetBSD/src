@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.1 2000/07/12 20:36:08 thorpej Exp $ */
+/* $NetBSD: jensenio.c,v 1.2 2000/08/14 02:14:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.1 2000/07/12 20:36:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.2 2000/08/14 02:14:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.1 2000/07/12 20:36:08 thorpej Exp $")
 
 #include <alpha/jensenio/jensenioreg.h>
 #include <alpha/jensenio/jenseniovar.h>
+
+#include "eisa.h"
 
 /*
  * The devices built-in to the VLSI VL82C106 junk I/O chip.
@@ -261,7 +263,15 @@ jensenio_eisa_attach_hook(struct device *parent, struct device *self,
     struct eisabus_attach_args *eba)
 {
 
-	/* Nothing to do. */
+#if NEISA > 0
+	/*
+	 * Jensen's EISA config info is sparse, and is mapped at a
+	 * different location that on other EISA systems.
+	 */
+	eisa_config_stride = 0x200;
+	eisa_config_addr = JENSEN_FEPROM1;
+	eisa_init();
+#endif
 }
 
 int
