@@ -1,4 +1,4 @@
-#	$NetBSD: parselist.awk,v 1.9 2002/03/14 22:26:09 lukem Exp $
+#	$NetBSD: parselist.awk,v 1.10 2002/04/10 02:01:43 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -78,8 +78,8 @@
 #	M P	COPY	src dest [mode]	copy src to dest
 #
 #	M P	COPYDIR	src dest	recursively copy files under src to
-#					dest.  for M, the directories in src
-#					are listed first.
+#					dest.  for M, dest is listed first,
+#					followed by the subdirectories in src.
 #
 #	C	LIBS	libspec ...	as per crunchgen(1) `libs'
 #
