@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.32 2004/12/02 21:46:52 ginsbach Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.33 2004/12/21 02:39:00 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.32 2004/12/02 21:46:52 ginsbach Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.33 2004/12/21 02:39:00 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,6 @@ void		oob(int);
 int		reader(sigset_t *);
 void		sendwindow(void);
 void		setsignal(int);
-int		speed(int);
 void		sigwinch(int);
 void		stop(int);
 void		usage(void);
@@ -187,9 +186,9 @@ main(int argc, char *argv[])
 	}
 
 #ifdef KERBEROS
-#define	OPTIONS	"8EKLde:p:k:l:x"
+#define	OPTIONS	"8EKde:p:k:l:x"
 #else
-#define	OPTIONS	"8EKLde:p:l:"
+#define	OPTIONS	"8EKde:p:l:"
 #endif
 	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != -1)
 		switch(ch) {
@@ -436,31 +435,13 @@ try_connect:
 	return (0);
 }
 
-int
-speed(int fd)
-{
-	struct termios tt;
-
-	(void)tcgetattr(fd, &tt);
-
-	return ((int)cfgetispeed(&tt));
-}
-
 pid_t child;
-struct termios deftt;
-struct termios nott;
 
 void
 doit(sigset_t *smask)
 {
-	int i;
 	struct sigaction sa;
 
-	for (i = 0; i < NCCS; i++)
-		nott.c_cc[i] = _POSIX_VDISABLE;
-	tcgetattr(0, &deftt);
-	nott.c_cc[VSTART] = deftt.c_cc[VSTART];
-	nott.c_cc[VSTOP] = deftt.c_cc[VSTOP];
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = SIG_IGN;
@@ -967,12 +948,12 @@ usage(void)
 	    "usage: rlogin [-%s]%s[-e char] [-l username] [-p port] [username@]host\n",
 #ifdef KERBEROS
 #ifdef CRYPT
-	    "8EKLdx", " [-k realm] ");
+	    "8EKdx", " [-k realm] ");
 #else
-	    "8EKLd", " [-k realm] ");
+	    "8EKd", " [-k realm] ");
 #endif
 #else
-	    "8ELd", " ");
+	    "8Ed", " ");
 #endif
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: rlogin.1,v 1.21 2004/09/05 08:48:32 wiz Exp $
+.\"	$NetBSD: rlogin.1,v 1.22 2004/12/21 02:39:00 ginsbach Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)rlogin.1	8.2 (Berkeley) 4/29/95
 .\"
-.Dd September 5, 2004
+.Dd December 20, 2004
 .Dt RLOGIN 1
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Op Fl p Ar port
 .Ar host
 .Nm
-.Op Fl 8ELd
+.Op Fl 8Ed
 .Op Fl e Ar char
 .Op Fl p Ar port
 .Ar username@host
@@ -72,14 +72,6 @@ option stops any character from being recognized as an escape character.
 When used with the
 .Fl 8
 option, this provides a completely transparent connection.
-.It Fl L
-The
-.Fl L
-option allows the rlogin session to be run in
-.Dq litout
-(see
-.Xr tty 4 )
-mode.
 .It Fl d
 The
 .Fl d
