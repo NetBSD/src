@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.91 2002/04/10 15:44:23 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.92 2002/04/10 15:56:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2002/04/10 15:44:23 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2002/04/10 15:56:21 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1245,7 +1245,7 @@ pmap_alloc_l1pt(void)
 	struct l1pt *pt;
 	int error;
 	struct vm_page *m;
-	pt_entry_t *ptes;
+	pt_entry_t *pte;
 
 	/* Allocate virtual address space for the L1 page table */
 	va = uvm_km_valloc(kernel_map, L1_TABLE_SIZE);
@@ -1281,21 +1281,24 @@ pmap_alloc_l1pt(void)
 	/* Map our physical pages into our virtual space */
 	pt->pt_va = va;
 	m = TAILQ_FIRST(&pt->pt_plist);
-	ptes = pmap_map_ptes(pmap_kernel());
 	while (m && va < (pt->pt_va + L1_TABLE_SIZE)) {
 		pa = VM_PAGE_TO_PHYS(m);
 
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pte = vtopte(va);
 
-		/* Revoke cacheability and bufferability */
-		/* XXX should be done better than this */
-		ptes[arm_btop(va)] &= ~L2_S_CACHE_MASK;
+		/*
+		 * Assert that the PTE is invalid.  If it's invalid,
+		 * then we are guaranteed that there won't be an entry
+		 * for this VA in the TLB.
+		 */
+		KDASSERT(pmap_pte_v(pte) == 0);
+
+		*pte = L2_S_PROTO | VM_PAGE_TO_PHYS(m) |
+		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE);
 
 		va += NBPG;
 		m = m->pageq.tqe_next;
 	}
-	pmap_unmap_ptes(pmap_kernel());
-	pmap_update(pmap_kernel());
 
 #ifdef DIAGNOSTIC
 	if (m)
