@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_delete.c,v 1.10 1998/12/09 12:42:46 christos Exp $	*/
+/*	$NetBSD: bt_delete.c,v 1.11 1999/03/16 18:17:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_delete.c	8.13 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: bt_delete.c,v 1.10 1998/12/09 12:42:46 christos Exp $");
+__RCSID("$NetBSD: bt_delete.c,v 1.11 1999/03/16 18:17:56 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -427,7 +427,7 @@ __bt_pdelete(t, h)
 		 * root page. If it's the rootpage, turn it back into an empty
 		 * leaf page.
 		 */
-		if (NEXTINDEX(pg) == 1)
+		if (NEXTINDEX(pg) == 1) {
 			if (pg->pgno == P_ROOT) {
 				pg->lower = BTDATAOFF;
 				pg->upper = t->bt_psize;
@@ -437,7 +437,7 @@ __bt_pdelete(t, h)
 					return (RET_ERROR);
 				continue;
 			}
-		else {
+		} else {
 			/* Pack remaining key items at the end of the page. */
 			nksize = NBINTERNAL(bi->ksize);
 			from = (char *)(void *)pg + pg->upper;
