@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.103 2003/10/23 17:02:23 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.104 2003/10/24 03:12:53 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.103 2003/10/23 17:02:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.104 2003/10/24 03:12:53 enami Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -209,6 +209,8 @@ int	tcp_cwm_burstsize = 4;
 #include <sys/device.h>
 
 extern struct evcnt tcp_output_bigheader;
+extern struct evcnt tcp_output_predict_hit;
+extern struct evcnt tcp_output_predict_miss;
 extern struct evcnt tcp_output_copysmall;
 extern struct evcnt tcp_output_copybig;
 extern struct evcnt tcp_output_refbig;
