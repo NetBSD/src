@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.25 2003/01/04 01:10:47 wiz Exp $
+.\"	$NetBSD: wiconfig.8,v 1.26 2003/03/31 21:19:06 perry Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -123,6 +123,24 @@ The default is 2304.
 Enable or disable
 .Qq microwave oven robustness
 on a given interface.
+This should only be used if needed.
+.Pp
+In cases of slow performance where there is a good quality signal but
+also high levels of noise (i.e. the signal to noise ratio is bad but
+the signal strength is good), and there is an operating microwave oven
+in or near the signal path, this option may be of use.
+.Pp
+In bad signal-to-noise conditions, the link layer will switch to lower
+transmit rates.
+However at lower transmit rates, individual frames
+take longer to transmit, making them more vulnerable to bursty
+noise.
+The option works by enabling data fragmentation in the link
+layer as the transmit speed lowers in an attempt to shorten the
+transmit time of each frame so that individual frames are more likely
+to be transmitted without error.
+.Pp
+Note that this does not impact the visible MTU of the link.
 .It Fl m Ar MAC address
 Set the station address for the specified interface.
 The
