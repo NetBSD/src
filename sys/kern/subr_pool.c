@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.52 2001/05/09 23:46:03 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.53 2001/05/10 01:37:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -102,6 +102,9 @@ struct pool_item {
 
 #define	PR_HASH_INDEX(pp,addr) \
 	(((u_long)(addr) >> (pp)->pr_pageshift) & (PR_HASHTABSIZE - 1))
+
+#define	POOL_NEEDS_CATCHUP(pp)						\
+	((pp)->pr_nitems < (pp)->pr_minitems)
 
 /*
  * Pool cache management.
@@ -775,7 +778,7 @@ _pool_get(struct pool *pp, int flags, const char *file, long line)
 	 * If we have a low water mark and we are now below that low
 	 * water mark, add more items to the pool.
 	 */
-	if (pp->pr_nitems < pp->pr_minitems && pool_catchup(pp) != 0) {
+	if (POOL_NEEDS_CATCHUP(pp) && pool_catchup(pp) != 0) {
 		/*
 		 * XXX: Should we log a warning?  Should we set up a timeout
 		 * to try again in a second or so?  The latter could break
@@ -1083,8 +1086,7 @@ pool_setlowat(struct pool *pp, int n)
 		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
 	/* Make sure we're caught up with the newly-set low water mark. */
-	if ((pp->pr_nitems < pp->pr_minitems) &&
-	    (error = pool_catchup(pp)) != 0) {
+	if (POOL_NEEDS_CATCHUP(pp) && (error = pool_catchup(pp) != 0)) {
 		/*
 		 * XXX: Should we log a warning?  Should we set up a timeout
 		 * to try again in a second or so?  The latter could break
