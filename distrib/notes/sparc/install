@@ -8,6 +8,7 @@ a single disk attached. Alternatively, you could use SunOS (booted from
 a local disk) and install NetBSD onto a second disk. For the latter method,
 skip to the section "Installing from SunOS" below.
 
+
 Installing using a diskless setup.
 
 First, you must setup a diskless client configuration on a server. Consult
@@ -16,11 +17,34 @@ Put all the *.tar.gz files you want to install into the root directory
 for your client on the server.
 
 Next, unpack base.tar.gz on the server in the root directory for your machine.
+If you elect to you a separately NFS-mounted filesystem for `/usr' on your
+diskless setup, make sure the "./usr" base files in base.tar.gz end up
+in the correct location. One way to do this is to temporarily use a loopback
+mount on the server, re-routing <root>/usr to your server's exported
+NetBSD "/usr" directory.
+
 A few configuration files need to be edited:
 
 	<root>/etc/hosts
+		Add the IP addresses of both server and client.
+
 	<root>/etc/myname
+		This files contains the client's hostname; use the same
+		name as in <root>/etc/hosts.
+
 	<root>/etc/fstab
+		Enter the entries for remotely mounted `root', `swap' and
+		possibly `/usr' filesystems.
+
+Now you must populate the the `/dev' directory for your client. If you server
+runs SunOS 4.x, you can simply change your working directory to `<root>/dev'
+and run the MAKEDEV script: `sh MAKEDEV all'.
+
+On SunOS 5.x systems, MAKEDEV can also be used, but there'll be error
+messages about unknown user and groups. These errors are inconsequential
+for the purpose of installing NetBSD. However, you may want to correct them
+if you plan to the diskless setup regularly. In that case, you may re-run
+MAKEDEV on your NetBSD machine once it has booted.
 
 Boot your workstation from the server by entering the appropriate `boot'
 command at the monitor prompt. Depending on the PROM version in your machine,
@@ -41,6 +65,12 @@ instead of `ok', type:
     ok setenv sunmon-compat? false	# make it permanent
     ok
 ]]
+
+If you use a diskless setup with a separately NFS-mounted /usr filesystem,
+mount /usr by hand now:
+
+netbsd# mount /usr
+
 
 Start the installation procedure:
 
