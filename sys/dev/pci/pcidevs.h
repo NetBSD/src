@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.241 2000/06/13 22:44:51 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.242 2000/06/16 08:13:50 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.235 2000/06/13 22:44:19 tron Exp 
+ *	NetBSD: pcidevs,v 1.236 2000/06/16 08:13:25 soren Exp 
  */
 
 /*
@@ -1298,8 +1298,16 @@
 #define	PCI_PRODUCT_S3_VIRGE_DX	0x8a01		/* ViRGE/DX */
 #define	PCI_PRODUCT_S3_VIRGE_GX2	0x8a10		/* ViRGE/GX2 */
 #define	PCI_PRODUCT_S3_TRIO3D2X	0x8a13		/* Trio3D/2X */
+#define	PCI_PRODUCT_S3_SAVAGE3D	0x8a20		/* Savage3D */
+#define	PCI_PRODUCT_S3_SAVAGE3D_MV	0x8a21		/* Savage3D+MV */
+#define	PCI_PRODUCT_S3_SAVAGE4	0x8a22		/* Savage4 */
 #define	PCI_PRODUCT_S3_VIRGE_MX	0x8c01		/* ViRGE/MX */
 #define	PCI_PRODUCT_S3_VIRGE_MXP	0x8c03		/* ViRGE/MXP */
+#define	PCI_PRODUCT_S3_SAVAGE_MX_MV	0x8c10		/* Savage/MX+MV */
+#define	PCI_PRODUCT_S3_SAVAGE_MX	0x8c11		/* Savage/MX */
+#define	PCI_PRODUCT_S3_SAVAGE_IX_MV	0x8c12		/* Savage/IX+MV */
+#define	PCI_PRODUCT_S3_SAVAGE_IX	0x8c13		/* Savage/IX */
+#define	PCI_PRODUCT_S3_SAVAGE2000	0x9102		/* Savage2000 */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
 
 /* Samsung Semiconductor products */
