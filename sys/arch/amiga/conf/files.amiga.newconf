@@ -1,5 +1,5 @@
 #
-#	$Id: files.amiga.newconf,v 1.10 1994/06/15 19:04:28 chopps Exp $
+#	$Id: files.amiga.newconf,v 1.11 1994/07/16 02:26:21 chopps Exp $
 #
 
 maxusers 2 8 64
@@ -84,6 +84,9 @@ file	arch/amiga/dev/gvpbus.c		gvpbus
 
 device	le at ztwobus:	ifnet, ether
 file	arch/amiga/dev/if_le.c		le needs-count
+
+device	ed at ztwobus:	ifnet, ether
+file	arch/amiga/dev/if_ed.c		ed needs-flag
 
 define	scsi {}
 
