@@ -1,5 +1,5 @@
 #	from: @(#)bsd.doc.mk	5.3 (Berkeley) 1/2/91
-#	$Id: bsd.doc.mk,v 1.16 1994/01/24 22:30:32 cgd Exp $
+#	$Id: bsd.doc.mk,v 1.17 1994/02/09 23:50:35 cgd Exp $
 
 PRINTER_TYPE?=	ps
 
@@ -30,7 +30,6 @@ cleandir: clean
 
 FILES?=	${SRCS}
 install:
-	@install -d -o root -g wheel -m 755 ${DESTDIR}${DOCDIR}/${DIR}
 	(cd ${.CURDIR}; install ${COPY} -o ${DOCOWN} -g ${DOCGRP} -m 444 \
 	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${DOCDIR}/${DIR} )
 
