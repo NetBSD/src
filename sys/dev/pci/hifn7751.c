@@ -1,5 +1,5 @@
-/*	$NetBSD: hifn7751.c,v 1.19 2003/08/28 18:13:33 thorpej Exp $	*/
-/* 	$FreeBSD: hifn7751.c,v 1.5.2.6 2003/07/02 17:04:50 sam Exp $ */
+/*	$NetBSD: hifn7751.c,v 1.20 2003/11/16 00:22:09 jonathan Exp $	*/
+/*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
 /*
@@ -8,6 +8,7 @@
  * Copyright (c) 1999 Theo de Raadt
  * Copyright (c) 2000-2001 Network Security Technologies, Inc.
  *			http://www.netsec.net
+ * Copyright (c) 2003 Hifn Inc.
  *
  * This driver is based on a previous driver by Invertex, for which they
  * requested:  Please send any comments, feedback, bug-fixes, or feature
@@ -43,11 +44,11 @@
  */
 
 /*
- * Driver for the Hifn 7751 encryption processor.
+ * Driver for various  Hifn pre-HIPP encryption processors.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.19 2003/08/28 18:13:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.20 2003/11/16 00:22:09 jonathan Exp $");
 
 #include "rnd.h"
 #include "opencrypto.h"
@@ -204,6 +205,16 @@ static const struct hifn_product {
 	  "Hifn 7951",
 	},
 
+	{ PCI_VENDOR_HIFN,	PCI_PRODUCT_HIFN_7955,
+	  HIFN_HAS_RNG | HIFN_HAS_PUBLIC | HIFN_IS_7956 | HIFN_HAS_AES,
+	  "Hifn 7955",
+	},
+
+	{ PCI_VENDOR_HIFN,	PCI_PRODUCT_HIFN_7956,
+	  HIFN_HAS_RNG | HIFN_HAS_PUBLIC | HIFN_IS_7956 | HIFN_HAS_AES,
+	  "Hifn 7956",
+	},
+
 
 	{ 0,			0,
 	  0,
@@ -341,7 +352,10 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 	hifn_init_dma(sc);
 	hifn_init_pci_registers(sc);
 
-	if (hifn_ramtype(sc))
+	/* XXX can't dynamically determine ram type for 795x; force dram */
+	if (sc->sc_flags & HIFN_IS_7956)
+		sc->sc_drammodel = 1;
+	else if (hifn_ramtype(sc))
 		goto fail_mem;
 
 	if (sc->sc_drammodel == 0)
@@ -408,6 +422,10 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 		    hifn_newsession, hifn_freesession, hifn_process, sc);
 		crypto_register(sc->sc_cid, CRYPTO_ARC4, 0, 0,
 		    hifn_newsession, hifn_freesession, hifn_process, sc);
+		if (sc->sc_flags & HIFN_HAS_AES)
+			crypto_register(sc->sc_cid, CRYPTO_AES_CBC,  0, 0,
+				hifn_newsession, hifn_freesession,
+				hifn_process, sc);
 		/*FALLTHROUGH*/
 	case HIFN_PUSTAT_ENA_1:
 		crypto_register(sc->sc_cid, CRYPTO_MD5, 0, 0,
@@ -698,6 +716,16 @@ struct pci2id {
 		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		  0x00, 0x00, 0x00, 0x00, 0x00 }
 	}, {
+		PCI_VENDOR_HIFN,
+		PCI_PRODUCT_HIFN_7955,
+		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		  0x00, 0x00, 0x00, 0x00, 0x00 }
+	}, {
+		PCI_VENDOR_HIFN,
+		PCI_PRODUCT_HIFN_7956,
+		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		  0x00, 0x00, 0x00, 0x00, 0x00 }
+	}, {
 		PCI_VENDOR_NETSEC,
 		PCI_PRODUCT_NETSEC_7751,
 		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -880,10 +908,17 @@ hifn_init_pci_registers(struct hifn_softc *sc)
 	WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 	CLR_LED(sc, HIFN_MIPSRST_LED0 | HIFN_MIPSRST_LED1 | HIFN_MIPSRST_LED2);
 
-	WRITE_REG_0(sc, HIFN_0_PUCNFG, HIFN_PUCNFG_COMPSING |
-	    HIFN_PUCNFG_DRFR_128 | HIFN_PUCNFG_TCALLPHASES |
-	    HIFN_PUCNFG_TCDRVTOTEM | HIFN_PUCNFG_BUS32 |
-	    (sc->sc_drammodel ? HIFN_PUCNFG_DRAM : HIFN_PUCNFG_SRAM));
+	if (sc->sc_flags & HIFN_IS_7956) {
+		WRITE_REG_0(sc, HIFN_0_PUCNFG, HIFN_PUCNFG_COMPSING |
+		    HIFN_PUCNFG_TCALLPHASES |
+		    HIFN_PUCNFG_TCDRVTOTEM | HIFN_PUCNFG_BUS32);
+		WRITE_REG_1(sc, HIFN_1_PLL, HIFN_PLL_7956);
+	} else {
+		WRITE_REG_0(sc, HIFN_0_PUCNFG, HIFN_PUCNFG_COMPSING |
+		    HIFN_PUCNFG_DRFR_128 | HIFN_PUCNFG_TCALLPHASES |
+		    HIFN_PUCNFG_TCDRVTOTEM | HIFN_PUCNFG_BUS32 |
+		    (sc->sc_drammodel ? HIFN_PUCNFG_DRAM : HIFN_PUCNFG_SRAM));
+	}
 
 	WRITE_REG_0(sc, HIFN_0_PUISR, HIFN_PUISR_DSTOVER);
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
@@ -912,8 +947,14 @@ hifn_sessions(struct hifn_softc *sc)
 			ctxsize = 128;
 		else
 			ctxsize = 512;
-		sc->sc_maxses = 1 +
-		    ((sc->sc_ramsize - 32768) / ctxsize);
+		/*
+		 * 7955/7956 has internal context memory of 32K
+		 */
+		if (sc->sc_flags & HIFN_IS_7956)
+			sc->sc_maxses = 32768 / ctxsize;
+		else
+			sc->sc_maxses = 1 +
+			    ((sc->sc_ramsize - 32768) / ctxsize);
 	}
 	else
 		sc->sc_maxses = sc->sc_ramsize / 16384;
@@ -1001,9 +1042,16 @@ hifn_dramsize(struct hifn_softc *sc)
 {
 	u_int32_t cnfg;
 
-	cnfg = READ_REG_0(sc, HIFN_0_PUCNFG) &
-	    HIFN_PUCNFG_DRAMMASK;
-	sc->sc_ramsize = 1 << ((cnfg >> 13) + 18);
+	if (sc->sc_flags & HIFN_IS_7956) {
+		/*
+		 * 7955/7956 have a fixed internal ram of only 32K.
+		 */
+		sc->sc_ramsize = 32768;
+	} else {
+		cnfg = READ_REG_0(sc, HIFN_0_PUCNFG) &
+		    HIFN_PUCNFG_DRAMMASK;
+		sc->sc_ramsize = 1 << ((cnfg >> 13) + 18);
+	}
 	return (0);
 }
 
@@ -1233,7 +1281,7 @@ hifn_write_command(struct hifn_command *cmd, u_int8_t *buf)
 	struct hifn_mac_command *mac_cmd;
 	struct hifn_crypt_command *cry_cmd;
 	struct hifn_comp_command *comp_cmd;
-	int using_mac, using_crypt, using_comp, len;
+	int using_mac, using_crypt, using_comp, len, ivlen;
 	u_int32_t dlen, slen;
 
 	buf_pos = buf;
@@ -1307,7 +1355,7 @@ hifn_write_command(struct hifn_command *cmd, u_int8_t *buf)
 			break;
 		case HIFN_CRYPT_CMD_ALG_DES:
 			bcopy(cmd->ck, buf_pos, HIFN_DES_KEY_LENGTH);
-			buf_pos += cmd->cklen;
+			buf_pos += HIFN_DES_KEY_LENGTH;
 			break;
 		case HIFN_CRYPT_CMD_ALG_RC4:
 			len = 256;
@@ -1322,12 +1370,28 @@ hifn_write_command(struct hifn_command *cmd, u_int8_t *buf)
 			bzero(buf_pos, 4);
 			buf_pos += 4;
 			break;
+		case HIFN_CRYPT_CMD_ALG_AES:
+			/*
+			 * AES keys are variable 128, 192 and
+			 * 256 bits (16, 24 and 32 bytes).
+			 */
+			bcopy(cmd->ck, buf_pos, cmd->cklen);
+			buf_pos += cmd->cklen;
+			break;
 		}
 	}
 
 	if (using_crypt && cmd->cry_masks & HIFN_CRYPT_CMD_NEW_IV) {
-		bcopy(cmd->iv, buf_pos, HIFN_IV_LENGTH);
-		buf_pos += HIFN_IV_LENGTH;
+		switch (cmd->cry_masks & HIFN_CRYPT_CMD_ALG_MASK) {
+		case HIFN_CRYPT_CMD_ALG_AES:
+			ivlen = HIFN_AES_IV_LENGTH;
+			break;
+		default:
+			ivlen = HIFN_IV_LENGTH;
+			break;
+		}
+		bcopy(cmd->iv, buf_pos, ivlen);
+		buf_pos += ivlen;
 	}
 
 	if ((cmd->base_masks & (HIFN_BASE_CMD_MAC | HIFN_BASE_CMD_CRYPT |
@@ -1935,13 +1999,17 @@ hifn_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 			break;
 		case CRYPTO_DES_CBC:
 		case CRYPTO_3DES_CBC:
+		case CRYPTO_AES_CBC:
 #ifdef __NetBSD__
 			rnd_extract_data(sc->sc_sessions[i].hs_iv,
-			    HIFN_IV_LENGTH, RND_EXTRACT_ANY);
+			    c->cri_alg == CRYPTO_AES_CBC ?
+				HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH,
+			    RND_EXTRACT_ANY);
 #else	/* FreeBSD and OpenBSD have get_random_bytes */
 			/* XXX this may read fewer, does it matter? */
  			get_random_bytes(sc->sc_sessions[i].hs_iv, 
- 			    HIFN_IV_LENGTH);
+				c->cri_alg == CRYPTO_AES_CBC ?
+					HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH);
 #endif
 			/*FALLTHROUGH*/
 		case CRYPTO_ARC4:
@@ -2005,7 +2073,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 {
 	struct hifn_softc *sc = arg;
 	struct hifn_command *cmd = NULL;
-	int session, err;
+	int session, err, ivlen;
 	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
 
 	if (crp == NULL || crp->crp_callback == NULL) {
@@ -2054,6 +2122,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 			enccrd = NULL;
 		} else if (crd1->crd_alg == CRYPTO_DES_CBC ||
 			   crd1->crd_alg == CRYPTO_3DES_CBC ||
+			   crd1->crd_alg == CRYPTO_AES_CBC ||
 			   crd1->crd_alg == CRYPTO_ARC4) {
 			if ((crd1->crd_flags & CRD_F_ENCRYPT) == 0)
 				cmd->base_masks |= HIFN_BASE_CMD_DECODE;
@@ -2074,6 +2143,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 		     crd1->crd_alg == CRYPTO_SHA1) &&
 		    (crd2->crd_alg == CRYPTO_DES_CBC ||
 		     crd2->crd_alg == CRYPTO_3DES_CBC ||
+		     crd2->crd_alg == CRYPTO_AES_CBC ||
 		     crd2->crd_alg == CRYPTO_ARC4) &&
 		    ((crd2->crd_flags & CRD_F_ENCRYPT) == 0)) {
 			cmd->base_masks = HIFN_BASE_CMD_DECODE;
@@ -2081,7 +2151,8 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 			enccrd = crd2;
 		} else if ((crd1->crd_alg == CRYPTO_DES_CBC ||
 			    crd1->crd_alg == CRYPTO_ARC4 ||
-			    crd1->crd_alg == CRYPTO_3DES_CBC) &&
+			    crd1->crd_alg == CRYPTO_3DES_CBC ||
+			    crd1->crd_alg == CRYPTO_AES_CBC) &&
 			   (crd2->crd_alg == CRYPTO_MD5_HMAC ||
 			    crd2->crd_alg == CRYPTO_SHA1_HMAC ||
 			    crd2->crd_alg == CRYPTO_MD5 ||
@@ -2119,47 +2190,71 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 			    HIFN_CRYPT_CMD_MODE_CBC |
 			    HIFN_CRYPT_CMD_NEW_IV;
 			break;
+		case CRYPTO_AES_CBC:
+			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_AES |
+			    HIFN_CRYPT_CMD_MODE_CBC |
+			    HIFN_CRYPT_CMD_NEW_IV;
+			break;
 		default:
 			err = EINVAL;
 			goto errout;
 		}
 		if (enccrd->crd_alg != CRYPTO_ARC4) {
+			ivlen = ((enccrd->crd_alg == CRYPTO_AES_CBC) ?
+				HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH);
 			if (enccrd->crd_flags & CRD_F_ENCRYPT) {
 				if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-					bcopy(enccrd->crd_iv, cmd->iv,
-					    HIFN_IV_LENGTH);
+					bcopy(enccrd->crd_iv, cmd->iv, ivlen);
 				else
 					bcopy(sc->sc_sessions[session].hs_iv,
-					    cmd->iv, HIFN_IV_LENGTH);
+					    cmd->iv, ivlen);
 
 				if ((enccrd->crd_flags & CRD_F_IV_PRESENT)
 				    == 0) {
 					if (crp->crp_flags & CRYPTO_F_IMBUF)
 						m_copyback(cmd->srcu.src_m,
 						    enccrd->crd_inject,
-						    HIFN_IV_LENGTH, cmd->iv);
+						    ivlen, cmd->iv);
 					else if (crp->crp_flags & CRYPTO_F_IOV)
 						cuio_copyback(cmd->srcu.src_io,
 						    enccrd->crd_inject,
-						    HIFN_IV_LENGTH, cmd->iv);
+						    ivlen, cmd->iv);
 				}
 			} else {
 				if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-					bcopy(enccrd->crd_iv, cmd->iv,
-					    HIFN_IV_LENGTH);
+					bcopy(enccrd->crd_iv, cmd->iv, ivlen);
 				else if (crp->crp_flags & CRYPTO_F_IMBUF)
 					m_copydata(cmd->srcu.src_m,
-					    enccrd->crd_inject,
-					    HIFN_IV_LENGTH, cmd->iv);
+					    enccrd->crd_inject, ivlen, cmd->iv);
 				else if (crp->crp_flags & CRYPTO_F_IOV)
 					cuio_copydata(cmd->srcu.src_io,
-					    enccrd->crd_inject,
-					    HIFN_IV_LENGTH, cmd->iv);
+					    enccrd->crd_inject, ivlen, cmd->iv);
 			}
 		}
 
 		cmd->ck = enccrd->crd_key;
 		cmd->cklen = enccrd->crd_klen >> 3;
+
+		/* 
+		 * Need to specify the size for the AES key in the masks.
+		 */
+		if ((cmd->cry_masks & HIFN_CRYPT_CMD_ALG_MASK) ==
+		    HIFN_CRYPT_CMD_ALG_AES) {
+			switch (cmd->cklen) {
+			case 16:
+				cmd->cry_masks |= HIFN_CRYPT_CMD_KSZ_128;
+				break;
+			case 24:
+				cmd->cry_masks |= HIFN_CRYPT_CMD_KSZ_192;
+				break;
+			case 32:
+				cmd->cry_masks |= HIFN_CRYPT_CMD_KSZ_256;
+				break;
+			default:
+				err = EINVAL;
+				goto errout;
+			}
+		}
 
 		if (sc->sc_sessions[session].hs_state == HS_STATE_USED)
 			cmd->cry_masks |= HIFN_CRYPT_CMD_NEW_KEY;
@@ -2329,7 +2424,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd, u_int8_t *resbuf)
 	struct cryptop *crp = cmd->crp;
 	struct cryptodesc *crd;
 	struct mbuf *m;
-	int totlen, i, u;
+	int totlen, i, u, ivlen;
 
 	if (cmd->src_map == cmd->dst_map)
 		bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
@@ -2395,17 +2490,20 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd, u_int8_t *resbuf)
 	    HIFN_BASE_CMD_CRYPT) {
 		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
 			if (crd->crd_alg != CRYPTO_DES_CBC &&
-			    crd->crd_alg != CRYPTO_3DES_CBC)
+			    crd->crd_alg != CRYPTO_3DES_CBC &&
+			    crd->crd_alg != CRYPTO_AES_CBC)
 				continue;
+			ivlen = ((crd->crd_alg == CRYPTO_AES_CBC) ?
+				HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH);
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata((struct mbuf *)crp->crp_buf,
-				    crd->crd_skip + crd->crd_len - HIFN_IV_LENGTH,
-				    HIFN_IV_LENGTH,
+				    crd->crd_skip + crd->crd_len - ivlen,
+				    ivlen,
 				    cmd->softc->sc_sessions[cmd->session_num].hs_iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV) {
 				cuio_copydata((struct uio *)crp->crp_buf,
-				    crd->crd_skip + crd->crd_len - HIFN_IV_LENGTH,
-				    HIFN_IV_LENGTH,
+				    crd->crd_skip + crd->crd_len - ivlen,
+				    ivlen,
 				    cmd->softc->sc_sessions[cmd->session_num].hs_iv);
 			}
 			/* XXX We do not handle contig data */
