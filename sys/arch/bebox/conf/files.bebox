@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.33 2002/04/16 20:50:18 thorpej Exp $
+#	$NetBSD: files.bebox,v 1.34 2002/04/18 15:44:22 wiz Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -123,10 +123,6 @@ file	arch/bebox/isa/lms.c		lms needs-flag
 device	mms
 attach	mms at isa
 file	arch/bebox/isa/mms.c		mms needs-flag
-device	opms
-attach	opms at pckbcport with pms_hack
-attach	opms at pckbc with pms_pckbc
-file	arch/bebox/isa/pms.c		pms | pms_hack | pms_pckbc needs-flag
 
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"
