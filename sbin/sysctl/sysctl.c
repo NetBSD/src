@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.86.2.10 2004/04/28 05:30:41 jmc Exp $ */
+/*	$NetBSD: sysctl.c,v 1.86.2.10.2.1 2005/04/06 14:47:09 he Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.86.2.10 2004/04/28 05:30:41 jmc Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.86.2.10.2.1 2005/04/06 14:47:09 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -668,7 +668,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 		if (rc == -1)
 			sysctlerror(1);
 		else
-			display_string(pnode, gsname, buf, sz, DISPLAY_VALUE);
+			display_string(pnode, gsname, tbuf, sz, DISPLAY_VALUE);
 		if (tbuf != buf)
 			free(tbuf);
 		break;
