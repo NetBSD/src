@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.1 2001/04/10 05:52:14 leo Exp $
+#	$NetBSD: GENERIC.in,v 1.2 2001/04/10 06:46:01 leo Exp $
 #
 # Generic atari
 #
@@ -12,7 +12,7 @@ include "arch/atari/conf/std.hades"
 include "arch/atari/conf/std.milan"
 #endif
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 #
 # Add support for about 16 users. This variable is used to size
@@ -170,7 +170,7 @@ options 	PCIVERBOSE		# verbose PCI device autoconfig messages
 #
 #options 	KFONT_8x8		# Use 8x8 font instead of 8x16
 options 	ST_POOL_SIZE=22		# smallest that allows TT-HIGH
-#ifdef TT030_KERNEL
+#if defined(TT030_KERNEL) || defined(HADES_KERNEL)
 options 	TT_SCSI			# SCSI-support for TT
 options 	TT_VIDEO		# Graphics support for TT
 #endif
@@ -205,7 +205,6 @@ pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
 pseudo-device	md		2	# Boot memory disk
 
 #ifndef INSTALL_KERNEL
-pseudo-device	mouse		1	# mouse
 pseudo-device	bpfilter	2	# berkeley packet filters
 pseudo-device	tun		2	# network tunnel
 #pseudo-device	gre		2	# generic L3 over IP tunnel
