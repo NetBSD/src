@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.8 1994/12/17 20:14:22 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.9 1995/03/24 19:48:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -285,6 +285,7 @@ int
 kbd_iopen()
 {
 	struct kbd_softc *k;
+	struct tty *tp;
 	int error, s;
 
 	k = &kbd_softc;
@@ -294,16 +295,18 @@ kbd_iopen()
 		return (0);
 
 	/* Make sure "down" link (to zs1a) is established. */
-	if (k->k_kbd == NULL)
+	tp = k->k_kbd;
+	if (tp == NULL)
 		return (ENXIO);
 
 	/* Open the "down" link (never to be closed). */
-	(*k->k_open)(k->k_kbd);
+	tp->t_ispeed = tp->t_ospeed = 1200;
+	(*k->k_open)(tp);
 
 	/* Reset the keyboard and find out its type. */
 	s = spltty();
-	(void) ttyoutput(KBD_CMD_RESET, k->k_kbd);
-	(*k->k_kbd->t_oproc)(k->k_kbd);
+	(void) ttyoutput(KBD_CMD_RESET, tp);
+	(*tp->t_oproc)(tp);
 	/* The wakeup for this sleep is in kbd_reset(). */
 	error = tsleep((caddr_t)k, PZERO | PCATCH,
 				   devopn, hz);
