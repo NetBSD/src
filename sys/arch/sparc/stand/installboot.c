@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.5 1995/06/18 14:46:20 cgd Exp $ */
+/*	$NetBSD: installboot.c,v 1.6 1995/08/18 21:44:01 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -190,7 +190,7 @@ loadprotoblocks(fname, size)
 	close(fd);
 
 	hp = (struct exec *)bp;
-	*size = roundup(hp->a_text + hp->a_data, DEV_BSIZE);
+	*size = roundup(sizeof(*hp) + hp->a_text + hp->a_data, DEV_BSIZE);
 
 	/* Calculate the symbols' location within the proto file */
 	off = N_DATOFF(*hp) - N_DATADDR(*hp) - (hp->a_entry - N_TXTADDR(*hp));
