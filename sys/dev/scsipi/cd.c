@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.192 2003/09/08 18:51:34 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.193 2003/09/08 23:44:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.192 2003/09/08 18:51:34 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.193 2003/09/08 23:44:29 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -2242,7 +2242,7 @@ cd_mode_select(cd, byte2, sense, size, flags, big)
 
 		header->data_length = 0;
 		return scsipi_mode_select(cd->sc_periph, byte2, sense,
-		    size + sizeof(struct scsipi_mode_header_big),
+		    size + sizeof(struct scsipi_mode_header),
 		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000);
 	}
 }
@@ -2454,6 +2454,6 @@ printf("cd_setblksize: trying to change bsize, but blk_desc is correct\n");
 		
 	_lto3b(2048, bdesc->blklen);
 
-	return (cd_mode_select(cd, SMS_PF, &data,
-	    sizeof(struct scsi_blk_desc), 0, big));
+	return (cd_mode_select(cd, SMS_PF, &data, sizeof(data.blk_desc), 0,
+	    big));
 }
