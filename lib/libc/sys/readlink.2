@@ -1,4 +1,4 @@
-.\"	$NetBSD: readlink.2,v 1.18 2003/08/07 16:44:04 agc Exp $
+.\"	$NetBSD: readlink.2,v 1.18.2.1 2004/05/12 05:00:37 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,6 +59,22 @@ The call returns the count of characters placed in the buffer
 if it succeeds, or a -1 if an error occurs, placing the error
 code in the global variable
 .Va errno .
+.Sh EXAMPLES
+A typical use is illustrated in the following piece of code
+which reads the contents of a symbolic link named
+.Pa /symbolic/link
+and stores them as null-terminated string:
+.Bd -literal -offset indent
+#include \*[Lt]limits.h\*[Gt]
+#include \*[Lt]unistd.h\*[Gt]
+
+char buf[PATH_MAX];
+int len;
+
+if ((len = readlink("/symbolic/link", buf, sizeof(buf)-1)) == -1)
+	error handling;
+buf[len] = '\e0';
+.Ed
 .Sh ERRORS
 .Fn readlink
 will fail if:
