@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.89 2004/08/30 16:15:03 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.90 2005/01/07 18:29:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -281,6 +281,7 @@ struct olddisklabel {
 #define	DTYPE_JFS2		16		/* IBM JFS2 */
 #define	DTYPE_CGD		17		/* cryptographic pseudo-disk */
 #define	DTYPE_VINUM		18		/* vinum volume */
+#define	DTYPE_FLASH		19		/* flash memory devices */
 
 #ifdef DKTYPENAMES
 static const char *const dktypenames[] = {
@@ -303,6 +304,7 @@ static const char *const dktypenames[] = {
 	"jfs",
 	"cgd",
 	"vinum",
+	"flash",
 	NULL
 };
 #define	DKMAXTYPES	(sizeof(dktypenames) / sizeof(dktypenames[0]) - 1)
