@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.24 2000/10/04 16:21:39 sommerfeld Exp $	*/
+/*	$NetBSD: term.c,v 1.25 2000/11/11 22:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.24 2000/10/04 16:21:39 sommerfeld Exp $");
+__RCSID("$NetBSD: term.c,v 1.25 2000/11/11 22:18:58 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -224,7 +224,11 @@ private struct termcapstr {
 	{ "RI", "cursor right multiple" },
 #define	T_UP	35
 	{ "UP", "cursor up multiple" },
-#define	T_str	36
+#define	T_kh	36
+	{ "kh", "send cursor home" },
+#define	T_at7	37
+	{ "@7", "send cursor end" },
+#define	T_str	38
 	{ NULL, NULL }
 };
 
@@ -1008,6 +1012,15 @@ term_init_arrow(EditLine *el)
 	arrow[A_K_RT].fun.cmd = ED_NEXT_CHAR;
 	arrow[A_K_RT].type = XK_CMD;
 
+	arrow[A_K_HO].name = "home";
+	arrow[A_K_HO].key = T_kh;
+	arrow[A_K_HO].fun.cmd = ED_MOVE_TO_BEG;
+	arrow[A_K_HO].type = XK_CMD;
+
+	arrow[A_K_EN].name = "end";
+	arrow[A_K_EN].key = T_at7;
+	arrow[A_K_EN].fun.cmd = ED_MOVE_TO_END;
+	arrow[A_K_EN].type = XK_CMD;
 }
 
 
@@ -1022,29 +1035,41 @@ term_reset_arrow(EditLine *el)
 	static char strB[] = {033, '[', 'B', '\0'};
 	static char strC[] = {033, '[', 'C', '\0'};
 	static char strD[] = {033, '[', 'D', '\0'};
+	static char strH[] = {033, '[', 'H', '\0'};
+	static char strF[] = {033, '[', 'F', '\0'};
 	static char stOA[] = {033, 'O', 'A', '\0'};
 	static char stOB[] = {033, 'O', 'B', '\0'};
 	static char stOC[] = {033, 'O', 'C', '\0'};
 	static char stOD[] = {033, 'O', 'D', '\0'};
+	static char stOH[] = {033, 'O', 'H', '\0'};
+	static char stOF[] = {033, 'O', 'F', '\0'};
 
 	key_add(el, strA, &arrow[A_K_UP].fun, arrow[A_K_UP].type);
 	key_add(el, strB, &arrow[A_K_DN].fun, arrow[A_K_DN].type);
 	key_add(el, strC, &arrow[A_K_RT].fun, arrow[A_K_RT].type);
 	key_add(el, strD, &arrow[A_K_LT].fun, arrow[A_K_LT].type);
+	key_add(el, strH, &arrow[A_K_HO].fun, arrow[A_K_HO].type);
+	key_add(el, strF, &arrow[A_K_EN].fun, arrow[A_K_EN].type);
 	key_add(el, stOA, &arrow[A_K_UP].fun, arrow[A_K_UP].type);
 	key_add(el, stOB, &arrow[A_K_DN].fun, arrow[A_K_DN].type);
 	key_add(el, stOC, &arrow[A_K_RT].fun, arrow[A_K_RT].type);
 	key_add(el, stOD, &arrow[A_K_LT].fun, arrow[A_K_LT].type);
+	key_add(el, stOH, &arrow[A_K_HO].fun, arrow[A_K_HO].type);
+	key_add(el, stOF, &arrow[A_K_EN].fun, arrow[A_K_EN].type);
 
 	if (el->el_map.type == MAP_VI) {
 		key_add(el, &strA[1], &arrow[A_K_UP].fun, arrow[A_K_UP].type);
 		key_add(el, &strB[1], &arrow[A_K_DN].fun, arrow[A_K_DN].type);
 		key_add(el, &strC[1], &arrow[A_K_RT].fun, arrow[A_K_RT].type);
 		key_add(el, &strD[1], &arrow[A_K_LT].fun, arrow[A_K_LT].type);
+		key_add(el, &strH[1], &arrow[A_K_HO].fun, arrow[A_K_HO].type);
+		key_add(el, &strF[1], &arrow[A_K_EN].fun, arrow[A_K_EN].type);
 		key_add(el, &stOA[1], &arrow[A_K_UP].fun, arrow[A_K_UP].type);
 		key_add(el, &stOB[1], &arrow[A_K_DN].fun, arrow[A_K_DN].type);
 		key_add(el, &stOC[1], &arrow[A_K_RT].fun, arrow[A_K_RT].type);
 		key_add(el, &stOD[1], &arrow[A_K_LT].fun, arrow[A_K_LT].type);
+		key_add(el, &stOH[1], &arrow[A_K_HO].fun, arrow[A_K_HO].type);
+		key_add(el, &stOF[1], &arrow[A_K_EN].fun, arrow[A_K_EN].type);
 	}
 }
 
@@ -1123,7 +1148,7 @@ term_bind_arrow(EditLine *el)
 
 	term_reset_arrow(el);
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < A_K_NKEYS; i++) {
 		p = el->el_term.t_str[arrow[i].key];
 		if (p && *p) {
 			j = (unsigned char) *p;

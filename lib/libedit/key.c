@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.8 2000/10/04 16:21:39 sommerfeld Exp $	*/
+/*	$NetBSD: key.c,v 1.9 2000/11/11 22:18:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: key.c,v 1.8 2000/10/04 16:21:39 sommerfeld Exp $");
+__RCSID("$NetBSD: key.c,v 1.9 2000/11/11 22:18:57 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -86,11 +86,12 @@ struct key_node_t {
 };
 
 private int		 node_trav(EditLine *, key_node_t *, char *,
-			    key_value_t *);
-private int		 node__try(key_node_t *, char *, key_value_t *, int);
+    key_value_t *);
+private int		 node__try(EditLine *, key_node_t *, char *,
+    key_value_t *, int);
 private key_node_t	*node__get(int);
-private void		 node__put(key_node_t *);
-private int		 node__delete(key_node_t **, char *);
+private void		 node__put(EditLine *, key_node_t *);
+private int		 node__delete(EditLine *, key_node_t **, char *);
 private int		 node_lookup(EditLine *, char *, key_node_t *, int);
 private int		 node_enum(EditLine *, key_node_t *, int);
 private int		 key__decode_char(char *, int, int);
@@ -159,7 +160,7 @@ protected void
 key_reset(EditLine *el)
 {
 
-	node__put(el->el_key.map);
+	node__put(el, el->el_key.map);
 	el->el_key.map = NULL;
 	return;
 }
@@ -207,7 +208,7 @@ key_add(EditLine *el, char *key, key_value_t *val, int ntype)
 			/* it is properly initialized */
 
 	/* Now recurse through el->el_key.map */
-	(void) node__try(el->el_key.map, key, val, ntype);
+	(void) node__try(el, el->el_key.map, key, val, ntype);
 	return;
 }
 
@@ -244,7 +245,7 @@ key_delete(EditLine *el, char *key)
 	if (el->el_key.map == NULL)
 		return (0);
 
-	(void) node__delete(&el->el_key.map, key);
+	(void) node__delete(el, &el->el_key.map, key);
 	return (0);
 }
 
@@ -312,7 +313,7 @@ node_trav(EditLine *el, key_node_t *ptr, char *ch, key_value_t *val)
  * 	Find a node that matches *str or allocate a new one
  */
 private int
-node__try(key_node_t *ptr, char *str, key_value_t *val, int ntype)
+node__try(EditLine *el, key_node_t *ptr, char *str, key_value_t *val, int ntype)
 {
 
 	if (ptr->ch != *str) {
@@ -328,7 +329,7 @@ node__try(key_node_t *ptr, char *str, key_value_t *val, int ntype)
 	if (*++str == '\0') {
 		/* we're there */
 		if (ptr->next != NULL) {
-			node__put(ptr->next);
+			node__put(el, ptr->next);
 				/* lose longer keys with this prefix */
 			ptr->next = NULL;
 		}
@@ -342,7 +343,8 @@ node__try(key_node_t *ptr, char *str, key_value_t *val, int ntype)
 				el_free((ptr_t) ptr->val.str);
 			break;
 		default:
-			abort();
+			EL_ABORT((el->el_errfile, "Bad XK_ type %d\n",
+			    ptr->type));
 			break;
 		}
 
@@ -355,14 +357,14 @@ node__try(key_node_t *ptr, char *str, key_value_t *val, int ntype)
 			ptr->val.str = strdup(val->str);
 			break;
 		default:
-			abort();
+			EL_ABORT((el->el_errfile, "Bad XK_ type %d\n", ntype));
 			break;
 		}
 	} else {
 		/* still more chars to go */
 		if (ptr->next == NULL)
 			ptr->next = node__get(*str);	/* setup new node */
-		(void) node__try(ptr->next, str, val, ntype);
+		(void) node__try(el, ptr->next, str, val, ntype);
 	}
 	return (0);
 }
@@ -372,7 +374,7 @@ node__try(key_node_t *ptr, char *str, key_value_t *val, int ntype)
  *	Delete node that matches str
  */
 private int
-node__delete(key_node_t **inptr, char *str)
+node__delete(EditLine *el, key_node_t **inptr, char *str)
 {
 	key_node_t *ptr;
 	key_node_t *prev_ptr = NULL;
@@ -397,9 +399,10 @@ node__delete(key_node_t **inptr, char *str)
 		else
 			prev_ptr->sibling = ptr->sibling;
 		ptr->sibling = NULL;
-		node__put(ptr);
+		node__put(el, ptr);
 		return (1);
-	} else if (ptr->next != NULL && node__delete(&ptr->next, str) == 1) {
+	} else if (ptr->next != NULL &&
+	    node__delete(el, &ptr->next, str) == 1) {
 		if (ptr->next != NULL)
 			return (0);
 		if (prev_ptr == NULL)
@@ -407,7 +410,7 @@ node__delete(key_node_t **inptr, char *str)
 		else
 			prev_ptr->sibling = ptr->sibling;
 		ptr->sibling = NULL;
-		node__put(ptr);
+		node__put(el, ptr);
 		return (1);
 	} else {
 		return (0);
@@ -419,16 +422,16 @@ node__delete(key_node_t **inptr, char *str)
  *	Puts a tree of nodes onto free list using free(3).
  */
 private void
-node__put(key_node_t *ptr)
+node__put(EditLine *el, key_node_t *ptr)
 {
 	if (ptr == NULL)
 		return;
 
 	if (ptr->next != NULL) {
-		node__put(ptr->next);
+		node__put(el, ptr->next);
 		ptr->next = NULL;
 	}
-	node__put(ptr->sibling);
+	node__put(el, ptr->sibling);
 
 	switch (ptr->type) {
 	case XK_CMD:
@@ -440,7 +443,7 @@ node__put(key_node_t *ptr)
 			el_free((ptr_t) ptr->val.str);
 		break;
 	default:
-		abort();
+		EL_ABORT((el->el_errfile, "Bad XK_ type %d\n", ptr->type));
 		break;
 	}
 	el_free((ptr_t) ptr);
@@ -590,7 +593,7 @@ key_kprint(EditLine *el, char *key, key_value_t *val, int ntype)
 
 			break;
 		default:
-			abort();
+			EL_ABORT((el->el_errfile, "Bad XK_ type %d\n", ntype));
 			break;
 		}
 	else
