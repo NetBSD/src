@@ -1,4 +1,4 @@
-/*	$NetBSD: activate.c,v 1.10 2001/01/10 03:33:16 lukem Exp $	*/
+/*	$NetBSD: activate.c,v 1.11 2002/02/11 07:32:56 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: activate.c,v 1.10 2001/01/10 03:33:16 lukem Exp $");
+__RCSID("$NetBSD: activate.c,v 1.11 2002/02/11 07:32:56 atatat Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -151,7 +151,7 @@ send_reply(so, fd, error)
 	 * construct a suitable rights control message.
 	 */
 	if (fd >= 0) {
-		cmsgsize = CMSG_SPACE(sizeof(*files));
+		cmsgsize = CMSG_LEN(sizeof(*files));
 
 		ctl = malloc(cmsgsize);
 		if (ctl == NULL) {
