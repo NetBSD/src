@@ -230,12 +230,17 @@ long via2_noint(int bitnum)
   return 1;
 }
 
-int add_nubus_intr(slot, func, unit)
-int slot;
+int add_nubus_intr(addr, func, unit)
+int addr;
 int (*func)();
 int unit;
 {
-	int s = splhigh();
+	int	s = splhigh();
+	int	slot;
+
+	slot = nubus_addr_to_slot(addr);
+	if (slot < 0) return 0;
+
 	slotitab[slot-9] = func;
 	slotutab[slot-9] = unit;
 
