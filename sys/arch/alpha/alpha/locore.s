@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.26 1996/10/17 02:50:38 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.27 1996/12/03 19:54:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -183,9 +183,7 @@ Ler1:	LDGP(pv)
 	beq	t1, Lchkast			/* no, try an AST*/
 
 	/* We've got a SIR. */
-	ldiq	a0, ALPHA_PSL_IPL_SOFT		/* yes, lower IPL to soft */
-	call_pal PAL_OSF1_swpipl
-	CALL(do_sir)				/* do the SIR */
+	CALL(do_sir)				/* do the SIR; lowers IPL */
 
 Lchkast:
 	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero*/
