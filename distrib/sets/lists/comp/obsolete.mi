@@ -1,11 +1,10 @@
-# $NetBSD: obsolete.mi,v 1.71 2002/07/14 10:40:54 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.72 2002/08/05 23:29:29 soren Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
 /usr/include/bfd/libiberty.h
-/usr/include/dev/ata/atavar.h
 /usr/include/dev/ata/wdvar.h
 /usr/include/dev/auconv.h
 /usr/include/dev/audio_if.h

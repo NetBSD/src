@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.14 2001/09/07 16:33:50 simonb Exp $	*/
+/*	$NetBSD: atactl.c,v 1.15 2002/08/05 23:29:29 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@
 #include <util.h>
 
 #include <dev/ata/atareg.h>
+#include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <sys/ataio.h>
 
@@ -70,6 +71,8 @@ int	main(int, char *[]);
 void	usage(void);
 void	ata_command(struct atareq *);
 void	print_bitinfo(const char *, const char *, u_int, struct bitinfo *);
+void	print_smart_status(void *vbuf, void *tbuf);
+int	is_smart(int silent);
 
 int	fd;				/* file descriptor for device */
 const	char *dvname;			/* device name */
@@ -81,6 +84,7 @@ void	device_identify(int, char *[]);
 void	device_setidle(int, char *[]);
 void	device_idle(int, char *[]);
 void	device_checkpower(int, char *[]);
+void	device_smart(int, char *[]);
 
 struct command commands[] = {
 	{ "identify",	"",			device_identify },
@@ -90,6 +94,7 @@ struct command commands[] = {
 	{ "standby",	"",			device_idle },
 	{ "sleep",	"",			device_idle },
 	{ "checkpower",	"",			device_checkpower },
+	{ "smart",	"enable|disable|info",	device_smart },
 	{ NULL,		NULL,			NULL },
 };
 
@@ -262,6 +267,115 @@ print_bitinfo(const char *bf, const char *af, u_int bits, struct bitinfo *binfo)
 			printf("%s%s%s", bf, binfo->string, af);
 }
 
+/*
+ * Print out SMART attribute thresholds and values
+ */
+
+void
+print_smart_status(void *vbuf, void *tbuf)
+{
+	struct ata_smart_attributes *value_buf = vbuf;
+	struct ata_smart_thresholds *threshold_buf = tbuf;
+	int values[256];
+	int thresholds[256];
+	int flags[256];
+	int i;
+	int id;
+	int8_t checksum;
+
+	for (i = checksum = 0; i < 511; i++)
+		checksum += ((int8_t *) value_buf)[i];
+	checksum *= -1;
+	if (checksum != value_buf->checksum) {
+		fprintf(stderr, "SMART attribute values checksum error\n");
+		return;
+	}
+
+	for (i = checksum = 0; i < 511; i++)
+		checksum += ((int8_t *) threshold_buf)[i];
+	checksum *= -1;
+	if (checksum != threshold_buf->checksum) {
+		fprintf(stderr, "SMART attribute thresholds checksum error\n");
+		return;
+	}
+
+	memset(values, 0, sizeof(values));
+	memset(thresholds, 0, sizeof(thresholds));
+	memset(flags, 0, sizeof(flags));
+
+	for (i = 0; i < 30; i++) {
+		id = value_buf->attributes[i].id;
+		values[id] = value_buf->attributes[i].value;
+		flags[id] = value_buf->attributes[i].flags;
+		id = threshold_buf->thresholds[i].id;
+		thresholds[id] = threshold_buf->thresholds[i].value;
+	}
+
+	printf("id\tvalue\tthresh\tcrit\tcollect\treliability\n");
+	for (i = 0; i < 256; i++) {
+		if (values[i] != 00 && values[i] != 0xFE && values[i] != 0xFF) {
+			printf("%2d\t%3d\t%3d\t%s\t%sline\t%stive\n",
+			       i, values[i], thresholds[i],
+			       flags[i] & WDSM_ATTR_ADVISORY ? "yes" : "no",
+			       flags[i] & WDSM_ATTR_COLLECTIVE ? "on" : "off",
+			       values[i] > thresholds[i] ? "posi" : "nega");
+		}
+	}
+}
+
+/*
+ * is_smart:
+ *
+ *	Detect whether device supports SMART and SMART is enabled.
+ */
+
+int
+is_smart(int silent)
+{
+	int retval = 0;
+	struct atareq req;
+	unsigned char inbuf[DEV_BSIZE];
+	struct ataparams *inqbuf;
+	char *status;
+
+	memset(&inbuf, 0, sizeof(inbuf));
+	memset(&req, 0, sizeof(req));
+
+	inqbuf = (struct ataparams *) inbuf;
+
+	req.flags = ATACMD_READ;
+	req.command = WDCC_IDENTIFY;
+	req.databuf = (caddr_t) inbuf;
+	req.datalen = sizeof(inbuf);
+	req.timeout = 1000;
+
+	ata_command(&req);
+
+	if (inqbuf->atap_cmd_def != 0 && inqbuf->atap_cmd_def != 0xffff) {
+		if (!(inqbuf->atap_cmd_set1 & WDC_CMD1_SMART)) {
+			fprintf(stderr, "SMART unsupported\n");
+		} else {
+			if (inqbuf->atap_ata_major <= WDC_VER_ATA5 ||
+			    inqbuf->atap_cmd_set2 == 0xffff ||
+			    inqbuf->atap_cmd_set2 == 0x0000) {
+				status = "status unknown";
+				retval = 2;
+			} else {
+				if (inqbuf->atap_cmd_set2 & ATA_CMD2_SMART) {
+					status = "enabled";
+					retval = 1;
+				} else {
+					status = "disabled";
+				}
+			}
+			if (!silent || retval == 0) {
+				printf("SMART supported, SMART %s\n", status);
+			}
+		}
+	}
+	return retval;
+}
+					
 /*
  * DEVICE COMMANDS
  */
@@ -515,5 +629,104 @@ device_checkpower(int argc, char *argv[])
 		printf("Unknown power code (%02x)\n", req.sec_count);
 	}
 
+	return;
+}
+
+/*
+ * device_smart:
+ *
+ *	Display SMART status
+ */
+void
+device_smart(int argc, char *argv[])
+{
+	struct atareq req;
+	unsigned char inbuf[DEV_BSIZE];
+	unsigned char inbuf2[DEV_BSIZE];
+
+	/* Only one argument */
+	if (argc != 1)
+		usage();
+
+	if (strcmp(argv[0], "enable") == 0) {
+		if (is_smart(1)) {
+			memset(&req, 0, sizeof(req));
+
+			req.features = WDSM_ENABLE_OPS;
+			req.command = WDCC_SMART;
+			req.cylinder = htole16(WDSMART_CYL);
+			req.timeout = 1000;
+
+			ata_command(&req);
+
+			is_smart(0);
+		}
+	} else if (strcmp(argv[0], "disable") == 0) {
+		if (is_smart(1)) {
+			memset(&req, 0, sizeof(req));
+
+			req.features = WDSM_DISABLE_OPS;
+			req.command = WDCC_SMART;
+			req.cylinder = htole16(WDSMART_CYL);
+			req.timeout = 1000;
+
+			ata_command(&req);
+
+			is_smart(0);
+		}
+	} else if (strcmp(argv[0], "info") == 0) {
+		if (is_smart(0)) {
+			memset(&inbuf, 0, sizeof(inbuf));
+			memset(&req, 0, sizeof(req));
+
+			req.features = WDSM_STATUS;
+			req.command = WDCC_SMART;
+			req.cylinder = htole16(WDSMART_CYL);
+			req.timeout = 1000;
+	
+			ata_command(&req);
+
+			if (req.cylinder != htole16(WDSMART_CYL)) {
+				fprintf(stderr, "Threshold exceeds condition\n");
+			}
+
+			/* WDSM_RD_DATA and WDSM_RD_THRESHOLDS are optional
+			 * features, the following ata_command()'s may error
+			 * and exit().
+			 */
+
+			memset(&inbuf, 0, sizeof(inbuf));
+			memset(&req, 0, sizeof(req));
+
+			req.flags = ATACMD_READ;
+			req.features = WDSM_RD_DATA;
+			req.command = WDCC_SMART;
+			req.databuf = (caddr_t) inbuf;
+			req.datalen = sizeof(inbuf);
+			req.cylinder = htole16(WDSMART_CYL);
+			req.timeout = 1000;
+	
+			ata_command(&req);
+
+			memset(&inbuf2, 0, sizeof(inbuf2));
+			memset(&req, 0, sizeof(req));
+
+			req.flags = ATACMD_READ;
+			req.features = WDSM_RD_THRESHOLDS;
+			req.command = WDCC_SMART;
+			req.databuf = (caddr_t) inbuf2;
+			req.datalen = sizeof(inbuf2);
+			req.cylinder = htole16(WDSMART_CYL);
+			req.timeout = 1000;
+
+			ata_command(&req);
+
+			print_smart_status(inbuf, inbuf2);
+		} else {
+			fprintf(stderr, "SMART not supported\n");
+		}
+	} else {
+		usage();
+	}
 	return;
 }

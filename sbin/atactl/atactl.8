@@ -1,4 +1,4 @@
-.\"	$NetBSD: atactl.8,v 1.9 2001/11/16 11:21:37 wiz Exp $
+.\"	$NetBSD: atactl.8,v 1.10 2002/08/05 23:29:29 soren Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,6 +103,58 @@ seconds.  A value of 0 will disable the Standby timer.
 .Pp
 Will print out if the device is in Active, Idle, or Standby power
 management mode.
+.Pp
+.Cm smart
+.Ar [enable | disable | info]
+.Pp
+Controls SMART feature set of the specified device.  SMART stands for
+Self-Monitoring, Analysis, and Reporting Technology.  It provides an
+early warning system by comparing subtle operation characteristics to
+those determined in vendor testing to precede device failures.
+.Pp
+.Ar enable
+.Pp
+Enables access to SMART capabilities within the device.  Prior to being
+enabled, a SMART capable device neither monitors nor saves SMART
+attribute values.  The state of SMART, either enabled or disabled, will
+be preserved by the device across power cycles.
+.Pp
+.Ar disable
+.Pp
+Disables access to SMART capabilities within the device.  Attribute values
+will be saved, and will no longer be monitored.
+.Pp
+.Ar info
+.Pp
+Reports whether SMART is supported by the device, and whether SMART is
+enabled on the device (can only be determined on ATA6 or better devices).
+If SMART is enabled, then a table of attribute information is printed.
+Attributes are the specific performance or calibration parameters that
+are used in analyzing the status of the device.  The specific set of
+attributes being used and the identity of these attributes is vendor
+specific and proprietary.
+.Pp
+Attribute values are used to represent the relative reliability of
+individual performance or calibration parameters.  The valid range of
+attribute values is from 1 to 253 decimal.  Lower values indicate that the
+analysis algorithms being used by the device are predicting a higher
+probability of a degrading or faulty condition.
+.Pp
+Each attribute value has a corresponding threshold limit which is used for
+direct comparison to the attribute value to indicate the existence of a
+degrading or faulty conditon.  The numerical value of the attribute
+thresholds are determined by the device manufacturer through design and
+reliability testing and analysis.  Each attribute threshold represents the
+lowest limit to which its corresponding attribute value can equal while
+still retaining a positive reliability status.
+.Pp
+If the crit field is "yes" then negative reliability of this attribute
+predicts imminent data loss.  Otherwise it merely indicates that the
+intended design life period of usage or age has been exceeded.
+The collect field indicates whether this attribute is updated while the
+device is online.  The reliability field indicates whether the attribute
+value is within the acceptable threshold.
+.Pp
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr wd 4
