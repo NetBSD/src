@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.10.2.2 1995/11/12 11:46:17 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.10.2.3 1996/02/17 23:27:08 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -60,6 +60,8 @@ void dma_enintr		__P((struct dma_softc *));
 int dma_isintr		__P((struct dma_softc *));
 void dma_start		__P((struct dma_softc *, caddr_t *, size_t *, int));
 int dmaintr		__P((struct dma_softc *));
+int dma_setup		__P((struct dma_softc *, caddr_t *, size_t *, int, size_t *));
+void dma_go		__P((struct dma_softc *));
 
 struct cfdriver dmacd = {
 	NULL, "dma", dmamatch, dmaattach,
@@ -81,7 +83,7 @@ dmaprint(aux, name)
 	void *aux;
 	char *name;
 {
-	return -1;
+	return (UNCONF);
 }
 
 int
@@ -98,7 +100,7 @@ dmamatch(parent, vcf, aux)
 	if (ca->ca_bustype == BUS_SBUS)
 		return (1);
 	ra->ra_len = NBPG;
-	return (probeget(ra->ra_vaddr, 1) != -1);
+	return (probeget(ra->ra_vaddr, 4) != -1);
 }
 
 /*
@@ -114,14 +116,11 @@ dmaattach(parent, self, aux)
 	int node, base, slot;
 	char *name;
 
-	/*
-	 * do basic sbus stuff (I think)
-	 */
 	if (ca->ca_ra.ra_vaddr == NULL)
-		ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_paddr,
-		    ca->ca_ra.ra_len, ca->ca_bustype);
-	if ((u_long)ca->ca_ra.ra_paddr & PGOFSET)
-		(u_long)ca->ca_ra.ra_vaddr |= ((u_long)ca->ca_ra.ra_paddr & PGOFSET);
+		ca->ca_ra.ra_vaddr =
+		    mapiodev(ca->ca_ra.ra_paddr, ca->ca_ra.ra_len,
+			     ca->ca_bustype);
+
 	sc->sc_regs = (struct dma_regs *) ca->ca_ra.ra_vaddr;
 
 	/*
@@ -167,7 +166,8 @@ dmaattach(parent, self, aux)
 	sc->enintr = dma_enintr;
 	sc->isintr = dma_isintr;
 	sc->reset = dma_reset;
-	sc->start = dma_start;
+	sc->setup = dma_setup;
+	sc->go = dma_go;
 	sc->intr = dmaintr;
 
 	sc->sc_node = ca->ca_ra.ra_node;
@@ -208,6 +208,7 @@ dma_reset(sc)
 	DMAWAIT1(sc);				/* let things drain */
 	DMACSR(sc) |= D_RESET;			/* reset DMA */
 	DELAY(200);				/* what should this be ? */
+	DMAWAIT1(sc);
 	DMACSR(sc) &= ~D_RESET;			/* de-assert reset line */
 	DMACSR(sc) |= D_INT_EN;			/* enable interrupts */
 	if (sc->sc_rev > DMAREV_1)
@@ -230,70 +231,82 @@ dma_isintr(sc)
 	return (sc->sc_regs->csr & (D_INT_PEND|D_ERR_PEND));
 }
 
-#define ESPMAX		((sc->sc_esp->sc_rev > ESP100A) ? \
-			    (16 * 1024 * 1024) : (64 * 1024))
 #define DMAMAX(a)	(0x01000000 - ((a) & 0x00ffffff))
 
 /*
- * start a dma transfer or keep it going
+ * setup a dma transfer
  */
-void
-dma_start(sc, addr, len, datain)
+int
+dma_setup(sc, addr, len, datain, dmasize)
 	struct dma_softc *sc;
 	caddr_t *addr;
 	size_t *len;
 	int datain;
+	size_t *dmasize;	/* IN-OUT */
 {
-	/* we do the loading of the transfer counter */
-	volatile caddr_t esp = sc->sc_esp->sc_reg;
-	size_t size;
 	u_long csr;
 
+	/* clear errors and D_TC flag */
+	DMAWAIT(sc);
+	DMA_DRAIN(sc);		/* ? */
+	DMAWAIT1(sc);
+	DMACSR(sc) |= D_INVALIDATE;
+	DMAWAIT1(sc);
+
+#if 0
+	DMACSR(sc) &= ~D_INT_EN;
+#endif
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
-	ESP_DMA(("%s: start %d@0x%08x,%d\n", sc->sc_dev.dv_xname, *sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
+	ESP_DMA(("%s: start %d@0x%08x,%d\n", sc->sc_dev.dv_xname,
+		*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
 
 	/*
 	 * the rules say we cannot transfer more than the limit
 	 * of this DMA chip (64k for old and 16Mb for new),
 	 * and we cannot cross a 16Mb boundary.
 	 */
-	size = min(*sc->sc_dmalen, ESPMAX);
-	size = min(size, DMAMAX((size_t) *sc->sc_dmaaddr));
-	sc->sc_dmasize = size;
+	*dmasize = sc->sc_dmasize =
+		min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 
-	ESP_DMA(("dma_start: dmasize = %d\n", sc->sc_dmasize));
+	ESP_DMA(("dma_setup: dmasize = %d\n", sc->sc_dmasize));
 
-	esp[ESP_TCL] = size;
-	esp[ESP_TCM] = size >> 8;
-	if (sc->sc_esp->sc_rev > ESP100A) {
-		esp[ESP_TCH] = size >> 16;
-	}  
-	/* load the count in */
-	ESPCMD(sc->sc_esp, ESPCMD_NOP|ESPCMD_DMA);
+	/* Program the DMA address */
+#if defined(SUN4M)
+	if (sc->sc_dmasize && cputyp == CPU_SUN4M) {
+		/*
+		 * Use dvma mapin routines to map the buffer into DVMA space.
+		 */
+		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
+		sc->sc_dvmakaddr = kdvma_mapin(sc->sc_dvmaaddr,
+					       sc->sc_dmasize, 0);
+		if (sc->sc_dvmakaddr == NULL)
+			panic("dma: cannot allocate DVMA address");
+		DMADDR(sc) = sc->sc_dvmakaddr;
+	} else
+#endif
+		DMADDR(sc) = *sc->sc_dmaaddr;
 
-	/* clear errors and D_TC flag */
-	DMAWAIT(sc);
-	DMACSR(sc) |= D_INVALIDATE;
-	DMAWAIT1(sc);
-
-	DMADDR(sc) = *sc->sc_dmaaddr;
+	/* Setup DMA control register */
 	csr = DMACSR(sc);
-	/* clear from last read if this is a write */
-	csr &= ~D_WRITE;
-	csr |= datain|D_EN_DMA|D_INT_EN;
+	if (datain)
+		csr |= D_WRITE;
+	else
+		csr &= ~D_WRITE;
+	csr |= D_INT_EN;
 	DMACSR(sc) = csr;
 
-	/*
-	 * and kick the SCSI
-	 * Note that if `size' is 0, we've already transceived all
-	 * the bytes we want but we're still in the DATA PHASE.
-	 * Apparently, the device needs padding. Also, a transfer
-	 * size of 0 means "maximum" to the chip DMA logic.
-	 */
-	ESPCMD(sc->sc_esp, (size==0?ESPCMD_TRPAD:ESPCMD_TRANS)|ESPCMD_DMA);
+	return 0;
+}
 
+void
+dma_go(sc)
+	struct dma_softc *sc;
+{
+
+	/* Start DMA */
+	DMACSR(sc) |= D_EN_DMA;
 	sc->sc_active = 1;
 }
 
@@ -308,15 +321,19 @@ int
 dmaintr(sc)
 	struct dma_softc *sc;
 {
-	volatile caddr_t esp = sc->sc_esp->sc_reg;
 	int trans = 0, resid = 0;
+	u_long csr;
 
-	ESP_DMA(("%s: intr: <csr %x>", sc->sc_dev.dv_xname, DMACSR(sc)));
+	csr = DMACSR(sc);
 
-	if (DMACSR(sc) & D_ERR_PEND) {
+	ESP_DMA(("%s: intr: addr %x, csr %b\n", sc->sc_dev.dv_xname,
+		 DMADDR(sc), csr, DMACSRBITS));
+
+	if (csr & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
-		printf("%s: error", sc->sc_dev.dv_xname);
+		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
+			csr, DMACSRBITS);
 		return 0;
 	}
 
@@ -324,32 +341,42 @@ dmaintr(sc)
 	if (sc->sc_active == 0)
 		panic("dmaintr: DMA wasn't active");
 
+	/* clear errors and D_TC flag */
+	DMAWAIT(sc);
+	DMA_DRAIN(sc);		/* ? */
+	DMAWAIT1(sc);
+	DMACSR(sc) |= D_INVALIDATE;
+	DMAWAIT1(sc);
+
 	/* DMA has stopped */
 	DMACSR(sc) &= ~D_EN_DMA;
 	sc->sc_active = 0;
 
-	if ((DMACSR(sc) & D_WRITE)) {
-		DMAWAIT(sc);
-		/* clear errors and D_TC flag */
-		DMACSR(sc) |= D_INVALIDATE;
-		DMAWAIT1(sc);
-	}
-
 	if (sc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
-		ESP_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n", esp[ESP_TCL] | (esp[ESP_TCM] << 8), esp[ESP_TCL], esp[ESP_TCM]));
+		ESP_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
+			ESP_READ_REG(sc->sc_esp, ESP_TCL) |
+				(ESP_READ_REG(sc->sc_esp, ESP_TCM) << 8),
+			ESP_READ_REG(sc->sc_esp, ESP_TCL),
+			ESP_READ_REG(sc->sc_esp, ESP_TCM)));
 		return 0;
 	}
 
-	if (!(DMACSR(sc) & D_WRITE) &&
-	    (resid = (esp[ESP_FFLAG] & ESPFIFO_FF)) != 0) {
-		printf("empty FIFO of %d ", resid);
+	if (!(csr & D_WRITE) &&
+	    (resid = (ESP_READ_REG(sc->sc_esp, ESP_FFLAG) & ESPFIFO_FF)) != 0) {
+		ESP_DMA(("dmaintr: empty esp FIFO of %d ", resid));
 		ESPCMD(sc->sc_esp, ESPCMD_FLUSH);
-		DELAY(1);
 	}
 
-	resid += esp[ESP_TCL] | (esp[ESP_TCM] << 8) |
-	    (sc->sc_esp->sc_rev > ESP100A ? (esp[ESP_TCH] << 16) : 0);
+	resid += ESP_READ_REG(sc->sc_esp, ESP_TCL) |
+		 (ESP_READ_REG(sc->sc_esp, ESP_TCM) << 8) |
+		 (sc->sc_esp->sc_rev > ESP100A
+			? (ESP_READ_REG(sc->sc_esp, ESP_TCH) << 16) : 0);
+
+	if (resid == 0 && (sc->sc_esp->sc_rev <= ESP100A) &&
+	    (sc->sc_esp->sc_espstat & ESPSTAT_TC) == 0)
+		resid = 65536;
+
 	trans = sc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
 		printf("%s: xfer (%d) > req (%d)\n",
@@ -357,15 +384,26 @@ dmaintr(sc)
 		trans = sc->sc_dmasize;
 	}
 
-	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n", esp[ESP_TCL],esp[ESP_TCM], esp[ESP_TCH], trans, resid));
+	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
+		ESP_READ_REG(sc->sc_esp, ESP_TCL),
+		ESP_READ_REG(sc->sc_esp, ESP_TCM),
+		sc->sc_esp->sc_rev > ESP100A
+			? ESP_READ_REG(sc->sc_esp, ESP_TCH) : 0,
+		trans, resid));
 
-	if (DMACSR(sc) & D_WRITE)
+	if (csr & D_WRITE)
 		cache_flush(*sc->sc_dmaaddr, trans);
+
+#if defined(SUN4M)
+	if (cputyp == CPU_SUN4M && sc->sc_dvmakaddr)
+		dvma_mapout((vm_offset_t)sc->sc_dvmakaddr,
+			    (vm_offset_t)sc->sc_dvmaaddr, sc->sc_dmasize);
+#endif
 
 	*sc->sc_dmalen -= trans;
 	*sc->sc_dmaaddr += trans;
 
-#if 0   /* this is not normal operation just yet */
+#if 0	/* this is not normal operation just yet */
 	if (*sc->sc_dmalen == 0 ||
 	    sc->sc_esp->sc_phase != sc->sc_esp->sc_prevphase)
 		return 0;

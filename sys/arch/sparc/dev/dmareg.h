@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.5 1994/11/20 20:52:06 deraadt Exp $ */
+/*	$NetBSD: dmareg.h,v 1.5.2.1 1996/02/17 23:26:59 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -27,6 +27,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define DMACSRBITS "\020\01INT\02ERR\03DR1\04DR2\05IEN\011WRITE\016ENCNT\017TC\032DMAON"
 
 struct dma_regs {
 	volatile u_long		csr;		/* DMA CSR */
@@ -67,4 +69,5 @@ struct dma_regs {
 #define  D_BCNT_MASK		0x00ffffff	/* only 24 bits */
 
 	volatile u_long		test;		/* DMA TEST (in u_longs) */
+
 };
