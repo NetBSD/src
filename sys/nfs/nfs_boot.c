@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.50 1999/02/21 15:07:49 drochner Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.50.2.1 1999/10/05 22:15:09 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -211,6 +211,8 @@ nfs_boot_ifupdown(ifp, procp, up)
 		goto out;
 	}
 
+	if (up)
+		delay(3000000); /* give the link some time to get up */
 out:
 	soclose(so);
 	return (error);
@@ -268,6 +270,7 @@ nfs_boot_setaddress(ifp, procp, addr, netmask, braddr)
 		goto out;
 	}
 
+	delay(3000000); /* give the link some time to get up */
 out:
 	soclose(so);
 	return (error);
@@ -562,7 +565,7 @@ nfs_boot_getfh(ndm)
 #endif
 	args->fh       = ndm->ndm_fh;
 	args->hostname = ndm->ndm_host;
-	args->flags    = NFSMNT_RESVPORT | NFSMNT_NFSV3;
+	args->flags    = NFSMNT_NFSV3 | NFSMNT_NOCONN | NFSMNT_RESVPORT;
 
 #ifdef	NFS_BOOT_OPTIONS
 	args->flags    |= NFS_BOOT_OPTIONS;
