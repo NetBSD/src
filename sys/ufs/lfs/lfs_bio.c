@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.14 1999/11/23 23:52:42 fvdl Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.15 1999/12/04 12:18:21 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -115,8 +115,8 @@ extern int lfs_dostats;
 #define LFS_MAX_BUFS        ((nbuf >> 2) - 10)
 #define LFS_WAIT_BUFS       ((nbuf >> 1) - (nbuf >> 3) - 10)
 /* These are new ... is LFS taking up too much memory in its buffers? */
-#define LFS_MAX_BYTES       (((bufpages >> 2) - 10) * CLBYTES)
-#define LFS_WAIT_BYTES      (((bufpages >> 1) - (bufpages >> 3) - 10) * CLBYTES)
+#define LFS_MAX_BYTES       (((bufpages >> 2) - 10) * NBPG)
+#define LFS_WAIT_BYTES      (((bufpages >> 1) - (bufpages >> 3) - 10) * NBPG)
 #define LFS_BUFWAIT         2
 /*
  *
