@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.29 2004/01/03 22:34:38 tron Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.30 2004/01/16 09:01:22 abs Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -62,7 +62,9 @@
 #endif
 #define	NAT_HW_CKSUM	0x80000000
 
-#define	DEF_NAT_AGE	1200     /* 10 minutes (600 seconds) */
+#ifndef DEF_NAT_AGE
+# define	DEF_NAT_AGE	1200     /* 10 minutes (600 seconds) */
+#endif
 
 struct ap_session;
 
