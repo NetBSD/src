@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.30 2000/11/02 21:56:46 bjh21 Exp $	*/
+/*	$NetBSD: i82586.c,v 1.31 2000/11/04 19:48:38 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ Mode of operation:
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.30 2000/11/02 21:56:46 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.31 2000/11/04 19:48:38 scw Exp $");
 
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -1315,7 +1315,7 @@ i82586_reset(sc, hard)
 	if ((sc->sc_ethercom.ec_if.if_flags & IFF_UP) != 0) {
 		int retries=0;	/* XXX - find out why init sometimes fails */
 		while (retries++ < 2)
-			if (i82586_init(&sc->sc_ethercom.ec_if) == 1)
+			if (i82586_init(&sc->sc_ethercom.ec_if) == 0)
 				break;
 	}
 
@@ -1684,13 +1684,13 @@ i82586_init(ifp)
 	 * Send the configure command first.
 	 */
 	if (ie_cfg_setup(sc, cmd, sc->promisc, 0) == 0)
-		return (0);
+		return (1);
 
 	/*
 	 * Send the Individual Address Setup command.
 	 */
 	if (ie_ia_setup(sc, cmd) == 0)
-		return (0);
+		return (1);
 
 	/*
 	 * Run the time-domain reflectometer.
@@ -1701,7 +1701,7 @@ i82586_init(ifp)
 	 * Set the multi-cast filter, if any
 	 */
 	if (ie_mc_setup(sc, cmd) == 0)
-		return (0);
+		return (1);
 
 	/*
 	 * Acknowledge any interrupts we have generated thus far.
@@ -1723,7 +1723,7 @@ i82586_init(ifp)
 		sc->do_xmitnopchain = 0;
 
 	i82586_start_transceiver(sc);
-	return (1);
+	return (0);
 }
 
 /*
