@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/01/10 16:14:37 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2004/06/13 11:49:55 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ BINMODE=4711
 MAN=	X68k.1
 
 FILES=	X68kConfig
-FILESDIR=${X11LIBDIR}
+FILESDIR=${X11ETCDIR}
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/x68k
 
