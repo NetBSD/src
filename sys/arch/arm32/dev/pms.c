@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.9 1997/01/06 04:47:58 mark Exp $ */
+/*	$NetBSD: pms.c,v 1.10 1997/01/28 04:55:17 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -62,6 +62,7 @@
 #include <machine/cpu.h>
 #include <machine/katelib.h>
 #include <machine/irqhandler.h>
+#include <machine/conf.h>
 #include <machine/iomd.h>
 #include <machine/mouse.h>
 #include <arm32/mainbus/mainbus.h>
@@ -101,9 +102,10 @@ struct pms_softc {		/* driver status information */
 int pmsprobe		__P((struct device *, void *, void *));
 void pmsattach		__P((struct device *, struct device *, void *));
 int pmsintr		__P((void *));
-int pmsinit		__P(());
+int pmsinit		__P((void));
 void pmswatchdog	__P((void *));
 void pmsputbuffer	__P((struct pms_softc *sc, struct mousebufrec *buf));
+static __inline void pms_flush __P((void));
 
 struct cfattach pms_ca = {
 	sizeof(struct pms_softc), pmsprobe, pmsattach

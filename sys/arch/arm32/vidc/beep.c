@@ -1,4 +1,4 @@
-/* $NetBSD: beep.c,v 1.8 1996/11/23 03:37:35 mark Exp $ */
+/* $NetBSD: beep.c,v 1.9 1997/01/28 04:55:15 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -89,7 +89,7 @@ int	beepprobe	__P((struct device *parent, void *match, void *aux));
 void	beepattach	__P((struct device *parent, struct device *self, void *aux));
 int	beepopen	__P((dev_t, int, int, struct proc *));
 int	beepclose	__P((dev_t, int, int, struct proc *));
-int	beepintr	__P((struct beep_softc *sc));
+int	beepintr	__P((void *arg));
 void	beepdma		__P((struct beep_softc *sc, int buf));
 
 static int sdma_channel;
@@ -371,9 +371,10 @@ beepioctl(dev, cmd, data, flag, p)
 
 
 int
-beepintr(sc)
-	struct beep_softc *sc;
+beepintr(arg)
+	void *arg;
 {
+	struct beep_softc *sc = arg;
 /*	WriteByte(IOMD_DMARQ, 0x10);*/
 	--sc->sc_count;
 	if (sc->sc_count <= 0) {

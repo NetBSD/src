@@ -1,4 +1,4 @@
-/* $NetBSD: qms.c,v 1.12 1996/11/23 03:37:39 mark Exp $ */
+/*	$NetBSD: qms.c,v 1.13 1997/01/28 04:55:18 mark Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -56,6 +56,7 @@
 #include <arm32/mainbus/mainbus.h>
 #include <machine/irqhandler.h>
 #include <machine/katelib.h>
+#include <machine/conf.h>
 #include <machine/iomd.h>
 #include <machine/mouse.h>
 
@@ -85,10 +86,8 @@ struct quadmouse_softc {
 
 int	quadmouseprobe	__P((struct device *, void *, void *));
 void	quadmouseattach	__P((struct device *, struct device *, void *));
-int	quadmouseopen	__P((dev_t, int, int, struct proc *));
-int	quadmouseclose	__P((dev_t, int, int, struct proc *));
 
-int quadmouseintr	__P((struct quadmouse_softc *sc));
+int quadmouseintr	__P((void *arg));
 void quadmouseputbuffer	__P((struct quadmouse_softc *sc, struct mousebufrec *buf));
 
 struct cfattach quadmouse_ca = {
@@ -311,7 +310,7 @@ quadmouseread(dev, uio, flag)
 int
 quadmouseioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -434,9 +433,10 @@ quadmouseioctl(dev, cmd, data, flag, p)
 
 
 int
-quadmouseintr(sc)
-	struct quadmouse_softc *sc;
+quadmouseintr(arg)
+	void *arg;
 {
+	struct quadmouse_softc *sc = arg;
 	int s;
 	struct mousebufrec buffer;
 	int dosignal=0;
