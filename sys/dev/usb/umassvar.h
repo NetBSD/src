@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.7 2001/12/14 08:46:21 gehenna Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.8 2001/12/14 08:58:51 gehenna Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -157,6 +157,8 @@ struct umass_wire_methods {
 struct umass_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* device */
+	usbd_interface_handle	sc_iface;	/* interface */
+	int			sc_ifaceno;	/* interface number */
 
 	u_int8_t		sc_epaddr[UMASS_NEP];
 	usbd_pipe_handle	sc_pipe[UMASS_NEP];
@@ -207,9 +209,6 @@ struct umass_softc {
 
 	u_char			subclass;	/* interface subclass */
 	u_char			protocol;	/* interface protocol */
-
-	usbd_interface_handle	iface;		/* Mass Storage interface */
-	int			ifaceno;	/* MS iface number */
 
 	/* Bulk specific variables for transfers in progress */
 	umass_bbb_cbw_t		cbw;	/* command block wrapper */

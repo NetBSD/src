@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.75 2001/12/14 08:46:19 gehenna Exp $	*/
+/*	$NetBSD: umass.c,v 1.76 2001/12/14 08:58:49 gehenna Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.75 2001/12/14 08:46:19 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.76 2001/12/14 08:58:49 gehenna Exp $");
 
 #include "atapibus.h"
 
@@ -454,17 +454,17 @@ USB_ATTACH(umass)
 	usbd_devinfo(uaa->device, 0, devinfo);
 	USB_ATTACH_SETUP;
 
-	sc->iface = uaa->iface;
-	sc->ifaceno = uaa->ifaceno;
+	sc->sc_iface = uaa->iface;
+	sc->sc_ifaceno = uaa->ifaceno;
 
 	/* initialise the proto and drive values in the umass_softc (again) */
-	if (umass_match_proto(sc, sc->iface, uaa->device) == 0) {
+	if (umass_match_proto(sc, sc->sc_iface, uaa->device) == 0) {
 		printf("%s: match failed\n", USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
 
 	if (sc->drive == INSYSTEM_USBCABLE) {
-		err = usbd_set_interface(sc->iface, 1);
+		err = usbd_set_interface(sc->sc_iface, 1);
 		if (err) {
 			DPRINTF(UDMASS_USB, ("%s: could not switch to "
 					     "Alt Interface %d\n",
@@ -486,7 +486,7 @@ USB_ATTACH(umass)
 	printf("%s: timeout=%d ms\n", USBDEVNAME(sc->sc_dev), sc->timeout);
 #endif
 
-	id = usbd_get_interface_descriptor(sc->iface);
+	id = usbd_get_interface_descriptor(sc->sc_iface);
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
 	switch (sc->subclass) {
@@ -542,7 +542,7 @@ USB_ATTACH(umass)
 	 * from the device descriptors of the current interface.
 	 */
 	for (i = 0 ; i < id->bNumEndpoints ; i++) {
-		ed = usbd_interface2endpoint_descriptor(sc->iface, i);
+		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (!ed) {
 			printf("%s: could not read endpoint descriptor\n",
 			       USBDEVNAME(sc->sc_dev));
@@ -594,7 +594,7 @@ USB_ATTACH(umass)
 	}
 
 	/* Open the bulk-in and -out pipe */
-	err = usbd_open_pipe(sc->iface, sc->sc_epaddr[UMASS_BULKOUT],
+	err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_BULKOUT],
 				USBD_EXCLUSIVE_USE,
 				&sc->sc_pipe[UMASS_BULKOUT]);
 	if (err) {
@@ -603,7 +603,7 @@ USB_ATTACH(umass)
 		umass_disco(sc);
 		USB_ATTACH_ERROR_RETURN;
 	}
-	err = usbd_open_pipe(sc->iface, sc->sc_epaddr[UMASS_BULKIN],
+	err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_BULKIN],
 				USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_BULKIN]);
 	if (err) {
 		DPRINTF(UDMASS_USB, ("%s: could not open %u-in pipe (bulk)\n",
@@ -624,7 +624,7 @@ USB_ATTACH(umass)
 	 * arriving concurrently.
 	 */
 	if (sc->wire_proto == WPROTO_CBI_I) {
-		err = usbd_open_pipe(sc->iface, sc->sc_epaddr[UMASS_INTRIN],
+		err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_INTRIN],
 				USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_INTRIN]);
 		if (err) {
 			DPRINTF(UDMASS_USB, ("%s: couldn't open %u-in (intr)\n",
@@ -765,7 +765,7 @@ umass_init_shuttle(struct umass_softc *sc)
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	req.bRequest = 1;
 	USETW(req.wValue, 0);
-	USETW(req.wIndex, sc->ifaceno);
+	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, sizeof status);
 	(void)usbd_do_request(sc->sc_udev, &req, &status);
 }
@@ -900,7 +900,7 @@ umass_bbb_reset(struct umass_softc *sc, int status)
 	sc->request.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	sc->request.bRequest = UR_BBB_RESET;
 	USETW(sc->request.wValue, 0);
-	USETW(sc->request.wIndex, sc->ifaceno);
+	USETW(sc->request.wIndex, sc->sc_ifaceno);
 	USETW(sc->request.wLength, 0);
 	umass_setup_ctrl_transfer(sc, &sc->request, NULL, 0, 0,
 				  sc->transfer_xfer[XFER_BBB_RESET1]);
@@ -1334,7 +1334,7 @@ umass_cbi_adsc(struct umass_softc *sc, char *buffer, int buflen,
 	sc->request.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	sc->request.bRequest = UR_CBI_ADSC;
 	USETW(sc->request.wValue, 0);
-	USETW(sc->request.wIndex, sc->ifaceno);
+	USETW(sc->request.wIndex, sc->sc_ifaceno);
 	USETW(sc->request.wLength, buflen);
 	return umass_setup_ctrl_transfer(sc, &sc->request, buffer,
 					 buflen, 0, xfer);
@@ -1739,7 +1739,7 @@ umass_bbb_get_max_lun(struct umass_softc *sc, u_int8_t *maxlun)
 	req.bmRequestType = UT_READ_CLASS_INTERFACE;
 	req.bRequest = UR_BBB_GET_MAX_LUN;
 	USETW(req.wValue, 0);
-	USETW(req.wIndex, sc->ifaceno);
+	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, 1);
 
 	err = usbd_do_request(sc->sc_udev, &req, maxlun);
