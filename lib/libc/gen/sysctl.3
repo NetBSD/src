@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.30 1998/06/28 21:36:56 nathanw Exp $
+.\"	$NetBSD: sysctl.3,v 1.31 1998/08/03 14:38:20 kleink Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -260,6 +260,7 @@ information.
 .It KERN\_FSYNC	integer	no
 .It KERN\_HOSTID	integer	yes
 .It KERN\_HOSTNAME	string	yes
+.It KERN\_IOV\_MAX	integer	no
 .It KERN\_JOB\_CONTROL	integer	no
 .It KERN\_LINK\_MAX	integer	no
 .It KERN\_MAXFILES	integer	yes
@@ -284,6 +285,7 @@ information.
 .It KERN\_SAVED\_IDS	integer	no
 .It KERN\_SECURELVL	integer	raise only
 .It KERN\_SHORTCORENAME	integer	yes
+.It KERN\_SYNCHRONIZED\_IO	integer	no
 .It KERN\_SYSVMSG	integer	no
 .It KERN\_SYSVSEM	integer	no
 .It KERN\_SYSVSHM	integer	no
@@ -330,12 +332,24 @@ followed by an array of
 .Va struct file ,
 whose size depends on the current number of such objects in the system.
 .It Li KERN_FSYNC
-Return 1 if the File Synchronisation Option is available on this system,
+Return 1 if the POSIX 1003.1b File Synchronization Option is available
+on this system,
 otherwise 0.
 .It Li KERN_HOSTID
 Get or set the host id.
 .It Li KERN_HOSTNAME
 Get or set the hostname.
+.It Li KERN_IOV_MAX
+Return the maximum number of
+.Va iovec
+structures that a process has available for use with
+.Xr preadv 2 ,
+.Xr pwritev 2 ,
+.Xr readv 2 ,
+.Xr recvmsg 2 ,
+.Xr sendmsg 2
+and
+.Xr writev 2 .
 .It Li KERN_JOB_CONTROL
 Return 1 if job control is available on this system, otherwise 0.
 .It Li KERN_LINK_MAX
@@ -443,15 +457,22 @@ The default value can be changed to 1 with the kernel configuration option
 (see 
 .Xr options 4 ,
 .Xr core 5 ).
+.It Li KERN_SYNCHRONIZED_IO
+Returns 1 if the POSIX 1003.1b Synchronized I/O Option is available
+on this system,
+otherwise 0.
 .It Li KERN_SYSVMSG
-Returns 1 if System V style message queue functionality is available on this
-system, otherwise 0.
+Returns 1 if System V style message queue functionality is available
+on this system,
+otherwise 0.
 .It Li KERN_SYSVSEM
-Returns 1 if System V style semaphore functionality is available on this
-system, otherwise 0.
+Returns 1 if System V style semaphore functionality is available
+on this system,
+otherwise 0.
 .It Li KERN_SYSVSHM
-Returns 1 if System V style share memory functionality is available on this
-system, otherwise 0.
+Returns 1 if System V style share memory functionality is available
+on this system,
+otherwise 0.
 .It Li KERN_VDISABLE
 Returns the terminal character disabling value.
 .It Li KERN_VERSION
