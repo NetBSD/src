@@ -1,4 +1,4 @@
-.\"	$NetBSD: exit.3,v 1.6 1998/08/29 08:32:35 lukem Exp $
+.\" $NetBSD: exit.3,v 1.7 2001/03/22 01:37:46 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\"
 .\"     from: @(#)exit.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd March 21, 2001
 .Dt EXIT 3
 .Os
 .Sh NAME
@@ -51,7 +51,14 @@
 .Fn exit "int status"
 .Sh DESCRIPTION
 .Fn exit
-terminates a process.
+terminates a process.  The
+.Fa status
+values
+.Dv EXIT_SUCCESS
+and
+.Dv EXIT_FAILURE
+can be used to indicate successful and unsuccessful
+termination, respectively.
 .Pp
 Before termination it performs the following functions in the
 order listed:
