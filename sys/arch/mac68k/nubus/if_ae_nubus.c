@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.21 1997/10/10 05:55:05 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.22 1997/10/15 16:58:21 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -69,6 +69,8 @@ static int	ae_nb_get_enaddr __P((bus_space_tag_t, bus_space_handle_t,
 #ifdef DEBUG
 static void	ae_nb_watchdog __P((struct ifnet *));
 #endif
+
+void		ae_nubus_intr __P((void *, int));
 
 struct cfattach ae_nubus_ca = {
 	sizeof(struct dp8390_softc), ae_nubus_match, ae_nubus_attach
@@ -143,13 +145,7 @@ ae_nubus_attach(parent, self, aux)
 	sc->sc_flags = self->dv_cfdata->cf_flags;
 
 	sc->vendor = ae_nb_card_vendor(bst, bsh, na);
-	sc->type = 0;
 	cardtype = nubus_get_card_name(bst, bsh, na->fmt);
-	i = strlen(cardtype);
-	if ((sc->type_str = malloc((u_long)(i + 1), M_DEVBUF, M_NOWAIT))) {
-		strncpy(sc->type_str, cardtype, i);
-		sc->type_str[i] = '\0';
-	}
 
 	sc->is790 = 0;
 
@@ -351,15 +347,28 @@ ae_nubus_attach(parent, self, aux)
 	ifp->if_watchdog = ae_nb_watchdog;	/* Override watchdog */
 #endif
 
+	/* Interface is always enabled. */
+	sc->sc_enabled = 1;
+
+	printf(": %s, %dKB memory\n", cardname, sc->mem_size / 1024);
+
 	if (dp8390_config(sc)) {
 		bus_space_unmap(bst, bsh, NBMEMSIZE);
 		return;
 	}
 
-	printf("%dKB memory\n", sc->mem_size / 1024);
-
 	/* make sure interrupts are vectored to us */
-	add_nubus_intr(na->slot, dp8390_intr, sc);
+	add_nubus_intr(na->slot, ae_nubus_intr, sc);
+}
+
+/* ARGSUSED */
+void
+ae_nubus_intr(arg, slot)
+	void *arg;
+	int slot;
+{
+
+	(void) dp8390_intr(sc);
 }
 
 static int
