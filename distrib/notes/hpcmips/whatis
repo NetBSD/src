@@ -1,6 +1,6 @@
-.\"	$NetBSD: whatis,v 1.6 2000/10/29 14:08:07 lukem Exp $
+.\"	$NetBSD: whatis,v 1.7 2002/04/07 02:58:16 shin Exp $
 .
-This is the first official release of
+This is the second official release of
 .Nx*M .
 .Pp
 .Nx*M
