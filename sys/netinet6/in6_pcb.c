@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.10 1999/12/13 15:17:22 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.11 2000/01/06 06:41:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -89,8 +89,8 @@
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet6/ip6.h>
-#include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>
 
 #ifndef __bsdi__
@@ -131,6 +131,12 @@ in6_pcballoc(so, head)
 	head->in6p_next = in6p;
 	in6p->in6p_prev = head;
 	in6p->in6p_next->in6p_prev = in6p;
+#endif
+#if defined(__NetBSD__) && !defined(INET6_BINDV6ONLY)
+	if (ip6_bindv6only)
+		in6p->in6p_flags |= IN6P_BINDV6ONLY;
+#else
+	in6p->in6p_flags |= IN6P_BINDV6ONLY;	/*just for safety*/
 #endif
 	so->so_pcb = (caddr_t)in6p;
 	return(0);
@@ -641,8 +647,14 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 				ro->ro_rt = rtalloc1(&((struct route *)ro)
 						     ->ro_dst, 0);
 #endif /*__bsdi__*/
-			} else
+			} else {
+#ifdef __bsdi__			/* bsdi needs rtcalloc to make a host route */
+				rtcalloc((struct route *)ro);
+#else
 				rtalloc((struct route *)ro);
+#endif
+			}
+
 		}
 
 		/*
@@ -937,8 +949,29 @@ in6_pcblookup(head, faddr6, fport_arg, laddr6, lport_arg, flags)
 				wildcard++;
 			else if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, laddr6))
 				continue;
-		} else {
-			if (!IN6_IS_ADDR_UNSPECIFIED(laddr6))
+		}
+#ifndef TCP6
+		else if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)
+			&& in6p->in6p_laddr.s6_addr32[3] == 0) {
+			if (!IN6_IS_ADDR_V4MAPPED(laddr6))
+				continue;
+			if (laddr6->s6_addr32[3] == 0)
+				;
+			else
+				wildcard++;
+		}
+#endif
+		else {
+			if (IN6_IS_ADDR_V4MAPPED(laddr6)) {
+#if !defined(TCP6) && !defined(INET6_BINDV6ONLY)
+				if (in6p->in6p_flags & IN6P_BINDV6ONLY)
+					continue;
+				else
+					wildcard++;
+#else
+				continue;
+#endif
+			} else if (!IN6_IS_ADDR_UNSPECIFIED(laddr6))
 				wildcard++;
 		}
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
@@ -947,10 +980,32 @@ in6_pcblookup(head, faddr6, fport_arg, laddr6, lport_arg, flags)
 			else if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, faddr6)
 			      || in6p->in6p_fport != fport)
 				continue;
-		} else {
-			if (!IN6_IS_ADDR_UNSPECIFIED(faddr6))
+		}
+#ifndef TCP6
+		else if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)
+			&& in6p->in6p_faddr.s6_addr32[3] == 0) {
+			if (!IN6_IS_ADDR_V4MAPPED(faddr6))
+				continue;
+			if (faddr6->s6_addr32[3] == 0)
+				;
+			else
 				wildcard++;
 		}
+#endif
+		else {
+			if (IN6_IS_ADDR_V4MAPPED(faddr6)) {
+#if !defined(TCP6) && !defined(INET6_BINDV6ONLY)
+				if (in6p->in6p_flags & IN6P_BINDV6ONLY)
+					continue;
+				else
+					wildcard++;
+#else
+				continue;
+#endif
+			} else if (!IN6_IS_ADDR_UNSPECIFIED(faddr6))
+				wildcard++;
+		}
+
 		if (wildcard && (flags & IN6PLOOKUP_WILDCARD) == 0)
 			continue;
 		if (wildcard < matchwild) {
@@ -1044,8 +1099,25 @@ in6_pcblookup_bind(head, laddr6, lport_arg, faith)
 			continue;
 		if (in6p->in6p_lport != lport)
 			continue;
-		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr))
-			match = in6p;
+		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
+			if (IN6_IS_ADDR_V4MAPPED(laddr6)) {
+#ifndef INET6_BINDV6ONLY
+				if (in6p->in6p_flags & IN6P_BINDV6ONLY)
+					continue;
+				else
+					match = in6p;
+#else
+				continue;
+#endif
+			} else
+				match = in6p;
+		}
+		else if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr) && 
+			 in6p->in6p_laddr.s6_addr32[3] == 0) {
+			if (IN6_IS_ADDR_V4MAPPED(laddr6)
+			 && laddr6->s6_addr32[3] != 0)
+				match = in6p;
+		}
 		else if (IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, laddr6))
 			return in6p;
 	}
