@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoectl.8,v 1.23 2003/10/02 07:07:48 wiz Exp $
+.\"	$NetBSD: pppoectl.8,v 1.24 2005/02/19 18:26:09 christos Exp $
 .\"
 .\" Copyright (C) 1997 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" From: spppcontrol.1,v 1.1.1.1 1997/10/11 11:30:30 joerg Exp
 .\"
-.\" $Id: pppoectl.8,v 1.23 2003/10/02 07:07:48 wiz Exp $
+.\" $Id: pppoectl.8,v 1.24 2005/02/19 18:26:09 christos Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
@@ -90,10 +90,12 @@ This is only available if DNS query is enabled, see
 .It Fl f
 parse
 .Ar config-file
-ignoring lines starting with a # for
+for
 .Ar parameter Ns Op \&= Ns Ar value
 pairs, one per line, as if they had been specified on the command line.
 This allows the password to be not passed as a command line argument.
+Unless escaped by \e, comments starting with # to the end of the current line
+are ignored.
 .El
 .Pp
 Typically, not both the access concentrator name and the service name are
