@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.118 2001/05/30 20:30:02 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.119 2001/06/08 04:48:58 simonb Exp $	*/
 
 
 /*
@@ -1258,13 +1258,17 @@ pciide_map_compat_intr(pa, cp, compatchan, interface)
 	if ((interface & PCIIDE_INTERFACE_PCI(wdc_cp->channel)) != 0)
 		return;
 
+#ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 	cp->ih = pciide_machdep_compat_intr_establish(&sc->sc_wdcdev.sc_dev,
 	    pa, compatchan, pciide_compat_intr, cp);
 	if (cp->ih == NULL) {
+#endif
 		printf("%s: no compatibility interrupt for use by %s "
 		    "channel\n", sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		cp->hw_ok = 0;
+#ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 	}
+#endif
 }
 
 void

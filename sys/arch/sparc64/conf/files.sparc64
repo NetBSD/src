@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.47 2001/06/06 21:19:48 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.48 2001/06/08 04:48:58 simonb Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -53,7 +53,6 @@ attach  simba at pci
 file	arch/sparc64/dev/simba.c		simba
 
 include "dev/ata/files.ata"
-file	arch/sparc64/dev/pciide_machdep.c	pciide
 
 device ebus {[addr = -1]}: pcibus
 attach ebus at pci
