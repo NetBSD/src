@@ -1,4 +1,4 @@
-/*	$NetBSD: chown.c,v 1.29 2003/09/25 10:30:10 dsl Exp $	*/
+/*	$NetBSD: chown.c,v 1.30 2005/03/16 02:08:52 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994, 2003\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.29 2003/09/25 10:30:10 dsl Exp $");
+__RCSID("$NetBSD: chown.c,v 1.30 2005/03/16 02:08:52 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,11 +59,10 @@ __RCSID("$NetBSD: chown.c,v 1.29 2003/09/25 10:30:10 dsl Exp $");
 #include <string.h>
 #include <unistd.h>
 
-static void	a_gid __P((const char *));
-static void	a_uid __P((const char *));
-static id_t	id __P((const char *, const char *));
-	int	main __P((int, char **));
-static void	usage __P((void));
+static void	a_gid(const char *);
+static void	a_uid(const char *);
+static id_t	id(const char *, const char *);
+static void	usage(void);
 
 static uid_t uid;
 static gid_t gid;
@@ -71,9 +70,7 @@ static int ischown;
 static char *myname;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	FTS *ftsp;
 	FTSENT *p;
@@ -224,8 +221,7 @@ main(argc, argv)
 }
 
 static void
-a_gid(s)
-	const char *s;
+a_gid(const char *s)
 {
 	struct group *gr;
 
@@ -240,8 +236,7 @@ a_gid(s)
 }
 
 static void
-a_uid(s)
-	const char *s;
+a_uid(const char *s)
 {
 	if (*s == '\0')			/* Argument was "[:.]gid". */
 		return;
@@ -252,8 +247,7 @@ a_uid(s)
 }
 
 static id_t
-id(name, type)
-	const char *name, *type;
+id(const char *name, const char *type)
 {
 	id_t val;
 	char *ep;
@@ -270,7 +264,7 @@ id(name, type)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
