@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.534 2003/06/07 09:15:33 wiz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.535 2003/06/08 13:21:06 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.535 2003/06/07 09:15:00 wiz Exp 
+ *	NetBSD: pcidevs,v 1.536 2003/06/08 13:19:27 ichiro Exp 
  */
 
 /*
@@ -3920,6 +3920,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "PRO/100 VM (MOB) Network Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2100,
+	    0,
+	    "Intel",
+	    "PRO/Wireless LAN 2100 3B Mini PCI Adapter",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_M,
