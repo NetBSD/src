@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.122 2001/09/01 21:52:31 atatat Exp $
+# 	$NetBSD: GENERIC,v 1.123 2001/09/01 23:08:45 atatat Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.122 $"
+#ident 		"GENERIC-$Revision: 1.123 $"
 
 maxusers	32
 
@@ -508,7 +508,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan
 
 ## Simple inter-network traffic bridging
-pseudo-device	bridge
+#pseudo-device	bridge
 
 #### Audio and video devices
 
