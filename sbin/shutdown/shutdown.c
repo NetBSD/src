@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.28 1998/07/05 08:34:25 mrg Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.29 1998/07/26 20:18:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.28 1998/07/05 08:34:25 mrg Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.29 1998/07/26 20:18:32 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,8 @@ struct interval {
 static time_t offset, shuttime;
 static int dofast, dohalt, doreboot, killflg, mbuflen, nofork, nosync, dodump;
 static int dopowerdown;
-static char *whom, mbuf[BUFSIZ];
+static const char *whom;
+static char mbuf[BUFSIZ];
 
 void badtime __P((void));
 void die_you_gravy_sucking_pig_dog __P((void));
