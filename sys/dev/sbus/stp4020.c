@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.9 2000/02/22 12:12:21 pk Exp $ */
+/*	$NetBSD: stp4020.c,v 1.10 2000/02/22 12:24:53 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -296,7 +296,7 @@ stp4020attach(parent, self, aux)
 #define STP4020_BANK_PROM	0
 #define STP4020_BANK_CTRL	4
 	for (i = 0; i < 8; i++) {
-		int s, w;
+
 		/*
 		 * STP4020 Register address map:
 		 *	bank  0:   Forth PROM
@@ -304,55 +304,38 @@ stp4020attach(parent, self, aux)
 		 *	bank  4:   control registers
 		 *	banks 5-7: socket 1, windows 0-2
 		 */
+
 		if (i == STP4020_BANK_PROM)
 			/* Skip the PROM */
 			continue;
-
-		if (i == STP4020_BANK_CTRL) {
-			if (sbus_bus_map(sa->sa_bustag,
-					 sa->sa_reg[i].sbr_slot,
-					 sa->sa_reg[i].sbr_offset,
-					 sa->sa_reg[i].sbr_size,
-					 BUS_SPACE_MAP_LINEAR, 0,
-					 &bh) != 0) {
-				printf("%s: attach: cannot map registers\n",
-					self->dv_xname);
-				return;
-			}
-			/*
-			 * Copy tag and handle to both socket structures
-			 * for easy access in control/status IO functions.
-			 */
-			sc->sc_socks[0].regs = sc->sc_socks[1].regs = bh;
-			continue;
-		}
-
-		if (i < STP4020_BANK_CTRL)
-			s = 0, w = i - 1;		/* banks 1-3 */
-		else
-			s = 1, w = i - 5;		/* banks 5-7 */
 
 		if (sbus_bus_map(sa->sa_bustag,
 				 sa->sa_reg[i].sbr_slot,
 				 sa->sa_reg[i].sbr_offset,
 				 sa->sa_reg[i].sbr_size,
 				 BUS_SPACE_MAP_LINEAR, 0,
-				 &sc->sc_socks[s].windows[w].winaddr) != 0) {
+				 &bh) != 0) {
 			printf("%s: attach: cannot map registers\n",
 				self->dv_xname);
 			return;
 		}
+
+		if (i == STP4020_BANK_CTRL) {
+			/*
+			 * Copy tag and handle to both socket structures
+			 * for easy access in control/status IO functions.
+			 */
+			sc->sc_socks[0].regs = sc->sc_socks[1].regs = bh;
+		} else if (i < STP4020_BANK_CTRL) {
+			/* banks 1-3 */
+			sc->sc_socks[0].windows[i-1].winaddr = bh;
+		} else {
+			/* banks 5-7 */
+			sc->sc_socks[1].windows[i-5].winaddr = bh;
+		}
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
-
-#if 0 /*XXX-think about tracking boot devices*/
-	/* Propagate bootpath */
-	if (sa->sa_bp != NULL)
-		bp = sa->sa_bp + 1;
-	else
-		bp = NULL;
-#endif
 
 	/*
 	 * We get to use two SBus interrupt levels.
