@@ -1,4 +1,4 @@
-/* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
+/* $NetBSD: vga_pci.c,v 1.4 2000/08/14 20:14:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -122,7 +122,7 @@ vga_pci_attach(parent, self, aux)
 	    PCI_REVISION(pa->pa_class));
 
 	vga_common_attach(self, pa->pa_iot, pa->pa_memt,
-			  WSDISPLAY_TYPE_PCIVGA);
+			  WSDISPLAY_TYPE_PCIVGA, NULL);
 }
 
 int
