@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2003/04/26 18:13:16 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.9 2003/05/13 08:26:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1853,7 +1853,7 @@ switch_resume:
 	SET_CURLWP(%edi,%ecx)
 
 	/* Skip context switch if same lwp. */
-	movl	$1, %eax
+	movl	$1, %ebx
 	cmpl	%edi,%esi
 	je	switch_return
 
@@ -1961,7 +1961,7 @@ switch_restored:
 	je	1f
 	movl	%eax,TF_EIP(%ebx)
 1:
-	xor	%eax,%eax
+	xor	%ebx,%ebx
 
 switch_return:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)     
@@ -1971,6 +1971,8 @@ switch_return:
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 	addl	$4,%esp
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)	# splhigh()
+
+	movl	%ebx,%eax
 	
 	popl	%edi
 	popl	%esi
