@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.47.2.1 2002/05/28 04:24:33 lukem Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.47.2.2 2005/04/06 10:59:50 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.47.2.1 2002/05/28 04:24:33 lukem Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.47.2.2 2005/04/06 10:59:50 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -660,13 +660,12 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 	const char *ruser, *luser;
 {
 	struct sockaddr *sa;
-	register char *cp;
 	struct stat sbuf;
 	struct passwd *pwd;
 	FILE *hostf;
 	uid_t uid;
 	gid_t gid;
-	int first;
+	int isvaliduser;
 	char pbuf[MAXPATHLEN];
 
 	_DIAGASSERT(raddr != NULL);
@@ -676,9 +675,10 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 	/*LINTED const castaway*/
 	sa = (struct sockaddr *)(void *)raddr;
 
-	first = 1;
+	__rcmd_errstr = NULL;
+
 	hostf = superuser ? NULL : fopen(_PATH_HEQUIV, "r");
-again:
+
 	if (hostf) {
 		if (__ivaliduser_sa(hostf, sa, (socklen_t)rlen, luser,
 		    ruser) == 0) {
@@ -687,17 +687,19 @@ again:
 		}
 		(void)fclose(hostf);
 	}
-	if (first == 1 && (__check_rhosts_file || superuser)) {
-		first = 0;
+
+	isvaliduser = -1;
+	if (__check_rhosts_file || superuser) {
+
 		if ((pwd = getpwnam(luser)) == NULL)
 			return (-1);
 		(void)strlcpy(pbuf, pwd->pw_dir, sizeof(pbuf));
 		(void)strlcat(pbuf, "/.rhosts", sizeof(pbuf));
 
 		/*
-		 * Change effective uid while opening .rhosts.  If root and
-		 * reading an NFS mounted file system, can't read files that
-		 * are protected read/write owner only.
+		 * Change effective uid while opening and reading .rhosts.
+		 * If root and reading an NFS mounted file system, can't
+		 * read files that are protected read/write owner only.
 		 */
 		uid = geteuid();
 		gid = getegid();
@@ -705,35 +707,35 @@ again:
 		initgroups(pwd->pw_name, pwd->pw_gid);
 		(void)seteuid(pwd->pw_uid);
 		hostf = fopen(pbuf, "r");
+
+		if (hostf != NULL) {
+			/*
+			 * If not a regular file, or is owned by someone other
+			 * than user or root or if writable by anyone but the
+			 * owner, quit.
+			 */
+			if (lstat(pbuf, &sbuf) < 0)
+				__rcmd_errstr = ".rhosts lstat failed";
+			else if (!S_ISREG(sbuf.st_mode))
+				__rcmd_errstr = ".rhosts not regular file";
+			else if (fstat(fileno(hostf), &sbuf) < 0)
+				__rcmd_errstr = ".rhosts fstat failed";
+			else if (sbuf.st_uid && sbuf.st_uid != pwd->pw_uid)
+				__rcmd_errstr = "bad .rhosts owner";
+			else if (sbuf.st_mode & (S_IWGRP|S_IWOTH))
+				__rcmd_errstr =
+					".rhosts writable by other than owner";
+			else
+				isvaliduser =
+				    __ivaliduser_sa(hostf, sa, (socklen_t)rlen,
+						    luser, ruser);
+
+			(void)fclose(hostf);
+		}
 		(void)seteuid(uid);
 		(void)setegid(gid);
-
-		if (hostf == NULL)
-			return (-1);
-		/*
-		 * If not a regular file, or is owned by someone other than
-		 * user or root or if writeable by anyone but the owner, quit.
-		 */
-		cp = NULL;
-		if (lstat(pbuf, &sbuf) < 0)
-			cp = ".rhosts lstat failed";
-		else if (!S_ISREG(sbuf.st_mode))
-			cp = ".rhosts not regular file";
-		else if (fstat(fileno(hostf), &sbuf) < 0)
-			cp = ".rhosts fstat failed";
-		else if (sbuf.st_uid && sbuf.st_uid != pwd->pw_uid)
-			cp = "bad .rhosts owner";
-		else if (sbuf.st_mode & (S_IWGRP|S_IWOTH))
-			cp = ".rhosts writeable by other than owner";
-		/* If there were any problems, quit. */
-		if (cp) {
-			__rcmd_errstr = cp;
-			(void)fclose(hostf);
-			return (-1);
-		}
-		goto again;
 	}
-	return (-1);
+	return (isvaliduser);
 }
 
 /*
