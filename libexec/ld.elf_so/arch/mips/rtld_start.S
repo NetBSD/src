@@ -1,7 +1,8 @@
-/*	$NetBSD: rtld_start.S,v 1.5 2002/09/12 17:08:32 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.6 2002/09/12 17:18:40 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
+ * Portions copyright 2002 Charles M. Hannum.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

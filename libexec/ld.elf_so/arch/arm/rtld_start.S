@@ -1,11 +1,11 @@
-/*	$NetBSD: rtld_start.S,v 1.6 2002/09/12 17:07:26 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.7 2002/09/12 17:18:38 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas.
+ * by Matt Thomas and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -1,12 +1,12 @@
-/*	$NetBSD: rtld_start.S,v 1.8 2002/09/12 17:07:27 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.9 2002/09/12 17:18:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas and Paul Kranenburg.
+ * by Christos Zoulas, Paul Kranenburg and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
