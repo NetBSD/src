@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.110 2001/10/04 15:58:54 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.111 2001/10/06 00:47:46 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2439,8 +2439,7 @@ rf_update_component_labels(raidPtr, final)
 	for( c = 0; c < raidPtr->numSpare ; c++) {
 		sparecol = raidPtr->numCol + c;
 		/* Need to ensure that the reconstruct actually completed! */
-		if ((raidPtr->Disks[0][sparecol].status == rf_ds_used_spare) &&
-		    (raidPtr->status[0] == rf_rs_optimal)) {
+		if (raidPtr->Disks[0][sparecol].status == rf_ds_used_spare) {
 			/* 
 			   
 			   we claim this disk is "optimal" if it's 
