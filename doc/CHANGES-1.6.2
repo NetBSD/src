@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.3 2003/04/28 06:31:15 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.4 2003/04/28 08:05:48 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -23,4 +23,10 @@ usr.sbin/etcupdate/etcupdate			1.10
 
 	Use md5 instead of sum (bin/20196).
 	[martti, ticket #1146]
+
+sys/dev/pci/if_rtk_pci.c			1.18
+
+	Set RTK_ENABLE flag when it attached. This fixed multicast problem.
+	Found by FUKAUMI Naoki <naoki@fukaumi.org>.
+	[kanaoka, ticket #1134]
 
