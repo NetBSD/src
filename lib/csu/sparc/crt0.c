@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.14 1995/06/06 09:04:51 pk Exp $	*/
+/*	$NetBSD: crt0.c,v 1.15 1995/06/15 21:41:55 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -87,7 +87,11 @@ asm ("	cmp	%o0, 0");
 asm ("	mov	%o0, %l6");
 asm ("	be	1f");
 asm ("	sethi	%hi(___progname), %l7");
+#ifdef DYNAMIC
 asm ("	call	__strrchr");
+#else
+asm ("	call	_strrchr");
+#endif
 asm ("	mov	47, %o1");
 asm ("	cmp	%o0, 0");
 asm ("	be,a	1f");
