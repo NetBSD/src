@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)raw_usrreq.c	7.9 (Berkeley) 6/28/90
- *	$Id: raw_usrreq.c,v 1.4 1993/12/18 00:41:01 mycroft Exp $
+ *	$Id: raw_usrreq.c,v 1.5 1994/01/06 14:00:35 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -39,7 +39,6 @@
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
-#include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 
