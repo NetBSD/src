@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.7 2003/07/13 07:58:19 itojun Exp $ */
+/* $NetBSD: params.c,v 1.8 2003/09/23 17:24:46 cb Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.7 2003/07/13 07:58:19 itojun Exp $");
+__RCSID("$NetBSD: params.c,v 1.8 2003/09/23 17:24:46 cb Exp $");
 #endif
 
 #include <sys/types.h>
@@ -264,6 +264,8 @@ params_verify_method(string_t *in)
 		p->verify_method = VERIFY_DISKLABEL;
 	if (!strcmp("ffs", vm))
 		p->verify_method = VERIFY_FFS;
+	if (!strcmp("re-enter", vm))
+		p->verify_method = VERIFY_REENTER;
 
 	string_free(in);
 
@@ -700,6 +702,9 @@ params_fput(struct params *p, FILE *f)
 		break;
 	case VERIFY_FFS:
 		print_kvpair_cstr(f, ts, "verify_method", "ffs");
+		break;
+	case VERIFY_REENTER:
+		print_kvpair_cstr(f, ts, "verify_method", "re-enter");
 		break;
 	default:
 		fprintf(stderr, "unsupported verify_method (%d)\n",

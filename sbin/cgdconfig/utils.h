@@ -1,4 +1,4 @@
-/* $NetBSD: utils.h,v 1.2 2003/03/24 02:02:52 elric Exp $ */
+/* $NetBSD: utils.h,v 1.3 2003/09/23 17:24:46 cb Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@ void		  bits_assign(bits_t **, bits_t *);
 void		  bits_free(bits_t *);
 const void	 *bits_getbuf(bits_t *);
 int		  bits_len(bits_t *);
+int		  bits_match(const bits_t *, const bits_t *);
 
 bits_t		 *bits_xor(const bits_t *, const bits_t *);
 bits_t		 *bits_xor_d(bits_t *, bits_t *);

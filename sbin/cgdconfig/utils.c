@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.2 2003/03/24 02:02:52 elric Exp $ */
+/* $NetBSD: utils.c,v 1.3 2003/09/23 17:24:46 cb Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.2 2003/03/24 02:02:52 elric Exp $");
+__RCSID("$NetBSD: utils.c,v 1.3 2003/09/23 17:24:46 cb Exp $");
 #endif
 
 #include <sys/param.h>
@@ -297,6 +297,21 @@ bits_len(bits_t *in)
 {
 
 	return in->length;
+}
+
+int
+bits_match(const bits_t *b1, const bits_t *b2)
+{
+	int i;
+
+	if (b1->length != b2->length)
+		return 0;
+
+	for (i = 0; i < BITS2BYTES(b1->length); i++)
+		if (b1->text[i] != b2->text[i])
+			return 0;
+
+	return 1;
 }
 
 bits_t *

@@ -1,4 +1,4 @@
-/* $NetBSD: params.h,v 1.4 2003/03/24 02:02:51 elric Exp $ */
+/* $NetBSD: params.h,v 1.5 2003/09/23 17:24:46 cb Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@ struct params {
 #define VERIFY_NONE		0x1
 #define VERIFY_DISKLABEL	0x2
 #define VERIFY_FFS		0x3
+#define VERIFY_REENTER		0x4
 
 __BEGIN_DECLS
 struct params	*params_new(void);
