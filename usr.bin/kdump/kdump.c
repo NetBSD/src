@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.59 2003/08/07 11:14:13 agc Exp $	*/
+/*	$NetBSD: kdump.c,v 1.60 2003/09/19 22:49:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.59 2003/08/07 11:14:13 agc Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.60 2003/09/19 22:49:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ void	ktrsysret __P((struct ktr_sysret *, int));
 void	ktrnamei __P((char *, int));
 void	ktremul __P((char *, int, int));
 void	ktrgenio __P((struct ktr_genio *, int));
-void	ktrpsig __P((struct ktr_psig *));
+void	ktrpsig __P((void *, int));
 void	ktrcsw __P((struct ktr_csw *));
 void	ktruser __P((struct ktr_user *, int));
 void	ktrmmsg __P((struct ktr_mmsg *, int));
@@ -235,7 +235,7 @@ main(argc, argv)
 			ktrgenio(m, ktrlen);
 			break;
 		case KTR_PSIG:
-			ktrpsig(m);
+			ktrpsig(m, ktrlen);
 			break;
 		case KTR_CSW:
 			ktrcsw(m);
@@ -303,7 +303,7 @@ dumpheader(kth)
 		type = "PSIG";
 		break;
 	case KTR_CSW:
-		type = "CSW";
+		type = "CSW ";
 		break;
 	case KTR_EMUL:
 		type = "EMUL";
@@ -676,20 +676,26 @@ ktrgenio(ktr, len)
 }
 
 void
-ktrpsig(psig)
-	struct ktr_psig *psig;
+ktrpsig(v, len)
+	void *v;
+	int len;
 {
 	int signo, first;
+	struct {
+		struct ktr_psig ps;
+		siginfo_t si;
+	} *psig = v;
+	siginfo_t *si = &psig->si;
+	const char *code;
 
-	(void)printf("SIG%s ", signame(psig->signo, 0));
-	if (psig->action == SIG_DFL)
-		(void)printf("SIG_DFL\n");
+	(void)printf("SIG%s ", signame(psig->ps.signo, 0));
+	if (psig->ps.action == SIG_DFL)
+		(void)printf("SIG_DFL");
 	else {
-		(void)printf("caught handler=0x%lx mask=(",
-		    (u_long)psig->action);
+		(void)printf("caught handler=%p mask=(", psig->ps.action);
 		first = 1;
 		for (signo = 1; signo < NSIG; signo++) {
-			if (sigismember(&psig->mask, signo)) {
+			if (sigismember(&psig->ps.mask, signo)) {
 				if (first)
 					first = 0;
 				else
@@ -697,7 +703,76 @@ ktrpsig(psig)
 				(void)printf("%d", signo);
 			}
 		}
-		(void)printf(") code=0x%x\n", psig->code);
+		(void)printf(")");
+	}
+	switch (len) {
+	case sizeof(struct ktr_psig):
+		printf("\n");
+		return;
+	case sizeof(*psig):
+		if (si->si_code == 0) {
+			printf(": code=SI_USER sent by pid=%d, uid=%d\n",
+			    si->si_pid, si->si_uid); 
+			return;
+		}
+
+		if (si->si_code < 0) {
+			switch (si->si_code) {
+			case SI_TIMER:
+				printf(": code=SI_TIMER sigval %p\n",
+				    si->si_sigval.sival_ptr);
+				return;
+			case SI_QUEUE:
+				code = "SI_QUEUE";
+				break;
+			case SI_ASYNCIO:
+				code = "SI_ASYNCIO";
+				break;
+			case SI_MESGQ:
+				code = "SI_MESGQ";
+				break;
+			default:
+				code = NULL;
+				break;
+			}
+			if (code)
+				printf(": code=%s unimplemented\n", code);
+			else
+				printf(": code=%d unimplemented\n",
+				    si->si_code);
+			return;
+		}
+
+		code = siginfocodename(si->si_signo, si->si_code);
+		switch (si->si_signo) {
+		case SIGCHLD:
+			printf(": code=%s child pid=%d, uid=%d, "
+			    " status=%u, utime=%lu, stime=%lu\n", 
+			    code, si->si_pid,
+			    si->si_uid, si->si_status, si->si_utime,
+			    si->si_stime); 
+			return;
+		case SIGILL:
+		case SIGFPE:
+		case SIGSEGV:
+		case SIGBUS:
+		case SIGTRAP:
+			printf(": code=%s, addr=%p, trap=%d\n",
+			    code, si->si_addr, si->si_trap);
+			return;
+		case SIGIO:
+			printf(": code=%s, fd=%d, band=%lx\n",
+			    code, si->si_fd, si->si_band);
+			return;
+		default:
+			printf(": code=%s, errno=%d\n",
+			    code, si->si_errno);
+			return;
+		}
+		/*NOTREACHED*/
+	default:
+		warnx("Unhandled size %d for ktrpsig\n", len);
+		break;
 	}
 }
 
