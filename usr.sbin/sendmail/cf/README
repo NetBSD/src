@@ -4,7 +4,7 @@
 
 		Eric Allman <eric@CS.Berkeley.EDU>
 
-		@(#)README	8.27 (Berkeley) 3/12/94
+		@(#)README	8.28 (Berkeley) 4/14/94
 
 
 This document describes the sendmail configuration files being used
@@ -140,7 +140,11 @@ may be empty).
 
 ALIAS_FILE		[/etc/aliases] The location of the text version
 			of the alias file(s).  It can be a comma-separated
-			list of names.
+			list of names (but be sure you quote values with
+			comments in them -- for example, use
+				define(`ALIAS_FILE', `a,b')
+			to get "a" and "b" both listed as alias files;
+			otherwise the define() primitive only sees "a").
 HELP_FILE		[/usr/lib/sendmail.hf] The name of the file
 			containing information printed in response to
 			the SMTP HELP command.
@@ -813,7 +817,7 @@ Sam Leffler's FlexFAX software is still in beta test -- but he expects a
 public version out "later this week" [as of 3/1/93].  The following
 blurb is direct from Sam:
 
-	$Header: /cvsroot/src/usr.sbin/sendmail/cf/Attic/README,v 1.8 1994/03/16 02:11:48 glass Exp $
+	$Header: /cvsroot/src/usr.sbin/sendmail/cf/Attic/README,v 1.9 1994/04/20 06:25:59 glass Exp $
 
 	How To Obtain This Software (in case all you get is this file)
 	--------------------------------------------------------------
