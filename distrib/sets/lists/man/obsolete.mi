@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.27 2001/05/26 00:55:35 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.28 2001/06/02 00:34:01 itojun Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/i386
 /usr/share/man/cat1/i386/cursor.0
@@ -150,3 +150,13 @@
 /usr/share/man/man8/xntpd.8
 /usr/share/man/man8/xntpdc.8
 /usr/share/man/man9/boot.9
+/usr/share/man/cat1/pim6stat.0
+/usr/share/man/cat5/pim6dd.conf.0
+/usr/share/man/cat5/pim6sd.conf.0
+/usr/share/man/cat8/pim6dd.0
+/usr/share/man/cat8/pim6sd.0
+/usr/share/man/man1/pim6stat.1
+/usr/share/man/man5/pim6dd.conf.5
+/usr/share/man/man5/pim6sd.conf.5
+/usr/share/man/man8/pim6dd.8
+/usr/share/man/man8/pim6sd.8
