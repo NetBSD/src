@@ -750,7 +750,7 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr)
 	struct ip6_moptions im6o;
 	int icmp6len;
 	caddr_t mac;
-	struct ifnet *outif;
+	struct ifnet *outif = NULL;
 	
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
 		return;
