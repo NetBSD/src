@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.1.1.1.2.4 2004/05/30 11:26:52 tron Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.1.1.1.2.5 2004/05/30 11:27:18 tron Exp $	*/
 
 %{
 #include "ipf.h"
@@ -886,7 +886,7 @@ poollist:
 			  bcopy(&($4.m), &($$->al_i6mask), sizeof($4.m)); }
 	;
 
-port:	IPFY_PORT			{ yyexpectaddr = 0; }
+port:	IPFY_PORT			{ yyexpectaddr = 0; yyvarnext = 1; }
 	;
 
 portcomp:
