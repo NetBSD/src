@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.5 1995/06/26 04:08:06 cgd Exp $	*/
+/*	$NetBSD: boca.c,v 1.6 1995/12/24 02:31:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -134,8 +134,8 @@ bocaattach(parent, self, aux)
 		}
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
-	    bocaintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, bocaintr,
+	    sc);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.58 1995/11/10 04:42:07 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.59 1995/12/24 02:31:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -608,7 +608,7 @@ uhaattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&uha->sc_id, &uha->sc_dev);
 #endif
-	uha->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
+	uha->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO,
 	    uha->intr, uha);
 
 	/*

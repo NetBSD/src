@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.74 1995/06/07 06:46:04 cgd Exp $	*/
+/*	$NetBSD: isa.c,v 1.75 1995/12/24 02:31:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -88,17 +88,17 @@ isascan(parent, match)
 
 char *
 isa_intr_typename(type)
-	isa_intrtype type;
+	int type;
 {
 
 	switch (type) {
-        case ISA_IST_NONE :
+        case IST_NONE :
 		return ("none");
-        case ISA_IST_PULSE:
+        case IST_PULSE:
 		return ("pulsed");
-        case ISA_IST_EDGE:
+        case IST_EDGE:
 		return ("edge-triggered");
-        case ISA_IST_LEVEL:
+        case IST_LEVEL:
 		return ("level-triggered");
 	default:
 		panic("isa_intr_typename: invalid type %d", type);

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.37 1995/11/30 00:59:51 jtc Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.38 1995/12/24 02:31:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -766,8 +766,8 @@ aicattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    aicintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, aicintr,
+	    sc);
 
 	config_found(self, &sc->sc_link, aicprint);
 }
