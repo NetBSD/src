@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.15 2003/03/23 16:57:51 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.16 2003/03/24 07:51:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.15 2003/03/23 16:57:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.16 2003/03/24 07:51:04 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -748,7 +748,7 @@ smb_t2_request(struct smb_t2rq *t2p)
 	int error = EINVAL, i;
 
 	for (i = 0; i < SMB_MAXRCN; i++) {
-		t2p->t2_flags &= ~SMBR_RESTART;
+		t2p->t2_flags &= ~SMBT2_RESTART;
 		error = smb_t2_request_int(t2p);
 		if (error == 0)
 			break;
