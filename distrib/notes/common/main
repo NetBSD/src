@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.54 2002/03/06 21:48:23 he Exp $
+.\"	$NetBSD: main,v 1.61.2.55 2002/03/09 20:10:38 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -400,7 +400,7 @@ in 1.5.3.  The development of 1.5 and the subsequent maintenance releases
 is done on a separate branch in the CVS repository.
 The branch was created when
 the release cycle for 1.5 was started, and during the release cycle of
-1.5 and its patch releases, selected fixes and enhancements have been
+1.5 and its maintenance releases, selected fixes and enhancements have been
 imported from the main development trunk.
 So, there are features in 1.5.3 which were not in, e.g. 1.5B, and vice
 versa.
