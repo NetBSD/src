@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.8 1997/10/10 08:22:30 mikel Exp $	*/
+/*	$NetBSD: crypt.c,v 1.8.2.1 1997/11/04 22:50:48 mellon Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.8 1997/10/10 08:22:30 mikel Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.8.2.1 1997/11/04 22:50:48 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -286,7 +286,7 @@ typedef union {
 #endif /* LARGEDATA */
 
 STATIC	init_des __P((void));
-STATIC	init_perm __P((C_block [][], unsigned char [], int, int));
+STATIC	init_perm __P((C_block [64/CHUNKBITS][1<<CHUNKBITS], unsigned char [64], int, int));
 #ifndef LARGEDATA
 STATIC	permute __P((unsigned char *, C_block *, C_block *, int));
 #endif
