@@ -1,4 +1,4 @@
-#	$NetBSD: CQREEKSH3,v 1.3 1999/09/14 11:21:26 tsubai Exp $
+#	$NetBSD: CQREEKSH3,v 1.4 1999/09/17 01:21:40 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -136,7 +136,7 @@ shb* at mainbus?
 
 # Serial Devices
 
-options	SCICN_SPEED=38400
+options	SCICONSOLE,SCICN_SPEED=38400
 sci0 at shb? port 0xa4000008 irq 12
 
 # Miscellaneous mass storage devices
