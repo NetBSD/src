@@ -1,5 +1,6 @@
-# $NetBSD: md.sun2,v 1.4 2002/03/21 23:42:29 fredette Exp $
-./usr/include/sun2	comp-c-include
+# $NetBSD: md.sun2,v 1.5 2002/07/11 19:44:26 jdolecek Exp $
+./usr/include/ieeefp.h		comp-c-include
+./usr/include/sun2		comp-c-include
 ./usr/include/sun2/_G_config.h	comp-c-include
 ./usr/include/sun2/ansi.h	comp-c-include
 ./usr/include/sun2/aout_machdep.h	comp-c-include
@@ -21,6 +22,7 @@
 ./usr/include/sun2/idprom.h	comp-c-include
 ./usr/include/sun2/ieee.h	comp-c-include
 ./usr/include/sun2/ieeefp.h	comp-c-include
+./usr/include/sun2/intr.h	comp-c-include
 ./usr/include/sun2/int_const.h	comp-c-include
 ./usr/include/sun2/int_fmtio.h	comp-c-include
 ./usr/include/sun2/int_limits.h	comp-c-include
@@ -39,6 +41,7 @@
 ./usr/include/sun2/pmap.h	comp-c-include
 ./usr/include/sun2/proc.h	comp-c-include
 ./usr/include/sun2/profile.h	comp-c-include
+./usr/include/sun2/promlib.h	comp-c-include
 ./usr/include/sun2/psl.h	comp-c-include
 ./usr/include/sun2/pte.h	comp-c-include
 ./usr/include/sun2/ptrace.h	comp-c-include
@@ -52,4 +55,11 @@
 ./usr/include/sun2/vmparam.h	comp-c-include
 ./usr/include/sun2/vuid_event.h	comp-c-include
 ./usr/include/sun2/z8530var.h	comp-c-include
-./usr/include/ieeefp.h		comp-c-include
+./usr/include/sun68k		comp-c-include
+./usr/include/sun68k/bus.h	comp-c-include
+./usr/include/sun68k/cpu.h	comp-c-include
+./usr/include/sun68k/disklabel.h		comp-c-include
+./usr/include/sun68k/idprom.h	comp-c-include
+./usr/include/sun68k/intr.h	comp-c-include
+./usr/include/sun68k/mon.h	comp-c-include
+./usr/include/sun68k/psl.h	comp-c-include
