@@ -1,4 +1,4 @@
-/*	$NetBSD: dwlpx_pci.c,v 1.3 1997/03/13 23:59:36 cgd Exp $	*/
+/*	$NetBSD: dwlpx_pci.c,v 1.4 1997/03/15 03:15:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -42,7 +42,7 @@
 #include <alpha/pci/dwlpxreg.h>
 #include <alpha/pci/dwlpxvar.h>
 
-/* #define	DO_SECONDARIES	1 */
+#define	DO_SECONDARIES	1
 
 #define	KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
 
@@ -148,9 +148,9 @@ dwlpx_conf_read(cpv, tag, offset)
 		tag &= 0x1fffff;
 		tag |= (secondary << 21);
 
+#if	0
 		printf("read secondary %d reg %x (tag %x)",
 		    secondary, offset, tag);
-#if	0
 #endif
 
 		alpha_pal_draina();
@@ -190,8 +190,8 @@ dwlpx_conf_read(cpv, tag, offset)
 		}
 		(void) splx(s);
 #ifdef	DO_SECONDARIES
-		printf("=%x\n", data);
 #if	0
+		printf("=%x\n", data);
 #endif
 #endif
 	}
@@ -220,9 +220,9 @@ dwlpx_conf_write(cpv, tag, offset, data)
 	if (secondary) {
 		tag &= 0x1fffff;
 		tag |= (secondary << 21);
+#if	0
 		printf("write secondary %d reg %x (tag %x) with %x\n",
 		    secondary, offset, tag, data);
-#if	0
 #endif
 
 		alpha_pal_draina();
