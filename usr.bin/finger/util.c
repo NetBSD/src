@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$Id: util.c,v 1.7 1996/11/21 06:01:52 lukem Exp $";
+static char rcsid[] = "$Id: util.c,v 1.8 1996/11/22 05:34:07 lukem Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,7 +62,6 @@ find_idle_and_ttywrite(w)
 	struct stat sb;
 
 	(void)snprintf(tbuf, sizeof(tbuf), "%s/%s", _PATH_DEV, w->tty);
-	tbuf[sizeof(tbuf)-1] = '\0';
 	if (stat(tbuf, &sb) < 0) {
 		(void)fprintf(stderr,
 		    "finger: %s: %s\n", tbuf, strerror(errno));
@@ -91,7 +90,6 @@ userinfo(pn, pw)
 	pn->shell = strdup(pw->pw_shell);
 
 	(void)strncpy(bp = tbuf, pw->pw_gecos, sizeof(tbuf));
-	tbuf[sizeof(tbuf) - 1] = '\0';
 
 	/* ampersands get replaced by the login name */
 	if (!(p = strsep(&bp, ",")))
@@ -106,7 +104,6 @@ userinfo(pn, pw)
 	    strdup(p) : NULL;
 	(void)snprintf(tbuf, sizeof(tbuf), "%s/%s", _PATH_MAILSPOOL,
 	    pw->pw_name);
-	tbuf[sizeof(tbuf)-1] = '\0';
 	pn->mailrecv = -1;		/* -1 == not_valid */
 	if (stat(tbuf, &sb) < 0) {
 		if (errno != ENOENT) {
@@ -129,7 +126,6 @@ match(pw, user)
 	char name[1024];
 
 	(void)strncpy(p = tbuf, pw->pw_gecos, sizeof(tbuf));
-	tbuf[sizeof(tbuf) - 1] = '\0';
 
 	/* ampersands get replaced by the login name */
 	if (!(p = strtok(p, ",")))
