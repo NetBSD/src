@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.14 1997/05/21 20:09:24 gwr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.15 1998/05/06 01:11:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -234,6 +234,18 @@ char	*prcorequests[] = {
 #endif
 
 #ifdef _KERNEL
+/*
+ * Monotonically increasing time values for slow and fast timers.
+ */
+extern	u_int pfslowtimo_now;
+extern	u_int pffasttimo_now;
+
+#define	PRT_SLOW_ARM(t, nticks)	(t) = (pfslowtimo_now + (nticks))
+#define	PRT_FAST_ARM(t, nticks)	(t) = (pffasttimo_now + (nticks))
+
+#define	PRT_SLOW_ISEXPIRED(t)	((t) <= pfslowtimo_now)
+#define	PRT_FAST_ISEXPIRED(t)	((t) <= pffasttimo_now)
+
 struct sockaddr;
 struct protosw *pffindproto __P((int, int, int));
 struct protosw *pffindtype __P((int, int));
