@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.457 2004/09/20 06:02:05 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.458 2004/09/21 15:15:16 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7493,4 +7493,11 @@ sys/arch/i386/i386/locore.S			1.29
 	we did adjust nkpde, save the new value. This should enable us to
 	boot extremely large kernels without fiddling with NKPTP.
 	[grant, ticket #865]
+
+etc/rc.d/ipfilter				1.12
+
+	Explicitly flush (-Fa) rules when loading or reloading IPv4 and IPv6
+	rules, rather than relying upon running "ipf -Fa" beforehand (which
+	only flushes IPv4). Should fix PR 26885 and PR 26857.
+	[martti, ticket #866]
 
