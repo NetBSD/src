@@ -1,5 +1,6 @@
-#ifndef PRIVATE_H
+/*	$NetBSD: private.h,v 1.2 1995/03/09 23:41:19 jtc Exp $	*/
 
+#ifndef PRIVATE_H
 #define PRIVATE_H
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: difftime.c,v 1.2 1995/03/09 23:41:15 jtc Exp $	*/
+
 #ifndef lint
 #ifndef NOID
 static char	elsieid[] = "@(#)difftime.c	7.5";
