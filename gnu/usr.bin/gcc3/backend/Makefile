@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2004/02/22 01:24:25 uwe Exp $
+#	$NetBSD: Makefile,v 1.14.2.1 2004/04/28 06:02:53 jmc Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -55,10 +55,6 @@ NOGCCERROR=			# defined
 COPTS.reload1.c=		-O1
 .endif
 
-# XXX: toolchain/22489 (gcc optimization/11937)
-.if ${MACHINE_CPU} == "sh3"
-COPTS.function.c=		-O0
-.endif
 
 
 # Headers that host objects depend on (except gen*rtl*)
