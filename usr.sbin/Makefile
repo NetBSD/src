@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.90 1998/02/27 15:57:07 perry Exp $
+#	$NetBSD: Makefile,v 1.91 1998/03/15 01:16:32 lukem Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 #
 # not yet done: catman
 
-SUBDIR=	ac accton amd apm apmd arp bad144 bootpd bootpef bootpgw \
-	bootptest chown chroot chrtbl config cron dbsym dev_mkdb \
+SUBDIR=	ac accton amd apm apmd arp bad144 bootp \
+	chown chroot chrtbl config cron dbsym dev_mkdb \
 	dhcp diskpart dumpfs dumplfs edquota eeprom grfconfig \
 	grfinfo gspa hilinfo inetd iostat ipf iteconfig kgmon \
 	kvm_mkdb lastlogin lpr map-mbone mdconfig mdsetimage \
