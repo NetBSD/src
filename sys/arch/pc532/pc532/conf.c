@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.32 1997/03/18 01:41:40 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.33 1997/03/20 12:00:34 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -40,22 +40,27 @@
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/conf.h>
 #include <sys/vnode.h>
 
-#include "sd.h"
-bdev_decl(sd);
-bdev_decl(sw);
-#include "st.h"
-bdev_decl(st);
-#include "md.h"
-bdev_decl(md);
-#include "cd.h"
-bdev_decl(cd);
-#include "vnd.h"
-bdev_decl(vnd);
+#include <machine/conf.h>
+
 #include "ccd.h"
-bdev_decl(ccd);
+#include "cd.h"
+#include "md.h"
+#include "sd.h"
+#include "st.h"
+#include "vnd.h"
+
+#include "bpfilter.h"
+#include "ch.h"
+#include "ipfilter.h"
+#include "lpt.h"
+#include "pty.h"
+#include "scn.h"
+#include "se.h"
+#include "ss.h"
+#include "tun.h"
+#include "uk.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -74,54 +79,6 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 12 */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
-
-/* open, close, write, ioctl */
-#define	cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), \
-	(dev_type_read((*))) enodev, dev_init(c,n,write), \
-	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0}
-
-cdev_decl(cn);
-cdev_decl(ctty);
-#define	mmread	mmrw
-#define	mmwrite	mmrw
-cdev_decl(mm);
-cdev_decl(sd);
-cdev_decl(sw);
-#include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
-#include "scn.h"
-cdev_decl(scn);
-cdev_decl(md);
-cdev_decl(st);
-#include "ss.h"
-cdev_decl(ss);
-#include "uk.h"
-cdev_decl(uk);
-#include "ch.h"
-cdev_decl(ch);
-cdev_decl(fd);
-dev_decl(filedesc,open);
-cdev_decl(cd);
-cdev_decl(vnd);
-cdev_decl(ccd);
-#include "bpfilter.h"
-cdev_decl(bpf);
-#include "tun.h"
-cdev_decl(tun);
-#include "lpt.h"
-cdev_decl(lpt);
-#include "ipfilter.h"
-cdev_decl(ipl);
-#include "se.h"
-cdev_decl(se);
 
 struct cdevsw	cdevsw[] =
 {
@@ -173,6 +130,7 @@ dev_t	swapdev = makedev(1, 0);
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
+int
 iskmemdev(dev)
 	dev_t dev;
 {
@@ -183,6 +141,7 @@ iskmemdev(dev)
 /*
  * Returns true if dev is /dev/zero.
  */
+int
 iszerodev(dev)
 	dev_t dev;
 {
@@ -226,6 +185,7 @@ static int chrtoblktbl[] = {
 /*
  * Convert a character device number to a block device number.
  */
+int
 chrtoblk(dev)
 	dev_t dev;
 {
