@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.1.2.1 2000/06/23 08:16:03 hannken Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.1.2.2 2000/08/05 17:47:49 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -1199,7 +1199,7 @@ handle_reply(int fd, SVCXPRT *xprt)
 	struct rpc_err	reply_error;
 	char		*buffer;
 	struct finfo	*fi;
-	int		inlen, pos, len, res;
+	int		inlen, pos, len;
 	struct r_rmtcall_args a;
 	struct sockaddr_storage ss;
 	socklen_t fromlen;
@@ -1215,10 +1215,10 @@ handle_reply(int fd, SVCXPRT *xprt)
 		inlen = recvfrom(fd, buffer, RPC_BUF_MAX, 0,
 			    (struct sockaddr *)&ss, &fromlen);
 	} while (inlen < 0 && errno == EINTR);
-	if (res < 0) {
+	if (inlen < 0) {
 		if (debugging)
 			fprintf(stderr,
-	"handle_reply:  recvfrom returned %d, errno %d\n", res, errno);
+	"handle_reply:  recvfrom returned %d, errno %d\n", inlen, errno);
 		goto done;
 	}
 
