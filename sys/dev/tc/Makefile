@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 1998/06/12 23:22:58 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1998/06/16 18:36:04 cgd Exp $
+
+# use 'make -f Makefile.tcdevs' to make tcdevs.h and tcdevs_data.h
 
 INCSDIR= /usr/include/dev/tc
 
