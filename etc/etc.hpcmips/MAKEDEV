@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.35 2002/03/23 03:17:01 shin Exp $
+#	$NetBSD: MAKEDEV,v 1.36 2002/03/23 09:06:50 hamajima Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -101,6 +101,7 @@
 #	uk*	unknown SCSI device
 #	ch*	SCSI media changer
 #	ucbsnd	UCB1200 (TX39) audio device. 22.154kHz mono 16bit
+#	audio*	audio devices
 #
 
 dialin=0
@@ -140,8 +141,9 @@ all)
 	makedev usbs isdns
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev ttyTX0 ttyTX1 ucbsnd
-#	makedev local
 	makedev clockctl
+	makedev audio
+#	makedev local
 	;;
 
 floppy)
@@ -616,6 +618,30 @@ clockctl)
 	chgrp ntpd clockctl
 	chmod 660 clockctl
 	;;
+
+audio)  
+	sh $0 audio0 audio1 audio2 audio3
+	ln -fs sound0 sound
+	ln -fs audio0 audio
+	ln -fs mixer0 mixer     
+	ln -fs audioctl0 audioctl 
+	;;
+audio*) 
+	unit=${i#audio}
+	audio=audio$unit
+	sound=sound$unit
+	mixer=mixer$unit
+	major=48
+	audioctl=audioctl$unit  
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $audio $sound $mixer $audioctl
+	mknod $sound    c $major $(($unit + 0))
+	mknod $audio    c $major $(($unit + 128))
+	mknod $mixer    c $major $(($unit + 16))
+	mknod $audioctl c $major $(($unit + 192))
+	chown root.wheel $audio $sound $mixer $audioctl
+	chmod 666 $audio $sound $mixer $audioctl
+	;;  
 
 local)
 	umask 0
