@@ -1,4 +1,4 @@
-/*	$NetBSD: cninit.c,v 1.1 1995/04/11 10:06:42 mellon Exp $	*/
+/*	$NetBSD: cninit.c,v 1.2 1995/04/11 22:08:10 pk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,9 +57,7 @@
 
 extern struct consdev constab[];
 
-extern struct	tty *constty = NULL;	/* virtual console output device */
 extern struct	consdev *cn_tab;	/* physical console device info */
-extern struct	vnode *cn_devvp;	/* vnode for underlying device. */
 
 void
 cninit()
