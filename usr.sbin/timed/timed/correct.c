@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)correct.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.4 $"
+#ident "$Revision: 1.5 $"
 #endif
 
 #include "globals.h"
@@ -276,15 +276,8 @@ adjclock(struct timeval *corr)
 void
 adj_msg_time(struct tsp *msg, struct timeval *now)
 {
-	msg->tsp_time.tv_sec += (now->tv_sec - from_when.tv_sec);
-	msg->tsp_time.tv_usec += (now->tv_usec - from_when.tv_usec);
+	struct timeval diff;
 
-	while (msg->tsp_time.tv_usec < 0) {
-		msg->tsp_time.tv_sec--;
-		msg->tsp_time.tv_usec += 1000000;
-	}
-	while (msg->tsp_time.tv_usec >= 1000000) {
-		msg->tsp_time.tv_sec++;
-		msg->tsp_time.tv_usec -= 1000000;
-	}
+	timersub(now, &from_when, &diff);
+	timeradd(&msg->tsp_time, &diff, &msg->tsp_time);
 }
