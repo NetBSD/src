@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.18.2.3 1999/10/19 21:05:06 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.18.2.4 1999/10/20 20:41:27 thorpej Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -42,7 +42,6 @@ ispioctl __P((struct scsipi_channel *, u_long, caddr_t, int, struct proc *));
 static int isp_poll __P((struct ispsoftc *, ISP_SCSI_XFER_T *, int));
 static void isp_watch __P((void *));
 static void isp_command_requeue __P((void *));
-static void isp_internal_restart __P((void *));
 
 /*
  * Complete attachment of hardware, include subdevices.
@@ -56,7 +55,6 @@ isp_attach(isp)
 	int i;
 
 	isp->isp_state = ISP_RUNSTATE;
-	TAILQ_INIT(&isp->isp_osinfo.waitq);	/* XXX 2nd Bus? */
 
 	/*
 	 * Fill in the scsipi_adapter.
@@ -220,23 +218,6 @@ isp_scsipi_request(chan, req, arg)
 			}
 			isp->isp_state = ISP_RUNSTATE;
 			ENABLE_INTS(isp);
-		}
-
-		/*
-		 * Check for queue blockage...
-		 * XXX Should be done in the mid-layer.
-		 */
-		if (isp->isp_osinfo.blocked) {
-			if (xs->xs_control & XS_CTL_POLL) {
-				xs->error = XS_BUSY;
-				scsipi_done(xs);
-				splx(s);
-				return;
-			}
-			TAILQ_INSERT_TAIL(&isp->isp_osinfo.waitq, xs,
-			    channel_q);
-			splx(s);
-			return;
 		}
 
 		DISABLE_INTS(isp);
@@ -487,39 +468,6 @@ isp_command_requeue(arg)
 	(void) splx(s);
 }
 
-/*
- * Restart function after a LOOP UP event (e.g.),
- * done as a timeout for some hysteresis.
- */
-static void
-isp_internal_restart(arg)
-	void *arg;
-{
-	struct ispsoftc *isp = arg;
-	int result, nrestarted = 0, s;
-
-	s = splbio();
-	if (isp->isp_osinfo.blocked == 0) {
-		struct scsipi_xfer *xs;
-		while ((xs = TAILQ_FIRST(&isp->isp_osinfo.waitq)) != NULL) {
-			TAILQ_REMOVE(&isp->isp_osinfo.waitq, xs, channel_q);
-			DISABLE_INTS(isp);
-			result = ispscsicmd(xs);
-			ENABLE_INTS(isp);
-			if (result != CMD_QUEUED) {
-				printf("%s: botched command restart (0x%x)\n",
-				    isp->isp_name, result);
-				if (XS_ERR(xs) == XS_NOERROR)
-					XS_SETERR(xs, HBA_BOTCH);
-				XS_CMD_DONE(xs);
-			}
-			nrestarted++;
-		}
-		printf("%s: requeued %d commands\n", isp->isp_name, nrestarted);
-	}
-	(void) splx(s);
-}
-
 int
 isp_async(isp, cmd, arg)
 	struct ispsoftc *isp;
@@ -552,13 +500,20 @@ isp_async(isp, cmd, arg)
 		/*
 		 * Hopefully we get here in time to minimize the number
 		 * of commands we are firing off that are sure to die.
+		 *
+		 * XXX Hard-code channel 0, but only one channel on FC
+		 * XXX adapters, right?
 		 */
-		isp->isp_osinfo.blocked = 1;
+		scsipi_channel_freeze(&isp->isp_osinfo._channels[0], 1);
 		printf("%s: Loop DOWN\n", isp->isp_name);
 		break;
         case ISPASYNC_LOOP_UP:
-		isp->isp_osinfo.blocked = 0;
-		timeout(isp_internal_restart, isp, 1);
+		/*
+		 * XXX Hard-code channel 0, but only one channel on FC
+		 * XXX adapters, right?
+		 */
+		timeout(scsipi_channel_timed_thaw,
+		    &isp->isp_osinfo._channels[0], 1);
 		printf("%s: Loop UP\n", isp->isp_name);
 		break;
 	case ISPASYNC_PDB_CHANGED:
