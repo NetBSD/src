@@ -222,7 +222,7 @@ count_int checkpoint = CHECK_GAP;
 #define	CLEAR	256	/* table clear output code */
 
 int force = 0;
-char ofname [100];
+char ofname [MAXPATHLEN];
 #ifdef DEBUG
 int debug, verbose;
 #endif
