@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.11 2004/05/27 03:46:32 agc Exp $
+#	$NetBSD: TODO,v 1.12 2004/11/29 09:48:03 agc Exp $
 
 THINGS TO BE DONE:
 
@@ -87,3 +87,10 @@ This is a list of suggested smaller projects (in no particular order):
 + add a native scheme interpreter
 + add platform support for TenDRA compiler suite
 + merge moused(8) with wsmoused(8) as a new work mode (i.e. serial)
++ re-design our mbuf/network buffer memory handling so that it is simpler
+  and can handle zero copy tcp
++ re-design our signal handling path. It is far too complicated and will not
+  be easy to accommodate MP code
++ Examine our vnode locking and vfs layer and see what needs to be changed
+  for locking in layered filesystems to really work
+
