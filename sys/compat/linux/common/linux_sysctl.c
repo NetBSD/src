@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.3 2002/03/20 00:27:58 christos Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.4 2002/04/02 20:23:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.3 2002/03/20 00:27:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.4 2002/04/02 20:23:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ linux_kern_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
  * kernel related system variables.
  */
 int
-sysctl_linux(int *name, u_int nlen, void *oldp, size_t *oldlenp,
+linux_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct proc *p)
 {
 	if (nlen != 2 || name[0] != EMUL_LINUX_KERN)
