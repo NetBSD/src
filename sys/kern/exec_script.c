@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.26 2000/08/03 20:41:21 thorpej Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.27 2000/11/21 00:37:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -237,7 +237,7 @@ check_shell:
 
 	if ((error = check_exec(p, epp)) == 0) {
 		/* note that we've clobbered the header */
-		epp->ep_flags |= EXEC_DESTR;
+		epp->ep_flags |= EXEC_DESTR|EXEC_HASES;
 
 		/*
 		 * It succeeded.  Unlock the script and

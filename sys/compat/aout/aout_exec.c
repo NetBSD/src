@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_exec.c,v 1.3 2000/11/13 21:32:16 jdolecek Exp $	*/
+/*	$NetBSD: aout_exec.c,v 1.4 2000/11/21 00:37:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/exec.h>
 #include <sys/signalvar.h>
 
-#include <compat/aout/aout_exec.h>
 #include <compat/aout/aout_syscall.h>
  
 const char aout_emul_path[] = "/emul/aout";
@@ -67,18 +66,6 @@ struct emul emul_netbsd_aout = {
 #else
 	NULL,
 #endif
-	0,
-	copyargs,
-	setregs,
 	sigcode,
 	esigcode,
 };
-
-int
-exec_aoutcompat_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	epp->ep_emul = &emul_netbsd_aout;
-	return exec_aout_makecmds(p, epp);
-}

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.47 2000/11/17 03:55:18 erh Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.48 2000/11/21 00:37:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,6 @@
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
-#include <compat/linux/common/linux_errno.h>
 
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
@@ -77,25 +76,6 @@ static int ELFNAME2(linux,signature) __P((struct proc *, struct exec_package *,
 static int ELFNAME2(linux,gcc_signature) __P((struct proc *p,
 	struct exec_package *, Elf_Ehdr *));
 #endif
-
-extern char linux_sigcode[], linux_esigcode[];
-extern struct sysent linux_sysent[];
-extern const char * const linux_syscallnames[];
-
-struct emul ELFNAMEEND(emul_linux) = {
-	"linux",
-	native_to_linux_errno,
-	linux_sendsig,
-	LINUX_SYS_syscall,
-	LINUX_SYS_MAXSYSCALL,
-	linux_sysent,
-	linux_syscallnames,
-	LINUX_ELF_AUX_ARGSIZ,
-	LINUX_COPYARGS_FUNCTION,
-	linux_setregs,
-	linux_sigcode,
-	linux_esigcode,
-};
 
 #ifdef LINUX_GCC_SIGNATURE
 /*
@@ -207,7 +187,7 @@ ELFNAME2(linux,signature)(p, epp, eh)
 			goto out3;
 		}
 #ifdef DEBUG_LINUX
-		printf("linux_signature: interp=%s\n", notep);
+		printf("linux_signature: interp=%s\n", (char *)notep);
 #endif
 		if (strncmp(&((char *)notep)[8], "linux", 5) == 0 ||
 		    strncmp((char *)notep, "/lib/ld.so.", 11) == 0) {
@@ -268,9 +248,9 @@ int
 ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 	struct proc *p;
 	struct exec_package *epp;
-	Elf_Ehdr *eh;
+	void *eh;
 	char *itp;
-	Elf_Addr *pos;
+	vaddr_t *pos;
 {
 	const char *bp;
 	int error;
@@ -291,7 +271,6 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 			return error;
 		free((void *)bp, M_TEMP);
 	}
-	epp->ep_emul = &ELFNAMEEND(emul_linux);
 	*pos = ELF_NO_ADDR;
 #ifdef DEBUG_LINUX
 	printf("linux_probe: returning 0\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.11 2000/11/13 21:32:18 jdolecek Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.12 2000/11/21 00:37:54 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -49,10 +49,6 @@
 #include <compat/osf1/osf1_util.h>
 #include <compat/osf1/osf1_cvt.h>
 
-/* XXX BELONGS IN A 'PUBLIC' HEADER */
-int     osf1_exec_ecoff_hook(struct proc *p, struct exec_package *epp);
-
-
 struct osf1_exec_emul_arg {
 	int	flags;
 #define	OSF1_EXEC_EMUL_FLAGS_HAVE_LOADER	0x01
@@ -66,15 +62,11 @@ static void *osf1_copyargs(struct exec_package *pack,
 
 static int osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp);
 
-#define	MAX_AUX_ENTRIES		4	/* max we'll ever push (right now) */
-
 extern struct sysent osf1_sysent[];
 extern const char * const osf1_syscallnames[];
-extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
-					u_long));
 extern char osf1_sigcode[], osf1_esigcode[];
 
-struct emul emul_osf1 = {
+const struct emul emul_osf1 = {
 	"osf1",
 	(int *)osf1_errno_rxlist,
 	sendsig,
@@ -82,23 +74,20 @@ struct emul emul_osf1 = {
 	OSF1_SYS_MAXSYSCALL,
 	osf1_sysent,
 	osf1_syscallnames,
-	howmany(MAX_AUX_ENTRIES * sizeof (struct osf1_auxv) +
-	    2 * (MAXPATHLEN + 1), sizeof (char *)), /* exec & loader names */
-	osf1_copyargs,
-	cpu_exec_ecoff_setregs,
 	osf1_sigcode,
 	osf1_esigcode,
 };
 
 int
-osf1_exec_ecoff_hook(struct proc *p, struct exec_package *epp)
+osf1_exec_ecoff_probe(struct proc *p, struct exec_package *epp)
 {
         struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 	struct osf1_exec_emul_arg *emul_arg;
 	int error;
 
-	/* if we're here and we're exec-able at all, we're an OSF/1 binary */
-	epp->ep_emul = &emul_osf1;
+	/* check if the binary is osf1 ecoff */
+	if (execp->f.f_magic != ECOFF_MAGIC_ALPHA)
+		return ENOEXEC;
 
 	/* set up the exec package emul arg as appropriate */
 	emul_arg = malloc(sizeof *emul_arg, M_TEMP, M_WAITOK);
@@ -113,7 +102,7 @@ osf1_exec_ecoff_hook(struct proc *p, struct exec_package *epp)
 		    MAXPATHLEN + 1, NULL);
 #ifdef DIAGNOSTIC
 	if (error != 0)
-		panic("osf1_exec_ecoff_hook: copyinstr failed");
+		panic("osf1_exec_ecoff_probe: copyinstr failed");
 #endif
 
 	/* do any special object file handling */
