@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.33 1997/03/15 18:09:44 is Exp $
+#	$NetBSD: files.atari,v 1.34 1997/03/17 19:46:41 gwr Exp $
 
 
 maxpartitions 16
@@ -151,8 +151,10 @@ file	arch/atari/atari/vm_machdep.c
 file	arch/atari/atari/db_memrw.c		ddb
 file	arch/atari/atari/fpu.c
 file	arch/atari/dev/ym2149.c
-file	arch/m68k/m68k/copy.s
 file	arch/atari/atari/intr.c
+file	arch/m68k/m68k/copy.s
+file	arch/m68k/m68k/bcopy.s
+file	arch/m68k/m68k/copypage.s
 
 # Emulation modules
 # 6888x emulator (FPU_EMULATE)
