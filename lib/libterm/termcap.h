@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.h,v 1.3 1997/10/13 16:11:50 lukem Exp $	*/
+/*	$NetBSD: termcap.h,v 1.4 1998/07/27 01:57:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,12 +42,12 @@
 #define _TERMCAP_H_
 
 __BEGIN_DECLS
-int   tgetent	__P((char *, char *));
-char *tgetstr	__P((char *, char **));
-int   tgetflag	__P((char *));
-int   tgetnum	__P((char *));
-char *tgoto	__P((char *, int, int));
-void  tputs	__P((char *, int, void (*)(int)));
+int   tgetent	__P((char *, const char *));
+char *tgetstr	__P((const char *, char **));
+int   tgetflag	__P((const char *));
+int   tgetnum	__P((const char *));
+char *tgoto	__P((const char *, int, int));
+void  tputs	__P((const char *, int, void (*)(int)));
 __END_DECLS
 
 #endif /* _TERMCAP_H_ */
