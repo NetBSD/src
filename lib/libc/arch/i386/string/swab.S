@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: swab.S,v 1.3 1993/10/21 01:48:38 jtc Exp $
+ *	$Id: swab.S,v 1.4 1993/11/25 01:18:24 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: swab.S,v 1.3 1993/10/21 01:48:38 jtc Exp $"
+	.asciz "$Id: swab.S,v 1.4 1993/11/25 01:18:24 jtc Exp $"
 #endif
 
 #include "DEFS.h"
@@ -56,20 +56,19 @@ ENTRY(swab)
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
 	movl	20(%esp),%ecx
-	shrl	$1,%ecx
-	jz	L4			# len = 0, jmp to func exit
 
 	cld				# set direction forward
 
+	shrl	$1,%ecx
 	testl	$7,%ecx			# copy first group of 1 to 7 words
-	je	L2			# while swaping alternate bytes.
+	jz	L2			# while swaping alternate bytes.
 	.align	2,0x90
 L1:	lodsw
 	xchgb	%al,%ah
 	stosw
 	decl	%ecx
 	testl	$7,%ecx
-	jne	L1
+	jnz	L1
 
 L2:	shrl	$3,%ecx			# copy remainder 8 words at a time
 	jz	L4			# while swapping alternate bytes.
