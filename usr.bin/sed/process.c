@@ -37,7 +37,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)process.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: process.c,v 1.11 1994/02/28 07:00:00 andrew Exp $";
+static char *rcsid = "$Id: process.c,v 1.12 1994/03/01 06:32:54 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -318,7 +318,7 @@ substitute(cp)
 	SPACE tspace;
 	regex_t *re;
 	size_t re_off, slen;
-	int n;
+	int n, lastempty;
 	char *s;
 
 	s = ps;
@@ -336,22 +336,40 @@ substitute(cp)
 	SS.len = 0;				/* Clean substitute space. */
 	slen = psl;
 	n = cp->u.s->n;
+	lastempty = 1;
+
 	switch (n) {
 	case 0:					/* Global */
 		do {
-			/* Locate start of replaced string. */
-			re_off = match[0].rm_so;
-			/* Copy leading retained string. */
-			cspace(&SS, s, re_off, APPEND);
-			/* Add in regular expression. */
-			regsub(&SS, s, cp->u.s->new);
+			if (lastempty || match[0].rm_so != match[0].rm_eo) {
+				/* Locate start of replaced string. */
+				re_off = match[0].rm_so;
+				/* Copy leading retained string. */
+				cspace(&SS, s, re_off, APPEND);
+				/* Add in regular expression. */
+				regsub(&SS, s, cp->u.s->new);
+			}
+
 			/* Move past this match. */
-			s += match[0].rm_eo;
-			slen -= match[0].rm_eo;
-		} while(match[0].rm_so != match[0].rm_eo &&
-		    regexec_e(re, s, REG_NOTBOL, 0, slen));
+			if (match[0].rm_so != match[0].rm_eo) {
+				s += match[0].rm_eo;
+				slen -= match[0].rm_eo;
+				lastempty = 0;
+			} else {
+				if (match[0].rm_so == 0)
+					cspace(&SS, s, match[0].rm_so + 1,
+					    APPEND);
+				else
+					cspace(&SS, s + match[0].rm_so, 1,
+					    APPEND);
+				s += match[0].rm_so + 1;
+				slen -= match[0].rm_so + 1;
+				lastempty = 1;
+			}
+		} while (slen > 0 && regexec_e(re, s, REG_NOTBOL, 0, slen));
 		/* Copy trailing retained string. */
-		cspace(&SS, s, slen, APPEND);
+		if (slen > 0)
+			cspace(&SS, s, slen, APPEND);
 		break;
 	default:				/* Nth occurrence */
 		while (--n) {
