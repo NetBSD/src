@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.258 2004/06/12 06:57:53 mbw Exp $
+.\"	$NetBSD: main,v 1.259 2004/06/12 17:21:41 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1057,34 +1057,6 @@ all sets may be unpacked into
 .Pa /usr/src
 with the command:
 .Dl # Ic "( cd / ; tar -zxpf - ) \*< set_name.tgz"
-.Pp
-The
-.Pa sets/Split/
-subdirectory contains split
-versions of the source sets for those users who need to load the
-source sets from floppy or otherwise need a split distribution.
-The split sets are named
-.Pa "set_name." Ns Ar xx
-where
-.Pa set_name
-is the distribution set name, and
-.Ar xx
-is the sequence number of the file,
-starting with
-.Dq aa
-for the first file in the distribution set, then
-.Dq ab
-for the next, and so on.
-All of these files except the last one of each set should be exactly
-240,640 bytes long.
-(The last file is just long enough to contain the remainder of the data
-for that distribution set.)
-.Pp
-The split distributions may be reassembled and extracted with
-.Ic cat
-as follows:
-.Pp
-.Dl # Ic "cat set_name.?? | ( cd / ; tar -zxpf - )"
 .Pp
 In each of the source distribution set directories, there are
 files which contain the checksums of the files in the directory:
