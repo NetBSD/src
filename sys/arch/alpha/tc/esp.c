@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.1 1995/02/13 23:08:55 cgd Exp $	*/
+/*	$NetBSD: esp.c,v 1.2 1995/03/03 01:37:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -971,34 +971,31 @@ esp_msgin(sc)
 		 * If we're going to reject the message, don't bother storing
 		 * the incoming bytes.  But still, we need to ACK them.
 		 */
-		if (!(sc->sc_flags & ESP_DROP_MSGI)) {
+		if ((sc->sc_flags & ESP_DROP_MSGI) == 0) {
 			sc->sc_imess[sc->sc_imlen] = espgetbyte(sc);
 			ESP_MISC(("0x%02x ", sc->sc_imess[sc->sc_imlen]));
-			/* 
-			 * This testing is suboptimal, but most messages will
-			 * be of the one byte variety, so it should not effect
-			 * performance significantly.
-			 */
-			if (IS1BYTEMSG(sc->sc_imess[0]))
-				break;
-			if (IS2BYTEMSG(sc->sc_imess[0]) && sc->sc_imlen == 1)
-				break;
-			if (ISEXTMSG(sc->sc_imess[0]) && sc->sc_imlen > 0) {
-				if (sc->sc_imlen == ESP_MAX_MSG_LEN) {
-					sc->sc_flags |= ESP_DROP_MSGI;
-					ESPCMD(sc, ESPCMD_SETATN);
-					ESPCMD(sc, ESPCMD_MSGOK);
-				}
-				extlen = sc->sc_imess[1] ? sc->sc_imess[1] : 256;
-				if (sc->sc_imlen == extlen + 2) {
-					break; /* Got it all */
-				} else {
-					sc->sc_imlen++;
-					/* ESPCMD(sc, ESPCMD_TRANS); */
-					/* return; */
-				}
-			} else
+			if (sc->sc_imlen >= ESP_MAX_MSG_LEN) {
+				esp_sched_msgout(SEND_REJECT);
+				sc->sc_flags |= ESP_DROP_MSGI;
+			} else {
 				sc->sc_imlen++;
+				/* 
+				 * This testing is suboptimal, but most
+				 * messages will be of the one byte variety, so
+				 * it should not effect performance
+				 * significantly.
+				 */
+				if (sc->sc_imlen == 1 &&
+				    IS1BYTEMSG(sc->sc_imess[0]))
+					break;
+				if (sc->sc_imlen == 2 &&
+				    IS2BYTEMSG(sc->sc_imess[0]))
+					break;
+				if (sc->sc_imlen >= 3 &&
+				    ISEXTMSG(sc->sc_imess[0]) &&
+				    sc->sc_imlen == sc->sc_imess[1] + 2)
+					break;
+			}
 		}
 	}
 
