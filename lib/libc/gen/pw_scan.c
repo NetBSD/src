@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.3 1998/07/26 13:51:44 mycroft Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.4 1998/07/26 19:05:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.3 1998/07/26 13:51:44 mycroft Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.4 1998/07/26 19:05:07 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -64,8 +64,8 @@ __pw_scan(bp, pw, flags)
 {
 	unsigned long id;
 	int root, inflags;
-	char *p, *ep;
-	const char *sh;
+	char *ep;
+	const char *p, *sh;
 
 	inflags = 0;
 	if (flags != (int *)NULL) {
