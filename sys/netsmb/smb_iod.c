@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.2.4.4 2002/06/24 22:12:02 nathanw Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.2.4.5 2002/07/15 20:37:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -665,7 +665,7 @@ smb_iod_thread(void *arg)
 	 * Here we assume that the thread structure will be the same
 	 * for an entire kthread (kproc, to be more precise) life.
 	 */
-	iod->iod_p = curlwp;
+	iod->iod_p = curproc;
 	smb_makescred(&iod->iod_scred, iod->iod_p, NULL);
 	while ((iod->iod_flags & SMBIOD_SHUTDOWN) == 0) {
 		smb_iod_main(iod);
