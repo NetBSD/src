@@ -101,6 +101,7 @@
 ./usr/share/man/cat1/intro.0
 ./usr/share/man/cat1/ipcrm.0
 ./usr/share/man/cat1/ipcs.0
+./usr/share/man/cat1/ipftest.0
 ./usr/share/man/cat1/ipsend.0
 ./usr/share/man/cat1/iptest.0
 ./usr/share/man/cat1/jobs.0
@@ -314,9 +315,11 @@
 ./usr/share/man/cat4/cy.0
 ./usr/share/man/cat4/ddb.0
 ./usr/share/man/cat4/drum.0
+./usr/share/man/cat4/ec.0
 ./usr/share/man/cat4/eg.0
 ./usr/share/man/cat4/eisa.0
 ./usr/share/man/cat4/el.0
+./usr/share/man/cat4/en.0
 ./usr/share/man/cat4/ep.0
 ./usr/share/man/cat4/esis.0
 ./usr/share/man/cat4/esp.0
@@ -337,6 +340,7 @@
 ./usr/share/man/cat4/isapnp.0
 ./usr/share/man/cat4/iso.0
 ./usr/share/man/cat4/iy.0
+./usr/share/man/cat4/lc.0
 ./usr/share/man/cat4/lkm.0
 ./usr/share/man/cat4/lo.0
 ./usr/share/man/cat4/mcd.0
@@ -360,6 +364,7 @@
 ./usr/share/man/cat4/sd.0
 ./usr/share/man/cat4/sea.0
 ./usr/share/man/cat4/sl.0
+./usr/share/man/cat4/sm.0
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/st.0
 ./usr/share/man/cat4/stderr.0
@@ -379,6 +384,7 @@
 ./usr/share/man/cat4/unix.0
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/wds.0
+./usr/share/man/cat4/we.0
 ./usr/share/man/cat4/wss.0
 ./usr/share/man/cat4/wt.0
 ./usr/share/man/cat4/zstty.0
@@ -403,6 +409,7 @@
 ./usr/share/man/cat5/exports.0
 ./usr/share/man/cat5/fs.0
 ./usr/share/man/cat5/fstab.0
+./usr/share/man/cat5/ftpd.conf.0
 ./usr/share/man/cat5/genassym.cf.0
 ./usr/share/man/cat5/gettytab.0
 ./usr/share/man/cat5/group.0
@@ -521,6 +528,7 @@
 ./usr/share/man/cat8/fsirand.0
 ./usr/share/man/cat8/ftpd.0
 ./usr/share/man/cat8/genassym.sh.0
+./usr/share/man/cat8/getNAME.0
 ./usr/share/man/cat8/gettable.0
 ./usr/share/man/cat8/getty.0
 ./usr/share/man/cat8/halt.0
@@ -1008,6 +1016,7 @@
 ./usr/share/man/man1/intro.1
 ./usr/share/man/man1/ipcrm.1
 ./usr/share/man/man1/ipcs.1
+./usr/share/man/man1/ipftest.1
 ./usr/share/man/man1/ipsend.1
 ./usr/share/man/man1/iptest.1
 ./usr/share/man/man1/jobs.1
@@ -1221,9 +1230,11 @@
 ./usr/share/man/man4/cy.4
 ./usr/share/man/man4/ddb.4
 ./usr/share/man/man4/drum.4
+./usr/share/man/man4/ec.4
 ./usr/share/man/man4/eg.4
 ./usr/share/man/man4/eisa.4
 ./usr/share/man/man4/el.4
+./usr/share/man/man4/en.4
 ./usr/share/man/man4/ep.4
 ./usr/share/man/man4/esis.4
 ./usr/share/man/man4/esp.4
@@ -1244,6 +1255,7 @@
 ./usr/share/man/man4/isapnp.4
 ./usr/share/man/man4/iso.4
 ./usr/share/man/man4/iy.4
+./usr/share/man/man4/lc.4
 ./usr/share/man/man4/lkm.4
 ./usr/share/man/man4/lo.4
 ./usr/share/man/man4/mcd.4
@@ -1267,6 +1279,7 @@
 ./usr/share/man/man4/sd.4
 ./usr/share/man/man4/sea.4
 ./usr/share/man/man4/sl.4
+./usr/share/man/man4/sm.4
 ./usr/share/man/man4/spp.4
 ./usr/share/man/man4/st.4
 ./usr/share/man/man4/stderr.4
@@ -1286,6 +1299,7 @@
 ./usr/share/man/man4/unix.4
 ./usr/share/man/man4/vnd.4
 ./usr/share/man/man4/wds.4
+./usr/share/man/man4/we.4
 ./usr/share/man/man4/wss.4
 ./usr/share/man/man4/wt.4
 ./usr/share/man/man4/zstty.4
@@ -1310,6 +1324,7 @@
 ./usr/share/man/man5/exports.5
 ./usr/share/man/man5/fs.5
 ./usr/share/man/man5/fstab.5
+./usr/share/man/man5/ftpd.conf.5
 ./usr/share/man/man5/genassym.cf.5
 ./usr/share/man/man5/gettytab.5
 ./usr/share/man/man5/group.5
@@ -1428,6 +1443,7 @@
 ./usr/share/man/man8/fsirand.8
 ./usr/share/man/man8/ftpd.8
 ./usr/share/man/man8/genassym.sh.8
+./usr/share/man/man8/getNAME.8
 ./usr/share/man/man8/gettable.8
 ./usr/share/man/man8/getty.8
 ./usr/share/man/man8/halt.8
