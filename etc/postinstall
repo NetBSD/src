@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.16.2.4 2002/12/12 21:46:32 he Exp $
+# $NetBSD: postinstall,v 1.16.2.5 2003/01/26 09:54:59 jmc Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -264,6 +264,23 @@ rcconf_is_set()
 #	items
 #	-----
 #
+
+#
+#	rc
+#
+additem postinstall "/etc/postinstall being up to date"
+do_postinstall()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_postinstall  fix|check"
+	op=$1
+	failed=0
+
+	compare_dir ${op} ${SRC_DIR}/etc ${DEST_DIR}/etc 555 \
+		postinstall
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
 
 #
 #	defaults
