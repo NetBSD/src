@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1994/12/22 09:33:36 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1995/04/23 07:58:37 cgd Exp $
 
 PROG=		awk
 SRCS=		main.c eval.c builtin.c msg.c iop.c io.c field.c array.c \

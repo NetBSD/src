@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1993/10/07 07:26:26 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1995/04/23 07:58:53 cgd Exp $
 
 PROG=	sort
 LDADD+=	-lgnumalloc

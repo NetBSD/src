@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1995/02/24 02:07:40 mycroft Exp $
+#	$NetBSD: Makefile,v 1.5 1995/04/23 07:58:48 cgd Exp $
 
 SUBDIR+=lib
 SUBDIR+=ci co ident merge rcs rcsclean rcsdiff rcsfreeze rcsmerge rlog

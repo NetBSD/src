@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1994/01/28 12:36:46 pk Exp $
+#	$NetBSD: Makefile,v 1.7 1995/04/23 07:58:40 cgd Exp $
 
 SUBDIR=	bfd readline libiberty gdb
 
