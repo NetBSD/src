@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1996/05/10 23:16:34 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 1996/12/13 19:26:19 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -110,6 +110,7 @@ WINDOW	*opennetstat __P((void));
 WINDOW	*openpigs __P((void));
 WINDOW	*openswap __P((void));
 int	 prefix __P((char *, char *));
+void	 redraw __P((int));
 void	 showiostat __P((void));
 void	 showkre __P((void));
 void	 showmbufs __P((void));
