@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.119 2000/07/30 04:42:37 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.120 2000/07/30 06:10:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.119 2000/07/30 04:42:37 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.120 2000/07/30 06:10:43 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -435,14 +435,9 @@ sigjmp_buf	httpabort;
 static int
 fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 {
-#if defined(NI_NUMERICHOST) && defined(INET6)
 	struct addrinfo		hints, *res, *res0 = NULL;
 	int			error;
 	char			hbuf[NI_MAXHOST];
-#else
-	struct sockaddr_in	sin;
-	struct hostent		*hp = NULL;
-#endif
 	volatile sigfunc	oldintr, oldintp;
 	volatile int		s;
 	struct stat		sb;
@@ -656,66 +651,6 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			}
 		} /* ! EMPTYSTRING(proxyenv) */
 
-#if !defined(NI_NUMERICHOST) || !defined(INET6)
-		memset(&sin, 0, sizeof(sin));
-		sin.sin_family = AF_INET;
-
-		if (isdigit((unsigned char)host[0])) {
-			if (inet_aton(host, &sin.sin_addr) == 0) {
-				warnx("Invalid IP address `%s'", host);
-				goto cleanup_fetch_url;
-			}
-		} else {
-			hp = gethostbyname(host);
-			if (hp == NULL) {
-				warnx("%s: %s", host, hstrerror(h_errno));
-				goto cleanup_fetch_url;
-			}
-			if (hp->h_addrtype != AF_INET) {
-				warnx("`%s': not an Internet address?", host);
-				goto cleanup_fetch_url;
-			}
-			if (hp->h_length > sizeof(sin.sin_addr))
-				hp->h_length = sizeof(sin.sin_addr);
-			memcpy(&sin.sin_addr, hp->h_addr, hp->h_length);
-		}
-		sin.sin_port = htons(portnum);
-
-		s = socket(AF_INET, SOCK_STREAM, 0);
-		if (s == -1) {
-			warn("Can't create socket");
-			goto cleanup_fetch_url;
-		}
-
-		while (xconnect(s, (struct sockaddr *)&sin,
-		    sizeof(sin)) == -1) {
-			if (errno == EINTR)
-				continue;
-			if (hp && hp->h_addr_list[1]) {
-				int oerrno = errno;
-				char *ia;
-
-				ia = inet_ntoa(sin.sin_addr);
-				errno = oerrno;
-				warn("Connect to address `%s'", ia);
-				hp->h_addr_list++;
-				memcpy(&sin.sin_addr, hp->h_addr_list[0],
-				    (size_t)hp->h_length);
-				if (verbose)
-					fprintf(ttyout, "Trying %s...\n",
-					    inet_ntoa(sin.sin_addr));
-				(void)close(s);
-				s = socket(AF_INET, SOCK_STREAM, 0);
-				if (s < 0) {
-					warn("Can't create socket");
-					goto cleanup_fetch_url;
-				}
-				continue;
-			}
-			warn("Can't connect to `%s'", host);
-			goto cleanup_fetch_url;
-		}
-#else
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_flags = 0;
 		hints.ai_family = AF_UNSPEC;
@@ -766,7 +701,6 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			warn("Can't connect to %s", host);
 			goto cleanup_fetch_url;
 		}
-#endif
 
 		fin = fdopen(s, "r+");
 		/*
