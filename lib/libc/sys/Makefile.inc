@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.111.2.4 2001/11/17 03:17:34 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.111.2.5 2001/11/17 21:49:53 briggs Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -30,12 +30,6 @@ SRCS+=	adjtime.c clock_settime.c ftruncate.c getdirentries.c lseek.c mmap.c \
 # handled portably and easily by the syscall interface. The glue
 # converts structs and unions to pointers to them.
 SRCS+=	__semctl13.c
-
-# "stub" POSIX.1b interfaces which return -1 and set errno to ENOSYS, so
-# we can avoid bumping libc's minor number as functions are added to the
-# kernel.
-SRCS+=	timer_create.c timer_delete.c timer_gettime.c timer_settime.c \
-	timer_getoverrun.c
 
 # namespace purity wrappers
 SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
@@ -76,9 +70,8 @@ ASM=	accept.S access.S acct.S bind.S chdir.S chflags.S \
 	_lwp_suspend.S _lwp_continue.S \
 	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
 	sa_preempt.S \
-	timer_create.S timer_delete.S timer_settime.S timer_settime.S \
-	timer_gettime.S timer_getoverrun.S
-
+	timer_create.S timer_delete.S timer_gettime.S timer_getoverrun.S \
+	timer_settime.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
 	issetugid.S sync.S
