@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.32 1999/02/19 16:15:07 mycroft Exp $	*/
+/*	$NetBSD: seagate.c,v 1.33 1999/03/19 05:42:00 cgd Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -86,8 +86,7 @@
 #include <dev/scsipi/scsiconf.h>
 
 #include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-#include <i386/isa/isa_machdep.h>	/* XXX USES ISA HOLE DIRECTLY */
+#include <dev/isa/isavar.h>	/* XXX USES ISA HOLE DIRECTLY */
 
 #define	SEA_SCB_MAX	32	/* allow maximally 8 scsi control blocks */
 #define SCB_TABLE_SIZE	8	/* start with 8 scb entries in table */
