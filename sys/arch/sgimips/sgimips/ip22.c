@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.18 2003/10/05 15:38:08 tsutsui Exp $	*/
+/*	$NetBSD: ip22.c,v 1.19 2003/12/14 05:23:12 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -28,12 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.18 2003/10/05 15:38:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.19 2003/12/14 05:23:12 sekiya Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
-
-#ifdef IP22
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -454,5 +452,3 @@ ip22_cal_timer(u_int32_t tctrl, u_int32_t tcount)
 
 	return (endctr - startctr) / roundtime * roundtime;
 }
-
-#endif	/* IP22 */
