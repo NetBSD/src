@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_ACPI,v 1.18 2005/02/18 21:05:50 dsl Exp $
+# $NetBSD: INSTALL_ACPI,v 1.19 2005/03/25 23:28:44 cube Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.18 $"
+#ident 		"INSTALL-$Revision: 1.19 $"
 
 maxusers	32		# estimated number of users
 
@@ -227,6 +227,7 @@ wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
+attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
 
