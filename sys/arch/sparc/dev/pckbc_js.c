@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.5 2002/10/02 16:02:15 thorpej Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.6 2002/10/03 16:22:46 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -136,14 +136,24 @@ pckbc_ebus_attach(parent, self, aux)
 	struct ebus_attach_args *ea = aux;
 	bus_space_tag_t iot;
 	bus_addr_t ioaddr;
-	int intr, isconsole;
+	int intr;
+	int stdin_node,	node;
+	int isconsole;
 
 	iot = ea->ea_bustag;
 	ioaddr = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
 	intr = ea->ea_nintr ? ea->ea_intr[0] : /* line */ 0;
 
-	/* TODO: see comment in pckbc_obio_attach above */
-	isconsole = 1;
+	/* search children of "8042" node for stdin (keyboard) */
+	stdin_node = prom_instance_to_package(prom_stdin());
+	isconsole = 0;
+
+	for (node = prom_firstchild(ea->ea_node);
+	     node != 0; node = prom_nextsibling(node))
+		if (node == stdin_node) {
+			isconsole = 1;
+			break;
+		}
 
 	pckbc_js_attach_common(jsc, iot, ioaddr, intr, isconsole);
 }
