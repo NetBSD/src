@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.70.2.6 2003/08/20 01:52:38 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.70.2.7 2003/08/21 01:57:22 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.70.2.6 2003/08/20 01:52:38 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.70.2.7 2003/08/21 01:57:22 jlam Exp $");
 #endif
 #endif
 
@@ -766,9 +766,7 @@ success:
 	/* Add the package to a default view. */
 	if (!NoView && is_depoted_pkg) {
 		if (Verbose) {
-			printf("env %s=%s %s/pkg_view %s%s %s%s %sadd %s\n",
-				PKG_DBDIR,
-				DEF_LOG_DIR,
+			printf("%s/pkg_view %s%s %s%s %sadd %s\n",
 				BINDIR,
 				View ? "-w " : "",
 				View ? View : "",
@@ -777,9 +775,7 @@ success:
 				Verbose ? "-v " : "",
 				PkgName);
 		}
-		vsystem("env %s=%s %s/pkg_view %s%s %s%s %sadd %s",
-				PKG_DBDIR,
-				DEF_LOG_DIR,
+		vsystem("%s/pkg_view %s%s %s%s %sadd %s",
 				BINDIR,
 				View ? "-w " : "",
 				View ? View : "",
