@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.42 1996/11/11 23:58:48 pk Exp $	*/
+/*	$NetBSD: conf.h,v 1.43 1997/01/05 13:41:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -302,6 +302,13 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,poll), dev_init(c,n,mmap) }
 
+/* open, close, read, ioctl */
+#define cdev_ipl_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
+	(dev_type_mmap((*))) enodev }
+
 /* open */
 #define	cdev_svr4_net_init(c,n) { \
 	dev_init(c,n,open), (dev_type_close((*))) enodev, \
@@ -407,6 +414,8 @@ cdev_decl(uk);
 cdev_decl(bpf);
 
 cdev_decl(tun);
+
+cdev_decl(ipl);
 
 #ifdef COMPAT_SVR4
 # define NSVR4_NET	1
