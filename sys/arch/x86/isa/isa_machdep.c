@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.8 2003/08/07 16:30:33 agc Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.9 2003/10/16 22:56:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.8 2003/08/07 16:30:33 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9 2003/10/16 22:56:29 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,8 +236,8 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 
 #if NIOAPIC > 0
 	if (mp_busses != NULL) {
-		if (intr_find_mpmapping(mp_isa_bus, irq, &mpih) == 0 ||
-		    intr_find_mpmapping(mp_eisa_bus, irq, &mpih) == 0) {
+		if (intr_find_mpmapping(mp_isa_bus, irq, &mpih, NULL) == 0 ||
+		    intr_find_mpmapping(mp_eisa_bus, irq, &mpih, NULL) == 0) {
 			if (!APIC_IRQ_ISLEGACY(mpih)) {
 				pin = APIC_IRQ_PIN(mpih);
 				pic = (struct pic *)
