@@ -1,7 +1,7 @@
-/*	$NetBSD: cd.c,v 1.99 1997/03/29 21:37:55 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -105,7 +105,7 @@ void	cdunlock __P((struct cd_softc *));
 void	cdstart __P((void *));
 void	cdminphys __P((struct buf *));
 void	cdgetdisklabel __P((struct cd_softc *));
-int	cddone __P((struct scsi_xfer *, int));
+void	cddone __P((struct scsi_xfer *));
 u_long	cd_size __P((struct cd_softc *, int));
 int	cd_get_mode __P((struct cd_softc *, struct cd_mode_data *, int));
 int	cd_set_mode __P((struct cd_softc *, struct cd_mode_data *));
@@ -603,17 +603,14 @@ cdstart(v)
 	}
 }
 
-int
-cddone(xs, complete)
+void
+cddone(xs)
 	struct scsi_xfer *xs;
-	int complete;
 {
 	struct cd_softc *cd = xs->sc_link->device_softc;
 
-	if (complete && (xs->bp != NULL))
-		disk_unbusy(&cd->sc_dk, (xs->bp->b_bcount - xs->bp->b_resid));
-
-	return (0);
+	if (xs->bp != NULL)
+		disk_unbusy(&cd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid);
 }
 
 void

@@ -1,7 +1,7 @@
-/*	$NetBSD: sd.c,v 1.110 1997/03/04 06:25:22 mikel Exp $	*/
+/*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -115,7 +115,7 @@ void	sdunlock __P((struct sd_softc *));
 void	sdminphys __P((struct buf *));
 void	sdgetdisklabel __P((struct sd_softc *));
 void	sdstart __P((void *));
-int	sddone __P((struct scsi_xfer *, int));
+void	sddone __P((struct scsi_xfer *));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
 int	sd_get_optparms __P((struct sd_softc *, int, struct disk_parms *));
 int	sd_get_parms __P((struct sd_softc *, int));
@@ -631,17 +631,14 @@ sdstart(v)
 	}
 }
 
-int
-sddone(xs, complete)
+void
+sddone(xs)
 	struct scsi_xfer *xs;
-	int complete;
 {
 	struct sd_softc *sd = xs->sc_link->device_softc;
 
-	if (complete && (xs->bp != NULL))
-		disk_unbusy(&sd->sc_dk, (xs->bp->b_bcount - xs->bp->b_resid));
-
-	return (0);
+	if (xs->bp != NULL)
+		disk_unbusy(&sd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid);
 }
 
 void
