@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.44 1997/09/02 01:37:19 mikel Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.45 1997/10/14 15:50:21 is Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -69,10 +69,8 @@
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/lptreg.h>
-
-#define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
-#define	STEP		hz/4
+#include <dev/ic/lptreg.h>
+#include <dev/ic/lptvar.h>
 
 #define	LPTPRI		(PZERO+8)
 #define	LPT_BSIZE	1024
@@ -80,64 +78,26 @@
 #ifndef LPTDEBUG
 #define LPRINTF(a)
 #else
-#define LPRINTF(a)	if (lptdebug) printf a
-int lptdebug = 0;
+#define LPRINTF(a)	if (lpt_isa_debug) printf a
+int lpt_isa_debug = 0;
 #endif
 
-struct lpt_softc {
-	struct device sc_dev;
-	void *sc_ih;
-
-	size_t sc_count;
-	struct buf *sc_inbuf;
-	u_char *sc_cp;
-	int sc_spinmax;
-	int sc_iobase;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
+struct lpt_isa_softc {
+	struct lpt_softc sc_lpt;
 	int sc_irq;
-	u_char sc_state;
-#define	LPT_OPEN	0x01	/* device is open */
-#define	LPT_OBUSY	0x02	/* printer is busy doing output */
-#define	LPT_INIT	0x04	/* waiting to initialize for open */
-	u_char sc_flags;
-#define	LPT_AUTOLF	0x20	/* automatic LF on CR */
-#define	LPT_NOPRIME	0x40	/* don't prime on open */
-#define	LPT_NOINTR	0x80	/* do not use interrupt */
-	u_char sc_control;
-	u_char sc_laststatus;
-};
 
-/* XXX does not belong here */
-cdev_decl(lpt);
+};
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-int lptprobe __P((struct device *, void *, void *));
+int lpt_isa_probe __P((struct device *, void *, void *));
 #else
-int lptprobe __P((struct device *, struct cfdata *, void *));
+int lpt_isa_probe __P((struct device *, struct cfdata *, void *));
 #endif
-void lptattach __P((struct device *, struct device *, void *));
-int lptintr __P((void *));
+void lpt_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach lpt_ca = {
-	sizeof(struct lpt_softc), lptprobe, lptattach
+struct cfattach lpt_isa_ca = {
+	sizeof(struct lpt_isa_softc), lpt_isa_probe, lpt_isa_attach
 };
-
-struct cfdriver lpt_cd = {
-	NULL, "lpt", DV_TTY
-};
-
-#define	LPTUNIT(s)	(minor(s) & 0x1f)
-#define	LPTFLAGS(s)	(minor(s) & 0xe0)
-
-#define	LPS_INVERT	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK)
-#define	LPS_MASK	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK|LPS_NOPAPER)
-#define	NOT_READY()	((bus_space_read_1(iot, ioh, lpt_status) ^ LPS_INVERT) & LPS_MASK)
-#define	NOT_READY_ERR()	not_ready(bus_space_read_1(iot, ioh, lpt_status), sc)
-static int not_ready __P((u_char, struct lpt_softc *));
-
-static void lptwakeup __P((void *arg));
-static int pushbytes __P((struct lpt_softc *));
 
 int	lpt_port_test __P((bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    bus_size_t, u_char, u_char));
@@ -190,7 +150,7 @@ lpt_port_test(iot, ioh, base, off, data, mask)
  *	3) Set the data and control ports to a value of 0
  */
 int
-lptprobe(parent, match, aux)
+lpt_isa_probe(parent, match, aux)
 	struct device *parent;
 #ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
@@ -255,11 +215,12 @@ out:
 }
 
 void
-lptattach(parent, self, aux)
+lpt_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct lpt_softc *sc = (void *)self;
+	struct lpt_isa_softc *sc = (void *)self;
+	struct lpt_softc *lsc = &sc->sc_lpt;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -269,322 +230,17 @@ lptattach(parent, self, aux)
 	else
 		printf(": polled\n");
 
-	sc->sc_iobase = ia->ia_iobase;
 	sc->sc_irq = ia->ia_irq;
-	sc->sc_state = 0;
 
-	iot = sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(iot, sc->sc_iobase, LPT_NPORTS, 0, &ioh))
-		panic("lptattach: couldn't map I/O ports");
-	sc->sc_ioh = ioh;
+	iot = lsc->sc_iot = ia->ia_iot;
+	if (bus_space_map(iot, ia->ia_iobase, LPT_NPORTS, 0, &ioh))
+		panic("lpt_isa_attach: couldn't map I/O ports");
+	lsc->sc_ioh = ioh;
 
-	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
+	lpt_attach_subr(lsc);
 
 	if (ia->ia_irq != IRQUNK)
-		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-		    IPL_TTY, lptintr, sc);
+		lsc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+		    IPL_TTY, lptintr, lsc);
 }
 
-/*
- * Reset the printer, then wait until it's selected and not busy.
- */
-int
-lptopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
-{
-	int unit = LPTUNIT(dev);
-	u_char flags = LPTFLAGS(dev);
-	struct lpt_softc *sc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_char control;
-	int error;
-	int spin;
-
-	if (unit >= lpt_cd.cd_ndevs)
-		return ENXIO;
-	sc = lpt_cd.cd_devs[unit];
-	if (!sc)
-		return ENXIO;
-
-	if (sc->sc_irq == IRQUNK && (flags & LPT_NOINTR) == 0)
-		return ENXIO;
-
-#ifdef DIAGNOSTIC
-	if (sc->sc_state)
-		printf("%s: stat=0x%x not zero\n", sc->sc_dev.dv_xname,
-		    sc->sc_state);
-#endif
-
-	if (sc->sc_state)
-		return EBUSY;
-
-	sc->sc_state = LPT_INIT;
-	sc->sc_flags = flags;
-	LPRINTF(("%s: open: flags=0x%x\n", sc->sc_dev.dv_xname,
-	    (unsigned)flags));
-	iot = sc->sc_iot;
-	ioh = sc->sc_ioh;
-
-	if ((flags & LPT_NOPRIME) == 0) {
-		/* assert INIT for 100 usec to start up printer */
-		bus_space_write_1(iot, ioh, lpt_control, LPC_SELECT);
-		delay(100);
-	}
-
-	control = LPC_SELECT | LPC_NINIT;
-	bus_space_write_1(iot, ioh, lpt_control, control);
-
-	/* wait till ready (printer running diagnostics) */
-	for (spin = 0; NOT_READY_ERR(); spin += STEP) {
-		if (spin >= TIMEOUT) {
-			sc->sc_state = 0;
-			return EBUSY;
-		}
-
-		/* wait 1/4 second, give up if we get a signal */
-		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen", STEP);
-		if (error != EWOULDBLOCK) {
-			sc->sc_state = 0;
-			return error;
-		}
-	}
-
-	if ((flags & LPT_NOINTR) == 0)
-		control |= LPC_IENABLE;
-	if (flags & LPT_AUTOLF)
-		control |= LPC_AUTOLF;
-	sc->sc_control = control;
-	bus_space_write_1(iot, ioh, lpt_control, control);
-
-	sc->sc_inbuf = geteblk(LPT_BSIZE);
-	sc->sc_count = 0;
-	sc->sc_state = LPT_OPEN;
-
-	if ((sc->sc_flags & LPT_NOINTR) == 0)
-		lptwakeup(sc);
-
-	LPRINTF(("%s: opened\n", sc->sc_dev.dv_xname));
-	return 0;
-}
-
-int
-not_ready(status, sc)
-	u_char status;
-	struct lpt_softc *sc;
-{
-	u_char new;
-
-	status = (status ^ LPS_INVERT) & LPS_MASK;
-	new = status & ~sc->sc_laststatus;
-	sc->sc_laststatus = status;
-
-	if (new & LPS_SELECT)
-		log(LOG_NOTICE, "%s: offline\n", sc->sc_dev.dv_xname);
-	else if (new & LPS_NOPAPER)
-		log(LOG_NOTICE, "%s: out of paper\n", sc->sc_dev.dv_xname);
-	else if (new & LPS_NERR)
-		log(LOG_NOTICE, "%s: output error\n", sc->sc_dev.dv_xname);
-
-	return status;
-}
-
-void
-lptwakeup(arg)
-	void *arg;
-{
-	struct lpt_softc *sc = arg;
-	int s;
-
-	s = spltty();
-	lptintr(sc);
-	splx(s);
-
-	timeout(lptwakeup, sc, STEP);
-}
-
-/*
- * Close the device, and free the local line buffer.
- */
-int
-lptclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
-{
-	int unit = LPTUNIT(dev);
-	struct lpt_softc *sc = lpt_cd.cd_devs[unit];
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-
-	if (sc->sc_count)
-		(void) pushbytes(sc);
-
-	if ((sc->sc_flags & LPT_NOINTR) == 0)
-		untimeout(lptwakeup, sc);
-
-	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
-	sc->sc_state = 0;
-	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
-	brelse(sc->sc_inbuf);
-
-	LPRINTF(("%s: closed\n", sc->sc_dev.dv_xname));
-	return 0;
-}
-
-int
-pushbytes(sc)
-	struct lpt_softc *sc;
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	int error;
-
-	if (sc->sc_flags & LPT_NOINTR) {
-		int spin, tic;
-		u_char control = sc->sc_control;
-
-		while (sc->sc_count > 0) {
-			spin = 0;
-			while (NOT_READY()) {
-				if (++spin < sc->sc_spinmax)
-					continue;
-				tic = 0;
-				/* adapt busy-wait algorithm */
-				sc->sc_spinmax++;
-				while (NOT_READY_ERR()) {
-					/* exponential backoff */
-					tic = tic + tic + 1;
-					if (tic > TIMEOUT)
-						tic = TIMEOUT;
-					error = tsleep((caddr_t)sc,
-					    LPTPRI | PCATCH, "lptpsh", tic);
-					if (error != EWOULDBLOCK)
-						return error;
-				}
-				break;
-			}
-
-			bus_space_write_1(iot, ioh, lpt_data, *sc->sc_cp++);
-			bus_space_write_1(iot, ioh, lpt_control,
-			    control | LPC_STROBE);
-			sc->sc_count--;
-			bus_space_write_1(iot, ioh, lpt_control, control);
-
-			/* adapt busy-wait algorithm */
-			if (spin*2 + 16 < sc->sc_spinmax)
-				sc->sc_spinmax--;
-		}
-	} else {
-		int s;
-
-		while (sc->sc_count > 0) {
-			/* if the printer is ready for a char, give it one */
-			if ((sc->sc_state & LPT_OBUSY) == 0) {
-				LPRINTF(("%s: write %u\n", sc->sc_dev.dv_xname,
-				    sc->sc_count));
-				s = spltty();
-				(void) lptintr(sc);
-				splx(s);
-			}
-			error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
-			    "lptwrite2", 0);
-			if (error)
-				return error;
-		}
-	}
-	return 0;
-}
-
-/* 
- * Copy a line from user space to a local buffer, then call putc to get the
- * chars moved to the output queue.
- */
-int
-lptwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-	struct lpt_softc *sc = lpt_cd.cd_devs[LPTUNIT(dev)];
-	size_t n;
-	int error = 0;
-
-	while ((n = min(LPT_BSIZE, uio->uio_resid)) != 0) {
-		uiomove(sc->sc_cp = sc->sc_inbuf->b_data, n, uio);
-		sc->sc_count = n;
-		error = pushbytes(sc);
-		if (error) {
-			/*
-			 * Return accurate residual if interrupted or timed
-			 * out.
-			 */
-			uio->uio_resid += sc->sc_count;
-			sc->sc_count = 0;
-			return error;
-		}
-	}
-	return 0;
-}
-
-/*
- * Handle printer interrupts which occur when the printer is ready to accept
- * another char.
- */
-int
-lptintr(arg)
-	void *arg;
-{
-	struct lpt_softc *sc = arg;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-
-#if 0
-	if ((sc->sc_state & LPT_OPEN) == 0)
-		return 0;
-#endif
-
-	/* is printer online and ready for output */
-	if (NOT_READY() && NOT_READY_ERR())
-		return 0;
-
-	if (sc->sc_count) {
-		u_char control = sc->sc_control;
-		/* send char */
-		bus_space_write_1(iot, ioh, lpt_data, *sc->sc_cp++);
-		bus_space_write_1(iot, ioh, lpt_control, control | LPC_STROBE);
-		sc->sc_count--;
-		bus_space_write_1(iot, ioh, lpt_control, control);
-		sc->sc_state |= LPT_OBUSY;
-	} else
-		sc->sc_state &= ~LPT_OBUSY;
-
-	if (sc->sc_count == 0) {
-		/* none, wake up the top half to get more */
-		wakeup((caddr_t)sc);
-	}
-
-	return 1;
-}
-
-int
-lptioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-	int error = 0;
-
-	switch (cmd) {
-	default:
-		error = ENODEV;
-	}
-
-	return error;
-}
