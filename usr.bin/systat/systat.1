@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.32 2003/09/12 17:32:32 mycroft Exp $
+.\"	$NetBSD: systat.1,v 1.33 2003/09/15 13:17:24 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd August 30, 2003
+.Dd September 12, 2003
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -471,8 +471,9 @@ Multiple drives may be specified, separated by spaces.
 Do not display information about the drives indicated.
 Multiple drives may be specified, separated by spaces.
 .It Cm drives Op Ar drives
-With no arguments, displays a list of available drives.  With arguments,
-replaced the list of currently displayed with the ones indicated.
+With no arguments, display a list of available drives.
+With arguments, replace the list of currently displayed drives
+with the ones specified.
 .El
 .Pp
 The following commands are specific to the
