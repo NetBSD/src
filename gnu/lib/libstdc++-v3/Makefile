@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2003/07/26 14:55:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2003/07/27 14:38:57 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
+NOPROFILE=	# XXX ???
 
 .include <bsd.own.mk>
 
@@ -20,9 +21,11 @@ INCSDIR=	/usr/include/g++
 
 .include "${.CURDIR}/../libsupc++/Makefile.common"
 
-SRCS=		${LIBMATHSRCS} ${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS} xmalloc.c
+SRCS=		${LIBMATHSRCS} ${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS} xmalloc.c xexit.c
 # affects profiling; can't switch it off just for profiling easily.
 #CXXFLAGS+=	${G_SECTION_FLAGS}
+#CXXFLAGS+=	-ffunction-sections -fdata-sections 
+CXXFLAGS+=	-fno-implicit-templates -fdiagnostics-show-location=once
 
 CONF=		${DIST}/libstdc++-v3/config
 CLEANFILES+=    basic_file.cc c++locale.cc
@@ -31,11 +34,15 @@ basic_file.cc: ${CONF}/io/basic_file_stdio.cc
 c++locale.cc: ${CONF}/locale/generic/c_locale.cc
 	cp $> ${.TARGET}
 
-COPTS.concept-inst.cc=	-D_GLIBCPP_CONCEPT_CHECKS -fimplicit-templates
-COPTS.strstream.cc=	-I$(GLIBCPP_INCLUDE_DIR)/backward -Wno-deprecated
+GLIBCPP_INCLUDE_DIR=	${DESTDIR}/usr/include/g++
 
-# ARGH!
-#.include <bsd.lib.mk>
+COPTS.concept-inst.cc=	-D_GLIBCPP_CONCEPT_CHECKS -fimplicit-templates
+CPPFLAGS.strstream.cc=	-I$(GLIBCPP_INCLUDE_DIR)/backward -Wno-deprecated
+
+# XXX
+MKDEPFLAGS+=	-I$(GLIBCPP_INCLUDE_DIR)/backward
+
+.include <bsd.lib.mk>
 .include <bsd.subdir.mk>
 .include <bsd.info.mk>
 
