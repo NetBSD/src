@@ -1,4 +1,1584 @@
+2004-05-10  Stephen Gildea  <http://www.gildea.com/stephen>
+
+	* src/preproc/refer/label.y (same_author_last_name,
+	same_author_name): Handle empty sort keys.
+
+2004-05-10  Werner LEMBERG  <wl@gnu.org>
+
+	* NEWS, README, TODO, PROJECTS, PROBLEMS, MANIFEST, doc/webpage.ms,
+	tmac/TODO: Updated.
+
+	* tmac/doc-syms (doc-str-Lb-libposix, doc-str-Lb-libpthread,
+	doc-str-Lb-librt): Reset font.
+	(Lb): Rename `doc-str-Lb' to `doc-str-Lb1'.
+	Provide `doc-str-Lb' to reset font.
+	* tmac/groff_mdoc.man: Updated.
+
+2004-05-08  Jan Schaumann  <jschauma@netmeister.org>
+
+	* src/preproc/html/pre-html.cpp (make_message): Make it work for
+	snprintf versions which don't conform to ANSI C 99 (this is,
+	counting the string's trailing null byte in the return value).
+
+2004-05-07  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	* src/roff/troff/node.cpp (suppress_node::tprint): Don't expect
+	that all implementations of sprintf handle null pointers correctly.
+
+2004-05-04  Werner LEMBERG  <wl@gnu.org>
+
+	* NEWS, man/groff_diff.man, man/groff.man, doc/groff.texinfo:
+	Document `.U' register.
+
+	* src/roff/troff/env.cpp (environment::mark_last_line)
+	[WIDOW_CONTROL]: Fix scope of `p' for new C++ compilers.
+
+2004-05-04  Larry Kollar  <kollar@alltel.net>
+
+	New read-only register `.U'; it returns 1 in safer mode and 0
+	otherwise.
+
+	* src/roff/troff/input.cpp (init_input_requests): Implement `.U'
+	register.
+
+2004-05-03  Werner LEMBERG  <wl@gnu.org>
+
+	* install-sh, mkinstalldirs: New versions; taken from texinfo CVS.
+
+2004-04-17  Werner LEMBERG  <wl@gnu.org>
+
+	* src/include/font.h (font): Use `int' for ch_index.
+	* src/libs/libgroff/font.cpp (font::alloc_ch_index,
+	font::compact): Updated.
+
+	* src/roff/groff/pipeline.c (run_pipeline) [_WIN32]: Fix compiler
+	warnings.
+
+	* src/roff/troff/div.cpp (begin_page), src/roff/troff/env.cpp
+	(hyphen_word): Fix compiler warnings.
+	* src/roff/troff/input.cpp (get_char_for_escape_name): Return
+	`char'.
+	Update all callers.
+	(get_delim_number, get_line_arg): Change second argument type to
+	`unsigned char'.
+	(macro_header::copy, token::next, do_define_string,
+	do_define_character, substring_request, asciify_macro,
+	unformat_macro, read_size, non_interpreted_node::interpret,
+	while_request, main: Fix compiler warnings.
+	(read_color_draw_node): Initialize `col'.
+
+	* src/preproc/tbl/table.cpp (horizontal_span, table_entry): Make
+	`start_col' and `end_col' of type `int'.
+	(vertical_rule): Make `col' of type `int'.
+
+	* src/preproc/grn/hdb.cpp (DBRead): Protect call to getc with check
+	for EOF.
+
+	* src/preproc/refer/label.y (uppercase_array, lowercase_array):
+	New arrays.
+	(format_serial): Use them to remove dependency on ASCII.
+
+	* src/devices/grops/ps.cpp (ps_printer::define_encoding): Fix
+	compiler warning.
+	* src/devices/grops/psrm.cpp (resource_manager::supply_resource):
+	Ditto.
+
+	* src/devices/grotty/tty.cpp (tty_font::load_tty_font): Fix
+	compiler warnings.
+	(glyph): Change type of `hpos' to `int'.
+
+	* src/devices/lbp/lbp.cpp (strsep): Removed.  Unused.
+	* src/devices/lbp/lbp.h (splinerel): Fix compiler warnings.
+
+	* src/utils/tfmtodit.cpp (gf::load): Fix compiler warnings.
+
+	* src/utils/pfbtops/pfbtops.c (get_text): Fix compiler warning.
+
+2004-04-16  Werner LEMBERG  <wl@gnu.org>
+
+	* src/devices/grolbp/lbp.h, src/preproc/grn/gprint.h,
+	src/preproc/grn/hgraph.cpp, src/preproc/grn/hpoint.cpp,
+	src/preproc/html/pushback.cpp, src/preproc/html/pushback.h: Use
+	`double' instead of `float' everywhere.
+	* src/preproc/grn/main.cpp: Use `double' instead of `float'
+	everywhere.
+	(main): Add return value.
+	* src/preproc/grn/hdb.cpp: Use `double' instead of `float'
+	everywhere.
+	Update all user functions.
+
+	* src/include/search.h, src/include/ptable.h, src/include/printer.h,
+	src/preproc/eqn/box.h, src/preproc/pic/object.h,
+	src/preproc/refer/refer.h, src/preproc/tbl/table.h,
+	src/preproc/tbl/table.cpp, src/roff/troff/env.h,
+	src/roff/troff/div.h, src/roff/troff/token.h, src/roff/troff/node.h,
+	src/roff/troff/input.cpp, src/roff/troff/request.h,
+	src/roff/troff/node.cpp: Don't mix `struct' and `class' in forward
+	declarations.
+
+	* src/utils/indxbib/signal.c: Include stdlib.h.
+
+2004-04-14  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	* tmac/s.tmac (@init, RP): Allow initialization of the PO register
+	before the first page.
+
+2004-04-14  Thomas Klausner <wiz@netbsd.org>
+
+	* tmac/doc-common (doc-volume-as-*): Use lowercase names.
+	(doc-operating-system-*): Updated.
+	* tmac/doc-syms (doc-str-St-*): Various small fixes.
+	(doc-str-Lb-*): Add more library names.
+
+2004-04-10  Art Haas  <ahaas@airmail.net>
+
+	* src/utils/hpftodit/hpuni.cpp (hp_msl_to_unicode_list): Don't
+	use anonymous type.
+
+2004-04-09  Art Haas  <ahaas@airmail.net>
+
+	* src/utils/tfmtodit.cpp (lig_chars): Don't use anonymous type.
+
+2004-04-09  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	* arch/misc/shdeps.sh: Generate better comment for sed script.
+
+2004-04-08  Art Haas  <ahaas@airmail.net>
+
+	* src/libs/libgroff/glyphuni.cpp (glyph_to_unicode_list),
+	src/libs/libgroff/uniglyph.cpp (unicode_to_glyph_list),
+	src/libs/libgroff/uniuni.cpp (unicode_decompose_list),
+	src/preproc/eqn/box.cpp (param_table), src/preproc/grn/hgraph.cpp
+	(polyfill), src/preproc/grn/main.cpp (polyfill),
+	src/preproc/refer/command.cpp (command_table),
+	src/utils/tfmtodit.cpp (lig_table): Don't use anonymous types (which
+	gcc 3.5 doesn't like).
+
+2004-04-08  Werner Lemberg  <wl@gnu.org>
+
+	Removing many compiler warnings.  groff should now compile with
+	a C++ compiler used for C files also.  [Simple variable renamings
+	to avoid shadowing aren't logged in detail.]
+
+	* src/devices/grodvi/dvi.cpp: Some local variable renamings.
+	(draw_dvi_printer::draw) ['c']: Enclose in block.
+
+	* src/devices/grohtml/post-html.cpp: Some local variable renamings.
+	(page::add_line): Fix typos.
+	* src/devices/grohtml/html-text.cpp: Some local variable renamings.
+
+	* src/devices/grolbp/lbp.cpp: Don't define _GNU_SOURCE.
+	Some local variable renamings.
+	* src/devices/grolbp/lbp.h: Some local variable renamings.
+
+	* src/devices/grolj4/lj4.cpp, src/devices/grotty/tty.cpp: Some local
+	variable renamings.
+
+	* src/libs/libbib/index.cpp (index_search_item_iterator::get_tag):
+	Remove redundant local variable declaration.
+	* src/libs/libbib/map.c (mapread, unmap): Don't use K&R style.
+	Don't use `caddr_t' but `void *'.
+	Enclose functions with `extern "C"' for C++.
+
+	* src/libs/libdriver/input.cpp (remember_filename,
+	remember_source_filename): Use cast for string constant.
+
+	* src/libs/libgroff/font.cpp, src/libs/libgroff/fontfile.cpp,
+	src/libs/libgroff/nametoindex.cpp, src/libs/libgroff/paper.cpp,
+	src/libs/libgroff/geometry.cpp: Some local variable renamings.
+	* src/libs/libgroff/iftoa.c, src/libs/libgroff/itoa.c: Don't use K&R
+	style.
+	Enclose functions with `extern "C"' for C++.
+	* src/libs/libgroff/quotearg.c (TRUE,FALSE): Define as macros.
+	(needs_quoting): Return `int'.
+	(quote_arg): Add proper casts to malloc and realloc.
+	* src/libs/libgroff/spawnvp.c: Compile code only for MS-DOS and
+	various MS Windows environments.
+	(spawnvp_wrapper): Add proper cast to malloc.
+
+	* src/preproc/eqn/box.h: Remove redundant declarations of
+	`make_script_box', `make_mark_box' and `make_lineup_box'.
+	* src/preproc/eqn/eqn.y: Remove redundant declaration of `strsave'.
+	* src/preproc/eqn/script.cpp, src/preproc/eqn/pile.cpp: Some local
+	variable renamings.
+
+	* src/preproc/grn/hpoint.cpp: Some local variable renamings.
+	* src/preproc/grn/hgraph.cpp: Some local variable renamings.
+	(dx, dy): Renamed functions to...
+	(deltax, deltay): This.
+	* src/preproc/grn/main.cpp: Some local variable renamings.
+	(deffont): Add `const'.
+	(initpic, conv): Use cast for string constant.
+
+	* src/preproc/html/pre-html.cpp: Some local variable renamings.
+	(makeFileName, alterDeviceTo, addZ): Use cast for string constant.
+	(char_buffer::run_output_filter): Second argument is unused.
+	* src/preproc/html/pushback.cpp: Some local variable renamings.
+
+	* src/preproc/pic/pic.y: Remove redundant declaration of `do_copy'.
+	* src/preproc/pic/object.cpp: Some local variable renamings.
+
+	* src/preproc/refer/label.y (lookup_label): Remove redundant
+	declaration of local variable.
+
+	* src/preproc/soelim.cpp: Remove redundant declaration of
+	`interpret_lf_args'.
+
+	* src/preproc/tbl/main.cpp: Some local variable renamings.
+
+	* src/roff/groff/groff.cpp (main): Use cast for string constant.
+	* src/roff/groff/pipeline.c: Enclose declarations of `error',
+	`c_fatal', and `i_to_a' with `extern "C"' for C++.
+	Don't use C++-style comments.
+
+	* src/roff/troff/env.h: Remove redundant declaration of `title'.
+	* src/roff/troff/node.h, src/roff/troff/env.cpp,
+	src/roff/troff/div.cpp, src/roff/troff/node.cpp: Some local variable
+	renamings.
+	* src/roff/troff/div.h: Remove redundant declaration of
+	`end_diversions'.
+	* src/roff/troff/troff.h: Remove redundant declaration of
+	`cleanup_and_exit'
+	* src/roff/troff/input.cpp: Remove redundant declaration of
+	`handle_first_page_transition' and `process_input_stack'.
+
+	* src/utils/hpftodit.cpp: Some local variable renamings.
+
+	* src/utils/indxbib/signal.c: Enclose functions with `extern "C"'
+	for C++.
+	Don't define RETSIGTYPE.
+	* src/utils/indxbib/indxbib.cpp: Some local variable renamings.
+
+	* src/utils/pfbtops/pfbtops.cpp: Don't use K&R style.
+	(error): Use `const' in argument.
+	(main): Remove redundant declaration of `optind'.
+	Move declaration of `Version_string' to top-level.
+
+	* PROBLEMS: Document difficulties compiling signal.c if a C++
+	compiler is used for C.
+
+2004-04-07  Werner Lemberg  <wl@gnu.org>
+
+	* Makefile.sub (DISTCLEANFILES): Add `test-groff'.
+
+2004-04-06  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Make scripts like nroff.sh and neqn.sh portable across various
+	(Unix-like) shell implementations from Cygwin, MSYS, etc., which use
+	non-POSIX path separators.  The idea is to extend those scripts to
+	decide at run-time (of the script) which path separator to use.
+
+	* arch/misc/Makefile.sub: New file.
+	* arch/misc/shdeps.sh: New file, generating OS dependency fixups.
+	This script handles @GROFF_BIN_PATH_SETUP@, replacing it with
+	a proper definition of the variable `GROFF_RUNTIME'.
+
+	* Makefile.in (SH_DEPS_SED_SCRIPT): New variable.
+	(MDEFINES): Add SH_DEPS_SED_SCRIPT.
+	(PROGDEPDIRS): New variable.
+	`FORCE' it.
+	(PROGDIRS): Add PROGDEPDIRS.
+
+	* src/preproc/eqn/Makefile.sub (neqn): Call SH_DEPS_SED_SCRIPT.
+	Don't substitute @SEP@ and @BINDIR@.
+	* src/preproc/eqn/neqn.sh: Use @GROFF_BIN_PATH_SETUP@.
+	(PATH): Use GROFF_RUNTIME.
+
+	* src/roff/nroff/Makefile.sub (nroff): Call SH_DEPS_SED_SCRIPT.
+	Don't substitute @SEP@ and @BINDIR@.
+	* src/roff/nroff/nroff.sh: Use @GROFF_BIN_PATH_SETUP@.
+	(PATH): Use GROFF_RUNTIME.
+
+2004-04-05  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	* src/roff/nroff/nroff.sh: Implement work-around for sh.exe from
+	Cygwin which doesn't handle stderr correctly.
+
+2004-03-08  Werner LEMBERG  <wl@gnu.org>
+
+	* Makefile.comm (install_dev, uninstall_dev): Protect `for' loops
+	against empty argument.  Problem reported by <cgd@broadcom.com>.
+
+2004-03-05  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	* Makefile.in (SEP): Replaced with...
+	(RT_SEP, SH_SEP): Separators for the target platform's native path
+	separator and the build environment, respectively.
+	(fontpath, tmacpath): Use RT_SEP.
+	(MDEFINES): Updated.
+
+	* contrib/mom/Makefile.sub (GROFF_BIN_PATH): Use SH_SEP.
+	* doc/Makefile.sub (GROFF_BIN_PATH): Use SH_SEP.
+	* src/preproc/eqn/Makefile.sub (neqn): Use SH_SEP.
+	* src/roff/nroff/Makefile.sub (nroff): Use SH_SEP.
+
+2004-03-05  Werner LEMBERG  <wl@gnu.org>
+
+	* fonts/devlj4/Makefile.sub (LJ4RES): Set to 1200.  This helps to
+	reduce alignment problems with newer printers which use built-in
+	TrueType fonts (instead of the older Intellifonts).  The ideal
+	solution is to provide a second set of groff metric files, but this
+	is extremely time-consuming to produce, given that HP's metric
+	files are very rudimentary.
+
+2004-03-01  Werner LEMBERG  <wl@gnu.org>
+
+	* src/devices/grolj4/lj4.cpp (main): Fix argument of getopt_long.
+	s/operand/argument/ in error message.
+
+2004-03-01  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	* src/roff/groff/groff.cpp (main): Don't allow option -o if -Thtml
+	is in use.
+
+2004-03-01  Antti Kantee  <pooka@netbsd.org>
+
+	* tmac/s.tmac (XE): Fix error message.
+
+2004-02-27  Jeff Conrad  <jeff_conrad@msn.com>
+
+	* src/include/nonposix.h (write, dup, dup2, close) [_MSC_VER]:
+	New macros.
+
+	* src/roff/groff/pipeline.c: Declare strcasecmp.
+	(run_pipeline) [_WIN32]: Use function name variants which don't
+	start with `_'.
+	Fix stream handling.
+
+2004-02-27  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	* src/include/nonposix.h: Fix declaration of `system_shell_name'.
+	Declare `spawnvp_wrapper' and macro definitions of spawnvp only
+	for platforms which use the native Win32 runtime libraries.
+	(FLUSH_INPUT_PIPE) [_UWIN]: Provide non-empty version.
+
+	* src/libs/libgroff/quotearg.c (QUOTE_ARG_MALLOC_ERROR,
+	QUOTE_ARG_REALLOC_ERROR): Fix string.
+
+	* src/preproc/html/pre-html.cpp: Remove declaration of
+	`spawnvp_wrapper'.
+	Don't use __MINGW32__.
+	s/DEBUG_FILE/DEBUG_FILE_DIR/.
+	(DEBUG_TEXT, DEBUG_NAME, DEBUG_FILE) [DEBUGGING]: New macros.
+	(OUTPUT_STREAM, PS_OUTPUT_STREAM, REGION_OUTPUT_STREAM): New macros.
+	(char_buffer::run_output_filter) [MAY_FORK_CHILD_PROCESS]: Fix
+	calls to `set_redirection' and `WAIT'.
+	[MAY_SPAWN_ASYNCHRONOUS_CHILD]: Remove unused variable `i' and `j'.
+	Fix calls to `set_redirection' and `save_and_redirect'.
+	(char_buffer::do_html, char_buffer::do_image) [DEBUGGING]: Fix calls
+	to `set_redirection' and `save_and_redirect'.
+	(usage): Fix message.
+	(makeTempFiles, main): Use `DEBUG_FILE'.
+
+2004-02-21  Werner LEMBERG  <wl@gnu.org>
+
+	* src/roff/troff/troff.h (WARN_TOTAL): Fix value.
+
+2004-02-21  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	* src/libs/libgroff/quotearg.c: New file, providing proper argument
+	quoting for MSVC's spawn* and exec* functions.
+	* src/libs/libgroff/spawnvp.c: New file, providing a wrapper around
+	spawnvp with proper quoting for MSVC.
+
+	* src/libs/libgroff/assert.cpp (program_name),
+	src/libs/libgroff/new.cpp (program_name): Declare as `extern "C"'.
+	* src/libs/libgroff/Makefile.sub (OBJS, CSRCS): Updated.
+
+	* src/roff/troff/input.cpp (program_name): Declare as `extern "C"'.
+
+	* src/include/error.h (program_name): Declare as `extern "C"'.
+	* src/include/nonposix.h [__MSDOS__ ...]: Handle spawnvp.
+
+2004-02-21  Jeff Conrad  <jeff_conrad@msn.com>
+
+	* src/preproc/html/pre-html.cpp [__CYGWIN__ ...]: Declare
+	spawnvp_wrapper.
+	[MAY_SPAWN_ASYNCHRONOUS_CHILD]: Declare i and j.
+
+2004-02-20  Jeff Conrad  <jeff_conrad@msn.com>
+
+	* src/roff/groff/pipeline.c (cmd) [__MSDOS__ || ...]: New global
+	variable.
+	(sbasename) [__MSDOS__ || ...]: New function.
+	(system_shell_name) [__MSDOS__ || ...]: Use a different, more
+	generic algorithm.
+	(system_shell_dash_c, is_system_shell) [__MSDOS__ || ...]: Updated.
+	(run_pipeline) [_WIN32]: Use _XXX variants for some macros instead
+	of XXX.
+	Use STDOUT_FILENO instead of hardcoded file handle.
+	(signal_catcher) [__MSDOS__]: Moved to non-_WIN32 section.
+
+2004-02-19  Werner LEMBERG  <wl@gnu.org>
+
+	* src/roff/troff/div.cpp: Include nonposix.h after troff.h to
+	avoid warnings w.r.t. redefinition of P_tmpdir for some compilers.
+
+2004-02-18  Werner LEMBERG  <wl@gnu.org>
+
+	* font/devlj4/Makefile.sub (DEVFILES): Updated to contain all
+	new font and mapping files.
+
+2004-02-18  Jeff Conrad  <jeff_conrad@msn.com>
+	    Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	* src/include/nonposix.h (FLUSH_INPUT_PIPE): New macro to empty
+	an input pipe.  This is needed for the MSVC compiler to make troff's
+	`-o' option work.
+
+	* src/roff/troff/div.cpp: Include nonposix.h.
+	(cleanup_and_exit): Call FLUSH_INPUT_PIPE.
+
+2004-02-17  Werner LEMBERG  <wl@gnu.org>
+
+	* font/devlj4/generate/special.awk: New script.
+	* font/devlj4/generate/Makefile (S): Use special.awk.
+	* font/devlj4/*: Regenerated, including the following new files:
+	Arial (AR, AB, AI, ABI), Times New Roman (TNRR, TNRB, TNRI, TNRBI),
+	MS Symbol (SYMBOL), Wingdings (WINGDINGS).
+	* NEWS: Document new lj4 fonts and revised hpftodit.
+
+2004-02-17  Paco Andrés Verdú  <pandres@dragonet.es>
+
+	* src/devices/grolbp/lbp.h (vmdvarc): Fix formatting string.
+
+2004-01-25  Werner LEMBERG  <wl@gnu.org>
+
+	* src/libs/libgroff/progname.cpp: Replaced with...
+	* src/libs/libgroff/progname.c: New file.
+	* src/libs/libgroff/Makefile.sub: Updated accordingly.
+
+2004-01-17  Werner LEMBERG  <wl@gnu.org>
+
+	* font/devlj4/generate/Makefile (SYMBOL): Use 9nb28703.tfm.
+
+2004-01-16  Jeff Conrad  <jeff_conrad@msn.com>
+
+	* font/devlj4/generate/wingdings.map,
+	font/devlj4/generate/symbol.map: Include unnamed glyphs.
+	Use groff glyph names where possible.
+	* src/devices/grolj4/lj4_font.man: Minor updates.
+
+2004-01-13  Werner LEMBERG  <wl@gnu.org>
+
+	* tmac/www.tmac (DC): Handle TTY devices.
+
+	* doc/webpage.ms: Document viewCVS from ffii.org.
+	* NEWS, README: Updated.
+
+	* src/roff/groff/groff.man: Mention lj4_font man page.
+
+	* font/devlj4/generate/Makefile (SYMBOLMAP, WINGDINGSMAP): New
+	variables.
+	(FONTS): Add SYMBOL and WINGDINGS.
+	(SYMBOL, WINGDINGS): New targets.
+
+2004-01-13  Jeff Conrad  <jeff_conrad@msn.com>
+
+	* src/devices/grolj4/lj4_font.man: New man page.
+	* src/devices/grolj4/Makefile.sub (MAN5): New variable.
+	* src/devices/grolj4.man: Mention lj4_font man page.
+
+	* src/utils/hpftodit/hpftodit.cpp (read_map): Handle line comments.
+	* src/utils/hpftodit/hpftodit.man: Document it.
+	(CW): New macro.
+	Remove details about fonts (which are now in lj4_font.man).
+
+	* font/devlj4/generate/symbol.map,
+	font/devlj4/generate/wingdings.map: New files.
+
+2004-01-12  Werner LEMBERG  <wl@gnu.org>
+
+	* README: Mention ffii's viewcvs access.
+
+2004-01-09  Werner LEMBERG  <wl@gnu.org>
+
+	* font/devlj4/generate/special.map: Map MSL 228 to U+221F.
+
+2004-01-09  Jeff Conrad  <jeff_conrad@msn.com>
+
+	Revert most of the change from 2004-01-03 to better control used
+	symbol sets.
+
+	* src/utils/hpftodit/hpftodit.cpp (symbol_set): New structure.
+	(text_symbol_sets, special_symbol_sets): New arrays.
+	(symbol_set_table): New global variable.
+	(read_symbol_sets): Use search order given in the text_symbol_sets
+	and special_symbol_sets arrays.  If command line flag -a is not
+	given, search both arrays.
+	(output_charset): Require x_height_tag only for command line flag -i.
+
+2004-01-06  Werner LEMBERG  <wl@gnu.org>
+
+	Implement string-valued registers \n[.m] and \n[.M] to return the
+	name of the current drawing and background color, respectively.
+
+	* src/roff/troff/symbol.h: Moved to...
+	* src/include/symbol.h: Here.
+	Small fixes to make it work outside of the `troff' directory.
+	* src/roff/troff/symbol.cpp: Moved to...
+	* src/libs/libgroff/symbol.cpp: Here.
+	Small fixes to make it work outside of the `troff' directory.
+
+	* src/include/Makefile.sub (HDRS), src/libs/libgroff/Makefile.sub
+	(OBJS, CCSRCS), src/roff/troff/Makefile.sub (OBJS, CCSRCS, HDRS):
+	Updated.
+
+	* src/include/color.h: Include symbol.h.
+	(color): Add new field `nm'.
+	* src/libs/libgroff/color.cpp (color::color): Updated.
+
+	* src/roff/troff/dictionary.cpp, src/roff/troff/div.cpp,
+	src/roff/troff/node.cpp, src/roff/troff/number.cpp,
+	src/roff/troff/reg.cpp: Don't include symbol.h.
+
+	* src/roff/troff/env.cpp: Don't include symbol.h.
+	(environment::get_glyph_color_string,
+	environment_get_fill_color_string): New member functions.
+	(init_env_requests): Handle `.m' and `.M' registers.
+	* src/roff/troff/input.cpp: Don't include symbol.h.
+	(default_symbol): Moved to symbol.cpp/symbol.h.
+	(do_glyph_color, do_fill_color, define_color): Pass symbol name
+	to color constructor.
+	* src/roff/troff/env.h: Updated.
+
+	* NEWS, man/groff_diff.man, man/groff.man, doc/groff.texinfo:
+	Document new registers.
+
+2004-01-05  Werner LEMBERG  <wl@gnu.org>
+
+	* src/roff/troff/nroff.cpp (space_node::get_breakpoints,
+	space_node::nbreaks): Protect against zero `next' field.
+
+2004-01-03  Jeff Conrad  <jeff_conrad@msn.com>
+
+	In hpftodit, use the symbol sets offered in the TFM.
+
+	* src/utils/hpftodit/hpftodit.cpp (NO_GLYPH): New constant.
+	(symbol_set, text_symbol_sets, special_symbol_sets,
+	symbol_set_table): Removed.
+	(get_printcode): Removed.
+	(read_symbol_sets): Initialize `symbol_set' field with
+	`NO_SYMBOL_SET'.
+	Simplify code to just use the `kind' value.
+	(output_charset): Improve output formatting.
+	(dump_symbols): Simplified.
+
+2004-01-02  Werner LEMBERG  <wl@gnu.org>
+
+	* font/devlj4/generate/text.map: Add more MSL numbers.
+
+2004-01-02  Jeff Conrad  <jeff_conrad@msn.com>
+
+	* src/utils/hpftodit/hpftodit.cpp (is_decomposed): New macro.
+	(text_symbol_sets): Add more symbol sets.
+	(debug_flag): New static variable (moved from `main').
+	(get_printcode, show_symset): New functions.
+	(main): Remove `debug_flag'.
+	(output_charset): Use `show_symset'.
+	(dump_symbols):  Use `show_symset'.
+	Print symsets for all glyphs.
+	(read_map): Actually call `unicode_to_ucode_make' but this time
+	correctly.
+
+2004-01-01  Werner LEMBERG  <wl@gnu.org>
+
+	* font/devlj4/generate/text.map, font/devlj4/generate/special.map:
+	Fix placement of comments.
+
+2004-01-01  Jeff Conrad  <jeff_conrad@msn.com>
+
+	* src/utils/hpftodit/hpftodit.cpp (main): Read map file also if
+	option `-d' is given.
+	(output_charset): Improve warning messages to give more information.
+	(dump_symbols): Make information more precise.
+	(usage): Updated.
+	(read_map): Don't call unicode_to_ucode_name; the glyph names must
+	appear as-is and shouldn't be decomposed.
+
+2003-12-31  Werner LEMBERG  <wl@gnu.org>
+
+	* src/utils/hpftodit/hpftodit.cpp (dump_tags): Handle posture_tag.
+	* font/devlj4/generate/Makefile (IFLAG): Updated to new units.
+	(FONTS): Add TrueType font families Arial and Times New Roman.
+	(TNRR, TNRB, TNRI, TNRBI, AR, AB, AI, ABI): New targets.
+	* font/devlj4/generate/text.map: Fix Unicode values of `fi' and
+	`fl'.
+
+2003-12-31  Jeff Conrad  <jeff_conrad@msn.com>
+
+	* test-groff.in (SEP): Quote value.
+	* src/roff/troff/node.cpp (suppress_node::tprint): Change type of
+	`tem' to `char*' to avoid deallocation of a pointer to a constant
+	object which some compilers don't like.
+
+2003-12-31  Werner LEMBERG  <wl@gnu.org>
+
+	* font/devlj4/generate (text.map, special.map): Rewritten to work
+	with the new hpftodit version.
+
+2003-12-30  Jeff Conrad  <jeff_conrad@msn.com>
+
+	* src/utils/hpftodit/hpftodit.cpp (output_charset): Emit HP symbol
+	set and 8bit character code for all glyphs also.
+
+2003-12-30  Werner LEMBERG  <wl@gnu.org>
+
+	* src/libs/libgroff/strcasecmp.c: Updated from gnulib.
+
+2003-12-29  Werner LEMBERG  <wl@gnu.org>
+
+	More fixes for MSVC compiler.
+
+	* doc/Makefile.sub, contrib/mom/Makefile.sub (GROFF_BIN_PATH): Use
+	$(SEP).
+
+	* src/include/nonposix.h (STDIN_FILENO, STDOUT_FILENO,
+	STDERR_FILENO) [_MSC_VER]: Define conditionally.
+	(getpid) [_MSC_VER]: Remove.
+	Include direct.h and process.h conditionally.
+
+	* src/roff/troff/node.cpp (suppress_node::tprint): Don't use
+	parentheses for a_delete.
+
+	* src/utils/lookbib/lookbib.cpp: Include nonposix.h.
+
+	* test-groff: Replaced with...
+	* test-groff.in: This new template to handle path separator
+	properly.
+
+	* configure.ac: Check for direct.h and process.h.
+	Generate test-groff script.
+	* configure, src/include/config.hin: Regenerated.
+
+2003-12-28  Werner LEMBERG  <wl@gnu.org>
+
+	Add integral extension glyph.
+	Add new option `-x' to afmtodit to suppress use of built-in AGL.
+
+	* font/devhtml/R.proto, font/devutf8/R.proto: Add `u23AE'.
+
+	* font/devps/generate/textmap: Provide entry for `integralex' to
+	override (old) PUA value of the AGL.
+	* font/devps/generate/Makefile (SS): Add afmtodit option `-x'.
+	* font/devps/*: Regenerated.
+
+	* src/utils/afmtodit/afmtodit.pl: Add option `-x'.
+	* src/utils/afmtodit/afmtodit.man, NEWS: Updated.
+
+2003-12-27  Werner LEMBERG  <wl@gnu.org>
+
+	Add forgotten `coproduct' symbol (already available for DVI).
+
+	* font/devhtml/R.proto, font/devps/generate/textmap,
+	font/devps/symbolmap, font/devutf8/R.proto, man/groff_char.man,
+	src/libs/libgroff/uniglyph.cc, src/libs/libgroff/glyphuni.cpp: Add
+	U+2210 (\[coproduct]).
+
+2003-12-26  Jeff Conrad  <jeff_conrad@msn.com>
+
+	hpftodit has been extended to handle TrueType metric files and
+	more glyphs.  See hpftodit.man for more details.
+
+	* src/utils/hpftodit/hpftodit.cpp: Include stdio.h, string.h, 
+	ctype.h, and unicode.h.
+	s/msl/charcode/ everywhere since we now handle Unicode values also.
+	(equal, NO, YES, MSL, SYMSET, UNICODE, UNICODE): New macros.
+	Use it where appropriate.
+	(MULTIPLIER): Replaced with...
+	(multiplier): New global static variable.
+	(scale): Updated.
+	(tag_type): Add more TFM tags.
+	(tag_name): New array.
+	(ENUM_TYPE, FLOAT_TYPE): Removed.
+	(BYTE_TYPE): New value assigned.
+	(ASCII_TYPE, RATIONAL_TYPE): New enumeration values.
+	(text_symbol_sets, special_symbol_sets): Extended to cover more
+	sets.
+	(check_type): Add return value.
+	(check_units): Add parameters to get ppi and upem values.
+	Handle TrueType TFM data.
+	(output_font_name): New function.
+	(output_charset): Add parameter to handle TFM type.
+	Handle TrueType TFMs also.
+	(em_fract): New macro.
+	(dump_tags): Be much more verbose and handle more tags.
+	(dump_ascii, dump_symbol_sets, dump_symbols): New functions.
+	(hp_msl_to_ucode_name, unicode_to_ucode_name, is_uname): New
+	functions.
+	(read_map): Add parameter to handle TFM type.
+	Handle both MSL and Unicode mappings.
+	(main): Add two new command line options `-a' and `-q'.
+	Updated to make use of new functions.
+	(usage): Updated.
+
+	* src/utils/hpftodit/hpuni.cpp: New file.
+
+	* src/utils/hpftodit/Makefile.sub, src/utils/hpftodit/hpftodit.man:
+	Updated.
+
+2003-12-25  Werner LEMBERG  <wl@gnu.org>
+
+	* src/include/nonposix.h (read) [_MSC_VER]: Define.
+
+2003-12-24  Werner LEMBERG  <wl@gnu.org>
+
+	* src/utils/afmtodit/afmtodit.man: Some reformulations as suggested
+	by Michail Vidiassov <master@iaas.msu.ru>.
+
+2003-12-20  Werner LEMBERG  <wl@gnu.org>
+
+	* font/devhtml/R.proto: Add u00{47,67}_0306, u00{53,73}_0327,
+	and u0049_0307.
+	Add missing latin-2 glyphs.
+	* font/devutf8/R.proto: Add missing latin-2 glyphs.
+
+	* tmac/troffrc: Load `composite.tmac' earlier.
+
+	* tmac/dvi.tmac, tmac/ps.tmac, tmac/lbp.tmac: Add u00{47,67}_0306,
+	u00{53,73}_0327, and u0049_0307.
+	* tmac/X.tmac: Add u00{47,67}_0306.
+	* tmac/tty-char.tmac: Use composite glyph names for readability.
+
+	* NEWS: Updated.
+
+	* src/include/unicode.h: Remove `extern' keywords.
+
+2003-12-20  Nilgün Belma Bugüner  <nilgun@superonline.com>
+
+	* tmac/latin5.tmac: New file.
+
+2003-12-19  Werner LEMBERG  <wl@gnu.org>
+
+	Add some glyphs needed for Turkish.
+
+	* font/devutf8/R.proto: Add u00{47,67}_0306, u00{53,73}_0327,
+	and u0049_0307.
+
+	* tmac/composite.tmac: Add `,' as a synonym for `ac' accent. 
+	* tmac/tty-char.tmac: Add representations for u00{47,67}_0306,
+	u00{53,73}_0327, and u0049_0307.
+
+2003-12-18  Werner LEMBERG  <wl@gnu.org>
+
+	* src/devices/grops/ps.cc (ps_output::put_float): Revert change
+	from 2001-10-04.
+	Remove trailing zeros.
+
+2003-12-17  Werner LEMBERG  <wl@gnu.org>
+
+	Make \? transparent to end-of-sentence recognition.
+
+	* src/roff/troff/input.cc (non_interpreted_node): Add
+	`ends_sentence' member function.
+
+2003-12-16  Werner LEMBERG  <wl@gnu.org>
+
+	* doc/groff.texinfo: Document `dt' request correctly.
+	Other minor typographical improvements.
+
+2003-12-10  Michail Vidiassov  <master@iaas.msu.ru>
+
+	* src/utils/afmtodit/Makefile.sub (afmtodit): Fix typo.
+
+2003-12-10  Richard Stallman  <rms@gnu.org>
+
+	* LICENSE: Better wording.
+
+2003-12-09  Werner LEMBERG  <wl@gnu.org>
+
+	* aclocal.m4 (GROFF_BROKEN_SPOOLER_FLAGS): Set default value to 0.
+	* configure, NEWS: Updated.
+
+2003-12-08  Werner LEMBERG  <wl@gnu.org>
+
+	* FDL: Updated to version 1.2 (from www.gnu.org/copyleft).
+
+2003-12-07  Bernd Warken  <bwarken@mayn.de>
+
+	* LICENSE: Updated.
+
+2003-12-07  Werner LEMBERG  <wl@gnu.org>
+
+	* INSTALL: Improved.
+
+2003-12-05  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Use path separator character of target platform for compiled-in
+	default paths.
+
+	* aclocal.m4 (GROFF_TARGET_PATH_SEPARATOR): New macro.
+	* configure.ac: Use GROFF_TARGET_PATH_SEPARATOR.
+	* configure: Regenerated.
+	* Makefile.in (SEP): Use GROFF_PATH_SEPARATOR.
+
+2003-12-05  Werner LEMBERG  <wl@gnu.org>
+
+	* src/include/nonposix.h (PATH_SEP_CHAR): New definition.
+	Replace `PATH_SEP[0]' with `PATH_SEP_CHAR' everywhere.
+
+2003-12-04  Bernd Warken  <bwarken@mayn.de>
+
+	* LICENSE: New file.
+
+2003-12-03  Werner LEMBERG  <wl@gnu.org>
+
+	* src/utils/afmtodit/afmtodit.pl: Comment out code which handles
+	ligatures present in AFM files since groff currently only
+	understands some standard ligatures and nothing else.
+
+2003-12-03  Jeff Conrad  <jeff_conrad@msn.com>
+
+	* src/roff/groff/groff.cpp (main): Don't run the spooler if
+	option -v is given.
+
+	* src/roff/groff/pipeline.c (run_pipeline) [_WIN32]: Fix error
+	messages.
+	Close stdout copy.
+	Don't use Unix wait flags.
+
+2003-12-02  Werner LEMBERG  <wl@gnu.org>
+
+	* src/roff/troff/glyphuni.cpp, src/roff/troff/unicode.cpp,
+	src/roff/troff/unicode.h, src/roff/troff/uniglyph.cpp,
+	src/roff/troff/uniuni.cpp: Moved to...
+	* src/libs/libgroff/glyphuni.cpp, src/libs/libgroff/unicode.cpp,
+	src/libs/libgroff/unicode.h, src/libs/libgroff/uniglyph.cpp,
+	src/libs/libgroff/uniuni.cpp: Here.
+
+	* src/include/Makefile.sub.old (HDRS),
+	src/libs/libgroff/Makefile.sub (OBJS, CCSRCS),
+	src/roff/troff/Makefile.sub (HDRS, PBJS, CCSRCS): Updated.
+
+2003-12-01  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	* src/preproc/htlp/pre-html.cpp (__tmpfile): Renamed to
+	`DEBUG_FILE'.
+	Updated all users.
+
+2003-12-01  Werner LEMBERG  <wl@gnu.org>
+
+	* groff.texinfo: Document special behaviour of `.vs 0'.
+	Improve documentation of `cflags' request.
+	* NEWS: Updated.
+
+2003-11-29  Werner LEMBERG  <wl@gnu.org>
+
+	* font/devlj4/generate/Makefile (CORONET): Use correct TFM.
+	* font/devlj4/CORONET: Regenerated.
+
+2003-11-24  Werner LEMBERG  <wl@gnu.org>
+
+	* src/roff/troff/env.cpp (hyphen_trie::read_patterns_file): Fix loop
+	if processing hyphenation patterns in traditional mode.
+	Improve error messages.
+
+2003-11-20  Werner LEMBERG  <wl@gnu.org>
+
+	* src/roff/troff/node.cpp (troff_output_file::put_char_width,
+	troff_output_file::put_char): Fix type of local variable `c'.
+
+2003-11-19  Werner LEMBERG  <wl@gnu.org>
+
+	* src/roff/groff/pipeline.c (P): Removed.  Updated all function
+	declarations.
+	(i_to_a): Removed.  libgroff already provides this function.
+	(run_pipeline) [_WIN32]: Don't use itoa but i_to_a.
+
+2003-11-18  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	* src/roff/groff/pipeline.c (xstrsignal): Fix usage of
+	HAVE_DECL_SYS_LIST.
+
+2003-11-17  Werner LEMBERG  <wl@gnu.org>
+
+	* COPYING: Use correct version.
+
+2003-11-11  Werner LEMBERG  <wl@gnu.org>
+
+	LynxOS 4.0.0 doesn't declare vfprintf.
+
+	* configure.ac: Check for vfprintf.
+	* configure: Regenerated.
+	* src/include/lib.h: Handle `NEED_DECLARATION_VFPRINTF'.
+	* src/include/config.hin: Regenerated.
+
+2003-11-10  Werner LEMBERG  <wl@gnu.org>
+
+	LynxOS 4.0.0 has snprintf (without declaration) but no vsnprintf.
+
+	* configure.ac: Check for vsnprintf.
+	* configure: Regenerated.
+	* src/include/lib.h: Handle `NEED_DECLARATION_VSNPRINTF' and
+	`HAVE_VSNPRINTF'.
+	* src/include/config.hin: Regenerated.
+
+2003-11-09  Werner LEMBERG  <wl@gnu.org>
+
+	* aclocal.m4: Updated syntax to autoconf 2.59.
+	(GROFF_HTML_PROGRAMS): Use AC_FOREACH.
+	Don't check for gsos2.
+	(GROFF_SRCDIR, GROFF_BUILDDIR): Removed.  autoconf 2.59 provides
+	working abs_top_srcdir and abs_top_builddir.
+
+	* configure.ac: Updated syntax to autoconf 2.59.
+	Don't call GROFF_SRCDIR and GROFF_BUILDDIR.
+	Replace call to AC_DECL_SYS_SIGLIST with call to AC_CHECK_DECLS.
+	* configure: Regenerated.
+
+	* Makefile.in, doc/Makefile.in: s/@top_srcdir@/@abs_top_srcdir@/,
+	s/@groff_top_builddir@/@abs_top_builddir@/.
+
+	* src/roff/groff/pipeline.c (xstrsignal):
+	s/SYS_SIGLIST_DECLARED/HAVE_DECL_SYS_SIGLIST/.
+
+2003-11-07  Werner LEMBERG  <wl@gnu.org>
+
+	* src/devices/grodvi/dvi.cpp (draw_dvi_printer::draw) ['a']: Always
+	make start angle smaller than end angle to circumvent a bug in tpic
+	handling of some versions of dvipdfm (and dvipdfmx).
+
+2003-10-30  Werner LEMBERG  <wl@gnu.org>
+
+	* src/devices/grops/grops.man: Improve section on creating EPS.
+
+2003-10-29  Werner LEMBERG  <wl@gnu.org>
+
+	* contrib/pic2graph/pic2graph.sh: Fix typo (-P-letter ->
+	-P-pletter).
+
+2003-10-28  Werner LEMBERG  <wl@gnu.org>
+
+	* doc/groff.texinfo: Fix documentation of `.if'.
+
+2003-10-27  Michail Vidiassov  <master@iaas.msu.ru>
+
+	* src/utils/afmtodit/afmtodit.pl: Handle unmapped characters of
+	the form `uniXXXX' also.
+
+2003-10-27  Werner LEMBERG  <wl@gnu.org>
+
+	* contrib/eqn2graph/eqn2graph.sh, contrib/grap2graph/grap2graph.sh,
+	contrib/pic2graph/pic2graph.sh: Implement secure management of
+	temporary files.
+	Pass `-P-pletter' to groff to avoid data outside of the converted
+	area -- some versions of `convert' (for example 5.3.8) don't check
+	the bounding box of the image but always use a fixed image size
+	(letter paper format).
+	* contrib/eqn2graph/eqn2graph.man, contrib/grap2graph/grap2graph.man,
+	contrib/pic2graph/pic2graph.man: Updated.
+
+	* src/roff/groff/groff.man: Document $TMP and $TEMP.
+
+2003-10-26  Werner LEMBERG  <wl@gnu.org>
+
+	* src/preproc/pic/troff.cpp (troff_output::simple_circle,
+	troff_output::simple_ellipse, troff_output::simple_arc,
+	troff_output::simple_line, troff_output::simple_spline,
+	troff_output::simple_polygon): Insert a space before arguments.
+	(troff_output::set_fill): Emit `\&' before `\D'Fg...' since the
+	latter doesn't produce a node, so the following `.sp -1' would do
+	the wrong thing.
+	Don't emit `.sp -1' after \M.  This also doesn't produce a token
+	(and we don't have to care about compatibility mode).
+	(troff_output::set_color, troff_output::reset_color): Don't emit
+	`.sp -1' after \M and \m.
+
+	* src/roff/troff/input.cpp (old_have_input): New global variable.
+	(input_stack::get): Handle `old_have_input'.
+	(process_input_stack) <token::TOKEN_NEWLINE>: Call
+	`trapping_blank_line' depending on `old_have_input', not
+	`have_input'.
+
+2003-10-20  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	* src/libs/libgroff/tmpfile.cpp [__MSDOS__, _Win32]
+	(WIN32_TMPDIR_ENVVAR, MSDOS_TMPDIR_ENVVAR): New macros, providing
+	default directory names for temporary files.
+	[__MSDOS__, _Win32] (temp_init::temp_init): Use them.
+
+	* src/roff/groff/pipeline.c [__MSDOS__]: Include stdlib.h.
+	[__MSDOS__] (run_pipeline): Honour environment variables.
+	Don't use `tmpnam' but `tempnam' to work around messy
+	implementation.
+
+	* README.MinGW: New file.
+
+2003-10-16  Werner LEMBERG  <wl@gnu.org>
+
+	* src/preproc/html/pre-html.cpp (write_upto_newline): Don't use
+	`(*t)->next' without testing validity of `*t'.
+	(usage): Make it more readable.
+
+2003-10-16  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	Make html device run under both MS-DOS and Win32.
+
+	* src/preproc/html/pre-html.cpp (MAY_FORK_CHILD_PROCESS,
+	MAY_SPAWN_ASYNCHRONOUS_CHILD): New macros to control whether
+	spawn or fork+exec has to be used, and whether parent must sleep
+	until the child process terminates.  Used in
+	`char_buffer::run_output_filter'.
+	(copyofstdoutfd): Removed.
+	(char_buffer): Replace `write_file_html' and `write_file_troff'
+	member functions with `emit_troff_output' and `run_output_filter'.
+	(DEVICE_FORMAT, HTML_OUTPUT_FILTER, IMAGE_OUTPUT_FILTER): New
+	macros.
+	(replaceFd): Replaced with...
+	(set_redirection): New auxiliary function.
+	(waitForChild): Replaced with...
+	(save_and_redirect): New auxiliary function for.
+
+	(char_buffer::do_html, char_buffer::do_image): Simplified, using new
+	functions.
+
+2003-10-14  Keith Marshall  <keith.d.marshall@ntlworld.com>
+
+	* aclocal.m4 (GROFF_SYS_NERR): Check stdlib.h also.
+	(GROFF_LIBC): New function.
+	* configure.ac: Call GROFF_LIBC.
+	Check for `kill'.
+	* configure: Regenerated.
+
+	* src/include/lib.h: Handle __MINGW32__.
+	* src/include/nonposix.h [_MSC_VER]: Handle __MINGW32__.
+	Add macro for `pipe'.
+	Define P_tmpdir.
+
+	* src/roff/groff/pipeline.c (run_pipeline): Handle `no_pipe'
+	correctly.
+
+	* src/utils/indxbib/signal.c (handle_fatal_signal) [!HAVE_KILL]:
+	Implement.
+
+2003-10-13  Werner LEMBERG  <wl@gnu.org>
+
+	Finally fix change 2003-08-26, based on ideas from Chuck Silvers
+	<chuq@chuq.com>.
+
+	* contrib/mom/Makefile.sub: Use a stamp file in the `examples'
+	directory.
+
+2003-10-12  Werner LEMBERG  <wl@gnu.org>
+
+	* src/roff/groff/groff.cpp (help), src/devices/grops/ps.cpp (usage),
+	src/roff/troff/input.cc (usage): Updated.
+
+	* NEWS, doc/groff.texinfo: Updated.
+
+2003-10-12  Peter Miller  <millerp@canb.auug.org.au>
+
+	* src/libs/libgroff/searchpath.cpp
+	(search_path::open_file_cautious): New function which also handles
+	`-' as stdin and stdout depending on the access mode.
+	* src/include/searchpath.h (search_path): Updated.
+
+	* src/devices/grops/ps.cpp (main): Handle new `-I' switch.
+	* src/devices/grops/ps.h: Include `searchpath.h'.
+	* src/devices/grops/psrm.cpp (resource_manager::supply_resource):
+	Open resource file with `include_search_path.open_file_cautious'.
+	* src/devices/grops/grops.man: Document new `-I' switch.
+
+	* src/devices/grodvi/dvi.cpp (main), src/devices/grolbp/lbp.cpp
+	(main), src/devices/grolj4/lj4.cpp (main),
+	src/devices/grotty/tty.cpp (main): Ignore new `-I' switch.
+
+	* src/preproc/soelim/soelim.cpp (include_list_length, include_list):
+	Replaced with...
+	(include_search_path): New global variable.
+	(include_path_append): Removed.
+	(main): Use `include_search_path.command_line_dir' to handle `-I'.
+	(do_file): Simplify, using new
+	`include_search_path.open_file_cautious'.
+
+	* src/roff/groff/groff.cpp (print_commands): Accept file handle as
+	parameter.
+	(main): Pass arguments to `-I' to both troff and devices.
+	Improve handling of `-V'.
+	* src/roff/groff/groff.man: Document changes to -I and -V.
+
+	* src/roff/troff/input.cpp (include_search_path): New global
+	variable.
+	(next_file, source, ps_bbox_request, transparent_file,
+	process_input_file): Use new
+	`include_search_path.open_file_cautious'.
+	(main) Handle `-I' switch.
+	* src/roff/troff/node.cpp (troff_output_file::really_copy_file):
+	Use new `include_search_path.open_file_cautious'.
+	* src/roff/troff/node.h: New extern symbol `include_search_path'.
+	* src/roff/troff/troff.man: Document new `-I' switch.
+
+2003-09-15  Ruslan Ermilov  <ru@FreeBSD.org>
+
+	Support multiple calls of .Lb in LIBRARY section.
+
+	* tmac/doc-common (doc-in-library-section): New register.
+	(doc-section-library): New string.
+	(Sh): Set `doc-in-library-section'.
+	(Rd): Updated.
+	* tmac/doc-syms (Lb): Insert breaks before and after arguments
+	if in LIBRARY section.
+	* tmac/doc.tmac (doc-save-global-vars): Updated.
+	* NEWS, tmac/groff_mdoc.man: Updated.
+
+2003-09-14  Ruslan Ermilov  <ru@FreeBSD.org>
+
+	* tmac/doc-common (doc-default-operating-system): New variable.
+	(Os): Use it.
+
+2003-09-08  Werner LEMBERG  <wl@gnu.org>
+
+	* tmac/doc.tmac (doc-reset-reference): Handle data for `%I' also.
+
+2003-08-31  Werner LEMBERG  <wl@gnu.org>
+
+	* contrib/mom/Makefile.sub: Fix last change to make it really work.
+	* Makefile.comm: Use `test ... ||' in favor of `if test ...; then'.
+	(install_dev, uninstall_dev): Check whether $(DEVSCRIPTS) and
+	$(DEVFILES) are not empty.
+	* Makefile.in: Use `test ... ||' in favor of `if test ...; then'.
+
+2003-08-26  Chuck Silvers  <chuq@chuq.com>
+
+	* contrib/mom/Makefile.sub (prepare_make_examples): Make it work
+	with parallel runs of `make'.
+
+2003-08-23  Stephen Gildea  <http://www.gildea.com/stephen>
+
+	* src/preproc/ref/ref.cpp (reference::compute_sort_key): Always
+	insert SORT_SEP.  With certain combinations of sort specifications,
+	refer sorted entries in the wrong order.  In particular, entries
+	with a missing field should be be sorted before all entries that
+	have that field, before refer looks to the next field.
+
+2003-08-23  Werner LEMBERG  <wl@gnu.org>
+
+	* src/utils/pfbtops/Makefile.sub (LINK.c): Define it so that the
+	g++ linker is used.  Reported by Mark J. Reed
+	<mark.reed@turner.com>.
+
+2003-08-16  Heinz-Jürgen Oertel  <hj.oertel@surfeu.de>
+
+	Add key character `x' to tbl which makes tbl call a user-defined
+	macro on a table cell.
+
+	* src/preproc/tbl/table.h (entry_modifier): Add `macro'.
+	* src/preproc/tbl/table.cpp (block_entry::do_divert): Call
+	`set_modifier' after printing the compatibility request.
+	(set_modifier): Print call to `m->macro' if not empty.
+	* src/preproc/tbl/main.cpp (entry_format::debug_print): Handle
+	`macro'.
+	(process_format): Implement cases `x' and `X'.
+	* src/preproc/tbl/tbl.man, NEWS: Updated.
+
+2003-08-15  Werner LEMBERG  <wl@gnu.org>
+
+	* doc/groff.texinfo: Minor fixes.
+
+2003-08-09  Werner LEMBERG  <wl@gnu.org>
+
+	* tmac/an-old.tmac [cR]: Fix redefinition of `bp'.
+
+2003-08-07  Werner LEMBERG  <wl@gnu.org>
+
+	* doc/Makefile.sub: Not all shells expand wildcards in the `for'
+	argument list to nothing if there is no file to match.  Use `ls' as
+	a protection, similar to autoconf.
+
+	* Makefile.comm (install_dev, uninstall_dev): Protect `for' against
+	empty argument lists.
+
+	* doc/groff.texinfo: Improve documentation how vertical spacing
+	and line breaks interact.
+	Other minor fixes.
+
+	* tmac/www.tmac: Initialize `www-htmlimage-gap'.
+
+2003-08-03  Werner LEMBERG  <wl@gnu.org>
+
+	* NEWS, src/devices/grops/grops.man: -b16 is necessary to produce
+	EPS (using eps2eps or similar programs to compute the bounding box).
+
+2003-07-24  Werner LEMBERG  <wl@gnu.org>
+
+	* doc/groff.texinfo: Use the new @/ command to avoid overlong lines.
+	* doc/texinfo.tex: Updated from texinfo 4.6.
+	* README.CVS: From now on we need texinfo 4.6.
+
+2003-07-23  Werner LEMBERG  <wl@gnu.org>
+
+	Add requests `dei1' and `ami1' for completeness.
+
+	* src/roff/troff/input.cc (calling_mode): Remove
+	CALLING_DISABLE_COMP.
+	(comp_mode): New enumeration.
+	(do_define_string, define_string, define_nocomp_string,
+	append_string, append_nocomp_string): Updated.
+	(do_define_macro): Add third parameter.
+	(define_macro, define_nocomp_macro, define_indirect_macro,
+	append_macro, append_nocomp_macro, append_indirect_macro): Updated.
+	(define_indirect_nocomp_macro, append_indirect_nocomp_macro): New
+	functions.
+	(ignore): Updated.
+	(init_input_requests): Add `dei1' and `ami1'.
+
+	* tmac/trace.tmac: Handle de1 and am1.
+	(de): Improve tracing message.
+	(am): Add missing `do'.
+	(return): Use de1.
+
+	* NEWS, man/groff_diff.man, man/groff.man, doc/groff.texinfo:
+	Document new requests.
+
+2003-07-22  Heinz-Jürgen Oertel  <hj.oertel@surfeu.de>
+
+	Add option -G to .MPIMG to insert a gap between text and the image.
+
+	* tmac/www.tmac (www-finish-left-po, www-finish-right-ll,
+	www-finish-left-ll): Updated.
+	(www-image-just, www-image-gap, www-htmlimage-gap): New variables.
+	(MPIMG): Make option -L and -R optional.
+	Implement option -G.
+
+2003-07-22  Gaius Mulley  <gaius@glam.ac.uk>
+
+	* src/devices/grohtml/post-html.cpp
+	(html_printer::do_file_components): Don't use `stdout' as lvalue
+	since it can be a macro.
+
+2003-07-22  Werner LEMBERG  <wl@gnu.org>
+
+	* src/libs/libgroff/strerror.c: Include errno.h to be in sync with
+	the corresponding test in aclocal.m4.
+
+2003-07-21  Werner LEMBERG  <wl@gnu.org>
+
+	* src/preproc/html/pre-html.cpp (TRANSPARENT): Don't use colour
+	names but RGB values directly.  Otherwise pnmtopng depends on
+	an external file `rgb.txt' which maps colour names to values.
+
+2003-07-20  Werner LEMBERG  <wl@gnu.org>
+
+	* aclocal.m4 (GROFF_SYS_ERRLIST): Include stdlib.h for MinGW.
+	* configure, src/include/config.hin: Regenerated.
+
+	* src/libs/libgroff/strerror.c: Include stdlib.h for MinGW.
+
+2003-07-19  Werner LEMBERG  <wl@gnu.org>
+
+	* PROBLEMS: Add solution for UTF-8 problem with hyphens.
+
+2003-07-18  Werner LEMBERG  <wl@gnu.org>
+
+	* *.man: Switch to non-compatibility mode temporarily if GNU
+	syntax extensions are used in the particular man page.
+
+	* PROBLEMS: Add solutions for SGR problems.
+
+2003-07-17  Werner LEMBERG  <wl@gnu.org>
+
+	Don't ignore grotty's command line options if \X'tty: sgr ...' is
+	used to change the drawing scheme.
+
+	* src/devives/grotty/tty.cpp (bold_flag_option,
+	underline_flag_option, italic_flag_option, reverse_flag_option,
+	bold_underline_mode_option): New global variables.
+	(update_options): New function.
+	(tty_printer::special): Call update_options.
+	(main): Don't set xxx_flag but xxx_flag_option, then call
+	update_options.
+
+2003-07-14  Werner LEMBERG  <wl@gnu.org>
+
+	Make grotty emit proper Unicode box drawing characters for -Tutf8.
+
+	* src/devices/grotty/tty.cpp (START_LINE, END_LINE): New enum
+	values.
+	(hline_char, vline_char): New global variables.
+	(tty_printer::tty_printer): Initialize them.
+	(tty_printer::draw): Emit START_LINE and END_LINE flags for both
+	horizontal and vertical lines.
+	(crossings): New global array.
+	(tty_printer::end_page): Use it to determine the proper crossing
+	character for -Tutf8.
+
+2003-07-12  Werner LEMBERG  <wl@gnu.org>
+
+	* doc/Makefilesub (HTMLDOCFILESALL): New macro.
+	(HTMLDOCFILES): Revert to `pic.html'.
+	(CLEANADD, install_html, uninstall_sub): Use HTMLDOCFILESALL.
+
+2003-07-11  Werner LEMBERG  <wl@gnu.org>
+
+	* doc/pic.ms: Improve documentation of absolute coordinates.
+	Document absolute positioning of pictures.
+
+	* NEWS: Add new pic capability.
+
+2003-07-09  Hartmut Henkel  <hartmut_henkel@gmx.de>
+
+	* src/libs/libgroff/geometry.cpp (check_output_arc_limits):
+	Rewritten.
+
+2003-07-07  Werner LEMBERG  <wl@gnu.org>
+
+	Implement support for dashed and dotted ellipses in pic.  Based on
+	a patch from Hartmut Henkel <hartmut_henkel@gmx.de>.
+
+	* src/preproc/pic/common.cpp (common_output::ellipse_arc,
+	common_output::dashed_ellipse, common_output::dotted_ellipse): New
+	functions.  Ellipse arcs are approximated with circle arcs.
+	* src/preproc/pic/common.h (common_output): Updated.
+	* src/preproc/pic/tex.cpp (tex_output::ellipse): Use new ellipse
+	functions.
+	* src/preproc/pic/troff.cpp (simple_output::ellipse): Ditto.
+
+	* src/preproc/pic/TODO, src/preproc/pic/pic.man: Updated.
+
+2003-07-06  Werner LEMBERG  <wl@gnu.org>
+
+	Make grotty work on platforms which have unsigned char as the
+	default for char.  Based on a patch by Thomas Klausner
+	<wiz@netbsd.org>.
+
+	* src/devices/grotty/tty.cpp (schar): New typedef.
+	Updated calls to declare_ptable and implement_ptable.
+	(glyph): Use schar for back_color_idx and fore_color_idx.
+	(tty_printer): Use schar for curr_fore_idx and curr_back_idx.
+	(tty_printer::tty_color, tty_printer::tty_printer,
+	tty_printer::color_to_idx, tty_printer::put_color): Updated.
+
+2003-07-06  Ruslan Ermilov  <ru@FreeBSD.org>
+
+	* src/roff/nroff/nroff.sh: Add option -d for completeness.
+	* src/roff/nroff/nroff.man: Updated.
+
+2003-07-05  Werner LEMBERG  <wl@gnu.org>
+
+	* NEWS, tmac/groff_www.man: Updated.
+	* doc/Makefile.sub: Updated.
+
+2003-07-05  Gaius Mulley  <gaius@glam.ac.uk>
+
+	Implement support for multiple HTML output files.
+
+	* src/preproc/html/pre-html.cpp (scanArguments): Dummy handling for
+	-j command line option.
+
+	* src/devices/grohtml/post-html.cpp (job_name, multiple_files): New
+	global variables.
+	(file): New fields `new_output_file', `require_links',
+	`output_file_name'.
+	(file::file): Updated.
+	(files::set_file_name, files::set_links_required,
+	files::are_links_required, files::is_new_output_file,
+	files::file_name, files::next_file_name): New functions.
+	(header_desc): New fields `no_of_level_one_headings',
+	`header_filename'.
+	(header_desc::header_desc): Updated.
+	(header_desc::write_headings): Handle multiple files.
+	(html_printer::write_header): Save file name in which header occurs.
+	(html_printer::determine_header_level): Possibly split files on
+	level one headings.
+	(html_printer::do_links, html_printer::troff_tag): Updated.
+	(html_printer::insert_split_file, html_printer::do_job_name,
+	html_printer::emit_link, html_printer::write_navigation,
+	html_printer::do_file_components): New functions.
+	(html_printer::~html_printer): Handle multiple files.
+	(main): Handle command line option `-j'.
+
+	* src/devices/grohtml/grohtml.man: Updated.
+
+	* doc/Makefile.sub (pic.html), doc/Makefile.in (pic.html): New rule
+	which splits file.
+
+	* tmac/www.tmac (JOBNAME): New macro.
+	* tmac/s.tmac (SH-NO-TAG): New macro.
+	(@SH): Call SH-NO-TAG.
+	(@NH): Updated.
+
+2003-07-05  Ruslan Ermilov  <ru@FreeBSD.org>
+
+	* tmac/groff_mdoc.man: Improve documentation of punctuation
+	characters.
+
+2003-07-04  Ruslan Ermilov  <ru@FreeBSD.org>
+
+	* tmac/doc.tmac (Bd): Change to doc-Li-font later.
+
+2003-07-03  Werner LEMBERG  <wl@gnu.org>
+
+	* tmac/an-old.tmac [cR]: Redefine `bp' to avoid empty lines.
+
+2003-07-01  Ruslan Ermilov  <ru@FreeBSD.org>
+
+	* tmac/doc.tmac (doc-do-func, doc-do-func-args): Don't print a comma
+	after `/*' and `*/'.
+	Fix spacing.
+	(Fn, Fo): Reduce indentation in synopsis.
+
+	* tmac/doc-common (doc-check-depth): New macro.
+	(doc-end-macro, Sh, Ss): Use it.
+	(Cd): Fix behaviour in synopsis.
+	(In): Make it parsed and callable.
+	If not in the synopsis, represent the C header file enclosed in
+	angle brackets.
+	(doc-str-Rv-std-suffix, doc-str-Rv-stds-suffix, doc-str-Rv-std0):
+	Use minus, not hyphen.
+
+	* tmc/groff_mdoc.man: Updated.
+
+2003-07-01  Werner LEMBERG  <wl@gnu.org>
+
+	Integrated grap2graph, contributed by Eric S. Raymond.
+
+	* contrib/grap2graph/{Makefile.sub, grap2graph.sh, grap2graph.man}:
+	New files.
+	* Makefile.in, NEWS, MANIFEST, contrib/eqn2graph.man,
+	contrib/pic2graph.man, src/roff/groff/groff.man: Updated.
+
+2003-07-01  Colin Watson  <cjwatson@debian.org>
+
+	* src/xditview/*.c: Add prototypes, fix return types, add includes.
+	Based on work by Fumitoshi UKAI <ukai@debian.or.jp>.
+
+2003-06-31  Ruslan Ermilov  <ru@FreeBSD.org>
+
+	* tmac/tty-char.tmac: Provide `lb', `rb', `lk', `rk', `lt', `rt'.
+
+2003-06-31  Werner LEMBERG  <wl@gnu.org>
+
+	* doc/Makefile.sub (CLEANADD): Remove all files created by
+	running `make groff.{pdf,dvi}'.
+
+	* Makefile.sub (DISTCLEANFILES): Remove all non-source files from
+	src/xditview also.
+
+2003-06-30  Werner LEMBERG  <wl@gnu.org>
+
+	* Makefile.in (SHELL): Define as @SHELL@.
+	(mkinstalldirs): Use $(SHELL).
+	(MDEFINES): Add $(SHELL).
+	* Makefile.comm (SHELL): Removed.
+
+2003-06-29  Werner LEMBERG  <wl@gnu.org>
+
+	* tmac/s.tmac (De, Ds): New aliases for .DE and .DS, respectively.
+	The X11 documentation files use them.
+	* tmac/groff_ms.man, doc/groff.texinfo: Document them.
+
+2003-06-15  Robert Goulding  <goulding@Princeton.EDU>
+
+	* tmac/e.tmac (@C): Handle .ad also.
+
+2003-06-12  Werner LEMBERG  <wl@gnu.org>
+
+	* src/preproc/tbl/tbl.man: Document formatting of text blocks.
+
+	* src/roff/troff/input.cc (token::next) <handle_escape_char>:
+	Assign `n' even here.  It is possible to construct a node
+	immediately following an escape character:
+
+	  .di xx
+	  \?\\\?a
+	  .br
+	  .di
+	  .xx
+
+2003-06-10  Werner LEMBERG  <wl@gnu.org>
+
+	* README.WIN32: Removed.
+	* MANIFEST: Updated.
+
+2003-06-07  Werner LEMBERG  <wl@gnu.org>
+
+	* src/roff/nroff/nroff.sh: Don't emit SGR for option -u.
+
+2003-06-05  Werner LEMBERG  <wl@gnu.org>
+
+	* src/preproc/pic/pic.y <sprintf_args>: Implement workaround for bug
+	in Compaq C++ V6.5-033 for Compaq Tru64 UNIX V5.1A (Rev. 1885).
+
+2003-06-03  Werner LEMBERG  <wl@gnu.org>
+
+	* src/preproc/grn/hdb.cpp (DBRead): Don't close file handle; this
+	is done by the calling function.
+
+2003-05-22  Ruslan Ermilov  <ru@FreeBSD.org>
+
+	* tmac/X.tmac: Fix definition of `em'.
+
+2003-05-22  Werner LEMBERG  <wl@gnu.org>
+
+	* src/roff/troff/input.cc (return_macro_request): Fix detection of
+	argument.
+
+2003-05-18  Werner LEMBERG  <wl@gnu.org>
+
+	* tmac/doc.tmac (doc-tag-list): Force horizontal mode after tag
+	to make	items work which consist only of a tag.
+
+2003-05-17  Werner LEMBERG  <wl@gnu.org>
+
+	* tmac/doc.tmac (doc-tag-list): Don't use \Z to assure that spaces
+	aren't stretched in a tag (this can fail with unformatted boxes).
+	Instead, insert a break and go back one line.
+
+2003-05-16  Werner LEMBERG  <wl@gnu.org>
+
+	* src/roff/troff/input.cc (return_macro_request): If called with
+	argument pop macro twice.  We need this to trace `return'.
+
+	* tmac/trace.tmac: Handle `return'.
+	Fix typos.
+
+	* NEWS, man/groff_diff.man, man/groff.man, doc/groff.texinfo:
+	Document.
+
+2003-05-15  Larry Kollar  <kollar@alltel.net>
+
+	* tmac/groff_ms.man, doc/groff.texinfo: Improve documentation of
+	registers `FPS', `FVS', and `FPD'.
+
+2003-05-15  Werner LEMBERG  <wl@gnu.org>
+
+	* src/utils/pfbtops/pfbtops.c (get_text): Handle loop counter
+	correctly.
+
+2003-05-03  Ruslan Ermilov  <ru@FreeBSD.org>
+
+	* tmac/groff_mdoc.man: Slight improvements.
+
+2003-05-03  Werner LEMBERG  <wl@gnu.org>
+
+	* tmac/doc-common (doc-header): Emit vertical space of 1v instead of
+	`doc-header-space' after header line if register `cR' is set.
+
+2003-05-02  Werner LEMBERG  <wl@gnu.org>
+
+	* TODO: Updated.
+
+2003-05-01  Ruslan Ermilov  <ru@FreeBSD.org>
+
+	* tmac/doc-common (Nd): Use \[em].
+
+2003-05-01  Werner LEMBERG  <wl@gnu.org>
+
+	* tmac/doc-ditroff, tmac/doc-nroff (doc-header-space,
+	doc-footer-space): Initialize to 0.5i.
+	(doc-setup-page-layout): Don't set doc-header-space and
+	doc-footer-space.
+
+2003-04-30  Werner LEMBERG  <wl@gnu.org>
+
+	* REVISION: Set to 1.
+
+	* doc/pic.ms: Document possible problems with `figname'.
+
 2003-04-29  Werner LEMBERG  <wl@gnu.org>
+
+Version 1.19 released
+=====================
 
 	* VERSION: Set to 1.19.
 	* REVISION: Set to 0.
@@ -2467,7 +4047,7 @@ Version 1.18.0 released
 	Implement change described above.
 
 	* man/groff_char.man, tmac/doc-common (doc-header), tmac/doc.tmac
-	(doc-do-Bd-args, doc-do-Bl-args: Changed accordingly.
+	(doc-do-Bd-args, doc-do-Bl-args): Changed accordingly.
 
 	* NEWS, doc/groff.texinfo, man/groff_diff.man: Updated.
 

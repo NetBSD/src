@@ -1,7 +1,8 @@
-/*	$NetBSD: dictionary.cpp,v 1.1.1.1 2003/06/30 17:52:07 wiz Exp $	*/
+/*	$NetBSD: dictionary.cpp,v 1.1.1.2 2004/07/30 14:44:53 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2001 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2004
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -22,7 +23,6 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 
 #include "troff.h"
-#include "symbol.h"
 #include "dictionary.h"
   
 // is `p' a good size for a hash table
@@ -211,4 +211,3 @@ int object_dictionary::alias(symbol newnm, symbol oldnm)
   }
   return 0;
 }
-

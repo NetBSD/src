@@ -1,7 +1,7 @@
-/*	$NetBSD: number.cpp,v 1.1.1.1 2003/06/30 17:52:10 wiz Exp $	*/
+/*	$NetBSD: number.cpp,v 1.1.1.2 2004/07/30 14:44:56 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2002
+/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2002, 2004
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -23,7 +23,6 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 
 #include "troff.h"
-#include "symbol.h"
 #include "hvunits.h"
 #include "env.h"
 #include "token.h"

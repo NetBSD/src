@@ -1,7 +1,7 @@
-/*	$NetBSD: html-text.cpp,v 1.1.1.1 2003/06/30 17:52:16 wiz Exp $	*/
+/*	$NetBSD: html-text.cpp,v 1.1.1.2 2004/07/30 14:45:05 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+/* Copyright (C) 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
  *
  *  Gaius Mulley (gaius@glam.ac.uk) wrote html-text.cpp
  *
@@ -656,15 +656,16 @@ void html_text::do_para (const char *arg)
 }
 
 void html_text::do_para (simple_output *op, const char *arg1,
-			 int indentation, int pageoffset, int linelength)
+			 int indentation_value, int page_offset,
+			 int line_length)
 {
-  html_indent *indent;
+  html_indent *ind;
 
-  if (indentation == 0)
-    indent = NULL;
+  if (indentation_value == 0)
+    ind = NULL;
   else
-    indent = new html_indent(op, indentation, pageoffset, linelength);
-  do_para(arg1, indent);
+    ind = new html_indent(op, indentation_value, page_offset, line_length);
+  do_para(arg1, ind);
 }
 
 /*

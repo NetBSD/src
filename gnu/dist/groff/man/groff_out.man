@@ -3,7 +3,7 @@
 .ig
 groff_out.5
 
-Last update: 13 Apr 2003
+Last update: 15 Jul 2003
 
 This file is part of groff, the GNU roff type-setting system.
 
@@ -23,6 +23,9 @@ FDL in the main directory of the groff source package.
 .\" --------------------------------------------------------------------
 .\" Setup
 .\" --------------------------------------------------------------------
+.
+.do nr groff_out_C \n[.C]
+.cp 0
 .
 .mso www.tmac
 .
@@ -1887,6 +1890,8 @@ It has been rewritten 2002 by
 .MTO bwarken@mayn.de "Bernd Warken"
 and is maintained by
 .MTO wl@gnu.org "Werner Lemberg" .
+.
+.cp \n[groff_out_C]
 .
 .\" --------------------------------------------------------------------
 .\" Emacs settings

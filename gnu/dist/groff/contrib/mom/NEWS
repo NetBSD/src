@@ -1,3 +1,130 @@
+Release 1.1.8
+-------------
+
+Added text color support.  Users can now define or initialize a color,
+and afterwards change text color with an inline of the form
+\*[<colorname>], or with the macro .COLOR.  In document processing,
+the docelement tag control macros have been expanded to include
+_COLOR, e.g. .HEAD_COLOR <predefined colorname> will colorize
+heads, PAGENUM_COLOR <predefined colorname) will colorize page
+numbering, etc.
+
+Adjusted vertical placement of hyphens around page numbering when
+PAGENUM_STYLE is DIGIT, ROMAN or ALPHA so that the hyphens appear
+properly centered on the page numbering character.
+
+Changed tab handling in document processing so that tab structures
+are preserved from page to page and column to column.
+
+Release 1.1.7-a
+---------------
+
+Increased the flexibility of SMARTQUOTES so that they handle quoting
+styles by language, entered as a 2-digit language code argument to
+SMARTQUOTES.  See docs.
+
+Re-wrote the DOCTYPE LETTER macros so that DATE, TO and FROM can be
+entered in any order the user wishes, with output that matches
+input.  (Should have done this in the first place.)
+
+Release 1.1.7
+-------------
+
+Finally got around to writing "list" macros.  See the docs.
+
+Added German-style lowered double quotes and two styles of
+guillemets to SMARTQUOTES.
+
+Added macro SIZE, intended to be called inline as \*[SIZE <n>].
+This brings mom's inline size change syntax into line with her other
+inlines.  \*S[<n>] can still be used for the same thing.
+
+The file elvis_syntax (for elvis prior to 2.2h) is no longer being
+maintained.  It was getting messy and long in the tooth.  The
+official elvis syntax file is elvis_syntax.new, which works for
+2.2h of elvis (and higher, one hopes).  elvis users are encouraged
+to update to 2.2h or higher.
+
+Release 1.1.6-e
+---------------
+
+Extended handling of draft and revision numbers and strings in
+headers/footers for increased flexibility.  It's possible now to
+have just about any combo of DRAFT_STRING, DRAFT, REVISION_STRING
+and REVISION, and have them come out in headers/footers as one
+intuitively expects/wants.
+
+Also added a new set of syntax highlighting rules for the vi clone,
+elvis.  Version 2-2h-beta of elvis finally made possible the
+highlighting of \*[...] inline escapes, whether or not they're
+separated from surrounding text by spaces.  This is a terrific
+improvement in elvis, and makes for greatly improved readability of
+mom files.
+
+Release 1.1.6-b - 1.1.6d
+------------------------
+
+Trivial changes to documentation and some cleanups of the main
+om.tmac file, including:
+
+Added a .bp after .if \\n[#START]=1 in FOOTER.  Without it,
+in document processing mode, documents that use *none* of the
+docprocessing tags (yes, there are times when users want to do
+this) ignored the footer trap.
+
+Changed register #DOCHEADER_LEAD_ADJ to string
+$DOCHEADER_LEAD_ADJ.  This means that .DOCHEADER_LEAD no longer
+requires a unit of measure; points is assumed.
+
+Release 1.1.6-b
+---------------
+
+Added a SHIM macro that calculates and moves to the next "legal"
+baseline during document processing (useful if user starts playing
+around with spacing/leading on a page and needs to get the leading
+back on track).
+
+Fixed handling of DOCHEADER OFF <distance> so that the first line of
+running text falls on a "legal" baseline when <distance> is given.
+
+Release 1.1.6-a
+---------------
+
+Problem with groff 1.19.1 fixed by Werner (.return handled arguments
+incorrectly).
+
+Fixed handling of page numbering style restoration in endnotes, so
+that (collated) docs have the correct page numbering style when the
+style has been changed for endnotes (with ENDNOTES_PAGENUM_STYLE).
+
+DOC_TITLE has been made for use exclusively with DOCTYPE DEFAULT.
+
+Fixed handling of headers/footers with respect to endnotes.  Now,
+when either headers or footers are on, mom picks up the correct
+page header/footer on the last page prior to ENDNOTES, gets the
+pageheaders correct for endnotes pages *including the last one*, and
+picks up correct page headers/footers for the subsequent docs after
+COLLATE.
+
+
+Release 1.1.6
+-------------
+
+BAD NEWS: mom appears to be crippled in some areas when run with
+groff 1.19.1.  Pending a solution, mom must be run with groff 1.18
+
+***NEW***
+
+Added TOC capabilities.
+
+Extended range of endnotes control macros.  See the documentation
+on endnotes control macros.
+
+Added a new DOC_TITLE macro, to deal with collated documents that
+have an overall title, while each doc has its own separate doc
+title (from TITLE).
+
+
 Release 1.1.5
 -------------
 
