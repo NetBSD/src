@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.1 1996/05/05 12:17:24 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
