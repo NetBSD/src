@@ -1,4 +1,4 @@
-/*	$NetBSD: ppt.c,v 1.4 1995/03/23 08:35:40 cgd Exp $	*/
+/*	$NetBSD: ppt.c,v 1.5 1997/10/10 16:48:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,34 +33,36 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ppt.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: ppt.c,v 1.4 1995/03/23 08:35:40 cgd Exp $";
+__RCSID("$NetBSD: ppt.c,v 1.5 1997/10/10 16:48:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
 
-static void	putppt();
+	int	main __P((int, char *[]));
+static void	putppt __P((int));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int c;
-	register char *p;
+	int c;
+	char *p;
 
 	(void) puts("___________");
 	if (argc > 1)
-		while (p = *++argv)
+		while ((p = *++argv) != NULL)
 			for (; *p; ++p)
 				putppt((int)*p);
 	else while ((c = getchar()) != EOF)
@@ -71,9 +73,9 @@ main(argc, argv)
 
 static void
 putppt(c)
-	register int c;
+	int c;
 {
-	register int i;
+	int i;
 
 	(void) putchar('|');
 	for (i = 7; i >= 0; i--) {
