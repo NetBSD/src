@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.23 1997/04/13 13:44:17 mrg Exp $	*/
+/*	$NetBSD: w.c,v 1.24 1997/05/19 03:44:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-static char rcsid[] = "$NetBSD: w.c,v 1.23 1997/04/13 13:44:17 mrg Exp $";
+static char rcsid[] = "$NetBSD: w.c,v 1.24 1997/05/19 03:44:43 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ main(argc, argv)
 	struct hostent *hp;
 	struct stat *stp;
 	FILE *ut;
-	u_long l;
+	struct in_addr l;
 	int ch, i, nentries, nusers, wcmd;
 	char *memf, *nlistf, *p, *x;
 	char buf[MAXHOSTNAMELEN], errbuf[_POSIX2_LINE_MAX];
@@ -300,8 +300,7 @@ main(argc, argv)
 		else
 			*x++ = '\0';
 
-		if (!nflag && isdigit(*p) &&
-		    (long)(l = inet_addr(p)) != -1 &&
+		if (!nflag && inet_aton(p, &l) &&
 		    (hp = gethostbyaddr((char *)&l, sizeof(l), AF_INET))) {
 			if (domain[0] != '\0') {
 				p = hp->h_name;
