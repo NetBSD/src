@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 1997/03/26 22:43:01 gwr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3 1998/03/02 16:18:17 drochner Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -181,6 +181,11 @@ mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off)
 							 lp, pnpart, osdep, off))
 					goto done;
 				break;
+#ifdef COMPAT_386BSD_MBRPART
+			case MBR_386BSD:
+				printf("WARNING: old BSD partition ID!\n");
+				/* FALLTHROUGH */
+#endif
 			case MBR_NETBSD:
 				/* Found the real NetBSD partition, use it */
 				osdep->cd_start = off + get_long(&mp->mbr_start);

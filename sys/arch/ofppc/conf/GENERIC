@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.10 1998/02/24 05:45:51 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.11 1998/03/02 16:18:17 drochner Exp $
 #
 # First try for PPC config file
 #
@@ -35,6 +35,7 @@ options 	COMPAT_09
 options 	COMPAT_10
 options 	COMPAT_12
 options 	COMPAT_13
+options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 file-system 	FFS
 file-system 	MFS
