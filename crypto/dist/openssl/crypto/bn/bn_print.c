@@ -139,12 +139,12 @@ char *BN_bn2dec(const BIGNUM *a)
 		/* We now have a series of blocks, BN_DEC_NUM chars
 		 * in length, where the last one needs truncation.
 		 * The blocks need to be reversed in order. */
-		snprintf(p, num - (p - buf) + 3, BN_DEC_FMT1, *lp);
+		snprintf(p, num + 3 - (p - buf), BN_DEC_FMT1, *lp);
 		while (*p) p++;
 		while (lp != bn_data)
 			{
 			lp--;
-			snprintf(p, num - (p - buf) + 3, BN_DEC_FMT2, *lp);
+			snprintf(p, num + 3 - (p - buf), BN_DEC_FMT2, *lp);
 			while (*p) p++;
 			}
 		}
