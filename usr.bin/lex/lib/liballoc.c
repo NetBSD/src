@@ -1,8 +1,6 @@
 /* liballoc - flex run-time memory allocation */
 
-/* $Header: /cvsroot/src/usr.bin/lex/lib/Attic/liballoc.c,v 1.1 1993/12/02 19:14:28 jtc Exp $ */
-
-#include <stdio.h>
+/* $Header: /cvsroot/src/usr.bin/lex/lib/Attic/liballoc.c,v 1.2 1993/12/06 19:26:02 jtc Exp $ */
 
 #ifdef STDC_HEADERS
 
@@ -34,20 +32,4 @@ void yy_flex_free( ptr )
 void *ptr;
 	{
 	free( ptr );
-	}
-
-/* The following is only used by bison/alloca. */
-void *yy_flex_xmalloc( size )
-int size;
-	{
-	void *result = yy_flex_alloc( size );
-
-	if ( ! result  )
-		{
-		fprintf( stderr,
-			"flex memory allocation failed in yy_flex_xmalloc()" );
-		exit( 1 );
-		}
-
-	return result;
 	}
