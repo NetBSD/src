@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.53 2003/08/24 17:52:42 chs Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.54 2003/09/06 22:09:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.53 2003/08/24 17:52:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.54 2003/09/06 22:09:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.53 2003/08/24 17:52:42 chs Exp $");
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_exec.h>
+#include <compat/ibcs2/ibcs2_signal.h>
 #include <compat/ibcs2/ibcs2_errno.h>
 #include <compat/ibcs2/ibcs2_syscall.h>
 
