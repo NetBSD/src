@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.62.8.1 2002/05/16 13:32:54 gehenna Exp $
+#	$NetBSD: files.sun3,v 1.62.8.2 2002/05/17 15:09:20 gehenna Exp $
 
 #
 # sun3-specific configuration info
@@ -272,12 +272,5 @@ file arch/m68k/m68k/linux_trap.c	compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
-
-# Major numbers for root/swap device configuration
-major	{xy=3}	# Xylogics 450 and 451
-major	{sd=7}	# SCSI disk
-major	{xd=10}	# Xylogics 7053
-major	{md=13}	# Memory disk (for mini-kernel)
-major	{raid=25} # RAIDframe
 
 include "arch/sun3/conf/majors.sun3"

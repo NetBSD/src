@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.24.8.1 2002/05/16 13:32:34 gehenna Exp $
+# $NetBSD: files.next68k,v 1.24.8.2 2002/05/17 15:09:14 gehenna Exp $
 
 # next68k-specific configuration info
 
@@ -88,12 +88,6 @@ file	arch/next68k/dev/esp.c		esp needs-flag
 
 # Memory disk for boot tape
 file	dev/md_root.c			memory_disk_hooks
-major	{sd = 4}
-major	{cd = 6}
-major	{md = 13}
-
-# RAIDframe
-major	{raid = 20}
 
 # NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
 include "compat/aoutm68k/files.aoutm68k"

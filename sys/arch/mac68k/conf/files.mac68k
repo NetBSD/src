@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.105.2.1 2002/05/16 13:32:17 gehenna Exp $
+#	$NetBSD: files.mac68k,v 1.105.2.2 2002/05/17 15:09:10 gehenna Exp $
 
 # mac68k-specific configuration info
 
@@ -189,16 +189,6 @@ file	dev/cninit.c
 # Memory Disk for installs
 #	These files are out of order
 file	dev/md_root.c			memory_disk_hooks
-
-major	{sd = 4}
-major	{cd = 6}
-major	{md = 13}
-
-# RAIDframe
-major	{raid = 20}
-
-#ATA disk
-major	{wd = 22}
 
 # Compatibility modules
 

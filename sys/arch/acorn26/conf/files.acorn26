@@ -1,4 +1,4 @@
-# $NetBSD: files.acorn26,v 1.2.2.1 2002/05/16 13:31:48 gehenna Exp $
+# $NetBSD: files.acorn26,v 1.2.2.2 2002/05/17 15:08:59 gehenna Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -38,10 +38,7 @@ include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
 
 include "dev/ata/files.ata"
-major	{ wd = 4 }
 include "dev/scsipi/files.scsipi"
-major	{ sd = 5 }
-major	{ cd = 6 }
 
 define fiq
 
@@ -114,7 +111,6 @@ attach	wfdc at ioc
 device	wf: disk
 attach	wf at wfdc
 # Steal code from arch/atari/dev/fd{.c,reg.h}
-#major	{...}
 
 # Econet module (Motorola 6854) (usually at bank 2 fiq 2)
 device	eca: fiq, eco, ifnet
@@ -153,7 +149,6 @@ attach	hdc at ioc with hdc_ioc
 attach	hdc at podulebus with hdc_podulebus
 device	hd: disk
 attach	hd at hdc
-#major	{hd = ?}
 
 # VIDC/MEMC audio/video subsystems.
 device	arcvideo: rasops1, rasops2, rasops4, rasops8, wsemuldisplaydev
@@ -194,7 +189,6 @@ file	arch/acorn26/podulebus/powerrom.c	powerrom
 
 # Memory disk for installation (or ROM versions?)
 file	dev/md_root.c				memory_disk_hooks
-major	{ md = 1 }
 
 ####
 # Other files

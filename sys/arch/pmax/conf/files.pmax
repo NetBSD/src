@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.101.2.1 2002/05/16 13:32:40 gehenna Exp $
+#	$NetBSD: files.pmax,v 1.101.2.2 2002/05/17 15:09:16 gehenna Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -90,16 +90,9 @@ file	arch/pmax/ibus/mcclock_ibus.c	mcclock_ibus
 file	arch/mips/mips/mips_mcclock.c	mcclock # CPU speed via mcclock
 
 include "dev/scsipi/files.scsipi"
-major { sd = 19 }
-major { cd = 25 }
 
 # Memory Disk
 file	dev/md_root.c			memory_disk_hooks
-major { md = 17 }
-
-# RAIDframe
-major { raid = 32 }
-
 
 # asc attachment at ioasic?
 attach	asc at ioasic with asc_ioasic

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.85.2.1 2002/05/16 13:32:11 gehenna Exp $
+#	$NetBSD: files.hpcmips,v 1.85.2.2 2002/05/17 15:09:08 gehenna Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -16,16 +16,12 @@ include "dev/i2o/files.i2o"
 #
 
 include "dev/scsipi/files.scsipi"
-major	{sd = 3}
-major	{st = 4}
-major	{cd = 5}
 
 #
 # Machine-independent ATA drivers
 #
 
 include "dev/ata/files.ata"
-major	{wd = 1}
 
 #
 # Bus-independent devices
@@ -362,7 +358,6 @@ device	fdc {drive = -1}
 device	fd: disk
 #attach	fd at fdc
 file	arch/i386/isa/fd.c		fdc needs-flag
-major	{fd = 2}
 
 # XXXX pcic here because it needs to be late.  The catch: pcic needs
 # to be late, so devices which attach to it are attached late.  But it
@@ -401,7 +396,6 @@ file arch/hpcmips/dev/com_hpcio.c		com_hpcio needs-flag
 
 # Memory Disk for boot tape
 file dev/md_root.c				memory_disk_hooks
-major	{md = 6}
 
 include "dev/usb/files.usb"
 
