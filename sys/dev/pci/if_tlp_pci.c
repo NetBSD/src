@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.28 2000/01/25 03:23:56 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.29 2000/01/25 19:29:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -246,8 +246,6 @@ const struct tlp_pci_quirks tlp_pci_21142_quirks[] = {
 	{ NULL,				{ 0, 0, 0 } }
 };
 
-const char *tlp_pci_chip_names[] = TULIP_CHIP_NAMES;
-
 int	tlp_pci_shared_intr __P((void *));
 
 const struct tulip_pci_product *tlp_pci_lookup
@@ -263,7 +261,7 @@ tlp_pci_lookup(pa)
 	const struct tulip_pci_product *tpp;
 
 	for (tpp = tlp_pci_products;
-	     tlp_pci_chip_names[tpp->tpp_chip] != NULL;
+	     tlp_chip_names[tpp->tpp_chip] != NULL;
 	     tpp++) {
 		if (PCI_VENDOR(pa->pa_id) == tpp->tpp_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == tpp->tpp_product)
@@ -427,7 +425,7 @@ tlp_pci_attach(parent, self, aux)
 	}
 
 	printf(": %s Ethernet, pass %d.%d\n",
-	    tlp_pci_chip_names[sc->sc_chip],
+	    tlp_chip_names[sc->sc_chip],
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 	switch (sc->sc_chip) {
