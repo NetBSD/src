@@ -1,4 +1,4 @@
-/*	$Id: savar.h,v 1.1.2.11 2001/12/28 06:12:22 nathanw Exp $	*/
+/*	$Id: savar.h,v 1.1.2.12 2002/02/02 00:03:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -82,6 +82,13 @@ void	sadata_upcall_free(struct sadata_upcall *);
 void	sa_switch(struct lwp *, int);
 void	sa_switchcall(void *);
 int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *);
+int	sa_upcall0(struct lwp *, int, struct lwp *, struct lwp *,
+	    size_t, void *, struct sadata_upcall *);
+
+void	sa_putcachelwp(struct proc *, struct lwp *);
+struct lwp *sa_getcachelwp(struct proc *);
+
+
 void	sa_upcall_userret(struct lwp *);
 void	cpu_upcall(struct lwp *, int, int, int, void *, void *, void *, sa_upcall_t);
 
