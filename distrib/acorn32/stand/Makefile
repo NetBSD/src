@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2004/05/26 23:58:35 gavan Exp $
+#	$NetBSD: Makefile,v 1.13 2004/06/08 21:38:10 gavan Exp $
 #
 
 .include <bsd.own.mk>
@@ -66,7 +66,7 @@ SETTYPE_FILE_!BtNetBSD/src/Banner/resutil=ffb
 
 SETTYPE_FILES+=misc/bb_netbsd
 
-SETTYPE_FILE_misc/bb_netbsd=feb
+SETTYPE_FILE_misc/bb_netbsd=ffb
 
 SETTYPE_FILES+=misc/Mkrel/MkRelease misc/Mkrel/MkRelScr
 
