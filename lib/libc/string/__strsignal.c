@@ -1,4 +1,4 @@
-/*	$NetBSD: __strsignal.c,v 1.22 2002/11/11 01:12:04 thorpej Exp $	*/
+/*	$NetBSD: __strsignal.c,v 1.23 2002/11/17 01:50:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strsignal.c,v 1.22 2002/11/11 01:12:04 thorpej Exp $");
+__RCSID("$NetBSD: __strsignal.c,v 1.23 2002/11/17 01:50:01 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,22 +79,21 @@ __strsignal(num, buf, buflen)
 	signum = num;				/* convert to unsigned */
 	if (signum < (unsigned int) sys_nsig) {
 #ifdef NLS
-		(void)strncpy(buf, catgets(catd, 2, (int)signum,
-		    sys_siglist[signum]), NL_TEXTMAX); 
-		buf[NL_TEXTMAX - 1] = '\0';
+		(void)strlcpy(buf, catgets(catd, 2, (int)signum,
+		    sys_siglist[signum]), buflen); 
 #else
 		return((char *)sys_siglist[signum]);
 #endif
 	} else if (signum >= SIGRTMIN && signum <= SIGRTMAX) {
 #ifdef NLS
-		(void)snprintf(buf, NL_TEXTMAX, 
+		(void)snprintf(buf, buflen, 
 	            catgets(catd, 2, SIGRTMIN, RPREFIX), signum);
 #else
 		(void)snprintf(buf, buflen, RPREFIX, signum);
 #endif
 	} else {
 #ifdef NLS
-		(void)snprintf(buf, NL_TEXTMAX, 
+		(void)snprintf(buf, buflen, 
 	            catgets(catd, 1, 0xffff, UPREFIX), signum);
 #else
 		(void)snprintf(buf, buflen, UPREFIX, signum);
