@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,8 +33,8 @@
 
 #include "kx.h"
 
-__RCSID("$Heimdal: kxd.c,v 1.71 2003/04/16 16:45:43 joda Exp $"
-        "$NetBSD: kxd.c,v 1.1.1.6 2003/05/15 20:28:43 lha Exp $");
+__RCSID("$Heimdal: kxd.c,v 1.71.2.2 2003/05/15 15:11:35 lha Exp $"
+        "$NetBSD: kxd.c,v 1.1.1.7 2004/04/02 14:47:33 lha Exp $");
 
 static pid_t wait_on_pid = -1;
 static int   done        = 0;
@@ -129,7 +129,7 @@ recv_conn (int sock, kx_context *kc,
 	 exit (1);
      }
      kc->thisaddr_len = addrlen;
-     addrlen = sizeof(kc->thataddr);
+     addrlen = sizeof(kc->__ss_that);
      kc->thataddr = (struct sockaddr*)&kc->__ss_that;
      if (getpeername (sock, kc->thataddr, &addrlen) < 0) {
 	 syslog (LOG_ERR, "getpeername: %m");
@@ -227,11 +227,11 @@ recv_conn (int sock, kx_context *kc,
 	 fatal (kc, sock, "cannot set uid");
      }
 
-     ret = getnameinfo((struct sockaddr *)&kc->thataddr, kc->thataddr_len,
+     ret = getnameinfo(kc->thataddr, kc->thataddr_len,
 		       remoteaddr, sizeof(remoteaddr), 
 		       NULL, 0, NI_NUMERICHOST);
      if (ret != 0)
-	 fatal (kc, sock, "getnameinfo failed");
+	 fatal (kc, sock, "getnameinfo failed: %s", gai_strerror(ret));
 
      syslog (LOG_INFO, "from %s(%s): %s -> %s",
 	     remotehost, remoteaddr,

@@ -1,5 +1,5 @@
-# $Heimdal: Makefile.am,v 1.156.2.1 2003/05/12 15:20:47 joda Exp $
-# $NetBSD: Makefile.am,v 1.1.1.7 2003/05/15 20:28:47 lha Exp $
+# $Heimdal: Makefile.am,v 1.156.2.3 2003/10/28 15:49:31 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.8 2004/04/02 14:47:48 lha Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -133,7 +133,7 @@ libkrb5_la_SOURCES =				\
 	write_message.c				\
 	$(ERR_FILES)
 
-libkrb5_la_LDFLAGS = -version-info 19:0:2
+libkrb5_la_LDFLAGS = -version-info 20:0:3
 
 $(libkrb5_la_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h
 
