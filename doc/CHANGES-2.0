@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.347 2004/07/23 08:47:01 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.348 2004/07/23 09:44:21 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5396,6 +5396,7 @@ include/string.h				1.27
 	Also __P() it; this should be consistent within a single header.
 	[kleink, ticket #643]
 
+doc/CHANGES					1.331 via patch
 distrib/sets/lists/man/mi			1.712
 share/man/man4/Makefile				1.325
 share/man/man4/geodeide.4			1.1 (new)
