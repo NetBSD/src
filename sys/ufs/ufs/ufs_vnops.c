@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.62 2000/02/14 22:00:23 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.63 2000/03/30 02:49:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -51,7 +51,6 @@
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
@@ -1765,7 +1764,6 @@ ufsfifo_read(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	extern int (**fifo_vnodeop_p) __P((void *));
 
 	/*
 	 * Set access flag.
@@ -1787,7 +1785,6 @@ ufsfifo_write(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	extern int (**fifo_vnodeop_p) __P((void *));
 
 	/*
 	 * Set update and change flags.
@@ -1811,7 +1808,6 @@ ufsfifo_close(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	extern int (**fifo_vnodeop_p) __P((void *));
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct timespec ts;
