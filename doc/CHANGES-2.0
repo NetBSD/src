@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.9 2004/03/30 06:03:47 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.10 2004/03/30 06:05:04 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -84,3 +84,8 @@ sys/sys/userret.h				1.4
 
 	Update comment to match reality:  sparc64 uses mi_userret.
 	[cl, ticket #14]
+
+sys/arch/powerpc/fpu/fpu_emu.c			1.11
+
+	Make the "cond" variable an unsigned variable. PR#24938
+	[simonb, ticket #18]
