@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.2 2003/10/22 22:51:36 fvdl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.2 2003/10/22 22:51:36 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
 		db_symbol_values(sym, &name, NULL);
 
-		if (lastframe == 0 && sym == NULL) {
+		if (lastframe == 0 && sym == 0) {
 			/* Symbol not found, peek at code */
 			long	instr = db_get_value(callpc, 8, FALSE);
 
