@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,47 +35,64 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: ite_dv.c 1.7 91/01/21
- *	from: @(#)ite_dv.c	7.5 (Berkeley) 5/7/91
- *	$Id: ite_dv.c,v 1.3 1993/08/01 19:24:23 mycroft Exp $
+ * from: Utah $Hdr: ite_dv.c 1.10 93/06/25$
+ *
+ *	from: @(#)ite_dv.c	8.1 (Berkeley) 7/8/93
+ *	$Id: ite_dv.c,v 1.4 1994/05/25 11:48:28 mycroft Exp $
  */
 
 #include "ite.h"
 #if NITE > 0
 
-#include "param.h"
-#include "conf.h"
-#include "proc.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "systm.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/systm.h>
 
-#include "itevar.h"
-#include "itereg.h"
-#include "grf_dvreg.h"
+#include <hp300/dev/itevar.h>
+#include <hp300/dev/itereg.h>
+#include <hp300/dev/grf_dvreg.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 /* XXX */
-#include "grfioctl.h"
-#include "grfvar.h"
+#include <hp300/dev/grfioctl.h>
+#include <hp300/dev/grfvar.h>
 
 #define REGBASE		((struct dvboxfb *)(ip->regbase))
 #define WINDOWMOVER	dvbox_windowmove
 
 dvbox_init(ip)
-	struct ite_softc *ip;
+	register struct ite_softc *ip;
 {
 	int i;
 	
 	/* XXX */
 	if (ip->regbase == 0) {
-		struct grf_softc *gp = &grf_softc[ip - ite_softc];
+		struct grf_softc *gp = ip->grf;
+
 		ip->regbase = gp->g_regkva;
 		ip->fbbase = gp->g_fbkva;
+		ip->fbwidth = gp->g_display.gd_fbwidth;
+		ip->fbheight = gp->g_display.gd_fbheight;
+		ip->dwidth = gp->g_display.gd_dwidth;
+		ip->dheight = gp->g_display.gd_dheight;
+		/*
+		 * XXX some displays (e.g. the davinci) appear
+		 * to return a display height greater than the
+		 * returned FB height.  Guess we should go back
+		 * to getting the display dimensions from the
+		 * fontrom...
+		 */
+		if (ip->dwidth > ip->fbwidth)
+			ip->dwidth = ip->fbwidth;
+		if (ip->dheight > ip->fbheight)
+			ip->dheight = ip->fbheight;
 	}
 
-	dv_reset(REGADDR);
+	dv_reset(ip->regbase);
 
 	/*
 	 * Turn on frame buffer, turn on overlay planes, set replacement
@@ -124,16 +141,16 @@ dvbox_init(ip)
 	}
 	REGBASE->cmapbank = 0;
 	
-	db_waitbusy(REGADDR);
+	db_waitbusy(ip->regbase);
 
-	ite_devinfo(ip);
+	ite_fontinfo(ip);
 	ite_fontinit(ip);
 
 	/*
 	 * Clear the (visible) framebuffer.
 	 */
 	dvbox_windowmove(ip, 0, 0, 0, 0, ip->dheight, ip->dwidth, RR_CLEAR);
-	db_waitbusy(REGADDR);
+	db_waitbusy(ip->regbase);
 
 	/*
 	 * Stash the inverted cursor.
@@ -144,10 +161,10 @@ dvbox_init(ip)
 }
 
 dvbox_deinit(ip)
-	struct ite_softc *ip;
+	register struct ite_softc *ip;
 {
 	dvbox_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
-	db_waitbusy(REGADDR);
+	db_waitbusy(ip->regbase);
 
    	ip->flags &= ~ITE_INITED;
 }
@@ -198,8 +215,6 @@ dvbox_scroll(ip, sy, sx, count, dir)
 	register int height = 1;
 	register int width = ip->cols;
 
-	dvbox_cursor(ip, ERASE_CURSOR);
-
 	if (dir == SCROLL_UP) {
 		dy = sy - count;
 		height = ip->rows - sy;
@@ -233,7 +248,7 @@ dvbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	if (h == 0 || w == 0)
 		return;
 	
-	db_waitbusy(REGADDR);
+	db_waitbusy(ip->regbase);
 	dp->rep_rule = func << 4 | func;
 	dp->source_y = sy;
 	dp->source_x = sx;

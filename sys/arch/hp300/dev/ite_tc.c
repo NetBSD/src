@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,42 +35,49 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: ite_tc.c 1.25 91/03/25
- *	from: @(#)ite_tc.c	7.4 (Berkeley) 5/7/91
- *	$Id: ite_tc.c,v 1.3 1993/08/01 19:24:25 mycroft Exp $
+ * from: Utah $Hdr: ite_tc.c 1.27 92/12/20$
+ *
+ *	from: @(#)ite_tc.c	8.1 (Berkeley) 6/10/93
+ *	$Id: ite_tc.c,v 1.4 1994/05/25 11:49:06 mycroft Exp $
  */
 
 #include "ite.h"
 #if NITE > 0
 
-#include "param.h"
-#include "conf.h"
-#include "proc.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "systm.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/systm.h>
 
-#include "grf_tcreg.h"
-#include "itereg.h"
-#include "itevar.h"
+#include <hp300/dev/grf_tcreg.h>
+#include <hp300/dev/grfreg.h>
+#include <hp300/dev/itereg.h>
+#include <hp300/dev/itevar.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
+
+/* XXX */
+#include <hp300/dev/grfioctl.h>
+#include <hp300/dev/grfvar.h>
 
 #define REGBASE	    	((struct tcboxfb *)(ip->regbase))
 #define WINDOWMOVER 	topcat_windowmove
-
-/* XXX */
-#include "grfioctl.h"
-#include "grfvar.h"
 
 topcat_init(ip)
 	register struct ite_softc *ip;
 {
 	/* XXX */
 	if (ip->regbase == NULL) {
-		struct grf_softc *gp = &grf_softc[ip - ite_softc];
+		struct grf_softc *gp = ip->grf;
+
 		ip->regbase = gp->g_regkva;
 		ip->fbbase = gp->g_fbkva;
+		ip->fbwidth = gp->g_display.gd_fbwidth;
+		ip->fbheight = gp->g_display.gd_fbheight;
+		ip->dwidth = gp->g_display.gd_dwidth;
+		ip->dheight = gp->g_display.gd_dheight;
 	}
 
 	/*
@@ -106,13 +113,13 @@ topcat_init(ip)
 	REGBASE->ren  = ip->planemask;
 	REGBASE->prr  = RR_COPY;
 
-	ite_devinfo(ip);
+	ite_fontinfo(ip);
 
 	/*
 	 * Clear the framebuffer on all planes.
 	 */
 	topcat_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
-	tc_waitbusy(REGADDR, ip->planemask);
+	tc_waitbusy(ip->regbase, ip->planemask);
 
 	ite_fontinit(ip);
 
@@ -120,10 +127,10 @@ topcat_init(ip)
 	 * Initialize color map for color displays
 	 */
 	if (ip->planemask != 1) {
-	  	tc_waitbusy(REGADDR, ip->planemask);
+	  	tc_waitbusy(ip->regbase, ip->planemask);
 		REGBASE->nblank = 0x01;
 
-		tccm_waitbusy(REGADDR);
+		tccm_waitbusy(ip->regbase);
 		REGBASE->rdata  = 0x0;
 		REGBASE->gdata  = 0x0;
 		REGBASE->bdata  = 0x0;
@@ -131,14 +138,14 @@ topcat_init(ip)
 		REGBASE->strobe = 0xFF;
 
 		DELAY(100);
-		tccm_waitbusy(REGADDR);
+		tccm_waitbusy(ip->regbase);
 		REGBASE->rdata  = 0x0;
 		REGBASE->gdata  = 0x0;
 		REGBASE->bdata  = 0x0;
 		REGBASE->cindex = 0x0;
 
 		DELAY(100);
-		tccm_waitbusy(REGADDR);
+		tccm_waitbusy(ip->regbase);
 		REGBASE->rdata  = 0xFF;
 		REGBASE->gdata  = 0xFF;
 		REGBASE->bdata  = 0xFF;
@@ -146,7 +153,7 @@ topcat_init(ip)
 		REGBASE->strobe = 0xFF;
 
 		DELAY(100);
-		tccm_waitbusy(REGADDR);
+		tccm_waitbusy(ip->regbase);
 		REGBASE->rdata  = 0x0;
 		REGBASE->gdata  = 0x0;
 		REGBASE->bdata  = 0x0;
@@ -165,7 +172,7 @@ topcat_deinit(ip)
 	register struct ite_softc *ip;
 {
 	topcat_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
-	tc_waitbusy(REGADDR, ip->planemask);
+	tc_waitbusy(ip->regbase, ip->planemask);
 
 	REGBASE->nblank = ~0;
    	ip->flags &= ~ITE_INITED;
@@ -216,8 +223,6 @@ topcat_scroll(ip, sy, sx, count, dir)
 	register int height = 1;
 	register int width = ip->cols;
 
-	topcat_cursor(ip, ERASE_CURSOR);
-
 	if (dir == SCROLL_UP) {
 		dy = sy - count;
 		height = ip->rows - sy;
@@ -251,7 +256,7 @@ topcat_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	
 	if (h == 0 || w == 0)
 		return;
-	tc_waitbusy(REGADDR, ip->planemask);
+	tc_waitbusy(ip->regbase, ip->planemask);
 	rp->wmrr     = func;
 	rp->source_y = sy;
 	rp->source_x = sx;
