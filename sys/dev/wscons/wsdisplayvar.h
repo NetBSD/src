@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.20 2001/10/13 15:56:15 augustss Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.21 2002/06/26 23:05:37 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -89,6 +89,7 @@ struct wsscreen_descr {
 };
 
 struct wsdisplay_font;
+struct wsdisplay_char;
 /*
  * Display access functions, invoked by user-land programs which require
  * direct device access, such as X11.
@@ -107,6 +108,8 @@ struct wsdisplay_accessops {
 				    void (*) (void *, int, int), void *);
 	int	(*load_font)(void *, void *, struct wsdisplay_font *);
 	void	(*pollc)(void *, int);
+	int	(*getwschar)(void *, struct wsdisplay_char *);
+	int	(*putwschar)(void *, struct wsdisplay_char *);
 };
 
 /*
@@ -186,8 +189,13 @@ int wsdisplay_usl_ioctl1(struct wsdisplay_softc *,
 int wsdisplay_usl_ioctl2(struct wsdisplay_softc *, struct wsscreen *,
 			 u_long, caddr_t, int, struct proc *);
 
+int wsdisplay_stat_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
+			 int flag, struct proc *p);
+
 int wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 			int flag, struct proc *p);
+
+int wsdisplay_stat_inject(struct device *dev, u_int type, int value);
 
 /*
  * for general use

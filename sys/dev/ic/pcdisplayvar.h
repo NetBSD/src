@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplayvar.h,v 1.8 2000/01/25 02:44:03 ad Exp $ */
+/* $NetBSD: pcdisplayvar.h,v 1.9 2002/06/26 23:05:33 christos Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -94,3 +94,6 @@ void	pcdisplay_copycols __P((void *, int, int, int,int));
 void	pcdisplay_erasecols __P((void *, int, int, int, long));
 void	pcdisplay_copyrows __P((void *, int, int, int));
 void	pcdisplay_eraserows __P((void *, int, int, long));
+struct wsdisplay_char;
+int	pcdisplay_getwschar __P((void *, struct wsdisplay_char *));
+int	pcdisplay_putwschar __P((void *, struct wsdisplay_char *));
