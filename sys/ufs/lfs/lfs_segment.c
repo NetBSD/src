@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.128 2003/07/12 16:17:52 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.129 2003/07/23 13:53:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.128 2003/07/12 16:17:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.129 2003/07/23 13:53:51 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -2120,6 +2120,7 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 int
 lfs_match_fake(struct lfs *fs, struct buf *bp)
 {
+
 	return LFS_IS_MALLOC_BUF(bp);
 }
 
@@ -2127,6 +2128,7 @@ lfs_match_fake(struct lfs *fs, struct buf *bp)
 int
 lfs_match_real(struct lfs *fs, struct buf *bp)
 {
+
 	return (lfs_match_data(fs, bp) && !lfs_match_fake(fs, bp));
 }
 #endif
@@ -2134,6 +2136,7 @@ lfs_match_real(struct lfs *fs, struct buf *bp)
 int
 lfs_match_data(struct lfs *fs, struct buf *bp)
 {
+
 	return (bp->b_lblkno >= 0);
 }
 
@@ -2350,12 +2353,14 @@ lfs_generic_callback(struct buf *bp, void (*aiodone)(struct buf *))
 static void
 lfs_cluster_callback(struct buf *bp)
 {
+
 	lfs_generic_callback(bp, lfs_cluster_aiodone);
 }
 
 void
 lfs_supercallback(struct buf *bp)
 {
+
 	lfs_generic_callback(bp, lfs_super_aiodone);
 }
 
@@ -2502,6 +2507,7 @@ lfs_vunref(struct vnode *vp)
 void
 lfs_vunref_head(struct vnode *vp)
 {
+
 	simple_lock(&vp->v_interlock);
 #ifdef DIAGNOSTIC
 	if (vp->v_usecount == 0) {
