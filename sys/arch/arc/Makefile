@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/12/24 09:25:24 ur Exp $
+#	$NetBSD: Makefile,v 1.7.8.1 2003/01/07 20:57:08 thorpej Exp $
 #	$OpenBSD: Makefile,v 1.5 1997/05/19 10:34:53 pefo Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/16/93
 
@@ -30,6 +30,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	include stand
+SUBDIR=	compile include stand
 
 .include <bsd.subdir.mk>

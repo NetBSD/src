@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1.4.5 2002/11/11 21:56:51 nathanw Exp $	*/
+/*	$NetBSD: rtc.c,v 1.1.4.6 2003/01/07 21:01:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -81,7 +81,7 @@ cmos_read(location)
 
 /*
  * This commented code dates from when I was translating CMOS address
- * from the RISCOS addresses. Now all addresses are specifed as
+ * from the RISCOS addresses. Now all addresses are specified as
  * actual addresses in the CMOS RAM
  */
 
@@ -117,7 +117,7 @@ cmos_write(location, value)
 
 /*
  * This commented code dates from when I was translating CMOS address
- * from the RISCOS addresses. Now all addresses are specifed as
+ * from the RISCOS addresses. Now all addresses are specified as
  * actual addresses in the CMOS RAM
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.12.30.2 2002/06/20 03:37:48 nathanw Exp $	*/
+/*	$NetBSD: cc.c,v 1.12.30.3 2003/01/07 20:56:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.12.30.2 2002/06/20 03:37:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.12.30.3 2003/01/07 20:56:15 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -342,7 +342,7 @@ cc_init_audio()
 	int i;
 
 	/*
-	 * disable all audio interupts
+	 * disable all audio interrupts
 	 */
 	custom.intena = INTF_AUD0|INTF_AUD1|INTF_AUD2|INTF_AUD3;
 
@@ -375,7 +375,7 @@ audio_handler()
 	audio_dma &= (DMAF_AUD0|DMAF_AUD1|DMAF_AUD2|DMAF_AUD3);
 
 	/*
-	 * disable all audio interupts with DMA set
+	 * disable all audio interrupts with DMA set
 	 */
 	custom.intena = (audio_dma << INTB_AUD0) & AUCC_ALLINTF;
 
@@ -425,7 +425,7 @@ audio_handler()
 
 out:
 	/*
-	 * enable audio interupts with dma still set.
+	 * enable audio interrupts with dma still set.
 	 */
 	audio_dma = custom.dmaconr;
 	audio_dma &= (DMAF_AUD0|DMAF_AUD1|DMAF_AUD2|DMAF_AUD3);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/06/28 09:47:55 soren Exp $
+#	$NetBSD: Makefile,v 1.3.10.1 2003/01/07 21:05:06 thorpej Exp $
 
 # Makefile for cobalt tags file
 
@@ -26,6 +26,6 @@ links:
 	-for i in ${DCOBALT}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
-SUBDIR=	include stand
+SUBDIR=	compile include stand
 
 .include <bsd.subdir.mk>

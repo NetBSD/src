@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_supio.c,v 1.7.8.4 2002/10/18 02:34:59 nathanw Exp $ */
+/*	$NetBSD: isic_supio.c,v 1.7.8.5 2003/01/07 20:56:21 thorpej Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -47,7 +47,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.7.8.4 2002/10/18 02:34:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.7.8.5 2003/01/07 20:56:21 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -195,7 +195,7 @@ isic_supio_attach(struct device *parent, struct device *self, void *aux)
 int
 isic_supiointr(void *p)
 {
-	/* XXX should test whether it is our interupt at all */
+	/* XXX should test whether it is our interrupt at all */
         add_sicallback((sifunc_t)isicintr, p, NULL);
 	return 1;
 }

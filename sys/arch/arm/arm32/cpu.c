@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9.2.10 2002/12/11 05:53:01 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9.2.11 2003/01/07 21:01:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.2.10 2002/12/11 05:53:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.2.11 2003/01/07 21:01:23 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -348,7 +348,7 @@ const struct cpu_classtab cpu_classes[] = {
 };
 
 /*
- * Report the type of the specifed arm processor. This uses the generic and
+ * Report the type of the specified arm processor. This uses the generic and
  * arm specific information in the cpu structure to identify the processor.
  * The remaining fields in the cpu structure are filled in appropriately.
  */
