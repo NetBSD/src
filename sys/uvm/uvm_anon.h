@@ -1,7 +1,7 @@
-/*	$NetBSD: uvm_anon.h,v 1.3 1998/02/07 11:08:04 mrg Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.4 1998/02/09 04:05:36 mrg Exp $	*/
 
 /*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
+ * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
  *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
  */
 /*
@@ -51,15 +51,15 @@
  */
 
 struct vm_anon {
-  int an_ref;			/* reference count [an_lock] */
+	int an_ref;			/* reference count [an_lock] */
 #if NCPU > 1
-  simple_lock_data_t an_lock;	/* lock for an_ref */
+	simple_lock_data_t an_lock;	/* lock for an_ref */
 #endif
-  union {
-    struct vm_anon *an_nxt;	/* if on free list [afreelock] */
-    struct vm_page *an_page;	/* if in RAM [pageqlock] */
-  } u;
-  int an_swslot;		/* drum swap slot # (if != 0) [pageqlock] */
+	union {
+		struct vm_anon *an_nxt;	/* if on free list [afreelock] */
+		struct vm_page *an_page;/* if in RAM [pageqlock] */
+	} u;
+	int an_swslot;		/* drum swap slot # (if != 0) [pageqlock] */
 };
 
 /*
@@ -88,18 +88,18 @@ struct vm_anon {
 
 struct vm_amap {
 #if NCPU > 1
-  simple_lock_data_t am_l;	/* simple lock [locks all vm_amap fields] */
+	simple_lock_data_t am_l; /* simple lock [locks all vm_amap fields] */
 #endif
-  int am_ref;			/* reference count */
-  int am_flags;			/* flags */
-  int am_maxslot;		/* max # of slots allocated */
-  int am_nslot;			/* # of slots currently in map ( <= maxslot) */
-  int am_nused;			/* # of slots currently in use */
-  int *am_slots;		/* contig array of active slots */
-  int *am_bckptr;		/* back pointer array to am_slots */
-  struct vm_anon **am_anon;	/* array of anonymous pages */
+	int am_ref;		/* reference count */
+	int am_flags;		/* flags */
+	int am_maxslot;		/* max # of slots allocated */
+	int am_nslot;		/* # of slots currently in map ( <= maxslot) */
+	int am_nused;		/* # of slots currently in use */
+	int *am_slots;		/* contig array of active slots */
+	int *am_bckptr;		/* back pointer array to am_slots */
+	struct vm_anon **am_anon; /* array of anonymous pages */
 #ifdef VM_AMAP_PPREF
-  int *am_ppref;		/* per page reference count (if !NULL) */
+	int *am_ppref;		/* per page reference count (if !NULL) */
 #endif
 };
 
@@ -136,8 +136,8 @@ struct vm_amap {
  */
 
 struct vm_aref {
-  int ar_slotoff;		/* slot offset into amap we start */
-  struct vm_amap *ar_amap;	/* pointer to amap */
+	int ar_slotoff;			/* slot offset into amap we start */
+	struct vm_amap *ar_amap;	/* pointer to amap */
 };
 
 /*
