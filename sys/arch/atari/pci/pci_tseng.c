@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_tseng.c,v 1.6 2003/02/02 18:12:59 thomas Exp $	*/
+/*	$NetBSD: pci_tseng.c,v 1.7 2003/07/15 01:19:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -28,6 +28,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_tseng.c,v 1.7 2003/07/15 01:19:55 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/systm.h>

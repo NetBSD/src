@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.8 2003/01/01 00:48:34 thorpej Exp $	*/
+/*	$NetBSD: vme.c,v 1.9 2003/07/15 01:19:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.9 2003/07/15 01:19:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

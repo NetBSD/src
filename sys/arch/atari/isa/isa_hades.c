@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_hades.c,v 1.2 2002/09/27 15:35:53 provos Exp $	*/
+/*	$NetBSD: isa_hades.c,v 1.3 2003/07/15 01:19:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isa_hades.c,v 1.3 2003/07/15 01:19:53 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

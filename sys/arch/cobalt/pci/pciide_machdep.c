@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.3 2002/01/13 23:02:35 augustss Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.4 2003/07/15 01:29:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.4 2003/07/15 01:29:23 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

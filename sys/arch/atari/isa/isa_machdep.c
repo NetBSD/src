@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.26 2002/12/08 21:31:38 leo Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.27 2003/07/15 01:19:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.27 2003/07/15 01:19:54 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.28 2003/06/23 11:01:11 martin Exp $	*/
+/*	$NetBSD: pccons.c,v 1.29 2003/07/15 01:26:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,9 @@
 /*
  * code to work keyboard & display for PC-style console
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.29 2003/07/15 01:26:32 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
