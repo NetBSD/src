@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.8 2003/06/11 09:03:33 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.9 2003/06/11 21:35:43 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -169,42 +169,19 @@ Kiedy juz uruchomisz swoj zaktualizowany system, mozliwe ze bedziesz musial
 zajac sie polaczeniem nowo utworzonego /emul/aout ze starym.
 }
 
-message Selection_toggles_inclusion
-{Wybierz}
-message Kernel_GENERIC
+message set_kernel_1
 {Kernel (GENERIC)}
-message Kernel_GENERIC_TINY
+message set_kernel_2
 {Kernel (GENERIC_TINY)}
-message Kernel_GENERIC_LAPTOP
+message set_kernel_3
 {Kernel (GENERIC_LAPTOP)}
-message Kernel_GENERIC_DIAGNOSTIC
+message set_kernel_4
 {Kernel (GENERIC_DIAGNOSTIC)}
-message Kernel_GENERIC_PS2TINY
+message set_kernel_5
 {Kernel (GENERIC_PS2TINY)}
-message Base
-{Base}
-message System_etc
-{System (/etc)}
-message Compiler_Tools
-{Compiler Tools}
-message Games
-{Games}
-message Online_Manual_Pages
-{Online manual pages}
-message Miscellaneous
-{Miscellaneous}
-message Text_Processing_Tools
-{Text Processing Tools}
-message X11_base_and_clients
-{X11 base and clients}
-message X11_fonts
-{X11 fonts}
-message X11_servers
-{X11 servers}
-message X_contrib_clients
-{X contrib clients}
-message X11_programming
-{X11 programming}
-message X11_Misc
-{X11 Misc.}
+message set_kernel_6 
+{Kernel (GENERIC.MP)}
+
+message set_md_1        
+{GNU toochain}          /* for amd64 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.pl,v 1.19 2003/06/11 09:03:33 dsl Exp $	*/
+/*	$NetBSD: menus.mi.pl,v 1.20 2003/06/11 21:35:35 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.mi.en,v 1.49 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -90,8 +90,7 @@ menu ok, title "Nacisnij enter aby kontynuowac";
 	option "ok", exit;
 
 menu layout, title  "Wybierz swoja instalacje";
-	option "Standardowa", 	  exit, action { layoutkind = 1; md_set_no_x(); };
-	option "Standardowa z X", exit, action { layoutkind = 2; };
+	option "Standardowa", 	  exit, action { layoutkind = 1; };
 	option "Istniejaca", 	  exit, action { layoutkind = 4; };
 
 menu sizechoice, title  "Wybierz specyfikator rozmiaru";
@@ -134,7 +133,7 @@ menu distmedium, title "Wybierz medium";
 menu distset, title "Wybierz swoja dystrybucje";
 	display action { msg_display (MSG_distset); };
 	option "Pelna instalacja", exit;
-	option "Inna instalacja", next menu md_distcustom;
+	option "Inna instalacja", exit, action { customise_sets(); };
 
 menu ftpsource, title "Zmien";
 	display action

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2003/05/31 08:09:59 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.4 2003/06/11 21:35:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -238,16 +238,4 @@ void
 md_set_sizemultname()
 {
 	set_sizemultname_cyl();
-}
-
-void
-md_set_no_x()
-{
-
-	toggle_getit (8);
-	toggle_getit (9);
-	toggle_getit (10);
-	toggle_getit (11);
-	toggle_getit (12);
-	toggle_getit (13);
 }

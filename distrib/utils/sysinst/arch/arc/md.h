@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.5 2003/05/30 11:56:24 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.6 2003/06/11 21:35:38 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,33 +60,9 @@
  *  or upgrade. The standard sets are:
  *      base, etc, comp, games, man, misc, text,
  *      xbase, xfont, xserver, xcontrib, xcomp.
- *
- * arc has the  MD set kern first, because generic kernels are  too
- * big to fit on install floppies. arc does not yet include the x sets. 
- *
- * Third entry is the last extension name in the split sets for loading
- * from floppy.
  */
-EXTERN distinfo dist_list[]
-#ifdef MAIN
-= {
-    {"kern-GENERIC",	1, "Kernel        : "},
-    {"base",		1, "Base          : "},
-    {"etc",		1, "System (/etc) : "},
-    {"comp",		1, "Compiler      : "},
-    {"games",		1, "Games         : "},
-    {"man",		1, "Manuals       : "},
-    {"misc",		1, "Miscellaneous : "},
-    {"text",		1, "Text tools    : "},
-    {"xbase",		1, "X11 clients   : "},
-    {"xfont",		1, "X11 fonts     : "},
-    {"xcontrib",	1, "X11 contrib   : "},
-    {"xcomp",		1, "X programming : "},
-    {"xmisc",		1, "X11 Misc.     : "},
-    { NULL,		0, NULL }
-}
-#endif
-;
+
+#define SET_KERNEL_1_NAME	"kern-GENERIC"
 
 /*
  * Machine-specific command to write a new label to a disk.
