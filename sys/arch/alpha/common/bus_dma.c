@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.41 2001/01/03 20:29:58 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.42 2001/01/03 21:27:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.41 2001/01/03 20:29:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.42 2001/01/03 21:27:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ _bus_dmamap_load_direct(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 }
 
 /*
- * Like _bus_dmamap_load_direct_common(), but for mbufs.
+ * Like _bus_dmamap_load_direct(), but for mbufs.
  */
 int
 _bus_dmamap_load_mbuf_direct(bus_dma_tag_t t, bus_dmamap_t map,
@@ -306,7 +306,7 @@ _bus_dmamap_load_mbuf_direct(bus_dma_tag_t t, bus_dmamap_t map,
 }
 
 /*
- * Like _bus_dmamap_load_direct_common(), but for uios.
+ * Like _bus_dmamap_load_direct(), but for uios.
  */
 int
 _bus_dmamap_load_uio_direct(bus_dma_tag_t t, bus_dmamap_t map,
@@ -366,7 +366,7 @@ _bus_dmamap_load_uio_direct(bus_dma_tag_t t, bus_dmamap_t map,
 }
 
 /*
- * Like _bus_dmamap_load_direct_common(), but for raw memory.
+ * Like _bus_dmamap_load_direct(), but for raw memory.
  */
 int
 _bus_dmamap_load_raw_direct(bus_dma_tag_t t, bus_dmamap_t map,
