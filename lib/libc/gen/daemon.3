@@ -1,4 +1,4 @@
-.\"	$NetBSD: daemon.3,v 1.6 1999/03/14 18:10:02 kristerw Exp $
+.\"	$NetBSD: daemon.3,v 1.7 1999/09/03 13:12:44 proff Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)daemon.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd Sep 3, 1999
 .Dt DAEMON 3
 .Os
 .Sh NAME
@@ -64,6 +64,9 @@ is non-zero,
 .Fn daemon
 will redirect standard input, standard output and standard error
 to ``/dev/null''.
+.Pp
+.Sh RETURN VALUES
+On return 0 indicates success with -1 indicating error.
 .Sh ERRORS
 The function
 .Fn daemon
@@ -81,3 +84,16 @@ The
 .Fn daemon
 function first appeared in
 .Bx 4.4 .
+.Sh BUGS
+.Fn daemon
+uses 
+.Fn fork
+as part of its tty detachment mechanism. Consequently the process id changes
+when
+.Fn daemon
+is invoked. Processes employing
+.Fn daemon
+can not be reliably waited
+upon until
+.Fn daemon
+has been invoked.
