@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.373 2002/12/17 15:16:41 jdolecek Exp $
+# $NetBSD: mi,v 1.374 2002/12/20 06:39:54 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -587,31 +587,6 @@
 ./usr/lkm/portal.o		base-vfs-lkm
 ./usr/lkm/procfs.o		base-vfs-lkm
 ./usr/lkm/umapfs.o		base-vfs-lkm
-./usr/local			base-sys-usr
-./usr/local/bin			base-sys-usr
-./usr/local/lib			base-sys-usr
-./usr/local/libdata		base-sys-usr
-./usr/local/libexec		base-sys-usr
-./usr/local/man			base-sys-usr
-./usr/local/man/cat1		base-sys-usr
-./usr/local/man/cat2		base-sys-usr
-./usr/local/man/cat3		base-sys-usr
-./usr/local/man/cat4		base-sys-usr
-./usr/local/man/cat5		base-sys-usr
-./usr/local/man/cat6		base-sys-usr
-./usr/local/man/cat7		base-sys-usr
-./usr/local/man/cat8		base-sys-usr
-./usr/local/man/cat9		base-sys-usr
-./usr/local/man/man1		base-sys-usr
-./usr/local/man/man2		base-sys-usr
-./usr/local/man/man3		base-sys-usr
-./usr/local/man/man4		base-sys-usr
-./usr/local/man/man5		base-sys-usr
-./usr/local/man/man6		base-sys-usr
-./usr/local/man/man7		base-sys-usr
-./usr/local/man/man8		base-sys-usr
-./usr/local/man/man9		base-sys-usr
-./usr/local/sbin		base-sys-usr
 ./usr/mdec			base-sys-usr
 ./usr/sbin			base-sys-usr
 ./usr/sbin/ac			base-sysutil-bin

@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.66 2002/10/09 14:55:54 elric Exp $
+#	$NetBSD: special,v 1.67 2002/12/20 06:39:53 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -280,9 +280,6 @@
 ./usr/lib			type=dir  mode=0755 ignore
 ./usr/libdata			type=dir  mode=0755 ignore
 ./usr/libexec			type=dir  mode=0755 ignore
-./usr/local			type=dir  mode=0755
-./usr/local/bin			type=dir  mode=0755 ignore
-./usr/local/lib			type=dir  mode=0755 ignore
 ./usr/pkg			type=dir  mode=0755 ignore optional
 ./usr/sbin			type=dir  mode=0755 ignore
 ./usr/share			type=dir  mode=0755 ignore
