@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 4/15/94";*/
-static char *rcsid = "$Id: main.c,v 1.3 1994/06/08 18:57:36 mycroft Exp $";
+static char *rcsid = "$Id: main.c,v 1.4 1994/09/23 14:27:04 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -244,9 +244,9 @@ main(argc, argv)
 			tsize = cartridge ? 1700L*120L : 2300L*120L;
 	}
 
-	if (index(tape, ':')) {
+	if (strchr(tape, ':')) {
 		host = tape;
-		tape = index(host, ':');
+		tape = strchr(host, ':');
 		*tape++ = '\0';
 #ifdef RDUMP
 		if (rmthost(host) == 0)
@@ -533,7 +533,7 @@ rawname(cp)
 	char *cp;
 {
 	static char rawbuf[MAXPATHLEN];
-	char *dp = rindex(cp, '/');
+	char *dp = strrchr(cp, '/');
 
 	if (dp == NULL)
 		return (NULL);

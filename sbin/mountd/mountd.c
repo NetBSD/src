@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mountd.c	8.8 (Berkeley) 2/20/94";*/
-static char *rcsid = "$Id: mountd.c,v 1.14 1994/08/12 04:19:52 cgd Exp $";
+static char *rcsid = "$Id: mountd.c,v 1.15 1994/09/23 14:27:37 mycroft Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -356,7 +356,7 @@ mntsrv(rqstp, transp)
 		     (defset && scan_tree(ep->ex_defdir, saddr) == 0 &&
 		      scan_tree(ep->ex_dirl, saddr) == 0))) {
 			/* Get the file handle */
-			bzero((caddr_t)&nfh, sizeof(nfh));
+			memset(&nfh, 0, sizeof(nfh));
 			if (getfh(dirpath, (fhandle_t *)&nfh) < 0) {
 				bad = errno;
 				syslog(LOG_ERR, "Can't get fh for %s", dirpath);
@@ -879,7 +879,7 @@ get_exp()
 	ep = (struct exportlist *)malloc(sizeof (struct exportlist));
 	if (ep == (struct exportlist *)NULL)
 		out_of_mem();
-	bzero((caddr_t)ep, sizeof (struct exportlist));
+	memset(ep, 0, sizeof(struct exportlist));
 	return (ep);
 }
 
@@ -894,7 +894,7 @@ get_grp()
 	gp = (struct grouplist *)malloc(sizeof (struct grouplist));
 	if (gp == (struct grouplist *)NULL)
 		out_of_mem();
-	bzero((caddr_t)gp, sizeof (struct grouplist));
+	memset(gp, 0, sizeof(struct grouplist));
 	return (gp);
 }
 
@@ -1171,12 +1171,12 @@ do_opt(cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
 	while (cpopt && *cpopt) {
 		allflag = 1;
 		usedarg = -2;
-		if (cpoptend = index(cpopt, ',')) {
+		if (cpoptend = strchr(cpopt, ',')) {
 			*cpoptend++ = '\0';
-			if (cpoptarg = index(cpopt, '='))
+			if (cpoptarg = strchr(cpopt, '='))
 				*cpoptarg++ = '\0';
 		} else {
-			if (cpoptarg = index(cpopt, '='))
+			if (cpoptarg = strchr(cpopt, '='))
 				*cpoptarg++ = '\0';
 			else {
 				*cp = savedc;
@@ -1302,13 +1302,12 @@ get_host(cp, grp)
 		malloc(sizeof(struct hostent));
 	if (nhp == (struct hostent *)NULL)
 		out_of_mem();
-	bcopy((caddr_t)hp, (caddr_t)nhp,
-		sizeof(struct hostent));
+	memcpy(nhp, hp, sizeof(struct hostent));
 	i = strlen(hp->h_name)+1;
 	nhp->h_name = (char *)malloc(i);
 	if (nhp->h_name == (char *)NULL)
 		out_of_mem();
-	bcopy(hp->h_name, nhp->h_name, i);
+	memcpy(nhp->h_name, hp->h_name, i);
 	addrp = hp->h_addr_list;
 	i = 1;
 	while (*addrp++)
@@ -1323,8 +1322,7 @@ get_host(cp, grp)
 		    malloc(hp->h_length);
 		if (*naddrp == (char *)NULL)
 		    out_of_mem();
-		bcopy(*addrp, *naddrp,
-			hp->h_length);
+		memcpy(*naddrp, *addrp, hp->h_length);
 		addrp++;
 		naddrp++;
 	}
@@ -1402,10 +1400,9 @@ get_isoaddr(cp, grp)
 	    malloc(sizeof (struct sockaddr_iso));
 	if (isoaddr == (struct sockaddr_iso *)NULL)
 		out_of_mem();
-	bzero((caddr_t)isoaddr, sizeof (struct sockaddr_iso));
-	bcopy((caddr_t)isop, (caddr_t)&isoaddr->siso_addr,
-		sizeof (struct iso_addr));
-	isoaddr->siso_len = sizeof (struct sockaddr_iso);
+	memset(isoaddr, 0, sizeof(struct sockaddr_iso));
+	memcpy(&isoaddr->siso_addr, isop, sizeof(struct iso_addr));
+	isoaddr->siso_len = sizeof(struct sockaddr_iso);
 	isoaddr->siso_family = AF_ISO;
 	grp->gr_type = GT_ISO;
 	grp->gr_ptr.gt_isoaddr = isoaddr;
@@ -1454,8 +1451,8 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	args.ua.fspec = 0;
 	args.ua.export.ex_flags = exflags;
 	args.ua.export.ex_anon = *anoncrp;
-	bzero((char *)&sin, sizeof(sin));
-	bzero((char *)&imask, sizeof(imask));
+	memset(&sin, 0, sizeof(sin));
+	memset(&imask, 0, sizeof(imask));
 	sin.sin_family = AF_INET;
 	sin.sin_len = sizeof(sin);
 	imask.sin_family = AF_INET;
@@ -1769,7 +1766,7 @@ void
 get_mountlist()
 {
 	struct mountlist *mlp, **mlpp;
-	char *eos, *dirp;
+	char *host, *dirp, *cp;
 	int len;
 	char str[STRSIZ];
 	FILE *mlfile;
@@ -1780,27 +1777,16 @@ get_mountlist()
 	}
 	mlpp = &mlhead;
 	while (fgets(str, STRSIZ, mlfile) != NULL) {
-		if ((dirp = index(str, '\t')) == NULL &&
-		    (dirp = index(str, ' ')) == NULL)
+		cp = str;
+		host = strsep(&cp, " \t\n");
+		dirp = strsep(&cp, " \t\n");
+		if (host == NULL || dirp == NULL)
 			continue;
 		mlp = (struct mountlist *)malloc(sizeof (*mlp));
-		len = dirp-str;
-		if (len > RPCMNT_NAMELEN)
-			len = RPCMNT_NAMELEN;
-		bcopy(str, mlp->ml_host, len);
-		mlp->ml_host[len] = '\0';
-		while (*dirp == '\t' || *dirp == ' ')
-			dirp++;
-		if ((eos = index(dirp, '\t')) == NULL &&
-		    (eos = index(dirp, ' ')) == NULL &&
-		    (eos = index(dirp, '\n')) == NULL)
-			len = strlen(dirp);
-		else
-			len = eos-dirp;
-		if (len > RPCMNT_PATHLEN)
-			len = RPCMNT_PATHLEN;
-		bcopy(dirp, mlp->ml_dirp, len);
-		mlp->ml_dirp[len] = '\0';
+		strncpy(mlp->ml_host, host, RPCMNT_NAMELEN);
+		mlp->ml_host[RPCMNT_NAMELEN] = '\0';
+		strncpy(mlp->ml_dirp, dirp, RPCMNT_PATHLEN);
+		mlp->ml_dirp[RPCMNT_PATHLEN] = '\0';
 		mlp->ml_next = (struct mountlist *)NULL;
 		*mlpp = mlp;
 		mlpp = &mlp->ml_next;

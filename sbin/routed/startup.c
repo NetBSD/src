@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)startup.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: startup.c,v 1.6 1994/05/13 08:04:50 mycroft Exp $";
+static char *rcsid = "$Id: startup.c,v 1.7 1994/09/23 14:28:09 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -89,7 +89,7 @@ rt_xaddrs(cp, cplim, rtinfo)
 	register struct sockaddr *sa;
 	register int i;
 
-	bzero(rtinfo->rti_info, sizeof(rtinfo->rti_info));
+	memset(rtinfo->rti_info, 0, sizeof(rtinfo->rti_info));
 	for (i = 0; (i < RTAX_MAX) && (cp < cplim); i++) {
 		if ((rtinfo->rti_addrs & (1 << i)) == 0)
 			continue;
@@ -133,7 +133,7 @@ ifinit()
 	for (cp = buf; cp < cplim; cp += ifm->ifm_msglen) {
 		ifm = (struct if_msghdr *)cp;
 		if (ifm->ifm_type == RTM_IFINFO) {
-			bzero(&ifs, sizeof(ifs));
+			memset(&ifs, 0, sizeof(ifs));
 			ifs.int_flags = flags = (0xffff & ifm->ifm_flags) | IFF_INTERFACE;
 			if ((flags & IFF_UP) == 0 || no_ipaddr)
 				lookforinterfaces = 1;
@@ -277,7 +277,7 @@ addrouteforif(ifp)
 	if (ifp->int_flags & IFF_POINTOPOINT)
 		dst = &ifp->int_dstaddr;
 	else {
-		bzero((char *)&net, sizeof (net));
+		memset(&net, 0, sizeof (net));
 		net.sin_family = AF_INET;
 		net.sin_addr = inet_makeaddr(ifp->int_subnet, INADDR_ANY);
 		dst = (struct sockaddr *)&net;
@@ -340,7 +340,7 @@ add_ptopt_localrt(ifp)
 	state = RTS_INTERFACE | RTS_PASSIVE;
 
 	/* look for route to logical network */
-	bzero((char *)&net, sizeof (net));
+	memset(&net, 0, sizeof (net));
 	net.sin_family = AF_INET;
 	net.sin_addr = inet_makeaddr(ifp->int_net, INADDR_ANY);
 	dst = (struct sockaddr *)&net;
@@ -388,9 +388,9 @@ gwkludge()
 	dname = buf + 64;
 	gname = buf + ((BUFSIZ - 64) / 3);
 	type = buf + (((BUFSIZ - 64) * 2) / 3);
-	bzero((char *)&dst, sizeof (dst));
-	bzero((char *)&gate, sizeof (gate));
-	bzero((char *)&route, sizeof(route));
+	memset(&dst, 0, sizeof (dst));
+	memset(&gate, 0, sizeof (gate));
+	memset(&route, 0, sizeof(route));
 /* format: {net | host} XX gateway XX metric DD [passive | external]\n */
 #define	readentry(fp) \
 	fscanf((fp), "%s %s gateway %s metric %d %s\n", \
@@ -436,7 +436,7 @@ gwkludge()
 		/* assume no duplicate entries */
 		externalinterfaces++;
 		ifp = (struct interface *)malloc(sizeof (*ifp));
-		bzero((char *)ifp, sizeof (*ifp));
+		memset(ifp, 0, sizeof (*ifp));
 		ifp->int_flags = IFF_REMOTE;
 		/* can't identify broadcast capability */
 		ifp->int_net = inet_netof(dst.sin_addr);
@@ -490,7 +490,7 @@ getnetorhostname(type, name, sin)
 		else {
 			if (hp->h_addrtype != AF_INET)
 				return (0);
-			bcopy(hp->h_addr, &sin->sin_addr, hp->h_length);
+			memcpy(&sin->sin_addr, hp->h_addr, hp->h_length);
 		}
 		sin->sin_family = AF_INET;
 		return (1);
@@ -506,7 +506,7 @@ gethostnameornumber(name, sin)
 
 	hp = gethostbyname(name);
 	if (hp) {
-		bcopy(hp->h_addr, &sin->sin_addr, hp->h_length);
+		memcpy(&sin->sin_addr, hp->h_addr, hp->h_length);
 		sin->sin_family = hp->h_addrtype;
 		return (1);
 	}

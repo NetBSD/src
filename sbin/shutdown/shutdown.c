@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)shutdown.c	8.2 (Berkeley) 2/16/94";*/
-static char *rcsid = "$Id: shutdown.c,v 1.7 1994/09/17 00:10:12 mycroft Exp $";
+static char *rcsid = "$Id: shutdown.c,v 1.8 1994/09/23 14:28:17 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -165,7 +165,7 @@ main(argc, argv)
 				break;
 			if (p != mbuf)
 				*p++ = ' ';
-			bcopy(*argv, p, arglen);
+			memcpy(p, *argv, arglen);
 			p += arglen;
 		}
 		*p = '\n';

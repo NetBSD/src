@@ -36,7 +36,7 @@
  *
  *	from: Id: activate.c,v 1.2 1992/05/27 07:09:27 jsp Exp
  *	from: @(#)activate.c	8.2 (Berkeley) 3/27/94
- *	$Id: activate.c,v 1.2 1994/06/08 19:24:45 mycroft Exp $
+ *	$Id: activate.c,v 1.3 1994/09/23 14:27:33 mycroft Exp $
  */
 
 #include <stdio.h>
@@ -89,7 +89,7 @@ int klen;
 	iov[1].iov_base = key;
 	iov[1].iov_len = klen;
 
-	bzero((char *) &msg, sizeof(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.msg_iov = iov;
 	msg.msg_iovlen = 2;
 
@@ -129,7 +129,7 @@ int error;
 	/*
 	 * Build a msghdr
 	 */
-	bzero((char *) &msg, sizeof(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)preen.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: preen.c,v 1.6 1994/06/08 19:00:31 mycroft Exp $";
+static char *rcsid = "$Id: preen.c,v 1.7 1994/09/23 14:27:20 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -325,7 +325,7 @@ unrawname(name)
 	char *dp;
 	struct stat stb;
 
-	if ((dp = rindex(name, '/')) == 0)
+	if ((dp = strrchr(name, '/')) == 0)
 		return (name);
 	if (stat(name, &stb) < 0)
 		return (name);
@@ -344,7 +344,7 @@ rawname(name)
 	static char rawbuf[32];
 	char *dp;
 
-	if ((dp = rindex(name, '/')) == 0)
+	if ((dp = strrchr(name, '/')) == 0)
 		return (0);
 	*dp = 0;
 	(void)strcpy(rawbuf, name);
