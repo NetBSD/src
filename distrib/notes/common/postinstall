@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.24 2001/05/13 23:25:37 mbw Exp $
+.\"	$NetBSD: postinstall,v 1.25 2001/05/14 07:46:56 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,6 +59,10 @@ prompt. If you are asked for a terminal type, respond with
 .Ic hp300h
 for a local console, or whatever is appropriate for your serial console.
 .\}
+.el .ie r_macppc \{\
+.Ic vt100
+(or whatever is appropriate for your terminal type)
+.\}
 .el .ie r_pmax \{\
 the correct terminal type as discussed in the
 .Sx Once you've booted the diskimage
@@ -81,7 +85,9 @@ and press
 At this point, you need to configure at least
 one file in the
 .Pa /etc
-directory. Change to the
+directory. You will need to mount your root filesystem read/write with:
+.Dl # Ic "/sbin/mount -u -w /"
+Change to the
 .Pa /etc
 directory and take a look at the
 .Pa /etc/rc.conf
@@ -109,6 +115,7 @@ Do the following:
 .Pp
 .Dl # Ic "mount /usr"
 .ie     r_hp300 .Dl # Ic "export TERM=hp300h"
+.el .ie r_macppc .Dl # Ic "export TERM=vt100"
 .el .ie r_pmax  .Dl # Ic "export TERM=termtype"
 .el .ie r_sparc .Dl # Ic "export TERM=sun"
 .el             .Dl # Ic "export TERM=vt220"
