@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.c,v 1.1 1999/07/07 01:55:08 danw Exp $	*/
+/*	$NetBSD: fpsetsticky.c,v 1.2 2001/02/08 18:28:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ fpsetsticky(mask)
 	fp_rnd old;
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
-	old = (fpscr >> 25) & 0x1f;
+	old = (fp_except)((fpscr >> 25) & 0x1f);
 	fpscr = (fpscr & 0xc1ffffff) | (mask << 25);
 	__asm__ __volatile("mtfsf 0xff,%0" :: "f"(fpscr));
 	return (old);
