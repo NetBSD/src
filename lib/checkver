@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: checkver,v 1.6 1999/06/10 00:32:23 simonb Exp $
+#	$NetBSD: checkver,v 1.7 1999/06/24 14:39:48 christos Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -100,7 +100,7 @@ fi
 
 set -- $args
 
-while . ; do
+while [ ! -z "$1" ]; do
     case "$1" in
 	-d) usedir=1 ; shift
 	    if [ $usefile -eq 1 -o $usesets -eq 1 ]; then
