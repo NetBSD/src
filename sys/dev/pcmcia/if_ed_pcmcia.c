@@ -176,9 +176,6 @@ ed_pcmcia_match(parent, match, aux)
     struct pcmcia_attach_args *pa = (struct pcmcia_attach_args *) aux;
     int i;
 
-    printf("ed_pcmcia_match: \"%s\" \"%s\" %d\n", pa->card->cis1_info[0],
-	   pa->card->cis1_info[1], pa->pf->number);
-
     for (i=0; i<(sizeof(ne2000devs)/sizeof(ne2000devs[0])); i++) {
 	if (ne2000_match(pa->card, pa->pf->number, i))
 	    return(1);

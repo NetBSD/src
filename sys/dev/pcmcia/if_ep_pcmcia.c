@@ -72,9 +72,6 @@ ep_pcmcia_match(parent, match, aux)
 {
     struct pcmcia_attach_args *pa = (struct pcmcia_attach_args *) aux;
 
-    printf("ep_pcmcia_match: %x %x %d\n", pa->manufacturer,
-	    pa->product, pa->pf->number);
-
     if ((pa->manufacturer == PCMCIA_MANUFACTURER_3COM) &&
 	(pa->product == PCMCIA_PRODUCT_3COM_3C562) &&
 	(pa->pf->number == 0))
