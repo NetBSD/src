@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/07/25 16:32:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2003/12/07 12:51:43 simonb Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -12,6 +12,11 @@ SRCS=		${G_LIBCPP_OBJS:.o=.c}
 CPPFLAGS+=	-I${.CURDIR} -I${GCCARCH} -I${BACKENDOBJ} \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \
 		-DPREFIX=\"/usr\"
+
+# XXX gcc332 gets an ICE compiling cppmacro.c with -O2.
+.if ${MACHINE_ARCH} == "ns32k"
+COPTS.cppmacro.c= -O1
+.endif
 
 .include <bsd.lib.mk>
 
