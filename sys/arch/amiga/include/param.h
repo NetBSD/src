@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.22 1995/06/26 06:55:48 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.23 1995/06/28 02:43:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -230,8 +230,6 @@ extern volatile unsigned short *amiga_intena_read, *amiga_intena_write;
 #ifdef _KERNEL
 void delay __P((int));
 void DELAY __P((int));
-#else
-#define	DELAY(n)	{ register int N = (n); while (--N > 0); }
 #endif
 
 #endif /* !_MACHINE_PARAM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10 1995/06/26 06:56:08 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.11 1995/06/28 02:43:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -155,7 +155,4 @@ extern int (*Mach_splnet)(), (*Mach_splbio)(), (*Mach_splimp)(),
 extern	int cpuspeed;
 #define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
 #endif
-
-#else /* !_KERNEL */
-#define	DELAY(n)	{ register int N = (n); while (--N > 0); }
 #endif /* !_KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 1995/06/26 06:55:38 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.6 1995/06/28 02:43:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -168,8 +168,6 @@ extern	u_int64_t cycles_per_usec;
 int spl0 __P((void));					/* drop ipl to zero */
 
 #endif
-#else /* !_KERNEL */
-#define	DELAY(n)	{ register int N = (n); while (--N > 0); }
 #endif /* !_KERNEL */
 
 int prtloc;
