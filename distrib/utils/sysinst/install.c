@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.26 2000/12/31 13:08:05 jdc Exp $	*/
+/*	$NetBSD: install.c,v 1.27 2001/01/07 13:07:57 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -127,7 +127,7 @@ do_install()
 	msg_display(MSG_disksetupdone);
 
 	getchar();
-	clearok(stdscr, TRUE);
+	wrefresh(curscr);
 	wmove(stdscr,0, 0);
 	wclear(stdscr);
 	wrefresh(stdscr);
