@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.46 2000/09/10 21:27:50 christos Exp $
+#	$NetBSD: security,v 1.47 2000/10/07 07:36:56 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -126,8 +126,8 @@ fi
 # mechanisms also print out file differences and we don't want to do
 # that because this file has encrypted passwords in it.
 #
-CUR=/var/backups/`basename $MP`.current
-BACK=/var/backups/`basename $MP`.backup
+CUR=/var/backups/${MP##*/}.current
+BACK=/var/backups/${MP##*/}.backup
 if [ -s $CUR ] ; then
 	if cmp -s $CUR $MP; then
 		:
@@ -675,8 +675,8 @@ fi
 
 if [ -n "$CHANGELIST" ]; then
 	for file in `egrep -hv "^#|$MP" $CHANGELIST`; do
-		CUR=/var/backups/`basename $file`.current
-		BACK=/var/backups/`basename $file`.backup
+		CUR=/var/backups/${file##*/}.current
+		BACK=/var/backups/${file##*/}.backup
 		if [ -f $file ]; then
 			if [ -f $CUR ] ; then
 				diff $CUR $file > $OUTPUT
