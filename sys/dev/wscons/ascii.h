@@ -1,5 +1,6 @@
-/* $NetBSD: ascii.h,v 1.1 1998/03/22 14:24:02 drochner Exp $ */
+/* $NetBSD: ascii.h,v 1.2 1998/06/15 17:38:39 drochner Exp $ */
 
+#define	ASCII_NUL	0x00		/* nul */
 #define	ASCII_BEL	0x07		/* bell */
 #define	ASCII_BS	0x08		/* backspace */
 #define	ASCII_HT	0x09		/* horizontal tab */
