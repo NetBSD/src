@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.5 2002/10/01 21:40:26 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.6 2002/10/02 15:52:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ static int	obio_print(void *, const char *);
 static int	obio_search(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(obio, sizeof(struct device),
-    obio_match, obio_attach, NULL, NULL)
+    obio_match, obio_attach, NULL, NULL);
 
 extern struct cfdriver obio_cd;
 

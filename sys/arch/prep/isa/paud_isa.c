@@ -1,4 +1,4 @@
-/*	$NetBSD: paud_isa.c,v 1.4 2002/10/01 21:40:27 thorpej Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.5 2002/10/02 15:52:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ static void paud_attach_isa (struct device *, struct device *, void *);
 static int  paud_match_isa (struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(paud_isa, sizeof(struct ad1848_isa_softc),
-    paud_match_isa, paud_attach_isa, NULL, NULL)
+    paud_match_isa, paud_attach_isa, NULL, NULL);
 
 /*
  * Define our interface to the higher level audio driver.

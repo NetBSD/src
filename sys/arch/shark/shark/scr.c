@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.6 2002/10/01 19:18:59 thorpej Exp $	*/
+/*	$NetBSD: scr.c,v 1.7 2002/10/02 15:52:41 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -651,7 +651,7 @@ static void scrUntimeout   __P((void (*func)(struct scr_softc*,int), struct scr_
 
 
 CFATTACH_DECL(scr, sizeof(struct scr_softc),
-    (cfmatch_t)scrprobe, scrattach, NULL, NULL)
+    (cfmatch_t)scrprobe, scrattach, NULL, NULL);
 
 extern struct cfdriver scr_cd;
 
