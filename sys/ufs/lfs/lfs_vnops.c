@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.91 2003/03/01 11:20:22 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.92 2003/03/02 04:34:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.91 2003/03/01 11:20:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.92 2003/03/02 04:34:32 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1011,6 +1011,102 @@ lfs_reclaim(void *v)
 	return (0);
 }
 
+static void
+lfs_flush_dirops(struct lfs *fs)
+{
+	struct inode *ip, *nip;
+	struct vnode *vp;
+	extern int lfs_dostats;
+	struct segment *sp;
+	int needunlock;
+
+	if (fs->lfs_ronly)
+		return;
+
+	if (TAILQ_FIRST(&fs->lfs_dchainhd) == NULL)
+		return;
+
+	/* XXX simplelock fs->lfs_dirops */
+	while (fs->lfs_dirops > 0) {
+		++fs->lfs_diropwait;  
+		tsleep(&fs->lfs_writer, PRIBIO+1, "pndirop", 0);
+		--fs->lfs_diropwait; 
+	}
+	/* disallow dirops during flush */
+	fs->lfs_writer++;
+
+	if (lfs_dostats)
+		++lfs_stats.flush_invoked;
+
+	/*
+	 * Inline lfs_segwrite/lfs_writevnodes, but just for dirops.
+	 * Technically this is a checkpoint (the on-disk state is valid)
+	 * even though we are leaving out all the file data.
+	 */
+	lfs_imtime(fs);
+	lfs_seglock(fs, SEGM_CKP);
+	sp = fs->lfs_sp;
+
+	/*
+	 * lfs_writevnodes, optimized to get dirops out of the way.
+	 * Only write dirops, and don't flush files' pages, only
+	 * blocks from the directories.
+	 *
+	 * We don't need to vref these files because they are
+	 * dirops and so hold an extra reference until the
+	 * segunlock clears them of that status.
+	 *
+	 * We don't need to check for IN_ADIROP because we know that
+	 * no dirops are active.
+	 *
+	 */
+	for (ip = TAILQ_FIRST(&fs->lfs_dchainhd); ip != NULL; ip = nip) {
+		nip = TAILQ_NEXT(ip, i_lfs_dchain);
+		vp = ITOV(ip);
+
+		/*
+		 * All writes to directories come from dirops; all
+		 * writes to files' direct blocks go through the page
+		 * cache, which we're not touching.  Reads to files
+		 * and/or directories will not be affected by writing
+		 * directory blocks inodes and file inodes.  So we don't
+		 * really need to lock.  If we don't lock, though,
+		 * make sure that we don't clear IN_MODIFIED
+		 * unnecessarily.
+		 */
+		if (vp->v_flag & VXLOCK)
+			continue;
+		if (vn_lock(vp, LK_EXCLUSIVE | LK_CANRECURSE |
+			    LK_NOWAIT) == 0) {
+			needunlock = 1;
+		} else {
+			printf("lfs_flush_dirops: flushing locked ino %d\n", 
+			       VTOI(vp)->i_number);
+			needunlock = 0;
+		}
+		if (vp->v_type != VREG &&
+		    ((ip->i_flag & IN_ALLMOD) || !VPISEMPTY(vp))) {
+			lfs_writefile(fs, sp, vp);
+			if (!VPISEMPTY(vp) && !WRITEINPROG(vp) &&
+			    !(ip->i_flag & IN_ALLMOD)) {
+				LFS_SET_UINO(ip, IN_MODIFIED);
+			}
+		}
+		(void) lfs_writeinode(fs, sp, ip);
+		if (needunlock)
+			VOP_UNLOCK(vp, 0);
+		else
+			LFS_SET_UINO(ip, IN_MODIFIED);
+	}
+	/* We've written all the dirops there are */
+	((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
+	(void) lfs_writeseg(fs, sp);
+	lfs_segunlock(fs);
+	
+	if (--fs->lfs_writer == 0)
+		wakeup(&fs->lfs_dirops);
+}
+
 /*
  * Provide a fcntl interface to sys_lfs_{segwait,bmapv,markv}.
  */
@@ -1027,9 +1123,13 @@ lfs_fcntl(void *v)
         } */ *ap = v;
 	struct timeval *tvp;
 	BLOCK_INFO *blkiov;
-	int blkcnt, error;
+	CLEANERINFO *cip;
+	int blkcnt, error, oclean;
 	struct lfs_fcntl_markv blkvp;
 	fsid_t *fsidp;
+	struct lfs *fs;
+	struct buf *bp;
+	daddr_t off;
 
 	/* Only respect LFS fcntls on fs root or Ifile */
 	if (VTOI(ap->a_vp)->i_number != ROOTINO &&
@@ -1077,6 +1177,33 @@ lfs_fcntl(void *v)
 		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
 		free(blkiov, M_SEGMENT);
 		return error;
+
+	    case LFCNRECLAIM:
+		/*
+		 * Flush dirops and write Ifile, allowing empty segments
+		 * to be immediately reclaimed.
+		 */
+		fs = VTOI(ap->a_vp)->i_lfs;
+		off = fs->lfs_offset;
+		lfs_seglock(fs, SEGM_FORCE_CKP | SEGM_CKP);
+		lfs_flush_dirops(fs);
+		LFS_CLEANERINFO(cip, fs, bp);
+		oclean = cip->clean;
+		LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
+		lfs_segwrite(ap->a_vp->v_mount, SEGM_FORCE_CKP);
+		lfs_segunlock(fs);
+
+#ifdef DEBUG_LFS
+		LFS_CLEANERINFO(cip, fs, bp);
+		oclean = cip->clean;
+		printf("lfs_fcntl: reclaim wrote %" PRId64 " blocks, cleaned "
+			"%" PRId32 " segments (activesb %d)\n",
+			fs->lfs_offset - off, cip->clean - oclean,
+			fs->lfs_activesb);
+		LFS_SYNC_CLEANERINFO(cip, fs, bp, 0);
+#endif
+
+		return 0;
 
 	    default:
 		return ufs_fcntl(v);

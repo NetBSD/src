@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.104 2003/02/23 00:22:34 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.105 2003/03/02 04:34:31 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.104 2003/02/23 00:22:34 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.105 2003/03/02 04:34:31 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -531,6 +531,7 @@ lfs_segwrite(struct mount *mp, int flags)
 	int dirty;
 	int redo;
 	int loopcount;
+	int sn;
 	
 	fs = VFSTOUFS(mp)->um_lfs;
 
@@ -584,7 +585,7 @@ lfs_segwrite(struct mount *mp, int flags)
 	 */
 	if (sp->seg_flags & SEGM_CLEAN)
 		lfs_writevnodes(fs, mp, sp, VN_CLEAN);
-	else {
+	else if (!(sp->seg_flags & SEGM_FORCE_CKP)) {
 		lfs_writevnodes(fs, mp, sp, VN_REG);
 		if (!fs->lfs_dirops || !fs->lfs_flushvp) {
 			while (fs->lfs_dirops)
@@ -618,11 +619,16 @@ lfs_segwrite(struct mount *mp, int flags)
 
 				panic("lfs_segwrite: ifile read");
 			segusep = (SEGUSE *)bp->b_data;
-			for (i = fs->lfs_sepb; i--;) {
+			for (i = fs->lfs_sepb; i > 0; i--) {
+				sn = (ibno - fs->lfs_cleansz) * fs->lfs_sepb +
+					fs->lfs_sepb - i;
 				if (segusep->su_flags & SEGUSE_ACTIVE) {
 					segusep->su_flags &= ~SEGUSE_ACTIVE;
+					--fs->lfs_nactive;
 					++dirty;
 				}
+				fs->lfs_suflags[fs->lfs_activesb][sn] =
+					segusep->su_flags;
 				if (fs->lfs_version > 1)
 					++segusep;
 				else
@@ -634,16 +640,18 @@ lfs_segwrite(struct mount *mp, int flags)
 			segusep = (SEGUSE *)bp->b_data;
 			if (dtosn(fs, fs->lfs_curseg) / fs->lfs_sepb ==
 			    (ibno-fs->lfs_cleansz)) {
+				sn = dtosn(fs, fs->lfs_curseg);
 				if (fs->lfs_version > 1)
-					segusep[dtosn(fs, fs->lfs_curseg) %
-					     fs->lfs_sepb].su_flags |=
+					segusep[sn % fs->lfs_sepb].su_flags |=
 						     SEGUSE_ACTIVE;
 				else
 					((SEGUSE *)
 					 ((SEGUSE_V1 *)(bp->b_data) +
-					  (dtosn(fs, fs->lfs_curseg) %
-					   fs->lfs_sepb)))->su_flags
+					  (sn % fs->lfs_sepb)))->su_flags
 						   |= SEGUSE_ACTIVE;
+				fs->lfs_suflags[fs->lfs_activesb][sn] |=
+					SEGUSE_ACTIVE;
+				++fs->lfs_nactive;
 				--dirty;
 			}
 			if (dirty)
@@ -1201,8 +1209,9 @@ loop:	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 # define DEBUG_OOFF(n) do {						\
 	if (ooff == 0) {						\
 		printf("lfs_updatemeta[%d]: warning: writing "		\
-			"ino %d lbn %" PRId64 " at 0x%" PRIx64		\
-			", was 0x0\n", (n), ip->i_number, lbn, daddr);	\
+			"ino %d lbn %" PRId64 " at 0x%" PRIx32		\
+			", was 0x0 (or %" PRId64 ")\n",			\
+			(n), ip->i_number, lbn, ndaddr, daddr);		\
 	}								\
 } while(0)
 #else
