@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.2 2001/10/15 16:13:40 minoura Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.3 2001/10/15 16:23:01 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -258,6 +258,7 @@ bootufs(void)
 #endif
 	struct exec header;
 	int size;
+	extern const char bootprog_name[], bootprog_rev[];
 
 #ifdef BOOT_DEBUG
 	/* for debug; レジスタの状態をプリントする */
@@ -266,6 +267,10 @@ bootufs(void)
 		B_PRINT((i & 7) == 7 ? "\r\n" : " ");
 	}
 #endif
+
+	B_PRINT(bootprog_name);
+	B_PRINT(" rev.");	B_PRINT(bootprog_rev);
+	B_PRINT("\r\n");
 
 	/*
 	 * get boot device
