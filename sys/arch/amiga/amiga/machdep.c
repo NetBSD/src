@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 1996/04/27 20:48:52 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 1996/04/28 06:57:15 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -141,6 +141,12 @@ static void call_sicallbacks __P((void));
 void intrhand __P((int));
 static void dumpmem __P((int *, int, int));
 static char *hexstr __P((int, int));
+#if NSER > 0
+void ser_outintr __P((void));
+#endif
+#if NFD > 0
+void fdintr __P((int));
+#endif
 
 /*
  * Declare these as initialized data so we can patch them.
