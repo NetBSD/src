@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sip.c,v 1.3 2003/06/01 21:42:27 ichiro Exp $ */
+/*	$NetBSD: ixp425_sip.c,v 1.4 2003/10/08 14:55:04 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.3 2003/06/01 21:42:27 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.4 2003/10/08 14:55:04 scw Exp $");
 
 /*
  * Slow peripheral bus of IXP425 Processor
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.3 2003/06/01 21:42:27 ichiro Exp $"
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
+#include <arm/xscale/ixp425var.h>
 #include <arm/xscale/ixp425_sipvar.h>
 
 #include "locators.h"
@@ -74,6 +75,11 @@ ixpsip_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = &ixpsip_bs_tag;
 
 	printf("\n");
+
+	/*
+	 * Bootstrap the timer (needed for delay(9))
+	 */
+	ixp425_clk_bootstrap(sc->sc_iot);
 
 	/*
 	 *  Attach each devices

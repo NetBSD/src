@@ -1,4 +1,4 @@
-#	$NetBSD: std.ixdp425,v 1.4 2003/09/25 14:11:18 ichiro Exp $
+#	$NetBSD: std.ixdp425,v 1.5 2003/10/08 14:55:04 scw Exp $
 #
 # standard NetBSD/evbarm for IXDP425 options
 
@@ -10,9 +10,9 @@ include "arch/evbarm/conf/files.ixdp425"
 options 	EXEC_ELF32
 options 	EXEC_AOUT
 options 	EXEC_SCRIPT
-
-# To support easy transit to ../arch/arm/arm32
 options 	ARM32
+
+options 	COM_PXA2X0		# Enable IXP Uart support in com(4)
 
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 

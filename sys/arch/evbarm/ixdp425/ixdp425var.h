@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425var.h,v 1.1 2003/05/24 01:59:32 ichiro Exp $ */
+/*	$NetBSD: ixdp425var.h,v 1.2 2003/10/08 14:55:04 scw Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,5 @@
 #define _IXDP425VAR_H_
 
 #include <dev/pci/pcivar.h>
-
-void	ixdp425_pci_init(pci_chipset_tag_t, void *);
 
 #endif /* _IXDP425VAR_H_ */

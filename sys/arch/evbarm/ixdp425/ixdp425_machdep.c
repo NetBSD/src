@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.7 2003/09/25 14:11:18 ichiro Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.8 2003/10/08 14:55:04 scw Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.7 2003/09/25 14:11:18 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.8 2003/10/08 14:55:04 scw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -105,9 +105,13 @@ __KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.7 2003/09/25 14:11:18 ichiro E
 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>
-
 #include <arm/xscale/ixp425_sipvar.h>
-#include <arm/xscale/ixp425_comvar.h>
+
+#include "com.h"
+#if NCOM > 0
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+#endif
 
 #include "opt_ipkdb.h"
 #include "ksyms.h"
@@ -151,11 +155,6 @@ vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
 int physmem = 0;
-
-/*int debug_flags;*/
-#ifndef PMAP_STATIC_L1S
-int max_processes = 64;			/* Default number */
-#endif	/* !PMAP_STATIC_L1S */
 
 /* Physical and virtual addresses for some global pages */
 pv_addr_t systempage;
@@ -398,7 +397,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
-	printf("\nNetBSD/evbarm (IXP425) booting ...\n");
+	printf("\nNetBSD/evbarm (Intel IXDP425) booting ...\n");
 #endif
 
 	/*
@@ -501,7 +500,7 @@ initarm(void *arg)
 		panic("initarm: Failed to align the kernel page directory");
 
 	/*
-	 * Allocate a page for the system page mapped to V0x00000000
+	 * Allocate a page for the system page.
 	 * This page will just contain the system vectors and can be
 	 * shared by all processes.
 	 */
@@ -778,6 +777,9 @@ void
 consinit(void)
 {
 	static int consinit_called;
+	static const bus_addr_t addrs[2] = {
+		IXP425_UART0_HWBASE, IXP425_UART1_HWBASE
+	};
 
 	if (consinit_called != 0)
 		return;
@@ -786,7 +788,7 @@ consinit(void)
 
 	pmap_devmap_register(ixp425_devmap);
 
-	if (ixdp_ixp4xx_comcnattach(&ixpsip_bs_tag, comcnunit,
-				comcnspeed, FREQ, comcnmode))
+	if (comcnattach(&ixp425_a4x_bs_tag, addrs[comcnunit],
+	    comcnspeed, IXP425_UART_FREQ, COM_TYPE_PXA2x0, comcnmode))
 		panic("can't init serial console (UART%d)", comcnunit);
 }

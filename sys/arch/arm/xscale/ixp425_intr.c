@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.3 2003/09/25 14:11:18 ichiro Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.4 2003/10/08 14:55:04 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.3 2003/09/25 14:11:18 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.4 2003/10/08 14:55:04 scw Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -91,8 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.3 2003/09/25 14:11:18 ichiro Exp $
 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>
-
-#include <evbarm/ixdp425/ixdp425reg.h>
 
 /* Interrupt handler queues. */
 struct intrq intrq[NIRQ];
@@ -162,6 +160,27 @@ ixp425_disable_irq(int irq)
 
 	intr_enabled &= ~(1U << irq);
 	ixp425_set_intrmask();
+}
+
+static __inline u_int32_t
+ixp425_irq2gpio_bit(int irq)
+{
+
+	static const u_int8_t int2gpio[32] __attribute__ ((aligned(32))) = {
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* INT#0 -> INT#5 */
+		0x00, 0x01,				/* GPIO#0 -> GPIO#1 */
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* INT#8 -> INT#13 */
+		0xff, 0xff, 0xff, 0xff, 0xff,		/* INT#14 -> INT#18 */
+		0x02, 0x03, 0x04, 0x05, 0x06, 0x07,	/* GPIO#2 -> GPIO#7 */
+		0x08, 0x09, 0x0a, 0x0b, 0x0c,		/* GPIO#8 -> GPIO#12 */
+		0xff, 0xff				/* INT#30 -> INT#31 */
+	};
+
+#ifdef DEBUG
+	if (int2gpio[irq] == 0xff)
+		panic("ixp425_irq2gpio_bit: bad GPIO irq: %d\n", irq);
+#endif
+	return (1U << int2gpio[irq]);
 }
 
 /*
@@ -420,6 +439,8 @@ ixp425_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 	/* All IXP425 interrupts are level-triggered. */
 	iq->iq_ist = IST_LEVEL; /* XXX */
 
+	IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) = ixp425_irq2gpio_bit(irq);
+
 	oldirqstate = disable_interrupts(I32_bit);
 
 	TAILQ_INSERT_TAIL(&iq->iq_list, ih, ih_list);
@@ -452,7 +473,7 @@ ixp425_intr_dispatch(struct clockframe *frame)
 {
 	struct intrq *iq;
 	struct intrhand *ih;
-	int oldirqstate, pcpl, irq, ibit, hwpend;
+	int oldirqstate, pcpl, irq, ibit, hwpend, handled;
 
 	pcpl = current_spl_level;
 
@@ -462,37 +483,6 @@ ixp425_intr_dispatch(struct clockframe *frame)
 	 * Disable all the interrupts that are pending.  We will
 	 * reenable them once they are processed and not masked.
 	 */
-
-	/* Clear GPIO interrupts pending for PCI(A..D) */
-	if (hwpend & (1U << PCI_INT_A)) {
-#ifdef DEBUG
-		printf("ixp425_intr_dispatch: PCI_INT_A\n");
-#endif
-		IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) =
-			(1U << GPIO_PCI_INTA);
-	}
-	if (hwpend & (1U << PCI_INT_B)) { 
-#ifdef DEBUG
-		printf("ixp425_intr_dispatch: PCI_INT_B\n");
-#endif
-		IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) =
-			(1U << GPIO_PCI_INTB);
-	}
-	if (hwpend & (1U << PCI_INT_C)) { 
-#ifdef DEBUG
-		printf("ixp425_intr_dispatch: PCI_INT_C\n");
-#endif
-		IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) =
-			(1U << GPIO_PCI_INTC);
-	}
-	if (hwpend & (1U << PCI_INT_D)) { 
-#ifdef DEBUG
-		printf("ixp425_intr_dispatch: PCI_INT_D\n");
-#endif
-		IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) =
-			(1U << GPIO_PCI_INTD);
-	}
-
 	intr_enabled &= ~hwpend;
 	ixp425_set_intrmask();
 
@@ -517,12 +507,33 @@ ixp425_intr_dispatch(struct clockframe *frame)
 		iq->iq_ev.ev_count++;
 		uvmexp.intrs++;
 		current_spl_level |= iq->iq_mask;
+
+		/* Clear down non-level triggered GPIO interrupts now */
+		if ((ibit & IXP425_INT_GPIOMASK) && iq->iq_ist != IST_LEVEL) {
+			IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) =
+			    ixp425_irq2gpio_bit(irq);
+		}
+
 		oldirqstate = enable_interrupts(I32_bit);
-		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
+		for (handled = 0, ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
 		     ih = TAILQ_NEXT(ih, ih_list)) {
-			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
+			handled |=
+			    (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 		}
 		restore_interrupts(oldirqstate);
+
+#if 0	/* XXX: There's a spurious interrupt coming from somewhere... */
+		if (handled == 0 && iq->iq_ist == IST_LEVEL) {
+			panic("ixp425_intr_dispatch: unhandled level-triggered"
+			    " interrupt: irq %d", irq);
+		}
+#endif
+
+		/* Clear down level triggered GPIO interrupts now */
+		if ((ibit & IXP425_INT_GPIOMASK) && iq->iq_ist == IST_LEVEL) {
+			IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) =
+			    ixp425_irq2gpio_bit(irq);
+		}
 
 		current_spl_level = pcpl;
 
