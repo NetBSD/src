@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_nbsd.c,v 1.7 2001/01/12 05:19:18 itojun Exp $	*/
+/*	$NetBSD: if_lmc_nbsd.c,v 1.8 2001/04/12 07:50:54 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -197,7 +197,7 @@ lmc_pci_probe(struct device *parent, struct cfdata *match,
 	if ((PCI_CHIPID(id) != PCI_PRODUCT_LMC_HSSI)
 	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_DS3)
 	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_SSI)
-	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_T1))
+	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_DS1))
 		return 0;
 
 	return 10; /* must be > than any other tulip driver */
@@ -217,7 +217,7 @@ lmc_pci_attach(struct device * const parent,
 	u_int32_t revinfo, cfdainfo, id, ssid;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
-#if !defined(LMC_IOMAPPED)
+#if 0
 	vm_offset_t pa_csrs;
 #endif
 	unsigned csroffset = LMC_PCI_CSROFFSET;
@@ -230,6 +230,7 @@ lmc_pci_attach(struct device * const parent,
 	extern lmc_media_t lmc_hssi_media;
 	extern lmc_media_t lmc_ds3_media;
 	extern lmc_media_t lmc_t1_media;
+	extern lmc_media_t lmc_ssi_media;
 
 	revinfo  = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CFRV) & 0xFF;
 	id       = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CFID);
@@ -247,12 +248,16 @@ lmc_pci_attach(struct device * const parent,
 		break;
 	case PCI_PRODUCT_LMC_SSI:
 		printf(": Lan Media Corporation SSI\n");
+		sc->lmc_media = &lmc_ssi_media;
+		break;
+	case PCI_PRODUCT_LMC_DS1:
+		printf(": Lan Media Corporation T1\n");
 		sc->lmc_media = &lmc_t1_media;
 		break;
 	}
 
-        sc->lmc_pci_busno = parent;
-        sc->lmc_pci_devno = pa->pa_device;
+	sc->lmc_pci_busno = parent;
+	sc->lmc_pci_devno = pa->pa_device;
 
 	sc->lmc_chipid = LMC_21140A;
 	sc->lmc_features |= LMC_HAVE_STOREFWD;
@@ -296,6 +301,11 @@ lmc_pci_attach(struct device * const parent,
 			       sc->lmc_dev.dv_xname);
 			return;
 		}
+		/* Make sure bus mastering is enabled. */
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+			       pci_conf_read(pa->pa_pc, pa->pa_tag,
+					     PCI_COMMAND_STATUS_REG) |
+			       PCI_COMMAND_MASTER_ENABLE);
 	}
 
 	lmc_initcsrs(sc, csr_base + csroffset, csrsize);
@@ -309,7 +319,7 @@ lmc_pci_attach(struct device * const parent,
 
 	sc->lmc_media->defaults(sc);
 
-	sc->lmc_media->set_link_status(sc, 0); /* down */
+	sc->lmc_media->set_link_status(sc, LMC_LINK_DOWN); /* down */
 
 	/*
 	 * Make sure there won't be any interrupts or such...
@@ -324,10 +334,6 @@ lmc_pci_attach(struct device * const parent,
 	DELAY(100);
 
 	lmc_read_macaddr(sc);
-	printf("%s: pass %d.%d, serial " LMC_EADDR_FMT "\n",
-	       sc->lmc_dev.dv_xname,
-	       (sc->lmc_revinfo & 0xF0) >> 4, sc->lmc_revinfo & 0x0F,
-	       LMC_EADDR_ARGS(sc->lmc_enaddr));
 
 	if (pci_intr_map(pa, &intrhandle)) {
 		printf("%s: couldn't map interrupt\n",
@@ -345,11 +351,14 @@ lmc_pci_attach(struct device * const parent,
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->lmc_dev.dv_xname,
-	       intrstr);
 
-        sc->lmc_ats = shutdownhook_establish(lmc_shutdown, sc);
-        if (sc->lmc_ats == NULL)
+	printf("%s: pass %d.%d, serial " LMC_EADDR_FMT ", %s\n",
+	       sc->lmc_dev.dv_xname,
+	       (sc->lmc_revinfo & 0xF0) >> 4, sc->lmc_revinfo & 0x0F,
+	       LMC_EADDR_ARGS(sc->lmc_enaddr), intrstr);
+
+	sc->lmc_ats = shutdownhook_establish(lmc_shutdown, sc);
+	if (sc->lmc_ats == NULL)
 		printf("%s: warning: couldn't establish shutdown hook\n",
 		       sc->lmc_xname);
 
