@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.15 2000/12/21 05:11:00 enami Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.16 2001/06/19 09:12:49 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -84,6 +84,8 @@
 #define CR4_MCE	0x00000040	/* machine check enable */
 #define CR4_PGE	0x00000080	/* page global enable */
 #define CR4_PCE	0x00000100	/* enable RDPMC instruction for all cpls */
+#define CR4_OSFXSR	0x00000200	/* enable fxsave/fxrestor and SSE */
+#define CR4_OSXMMEXCPT	0x00000400	/* enable unmasked SSE exceptions */
 
 /*
  * CPUID "features" bits:
