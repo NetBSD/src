@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.10 1999/03/26 22:45:17 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.10.2.1 1999/04/26 15:46:47 perry Exp $ */
 /* release_03_25_99 */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -312,7 +312,6 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmamap;
-	int s;
 	int dosleep = (xs->flags & SCSI_NOSLEEP) != 0;
 
 	if (xs->datalen == 0) {
@@ -331,14 +330,12 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 		panic("%s: dma map already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
-	s = splbio();
 	if (bus_dmamap_load(sbc->sbus_dmatag, dmamap,
 			    xs->data, xs->datalen, NULL,
 			    dosleep ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) != 0) {
 		XS_SETERR(xs, HBA_BOTCH);
 		return (CMD_COMPLETE);
 	}
-	splx(s);
 	bus_dmamap_sync(sbc->sbus_dmatag, dmamap,
 			dmamap->dm_segs[0].ds_addr, xs->datalen,
 			(xs->flags & SCSI_DATA_IN)
@@ -364,7 +361,6 @@ isp_sbus_dmateardown(isp, xs, handle)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmamap;
-	int s;
 
 	if (handle >= RQUEST_QUEUE_LEN) {
 		panic("%s: bad handle (%d) in isp_sbus_dmateardown\n",
@@ -382,7 +378,5 @@ isp_sbus_dmateardown(isp, xs, handle)
 			(xs->flags & SCSI_DATA_IN)
 				? BUS_DMASYNC_POSTREAD
 				: BUS_DMASYNC_POSTWRITE);
-	s = splbio();
 	bus_dmamap_unload(sbc->sbus_dmatag, dmamap);
-	splx(s);
 }
