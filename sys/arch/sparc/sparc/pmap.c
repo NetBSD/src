@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.19 1994/10/02 22:00:55 deraadt Exp $
+ * $Id: pmap.c,v 1.20 1994/11/02 23:18:25 deraadt Exp $
  */
 
 /*
@@ -306,9 +306,9 @@ vm_offset_t	virtual_end;	/* last free virtual page number */
 #define	setsegmap(va, pmeg)	stba(va, ASI_SEGMAP, pmeg)
 #endif
 #if defined(SUN4) && defined(SUN4C)
-#define	getsegmap(va)		(cputyp == CPU_SUN4C ? lduba(va, ASI_SEGMAP) \
+#define	getsegmap(va)		(cputyp==CPU_SUN4C ? lduba(va, ASI_SEGMAP) \
 				    : lduha(va, ASI_SEGMAP))
-#define	setsegmap(va, pmeg)	(cputyp == CPU_SUN4C ? stba(va, ASI_SEGMAP, pmeg) \
+#define	setsegmap(va, pmeg)	(cputyp==CPU_SUN4C ? stba(va, ASI_SEGMAP, pmeg) \
 				    : stha(va, ASI_SEGMAP, pmeg))
 #endif
 
@@ -491,13 +491,18 @@ mmu_reservemon(nmmu)
 	register u_int va, eva;
 	register int mmuseg, i;
 
+#if defined(SUN4)
 	if (cputyp==CPU_SUN4) {
 		va = OLDMON_STARTVADDR;
 		eva = OLDMON_ENDVADDR;
-	} else {
+	}
+#endif
+#if defined(SUN4C)
+	if (cputyp==CPU_SUN4C) {
 		va = OPENPROM_STARTVADDR;
 		eva = OPENPROM_ENDVADDR;
 	}
+#endif
 	while (va < eva) {
 		mmuseg = getsegmap(va);
 		if (mmuseg < nmmu)
@@ -1249,7 +1254,6 @@ pmap_bootstrap(nmmu, nctx)
 	nptesg = (NBPSG >> pgshift);
 #endif
 
-
 	/*
 	 * Last segment is the `invalid' one (one PMEG of pte's with !pg_v).
 	 * It will never be used for anything else.
@@ -1683,16 +1687,6 @@ pmap_remove(pm, va, endva)
 	setcontext(ctx);
 }
 
-#if !(defined(SUN4) && defined(SUN4C))
-#define perftest
-#endif
-#ifdef perftest
-/* counters, one per possible length */
-int	rmk_vlen[NPTESG+1];	/* virtual length per rmk() call */
-int	rmk_npg[NPTESG+1];	/* n valid pages per rmk() call */
-int	rmk_vlendiff;		/* # times npg != vlen */
-#endif
-
 /*
  * The following magic number was chosen because:
  *	1. It is the same amount of work to cache_flush_page 4 pages
@@ -1723,9 +1717,6 @@ pmap_rmk(pm, va, endva, vseg, nleft, pmeg)
 {
 	register int i, tpte, perpage, npg;
 	register struct pvlist *pv;
-#ifdef perftest
-	register int nvalid;
-#endif
 
 #ifdef DEBUG
 	if (pmeg == seginval)
@@ -1748,9 +1739,6 @@ pmap_rmk(pm, va, endva, vseg, nleft, pmeg)
 		/* flush each page individually; some never need flushing */
 		perpage = 1;
 	}
-#ifdef perftest
-	nvalid = 0;
-#endif
 	while (va < endva) {
 		tpte = getpte(va);
 		if ((tpte & PG_V) == 0) {
@@ -1760,9 +1748,6 @@ pmap_rmk(pm, va, endva, vseg, nleft, pmeg)
 		pv = NULL;
 		/* if cacheable, flush page as needed */
 		if ((tpte & PG_NC) == 0) {
-#ifdef perftest
-			nvalid++;
-#endif
 			if (perpage)
 				cache_flush_page(va);
 		}
@@ -1778,12 +1763,6 @@ pmap_rmk(pm, va, endva, vseg, nleft, pmeg)
 		setpte(va, 0);
 		va += NBPG;
 	}
-#ifdef perftest
-	rmk_vlen[npg]++;
-	rmk_npg[nvalid]++;
-	if (npg != nvalid)
-		rmk_vlendiff++;
-#endif
 
 	/*
 	 * If the segment is all gone, remove it from everyone and
@@ -1800,14 +1779,6 @@ pmap_rmk(pm, va, endva, vseg, nleft, pmeg)
 	}
 	return (nleft);
 }
-
-#ifdef perftest
-/* as before but for pmap_rmu */
-int	rmu_vlen[NPTESG+1];	/* virtual length per rmu() call */
-int	rmu_npg[NPTESG+1];	/* n valid pages per rmu() call */
-int	rmu_vlendiff;		/* # times npg != vlen */
-int	rmu_noflush;		/* # times rmu does not need to flush at all */
-#endif
 
 /*
  * Just like pmap_rmk_magic, but we have a different threshold.
@@ -1828,9 +1799,6 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 {
 	register int *pte0, i, pteva, tpte, perpage, npg;
 	register struct pvlist *pv;
-#ifdef perftest
-	register int doflush, nvalid;
-#endif
 
 	pte0 = pm->pm_pte[vseg];
 	if (pmeg == seginval) {
@@ -1871,10 +1839,6 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 	if (pm->pm_ctx) {
 		/* process has a context, must flush cache */
 		npg = (endva - va) >> PGSHIFT;
-#ifdef perftest
-		doflush = 1;
-		nvalid = 0;
-#endif
 		setcontext(pm->pm_ctxnum);
 		if (npg > PMAP_RMU_MAGIC) {
 			perpage = 0; /* flush the whole segment */
@@ -1892,12 +1856,6 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 		setsegmap(0, pmeg);
 		pteva = VA_VPG(va) << PGSHIFT;
 		perpage = 0;
-#ifdef perftest
-		npg = 0;
-		doflush = 0;
-		nvalid = 0;
-		rmu_noflush++;
-#endif
 	}
 	for (; va < endva; pteva += PAGE_SIZE, va += PAGE_SIZE) {
 		tpte = getpte(pteva);
@@ -1906,10 +1864,6 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 		pv = NULL;
 		/* if cacheable, flush page as needed */
 		if ((tpte & PG_NC) == 0) {
-#ifdef perftest
-			if (doflush)
-				nvalid++;
-#endif
 			if (perpage)
 				cache_flush_page(va);
 		}
@@ -1924,14 +1878,6 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 		nleft--;
 		setpte(pteva, 0);
 	}
-#ifdef perftest
-	if (doflush) {
-		rmu_vlen[npg]++;
-		rmu_npg[nvalid]++;
-		if (npg != nvalid)
-			rmu_vlendiff++;
-	}
-#endif
 
 	/*
 	 * If the segment is all gone, and the context is loaded, give
