@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.34 2001/01/01 15:47:37 sommerfeld Exp $	*/
+/*	$NetBSD: make.c,v 1.35 2001/01/15 22:17:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.34 2001/01/01 15:47:37 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.35 2001/01/15 22:17:09 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.34 2001/01/01 15:47:37 sommerfeld Exp $");
+__RCSID("$NetBSD: make.c,v 1.35 2001/01/15 22:17:09 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -646,7 +646,8 @@ Make_Update (cgn)
 	    pgn = (GNode *)Lst_Datum (ln);
 	    if (pgn->flags & REMAKE) {
 		Var_Set (IMPSRC, cname, pgn);
-		Var_Set (PREFIX, cpref, pgn);
+		if (cpref != NULL)
+		    Var_Set (PREFIX, cpref, pgn);
 	    }
 	}
 	if (p1)
