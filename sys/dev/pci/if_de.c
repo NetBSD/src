@@ -1,4 +1,4 @@
-/*    $NetBSD: if_de.c,v 1.26 1996/10/13 01:38:19 christos Exp $       */
+/*    $NetBSD: if_de.c,v 1.27 1996/10/21 22:56:32 thorpej Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -138,6 +138,25 @@ typedef struct {
     int ri_free;
 } tulip_ringinfo_t;
 
+#ifdef __NetBSD__
+/*
+ * These macros are the same for NetBSD regardless of TULIP_IOMAPPED.
+ */
+typedef bus_size_t tulip_csrptr_t;
+
+#define	TULIP_READ_CSR(sc, csr)	\
+    bus_space_read_4((sc)->tulip_bst, (sc)->tulip_bsh, (sc)->tulip_csrs.csr)
+#define	TULIP_WRITE_CSR(sc, csr, val) \
+    bus_space_write_4((sc)->tulip_bst, (sc)->tulip_bsh, (sc)->tulip_csrs.csr, \
+    (val))
+
+#define	TULIP_READ_CSRBYTE(sc, csr) \
+    bus_space_read_1((sc)->tulip_bst, (sc)->tulip_bsh, (sc)->tulip_csrs.csr)
+#define	TULIP_WRITE_CSRBYTE(sc, csr, val) \
+    bus_space_write_1((sc)->tulip_bst, (sc)->tulip_bsh, (sc)->tulip_csrs.csr, \
+    (val))
+#endif /* __NetBSD__ */
+
 #ifdef TULIP_IOMAPPED
 
 #define	TULIP_EISA_CSRSIZE	16
@@ -151,19 +170,7 @@ typedef tulip_uint16_t tulip_csrptr_t;
 
 #define	TULIP_READ_CSRBYTE(sc, csr)		(inb((sc)->tulip_csrs.csr))
 #define	TULIP_WRITE_CSRBYTE(sc, csr, val)	outb((sc)->tulip_csrs.csr, val)
-#else
-typedef bus_io_size_t tulip_csrptr_t;
-
-#define	TULIP_READ_CSR(sc, csr)	\
-    bus_io_read_4((sc)->tulip_bc, (sc)->tulip_ioh, (sc)->tulip_csrs.csr)
-#define	TULIP_WRITE_CSR(sc, csr, val) \
-    bus_io_write_4((sc)->tulip_bc, (sc)->tulip_ioh, (sc)->tulip_csrs.csr, (val))
-
-#define	TULIP_READ_CSRBYTE(sc, csr) \
-    bus_io_read_1((sc)->tulip_bc, (sc)->tulip_ioh, (sc)->tulip_csrs.csr)
-#define	TULIP_WRITE_CSRBYTE(sc, csr, val) \
-    bus_io_write_1((sc)->tulip_bc, (sc)->tulip_ioh, (sc)->tulip_csrs.csr, (val))
-#endif
+#endif /* ! __NetBSD__ */
 
 #else /* TULIP_IOMAPPED */
 
@@ -180,15 +187,8 @@ typedef volatile tulip_uint32_t *tulip_csrptr_t;
 #define	TULIP_READ_CSR(sc, csr)		(0 + *(sc)->tulip_csrs.csr)
 #define	TULIP_WRITE_CSR(sc, csr, val) \
 	    ((void)(*(sc)->tulip_csrs.csr = (val)))
-#else
-typedef bus_mem_size_t tulip_csrptr_t;
+#endif /* ! __NetBSD__ */
 
-#define	TULIP_READ_CSR(sc, csr)	\
-    bus_mem_read_4((sc)->tulip_bc, (sc)->tulip_memh, (sc)->tulip_csrs.csr)
-#define	TULIP_WRITE_CSR(sc, csr, val) \
-    bus_mem_write_4((sc)->tulip_bc, (sc)->tulip_memh, (sc)->tulip_csrs.csr, \
-      (val))
-#endif
 #endif /* TULIP_IOMAPPED */
 
 typedef struct {
@@ -312,13 +312,9 @@ struct _tulip_softc_t {
     struct device tulip_dev;		/* base device */
     void *tulip_ih;			/* intrrupt vectoring */
     void *tulip_ats;			/* shutdown hook */
-    bus_chipset_tag_t tulip_bc;
-    pci_chipset_tag_t tulip_pc;
-#ifdef TULIP_IOMAPPED
-    bus_io_handle_t tulip_ioh;		/* I/O region handle */
-#else
-    bus_io_handle_t tulip_memh;		/* memory region handle */
-#endif
+    pci_chipset_tag_t tulip_pc;		/* PCI chipset cookie */
+    bus_space_tag_t tulip_bst;		/* bus space tag */
+    bus_space_handle_t tulip_bsh;	/* bus space handle */
 #endif
     char tulip_xname[IFNAMSIZ];		/* name + unit number */
     struct arpcom tulip_ac;
@@ -425,7 +421,7 @@ static void tulip_addr_filter(tulip_softc_t *sc);
 #if defined(__NetBSD__) && defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #undef vtophys
-#define	vtophys(va)	__alpha_bus_XXX_dmamap(sc->tulip_bc, (void *)(va))
+#define	vtophys(va)	__alpha_bus_XXX_dmamap(sc->tulip_bst, (void *)(va))
 #endif
 
 
@@ -2438,15 +2434,9 @@ tulip_pci_attach(
 #if defined(__NetBSD__)
     tulip_softc_t * const sc = (tulip_softc_t *) self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
-    bus_chipset_tag_t bc = pa->pa_bc;
     pci_chipset_tag_t pc = pa->pa_pc;
-#if defined(TULIP_IOMAPPED)
-    bus_io_addr_t iobase;
-    bus_io_size_t iosize;
-#else
-    bus_mem_addr_t membase;
-    bus_mem_size_t memsize;
-#endif
+    bus_addr_t tulipbase;
+    bus_size_t tulipsize;
 #if defined(__FreeBSD__)
     int unit = sc->tulip_dev.dv_unit;
 #endif
@@ -2578,17 +2568,20 @@ tulip_pci_attach(
 #endif /* __bsdi__ */
 
 #if defined(__NetBSD__)
-    sc->tulip_bc = bc;
     sc->tulip_pc = pc;
 #if defined(TULIP_IOMAPPED)
-    retval = pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize);
+    sc->tulip_bst = pa->pa_iot;
+    retval = pci_io_find(pc, pa->pa_tag, PCI_CBIO, &tulipbase, &tulipsize);
     if (!retval)
-	retval = bus_io_map(bc, iobase, iosize, &sc->tulip_ioh);
+	retval = bus_space_map(pa->pa_iot, tulipbase, tulipsize, 0,
+	  &sc->tulip_bsh);
 #else
-    retval = pci_mem_find(pc, pa->pa_tag, PCI_CBMA, &membase, &memsize,
-	NULL);
+    sc->tulip_bst = pa->pa_memt;
+    retval = pci_mem_find(pc, pa->pa_tag, PCI_CBMA, &tulipbase, &tulipsize,
+      NULL);
     if (!retval)
-	retval = bus_mem_map(bc, membase, memsize, 0, &sc->tulip_memh);
+	retval = bus_space_map(pa->pa_memt, tulipbase, tulipsize, 0,
+	  &sc->tulip_bsh);
 #endif
     csr_base = 0;
     if (retval) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.4 1996/10/13 01:38:17 christos Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.5 1996/10/21 22:56:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -66,10 +66,10 @@ bha_pci_match(parent, match, aux)
 	void *match, *aux;
 {
 	struct pci_attach_args *pa = aux;
-	bus_chipset_tag_t bc = pa->pa_bc;
-	bus_io_addr_t iobase;
-	bus_io_size_t iosize;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = pa->pa_iot;
+	bus_addr_t iobase;
+	bus_size_t iosize;
+	bus_space_handle_t ioh;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	int rv;
 
@@ -82,12 +82,12 @@ bha_pci_match(parent, match, aux)
 
 	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize))
 		return (0);
-	if (bus_io_map(bc, iobase, iosize, &ioh))
+	if (bus_space_map(iot, iobase, iosize, 0, &ioh))
 		return (0);
 
-	rv = bha_find(bc, ioh, NULL);
+	rv = bha_find(iot, ioh, NULL);
 
-	bus_io_unmap(bc, ioh, iosize);
+	bus_space_unmap(iot, ioh, iosize);
 
 	return (rv);
 }
@@ -102,10 +102,10 @@ bha_pci_attach(parent, self, aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct bha_softc *sc = (void *)self;
-	bus_chipset_tag_t bc = pa->pa_bc;
-	bus_io_addr_t iobase;
-	bus_io_size_t iosize;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = pa->pa_iot;
+	bus_addr_t iobase;
+	bus_size_t iosize;
+	bus_space_handle_t ioh;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
@@ -121,12 +121,12 @@ bha_pci_attach(parent, self, aux)
 
 	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize))
 		panic("bha_attach: pci_io_find failed!");
-	if (bus_io_map(bc, iobase, iosize, &ioh))
-		panic("bha_attach: bus_io_map failed!");
+	if (bus_space_map(iot, iobase, iosize, 0, &ioh))
+		panic("bha_attach: bus_space_map failed!");
 
-	sc->sc_bc = bc;
+	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	if (!bha_find(bc, ioh, sc))
+	if (!bha_find(iot, ioh, sc))
 		panic("bha_attach: bha_find failed!");
 
 	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.12 1996/10/15 23:41:56 christos Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -120,9 +120,9 @@ ep_pci_attach(parent, self, aux)
 	struct ep_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	bus_chipset_tag_t bc = pa->pa_bc;
-	bus_io_addr_t iobase;
-	bus_io_size_t iosize;
+	bus_space_tag_t iot = pa->pa_iot;
+	bus_addr_t iobase;
+	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	u_short conn = 0;
 	pcireg_t i;
@@ -134,12 +134,12 @@ ep_pci_attach(parent, self, aux)
 		return;
 	}
 
-	if (bus_io_map(bc, iobase, iosize, &sc->sc_ioh)) {
+	if (bus_space_map(iot, iobase, iosize, 0, &sc->sc_ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
-	sc->sc_bc = bc;
+	sc->sc_iot = iot;
 	sc->bustype = EP_BUS_PCI;
 
 	i = pci_conf_read(pc, pa->pa_tag, PCI_CONN);
