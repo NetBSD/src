@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.74 1994/03/29 04:36:30 mycroft Exp $
+ *	$Id: wd.c,v 1.75 1994/03/30 04:58:32 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -76,7 +76,7 @@
 #define WDCDELAY	100
 #define	RECOVERYTIME	hz/2	/* time to recover from an error */
 
-#if 1
+#if 0
 /* If you enable this, it will report any delays more than 100us * N long. */
 #define WDCNDELAY_DEBUG	10
 #endif
