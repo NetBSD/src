@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.19 1998/11/08 04:10:38 ross Exp $
+.\"	$NetBSD: doc-common,v 1.20 1999/01/11 19:09:30 garbled Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -179,7 +179,7 @@
 .de Os
 .ds oS Null
 .if "\\$1"" \{\
-.	ds oS 4.4BSD
+.	ds oS NetBSD 1.4
 .\}
 .if "\\$2"" \{\
 .	ds aa Non-Null
