@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.15 2002/02/12 19:21:36 reinoud Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.16 2002/02/18 13:53:29 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -56,6 +56,9 @@
 #include "pckbc.h"
 
 #include <sys/param.h>
+
+__RCSID("$NetBSD: rpc_machdep.c,v 1.16 2002/02/18 13:53:29 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
@@ -78,6 +81,7 @@
 #include <machine/io.h>
 #include <machine/intr.h>
 #include <arm/arm32/katelib.h>
+#include <arm/arm32/machdep.h>
 #include <machine/vconsole.h>
 #include <arm/undefined.h>
 #include <machine/rtc.h>
@@ -196,6 +200,7 @@ void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
 
+static void canonicalise_bootconfig __P((BootConfig *, BootConfig *));
 static void process_kernel_args	__P((void));
 
 extern void dump_spl_masks	__P((void));
@@ -462,9 +467,9 @@ canonicalise_bootconfig(bootconf, raw_bootconf)
 
 
 u_int
-initarm(raw_bootconf)
-	BootConfig *raw_bootconf;
+initarm(void *cookie)
 {
+	BootConfig *raw_bootconf = cookie;
 	int loop;
 	int loop1;
 	u_int logical;
