@@ -1,6 +1,6 @@
 /**************************************************************************
 **
-**  $Id: ncrstat.c,v 1.2 1994/08/11 04:54:13 mycroft Exp $
+**  $Id: ncrstat.c,v 1.3 1994/10/01 06:28:02 mycroft Exp $
 **
 **  Utility for NCR 53C810 device driver.
 **
@@ -43,39 +43,6 @@
 **
 **
 **-------------------------------------------------------------------------
-**
-**  $Log: ncrstat.c,v $
-**  Revision 1.2  1994/08/11 04:54:13  mycroft
-**  Make this work.
-**
-**  Revision 2.0.0.6  94/08/10  19:36:32  wolf
-**  Multiple "-s" options per line supported.
-**  Ported to NetBSD.
-**  
-**  Revision 2.0.0.5  94/08/09  23:10:20  wolf
-**  new message.
-**  
-**  Revision 2.0.0.4  94/08/08  19:10:28  wolf
-**  struct script left outside struct ncb.
-**  (must fit in one physical page)
-**  
-**  Revision 2.0.0.3  94/08/05  18:44:43  wolf
-**  adapted to ncr.c 2.0.0.8
-**  (script now inside control structure)
-**  
-**  Revision 2.0.0.2  94/07/22  16:57:34  wolf
-**  New option "-n#": get the script label of an address.
-**  
-**  Revision 2.0.0.1  94/07/19  22:25:05  wolf
-**  hexadecimal args.
-**  
-**  Revision 2.0  94/07/10  19:01:30  wolf
-**  FreeBSD release.
-**  
-**  Revision 1.1  94/06/25  17:18:11  wolf
-**  Initial revision
-**  
-***************************************************************************
 */
 
 #include <sys/file.h>
@@ -88,24 +55,20 @@
 #include <errno.h>
 #include <paths.h>
 #include <limits.h>
+#include <kvm.h>
 #include <i386/pci/ncr.c>
 
 /*
 **	used external functions
 */
 
-#ifdef __NetBSD__
-#include <kvm.h>
+#if defined(__NetBSD__) || (__FreeBSD__ >= 2)
 kvm_t	*kvm;
 #define	KVM_NLIST(n)		(kvm_nlist(kvm, (n)) >= 0)
-#define	KVM_READ(o, p, l)	(kvm_read(kvm, (o), (p), (l)) == (l))
+#define	KVM_READ(o, p, l)	(kvm_read(kvm, (o), (void*)(p), (l)) == (l))
 #else
-extern int   kvm_openfiles();
-extern int   kvm_nlist();
-extern char* kvm_geterr();
-extern int   kvm_read();
 #define	KVM_NLIST(n)		(kvm_nlist((n)) >= 0)
-#define	KVM_READ(o, p, l)	(kvm_read((o), (p), (l)) == (l))
+#define	KVM_READ(o, p, l)	(kvm_read((void*)(o), (p), (l)) == (l))
 #endif
 
 extern void  exit();
@@ -176,7 +139,7 @@ read_ccb(u_long base)
 {
 	ccb_base = base;
 	if (!KVM_READ (
-		(void*)base,
+		base,
 		&ccb,
 		sizeof (struct ccb))) {
 		fprintf (stderr, "%s: bad kvm read at %x.\n", prog, base);
@@ -188,7 +151,7 @@ read_lcb(u_long base)
 {
 	lcb_base = base;
 	if (!KVM_READ (
-		(void*)base,
+		base,
 		&lcb,
 		sizeof (struct lcb))) {
 		fprintf (stderr, "%s: bad kvm read at %x.\n", prog, base);
@@ -199,7 +162,7 @@ read_lcb(u_long base)
 read_ncr()
 {
 	if (!KVM_READ (
-		(void*)ncr_base,
+		ncr_base,
 		&ncr,
 		sizeof (ncr))) {
 		fprintf (stderr, "%s: bad kvm read at %x.\n", prog, ncr_base);
@@ -211,13 +174,13 @@ void open_kvm(int flags)
 {
 	int i;
 	u_long	kernel_version;
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || (__FreeBSD__ >= 2)
 	char 	errbuf[_POSIX2_LINE_MAX];
 #endif
 
 	if (kvm_isopen) return;
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || (__FreeBSD__ >= 2)
 	kvm = kvm_openfiles(vmunix, kmemf, NULL, flags, errbuf);
 	if (kvm == NULL) {
 		fprintf(stderr, "%s: kvm_openfiles: %s\n", prog, errbuf);
@@ -244,7 +207,7 @@ void open_kvm(int flags)
 		}
 
 	if (!KVM_READ (
-		(void*)nl[N_NCR_VERSION].n_value,
+		nl[N_NCR_VERSION].n_value,
 		&kernel_version,
 		sizeof (kernel_version))) {
 		fprintf (stderr, "%s: bad kvm read.\n", prog);
@@ -260,7 +223,7 @@ void open_kvm(int flags)
 #ifdef __NetBSD__
 
 	if (!KVM_READ (
-		(void*)nl[N_NCRCD].n_value,
+		nl[N_NCRCD].n_value,
 		&ncrcd,
 		sizeof (ncrcd))) {
 		fprintf (stderr, "%s: bad kvm read.\n", prog);
@@ -274,7 +237,7 @@ void open_kvm(int flags)
 	};
 
 	if (!KVM_READ (
-		(void*)ncrcd.cd_devs+4*ncr_unit,
+		ncrcd.cd_devs+4*ncr_unit,
 		&ncr_base,
 		sizeof (ncr_base))) {
 		fprintf (stderr, "%s: bad kvm read.\n", prog);
@@ -290,7 +253,7 @@ void open_kvm(int flags)
 #else /* !__NetBSD__ */
 
 	if (!KVM_READ (
-		(void*)nl[N_NNCR].n_value,
+		nl[N_NNCR].n_value,
 		&ncr_units,
 		sizeof (ncr_units))) {
 		fprintf (stderr, "%s: bad kvm read.\n", prog);
@@ -304,7 +267,7 @@ void open_kvm(int flags)
 	};
 
 	if (!KVM_READ (
-		(void*)nl[N_NCRP].n_value+4*ncr_unit,
+		nl[N_NCRP].n_value+4*ncr_unit,
 		&ncr_base,
 		sizeof (ncr_base))) {
 		fprintf (stderr, "%s: bad kvm read.\n", prog);
@@ -379,7 +342,7 @@ do_info(void)
 
 	set_target_mask();
 
-	printf ("T:L  Vendor   Device           Rev  Speed   Max   Tags\n");
+	printf ("T:L  Vendor   Device           Rev  Speed   Max Wide Tags\n");
 	for (t=0; t<MAX_TARGET;t++) {
 		if (!((target_mask>>t)&1)) continue;
 		tip = &ncr.target[t];
@@ -425,6 +388,20 @@ do_info(void)
 				continue;
 			};
 			read_lcb ((u_long) tip->lp[l]);
+
+			switch (tip->widedone) {
+			case 1:
+				printf ("   8");
+				break;
+			case 2:
+				printf ("  16");
+				break;
+			case 3:
+				printf ("  32");
+				break;
+			default:
+				printf ("   ?");
+			};
 
 			if (lcb.usetags)
 				printf ("%5d", lcb.actlink);
@@ -681,7 +658,7 @@ u_char in (u_char reg)
 {
 	u_char res;
 	if (!KVM_READ (
-		(void*)(ncr.vaddr + reg),
+		(ncr.vaddr + reg),
 		&res,
 		1)) {
 		fprintf (stderr, "%s: bad kvm read.\n", prog);
@@ -710,7 +687,7 @@ void do_set (char * arg)
 
 	for (i=3; i; i--) {
 		if (!KVM_READ (
-			(void*)(addr),
+			(addr),
 			&user,
 			sizeof (user))) {
 			fprintf (stderr, "%s: bad kvm read.\n", prog);
@@ -733,6 +710,8 @@ void do_set (char * arg)
 "async:         disable synchronous transfers.\n"
 "sync=value:    set the maximal synchronous transfer rate (MHz).\n"
 "fast:          set FAST SCSI-2.\n"
+"\n"
+"wide=value:    set the bus width (0=8bit 1=16bit).\n"
 "\n"
 "tags=value:    use this number of tags.\n"
 "orderedtag:    use ordered tags only.\n"
@@ -762,11 +741,27 @@ void do_set (char * arg)
 		};
 	};
 
+	if (!strncmp(arg, "wide=", 5)) {
+		u_char t = strtoul (arg+5, (char**)0, 0);
+		if (t<=1) {
+			user.data = t;
+			user.cmd  = UC_SETWIDE;
+		};
+	};
+
 	if (!strncmp(arg, "tags=", 5)) {
 		u_char t = strtoul (arg+5, (char**)0, 0);
 		if (t<=SCSI_NCR_MAX_TAGS) {
 			user.data = t;
 			user.cmd  = UC_SETTAGS;
+		};
+	};
+
+	if (!strncmp(arg, "flags=", 6)) {
+		u_char t = strtoul (arg+6, (char**)0, 0);
+		if (t<=0xff) {
+			user.data = t;
+			user.cmd  = UC_SETFLAG;
 		};
 	};
 
@@ -784,12 +779,12 @@ void do_set (char * arg)
 		user.data = M_SIMPLE_TAG;
 		user.cmd  = UC_SETORDER;
 	};
-
+
 	if (!strcmp(arg, "orderedwrite")) {
 		user.data = 0;
 		user.cmd  = UC_SETORDER;
 	};
-
+
 	if (user.cmd) {
 		openkernelwritefile();
 
@@ -920,7 +915,7 @@ static const char * sn (u_long a)
 	if ((d=a-offsetof(struct script, msg_sdtr))<m) m=d, s="<msg_sdtr>";
 	if ((d=a-offsetof(struct script, complete))<m) m=d, s="<complete>";
 	if ((d=a-offsetof(struct script, cleanup))<m) m=d, s="<cleanup>";
-	if ((d=a-offsetof(struct script, savepos))<m) m=d, s="<savepos>";
+	if ((d=a-offsetof(struct script, cleanup0))<m) m=d, s="<cleanup>";
 	if ((d=a-offsetof(struct script, signal))<m) m=d, s="<signal>";
 	if ((d=a-offsetof(struct script, save_dp))<m) m=d, s="<save_dp>";
 	if ((d=a-offsetof(struct script, restore_dp))<m) m=d, s="<restore_dp>";
@@ -1221,7 +1216,7 @@ static void dump_lcb (u_long base)
 	printf ("----------------------\n");
 
 	if (!KVM_READ (
-		(void*)base,
+		base,
 		&l,
 		sizeof (struct lcb))) {
 		fprintf (stderr, "%s: bad kvm read.\n", prog);
@@ -1242,7 +1237,7 @@ static void dump_lcb (u_long base)
 		cn++;
 		printf ("ccb #%d:\n", cn);
 		if (!KVM_READ (
-			(void*)cp,
+			cp,
 			&c,
 			sizeof (struct ccb))) {
 			fprintf (stderr, "%s: bad kvm read.\n", prog);
@@ -1273,10 +1268,12 @@ static void dump_tip (struct tcb * tip)
 
 	printf ("   transfers:%10d.\n", tip->transfers);
 	printf ("       bytes:%10d.\n", tip->bytes    );
-	printf (" user limits: usrsync=%d  usrtags=%d.\n",
-			tip->usrsync, tip->usrtags);
+	printf (" user limits: usrsync=%d  usrwide=%d  usrtags=%d.\n",
+			tip->usrsync, tip->usrwide, tip->usrtags);
 	printf ("        sync: minsync=%d, maxoffs=%d, period=%d ns, sval=%x.\n",
 			tip->minsync, tip->maxoffs, tip->period, tip->sval);
+	printf ("	wide: widedone=%d, wval=%x.\n",
+			tip->widedone, tip->wval);
 
 	printf   ("     hold_cp: %x\n", tip->hold_cp);
 	dump_link ("    jump_tcb", &tip->jump_tcb);
@@ -1320,7 +1317,7 @@ static void dump_ncr (void)
 		struct ncr_reg reg;
 
 		if (!KVM_READ (
-			(void*)ncr.vaddr,
+			ncr.vaddr,
 			&reg,
 			sizeof (reg))) {
 			fprintf (stderr, "%s: bad kvm read.\n", prog);
@@ -1356,7 +1353,7 @@ static void dump_ncr (void)
 		u_long	startpos;
 
 		if (!KVM_READ (
-			(void*)((u_long)ncr.script
+			((u_long)ncr.script
 				+offsetof(struct script, startpos)),
 			&startpos,
 			sizeof (startpos))) {
@@ -1456,7 +1453,7 @@ do_debug(char * arg)
 	if (strchr (debug_opt, 'r')) {
 		struct ncr_reg reg;
 		if (!KVM_READ (
-			(void*)ncr.vaddr,
+			ncr.vaddr,
 			&reg,
 			sizeof (reg))) {
 			fprintf (stderr, "%s: bad kvm read.\n", prog);
@@ -1571,10 +1568,10 @@ void main(argc, argv)
 	case 'i':
 		do_info();
 		break;
+
 	case 's':
 		do_set(optarg);
 		break;
-
 	case 'd':
 		do_debug(optarg);
 		break;
