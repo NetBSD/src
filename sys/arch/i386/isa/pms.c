@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.22 1995/10/05 14:12:21 mycroft Exp $	*/
+/*	$NetBSD: pms.c,v 1.23 1995/10/05 22:06:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -192,7 +192,7 @@ pmsattach(parent, self, aux)
 	/* Other initialization was done by pmsprobe. */
 	sc->sc_state = 0;
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NONE,
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
 	    pmsintr, sc);
 }
 
