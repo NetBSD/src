@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.58 2000/02/27 11:15:47 uch Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.59 2000/03/20 18:39:32 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -123,6 +123,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_DLINK_DE660,
       0, -1, { 0x00, 0x80, 0xc8 } },
+
+    { PCMCIA_STR_RPTI_EP400,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_RPTI_EP400,
+      0, -1, { 0x00, 0x40, 0x95 } },
 
     { PCMCIA_STR_RPTI_EP401,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
