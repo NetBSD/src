@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.47 1995/02/09 05:19:18 mycroft Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.48 1995/06/05 20:57:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -290,9 +290,8 @@ sendsig:
 		t->p_oppid = t->p_pptr->p_pid;
 		if (t->p_pptr != p)
 			proc_reparent(t, p);
-		t->p_xstat = 0;         /* XXX ? */
-		psignal(t, SIGSTOP);
-		return (0);
+		SCARG(uap, data) = SIGSTOP;
+		goto sendsig;
 
 #ifdef PT_SETREGS
 	case  PT_SETREGS:
