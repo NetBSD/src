@@ -699,6 +699,9 @@ arm*-*-netbsd*)
 	tmake_file="t-netbsd arm/t-netbsd"
 	extra_parts=""
 	use_collect2=yes
+	case $machine in
+	armeb*) tm_defines="TARGET_ENDIAN_DEFAULT=ARM_FLAG_BIG_END $tm_defines"
+	esac
 	;;
 arm*-*-linux*)			# ARM GNU/Linux with ELF
 	tm_file="dbxelf.h elfos.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h arm/linux-gas.h arm/linux-elf.h"
