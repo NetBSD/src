@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcmp.S,v 1.7 1998/02/22 08:14:59 mycroft Exp $")
+	RCSID("$NetBSD: strcmp.S,v 1.8 1999/08/23 09:07:35 kleink Exp $")
 #endif
 
 /*
@@ -20,7 +20,7 @@ ENTRY(strcmp)
 	movl	0x08(%esp),%edx
 	jmp	L2			/* Jump into the loop! */
 
-	.align	2,0x90
+	_ALIGN_TEXT,0x90
 L1:	incl	%eax
 	incl	%edx
 L2:	movb	(%eax),%cl
@@ -77,7 +77,7 @@ L2:	movb	(%eax),%cl
 	jz	L3
 	cmpb	%cl,(%edx)
 	je	L1
-	.align 2, 0x90
+	_ALIGN_TEXT,0x90
 L3:	movzbl	(%eax),%eax		/* unsigned comparison */
 	movzbl	(%edx),%edx
 	subl	%edx,%eax

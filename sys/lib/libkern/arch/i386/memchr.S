@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memchr.S,v 1.3 1998/02/22 08:14:58 mycroft Exp $")
+	RCSID("$NetBSD: memchr.S,v 1.4 1999/08/23 09:07:35 kleink Exp $")
 #endif
 
 ENTRY(memchr)
@@ -23,7 +23,7 @@ ENTRY(memchr)
 	leal	-1(%edi),%eax		/* adjust result of scan */
 	popl	%edi
 	ret
-	.align 2,0x90
+	_ALIGN_TEXT,0x90
 L1:	xorl	%eax,%eax
 	popl	%edi
 	ret

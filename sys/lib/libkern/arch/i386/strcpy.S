@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcpy.S,v 1.7 1998/02/22 08:14:59 mycroft Exp $")
+	RCSID("$NetBSD: strcpy.S,v 1.8 1999/08/23 09:07:35 kleink Exp $")
 #endif
 
 /*
@@ -20,7 +20,7 @@ ENTRY(strcpy)
 	movl	8(%esp),%edx		/* src address */
 	pushl	%ecx			/* push dst address */
 
-	.align 2,0x90
+	_ALIGN_TEXT,0x90
 L1:	movb	(%edx),%al		/* unroll loop, but not too much */
 	movb	%al,(%ecx)
 	testb	%al,%al

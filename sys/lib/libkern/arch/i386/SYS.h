@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.8 1998/02/22 08:14:57 mycroft Exp $
+ *	$NetBSD: SYS.h,v 1.9 1999/08/23 09:07:35 kleink Exp $
  */
 
 #include <machine/asm.h>
@@ -52,7 +52,7 @@
 	SYSTRAP(y)
 
 #define _SYSCALL(x,y)							\
-	.text; .align 2;						\
+	.text; _ALIGN_TEXT;						\
 	2: jmp PIC_PLT(cerror);						\
 	_SYSCALL_NOERROR(x,y);						\
 	jc 2b
