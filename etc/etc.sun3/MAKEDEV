@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.56 2003/08/30 11:00:38 dsl Exp $
+#	$NetBSD: MAKEDEV,v 1.57 2003/09/05 17:03:08 dsl Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -239,8 +239,8 @@ pty*)
 		if [ $j = g ]; then
 			unit=$(($unit + $class * 30 + 256 - 16))
 		fi
-		mknod tty$name$j c 5 $unit
-		mknod pty$name$j c 6 $unit
+		mknod tty$name$j c 20 $unit
+		mknod pty$name$j c 21 $unit
 		names="$names tty$name$j pty$name$j"
 		unit=$(($unit + 1))
 	done
