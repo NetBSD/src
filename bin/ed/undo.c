@@ -1,4 +1,4 @@
-/*	$NetBSD: undo.c,v 1.2 1995/03/21 09:04:52 cgd Exp $	*/
+/*	$NetBSD: undo.c,v 1.3 1997/07/20 06:35:42 thorpej Exp $	*/
 
 /* undo.c: This file contains the undo routines for the ed line editor */
 /*-
@@ -27,11 +27,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "@(#)undo.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-static char rcsid[] = "$NetBSD: undo.c,v 1.2 1995/03/21 09:04:52 cgd Exp $";
+__RCSID("$NetBSD: undo.c,v 1.3 1997/07/20 06:35:42 thorpej Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $	*/
+/*	$NetBSD: glbl.c,v 1.3 1997/07/20 06:35:38 thorpej Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
    editor */
@@ -28,11 +28,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "@(#)glob.c,v 1.1 1994/02/01 00:34:40 alm Exp";
 #else
-static char rcsid[] = "$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $";
+__RCSID("$NetBSD: glbl.c,v 1.3 1997/07/20 06:35:38 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,8 +137,8 @@ exec_global(interact, gflag)
 		for (; *ibufp;)
 			if ((status = extract_addr_range()) < 0 ||
 			    (status = exec_command()) < 0 ||
-			    status > 0 && (status = display_lines(
-			    current_addr, current_addr, status)) < 0)
+			    (status > 0 && (status = display_lines(
+			    current_addr, current_addr, status))) < 0)
 				return status;
 	}
 	return 0;
