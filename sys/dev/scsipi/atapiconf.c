@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.57 2003/04/03 17:41:51 erh Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.58 2003/09/08 18:51:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.57 2003/04/03 17:41:51 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.58 2003/09/08 18:51:33 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,6 @@ int atapibusprint __P((void *, const char *));
 const struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "ALPS ELECTRIC CO.,LTD. DC544C", "", "SW03D"},	PQUIRK_NOTUR},
-	{{T_CDROM, T_REMOV,
-	 "BCD-16X 1997-04-25", "", "VER 2.2"},	PQUIRK_NOSTARTUNIT},
-	{{T_CDROM, T_REMOV,
-	 "BCD-24X 1997-06-27", "", "VER 2.0"},	PQUIRK_NOSTARTUNIT},
 	{{T_CDROM, T_REMOV,
 	 "CR-2801TE", "", "1.07"},		PQUIRK_NOSENSE},
 	{{T_CDROM, T_REMOV,

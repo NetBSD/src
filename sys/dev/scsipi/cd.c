@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.191 2003/09/08 16:16:43 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.192 2003/09/08 18:51:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.191 2003/09/08 16:16:43 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.192 2003/09/08 18:51:34 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -391,7 +391,6 @@ cdopen(dev, flag, fmt, p)
 	struct cd_softc *cd;
 	struct scsipi_periph *periph;
 	struct scsipi_adapter *adapt;
-	struct cd_sub_channel_info data;
 	int unit, part;
 	int error;
 
@@ -436,40 +435,36 @@ cdopen(dev, flag, fmt, p)
 		error = scsipi_test_unit_ready(periph,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
 		    XS_CTL_SILENT_NODEV);
-		SC_DEBUG(periph, SCSIPI_DB1,
-		    ("cdopen: scsipi_test_unit_ready, error=%d\n", error));
-		if (error) {
-			if (part != RAW_PART || fmt != S_IFCHR)
-				goto bad3;
-			else
-				goto out;
-		}
 
-		/* Don't try to start the unit if audio is playing. */
-		error = cd_read_subchannel(cd, CD_LBA_FORMAT,
-		    CD_CURRENT_POSITION, 0, &data, sizeof(data),
-		    XS_CTL_DATA_ONSTACK);
-		if ((data.header.audio_status != CD_AS_PLAY_IN_PROGRESS &&
-		    data.header.audio_status != CD_AS_PLAY_PAUSED) || error) {
-			/*
-			 * Start the pack spinning if necessary. Always
-			 * allow the raw parition to be opened, for raw
-			 * IOCTLs. Data transfers will check for
-			 * SDEV_MEDIA_LOADED.
-			 */
-			error = scsipi_start(periph, SSS_START,
-			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
-			    XS_CTL_IGNORE_MEDIA_CHANGE |
-			    XS_CTL_SILENT);
-			SC_DEBUG(periph, SCSIPI_DB1,
-			    ("cdopen: scsipi_start, error=%d\n", error));
-			if (error) {
-				if (part != RAW_PART || fmt != S_IFCHR) 
-					goto bad3;
-				else
+		/*
+		 * Start the pack spinning if necessary. Always allow the
+		 * raw parition to be opened, for raw IOCTLs. Data transfers
+		 * will check for SDEV_MEDIA_LOADED.
+		 */
+		if (error == ENODEV) {
+			int silent, error2;
+
+			if (part == RAW_PART && fmt == S_IFCHR)
+				silent = XS_CTL_SILENT;
+			else
+				silent = 0;
+			error2 = scsipi_start(periph, SSS_START, silent);
+			switch (error2) {
+			case 0:
+				error = 0;
+				break;
+			case ENODEV:
+			case EINVAL:
+				if (silent)
 					goto out;
+				break;
+			default:
+				error = error2;
+				break;
 			}
 		}
+		if (error)
+			goto bad3;
 
 		periph->periph_flags |= PERIPH_OPEN;
 

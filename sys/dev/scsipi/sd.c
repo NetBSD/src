@@ -1,7 +1,7 @@
-/*	$NetBSD: sd.c,v 1.203 2003/09/07 22:11:24 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.204 2003/09/08 18:51:38 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.203 2003/09/07 22:11:24 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.204 2003/09/08 18:51:38 mycroft Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -190,9 +190,9 @@ sdattach(parent, sd, periph, ops)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	error = scsipi_start(periph, SSS_START,
+	error = scsipi_test_unit_ready(periph,
 	    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
-	    XS_CTL_IGNORE_MEDIA_CHANGE | XS_CTL_SILENT);
+	    XS_CTL_IGNORE_MEDIA_CHANGE | XS_CTL_SILENT_NODEV);
 
 	if (error)
 		result = SDGP_RESULT_OFFLINE;
@@ -414,24 +414,37 @@ sdopen(dev, flag, fmt, p)
 		/* Check that it is still responding and ok. */
 		error = scsipi_test_unit_ready(periph,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
-		    XS_CTL_IGNORE_NOT_READY);
-		if (error)
-			goto bad3;
+		    XS_CTL_SILENT_NODEV);
 
 		/*
 		 * Start the pack spinning if necessary. Always allow the
 		 * raw parition to be opened, for raw IOCTLs. Data transfers
 		 * will check for SDEV_MEDIA_LOADED.
 		 */
-		error = scsipi_start(periph, SSS_START,
-		    XS_CTL_IGNORE_ILLEGAL_REQUEST |
-		    XS_CTL_IGNORE_MEDIA_CHANGE | XS_CTL_SILENT);
-		if (error) {
-			if (part != RAW_PART || fmt != S_IFCHR)
-				goto bad3;
+		if (error == ENODEV) {
+			int silent, error2;
+
+			if (part == RAW_PART && fmt == S_IFCHR)
+				silent = XS_CTL_SILENT;
 			else
-				goto out;
+				silent = 0;
+			error2 = scsipi_start(periph, SSS_START, silent);
+			switch (error2) {
+			case 0:
+				error = 0;
+				break;
+			case ENODEV:
+			case EINVAL:
+				if (silent)
+					goto out;
+				break;
+			default:
+				error = error2;
+				break;
+			}
 		}
+		if (error)
+			goto bad3;
 
 		periph->periph_flags |= PERIPH_OPEN;
 
@@ -1299,8 +1312,7 @@ sd_interpret_sense(xs)
 			callout_reset(&periph->periph_callout,
 			    5 * hz, scsipi_periph_timed_thaw, periph);
 			retval = ERESTART;
-		} else if ((sense->add_sense_code_qual == 0x2) &&
-		    (periph->periph_quirks & PQUIRK_NOSTARTUNIT) == 0) {
+		} else if (sense->add_sense_code_qual == 0x02) {
 			printf("%s: pack is stopped, restarting...\n",
 			    sd->sc_dev.dv_xname);
 			s = splbio();

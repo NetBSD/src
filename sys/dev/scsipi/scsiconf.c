@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.208 2003/08/07 17:54:26 jrf Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.209 2003/09/08 18:51:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.208 2003/08/07 17:54:26 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.209 2003/09/08 18:51:35 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,8 +503,7 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "YAMAHA", "CRW8424S",           ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
-	 "VMware", "Virtual",            "1.0"},
-				PQUIRK_NOSTARTUNIT|PQUIRK_NODOORLOCK},
+	 "VMware", "Virtual",            "1.0"},  PQUIRK_NODOORLOCK},
 	{{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:222", ""},	  PQUIRK_NOLUNS|PQUIRK_NOSYNC},
 
@@ -527,11 +526,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "EMULEX  ", "MD21/S2     ESDI", "A00"},
 				PQUIRK_FORCELUNS|PQUIRK_AUTOSAVE},
-	/* Gives non-media hardware failure in response to start-unit command */
-	{{T_DIRECT, T_FIXED,
-	 "HITACHI", "DK515C",            "CP16"}, PQUIRK_NOSTARTUNIT},
-	{{T_DIRECT, T_FIXED,
-	 "HITACHI", "DK515C",            "CP15"}, PQUIRK_NOSTARTUNIT},
 	{{T_DIRECT, T_FIXED,
 	/* improperly report DT-only sync mode */
 	 "HITACHI", "DX32DJ-72ME",	 ""},
@@ -622,8 +616,7 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "TOSHIBA ", "MK538FB         ", "6027"}, PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
-	 "VMware", "Virtual",           "1.0"},
-				PQUIRK_NOSTARTUNIT|PQUIRK_NODOORLOCK},
+	 "VMware", "Virtual",           "1.0"},   PQUIRK_NODOORLOCK},
 	{{T_DIRECT, T_FIXED,	/* XXX move to umass */
 	 "Maxtor 4", "D080H4",           "DAH0"}, PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,	/* XXX move to umass */
@@ -640,9 +633,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_REMOV,
 	 "IOMEGA", "ZIP 100",		 "J.03"},
 				PQUIRK_NOMODESENSE|PQUIRK_NOLUNS},
-	/* Letting the motor run kills floppy drives and disks quite fast. */
-	{{T_DIRECT, T_REMOV,
-	 "TEAC", "FC-1",		 ""},	  PQUIRK_NOSTARTUNIT},
 	{{T_DIRECT, T_REMOV,
 	 "INSITE", "I325VM",             ""},
 				PQUIRK_NOLUNS|PQUIRK_NODOORLOCK},
@@ -709,6 +699,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SONY    ", "CDL1100         ", ""},     PQUIRK_NOLUNS},
 	{{T_ENCLOSURE, T_FIXED,
 	 "SUN     ", "SENA            ", ""},     PQUIRK_NOLUNS},
+	{{T_DIRECT, T_REMOV,
+	 "Generic ", "USB Storage-SMC ", ""},     PQUIRK_FORCELUNS},
 };
 
 /*
