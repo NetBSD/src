@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 1999/04/27 01:34:49 simonb Exp $
+#	$NetBSD: Makefile,v 1.6 1999/04/27 12:03:39 simonb Exp $
 
+BINDIR=		/installation/diskimage
 
 IMAGE=		diskimage
 IMAGESIZE=	4096 # 512 byte blocks
@@ -46,8 +47,13 @@ ${IMAGE}.gz: netbsd.gz ${DESTDIR}/usr/mdec/boot
 	vnconfig -u ${VND_DEV}
 	gzip -9 ${IMAGE}
 
+realinstall:
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
+		-m ${NONBINMODE} ${IMAGE}.gz ${RELEASEDIR}${BINDIR}
+
 clean cleandir distclean:
 	rm -f ${CLEANFILES}
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
+.include "../Makefile.inc"
