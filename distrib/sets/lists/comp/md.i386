@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.75 2003/09/19 08:15:48 mrg Exp $
+# $NetBSD: md.i386,v 1.76 2003/10/22 11:56:35 kleink Exp $
 ./lib/libm387.so			comp-sys-shlib
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/ansi.h		comp-c-include
@@ -82,6 +82,7 @@
 ./usr/include/x86/intr.h	comp-c-include
 ./usr/include/x86/intrdefs.h	comp-c-include
 ./usr/include/x86/lock.h	comp-c-include
+./usr/include/x86/math.h	comp-c-include
 ./usr/include/x86/mtrr.h	comp-c-include
 ./usr/include/x86/pio.h		comp-c-include
 ./usr/include/x86/psl.h		comp-c-include
