@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.5.6.2 1997/02/20 16:41:08 is Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.5.6.3 1997/02/20 17:45:51 is Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -206,7 +206,15 @@ pdq_os_receive_pdu(
 #if NBPFILTER > 0
     if (sc->sc_bpf != NULL)
 	PDQ_BPF_MTAP(sc, m);
-    if ((fh->fddi_fc & (FDDIFC_L|FDDIFC_F)) != FDDIFC_LLC_ASYNC) {
+    if ((fh->fddi_fc & (FDDIFC_L|FDDIFC_F)) != FDDIFC_LLC_ASYNC ||
+	((sc->sc_if.if_flags & IFF_PROMISC) &&
+	 (fh->fddi_dhost[0] & 1) == 0 && /* !mcast and !bcast */
+#ifdef __NetBSD__
+	 bcmp(fh->fddi_dhost, LLADDR(sc->sc_ec.ec_if.if_sadl),
+#else
+	 bcmp(fh->fddi_dhost, sc->sc_ac.ac_enaddr,
+#endif
+	     sizeof(fh->fddi_dhost)) != 0)) {
 	m_freem(m);
 	return;
     }
