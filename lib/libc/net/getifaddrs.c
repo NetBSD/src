@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs.c,v 1.2 2000/02/23 15:29:18 itojun Exp $	*/
+/*	$NetBSD: getifaddrs.c,v 1.3 2000/04/24 09:27:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -24,6 +24,7 @@
  *
  *	BSDI getifaddrs.c,v 2.12 2000/02/23 14:51:59 dab Exp
  */
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -39,6 +40,11 @@
 #include <ifaddrs.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(getifaddrs,_getifaddrs)
+__weak_alias(freeifaddrs,_freeifaddrs)
+#endif
 
 #if !defined(AF_LINK)
 #define	SA_LEN(sa)	sizeof(struct sockaddr)
