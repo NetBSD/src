@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.109 2004/02/13 11:36:22 wiz Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $
+ * $Id: aic7xxx.c,v 1.109 2004/02/13 11:36:22 wiz Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.109 2004/02/13 11:36:22 wiz Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -6517,7 +6517,7 @@ ahc_download_instr(struct ahc_softc *ahc, u_int instrptr, uint8_t *dconsts)
 				      |	(fmt1_ins->opcode << 25);
 			}
 		}
-		/* The sequencer is a little endian cpu */
+		/* The sequencer is a little endian CPU */
 		instr.integer = ahc_htole32(instr.integer);
 		ahc_outsb(ahc, SEQRAM, instr.bytes, 4);
 		break;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: 2.t,v 1.4 2003/08/07 10:30:47 agc Exp $
+.\"	$NetBSD: 2.t,v 1.5 2004/02/13 11:36:08 wiz Exp $
 .\"
 .\" Copyright (c) 1985 The Regents of the University of California.
 .\" All rights reserved.
@@ -50,12 +50,12 @@ virtual memory activity.
 By running \fIvmstat\fP
 when the system is active you can judge the system activity in several
 dimensions: job distribution, virtual memory load, paging and swapping
-activity, disk and cpu utilization.
+activity, disk and CPU utilization.
 Ideally, to have a balanced system in activity,
 there should be few blocked (b) jobs,
 there should be little paging or swapping activity, there should
 be available bandwidth on the disk devices (most single arms peak
-out at 25-35 tps in practice), and the user cpu utilization (us) should
+out at 25-35 tps in practice), and the user CPU utilization (us) should
 be high (above 50%).
 .PP
 If the system is busy, then the count of active jobs may be large,

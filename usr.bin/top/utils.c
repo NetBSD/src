@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.7 2003/07/12 14:08:37 itojun Exp $	*/
+/*	$NetBSD: utils.c,v 1.8 2004/02/13 11:36:24 wiz Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.7 2003/07/12 14:08:37 itojun Exp $");
+__RCSID("$NetBSD: utils.c,v 1.8 2004/02/13 11:36:24 wiz Exp $");
 #endif
 
 #include "os.h"
@@ -292,7 +292,7 @@ int *cntp;
  *	"cnt" is size of each array and "diffs" is used for scratch space.
  *	The array "old" is updated on each call.
  *	The routine assumes modulo arithmetic.  This function is especially
- *	useful on BSD mchines for calculating cpu state percentages.
+ *	useful on BSD mchines for calculating CPU state percentages.
  */
 
 long percentages(cnt, out, new, old, diffs)

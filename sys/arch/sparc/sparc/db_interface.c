@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.59 2004/01/11 19:18:41 jdolecek Exp $ */
+/*	$NetBSD: db_interface.c,v 1.60 2004/02/13 11:36:17 wiz Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.59 2004/01/11 19:18:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.60 2004/02/13 11:36:17 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -328,7 +328,7 @@ kdb_trap(type, tf)
 	dbregs.db_tf = *tf;
 	dbregs.db_fr = *(struct frame *)tf->tf_out[6];
 
-	/* Setup current cpu & reg pointers */
+	/* Setup current CPU & reg pointers */
 	ddb_cpuinfo = curcpu();
 	curcpu()->ci_ddb_regs = ddb_regp = &dbregs;
 
@@ -377,7 +377,7 @@ db_proc_cmd(addr, have_addr, count, modif)
 	p = l->l_proc;
 
 	db_printf("LWP %p: ", l);
-	db_printf("pid:%d.%d cpu:%d stat:%d vmspace:%p", p->p_pid,
+	db_printf("PID:%d.%d CPU:%d stat:%d vmspace:%p", p->p_pid,
 	    l->l_lid, l->l_cpu->ci_cpuid, l->l_stat, p->p_vmspace);
 	if (!P_ZOMBIE(p))
 		db_printf(" ctx: %p cpuset %x",
@@ -535,25 +535,25 @@ db_cpu_cmd(addr, have_addr, count, modif)
 	}
 	
 	if ((addr < 0) || (addr >= ncpu)) {
-		db_printf("%ld: cpu out of range\n", addr);
+		db_printf("%ld: CPU out of range\n", addr);
 		return;
 	}
 	ci = cpus[addr];
 	if (ci == NULL) {
-		db_printf("cpu %ld not configured\n", addr);
+		db_printf("CPU %ld not configured\n", addr);
 		return;
 	}
 	if (ci != curcpu()) {
 		if (!(ci->flags & CPUFLG_PAUSED)) {
-			db_printf("cpu %ld not paused\n", addr);
+			db_printf("CPU %ld not paused\n", addr);
 			return;
 		}
 	}
 	if (ci->ci_ddb_regs == 0) {
-		db_printf("cpu %ld has no saved regs\n", addr);
+		db_printf("CPU %ld has no saved regs\n", addr);
 		return;
 	}
-	db_printf("using cpu %ld", addr);
+	db_printf("using CPU %ld", addr);
 	ddb_regp = (void *)ci->ci_ddb_regs;
 	ddb_cpuinfo = ci;
 }

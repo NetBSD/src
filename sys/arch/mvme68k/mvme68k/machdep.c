@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 2003/12/30 12:33:17 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109 2004/02/13 11:36:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2003/12/30 12:33:17 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2004/02/13 11:36:16 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -463,7 +463,7 @@ consinit()
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu, and do autoconfiguration.
+ * initialize CPU, and do autoconfiguration.
  */
 void
 cpu_startup()
@@ -1193,7 +1193,7 @@ mvme68k_abort(cp)
 
 /*
  * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
+ *	CPU-dependent a.out format hook for execve().
  * 
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2003/12/30 12:33:16 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2004/02/13 11:36:12 wiz Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2003/12/30 12:33:16 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2004/02/13 11:36:12 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -226,7 +226,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	cn_tab = &yamon_promcd;
 
 	/*
-	 * Set up the exception vectors and cpu-specific function
+	 * Set up the exception vectors and CPU-specific function
 	 * vectors early on.  We need the wbflush() vector set up
 	 * before comcnattach() is called (or at least before the
 	 * first printf() after that is called).

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.36 2003/12/14 01:32:01 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.37 2004/02/13 11:36:11 wiz Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -150,7 +150,7 @@ config		netbsd	root on ? type ?
 # The main bus device
 mainbus0 at root
 
-# The boot cpu
+# The boot CPU
 cpu0 at mainbus?
 
 # Core logic

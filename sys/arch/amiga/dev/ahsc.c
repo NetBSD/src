@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.33 2003/08/07 16:26:40 agc Exp $ */
+/*	$NetBSD: ahsc.c,v 1.34 2004/02/13 11:36:09 wiz Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahsc.c,v 1.33 2003/08/07 16:26:40 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahsc.c,v 1.34 2004/02/13 11:36:09 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ ahscattach(struct device *pdp, struct device *dp, void *auxp)
 	if (cdp < ecdp) {
 		sc->sc_sbic.sbic_asr_p =  ((vu_char *)rp + 0x43);
 		sc->sc_sbic.sbic_value_p =  ((vu_char *)rp + 0x47);
-		printf(": modified for Apollo cpu board\n");
+		printf(": modified for Apollo CPU board\n");
 	} else {
 		sc->sc_sbic.sbic_asr_p =  ((vu_char *)rp + 0x41);
 		sc->sc_sbic.sbic_value_p =  ((vu_char *)rp + 0x43);

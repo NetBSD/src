@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_aout.c,v 1.5 2003/06/29 22:29:16 fvdl Exp $	*/
+/*	$NetBSD: freebsd_exec_aout.c,v 1.6 2004/02/13 11:36:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.5 2003/06/29 22:29:16 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.6 2004/02/13 11:36:20 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.5 2003/06/29 22:29:16 fvdl E
 *
 * Given a proc pointer and an exec package pointer, see if the referent
 * of the epp is in a.out format.  First check 'standard' magic numbers for
-* this architecture.  If that fails, try a cpu-dependent hook.
+* this architecture.  If that fails, try a CPU-dependent hook.
  *
  * This function, in the former case, or the hook, in the latter, is
  * responsible for creating a set of vmcmds which can be used to build

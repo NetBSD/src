@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.53 2004/01/04 16:19:43 wiz Exp $ */
+/*	$NetBSD: zbus.c,v 1.54 2004/02/13 11:36:10 wiz Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.53 2004/01/04 16:19:43 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.54 2004/02/13 11:36:10 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -380,7 +380,7 @@ zbusmap(caddr_t pa, u_int size)
 #elif defined(__m68k__)
 	physaccess((caddr_t)kva, (caddr_t)pa, size, PG_RW|PG_CI);
 #else
-ERROR no support for this target cpu yet.
+ERROR no support for this target CPU yet.
 #endif
 	return((caddr_t)kva);
 }

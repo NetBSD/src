@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 2003/07/15 03:36:00 lukem Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 2004/02/13 11:36:17 wiz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2003/07/15 03:36:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2004/02/13 11:36:17 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"
@@ -166,7 +166,7 @@ PMSTR(pmap_t pm)
  * expand the number of TLB slots, and the number of bits allocated to
  * various fields within the PTEs. Conversely, future silicon may also
  * scrap the separate instruction and data TLBs. Regardless, we defer
- * TLB manipulation to a cpu-specific backend so these details shouldn't
+ * TLB manipulation to a CPU-specific backend so these details shouldn't
  * affect this pmap.
  * 
  * Given the limited options, the following VM layout is used:
@@ -763,7 +763,7 @@ pmap_pteg_clear_bit(volatile pte_t *pt, struct pvo_entry *pvo, u_int ptebit)
 	 * Before raising the protection of the mapping,
 	 * make sure the cache is synchronised.
 	 *
-	 * Note: The cpu-specific cache handling code will ensure
+	 * Note: The CPU-specific cache handling code will ensure
 	 * this doesn't cause a TLB miss exception.
 	 */
 	pmap_cache_sync_raise(PVO_VADDR(pvo), ptel, ptebit);
@@ -779,7 +779,7 @@ pmap_pteg_clear_bit(volatile pte_t *pt, struct pvo_entry *pvo, u_int ptebit)
 	if ((ptel & SH5_PTEL_R) != 0 && pm->pm_asid != PMAP_ASID_UNASSIGNED &&
 	    pm->pm_asidgen == pmap_asid_generation) {
 		/*
-		 * The mapping may be cached in the TLB. Call cpu-specific
+		 * The mapping may be cached in the TLB. Call CPU-specific
 		 * code to check and invalidate if necessary.
 		 */
 		cpu_tlbinv_cookie((pteh & SH5_PTEH_EPN_MASK) |
@@ -864,7 +864,7 @@ pmap_pteg_unset(volatile pte_t *pt, struct pvo_entry *pvo)
 	 * Before deleting the mapping from the PTEG/TLB,
 	 * make sure the cache is synchronised.
 	 *
-	 * Note: The cpu-specific cache handling code must ensure
+	 * Note: The CPU-specific cache handling code must ensure
 	 * this doesn't cause a TLB miss exception.
 	 */
 	pmap_cache_sync_unmap(PVO_VADDR(pvo), ptel);
@@ -872,7 +872,7 @@ pmap_pteg_unset(volatile pte_t *pt, struct pvo_entry *pvo)
 	if ((ptel & SH5_PTEL_R) != 0 && pm->pm_asid != PMAP_ASID_UNASSIGNED &&
 	    pm->pm_asidgen == pmap_asid_generation) {
 		/*
-		 * The mapping may be in the TLB. Call cpu-specific
+		 * The mapping may be in the TLB. Call CPU-specific
 		 * code to check and invalidate if necessary.
 		 */
 		cpu_tlbinv_cookie((pteh & SH5_PTEH_EPN_MASK) |
@@ -1149,7 +1149,7 @@ pmap_bootstrap(vaddr_t avail, paddr_t kseg0base, struct mem_region *mr)
 	    PMAP_BOOTSTRAP_DEVICE_KVA;
 
 	pmap_asid_next = PMAP_ASID_USER_START;
-	pmap_asid_max = SH5_PTEH_ASID_MASK;	/* XXX Should be cpu specific */
+	pmap_asid_max = SH5_PTEH_ASID_MASK;	/* XXX Should be CPU specific */
 
 	pmap_pinit(pmap_kernel());
 	pmap_kernel()->pm_asid = PMAP_ASID_KERNEL;

@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.9 2003/07/15 02:43:34 lukem Exp $ */
+/* $NetBSD: aubus.c,v 1.10 2004/02/13 11:36:15 wiz Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.9 2003/07/15 02:43:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.10 2004/02/13 11:36:15 wiz Exp $");
 
 #include "locators.h"
 
@@ -90,7 +90,7 @@ struct au1x00_dev {
 };
 
 /*
- * The devices built in to the Au1000 cpu.
+ * The devices built in to the Au1000 CPU.
  */
 const struct au1x00_dev au1000_devs [] = {
 	{ "aucom",	{ UART0_BASE },				   {  0, -1 }},
@@ -112,7 +112,7 @@ const struct au1x00_dev au1000_devs [] = {
 };
 
 /*
- * The devices built in to the Au1500 cpu.
+ * The devices built in to the Au1500 CPU.
  */
 const struct au1x00_dev au1500_devs [] = {
 	{ "aucom",	{ UART0_BASE },				   {  0, -1 }},
@@ -134,7 +134,7 @@ const struct au1x00_dev au1500_devs [] = {
 
 
 /*
- * The devices built in to the Au1100 cpu.
+ * The devices built in to the Au1100 CPU.
  */
 const struct au1x00_dev au1100_devs [] = {
 	{ "aucom",	{ UART0_BASE },				   {  0, -1 }},

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.67 2003/10/29 23:39:16 simonb Exp $ */
+/* $NetBSD: locore.h,v 1.68 2004/02/13 11:36:15 wiz Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,7 +14,7 @@
  */
 
 /*
- * Jump table for MIPS cpu locore functions that are implemented
+ * Jump table for MIPS CPU locore functions that are implemented
  * differently on different generations, or instruction-level
  * archtecture (ISA) level, the Mips family.
  *

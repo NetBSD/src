@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.92 2003/08/07 16:26:55 agc Exp $	*/
+/*	$NetBSD: locore.s,v 1.93 2004/02/13 11:36:11 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -1427,7 +1427,7 @@ Ldoreboot:
 	lea	_ASM_LABEL(zero),%a0
 	pmove	%a0@,%tc		| Turn off MMU
 	lea	_ASM_LABEL(nullrp),%a0
-	pmove	%a0@,%crp		| Invalidate Cpu root pointer
+	pmove	%a0@,%crp		| Invalidate CPU root pointer
 	pmove	%a0@,%srp		|  and the Supervisor root pointer
 	jra	Ldoboot1		| Ok, continue with actual reboot
 Lmmuoff040:

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.43 2004/02/13 11:36:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.43 2004/02/13 11:36:10 wiz Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -214,7 +214,7 @@ cpu_startup()
 	u_int loop;
 	char pbuf[9];
 
-	/* Set the cpu control register */
+	/* Set the CPU control register */
 	cpu_setup(boot_args);
 
 	/* Lock down zero page */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_pci.c,v 1.10 2003/07/15 03:35:59 lukem Exp $	*/
+/*	$NetBSD: sh5_pci.c,v 1.11 2004/02/13 11:36:17 wiz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh5_pci.c,v 1.10 2003/07/15 03:35:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh5_pci.c,v 1.11 2004/02/13 11:36:17 wiz Exp $");
 
 #include "opt_pci.h"
 
@@ -467,7 +467,7 @@ sh5pci_dmamap_load_common(struct sh5pci_softc *sc, bus_dmamap_t map)
 
 	/*
 	 * Traverse the list of segments which make up this map, and
-	 * convert the cpu-relative addresses therein to PCIbus addresses.
+	 * convert the CPU-relative addresses therein to PCIbus addresses.
 	 */
 	for (ds = &map->dm_segs[0]; ds < &map->dm_segs[map->dm_nsegs]; ds++) {
 		for (i = 0; i < SH5PCI_NUM_MBARS; i++) {
@@ -529,7 +529,7 @@ sh5pci_dmamem_alloc(void *arg, bus_size_t size, bus_size_t alignment,
 	/*
 	 * Allocate physical memory.
 	 *
-	 * Note: This fills in the segments with cpu-relative physical
+	 * Note: This fills in the segments with CPU-relative physical
 	 * addresses. A further call to bus_dmamap_load_raw() must be
 	 * made before the addresses in the segments can be used.
 	 * The segments of the DMA map will then contain PCIbus-relative

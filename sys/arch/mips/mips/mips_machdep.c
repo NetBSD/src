@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.172 2003/12/06 15:20:04 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.173 2004/02/13 11:36:15 wiz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.172 2003/12/06 15:20:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.173 2004/02/13 11:36:15 wiz Exp $");
 
 #include "opt_cputype.h"
 
@@ -760,7 +760,7 @@ mips64_vector_init(void)
  *
  * The principal purpose of this function is to examine the
  * variable cpu_id, into which the kernel locore start code
- * writes the cpu ID register, and to then copy appropriate
+ * writes the CPU ID register, and to then copy appropriate
  * code into the CPU exception-vector entries and the jump tables
  * used to hide the differences in cache and TLB handling in
  * different MIPS CPUs.
@@ -846,7 +846,7 @@ mips_vector_init(void)
 		panic("Unknown number of TLBs for CPU type 0x%x", cpu_id);
 
 	/*
-	 * Check cpu-specific flags.
+	 * Check CPU-specific flags.
 	 */
 	mips_cpu_flags = mycpu->cpu_flags;
 	mips_has_r4k_mmu = mips_cpu_flags & CPU_MIPS_R4K_MMU;
@@ -944,7 +944,7 @@ mips_set_wbflush(flush_fn)
 }
 
 /*
- * Identify product revision IDs of cpu and fpu.
+ * Identify product revision IDs of CPU and FPU.
  */
 void
 cpu_identify(void)

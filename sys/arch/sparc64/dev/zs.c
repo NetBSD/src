@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.49 2003/11/09 14:28:56 martin Exp $	*/
+/*	$NetBSD: zs.c,v 1.50 2004/02/13 11:36:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.49 2003/11/09 14:28:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.50 2004/02/13 11:36:18 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -772,7 +772,7 @@ zs_putc(arg, c)
 	 * the `transmit-ready' interrupt isn't de-asserted until
 	 * some period of time after the register write completes
 	 * (more than a couple instructions).  So to avoid stray
-	 * interrupts we put in the 2us delay regardless of cpu model.
+	 * interrupts we put in the 2us delay regardless of CPU model.
 	 */
 	zc->zc_data = c;
 	delay(2);

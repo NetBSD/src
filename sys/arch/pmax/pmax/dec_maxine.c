@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.42 2003/12/13 23:04:38 ad Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.43 2004/02/13 11:36:16 wiz Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.42 2003/12/13 23:04:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.43 2004/02/13 11:36:16 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,7 +396,7 @@ dec_maxine_intr(status, cause, pc, ipending)
 	 */	
 	/*
 	 * All of IOASIC device interrupts comes through a single service
-	 * request line coupled with MIPS cpu INT 3.
+	 * request line coupled with MIPS CPU INT 3.
 	 * Disabling INT 3 makes entire IOASIC interrupt services blocked,
 	 * and it's harmful because it causes DMA overruns during network
 	 * disk I/O interrupts.

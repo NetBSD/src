@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.32 2003/12/09 18:00:22 he Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.33 2004/02/13 11:36:12 wiz Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -148,7 +148,7 @@ config		netbsd-sd0	root on sd0 type ?
 # The main bus device
 mainbus0	at root
 
-# The boot cpu
+# The boot CPU
 cpu0		at mainbus?
 
 # On-board device support
