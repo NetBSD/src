@@ -1,4 +1,4 @@
-.\" $NetBSD: traceroute.8,v 1.8 1997/10/04 16:31:33 christos Exp $
+.\" $NetBSD: traceroute.8,v 1.9 1998/07/17 23:45:24 is Exp $
 .\"
 .\" Copyright (c) 1989, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -25,7 +25,7 @@ traceroute \- print the route packets take to network host
 .na
 .B traceroute
 [
-.B \-DFIdlnrvx
+.B \-DFPIdlnrvx
 ] [
 .B \-f
 .I first_ttl
@@ -99,6 +99,10 @@ Set the initial time-to-live used in the first outgoing probe packet.
 .TP
 .B \-F
 Set the "don't fragment" bit.
+.TP
+.B \-P
+Set the "don't fragment" bit, and use the next hop mtu each time we get
+the "need fragmentation" error, thus probing the path MTU.
 .TP
 .B \-d
 Enable socket level debugging.
