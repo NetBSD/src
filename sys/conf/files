@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.384 2000/08/12 20:47:49 tv Exp $
+#	$NetBSD: files,v 1.385 2000/08/16 23:56:08 bjh21 Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -397,6 +397,17 @@ file	dev/ic/pckbc.c			pckbc needs-flag
 # Cirrus Logic CD240[01] 4-port Multi-Protocol Communications Controller
 device	clmpcc: tty
 file	dev/ic/clmpcc.c			clmpcc needs-flag
+
+# CHIPS and Technologies 82C7[12][01] Universal Peripheral Controller
+# lpt attachment commented out because "device lpt" isn't in this file.
+device	upc { [offset = -1] }
+attach	wdc at upc with wdc_upc
+attach	com at upc with com_upc
+# attach lpt at upc with lpt_upc
+file	dev/ic/upc.c				upc
+file	dev/ic/wdc_upc.c			wdc_upc
+file	dev/ic/com_upc.c			com_upc
+# file	dev/ic/lpt_upc.c			lpt_upc
 
 # Device description for i2c bus and i2c eeprom
 define  i2c

@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.2 2000/08/13 12:31:26 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.3 2000/08/16 23:56:13 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -142,19 +142,20 @@ file	arch/arm26/vidc/arcvideo.c		arcvideo	needs-flag
 device	arcaudio: audio
 attach	arcaudio at root
 
+###
 # 82C7xx Universal Peripheral Controller
-device upc { [offset = -1] }
-attach upc at iobus
+#
 
-attach wdc at upc with wdc_upc
-device lpt
-attach lpt at upc with lpt_upc
-attach com at upc with com_upc
+# This section belongs in sys/conf/files, but some ports have their own
+# "lpt" devices, so it has to stay here.
+device	lpt
+file	dev/ic/lpt.c				lpt		needs-flag
+attach	lpt at upc with lpt_upc
+file	dev/ic/lpt_upc.c			lpt_upc
 
-device fdc { drive }
-attach fdc at upc with fdc_upc
-device fd: disk
-attach fd at fdc
+# This section belongs here
+attach	upc at iobus with upc_iobus
+file	arch/arm26/iobus/upc_iobus.c		upc_iobus
 
 ###
 # Assorted podules
