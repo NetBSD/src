@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmget.2,v 1.3 1997/11/27 10:25:22 mikel Exp $	
+.\"	$NetBSD: shmget.2,v 1.4 1998/05/07 18:42:01 kleink Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Fd #include <sys/ipc.h>
 .Fd #include <sys/shm.h>
 .Ft int
-.Fn shmget "key_t key" "int size" "int shmflg"
+.Fn shmget "key_t key" "size_t size" "int shmflg"
 .Sh DESCRIPTION
 .Fn shmget
 returns the shared memory identifier associated with the key
