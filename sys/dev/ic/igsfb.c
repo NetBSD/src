@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.4 2002/07/21 02:56:35 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.5 2002/08/03 00:13:03 itojun Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -32,7 +32,7 @@
  * Only tested on IGA 1682 in Krups JavaStation-NC.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.4 2002/07/21 02:56:35 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.5 2002/08/03 00:13:03 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,7 +597,7 @@ igsfb_get_cmap(sc, p)
 {
 	u_int index = p->index, count = p->count;
 
-	if (index >= IGS_CMAP_SIZE || (index + count) > IGS_CMAP_SIZE)
+	if (index >= IGS_CMAP_SIZE || count > IGS_CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_WRITE) ||
@@ -624,7 +624,7 @@ igsfb_set_cmap(sc, p)
 {
 	u_int index = p->index, count = p->count;
 
-	if (index >= IGS_CMAP_SIZE || (index + count) > IGS_CMAP_SIZE)
+	if (index >= IGS_CMAP_SIZE || count > IGS_CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_READ) ||

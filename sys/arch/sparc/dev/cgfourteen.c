@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.23 2002/04/03 16:34:11 darrenr Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.24 2002/08/03 00:12:59 itojun Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -747,68 +747,68 @@ cg14_get_cmap(p, cm, cmsize)
 	union cg14cmap *cm;
 	int cmsize;
 {
-        u_int i, start, count;
-        u_char *cp;
+	u_int i, start, count;
+	u_char *cp;
 
-        start = p->index;
-        count = p->count;
-        if (start >= cmsize || start + count > cmsize)
+	start = p->index;
+	count = p->count;
+	if (start >= cmsize || count > cmsize - start)
 #ifdef DEBUG
 	{
 		printf("putcmaperror: start %d cmsize %d count %d\n",
 		    start,cmsize,count);
 #endif
-                return (EINVAL);
+		return (EINVAL);
 #ifdef DEBUG
 	}
 #endif
 
-        if (!uvm_useracc(p->red, count, B_WRITE) ||
-            !uvm_useracc(p->green, count, B_WRITE) ||
-            !uvm_useracc(p->blue, count, B_WRITE))
-                return (EFAULT);
-        for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 4, i++) {
-                p->red[i] = cp[3];
-                p->green[i] = cp[2];
-                p->blue[i] = cp[1];
-        }
-        return (0);
+	if (!uvm_useracc(p->red, count, B_WRITE) ||
+	    !uvm_useracc(p->green, count, B_WRITE) ||
+	    !uvm_useracc(p->blue, count, B_WRITE))
+		return (EFAULT);
+	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 4, i++) {
+		p->red[i] = cp[3];
+		p->green[i] = cp[2];
+		p->blue[i] = cp[1];
+	}
+	return (0);
 }
 
 /* Write the software shadow colormap */
 static int
 cg14_put_cmap(p, cm, cmsize)
-        struct fbcmap *p;
-        union cg14cmap *cm;
-        int cmsize;
+	struct fbcmap *p;
+	union cg14cmap *cm;
+	int cmsize;
 {
-        u_int i, start, count;
-        u_char *cp;
+	u_int i, start, count;
+	u_char *cp;
 
-        start = p->index;
-        count = p->count;
-        if (start >= cmsize || start + count > cmsize)
+	start = p->index;
+	count = p->count;
+	if (start >= cmsize || count > cmsize - start)
 #ifdef DEBUG
 	{
 		printf("putcmaperror: start %d cmsize %d count %d\n",
 		    start,cmsize,count);
 #endif
-                return (EINVAL);
+		return (EINVAL);
 #ifdef DEBUG
 	}
 #endif
 
-        if (!uvm_useracc(p->red, count, B_READ) ||
-            !uvm_useracc(p->green, count, B_READ) ||
-            !uvm_useracc(p->blue, count, B_READ))
-                return (EFAULT);
-        for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 4, i++) {
-                cp[3] = p->red[i];
-                cp[2] = p->green[i];
-                cp[1] = p->blue[i];
+	if (!uvm_useracc(p->red, count, B_READ) ||
+	    !uvm_useracc(p->green, count, B_READ) ||
+	    !uvm_useracc(p->blue, count, B_READ))
+		return (EFAULT);
+	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 4, i++) {
+		cp[3] = p->red[i];
+		cp[2] = p->green[i];
+		cp[1] = p->blue[i];
 		cp[0] = 0;	/* no alpha channel */
-        }
-        return (0);
+	}
+	return (0);
 }
 
 static void

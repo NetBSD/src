@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.15 2002/03/17 19:40:29 atatat Exp $ */
+/*	$NetBSD: grf_et.c,v 1.16 2002/08/03 00:12:55 itojun Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -37,7 +37,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.15 2002/03/17 19:40:29 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.16 2002/08/03 00:12:55 itojun Exp $");
 
 #include "grfet.h"
 #if NGRFET > 0
@@ -834,7 +834,7 @@ et_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 	if (cmap->count == 0 || cmap->index >= 256)
 		return 0;
 
-	if (cmap->index + cmap->count > 256)
+	if (cmap->count > 256 - cmap->index)
 		cmap->count = 256 - cmap->index;
 
 	ba = gfp->g_regkva;
@@ -885,7 +885,7 @@ et_putcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 	if (cmap->count == 0 || cmap->index >= 256)
 		return (0);
 
-	if (cmap->index + cmap->count > 256)
+	if (cmap->count > 256 - cmap->index)
 		cmap->count = 256 - cmap->index;
 
 	/* first copy the colors into kernelspace */
