@@ -1,4 +1,4 @@
-.\" $NetBSD: usermod.8,v 1.7 2000/10/03 19:32:23 bjh21 Exp $ */
+.\" $NetBSD: usermod.8,v 1.8 2000/12/23 16:30:21 wiz Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -74,10 +74,12 @@ is the comment field (also, for historical reasons known as the
 GECOS field) which will be added for the user, and typically will include
 the username, and, perhaps, contact information for the user.
 .It Fl d Ar home-directory
-is the home directory which will be created and populated for the user,
-should the
+Sets the home directory to
+.Ar home-directory
+without populating it; if the
 .Fl m
-option be specified.
+option is specified, tries to move the old home directory to
+.Ar home-directory .
 .It Fl e Ar secs-to-expiry
 provides the number of seconds since the epoch (UTC) at
 which the current password change expire. This
