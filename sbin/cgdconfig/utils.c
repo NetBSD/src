@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.4 2004/08/10 02:27:26 rumble Exp $ */
+/* $NetBSD: utils.c,v 1.5 2004/08/13 15:03:57 tv Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.4 2004/08/10 02:27:26 rumble Exp $");
+__RCSID("$NetBSD: utils.c,v 1.5 2004/08/13 15:03:57 tv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -464,8 +464,11 @@ bits_cget(const char *fn, int len)
 	FILE	*f;
 
 	f = fopen(fn, "r");
-	if (!f)
+	if (!f) {
+		free(bits->text);
+		free(bits);
 		return NULL;
+	}
 
 	bits = bits_fget(f, len);
 	fclose(f);
@@ -473,10 +476,10 @@ bits_cget(const char *fn, int len)
 }
 
 bits_t *
-bits_getrandombits(int len)
+bits_getrandombits(int len, int hard)
 {
 
-	return bits_cget("/dev/random", len);
+	return bits_cget((hard ? "/dev/random" : "/dev/urandom"), len);
 }
 
 void
