@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.190.2.6 2004/09/19 15:38:01 he Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.190.2.7 2005/04/06 13:48:34 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.190.2.6 2004/09/19 15:38:01 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.190.2.7 2005/04/06 13:48:34 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1444,6 +1444,21 @@ after_listen:
 	 */
 	if (optp)
 		tcp_dooptions(tp, optp, optlen, th, &opti);
+
+	if (opti.ts_present && opti.ts_ecr) {
+		u_int32_t now;
+
+		/*
+		 * Calculate the RTT from the returned time stamp and the
+		 * connection's time base.  If the time stamp is later than
+		 * the current time, fall back to non-1323 RTT calculation.
+		 */
+		now = TCP_TIMESTAMP(tp);
+		if (SEQ_GEQ(now, opti.ts_ecr))
+			opti.ts_ecr = now - opti.ts_ecr + 1;
+		else
+			opti.ts_ecr = 0;
+	}
 
 	/*
 	 * Header prediction: check for the two common cases
