@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.3 2002/10/24 01:43:54 augustss Exp $ */
+/* $NetBSD: cgd.c,v 1.4 2002/10/24 08:04:00 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.3 2002/10/24 01:43:54 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.4 2002/10/24 08:04:00 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,7 +79,7 @@ const struct bdevsw cgd_bdevsw = {
 
 const struct cdevsw cgd_cdevsw = {
 	cgdopen, cgdclose, cgdread, cgdwrite, cgdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /* Internal Functions */
