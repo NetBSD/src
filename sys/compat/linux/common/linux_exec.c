@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.55 2002/01/17 17:19:04 bjh21 Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.56 2002/01/17 21:19:22 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.55 2002/01/17 17:19:04 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.56 2002/01/17 21:19:22 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ extern struct sysent linux_sysent[];
 extern const char * const linux_syscallnames[];
 extern char linux_sigcode[], linux_esigcode[];
 #ifndef __HAVE_SYSCALL_INTERN
-void LINUX_SYCALL_FUNCTION __P((void));
+void LINUX_SYSCALL_FUNCTION __P((void));
 #endif
 
 static void linux_e_proc_exec __P((struct proc *, struct exec_package *));
