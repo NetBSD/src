@@ -1,4 +1,4 @@
-/*	$NetBSD: r5900regs.h,v 1.1 2002/03/05 16:04:57 simonb Exp $	*/
+/*	$NetBSD: r5900regs.h,v 1.2 2002/11/15 00:58:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@
  */
 
 #undef COP0_SYNC
-#define	COP0_SYNC	sync.p 
+#define	COP0_SYNC	sync.p
 
-/* 
- * R5900 has INT5,1,0 only don't support software interrupt 
+/*
+ * R5900 has INT5,1,0 only don't support software interrupt
  * MIPS_SOFT_INT_MASK_1 and MIPS_SOFT_INT_MASK_1 are emulated by kernel.
  */
 #undef MIPS_INT_MASK
@@ -48,9 +48,9 @@
 #undef MIPS_HARD_INT_MASK
 #define	MIPS_HARD_INT_MASK	0x0c00
 
-/* 
- * The R5900 doesn't have 
- *    
+/*
+ * The R5900 doesn't have
+ *
  * LLADDR
  * WATCH_LO
  * WATCH_HI
