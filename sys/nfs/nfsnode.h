@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.38 2003/04/09 14:22:34 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.39 2003/04/09 14:24:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -183,7 +183,7 @@ LIST_HEAD(nfsnodehashhead, nfsnode);
 #define NFSTOV(np)	((np)->n_vnode)
 
 /*
- * Queue head for nfsiod's
+ * Per-nfsiod datas
  */
 struct nfs_iod {
 	struct proc *nid_proc;
