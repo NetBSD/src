@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.3 2001/02/03 16:49:06 tshiozak Exp $	*/
+/*	$NetBSD: umidi.c,v 1.4 2001/02/03 18:50:31 tshiozak Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -89,11 +89,15 @@ static usbd_status bind_jacks_to_mididev(struct umidi_softc *,
 					 struct umidi_jack *,
 					 struct umidi_jack *,
 					 struct umidi_mididev *);
-static usbd_status unbind_jacks_from_mididev(struct umidi_mididev *);
-static usbd_status unbind_all_jacks(struct umidi_softc *);
+static void unbind_jacks_from_mididev(struct umidi_mididev *);
+static void unbind_all_jacks(struct umidi_softc *);
 static usbd_status assign_all_jacks_automatically(struct umidi_softc *);
-static usbd_status open_jack(struct umidi_jack *);
-static void close_jack(struct umidi_jack *);
+static usbd_status open_out_jack(struct umidi_jack *, void *,
+				 void (*)(void *));
+static usbd_status open_in_jack(struct umidi_jack *, void *,
+				void (*)(void *, int));
+static void close_out_jack(struct umidi_jack *);
+static void close_in_jack(struct umidi_jack *);
 
 static usbd_status attach_mididev(struct umidi_softc *,
 				  struct umidi_mididev *);
@@ -113,9 +117,9 @@ static void dump_jack(struct umidi_jack *);
 
 static void init_packet(struct umidi_packet *);
 
-static void in_packet_to_mididev(struct umidi_endpoint *, uByte *);
 static usbd_status start_input_transfer(struct umidi_endpoint *);
 static usbd_status start_output_transfer(struct umidi_endpoint *);
+static int out_jack_output(struct umidi_jack *, int);
 static void in_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 static void out_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 static void out_build_packet(int, struct umidi_packet *, uByte);
@@ -251,7 +255,6 @@ USB_DETACH(umidi)
 
 	sc->sc_dying = 1;
 	detach_all_mididevs(sc, flags);
-	unbind_all_jacks(sc);
 	free_all_mididevs(sc);
 	free_all_jacks(sc);
 	free_all_endpoints(sc);
@@ -263,6 +266,9 @@ USB_DETACH(umidi)
 }
 
 
+/*
+ * midi_if stuffs
+ */
 int
 umidi_open(void *addr,
 	   int flags,
@@ -279,18 +285,15 @@ umidi_open(void *addr,
 		return ENXIO;
 	if (mididev->opened)
 		return EBUSY;
-	if (sc->sc_dying || mididev->dying)
+	if (sc->sc_dying)
 		return EIO;
 
-	mididev->flags = flags;
 	mididev->opened = 1;
-	mididev->arg = arg;
-	mididev->iintr = iintr;
-	mididev->ointr = ointr;
+	mididev->flags = flags;
 	if ((mididev->flags & FWRITE) && mididev->out_jack)
-		open_jack(mididev->out_jack);
+		open_out_jack(mididev->out_jack, arg, ointr);
 	if ((mididev->flags & FREAD) && mididev->in_jack) {
-		open_jack(mididev->in_jack);
+		open_in_jack(mididev->in_jack, arg, iintr);
 	}
 
 	return 0;
@@ -304,74 +307,22 @@ umidi_close(void *addr)
 
 	s = splusb();
 	if ((mididev->flags & FWRITE) && mididev->out_jack)
-		close_jack(mididev->out_jack);
+		close_out_jack(mididev->out_jack);
 	if ((mididev->flags & FREAD) && mididev->in_jack)
-		close_jack(mididev->in_jack);
+		close_in_jack(mididev->in_jack);
 	mididev->opened = 0;
-	mididev->arg = NULL;
-	mididev->iintr = NULL;
-	mididev->ointr = NULL;
 	splx(s);
 }
-
-#ifdef UMIDI_DEBUG
-#define DPR_PACKET(dir, sc, p)						\
-if ((unsigned char)(p)->buffer[1]!=0xFE)				\
-	DPRINTFN(500,							\
-		 ("%s: umidi packet(" #dir "): %02X %02X %02X %02X\n",	\
-		  USBDEVNAME(sc->sc_dev),				\
-		  (unsigned char)(p)->buffer[0],			\
-		  (unsigned char)(p)->buffer[1],			\
-		  (unsigned char)(p)->buffer[2],			\
-		  (unsigned char)(p)->buffer[3]));
-#else
-#define DPR_PACKET(dir, sc, p)
-#endif
 
 int
 umidi_output(void *addr, int d)
 {
 	struct umidi_mididev *mididev = addr;
-	struct umidi_softc *sc = mididev->sc;
-	struct umidi_jack *out_jack = mididev->out_jack;
-	struct umidi_endpoint *ep;
-	int error;
-	int s;
 
-	if (sc->sc_dying || mididev->dying || !mididev->opened)
+	if (!mididev->out_jack || !mididev->opened)
 		return EIO;
 
-	error = 0;
-	if (out_jack && (ep=out_jack->endpoint)!=NULL && ep->buffer) {
-		DPRINTFN(1000, ("umidi_output: ep=%p 0x%02x\n", ep, d));
-		out_build_packet(out_jack->cable_number, &out_jack->packet, d);
-		switch (out_jack->packet.state) {
-		case PS_EXCL_0:
-		case PS_END:
-			DPR_PACKET(out, sc, &out_jack->packet);
-			s = splusb();
-			if (LIST_EMPTY(&ep->queue)) {
-				memcpy(ep->buffer,
-				       out_jack->packet.buffer,
-				       UMIDI_PACKET_SIZE);
-				start_output_transfer(ep);
-			}
-			if (LIST_EMPTY(&ep->queue))
-				LIST_INSERT_HEAD(&ep->queue,
-						 out_jack, queue);
-			else
-				LIST_INSERT_AFTER(ep->queue_tail,
-						  out_jack, queue);
-			ep->queue_tail = out_jack;
-			splx(s);
-			break;
-		default:
-			error = EINPROGRESS;
-		}
-	} else
-		error = ENODEV;
-
-	return error;
+	return out_jack_output(mididev->out_jack, d);
 }
 
 void
@@ -387,7 +338,9 @@ umidi_getinfo(void *addr, struct midi_info *mi)
 }
 
 
-/* --- */
+/*
+ * each endpoint stuffs
+ */
 
 /* alloc/free pipe */
 static usbd_status
@@ -397,7 +350,7 @@ alloc_pipe(struct umidi_endpoint *ep)
 	usbd_status err;
 
 	DPRINTF(("%s: alloc_pipe %p\n", USBDEVNAME(sc->sc_dev), ep));
-	LIST_INIT(&ep->queue);
+	LIST_INIT(&ep->queue_head);
 	ep->xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (!ep->xfer) {
 	    err = USBD_NOMEM;
@@ -523,7 +476,7 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 		sc->sc_out_num_jacks += fp->out_ep[i].num_jacks;
 		ep->num_open = 0;
 		memset(ep->jacks, 0, sizeof(ep->jacks));
-		LIST_INIT(&ep->queue);
+		LIST_INIT(&ep->queue_head);
 		ep++;
 	}
 	ep = &sc->sc_in_ep[0];
@@ -741,7 +694,10 @@ alloc_all_endpoints_genuine(struct umidi_softc *sc)
 }
 
 
-/* */
+/*
+ * jack stuffs
+ */
+
 static usbd_status
 alloc_all_jacks(struct umidi_softc *sc)
 {
@@ -763,16 +719,20 @@ alloc_all_jacks(struct umidi_softc *sc)
 
 	jack = &sc->sc_out_jacks[0];
 	for (i=0; i<sc->sc_out_num_jacks; i++) {
-		init_packet(&jack->packet);
+		jack->opened = 0;
+		jack->binded = 0;
+		jack->arg = NULL;
+		jack->u.out.intr = NULL;
 		jack->cable_number = i;
-		jack->mididev = NULL;
 		jack++;
 	}
 	jack = &sc->sc_in_jacks[0];
 	for (i=0; i<sc->sc_in_num_jacks; i++) {
-		init_packet(&jack->packet);
+		jack->opened = 0;
+		jack->binded = 0;
+		jack->arg = NULL;
+		jack->u.in.intr = NULL;
 		jack->cable_number = i;
-		jack->mididev = NULL;
 		jack++;
 	}
 
@@ -824,47 +784,45 @@ bind_jacks_to_mididev(struct umidi_softc *sc,
 		      struct umidi_jack *in_jack,
 		      struct umidi_mididev *mididev)
 {
-	if (mididev->opened || mididev->out_jack || mididev->in_jack)
+	if (out_jack->binded || in_jack->binded)
+		return USBD_IN_USE;
+	if (mididev->out_jack || mididev->in_jack)
 		return USBD_IN_USE;
 
+	if (out_jack)
+		out_jack->binded = 1;
+	if (in_jack)
+		in_jack->binded = 1;
 	mididev->in_jack = in_jack;
 	mididev->out_jack = out_jack;
-	if (in_jack)
-		in_jack->mididev = mididev;
-	if (out_jack)
-		out_jack->mididev = mididev;
 
 	return USBD_NORMAL_COMPLETION;
 }
 
-static usbd_status
+static void
 unbind_jacks_from_mididev(struct umidi_mididev *mididev)
 {
-	if (mididev->opened) {
-		if ((mididev->flags&FWRITE) && mididev->out_jack)
-			close_jack(mididev->out_jack);
-		if ((mididev->flags&FWRITE) && mididev->in_jack)
-			close_jack(mididev->in_jack);
-		mididev->out_jack = mididev->in_jack = NULL;
-	}
+	if ((mididev->flags&FWRITE) && mididev->out_jack)
+		close_out_jack(mididev->out_jack);
+	if ((mididev->flags&FWRITE) && mididev->in_jack)
+		close_in_jack(mididev->in_jack);
 
-	return USBD_NORMAL_COMPLETION;
+	if (mididev->out_jack)
+		mididev->out_jack->binded = 0;
+	if (mididev->in_jack)
+		mididev->in_jack->binded = 0;
+	mididev->out_jack = mididev->in_jack = NULL;
 }
 
-static usbd_status
+static void
 unbind_all_jacks(struct umidi_softc *sc)
 {
-	usbd_status err;
 	int i;
 
 	if (sc->sc_mididevs)
 		for (i=0; i<sc->sc_num_mididevs; i++) {
-			err = unbind_jacks_from_mididev(&sc->sc_mididevs[i]);
-			if (err!=USBD_NORMAL_COMPLETION)
-				return err;
+			unbind_jacks_from_mididev(&sc->sc_mididevs[i]);
 		}
-
-	return USBD_NORMAL_COMPLETION;
 }
 
 static usbd_status
@@ -894,14 +852,34 @@ assign_all_jacks_automatically(struct umidi_softc *sc)
 }
 
 static usbd_status
-open_jack(struct umidi_jack *jack)
+open_out_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *))
+{
+	struct umidi_endpoint *ep = jack->endpoint;
+
+	if (jack->opened)
+		return USBD_IN_USE;
+
+	jack->arg = arg;
+	jack->u.out.intr = intr;
+	init_packet(&jack->packet);
+	jack->opened = 1;
+	ep->num_open++;
+
+	return USBD_NORMAL_COMPLETION;
+}
+
+static usbd_status
+open_in_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *, int))
 {
 	usbd_status err = USBD_NORMAL_COMPLETION;
 	struct umidi_endpoint *ep = jack->endpoint;
 
-	if (!ep)
-		return USBD_NO_ADDR;
-	init_packet(&jack->packet);
+	if (jack->opened)
+		return USBD_IN_USE;
+
+	jack->arg = arg;
+	jack->u.in.intr = intr;
+	jack->opened = 1;
 	if (ep->num_open++==0 && UE_GET_DIR(ep->addr)==UE_DIR_IN) {
 		err = start_input_transfer(ep);
 		if (err!=USBD_NORMAL_COMPLETION) {
@@ -913,24 +891,38 @@ open_jack(struct umidi_jack *jack)
 }
 
 static void
-close_jack(struct umidi_jack *jack)
+close_out_jack(struct umidi_jack *jack)
 {
 	struct umidi_jack *tail;
 	int s;
-	s = splusb();
-	LIST_REMOVE(jack, queue);
-	if (jack==jack->endpoint->queue_tail) {
-		/* find tail */
-		LIST_FOREACH(tail, &jack->endpoint->queue, queue) {
-			if (!LIST_NEXT(last, queue)) {
-				jack->endpoint->queue_tail = tail;
+
+	if (jack->opened) {
+		s = splusb();
+		LIST_REMOVE(jack, u.out.queue_entry);
+		if (jack==jack->endpoint->queue_tail) {
+			/* find tail */
+			LIST_FOREACH(tail,
+				     &jack->endpoint->queue_head,
+				     u.out.queue_entry) {
+				if (!LIST_NEXT(tail, u.out.queue_entry)) {
+					jack->endpoint->queue_tail = tail;
+				}
 			}
 		}
+		splx(s);
+		jack->opened = 0;
+		jack->endpoint->num_open--;
 	}
-	jack->endpoint->num_open--;
-	splx(s);
 }
 
+static void
+close_in_jack(struct umidi_jack *jack)
+{
+	if (jack->opened) {
+		jack->opened = 0;
+		jack->endpoint->num_open--;
+	}
+}
 
 static usbd_status
 attach_mididev(struct umidi_softc *sc, struct umidi_mididev *mididev)
@@ -939,8 +931,6 @@ attach_mididev(struct umidi_softc *sc, struct umidi_mididev *mididev)
 		return USBD_IN_USE;
 
 	mididev->sc = sc;
-	mididev->opened = 0;
-	mididev->dying = 0;
 
 	mididev->mdev = midi_attach_mi(&umidi_hw_if, mididev, &sc->sc_dev);
 
@@ -956,10 +946,7 @@ detach_mididev(struct umidi_mididev *mididev, int flags)
 	if (mididev->opened) {
 		umidi_close(mididev);
 	}
-
-	mididev->iintr = NULL;
-	mididev->ointr = NULL;
-	mididev->arg = NULL;
+	unbind_jacks_from_mididev(mididev);
 
 	if (mididev->mdev)
 		config_detach(mididev->mdev, flags);
@@ -972,10 +959,10 @@ detach_mididev(struct umidi_mididev *mididev, int flags)
 static usbd_status
 deactivate_mididev(struct umidi_mididev *mididev)
 {
-	if (!mididev->sc)
-		return USBD_NO_ADDR;
-
-	mididev->dying = 1;
+	if (mididev->out_jack)
+		mididev->out_jack->binded = 0;
+	if (mididev->in_jack)
+		mididev->in_jack->binded = 0;
 	config_deactivate(mididev->mdev);
 
 	return USBD_NORMAL_COMPLETION;
@@ -1145,37 +1132,6 @@ init_packet(struct umidi_packet *packet)
 	packet->state = PS_INITIAL;
 }
 
-static void
-in_packet_to_mididev(struct umidi_endpoint *ep, uByte *packet)
-{
-	int cn, len, i;
-	struct umidi_jack *jack;
-	struct umidi_mididev *mididev;
-
-	cn = GET_CN(packet[0]);
-	len = packet_length[GET_CIN(packet[0])];
-	jack = ep->jacks[cn];
-
-	if (cn>=ep->num_jacks || !jack) {
-		DPRINTF(("%s: stray umidi packet (in): %02X %02X %02X %02X\n",
-			 USBDEVNAME(ep->sc->sc_dev),
-			 (unsigned)packet[0],
-			 (unsigned)packet[1],
-			 (unsigned)packet[2],
-			 (unsigned)packet[3]));
-		return;
-	}
-	mididev = jack->mididev;
-	if (!mididev || !mididev->opened || mididev->dying)
-		return;
-	DPR_PACKET(in, ep->sc, &jack->packet);
-	if (mididev->iintr) {
-		for (i=0; i<len; i++) {
-			(*mididev->iintr)(mididev->arg, packet[i+1]);
-		}
-	}
-}
-
 static usbd_status
 start_input_transfer(struct umidi_endpoint *ep)
 {
@@ -1196,15 +1152,94 @@ start_output_transfer(struct umidi_endpoint *ep)
 	return usbd_transfer(ep->xfer);
 }
 
+#ifdef UMIDI_DEBUG
+#define DPR_PACKET(dir, sc, p)						\
+if ((unsigned char)(p)->buffer[1]!=0xFE)				\
+	DPRINTFN(500,							\
+		 ("%s: umidi packet(" #dir "): %02X %02X %02X %02X\n",	\
+		  USBDEVNAME(sc->sc_dev),				\
+		  (unsigned char)(p)->buffer[0],			\
+		  (unsigned char)(p)->buffer[1],			\
+		  (unsigned char)(p)->buffer[2],			\
+		  (unsigned char)(p)->buffer[3]));
+#else
+#define DPR_PACKET(dir, sc, p)
+#endif
+
+static int
+out_jack_output(struct umidi_jack *out_jack, int d)
+{
+	struct umidi_endpoint *ep = out_jack->endpoint;
+	struct umidi_softc *sc = ep->sc;
+	int error;
+	int s;
+
+	if (sc->sc_dying)
+		return EIO;
+
+	error = 0;
+	if (out_jack->opened) {
+		DPRINTFN(1000, ("umidi_output: ep=%p 0x%02x\n", ep, d));
+		out_build_packet(out_jack->cable_number, &out_jack->packet, d);
+		switch (out_jack->packet.state) {
+		case PS_EXCL_0:
+		case PS_END:
+			DPR_PACKET(out, sc, &out_jack->packet);
+			s = splusb();
+			if (LIST_EMPTY(&ep->queue_head)) {
+				memcpy(ep->buffer,
+				       out_jack->packet.buffer,
+				       UMIDI_PACKET_SIZE);
+				start_output_transfer(ep);
+			}
+			if (LIST_EMPTY(&ep->queue_head))
+				LIST_INSERT_HEAD(&ep->queue_head,
+						 out_jack, u.out.queue_entry);
+			else
+				LIST_INSERT_AFTER(ep->queue_tail,
+						  out_jack, u.out.queue_entry);
+			ep->queue_tail = out_jack;
+			splx(s);
+			break;
+		default:
+			error = EINPROGRESS;
+		}
+	} else
+		error = ENODEV;
+
+	return error;
+}
+
 static void
 in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
+	int cn, len, i;
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
+	struct umidi_jack *jack;
 
 	if (ep->sc->sc_dying || !ep->num_open)
 		return;
 
-	in_packet_to_mididev(ep, ep->buffer);
+	cn = GET_CN(ep->buffer[0]);
+	len = packet_length[GET_CIN(ep->buffer[0])];
+	jack = ep->jacks[cn];
+	if (cn>=ep->num_jacks || !jack) {
+		DPRINTF(("%s: stray umidi packet (in): %02X %02X %02X %02X\n",
+			 USBDEVNAME(ep->sc->sc_dev),
+			 (unsigned)ep->buffer[0],
+			 (unsigned)ep->buffer[1],
+			 (unsigned)ep->buffer[2],
+			 (unsigned)ep->buffer[3]));
+		return;
+	}
+	if (!jack->binded || !jack->opened)
+		return;
+	DPR_PACKET(in, ep->sc, &jack->buffer);
+	if (jack->u.in.intr) {
+		for (i=0; i<len; i++) {
+			(*jack->u.in.intr)(jack->arg, ep->buffer[i+1]);
+		}
+	}
 
 	(void)start_input_transfer(ep);
 }
@@ -1215,24 +1250,21 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
 	struct umidi_softc *sc = ep->sc;
 	struct umidi_jack *jack;
-	struct umidi_mididev *mididev;
 
 	if (sc->sc_dying || !ep->num_open)
 		return;
 
-	jack = LIST_FIRST(&ep->queue);
-	if (jack) {
-		mididev = jack->mididev;
-
-		LIST_REMOVE(jack, queue);
-		if (!LIST_EMPTY(&ep->queue)) {
+	jack = LIST_FIRST(&ep->queue_head);
+	if (jack && jack->opened) {
+		LIST_REMOVE(jack, u.out.queue_entry);
+		if (!LIST_EMPTY(&ep->queue_head)) {
 			memcpy(ep->buffer,
-			       LIST_FIRST(&ep->queue)->packet.buffer,
+			       LIST_FIRST(&ep->queue_head)->packet.buffer,
 			       UMIDI_PACKET_SIZE);
 			(void)start_output_transfer(ep);
 		}
-		if (mididev && mididev->ointr) {
-			(*mididev->ointr)(mididev->arg);
+		if (jack->u.out.intr) {
+			(*jack->u.out.intr)(jack->arg);
 		}
 	}
 }
@@ -1328,3 +1360,4 @@ retry:
 		goto retry;
 	}
 }
+

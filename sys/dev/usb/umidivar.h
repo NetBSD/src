@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.2 2001/02/03 16:49:06 tshiozak Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.3 2001/02/03 18:50:32 tshiozak Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,11 +56,11 @@ struct umidi_packet {
 /*
  * hierarchie
  *
- * <-- parent		      child -->
+ * <-- parent	       child -->
  *
- * umidi(sc) -> endpoint -> jack -> mididev
- *	   ^	 |    ^	    |  ^     |
- *	   +-----+    +-----+  +-----+
+ * umidi(sc) -> endpoint -> jack   <- (dynamically assignable) - mididev
+ *	   ^	 |    ^	    | 
+ *	   +-----+    +-----+ 
  */
 
 /* midi device */
@@ -73,20 +73,26 @@ struct umidi_mididev {
 	/* */
 	int			opened;
 	int			flags;
-	int			dying;
-	void			(*iintr)(void *, int);
-	void			(*ointr)(void *);
-	void			*arg;
 };
 
 /* Jack Information */
 struct umidi_jack {
-	struct umidi_endpoint		*endpoint;
+	struct umidi_endpoint	*endpoint;
 	/* */
-	int				cable_number;
-	struct umidi_packet		packet;
-	struct umidi_mididev		*mididev;
-	LIST_ENTRY(umidi_jack)		queue;
+	int			cable_number;
+	struct umidi_packet	packet;
+	void			*arg;
+	int			binded;
+	int			opened;
+	union {
+		struct {
+			void			(*intr)(void *);
+			LIST_ENTRY(umidi_jack)	queue_entry;
+		} out;
+		struct {
+			void			(*intr)(void *, int);
+		} in;
+	} u;
 };
 
 #define UMIDI_MAX_EPJACKS	16
@@ -95,15 +101,14 @@ struct umidi_endpoint {
 	struct umidi_softc	*sc;
 	/* */
 	int			addr;
-	int			num_jacks;
-	struct umidi_jack	*jacks[UMIDI_MAX_EPJACKS];
-	int			num_open;
-	LIST_HEAD(, umidi_jack)	queue;
-	struct umidi_jack	*queue_tail;
-	/* valid only while transfer */
 	usbd_pipe_handle	pipe;
 	usbd_xfer_handle	xfer;
 	char			*buffer;
+	int			num_open;
+	int			num_jacks;
+	struct umidi_jack	*jacks[UMIDI_MAX_EPJACKS];
+	LIST_HEAD(, umidi_jack)	queue_head;
+	struct umidi_jack	*queue_tail;
 };
 
 /* software context */
