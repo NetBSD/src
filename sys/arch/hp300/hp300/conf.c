@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.48 2001/11/17 23:53:39 gmcgarry Exp $	*/
+/*	$NetBSD: conf.c,v 1.49 2001/12/14 08:29:24 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -293,81 +293,3 @@ chrtoblk(dev)
 		return (NODEV);
 	return (makedev(blkmaj, minor(dev)));
 }
-
-/*
- * This entire table could be autoconfig()ed but that would mean that
- * the kernel's idea of the console would be out of sync with that of
- * the standalone boot.  I think it best that they both use the same
- * known algorithm unless we see a pressing need otherwise.
- */
-#include <dev/cons.h>
-
-#define dvboxcngetc		itecngetc
-#define dvboxcnputc		itecnputc
-#define dvboxcnpollc		nullcnpollc
-cons_decl(dvbox);
-
-#define gboxcngetc		itecngetc
-#define gboxcnputc		itecnputc
-#define gboxcnpollc		nullcnpollc
-cons_decl(gbox);
-
-#define hypercngetc		itecngetc
-#define hypercnputc		itecnputc
-#define hypercnpollc		nullcnpollc
-cons_decl(hyper);
-
-#define rboxcngetc		itecngetc
-#define rboxcnputc		itecnputc
-#define rboxcnpollc		nullcnpollc
-cons_decl(rbox);
-
-#define topcatcngetc		itecngetc
-#define topcatcnputc		itecnputc
-#define topcatcnpollc		nullcnpollc
-cons_decl(topcat);
-
-#define	dcacnpollc		nullcnpollc
-cons_decl(dca);
-
-#define	apcicnpollc		nullcnpollc
-cons_decl(apci);
-
-#define	dcmcnpollc		nullcnpollc
-cons_decl(dcm);
-
-#include "dvbox.h"
-#include "gbox.h"
-#include "hyper.h"
-#include "rbox.h"
-#include "topcat.h"
-
-struct	consdev constab[] = {
-#if (NITE > 0) && (NHIL > 0)
-#if NDVBOX > 0
-	cons_init(dvbox),
-#endif
-#if NGBOX > 0
-	cons_init(gbox),
-#endif
-#if NHYPER > 0
-	cons_init(hyper),
-#endif
-#if NRBOX > 0
-	cons_init(rbox),
-#endif
-#if NTOPCAT > 0
-	cons_init(topcat),
-#endif
-#endif /* NITE > 0 */
-#if NDCA > 0
-	cons_init(dca),
-#endif
-#if NAPCI > 0
-	cons_init(apci),
-#endif
-#if NDCM > 0
-	cons_init(dcm),
-#endif
-	{ 0 },
-};
