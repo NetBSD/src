@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.51 2003/10/23 17:41:59 fvdl Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.52 2003/10/23 20:36:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.51 2003/10/23 17:41:59 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.52 2003/10/23 20:36:36 fvdl Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1191,7 +1191,8 @@ bge_chipinit(sc)
 	 */
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS|
 		    BGE_MODECTL_MAC_ATTN_INTR|BGE_MODECTL_HOST_SEND_BDS|
-		    BGE_MODECTL_TX_NO_PHDR_CSUM| BGE_MODECTL_RX_NO_PHDR_CSUM);
+		    BGE_MODECTL_NO_RX_CRC|BGE_MODECTL_TX_NO_PHDR_CSUM|
+		    BGE_MODECTL_RX_NO_PHDR_CSUM);
 
 	/* Get cache line size. */
 	cachesize = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_CACHESZ);
@@ -2158,6 +2159,7 @@ bge_attach(parent, self, aux)
 
 	if (br == NULL) {
 		aprint_normal("unknown ASIC 0x%08x", sc->bge_chipid);
+		sc->bge_quirks = 0;
 	} else {
 		aprint_normal("ASIC %s", br->br_name);
 		sc->bge_quirks |= br->br_quirks;
