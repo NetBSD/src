@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.52 2004/02/07 00:51:05 matt Exp $
+$NetBSD: miidevs,v 1.53 2004/10/28 07:23:00 cube Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -127,6 +127,7 @@ model BROADCOM BCM5701		0x0011 BCM5701 1000BASE-T media interface
 model BROADCOM BCM5703		0x0016 BCM5703 1000BASE-T media interface
 model BROADCOM BCM5704		0x0019 BCM5704 1000BASE-T media interface
 model BROADCOM BCM5705		0x001a BCM5705 1000BASE-T media interface
+model BROADCOM BCM5750		0x0018 BCM5750 1000BASE-T media interface
 
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */
