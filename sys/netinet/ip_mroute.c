@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_mroute.c,v 1.13 1994/06/29 06:38:22 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989 Stephen Deering
  * Copyright (c) 1992 Regents of the University of California.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ip_mroute.c	7.4 (Berkeley) 11/19/92
- *	$Id $
+ *	@(#)ip_mroute.c	7.4 (Berkeley) 11/19/92
  */
 
 /*

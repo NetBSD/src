@@ -1,3 +1,5 @@
+/*	$NetBSD: null_subr.c,v 1.2 1994/06/29 06:34:32 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: lofs_subr.c,v 1.11 1992/05/30 10:05:43 jsp Exp
- *	from: @(#)null_subr.c	8.4 (Berkeley) 1/21/94
- *	$Id: null_subr.c,v 1.1 1994/06/08 11:33:24 mycroft Exp $
+ *	@(#)null_subr.c	8.4 (Berkeley) 1/21/94
  */
 
 #include <sys/param.h>

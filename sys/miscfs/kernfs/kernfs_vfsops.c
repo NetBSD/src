@@ -1,3 +1,5 @@
+/*	$NetBSD: kernfs_vfsops.c,v 1.18 1994/06/29 06:34:27 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kernfs_vfsops.c	8.5 (Berkeley) 6/15/94
- *	$Id: kernfs_vfsops.c,v 1.17 1994/06/15 22:54:40 mycroft Exp $
+ *	@(#)kernfs_vfsops.c	8.5 (Berkeley) 6/15/94
  */
 
 /*

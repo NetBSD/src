@@ -1,3 +1,5 @@
+/*	$NetBSD: tcp_timer.c,v 1.8 1994/06/29 06:38:48 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tcp_timer.c	8.1 (Berkeley) 6/10/93
- *	$Id: tcp_timer.c,v 1.7 1994/05/13 06:06:46 mycroft Exp $
+ *	@(#)tcp_timer.c	8.1 (Berkeley) 6/10/93
  */
 
 #ifndef TUBA_INCLUDE

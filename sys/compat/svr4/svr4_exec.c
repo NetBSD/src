@@ -1,3 +1,5 @@
+/*	$NetBSD: svr4_exec.c,v 1.2 1994/06/29 06:30:31 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -23,8 +25,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: svr4_exec.c,v 1.1 1994/05/22 10:04:31 deraadt Exp $
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: kern_ktrace.c,v 1.11 1994/06/29 06:32:29 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kern_ktrace.c	8.2 (Berkeley) 9/23/93
- *	$Id: kern_ktrace.c,v 1.10 1994/06/08 11:28:37 mycroft Exp $
+ *	@(#)kern_ktrace.c	8.2 (Berkeley) 9/23/93
  */
 
 #ifdef KTRACE

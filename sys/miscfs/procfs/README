@@ -1,3 +1,5 @@
+/*	$NetBSD: README,v 1.4 1994/06/29 06:34:43 cgd Exp $	*/
+
 saute procfs lyonnais
 
 procfs supports two levels of directory.  the filesystem root
@@ -109,5 +111,3 @@ the debugger, the debugger should fork and the child should stop itself
 (with a self-inflicted SIGSTOP).  the parent should do a "wait" then an
 "attach".  as before, the child will hit a breakpoint on the first
 instruction in any newly exec'd image.
-
-$Id: README,v 1.3 1994/06/08 11:33:32 mycroft Exp $

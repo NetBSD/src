@@ -1,3 +1,5 @@
+/*	$NetBSD: if_tun.h,v 1.5 1994/06/29 06:36:27 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
  * Nottingham University 1987.
@@ -11,8 +13,7 @@
  * UCL. This driver is based much more on read/write/select mode of
  * operation though.
  * 
- * from: $Header: if_tnreg.h,v 1.1.2.1 1992/07/16 22:39:16 friedl Exp
- * $Id: if_tun.h,v 1.4 1994/05/03 23:02:09 deraadt Exp $
+ * : $Header: if_tnreg.h,v 1.1.2.1 1992/07/16 22:39:16 friedl Exp
  */
 
 #ifndef _NET_IF_TUN_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: null_vnops.c,v 1.2 1994/06/29 06:34:35 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)null_vnops.c	8.1 (Berkeley) 6/10/93
- *	$Id: null_vnops.c,v 1.1 1994/06/08 11:33:26 mycroft Exp $
+ *	@(#)null_vnops.c	8.1 (Berkeley) 6/10/93
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92

@@ -1,3 +1,5 @@
+/*	$NetBSD: tty_tty.c,v 1.10 1994/06/29 06:33:31 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tty_tty.c	8.2 (Berkeley) 9/23/93
- *	$Id: tty_tty.c,v 1.9 1994/05/12 03:48:37 cgd Exp $
+ *	@(#)tty_tty.c	8.2 (Berkeley) 9/23/93
  */
 
 /*

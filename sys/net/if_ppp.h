@@ -1,3 +1,5 @@
+/*	$NetBSD: if_ppp.h,v 1.7 1994/06/29 06:36:19 cgd Exp $	*/
+
 /*
  * if_ppp.h - Point-to-Point Protocol definitions.
  *
@@ -15,8 +17,6 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
- * $Id: if_ppp.h,v 1.6 1994/05/08 12:34:20 paulus Exp $
  */
 
 #ifndef _IF_PPP_H_

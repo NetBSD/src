@@ -1,3 +1,5 @@
+/*	$NetBSD: if_ether.c,v 1.16 1994/06/29 06:37:54 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_ether.c	8.1 (Berkeley) 6/10/93
- *	$Id: if_ether.c,v 1.15 1994/06/21 03:54:27 chopps Exp $
+ *	@(#)if_ether.c	8.1 (Berkeley) 6/10/93
  */
 
 /*

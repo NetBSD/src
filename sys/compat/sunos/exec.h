@@ -1,3 +1,5 @@
+/*	$NetBSD: exec.h,v 1.3 1994/06/29 06:30:07 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Theo de Raadt
  * All rights reserved.
@@ -23,8 +25,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: exec.h,v 1.2 1994/01/28 23:46:30 jtc Exp $
  */
 
 #ifndef	_SUNOS_EXEC_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: db_variables.h,v 1.4 1994/06/29 06:31:24 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -25,7 +27,6 @@
  *
  * 	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
- *	$Id: db_variables.h,v 1.3 1994/02/15 14:50:47 mycroft Exp $
  */
 
 #ifndef	_DB_VARIABLES_H_

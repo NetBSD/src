@@ -1,3 +1,5 @@
+/*	$NetBSD: procfs_fpregs.c,v 1.3 1994/06/29 06:34:48 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
  * Copyright (c) 1993
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)procfs_fpregs.c	8.2 (Berkeley) 6/15/94
- *	$Id: procfs_fpregs.c,v 1.2 1994/06/15 22:59:05 mycroft Exp $
+ *	@(#)procfs_fpregs.c	8.2 (Berkeley) 6/15/94
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: procfs_vnops.c,v 1.24 1994/06/29 06:35:00 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
  * Copyright (c) 1993
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)procfs_vnops.c	8.8 (Berkeley) 6/15/94
- *	$Id: procfs_vnops.c,v 1.23 1994/06/16 06:01:19 mycroft Exp $
+ *	@(#)procfs_vnops.c	8.8 (Berkeley) 6/15/94
  */
 
 /*

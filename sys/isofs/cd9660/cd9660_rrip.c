@@ -1,4 +1,5 @@
-/* NetBSD $Id: cd9660_rrip.c,v 1.3 1994/06/27 19:41:06 cgd Exp $ */
+/*	$NetBSD: cd9660_rrip.c,v 1.4 1994/06/29 06:31:49 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

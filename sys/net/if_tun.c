@@ -1,3 +1,5 @@
+/*	$NetBSD: if_tun.c,v 1.14 1994/06/29 06:36:25 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
  * Nottingham University 1987.
@@ -10,8 +12,6 @@
  * roots in a similar driver written by Phil Cockcroft (formerly) at
  * UCL. This driver is based much more on read/write/select mode of
  * operation though.
- * 
- * $Id: if_tun.c,v 1.13 1994/05/26 00:47:19 deraadt Exp $
  */
 
 #include "tun.h"
