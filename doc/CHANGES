@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.448 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.449 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -9,4 +9,4 @@ containing just the word `help' to `majordomo@NetBSD.org'.]
 
 Changes from NetBSD 3.0 to NetBSD 4.0:
 	agr(4): Add pseudo-device driver for link aggregation. [yamt 20050318]
-	kernel: Add lock limiting code [christos 20050320]
+	kernel: Limit the number of locks per user to 1024 [christos 20050320]
