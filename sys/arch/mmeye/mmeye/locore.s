@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.6 1999/12/21 17:46:55 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.7 1999/12/21 21:41:58 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -346,8 +346,9 @@ start_in_RAM:
 	mov.l	XLinitSH3, r0
 	jsr	@r0		/* call initSH3() */
 	nop
-1:
+
 	.align	2
+1:
 #if 1
 	mov.l	XLKernelStack, r3
 	mov.l	r15, @r3
@@ -550,8 +551,8 @@ switch_error:
 	jsr	@r0
 	nop
 
-1:
 	.align	2
+1:
 	.asciz	"cpu_swicth"
 	.align	2
 XL_panic:
@@ -725,8 +726,8 @@ sw1:	mov	#0, r2
 	bra	3f
 	nop
 
-1:
 	.align	2
+1:
 	.asciz	"switch[i=%d,whichqs=0x%0x]\n"
 	.align	2
 2:	.long	_C_LABEL(printf)
@@ -1291,8 +1292,8 @@ ENTRY(cpu_printR15)
 	rts
 	nop
 
-1:
 	.align	2
+1:
 	.asciz	"sp=0x%x\n"
 	.align	2
 2:	.long	_C_LABEL(printf)
