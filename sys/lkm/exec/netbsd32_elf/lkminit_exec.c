@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:44 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.2 2001/05/15 02:00:14 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ int exec_netbsd32_elf_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_netbsd32_elf =
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
-	  { elf_probe_func: ELFNAME2(netbsd32,probe) },
+	  { ELFNAME2(netbsd32,probe) },
 	  NULL, EXECSW_PRIO_FIRST,
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  netbsd32_elf32_copyargs, netbsd32_setregs }; /* NetBSD32 32bit ELF bins */

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:47 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.2 2001/05/15 02:00:14 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ int exec_svr4_elf_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_svr4_elf =
 	{ sizeof (Elf_Ehdr), exec_elf32_makecmds,
-	  { elf_probe_func: ELFNAME2(svr4,probe) },
+	  { ELFNAME2(svr4,probe) },
 	  NULL, EXECSW_PRIO_ANY,
 	  SVR4_AUX_ARGSIZ,
 	  svr4_copyargs, svr4_setregs };	/* SVR4 32bit ELF bins (not 64bit safe) */
