@@ -1,4 +1,4 @@
-/*	$NetBSD: board.h,v 1.2 2002/04/17 17:37:52 thorpej Exp $	*/
+/*	$NetBSD: iq80310.c,v 1.1 2002/04/17 17:37:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,17 +36,24 @@
  */
 
 /*
- * This file defines the interfaces that standalone board support
- * packages must provide.
+ * Board initialization routines for the Intel IQ80310 eval board.
  */
 
-#ifndef _STAND_BOARD_H_
-#define	_STAND_BOARD_H_
+#include <sys/types.h>
+#include <lib/libsa/stand.h>
 
-void	board_init(void);
-void	board_fini(void);
+#include "board.h"
 
-void	cons_init(void);
-void	mem_init(void);
+void
+board_init(void)
+{
 
-#endif /* _STAND_BOARD_H_ */
+	mem_init();
+}
+
+void
+board_fini(void)
+{
+
+	/* Nothing to do here. */
+}
