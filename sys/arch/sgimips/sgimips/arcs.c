@@ -1,4 +1,4 @@
-/*	$NetBSD: arcs.c,v 1.1 2000/06/14 16:02:38 soren Exp $	*/
+/*	$NetBSD: arcs.c,v 1.2 2001/07/07 23:13:26 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -49,8 +49,6 @@
 #include <mips/cpuregs.h>
 #include <machine/arcs.h>
 
-extern int db_max_line;
-
 const struct arcs_fv *ARCS;
 
 void arcsinit(void);
@@ -64,11 +62,6 @@ int i;
 
 	spb = (struct arcs_spb *)MIPS_PHYS_TO_KSEG0(0x00001000);
 	ARCS = spb->FirmwareVector;
-
-	/*
-	 * Default textport windows are only 20 lines high.
-	 */
-	db_max_line = 20;
 
 	for (i = 0; i < 32; i++) {
 #if 0

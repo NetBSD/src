@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.2 2001/06/07 19:23:03 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.3 2001/07/07 23:13:25 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -41,11 +41,6 @@
  *
  * Runs two serial lines per chip using slave drivers.
  * Plain tty/async lines use the zs_async slave.
- */
-
-/* 
- * Short TODO list:
- *	(1) KGDB support.
  */
 
 #include "opt_ddb.h"
@@ -382,7 +377,7 @@ zshard(arg)
 		    softintr_schedule(zsc->sc_si);
 		}
 	}
-	return 0;
+	return rval;
 }
 
 /*
@@ -445,7 +440,7 @@ zs_set_speed(cs, bps)
 {
 	int tconst, real_bps;
 
-#if 1
+#if 0
 	while (!(zs_read_csr(cs) & ZSRR0_TX_READY))
 	        {/*nop*/}
 #endif
@@ -599,7 +594,9 @@ void
 zs_abort(cs)
 	struct zs_chanstate *cs;
 {
-#ifdef DDB
+#if defined(KGDB)
+	zskgdb(cs);
+#elif defined(DDB)
 	Debugger();
 #endif
 }
