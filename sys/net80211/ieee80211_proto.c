@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.5 2003/10/13 04:23:56 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.6 2003/12/14 09:56:53 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -33,9 +33,9 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.3 2003/07/20 21:36:08 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.6 2003/10/31 18:32:09 brooks Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.5 2003/10/13 04:23:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.6 2003/12/14 09:56:53 dyoung Exp $");
 #endif
 
 /*
@@ -122,7 +122,7 @@ ieee80211_proto_attach(struct ifnet *ifp)
 	ic->ic_fixed_rate = -1;			/* no fixed rate */
 
 #ifdef __FreeBSD__
-	mtx_init(&ic->ic_mgtq.ifq_mtx, ifp->if_name, "mgmt send q", MTX_DEF);
+	mtx_init(&ic->ic_mgtq.ifq_mtx, ifp->if_xname, "mgmt send q", MTX_DEF);
 #endif
 
 	/* protocol state change handler */
@@ -245,7 +245,7 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags
 	okrate = badrate = 0;
 	srs = &ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
 	nrs = &ni->ni_rates;
-	for (i = 0; i < ni->ni_rates.rs_nrates; ) {
+	for (i = 0; i < nrs->rs_nrates; ) {
 		ignore = 0;
 		if (flags & IEEE80211_F_DOSORT) {
 			/*
@@ -284,7 +284,16 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags
 					break;
 			}
 			if (j == srs->rs_nrates) {
-				if (nrs->rs_rates[i] & IEEE80211_RATE_BASIC)
+				/*
+				 * A rate in the node's rate set is not
+				 * supported.  If this is a basic rate and we
+				 * are operating as an AP then this is an error.
+				 * Otherwise we just discard/ignore the rate.
+				 * Note that this is important for 11b stations
+				 * when they want to associate with an 11g AP.
+				 */
+				if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
+				    (nrs->rs_rates[i] & IEEE80211_RATE_BASIC))
 					error++;
 				ignore++;
 			}

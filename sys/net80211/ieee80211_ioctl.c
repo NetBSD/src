@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.6 2003/12/07 05:23:12 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.7 2003/12/14 09:56:53 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -33,9 +33,9 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.4 2003/07/20 21:36:08 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.9 2003/11/13 05:23:58 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.6 2003/12/07 05:23:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.7 2003/12/14 09:56:53 dyoung Exp $");
 #endif
 
 /*
@@ -158,7 +158,8 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case WI_RID_COMMS_QUALITY:
 		wreq.wi_val[0] = 0;				/* quality */
-		wreq.wi_val[1] = htole16(ic->ic_bss->ni_rssi);	/* signal */
+		wreq.wi_val[1] =
+			htole16((*ic->ic_node_getrssi)(ic, ic->ic_bss));
 		wreq.wi_val[2] = 0;				/* noise */
 		wreq.wi_len = 3;
 		break;
@@ -300,7 +301,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 					    ni->ni_esslen);
 			}
 			ap->channel = ieee80211_chan2ieee(ic, ni->ni_chan);
-			ap->signal = ni->ni_rssi;
+			ap->signal = (*ic->ic_node_getrssi)(ic, ni);
 			ap->capinfo = ni->ni_capinfo;
 			ap->interval = ni->ni_intval;
 			rs = &ni->ni_rates;
@@ -336,7 +337,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 				break;
 			res->wi_chan = ieee80211_chan2ieee(ic, ni->ni_chan);
 			res->wi_noise = 0;
-			res->wi_signal = ni->ni_rssi;
+			res->wi_signal = (*ic->ic_node_getrssi)(ic, ni);
 			IEEE80211_ADDR_COPY(res->wi_bssid, ni->ni_bssid);
 			res->wi_interval = ni->ni_intval;
 			res->wi_capinfo = ni->ni_capinfo;
@@ -364,7 +365,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 				break;
 			IEEE80211_ADDR_COPY(wsc.macsrc, ni->ni_macaddr);
 			memset(&wsc.ipsrc, 0, sizeof(wsc.ipsrc));
-			wsc.signal = ni->ni_rssi;
+			wsc.signal = (*ic->ic_node_getrssi)(ic, ni);
 			wsc.noise = 0;
 			wsc.quality = 0;
 			memcpy((caddr_t)wreq.wi_val + sizeof(wsc) * i,
@@ -399,6 +400,43 @@ findrate(struct ieee80211com *ic, enum ieee80211_phymode mode, int rate)
 			return i;
 	return -1;
 #undef IEEERATE
+}
+
+/*
+ * Prepare to do a user-initiated scan for AP's.  If no
+ * current/default channel is setup or the current channel
+ * is invalid then pick the first available channel from
+ * the active list as the place to start the scan.
+ */
+static int
+ieee80211_setupscan(struct ieee80211com *ic)
+{
+	u_char *chanlist = ic->ic_chan_active;
+	int i;
+
+	if (ic->ic_ibss_chan == NULL ||
+	    isclr(chanlist, ieee80211_chan2ieee(ic, ic->ic_ibss_chan))) {
+		for (i = 0; i <= IEEE80211_CHAN_MAX; i++)
+			if (isset(chanlist, i)) {
+				ic->ic_ibss_chan = &ic->ic_channels[i];
+				goto found;
+			}
+		return EINVAL;			/* no active channels */
+found:
+		;
+	}
+	if (ic->ic_bss->ni_chan == IEEE80211_CHAN_ANYC ||
+	    isclr(chanlist, ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan)))
+		ic->ic_bss->ni_chan = ic->ic_ibss_chan;
+	/*
+	 * XXX don't permit a scan to be started unless we
+	 * know the device is ready.  For the moment this means
+	 * the device is marked up as this is the required to
+	 * initialize the hardware.  It would be better to permit
+	 * scanning prior to being up but that'll require some
+	 * changes to the infrastructure.
+	 */
+	return (ic->ic_if.if_flags & IFF_UP) ? 0 : ENETRESET;
 }
 
 int
@@ -690,8 +728,9 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case WI_RID_SCAN_REQ:			/* XXX wicontrol */
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 			break;
-		/* NB: ignore channel list and tx rate parameters */
-		error = ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		error = ieee80211_setupscan(ic);
+		if (error == 0)
+			error = ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		break;
 	case WI_RID_SCAN_APS:
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
@@ -723,18 +762,11 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		memcpy(ic->ic_chan_active, chanlist,
 		    sizeof(ic->ic_chan_active));
-		if (isclr(chanlist, ieee80211_chan2ieee(ic, ic->ic_ibss_chan))) {
-			for (i = 0; i <= IEEE80211_CHAN_MAX; i++)
-				if (isset(chanlist, i)) {
-					ic->ic_ibss_chan = &ic->ic_channels[i];
-					break;
-				}
-		}
-		if (isclr(chanlist, ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan)))
-			ic->ic_bss->ni_chan = ic->ic_ibss_chan;
-		if (wreq.wi_type == WI_RID_CHANNEL_LIST)
+		error = ieee80211_setupscan(ic);
+		if (wreq.wi_type == WI_RID_CHANNEL_LIST) {
+			/* NB: ignore error from ieee80211_setupscan */
 			error = ENETRESET;
-		else
+		} else if (error == 0)
 			error = ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		break;
 	default:
@@ -752,6 +784,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int error = 0;
 	u_int kid, len;
 	struct ieee80211req *ireq;
+	struct ifreq *ifr;
 	u_int8_t tmpkey[IEEE80211_KEYBUF_SIZE];
 	char tmpssid[IEEE80211_NWID_LEN];
 	struct ieee80211_channel *chan;
@@ -808,7 +841,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			}
 			len = (u_int) ic->ic_nw_keys[kid].wk_len;
 			/* NB: only root can read WEP keys */
-			if (suser(curproc->p_ucred, &curproc->p_acflag)) {
+			if (suser(curthread) == 0) {
 				bcopy(ic->ic_nw_keys[kid].wk_key, tmpkey, len);
 			} else {
 				bzero(tmpkey, len);
@@ -855,7 +888,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		case IEEE80211_IOC_POWERSAVESLEEP:
 			ireq->i_val = ic->ic_lintval;
 			break;
-		case IEEE80211_IOCT_RTSTHRESHOLD:
+		case IEEE80211_IOC_RTSTHRESHOLD:
 			ireq->i_val = ic->ic_rtsthreshold;
 			break;
 		default:
@@ -990,7 +1023,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ic->ic_lintval = ireq->i_val;
 			error = ENETRESET;
 			break;
-		case IEEE80211_IOCT_RTSTHRESHOLD:
+		case IEEE80211_IOC_RTSTHRESHOLD:
 			if (!(IEEE80211_RTS_MIN < ireq->i_val &&
 			      ireq->i_val <= IEEE80211_RTS_MAX + 1)) {
 				error = EINVAL;
@@ -1258,6 +1291,10 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (error)
 			break;
 		error = ieee80211_cfgset(ifp, cmd, data);
+		break;
+	case SIOCG80211STATS:
+		ifr = (struct ifreq *)data;
+		copyout(&ic->ic_stats, ifr->ifr_data, sizeof (ic->ic_stats));
 		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);

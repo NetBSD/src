@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.7 2003/10/29 21:50:57 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.8 2003/12/14 09:56:53 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_node.h,v 1.5 2003/08/19 22:17:03 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_node.h,v 1.7 2003/10/17 21:41:52 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_NODE_H_
 #define _NET80211_IEEE80211_NODE_H_
@@ -63,6 +63,7 @@ struct ieee80211_node {
 	TAILQ_ENTRY(ieee80211_node)	ni_list;
 	LIST_ENTRY(ieee80211_node)	ni_hash;
 	u_int			ni_refcnt;
+	u_int			ni_scangen;	/* gen# for timeout scan */
 
 	/* hardware */
 	u_int32_t		ni_rstamp;	/* recv timestamp */
@@ -154,6 +155,14 @@ ieee80211_unref_node(struct ieee80211_node **ni)
 	ieee80211_node_decref(*ni);
 	*ni = NULL;			/* guard against use */
 }
+
+#define	IEEE80211_NODE_LOCK_INIT(_ic, _name) \
+	mtx_init(&(_ic)->ic_nodelock, _name, "802.11 node table", MTX_DEF)
+#define	IEEE80211_NODE_LOCK_DESTROY(_ic)	mtx_destroy(&(_ic)->ic_nodelock)
+#define	IEEE80211_NODE_LOCK(_ic)		mtx_lock(&(_ic)->ic_nodelock)
+#define	IEEE80211_NODE_UNLOCK(_ic)		mtx_unlock(&(_ic)->ic_nodelock)
+#define	IEEE80211_NODE_LOCK_ASSERT(_ic) \
+	mtx_assert(&(_ic)->ic_nodelock, MA_OWNED)
 
 struct ieee80211com;
 

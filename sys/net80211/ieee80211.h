@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.4 2003/10/15 11:43:51 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211.h,v 1.2 2003/06/27 05:13:52 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211.h,v 1.3 2003/09/15 19:36:34 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_H_
 #define _NET80211_IEEE80211_H_
@@ -138,6 +138,55 @@ struct ieee80211_frame_addr4 {
 #define	IEEE80211_SEQ_SEQ_SHIFT			4
 
 #define	IEEE80211_NWID_LEN			32
+
+/*
+ * Control frames.
+ */
+struct ieee80211_frame_min {
+	u_int8_t	i_fc[2];
+	u_int8_t	i_dur[2];
+	u_int8_t	i_addr1[IEEE80211_ADDR_LEN];
+	u_int8_t	i_addr2[IEEE80211_ADDR_LEN];
+	/* FCS */
+} __attribute__((__packed__));
+
+struct ieee80211_frame_rts {
+	u_int8_t	i_fc[2];
+	u_int8_t	i_dur[2];
+	u_int8_t	i_ra[IEEE80211_ADDR_LEN];
+	u_int8_t	i_ta[IEEE80211_ADDR_LEN];
+	/* FCS */
+} __attribute__((__packed__));
+
+struct ieee80211_frame_cts {
+	u_int8_t	i_fc[2];
+	u_int8_t	i_dur[2];
+	u_int8_t	i_ra[IEEE80211_ADDR_LEN];
+	/* FCS */
+} __attribute__((__packed__));
+
+struct ieee80211_frame_ack {
+	u_int8_t	i_fc[2];
+	u_int8_t	i_dur[2];
+	u_int8_t	i_ra[IEEE80211_ADDR_LEN];
+	/* FCS */
+} __attribute__((__packed__));
+
+struct ieee80211_frame_pspoll {
+	u_int8_t	i_fc[2];
+	u_int8_t	i_aid[2];
+	u_int8_t	i_bssid[IEEE80211_ADDR_LEN];
+	u_int8_t	i_ta[IEEE80211_ADDR_LEN];
+	/* FCS */
+} __attribute__((__packed__));
+
+struct ieee80211_frame_cfend {		/* NB: also CF-End+CF-Ack */
+	u_int8_t	i_fc[2];
+	u_int8_t	i_dur[2];	/* should be zero */
+	u_int8_t	i_ra[IEEE80211_ADDR_LEN];
+	u_int8_t	i_bssid[IEEE80211_ADDR_LEN];
+	/* FCS */
+} __attribute__((__packed__));
 
 /*
  * BEACON management packets
@@ -320,6 +369,8 @@ enum {
 #define	IEEE80211_MTU				1500
 #define	IEEE80211_MAX_LEN			(2300 + IEEE80211_CRC_LEN + \
     (IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN + IEEE80211_WEP_CRCLEN))
+#define	IEEE80211_MIN_LEN \
+	(sizeof(struct ieee80211_frame_min) + IEEE80211_CRC_LEN)
 
 #define	IEEE80211_MAX_AID			2007
 

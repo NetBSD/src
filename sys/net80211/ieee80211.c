@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.7 2003/10/16 22:25:00 matt Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.8 2003/12/14 09:56:53 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -33,9 +33,9 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.7 2003/08/13 22:09:44 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.8 2003/09/14 22:32:18 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.7 2003/10/16 22:25:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.8 2003/12/14 09:56:53 dyoung Exp $");
 #endif
 
 /*
@@ -762,15 +762,15 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	 * XXX what if we have stations already associated???
 	 * XXX probably not right for autoselect?
 	 */
+	if (ic->ic_caps & IEEE80211_C_SHPREAMBLE)
+		ic->ic_flags |= IEEE80211_F_SHPREAMBLE;
 	if (mode == IEEE80211_MODE_11G) {
 		if (ic->ic_caps & IEEE80211_C_SHSLOT)
 			ic->ic_flags |= IEEE80211_F_SHSLOT;
-		if (ic->ic_caps & IEEE80211_C_SHPREAMBLE)
-			ic->ic_flags |= IEEE80211_F_SHPREAMBLE;
 		ieee80211_set11gbasicrates(&ic->ic_sup_rates[mode],
 			IEEE80211_MODE_11G);
 	} else {
-		ic->ic_flags &= ~(IEEE80211_F_SHSLOT | IEEE80211_F_SHPREAMBLE);
+		ic->ic_flags &= ~IEEE80211_F_SHSLOT;
 	}
 
 	ic->ic_curmode = mode;
