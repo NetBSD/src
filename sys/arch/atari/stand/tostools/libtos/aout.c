@@ -1,4 +1,4 @@
-/*	$NetBSD: aout.c,v 1.4 2001/10/14 19:47:12 leo Exp $	*/
+/*	$NetBSD: aout.c,v 1.5 2002/02/24 20:51:07 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,9 +58,9 @@
 #define	MALLOC(x)	alloc(x)
 #endif
 
-#include "tosdefs.h"
-#include "kparamb.h"
 #include "libtos.h"
+#include "kparamb.h"
+#include "tosdefs.h"
 #include "cread.h"
 
 
