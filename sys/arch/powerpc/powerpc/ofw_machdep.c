@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.11 2001/08/26 02:47:39 matt Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.11.14.1 2002/05/17 13:49:58 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -172,22 +172,23 @@ dk_cleanup(void)
 static void
 dk_setroot(struct ofb_disk *od, int part)
 {
+	const struct bdevsw *bdev;
 	char type[8];
-	int maj, unit;
+	int unit;
 	struct disklabel *lp;
 	dev_t tmpdev;
 	char *cp;
+	int bmajor;
 
 	if (OF_getprop(od->ofb_phandle, "device_type", type, sizeof type) < 0)
 		panic("OF_getproperty");
 
 	if (strcmp(type, "block") == 0) {
-		for (maj = 0; maj < nblkdev; maj++) {
-			if (bdevsw[maj].d_strategy ==
-			    od->ofb_dk->dk_driver->d_strategy)
-				break;
-		}
-		if (maj >= nblkdev)
+		bmajor = devsw_name2blk(od->ofb_dev->dv_xname, NULL, 0);
+		if (bmajor == -1)
+			panic("dk_setroot: impossible");
+		bdev = bdevsw_lookup(makedev(bmajor, 0));
+		if (bdev == NULL)
 			panic("dk_setroot: impossible");
 
 		/*
@@ -212,16 +213,16 @@ dk_setroot(struct ofb_disk *od, int part)
 			 * disklabel.  Use RAW_PART because all disk
 			 * drivers allow RAW_PART to be opened.
 			 */
-			tmpdev = MAKEDISKDEV(maj, unit, RAW_PART);
+			tmpdev = MAKEDISKDEV(bmajor, unit, RAW_PART);
 
-			if (bdevsw[maj].d_open(tmpdev, FREAD, S_IFBLK, 0)) {
+			if ((*bdev->d_open)(tmpdev, FREAD, S_IFBLK, 0)) {
 				/*
 				 * Open failed.  Device is probably not
 				 * configured.  setroot() can handle this.
 				 */
 				return;
 			}
-			(void)bdevsw[maj].d_close(tmpdev, FREAD, S_IFBLK, 0);
+			(void)(*bdev->d_close)(tmpdev, FREAD, S_IFBLK, 0);
 			lp = od->ofb_dk->dk_label;
 
 			/* Check for a valid `a' partition. */

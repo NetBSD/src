@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.11 2002/03/18 04:50:32 briggs Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.11.4.1 2002/05/17 13:49:59 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -140,18 +140,18 @@ long dumplo = -1;			/* blocks */
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int nblks;		/* size of dump device */
 	int skip;
-	int maj;
 
 	if (dumpdev == NODEV)
 		return;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
+	if (bdev->d_psize == NULL)
 		return;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	nblks = (*bdev->d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		return;
 

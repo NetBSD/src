@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.123 2002/03/31 00:11:13 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.123.2.1 2002/05/17 13:50:02 gehenna Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -250,14 +250,20 @@ long	dumplo = 0;
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int		nblks;
 
 	/*
 	 * XXX include the final RAM page which is not included in physmem.
 	 */
+	if (dumpdev == NODEV)
+		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
+		return;
 	dumpsize = physmem + 1;
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize) (dumpdev);
+	if (bdev->d_psize != NULL) {
+		nblks = (*bdev->d_psize)(dumpdev);
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
 		else if (dumplo == 0)
@@ -555,8 +561,12 @@ cpu_reboot(howto, b)
 void
 dumpsys()
 {
+	const struct bdevsw *bdev;
 
 	if (dumpdev == NODEV)
+		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		return;
 	/*
 	 * For dumps during autoconfiguration, if dump device has already
@@ -572,7 +582,7 @@ dumpsys()
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump) (dumpdev, 0, 0, 0)) {
+	switch ((*bdev->d_dump) (dumpdev, 0, 0, 0)) {
 
 	case ENXIO:
 		printf("device bad\n");

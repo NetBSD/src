@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155 2002/05/14 02:58:34 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.155.2.1 2002/05/17 13:50:01 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -545,18 +545,18 @@ long	dumplo = 0; 		/* blocks */
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int devblks;	/* size of dump device in blocks */
 	int dumpblks;	/* size of dump image in blocks */
-	int maj;
 	int (*getsize)__P((dev_t));
 
 	if (dumpdev == NODEV)
 		return;
 
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	getsize = bdevsw[maj].d_psize;
+	getsize = bdev->d_psize;
 	if (getsize == NULL)
 		return;
 	devblks = (*getsize)(dumpdev);
@@ -597,7 +597,7 @@ extern paddr_t avail_start;
 void
 dumpsys()
 {
-	struct bdevsw *dsw;
+	const struct bdevsw *dsw;
 	kcore_seg_t	*kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
 	struct sun3_kcore_hdr *sh;
@@ -610,6 +610,9 @@ dumpsys()
 	if (dumpdev == NODEV)
 		return;
 	if (dumppage == 0)
+		return;
+	dsw = bdevsw_lookup(dumpdev);
+	if (dsw == NULL || dsw->d_psize == NULL)
 		return;
 
 	/*
@@ -625,7 +628,6 @@ dumpsys()
 	}
 	savectx(&dumppcb);
 
-	dsw = &bdevsw[major(dumpdev)];
 	psize = (*(dsw->d_psize))(dumpdev);
 	if (psize == -1) {
 		printf("dump area unavailable\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.115 2002/04/09 13:04:43 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115.2.1 2002/05/17 13:49:51 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -533,6 +533,7 @@ long		dumplo   = 0;		/* (disk blocks)		*/
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int	nblks, i;
 
 	for (i = dumpsize = 0; i < NMEM_SEGS; i++) {
@@ -542,12 +543,15 @@ cpu_dumpconf()
 	}
 	dumpsize = btoc(dumpsize);
 
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-		if (dumpsize > btoc(dbtob(nblks - dumplo)))
-			dumpsize = btoc(dbtob(nblks - dumplo));
-		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(dumpsize));
+	if (dumpdev != NODEV) {
+		bdev = bdevsw_lookup(dumpdev);
+		if (bdev != NULL && bdev->d_psize != NULL) {
+			nblks = (*bdev->d_psize)(dumpdev);
+			if (dumpsize > btoc(dbtob(nblks - dumplo)))
+				dumpsize = btoc(dbtob(nblks - dumplo));
+			else if (dumplo == 0)
+				dumplo = nblks - btodb(ctob(dumpsize));
+		}
 	}
 	dumplo -= cpu_dumpsize();
 
@@ -567,6 +571,7 @@ cpu_dumpconf()
 void
 dumpsys()
 {
+	const struct bdevsw *bdev;
 	daddr_t	blkno;		/* Current block to write	*/
 	int	(*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 				/* Dumping function		*/
@@ -578,6 +583,9 @@ dumpsys()
 
 	error = segnum = 0;
 	if (dumpdev == NODEV)
+		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		return;
 	/*
 	 * For dumps during autoconfiguration,
@@ -610,7 +618,7 @@ dumpsys()
 	maddr    = 0;
 	segbytes = boot_segs[0].end;
 	blkno    = dumplo;
-	dump     = bdevsw[major(dumpdev)].d_dump;
+	dump     = bdev->d_dump;
 	nbytes   = dumpsize * NBPG;
 
 	printf("dump ");

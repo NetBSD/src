@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2002/03/26 15:02:42 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.2.1 2002/05/17 13:50:03 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -748,9 +748,14 @@ cpu_dump()
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
+	const struct bdevsw *bdev;
 	int i;
 
-	dump = bdevsw[major(dumpdev)].d_dump;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
+		return (ENXIO);
+
+	dump = bdev->d_dump;
 
 	memset(buf, 0, sizeof buf);
 	segp = (kcore_seg_t *)buf;
@@ -791,17 +796,18 @@ cpu_dump()
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
 	int maj;
 
 	if (dumpdev == NODEV)
 		goto bad;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
+	if (bdev->d_psize == NULL)
 		goto bad;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	nblks = (*bdev->d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 
@@ -845,6 +851,7 @@ reserve_dumppages(p)
 void
 dumpsys()
 {
+	const struct bdevsw *bdev;
 	u_long totalbytesleft, bytes, i, n, memseg;
 	u_long maddr;
 	int psize;
@@ -856,6 +863,9 @@ dumpsys()
 	savectx(&dumppcb);
 
 	if (dumpdev == NODEV)
+		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL || bdev->d_psize == NULL)
 		return;
 
 	/*
@@ -872,7 +882,7 @@ dumpsys()
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
-	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
@@ -889,7 +899,7 @@ dumpsys()
 
 	totalbytesleft = ptoa(cpu_dump_mempagecnt());
 	blkno = dumplo + cpu_dumpsize();
-	dump = bdevsw[major(dumpdev)].d_dump;
+	dump = bdev->d_dump;
 	error = 0;
 
 	for (memseg = 0; memseg < mem_cluster_cnt; memseg++) {

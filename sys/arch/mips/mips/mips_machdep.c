@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.129 2002/05/03 03:50:11 rafal Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.129.2.1 2002/05/17 13:49:56 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.129 2002/05/03 03:50:11 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.129.2.1 2002/05/17 13:49:56 gehenna Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -1358,9 +1358,14 @@ cpu_dump(void)
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
+	const struct bdevsw *bdev;
 	int i;
 
-	dump = bdevsw[major(dumpdev)].d_dump;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
+		return (ENXIO);
+
+	dump = bdev->d_dump;
 
 	memset(buf, 0, sizeof buf);
 	segp = (kcore_seg_t *)buf;
@@ -1413,17 +1418,17 @@ cpu_dump(void)
 void
 cpu_dumpconf(void)
 {
+	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
-	int maj;
 
 	if (dumpdev == NODEV)
 		goto bad;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
+	if (bdev->d_psize == NULL)
 		goto bad;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	nblks = (*bdev->d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 
@@ -1459,6 +1464,7 @@ dumpsys(void)
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
+	const struct bdevsw *bdev;
 	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error;
 
@@ -1466,6 +1472,9 @@ dumpsys(void)
 	savectx(&dumppcb);
 
 	if (dumpdev == NODEV)
+		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL || bdev->d_psize == NULL)
 		return;
 
 	/*
@@ -1482,7 +1491,7 @@ dumpsys(void)
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
-	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
@@ -1496,7 +1505,7 @@ dumpsys(void)
 
 	totalbytesleft = ptoa(cpu_dump_mempagecnt());
 	blkno = dumplo + cpu_dumpsize();
-	dump = bdevsw[major(dumpdev)].d_dump;
+	dump = bdev->d_dump;
 	error = 0;
 
 	for (memcl = 0; memcl < mem_cluster_cnt; memcl++) {
