@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.14 1996/12/17 20:42:43 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -86,14 +86,6 @@ extern int zs_check_kgdb();
 #endif
 
 /*
- * Allow the MD var.h to override the default CFLAG so that
- * console messages during boot come out with correct parity.
- */
-#ifndef	ZSTTY_DEF_CFLAG
-#define	ZSTTY_DEF_CFLAG	TTYDEF_CFLAG
-#endif
-
-/*
  * How many input characters we can buffer.
  * The port-specific var.h may override this.
  * Note: must be a power of two!
@@ -158,7 +150,11 @@ struct zstty_softc {
 
 
 /* Definition of the driver for autoconfig. */
+#ifdef	__BROKEN_INDIRECT_CONFIG
 static int	zstty_match(struct device *, void *, void *);
+#else
+static int	zstty_match(struct device *, struct cfdata *, void *);
+#endif
 static void	zstty_attach(struct device *, struct device *, void *);
 
 struct cfattach zstty_ca = {
@@ -174,21 +170,22 @@ struct zsops zsops_tty;
 /* Routines called from other code. */
 cdev_decl(zs);	/* open, close, read, write, ioctl, stop, ... */
 
-static void	zsstart(struct tty *);
-static int	zsparam(struct tty *, struct termios *);
-static void zs_modem(struct zstty_softc *zst, int onoff);
-static int	zshwiflow(struct tty *, int);
-static void zs_hwiflow(struct zstty_softc *, int);
+static void	zsstart __P((struct tty *));
+static int	zsparam __P((struct tty *, struct termios *));
+static void zs_modem __P((struct zstty_softc *zst, int onoff));
+static int	zshwiflow __P((struct tty *, int));
+static void zs_hwiflow __P((struct zstty_softc *, int));
 
 /*
  * zstty_match: how is this zs channel configured?
  */
+#ifdef	__BROKEN_INDIRECT_CONFIG
 int 
-zstty_match(parent, match, aux)
+zstty_match(parent, vcf, aux)
 	struct device *parent;
-	void   *match, *aux;
+	void   *vcf, *aux;
 {
-	struct cfdata *cf = match;
+	struct cfdata *cf = vcf;
 	struct zsc_attach_args *args = aux;
 
 	/* Exact match is better than wildcard. */
@@ -201,6 +198,26 @@ zstty_match(parent, match, aux)
 
 	return 0;
 }
+#else	/* __BROKEN_INDIRECT_CONFIG */
+int 
+zstty_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void   *aux;
+{
+	struct zsc_attach_args *args = aux;
+
+	/* Exact match is better than wildcard. */
+	if (cf->cf_loc[0] == args->channel)
+		return 2;
+
+	/* This driver accepts wildcard. */
+	if (cf->cf_loc[0] == -1)
+		return 1;
+
+	return 0;
+}
+#endif	/* __BROKEN_INDIRECT_CONFIG */
 
 void 
 zstty_attach(parent, self, aux)
@@ -210,24 +227,23 @@ zstty_attach(parent, self, aux)
 {
 	struct zsc_softc *zsc = (void *) parent;
 	struct zstty_softc *zst = (void *) self;
+	struct cfdata *cf = self->dv_cfdata;
 	struct zsc_attach_args *args = aux;
 	struct zs_chanstate *cs;
-	struct cfdata *cf;
 	struct tty *tp;
 	int channel, tty_unit;
 	dev_t dev;
 
-	cf = zst->zst_dev.dv_cfdata;
 	tty_unit = zst->zst_dev.dv_unit;
 	channel = args->channel;
-	cs = &zsc->zsc_cs[channel];
+	cs = zsc->zsc_cs[channel];
 	cs->cs_private = zst;
 	cs->cs_ops = &zsops_tty;
 
 	zst->zst_cs = cs;
 	zst->zst_swflags = cf->cf_flags;	/* softcar, etc. */
 	zst->zst_hwflags = args->hwflags;
-	dev = makedev(ZSTTY_MAJOR, tty_unit);
+	dev = makedev(zs_major, tty_unit);
 
 	if (zst->zst_swflags)
 		printf(" flags 0x%x", zst->zst_swflags);
@@ -266,18 +282,26 @@ zstty_attach(parent, self, aux)
 	zst->zst_rbuf = malloc(zstty_rbuf_size * sizeof(zst->zst_rbuf[0]),
 			      M_DEVBUF, M_WAITOK);
 
+	/* XXX - Do we need an MD hook here? */
+
 	/*
 	 * Hardware init
 	 */
 	if (zst->zst_hwflags & ZS_HWFLAG_CONSOLE) {
-		/* This unit is the console. */
+		/* Call zsparam similar to open. */
+		struct termios t;
+
+		/* Make console output work while closed. */
 		zst->zst_swflags |= TIOCFLAG_SOFTCAR;
-		/* Call _param so interrupts get enabled. */
-		cs->cs_defspeed = zs_getspeed(cs);
-		tp->t_ispeed = cs->cs_defspeed;
-		tp->t_ospeed = cs->cs_defspeed;
-		tp->t_cflag = ZSTTY_DEF_CFLAG;
-		(void) zsparam(tp, &tp->t_termios);
+		/* Setup the "new" parameters in t. */
+		bzero((void*)&t, sizeof(t));
+		t.c_cflag  = cs->cs_defcflag;
+		t.c_ospeed = cs->cs_defspeed;
+		/* Enable interrupts. */
+		cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
+		/* Make sure zsparam will see changes. */
+		tp->t_ospeed = 0;
+		(void) zsparam(tp, &t);
 	} else {
 		/* Not the console; may need reset. */
 		int reset, s;
@@ -357,48 +381,77 @@ zsopen(dev, flags, mode, p)
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		/* First open. */
-		ttychars(tp);
-		tp->t_iflag = TTYDEF_IFLAG;
-		tp->t_oflag = TTYDEF_OFLAG;
-		tp->t_cflag = ZSTTY_DEF_CFLAG;
+		struct termios t;
+
+		/*
+		 * Setup the "new" parameters in t.
+		 * Can not use tp->t because zsparam
+		 * deals only with what has changed.
+		 */
+		bzero((void*)&t, sizeof(t));
+		t.c_cflag  = cs->cs_defcflag;
 		if (zst->zst_swflags & TIOCFLAG_CLOCAL)
-			tp->t_cflag |= CLOCAL;
+			t.c_cflag |= CLOCAL;
 		if (zst->zst_swflags & TIOCFLAG_CRTSCTS)
-			tp->t_cflag |= CRTSCTS;
+			t.c_cflag |= CRTSCTS;
 		if (zst->zst_swflags & TIOCFLAG_MDMBUF)
-			tp->t_cflag |= MDMBUF;
-		tp->t_lflag = TTYDEF_LFLAG;
-		tp->t_ispeed = tp->t_ospeed = cs->cs_defspeed;
-		(void) zsparam(tp, &tp->t_termios);
+			t.c_cflag |= MDMBUF;
+		t.c_ospeed = cs->cs_defspeed;
+		/* Enable interrupts. */
+		cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
+		/* Make sure zsparam will see changes. */
+		tp->t_ospeed = 0;
+		(void) zsparam(tp, &t);
+		/*
+		 * Note: zsparam has done: cflag, ispeed, ospeed
+		 * so we just need to do: iflag, oflag, lflag, cc
+		 * For "raw" mode, just leave all zeros.
+		 */
+		if ((zst->zst_hwflags & ZS_HWFLAG_RAW) == 0) {
+			tp->t_iflag = TTYDEF_IFLAG;
+			tp->t_oflag = TTYDEF_OFLAG;
+			tp->t_lflag = TTYDEF_LFLAG;
+			ttychars(tp);
+		}
 		ttsetwater(tp);
 		/* Flush any pending input. */
 		zst->zst_rbget = zst->zst_rbput;
 		zs_iflush(cs);	/* XXX */
-		/* Turn on DTR */
-		zs_modem(zst, 1);
+		/* DTR was turned on by zsparam. */
 		if (zst->zst_swflags & TIOCFLAG_SOFTCAR) {
+			tp->t_state |= TS_CARR_ON;
+		}
+		/* XXX - The MD code could just force CLOCAL instead. */
+		if (zst->zst_hwflags & ZS_HWFLAG_NO_DCD) {
 			tp->t_state |= TS_CARR_ON;
 		}
 	}
 	error = 0;
 
-	/* Wait for carrier. */
-	for (;;) {
+	/* In this section, we may touch the chip. */
+	(void)splzs();
 
-		/* Might never get status intr if carrier already on. */
-		cs->cs_rr0 = zs_read_csr(cs);
-		if (cs->cs_rr0 & ZSRR0_DCD) {
+	/*
+	 * Get initial value of RR0.  This is done after we
+	 * raise DTR in case the cable loops DTR back to CTS.
+	 */
+	cs->cs_rr0 = zs_read_csr(cs);
+
+	/*
+	 * Wait for DCD (if necessary).  Note that we might
+	 * never get status interrupt if DCD is already on.
+	 */
+	for (;;) {
+		/* Check the DCD bit (if we have one). */
+		if (cs->cs_rr0 & cs->cs_rr0_dcd)
 			tp->t_state |= TS_CARR_ON;
-			break;
-		}
 
 		if ((tp->t_state & TS_CARR_ON) ||
 		    (tp->t_cflag & CLOCAL) ||
 		    (flags & O_NONBLOCK) )
-		{
 			break;
-		}
 
+		/* Sleep waiting for a status interrupt. */
 		tp->t_state |= TS_WOPEN;
 		error = ttysleep(tp, (caddr_t)&tp->t_rawq,
 			TTIPRI | PCATCH, ttopen, 0);
@@ -411,13 +464,12 @@ zsopen(dev, flags, mode, p)
 			}
 			break;
 		}
+		/* The status interrupt changed cs->cs_rr0 */
 	}
 
 	splx(s);
-
 	if (error == 0)
 		error = linesw[tp->t_line].l_open(dev, tp);
-
 	return (error);
 }
 
@@ -434,7 +486,6 @@ zsclose(dev, flags, mode, p)
 	struct zstty_softc *zst;
 	register struct zs_chanstate *cs;
 	register struct tty *tp;
-	struct zsinfo *zi;
 	int hup, s;
 
 	zst = zstty_cd.cd_devs[minor(dev)];
@@ -446,6 +497,14 @@ zsclose(dev, flags, mode, p)
 		return 0;
 
 	(*linesw[tp->t_line].l_close)(tp, flags);
+
+	/* Disable interrupts. */
+	s = splzs();
+	cs->cs_creg[1] = cs->cs_preg[1] = 0;
+	zs_write_reg(cs, 1, cs->cs_creg[1]);
+	splx(s);
+
+	/* Maybe do "hangup" (drop DTR). */
 	hup = tp->t_cflag & HUPCL;
 	if (zst->zst_swflags & TIOCFLAG_SOFTCAR)
 		hup = 0;
@@ -457,7 +516,6 @@ zsclose(dev, flags, mode, p)
 	if (cs->cs_creg[5] & ZSWR5_BREAK) {
 		zs_break(cs, 0);
 	}
-	/* XXX - turn off interrupts? */
 
 	ttyclose(tp);
 	return (0);
@@ -517,9 +575,16 @@ zsioctl(dev, cmd, data, flag, p)
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
+
+#ifdef	ZS_MD_IOCTL
+	error = ZS_MD_IOCTL;
+	if (error >= 0)
+		return (error);
+#endif	/* ZS_MD_IOCTL */
 
 	switch (cmd) {
 
@@ -592,10 +657,10 @@ zsstart(tp)
 
 	/*
 	 * If under CRTSCTS hfc and halted, do nothing
+	 * This flag can only be set with CRTSCTS.
 	 */
-	if (tp->t_cflag & CRTSCTS)
-		if (zst->zst_tx_stopped)
-			goto out;
+	if (zst->zst_tx_stopped)
+		goto out;
 
 	/*
 	 * If there are sleepers, and output has drained below low
@@ -671,101 +736,116 @@ zsstop(tp, flag)
  * Set ZS tty parameters from termios.
  * XXX - Should just copy the whole termios after
  * making sure all the changes could be done.
- * XXX - Only whack the UART when params change...
  */
 static int
 zsparam(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
 {
-	register struct zstty_softc *zst;
-	register struct zs_chanstate *cs;
-	register int s, bps, cflag, tconst;
-	u_char tmp3, tmp4, tmp5, reset;
+	struct zstty_softc *zst;
+	struct zs_chanstate *cs;
+	int s, bps, cflag, error;
+	u_char tmp3, tmp4, tmp5;
 
 	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
 	cs = zst->zst_cs;
-
-	/* XXX: Need to use an MD function for this. */
 	bps = t->c_ospeed;
+	cflag = t->c_cflag;
+
 	if (bps < 0 || (t->c_ispeed && t->c_ispeed != bps))
 		return (EINVAL);
-	if (bps == 0) {
-		/* stty 0 => drop DTR and RTS */
-		zs_modem(zst, 0);
+
+	/*
+	 * Only whack the UART when params change.
+	 * Some callers need to clear tp->t_ospeed
+	 * to make sure initialization gets done.
+	 */
+	if ((tp->t_ospeed == bps) &&
+	    (tp->t_cflag == cflag) )
 		return (0);
-	}
-	tconst = BPS_TO_TCONST(cs->cs_brg_clk, bps);
-	if (tconst < 0)
-		return (EINVAL);
 
-	/* Convert back to make sure we can do it. */
-	bps = TCONST_TO_BPS(cs->cs_brg_clk, tconst);
-	if (bps != t->c_ospeed)
-		return (EINVAL);
-	tp->t_ispeed = tp->t_ospeed = bps;
+	/*
+	 * Call MD functions to deal with changed
+	 * clock modes or H/W flow control modes.
+	 * The BRG divisor is set now. (reg 12,13)
+	 */
+	error = zs_set_speed(cs, bps);
+	if (error)
+		return (error);
+	error = zs_set_modes(cs, cflag);
+	if (error)
+		return (error);
 
-	cflag = t->c_cflag;
+	/* OK, we are now committed to do it. */
 	tp->t_cflag = cflag;
+	tp->t_ospeed = bps;
+	tp->t_ispeed = bps;
 
 	/*
 	 * Block interrupts so that state will not
 	 * be altered until we are done setting it up.
-	 */
-	s = splzs();
-
-	/*
+	 *
 	 * Initial values in cs_preg are set before
 	 * our attach routine is called.  The master
 	 * interrupt enable is handled by zsc.c
+	 *
 	 */
+	s = splzs();
 
-	cs->cs_preg[12] = tconst;
-	cs->cs_preg[13] = tconst >> 8;
-
+	/* Recompute character size bits. */
+	tmp3 = cs->cs_preg[3] & ~ZSWR3_RXSIZE;
+	tmp5 = cs->cs_preg[5] & ~ZSWR5_TXSIZE;
 	switch (cflag & CSIZE) {
 	case CS5:
-		tmp3 = ZSWR3_RX_5;
-		tmp5 = ZSWR5_TX_5;
+		/* These are |= 0 but let the optimizer deal with it. */
+		tmp3 |= ZSWR3_RX_5;
+		tmp5 |= ZSWR5_TX_5;
 		break;
 	case CS6:
-		tmp3 = ZSWR3_RX_6;
-		tmp5 = ZSWR5_TX_6;
+		tmp3 |= ZSWR3_RX_6;
+		tmp5 |= ZSWR5_TX_6;
 		break;
 	case CS7:
-		tmp3 = ZSWR3_RX_7;
-		tmp5 = ZSWR5_TX_7;
+		tmp3 |= ZSWR3_RX_7;
+		tmp5 |= ZSWR5_TX_7;
 		break;
 	case CS8:
 	default:
-		tmp3 = ZSWR3_RX_8;
-		tmp5 = ZSWR5_TX_8;
+		tmp3 |= ZSWR3_RX_8;
+		tmp5 |= ZSWR5_TX_8;
 		break;
 	}
+	/* Raise or lower DTR and RTS as appropriate. */
+	if (bps) {
+		/* Raise DTR and RTS */
+		tmp5 |= cs->cs_wr5_dtr;
+	} else {
+		/* Drop DTR and RTS */
+		/* XXX: Should SOFTCAR prevent this? */
+		tmp5 &= ~(cs->cs_wr5_dtr);
+	}
+	cs->cs_preg[3] = tmp3;
+	cs->cs_preg[5] = tmp5;
 
-	cs->cs_preg[3] = tmp3 | ZSWR3_RX_ENABLE;
-	cs->cs_preg[5] = tmp5 | ZSWR5_TX_ENABLE | ZSWR5_DTR | ZSWR5_RTS;
-
-	tmp4 = ZSWR4_CLK_X16 | (cflag & CSTOPB ? ZSWR4_TWOSB : ZSWR4_ONESB);
+	/*
+	 * Recompute the stop bits and parity bits.  Note that
+	 * zs_set_speed() may have set clock selection bits etc.
+	 * in wr4, so those must preserved.
+	 */
+	tmp4 = cs->cs_preg[4];
+	/* Recompute stop bits. */
+	tmp4 &= ~ZSWR4_SBMASK;
+	tmp4 |= (cflag & CSTOPB) ?
+		ZSWR4_TWOSB : ZSWR4_ONESB;
+	/* Recompute parity bits. */
+	tmp4 &= ~ZSWR4_PARMASK;
 	if ((cflag & PARODD) == 0)
 		tmp4 |= ZSWR4_EVENP;
 	if (cflag & PARENB)
 		tmp4 |= ZSWR4_PARENB;
 	cs->cs_preg[4] = tmp4;
 
-	/*
-	 * Output hardware flow control on the chip is horrendous:
-	 * if carrier detect drops, the receiver is disabled.
-	 * Therefore, NEVER set the HFC bit, and instead use
-	 * the status interrupts to detect CTS changes.
-	 */
-	if (cflag & CRTSCTS) {
-		zst->zst_rbhiwat = zstty_rbuf_hiwat;
-		cs->cs_preg[15] |= ZSWR15_CTS_IE;
-	} else {
-		zst->zst_rbhiwat = zstty_rbuf_size; /* impossible value */
-		cs->cs_preg[15] &= ~ZSWR15_CTS_IE;
-	}
+	/* The MD function zs_set_modes handled CRTSCTS, etc. */
 
 	/*
 	 * If nothing is being transmitted, set up new current values,
@@ -775,12 +855,27 @@ zsparam(tp, t)
 		if (zst->zst_tx_busy) {
 			zst->zst_heldtbc = zst->zst_tbc;
 			zst->zst_tbc = 0;
-			cs->cs_heldchange = 0xFF; /* XXX */
+			cs->cs_heldchange = 0xFFFF;
 		} else {
 			zs_loadchannelregs(cs);
 		}
 	}
 	splx(s);
+
+	/* If we can throttle input, enable "high water" detection. */
+	if (cflag & CHWFLOW) {
+		zst->zst_rbhiwat = zstty_rbuf_hiwat;
+	} else {
+		/* This impossible value prevents a "high water" trigger. */
+		zst->zst_rbhiwat = zstty_rbuf_size;
+		/* XXX: Lost hwi ability, so unblock and restart. */
+		zst->zst_rx_blocked = 0;
+		if (zst->zst_tx_stopped) {
+			zst->zst_tx_stopped = 0;
+			zsstart(tp);
+		}
+	}
+
 	return (0);
 }
 
@@ -794,21 +889,23 @@ zs_modem(zst, onoff)
 	int onoff;
 {
 	struct zs_chanstate *cs;
-	struct tty *tp;
-	int s, bis, and;
+	int s, clr, set;
 
 	cs = zst->zst_cs;
-	tp = zst->zst_tty;
+	if (cs->cs_wr5_dtr == 0)
+		return;
 
 	if (onoff) {
-		bis = ZSWR5_DTR | ZSWR5_RTS;
-		and = ~0;
+		clr = 0;
+		set = cs->cs_wr5_dtr;
 	} else {
-		bis = 0;
-		and = ~(ZSWR5_DTR | ZSWR5_RTS);
+		clr = cs->cs_wr5_dtr;
+		set = 0;
 	}
+
 	s = splzs();
-	cs->cs_preg[5] = (cs->cs_preg[5] | bis) & and;
+	cs->cs_preg[5] &= ~clr;
+	cs->cs_preg[5] |= set;
 	if (cs->cs_heldchange == 0) {
 		if (zst->zst_tx_busy) {
 			zst->zst_heldtbc = zst->zst_tbc;
@@ -834,9 +931,15 @@ zshwiflow(tp, stop)
 	int stop;
 {
 	register struct zstty_softc *zst;
+	register struct zs_chanstate *cs;
 	int s;
 
 	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
+	cs = zst->zst_cs;
+
+	/* Can not do this without some bit assigned as RTS. */
+	if (cs->cs_wr5_rts == 0)
+		return (0);
 
 	s = splzs();
 	if (stop) {
@@ -870,23 +973,25 @@ zs_hwiflow(zst, stop)
 	int stop;
 {
 	register struct zs_chanstate *cs;
-	register struct tty *tp;
-	register int bis, and;
+	register int clr, set;
 
 	cs = zst->zst_cs;
-	tp = zst->zst_tty;
+
+	if (cs->cs_wr5_rts == 0)
+		return;
 
 	if (stop) {
 		/* Block input (Lower RTS) */
-		bis = 0;
-		and = ~ZSWR5_RTS;
+		clr = cs->cs_wr5_rts;
+		set = 0;
 	} else {
 		/* Unblock input (Raise RTS) */
-		bis = ZSWR5_RTS;
-		and = ~0;
+		clr = 0;
+		set = cs->cs_wr5_rts;
 	}
 
-	cs->cs_preg[5] = (cs->cs_preg[5] | bis) & and;
+	cs->cs_preg[5] &= ~clr;
+	cs->cs_preg[5] |= set;
 	if (cs->cs_heldchange == 0) {
 		if (zst->zst_tx_busy) {
 			zst->zst_heldtbc = zst->zst_tbc;
@@ -904,6 +1009,12 @@ zs_hwiflow(zst, stop)
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
+static void zstty_rxint __P((struct zs_chanstate *));
+static void zstty_txint __P((struct zs_chanstate *));
+static void zstty_stint __P((struct zs_chanstate *));
+static void zstty_softint  __P((struct zs_chanstate *));
+
+static void zsoverrun __P((struct zstty_softc *, long *, char *));
 
 /*
  * receiver ready interrupt.
@@ -1033,11 +1144,9 @@ zstty_stint(cs)
 	register struct zs_chanstate *cs;
 {
 	register struct zstty_softc *zst;
-	register struct tty *tp;
-	register u_char rr0;
+	register u_char rr0, delta;
 
 	zst = cs->cs_private;
-	tp  = zst->zst_tty;
 
 	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
@@ -1049,21 +1158,8 @@ zstty_stint(cs)
 	if ((rr0 & ZSRR0_BREAK) &&
 		(zst->zst_hwflags & ZS_HWFLAG_CONSOLE))
 	{
-		zs_abort();
+		zs_abort(cs);
 		return;
-	}
-
-	/*
-	 * Need to handle CTS output flow control here.
-	 * Output remains stopped as long as either the
-	 * zst_tx_stopped or TS_TTSTOP flag is set.
-	 * Never restart here; the softint routine will
-	 * do that after things are ready to move.
-	 */
-	if (((rr0 & ZSRR0_CTS) == 0) && (tp->t_cflag & CRTSCTS)) {
-		zst->zst_tbc = 0;
-		zst->zst_heldtbc = 0;
-		zst->zst_tx_stopped = 1;
 	}
 
 	/*
@@ -1073,8 +1169,24 @@ zstty_stint(cs)
 	 * some status line changes in the softint routine.
 	 * Fix from Bill Studenmund, October 1996.
 	 */
-	cs->cs_rr0_delta |= (cs->cs_rr0 ^ rr0);
+	delta = (cs->cs_rr0 ^ rr0);
+	cs->cs_rr0_delta |= delta;
 	cs->cs_rr0 = rr0;
+
+	/*
+	 * Need to handle CTS output flow control here.
+	 * Output remains stopped as long as either the
+	 * zst_tx_stopped or TS_TTSTOP flag is set.
+	 * Never restart here; the softint routine will
+	 * do that after things are ready to move.
+	 */
+	if ((delta & cs->cs_rr0_cts) &&
+	    ((rr0 & cs->cs_rr0_cts) == 0))
+	{
+		zst->zst_tbc = 0;
+		zst->zst_heldtbc = 0;
+		zst->zst_tx_stopped = 1;
+	}
 	zst->zst_st_check = 1;
 
 	/* Ask for softint() call. */
@@ -1120,7 +1232,7 @@ zstty_softint(cs)
 	register int get, c, s;
 	int ringmask, overrun;
 	register u_short ring_data;
-	register u_char rr0, rr1, delta;
+	register u_char rr0, delta;
 
 	zst  = cs->cs_private;
 	tp   = zst->zst_tty;
@@ -1189,22 +1301,28 @@ zstty_softint(cs)
 	if (zst->zst_st_check) {
 		zst->zst_st_check = 0;
 
+		(void) splzs();
 		rr0 = cs->cs_rr0;
 		delta = cs->cs_rr0_delta;
 		cs->cs_rr0_delta = 0;
-		if (delta & ZSRR0_DCD) {
-			c = ((rr0 & ZSRR0_DCD) != 0);
+		(void) spltty();
+
+		/* Note, the MD code may use DCD for something else. */
+		if (delta & cs->cs_rr0_dcd) {
+			c = ((rr0 & cs->cs_rr0_dcd) != 0);
 			if (line->l_modem(tp, c) == 0)
 				zs_modem(zst, c);
 		}
-		if ((delta & ZSRR0_CTS) && (tp->t_cflag & CRTSCTS)) {
+
+		/* Note, cs_rr0_cts is set only with H/W flow control. */
+		if (delta & cs->cs_rr0_cts) {
 			/*
 			 * Only do restart here.  Stop is handled
 			 * at the h/w interrupt level.
 			 */
-			if (rr0 & ZSRR0_CTS) {
+			if (rr0 & cs->cs_rr0_cts) {
 				zst->zst_tx_stopped = 0;
-				tp->t_state &= ~TS_TTSTOP;
+				/* tp->t_state &= ~TS_TTSTOP; */
 				(*line->l_start)(tp);
 			}
 		}
