@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.32 2000/04/04 20:16:47 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.33 2000/04/06 13:52:04 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -1108,13 +1108,20 @@ scsipiprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	extern int atapi_print __P((void *aux, const char *pnp));
 	struct scsipi_link *l = aux;
 
 	if (l->type == BUS_SCSI)
 		return (scsiprint(aux, pnp));
-	else
+	else {
+#if NATAPIBUS > 0
+		extern int atapi_print __P((void *aux, const char *pnp));
 		return (atapi_print(aux, pnp));
+#else
+		if (pnp)
+			printf("atapibus at %s", pnp);
+		return (UNCONF);
+#endif
+	}
 }
 
 USB_DETACH(umass)
