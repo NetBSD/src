@@ -1,8 +1,12 @@
-#	$NetBSD: bsd.sys.mk,v 1.2 1995/12/13 01:25:07 cgd Exp $
+#	$NetBSD: bsd.sys.mk,v 1.3 1996/05/15 19:46:51 scottr Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
 CFLAGS+= -Werror
+
+.if defined(DESTDIR)
+CFLAGS+= -nostdinc -idirafter ${DESTDIR}/usr/include
+.endif
 
 .if defined(PARALLEL)
 # Lex
