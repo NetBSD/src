@@ -1,4 +1,4 @@
-.\"     $NetBSD: file.9,v 1.3 2002/10/20 11:04:52 wiz Exp $
+.\"     $NetBSD: file.9,v 1.4 2002/10/20 20:21:07 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,6 +120,9 @@ A reference to the data structure is passed as the first parameter to a
 function that implements a file operation.
 The operations that must be implemented for each descriptor type are
 read, write, ioctl, fcntl, poll, stat, and close.
+See
+.Xr vnfileops 9
+for an overview of the vnode file operations.
 All state associated with an instance of an object must be stored in
 that instance's data structure; the underlying objects are not permitted
 to manipulate the file entry themselves.
