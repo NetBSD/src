@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.42 2000/10/11 16:57:45 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.43 2000/10/17 16:16:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -433,6 +433,11 @@ ex_config(sc)
 	ifp->if_stop = ex_stop;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+
+	/*
+	 * We can support 802.1Q VLAN-sized frames.
+	 */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	if_attach(ifp);
 	ether_ifattach(ifp, macaddr);
@@ -1206,7 +1211,10 @@ ex_intr(arg)
 				if (ex_add_rxbuf(sc, rxd) == 0) {
 					u_int16_t total_len;
 
-					if (pktstat & EX_UPD_ERR) {
+					if (pktstat &
+					    ((sc->sc_ethercom.ec_capenable &
+					    ETHERCAP_VLAN_MTU) ?
+					    EX_UPD_ERR_VLAN : EX_UPD_ERR)) {
 						ifp->if_ierrors++;
 						m_freem(m);
 						goto rcvloop;
