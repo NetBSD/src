@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.9 2001/06/15 20:53:45 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10 2001/06/15 21:29:54 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -932,8 +932,7 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 	if ((pt->pte_hi ^ (pvo->pvo_pte.pte_hi & ~PTE_VALID)) == PTE_VALID) {
 #ifdef DIAGNOSTIC
 		if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0) {
-#ifdef DEBUG
-			pmap_pte_print(&pvo->pvo_pte);
+#if defined(DEBUG) || defined(PMAPCHECK)
 			pmap_pte_print(pt);
 #endif
 			panic("pmap_pvo_to_pte: pvo %p: has valid pte in "
@@ -941,7 +940,7 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 			    pvo, pt);
 		}
 		if (((pt->pte_lo ^ pvo->pvo_pte.pte_lo) & ~(PTE_CHG|PTE_REF)) != 0) {
-#ifdef DEBUG
+#if defined(DEBUG) || defined(PMAPCHECK)
 			pmap_pte_print(pt);
 #endif
 			panic("pmap_pvo_to_pte: pvo %p: pvo pte does "
@@ -953,13 +952,14 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 	}
 
 #ifdef DIAGNOSTIC
-	if (pvo->pvo_pte.pte_hi & PTE_VALID)
-#ifdef DEBUG
+	if (pvo->pvo_pte.pte_hi & PTE_VALID) {
+#if defined(DEBUG) || defined(PMAPCHECK)
 		pmap_pte_print(pt);
 #endif
-		panic("pmap_pvo_to_pte: pvo %p: has invalid pte in "
-		    "pmap_pteg_table but valid in pvo", pvo);
+		panic("pmap_pvo_to_pte: pvo %p: has invalid pte %p in "
+		    "pmap_pteg_table but valid in pvo", pvo, pt);
 #endif
+	}
 	return NULL;
 }
 
@@ -1549,7 +1549,11 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		if ((pvo->pvo_pte.pte_lo & PTE_PP) == PTE_RO)
 			continue;
 #endif
-
+		/*
+		 * Grab the PTE pointer before we diddle with
+		 * the cached PTE copy.
+		 */
+		pt = pmap_pvo_to_pte(pvo, pteidx);
 		/*
 		 * Change the protection of the page.
 		 */
@@ -1560,7 +1564,6 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		 * If the PVO is in the page table, update
 		 * that pte at well.
 		 */
-		pt = pmap_pvo_to_pte(pvo, pteidx);
 		if (pt != NULL)
 			pmap_pte_change(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
 
@@ -1624,9 +1627,14 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 				pmap_pvo_remove(pvo, -1, TRUE);
 			continue;
 		}
+		/*
+		 * Grab the PTE before the we diddle the bits so
+		 * pvo_to_pte can verify the pte contents are as
+		 * expected.
+		 */
+		pt = pmap_pvo_to_pte(pvo, -1);
 		pvo->pvo_pte.pte_lo &= ~PTE_PP;
 		pvo->pvo_pte.pte_lo |= PTE_RO;
-		pt = pmap_pvo_to_pte(pvo, -1);
 		if (pt != NULL)
 			pmap_pte_change(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
