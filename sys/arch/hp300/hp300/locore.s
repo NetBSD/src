@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.15 1994/02/04 23:10:11 mycroft Exp $
+ *	$Id: locore.s,v 1.16 1994/02/05 01:14:55 mycroft Exp $
  */
 
 #include "assym.s"
@@ -546,16 +546,14 @@ Lstackok:
 	btst	#2,d0			| timer3 interrupt?
 	jeq     Ltimer1			| no, must be timer1
 	movb	a0@(CLKMSB3),d1		| clear timer3 interrupt
-	lea	sp@(16),a1		| get pointer to PS
 #ifdef GPROF
 	.globl	_profclock
 	movl	d0,sp@-			| save status so jsr will not clobber
-	movl	a1@(4),sp@-		| push PC
-	movl	a1@,sp@-		| push padded PS
-	movl	sp,sp@-			| push pointer to clockframe
-	jbsr	_profclock		| profclock(pc, ps)
-	lea	sp@(12),sp		| pop params
+	pea	sp@(20)			| push pointer to clockframe
+	jbsr	_profclock		| profclock(frame)
+	addql	#4,sp			| pop params
 #else
+	lea	sp@(16),a1		| get pointer to PS
 	btst	#5,a1@(2)		| saved PS in user mode?
 	jne	Lttimer1		| no, go check timer1
 	movl	_curpcb,a0		| current pcb
@@ -577,12 +575,9 @@ Lttimer1:
 Ltimer1:
 #endif
 	movb	a0@(CLKMSB1),d1		| clear timer1 interrupt
-	lea	sp@(16),a1		| get pointer to PS
-	movl	a1@(4),sp@-		| push PC
-	movl	a1@,sp@-		| push padded PS
-	movl	sp,sp@-			| push pointer to clockframe
+	pea	sp@(16)			| push pointer to clockframe
 	jbsr	_hardclock		| call generic clock int routine
-	lea	sp@(12),sp		| pop params
+	addql	#4,sp			| pop params
 	addql	#1,_intrcnt+28		| add another system clock interrupt
 #ifdef PROFTIMER
 Ltimend:
