@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.250 2000/08/04 14:32:06 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.251 2000/08/07 04:08:35 billc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -46,6 +46,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "3c985 Gigabit Ethernet",
 	},
 	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C450TX,
+	    0,
+	    "3Com",
+	    "3c450-TX 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C590,
 	    0,
 	    "3Com",
@@ -68,6 +74,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c595-MII 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CSOHO100TX,
+	    0,
+	    "3Com",
+	    "3cSOHO100-TX 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900TPO,
