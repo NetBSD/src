@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_raster.h,v 1.3 1998/06/20 21:52:49 drochner Exp $ */
+/* $NetBSD: wscons_raster.h,v 1.4 1998/06/26 21:12:49 drochner Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,6 +85,7 @@ void	rcons_init __P((struct rcons *rc, int mrow, int mcol));
 /* Console emulation interface functions.  See ansicons.h for more info. */
 void	rcons_cursor __P((void *, int, int, int));
 void	rcons_invert __P((void *, int));
+unsigned int rcons_mapchar __P((void *, int));
 void	rcons_putchar __P((void *, int, int, u_int, long));
 void	rcons_copycols __P((void *, int, int, int, int));
 void	rcons_erasecols __P((void *, int, int, int, long));
