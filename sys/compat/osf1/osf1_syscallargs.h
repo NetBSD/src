@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_syscallargs.h,v 1.16 1998/07/01 00:41:55 thorpej Exp $	*/
+/*	$NetBSD: osf1_syscallargs.h,v 1.17 1998/10/03 19:38:58 eeh Exp $	*/
 
 /*
  * System call argument lists.
@@ -7,7 +7,17 @@
  * created from	NetBSD: syscalls.master,v 1.11 1998/07/01 00:41:36 thorpej Exp 
  */
 
-#define	syscallarg(x)	union { x datum; register_t pad; }
+#define	syscallarg(x)								\
+		union {								\
+			register_t pad;						\
+			struct { x datum; } le;					\
+			struct {						\
+				int8_t pad[ (sizeof (register_t) < sizeof (x))	\
+					? 0					\
+					: sizeof (register_t) - sizeof (x)];	\
+				x datum;					\
+			} be;							\
+		}
 
 struct osf1_sys_mknod_args {
 	syscallarg(char *) path;
