@@ -1,4 +1,4 @@
-/*      $NetBSD: blabel.c,v 1.5 2001/01/09 21:38:53 garbled Exp $       */
+/*      $NetBSD: blabel.c,v 1.6 2001/01/10 03:05:48 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -123,8 +123,8 @@ wrap_help(EObjectType cdktype, void *object, void *clientdata, chtype key)
 static void
 do_cancel(EObjectType cdktype, void *object, void *clientdata, chtype key)
 {
-	CDKSCROLL *scroll = (CDKSCROLL *)object;
-	scroll->exitType = vESCAPE_HIT;
+	CDKSCROLL *scrollp = (CDKSCROLL *)object;
+	scrollp->exitType = vESCAPE_HIT;
 }
 
 /*ARGSUSED*/
@@ -154,7 +154,7 @@ do_scrdump(EObjectType cdktype, void *object, void *clientdata, chtype key)
 
 	getyx(stdscr, origy, origx);
 
-	dumpimg = malloc(ws.ws_row * ws.ws_col);
+	dumpimg = malloc((size_t)(ws.ws_row * ws.ws_col));
 	if (dumpimg == NULL)
 		bailout("malloc: %s", strerror(errno));
 
@@ -170,6 +170,7 @@ do_scrdump(EObjectType cdktype, void *object, void *clientdata, chtype key)
 		fprintf(file, "\n");
 	}
 	fclose(file);
+	move(origy, origx);
 }
 
 /*ARGSUSED*/
