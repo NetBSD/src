@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet6.4,v 1.17 2000/11/24 10:10:34 itojun Exp $
+.\"	$NetBSD: inet6.4,v 1.18 2001/04/04 16:57:53 bjh21 Exp $
 .\"	$KAME: inet6.4,v 1.18 2000/11/24 08:50:32 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,20 +96,20 @@ to effect
 .Dq wildcard
 matching on incoming messages.
 .Pp
-IPv6 specification defines scoped address,
-like link-local or site-local address.
+The IPv6 specification defines scoped addresses,
+like link-local or site-local addresses.
 A scoped address is ambiguous to the kernel,
-if it is specified without scope identifier.
+if it is specified without a scope identifier.
 To manipulate scoped addresses properly from the userland,
-programs must use advanced API defined in RFC2292.
-Compact description on the advanced API is available in
+programs must use the advanced API defined in RFC2292.
+A compact description of the advanced API is available in
 .Xr ip6 4 .
-If scoped addresses are specified without explicit scope,
-the kernel may raise error.
+If a scoped address is specified without an explicit scope,
+the kernel may raise an error.
 Note that scoped addresses are not for daily use at this moment,
-both from specification and implementation point of view.
+both from a specification and an implementation point of view.
 .Pp
-KAME implementation supports extended numeric IPv6 address notation
+The KAME implementation supports an extended numeric IPv6 address notation
 for link-local addresses,
 like
 .Dq Li fe80::1%de0
@@ -120,7 +120,7 @@ on
 .Li de0
 interface
 .Dc .
-The notation is supported by
+This notation is supported by
 .Xr getaddrinfo 3
 and
 .Xr getnameinfo 3 .
@@ -128,23 +128,23 @@ Some of normal userland programs, such as
 .Xr telnet 1
 or
 .Xr ftp 1 ,
-are able to use the notation.
+are able to use this notation.
 With special programs
 like
 .Xr ping6 8 ,
-you can specify outgoing interface by extra command line option
+you can specify the outgoing interface by an extra command line option
 to disambiguate scoped addresses.
 .Pp
 Scoped addresses are handled specially in the kernel.
-In the kernel structures like routing tables or interface structure,
-scoped addresses will have its interface index embedded into the address.
+In kernel structures like routing tables or interface structures,
+a scoped address will have its interface index embedded into the address.
 Therefore,
-the address on some of the kernel structure is not the same as that on the wire.
-The embedded index will become visible on
+the address in some kernel structures is not the same as that on the wire.
+The embedded index will become visible through a
 .Dv PF_ROUTE
 socket, kernel memory accesses via
 .Xr kvm 3
-and some other occasions.
+and on some other occasions.
 HOWEVER, users should never use the embedded form.
 For details please consult
 .Pa sys/netinet6/IMPLEMENTATION .
@@ -268,20 +268,20 @@ message protocol is accessible from a raw socket.
 The behavior of 
 .Dv AF_INET6
 TCP/UDP socket is documented in RFC2553.
-Basically, it says as follows:
+Basically, it says this:
 .Bl -bullet -compact
 .It
-Specific bind on
+A specific bind on an
 .Dv AF_INET6
 socket
 .Po
 .Xr bind 2
-with address specified
+with an address specified
 .Pc
 should accept IPv6 traffic to that address only.
 .It
-If you perform wildcard bind
-on
+If you perform a wildcard bind
+on an
 .Dv AF_INET6
 socket
 .Po
@@ -295,33 +295,33 @@ socket on that TCP/UDP port, IPv6 traffic as well as IPv4 traffic
 should be routed to that
 .Dv AF_INET6
 socket.
-IPv4 traffic should be seen as if it came from IPv6 address like
+IPv4 traffic should be seen as if it came from an IPv6 address like
 .Li ::ffff:10.1.1.1 .
-This is called IPv4 mapped address.
+This is called an IPv4 mapped address.
 .It
-If there are both wildcard bind
+If there are both a wildcard bind
 .Dv AF_INET
-socket and wildcard bind
+socket and a wildcard bind
 .Dv AF_INET6
 socket on one TCP/UDP port, they should behave separately.
-IPv4 traffic should be routed to
+IPv4 traffic should be routed to the
 .Dv AF_INET
-socket and IPv6 should be routed to
+socket and IPv6 should be routed to the
 .Dv AF_INET6
 socket.
 .El
 .Pp
-However, RFC2553 does not define the constraint between the order of
+However, RFC2553 does not define the ordering constraint between calls to
 .Xr bind 2 ,
-nor how IPv4 TCP/UDP port number and IPv6 TCP/UDP port number
-relate each other
+nor how IPv4 TCP/UDP port numbers and IPv6 TCP/UDP port numbers
+relate to each other
 .Po
 should they be integrated or separated
 .Pc .
-Implemented behavior is very different across kernel to kernel.
+Implemented behavior is very different from kernel to kernel.
 Therefore, it is unwise to rely too much upon the behavior of
 .Dv AF_INET6
-wildcard bind socket.
+wildcard bind sockets.
 It is recommended to listen to two sockets, one for
 .Dv AF_INET
 and another for
@@ -334,7 +334,7 @@ and are able to bypass access control,
 if the target node routes IPv4 traffic to
 .Dv AF_INET6
 socket.
-Users are advised to take caution handling connections
+Users are advised to take care handling connections
 from IPv4 mapped address to
 .Dv AF_INET6
 sockets.
@@ -343,7 +343,7 @@ Because of the above, by default,
 .Nx
 does not route IPv4 traffic to
 .Dv AF_INET6
-socket.
+sockets.
 Listen to two sockets if you want to accept both IPv4 and IPv6 traffic.
 IPv4 traffic may be routed with certain
 per-socket/per-node configuration, however, it is not recommended to do so.
@@ -372,8 +372,8 @@ for details.
 .Sh HISTORY
 The
 .Nm
-protocol interface are defined in RFC2553 and RFC2292.
-The implementation described herein appeared in WIDE/KAME project.
+protocol interfaces are defined in RFC2553 and RFC2292.
+The implementation described herein appeared in the WIDE/KAME project.
 .Sh BUGS
 The IPv6 support is subject to change as the Internet protocols develop.
 Users should not depend on details of the current implementation,
