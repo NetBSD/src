@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscall.h,v 1.31 2003/09/06 11:18:51 manu Exp $ */
+/* $NetBSD: darwin_syscall.h,v 1.32 2003/09/06 11:50:01 manu Exp $ */
 
 /*
  * System call numbers.
@@ -30,6 +30,9 @@
 
 /* syscall: "fchdir" ret: "int" args: "int" */
 #define	DARWIN_SYS_fchdir	13
+
+/* syscall: "mknod" ret: "int" args: "const char *" "mode_t" "dev_t" */
+#define	DARWIN_SYS_mknod	14
 
 /* syscall: "break" ret: "int" args: "char *" */
 #define	DARWIN_SYS_break	17

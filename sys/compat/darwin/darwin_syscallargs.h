@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscallargs.h,v 1.31 2003/09/06 11:18:51 manu Exp $ */
+/* $NetBSD: darwin_syscallargs.h,v 1.32 2003/09/06 11:50:01 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -51,7 +51,7 @@ struct bsd_sys_chdir_args {
 	syscallarg(const char *) path;
 };
 
-struct bsd_sys_mknod_args {
+struct darwin_sys_mknod_args {
 	syscallarg(const char *) path;
 	syscallarg(mode_t) mode;
 	syscallarg(dev_t) dev;
@@ -281,7 +281,7 @@ int	bsd_sys_link(struct lwp *, void *, register_t *);
 int	bsd_sys_unlink(struct lwp *, void *, register_t *);
 int	bsd_sys_chdir(struct lwp *, void *, register_t *);
 int	sys_fchdir(struct lwp *, void *, register_t *);
-int	bsd_sys_mknod(struct lwp *, void *, register_t *);
+int	darwin_sys_mknod(struct lwp *, void *, register_t *);
 int	bsd_sys_chmod(struct lwp *, void *, register_t *);
 int	bsd_sys_chown(struct lwp *, void *, register_t *);
 int	sys_obreak(struct lwp *, void *, register_t *);
