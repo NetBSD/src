@@ -27,13 +27,18 @@
  *	i4b daemon - controller state support routines
  *	----------------------------------------------
  *
- *	$Id: controller.c,v 1.5 2002/12/06 15:00:14 thorpej Exp $
+ *	$Id: controller.c,v 1.6 2003/09/05 13:31:03 pooka Exp $
  *
  * $FreeBSD$
  *
  *      last edit-date: [Mon Oct  9 14:37:34 2000]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/types.h>
+#include <sys/mman.h>
+
+#include <fcntl.h>
 
 #include "isdnd.h"
 
@@ -124,6 +129,7 @@ init_controller_state(int controller, const char *devname, const char *cardname,
 	ctrl->tei = tei;
 	ctrl->l1stat = LAYER_IDLE;
 	ctrl->l2stat = LAYER_IDLE;
+	ctrl->firmware = NULL;
 	DBGL(DL_RCCF, (logit(LL_DBG, "init_controller_state: controller %d (%s) is %s",
 	   controller, devname, cardname)));
 
@@ -139,10 +145,12 @@ init_controller_state(int controller, const char *devname, const char *cardname,
 void
 init_active_controller(void)
 {
-/* XXX - replace by something usefull */
+	struct isdn_ctrl_state *cst = NULL;
+	int ret, fd;
+	int i, numctrl;
+
 #if 0
-	int ret;
-	int unit = 0;
+	/* XXX - replace by something useful */
 	int controller;
 	char cmdbuf[MAXPATHLEN+128];
 
@@ -162,6 +170,60 @@ init_active_controller(void)
 		}
 	}
 #endif
+
+	numctrl = count_ctrl_states();
+	for (cst = get_first_ctrl_state(), i = 0;
+	    i < numctrl;
+	    cst = find_ctrl_state(i++)) {
+
+		/*
+		 *  Generic microcode loading. If a controller has
+		 *  defined a microcode file, load it using the 
+		 *  I4B_CTRL_DOWNLOAD ioctl.
+		 */
+		if (cst->firmware != NULL) {
+			struct isdn_dr_prot idp;
+			struct isdn_download_request idr;
+
+			fd = open(cst->firmware, O_RDONLY);
+			if (fd < 0) {
+				logit(LL_ERR, "init_active_controller %d: "
+				    "open %s: %s!", cst->bri, cst->firmware,
+				    strerror(errno)); 
+				do_exit(1);
+			}
+
+			idp.bytecount = lseek(fd, 0, SEEK_END);
+			idp.microcode = mmap(0, idp.bytecount, PROT_READ,
+			    MAP_SHARED, fd, 0);
+			if (idp.microcode == MAP_FAILED) {
+				logit(LL_ERR, "init_active_controller %d: "
+				    "mmap %s: %s!", cst->bri, cst->firmware,
+				    strerror(errno));
+				do_exit(1);
+			}
+
+			DBGL(DL_RCCF, (logit(LL_DBG, "init_active_controller "
+			    "%d: loading firmware from [%s]", cst->bri,
+			    cst->firmware)));
+
+			idr.controller = cst->bri;
+			idr.numprotos = 1;
+			idr.protocols = &idp;
+
+			ret = ioctl(isdnfd, I4B_CTRL_DOWNLOAD, &idr,
+			    sizeof(idr));
+			if (ret) {
+				logit(LL_ERR, "init_active_controller %d: "
+				    "load %s: %s!", cst->bri, cst->firmware,
+				    strerror(errno));
+				do_exit(1);
+			}
+
+			munmap(idp.microcode, idp.bytecount);
+			close(fd);
+		}
+	}
 }	
 
 void

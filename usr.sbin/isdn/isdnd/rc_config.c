@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.16 2003/01/06 12:46:14 wiz Exp $ 
+ *	$Id: rc_config.c,v 1.17 2003/09/05 13:31:04 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -656,6 +656,11 @@ cfg_setval(int keyword)
 		case EXTCALLATTR:
 			DBGL(DL_RCCF, (logit(LL_DBG, "system: extcallattr = %d", yylval.booln)));
 			extcallattr = yylval.booln;
+			break;
+
+		case FIRMWARE:
+			DBGL(DL_RCCF, (logit(LL_DBG, "controller %d: firmware = %s", cur_ctrl->bri, yylval.str)));
+			cur_ctrl->firmware = strdup(yylval.str);
 			break;
 
 		case HOLIDAYFILE:

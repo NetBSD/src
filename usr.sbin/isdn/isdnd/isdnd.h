@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.11 2003/01/06 12:46:14 wiz Exp $ 
+ *	$Id: isdnd.h,v 1.12 2003/09/05 13:31:03 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -527,6 +527,8 @@ struct isdn_ctrl_state {
 	char controller[80];		/* manufacturer/name	 	*/
 	int bri;
 	int protocol;			/* ISDN D-channel protocol 	*/	
+	char *firmware;			/* loadable firmware file name	*/
+
 	int state;			/* controller state		*/
 #define  CTRL_DOWN 	0		/* controller inoparable	*/
 #define  CTRL_UP	1		/* controller may be used	*/
