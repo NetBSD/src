@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.4 1998/08/19 00:17:41 thorpej Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.5 1999/05/04 17:12:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.4 1998/08/19 00:17:41 thorpej Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.5 1999/05/04 17:12:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,11 +124,11 @@ ruserpass(host, aname, apass)
 	if ((mydomain = strchr(myname, '.')) == NULL)
 		mydomain = "";
 next:
-	while ((t = token())) switch(t) {
+	while ((t = token()) != NULL) switch(t) {
 
 	case DEFAULT:
 		usedefault = 1;
-		/* FALL THROUGH */
+		/* FALLTHROUGH */
 
 	case MACH:
 		if (!usedefault) {
@@ -143,7 +143,8 @@ next:
 				goto match;
 			if ((tmp = strchr(host, '.')) != NULL &&
 			    strcasecmp(tmp, mydomain) == 0 &&
-			    strncasecmp(host, tokval, tmp - host) == 0 &&
+			    strncasecmp(host, tokval,
+			    (size_t)(tmp - host)) == 0 &&
 			    tokval[tmp - host] == '\0')
 				goto match;
 			continue;
