@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.40 1994/12/16 19:01:43 deraadt Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.41 1994/12/17 19:22:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -969,7 +969,7 @@ sunos_poll(p, uap, retval)
 			goto done;
 		}
 		s = splclock();
-		timevaladd(&atv, (struct timeval *)&time);
+		__timeradd(&atv, &time);
 		timo = hzto(&atv);
 		/*
 		 * Avoid inadvertently sleeping forever.
