@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.342 1999/03/10 01:28:24 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.343 1999/03/12 01:01:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -226,8 +226,8 @@ char machine_arch[] = "i386";		/* machine == machine_arch */
 
 char bootinfo[BOOTINFO_MAXSIZE];
 
-struct bi_devmatch *native_disks = NULL;
-int nnative_disks = 0;
+struct bi_devmatch *i386_alldisks = NULL;
+int i386_ndisks = 0;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -1132,7 +1132,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 {
 	dev_t consdev;
 	struct btinfo_bootpath *bibp;
-	struct btinfo_biosgeom *bigp;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -1161,18 +1160,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	        if(!bibp)
 			return(ENOENT); /* ??? */
 		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
-	case CPU_BIOS_DISKS:
-		bigp = lookup_bootinfo(BTINFO_BIOSGEOM);
-		if (!bigp)
+	case CPU_DISKINFO:
+		if (i386_alldisks == NULL)
 			return (ENOENT);
-		return (sysctl_rdstruct(oldp, oldlenp, newp, bigp->disk,
-		    bigp->num * sizeof (struct bi_biosgeom_entry)));
-	case CPU_NATIVE_DISKS:
-		if (native_disks == NULL)
-			return (ENOENT);
-		return (sysctl_rdstruct(oldp, oldlenp, newp, native_disks,
-		    nnative_disks * sizeof (struct bi_devmatch)));
-
+		return (sysctl_rdstruct(oldp, oldlenp, newp, i386_alldisks,
+		    sizeof (struct disklist) +
+			(i386_ndisks - 1) * sizeof (struct nativedisk_info)));
 	default:
 		return (EOPNOTSUPP);
 	}
