@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1 1996/12/16 20:37:56 cgd Exp $
+$NetBSD: README,v 1.1.2.1 1998/05/08 17:39:12 mycroft Exp $
 
 BUGS/PROBLEMS:
 
@@ -38,7 +38,7 @@ BUGS/PROBLEMS:
 
 TO DO:
 
-* Support for other platforms (e.g. mips)
+* Support for other platforms
 
 * Support for coexistance of 32-bit and 64-bit ELF on platforms that can
   do that.
@@ -47,3 +47,5 @@ TO DO:
 
 * Possible support for ldd (standalone operation) and program loading
   a la the glibc shared loader.
+
+* Support for relocating ld.elf_so on mips
