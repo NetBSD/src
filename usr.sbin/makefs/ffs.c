@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.24 2003/10/26 10:31:44 mycroft Exp $	*/
+/*	$NetBSD: ffs.c,v 1.25 2003/10/26 10:32:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.24 2003/10/26 10:31:44 mycroft Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.25 2003/10/26 10:32:35 mycroft Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -348,7 +348,7 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		fsopts->size =
 		    fsopts->size * (100 + fsopts->minfree) / 100;
 	/*
-	 * XXX	any other fs slop to add, such as csum's, etc ??
+	 * XXX	any other fs slop to add, such as csum's, bitmaps, etc ??
 	 */
 
 	if (fsopts->size < fsopts->minsize)	/* ensure meets minimum size */
