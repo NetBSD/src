@@ -2,7 +2,7 @@
 # R4000 (any  model) kernel config file
 
 #
-# 	$NetBSD: R4000,v 1.6 1998/03/25 04:17:08 jonathan Exp $
+# 	$NetBSD: R4000,v 1.7 1998/04/19 08:46:51 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -16,11 +16,6 @@ options 	MIPS3			# R4000/R4400 support (new)
 options 	DEC_3MIN		# 5000/50 
 options 	DEC_MAXINE		# 5000/150
 options 	DEC_3MAXPLUS		# 5000/260
-
-# old stype options (deprecated, still required)
-options 	DS5000_25		# MAXINE (kn02ca/xine) support
-options 	DS5000_100		# 3MIN (kn02ba/kmin) support
-options 	DS5000_240		# 3MAXPLUS (kn03) support
 
 
 # Standard system options
