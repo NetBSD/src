@@ -71,6 +71,7 @@
 ./etc/ttys
 ./etc/weekly
 ./etc/weekly.conf
+./etc/wscons.conf
 ./root/.cshrc
 ./root/.klogin
 ./root/.login
