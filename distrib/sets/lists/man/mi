@@ -381,6 +381,7 @@
 ./usr/share/man/cat4/wds.0
 ./usr/share/man/cat4/wss.0
 ./usr/share/man/cat4/wt.0
+./usr/share/man/cat4/zstty.0
 ./usr/share/man/cat5/a.out.0
 ./usr/share/man/cat5/acct.0
 ./usr/share/man/cat5/aliases.0
@@ -867,6 +868,7 @@
 ./usr/share/man/cat9/psignal.0
 ./usr/share/man/cat9/readdisklabel.0
 ./usr/share/man/cat9/resettodr.0
+./usr/share/man/cat9/rnd.0
 ./usr/share/man/cat9/runtime.0
 ./usr/share/man/cat9/setdisklabel.0
 ./usr/share/man/cat9/shutdownhook_disestablish.0
@@ -1286,6 +1288,7 @@
 ./usr/share/man/man4/wds.4
 ./usr/share/man/man4/wss.4
 ./usr/share/man/man4/wt.4
+./usr/share/man/man4/zstty.4
 ./usr/share/man/man5/a.out.5
 ./usr/share/man/man5/acct.5
 ./usr/share/man/man5/aliases.5
@@ -1772,6 +1775,7 @@
 ./usr/share/man/man9/psignal.9
 ./usr/share/man/man9/readdisklabel.9
 ./usr/share/man/man9/resettodr.9
+./usr/share/man/man9/rnd.9
 ./usr/share/man/man9/runtime.9
 ./usr/share/man/man9/setdisklabel.9
 ./usr/share/man/man9/shutdownhook_disestablish.9
