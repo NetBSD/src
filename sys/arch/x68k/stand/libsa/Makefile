@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/09/27 13:27:55 minoura Exp $
+#	$NetBSD: Makefile,v 1.3 2001/09/28 15:19:33 minoura Exp $
 
 S=		${.CURDIR}/../../../..
 LIBSADIR=	$S/lib/libsa
@@ -23,7 +23,7 @@ SRCS+=		ashldi3.c ashrdi3.c strcat.c strchr.c strcmp.c strncmp.c strcpy.c strerr
 SRCS+=		adler32.c crc32.c infblock.c infcodes.c inffast.c
 SRCS+=		inflate.c inftrees.c infutil.c uncompr.c
 
-SRCS+=		consio.c devopen.c parseutils.c sdcd.c fd.c fdsub.S
+SRCS+=		consio.c devopen.c parseutils.c sdcd.c fd.c fdsub.S chdsk.c
 
 MKPROFILE=	no
 MKPIC=		no
@@ -33,6 +33,7 @@ CPPFLAGS+=	-I${.OBJDIR} -I${LIBSADIR} -I$S -I${LIBZDIR} -D_STANDALONE
 CPPFLAGS+=	-I${.CURDIR}/../libiocs -I${.CURDIR}/../common
 CPPFLAGS+=	-DHEAP_VARIABLE -D__INTERNAL_LIBSA_CREAD
 CPPFLAGS+=	-D_ZLIB_PRIVATE
+CPPFLAGS+=	-DHAVE_CHANGEDISK_HOOK
 #CPPFLAGS+=	-DDEBUG
 
 .PATH:	${LIBSADIR} ${LIBKERNDIR} ${LIBZDIR}
