@@ -14,7 +14,7 @@
  *
  * commenced: Sun Sep 27 18:14:01 PDT 1992
  *
- *      $Id: aha1742.c,v 1.14.2.3 1993/11/29 00:35:57 mycroft Exp $
+ *      $Id: aha1742.c,v 1.14.2.4 1994/02/02 05:39:01 mycroft Exp $
  */
 
 #include "ahb.h"
@@ -283,7 +283,7 @@ void ahb_print_active_ecb __P((struct ahb_data *));
 
 struct	ecb *cheat;
 
-#define	MAX_SLOTS	8
+#define	MAX_SLOTS	15
 static  ahb_slot = 0;		/* slot last board was found in */
 int     ahb_debug = 0;
 #define AHB_SHOWECBS 0x01
@@ -435,7 +435,7 @@ ahbprobe(parent, cf, aux)
 	if (ia->ia_iobase != IOBASEUNK)
 		return ahbprobe1(parent, cf, aux);
 
-	do {
+	while (ahb_slot < MAX_SLOTS) {
 		ahb_slot++;
 		port = 0x1000 * ahb_slot;
 		byte1 = inb(port + HID0);
@@ -452,7 +452,7 @@ ahbprobe(parent, cf, aux)
 		ia->ia_iobase = port;
 		if (ahbprobe1(parent, cf, ia))
 			return 1;
-	} while (ahb_slot < MAX_SLOTS);
+	}
 
 	return 0;
 }
