@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.12 2003/05/30 09:22:50 dsl Exp $	*/
+/*	$NetBSD: ffs.c,v 1.13 2003/10/06 02:39:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.12 2003/05/30 09:22:50 dsl Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.13 2003/10/06 02:39:04 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -440,7 +440,7 @@ ffs_findstage2_blocks(ib_params *params, void *_state,
 }
 
 /*
- *	publically visible functions
+ *	publicly visible functions
  */
 
 static off_t sblock_try[] = SBLOCKSEARCH;
