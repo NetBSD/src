@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.16 2003/09/23 17:57:21 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.17 2003/09/23 18:15:50 itojun Exp $	*/
 /*	$KAME: if.c,v 1.31 2003/09/23 10:58:20 itojun Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ struct sockaddr_dl *
 if_nametosdl(char *name)
 {
 	struct ifaddrs *ifap, *ifa;
-	struct sockaddr_dl *sdl = NULL;
+	struct sockaddr_dl *sdl;
 
 	if (getifaddrs(&ifap) != 0)
 		return (NULL);
