@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.12 1999/03/02 20:36:51 nathanw Exp $	*/
+/*	$NetBSD: essvar.h,v 1.13 1999/03/16 13:06:36 mycroft Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.12 $ (SHARK) $Date: 1999/03/02 20:36:51 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.13 $ (SHARK) $Date: 1999/03/16 13:06:36 $
 **
 **++
 **
@@ -131,8 +131,8 @@ struct ess_softc
 
 	u_int	spkr_state;		/* non-null is on */
 	
-	struct ess_audio_channel sc_in; /* audio channel for record */
-	struct ess_audio_channel sc_out;/* audio channel for playback */
+	struct ess_audio_channel sc_audio1; /* audio channel for record */
+	struct ess_audio_channel sc_audio2; /* audio channel for playback */
 
 	u_int	sc_model;
 #define ESS_UNSUPPORTED 0
