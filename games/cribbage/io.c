@@ -374,14 +374,11 @@ int		Mpos = 0;
 static int	Newpos = 0;
 
 /* VARARGS1 */
-msg(fmt)
+msg(fmt,ap)
 	char *fmt;
+	_VA_LIST_ ap;
 {
-	va_list ap;
-
-	va_start(ap, fmt);
 	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
-	va_end(ap);
 	endmsg();
 }
 
@@ -390,14 +387,11 @@ msg(fmt)
  *	Add things to the current message
  */
 /* VARARGS1 */
-addmsg(fmt)
+addmsg(fmt,ap)
 	char *fmt;
+	_VA_LIST_ ap;
 {
-	va_list ap;
-
-	va_start(ap, fmt);
 	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
-	va_end(ap);
 }
 
 /*

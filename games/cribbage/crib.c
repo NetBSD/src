@@ -43,6 +43,7 @@ static char sccsid[] = "@(#)crib.c	5.6 (Berkeley) 2/28/91";
 
 # include	<sys/signal.h>
 # include	<curses.h>
+# include	<unistd.h>
 # include	"deck.h"
 # include	"cribbage.h"
 # include	"cribcur.h"
@@ -60,7 +61,7 @@ char	*argv[];
 	char			*s;		/* for reading arguments */
 	FILE			*f;
 	FILE			*fopen();
-	char			*getline(), *getlogin();
+	char			*getline();
 	void			rint();
 
 	while ((ch = getopt(argc, argv, "eqr")) != EOF)
@@ -179,6 +180,7 @@ game()
 	register int		i, j;
 	BOOLEAN			flag;
 	BOOLEAN			compcrib;
+	char			*getline();
 
 	makeboard();
 	refresh();
@@ -356,6 +358,7 @@ int		pos;
 {
 	register int		i, cardx;
 	BOOLEAN			win = FALSE;
+	char			*getline();
 
 	if (mycrib) {
 	    if (!rflag) {			/* random cut */
