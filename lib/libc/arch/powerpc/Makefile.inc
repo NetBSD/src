@@ -1,4 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.2 1999/04/17 21:16:45 ws Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2001/06/18 17:05:32 simonb Exp $
 
 KMINCLUDES=
 KMSRCS=
+
+.if (${MKSOFTFLOAT} != "no")
+CPPFLAGS+= -DSOFTFLOAT_NEED_FIXUNS
+.include <softfloat/Makefile.inc>
+.endif
