@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.83 1997/04/09 23:26:06 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.84 1997/04/11 22:03:58 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1123,36 +1123,44 @@ sys_lseek(p, v, retval)
 	struct ucred *cred = p->p_ucred;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
+	struct vnode *vp;
 	struct vattr vattr;
+	register off_t newoff;
 	int error;
 
 	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
 		return (EBADF);
+
+	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE
 #ifdef FIFO
-	    || ((struct vnode *)fp->f_data)->v_type == VFIFO
+	    || vp->v_type == VFIFO
 #endif
 	)
 		return (ESPIPE);
+
 	switch (SCARG(uap, whence)) {
 	case L_INCR:
-		fp->f_offset += SCARG(uap, offset);
+		newoff = fp->f_offset + SCARG(uap, offset);
 		break;
 	case L_XTND:
 		error = VOP_GETATTR((struct vnode *)fp->f_data, &vattr,
 				    cred, p);
 		if (error)
 			return (error);
-		fp->f_offset = SCARG(uap, offset) + vattr.va_size;
+		newoff = SCARG(uap, offset) + vattr.va_size;
 		break;
 	case L_SET:
-		fp->f_offset = SCARG(uap, offset);
+		newoff = SCARG(uap, offset);
 		break;
 	default:
 		return (EINVAL);
 	}
-	*(off_t *)retval = fp->f_offset;
+	if ((error = VOP_SEEK(vp, fp->f_offset, newoff, cred)) != 0)
+		return (error);
+
+	*(off_t *)retval = fp->f_offset = newoff;
 	return (0);
 }
 
