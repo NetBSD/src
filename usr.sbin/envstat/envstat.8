@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.3 2002/01/19 03:11:44 wiz Exp $
+.\"	$NetBSD: envstat.8,v 1.4 2003/01/02 11:55:52 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,6 +81,10 @@ Display a new header every
 .Ar headrep
 lines.  An argument of 0 disables header line printing completely.
 The default is every 22 lines.
+.It Fl r
+Display the sensors row wise.  This is useful when the number of sensors
+is large.  This option also displays fractional values when present
+(e.g., the percentage battery charge).
 .It Fl s
 Restrict the display to the named sensors.  The sensor names must be
 supplied as a comma separated list.  Sensor names are case sensitive.
