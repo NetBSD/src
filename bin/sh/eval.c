@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.56 2000/05/22 10:18:46 elric Exp $	*/
+/*	$NetBSD: eval.c,v 1.56.4.1 2002/02/23 17:08:17 he Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.56 2000/05/22 10:18:46 elric Exp $");
+__RCSID("$NetBSD: eval.c,v 1.56.4.1 2002/02/23 17:08:17 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -279,7 +279,7 @@ evaltree(n, flags)
 out:
 	if (pendingsigs)
 		dotrap();
-	if ((flags & EV_EXIT) || (eflag && exitstatus && !(flags & EV_TESTED)))
+	if ((flags & EV_EXIT) != 0)
 		exitshell(exitstatus);
 }
 
