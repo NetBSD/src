@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.257 2003/10/24 20:12:04 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.258 2003/10/24 22:39:51 ross Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -180,7 +180,7 @@ install-etc-files: check_DESTDIR MAKEDEV
 		done; \
 	) | ${METALOG.add}
 .endif	# MKUNPRIVED != no
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV ${DESTDIR}/dev
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV.local ${DESTDIR}/dev
