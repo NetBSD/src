@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.2 1999/09/25 21:25:55 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.3 1999/09/25 21:40:58 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.2 1999/09/25 21:25:55 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.3 1999/09/25 21:40:58 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -144,7 +144,9 @@ main(int argc,char **argv)
 	if ((out = fopen(whatisdb, "w")) == NULL)
 		errx(EXIT_FAILURE, "%s: %s", whatisdb, strerror(errno));
 
-	if (!(dumpwhatis(out, dest) || (fclose(out) < 0)))
+	if (!(dumpwhatis(out, dest) ||
+	    (fclose(out) < 0)) ||
+	    (chmod(whatisdb, S_IRUSR|S_IRGRP|S_IROTH) < 0))
 		errx(EXIT_FAILURE, "%s: %s", whatisdb, strerror(errno));
 
 	return EXIT_SUCCESS;
