@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db_factory.c,v 1.4 2003/06/27 08:58:18 itojun Exp $	*/
+/*	$NetBSD: citrus_db_factory.c,v 1.5 2003/06/30 12:32:21 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -26,9 +26,13 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_db_factory.c,v 1.4 2003/06/27 08:58:18 itojun Exp $");
+__RCSID("$NetBSD: citrus_db_factory.c,v 1.5 2003/06/30 12:32:21 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -39,9 +43,6 @@ __RCSID("$NetBSD: citrus_db_factory.c,v 1.4 2003/06/27 08:58:18 itojun Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
-#ifndef __packed
-#define __packed /* ignored */
-#endif
 #include "citrus_namespace.h"
 #include "citrus_region.h"
 #include "citrus_db_file.h"
