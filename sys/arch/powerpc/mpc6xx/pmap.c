@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 2002/04/03 00:12:08 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 2002/04/13 15:58:30 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1618,6 +1618,10 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pvo_flags = PVO_MANAGED;
 	}
 
+	DPRINTFN(ENTER,
+	    ("pmap_enter(%p, 0x%lx, 0x%lx, 0x%x, 0x%x):",
+	    pm, va, pa, prot, flags));
+
 	/*
 	 * If this is a managed page, and it's the first reference to the
 	 * page clear the execness of the page.  Otherwise fetch the execness.
@@ -1625,15 +1629,13 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (pg != NULL) {
 		if (LIST_EMPTY(pvo_head)) {
 			pmap_attr_clear(pg, PTE_EXEC);
+			DPRINTFN(ENTER, (" first"));
 		} else {
 			was_exec = pmap_attr_fetch(pg) & PTE_EXEC;
 		}
 	}
 
-	DPRINTFN(ENTER,
-	    ("pmap_enter(0x%p, 0x%lx, 0x%lx, 0x%x, 0x%x) ",
-	    pm, va, pa, prot, flags));
-
+	DPRINTFN(ENTER, (" was_exec=%d", was_exec));
 
 	/*
 	 * Assume the page is cache inhibited and access is guarded unless
@@ -1687,10 +1689,13 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
             (flags & VM_PROT_EXECUTE) &&
             (pte_lo & PTE_I) == 0 &&
 	    was_exec == 0) {
+		DPRINTFN(ENTER, (" syncicache"));
 		pmap_syncicache(pa, NBPG);
 		if (pg != NULL)
 			pmap_attr_save(pg, PTE_EXEC);
 	}
+
+	DPRINTFN(ENTER, (" error=%d\n", error));
 
 	return error;
 }
