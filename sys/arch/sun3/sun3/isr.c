@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.16 1995/01/18 17:22:40 gwr Exp $	*/
+/*	$NetBSD: isr.c,v 1.17 1995/04/07 04:43:25 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -229,10 +229,12 @@ void isr_autovec(ipl)
 	cnt.v_intr++;
 
 	isr = isr_autovec_list[ipl];
-	if ((isr == NULL) && (n == 0)) {
-		printf("isr_autovec: ipl %d unexpected\n", ipl);
+	if (isr == NULL) {
+		if (n == 0)
+			printf("isr_autovec: ipl %d unexpected\n", ipl);
 		return;
 	}
+
 	/* Give all the handlers a chance. */
 	n = 0;
 	while (isr) {
