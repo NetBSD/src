@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120.2.3 1998/11/16 10:34:48 nisimura Exp $ */
+/*	$NetBSD: machdep.c,v 1.120.2.4 1999/01/18 20:15:14 drochner Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.3 1998/11/16 10:34:48 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.4 1999/01/18 20:15:14 drochner Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -563,10 +563,10 @@ cpu_startup()
 	 * Finally, allocate mbuf cluster submap.
 	 */
 #if defined(UVM)
-	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
+	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 			         VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
-	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 #endif
 	/*
