@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 1997/04/09 19:21:06 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 1997/10/21 18:03:56 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,46 +68,16 @@
  */
 
 /*
- * XXX Much more could be pulled out of port-specific header files
- * XXX and placed here.
+ * XXX  The remaining contents of this file should be split out
+ * XXX  into separate files (like m68k.h) and then this file
+ * XXX  should go away.  Furthermore, most of the stuff defined
+ * XXX  here does NOT belong in <machine/cpu.h>, and the ports
+ * XXX  using this file should remove <m68k/cpu.h> from there.
  */
 
-#ifdef _KERNEL
-/*
- * All m68k ports must provide these globals.
- */
-extern	int cputype;		/* CPU on this host */
-extern	int ectype;		/* external cache on this host */
-extern	int fputype;		/* FPU on this host */
-extern	int mmutype;		/* MMU on this host */
-#endif
+#include <m68k/m68k.h>
 
-/* values for cputype */
-#define	CPU_68020	0	/* 68020 */
-#define	CPU_68030	1	/* 68030 */
-#define	CPU_68040	2	/* 68040 */
-#define	CPU_68060	3	/* 68060 */
-
-/* values for ectype */
-#define	EC_PHYS		-1	/* external physical address cache */
-#define	EC_NONE		0	/* no external cache */
-#define	EC_VIRT		1	/* external virtual address cache */
-
-/* values for fputype */
-#define	FPU_NONE	0	/* no FPU */
-#define	FPU_68881	1	/* 68881 FPU */
-#define	FPU_68882	2	/* 68882 FPU */
-#define	FPU_68040	3	/* 68040 on-chip FPU */
-#define	FPU_68060	4	/* 68060 on-chip FPU */
-#define	FPU_UNKNOWN	5	/* placeholder; unknown FPU */
-
-/* values for mmutype (assigned for quick testing) */
-#define	MMU_68060	-3	/* 68060 on-chip MMU */
-#define	MMU_68040	-2	/* 68040 on-chip MMU */
-#define	MMU_68030	-1	/* 68030 on-chip subset of 68851 */
-#define	MMU_HP		0	/* HP proprietary */
-#define	MMU_68851	1	/* Motorola 68851 */
-#define	MMU_SUN		2	/* Sun MMU */
+/* XXX - Move this stuff into <m68k/mmu030.h> maybe? */
 
 /*
  * 68851 and 68030 MMU
@@ -120,6 +90,8 @@ extern	int mmutype;		/* MMU on this host */
 #define	PMMU_LV		0x4000
 #define	PMMU_BE		0x8000
 #define	PMMU_FAULT	(PMMU_WP|PMMU_INV)
+
+/* XXX - Move this stuff into <m68k/mmu040.h> maybe? */
 
 /*
  * 68040 MMU
@@ -135,6 +107,8 @@ extern	int mmutype;		/* MMU on this host */
 #define	MMU40_GLB	0x400
 #define	MMU40_BE	0x800
 
+/* XXX - Move this stuff into <m68k/fcode.h> maybe? */
+
 /* 680X0 function codes */
 #define	FC_USERD	1	/* user data space */
 #define	FC_USERP	2	/* user program space */
@@ -142,6 +116,8 @@ extern	int mmutype;		/* MMU on this host */
 #define	FC_SUPERD	5	/* supervisor data space */
 #define	FC_SUPERP	6	/* supervisor program space */
 #define	FC_CPU		7	/* CPU space */
+
+/* XXX - Move this stuff into <m68k/cacr.h> maybe? */
 
 /* fields in the 68020 cache control register */
 #define	IC_ENABLE	0x0001	/* enable instruction cache */
@@ -186,19 +162,5 @@ extern	int mmutype;		/* MMU on this host */
 
 #define	CACHE60_ON	(CACHE40_ON|IC60_CABC|IC60_EBC|DC60_ESB)
 #define	CACHE60_OFF	(CACHE40_OFF|IC60_CABC)
-
-#ifdef _KERNEL
-void	copypage __P((void *fromaddr, void *toaddr));
-void	zeropage __P((void *addr));
-
-#ifdef MAPPEDCOPY
-int	mappedcopyin __P((void *fromp, void *top, size_t count));
-int	mappedcopyout __P((void *fromp, void *top, size_t count));
-extern	u_int mappedcopysize;
-#endif /* MAPPEDCOPY */
-
-struct trapframe;
-void	regdump __P((struct trapframe *, int));
-#endif /* _KERNEL */
 
 #endif /* _M68K_CPU_H_ */
