@@ -1,5 +1,4 @@
-OUTPUT_FORMAT("a.out-m68k-netbsd", "a.out-m68k-netbsd",
-	      "a.out-m68k-netbsd")
+OUTPUT_FORMAT("binary", "binary", "binary")
 OUTPUT_ARCH(m68k)
 ENTRY(start)
 SEARCH_DIR(/usr/lib);

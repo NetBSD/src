@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/10/15 16:23:01 minoura Exp $
+#	$NetBSD: Makefile,v 1.5 2001/11/24 16:18:45 minoura Exp $
 
 .include <bsd.own.mk>
 
@@ -17,8 +17,6 @@ STRIPFLAG=
 BINMODE=	444
 MKMAN=		no
 
-OBJCOPY?=	objcopy
-
 S=		${.CURDIR}/../../../..
 M=		$S/arch/x68k
 COMMONDIR=	$M/stand/common
@@ -36,27 +34,52 @@ CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS}
 AFLAGS=	   ${CFLAGS:M-[ID]*}
 AFLAGS+=   -Wa,-mc68000
 .if ${OBJECT_FMT} == "ELF"
-LDFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript
+LDFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
 LDFLAGS+=  -noinhibit-exec	# XXX
 .else
-LDFLAGS=   -n -Bstatic -Ttext ${TEXT}
+LDFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
+OBJCOPY?=  objcopy
 .endif
 
-CLEANFILES=	${PROG}.x s.x x.s x.o
+CLEANFILES=	${PROG}.x $(PROG).map
 
 
 ${PROG}: $(OBJS)
-	$(LD) $(LDFLAGS) -o ${PROG}.x $(OBJS) $(LDADD)
-	@$(NM) --target=a.out-m68k-netbsd ${PROG}.x | sed -n '/T first_kbyte/p'
-	@if [ `(echo ibase=16; \
-		$(NM) --target=a.out-m68k-netbsd ${PROG}.x | sed -n 's/T first_kbyte/-$(TEXT)-400/p' | \
-				tr a-f A-F) | bc` -gt 0 ];\
-	then echo '${PROG}: first_kbyte exceeds the first killobyte'; exit 1; fi
-	@$(SIZE) --target=a.out-m68k-netbsd ${PROG}.x
-	@if [ `(echo ibase=16; \
-		$(NM) --target=a.out-m68k-netbsd ${PROG}.x | sed -n 's/D _edata/-$(TEXT)-2000/p' | tr a-f A-F) |\
-			bc` -gt 0 ];\
-	then	echo '${PROG}: text+data is too large'; exit 1; fi
-	@$(OBJCOPY) -I a.out-m68k-netbsd -O binary ${PROG}.x ${PROG}
+	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS) $(LDADD) > $(PROG).map
+	@grep first_kbyte $(PROG).map
+.if ${OBJECT_FMT} == "ELF"
+	@if [ `(echo ibase=16; 						   \
+	    sed -n 's/^.*0x\([0-9a-f]*\).* first_kbyte$$/\1-$(TEXT)-400/p' \
+		$(PROG).map | 						   \
+	    tr a-f A-F) | bc` -gt 0 ]; 					   \
+	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
+	    rm $(PROG) ; exit 1; 					   \
+	fi
+	@if [ `(echo ibase=16; 						   \
+	    sed -n 's/^.*0x\([0-9a-f]*\).* _edata=\.$$/\1-$(TEXT)-2000/p' \
+		$(PROG).map | 						   \
+	    tr a-f A-F) | bc` -gt 0 ]; 					   \
+	then echo '$(BOOT): text+data is too large';			   \
+	    rm $(PROG) ; exit 1; 					   \
+	fi
+.else
+	mv $(PROG) $(PROG).x
+	$(OBJCOPY) -I a.out-m68k-netbsd -O binary $(PROG).x $(PROG)
+	@rm -f $(PROG).x
+	@if [ `(echo ibase=16; 						   \
+	    sed -n 's/  first_kbyte:.*0x\(.*\),.*$$/\1-$(TEXT)-400/p'	   \
+		$(PROG).map | 						   \
+	    tr a-f A-F) | bc` -gt 0 ]; 					   \
+	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
+	    rm $(PROG) ; exit 1; 					   \
+	fi
+	@if [ `(echo ibase=16; 						   \
+	    sed -n 's/  _edata:.*0x\(.*\),.*$$/\1-$(TEXT)-2000/p'	   \
+		$(PROG).map | 						   \
+	    tr a-f A-F) | bc` -gt 0 ]; 					   \
+	then echo '$(BOOT): text+data is too large';			   \
+	    rm $(PROG) ; exit 1; 					   \
+	fi
+.endif
 
 .include <bsd.prog.mk>
