@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 2001/08/26 16:05:25 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.20 2001/08/26 16:22:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -521,7 +521,7 @@ pmap_init()
 		 * XXX We don't want to hang when we run out of
 		 * page tables, so we lower maxproc so that fork()
 		 * will fail instead.  Note that root could still raise
-		 * this value via sysctl(2).
+		 * this value via sysctl(3).
 		 */
 		maxproc = (PTMAXSIZE / MAX_PTSIZE);
 	} else
