@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.41 1998/03/26 06:36:36 thorpej Exp $	*/
+/*	$NetBSD: dc.c,v 1.42 1998/03/31 11:32:53 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.41 1998/03/26 06:36:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.42 1998/03/31 11:32:53 jonathan Exp $");
 
 /*
  * devDC7085.c --
@@ -995,7 +995,7 @@ dcmctl(dev, bits, how)
 			tcr |= TCR_DTR2;
 		else
 			tcr &= ~TCR_DTR2;
-		/*if (pmax_boardtype != DS_PMAX)*/
+		/*if (systype != DS_PMAX)*/
 		if (sc->dc_rtscts & (1 << line)) {
 			if (mbits & DML_RTS)
 				tcr |= TCR_RTS2;
@@ -1007,7 +1007,7 @@ dcmctl(dev, bits, how)
 
 	case 3:
 		/* XXX DTR not supported on this line on 2100/3100 */
-		/*if (pmax_boardtype != DS_PMAX)*/
+		/*if (systype != DS_PMAX)*/
 		if (sc->dc_modem & (1 << line)) {
 			tcr = dcaddr->dc_tcr;
 			if (mbits & DML_DTR)
@@ -1046,7 +1046,7 @@ dcscan(arg)
 	dtr = TCR_DTR2;
 	dsr = MSR_DSR2;
 #ifdef HW_FLOW_CONTROL
-	/*limit = (pmax_boardtype == DS_PMAX) ? 2 : 3;*/
+	/*limit = (systype == DS_PMAX) ? 2 : 3;*/
 	limit =  (sc->dc_rtscts & (1 << 3)) :3  : 2;	/*XXX*/
 #else
 	limit = 2;
@@ -1068,7 +1068,7 @@ dcscan(arg)
 		 * then resume transmit.
 		 */
 		if ((tp->t_cflag & CCTS_OFLOW) && (tp->t_state & TS_TTSTOP) &&
-		     /*pmax_boardtype != DS_PMAX*/
+		     /*systype != DS_PMAX*/
 		    (sc->dc_rtscts & (1 << unit)) ) {
 			switch (unit) {
 			case 2:

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 1998/03/26 12:46:35 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 1998/03/31 11:32:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 1998/03/26 12:46:35 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 1998/03/31 11:32:52 jonathan Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -177,7 +177,6 @@ int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 int	physmem_boardmax;	/* {model,simm}-specific bound on physmem */
 int	systype;		/* Mother board type */
-int	pmax_boardtype;		/* Mother board type (deprecated) */
 u_long	le_iomem;		/* 128K for lance chip via. ASIC */
 
 
@@ -411,7 +410,6 @@ mach_init(argc, argv, code, cv)
 
 	/* check what model platform we are running on */
 	systype = ((i >> 16) & 0xff);
-	pmax_boardtype = systype;
 
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.19 1997/05/24 08:19:50 jonathan Exp $	*/
+/*	$NetBSD: fb.c,v 1.20 1998/03/31 11:32:53 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -118,7 +118,6 @@
 
 /* qvss/pm compatible and old 4.4bsd/pmax driver functions */
 
-extern int pmax_boardtype;
 
 extern void fbScreenInit __P (( struct fbinfo *fi));
 
@@ -270,7 +269,7 @@ tb_kbdmouseconfig(fi)
 		return 1;
 	}
 
-	switch (pmax_boardtype) {
+	switch (systype) {
 
 #if (NDC_DS > 0) || (NDC_IOASIC > 0)
 	case DS_PMAX:
