@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.546 2003/02/16 17:35:15 augustss Exp $
+# $NetBSD: GENERIC,v 1.547 2003/02/18 20:13:03 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.546 $"
+#ident 		"GENERIC-$Revision: 1.547 $"
 
 maxusers	32		# estimated number of users
 
@@ -142,6 +142,7 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -1110,6 +1111,9 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+pseudo-device	nsmb			# experimental - SMB requester
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
