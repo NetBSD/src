@@ -1,4 +1,4 @@
-.\"	$NetBSD: stdarg.3,v 1.4 1997/11/12 00:49:26 mrg Exp $
+.\"	$NetBSD: stdarg.3,v 1.5 1999/03/16 19:46:38 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -159,7 +159,7 @@ void foo(char *fmt, ...)
 
 	va_start(ap, fmt);
 	while (*fmt)
-		switch(*fmt++) {
+		switch (*fmt++) {
 		case 's':			/* string */
 			s = va_arg(ap, char *);
 			printf("string %s\en", s);
