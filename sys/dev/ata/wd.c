@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.125 1995/01/13 08:58:16 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.126 1995/01/13 09:40:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -114,11 +114,13 @@ struct wd_softc {
 	struct device sc_dev;
 	struct dkdevice sc_dk;
 
-	daddr_t	sc_blkno;	/* starting block number */
-	int	sc_bcount;	/* byte count left */
-	int	sc_skip;	/* bytes already transferred */
-	int	sc_drive;	/* physical unit number */
-	int	sc_state;	/* control state */
+	daddr_t sc_blkno;	/* starting block number */
+	int sc_bcount;		/* byte count left */
+	int sc_skip;		/* bytes already transferred */
+	int sc_nblks;		/* number of blocks currently transferring */
+
+	int sc_drive;		/* physical unit number */
+	int sc_state;		/* control state */
 #define	RECAL		0		/* recalibrate */
 #define	RECAL_WAIT	1		/* done recalibrating */
 #define	GEOMETRY	2		/* upload geometry */
@@ -126,41 +128,42 @@ struct wd_softc {
 #define	MULTIMODE	4		/* set multiple mode */
 #define	MULTIMODE_WAIT	5		/* done setting multiple mode */
 #define	OPEN		6		/* done with open */
-	int	sc_mode;	/* transfer mode */
+	int sc_mode;		/* transfer mode */
 #define	WDM_PIOSINGLE	0		/* single-sector PIO */
 #define	WDM_PIOMULTI	1		/* multi-sector PIO */
 #define	WDM_DMA		2		/* DMA */
-	int	sc_multiple;	/* multiple for WDM_PIOMULTI */
-	int	sc_flags;	/* drive characteistics found */
+	int sc_multiple;	/* multiple for WDM_PIOMULTI */
+	int sc_flags;		/* drive characteistics found */
 #define	WDF_LOCKED	0x01
 #define	WDF_WANTED	0x02
 #define	WDF_LOADED	0x04
 #define	WDF_BSDLABEL	0x08		/* has a BSD disk label */
 #define	WDF_WLABEL	0x10		/* label is writable */
 #define	WDF_32BIT	0x20		/* can do 32-bit transfer */
-	TAILQ_ENTRY(wd_softc) sc_drivechain;
-	struct buf sc_q;
+
 	struct wdparams sc_params; /* ESDI/IDE drive/controller parameters */
 	daddr_t	sc_badsect[127];	/* 126 plus trailing -1 marker */
+
+	TAILQ_ENTRY(wd_softc) sc_drivechain;
+	struct buf sc_q;
 };
 
 struct wdc_softc {
 	struct device sc_dev;
 	struct intrhand sc_ih;
 
-	int	sc_iobase;	/* I/O port base */
-	int	sc_drq;		/* DMA channel */
+	int sc_iobase;		/* I/O port base */
+	int sc_drq;		/* DMA channel */
 
-	int	sc_flags;
+	TAILQ_HEAD(drivehead, wd_softc) sc_drives;
+	int sc_flags;
 #define	WDCF_ACTIVE	0x01	/* controller is active */
 #define	WDCF_SINGLE	0x02	/* sector at a time mode */
 #define	WDCF_ERROR	0x04	/* processing a disk error */
 #define	WDCF_WANTED	0x08	/* XXX locking for wd_get_parms() */
-	u_char	sc_status;	/* copy of status register */
-	u_char	sc_error;	/* copy of error register */
-	int	sc_errors;	/* count of errors during current transfer */
-	int	sc_nblks;	/* number of blocks currently transferring */
-	TAILQ_HEAD(drivehead, wd_softc) sc_drives;
+	int sc_errors;		/* count of errors during current transfer */
+	u_char sc_status;	/* copy of status register */
+	u_char sc_error;	/* copy of error register */
 };
 
 int wdcprobe __P((struct device *, void *, void *));
@@ -701,7 +704,7 @@ loop:
 		nblks = min(wd->sc_bcount / DEV_BSIZE, wd->sc_multiple);
 	else
 		nblks = min(wd->sc_bcount / DEV_BSIZE, 8);
-	wdc->sc_nblks = nblks;
+	wd->sc_nblks = nblks;
     
 	/* If this was a write and not using DMA, push the data. */
 	if (wd->sc_mode != WDM_DMA &&
@@ -770,7 +773,7 @@ wdcintr(wdc)
 		return 1;
 	}
 
-	nblks = wdc->sc_nblks;
+	nblks = wd->sc_nblks;
     
 	if (wd->sc_mode == WDM_DMA)
 		isa_dmadone(bp->b_flags & B_READ, bp->b_data,
