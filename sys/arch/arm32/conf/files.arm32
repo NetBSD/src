@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.70 1998/10/05 01:21:39 mark Exp $
+#	$NetBSD: files.arm32,v 1.71 1998/10/05 15:41:19 mark Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -395,7 +395,7 @@ file	arch/arm32/arm32/disassem.c
 file	arch/arm32/arm32/postmortem.c		postmortem
 
 file    dev/cons.c
-file	dev/cninit.c
+file	dev/cninit.c				!footbridge
 
 # ARM FPE
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
