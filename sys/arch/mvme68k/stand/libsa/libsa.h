@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.1 1996/05/17 21:00:14 chuck Exp $	*/
+/*	$NetBSD: libsa.h,v 1.2 1996/05/19 20:08:15 chuck Exp $	*/
 
 /*
  * libsa prototypes 
@@ -17,8 +17,4 @@ void exec_mvme __P((char *, int));
 
 /* parse_args.c */
 void parse_args __P((char **, int *));
-
-#ifndef RB_NOSYM
-#define RB_NOSYM 0x400
-#endif
 
