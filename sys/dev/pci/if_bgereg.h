@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.10 2003/06/01 20:26:14 fvdl Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.11 2003/07/17 11:44:27 hannken Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -238,6 +238,10 @@
 #define BGE_ASICREV_BCM5704_A0		0x20000000
 #define BGE_ASICREV_BCM5704_A1		0x20010000
 #define BGE_ASICREV_BCM5704_A2		0x20020000
+#define BGE_ASICREV_BCM5705_A0		0x30000000
+#define BGE_ASICREV_BCM5705_A1		0x30010000
+#define BGE_ASICREV_BCM5705_A2		0x30020000
+#define BGE_ASICREV_BCM5705_A3		0x30030000
 
 /* PCI DMA Read/Write Control register */
 #define BGE_PCIDMARWCTL_MINDMA		0x000000FF
@@ -1917,6 +1921,7 @@ struct bge_status_block {
 #define BGE_JUMBO_RX_RING_CNT	256
 #define BGE_MINI_RX_RING_CNT	1024
 #define BGE_RETURN_RING_CNT	1024
+#define BGE_RETURN_RING_CNT_5705	512
 
 /*
  * Possible TX ring sizes.
@@ -1936,6 +1941,44 @@ struct bge_status_block {
 /*
  * Tigon III statistics counters.
  */
+
+/* Stats counters access through registers */
+struct bge_mac_stats_regs {
+	u_int32_t		ifHCOutOctets;
+	u_int32_t		Reserved0;
+	u_int32_t		etherStatsCollisions;
+	u_int32_t		outXonSent;
+	u_int32_t		outXoffSent;
+	u_int32_t		Reserved1;
+	u_int32_t		dot3StatsInternalMacTransmitErrors;
+	u_int32_t		dot3StatsSingleCollisionFrames;
+	u_int32_t		dot3StatsMultipleCollisionFrames;
+	u_int32_t		dot3StatsDeferredTransmissions;
+	u_int32_t		Reserved2;
+	u_int32_t		dot3StatsExcessiveCollisions;
+	u_int32_t		dot3StatsLateCollisions;
+	u_int32_t		Reserved3[14];
+	u_int32_t		ifHCOutUcastPkts;
+	u_int32_t		ifHCOutMulticastPkts;
+	u_int32_t		ifHCOutBroadcastPkts;
+	u_int32_t		Reserved4[2];
+	u_int32_t		ifHCInOctets;
+	u_int32_t		Reserved5;
+	u_int32_t		etherStatsFragments;
+	u_int32_t		ifHCInUcastPkts;
+	u_int32_t		ifHCInMulticastPkts;
+	u_int32_t		ifHCInBroadcastPkts;
+	u_int32_t		dot3StatsFCSErrors;
+	u_int32_t		dot3StatsAlignmentErrors;
+	u_int32_t		xonPauseFramesReceived;
+	u_int32_t		xoffPauseFramesReceived;
+	u_int32_t		macControlFramesReceived;
+	u_int32_t		xoffStateEntered;
+	u_int32_t		dot3StatsFramesTooLong;
+	u_int32_t		etherStatsJabbers;
+	u_int32_t		etherStatsUndersizePkts;
+};
+
 struct bge_stats {
 	u_int8_t		Reserved0[256];
 
@@ -2235,6 +2278,7 @@ struct bge_softc {
 	u_int8_t		bge_extram;	/* has external SSRAM */
 	u_int8_t		bge_tbi;
     	u_int8_t		bge_rx_alignment_bug;
+	u_int32_t		bge_return_ring_cnt;
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_asicrev;
 	u_int32_t		bge_quirks;
