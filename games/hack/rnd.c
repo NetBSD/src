@@ -1,32 +1,44 @@
+/*	$NetBSD: rnd.c,v 1.4 1997/10/19 16:59:39 christos Exp $	*/
+
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: rnd.c,v 1.3 1995/03/23 08:32:28 cgd Exp $";
-#endif /* not lint */
+__RCSID("$NetBSD: rnd.c,v 1.4 1997/10/19 16:59:39 christos Exp $");
+#endif				/* not lint */
+
+#include <stdlib.h>
+#include "hack.h"
+#include "extern.h"
 
 #define RND(x)	((random()>>3) % x)
 
-rn1(x,y)
-register x,y;
+int
+rn1(x, y)
+	int             x, y;
 {
-	return(RND(x)+y);
+	return (RND(x) + y);
 }
 
+int
 rn2(x)
-register x;
+	int             x;
 {
-	return(RND(x));
+	return (RND(x));
 }
 
+int
 rnd(x)
-register x;
+	int             x;
 {
-	return(RND(x)+1);
+	return (RND(x) + 1);
 }
 
-d(n,x)
-register n,x;
+int
+d(n, x)
+	int             n, x;
 {
-	register tmp = n;
+	int tmp = n;
 
-	while(n--) tmp += RND(x);
-	return(tmp);
+	while (n--)
+		tmp += RND(x);
+	return (tmp);
 }

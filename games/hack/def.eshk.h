@@ -1,8 +1,10 @@
+/*	$NetBSD: def.eshk.h,v 1.4 1997/10/19 16:56:53 christos Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
- *
- *	$NetBSD: def.eshk.h,v 1.3 1995/03/23 08:29:21 cgd Exp $
  */
+#ifndef _DEF_ESHK_H_
+#define _DEF_ESHK_H_
 
 #define	BILLSZ	200
 struct bill_x {
@@ -25,3 +27,4 @@ struct eshk {
 	char customer[PL_NSIZ];	/* most recent customer */
 	char shknam[PL_NSIZ];
 };
+#endif /* _DEF_ESHK_H_ */
