@@ -1,4 +1,4 @@
-/*	$NetBSD: if_prom.c,v 1.2 1996/09/23 04:30:57 cgd Exp $	*/
+/*	$NetBSD: if_prom.c,v 1.3 1996/10/02 21:06:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -145,28 +145,25 @@ prom_init(desc, machdep_hint)
 {
 
         prom_return_t ret;
-        char devname[64], tmpbuf[14];
+        char devname[64];
         int devlen, i;
 	char *enet_addr;
 
         ret.bits = prom_getenv(PROM_E_BOOTED_DEV, devname, sizeof(devname));
         devlen = ret.u.retval;
 
-	printf("booted_dev = \"%s\"\n", devname);
 	/* Ethernet address is the 9th component of the booted_dev string. */
 	enet_addr = devname;
 	for (i = 0; i < 8; i++) {
-		printf("enet_addr = \"%s\"\n", enet_addr);
 		enet_addr = strchr(enet_addr, ' ');
 		if (enet_addr == NULL) {
-			printf("enet_addr too short.\n");
+			printf("Boot device name does not contain ethernet address.\n");
+			goto punt;
 		}
 		enet_addr++;
 	}
 	if (enet_addr != NULL) {
 		int hv, lv;
-
-		printf("enet_addr is now \"%s\"\n", enet_addr);
 
 #define	dval(c)	(((c) >= '0' && (c) <= '9') ? ((c) - '0') : \
 		 (((c) >= 'A' && (c) <= 'F') ? (10 + (c) - 'A') : \
@@ -178,18 +175,16 @@ prom_init(desc, machdep_hint)
 			enet_addr++;
 
 			if (hv == -1 || lv == -1) {
-				printf("bogus ethernet address\n");
-				printf("i = %d, hv = %d, lv = %d\n", i, hv, lv);
-				halt();
+				printf("Bogus ethernet address.\n");
+				goto punt;
 			}
 
-			printf("i = %d, hv = %x, lv = %x\n", i, hv, lv);
 			desc->myea[i] = (hv << 4) | lv;
 		}
-		printf("ethernet address is: %s\n", ether_sprintf(desc->myea));
-		
 #undef dval
 	}
+
+	printf("boot: ethernet address: %s\n", ether_sprintf(desc->myea));
 
         ret.bits = prom_open(devname, devlen + 1); 
         if (ret.u.status) {
@@ -197,37 +192,13 @@ prom_init(desc, machdep_hint)
                 return;
         }
         netfd = ret.u.retval;
+	return;
 
-	bzero(tmpbuf, sizeof(tmpbuf));
-	prom_write(netfd, sizeof(tmpbuf), tmpbuf, 0);
-
-#if 0
-	/* PLUG YOUR ENET ADDR IN HERE. */
-#if 1
-#if 1
-	desc->myea[0] = 0x08;
-	desc->myea[1] = 0x00;
-	desc->myea[2] = 0x2b;
-	desc->myea[3] = 0xbd;
-	desc->myea[4] = 0x5d;
-	desc->myea[5] = 0xfd;
-#else
-	desc->myea[0] = 0x08;
-	desc->myea[1] = 0x00;
-	desc->myea[2] = 0x2b;
-	desc->myea[3] = 0x39;
-	desc->myea[4] = 0x98;
-	desc->myea[5] = 0x3d;
-#endif
-#else
-	desc->myea[0] = 0x00;
-	desc->myea[1] = 0x00;
-	desc->myea[2] = 0xf8;
-	desc->myea[3] = 0x21;
-	desc->myea[4] = 0xa6;
-	desc->myea[5] = 0x81;
-#endif
-#endif
+punt:
+	printf("Boot device name was: \"%s\"\n", devname);
+	printf("\n");
+	printf("Your firmware may be too old to network-boot NetBSD/Alpha.\n");
+	halt();
 }
 
 void
