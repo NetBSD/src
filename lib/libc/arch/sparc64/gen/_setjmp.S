@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.2 1998/09/12 16:54:14 eeh Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.3 1998/09/13 23:54:44 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,12 +40,13 @@
  */
 
 #include <machine/asm.h>
+#define _LOCORE	/* Not really true, but hey */
 #include <machine/frame.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 	.asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: _setjmp.S,v 1.2 1998/09/12 16:54:14 eeh Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.3 1998/09/13 23:54:44 eeh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
