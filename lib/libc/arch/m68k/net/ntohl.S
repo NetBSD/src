@@ -1,3 +1,5 @@
+/*	$NetBSD: ntohl.S,v 1.2 1995/12/13 21:46:16 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,15 +37,17 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)ntohl.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: ntohl.S,v 1.1 1993/11/25 23:37:43 paulus Exp $"
+#if 0
+	RCSID("from: @(#)ntohl.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: ntohl.S,v 1.2 1995/12/13 21:46:16 thorpej Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /* hostorder = ntohl(netorder) */
-
-#include "DEFS.h"
 
 ENTRY(ntohl)
 	movl	sp@(4),d0
