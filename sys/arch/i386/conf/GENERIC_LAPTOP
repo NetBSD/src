@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.8.2.13 2002/05/03 19:12:55 sommerfeld Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.8.2.14 2002/06/25 15:44:46 sommerfeld Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.8.2.13 $"
+#ident 		"GENERIC-$Revision: 1.8.2.14 $"
 
 maxusers	32		# estimated number of users
 
@@ -26,6 +26,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	DUMMY_NOPS
 
 options 	MTRR		# memory-type range register syscall support
+#options 	PERFCTRS	# performance-monitoring counters support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -398,9 +399,7 @@ ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
-scsibus* at ahc?
-scsibus* at aic?
-scsibus* at esp?
+scsibus* at scsi?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -446,8 +445,7 @@ wd*	at wdc? channel ? drive ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus* at wdc? channel ?
-atapibus* at pciide? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.
@@ -553,8 +551,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
-scsibus* at umass? channel ?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
@@ -667,32 +663,7 @@ opl*	at yds?
 opl*	at ym?
 
 # Audio support
-#audio*	at aria?
-audio*	at auich?
-audio*	at autri?
-audio*	at auvia?
-audio*	at clcs?
-audio*	at clct?
-audio*	at cmpci?
-audio*	at eap?
-audio*	at emuxki?
-audio*	at esa?
-audio*	at esl?
-audio*	at esm?
-audio*	at eso?
-audio*	at ess?
-audio*	at fms?
-audio*	at gus?
-audio*	at guspnp?
-audio*	at neo?
-audio*	at pas?
-audio*	at sb?
-audio*	at sp?
-audio*	at sv?
-audio*	at uaudio?
-audio*	at wss?
-audio*	at yds?
-audio*	at ym?
+audio*	at audiobus?
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
@@ -704,16 +675,8 @@ mpu*	at yds?
 mpu*	at ym?
 
 # MIDI support
-midi*	at autri?		# Trident 4DWAVE MIDI port
-midi*	at clcs?		# Cirrus Logic CS4280 MIDI port
-#midi*	at clct?		# Cirrus Logic CS4281 MIDI port
-#midi*	at cms?			# Creative Music System
-midi*	at eap?			# 137[01] MIDI port
-midi*	at mpu?			# MPU 401
-midi*	at opl?			# OPL FM synth
+midi*	at midibus?
 midi*	at pcppi?		# MIDI interface to the PC speaker
-midi*	at sb?			# SB1 MIDI port
-midi*	at umidi?		# USB MIDI
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -797,6 +760,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.

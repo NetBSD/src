@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.147.2.24 2002/05/03 19:12:57 sommerfeld Exp $
+#	$NetBSD: files.i386,v 1.147.2.25 2002/06/25 15:44:49 sommerfeld Exp $
 #
 # new style config file for i386 architecture
 #
@@ -198,6 +198,12 @@ file	arch/i386/pci/pcib.c		pcib
 device	pcmb: mcabus
 attach	pcmb at pci
 file	arch/i386/pci/pcmb.c		pcmb
+
+device	p64h2apic
+attach	p64h2apic at pci
+file	arch/i386/pci/p64h2apic.c	p64h2apic
+
+
 
 # Game adapter (joystick)
 file	arch/i386/isa/joy_timer.c	joy
@@ -461,3 +467,13 @@ include	"arch/i386/pnpbios/files.pnpbios"
 
 include "dev/acpi/files.acpi"
 file	arch/i386/i386/acpi_machdep.c	acpi
+file	arch/i386/acpi/acpi_wakeup.c	acpi
+
+# Toshiba VALD 
+device	vald
+attach	vald at acpi with vald_acpi
+file	arch/i386/acpi/vald_acpi.c		vald_acpi
+
+# Sony SPIC (jog dial etc.)
+attach	spic at acpi with spic_acpi
+file	arch/i386/acpi/spic_acpi.c		spic_acpi

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.22.2.11 2002/05/03 19:12:55 sommerfeld Exp $
+#	$NetBSD: GENERIC_TINY,v 1.22.2.12 2002/06/25 15:44:46 sommerfeld Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -316,17 +316,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #wds1	at isa? port 0x358 irq 11 drq 5
 
 # SCSI bus support
-#scsibus* at aha?
-#scsibus* at ahb?
-#scsibus* at ahc?
-#scsibus* at aic?
-#scsibus* at bha?
-#scsibus* at dpt?
-#scsibus* at isp?
-#scsibus* at sea?
-#scsibus* at siop?
-#scsibus* at uha?
-#scsibus* at wds?
+#scsibus* at scsi?
 
 # SCSI devices
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -353,7 +343,7 @@ wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?			# the drives themselves
 
 # ATAPI bus support
-atapibus* at wdc?
+atapibus* at atapi?
 
 # ATAPI devices
 cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
@@ -468,8 +458,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
-#atapibus* at umass? channel ?
-#scsibus* at umass? channel ?
 
 # USB Ethernet adapters
 #aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
@@ -502,15 +490,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
 # Audio support
-#audio*	at aria?
-#audio*	at eap?
-#audio*	at gus?
-#audio*	at guspnp?
-#audio*	at pas?
-#audio*	at sb?
-#audio*	at sp?
-#audio*	at wss?
-#audio*	at ym?
+#audio*	at audiobus?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -567,3 +547,4 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem

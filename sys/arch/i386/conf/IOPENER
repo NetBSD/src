@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.11.4.10 2002/05/03 19:12:56 sommerfeld Exp $
+#	$NetBSD: IOPENER,v 1.11.4.11 2002/06/25 15:44:48 sommerfeld Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.11.4.10 $"
+#ident 		"IOPENER-$Revision: 1.11.4.11 $"
 
 maxusers	32		# estimated number of users
 
@@ -321,7 +321,7 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-scsibus* at umass? channel ?
+#scsibus* at scsi?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
@@ -352,14 +352,13 @@ ym*	at isapnp?			# Yamaha OPL3-SA3 audio
 opl*	at ym?
 
 # Audio support
-audio*	at ym?
+audio*	at audiobus?
 
 # MPU 401 UARTs
 mpu*	at ym?
 
 # MIDI support
-midi*	at mpu?			# MPU 401
-midi*	at opl?			# OPL FM synth
+midi*	at midibus?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -398,6 +397,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

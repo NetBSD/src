@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.85.2.2 2002/05/03 19:12:54 sommerfeld Exp $
+#	$NetBSD: DISKLESS,v 1.85.2.3 2002/06/25 15:44:45 sommerfeld Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -157,31 +157,24 @@ omms1	at isa? port 0x238 irq 5
 
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
-#scsibus* at aha?
 #ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
-#scsibus* at ahb?
 #ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI controllers
 #ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
 #ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI controllers
-#scsibus* at ahc?
 #aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
-#scsibus* at aic?
 #bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bha1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bha*	at eisa? slot ?
 #bha*	at pci? dev ? function ?
-#scsibus* at bha?
 #sea0	at isa? iomem 0xc8000 irq 5
-#scsibus* at sea?
 #uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 #uha1	at isa? port 0x340 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 #uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
-#scsibus* at uha?
 #wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
-#scsibus* at wds?
 #isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
-#scsibus* at isp?
+
+#scsibus* at scsi?
 
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #st*	at scsibus? target ? lun ?	# SCSI tape drives
@@ -199,7 +192,7 @@ omms1	at isa? port 0x238 irq 5
 #wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 #wdc1	at isa? port 0x170 irq 15
 #wd*	at wdc? drive ?
-#atapibus* at wdc?
+#atapibus* at atapi?
 #cd*	at atapibus? drive ?
 #sd*	at atapibus? drive ?
 
@@ -240,18 +233,15 @@ ukphy*	at mii? phy ?				# generic unknown PHYs
 
 #pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
 #sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
-#audio*	at sp0
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
 #sb*	at isapnp?
-#audio*	at sb?
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-#audio*	at wss0
 #pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
-#audio*	at pas0
 #gus0	at isa? port 0x220 irq 7 drq 1 drq2 6 # Gravis Ultra Sound
-#audio*	at gus0
 #spkr0	at pcppi?
+
+#audio*	at audiobus?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
@@ -273,3 +263,4 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 #pseudo-device	vnd	4		# paging to files
 #pseudo-device	ccd	4		# concatenated disk devices
+pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.6.2.2 2002/05/03 19:12:56 sommerfeld Exp $
+# $NetBSD: NET4501,v 1.6.2.3 2002/06/25 15:44:49 sommerfeld Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.6.2.2 $"
+#ident 		"NET4501-$Revision: 1.6.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -31,6 +31,7 @@ options 	VNODE_OP_NOINLINE
 options 	DUMMY_NOPS
 
 #options 	MTRR		# memory-type range register syscall support
+#options 	PERFCTRS	# performance-monitoring counters support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -257,3 +258,4 @@ pseudo-device	pty			# pseudo-terminals
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem

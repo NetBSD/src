@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.135.2.9 2002/04/27 20:24:45 sommerfeld Exp $	*/
+/*	$NetBSD: conf.c,v 1.135.2.10 2002/06/25 15:44:50 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.135.2.9 2002/04/27 20:24:45 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.135.2.10 2002/06/25 15:44:50 sommerfeld Exp $");
 
 #include "opt_compat_svr4.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +116,7 @@ cdev_decl(ctty);
 cdev_decl(mm);
 cdev_decl(wd);
 cdev_decl(sw);
+cdev_decl(systrace);
 #include "pty.h"
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl
@@ -358,6 +360,11 @@ struct cdevsw	cdevsw[] =
 	cdev_radio_init(NRADIO,radio),	/* 87: generic radio I/O */
 	cdev_netsmb_init(NNETSMB,nsmb_dev_),/* 88: SMB */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 89: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 90: system call tracing */
+#else
+	cdev_notdef(),			/* 90: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -489,6 +496,7 @@ static int chrtoblktbl[] = {
 	/* 87 */	NODEV,
 	/* 88 */	NODEV,
 	/* 89 */	NODEV,
+	/* 90 */	NODEV,
 };
 
 /*

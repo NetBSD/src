@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.32 2002/04/30 14:15:14 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.33 2002/06/25 15:44:51 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -820,11 +820,13 @@ NENTRY(proc_trampoline)
  */
 /* LINTSTUB: Var: char sigcode[1], esigcode[1]; */
 NENTRY(sigcode)
-	call	*SIGF_HANDLER(%esp)
-	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-	pushl	%eax
-	pushl	%eax			# junk to fake return address
+	/*
+	 * Handler has returned here as if we called it.  The sigcontext
+	 * is on the stack after the 3 args "we" pushed.
+	 */
+	leal	12(%esp),%eax		# get pointer to sigcontext
+	movl	%eax,4(%esp)		# put it in the argument slot
+					# fake return address already there
 	movl	$SYS___sigreturn14,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$SYS_exit,%eax
@@ -2231,16 +2233,6 @@ ENTRY(savectx)
  * and only enable them again on the final `iret' or before calling the AST
  * handler.
  */ 
-
-/*
- * XXX traditional CPP's evaluation semantics make this necessary.
- * XXX (__CONCAT() would be evaluated incorrectly)
- */
-#ifdef __ELF__
-#define	IDTVEC(name)	ALIGN_TEXT; .globl X/**/name; X/**/name:
-#else
-#define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
-#endif
 
 #define	TRAP(a)		pushl $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)

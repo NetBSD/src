@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.53.2.2 2002/05/03 19:12:56 sommerfeld Exp $
+#	$NetBSD: INSTALL_TINY,v 1.53.2.3 2002/06/25 15:44:48 sommerfeld Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -302,20 +302,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #wds1	at isa? port 0x358 irq 11 drq 5
 
 # SCSI bus support
-#scsibus* at aha?
-#scsibus* at ahb?
-#scsibus* at ahc?
-#scsibus* at aic?
-#scsibus* at bha?
-#scsibus* at dpt?
-#scsibus* at iopsp?
-#scsibus* at isp?
-#scsibus* at nca?
-#scsibus* at sea?
-#scsibus* at mly?
-#scsibus* at siop?
-#scsibus* at uha?
-#scsibus* at wds?
+#scsibus* at scsi?
 
 # SCSI devices
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -342,7 +329,6 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #ld*	at mlx? unit ?
 
 #icpsp*	at icp? unit ?			# SCSI pass-through
-#scsibus* at icpsp?
 
 
 # IDE and related devices
@@ -461,12 +447,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
 # Audio support
-#audio*	at gus?
-#audio*	at guspnp?
-#audio*	at pas?
-#audio*	at sb?
-#audio*	at sp?
-#audio*	at wss?
+#audio*	at audiobus?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker

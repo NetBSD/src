@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35.2.12 2002/05/18 21:42:40 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.35.2.13 2002/06/25 15:44:55 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.35.2.12 2002/05/18 21:42:40 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.35.2.13 2002/06/25 15:44:55 sommerfeld Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -527,7 +527,7 @@ pci_intr_map(pa, ihp)
 	}
 #if NIOAPIC > 0
 	pci_decompose_tag (pc, pa->pa_tag, &bus, &dev, &func);
-	if (mp_busses != NULL) {
+	if ((mp_busses != NULL) && (mp_busses[bus].mb_intrs != NULL)) {
 		/*
 		 * Note: assumes 1:1 mapping between PCI bus numbers and
 		 * the numbers given by the MP bios.
