@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.20 2001/05/30 13:09:02 tsubai Exp $
+# $NetBSD: ad.powerpc,v 1.21 2001/07/15 23:29:13 wiz Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/powerpc	comp-c-include
 ./usr/include/powerpc/ansi.h	comp-c-include
@@ -16,8 +16,10 @@
 ./usr/include/powerpc/float.h	comp-c-include
 ./usr/include/powerpc/fpu.h	comp-c-include
 ./usr/include/powerpc/frame.h	comp-c-include
-./usr/include/powerpc/hid.h	comp-c-include
-./usr/include/powerpc/hid_601.h	comp-c-include
+./usr/include/powerpc/ibm4xx	comp-c-include
+./usr/include/powerpc/ibm4xx/pmap.h	comp-c-include
+./usr/include/powerpc/ibm4xx/pte.h	comp-c-include
+./usr/include/powerpc/ibm4xx/tlb.h	comp-c-include
 ./usr/include/powerpc/ieee.h	comp-c-include
 ./usr/include/powerpc/ieeefp.h	comp-c-include
 ./usr/include/powerpc/int_const.h	comp-c-include
@@ -30,6 +32,13 @@
 ./usr/include/powerpc/limits.h	comp-c-include
 ./usr/include/powerpc/lock.h	comp-c-include
 ./usr/include/powerpc/math.h	comp-c-include
+./usr/include/powerpc/mpc6xx	comp-c-include
+./usr/include/powerpc/mpc6xx/bat.h	comp-c-include
+./usr/include/powerpc/mpc6xx/hid.h	comp-c-include
+./usr/include/powerpc/mpc6xx/hid_601.h	comp-c-include
+./usr/include/powerpc/mpc6xx/pmap.h	comp-c-include
+./usr/include/powerpc/mpc6xx/pte.h	comp-c-include
+./usr/include/powerpc/mpc6xx/vmparam.h	comp-c-include
 ./usr/include/powerpc/param.h	comp-c-include
 ./usr/include/powerpc/pcb.h	comp-c-include
 ./usr/include/powerpc/pio.h	comp-c-include
