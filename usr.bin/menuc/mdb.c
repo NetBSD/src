@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.7 1998/06/25 19:57:10 phil Exp $	*/
+/*	$NetBSD: mdb.c,v 1.8 1998/06/29 08:46:37 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -209,19 +209,20 @@ write_menu_file (char *initcode)
 		toptn = menus[i]->info->optns;
 		opt_ch = 'a';
 		while (toptn != NULL) {
+			if (opt_ch > 'Z' && opt_ch < 'a') {
+				(void) fprintf (stderr, "Menu %s has "
+					"too many options.\n",
+					menus[i]->info->title);
+				exit (1);
+			}
 			(void) fprintf (out_file, "\t\"%c: %s,\n", opt_ch,
 					toptn->name+1);
 			toptn = toptn->next;
 			if (opt_ch == 'z')
 				opt_ch = 'A';
-			else if (opt_ch == 'x')
+			else if (opt_ch == 'w')
 				opt_ch = 'y';
-			else if (opt_ch == 'Z') {
-				(void) fprintf (stderr, "Menu %s has "
-					"too many options.\n",
-					menus[i]->info->title);
-				exit (1);
-			} else
+			else
 				opt_ch++;
 		}
 		(void) fprintf (out_file, "\t(char *)NULL\n};\n\n");
