@@ -11,7 +11,7 @@
  *
  * Main client header
  *
- * $Id: skey.h,v 1.1 1994/05/21 05:46:13 deraadt Exp $
+ * $Id: skey.h,v 1.2 1995/06/05 19:48:36 pk Exp $
  */
 
 #if	defined(__TURBOC__) || defined(__STDC__) || defined(LATTICE)
@@ -61,3 +61,17 @@ void rip __ARGS ((char *buf));
 int skeychallenge __ARGS ((struct skey * mp, char *name, char *ss));
 int skeylookup __ARGS ((struct skey * mp, char *name));
 int skeyverify __ARGS ((struct skey * mp, char *response));
+void sevenbit __ARGS ((char *s));
+void backspace __ARGS ((char *s));
+char *skipspace __ARGS ((char *s));
+char *readpass __ARGS ((char *buf, int n));
+char *readskey __ARGS ((char *buf, int n));
+int skey_authenticate __ARGS ((char *));
+int skey_passcheck __ARGS ((char *, char *));
+char *skey_keyinfo __ARGS ((char *));
+int skey_haskey __ARGS ((char *));
+int getskeyprompt __ARGS ((struct skey *, char *, char *));
+int atob8 __ARGS((char *, char *));
+int btoa8 __ARGS((char *, char *));
+int htoi __ARGS((char));
+

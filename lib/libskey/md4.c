@@ -23,7 +23,7 @@
  * These notices must be retained in any copies of any part of this
  * documentation and/or software.
  *
- * $Id: md4.c,v 1.2 1994/05/26 09:39:08 deraadt Exp $
+ * $Id: md4.c,v 1.3 1995/06/05 19:48:33 pk Exp $
  */
 
 /* 
@@ -55,6 +55,8 @@
 #include <stdio.h>
 #include <machine/endian.h>
 #include "md4.h"
+
+static void MDblock __ARGS((MDptr, unsigned long *));
 
 /* Compile-time declarations of MD4 ``magic constants'' */
 #define I0  0x67452301       /* Initial values for MD buffer */
