@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.4 1998/08/26 13:08:10 augustss Exp $	*/
+/*	$NetBSD: opl.c,v 1.5 1998/09/13 04:41:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -183,12 +183,12 @@ opl_command(sc, offs, addr, data)
 	if (sc->model == OPL_2)
 		delay(10);
 	else
-		delay(2);
+		delay(6);
 	bus_space_write_1(sc->iot, sc->ioh, OPL_DATA+offs, data);
 	if (sc->model == OPL_2)
 		delay(30);
 	else
-		delay(2);
+		delay(6);
 }
 
 int
@@ -347,13 +347,10 @@ oplsyn_close(ms)
 	midisyn *ms;
 {
 	struct opl_softc *sc = ms->data;
-	int v;
 
 	DPRINTFN(2, ("oplsyn_close:\n"));
+
 	/*opl_reset(ms->data);*/
-	
-	for (v = 0; v < sc->syn.nvoice ; v++)
-		oplsyn_noteoff(ms, v, 0, 0);
 	if (sc->spkrctl)
 		sc->spkrctl(sc->spkrarg, 0);
 }
