@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.52 1998/09/30 21:52:24 tls Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.53 1998/10/01 11:04:24 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -677,6 +677,7 @@ arplookup(addr, create, proxy)
 {
 	register struct rtentry *rt;
 	static struct sockaddr_inarp sin;
+	const char *why = 0;
 
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
@@ -686,14 +687,21 @@ arplookup(addr, create, proxy)
 	if (rt == 0)
 		return (0);
 	rt->rt_refcnt--;
-	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
-	    rt->rt_gateway->sa_family != AF_LINK) {
-		if (create)
-			log(LOG_DEBUG, "arplookup: unable to enter address for %s\n",
-			    in_fmtaddr(*addr));
-		return (0);
-	}
-	return ((struct llinfo_arp *)rt->rt_llinfo);
+
+	if (rt->rt_flags & RTF_GATEWAY)
+		why = "host is not on local network";
+	else if ((rt->rt_flags & RTF_LLINFO) == 0)
+		why = "could not allocate llinfo";
+	else if (rt->rt_gateway->sa_family != AF_LINK)
+		why = "gateway route is not ours";
+	else
+		return ((struct llinfo_arp *)rt->rt_llinfo);
+
+	if (create)
+		log(LOG_DEBUG, "arplookup: unable to enter address"
+		    " for %s (%s)\n",
+		    in_fmtaddr(*addr), why);
+	return (0);
 }
 
 int
