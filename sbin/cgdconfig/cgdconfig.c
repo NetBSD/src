@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.8 2003/05/17 23:09:06 itojun Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.9 2003/09/23 17:24:46 cb Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.8 2003/05/17 23:09:06 itojun Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.9 2003/09/23 17:24:46 cb Exp $");
 #endif
 
 #include <err.h>
@@ -103,6 +103,7 @@ static int	 unconfigure_fd(int);
 static int	 verify(struct params *, int);
 static int	 verify_disklabel(int);
 static int	 verify_ffs(int);
+static int	 verify_reenter(struct params *);
 
 static void	 usage(void);
 
@@ -311,6 +312,7 @@ getkey_pkcs5_pbkdf2(const char *target, struct keygen *kg, int keylen)
 	}
 
 	ret = bits_new(tmp, keylen);
+	kg->kg_key = bits_dup(ret);
 	free(tmp);
 	return ret;
 }
@@ -568,6 +570,8 @@ verify(struct params *p, int fd)
 		return verify_disklabel(fd);
 	case VERIFY_FFS:
 		return verify_ffs(fd);
+	case VERIFY_REENTER:
+		return verify_reenter(p);
 	default:
 		warnx("unimplemented verification method");
 		return -1;
@@ -626,6 +630,33 @@ verify_ffs(int fd)
 		}
 	}
 	return 1;
+}
+
+static int
+verify_reenter(struct params *p)
+{
+	struct keygen *kg;
+	bits_t *orig_key, *key;
+	int ret;
+
+	ret = 0;
+	for (kg = p->keygen; kg && !ret; kg = kg->next) {
+		if (kg->kg_method != KEYGEN_PKCS5_PBKDF2)
+			continue;
+
+		orig_key = kg->kg_key;
+		kg->kg_key = NULL;
+
+		key = getkey_pkcs5_pbkdf2("re-enter device", kg,
+			    bits_len(orig_key));
+		ret = !bits_match(key, orig_key);
+
+		bits_free(key);
+		bits_free(kg->kg_key);
+		kg->kg_key = orig_key;
+	}
+
+	return ret;
 }
 
 static int
