@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.2 1998/02/06 22:31:52 thorpej Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.3 1998/02/07 02:26:46 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -153,10 +153,13 @@ void uvm_init()
 
   /*
    * the VM system is now up!  now that malloc is up we can resize the
-   * <obj,off> => <page> hash table for general use.
+   * <obj,off> => <page> hash table for general use and enable paging
+   * of kernel objects.
    */
 
   uvm_page_rehash();
+  uao_create(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS, UAO_FLAG_KERNSWAP);
+
 
   /*
    * done!
