@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1.1.1 1997/01/14 20:57:09 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.2 1997/01/23 22:44:48 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,8 +60,7 @@
 #include <machine/eeprom.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
-
-#include "machdep.h"
+#include <machine/machdep.h>
 
 #define	mmread	mmrw
 cdev_decl(mm);
