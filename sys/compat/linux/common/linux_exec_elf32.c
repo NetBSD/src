@@ -1,11 +1,12 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.50 2000/12/15 06:14:21 mycroft Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.51 2001/01/19 01:43:31 manu Exp $	*/
 
 /*-
- * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas, Frank van der Linden and Eric Haszlakiewicz.
+ * by Christos Zoulas, Frank van der Linden, Eric Haszlakiewicz and
+ * Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -75,6 +76,82 @@ static int ELFNAME2(linux,signature) __P((struct proc *, struct exec_package *,
 #ifdef LINUX_GCC_SIGNATURE
 static int ELFNAME2(linux,gcc_signature) __P((struct proc *p,
 	struct exec_package *, Elf_Ehdr *));
+#endif
+#ifdef LINUX_ATEXIT_SIGNATURE
+static int ELFNAME2(linux,atexit_signature) __P((struct proc *p,
+	struct exec_package *, Elf_Ehdr *));
+#endif
+
+#ifdef LINUX_ATEXIT_SIGNATURE
+/*
+ * On the PowerPC, statically linked Linux binaries are not recognized
+ * by linux_signature nor by linux_gcc_signature. Fortunately, thoses
+ * binaries features a __libc_atexit ELF section. We therefore assume we
+ * have a Linux binary if we find this section.
+ */
+static int
+ELFNAME2(linux,atexit_signature)(p, epp, eh)
+	struct proc *p;
+	struct exec_package *epp;
+	Elf_Ehdr *eh;
+{
+	size_t shsize;
+	int	strndx;
+	size_t i;
+	static const char signature[] = "__libc_atexit";
+	char* strtable;
+	Elf_Shdr *sh;
+	
+	int error;
+
+/*
+ * load the section header table 
+ */
+	shsize = eh->e_shnum * sizeof(Elf_Shdr);
+	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
+	error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_shoff, (caddr_t)sh,
+	    shsize);
+	if (error)
+		goto out;
+
+/* 
+ * Now let's find the string table. If it does not exists, give up.
+ */
+	strndx = (int)(eh->e_shstrndx);
+   if (strndx == SHN_UNDEF) {
+		error = ENOEXEC;
+		goto out;
+	}
+
+/*
+ * strndx is the index in section header table of the string table section
+ * get the whole string table in strtable, and then we get access to the names
+ * s->sh_name is the offset of the section name in strtable.
+ */
+	strtable = malloc(sh[strndx].sh_size, M_TEMP, M_WAITOK);
+	error = ELFNAME(read_from)(p, epp->ep_vp, sh[strndx].sh_offset, 
+			(caddr_t)strtable, sh[strndx].sh_size);
+	if (error)
+		goto out;
+
+	for (i = 0; i < eh->e_shnum; i++) {
+		Elf_Shdr *s = &sh[i];
+		if (!memcmp((void*)(&(strtable[s->sh_name])), signature, 
+				sizeof(signature))) {
+#ifdef DEBUG_LINUX
+			printf("linux_atexit_sig=%s\n",&(strtable[s->sh_name]));
+#endif
+			error = 0;
+			goto out;
+		}
+	}
+	error = ENOEXEC;
+
+out:
+	free(sh, M_TEMP);
+	free(strtable, M_TEMP);
+	return (error);
+}
 #endif
 
 #ifdef LINUX_GCC_SIGNATURE
@@ -232,12 +309,19 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 	int error;
 	size_t len;
 
-	if ((error = ELFNAME2(linux,signature)(p, epp, eh, itp)) != 0)
 #ifdef LINUX_GCC_SIGNATURE
+	if ((error = ELFNAME2(linux,signature)(p, epp, eh, itp)) != 0)
 		if ((error = ELFNAME2(linux,gcc_signature)(p, epp, eh)) != 0)
 			return error;
 #else
+#ifdef LINUX_ATEXIT_SIGNATURE
+	if ((error = ELFNAME2(linux,signature)(p, epp, eh, itp)) != 0)
+		if ((error = ELFNAME2(linux,atexit_signature)(p, epp, eh)) != 0)
+			return error;
+#else
+	if ((error = ELFNAME2(linux,signature)(p, epp, eh, itp)) != 0)
 		return error;
+#endif
 #endif
 
 	if (itp[0]) {
