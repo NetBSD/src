@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.108 1999/04/24 08:10:42 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.109 1999/05/18 03:13:37 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.108 1999/04/24 08:10:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109 1999/05/18 03:13:37 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -485,7 +485,7 @@ trap(status, cause, vaddr, opc, frame)
 		entry |= mips_pg_m_bit();
 		pte->pt_entry = entry;
 		vaddr = (vaddr & ~PGOFSET) |
-			(pmap->pm_tlbpid << MIPS_TLB_PID_SHIFT);
+			(pmap->pm_asid << MIPS_TLB_PID_SHIFT);
 		MachTLBUpdate(vaddr, entry);
 		pa = pfn_to_vad(entry);
 		if (!IS_VM_PHYSADDR(pa)) {
