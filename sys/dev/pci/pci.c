@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.67 2002/06/20 23:02:06 itojun Exp $	*/
+/*	$NetBSD: pci.c,v 1.68 2002/07/05 00:16:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.67 2002/06/20 23:02:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.68 2002/07/05 00:16:26 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -260,10 +260,10 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 
 	/* Invalid vendor ID value? */
 	if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-		return (NULL);
+		return (0);
 	/* XXX Not invalid, but we've done this ~forever. */
 	if (PCI_VENDOR(id) == 0)
-		return (NULL);
+		return (0);
 
 	pa.pa_iot = sc->sc_iot;
 	pa.pa_memt = sc->sc_memt;
