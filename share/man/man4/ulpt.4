@@ -1,4 +1,4 @@
-.\" $NetBSD: ulpt.4,v 1.5 2001/09/11 23:18:55 wiz Exp $
+.\" $NetBSD: ulpt.4,v 1.6 2002/02/05 00:37:48 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,11 +51,18 @@ The bits in the minor number select various features of the driver.
 .Pp
 .Bl -column "Minor Bit" "Functionxxxxxxxxxxxxxxxxxxxxxxxxxxxx" -offset indent
 .It Sy Pa "Minor Bit"	Function
-.It  64	Do not initialize the device on the port.
+.It  64	Do not initialize (reset) the device on the port.
 .El
+.Pp
+Some printers cannot handle the reset on open; in case of problems try the
+.Pa ulpn
+device.
 .Sh FILES
-.Bl -tag -width Pa
+.Bl -tag -width xxxxxxxxxx
 .It Pa /dev/ulpt?
+device with reset
+.It Pa /dev/ulpn?
+device without reset
 .El
 .Sh SEE ALSO
 .Xr lpt 4 ,
