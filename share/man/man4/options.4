@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.108 2000/05/31 22:26:58 gmcgarry Exp $
+.\"	$NetBSD: options.4,v 1.109 2000/06/15 10:33:15 itojun Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1051,15 +1051,6 @@ will enable source code that is subject to export control in some countries
 and compiled kernel binary will be subject to certain restriction.
 This option assumes
 .Em IPSEC .
-To use this option, you will need have a symbolic link from
-.Li src/crypto-intl
-to
-.Li cryptosrc-intl/crypto-intl
-(or from
-.Li src/crypto-us
-to
-.Li cryptosrc-us/crypto-us
-if you are in the US).
 .It Cd options SUBNETSARELOCAL
 Sets default value for net.inet.ip.subnetsarelocal variable, which
 controls whether non-directly-connected subnets of connected networks
