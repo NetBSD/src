@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.7 2003/07/15 02:29:25 lukem Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.8 2003/11/18 04:04:42 chs Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.7 2003/07/15 02:29:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.8 2003/11/18 04:04:42 chs Exp $");
 
 #define GSCDEBUG
 
@@ -161,7 +161,7 @@ gscattach(parent, self, aux)
 					 NULL, ga->ga_int_reg,
 					 &int_reg_cpu, ga->ga_irq);
 
-	pdc_scanbus(self, ga->ga_mod, MAXMODBUS, gsc_module_callback);
+	pdc_scanbus(self, &ga->ga_ca, gsc_module_callback);
 }
 
 int

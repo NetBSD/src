@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13 2003/08/31 01:26:32 chs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14 2003/11/18 04:04:42 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2003/08/31 01:26:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2003/11/18 04:04:42 chs Exp $");
 
 #undef BTLBDEBUG
 
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2003/08/31 01:26:32 chs Exp $");
 #include <hp700/hp700/machdep.h>
 #include <hp700/hp700/intr.h>
 #include <hp700/dev/cpudevs.h>
+
+static struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
 
 struct mainbus_softc {
 	struct  device sc_dv;
@@ -802,7 +804,7 @@ mbus_dmamap_create(void *v, bus_size_t size, int nsegments,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	bzero(mapstore, mapsize);
+	memset(mapstore, 0, mapsize);
 	map = (struct hppa_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
@@ -1250,11 +1252,26 @@ mbmatch(parent, cf, aux)
 static void
 mb_module_callback(struct device *self, struct confargs *ca)
 {
-	ca->ca_iot = &hppa_bustag;
-	ca->ca_dmatag = &hppa_dmatag;
-	ca->ca_irq = HP700CF_IRQ_UNDEF;
-
+	if (ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
+	    ca->ca_type.iodc_type == HPPA_TYPE_MEMORY)
+		return;
 	config_found_sm(self, ca, mbprint, mbsubmatch);
+}
+
+static void
+mb_monarch_cpu_callback(struct device *self, struct confargs *ca)
+{
+	if (ca->ca_hpa == pdc_hpa.hpa)
+		config_found_sm(self, ca, mbprint, mbsubmatch);
+}
+
+static void
+mb_cpu_mem_callback(struct device *self, struct confargs *ca)
+{
+	if ((ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
+	     ca->ca_type.iodc_type == HPPA_TYPE_MEMORY) &&
+	    ca->ca_hpa != pdc_hpa.hpa)
+		config_found_sm(self, ca, mbprint, mbsubmatch);
 }
 
 void
@@ -1264,7 +1281,8 @@ mbattach(parent, self, aux)
 	void *aux;
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
-	struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
+	struct pdc_system_map_find_mod pdc_find_mod PDC_ALIGNMENT;
+	struct device_path path PDC_ALIGNMENT;
 	struct confargs nca;
 	bus_space_handle_t ioh;
 
@@ -1282,7 +1300,7 @@ mbattach(parent, self, aux)
 	 * XXX fredette - this may be a copout, or it may
  	 * be a great idea.  I'm not sure which yet.
 	 */
-	if (bus_space_map(&hppa_bustag, FP_ADDR, 0 - FP_ADDR, 0, &ioh))
+	if (bus_space_map(&hppa_bustag, pdc_hpa.hpa, 0 - pdc_hpa.hpa, 0, &ioh))
 		panic("mbattach: cannot map mainbus IO space");
 
 	/*
@@ -1295,14 +1313,60 @@ mbattach(parent, self, aux)
 	printf (" [flex %lx]\n", pdc_hpa.hpa & FLEX_MASK);
 
 	/* PDC first */
-	bzero (&nca, sizeof(nca));
+	memset(&nca, 0, sizeof(nca));
 	nca.ca_name = "pdc";
 	nca.ca_hpa = 0;
 	nca.ca_iot = &hppa_bustag;
 	nca.ca_dmatag = &hppa_dmatag;
 	config_found(self, &nca, mbprint);
 
-	pdc_scanbus(self, -1, MAXMODBUS, mb_module_callback);
+	/*
+	 * How to do device scaning? Try to use PDC_SYSTEM_MAP.
+	 * We are on a "new" system if it succedes, so use PDC_SYSTEM_MAP.
+	 * Otherwise we must be on an "old" system, so use PDC_MEMMAP.
+	 */
+	if (pdc_call((iodcio_t)pdc, 0, PDC_SYSTEM_MAP, PDC_SYSTEM_MAP_FIND_MOD,
+	    &pdc_find_mod, &path, 0) == 0) {
+	        pdc_scanbus = pdc_scanbus_system_map;
+	} else {
+	        pdc_scanbus = pdc_scanbus_memory_map;
+	}
+
+	/* Search and attach monarch CPU. */
+	memset(&nca, 0, sizeof(nca));
+	nca.ca_name = "mainbus";
+	nca.ca_hpa = 0;
+	nca.ca_irq = HP700CF_IRQ_UNDEF;
+	nca.ca_iot = &hppa_bustag;
+	nca.ca_dmatag = &hppa_dmatag;
+	nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] =
+	nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
+	nca.ca_dp.dp_mod = -1;
+	pdc_scanbus(self, &nca, mb_monarch_cpu_callback);
+
+	/* Search and attach additional CPUs and memory controller. */
+	memset(&nca, 0, sizeof(nca));
+	nca.ca_name = "mainbus";
+	nca.ca_hpa = 0;
+	nca.ca_irq = HP700CF_IRQ_UNDEF;
+	nca.ca_iot = &hppa_bustag;
+	nca.ca_dmatag = &hppa_dmatag;
+	nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] =
+	nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
+	nca.ca_dp.dp_mod = -1;
+	pdc_scanbus(self, &nca, mb_cpu_mem_callback);
+
+	/* Search for IO hardware. */
+	memset(&nca, 0, sizeof(nca));
+	nca.ca_name = "mainbus";
+	nca.ca_hpa = 0;
+	nca.ca_irq = HP700CF_IRQ_UNDEF;
+	nca.ca_iot = &hppa_bustag;
+	nca.ca_dmatag = &hppa_dmatag;
+	nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] =
+	nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
+	nca.ca_dp.dp_mod = -1;
+	pdc_scanbus(self, &nca, mb_module_callback);
 }
 
 /*
@@ -1324,13 +1388,19 @@ mbprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
+	int n;
 	struct confargs *ca = aux;
 
 	if (pnp)
-		aprint_normal("\"%s\" at %s (type %x, sv %x)", ca->ca_name, pnp,
-		    ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
+		aprint_normal("\"%s\" at %s (type 0x%x, sv 0x%x)", ca->ca_name,
+		    pnp, ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
 	if (ca->ca_hpa) {
-		aprint_normal(" hpa %lx", ca->ca_hpa);
+		aprint_normal(" hpa 0x%lx path ", ca->ca_hpa);
+		for (n = 0 ; n < 6 ; n++) {
+			if ( ca->ca_dp.dp_bc[n] > 0)
+				printf( "%d/", ca->ca_dp.dp_bc[n]);
+		}
+		printf( "%d", ca->ca_dp.dp_mod);
 		if (!pnp && ca->ca_irq >= 0) {
 			aprint_normal(" irq %d", ca->ca_irq);
 			if (ca->ca_type.iodc_type != HPPA_TYPE_BHA)

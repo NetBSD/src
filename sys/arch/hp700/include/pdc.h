@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.1 2002/06/06 19:48:09 fredette Exp $	*/
+/*	$NetBSD: pdc.h,v 1.2 2003/11/18 04:04:42 chs Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.15 2000/12/06 17:18:57 deraadt Exp $	*/
 
@@ -226,6 +226,11 @@
 #define	PDC_PSW_GETMASK		0	/* get mask */
 #define	PDC_PSW_DEFAULTS	1	/* get default bits values */
 #define	PDC_PSW_SETDEFAULTS	2	/* set default bits values */
+
+#define	PDC_SYSTEM_MAP		22      /* map system modules */
+#define	PDC_SYSTEM_MAP_FIND_MOD	0       /* find module by index */
+#define	PDC_SYSTEM_MAP_FIND_ADDR	1
+#define	PDC_SYSTEM_MAP_TRANS_PATH	2       /* same as PDC_MEMMAP_HPA */
 
 #define	PDC_SOFT_POWER		23	/* support for soft power switch */
 #define	PDC_SOFT_POWER_INFO	0	/* get info about soft power switch */
@@ -462,6 +467,20 @@ struct pdc_memmap {	/* PDC_MEMMAP */
 	u_int	filler[30];
 };
 
+struct pdc_system_map_find_mod {	/* PDC_SYSTEM_MAP_FIND_MOD */
+	u_int	hpa;
+	u_int	size;		/* pages */
+	u_int	naddrs;
+	u_int	mod_index;
+	u_int	filler[28];
+};
+
+struct pdc_system_map_find_addr {	/* PDC_SYSTEM_MAP_FIND_ADDR */
+	u_int	hpa;
+	u_int	size;		/* pages */
+	u_int	filler[30];
+};
+
 struct pdc_lan_station_id {	/* PDC_LAN_STATION_ID */
 	u_int8_t addr[6];
 	u_int8_t filler1[2];
@@ -515,7 +534,7 @@ struct device_path {
 	u_char	dp_flags;	/* see bit definitions below */
 	char	dp_bc[6];	/* Bus Converter routing info to a specific */
 				/* I/O adaptor (< 0 means none, > 63 resvd) */
-	u_char	dp_mod;		/* fixed field of specified module */
+	char	dp_mod;		/* fixed field of specified module */
 	int	dp_layers[6];	/* device-specific info (ctlr #, unit # ...) */
 };
 

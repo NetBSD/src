@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2003/08/31 01:26:31 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2003/11/18 04:04:42 chs Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2003/08/31 01:26:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2003/11/18 04:04:42 chs Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -394,6 +394,7 @@ net_find(name, ctlr, unit)
 	return (find_dev_byname(tname));
 }
 
+#if NSCSIBUS != 0
 /*
  * SCSI device:  The controller number corresponds to the
  * scsibus number, and the unit number is (targ*8 + LUN).
@@ -426,6 +427,16 @@ scsi_find(name, ctlr, unit)
 
 	return (periph->periph_dev);
 }
+#else
+static struct device *
+scsi_find(name, ctlr, unit)
+	char *name;
+	int ctlr, unit;
+{
+
+	return (NULL);
+}
+#endif
 
 /*
  * Given a device name, find its struct device
@@ -451,39 +462,105 @@ find_dev_byname(name)
 #endif
 
 void
-pdc_scanbus(self, bus, maxmod, callback)
+pdc_scanbus_memory_map(self, ca, callback)
 	struct device *self;
-	int bus, maxmod;
+	struct confargs *ca;
 	void (*callback) __P((struct device *, struct confargs *));
 {
-	struct pdc_memmap pdc_memmap;
-	struct device_path dp;
 	int i;
+	struct confargs nca;
+	struct pdc_memmap pdc_memmap PDC_ALIGNMENT;
+	struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
 
-	for (i = maxmod; i--; ) {
-		struct confargs nca;
-		struct pdc_iodc_read pdc_iodc_read;
+	for (i = 0; i < 16; i++) {
+		bzero(&nca, sizeof(nca));
+		nca.ca_dp.dp_bc[0] = -1;
+		nca.ca_dp.dp_bc[1] = -1;
+		nca.ca_dp.dp_bc[2] = -1;
+		nca.ca_dp.dp_bc[3] = -1;
+		nca.ca_dp.dp_bc[4] = ca->ca_dp.dp_mod;
+		nca.ca_dp.dp_bc[5] = ca->ca_dp.dp_mod < 0 ? -1 : 0;
+		nca.ca_dp.dp_mod = i;
 
-		dp.dp_bc[0] = dp.dp_bc[1] = dp.dp_bc[2] = dp.dp_bc[3] = -1;
-		dp.dp_bc[4] = bus;
-		dp.dp_bc[5] = bus < 0? -1 : 0;
-		dp.dp_mod = i;
-
-		if (pdc_call((iodcio_t)pdc, 0, PDC_MEMMAP,
-			     PDC_MEMMAP_HPA, &pdc_memmap, &dp) < 0)
+		if (pdc_call((iodcio_t)pdc, 0, PDC_MEMMAP, PDC_MEMMAP_HPA, 
+		    &pdc_memmap, &nca.ca_dp) < 0)
 			continue;
 
 		if (pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ,
-			     &pdc_iodc_read, pdc_memmap.hpa, IODC_DATA,
-			     &nca.ca_type, sizeof(nca.ca_type)) < 0)
+		     &pdc_iodc_read, pdc_memmap.hpa, IODC_DATA,
+		     &nca.ca_type, sizeof(nca.ca_type)) < 0)
 			continue;
 
 		nca.ca_mod = i;
 		nca.ca_hpa = pdc_memmap.hpa;
+		nca.ca_iot = ca->ca_iot;
+		nca.ca_dmatag = ca->ca_dmatag;
 		nca.ca_irq = HP700CF_IRQ_UNDEF;
 		nca.ca_pdc_iodc_read = &pdc_iodc_read;
 		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
-					    nca.ca_type.iodc_sv_model);
+		    nca.ca_type.iodc_sv_model);
+		(*callback)(self, &nca);
+	}
+}
+
+void
+pdc_scanbus_system_map(self, ca, callback)
+	struct device *self;
+	struct confargs *ca;
+	void (*callback) __P((struct device *, struct confargs *));
+{
+	int i;
+	int ia;
+	struct confargs nca;
+	struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
+	struct pdc_system_map_find_mod pdc_find_mod PDC_ALIGNMENT;
+	struct pdc_system_map_find_addr pdc_find_addr PDC_ALIGNMENT;
+
+	for (i = 0; i <= 64; i++) {
+		bzero(&nca, sizeof(nca));
+		nca.ca_dp.dp_bc[0] = ca->ca_dp.dp_bc[1];
+		nca.ca_dp.dp_bc[1] = ca->ca_dp.dp_bc[2];
+		nca.ca_dp.dp_bc[2] = ca->ca_dp.dp_bc[3];
+		nca.ca_dp.dp_bc[3] = ca->ca_dp.dp_bc[4];
+		nca.ca_dp.dp_bc[4] = ca->ca_dp.dp_bc[5];
+		nca.ca_dp.dp_bc[5] = ca->ca_dp.dp_mod;
+		nca.ca_dp.dp_mod = i;
+
+		if (pdc_call((iodcio_t)pdc, 0, PDC_SYSTEM_MAP, 
+		    PDC_SYSTEM_MAP_TRANS_PATH, &pdc_find_mod, &nca.ca_dp) != 0)
+			continue;
+		nca.ca_hpa = pdc_find_mod.hpa;
+		nca.ca_hpasz = pdc_find_mod.size << PGSHIFT;
+		if (pdc_find_mod.naddrs > 0) {
+			nca.ca_naddrs = pdc_find_mod.naddrs;
+			if (nca.ca_naddrs > 16) { 
+				nca.ca_naddrs = 16;
+				printf("WARNING: too many (%d) addrs\n",
+				    pdc_find_mod.naddrs);
+			}
+			for (ia = 0; pdc_call((iodcio_t)pdc, 0, 
+			    PDC_SYSTEM_MAP, PDC_SYSTEM_MAP_FIND_ADDR, 
+			    &pdc_find_addr, pdc_find_mod.mod_index, ia) == 0
+			    && ia < nca.ca_naddrs; ia++) {
+				nca.ca_addrs[ia].addr = pdc_find_addr.hpa;
+				nca.ca_addrs[ia].size = 
+				    pdc_find_addr.size << PGSHIFT;
+			}
+		}
+
+		if (pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ,
+		     &pdc_iodc_read, nca.ca_hpa, IODC_DATA,
+		     &nca.ca_type, sizeof(nca.ca_type)) < 0) {
+			continue;
+		}
+
+		nca.ca_mod = i;
+		nca.ca_iot = ca->ca_iot;
+		nca.ca_dmatag = ca->ca_dmatag;
+		nca.ca_irq = HP700CF_IRQ_UNDEF;
+		nca.ca_pdc_iodc_read = &pdc_iodc_read;
+		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
+		    nca.ca_type.iodc_sv_model);
 		(*callback)(self, &nca);
 	}
 }
@@ -508,4 +585,3 @@ hppa_mod_info(type, sv)
 	} else
 		return mi->mi_name;
 }
-
