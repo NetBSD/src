@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/01/05 19:01:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2001/01/06 14:00:34 jdolecek Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -15,4 +15,7 @@ LDADD+=	-lutil -lcurses -lcdk -lform -lm -L${LIBINSTALL} -linstall
 DPADD+= ${LIBUTIL} ${LIBCURSES} ${LIBCDK} ${LIBFORM} ${LIBM} \
 	${LIBINSTALL}/libinstall.a
 
+NLS=	C.msg
+
 .include <bsd.prog.mk>
+.include <bsd.nls.mk>
