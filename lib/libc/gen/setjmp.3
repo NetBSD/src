@@ -1,4 +1,4 @@
-.\"	$NetBSD: setjmp.3,v 1.13 2003/04/16 13:34:38 wiz Exp $
+.\"	$NetBSD: setjmp.3,v 1.14 2003/05/01 13:58:03 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -168,10 +168,10 @@ are corrupted, or correspond to an environment that has already returned,
 the
 .Fn longjmp
 routine calls the routine
-.Fn longjmperror 3 .
+.Xr longjmperror 3 .
 If
 .Fn longjmperror
-returns the program is aborted (see
+returns, the program is aborted (see
 .Xr abort 3 ) .
 The default version of
 .Fn longjmperror
