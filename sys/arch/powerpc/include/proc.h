@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.2 1997/04/16 22:57:48 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.2.40.1 2001/11/05 19:46:17 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,10 +30,16 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _POWERPC_PROC_H_
+#define _POWERPC_PROC_H_
 
 /*
  * Machine-dependent part of the proc structure
  */
-struct mdproc {
+struct mdlwp {
 	int md_regs;
 };
+struct mdproc {
+};
+
+#endif /* _POWERPC_PROC_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.40.1 2001/11/05 19:46:18 briggs Exp $
+#	$NetBSD: genassym.cf,v 1.5.8.2 2001/11/05 19:46:12 briggs Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,8 @@ include <sys/param.h>
 include <sys/time.h>
 include <sys/proc.h>
 
+include <uvm/uvm.h>
+
 include <machine/pcb.h>
 include <machine/pmap.h>
 
@@ -60,14 +62,14 @@ define	PCB_SP		offsetof(struct pcb, pcb_sp)
 define	PCB_SPL		offsetof(struct pcb, pcb_spl)
 define	PCB_FAULT	offsetof(struct pcb, pcb_onfault)
 
+define	PM_SR		offsetof(struct pmap, pm_sr[0])
 define	PM_USRSR	offsetof(struct pmap, pm_sr[USER_SR])
 define	PM_KERNELSR	offsetof(struct pmap, pm_sr[KERNEL_SR])
 
 define	L_FORW		offsetof(struct lwp, l_forw)
 define	L_BACK		offsetof(struct lwp, l_back)
 define	L_ADDR		offsetof(struct lwp, l_addr)
-define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_STAT		offsetof(struct lwp, l_stat)
 define	L_PRIORITY	offsetof(struct lwp, l_priority)
 
-define	SPLX		offsetof(struct machvec, splx)
+define	LSONPROC	LSONPROC

@@ -1,8 +1,8 @@
-/*	$NetBSD: sys_machdep.c,v 1.3.10.1 2001/11/05 19:46:19 briggs Exp $	*/
+/*	$NetBSD: pcb.h,v 1.8.8.2 2001/11/05 19:46:17 briggs Exp $	*/
 
-/*
- * Copyright (C) 1996 Wolfgang Solfrank.
- * Copyright (C) 1996 TooLs GmbH.
+/*-
+ * Copyright (C) 1995, 1996 Wolfgang Solfrank.
+ * Copyright (C) 1995, 1996 TooLs GmbH.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,20 +30,41 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef	_MACHINE_PCB_H_
+#define	_MACHINE_PCB_H_
 
-#include <sys/param.h>
+#include <powerpc/reg.h>
 
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
+typedef int faultbuf[23];
+struct fpu {
+	double fpr[32];
+	double fpscr;	/* FPSCR stored as double for easier access */
+};
 
-int
-sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	/*
-	 * Currently no special system calls
-	 */
-	return (ENOSYS);
-}
+struct pcb {
+	struct pmap *pcb_pm;	/* pmap of our vmspace */
+	struct pmap *pcb_pmreal; /* real address of above */
+	register_t pcb_sp;	/* saved SP */
+	int pcb_spl;		/* saved SPL */
+	faultbuf *pcb_onfault;	/* For use during copyin/copyout */
+	int pcb_flags;
+#define	PCB_FPU		1	/* Process had FPU initialized */
+	struct fpu pcb_fpu;	/* Floating point processor */
+	struct cpu_info *pcb_fpcpu; /* CPU with our FP state */
+	struct vreg *pcb_vr;
+};
+
+struct md_coredump {
+	struct trapframe frame;
+	struct fpu fpstate;
+	struct vreg vstate;
+};
+
+#if defined(_KERNEL) && !defined(MULTIPROCESSOR)
+extern struct pcb *curpcb;
+extern struct pmap *curpm;
+extern struct lwp *fpuproc, *vecproc;
+extern struct pool *vecpl;
+#endif
+
+#endif	/* _MACHINE_PCB_H_ */

@@ -1,8 +1,8 @@
-/*	$NetBSD: sys_machdep.c,v 1.3.10.1 2001/11/05 19:46:19 briggs Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.3.8.2 2001/11/05 19:46:17 briggs Exp $	*/
 
 /*
- * Copyright (C) 1996 Wolfgang Solfrank.
- * Copyright (C) 1996 TooLs GmbH.
+ * Copyright (C) 1995, 1996 Wolfgang Solfrank.
+ * Copyright (C) 1995, 1996 TooLs GmbH.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,18 +32,54 @@
  */
 
 #include <sys/param.h>
-
-#include <sys/mount.h>
+#include <sys/systm.h>
+#include <sys/signalvar.h>
+#include <sys/kernel.h>
+#include <sys/map.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/lwp.h>
+#include <sys/mount.h>  
 #include <sys/syscallargs.h>
 
 int
-sys_sysarch(l, v, retval)
+compat_13_sys_sigreturn(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+	struct compat_13_sys_sigreturn_args /* {
+		syscallarg(struct sigcontext13 *) sigcntxp;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct sigcontext13 sc;
+	struct trapframe *tf;
+	int error;
+	sigset_t mask;
+
 	/*
-	 * Currently no special system calls
+	 * The trampoline hands us the context.
+	 * It is unsafe to keep track of it ourselves, in the event that a
+	 * program jumps out of a signal hander.
 	 */
-	return (ENOSYS);
+	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)) != 0)
+		return (error);
+
+	/* Restore the register context. */
+	tf = trapframe(l);
+	if ((sc.sc_frame.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
+		return (EINVAL);
+	*tf = sc.sc_frame;
+
+	/* Restore signal stack. */
+	if (sc.sc_onstack & SS_ONSTACK)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	/* Restore signal mask. */
+	native_sigset13_to_sigset(&sc.sc_mask, &mask);
+	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+
+	return (EJUSTRETURN);
 }
