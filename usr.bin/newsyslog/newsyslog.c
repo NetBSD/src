@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.21 1999/11/30 12:03:24 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.21.4.1 2000/10/09 11:08:29 ad Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.21 1999/11/30 12:03:24 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.21.4.1 2000/10/09 11:08:29 ad Exp $");
 #endif /* not lint */
 
 #ifndef CONF
@@ -577,13 +577,14 @@ compress_log(log)
         char    *log;
 {
         int     pid;
+        int     status;
         char    tmp[128];
         
-        pid = fork();
         (void) sprintf(tmp,"%s.0",log);
+        pid = vfork();
         if (pid < 0) {
                 fprintf(stderr,"%s: ",progname);
-                perror("fork");
+                perror("vfork");
                 exit(1);
         } else if (!pid) {
                 (void) execl(COMPRESS,"compress","-f",tmp,0);
@@ -591,6 +592,14 @@ compress_log(log)
                 perror(COMPRESS);
                 exit(1);
         }
+
+	while (waitpid(pid, &status, 0) != pid)
+		;
+
+	if (!WIFEXITED(status) || (WEXITSTATUS(status) != 0)) {
+		fprintf(stderr,"%s: ",progname);
+		perror(COMPRESS);
+	}
 }
 
 /* Return size in kilobytes of a file */
