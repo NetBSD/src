@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.7 2005/03/01 04:23:44 sekiya Exp $	*/
+/*	$NetBSD: cache.h,v 1.8 2005/03/26 09:51:02 tsutsui Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -185,8 +185,6 @@ extern int mips_sdcache_write_through;
 
 extern int mips_scache_unified;
 
-extern u_int mips_sdcache_forceinv;	/* force pmap to invalidate for r5ksc */
-
 /* TERTIARY CACHE VARIABLES */
 extern u_int mips_tcache_size;		/* always unified */
 extern u_int mips_tcache_line_size;
@@ -200,6 +198,8 @@ extern u_int mips_dcache_align_mask;
 
 extern u_int mips_cache_alias_mask;
 extern u_int mips_cache_prefer_mask;
+
+extern int mips_cache_virtual_alias;
 
 /*
  * XXX XXX XXX THIS SHOULD NOT EXIST XXX XXX XXX
