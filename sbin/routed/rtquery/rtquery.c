@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.2 1996/08/10 01:30:36 thorpej Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.3 1996/09/24 16:24:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -37,13 +37,11 @@ char copyright[] =
 "@(#) Copyright (c) 1982, 1986, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 
-#if !defined(lint) && !defined(sgi)
-#if 0
+#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 6/5/93";
-#else
-static char rcsid[] = "$NetBSD: rtquery.c,v 1.2 1996/08/10 01:30:36 thorpej Exp $";
+#elif defined(__NetBSD__)
+static char rcsid[] = "$NetBSD: rtquery.c,v 1.3 1996/09/24 16:24:26 christos Exp $";
 #endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/protosw.h>
@@ -174,6 +172,8 @@ main(int argc,
 					"more",
 #				    define TRACE_OFF	2
 					"off",
+#				    define TRACE_DUMP	3
+					"dump",
 					0
 				};
 				switch (getsubopt(&options,traceopts,&value)) {
@@ -182,25 +182,30 @@ main(int argc,
 					if (!value
 					    || strlen(value) > MAXPATHLEN)
 						goto usage;
-					strcpy(OMSG.rip_tracefile, value);
-					omsg_len += (strlen(value)
-						     - sizeof(OMSG.ripun));
 					break;
 				case TRACE_MORE:
 					if (value)
 						goto usage;
 					OMSG.rip_cmd = RIPCMD_TRACEON;
-					OMSG.rip_tracefile[0] = '\0';
+					value = "";
 					break;
 				case TRACE_OFF:
 					if (value)
 						goto usage;
 					OMSG.rip_cmd = RIPCMD_TRACEOFF;
-					OMSG.rip_tracefile[0] = '\0';
+					value = "";
+					break;
+				case TRACE_DUMP:
+					if (value)
+						goto usage;
+					OMSG.rip_cmd = RIPCMD_TRACEON;
+					value = "dump/../table";
 					break;
 				default:
 					goto usage;
 				}
+				strcpy((char*)OMSG.rip_tracefile, value);
+				omsg_len += strlen(value) - sizeof(OMSG.ripun);
 			}
 			break;
 

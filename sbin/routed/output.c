@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.10 1996/08/10 01:29:26 thorpej Exp $	*/
+/*	$NetBSD: output.c,v 1.11 1996/09/24 16:24:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,13 +33,11 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi)
-#if 0
+#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)output.c	8.1 (Berkeley) 6/5/93";
-#else
-static char rcsid[] = "$NetBSD: output.c,v 1.10 1996/08/10 01:29:26 thorpej Exp $";
+#elif defined(__NetBSD__)
+static char rcsid[] = "$NetBSD: output.c,v 1.11 1996/09/24 16:24:16 christos Exp $";
 #endif
-#endif /* not lint */
 
 #include "defs.h"
 
@@ -65,6 +63,7 @@ struct {
 	} v12, v2;
 	char	metric;			/* adjust metrics by interface */
 	int	npackets;
+	int	gen_limit;
 	u_int	state;
 #define	    WS_ST_FLASH	    0x001	/* send only changed routes */
 #define	    WS_ST_RIP2_SAFE 0x002	/* send RIPv2 safe for RIPv1 */
@@ -174,10 +173,10 @@ output(enum output_type type,
 			}
 			sin.sin_addr.s_addr = htonl(INADDR_RIP_GROUP);
 		}
-		break;
 
-	default:
-		/* Nothing; keep compilers happy. */
+	case NO_OUT_MULTICAST:
+	case NO_OUT_RIPV2:
+		break;
 	}
 
 	trace_rip(msg, "to", &sin, ifp, buf, size);
@@ -265,7 +264,7 @@ supply_out(struct ag_info *ag)
 	    && (ws.state & WS_ST_FLASH))
 		return;
 
-	/* Skip this route if required by split-horizon
+	/* Skip this route if required by split-horizon.
 	 */
 	if (ag->ag_state & AGS_SPLIT_HZ)
 		return;
@@ -305,20 +304,22 @@ supply_out(struct ag_info *ag)
 			ddst_h = v1_mask & -v1_mask;
 			i = (v1_mask & ~mask)/ddst_h;
 
-			if (i >= 1024) {
+			if (i > ws.gen_limit) {
 				/* Punt if we would have to generate an
 				 * unreasonable number of routes.
 				 */
 #ifdef DEBUG
-				msglog("sending %s to %s as-is instead"
-				       " of as %d routes",
-				       addrname(htonl(dst_h),mask,0),
-				       naddr_ntoa(ws.to.sin_addr.s_addr), i);
+				msglog("sending %s to %s as 1 instead"
+				       " of %d routes",
+				       addrname(htonl(dst_h),mask,1),
+				       naddr_ntoa(ws.to.sin_addr.s_addr),
+				       i+1);
 #endif
 				i = 0;
 
 			} else {
 				mask = v1_mask;
+				ws.gen_limit -= i;
 			}
 		}
 	}
@@ -359,13 +360,10 @@ supply_out(struct ag_info *ag)
  */
 /* ARGSUSED */
 static int
-walk_supply(struct radix_node *rn, void *argp)
+walk_supply(struct radix_node *rn, struct walkarg *argp)
 {
 #define RT ((struct rt_entry *)rn)
-#if 0
-	struct walkarg *w = argp;	/* not used */
-#endif
-	u_short ags = 0;
+	u_short ags;
 	char metric, pref;
 	naddr dst, nhop;
 
@@ -373,7 +371,8 @@ walk_supply(struct radix_node *rn, void *argp)
 	/* Do not advertise the loopback interface
 	 * or external remote interfaces
 	 */
-	if (RT->rt_ifp != 0
+	if ((RT->rt_state & RS_IF)
+	    && RT->rt_ifp != 0
 	    && ((RT->rt_ifp->int_if_flags & IFF_LOOPBACK)
 		|| (RT->rt_ifp->int_state & IS_EXTERNAL))
 	    && !(RT->rt_state & RS_MHOME))
@@ -431,32 +430,8 @@ walk_supply(struct radix_node *rn, void *argp)
 			nhop = 0;
 	}
 
-	/* Adjust the outgoing metric by the cost of the link.
-	 */
-	pref = metric = RT->rt_metric + ws.metric;
-	if (pref < HOPCNT_INFINITY) {
-		/* Keep track of the best metric with which the
-		 * route has been advertised recently.
-		 */
-		if (RT->rt_poison_metric >= metric
-		    || RT->rt_poison_time <= now_garbage) {
-			RT->rt_poison_time = now.tv_sec;
-			RT->rt_poison_metric = RT->rt_metric;
-		}
-
-	} else {
-		/* Do not advertise stable routes that will be ignored,
-		 * unless they are being held down and poisoned.  If the
-		 * route recently was advertised with a metric that would
-		 * have been less than infinity through this interface, we
-		 * need to continue to advertise it in order to poison it.
-		 */
-		pref = RT->rt_poison_metric + ws.metric;
-		if (pref >= HOPCNT_INFINITY)
-			return 0;
-
-		metric = HOPCNT_INFINITY;
-	}
+	metric = RT->rt_metric;
+	ags = 0;
 
 	if (RT->rt_state & RS_MHOME) {
 		/* retain host route of multi-homed servers */
@@ -523,8 +498,47 @@ walk_supply(struct radix_node *rn, void *argp)
 	    && (ws.state & WS_ST_TO_ON_NET)
 	    && (!(RT->rt_state & RS_IF)
 		|| ws.ifp->int_if_flags & IFF_POINTOPOINT)) {
-		ags |= AGS_SPLIT_HZ;
-		ags &= ~(AGS_PROMOTE | AGS_SUPPRESS);
+		/* Poison-reverse the route instead of only not advertising it
+		 * it is recently changed from some other route.
+		 * In almost all cases, if there is no spare for the route
+		 * then it is either old or a brand new route, and if it
+		 * is brand new, there is no need for poison-reverse.
+		 */
+		metric = HOPCNT_INFINITY;
+		if (RT->rt_poison_time < now_expire
+		    || RT->rt_spares[1].rts_gate ==0) {
+			ags |= AGS_SPLIT_HZ;
+			ags &= ~(AGS_PROMOTE | AGS_SUPPRESS);
+		}
+	}
+
+	/* Adjust the outgoing metric by the cost of the link.
+	 */
+	pref = metric + ws.metric;
+	if (pref < HOPCNT_INFINITY) {
+		/* Keep track of the best metric with which the
+		 * route has been advertised recently.
+		 */
+		if (RT->rt_poison_metric >= metric
+		    || RT->rt_poison_time < now_expire) {
+			RT->rt_poison_time = now.tv_sec;
+			RT->rt_poison_metric = metric;
+		}
+		metric = pref;
+
+	} else {
+		/* Do not advertise stable routes that will be ignored,
+		 * unless they are being held down and poisoned.  If the
+		 * route recently was advertised with a metric that would
+		 * have been less than infinity through this interface, we
+		 * need to continue to advertise it in order to poison it.
+		 */
+		pref = RT->rt_poison_metric + ws.metric;
+		if (pref >= HOPCNT_INFINITY
+		    || RT->rt_poison_time < now_garbage )
+			return 0;
+
+		metric = HOPCNT_INFINITY;
 	}
 
 	ag_check(dst, RT->rt_mask, 0, nhop, metric, pref,
@@ -549,6 +563,7 @@ supply(struct sockaddr_in *dst,
 
 
 	ws.state = 0;
+	ws.gen_limit = 1024;
 
 	ws.to = *dst;
 	ws.to_std_mask = std_mask(ws.to.sin_addr.s_addr);

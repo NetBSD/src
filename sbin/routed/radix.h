@@ -144,8 +144,8 @@ void	 rn_init __P((void));
 int	 rn_inithead __P((void **, int));
 int	 rn_refines __P((void *, void *));
 int	 rn_walktree __P((struct radix_node_head *,
-		     int (*)__P((struct radix_node *, struct walkarg*)),
-		     struct walkarg*));
+		     int (*)__P((struct radix_node *, struct walkarg *)),
+		     struct walkarg *));
 struct radix_node
 	 *rn_addmask __P((void *, int, int)),
 	 *rn_addroute __P((void *, void *, struct radix_node_head *,
