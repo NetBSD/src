@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.60 2002/12/16 10:48:59 pooka Exp $
+#	$NetBSD: services,v 1.61 2003/01/19 17:49:39 pooka Exp $
 #
 # Network services, Internet style
 #
@@ -213,6 +213,8 @@ cvspserver	2401/udp
 iscsi		3260/tcp
 mysql		3306/tcp		# MySQL
 mysql		3306/udp		# MySQL
+svn		3690/tcp		# Subversion
+svn		3690/udp		# Subversion
 rfe		5002/tcp		# Radio Free Ethernet
 rfe		5002/udp		# Actually uses UDP only
 postgresql	5432/tcp		# PostgreSQL Database
