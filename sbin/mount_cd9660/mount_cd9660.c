@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.6 1998/03/01 02:20:17 fvdl Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.6.2.1 1999/09/05 15:05:49 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.6 1998/03/01 02:20:17 fvdl Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.6.2.1 1999/09/05 15:05:49 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ main(argc, argv)
 	args.flags = opts;
 
 	if (mount(MOUNT_CD9660, dir, mntflags, &args) < 0)
-		err(1, "%s", "");
+		err(1, "%s on %s", dev, dir);
 	exit(0);
 }
 
