@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.1 2002/04/26 15:37:25 lukem Exp $
+# $NetBSD: postinstall,v 1.2 2002/04/26 15:49:09 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -335,6 +335,7 @@ Usage: ${PROGNAME} [-s srcdir] [-d destdir] operation [item [...]]
 	-d destdir	Destination directory to check.    [${DEST_ETC}]
 
 	Operation may be one of:
+		help	display this help
 		list	list available items
 		check	perform post-installation checks on items
 		fix	apply fixes that 'check' determines need to be applied
@@ -381,8 +382,12 @@ main()
 
 	case "${op}" in
 
-	list|usage)
-		eval ${op} $*
+	usage|help)
+		usage
+		;;
+
+	list)
+		list
 		;;
 
 	check|fix)
