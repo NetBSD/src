@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.51 2002/10/21 04:14:53 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.52 2003/03/30 20:16:34 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -79,7 +79,7 @@
 #	bpf*	packet filter
 #	tun*	network tunnel driver
 #	lkm	loadable kernel modules interface
-#	ipl	IPilter control
+#	ipl	IP filter control
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	systrace syscall tracer
