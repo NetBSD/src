@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pfkey.c,v 1.3 2003/09/12 08:44:34 itojun Exp $");
+__RCSID("$NetBSD: pfkey.c,v 1.4 2003/09/25 01:00:32 mycroft Exp $");
 
 #define _PFKEY_C_
 
@@ -271,7 +271,7 @@ pfkey_dump_sadb(satype)
 		goto fail;
 	}
 
-	buf = valloc(len);
+	buf = vmalloc(len);
 	if (buf == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to reallocate buffer to dump.\n");
