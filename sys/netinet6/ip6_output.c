@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_output.c,v 1.32 2001/03/21 07:52:14 itojun Exp $	*/
-/*	$KAME: ip6_output.c,v 1.171 2001/03/21 07:30:48 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.33 2001/03/25 09:58:43 itojun Exp $	*/
+/*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1152,7 +1152,7 @@ ip6_insert_jumboopt(exthdrs, plen)
 			      oldoptlen);
 			optbuf = mtod(n, caddr_t) + oldoptlen;
 			m_freem(mopt);
-			exthdrs->ip6e_hbh = n;
+			mopt = exthdrs->ip6e_hbh = n;
 		} else {
 			optbuf = mtod(mopt, u_char *) + mopt->m_len;
 			mopt->m_len += JUMBOOPTLEN;
