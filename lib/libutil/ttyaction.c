@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyaction.c,v 1.2 1996/11/14 19:16:02 gwr Exp $	*/
+/*	$NetBSD: ttyaction.c,v 1.3 1996/11/18 18:54:36 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -91,10 +91,13 @@ ttyaction(tty, act, user)
 	argv[2] = NULL;	/* see below */
 	argv[3] = NULL;
 
-	/* Environment needs: TTY, ACT, USER */
-	sprintf(env_tty, "TTY=%.63s", tty);
-	sprintf(env_act, "ACT=%.63s", act);
-	sprintf(env_user, "USER=%.255s", user);
+	/*
+	 * Environment needs: TTY, ACT, USER
+	 * Note sizes are: 63-4 and 255-5
+	 */
+	sprintf(env_tty, "TTY=%.59s", tty);
+	sprintf(env_act, "ACT=%.59s", act);
+	sprintf(env_user, "USER=%.250s", user);
 	envp[0] = pathenv;
 	envp[1] = env_tty;
 	envp[2] = env_act;
