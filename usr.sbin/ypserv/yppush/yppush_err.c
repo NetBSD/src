@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush_err.c,v 1.1.1.1 1996/08/09 10:15:01 thorpej Exp $	*/
+/*	$NetBSD: yppush_err.c,v 1.2 1997/07/18 21:57:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,11 +33,14 @@
 
 #include <sys/types.h>
 
+#include <string.h>
 #include <stdio.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp_prot.h>
+
+#include "yppush.h"
 
 char *
 yppush_err_string(y)
