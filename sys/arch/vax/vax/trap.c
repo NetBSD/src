@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.26 1997/06/13 15:16:25 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.27 1997/07/06 22:38:23 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -221,7 +221,7 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 #endif
 		if (!p)
 			panic("trap: access fault without process");
-		pm=&p->p_vmspace->vm_pmap;
+		pm = p->p_vmspace->vm_map.pmap;
 		if(frame->trap&T_PTEFETCH){
 			u_int faultaddr,testaddr=(u_int)frame->code&0x3fffffff;
 			int P0 = 0, P1 = 0, SYS = 0;
@@ -278,7 +278,7 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 
 	case T_PTELEN:
 	case T_PTELEN|T_USER:	/* Page table length exceeded */
-		pm=&p->p_vmspace->vm_pmap;
+		pm = p->p_vmspace->vm_map.pmap;
 #ifdef TRAPDEBUG
 if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
                         frame->trap, frame->code, frame->pc, frame->psl);
