@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.50 2004/04/10 17:53:05 darrenr Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.51 2004/05/12 16:48:44 tron Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.50 2004/04/10 17:53:05 darrenr Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.51 2004/05/12 16:48:44 tron Exp $");
 #endif
 
 
@@ -96,7 +96,7 @@ struct if_info *iflist;
 u_int32_t choose_ipaddr(u_int32_t **, u_int32_t, u_int32_t);
 void	debug(const char *,...)
 	__attribute__((__format__(__printf__, 1, 2)));
-void	init_all(void);
+void	init_some(char *name);
 void	init_one(char *, u_int32_t);
 u_int32_t	ipaddrtonetmask(u_int32_t);
 void	lookup_eaddr(char *, u_char *);
@@ -175,10 +175,10 @@ main(int argc, char **argv)
 	}
 
 	if (aflag)
-		init_all();
+		init_some(NULL);
 	else {
 		while (argc--)
-			init_one(*argv++, INADDR_ANY);
+			init_some(*argv++);
 	}
 
 	rarp_loop();
@@ -239,7 +239,7 @@ init_one(char *ifname, u_int32_t ipaddr)
  * point to point.
  */
 void
-init_all(void)
+init_some(char *name)
 {
 	struct ifaddrs *ifap, *ifa, *p;
 
@@ -252,6 +252,8 @@ init_all(void)
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 #define SIN(s)	((struct sockaddr_in *) (s))
 		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		if (name && strcmp(name, ifa->ifa_name))
 			continue;
 		if (p && !strcmp(p->ifa_name, ifa->ifa_name) &&
 		    SIN(p->ifa_addr)->sin_addr.s_addr == SIN(ifa->ifa_addr)->sin_addr.s_addr)
