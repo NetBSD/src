@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.7 1996/12/05 02:39:37 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.8 1997/02/12 23:36:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -169,7 +169,7 @@ depca_isa_probe(lesc, ia)
 		goto bad;
 
 	/* Just needed to check mapability; don't need it anymore. */
-	bus_space_unmap(ia->ia_memt, ia->ia_maddr, ia->ia_msize);
+	bus_space_unmap(ia->ia_memt, memh, ia->ia_msize);
 
 	lesc->sc_iot = iot;
 	lesc->sc_ioh = ioh;
