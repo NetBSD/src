@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.51 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: fd.c,v 1.51.2.1 2004/06/04 03:41:05 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.51 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.51.2.1 2004/06/04 03:41:05 jmc Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -427,8 +427,12 @@ fdprobe(parent, match, aux)
 	out_fdc(iot, ioh, NE7CMD_RECAL);
 	out_fdc(iot, ioh, drive);
 	/* wait for recalibrate, up to 2s */
-	if (tsleep(fdc, PWAIT, "fdprobe2", 2 * hz) != EWOULDBLOCK)
-/*XXX*/		printf("fdprobe: got intr\n");
+	if (tsleep(fdc, PWAIT, "fdprobe2", 2 * hz) != EWOULDBLOCK) {
+#ifdef FD_DEBUG
+		/* XXX */
+		printf("fdprobe: got intr\n");
+#endif
+	}
 	out_fdc(iot, ioh, NE7CMD_SENSEI);
 	n = fdcresult(fdc);
 #ifdef FD_DEBUG
@@ -961,7 +965,9 @@ fdcintr(arg)
 	struct ne7_fd_formb *finfo = NULL;
 
 	if (fdc->sc_state == PROBING) {
-/*XXX*/		printf("got probe interrupt\n");
+#ifdef DEBUG
+		printf("fdcintr: got probe interrupt\n");
+#endif
 		wakeup(fdc);
 		return 1;
 	}
