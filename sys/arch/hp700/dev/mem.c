@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 2002/09/27 20:31:59 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.4 2002/10/02 05:17:47 thorpej Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -110,9 +110,8 @@ struct mem_softc {
 int	memmatch __P((struct device *, struct cfdata *, void *));
 void	memattach __P((struct device *, struct device *, void *));
 
-const struct cfattach mem_ca = {
-	sizeof(struct mem_softc), memmatch, memattach
-};
+CFATTACH_DECL(mem, sizeof(struct mem_softc),
+    memmatch, memattach, NULL, NULL);
 
 extern struct cfdriver mem_cd;
 

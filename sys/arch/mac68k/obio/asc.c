@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.41 2002/09/27 20:33:25 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.42 2002/10/02 05:36:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -107,9 +107,8 @@ static void	asc_intr __P((void *));
 static int	ascmatch __P((struct device *, struct cfdata *, void *));
 static void	ascattach __P((struct device *, struct device *, void *));
 
-const struct cfattach asc_ca = {
-	sizeof(struct asc_softc), ascmatch, ascattach
-};
+CFATTACH_DECL(asc, sizeof(struct asc_softc),
+    ascmatch, ascattach, NULL, NULL);
 
 extern struct cfdriver asc_cd;
 

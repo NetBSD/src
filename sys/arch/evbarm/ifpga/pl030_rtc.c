@@ -1,4 +1,4 @@
-/*	$NetBSD: pl030_rtc.c,v 1.4 2002/09/27 20:31:26 thorpej Exp $ */
+/*	$NetBSD: pl030_rtc.c,v 1.5 2002/10/02 05:10:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -55,9 +55,8 @@ struct plrtc_softc {
 static int  plrtc_probe  (struct device *, struct cfdata *, void *);
 static void plrtc_attach (struct device *, struct device *, void *);
 
-const struct cfattach plrtc_ca = {
-	sizeof(struct plrtc_softc), plrtc_probe, plrtc_attach
-};
+CFATTACH_DECL(plrtc, sizeof(struct plrtc_softc),
+    plrtc_probe, plrtc_attach, NULL, NULL);
 
 /* Remember our handle, since it isn't passed in by inittodr and
    resettodr.  */

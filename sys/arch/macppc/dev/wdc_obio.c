@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.21 2002/09/27 20:33:37 thorpej Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.22 2002/10/02 05:30:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,11 +86,8 @@ static void wdc_obio_select __P((struct channel_softc *, int));
 static void adjust_timing __P((struct channel_softc *));
 static void ata4_adjust_timing __P((struct channel_softc *));
 
-const struct cfattach wdc_obio_ca = {
-	sizeof(struct wdc_obio_softc), wdc_obio_probe, wdc_obio_attach,
-	wdc_obio_detach, wdcactivate
-};
-
+CFATTACH_DECL(wdc_obio, sizeof(struct wdc_obio_softc),
+    wdc_obio_probe, wdc_obio_attach, wdc_obio_detach, wdcactivate);
 
 int
 wdc_obio_probe(parent, match, aux)

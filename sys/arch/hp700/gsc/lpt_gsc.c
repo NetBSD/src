@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_gsc.c,v 1.4 2002/09/27 20:32:02 thorpej Exp $	*/
+/*	$NetBSD: lpt_gsc.c,v 1.5 2002/10/02 05:17:50 thorpej Exp $	*/
 
 /*	$OpenBSD: lpt_gsc.c,v 1.6 2000/07/21 17:41:06 mickey Exp $	*/
 
@@ -80,9 +80,8 @@ int lpt_isa_debug = 0;
 int	lpt_gsc_probe __P((struct device *, struct cfdata *, void *));
 void	lpt_gsc_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach lpt_gsc_ca = {
-	sizeof(struct lpt_softc), lpt_gsc_probe, lpt_gsc_attach
-};
+CFATTACH_DECL(lpt_gsc, sizeof(struct lpt_softc),
+    lpt_gsc_probe, lpt_gsc_attach, NULL, NULL);
 
 int	lpt_port_test __P((bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    bus_size_t, u_char, u_char));

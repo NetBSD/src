@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 2002/09/27 20:30:53 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.30 2002/10/02 05:04:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -96,9 +96,8 @@ dev_type_write(rtcwrite);
 static void	clockattach __P((struct device *, struct device *, void *));
 static int	clockmatch __P((struct device *, struct cfdata *, void *));
 
-const struct cfattach clock_ca = {
-	sizeof(struct clock_softc), clockmatch, clockattach
-};
+CFATTACH_DECL(clock, sizeof(struct clock_softc),
+    clockmatch, clockattach, NULL, NULL);
 
 extern struct cfdriver clock_cd;
 

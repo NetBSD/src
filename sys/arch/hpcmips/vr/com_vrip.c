@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.13 2002/09/27 20:32:31 thorpej Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.14 2002/10/02 05:26:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -88,9 +88,8 @@ void vrcmu_init(void);
 void vrcmu_supply(int);
 void vrcmu_mask(int);
 
-const struct cfattach com_vrip_ca = {
-	sizeof(struct com_vrip_softc), com_vrip_probe, com_vrip_attach
-};
+CFATTACH_DECL(com_vrip, sizeof(struct com_vrip_softc),
+    com_vrip_probe, com_vrip_attach, NULL, NULL);
 
 int
 com_vrip_cndb_attach(bus_space_tag_t iot, int iobase, int rate, int frequency,

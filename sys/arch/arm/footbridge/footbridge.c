@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.9 2002/09/27 20:30:35 thorpej Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.10 2002/10/02 05:02:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -71,9 +71,8 @@ static int footbridge_print	__P((void *aux, const char *pnp));
 static int footbridge_intr	__P((void *arg));
 
 /* Driver and attach structures */
-const struct cfattach footbridge_ca = {
-	sizeof(struct footbridge_softc), footbridge_match, footbridge_attach
-};
+CFATTACH_DECL(footbridge, sizeof(struct footbridge_softc),
+    footbridge_match, footbridge_attach, NULL, NULL);
 
 /* Various bus space tags */
 extern struct bus_space footbridge_bs_tag;

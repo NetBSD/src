@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.9 2002/09/27 20:30:24 thorpej Exp $	*/
+/*	$NetBSD: btl.c,v 1.10 2002/10/02 04:59:47 thorpej Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -167,9 +167,8 @@ int	btprobe __P((struct device *, struct cfdata *, void *));
 void	btattach __P((struct device *, struct device *, void *));
 int	btprint __P((void *, const char *));
 
-const struct cfattach btl_ca = {
-	sizeof(struct bt_softc), btprobe, btattach
-};
+CFATTACH_DECL(btl, sizeof(struct bt_softc),
+    btprobe, btattach, NULL, NULL);
 
 #define BT_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
 #define	BT_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */

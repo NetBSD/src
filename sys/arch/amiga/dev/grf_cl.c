@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.32 2002/09/27 20:29:57 thorpej Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.33 2002/10/02 04:55:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.32 2002/09/27 20:29:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.33 2002/10/02 04:55:49 thorpej Exp $");
 
 #include "grfcl.h"
 #if NGRFCL > 0
@@ -188,9 +188,8 @@ static unsigned char cl_imageptr[8 * 64], cl_maskptr[8 * 64];
 static unsigned char cl_sprred[2], cl_sprgreen[2], cl_sprblue[2];
 
 /* standard driver stuff */
-const struct cfattach grfcl_ca = {
-	sizeof(struct grf_softc), grfclmatch, grfclattach
-};
+CFATTACH_DECL(grfcl, sizeof(struct grf_softc),
+    grfclmatch, grfclattach, NULL, NULL);
 
 static struct cfdata *cfdata;
 

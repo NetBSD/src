@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.10 2002/09/27 20:32:16 thorpej Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.11 2002/10/02 05:26:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -172,9 +172,8 @@ void	ringbuf_producer_return(struct ring_buf*, size_t);
 void	*ringbuf_consumer_get(struct ring_buf*, size_t*);
 void	ringbuf_consumer_return(struct ring_buf*);
 
-const struct cfattach ucbsnd_ca = {
-	sizeof(struct ucbsnd_softc), ucbsnd_match, ucbsnd_attach
-};
+CFATTACH_DECL(ucbsnd, sizeof(struct ucbsnd_softc),
+    ucbsnd_match, ucbsnd_attach, NULL, NULL);
 
 dev_type_open(ucbsndopen);
 dev_type_close(ucbsndclose);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.6 2002/09/27 20:33:36 thorpej Exp $	*/
+/*	$NetBSD: nvram.c,v 1.7 2002/10/02 05:30:42 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -59,9 +59,8 @@ struct nvram_softc {
 	char *nv_data;
 };
 
-const struct cfattach nvram_ca = {
-	sizeof(struct nvram_softc), nvram_match, nvram_attach
-};
+CFATTACH_DECL(nvram, sizeof(struct nvram_softc),
+    nvram_match, nvram_attach, NULL, NULL);
 
 extern struct cfdriver nvram_cd;
 

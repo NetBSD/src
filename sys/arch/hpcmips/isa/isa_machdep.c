@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.26 2002/09/27 20:32:21 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.27 2002/10/02 05:26:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,9 +98,8 @@ struct vrisab_softc {
 	struct hpcmips_isa_chipset sc_isa_ic;
 };
 
-const struct cfattach vrisab_ca = {
-	sizeof(struct vrisab_softc), vrisabmatch, vrisabattach
-};
+CFATTACH_DECL(vrisab, sizeof(struct vrisab_softc),
+    vrisabmatch, vrisabattach, NULL, NULL);
 
 #ifdef DEBUG_FIND_PCIC
 #include <mips/cpuregs.h>

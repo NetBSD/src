@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_jazzio.c,v 1.2 2002/09/27 20:30:32 thorpej Exp $	*/
+/*	$NetBSD: lpt_jazzio.c,v 1.3 2002/10/02 04:59:49 thorpej Exp $	*/
 /*	$OpenBSD: lpt_lbus.c,v 1.3 1997/04/10 16:29:17 pefo Exp $	*/
 
 /*
@@ -70,9 +70,8 @@
 int lpt_jazzio_probe __P((struct device *, struct cfdata *, void *));
 void lpt_jazzio_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach lpt_jazzio_ca = {
-	sizeof(struct lpt_softc), lpt_jazzio_probe, lpt_jazzio_attach
-};
+CFATTACH_DECL(lpt_jazzio, sizeof(struct lpt_softc),
+    lpt_jazzio_probe, lpt_jazzio_attach, NULL, NULL);
 
 /*
  * XXX - copied from lpt_isa.c
