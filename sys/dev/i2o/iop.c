@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.17 2001/09/18 18:15:51 wiz Exp $	*/
+/*	$NetBSD: iop.c,v 1.18 2001/09/21 23:44:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -210,12 +210,9 @@ static void	iop_config_interrupts(struct device *);
 static void	iop_configure_devices(struct iop_softc *, int, int);
 static void	iop_devinfo(int, char *);
 static int	iop_print(void *, const char *);
-static int	iop_reconfigure(struct iop_softc *, u_int);
 static void	iop_shutdown(void *);
 static int	iop_submatch(struct device *, struct cfdata *, void *);
-#ifdef notyet
 static int	iop_vendor_print(void *, const char *);
-#endif
 
 static void	iop_adjqparam(struct iop_softc *, int);
 static void	iop_create_reconf_thread(void *);
@@ -233,7 +230,6 @@ static int	iop_passthrough(struct iop_softc *, struct ioppt *,
 static void	iop_reconf_thread(void *);
 static void	iop_release_mfa(struct iop_softc *, u_int32_t);
 static int	iop_reset(struct iop_softc *);
-static int	iop_status_get(struct iop_softc *, int);
 static int	iop_systab_set(struct iop_softc *);
 static void	iop_tfn_print(struct iop_softc *, struct i2o_fault_notify *);
 
@@ -433,6 +429,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 static void
 iop_config_interrupts(struct device *self)
 {
+	struct iop_attach_args ia;
 	struct iop_softc *sc, *iop;
 	struct i2o_systab_entry *ste;
 	int rv, i, niop;
@@ -536,13 +533,16 @@ iop_config_interrupts(struct device *self)
 		return;
 	}
 
-#ifdef notyet
-	/* Attempt to match and attach a product-specific extension. */
+	/*
+	 * Attempt to match and attach a product-specific extension.
+	 */
 	ia.ia_class = I2O_CLASS_ANY;
 	ia.ia_tid = I2O_TID_IOP;
 	config_found_sm(self, &ia, iop_vendor_print, iop_submatch);
-#endif
 
+	/*
+	 * Start device configuration.
+	 */
 	lockmgr(&sc->sc_conflock, LK_EXCLUSIVE, NULL);
 	if ((rv = iop_reconfigure(sc, 0)) == -1) {
 		printf("%s: configure failed (%d)\n", sc->sc_dv.dv_xname, rv);
@@ -615,7 +615,7 @@ iop_reconf_thread(void *cookie)
 /*
  * Reconfigure: find new and removed devices.
  */
-static int
+int
 iop_reconfigure(struct iop_softc *sc, u_int chgind)
 {
 	struct iop_msg *im;
@@ -840,16 +840,12 @@ iop_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-#ifdef notyet
 static int
 iop_vendor_print(void *aux, const char *pnp)
 {
 
-	if (pnp != NULL)
-		printf("vendor specific extension at %s", pnp);
-	return (UNCONF);
+	return (QUIET);
 }
-#endif
 
 static int
 iop_submatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -888,13 +884,13 @@ iop_shutdown(void *junk)
 
 	/* Wait.  Some boards could still be flushing, stupidly enough. */
 	delay(5000*1000);
-	printf(" done.\n");
+	printf(" done\n");
 }
 
 /*
  * Retrieve IOP status.
  */
-static int
+int
 iop_status_get(struct iop_softc *sc, int nosleep)
 {
 	struct i2o_exec_status_get mf;

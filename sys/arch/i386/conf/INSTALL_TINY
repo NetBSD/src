@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.39 2001/09/14 21:44:22 nathanw Exp $
+#	$NetBSD: INSTALL_TINY,v 1.40 2001/09/21 23:44:22 ad Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -255,6 +255,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #iop*	at pci? dev ? function ?	# I/O processor
 #iopsp*	at iop? tid ?			# SCSI/FC-AL ports
 #ld*	at iop? tid ?			# block devices
+#dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
 # SCSI Controllers and Devices
 
