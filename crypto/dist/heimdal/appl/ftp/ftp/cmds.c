@@ -36,7 +36,7 @@
  */
 
 #include "ftp_locl.h"
-RCSID("$Id: cmds.c,v 1.1.1.2 2000/08/02 19:58:36 assar Exp $");
+RCSID("$Id: cmds.c,v 1.1.1.3 2001/06/19 22:07:45 assar Exp $");
 
 typedef void (*sighand)(int);
 
@@ -81,7 +81,7 @@ void
 setpeer(int argc, char **argv)
 {
 	char *host;
-	short port;
+	u_short port;
 	struct servent *sp;
 
 	if (connected) {
@@ -102,14 +102,23 @@ setpeer(int argc, char **argv)
 		errx(1, "You bastard. You removed ftp/tcp from services");
 	port = sp->s_port;
 	if (argc > 2) {
-		port = atoi(argv[2]);
-		if (port <= 0) {
-			printf("%s: bad port number-- %s\n", argv[1], argv[2]);
-			printf ("usage: %s host-name [port]\n", argv[0]);
-			code = -1;
-			return;
+		sp = getservbyname(argv[2], "tcp");
+		if (sp != NULL) {
+			port = sp->s_port;
+		} else {
+			char *ep;
+
+			port = strtol(argv[2], &ep, 0);
+			if (argv[2] == ep) {
+				printf("%s: bad port number-- %s\n",
+				       argv[1], argv[2]);
+				printf ("usage: %s host-name [port]\n",
+					argv[0]);
+				code = -1;
+				return;
+			}
+			port = htons(port);
 		}
-		port = htons(port);
 	}
 	host = hookup(argv[1], port);
 	if (host) {

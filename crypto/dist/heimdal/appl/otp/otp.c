@@ -34,7 +34,7 @@
 #include "otp_locl.h"
 #include <getarg.h>
 
-RCSID("$Id: otp.c,v 1.1.1.2 2000/08/02 19:58:15 assar Exp $");
+RCSID("$Id: otp.c,v 1.1.1.3 2001/06/19 22:07:40 assar Exp $");
 
 static int listp;
 static int deletep;
@@ -293,7 +293,7 @@ main (int argc, char **argv)
     OtpAlgorithm *alg = otp_find_alg (OTP_ALG_DEFAULT);
     int optind = 0;
   
-    set_progname (argv[0]);
+    setprogname (argv[0]);
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);
     if(help_flag)

@@ -33,7 +33,7 @@
 
 #include <config.h>
 
-RCSID("$Id: enc_des.c,v 1.1.1.2 2000/08/02 19:58:17 assar Exp $");
+RCSID("$Id: enc_des.c,v 1.1.1.3 2001/06/19 22:07:41 assar Exp $");
 
 #if	defined(AUTHENTICATION) && defined(ENCRYPTION) && defined(DES_ENCRYPTION)
 #include <arpa/telnet.h>
@@ -50,7 +50,11 @@ RCSID("$Id: enc_des.c,v 1.1.1.2 2000/08/02 19:58:17 assar Exp $");
 #include "encrypt.h"
 #include "misc-proto.h"
 
+#ifdef HAVE_OPENSSL_DES_H
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 
 extern int encrypt_debug_mode;
 
@@ -404,7 +408,7 @@ static void fb64_session(Session_Key *key, int server, struct fb *fbp)
 	fb64_stream_key(fbp->krbdes_key, &fbp->streams[DIR_DECRYPT-1]);
 
 	if (fbp->once == 0) {
-#ifndef OLD_DES_RANDOM_KEY
+#if !defined(OLD_DES_RANDOM_KEY) && !defined(HAVE_OPENSSL_DES_H)
 		des_init_random_number_generator(&fbp->krbdes_key);
 #endif
 		fbp->once = 1;
