@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.12 1996/02/04 02:17:39 christos Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -45,8 +45,8 @@
 #include <sys/tty.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
+#include <sys/conf.h>
 
-#include <kern/kern_conf.h>
 
 #define cttyvp(p) ((p)->p_flag & P_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
 
