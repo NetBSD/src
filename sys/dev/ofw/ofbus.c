@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.3 1996/10/13 01:38:11 christos Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.4 1997/04/16 23:32:04 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,7 +36,7 @@
 
 #include <dev/ofw/openfirm.h>
 
-int ofbprobe __P((struct device *, void *, void *));
+int ofbprobe __P((struct device *, struct cfdata *, void *));
 void ofbattach __P((struct device *, struct device *, void *));
 static int ofbprint __P((void *, const char *));
 
@@ -81,7 +81,8 @@ ofbprint(aux, name)
 int
 ofbprobe(parent, cf, aux)
 	struct device *parent;
-	void *cf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct ofprobe *ofp = aux;
 	
