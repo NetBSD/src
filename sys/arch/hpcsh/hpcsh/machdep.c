@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2002/02/01 17:52:55 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2002/02/07 17:06:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -265,8 +265,8 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 
 	/* find memory cluster */
 	physmem = mem_cluster_init(SH3_P1SEG_TO_PHYS(kernend));
-	nkpde = physmem >> (PDSHIFT - 1);
-	DPRINTF(("nkpde = %d\n", nkpde));
+	nkpde = ptoa(physmem) >> (PDSHIFT - 1);
+	DPRINTF(("physmem= %d, nkpde = %d\n", physmem, nkpde));
 
 	/* steal page dir area, process0 stack, page table area */
 	sz = NBPG + USPACE + NBPG * (1 + nkpde);
