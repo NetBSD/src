@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.35 2000/03/19 14:56:54 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.36 2000/05/01 12:11:50 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -211,7 +211,7 @@ _longjmp:.word	0
 	movl	4(r1), fp
 	movl	12(r1), sp
 	jmp	*8(r1)
-#endif 
+#endif
 
 #
 # setrunqueue/remrunqueue fast variants.
@@ -250,7 +250,11 @@ remrq:	.asciz	"remrunqueue"
 # pi or something.
 #
 idle:	mtpr	$0,$PR_IPL		# Enable all types of interrupts
-1:	tstl	_whichqs		# Anything ready to run?
+1:	movab	_uvm,r0
+	tstl	UVM_PAGE_IDLE_ZERO(r0)
+	beql	2f
+	calls	$0,_uvm_pageidlezero
+2:	tstl	_whichqs		# Anything ready to run?
 	beql	1b			# no, continue to loop
 	brb	Swtch			# Yes, goto switch again.
 
@@ -364,10 +368,17 @@ _copyoutstr:	.globl	_copyoutstr
 	.word	0
 	movl	4(ap),r4	# from
 	movl	8(ap),r5	# to
-	movl	12(ap),r2	# len
 	movl	16(ap),r3	# copied
+	movl	12(ap),r2	# len
 
-	movab	2f,*pcbtrap
+	bneq	0f		# zero length?
+	tstl	r3
+	beql	1f		# Save zero length?
+	clrl	(r3)
+1:	clrl	r0
+	ret
+
+0:	movab	2f,*pcbtrap
 
 /*
  * This routine consists of two parts: One is for MV2 that doesn't have
