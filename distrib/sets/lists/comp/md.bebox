@@ -1,10 +1,9 @@
-# $NetBSD: md.bebox,v 1.16 2001/05/03 13:17:26 soren Exp $
+# $NetBSD: md.bebox,v 1.17 2002/05/04 04:50:46 briggs Exp $
 ./usr/include/bebox	comp-c-include
 ./usr/include/bebox/_G_config.h	comp-c-include
 ./usr/include/bebox/ansi.h	comp-c-include
 ./usr/include/bebox/aout_machdep.h	comp-c-include
 ./usr/include/bebox/asm.h	comp-c-include
-./usr/include/bebox/bat.h	comp-c-include
 ./usr/include/bebox/bootinfo.h	comp-c-include
 ./usr/include/bebox/bswap.h	comp-c-include
 ./usr/include/bebox/bus.h	comp-c-include
@@ -44,7 +43,6 @@
 ./usr/include/bebox/proc.h	comp-c-include
 ./usr/include/bebox/profile.h	comp-c-include
 ./usr/include/bebox/psl.h	comp-c-include
-./usr/include/bebox/pte.h	comp-c-include
 ./usr/include/bebox/ptrace.h	comp-c-include
 ./usr/include/bebox/reg.h	comp-c-include
 ./usr/include/bebox/reloc.h	comp-c-include
