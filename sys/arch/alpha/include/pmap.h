@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.11 1998/03/26 02:18:04 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.12 1998/03/26 02:53:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -152,16 +152,24 @@ struct pv_page {
 
 #ifdef _KERNEL
 
-#include "opt_avalon_a12.h"			/* XXX */
+#ifndef _LKM
+#include "opt_new_scc_driver.h"
 #include "opt_dec_3000_300.h"			/* XXX */
 #include "opt_dec_3000_500.h"			/* XXX */
 #include "opt_dec_kn8ae.h"			/* XXX */
 
-#if defined(DEC_3000_300)	\
- || defined(DEC_3000_500)	\
+#if defined(NEW_SCC_DRIVER)
+#if defined(DEC_KN8AE)
+#define	_PMAP_MAY_USE_PROM_CONSOLE
+#endif
+#else /* ! NEW_SCC_DRIVER */
+#if defined(DEC_3000_300)		\
+ || defined(DEC_3000_500)		\
  || defined(DEC_KN8AE) 				/* XXX */
 #define _PMAP_MAY_USE_PROM_CONSOLE		/* XXX */
 #endif						/* XXX */
+#endif /* NEW_SCC_DRIVER */
+#endif /* _LKM */
  
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
