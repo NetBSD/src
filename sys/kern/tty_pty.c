@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.56 2001/05/02 10:32:08 scw Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.57 2001/11/12 15:25:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,9 @@
  * Pseudo-teletype Driver
  * (Actually two drivers, requiring two entries in 'cdevsw')
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.57 2001/11/12 15:25:28 lukem Exp $");
 
 #include "opt_compat_sunos.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.51 2001/10/30 15:32:04 thorpej Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.52 2001/11/12 15:25:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)vfs_vnops.c	8.14 (Berkeley) 6/15/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.52 2001/11/12 15:25:42 lukem Exp $");
 
 #include "fs_union.h"
 

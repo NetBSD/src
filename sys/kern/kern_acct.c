@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.49 2000/05/08 19:06:36 thorpej Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.50 2001/11/12 15:25:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -40,6 +40,9 @@
  *
  *	@(#)kern_acct.c	8.8 (Berkeley) 5/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.50 2001/11/12 15:25:05 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

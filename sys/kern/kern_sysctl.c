@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.96 2001/11/08 21:24:47 bouyer Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.97 2001/11/12 15:25:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,6 +41,9 @@
 /*
  * sysctl system call.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.97 2001/11/12 15:25:17 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.15 2001/10/30 15:32:03 thorpej Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.16 2001/11/12 15:25:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.16 2001/11/12 15:25:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
