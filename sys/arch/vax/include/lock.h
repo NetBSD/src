@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.5 2000/07/01 06:41:06 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.6 2001/06/03 15:10:11 ragge Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -33,29 +33,51 @@
 #ifndef _VAX_LOCK_H_
 #define _VAX_LOCK_H_
 
-typedef	__volatile int		__cpu_simple_lock_t;
+typedef __volatile int		__cpu_simple_lock_t;
 
-#define	__SIMPLELOCK_LOCKED	1
-#define	__SIMPLELOCK_UNLOCKED	0
+#define __SIMPLELOCK_LOCKED	1
+#define __SIMPLELOCK_UNLOCKED	0
 
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
-	*alp = __SIMPLELOCK_UNLOCKED;
+	__asm__ __volatile ("movl %0,r1;jsb Sunlock"
+		: /* No output */
+		: "g"(alp)
+		: "r1","cc","memory");
+#if 0
+	__asm__ __volatile ("bbcci $0, %0, 1f;1:"
+		: /* No output */
+		: "m"(*alp));
+#endif
 }
 
 static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
+	__asm__ __volatile ("movl %0,r1;jsb Slock"
+		: /* No output */
+		: "g"(alp)
+		: "r0","r1","cc","memory");
+#if 0
 	__asm__ __volatile ("1:;bbssi $0, %0, 1b"
 		: /* No output */
 		: "m"(*alp));
+#endif
 }
 
 static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
-	*alp = __SIMPLELOCK_UNLOCKED;
+	__asm__ __volatile ("movl %0,r1;jsb Sunlock"
+		: /* No output */
+		: "g"(alp)
+		: "r1","cc","memory");
+#if 0
+	__asm__ __volatile ("bbcci $0, %0, 1f;1:"
+		: /* No output */
+		: "m"(*alp));
+#endif
 }
 
 static __inline int
@@ -63,11 +85,38 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int ret;
 
+	__asm__ __volatile ("movl %1,r1;jsb Slocktry;movl r0,%0"
+		: "=&r"(ret)
+		: "g"(alp)
+		: "r0","r1","cc","memory");
+#if 0
 	__asm__ __volatile ("movl $0,%0;bbssi $0,%1,1f;incl %0;1:"
 		: "=&r"(ret)
 		: "m"(*alp));
+#endif
 
 	return ret;
 }
 
+#if defined(MULTIPROCESSOR)
+/*
+ * On the Vax, interprocessor interrupts can come in at device priority
+ * level or lower. This can cause some problems while waiting for r/w
+ * spinlocks from a high'ish priority level: IPIs that come in will not
+ * be processed. This can lead to deadlock.
+ *
+ * This hook allows IPIs to be processed while a spinlock's interlock
+ * is released.
+ */
+#define SPINLOCK_SPIN_HOOK						\
+do {									\
+	struct cpu_info *__ci = curcpu();				\
+									\
+	if (__ci->ci_ipimsgs != 0) {					\
+		/* printf("CPU %lu has IPIs pending\n",			\
+		    __ci->ci_cpuid); */					\
+		cpu_handle_ipi();					\
+	}								\
+} while (0)
+#endif /* MULTIPROCESSOR */
 #endif /* _VAX_LOCK_H_ */
