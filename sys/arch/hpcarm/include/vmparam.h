@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 2002/03/23 02:42:46 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16 2002/03/23 02:54:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -46,11 +46,11 @@
 
 /*
  * The line between user space and kernel space
- * Mappings >= KERNEL_SPACE_START are constant across all processes
+ * Mappings >= KERNEL_BASE are constant across all processes
  */
-#define	KERNEL_SPACE_START	0xc0000000
-
 #define	KERNEL_BASE		0xc0000000
+
+/* Various constants used by the MD code*/
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00040000)
 #define	APTE_BASE		(KERNEL_BASE + 0x00800000)
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x00c00000)
