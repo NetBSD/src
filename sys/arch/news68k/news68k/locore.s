@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.9 2000/08/20 21:50:10 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.10 2000/09/15 17:15:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -983,7 +983,16 @@ ASENTRY_NOPROFILE(Idle)
 	/* Release sched_lock */
 	jbsr	_C_LABEL(sched_unlock_idle)
 #endif
+	movw	#PSL_LOWIPL,%sr
+
+	/* Try to zero some pages. */
+	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO,%d0
+	jeq	1f
+	jbsr	_C_LABEL(uvm_pageidlezero)
+	jra	2f
+1:
 	stop	#PSL_LOWIPL
+2:
 	movw	#PSL_HIGHIPL,%sr
 #if defined(LOCKDEBUG)
 	/* Acquire sched_lock */
