@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.46 2002/12/29 19:21:34 kristerw Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.47 2003/01/18 18:05:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -265,11 +265,11 @@
  *	  larger code.
  */
 #if __GNUC_PREREQ__(2, 96)
-#define	__predict_true(exp)	__builtin_expect(((exp) != 0), 1)
-#define	__predict_false(exp)	__builtin_expect(((exp) != 0), 0)
+#define	__predict_true(exp)	__builtin_expect((exp) != 0, 1)
+#define	__predict_false(exp)	__builtin_expect((exp) != 0, 0)
 #else
-#define	__predict_true(exp)	((exp) != 0)
-#define	__predict_false(exp)	((exp) != 0)
+#define	__predict_true(exp)	(exp)
+#define	__predict_false(exp)	(exp)
 #endif
 
 /*
