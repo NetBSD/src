@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.12 2001/11/13 07:26:33 lukem Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.13 2001/11/18 04:27:49 mrg Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.12 2001/11/13 07:26:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.13 2001/11/18 04:27:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +150,11 @@ static const struct wi_pcmcia_product {
 
 	{ PCMCIA_VENDOR_LUCENT,
 	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	  PCMCIA_CIS_NANOSPEED_PRISM2,
+	  PCMCIA_STR_NANOSPEED_PRISM2 },
+
+	{ PCMCIA_VENDOR_LINKSYS2,
+	  PCMCIA_PRODUCT_LINKSYS2_IWN,
 	  PCMCIA_CIS_NANOSPEED_PRISM2,
 	  PCMCIA_STR_NANOSPEED_PRISM2 },
 
