@@ -27,14 +27,14 @@
  *	i4b - Siemens HSCX chip (B-channel) handling
  *	--------------------------------------------
  *
- *	$Id: hscx.c,v 1.3 2001/11/13 13:14:37 lukem Exp $ 
+ *	$Id: hscx.c,v 1.4 2002/03/17 09:45:58 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.3 2001/11/13 13:14:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.4 2002/03/17 09:45:58 martin Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 300001
@@ -212,7 +212,7 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 					isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
 				}
 
-				(*chan->drvr_linktab->bch_rx_data_ready)(chan->drvr_linktab->unit);
+				(*chan->drvr_linktab->l4_driver->bch_rx_data_ready)(chan->drvr_linktab->l4_driver_softc);
 
 				activity = ACT_RX;
 				
@@ -300,7 +300,7 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 
 				/* signal upper driver that data is available */
 
-				(*chan->drvr_linktab->bch_rx_data_ready)(chan->drvr_linktab->unit);
+				(*chan->drvr_linktab->l4_driver->bch_rx_data_ready)(chan->drvr_linktab->l4_driver_softc);
 				
 				/* alloc new buffer */
 				
@@ -356,7 +356,7 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 			if(chan->out_mbuf_head == NULL)
 			{
 				chan->state &= ~HSCX_TX_ACTIVE;
-				(*chan->drvr_linktab->bch_tx_queue_empty)(chan->drvr_linktab->unit);
+				(*chan->drvr_linktab->l4_driver->bch_tx_queue_empty)(chan->drvr_linktab->l4_driver_softc);
 			}
 			else
 			{
@@ -449,7 +449,7 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 	/* call timeout handling routine */
 	
 	if(activity == ACT_RX || activity == ACT_TX)
-		(*chan->drvr_linktab->bch_activity)(chan->drvr_linktab->unit, activity);
+		(*chan->drvr_linktab->l4_driver->bch_activity)(chan->drvr_linktab->l4_driver_softc, activity);
 }
 
 /*---------------------------------------------------------------------------*

@@ -27,14 +27,14 @@
  *	i4b_bchan.c - B channel handling L1 procedures
  *	----------------------------------------------
  *
- *	$Id: isic_bchan.c,v 1.4 2001/11/13 13:14:39 lukem Exp $
+ *	$Id: isic_bchan.c,v 1.5 2002/03/17 09:45:59 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.4 2001/11/13 13:14:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.5 2002/03/17 09:45:59 martin Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -322,8 +322,8 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 	/* call timeout handling routine */
 	
 	if(activity == ACT_RX || activity == ACT_TX)
-		(*chan->drvr_linktab->bch_activity)(chan->drvr_linktab->unit,
-			activity);
+		(*chan->drvr_linktab->l4_driver->bch_activity)(
+		    chan->drvr_linktab->l4_driver_softc, activity);
 
 	if(cmd)
 		isic_hscx_cmd(sc, h_chan, cmd);
@@ -376,6 +376,13 @@ isic_set_linktab(isdn_layer1token t, int channel, drvr_link_t *dlt)
 	chan->drvr_linktab = dlt;
 }
 
+static const struct isdn_l4_bchannel_functions
+isic_l4_bchannel_functions = {
+	isic_bchannel_setup,
+	isic_bchannel_start,
+	isic_bchannel_stat
+};
+
 /*---------------------------------------------------------------------------*
  *	initialize our local linktab
  *---------------------------------------------------------------------------*/
@@ -392,9 +399,7 @@ isic_init_linktab(struct l1_softc *sc)
 	/* local setup */
 	lt->l1token = sc;
 	lt->channel = HSCX_CH_A;
-	lt->bch_config = isic_bchannel_setup;
-	lt->bch_tx_start = isic_bchannel_start;
-	lt->bch_stat = isic_bchannel_stat;
+	lt->bchannel_driver = &isic_l4_bchannel_functions;
 	lt->tx_queue = &chan->tx_queue;
 
 	/* used by non-HDLC data transfers, i.e. telephony drivers */
@@ -408,9 +413,7 @@ isic_init_linktab(struct l1_softc *sc)
 
 	lt->l1token = sc;
 	lt->channel = HSCX_CH_B;
-	lt->bch_config = isic_bchannel_setup;
-	lt->bch_tx_start = isic_bchannel_start;
-	lt->bch_stat = isic_bchannel_stat;
+	lt->bchannel_driver = &isic_l4_bchannel_functions;
 	lt->tx_queue = &chan->tx_queue;
 
 	/* used by non-HDLC data transfers, i.e. telephony drivers */
