@@ -1,3 +1,5 @@
+/*	$NetBSD: amu.h,v 1.1.1.2 1997/10/26 00:02:21 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amu.h,v 1.1.1.1 1997/07/24 21:20:10 christos Exp $
+ * Id: amu.h,v 1.1 1996/01/13 23:23:39 ezk Exp ezk 
  *
  */
 

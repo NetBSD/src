@@ -1,3 +1,4 @@
+$NetBSD: am-utils.info-1,v 1.1.1.3 1997/10/26 00:03:40 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
@@ -1144,12 +1145,10 @@ defined as empty strings.
      the name of the mount map being used.
 
 `netnumber'
-`primnetnum'
      the number of the network to which the primary network interface is
      attached.  This value is also output by the "-v" option.
 
 `network'
-`primnetname'
 `wire'
      the name of the network to which the primary network interface is
      attached.  If a symbolic name cannot be found in the networks or
@@ -1159,18 +1158,6 @@ defined as empty strings.
 `path'
      the full pathname of the name being resolved.  For example
      `/home/foo' in the example above.
-
-`subsnetname'
-     the name of the network to which the subsidiary (second) network
-     interface is attached.  If a symbolic name cannot be found in the
-     networks or hosts database then dotted IP address format is used.
-     This value is also output by the "-v" option.
-
-`subsnetnum'
-     the number of the network to which the subsidiary (second) network
-     interface is attached.  If a symbolic name cannot be found in the
-     networks or hosts database then dotted IP address format is used.
-     This value is also output by the "-v" option.
 
    Selectors can be negated by using `!=' instead of `=='.  For example
 to select a location on all non-Vax machines the selector `arch!=vax'
@@ -1191,6 +1178,12 @@ compared with a value.
      If the current host as determined by the value of `${host}' is a
      member of the netgroup ARG, this selector evaluates to true.
      Otherwise it evaluates to false.
+
+`in_network(ARG)'
+     If the current host has any network interface that is locally
+     attached to the network specified in ARG (either via name or
+     number), this selector evaluates to true.  Otherwise it evaluates
+     to false.
 
 `true(ARG)'
      Always evaluates to true.  ARG is ignored.

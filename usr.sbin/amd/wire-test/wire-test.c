@@ -1,3 +1,5 @@
+/*	$NetBSD: wire-test.c,v 1.1.1.2 1997/10/26 00:03:37 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: wire-test.c,v 1.1.1.1 1997/09/26 16:08:40 christos Exp $
+ * Id: wire-test.c,v 5.2.2.2 1992/06/07 18:06:46 jsp Exp jsp 
  *
  */
 
@@ -59,9 +61,8 @@ int
 main(int argc, char **argv)
 {
   char *networkName1, *networkNumber1;
-  char *networkName2, *networkNumber2;
   struct in_addr myipaddr;	/* (An) IP address of this host */
-  char *testhost, *proto;
+  char *testhost, *proto, tmpbuf[1024];
   int nv, ret;
   struct sockaddr_in *ip;
   struct hostent *hp = 0;
@@ -74,31 +75,11 @@ main(int argc, char **argv)
     perror(argv[0]);
     exit(1);
   }
-  if ((networkName1 = (char *) calloc(STRMAX, sizeof(char)))
-      == (char *) NULL) {
-    perror(argv[0]);
-    exit(1);
-  }
-  if ((networkNumber1 = (char *) calloc(STRMAX, sizeof(char)))
-      == (char *) NULL) {
-    perror(argv[0]);
-    exit(1);
-  }
-  if ((networkName2 = (char *) calloc(STRMAX, sizeof(char)))
-      == (char *) NULL) {
-    perror(argv[0]);
-    exit(1);
-  }
-  if ((networkNumber2 = (char *) calloc(STRMAX, sizeof(char)))
-      == (char *) NULL) {
-    perror(argv[0]);
-    exit(1);
-  }
-  getwire(&networkName1, &networkNumber1, &networkName2, &networkNumber2);
-  fprintf(stderr, "Network name is \"%s\"\n", networkName1);
-  fprintf(stderr, "Network number is \"%s\"\n", networkNumber1);
-  fprintf(stderr, "Network name is \"%s\"\n", networkName2);
-  fprintf(stderr, "Network number is \"%s\"\n", networkNumber2);
+
+  /* get list of networks */
+  getwire(&networkName1, &networkNumber1);
+  print_wires(tmpbuf);
+  fprintf(stderr, "%s", tmpbuf);
 
   /* also print my IP address */
   amu_get_myaddress(&myipaddr);
