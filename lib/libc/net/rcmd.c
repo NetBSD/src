@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.18 1997/01/23 14:02:05 mrg Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.19 1997/02/08 04:38:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.18 1997/01/23 14:02:05 mrg Exp $";
+static char *rcsid = "$NetBSD: rcmd.c,v 1.19 1997/02/08 04:38:30 mycroft Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -155,9 +155,9 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 			goto bad;
 		}
 		reads[0].fd = s;
+		reads[0].events = POLLIN;
 		reads[1].fd = s2;
-		reads[0].events = reads[1].events = reads[0].revents =
-						    reads[1].revents = POLLIN;
+		reads[1].events = POLLIN;
 		errno = 0;
 		if (poll(reads, 2, INFTIM) < 1 ||
 		    (reads[1].revents & POLLIN) == 0) {

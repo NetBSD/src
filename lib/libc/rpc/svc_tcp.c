@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.9 1996/12/24 21:49:55 christos Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.10 1997/02/08 04:38:04 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_tcp.c,v 1.9 1996/12/24 21:49:55 christos Exp $";
+static char *rcsid = "$NetBSD: svc_tcp.c,v 1.10 1997/02/08 04:38:04 mycroft Exp $";
 #endif
 
 /*
@@ -303,7 +303,7 @@ readtcp(xprt, buf, len)
 
 	do {
 		pollfd.fd = sock;
-		pollfd.events = pollfd.revents = POLLIN;
+		pollfd.events = POLLIN;
 		switch (poll(&pollfd, 1, milliseconds)) {
 		case -1:
 			if (errno == EINTR) {
