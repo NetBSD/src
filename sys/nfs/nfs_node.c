@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.31 2000/03/16 18:08:29 jdolecek Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.32 2000/03/30 02:40:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -131,7 +131,6 @@ nfs_nget(mntp, fhp, fhsize, npp)
 	register struct nfsnode *np;
 	struct nfsnodehashhead *nhpp;
 	register struct vnode *vp;
-	extern int (**nfsv2_vnodeop_p)__P((void *));
 	struct vnode *nvp;
 	int error;
 
