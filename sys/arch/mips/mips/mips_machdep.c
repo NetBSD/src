@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.93 2000/07/10 21:12:13 jeffs Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.94 2000/07/10 23:21:16 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.93 2000/07/10 21:12:13 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.94 2000/07/10 23:21:16 jeffs Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -435,6 +435,11 @@ mips_vector_init()
 		mips3_SetWIRED(0);
 		mips3_TBIA(mips_num_tlb_entries);
 		mips3_SetWIRED(MIPS3_TLB_WIRED_UPAGES);
+		if (mips3_L1TwoWayCache) {
+			mips3_locore_vec.flushCache = mips3_FlushCache_2way;
+			mips3_locore_vec.flushDCache = mips3_FlushDCache_2way;
+			mips3_locore_vec.flushICache = mips3_FlushICache_2way;
+		}
 		mips3_vector_init();
 		memcpy(mips_locoresw, mips3_locoresw, sizeof(mips_locoresw));
 		break;
@@ -740,7 +745,8 @@ sendsig(catcher, sig, mask, code)
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
 						  psp->ps_sigstk.ss_size);
 	else
-		fp = (struct sigframe *)f->f_regs[SP];
+		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
+		fp = (struct sigframe *)(u_int32_t)f->f_regs[SP];
 	fp--;
 
 #ifdef DEBUG
