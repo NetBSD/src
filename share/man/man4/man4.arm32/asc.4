@@ -27,12 +27,14 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
+.\"	$Id: asc.4,v 1.2 1996/10/15 23:57:38 mark Exp $
+.\"
 .Dd
-.Dt EB 4 arm32
+.Dt ASC 4 arm32
 .Os
 .Sh NAME
 .Nm asc
-.Nd Acorn SCSI Card device interface
+.Nd Acorn SCSI I Card device interface
 .Sh SYNOPSIS
 .Cd "asc0 at podulebus?"
 .Sh DESCRIPTION
@@ -40,3 +42,7 @@ The
 .Nm
 interface provides access to Acorn SCSI Card interfaces.
 .Sh SEE ALSO
+.Xr cosc 4 ,
+.Xr csc 4 ,
+.Xr ptsc 4 ,
+.Xr oak 4
