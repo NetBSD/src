@@ -1,4 +1,4 @@
-/*	$NetBSD: print-sl.c,v 1.5 1995/03/06 19:11:29 mycroft Exp $	*/
+/*	$NetBSD: print-sl.c,v 1.6 1996/05/20 00:41:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static  char rcsid[] =
-	"@(#)Header: print-sl.c,v 1.28 94/06/10 17:01:38 mccanne Exp (LBL)";
+	"@(#)Header: print-sl.c,v 1.28+ 94/06/10 17:01:38 mccanne Exp (LBL)";
 #endif
 
 #ifdef CSLIP
@@ -130,6 +130,8 @@ sliplink_print(register const u_char *p, register const struct ip *ip,
 	case TYPE_UNCOMPRESSED_TCP:
 		/*
 		 * The connection id is stode in the IP protcol field.
+		 * Get it from the link layer since sl_uncompress_tcp()
+		 * has restored the IP header copy to IPPROTO_TCP.
 		 */
 		lastconn = ip->ip_p;
 		hlen = ip->ip_hl;
