@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.115 2001/11/03 23:49:58 augustss Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.116 2001/11/06 07:18:14 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -549,7 +549,6 @@ msdosfs_write(v)
 	u_long osize;
 	int error = 0;
 	u_long count;
-	daddr_t lastcn;
 	int ioflag = ap->a_ioflag;
 	void *win;
 	vsize_t bytelen;
@@ -622,9 +621,7 @@ msdosfs_write(v)
 		if ((error = extendfile(dep, count, NULL, NULL, 0)) &&
 		    (error != ENOSPC || (ioflag & IO_UNIT)))
 			goto errexit;
-		lastcn = dep->de_fc[FC_LASTFC].fc_frcn;
-	} else
-		lastcn = de_clcount(pmp, osize) - 1;
+	}
 
 	if (dep->de_FileSize < uio->uio_offset + resid) {
 		dep->de_FileSize = uio->uio_offset + resid;
