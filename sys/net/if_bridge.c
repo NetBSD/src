@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.2.2.2 2001/08/24 00:12:08 nathanw Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.2.2.3 2001/09/25 16:15:55 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -91,6 +91,7 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h> 
 #include <sys/pool.h>
 
@@ -402,7 +403,7 @@ int
 bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct bridge_softc *sc = ifp->if_softc;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	union {
 		struct ifbreq ifbreq;
 		struct ifbifconf ifbifconf;
