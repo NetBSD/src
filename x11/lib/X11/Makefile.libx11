@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libx11,v 1.1 2003/09/14 07:56:17 lukem Exp $
+#	$NetBSD: Makefile.libx11,v 1.2 2003/09/20 06:20:52 lukem Exp $
 
 LIB=	X11
 .PATH:	${X11SRCDIR.xc}/lib/${LIB}
@@ -121,7 +121,7 @@ CPPFLAGS.KeyBind.c=	$(XKB_DEFINES)
 CPPFLAGS.XKBBind.c=	$(XKB_DEFINES)
 CPPFLAGS.imConv.c=	$(XKB_DEFINES)
 
-LNFILES=	transport.c x11trans.c \
+BUILDSYMLINKS=	transport.c x11trans.c \
 		transport.c ximtrans.c
 
 .include "${NETBSDSRCDIR}/x11/tools/makekeys/Makefile.makekeys"
