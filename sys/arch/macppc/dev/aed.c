@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.5.8.1 2001/09/09 05:40:47 thorpej Exp $	*/
+/*	$NetBSD: aed.c,v 1.5.8.2 2002/06/18 19:29:11 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -38,6 +38,7 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -59,6 +60,8 @@ static void	aed_kbdrpt __P((void *kstate));
 static void	aed_dokeyupdown __P((adb_event_t *event));
 static void	aed_handoff __P((adb_event_t *event));
 static void	aed_enqevent __P((adb_event_t *event));
+
+cdev_decl(aed);
 
 /*
  * Global variables.
@@ -513,7 +516,7 @@ aedwrite(dev, uio, flag)
 int 
 aedioctl(dev, cmd, data, flag, p)
     dev_t dev;
-    int cmd;
+    u_long cmd;
     caddr_t data;
     int flag;
     struct proc *p;
@@ -634,12 +637,12 @@ aedkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_selinfo.si_klist;
+		klist = &aed_sc->sc_selinfo.si_klist;
 		kn->kn_fop = &aedread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->sc_selinfo.si_klist;
+		klist = &aed_sc->sc_selinfo.si_klist;
 		kn->kn_fop = &aed_seltrue_filtops;
 		break;
 
