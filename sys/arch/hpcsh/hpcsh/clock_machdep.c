@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.13 2002/02/22 19:44:02 uch Exp $	*/
+/*	$NetBSD: clock_machdep.c,v 1.1 2002/02/22 19:44:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,41 +33,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SH3_CPUFUNC_H_
-#define	_SH3_CPUFUNC_H_
+#include <sys/param.h>
+#include <sys/systm.h>
 
-#ifdef _KERNEL
-#ifndef _LOCORE
+#include <sh3/clock.h>
 
-/*
- * Memory-mapped register access method.
- */
-#define	_reg_read_1(a)		(*(__volatile__ u_int8_t *)((vaddr_t)(a)))
-#define	_reg_read_2(a)		(*(__volatile__ u_int16_t *)((vaddr_t)(a)))
-#define	_reg_read_4(a)		(*(__volatile__ u_int32_t *)((vaddr_t)(a)))
-#define	_reg_write_1(a, v)						\
-	(*(__volatile__ u_int8_t *)(a) = (u_int8_t)(v))
-#define	_reg_write_2(a, v)						\
-	(*(__volatile__ u_int16_t *)(a) = (u_int16_t)(v))
-#define	_reg_write_4(a, v)						\
-	(*(__volatile__ u_int32_t *)(a) = (u_int32_t)(v))
+void
+machine_clock_init()
+{
 
-/*
- * CPU exception/interrupt ops.	(locore_subr.S)
- */
-/* suspend/resume external interrupt (SR.IMASK) */
-u_int32_t _cpu_intr_suspend(void);
-void _cpu_intr_resume(u_int32_t);
-/* suspend/resume exception (SR.BL) */
-u_int32_t _cpu_exception_suspend(void);
-void _cpu_exception_resume(u_int32_t);
-
-/* for delay loop. */
-void _cpu_spin(u_int32_t);
-
-/* Soft reset */
-void cpu_reset(void);
-
-#endif /* !_LOCORE */
-#endif /* _KERNEL */
-#endif /* !_SH3_CPUFUNC_H_ */
+	sh_clock_init(0, 0);
+}

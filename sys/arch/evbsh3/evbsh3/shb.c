@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.14 2002/02/19 17:21:20 uch Exp $	*/
+/*	$NetBSD: shb.c,v 1.15 2002/02/22 19:44:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -396,8 +396,8 @@ intrhandler(p1, p2, p3, p4, frame)
 	if (irl >= INTEVT_SOFT) {
 		/* This is software interrupt */
 		irq_num = (irl - INTEVT_SOFT);
-	} else if (irl == INTEVT_TMU1) {
-		irq_num = TMU1_IRQ;
+	} else if (irl == INTEVT_TMU0) {
+		irq_num = TMU0_IRQ;
 	} else if (IS_INTEVT_SCI0(irl)) {	/* XXX TOO DIRTY */
 		irq_num = SCI_IRQ;
 #ifdef SH4
@@ -519,9 +519,9 @@ mask_irq(irq)
 	int irq;
 {
 	switch (irq) {
-	case TMU1_IRQ:
+	case TMU0_IRQ:
 #ifdef SH7709A_BROKEN_IPR
-		ipr[IPRA] &= ~((15)<<8);
+		ipr[IPRA] &= ~((15)<<12);
 		SHREG_IPRA = ipr[IPRA];
 #else
 		SHREG_IPRA &= ~((15)<<8);
@@ -571,9 +571,9 @@ unmask_irq(irq)
 {
 
 	switch (irq) {
-	case TMU1_IRQ:
+	case TMU0_IRQ:
 #ifdef SH7709A_BROKEN_IPR
-		ipr[ IPRA ] |= ((15 - irq)<<8);
+		ipr[ IPRA ] |= ((15 - irq)<<12);
 		SHREG_IPRA = ipr[ IPRA ];
 #else
 		SHREG_IPRA |= ((15 - irq)<<8);
@@ -622,8 +622,8 @@ mask_irq(irq)
 	int irq;
 {
 	switch (irq) {
-	case TMU1_IRQ:
-		SHREG_IPRA &= ~((15)<<8);
+	case TMU0_IRQ:
+		SHREG_IPRA &= ~((15)<<12);
 		break;
 	case SCI_IRQ:
 		SHREG_IPRB &= ~((15)<<4);
@@ -657,8 +657,8 @@ unmask_irq(irq)
 {
 
 	switch (irq) {
-	case TMU1_IRQ:
-		SHREG_IPRA |= ((15 - irq)<<8);
+	case TMU0_IRQ:
+		SHREG_IPRA |= ((15 - irq)<<12);
 		break;
 	case SCI_IRQ:
 		SHREG_IPRB |= ((15 - irq)<<4);

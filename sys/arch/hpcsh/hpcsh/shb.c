@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.9 2002/02/17 21:01:19 uch Exp $	*/
+/*	$NetBSD: shb.c,v 1.10 2002/02/22 19:44:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -333,8 +333,8 @@ intrhandler(int p1, int p2, int p3, int p4, /* dummy param */
 	if (irl >= INTEVT_SOFT) {
 		/* This is software interrupt */
 		irq_num = (irl - INTEVT_SOFT);
-	} else if (irl == INTEVT_TMU1) {
-		irq_num = TMU1_IRQ;
+	} else if (irl == INTEVT_TMU0) {
+		irq_num = TMU0_IRQ;
 	} else if (IS_INTEVT_SCI0(irl)) {	/* XXX TOO DIRTY */
 		irq_num = SCI_IRQ;
 #ifdef SH4 //XXX
@@ -428,8 +428,8 @@ void
 mask_irq_sh4(int irq)
 {
 	switch (irq) {
-	case TMU1_IRQ:
-		_reg_write_2(SH4_IPRA, _reg_read_2(SH4_IPRA) & ~((15) << 8));
+	case TMU0_IRQ:
+		_reg_write_2(SH4_IPRA, _reg_read_2(SH4_IPRA) & ~((15) << 12));
 		break;
 	case SCI_IRQ:
 		_reg_write_2(SH4_IPRB, _reg_read_2(SH4_IPRB) & ~((15) << 4));
@@ -454,9 +454,9 @@ unmask_irq_sh4(int irq)
 {
 
 	switch (irq) {
-	case TMU1_IRQ:
+	case TMU0_IRQ:
 		_reg_write_2(SH4_IPRA,
-		    _reg_read_2(SH4_IPRA) | ((15 - irq) << 8));
+		    _reg_read_2(SH4_IPRA) | ((15 - irq) << 12));
 		break;
 	case SCI_IRQ:
 		_reg_write_2(SH4_IPRB,
@@ -493,8 +493,8 @@ void
 mask_irq_sh3(int irq)
 {
 	switch (irq) {
-	case TMU1_IRQ:
-		ipr[IPRA] &= ~((15)<<8);
+	case TMU0_IRQ:
+		ipr[IPRA] &= ~((15)<<12);
 		_reg_write_2(SH3_IPRA, ipr[IPRA]);
 		break;
 	case SCI_IRQ:
@@ -520,8 +520,8 @@ unmask_irq_sh3(int irq)
 {
 
 	switch (irq) {
-	case TMU1_IRQ:
-		ipr[ IPRA ] |= ((15 - irq)<<8);
+	case TMU0_IRQ:
+		ipr[ IPRA ] |= ((15 - irq)<<12);
 		_reg_write_2(SH3_IPRA, ipr[IPRA]);
 		break;
 	case SCI_IRQ:
