@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: tftpd.c,v 1.5 1994/03/01 08:27:44 cgd Exp $";
+static char rcsid[] = "$Id: tftpd.c,v 1.6 1995/06/03 22:48:30 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -197,6 +197,7 @@ main(argc, argv)
 			exit(0);
 		}
 	}
+	from.sin_len = sizeof(struct sockaddr_in);
 	from.sin_family = AF_INET;
 	alarm(0);
 	close(fd);

@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: uucpd.c,v 1.3 1994/04/01 03:51:44 cgd Exp $";
+static char rcsid[] = "$Id: uucpd.c,v 1.4 1995/06/03 22:48:48 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -119,6 +119,7 @@ char **argv;
 	}
 
 	bzero((char *)&myctladdr, sizeof (myctladdr));
+	myctladdr.sin_len = sizeof(struct sockaddr_in);
 	myctladdr.sin_family = AF_INET;
 	myctladdr.sin_port = sp->s_port;
 	tcp_socket = socket(AF_INET, SOCK_STREAM, 0);

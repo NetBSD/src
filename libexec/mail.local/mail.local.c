@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.8 1994/08/05 23:41:15 jtc Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.9 1995/06/03 22:47:20 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -271,9 +271,10 @@ notifybiff(msg)
 			err(NOTFATAL, "localhost: %s", strerror(errno));
 			return;
 		}
+		addr.sin_len = sizeof(struct sockaddr_in);
 		addr.sin_family = hp->h_addrtype;
-		bcopy(hp->h_addr, &addr.sin_addr, hp->h_length);
 		addr.sin_port = sp->s_port;
+		bcopy(hp->h_addr, &addr.sin_addr, hp->h_length);
 	}
 	if (f < 0 && (f = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 		err(NOTFATAL, "socket: %s", strerror(errno));
