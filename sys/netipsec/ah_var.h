@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_var.h,v 1.1 2003/08/13 20:06:49 jonathan Exp $	*/
+/*	$NetBSD: ah_var.h,v 1.2 2004/05/07 00:55:14 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ah_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$OpenBSD: ip_ah.h,v 1.29 2002/06/09 16:26:10 itojun Exp $	*/
 /*
@@ -49,26 +49,26 @@
 #define	AH_ALG_MAX	16
 
 struct ahstat {
-	u_int32_t	ahs_hdrops;	/* Packet shorter than header shows */
-	u_int32_t	ahs_nopf;	/* Protocol family not supported */
-	u_int32_t	ahs_notdb;
-	u_int32_t	ahs_badkcr;
-	u_int32_t	ahs_badauth;
-	u_int32_t	ahs_noxform;
-	u_int32_t	ahs_qfull;
-	u_int32_t	ahs_wrap;
-	u_int32_t	ahs_replay;
-	u_int32_t	ahs_badauthl;	/* Bad authenticator length */
-	u_int32_t	ahs_input;	/* Input AH packets */
-	u_int32_t	ahs_output;	/* Output AH packets */
-	u_int32_t	ahs_invalid;	/* Trying to use an invalid TDB */
+	u_int64_t	ahs_hdrops;	/* Packet shorter than header shows */
+	u_int64_t	ahs_nopf;	/* Protocol family not supported */
+	u_int64_t	ahs_notdb;
+	u_int64_t	ahs_badkcr;
+	u_int64_t	ahs_badauth;
+	u_int64_t	ahs_noxform;
+	u_int64_t	ahs_qfull;
+	u_int64_t	ahs_wrap;
+	u_int64_t	ahs_replay;
+	u_int64_t	ahs_badauthl;	/* Bad authenticator length */
+	u_int64_t	ahs_input;	/* Input AH packets */
+	u_int64_t	ahs_output;	/* Output AH packets */
+	u_int64_t	ahs_invalid;	/* Trying to use an invalid TDB */
 	u_int64_t	ahs_ibytes;	/* Input bytes */
 	u_int64_t	ahs_obytes;	/* Output bytes */
-	u_int32_t	ahs_toobig;	/* Packet got larger than IP_MAXPACKET */
-	u_int32_t	ahs_pdrops;	/* Packet blocked due to policy */
-	u_int32_t	ahs_crypto;	/* Crypto processing failure */
-	u_int32_t	ahs_tunnel;	/* Tunnel sanity check failure */
-	u_int32_t	ahs_hist[AH_ALG_MAX];	/* Per-algorithm op count */
+	u_int64_t	ahs_toobig;	/* Packet got larger than IP_MAXPACKET */
+	u_int64_t	ahs_pdrops;	/* Packet blocked due to policy */
+	u_int64_t	ahs_crypto;	/* Crypto processing failure */
+	u_int64_t	ahs_tunnel;	/* Tunnel sanity check failure */
+	u_int64_t	ahs_hist[AH_ALG_MAX];	/* Per-algorithm op count */
 };
 
 #ifdef _KERNEL
