@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.25 1998/12/18 21:53:08 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.26 1998/12/18 22:07:00 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.23 1998/12/18 21:52:53 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.24 1998/12/18 22:04:48 thorpej Exp 
  */
 
 /*-
@@ -78,6 +78,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "3Com Corporation",
 	    "3Com 3c574-TX 10/100Mbps Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
+	    PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
+	    0,
+	    "",
+	    "Compex Linkport ENET-B Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_1,

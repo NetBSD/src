@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.25 1998/12/18 21:53:08 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.26 1998/12/18 22:07:00 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.23 1998/12/18 21:52:53 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.24 1998/12/18 22:04:48 thorpej Exp 
  */
 
 /*-
@@ -63,6 +63,7 @@
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+vendir COMPEX			0x8a01	Compex Corporation
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
 
@@ -87,6 +88,11 @@
 #define	PCMCIA_CIS_3COM_3C574	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3C574	0x0574
 #define	PCMCIA_STR_3COM_3C574	"3Com 3c574-TX 10/100Mbps Ethernet"
+
+/* Compex Products */
+#define	PCMCIA_CIS_COMPEX_LINKPORT_ENET_B	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B	0x0100
+#define	PCMCIA_STR_COMPEX_LINKPORT_ENET_B	"Compex Linkport ENET-B Ethernet"
 
 /* Dayna Products */
 #define	PCMCIA_CIS_DAYNA_COMMUNICARD_E_1	{ NULL, NULL, NULL, NULL }
