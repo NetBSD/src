@@ -1,4 +1,4 @@
-/*	$NetBSD: float_ieee754.h,v 1.3 2003/10/22 16:18:48 kleink Exp $	*/
+/*	$NetBSD: float_ieee754.h,v 1.4 2003/10/22 20:31:05 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,4 +111,20 @@ __END_DECLS
 #define	LDBL_MAX_10_EXP	4932
 #endif /* LDBL_MANT_DIG */
 
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) || \
+    ((__STDC_VERSION__ - 0) >= 199901L) || \
+    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
+    ((_XOPEN_SOURCE  - 0) >= 600) || \
+    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+#ifndef	DECIMAL_DIG
+#if LDBL_MANT_DIG == DBL_MANT_DIG
+#define	DECIMAL_DIG	17		/* ceil((1+p*log10(b))-(b==10) */
+#elif LDBL_MANT_DIG == 64
+#define	DECIMAL_DIG	21
+#elif LDBL_MANT_DIG == 113
+#define	DECIMAL_DIG	36
+#endif /* LDBL_MANT_DIG == DBL_MANT_DIG */
+#endif /* DECIMAL_DIG */
+#endif /* !defined(_ANSI_SOURCE) && ... */
 #endif	/* _SYS_FLOAT_IEEE754_H_ */
