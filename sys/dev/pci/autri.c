@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.3 2001/11/18 17:15:48 augustss Exp $	*/
+/*	$NetBSD: autri.c,v 1.4 2002/02/05 01:51:51 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -374,7 +374,7 @@ autri_reset_codec(void *sc_)
 	DPRINTF(("autri_reset_codec(codec=%p,sc=%p)\n",codec,sc));
 	DPRINTF(("sc->sc_devid=%X\n",sc->sc_devid));
 
-	switch (PCI_PRODUCT(sc->sc_devid)) {
+	switch (sc->sc_devid) {
 	case AUTRI_DEVICE_ID_4DWAVE_DX:
 		/* warm reset AC'97 codec */
 		autri_reg_set_4(sc, AUTRI_DX_ACR2, 1);
