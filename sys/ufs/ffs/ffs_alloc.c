@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.48 2001/08/30 15:17:28 lukem Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.49 2001/08/31 03:38:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -120,8 +120,8 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 	if (ITOV(ip)->v_type == VREG && lbn > 0) {
 		struct vm_page *pg;
 		struct uvm_object *uobj = &ITOV(ip)->v_uvm.u_obj;
-		voff_t off = trunc_page(lblktosize(fs, (voff_t)lbn));
-		voff_t endoff = round_page(lblktosize(fs, (voff_t)lbn) + size);
+		voff_t off = trunc_page(lblktosize(fs, lbn));
+		voff_t endoff = round_page(lblktosize(fs, lbn) + size);
 
 		simple_lock(&uobj->vmobjlock);
 		while (off < endoff) {
@@ -206,8 +206,8 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	if (ITOV(ip)->v_type == VREG) {
 		struct vm_page *pg;
 		struct uvm_object *uobj = &ITOV(ip)->v_uvm.u_obj;
-		voff_t off = trunc_page(lblktosize(fs, (voff_t)lbprev));
-		voff_t endoff = round_page(lblktosize(fs, (voff_t)lbprev) + osize);
+		voff_t off = trunc_page(lblktosize(fs, lbprev));
+		voff_t endoff = round_page(lblktosize(fs, lbprev) + osize);
 
 		simple_lock(&uobj->vmobjlock);
 		while (off < endoff) {
