@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.63 1998/04/25 21:27:40 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.64 1998/04/25 21:39:54 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -432,6 +432,9 @@ slot_noint(client_data)
 	int slot = (int)client_data + 9;
 
 	printf("slot_noint() slot %x\n", slot);
+
+	/* attempt to clear the interrupt */
+	slot_ignore(client_data);
 }
 
 void
