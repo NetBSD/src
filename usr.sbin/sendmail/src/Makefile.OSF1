@@ -83,10 +83,11 @@ sendmail.0: sendmail.8
 install: install-sendmail install-docs
 
 install-sendmail: sendmail
-	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
+	installbsd -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
 	for i in ${LINKS}; do rm -f $$i; ln -s ${BINDIR}/sendmail $$i; done
 	cp /dev/null ${STDIR}/sendmail.st
-	chmod ${BINMOD}.${BINGRP} ${STDIR}/sendmail.st
+	chmod ${BINMOD} ${STDIR}/sendmail.st
+	chown ${BINGRP}.${BINGRP} ${STDIR}/sendmail.st
 	installbsd -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
 	rm -f /usr/sbin/smtpd
 

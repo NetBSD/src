@@ -4,7 +4,7 @@
 
 		Eric Allman <eric@CS.Berkeley.EDU>
 
-		@(#)README	8.14 (Berkeley) 9/19/93
+		@(#)README	8.15 (Berkeley) 10/31/93
 
 
 This document describes the sendmail configuration files being used
@@ -691,7 +691,7 @@ Sam Leffler's FlexFAX software is still in beta test -- but he expects a
 public version out "later this week" [as of 3/1/93].  The following
 blurb is direct from Sam:
 
-	$Header: /cvsroot/src/usr.sbin/sendmail/cf/Attic/README,v 1.5 1993/10/30 00:32:44 glass Exp $
+	$Header: /cvsroot/src/usr.sbin/sendmail/cf/Attic/README,v 1.6 1993/11/05 07:52:25 glass Exp $
 
 	How To Obtain This Software (in case all you get is this file)
 	--------------------------------------------------------------
@@ -1004,6 +1004,12 @@ RULESETS (* means built in to sendmail)
    5 *	Local address rewrite (after aliasing)
   1x	mailer rules (sender qualification)
   2x	mailer rules (recipient qualification)
+  3x	mailer rules (sender header qualification)
+  4x	mailer rules (recipient header qualification)
+  5x	mailer subroutines (general)
+  6x	mailer subroutines (general)
+  7x	mailer subroutines (general)
+  8x	reserved
   90	Mailertable host stripping
   96	Bottom half of Ruleset 3 (ruleset 6 in old sendmail)
   97	Hook for recursive ruleset 0 call (ruleset 7 in old sendmail)
