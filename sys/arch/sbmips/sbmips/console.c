@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.1 2002/03/06 02:13:51 simonb Exp $ */
+/* $NetBSD: console.c,v 1.2 2002/11/09 05:36:50 cgd Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -39,14 +39,10 @@
 #include <sys/tty.h>
 #include <dev/cons.h>
 
-#ifdef IKOS
-#include <sbmips/ikos/ikosvar.h>
-#else
 #ifdef JTAGCONSOLE
 #include <mips/sibyte/dev/sbjcnvar.h>
 #endif
 #include <mips/sibyte/dev/sbscnvar.h>
-#endif
 
 #define	CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 
@@ -54,16 +50,12 @@ void
 consinit(void)
 {
 
-#ifdef IKOS
-	ikoscons_cnattach();
-#else
 #ifdef JTAGCONSOLE
 	sbjcn_cnattach(0x1001FF80, 0, 115200, CONMODE);
 #else
 	sbscn_cnattach(0x10060100, 0, 115200, CONMODE);
 #ifdef KGDB
 	sbscn_kgdb_attach(0x10060100, 1, 115200, CONMODE);
-#endif
 #endif
 #endif
 }
