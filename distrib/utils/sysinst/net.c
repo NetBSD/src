@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.20 1997/11/22 13:52:45 simonb Exp $	*/
+/*	$NetBSD: net.c,v 1.21 1997/11/22 14:16:55 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,6 +43,7 @@
 #include <string.h>
 #include <curses.h>
 #include <unistd.h>
+#include <sys/param.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -77,6 +78,39 @@ static void get_ifconfig_info (void)
 	t = strstr (net_devices, "lo0");
 	if (t != NULL)
 		*t = 0;
+}
+
+/* Fill in defaults network values for the selected interface */
+
+static void get_ifinterface_info(void)
+{
+	char *textbuf;
+	int textsize;
+	char *t;
+	char hostname[MAXHOSTNAMELEN];
+
+	/* First look to see if the selected interface is already configured. */
+	textsize = collect(T_OUTPUT, &textbuf, "/sbin/ifconfig %s 2>/dev/null",
+			   net_dev);
+	if (textsize >= 0) {
+		(void)strtok(textbuf, " \t\n"); /* ignore interface name */
+		while ((t = strtok(NULL, " \t\n")) != NULL) {
+			if (strcmp(t, "inet") == 0) {
+				t = strtok(NULL, " \t\n");
+				if (strcmp(t, "0.0.0.0") != 0)
+					strcpy(net_ip, t);
+			}
+			else if (strcmp(t, "netmask") == 0) {
+				t = strtok(NULL, " \t\n");
+				if (strcmp(t, "0x0") != 0)
+					strcpy(net_mask, t);
+			}
+		}
+	}
+
+	/* Check host (and domain?) name */
+	if (gethostname(hostname, sizeof(hostname)) == 0)
+		strncpy(net_host, hostname, sizeof(net_host));
 }
 
 /* Get the information to configure the network, configure it and
@@ -123,10 +157,13 @@ int config_network (void)
 
 	/* Remove that space we added. */
 	net_dev[strlen(net_dev)-1] = 0;
+
+	/* Preload any defaults we can find */
+	get_ifinterface_info ();
+	pass = strlen(net_mask) == 0 ? 0 : 1;
 	
 	/* Get other net information */
 	msg_display (MSG_netinfo);
-	pass = 0;
 	do {
 		msg_prompt_add (MSG_net_domain, net_domain, net_domain,
 				STRSIZE);
