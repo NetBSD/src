@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.62 1994/04/07 06:48:35 mycroft Exp $
+ *	$Id: locore.s,v 1.63 1994/04/08 22:03:09 mycroft Exp $
  */
 
 /*
@@ -1952,6 +1952,9 @@ IDTVEC(rsvd14)
 ENTRY(alltraps)
 	INTRENTRY
 calltrap:
+#ifdef DIAGNOSTIC
+	movl	_cpl,%ebx
+#endif
 	call	_trap
 	/*
 	 * Check for ASTs.
@@ -1962,7 +1965,22 @@ calltrap:
 	jnc	1f
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_trap
+#ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
+#else
+1:	cmpl	_cpl,%ebx
+	jne	3f
+2:	INTRFASTEXIT
+3:	pushl	$4f
+	call	_printf
+	addl	$4,%esp
+#ifdef DDB
+	int	$3
+#endif
+	movl	%ebx,_cpl
+	jmp	2b
+4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
+#endif
 
 #ifdef KGDB
 /*
@@ -1989,6 +2007,9 @@ IDTVEC(syscall)
 	INTRENTRY
 	movl	TF_TRAPNO(%esp),%eax	# copy eflags from tf_trapno to tf_eflags
 	movl	%eax,TF_EFLAGS(%esp)
+#ifdef DIAGNOSTIC
+	movl	_cpl,%ebx
+#endif
 	call	_syscall
 	/*
 	 * Check for ASTs.
@@ -1998,7 +2019,22 @@ IDTVEC(syscall)
 	jnc	1f
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_trap
+#ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
+#else
+1:	cmpl	_cpl,%ebx
+	jne	3f
+2:	INTRFASTEXIT
+3:	pushl	$4f
+	call	_printf
+	addl	$4,%esp
+#ifdef DDB
+	int	$3
+#endif
+	movl	%ebx,_cpl
+	jmp	2b
+4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
+#endif
 
 #include <i386/isa/vector.s>
 #include <i386/isa/icu.s>
