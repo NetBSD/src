@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.56 2001/11/20 16:08:10 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.57 2001/11/21 16:12:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -177,6 +177,7 @@ typedef struct {
 /* Feature numbers */
 #define UF_ENDPOINT_HALT	0
 #define UF_DEVICE_REMOTE_WAKEUP	1
+#define UF_TEST_MODE		2
 
 #define USB_MAX_IPACKET		8 /* maximum size of the initial packet */
 
