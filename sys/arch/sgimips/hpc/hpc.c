@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.24 2003/12/30 23:45:25 sekiya Exp $	*/
+/*	$NetBSD: hpc.c,v 1.25 2004/01/02 01:04:46 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.24 2003/12/30 23:45:25 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.25 2004/01/02 01:04:46 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,15 @@ const struct hpc_device {
 	  29,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
+	/* probe order is important for IP20 zsc */
+
 	{ "zsc",        /* serial 0/1 duart 1 */
 	  0x0d10, 0,
+	  5,
+	  HPCDEV_IP20 },
+
+	{ "zsc",        /* serial 0/1 duart 0 */
+	  0x0d00, 0,
 	  5,
 	  HPCDEV_IP20 },
 
