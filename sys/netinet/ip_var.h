@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.63 2003/12/06 23:56:10 jonathan Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.64 2003/12/08 02:23:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -93,6 +93,7 @@ struct ipq {
 	u_int16_t ipq_id;		/* sequence id for reassembly */
 	struct	  ipqehead ipq_fragq;	/* to ip fragment queue */
 	struct	  in_addr ipq_src, ipq_dst;
+	u_int16_t ipq_nfrags;		/* frags in this queue entry */
 };
 
 /*

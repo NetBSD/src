@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.191 2003/12/07 01:18:26 jonathan Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.192 2003/12/08 02:23:27 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.191 2003/12/07 01:18:26 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.192 2003/12/08 02:23:27 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -243,12 +243,10 @@ struct pfil_head inet_pfil_hook;
 #define IPREASS_HASH(x,y) \
 	(((((x) & 0xF) | ((((x) >> 8) & 0xF) << 4)) ^ (y)) & IPREASS_HMASK)
 struct ipqhead ipq[IPREASS_NHASH];
-#ifdef notyet
-static int    nipq = 0;         /* total # of reass queues */
-#endif
 int	ipq_locked;
 int	ip_nfragpackets = 0;
 int	ip_maxfragpackets = 200;
+int	ip_nfrags = 0;         /* total fragments in reass queues */
 
 static __inline int ipq_lock_try __P((void));
 static __inline void ipq_unlock __P((void));
@@ -372,6 +370,7 @@ ip_init()
 		if (pr->pr_domain->dom_family == PF_INET &&
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
 			ip_protox[pr->pr_protocol] = pr - inetsw;
+
 	for (i = 0; i < IPREASS_NHASH; i++)
 	    	LIST_INIT(&ipq[i]);
 
@@ -1005,6 +1004,11 @@ ip_reass(ipqe, fp, ipqhead)
 	m->m_len -= hlen;
 
 	/*
+	 * We are about to add a fragment; increment frag count.
+	 */
+	ip_nfrags++;
+	
+	/*
 	 * If first fragment to arrive, create a reassembly queue.
 	 */
 	if (fp == 0) {
@@ -1024,6 +1028,7 @@ ip_reass(ipqe, fp, ipqhead)
 		if (fp == NULL)
 			goto dropfrag;
 		LIST_INSERT_HEAD(ipqhead, fp, ipq_q);
+		fp->ipq_nfrags = 1;
 		fp->ipq_ttl = IPFRAGTTL;
 		fp->ipq_p = ipqe->ipqe_ip->ip_p;
 		fp->ipq_id = ipqe->ipqe_ip->ip_id;
@@ -1032,6 +1037,8 @@ ip_reass(ipqe, fp, ipqhead)
 		fp->ipq_dst = ipqe->ipqe_ip->ip_dst;
 		p = NULL;
 		goto insert;
+	} else {
+		fp->ipq_nfrags++;
 	}
 
 	/*
@@ -1082,6 +1089,8 @@ ip_reass(ipqe, fp, ipqhead)
 		m_freem(q->ipqe_m);
 		TAILQ_REMOVE(&fp->ipq_fragq, q, ipqe_q);
 		pool_put(&ipqent_pool, q);
+		fp->ipq_nfrags--;
+		ip_nfrags--;
 	}
 
 insert:
@@ -1127,6 +1136,7 @@ insert:
 		pool_put(&ipqent_pool, q);
 		m_cat(m, t);
 	}
+	ip_nfrags -= fp->ipq_nfrags;
 
 	/*
 	 * Create header for new ip packet by
@@ -1152,6 +1162,9 @@ insert:
 	return (m);
 
 dropfrag:
+	if (fp != 0)
+		fp->ipq_nfrags--;
+	ip_nfrags--;
 	ipstat.ips_fragdropped++;
 	m_freem(m);
 	pool_put(&ipqent_pool, ipqe);
@@ -1167,15 +1180,21 @@ ip_freef(fp)
 	struct ipq *fp;
 {
 	struct ipqent *q, *p;
+	u_int nfrags = 0;
 
 	IPQ_LOCK_CHECK();
 
 	for (q = TAILQ_FIRST(&fp->ipq_fragq); q != NULL; q = p) {
 		p = TAILQ_NEXT(q, ipqe_q);
 		m_freem(q->ipqe_m);
+		nfrags++;
 		TAILQ_REMOVE(&fp->ipq_fragq, q, ipqe_q);
 		pool_put(&ipqent_pool, q);
 	}
+
+	if (nfrags != fp->ipq_nfrags)
+	    printf("ip_freef: nfrags %d != %d\n", fp->ipq_nfrags, nfrags);
+	ip_nfrags -= nfrags;
 	LIST_REMOVE(fp, ipq_q);
 	FREE(fp, M_FTABLE);
 	ip_nfragpackets--;
