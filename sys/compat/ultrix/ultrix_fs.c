@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.19 2000/06/28 15:39:36 mrg Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.20 2001/05/03 05:30:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -417,7 +417,7 @@ ultrix_sys_mount(p, v, retval)
 		 */
 		fsname[0] = 0;
 		if ((error = copyinstr((caddr_t)SCARG(&nuap, path), fsname,
-				      sizeof fsname, (u_int*)0)) != 0)
+				      sizeof fsname, NULL)) != 0)
 			return(error);
 		if (strcmp(fsname, "/") == 0) {
 			SCARG(&nuap, flags) |= MNT_UPDATE;
