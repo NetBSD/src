@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mvme68k,v 1.9 2003/10/10 22:42:40 jdolecek Exp $
+#	$NetBSD: majors.mvme68k,v 1.10 2003/10/24 08:09:54 jdolecek Exp $
 #
 # Device majors for mvme68k
 #
@@ -26,6 +26,7 @@ device-major	bpf		char 22			bpfilter
 device-major	tun		char 23			tun
 device-major	lkm		char 24			lkm
 
+device-major	ses		char 30			ses
 device-major	ch		char 31			ch
 device-major	md		char 32  block 9	md
 device-major	ss		char 33			ss
