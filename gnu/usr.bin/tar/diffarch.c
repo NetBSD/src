@@ -27,6 +27,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -71,6 +72,7 @@ extern int head_standard;		/* Tape header is in ANSI format */
 extern void print_header();
 extern void skip_file();
 extern void skip_extended_headers();
+extern long from_oct();
 
 extern FILE *msg_file;
 
@@ -120,8 +122,6 @@ diff_archive()
 	ino_t	ino;
 #endif
 	char *get_dir_contents();
-	long from_oct();
-	long lseek();
 
 	errno = EPIPE;			/* FIXME, remove perrors */
 

@@ -28,6 +28,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
  * have been written on a BSD system.
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <signal.h>
@@ -739,7 +740,6 @@ ck_malloc(size)
 size_t size;
 {
 	char *ret;
-	char *malloc();
 
 	if(!size)
 		size++;
@@ -755,7 +755,6 @@ char *ptr;
 size_t size;
 {
 	char *ret;
-	char *realloc();
 
 	if(!ptr)
 		ret=ck_malloc(size);
