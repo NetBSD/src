@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.14 1997/09/23 07:28:29 mrg Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.15 1997/10/18 11:27:49 lukem Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.14 1997/09/23 07:28:29 mrg Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.15 1997/10/18 11:27:49 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -88,7 +88,7 @@ main(argc, argv)
 				warnx("no such host: %s", optarg);
 				usage();
 			}
-			bcopy(he->h_addr, &route_addr.s_addr, he->h_length);
+			memmove(&route_addr.s_addr, he->h_addr, he->h_length);
 			break;
 		case 'f':
 			bootpfile = optarg;
@@ -156,8 +156,9 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 		    255 & whoami->client_address.bp_address_u.ip_addr.lh,
 		    255 & whoami->client_address.bp_address_u.ip_addr.impno);
 
-	bcopy((char *) &whoami->client_address.bp_address_u.ip_addr,
-	    (char *) &haddr, sizeof(haddr));
+	memmove((char *) &haddr,
+	    (char *) &whoami->client_address.bp_address_u.ip_addr,
+	    sizeof(haddr));
 	he = gethostbyaddr((char *) &haddr, sizeof(haddr), AF_INET);
 	if (he) {
 		strncpy(askname, he->h_name, sizeof(askname));
@@ -180,8 +181,8 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 
 		if (res.router_address.address_type != IP_ADDR_TYPE) {
 			res.router_address.address_type = IP_ADDR_TYPE;
-			bcopy(&route_addr.s_addr,
-			    &res.router_address.bp_address_u.ip_addr, 4);
+			memmove(&res.router_address.bp_address_u.ip_addr,
+			    &route_addr.s_addr,4);
 		}
 		if (debug)
 			warnx("Returning %s   %s    %d.%d.%d.%d",
@@ -239,13 +240,14 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 		he = gethostbyname(res.server_name);
 		if (!he)
 			goto failed;
-		bcopy(he->h_addr, &res.server_address.bp_address_u.ip_addr, 4);
+		memmove(&res.server_address.bp_address_u.ip_addr,
+		    he->h_addr, 4);
 		res.server_address.address_type = IP_ADDR_TYPE;
 	} else if (err == ENOENT && !strcmp(getfile->file_id, "dump")) {
 		/* Special for dump, answer with null strings. */
 		res.server_name[0] = '\0';
 		res.server_path[0] = '\0';
-		bzero(&res.server_address.bp_address_u.ip_addr, 4);
+		memset(&res.server_address.bp_address_u.ip_addr, 0, 4);
 	} else {
 failed:
 		if (debug)
