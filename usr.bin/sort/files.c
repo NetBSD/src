@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.15 2001/02/19 15:45:45 jdolecek Exp $	*/
+/*	$NetBSD: files.c,v 1.16 2001/02/19 20:50:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,13 +40,13 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.15 2001/02/19 15:45:45 jdolecek Exp $");
+__RCSID("$NetBSD: files.c,v 1.16 2001/02/19 20:50:17 jdolecek Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
 #include <string.h>
 
-static int seq __P((FILE *, DBT *, DBT *));
+static int	seq __P((FILE *, DBT *, DBT *));
 
 /*
  * this is the subroutine for file management for fsort().
@@ -57,7 +57,7 @@ getnext(binno, infl0, filelist, nfiles, pos, end, dummy)
 	int binno, infl0;
 	struct filelist *filelist;
 	int nfiles;
-	struct recheader *pos;
+	RECHEADER *pos;
 	u_char *end;
 	struct field *dummy;
 {
@@ -76,7 +76,7 @@ getnext(binno, infl0, filelist, nfiles, pos, end, dummy)
 			}
 			flag = -1;
 			nleft = cnt = 0;
-			return(-1);
+			return (-1);
 		}
 		maxb = fstack[infl0].maxb;
 		for (; nleft == 0; cnt++) {
@@ -108,7 +108,7 @@ getnext(binno, infl0, filelist, nfiles, pos, end, dummy)
 		return (BUFFEND);
 	fread(pos, sizeof(TRECHEADER), 1, fp);
 	if (end - pos->data < pos->length) {
-		hp = ((u_char *) pos) + sizeof(TRECHEADER);
+		hp = ((u_char *)pos) + sizeof(TRECHEADER);
 		for (i = sizeof(TRECHEADER); i ;  i--)
 			ungetc(*--hp, fp);
 		return (BUFFEND);
@@ -129,7 +129,7 @@ makeline(flno, top, filelist, nfiles, buffer, bufend, dummy2)
 	int flno, top;
 	struct filelist *filelist;
 	int nfiles;
-	struct recheader *buffer;
+	RECHEADER *buffer;
 	u_char *bufend;
 	struct field *dummy2;
 {
@@ -158,14 +158,14 @@ makeline(flno, top, filelist, nfiles, buffer, bufend, dummy2)
 		overflow = 0;
 	}
 	for (;;) {
-		if (flno >= 0) {
-			if (!(fp = fstack[flno].fp))
+		if (flno >= 0 && (fp = fstack[flno].fp) == NULL)
+			return (EOF);
+		else if (fp == NULL) {
+			if (fileno  >= nfiles)
 				return (EOF);
-		} else if (!fp) {
-			if (fileno  >= nfiles) return(EOF);
 			if (!(fp = fopen(filelist->names[fileno], "r")))
 				err(2, "%s", filelist->names[fileno]);
-			++fileno;
+			fileno++;
 		}
 		while ((pos < (char *)bufend) && ((c = getc(fp)) != EOF)) {
 			if ((*pos++ = c) == REC_D) {
@@ -186,21 +186,24 @@ makeline(flno, top, filelist, nfiles, buffer, bufend, dummy2)
 				*pos++ = REC_D;
 				buffer->offset = 0;
 				buffer->length = pos - (char *) buffer->data;
-				return(0);
+				return (0);
 			}
 			FCLOSE(fp);
 			fp = 0;
-			if(flno >= 0) fstack[flno].fp = 0;
+			if (flno >= 0)
+				fstack[flno].fp = 0;
 		} else {
 			
 			warnx("makeline: line too long: ignoring '%.100s...'", buffer->data);
 
-			/* consume rest of line from input */
-			while((c = getc(fp)) != REC_D && c != EOF);
+			/* Consume the rest of line from input */
+			while((c = getc(fp)) != REC_D && c != EOF)
+				;
 
 			buffer->offset = 0;
 			buffer->length = 0;
-			return BUFFEND;
+
+			return (BUFFEND);
 		}
 	}
 }
@@ -213,7 +216,7 @@ makekey(flno, top, filelist, nfiles, buffer, bufend, ftbl)
 	int flno, top;
 	struct filelist *filelist;
 	int nfiles;
-	struct recheader *buffer;
+	RECHEADER *buffer;
 	u_char *bufend;
 	struct field *ftbl;
 {
@@ -222,25 +225,27 @@ makekey(flno, top, filelist, nfiles, buffer, bufend, ftbl)
 	static DBT dbkey[1], line[1];
 	static int overflow = 0;
 	int c;
+
 	if (overflow) {
-		overflow = enterkey(buffer, line, bufend - (u_char *) buffer,
-		    ftbl);
+		overflow = enterkey(buffer, line, bufend - (u_char *)buffer,
+									ftbl);
 		if (overflow)
 			return (BUFFEND);
 		else
 			return (0);
 	}
+
 	for (;;) {
 		if (flno >= 0) {
 			if (!(dbdesc = fstack[flno].fp))
-				return(EOF);
+				return (EOF);
 		} else if (!dbdesc) {
 			if (fileno  >= nfiles)
 				return (EOF);
 			dbdesc = fopen(filelist->names[fileno], "r");
 			if (!dbdesc)
 				err(2, "%s", filelist->names[fileno]);
-			++fileno;
+			fileno++;
 		}
 		if (!(c = seq(dbdesc, line, dbkey))) {
 			if ((signed)line->size > bufend - buffer->data) {
@@ -257,13 +262,13 @@ makekey(flno, top, filelist, nfiles, buffer, bufend, ftbl)
 		if (c == EOF) {
 			FCLOSE(dbdesc);
 			dbdesc = 0;
-			if (flno >= 0) fstack[flno].fp = 0;
+			if (flno >= 0)
+				fstack[flno].fp = 0;
 		} else {
 			((char *) line->data)[60] = '\000';
 			warnx("makekey: line too long: ignoring %.100s...",
 			    (char *)line->data);
 		}
-			
 	}
 }
 
@@ -278,6 +283,7 @@ seq(fp, line, key)
 	static char *buf, flag = 1;
 	char *end, *pos;
 	int c;
+
 	if (flag) {
 		flag = 0;
 		buf = (char *) linebuf;
@@ -294,7 +300,8 @@ seq(fp, line, key)
 			linebuf_size *= 2;
 			linebuf = realloc(linebuf, linebuf_size);
 			if (!linebuf)
-				err(2, "realloc for linebuf to %lu bytes failed", (unsigned long) linebuf_size);
+				err(2, "realloc of linebuf to %lu bytes failed",
+					(unsigned long)linebuf_size);
 		
 			end = linebuf + linebuf_size;
 			pos = linebuf + (pos - buf);
@@ -315,7 +322,7 @@ seq(fp, line, key)
  */
 void
 putrec(rec, fp)
-	const struct recheader *rec;
+	const RECHEADER *rec;
 	FILE *fp;
 {
 	EWRITE(rec, 1, rec->length + sizeof(TRECHEADER), fp);
@@ -326,7 +333,7 @@ putrec(rec, fp)
  */
 void
 putline(rec, fp)
-	const struct recheader *rec;
+	const RECHEADER *rec;
 	FILE *fp;
 {
 	EWRITE(rec->data+rec->offset, 1, rec->length - rec->offset, fp);
@@ -340,12 +347,13 @@ geteasy(flno, top, filelist, nfiles, rec, end, dummy2)
 	int flno, top;
 	struct filelist *filelist;
 	int nfiles;
-	struct recheader *rec;
+	RECHEADER *rec;
 	u_char *end;
 	struct field *dummy2;
 {
 	int i;
 	FILE *fp;
+
 	fp = fstack[flno].fp;
 	if ((u_char *) rec > end - sizeof(TRECHEADER))
 		return (BUFFEND);

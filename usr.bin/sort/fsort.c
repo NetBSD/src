@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.15 2001/02/19 19:39:53 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.16 2001/02/19 20:50:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,12 +42,12 @@
  * and try again on smaller bins.  Sort the final bin at this level
  * of recursion to keep the head of fstack at 0.
  * After PANIC passes, abort to merge sort.
-*/
+ */
 #include "sort.h"
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.15 2001/02/19 19:39:53 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.16 2001/02/19 20:50:17 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -100,7 +100,8 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 		memset(keylist, 0, MAXNUM * sizeof(u_char *));
 		if (!SINGL_FLD) {
 			linebuf_size = DEFLLEN;
-			linebuf = malloc(linebuf_size);
+			if ((linebuf = malloc(linebuf_size)) == NULL)
+				errx(2, "cannot allocate memory");
 		}
 	}
 	bufend = buffer + bufsize;
@@ -190,7 +191,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 						    mfct, geteasy,
 						    fstack[base].fp,
 						    putrec, ftbl);
-						++ntfiles;
+						ntfiles++;
 						mfct = 0;
 						memmove(crec->data, tmpbuf,
 						    bufend - crec->data);
@@ -200,17 +201,16 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 					fstack[base + ntfiles].fp= ftmp();
 					onepass(keylist, depth, nelem, sizes,
 					    weights, fstack[base + ntfiles].fp);
-					++ntfiles;
+					ntfiles++;
 				}
 			}
 		}
 		if (!ntfiles && !mfct) {	/* everything in memory--pop */
-			if (nelem > 1) {
-			   if ((stable_sort)
+			if (nelem > 1
+			    && ((stable_sort)
 				? sradixsort(keylist, nelem, weights, REC_D)
-				: radixsort(keylist, nelem, weights, REC_D) )
+				: radixsort(keylist, nelem, weights, REC_D) ))
 				err(2, NULL);
-			}
 			append(keylist, nelem, depth, outfp, putline, ftbl);
 			break;					/* pop */
 		}
@@ -242,10 +242,9 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 		for (i = 0; i < maxb; i++) {
 			if (!sizes[i])	/* bin empty; step ahead file offset */
 				getnext(i, base, NULL,ntfiles, crec, bufend, 0);
-			else {
+			else
 				fsort(i, depth+1, base, filelist, ntfiles,
 					outfp, ftbl);
-			}
 		}
 
 		get = getnext;
@@ -255,13 +254,12 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 				tailfp[panic] = prevfp;
 			prevfp = ftmp();
 			for (i = maxb+1; i <= lastb; i++)
-				if (!sizes[i]) {
+				if (!sizes[i])
 					getnext(i, base, NULL, ntfiles, crec,
 					    bufend,0);
-				} else {
+				else
 					fsort(i, depth+1, base, filelist,
 					    ntfiles, prevfp, ftbl);
-				}
 		}
 
 		/* sort biggest (or last) bin at this level */
@@ -283,7 +281,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 }
 
 /*
- This is one pass of radix exchange, dumping the bins to disk.
+ * This is one pass of radix exchange, dumping the bins to disk.
  */
 #define swap(a, b, t) t = a, a = b, b = t
 void

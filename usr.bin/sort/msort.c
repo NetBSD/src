@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.9 2001/01/19 10:50:31 jdolecek Exp $	*/
+/*	$NetBSD: msort.c,v 1.10 2001/02/19 20:50:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.9 2001/01/19 10:50:31 jdolecek Exp $");
+__RCSID("$NetBSD: msort.c,v 1.10 2001/02/19 20:50:17 jdolecek Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ typedef struct mfile {
 
 static u_char *wts, *wts1 = NULL;
 
-static int cmp __P((struct recheader *, struct recheader *));
+static int cmp __P((RECHEADER *, RECHEADER *));
 static int insert __P((struct mfile **, struct mfile **, int, int));
 
 void
@@ -96,6 +96,7 @@ fmerge(binno, top, filelist, nfiles, get, outfp, fput, ftbl)
 		l_fstack = fstack + top;
 	else
 		l_fstack = fstack;
+
 	while (nfiles) {
 		put = putrec;
 		for (j = 0; j < nfiles; j += MERGE_FNUM) {
@@ -107,18 +108,13 @@ fmerge(binno, top, filelist, nfiles, get, outfp, fput, ftbl)
 				tout = ftmp();
 			last = min(MERGE_FNUM, nfiles - j);
 			if (binno < 0) {
-				FILE *fp;
-				for (i = 0; i < last; i++) { 
-					fp = fopen(filelist->names[j+i], "r");
-					if (!fp) {
+				for (i = 0; i < last; i++)
+					if (!(l_fstack[i+MAXFCT-1-MERGE_FNUM].fp =
+					    fopen(filelist->names[j+i], "r")))
 						err(2, "%s",
 							filelist->names[j+i]);
-					}
-					l_fstack[i+MAXFCT-1-MERGE_FNUM].fp = fp;
-				}
 				merge(MAXFCT-1-MERGE_FNUM, last, get, tout, put, ftbl);
-			}
-			else {
+			} else {
 				for (i = 0; i< last; i++)
 					rewind(l_fstack[i+j].fp);
 				merge(top+j, last, get, tout, put, ftbl);
@@ -248,7 +244,7 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 /*
  * if delete: inserts *rec in flist, deletes flist[0], and leaves it in *rec;
  * otherwise just inserts *rec in flist.
-*/
+ */
 static int
 insert(flist, rec, ttop, delete)
 	struct mfile **flist, **rec;
@@ -294,7 +290,7 @@ insert(flist, rec, ttop, delete)
 			if (!bot && cmpv)
 				cmpv = cmp(tmprec->rec, flist[0]->rec);
 			if (!cmpv)
-				return(1);
+				return (1);
 		}
 		tmprec = flist[0];
 		if (bot)
@@ -330,7 +326,7 @@ order(filelist, get, ftbl)
 {
 	u_char *crec_end, *prec_end, *trec_end;
 	int c;
-	struct recheader *crec, *prec, *trec;
+	RECHEADER *crec, *prec, *trec;
 
 	if (!SINGL_FLD)
 		linebuf = malloc(DEFLLEN);
@@ -372,7 +368,7 @@ order(filelist, get, ftbl)
 
 static int
 cmp(rec1, rec2)
-	struct recheader *rec1, *rec2;
+	RECHEADER *rec1, *rec2;
 {
 	int r;
 	u_char *pos1, *pos2, *end;
