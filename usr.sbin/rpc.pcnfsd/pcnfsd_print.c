@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_print.c,v 1.2 1995/07/25 22:20:48 gwr Exp $	*/
+/*	$NetBSD: pcnfsd_print.c,v 1.3 1995/08/14 19:45:18 gwr Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_print.c 1.7 92/01/24 19:58:58 SMI */
 /*
@@ -41,6 +41,8 @@
 #include <shadow.h>
 #endif
 
+#include "paths.h"
+
 /*
 **---------------------------------------------------------------------
 ** Other #define's 
@@ -48,18 +50,6 @@
 */
 #ifndef MAXPATHLEN
 #define MAXPATHLEN 1024
-#endif
-
-#ifndef SPOOLDIR
-#define SPOOLDIR        "/export/pcnfs"
-#endif
-
-#ifndef LPRDIR
-#define LPRDIR		"/usr/bin"
-#endif
-
-#ifndef LPCDIR
-#define LPCDIR		"/usr/sbin"
 #endif
 
 /*
@@ -329,15 +319,19 @@ char            scratch[512];
 		** Try to match to an aliased printer
 		*/
 		xcmd = expand_alias(pr, new_pathname, user, system);
-	        /*
-                **----------------------------------------------------------
-	        **  Use the copy option so we can remove the orignal spooled
-	        **  nfs file from the spool directory.
-                **----------------------------------------------------------
-	        */
 		if(!xcmd) {
+#ifdef	SVR4
+	        /*
+			 * Use the copy option so we can remove the orignal
+			 * spooled nfs file from the spool directory.
+			 */
+			sprintf(cmdbuf, "/usr/bin/lp -c -d%s %s",
+				pr, new_pathname);
+#else	/* SVR4 */
+			/* BSD way: lpr */
 			sprintf(cmdbuf, "%s/lpr -P%s %s",
 				LPRDIR, pr, new_pathname);
+#endif	/* SVR4 */
 			xcmd = cmdbuf;
 		}
 		if ((fd = su_popen(user, xcmd, MAXTIME_FOR_PRINT)) == NULL) {
@@ -363,9 +357,166 @@ char            scratch[512];
 
 
 /*
- * determine which printers are valid...
- * on BSD use "lpc status"
+ * build_pr_list: determine which printers are valid.
  * on SVR4 use "lpstat -v"
+ * on BSD use "lpc status"
+ */
+
+#ifdef	SVR4
+/*
+ * In SVR4 the command to determine which printers are
+ * valid is lpstat -v. The output is something like this:
+ *
+ * device for lp: /dev/lp0
+ * system for pcdslw: hinode
+ * system for bletch: hinode (as printer hisname)
+ *
+ * On SunOS using the SysV compatibility package, the output
+ * is more like:
+ *
+ * device for lp is /dev/lp0
+ * device for pcdslw is the remote printer pcdslw on hinode
+ * device for bletch is the remote printer hisname on hinode
+ *
+ * It is fairly simple to create logic that will handle either
+ * possibility:
+ */
+int
+build_pr_list()
+{
+	pr_list last = NULL;
+	pr_list curr = NULL;
+	char buff[256];
+	FILE *p;
+	char *cp;
+	int saw_system;
+
+	p = popen("lpstat -v", "r");
+	if(p == NULL) {
+		msg_out("rpc.pcnfsd: unable to popen() lp status");
+		return(0);
+	}
+	
+	while(fgets(buff, 255, p) != NULL) {
+		cp = strtok(buff, delims);
+		if(!cp)
+			continue;
+		if(!strcmp(cp, "device"))
+			saw_system = 0;
+		else if (!strcmp(cp, "system"))
+			saw_system = 1;
+		else
+			continue;
+		cp = strtok(NULL, delims);
+		if(!cp || strcmp(cp, "for"))
+			continue;
+		cp = strtok(NULL, delims);
+		if(!cp)
+			continue;
+		curr = (struct pr_list_item *)
+			grab(sizeof (struct pr_list_item));
+
+		curr->pn = strdup(cp);
+		curr->device = NULL;
+		curr->remhost = NULL;
+		curr->cm = strdup("-");
+		curr->pr_next = NULL;
+
+		cp = strtok(NULL, delims);
+
+		if(cp && !strcmp(cp, "is")) 
+			cp = strtok(NULL, delims);
+
+		if(!cp) {
+			free_pr_list_item(curr);
+			continue;
+		}
+
+		if(saw_system) {
+			/* "system" OR "system (as printer pname)" */ 
+			curr->remhost = strdup(cp);
+			cp = strtok(NULL, delims);
+			if(!cp) {
+				/* simple format */
+				curr->device = strdup(curr->pn);
+			} else {
+				/* "sys (as printer pname)" */
+				if (strcmp(cp, "as")) {
+					free_pr_list_item(curr);
+					continue;
+				}
+				cp = strtok(NULL, delims);
+				if (!cp || strcmp(cp, "printer")) {
+					free_pr_list_item(curr);
+					continue;
+				}
+				cp = strtok(NULL, delims);
+				if(!cp) {
+					free_pr_list_item(curr);
+					continue;
+				}
+				curr->device = strdup(cp);
+			}
+		}
+		else if(!strcmp(cp, "the")) {
+			/* start of "the remote printer foo on bar" */
+			cp = strtok(NULL, delims);
+			if(!cp || strcmp(cp, "remote")) {
+				free_pr_list_item(curr);
+				continue;
+			}
+			cp = strtok(NULL, delims);
+			if(!cp || strcmp(cp, "printer")) {
+				free_pr_list_item(curr);
+				continue;
+			}
+			cp = strtok(NULL, delims);
+			if(!cp) {
+				free_pr_list_item(curr);
+				continue;
+			}
+			curr->device = strdup(cp);
+			cp = strtok(NULL, delims);
+			if(!cp || strcmp(cp, "on")) {
+				free_pr_list_item(curr);
+				continue;
+			}
+			cp = strtok(NULL, delims);
+			if(!cp) {
+				free_pr_list_item(curr);
+				continue;
+			}
+			curr->remhost = strdup(cp);
+		} else {
+			/* the local name */
+			curr->device = strdup(cp);
+			curr->remhost = strdup("");
+		}
+
+		if(last == NULL)
+			printers = curr;
+		else
+			last->pr_next = curr;
+		last = curr;
+
+	}
+	(void) pclose(p);
+
+	/*
+	 ** Now add on the virtual printers, if any
+	 */
+	if(last == NULL)
+		printers = list_virtual_printers();
+	else
+		last->pr_next = list_virtual_printers();
+
+	return(1);
+}
+
+#else	/* SVR4 */
+
+/*
+ * BSD way: lpc stat
  */
 int
 build_pr_list()
@@ -421,10 +572,12 @@ build_pr_list()
 	return(1);
 }
 
+#endif	/* SVR4 */
+
 void *grab(n)
 int n;
 {
-void *p;
+	void *p;
 
 	p = (void *)malloc(n);
 	if(p == NULL) {
@@ -450,12 +603,120 @@ pr_list curr;
 		free_pr_list_item(curr->pr_next); /* recurse */
 	free(curr);
 }
+
 /*
-** Print queue handling.
+ * build_pr_queue:  used to show the print queue.
+ *
+ * Note that the first thing we do is to discard any
+ * existing queue.
+ */
+#ifdef SVR4
+
+/*
+** In SVR4 the command to list the print jobs for printer
+** lp is "lpstat lp" (or, equivalently, "lpstat -p lp").
+** The output looks like this:
+** 
+** lp-2                    root               939   Jul 10 21:56
+** lp-5                    geoff               15   Jul 12 23:23
+** lp-6                    geoff               15   Jul 12 23:23
+** 
+** If the first job is actually printing the first line
+** is modified, as follows:
 **
-** Note that the first thing we do is to discard any
-** existing queue.
-*/
+** lp-2                    root               939   Jul 10 21:56 on lp
+** 
+** I don't yet have any info on what it looks like if the printer
+** is remote and we're spooling over the net. However for
+** the purposes of rpc.pcnfsd we can simply say that field 1 is the
+** job ID, field 2 is the submitter, and field 3 is the size.
+** We can check for the presence of the string " on " in the
+** first record to determine if we should count it as rank 0 or rank 1,
+** but it won't hurt if we get it wrong.
+**/
+
+pirstat
+build_pr_queue(pn, user, just_mine, p_qlen, p_qshown)
+printername     pn;
+username        user;
+int            just_mine;
+int            *p_qlen;
+int            *p_qshown;
+{
+pr_queue last = NULL;
+pr_queue curr = NULL;
+char buff[256];
+FILE *p;
+char *owner;
+char *job;
+char *totsize;
+
+	if(queue) {
+		free_pr_queue_item(queue);
+		queue = NULL;
+	}
+	*p_qlen = 0;
+	*p_qshown = 0;
+
+	pn = map_printer_name(pn);
+	if(pn == NULL || !valid_pr(pn) || suspicious(pn))
+		return(PI_RES_NO_SUCH_PRINTER);
+
+	sprintf(buff, "/usr/bin/lpstat %s", pn);
+	p = su_popen(user, buff, MAXTIME_FOR_QUEUE);
+	if(p == NULL) {
+		msg_out("rpc.pcnfsd: unable to popen() lpstat queue query");
+		return(PI_RES_FAIL);
+	}
+	
+	while(fgets(buff, 255, p) != NULL) {
+		job = strtok(buff, delims);
+		if(!job)
+			continue;
+
+		owner = strtok(NULL, delims);
+		if(!owner)
+			continue;
+
+		totsize = strtok(NULL, delims);
+		if(!totsize)
+			continue;
+
+		*p_qlen += 1;
+
+		if(*p_qshown > QMAX)
+			continue;
+
+		if(just_mine && mystrcasecmp(owner, user))
+			continue;
+
+		*p_qshown += 1;
+
+		curr = (struct pr_queue_item *)
+			grab(sizeof (struct pr_queue_item));
+
+		curr->position = *p_qlen;
+		curr->id = strdup(job);
+		curr->size = strdup(totsize);
+		curr->status = strdup("");
+		curr->system = strdup("");
+		curr->user = strdup(owner);
+		curr->file = strdup("");
+		curr->cm = strdup("-");
+		curr->pr_next = NULL;
+
+		if(last == NULL)
+			queue = curr;
+		else
+			last->pr_next = curr;
+		last = curr;
+
+	}
+	(void) su_pclose(p);
+	return(PI_RES_OK);
+}
+
+#else /* SVR4 */
 
 pirstat
 build_pr_queue(pn, user, just_mine, p_qlen, p_qshown)
@@ -561,6 +822,8 @@ char *totsize;
 	return(PI_RES_OK);
 }
 
+#endif /* SVR4 */
+
 void
 free_pr_queue_item(curr)
 pr_queue curr;
@@ -584,7 +847,53 @@ pr_queue curr;
 	free(curr);
 }
 
+#ifdef SVR4
 
+/*
+** New - SVR4 printer status handling.
+**
+** The command we'll use for checking the status of printer "lp"
+** is "lpstat -a lp -p lp". Here are some sample outputs:
+**
+** 
+** lp accepting requests since Wed Jul 10 21:49:25 EDT 1991
+** printer lp disabled since Thu Feb 21 22:52:36 EST 1991. available.
+** 	new printer
+** ---
+** pcdslw not accepting requests since Fri Jul 12 22:30:00 EDT 1991 -
+** 	unknown reason
+** printer pcdslw disabled since Fri Jul 12 22:15:37 EDT 1991. available.
+** 	new printer
+** ---
+** lp accepting requests since Wed Jul 10 21:49:25 EDT 1991
+** printer lp now printing lp-2. enabled since Sat Jul 13 12:02:17 EDT 1991. available.
+** ---
+** lp accepting requests since Wed Jul 10 21:49:25 EDT 1991
+** printer lp now printing lp-2. enabled since Sat Jul 13 12:02:17 EDT 1991. available.
+** ---
+** lp accepting requests since Wed Jul 10 21:49:25 EDT 1991
+** printer lp disabled since Sat Jul 13 12:05:20 EDT 1991. available.
+** 	unknown reason
+** ---
+** pcdslw not accepting requests since Fri Jul 12 22:30:00 EDT 1991 -
+** 	unknown reason
+** printer pcdslw is idle. enabled since Sat Jul 13 12:05:28 EDT 1991. available.
+**
+** Note that these are actual outputs. The format (which is totally
+** different from the lpstat in SunOS) seems to break down as
+** follows:
+** (1) The first line has the form "printername [not] accepting requests,,,"
+**    This is trivial to decode.
+** (2) The second line has several forms, all beginning "printer printername":
+** (2.1) "... disabled"
+** (2.2) "... is idle"
+** (2.3) "... now printing jobid"
+** The "available" comment seems to be meaningless. The next line
+** is the "reason" code which the operator can supply when issuing
+** a "disable" or "reject" command.
+** Note that there is no way to check the number of entries in the
+** queue except to ask for the queue and count them.
+*/
 
 pirstat
 get_pr_status(pn, avail, printing, qlen, needs_operator, status)
@@ -595,16 +904,81 @@ int          *qlen;
 bool_t       *needs_operator;
 char         *status;
 {
-char cmd[128];
 char buff[256];
-char buff2[256];
-char pname[64];
+char cmd[64];
 FILE *p;
-char *cp;
-char *cp1;
-char *cp2;
 int n;
 pirstat stat = PI_RES_NO_SUCH_PRINTER;
+
+	/* assume the worst */
+	*avail = FALSE;
+	*printing = FALSE;
+	*needs_operator = FALSE;
+	*qlen = 0;
+	*status = '\0';
+
+	pn = map_printer_name(pn);
+	if(pn == NULL || !valid_pr(pn) || suspicious(pn))
+		return(PI_RES_NO_SUCH_PRINTER);
+	n = strlen(pn);
+
+	sprintf(cmd, "/usr/bin/lpstat -a %s -p %s", pn, pn);
+
+	p = popen(cmd, "r");
+	if(p == NULL) {
+		msg_out("rpc.pcnfsd: unable to popen() lp status");
+		return(PI_RES_FAIL);
+	}
+	
+	stat = PI_RES_OK;
+
+	while(fgets(buff, 255, p) != NULL) {
+		if(!strncmp(buff, pn, n)) {
+			if(!strstr(buff, "not accepting"))
+			*avail = TRUE;
+			continue;
+		}
+		if(!strncmp(buff, "printer ", 8)) {
+			if(!strstr(buff, "disabled"))
+				*printing = TRUE;
+			if(strstr(buff, "printing"))
+				strcpy(status, "printing");
+			else if (strstr(buff, "idle"))
+				strcpy(status, "idle");
+			continue;
+		}
+		if(!strncmp(buff, "UX:", 3)) {
+			stat = PI_RES_NO_SUCH_PRINTER;
+		}
+	}
+	(void) pclose(p);
+	return(stat);
+}
+
+#else /* SVR4 */
+
+/*
+ * BSD way: lpc status
+ */
+pirstat
+get_pr_status(pn, avail, printing, qlen, needs_operator, status)
+printername   pn;
+bool_t       *avail;
+bool_t       *printing;
+int          *qlen;
+bool_t       *needs_operator;
+char         *status;
+{
+	char cmd[128];
+	char buff[256];
+	char buff2[256];
+	char pname[64];
+	FILE *p;
+	char *cp;
+	char *cp1;
+	char *cp2;
+	int n;
+	pirstat stat = PI_RES_NO_SUCH_PRINTER;
 
 	/* assume the worst */
 	*avail = FALSE;
@@ -620,19 +994,8 @@ pirstat stat = PI_RES_NO_SUCH_PRINTER;
 	sprintf(pname, "%s:", pn);
 	n = strlen(pname);
 
-#if 0
-/*
- * We used to use lpstat -a, but it breaks because of
- * printer alias inconsistency
- */
-	p = popen("/usr/bin/lpstat -a", "r");
-#else
-/*
- * So now we use:  lpc status
- */
 	sprintf(cmd, "%s/lpc status %s", LPCDIR, pn);
 	p = popen(cmd, "r");
-#endif
 	if(p == NULL) {
 		msg_out("rpc.pcnfsd: unable to popen() lp status");
 		return(PI_RES_FAIL);
@@ -698,7 +1061,43 @@ pirstat stat = PI_RES_NO_SUCH_PRINTER;
 	return(stat);
 }
 
+#endif /* SVR4 */
 
+/*
+ * pr_cancel: cancel a print job
+ */
+#ifdef SVR4
+
+/*
+** For SVR4 we have to be prepared for the following kinds of output:
+** 
+** # cancel lp-6
+** request "lp-6" cancelled
+** # cancel lp-33
+** UX:cancel: WARNING: Request "lp-33" doesn't exist.
+** # cancel foo-88
+** UX:cancel: WARNING: Request "foo-88" doesn't exist.
+** # cancel foo
+** UX:cancel: WARNING: "foo" is not a request id or a printer.
+**             TO FIX: Cancel requests by id or by
+**                     name of printer where printing.
+** # su geoff
+** $ cancel lp-2
+** UX:cancel: WARNING: Can't cancel request "lp-2".
+**             TO FIX: You are not allowed to cancel
+**                     another's request.
+**
+** There are probably other variations for remote printers.
+** Basically, if the reply begins with the string
+**          "UX:cancel: WARNING: "
+** we can strip this off and look for one of the following
+** (1) 'R' - should be part of "Request "xxxx" doesn't exist."
+** (2) '"' - should be start of ""foo" is not a request id or..."
+** (3) 'C' - should be start of "Can't cancel request..."
+**
+** The fly in the ointment: all of this can change if these
+** messages are localized..... :-(
+*/
 pcrstat pr_cancel(pr, user, id)
 char *pr;
 char *user;
@@ -707,8 +1106,52 @@ char *id;
 char            cmdbuf[256];
 char            resbuf[256];
 FILE *fd;
-int i;
 pcrstat stat = PC_RES_NO_SUCH_JOB;
+
+	pr = map_printer_name(pr);
+	if(pr == NULL || suspicious(pr))
+		return(PC_RES_NO_SUCH_PRINTER);
+	if(suspicious(id))
+		return(PC_RES_NO_SUCH_JOB);
+
+	sprintf(cmdbuf, "/usr/bin/cancel %s", id);
+	if ((fd = su_popen(user, cmdbuf, MAXTIME_FOR_CANCEL)) == NULL) {
+		msg_out("rpc.pcnfsd: su_popen failed");
+		return(PC_RES_FAIL);
+	}
+
+	if(fgets(resbuf, 255, fd) == NULL) 
+		stat = PC_RES_FAIL;
+	else if(!strstr(resbuf, "UX:"))
+		stat = PC_RES_OK;
+	else if(strstr(resbuf, "doesn't exist"))
+		stat = PC_RES_NO_SUCH_JOB;
+	else if(strstr(resbuf, "not a request id"))
+		stat = PC_RES_NO_SUCH_JOB;
+	else if(strstr(resbuf, "Can't cancel request"))
+		stat = PC_RES_NOT_OWNER;
+	else	stat = PC_RES_FAIL;
+
+	if(su_pclose(fd) == 255)
+		msg_out("rpc.pcnfsd: su_pclose alert");
+	return(stat);
+}
+
+#else /* SVR4 */
+
+/*
+ * BSD way: lprm
+ */
+pcrstat pr_cancel(pr, user, id)
+char *pr;
+char *user;
+char *id;
+{
+	char            cmdbuf[256];
+	char            resbuf[256];
+	FILE *fd;
+	int i;
+	pcrstat stat = PC_RES_NO_SUCH_JOB;
 
 	pr = map_printer_name(pr);
 	if(pr == NULL || suspicious(pr))
@@ -736,7 +1179,7 @@ pcrstat stat = PC_RES_NO_SUCH_JOB;
 			msg_out("rpc.pcnfsd: su_pclose alert");
 		return(stat);
 }
-
+#endif /* SVR4 */
 
 /*
 ** New subsystem here. We allow the administrator to define
@@ -898,4 +1341,3 @@ int i;
 	}
 	return(NULL);
 }
-
