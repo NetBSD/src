@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.29.2.8 2000/07/31 18:18:28 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.29.2.9 2000/10/12 21:26:02 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.29.2.8 2000/07/31 18:18:28 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.29.2.9 2000/10/12 21:26:02 he Exp $");
 #endif
 #endif
 
@@ -140,10 +140,15 @@ pkg_do(char *pkg)
 				strcpy(buf, s);
 				tmppkg = buf;
 			}
-			
-			if (!(Home = fileGetURL(NULL, tmppkg))) {
+
+			Home = fileGetURL(NULL, tmppkg);
+			if (Home == NULL) {
 				warnx("unable to fetch `%s' by URL", tmppkg);
 				if (ispkgpattern(pkg))
+					/*
+					 * Seems we were not able to expand the pattern
+					 * to something useful - bail out
+					 */
 					return 1;
 
 				if (strstr(pkg, ".tgz") != NULL) {
@@ -152,7 +157,7 @@ pkg_do(char *pkg)
 					 *  clever - the user should give something sane!)
 					 */
 					return 1;
-			}
+				}
 			
 				
 				/* Second chance - maybe just a package name was given,
@@ -173,10 +178,11 @@ pkg_do(char *pkg)
 					}
 					strcpy(buf, s);
 					tmppkg = buf;
-					if (!(Home = fileGetURL(NULL, tmppkg))) {
+					Home = fileGetURL(NULL, tmppkg);
+					if (Home == NULL) {
 						warnx("unable to fetch `%s' by URL", tmppkg);
-				return 1;
-			}
+						return 1;
+					}
 				}
 			}
 			where_to = Home;
@@ -363,24 +369,25 @@ pkg_do(char *pkg)
 			 * and we better stop right now.
 			 */
 			char *s;
-			char *fmt = NULL;
 			int skip = -1;
 
 			/* doing this right required to parse the full version(s),
 			 * do a 99% solution here for now */
+			if (strchr(p->name, '{'))
+				continue;	/* would remove trailing '}' else */
+
 			if ((s = strpbrk(p->name, "<>")) != NULL) {
-				fmt = "%.*s-[0-9]*";
 				skip = 0;
 			} else if ((s = strrchr(p->name, '-')) != NULL) {
-				fmt = "%.*s[0-9]*";
 				skip = 1;
 			}
 			
-			if (fmt != NULL) {
+			if (skip >= 0) {
 				char    buf[FILENAME_MAX];
 		
-				(void) snprintf(buf, sizeof(buf), fmt,
-					(int)(s - p->name) + skip, p->name);
+				(void) snprintf(buf, sizeof(buf),
+				    skip ? "%.*s[0-9]*" : "%.*s-[0-9]*",
+				    (int)(s - p->name) + skip, p->name);
 				if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
 					warnx("pkg `%s' required, but `%s' found installed.",
 					      p->name, installed);
