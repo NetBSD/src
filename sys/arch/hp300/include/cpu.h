@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: cpu.h 1.16 91/03/25
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.5 1994/05/05 10:12:19 mycroft Exp $
+ *	$Id: cpu.h,v 1.6 1994/05/07 06:26:03 mycroft Exp $
  */
 
 /*
@@ -117,7 +117,16 @@ extern unsigned char ssir;
 #define setsoftnet()	ssir |= SIR_NET
 #define setsoftclock()	ssir |= SIR_CLOCK
 
+/*
+ * CTL_MACHDEP definitions.
+ */
+#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define	CPU_MAXID		2	/* number of valid machdep ids */
 
+#define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+}
 
 /*
  * The rest of this should probably be moved to ../hp300/hp300cpu.h,
