@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.88 1999/12/17 09:01:01 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.89 1999/12/18 00:35:25 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1820,3 +1820,43 @@ usr.bin/quota/quota.c				1.22
 usr.sbin/edquota/edquota.c			1.19
 
   Allow use of quotas bigger than 4GB by avoiding integer overflow.
+
+sbin/disklabel/interact.c			1.12-1.13
+
+  When setting size of partitions interactively, allow '$'
+  for the remainder of the disk.
+
+usr.sbin/pwd_mkdb/pwd_mkdb.8			1.10
+
+  Remove obsolete reference to mkpasswd(8).
+
+share/man/man5/passwd.5				1.14
+
+  Clarify master.passwd vs. passwd files.
+
+sys/ufs/lfs/lfs.h				1.15
+sys/ufs/lfs/lfs_bio.c				1.11
+sys/ufs/lfs/lfs_extern.h			1.14
+sys/ufs/lfs/lfs_inode.c				1.25
+sys/ufs/lfs/lfs_vfsops.c			1.34 via patch
+
+  Avoid flushing vnodes involved in a dirop, making lfs' promise
+  of "no fsck needed, even in the event of a crash" closer to
+  reality.  Improves ability to NFS-export LFS file systems.
+
+sys/ufs/lfs/lfs.h				1.17
+sys/ufs/lfs/lfs_alloc.c				1.26
+sys/ufs/lfs/lfs_bio.c				1.13
+sys/ufs/lfs/lfs_segment.c			1.32
+sys/ufs/lfs/lfs_vfsops.c			1.41
+sys/ufs/lfs/lfs_vnops.c				1.31
+
+  Address locking protocol error for inode hash, and make the
+  maximum number of active dirops a global quantity.
+
+sys/ufs/lfs/lfs_segment.c			1.37
+sys/ufs/lfs/lfs_vnops.c				1.33
+
+  Handle the case of a vnode flush while dirops are active correctly
+  in lfs_segwrite.  Also, make sure a flush is called in SET_DIROP
+  before sleeping on its results.  Addresses PR#8863.
