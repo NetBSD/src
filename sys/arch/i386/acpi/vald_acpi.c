@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.7 2003/05/20 12:09:56 kanaoka Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.8 2003/05/20 12:14:17 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.7 2003/05/20 12:09:56 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.8 2003/05/20 12:14:17 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,7 @@ vald_acpi_notifyhandler(ACPI_HANDLE handle, UINT32 value, void *context)
 	switch (value) {
 	case ACPI_NOTIFY_ValdStatusChanged:
 #ifdef VALD_ACPI_DEBUG
-		printf("%s: recived ValdStatusChanged message. \n",
+		printf("%s: received ValdStatusChanged message. \n",
 		    sc->sc_dev.dv_xname);
 #endif /* ACPI_VALD_DEBUG */
 
