@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.8 2002/05/05 17:51:46 thorpej Exp $	*/
+/*	$NetBSD: SYS.h,v 1.9 2002/05/07 01:31:33 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,20 +56,23 @@
  * change it to be position independent later, if need be.
  */
 #ifdef PIC
-#define	CALL(name) \
-	PIC_PROLOGUE(%g1,%g2); \
-	sethi %hi(name),%g2; \
-	or %g2,%lo(name),%g2; \
-	ldx [%g1+%g2],%g2; \
-	jmp %g2; \
+#ifdef BIGPIC
+#define	JUMP(name) \
+	PIC_PROLOGUE(%g1,%g5); \
+	sethi %hi(_C_LABEL(name)),%g5; \
+	or %g5,%lo(_C_LABEL(name)),%g5; \
+	ldx [%g1+%g5],%g5; \
+	jmp %g5; \
 	nop
 #else
-#define	CALL(name) \
-	sethi %hi(name),%g1; or %lo(name),%g1,%g1; \
-	jmp %g1; nop
+#define	JUMP(name) \
+	PIC_PROLOGUE(%g1,%g5); \
+	ldx [%g1+_C_LABEL(name)],%g5; jmp %g5; nop
 #endif
-#define	ERROR()	CALL(_C_LABEL(__cerror))
-
+#else
+#define	JUMP(name)	set _C_LABEL(name),%g1; jmp %g1; nop
+#endif
+#define	ERROR()		JUMP(__cerror)
 /*
  * SYSCALL is used when further action must be taken before returning.
  * Note that it adds a `nop' over what we could do, if we only knew what
