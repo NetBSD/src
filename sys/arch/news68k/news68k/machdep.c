@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2000/09/15 15:55:10 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2001/01/12 17:17:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,9 +64,14 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 
+#ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#ifdef __ELF__
+#include <sys/exec_elf.h>
+#endif
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -1244,7 +1249,12 @@ consinit()
 		extern int end;
 		extern int *esym;
 
+#ifndef __ELF__
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+#else
+		ddb_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		    (void *)&end, esym);
+#endif
 	}
 	if (boothowto & RB_KDB)
 		Debugger();
