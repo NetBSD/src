@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.4 (Berkeley) 6/10/91";*/
-static char rcsid[] = "$Id: print.c,v 1.7 1994/03/23 04:05:31 mycroft Exp $";
+static char rcsid[] = "$Id: print.c,v 1.8 1994/04/12 06:08:51 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -115,7 +115,6 @@ print(tp, wp, ldisc, fmt)
 	put("-altwerase", ALTWERASE, 0);
 	put("-noflsh", NOFLSH, 0);
 	put("-tostop", TOSTOP, 0);
-	put("-mdmbuf", MDMBUF, 0);
 	put("-flusho", FLUSHO, 0);
 	put("-pendin", PENDIN, 0);
 	put("-nokerninfo", NOKERNINFO, 0);
@@ -169,6 +168,7 @@ print(tp, wp, ldisc, fmt)
 	put("-clocal", CLOCAL, 0);
 	put("-cstopb", CSTOPB, 0);
 	put("-crtscts", CRTSCTS, 0);
+	put("-mdmbuf", MDMBUF, 0);
 
 	/* special control characters */
 	cc = tp->c_cc;

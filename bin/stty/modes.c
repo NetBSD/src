@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)modes.c	5.4 (Berkeley) 6/10/91";*/
-static char rcsid[] = "$Id: modes.c,v 1.5 1993/08/01 18:57:36 mycroft Exp $";
+static char rcsid[] = "$Id: modes.c,v 1.6 1994/04/12 06:08:48 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -79,6 +79,8 @@ struct modes cmodes[] = {
 	"-clocal",	0, CLOCAL,
 	"crtscts",	CRTSCTS, 0,
 	"-crtscts",	0, CRTSCTS,
+	"mdmbuf",	MDMBUF, 0,
+	"-mdmbuf",	0, MDMBUF,
 	NULL
 };
 
@@ -155,8 +157,6 @@ struct modes lmodes[] = {
 	"-noflsh",	0, NOFLSH,
 	"tostop",	TOSTOP, 0,
 	"-tostop",	0, TOSTOP,
-	"mdmbuf",	MDMBUF, 0,
-	"-mdmbuf",	0, MDMBUF,
 	"flusho",	FLUSHO, 0,
 	"-flusho",	0, FLUSHO,
 	"pendin",	PENDIN, 0,
