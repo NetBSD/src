@@ -1,4 +1,5 @@
-#	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
+#	from: @(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
+#	$Id: bsd.man.mk,v 1.7 1993/08/15 19:37:07 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
