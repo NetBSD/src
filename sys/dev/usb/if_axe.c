@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.2 2004/10/23 14:01:41 augustss Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.3 2004/10/24 08:49:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.2 2004/10/23 14:01:41 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.3 2004/10/24 08:49:13 augustss Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -717,7 +717,6 @@ axe_rx_list_init(struct axe_softc *sc)
 		if (axe_newbuf(sc, c, NULL) == ENOBUFS)
 			return (ENOBUFS);
 		if (c->axe_xfer == NULL) {
-assert(sc->axe_udev);
 			c->axe_xfer = usbd_alloc_xfer(sc->axe_udev);
 			if (c->axe_xfer == NULL)
 				return (ENOBUFS);
