@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.c,v 1.46 2002/05/10 05:49:21 itojun Exp $	*/
-/*	$KAME: ipsec.c,v 1.125 2001/09/12 23:01:16 sakane Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.46.2.1 2002/05/30 13:52:34 gehenna Exp $	*/
+/*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.46 2002/05/10 05:49:21 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.46.2.1 2002/05/30 13:52:34 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -172,9 +172,6 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 	struct inpcbpolicy *pcbsp;
 	int dir;
 {
-#ifndef IPSEC_PCBCACHE
-	return NULL;
-#else
 	struct secpolicyindex spidx;
 
 	switch (dir) {
@@ -195,6 +192,10 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 	}
 	if (!pcbsp->cache[dir])
 		return NULL;
+	if (pcbsp->cache[dir]->state != IPSEC_SPSTATE_ALIVE) {
+		ipsec_invalpcbcache(pcbsp, dir);
+		return NULL;
+	}
 	if ((pcbsp->cacheflags & IPSEC_PCBSP_CONNECTED) == 0) {
 		if (!pcbsp->cache[dir])
 			return NULL;
@@ -225,7 +226,6 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 		printf("DP ipsec_checkpcbcache cause refcnt++:%d SP:%p\n",
 		pcbsp->cache[dir]->refcnt, pcbsp->cache[dir]));
 	return pcbsp->cache[dir];
-#endif
 }
 
 static int
@@ -236,9 +236,6 @@ ipsec_fillpcbcache(pcbsp, m, sp, dir)
 	int dir;
 {
 
-#ifndef IPSEC_PCBCACHE
-	return EINVAL;
-#else
 	switch (dir) {
 	case IPSEC_DIR_INBOUND:
 	case IPSEC_DIR_OUTBOUND:
@@ -267,7 +264,6 @@ ipsec_fillpcbcache(pcbsp, m, sp, dir)
 	pcbsp->cachegen[dir] = sp_cachegen;
 
 	return 0;
-#endif
 }
 
 static int

@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.113 2002/05/06 22:11:50 eeh Exp $
+#	$NetBSD: DEVNAMES,v 1.113.2.1 2002/05/30 14:45:24 gehenna Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -572,6 +572,7 @@ le_dec_subr		MI		Attribute
 lebuffer		MI		
 ledma			MI		
 leo			atari
+lfmiop			MI
 lkkbd			alpha
 lkkbd			vax
 lkms			vax

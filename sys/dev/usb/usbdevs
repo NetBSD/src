@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.248 2002/05/12 07:55:57 simonb Exp $
+$NetBSD: usbdevs,v 1.248.2.1 2002/05/30 14:47:40 gehenna Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -548,7 +548,7 @@ product CYPRESS THERMO		0x0002	thermometer
 product CYPRESS FMRADIO		0x1002	FM Radio
 
 /* Daisy Technology products */
-product DAISY DMC		0x6901	PhotoClip Camera
+product DAISY DMC		0x6901	PhotoClip USBMediaReader
 
 /* Dallas Semiconductor products */
 product DALLAS J6502		0x4201	J-6502 speakers
@@ -714,7 +714,27 @@ product IBM USBCDROMDRIVE	0x4427	USB CD-ROM Drive
 product IIYAMA HUB		0x0201	Hub
 
 /* Inside Out Networks products */
-product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 serial ports
+product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 RS232
+product INSIDEOUT HUBPORT7	0x0002	Hubport/7
+product INSIDEOUT RAPIDPORT4	0x0003	Rapidport/4
+product INSIDEOUT EDGEPORT4T	0x0004	Edgeport/4 RS232 for Telxon
+product INSIDEOUT EDGEPORT2	0x0005	Edgeport/2 RS232
+product INSIDEOUT EDGEPORT4I	0x0006	Edgeport/4 RS422
+product INSIDEOUT EDGEPORT2I	0x0007	Edgeport/2 RS422/RS485
+product	INSIDEOUT HUBPORT4	0x0008	Hubport/4
+product INSIDEOUT EDGEPORT8HAND	0x0009	Hand-built Edgeport/8
+product	INSIDEOUT MULTIMODEM	0x000A	MultiTech version of RP/4
+product	INSIDEOUT EDGEPORTPPORT	0x000B	Edgeport/(4)21 Parallel port (USS720)
+product	INSIDEOUT EDGEPORT421	0x000C	Edgeport/421 Hub+RS232+Parallel
+product	INSIDEOUT EDGEPORT21	0x000D	Edgeport/21  RS232+Parallel
+product INSIDEOUT EDGEPORT8DC	0x000E	1/2 Edgeport/8 (2 EP/4s on 1 PCB)
+product INSIDEOUT EDGEPORT8	0x000F	Edgeport/8
+product INSIDEOUT EDGEPORT2DIN	0x0010	Edgeport/2 RS232 / Apple DIN connector
+product INSIDEOUT EDGEPORT4DIN	0x0011	Edgeport/4 RS232 / Apple DIN connector
+product INSIDEOUT EDGEPORT16DC	0x0012	1/2 Edgeport/16 (2 EP/8s on 1 PCB))
+product INSIDEOUT EDGEPORTCOMP	0x0013	Edgeport Compatible
+product INSIDEOUT EDGEPORT8I	0x0014	Edgeport/8 RS422
+product INSIDEOUT MT4X56USB	0x1403	OEM device
 
 /* In-System products */
 product INSYSTEM F5U002		0x0002	Parallel printer adapter
@@ -900,6 +920,7 @@ product MINOLTA X		0x4009	Dimage X
 
 /* Mitsumi products */
 product MITSUMI CDRRW		0x0000	CD-R/RW Drive
+product MITSUMI MOUSE		0x6407	Mouse
 product MITSUMI FDD		0x6901	FDD
 
 /* Mobility products */

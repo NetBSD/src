@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.h,v 1.1.2.1 2002/05/16 04:35:49 gehenna Exp $ */
+/*	$NetBSD: irix_usema.h,v 1.1.2.2 2002/05/30 14:44:56 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,21 +41,84 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/queue.h>
   
 #include <compat/irix/irix_types.h>
+#include <compat/irix/irix_exec.h>
 
-#ifdef _KERNEL
+extern struct vfsops irix_usema_dummy_vfsops;
+void irix_usema_dummy_vfs_init __P((void));
+extern const struct vnodeopv_desc * const irix_usema_vnodeopv_descs[];
+extern const struct vnodeopv_desc irix_usema_opv_desc;
+extern int (**irix_usema_vnodeop_p) __P((void *));
+extern const struct vnodeopv_entry_desc irix_usema_vnodeop_entries[];
+
+
 void	irix_usemaattach __P((struct device *, struct device *, void *));
+
+int	irix_usema_close	__P((void *));
+int	irix_usema_access	__P((void *));
+int	irix_usema_getattr	__P((void *));
+int	irix_usema_setattr	__P((void *));
+int	irix_usema_fcntl	__P((void *));
+int	irix_usema_ioctl	__P((void *));
+int	irix_usema_poll		__P((void *));
+int	irix_usema_inactive	__P((void *));
+
+#ifdef DEBUG_IRIX
+void	irix_usema_debug	__P((void));
 #endif
 
 #define IRIX_USEMADEV_MINOR	1
 #define IRIX_USEMACLNDEV_MINOR	0
+
+/* Semaphore internal structure: undocumented in IRIX */
+struct irix_semaphore {
+	int is_val;	/* Sempahore value */	
+	int is_uk1;	/* unknown, usually small integer < 3000  */
+	int is_uk2;	/* metric, debug or history pointer ? */
+	int is_uk3;	/* unknown, usually equal to 0 */
+	int is_uk4;	/* unknown, usually equal to 0 */
+	int is_shid;	/* unique ID for the shared arena ? */
+	int is_oid;	/* owned id? usually equal to -1 */
+	int is_uk7;	/* unknown, usually equal to -1 */
+	int is_uk8;	/* unknown, usually equal to 0 */
+	int is_uk9;	/* unknown, usually equal to 0 */
+	int is_uk10;	/* semaphore page base address ? */
+	int is_uk12;	/* unknown, usually equal to 0 */
+	int is_uk13;	/* metric, debug or history pointer ? */
+	int is_uk14;	/* padding? */
+};
+
+struct irix_usema_idaddr {
+	int iui_uk1;	/* unknown, usually equal to 0 */
+	int *iui_oidp;	/* pointer to is_oid field in struct irix_semaphore */
+};
+
+/* waigint processes list */
+struct irix_waiting_proc_rec {
+	TAILQ_ENTRY(irix_waiting_proc_rec) iwpr_list;
+	struct proc *iwpr_p;
+};
+
+/* semaphore list, their vnode counterparts, and waiting processes lists */
+struct irix_usema_rec {
+	LIST_ENTRY(irix_usema_rec) iur_list;
+	struct vnode *iur_vn;
+	struct irix_semaphore *iur_sem;
+	int iur_shid;
+	struct proc *iur_p;
+	int iur_waiting_count;
+	TAILQ_HEAD(iur_waiting_p, irix_waiting_proc_rec) iur_waiting_p;
+	TAILQ_HEAD(iur_released_p, irix_waiting_proc_rec) iur_released_p;
+};
 
 /* From IRIX's <sys/usioctl.h> */
 #define IRIX_USEMADEV		"/dev/usema"
 #define IRIX_USEMACLNDEV	"/dev/usemaclone"
 
 #define IRIX_UIOC	('u' << 16 | 's' << 8)
+#define IRIX_UIOC_MASK	0x00ffff00
 
 #define IRIX_UIOCATTACHSEMA	(IRIX_UIOC|2)
 #define IRIX_UIOCBLOCK		(IRIX_UIOC|3)
@@ -98,5 +161,24 @@ struct irix_ussemastate_s {
 };
 typedef struct irix_ussemastate_s irix_ussemastate_t;
 typedef struct irix_ussematidstate_s irix_ussematidstate_t;
+
+
+/* usync_fcntl() commands, undocumented in IRIX */
+#define IRIX_USYNC_BLOCK		1
+#define IRIX_USYNC_INTR_BLOCK		2
+#define IRIX_USYNC_UNBLOCK_ALL		3
+#define IRIX_USYNC_UNBLOCK		4
+#define IRIX_USYNC_NOTIFY_REGISTER	5
+#define IRIX_USYNC_NOTIFY		6
+#define IRIX_USYNC_NOTIFY_DELETE	7
+#define IRIX_USYNC_NOTIFY_CLEAR		8
+#define IRIX_USYNC_GET_STATE		11
+
+struct irix_usync_arg {
+	int iua_uk0;	/* unknown, usually small integer around 1000 */
+	int iua_uk1;	/* unknown, usually pointer to code in libc */
+	int iua_uk2;	/* unknown, usually null */
+	struct irix_semaphore *iua_sem;	/* semaphore address */
+};
 
 #endif /* _IRIX_USEMA_H_ */

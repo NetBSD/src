@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.74 2002/05/14 20:03:54 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.74.2.1 2002/05/30 13:52:42 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.74 2002/05/14 20:03:54 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.74.2.1 2002/05/30 13:52:42 gehenna Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -216,13 +216,13 @@ lfs_vflush(struct vnode *vp)
 		 * to avoid losing new data
 		 */
 		s = splbio();
-		for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
-			nbp = bp->b_vnbufs.le_next;
+		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+			nbp = LIST_NEXT(bp, b_vnbufs);
 			if (bp->b_flags & B_CALL) {
-				for (tbp = vp->v_dirtyblkhd.lh_first; tbp;
+				for (tbp = LIST_FIRST(&vp->v_dirtyblkhd); tbp;
 				    tbp = tnbp)
 				{
-					tnbp = tbp->b_vnbufs.le_next;
+					tnbp = LIST_NEXT(tbp, b_vnbufs);
 					if (tbp->b_vp == bp->b_vp
 					   && tbp->b_lblkno == bp->b_lblkno
 					   && tbp != bp)
@@ -258,8 +258,8 @@ lfs_vflush(struct vnode *vp)
 		printf("lfs_vflush: ino %d is freed, not flushing\n",
 			ip->i_number);
 		s = splbio();
-		for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
-			nbp = bp->b_vnbufs.le_next;
+		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+			nbp = LIST_NEXT(bp, b_vnbufs);
 			if (bp->b_flags & B_DELWRI) { /* XXX always true? */
 				fs->lfs_avail += btofsb(fs, bp->b_bcount);
 				wakeup(&fs->lfs_avail);
@@ -298,7 +298,7 @@ lfs_vflush(struct vnode *vp)
 	}
 	sp = fs->lfs_sp;
 
-	if (vp->v_dirtyblkhd.lh_first == NULL) {
+	if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
 		lfs_writevnodes(fs, vp->v_mount, sp, VN_EMPTY);
 	} else if ((ip->i_flag & IN_CLEANING) &&
 		  (fs->lfs_sp->seg_flags & SEGM_CLEAN)) {
@@ -307,7 +307,7 @@ lfs_vflush(struct vnode *vp)
 #endif
 		lfs_writevnodes(fs, vp->v_mount, sp, VN_CLEAN);
 	} else if (lfs_dostats) {
-		if (vp->v_dirtyblkhd.lh_first || (VTOI(vp)->i_flag & IN_ALLMOD))
+		if (LIST_FIRST(&vp->v_dirtyblkhd) || (VTOI(vp)->i_flag & IN_ALLMOD))
 			++lfs_stats.vflush_invoked;
 #ifdef DEBUG_LFS
 		ivndebug(vp,"vflush");
@@ -328,7 +328,7 @@ lfs_vflush(struct vnode *vp)
 
 	do {
 		do {
-			if (vp->v_dirtyblkhd.lh_first != NULL)
+			if (LIST_FIRST(&vp->v_dirtyblkhd) != NULL)
 				lfs_writefile(fs, sp, vp);
 		} while (lfs_writeinode(fs, sp, ip));
 	} while (lfs_writeseg(fs, sp) && ip->i_number == LFS_IFILE_INUM);
@@ -373,26 +373,26 @@ int
 lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 {
 	struct inode *ip;
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
 	int inodes_written = 0, only_cleaning;
 	int needs_unlock;
 
 #ifndef LFS_NO_BACKVP_HACK
 	/* BEGIN HACK */
-#define	VN_OFFSET	(((caddr_t)&vp->v_mntvnodes.le_next) - (caddr_t)vp)
-#define	BACK_VP(VP)	((struct vnode *)(((caddr_t)VP->v_mntvnodes.le_prev) - VN_OFFSET))
-#define	BEG_OF_VLIST	((struct vnode *)(((caddr_t)&mp->mnt_vnodelist.lh_first) - VN_OFFSET))
+#define	VN_OFFSET	(((caddr_t)&LIST_NEXT(vp, v_mntvnodes)) - (caddr_t)vp)
+#define	BACK_VP(VP)	((struct vnode *)(((caddr_t)(VP)->v_mntvnodes.le_prev) - VN_OFFSET))
+#define	BEG_OF_VLIST	((struct vnode *)(((caddr_t)&(LIST_FIRST(&mp->mnt_vnodelist))) - VN_OFFSET))
 	
 	/* Find last vnode. */
- loop:	for (vp = mp->mnt_vnodelist.lh_first;
-	     vp && vp->v_mntvnodes.le_next != NULL;
-	     vp = vp->v_mntvnodes.le_next);
-	for (; vp && vp != BEG_OF_VLIST; vp = BACK_VP(vp)) {
+ loop:	for (vp = LIST_FIRST(&mp->mnt_vnodelist);
+	     vp && LIST_NEXT(vp, v_mntvnodes) != NULL;
+	     vp = LIST_NEXT(vp, v_mntvnodes));
+	for (; vp && vp != BEG_OF_VLIST; vp = nvp) {
+		nvp = BACK_VP(vp);
 #else
 	loop:
-	for (vp = mp->mnt_vnodelist.lh_first;
-	     vp != NULL;
-	     vp = vp->v_mntvnodes.le_next) {
+	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
+		nvp = LIST_NEXT(vp, v_mntvnodes);
 #endif
 		/*
 		 * If the vnode that we are about to sync is no longer
@@ -410,7 +410,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			continue;
 		}
 		
-		if (op == VN_EMPTY && vp->v_dirtyblkhd.lh_first) {
+		if (op == VN_EMPTY && LIST_FIRST(&vp->v_dirtyblkhd)) {
 			vndebug(vp,"empty");
 			continue;
 		}
@@ -454,16 +454,16 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 		 * Write the inode/file if dirty and it's not the IFILE.
 		 */
 		if ((ip->i_flag & IN_ALLMOD) ||
-		     (vp->v_dirtyblkhd.lh_first != NULL))
+		     (LIST_FIRST(&vp->v_dirtyblkhd) != NULL))
 		{
 			only_cleaning = ((ip->i_flag & IN_ALLMOD) == IN_CLEANING);
 
 			if (ip->i_number != LFS_IFILE_INUM
-			   && vp->v_dirtyblkhd.lh_first != NULL)
+			   && LIST_FIRST(&vp->v_dirtyblkhd) != NULL)
 			{
 				lfs_writefile(fs, sp, vp);
 			}
-			if (vp->v_dirtyblkhd.lh_first != NULL) {
+			if (LIST_FIRST(&vp->v_dirtyblkhd) != NULL) {
 				if (WRITEINPROG(vp)) {
 #ifdef DEBUG_LFS
 					ivndebug(vp,"writevnodes/write2");
@@ -640,7 +640,7 @@ lfs_segwrite(struct mount *mp, int flags)
 			fs->lfs_flags &= ~LFS_IFDIRTY;
 
 			ip = VTOI(vp);
-			/* if (vp->v_dirtyblkhd.lh_first != NULL) */
+			/* if (LIST_FIRST(&vp->v_dirtyblkhd) != NULL) */
 				lfs_writefile(fs, sp, vp);
 			if (ip->i_flag & IN_ALLMOD)
 				++did_ckp;
@@ -652,11 +652,11 @@ lfs_segwrite(struct mount *mp, int flags)
 		} while (redo && do_ckp);
 
 		/* The ifile should now be all clear */
-		if (do_ckp && vp->v_dirtyblkhd.lh_first) {
+		if (do_ckp && LIST_FIRST(&vp->v_dirtyblkhd)) {
 			struct buf *bp;
 			int s, warned = 0, dopanic = 0;
 			s = splbio();
-			for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = bp->b_vnbufs.le_next) {
+			for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = LIST_NEXT(bp, b_vnbufs)) {
 				if (!(bp->b_flags & B_GATHERED)) {
 					if (!warned)
 						printf("lfs_segwrite: ifile still has dirty blocks?!\n");
@@ -1027,23 +1027,25 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 int
 lfs_gather(struct lfs *fs, struct segment *sp, struct vnode *vp, int (*match)(struct lfs *, struct buf *))
 {
-	struct buf *bp;
+	struct buf *bp, *nbp;
 	int s, count = 0;
 	
 	sp->vp = vp;
 	s = splbio();
 
 #ifndef LFS_NO_BACKBUF_HACK
-loop:	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = bp->b_vnbufs.le_next) {
-#else /* LFS_NO_BACKBUF_HACK */
 /* This is a hack to see if ordering the blocks in LFS makes a difference. */
-# define	BUF_OFFSET	(((void *)&bp->b_vnbufs.le_next) - (void *)bp)
-# define	BACK_BUF(BP)	((struct buf *)(((void *)BP->b_vnbufs.le_prev) - BUF_OFFSET))
-# define	BEG_OF_LIST	((struct buf *)(((void *)&vp->v_dirtyblkhd.lh_first) - BUF_OFFSET))
+# define	BUF_OFFSET	(((caddr_t)&LIST_NEXT(bp, b_vnbufs)) - (caddr_t)bp)
+# define	BACK_BUF(BP)	((struct buf *)(((caddr_t)(BP)->b_vnbufs.le_prev) - BUF_OFFSET))
+# define	BEG_OF_LIST	((struct buf *)(((caddr_t)&LIST_FIRST(&vp->v_dirtyblkhd)) - BUF_OFFSET))
 /* Find last buffer. */
-loop:	for (bp = vp->v_dirtyblkhd.lh_first; bp && bp->b_vnbufs.le_next != NULL;
-	    bp = bp->b_vnbufs.le_next);
-	for (; bp && bp != BEG_OF_LIST; bp = BACK_BUF(bp)) {
+loop:	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp && LIST_NEXT(bp, b_vnbufs) != NULL;
+	    bp = LIST_NEXT(bp, b_vnbufs));
+	for (; bp && bp != BEG_OF_LIST; bp = nbp) {
+		nbp = BACK_BUF(bp);
+#else /* LFS_NO_BACKBUF_HACK */
+loop:	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
 #endif /* LFS_NO_BACKBUF_HACK */
 		if ((bp->b_flags & (B_BUSY|B_GATHERED)) || !match(fs, bp)) {
 #ifdef DEBUG_LFS
@@ -1659,7 +1661,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 				} else {
 					bremfree(bp);
 					bp->b_flags |= B_DONE;
+					s = splbio();
 					reassignbuf(bp, bp->b_vp);
+					splx(s);
 					LFS_UNLOCK_BUF(bp);
 					brelse(bp);
 				}
@@ -1873,7 +1877,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			 */
 			if ((i == 1 ||
 			     (i > 1 && vp && *bpp && (*bpp)->b_vp != vp)) &&
-			    (bp = vp->v_dirtyblkhd.lh_first) != NULL &&
+			    (bp = LIST_FIRST(&vp->v_dirtyblkhd)) != NULL &&
 			    vp->v_mount == fs->lfs_ivnode->v_mount)
   			{
 				ip = VTOI(vp);
@@ -2108,7 +2112,27 @@ lfs_cluster_callback(struct buf *bp)
 		}
 #endif
 		if (tbp->b_flags & (B_BUSY | B_CALL)) {
+			/*
+			 * Prevent vp from being moved between hold list
+			 * and free list by giving it an extra hold,
+			 * and then inline HOLDRELE, minus the TAILQ
+			 * manipulation.
+			 *
+			 * lfs_vunref() will put the vnode back on the
+			 * appropriate free list the next time it is
+			 * called (in thread context).
+			 */
+			if (vp)
+				VHOLD(vp);
 			biodone(tbp);
+			if (vp) {
+        			simple_lock(&vp->v_interlock); 
+        			if (vp->v_holdcnt <= 0)
+                			panic("lfs_cluster_callback: "
+						"holdcnt vp %p", vp);
+        			vp->v_holdcnt--; 
+        			simple_unlock(&vp->v_interlock); 
+			}
 		}
 	}
 
@@ -2278,7 +2302,10 @@ lfs_vunref_head(struct vnode *vp)
 	 * insert at head of LRU list
 	 */
 	simple_lock(&vnode_free_list_slock);
-	TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
+	if (vp->v_holdcnt > 0)
+		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
+	else
+		TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
 	simple_unlock(&vnode_free_list_slock);
 	simple_unlock(&vp->v_interlock);
 }

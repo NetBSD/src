@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.527.2.1 2002/05/16 12:26:18 gehenna Exp $
+#	$NetBSD: files,v 1.527.2.2 2002/05/30 14:45:17 gehenna Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -365,6 +365,11 @@ device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
 file	dev/ic/isp_target.c		isp
+
+# LSILogic Fusion-MPT I/O Processor SCSI/FC Controllers
+#
+device	lfmiop: scsi
+file	dev/ic/lfmiop.c			lfmiop
 
 # Symbios/NCR 53c710 SCSI controllers
 #
@@ -825,6 +830,23 @@ device	fwohci: fwbus
 device	spic: wsmousedev
 file	dev/ic/spic.c			spic
 
+# IBM CPC700 PowerPC bridge
+define	cpcbus { addr, [irq=-1] }
+device	cpc: cpcbus, pcibus
+file	dev/ic/cpc700.c			cpc
+
+attach	com at cpcbus with com_cpcbus
+file	dev/ic/com_cpcbus.c		com_cpcbus
+
+device	cpctim
+attach	cpctim at cpcbus
+file	dev/ic/timer_cpcbus.c		cpctim
+
+device	cpciic
+attach	cpciic at cpcbus with iic_cpcbus
+file	dev/ic/iic_cpcbus.c		iic_cpcbus
+
+
 # Attribute used by various things that need BPF's virtual machine
 #
 define	bpf_filter
@@ -1093,7 +1115,7 @@ file	net/if_tokensubr.c		token			needs-flag
 file	net/if_tun.c			tun			needs-flag
 file	net/if_vlan.c			vlan			needs-flag
 file	net/if_pppoe.c			pppoe			needs-flag
-#file net/net_osdep.c
+#file	net/net_osdep.c
 file	net/pfil.c			pfil_hooks | ipfilter
 file	net/ppp-deflate.c		ppp & ppp_deflate
 file	net/ppp_tty.c			ppp

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.52 2002/05/12 15:48:39 wiz Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.52.2.1 2002/05/30 13:52:32 gehenna Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.52 2002/05/12 15:48:39 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.52.2.1 2002/05/30 13:52:32 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -160,7 +160,6 @@ ip6_init()
 {
 	struct ip6protosw *pr;
 	int i;
-	struct timeval tv;
 
 	pr = (struct ip6protosw *)pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)
@@ -175,12 +174,7 @@ ip6_init()
 	ip6intrq.ifq_maxlen = ip6qmaxlen;
 	nd6_init();
 	frag6_init();
-	/*
-	 * in many cases, random() here does NOT return random number
-	 * as initialization during bootstrap time occur in fixed order.
-	 */
-	microtime(&tv);
-	ip6_flow_seq = random() ^ tv.tv_usec;
+	ip6_flow_seq = arc4random();
 
 	ip6_init2((void *)0);
 
@@ -1517,6 +1511,8 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		}
 		return (error);
 #endif
+	case IPV6CTL_MAXFRAGS:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_maxfrags);
 	default:
 		return EOPNOTSUPP;
 	}

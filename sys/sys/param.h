@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.138 2002/04/05 18:27:57 bouyer Exp $	*/
+/*	$NetBSD: param.h,v 1.138.2.1 2002/05/30 13:52:42 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,7 +67,7 @@
  * Don't forget to change conf/osrelease.sh too.
  */
 
-#define	__NetBSD_Version__	105290000	/* NetBSD 1.5ZC */
+#define	__NetBSD_Version__	106010000	/* NetBSD 1.6A */
 
 /*
  * Historical NetBSD #define

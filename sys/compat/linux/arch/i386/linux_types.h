@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.9 2002/02/15 16:48:00 christos Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.9.8.1 2002/05/30 14:45:05 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,8 @@ struct linux_stat64 {
 	unsigned long long lst_dev;
 	unsigned int	__pad1;
 
-	unsigned int	lst_ino;
+#define LINUX_STAT64_HAS_BROKEN_ST_INO	1
+	unsigned int	__lst_ino;
 	unsigned int	lst_mode;
 	unsigned int	lst_nlink;
 
@@ -126,7 +127,7 @@ struct linux_stat64 {
 	unsigned int	lst_ctime;
 	unsigned int	__unused3;	/* will be high 32 bits of ctime someday */
 
-	unsigned long long lst_ino64;
+	unsigned long long lst_ino;
 };
 
 #endif /* !_I386_LINUX_TYPES_H */

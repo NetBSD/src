@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.427 2002/05/15 14:14:58 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.427.2.1 2002/05/30 14:46:23 gehenna Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.424 2002/05/15 14:14:34 augustss Exp 
+ *	NetBSD: pcidevs,v 1.433 2002/05/28 17:46:10 christos Exp 
  */
 
 /*
@@ -2776,6 +2776,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "HOTlink interface",
 	},
 	{
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_COUNTTIME,
+	    0,
+	    "FZ Juelich / ZEL",
+	    "Counter / Timer",
+	},
+	{
 	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_PLXCAMAC,
 	    0,
 	    "FZ Juelich / ZEL",
@@ -3460,6 +3466,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82439HX System Controller (TXC)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_PPB,
+	    0,
+	    "Intel",
+	    "82870P2 P64H2 PCI-to-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_IOxAPIC,
+	    0,
+	    "Intel",
+	    "82870P2 P64H2 IOxAPIC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_HPLUG,
+	    0,
+	    "Intel",
+	    "82870P2 P64H2 Hot Plug Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960_RP,
 	    0,
 	    "Intel",
@@ -3724,6 +3748,102 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82820 AGP",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82850_HB,
+	    0,
+	    "Intel",
+	    "82850 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82850_AGP,
+	    0,
+	    "Intel",
+	    "82850/82860 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_HB,
+	    0,
+	    "Intel",
+	    "82860 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82850_AGP,
+	    0,
+	    "Intel",
+	    "82850/82860 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI1,
+	    0,
+	    "Intel",
+	    "82860 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI2,
+	    0,
+	    "Intel",
+	    "82860 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI3,
+	    0,
+	    "Intel",
+	    "82860 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI4,
+	    0,
+	    "Intel",
+	    "82860 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HB,
+	    0,
+	    "Intel",
+	    "E7500 MCH Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_DRAM,
+	    0,
+	    "Intel",
+	    "E7500 MCH DRAM Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_B1,
+	    0,
+	    "Intel",
+	    "E7500 MCH HI_B vppb 1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_B2,
+	    0,
+	    "Intel",
+	    "E7500 MCH HI_B vppb 2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_C1,
+	    0,
+	    "Intel",
+	    "E7500 MCH HI_C vppb 1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_C2,
+	    0,
+	    "Intel",
+	    "E7500 MCH HI_C vppb 2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_D1,
+	    0,
+	    "Intel",
+	    "E7500 MCH HI_C vppb 1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_D2,
+	    0,
+	    "Intel",
+	    "E7500 MCH HI_C vppb 2",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
 	    0,
 	    "Intel",
@@ -3956,6 +4076,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82451NX PCI Expander Bridge (PXB)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21555,
+	    0,
+	    "Intel",
+	    "21555 Non-Transparent PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T,
@@ -4594,6 +4720,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "53c1010 (66MHz)",
 	},
 	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030R,
+	    0,
+	    "Symbios Logic",
+	    "53c1030R",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875J,
 	    0,
 	    "Symbios Logic",
@@ -4604,6 +4736,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Symbios Logic",
 	    "FC909",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC929,
+	    0,
+	    "Symbios Logic",
+	    "FC929",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC929_1,
+	    0,
+	    "Symbios Logic",
+	    "FC929",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC919,
+	    0,
+	    "Symbios Logic",
+	    "FC919",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC919_1,
+	    0,
+	    "Symbios Logic",
+	    "FC919",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
@@ -4754,6 +4910,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Netmos",
 	    "Dual UART and 1284 Printer port",
+	},
+	{
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845,
+	    0,
+	    "Netmos",
+	    "Quad UART and 1284 Printer port",
 	},
 	{
 	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751,
@@ -6278,6 +6440,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Triones Technologies",
 	    "HPT366/370 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT372,
+	    0,
+	    "Triones Technologies",
+	    "HPT372 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT374,
+	    0,
+	    "Triones Technologies",
+	    "HPT374 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_TRITECH, PCI_PRODUCT_TRITECH_TR25202,
@@ -10381,6 +10555,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_COREGA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Corega",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ACTIONTEC, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Action Tec Electronics, Inc.",
 	    NULL,
 	},
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.117.6.1 2002/05/16 11:47:15 gehenna Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.117.6.2 2002/05/30 14:47:03 gehenna Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.117.6.1 2002/05/16 11:47:15 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.117.6.2 2002/05/30 14:47:03 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1282,7 +1282,7 @@ raidioctl(dev, cmd, data, flag, p)
 		RF_Malloc(rrcopy, sizeof(*rrcopy), (struct rf_recon_req *));
 		if (rrcopy == NULL)
 			return(ENOMEM);
-		bcopy(rr, rrcopy, sizeof(*rr));
+		memcpy(rrcopy, rr, sizeof(*rr));
 		rrcopy->raidPtr = (void *) raidPtr;
 
 		retcode = RF_CREATE_THREAD(raidPtr->recon_thread,
@@ -2700,6 +2700,10 @@ rf_find_raid_components()
 
 		/* we don't care about floppies... */
 		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"fd")) {
+			continue;
+		}
+		/* hdfd is the Atari/Hades floppy driver */
+		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"hdfd")) {
 			continue;
 		}
 		

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.15 2002/05/13 05:41:27 matt Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.15.2.1 2002/05/30 14:45:14 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.15 2002/05/13 05:41:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.15.2.1 2002/05/30 14:45:14 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,9 @@ bsd_to_linux_stat(bsp, lsp)
 	lsp->lst_atime   = bsp->st_atime;
 	lsp->lst_mtime   = bsp->st_mtime;
 	lsp->lst_ctime   = bsp->st_ctime;
-	lsp->lst_ino64   = bsp->st_ino;
+#if LINUX_STAT64_HAS_BROKEN_ST_INO
+	lsp->__lst_ino   = (linux_ino_t) bsp->st_ino;
+#endif
 }
 
 /*
@@ -344,12 +346,12 @@ linux_sys_fcntl64(p, v, retval)
 /*
  * Linux 'readdir' call. This code is mostly taken from the
  * SunOS getdents call (see compat/sunos/sunos_misc.c), though
- * an attempt has been made to keep it a little cleaner (failing
- * miserably, because of the cruft needed if count 1 is passed).
+ * an attempt has been made to keep it a little cleaner.
  *
- * The d_off field should contain the offset of the next valid entry,
- * but in Linux it has the offset of the entry itself. We emulate
- * that bug here.
+ * The d_off field contains the offset of the next valid entry,
+ * unless the older Linux getdents(2), which used to have it set
+ * to the offset of the entry itself. This function also doesn't
+ * need to deal with the old count == 1 glibc problem.
  *
  * Read in BSD-style entries, convert them, and copy them out.
  *
@@ -377,7 +379,7 @@ linux_sys_getdents64(p, v, retval)
 	struct iovec aiov;
 	struct linux_dirent64 idb;
 	off_t off;		/* true file offset */
-	int buflen, error, eofflag, nbytes, oldcall;
+	int buflen, error, eofflag, nbytes;
 	struct vattr va;
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
@@ -401,16 +403,9 @@ linux_sys_getdents64(p, v, retval)
 		goto out1;
 
 	nbytes = SCARG(uap, count);
-	if (nbytes == 1) {	/* emulating old, broken behaviour */
-		nbytes = sizeof (idb);
-		buflen = max(va.va_blocksize, nbytes);
-		oldcall = 1;
-	} else {
-		buflen = min(MAXBSIZE, nbytes);
-		if (buflen < va.va_blocksize)
-			buflen = va.va_blocksize;
-		oldcall = 0;
-	}
+	buflen = min(MAXBSIZE, nbytes);
+	if (buflen < va.va_blocksize)
+		buflen = va.va_blocksize;
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -456,6 +451,7 @@ again:
 			outp++;
 			break;
 		}
+		off = *cookie++;	/* each entry points to next */
 		/*
 		 * Massage in place to make a Linux-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
@@ -463,36 +459,22 @@ again:
 		 */
 		idb.d_ino = bdp->d_fileno;
 		idb.d_type = bdp->d_type;
-		/*
-		 * The old readdir() call misuses the offset and reclen fields.
-		 */
-		if (oldcall) {
-			idb.d_off = linux_reclen;
-			idb.d_reclen = (u_short)bdp->d_namlen;
-		} else {
-			idb.d_off = off;
-			idb.d_reclen = (u_short)linux_reclen;
-		}
+		idb.d_off = off;
+		idb.d_reclen = (u_short)linux_reclen;
 		strcpy(idb.d_name, bdp->d_name);
 		if ((error = copyout((caddr_t)&idb, outp, linux_reclen)))
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
-		off = *cookie++;	/* each entry points to itself */
 		/* advance output past Linux-shaped entry */
 		outp += linux_reclen;
 		resid -= linux_reclen;
-		if (oldcall)
-			break;
 	}
 
 	/* if we squished out the whole block, try again */
 	if (outp == (caddr_t)SCARG(uap, dent))
 		goto again;
 	fp->f_offset = off;	/* update the vnode offset */
-
-	if (oldcall)
-		nbytes = resid + linux_reclen;
 
 eof:
 	*retval = nbytes - resid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.60.2.1 2002/05/16 04:14:48 gehenna Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.60.2.2 2002/05/30 14:47:53 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.60.2.1 2002/05/16 04:14:48 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.60.2.2 2002/05/30 14:47:53 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -310,7 +310,8 @@ iso_mountfs(devvp, mp, p, argp)
 	struct iso_supplementary_descriptor *sup;
 	int sess = 0;
 	int ext_attr_length;
-	
+	struct disklabel label;
+
 	if (!ronly)
 		return EROFS;
 	
@@ -338,14 +339,22 @@ iso_mountfs(devvp, mp, p, argp)
 	 */
 	iso_bsize = ISO_DEFAULT_BLOCK_SIZE;
 
-	error = VOP_IOCTL(devvp, CDIOREADMSADDR, (caddr_t)&sess, 0, FSCRED, p);
-	if (error)
-		sess = 0;	/* never mind */
-#if 0
-	else
-		printf("cdfs: detected multi-session at offset %d\n", sess);
+	error = VOP_IOCTL(devvp, DIOCGDINFO, (caddr_t)&label, FREAD, FSCRED, p);
+	if (!error &&
+	    label.d_partitions[DISKPART(dev)].p_fstype == FS_ISO9660) {
+		/* XXX more sanity checks? */
+		sess = label.d_partitions[DISKPART(dev)].p_cdsession;
+	} else {
+		/* fallback to old method */
+		error = VOP_IOCTL(devvp, CDIOREADMSADDR, (caddr_t)&sess, 0,
+				  FSCRED, p);
+		if (error)
+			sess = 0;	/* never mind */
+	}
+#ifdef DEBUG
+	printf("isofs: session offset (part %d) %d\n", DISKPART(dev), sess);
 #endif
-	
+
 	for (iso_blknum = 16; iso_blknum < 100; iso_blknum++) {
 		if ((error = bread(devvp, (iso_blknum+sess) * btodb(iso_bsize),
 				   iso_bsize, NOCRED, &bp)) != 0)

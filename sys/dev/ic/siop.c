@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.60 2002/04/25 20:05:10 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.60.2.1 2002/05/30 14:45:57 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.60 2002/04/25 20:05:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.60.2.1 2002/05/30 14:45:57 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1004,6 +1004,8 @@ siop_scsicmd_end(siop_cmd)
 		xs->error = XS_SELTIMEOUT;
 		break;
 	default:
+		scsipi_printaddr(xs->xs_periph);
+		printf("invalid status code %d\n", xs->status);
 		xs->error = XS_DRIVER_STUFFUP;
 	}
 	if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
@@ -1363,9 +1365,11 @@ siop_scsipi_request(chan, req, arg)
 			    TARST_ASYNC;
 
 		for (lun = 0; lun < sc->sc_c.sc_chan.chan_nluns; lun++) {
-			if (sc->sc_c.sc_chan.chan_periphs[xm->xm_target][lun])
+			if (scsipi_lookup_periph(chan,
+			    xm->xm_target, lun) != NULL) {
 				/* allocate a lun sw entry for this device */
 				siop_add_dev(sc, xm->xm_target, lun);
+			}
 		}
 
 		splx(s);

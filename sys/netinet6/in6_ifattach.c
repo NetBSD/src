@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.41 2001/12/21 08:54:54 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.41.8.1 2002/05/30 13:52:31 gehenna Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.41 2001/12/21 08:54:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.41.8.1 2002/05/30 13:52:31 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,10 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.41 2001/12/21 08:54:54 itojun Exp
 
 #include <net/net_osdep.h>
 
-struct in6_ifstat **in6_ifstat = NULL;
-struct icmp6_ifstat **icmp6_ifstat = NULL;
-size_t in6_ifstatmax = 0;
-size_t icmp6_ifstatmax = 0;
 unsigned long in6_maxmtu = 0;
 
 static int get_rand_ifid __P((struct ifnet *, struct in6_addr *));
@@ -442,16 +438,7 @@ in6_ifattach_addaddr(ifp, ia)
 			    if_name(ifp), ip6_sprintf(&llsol), error));
 		}
 
-		/* XXX should we run DAD on other interface types? */
-		switch (ifp->if_type) {
-#if 1
-		case IFT_ARCNET:
-		case IFT_ETHER:
-		case IFT_FDDI:
-		case IFT_IEEE1394:
-#else
-		default:
-#endif
+		if (in6if_do_dad(ifp)) {
 			/* mark the address TENTATIVE, if needed. */
 			ia->ia6_flags |= IN6_IFF_TENTATIVE;
 			/* nd6_dad_start() will be called in in6_if_up */
@@ -579,7 +566,6 @@ in6_ifattach(ifp, altifp)
 	struct ifnet *ifp;
 	struct ifnet *altifp;	/* secondary EUI64 source */
 {
-	static size_t if_indexlim = 8;
 	struct sockaddr_in6 mltaddr;
 	struct sockaddr_in6 mltmask;
 	struct sockaddr_in6 gate;
@@ -589,54 +575,17 @@ in6_ifattach(ifp, altifp)
 
 	/* some of the interfaces are inherently not IPv6 capable */
 	switch (ifp->if_type) {
-	case IFT_PROPVIRTUAL:
-		if (strncmp("bridge", ifp->if_xname, sizeof("bridge")) == 0 &&
-		    '0' <= ifp->if_xname[sizeof("bridge")] &&
-		    ifp->if_xname[sizeof("bridge")] <= '9')
-			return;
-		break;
+	case IFT_BRIDGE:
+		return;
 	}
 
 	/*
-	 * We have some arrays that should be indexed by if_index.
-	 * since if_index will grow dynamically, they should grow too.
-	 *	struct in6_ifstat **in6_ifstat
-	 *	struct icmp6_ifstat **icmp6_ifstat
+	 * if link mtu is too small, don't try to configure IPv6.
+	 * remember there could be some link-layer that has special
+	 * fragmentation logic.
 	 */
-	if (in6_ifstat == NULL || icmp6_ifstat == NULL ||
-	    if_index >= if_indexlim) {
-		size_t n;
-		caddr_t q;
-		size_t olim;
-
-		olim = if_indexlim;
-		while (if_index >= if_indexlim)
-			if_indexlim <<= 1;
-
-		/* grow in6_ifstat */
-		n = if_indexlim * sizeof(struct in6_ifstat *);
-		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
-		bzero(q, n);
-		if (in6_ifstat) {
-			bcopy((caddr_t)in6_ifstat, q,
-				olim * sizeof(struct in6_ifstat *));
-			free((caddr_t)in6_ifstat, M_IFADDR);
-		}
-		in6_ifstat = (struct in6_ifstat **)q;
-		in6_ifstatmax = if_indexlim;
-
-		/* grow icmp6_ifstat */
-		n = if_indexlim * sizeof(struct icmp6_ifstat *);
-		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
-		bzero(q, n);
-		if (icmp6_ifstat) {
-			bcopy((caddr_t)icmp6_ifstat, q,
-				olim * sizeof(struct icmp6_ifstat *));
-			free((caddr_t)icmp6_ifstat, M_IFADDR);
-		}
-		icmp6_ifstat = (struct icmp6_ifstat **)q;
-		icmp6_ifstatmax = if_indexlim;
-	}
+	if (ifp->if_mtu < IPV6_MMTU)
+		return;
 
 	/* create a multicast kludge storage (if we have not had one) */
 	in6_createmkludge(ifp);
@@ -653,7 +602,7 @@ in6_ifattach(ifp, altifp)
 		 * linklocals for 6to4 interface, but there's no use and
 		 * it is rather harmful to have one.
 		 */
-		goto statinit;
+		return;
 #endif
 	default:
 		break;
@@ -683,7 +632,7 @@ in6_ifattach(ifp, altifp)
 			    if_name(ifp));
 
 			/* we can't initialize multicasts without link-local */
-			goto statinit;
+			return;
 		}
 	}
 
@@ -792,26 +741,6 @@ in6_ifattach(ifp, altifp)
 			}
 		}
 	}
-
-statinit:;
-
-	/* update dynamically. */
-	if (in6_maxmtu < ifp->if_mtu)
-		in6_maxmtu = ifp->if_mtu;
-
-	if (in6_ifstat[ifp->if_index] == NULL) {
-		in6_ifstat[ifp->if_index] = (struct in6_ifstat *)
-			malloc(sizeof(struct in6_ifstat), M_IFADDR, M_WAITOK);
-		bzero(in6_ifstat[ifp->if_index], sizeof(struct in6_ifstat));
-	}
-	if (icmp6_ifstat[ifp->if_index] == NULL) {
-		icmp6_ifstat[ifp->if_index] = (struct icmp6_ifstat *)
-			malloc(sizeof(struct icmp6_ifstat), M_IFADDR, M_WAITOK);
-		bzero(icmp6_ifstat[ifp->if_index], sizeof(struct icmp6_ifstat));
-	}
-
-	/* initialize NDP variables */
-	nd6_ifattach(ifp);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.22 2002/05/14 20:03:54 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.22.2.1 2002/05/30 13:52:43 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.22 2002/05/14 20:03:54 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.22.2.1 2002/05/30 13:52:43 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ lfs_segunlock(struct lfs *fs)
 	unsigned long sync, ckp;
 	int s;
 	struct buf *bp;
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
 	struct mount *mp;
 	extern int lfs_dirvcount;
 #ifdef LFS_MALLOC_SUMMARY
@@ -197,20 +197,22 @@ lfs_segunlock(struct lfs *fs)
 		 */
 #ifndef LFS_NO_BACKVP_HACK
 	/* BEGIN HACK */
-#define	VN_OFFSET	(((caddr_t)&vp->v_mntvnodes.le_next) - (caddr_t)vp)
-#define	BACK_VP(VP)	((struct vnode *)(((caddr_t)VP->v_mntvnodes.le_prev) - VN_OFFSET))
-#define	BEG_OF_VLIST	((struct vnode *)(((caddr_t)&mp->mnt_vnodelist.lh_first) - VN_OFFSET))
+#define	VN_OFFSET	(((caddr_t)&LIST_NEXT(vp, v_mntvnodes)) - (caddr_t)vp)
+#define	BACK_VP(VP)	((struct vnode *)(((caddr_t)(VP)->v_mntvnodes.le_prev) - VN_OFFSET))
+#define	BEG_OF_VLIST	((struct vnode *)(((caddr_t)&LIST_FIRST(&mp->mnt_vnodelist)) - VN_OFFSET))
 	
 		/* Find last vnode. */
-	loop:	for (vp = mp->mnt_vnodelist.lh_first;
-		     vp && vp->v_mntvnodes.le_next != NULL;
-		     vp = vp->v_mntvnodes.le_next);
-		for (; vp && vp != BEG_OF_VLIST; vp = BACK_VP(vp)) {
+	loop:	for (vp = LIST_FIRST(&mp->mnt_vnodelist);
+		     vp && LIST_NEXT(vp, v_mntvnodes) != NULL;
+		     vp = LIST_NEXT(vp, v_mntvnodes));
+		for (; vp && vp != BEG_OF_VLIST; vp = nvp) {
+			nvp = BACK_VP(vp);
 #else
 	loop:
-		 for (vp = mp->mnt_vnodelist.lh_first;
+		 for (vp = LIST_FIRST(&mp->mnt_vnodelist);
 		     vp != NULL;
-		     vp = vp->v_mntvnodes.le_next) {
+		     vp = nvp) {
+			nvp = LIST_NEXT(vp, v_mntvnodes);
 #endif
 			if (vp->v_mount != mp) {
 				printf("lfs_segunlock: starting over\n");
@@ -252,10 +254,10 @@ lfs_segunlock(struct lfs *fs)
 #else
 			s = splbio();
 			bremfree(bp);
-			splx(s);
 			bp->b_flags |= B_DONE|B_INVAL;
 			bp->b_flags &= ~B_DELWRI;
 			reassignbuf(bp,bp->b_vp);
+			splx(s);
 			brelse(bp);
 #endif
 		} else

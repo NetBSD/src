@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2001/12/13 01:26:39 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.10.8.1 2002/05/30 14:48:16 gehenna Exp $
 
 .if !target(assym.h)
 S!=	cd ${.CURDIR}/../../..;pwd
@@ -8,6 +8,14 @@ NOMAN=	# defined
 .include <bsd.own.mk>
 
 DPSRCS+= assym.h
+
+.if (${MACHINE_ARCH} == "powerpc")
+.if (${MACHINE} == "macppc")
+# use mpc6xx
+GENASSYM_DIR= $S/arch/${MACHINE_ARCH}/mpc6xx
+CPPFLAGS+=	-DPPC_MPC6XX
+.endif
+.endif
 
 .if exists($S/arch/${MACHINE}/${MACHINE}/genassym.cf)
 GENASSYM_DIR?= $S/arch/${MACHINE}/${MACHINE}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.107 2001/11/30 16:21:16 kleink Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.107.8.1 2002/05/30 14:48:00 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.107 2001/11/30 16:21:16 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.107.8.1 2002/05/30 14:48:00 gehenna Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -114,9 +114,6 @@ __volatile u_int32_t sched_whichqs;	/* bitmap of non-empty queues */
 struct slpque sched_slpque[SLPQUE_TABLESIZE]; /* sleep queues */
 
 struct simplelock sched_lock = SIMPLELOCK_INITIALIZER;
-#if defined(MULTIPROCESSOR)
-struct lock kernel_lock;
-#endif
 
 void schedcpu(void *);
 void updatepri(struct proc *);

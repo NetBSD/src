@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.173.2.1 2002/05/16 04:13:51 gehenna Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.173.2.2 2002/05/30 14:48:05 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.173.2.1 2002/05/16 04:13:51 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.173.2.2 2002/05/30 14:48:05 gehenna Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"

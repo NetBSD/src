@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.11 2002/04/29 13:42:43 martin Exp $ */
+/* $NetBSD: isic_l1.c,v 1.11.2.1 2002/05/30 14:45:45 gehenna Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.11 2002/04/29 13:42:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.11.2.1 2002/05/30 14:45:45 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -126,7 +126,7 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 				hdr.type = TRC_CH_D;
 				hdr.dir = FROM_TE;
 				hdr.count = ++sc->sc_trace_dcount;
-				isdn_layer2_trace_ind(&sc->sc_l2, &hdr, m->m_len, m->m_data);
+				isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, m->m_len, m->m_data);
 			}
 			splx(s);
 			return(1);
@@ -147,7 +147,7 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 		hdr.type = TRC_CH_D;
 		hdr.dir = FROM_TE;
 		hdr.count = ++sc->sc_trace_dcount;
-		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, m->m_len, m->m_data);
+		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, m->m_len, m->m_data);
 	}
 	
 	sc->sc_state |= ISAC_TX_ACTIVE;	/* set transmitter busy flag */

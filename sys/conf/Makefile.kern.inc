@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.13.2.1 2002/05/16 13:14:26 gehenna Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.13.2.2 2002/05/30 14:45:16 gehenna Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -22,6 +22,7 @@
 ## (0) toolchain settings for things that aren't part of the standard
 ## toolchain
 ##
+DBSYM?=		dbsym
 MKDEP?=		mkdep
 STRIP?=		strip
 OBJCOPY?=	objcopy
@@ -48,7 +49,7 @@ COPTS?=		${DEFCOPTS}
 DBG=		# might contain unwanted -Ofoo
 DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
-CWARNFLAGS+=	-Werror -Wall -Wno-main
+CWARNFLAGS+=	-Werror -Wall -Wno-main -Wno-format-zero-length
 WEAK_POINTERS?=	no
 .if !(${WEAK_POINTERS} == "yes")
 CWARNFLAGS+=	-Wpointer-arith

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.68 2002/05/15 11:43:22 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.68.2.1 2002/05/30 14:47:22 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -260,19 +260,18 @@ struct scsipi_bustype {
  *	Note: chan_bustype has to be first member, as its bustype_type member
  * 	is shared with the aa_bustype member of struct ata_atapi_attach.
  */
+
+#define	SCSIPI_CHAN_PERIPH_BUCKETS	16
+#define	SCSIPI_CHAN_PERIPH_HASHMASK	(SCSIPI_CHAN_PERIPH_BUCKETS - 1)
+
 struct scsipi_channel {
 	const struct scsipi_bustype *chan_bustype; /* channel's bus type */
 	const char *chan_name;	/* this channel's name */
 
 	struct scsipi_adapter *chan_adapter; /* pointer to our adapter */
 
-	/*
-	 * Periphs for this channel.  2-dimensional array is dynamically
-	 * allocated.
-	 *
-	 * XXX Consider a different data structure to save space.
-	 */
-	struct scsipi_periph ***chan_periphs;
+	/* Periphs for this channel. */
+	LIST_HEAD(, scsipi_periph) chan_periphtab[SCSIPI_CHAN_PERIPH_BUCKETS];
 
 	int	chan_channel;		/* channel number */
 	int	chan_flags;		/* channel flags */
@@ -349,6 +348,9 @@ struct scsipi_channel {
 struct scsipi_periph {
 	struct device *periph_dev;	/* pointer to peripherial's device */
 	struct scsipi_channel *periph_channel; /* channel we're connected to */
+
+					/* link in channel's table of periphs */
+	LIST_ENTRY(scsipi_periph) periph_hash;
 
 	const struct scsipi_periphsw *periph_switch; /* peripherial's entry
 							points */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.127 2002/05/12 20:33:50 matt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.127.2.1 2002/05/30 13:52:28 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.127 2002/05/12 20:33:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.127.2.1 2002/05/30 13:52:28 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -146,6 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.127 2002/05/12 20:33:50 matt Exp $");
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6protosw.h>
 #include <netinet/icmp6.h>
+#include <netinet6/nd6.h>
 #endif
 
 #include <netinet/tcp.h>
@@ -844,7 +845,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 #ifdef INET
 	case AF_INET:
 		error = ip_output(m, NULL, ro,
-		    (ip_mtudisc ? IP_MTUDISC : 0),
+		    (tp && tp->t_mtudisc ? IP_MTUDISC : 0),
 		    NULL);
 		break;
 #endif
@@ -915,10 +916,13 @@ tcp_newtcpcb(family, aux)
 	switch (family) {
 	case PF_INET:
 		tp->t_inpcb = (struct inpcb *)aux;
+		tp->t_mtudisc = ip_mtudisc;
 		break;
 #ifdef INET6
 	case PF_INET6:
 		tp->t_in6pcb = (struct in6pcb *)aux;
+		/* for IPv6, always try to run path MTU discovery */
+		tp->t_mtudisc = 1;
 		break;
 #endif
 	}
@@ -1417,7 +1421,7 @@ tcp_ctlinput(cmd, sa, v)
 		notify = tcp_quench;
 	else if (PRC_IS_REDIRECT(cmd))
 		notify = in_rtchange, ip = 0;
-	else if (cmd == PRC_MSGSIZE && ip_mtudisc && ip && ip->ip_v == 4) {
+	else if (cmd == PRC_MSGSIZE && ip && ip->ip_v == 4) {
 		/*
 		 * Check to see if we have a valid TCP connection
 		 * corresponding to the address in the ICMP message
@@ -1657,7 +1661,16 @@ tcp_mss_to_advertise(ifp, af)
 	 */
 
 	if (ifp != NULL)
-		mss = ifp->if_mtu;
+		switch (af) {
+		case AF_INET:
+			mss = ifp->if_mtu;
+			break;
+#ifdef INET6
+		case AF_INET6:
+			mss = IN6_LINKMTU(ifp);
+			break;
+#endif
+		}
 
 	if (tcp_mss_ifmtu == 0)
 		switch (af) {
@@ -1999,7 +2012,7 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 #if NRND > 0
 		rnd_extract_data(&tcp_iss, sizeof(tcp_iss), RND_EXTRACT_ANY);
 #else
-		tcp_iss = random();
+		tcp_iss = arc4random();
 #endif
 
 		/*

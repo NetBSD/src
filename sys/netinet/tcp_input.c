@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.141 2002/05/07 02:59:38 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.141.2.1 2002/05/30 13:52:27 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.141 2002/05/07 02:59:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.141.2.1 2002/05/30 13:52:27 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2811,8 +2811,8 @@ syn_cache_insert(sc, tp)
 	if (syn_cache_count == 0) {
 		struct timeval tv;
 		microtime(&tv);
-		syn_hash1 = random() ^ (u_long)&sc;
-		syn_hash2 = random() ^ tv.tv_usec;
+		syn_hash1 = arc4random() ^ (u_long)&sc;
+		syn_hash2 = arc4random() ^ tv.tv_usec;
 	}
 
 	SYN_HASHALL(sc->sc_hash, &sc->sc_src.sa, &sc->sc_dst.sa);

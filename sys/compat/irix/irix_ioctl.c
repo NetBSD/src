@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.c,v 1.1 2002/03/03 20:12:17 manu Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.1.10.1 2002/05/30 14:44:46 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,16 +37,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.1 2002/03/03 20:12:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.1.10.1 2002/05/30 14:44:46 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/mount.h>
 #include <sys/file.h>
 #include <sys/filio.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
+#include <sys/vnode.h>
 #include <sys/types.h>
+#include <sys/syscallargs.h>
+
+#include <miscfs/specfs/specdev.h>
+
+#include <compat/common/compat_util.h>
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_lwp.h>
@@ -56,8 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.1 2002/03/03 20:12:17 manu Exp $");
 #include <compat/svr4/svr4_syscallargs.h>
 
 #include <compat/irix/irix_ioctl.h>
+#include <compat/irix/irix_usema.h>
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_types.h>
+#include <compat/irix/irix_exec.h>
 #include <compat/irix/irix_syscallargs.h>
 
 int
@@ -71,9 +80,16 @@ irix_sys_ioctl(p, v, retval)
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
+	extern const struct cdevsw irix_usema_cdevsw;
 	u_long	cmd;
+	caddr_t data;
 	struct file *fp;
 	struct filedesc *fdp;
+	struct vnode *vp;
+	struct irix_ioctl_usrdata iiu;
+	struct irix_ioctl_usrdata *iiup;
+	caddr_t sg = stackgap_init(p, 0);
+	int error;
 
 	/* 
 	 * This duplicates 6 lines from svr4_sys_ioctl() 
@@ -81,12 +97,49 @@ irix_sys_ioctl(p, v, retval)
 	 */
 	fdp = p->p_fd;
 	cmd = SCARG(uap, com);
+	data = SCARG(uap, data);
 	
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
 		return EBADF;
+
+	/*
+	 * A special hook for /dev/usemaclone ioctls. Some of the ioctl
+	 * commands need to set the return value, which is normally
+	 * impossible in the file methods and lower. We do the job by
+	 * copying the retval address and the data argument to a 
+	 * struct irix_ioctl_usrdata in the stackgap. The data argument
+	 * is set to the address of the structure, and the underlying 
+	 * code will be able to retreive both data and the retval address
+	 * by fecthing the struct irix_ioctl_usrdata.
+	 *
+	 * We also bypass the checks in sys_ioctl() because theses ioctl
+	 * are defined _IO but really are _IOR. XXX need security review.
+	 */
+	if ((cmd & IRIX_UIOC_MASK) == IRIX_UIOC) {
+		FILE_USE(fp);
+		vp = (struct vnode*)fp->f_data;
+		if (vp->v_type != VCHR ||
+		    cdevsw_lookup(vp->v_rdev) != &irix_usema_cdevsw ||
+		    minor(vp->v_rdev) != IRIX_USEMACLNDEV_MINOR) {
+			error = ENOTTY;
+			goto out;
+		}
+
+		iiup = stackgap_alloc(p, &sg, sizeof(iiu));	
+		iiu.iiu_data = data;
+		iiu.iiu_retval = retval;
+		data = (caddr_t)iiup;
+		if ((error = copyout(&iiu, iiup, sizeof(iiu))) != 0) 
+			goto out;
+
+		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data, p);
+out:
+		FILE_UNUSE(fp, p);
+		return error;
+	}
 
 	switch (cmd) {
 	case IRIX_SIOCNREAD: /* number of bytes to read */
@@ -95,8 +148,9 @@ irix_sys_ioctl(p, v, retval)
 		break;	
 
 	default: /* Fallback to the standard SVR4 ioctl's */
-		return svr4_sys_ioctl(p, v, retval);
+		error = svr4_sys_ioctl(p, v, retval);
+		break;
 	}
-	/* NOTREACHED */
-	return 0;
+
+	return error;
 }

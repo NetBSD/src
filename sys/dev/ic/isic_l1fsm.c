@@ -27,14 +27,14 @@
  *	i4b_l1fsm.c - isdn4bsd layer 1 I.430 state machine
  *	--------------------------------------------------
  *
- *	$Id: isic_l1fsm.c,v 1.4 2002/03/24 20:35:47 martin Exp $ 
+ *	$Id: isic_l1fsm.c,v 1.4.2.1 2002/05/30 14:45:46 gehenna Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.4 2002/03/24 20:35:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.4.2.1 2002/05/30 14:45:46 gehenna Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -166,7 +166,7 @@ timer3_expired(struct isic_softc *sc)
 
 			splx(s);
 
-			isdn_layer2_status_ind(&sc->sc_l2, STI_NOL1ACC, 0);
+			isdn_layer2_status_ind(&sc->sc_l2, sc->sc_l3token, STI_NOL1ACC, 0);
 		}
 		
 		isic_next_state(sc, EV_T3);		
@@ -214,7 +214,7 @@ F_T3ex(struct isic_softc *sc)
 {
 	NDBGL1(L1_F_MSG, "FSM function F_T3ex executing");
 	if(((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S)
-		isdn_layer2_activate_ind(&sc->sc_l2, 0);
+		isdn_layer2_activate_ind(&sc->sc_l2, sc->sc_l3token, 0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -227,7 +227,7 @@ timer4_expired(struct isic_softc *sc)
 	{
 		NDBGL1(L1_T_MSG, "state = %s", isic_printstate(sc));
 		sc->sc_I430T4 = 0;
-		isdn_layer2_status_ind(&sc->sc_l2, STI_PDEACT, 0);
+		isdn_layer2_status_ind(&sc->sc_l2, sc->sc_l3token, STI_PDEACT, 0);
 	}
 	else
 	{
@@ -273,7 +273,7 @@ F_AI8(struct isic_softc *sc)
 	NDBGL1(L1_F_MSG, "FSM function F_AI8 executing");
 
 	if(((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S)
-		isdn_layer2_activate_ind(&sc->sc_l2, 1);
+		isdn_layer2_activate_ind(&sc->sc_l2, sc->sc_l3token, 1);
 
 	T3_stop(sc);
 
@@ -285,7 +285,7 @@ F_AI8(struct isic_softc *sc)
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, 1, &info);
+		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, 1, &info);
 	}
 }
 
@@ -300,7 +300,7 @@ F_AI10(struct isic_softc *sc)
 	NDBGL1(L1_F_MSG, "FSM function F_AI10 executing");
 
 	if(((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S)
-		isdn_layer2_activate_ind(&sc->sc_l2, 1);
+		isdn_layer2_activate_ind(&sc->sc_l2, sc->sc_l3token, 1);
 
 	T3_stop(sc);
 
@@ -312,7 +312,7 @@ F_AI10(struct isic_softc *sc)
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, 1, &info);
+		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, 1, &info);
 	}
 }
 
@@ -332,7 +332,7 @@ F_I01(struct isic_softc *sc)
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, 1, &info);
+		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, 1, &info);
 	}
 }
 
@@ -345,7 +345,7 @@ F_I02(struct isic_softc *sc)
 	NDBGL1(L1_F_MSG, "FSM function F_I02 executing");
 
 	if(((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S)
-		isdn_layer2_activate_ind(&sc->sc_l2, 0);
+		isdn_layer2_activate_ind(&sc->sc_l2, sc->sc_l3token, 0);
 
 	if(sc->sc_trace & TRACE_I)
 	{
@@ -355,7 +355,7 @@ F_I02(struct isic_softc *sc)
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, 1, &info);
+		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, 1, &info);
 	}
 }
 
@@ -368,7 +368,7 @@ F_I03(struct isic_softc *sc)
 	NDBGL1(L1_F_MSG, "FSM function F_I03 executing");
 
 	if(((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S)
-		isdn_layer2_activate_ind(&sc->sc_l2, 0);
+		isdn_layer2_activate_ind(&sc->sc_l2, sc->sc_l3token, 0);
 
 	T4_start(sc);
 	
@@ -380,7 +380,7 @@ F_I03(struct isic_softc *sc)
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, 1, &info);
+		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, 1, &info);
 	}
 }
 
@@ -400,7 +400,7 @@ F_AR(struct isic_softc *sc)
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_TE;
 		hdr.count = 0;
-		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, 1, &info);
+		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, 1, &info);
 	}
 
 	isic_isac_l1_cmd(sc, CMD_AR8);
@@ -424,7 +424,7 @@ F_I2(struct isic_softc *sc)
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, 1, &info);
+		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, 1, &info);
 	}
 }
 

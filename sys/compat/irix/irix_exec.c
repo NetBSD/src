@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.14 2002/04/20 16:19:22 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.14.2.1 2002/05/30 14:44:41 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.14 2002/04/20 16:19:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.14.2.1 2002/05/30 14:44:41 gehenna Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.14 2002/04/20 16:19:22 manu Exp $");
 #include <compat/irix/irix_exec.h>
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_errno.h>
+
+extern const int native_to_svr4_signo[];
 
 static void setregs_n32 __P((struct proc *, struct exec_package *, u_long));
 static void irix_e_proc_exec __P((struct proc *, struct exec_package *));
@@ -295,6 +297,24 @@ static void
 irix_e_proc_exit(p)
 	struct proc *p;
 {
+	struct proc *pp;
+	struct irix_emuldata *ied;
+
+	LIST_FOREACH(pp, &allproc, p_list) {
+		/* 
+		 * Select IRIX processes. 
+		 * XXX not nice, but we need to do this
+		 * before we reference p_emuldata.
+		 */
+		if (pp->p_emul != &emul_irix_o32 &&
+		    pp->p_emul != &emul_irix_n32)
+			continue;
+
+		ied = (struct irix_emuldata *)(pp->p_emuldata);
+		if (ied->ied_pptr == p)
+			psignal(pp, native_to_svr4_signo[SIGHUP]);
+	}
+
 	FREE(p->p_emuldata, M_EMULDATA);
 	p->p_emuldata = NULL;
 }
@@ -306,8 +326,17 @@ static void
 irix_e_proc_fork(p, parent)
         struct proc *p, *parent;
 {
+	struct irix_emuldata *ied1;
+	struct irix_emuldata *ied2;
+
         p->p_emuldata = NULL;
 
-	/* Use parent's vmspace beacause our vmspace may not be setup yet) */
+	/* Use parent's vmspace beacause our vmspace may not be setup yet */
         irix_e_proc_init(p, parent->p_vmspace);
+
+	ied1 = p->p_emuldata;
+	ied2 = parent->p_emuldata;
+
+	(void) memcpy(ied1, ied2, (unsigned)
+	    ((caddr_t)&ied1->ied_endcopy - (caddr_t)&ied1->ied_startcopy));
 }

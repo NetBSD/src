@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.75 2002/03/08 20:48:43 thorpej Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.75.6.1 2002/05/30 13:52:26 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.75 2002/03/08 20:48:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.75.6.1 2002/05/30 13:52:26 gehenna Exp $");
 
 #include "opt_ipsec.h"
 
@@ -833,17 +833,18 @@ in_pcbrtentry(inp)
 
 	ro = &inp->inp_route;
 
-	if (ro->ro_rt == NULL) {
-		/*
-		 * No route yet, so try to acquire one.
-		 */
-		if (!in_nullhost(inp->inp_faddr)) {
-			bzero(&ro->ro_dst, sizeof(struct sockaddr_in));
-			ro->ro_dst.sa_family = AF_INET;
-			ro->ro_dst.sa_len = sizeof(ro->ro_dst);
-			satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
-			rtalloc(ro);
-		}
+	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+	    !in_hosteq(satosin(&ro->ro_dst)->sin_addr, inp->inp_faddr))) {
+		RTFREE(ro->ro_rt);
+		ro->ro_rt = (struct rtentry *)NULL;
+	}
+	if (ro->ro_rt == (struct rtentry *)NULL &&
+	    !in_nullhost(inp->inp_faddr)) {
+		bzero(&ro->ro_dst, sizeof(struct sockaddr_in));
+		ro->ro_dst.sa_family = AF_INET;
+		ro->ro_dst.sa_len = sizeof(ro->ro_dst);
+		satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
+		rtalloc(ro);
 	}
 	return (ro->ro_rt);
 }

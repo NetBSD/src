@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.46 2002/04/29 16:29:29 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.46.2.1 2002/05/30 13:52:25 gehenna Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46 2002/04/29 16:29:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.2.1 2002/05/30 13:52:25 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -3374,7 +3374,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 			addlog(" send %s\n", sppp_cp_type_name(type));
 		sppp_cp_send (sp, PPP_IPV6CP, type, h->ident, origlen, h+1);
 	} else {
-#ifdef DIAGNOSTIC
+#ifdef notdef
 		if (type == CONF_ACK)
 			panic("IPv6CP RCR: CONF_ACK with non-zero rlen");
 #endif

@@ -27,7 +27,7 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.8.2.1 2002/05/16 03:54:50 gehenna Exp $
+ *	$Id: i4b_ctl.c,v 1.8.2.2 2002/05/30 13:52:35 gehenna Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.8.2.1 2002/05/16 03:54:50 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.8.2.2 2002/05/30 13:52:35 gehenna Exp $");
 
 #include "isdnctl.h"
 
@@ -352,7 +352,7 @@ isdnctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			break;
 	}
 	return(error);
-#endif DO_I4B_DEBUG
+#endif /* DO_I4B_DEBUG */
 }
 
 #if defined(__FreeBSD__) && defined(OS_USES_POLL)

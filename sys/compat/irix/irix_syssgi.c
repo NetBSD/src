@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.26 2002/04/20 07:43:35 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.26.2.1 2002/05/30 14:44:54 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.26 2002/04/20 07:43:35 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.26.2.1 2002/05/30 14:44:54 gehenna Exp $");
 
 #include "opt_ddb.h"
 
@@ -469,7 +469,7 @@ irix_syssgi_sysconf(name, p, retval)
 	default:
 		printf("Warning: syssgi(SYSCONF) unsupported variable %d\n",
 		    name);
-		    return EINVAL;
+		return EINVAL;
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.75 2002/03/05 08:13:56 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.75.6.1 2002/05/30 13:52:30 gehenna Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.75 2002/03/05 08:13:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.75.6.1 2002/05/30 13:52:30 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.75 2002/03/05 08:13:56 itojun Exp $");
 #include <netinet6/nd6.h>
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/ip6protosw.h>
-
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -1540,6 +1539,11 @@ ni6_input(m, off)
 }
 #undef hostnamelen
 
+#define isupper(x) ('A' <= (x) && (x) <= 'Z')
+#define isalpha(x) (('A' <= (x) && (x) <= 'Z') || ('a' <= (x) && (x) <= 'z'))
+#define isalnum(x) (isalpha(x) || ('0' <= (x) && (x) <= '9'))
+#define tolower(x) (isupper(x) ? (x) + 'a' - 'A' : (x))
+
 /*
  * make a mbuf with DNS-encoded string.  no compression support.
  *
@@ -1617,8 +1621,17 @@ ni6_nametodns(name, namelen, old)
 			if (i <= 0 || i >= 64)
 				goto fail;
 			*cp++ = i;
-			bcopy(p, cp, i);
-			cp += i;
+			if (!isalpha(p[0]) || !isalnum(p[i - 1]))
+				goto fail;
+			while (i > 0) {
+				if (!isalnum(*p) && *p != '-')
+					goto fail;
+				if (isupper(*p))
+					*cp++ = tolower(*p++);
+				else
+					*cp++ = *p++;
+				i--;
+			}
 			p = q;
 			if (p < name + namelen && *p == '.')
 				p++;
@@ -2188,7 +2201,7 @@ icmp6_reflect(m, off)
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
 	if (m->m_pkthdr.rcvif) {
 		/* XXX: This may not be the outgoing interface */
-		ip6->ip6_hlim = nd_ifinfo[m->m_pkthdr.rcvif->if_index].chlim;
+		ip6->ip6_hlim = ND_IFINFO(m->m_pkthdr.rcvif)->chlim;
 	} else
 		ip6->ip6_hlim = ip6_defhlim;
 
@@ -2911,8 +2924,8 @@ icmp6_mtudisc_timeout(rt, r)
 		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 	} else {
-		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
-			rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu;
+		if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
+			rt->rt_rmx.rmx_mtu = 0;
 	}
 }
 
