@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.4 1996/10/13 01:38:21 christos Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.5 1996/10/21 22:56:35 thorpej Exp $	*/
 
 /*
  *
@@ -143,14 +143,14 @@ void *aux;
   struct en_softc *sc = (void *)self;
   struct en_pci_softc *scp = (void *)self;
   struct pci_attach_args *pa = aux;
-  bus_mem_addr_t membase;
+  bus_addr_t membase;
   pci_intr_handle_t ih;
   const char *intrstr;
   int retval;
 
   printf("\n");
 
-  sc->en_bc = pa->pa_bc;
+  sc->en_memt = pa->pa_memt;
   scp->en_pc = pa->pa_pc;
 
   /*
@@ -181,7 +181,8 @@ void *aux;
   retval = pci_mem_find(scp->en_pc, pa->pa_tag, PCI_CBMA,
 				&membase, &sc->en_obmemsz, NULL);
   if (retval == 0)
-    retval = bus_mem_map(sc->en_bc, membase, sc->en_obmemsz, 0, &sc->en_base);
+    retval = bus_space_map(sc->en_memt, membase, sc->en_obmemsz, 0,
+      &sc->en_base);
  
   if (retval) {
     printf("%s: couldn't map memory\n", sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.11 1996/10/13 01:38:30 christos Exp $	*/
+/*	$NetBSD: ppb.c,v 1.12 1996/10/21 22:57:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -119,7 +119,8 @@ ppbattach(parent, self, aux)
 	 * Attach the PCI bus than hangs off of it.
 	 */
 	pba.pba_busname = "pci";
-	pba.pba_bc = pa->pa_bc;
+	pba.pba_iot = pa->pa_iot;
+	pba.pba_memt = pa->pa_memt;
 	pba.pba_pc = pc;
 	pba.pba_bus = PPB_BUSINFO_SECONDARY(busdata);
 	pba.pba_intrswiz = pa->pa_intrswiz;

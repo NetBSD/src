@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.8 1996/10/13 01:38:16 christos Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -306,9 +306,9 @@ ahc_pci_attach(parent, self, aux)
 #elif defined(__NetBSD__)
 	struct pci_attach_args *pa = aux;
 	struct ahc_data *ahc = (void *)self;
-	bus_io_addr_t iobase;
-	bus_io_size_t iosize;
-	bus_io_handle_t ioh;
+	bus_addr_t iobase;
+	bus_size_t iosize;
+	bus_space_handle_t ioh;
 	pci_intr_handle_t ih;
 	const char *intrstr;
 #endif
@@ -333,7 +333,7 @@ ahc_pci_attach(parent, self, aux)
 #elif defined(__NetBSD__)
 	if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_BASEADR0, &iobase, &iosize))
 		return;
-	if (bus_io_map(pa->pa_bc, iobase, iosize, &ioh))
+	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &ioh))
 		return;
 #endif
 
@@ -390,16 +390,17 @@ ahc_pci_attach(parent, self, aux)
 	if(ahc_t & AHC_ULTRA)
 		ultra_enb = inb(SXFRCTL0 + io_port) & ULTRAEN;
 #else
-	our_id = bus_io_read_1(pa->pa_bc, ioh, SCSIID) & OID;
+	our_id = bus_space_read_1(pa->pa_iot, ioh, SCSIID) & OID;
 	if(ahc_t & AHC_ULTRA)
-		ultra_enb = bus_io_read_1(pa->pa_bc, ioh, SXFRCTL0) & ULTRAEN;
+		ultra_enb = bus_space_read_1(pa->pa_iot, ioh,
+		    SXFRCTL0) & ULTRAEN;
 #endif
 
 #if defined(__FreeBSD__)
 	ahc_reset(io_port);
 #elif defined(__NetBSD__)
 	printf("\n");
-	ahc_reset(ahc->sc_dev.dv_xname, pa->pa_bc, ioh);
+	ahc_reset(ahc->sc_dev.dv_xname, pa->pa_iot, ioh);
 #endif
 
 	if(ahc_t & AHC_AIC7870){
@@ -449,7 +450,7 @@ ahc_pci_attach(parent, self, aux)
 		return;
 	}
 #elif defined(__NetBSD__)
-	ahc_construct(ahc, pa->pa_bc, ioh, ahc_t, ahc_f);
+	ahc_construct(ahc, pa->pa_iot, ioh, ahc_t, ahc_f);
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) {
@@ -620,7 +621,7 @@ load_seeprom(ahc)
 #if defined(__FreeBSD__)
 	sd.sd_iobase = ahc->baseport + SEECTL;
 #elif defined(__NetBSD__)
-	sd.sd_bc = ahc->sc_bc;
+	sd.sd_iot = ahc->sc_iot;
 	sd.sd_ioh = ahc->sc_ioh;
 	sd.sd_offset = SEECTL;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.44 1996/10/13 01:38:25 christos Exp $	*/
+/*	$NetBSD: ncr.c,v 1.45 1996/10/21 22:56:51 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -213,7 +213,7 @@ extern PRINT_ADDR();
 #if defined(__NetBSD__) && defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #undef vtophys
-#define	vtophys(va)	__alpha_bus_XXX_dmamap(np->sc_bc, (void *)(va))
+#define	vtophys(va)	__alpha_bus_XXX_dmamap(np->sc_memt, (void *)(va))
 #endif
 
 /*==========================================================
@@ -286,44 +286,44 @@ extern PRINT_ADDR();
 #define	INB(r) \
     INB_OFF(offsetof(struct ncr_reg, r))
 #define	INB_OFF(o) \
-    bus_io_read_1 (np->sc_bc, np->sc_ioh, (o))
+    bus_space_read_1 (np->sc_memt, np->sc_bah, (o))
 #define	INW(r) \
-    bus_io_read_2 (np->sc_bc, np->sc_ioh, offsetof(struct ncr_reg, r))
+    bus_space_read_2 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r))
 #define	INL(r) \
     INL_OFF(offsetof(struct ncr_reg, r))
 #define	INL_OFF(o) \
-    bus_io_read_4 (np->sc_bc, np->sc_ioh, (o))
+    bus_space_read_4 (np->sc_memt, np->sc_bah, (o))
 
 #define	OUTB(r, val) \
-    bus_io_write_1 (np->sc_bc, np->sc_ioh, offsetof(struct ncr_reg, r), (val))
+    bus_space_write_1 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r), (val))
 #define	OUTW(r, val) \
-    bus_io_write_2 (np->sc_bc, np->sc_ioh, offsetof(struct ncr_reg, r), (val))
+    bus_space_write_2 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r), (val))
 #define	OUTL(r, val) \
     OUTL_OFF(offsetof(struct ncr_reg, r), (val))
 #define	OUTL_OFF(o, val) \
-    bus_io_write_4 (np->sc_bc, np->sc_ioh, (o), (val))
+    bus_space_write_4 (np->sc_memt, np->sc_bah, (o), (val))
 
 #else
 
 #define	INB(r) \
     INB_OFF(offsetof(struct ncr_reg, r))
 #define	INB_OFF(o) \
-    bus_mem_read_1 (np->sc_bc, np->sc_memh, (o))
+    bus_space_read_1 (np->sc_memt, np->sc_bah, (o))
 #define	INW(r) \
-    bus_mem_read_2 (np->sc_bc, np->sc_memh, offsetof(struct ncr_reg, r))
+    bus_space_read_2 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r))
 #define	INL(r) \
     INL_OFF(offsetof(struct ncr_reg, r))
 #define	INL_OFF(o) \
-    bus_mem_read_4 (np->sc_bc, np->sc_memh, (o))
+    bus_space_read_4 (np->sc_memt, np->sc_bah, (o))
 
 #define	OUTB(r, val) \
-    bus_mem_write_1 (np->sc_bc, np->sc_memh, offsetof(struct ncr_reg, r), (val))
+    bus_space_write_1 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r), (val))
 #define	OUTW(r, val) \
-    bus_mem_write_2 (np->sc_bc, np->sc_memh, offsetof(struct ncr_reg, r), (val))
+    bus_space_write_2 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r), (val))
 #define	OUTL(r, val) \
     OUTL_OFF(offsetof(struct ncr_reg, r), (val))
 #define	OUTL_OFF(o, val) \
-    bus_mem_write_4 (np->sc_bc, np->sc_memh, (o), (val))
+    bus_space_write_4 (np->sc_memt, np->sc_bah, (o), (val))
 
 #endif
 
@@ -999,13 +999,9 @@ struct ncb {
 #ifdef __NetBSD__
 	struct device sc_dev;
 	void *sc_ih;
-	bus_chipset_tag_t sc_bc;
+	bus_space_tag_t sc_memt;
 	pci_chipset_tag_t sc_pc;
-#ifdef NCR_IOMAPPED
-	bus_io_handle_t sc_ioh;
-#else /* !NCR_IOMAPPED */
-	bus_mem_handle_t sc_memh;
-#endif /* NCR_IOMAPPED */
+	bus_space_handle_t sc_bah;
 #else /* !__NetBSD__ */
 	int	unit;
 #endif /* __NetBSD__ */
@@ -1035,7 +1031,7 @@ struct ncb {
 	vm_offset_t     vaddr;
 	vm_offset_t     paddr;
 #else
-	bus_mem_addr_t	paddr;
+	bus_addr_t	paddr;
 #endif
 
 #ifndef __NetBSD__
@@ -1332,7 +1328,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.44 1996/10/13 01:38:25 christos Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.45 1996/10/21 22:56:51 thorpej Exp $\n";
 #endif
 
 u_long	ncr_version = NCR_VERSION	* 11
@@ -3349,13 +3345,14 @@ ncr_attach(parent, self, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	bus_chipset_tag_t bc = pa->pa_bc;
+	bus_space_tag_t memt = pa->pa_memt;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	bus_mem_size_t memsize;
+	bus_size_t memsize;
 	int retval, cacheable;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	ncb_p np = (void *)self;
+	int wide = 0;
 
 	printf(": NCR ");
 	switch (pa->pa_id) {
@@ -3370,17 +3367,19 @@ ncr_attach(parent, self, aux)
 		break;
 	case NCR_825_ID:
 		printf("53c825 Wide");
+		wide = 1;
 		break;
 	case NCR_860_ID:
 		printf("53c860");
 		break;
 	case NCR_875_ID:
 		printf("53c875 Wide");
+		wide = 1;
 		break;
 	}
 	printf(" SCSI\n");
 
-	np->sc_bc = bc;
+	np->sc_memt = memt;
 	np->sc_pc = pc;
 
 	/*
@@ -3396,7 +3395,8 @@ ncr_attach(parent, self, aux)
 	}
 
 	/* Map the memory.  Note that we never want it to be cacheable. */
-	retval = bus_mem_map(pa->pa_bc, np->paddr, memsize, 0, &np->sc_memh);
+	retval = bus_space_map(pa->pa_memt, np->paddr, memsize, 0,
+	    &np->sc_bah);
 	if (retval) {
 		printf("%s: couldn't map memory region\n", self->dv_xname);
 		return;

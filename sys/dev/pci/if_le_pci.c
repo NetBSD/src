@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.10 1996/10/13 01:38:23 christos Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.11 1996/10/21 22:56:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -77,7 +77,7 @@
 #ifdef __alpha__			/* XXX */
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */ 
 #undef vtophys
-#define	vtophys(va)	__alpha_bus_XXX_dmamap(lesc->sc_bc, (void *)(va))
+#define	vtophys(va)	__alpha_bus_XXX_dmamap(lesc->sc_iot, (void *)(va))
 #endif
 
 int le_pci_match __P((struct device *, void *, void *));
@@ -102,11 +102,11 @@ le_pci_wrcsr(sc, port, val)
 	u_int16_t port, val;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
-	bus_chipset_tag_t bc = lesc->sc_bc;
-	bus_io_handle_t ioh = lesc->sc_ioh;
+	bus_space_tag_t iot = lesc->sc_iot;
+	bus_space_handle_t ioh = lesc->sc_ioh;
 
-	bus_io_write_2(bc, ioh, lesc->sc_rap, port);
-	bus_io_write_2(bc, ioh, lesc->sc_rdp, val);
+	bus_space_write_2(iot, ioh, lesc->sc_rap, port);
+	bus_space_write_2(iot, ioh, lesc->sc_rdp, val);
 }
 
 hide u_int16_t
@@ -115,12 +115,12 @@ le_pci_rdcsr(sc, port)
 	u_int16_t port;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
-	bus_chipset_tag_t bc = lesc->sc_bc;
-	bus_io_handle_t ioh = lesc->sc_ioh;
+	bus_space_tag_t iot = lesc->sc_iot;
+	bus_space_handle_t ioh = lesc->sc_ioh;
 	u_int16_t val;
 
-	bus_io_write_2(bc, ioh, lesc->sc_rap, port);
-	val = bus_io_read_2(bc, ioh, lesc->sc_rdp);
+	bus_space_write_2(iot, ioh, lesc->sc_rap, port);
+	val = bus_space_read_2(iot, ioh, lesc->sc_rdp);
 	return (val);
 }
 
@@ -151,10 +151,10 @@ le_pci_attach(parent, self, aux)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
-	bus_io_addr_t iobase;
-	bus_io_size_t iosize;
-	bus_io_handle_t ioh;
-	bus_chipset_tag_t bc = pa->pa_bc;
+	bus_addr_t iobase;
+	bus_size_t iosize;
+	bus_space_handle_t ioh;
+	bus_space_tag_t iot = pa->pa_iot;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t csr;
 	int i;
@@ -177,7 +177,7 @@ le_pci_attach(parent, self, aux)
 		printf("%s: can't find I/O base\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	if (bus_io_map(bc, iobase, iosize, &ioh)) {
+	if (bus_space_map(iot, iobase, iosize, 0, &ioh)) {
 		printf("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -186,7 +186,7 @@ le_pci_attach(parent, self, aux)
 	 * Extract the physical MAC address from the ROM.
 	 */
 	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
-		sc->sc_arpcom.ac_enaddr[i] = bus_io_read_1(bc, ioh, i);
+		sc->sc_arpcom.ac_enaddr[i] = bus_space_read_1(iot, ioh, i);
 
 	sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_mem == 0) {
@@ -195,7 +195,7 @@ le_pci_attach(parent, self, aux)
 		return;
 	}
 
-	lesc->sc_bc = bc;
+	lesc->sc_iot = iot;
 	lesc->sc_ioh = ioh;
 
 	sc->sc_conf3 = 0;
