@@ -1,7 +1,7 @@
-/*	$NetBSD: hlfsd.c,v 1.1.1.6 2003/03/09 01:13:54 christos Exp $	*/
+/*	$NetBSD: hlfsd.c,v 1.1.1.7 2004/11/27 01:01:04 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: hlfsd.c,v 1.22 2002/12/27 22:44:08 ezk Exp
+ * Id: hlfsd.c,v 1.28 2004/07/23 18:29:22 ezk Exp
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -86,7 +86,7 @@ char *logfile = DEFAULT_LOGFILE;
 char *passwdfile = NULL;	/* alternate passwd file to use */
 char *slinkname = 0;
 char hostname[MAXHOSTNAMELEN + 1] = "localhost";
-int cache_interval = DEFAULT_CACHE_INTERVAL;
+u_int cache_interval = DEFAULT_CACHE_INTERVAL;
 gid_t hlfs_gid = (gid_t) INVALIDID;
 int masterpid = 0;
 int noverify = 0;
@@ -503,7 +503,7 @@ main(int argc, char *argv[])
   /* some systems don't have a mount type, but a mount flag */
 
 #ifndef HAVE_TRANSPORT_TYPE_TLI
-  amu_get_myaddress(&localsocket.sin_addr);
+  amu_get_myaddress(&localsocket.sin_addr, NULL);
   localsocket.sin_family = AF_INET;
   localsocket.sin_port = htons(nfsxprt->xp_port);
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
@@ -524,7 +524,7 @@ main(int argc, char *argv[])
   if (retry <= 0)
     retry = 1;			/* XXX */
 
-  memmove(&anh.v2.fhs_fh, root_fhp, sizeof(*root_fhp));
+  memmove(&anh.v2, root_fhp, sizeof(*root_fhp));
 #ifdef HAVE_TRANSPORT_TYPE_TLI
   compute_nfs_args(&nfs_args,
 		   &mnt,
@@ -580,14 +580,14 @@ main(int argc, char *argv[])
  */
   if (!amuDebug(D_DAEMON)) {	/* Normal case */
     plog(XLOG_INFO, "normal NFS mounting hlfsd service points");
-    if (mount_fs2(&mnt, dir_name, genflags, (caddr_t) &nfs_args, retry, type, 0, NULL, mnttab_file_name) < 0)
+    if (mount_fs(&mnt, genflags, (caddr_t) &nfs_args, retry, type, 0, NULL, mnttab_file_name, 0) < 0)
       fatal("nfsmount: %m");
   } else {			/* asked for -D daemon */
     if (fork() == 0) {		/* child runs mount */
       am_set_mypid();
       foreground = 0;
       plog(XLOG_INFO, "child NFS mounting hlfsd service points");
-      if (mount_fs2(&mnt, dir_name, genflags, (caddr_t) &nfs_args, retry, type, 0, NULL, mnttab_file_name) < 0) {
+      if (mount_fs(&mnt, genflags, (caddr_t) &nfs_args, retry, type, 0, NULL, mnttab_file_name, 0) < 0) {
 	fatal("nfsmount: %m");
       }
       exit(0);			/* all went well */
@@ -735,7 +735,7 @@ hlfsd_init(void)
   if (setitimer(ITIMER_REAL, &reloadinterval, (struct itimerval *) 0) < 0)
     fatal("setitimer: %m");
 
-  gettimeofday((struct timeval *) &startup, (struct timezone *) 0);
+  gettimeofday((struct timeval *) ((void *)&startup), (struct timezone *) 0);
 
   /*
    * If not -D daemon, then start serving here in the child,
@@ -843,7 +843,7 @@ cleanup(int signum)
   am_set_mypid();
 
   for (;;) {
-    while ((umount_result = UMOUNT_FS(dir_name, dir_name, mnttab_file_name)) == EBUSY) {
+    while ((umount_result = UMOUNT_FS(dir_name, mnttab_file_name, 0)) == EBUSY) {
       dlog("cleanup(): umount delaying for 10 seconds");
       sleep(10);
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: am_compat.h,v 1.1.1.5 2002/11/29 22:59:02 christos Exp $	*/
+/*	$NetBSD: am_compat.h,v 1.1.1.6 2004/11/27 01:01:05 christos Exp $	*/
 
 /*
  * am_compat.h:
@@ -61,6 +61,10 @@
 # define MNTTAB_OPT_PGTHRESH "pgthresh"
 #endif /* defined(MNT2_NFS_OPT_PGTHRESH) && !defined(MNTTAB_OPT_PGTHRESH) */
 
+#if defined(MNT2_NFS_OPT_PRIVATE) && !defined(MNTTAB_OPT_PRIVATE)
+# define MNTTAB_OPT_PRIVATE "private"
+#endif /* defined(MNT2_NFS_OPT_PRIVATE) && !defined(MNTTAB_OPT_PRIVATE) */
+
 #if defined(MNT2_NFS_OPT_RETRANS) && !defined(MNTTAB_OPT_RETRANS)
 # define MNTTAB_OPT_RETRANS "retrans"
 #endif /* defined(MNT2_NFS_OPT_RETRANS) && !defined(MNTTAB_OPT_RETRANS) */
@@ -95,6 +99,10 @@
 #if defined(MNT2_NFS_OPT_NONLM) && !defined(MNTTAB_OPT_NOLOCK)
 # define MNTTAB_OPT_NOLOCK "nolock"
 #endif /* defined(MNT2_NFS_OPT_NONLM) && !defined(MNTTAB_OPT_NOLOCK) */
+
+#if defined(MNT2_NFS_OPT_XLATECOOKIE) && !defined(MNTTAB_OPT_XLATECOOKIE)
+# define MNTTAB_OPT_XLATECOOKIE "xlatecookie"
+#endif /* defined(MNT2_NFS_OPT_XLATECOOKIE) && !defined(MNTTAB_OPT_XLATECOOKIE) */
 
 /*
  * Complete MNTTAB_OPT_* options based on MNT2_CDFS_OPT_* mount options.
@@ -190,6 +198,10 @@
 #ifndef MNTTAB_OPT_PORT
 # define MNTTAB_OPT_PORT "port"
 #endif /* not MNTTAB_OPT_PORT */
+
+#ifndef MNTTAB_OPT_PUBLIC
+# define MNTTAB_OPT_PUBLIC "public"
+#endif /* not MNTTAB_OPT_PUBLIC */
 
 #ifndef MNTTAB_OPT_RETRANS
 # define MNTTAB_OPT_RETRANS "retrans"

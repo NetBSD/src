@@ -1,7 +1,7 @@
-/*	$NetBSD: info_hesiod.c,v 1.1.1.6 2003/03/09 01:13:14 christos Exp $	*/
+/*	$NetBSD: info_hesiod.c,v 1.1.1.7 2004/11/27 01:00:38 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_hesiod.c,v 1.13 2002/12/27 22:43:49 ezk Exp
+ * Id: info_hesiod.c,v 1.15 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -103,6 +103,9 @@ hesiod_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 
   dlog("hesiod_search(m=%lx, map=%s, key=%s, pval=%lx tp=%lx)",
        (unsigned long) m, map, key, (unsigned long) pval, (unsigned long) tp);
+
+  if (key[0] == '.')
+    return ENOENT;
 
   sprintf(hes_key, "%s.%s", key, map + HES_PREFLEN);
 

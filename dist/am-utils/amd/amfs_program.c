@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_program.c,v 1.1.1.6 2003/03/09 01:13:08 christos Exp $	*/
+/*	$NetBSD: amfs_program.c,v 1.1.1.7 2004/11/27 01:00:38 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_program.c,v 1.17 2002/12/27 22:43:47 ezk Exp
+ * Id: amfs_program.c,v 1.24 2004/08/07 16:32:49 ezk Exp
  *
  */
 
@@ -75,8 +75,9 @@ am_ops amfs_program_ops =
   0,				/* amfs_program_readlink */
   0,				/* amfs_program_mounted */
   0,				/* amfs_program_umounted */
-  find_amfs_auto_srvr,
-  FS_BACKGROUND | FS_AMQINFO,			/* nfs_fs_flags */
+  amfs_generic_find_srvr,
+  0,				/* amfs_program_get_wchan */
+  FS_MKMNT | FS_BACKGROUND | FS_AMQINFO,	/* nfs_fs_flags */
 #ifdef HAVE_FS_AUTOFS
   AUTOFS_PROGRAM_FS_FLAGS,
 #endif /* HAVE_FS_AUTOFS */
@@ -91,8 +92,12 @@ amfs_program_match(am_opts *fo)
 {
   char *prog;
 
-  if (!fo->opt_mount || !fo->opt_unmount) {
-    plog(XLOG_ERROR, "program: both mount and unmount must be specified");
+  if (fo->opt_unmount && fo->opt_umount) {
+    plog(XLOG_ERROR, "program: cannot specify both unmount and umount options");
+    return 0;
+  }
+  if (!fo->opt_mount || (!fo->opt_unmount && !fo->opt_umount)) {
+    plog(XLOG_ERROR, "program: both mount and unmount/umount must be specified");
     return 0;
   }
   prog = strchr(fo->opt_mount, ' ');
@@ -105,11 +110,14 @@ static int
 amfs_program_init(mntfs *mf)
 {
   /*
-   * Save unmount command
+   * Save unmount (or umount) command
    */
   if (mf->mf_refc == 1) {
-    mf->mf_private = (voidp) strdup(mf->mf_fo->opt_unmount);
-    mf->mf_prfree = (void (*)(voidp)) free;
+    if (mf->mf_fo->opt_unmount != NULL)
+      mf->mf_private = (opaque_t) strdup(mf->mf_fo->opt_unmount);
+    else
+      mf->mf_private = (opaque_t) strdup(mf->mf_fo->opt_umount);
+    mf->mf_prfree = (void (*)(opaque_t)) free;
   }
 
   return 0;
