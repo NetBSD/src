@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.141 1999/07/04 06:17:52 sommerfeld Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.142 1999/07/04 16:20:13 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -478,9 +478,11 @@ dounmount(mp, flags, p)
 		mp->mnt_flag |= async;
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
 		    &mountlist_slock);
-		if (mp->mnt_flag & MNT_MWAIT)
+		while(mp->mnt_wcnt > 0) {
 			wakeup((caddr_t)mp);
-		 return (error);
+			sleep(&mp->mnt_wcnt, PVFS);
+		}
+		return (error);
 	}
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
@@ -490,9 +492,12 @@ dounmount(mp, flags, p)
 	mp->mnt_op->vfs_refcount--;
 	if (mp->mnt_vnodelist.lh_first != NULL)
 		panic("unmount: dangling vnode");
+	mp->mnt_flag |= MNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
-	if (mp->mnt_flag & MNT_MWAIT)
+	while(mp->mnt_wcnt > 0) {
 		wakeup((caddr_t)mp);
+		sleep(&mp->mnt_wcnt, PVFS);
+	}
 	free((caddr_t)mp, M_MOUNT);
 	return (0);
 }

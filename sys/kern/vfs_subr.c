@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.102 1999/04/21 02:37:07 mrg Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.103 1999/07/04 16:20:13 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -198,10 +198,11 @@ vfs_busy(mp, flags, interlkp)
 {
 	int lkflags;
 
-	if (mp->mnt_flag & MNT_UNMOUNT) {
+	while (mp->mnt_flag & MNT_UNMOUNT) {
+		int gone;
+		
 		if (flags & LK_NOWAIT)
 			return (ENOENT);
-		mp->mnt_flag |= MNT_MWAIT;
 		if (interlkp)
 			simple_unlock(interlkp);
 		/*
@@ -209,11 +210,20 @@ vfs_busy(mp, flags, interlkp)
 		 * lock granted when unmounting, the only place that a
 		 * wakeup needs to be done is at the release of the
 		 * exclusive lock at the end of dounmount.
+		 *
+		 * XXX MP: add spinlock protecting mnt_wcnt here.
 		 */
+		mp->mnt_wcnt++;
 		sleep((caddr_t)mp, PVFS);
+		mp->mnt_wcnt--;
+		gone = mp->mnt_flag & MNT_GONE;
+		
+		if (mp->mnt_wcnt == 0)
+			wakeup(&mp->mnt_wcnt);
 		if (interlkp)
 			simple_lock(interlkp);
-		return (ENOENT);
+		if (gone)
+			return (ENOENT);
 	}
 	lkflags = LK_SHARED;
 	if (interlkp)
@@ -394,9 +404,22 @@ getnewvnode(tag, mp, vops, vpp)
 {
 	struct proc *p = curproc;	/* XXX */
 	struct vnode *vp;
+	int error;
 #ifdef DIAGNOSTIC
 	int s;
 #endif
+	if (mp) {
+		/*
+		 * XXX
+		 * calling vfs_busy here (either with or without LK_NOWAIT)
+		 * means that syscalls taking place during an
+		 * unsuccessful unmount attempt will fail (spuriously).
+		 * We should be able to wait for the unmount to finish.
+		 */
+		error = vfs_busy(mp, LK_NOWAIT, 0);
+		if (error)
+			return error;
+	}
 
 	simple_lock(&vnode_free_list_slock);
 	if ((vnode_free_list.tqh_first == NULL &&
@@ -419,6 +442,7 @@ getnewvnode(tag, mp, vops, vpp)
 		 */
 		if (vp == NULLVP) {
 			simple_unlock(&vnode_free_list_slock);
+			if (mp) vfs_unbusy(mp);
 			tablefull("vnode");
 			*vpp = 0;
 			return (ENFILE);
@@ -461,6 +485,7 @@ getnewvnode(tag, mp, vops, vpp)
 	vp->v_usecount = 1;
 	vp->v_data = 0;
 	simple_lock_init(&vp->v_uvm.u_obj.vmobjlock);
+	if (mp) vfs_unbusy(mp);
 	return (0);
 }
 
@@ -473,6 +498,13 @@ insmntque(vp, mp)
 	register struct mount *mp;
 {
 
+#ifdef DIAGNOSTIC
+	if ((mp != NULL) &&
+	    (mp->mnt_flag & MNT_UNMOUNT)) {
+		panic("insmntque into dying filesystem");
+	}
+#endif
+	
 	simple_lock(&mntvnode_slock);
 	/*
 	 * Delete from old mount point vnode list, if on one.
