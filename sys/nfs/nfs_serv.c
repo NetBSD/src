@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.32 1997/05/08 10:57:41 mycroft Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.33 1997/05/08 16:20:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -149,7 +149,7 @@ nfsrv3_access(nfsd, slp, procp, mrq)
 		    nfsrv_access(vp, VWRITE, cred, rdonly, procp, 0) == 0)
 			outmode |= testmode;
 		if ((inmode & NFSV3ACCESS_LOOKUP) &&
-		    nfsrv_access(vp, VLOOKUP, cred, rdonly, procp, 0) == 0)
+		    nfsrv_access(vp, VEXEC, cred, rdonly, procp, 0) == 0)
 			outmode |= NFSV3ACCESS_LOOKUP;
 	}
 	getret = VOP_GETATTR(vp, &va, cred, procp);
@@ -2453,7 +2453,7 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 #endif
 	}
 	if (!error)
-		error = nfsrv_access(vp, VLOOKUP, cred, rdonly, procp, 0);
+		error = nfsrv_access(vp, VEXEC, cred, rdonly, procp, 0);
 	if (error) {
 		vput(vp);
 		nfsm_reply(NFSX_POSTOPATTR(v3));
@@ -2720,7 +2720,7 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 #endif
 	if (!error) {
 		nqsrv_getl(vp, ND_READ);
-		error = nfsrv_access(vp, VLOOKUP, cred, rdonly, procp, 0);
+		error = nfsrv_access(vp, VEXEC, cred, rdonly, procp, 0);
 	}
 	if (error) {
 		vput(vp);
