@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.3 2001/04/25 12:05:24 bjh21 Exp $
+.\"	$NetBSD: pmap.9,v 1.4 2001/04/25 12:38:20 kleink Exp $
 .\"
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -228,7 +228,7 @@ page fault is unacceptable.  Information about which mappings are wired
 is provided to the
 .Nm
 module when a mapping is established.
-.Ss MODIFED/REFERENCED INFORMATION
+.Ss MODIFIED/REFERENCED INFORMATION
 The
 .Nm
 module is required to keep track of whether or not a page managed
@@ -257,7 +257,7 @@ is not feasible, then the
 .Nm
 implementation should always consider the
 .Dq referenced
-attibute to be FALSE.
+attribute to be FALSE.
 .Pp
 The
 .Dq modified
@@ -305,7 +305,7 @@ been removed, the modified/referenced information for that page
 .Em must
 be preserved.  The only time the modified/referenced attributes may
 be cleared is when the virtual memory system explicitly calls the
-.Fn pmap_clear_modifiy
+.Fn pmap_clear_modify
 and
 .Fn pmap_clear_reference
 functions.
@@ -761,7 +761,7 @@ Note that this function may be provided as a C pre-processor macro.
 Convert a cookie returned by a device
 .Fn mmap
 function into a physical address.  This function is provided to
-accomodate systems which have physical address spaces larger than
+accommodate systems which have physical address spaces larger than
 can be directly addressed by the platform's
 .Fa paddr_t
 type.  The existence of this function is highly dubious, and it is
@@ -876,7 +876,7 @@ Some
 implementations may need to keep track of other information not
 directly related to the virtual address space.  For example, on
 the i386 port, the Local Descriptor Table state of a process is
-assocaited with the pmap (this is due to the fact that applications
+associated with the pmap (this is due to the fact that applications
 manipulate the Local Descriptor Table directly expect it to be
 logically associated with the virtual memory state of the process).
 .Pp
@@ -1007,7 +1007,7 @@ needs to be reexamined.
 .Pp
 The use of
 .Fn pmap_copy
-needs to be reexamined.  Emperical evidence suggests that performance
+needs to be reexamined.  Empirical evidence suggests that performance
 of the system suffers when
 .Fn pmap_copy
 actually performs its defined function.  This is largely due to the
