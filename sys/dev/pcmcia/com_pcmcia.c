@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.21.16.3 2002/06/23 17:48:12 jdolecek Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.21.16.4 2002/10/10 18:41:22 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.21.16.3 2002/06/23 17:48:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.21.16.4 2002/10/10 18:41:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,10 +134,8 @@ struct com_pcmcia_softc {
 	void *sc_ih;				/* interrupt handler */
 };
 
-struct cfattach com_pcmcia_ca = {
-	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach,
-	com_pcmcia_detach, com_activate
-};
+CFATTACH_DECL(com_pcmcia, sizeof(struct com_pcmcia_softc),
+    com_pcmcia_match, com_pcmcia_attach, com_pcmcia_detach, com_activate);
 
 /* Look for pcmcia cards with particular CIS strings */
 static struct com_dev *

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.9.6.5 2002/06/23 17:49:21 jdolecek Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.9.6.6 2002/10/10 18:42:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.9.6.5 2002/06/23 17:49:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.9.6.6 2002/10/10 18:42:56 jdolecek Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -118,7 +118,17 @@ void wsmuxattach(int);
 #define WSMUXDEV(n) ((n) & 0x7f)
 #define WSMUXCTL(n) ((n) & 0x80)
 
-cdev_decl(wsmux);
+dev_type_open(wsmuxopen);
+dev_type_close(wsmuxclose);
+dev_type_read(wsmuxread);
+dev_type_ioctl(wsmuxioctl);
+dev_type_poll(wsmuxpoll);
+dev_type_kqfilter(wsmuxkqfilter);
+
+const struct cdevsw wsmux_cdevsw = {
+	wsmuxopen, wsmuxclose, wsmuxread, nowrite, wsmuxioctl,
+	nostop, notty, wsmuxpoll, nommap, wsmuxkqfilter,
+};
 
 struct wssrcops wsmux_srcops = {
 	WSMUX_MUX,

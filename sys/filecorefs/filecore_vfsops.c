@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.14.2.2 2002/09/06 08:47:33 jdolecek Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.14.2.3 2002/10/10 18:42:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.14.2.2 2002/09/06 08:47:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.14.2.3 2002/10/10 18:42:58 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.14.2.2 2002/09/06 08:47:33 jdo
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/conf.h>
 
 #include <filecorefs/filecore.h>
 #include <filecorefs/filecore_extern.h>
@@ -160,6 +161,17 @@ filecore_mount(mp, path, data, ndp, p)
 	int error;
 	struct filecore_mnt *fcmp = NULL;
 	
+	if (mp->mnt_flag & MNT_GETARGS) {
+		fcmp = VFSTOFILECORE(mp);
+		if (fcmp == NULL)
+			return EIO;
+		args.flags = fcmp->fc_mntflags;
+		args.uid = fcmp->fc_uid;
+		args.gid = fcmp->fc_gid;
+		args.fspec = NULL;
+		vfs_showexport(mp, &args.export, &fcmp->fc_export);
+		return copyout(&args, data, sizeof(args));
+	}
 	error = copyin(data, (caddr_t)&args, sizeof (struct filecore_args));
 	if (error)
 		return (error);
@@ -189,7 +201,7 @@ filecore_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return ENOTBLK;
 	}
-	if (major(devvp->v_rdev) >= nblkdev) {
+	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 		vrele(devvp);
 		return ENXIO;
 	}

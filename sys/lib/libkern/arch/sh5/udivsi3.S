@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.1.4.2 2002/09/06 08:48:32 jdolecek Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.1.4.3 2002/10/10 18:43:27 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -57,7 +57,7 @@
  *
  * Note: These don't follow the regular SH-5 ABI calling convention.
  * The dividend is passed in r4 instead of r2, the divisor is passed in
- * r5, and the result is returned in r0. Also, we can only clobber r18-r19.
+ * r5, and the result is returned in r0. Also, we can only clobber r18-r19, r25.
  */
 
 #include <machine/asm.h>
@@ -77,6 +77,10 @@ ENTRY(__udivsi3)
 	ptabs/l	r18, tr0
 	fmov.dq	dr0, r19		/* Preserve dr0 in r19 */
 	fmov.dq	dr2, r0			/* Preserve dr2 in r0 */
+	fgetscr	fr0			/* Fetch FPSCR */
+	fmov.sl	fr0, r25		/* Preserve in r25 */
+	fmov.ls	r63, fr0
+	fputscr	fr0			/* Disable FPU exceptions */
 	addz.l	r4, r63, r4		/* r4 = zero extended dividend */
 	addz.l	r5, r63, r18		/* r18 = zero extended divisor */
 	fmov.qd	r4, dr0			/* dr0 = bitwise copy of dividend */
@@ -87,6 +91,8 @@ ENTRY(__udivsi3)
 	fmov.qd	r0, dr2			/* Restore dr2 */
 	ftrc.dq	dr0, dr0		/* double to int conversion */
 	fmov.dq	dr0, r0			/* Result to r0 */
+	fmov.ls	r25, fr0		/* Restore FPSCR */
+	fputscr	fr0
 	fmov.qd	r19, dr0		/* Restore dr0 */
 	addz.l	r0, r63, r0		/* Zero extended result to r0 */
 	blink	tr0, r63

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.7.2.1 2002/01/10 19:58:33 thorpej Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.7.2.2 2002/10/10 18:42:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.7.2.1 2002/01/10 19:58:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.7.2.2 2002/10/10 18:42:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,8 @@ static int	kbd_zs_match(struct device *, struct cfdata *, void *);
 static void	kbd_zs_attach(struct device *, struct device *, void *);
 static void	kbd_zs_write_data __P((struct kbd_softc *, int));
 
-struct cfattach kbd_zs_ca = {
-	sizeof(struct kbd_softc), kbd_zs_match, kbd_zs_attach
-};
+CFATTACH_DECL(kbd_zs, sizeof(struct kbd_softc),
+    kbd_zs_match, kbd_zs_attach, NULL, NULL);
 
 /* Fall-back baud rate */
 int	kbd_zs_bps = KBD_DEFAULT_BPS;

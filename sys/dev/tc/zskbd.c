@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.1.6.3 2002/06/23 17:49:00 jdolecek Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.1.6.4 2002/10/10 18:42:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.1.6.3 2002/06/23 17:49:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.1.6.4 2002/10/10 18:42:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,9 +127,8 @@ static void	zskbd_input __P((struct zskbd_softc *, int));
 static int	zskbd_match __P((struct device *, struct cfdata *, void *));
 static void	zskbd_attach __P((struct device *, struct device *, void *));
 
-struct cfattach zskbd_ca = {
-	sizeof(struct zskbd_softc), zskbd_match, zskbd_attach,
-};
+CFATTACH_DECL(zskbd, sizeof(struct zskbd_softc),
+    zskbd_match, zskbd_attach, NULL, NULL);
 
 static int	zskbd_enable __P((void *, int));
 static void	zskbd_set_leds __P((void *, int));

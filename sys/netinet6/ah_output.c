@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.14.4.3 2002/09/06 08:49:25 jdolecek Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.14.4.4 2002/10/10 18:44:10 jdolecek Exp $	*/
 /*	$KAME: ah_output.c,v 1.31 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.14.4.3 2002/09/06 08:49:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.14.4.4 2002/10/10 18:44:10 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -92,7 +92,7 @@ ah_hdrsiz(isr)
 
 	/* sanity check */
 	if (isr == NULL)
-		panic("ah_hdrsiz: NULL was passed.\n");
+		panic("ah_hdrsiz: NULL was passed.");
 
 	if (isr->saidx.proto != IPPROTO_AH)
 		panic("unsupported mode passed to ah_hdrsiz");
@@ -148,7 +148,7 @@ ah4_output(m, isr)
 	const struct ah_algorithm *algo;
 	u_int32_t spi;
 	u_char *ahdrpos;
-	u_char *ahsumpos = NULL;
+	u_int8_t *ahsumpos = NULL;
 	size_t hlen = 0;	/* IP header+option in bytes */
 	size_t plen = 0;	/* AH payload size in bytes */
 	size_t ahlen = 0;	/* plen + sizeof(ah) */
@@ -302,7 +302,7 @@ ah4_output(m, isr)
 	 * calcurate the checksum, based on security association
 	 * and the algorithm specified.
 	 */
-	error = ah4_calccksum(m, (caddr_t)ahsumpos, plen, algo, sav);
+	error = ah4_calccksum(m, ahsumpos, plen, algo, sav);
 	if (error) {
 		ipseclog((LOG_ERR,
 		    "error after ah4_calccksum, called from ah4_output"));
@@ -345,7 +345,7 @@ ah_hdrlen(sav)
 		ahlen = plen + sizeof(struct newah);
 	}
 
-	return(ahlen);
+	return (ahlen);
 }
 
 #ifdef INET6
@@ -364,7 +364,7 @@ ah6_output(m, nexthdrp, md, isr)
 	struct secasvar *sav = isr->sav;
 	const struct ah_algorithm *algo;
 	u_int32_t spi;
-	u_char *ahsumpos = NULL;
+	u_int8_t *ahsumpos = NULL;
 	size_t plen;	/* AH payload size in bytes */
 	int error = 0;
 	int ahlen;
@@ -483,7 +483,7 @@ ah6_output(m, nexthdrp, md, isr)
 	 * calcurate the checksum, based on security association
 	 * and the algorithm specified.
 	 */
-	error = ah6_calccksum(m, (caddr_t)ahsumpos, plen, algo, sav);
+	error = ah6_calccksum(m, ahsumpos, plen, algo, sav);
 	if (error) {
 		ipsec6stat.out_inval++;
 		m_freem(m);
@@ -493,7 +493,7 @@ ah6_output(m, nexthdrp, md, isr)
 	}
 	ipsec6stat.out_ahhist[sav->alg_auth]++;
 
-	return(error);
+	return (error);
 }
 #endif
 

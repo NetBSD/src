@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.45.4.3 2002/09/06 08:49:17 jdolecek Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.45.4.4 2002/10/10 18:44:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -195,7 +195,7 @@ extern u_int16_t ip_id;			/* ip packet ctr, for ids */
 extern int   ip_defttl;			/* default IP ttl */
 extern int   ipforwarding;		/* ip forwarding */
 extern int   ip_mtudisc;		/* mtu discovery */
-extern u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
+extern int   ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
 extern int   anonportmin;		/* minimum ephemeral port */
 extern int   anonportmax;		/* maximum ephemeral port */
 extern int   lowportmin;		/* minimum reserved port */

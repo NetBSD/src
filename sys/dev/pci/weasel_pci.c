@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel_pci.c,v 1.1.4.2 2002/01/10 19:57:09 thorpej Exp $	*/
+/*	$NetBSD: weasel_pci.c,v 1.1.4.3 2002/10/10 18:41:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.1.4.2 2002/01/10 19:57:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.1.4.3 2002/10/10 18:41:19 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,9 +80,8 @@ int	weasel_pci_match(struct device *, struct cfdata *, void *);
 void	weasel_pci_attach(struct device *, struct device *, void *);
 extern int	sysmon_wdog_setmode(struct sysmon_wdog *, int, u_int);
 
-struct cfattach weasel_pci_ca = {
-	sizeof(struct weasel_softc), weasel_pci_match, weasel_pci_attach,
-};
+CFATTACH_DECL(weasel_pci, sizeof(struct weasel_softc),
+    weasel_pci_match, weasel_pci_attach, NULL, NULL);
 
 int	weasel_pci_wdog_setmode(struct sysmon_wdog *);
 int	weasel_pci_wdog_tickle(struct sysmon_wdog *);

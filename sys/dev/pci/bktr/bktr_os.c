@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.19.2.1 2002/01/10 19:57:12 thorpej Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.19.2.2 2002/10/10 18:41:20 jdolecek Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp */
 
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.19.2.1 2002/01/10 19:57:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.19.2.2 2002/10/10 18:41:20 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -170,6 +170,19 @@ int bktr_debug = 0;
 #endif
 #endif /* __NetBSD__ || __OpenBSD__ */
 
+#ifdef __NetBSD__
+dev_type_open(bktr_open);
+dev_type_close(bktr_close);
+dev_type_read(bktr_read);
+dev_type_write(bktr_write);
+dev_type_ioctl(bktr_ioctl);
+dev_type_mmap(bktr_mmap);
+
+const struct cdevsw bktr_cdevsw = {
+	bktr_open, bktr_close, bktr_read, bktr_write, bktr_ioctl,
+	nostop, notty, nopoll, bktr_mmap, nokqfilter,
+};
+#endif /* __NetBSD __ */
 
 #ifdef __NetBSD__
 #include <dev/ic/bt8xx.h>	/* NetBSD location for .h files */
@@ -1303,6 +1316,7 @@ int bktr_poll( dev_t dev, int events, struct proc *p)
 
 static	int		bktr_intr(void *arg) { return common_bktr_intr(arg); }
 
+#if defined(__OpenBSD__)
 #define bktr_open       bktropen
 #define bktr_close      bktrclose
 #define bktr_read       bktrread
@@ -1310,16 +1324,14 @@ static	int		bktr_intr(void *arg) { return common_bktr_intr(arg); }
 #define bktr_ioctl      bktrioctl
 #define bktr_mmap       bktrmmap
 
-#if defined(__OpenBSD__)
 static int      bktr_probe __P((struct device *, void *, void *));
 #else
 static int      bktr_probe __P((struct device *, struct cfdata *, void *));
 #endif
 static void     bktr_attach __P((struct device *, struct device *, void *));
 
-struct cfattach bktr_ca = {
-        sizeof(struct bktr_softc), bktr_probe, bktr_attach
-};
+CFATTACH_DECL(bktr, sizeof(struct bktr_softc),
+    bktr_probe, bktr_attach, NULL, NULL);
 
 #if defined(__NetBSD__)
 extern struct cfdriver bktr_cd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.3.2.3 2002/06/28 08:04:13 jdolecek Exp $ */
+/*	$NetBSD: fb.c,v 1.3.2.4 2002/10/10 18:42:22 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.3.2.3 2002/06/28 08:04:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.3.2.4 2002/10/10 18:42:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.3.2.3 2002/06/28 08:04:13 jdolecek Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/kbd.h>
-#include <machine/conf.h>
 #include <machine/eeprom.h>
 #include <sparc/dev/cons.h>
 
@@ -71,6 +70,18 @@ __KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.3.2.3 2002/06/28 08:04:13 jdolecek Exp $");
 #include "pfour.h"
 
 static struct fbdevice *devfb;
+
+dev_type_open(fbopen);
+dev_type_close(fbclose);
+dev_type_ioctl(fbioctl);
+dev_type_poll(fbpoll);
+dev_type_mmap(fbmmap);
+dev_type_kqfilter(fbkqfilter);
+
+const struct cdevsw fb_cdevsw = {
+	fbopen, fbclose, noread, nowrite, fbioctl,
+	nostop, notty, fbpoll, fbmmap, fbkqfilter,
+};
 
 void
 fb_unblank()

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipl.h,v 1.10.2.2 2002/06/23 17:50:58 jdolecek Exp $	*/
+/*	$NetBSD: ipl.h,v 1.10.2.3 2002/10/10 18:44:05 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -6,12 +6,12 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ipl.h	1.21 6/5/96
- * Id: ipl.h,v 2.15.2.33 2002/04/27 14:53:48 darrenr Exp
+ * Id: ipl.h,v 2.15.2.35 2002/08/28 13:00:50 darrenr Exp
  */
 
 #ifndef	__IPL_H__
 #define	__IPL_H__
 
-#define	IPL_VERSION	"IP Filter: v3.4.27"
+#define	IPL_VERSION	"IP Filter: v3.4.29"
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.9.2.2 2002/01/10 19:58:27 thorpej Exp $ */
+/*	$NetBSD: ses.c,v 1.9.2.3 2002/10/10 18:42:18 jdolecek Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.9.2.2 2002/01/10 19:58:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.9.2.3 2002/10/10 18:42:18 jdolecek Exp $");
 
 #include "opt_scsi.h"
 
@@ -132,9 +132,14 @@ static int safte_set_objstat __P((ses_softc_t *, ses_objstat *, int));
 #define	WRITE_BUFFER		0x3b
 #define	READ_BUFFER		0x3c
 
-int sesopen __P((dev_t, int, int, struct proc *));
-int sesclose __P((dev_t, int, int, struct proc *));
-int sesioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+dev_type_open(sesopen);
+dev_type_close(sesclose);
+dev_type_ioctl(sesioctl);
+
+const struct cdevsw ses_cdevsw = {
+	sesopen, sesclose, noread, nowrite, sesioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 static int ses_runcmd	__P((struct ses_softc *, char *, int, char *, int *));
 static void ses_log	__P((struct ses_softc *, const char *, ...))
@@ -165,9 +170,9 @@ static int ses_match __P((struct device *, struct cfdata *, void *));
 static void ses_attach __P((struct device *, struct device *, void *));
 static enctyp ses_device_type __P((struct scsipibus_attach_args *));
 
-struct cfattach ses_ca = {
-	sizeof (struct ses_softc), ses_match, ses_attach
-};
+CFATTACH_DECL(ses, sizeof (struct ses_softc),
+    ses_match, ses_attach, NULL, NULL);
+
 extern struct cfdriver ses_cd;
 
 const struct scsipi_periphsw ses_switch = {

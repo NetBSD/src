@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.12.4.2 2002/01/10 19:57:05 thorpej Exp $ */
+/*      $NetBSD: sv.c,v 1.12.4.3 2002/10/10 18:41:13 jdolecek Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.12.4.2 2002/01/10 19:57:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.12.4.3 2002/10/10 18:41:13 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,9 +121,8 @@ struct sv_dma {
 #define DMAADDR(p) ((p)->map->dm_segs[0].ds_addr)
 #define KERNADDR(p) ((void *)((p)->addr))
 
-struct cfattach sv_ca = {
-	sizeof(struct sv_softc), sv_match, sv_attach
-};
+CFATTACH_DECL(sv, sizeof(struct sv_softc),
+    sv_match, sv_attach, NULL, NULL);
 
 struct audio_device sv_device = {
 	"S3 SonicVibes",

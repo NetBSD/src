@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.65.2.6 2002/06/23 17:47:51 jdolecek Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.65.2.7 2002/10/10 18:40:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.65.2.6 2002/06/23 17:47:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.65.2.7 2002/10/10 18:40:59 jdolecek Exp $");
 
 /*
 #define CBB_DEBUG
@@ -226,9 +226,8 @@ static void cb_show_regs __P((pci_chipset_tag_t pc, pcitag_t tag,
     bus_space_tag_t memt, bus_space_handle_t memh));
 #endif
 
-struct cfattach cbb_pci_ca = {
-	sizeof(struct pccbb_softc), pcicbbmatch, pccbbattach
-};
+CFATTACH_DECL(cbb_pci, sizeof(struct pccbb_softc),
+    pcicbbmatch, pccbbattach, NULL, NULL);
 
 static struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
 	pccbb_pcmcia_mem_alloc,
@@ -642,7 +641,7 @@ pccbb_pci_callback(self)
 	pccbb_chipinit(sc);
 
 	/* clear data structure for child device interrupt handlers */
-	sc->sc_pil = NULL;
+	LIST_INIT(&sc->sc_pil);
 	sc->sc_pil_intr_enable = 1;
 
 	/* Map and establish the interrupt. */
@@ -1073,7 +1072,8 @@ pccbbintr_function(sc)
 	struct pccbb_intrhand_list *pil;
 	int s, splchanged;
 
-	for (pil = sc->sc_pil; pil != NULL; pil = pil->pil_next) {
+	for (pil = LIST_FIRST(&sc->sc_pil); pil != NULL;
+	     pil = LIST_NEXT(pil, pil_next)) {
 		/*
 		 * XXX priority change.  gross.  I use if-else
 		 * sentense instead of switch-case sentense because of
@@ -1789,11 +1789,10 @@ pccbb_intr_establish(sc, irq, level, func, arg)
 {
 	struct pccbb_intrhand_list *pil, *newpil;
 
-	DPRINTF(("pccbb_intr_establish start. %p\n", sc->sc_pil));
+	DPRINTF(("pccbb_intr_establish start. %p\n", LIST_FIRST(&sc->sc_pil)));
 
-	if (sc->sc_pil == NULL) {
-	  pccbb_intr_route(sc);
-
+	if (LIST_EMPTY(&sc->sc_pil)) {
+		pccbb_intr_route(sc);
 	}
 
 	/* 
@@ -1808,17 +1807,18 @@ pccbb_intr_establish(sc, irq, level, func, arg)
 	newpil->pil_func = func;
 	newpil->pil_arg = arg;
 	newpil->pil_level = level;
-	newpil->pil_next = NULL;
 
-	if (sc->sc_pil == NULL) {
-		sc->sc_pil = newpil;
+	if (LIST_EMPTY(&sc->sc_pil)) {
+		LIST_INSERT_HEAD(&sc->sc_pil, newpil, pil_next);
 	} else {
-		for (pil = sc->sc_pil; pil->pil_next != NULL;
-		    pil = pil->pil_next);
-		pil->pil_next = newpil;
+		for (pil = LIST_FIRST(&sc->sc_pil);
+		     LIST_NEXT(pil, pil_next) != NULL;
+		     pil = LIST_NEXT(pil, pil_next));
+		LIST_INSERT_AFTER(pil, newpil, pil_next);
 	}
 
-	DPRINTF(("pccbb_intr_establish add pil. %p\n", sc->sc_pil));
+	DPRINTF(("pccbb_intr_establish add pil. %p\n",
+	    LIST_FIRST(&sc->sc_pil)));
 
 	return newpil;
 }
@@ -1827,31 +1827,50 @@ pccbb_intr_establish(sc, irq, level, func, arg)
  * static void *pccbb_intr_disestablish(struct pccbb_softc *sc,
  *					void *ih)
  *
- *   This function removes an interrupt handler pointed by ih.
+ *	This function removes an interrupt handler pointed by ih.  ih
+ *	should be the value returned by cardbus_intr_establish() or
+ *	NULL.
+ *
+ *	When ih is NULL, this function will do nothing.
  */
 static void
 pccbb_intr_disestablish(sc, ih)
 	struct pccbb_softc *sc;
 	void *ih;
 {
-	struct pccbb_intrhand_list *pil, **pil_prev;
+	struct pccbb_intrhand_list *pil;
 	pcireg_t reg;
 
-	DPRINTF(("pccbb_intr_disestablish start. %p\n", sc->sc_pil));
+	DPRINTF(("pccbb_intr_disestablish start. %p\n",
+	    LIST_FIRST(&sc->sc_pil)));
 
-	pil_prev = &sc->sc_pil;
+	if (ih == NULL) {
+		/* intr handler is not set */
+		DPRINTF(("pccbb_intr_disestablish: no ih\n"));
+		return;
+	}
 
-	for (pil = sc->sc_pil; pil != NULL; pil = pil->pil_next) {
+#ifdef DIAGNOSTIC
+	for (pil = LIST_FIRST(&sc->sc_pil); pil != NULL;
+	     pil = LIST_NEXT(pil, pil_next)) {
+		printf("pccbb_intr_disestablish: pil %p\n", pil);
 		if (pil == ih) {
-			*pil_prev = pil->pil_next;
-			free(pil, M_DEVBUF);
 			DPRINTF(("pccbb_intr_disestablish frees one pil\n"));
 			break;
 		}
-		pil_prev = &pil->pil_next;
 	}
+	if (pil == NULL) {
+		panic("pccbb_intr_disestablish: %s cannot find pil %p",
+		    sc->sc_dev.dv_xname, ih);
+	}
+#endif
 
-	if (sc->sc_pil == NULL) {
+	pil = (struct pccbb_intrhand_list *)ih;
+	LIST_REMOVE(pil, pil_next);
+	free(pil, M_DEVBUF);
+	DPRINTF(("pccbb_intr_disestablish frees one pil\n"));
+
+	if (LIST_EMPTY(&sc->sc_pil)) {
 		/* No interrupt handlers */
 
 		DPRINTF(("pccbb_intr_disestablish: no interrupt handler\n"));
@@ -2051,6 +2070,8 @@ pccbb_pcmcia_io_alloc(pch, start, size, align, pcihp)
 	if (rbus_space_alloc(rb, start, size, mask, align, 0, &ioaddr, &ioh)) {
 		return 1;
 	}
+	DPRINTF(("pccbb_pcmcia_io_alloc alloc port %lx+%lx\n",
+	    (u_long) ioaddr, (u_long) size));
 #else
 	if (start) {
 		ioaddr = start;

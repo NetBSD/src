@@ -1,4 +1,4 @@
-/*	$NetBSD: glxtphy.c,v 1.1.2.6 2002/09/06 08:44:59 jdolecek Exp $	*/
+/*	$NetBSD: glxtphy.c,v 1.1.2.7 2002/10/10 18:40:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.1.2.6 2002/09/06 08:44:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.1.2.7 2002/10/10 18:40:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,10 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.1.2.6 2002/09/06 08:44:59 jdolecek Exp
 int	glxtphymatch(struct device *, struct cfdata *, void *);
 void	glxtphyattach(struct device *, struct device *, void *);
 
-struct cfattach glxtphy_ca = {
-	sizeof(struct mii_softc), glxtphymatch, glxtphyattach,
-	    mii_phy_detach, mii_phy_activate
-};
+CFATTACH_DECL(glxtphy, sizeof(struct mii_softc),
+    glxtphymatch, glxtphyattach, mii_phy_detach, mii_phy_activate);
 
 int	glxtphy_service(struct mii_softc *, struct mii_data *, int);
 void	glxtphy_status(struct mii_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.3.8.1 2002/02/11 20:10:11 jdolecek Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.3.8.2 2002/10/10 18:42:07 jdolecek Exp $	*/
 /* magmareg.h
  *
  *  Copyright (c) 1998 Iain Hibbert
@@ -220,7 +220,6 @@ void mtty_start __P((struct tty *));
 
 int mbpp_match __P((struct device *, struct cfdata *, void *));
 void mbpp_attach __P((struct device *, struct device *, void *));
-int mbpp_rw __P((dev_t, struct uio *));
 void mbpp_timeout __P((void *));
 void mbpp_start __P((void *));
 int mbpp_send __P((struct mbpp_port *, caddr_t, int));

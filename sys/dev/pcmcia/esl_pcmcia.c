@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.4.2.3 2002/06/23 17:48:12 jdolecek Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.4.2.4 2002/10/10 18:41:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.4.2.3 2002/06/23 17:48:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.4.2.4 2002/10/10 18:41:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,8 @@ int	esl_pcmcia_detach(struct device *, int);
 int	esl_pcmcia_enable(struct esl_pcmcia_softc *);
 void	esl_pcmcia_disable(struct esl_pcmcia_softc *);
 
-struct cfattach esl_pcmcia_ca = {
-	sizeof(struct esl_pcmcia_softc), esl_pcmcia_match, esl_pcmcia_attach,
-	esl_pcmcia_detach
-};
+CFATTACH_DECL(esl_pcmcia, sizeof(struct esl_pcmcia_softc),
+    esl_pcmcia_match, esl_pcmcia_attach, esl_pcmcia_detach, NULL);
 
 #define ESL_NDEVS (sizeof(esl_pcmcia_products) / sizeof(esl_pcmcia_products[0]))
 

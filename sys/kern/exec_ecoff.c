@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.14.4.1 2002/01/10 19:59:39 thorpej Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.14.4.2 2002/10/10 18:43:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.14.4.1 2002/01/10 19:59:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.14.4.2 2002/10/10 18:43:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,7 @@ exec_ecoff_prep_zmagic(struct proc *p, struct exec_package *epp,
 	    vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.63.2.5 2002/09/06 08:47:39 jdolecek Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.63.2.6 2002/10/10 18:43:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.63.2.5 2002/09/06 08:47:39 jdolecek Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.63.2.6 2002/10/10 18:43:02 jdolecek Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -397,11 +397,7 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 			/* If entry is within this section it must be text */
 			if (eh.e_entry >= ph[i].p_vaddr &&
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
-				/* XXX */
-				*entry = addr + eh.e_entry;
-#ifdef __mips__
-				*entry -= ph[i].p_vaddr;
-#endif
+				*entry = addr + eh.e_entry - ph[i].p_vaddr;
 				ap->arg_interp = addr;
 			}
 			if (base_ph == NULL)
@@ -475,7 +471,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	if (epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}

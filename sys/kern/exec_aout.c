@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.20.4.2 2002/09/06 08:47:37 jdolecek Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.20.4.3 2002/10/10 18:43:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.20.4.2 2002/09/06 08:47:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.20.4.3 2002/10/10 18:43:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ exec_aout_prep_zmagic(struct proc *p, struct exec_package *epp)
 	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}

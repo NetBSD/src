@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.17.2.2 2002/06/23 17:48:11 jdolecek Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.17.2.3 2002/10/10 18:41:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.17.2.2 2002/06/23 17:48:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.17.2.3 2002/10/10 18:41:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,10 +67,8 @@ struct aic_pcmcia_softc {
 #define AIC_PCMCIA_ATTACH	0x0001		/* attach is in progress */
 };
 
-struct cfattach aic_pcmcia_ca = {
-	sizeof(struct aic_pcmcia_softc), aic_pcmcia_match, aic_pcmcia_attach,
-	aic_pcmcia_detach, aic_activate
-};
+CFATTACH_DECL(aic_pcmcia, sizeof(struct aic_pcmcia_softc),
+    aic_pcmcia_match, aic_pcmcia_attach, aic_pcmcia_detach, aic_activate);
 
 int	aic_pcmcia_enable __P((struct device *, int));
 

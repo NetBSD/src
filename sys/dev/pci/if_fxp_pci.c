@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.18.2.4 2002/09/06 08:45:15 jdolecek Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.18.2.5 2002/10/10 18:40:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.18.2.4 2002/09/06 08:45:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.18.2.5 2002/10/10 18:40:42 jdolecek Exp $");
 
 #include "rnd.h"
 
@@ -101,9 +101,8 @@ void	fxp_pci_disable __P((struct fxp_softc *));
 static void	fxp_pci_confreg_restore __P((struct fxp_pci_softc *psc));
 static void	fxp_pci_power __P((int why, void *arg));
 
-struct cfattach fxp_pci_ca = {
-	sizeof(struct fxp_pci_softc), fxp_pci_match, fxp_pci_attach
-};
+CFATTACH_DECL(fxp_pci, sizeof(struct fxp_pci_softc),
+    fxp_pci_match, fxp_pci_attach, NULL, NULL);
 
 const struct fxp_pci_product {
 	u_int32_t	fpp_prodid;	/* PCI product ID */
@@ -131,6 +130,12 @@ const struct fxp_pci_product {
 	  "Intel PRO/100 VE Network Controller with 82562ET/EZ (CNR) PHY" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_4,
 	  "Intel PRO/100 VE (MOB) Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_0,
+	  "Intel PRO/100 VM Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_1,
+	  "Intel PRO/100 VM Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_2,
+	  "Intel PRO/100 VM Network Controller" },
 	{ 0,
 	  NULL },
 };
@@ -492,6 +497,13 @@ void
 fxp_pci_disable(struct fxp_softc *sc)
 {
 	struct fxp_pci_softc *psc = (void *) sc;
+
+	/*
+	 * for some 82558_A4 and 82558_B0, entering D3 state makes
+	 * media detection disordered.
+	 */
+	if (sc->sc_rev <= FXP_REV_82558_B0)
+		return;
 
 #if 0
 	printf("%s: going to power state D3\n", sc->sc_dev.dv_xname);

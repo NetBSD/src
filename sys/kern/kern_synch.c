@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.104.2.3 2002/09/06 08:47:58 jdolecek Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.104.2.4 2002/10/10 18:43:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.104.2.3 2002/09/06 08:47:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.104.2.4 2002/10/10 18:43:11 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -253,7 +253,7 @@ schedcpu(void *arg)
 	int clkhz;
 
 	proclist_lock_read();
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		/*
 		 * Increment time in/out of memory and sleep time
 		 * (if sleeping).  We ignore overflow; with 16-bit int's
@@ -469,7 +469,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	p->p_stats->p_ru.ru_nvcsw++;
 
 	SCHED_ASSERT_LOCKED();
-	mi_switch(p);
+	mi_switch(p, NULL);
 
 #if	defined(DDB) && !defined(GPROF)
 	/* handy breakpoint location after process "wakes" */
@@ -732,7 +732,7 @@ yield(void)
 	p->p_stat = SRUN;
 	setrunqueue(p);
 	p->p_stats->p_ru.ru_nvcsw++;
-	mi_switch(p);
+	mi_switch(p, NULL);
 	SCHED_ASSERT_UNLOCKED();
 	splx(s);
 }
@@ -749,18 +749,12 @@ preempt(struct proc *newp)
 	struct proc *p = curproc;
 	int s;
 
-	/*
-	 * XXX Switching to a specific process is not supported yet.
-	 */
-	if (newp != NULL)
-		panic("preempt: cpu_preempt not yet implemented");
-
 	SCHED_LOCK(s);
 	p->p_priority = p->p_usrpri;
 	p->p_stat = SRUN;
 	setrunqueue(p);
 	p->p_stats->p_ru.ru_nivcsw++;
-	mi_switch(p);
+	mi_switch(p, newp);
 	SCHED_ASSERT_UNLOCKED();
 	splx(s);
 }
@@ -771,7 +765,7 @@ preempt(struct proc *newp)
  * the sched_lock held.
  */
 void
-mi_switch(struct proc *p)
+mi_switch(struct proc *p, struct proc *newp)
 {
 	struct schedstate_percpu *spc;
 	struct rlimit *rlim;
@@ -795,6 +789,7 @@ mi_switch(struct proc *p)
 
 	KDASSERT(p->p_cpu != NULL);
 	KDASSERT(p->p_cpu == curcpu());
+	KDASSERT(newp == NULL);
 
 	spc = &p->p_cpu->ci_schedstate;
 
@@ -807,7 +802,7 @@ mi_switch(struct proc *p)
 
 	/*
 	 * Compute the amount of time during which the current
-	 * process was running, and add that to its total so far.
+	 * process was running.
 	 */
 	microtime(&tv);
 	u = p->p_rtime.tv_usec + (tv.tv_usec - spc->spc_runtime.tv_usec);
@@ -866,11 +861,11 @@ mi_switch(struct proc *p)
 #endif
 
 	/*
-	 * Pick a new current process and switch to it.  When we
+	 * Switch to the new current process.  When we
 	 * run again, we'll return back here.
 	 */
 	uvmexp.swtch++;
-	cpu_switch(p);
+	cpu_switch(p, NULL);
 
 	/*
 	 * If we are using h/w performance counters, restore context.
@@ -1042,7 +1037,7 @@ suspendsched()
 	 */
 	proclist_lock_read();
 	SCHED_LOCK(s);
-	for (p = LIST_FIRST(&allproc); p != NULL; p = LIST_NEXT(p, p_list)) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		if ((p->p_flag & P_SYSTEM) != 0)
 			continue;
 		switch (p->p_stat) {
@@ -1066,3 +1061,53 @@ suspendsched()
 	SCHED_UNLOCK(s);
 	proclist_unlock_read();
 }
+
+/*
+ * Low-level routines to access the run queue.  Optimised assembler
+ * routines can override these.
+ */
+
+#ifndef __HAVE_MD_RUNQUEUE
+
+void
+setrunqueue(struct proc *p)
+{
+	struct prochd *rq;
+	struct proc *prev;
+	int whichq;
+
+#ifdef DIAGNOSTIC
+	if (p->p_back != NULL || p->p_wchan != NULL || p->p_stat != SRUN)
+		panic("setrunqueue");
+#endif
+	whichq = p->p_priority / 4;
+	sched_whichqs |= (1<<whichq);
+	rq = &sched_qs[whichq];
+	prev = rq->ph_rlink;
+	p->p_forw = (struct proc *)rq;
+	rq->ph_rlink = p;
+	prev->p_forw = p;
+	p->p_back = prev;
+}
+
+void
+remrunqueue(struct proc *p)
+{
+	struct proc *prev, *next;
+	int whichq;
+
+	whichq = p->p_priority / 4;
+#ifdef DIAGNOSTIC
+	if (((sched_whichqs & (1<<whichq)) == 0))
+		panic("remrunqueue");
+#endif
+	prev = p->p_back;
+	p->p_back = NULL;
+	next = p->p_forw;
+	prev->p_forw = next;
+	next->p_back = prev;
+	if (prev == next)
+		sched_whichqs &= ~(1<<whichq);
+}
+
+#endif

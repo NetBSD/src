@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.56.2.8 2002/09/29 09:59:15 jdolecek Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.56.2.9 2002/10/10 18:43:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.56.2.8 2002/09/29 09:59:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.56.2.9 2002/10/10 18:43:18 jdolecek Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -95,13 +95,50 @@ static struct simplelock pt_softc_mutex = SIMPLELOCK_INITIALIZER;
 
 void	ptyattach __P((int));
 void	ptcwakeup __P((struct tty *, int));
-int	ptcopen __P((dev_t, int, int, struct proc *));
-struct tty *ptytty __P((dev_t));
 void	ptsstart __P((struct tty *));
 int	pty_maxptys __P((int, int));
 
 static struct pt_softc **ptyarralloc __P((int));
 static int check_pty __P((dev_t));
+
+dev_type_open(ptcopen);
+dev_type_close(ptcclose);
+dev_type_read(ptcread);
+dev_type_write(ptcwrite);
+dev_type_poll(ptcpoll);
+dev_type_kqfilter(ptckqfilter);
+
+dev_type_open(ptsopen);
+dev_type_close(ptsclose);
+dev_type_read(ptsread);
+dev_type_write(ptswrite);
+dev_type_stop(ptsstop);
+dev_type_poll(ptspoll);
+
+dev_type_ioctl(ptyioctl);
+dev_type_tty(ptytty);
+
+const struct cdevsw ptc_cdevsw = {
+	ptcopen, ptcclose, ptcread, ptcwrite, ptyioctl,
+	nullstop, ptytty, ptcpoll, nommap, ptckqfilter, D_TTY
+};
+
+const struct cdevsw pts_cdevsw = {
+	ptsopen, ptsclose, ptsread, ptswrite, ptyioctl,
+	ptsstop, ptytty, ptspoll, nommap, ttykqfilter, D_TTY
+};
+
+#if defined(pmax)
+const struct cdevsw ptc_ultrix_cdevsw = {
+	ptcopen, ptcclose, ptcread, ptcwrite, ptyioctl,
+	nullstop, ptytty, ptcpoll, nommap, ptckqfilter, D_TTY
+};
+
+const struct cdevsw pts_ultrix_cdevsw = {
+	ptsopen, ptsclose, ptsread, ptswrite, ptyioctl,
+	ptsstop, ptytty, ptspoll, nommap, ttykqfilter, D_TTY
+};
+#endif /* defined(pmax) */
 
 /*
  * Allocate and zero array of nelem elements.
@@ -853,9 +890,11 @@ ptyioctl(dev, cmd, data, flag, p)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
+	const struct cdevsw *cdev;
 	u_char *cc = tp->t_cc;
 	int stop, error, sig;
 
+	cdev = cdevsw_lookup(dev);
 	/*
 	 * IF CONTROLLER STTY THEN MUST FLUSH TO PREVENT A HANG.
 	 * ttywflush(tp) will hang if there are characters in the outq.
@@ -882,7 +921,7 @@ ptyioctl(dev, cmd, data, flag, p)
 		}
 		return(0);
 	} else
-	if (cdevsw[major(dev)].d_open == ptcopen)
+	if (cdev != NULL && cdev->d_open == ptcopen)
 		switch (cmd) {
 
 		case TIOCGPGRP:

@@ -1,4 +1,4 @@
-/*	$NetBSD: __assert.c,v 1.5 2000/03/29 03:19:52 simonb Exp $	*/
+/*	$NetBSD: __assert.c,v 1.5.8.1 2002/10/10 18:43:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -44,6 +44,6 @@ __assert(t, f, l, e)
 	int l;
 {
 
-	panic("kernel %sassertion \"%s\" failed: file \"%s\", line %d\n",
+	panic("kernel %sassertion \"%s\" failed: file \"%s\", line %d",
 	      t, e, f, l);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.10.2.5 2002/06/28 07:27:38 jdolecek Exp $	*/
+/*	$NetBSD: magma.c,v 1.10.2.6 2002/10/10 18:42:07 jdolecek Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.10.2.5 2002/06/28 07:27:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.10.2.6 2002/10/10 18:42:07 jdolecek Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.10.2.5 2002/06/28 07:27:38 jdolecek Exp 
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -187,20 +186,41 @@ static struct magma_board_info supported_cards[] = {
  *  Autoconfig Stuff
  */
 
-struct cfattach magma_ca = {
-	sizeof(struct magma_softc), magma_match, magma_attach
-};
+CFATTACH_DECL(magma, sizeof(struct magma_softc),
+    magma_match, magma_attach, NULL, NULL);
 
-struct cfattach mtty_ca = {
-	sizeof(struct mtty_softc), mtty_match, mtty_attach
-};
+CFATTACH_DECL(mtty, sizeof(struct mtty_softc),
+    mtty_match, mtty_attach, NULL, NULL);
 
-struct cfattach mbpp_ca = {
-	sizeof(struct mbpp_softc), mbpp_match, mbpp_attach
-};
+CFATTACH_DECL(mbpp, sizeof(struct mbpp_softc),
+    mbpp_match, mbpp_attach, NULL, NULL);
 
 extern struct cfdriver mtty_cd;
 extern struct cfdriver mbpp_cd;
+
+dev_type_open(mttyopen);
+dev_type_close(mttyclose);
+dev_type_read(mttyread);
+dev_type_write(mttywrite);
+dev_type_ioctl(mttyioctl);
+dev_type_stop(mttystop);
+dev_type_tty(mttytty);
+dev_type_poll(mttypoll);
+
+const struct cdevsw mtty_cdevsw = {
+	mttyopen, mttyclose, mttyread, mttywrite, mttyioctl,
+	mttystop, mttytty, mttypoll, nommap, ttykqfilter, D_TTY
+};
+
+dev_type_open(mbppopen);
+dev_type_close(mbppclose);
+dev_type_read(mbpp_rw);
+dev_type_ioctl(mbppioctl);
+
+const struct cdevsw mbpp_cdevsw = {
+	mbppopen, mbppclose, mbpp_rw, mbpp_rw, mbppioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 /************************************************************************
  *
@@ -1451,10 +1471,7 @@ mtty_param(tp, t)
  *	mbpp_attach	attach mbpp devices
  *	mbppopen	open mbpp device
  *	mbppclose	close mbpp device
- *	mbppread	read from mbpp
- *	mbppwrite	write to mbpp
  *	mbppioctl	do ioctl on mbpp
- *	mbppselect	do select on mbpp
  *	mbpp_rw		general rw routine
  *	mbpp_timeout	rw timeout
  *	mbpp_start	rw start after delay
@@ -1574,32 +1591,6 @@ mbppclose(dev, flag, mode, p)
 }
 
 /*
- * Read routine
- */
-int
-mbppread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-
-	return( mbpp_rw(dev, uio) );
-}
-
-/*
- * Write routine
- */
-int
-mbppwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-
-	return( mbpp_rw(dev, uio) );
-}
-
-/*
  * ioctl routine
  */
 int
@@ -1649,9 +1640,10 @@ mbppioctl(dev, cmd, data, flags, p)
 }
 
 int
-mbpp_rw(dev, uio)
+mbpp_rw(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	int card = MAGMA_CARD(dev);
 	int port = MAGMA_PORT(dev);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.36.2.4 2002/06/23 17:51:11 jdolecek Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.36.2.5 2002/10/10 18:44:16 jdolecek Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.36.2.4 2002/06/23 17:51:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.36.2.5 2002/10/10 18:44:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ get_rand_ifid(ifp, in6)
 	/* generate 8 bytes of pseudo-random value. */
 	bzero(&ctxt, sizeof(ctxt));
 	MD5Init(&ctxt);
-	MD5Update(&ctxt, hostname, hostnamelen);
+	MD5Update(&ctxt, (u_char *)hostname, hostnamelen);
 	MD5Final(digest, &ctxt);
 
 	/* assumes sizeof(digest) > sizeof(ifid) */
@@ -130,7 +130,7 @@ get_hw_ifid(ifp, in6)
 {
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
-	u_int8_t *addr;
+	char *addr;
 	size_t addrlen;
 	static u_int8_t allzero[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	static u_int8_t allone[8] =
@@ -355,7 +355,7 @@ in6_ifattach_linklocal(ifp, altifp)
 		if (get_ifid(ifp, altifp, &ifra.ifra_addr.sin6_addr) != 0) {
 			nd6log((LOG_ERR,
 			    "%s: no ifid available\n", if_name(ifp)));
-			return(-1);
+			return (-1);
 		}
 	}
 
@@ -395,7 +395,7 @@ in6_ifattach_linklocal(ifp, altifp)
 			    "configure a link-local address on %s "
 			    "(errno=%d)\n",
 			    if_name(ifp), error));
-		return(-1);
+		return (-1);
 	}
 
 	/*
@@ -450,7 +450,7 @@ in6_ifattach_linklocal(ifp, altifp)
 	 */
 	if (nd6_prefix_lookup(&pr0) == NULL) {
 		if ((error = nd6_prelist_add(&pr0, NULL, NULL)) != 0)
-			return(error);
+			return (error);
 	}
 
 	return 0;
@@ -502,7 +502,7 @@ in6_ifattach_loopback(ifp)
 		nd6log((LOG_ERR, "in6_ifattach_loopback: failed to configure "
 		    "the loopback address on %s (errno=%d)\n",
 		    if_name(ifp), error));
-		return(-1);
+		return (-1);
 	}
 
 	return 0;
@@ -522,11 +522,11 @@ in6_nigroup(ifp, name, namelen, sa6)
 	struct sockaddr_in6 *sa6;
 {
 	const char *p;
-	u_char *q;
+	u_int8_t *q;
 	MD5_CTX ctxt;
 	u_int8_t digest[16];
-	char l;
-	char n[64];	/* a single label must not exceed 63 chars */
+	u_int8_t l;
+	u_int8_t n[64];	/* a single label must not exceed 63 chars */
 
 	if (!namelen || !name)
 		return -1;
@@ -537,7 +537,7 @@ in6_nigroup(ifp, name, namelen, sa6)
 	if (p - name > sizeof(n) - 1)
 		return -1;	/* label too long */
 	l = p - name;
-	strncpy(n, name, l);
+	strncpy((char *)n, name, l);
 	n[(int)l] = '\0';
 	for (q = n; *q; q++) {
 		if ('A' <= *q && *q <= 'Z')
@@ -684,7 +684,6 @@ in6_ifdetach(ifp)
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = next)
 	{
 		next = ifa->ifa_list.tqe_next;
-
 
 		if (ifa->ifa_addr->sa_family != AF_INET6
 		 || !IN6_IS_ADDR_LINKLOCAL(&satosin6(&ifa->ifa_addr)->sin6_addr)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.8 1998/03/27 01:30:01 cgd Exp $	*/
+/*	$NetBSD: ffs.c,v 1.8.28.1 2002/10/10 18:43:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ffs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ffs.c,v 1.8 1998/03/27 01:30:01 cgd Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.8.28.1 2002/10/10 18:43:24 jdolecek Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,8 +48,11 @@ __RCSID("$NetBSD: ffs.c,v 1.8 1998/03/27 01:30:01 cgd Exp $");
 #include <lib/libkern/libkern.h>
 #endif
 
+/* #undef ffs() - might be defined as macro to __builtin_ffs() */
+#undef ffs
+
 /*
- * ffs -- vax ffs instruction
+ * ffs - find first bit set in a bit string (C version)
  */
 int
 ffs(mask)

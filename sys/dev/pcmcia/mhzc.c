@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.7.2.3 2002/09/06 08:45:45 jdolecek Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.7.2.4 2002/10/10 18:41:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.7.2.3 2002/09/06 08:45:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.7.2.4 2002/10/10 18:41:28 jdolecek Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -141,10 +141,8 @@ void	mhzc_attach __P((struct device *, struct device *, void *));
 int	mhzc_detach __P((struct device *, int));
 int	mhzc_activate __P((struct device *, enum devact));
 
-struct cfattach mhzc_ca = {
-	sizeof(struct mhzc_softc), mhzc_match, mhzc_attach,
-	    mhzc_detach, mhzc_activate
-};
+CFATTACH_DECL(mhzc, sizeof(struct mhzc_softc),
+    mhzc_match, mhzc_attach, mhzc_detach, mhzc_activate);
 
 int	mhzc_em3336_enaddr __P((struct mhzc_softc *, u_int8_t *));
 int	mhzc_em3336_enable __P((struct mhzc_softc *));
@@ -665,10 +663,8 @@ void	com_mhzc_attach __P((struct device *, struct device *, void *));
 int	com_mhzc_detach __P((struct device *, int));
 
 /* No mhzc-specific goo in the softc; it's all in the parent. */
-struct cfattach com_mhzc_ca = {
-	sizeof(struct com_softc), com_mhzc_match, com_mhzc_attach,
-	    com_detach, com_activate
-};
+CFATTACH_DECL(com_mhzc, sizeof(struct com_softc),
+    com_mhzc_match, com_mhzc_attach, com_detach, com_activate);
 
 int	com_mhzc_enable __P((struct com_softc *));
 void	com_mhzc_disable __P((struct com_softc *));
@@ -753,10 +749,8 @@ int	sm_mhzc_match __P((struct device *, struct cfdata *, void *));
 void	sm_mhzc_attach __P((struct device *, struct device *, void *));
 
 /* No mhzc-specific goo in the softc; it's all in the parent. */
-struct cfattach sm_mhzc_ca = {
-	sizeof(struct smc91cxx_softc), sm_mhzc_match, sm_mhzc_attach,
-	    smc91cxx_detach, smc91cxx_activate
-};
+CFATTACH_DECL(sm_mhzc, sizeof(struct smc91cxx_softc),
+    sm_mhzc_match, sm_mhzc_attach, smc91cxx_detach, smc91cxx_activate);
 
 int	sm_mhzc_enable __P((struct smc91cxx_softc *));
 void	sm_mhzc_disable __P((struct smc91cxx_softc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.61.2.4 2002/09/06 08:47:50 jdolecek Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.61.2.5 2002/10/10 18:43:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.61.2.4 2002/09/06 08:47:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.61.2.5 2002/10/10 18:43:08 jdolecek Exp $");
 
 #include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/map.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
@@ -257,7 +256,8 @@ malloc(unsigned long size, int type, int flags)
 		npg = btoc(allocsize);
 		va = (caddr_t) uvm_km_kmemalloc(kmem_map, NULL,
 		    (vsize_t)ctob(npg),
-		    (flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0);
+		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |
+		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0));
 		if (__predict_false(va == NULL)) {
 			/*
 			 * Kmem_malloc() can return NULL, even if it can
@@ -270,7 +270,7 @@ malloc(unsigned long size, int type, int flags)
 			if ((flags & (M_NOWAIT|M_CANFAIL)) == 0)
 				panic("malloc: out of space in kmem_map");
 			splx(s);
-			return ((void *) NULL);
+			return (NULL);
 		}
 #ifdef KMEMSTATS
 		kbp->kb_total += kbp->kb_elmpercl;
@@ -461,7 +461,7 @@ free(void *addr, int type)
 	else
 		alloc = addrmask[kup->ku_indx];
 	if (((u_long)addr & alloc) != 0)
-		panic("free: unaligned addr %p, size %ld, type %s, mask %ld\n",
+		panic("free: unaligned addr %p, size %ld, type %s, mask %ld",
 		    addr, size, memname[type], alloc);
 #endif /* DIAGNOSTIC */
 	if (size > MAXALLOCSAVE) {

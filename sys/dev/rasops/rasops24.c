@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.13.6.1 2002/01/10 19:58:04 thorpej Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.13.6.2 2002/10/10 18:42:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.13.6.1 2002/01/10 19:58:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.13.6.2 2002/10/10 18:42:02 jdolecek Exp $");
 
 #include "opt_rasops.h"
 
@@ -687,7 +687,7 @@ rasops24_erasecols(cookie, row, col, num, attr)
 	 *
 	 *	aaab bbcc cddd
 	 */
-	slop = (int)rp & 3;	num -= slop;
+	slop = (int)(long)rp & 3;	num -= slop;
 	n12 = num / 12;		num -= (n12 << 3) + (n12 << 2);
 	n4 = num >> 2;		num &= 3;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.2.2.3 2002/01/10 19:59:41 thorpej Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.2.2.4 2002/10/10 18:43:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.2.2.3 2002/01/10 19:59:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.2.2.4 2002/10/10 18:43:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -303,7 +303,7 @@ exec_macho_load_file(struct proc *p, struct exec_package *epp,
 	if (vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		error = ETXTBSY;
 		goto badunlock;
@@ -526,7 +526,7 @@ exec_macho_makecmds(struct proc *p, struct exec_package *epp)
 	if (epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}

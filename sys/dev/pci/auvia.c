@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.11.4.3 2002/06/23 17:47:34 jdolecek Exp $	*/
+/*	$NetBSD: auvia.c,v 1.11.4.4 2002/10/10 18:40:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.11.4.3 2002/06/23 17:47:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.11.4.4 2002/10/10 18:40:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,9 +117,8 @@ int	auvia_trigger_input(void *, void *, void *, int, void (*)(void *),
 
 int	auvia_intr __P((void *));
 
-struct cfattach auvia_ca = {
-	sizeof (struct auvia_softc), auvia_match, auvia_attach
-};
+CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
+    auvia_match, auvia_attach, NULL, NULL);
 
 #define AUVIA_PCICONF_JUNK	0x40
 #define		AUVIA_PCICONF_ENABLES	 0x00FF0000	/* reg 42 mask */
@@ -887,7 +886,7 @@ auvia_trigger_output(void *addr, void *start, void *end,
 
 	if (!p)
 		panic("auvia_trigger_output: request with bad start "
-			"address (%p)\n", start);
+			"address (%p)", start);
 
 	if (auvia_build_dma_ops(sc, ch, p, start, end, blksize)) {
 		return 1;
@@ -923,7 +922,7 @@ auvia_trigger_input(void *addr, void *start, void *end,
 
 	if (!p)
 		panic("auvia_trigger_input: request with bad start "
-			"address (%p)\n", start);
+			"address (%p)", start);
 
 	if (auvia_build_dma_ops(sc, ch, p, start, end, blksize)) {
 		return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.5.4.4 2002/06/23 17:48:38 jdolecek Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.5.4.5 2002/10/10 18:42:04 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.5.4.4 2002/06/23 17:48:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.5.4.5 2002/10/10 18:42:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,13 +111,11 @@ void	*dmabus_intr_establish __P((
 
 static	bus_space_tag_t dma_alloc_bustag __P((struct dma_softc *sc));
 
-struct cfattach dma_sbus_ca = {
-	sizeof(struct dma_softc), dmamatch_sbus, dmaattach_sbus
-};
+CFATTACH_DECL(dma_sbus, sizeof(struct dma_softc),
+    dmamatch_sbus, dmaattach_sbus, NULL, NULL);
 
-struct cfattach ledma_ca = {
-	sizeof(struct dma_softc), dmamatch_sbus, dmaattach_sbus
-};
+CFATTACH_DECL(ledma, sizeof(struct dma_softc),
+    dmamatch_sbus, dmaattach_sbus, NULL, NULL);
 
 int
 dmaprint_sbus(aux, busname)
@@ -142,7 +140,7 @@ dmamatch_sbus(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
+	return (strcmp(cf->cf_name, sa->sa_name) == 0 ||
 		strcmp("espdma", sa->sa_name) == 0);
 }
 
@@ -195,7 +193,7 @@ dmaattach_sbus(parent, self, aux)
 	sc->sc_burst = (burst & SBUS_BURST_32) ? 32 :
 		       (burst & SBUS_BURST_16) ? 16 : 0;
 
-	if (sc->sc_dev.dv_cfdata->cf_attach == &ledma_ca) {
+	if (strcmp(sc->sc_dev.dv_cfdata->cf_name, "ledma") == 0) {
 		char *cabletype;
 		u_int32_t csr;
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.78.2.6 2002/09/06 08:45:42 jdolecek Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.78.2.7 2002/10/10 18:41:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.78.2.6 2002/09/06 08:45:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.78.2.7 2002/10/10 18:41:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,10 +90,8 @@ u_int8_t *
 	    u_int8_t [ETHER_ADDR_LEN]));
 int	ne_pcmcia_ax88190_set_iobase __P((struct ne_pcmcia_softc *));
 
-struct cfattach ne_pcmcia_ca = {
-	sizeof(struct ne_pcmcia_softc), ne_pcmcia_match, ne_pcmcia_attach,
-	    ne_pcmcia_detach, dp8390_activate
-};
+CFATTACH_DECL(ne_pcmcia, sizeof(struct ne_pcmcia_softc),
+    ne_pcmcia_match, ne_pcmcia_attach, ne_pcmcia_detach, dp8390_activate);
 
 static const struct ne2000dev {
     char *name;
@@ -161,6 +159,10 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_ACCTON_EN2212,
       0, 0x0ff0, { 0x00, 0x00, 0xe8 } },
+    { PCMCIA_STR_ACCTON_EN2216,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_ACCTON_EN2216,
+      0, -1, { 0x00, 0x00, 0xe8 } },
 
     { PCMCIA_STR_SVEC_COMBOCARD,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
@@ -801,7 +803,7 @@ again:
 			typestr = " (RTL8019)";
 			dsc->sc_mediachange = rtl80x9_mediachange;
 			dsc->sc_mediastatus = rtl80x9_mediastatus;
-				dsc->init_card = rtl80x9_init_card;
+			dsc->init_card = rtl80x9_init_card;
 			dsc->sc_media_init = rtl80x9_media_init;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.24.2.2 2002/06/23 17:50:46 jdolecek Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.24.2.3 2002/10/10 18:43:54 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.26.2.44 2002/04/25 16:32:15 darrenr Exp
+ * Id: ip_compat.h,v 2.26.2.46 2002/06/27 14:39:40 darrenr Exp
  */
 
 #ifndef _NETINET_IP_COMPAT_H_
@@ -188,6 +188,9 @@ typedef	struct	qif	{
 	 */
 	size_t	qf_hl;	/* header length */
 	int	qf_sap;
+# if SOLARIS2 >= 8
+	int	qf_tunoff;	/* tunnel offset */
+#endif
 	size_t	qf_incnt;
 	size_t	qf_outcnt;
 } qif_t;
@@ -215,7 +218,11 @@ typedef	 int	minor_t;
 #if defined(__FreeBSD__) && (defined(KERNEL) || defined(_KERNEL))
 # include <sys/param.h>
 # ifndef __FreeBSD_version
-#  include <sys/osreldate.h>
+#  ifdef IPFILTER_LKM
+#   include <osreldate.h>
+#  else
+#   include <sys/osreldate.h>
+#  endif
 # endif
 # ifdef IPFILTER_LKM
 #  define       ACTUALLY_LKM_NOT_KERNEL
@@ -251,8 +258,8 @@ typedef u_int32_t       u_32_t;
 #   include "opt_inet6.h"
 #  endif
 #  ifdef INET6
-#   define USE_INET6
-#  endif
+#   define USE_INET6     
+#  endif   
 # endif
 # if !defined(_KERNEL) && !defined(IPFILTER_LKM) && !defined(USE_INET6)
 #  if (defined(__FreeBSD_version) && (__FreeBSD_version >= 400000)) || \
@@ -1080,7 +1087,7 @@ typedef	struct	uio	{
 #  define	SPL_X(x)
 #  define	SPL_NET(x)
 #  define	SPL_IMP(x)
-
+ 
 #  define	bcmp(a,b,c)	memcmp(a,b,c)
 #  define	bcopy(a,b,c)	memcpy(b,a,c)
 #  define	bzero(a,c)	memset(a,0,c)

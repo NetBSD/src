@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.13.4.2 2002/06/23 17:50:41 jdolecek Exp $       */
+/*      $NetBSD: if_atm.c,v 1.13.4.3 2002/10/10 18:43:52 jdolecek Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.13.4.2 2002/06/23 17:50:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.13.4.3 2002/10/10 18:43:52 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"
@@ -270,7 +270,7 @@ atmresolve(rt, m, dst, desten)
 
 	if (sdl->sdl_family == AF_LINK && sdl->sdl_alen == sizeof(*desten)) {
 		bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
-		return(1);	/* ok, go for it! */
+		return (1);	/* ok, go for it! */
 	}
 
 	/*
@@ -281,6 +281,6 @@ atmresolve(rt, m, dst, desten)
 
 bad:
 	m_freem(m);
-	return(0);
+	return (0);
 }
 #endif /* INET */

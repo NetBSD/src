@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.35.2.3 2002/09/06 08:46:27 jdolecek Exp $	*/
+/*	$NetBSD: ss.c,v 1.35.2.4 2002/10/10 18:42:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.35.2.3 2002/09/06 08:46:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.35.2.4 2002/10/10 18:42:19 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,11 +73,20 @@ void ssattach(struct device *, struct device *, void *);
 int ssdetach(struct device *self, int flags);
 int ssactivate(struct device *self, enum devact act);
 
-struct cfattach ss_ca = {
-	sizeof(struct ss_softc), ssmatch, ssattach, ssdetach, ssactivate
-};
+CFATTACH_DECL(ss, sizeof(struct ss_softc),
+    ssmatch, ssattach, ssdetach, ssactivate);
 
 extern struct cfdriver ss_cd;
+
+dev_type_open(ssopen);
+dev_type_close(ssclose);
+dev_type_read(ssread);
+dev_type_ioctl(ssioctl);
+
+const struct cdevsw ss_cdevsw = {
+	ssopen, ssclose, ssread, nowrite, ssioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 void    ssstrategy __P((struct buf *));
 void    ssstart __P((struct scsipi_periph *));
@@ -96,15 +105,19 @@ struct scsipi_inquiry_pattern ss_patterns[] = {
 	{T_SCANNER, T_REMOV,
 	 "",         "",                 ""},
 	{T_PROCESSOR, T_FIXED,
+	 "HP      ", "C1130A          ", ""},
+	{T_PROCESSOR, T_FIXED,
 	 "HP      ", "C1750A          ", ""},
 	{T_PROCESSOR, T_FIXED,
 	 "HP      ", "C2500A          ", ""},
 	{T_PROCESSOR, T_FIXED,
-	 "HP      ", "C1130A          ", ""},
+	 "HP      ", "C2520A          ", ""},
 	{T_PROCESSOR, T_FIXED,
 	 "HP      ", "C5110A          ", ""},
 	{T_PROCESSOR, T_FIXED,
 	 "HP      ", "C7670A          ", ""},
+	{T_PROCESSOR, T_FIXED,
+	 "HP      ", "", ""},
 };
 
 int
@@ -175,9 +188,7 @@ ssdetach(struct device *self, int flags)
 	int s, cmaj, mn;
 
 	/* locate the major number */
-	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == ssopen)
-			break;
+	cmaj = cdevsw_lookup_major(&ss_cdevsw);
 
 	s = splbio();
 

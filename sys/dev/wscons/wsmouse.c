@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.13.4.3 2002/06/23 17:49:20 jdolecek Exp $ */
+/* $NetBSD: wsmouse.c,v 1.13.4.4 2002/10/10 18:42:56 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13.4.3 2002/06/23 17:49:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13.4.4 2002/10/10 18:42:56 jdolecek Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -152,16 +152,24 @@ static int  wsmousedoioctl(struct device *, u_long, caddr_t, int, struct proc *)
 
 static int  wsmousedoopen(struct wsmouse_softc *, struct wseventvar *);
 
-struct cfattach wsmouse_ca = {
-	sizeof (struct wsmouse_softc), wsmouse_match, wsmouse_attach,
-	wsmouse_detach, wsmouse_activate
-};
+CFATTACH_DECL(wsmouse, sizeof (struct wsmouse_softc),
+    wsmouse_match, wsmouse_attach, wsmouse_detach, wsmouse_activate);
 
 #if NWSMOUSE > 0
 extern struct cfdriver wsmouse_cd;
 #endif /* NWSMOUSE > 0 */
 
-cdev_decl(wsmouse);
+dev_type_open(wsmouseopen);
+dev_type_close(wsmouseclose);
+dev_type_read(wsmouseread);
+dev_type_ioctl(wsmouseioctl);
+dev_type_poll(wsmousepoll);
+dev_type_kqfilter(wsmousekqfilter);
+
+const struct cdevsw wsmouse_cdevsw = {
+	wsmouseopen, wsmouseclose, wsmouseread, nowrite, wsmouseioctl,
+	nostop, notty, wsmousepoll, nommap, wsmousekqfilter,
+};
 
 #if NWSMUX > 0
 struct wssrcops wsmouse_srcops = {
@@ -270,9 +278,7 @@ wsmouse_detach(struct device  *self, int flags)
 	}
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == wsmouseopen)
-			break;
+	maj = cdevsw_lookup_major(&wsmouse_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;

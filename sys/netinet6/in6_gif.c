@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.20.2.4 2002/06/23 17:51:11 jdolecek Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.20.2.5 2002/10/10 18:44:15 jdolecek Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.20.2.4 2002/06/23 17:51:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.20.2.5 2002/10/10 18:44:15 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -222,7 +222,7 @@ in6_gif_output(ifp, family, m)
 	error = ip6_output(m, 0, &sc->gif_ro6, 0, 0, NULL);
 #endif
 
-	return(error);
+	return (error);
 }
 
 int in6_gif_input(mp, offp, proto)

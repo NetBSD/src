@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.6.16.2 2002/01/10 19:57:58 thorpej Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.6.16.3 2002/10/10 18:41:57 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.6.16.2 2002/01/10 19:57:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.6.16.3 2002/10/10 18:41:57 jdolecek Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -66,7 +66,9 @@ static void
 FreeReconMapListElem(RF_ReconMap_t * mapPtr,
     RF_ReconMapListElem_t * p);
 static void update_size(RF_ReconMap_t * mapPtr, int size);
+#if 0
 static void PrintList(RF_ReconMapListElem_t * listPtr);
+#endif
 
 /*-----------------------------------------------------------------------------
  *
@@ -107,8 +109,7 @@ rf_MakeReconMap(raidPtr, ru_sectors, disk_sectors, spareUnitsPerDisk)
 
 	rc = rf_mutex_init(&p->mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		RF_Free(p->status, num_rus * sizeof(RF_ReconMapListElem_t *));
 		RF_Free(p, sizeof(RF_ReconMap_t));
 		return (NULL);
@@ -338,6 +339,7 @@ update_size(mapPtr, size)
 	mapPtr->maxSize = RF_MAX(mapPtr->size, mapPtr->maxSize);
 }
 
+#if 0
 static void 
 PrintList(listPtr)
 	RF_ReconMapListElem_t *listPtr;
@@ -377,7 +379,9 @@ rf_PrintReconMap(raidPtr, mapPtr, frow, fcol)
 			}
 	}
 }
+#endif
 
+#if RF_DEBUG_RECON
 void 
 rf_PrintReconSchedule(mapPtr, starttime)
 	RF_ReconMap_t *mapPtr;
@@ -395,3 +399,5 @@ rf_PrintReconSchedule(mapPtr, starttime)
 		old_pctg = new_pctg;
 	}
 }
+#endif
+

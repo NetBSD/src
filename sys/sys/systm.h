@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.136.2.4 2002/09/06 08:50:06 jdolecek Exp $	*/
+/*	$NetBSD: systm.h,v 1.136.2.5 2002/10/10 18:44:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -101,9 +101,6 @@ extern const char version[];	/* system version */
 extern int autonicetime;        /* time (in seconds) before autoniceval */
 extern int autoniceval;         /* proc priority after autonicetime */
 
-extern int nblkdev;		/* number of entries in bdevsw */
-extern int nchrdev;		/* number of entries in cdevsw */
-
 extern int selwait;		/* select timeout address */
 
 extern int maxmem;		/* max memory per process */
@@ -124,8 +121,10 @@ extern const char *rootspec;	/* how root device was specified */
  * is used by the swap pager to indirect through the routines
  * in sys/vm/vm_swap.c.
  */
-extern dev_t swapdev;		/* swapping device */
+extern const dev_t swapdev;	/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
+
+extern const dev_t zerodev;	/* /dev/zero */
 
 typedef int	sy_call_t(struct proc *, void *, register_t *);
 
@@ -169,10 +168,6 @@ int	enoioctl __P((void));
 int	enxio __P((void));
 int	eopnotsupp __P((void));
 
-#if defined(LKM) || defined(_LKM)
-int	lkmenodev __P((void));
-#endif
-
 enum hashtype {
 	HASH_LIST,
 	HASH_TAILQ
@@ -194,6 +189,7 @@ int	snprintf __P((char *, size_t, const char *, ...))
 void	vprintf __P((const char *, _BSD_VA_LIST_));
 int	vsprintf __P((char *, const char *, _BSD_VA_LIST_));
 int	vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_));
+int	humanize_number __P((char *, size_t, u_int64_t, const char *, int));
 #endif /* _KERNEL */
 
 void	panic __P((const char *, ...))
@@ -205,7 +201,6 @@ void	ttyprintf __P((struct tty *, const char *, ...))
 
 char	*bitmask_snprintf __P((u_quad_t, const char *, char *, size_t));
 
-int	humanize_number __P((char *, size_t, u_int64_t, const char *, int));
 int	format_bytes __P((char *, size_t, u_int64_t));
 
 void	tablefull __P((const char *, const char *));

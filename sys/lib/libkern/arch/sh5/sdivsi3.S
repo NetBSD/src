@@ -1,4 +1,4 @@
-/*	$NetBSD: sdivsi3.S,v 1.1.4.2 2002/09/06 08:48:32 jdolecek Exp $	*/
+/*	$NetBSD: sdivsi3.S,v 1.1.4.3 2002/10/10 18:43:27 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -76,6 +76,10 @@
 ENTRY(__sdivsi3)
 	fmov.dq	dr0, r1			/* Preserve dr0 (fr0/fr1) in r1 */
 	fmov.dq	dr2, r2			/* Preserve dr2 (fr2/fr3) in r2 */
+	fgetscr	fr0			/* Fetch FPSCR */
+	fmov.sl	fr0, r3			/* Preserve in r3 */
+	fmov.ls	r63, fr0
+	fputscr	fr0			/* Disable FPU exceptions */
 	fmov.ls	r4, fr0			/* fr0 = bitwise copy of dividend */
 	fmov.ls	r5, fr2			/* fr2 = bitwise copy of divisor */
 	float.ld fr0, dr0		/* int to double conversion of fr0 */
@@ -85,6 +89,8 @@ ENTRY(__sdivsi3)
 	fmov.qd	r2, dr2			/* Restore dr2 */
 	ftrc.dl	dr0, fr0		/* double to int conversion */
 	fmov.sl	fr0, r0			/* Sign-extended result to r0 */
+	fmov.ls	r3, fr0			/* Restore FPSCR */
+	fputscr	fr0
 	fmov.qd	r1, dr0			/* Restore dr0 */
 	blink	tr0, r63
 

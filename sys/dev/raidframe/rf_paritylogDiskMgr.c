@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.10.8.2 2002/01/10 19:57:53 thorpej Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.10.8.3 2002/10/10 18:41:54 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.10.8.2 2002/01/10 19:57:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.10.8.3 2002/10/10 18:41:54 jdolecek Exp $");
 
 #include "rf_archs.h"
 
@@ -262,8 +262,10 @@ ReadRegionParity(
 	prd_rdNode->params[2].v = 0;
 	prd_rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 
 						   0, 0, 0);
+#if RF_DEBUG_VALIDATE_DAG
 	if (rf_validateDAGDebug)
 		rf_ValidateDAG(*prd_dag_h);
+#endif
 	/* launch region parity read dag */
 	rf_DispatchDAG(*prd_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,
 	    (void *) prd_mcpair);

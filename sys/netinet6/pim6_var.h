@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6_var.h,v 1.9 2001/02/10 04:14:29 itojun Exp $	*/
+/*	$NetBSD: pim6_var.h,v 1.9.4.1 2002/10/10 18:44:26 jdolecek Exp $	*/
 /*	$KAME: pim6_var.h,v 1.8 2000/06/06 08:07:43 jinmei Exp $	*/
 
 /*
@@ -52,8 +52,6 @@ struct pim6stat {
 };
 
 #if (defined(KERNEL)) || (defined(_KERNEL))
-extern struct pim6stat pim6stat;
-
 int pim6_input __P((struct mbuf **, int*, int));
 #endif /* KERNEL */
 

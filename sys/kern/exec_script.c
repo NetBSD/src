@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.29.2.1 2002/01/10 19:59:41 thorpej Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.29.2.2 2002/10/10 18:43:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.29.2.1 2002/01/10 19:59:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.29.2.2 2002/10/10 18:43:02 jdolecek Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -219,7 +219,7 @@ check_shell:
 		    (size_t *)0);
 #ifdef DIAGNOSTIC
 		if (error != 0)
-			panic("exec_script: copyinstr couldn't fail\n");
+			panic("exec_script: copyinstr couldn't fail");
 #endif
 #ifdef FDSCRIPTS
 	} else

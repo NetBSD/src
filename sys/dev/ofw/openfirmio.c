@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.c,v 1.2.6.1 2002/01/10 19:56:23 thorpej Exp $ */
+/*	$NetBSD: openfirmio.c,v 1.2.6.2 2002/10/10 18:40:22 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.2.6.1 2002/01/10 19:56:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.2.6.2 2002/10/10 18:40:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.2.6.1 2002/01/10 19:56:23 thorpej E
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/event.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/openfirmio.h>
@@ -66,23 +67,17 @@ static int openfirmgetstr (int, char *, char **);
 
 void openfirmattach (int);
 
+dev_type_ioctl(openfirmioctl);
+
+const struct cdevsw openfirm_cdevsw = {
+	nullopen, nullclose, noread, nowrite, openfirmioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
+
 void
 openfirmattach(int num)
 {
 	/* nothing */
-}
-
-int
-openfirmopen(dev_t dev, int flags, int mode, struct proc *p)
-{
-	return (0);
-}
-
-int
-openfirmclose(dev_t dev, int flags, int mode, struct proc *p)
-{
-
-	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.11.2.2 2002/06/23 17:51:11 jdolecek Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.11.2.3 2002/10/10 18:44:15 jdolecek Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.9 2000/09/09 15:33:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.11.2.2 2002/06/23 17:51:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.11.2.3 2002/10/10 18:44:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -126,7 +126,7 @@ in6_cksum(m, nxt, off, len)
 
 	/* sanity check */
 	if (m->m_pkthdr.len < off + len) {
-		panic("in6_cksum: mbuf len (%d) < off+len (%d+%d)\n",
+		panic("in6_cksum: mbuf len (%d) < off+len (%d+%d)",
 			m->m_pkthdr.len, off, len);
 	}
 
@@ -316,7 +316,7 @@ in6_cksum(m, nxt, off, len)
 			s_util.c[0] = *(char *)w;
 	}
 	if (len)
-		panic("in6_cksum: out of data\n");
+		panic("in6_cksum: out of data");
 	if (mlen == -1) {
 		/* The last mbuf has odd # of bytes. Follow the
 		   standard (the odd byte may be shifted left by 8 bits

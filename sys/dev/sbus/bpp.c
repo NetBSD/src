@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.8.4.6 2002/10/02 22:02:27 jdolecek Exp $ */
+/*	$NetBSD: bpp.c,v 1.8.4.7 2002/10/10 18:42:03 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.8.4.6 2002/10/02 22:02:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.8.4.7 2002/10/10 18:42:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.8.4.6 2002/10/02 22:02:27 jdolecek Exp $")
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #include <dev/ic/lsi64854reg.h>
 #include <dev/ic/lsi64854var.h>
@@ -120,11 +119,23 @@ static void	bppattach	__P((struct device *, struct device *, void *));
 static int	bppintr		__P((void *));
 static void	bpp_setparams	__P((struct bpp_softc *, struct hwstate *));
 
-struct cfattach bpp_ca = {
-	sizeof(struct bpp_softc), bppmatch, bppattach
-};
+CFATTACH_DECL(bpp, sizeof(struct bpp_softc),
+    bppmatch, bppattach, NULL, NULL);
 
 extern struct cfdriver bpp_cd;
+
+dev_type_open(bppopen);
+dev_type_close(bppclose);
+dev_type_write(bppwrite);
+dev_type_ioctl(bppioctl);
+dev_type_poll(bpppoll);
+dev_type_kqfilter(bppkqfilter);
+
+const struct cdevsw bpp_cdevsw = {
+	bppopen, bppclose, noread, bppwrite, bppioctl,
+	nostop, notty, bpppoll, nommap, bppkqfilter,
+};
+
 #define BPPUNIT(dev)	(minor(dev))
 
 
@@ -296,16 +307,6 @@ bppclose(dev, flags, mode, p)
 	sc->sc_asyncproc = NULL;
 	sc->sc_flags = 0;
 	return (0);
-}
-
-int
-bppread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-
-	return (ENXIO);
 }
 
 int

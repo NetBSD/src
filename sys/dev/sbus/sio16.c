@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.2.2.4 2002/06/23 17:48:41 jdolecek Exp $	*/
+/*	$NetBSD: sio16.c,v 1.2.2.5 2002/10/10 18:42:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.2.2.4 2002/06/23 17:48:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.2.2.5 2002/10/10 18:42:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.2.2.4 2002/06/23 17:48:41 jdolecek Exp $
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #include <dev/ic/cd18xxvar.h>
 #include <dev/ic/cd18xxreg.h>
@@ -92,9 +91,8 @@ struct sio16_softc {
 
 };
 
-struct cfattach siosixteen_ca = {
-	sizeof(struct sio16_softc), sio16_match, sio16_attach
-};
+CFATTACH_DECL(siosixteen, sizeof(struct sio16_softc),
+    sio16_match, sio16_attach, NULL, NULL);
 
 struct sio16_attach_args {
 	bus_space_tag_t		cd_tag;
@@ -141,7 +139,7 @@ sio16_attach(parent, self, aux)
 	int i;
 
 	if (sa->sa_nreg != 4)
-		panic("sio16_attach: got %d registers intead of 4\n",
+		panic("sio16_attach: got %d registers intead of 4",
 		    sa->sa_nreg);
 
 	/* copy our bus tag, we will need it */
@@ -153,9 +151,9 @@ sio16_attach(parent, self, aux)
 	 * a 4 byte region for interrupt acknowledgement.
 	 */
 	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_reg[0].sbr_slot,
-			 sa->sa_reg[0].sbr_offset,
-			 sa->sa_reg[0].sbr_size,
+			 sa->sa_reg[0].oa_space,
+			 sa->sa_reg[0].oa_base,
+			 sa->sa_reg[0].oa_size,
 			 0, &h) != 0) {
 		printf("%s at sbus: can not map registers 0\n",
 		    self->dv_xname);
@@ -282,9 +280,8 @@ sio16_ackfunc(v, who)
 static int	clcd_match(struct device *, struct cfdata *, void *);
 static void	clcd_attach(struct device *, struct device *, void *);
 
-struct cfattach clcd_ca = {
-	sizeof(struct cd18xx_softc), clcd_match, clcd_attach
-};
+CFATTACH_DECL(clcd, sizeof(struct cd18xx_softc),
+    clcd_match, clcd_attach, NULL, NULL);
 
 static int
 clcd_match(parent, cf, aux)

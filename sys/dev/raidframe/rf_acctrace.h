@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.h,v 1.3.22.1 2002/01/10 19:57:36 thorpej Exp $	*/
+/*	$NetBSD: rf_acctrace.h,v 1.3.22.2 2002/10/10 18:41:42 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -128,6 +128,5 @@ RF_DECLARE_EXTERN_MUTEX(rf_tracing_mutex)
 
 	int     rf_ConfigureAccessTrace(RF_ShutdownList_t ** listp);
 	void    rf_LogTraceRec(RF_Raid_t * raid, RF_AccTraceEntry_t * rec);
-	void    rf_FlushAccessTraceBuf(void);
 
 #endif				/* !_RF__RF_ACCTRACE_H_ */

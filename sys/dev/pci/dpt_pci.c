@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.8.2.1 2002/01/10 19:56:31 thorpej Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.8.2.2 2002/10/10 18:40:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.8.2.1 2002/01/10 19:56:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.8.2.2 2002/10/10 18:40:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.8.2.1 2002/01/10 19:56:31 thorpej Exp 
 static int	dpt_pci_match(struct device *, struct cfdata *, void *);
 static void	dpt_pci_attach(struct device *, struct device *, void *);
 
-struct cfattach dpt_pci_ca = {
-	sizeof(struct dpt_softc), dpt_pci_match, dpt_pci_attach
-};
+CFATTACH_DECL(dpt_pci, sizeof(struct dpt_softc),
+    dpt_pci_match, dpt_pci_attach, NULL, NULL);
 
 static int
 dpt_pci_match(struct device *parent, struct cfdata *match, void *aux)

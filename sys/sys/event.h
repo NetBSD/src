@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.1.1.1.2.11 2002/10/02 19:09:36 jdolecek Exp $	*/
+/*	$NetBSD: event.h,v 1.1.1.1.2.12 2002/10/10 18:44:44 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -200,6 +200,7 @@ int	kfilter_register(const char *name,
 int	kfilter_unregister(const char *name);
 
 int	filt_seltrue(struct knote *kn, long hint);
+int	seltrue_kqfilter(dev_t dev, struct knote *kn);
 
 #else 	/* !_KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.4.4.3 2002/09/06 08:47:04 jdolecek Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.4.4.4 2002/10/10 18:42:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.4.4.3 2002/09/06 08:47:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.4.4.4 2002/10/10 18:42:42 jdolecek Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -505,7 +505,7 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		break;
 
 	default:
-		panic("%s: Unknown status %d in umass_scsipi_cb\n",
+		panic("%s: Unknown status %d in umass_scsipi_cb",
 			USBDEVNAME(sc->sc_dev), status);
 	}
 

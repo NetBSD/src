@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.69.2.2 2002/09/06 08:49:53 jdolecek Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.69.2.3 2002/10/10 18:44:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -282,6 +282,7 @@ struct olddisklabel {
 #define DTYPE_ATAPI		13		/* ATAPI */
 #define	DTYPE_RAID		14		/* RAIDframe */
 #define	DTYPE_LD		15		/* logical disk */
+#define	DTYPE_JFS2		16		/* IBM JFS2 */
 
 #ifdef DKTYPENAMES
 static const char *const dktypenames[] = {
@@ -301,6 +302,7 @@ static const char *const dktypenames[] = {
 	"ATAPI",
 	"RAID",
 	"ld",
+	"jfs",
 	NULL
 };
 #define DKMAXTYPES	(sizeof(dktypenames) / sizeof(dktypenames[0]) - 1)
@@ -332,8 +334,10 @@ static const char *const dktypenames[] = {
 #define	FS_NTFS		18		/* Windows/NT file system */
 #define	FS_RAID		19		/* RAIDframe component */
 #define	FS_CCD		20		/* concatenated disk component */
+#define	FS_JFS2		21		/* IBM JFS2 */
+#define	FS_APPLEUFS	22		/* Apple UFS */
 
-/* Adjust the FSMAXTYPES def below if you add something after CCD */
+/* Adjust the FSMAXTYPES def below if you add something after APPLEUFS */
 
 #ifdef	FSTYPENAMES
 static const char *const fstypenames[] = {
@@ -358,11 +362,13 @@ static const char *const fstypenames[] = {
 	"NTFS",
 	"RAID",
 	"ccd",
+	"jfs",
+	"Apple UFS",
 	NULL
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
 #else
-#define FSMAXTYPES	(FS_CCD + 1)
+#define FSMAXTYPES	(FS_APPLEUFS + 1)
 #endif
 
 #ifdef FSCKNAMES
@@ -389,6 +395,8 @@ static const char *const fscknames[] = {
 	NULL,		/* Windows/NT */
 	NULL,		/* RAID Component */
 	NULL,		/* concatenated disk component */
+	NULL,		/* IBM JFS2 */
+	"ffs",		/* Apple UFS */
 	NULL		/* NULL */
 };
 #define FSMAXNAMES	(sizeof(fscknames) / sizeof(fscknames[0]) - 1)
@@ -419,6 +427,8 @@ static const char *const mountnames[] = {
 	"ntfs",		/* Windows/NT */
 	NULL,		/* RAID Component */
 	NULL,		/* concatenated disk component */
+	NULL,		/* IBM JFS2 */
+	"ffs",		/* Apple UFS */
 	NULL		/* NULL */
 };
 #define FSMAXMOUNTNAMES	(sizeof(mountnames) / sizeof(mountnames[0]) - 1)

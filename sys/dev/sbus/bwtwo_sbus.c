@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.1.6.2 2002/03/16 16:01:28 jdolecek Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.1.6.3 2002/10/10 18:42:03 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.1.6.2 2002/03/16 16:01:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.1.6.3 2002/10/10 18:42:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.1.6.2 2002/03/16 16:01:28 jdolecek 
 
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
-#include <machine/conf.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -124,9 +123,8 @@ struct bwtwo_sbus_softc {
 	struct sbusdev bss_sd;
 };
 
-struct cfattach bwtwo_sbus_ca = {
-	sizeof(struct bwtwo_sbus_softc), bwtwomatch_sbus, bwtwoattach_sbus
-};
+CFATTACH_DECL(bwtwo_sbus, sizeof(struct bwtwo_sbus_softc),
+    bwtwomatch_sbus, bwtwoattach_sbus, NULL, NULL);
 
 static int	bwtwo_get_video (struct bwtwo_softc *);
 static void	bwtwo_set_video (struct bwtwo_softc *, int);
@@ -142,7 +140,7 @@ bwtwomatch_sbus(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 

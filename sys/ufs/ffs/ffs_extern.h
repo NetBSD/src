@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.17.6.3 2002/06/23 17:52:07 jdolecek Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.17.6.4 2002/10/10 18:44:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -133,6 +133,12 @@ int ffs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
 int ffs_sbupdate __P((struct ufsmount *, int));
 int ffs_cgupdate __P((struct ufsmount *, int));
+
+/* ffs_appleufs.c */
+u_int16_t ffs_appleufs_cksum __P((const struct appleufslabel *));
+int ffs_appleufs_validate __P((const char*,const struct appleufslabel *,struct appleufslabel *));
+void ffs_appleufs_set __P((struct appleufslabel *, const char *, time_t));
+
 
 /* ffs_vnops.c */
 int ffs_read __P((void *));

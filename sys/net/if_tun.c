@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.43.2.9 2002/10/02 22:02:30 jdolecek Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.43.2.10 2002/10/10 18:43:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.43.2.9 2002/10/02 22:02:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.43.2.10 2002/10/10 18:43:49 jdolecek Exp $");
 
 #include "tun.h"
 
@@ -90,6 +90,19 @@ static void tuninit __P((struct tun_softc *));
 static void tunstart __P((struct ifnet *));
 #endif
 static struct tun_softc *tun_find_unit __P((dev_t));
+
+dev_type_open(tunopen);
+dev_type_close(tunclose);
+dev_type_read(tunread);
+dev_type_write(tunwrite);
+dev_type_ioctl(tunioctl);
+dev_type_poll(tunpoll);
+dev_type_kqfilter(tunkqfilter);
+
+const struct cdevsw tun_cdevsw = {
+	tunopen, tunclose, tunread, tunwrite, tunioctl,
+	nostop, notty, tunpoll, nommap, tunkqfilter,
+};
 
 void
 tunattach(unused)
@@ -558,7 +571,6 @@ tunioctl(dev, cmd, data, flag, p)
 		default:
 			simple_unlock(&tp->tun_lock);
 			return (EINVAL);
-			break;
 		}
 		break;
 
@@ -741,7 +753,7 @@ tunwrite(dev, uio, ioflag)
 #endif
 	}
 
-	if (uio->uio_resid < 0 || uio->uio_resid > TUNMTU) {
+	if (uio->uio_resid > TUNMTU) {
 		TUNDEBUG("%s: len=%lu!\n", ifp->if_xname,
 		    (unsigned long)uio->uio_resid);
 		simple_unlock(&tp->tun_lock);

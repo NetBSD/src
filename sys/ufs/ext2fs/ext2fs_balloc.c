@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.10.2.3 2002/06/23 17:52:06 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.10.2.4 2002/10/10 18:44:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.10.2.3 2002/06/23 17:52:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.10.2.4 2002/10/10 18:44:48 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -367,98 +367,4 @@ ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 		len -= bsize;
 	}
 	return 0;
-}
-
-/*
- * allocate a range of blocks in a file.
- * after this function returns, any page entirely contained within the range
- * will map to invalid data and thus must be overwritten before it is made
- * accessible to others.
- */
-
-int
-ext2fs_balloc_range(vp, off, len, cred, flags)
-	struct vnode *vp;
-	off_t off, len;
-	struct ucred *cred;
-	int flags;
-{
-	off_t oldeof, eof, pagestart;
-	struct genfs_node *gp = VTOG(vp);
-	int i, delta, error, npages;
-	int bshift = vp->v_mount->mnt_fs_bshift;
-	int bsize = 1 << bshift;
-	int ppb = max(bsize >> PAGE_SHIFT, 1);
-	struct vm_page *pgs[ppb];
-	UVMHIST_FUNC("ext2fs_balloc_range"); UVMHIST_CALLED(ubchist);
-	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
-		    vp, off, len, vp->v_size);
-
-	oldeof = vp->v_size;
-	eof = MAX(oldeof, off + len);
-	UVMHIST_LOG(ubchist, "new eof 0x%x", eof,0,0,0);
-	pgs[0] = NULL;
-
-	/*
-	 * cache the new range of the file.  this will create zeroed pages
-	 * where the new block will be and keep them locked until the
-	 * new block is allocated, so there will be no window where
-	 * the old contents of the new block is visible to racing threads.
-	 */
-
-	pagestart = trunc_page(off) & ~(bsize - 1);
-	npages = MIN(ppb, (round_page(eof) - pagestart) >> PAGE_SHIFT);
-	memset(pgs, 0, npages * sizeof(struct vm_page *));
-	simple_lock(&vp->v_interlock);
-	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
-	    VM_PROT_READ, 0, PGO_SYNCIO | PGO_PASTEOF);
-	if (error) {
-		return error;
-	}
-	for (i = 0; i < npages; i++) {
-		UVMHIST_LOG(ubchist, "got pgs[%d] %p", i, pgs[i],0,0);
-		KASSERT((pgs[i]->flags & PG_RELEASED) == 0);
-		pgs[i]->flags &= ~PG_CLEAN;
-		uvm_pageactivate(pgs[i]);
-	}
-
-	/*
-	 * adjust off to be block-aligned.
-	 */
-
-	delta = off & (bsize - 1);
-	off -= delta;
-	len += delta;
-
-	/*
-	 * now allocate the range.
-	 */
-
-	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
-	error = GOP_ALLOC(vp, off, len, flags, cred);
-	UVMHIST_LOG(ubchist, "alloc %d", error,0,0,0);
-	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
-
-	/*
-	 * clear PG_RDONLY on any pages we are holding
-	 * (since they now have backing store) and unbusy them.
-	 * if we got an error, free any pages we created past the old eob.
-	 */
-
-	simple_lock(&vp->v_interlock);
-	for (i = 0; i < npages; i++) {
-		pgs[i]->flags &= ~PG_RDONLY;
-		if (error) {
-			pgs[i]->flags |= PG_RELEASED;
-		}
-	}
-	if (error) {
-		uvm_lock_pageq();
-		uvm_page_unbusy(pgs, npages);
-		uvm_unlock_pageq();
-	} else {
-		uvm_page_unbusy(pgs, npages);
-	}
-	simple_unlock(&vp->v_interlock);
-	return (error);
 }

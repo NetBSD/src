@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.33.2.4 2002/09/06 08:49:39 jdolecek Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.33.2.5 2002/10/10 18:44:26 jdolecek Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.33.2.4 2002/09/06 08:49:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.33.2.5 2002/10/10 18:44:26 jdolecek Exp $");
 
 #include "opt_ipsec.h"
 
@@ -254,11 +254,11 @@ rip6_input(mp, offp, proto)
 		if (proto == IPPROTO_NONE)
 			m_freem(m);
 		else {
-			char *prvnxtp = ip6_get_prevhdr(m, *offp); /* XXX */
+			u_int8_t *prvnxtp = ip6_get_prevhdr(m, *offp); /* XXX */
 			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_protounknown);
 			icmp6_error(m, ICMP6_PARAM_PROB,
 			    ICMP6_PARAMPROB_NEXTHEADER,
-			    prvnxtp - mtod(m, char *));
+			    prvnxtp - mtod(m, u_int8_t *));
 		}
 		ip6stat.ip6s_delivered--;
 	}
@@ -534,7 +534,7 @@ rip6_output(m, va_alist)
 		RTFREE(optp->ip6po_route.ro_rt);
 	if (control)
 		m_freem(control);
-	return(error);
+	return (error);
 }
 
 /*
@@ -836,7 +836,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 		/*
 		 * stat: don't bother with a blocksize
 		 */
-		return(0);
+		return (0);
 	/*
 	 * Not supported.
 	 */
@@ -861,5 +861,5 @@ rip6_usrreq(so, req, m, nam, control, p)
 	}
 	if (m != NULL)
 		m_freem(m);
-	return(error);
+	return (error);
 }

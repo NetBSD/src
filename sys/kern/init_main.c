@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.192.2.7 2002/09/06 08:47:40 jdolecek Exp $	*/
+/*	$NetBSD: init_main.c,v 1.192.2.8 2002/10/10 18:43:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.192.2.7 2002/09/06 08:47:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.192.2.8 2002/10/10 18:43:03 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.192.2.7 2002/09/06 08:47:40 jdolecek
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/resourcevar.h>
@@ -439,6 +438,13 @@ main(void)
 		(void) tsleep((void *)&config_pending, PWAIT, "cfpend", 0);
 
 	/*
+	 * Finalize configuration now that all real devices have been
+	 * found.  This needs to be done before the root device is
+	 * selected, since finalization may create the root device.
+	 */
+	config_finalize();
+
+	/*
 	 * Now that autoconfiguration has completed, we can determine
 	 * the root and dump devices.
 	 */
@@ -457,14 +463,14 @@ main(void)
 	} while (error != 0);
 	mountroothook_destroy();
 
-	mountlist.cqh_first->mnt_flag |= MNT_ROOTFS;
-	mountlist.cqh_first->mnt_op->vfs_refcount++;
+	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
+	CIRCLEQ_FIRST(&mountlist)->mnt_op->vfs_refcount++;
 
 	/*
 	 * Get the vnode for '/'.  Set filedesc0.fd_fd.fd_cdir to
 	 * reference it.
 	 */
-	if (VFS_ROOT(mountlist.cqh_first, &rootvnode))
+	if (VFS_ROOT(CIRCLEQ_FIRST(&mountlist), &rootvnode))
 		panic("cannot find root vnode");
 	cwdi0.cwdi_cdir = rootvnode;
 	VREF(cwdi0.cwdi_cdir);

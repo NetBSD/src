@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.21.8.1 2002/01/10 20:01:55 thorpej Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.21.8.2 2002/10/10 18:43:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -74,6 +74,10 @@ struct msdosfs_args {
 #define	MSDOSFSMNT_RONLY	0x80000000	/* mounted read-only	*/
 #define	MSDOSFSMNT_WAITONFAT	0x40000000	/* mounted synchronous	*/
 #define	MSDOSFS_FATMIRROR	0x20000000	/* FAT is mirrored */
+
+#define MSDOSFSMNT_BITS "\177\20" \
+    "b\00shortname\0b\01longname\0b\02nowin95\0bgemdosfs\0" \
+    "b\037ronly\0b\036waitonfat\0b\035fatmirror"
 
 #ifdef _KERNEL
 /*

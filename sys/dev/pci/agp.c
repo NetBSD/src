@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.2.2.5 2002/09/06 08:45:07 jdolecek Exp $	*/
+/*	$NetBSD: agp.c,v 1.2.2.6 2002/10/10 18:40:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.2.2.5 2002/09/06 08:45:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.2.2.6 2002/10/10 18:40:24 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,14 +92,22 @@ __KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.2.2.5 2002/09/06 08:45:07 jdolecek Exp $")
 /* XXXfvdl get rid of this one. */
 
 extern struct cfdriver agp_cd;
-cdev_decl(agp);
+
+dev_type_open(agpopen);
+dev_type_close(agpclose);
+dev_type_ioctl(agpioctl);
+dev_type_mmap(agpmmap);
+
+const struct cdevsw agp_cdevsw = {
+	agpopen, agpclose, noread, nowrite, agpioctl,
+	nostop, notty, nopoll, agpmmap, nokqfilter,
+};
 
 int agpmatch(struct device *, struct cfdata *, void *);
 void agpattach(struct device *, struct device *, void *);
 
-struct cfattach agp_ca = {
-	sizeof(struct agp_softc), agpmatch, agpattach
-};
+CFATTACH_DECL(agp, sizeof(struct agp_softc),
+    agpmatch, agpattach, NULL, NULL);
 
 static int agp_info_user(struct agp_softc *, agp_info *);
 static int agp_setup_user(struct agp_softc *, agp_setup *);
@@ -290,7 +298,7 @@ int
 agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc)
 {
 	/*
-	 * Find and the aperture. Don't map it (yet), this would
+	 * Find the aperture. Don't map it (yet), this would
 	 * eat KVA.
 	 */
 	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, AGP_APBASE,

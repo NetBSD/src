@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.6.2.1 2002/01/10 19:58:35 thorpej Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.6.2.2 2002/10/10 18:42:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.6.2.1 2002/01/10 19:58:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.6.2.2 2002/10/10 18:42:24 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,12 +99,11 @@ int	sunkbdstart(struct tty *);
 /* Default keyboard baud rate */
 int	sunkbd_bps = KBD_DEFAULT_BPS;
 
-struct cfattach kbd_ca = {
-	sizeof(struct kbd_softc), sunkbd_match, sunkbd_attach
-};
+CFATTACH_DECL(kbd, sizeof(struct kbd_softc),
+    sunkbd_match, sunkbd_attach, NULL, NULL);
 
 struct  linesw sunkbd_disc =
-	{ "sunkbd", 7, ttylopen, ttylclose, ttyerrio, ttyerrio, nullioctl,
+	{ "sunkbd", 7, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
 	  sunkbdinput, sunkbdstart, nullmodem, ttpoll }; /* 7- SUNKBDDISC */
 
 /*
@@ -220,16 +219,19 @@ sunkbdiopen(dev, flags)
 	struct tty *tp = (struct tty *)k->k_priv;
 	struct proc *p = curproc;
 	struct termios t;
-	int maj;
+	const struct cdevsw *cdev;
 	int error;
 
-	maj = major(tp->t_dev);
 	if (p == NULL)
 		p = &proc0;
 
+	cdev = cdevsw_lookup(tp->t_dev);
+	if (cdev == NULL)
+		return (ENXIO);
+
 	/* Open the lower device */
-	if ((error = (*cdevsw[maj].d_open)(tp->t_dev, O_NONBLOCK|flags,
-					   0/* ignored? */, p)) != 0)
+	if ((error = (*cdev->d_open)(tp->t_dev, O_NONBLOCK|flags,
+				     0/* ignored? */, p)) != 0)
 		return (error);
 
 	/* Now configure it for the console. */

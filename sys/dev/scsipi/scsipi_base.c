@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.48.2.8 2002/09/06 08:46:24 jdolecek Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.48.2.9 2002/10/10 18:42:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.48.2.8 2002/09/06 08:46:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.48.2.9 2002/10/10 18:42:15 jdolecek Exp $");
 
 #include "opt_scsi.h"
 
@@ -2074,6 +2074,9 @@ scsipi_completion_thread(arg)
 	struct scsipi_channel *chan = arg;
 	struct scsipi_xfer *xs;
 	int s;
+
+	if (chan->chan_init_cb)
+		(*chan->chan_init_cb)(chan, chan->chan_init_cb_arg);
 
 	s = splbio();
 	chan->chan_flags |= SCSIPI_CHAN_TACTIVE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.38.2.4 2002/09/06 08:46:50 jdolecek Exp $	*/
+/*	$NetBSD: ucom.c,v 1.38.2.5 2002/10/10 18:42:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.38.2.4 2002/09/06 08:46:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.38.2.5 2002/10/10 18:42:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,19 @@ struct ucom_softc {
 #endif
 };
 
-cdev_decl(ucom);
+dev_type_open(ucomopen);
+dev_type_close(ucomclose);
+dev_type_read(ucomread);
+dev_type_write(ucomwrite);
+dev_type_ioctl(ucomioctl);
+dev_type_stop(ucomstop);
+dev_type_tty(ucomtty);
+dev_type_poll(ucompoll);
+
+const struct cdevsw ucom_cdevsw = {
+	ucomopen, ucomclose, ucomread, ucomwrite, ucomioctl,
+	ucomstop, ucomtty, ucompoll, nommap, ttykqfilter, D_TTY
+};
 
 Static void	ucom_cleanup(struct ucom_softc *);
 Static void	ucom_hwiflow(struct ucom_softc *);
@@ -229,9 +241,7 @@ USB_DETACH(ucom)
 	splx(s);
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == ucomopen)
-			break;
+	maj = cdevsw_lookup_major(&ucom_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
 	mn = self->dv_unit;
@@ -265,7 +275,6 @@ ucom_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
@@ -1136,5 +1145,5 @@ ucomsubmatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->ucomcf_portno != UCOM_UNK_PORTNO &&
 	    cf->ucomcf_portno != uca->portno)
 		return (0);
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }

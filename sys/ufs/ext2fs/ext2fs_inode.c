@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.24.4.1 2002/01/10 20:04:57 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.24.4.2 2002/10/10 18:44:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.24.4.1 2002/01/10 20:04:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.24.4.2 2002/10/10 18:44:49 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ ext2fs_truncate(v)
 		if (length > fs->fs_maxfilesize)
 			return (EFBIG);
 #endif
-		ext2fs_balloc_range(ovp, length - 1, 1, ap->a_cred,
+		ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
 		    ap->a_flags & IO_SYNC ? B_SYNC : 0);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, NULL, NULL, 1));

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.40.2.2 2002/06/23 17:48:43 jdolecek Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.40.2.3 2002/10/10 18:42:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.40.2.2 2002/06/23 17:48:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.40.2.3 2002/10/10 18:42:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,10 +65,8 @@ int	atapibussubmatch __P((struct device *, struct cfdata *, void *));
 
 int	atapi_probe_bus __P((struct atapibus_softc *, int));
 
-struct cfattach atapibus_ca = {
-	sizeof(struct atapibus_softc), atapibusmatch, atapibusattach,
-	atapibusdetach, atapibusactivate,
-};
+CFATTACH_DECL(atapibus, sizeof(struct atapibus_softc),
+    atapibusmatch, atapibusattach, atapibusdetach, atapibusactivate);
 
 extern struct cfdriver atapibus_cd;
 
@@ -166,7 +164,7 @@ atapibussubmatch(parent, cf, aux)
 	if (cf->cf_loc[ATAPIBUSCF_DRIVE] != ATAPIBUSCF_DRIVE_DEFAULT &&
 	    cf->cf_loc[ATAPIBUSCF_DRIVE] != periph->periph_target)
 		return (0);
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 void
@@ -186,6 +184,8 @@ atapibusattach(parent, self, aux)
 	printf(": %d targets\n", chan->chan_ntargets);
 
 	/* Initialize the channel. */
+	chan->chan_init_cb = NULL;
+	chan->chan_init_cb_arg = NULL;
 	scsipi_channel_init(chan);
 
 	/* Probe the bus for devices. */

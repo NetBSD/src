@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.17.4.1 2002/01/10 20:04:21 thorpej Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.17.4.2 2002/10/10 18:44:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.17.4.1 2002/01/10 20:04:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.17.4.2 2002/10/10 18:44:36 jdolecek Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.17.4.1 2002/01/10 20:04:21 thorp
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
-#include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/mount.h>

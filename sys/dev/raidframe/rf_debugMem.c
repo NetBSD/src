@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.c,v 1.7.8.1 2002/01/10 19:57:42 thorpej Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.7.8.2 2002/10/10 18:41:47 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.7.8.1 2002/01/10 19:57:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.7.8.2 2002/10/10 18:41:47 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.7.8.1 2002/01/10 19:57:42 thorpej 
 #include "rf_options.h"
 #include "rf_debugMem.h"
 #include "rf_general.h"
+
+#if RF_DEBUG_MEM
 
 static long tot_mem_in_use = 0;
 
@@ -61,10 +63,10 @@ struct mh_struct {
 };
 static struct mh_struct *mh_table[RF_MH_TABLESIZE];
 RF_DECLARE_MUTEX(rf_debug_mem_mutex)
-	static int mh_table_initialized = 0;
+static int mh_table_initialized = 0;
 
-	static void memory_hash_insert(void *addr, int size, int line, char *filen);
-	static int memory_hash_remove(void *addr, int sz);
+static void memory_hash_insert(void *addr, int size, int line, char *filen);
+static int memory_hash_remove(void *addr, int sz);
 
 void 
 rf_record_malloc(p, size, line, filen)
@@ -120,17 +122,18 @@ rf_print_unfreed()
 		printf("%ld total bytes in use\n", tot_mem_in_use);
 	}
 }
+#endif /* RF_DEBUG_MEM */
 
 int 
 rf_ConfigureDebugMem(listp)
 	RF_ShutdownList_t **listp;
 {
+#if RF_DEBUG_MEM
 	int     i, rc;
 
 	rc = rf_create_managed_mutex(listp, &rf_debug_mem_mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex( __FILE__, __LINE__, rc);
 		return (rc);
 	}
 	if (rf_memDebug) {
@@ -138,8 +141,12 @@ rf_ConfigureDebugMem(listp)
 			mh_table[i] = NULL;
 		mh_table_initialized = 1;
 	}
+#endif
 	return (0);
 }
+
+#if RF_DEBUG_MEM
+
 #define HASHADDR(_a_)      ( (((unsigned long) _a_)>>3) % RF_MH_TABLESIZE )
 
 static void 
@@ -201,3 +208,6 @@ memory_hash_remove(addr, sz)
 	p->allocated = 0;
 	return (p->size);
 }
+#endif /* RF_DEBUG_MEM */
+
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.2.6.3 2002/06/28 08:04:09 jdolecek Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.2.6.4 2002/10/10 18:42:21 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.2.6.3 2002/06/28 08:04:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.2.6.4 2002/10/10 18:42:21 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.2.6.3 2002/06/28 08:04:09 jdolecek Exp $
 
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
-#include <machine/conf.h>
 
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
@@ -112,18 +111,24 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.2.6.3 2002/06/28 08:04:09 jdolecek Exp $
 #include <dev/sun/bwtwovar.h>
 #include <dev/sun/pfourreg.h>
 
-/* cdevsw prototypes */
-cdev_decl(bwtwo);
-
 extern struct cfdriver bwtwo_cd;
+
+dev_type_open(bwtwoopen);
+dev_type_ioctl(bwtwoioctl);
+dev_type_mmap(bwtwommap);
+
+const struct cdevsw bwtwo_cdevsw = {
+	bwtwoopen, nullclose, noread, nowrite, bwtwoioctl,
+	nostop, notty, nopoll, bwtwommap, nokqfilter,
+};
 
 /* XXX we do not handle frame buffer interrupts (do not know how) */
 static void	bwtwounblank(struct device *);
 
 /* frame buffer generic driver */
 static struct fbdriver bwtwofbdriver = {
-	bwtwounblank, bwtwoopen, bwtwoclose, bwtwoioctl, bwtwopoll, bwtwommap,
-	bwtwokqfilter
+	bwtwounblank, bwtwoopen, nullclose, bwtwoioctl, nopoll, bwtwommap,
+	nokqfilter
 };
 
 int
@@ -228,16 +233,6 @@ bwtwoopen(dev, flags, mode, p)
 }
 
 int
-bwtwoclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-int
 bwtwoioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -274,41 +269,6 @@ bwtwounblank(dev)
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)dev;
 
 	sc->sc_set_video(sc, 1);
-}
-
-int
-bwtwopoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
-}
-
-static void
-filt_bwtwodetach(struct knote *kn)
-{
-	/* Nothing to do */
-}
-
-static const struct filterops bwtwo_filtops =
-	{ 1, NULL, filt_bwtwodetach, filt_seltrue };
-
-int
-bwtwokqfilter(dev_t dev, struct knote *kn)
-{
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-	case EVFILT_WRITE:
-		kn->kn_fop = &bwtwo_filtops;
-		break;
-	default:
-		return (1);
-	}
-
-	/* Nothing more to do */
-	return (0);
 }
 
 /*

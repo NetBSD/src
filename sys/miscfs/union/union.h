@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.12 2000/03/16 18:08:27 jdolecek Exp $	*/
+/*	$NetBSD: union.h,v 1.12.8.1 2002/10/10 18:43:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -48,6 +48,9 @@ struct union_args {
 #define UNMNT_BELOW	0x0002		/* Target appears below mount point */
 #define UNMNT_REPLACE	0x0003		/* Target replaces mount point */
 #define UNMNT_OPMASK	0x0003
+
+#define UNMNT_BITS "\177\20" \
+    "b\00above\0b\01below\0b\02replace"
 
 struct union_mount {
 	struct vnode	*um_uppervp;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.1.4.2 2002/06/23 17:48:28 jdolecek Exp $ */
+/* $NetBSD: if_eb.c,v 1.1.4.3 2002/10/10 18:41:35 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.1.4.2 2002/06/23 17:48:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.1.4.3 2002/10/10 18:41:35 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -76,9 +76,8 @@ void ebattach(struct device *, struct device *, void *);
 
 /* driver structure for autoconf */
 
-struct cfattach eb_ca = {
-	sizeof(struct eb_softc), ebprobe, ebattach
-};
+CFATTACH_DECL(eb, sizeof(struct eb_softc),
+    ebprobe, ebattach, NULL, NULL);
 
 /*
  * Probe routine.

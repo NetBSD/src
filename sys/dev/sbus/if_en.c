@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.10.4.3 2002/06/23 17:48:39 jdolecek Exp $	*/
+/*	$NetBSD: if_en.c,v 1.10.4.4 2002/10/10 18:42:05 jdolecek Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.10.4.3 2002/06/23 17:48:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.10.4.4 2002/10/10 18:42:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,9 +86,8 @@ static	void en_sbus_attach __P((struct device *, struct device *, void *));
  * SBus autoconfig attachments
  */
 
-struct cfattach en_sbus_ca = {
-	sizeof(struct en_sbus_softc), en_sbus_match, en_sbus_attach,
-};
+CFATTACH_DECL(en_sbus, sizeof(struct en_sbus_softc),
+    en_sbus_match, en_sbus_attach, NULL, NULL);
 
 /***********************************************************************/
 

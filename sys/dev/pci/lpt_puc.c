@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.1.28.1 2002/01/10 19:56:50 thorpej Exp $	*/
+/*	$NetBSD: lpt_puc.c,v 1.1.28.2 2002/10/10 18:40:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.1.28.1 2002/01/10 19:56:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.1.28.2 2002/10/10 18:40:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.1.28.1 2002/01/10 19:56:50 thorpej Exp
 int	lpt_puc_probe __P((struct device *, struct cfdata *, void *));
 void	lpt_puc_attach __P((struct device *, struct device *, void *));
 
-struct cfattach lpt_puc_ca = {
-	sizeof(struct lpt_softc), lpt_puc_probe, lpt_puc_attach
-};
+CFATTACH_DECL(lpt_puc, sizeof(struct lpt_softc),
+    lpt_puc_probe, lpt_puc_attach, NULL, NULL);
 
 int
 lpt_puc_probe(parent, match, aux)

@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.3.16.1 2002/01/10 19:59:13 thorpej Exp $ */
+/* $NetBSD: vme.c,v 1.3.16.2 2002/10/10 18:42:51 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.3.16.1 2002/01/10 19:59:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.3.16.2 2002/10/10 18:42:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +57,10 @@ int vmedetach __P((struct device*));
 
 #define VME_NUMCFRANGES 3 /* cf. "files.vme" */
 
-struct cfattach vme_ca = {
-	sizeof(struct vmebus_softc), vmematch, vmeattach,
-};
+CFATTACH_DECL(vme, sizeof(struct vmebus_softc),
+    vmematch, vmeattach, NULL, NULL);
 
-struct cfattach vme_slv_ca = {
+const struct cfattach vme_slv_ca = {
 	0	/* never used */
 };
 
@@ -134,7 +133,7 @@ vmesubmatch1(bus, dev, aux)
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
 	struct vme_attach_args v;
 
-	if (strcmp(dev->cf_driver->cd_name, VME_SLAVE_DUMMYDRV))
+	if (strcmp(dev->cf_name, VME_SLAVE_DUMMYDRV))
 		return (0);
 
 	vme_extractlocators(dev->cf_loc, &v);
@@ -154,7 +153,7 @@ vmesubmatch(bus, dev, aux)
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
 	struct vme_attach_args v;
 
-	if (!strcmp(dev->cf_driver->cd_name, VME_SLAVE_DUMMYDRV))
+	if (!strcmp(dev->cf_name, VME_SLAVE_DUMMYDRV))
 		return (0);
 
 	vme_extractlocators(dev->cf_loc, &v);
@@ -162,7 +161,7 @@ vmesubmatch(bus, dev, aux)
 	v.va_vct = sc->sc_vct;
 	v.va_bdt = sc->sc_bdt;
 
-	if (dev->cf_attach->ca_match(bus, dev, &v)) {
+	if (config_match(bus, dev, &v)) {
 		config_attach(bus, dev, &v, (cfprint_t)vmeprint);
 		return (1);
 	}

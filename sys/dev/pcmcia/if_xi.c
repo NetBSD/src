@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.14.2.3 2002/06/23 17:48:18 jdolecek Exp $ */
+/*	$NetBSD: if_xi.c,v 1.14.2.4 2002/10/10 18:41:27 jdolecek Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.14.2.3 2002/06/23 17:48:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.14.2.4 2002/10/10 18:41:27 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -182,13 +182,8 @@ struct xi_pcmcia_softc {
 #define XI_RES_MI	8
 };
 
-struct cfattach xi_pcmcia_ca = {
-	sizeof(struct xi_pcmcia_softc),
-	xi_pcmcia_match,
-	xi_pcmcia_attach,
-	xi_pcmcia_detach,
-	xi_pcmcia_activate
-};
+CFATTACH_DECL(xi_pcmcia, sizeof(struct xi_pcmcia_softc),
+    xi_pcmcia_match, xi_pcmcia_attach, xi_pcmcia_detach, xi_pcmcia_activate);
 
 static int xi_pcmcia_cis_quirks __P((struct pcmcia_function *));
 static void xi_cycle_power __P((struct xi_softc *));
@@ -834,13 +829,14 @@ xi_intr(arg)
 	PAGE(sc, 40);
 	rx_status =
 	    bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + RXST0);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + RXST0,
+	    ~rx_status & 0xff);
 	tx_status =
 	    bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + TXST0);
-
-	/*
-	 * XXX Linux writes to RXST0 and TXST* here.  My CE2 works just fine
-	 * without it, and I can't see an obvious reason for it.
-	 */
+	tx_status |=
+	    bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + TXST1) << 8;
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + TXST0,0);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + TXST1,0);
 
 	PAGE(sc, 0);
 	while (esr & FULL_PKT_RCV) {
@@ -885,6 +881,7 @@ xi_intr(arg)
 
 	/* Check for rx overrun. */
 	if (rx_status & RX_OVERRUN) {
+		ifp->if_ierrors++;
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + CR,
 		    CLR_RX_OVERRUN);
 		DPRINTF(XID_INTR, ("xi: overrun cleared\n"));

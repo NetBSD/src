@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.7.2.3 2002/06/23 17:48:56 jdolecek Exp $	*/
+/* 	$NetBSD: px.c,v 1.7.2.4 2002/10/10 18:42:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.7.2.3 2002/06/23 17:48:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.7.2.4 2002/10/10 18:42:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,9 +114,8 @@ struct px_softc {
 	volatile u_int32_t	*px_qpoll[PX_BUF_COUNT];
 };
 
-struct cfattach px_ca = {
-	sizeof(struct px_softc), px_match, px_attach
-};
+CFATTACH_DECL(px, sizeof(struct px_softc),
+    px_match, px_attach, NULL, NULL);
 
 int
 px_match(struct device *parent, struct cfdata *match, void *aux)

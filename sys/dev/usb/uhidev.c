@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.3.4.5 2002/09/06 08:46:57 jdolecek Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.3.4.6 2002/10/10 18:42:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -282,7 +282,7 @@ uhidevsubmatch(struct device *parent, struct cfdata *cf, void *aux)
 		uha->matchlvl = UMATCH_VENDOR_PRODUCT;
 	else
 		uha->matchlvl = 0;
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int
@@ -294,7 +294,6 @@ uhidev_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		rv = 0;

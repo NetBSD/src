@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.9.2.3 2002/09/06 08:45:52 jdolecek Exp $	*/
+/*	$NetBSD: rl.c,v 1.9.2.4 2002/10/10 18:41:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.9.2.3 2002/09/06 08:45:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.9.2.4 2002/10/10 18:41:39 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.9.2.3 2002/09/06 08:45:52 jdolecek Exp $");
 #include <sys/stat.h>
 #include <sys/dkio.h>
 #include <sys/fcntl.h>
+#include <sys/event.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -77,19 +78,32 @@ static	void rlattach(struct device *, struct device *, void *);
 static	void rlcstart(struct rlc_softc *, struct buf *);
 static	void waitcrdy(struct rlc_softc *);
 static	void rlcreset(struct device *);
-cdev_decl(rl);
-bdev_decl(rl);
 
-struct cfattach rlc_ca = {
-	sizeof(struct rlc_softc), rlcmatch, rlcattach
+CFATTACH_DECL(rlc, sizeof(struct rlc_softc),
+    rlcmatch, rlcattach, NULL, NULL);
+
+CFATTACH_DECL(rl, sizeof(struct rl_softc),
+    rlmatch, rlattach, NULL, NULL);
+
+dev_type_open(rlopen);
+dev_type_close(rlclose);
+dev_type_read(rlread);
+dev_type_write(rlwrite);
+dev_type_ioctl(rlioctl);
+dev_type_strategy(rlstrategy);
+dev_type_dump(rldump);
+dev_type_size(rlsize);
+
+const struct bdevsw rl_bdevsw = {
+	rlopen, rlclose, rlstrategy, rlioctl, rldump, rlsize, D_DISK
 };
 
-struct cfattach rl_ca = {
-	sizeof(struct rl_softc), rlmatch, rlattach
+const struct cdevsw rl_cdevsw = {
+	rlopen, rlclose, rlread, rlwrite, rlioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 #define	MAXRLXFER (RL_BPS * RL_SPT)
-#define	RLMAJOR	14
 
 #define	RL_WREG(reg, val) \
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, (reg), (val))
@@ -289,6 +303,7 @@ rlopen(dev_t dev, int flag, int fmt, struct proc *p)
 	dl = rc->rc_disk.dk_label;
 	if (rc->rc_state == DK_CLOSED) {
 		u_int16_t mp;
+		int maj;
 		RL_WREG(RL_CS, RLCS_RHDR|(rc->rc_hwid << RLCS_USHFT));
 		waitcrdy(sc);
 		mp = RL_RREG(RL_MP);
@@ -297,7 +312,8 @@ rlopen(dev_t dev, int flag, int fmt, struct proc *p)
 		rc->rc_state = DK_OPEN;
 		/* Get disk label */
 		printf("%s: ", rc->rc_dev.dv_xname);
-		if ((msg = readdisklabel(MAKEDISKDEV(RLMAJOR,
+		maj = cdevsw_lookup_major(&rl_cdevsw);
+		if ((msg = readdisklabel(MAKEDISKDEV(maj,
 		    rc->rc_dev.dv_unit, RAW_PART), rlstrategy, dl, NULL)))
 			printf("%s: ", msg);
 		printf("size %d sectors\n", dl->d_secperunit);

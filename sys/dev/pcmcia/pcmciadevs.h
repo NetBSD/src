@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.132.2.7 2002/09/06 08:45:48 jdolecek Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.132.2.8 2002/10/10 18:41:30 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.175 2002/07/23 23:11:04 rjs Exp 
+ *	NetBSD: pcmciadevs,v 1.177 2002/09/15 17:43:48 bouyer Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -49,6 +49,7 @@
  */
 
 #define	PCMCIA_VENDOR_FUJITSU	0x0004	/* Fujitsu Corporation */
+#define	PCMCIA_VENDOR_NETGEAR_2	0x000b	/* Netgear */
 #define	PCMCIA_VENDOR_PANASONIC	0x0032	/* Matsushita Electric Industrial Co. */
 #define	PCMCIA_VENDOR_SANDISK	0x0045	/* Sandisk Corporation */
 #define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* New Media Corporation */
@@ -476,6 +477,9 @@
 #define	PCMCIA_CIS_NETGEAR_FA411	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NETGEAR_FA411	0x0411
 #define	PCMCIA_STR_NETGEAR_FA411	"Netgear FA411"
+#define	PCMCIA_CIS_NETGEAR_2_MA401	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NETGEAR_2_MA401	0x7300
+#define	PCMCIA_STR_NETGEAR_2_MA401	"Netgear MA401"
 
 /* National Instruments */
 #define	PCMCIA_CIS_NI_PCMCIA_GPIB	{ NULL, NULL, NULL, NULL }
@@ -698,6 +702,9 @@
 #define	PCMCIA_CIS_ACCTON_EN2212	{ "ACCTON", "EN2212", NULL, NULL }
 #define	PCMCIA_PRODUCT_ACCTON_EN2212	-1
 #define	PCMCIA_STR_ACCTON_EN2212	"Accton EN2212"
+#define	PCMCIA_CIS_ACCTON_EN2216	{ "ACCTON", "EN2216-PCMCIA-ETHERNET", "EN2216R01", NULL }
+#define	PCMCIA_PRODUCT_ACCTON_EN2216	-1
+#define	PCMCIA_STR_ACCTON_EN2216	"Accton EN2216"
 #define	PCMCIA_CIS_AMBICOM_AMB8002T	{ "AmbiCom Inc", "AMB8002T", NULL, NULL }
 #define	PCMCIA_PRODUCT_AMBICOM_AMB8002T	-1
 #define	PCMCIA_STR_AMBICOM_AMB8002T	"AmbiCom AMB8002T"

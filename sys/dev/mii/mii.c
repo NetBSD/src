@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.26.2.3 2002/06/23 17:47:24 jdolecek Exp $	*/
+/*	$NetBSD: mii.c,v 1.26.2.4 2002/10/10 18:40:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.26.2.3 2002/06/23 17:47:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.26.2.4 2002/10/10 18:40:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -181,7 +181,7 @@ mii_activate(struct mii_data *mii, enum devact act, int phyloc, int offloc)
 
 		case DVACT_DEACTIVATE:
 			if (config_deactivate(&child->mii_dev) != 0)
-				panic("%s: config_activate(%d) failed\n",
+				panic("%s: config_activate(%d) failed",
 				    child->mii_dev.dv_xname, act);
 		}
 	}
@@ -237,7 +237,7 @@ mii_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[MIICF_PHY] != MIICF_PHY_DEFAULT)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.7.28.2 2002/01/10 19:56:23 thorpej Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.7.28.3 2002/10/10 18:40:22 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,16 +32,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.7.28.2 2002/01/10 19:56:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.7.28.3 2002/10/10 18:40:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 
 #include <dev/ofw/openfirm.h>
-
-cdev_decl(ofrtc_);
 
 struct ofrtc_softc {
 	struct device sc_dev;
@@ -52,11 +51,19 @@ struct ofrtc_softc {
 static int ofrtc_match __P((struct device *, struct cfdata *, void *));
 static void ofrtc_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ofrtc_ca = {
-	sizeof(struct ofrtc_softc), ofrtc_match, ofrtc_attach
-};
+CFATTACH_DECL(ofrtc, sizeof(struct ofrtc_softc),
+    ofrtc_match, ofrtc_attach, NULL, NULL);
 
 extern struct cfdriver ofrtc_cd;
+
+dev_type_open(ofrtc_open);
+dev_type_read(ofrtc_read);
+dev_type_write(ofrtc_write);
+
+const struct cdevsw ofrtc_cdevsw = {
+	ofrtc_open, nullclose, ofrtc_read, ofrtc_write, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 static int
 ofrtc_match(struct device *parent, struct cfdata *match, void *aux)
@@ -123,12 +130,6 @@ ofrtc_open(dev_t dev, int flags, int fmt, struct proc *p)
 
 	}
 
-	return 0;
-}
-
-int
-ofrtc_close(dev_t dev, int flags, int fmt, struct proc *p)
-{
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.2.6.6 2002/09/06 08:46:18 jdolecek Exp $ */
+/*	$NetBSD: tcx.c,v 1.2.6.7 2002/10/10 18:42:09 jdolecek Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.2.6.6 2002/09/06 08:46:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.2.6.7 2002/10/10 18:42:09 jdolecek Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -78,8 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.2.6.6 2002/09/06 08:46:18 jdolecek Exp $")
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/tcxreg.h>
-
-#include <machine/conf.h>
 
 /* per-display variables */
 struct tcx_softc {
@@ -119,19 +117,25 @@ static void	tcxattach __P((struct device *, struct device *, void *));
 static int	tcxmatch __P((struct device *, struct cfdata *, void *));
 static void	tcx_unblank __P((struct device *));
 
-/* cdevsw prototypes */
-cdev_decl(tcx);
-
-struct cfattach tcx_ca = {
-	sizeof(struct tcx_softc), tcxmatch, tcxattach
-};
+CFATTACH_DECL(tcx, sizeof(struct tcx_softc),
+    tcxmatch, tcxattach, NULL, NULL);
 
 extern struct cfdriver tcx_cd;
 
+dev_type_open(tcxopen);
+dev_type_close(tcxclose);
+dev_type_ioctl(tcxioctl);
+dev_type_mmap(tcxmmap);
+
+const struct cdevsw tcx_cdevsw = {
+	tcxopen, tcxclose, noread, nowrite, tcxioctl,
+	nostop, notty, nopoll, tcxmmap, nokqfilter,
+};
+
 /* frame buffer generic driver */
 static struct fbdriver tcx_fbdriver = {
-	tcx_unblank, tcxopen, tcxclose, tcxioctl, tcxpoll, tcxmmap,
-	tcxkqfilter
+	tcx_unblank, tcxopen, tcxclose, tcxioctl, nopoll, tcxmmap,
+	nokqfilter
 };
 
 static void tcx_reset __P((struct tcx_softc *));
@@ -497,41 +501,6 @@ tcxioctl(dev, cmd, data, flags, p)
 #endif
 		return (ENOTTY);
 	}
-	return (0);
-}
-
-int
-tcxpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
-}
-
-static void
-filt_tcxdetach(struct knote *kn)
-{
-	/* Nothing to do */
-}
-
-static const struct filterops tcx_filtops =
-	{ 1, NULL, filt_tcxdetach, filt_seltrue };
-
-int
-tcxkqfilter(dev_t dev, struct knote *kn)
-{
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-	case EVFILT_WRITE:
-		kn->kn_fop = &tcx_filtops;
-		break;
-	default:
-		return (1);
-	}
-
-	/* Nothing more to do */
 	return (0);
 }
 

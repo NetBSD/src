@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.2.6.3 2002/06/28 08:04:12 jdolecek Exp $ */
+/*	$NetBSD: cgthree.c,v 1.2.6.4 2002/10/10 18:42:22 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.2.6.3 2002/06/28 08:04:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.2.6.4 2002/10/10 18:42:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,22 +68,26 @@ __KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.2.6.3 2002/06/28 08:04:12 jdolecek Exp
 #include <dev/sun/cgthreereg.h>
 #include <dev/sun/cgthreevar.h>
 
-#include <machine/conf.h>
-
 static void	cgthreeunblank(struct device *);
 static void	cgthreeloadcmap(struct cgthree_softc *, int, int);
 static void	cgthree_set_video(struct cgthree_softc *, int);
 static int	cgthree_get_video(struct cgthree_softc *);
 
-/* cdevsw prototypes */
-cdev_decl(cgthree);
-
 extern struct cfdriver cgthree_cd;
+
+dev_type_open(cgthreeopen);
+dev_type_ioctl(cgthreeioctl);
+dev_type_mmap(cgthreemmap);
+
+const struct cdevsw cgthree_cdevsw = {
+	cgthreeopen, nullclose, noread, nowrite, cgthreeioctl,
+	nostop, notty, nopoll, cgthreemmap, nokqfilter
+};
 
 /* frame buffer generic driver */
 static struct fbdriver cgthreefbdriver = {
-	cgthreeunblank, cgthreeopen, cgthreeclose, cgthreeioctl, cgthreepoll,
-	cgthreemmap, cgthreekqfilter
+	cgthreeunblank, cgthreeopen, nullclose, cgthreeioctl, nopoll,
+	cgthreemmap, nokqfilter
 };
 
 /* Video control parameters */
@@ -171,16 +175,6 @@ cgthreeopen(dev, flags, mode, p)
 }
 
 int
-cgthreeclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-int
 cgthreeioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -236,41 +230,6 @@ cgthreeioctl(dev, cmd, data, flags, p)
 	default:
 		return (ENOTTY);
 	}
-	return (0);
-}
-
-int
-cgthreepoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
-}
-
-static void
-filt_cgthreedetach(struct knote *kn)
-{
-	/* Nothing to do */
-}
-
-static const struct filterops cgthree_filtops =
-	{ 1, NULL, filt_cgthreedetach, filt_seltrue };
-
-int
-cgthreekqfilter(dev_t dev, struct knote *kn)
-{
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-	case EVFILT_WRITE:
-		kn->kn_fop = &cgthree_filtops;
-		break;
-	default:
-		return (1);
-	}
-
-	/* Nothing more to do */
 	return (0);
 }
 

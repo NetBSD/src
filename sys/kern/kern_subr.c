@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.76.2.4 2002/09/06 08:47:57 jdolecek Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.76.2.5 2002/10/10 18:43:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.76.2.4 2002/09/06 08:47:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.76.2.5 2002/10/10 18:43:10 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -118,8 +118,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.76.2.4 2002/09/06 08:47:57 jdolecek 
 #include <net/if.h>
 
 /* XXX these should eventually move to subr_autoconf.c */
-static int findblkmajor __P((const char *));
-const char *findblkname __P((int));
 static struct device *finddevice __P((const char *));
 static struct device *getdisk __P((char *, int, int, dev_t *, int));
 static struct device *parsedisk __P((char *, int, int, dev_t *));
@@ -427,7 +425,7 @@ hook_destroy(list)
 {
 	struct hook_desc *hd;
 
-	while ((hd = list->lh_first) != NULL) {
+	while ((hd = LIST_FIRST(list)) != NULL) {
 		LIST_REMOVE(hd, hk_list);
 		free(hd, M_DEVBUF);
 	}
@@ -471,7 +469,7 @@ void
 shutdownhook_disestablish(vhook)
 	void *vhook;
 {
-	return hook_disestablish(&shutdownhook_list, vhook);
+	hook_disestablish(&shutdownhook_list, vhook);
 }
 
 /*
@@ -487,7 +485,7 @@ doshutdownhooks()
 {
 	struct hook_desc *dp;
 
-	while ((dp = shutdownhook_list.lh_first) != NULL) {
+	while ((dp = LIST_FIRST(&shutdownhook_list)) != NULL) {
 		LIST_REMOVE(dp, hk_list);
 		(*dp->hk_fn)(dp->hk_arg);
 #if 0
@@ -522,7 +520,7 @@ void
 mountroothook_disestablish(vhook)
 	void *vhook;
 {
-	return hook_disestablish(&mountroothook_list, vhook);
+	hook_disestablish(&mountroothook_list, vhook);
 }
 
 void
@@ -901,7 +899,7 @@ setroot(bootdv, bootpartition)
 		 */
 		rootdv = bootdv;
 
-		majdev = findblkmajor(bootdv->dv_xname);
+		majdev = devsw_name2blk(bootdv->dv_xname, NULL, 0);
 		if (majdev >= 0) {
 			/*
 			 * Root is on a disk.  `bootpartition' is root.
@@ -925,7 +923,7 @@ setroot(bootdv, bootpartition)
 			goto haveroot;
 		}
 
-		rootdevname = findblkname(major(rootdev));
+		rootdevname = devsw_blk2name(major(rootdev));
 		if (rootdevname == NULL) {
 			printf("unknown device major 0x%x\n", rootdev);
 			boothowto |= RB_ASKNAME;
@@ -993,7 +991,7 @@ setroot(bootdv, bootpartition)
 			goto nodumpdev;
 		}
 
-		dumpdevname = findblkname(major(dumpdev));
+		dumpdevname = devsw_blk2name(major(dumpdev));
 		if (dumpdevname == NULL)
 			goto nodumpdev;
 		memset(buf, 0, sizeof(buf));
@@ -1022,31 +1020,6 @@ setroot(bootdv, bootpartition)
  nodumpdev:
 	dumpdev = NODEV;
 	printf("\n");
-}
-
-static int
-findblkmajor(name)
-	const char *name;
-{
-	int i;
-
-	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
-		if (strncmp(name, dev_name2blk[i].d_name,
-		    strlen(dev_name2blk[i].d_name)) == 0)
-			return (dev_name2blk[i].d_maj);
-	return (-1);
-}
-
-const char *
-findblkname(maj)
-	int maj;
-{
-	int i;
-
-	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
-		if (dev_name2blk[i].d_maj == maj)
-			return (dev_name2blk[i].d_name);
-	return (NULL);
 }
 
 static struct device *
@@ -1164,7 +1137,7 @@ parsedisk(str, len, defpart, devp)
 #ifdef MEMORY_DISK_HOOKS
  gotdisk:
 #endif
-			majdev = findblkmajor(dv->dv_xname);
+			majdev = devsw_name2blk(dv->dv_xname, NULL, 0);
 			if (majdev < 0)
 				panic("parsedisk");
 			*devp = MAKEDISKDEV(majdev, dv->dv_unit, part);
@@ -1187,8 +1160,8 @@ parsedisk(str, len, defpart, devp)
  *	bytes		result
  *	-----		------
  *	99999		`99999 B'
- *	100000		`97 KB'
- *	66715648	`65152 KB'
+ *	100000		`97 kB'
+ *	66715648	`65152 kB'
  *	252215296	`240 MB'
  */
 int
@@ -1199,9 +1172,8 @@ humanize_number(buf, len, bytes, suffix, divisor)
 	const char	*suffix;
 	int 		divisor;
 {
-		/* prefixes are: (none), Kilo, Mega, Giga, Tera, Peta, Exa */
-	static const char prefixes[] = " KMGTPE";
-
+       	/* prefixes are: (none), kilo, Mega, Giga, Tera, Peta, Exa */
+	const char *prefixes;
 	int		r;
 	u_int64_t	max;
 	size_t		i, suffixlen;
@@ -1211,14 +1183,23 @@ humanize_number(buf, len, bytes, suffix, divisor)
 	if (len > 0)
 		buf[0] = '\0';
 	suffixlen = strlen(suffix);
-			/* check if enough room for `x y' + suffix + `\0' */
+	/* check if enough room for `x y' + suffix + `\0' */
 	if (len < 4 + suffixlen)
 		return (-1);
+
+	if (divisor == 1024) {
+		/*
+		 * binary multiplies
+		 * XXX IEC 60027-2 recommends Ki, Mi, Gi...
+		 */
+		prefixes = " KMGTPE";
+	} else
+		prefixes = " kMGTPE"; /* SI for decimal multiplies */
 
 	max = 1;
 	for (i = 0; i < len - suffixlen - 3; i++)
 		max *= 10;
-	for (i = 0; bytes >= max && i < sizeof(prefixes); i++)
+	for (i = 0; bytes >= max && prefixes[i + 1]; i++)
 		bytes /= divisor;
 
 	r = snprintf(buf, len, "%qu%s%c%s", (unsigned long long)bytes,

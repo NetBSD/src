@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.11.4.3 2002/06/23 17:48:42 jdolecek Exp $ */
+/*	$NetBSD: stp4020.c,v 1.11.4.4 2002/10/10 18:42:08 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.11.4.3 2002/06/23 17:48:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.11.4.4 2002/10/10 18:42:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,9 +139,8 @@ static int	stp4020_statintr __P((void *));
 static void	stp4020_map_window(struct stp4020_socket *h, int win, int speed);
 static void	stp4020_calc_speed(int bus_speed, int ns, int *length, int *delay);
 
-struct cfattach nell_ca = {
-	sizeof(struct stp4020_softc), stp4020match, stp4020attach
-};
+CFATTACH_DECL(nell, sizeof(struct stp4020_softc),
+    stp4020match, stp4020attach, NULL, NULL);
 
 #ifdef STP4020_DEBUG
 static void	stp4020_dump_regs __P((struct stp4020_socket *));
@@ -323,9 +322,9 @@ stp4020attach(parent, self, aux)
 			continue;
 
 		if (sbus_bus_map(sa->sa_bustag,
-				 sa->sa_reg[i].sbr_slot,
-				 sa->sa_reg[i].sbr_offset,
-				 sa->sa_reg[i].sbr_size,
+				 sa->sa_reg[i].oa_space,
+				 sa->sa_reg[i].oa_base,
+				 sa->sa_reg[i].oa_size,
 				 0, &bh) != 0) {
 			printf("%s: attach: cannot map registers\n",
 				self->dv_xname);
@@ -355,10 +354,10 @@ stp4020attach(parent, self, aux)
 	 * the lower level for PC card I/O.
 	 */
 	if (sa->sa_nintr != 0) {
-		bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].sbi_pri,
+		bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].oi_pri,
 				   IPL_NONE, 0, stp4020_statintr, sc);
 
-		bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].sbi_pri,
+		bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].oi_pri,
 				   IPL_NONE, 0, stp4020_iointr, sc);
 	}
 
@@ -696,7 +695,7 @@ stp4020_map_window(struct stp4020_socket *h, int win, int speed)
 	 * seem to propagate timing information, so we use that
 	 * everywhere.
 	 */
-	stp4020_calc_speed(speed, 300, &length, &delay);
+	stp4020_calc_speed(speed, (win==STP_WIN_ATTR)? 300 : 100, &length, &delay);
 
 	/*
 	 * Fill in the Address Space Select and Base Address

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.16.2.2 2002/09/06 08:47:43 jdolecek Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.16.2.3 2002/10/10 18:43:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.16.2.2 2002/09/06 08:47:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.16.2.3 2002/10/10 18:43:04 jdolecek Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_callout.h"
@@ -168,7 +168,7 @@ allocsys(caddr_t v, caddr_t (*mdcallback)(caddr_t))
 	if (bufpages == 0) {
 		if (bufcache != 0) {
 			if (bufcache < 5 || bufcache > 95)
-				panic("bufcache is out of range (%d)\n",
+				panic("bufcache is out of range (%d)",
 				    bufcache);
 			bufpages = physmem / 100 * bufcache;
 		} else {
@@ -182,7 +182,7 @@ allocsys(caddr_t v, caddr_t (*mdcallback)(caddr_t))
 
 #ifdef DIAGNOSTIC
 	if (bufpages == 0)
-		panic("bufpages = 0\n");
+		panic("bufpages = 0");
 #endif
 
 	/*

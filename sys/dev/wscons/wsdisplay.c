@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.51.2.6 2002/09/06 08:47:30 jdolecek Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.51.2.7 2002/10/10 18:42:53 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.51.2.6 2002/09/06 08:47:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.51.2.7 2002/10/10 18:42:53 jdolecek Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -143,20 +143,28 @@ static void wsdisplay_emul_attach(struct device *, struct device *, void *);
 static int wsdisplay_noemul_match(struct device *, struct cfdata *, void *);
 static void wsdisplay_noemul_attach(struct device *, struct device *, void *);
 
-struct cfattach wsdisplay_emul_ca = {
-	sizeof (struct wsdisplay_softc),
-	wsdisplay_emul_match,
-	wsdisplay_emul_attach,
-};
+CFATTACH_DECL(wsdisplay_emul, sizeof (struct wsdisplay_softc),
+    wsdisplay_emul_match, wsdisplay_emul_attach, NULL, NULL);
+
+CFATTACH_DECL(wsdisplay_noemul, sizeof (struct wsdisplay_softc),
+    wsdisplay_noemul_match, wsdisplay_noemul_attach, NULL, NULL);
  
-struct cfattach wsdisplay_noemul_ca = {
-	sizeof (struct wsdisplay_softc),
-	wsdisplay_noemul_match,
-	wsdisplay_noemul_attach,
+dev_type_open(wsdisplayopen);
+dev_type_close(wsdisplayclose);
+dev_type_read(wsdisplayread);
+dev_type_write(wsdisplaywrite);
+dev_type_ioctl(wsdisplayioctl);
+dev_type_stop(wsdisplaystop);
+dev_type_tty(wsdisplaytty);
+dev_type_poll(wsdisplaypoll);
+dev_type_mmap(wsdisplaymmap);
+dev_type_kqfilter(wsdisplaykqfilter);
+
+const struct cdevsw wsdisplay_cdevsw = {
+	wsdisplayopen, wsdisplayclose, wsdisplayread, wsdisplaywrite,
+	wsdisplayioctl, wsdisplaystop, wsdisplaytty, wsdisplaypoll,
+	wsdisplaymmap, wsdisplaykqfilter, D_TTY
 };
- 
-/* Exported tty- and cdevsw-related functions. */
-cdev_decl(wsdisplay);
 
 static void wsdisplaystart(struct tty *);
 static int wsdisplayparam(struct tty *, struct termios *);
@@ -383,9 +391,7 @@ wsdisplay_closescreen(struct wsdisplay_softc *sc, struct wsscreen *scr)
 	}
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == wsdisplayopen)
-			break;
+	maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
 	/* locate the screen index */
 	for (idx = 0; idx < WSDISPLAY_MAXSCREEN; idx++)
 		if (scr == sc->sc_scr[idx])
@@ -493,9 +499,7 @@ wsdisplay_emul_attach(struct device *parent, struct device *self, void *aux)
 		int maj;
 
 		/* locate the major number */
-		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == wsdisplayopen)
-				break;
+		maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
 
 		cn_tab->cn_dev = makedev(maj, WSDISPLAYMINOR(self->dv_unit, 0));
 	}
@@ -573,7 +577,7 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 		mux = wsmux_create("dmux", sc->sc_dv.dv_unit);
 	/* XXX panic()ing isn't nice, but attach cannot fail */
 	if (mux == NULL)
-		panic("wsdisplay_common_attach: no memory\n");
+		panic("wsdisplay_common_attach: no memory");
 	sc->sc_input = &mux->sc_base;
 	mux->sc_base.me_dispdv = &sc->sc_dv;
 	printf(" kbdmux %d", kbdmux);
@@ -876,14 +880,14 @@ wsdisplaykqfilter(dev, kn)
 	struct wsscreen *scr;
 
 	if (ISWSDISPLAYCTL(dev))
-		return (0);
+		return (1);
 
 	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
 
 	if (WSSCREEN_HAS_TTY(scr))
 		return (ttykqfilter(dev, kn));
 	else
-		return (0);
+		return (1);
 }
 
 struct tty *

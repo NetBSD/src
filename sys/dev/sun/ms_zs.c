@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_zs.c,v 1.3.8.1 2002/01/10 19:58:34 thorpej Exp $	*/
+/*	$NetBSD: ms_zs.c,v 1.3.8.2 2002/10/10 18:42:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.3.8.1 2002/01/10 19:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.3.8.2 2002/10/10 18:42:24 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +100,8 @@ int	ms_zs_bps = MS_DEFAULT_BPS;
 static int	ms_zs_match(struct device *, struct cfdata *, void *);
 static void	ms_zs_attach(struct device *, struct device *, void *);
 
-struct cfattach ms_zs_ca = {
-	sizeof(struct ms_softc), ms_zs_match, ms_zs_attach
-};
+CFATTACH_DECL(ms_zs, sizeof(struct ms_softc),
+    ms_zs_match, ms_zs_attach, NULL, NULL);
 
 /*
  * ms_match: how is this zs channel configured?

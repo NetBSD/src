@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.19.8.2 2002/06/23 17:48:03 jdolecek Exp $	*/
+/*	$NetBSD: ppb.c,v 1.19.8.3 2002/10/10 18:41:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.19.8.2 2002/06/23 17:48:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.19.8.3 2002/10/10 18:41:13 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +51,8 @@ struct ppb_softc {
 int	ppbmatch __P((struct device *, struct cfdata *, void *));
 void	ppbattach __P((struct device *, struct device *, void *));
 
-struct cfattach ppb_ca = {
-	sizeof(struct ppb_softc), ppbmatch, ppbattach
-};
+CFATTACH_DECL(ppb, sizeof(struct ppb_softc),
+    ppbmatch, ppbattach, NULL, NULL);
 
 int	ppbprint __P((void *, const char *pnp));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.54.2.3 2002/06/23 17:52:17 jdolecek Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.54.2.4 2002/10/10 18:45:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.54.2.3 2002/06/23 17:52:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.54.2.4 2002/10/10 18:45:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,7 @@ sys_mmap(p, v, retval)
 			return (EOVERFLOW);		/* no offset wrapping */
 
 		/* special case: catch SunOS style /dev/zero */
-		if (vp->v_type == VCHR && iszerodev(vp->v_rdev)) {
+		if (vp->v_type == VCHR && vp->v_rdev == zerodev) {
 			flags |= MAP_ANON;
 			goto is_anon;
 		}
@@ -649,10 +649,12 @@ sys_munmap(p, v, retval)
 	 */
 
 	vm_map_lock(map);
+#if 0
 	if (!uvm_map_checkprot(map, addr, addr + size, VM_PROT_NONE)) {
 		vm_map_unlock(map);
 		return (EINVAL);
 	}
+#endif
 	uvm_unmap_remove(map, addr, addr + size, &dead_entries);
 	vm_map_unlock(map);
 	if (dead_entries != NULL)

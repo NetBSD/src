@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.42.4.3 2002/06/23 17:47:52 jdolecek Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.42.4.4 2002/10/10 18:41:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.42.4.3 2002/06/23 17:47:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.42.4.4 2002/10/10 18:41:01 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -89,6 +89,7 @@ const struct pci_class pci_subclass_mass_storage[] = {
 	{ "IPI",		PCI_SUBCLASS_MASS_STORAGE_IPI,		},
 	{ "RAID",		PCI_SUBCLASS_MASS_STORAGE_RAID,		},
 	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,		},
+	{ "SATA",		PCI_SUBCLASS_MASS_STORAGE_SATA,		},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,		},
 	{ 0 },
 };
@@ -213,6 +214,8 @@ const struct pci_class pci_subclass_wireless[] = {
 	{ "RF",			PCI_SUBCLASS_WIRELESS_RF,		},
 	{ "bluetooth",		PCI_SUBCLASS_WIRELESS_BLUETOOTH,	},
 	{ "broadband",		PCI_SUBCLASS_WIRELESS_BROADBAND,	},
+	{ "802.11a (5 GHz)",	PCI_SUBCLASS_WIRELESS_802_11A,		},
+	{ "802.11b (2.4 GHz)",	PCI_SUBCLASS_WIRELESS_802_11B,		},
 	{ "miscellaneous",	PCI_SUBCLASS_WIRELESS_MISC,		},
 	{ 0 },
 };
@@ -776,63 +779,84 @@ pci_conf_print_type0(
 	}
 	printf("\n");
 	printf("    Interrupt line: 0x%02x\n", PCI_INTERRUPT_LINE(rval));
+}
 
-	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT) {
-		for (off = PCI_CAPLIST_PTR(regs[o2i(PCI_CAPLISTPTR_REG)]);
-		     off != 0;
-		     off = PCI_CAPLIST_NEXT(regs[o2i(off)])) {
-			rval = regs[o2i(off)];
-			printf("    Capability register at 0x%02x\n", off);
+static void
+pci_conf_print_caplist(
+#ifdef _KERNEL
+    pci_chipset_tag_t pc, pcitag_t tag,
+#endif
+    const pcireg_t *regs, int capoff)
+{
+	int off;
+	pcireg_t rval;
 
-			printf("      type: 0x%02x (", PCI_CAPLIST_CAP(rval));
-			switch (PCI_CAPLIST_CAP(rval)) {
-			case PCI_CAP_RESERVED0:
-				printf("reserved");
-				break;
-			case PCI_CAP_PWRMGMT:
-				printf("Power Management, rev. %d.0",
-				    (rval >> 0) & 0x07); /* XXX not clear */
-				break;
-			case PCI_CAP_AGP:
-				printf("AGP, rev. %d.%d",
-				    (rval >> 24) & 0x0f,
-				    (rval >> 20) & 0x0f);
-				break;
-			case PCI_CAP_VPD:
-				printf("VPD");
-				break;
-			case PCI_CAP_SLOTID:
-				printf("SlotID");
-				break;
-			case PCI_CAP_MBI:
-				printf("MBI");
-				break;
-			case PCI_CAP_CPCI_HOTSWAP:
-				printf("CompactPCI Hot-swapping");
-				break;
-			case PCI_CAP_PCIX:
-				printf("PCI-X");
-				break;
-			case PCI_CAP_LDT:
-				printf("LDT");
-				break;
-			case PCI_CAP_VENDSPEC:
-				printf("Vendor-specific");
-				break;
-			case PCI_CAP_DEBUGPORT:
-				printf("Debug Port");
-				break;
-			case PCI_CAP_CPCI_RSRCCTL:
-				printf("CompactPCI Resource Control");
-				break;
-			case PCI_CAP_HOTPLUG:
-				printf("Hot-Plug");
-				break;
-			default:
-				printf("unknown");
-			}
-			printf(")\n");
+	for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
+	     off != 0;
+	     off = PCI_CAPLIST_NEXT(regs[o2i(off)])) {
+		rval = regs[o2i(off)];
+		printf("  Capability register at 0x%02x\n", off);
+
+		printf("    type: 0x%02x (", PCI_CAPLIST_CAP(rval));
+		switch (PCI_CAPLIST_CAP(rval)) {
+		case PCI_CAP_RESERVED0:
+			printf("reserved");
+			break;
+		case PCI_CAP_PWRMGMT:
+			printf("Power Management, rev. %d.0",
+			       (rval >> 0) & 0x07); /* XXX not clear */
+			break;
+		case PCI_CAP_AGP:
+			printf("AGP, rev. %d.%d",
+			       (rval >> 24) & 0x0f,
+			       (rval >> 20) & 0x0f);
+			break;
+		case PCI_CAP_VPD:
+			printf("VPD");
+			break;
+		case PCI_CAP_SLOTID:
+			printf("SlotID");
+			break;
+		case PCI_CAP_MSI:
+			printf("MSI");
+			break;
+		case PCI_CAP_CPCI_HOTSWAP:
+			printf("CompactPCI Hot-swapping");
+			break;
+		case PCI_CAP_PCIX:
+			printf("PCI-X");
+			break;
+		case PCI_CAP_LDT:
+			printf("LDT");
+			break;
+		case PCI_CAP_VENDSPEC:
+			printf("Vendor-specific");
+			break;
+		case PCI_CAP_DEBUGPORT:
+			printf("Debug Port");
+			break;
+		case PCI_CAP_CPCI_RSRCCTL:
+			printf("CompactPCI Resource Control");
+			break;
+		case PCI_CAP_HOTPLUG:
+			printf("Hot-Plug");
+			break;
+		case PCI_CAP_AGP8:
+			printf("AGP 8x");
+			break;
+		case PCI_CAP_SECURE:
+			printf("Secure Device");
+			break;
+		case PCI_CAP_PCIEXPRESS:
+			printf("PCI Express");
+			break;
+		case PCI_CAP_MSIX:
+			printf("MSI-X");
+			break;
+		default:
+			printf("unknown");
 		}
+		printf(")\n");
 	}
 }
 
@@ -931,7 +955,12 @@ pci_conf_print_type1(
 	printf("      base upper 32 bits register:  0x%08x\n", regs[o2i(0x28)]);
 	printf("      limit upper 32 bits register: 0x%08x\n", regs[o2i(0x2c)]);
 
-	printf("    Reserved @ 0x34: 0x%08x\n", regs[o2i(0x34)]);
+	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
+		printf("    Capability list pointer: 0x%02x\n",
+		    PCI_CAPLIST_PTR(regs[o2i(PCI_CAPLISTPTR_REG)]));
+	else
+		printf("    Reserved @ 0x34: 0x%08x\n", regs[o2i(0x34)]);
+
 	/* XXX */
 	printf("    Expansion ROM Base Address: 0x%08x\n", regs[o2i(0x38)]);
 
@@ -1000,8 +1029,12 @@ pci_conf_print_type2(
 	pci_conf_print_bar(regs, 0x10, "CardBus socket/ExCA registers");
 #endif
 
-	printf("    Reserved @ 0x14: 0x%04x\n",
-	    (regs[o2i(0x14)] >> 0) & 0xffff);
+	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
+		printf("    Capability list pointer: 0x%02x\n",
+		    PCI_CAPLIST_PTR(regs[o2i(PCI_CARDBUS_CAPLISTPTR_REG)]));
+	else
+		printf("    Reserved @ 0x14: 0x%04x\n",
+		       (regs[o2i(0x14)] >> 0) & 0xffff);
 	rval = (regs[o2i(0x14)] >> 16) & 0xffff;
 	printf("    Secondary status register: 0x%04x\n", rval);
 	onoff("66 MHz capable", 0x0020);
@@ -1118,7 +1151,7 @@ pci_conf_print(
     )
 {
 	pcireg_t regs[o2i(256)];
-	int off, endoff, hdrtype;
+	int off, capoff, endoff, hdrtype;
 	const char *typename;
 #ifdef _KERNEL
 	void (*typeprintfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *, int);
@@ -1165,23 +1198,27 @@ pci_conf_print(
 		/* Standard device header */
 		typename = "\"normal\" device";
 		typeprintfn = &pci_conf_print_type0;
+		capoff = PCI_CAPLISTPTR_REG;
 		endoff = 64;
 		break;
 	case 1:
 		/* PCI-PCI bridge header */
 		typename = "PCI-PCI bridge";
 		typeprintfn = &pci_conf_print_type1;
+		capoff = PCI_CAPLISTPTR_REG;
 		endoff = 64;
 		break;
 	case 2:
 		/* PCI-CardBus bridge header */
 		typename = "PCI-CardBus bridge";
 		typeprintfn = &pci_conf_print_type2;
+		capoff = PCI_CARDBUS_CAPLISTPTR_REG;
 		endoff = 72;
 		break;
 	default:
 		typename = NULL;
 		typeprintfn = 0;
+		capoff = -1;
 		endoff = 64;
 		break;
 	}
@@ -1201,6 +1238,17 @@ pci_conf_print(
 		printf("    Don't know how to pretty-print type %d header.\n",
 		    hdrtype);
 	printf("\n");
+
+	/* papability list, if present */
+	if ((regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
+		&& (capoff > 0)) {
+#ifdef _KERNEL
+		pci_conf_print_caplist(pc, tag, regs, capoff);
+#else
+		pci_conf_print_caplist(regs, capoff);
+#endif
+		printf("\n");
+	}
 
 	/* device-dependent header */
 	printf("  Device-dependent header:\n");

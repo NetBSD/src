@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.9.4.1 2002/06/23 17:51:42 jdolecek Exp $	*/
+/*	$NetBSD: keydb.h,v 1.9.4.2 2002/10/10 18:44:34 jdolecek Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ struct secreplay {
 	u_int wsize;		/* window size, i.g. 4 bytes */
 	u_int32_t seq;		/* used by sender */
 	u_int32_t lastseq;	/* used by receiver */
-	caddr_t bitmap;		/* used by receiver */
+	u_int8_t *bitmap;	/* used by receiver */
 	int overflow;		/* overflow flag */
 };
 

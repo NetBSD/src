@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.53.4.5 2002/06/23 17:49:11 jdolecek Exp $	*/
+/*	$NetBSD: usb.c,v 1.53.4.6 2002/10/10 18:42:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.53.4.5 2002/06/23 17:49:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.53.4.6 2002/10/10 18:42:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,17 @@ struct usb_softc {
 
 TAILQ_HEAD(, usb_task) usb_all_tasks;
 
-cdev_decl(usb);
+dev_type_open(usbopen);
+dev_type_close(usbclose);
+dev_type_read(usbread);
+dev_type_ioctl(usbioctl);
+dev_type_poll(usbpoll);
+dev_type_kqfilter(usbkqfilter);
+
+const struct cdevsw usb_cdevsw = {
+	usbopen, usbclose, usbread, nowrite, usbioctl,
+	nostop, notty, usbpoll, nommap, usbkqfilter,
+};
 
 Static void	usb_discover(void *);
 Static void	usb_create_event_thread(void *);
@@ -768,7 +778,6 @@ usb_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;

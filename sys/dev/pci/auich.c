@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.3.4.5 2002/09/06 08:45:08 jdolecek Exp $	*/
+/*	$NetBSD: auich.c,v 1.3.4.6 2002/10/10 18:40:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.3.4.5 2002/09/06 08:45:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.3.4.6 2002/10/10 18:40:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,9 +240,8 @@ int	auich_match(struct device *, struct cfdata *, void *);
 void	auich_attach(struct device *, struct device *, void *);
 int	auich_intr(void *);
 
-struct cfattach auich_ca = {
-	sizeof(struct auich_softc), auich_match, auich_attach
-};
+CFATTACH_DECL(auich, sizeof(struct auich_softc),
+    auich_match, auich_attach, NULL, NULL);
 
 int	auich_open(void *, int);
 void	auich_close(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.4.16.2 2002/01/10 19:57:36 thorpej Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.4.16.3 2002/10/10 18:41:42 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.4.16.2 2002/01/10 19:57:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.4.16.3 2002/10/10 18:41:42 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -87,16 +87,14 @@ rf_ConfigureAllocList(listp)
 
 	rc = rf_mutex_init(&alist_mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex( __FILE__, __LINE__, rc);
 		return (rc);
 	}
 	al_free_list = NULL;
 	fl_hit_count = fl_miss_count = al_free_list_count = 0;
 	rc = rf_ShutdownCreate(listp, rf_ShutdownAllocList, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-		    __FILE__, __LINE__, rc);
+		rf_print_unable_to_add_shutdown( __FILE__, __LINE__, rc);
 		rf_mutex_destroy(&alist_mutex);
 		return (rc);
 	}
@@ -109,11 +107,10 @@ rf_ConfigureAllocList(listp)
  * increase POINTERS_PER_ALLOC_LIST_ELEMENT.
  */
 void 
-rf_real_AddToAllocList(l, p, size, lockflag)
+rf_real_AddToAllocList(l, p, size)
 	RF_AllocListElem_t *l;
 	void   *p;
 	int     size;
-	int     lockflag;
 {
 	RF_AllocListElem_t *newelem;
 
@@ -122,7 +119,7 @@ rf_real_AddToAllocList(l, p, size, lockflag)
 
 	RF_ASSERT(l->numPointers >= 0 && l->numPointers <= RF_POINTERS_PER_ALLOC_LIST_ELEMENT);
 	if (l->numPointers == RF_POINTERS_PER_ALLOC_LIST_ELEMENT) {
-		newelem = rf_real_MakeAllocList(lockflag);
+		newelem = rf_real_MakeAllocList();
 		l->next = newelem;
 		l = newelem;
 	}
@@ -168,8 +165,7 @@ rf_FreeAllocList(l)
 }
 
 RF_AllocListElem_t *
-rf_real_MakeAllocList(lockflag)
-	int     lockflag;
+rf_real_MakeAllocList()
 {
 	RF_AllocListElem_t *p;
 

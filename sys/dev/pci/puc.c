@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.11.4.1 2002/01/10 19:57:04 thorpej Exp $	*/
+/*	$NetBSD: puc.c,v 1.11.4.2 2002/10/10 18:41:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.11.4.1 2002/01/10 19:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.11.4.2 2002/10/10 18:41:13 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +99,8 @@ void	puc_attach __P((struct device *, struct device *, void *));
 int	puc_print __P((void *, const char *));
 int	puc_submatch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach puc_ca = {
-	sizeof(struct puc_softc), puc_match, puc_attach
-};
+CFATTACH_DECL(puc, sizeof(struct puc_softc),
+    puc_match, puc_attach, NULL, NULL);
 
 const struct puc_device_description *
 	puc_find_description __P((pcireg_t, pcireg_t, pcireg_t, pcireg_t));
@@ -338,7 +337,7 @@ puc_submatch(parent, cf, aux)
 	if (cf->cf_loc[PUCCF_PORT] != PUCCF_PORT_DEFAULT &&
 	    cf->cf_loc[PUCCF_PORT] != aa->port)
 		return 0;
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 const struct puc_device_description *

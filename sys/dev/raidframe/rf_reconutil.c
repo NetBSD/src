@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.3.22.1 2002/01/10 19:57:59 thorpej Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.3.22.2 2002/10/10 18:41:59 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.3.22.1 2002/01/10 19:57:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.3.22.2 2002/10/10 18:41:59 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -121,15 +121,13 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 	rc = rf_mutex_init(&reconCtrlPtr->eq_mutex);
 	if (rc) {
 		/* XXX deallocate, cleanup */
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (NULL);
 	}
 	rc = rf_cond_init(&reconCtrlPtr->eq_cond);
 	if (rc) {
 		/* XXX deallocate, cleanup */
-		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
 		return (NULL);
 	}
 	reconCtrlPtr->eventQueue = NULL;
@@ -139,8 +137,7 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 	rc = rf_mutex_init(&reconCtrlPtr->rb_mutex);
 	if (rc) {
 		/* XXX deallocate, cleanup */
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (NULL);
 	}
 	reconCtrlPtr->fullBufferList = NULL;
@@ -243,7 +240,6 @@ rf_MakeReconBuffer(
 
 	RF_Malloc(t, sizeof(RF_ReconBuffer_t), (RF_ReconBuffer_t *));
 	RF_Malloc(t->buffer, recon_buffer_size, (caddr_t));
-	RF_Malloc(t->arrived, raidPtr->numCol * sizeof(char), (char *));
 	t->raidPtr = raidPtr;
 	t->row = row;
 	t->col = col;
@@ -261,14 +257,15 @@ rf_FreeReconBuffer(rbuf)
 	RF_ReconBuffer_t *rbuf;
 {
 	RF_Raid_t *raidPtr = rbuf->raidPtr;
-	u_int   recon_buffer_size = rf_RaidAddressToByte(raidPtr, raidPtr->Layout.SUsPerRU * raidPtr->Layout.sectorsPerStripeUnit);
+	u_int   recon_buffer_size;
 
-	RF_Free(rbuf->arrived, raidPtr->numCol * sizeof(char));
+	recon_buffer_size = rf_RaidAddressToByte(raidPtr, raidPtr->Layout.SUsPerRU * raidPtr->Layout.sectorsPerStripeUnit);
+
 	RF_Free(rbuf->buffer, recon_buffer_size);
 	RF_Free(rbuf, sizeof(*rbuf));
 }
 
-
+#if RF_DEBUG_RECON
 /******************************************************************************
  * debug only:  sanity check the number of floating recon bufs in use
  *****************************************************************************/
@@ -337,3 +334,5 @@ rf_CheckFloatingRbufCount(raidPtr, dolock)
 	if (dolock)
 		RF_UNLOCK_MUTEX(raidPtr->reconControl[frow]->rb_mutex);
 }
+#endif
+

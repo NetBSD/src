@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.66.2.4 2002/06/23 17:50:42 jdolecek Exp $	*/
+/*	$NetBSD: in.c,v 1.66.2.5 2002/10/10 18:43:53 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.66.2.4 2002/06/23 17:50:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.66.2.5 2002/10/10 18:43:53 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -329,7 +329,7 @@ in_control(so, cmd, data, ifp, p)
 	case SIOCALIFADDR:
 	case SIOCDLIFADDR:
 		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
-			return(EPERM);
+			return (EPERM);
 		/*fall through*/
 	case SIOCGLIFADDR:
 		if (!ifp)
@@ -535,7 +535,7 @@ in_control(so, cmd, data, ifp, p)
 			return (EOPNOTSUPP);
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
 		in_setmaxmtu();
-		return(error);
+		return (error);
 	}
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.11.4.2 2002/09/06 08:45:54 jdolecek Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.11.4.3 2002/10/10 18:41:42 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -110,6 +110,34 @@
 
 #ifndef RF_DEBUG_VALIDATE_DAG
 #define RF_DEBUG_VALIDATE_DAG 0
+#endif
+
+#ifndef RF_DEBUG_STRIPELOCK
+#define RF_DEBUG_STRIPELOCK 0
+#endif
+
+#ifndef RF_DEBUG_RECON
+#define RF_DEBUG_RECON 0
+#endif
+
+#ifndef RF_DEBUG_VERIFYPARITY
+#define RF_DEBUG_VERIFYPARITY 0
+#endif
+
+#ifndef RF_DEBUG_QUEUE
+#define RF_DEBUG_QUEUE 0
+#endif
+
+#ifndef RF_DEBUG_QUIESCE
+#define RF_DEBUG_QUIESCE 0
+#endif
+
+#ifndef RF_DEBUG_PSS
+#define RF_DEBUG_PSS 0
+#endif
+
+#ifndef RF_DEBUG_MAP
+#define RF_DEBUG_MAP 0
 #endif
 
 #include "rf_options.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.56.2.2 2002/06/23 17:49:28 jdolecek Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.56.2.3 2002/10/10 18:43:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.56.2.2 2002/06/23 17:49:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.56.2.3 2002/10/10 18:43:08 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -158,6 +158,21 @@ do {									\
 		splx(s);						\
 } while (0)
 
+#ifdef DDB /* { */
+#ifdef MULTIPROCESSOR
+int simple_lock_debugger = 1;	/* more serious on MP */
+#else
+int simple_lock_debugger = 0;
+#endif
+#define	SLOCK_DEBUGGER()	if (simple_lock_debugger) Debugger()
+#define	SLOCK_TRACE()							\
+	db_stack_trace_print((db_expr_t)__builtin_frame_address(0),	\
+	    TRUE, 65535, "", printf);
+#else
+#define	SLOCK_DEBUGGER()	/* nothing */
+#define	SLOCK_TRACE()		/* nothing */
+#endif /* } */
+
 #if defined(LOCKDEBUG)
 #if defined(DDB)
 #define	SPINLOCK_SPINCHECK_DEBUGGER	Debugger()
@@ -183,6 +198,7 @@ do {									\
 		if (lkp->lk_unlock_file)				\
 			printf("last unlocked at %s:%d\n",		\
 			    lkp->lk_unlock_file, lkp->lk_unlock_line);	\
+		SLOCK_TRACE();						\
 		SPINLOCK_SPINCHECK_DEBUGGER;				\
 	}								\
 } while (0)
@@ -479,7 +495,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	 * on spin locks.
 	 */
 	if ((flags ^ lkp->lk_flags) & LK_SPIN)
-		panic("lockmgr: sleep/spin mismatch\n");
+		panic("lockmgr: sleep/spin mismatch");
 #endif /* } */
 
 	if (extflags & LK_SPIN)
@@ -517,7 +533,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			panic("lockmgr: using decommissioned lock");
 		if ((flags & LK_TYPE_MASK) != LK_RELEASE ||
 		    WEHOLDIT(lkp, pid, cpu_id) == 0)
-			panic("lockmgr: non-release on draining lock: %d\n",
+			panic("lockmgr: non-release on draining lock: %d",
 			    flags & LK_TYPE_MASK);
 #endif /* DIAGNOSTIC */ /* } */
 		lkp->lk_flags &= ~LK_DRAINING;
@@ -883,7 +899,7 @@ spinlock_acquire_count(__volatile struct lock *lkp, int count)
 
 #ifdef DIAGNOSTIC
 	if (WEHOLDIT(lkp, LK_NOPROC, cpu_id))
-		panic("spinlock_acquire_count: processor %lu already holds lock\n", (long)cpu_id);
+		panic("spinlock_acquire_count: processor %lu already holds lock", (long)cpu_id);
 #endif
 	/*
 	 * Try to acquire the want_exclusive flag.
@@ -963,21 +979,6 @@ u_long simple_locks;
 
 #define	SLOCK_COUNT(x)		simple_locks += (x)
 #endif /* MULTIPROCESSOR */ /* } */
-
-#ifdef DDB /* { */
-#ifdef MULTIPROCESSOR
-int simple_lock_debugger = 1;	/* more serious on MP */
-#else
-int simple_lock_debugger = 0;
-#endif
-#define	SLOCK_DEBUGGER()	if (simple_lock_debugger) Debugger()
-#define	SLOCK_TRACE()							\
-	db_stack_trace_print((db_expr_t)__builtin_frame_address(0),	\
-	    TRUE, 65535, "", printf);
-#else
-#define	SLOCK_DEBUGGER()	/* nothing */
-#define	SLOCK_TRACE()		/* nothing */
-#endif /* } */
 
 #ifdef MULTIPROCESSOR
 #define SLOCK_MP()		lock_printf("on cpu %ld\n", 		\

@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.66.2.3 2002/09/06 08:46:58 jdolecek Exp $        */
+/*      $NetBSD: ukbd.c,v 1.66.2.4 2002/10/10 18:42:39 jdolecek Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.66.2.3 2002/09/06 08:46:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.66.2.4 2002/10/10 18:42:39 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,7 +393,6 @@ ukbd_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		if (sc->sc_wskbddev != NULL)

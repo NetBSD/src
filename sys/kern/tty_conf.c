@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.33.2.4 2002/06/23 17:49:39 jdolecek Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.33.2.5 2002/10/10 18:43:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.33.2.4 2002/06/23 17:49:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.33.2.5 2002/10/10 18:43:18 jdolecek Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_43.h"
@@ -114,14 +114,14 @@ int	irframetpoll __P((struct tty *tp, int events, struct proc *p));
 
 
 struct  linesw termios_disc =
-	{ "termios", TTYDISC, ttylopen, ttylclose, ttread, ttwrite, nullioctl,
-	  ttyinput, ttstart, ttymodem, ttpoll };	/* 0- termios */
+	{ "termios", TTYDISC, ttylopen, ttylclose, ttread, ttwrite,
+	  ttynullioctl, ttyinput, ttstart, ttymodem, ttpoll };	/* 0- termios */
 struct  linesw defunct_disc =
-	{ "defunct", 1, ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
-	  ttyerrinput, ttyerrstart, nullmodem, ttyerrpoll }; /* 1- defunct */
+	{ "defunct", 1, ttynodisc, ttyerrclose, ttyerrio, ttyerrio,
+	  ttynullioctl, ttyerrinput, ttyerrstart, nullmodem, ttyerrpoll }; /* 1- defunct */
 #if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
 struct  linesw ntty_disc =
-	{ "ntty", 2, ttylopen, ttylclose, ttread, ttwrite, nullioctl,
+	{ "ntty", 2, ttylopen, ttylclose, ttread, ttwrite, ttynullioctl,
 	  ttyinput, ttstart, ttymodem, ttpoll };	/* 2- old NTTYDISC */
 #endif
 #if NTB > 0
@@ -167,7 +167,7 @@ int	slinesw = 0;
  */
 /*ARGSUSED*/
 int
-nullioctl(tp, cmd, data, flags, p)
+ttynullioctl(tp, cmd, data, flags, p)
 	struct tty *tp;
 	u_long cmd;
 	char *data;

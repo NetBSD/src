@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.17.2.3 2002/06/23 17:48:39 jdolecek Exp $	*/
+/*	$NetBSD: if_le.c,v 1.17.2.4 2002/10/10 18:42:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.17.2.3 2002/06/23 17:48:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.17.2.4 2002/10/10 18:42:05 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -95,9 +95,8 @@ static int lemedia[] = {
 };
 #define NLEMEDIA	(sizeof(lemedia) / sizeof(lemedia[0]))
 
-struct cfattach le_sbus_ca = {
-	sizeof(struct le_softc), lematch_sbus, leattach_sbus
-};
+CFATTACH_DECL(le_sbus, sizeof(struct le_softc),
+    lematch_sbus, leattach_sbus, NULL, NULL);
 
 extern struct cfdriver le_cd;
 
@@ -160,7 +159,7 @@ lematch_sbus(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 void
@@ -259,7 +258,7 @@ leattach_sbus(parent, self, aux)
 
 		/* Load DMA buffer */
 		if ((error = bus_dmamap_load(dmatag, lesc->sc_dmamap, sc->sc_mem,
-		    MEMSIZE, NULL, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		    MEMSIZE, NULL, BUS_DMA_NOWAIT)) != 0) {
 			printf("%s: DMA buffer map load error %d\n",
 				self->dv_xname, error);
 			bus_dmamem_free(dmatag, &seg, rseg);

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.44.2.4 2002/06/23 17:48:40 jdolecek Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.44.2.5 2002/10/10 18:42:06 jdolecek Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.44.2.4 2002/06/23 17:48:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.44.2.5 2002/10/10 18:42:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,9 +118,8 @@ struct isp_sbussoftc {
 
 static int isp_match(struct device *, struct cfdata *, void *);
 static void isp_sbus_attach(struct device *, struct device *, void *);
-struct cfattach isp_sbus_ca = {
-	sizeof (struct isp_sbussoftc), isp_match, isp_sbus_attach
-};
+CFATTACH_DECL(isp_sbus, sizeof (struct isp_sbussoftc),
+    isp_match, isp_sbus_attach, NULL, NULL);
 
 static int
 isp_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -131,7 +130,7 @@ isp_match(struct device *parent, struct cfdata *cf, void *aux)
 #endif
 	struct sbus_attach_args *sa = aux;
 
-	rv = (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
+	rv = (strcmp(cf->cf_name, sa->sa_name) == 0 ||
 		strcmp("PTI,ptisp", sa->sa_name) == 0 ||
 		strcmp("ptisp", sa->sa_name) == 0 ||
 		strcmp("SUNW,isp", sa->sa_name) == 0 ||
@@ -533,7 +532,7 @@ isp_sbus_dmasetup(struct ispsoftc *isp, XS_T *xs, ispreq_t *rq,
 
 	dmap = sbc->sbus_dmamap[isp_handle_index(rq->req_handle)];
 	if (dmap->dm_nsegs != 0) {
-		panic("%s: dma map already allocated\n", isp->isp_name);
+		panic("%s: dma map already allocated", isp->isp_name);
 		/* NOTREACHED */
 	}
 	error = bus_dmamap_load(isp->isp_dmatag, dmap, xs->data, xs->datalen,
@@ -602,7 +601,7 @@ isp_sbus_dmateardown(struct ispsoftc *isp, XS_T *xs, u_int16_t handle)
 	dmap = sbc->sbus_dmamap[isp_handle_index(handle)];
 
 	if (dmap->dm_nsegs == 0) {
-		panic("%s: dma map not already allocated\n", isp->isp_name);
+		panic("%s: dma map not already allocated", isp->isp_name);
 		/* NOTREACHED */
 	}
 	bus_dmamap_sync(isp->isp_dmatag, dmap, 0,

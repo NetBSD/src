@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.17.4.1 2002/01/10 19:58:39 thorpej Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.17.4.2 2002/10/10 18:42:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.17.4.1 2002/01/10 19:58:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.17.4.2 2002/10/10 18:42:26 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -74,9 +74,8 @@ struct le_ioasic_softc {
 static int  le_ioasic_match __P((struct device *, struct cfdata *, void *));
 static void le_ioasic_attach __P((struct device *, struct device *, void *));
 
-struct cfattach le_ioasic_ca = {
-	sizeof(struct le_softc), le_ioasic_match, le_ioasic_attach
-};
+CFATTACH_DECL(le_ioasic, sizeof(struct le_softc),
+    le_ioasic_match, le_ioasic_attach, NULL, NULL);
 
 static void le_ioasic_copytobuf_gap2 __P((struct lance_softc *, void *,
 	    int, int));

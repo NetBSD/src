@@ -1,4 +1,4 @@
-/* $NetBSD: acemidi.c,v 1.2.2.2 2002/06/23 17:48:26 jdolecek Exp $ */
+/* $NetBSD: acemidi.c,v 1.2.2.3 2002/10/10 18:41:34 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.2.2.2 2002/06/23 17:48:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.2.2.3 2002/10/10 18:41:34 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -59,13 +59,11 @@ static void acemidi_attach(struct device *, struct device *, void *);
 static int com_acemidi_match(struct device *, struct cfdata *, void *);
 static void com_acemidi_attach(struct device *, struct device *, void *);
 
-struct cfattach acemidi_ca = {
-	sizeof(struct acemidi_softc), acemidi_match, acemidi_attach
-};
+CFATTACH_DECL(acemidi, sizeof(struct acemidi_softc),
+    acemidi_match, acemidi_attach, NULL, NULL);
 
-struct cfattach com_acemidi_ca = {
-	sizeof(struct com_acemidi_softc), com_acemidi_match, com_acemidi_attach
-};
+CFATTACH_DECL(com_acemidi, sizeof(struct com_acemidi_softc),
+    com_acemidi_match, com_acemidi_attach, NULL, NULL);
 
 static int
 acemidi_match(struct device *parent, struct cfdata *cf, void *aux)
