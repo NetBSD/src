@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 2003/04/26 18:50:19 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70 2003/05/25 14:02:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2003/04/26 18:50:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2003/05/25 14:02:49 tsutsui Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2003/04/26 18:50:19 tsutsui Exp $")
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
@@ -129,12 +130,7 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 struct idrom idrom;
-void (*enable_intr) __P((void));
-void (*disable_intr) __P((void));
 void (*readmicrotime) __P((struct timeval *tvp));
-
-static void (*hardware_intr) __P((u_int, u_int, u_int, u_int));
-u_int ssir;
 
 /*
  *  Local functions.
@@ -158,6 +154,51 @@ extern void stacktrace __P((void)); /*XXX*/
  * disables mips1 FPU interrupts.
  */
 int safepri = MIPS3_PSL_LOWIPL;		/* XXX */
+
+/*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given interrupt priority level.
+ */
+const u_int32_t ipl_sr_bits[_IPL_N] = {
+	0,					/* IPL_NONE */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0,		/* IPL_BIO */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1,		/* IPL_NET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1,		/* IPL_{TTY,SERIAL} */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2,		/* IPL_{CLOCK,HIGH} */
+};
+
+const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+};
 
 extern struct user *proc0paddr;
 extern u_long bootdev;
@@ -651,10 +692,6 @@ delay(n)
 	DELAY(n);
 }
 
-#include "zsc.h"
-
-int zssoft __P((void));
-
 void
 cpu_intr(status, cause, pc, ipending)
 	u_int32_t status;
@@ -662,39 +699,18 @@ cpu_intr(status, cause, pc, ipending)
 	u_int32_t pc;
 	u_int32_t ipending;
 {
+
 	uvmexp.intrs++;
 
 	/* device interrupts */
 	(*hardware_intr)(status, cause, pc, ipending);
 
-	/* software simulated interrupt */
-	if ((ipending & MIPS_SOFT_INT_MASK_1) ||
-	    (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
+	/* software interrupts */
+	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
+	if (ipending == 0)
+		return;
 
-#define DO_SIR(bit, fn)						\
-	do {							\
-		if (n & (bit)) {				\
-			uvmexp.softs++;				\
-			fn;					\
-		}						\
-	} while (0)
+	_clrsoftintr(ipending);
 
-		unsigned n;
-		n = ssir; ssir = 0;
-		_clrsoftintr(MIPS_SOFT_INT_MASK_1);
-
-#if NZSC > 0
-		DO_SIR(SIR_SERIAL, zssoft());
-#endif
-		DO_SIR(SIR_NET, netintr());
-#undef DO_SIR
-	}
-
-	/* 'softclock' interrupt */
-	if (ipending & MIPS_SOFT_INT_MASK_0) {
-		_clrsoftintr(MIPS_SOFT_INT_MASK_0);
-		uvmexp.softs++;
-		intrcnt[SOFTCLOCK_INTR]++;
-		softclock(NULL);
-	}
+	softintr_dispatch(ipending);
 }
