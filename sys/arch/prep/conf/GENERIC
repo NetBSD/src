@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.61 2003/01/16 06:59:19 matt Exp $
+# $NetBSD: GENERIC,v 1.62 2003/01/16 07:23:06 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.61 $"
+#ident		"GENERIC-$Revision: 1.62 $"
 
 maxusers	32
 
@@ -298,6 +298,11 @@ cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
+# Miscellaneous mass storage devices
+
+# ISA Floppy
+fdc0 at isa? port 0x3f0 irq 6 drq 2	# standard ISA floppy controller
+fd0 at fdc0 drive ?
 
 # Network Interfaces
 
