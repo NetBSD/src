@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.5.14.1 2004/08/03 10:30:47 skrll Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.5.14.2 2004/08/12 16:15:32 skrll Exp $	*/
 /*	$KAME: altq_blue.c,v 1.8 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.5.14.1 2004/08/03 10:30:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.5.14.2 2004/08/12 16:15:32 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -126,20 +126,20 @@ static int blue_request __P((struct ifaltq *, int, void *));
 altqdev_decl(blue);
 
 int
-blueopen(dev, flag, fmt, p)
+blueopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
 }
 
 int
-blueclose(dev, flag, fmt, p)
+blueclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	blue_queue_t *rqp;
 	int err, error = 0;
@@ -155,16 +155,17 @@ blueclose(dev, flag, fmt, p)
 }
 
 int
-blueioctl(dev, cmd, addr, flag, p)
+blueioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	blue_queue_t *rqp;
 	struct blue_interface *ifacep;
 	struct ifnet *ifp;
+	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */

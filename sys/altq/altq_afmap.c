@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.5.16.1 2004/08/03 10:30:47 skrll Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.5.16.2 2004/08/12 16:15:32 skrll Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.5.16.1 2004/08/03 10:30:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.5.16.2 2004/08/12 16:15:32 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -330,19 +330,19 @@ afm_match(ifp, flow)
 altqdev_decl(afm);
 
 int
-afmopen(dev, flag, fmt, p)
+afmopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	return 0;
 }
 
 int
-afmclose(dev, flag, fmt, p)
+afmclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int err, error = 0;
 	struct atm_flowmap fmap;
@@ -358,7 +358,7 @@ afmclose(dev, flag, fmt, p)
 		sprintf(fmap.af_ifname, "%s%d",
 			head->afh_ifp->if_name, head->afh_ifp->if_unit);
 #endif
-		err = afmioctl(dev, AFM_CLEANFMAP, (caddr_t)&fmap, flag, p);
+		err = afmioctl(dev, AFM_CLEANFMAP, (caddr_t)&fmap, flag, l);
 		if (err && error == 0)
 			error = err;
 	}
@@ -367,16 +367,17 @@ afmclose(dev, flag, fmt, p)
 }
 
 int
-afmioctl(dev, cmd, addr, flag, p)
+afmioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int	error = 0;
 	struct atm_flowmap *flowmap;
 	struct ifnet *ifp;
+	struct proc *p = l->l_proc;
 
 	/* check cmd for superuser only */
 	switch (cmd) {
