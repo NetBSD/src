@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.23 1996/06/06 16:17:44 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.24 1996/10/06 00:14:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -1216,60 +1216,93 @@ sdsize(dev)
 	return (psize);
 }
 
+static int sddoingadump;	/* simple mutex */
+
 /*
  * Non-interrupt driven, non-dma dump routine.
  */
 int
-sddump(dev)
+sddump(dev, blkno, va, size)
 	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
-	int part = sdpart(dev);
-	int unit = sdunit(dev);
-	register struct sd_softc *sc = &sd_softc[unit];
-	register struct hp_device *hp = sc->sc_hd;
-	register struct partition *pinfo;
-	register daddr_t baddr;
-	register int maddr;
-	register int pages, i;
-	int stat;
-	extern int lowram, dumpsize;
+	int sectorsize;		/* size of a disk sector */
+	int nsects;		/* number of sectors in partition */
+	int sectoff;		/* sector offset of partition */
+	int totwrt;		/* total number of sectors left to write */
+	int nwrt;		/* current number of sectors to write */
+	int unit, part;
+	struct sd_softc *sc;
+	struct hp_device *hp;
+	struct disklabel *lp;
+	daddr_t baddr;
+	char stat;
 
-	/* is drive ok? */
-	if (unit >= NSD || (sc->sc_flags & SDF_ALIVE) == 0)
+	/* Check for recursive dump; if so, punt. */
+	if (sddoingadump)
+		return (EFAULT);
+	sddoingadump = 1;
+
+	/* Decompose unit and partition. */
+	unit = sdunit(dev);
+	part = sdpart(dev);
+
+	/* Make sure device is ok. */
+	if (unit >= NSD)
 		return (ENXIO);
-	pinfo = &sc->sc_dkdev.dk_label->d_partitions[part];
-	/* dump parameters in range? */
-	if (dumplo < 0 || dumplo >= pinfo->p_size ||
-	    pinfo->p_fstype != FS_SWAP)
+	sc = &sd_softc[unit];
+	if ((sc->sc_flags & SDF_ALIVE) == 0)
+		return (ENXIO);
+	hp = sc->sc_hd;
+
+	/*
+	 * Convert to disk sectors.  Request must be a multiple of size.
+	 */
+	lp = sc->sc_dkdev.dk_label;
+	sectorsize = lp->d_secsize;
+	if ((size % sectorsize) != 0)
+		return (EFAULT);
+	totwrt = size / sectorsize;
+	blkno = dbtob(blkno) / sectorsize;	/* blkno in DEV_BSIZE units */
+
+	nsects = lp->d_partitions[part].p_size;
+	sectoff = lp->d_partitions[part].p_offset;
+
+	/* Check transfer bounds against partition size. */
+	if ((blkno < 0) || (blkno + totwrt) > nsects)
 		return (EINVAL);
-	pages = dumpsize;
-	if (dumplo + ctod(pages) > pinfo->p_size)
-		pages = dtoc(pinfo->p_size - dumplo);
-	maddr = lowram;
-	baddr = dumplo + pinfo->p_offset;
-	/* scsi bus idle? */
-	if (!scsireq(&sc->sc_dq)) {
-		scsireset(hp->hp_ctlr);
-		sdreset(sc, sc->sc_hd);
-		printf("[ drive %d reset ] ", unit);
-	}
-	for (i = 0; i < pages; i++) {
-#define NPGMB	(1024*1024/NBPG)
-		/* print out how many Mbs we have dumped */
-		if (i && (i % NPGMB) == 0)
-			printf("%d ", i / NPGMB);
-#undef NPBMG
-		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
-		    VM_PROT_READ, TRUE);
+
+	/* Offset block number to start of partition. */
+	blkno += sectoff;
+
+	while (totwrt > 0) {
+		nwrt = totwrt;		/* XXX */
+#ifndef SD_DUMP_NOT_TRUSTED
+		/*
+		 * Send the data.  Note the `0' argument for bshift;
+		 * we've done the necessary conversion above.
+		 */
 		stat = scsi_tt_write(hp->hp_ctlr, hp->hp_slave, sc->sc_punit,
-				     vmmap, NBPG, baddr, sc->sc_bshift);
+		    va, nwrt * sectorsize, blkno, 0);
 		if (stat) {
-			printf("sddump: scsi write error 0x%x\n", stat);
+			printf("\nsddump: scsi write error 0x%x\n", stat);
 			return (EIO);
 		}
-		maddr += NBPG;
-		baddr += ctod(1);
+#else /* SD_DUMP_NOT_TRUSTED */
+		/* Lets just talk about it first. */
+		printf("%s: dump addr %p, blk %d\n", hp->hp_xname,
+		    va, blkno);
+		delay(500 * 1000);	/* half a second */
+#endif /* SD_DUMP_NOT_TRUSTED */
+
+		/* update block count */
+		totwrt -= nwrt;
+		blkno += nwrt;
+		va += sectorsize * nwrt;
 	}
+	sddoingadump = 0;
 	return (0);
 }
 #endif
