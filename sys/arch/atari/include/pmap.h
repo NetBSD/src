@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27.4.3 2002/06/24 22:04:11 nathanw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27.4.4 2002/07/02 19:12:27 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -156,8 +156,8 @@ struct pmap	kernel_pmap_store;
 #define	pmap_update(pmap)		/* nothing (yet) */
 
 #define	active_user_pmap(pm) \
-	(curproc && (pm) != pmap_kernel() && \
-	    (pm) == curproc->p_vmspace->vm_map.pmap)
+	(curproc && \
+	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
 void	pmap_bootstrap __P((psize_t, u_int, u_int));
 void	pmap_changebit __P((paddr_t, int, boolean_t));
