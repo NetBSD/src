@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.23 1999/09/09 12:26:44 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.24 1999/10/12 11:54:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -251,6 +251,7 @@ ugenopen(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
+	struct ugen_softc *sc;
 	int unit = UGENUNIT(dev);
 	int endpt = UGENENDPOINT(dev);
 	usb_endpoint_descriptor_t *edesc;
@@ -346,11 +347,12 @@ ugenclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 	int endpt = UGENENDPOINT(dev);
+	struct ugen_softc *sc;
 	struct ugen_endpoint *sce;
 	int dir;
 
+	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 	DPRINTFN(5, ("ugenclose: flag=%d, mode=%d, unit=%d, endpt=%d\n",
 		     flag, mode, UGENUNIT(dev), endpt));
 
@@ -502,10 +504,11 @@ ugenread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 	int endpt = UGENENDPOINT(dev);
+	struct ugen_softc *sc;
 	int error;
 
+	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 	sc->sc_refcnt++;
 	error = ugen_do_read(sc, endpt, uio, flag);
 	if (--sc->sc_refcnt < 0)
@@ -576,10 +579,11 @@ ugenwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 	int endpt = UGENENDPOINT(dev);
+	struct ugen_softc *sc;
 	int error;
 
+	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 	sc->sc_refcnt++;
 	error = ugen_do_write(sc, endpt, uio, flag);
 	if (--sc->sc_refcnt < 0)
@@ -1072,10 +1076,11 @@ ugenioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 	int endpt = UGENENDPOINT(dev);
+	struct ugen_softc *sc;
 	int error;
 
+	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 	sc->sc_refcnt++;
 	error = ugen_do_ioctl(sc, endpt, cmd, addr, flag, p);
 	if (--sc->sc_refcnt < 0)
@@ -1089,11 +1094,12 @@ ugenpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	struct ugen_softc *sc;
 	struct ugen_endpoint *sce;
 	int revents = 0;
 	int s;
 
+	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 	if (sc->sc_dying)
 		return (EIO);
 
