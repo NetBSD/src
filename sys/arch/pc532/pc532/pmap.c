@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 1996/02/12 21:19:13 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 1996/10/09 07:45:20 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -79,6 +79,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/user.h>
@@ -177,6 +178,14 @@ TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
 pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+struct pv_entry * pmap_alloc_pv __P((void));
+void pmap_free_pv __P((struct pv_entry *));
+void ns532_protection_init __P((void));
+void pmap_collect_pv __P((void));
+__inline void pmap_remove_pv __P((pmap_t, vm_offset_t, u_int));
+__inline void pmap_enter_pv __P((pmap_t, vm_offset_t, u_int));
+void pmap_deactivate __P((pmap_t, struct pcb *));
+void pmap_remove_all __P((vm_offset_t));
 
 #if BSDVM_COMPAT
 #include <sys/msgbuf.h>
@@ -241,9 +250,6 @@ pmap_bootstrap(virtual_start)
 	vm_offset_t va;
 	pt_entry_t *pte;
 #endif
-	extern int physmem;
-	extern vm_offset_t reserve_dumppages(vm_offset_t);
-
 	/* XXX: allow for msgbuf */
 	avail_end -= ns532_round_page(sizeof(struct msgbuf));
 
@@ -296,9 +302,8 @@ pmap_init(phys_start, phys_end)
 	vm_offset_t phys_start;
 	vm_offset_t phys_end;
 {
-	vm_offset_t addr, addr2;
+	vm_offset_t addr;
 	vm_size_t s;
-	int rv;
 
 	if (PAGE_SIZE != NBPG)
 		panic("pmap_init: CLSIZE != 1");
@@ -366,7 +371,6 @@ pmap_free_pv(pv)
 	struct pv_entry *pv;
 {
 	register struct pv_page *pvp;
-	register int i;
 
 	pvp = (struct pv_page *) trunc_page(pv);
 	switch (++pvp->pvp_pgi.pgi_nfree) {
@@ -839,7 +843,9 @@ reduce wiring count on page table pages as references drop
 
 		*pte = 0;
 
+#ifndef __GNUC__
 	next:
+#endif
 		sva += NBPG;
 		pte++;
 	}
@@ -1022,7 +1028,9 @@ pmap_protect(pmap, sva, eva, prot)
 			ns532prot |= PG_u | PG_RW;
 		pmap_pte_set_prot(pte, ns532prot);
 
+#ifndef __GNUC__
 	next:
+#endif
 		sva += NBPG;
 		pte++;
 	}
@@ -1095,7 +1103,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 		/*
 		 * Check for wiring change and adjust statistics.
 		 */
-		if (wired && !pmap_pte_w(pte) || !wired && pmap_pte_w(pte)) {
+		if ((wired && !pmap_pte_w(pte)) ||
+		    (!wired && pmap_pte_w(pte))) {
 			/*
 			 * We don't worry about wiring PT pages as they remain
 			 * resident as long as there are valid mappings in them.
@@ -1210,7 +1219,7 @@ validate:
 	 * NOTE: we only support cache flush for read only text.
 	 */
 	if (prot == (VM_PROT_READ | VM_PROT_EXECUTE))
-		__asm __volatile("cinv ia,r0");
+		cinv(ia, 0);
 }
 
 /*
@@ -1272,7 +1281,7 @@ pmap_change_wiring(pmap, va, wired)
 	}
 #endif
 
-	if (wired && !pmap_pte_w(pte) || !wired && pmap_pte_w(pte)) {
+	if ((wired && !pmap_pte_w(pte)) || (!wired && pmap_pte_w(pte))) {
 		if (wired)
 			pmap->pm_stats.wired_count++;
 		else
@@ -1388,12 +1397,6 @@ void
 pmap_collect(pmap)
 	pmap_t pmap;
 {
-	register vm_offset_t pa;
-	register struct pv_entry *pv;
-	register pt_entry_t *pte;
-	vm_offset_t kpa;
-	int s;
-
 #ifdef DEBUG
 	printf("pmap_collect(%x) ", pmap);
 #endif
@@ -1557,6 +1560,7 @@ pmap_pageable(pmap, sva, eva, pageable)
  * Miscellaneous support routines follow
  */
 
+void
 ns532_protection_init()
 {
 
