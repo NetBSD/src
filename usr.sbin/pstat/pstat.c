@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.86 2004/02/22 12:30:11 jdc Exp $	*/
+/*	$NetBSD: pstat.c,v 1.87 2004/12/09 01:14:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.86 2004/02/22 12:30:11 jdc Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.87 2004/12/09 01:14:59 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -901,7 +901,7 @@ filemode()
 	nfile = (len - sizeof(struct filelist)) / sizeof(struct file);
 
 	(void)printf("%d/%d open files\n", nfile, maxfile);
-	(void)printf("%*s%s%*s TYPE    FLG     CNT  MSG  %*s%s%*s  OFFSET\n",
+	(void)printf("%*s%s%*s TYPE    FLG     CNT  MSG  %*s%s%*s USE IFLG OFFSET\n",
 	    (PTRSTRWIDTH - 4) / 2, "", " LOC", (PTRSTRWIDTH - 4) / 2, "",
 	    (PTRSTRWIDTH - 4) / 2, "", "DATA", (PTRSTRWIDTH - 4) / 2, "");
 	for (; (char *)fp < offset + len; addr = fp->f_list.le_next, fp++) {
@@ -915,6 +915,8 @@ filemode()
 		PRWORD(ovflw, " %*d", 5, 1, fp->f_count);
 		PRWORD(ovflw, " %*d", 5, 1, fp->f_msgcount);
 		PRWORD(ovflw, "  %*lx", PTRSTRWIDTH + 1, 2, (long)fp->f_data);
+		PRWORD(ovflw, " %*d", 5, 1, fp->f_usecount);
+		PRWORD(ovflw, " %*x", 5, 1, fp->f_iflags);
 		if (fp->f_offset < 0)
 			PRWORD(ovflw, "  %-*lld\n", PTRSTRWIDTH + 1, 2,
 			    (long long)fp->f_offset);
