@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.7 2002/09/01 11:40:54 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.8 2002/09/04 14:04:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -126,7 +126,7 @@
 	andi	r0, 1, r0						      ;\
 	bne/u	r0, r63, tr0		/* Skip FP save if FPU disabled */    ;\
 	andi	mdf, MDP_FPSAVED, r0	/* Skip FP save if already done */    ;\
-	beq/u	r0, r63, tr0						      ;\
+	bne/u	r0, r63, tr0						      ;\
 	shlri	r1, 8, mdf						      ;\
 	andi	mdf, 0xff, mdf						      ;\
 	cmpgt	mdf, r63, mdf		/* mdf = MDP_FPUSED if fpregs dirty */;\
@@ -371,10 +371,10 @@ Lsw2:
 	ptabs/l	r0, tr0
 	or	r2, r63, r28		/* Save new proc in r28 */
 	blink	tr0, r18
-	LDPTR	r28, P_ADDR, r3		/* Fetch new process' pcb */
 	or	r28, r63, r2		/* new proc to r2 */
 
 2:
+	LDPTR	r2, P_ADDR, r3		/* Fetch new process' pcb */
 	LDPTR	r2, P_MD_REGS, r1	/* Fetch pointer to trapframe */
 	ld.l	r2, P_MD_FLAGS, r4
 	ld.q	r1, TF_USR, r1		/* Fetch saved USR */
@@ -398,7 +398,7 @@ Lsw2:
 	LDPTR	r0, CI_CURPROC, r1	/* Fetch curproc */
 	movi	SONPROC, r2		/* Flag process as running */
 	st.b	r1, P_STAT, r2
-	st.l	r1, CI_WANT_RESCHED, r63 /* We've rescheduled */
+	st.l	r0, CI_WANT_RESCHED, r63 /* We've rescheduled */
 
 	LDPTR	r0, CI_CURPCB, r0	/* Fetch curpcb */
 	ld.q	r0, PCB_CTX_SR, r0	/* Fetch saved status register */
