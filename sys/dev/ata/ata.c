@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.30 2004/08/01 21:40:41 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.31 2004/08/02 22:02:35 bouyer Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.30 2004/08/01 21:40:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.31 2004/08/02 22:02:35 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -158,14 +158,12 @@ atabus_thread(void *arg)
 			break;
 		s = splbio();
 		if (chp->ch_flags & WDCF_TH_RESET) {
-			int drive;
-
-			(void) wdcreset(chp, RESET_SLEEP);
-			for (drive = 0; drive < 2; drive++)
-				chp->ch_drive[drive].state = 0;
-			chp->ch_flags &= ~WDCF_TH_RESET;
+			/*
+			 * wdc_reset_channel() will freeze 2 times, so
+			 * unfreeze one time. Not a problem as we're at splbio
+			 */
 			chp->ch_queue->queue_freeze--;
-			wdcstart(chp);
+			wdc_reset_channel(chp, AT_WAIT | chp->ch_reset_flags);
 		} else if ((chp->ch_flags & WDCF_ACTIVE) != 0 &&
 			   chp->ch_queue->queue_freeze == 1) {
 			/*
