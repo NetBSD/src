@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.8 1999/09/12 19:37:48 aidan Exp $	*/
+/*	$NetBSD: auth.h,v 1.9 2003/07/15 10:14:55 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -71,7 +71,7 @@ typedef struct XauthP {
 	int	(*send) __P((struct XauthP *));
 	void	(*is) __P((struct XauthP *, unsigned char *, int));
 	void	(*reply) __P((struct XauthP *, unsigned char *, int));
-	int	(*status) __P((struct XauthP *, char *, int));
+	int	(*status) __P((struct XauthP *, char *, size_t, int));
 	void	(*printsub) __P((unsigned char *, int, unsigned char *, int));
 } Authenticator;
 

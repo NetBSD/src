@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos.c,v 1.11 2003/07/15 05:09:35 itojun Exp $	*/
+/*	$NetBSD: kerberos.c,v 1.12 2003/07/15 10:14:55 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kerberos.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: kerberos.c,v 1.11 2003/07/15 05:09:35 itojun Exp $");
+__RCSID("$NetBSD: kerberos.c,v 1.12 2003/07/15 10:14:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -434,16 +434,17 @@ kerberos4_reply(ap, data, cnt)
 }
 
 	int
-kerberos4_status(ap, kname, level)
+kerberos4_status(ap, kname, l, level)
 	Authenticator *ap;
 	char *kname;
+	size_t l;
 	int level;
 {
 	if (level < AUTH_USER)
 		return(level);
 
 	if (UserNameRequested && !kuserok(&adat, UserNameRequested)) {
-		strcpy(kname, UserNameRequested);
+		strlcpy(kname, UserNameRequested, l);
 		return(AUTH_VALID);
 	} else
 		return(AUTH_USER);

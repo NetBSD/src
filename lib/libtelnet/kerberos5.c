@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.10 2002/09/20 22:25:49 thorpej Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.11 2003/07/15 10:14:55 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -577,14 +577,14 @@ kerberos5_reply(Authenticator * ap, unsigned char *data, int cnt)
 }
 
 int
-kerberos5_status(Authenticator *ap, char *name, int level)
+kerberos5_status(Authenticator *ap, char *name, size_t l, int level)
 {
 	if (level < AUTH_USER)
 		return (level);
 
 	if (UserNameRequested &&
 	    krb5_kuserok(telnet_context, ticket->client, UserNameRequested)) {
-		strcpy(name, UserNameRequested);
+		strlcpy(name, UserNameRequested, l);
 		return (AUTH_VALID);
 	} else
 		return (AUTH_USER);
