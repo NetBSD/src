@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.29 2000/06/18 21:41:23 itojun Exp $	*/
+/*	$NetBSD: res_send.c,v 1.30 2000/07/06 03:01:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.29 2000/06/18 21:41:23 itojun Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.30 2000/07/06 03:01:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -209,14 +209,14 @@ get_nsaddr(n)
 		 *   than struct sockaddr, and
 		 * - user code did not update _res.nsaddr_list[n].
 		 */
-		return (struct sockaddr *)&_res_ext.nsaddr_list[n];
+		return (struct sockaddr *)(void *)&_res_ext.nsaddr_list[n];
 	} else {
 		/*
 		 * - user code updated _res.nsaddr_list[n], or
 		 * - _res.nsaddr_list[n] has the same content as
 		 *   _res_ext.nsaddr_list[n].
 		 */
-		return (struct sockaddr *)&_res.nsaddr_list[n];
+		return (struct sockaddr *)(void *)&_res.nsaddr_list[n];
 	}
 }
 #else
@@ -237,7 +237,8 @@ res_isourserver(inp)
 	const struct sockaddr_in *inp;
 {
 #ifdef INET6
-	const struct sockaddr_in6 *in6p = (const struct sockaddr_in6 *)inp;
+	const struct sockaddr_in6 *in6p = (const struct sockaddr_in6 *)
+	    (const void *)inp;
 	const struct sockaddr_in6 *srv6;
 #endif
 	const struct sockaddr_in *srv;
@@ -250,7 +251,8 @@ res_isourserver(inp)
 #ifdef INET6
 	case AF_INET6:
 		for (ns = 0; ns < _res.nscount; ns++) {
-			srv6 = (struct sockaddr_in6 *)get_nsaddr(ns);
+			srv6 = (struct sockaddr_in6 *)(void *)
+			    get_nsaddr((size_t)ns);
 			if (srv6->sin6_family == in6p->sin6_family &&
 			    srv6->sin6_port == in6p->sin6_port &&
 			    srv6->sin6_scope_id == in6p->sin6_scope_id &&
@@ -266,7 +268,8 @@ res_isourserver(inp)
 #endif
 	case AF_INET:
 		for (ns = 0; ns < _res.nscount; ns++) {
-			srv = (struct sockaddr_in *)get_nsaddr(ns);
+			srv = (struct sockaddr_in *)
+			    (void *)get_nsaddr((size_t)ns);
 			if (srv->sin_family == inp->sin_family &&
 			    srv->sin_port == inp->sin_port &&
 			    (srv->sin_addr.s_addr == INADDR_ANY ||
@@ -409,7 +412,7 @@ res_send(buf, buflen, ans, anssiz)
 	 */
 	for (try = 0; try < _res.retry; try++) {
 	    for (ns = 0; ns < _res.nscount; ns++) {
-		struct sockaddr *nsap = get_nsaddr(ns);
+		struct sockaddr *nsap = get_nsaddr((size_t)ns);
 		socklen_t salen;
 
 		if (nsap->sa_len)
@@ -717,8 +720,8 @@ read_len:
 					connected = 0;
 					errno = 0;
 				}
-				if (sendto(s, (char*)buf, buflen, 0,
-					   nsap, salen) != buflen) {
+				if (sendto(s, buf, (size_t)buflen, 0,
+				    nsap, salen) != buflen) {
 					Aerror(stderr, "sendto", errno, nsap);
 					badns |= (1 << ns);
 					res_close();
@@ -791,7 +794,8 @@ wait:
 			}
 #if CHECK_SRVR_ADDR
 			if (!(_res.options & RES_INSECURE1) &&
-			    !res_isourserver((struct sockaddr_in *)&from)) {
+			    !res_isourserver(
+			    (struct sockaddr_in *)(void *)&from)) {
 				/*
 				 * response from wrong server? ignore it.
 				 * XXX - potential security hazard could
@@ -868,9 +872,9 @@ wait:
 			do {
 				res_sendhookact act;
 
-				act = (*Rhook)((struct sockaddr_in *)nsap,
-					       buf, buflen,
-					       ans, anssiz, &resplen);
+				act = (*Rhook)(
+				    (struct sockaddr_in *)(void *)nsap,
+				    buf, buflen, ans, anssiz, &resplen);
 				switch (act) {
 				case res_goahead:
 				case res_done:
