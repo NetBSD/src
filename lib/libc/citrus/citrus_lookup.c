@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_lookup.c,v 1.1 2003/06/25 09:51:34 tshiozak Exp $	*/
+/*	$NetBSD: citrus_lookup.c,v 1.2 2003/06/26 12:05:04 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lookup.c,v 1.1 2003/06/25 09:51:34 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_lookup.c,v 1.2 2003/06/26 12:05:04 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -120,9 +120,10 @@ seq_lookup_db(struct _citrus_lookup *cl, const char *key,
 	cl->cl_rewind = 0;
 	free(cl->cl_key);
 	cl->cl_key = strdup(key);
-	cl->cl_keylen = strlen(key);
+	_bcs_convert_to_lower(cl->cl_key);
+	cl->cl_keylen = strlen(cl->cl_key);
 	_db_locator_init(&cl->cl_dblocator);
-	return _db_lookup_by_s(cl->cl_db, key, data, &cl->cl_dblocator);
+	return _db_lookup_by_s(cl->cl_db, cl->cl_key, data, &cl->cl_dblocator);
 }
 
 static void
@@ -226,13 +227,14 @@ seq_lookup_plain(struct _citrus_lookup *cl, const char *key,
 	const char *p;
 
 	cl->cl_rewind = 0;
-	_memstream_bind(&cl->cl_plainms, &cl->cl_plainr);
-	p = _memstream_matchline(&cl->cl_plainms, key, &len, 0);
-	if (p == NULL)
-		return ENOENT;
 	free(cl->cl_key);
 	cl->cl_key = strdup(key);
-	cl->cl_keylen = strlen(key);
+	_bcs_convert_to_lower(cl->cl_key);
+	cl->cl_keylen = strlen(cl->cl_key);
+	_memstream_bind(&cl->cl_plainms, &cl->cl_plainr);
+	p = _memstream_matchline(&cl->cl_plainms, cl->cl_key, &len, 0);
+	if (p == NULL)
+		return ENOENT;
 	if (data)
 		/* LINTED: discard const */
 		_region_init(data, (char *)p, len);

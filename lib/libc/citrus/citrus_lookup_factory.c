@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_lookup_factory.c,v 1.1 2003/06/25 09:51:35 tshiozak Exp $	*/
+/*	$NetBSD: citrus_lookup_factory.c,v 1.2 2003/06/26 12:05:04 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lookup_factory.c,v 1.1 2003/06/25 09:51:35 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_lookup_factory.c,v 1.2 2003/06/26 12:05:04 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -67,6 +67,7 @@ convert_line(struct _citrus_db_factory *df, const char *line, size_t len)
 	if (p==line)
 		return 0;
 	snprintf(key, sizeof(key), "%.*s", (int)(p-line), line);
+	_bcs_convert_to_lower(key);
 
 	/* data */
 	line = _bcs_skip_ws_len(p, &len);
