@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.15 1994/11/20 21:29:33 deraadt Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.16 1995/03/04 09:50:07 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -35,7 +35,7 @@
 #include <sys/termios.h>
 #include <sys/tty.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
+#include <sys/audioio.h>
 #include <net/if.h>
 
 #include <sys/mount.h>
@@ -655,6 +655,82 @@ sunos_ioctl(p, uap, retval)
 			return error;
 		return copyout ((caddr_t)&ifconf, SCARG(uap, data),
 		    sizeof (ifconf));
+	    }
+
+/*
+ * Audio ioctl translations.
+ */
+	case _IOR('A', 1, struct sunos_audio_info):	/* AUDIO_GETINFO */
+	    {
+		struct audio_info aui;
+		struct sunos_audio_info sunos_aui;
+
+		if (error = (*ctl)(fp, AUDIO_GETINFO, (caddr_t)&aui, p))
+			return error;
+
+		sunos_aui.play = *(struct sunos_audio_prinfo *)&aui.play;
+		sunos_aui.record = *(struct sunos_audio_prinfo *)&aui.record;
+		sunos_aui.monitor_gain = aui.__spare; /* XXX */
+
+		/* `avail_ports' is `seek' in BSD */
+#define AUDIO_SPEAKER	1
+#define AUDIO_HEADPHONE	2
+		sunos_aui.play.avail_ports = AUDIO_SPEAKER | AUDIO_HEADPHONE;
+		sunos_aui.record.avail_ports = AUDIO_SPEAKER | AUDIO_HEADPHONE;
+
+		sunos_aui.play.waiting = 0;
+		sunos_aui.record.waiting = 0;
+		sunos_aui.play.eof = 0;
+		sunos_aui.record.eof = 0;
+
+		return copyout ((caddr_t)&sunos_aui, SCARG(uap, data),
+				sizeof (sunos_aui));
+	    }
+
+	case _IOWR('A', 2, struct sunos_audio_info):	/* AUDIO_SETINFO */
+	    {
+		struct audio_info aui;
+		struct sunos_audio_info sunos_aui;
+
+		if (error = copyin (SCARG(uap, data), (caddr_t)&sunos_aui,
+		    sizeof (sunos_aui)))
+			return error;
+
+		aui.play = *(struct audio_prinfo *)&sunos_aui.play;
+		aui.record = *(struct audio_prinfo *)&sunos_aui.record;
+		aui.__spare = sunos_aui.monitor_gain;
+		aui.blocksize = ~0;
+		aui.hiwat = ~0;
+		aui.lowat = ~0;
+		aui.backlog = ~0;
+		/*
+		 * The bsd driver does not distinguish between paused and
+		 * active. (In the sun driver, not active means samples are
+		 * not ouput at all, but paused means the last streams buffer
+		 * is drained and then output stops.)  If either are 0, then
+		 * when stop output. Otherwise, if either are non-zero,
+		 * we resume.
+		 */
+		if (sunos_aui.play.pause == 0 || sunos_aui.play.active == 0)
+			aui.play.pause = 0;
+		else if (sunos_aui.play.pause != (u_char)~0 ||
+			 sunos_aui.play.active != (u_char)~0)
+			aui.play.pause = 1;
+		if (sunos_aui.record.pause == 0 || sunos_aui.record.active == 0)
+			aui.record.pause = 0;
+		else if (sunos_aui.record.pause != (u_char)~0 ||
+			 sunos_aui.record.active != (u_char)~0)
+			aui.record.pause = 1;
+
+		return (*ctl)(fp, AUDIO_SETINFO, (caddr_t)&aui, p);
+	    }
+	case _IO('A', 3):	/* AUDIO_DRAIN */
+		return (*ctl)(fp, AUDIO_DRAIN, (void *)0, p);
+	case _IOR('A', 4, int):	/* AUDIO_GETDEV */
+	    {
+		int devtype = SUNOS_AUDIO_DEV_AMD;
+		return copyout ((caddr_t)&devtype, SCARG(uap, data),
+				sizeof (devtype));
 	    }
 	}
 	return (ioctl(p, uap, retval));
