@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.1 2003/04/16 22:36:14 dsl Exp $
+# $NetBSD: Makefile.boot,v 1.2 2003/04/26 19:13:37 fvdl Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -37,7 +37,7 @@ CPPFLAGS+= -DX86_BOOT_MAGIC_2="('x' << 24 | 0x86b << 12 | 'm' << 4 | 2)"
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
 
-.if ${MACHINE} == "x86_64"
+.if ${MACHINE} == "amd64"
 LDFLAGS+=  -m elf_i386
 AFLAGS+=   -m32
 COPTS+=    -m32
