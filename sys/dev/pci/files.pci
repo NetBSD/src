@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.99 2000/06/25 23:34:27 gmcgarry Exp $
+#	$NetBSD: files.pci,v 1.100 2000/07/25 23:18:44 jeffs Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -255,6 +255,10 @@ file	dev/pci/pucdata.c		puc
 
 attach	com at puc with com_puc
 file	dev/pci/com_puc.c		com_puc
+
+# Console device support for puc drivers
+defopt	opt_puccn.h			PUCCN
+file	dev/pci/puccn.c			puccn
 
 # XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
 # XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
