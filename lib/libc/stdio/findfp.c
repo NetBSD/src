@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.13 2000/01/21 19:55:02 mycroft Exp $	*/
+/*	$NetBSD: findfp.c,v 1.13.6.1 2001/08/08 16:27:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.13 2000/01/21 19:55:02 mycroft Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.13.6.1 2001/08/08 16:27:44 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,7 +78,7 @@ struct glue __sglue = { &uglue, 3, __sF };
 static struct glue *moreglue __P((int));
 void f_prealloc __P((void));
 
-#ifdef _REENT
+#ifdef _REENTRANT
 rwlock_t __sfp_lock = RWLOCK_INITIALIZER;
 #endif
 
