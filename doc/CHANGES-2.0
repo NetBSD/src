@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.188 2004/05/06 05:46:26 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.189 2004/05/06 05:54:02 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1898,3 +1898,8 @@ share/man/man4/cardbus.4			1.18
 	   cbb0: NOT USED because of unconfigured interrupt
 	on an i386-family system. PR#25386
 	[briggs, ticket #259]
+
+lib/libc/gen/endutxent.3			1.4
+
+	Thats "endutxent", not "entutxent".
+	[atatat, ticket #260]
