@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.43 2004/02/10 00:59:38 dyoung Exp $	*/
+/*	$NetBSD: wivar.h,v 1.43.2.1 2004/07/23 23:27:11 he Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -123,13 +123,15 @@ struct wi_softc	{
 	int			sc_buflen;
 #define	WI_NTXBUF	3
 #define	WI_NTXRSS	10
-	struct sc_txdesc {
+	struct {
 		int				d_fid;
-		int				d_len;
-		int				d_rate;
 	}			sc_txd[WI_NTXBUF];
-	int			sc_txnext;
-	int			sc_txcur;
+	int			sc_txalloc;	/* next FID to allocate */
+	int			sc_txalloced;	/* FIDs currently allocated */
+	int			sc_txqueue;	/* next FID to queue */
+	int			sc_txqueued;	/* FIDs currently queued */
+	int			sc_txstart;	/* next FID to start */
+	int			sc_txstarted;	/* FIDs currently started */
 	struct wi_rssdesc 	sc_rssd[WI_NTXRSS];
 	wi_rssdescq_t		sc_rssdfree;
 	int			sc_tx_timer;
