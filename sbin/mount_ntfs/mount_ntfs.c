@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ntfs.c,v 1.7 2002/10/01 09:20:35 itojun Exp $ */
+/* $NetBSD: mount_ntfs.c,v 1.8 2003/03/22 11:15:52 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.7 2002/10/01 09:20:35 itojun Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.8 2003/03/22 11:15:52 jdolecek Exp $");
 #endif
 
 #include <sys/cdefs.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: mount_ntfs.c,v 1.7 2002/10/01 09:20:35 itojun Exp $");
 #include <unistd.h>
 #include <util.h>
 
-#include "mntopts.h"
+#include <mntopts.h>
 #include <fattr.h>
 
 static const struct mntopt mopts[] = {

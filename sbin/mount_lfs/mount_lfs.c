@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.15 2003/02/18 13:16:48 jdolecek Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.16 2003/03/22 11:15:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.15 2003/02/18 13:16:48 jdolecek Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.16 2003/03/22 11:15:50 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: mount_lfs.c,v 1.15 2003/02/18 13:16:48 jdolecek Exp $");
 
 #include <signal.h>
 
-#include "mntopts.h"
+#include <mntopts.h>
 #include "pathnames.h"
 
 static const struct mntopt mopts[] = {

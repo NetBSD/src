@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.22 2002/09/21 18:43:37 christos Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.23 2003/03/22 11:15:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.22 2002/09/21 18:43:37 christos Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.23 2003/03/22 11:15:54 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ __RCSID("$NetBSD: mount_portal.c,v 1.22 2002/09/21 18:43:37 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "mntopts.h"
+#include <mntopts.h>
 #include "pathnames.h"
 #include "portald.h"
 

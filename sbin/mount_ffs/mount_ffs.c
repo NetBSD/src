@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ffs.c,v 1.13 2002/09/21 18:43:34 christos Exp $	*/
+/*	$NetBSD: mount_ffs.c,v 1.14 2003/03/22 11:15:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_ffs.c,v 1.13 2002/09/21 18:43:34 christos Exp $");
+__RCSID("$NetBSD: mount_ffs.c,v 1.14 2003/03/22 11:15:49 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: mount_ffs.c,v 1.13 2002/09/21 18:43:34 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "mntopts.h"
+#include <mntopts.h>
 
 static void	ffs_usage __P((void));
 int	main __P((int, char *[]));

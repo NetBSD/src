@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ext2fs.c,v 1.9 2002/09/21 18:43:33 christos Exp $	*/
+/*	$NetBSD: mount_ext2fs.c,v 1.10 2003/03/22 11:15:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_ext2fs.c,v 1.9 2002/09/21 18:43:33 christos Exp $");
+__RCSID("$NetBSD: mount_ext2fs.c,v 1.10 2003/03/22 11:15:48 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: mount_ext2fs.c,v 1.9 2002/09/21 18:43:33 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "mntopts.h"
+#include <mntopts.h>
 
 static void	ext2fs_usage __P((void));
 int	main __P((int, char *[]));

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_union.c,v 1.10 2003/03/19 18:35:08 christos Exp $	*/
+/*	$NetBSD: mount_union.c,v 1.11 2003/03/22 11:15:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_union.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_union.c,v 1.10 2003/03/19 18:35:08 christos Exp $");
+__RCSID("$NetBSD: mount_union.c,v 1.11 2003/03/22 11:15:56 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: mount_union.c,v 1.10 2003/03/19 18:35:08 christos Exp $");
 #include <unistd.h>
 #include <util.h>
 
-#include "mntopts.h"
+#include <mntopts.h>
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
