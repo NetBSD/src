@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.6 1995/12/24 02:30:58 mycroft Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.7 1996/03/07 15:00:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -37,6 +37,8 @@
 /*
  * Generic interface to hardware driver.
  */
+
+struct audio_softc;
 
 struct audio_hw_if {
 	int	(*open)__P((dev_t, int));	/* open hardware */
@@ -91,8 +93,10 @@ struct audio_hw_if {
 	void	(*sw_decode)__P((void *, int, u_char *, int));
 
 	/* Start input/output routines. These usually control DMA. */
-	int	(*start_output)__P((void *, void *, int, void (*)(), void *));
-	int	(*start_input)__P((void *, void *, int, void (*)(), void *));
+	int	(*start_output)__P((void *, void *, int,
+				    void (*)(void *), void *));
+	int	(*start_input)__P((void *, void *, int,
+				   void (*)(void *), void *));
 	int	(*halt_output)__P((void *));
 	int	(*halt_input)__P((void *));
 	int	(*cont_output)__P((void *));

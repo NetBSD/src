@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.7 1996/03/01 01:42:04 gwr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.8 1996/03/07 15:00:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -98,6 +98,8 @@ static int	ncr5380_command __P((struct ncr5380_softc *));
 static int	ncr5380_status __P((struct ncr5380_softc *));
 static void	ncr5380_machine __P((struct ncr5380_softc *));
 
+void	ncr5380_abort __P((struct ncr5380_softc *));
+void	ncr5380_cmd_timeout __P((void *));
 /*
  * Action flags returned by the info_tranfer functions:
  * (These determine what happens next.)
@@ -162,8 +164,12 @@ int ncr5380_wait_phase_timo = 1000 * 10 * 300;	/* 5 min. */
 int ncr5380_wait_req_timo = 1000 * 50;	/* X2 = 100 mS. */
 int ncr5380_wait_nrq_timo = 1000 * 25;	/* X2 =  50 mS. */
 
+static __inline int ncr5380_wait_req __P((struct ncr5380_softc *));
+static __inline int ncr5380_wait_not_req __P((struct ncr5380_softc *));
+static __inline void ncr_sched_msgout __P((struct ncr5380_softc *, int));
+
 /* Return zero on success. */
-static __inline__ int ncr5380_wait_req(sc)
+static __inline int ncr5380_wait_req(sc)
 	struct ncr5380_softc *sc;
 {
 	register int timo = ncr5380_wait_req_timo;
@@ -180,7 +186,7 @@ static __inline__ int ncr5380_wait_req(sc)
 }
 
 /* Return zero on success. */
-static __inline__ int ncr5380_wait_not_req(sc)
+static __inline int ncr5380_wait_not_req(sc)
 	struct ncr5380_softc *sc;
 {
 	register int timo = ncr5380_wait_nrq_timo;
@@ -197,7 +203,7 @@ static __inline__ int ncr5380_wait_not_req(sc)
 }
 
 /* Ask the target for a MSG_OUT phase. */
-static __inline__ void
+static __inline void
 ncr_sched_msgout(sc, msg_code)
 	struct ncr5380_softc *sc;
 	int msg_code;
@@ -802,7 +808,7 @@ ncr5380_sched(sc)
 {
 	struct sci_req	*sr;
 	struct scsi_xfer *xs;
-	int	target, lun;
+	int	target = 0, lun = 0;
 	int	error, i;
 
 	/* Another hack (Er.. hook!) for the sun3 si: */
@@ -977,7 +983,8 @@ next_job:
 #ifdef	DIAGNOSTIC
 	if ((xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) == 0) {
 		if (sc->sc_dataptr) {
-			printf("%s: ptr but no data in/out flags?\n");
+			printf("%s: ptr but no data in/out flags?\n",
+			    sc->sc_dev.dv_xname);
 			NCR_BREAK();
 			sc->sc_dataptr = NULL;
 		}
@@ -1273,7 +1280,7 @@ ncr5380_select(sc, sr)
 	struct sci_req *sr;
 {
 	int timo, s;
-	u_char bus, data, icmd;
+	u_char data, icmd;
 
 	/* Check for reselect */
 	ncr5380_reselect(sc);
@@ -1511,7 +1518,7 @@ ncr5380_msg_in(sc)
 	register struct ncr5380_softc *sc;
 {
 	struct sci_req *sr = sc->sc_current;
-	int n, phase, timo;
+	int n, phase;
 	int act_flags;
 	register u_char icmd;
 
@@ -2012,7 +2019,7 @@ ncr5380_data_xfer(sc, phase)
 	struct sci_req *sr = sc->sc_current;
 	struct scsi_xfer *xs = sr->sr_xs;
 	int expected_phase;
-	int i, len;
+	int len;
 
 	if (sr->sr_flags & SR_SENSE) {
 		NCR_TRACE("data_xfer: get sense, sr=0x%x\n", (long)sr);
@@ -2103,7 +2110,6 @@ ncr5380_status(sc)
 	int len;
 	u_char status;
 	struct sci_req *sr = sc->sc_current;
-	struct scsi_xfer *xs = sr->sr_xs;
 
 	/* acknowledge phase change */
 	*sc->sci_tcmd = PHASE_STATUS;
