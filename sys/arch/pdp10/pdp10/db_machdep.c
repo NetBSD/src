@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.1 2003/08/19 10:55:00 ragge Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.2 2003/09/07 13:33:38 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -117,12 +117,6 @@ inst_unconditional_flow_transfer(int inst)
 
 db_addr_t
 branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
-{
-	return pc + 4;
-}
-
-db_addr_t
-next_instr_address(db_addr_t pc, boolean_t bd)
 {
 	return pc + 4;
 }
