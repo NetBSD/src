@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.13 1999/03/26 07:27:04 mrg Exp $	*/
+/*	$NetBSD: paths.h,v 1.13.2.1 2000/06/01 17:47:11 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -83,6 +83,7 @@
  * see the __CONCAT() macro from <sys/cdefs.h> for cpp examples.
  */
 #define	_PATH_DEV	"/dev/"
+#define	_PATH_EMUL_AOUT	"/emul/aout/"
 #define	_PATH_TMP	"/tmp/"
 #define	_PATH_VARDB	"/var/db/"
 #define	_PATH_VARRUN	"/var/run/"
