@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.78 2002/12/26 07:59:58 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.79 2002/12/26 08:06:17 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2754,4 +2754,10 @@ distrib/sparc/bootfs/Makefile			1.38
 	${INSTALLBOOT} runs) to ensure that boot.fs has a valid Sun disklabel.
 	Sparc boot floppies now boot.
 	[lukem, ticket #1044]
+
+etc/daily					1.47
+
+	fix /etc/security stderr redirection.
+	from rad@twig.com in PR bin/19553.
+	[grant, ticket #1046]
 
