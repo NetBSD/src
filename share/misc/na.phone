@@ -1,5 +1,5 @@
 # Area Code : City : State/Province : State/Province Abbrev.
-#	$NetBSD: na.phone,v 1.8 1997/04/01 07:36:12 mikel Exp $
+#	$NetBSD: na.phone,v 1.9 1997/04/17 07:02:33 mikel Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 201:Ashbury Park:New Jersey:NJ
 201:Newark:New Jersey:NJ
@@ -9,11 +9,11 @@
 205:Birmingham:Alabama:AL
 205:Huntsville:Alabama:AL
 206:Seattle:Washington:WA
-206:Tacoma:Washington:WA
 207::Maine:ME
 208::Idaho:ID
 209:Fresno:California:CA
 209:Stockton:California:CA
+210:Alamo:Texas:TX
 210:San Antonio:Texas:TX
 212:Manhattan:New York:NY
 212:New York City:New York:NY
@@ -33,6 +33,7 @@
 242::Bahamas:
 246::Barbados:
 250:Vancouver Island:British Columbia:BC
+253:Tacoma:Washington:WA
 264::Anguilla:
 268::Antigua:
 268::Barbuda:
@@ -134,8 +135,10 @@
 423:Chattanooga:Tennessee:TN
 423:Johnson City:Tennessee:TN
 423:Knoxville:Tennessee:TN
+425:Everett:Washington:WA
+425:Kent:Washington:WA
 441::Bermuda:
-501::Arkansas:AR
+501:Little Rock:Arkansas:AR
 502:Louisville:Kentucky:KY
 502:Paducah:Kentucky:KY
 502:Shelbyville:Kentucky:KY
@@ -153,7 +156,6 @@
 509:Walla Walla:Washington:WA
 510:Oakland:California:CA
 510:Berkeley:California:CA
-512:Alamo:Texas:TX
 512:Austin:Texas:TX
 512:Corpus Christi:Texas:TX
 513:Cincinnati:Ohio:OH
@@ -242,7 +244,9 @@
 712:Sioux City:Iowa:IA
 713:Houston:Texas:TX
 714:Anaheim:California:CA
-714:Orange County:California:CA
+714:Huntington Beach:California:CA
+714:Santa Ana:California:CA
+714:Tustin:California:CA
 715:Eau Claire:Wisconsin:WI
 715:Wausau:Wisconsin:WI
 716:Buffalo:New York:NY
@@ -304,6 +308,9 @@
 816:Kansas City:Missouri:MO
 816:Saint Joseph:Missouri:MO
 817:Arlington:Texas:TX
+817:Ft. Worth:Texas:TX
+817:Temple:Texas:TX
+817:Waco:Texas:TX
 818:Encino:California:CA
 818:North Hollywood:California:CA
 818:Pasadena:California:CA
@@ -318,6 +325,7 @@
 864:Greenville:South Carolina:SC
 869::Nevis:
 869::St. Kitts:
+870::Arkansas:AK
 901:Jackson:Tennessee:TN
 901:Memphis:Tennessee:TN
 902::Nova Scotia:NS
@@ -368,6 +376,9 @@
 941:Avon Park:Florida:FL
 941:Fort Myers:Florida:FL
 941:Winter Haven:Florida:FL
+949:Costa Mesa:California:CA
+949:Irvine:California:CA
+949:Newport Beach:California:CA
 954:Fort Lauderdale:Florida:FL
 954:Key West:Florida:FL
 970:Fort Collins:Colorado:CO
