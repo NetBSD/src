@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.2 2003/01/17 23:18:28 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.3 2003/03/05 05:56:26 jklos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -519,8 +519,8 @@ ENTRY(m68k_make_fpu_idle_frame)
 	frestore %sp@		| Effectively `resets' the FPU
 	fnop
 
-	/* Loading '0.0' from the constant rom will change FPU to "idle". */
-	fmovecrx #15,%fp0
+	/* Loading '0.0' will change FPU to "idle". */
+	fmove.x #0,%fp0
 	fnop
 
 	/* Save the resulting idle frame into the buffer */
