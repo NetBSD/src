@@ -1,10 +1,11 @@
-$NetBSD: acronyms.comp,v 1.50 2005/01/09 00:09:57 salo Exp $
+$NetBSD: acronyms.comp,v 1.51 2005/01/10 13:16:39 jmmv Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
 ADC	analog [to] digital converter
 ADPCM	adaptive differential pulse code modulation
 AGP	accelerated graphics port
+AM	amplitude modulation
 ANSI	american national standards institute
 API	application programming interface
 APIC	advanced programmable interrupt controller
@@ -65,6 +66,7 @@ EGA	enhanced graphics array
 EISA	extended industry standard architecture
 ELF	executable and linking format
 EPP	enhanced parallel port
+EPRML	extended partial response, maximum likelihood
 EPROM	erasable programmable read only memory
 ESDRAM	enhanced synchronous dynamic random access memory
 FAT	file allocation table
@@ -72,6 +74,7 @@ FBRAM	frame buffer random access memory
 FDDI	fiber distributed data interface
 FFS	fast file system
 FLOPS	floating [point] operations per second
+FM	frequency modulation
 FPM	fast page mode
 FQDN	fully qualified domain name
 FTP	file transfer protocol
@@ -126,6 +129,7 @@ LZW	Lempel Ziv Welch
 MAC	media access control
 MBR	master boot record
 MDRAM	multibank dynamic random access memory
+MFM	modified frequency modulation
 MIDI	musical instrument digital interface
 MIME	multipurpose internet mail extensions
 MIPS	million instructions per second
@@ -171,6 +175,7 @@ POTS	plain old telephone system
 PPP	point-to-point protocol
 PPPOA	point-to-point protocol over ATM
 PPPOE	point-to-point protocol over ethernet
+PRML	partial response, maximum likelihood
 PROM	programmable read only memory
 PTE	page table entry
 PTLA	pseudo top level aggregator
@@ -184,6 +189,7 @@ RFC	request for comments
 RGB	red green blue
 RISC	reduced instruction set computing
 RLE	run length encoding
+RLL	run length limited
 ROM	read only memory
 RPM	revolutions per minute
 RTF	rich text format
