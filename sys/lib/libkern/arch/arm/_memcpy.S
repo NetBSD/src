@@ -1,5 +1,4 @@
-/* $Id: _memcpy.S,v 1.1 2000/05/09 21:56:05 bjh21 Exp $ */
-/*	$NetBSD: _memcpy.S,v 1.1 2000/05/09 21:56:05 bjh21 Exp $	*/
+/*	$NetBSD: _memcpy.S,v 1.1 2000/12/29 20:51:56 bjh21 Exp $	*/
 
 /*
  * This code is derived from software contributed to The NetBSD Foundation
@@ -62,7 +61,7 @@ ENTRY(_memcpy)
 #else
 	moveq	pc, lr
 #endif
-	
+
 	stmdb	sp!, {r0, lr}		/* memcpy() returns dest addr */
 	subs	r2, r2, #4
 	blt	Lmemcpy_fl4		/* less than 4 bytes */

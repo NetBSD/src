@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.1 2000/05/09 21:56:05 bjh21 Exp $	*/
+/*	$NetBSD: memset.S,v 1.1 2000/12/29 20:51:57 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -120,7 +120,7 @@ Lmemset_lessthanfour:
 #else
 	moveq	pc, lr			/* Zero length so exit */
 #endif
-	
+
 	cmp	r2, #0x00000002
 	strb	r1, [r0], #0x0001	/* Set 1 byte */
 	strgeb	r1, [r0], #0x0001	/* Set another byte */

@@ -1,11 +1,11 @@
-/*	$NetBSD: bzero.S,v 1.2 2000/12/14 19:51:51 bjh21 Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.1 2000/12/29 20:51:57 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Neil A. Carson and Mark Brinicombe
+ * by Neil A. Carson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,16 @@
 
 #include <machine/asm.h>
 
-ENTRY(bzero)
-	mov	r2, r1
-	mov	r1, #0
-	b	_C_LABEL(memset)
+_ENTRY(_C_LABEL(bswap32))
+_ENTRY(_C_LABEL(ntohl))
+_ENTRY(_C_LABEL(htonl))
+_PROF_PROLOGUE
+	eor		r1, r0, r0, ror #16
+	bic		r1, r1, #0x00FF0000
+	mov		r0, r0, ror #8
+	eor		r0, r0, r1, lsr #8
+#ifdef __APCS_26__
+	movs		pc,lr
+#else
+	mov		pc, lr
+#endif
