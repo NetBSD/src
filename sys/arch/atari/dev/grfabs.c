@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.9 1996/09/16 06:49:03 leo Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.10 1996/10/04 07:27:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -141,6 +141,12 @@ void grf_remove_view(v)
 view_t *v;
 {
 	(v->mode->grfabs_funcs->remove_view)(v);
+}
+
+void grf_save_view(v)
+view_t *v;
+{
+	(v->mode->grfabs_funcs->save_view)(v);
 }
 
 void grf_free_view(v)

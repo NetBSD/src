@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.7 1996/09/16 06:43:35 leo Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.8 1996/10/04 07:27:56 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -75,6 +75,7 @@ struct view {
     dmode_t	*mode;		/* the mode for this view		*/
     colormap_t	*colormap;	/* the colormap for this view		*/
     int		flags;
+    caddr_t	*save_area;	/* Save frame-buffer when not on screen	*/
 };
 typedef struct view view_t;
 
@@ -140,6 +141,7 @@ struct grfabs_sw {
 	view_t	* (*alloc_view) __P((dmode_t *, dimen_t *, u_char));
 	void	 (*free_view) __P((view_t *));
 	void	 (*remove_view) __P((view_t *));
+	void	 (*save_view) __P((view_t *));
 	int 	 (*use_colormap) __P((view_t *, colormap_t *));
 };
 
@@ -195,5 +197,6 @@ void	grf_remove_view __P((view_t *v));
 void	grf_free_view __P((view_t *v));
 int	grf_get_colormap __P((view_t *, colormap_t *));
 int	grf_use_colormap __P((view_t *, colormap_t *));
+void	grf_save_view __P((view_t *v));
 
 #endif /* _GRFABS_REG_H */

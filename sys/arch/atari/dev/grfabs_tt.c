@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.5 1996/09/16 06:43:36 leo Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.6 1996/10/04 07:27:56 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -59,6 +59,7 @@ static void	  tt_display_view __P((view_t *));
 static view_t	  *tt_alloc_view __P((dmode_t *, dimen_t *, u_char));
 static void	  tt_free_view __P((view_t *));
 static void	  tt_remove_view __P((view_t *));
+static void	  tt_save_view __P((view_t *));
 static int	  tt_use_colormap __P((view_t *, colormap_t *));
 
 /*
@@ -69,6 +70,7 @@ struct grfabs_sw tt_vid_sw = {
 	tt_alloc_view,
 	tt_free_view,
 	tt_remove_view,
+	tt_save_view,
 	tt_use_colormap
 };
 
@@ -173,6 +175,12 @@ view_t *v;
 		mode->current_view = NULL;
 	}
 	v->flags &= ~VF_DISPLAY;
+}
+
+void
+tt_save_view(v)
+view_t *v;
+{
 }
 
 void
