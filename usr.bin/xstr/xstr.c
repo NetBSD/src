@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.9 1998/12/20 19:13:19 christos Exp $	*/
+/*	$NetBSD: xstr.c,v 1.10 1999/04/20 13:53:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: xstr.c,v 1.9 1998/12/20 19:13:19 christos Exp $");
+__RCSID("$NetBSD: xstr.c,v 1.10 1999/04/20 13:53:53 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,8 +135,15 @@ main(argc, argv)
 		(void)signal(SIGINT, onintr);
 	if (cflg || (argc == 0 && !readstd))
 		inithash();
-	else
-		strings = mktemp(strdup(_PATH_TMP));
+	else {
+		int	fd;
+
+		strings = strdup(_PATH_TMP);
+		fd = mkstemp(strings);
+		if (fd == -1)
+			err(1, "mkstemp failed");
+		close(fd);
+	}
 	while (readstd || argc > 0) {
 		if (freopen("x.c", "w", stdout) == NULL)
 			err(1, "Cannot open `%s'", "x.c");
