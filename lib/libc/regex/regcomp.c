@@ -61,6 +61,7 @@ static char nuls[10];		/* place to point scanner in event of error */
 #define	ASTERN(sop, pos)	EMIT(sop, HERE()-pos)
 #define	HERE()		(p->slen)
 #define	THERE()		(p->slen - 1)
+#define	THERETHERE()	(p->slen - 2)
 #define	DROP(n)	(p->slen -= (n))
 
 #ifndef NDEBUG
@@ -328,6 +329,7 @@ register struct parse *p;
 	REQUIRE(!wascaret, REG_BADRPT);
 	switch (c) {
 	case '*':	/* implemented as +? */
+		/* this case does not require the (y|) trick, noKLUDGE */
 		INSERT(OPLUS_, pos);
 		ASTERN(O_PLUS, pos);
 		INSERT(OQUEST_, pos);
@@ -338,8 +340,13 @@ register struct parse *p;
 		ASTERN(O_PLUS, pos);
 		break;
 	case '?':
-		INSERT(OQUEST_, pos);
-		ASTERN(O_QUEST, pos);
+		/* KLUDGE: emit y? as (y|) until subtle bug gets fixed */
+		INSERT(OCH_, pos);		/* offset slightly wrong */
+		ASTERN(OOR1, pos);		/* this one's right */
+		AHEAD(pos);			/* fix the OCH_ */
+		EMIT(OOR2, 0);			/* offset very wrong... */
+		AHEAD(THERE());			/* ...so fix it */
+		ASTERN(O_CH, THERETHERE());
 		break;
 	case '{':
 		count = p_count(p);
@@ -514,6 +521,7 @@ int starordinary;		/* is a leading * an ordinary character? */
 	}
 
 	if (EAT('*')) {		/* implemented as +? */
+		/* this case does not require the (y|) trick, noKLUDGE */
 		INSERT(OPLUS_, pos);
 		ASTERN(O_PLUS, pos);
 		INSERT(OQUEST_, pos);
@@ -926,19 +934,28 @@ int to;				/* to this number of times (maybe INFINITY) */
 	case REP(0, 1):			/* as x{1,1}? */
 	case REP(0, N):			/* as x{1,n}? */
 	case REP(0, INF):		/* as x{1,}? */
-		INSERT(OQUEST_, start);		/* offset is wrong... */
+		/* KLUDGE: emit y? as (y|) until subtle bug gets fixed */
+		INSERT(OCH_, start);		/* offset is wrong... */
 		repeat(p, start+1, 1, to);
+		ASTERN(OOR1, start);
 		AHEAD(start);			/* ... fix it */
-		ASTERN(O_QUEST, start);
+		EMIT(OOR2, 0);
+		AHEAD(THERE());
+		ASTERN(O_CH, THERETHERE());
 		break;
 	case REP(1, 1):			/* trivial case */
 		/* done */
 		break;
 	case REP(1, N):			/* as x?x{1,n-1} */
-		INSERT(OQUEST_, start);
-		ASTERN(O_QUEST, start);
+		/* KLUDGE: emit y? as (y|) until subtle bug gets fixed */
+		INSERT(OCH_, start);
+		ASTERN(OOR1, start);
+		AHEAD(start);
+		EMIT(OOR2, 0);			/* offset very wrong... */
+		AHEAD(THERE());			/* ...so fix it */
+		ASTERN(O_CH, THERETHERE());
 		copy = dupl(p, start+1, finish+1);
-		assert(copy == finish+2);
+		assert(copy == finish+4);
 		repeat(p, copy, 1, to-1);
 		break;
 	case REP(1, INF):		/* as x+ */

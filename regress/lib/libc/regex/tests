@@ -471,5 +471,5 @@ abcdefghijklmnopqrstuv	i	abcdefghijklmnopqrstuv	abcdefghijklmnopqrstuv
 (ALAK)|(ALT[AB])|(CC[123]1)|(CM[123]1)|(GAMC)|(LC[23][EO ])|(SEM[1234])|(SL[ES][12])|(SLWW)|(SLF )|(SLDT)|(VWH[12])|(WH[34][EW])|(WP1[ESN])	-	CC11	CC11
 CC[13]1|a{21}[23][EO][123][Es][12]a{15}aa[34][EW]aaaaaaa[X]a	-	CC11	CC11
 Char \([a-z0-9_]*\)\[.*	b	Char xyz[k	Char xyz[k	xyz
-#-\{0,1\}[0-9]*$	b	-5	-5
-#a?b	-	ab	ab
+a?b	-	ab	ab
+-\{0,1\}[0-9]*$	b	-5	-5
