@@ -1,6 +1,6 @@
-/* $NetBSD: intr.h,v 1.1 2000/05/09 21:55:59 bjh21 Exp $ */
+/* $NetBSD: intr.h,v 1.2 2000/08/22 21:27:22 bjh21 Exp $ */
 /*-
- * Copyright (c) 2000 Ben Harris
+ * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,19 +35,98 @@
 #ifndef _ARM26_INTR_H_
 #define _ARM26_INTR_H_
 
-#include <machine/spl.h> /* XXX should be merged into here */
+/*
+ * These are the different SPL states
+ *
+ * Each state has an interrupt mask associated with it which
+ * indicate which interrupts are allowed.
+ */
 
+#define IPL_NONE	0
+#define IPL_SOFTCLOCK	1
+#define IPL_SOFTNET	2
+#define IPL_SOFTSERIAL	IPL_SOFTNET
+#define IPL_BIO		3
+#define IPL_NET		4
+#define IPL_TTY		5
+#define IPL_LPT		IPL_TTY
+#define IPL_IMP		6
+#define IPL_AUDIO	7
+#define IPL_SERIAL	8
+#define IPL_CLOCK	9
+#define IPL_STATCLOCK	10
+#define IPL_SCHED	11
+#define IPL_HIGH	12
+#define NIPL		IPL_HIGH + 1
+
+#if defined(_KERNEL) && !defined(ASSEMBLER)
+
+#define splsoftnet()	raisespl(IPL_SOFTNET)
+#define splsoft()	splsoftnet()
+#define splsoftserial()	splsoftnet()
+#define splsoftclock()	raisespl(IPL_SOFTCLOCK)
+#define splbio()	raisespl(IPL_BIO)
+#define splnet()	raisespl(IPL_NET)
+#define spltty()	raisespl(IPL_TTY)
+#define spllpt()	raisespl(IPL_LPT)
+#define splimp()	raisespl(IPL_IMP)
+#define	splaudio()	raisespl(IPL_AUDIO)
+#define splserial()	raisespl(IPL_SERIAL)
+#define splclock()	raisespl(IPL_CLOCK)
+#define splstatclock()	raisespl(IPL_STATCLOCK)
+#define splhigh()	raisespl(IPL_HIGH)
+
+#define	splsched()	splhigh()
+#define spllock()	splhigh()
+
+#define spl0()			lowerspl(IPL_NONE)
+#define spllowersoftclock()	lowerspl(IPL_SOFTCLOCK)
+#define splx(s)			lowerspl(s)
+
+extern int current_spl_level; /* XXX tautological name */
+
+extern int raisespl(int);
+extern void lowerspl(int);
 extern int hardsplx(int);
 
-extern void softintr_init(void);
+/*
+ * Interrupt sharing types
+ * (not currently used on arm26)
+ */
+
+#define	IST_UNUSABLE	-1	/* interrupt cannot be used */
+#define	IST_NONE	0	/* none (dummy) */
+#define	IST_PULSE	1	/* pulsed */
+#define	IST_EDGE	2	/* edge-triggered */
+#define	IST_LEVEL	3	/* level-triggered */
+
+/*
+ * Emulated AST handling (faked trap on return to user code)
+ */
+
+#define signotify(p)	setsoftast()
+extern void setsoftast(void);
+
+extern void need_resched(void);
+extern void need_proftick(struct proc *);
+
+/*
+ * Soft Interrupts
+ */
+
+/* Old-fashioned soft interrupts */
 extern void setsoftclock(void);
 extern void setsoftnet(void);
-extern void dosoftints(int);
 
+/* New-fangled generic soft interrupts */
 #define __GENERIC_SOFT_INTERRUPTS
-
 extern void *softintr_establish(int, void (*)(void *), void *);
 extern void softintr_disestablish(void *);
 extern void softintr_schedule(void *);
 
+/* Machine-dependent soft-interrupt servicing routines */
+extern void softintr_init(void);
+extern void dosoftints(int);
+
+#endif /* _KERNEL && !ASSEMBLER */
 #endif
