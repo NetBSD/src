@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.20 1997/04/15 01:45:11 jtk Exp $ */
+/*	$NetBSD: apm.c,v 1.21 1997/06/04 03:34:43 jtk Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -728,6 +728,9 @@ apmprobe(parent, match, aux)
 			 bitmask_snprintf(regs.flags, I386_FLAGBITS,
 			 bits, sizeof(bits)), regs.si, regs.di));
 
+		if ((apminfo.apm_detail & APM_32BIT_SUPPORTED) == 0)
+		    return 0;		/* bail out */
+
 		/*
 		 * And connect to it.
 		 */
@@ -798,22 +801,21 @@ apmprobe(parent, match, aux)
 		    apminfo.apm_code32_seg_base >= IOM_END) {
 			DPRINTF(("apm code32 segment starts outside ISA hole [%x]\n",
 				 apminfo.apm_code32_seg_base));
-			return 0;
+			goto bail;
 		} 
 		if (apminfo.apm_code32_seg_base +
 		    apminfo.apm_code32_seg_len > IOM_END) {
-		    DPRINTF(("apm code32 segment oversized: [%x,%x), truncating\n",
-			     apminfo.apm_code32_seg_base,
-			     apminfo.apm_code32_seg_base +
-			     apminfo.apm_code32_seg_len-1));
-		    apminfo.apm_code32_seg_len =
-			IOM_END - apminfo.apm_code32_seg_base;
+			DPRINTF(("apm code32 segment oversized: [%x,%x)\n",
+				 apminfo.apm_code32_seg_base,
+				 apminfo.apm_code32_seg_base +
+				 apminfo.apm_code32_seg_len-1));
+			goto bail;
 		}
 		if (apminfo.apm_code16_seg_base < IOM_BEGIN ||
 		    apminfo.apm_code16_seg_base >= IOM_END) {
 			DPRINTF(("apm code16 segment starts outside ISA hole [%x]\n",
 				 apminfo.apm_code16_seg_base));
-			return 0;
+			goto bail;
 		}
 		if (apminfo.apm_code16_seg_base +
 		    apminfo.apm_code32_seg_len > IOM_END) {
@@ -825,7 +827,7 @@ apmprobe(parent, match, aux)
 		     * give up since we may have to trash the
 		     * 32bit segment length otherwise.
 		     */
-		    return 0;
+		    goto bail;
 		}
 		/*
 		 * allow data segment to be zero length, within ISA hole or
@@ -873,6 +875,19 @@ apmprobe(parent, match, aux)
 			 apminfo.apm_data_seg_base +
 			 apminfo.apm_data_seg_len));
 	}
+bail:
+	/*
+	 * call a disconnect; we're punting.
+	 */
+	regs.ax = APM_BIOS_FN(APM_DISCONNECT);
+	regs.bx = APM_DEV_APM_BIOS;
+	regs.cx = regs.dx = regs.si = regs.di = regs.flags = 0;
+	bioscall(APM_SYSTEM_BIOS, &regs);
+	DPRINTF(("apm: bioscall return: %x %x %x %x %s %x %x\n",
+		 regs.ax, regs.bx, regs.cx, regs.dx,
+		 bitmask_snprintf(regs.flags, I386_FLAGBITS,
+				  bits, sizeof(bits)),
+		 regs.si, regs.di));
 	return 0;
 }
 
