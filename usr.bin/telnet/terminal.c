@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.7 2000/06/22 06:47:49 thorpej Exp $	*/
+/*	$NetBSD: terminal.c,v 1.8 2002/06/14 00:30:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)terminal.c	8.2 (Berkeley) 2/16/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.7 2000/06/22 06:47:49 thorpej Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.8 2002/06/14 00:30:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ init_terminal()
 ttyflush(drop)
     int drop;
 {
-    register int n, n0, n1;
+    int n, n0, n1;
 
     n0 = ring_full_count(&ttyoring);
     if ((n1 = n = ring_full_consecutive(&ttyoring)) > 0) {
@@ -220,7 +220,7 @@ setconnmode(force)
 #ifdef	ENCRYPTION
     static int enc_passwd = 0;
 #endif
-    register int newmode;
+    int newmode;
 
     newmode = getconnmode()|(force?MODE_FORCE:0);
 

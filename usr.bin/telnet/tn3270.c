@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.8 1998/03/04 13:51:57 christos Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.9 2002/06/14 00:30:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,16 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: tn3270.c,v 1.8 1998/03/04 13:51:57 christos Exp $");
+__RCSID("$NetBSD: tn3270.c,v 1.9 2002/06/14 00:30:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <arpa/telnet.h>
-#ifdef __STDC__
 #include <unistd.h>
-#endif
 
 #include "general.h"
 
@@ -122,11 +120,11 @@ init_3270()
 
     int
 DataToNetwork(buffer, count, done)
-    register char *buffer;	/* where the data is */
-    register int  count;	/* how much to send */
+    char *buffer;	/* where the data is */
+    int  count;	/* how much to send */
     int		  done;		/* is this the last of a logical block */
 {
-    register int loop, c;
+    int loop, c;
     int origCount;
 
     origCount = count;
@@ -207,10 +205,10 @@ outputPurge()
 
     int
 DataToTerminal(buffer, count)
-    register char	*buffer;		/* where the data is */
-    register int	count;			/* how much to send */
+    char	*buffer;		/* where the data is */
+    int	count;			/* how much to send */
 {
-    register int c;
+    int c;
     int origCount;
 
     origCount = count;

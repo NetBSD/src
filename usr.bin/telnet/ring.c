@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.c,v 1.9 2000/06/22 06:47:48 thorpej Exp $	*/
+/*	$NetBSD: ring.c,v 1.10 2002/06/14 00:30:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ring.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: ring.c,v 1.9 2000/06/22 06:47:48 thorpej Exp $");
+__RCSID("$NetBSD: ring.c,v 1.10 2002/06/14 00:30:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -341,7 +341,7 @@ ring_consume_data(ring, buffer, count)
 void
 ring_encrypt(ring, encryptor)
 	Ring *ring;
-	void (*encryptor) P((unsigned char *, int));
+	void (*encryptor)(unsigned char *, int);
 {
 	unsigned char *s, *c;
 

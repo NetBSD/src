@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.20 2002/02/11 11:00:07 wiz Exp $	*/
+/*	$NetBSD: telnet.c,v 1.21 2002/06/14 00:30:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.20 2002/02/11 11:00:07 wiz Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.21 2002/06/14 00:30:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,12 +163,12 @@ int	linemode;
 int	kludgelinemode = 1;
 #endif
 
-static void dooption P((int));
-static void dontoption P((int));
-static void suboption P((void));
-static int telsnd P((void));
-static void netclear P((void));
-static void doflush P((void));
+static void dooption(int);
+static void dontoption(int);
+static void suboption(void);
+static int telsnd(void);
+static void netclear(void);
+static void doflush(void);
 
 /*
  * The following are some clocks used to decide how to interpret
@@ -284,7 +284,7 @@ printring(va_alist)
 
     void
 send_do(c, init)
-    register int c, init;
+    int c, init;
 {
     if (init) {
 	if (((do_dont_resp[c] == 0) && my_state_is_do(c)) ||
@@ -300,7 +300,7 @@ send_do(c, init)
 
     void
 send_dont(c, init)
-    register int c, init;
+    int c, init;
 {
     if (init) {
 	if (((do_dont_resp[c] == 0) && my_state_is_dont(c)) ||
@@ -316,7 +316,7 @@ send_dont(c, init)
 
     void
 send_will(c, init)
-    register int c, init;
+    int c, init;
 {
     if (init) {
 	if (((will_wont_resp[c] == 0) && my_state_is_will(c)) ||
@@ -332,7 +332,7 @@ send_will(c, init)
 
     void
 send_wont(c, init)
-    register int c, init;
+    int c, init;
 {
     if (init) {
 	if (((will_wont_resp[c] == 0) && my_state_is_wont(c)) ||
@@ -646,8 +646,8 @@ static char *unknown[] = { 0, 0 };
 mklist(buf, name)
 	char *buf, *name;
 {
-	register int n;
-	register char c, *cp, **argvp, *cp2, **argv, **avt;
+	int n;
+	char c, *cp, **argvp, *cp2, **argv, **avt;
 
 	if (name) {
 		if ((int)strlen(name) > 40) {
@@ -755,10 +755,10 @@ mklist(buf, name)
 
 	int
 is_unique(name, as, ae)
-	register char *name, **as, **ae;
+	char *name, **as, **ae;
 {
-	register char **ap;
-	register int n;
+	char **ap;
+	int n;
 
 	n = strlen(name) + 1;
 	for (ap = as; ap < ae; ap++)
@@ -1249,7 +1249,7 @@ static int slc_mode = SLC_EXPORT;
 	void
 slc_init()
 {
-	register struct spc *spcp;
+	struct spc *spcp;
 
 	localchars = 1;
 	for (spcp = spc_data; spcp < &spc_data[NSLC+1]; spcp++) {
@@ -1361,7 +1361,7 @@ slc_import(def)
     void
 slc_export()
 {
-    register struct spc *spcp;
+    struct spc *spcp;
 
     TerminalDefaultChars();
 
@@ -1384,11 +1384,11 @@ slc_export()
 
 	void
 slc(cp, len)
-	register unsigned char *cp;
+	unsigned char *cp;
 	int len;
 {
-	register struct spc *spcp;
-	register int func,level;
+	struct spc *spcp;
+	int func,level;
 
 	slc_start_reply();
 
@@ -1455,7 +1455,7 @@ slc(cp, len)
     void
 slc_check()
 {
-    register struct spc *spcp;
+    struct spc *spcp;
 
     slc_start_reply();
     for (spcp = &spc_data[1]; spcp < &spc_data[NSLC+1]; spcp++) {
@@ -1503,7 +1503,7 @@ slc_add_reply(func, flags, value)
     void
 slc_end_reply()
 {
-    register int len;
+    int len;
 
     *slc_replyp++ = IAC;
     *slc_replyp++ = SE;
@@ -1520,7 +1520,7 @@ slc_end_reply()
 	int
 slc_update()
 {
-	register struct spc *spcp;
+	struct spc *spcp;
 	int need_update = 0;
 
 	for (spcp = &spc_data[1]; spcp < &spc_data[NSLC+1]; spcp++) {
@@ -1557,11 +1557,11 @@ int old_env_value = OLD_ENV_VALUE;
 
 	void
 env_opt(buf, len)
-	register unsigned char *buf;
-	register int len;
+	unsigned char *buf;
+	int len;
 {
-	register unsigned char *ep = 0, *epc = 0;
-	register int i;
+	unsigned char *ep = 0, *epc = 0;
+	int i;
 
 	switch(buf[0]&0xff) {
 	case TELQUAL_SEND:
@@ -1664,9 +1664,9 @@ env_opt_start_info()
 
 	void
 env_opt_add(ep)
-	register unsigned char *ep;
+	unsigned char *ep;
 {
-	register unsigned char *vp, c;
+	unsigned char *vp, c;
 
 	if (opt_reply == NULL)		/*XXX*/
 		return;			/*XXX*/
@@ -1687,7 +1687,7 @@ env_opt_add(ep)
 	if (opt_replyp + (vp ? strlen((char *)vp) : 0) +
 				strlen((char *)ep) + 6 > opt_replyend)
 	{
-		register int len;
+		int len;
 		unsigned char *p;
 		opt_replyend += OPT_REPLY_SIZE;
 		len = opt_replyend - opt_reply;
@@ -1755,9 +1755,9 @@ opt_welldefined(ep)
 }
 	void
 env_opt_end(emptyok)
-	register int emptyok;
+	int emptyok;
 {
-	register int len;
+	int len;
 
 	len = opt_replyp - opt_reply + 2;
 	if (emptyok || len > 6) {
@@ -1780,9 +1780,9 @@ env_opt_end(emptyok)
     int
 telrcv()
 {
-    register int c;
-    register int scc;
-    register unsigned char *sbp = NULL;
+    int c;
+    int scc;
+    unsigned char *sbp = NULL;
     int count;
     int returnValue = 0;
 
@@ -2077,8 +2077,8 @@ telsnd()
     tcc = 0;
     count = 0;
     while (NETROOM() > 2) {
-	register int sc;
-	register int c;
+	int sc;
+	int c;
 
 	if (tcc == 0) {
 	    if (count) {
@@ -2428,7 +2428,7 @@ nextitem(current)
 	return current+3;
     case SB:		/* loop forever looking for the SE */
 	{
-	    register char *look = current+2;
+	    char *look = current+2;
 
 	    for (;;) {
 		if ((*look++&0xff) == IAC) {
@@ -2465,7 +2465,7 @@ nextitem(current)
 netclear()
 {
 #if	0	/* XXX */
-    register char *thisitem, *next;
+    char *thisitem, *next;
     char *good;
 #define	wewant(p)	((nfrontp > p) && ((*p&0xff) == IAC) && \
 				((*(p+1)&0xff) != EC) && ((*(p+1)&0xff) != EL))
@@ -2561,7 +2561,7 @@ get_status(s)
     char *s;
 {
     unsigned char tmp[16];
-    register unsigned char *cp;
+    unsigned char *cp;
 
     if (my_want_state_is_dont(TELOPT_STATUS)) {
 	printf("Remote side does not support STATUS option\n");
@@ -2662,7 +2662,7 @@ sendnaws()
 {
     long rows, cols;
     unsigned char tmp[16];
-    register unsigned char *cp;
+    unsigned char *cp;
 
     if (my_state_is_wont(TELOPT_NAWS))
 	return;

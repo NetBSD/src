@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2001/03/04 01:51:05 assar Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2002/06/14 00:30:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.15 2001/03/04 01:51:05 assar Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2002/06/14 00:30:56 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ char *ipsec_policy_in = NULL;
 char *ipsec_policy_out = NULL;
 #endif
 
-int main P((int, char *[]));
+int main(int, char *[]);
 
 /*
  * Initialize variables.
@@ -148,9 +148,6 @@ main(argc, argv)
 #endif	/* FORWARD */
 
 	tninit();		/* Clear out things */
-#if	defined(CRAY) && !defined(__STDC__)
-	_setlist_init();	/* Work around compiler bug */
-#endif
 
 	TerminalSaveState();
 

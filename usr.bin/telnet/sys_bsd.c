@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.18 2002/02/11 11:00:07 wiz Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.19 2002/06/14 00:30:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.18 2002/02/11 11:00:07 wiz Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.19 2002/06/14 00:30:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,16 +73,16 @@ __RCSID("$NetBSD: sys_bsd.c,v 1.18 2002/02/11 11:00:07 wiz Exp $");
 #endif
 
 #ifdef	SIGTSTP
-SIG_FUNC_RET susp P((int));
+SIG_FUNC_RET susp(int);
 #endif	/* SIGTSTP */
 #ifdef	SIGINFO
-SIG_FUNC_RET ayt P((int));
+SIG_FUNC_RET ayt(int);
 #endif
 
-SIG_FUNC_RET intr P((int));
-SIG_FUNC_RET intr2 P((int));
-SIG_FUNC_RET sendwin P((int));
-SIG_FUNC_RET deadpeer P((int));
+SIG_FUNC_RET intr(int);
+SIG_FUNC_RET intr2(int);
+SIG_FUNC_RET sendwin(int);
+SIG_FUNC_RET deadpeer(int);
 
 
 int
@@ -294,7 +294,7 @@ TerminalSaveState()
 
     cc_t *
 tcval(func)
-    register int func;
+    int func;
 {
     switch(func) {
     case SLC_IP:	return(&termIntChar);
@@ -401,7 +401,7 @@ TerminalRestoreState()
 
     void
 TerminalNewMode(f)
-    register int f;
+    int f;
 {
     static int prevmode = 0;
 #ifndef	USE_TERMIO
@@ -670,7 +670,7 @@ TerminalNewMode(f)
 #endif
     } else {
 #ifdef	SIGINFO
-	(void) signal(SIGINFO, (void (*) P((int))) ayt_status);
+	(void) signal(SIGINFO, (void (*)(int)) ayt_status);
 #endif
 #ifdef	SIGTSTP
 	(void) signal(SIGTSTP, SIG_DFL);
@@ -784,9 +784,9 @@ TerminalSpeeds(ispeed, ospeed)
     long *ospeed;
 {
 #ifdef	DECODE_BAUD
-    register struct termspeeds *tp;
+    struct termspeeds *tp;
 #endif	/* DECODE_BAUD */
-    register long in, out;
+    long in, out;
 
     out = cfgetospeed(&old_tc);
     in = cfgetispeed(&old_tc);
@@ -992,7 +992,7 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 	int netin, netout, netex, ttyin, ttyout;
     int poll;		/* If 0, then block until something to do */
 {
-    register int c;
+    int c;
 		/* One wants to be a bit careful about setting returnValue
 		 * to one, since a one implies we did some useful work,
 		 * and therefore probably won't be called to block next
