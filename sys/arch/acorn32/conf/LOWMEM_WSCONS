@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.13 2002/06/17 05:14:03 lukem Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.14 2002/08/07 14:42:42 bjh21 Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -249,7 +249,7 @@ sysbeep0	at vidc?
 #scsibus* at ptsc?
 
 #csc*	at podulebus?			# Cumana SCSI II card
-#scsibus* at csc?			# Not currently working
+#scsibus* at csc?
 
 #oak*	at podulebus?			# Oak SCSI I card
 #scsibus* at oak?
