@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.8 2001/07/13 20:30:19 perseant Exp $	 */
+/* $NetBSD: utilities.c,v 1.9 2002/05/23 04:05:11 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,6 +39,7 @@
 #include <ufs/ufs/dir.h>
 #include <sys/mount.h>
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_extern.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
