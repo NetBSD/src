@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.37 1999/09/27 16:24:40 kleink Exp $
+.\"	$NetBSD: sysctl.3,v 1.38 1999/09/28 14:52:32 bouyer Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -127,6 +127,7 @@ listed here, and described in separate sections below.
 .It CTL\_KERN	sys/sysctl.h	High kernel limits
 .It CTL\_MACHDEP	sys/sysctl.h	Machine dependent
 .It CTL\_NET	sys/socket.h	Networking
+.It CTL\_PROC	sys/sysctl.h	Per-process
 .It CTL\_USER	sys/sysctl.h	User-level
 .It CTL\_VM	vm/vm_param.h	Virtual memory
 .El
@@ -255,6 +256,7 @@ information.
 .It KERN\_BOOTTIME	struct timeval	no
 .It KERN\_CHOWN\_RESTRICTED	integer	no
 .It KERN\_CLOCKRATE	struct clockinfo	no
+.It KERN\_DEFCORENAME	string	yes
 .It KERN\_DOMAINNAME	string	yes
 .It KERN\_FILE	struct file	no
 .It KERN\_FSYNC	integer	no
@@ -289,7 +291,6 @@ information.
 .It KERN\_RAWPARTITION	integer	no
 .It KERN\_SAVED\_IDS	integer	no
 .It KERN\_SECURELVL	integer	raise only
-.It KERN\_SHORTCORENAME	integer	yes
 .It KERN\_SYNCHRONIZED\_IO	integer	no
 .It KERN\_SYSVMSG	integer	no
 .It KERN\_SYSVSEM	integer	no
@@ -327,6 +328,17 @@ structure is returned.
 This structure contains the clock, statistics clock and profiling clock
 frequencies, the number of micro-seconds per hz tick, and the clock
 skew rate.
+.It Li KERN_DEFCORENAME
+Default template for the name of core dump files (see also PROC_PID_CORENAME
+in the per-process variables CTL_PROC, and
+.Xr core 5
+for format of this template).  The default value is
+.Nm %n.core
+and can be changed with the kernel configuration option
+.Cd options DEFCORENAME
+(see 
+.Xr options 4
+).
 .It Li KERN_DOMAINNAME
 Get or set the YP domain name.
 .It Li KERN_FILE
@@ -470,17 +482,6 @@ Returns 1 if saved set-group and saved set-user ID is available.
 The system security level.
 This level may be raised by processes with appropriate privilege.
 It may only be lowered by process 1.
-.It Li KERN_SHORTCORENAME
-Whether core dumps are named 
-.Nm programname.core
-(default, value 0) or 
-.Nm core
-(value 1).
-The default value can be changed to 1 with the kernel configuration option
-.Cd options SHORTCORENAME
-(see 
-.Xr options 4 ,
-.Xr core 5 ).
 .It Li KERN_SYNCHRONIZED_IO
 Returns 1 if the POSIX 1003.1b Synchronized I/O Option is available
 on this system,
@@ -721,6 +722,79 @@ Returns the default UDP send buffer size.
 Returns the default UDP receive buffer size.
 .El
 .El
+.Sh CTL_PROC
+The string and integer information available for the CTL_PROC
+is detailed below.
+The changeable column shows whether a process with appropriate
+privilege may change the value.
+These values are per-process, and as such may change from one process
+to another. When a process is created, the default values are inherited from
+its parent. When a set-user-ID or set-group-ID binary is executed, the
+value of PROC_PID_CORENAME is reset to the system default value.
+The second level name is either the magic value PROC_CURPROC, which
+points to the current process, or the PID of the target process.
+.Bl -column "USER_COLL_WEIGHTS_MAXXXX" "integerXXX" "yes" -offset indent
+.It Sy Pa Third level name	Type	Changeable
+.It PROC\_PID\_CORENAME	string	yes
+.It PROC\_PID\_LIMIT	node	not applicable
+.El
+.Bl -tag -width "123456"
+.Pp
+.It Li PROC_PID_CORENAME
+The template used for the core dump file name (see
+.Xr core 5
+for details). The base name must either be 
+.Nm core
+or end with the suffix ``.core'' (the super-user may set arbitrary names). By
+default it points to KERN_DEFCORENAME.
+.It Li PROC_PID_LIMIT
+Return resources limits, as defined for the
+.Xr getrlimit 2
+and 
+.Xr setrlimit 2
+system calls.
+The fourth level name is one of:
+.Bl -tag -width PROC_PID_LIMIT_MEMLOCKAA
+.It Li PROC_PID_LIMIT_CPU
+The maximum amount of cpu time (in seconds) to be used by each process.
+.It Li PROC_PID_LIMIT_FSIZE
+The largest size (in bytes) file that may be created.
+.It Li PROC_PID_LIMIT_DATA
+The maximum size (in bytes) of the data segment for a process;
+this defines how far a program may extend its break with the
+.Xr sbrk 2
+system call.
+.It Li PROC_PID_LIMIT_STACK
+The maximum size (in bytes) of the stack segment for a process;
+this defines how far a program's stack segment may be extended.
+Stack extension is performed automatically by the system.
+.It Li PROC_PID_LIMIT_CORE
+The largest size (in bytes)
+.Pa core
+file that may be created.
+.It Li PROC_PID_LIMIT_RSS
+The maximum size (in bytes) to which a process's resident set size may
+grow.
+This imposes a limit on the amount of physical memory to be given to
+a process; if memory is tight, the system will prefer to take memory
+from processes that are exceeding their declared resident set size.
+.It Li PROC_PID_LIMIT_MEMLOCK
+The maximum size (in bytes) which a process may lock into memory
+using the
+.Xr mlock 2
+function.
+.It Li PROC_PID_LIMIT_NPROC
+The maximum number of simultaneous processes for this user id.
+.It Li PROC_PID_LIMIT_NOFILE
+The maximum number of open files for this process.
+.El
+.Pp
+The fifth level name is one of PROC_PID_LIMIT_TYPE_SOFT or
+PROC_PID_LIMIT_TYPE_HARD, to select respectively the soft or hard limit.
+Both are of type integer.
+.El
+.Pp
+
 .Sh CTL_USER
 The string and integer information available for the CTL_USER level
 is detailed below.
