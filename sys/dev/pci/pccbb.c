@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.8 1999/11/15 16:19:03 joda Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.9 1999/12/20 08:11:42 haya Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -523,7 +523,7 @@ pccbb_pci_callback(self)
 			 0, /* address: I don't mind where it is mapped */
 			 0x1000, /* size */
 			 0x0fff, /* mask */
-			 0x1000, /* align */
+			 (sc->sc_chipset == CB_RX5C47X || sc->sc_chipset == CB_TI113X) ? 0x10000 : 0x1000, /* align */
 			 0, /* flags */
 			 &sockbase, &sc->sc_base_memh)) {
       return;
@@ -700,7 +700,9 @@ pccbb_chipinit(sc)
 
   switch (sc->sc_chipset) {
   case CB_RX5C46X:		/* fallthrogh */
+#if 0
   case CB_RX5C47X:
+#endif
     /*
      * The legacy pcic io-port on Ricoh CardBus bridges cannot be
      * disabled by substituting 0 into PCI_LEGACY register.  Ricoh
@@ -1278,16 +1280,21 @@ STATIC int
 cb_reset(sc)
      struct pccbb_softc *sc;
 {
+  /*
+   * Reset Assert at least 20 ms 
+   * Some machines request longer duration.
+   */
+  int reset_duration = (sc->sc_chipset == CB_RX5C47X ? 400*1000 : 40*1000);
   u_int32_t bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
+
   bcr |= (0x40 << 16);		/* Reset bit Assert (bit 6 at 0x3E) */
   pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
-  /* Reset Assert at least 20 ms */
-  delay(20*1000);
+  delay(reset_duration);
 
   if (CBB_CARDEXIST & sc->sc_flags) { /* A card exists.  Reset it! */
     bcr &= ~(0x40 << 16);	/* Reset bit Deassert (bit 6 at 0x3E) */
     pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
-    delay(20*1000);
+    delay(reset_duration);
   }
 				/* No card found on the slot. Keep Reset. */
   return 1;
