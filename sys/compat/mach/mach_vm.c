@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.23 2003/01/04 15:15:01 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.24 2003/01/21 04:06:08 matt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.23 2003/01/04 15:15:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.24 2003/01/21 04:06:08 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/sa.h>
 #include <sys/mman.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
@@ -71,7 +72,8 @@ mach_vm_map(args)
 	mach_vm_map_request_t *req = args->smsg;
 	mach_vm_map_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->p;
+	struct lwp *l = args->l;
+	struct proc *p = l->l_proc;
 	struct sys_mmap_args cup;
 	vaddr_t addr;
 	int error, flags;
@@ -142,7 +144,7 @@ mach_vm_map(args)
 	SCARG(&cup, fd) = -1;		/* XXX For now, no object mapping */
 	SCARG(&cup, pos) = req->req_offset;
 	
-	if ((error = sys_mmap(p, &cup, &rep->rep_retval)) != 0)
+	if ((error = sys_mmap(l, &cup, &rep->rep_retval)) != 0)
 		return mach_msg_error(args, error);
 
 	rep->rep_msgh.msgh_bits = 
@@ -163,7 +165,8 @@ mach_vm_allocate(args)
 	mach_vm_allocate_request_t *req = args->smsg;
 	mach_vm_allocate_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->p;
+	struct lwp *l = args->l;
+	struct proc *p = l->l_proc;
 	struct sys_mmap_args cup;
 	vaddr_t addr;
 	size_t size;
@@ -197,7 +200,7 @@ mach_vm_allocate(args)
 	SCARG(&cup, fd) = -1;
 	SCARG(&cup, pos) = 0;
 
-	if ((error = sys_mmap(p, &cup, &rep->rep_address)) != 0) 
+	if ((error = sys_mmap(l, &cup, &rep->rep_address)) != 0) 
 		return mach_msg_error(args, error);
 	DPRINTF(("vm_allocate: success at %p\n", (void *)rep->rep_address));
 
@@ -220,7 +223,7 @@ mach_vm_deallocate(args)
 	mach_vm_deallocate_request_t *req = args->smsg;
 	mach_vm_deallocate_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->p;
+	struct lwp *l = args->l;
 	struct sys_munmap_args cup;
 	int error;
 
@@ -230,7 +233,7 @@ mach_vm_deallocate(args)
 	SCARG(&cup, addr) = (caddr_t)req->req_address;
 	SCARG(&cup, len) = req->req_size;
 
-	if ((error = sys_munmap(p, &cup, &rep->rep_retval)) != 0)
+	if ((error = sys_munmap(l, &cup, &rep->rep_retval)) != 0)
 		return mach_msg_error(args, error);
 
 	rep->rep_msgh.msgh_bits =
@@ -251,7 +254,7 @@ mach_vm_wire(args)
 	mach_vm_wire_request_t *req = args->smsg; 
 	mach_vm_wire_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->p;
+	struct lwp *l = args->l;
 	register_t retval;
 	int error;
 
@@ -272,19 +275,20 @@ mach_vm_wire(args)
 
 		SCARG(&cup, addr) = (void *)req->req_address;
 		SCARG(&cup, len) = req->req_size;
-		error = sys_munlock(p, &cup, &retval);
+		error = sys_munlock(l, &cup, &retval);
 	} else {
 		struct sys_mlock_args cup;
 
 		SCARG(&cup, addr) = (void *)req->req_address;
 		SCARG(&cup, len) = req->req_size;
-		error = sys_mlock(p, &cup, &retval);
+		error = sys_mlock(l, &cup, &retval);
 	}
 	if (error != 0)
 		return mach_msg_error(args, error);
 		
-	if ((error = uvm_map_protect(&p->p_vmspace->vm_map, req->req_address, 
-	    req->req_address + req->req_size, req->req_access, 0)) != 0)
+	if ((error = uvm_map_protect(&l->l_proc->p_vmspace->vm_map,
+	    req->req_address, req->req_address + req->req_size,
+	    req->req_access, 0)) != 0)
 		return mach_msg_error(args, error);
 
 	rep->rep_msgh.msgh_bits =
@@ -305,7 +309,7 @@ mach_vm_protect(args)
 	mach_vm_protect_request_t *req = args->smsg;
 	mach_vm_protect_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->p;
+	struct lwp *l = args->l;
 	struct sys_mprotect_args cup;
 	register_t retval;
 	int error;
@@ -314,7 +318,7 @@ mach_vm_protect(args)
 	SCARG(&cup, len) = req->req_size;
 	SCARG(&cup, prot) = req->req_prot;
 
-	if ((error = sys_mprotect(p, &cup, &retval)) != 0)
+	if ((error = sys_mprotect(l, &cup, &retval)) != 0)
 		return mach_msg_error(args, error);
 
 	rep->rep_msgh.msgh_bits =
@@ -330,8 +334,8 @@ mach_vm_protect(args)
 
 /* XXX The findspace argument is not handled correctly */
 int
-mach_sys_map_fd(p, v, retval)
-	struct proc *p;
+mach_sys_map_fd(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -347,6 +351,7 @@ mach_sys_map_fd(p, v, retval)
 	struct vnode *vp;
 	struct exec_vmcmd evc;
 	struct vm_map_entry *ret;
+	struct proc *p = l->l_proc;
 	void *va;
 	int error;
 
@@ -435,7 +440,7 @@ mach_vm_inherit(args)
 	mach_vm_inherit_request_t *req = args->smsg;
 	mach_vm_inherit_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->p;
+	struct lwp *l = args->l;
 	struct sys_minherit_args cup;
 	register_t retval;
 	int error;
@@ -445,7 +450,7 @@ mach_vm_inherit(args)
 	/* Flags map well between Mach and NetBSD */
 	SCARG(&cup, inherit) = req->req_inh;
 
-	if ((error = sys_minherit(p, &cup, &retval)) != 0)
+	if ((error = sys_minherit(l, &cup, &retval)) != 0)
 		return mach_msg_error(args, error);
 	
 	rep->rep_msgh.msgh_bits =
@@ -466,13 +471,14 @@ mach_vm_make_memory_entry(args)
 	mach_vm_make_memory_entry_request_t *req = args->smsg;
 	mach_vm_make_memory_entry_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->p;
+	struct lwp *l = args->l;
 	
 	/* 
 	 * XXX Find some documentation wbout what 
 	 * this is supposed to do, and implement it.
 	 */
-	printf("pid %d: Unimplemented mach_vm_make_memory_entry\n", p->p_pid);
+	printf("pid %d.%d: Unimplemented mach_vm_make_memory_entry\n",
+	    l->l_proc->p_pid, l->l_lid);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |

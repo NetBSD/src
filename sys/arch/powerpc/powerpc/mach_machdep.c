@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.9 2003/01/08 00:41:41 simonb Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.10 2003/01/21 04:06:08 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.9 2003/01/08 00:41:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.10 2003/01/21 04:06:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.9 2003/01/08 00:41:41 simonb Exp 
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
 #include <sys/exec_macho.h>
@@ -79,11 +80,11 @@ mach_trap(frame)
 	struct trapframe *frame;
 {
 	extern struct emul emul_mach;
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
 
-	if (p->p_emul != &emul_mach) {
+	if (l->l_proc->p_emul != &emul_mach) {
 		DPRINTF(("mach trap %d on bad emulation\n", frame->exc));
-		trapsignal(p, SIGBUS, 0);
+		trapsignal(l, SIGBUS, 0);
 		return;
 	}
 
@@ -117,25 +118,25 @@ mach_create_thread_child(arg)
 	void *arg;
 {
 	struct mach_create_thread_child_args *mctc;
-	struct proc *p;
+	struct lwp *l;
 	struct trapframe *tf;
 	struct exec_macho_powerpc_thread_state *regs;
 
 	mctc = (struct mach_create_thread_child_args *)arg;
-	p = *mctc->mctc_proc;
+	l = mctc->mctc_lwp;
 
 	if (mctc->mctc_flavor != MACHO_POWERPC_THREAD_STATE) {
 		mctc->mctc_child_done = 1;
 		wakeup(&mctc->mctc_child_done);	
-		killproc(p, "mach_create_thread_child: unknown flavor");
+		killproc(l->l_proc, "mach_create_thread_child: unknown flavor");
 	}
 	
 	/* 
 	 * Copy right from parent. Will disappear the day we have struct lwp.
 	 */
-	mach_copy_right(p->p_pptr, p);
+	mach_copy_right(mctc->mctc_oldlwp, l);
 
-	tf = trapframe(p);
+	tf = trapframe(l);
 	regs = (struct exec_macho_powerpc_thread_state *)mctc->mctc_state;
 
 	/* Security warning */
@@ -145,7 +146,7 @@ mach_create_thread_child(arg)
 	 * Call child return before setting the register context as it
 	 * affects R3, R4 and CR.
 	 */
-	child_return((void *)p);
+	child_return((void *)l);
 
 	/* Set requested register context */
 	tf->srr0 = regs->srr0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.19 2002/12/31 15:47:38 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.20 2003/01/21 04:06:08 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.19 2002/12/31 15:47:38 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.20 2003/01/21 04:06:08 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,25 +69,25 @@ mach_task_get_special_port(args)
 	mach_task_get_special_port_request_t *req = args->smsg;
 	mach_task_get_special_port_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->p;
+	struct lwp *l = args->l;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 	int error;
 
-	med = (struct mach_emuldata *)p->p_emuldata;
+	med = (struct mach_emuldata *)l->l_emuldata;
 
 	switch (req->req_which_port) {
 	case MACH_TASK_KERNEL_PORT:
-		mr = mach_right_get(med->med_kernel, p, MACH_PORT_TYPE_SEND, 0);
+		mr = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
 		break;
 
 	case MACH_TASK_HOST_PORT:
-		mr = mach_right_get(med->med_host, p, MACH_PORT_TYPE_SEND, 0);
+		mr = mach_right_get(med->med_host, l, MACH_PORT_TYPE_SEND, 0);
 		break;
 
 	case MACH_TASK_BOOTSTRAP_PORT:
 		mr = mach_right_get(med->med_bootstrap, 
-		    p, MACH_PORT_TYPE_SEND, 0);
+		    l, MACH_PORT_TYPE_SEND, 0);
 #ifdef DEBUG_MACH
 		printf("*** get bootstrap right %p, port %p, recv %p [%p]\n",
 		    mr, mr->mr_port, mr->mr_port->mp_recv,
@@ -126,7 +126,7 @@ mach_ports_lookup(args)
 	mach_ports_lookup_request_t *req = args->smsg;
 	mach_ports_lookup_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->p;
+	struct lwp *l = args->l;
 	struct mach_emuldata *med;
 	struct mach_right *msp[7];
 	vaddr_t va;
@@ -138,24 +138,24 @@ mach_ports_lookup(args)
 	 * filled. We have to see more of this in order to fully understand
 	 * how this trap works.
 	 */
-	va = vm_map_min(&p->p_vmspace->vm_map);
-	if ((error = uvm_map(&p->p_vmspace->vm_map, &va, PAGE_SIZE, NULL, 
-	    UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL,
+	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
+	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, PAGE_SIZE,
+	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL,
 	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
 		return mach_msg_error(args, error);
 
-	med = (struct mach_emuldata *)p->p_emuldata;
+	med = (struct mach_emuldata *)l->l_emuldata;
 	msp[0] = MACH_PORT_DEAD;
 	msp[3] = MACH_PORT_DEAD;
 	msp[5] = MACH_PORT_DEAD;
 	msp[6] = MACH_PORT_DEAD;
 
 	msp[MACH_TASK_KERNEL_PORT] = 
-	    mach_right_get(med->med_kernel, p, MACH_PORT_TYPE_SEND, 0);
+	    mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
 	msp[MACH_TASK_HOST_PORT] = 
-	    mach_right_get(med->med_host, p, MACH_PORT_TYPE_SEND, 0);
+	    mach_right_get(med->med_host, l, MACH_PORT_TYPE_SEND, 0);
 	msp[MACH_TASK_BOOTSTRAP_PORT] = 
-	    mach_right_get(med->med_bootstrap, p, MACH_PORT_TYPE_SEND, 0);
+	    mach_right_get(med->med_bootstrap, l, MACH_PORT_TYPE_SEND, 0);
 
 	/*
 	 * On Darwin, the data seems always null...
@@ -189,7 +189,7 @@ mach_task_set_special_port(args)
 	mach_task_set_special_port_request_t *req = args->smsg;
 	mach_task_set_special_port_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->p;
+	struct lwp *l = args->l;
 	mach_port_t mn;
 	struct mach_right *mr;
 	struct mach_port *mp;
@@ -202,13 +202,13 @@ mach_task_set_special_port(args)
 		return mach_msg_error(args, 0);
 
 	/* Does the inserted port exists? */
-	if ((mr = mach_right_check(mn, p, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
 		return mach_msg_error(args, EPERM);
 
 	if (mr->mr_type == MACH_PORT_TYPE_DEAD_NAME)
 		return mach_msg_error(args, EINVAL);
 
-	med = (struct mach_emuldata *)p->p_emuldata;
+	med = (struct mach_emuldata *)l->l_emuldata;
 
 	switch (req->req_which_port) {
 	case MACH_TASK_KERNEL_PORT:
@@ -240,7 +240,7 @@ mach_task_set_special_port(args)
 		{
 			struct darwin_emuldata *ded;
 
-			ded = p->p_emuldata;
+			ded = l->l_emuldata;
 			if (ded->ded_fakepid == 1) {
 				mach_bootstrap_port = med->med_bootstrap;
 #ifdef DEBUG_DARWIN

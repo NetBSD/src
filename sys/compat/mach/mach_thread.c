@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.12 2003/01/08 00:39:44 simonb Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.13 2003/01/21 04:06:08 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.12 2003/01/08 00:39:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.13 2003/01/21 04:06:08 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.12 2003/01/08 00:39:44 simonb Exp 
 #include <compat/mach/mach_syscallargs.h>
 
 int
-mach_sys_syscall_thread_switch(p, v, retval)
-	struct proc *p;
+mach_sys_syscall_thread_switch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -71,7 +71,7 @@ mach_sys_syscall_thread_switch(p, v, retval)
 	int timeout;
 	struct mach_emuldata *med;
 		
-	med = (struct mach_emuldata *)p->p_emuldata;
+	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
 	timeout = SCARG(uap, option_time) * hz / 1000;
 
 	/*
@@ -94,8 +94,8 @@ mach_sys_syscall_thread_switch(p, v, retval)
 	case MACH_SWITCH_OPTION_DEPRESS:
 	case MACH_SWITCH_OPTION_IDLE:
 		/* Use a callout to restore the priority after depression? */
-		med->med_thpri = p->p_priority;
-		p->p_priority = MAXPRI;
+		med->med_thpri = l->l_priority;
+		l->l_priority = MAXPRI;
 		break;
 
 	default:
@@ -132,25 +132,28 @@ mach_thread_create_running(args)
 	mach_thread_create_running_request_t *req = args->smsg;
 	mach_thread_create_running_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->p;
+	struct lwp *l = args->l;
 	struct mach_create_thread_child_args mctc;
-	register_t retval;
-	struct proc *child;
+	vaddr_t uaddr;
 	int flags;
 	int error;
+	int inmem;
 
 	/* 
 	 * Prepare the data we want to transmit to the child
 	 */
-	mctc.mctc_proc = &child;
 	mctc.mctc_flavor = req->req_flavor;
+	mctc.mctc_oldlwp = l;
 	mctc.mctc_child_done = 0;
 	mctc.mctc_state = req->req_state;
 
-	flags = (FORK_SHAREVM | FORK_SHARECWD | 
-	    FORK_SHAREFILES | FORK_SHARESIGS);
-	if ((error = fork1(p, flags, SIGCHLD, NULL, 0, 
-	    mach_create_thread_child, (void *)&mctc, &retval, &child)) != 0)
+        inmem = uvm_uarea_alloc(&uaddr);
+        if (__predict_false(uaddr == 0))
+                return (ENOMEM);
+
+	flags = 0;
+	if ((error = newlwp(l, l->l_proc, uaddr, inmem, flags, NULL, 0,
+	    mach_create_thread_child, (void *)&mctc, &mctc.mctc_lwp)) != 0)
 		return mach_msg_error(args, error);
 		
 	/* 
@@ -180,16 +183,16 @@ mach_thread_create_running(args)
  * some problems.
  */
 void
-mach_copy_right(p1, p2)
-	struct proc *p1;
-	struct proc *p2;
+mach_copy_right(l1, l2)
+	struct lwp *l1;
+	struct lwp *l2;
 {
 	struct mach_emuldata *med1;
 	struct mach_emuldata *med2;
 	struct mach_right *mr;
 
-	med1 = (struct mach_emuldata *)p1->p_emuldata;
-	med2 = (struct mach_emuldata *)p2->p_emuldata;
+	med1 = (struct mach_emuldata *)l1->l_emuldata;
+	med2 = (struct mach_emuldata *)l2->l_emuldata;
 
 	/* Undo what mach_e_proc_init did */
 	if (--med2->med_bootstrap->mp_refcount == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.13 2003/01/02 12:46:07 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.14 2003/01/21 04:06:07 matt Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@ struct mach_short_reply {
 	mach_msg_trailer_t sr_trailer;
 };
 struct mach_trap_args {
-	struct proc *p;
+	struct lwp *l;
 	void *smsg;
 	void *rmsg;
 	size_t *rsize;
@@ -223,12 +223,12 @@ struct mach_message {
 	TAILQ_ENTRY(mach_message) mm_list;
 					/* List of pending messages */
 	struct mach_port *mm_port;	/* The port on which msg is queued */
-	struct proc *mm_p;		/* The process that sent it */
+	struct lwp *mm_l;		/* The thread that sent it */
 };
 
 void mach_message_init(void);
 struct mach_message *mach_message_get(mach_msg_header_t *, 
-    size_t, struct mach_port *, struct proc *);
+    size_t, struct mach_port *, struct lwp *);
 void mach_message_put(struct mach_message *);
 void mach_message_put_shlocked(struct mach_message *);
 void mach_message_put_exclocked(struct mach_message *);
