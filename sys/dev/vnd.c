@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.27 1996/07/10 18:15:22 cgd Exp $	*/
+/*	$NetBSD: vnd.c,v 1.28 1996/09/25 02:22:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -390,8 +390,8 @@ vndstart(vnd)
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
 		printf("vndstart(%ld): bp %p vp %p blkno %x addr %p cnt %lx\n",
-		    vnd-vnd_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
-		    bp->b_bcount);
+		    (long) (vnd-vnd_softc), bp, bp->b_vp, bp->b_blkno,
+		    bp->b_data, bp->b_bcount);
 #endif
 
 	/* Instrumentation. */
@@ -415,8 +415,9 @@ vndiodone(bp)
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
 		printf("vndiodone(%ld): vbp %p vp %p blkno %x addr %p cnt %lx\n",
-		    vnd-vnd_softc, vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
-		    vbp->vb_buf.b_data, vbp->vb_buf.b_bcount);
+		    (long) (vnd-vnd_softc), vbp, vbp->vb_buf.b_vp,
+		    vbp->vb_buf.b_blkno, vbp->vb_buf.b_data,
+		    vbp->vb_buf.b_bcount);
 #endif
 
 	if (vbp->vb_buf.b_error) {
@@ -565,7 +566,7 @@ vndioctl(dev, cmd, data, flag, p)
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
 			printf("vndioctl: SET vp %p size %lx\n",
-			    vnd->sc_vp, vnd->sc_size);
+			    vnd->sc_vp, (unsigned long) vnd->sc_size);
 #endif
 
 		/* Attach the disk. */
