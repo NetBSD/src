@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.2 1995/01/20 08:52:05 jtc Exp $	*/
+/*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: netstat.c,v 1.2 1995/01/20 08:52:05 jtc Exp $";
+static char rcsid[] = "$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -141,10 +141,10 @@ closenetstat(w)
 }
 
 static struct nlist namelist[] = {
-#define	X_TCB	0
-	{ "_tcb" },
-#define	X_UDB	1
-	{ "_udb" },
+#define	X_TCBTABLE	0
+	{ "_tcbtable" },
+#define	X_UDBTABLE	1
+	{ "_udbtable" },
 	{ "" },
 };
 
@@ -155,7 +155,7 @@ initnetstat()
 		nlisterr(namelist);
 		return(0);
 	}
-	if (namelist[X_TCB].n_value == 0) {
+	if (namelist[X_TCBTABLE].n_value == 0) {
 		error("No symbols in namelist");
 		return(0);
 	}
@@ -167,7 +167,8 @@ initnetstat()
 void
 fetchnetstat()
 {
-	register struct inpcb *prev, *next;
+	struct inpcbtable pcbtable;
+	register struct inpcb *head, *prev, *next;
 	register struct netinfo *p;
 	struct inpcb inpcb;
 	struct socket sockb;
@@ -175,16 +176,16 @@ fetchnetstat()
 	void *off;
 	int istcp;
 
-	if (namelist[X_TCB].n_value == 0)
+	if (namelist[X_TCBTABLE].n_value == 0)
 		return;
 	for (p = netcb.ni_forw; p != (struct netinfo *)&netcb; p = p->ni_forw)
 		p->ni_seen = 0;
 	if (protos&TCP) {
-		off = NPTR(X_TCB); 
+		off = NPTR(X_TCBTABLE); 
 		istcp = 1;
 	}
 	else if (protos&UDP) {
-		off = NPTR(X_UDB); 
+		off = NPTR(X_UDBTABLE); 
 		istcp = 0;
 	}
 	else {
@@ -192,18 +193,22 @@ fetchnetstat()
 		return;
 	}
 again:
-	KREAD(off, &inpcb, sizeof (struct inpcb));
-	prev = off;
-	for (; inpcb.inp_next != off; prev = next) {
-		next = inpcb.inp_next;
+	KREAD(off, &pcbtable, sizeof (struct inpcbtable));
+	prev = head = (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue;
+	next = pcbtable.inpt_queue.cqh_first;
+	while (next != head) {
 		KREAD(next, &inpcb, sizeof (inpcb));
-		if (inpcb.inp_prev != prev) {
+		if (inpcb.inp_queue.cqe_prev != prev) {
+printf("prev = %x, head = %x, next = %x, inpcb...prev = %x\n", prev, head, next, inpcb.inp_queue.cqe_prev);
 			p = netcb.ni_forw;
 			for (; p != (struct netinfo *)&netcb; p = p->ni_forw)
 				p->ni_seen = 1;
 			error("Kernel state in transition");
 			return;
 		}
+		prev = next;
+		next = inpcb.inp_queue.cqe_next;
+
 		if (!aflag && inet_lnaof(inpcb.inp_laddr) == INADDR_ANY)
 			continue;
 		if (nhosts && !checkhost(&inpcb))
@@ -219,7 +224,7 @@ again:
 	}
 	if (istcp && (protos&UDP)) {
 		istcp = 0;
-		off = NPTR(X_UDB);
+		off = NPTR(X_UDBTABLE);
 		goto again;
 	}
 }
@@ -285,7 +290,7 @@ enter(inp, so, state, proto)
 void
 labelnetstat()
 {
-	if (namelist[X_TCB].n_type == 0)
+	if (namelist[X_TCBTABLE].n_type == 0)
 		return;
 	wmove(wnd, 0, 0); wclrtobot(wnd);
 	mvwaddstr(wnd, 0, LADDR, "Local Address");
