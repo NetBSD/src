@@ -38,7 +38,7 @@
  *
  * The result is in (0,2^31), e.g., it's always positive.
  */
-#include "machine/asm.h"
+#include <machine/asm.h>
 
 	.data
 randseed:
@@ -49,12 +49,14 @@ ENTRY(random)
 	imull	randseed
 	shll	$1,%edx
 	movl	%eax,%ecx
-	and	$0x7fffffff,%eax
+	andl	$0x7fffffff,%eax
 	shrl	$31,%ecx
 	orl	%ecx,%edx
 	addl	%edx,%eax
-	jge	1f
-	incl	%eax
+	js	1f
+	movl	%eax,randseed
+	ret
 1:
+	subl	$0x7fffffff,%eax
 	movl	%eax,randseed
 	ret
