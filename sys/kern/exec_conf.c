@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.32 1998/10/03 20:39:32 christos Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.33 1999/02/11 09:35:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -38,6 +38,7 @@
 #include "opt_compat_hpux.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sparc32.h"
+#include "opt_compat_aout.h"
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -94,6 +95,10 @@
 #include <compat/vax1k/vax1k_exec.h>
 #endif
 
+#ifdef COMPAT_AOUT
+#include <compat/aout/aout_exec.h>
+#endif
+
 struct execsw execsw[] = {
 #ifdef LKM
 	{ 0, NULL, },					/* entries for LKMs */
@@ -106,7 +111,11 @@ struct execsw execsw[] = {
 	{ MAXINTERP, exec_script_makecmds, },		/* shell scripts */
 #endif
 #ifdef EXEC_AOUT
+# ifdef COMPAT_AOUT
+	{ sizeof(struct exec), exec_aoutcompat_makecmds, },/* compat a.out */
+# else
 	{ sizeof(struct exec), exec_aout_makecmds, },	/* a.out binaries */
+# endif
 #endif
 #ifdef EXEC_ECOFF
 	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, },	/* ecoff binaries */
