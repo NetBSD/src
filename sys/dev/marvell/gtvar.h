@@ -1,4 +1,4 @@
-/*	$NetBSD: gtvar.h,v 1.1 2003/03/05 22:08:23 matt Exp $	*/
+/*	$NetBSD: gtvar.h,v 1.2 2003/03/16 07:05:34 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -41,34 +41,57 @@
  * gtvar.h -- placeholder for GT system controller driver
  */
 #ifndef _DISCOVERY_DEV_GTVAR_H_
-#define _DISCOVERY_DEV_GTVAR_H_
+#define	_DISCOVERY_DEV_GTVAR_H_
 
 #include <sys/systm.h>
 
-#define GTPCI_NBUS 2
+#define	GTPCI_NBUS 2
 
 struct gt_softc {
 	struct device gt_dev;
-	vaddr_t gt_vbase;		/* mapped GT base address */
-#if 0
-	vaddr_t gt_iobat_vbase;		/* I/O BAT virtual base */
-	paddr_t gt_iobat_pbase;		/* I/O BAT physical base */
-	vsize_t gt_iobat_mask;		/* I/O BAT mask (signif. bits only) */
-#endif
-	struct pci_chipset *gt_pcis[GTPCI_NBUS];
 	bus_dma_tag_t gt_dmat;
-	bus_space_tag_t gt_memt;
-	bus_space_tag_t gt_pci0_memt;
-	bus_space_tag_t gt_pci0_iot;
-	bus_space_tag_t gt_pci1_memt;
-	bus_space_tag_t gt_pci1_iot;
+	bus_space_tag_t gt_memt;	/* the GT itself */
+	bus_space_tag_t gt_pci0_memt;	/* PCI0 mem space */
+	bus_space_tag_t gt_pci0_iot;	/* PCI0 i/o space */
+	bus_space_tag_t gt_pci1_memt;	/* PCI1 mem space */
+	bus_space_tag_t gt_pci1_iot;	/* PCI1 i/o space */
+
+	bus_space_handle_t gt_memh;	/* to access the GT registers */
+	int gt_childmask;		/* what children are present */
 };
+
+#define	GT_CHILDOK(gt, ga, cd, pos, max) \
+	(((ga)->ga_unit) < (max) &&  \
+	    !((gt)->gt_childmask & (1 << (((ga)->ga_unit) + (pos)))) && \
+	    !strcmp((ga)->ga_name, (cd)->cd_name))
+
+#define	GT_MPSCOK(gt, ga, cd)		GT_CHILDOK((gt), (ga), (cd), 0, 2)
+#define	GT_PCIOK(gt, ga, cd)		GT_CHILDOK((gt), (ga), (cd), 2, 2)
+#define	GT_ETHEROK(gt, ga, cd)		GT_CHILDOK((gt), (ga), (cd), 4, 3)
+#define	GT_OBIOOK(gt, ga, cd)		GT_CHILDOK((gt), (ga), (cd), 7, 5)
+
+#define	GT_CHILDFOUND(gt, ga, pos) \
+	((void)(((gt)->gt_childmask |= (1 << (((ga)->ga_unit) + (pos))))))
+
+#define	GT_MPSCFOUND(gt, ga)		GT_CHILDFOUND((gt), (ga), 0)
+#define	GT_PCIFOUND(gt, ga)		GT_CHILDFOUND((gt), (ga), 2)
+#define	GT_ETHERFOUND(gt, ga)		GT_CHILDFOUND((gt), (ga), 4)
+#define	GT_OBIOFOUND(gt, ga)		GT_CHILDFOUND((gt), (ga), 7)
 
 struct gt_attach_args {
 	const char *ga_name;		/* class name of device */
 	bus_dma_tag_t ga_dmat;		/* dma tag */
 	bus_space_tag_t ga_memt;	/* GT bus space tag */
+	bus_space_handle_t ga_memh;	/* GT bus space handle */
 	int ga_unit;			/* instance of ga_name */
+};
+
+struct obio_attach_args {
+	const char *oa_name;		/* call name of device */
+	bus_space_tag_t oa_memt;	/* bus space tag */
+	bus_addr_t oa_offset;		/* offset (absolute) to device */
+	bus_size_t oa_size;		/* size (strided) of device */
+	int oa_irq;			/* irq */
 };
 
 #ifdef _KERNEL
@@ -81,58 +104,39 @@ extern int gtpci_debug;
 /*
  * Locators for GT private devices, as specified to config.
  */
-#define gtcf_dev		cf_loc[GTCF_DEV]
-#define	GT_UNK_DEV		GTCF_DEV_DEFAULT	/* wcarded 'dev' */
+#define	gtcf_unit		cf_loc[GTCF_UNIT]
+#define	GT_UNK_UNIT		GTCF_UNIT_DEFAULT	/* wcarded 'function' */
 
-#define gtcf_function		cf_loc[GTCF_FUNCTION]
-#define	GT_UNK_FUNCTION		GTCF_FUNCTION_DEFAULT	/* wcarded 'function' */
+#define	obiocf_offset		cf_loc[OBIOCF_OFFSET]
+#define	OBIO_UNK_OFFSET		OBIOCF_OFFSET_DEFAULT	/* wcarded 'offset' */
+
+#define	obiocf_size		cf_loc[OBIOCF_SIZE]
+#define	OBIO_UNK_SIZE		OBIOCF_SIZE_DEFAULT	/* wcarded 'size' */
+
+#define	obiocf_irq		cf_loc[OBIOCF_IRQ]
+#define	OBIO_UNK_IRQ		OBIOCF_IRQ_DEFAULT	/* wcarded 'irq' */
 
 void	gt_attach_common(struct gt_softc *);
 uint32_t gt_read_mpp(void);
 int	gt_cfprint (void *, const char *);
 
-void	gtpci_config(struct gt_softc *, int,
-		     bus_space_tag_t, bus_space_tag_t, bus_dma_tag_t);
-void	gteth_config (struct gt_softc *, int);
-void	gtmpsc_config (struct gt_softc *, int);
+struct pci_chipset;
+
+void	gtpci_config_bus(struct pci_chipset *, int);
 
 /* int     gt_bs_extent_init(struct discovery_bus_space *, char *);  AKB */
 int	gt_mii_read (struct device *, struct device *, int, int);
 void	gt_mii_write (struct device *, struct device *, int, int, int);
-int	gtget_macaddr(struct gt_softc *gt, int function, char *enaddr);
-void	gtpci_config_bus(struct pci_chipset *pc, int busno);
-void	gt_setup(struct device *gt);
+int	gtget_macaddr(struct gt_softc *,int, char *);
 void	gt_watchdog_service(void);
 
-#define	gt_read(a,b)	gt_read_4(a,b)
-#define	gt_write(a,b,c)	gt_write_4(a,b,c)
-
-static __inline uint32_t
-gt_read_4(struct device *dv, bus_addr_t off)
-{
-	struct gt_softc *gt = (struct gt_softc *) dv;
-	uint32_t rv;
-
-	__asm __volatile("eieio; lwbrx %0,%1,%2; eieio;"
-	    : "=r"(rv)
-	    : "b"(gt->gt_vbase), "r"(off));
-
-	return rv;
-}
-
-static __inline void
-gt_write_4(struct device *dv, bus_addr_t off, uint32_t v)
-{
-	struct gt_softc *gt = (struct gt_softc *) dv;
-
-	__asm __volatile("eieio; stwbrx %0,%1,%2; eieio;"
-	    ::	"r"(v), "b"(gt->gt_vbase), "r"(off));
-}
+#define	gt_read(gt,o) \
+	bus_space_read_4((gt)->gt_memt, (gt)->gt_memh, (o))
+#define	gt_write(gt,o,v) \
+	bus_space_write_4((gt)->gt_memt, (gt)->gt_memh, (o), (v))
 
 #if defined(__powerpc__)
-static volatile inline int atomic_add(volatile int *p, int v);
-
-static volatile inline int
+static __inline volatile int
 atomic_add(volatile int *p, int	v)
 {
 	int	rv;
