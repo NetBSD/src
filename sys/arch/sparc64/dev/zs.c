@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.37 2002/09/21 09:29:34 petrov Exp $	*/
+/*	$NetBSD: zs.c,v 1.38 2002/09/26 20:51:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -289,9 +289,6 @@ zs_attach(zsc, zsd, pri)
 	for (channel = 0; channel < 2; channel++) {
 		struct zschan *zc;
 		struct device *child;
-#if (NKBD > 0) || (NMS > 0)
-		extern struct cfdriver zstty_cd; /* in ioconf.c */
-#endif
 
 		zsc_args.channel = channel;
 		cs = &zsc->zsc_cs_store[channel];
@@ -367,7 +364,7 @@ zs_attach(zsc, zsd, pri)
 		 * sunkbd and sunms line disciplines.
 		 */
 		if (child 
-		    && (child->dv_cfdata->cf_driver == &zstty_cd) 
+		    && (!strcmp(child->dv_cfdata->cf_driver->cd_name, "zstty"))
 		    && (PROM_getproplen(zsc->zsc_node, "keyboard") == 0)) {
 			struct kbd_ms_tty_attach_args kma;
 			struct zstty_softc {	
