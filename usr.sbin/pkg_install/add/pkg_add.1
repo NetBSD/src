@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.39 2003/02/25 10:36:16 wiz Exp $
+.\" $NetBSD: pkg_add.1,v 1.40 2003/03/24 13:47:13 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -271,9 +271,11 @@ option is not given.
 If the
 .Fl u
 option is given, it's assumed the package should be upgraded instead.
-This is prepared by moving an existing
+Before doing so, all packages that depend on the pkg being upgraded
+are checked if they also work with the new version. If that test is
+successful, the upgrade is prepared by moving an existing
 .Pa +REQUIRED_BY
-file aside (if it exists), and by running
+file aside (if it exists), and running
 .Xr pkg_delete 1
 on the installed package.
 Installation then proceeds as if the package
