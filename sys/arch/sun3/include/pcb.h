@@ -36,10 +36,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: pcb.h 1.13 89/04/23$
- *
- *	from: @(#)pcb.h	7.4 (Berkeley) 5/4/91
- *	pcb.h,v 1.2 1993/05/22 07:58:27 cgd Exp
+ *	from: Utah Hdr: pcb.h 1.14 91/03/25
+ *	from: @(#)pcb.h	8.1 (Berkeley) 6/10/93
+ *	$Id: pcb.h,v 1.6 1994/05/27 14:55:24 gwr Exp $
  */
 
 #include <machine/frame.h>
@@ -54,18 +53,15 @@ struct pcb
 	int	pcb_ustp;	/* user segment table pointer (+4) (not used)*/
 	int	pcb_usp;	/* user stack pointer (+8) */
 	int	pcb_regs[12];	/* D2-D7, A2-A7 (+C) */
-	vm_offset_t pcb_upte[3]; /* ptes for u-area */
+	vm_offset_t pcb_upte[UPAGES]; /* ptes for u-area */
 	caddr_t	pcb_onfault;	/* for copyin/out faults */
 	struct	fpframe pcb_fpregs; /* 68881/2 context save area */
-	int	pcb_exec[16];	/* exec structure for core dumps */
 };
 
-/* flags */
-
-#define PCB_HPUXMMAP	0x0010	/* VA space is multiple mapped */
-#define PCB_HPUXTRACE	0x0020	/* being traced by an HPUX process */
-#define PCB_HPUXBIN	0x0040	/* loaded from an HPUX format binary */
-				/* note: does NOT imply SHPUX */
-
+/*
+ * The pcb is augmented with machine-dependent additional data for
+ * core dumps. For the sun3, this includes just an exec header.
+ */
 struct md_coredump {
+	int	md_exec[16];	/* exec structure for core dumps */
 };

@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 1993 Adam Glass 
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1993 Adam Glass, Gordon Ross
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,16 +31,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	from: genassym.c,v 1.2 1993/05/22 07:57:23 cgd Exp
- *	$Id: genassym.c,v 1.18 1994/05/25 06:50:13 glass Exp $
+ *	from: @(#)genassym.c	8.3 (Berkeley) 1/4/94
+ *	from: genassym.c,v 1.9 1994/05/23 06:14:19 mycroft
+ *	$Id: genassym.c,v 1.19 1994/05/27 14:58:27 gwr Exp $
  */
 
 #define KERNEL
 
-#include <sys/cdefs.h>
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
@@ -61,6 +60,22 @@
 #include "interreg.h"
 #include "buserr.h"
 
+#ifdef	__STDC__
+#define	def1(name) def(#name, name)
+#else
+#define	def1(name) def("name", name)
+#endif
+
+void
+def(what, val)
+	char *what;
+	int val;
+{
+	printf("#define\t%s\t", what);
+	/* This just makes the output easier to verify. */
+	printf(((val > 999) ? "0x%x\n" : "%d\n"), val);
+}
+
 main()
 {
 	struct pcb *pcb = (struct pcb *) 0;
@@ -68,112 +83,118 @@ main()
 	struct proc *p = (struct proc *) 0;
 	struct vmspace *vms = (struct vmspace *) 0;
 	struct intersil7170 *intersil_addr = (struct intersil7170 *) 0;
-	unsigned int i;
-
+	struct frame *fp = (struct frame *) 0;
 
 	/* intersil clock internals */
-	printf("#define\tIREG_CLOCK_ENAB_5 %d\n", IREG_CLOCK_ENAB_5);
+	def("IREG_CLOCK_ENAB_5", IREG_CLOCK_ENAB_5);
 
 	/* bus error stuff */
-	printf("#define\tBUSERR_REG %d\n", BUSERR_REG);
-	printf("#define\tBUSERR_PROTERR %d\n", BUSERR_PROTERR);
-	printf("#define\tBUSERR_TIMEOUT %d\n", BUSERR_TIMEOUT);
-	printf("#define\tBUSERR_INVALID %d\n", BUSERR_INVALID);
+	def1(BUSERR_REG);
+	def1(BUSERR_PROTERR);
+	def1(BUSERR_TIMEOUT);
+	def1(BUSERR_INVALID);
 
 	/* 68k isms */
-	printf("#define\tPSL_LOWIPL %d\n", PSL_LOWIPL);
-	printf("#define\tPSL_HIGHIPL %d\n", PSL_HIGHIPL);
-	printf("#define\tPSL_IPL7 %d\n", PSL_IPL7);
-	printf("#define\tPSL_USER %d\n", PSL_USER);
-	printf("#define\tSPL1 %d\n", PSL_S | PSL_IPL1);
-	printf("#define\tFC_CONTROL %d\n",  FC_CONTROL);
-	printf("#define\tFC_SUPERD %d\n",  FC_SUPERD);
-	printf("#define\tFC_USERD %d\n",  FC_USERD);
-	printf("#define\tIC_CLEAR %d\n", IC_CLEAR);
+	def1(PSL_LOWIPL);
+	def1(PSL_HIGHIPL);
+	def1(PSL_IPL7);
+	def1(PSL_USER);
+	def("SPL1", PSL_S | PSL_IPL1);
+	def1(FC_CONTROL);
+	def1(FC_SUPERD);
+	def1(FC_USERD);
+	def1(IC_CLEAR);
 
 	/* sun3 control space isms */
-	printf("#define\tCONTEXT_0 %d\n",   CONTEXT_0);
-	printf("#define\tCONTEXT_REG %d\n", CONTEXT_REG);
-	printf("#define\tCONTEXT_NUM %d\n", CONTEXT_NUM);
-	printf("#define\tSYSTEM_ENAB %d\n", SYSTEM_ENAB);
-	printf("#define\tSYSTEM_ENAB_FPP %d\n", SYSTEM_ENAB_FPP);
-	printf("#define\tSEGMAP_BASE %d\n", SEGMAP_BASE);
-	printf("#define\tNBPG %d\n",        NBPG);
-	printf("#define\tNBSG %d\n",        NBSG);
+	def1(CONTEXT_0);
+	def1(CONTEXT_REG);
+	def1(CONTEXT_NUM);
+	def1(SYSTEM_ENAB);
+	def1(SYSTEM_ENAB_FPP);
+	def1(SEGMAP_BASE);
+	def1(NBPG);
+	def1(NBSG);
 
 	/* sun3 memory map */
-	printf("#define\tMAINMEM_MONMAP %d\n",    MAINMEM_MONMAP);
-	printf("#define\tMONSHORTSEG %d\n",       MONSHORTSEG);
-	printf("#define\tUSRSTACK %d\n",          USRSTACK);
+	def1(MAINMEM_MONMAP);
+	def1(MONSHORTSEG);
+	def1(USRSTACK);
 
 	/* kernel-isms */
-	printf("#define\tINTERSIL_INTR_OFFSET %d\n",
+	def("INTERSIL_INTR_OFFSET",
 		   &intersil_addr->interrupt_reg);
-	printf("#define\tINTERSIL_INTER_CSECONDS %d\n",
-		   INTERSIL_INTER_CSECONDS);
-	printf("#define\tCLOCK_VA %d\n", CLOCK_VA);
-	printf("#define\tINTERREG_VA %d\n", INTERREG_VA);
-	printf("#define\tKERNBASE %d\n",        KERNBASE);
-	printf("#define\tUPAGES %d\n",          UPAGES);
-	printf("#define\tUPAGE_ADDR %d\n",      MONSHORTSEG);
-	printf("#define\tKSTACK_ADDR %d\n",     MONSHORTSEG);
+	def1(INTERSIL_INTER_CSECONDS);
+	def1(CLOCK_VA);
+	def1(INTERREG_VA);
+	def1(KERNBASE);
+	def1(UPAGES);
+	def("UPAGE_ADDR",      MONSHORTSEG);
+	def("KSTACK_ADDR",     MONSHORTSEG);
 
 	/* errno-isms */
-	printf("#define\tEFAULT %d\n",        EFAULT);
-	printf("#define\tENAMETOOLONG %d\n",  ENAMETOOLONG);
+	def1(EFAULT);
+	def1(ENAMETOOLONG);
 
-	/* trap constants */
-	printf("#define\tT_BUSERR %d\n", T_BUSERR);
-	printf("#define\tT_ADDRERR %d\n", T_ADDRERR);
-	printf("#define\tT_ILLINST %d\n", T_ILLINST);
-	printf("#define\tT_ZERODIV %d\n", T_ZERODIV);
-	printf("#define\tT_CHKINST %d\n", T_CHKINST);
-	printf("#define\tT_TRAPVINST %d\n", T_TRAPVINST);
-	printf("#define\tT_PRIVINST %d\n", T_PRIVINST);
-	printf("#define\tT_TRACE %d\n", T_TRACE);
-	printf("#define\tT_MMUFLT %d\n", T_MMUFLT);
-	printf("#define\tT_SSIR %d\n", T_SSIR);
-	printf("#define\tT_FMTERR %d\n", T_FMTERR);
-	printf("#define\tT_COPERR %d\n", T_COPERR);
-	printf("#define\tT_FPERR %d\n", T_FPERR);
-	printf("#define\tT_ASTFLT %d\n", T_ASTFLT);
-	printf("#define\tT_TRAP15 %d\n", T_TRAP15);
+	/* trap types (should just include trap.h?) */
+	def1(T_BUSERR);
+	def1(T_ADDRERR);
+	def1(T_ILLINST);
+	def1(T_ZERODIV);
+	def1(T_CHKINST);
+	def1(T_TRAPVINST);
+	def1(T_PRIVINST);
+	def1(T_TRACE);
+	def1(T_MMUFLT);
+	def1(T_SSIR);
+	def1(T_FMTERR);
+	def1(T_COPERR);
+	def1(T_FPERR);
+	def1(T_ASTFLT);
+	def1(T_TRAP15);
 	
 	/*
 	 * unix structure-isms
 	 */
 
+	/* proc fields and values */
+	def("P_FORW", &p->p_forw);
+	def("P_BACK", &p->p_back);
+	def("P_VMSPACE", &p->p_vmspace);
+	def("P_ADDR", &p->p_addr);
+	def("P_PRIORITY", &p->p_priority);
+	def("P_STAT", &p->p_stat);
+	def("P_WCHAN", &p->p_wchan);
+	def("P_FLAG", &p->p_flag);
+	def("P_MDFLAG", &p->p_md.md_flags);
+	def1(SRUN);
+	/* HP-UX trace bit */
+	def("MDP_TRCB", ffs(MDP_HPUXTRACE) - 1);
+
+	/* VM structure fields */
+	def("VM_PMAP", &vms->vm_pmap);
+
 	/* pcb offsets */
-	printf("#define\tP_FORW %d\n", &p->p_forw);
-	printf("#define\tP_BACK %d\n", &p->p_back);
-	printf("#define\tP_VMSPACE %d\n", &p->p_vmspace);
-	printf("#define\tVM_PMAP %d\n", &vms->vm_pmap);
-	printf("#define\tP_ADDR %d\n", &p->p_addr);
-	printf("#define\tP_PRIORITY %d\n", &p->p_priority);
-	printf("#define\tP_STAT %d\n", &p->p_stat);
-	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
-	printf("#define\tP_FLAG %d\n", &p->p_flag);
-	printf("#define\tPCB_FLAGS %d\n", &pcb->pcb_flags);
-	printf("#define\tPCB_PS %d\n", &pcb->pcb_ps);
-	printf("#define\tPCB_USTP %d\n", &pcb->pcb_ustp);
-	printf("#define\tPCB_USP %d\n", &pcb->pcb_usp);
-	printf("#define\tPCB_REGS %d\n", pcb->pcb_regs);
-	printf("#define\tPCB_ONFAULT %d\n", &pcb->pcb_onfault);
-	printf("#define\tPCB_FPCTX %d\n", &pcb->pcb_fpregs);
-	for (i = 0; i < 32; i++)
-	if ((1 << i) & PCB_HPUXTRACE)
-	    printf("#define\tPCB_TRCB %d\n", i);
-	printf("#define\tSIZEOF_PCB %d\n", sizeof(struct pcb));
-	/* DIAGNOSTIC code needs this from proc.h */
-	printf("#define\tSRUN %d\n", SRUN);
+	def("PCB_FLAGS", &pcb->pcb_flags);
+	def("PCB_PS", &pcb->pcb_ps);
+	def("PCB_USTP", &pcb->pcb_ustp);
+	def("PCB_USP", &pcb->pcb_usp);
+	def("PCB_REGS", pcb->pcb_regs);
+	def("PCB_ONFAULT", &pcb->pcb_onfault);
+	def("PCB_FPCTX", &pcb->pcb_fpregs);
+	def("SIZEOF_PCB", sizeof(struct pcb));
+
+	/* exception frame offset/sizes */
+	def("FR_SP", &fp->f_regs[15]);
+	def("FR_HW", &fp->f_sr);
+	def("FR_ADJ", &fp->f_stackadj);
 
 	/* vm statistics */
-	printf("#define\tV_SWTCH %d\n", &vm->v_swtch);
-	printf("#define\tV_TRAP %d\n", &vm->v_trap);
-	printf("#define\tV_SYSCALL %d\n", &vm->v_syscall);
-	printf("#define\tV_INTR %d\n", &vm->v_intr);
-	printf("#define\tV_SOFT %d\n", &vm->v_soft);
-	printf("#define\tV_FAULTS %d\n", &vm->v_faults);
+	def("V_SWTCH", &vm->v_swtch);
+	def("V_TRAP", &vm->v_trap);
+	def("V_SYSCALL", &vm->v_syscall);
+	def("V_INTR", &vm->v_intr);
+	def("V_SOFT", &vm->v_soft);
+	def("V_FAULTS", &vm->v_faults);
 
 	exit(0);
 }
