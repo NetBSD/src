@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.1.2.3 1997/11/17 08:16:50 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.1.2.4 1997/11/18 23:41:09 mellon Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -303,7 +303,7 @@ tl_lookup_product(id)
 	return (tp);
 }
 
-static char *nullbuf;
+static char *nullbuf = NULL;
 
 static int
 tl_pci_match(parent, match, aux)
@@ -559,9 +559,6 @@ static void tl_shutdown(v)
 	sc->last_Tx = NULL;
 	free(sc->Tx_list, M_DEVBUF);
 	sc->Tx_list = NULL;
-	if (nullbuf)
-		free(nullbuf, M_DEVBUF);
-	nullbuf = NULL;
 	sc->tl_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	sc->mii.mii_media_status &= ~IFM_ACTIVE;
 	sc->tl_flags = 0;
@@ -644,7 +641,8 @@ static int tl_init(sc)
 	sc->active_Tx = sc->last_Tx = NULL;
 	sc->Free_Tx   = &sc->Tx_list[0];
 
-	nullbuf = malloc(ETHER_MIN_TX, M_DEVBUF, M_NOWAIT);
+	if (nullbuf == NULL)
+		nullbuf = malloc(ETHER_MIN_TX, M_DEVBUF, M_NOWAIT);
 	if (nullbuf == NULL) {
 		printf("%s: can't allocate space for pad buffer\n",
 			sc->sc_dev.dv_xname);
