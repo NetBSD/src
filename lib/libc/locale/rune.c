@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.25 2004/01/06 11:29:30 agc Exp $	*/
+/*	$NetBSD: rune.c,v 1.26 2004/05/09 11:26:33 kleink Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -63,10 +63,11 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.25 2004/01/06 11:29:30 agc Exp $");
+__RCSID("$NetBSD: rune.c,v 1.26 2004/05/09 11:26:33 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
