@@ -1,4 +1,4 @@
-/* $NetBSD: mcount.S,v 1.1 1996/01/31 23:16:32 mark Exp $ */
+/* $NetBSD: mcount.S,v 1.2 1996/06/03 21:21:34 mark Exp $ */
 
 /*
  * Copyright (C) 1994 Mark Brinicombe
@@ -29,8 +29,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: mcount.S,v 1.1 1996/01/31 23:16:32 mark Exp $
  */
 
 fp	.req	r11

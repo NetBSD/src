@@ -1,4 +1,4 @@
-/* $NetBSD: setcpsr.S,v 1.1 1996/01/31 23:16:54 mark Exp $ */
+/* $NetBSD: setcpsr.S,v 1.2 1996/06/03 21:21:37 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,11 +43,8 @@
  * Eventually this routine can be inline assembly.
  *
  * Created      : 12/09/94
- * Last updated : 28/05/95
  *
  * Based of kate/display/setcpsr.s
- *
- *    $Id: setcpsr.S,v 1.1 1996/01/31 23:16:54 mark Exp $
  */
 
 fp      .req    r11

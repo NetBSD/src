@@ -1,4 +1,4 @@
-/* $NetBSD: exit.S,v 1.1 1996/01/31 23:18:14 mark Exp $ */
+/* $NetBSD: exit.S,v 1.2 1996/06/03 21:24:54 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,11 +41,8 @@
  * Boot loader exit point
  *
  * Created      : 12/09/94
- * Last updated : 12/09/94
  *
  * Based on kate/boot/_exit.s
- *
- *    $Id: exit.S,v 1.1 1996/01/31 23:18:14 mark Exp $
  */
 
 #include "regs.h"
