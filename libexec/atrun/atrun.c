@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.c,v 1.3 1996/08/30 20:24:51 thorpej Exp $	*/
+/*	$NetBSD: atrun.c,v 1.4 1997/10/07 10:49:16 mrg Exp $	*/
 
 /*
  * atrun.c - run jobs queued by at; run with root privileges.
@@ -28,8 +28,8 @@
 
 /* System Headers */
 
-#include <sys/fcntl.h>
 #include <sys/types.h>
+#include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <dirent.h>
@@ -53,10 +53,17 @@
 #include "pathnames.h"
 #include "atrun.h"
 
+static void perr __P((const char *));
+static int write_string __P((int, const char *));
+static void run_file __P((const char *, uid_t));
+int main __P((int, char *[]));
+
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$NetBSD: atrun.c,v 1.3 1996/08/30 20:24:51 thorpej Exp $";
+#ifndef lint
+__RCSID("$NetBSD: atrun.c,v 1.4 1997/10/07 10:49:16 mrg Exp $");
+#endif
 
 /* Local functions */
 static void
