@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.14 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: crime.c,v 1.15 2004/01/12 03:30:51 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.14 2003/11/17 10:07:58 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.15 2004/01/12 03:30:51 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -98,7 +98,7 @@ crime_attach(parent, self, aux)
 
 	crime_sc = sc;
 
-	sc->iot = SGIMIPS_BUS_SPACE_HPC;
+	sc->iot = SGIMIPS_BUS_SPACE_CRIME;
 
 	if (bus_space_map(sc->iot, ma->ma_addr, 0 /* XXX */,
 	    BUS_SPACE_MAP_LINEAR, &sc->ioh))
