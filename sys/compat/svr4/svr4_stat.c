@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.32 1999/02/09 20:46:41 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.33 1999/03/23 14:57:00 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -796,6 +796,9 @@ svr4_to_bsd_pathconf(name)
 
 	case SVR4_PC_SYNC_IO:
 		return _PC_SYNC_IO;
+
+	case SVR4_PC_FILESIZEBITS:
+		return _PC_FILESIZEBITS;
 
 	case SVR4_PC_ASYNC_IO:
 	case SVR4_PC_PRIO_IO:
