@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.72 1997/05/24 20:17:04 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -643,6 +643,8 @@ bootpath_fake(bp, cp)
 
 /*
  * print out the bootpath
+ * the %x isn't 0x%x because the Sun EPROMs do it this way, and
+ * consistency with the EPROMs is probably better here.
  */
 
 static void
@@ -1478,7 +1480,7 @@ getprop(node, name, buf, bufsiz)
 	no = promvec->pv_nodeops;
 	len = no->no_proplen(node, name);
 	if (len > bufsiz) {
-		printf("node %x property %s length %d > %d\n",
+		printf("node 0x%x property %s length %d > %d\n",
 		    node, name, len, bufsiz);
 #ifdef DEBUG
 		panic("getprop");
