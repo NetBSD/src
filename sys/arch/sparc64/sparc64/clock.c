@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19.2.2 2000/07/31 02:06:39 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.19.2.3 2000/10/18 03:31:05 tv Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -151,6 +151,15 @@ void stopcounter __P((struct timer_4u *));
 
 int timerblurb = 10; /* Guess a value; used before clock is attached */
 
+struct bus_map_args {
+	bus_space_tag_t	tag;
+	bus_type_t	bustype;
+	bus_addr_t	addr;
+	bus_space_handle_t	bh;
+};
+
+static struct bus_map_args mapargs;
+
 /*
  * The OPENPROM calls the clock the "eeprom", so we have to have our
  * own special match function to call it the "clock".
@@ -241,6 +250,12 @@ clockattach_sbus(parent, self, aux)
 		return;
 	}
 	clockattach(sa->sa_node, bh);
+
+	/* Save mapping info for later. */
+	mapargs.tag = sa->sa_bustag;
+	mapargs.bustype = sa->sa_slot;
+	mapargs.addr = (sa->sa_offset & ~NBPG);
+	mapargs.bh = bh;
 }
 
 /* ARGSUSED */
@@ -267,6 +282,12 @@ clockattach_ebus(parent, self, aux)
 		return;
 	}
 	clockattach(ea->ea_node, bh);
+
+	/* Save mapping info for later. */
+	mapargs.tag = ea->ea_bustag;
+	mapargs.bustype = 0;
+	mapargs.addr = EBUS_PADDR_FROM_REG(&ea->ea_regs[0]);
+	mapargs.bh = bh;
 }
 
 static void
@@ -400,22 +421,26 @@ clk_wenable(onoff)
 	register int s;
 	register vm_prot_t prot;/* nonzero => change prot */
 	static int writers;
+	
 
 	s = splhigh();
 	if (onoff)
-		prot = writers++ == 0 ? VM_PROT_READ|VM_PROT_WRITE : 0;
+		prot = writers++ == 0 ? BUS_SPACE_MAP_LINEAR : 0;
 	else
-		prot = --writers == 0 ? VM_PROT_READ : 0;
+		prot = --writers == 0 ? 
+			BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_READONLY : 0;
 	splx(s);
-#if 0
 	if (prot) {
-		vaddr_t va = (vaddr_t)clockreg & ~(NBPG-1);
-		paddr_t pa;
+		bus_space_handle_t newhandle;
 
-		(void) pmap_extract(pmap_kernel(), va, &pa);
-		pmap_enter(pmap_kernel(), va, pa, prot, prot|PMAP_WIRED);
+		bus_space_map2(mapargs.tag, mapargs.bustype,
+			       mapargs.addr, 8192, prot,
+			       mapargs.bh, &newhandle);
+		/* We can panic now or take a datafault later... */
+		if (mapargs.bh != newhandle)
+			panic("sbus_wenable: address %p changed to %p\n",
+			      (vaddr_t)mapargs.bh, (vaddr_t)newhandle);
 	}
-#endif
 }
 
 void
