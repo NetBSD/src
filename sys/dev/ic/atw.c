@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.19 2004/01/13 23:37:29 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.20 2004/01/29 09:59:57 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.19 2004/01/13 23:37:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.20 2004/01/29 09:59:57 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2964,7 +2964,8 @@ atw_rxintr(sc)
 	struct atw_rxsoft *rxs;
 	struct mbuf *m;
 	u_int32_t rxstat;
-	int i, len, rate, rate0, rssi;
+	int i, len, rate, rate0;
+	u_int32_t rssi;
 
 	for (i = sc->sc_rxptr;; i = ATW_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
@@ -3075,7 +3076,7 @@ atw_rxintr(sc)
 			tap->ar_chan_flags = ic->ic_bss->ni_chan->ic_flags;
 
 			/* TBD verify units are dB */
-			tap->ar_antsignal = rssi;
+			tap->ar_antsignal = (int)rssi;
 			/* TBD tap->ar_flags */
 
 			M_COPY_PKTHDR(&mb, m);
