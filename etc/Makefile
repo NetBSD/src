@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.178 2001/08/05 03:37:37 matt Exp $
+#	$NetBSD: Makefile,v 1.179 2001/08/23 14:37:02 mrg Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -339,21 +339,21 @@ snap_kern:
 .ifndef KERNELS_DONE
 .for configfile in GENERIC ${EXTRA_KERNELS} ${BUILD_KERNELS}
 	cd ${KERNCONFDIR} && ${CONFIG} \
-		-b ${KERNOBJDIR}/${configfile} -s ${KERNSRCDIR} ${configfile}
+		-b ${KERNOBJDIR}/${configfile:C/.*\///} -s ${KERNSRCDIR} ${configfile}
 .ifndef UPDATE
-	cd ${KERNOBJDIR}/${configfile} && ${MAKE} distclean 
+	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} distclean 
 .endif
-	cd ${KERNOBJDIR}/${configfile} && ${MAKE} depend && ${MAKE} ${_J}
+	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} depend && ${MAKE} ${_J}
 .endfor # kernels
 	cd ${KERNOBJDIR}/GENERIC &&	\
 		tar cf - `${GETKERNELAWK} ${KERNCONFDIR}/GENERIC` |\
 		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern.tgz
 .for configfile in GENERIC ${EXTRA_KERNELS}
-	cd ${KERNOBJDIR}/${configfile} &&	\
+	cd ${KERNOBJDIR}/${configfile:C/.*\///} &&	\
 		for kernel in `${GETKERNELAWK} \
-			${KERNCONFDIR}/${configfile}` ; {   \
+			${KERNCONFDIR}/${configfile:C/.*\///}` ; do   \
 		gzip -c -9 < $${kernel} > \
-			${RELEASEDIR}/binary/kernel/$${kernel}.${configfile}.gz ; }
+			${RELEASEDIR}/binary/kernel/$${kernel}.${configfile:C/.*\///}.gz ; done
 .endfor # EXTRA_KERNELS
 .endif # KERNELS_DONE
 .endif # no target(snap_kern)
