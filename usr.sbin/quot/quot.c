@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.22 2004/03/21 22:07:22 dsl Exp $	*/
+/*	$NetBSD: quot.c,v 1.23 2004/03/27 13:08:50 dsl Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.22 2004/03/21 22:07:22 dsl Exp $");
+__RCSID("$NetBSD: quot.c,v 1.23 2004/03/27 13:08:50 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -591,7 +591,8 @@ quot(name, mp)
 		    fs->fs_magic != FS_UFS2_MAGIC)
 			continue;
 
-		if (fs->fs_old_flags & FS_FLAGS_UPDATED) {
+		if (fs->fs_magic == FS_UFS2_MAGIC
+		    || fs->fs_old_flags & FS_FLAGS_UPDATED) {
 			/* Not the main superblock */
 			if (fs->fs_sblockloc != sbloc)
 				continue;
