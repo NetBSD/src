@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74.4.14 2002/08/24 00:36:16 petrov Exp $ */
+/*	$NetBSD: trap.c,v 1.74.4.15 2002/08/28 22:26:33 petrov Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -456,6 +456,7 @@ userret(l, pc, oticks)
 			ADDUPROF(p);
 		}
 	}
+#if 0
 	if (want_resched) {
 		/*
 		 * We are being preempted.
@@ -464,6 +465,7 @@ userret(l, pc, oticks)
 		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}
+#endif
 
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
@@ -707,7 +709,7 @@ badtrap:
 #endif
 
 	case T_AST:
-#if 0
+#if 1
 		if (want_resched) {
 			extern int sadebug;
 			if (sadebug)
@@ -1785,6 +1787,8 @@ syscall(tf, code, pc)
 	} args;
 	register_t rval[2];
 	u_quad_t sticks;
+	vaddr_t dest;
+	vaddr_t opc, onpc;
 #ifdef DIAGNOSTIC
 	extern struct pcb *cpcb;
 #endif
@@ -1828,6 +1832,22 @@ syscall(tf, code, pc)
 
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;
+
+	/*
+	 * save pc/npc in case of ERESTART
+	 * adjust pc/npc to new values
+	 */
+	opc = tf->tf_pc;
+	onpc = tf->tf_npc;
+
+	if (new)
+		dest = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
+	else
+		dest = tf->tf_npc;
+
+	tf->tf_pc = dest;
+	tf->tf_npc = dest + 4;
+
 
 	/*
 	 * The first six system call arguments are in the six %o registers.
@@ -1990,6 +2010,7 @@ syscall(tf, code, pc)
 		/* Need to convert from int64 to int32 or we lose */
 		for (argp = &args.i[0]; i--;) 
 			*argp++ = *ap++;
+#ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL)) {
 #if defined(__arch64__)
 			register_t temp[8];
@@ -2003,6 +2024,7 @@ syscall(tf, code, pc)
 			ktrsyscall(p, code, (register_t *)&args.i);
 #endif
 		}
+#endif
 		if (error) {
 			goto bad;
 		}
@@ -2035,28 +2057,33 @@ syscall(tf, code, pc)
 	error = (*callp->sy_call)(l, &args, rval);
 
 	switch (error) {
-		vaddr_t dest;
 	case 0:
 		/* Note: fork() does not return here in the child */
 		tf->tf_out[0] = rval[0];
 		tf->tf_out[1] = rval[1];
 		if (new) {
+#if 0
 			/* jmp %g2 (or %g7, deprecated) on success */
 			dest = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
+#endif
 #ifdef DEBUG
 			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
 				printf("syscall: return tstate=%llx new success to %p retval %lx:%lx\n", 
 				       (unsigned long long)tf->tf_tstate, (void *)(u_long)dest,
 				       (u_long)rval[0], (u_long)rval[1]);
 #endif
+#if 0
 			if (dest & 3) {
 				error = EINVAL;
 				goto bad;
 			}
+#endif
 		} else {
 			/* old system call convention: clear C on success */
 			tf->tf_tstate &= ~(((int64_t)(ICC_C|XCC_C))<<TSTATE_CCR_SHIFT);	/* success */
+#if 0
 			dest = tf->tf_npc;
+#endif
 #ifdef DEBUG
 			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
 				printf("syscall: return tstate=%llx old success to %p retval %lx:%lx\n", 
@@ -2069,11 +2096,17 @@ syscall(tf, code, pc)
 				    (void *)(u_long)dest);
 #endif
 		}
+#if 0
 		tf->tf_pc = dest;
 		tf->tf_npc = dest + 4;
+#endif
 		break;
 
 	case ERESTART:
+		tf->tf_pc = opc;
+		tf->tf_npc = onpc;
+		break;
+
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
@@ -2084,9 +2117,12 @@ syscall(tf, code, pc)
 			error = p->p_emul->e_errno[error];
 		tf->tf_out[0] = error;
 		tf->tf_tstate |= (((int64_t)(ICC_C|XCC_C))<<TSTATE_CCR_SHIFT);	/* fail */
-		dest = tf->tf_npc;
-		tf->tf_pc = dest;
-		tf->tf_npc = dest + 4;
+		/*
+		 * XXX don't know why it's handled differently, shouldn't be needed at all
+		 * XXX because pc/npc are already set (petrov) 
+		 */
+		tf->tf_pc = onpc;
+		tf->tf_npc = tf->tf_pc + 4;
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) 
 			printf("syscall: return tstate=%llx fail %d to %p\n", 

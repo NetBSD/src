@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139.4.13 2002/08/01 02:43:46 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.139.4.14 2002/08/28 22:26:30 petrov Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -7571,7 +7571,7 @@ swdebug:	.word 0
 	st	%o1, [%l1]
 #endif
 	flushw				! We don't have anything else to run, so why not flush
-#ifdef DEBUG
+#ifdef NOTDEF_DEBUG
 	save	%sp, -CC64FSZ, %sp
 	flushw
 	restore
@@ -7646,7 +7646,7 @@ Lsw_scan:
 	sll	%o4, PTRSHFT+1, %o0
 	add	%o0, %o5, %o5
 	LDPTR	[%o5], %l3		! p = q->ph_link;
-cpu_loadproc:		
+! cpu_loadproc:		
 	cmp	%l3, %o5		! if (p == q)
 	be,pn	%icc, Lsw_panic_rq	!	panic("switch rq");
 	 EMPTY
@@ -7661,6 +7661,7 @@ cpu_loadproc:
 	andn	%o3, %o1, %o3
 	st	%o3, [%l2 + %lo(_C_LABEL(sched_whichqs))]
 1:
+cpu_loadproc:
 	/*
 	 * PHASE TWO: NEW REGISTER USAGE:
 	 *	%l1 = newpcb
@@ -8035,13 +8036,13 @@ ENTRY(cpu_preempt)
 	 */
 	flushw	
 	rdpr	%pstate, %o1			! oldpstate = %pstate;
-	wrpr	%g0, PSTATE_INTR, %pstate	! make sure we're on normal globals
+	wrpr	%g0, PSTATE_KERN, %pstate	! make sure we're on normal globals
 	sethi	%hi(CPCB), %l6
-	mov	%i1, %l3			! new proc -> %l3
-	
+	mov	%i1, %l3			! new lwp -> %l3
+
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2	! set up addr regs
-	ld	[%l3 + L_PRIORITY], %o4		! load which
-	
+	ldub	[%l3 + L_PRIORITY], %o4		! load which
+
 	sethi	%hi(CURLWP), %l7
 	LDPTR	[%l6 + %lo(CPCB)], %l5
 	
@@ -8056,9 +8057,31 @@ ENTRY(cpu_preempt)
 	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
 
 	sll	%o4, PTRSHFT+1, %o0
-	ba,pt	%icc, cpu_loadproc
-	 ld	[%l3 + L_BACK], %o5
+	LDPTR	[%l3 + L_BACK], %o5
 
+	cmp	%l3, %o5		! if (p == q)
+	be,pn	%icc, Lsw_panic_rq	!	panic("switch rq");
+	 EMPTY
+	LDPTR	[%l3], %o0		! tmp0 = p->p_forw;
+	STPTR	%o0, [%o5]		! q->ph_link = tmp0;
+	STPTR	%o5, [%o0 + PTRSZ]	! tmp0->p_back = q;
+
+	set	_C_LABEL(sched_qs), %o5	! q = &qs[which];
+	sll	%o4, PTRSHFT+1, %o0
+	add	%o0, %o5, %o5
+	ldx	[%o5], %o0
+
+	
+	cmp	%o0, %o5		! if (tmp0 == q)
+	bne	1f
+	 EMPTY
+	mov	1, %o1			!	whichqs &= ~(1 << which);
+	sll	%o1, %o4, %o1
+	andn	%o3, %o1, %o3
+	st	%o3, [%l2 + %lo(_C_LABEL(sched_whichqs))]
+1:
+	ba,pt	%icc, cpu_loadproc
+	 nop
 
 /*
  * Snapshot the current process so that stack frames are up to date.
@@ -8120,11 +8143,11 @@ ENTRY(proc_trampoline)
 	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g2	! pc = tf->tf_npc from execve/fork
 !	rdpr	%cwp, %g5			! Fixup %cwp in %tstate
 	srl	%g1, 0, %g1			! Clear out the condition codes
-	add	%g2, 4, %g3			! npc = pc+4
+!	add	%g2, 4, %g3			! npc = pc+4
 !	andn	%g1, CWP, %g1			! Clear the CWP bits
-	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
+!	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
 !	or	%g1, %g5, %g1	! Not needed
-	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]
+!	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
 #ifdef SCHED_DEBUG
 !	set	panicstack-CC64FSZ-STKB, %o0! DEBUG

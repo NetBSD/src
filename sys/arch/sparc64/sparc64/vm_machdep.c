@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41.4.12 2002/08/27 23:45:55 nathanw Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.41.4.13 2002/08/28 22:26:34 petrov Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -240,6 +240,9 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 * the FPU user, we must save the FPU state first.
 	 */
 
+#ifdef NOTDEF_DEBUG
+	printf("cpu_lwp_fork()\n");
+#endif
 	if (l1 == curlwp) {
 		write_user_windows();
 
@@ -293,6 +296,8 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	if (stack != NULL)
 		tf2->tf_out[6] = (u_int64_t)(u_long)stack + stacksize;
 
+#if 0
+	/* XXX not needed if pc/npc adjusted in syscall */
 	/* Duplicate efforts of syscall(), but slightly differently */
 	if (tf2->tf_global[1] & SYSCALL_G7RFLAG) {
 		/* jmp %g2 (or %g7, deprecated) on success */
@@ -308,6 +313,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 		 */
 		/*tf2->tf_psr &= ~PSR_C;   -* success */
 	}
+#endif
 
 	/* Set return values in child mode */
 	tf2->tf_out[0] = 0;
@@ -321,13 +327,13 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 
 	npcb->pcb_pc = (long)proc_trampoline - 8;
 	npcb->pcb_sp = (long)rp - STACK_OFFSET;
-
 	/* Need to create a %tstate if we're forking from proc0 */
 	if (l1 == &lwp0)
 		tf2->tf_tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
 			((PSTATE_USER)<<TSTATE_PSTATE_SHIFT);
 	else
-		tf2->tf_tstate &= ~(PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
+		tf2->tf_tstate &= ~(PSTATE_PEF<<TSTATE_PSTATE_SHIFT); 
+
 
 #ifdef NOTDEF_DEBUG
 	printf("cpu_lwp_fork: Copying over trapframe: otf=%p ntf=%p sp=%p opcb=%p npcb=%p\n", 
