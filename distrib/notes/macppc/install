@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.24 2002/11/18 12:39:50 lukem Exp $
+.\"	$NetBSD: install,v 1.25 2002/12/02 15:29:54 wiz Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -33,9 +33,9 @@ Otherwise, you need to specify the full Open Firmware path to the kernel.
 .Pp
 The
 .Fl a
-flag will ask you for the location of the next item to load (i.e.
-the bootloader will ask where the kernel is (if unspecified), or the
-kernel will ask where the root file system is).
+flag will ask you for the location of the next item to load
+(i.e. the bootloader will ask where the kernel is (if unspecified),
+or the kernel will ask where the root file system is).
 The
 .Fl s
 flag will boot into
@@ -64,7 +64,9 @@ To start with, Open Firmware keeps a
 .Dq device tree
 with all of the devices it finds in your system.
 You can get a listing of the nodes in this device tree with the
-.Ic dev No and Ic ls
+.Ic dev
+and
+.Ic ls
 commands.
 .Ic dev
 is similar to the unix
