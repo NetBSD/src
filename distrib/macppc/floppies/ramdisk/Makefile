@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2000/11/27 15:11:36 tsubai Exp $
+#	$NetBSD: Makefile,v 1.15 2001/07/27 11:37:58 tsubai Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -51,9 +51,8 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
 	${MAKE} -f ${CBIN}.mk DBG="${DBG}" all
 
 HACKSRC=${TOP}/../../utils/libhack
+NOLIBHACKOPENDIR=
 .include "${HACKSRC}/Makefile.inc"
-HACKOBJS= gethost.o getnet.o getpwent.o localeconv.o perror.o \
-	setlocale.o strerror.o strsignal.o utmp.o yplib.o
 
 clean cleandir distclean:
 	rm -f ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
