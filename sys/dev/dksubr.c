@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.2 2002/10/09 14:04:08 elric Exp $ */
+/* $NetBSD: dksubr.c,v 1.3 2002/10/12 22:43:25 elric Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 	 * provided by the individual driver.
 	 */
 	s = splbio();
-	di->di_diskstart(dksc->sc_osc, bp);
+	di->di_diskstart(dksc, bp);
 	splx(s);
 	return;
 }
