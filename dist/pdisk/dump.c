@@ -368,7 +368,7 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
 	    break;
 	}
 	if (bzb_slice_get(bp) != 0) {
-	    printf(" s%1d %4s", bzb_slice_get(bp)-1, s);
+	    printf(" s%1ld %4s", bzb_slice_get(bp)-1, s);
 	} else if (j >= 0) {
 	    printf(" S%1d %4s", j, s);
 	} else {
