@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.52 2003/09/28 22:56:58 cl Exp $	*/
+/*	$NetBSD: macrom.c,v 1.53 2003/10/27 23:11:23 fredb Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.52 2003/09/28 22:56:58 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.53 2003/10/27 23:11:23 fredb Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -178,7 +178,7 @@ mrg_DTInstall()
 	__asm __volatile ("movl %%a0,%0" : "=g" (ptr));
 
 	(caddr_t *)prev = &mrg_DTList;
-	while (*prev != NULL) 
+	while (*prev != 0) 
 		prev = *(caddr_t *)prev;
 	*(caddr_t *)ptr = NULL;
 	*(caddr_t *)prev = ptr;
