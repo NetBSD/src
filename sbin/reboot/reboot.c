@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.26 2000/04/25 14:03:26 hubertf Exp $	*/
+/*	$NetBSD: reboot.c,v 1.27 2001/01/10 03:41:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.26 2000/04/25 14:03:26 hubertf Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.27 2001/01/10 03:41:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,13 +145,13 @@ main(argc, argv)
 			user = (pw = getpwuid(getuid())) ?
 			    pw->pw_name : "???";
 		if (dohalt) {
-			openlog("halt", 0, LOG_AUTH | LOG_CONS);
+			openlog("halt", LOG_CONS, LOG_AUTH);
 			syslog(LOG_CRIT, "halted by %s", user);
 		} else if (dopoweroff) {
-			openlog("poweroff", 0, LOG_AUTH | LOG_CONS);
+			openlog("poweroff", LOG_CONS, LOG_AUTH);
 			syslog(LOG_CRIT, "powered off by %s", user);
 		} else {
-			openlog("reboot", 0, LOG_AUTH | LOG_CONS);
+			openlog("reboot", LOG_CONS, LOG_AUTH);
 			if (bootstr)
 				syslog(LOG_CRIT, "rebooted by %s: %s", user,
 				    bootstr);
