@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.32 1996/12/23 08:37:07 matthias Exp $ */
+/*	$NetBSD: scn.c,v 1.33 1997/01/11 10:58:16 matthias Exp $ */
 
 /*
  * Copyright (c) 1996 Phil Budne.
@@ -67,12 +67,15 @@
 
 #include <dev/cons.h>
 
+#include <machine/autoconf.h>
 #include <machine/icu.h>
 
 #include "scnreg.h"
 #include "scnvar.h"
 
 int scn_soft_rts = 1;
+static const char scnints[4] = {IR_TTY0, IR_TTY1, IR_TTY2, IR_TTY3};
+static const char rxints[4] = {IR_TTY0RDY, IR_TTY1RDY, IR_TTY2RDY, IR_TTY3RDY};
 
 int     scnprobe __P((struct device *, struct cfdata *, void *));
 void    scnattach __P((struct device *, struct device *, void *));
@@ -393,7 +396,8 @@ scnprobe(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
-{				/* system dependant data struct */
+{
+	struct confargs *ca = aux;
 	int unit = cf->cf_unit;
 	int mr1;
 	register volatile u_char *ch_base;
@@ -419,6 +423,13 @@ scnprobe(parent, cf, aux)
 		return(0);
 	if (ch_base[CH_MR] == mr1)
 		return(0);
+
+	ca->ca_addr = (int)ch_base;
+	if (unit & 1)
+		ca->ca_irq = -1;
+	else
+		ca->ca_irq = scnints[unit >> 1] | (rxints[unit >> 1] << 4);
+
 	return(1);
 }
 
@@ -468,18 +479,18 @@ scnattach(parent, self, aux)
 	struct device *self;
 	void   *aux;
 {
-	static char scnints[4] = {IR_TTY0, IR_TTY1, IR_TTY2, IR_TTY3};
-	static char rxints[4] = {IR_TTY0RDY, IR_TTY1RDY, IR_TTY2RDY, IR_TTY3RDY};
-	u_char  unit;
-	u_char  duart;
+	struct confargs *ca = aux;
 	register struct scn_softc *sc;
-	int s;
 	register volatile u_char *ch_base;
 	register volatile u_char *duart_base;
 	long scn_first_adr;
 	int channel;
 	int speed;
-	char duart_flags = 0;
+	int s;
+	u_char unit;
+	u_char duart;
+	u_char delim = ':';
+	u_char duart_flags = 0;
 
 	sc = (void *) self;
 	unit = self->dv_unit;	/* sc->scn_dev.dv_unit ??? */
@@ -489,7 +500,7 @@ scnattach(parent, self, aux)
 
 	/* pick up "flags" (SCN_xxx) from config file */
 	if (self->dv_cfdata)	/* paranoia */
-		sc->scn_swflags = self->dv_cfdata->cf_flags;
+		sc->scn_swflags = ca->ca_flags;
 	else
 		sc->scn_swflags = 0;
 
@@ -507,11 +518,6 @@ scnattach(parent, self, aux)
 
 	ch_base = (volatile u_char *) scn_first_adr + CH_SZ * unit;
 	duart_base = (volatile u_char *) scn_first_adr + DUART_SZ * duart;
-
-	/* XXX could be done by autoconfig "print" subr w/ addr in cfdata!! */
-	printf(" addr 0x%x", (unsigned int) ch_base);
-
-
 
 	if (channel == 0) {
 		char *duart_type;
@@ -546,7 +552,7 @@ scnattach(parent, self, aux)
 			RECOVER();
 			/* if 2681, MR2 still selected */
 			if((ch_base[CH_MR] & 1) == 1) {
-				duart_type = "SCN26C92";
+				duart_type = "sc26c92";
 				duart_flags |= SCN_HW_26C92;
 			} else {
 				ch_base[CH_CR] = CR_CMD_RTS_OFF; /* 2681 treats as MR1 Select */
@@ -556,9 +562,9 @@ scnattach(parent, self, aux)
 				ch_base[CH_CR] = CR_CMD_RTS_OFF;
 				RECOVER();
 				if (ch_base[CH_MR] == 1) {
-					duart_type = "SCN2681";
+					duart_type = "scn2681";
 				} else {
-					duart_type = "SCC2692";
+					duart_type = "scc2692";
 					duart_flags |= SCN_HW_2692;
 				}
 			}
@@ -581,11 +587,8 @@ scnattach(parent, self, aux)
 		intr_establish(scnints[duart], scnintr, (void *) (unit + 1),
 			       "scn", IPL_TTY, IPL_ZERO, LOW_LEVEL);
 
-		printf(", Duart: %s", duart_type);
-
-
-		/* print for both channels?? */
-		printf(", irq %d", scnints[duart]);
+		printf("%c %s", delim, duart_type);
+		delim = ',';
 
 		/*
 		 * IPL_ZERO is the right priority for the rx interrupt.
@@ -593,9 +596,6 @@ scnattach(parent, self, aux)
 		 */
 		intr_establish(rxints[duart], scnrxintr, (void *) (unit + 1),
 			       "scnrx", IPL_ZERO, IPL_RTTY, LOW_LEVEL);
-
-		/* print for both channels?? */
-		printf(", %d", rxints[duart]);
 	}
 	/* Record unit number, uart */
 	sc->unit = unit;
@@ -719,8 +719,11 @@ scnattach(parent, self, aux)
 	scn_rxdisable(sc);
 	splx(s);
 
-	if (sc->scn_swflags)
-		printf(", flags %x", sc->scn_swflags);
+	if (sc->scn_swflags) {
+		printf("%c flags %d", delim, sc->scn_swflags);
+		delim = ',';
+	}
+		
 #ifdef KGDB
 	if (kgdb_dev == makedev(scnmajor, unit)) {
 		if (scnconsole == unit)
@@ -732,10 +735,11 @@ scnattach(parent, self, aux)
 			scnkgdb = DEV_UNIT(kgdb_dev);
 			kgdb_attach(scncngetc, scncnputc, kgdb_dev);
 			if (kgdb_debug_init) {
-				printf(" ");
+				printf("%c ", delim);
 				kgdb_connect(1);
 			} else
-				printf(" kgdb enabled", unit);
+				printf("%c kgdb enabled", delim);
+			delim = ',';
 		}
 	}
 #endif
