@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.8 1997/06/04 13:50:25 leo Exp $	*/
+/*	$NetBSD: vectors.s,v 1.9 1997/07/15 08:25:43 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -133,7 +133,7 @@ _uservects:
 	.long	_intr_glue	|  64: parallel port - BUSY
 	.long	_badmfpint	|  65: modem port 1 - DCD
 	.long	_badmfpint	|  66: modem port 1 - CTS
-	.long	_badmfpint	|  67: unassigned
+	.long	_badmfpint	|  67: ISA1 [ Hades only ]
 	.long	_badmfpint	|  68: modem port 1 baudgen (Timer D)
 #ifdef STATCLOCK
 	.long	mfp_timc	|  69: Timer C {stat,prof}clock
@@ -149,7 +149,7 @@ _uservects:
 	.long	_badmfpint	|  76: modem port 1 - RCV buffer full
 	.long	mfp_tima	|  77: Timer A (System clock)
 	.long	_badmfpint	|  78: modem port 1 - RI
-	.long	_badmfpint	|  79: Monochrome detect
+	.long	_badmfpint	|  79: Monochrome detect (ISA2 [ Hades only ])
 
 	/*
 	 * MFP 2 auto vectors (ipl 6)
