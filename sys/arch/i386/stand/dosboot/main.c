@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1997/10/31 18:50:09 drochner Exp $	 */
+/*	$NetBSD: main.c,v 1.10 1997/11/03 18:17:19 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -212,9 +212,18 @@ print_banner(void)
 	char *s = "";
 
 #ifdef XMS
-	if (getextmem1() == 0) {
-		if ((extmem = checkxms()) != 0)
-			s = "(xms) ";
+	u_long xmsmem;
+	if (getextmem1() == 0 && (xmsmem = checkxms()) != 0) {
+		/*
+		 * With "CONSERVATIVE_MEMDETECT", extmem is 0 because
+		 *  getextmem() is getextmem1(). Without, the "smart"
+		 *  methods could fail to report all memory as well.
+		 * xmsmem is a few kB less than the actual size, but
+		 *  better than nothing.
+		 */
+		if (xmsmem > extmem)
+			extmem = xmsmem;
+		s = "(xms) ";
 	}
 #endif
 
