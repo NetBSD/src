@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.34 1996/12/19 08:03:40 cgd Exp $
+#  $NetBSD: Makefile,v 1.35 1997/10/09 11:26:55 lukem Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -78,6 +78,7 @@ ARCH_SRCS = n_atan2.S n_cabs.S n_cbrt.S n_sincos.S n_tan.S n_support.S
 .if (${MACHINE_ARCH} != "vax")
 CFLAGS+= -D_MULTI_LIBM -D_POSIX_MODE
 .endif
+CFLAGS+=-DLIBM_SCCS
 
 LIB=	m
 COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
