@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.47 2001/12/03 00:20:24 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.48 2002/01/27 22:00:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.47 2001/12/03 00:20:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.48 2002/01/27 22:00:40 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -528,9 +528,15 @@ wdc_atapi_intr(chp, xfer, irq)
 	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
 		chp->wdc->irqack(chp);
 
-	/* If we missed an IRQ and were using DMA, flag it as a DMA error */
+	/*
+	 * If we missed an IRQ and were using DMA, flag it as a DMA error
+	 * and reset device.
+	 */
 	if ((xfer->c_flags & C_TIMEOU) && (xfer->c_flags & C_DMA)) {
 		ata_dmaerr(drvp);
+		sc_xfer->error = XS_RESET;
+		wdc_atapi_reset(chp, xfer);
+		return (1);
 	}
 	/* 
 	 * if the request sense command was aborted, report the short sense
