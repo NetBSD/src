@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.23 2004/07/23 10:15:13 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.24 2004/07/24 04:07:01 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.23 2004/07/23 10:15:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.24 2004/07/24 04:07:01 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -801,7 +801,7 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE,
 		("%s %s refcnt %d\n", __func__,
-		 ether_sprintf(ni->ni_macaddr), ieee80211_node_refcnt(ni)));
+		 ether_sprintf(ni->ni_macaddr), ni->ni_refcnt));
 	if (ieee80211_node_decref(ni) == 0) {
 		IEEE80211_NODE_LOCK_BH(ic);
 		_ieee80211_free_node(ic, ni);
