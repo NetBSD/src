@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.2 2003/11/18 04:04:42 chs Exp $	*/
+/*	$NetBSD: pdc.h,v 1.3 2004/06/17 15:35:15 chs Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.15 2000/12/06 17:18:57 deraadt Exp $	*/
 
@@ -26,6 +26,7 @@
  * improvements that they make and grant CSL redistribution rights.
  *
  *	Utah $Hdr: pdc.h 1.12 94/12/14$
+ *	Author: Jeff Forys (CSS), Dave Slattengren (mtXinu)
  */
 
 #ifndef	_MACHINE_PDC_H_
@@ -89,7 +90,7 @@
  * "../stand/Makefile") to make way for the Kernel.
  */
 
-#define	IODC_MAXSIZE	(16 * 1024)	/* maximum size of IODC */
+#define	IODC_MAXSIZE	(64 * 1024)	/* maximum size of IODC */
 #define	IODC_MINIOSIZ	64		/* minimum buffer size for IODC call */
 #define	IODC_MAXIOSIZ	(64 * 1024)	/* maximum buffer size for IODC call */
 
@@ -404,8 +405,8 @@ struct pdc_coproc {	/* PDC_COPROC */
 	u_int	ccr_enable;	/* same format as CCR (CR 10) */
 	u_int	ccr_present;	/* which co-proc's are present (bitset) */
 	u_int	pad[15];
-	u_int	fpu_model;
 	u_int	fpu_revision;
+	u_int	fpu_model;
 	u_int	filler2[13];
 };
 
@@ -605,6 +606,7 @@ struct pz_device {
 #define	PCL_DUPLEX	7	/* full-duplex point-to-point (RS-232, Net) */
 #define	PCL_KEYBD	8	/* half-duplex input (HIL Keyboard) */
 #define	PCL_DISPL	9	/* half-duplex ouptput (display) */
+#define	PCL_FC		10	/* fibre channel access media */
 #define	PCL_CLASS_MASK	0xf	/* XXX class mask */
 #define	PCL_NET_MASK	0x1000	/* mask for bootp/tftp device */
 
