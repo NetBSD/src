@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.21 1999/03/26 17:34:16 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.22 1999/03/26 21:58:39 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -732,7 +732,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
 #else
 		pmap_enter(map->pmap, loopva, VM_PAGE_TO_PHYS(pg),
-		    UVM_PROT_ALL, TRUE);
+		    UVM_PROT_ALL, TRUE, 0);
 #endif
 		loopva += PAGE_SIZE;
 		offset += PAGE_SIZE;
@@ -865,7 +865,7 @@ uvm_km_alloc1(map, size, zeroit)
 		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg), UVM_PROT_ALL);
 #else
 		pmap_enter(map->pmap, loopva, VM_PAGE_TO_PHYS(pg),
-		    UVM_PROT_ALL, TRUE);
+		    UVM_PROT_ALL, TRUE, 0);
 #endif
 		loopva += PAGE_SIZE;
 		offset += PAGE_SIZE;

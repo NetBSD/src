@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.22 1999/03/26 17:34:16 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.23 1999/03/26 21:58:39 mycroft Exp $	*/
 
 /*
  *
@@ -648,7 +648,7 @@ ReFault:
 			 * ensure that we pmap_enter page R/O since
 			 * needs_copy is still true
 			 */
-			enter_prot = enter_prot & ~VM_PROT_WRITE; 
+			enter_prot &= ~VM_PROT_WRITE; 
 
 		}
 	}
@@ -819,7 +819,7 @@ ReFault:
 			pmap_enter(ufi.orig_map->pmap, currva,
 			    VM_PAGE_TO_PHYS(anon->u.an_page),
 			    (anon->an_ref > 1) ? VM_PROT_READ : enter_prot, 
-			    (ufi.entry->wired_count != 0));
+			    (ufi.entry->wired_count != 0), 0);
 		}
 		simple_unlock(&anon->an_lock);
 	}
@@ -947,7 +947,8 @@ ReFault:
 				pmap_enter(ufi.orig_map->pmap, currva,
 				    VM_PAGE_TO_PHYS(pages[lcv]),
 				    UVM_ET_ISCOPYONWRITE(ufi.entry) ?
-				    VM_PROT_READ : enter_prot, wired);
+				    VM_PROT_READ : enter_prot, wired,
+				    access_type);
 
 				/* 
 				 * NOTE: page can't be PG_WANTED or PG_RELEASED
@@ -1202,7 +1203,7 @@ ReFault:
 	UVMHIST_LOG(maphist, "  MAPPING: anon: pm=0x%x, va=0x%x, pg=0x%x",
 	    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, 0);
 	pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
-	    enter_prot, wired);
+	    enter_prot, wired, access_type);
 
 	/*
 	 * ... and update the page queues.
@@ -1630,7 +1631,7 @@ Case2:
 	    "  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=%d",
 	    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, promote);
 	pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
-	    enter_prot, wired);
+	    enter_prot, wired, access_type);
 
 	uvm_lock_pageq();
 

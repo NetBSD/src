@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.15 1999/03/25 18:48:55 mrg Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.16 1999/03/26 21:58:39 mycroft Exp $	*/
 
 /*
  *
@@ -185,7 +185,7 @@ ReStart:
 #endif
 
 		pmap_enter(vm_map_pmap(pager_map), cva, VM_PAGE_TO_PHYS(pp),
-		    VM_PROT_DEFAULT, TRUE);
+		    VM_PROT_DEFAULT, TRUE, 0);
 	}
 
 #endif /* PMAP_NEW */
