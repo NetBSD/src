@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we.c,v 1.14 1999/03/23 21:41:08 drochner Exp $	*/
+/*	$NetBSD: if_we.c,v 1.15 1999/03/28 12:51:49 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -347,10 +347,11 @@ we_attach(parent, self, aux)
 	bus_space_handle_t nich, asich, memh;
 	const char *typestr;
 	u_int8_t x;
-	int i;
+	int i, forced_16bit;
 
 	printf("\n");
 
+	forced_16bit = 0;
 	nict = asict = ia->ia_iot;
 	memt = ia->ia_memt;
 
@@ -388,8 +389,10 @@ we_attach(parent, self, aux)
 	/*
 	 * Allow user to override 16-bit mode.  8-bit takes precedence.
 	 */
-	if (self->dv_cfdata->cf_flags & WE_FLAGS_FORCE_16BIT_MODE)
+	if (self->dv_cfdata->cf_flags & WE_FLAGS_FORCE_16BIT_MODE) {
 		wsc->sc_16bitp = 1;
+		forced_16bit = 1;
+	}
 	if (self->dv_cfdata->cf_flags & WE_FLAGS_FORCE_8BIT_MODE)
 		wsc->sc_16bitp = 0;
 
@@ -432,6 +435,7 @@ we_attach(parent, self, aux)
 	    (wsc->sc_type == WE_TYPE_TOSHIBA1) ||
 	    (wsc->sc_type == WE_TYPE_TOSHIBA4) ||
 #endif
+	    (forced_16bit) ||
 	    (wsc->sc_type == WE_TYPE_WD8013EBT)) {
 		wsc->sc_laar_proto = (ia->ia_maddr >> 19) & WE_LAAR_ADDRHI;
 		if (wsc->sc_16bitp)
