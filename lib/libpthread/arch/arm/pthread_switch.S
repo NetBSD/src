@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.2 2001/11/22 23:54:34 bjh21 Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.3 2003/01/14 19:36:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -48,6 +48,16 @@
  *	    pt_spin_t *lock)
  */
 
+/*		*** WARNING ***
+ * STACK_SWITCH is more subtle than it looks. Please go read the extended
+ * comment in the i386 pthread_switch.S file.
+ */
+
+#define	STACK_SWITCH(pt, tmp)						\
+	ldr	tmp, [pt, #(PT_UC)]				;	\
+	sub	sp, tmp, #(STACKSPACE)
+
+
 /*    
  * void
  * pthread__switch(pthread_t self (r0), pthread_t next (r1))
@@ -64,32 +74,72 @@
  */
 ENTRY(pthread__switch)
 	sub	sp, sp, #(RND_CTXSIZE)	/* push space for ucontext_t */
-	
-	/* Save pointer to allocated space on stack in self->pt_uc */
-	str	sp, [r0, #(PT_UC)]
-	mov	r0, sp			/* r0 = self->pt_uc */
 
-	stmfd	sp!, {lr}		/* save return address */
+	mov	r3, sp			/* r3 = &context */
 
-	ldr	r1, [r1, #(PT_UC)]	/* r1 = next->pt_uc */
-	bl	PIC_SYM(_C_LABEL(_swapcontext_u), PLT)
+	/* Save r0-r2, r4-r5, lr */
+	stmfd	sp!, {r0-r2, r4-r5, lr}
 
-	ldmfd	sp!, {lr}		/* restore return address */
-	add	sp, sp, #(RND_CTXSIZE)	/* pop u_context_t */
+	/* Now r5 will point to &context for the duration. */
+	mov	r5, r3
+
+/*
+ * Stack is:
+ *		context			(RND_CTXSIZE bytes)
+ *		saved lr		(          4 bytes)
+ *		saved r5		(          4 bytes)
+ *		saved r4		(          4 bytes)
+ *		saved r2		(          4 bytes)
+ *		saved r1		(          4 bytes)
+ *		saved r0		(          4 bytes)
+ *		Note, no space needed
+ *		   for callees.
+ */
+
+	/* Get the current context. */
+	mov	r0, r5			/* r0 = &context */
+	bl	PIC_SYM(_C_LABEL(_getcontext_u), PLT)
+
+	/* Edit the context to make it continue below, rather than here */
+	add	r0, pc, #switch_return_point - . - 8
+	str	r0, [r5, #(_REG_PC)]
+
+	/* Get back r0-r2 */
+	ldmfd	sp, {r0-r2}
+
+	/* Side-effect: r4 = next->pt_uc */
+	STACK_SWITCH(r1, r4)
+
+	str	r5, [r0, #(PT_UC)]	/* self->pt_uc = &context */
+
+	/* NOTE: we can no longer recover registers stored on the stack */
+
+	mov	r0, r4			/* r0 = next->pt_uc */
+	b	PIC_SYM(_C_LABEL(_setcontext_u), PLT)
+	NOTREACHED
+
+switch_return_point:
+/*
+ * Stack is:
+ *		context			(RND_CTXSIZE bytes)
+ *		saved lr		(          4 bytes)
+ *		saved r5		(          4 bytes)
+ *		saved r4		(          4 bytes)
+ *		saved r2		(          4 bytes)
+ *		saved r1		(          4 bytes)
+ *		saved r0		(          4 bytes)
+ *		Note, no space needed
+ *		   for callees.
+ */
+
+	add	sp, sp, #12		/* skip over r0-r2 */
+	ldmfd	sp!, {r4-r5, lr}	/* restore r4-r5, lr */
+	add	sp, sp, #(RND_CTXSIZE)	/* pop ucontext_t */
 #ifdef __APCS_26__
 	movs	pc, lr
 #else
 	mov	pc, lr
 #endif
-
-/*		*** WARNING ***
- * STACK_SWITCH is more subtle than it looks. Please go read the extended
- * comment in the i386 pthread_switch.S file.
- */
-
-#define	STACK_SWITCH(pt, tmp)						\
-	ldr	tmp, [pt, #(PT_UC)]				;	\
-	sub	sp, tmp, #(STACKSPACE)
 
 /*
  * Helper routine; r0 = from, r1 = to, r2 = decr-spinlocks (boolean)
