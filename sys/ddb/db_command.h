@@ -25,7 +25,7 @@
  *
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
- *	$Id: db_command.h,v 1.3 1994/02/15 14:50:43 mycroft Exp $
+ *	$Id: db_command.h,v 1.4 1994/03/23 20:00:57 pk Exp $
  */
 
 /*
@@ -47,4 +47,16 @@ extern db_addr_t	db_prev;	/* last address examined
 extern db_addr_t	db_next;	/* next address to be examined
 					   or written */
 
-
+/*
+ * Command table
+ */
+struct db_command {
+	char		*name;		/* command name */
+	void		(*fcn)();	/* function to call */
+	int		flag;		/* extra info: */
+#define	CS_OWN		0x1		/* non-standard syntax */
+#define	CS_MORE		0x2		/* standard syntax, but may have other
+					   words at end */
+#define	CS_SET_DOT	0x100		/* set dot after command */
+	struct db_command *more;	/* another level of command */
+};

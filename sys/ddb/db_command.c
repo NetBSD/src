@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_command.c,v 1.9 1994/01/09 22:56:07 mycroft Exp $
+ *	$Id: db_command.c,v 1.10 1994/03/23 20:00:56 pk Exp $
  */
 
 /*
@@ -36,6 +36,7 @@
 
 #include <ddb/db_lex.h>
 #include <ddb/db_output.h>
+#include <ddb/db_command.h>
 
 #include <setjmp.h>
 
@@ -69,20 +70,6 @@ db_skip_to_eol()
 }
 
 /*
- * Command table
- */
-struct command {
-	char *	name;		/* command name */
-	void	(*fcn)();	/* function to call */
-	int	flag;		/* extra info: */
-#define	CS_OWN		0x1	    /* non-standard syntax */
-#define	CS_MORE		0x2	    /* standard syntax, but may have other
-				       words at end */
-#define	CS_SET_DOT	0x100	    /* set dot after command */
-	struct command *more;	/* another level of command */
-};
-
-/*
  * Results of command search.
  */
 #define	CMD_UNIQUE	0
@@ -96,12 +83,12 @@ struct command {
  */
 int
 db_cmd_search(name, table, cmdp)
-	char *		name;
-	struct command	*table;
-	struct command	**cmdp;	/* out */
+	char			*name;
+	struct db_command	*table;
+	struct db_command	**cmdp;	/* out */
 {
-	struct command	*cmd;
-	int		result = CMD_NONE;
+	struct db_command	*cmd;
+	int			result = CMD_NONE;
 
 	for (cmd = table; cmd->name != 0; cmd++) {
 	    register char *lp;
@@ -144,9 +131,9 @@ db_cmd_search(name, table, cmdp)
 
 void
 db_cmd_list(table)
-	struct command *table;
+	struct db_command *table;
 {
-	register struct command *cmd;
+	register struct db_command *cmd;
 
 	for (cmd = table; cmd->name != 0; cmd++) {
 	    db_printf("%-12s", cmd->name);
@@ -156,10 +143,10 @@ db_cmd_list(table)
 
 void
 db_command(last_cmdp, cmd_table)
-	struct command	**last_cmdp;	/* IN_OUT */
-	struct command	*cmd_table;
+	struct db_command	**last_cmdp;	/* IN_OUT */
+	struct db_command	*cmd_table;
 {
-	struct command	*cmd;
+	struct db_command	*cmd;
 	int		t;
 	char		modif[TOK_STRING_SIZE];
 	db_expr_t	addr, count;
@@ -337,12 +324,12 @@ extern void	db_listwatch_cmd();
 extern void	db_show_regs();
 void		db_show_help();
 
-struct command db_show_all_cmds[] = {
+struct db_command db_show_all_cmds[] = {
 	{ "procs",	db_show_all_procs,0,	0 },
 	{ (char *)0 }
 };
 
-struct command db_show_cmds[] = {
+struct db_command db_show_cmds[] = {
 	{ "all",	0,			0,	db_show_all_cmds },
 	{ "registers",	db_show_regs,		0,	0 },
 	{ "breaks",	db_listbreak_cmd, 	0,	0 },
@@ -363,7 +350,7 @@ extern void	db_stack_trace_cmd();
 void		db_help_cmd();
 void		db_fncall();
 
-struct command db_command_table[] = {
+struct db_command db_command_table[] = {
 #ifdef DB_MACHINE_COMMANDS
   /* this must be the first entry, if it exists */
 	{ "machine",    0,                      0,     		0},
@@ -407,12 +394,12 @@ struct db_command *ptr;
 
 #endif
 
-struct command	*db_last_command = 0;
+struct db_command	*db_last_command = 0;
 
 void
 db_help_cmd()
 {
-	struct command *cmd = db_command_table;
+	struct db_command *cmd = db_command_table;
 
 	while (cmd->name != 0) {
 	    db_printf("%-12s", cmd->name);
