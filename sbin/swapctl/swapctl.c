@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.26 2004/06/08 08:13:16 cjep Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.27 2005/01/10 20:53:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swapctl.c,v 1.26 2004/06/08 08:13:16 cjep Exp $");
+__RCSID("$NetBSD: swapctl.c,v 1.27 2005/01/10 20:53:48 lukem Exp $");
 #endif
 
 
@@ -457,8 +457,15 @@ do_fstab(add)
 	struct	stat st;
 	int	isblk;
 	int	gotone = 0;
+
+#ifdef RESCUEDIR
+#define PATH_MOUNT	RESCUEDIR "/mount_nfs"
+#define PATH_UMOUNT	RESCUEDIR "/umount"
+#else
 #define PATH_MOUNT	"/sbin/mount_nfs"
 #define PATH_UMOUNT	"/sbin/umount"
+#endif
+
 	char	cmd[2*PATH_MAX+sizeof(PATH_MOUNT)+2];
 
 #define PRIORITYEQ	"priority="
