@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1997/07/17 19:47:10 phil Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1997/12/10 14:14:24 drochner Exp $
 
 ECHO	?=	echo
 
@@ -9,16 +9,12 @@ LIBMODE	=	644
 
 # for pcvt_ioctl.h
 
-INCDIR	=	/usr/include/machine
-INCOWN	=	bin
-INCGRP	=	bin
-INCMODE	=	444
+INCDIR= ${DESTDIR}/usr/include/machine
 
-${INCDIR}/pcvt_ioctl.h: ${.CURDIR}/../../pcvt_ioctl.h
-	${INSTALL} ${COPY} -o ${INCOWN} -g ${INCGRP} -m ${INCMODE} \
-	${.CURDIR}/../../pcvt_ioctl.h ${INCDIR}
+${PROG}: ${INCDIR}/pcvt_ioctl.h
 
-.depend:	${INCDIR}/pcvt_ioctl.h
+${INCDIR}/pcvt_ioctl.h:
+	@echo "\"make includes\" in parent directory first!"; false
 
 MAN3EXT	=	3
 MAN4EXT	=	4
