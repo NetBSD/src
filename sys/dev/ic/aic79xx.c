@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.7 2003/07/26 06:15:57 thorpej Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.8 2003/08/28 22:16:01 thorpej Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.7 2003/07/26 06:15:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.8 2003/08/28 22:16:01 thorpej Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -9467,6 +9467,8 @@ ahd_update_xfer_mode(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
         	xm.xm_mode |= PERIPH_CAP_WIDE16;
 	if (tinfo->curr.period)
                 xm.xm_mode |= PERIPH_CAP_SYNC;
+	if (tinfo->curr.ppr_options & MSG_EXT_PPR_DT_REQ)
+		xm.xm_mode |= PERIPH_CAP_DT;
         if (tstate->tagenable & devinfo->target_mask)
 		xm.xm_mode |= PERIPH_CAP_TQING;
 	
