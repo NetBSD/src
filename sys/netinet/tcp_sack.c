@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.6 2005/03/07 09:40:35 yamt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.7 2005/03/07 10:27:39 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.6 2005/03/07 09:40:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.7 2005/03/07 10:27:39 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -330,7 +330,6 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				/* Otherwise, move start of hole forward */
 				cur->start = sack->right;
 				cur->rxmit = SEQ_MAX(cur->rxmit, cur->start);
-				cur = TAILQ_NEXT(cur, sackhole_q);
 				break;
 			}
 
@@ -361,7 +360,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				cur->rxmit = SEQ_MIN(cur->rxmit, cur->end);
 				TAILQ_INSERT_AFTER(&tp->snd_holes, cur, tmp,
 						sackhole_q);
-				cur = TAILQ_NEXT(tmp, sackhole_q);
+				cur = tmp;
 				break;
 			}
 		}
