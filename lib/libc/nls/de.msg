@@ -183,9 +183,9 @@ $ SIGEMT
 $ SIGFPE
 8 Flieﬂkommafehler
 $ SIGKILL
-9 Killed
+9 Unbedingter Programmabbruch
 $ SIGBUS
-10 Bus Fehler
+10 Bus-Zugriffsfehler
 $ SIGSEGV
 11 Illegaler Speicherzugriff
 $ SIGSYS
