@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.61 1994/12/23 22:25:48 jtc Exp $
+#	$Id: Makefile.inc,v 1.62 1995/01/11 20:23:59 pk Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -51,7 +51,7 @@ SRCS+=	_setjmp.S alloca.S fabs.S frexp.c ldexp.S modf.S setjmp.S
 SRCS+=	udiv.S urem.S
 .elif (${MACHINE_ARCH} == "sparc")
 SRCS+=	_setjmp.S fabs.S frexp.c isnan.c ldexp.c modf.S
-SRCS+=	fixunsdfsi.S mul.S umul.S saveregs.S setjmp.S
+SRCS+=	fixunsdfsi.S mul.S umul.S saveregs.S setjmp.S sigsetjmp.S
 .elif (${MACHINE_ARCH} == "mips")
 SRCS+=	_setjmp.S fabs.S frexp.c isinf.S ldexp.S modf.S
 SRCS+=	setjmp.S
