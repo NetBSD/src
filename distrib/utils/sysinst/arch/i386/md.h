@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.18 2000/07/25 18:17:07 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.19 2000/09/27 20:02:16 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,7 +62,7 @@
  *      xbase, xfont, xserver, xcontrib, xcomp.
  *
  * i386 has the  MD set kern first, because generic kernels are  too
- * big to fit on install floppies. i386 does not yet include the x sets. 
+ * big to fit on install floppies.
  *
  * Third entry is the last extension name in the split sets for loading
  * from floppy.
