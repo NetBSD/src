@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.11 1994/11/21 21:33:27 gwr Exp $	*/
+/*	$NetBSD: control.h,v 1.12 1995/02/11 20:59:37 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -79,8 +79,6 @@
 
 #include <sys/types.h>
 
-void control_copy_byte __P((char *, char *, int ));
-
 unsigned char get_control_byte __P((char *));
 unsigned int get_control_word __P((char *));
 void set_control_byte __P((char *, unsigned char));
@@ -95,4 +93,3 @@ void set_pte __P((vm_offset_t, vm_offset_t));
 unsigned char get_segmap __P((vm_offset_t));
 void set_segmap __P((vm_offset_t va, unsigned char));
 
-void set_temp_seg_addr __P((vm_offset_t va));
