@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.1 2003/10/27 00:45:36 christos Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.2 2003/10/27 02:33:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,25 +38,24 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __sigtramp2.S,v 1.1 2003/10/27 00:45:36 christos Exp $")
+	RCSID("$NetBSD: __sigtramp2.S,v 1.2 2003/10/27 02:33:06 christos Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 #define _LOCORE
-#include <sparc/frame.h>	/* BIAS */
+#include <sparc/frame.h>	/* BIAS, CC64FSZ */
 
 /*
  * When this code is run, the stack looks like:
  *	[%sp + BIAS]			struct frame
- *	[%sp + BIAS + 48]		???
- *	[%sp + BIAS + 128]		siginfo_t
- *	[%sp + BIAS + 128 + 128]	ucontext_t
+ *	[%sp + BIAS + CC64FSZ]		siginfo_t
+ *	[%sp + BIAS + CC64FSZ + 128]	ucontext_t
  *	    .
  *	    .
  */
 ENTRY_NOPROFILE(__sigtramp_siginfo_2)
-	add	%sp, 48 + 128 + 128 + BIAS, %o0	/* get pointer to ucontext */
+	add	%sp, BIAS + CC64FSZ + 128, %o0	/* get pointer to ucontext */
 	mov	SYS_setcontext, %g1
 	t	ST_SYSCALL		/* call setcontext */
 	mov	SYS_exit, %g1		/* exit with errno */
