@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.34 2001/07/08 18:02:28 thorpej Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.35 2001/11/13 07:48:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
  *
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.35 2001/11/13 07:48:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
