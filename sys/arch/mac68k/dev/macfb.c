@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.1.2.7 1999/11/21 20:34:13 scottr Exp $ */
+/* $NetBSD: macfb.c,v 1.1.2.8 1999/11/23 17:28:19 scottr Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -175,7 +175,7 @@ macfb_init(dc)
 	rcp->rc_crow = rcp->rc_ccol = -1;
 	rcp->rc_crowp = &rcp->rc_crow;
 	rcp->rc_ccolp = &rcp->rc_ccol;
-	rcons_init(rcp, 192, 128);
+	rcons_init(rcp, 128, 192);
 
 	macfb_stdscreen.nrows = dc->dc_rcons.rc_maxrow;
 	macfb_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
