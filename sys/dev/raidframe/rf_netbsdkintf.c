@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.38 2000/01/05 04:15:30 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.39 2000/01/06 02:06:41 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -187,15 +187,6 @@ static void InitBP(struct buf * bp, struct vnode *, unsigned rw_flag,
 		   void (*cbFunc) (struct buf *), void *cbArg, 
 		   int logBytesPerSector, struct proc * b_proc);
 
-#define Dprintf0(s)       if (rf_queueDebug) \
-     rf_debug_printf(s,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)
-#define Dprintf1(s,a)     if (rf_queueDebug) \
-     rf_debug_printf(s,a,NULL,NULL,NULL,NULL,NULL,NULL,NULL)
-#define Dprintf2(s,a,b)   if (rf_queueDebug) \
-     rf_debug_printf(s,a,b,NULL,NULL,NULL,NULL,NULL,NULL)
-#define Dprintf3(s,a,b,c) if (rf_queueDebug) \
-     rf_debug_printf(s,a,b,c,NULL,NULL,NULL,NULL,NULL)
-
 int raidmarkclean(dev_t dev, struct vnode *b_vp, int);
 int raidmarkdirty(dev_t dev, struct vnode *b_vp, int);
 
@@ -361,7 +352,9 @@ raidattach(num)
 		RF_Calloc(raidPtrs[raidID], 1, sizeof(RF_Raid_t),
 			  (RF_Raid_t *));
 		if (raidPtrs[raidID] == NULL) {
-			printf("raidPtrs[%d] is NULL\n", raidID);
+			printf("WARNING: raidPtrs[%d] is NULL\n", raidID);
+			numraid = raidID;
+			return;
 		}
 	}
 }
@@ -834,16 +827,9 @@ raidioctl(dev, cmd, data, flag, p)
 			return (EBUSY);
 		}
 
-		if (rf_debugKernelAccess) {
-			printf("call shutdown\n");
-		}
-
 		retcode = rf_Shutdown(raidPtrs[unit]);
 
-		db1_printf(("Done main shutdown\n"));
-
 		pool_destroy(&rs->sc_cbufpool);
-		db1_printf(("Done freeing component buffer freelist\n"));
 
 		/* It's no longer initialized... */
 		rs->sc_flags &= ~RAIDF_INITED;
@@ -1270,21 +1256,17 @@ raidioctl(dev, cmd, data, flag, p)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		db1_printf(("DIOCGDINFO %d %d\n", (int) dev, (int) DISKPART(dev)));
 		*(struct disklabel *) data = *(rs->sc_dkdev.dk_label);
 		break;
 
 	case DIOCGPART:
-		db1_printf(("DIOCGPART: %d %d\n", (int) dev, (int) DISKPART(dev)));
 		((struct partinfo *) data)->disklab = rs->sc_dkdev.dk_label;
 		((struct partinfo *) data)->part =
 		    &rs->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
 		break;
 
 	case DIOCWDINFO:
-		db1_printf(("DIOCWDINFO\n"));
 	case DIOCSDINFO:
-		db1_printf(("DIOCSDINFO\n"));
 		if ((error = raidlock(rs)) != 0)
 			return (error);
 
@@ -1307,7 +1289,6 @@ raidioctl(dev, cmd, data, flag, p)
 		break;
 
 	case DIOCWLABEL:
-		db1_printf(("DIOCWLABEL\n"));
 		if (*(int *) data != 0)
 			rs->sc_flags |= RAIDF_WLABEL;
 		else
@@ -1315,13 +1296,12 @@ raidioctl(dev, cmd, data, flag, p)
 		break;
 
 	case DIOCGDEFLABEL:
-		db1_printf(("DIOCGDEFLABEL\n"));
 		raidgetdefaultlabel(raidPtrs[unit], rs,
 		    (struct disklabel *) data);
 		break;
 
 	default:
-		retcode = ENOTTY;	/* XXXX ?? OR EINVAL ? */
+		retcode = ENOTTY;
 	}
 	return (retcode);
 
@@ -1339,8 +1319,6 @@ raidinit(dev, raidPtr, unit)
 	int     unit;
 {
 	int     retcode;
-	/* int ix; */
-	/* struct raidbuf *raidbp; */
 	struct raid_softc *rs;
 
 	retcode = 0;
@@ -1378,6 +1356,8 @@ raidinit(dev, raidPtr, unit)
  * so that in the extremely rare case that two recons happen at once, 
  * we know for which device were requesting a spare table
  * XXX
+ * 
+ * XXX This code is not currently used. GO
  */
 int 
 rf_GetSpareTableFromDaemon(req)
@@ -1404,6 +1384,7 @@ rf_GetSpareTableFromDaemon(req)
 					 * alloc'd */
 	return (retcode);
 }
+
 /* a wrapper around rf_DoAccess that extracts appropriate info from the 
  * bp & passes it down.
  * any calls originating in the kernel must use non-blocking I/O
@@ -1598,8 +1579,6 @@ rf_DispatchKernelIO(queue, req)
 
 	switch (req->type) {
 	case RF_IO_TYPE_NOP:	/* used primarily to unlock a locked queue */
-		/* Dprintf2("rf_DispatchKernelIO: NOP to r %d c %d\n",
-		 * queue->row, queue->col); */
 		/* XXX need to do something extra here.. */
 		/* I'm leaving this in, as I've never actually seen it used,
 		 * and I'd like folks to report it... GO */
@@ -1632,8 +1611,6 @@ rf_DispatchKernelIO(queue, req)
 		/* acc wouldn't have been let in if there were any pending
 		 * reqs at any other priority */
 		queue->curPriority = req->priority;
-		/* Dprintf3("rf_DispatchKernelIO: %c to row %d col %d\n",
-		 * req->type, queue->row, queue->col); */
 
 		db1_printf(("Going for %c to unit %d row %d col %d\n",
 			req->type, unit, queue->row, queue->col));
