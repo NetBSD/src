@@ -1,0 +1,105 @@
+#	$NetBSD: ALPHA,v 1.1 1995/02/13 23:07:21 cgd Exp $
+#
+# Alpha kernel with all the options you'd want, and more.
+
+include "std.alpha"
+
+makeoptions   CC="gcc -Werror"
+makeoptions   DEBUG="-g"
+
+maxusers 8
+
+# does not really do anything anymore, but this replaces "ident GENERIC"
+options		GENERIC
+
+# CPU Support
+options		DEC_3000_500		# 3000/400, /500, /600, and /700
+
+# needs to be set per system
+options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
+options		DST=1			# Daylight savings rules (for param.c)
+
+# Standard system options
+options		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
+options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
+options		KTRACE			# System call tracing support
+
+# File system options
+options		FIFO		# POSIX fifo support (in all file systems)
+options		FFS		# Fast file system
+options		QUOTA		# User and group quotas for the FFS
+options		MFS		# Memory-based file system
+options		LFS		# Log-structured file system
+options		CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
+options		MSDOSFS		# MS-DOS-compatible file system
+options		ADOSFS		# AmigaDOS-compatible file system
+options		NFSSERVER	# Sun NFS-compatible file system server
+options		NFSCLIENT	# Sun NFS-compatible file system client
+options		NULLFS		# Null file system layer
+options		KERNFS		# Kernel variable file system (/kern)
+options		FDESC		# File descriptor file system (/dev/fd)
+options		PORTAL		# Portal file system
+options		UMAP		# User-mapping file system layer
+options		PROCFS		# Process file system (/proc)
+
+# Networking options
+options		INET		# Internet protocol suite
+options		NS		# Xerox NS protocol suite
+options		ISO,TPIP,EON	# ISO protocol suite
+options		CCITT,LLC,HDLC	# CCITT protocol suite
+options		GATEWAY		# packet forwarding and more mbuf space
+
+# Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
+#options	TCP_COMPAT_42
+
+# 4.3BSD compatibility.  Should be optional, but necessary for now.
+options		COMPAT_43
+
+# NetBSD compatibility.  Mostly meaningless on the Alpha.
+#options	COMPAT_09
+#options	COMPAT_10
+
+# OSF/1 binary compatibility
+options		COMPAT_OSF1
+
+# System V-like message queues
+options		SYSVMSG
+
+# System V-like semaphores
+options		SYSVSEM
+
+# System V-like shared memory
+options		SYSVSHM
+#options	SHMMAXPGS=1024		# 1024 pages is the default
+
+# Loadable kernel modules
+options		LKM
+
+config		netbsd	root on sd0 swap on sd0
+#config		netbsd	swap generic
+#config		netbsd	root nfs swap nfs
+
+tc*	at	mainbus0
+asic0	at	tc? slot ? offset ?
+clock0	at	asic? offset ?
+le0	at	asic? offset ?
+scc0	at	asic? offset ?
+scc1	at	asic? offset ?
+tcds0	at	tc? slot ? offset ?
+esp0	at	tcds? slot ?
+esp1	at	tcds? slot ?
+#sfb*	at	tc? slot ? offset ?
+
+scsibus* at esp?
+
+sd*	at	scsibus? target ? drive ?
+st*	at	scsibus? target ? drive ?
+cd*	at	scsibus? target ? drive ?
+
+pseudo-device	bpfilter
+pseudo-device	loop
+pseudo-device	ppp
+pseudo-device	pty
+pseudo-device	sl
+pseudo-device	tun
+pseudo-device	vn

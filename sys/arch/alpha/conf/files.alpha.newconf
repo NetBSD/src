@@ -1,0 +1,87 @@
+#	$NetBSD: files.alpha.newconf,v 1.1 1995/02/13 23:07:26 cgd Exp $
+#
+# alpha-specific configuration info
+
+maxusers 2 8 64
+
+device mainbus at root { }              # no locators (yet?)
+
+device cpu at mainbus			# not really optional
+file	arch/alpha/alpha/cpu.c		cpu
+
+device tc at mainbus { slot = -1, offset = -1 }
+file	arch/alpha/tc/tc.c		tc
+file	arch/alpha/tc/tc_3000_300.c	dec_3000_300
+file	arch/alpha/tc/tc_3000_500.c	dec_3000_500
+
+device asic at tc { offset = -1 }		# not really optional
+file	arch/alpha/tc/asic.c		asic
+
+device clock at asic 				# not really optional
+file	arch/alpha/alpha/clock.c	clock
+
+device sfb at tc
+file	arch/alpha/tc/sfb.c		sfb
+
+device scc at asic
+file	arch/alpha/tc/scc.c		scc	needs-count
+
+device tcds at tc { slot = -1 }
+file	arch/alpha/tc/tcds.c		tcds	needs-count
+
+define	scsi {}
+file	scsi/scsi_base.c		scsi
+file	scsi/scsi_ioctl.c		scsi
+file	scsi/scsiconf.c			scsi
+
+major { sd = 8 }
+
+device esp at tcds: scsi
+file	arch/alpha/tc/esp.c		esp needs-count
+file	arch/alpha/tc/dma.c		esp
+
+device scsibus at scsi	{ target = -1, drive = -1 }
+
+device cd at scsibus: disk
+file	scsi/cd.c			cd needs-flag
+device sd at scsibus: disk
+file	scsi/sd.c			sd needs-flag
+device st at scsibus: tape
+file	scsi/st.c			st needs-flag
+device ch at scsibus: disk
+file	scsi/ch.c			ch needs-flag
+device uk at scsibus: disk
+file	scsi/uk.c			uk needs-flag
+device su at scsibus: disk
+file	scsi/su.c			su needs-flag
+
+device le at asic: ifnet, ether
+file	arch/alpha/tc/if_le.c		le	needs-count
+
+file	arch/alpha/alpha/autoconf.c
+file	arch/alpha/alpha/conf.c
+file	arch/alpha/alpha/interrupt.c
+file	arch/alpha/alpha/machdep.c
+file	arch/alpha/alpha/mainbus.c
+file	arch/alpha/alpha/mem.c
+file	arch/alpha/alpha/pmap.c
+file	arch/alpha/alpha/process_machdep.c
+file	arch/alpha/alpha/prom.c
+file	arch/alpha/alpha/support.c
+file	arch/alpha/alpha/sys_machdep.c
+file	arch/alpha/alpha/trap.c
+file	arch/alpha/alpha/vm_machdep.c
+file	arch/alpha/alpha/disksubr.c
+
+# XXX
+file	arch/alpha/alpha/promcons.c
+
+file	dev/cons.c
+file	netinet/in_cksum.c
+file	netns/ns_cksum.c		ns
+
+file	compat/osf1/osf1_ioctl.c	compat_osf1
+file	compat/osf1/osf1_misc.c		compat_osf1
+file	compat/osf1/osf1_mount.c	compat_osf1
+file	compat/osf1/osf1_syscalls.c	compat_osf1
+file	compat/osf1/osf1_sysent.c	compat_osf1
