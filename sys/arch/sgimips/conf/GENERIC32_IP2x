@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.14 2004/07/06 23:59:48 sekiya Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.15 2004/07/07 00:58:43 rumble Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.14 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.15 $"
 
 maxusers	32
 
@@ -238,7 +238,7 @@ zstty*		at zsc0 channel ?
 
 zsc1 		at hpc0 offset ?	# IP20 keyboard/mouse
 #zskbd0		at zsc1 channel 0
-#zsms0		at zs11 channel 1
+#zsms0		at zsc1 channel 1
 
 scsibus*	at scsi?		# HPC SCSI
 audio*          at audiobus?
