@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.3 1997/07/01 07:34:03 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.4 1997/10/09 15:42:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -144,7 +144,7 @@ ext2fs_mknod(v)
 		 * Want to be able to use this to make badblock
 		 * inodes, so don't truncate the dev number.
 		 */
-		ip->i_din.e2fs_din.e2di_rdev = vap->va_rdev;
+		ip->i_din.e2fs_din.e2di_rdev = h2fs32(vap->va_rdev);
 	}
 	/*
 	 * Remove inode so that it will be reloaded by VFS_VGET and
@@ -240,7 +240,7 @@ ext2fs_getattr(v)
 	vap->va_nlink = ip->i_e2fs_nlink;
 	vap->va_uid = ip->i_e2fs_uid;
 	vap->va_gid = ip->i_e2fs_gid;
-	vap->va_rdev = (dev_t)ip->i_din.e2fs_din.e2di_rdev;
+	vap->va_rdev = (dev_t)fs2h32(ip->i_din.e2fs_din.e2di_rdev);
 	vap->va_size = ip->i_e2fs_size;
 	vap->va_atime.tv_sec = ip->i_e2fs_atime;
 	vap->va_atime.tv_nsec = 0;
@@ -892,14 +892,14 @@ abortit:
 				UIO_SYSSPACE, IO_NODELOCKED, 
 				tcnp->cn_cred, (int *)0, (struct proc *)0);
 			if (error == 0) {
-					namlen = dirbuf.dotdot_namlen;
+					namlen = fs2h16(dirbuf.dotdot_namlen);
 				if (namlen != 2 ||
 				    dirbuf.dotdot_name[0] != '.' ||
 				    dirbuf.dotdot_name[1] != '.') {
 					ufs_dirbad(xp, (doff_t)12,
 					    "ext2fs_rename: mangled dir");
 				} else {
-					dirbuf.dotdot_ino = newparent;
+					dirbuf.dotdot_ino = h2fs32(newparent);
 					(void) vn_rdwr(UIO_WRITE, fvp,
 					    (caddr_t)&dirbuf,
 					    sizeof (struct dirtemplate),
@@ -942,14 +942,6 @@ out:
 }
 
 /*
- * A virgin directory (no blushing please).
- */
-static struct ext2fs_dirtemplate mastertemplate = {
-	0, 12, 1, ".",
-	0, - 12, 2, ".." /* XXX -12 should be e2fs_bsize-12 */
-};
-
-/*
  * Mkdir system call
  */
 int
@@ -967,7 +959,7 @@ ext2fs_mkdir(v)
 	register struct componentname *cnp = ap->a_cnp;
 	register struct inode *ip, *dp;
 	struct vnode *tvp;
-	struct ext2fs_dirtemplate dirtemplate, *dtp;
+	struct ext2fs_dirtemplate dirtemplate;
 	struct timespec ts;
 	int error, dmode;
 
@@ -1011,12 +1003,15 @@ ext2fs_mkdir(v)
 		goto bad;
 
 	/* Initialize directory with "." and ".." from static template. */
-	dtp = &mastertemplate;
-	dirtemplate = *dtp;
-	dirtemplate.dot_ino = ip->i_number;
-	dirtemplate.dotdot_ino = dp->i_number;
-	/* Correct reclen of second entry */
-    dirtemplate.dotdot_reclen = VTOI(dvp)->i_e2fs->e2fs_bsize - 12;
+	bzero(&dirtemplate, sizeof(dirtemplate));
+	dirtemplate.dot_ino = h2fs32(ip->i_number);
+	dirtemplate.dot_reclen = h2fs16(12);
+	dirtemplate.dot_namlen = h2fs16(1);
+	dirtemplate.dot_name[0] = '.';
+	dirtemplate.dotdot_ino = h2fs32(dp->i_number);
+    dirtemplate.dotdot_reclen = h2fs16(VTOI(dvp)->i_e2fs->e2fs_bsize - 12);
+	dirtemplate.dotdot_namlen = h2fs16(2);
+	dirtemplate.dotdot_name[0] = dirtemplate.dotdot_name[1] = '.';
 	error = vn_rdwr(UIO_WRITE, tvp, (caddr_t)&dirtemplate,
 	    sizeof (dirtemplate), (off_t)0, UIO_SYSSPACE,
 	    IO_NODELOCKED|IO_SYNC, cnp->cn_cred, (int *)0, (struct proc *)0);
@@ -1239,7 +1234,7 @@ ext2fs_vinit(mntp, specops, fifoops, vpp)
 	case VCHR:
 	case VBLK:
 		vp->v_op = specops;
-		if ((nvp = checkalias(vp, ip->i_din.e2fs_din.e2di_rdev, mntp))
+		if ((nvp = checkalias(vp, fs2h32(ip->i_din.e2fs_din.e2di_rdev), mntp))
 			!= NULL) {
 			/*
 			 * Discard unneeded vnode, but save its inode.
