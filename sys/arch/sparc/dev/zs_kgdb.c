@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.1 1997/10/18 00:00:51 gwr Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.2 1997/10/22 17:03:35 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,11 +61,8 @@
 #include <machine/z8530var.h>
 #include <sparc/dev/cons.h>
 
-/* The Sun3 provides a 4.9152 MHz clock to the ZS chips. */
+/* Suns provide a 4.9152 MHz clock to the ZS chips. */
 #define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
-#define ZSHARD_PRI	6	/* Wired on the CPU board... */
-
-#define	ZS_DELAY()		(CPU_ISSUN4C ? (0) : delay(2))
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zschan {
@@ -80,7 +77,7 @@ struct zsops zsops_kgdb;
 
 static u_char zs_kgdb_regs[16] = {
 	0,	/* 0: CMD (reset, etc.) */
-	0,	/* 1: ~(ZSWR1_RIE | ZSWR1_TIE | ZSWR1_SIE) */
+	0,	/* 1: No interrupts yet. */
 	0,	/* 2: IVECT */
 	ZSWR3_RX_8 | ZSWR3_RX_ENABLE,
 	ZSWR4_CLK_X16 | ZSWR4_ONESB | ZSWR4_EVENP,
@@ -135,21 +132,21 @@ zs_kgdb_init()
 {
 	struct zs_chanstate cs;
 	volatile struct zschan *zc;
-	int channel, zsc_unit;
+	int channel, zs_unit;
 
 	/* printf("zs_kgdb_init: kgdb_dev=0x%x\n", kgdb_dev); */
 	if (major(kgdb_dev) != zs_major)
 		return;
 
-	/* Note: (ttya,ttyb) on zsc1, and (ttyc,ttyd) on zsc0 */
-	zsc_unit = (kgdb_dev & 2) ? 0 : 1;
+	/* Note: (ttya,ttyb) on zs0, and (ttyc,ttyd) on zs2 */
+	zs_unit = (kgdb_dev & 2) ? 2 : 0;	/* XXX - config info! */
 	channel  =  kgdb_dev & 1;
 	printf("zs_kgdb_init: attaching tty%c at %d baud\n",
 		   'a' + (kgdb_dev & 3), kgdb_rate);
 
 	/* Setup temporary chanstate. */
 	bzero((caddr_t)&cs, sizeof(cs));
-	zc = zs_get_chan_addr(zsc_unit, channel);
+	zc = zs_get_chan_addr(zs_unit, channel);
 	if (zc == NULL) {
 		printf("zs_kgdb_init: zs not mapped.\n");
 		kgdb_dev = -1;
