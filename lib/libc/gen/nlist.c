@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.15 1999/09/20 04:39:02 lukem Exp $	*/
+/*	$NetBSD: nlist.c,v 1.16 2000/01/03 02:13:32 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.15 1999/09/20 04:39:02 lukem Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.16 2000/01/03 02:13:32 msaitoh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,6 +67,9 @@ static const struct {
 } fdnlist_fmts[] = {
 #ifdef NLIST_AOUT
 	{	__fdnlist_aout		},
+#endif
+#ifdef NLIST_COFF
+	{	__fdnlist_coff		},
 #endif
 #ifdef NLIST_ECOFF
 	{	__fdnlist_ecoff		},
