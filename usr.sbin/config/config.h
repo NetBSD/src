@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.24 1996/08/12 00:55:54 mycroft Exp $	*/
+/*	$NetBSD: config.h,v 1.25 1996/08/31 20:58:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -232,9 +232,11 @@ struct files {
 struct hashtab;
 
 const char *conffile;		/* source file, e.g., "GENERIC.sparc" */
-const char *confdirbase;	/* basename of compile directory, usu. same */
 const char *machine;		/* machine type, e.g., "sparc" or "sun3" */
 const char *machinearch;	/* machine arch, e.g., "sparc" or "m68k" */
+const char *srcdir;		/* path to source directory (rel. to build) */
+const char *builddir;		/* path to build directory */
+const char *defbuilddir;	/* default build directory */
 int	errors;			/* counts calls to error() */
 int	minmaxusers;		/* minimum "maxusers" parameter */
 int	defmaxusers;		/* default "maxusers" parameter */
@@ -315,7 +317,7 @@ void	initsem __P((void));
 /* util.c */
 void	*emalloc __P((size_t));
 void	*erealloc __P((void *, size_t));
-char	*path __P((const char *));
+char	*sourcepath __P((const char *));
 void	error __P((const char *, ...));			/* immediate errs */
 void	xerror __P((const char *, int, const char *, ...)); /* delayed errs */
 __dead void panic __P((const char *, ...));

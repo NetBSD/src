@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.38 1996/03/17 06:29:27 cgd Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.39 1996/08/31 20:58:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,8 +65,6 @@ static int emitroots __P((FILE *));
 static int emitvec __P((FILE *));
 static char *vecname __P((char *, const char *, int));
 
-static const char *s_i386;
-
 #define	SEP(pos, max)	(((u_int)(pos) % (max)) == 0 ? "\n\t" : " ")
 
 /*
@@ -79,16 +77,12 @@ int
 mkioconf()
 {
 	register FILE *fp;
-	register char *fname;
 	int v;
 
-	s_i386 = intern("i386");
-
-	fname = path("ioconf.c");
 	qsort(packed, npacked, sizeof *packed, cforder);
-	if ((fp = fopen(fname, "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write %s: %s\n",
-		    fname, strerror(errno));
+	if ((fp = fopen("ioconf.c", "w")) == NULL) {
+		(void)fprintf(stderr, "config: cannot write ioconf.c: %s\n",
+		    strerror(errno));
 		return (1);
 	}
 	v = emithdr(fp);
@@ -96,15 +90,13 @@ mkioconf()
 	    emitpv(fp) || emitcfdata(fp) || emitroots(fp) || emitpseudo(fp)) {
 		if (v >= 0)
 			(void)fprintf(stderr,
-			    "config: error writing %s: %s\n",
-			    fname, strerror(errno));
+			    "config: error writing ioconf.c: %s\n",
+			    strerror(errno));
 		(void)fclose(fp);
-		/* (void)unlink(fname); */
-		free(fname);
+		/* (void)unlink("ioconf.c"); */
 		return (1);
 	}
 	(void)fclose(fp);
-	free(fname);
 	return (0);
 }
 
@@ -398,11 +390,6 @@ vecname(buf, name, unit)
 	int unit;
 {
 
-	/* @#%* 386 uses a different name format */
-	if (machine == s_i386) {
-		(void)sprintf(buf, "V%s%d", name, unit);
-		return (buf);
-	}
 	(void)sprintf(buf, "X%s%d", name, unit);
 	return (buf);
 }

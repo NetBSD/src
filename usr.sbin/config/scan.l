@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.5 1996/08/12 00:55:57 mycroft Exp $	*/
+/*	$NetBSD: scan.l,v 1.6 1996/08/31 20:58:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,6 +87,7 @@ WORD	[A-Za-z_][-A-Za-z_0-9]*
 and		{ return AND; }
 at		{ return AT; }
 attach		{ return ATTACH; }
+build		{ return BUILD; }
 compile-with	{ return COMPILE_WITH; }
 config		{ return CONFIG; }
 define		{ return DEFINE; }
@@ -105,6 +106,7 @@ on		{ return ON; }
 options		{ return OPTIONS; }
 "pseudo-device"	{ return PSEUDO_DEVICE; }
 root		{ return ROOT; }
+source		{ return SOURCE; }
 swap		{ return SWAP; }
 vector		{ return VECTOR; }
 with		{ return WITH; }
@@ -186,10 +188,16 @@ include(fname, ateof)
 {
 	register FILE *fp;
 	register struct incl *in;
+	char *s;
 
-	if ((fp = fopen(fname, "r")) == NULL) {
-		error("cannot open %s for reading: %s\n",
-		    fname, strerror(errno));
+	/* Kludge until files.* files are fixed. */
+	if (strncmp(fname, "../../../", 9) == 0)
+		fname += 9;
+
+	s = (*fname == '/') ? strdup(fname) : sourcepath(fname);
+	if ((fp = fopen(s, "r")) == NULL) {
+		error("cannot open %s for reading: %s\n", s, strerror(errno));
+		free(s);
 		return (-1);
 	}
 	in = emalloc(sizeof *in);
@@ -200,9 +208,10 @@ include(fname, ateof)
 	in->in_preveof = eoftoken;
 	incl = in;
 	yy_switch_to_buffer(yy_create_buffer(fp, YY_BUF_SIZE));
-	yyfile = intern(fname);
+	yyfile = intern(s);
 	yyline = 1;
 	eoftoken = ateof;
+	free(s);
 	return (0);
 }
 
