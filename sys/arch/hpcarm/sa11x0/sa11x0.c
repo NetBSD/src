@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.12 2001/06/29 16:58:55 toshii Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.13 2001/06/29 17:22:51 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -115,9 +115,8 @@ sa11x0_print(aux, name)
 		printf("-0x%lx", sa->sa_membase + sa->sa_memsize - 1);
         if (sa->sa_intr > 1)
                 printf(" intr %d", sa->sa_intr);
-	printf("\n");
-        return (UNCONF);
 
+        return (UNCONF);
 }
 
 int

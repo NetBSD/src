@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.4 2001/03/27 18:06:39 toshii Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.5 2001/06/29 17:22:52 toshii Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -110,6 +110,8 @@ sacpcic_attach(parent, self, aux)
 	struct pcmciabus_attach_args paa;
 	struct sacpcic_softc *sc = (struct sacpcic_softc *)self;
 	struct sacc_softc *psc = (struct sacc_softc *)parent;
+
+	printf("\n");
 
 	sc->sc_pc.sc_iot = psc->sc_iot;
 	sc->sc_ioh = psc->sc_ioh;

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.8 2001/06/29 16:58:17 toshii Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.9 2001/06/29 17:22:51 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -120,6 +120,8 @@ sacc_attach(parent, self, aux)
 	struct sa11x0_softc *psc = (struct sa11x0_softc *)parent;
 	struct sa11x0_attach_args *sa = aux;
 	struct platid_data *p;
+
+	printf("\n");
 
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_piot = psc->sc_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.7 2001/05/01 12:36:55 toshii Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.8 2001/06/29 17:22:51 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -101,6 +101,8 @@ saost_attach(parent, self, aux)
 {
 	struct saost_softc *sc = (struct saost_softc*)self;
 	struct sa11x0_attach_args *sa = aux;
+
+	printf("\n");
 
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_baseaddr = sa->sa_addr;
