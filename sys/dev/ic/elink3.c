@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.68 2000/02/02 08:00:21 augustss Exp $	*/
+/*	$NetBSD: elink3.c,v 1.69 2000/02/02 08:05:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -482,7 +482,7 @@ epconfig(sc, chipset, enaddr)
 		 * we don't, just treat the Boomerang like the Vortex.
 		 */
 		if (sc->ep_flags & ELINK_FLAGS_MII) {
-			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
+			mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
 			    MII_PHY_ANY, MII_OFFSET_ANY);
 			if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 				ifmedia_add(&sc->sc_mii.mii_media,

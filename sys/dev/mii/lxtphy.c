@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.15 2000/01/27 16:44:30 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.16 2000/02/02 08:05:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -92,8 +92,8 @@ int	lxtphymatch __P((struct device *, struct cfdata *, void *));
 void	lxtphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach lxtphy_ca = {
-	sizeof(struct mii_softc), lxtphymatch, lxtphyattach, mii_detach,
-	    mii_activate
+	sizeof(struct mii_softc), lxtphymatch, lxtphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 int	lxtphy_service __P((struct mii_softc *, struct mii_data *, int));
@@ -139,7 +139,7 @@ lxtphyattach(parent, self, aux)
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(sc);
+		mii_phy_add_media(sc);
 	printf("\n");
 }
 

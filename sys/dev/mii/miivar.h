@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.13 2000/01/27 16:44:30 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.14 2000/02/02 08:05:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -44,9 +44,6 @@
 
 /*
  * Media Independent Interface autoconfiguration defintions.
- *
- * This file exports an interface which attempts to be compatible
- * with the BSD/OS 3.0 interface.
  */
 
 struct mii_softc;
@@ -139,9 +136,9 @@ typedef struct mii_softc mii_softc_t;
 #define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP)
 
 /*
- * Special `locators' passed to mii_phy_probe.  If one of these is not
+ * Special `locators' passed to mii_attach().  If one of these is not
  * an `any' value, we look for *that* PHY and configure it.  If both
- * are not `any', that is an error, and mii_phy_probe() will panic.
+ * are not `any', that is an error, and mii_attach() will panic.
  */
 #define	MII_OFFSET_ANY		-1
 #define	MII_PHY_ANY		-1
@@ -185,23 +182,25 @@ struct mii_media {
 	(*(p)->mii_pdata->mii_writereg)((p)->mii_dev.dv_parent, \
 	    (p)->mii_phy, (r), (v))
 
+void	mii_attach __P((struct device *, struct mii_data *, int, int, int));
+void	mii_activate __P((struct mii_data *, enum devact, int, int));
+void	mii_detach __P((struct mii_data *, int, int));
+
 int	mii_mediachg __P((struct mii_data *));
 void	mii_tick __P((struct mii_data *));
 void	mii_pollstat __P((struct mii_data *));
 void	mii_down __P((struct mii_data *));
-void	mii_phy_probe __P((struct device *, struct mii_data *, int, int, int));
-void	mii_phy_activate __P((struct mii_data *, enum devact, int, int));
-void	mii_phy_detach __P((struct mii_data *, int, int));
-void	mii_add_media __P((struct mii_softc *));
-void	mii_delete_media __P((struct mii_softc *));
+
+int	mii_phy_activate __P((struct device *, enum devact));
+int	mii_phy_detach __P((struct device *, int));
+
+void	mii_phy_add_media __P((struct mii_softc *));
+void	mii_phy_delete_media __P((struct mii_softc *));
 
 void	mii_phy_setmedia __P((struct mii_softc *));
 int	mii_phy_auto __P((struct mii_softc *, int));
 void	mii_phy_reset __P((struct mii_softc *));
 void	mii_phy_down __P((struct mii_softc *));
-
-int	mii_activate __P((struct device *, enum devact));
-int	mii_detach __P((struct device *, int));
 
 void	ukphy_status __P((struct mii_softc *));
 #endif /* _KERNEL */
