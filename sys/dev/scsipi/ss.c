@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.26.2.4 2001/01/05 17:36:27 bouyer Exp $	*/
+/*	$NetBSD: ss.c,v 1.26.2.5 2001/01/06 16:15:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -188,7 +188,7 @@ ssdetach(struct device *self, int flags)
 	}
 
 	/* Kill off any pending commands. */
-	scsipi_kill_pending(ss->sc_link);
+	scsipi_kill_pending(ss->sc_periph);
 
 	splx(s);
 
@@ -388,6 +388,7 @@ ssstrategy(bp)
 	struct buf *bp;
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
+	struct scsipi_periph *periph = ss->sc_periph;
 	int s;
 
 	SC_DEBUG(ss->sc_periph, SCSIPI_DB1,
@@ -398,7 +399,7 @@ ssstrategy(bp)
 	 */
 	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
 		bp->b_flags |= B_ERROR;
-		if (ss->sc_link->flags & SDEV_OPEN)
+		if (periph->periph_flags & PERIPH_OPEN)
 			bp->b_error = EIO;
 		else
 			bp->b_error = ENODEV;
