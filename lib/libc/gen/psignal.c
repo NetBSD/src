@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)psignal.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: psignal.c,v 1.3 1993/08/26 00:44:56 jtc Exp $";
+static char *rcsid = "$Id: psignal.c,v 1.4 1993/12/06 21:47:38 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -49,7 +49,7 @@ psignal(sig, s)
 	unsigned int sig;
 	const char *s;
 {
-	register char *c;
+	register const char *c;
 	register int n;
 
 	if (sig < NSIG)
