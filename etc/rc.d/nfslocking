@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: nfslocking,v 1.5 2002/03/22 04:33:59 thorpej Exp $
+# $NetBSD: nfslocking,v 1.6 2002/03/24 15:52:41 lukem Exp $
 #
 
 # PROVIDE: nfslocking
@@ -11,7 +11,8 @@
 
 arg=$1
 
-start_precmd='checkyesno nfs_server || checkyesno nfs_client'
+start_precmd='checkyesno nfs_server || checkyesno nfs_client ||
+		[ -n "$rc_force" ]'
 stop_precmd=$start_precmd
 status_precmd=$start_precmd
 
