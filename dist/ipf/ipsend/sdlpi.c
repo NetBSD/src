@@ -1,9 +1,10 @@
-/*	$NetBSD: sdlpi.c,v 1.2 2002/01/24 08:21:41 martti Exp $	*/
+/*	$NetBSD: sdlpi.c,v 1.3 2004/03/28 09:00:56 martti Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed. (from tcplog)
  *
  * See the IPFILTER.LICENCE file for details on licencing.
+ *
  */
 
 #include <stdio.h>
@@ -21,10 +22,17 @@
 #include <sys/stropts.h>
 
 #ifdef sun
-#include <sys/pfmod.h>
-#include <sys/bufmod.h>
+# include <sys/pfmod.h>
+# include <sys/bufmod.h>
 #endif
-#include <sys/dlpi.h>
+#ifdef __osf__
+# include <sys/dlpihdr.h>
+#else
+# include <sys/dlpi.h>
+#endif
+#ifdef __hpux
+# include <sys/dlpi_ext.h>
+#endif
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -40,7 +48,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)sdlpi.c	1.3 10/30/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sdlpi.c,v 2.1.4.2 2001/06/26 10:43:22 darrenr Exp";
+static const char rcsid[] = "@(#)Id: sdlpi.c,v 2.8 2004/01/05 14:17:07 darrenr Exp";
 #endif
 
 #define	CHUNKSIZE	8192
@@ -51,9 +59,9 @@ static const char rcsid[] = "@(#)Id: sdlpi.c,v 2.1.4.2 2001/06/26 10:43:22 darre
  * Be careful to only include those defined in the flags option for the
  * interface are included in the header size.
  */
-int	initdevice(device, sport, tout)
+int	initdevice(device, tout)
 char	*device;
-int	sport, tout;
+int	tout;
 {
 	char	devname[16], *s, buf[256];
 	int	i, fd;
@@ -81,24 +89,43 @@ int	sport, tout;
 		exit(-1);
 	    }
 
-	if (dlattachreq(fd, i) == -1 || dlokack(fd, buf) == -1)
+	if (dlattachreq(fd, i) == -1)
 	    {
-		fprintf(stderr, "DLPI error\n");
+		fprintf(stderr, "dlattachreq: DLPI error\n");
 		exit(-1);
 	    }
+	else if (dlokack(fd, buf) == -1)
+	    {
+		fprintf(stderr, "dlokack(attach): DLPI error\n");
+		exit(-1);
+	    }
+#ifdef DL_HP_RAWDLS
+	if (dlpromisconreq(fd, DL_PROMISC_SAP) < 0)
+	    {
+		fprintf(stderr, "dlpromisconreq: DL_PROMISC_PHYS error\n");
+		exit(-1);
+	    }
+	else if (dlokack(fd, buf) < 0)
+	    {
+		fprintf(stderr, "dlokack(promisc): DLPI error\n");
+		exit(-1);
+	    }
+	/* 22 is INSAP as per the HP-UX DLPI Programmer's Guide */
+
+	dlbindreq(fd, 22, 1, DL_HP_RAWDLS, 0, 0);
+#else
 	dlbindreq(fd, ETHERTYPE_IP, 0, DL_CLDLS, 0, 0);
+#endif
 	dlbindack(fd, buf);
 	/*
 	 * write full headers
 	 */
-#ifdef sun /* we require RAW DLPI mode, which is a Sun extension */
+#ifdef DLIOCRAW /* we require RAW DLPI mode, which is a Sun extension */
 	if (strioctl(fd, DLIOCRAW, -1, 0, NULL) == -1)
 	    {
 		fprintf(stderr, "DLIOCRAW error\n");
 		exit(-1);
 	    }
-#else
-you lose
 #endif
 	return fd;
 }
@@ -111,8 +138,19 @@ int	sendip(fd, pkt, len)
 int	fd, len;
 char	*pkt;
 {			
-	struct	strbuf	dbuf, *dp = &dbuf;
+	struct strbuf dbuf, *dp = &dbuf, *cp = NULL;
+	int pri = 0;
+#ifdef DL_HP_RAWDLS
+	struct strbuf cbuf;
+	dl_hp_rawdata_req_t raw;
 
+	cp = &cbuf;
+	raw.dl_primitive = DL_HP_RAWDATA_REQ;
+	cp->len = sizeof(raw);
+	cp->buf = (char *)&raw;
+	cp->maxlen = cp->len;
+	pri = MSG_HIPRI;
+#endif
 	/*
 	 * construct NIT STREAMS messages, first control then data.
 	 */
@@ -120,7 +158,7 @@ char	*pkt;
 	dp->len = len;
 	dp->maxlen = dp->len;
 
-	if (putmsg(fd, NULL, dp, 0) == -1)
+	if (putmsg(fd, cp, dp, pri) == -1)
 	    {
 		perror("putmsg");
 		return -1;
@@ -132,3 +170,4 @@ char	*pkt;
 	    }
 	return len;
 }
+
