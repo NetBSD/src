@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.38 1998/11/20 12:43:11 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.39 1998/11/21 23:41:13 oster Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -90,7 +90,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_disk_init(NCCD,ccd),	/* 13: concatenated disk driver */
 	bdev_disk_init(NWD,wd),		/* 14: IDE disk driver */
-	bdev_disk_init(NCCD,ccd),	/* 15: RAIDframe disk driver */
+	bdev_disk_init(NRAID,raid),	/* 15: RAIDframe disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
