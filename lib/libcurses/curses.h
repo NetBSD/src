@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.26 1999/08/08 08:58:08 simonb Exp $	*/
+/*	$NetBSD: curses.h,v 1.27 1999/09/29 00:34:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -236,7 +236,7 @@ typedef struct {
 #define	__PROTECT	0x80  		/* Added characters are protected. */
 #define	__ATTRIBUTES	0xfe  		/* All character attributes
 						(excluding standout). */
-	char	attr;			/* attributes of character */
+	int	attr;			/* attributes of character */
 } __LDATA;
 
 #define __LDATASIZE	(sizeof(__LDATA))
