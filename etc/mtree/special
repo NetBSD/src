@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.30.4.3 2001/04/27 11:13:38 he Exp $
+#	$NetBSD: special,v 1.30.4.4 2001/05/28 18:41:26 he Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -74,6 +74,7 @@ phones		type=file mode=0644 uname=root gname=wheel
 ppp		type=dir mode=0755 uname=root gname=wheel optional
 options		type=file mode=0644 uname=root gname=wheel optional
 ..	#etc/ppp
+primes		type=file mode=0444 uname=root gname=wheel
 printcap	type=file mode=0644 uname=root gname=wheel
 profile		type=file mode=0644 uname=root gname=wheel
 protocols	type=file mode=0644 uname=root gname=wheel
