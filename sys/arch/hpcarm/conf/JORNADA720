@@ -1,11 +1,11 @@
-#	$NetBSD: JORNADA720,v 1.4 2001/05/23 16:52:34 toshii Exp $
+#	$NetBSD: JORNADA720,v 1.5 2001/06/01 02:51:03 toshii Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
 
 include	"arch/hpcarm/conf/std.hpcarm"
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 # estimated number of users
 maxusers	32
@@ -194,6 +194,11 @@ options 	BOOTINFO_FB_HEIGHT=240
 options 	BOOTINFO_FB_TYPE=5
 
 options		FRAMEBUF_HW_BASE="0x48200000"
+
+# physical console
+sed0		at saip?
+hpcfb*		at sed?
+wsdisplay*	at hpcfb?
 
 pseudo-device	loop	1               # network loopback
 pseudo-device	bpfilter 8              # packet filter
