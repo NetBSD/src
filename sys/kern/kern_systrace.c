@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.16 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.17 2002/10/08 14:46:24 provos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.16 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.17 2002/10/08 14:46:24 provos Exp $");
 
 #include "opt_systrace.h"
 
@@ -117,6 +117,9 @@ struct str_process {
 
 	struct proc *proc;
 	const struct emul *oldemul;
+	uid_t olduid;
+	gid_t oldgid;
+
 	pid_t pid;
 
 	struct fsystrace *parent;
@@ -159,6 +162,7 @@ int	systrace_msg_ask(struct fsystrace *, struct str_process *,
 int	systrace_msg_result(struct fsystrace *, struct str_process *,
 	    int, int, size_t, register_t [], register_t []);
 int	systrace_msg_emul(struct fsystrace *, struct str_process *);
+int	systrace_msg_ugid(struct fsystrace *, struct str_process *);
 int	systrace_make_msg(struct str_process *, int);
 
 static struct fileops systracefops = {
@@ -760,12 +764,16 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 		SYSTRACE_UNLOCK(fst, p);
 	}
 	if (strp != NULL) {
-		if (error == 0)
-			strp->oldemul = p->p_emul;
-		else
+		if (error) {
 			strp->oldemul = NULL;
+			return (error);
+		}
+
+		strp->oldemul = p->p_emul;
+		strp->olduid = p->p_cred->p_ruid;
+		strp->oldgid = p->p_cred->p_rgid;
 	}
-	return error;
+	return (error);
 }
 
 void
@@ -809,6 +817,20 @@ systrace_exit(struct proc *p, register_t code, void *v, register_t retval[],
 			strp->policy = NULL;
 		}
 		systrace_msg_emul(fst, strp);
+	} else
+		systrace_unlock();
+
+	/* Report if effective uid or gid changed */
+	systrace_lock();
+	strp = p->p_systrace;
+	if (strp != NULL && (strp->olduid != p->p_cred->p_ruid ||
+	    strp->oldgid != p->p_cred->p_rgid)) {
+
+		fst = strp->parent;
+		SYSTRACE_LOCK(fst, p);
+		systrace_unlock();
+
+		systrace_msg_ugid(fst, strp);
 	} else
 		systrace_unlock();
 
@@ -1406,6 +1428,18 @@ systrace_msg_emul(struct fsystrace *fst, struct str_process *strp)
 	memcpy(msg_emul->emul, p->p_emul->e_name, SYSTR_EMULEN);
 
 	return (systrace_make_msg(strp, SYSTR_MSG_EMUL));
+}
+
+int
+systrace_msg_ugid(struct fsystrace *fst, struct str_process *strp)
+{
+	struct str_msg_ugid *msg_ugid = &strp->msg.msg_data.msg_ugid;
+	struct proc *p = strp->proc;
+
+	msg_ugid->uid = p->p_cred->p_ruid;
+	msg_ugid->gid = p->p_cred->p_rgid;
+
+	return (systrace_make_msg(strp, SYSTR_MSG_UGID));
 }
 
 int
