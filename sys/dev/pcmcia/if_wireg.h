@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wireg.h,v 1.4 2000/02/04 06:22:52 explorer Exp $	*/
+/*	$NetBSD: if_wireg.h,v 1.5 2000/02/04 07:48:29 explorer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wireg.h,v 1.4 2000/02/04 06:22:52 explorer Exp $
+ *	$Id: if_wireg.h,v 1.5 2000/02/04 07:48:29 explorer Exp $
  */
 
 /*
@@ -74,9 +74,19 @@
 
 #define WI_DEFAULT_MAX_SLEEP	100
 
-#define WI_DEFAULT_NODENAME	"NetBSD WaveLAN/IEEE node"
+#ifdef __NetBSD__
+#define OS_STRING_NAME	"NetBSD"
+#endif
+#ifdef __FreeBSD__
+#define OS_STRING_NAME	"FreeBSD"
+#endif
+#ifdef __OpenBSD__
+#define OS_STRING_NAME	"OpenBSD"
+#endif
 
-#define WI_DEFAULT_IBSS		"NetBSD IBSS"
+#define WI_DEFAULT_NODENAME	OS_STRING_NAME " WaveLAN/IEEE node"
+
+#define WI_DEFAULT_IBSS		OS_STRING_NAME " IBSS"
 
 #define WI_DEFAULT_CHAN		3
 
@@ -501,9 +511,11 @@ struct wi_ltv_mcast {
  */
 struct wi_frame {
 	u_int16_t		wi_status;	/* 0x00 */
-	u_int32_t		wi_rsvd0;	/* 0x02 */
+	u_int16_t		wi_rsvd0;	/* 0x02 */
+	u_int16_t		wi_rsvd1;	/* 0x04 */
 	u_int16_t		wi_q_info;	/* 0x06 */
-	u_int16_t		wi_rsvd1;	/* 0x08 */
+	u_int16_t		wi_rsvd2;	/* 0x08 */
+	u_int16_t		wi_rsvd3;	/* 0x0A */
 	u_int16_t		wi_tx_ctl;	/* 0x0C */
 	u_int16_t		wi_frame_ctl;	/* 0x0E */
 	u_int16_t		wi_id;		/* 0x10 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.3 1999/09/10 00:30:59 itojun Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.4 2000/02/04 07:48:29 explorer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.3 1999/09/10 00:30:59 itojun Exp $
+ *	$Id: if_wi.c,v 1.4 2000/02/04 07:48:29 explorer Exp $
  */
 
 /*
@@ -84,6 +84,7 @@
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>		/* for hz */
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -109,13 +110,12 @@
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-#include <dev/pcmcia/if_wivar.h>
-
 #include <dev/pcmcia/if_wi_ieee.h>
+#include <dev/pcmcia/if_wivar.h>
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.3 1999/09/10 00:30:59 itojun Exp $";
+	"$Id: if_wi.c,v 1.4 2000/02/04 07:48:29 explorer Exp $";
 #endif
 
 #ifdef foo
@@ -313,6 +313,14 @@ wi_attach(parent, self, aux)
 	sc->wi_channel = gen.wi_val;
 
 	bzero((char *)&sc->wi_stats, sizeof(sc->wi_stats));
+
+	/*
+	 * Find out if we support WEP on this card.
+	 */
+	gen.wi_type = WI_RID_WEP_AVAIL;
+	gen.wi_len = 2;
+	wi_read_record(sc, &gen);
+	sc->wi_has_wep = gen.wi_val;
 
 	wi_init(sc);
 	wi_stop(sc);
@@ -877,6 +885,12 @@ static void wi_setmulti(sc)
 			bzero((char *)&mcast, sizeof(mcast));
 			break;
 		}
+#if 0
+		/* Punt on ranges. */
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+			 sizeof(enm->enm_addrlo)) != 0)
+			break;
+#endif
 		bcopy(enm->enm_addrlo,
 		    (char *)&mcast.wi_mcast[i], ETHER_ADDR_LEN);
 		i++;
@@ -944,6 +958,16 @@ static void wi_setdef(sc, wreq)
 	case WI_RID_MAX_SLEEP:
 		sc->wi_max_sleep = wreq->wi_val[0];
 		break;
+	case WI_RID_ENCRYPTION:
+		sc->wi_use_wep = wreq->wi_val[0];
+		break;
+	case WI_RID_TX_CRYPT_KEY:
+		sc->wi_tx_key = wreq->wi_val[0];
+		break;
+	case WI_RID_DEFLT_CRYPT_KEYS:
+		bcopy((char *)wreq, (char *)&sc->wi_keys,
+		      sizeof(struct wi_ltv_keys));
+		break;
 	default:
 		break;
 	}
@@ -963,6 +987,7 @@ static int wi_ioctl(ifp, command, data)
 	struct wi_softc		*sc;
 	struct wi_req		wreq;
 	struct ifreq		*ifr;
+	struct proc *p = curproc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 
 	s = splimp();
@@ -1040,6 +1065,14 @@ static int wi_ioctl(ifp, command, data)
 			bcopy((char *)&sc->wi_stats, (char *)&wreq.wi_val,
 			    sizeof(sc->wi_stats));
 			wreq.wi_len = (sizeof(sc->wi_stats) / 2) + 1;
+		} else if (wreq.wi_type == WI_RID_DEFLT_CRYPT_KEYS) {
+			/* For non-root user, return all-zeroes keys */
+			if (suser(p->p_ucred, &p->p_acflag))
+				bzero((char *)&wreq,
+				      sizeof(struct wi_ltv_keys));
+			else
+				bcopy((char *)&sc->wi_keys, (char *)&wreq,
+				      sizeof(struct wi_ltv_keys));
 		} else {
 			if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq)) {
 				error = EINVAL;
@@ -1049,6 +1082,9 @@ static int wi_ioctl(ifp, command, data)
 		error = copyout(&wreq, ifr->ifr_data, sizeof(wreq));
 		break;
 	case SIOCSWAVELAN:
+		error = suser(p->p_ucred, &p->p_acflag);
+		if (error)
+			break;
 		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
 		if (error)
 			break;
@@ -1136,6 +1172,15 @@ static void wi_init(xsc)
 	mac.wi_type = WI_RID_MAC_NODE;
 	memcpy(&mac.wi_mac_addr, sc->sc_macaddr, ETHER_ADDR_LEN);
 	wi_write_record(sc, (struct wi_ltv_gen *)&mac);
+
+	/* Configure WEP. */
+	if (sc->wi_has_wep) {
+		WI_SETVAL(WI_RID_ENCRYPTION, sc->wi_use_wep);
+		WI_SETVAL(WI_RID_TX_CRYPT_KEY, sc->wi_tx_key);
+		sc->wi_keys.wi_len = (sizeof(struct wi_ltv_keys) / 2) + 1;
+		sc->wi_keys.wi_type = WI_RID_DEFLT_CRYPT_KEYS;
+		wi_write_record(sc, (struct wi_ltv_gen *)&sc->wi_keys);
+	}
 
 	/* Initialize promisc mode. */
 	if (ifp->if_flags & IFF_PROMISC) {
