@@ -1,7 +1,7 @@
-/*	$NetBSD: dmover_io.c,v 1.11 2003/06/29 22:30:07 fvdl Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.12 2003/07/19 02:00:18 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.11 2003/06/29 22:30:07 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.12 2003/07/19 02:00:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -147,40 +147,44 @@ dmio_usrreq_init(struct file *fp, struct dmio_usrreq_state *dus,
 
 	/* XXX How should malloc interact w/ FNONBLOCK? */
 
-	if (req->req_outbuf.dmbuf_iovcnt > IOV_MAX)
-		return (EINVAL);
-	len = sizeof(struct iovec) * req->req_outbuf.dmbuf_iovcnt;
-	if (len == 0)
-		return (EINVAL);
-	uio_out->uio_iov = malloc(len, M_TEMP, M_WAITOK);
-
-	error = copyin(req->req_outbuf.dmbuf_iov, uio_out->uio_iov, len);
-	if (error) {
-		free(uio_out->uio_iov, M_TEMP);
-		return (error);
-	}
-
-	for (j = 0, len = 0; j < req->req_outbuf.dmbuf_iovcnt; j++) {
-		len += uio_out->uio_iov[j].iov_len;
-		if (len > SSIZE_MAX) {
-			free(uio_out->uio_iov, M_TEMP);
+	if (req->req_outbuf.dmbuf_iovcnt != 0) {
+		if (req->req_outbuf.dmbuf_iovcnt > IOV_MAX)
 			return (EINVAL);
+		len = sizeof(struct iovec) * req->req_outbuf.dmbuf_iovcnt;
+		uio_out->uio_iov = malloc(len, M_TEMP, M_WAITOK);
+		error = copyin(req->req_outbuf.dmbuf_iov, uio_out->uio_iov,
+		    len);
+		if (error) {
+			free(uio_out->uio_iov, M_TEMP);
+			return (error);
 		}
+
+		for (j = 0, len = 0; j < req->req_outbuf.dmbuf_iovcnt; j++) {
+			len += uio_out->uio_iov[j].iov_len;
+			if (len > SSIZE_MAX) {
+				free(uio_out->uio_iov, M_TEMP);
+				return (EINVAL);
+			}
+		}
+
+		uio_out->uio_iovcnt = req->req_outbuf.dmbuf_iovcnt;
+		uio_out->uio_resid = len;
+		uio_out->uio_rw = UIO_READ;
+		uio_out->uio_segflg = UIO_USERSPACE;
+		uio_out->uio_procp = curproc;
+		dreq->dreq_outbuf_type = DMOVER_BUF_UIO;
+		dreq->dreq_outbuf.dmbuf_uio = uio_out;
+	} else {
+		uio_out->uio_iov = NULL;
+		uio_out = NULL;
+		dreq->dreq_outbuf_type = DMOVER_BUF_NONE;
 	}
 
-	uio_out->uio_iovcnt = req->req_outbuf.dmbuf_iovcnt;
-	uio_out->uio_resid = len;
-	uio_out->uio_rw = UIO_READ;
-	uio_out->uio_segflg = UIO_USERSPACE;
-	uio_out->uio_procp = curproc;
-
-	dreq->dreq_outbuf_type = DMOVER_BUF_UIO;
-	dreq->dreq_outbuf.dmbuf_uio = uio_out;
+	memcpy(dreq->dreq_immediate, req->req_immediate,
+	    sizeof(dreq->dreq_immediate));
 
 	if (dses->dses_ninputs == 0) {
-		/* No inputs; copy the immediate. */
-		memcpy(dreq->dreq_immediate, req->req_immediate,
-		    sizeof(dreq->dreq_immediate));
+		/* No inputs; all done. */
 		return (0);
 	}
 
@@ -214,7 +218,7 @@ dmio_usrreq_init(struct file *fp, struct dmio_usrreq_state *dus,
 			goto bad;
 		}
 
-		for (j = 0, len = 0; j < req->req_outbuf.dmbuf_iovcnt; j++) {
+		for (j = 0, len = 0; j < inbuf.dmbuf_iovcnt; j++) {
 			len += uio_in->uio_iov[j].iov_len;
 			if (len > SSIZE_MAX) {
 				free(uio_in->uio_iov, M_TEMP);
@@ -223,7 +227,7 @@ dmio_usrreq_init(struct file *fp, struct dmio_usrreq_state *dus,
 			}
 		}
 
-		if (len != uio_out->uio_resid) {
+		if (uio_out != NULL && len != uio_out->uio_resid) {
 			free(uio_in->uio_iov, M_TEMP);
 			error = EINVAL;
 			goto bad;
@@ -248,7 +252,8 @@ dmio_usrreq_init(struct file *fp, struct dmio_usrreq_state *dus,
 		}
 	}
 	free(dus->dus_uio_in, M_TEMP);
-	free(uio_out->uio_iov, M_TEMP);
+	if (uio_out != NULL)
+		free(uio_out->uio_iov, M_TEMP);
 	return (error);
 }
 
@@ -265,7 +270,8 @@ dmio_usrreq_fini(struct dmio_state *ds, struct dmio_usrreq_state *dus)
 	struct uio *uio_in;
 	int i;
 
-	free(uio_out->uio_iov, M_TEMP);
+	if (uio_out->uio_iov != NULL)
+		free(uio_out->uio_iov, M_TEMP);
 
 	if (dses->dses_ninputs == 0) {
 		pool_put(&dmio_usrreq_state_pool, dus);
@@ -341,8 +347,13 @@ dmio_read(struct file *fp, off_t *offp, struct uio *uio,
 
 		dreq = dus->dus_req;
 		resp.resp_id = dus->dus_id;
-		resp.resp_error = (dreq->dreq_flags & DMOVER_REQ_ERROR) ?
-		    dreq->dreq_error : 0;
+		if (dreq->dreq_flags & DMOVER_REQ_ERROR)
+			resp.resp_error = dreq->dreq_error;
+		else {
+			resp.resp_error = 0;
+			memcpy(resp.resp_immediate, dreq->dreq_immediate,
+			    sizeof(resp.resp_immediate));
+		}
 
 		dmio_usrreq_fini(ds, dus);
 
