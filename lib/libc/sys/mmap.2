@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.25 2002/02/08 01:28:19 ross Exp $
+.\"	$NetBSD: mmap.2,v 1.25.2.1 2003/08/17 10:14:59 tron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -149,6 +149,17 @@ handling may be necessary.
 Permit regions to be inherited across
 .Xr execve 2
 system calls.
+.It Dv MAP_TRYFIXED
+Attempt to use the address
+.Fa addr
+even if it falls within the normally protected process data or
+text segment memory regions.  If the requested region of memory
+is actually present in the memory map, a different address will
+be selected as if MAP_TRYFIXED had not been specified.  If
+.Fa addr
+is
+.Fa NULL ,
+this flag is ignored and the system will select a mapping address.
 .It Dv MAP_PRIVATE
 Modifications made by this process are private, however modifications made by
 other processes using
