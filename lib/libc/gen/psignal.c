@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)psignal.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: psignal.c,v 1.6 1994/10/06 18:07:45 jtc Exp $";
+static char *rcsid = "$Id: psignal.c,v 1.7 1994/10/06 18:16:43 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -43,6 +43,7 @@ static char *rcsid = "$Id: psignal.c,v 1.6 1994/10/06 18:07:45 jtc Exp $";
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 extern char *__strsignal __P((int , char *));
 
@@ -51,7 +52,7 @@ psignal(sig, s)
 	unsigned int sig;
 	const char *s;
 {
-	static char buf[128];
+	static char buf[NL_TEXTMAX];
 	register const char *c;
 	register int n;
 
