@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.61 1998/09/01 18:48:38 jtk Exp $	*/
+/*	$NetBSD: gus.c,v 1.62 1998/09/06 13:03:49 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1056,7 +1056,7 @@ gusopen(addr, flags)
 	sc->sc_voc[GUS_VOICE_LEFT].current_addr = GUS_MEM_OFFSET;
 
 	if (HAS_CODEC(sc)) {
-		ad1848_open(&sc->sc_codec, flags);
+		ad1848_open(&sc->sc_codec.sc_ad1848, flags);
 		sc->sc_codec.sc_ad1848.mute[AD1848_AUX1_CHANNEL] = 0;
 
 		/* turn on DAC output */
@@ -1084,8 +1084,8 @@ gusmaxopen(addr, flags)
 	void *addr;
 	int flags;
 {
-	struct ad1848_softc *ac = addr;
-	return gusopen(ac->parent, flags);
+	struct ad1848_isa_softc *ac = addr;
+	return gusopen(ac->sc_ad1848.parent, flags);
 }
 
 STATIC void
@@ -1152,8 +1152,8 @@ gusmax_dma_output(addr, buf, size, intr, arg)
 	void (*intr) __P((void *));
 	void *arg;
 {
-	struct ad1848_softc *ac = addr;
-	return gus_dma_output(ac->parent, buf, size, intr, arg);
+	struct ad1848_isa_softc *ac = addr;
+	return gus_dma_output(ac->sc_ad1848.parent, buf, size, intr, arg);
 }
 
 /*
@@ -1290,13 +1290,13 @@ void
 gusmax_close(addr)
 	void *addr;
 {
-	struct ad1848_softc *ac = addr;
-	struct gus_softc *sc = ac->parent;
+	struct ad1848_isa_softc *ac = addr;
+	struct gus_softc *sc = ac->sc_ad1848.parent;
 #if 0
 	ac->mute[AD1848_AUX1_CHANNEL] = MUTE_ALL;
 	ad1848_mute_channel(ac, MUTE_ALL); /* turn off DAC output */
 #endif
-	ad1848_close(ac);
+	ad1848_close(&ac->sc_ad1848);
 	gusclose(sc);
 }
 
@@ -2191,8 +2191,8 @@ gusmax_set_params(addr, setmode, usemode, p, r)
 	int setmode, usemode;
 	struct audio_params *p, *r;
 {
-	struct ad1848_softc *ac = addr;
-	struct gus_softc *sc = ac->parent;
+	struct ad1848_isa_softc *ac = addr;
+	struct gus_softc *sc = ac->sc_ad1848.parent;
 	int error;
 
 	error = ad1848_set_params(ac, setmode, usemode, p, r);
@@ -2274,8 +2274,8 @@ gusmax_round_blocksize(addr, blocksize)
 	void * addr;
 	int blocksize;
 {
-	struct ad1848_softc *ac = addr;
-	struct gus_softc *sc = ac->parent;
+	struct ad1848_isa_softc *ac = addr;
+	struct gus_softc *sc = ac->sc_ad1848.parent;
 
 /*	blocksize = ad1848_round_blocksize(ac, blocksize);*/
 	return gus_round_blocksize(sc, blocksize);
@@ -2351,8 +2351,8 @@ int
 gusmax_commit_settings(addr)
 	void * addr;
 {
-	struct ad1848_softc *ac = addr;
-	struct gus_softc *sc = ac->parent;
+	struct ad1848_isa_softc *ac = addr;
+	struct gus_softc *sc = ac->sc_ad1848.parent;
 	int error;
 
 	error = ad1848_commit_settings(ac);
@@ -2493,8 +2493,8 @@ gusmax_speaker_ctl(addr, newstate)
 	void * addr;
 	int newstate;
 {
-	struct ad1848_softc *sc = addr;
-	return gus_speaker_ctl(sc->parent, newstate);
+	struct ad1848_isa_softc *sc = addr;
+	return gus_speaker_ctl(sc->sc_ad1848.parent, newstate);
 }
 
 int
@@ -2949,8 +2949,8 @@ gusmax_dma_input(addr, buf, size, callback, arg)
 	void (*callback) __P((void *));
 	void *arg;
 {
-	struct ad1848_softc *sc = addr;
-	return gus_dma_input(sc->parent, buf, size, callback, arg);
+	struct ad1848_isa_softc *sc = addr;
+	return gus_dma_input(sc->sc_ad1848.parent, buf, size, callback, arg);
 }
 
 /*
@@ -3040,8 +3040,8 @@ int
 gusmax_halt_out_dma(addr)
 	void * addr;
 {
-	struct ad1848_softc *sc = addr;
-	return gus_halt_out_dma(sc->parent);
+	struct ad1848_isa_softc *sc = addr;
+	return gus_halt_out_dma(sc->sc_ad1848.parent);
 }
 
 
@@ -3049,8 +3049,8 @@ int
 gusmax_halt_in_dma(addr)
 	void * addr;
 {
-	struct ad1848_softc *sc = addr;
-	return gus_halt_in_dma(sc->parent);
+	struct ad1848_isa_softc *sc = addr;
+	return gus_halt_in_dma(sc->sc_ad1848.parent);
 }
 
 /*
@@ -3143,10 +3143,11 @@ gusmax_mixer_get_port(addr, cp)
 	void *addr;
 	mixer_ctrl_t *cp;
 {
-	struct ad1848_softc *ac = addr;
-	struct gus_softc *sc = ac->parent;
+	struct ad1848_isa_softc *ac = addr;
+	struct gus_softc *sc = ac->sc_ad1848.parent;
 	struct ad1848_volume vol;
-	int error = ad1848_mixer_get_port(ac, gusmapping, nummap, cp);
+	int error = ad1848_mixer_get_port(&ac->sc_ad1848, gusmapping,
+					  nummap, cp);
     
 	if (error != ENXIO)
 	  return (error);
@@ -3354,10 +3355,11 @@ gusmax_mixer_set_port(addr, cp)
 	void *addr;
 	mixer_ctrl_t *cp;
 {
-	struct ad1848_softc *ac = addr;
-	struct gus_softc *sc = ac->parent;
+	struct ad1848_isa_softc *ac = addr;
+	struct gus_softc *sc = ac->sc_ad1848.parent;
 	struct ad1848_volume vol;
-	int error = ad1848_mixer_set_port(ac, gusmapping, nummap, cp);
+	int error = ad1848_mixer_set_port(&ac->sc_ad1848, gusmapping,
+					  nummap, cp);
     
 	if (error != ENXIO)
 	  return (error);
@@ -3562,8 +3564,8 @@ STATIC int
 gusmax_get_props(addr)
 	void *addr;
 {
-	struct ad1848_softc *ac = addr;
-	return gus_get_props(ac->parent);
+	struct ad1848_isa_softc *ac = addr;
+	return gus_get_props(ac->sc_ad1848.parent);
 }
 
 STATIC int
