@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 1998/01/09 08:10:15 perry Exp $
+#	$NetBSD: Makefile,v 1.23 1998/02/08 06:57:00 thorpej Exp $
 #
 #	@(#)Makefile	8.19 (Berkeley) 1/14/97
 
@@ -28,10 +28,11 @@ RM=	rm -f
 ALL= netbsd-proto.cf
 
 OTHERS= boat-anchor.cf chimera.cf sun-lamp.cf trinity.cf \
-	clientproto.cf tcpproto.cf uucpproto.cf
+	clientproto.cf tcpproto.cf uucpproto.cf zhadum.cf
 
 FILES=	boat-anchor.mc chimera.mc sun-lamp.mc trinity.mc \
-	clientproto.mc netbsd-proto.mc tcpproto.mc uucpproto.mc Makefile
+	clientproto.mc netbsd-proto.mc tcpproto.mc uucpproto.mc zhadum.mc \
+	Makefile
 
 FILESDIR= /usr/share/sendmail/cf
 
