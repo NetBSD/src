@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.19 2003/04/07 12:04:15 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.20 2003/04/07 12:21:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.19 2003/04/07 12:04:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.20 2003/04/07 12:21:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,9 +219,7 @@ smbfs_open(v)
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 	struct smb_cred scred;
-#if 0
 	struct vattr vattr;
-#endif
 	u_int32_t sv_caps = SMB_CAPS(SSTOVC(np->n_mount->sm_share));
 	int error, accmode;
 
@@ -230,11 +228,14 @@ smbfs_open(v)
 		SMBFSERR("open eacces vtype=%d\n", vp->v_type);
 		return EACCES;
 	}
-	if (vp->v_type == VDIR && (sv_caps & SMB_CAP_NT_SMBS) == 0) {
-		np->n_opencount++;
-		return 0;
+	if (vp->v_type == VDIR) {
+		if ((sv_caps & SMB_CAP_NT_SMBS) == 0) {
+			np->n_opencount++;
+			return 0;
+		}
+		goto do_open;	/* skip 'modified' check */
 	}
-#if 0
+
 	if (np->n_flag & NMODIFIED) {
 		if ((error = smbfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 1)) == EINTR)
 			return error;
@@ -254,7 +255,8 @@ smbfs_open(v)
 			np->n_mtime.tv_sec = vattr.va_mtime.tv_sec;
 		}
 	}
-#endif
+
+do_open:
 	if (np->n_opencount) {
 		np->n_opencount++;
 		return 0;
