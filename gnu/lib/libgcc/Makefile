@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2001/01/04 09:10:25 itojun Exp $
+#	$NetBSD: Makefile,v 1.15 2001/01/04 09:17:42 itojun Exp $
 
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -11,6 +11,8 @@ ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
 
 .if (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb")
 ARCHSUBDIR= mips
+.elif (${MACHINE_ARCH} == "sh3el") || (${MACHINE_ARCH} == "sh3eb")
+ARCHSUBDIR= sh3
 .else
 ARCHSUBDIR= ${MACHINE_ARCH}
 .endif
