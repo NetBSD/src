@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.11 2000/12/20 20:47:55 christos Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.12 2003/07/09 01:59:34 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -108,8 +108,7 @@
  */
 typedef struct {
 	const char	 *src;
-	int		(*callback) __P((void *retval, void *cb_data,
-					_BSD_VA_LIST_));
+	int		(*callback) __P((void *, void *, _BSD_VA_LIST_));
 	void		 *cb_data;
 } ns_dtab;
 
