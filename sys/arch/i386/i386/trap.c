@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.72 1995/03/10 12:20:37 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.73 1995/03/14 14:43:59 scottb Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -68,6 +68,7 @@
 #include <machine/trap.h>
 
 #ifdef COMPAT_IBCS2
+#include <compat/ibcs2/ibcs2_errno.h>
 #include <compat/ibcs2/ibcs2_exec.h>
 #endif
 #ifdef COMPAT_LINUX
@@ -676,6 +677,11 @@ syscall(frame)
 #ifdef COMPAT_LINUX
 		if (p->p_emul == EMUL_LINUX && !fromtramp)
 			error = -linux_error[error];
+#endif
+#ifdef COMPAT_IBCS2
+		if (p->p_emul == EMUL_IBCS2_COFF
+		    || p->p_emul == EMUL_IBCS2_XOUT)
+			error = bsd2ibcs_errno[error];
 #endif
 		frame.tf_eax = error;
 		frame.tf_eflags |= PSL_C;	/* carry bit */
