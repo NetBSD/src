@@ -31,6 +31,7 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h> /* just for boothowto --eichin */
+#include <setjmp.h>	/* XXX */
 
 #include <vm/vm_statistics.h>
 #include <vm/pmap.h>
@@ -39,7 +40,6 @@
 #include <machine/mon.h>
 #include <machine/db_machdep.h>
 
-extern jmp_buf	db_jmpbuf;		/* XXX used in i386. ? */
 extern jmp_buf	*db_recover;
 
 int	db_active = 0;
@@ -71,14 +71,12 @@ kdb_trap(type, regs)
 	case -1:
 		break;
 	default:
-	    {
 		kdbprinttrap(type, 0);
 		if (db_recover != 0) {
 			db_printf("Caught exception in ddb.\n");
-			db_error("");
+			db_error(NULL);
 			/*NOTREACHED*/
 		}
-	    }
 	}
 
 	/* Should switch to kdb's own stack here. */
@@ -88,9 +86,7 @@ kdb_trap(type, regs)
 	db_active++;
 	cnpollc(TRUE);
 /*	(void) setvideoenable(1);*/
-
 	db_trap(type, 0);
-
 	cnpollc(FALSE);
 	db_active--;
 
@@ -126,7 +122,7 @@ kdbprinttrap(type, code)
 		printf("type %d", type);
 	else
 		printf("%s", trap_type[type]);
-	printf(" trap\n");
+	printf(" trap, code=%x\n");
 }
 
 /*
