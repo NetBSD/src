@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.46 1998/07/26 11:22:11 mycroft Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.47 1998/07/26 11:24:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -266,7 +266,7 @@ static const char *const fstypenames[] = {
 };
 
 /* These are the names MOUNT_XXX from <sys/mount.h> */
-static char *fscknames[] = {
+static const char *const fscknames[] = {
 	NULL,		/* unused */
 	NULL,		/* swap */
 	NULL,		/* Version 6 */

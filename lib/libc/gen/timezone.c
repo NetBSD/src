@@ -1,4 +1,4 @@
-/*	$NetBSD: timezone.c,v 1.11 1998/02/03 18:23:55 perry Exp $	*/
+/*	$NetBSD: timezone.c,v 1.12 1998/07/26 11:30:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)timezone.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: timezone.c,v 1.11 1998/02/03 18:23:55 perry Exp $");
+__RCSID("$NetBSD: timezone.c,v 1.12 1998/07/26 11:30:39 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -89,7 +89,7 @@ timezone(zone, dst)
 	return(_tztab(zone,dst));	/* default: table or created zone */
 }
 
-static struct zone {
+static const struct zone {
 	int	offset;
 	char	*stdzone;
 	char	*dlzone;
@@ -124,7 +124,7 @@ _tztab(zone,dst)
 	int	zone;
 	int	dst;
 {
-	struct zone	*zp;
+	const struct zone	*zp;
 	char	sign;
 
 	for (zp = zonetab; zp->offset != -1;++zp)	/* static tables */
