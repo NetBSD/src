@@ -1,0 +1,9 @@
+#	$Id: Makefile.src,v 1.1 1993/10/08 05:26:28 cgd Exp $
+
+RPCSRCS=        bootparam_prot.x klm_prot.x mount.x nfs_prot.x nlm_prot.x \
+		rex.x rnusers.x rquota.x rstat.x rwall.x sm_inter.x spray.x \
+		yp.x yppasswd.x
+RPCHDRS=        yp_prot.h ypclnt.h
+
+bootparam_prot.o: bootparam_prot.h
+yp.o: yp.h
