@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/11/23 09:22:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 1998/11/23 09:29:56 mrg Exp $
 
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -15,8 +15,8 @@ CPPFLAGS+=	-I${ARCH}/${MACHINE_ARCH} -I${ARCH} \
 LIB2OBJS=	__gcc_bcmp.o _varargs.o __dummy.o _eprintf.o _bb.o _shtab.o \
 		_clear_cache.o _trampoline.o __main.o _exit.o _ctors.o \
 		_pure.o
-.if (${MACHINE_ARCH} == "m68k") || (${MACHINE_ARCH} == "i386" || \
-     ${MACHINE_ARCH} == "sparc64")
+.if (${MACHINE_ARCH} == "m68k") || (${MACHINE_ARCH} == "i386") || \
+    (${MACHINE_ARCH} == "sparc64")
 LIB2OBJS+=	_fixxfdi.o _fixunsxfdi.o _floatdixf.o _fixunsxfsi.o
 .endif
 OBJS+=		${LIB2OBJS}
