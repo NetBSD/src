@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.75 2000/11/11 12:19:20 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.76 2000/11/11 12:24:07 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -852,7 +852,7 @@ establish_hostid(idp)
 	h |= idp->id_hostid[1] << 8;
 	h |= idp->id_hostid[2];
 
-	printf(": hostid %lu\n", h);
+	printf(": hostid %lx\n", h);
 
 	/* Save IDPROM pointer and Host ID in globals */
 	idprom = idp;
