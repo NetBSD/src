@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.6 2004/02/07 12:31:15 jdolecek Exp $	*/
+/*	$NetBSD: entry.c,v 1.7 2004/02/27 23:22:09 enami Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: entry.c,v 2.12 1994/01/17 03:20:37 vixie Exp";
 #else
-__RCSID("$NetBSD: entry.c,v 1.6 2004/02/07 12:31:15 jdolecek Exp $");
+__RCSID("$NetBSD: entry.c,v 1.7 2004/02/27 23:22:09 enami Exp $");
 #endif
 #endif
 
@@ -136,30 +136,35 @@ load_entry(file, error_func, pw, envp)
 			bit_set(e->dom, 0);
 			bit_set(e->month, 0);
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
+			e->flags |= DOW_STAR;
 		} else if (!strcmp("monthly", cmd)) {
 			bit_set(e->minute, 0);
 			bit_set(e->hour, 0);
 			bit_set(e->dom, 0);
 			bit_nset(e->month, 0, (LAST_MONTH-FIRST_MONTH+1));
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
+			e->flags |= DOW_STAR;
 		} else if (!strcmp("weekly", cmd)) {
 			bit_set(e->minute, 0);
 			bit_set(e->hour, 0);
 			bit_nset(e->dom, 0, (LAST_DOM-FIRST_DOM+1));
 			bit_nset(e->month, 0, (LAST_MONTH-FIRST_MONTH+1));
 			bit_set(e->dow, 0);
+			e->flags |= DOM_STAR;
 		} else if (!strcmp("daily", cmd) || !strcmp("midnight", cmd)) {
 			bit_set(e->minute, 0);
 			bit_set(e->hour, 0);
 			bit_nset(e->dom, 0, (LAST_DOM-FIRST_DOM+1));
 			bit_nset(e->month, 0, (LAST_MONTH-FIRST_MONTH+1));
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
+			e->flags |= DOM_STAR | DOW_STAR;
 		} else if (!strcmp("hourly", cmd)) {
 			bit_set(e->minute, 0);
 			bit_nset(e->hour, 0, (LAST_HOUR-FIRST_HOUR+1));
 			bit_nset(e->dom, 0, (LAST_DOM-FIRST_DOM+1));
 			bit_nset(e->month, 0, (LAST_MONTH-FIRST_MONTH+1));
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
+			e->flags |= DOM_STAR | DOW_STAR;
 		} else {
 			ecode = e_timespec;
 			goto eof;
