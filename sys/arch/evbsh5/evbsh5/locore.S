@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.9 2002/10/22 09:30:27 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.10 2002/11/24 10:43:15 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -187,11 +187,6 @@ Lsh5_resvec_vector_panic:
 	st.q	r15, IFO(IF_R0,SZ_TRAPFRAME), r0	/* Save r0 */
 	st.q	r15, IFO(IF_R1,SZ_TRAPFRAME), r1	/* Save r1 */
 	st.q	r15, IFO(IF_R2,SZ_TRAPFRAME), r2	/* Save r2 */
-	getcon	sr, r1
-	movi	-32768, r0
-	shori	0, r0
-	st.q	r0, 0, r15
-	st.q	r0, 8, r1
 	getcon	kcr1, r0
 	st.q	r15, IFO(IF_R15,SZ_TRAPFRAME), r0	/* Save r15 */
 	gettr	tr0, r0
