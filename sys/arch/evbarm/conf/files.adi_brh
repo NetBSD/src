@@ -1,4 +1,4 @@
-#	$NetBSD: files.adi_brh,v 1.2 2003/06/15 19:03:47 thorpej Exp $
+#	$NetBSD: files.adi_brh,v 1.3 2003/06/16 17:40:49 thorpej Exp $
 #
 # ADI BRH evaluation board configuration info
 #
@@ -10,7 +10,7 @@ file	arch/evbarm/adi_brh/brh_7seg.c
 file	arch/evbarm/adi_brh/brh_machdep.c
 
 # BRH on-board devices
-device	obio {addr, [irq = -1], [width = -1]}: bus_space_generic
+device	obio {addr, [size = -1], [width = -1], [irq = -1]}: bus_space_generic
 attach	obio at mainbus
 file	arch/evbarm/adi_brh/obio.c			obio
 file	arch/evbarm/adi_brh/obio_space.c		obio
