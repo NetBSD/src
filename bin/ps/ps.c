@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.27 1999/03/26 22:36:02 bgrayson Exp $	*/
+/*	$NetBSD: ps.c,v 1.28 1999/03/27 21:38:08 bgrayson Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.27 1999/03/26 22:36:02 bgrayson Exp $");
+__RCSID("$NetBSD: ps.c,v 1.28 1999/03/27 21:38:08 bgrayson Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,7 @@ struct varent *vhead, *vtail;
 int	eval;			/* exit value */
 int	rawcpu;			/* -C */
 int	sumrusage;		/* -S */
+int	dontuseprocfs=0;	/* -K */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
 
@@ -137,7 +138,7 @@ main(argc, argv)
 	flag = getuid();
 	memf = nlistf = swapf = NULL;
 	while ((ch = getopt(argc, argv,
-	    "acCeghjLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
+	    "acCeghjKLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
 		switch((char)ch) {
 		case 'a':
 			what = KERN_PROC_ALL;
@@ -161,6 +162,9 @@ main(argc, argv)
 			parsefmt(jfmt);
 			fmt = 1;
 			jfmt[0] = '\0';
+			break;
+		case 'K':
+			dontuseprocfs=1;
 			break;
 		case 'L':
 			showkey();
@@ -320,6 +324,11 @@ main(argc, argv)
 	 */
 	if ((kp = kvm_getprocs(kd, what, flag, &nentries)) == 0)
 	{
+		/*  If/when the /proc-based code is ripped out
+		 *  again, make sure all references to the -K
+		 *  option are also pulled (getopt(), usage(),
+		 *  man page).  See the man page comments about
+		 *  this for more details.  */
 	  	/*  sysctl() ought to provide some sort of
 		 *  always-working-but-minimal-functionality
 		 *  method of providing at least some of the
@@ -330,33 +339,20 @@ main(argc, argv)
 		 *  mounted) to grab as much information as we can.  
 		 *  The guts of emulating kvm_getprocs() is in
 		 *  the file procfs_ops.c.  */
-		warnx("%s.\n    %s", kvm_geterr(kd),
-		    "Attempting experimental, insecure /proc-based method.");
+		warnx("%s.", kvm_geterr(kd));
+		if (dontuseprocfs) {
+			exit(1);
+		}
 		/*  procfs_getprocs supports all but the
 		 *  KERN_PROC_RUID flag.  */
 		kp=procfs_getprocs(what, flag, &nentries);
 		if (kp == 0) {
-		  errx(1, "/proc-based lookup also failed.  Giving up...");
+		  errx(1, "fallback /proc-based lookup also failed.  %s",
+				  "Giving up...");
 		}
-		/*  An intruder could have put an ordinary filesystem
-		 *  on /proc, and keep updating it to make
-		 *  it look like it's the real /proc, when in
-		 *  reality they are hiding information about
-		 *  some trojan processes that are running. 
-		 *  Should we walk the mounted-filesystems table
-		 *  to figure out whether /proc is mounted with
-		 *  nothing mounted on top of it?  For now, just
-		 *  print a verbose warning.  XXX  bgrayson  */
-		fprintf(stderr, "%s%s%s%s%s%s%s%s%s",
-		    "*****************************************\n",
-		    "Warning:  /proc does not provide sufficient ",
-		    "information to provide\n",
-		    "valid data for all fields.\n",
-		    "1.  Several fields (like ",
-		    "STAT and TIME) will be incorrect.\n",
-		    "2.  If your system may be compromised, ",
-		    "verify that /proc is secure\n",
-		    "    before trusting these results.\n");
+		fprintf(stderr, "%s%s",
+		    "Warning:  /proc does not provide ",
+		    "valid data for all fields.\n");
 	}
 	if ((kinfo = malloc(nentries * sizeof(*kinfo))) == NULL)
 		err(1, "%s", "");
@@ -535,7 +531,7 @@ usage()
 
 	(void)fprintf(stderr,
 	    "usage:\t%s\n\t   %s\n\t%s\n",
-	    "ps [-aChjlmrSTuvwx] [-O|o fmt] [-p pid] [-t tty]",
+	    "ps [-aChjKlmrSTuvwx] [-O|o fmt] [-p pid] [-t tty]",
 	    "[-M core] [-N system] [-W swap]",
 	    "ps [-L]");
 	exit(1);

@@ -1,4 +1,4 @@
-/*  $NetBSD: procfs_ops.c,v 1.2 1999/03/27 15:22:17 tron Exp $ */
+/*  $NetBSD: procfs_ops.c,v 1.3 1999/03/27 21:38:08 bgrayson Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
+#include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -132,8 +133,19 @@ procfs_getprocs(op, arg, cnt)
 	struct kinfo_proc *kp;
 	int mib[4];
 	size_t len;
+	struct statfs procfsstat;
 
-	/* First, try to stat /proc/1/status.  If we can't do
+	/*  First, make sure that /proc is a procfs filesystem.  */
+	if (statfs("/proc", &procfsstat)) {
+		warn("statfs on /proc failed");
+		return 0;
+	}
+	if (strcmp(procfsstat.f_fstypename, MOUNT_PROCFS)) {
+		warnx("/proc exists but does not have a procfs mounted on it.");
+		return 0;
+	}
+
+	/* Try to stat /proc/1/status.  If we can't do
 	 * that, then just return right away. */
 	if (stat("/proc/1/status", &statbuf)) {
 		warn("stat of /proc/1/status");
@@ -232,5 +244,6 @@ procfs_getprocs(op, arg, cnt)
 	}
 
 	*cnt = knum;
+	close(procdirfd);
 	return kp;
 }
