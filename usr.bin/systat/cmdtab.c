@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.6 1999/05/30 20:26:21 ad Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.7 1999/08/02 17:27:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.6 1999/05/30 20:26:21 ad Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.7 1999/08/02 17:27:27 ad Exp $");
 #endif /* not lint */
 
 #include "systat.h"
@@ -66,16 +66,16 @@ struct	cmdtab cmdtab[] = {
 	{ "ps",		showps,		fetchpigs,	labelps,
 	  initpigs,	openpigs,	closepigs,	0,
 	  CF_LOADAV },
-	{ "tcp",	showtcp,	fetchtcp,	labeltcp,
+	{ "inet.tcp",	showtcp,	fetchtcp,	labeltcp,
 	  inittcp,	opentcp,	closetcp,	0,
 	  CF_LOADAV },
-	{ "tcpsyn",	showtcpsyn,	fetchtcp,	labeltcpsyn,
+	{ "inet.tcpsyn",showtcpsyn,	fetchtcp,	labeltcpsyn,
 	  inittcp,	opentcp,	closetcp,	0,
 	  CF_LOADAV },
-	{ "ip",		showip,		fetchip,	labelip,
+	{ "inet.ip",	showip,		fetchip,	labelip,
 	  initip,	openip,		closeip,	0,
 	  CF_LOADAV },
-	{ "icmp",	showicmp,	fetchicmp,	labelicmp,
+	{ "inet.icmp",	showicmp,	fetchicmp,	labelicmp,
 	  initicmp,	openicmp,	closeicmp,	0,
 	  CF_LOADAV },
 	{ 0 }

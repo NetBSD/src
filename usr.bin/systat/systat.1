@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.14 1999/05/30 20:26:21 ad Exp $
+.\"	$NetBSD: systat.1,v 1.15 1999/08/02 17:27:28 ad Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -102,10 +102,10 @@ argument expects to be one of:
 .Ic swap ,
 .Ic mbufs ,
 .Ic vmstat ,
-.Ic ip ,
-.Ic icmp ,
-.Ic tcp ,
-.Ic tcpsyn
+.Ic inet.ip ,
+.Ic inet.icmp ,
+.Ic inet.tcp ,
+.Ic inet.tcpsyn
 or
 .Ic netstat .
 These displays can also be requested interactively and are described in
@@ -168,13 +168,13 @@ Exit
 .Pp
 The available displays are:
 .Bl -tag -width Ic
-.It Ic icmp
+.It Ic inet.icmp
 Display ICMP statistics.
-.It Ic ip
+.It Ic inet.ip
 Display IP and UDP statistics.
-.It Ic tcp
+.It Ic inet.tcp
 Display TCP statistics.
-.It Ic tcpsyn
+.It Ic inet.tcpsyn
 Display statistics about the 
 .Tn TCP
 ``syncache''.
