@@ -1,4 +1,4 @@
-# $NetBSD: tests,v 1.7 2002/02/09 15:58:35 bouyer Exp $
+# $NetBSD: tests,v 1.8 2002/02/21 03:59:25 mrg Exp $
 
 #fill up an extent, should coalesce into one allocation
 extent test1 0 0x4f
@@ -71,4 +71,16 @@ alloc_subregion 0 0x10 4
 alloc_subregion 0xd 0x20 2
 boundary 8
 alloc_subregion 0 0x4f 8
+print
+
+#check that free works
+extent test10 0xc0002000 0xffffe000 EX_BOUNDZERO
+boundary 0x10000
+align 0x10000
+alloc_subregion 0xc0002000 0xffffe000 0x2000
+alloc_subregion 0xc0002000 0xffffe000 0x2000
+print
+free 0xc0020000 0x2000
+print
+alloc_subregion 0xc0002000 0xffffe000 0x10000
 print
