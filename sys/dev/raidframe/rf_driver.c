@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.52 2002/08/03 00:55:54 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.53 2002/08/03 01:24:03 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.52 2002/08/03 00:55:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.53 2002/08/03 01:24:03 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -768,7 +768,7 @@ rf_SuspendNewRequestsAndWait(raidPtr)
 	RF_Raid_t *raidPtr;
 {
 	if (rf_quiesceDebug)
-		printf("Suspending new reqs\n");
+		printf("raid%d: Suspending new reqs\n", raidPtr->raidid);
 
 	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
 	raidPtr->accesses_suspended++;
@@ -777,12 +777,13 @@ rf_SuspendNewRequestsAndWait(raidPtr)
 	if (raidPtr->waiting_for_quiescence) {
 		raidPtr->access_suspend_release = 0;
 		while (!raidPtr->access_suspend_release) {
-			printf("Suspending: Waiting for Quiescence\n");
+			printf("raid%d: Suspending: Waiting for Quiescence\n",
+			       raidPtr->raidid);
 			WAIT_FOR_QUIESCENCE(raidPtr);
 			raidPtr->waiting_for_quiescence = 0;
 		}
 	}
-	printf("Quiescence reached..\n");
+	printf("raid%d: Quiescence reached..\n", raidPtr->raidid);
 
 	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
 	return (raidPtr->waiting_for_quiescence);
