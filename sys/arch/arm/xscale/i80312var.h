@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312var.h,v 1.3 2001/11/09 03:27:52 thorpej Exp $	*/
+/*	$NetBSD: i80312var.h,v 1.4 2001/11/09 23:15:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -59,6 +59,7 @@ struct i80312_softc {
 	/* Handles for the various subregions. */
 	bus_space_handle_t sc_ppb_sh;
 	bus_space_handle_t sc_atu_sh;
+	bus_space_handle_t sc_mem_sh;
 
 	/*
 	 * Secondary IDSEL Select bits for providing a private
