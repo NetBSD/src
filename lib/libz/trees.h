@@ -1,5 +1,3 @@
-/* $NetBSD: trees.h,v 1.1.1.1 1998/11/01 19:48:19 tron Exp $ */
-
 /* header created automatically with -DGEN_TREES_H */
 
 local const ct_data static_ltree[L_CODES+2] = {
