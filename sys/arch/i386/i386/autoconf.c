@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 1997/10/07 09:54:16 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29 1998/01/09 16:01:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -102,11 +102,6 @@ configure()
 	spl0();
 	cold = 0;
 }
-
-/* XXX should be passed by bootcode */
-#if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
-int nfs_boot_rfc951 = 1;
-#endif
 
 void
 cpu_rootconf()
