@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotoent_r.c,v 1.3 2004/02/24 15:28:07 christos Exp $	*/
+/*	$NetBSD: getprotoent_r.c,v 1.4 2004/02/25 06:28:10 taca Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getprotoent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getprotoent_r.c,v 1.3 2004/02/24 15:28:07 christos Exp $");
+__RCSID("$NetBSD: getprotoent_r.c,v 1.4 2004/02/25 06:28:10 taca Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -110,7 +110,7 @@ getprotoent_r(struct protoent *pr, struct protoent_data *pd)
 		pr->p_proto = atoi(cp);
 		if (pd->aliases == NULL) {
 			pd->maxaliases = 10;
-			pd->aliases = malloc(pd->maxaliases * sizeof(char **));
+			pd->aliases = malloc(pd->maxaliases * sizeof(char *));
 			if (pd->aliases == NULL) {
 				oerrno = errno;
 				endprotoent_r(pd);
@@ -129,7 +129,7 @@ getprotoent_r(struct protoent *pr, struct protoent_data *pd)
 				if (i == pd->maxaliases - 2) {
 					pd->maxaliases *= 2;
 					q = realloc(q,
-					    pd->maxaliases * sizeof(char **));
+					    pd->maxaliases * sizeof(char *));
 					if (q == NULL) {
 						oerrno = errno;
 						endprotoent_r(pd);
