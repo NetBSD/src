@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.298 2001/02/04 18:16:20 briggs Exp $
+$NetBSD: pcidevs,v 1.299 2001/02/11 15:33:25 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -610,7 +610,8 @@ product 3DLABS PERMEDIA2V	0x0009	GLINT Permedia 2V
 product 3DLABS PERMEDIA3	0x000a	GLINT Permedia 3
 
 /* 3ware products */
-product	3WARE ESCALADE	0x1000	Escalade IDE RAID
+product	3WARE ESCALADE		0x1000	Escalade IDE RAID
+product 3WARE ESCALADE_ASIC	0x1001	Escalade IDE RAID (ASIC)
 
 /* ACC Products */
 product ACC 2188	0x0000	ACCM 2188 VL-PCI Bridge
