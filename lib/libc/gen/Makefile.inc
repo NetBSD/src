@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.29 1993/12/04 02:35:35 cgd Exp $
+#	$Id: Makefile.inc,v 1.30 1993/12/05 02:20:58 cgd Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -33,7 +33,7 @@ SRCS+=	adddf3.S addsf3.S ashlsi3.S ashrsi3.S cmpdf2.S cmpsf2.S divdf3.S \
 .elif (${MACHINE_ARCH} == "i386")
 SRCS+=	_setjmp.S alloca.S fabs.S ldexp.c modf.S setjmp.S sigsetjmp.S
 SRCS+=	divsi3.S fixdfsi.S fixunsdfsi.S udivsi3.S
-.elif (${MACHINE_ARCH} == "pc532")
+.elif (${MACHINE_ARCH} == "ns32k")
 SRCS+=	__main.c _setjmp.S alloca.S fabs.S frexp.S infinity.c isinf.c
 SRCS+=  ldexp.S modf.S setjmp.S
 .elif (${MACHINE_ARCH} == "tahoe")

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.15 1993/12/04 02:39:02 cgd Exp $
+#	$Id: Makefile.inc,v 1.16 1993/12/05 02:21:38 cgd Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
@@ -18,7 +18,7 @@ SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.S memchr.S memcmp.S memset.S \
 	strncat.c strncmp.S strncpy.c strpbrk.c strsep.c \
 	strspn.c strstr.c swab.S
 SRCS+=	memmove.S strchr.S strrchr.S
-.elif (${MACHINE_ARCH} == "pc532")
+.elif (${MACHINE_ARCH} == "ns32k")
 SRCS+=	bcmp.c bcopy.c bzero.c ffs.c index.c memchr.c memcmp.c memset.c \
 	rindex.c strcat.c strcmp.c strcpy.c strcspn.c strlen.c \
 	strncat.c strncmp.c strncpy.c strpbrk.c strsep.c \
