@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2003/08/07 16:42:46 agc Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 2003/08/19 08:31:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clock.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: clock.c,v 1.8 2003/08/07 16:42:46 agc Exp $");
+__RCSID("$NetBSD: clock.c,v 1.9 2003/08/19 08:31:18 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,18 +45,24 @@ __RCSID("$NetBSD: clock.c,v 1.8 2003/08/07 16:42:46 agc Exp $");
 #include <time.h>
 
 /*
- * Convert usec to clock ticks; could do (usec * CLOCKS_PER_SEC) / 1000000,
- * but this would overflow if we switch to nanosec.
+ * This code is all rather silly because the kernel counts actual
+ * execution time (to usec accuracy) then splits it into user, system and
+ * interrupt based on when clock ticks happen.  getrusage apportions the
+ * time based on the number of ticks, and here we are trying to generate
+ * a number which was, traditionally, the number of ticks!
+ *
+ * Due to the way the time is apportioned, this code (and indeed getrusage
+ * itself) are not guaranteed monotonic.
  */
-#define	CONVTCK(r)	(r.tv_sec * CLOCKS_PER_SEC + \
-			 r.tv_usec / (1000000 / CLOCKS_PER_SEC))
 
 clock_t
 clock()
 {
 	struct rusage ru;
+	clock_t hz = CLOCKS_PER_SEC;
 
 	if (getrusage(RUSAGE_SELF, &ru))
 		return ((clock_t) -1);
-	return((clock_t)((CONVTCK(ru.ru_utime) + CONVTCK(ru.ru_stime))));
+	return (ru.ru_utime.tv_sec + ru.ru_stime.tv_sec) * hz +
+	    (ru.ru_utime.tv_usec + ru.ru_stime.tv_usec + 50) / 100 * hz / 10000;
 }
