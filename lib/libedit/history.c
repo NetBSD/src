@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.16 2000/09/04 22:06:30 lukem Exp $	*/
+/*	$NetBSD: history.c,v 1.17 2001/03/20 00:08:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.16 2000/09/04 22:06:30 lukem Exp $");
+__RCSID("$NetBSD: history.c,v 1.17 2001/03/20 00:08:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: history.c,v 1.16 2000/09/04 22:06:30 lukem Exp $");
 #include <stdlib.h>
 #include <stdarg.h>
 #include <vis.h>
+#include <sys/stat.h>
 
 static const char hist_cookie[] = "_HiStOrY_V2_\n";
 
@@ -644,6 +645,7 @@ history_save(History *h, const char *fname)
 	if ((fp = fopen(fname, "w")) == NULL)
 		return (-1);
 
+	(void) fchmod(fileno(fp), S_IRUSR|S_IWUSR);
 	(void) fputs(hist_cookie, fp);
 	ptr = h_malloc(max_size = 1024);
 	for (retval = HLAST(h, &ev);
