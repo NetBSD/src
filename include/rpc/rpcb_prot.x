@@ -235,7 +235,7 @@ struct rpcb_rmtcallres {
 %	} results;
 %	xdrproc_t	xdr_res;	/* decodes results */
 %};
-#endif RPC_HDR
+#endif /* RPC_HDR */
 %
 %/*
 % * rpcb_entry contains a merged address of a service on a particular
@@ -418,7 +418,7 @@ program RPCBPROG {
 %
 %#define	_PATH_RPCBINDSOCK	"/var/run/rpcbind.sock"
 %
-%#else		/* ndef _KERNEL */
+%#else		/* ifndef _KERNEL */
 %#ifdef __cplusplus
 %extern "C" {
 %#endif
@@ -555,5 +555,5 @@ program RPCBPROG {
 %}
 %#endif
 %
-%#endif		/* ndef _KERNEL */
+%#endif		/* ifndef _KERNEL */
 #endif		/* RPC_HDR */
