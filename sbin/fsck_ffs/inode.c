@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.37 2003/04/02 10:39:25 fvdl Exp $	*/
+/*	$NetBSD: inode.c,v 1.38 2003/04/08 14:59:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.37 2003/04/02 10:39:25 fvdl Exp $");
+__RCSID("$NetBSD: inode.c,v 1.38 2003/04/08 14:59:52 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -214,7 +214,7 @@ iblock(idesc, ilevel, isize)
 		} else {
 			for (i = 0; i < nif; i++)
 				bp->b_un.b_indir1[i] =
-				    bswap32(bp->b_un.b_indir2[i]);
+				    bswap32(bp->b_un.b_indir1[i]);
 		}
 		dirty(bp);
 		flush(fswritefd, bp);
