@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.58 2000/11/24 09:39:37 matt Exp $     */
+/*	$NetBSD: trap.c,v 1.59 2000/12/31 19:27:24 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -68,7 +68,7 @@ volatile int startsysc = 0, faultdebug = 0;
 
 static __inline void userret __P((struct proc *, struct trapframe *, u_quad_t));
 
-void	arithflt __P((struct trapframe *));
+void	trap __P((struct trapframe *));
 void	syscall __P((struct trapframe *));
 
 char *traptypes[]={
@@ -143,7 +143,7 @@ userret(p, frame, oticks)
 }
 
 void
-arithflt(frame)
+trap(frame)
 	struct trapframe *frame;
 {
 	u_int	sig = 0, type = frame->trap, trapsig = 1;
