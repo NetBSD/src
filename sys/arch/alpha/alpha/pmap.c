@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.97 1999/05/23 17:49:07 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.98 1999/05/23 22:37:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 1999/05/23 17:49:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 1999/05/23 22:37:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,9 +274,10 @@ int		pmap_pv_lowat = PMAP_PV_LOWAT;
 
 /*
  * List of all pmaps, used to update them when e.g. additional kernel
- * page tables are allocated.
+ * page tables are allocated.  This list is kept LRU-ordered by
+ * pmap_activate().
  */
-LIST_HEAD(, pmap) pmap_all_pmaps;
+TAILQ_HEAD(, pmap) pmap_all_pmaps;
 
 /*
  * The pools from which pmap structures and sub-structures are allocated.
@@ -384,7 +385,8 @@ u_long	pmap_asn_generation[ALPHA_MAXPROCS]; /* current ASN generation */
  *	  for a specified managed page.
  *
  *	* pmap_all_pmaps_slock - This lock protects the global list of
- *	  all pmaps.
+ *	  all pmaps.  Note that a pm_slock must never be held while this
+ *	  lock is held.
  *
  *	Address space number management (global ASN counters and per-pmap
  *	ASN state) are not locked; they use arrays of values indexed
@@ -872,7 +874,7 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
 	    0, pmap_pv_page_alloc, pmap_pv_page_free, M_VMPMAP);
 
-	LIST_INIT(&pmap_all_pmaps);
+	TAILQ_INIT(&pmap_all_pmaps);
 
 	/*
 	 * Initialize the ASN logic.
@@ -906,7 +908,7 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 		pmap_kernel()->pm_asngen[i] = pmap_asn_generation[i];
 	}
 	simple_lock_init(&pmap_kernel()->pm_slock);
-	LIST_INSERT_HEAD(&pmap_all_pmaps, pmap_kernel(), pm_list);
+	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap_kernel(), pm_list);
 
 #if defined(MULTIPROCESSOR)
 	/*
@@ -1156,7 +1158,7 @@ pmap_create(size)
 	simple_lock_init(&pmap->pm_slock);
 
 	simple_lock(&pmap_all_pmaps_slock);
-	LIST_INSERT_HEAD(&pmap_all_pmaps, pmap, pm_list);
+	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap, pm_list);
 	simple_unlock(&pmap_all_pmaps_slock);
 
 	return (pmap);
@@ -1172,6 +1174,7 @@ void
 pmap_destroy(pmap)
 	pmap_t pmap;
 {
+	int refs;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1181,16 +1184,17 @@ pmap_destroy(pmap)
 		return;
 
 	simple_lock(&pmap->pm_slock);
-	if (--pmap->pm_count > 0) {
-		simple_unlock(&pmap->pm_slock);
+	refs = --pmap->pm_count;
+	simple_unlock(&pmap->pm_slock);
+
+	if (refs > 0)
 		return;
-	}
 
 	/*
 	 * Remove it from the global list of all pmaps.
 	 */
 	simple_lock(&pmap_all_pmaps_slock);
-	LIST_REMOVE(pmap, pm_list);
+	TAILQ_REMOVE(&pmap_all_pmaps, pmap, pm_list);
 	simple_unlock(&pmap_all_pmaps_slock);
 
 #ifdef DIAGNOSTIC
@@ -2165,6 +2169,14 @@ pmap_activate(p)
 	 * Mark the pmap in use by this processor.
 	 */
 	alpha_atomic_setbits_q(&pmap->pm_cpus, (1UL << cpu_id));
+
+	/*
+	 * Move the pmap to the end of the LRU list.
+	 */
+	simple_lock(&pmap_all_pmaps_slock);
+	TAILQ_REMOVE(&pmap_all_pmaps, pmap, pm_list);
+	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap, pm_list);
+	simple_unlock(&pmap_all_pmaps_slock);
 
 	simple_lock(&pmap->pm_slock);
 
@@ -3262,8 +3274,8 @@ pmap_physpage_alloc(usage)
 		 * the pmap is activated).
 		 */
 		simple_lock(&pmap_all_pmaps_slock);
-		for (pmap = LIST_FIRST(&pmap_all_pmaps); pmap != NULL;
-		     pmap = LIST_NEXT(pmap, pm_list)) {
+		for (pmap = TAILQ_FIRST(&pmap_all_pmaps); pmap != NULL;
+		     pmap = TAILQ_NEXT(pmap, pm_list)) {
 			/*
 			 * Don't garbage-collect pmaps that reference
 			 * kernel_lev1map.  They don't have any user PT
