@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.36 2000/02/22 13:57:23 kleink Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.37 2000/02/22 16:36:29 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -473,7 +473,7 @@ typedef struct {
 #define	DT_FINI_ARRAYSZ	28	/* Size, in bytes, of DT_FINI_ARRAY array*/
 #define	DT_NUM		29
 
-#define	DT_LOOS		0x60000000	/* Operating system specific range *
+#define	DT_LOOS		0x60000000	/* Operating system specific range */
 #define	DT_HIOS		0x6fffffff
 #define	DT_LOPROC	0x70000000	/* Processor-specific range */
 #define	DT_HIPROC	0x7fffffff
