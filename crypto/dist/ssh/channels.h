@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.h,v 1.1.1.7 2001/05/15 15:02:26 itojun Exp $	*/
+/*	$NetBSD: channels.h,v 1.2 2001/06/14 02:45:30 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -293,6 +293,8 @@ void    auth_request_forwarding(void);
  * a static buffer.
  */
 char   *auth_get_socket_name(void);
+
+void	auth_sock_cleanup_proc(void *_pw);
 
 /*
  * This is called to process SSH_CMSG_AGENT_REQUEST_FORWARDING on the server.
