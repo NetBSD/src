@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171.2.10 1998/11/23 05:55:26 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171.2.11 1998/11/23 05:57:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2500,6 +2500,8 @@ get_physical(u_int addr, u_long * phys)
 			if ((ph & MMU40_RES) == 0)
 				return 0;
 		}
+		if ((ph & MMU40_TTR) != 0)
+			ph = addr;
 
 		mask = (macos_tc & 0x4000) ? 0x00001fff : 0x00000fff;
 		ph &= (~mask);
