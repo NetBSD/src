@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.6 1995/05/28 02:53:56 jtc Exp $	*/
+/*	$NetBSD: signal.h,v 1.7 1995/05/28 03:10:06 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,7 +48,6 @@
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 extern __const char *__const sys_signame[_NSIG];
 extern __const char *__const sys_siglist[_NSIG];
-#define NSIG _NSIG
 #endif
 
 __BEGIN_DECLS
