@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.60 1999/01/25 02:20:08 msaitoh Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.61 1999/03/12 18:45:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -94,6 +94,7 @@ struct proc_target {
 	{ DT_REG, N("note"),	Pnote,		NULL },
 	{ DT_REG, N("notepg"),	Pnotepg,	NULL },
 	{ DT_REG, N("map"),	Pmap,		procfs_validmap },
+	{ DT_REG, N("cmdline"), Pcmdline,	NULL },
 #undef N
 };
 static int nproc_targets = sizeof(proc_targets) / sizeof(proc_targets[0]);
@@ -532,6 +533,7 @@ procfs_getattr(v)
 	case Pnote:
 	case Pnotepg:
 	case Pmap:
+	case Pcmdline:
 		vap->va_nlink = 1;
 		vap->va_uid = procp->p_ucred->cr_uid;
 		vap->va_gid = procp->p_ucred->cr_gid;
@@ -607,6 +609,7 @@ procfs_getattr(v)
 	case Pnote:
 	case Pnotepg:
 	case Pmap:
+	case Pcmdline:
 		vap->va_bytes = vap->va_size = 0;
 		break;
 

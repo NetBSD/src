@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.23 1999/01/25 02:20:08 msaitoh Exp $	*/
+/*	$NetBSD: procfs.h,v 1.24 1999/03/12 18:45:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -54,7 +54,8 @@ typedef enum {
 	Pstatus,	/* process status */
 	Pnote,		/* process notifier */
 	Pnotepg,	/* process group notifier */
-	Pmap		/* memory map */
+	Pmap,		/* memory map */
+	Pcmdline	/* process command line args */
 } pfstype;
 
 /*
@@ -107,15 +108,24 @@ vfs_namemap_t *vfs_findname __P((vfs_namemap_t *, char *, int));
 int procfs_freevp __P((struct vnode *));
 int procfs_allocvp __P((struct mount *, struct vnode **, long, pfstype));
 struct vnode *procfs_findtextvp __P((struct proc *));
-int procfs_donote __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_doregs __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_dofpregs __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_domem __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_doctl __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_dostatus __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_domap __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
+int procfs_donote __P((struct proc *, struct proc *, struct pfsnode *,
+    struct uio *));
+int procfs_doregs __P((struct proc *, struct proc *, struct pfsnode *,
+    struct uio *));
+int procfs_dofpregs __P((struct proc *, struct proc *, struct pfsnode *,
+    struct uio *));
+int procfs_domem __P((struct proc *, struct proc *, struct pfsnode *,
+    struct uio *));
+int procfs_doctl __P((struct proc *, struct proc *, struct pfsnode *,
+    struct uio *));
+int procfs_dostatus __P((struct proc *, struct proc *, struct pfsnode *,
+    struct uio *));
+int procfs_domap __P((struct proc *, struct proc *, struct pfsnode *,
+    struct uio *));
+int procfs_docmdline __P((struct proc *, struct proc *, struct pfsnode *,
+    struct uio *));
 
-int procfs_checkioperm __P((struct proc *p, struct proc *t));
+int procfs_checkioperm __P((struct proc *, struct proc *));
 
 /* functions to check whether or not files should be displayed */
 int procfs_validfile __P((struct proc *));
