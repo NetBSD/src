@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.6 1998/06/23 02:19:25 briggs Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.7 1998/06/30 14:14:44 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -72,6 +72,9 @@
 #define	PCMCIA_MANUFACTURER_IBM			0xa4
 #define	PCMCIA_PRODUCT_IBM_HOME_AND_AWAY	0x2e
 
+#define	PCMCIA_MANUFACTURER_MEGAHERTZ		0x102
+#define	PCMCIA_PRODUCT_MEGAHERTZ_XJ4288		0x23
+
 struct com_dev {
 	char *name;
 	int manufacturer;
@@ -88,6 +91,9 @@ static struct com_dev com_devs[] = {
 	  { NULL, NULL, NULL, NULL } },
 	{ "IBM Home and Away Modem",
 	  PCMCIA_MANUFACTURER_IBM, PCMCIA_PRODUCT_IBM_HOME_AND_AWAY,
+	  { NULL, NULL, NULL, NULL } },
+	{ "Megahertz XJ4288 Modem",
+	  PCMCIA_MANUFACTURER_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_XJ4288,
 	  { NULL, NULL, NULL, NULL } },
 	{ "Megahertz XJ2288 Modem",
 	  0xffffffff, 0xffff,
