@@ -1,4 +1,4 @@
-.\"	$NetBSD: access.9,v 1.4 1998/04/22 07:14:32 ross Exp $
+.\"	$NetBSD: access.9,v 1.5 1998/05/09 15:04:39 kleink Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,9 +44,9 @@
 .Nd check memory regions for accessability
 .Sh SYNOPSIS
 .Ft int
-.Fn kernacc "caddr_t addr" "int len" "int rw"
+.Fn kernacc "caddr_t addr" "size_t len" "int rw"
 .Ft int
-.Fn useracc "caddr_t addr" "int len" "int rw"
+.Fn useracc "caddr_t addr" "size_t len" "int rw"
 .Sh DESCRIPTION
 The
 .Fn kernacc

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.12 1998/04/30 06:28:59 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.13 1998/05/09 15:04:40 kleink Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -264,16 +264,16 @@ int			uvm_fault __P((vm_map_t, vm_offset_t,
 
 /* uvm_glue.c */
 #if defined(KGDB)
-void			uvm_chgkprot __P((caddr_t, int, int));
+void			uvm_chgkprot __P((caddr_t, size_t, int));
 #endif
 void			uvm_fork __P((struct proc *, struct proc *, boolean_t));
 void			uvm_init_limits __P((struct proc *));
-boolean_t		uvm_kernacc __P((caddr_t, int, int));
+boolean_t		uvm_kernacc __P((caddr_t, size_t, int));
 __dead void		uvm_scheduler __P((void)) __attribute__((noreturn));
 void			uvm_swapin __P((struct proc *));
-boolean_t		uvm_useracc __P((caddr_t, int, int));
-void			uvm_vslock __P((struct proc *, caddr_t, u_int));
-void			uvm_vsunlock __P((struct proc *, caddr_t, u_int));
+boolean_t		uvm_useracc __P((caddr_t, size_t, int));
+void			uvm_vslock __P((struct proc *, caddr_t, size_t));
+void			uvm_vsunlock __P((struct proc *, caddr_t, size_t));
 
 
 /* uvm_init.c */

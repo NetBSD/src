@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.10 1998/05/08 17:41:41 kleink Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.11 1998/05/09 15:04:40 kleink Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -120,7 +120,8 @@ int readbuffers = 0;		/* allow KGDB to read kern buffer pool */
 boolean_t
 uvm_kernacc(addr, len, rw)
 	caddr_t addr;
-	int len, rw;
+	size_t len;
+	int rw;
 {
 	boolean_t rv;
 	vm_offset_t saddr, eaddr;
@@ -156,7 +157,8 @@ uvm_kernacc(addr, len, rw)
 boolean_t
 uvm_useracc(addr, len, rw)
 	caddr_t addr;
-	int len, rw;
+	size_t len;
+	int rw;
 {
 	boolean_t rv;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
@@ -193,7 +195,8 @@ uvm_useracc(addr, len, rw)
 void
 uvm_chgkprot(addr, len, rw)
 	register caddr_t addr;
-	int len, rw;
+	size_t len;
+	int rw;
 {
 	vm_prot_t prot;
 	vm_offset_t pa, sva, eva;
@@ -226,7 +229,7 @@ void
 uvm_vslock(p, addr, len)
 	struct proc *p;
 	caddr_t	addr;
-	u_int	len;
+	size_t	len;
 {
 	uvm_fault_wire(&p->p_vmspace->vm_map, trunc_page(addr), 
 	    round_page(addr+len));
@@ -243,7 +246,7 @@ void
 uvm_vsunlock(p, addr, len)
 	struct proc *p;
 	caddr_t	addr;
-	u_int	len;
+	size_t	len;
 {
 	uvm_fault_unwire(p->p_vmspace->vm_map.pmap, trunc_page(addr), 
 		round_page(addr+len));
