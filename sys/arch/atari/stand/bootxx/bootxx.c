@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.7 2001/10/14 19:43:44 leo Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.8 2001/10/24 20:12:57 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -65,7 +65,7 @@ bootxx(readsector, disklabel, autoboot)
 	setheap(end, (void*)(LOADADDR3 - 4));
 
 	printf("\033v\nNetBSD/Atari secondary bootloader"
-						" ($Revision: 1.7 $)\n\n");
+						" ($Revision: 1.8 $)\n\n");
 
 	if (init_dskio(readsector, disklabel, -1))
 		return(-1);
@@ -180,16 +180,24 @@ load_booter(od)
 	int		fd;
 	u_char		*bstart = (u_char *)(LOADADDR3);
 	int		bsize;
+	char		*fname;
+	char		*boot_names[] = {	/* 3rd level boot names	  */
+				"/boot.atari",	/* in order of preference */
+				"/boot",
+				"/boot.ata",
+				NULL };		/* NULL terminated!	  */
+
 
 	/*
 	 * Read booter's exec-header.
 	 */
-	if ((fd = open("/boot.atari", 0)) < 0) {
-		if ((fd = open("/boot", 0)) < 0) {
-			printf("Cannot open /boot{.atari}\n");
-			return (-1);
-		}
+	for (fname = boot_names[0]; fname != NULL; fname++) {
+		if ((fd = open(fname, 0)) < 0)
+			printf("Cannot open '%s'\n", fname);
+		else break;
 	}
+	if (fd < 0)
+		return (-1);
 	while((bsize = read(fd, bstart, 1024)) > 0) {
 		bstart += bsize;
 	
