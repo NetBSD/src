@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.31 2004/03/28 09:00:57 martti Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.31.2.1 2004/05/30 11:24:57 tron Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -120,6 +120,7 @@ typedef	struct	nat	{
 	u_short		nat_oport;		/* other port */
 	u_short		nat_use;
 	u_char		nat_p;			/* protocol for NAT */
+	int		nat_rev;		/* 0 = forward, 1 = reverse */
 	int		nat_dir;
 	int		nat_ref;		/* reference count */
 	int		nat_hv[2];
