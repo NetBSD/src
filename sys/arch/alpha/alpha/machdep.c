@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.153 1998/10/19 22:09:13 tron Exp $ */
+/* $NetBSD: machdep.c,v 1.154 1998/11/02 04:43:23 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.153 1998/10/19 22:09:13 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.154 1998/11/02 04:43:23 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,11 +208,17 @@ int	nbuf = NBUF;
 #else
 int	nbuf = 0;
 #endif
-#ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
+
+#ifndef	BUFPAGES
+#define BUFPAGES 0
 #endif
+#ifndef BUFCACHE
+#define BUFCACHE 10
+#endif
+
+int	bufpages = BUFPAGES;	/* optional hardwired count */
+int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
+
 caddr_t msgbufaddr;
 
 int	maxmem;			/* max memory per process */
@@ -952,12 +958,12 @@ allocsys(v)
 
 	/*
 	 * Determine how many buffers to allocate.
-	 * We allocate 10% of memory for buffer space.  Insure a
+	 * We allocate bufcache % of memory for buffer space.  Insure a
 	 * minimum of 16 buffers.  We allocate 1/2 as many swap buffer
 	 * headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
-		bufpages = (physmem * 10) / (CLSIZE * 100);
+		bufpages = physmem / CLSIZE * bufcache / 100;
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
