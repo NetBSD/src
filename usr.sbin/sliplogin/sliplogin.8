@@ -1,4 +1,4 @@
-.\"	$NetBSD: sliplogin.8,v 1.5 1997/10/17 08:49:50 mrg Exp $
+.\"	$NetBSD: sliplogin.8,v 1.6 1997/10/17 13:36:47 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,10 +40,10 @@
 .Nm sliplogin
 .Nd attach a serial line network interface
 .Sh SYNOPSIS
-.Nm sliplogin
+.Nm
 .Op Ar loginname
 .Sh DESCRIPTION
-.Nm Sliplogin
+.Nm
 is used to turn the terminal line on standard input into
 a Serial Line IP
 .Pq Tn SLIP
@@ -86,7 +86,7 @@ entry, in order starting with
 .Pp
 Only the super-user may attach a network interface.  The interface is
 automatically detached when the other end hangs up or the
-.Nm sliplogin
+.Nm
 process dies.  If the kernel slip
 module has been configured for it, all routes through that interface will
 also disappear at the same time.  If there is other processing a site
@@ -122,15 +122,15 @@ slip line and
 is the appropriate IP netmask.  These arguments are passed
 directly to
 .Xr ifconfig 8 .
-.Em Opt-args
+.Em opt-args
 are optional arguments used to configure the line.
 .Sh EXAMPLE
 The normal use of
-.Nm sliplogin
+.Nm
 is to create a
 .Pa /etc/passwd
 entry for each legal, remote slip site with
-.Nm sliplogin
+.Nm
 as the shell for that entry.  E.g.,
 .Bd -literal
 Sfoo:ikhuy6:2010:1:slip line to foo:/tmp:/usr/sbin/sliplogin
@@ -157,7 +157,7 @@ to the local host name and
 is the local host IP netmask.
 .Pp
 Note that
-.Nm sliplogin
+.Nm
 must be setuid to root and, while not a security hole, moral defectives
 can use it to place terminal lines in an unusable state and/or deny
 access to legitimate users of a remote slip line.  To prevent this,
@@ -171,7 +171,7 @@ and mode 4550 (setuid root, only group
 .Em slip
 can execute binary).
 .Sh DIAGNOSTICS
-.Nm Sliplogin
+.Nm
 logs various information to the system log daemon,
 .Xr syslogd 8 ,
 with a facility code of

@@ -1,4 +1,4 @@
-/*	$NetBSD: sliplogin.c,v 1.13 1997/10/17 08:49:55 mrg Exp $	*/
+/*	$NetBSD: sliplogin.c,v 1.14 1997/10/17 13:36:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)sliplogin.c	8.2 (Berkeley) 2/1/94";
 #else
-static char rcsid[] = "$Id: sliplogin.c,v 1.13 1997/10/17 08:49:55 mrg Exp $";
+__RCSID("$NetBSD: sliplogin.c,v 1.14 1997/10/17 13:36:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,12 +73,15 @@ static char rcsid[] = "$Id: sliplogin.c,v 1.13 1997/10/17 08:49:55 mrg Exp $";
  * /etc/slip.hosts file and if found fd0 is configured as in case 1.
  */
 
+#include <sys/types.h>
+#include <sys/file.h>
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/file.h>
+#include <sys/stat.h>
 #include <sys/syslog.h>
 #include <netdb.h>
 #include <signal.h>
+#include <stdlib.h>
 
 #if BSD >= 199006
 #define POSIX
@@ -107,6 +110,11 @@ char	loginargs[BUFSIZ];
 char	loginfile[MAXPATHLEN];
 char	loginname[BUFSIZ];
 
+void	 findid __P((char *));
+void	hup_handler __P((int));
+int	main __P((int, char **));
+const char *sigstr __P((int));
+
 void
 findid(name)
 	char *name;
@@ -117,7 +125,7 @@ findid(name)
 	static char raddr[16];
 	static char mask[16];
 	char user[16];
-	int i, j, n;
+	int n;
 
 	(void)strncpy(loginname, name, sizeof(loginname) - 1);
 	if ((fp = fopen(_PATH_ACCESS, "r")) == NULL) {
@@ -201,6 +209,7 @@ hup_handler(s)
 	/* NOTREACHED */
 }
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -213,7 +222,6 @@ main(argc, argv)
 	struct sgttyb tty, otty;
 #endif
 	char logincmd[2*BUFSIZ+32];
-	extern uid_t getuid();
 
 	if ((name = strrchr(argv[0], '/')) == NULL)
 		name = argv[0];
@@ -261,8 +269,6 @@ main(argc, argv)
 			perror("ioctl (TIOCSCTTY)");
 #endif
 	} else {
-		extern char *getlogin();
-
 		if ((name = getlogin()) == NULL) {
 			syslog(LOG_ERR,
 			    "access denied - getlogin returned 0\n");
@@ -346,7 +352,7 @@ main(argc, argv)
 	 * to see whether changes are allowed (or just "route get").
 	 */
 	(void) setuid(0);
-	if (s = system(logincmd)) {
+	if ((s = system(logincmd)) != NULL) {
 		syslog(LOG_ERR, "%s login failed: exit status %d from %s",
 		       loginname, s, loginfile);
 		(void) ioctl(STDIN_FILENO, TIOCSETD, (caddr_t)&odisc);

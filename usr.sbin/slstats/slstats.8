@@ -1,4 +1,4 @@
-.\"	$NetBSD: slstats.8,v 1.5 1997/08/27 07:59:19 mikel Exp $
+.\"	$NetBSD: slstats.8,v 1.6 1997/10/17 13:38:00 lukem Exp $
 .\"
 .Dd July 5, 1993
 .Dt SLSTATS 8
@@ -6,7 +6,7 @@
 .Nm slstats
 .Nd report slip statistics
 .Sh SYNOPSIS
-.Nm slstats
+.Nm
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl v
@@ -15,14 +15,14 @@
 .Sh DESCRIPTION
 .Pp
 The 
-.Nm slstats
+.Nm
 utility reports slip-related statistics for the
-.Nm sl Ns
+.Ic sl Ns
 .So
 .Ar unit-number
 .Sc
 interface.  If the
-.Nm unit-number
+.Ar unit-number
 is unspecified, it defaults to 0.  These statistics are displayed at
 regular intervals.
 .Pp
