@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.100 1996/05/12 23:52:19 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.101 1996/06/25 20:47:02 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -703,7 +703,7 @@ ed_find_3Com(sc, cf, ia)
 
 	bc = ia->ia_bc;
 
-	if (bus_io_map(bc, ia->ia_iobase, ED_WD_IO_PORTS, &ioh))
+	if (bus_io_map(bc, ia->ia_iobase, ED_3COM_IO_PORTS, &ioh))
 		return (0);
 
 	sc->asic_base = asicbase = ED_3COM_ASIC_OFFSET;
