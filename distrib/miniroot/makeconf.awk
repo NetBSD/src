@@ -1,4 +1,4 @@
-#	$NetBSD: makeconf.awk,v 1.4 1996/12/01 21:51:53 pk Exp $
+#	$NetBSD: makeconf.awk,v 1.5 1999/03/23 10:20:01 leo Exp $
 
 #
 # generate crunchgen(1) configuration file from `list' spec.
@@ -11,6 +11,11 @@ BEGIN {
 }
 
 $1 == "SRCDIRS" {
+	$1 = tolower($1);
+	print;
+}
+
+$1 == "LIBS" {
 	$1 = tolower($1);
 	print;
 }
