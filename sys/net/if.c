@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.126 2003/08/07 16:32:49 agc Exp $	*/
+/*	$NetBSD: if.c,v 1.127 2003/08/09 18:13:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.126 2003/08/07 16:32:49 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.127 2003/08/09 18:13:03 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -1609,54 +1609,63 @@ ifconf(cmd, data)
 	struct ifaddr *ifa;
 	struct ifreq ifr, *ifrp;
 	int space = ifc->ifc_len, error = 0;
+	const int sz = (int)sizeof(ifr);
+	int sign;
 
-	ifrp = ifc->ifc_req;
+	if ((ifrp = ifc->ifc_req) == NULL) {
+		space = 0;
+		sign = -1;
+	} else {
+		sign = 1;
+	}
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		bcopy(ifp->if_xname, ifr.ifr_name, IFNAMSIZ);
 		if ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) == 0) {
-			memset((caddr_t)&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-			if (space >= (int)sizeof (ifr)) {
-				error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
-						sizeof(ifr));
+			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
+			if (ifrp != NULL && space >= sz) {
+				error = copyout(&ifr, ifrp, sz);
 				if (error)
 					break;
+				ifrp++;
 			}
-			space -= sizeof (ifr), ifrp++;
-		} else 
-		    for (; ifa != 0; ifa = TAILQ_NEXT(ifa, ifa_list)) {
+			space -= sizeof(ifr) * sign;
+			continue;
+		}
+
+		for (; ifa != 0; ifa = TAILQ_NEXT(ifa, ifa_list)) {
 			struct sockaddr *sa = ifa->ifa_addr;
 #if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || defined(COMPAT_ULTRIX)
 			if (cmd == OSIOCGIFCONF) {
 				struct osockaddr *osa =
 					 (struct osockaddr *)&ifr.ifr_addr;
+				/*
+				 * If it does not fit, we don't bother with it
+				 */
+				if (sa->sa_len > sizeof(*osa))
+					continue;
 				ifr.ifr_addr = *sa;
 				osa->sa_family = sa->sa_family;
-				if (space >= (int)sizeof (ifr)) {
-					error = copyout((caddr_t)&ifr,
-							(caddr_t)ifrp,
-							sizeof (ifr));
+				if (ifrp != NULL && space >= sz) {
+					error = copyout(&ifr, ifrp, sz);
 					ifrp++;
 				}
 			} else
 #endif
 			if (sa->sa_len <= sizeof(*sa)) {
 				ifr.ifr_addr = *sa;
-				if (space >= (int)sizeof (ifr)) {
-					error = copyout((caddr_t)&ifr,
-							(caddr_t)ifrp,
-							sizeof (ifr));
+				if (ifrp != NULL && space >= sz) {
+					error = copyout(&ifr, ifrp, sz);
 					ifrp++;
 				}
 			} else {
-				space -= sa->sa_len - sizeof(*sa);
-				if (space >= (int)sizeof (ifr)) {
-					error = copyout((caddr_t)&ifr,
-							(caddr_t)ifrp,
-							sizeof (ifr.ifr_name));
+				space -= (sa->sa_len - sizeof(*sa)) * sign;
+				if (ifrp != NULL && space >= sz) {
+					error = copyout(&ifr, ifrp,
+					    sizeof(ifr.ifr_name));
 					if (error == 0) {
-						error = copyout((caddr_t)sa,
-						  (caddr_t)&ifrp->ifr_addr,
-						  sa->sa_len);
+						error = copyout(sa,
+						    &ifrp->ifr_addr,
+						    sa->sa_len);
 					}
 					ifrp = (struct ifreq *)
 						(sa->sa_len +
@@ -1665,9 +1674,12 @@ ifconf(cmd, data)
 			}
 			if (error)
 				break;
-			space -= sizeof (ifr);
+			space -= sz * sign;
 		}
 	}
-	ifc->ifc_len -= space;
+	if (ifrp != NULL)
+		ifc->ifc_len -= space;
+	else
+		ifc->ifc_len = space;
 	return (error);
 }
