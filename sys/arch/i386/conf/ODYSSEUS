@@ -16,7 +16,7 @@ options		DIAGNOSTIC
 options		KGDB
 options		"KGDBDEV=0x800"
 
-config		bsd	root on dk0 swap on dk0
+config		netbsd	root on dk0 swap on dk0
 
 controller	isa0
 controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr

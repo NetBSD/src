@@ -11,7 +11,7 @@ options		XSERVER,UCONSOLE
 options		KERNFS,FDESC
 options		DDB
 
-config		bsd	root on wd0 swap on wd0 and as0
+config		netbsd	root on wd0 swap on wd0 and as0
 
 controller	isa0
 controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr

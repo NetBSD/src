@@ -27,7 +27,7 @@ options SCSI
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 
-config		bsd	root on wd0 swap on wd0 and sd0
+config		netbsd	root on wd0 swap on wd0 and sd0
 
 #buses
 controller	isa0
