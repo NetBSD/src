@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.2 2000/01/16 03:07:25 takemura Exp $	*/
+/*	$NetBSD: printf.c,v 1.3 2000/02/03 03:21:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -38,8 +38,6 @@
 #include <windows.h>
 #include <tchar.h>
 #include <stdarg.h>
-
-#include "compat.h"
 
 #include "../../../../lib/libsa/printf.c"
 
