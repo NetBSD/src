@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.10 1996/11/26 23:38:42 thorpej Exp $	*/
+/*	$NetBSD: chpass.c,v 1.11 1997/01/05 10:06:40 cjs Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$NetBSD: chpass.c,v 1.10 1996/11/26 23:38:42 thorpej Exp $";
+static char rcsid[] = "$NetBSD: chpass.c,v 1.11 1997/01/05 10:06:40 cjs Exp $";
 #endif
 #endif /* not lint */
 
@@ -182,7 +182,7 @@ main(argc, argv)
 #endif
 
 	if (op == EDITENTRY || op == NEWSH) {
-		if (username == NULL) {
+		if (username != NULL) {
 #ifdef YP
 			if (use_yp)
 				pw = ypgetpwnam(username);
