@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.61 2000/03/30 12:41:12 augustss Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.62 2000/04/04 09:23:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -1138,6 +1138,7 @@ ffs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	extern int doclusterread, doclusterwrite, doreallocblks, doasyncfree;
+	extern int ffs_log_changeopt;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -1155,6 +1156,9 @@ ffs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		    &doreallocblks));
 	case FFS_ASYNCFREE:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &doasyncfree));
+	case FFS_LOG_CHANGEOPT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+			&ffs_log_changeopt));
 	default:
 		return (EOPNOTSUPP);
 	}
