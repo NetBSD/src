@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.2 1996/10/03 06:57:18 mrg Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.2.2.1 1997/03/10 20:34:49 is Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -56,9 +56,9 @@ static char copyright[] =
 #endif
 #include <netinet/in_systm.h>
 #ifdef __NetBSD__
+#include <net/if_ether.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
-#include <netinet/if_ether.h>
 #else
 #include "includes/netinet/ip.h"
 #include "includes/netinet/udp.h"
