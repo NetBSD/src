@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.8 2003/12/18 12:21:36 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.9 2004/06/28 14:43:43 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ FrameBufferInfo::_table[] =
 	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HP_LX_620JP                 ,        8,      640,      240,      640, 0xb2000000 },
 	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HITACHI_PERSONA_HPW50PAD    ,        8,      640,      240,      640, 0xb2000000 },
 	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HITACHI_PERSONA_HPW230JC    ,        8,      640,      240,      640, 0xb2000000 },
+	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HITACHI_PERSONA_HPW200EC    ,        8,      640,      240,      640, 0xb2000000 },
 	// SH7709A (P2 address)
 	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA                  ,       16,      640,      240,     1280, 0xb2000000 },
 	// SH7750 (P2 address)

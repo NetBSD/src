@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.c,v 1.14 2004/03/17 04:18:38 uwe Exp $	*/
+/*	$NetBSD: platid_mask.c,v 1.15 2004/06/28 14:43:42 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -786,6 +786,10 @@ platid_t platid_mask_MACH_HITACHI_PERSONA_HPW230JC = {{
 platid_t platid_mask_MACH_HITACHI_PERSONA_HPW50PAD = {{
 	PLATID_CPU_SH_3_7709,
 	PLATID_MACH_HITACHI_PERSONA_HPW50PAD
+}};
+platid_t platid_mask_MACH_HITACHI_PERSONA_HPW200EC = {{
+	PLATID_CPU_SH_3_7709,
+	PLATID_MACH_HITACHI_PERSONA_HPW200EC
 }};
 platid_t platid_mask_MACH_HITACHI_PERSONA_HPW650PA = {{
 	PLATID_CPU_SH_4_7750,
