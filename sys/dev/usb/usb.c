@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.11 1999/01/08 11:58:25 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.12 1999/01/10 19:13:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -349,6 +349,7 @@ usb_bus_count()
 }
 #endif
 
+#if 0
 usbd_status
 usb_get_bus_handle(n, h)
 	int n;
@@ -363,6 +364,7 @@ usb_get_bus_handle(n, h)
 		}
 	return (USBD_INVAL);
 }
+#endif
 
 usbd_status
 usb_discover(sc)
