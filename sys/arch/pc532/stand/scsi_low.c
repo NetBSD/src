@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_low.c,v 1.3 1994/10/26 08:25:54 cgd Exp $	*/
+
 /****************************************************************************
  * NS32K Monitor SCSI low-level driver
  * Bruce Culbertson

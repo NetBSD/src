@@ -1,3 +1,5 @@
+/*	$NetBSD: umprintf.c,v 1.3 1994/10/26 08:25:20 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1986, 1988, 1991 The Regents of the University of California.
  * All rights reserved.
@@ -31,8 +33,7 @@
  * SUCH DAMAGE.
  *
  *      hacked out from ..
- *	from: @(#)subr_prf.c	7.30 (Berkeley) 6/29/91
- *	$Id: umprintf.c,v 1.2 1994/04/19 17:18:31 phil Exp $
+ *	@(#)subr_prf.c	7.30 (Berkeley) 6/29/91
  */
 
 #include <stdarg.h>

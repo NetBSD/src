@@ -1,3 +1,5 @@
+/*	$NetBSD: dpreg.h,v 1.6 1994/10/26 08:24:11 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
@@ -29,8 +31,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *	dp.h:  defines for the dp driver.
- *
- *	dpreg.h,v 1.2 1993/10/01 22:59:44 phil Exp
  */
 
 /* Most of this comes from the Minix dp driver by Bruce Culbertson. */

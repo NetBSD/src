@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_all.h,v 1.2 1994/10/26 08:25:28 cgd Exp $	*/
+
 /*
  * SCSI general  interface description
  *
@@ -13,8 +15,6 @@
  * TFS supplies this software to be publicly redistributed
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
- *
- *	$Id: scsi_all.h,v 1.1 1994/04/01 23:18:09 phil Exp $
  */
 
 /*

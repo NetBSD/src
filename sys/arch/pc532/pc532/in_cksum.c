@@ -1,3 +1,5 @@
+/*	$NetBSD: in_cksum.c,v 1.3 1994/10/26 08:25:04 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +44,6 @@
  *	@(#)in_cksum.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: in_cksum.c,v 1.7 92/11/26 03:04:52 torek Exp 
- * $Id: in_cksum.c,v 1.2 1994/03/22 00:18:32 phil Exp $
  */
 
 #include <sys/param.h>

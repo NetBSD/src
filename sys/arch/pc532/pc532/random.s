@@ -1,3 +1,5 @@
+/*	$NetBSD: random.s,v 1.2 1994/10/26 08:25:17 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
  * All rights reserved.
@@ -39,7 +41,6 @@
  * The result is in (0,2^31), e.g., it's always positive.
  *
  * written by Phil Nelson for ns32k.
- *
  */
 
 #include <machine/asm.h>

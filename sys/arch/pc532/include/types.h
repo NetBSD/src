@@ -1,3 +1,5 @@
+/*	$NetBSD: types.h,v 1.7 1994/10/26 08:24:44 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,8 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)types.h	7.5 (Berkeley) 3/9/91
- *
- *	types.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 
 #ifndef	_MACHINE_TYPES_H_

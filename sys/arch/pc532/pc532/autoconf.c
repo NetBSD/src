@@ -1,3 +1,5 @@
+/*	$NetBSD: autoconf.c,v 1.9 1994/10/26 08:24:49 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,8 +36,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)autoconf.c	7.1 (Berkeley) 5/9/91
- *
- *	$Id: autoconf.c,v 1.8 1994/07/01 04:25:48 phil Exp $
  */
 
 /*

@@ -1,7 +1,6 @@
+#	$NetBSD: STEELHEAD,v 1.4 1994/10/26 08:24:02 cgd Exp $
 #
 # STEELHEAD: Phil Nelson's pc532.
-#
-#	$Id: STEELHEAD,v 1.3 1994/08/01 23:44:08 phil Exp $
 #
 machine		"pc532"
 cpu		"ns532"

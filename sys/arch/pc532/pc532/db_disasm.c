@@ -1,3 +1,5 @@
+/*	$NetBSD: db_disasm.c,v 1.2 1994/10/26 08:24:55 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -32,8 +34,6 @@
  * From Bruce Culbertson's and Bob Krause's ROM monitor for the pc532 
  * adapted to pc532 Mach by Tero Kivinen and Tatu Ylonen at Helsinki 
  * University of Technology.
- *
- *	$Id: db_disasm.c,v 1.1.1.1 1993/09/09 23:53:48 phil Exp $
  */
 
 /*
