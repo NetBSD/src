@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.8 2001/02/19 06:23:55 jmc Exp $
+#	$NetBSD: binstall.sh,v 1.9 2001/12/31 09:44:04 mrg Exp $
 #
 
 vecho () {
@@ -11,7 +11,7 @@ vecho () {
 }
 
 Usage () {
-	echo "Usage: $0 [-hvtuU] [-m<path>] net|ffs directory"
+	echo "Usage: $0 [-hvtuU] [-m<path>] <"'"net"|"ffs"'"> <directory>"
 	exit 1
 }
 
