@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.3 1999/09/25 21:40:58 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.4 1999/12/11 20:30:30 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.3 1999/09/25 21:40:58 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.4 1999/12/11 20:30:30 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,7 +91,8 @@ char *default_manpath[] = {
 	NULL
 };
 
-char whatisdb[] = "whatis.db";
+char sectionext[] = "0123456789ln";
+char whatisdb[]   = "whatis.db";
 
 extern char *__progname;
 
@@ -124,7 +125,10 @@ main(int argc,char **argv)
 					fe->fts_path))
 					err(EXIT_FAILURE, NULL);
 		case FTS_D:
+		case FTS_DC:
+		case FTS_DEFAULT:
 		case FTS_DP:
+		case FTS_SLNONE:
 			break;
 		default:
 			errx(EXIT_FAILURE, "%s: %s", fe->fts_path,
@@ -162,9 +166,17 @@ manpagesection(char *name)
 	else
 		ptr = name;
 
-	while ((ptr = strchr(ptr, '.')) != NULL)
-		if (isdigit(*++ptr))
-			return (int)(*ptr - '0');
+	while ((ptr = strchr(ptr, '.')) != NULL) {
+		int section;
+
+		ptr++;
+		section=0;
+		while (sectionext[section] != '\0')
+			if (sectionext[section] == *ptr)
+				return section;
+			else
+				section++;
+	}
 
 	return -1;
 }
@@ -572,7 +584,8 @@ parsemanpage(gzFile *in, int defaultsection)
 	if (section == NULL) {
 		char sectionbuffer[24];
 
-		(void) sprintf(sectionbuffer, " (%d) - ", defaultsection);
+		(void) sprintf(sectionbuffer, " (%c) - ",
+			sectionext[defaultsection]);
 		ptr = replacestring(buffer, " - ", sectionbuffer);
 	}
 	else {
