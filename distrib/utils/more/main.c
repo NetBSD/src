@@ -50,6 +50,7 @@ static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/7/93";
 #include <sys/types.h>
 #include <sys/file.h>
 #include <stdio.h>
+#include <string.h>
 #include <less.h>
 
 int	ispipe;
@@ -67,9 +68,6 @@ int	quitting;
 extern int	file;
 extern int	cbufs;
 extern int	errmsgs;
-
-extern char	*tagfile;
-extern int	tagoption;
 
 /*
  * Edit a new file.
@@ -302,15 +300,7 @@ main(argc, argv)
 	init_signals(1);
 
 	/* select the first file to examine. */
-	if (tagoption) {
-		/*
-		 * A -t option was given; edit the file selected by the
-		 * "tags" search, and search for the proper line in the file.
-		 */
-		if (!tagfile || !edit(tagfile) || tagsearch())
-			quit();
-	}
-	else if (ac < 1)
+	if (ac < 1)
 		(void)edit("-");	/* Standard input */
 	else {
 		/*
