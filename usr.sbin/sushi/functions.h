@@ -1,4 +1,4 @@
-/*      $NetBSD: functions.h,v 1.2 2001/01/05 18:57:25 thorpej Exp $       */
+/*      $NetBSD: functions.h,v 1.3 2001/01/24 09:30:30 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@ char **testf(char *junk);
 char **script_do(char *what);
 char **log_do(char *what);
 char **ftp_pkglist(char *);
+char **ftp_pkgcats(char *);
 
 #define LOGFILE_NAME	"sushi.log"
 #define SCRIPTFILE_NAME	"sushi.script"
