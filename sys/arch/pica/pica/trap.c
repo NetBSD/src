@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 1996/03/28 12:40:33 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.3 1996/03/28 12:51:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -279,7 +279,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	 * Enable hardware interrupts if they were on before.
 	 * We only respond to software interrupts when returning to user mode.
 	 */
-	if (statusReg & MACH_SR_INT_ENAB)
+	if (statusReg & MIPS_SR_INT_IE)
 		splx((statusReg & MACH_HARD_INT_MASK) | MACH_SR_INT_ENAB);
 
 	switch (type) {
