@@ -1,7 +1,7 @@
-/*	$NetBSD: vector.s,v 1.37 1997/11/16 12:30:03 mycroft Exp $	*/
+/*	$NetBSD: vector.s,v 1.38 1997/11/16 12:31:00 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
