@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.2 1998/08/29 13:45:56 dante Exp $	*/
+/*	$NetBSD: adv.c,v 1.3 1998/09/09 05:28:58 thorpej Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -62,6 +62,10 @@
 
 #include <dev/ic/adv.h>
 #include <dev/ic/advlib.h>
+
+#ifndef DDB
+#define	Debugger()	panic("should call debugger here (adv.c)")
+#endif /* ! DDB */
 
 /******************************************************************************/
 
