@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.h,v 1.1 2002/02/27 21:02:16 scw Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2002/02/28 00:27:38 scw Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,37 +34,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-/*
- * Sandpoint-specific code developed
- * by Allen Briggs for Wasabi Systems, Inc.
- * 
- * OpenPIC code derived from code with the following notice.
- */
-/*-
- * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _MVMEPPC_INTR_H_
@@ -106,45 +75,51 @@ struct intrhand {
 	int	ih_irq;
 };
 
-void	setsoftclock(void);
-void	clearsoftclock(void);
-int	splsoftclock(void);
-void	setsoftnet(void);
-void	clearsoftnet(void);
-int	splsoftnet(void);
-void	softnet(void);
+void setsoftclock(void);
+void clearsoftclock(void);
+int  splsoftclock(void);
+void setsoftnet(void);
+void clearsoftnet(void);
+int  splsoftnet(void);
 
-void	ext_intr(void);
+void do_pending_int(void);
 
-void	do_pending_int(void);
-void	*intr_establish(int, int, int, int (*)(void *), void *);
-void	intr_disestablish(void *);
+void ext_intr(void);
+void ext_intr_ivr(void);
 
+void enable_intr(void);
+void disable_intr(void);
+
+void *intr_establish(int, int, int, int (*)(void *), void *);
+void intr_disestablish(void *);
+
+void softnet(void);
 void softserial(void);
 int isa_intr(void);
 void isa_intr_mask(int);
 void isa_intr_clr(int);
 void isa_setirqstat(int, int, int);
 
-
-extern volatile int cpl, ipending, astpending, tickspending;
-extern int imask[];
-extern long intrcnt[];
-extern int intrtype[];
-extern struct intrhand *intrhand[];
-
 static __inline int splraise(int);
-static __inline int spllower(int);
-static __inline void splx(int);
+static __inline void spllower(int);
 static __inline void set_sint(int);
 
+extern volatile int cpl, ipending, astpending, tickspending;
+extern int imen;
+extern int imask[];
+extern long intrcnt[];
+extern unsigned intrcnt2[];
+extern struct intrhand *intrhand[];
+extern int intrtype[];
+extern vaddr_t mvmeppc_intr_reg;
+
 /*
- * Reorder protection in the following inline functions is
- * protected with the "eieio" instruction.
+ *  Reorder protection in the following inline functions is
+ * achieved with the "eieio" instruction which the assembler
+ * seems to detect and then doesn't move instructions past....
  */
 static __inline int
-splraise(newcpl)
-	int newcpl;
+splraise(int newcpl)
 {
 	int oldcpl;
 
@@ -156,36 +131,20 @@ splraise(newcpl)
 }
 
 static __inline void
-splx(newcpl)
-	int newcpl;
+spllower(int newcpl)
 {
+
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 	cpl = newcpl;
 	if(ipending & ~newcpl)
 		do_pending_int();
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-}
-
-static __inline int
-spllower(newcpl)
-	int newcpl;
-{
-	int oldcpl;
-
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-	oldcpl = cpl;
-	cpl = newcpl;
-	if(ipending & ~newcpl)
-		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-	return(oldcpl);
 }
 
 /* Following code should be implemented with lwarx/stwcx to avoid
  * the disable/enable. i need to read the manual once more.... */
 static __inline void
-set_sint(pending)
-	int	pending;
+set_sint(int pending)
 {
 	int	msrsave;
 
@@ -213,29 +172,30 @@ set_sint(pending)
 #define	CNT_SINT_SERIAL	31
 #define	CNT_CLOCK	0
 
-#define	spl0()		spllower(0)
 #define splbio()	splraise(imask[IPL_BIO])
 #define splnet()	splraise(imask[IPL_NET])
 #define spltty()	splraise(imask[IPL_TTY])
-#define spllpt()	spltty()
 #define splclock()	splraise(imask[IPL_CLOCK])
 #define splvm()		splraise(imask[IPL_IMP])
+#define splaudio()	splraise(imask[IPL_AUDIO])
 #define	splserial()	splraise(imask[IPL_SERIAL])
 #define splstatclock()	splclock()
 #define	spllowersoftclock() spllower(imask[IPL_SOFTCLOCK])
 #define	splsoftclock()	splraise(imask[IPL_SOFTCLOCK])
 #define	splsoftnet()	splraise(imask[IPL_SOFTNET])
 #define	splsoftserial()	splraise(imask[IPL_SOFTSERIAL])
-#define	splhigh()	splraise(imask[IPL_HIGH])
-#define splsched()	splhigh()
-#define spllock()	splhigh()
 
-#if 1
-#define	setsoftisa()	set_sint(SINT_ISA);
+#define spllpt()	spltty()
+
 #define	setsoftclock()	set_sint(SINT_CLOCK);
 #define	setsoftnet()	set_sint(SINT_NET);
 #define	setsoftserial()	set_sint(SINT_SERIAL);
-#endif
+
+#define	splhigh()	splraise(imask[IPL_HIGH])
+#define	splsched()	splhigh()
+#define	spllock()	splhigh()
+#define	splx(x)		spllower(x)
+#define	spl0()		spllower(0)
 
 #endif /* !_LOCORE */
 
