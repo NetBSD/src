@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.13 2001/02/05 02:07:53 christos Exp $	*/
+/*	$NetBSD: fio.c,v 1.14 2001/12/19 00:06:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.13 2001/02/05 02:07:53 christos Exp $");
+__RCSID("$NetBSD: fio.c,v 1.14 2001/12/19 00:06:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,20 +237,15 @@ makemessage(f, omsgCount)
 	int omsgCount;
 {
 	int size = (msgCount + 1) * sizeof (struct message);
+	struct message *nmessage = realloc(message, size);
 
-	if (omsgCount) {
-		message = (struct message *)realloc(message, (unsigned) size);
-		if (message == 0)
-			errx(1, "Insufficient memory for %d messages\n",
-			      msgCount);
-	} else {        
-		if (message != 0)
-			free((char *) message);
-		if ((message = (struct message *) malloc((unsigned) size)) == 0)
-			errx(1, "Insufficient memory for %d messages",
-			    msgCount);
-		dot = message;
-	}
+	if (nmessage == NULL)
+		err(1, "Insufficient memory for %d messages", msgCount);
+	if (omsgCount == 0 || message == NULL)
+		dot = nmessage;
+	else
+		dot = nmessage + (dot - message);
+	message = nmessage;
 	size -= (omsgCount + 1) * sizeof (struct message);
 	fflush(f);
 	(void) lseek(fileno(f), (off_t)sizeof *message, 0);
