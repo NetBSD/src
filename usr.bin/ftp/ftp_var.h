@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.21 1997/11/01 14:37:00 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.22 1998/01/18 14:23:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -135,9 +135,9 @@ char   *hostname;		/* name of host connected to */
 int	unix_server;		/* server is unix, can use binary for ascii */
 int	unix_proxy;		/* proxy is unix, can use binary for ascii */
 
-u_int16_t	ftpport;	/* port number to use for ftp connections */
-u_int16_t	httpport;	/* port number to use for http connections */
-u_int16_t	gateport;	/* port number to use for gateftp connections */
+in_port_t	ftpport;	/* port number to use for ftp connections */
+in_port_t	httpport;	/* port number to use for http connections */
+in_port_t	gateport;	/* port number to use for gateftp connections */
 
 jmp_buf	toplevel;		/* non-local goto stuff for cmd scanner */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 1997/12/12 23:34:56 gwr Exp $	*/
+/*	$NetBSD: main.c,v 1.28 1998/01/18 14:23:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 1997/12/12 23:34:56 gwr Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 1998/01/18 14:23:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ main(argc, argv)
 	cp = getenv("FTPSERVERPORT");
 	if (cp != NULL) {
 		port = strtol(cp, &ep, 10);
-		if (port < 1 || port > 0xffff || *ep != '\0')
+		if (port < 1 || port > USHRT_MAX || *ep != '\0')
 			warnx("bad FTPSERVERPORT port number: %s (ignored)",
 			    cp);
 		else
@@ -194,10 +194,10 @@ main(argc, argv)
 
 		case 'P':
 			port = strtol(optarg, &ep, 10);
-			if (port < 1 || port > 0xffff || *ep != '\0')
+			if (port < 1 || port > USHRT_MAX || *ep != '\0')
 				warnx("bad port number: %s (ignored)", optarg);
 			else
-				ftpport = htons(port);
+				ftpport = htons((in_port_t)port);
 			break;
 
 		case 't':
@@ -624,12 +624,12 @@ OUT:
 			break;
 		case 1:
 			slrflag++;
-			altarg = (char *) 0;
+			altarg = NULL;
 			break;
 		default:
 			break;
 	}
-	return ((char *)0);
+	return (NULL);
 }
 
 /*
@@ -666,7 +666,7 @@ help(argc, argv)
 		c = getcmd(arg);
 		if (c == (struct cmd *)-1)
 			printf("?Ambiguous help command %s\n", arg);
-		else if (c == (struct cmd *)0)
+		else if (c == NULL)
 			printf("?Invalid help command %s\n", arg);
 		else
 			printf("%-*s\t%s\n", HELPINDENT,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.30 1997/11/01 14:36:58 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.31 1998/01/18 14:23:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.30 1997/11/01 14:36:58 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.31 1998/01/18 14:23:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ FILE	*cin, *cout;
 char *
 hookup(host, port)
 	const char *host;
-	int port;
+	in_port_t port;
 {
 	struct hostent *hp = NULL;
 	int s, len, tos;
@@ -100,7 +100,7 @@ hookup(host, port)
 		if (hp == NULL) {
 			warnx("%s: %s", host, hstrerror(h_errno));
 			code = -1;
-			return ((char *) 0);
+			return (NULL);
 		}
 		hisctladdr.sin_family = hp->h_addrtype;
 		memcpy(&hisctladdr.sin_addr, hp->h_addr, hp->h_length);
@@ -187,7 +187,7 @@ hookup(host, port)
 	return (hostname);
 bad:
 	(void)close(s);
-	return ((char *)0);
+	return (NULL);
 }
 
 void
@@ -386,7 +386,7 @@ empty(mask, sec)
 
 	t.tv_sec = (long) sec;
 	t.tv_usec = 0;
-	return (select(32, mask, (struct fd_set *) 0, (struct fd_set *) 0, &t));
+	return (select(32, mask, NULL, NULL, &t));
 }
 
 jmp_buf	sendabort;
@@ -1024,8 +1024,7 @@ break2:
 		if (preserve && (closefunc == fclose)) {
 			mtime = remotemodtime(remote, 0);
 			if (mtime != -1) {
-				(void)gettimeofday(&tval[0],
-				    (struct timezone *)0);
+				(void)gettimeofday(&tval[0], NULL);
 				tval[1].tv_sec = mtime;
 				tval[1].tv_usec = 0;
 				if (utimes(local, tval) == -1) {
@@ -1433,7 +1432,7 @@ abort:
 		if (command("%s %s", cmd2, local) != PRELIM) {
 			pswitch(0);
 			if (cpend)
-				abort_remote((FILE *) NULL);
+				abort_remote(NULL);
 		}
 		pswitch(1);
 		if (ptabflg)
@@ -1442,13 +1441,13 @@ abort:
 		return;
 	}
 	if (cpend)
-		abort_remote((FILE *) NULL);
+		abort_remote(NULL);
 	pswitch(!proxy);
 	if (!cpend && !secndflag) {  /* only if cmd = "RETR" (proxy=1) */
 		if (command("%s %s", cmd2, local) != PRELIM) {
 			pswitch(0);
 			if (cpend)
-				abort_remote((FILE *) NULL);
+				abort_remote(NULL);
 			pswitch(1);
 			if (ptabflg)
 				code = -1;
@@ -1457,7 +1456,7 @@ abort:
 		}
 	}
 	if (cpend)
-		abort_remote((FILE *) NULL);
+		abort_remote(NULL);
 	pswitch(!proxy);
 	if (cpend) {
 		FD_ZERO(&mask);
@@ -1519,7 +1518,7 @@ gunique(local)
 		*cp = '/';
 	if (d < 0) {
 		warn("local: %s", local);
-		return ((char *) 0);
+		return (NULL);
 	}
 	(void)strcpy(new, local);
 	cp = new + strlen(new);
@@ -1527,7 +1526,7 @@ gunique(local)
 	while (!d) {
 		if (++count == 100) {
 			puts("runique: can't find unique file name.");
-			return ((char *) 0);
+			return (NULL);
 		}
 		*cp++ = ext;
 		*cp = '\0';
