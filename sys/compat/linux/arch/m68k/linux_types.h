@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.4 2002/05/19 18:03:17 jdolecek Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.5 2004/09/19 15:06:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -58,19 +58,6 @@ typedef int linux_pid_t;
 typedef unsigned char linux_cc_t;
 typedef unsigned int linux_speed_t;
 typedef unsigned int linux_tcflag_t;
-
-struct linux_statfs {
-	long		l_ftype;
-	long		l_fbsize;
-	long		l_fblocks;
-	long		l_fbfree;
-	long		l_fbavail;
-	long		l_ffiles;
-	long		l_fffree;
-	linux_fsid_t	l_ffsid;
-	long		l_fnamelen;
-	long		l_fspare[6];
-};
 
 struct linux_stat {
 	linux_dev_t		lst_dev;
