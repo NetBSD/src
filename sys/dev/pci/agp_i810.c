@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.14 2002/12/13 11:32:51 scw Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.14 2002/12/13 11:32:51 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,14 +129,14 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT|M_ZERO);
 	if (isc == NULL) {
-		printf(": can't allocate chipset-specific softc\n");
+		aprint_error(": can't allocate chipset-specific softc\n");
 		return ENOMEM;
 	}
 	sc->as_chipc = isc;
 	sc->as_methods = &agp_i810_methods;
 
 	if (pci_find_device(&isc->vga_pa, agp_i810_vgamatch) == 0) {
-		printf(": can't find internal VGA device config space\n");
+		aprint_error(": can't find internal VGA device config space\n");
 		free(isc, M_AGP);
 		return ENOENT;
 	}
@@ -146,7 +146,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 	error = agp_map_aperture(&isc->vga_pa, sc);
 	if (error != 0) {
-		printf(": can't map aperture\n");
+		aprint_error(": can't map aperture\n");
 		free(isc, M_AGP);
 		return error;
 	}
@@ -167,7 +167,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	error = pci_mapreg_map(&isc->vga_pa, AGP_I810_MMADR,
 	    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh, NULL, NULL);
 	if (error != 0) {
-		printf(": can't map mmadr registers\n");
+		aprint_error(": can't map mmadr registers\n");
 		return error;
 	}
 
@@ -225,15 +225,16 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		default:
 			isc->stolen = 0;
-			printf(": unknown memory configuration, disabling\n");
+			aprint_error(
+			    ": unknown memory configuration, disabling\n");
 			agp_generic_detach(sc);
 			return EINVAL;
 		}
 		if (isc->stolen > 0) {
-			printf(": detected %dk stolen memory\n",
+			aprint_error(": detected %dk stolen memory\n",
 			    isc->stolen * 4);
 		}
-		printf("%s: aperture size is %dM\n", sc->as_dev.dv_xname,
+		aprint_error("%s: aperture size is %dM\n", sc->as_dev.dv_xname,
 		       isc->initial_aperture / 1024 / 1024);
 
 		/* GATT address is already in there, make sure it's enabled */
@@ -249,7 +250,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	agp_flush_cache();
 
-	printf("%s", sc->as_dev.dv_xname);
+	aprint_normal("%s", sc->as_dev.dv_xname);
 
 	return 0;
 }

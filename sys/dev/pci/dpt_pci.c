@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.13 2002/12/07 19:48:32 ad Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.14 2003/01/31 00:07:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.13 2002/12/07 19:48:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.14 2003/01/31 00:07:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,20 +87,22 @@ dpt_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	pcireg_t csr;
 
+	aprint_naive(": Storage controller\n");
+
 	sc = (struct dpt_softc *)self;
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
-	printf(": ");
+	aprint_normal(": ");
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot, 
 	    &ioh, NULL, NULL)) {
-		printf("can't map i/o space\n");
+		aprint_error("can't map i/o space\n");
 		return;
 	}
 	
 	/* Need to map in by 16 registers. */
 	if (bus_space_subregion(sc->sc_iot, ioh, 16, 16, &sc->sc_ioh)) {
-		printf("can't map i/o subregion\n");
+		aprint_error("can't map i/o subregion\n");
 		return;
 	}
 
@@ -113,22 +115,22 @@ dpt_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("can't map interrupt\n");
+		aprint_error("can't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, dpt_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("can't establish interrupt");
+		aprint_error("can't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
 
 	/* Read the EATA configuration. */
 	if (dpt_readcfg(sc)) {
-		printf("%s: readcfg failed - see dpt(4)\n", 
+		aprint_error("%s: readcfg failed - see dpt(4)\n", 
 		    sc->sc_dv.dv_xname);
 		return;	
 	}

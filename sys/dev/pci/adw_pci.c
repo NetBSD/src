@@ -1,4 +1,4 @@
-/* $NetBSD: adw_pci.c,v 1.13 2002/10/02 16:51:00 thorpej Exp $	 */
+/* $NetBSD: adw_pci.c,v 1.14 2003/01/31 00:07:39 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.13 2002/10/02 16:51:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.14 2003/01/31 00:07:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,26 +124,30 @@ adw_pci_attach(parent, self, aux)
 	u_int32_t       command;
 	const char     *intrstr;
 
+	aprint_naive(": SCSI controller\n");
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADVSYS)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_ADVSYS_WIDE:
 			sc->chip_type = ADW_CHIP_ASC3550;
-			printf(": AdvanSys ASB-3940UW-00 SCSI adapter\n");
+			aprint_normal(
+			    ": AdvanSys ASB-3940UW-00 SCSI adapter\n");
 			break;
 
 		case PCI_PRODUCT_ADVSYS_U2W:
 			sc->chip_type = ADW_CHIP_ASC38C0800;
-			printf(": AdvanSys ASB-3940U2W-00 SCSI adapter\n");
+			aprint_normal(
+			    ": AdvanSys ASB-3940U2W-00 SCSI adapter\n");
 			break;
 
 		case PCI_PRODUCT_ADVSYS_U3W:
 			sc->chip_type = ADW_CHIP_ASC38C1600;
-			printf(": AdvanSys ASB-3940U3W-00 SCSI adapter\n");
+			aprint_normal(
+			    ": AdvanSys ASB-3940U3W-00 SCSI adapter\n");
 			break;
 
 		default:
-			printf(": unknown model!\n");
+			aprint_error(": unknown model!\n");
 			return;
 		}
 
@@ -164,7 +168,7 @@ adw_pci_attach(parent, self, aux)
 	 */
 	if (pci_mapreg_map(pa, PCI_BASEADR_IO, PCI_MAPREG_TYPE_IO, 0,
 			   &iot, &ioh, NULL, NULL)) {
-		printf("%s: unable to map device registers\n",
+		aprint_error("%s: unable to map device registers\n",
 		       sc->sc_dev.dv_xname);
 		return;
 	}
@@ -176,7 +180,7 @@ adw_pci_attach(parent, self, aux)
 	 * Initialize the board
 	 */
 	if (adw_init(sc)) {
-		printf("%s: adw_init failed", sc->sc_dev.dv_xname);
+		aprint_error("%s: adw_init failed", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -184,7 +188,8 @@ adw_pci_attach(parent, self, aux)
 	 * Map Interrupt line
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -194,13 +199,14 @@ adw_pci_attach(parent, self, aux)
 	 */
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, adw_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't establish interrupt",
+		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/*
 	 * Attach all the sub-devices we can find

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.13 2002/10/02 16:51:23 thorpej Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.14 2003/01/31 00:07:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.13 2002/10/02 16:51:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.14 2003/01/31 00:07:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,10 +121,12 @@ esh_pci_attach(parent, self, aux)
 	char *model;
 	const char *intrstr = NULL;
 
+	aprint_naive(": HIPPI controller\n");
+
 	if (pci_mapreg_map(pa, MEM_MAP_REG,
 			   PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 			   &sc->sc_iot, &sc->sc_ioh, NULL, NULL) != 0) {
-	    printf(": unable to map memory device registers\n");
+	    aprint_error(": unable to map memory device registers\n");
 	    return;
 	}
 
@@ -142,7 +144,7 @@ esh_pci_attach(parent, self, aux)
 		break;
 	}
 
-	printf(": %s\n", model);
+	aprint_normal(": %s\n", model);
 
 	sc->sc_bist_read = esh_pci_bist_read;
 	sc->sc_bist_write = esh_pci_bist_write;
@@ -156,20 +158,21 @@ esh_pci_attach(parent, self, aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, eshintr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		aprint_error("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }
 
 u_int8_t
