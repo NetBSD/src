@@ -9,7 +9,7 @@
 #include <sys/mount.h>
 #include <sys/file.h>
 #include <sys/stat.h>
-#include <sys/signal.h>
+#include <signal.h>
 
 #include <stdio.h>
 #include <fstab.h>
