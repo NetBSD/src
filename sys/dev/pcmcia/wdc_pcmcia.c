@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.1 1998/01/19 19:49:03 matt Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.2 1998/01/23 01:14:13 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -65,7 +65,7 @@
 
 #define WDC_PCMCIA_REG_NPORTS      8
 #define WDC_PCMCIA_AUXREG_OFFSET   0x206
-#define WDC_PCMCIA_AUXREG_NPORTS   1
+#define WDC_PCMCIA_AUXREG_NPORTS   2
 
 struct wdc_pcmcia_softc {
 	struct wdc_softc sc_wdcdev;
@@ -89,14 +89,14 @@ struct cfattach wdc_pcmcia_ca = {
 };
 
 static int
-wdc_pcmcia_match(
-	struct device *parent,
+wdc_pcmcia_match(parent, match, aux)
+	struct device *parent;
 #ifdef __BROKEN_INDIRECT_CONFIG
-	void *match,
+	void *match;
 #else
-	struct cfdata *match,
+	struct cfdata *match;
 #endif
-	void *aux)
+	void *aux;
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -110,16 +110,16 @@ wdc_pcmcia_match(
 }
 
 static void
-wdc_pcmcia_attach(
-	struct device *parent,
-	struct device *self,
-	void *aux)
+wdc_pcmcia_attach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
 {
 	struct wdc_pcmcia_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe = pa->pf->cfe_head.sqh_first;
 
-	bzero(&sc->sc_ad, sizeof(sc->sc_ad));
+	printf("\n");
 
 	for (; cfe != NULL; cfe = cfe->cfe_list.sqe_next) {
 		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
@@ -142,7 +142,7 @@ wdc_pcmcia_attach(
 	}
 
 	if (cfe == NULL) {
-		printf(": can't handle card info\n");
+		printf("%s: can't handle card info\n", self->dv_xname);
 		return;
 	}
 
@@ -154,28 +154,28 @@ wdc_pcmcia_attach(
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
-		printf(": function enable failed\n");
+		printf("%s: function enable failed\n", self->dv_xname);
 		return;
 	}
 
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 			  sc->sc_pioh.size, &sc->sc_pioh,
 			  &sc->sc_iowindow)) {
-		printf(": can't map first I/O space\n");
+		printf("%s: can't map first I/O space\n", self->dv_xname);
 		return;
 	} 
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 			  sc->sc_auxpioh.size, &sc->sc_auxpioh,
 			  &sc->sc_auxiowindow)) {
-		printf(": can't map second I/O space\n");
+		printf("%s: can't map second I/O space\n", self->dv_xname);
 		return;
 	}
 
-	printf("\n");
 	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_BIO, wdcintr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n", self->dv_xname);
 		return;
 	}
+
 	wdcattach(&sc->sc_wdcdev, &sc->sc_ad);
 }
