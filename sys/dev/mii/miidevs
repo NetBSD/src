@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.1 1998/08/10 23:55:17 thorpej Exp $
+$NetBSD: miidevs,v 1.2 1998/11/03 05:01:49 thorpej Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@ model QUALSEMI QS6612		0x0000 QS6612 10/100 media interface
 
 /* Seeq PHYs */
 model SEEQ 80220		0x0003 Seeq 80220 10/100 media interface
+model SEEQ 84220		0x0004 Seeq 84220 10/100 media interface
 
 /* Texas Instruments PHYs */
 model TI TLAN10T		0x0001 ThunderLAN 10baseT media interface
