@@ -478,6 +478,3 @@ dtors_section ()							\
 
 #undef PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
-
-/* Use sjlj exceptions. */
-#define DWARF2_UNWIND_INFO 0
