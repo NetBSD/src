@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 1996/05/15 02:51:00 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30 1996/06/19 02:19:13 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,52 +37,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/*-
- * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
- *			Michael L. Finch, Bradley A. Grantham, and
- *			Lawrence A. Kesteloot
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the Alice Group.
- * 4. The names of the Alice Group or any of its members may not be used
- *    to endorse or promote products derived from this software without
- *    specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE ALICE GROUP ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE ALICE GROUP BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
 /*
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	@(#)autoconf.c	7.5 (Berkeley) 5/7/91
  */
-
-/*
-   ALICE 
-      05/23/92 BG
-      I've started to re-write this procedure to use our devices and strip 
-      out all the useless HP stuff, but I only got to line 120 or so 
-      before I had a really bad attack of kompernelphobia and blacked out.
-*/
 
 /*
  * Setup the system to run on the current machine.
