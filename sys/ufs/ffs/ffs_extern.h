@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.40 2004/06/04 07:43:56 he Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.41 2004/08/29 10:13:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -110,7 +110,7 @@ int ffs_truncate __P((void *));
 /* ffs_subr.c */
 void ffs_load_inode __P((struct buf *, struct inode *, struct fs *, ino_t));
 int ffs_blkatoff __P((void *));
-int ffs_freefile __P((void *));
+int ffs_freefile __P((struct fs *, struct vnode *, ino_t, int));
 void ffs_fragacct __P((struct fs *, int, int32_t[], int, int));
 #ifdef DIAGNOSTIC
 void	ffs_checkoverlap __P((struct buf *, struct inode *));
