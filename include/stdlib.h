@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
- *	$Id: stdlib.h,v 1.18 1994/07/02 05:01:45 deraadt Exp $
+ *	$Id: stdlib.h,v 1.19 1994/08/07 23:17:56 jtc Exp $
  */
 
 #ifndef _STDLIB_H_
@@ -162,6 +162,9 @@ int	 putenv __P((const char *));
 int	 setenv __P((const char *, const char *, int));
 void	 unsetenv __P((const char *));
 void	 setproctitle __P((const char *, ...));
+
+quad_t	 strtoq __P((const char *, char **, int));
+u_quad_t strtouq __P((const char *, char **, int));
 
 double	 drand48 __P((void));
 double	 erand48 __P((unsigned short[3]));
