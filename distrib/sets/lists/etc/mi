@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.76 2001/01/18 02:01:53 thorpej Exp $
+# $NetBSD: mi,v 1.77 2001/01/21 15:01:36 itojun Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -153,7 +153,6 @@
 ./etc/remote
 ./etc/rmt
 ./etc/rpc
-./etc/rtadvd.conf
 ./etc/security
 ./etc/security.conf
 ./etc/services
