@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.9 2002/08/03 11:10:51 yamt Exp $	*/
+/*	$NetBSD: runetable.c,v 1.10 2003/03/02 22:18:15 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.9 2002/08/03 11:10:51 yamt Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.10 2003/03/02 22:18:15 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -263,6 +263,24 @@ _RuneLocale _DefaultRuneLocale = {
     NULL, 0, 
     "646",
     &_citrus_ctype_default,
+    {
+	    { NULL, NULL, NULL },
+	    { NULL, NULL, NULL },
+    },
+    {
+	    { "alnum", _CTYPE_A|_CTYPE_D },
+	    { "alpha", _CTYPE_A },
+	    { "blank", _CTYPE_B },
+	    { "cntrl", _CTYPE_C },
+	    { "digit", _CTYPE_D },
+	    { "graph", _CTYPE_G },
+	    { "lower", _CTYPE_L },
+	    { "print", _CTYPE_R },
+	    { "punct", _CTYPE_P },
+	    { "space", _CTYPE_S },
+	    { "upper", _CTYPE_U },
+	    { "xdigit", _CTYPE_X },
+    }
 };
 
 _RuneLocale *_CurrentRuneLocale = &_DefaultRuneLocale;
