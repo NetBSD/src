@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2000/06/12 13:57:38 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2000/06/18 10:11:25 mrg Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=1
@@ -16,7 +16,7 @@ DIST=		${.CURDIR}/../../../../dist/ntp
 CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/include -DHAVE_CONFIG_H
 
 .if defined(PROG)
-LIBNTP!=	cd ${.CURDIR}/../libntp; make print-objdir
+LIBNTP!=	cd ${.CURDIR}/../libntp; ${MAKE} print-objdir
 LDADD+=		-L${LIBNTP} -lntp
 DPADD+=		${LIBNTP}/libntp.a
 
