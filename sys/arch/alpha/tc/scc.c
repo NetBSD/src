@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.34 1997/07/17 03:16:41 jtk Exp $ */
+/* $NetBSD: scc.c,v 1.35 1997/09/02 13:20:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -63,10 +63,9 @@
  *	@(#)scc.c	8.2 (Berkeley) 11/30/93
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.34 1997/07/17 03:16:41 jtk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.35 1997/09/02 13:20:16 thorpej Exp $");
 
 #include "scc.h"
 #if NSCC > 0
