@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_log10f.c,v 1.5 1999/07/02 15:37:45 simonb Exp $");
+__RCSID("$NetBSD: w_log10f.c,v 1.6 2002/05/26 22:02:02 wiz Exp $");
 #endif
 
 /*
@@ -26,12 +26,8 @@ __RCSID("$NetBSD: w_log10f.c,v 1.5 1999/07/02 15:37:45 simonb Exp $");
 #include "math_private.h"
 
 
-#ifdef __STDC__
-	float log10f(float x)		/* wrapper log10f */
-#else
-	float log10f(x)			/* wrapper log10f */
-	float x;
-#endif
+float
+log10f(float x)		/* wrapper log10f */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_log10f(x);

@@ -15,30 +15,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_atanhf.c,v 1.6 1999/07/02 15:37:38 simonb Exp $");
+__RCSID("$NetBSD: e_atanhf.c,v 1.7 2002/05/26 22:01:49 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const float one = 1.0, huge = 1e30;
-#else
-static float one = 1.0, huge = 1e30;
-#endif
 
-#ifdef __STDC__
 static const float zero = 0.0;
-#else
-static float zero = 0.0;
-#endif
 
-#ifdef __STDC__
-	float __ieee754_atanhf(float x)
-#else
-	float __ieee754_atanhf(x)
-	float x;
-#endif
+float
+__ieee754_atanhf(float x)
 {
 	float t;
 	int32_t hx,ix;

@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_sqrtf.c,v 1.5 1999/07/02 15:37:45 simonb Exp $");
+__RCSID("$NetBSD: w_sqrtf.c,v 1.6 2002/05/26 22:02:03 wiz Exp $");
 #endif
 
 /*
@@ -25,12 +25,8 @@ __RCSID("$NetBSD: w_sqrtf.c,v 1.5 1999/07/02 15:37:45 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float sqrtf(float x)		/* wrapper sqrtf */
-#else
-	float sqrt(x)			/* wrapper sqrtf */
-	float x;
-#endif
+float
+sqrtf(float x)		/* wrapper sqrtf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_sqrtf(x);

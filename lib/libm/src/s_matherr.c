@@ -12,18 +12,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_matherr.c,v 1.8 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: s_matherr.c,v 1.9 2002/05/26 22:01:57 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	int matherr(struct exception *x)
-#else
-	int matherr(x)
-	struct exception *x;
-#endif
+int
+matherr(struct exception *x)
 {
 	int n=0;
 	if(x->arg1!=x->arg1) return 0;

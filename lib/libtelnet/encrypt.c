@@ -1,4 +1,4 @@
-/*	$NetBSD: encrypt.c,v 1.8 2001/01/06 23:36:36 christos Exp $	*/
+/*	$NetBSD: encrypt.c,v 1.9 2002/05/26 22:07:28 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)encrypt.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: encrypt.c,v 1.8 2001/01/06 23:36:36 christos Exp $");
+__RCSID("$NetBSD: encrypt.c,v 1.9 2002/05/26 22:07:28 wiz Exp $");
 #endif /* not lint */
 
 /*
@@ -69,9 +69,7 @@ __RCSID("$NetBSD: encrypt.c,v 1.8 2001/01/06 23:36:36 christos Exp $");
 #include "encrypt.h"
 #include "misc.h"
 
-#ifdef	__STDC__
 #include <stdlib.h>
-#endif
 #ifdef	NO_STRING_H
 #include <strings.h>
 #else

@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_hypot.c,v 1.11 1999/07/02 15:37:39 simonb Exp $");
+__RCSID("$NetBSD: e_hypot.c,v 1.12 2002/05/26 22:01:50 wiz Exp $");
 #endif
 
 /* __ieee754_hypot(x,y)
@@ -50,12 +50,8 @@ __RCSID("$NetBSD: e_hypot.c,v 1.11 1999/07/02 15:37:39 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	double __ieee754_hypot(double x, double y)
-#else
-	double __ieee754_hypot(x,y)
-	double x, y;
-#endif
+double
+__ieee754_hypot(double x, double y)
 {
 	double a=x,b=y,t1,t2,y1,y2,w;
 	int32_t j,k,ha,hb;

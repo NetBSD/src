@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_atan2.c,v 1.11 1999/07/02 15:37:38 simonb Exp $");
+__RCSID("$NetBSD: e_atan2.c,v 1.12 2002/05/26 22:01:48 wiz Exp $");
 #endif
 
 /* __ieee754_atan2(y,x)
@@ -45,11 +45,7 @@ __RCSID("$NetBSD: e_atan2.c,v 1.11 1999/07/02 15:37:38 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const double
-#else
-static double
-#endif
 tiny  = 1.0e-300,
 zero  = 0.0,
 pi_o_4  = 7.8539816339744827900E-01, /* 0x3FE921FB, 0x54442D18 */
@@ -57,12 +53,8 @@ pi_o_2  = 1.5707963267948965580E+00, /* 0x3FF921FB, 0x54442D18 */
 pi      = 3.1415926535897931160E+00, /* 0x400921FB, 0x54442D18 */
 pi_lo   = 1.2246467991473531772E-16; /* 0x3CA1A626, 0x33145C07 */
 
-#ifdef __STDC__
-	double __ieee754_atan2(double y, double x)
-#else
-	double __ieee754_atan2(y,x)
-	double  y,x;
-#endif
+double
+__ieee754_atan2(double y, double x)
 {
 	double z;
 	int32_t k,m,hx,hy,ix,iy;

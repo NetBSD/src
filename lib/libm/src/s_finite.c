@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_finite.c,v 1.10 1999/07/02 15:37:42 simonb Exp $");
+__RCSID("$NetBSD: s_finite.c,v 1.11 2002/05/26 22:01:55 wiz Exp $");
 #endif
 
 /*
@@ -23,12 +23,8 @@ __RCSID("$NetBSD: s_finite.c,v 1.10 1999/07/02 15:37:42 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	int finite(double x)
-#else
-	int finite(x)
-	double x;
-#endif
+int
+finite(double x)
 {
 	int32_t hx;
 	GET_HIGH_WORD(hx,x);

@@ -16,7 +16,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_acoshf.c,v 1.5 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: w_acoshf.c,v 1.6 2002/05/26 22:01:59 wiz Exp $");
 #endif
 
 /*
@@ -26,12 +26,8 @@ __RCSID("$NetBSD: w_acoshf.c,v 1.5 1999/07/02 15:37:43 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float acoshf(float x)		/* wrapper acoshf */
-#else
-	float acoshf(x)			/* wrapper acoshf */
-	float x;
-#endif
+float
+acoshf(float x)		/* wrapper acoshf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_acoshf(x);

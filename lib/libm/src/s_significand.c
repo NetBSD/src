@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_significand.c,v 1.8 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: s_significand.c,v 1.9 2002/05/26 22:01:58 wiz Exp $");
 #endif
 
 /*
@@ -24,12 +24,8 @@ __RCSID("$NetBSD: s_significand.c,v 1.8 1999/07/02 15:37:43 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	double significand(double x)
-#else
-	double significand(x)
-	double x;
-#endif
+double
+significand(double x)
 {
 	return __ieee754_scalb(x,(double) -ilogb(x));
 }

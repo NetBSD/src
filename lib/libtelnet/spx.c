@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.1 2000/06/22 06:47:46 thorpej Exp $ */
+/*	$NetBSD: spx.c,v 1.2 2002/05/26 22:07:28 wiz Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)spx.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: spx.c,v 1.1 2000/06/22 06:47:46 thorpej Exp $");
+__RCSID("$NetBSD: spx.c,v 1.2 2002/05/26 22:07:28 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,9 +81,7 @@ __RCSID("$NetBSD: spx.c,v 1.1 2000/06/22 06:47:46 thorpej Exp $");
 #include <arpa/telnet.h>
 #include <stdio.h>
 #include "gssapi_defs.h"
-#ifdef	__STDC__
 #include <stdlib.h>
-#endif
 #ifdef	NO_STRING_H
 #include <strings.h>
 #else

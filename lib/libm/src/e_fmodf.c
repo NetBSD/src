@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_fmodf.c,v 1.6 1999/07/02 15:37:39 simonb Exp $");
+__RCSID("$NetBSD: e_fmodf.c,v 1.7 2002/05/26 22:01:49 wiz Exp $");
 #endif
 
 /*
@@ -27,18 +27,10 @@ __RCSID("$NetBSD: e_fmodf.c,v 1.6 1999/07/02 15:37:39 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const float one = 1.0, Zero[] = {0.0, -0.0,};
-#else
-static float one = 1.0, Zero[] = {0.0, -0.0,};
-#endif
 
-#ifdef __STDC__
-	float __ieee754_fmodf(float x, float y)
-#else
-	float __ieee754_fmodf(x,y)
-	float x,y ;
-#endif
+float
+__ieee754_fmodf(float x, float y)
 {
 	int32_t n,hx,hy,hz,ix,iy,sx,i;
 

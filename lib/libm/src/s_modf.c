@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_modf.c,v 1.10 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: s_modf.c,v 1.11 2002/05/26 22:01:57 wiz Exp $");
 #endif
 
 /*
@@ -28,18 +28,10 @@ __RCSID("$NetBSD: s_modf.c,v 1.10 1999/07/02 15:37:43 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const double one = 1.0;
-#else
-static double one = 1.0;
-#endif
 
-#ifdef __STDC__
-	double modf(double x, double *iptr)
-#else
-	double modf(x, iptr)
-	double x,*iptr;
-#endif
+double
+modf(double x, double *iptr)
 {
 	int32_t i0,i1,j0;
 	u_int32_t i;
