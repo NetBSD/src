@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.85.2.3 1997/08/28 22:40:17 marc Exp $
+#	$NetBSD: files.i386,v 1.85.2.4 1997/08/29 17:47:51 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -210,7 +210,7 @@ include "../../../compat/ossaudio/files.ossaudio"
 # like a kludge, but it might be for the best.
 device	pcic {[controller = -1], [socket = -1]}
 # XXX move to dev/ic
-file	dev/isa/i82365.c	pcic
+file	dev/isa/i82365.c		pcic
 
 # PCIC pcmcia contoller
 attach	pcic at isa with pcic_isa
@@ -225,6 +225,6 @@ file	dev/pci/i82365_pci.c		pcic_pci
 #
 # Machine-independent PCMCIA drivers
 #
-include "../../../dev/pcmcia/files.pcmcia"
+include "dev/pcmcia/files.pcmcia"
 
 
