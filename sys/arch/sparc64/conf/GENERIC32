@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.32 2002/02/10 17:37:02 wiz Exp $
+# 	$NetBSD: GENERIC32,v 1.33 2002/03/29 20:01:50 bouyer Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.32 $"
+#ident 		"GENERIC-$Revision: 1.33 $"
 
 maxusers	64
 
@@ -411,8 +411,7 @@ ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139 UT
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet UT
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
-# XXX uses vtophys()
-#tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 #options 	TLP_MATCH_21040
 #options 	TLP_MATCH_21041
