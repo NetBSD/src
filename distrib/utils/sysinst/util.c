@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.16 1997/11/05 22:46:10 mhitch Exp $	*/
+/*	$NetBSD: util.c,v 1.17 1997/11/05 23:32:54 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -98,7 +98,10 @@ ask_ynquestion (char *quest, char def, ...)
 	vsnprintf (line, STRSIZE, quest, ap);
 	va_end(ap);
 
-	printf ("%s [%c]: ", line, def);
+	if (def)
+		printf ("%s [%c]: ", line, def);
+	else
+		printf ("%s: ", line);
 	c = getchar();
 	if (c == '\n')
 		return def == 'y';
@@ -294,17 +297,12 @@ extract_file (char *path)
 	target_chdir_or_die("/");	
 
 	/* now extract set files files into "./". */
-	endwin();
 	(void)printf (msg_string(MSG_extracting), path);
 	tarexit = run_prog ("/usr/bin/tar --unlink -xpz%s -f %s",
 			    verbose ? "v":"", path);
-	if (tarexit) {
-		sleep(5);
-	}
-	puts(CL);
-	wrefresh(stdscr);
-
-	/* XXXX Check tarexit for errors and give warning ... */
+	/* Check tarexit for errors and give warning. */
+	if (tarexit)
+		ask_ynquestion (msg_string(MSG_tarerror), 0, path);
 
 	chdir (owd);
 	free (owd);
@@ -318,15 +316,10 @@ extract_dist (void)
 	distinfo *list;
 	char extdir[STRSIZE];
 
-#if 0
-	/* XXX buggy code: does floppy extraction depend onthis?  */
-	/* Current directory has the distribution included. */
-	strncpy(extdir, target_expand(dist_dir), STRSIZE);
-#else
 	/* For NFS,  distdir is mounted in the _current_ root.  */
 	strncpy(extdir, dist_dir, STRSIZE);
-#endif
 
+	endwin();
 	list = dist_list;
 	while (list->name) {
 		if (list->getit) {
@@ -338,6 +331,8 @@ extract_dist (void)
 		}
 		list++;
 	}
+	puts(CL);
+	wrefresh(stdscr);
 }
 
 
