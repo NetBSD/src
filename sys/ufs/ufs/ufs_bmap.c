@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.28 2004/02/27 00:19:36 uwe Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.29 2004/05/25 14:55:46 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.28 2004/02/27 00:19:36 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.29 2004/05/25 14:55:46 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,15 +157,30 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 		if (nump != NULL)
 			*nump = 0;
 		if (ip->i_ump->um_fstype == UFS1)
-			*bnp = blkptrtodb(ump,
-			    (int32_t)ufs_rw32(ip->i_ffs1_db[bn],
-			    UFS_MPNEEDSWAP(vp->v_mount)));
+			daddr = (int32_t)ufs_rw32(ip->i_ffs1_db[bn],
+			    UFS_MPNEEDSWAP(vp->v_mount));
 		else
-			*bnp = blkptrtodb(ump, ufs_rw64(ip->i_ffs2_db[bn],
-			    UFS_MPNEEDSWAP(vp->v_mount)));
-		if (*bnp == 0)
+			daddr = ufs_rw64(ip->i_ffs2_db[bn],
+			    UFS_MPNEEDSWAP(vp->v_mount));
+		*bnp = blkptrtodb(ump, daddr);
+		/*
+		 * Since this is FFS independent code, we are out of
+		 * scope for the definitions of BLK_NOCOPY and
+		 * BLK_SNAP, but we do know that they will fall in
+		 * the range 1..um_seqinc, so we use that test and
+		 * return a request for a zeroed out buffer if attempts
+		 * are made to read a BLK_NOCOPY or BLK_SNAP block.
+		 */
+		if ((ip->i_flags & SF_SNAPSHOT) && daddr > 0 &&
+		    daddr < ump->um_seqinc) {
 			*bnp = -1;
-		if (runp) {
+		} else if (*bnp == 0) {
+			if (ip->i_flags & SF_SNAPSHOT) {
+				*bnp = blkptrtodb(ump, bn * ump->um_seqinc);
+			} else {
+				*bnp = -1;
+			}
+		} else if (runp) {
 			if (ip->i_ump->um_fstype == UFS1) {
 				for (++bn; bn < NDADDR && *runp < maxrun &&
 				    is_sequential(ump,
@@ -255,7 +270,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 			daddr = (int32_t)ufs_rw32(
 			    ((int32_t *)bp->b_data)[xap->in_off],
 			    UFS_MPNEEDSWAP(mp));
-			if (num == 1 && runp) {
+			if (num == 1 && daddr && runp) {
 				for (bn = xap->in_off + 1;
 				    bn < MNINDIR(ump) && *runp < maxrun &&
 				    is_sequential(ump,
@@ -270,7 +285,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 		} else {
 			daddr = ufs_rw64(((int64_t *)bp->b_data)[xap->in_off],
 			    UFS_MPNEEDSWAP(mp));
-			if (num == 1 && runp) {
+			if (num == 1 && daddr && runp) {
 				for (bn = xap->in_off + 1;
 				    bn < MNINDIR(ump) && *runp < maxrun &&
 				    is_sequential(ump,
@@ -285,8 +300,26 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 	if (bp)
 		brelse(bp);
 
-	daddr = blkptrtodb(ump, (int32_t)daddr); /* XXX ondisk32 */
-	*bnp = daddr == 0 ? -1 : daddr;
+	/*
+	 * Since this is FFS independent code, we are out of scope for the
+	 * definitions of BLK_NOCOPY and BLK_SNAP, but we do know that they
+	 * will fall in the range 1..um_seqinc, so we use that test and
+	 * return a request for a zeroed out buffer if attempts are made
+	 * to read a BLK_NOCOPY or BLK_SNAP block.
+	 */
+	if ((ip->i_flags & SF_SNAPSHOT) && daddr > 0 &&
+	    daddr < ump->um_seqinc) {
+		*bnp = -1;
+		return (0);
+	}
+	*bnp = blkptrtodb(ump, (int32_t)daddr); /* XXX ondisk32 */
+	if (*bnp == 0) {
+		if (ip->i_flags & SF_SNAPSHOT) {
+			*bnp = blkptrtodb(ump, bn * ump->um_seqinc);
+		} else {
+			*bnp = -1;
+		}
+	}
 	return (0);
 }
 

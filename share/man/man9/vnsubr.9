@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.20 2004/03/14 22:39:21 cube Exp $
+.\"     $NetBSD: vnsubr.9,v 1.21 2004/05/25 14:54:56 hannken Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 14, 2004
+.Dd May 25, 2004
 .Dt VNSUBR 9
 .Os
 .Sh NAME
@@ -98,9 +98,9 @@
 .Ft void
 .Fn vn_finished_write "struct mount *mp" "int flags"
 .Ft int
-.Fn vn_cow_establish "struct vnode *vp" "void (*func)(void *, struct buf *)" "void *cookie"
+.Fn vn_cow_establish "struct vnode *vp" "int (*func)(void *, struct buf *)" "void *cookie"
 .Ft int
-.Fn vn_cow_disestablish "struct vnode *vp" "void (*func)(void *, struct buf *)" "void *cookie"
+.Fn vn_cow_disestablish "struct vnode *vp" "int (*func)(void *, struct buf *)" "void *cookie"
 .Sh DESCRIPTION
 The high-level functions described in this page are convenience
 functions for simplified access to the vnode operations described in

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.72 2004/02/28 06:28:47 yamt Exp $	*/
+/*	$NetBSD: buf.h,v 1.73 2004/05/25 14:54:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -268,6 +268,7 @@ do {									\
 /* Flags to low-level allocation routines. */
 #define B_CLRBUF	0x01	/* Request allocated buffer be cleared. */
 #define B_SYNC		0x02	/* Do all allocations synchronously. */
+#define B_METAONLY	0x04	/* Return indirect block buffer. */
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.53 2004/05/18 11:55:59 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.54 2004/05/25 14:54:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -140,6 +140,9 @@ struct lock {
 
 			/* maximum sleep time (for tsleep) */
 			int lk_sleep_timo;
+
+			/* lock taking over this lock */
+			struct lock *lk_newlock;
 		} lk_un_sleep;
 		struct {
 			/* CPU ID of exclusive lock holder */
@@ -154,6 +157,7 @@ struct lock {
 #define	lk_locklwp	lk_un.lk_un_sleep.lk_sleep_locklwp
 #define	lk_prio		lk_un.lk_un_sleep.lk_sleep_prio
 #define	lk_timo		lk_un.lk_un_sleep.lk_sleep_timo
+#define	lk_newlock	lk_un.lk_un_sleep.lk_newlock
 
 #define	lk_cpu		lk_un.lk_un_spin.lk_spin_cpu
 #if defined(LOCKDEBUG)
@@ -297,6 +301,7 @@ int	_lockmgr(__volatile struct lock *, u_int, struct simplelock *,
 #else
 int	lockmgr(__volatile struct lock *, u_int flags, struct simplelock *);
 #endif /* LOCKDEBUG */
+void	transferlockers(struct lock *, struct lock *);
 int	lockstatus(struct lock *);
 void	lockmgr_printinfo(__volatile struct lock *);
 
