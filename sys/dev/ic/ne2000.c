@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.18 1999/03/23 21:41:07 drochner Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.19 1999/09/27 04:07:24 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,12 +113,16 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 	int memsize, i, useword;
 
 	/*
-	 * Detect it again; this gives us the memory size.
+	 * Detect it again unless caller specified it; this gives us
+	 * the memory size.
 	 */
-	nsc->sc_type = ne2000_detect(nict, nich, asict, asich);
 	if (nsc->sc_type == 0) {
-		printf("%s: where did the card go?\n", dsc->sc_dev.dv_xname);
-		return;
+		nsc->sc_type = ne2000_detect(nict, nich, asict, asich);
+		if (nsc->sc_type == 0) {
+			printf("%s: where did the card go?\n",
+			    dsc->sc_dev.dv_xname);
+			return;
+		}
 	}
 
 	useword = (nsc->sc_type == NE2000_TYPE_NE2000);
