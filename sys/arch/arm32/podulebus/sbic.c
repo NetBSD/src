@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.5 1996/10/13 03:06:51 christos Exp $ */
+/* $NetBSD: sbic.c,v 1.6 1996/10/14 23:31:29 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -41,7 +41,7 @@
 #define DEBUG
 /*#define SBIC_DEBUG*/
 /*
- * AMIGA AMD 33C93 scsi adaptor driver
+ * WD 33C93 scsi adaptor driver
  */
 
 #include <sys/param.h>
@@ -569,13 +569,6 @@ sbic_scsidone(acb, stat)
 		return;
 	}
 #endif
-	/*
-	 * XXX Support old-style instrumentation for now.
-	 * IS THIS REALLY THE RIGHT PLACE FOR THIS?  --thorpej
-	 */
-	if (slp->device_softc &&
-	    ((struct device *)(slp->device_softc))->dv_unit < dk_ndrive)
-		++dk_xfer[((struct device *)(slp->device_softc))->dv_unit];
 	/*
 	 * is this right?
 	 */
