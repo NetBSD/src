@@ -4648,7 +4648,11 @@ ENTRY(random)
  * be and we must retry.  Typically this loop runs only once;
  * occasionally it runs twice, and only rarely does it run longer.
  */
+#if defined(SUN4)
 ENTRY(lo_microtime)
+#else
+ENTRY(microtime)
+#endif
 	sethi	%hi(_time), %g2
 	sethi	%hi(TIMERREG_VA), %g3
 1:
