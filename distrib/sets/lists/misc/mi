@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.22 1999/10/09 15:33:38 hubertf Exp $
+# $NetBSD: mi,v 1.23 1999/12/23 14:38:12 abs Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -254,6 +254,9 @@
 ./usr/share/examples/supfiles/sup.netbsd.org
 ./usr/share/examples/supfiles/sup.no.netbsd.org
 ./usr/share/examples/supfiles/sup.uk.netbsd.org
+./usr/share/examples/usermgmt/.cshrc
+./usr/share/examples/usermgmt/.login
+./usr/share/examples/usermgmt/.profile
 ./usr/share/sendmail/README
 ./usr/share/sendmail/cf/Makefile
 ./usr/share/sendmail/cf/boat-anchor.mc
