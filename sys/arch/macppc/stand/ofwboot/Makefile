@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2002/03/29 20:26:06 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.31 2002/03/30 07:17:09 tsutsui Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -10,6 +10,7 @@ XCOFFXTRAOBJ=	Xcoffxtra.o
 CFLAGS+=	-Wno-main -msoft-float -mmultiple
 #CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
+CPPFLAGS+=	-DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
 DBG=		-Os
 
 .PATH:		${S}/arch/powerpc/powerpc
