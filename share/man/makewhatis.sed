@@ -34,8 +34,8 @@
 #	@(#)makewhatis.sed	5.5 (Berkeley) 4/17/91
 #
 
-/(\([a-zA-Z0-9]*\).*UNIX Programmer's Manual/ {
-	s;.*(\([a-zA-Z0-9]*\).*UNIX.*;\1;
+/^[A-Z0-9]*([0-9])[ 	].*[ 	][A-Z0-9]*([0-9])$/ {
+	s;.*(\([a-zA-Z0-9]*\).*;\1;
 	h
 	d
 }
@@ -46,8 +46,7 @@
 	s;.*;;
 	N
 	s;\n;;
-	# some twits underline the command name
-	s;_;;g
+	s;.;;g
 	/^[^	 ]/b print
 	H
 	b name
@@ -60,4 +59,5 @@
 	s;\([a-zA-Z0-9,]\)[	 ][	 ]*;\1 ;g
 	s;[^a-zA-Z0-9]*\([a-zA-Z0-9]*\)[^a-zA-Z0-9]*\(.*\) - \(.*\);\2 (\1) - \3;
 	p
+	d
 	q

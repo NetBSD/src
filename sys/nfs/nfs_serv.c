@@ -34,6 +34,15 @@
  * SUCH DAMAGE.
  *
  *	@(#)nfs_serv.c	7.40 (Berkeley) 5/15/91
+ *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         3       00090
+ * --------------------         -----   ----------------------
+ *
+ * 08 Sep 92	Rick "gopher I"		Fix "truncate" (conflicting?)
+ * 28 Aug 92	Arne Henrik Juul	Fixed NFS "create" bug
+ * 02 Mar 92	Greg Hackney		Make NFS POSIX compliant (anon fix)
  */
 
 /*
@@ -365,7 +374,8 @@ nfsrv_read(mrep, md, dpos, cred, xid, mrq, repstat, p)
 	nfsm_srvstrsiz(cnt, NFS_MAXDATA);
 	if (error = nfsrv_fhtovp(fhp, TRUE, &vp, cred))
 		nfsm_reply(0);
-	if (error = nfsrv_access(vp, VREAD | VEXEC, cred, p)) {
+	if ((error = nfsrv_access(vp, VREAD, cred, p)) &&
+		(error = nfsrv_access(vp, VEXEC, cred, p))) {
 		vput(vp);
 		nfsm_reply(0);
 	}
@@ -550,7 +560,8 @@ nfsrv_write(mrep, md, dpos, cred, xid, mrq, repstat, p)
 
 /*
  * nfs create service
- * now does a truncate to 0 length via. setattr if it already exists
+ * if it already exists, just set length		* 28 Aug 92*
+ * do NOT truncate unconditionally !
  */
 nfsrv_create(mrep, md, dpos, cred, xid, mrq, repstat, p)
 	struct mbuf *mrep, *md, **mrq;
@@ -588,8 +599,8 @@ nfsrv_create(mrep, md, dpos, cred, xid, mrq, repstat, p)
 	VATTR_NULL(vap);
 	nfsm_disect(tl, u_long *, NFSX_SATTR);
 	/*
-	 * Iff doesn't exist, create it
-	 * otherwise just truncate to 0 length
+	 * If it doesn't exist, create it		* 28 Aug 92*
+	 * otherwise just set length from attributes
 	 *   should I set the mode too ??
 	 */
 	if (nd.ni_vp == NULL) {
@@ -654,8 +665,8 @@ nfsrv_create(mrep, md, dpos, cred, xid, mrq, repstat, p)
 		else
 			vput(nd.ni_dvp);
 		VOP_ABORTOP(&nd);
-		vap->va_size = 0;
-		if (error = VOP_SETATTR(vp, vap, cred, p)) {
+		vap->va_size = fxdr_unsigned(long, *(tl+3));	/* 28 Aug 92*/
+/* 08 Sep 92*/	if (vap->va_size != -1 && (error = VOP_SETATTR(vp, vap, cred, p))) {
 			vput(vp);
 			nfsm_reply(0);
 		}
@@ -1439,10 +1450,13 @@ nfsrv_noop(mrep, md, dpos, cred, xid, mrq, repstat, p)
 	struct proc *p;
 {
 	caddr_t bpos;
-	int error = 0;
+	int error;					/* 08 Sep 92*/
 	struct mbuf *mb, *mreq;
 
-	error = EPROCUNAVAIL;
+	if (*repstat)					/* 08 Sep 92*/
+		error = *repstat;
+	else
+		error = EPROCUNAVAIL;
 	nfsm_reply(0);
 	return (error);
 }

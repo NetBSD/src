@@ -29,6 +29,16 @@
  * The other files also don't care about ST(x) etc - they just get addresses
  * to 80-bit temporary reals, and do with them as they please. I wanted to
  * hide most of the 387-specific things here.
+ *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         2       00060
+ * --------------------         -----   ----------------------
+ *
+ * 19 Sep 92	Ishii Masahiro		Fix 0x1fd instruction
+ *		kym@bingsuns.cc.binghamton.edu		Fix fscale
+ * 28 Nov 92	Poul-Henning Kamp	Reduce kernel size if you have
+ *					a 387 or 486 chip
  */
 
 #include "machine/cpu.h"
@@ -68,6 +78,10 @@ put_fs_long(unsigned long val, unsigned long *adr) { (void)suword(adr,val); }
 
 math_emulate(struct trapframe * info)
 {
+#if defined(i486) || defined(i387)
+	panic("math_emulate(), shouldn't happen with -Di486 or -Di387");
+}
+#else
 	unsigned short code;
 	temp_real tmp;
 	char * address;
@@ -163,7 +177,7 @@ math_emulate(struct trapframe * info)
 			/* incomplete and totally inadequate -wfj */
 			Fscale(PST(0), PST(1), &tmp);
 			real_to_real(&tmp,&ST(0));
-			/* fall into .. */
+			return(0);			/* 19 Sep 92*/
 		case 0x1fc:
 			frndint(PST(0),&tmp);
 			real_to_real(&tmp,&ST(0));
@@ -1387,6 +1401,10 @@ void Fscale(const temp_real *a, const temp_real *b, temp_real *c)
 	temp_int ti;
 
 	*c = *a;
+	if(!c->a && !c->b) {				/* 19 Sep 92*/
+		c->exponent = 0;
+		return;
+	}
 	real_to_int(b, &ti);
 	if(ti.sign)
 		c->exponent -= ti.a;
@@ -1466,3 +1484,4 @@ void int_to_real(const temp_int * a, temp_real * b)
 			:"0" (b->a),"1" (b->b));
 	}
 }
+#endif /* defined(i486) || defined(i387) */
