@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 2000/11/06 12:33:07 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87 2000/11/06 12:35:21 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -314,6 +314,8 @@ initppc(startkernel, endkernel, args)
 
 #ifdef DDB
 	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	if (boothowto & RB_KDB)
+		Debugger();
 #endif
 #ifdef IPKDB
 	/*
