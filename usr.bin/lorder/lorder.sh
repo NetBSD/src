@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: lorder.sh,v 1.6 1997/07/22 05:21:03 cgd Exp $
+#	$NetBSD: lorder.sh,v 1.7 1998/04/09 05:28:07 fair Exp $
 #
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -51,8 +51,6 @@ if ! type "${NM:=nm}" > /dev/null 2>&1; then
 fi
 cmd='set `type "${NM}"` ; eval echo \$$#'
 NM=`eval $cmd`
-PATH=/bin:/usr/bin
-export PATH
 
 # only one argument is a special case, just output the name twice
 case $# in
