@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.10 2000/09/01 12:11:37 ad Exp $	*/
+/*	$NetBSD: cac.c,v 1.11 2000/09/01 14:17:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -191,23 +191,17 @@ cac_shutdown(void *cookie)
 {
 	extern struct cfdriver cac_cd;
 	struct cac_softc *sc;
-	char buf[512];
+	u_int8_t buf[512];
 	int i;
-
-	printf("shutting down cac devices...");
 
 	for (i = 0; i < cac_cd.cd_ndevs; i++) {
 		if ((sc = device_lookup(&cac_cd, i)) == NULL)
 			continue; 
-		/* XXX Documentation on this is a bit fuzzy. */
-		memset(buf, 0, sizeof (buf));
+		memset(buf, 0, sizeof(buf));
 		buf[0] = 1;
 		cac_cmd(sc, CAC_CMD_FLUSH_CACHE, buf, sizeof(buf), 0, 0, 
 		    CAC_CCB_DATA_OUT, NULL);
 	}
-	    	
-	DELAY(5000*1000);
-	printf(" done\n");
 }	
 
 /*
