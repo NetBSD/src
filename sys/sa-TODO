@@ -22,9 +22,6 @@ Things to do for scheduler activations/LWP code.
 - lwp-exit2: kill -9 should succeed against processes whose LWPs are
   all suspended.
 
-- Adapt /proc and libkvm interfaces to support examining LWP/SA data
-  structures. Adapt ps and friends to display such.
-
 - Implement better management of the lwp cache for a sa process. High-water 
   mark needed, at the very least.
 
@@ -34,5 +31,16 @@ Things to do for scheduler activations/LWP code.
 - Debugging interface needs work; ptrace(2) interface can't handle multi-LWP
   or SA processes. 
 
+- Prevent multiple PREEMPTED upcalls from being delivered before a
+  process ever returns to userspace.
+
+- Prevent race conditions between asynchronous upcall-generating
+  events (realtimerexpire, maybe signals?) and sa_yield().
+
+- Signals should not wake up sleeping normal LWPs of SA processes -
+  the kernel doesn't know what the signal mask of the executing thread
+  is, and can't make the decision about whether to wake them. Defer to
+  userland, in true SA style.
+ 
 - Of course, check all new XXX'd parts.
 
