@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_isa.c,v 1.1 2000/02/24 18:49:06 ad Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.2 2000/03/16 15:09:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andy Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.1 2000/02/24 18:49:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.2 2000/03/16 15:09:59 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,15 +104,15 @@ dpt_isa_match(parent, match, aux)
 
 	ia = aux;
 
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT) {
-		for (i = 0; dpt_isa_iobases[i] != -1; i++) {
-			if (dpt_isa_probe(ia, dpt_isa_iobases[i])) {
-				ia->ia_iobase = dpt_isa_iobases[i];
-				return (1);
-			}
+	if (ia->ia_iobase != ISACF_PORT_DEFAULT) 
+		return (dpt_isa_probe(ia, ia->ia_iobase));
+	
+	for (i = 0; dpt_isa_iobases[i] != -1; i++) {
+		if (dpt_isa_probe(ia, dpt_isa_iobases[i])) {
+			ia->ia_iobase = dpt_isa_iobases[i];
+			return (1);
 		}
-	} else if (dpt_isa_probe(ia, ia->ia_iobase))
-		return (1);
+	}
 
 	return (0);
 }
