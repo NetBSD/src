@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: console.h,v 1.2 2001/03/15 17:24:47 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: console.h,v 1.3 2001/03/22 18:19:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ protected:
 	BOOL setupBuffer(void);
 
 public:
+	void genericPrint(const char *);
 	virtual BOOL init(void) { return TRUE; };
 	virtual int16_t getBootConsole(void) { return BI_CNUSE_SERIAL; }
 };
