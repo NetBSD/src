@@ -1,4 +1,4 @@
-	/* $NetBSD: vidc_mc.S,v 1.5 1997/10/14 11:49:18 mark Exp $ */
+	/* $NetBSD: vidc_mc.S,v 1.6 1997/10/17 05:46:16 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,14 +42,6 @@
  */
 
 #include <machine/asm.h>
-
-ip	.req	r12
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
-
-	.text
-	.align 0
 
 /*
  * On entry:
