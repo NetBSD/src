@@ -33,7 +33,7 @@
  *	i4b daemon - network monitor server module
  *	------------------------------------------
  *
- *	$Id: monitor.c,v 1.1.1.1 2001/01/06 13:00:21 martin Exp $
+ *	$Id: monitor.c,v 1.2 2002/03/18 22:49:57 martin Exp $
  *
  * $FreeBSD$
  *
@@ -461,7 +461,7 @@ monitor_create_local_socket(void)
 		return(-1);
 	}
 
-	chmod(local_rights->name, 0500);
+	chmod(local_rights->name, 0600);
 
 	if (listen(s, 0))
 	{
