@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.23 1997/03/22 22:03:25 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.24 1997/03/24 22:56:37 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -606,7 +606,6 @@ srmmu_cache_flush(base, len)
 			srmmu_vcache_flush_context();
 	}
 }
-#endif
 
 void
 ms1_cache_flush(base, len)
@@ -696,3 +695,4 @@ cypress_pcache_flush_line(va, pa)
 	/* NOT YET IMPLEMENTED */
 	srmmu_vcache_flush_page(va & ~(NBPG - 1));
 }
+#endif /* SUN4M */
