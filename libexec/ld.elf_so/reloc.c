@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.54 2002/09/05 15:47:52 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.55 2002/09/05 16:33:57 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -172,8 +172,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 #if defined(__i386__)
 	case R_TYPE(GOT32):
 
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 
@@ -192,8 +191,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		 * generate it.
 		 */
 
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 
@@ -205,8 +203,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		break;
 
 	case R_TYPE(32):
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 
@@ -219,8 +216,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 
 #if defined(__m68k__)
 	case R_TYPE(GOT32):
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 
@@ -234,8 +230,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		break;
 
 	case R_TYPE(PC32):
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 
@@ -249,8 +244,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		break;
 
 	case R_TYPE(32):
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 
@@ -266,8 +260,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 
 #if defined(__sh__)
 	case R_TYPE(GOT32):
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 
@@ -286,8 +279,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		 * type of relocation, but some versions of Binutils
 		 * generate it.
 		 */
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 
@@ -299,8 +291,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		break;
 
 	case R_TYPE(DIR32):
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 
@@ -314,8 +305,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 
 #if defined(__alpha__)
 	case R_TYPE(REFQUAD):
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 
@@ -350,8 +340,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 #if defined(__alpha__) || defined(__i386__) || defined(__m68k__) || \
     defined(__sh__)
 	case R_TYPE(GLOB_DAT):
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 
@@ -437,8 +426,8 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 			    (void *)*where, obj->path));
 		} else {
 			/* XXX maybe do something re: bootstrapping? */
-			def = _rtld_find_symdef(_rtld_objlist, rela->r_info,
-			    NULL, obj, &defobj, false);
+			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
+			    false);
 			if (def == NULL)
 				return -1;
 			*where += (Elf_Addr)(defobj->relocbase + def->st_value);
@@ -453,8 +442,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 #if defined(__powerpc__) || defined(__vax__)
 	case R_TYPE(32):	/* word32 S + A */
 	case R_TYPE(GLOB_DAT):	/* word32 S + A */
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 
@@ -487,8 +475,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 
 #if defined(__arm__)
 	case R_TYPE(GLOB_DAT):	/* word32 B + S */
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 		*where = (Elf_Addr)(defobj->relocbase + def->st_value);
@@ -506,8 +493,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		break;
 
 	case R_TYPE(ABS32):	/* word32 B + S + A */
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 		*where += (Elf_Addr)defobj->relocbase + def->st_value;
@@ -532,8 +518,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		if (addend & 0x00800000)
 			addend |= 0xff000000;
 
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 		tmp = (Elf_Addr)obj->relocbase + def->st_value
@@ -571,9 +556,8 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		 		 * While we're relocating self, _rtld_objlist
 				 * is NULL, so we just pass in self.
 				 */
-				def = _rtld_find_symdef((_rtld_objlist == NULL ?
-				    obj : _rtld_objlist), rela->r_info, 
-				    NULL, obj, &defobj, false);
+				def = _rtld_find_symdef(rela->r_info, obj,
+				    &defobj, false);
 			if (def == NULL)
 				return -1;
 
@@ -611,9 +595,8 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	 		 * While we're relocating self, _rtld_objlist
 			 * is NULL, so we just pass in self.
 			 */
-			def = _rtld_find_symdef((_rtld_objlist == NULL ?
-			    obj : _rtld_objlist), rela->r_info, 
-			    NULL, obj, &defobj, false);
+			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
+			    false);
 			if (def == NULL)
 				return -1;
 
@@ -655,8 +638,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 #endif /* __hppa__ */
 
 	default:
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, true);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
 		rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
 		    "addend = %p, contents = %p, symbol = %s",
 		    (u_long)ELF_R_SYM(rela->r_info),
@@ -700,8 +682,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT));
 #endif
 
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, true);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
 		if (def == NULL)
 			return -1;
 
