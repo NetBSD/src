@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.7 1994/12/14 13:03:37 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.8 1995/06/15 23:22:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -99,13 +99,13 @@ ffs_update(ap)
 	    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0)
 		return (0);
 	if (ip->i_flag & IN_ACCESS)
-		ip->i_atime.ts_sec = ap->a_access->tv_sec;
+		ip->i_atime = ap->a_access->tv_sec;
 	if (ip->i_flag & IN_UPDATE) {
-		ip->i_mtime.ts_sec = ap->a_modify->tv_sec;
+		ip->i_mtime = ap->a_modify->tv_sec;
 		ip->i_modrev++;
 	}
 	if (ip->i_flag & IN_CHANGE)
-		ip->i_ctime.ts_sec = time.tv_sec;
+		ip->i_ctime = time.tv_sec;
 	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 	fs = ip->i_fs;
 	/*
