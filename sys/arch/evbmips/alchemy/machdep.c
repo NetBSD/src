@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.12 2003/09/26 16:00:28 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.13 2003/10/27 23:47:00 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2003/09/26 16:00:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2003/10/27 23:47:00 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -165,7 +165,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	const char *cp;
 	u_long first, last;
 	caddr_t v;
-	int howto, i;
+	int freqok, howto, i;
 
 	extern char edata[], end[];	/* XXX */
 
@@ -187,6 +187,8 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * vectors early on.  We need the wbflush() vector set up
 	 * before comcnattach() is called (or at least before the
 	 * first printf() after that is called).
+	 * Sets up mips_cpu_flags that may be queried by other
+	 * functions called during startup.
 	 * Also clears the I+D caches.
 	 */
 	mips_vector_init();
@@ -197,17 +199,24 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	uvm_setpagesize();
 
 	/*
+	 * Use YAMON's CPU frequency if available.
+	 */
+	freqok = yamon_setcpufreq(1);
+
+	/*
 	 * Initialize bus space tags.
 	 */
 	au_cpureg_bus_mem_init(&pbc->pc_cpuregt, pbc);
 	aubus_st = &pbc->pc_cpuregt;		/* XXX: for aubus.c */
 
 	/*
-	 * Calibrate the timer, delay() relies on this.
+	 * Calibrate the timer if YAMON failed to tell us.
 	 */
-	bus_space_map(&pbc->pc_cpuregt, PC_BASE, PC_SIZE, 0, &sh);
-	au_cal_timers(&pbc->pc_cpuregt, sh);
-	bus_space_unmap(&pbc->pc_cpuregt, sh, PC_SIZE);
+	if (!freqok) {
+		bus_space_map(&pbc->pc_cpuregt, PC_BASE, PC_SIZE, 0, &sh);
+		au_cal_timers(&pbc->pc_cpuregt, sh);
+		bus_space_unmap(&pbc->pc_cpuregt, sh, PC_SIZE);
+	}
 
 	/*
 	 * Bring up the console.
