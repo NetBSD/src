@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.5 1998/07/12 05:59:00 mrg Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.5.2.1 1999/09/26 13:39:26 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.5 1998/07/12 05:59:00 mrg Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.5.2.1 1999/09/26 13:39:26 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,8 +55,8 @@ __RCSID("$NetBSD: keyboard.c,v 1.5 1998/07/12 05:59:00 mrg Exp $");
 int
 keyboard()
 {
-	char ch, *line;
-	int linesz;
+	char ch, rch, *line;
+	int i, linesz;
 	sigset_t set;
 
 	sigemptyset(&set);
@@ -79,6 +79,7 @@ keyboard()
 				clearerr(stdin);
 				continue;
 			}
+			rch = ch;
 			if (ch >= 'A' && ch <= 'Z')
 				ch += 'a' - 'A';
 			if (col == 0) {
@@ -124,15 +125,19 @@ keyboard()
 				clrtoeol();
 				continue;
 			}
-			if (isprint(ch) || ch == ' ') {
+			if (isprint(rch) || ch == ' ') {
 				if (col < linesz) {
-					line[col] = ch;
-					mvaddch(CMDLINE, col, ch);
+					line[col] = rch;
+					mvaddch(CMDLINE, col, rch);
 					col++;
 				}
 			}
 		} while (col == 0 || (ch != '\r' && ch != '\n'));
 		line[col] = '\0';
+		/* pass commands as lowercase */
+		for (i = 1; i < col && line[i] != ' '; i++)
+		    if (line[i] >= 'A' && line[i] <= 'Z')
+			line[i] += 'a' - 'A';
 		sigprocmask(SIG_BLOCK, &set, NULL);
 		command(line + 1);
 		sigprocmask(SIG_UNBLOCK, &set, NULL);
