@@ -1,5 +1,5 @@
 /*
- *	$Id: disksubr.c,v 1.9 1994/05/16 05:08:26 chopps Exp $
+ *	$Id: disksubr.c,v 1.10 1994/05/25 21:48:53 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -147,22 +147,46 @@ readdisklabel(dev, strat, lp, clp)
 	lp->d_secsize = rbp->nbytes;
 	lp->d_nsectors = rbp->nsectors;
 	lp->d_ntracks = rbp->nheads;
-	lp->d_ncylinders = rbp->ncylinders;
-	lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
+	/*
+	 * should be rdb->ncylinders however this is a bogus value 
+	 * sometimes it seems
+	 */
+	lp->d_ncylinders = rbp->highcyl + 1;
+	/*
+	 * I also don't trust rdb->secpercyl
+	 */
+	lp->d_secpercyl = min(rbp->secpercyl, lp->d_nsectors * lp->d_ntracks);
 #ifdef DIAGNOSTIC
-	if (lp->d_secpercyl != rbp->secpercyl)
+	if (lp->d_ncylinders != rbp->ncylinders)
+		printf("warning found rdb->ncylinders(%d) != "
+		    "rdb->highcyl(%d) + 1\n", rbp->ncylinders,
+		    rbp->highcyl + 1);
+	if (lp->d_nsectors * lp->d_ntracks != rbp->secpercyl)
 		printf("warning found rdb->secpercyl(%d) != "
 		    "rdb->nsectors(%d) * rdb->nheads(%d)\n", rbp->secpercyl,
 		    rbp->nsectors, rbp->nheads);
 #endif
-	lp->d_secperunit = lp->d_secpercyl * (rbp->highcyl - rbp->lowcyl + 1);
-	lp->d_sparespercyl = lp->d_sparespertrack = 0;
+	lp->d_sparespercyl =
+	    max(rbp->secpercyl, lp->d_nsectors * lp->d_ntracks) 
+	    - lp->d_secpercyl;
+	if (lp->d_sparespercyl == 0)
+		lp->d_sparespertrack = 0;
+	else {
+		lp->d_sparespertrack = lp->d_sparespercyl / lp->d_ntracks;
+#ifdef DIAGNOSTIC
+		if (lp->d_sparespercyl % lp->d_ntracks)
+			printf("warning lp->d_sparespercyl(%d) not multiple "
+			    "of lp->d_ntracks(%d)\n", lp->d_sparespercyl,
+			    lp->d_ntracks);
+#endif
+	}
+
+	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
 	lp->d_acylinders = rbp->ncylinders - (rbp->highcyl - rbp->lowcyl + 1);
 	lp->d_rpm = 3600; 		/* good guess I suppose. */
 	lp->d_interleave = rbp->interleave;
 	lp->d_headswitch = lp->d_flags = lp->d_trackskew = lp->d_cylskew = 0;
 	lp->d_trkseek = /* rbp->steprate */ 0;	
-
 
 	/*
 	 * raw partition gets the entire disk
@@ -251,6 +275,9 @@ readdisklabel(dev, strat, lp, clp)
 			trypart = RAW_PART + 1;
 			break;
 		case ADT_AMIGADOS:
+			trypart = 8;
+			break;
+		case ADT_AMIX:
 			trypart = 8;
 			break;
 		case ADT_UNKNOWN:
@@ -503,6 +530,10 @@ getadostype(dostype)
 	case DOST_DOS:
 		adt.archtype = ADT_AMIGADOS;
 		adt.fstype = FS_ADOS;
+		return(adt);
+	case DOST_AMIX:
+		adt.archtype = ADT_AMIX;
+		adt.fstype = FS_UNUSED;
 		return(adt);
 	case DOST_XXXBSD:
 #ifdef DIAGNOSTIC
