@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_xout.c,v 1.7 2003/11/05 04:03:21 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec_xout.c,v 1.8 2003/11/19 15:46:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.7 2003/11/05 04:03:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.8 2003/11/19 15:46:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,18 +110,20 @@ exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep)
 	struct xexec *xp;
 	struct xext *xep;
 {
-	int error, nseg, i;
+	int error;
+	size_t nseg, i;
 	long baddr, bsize;
 	struct xseg *xs;
 	size_t resid;
+	size_t segsize = (size_t)xep->xe_segsize;
 
-	if (xep->xe_segsize > 16 * sizeof(*xs))
+	if (segsize > 16 * sizeof(*xs))
 		return ENOEXEC;
 
 	/* read in segment table */
-	xs = (struct xseg *)malloc(xep->xe_segsize, M_TEMP, M_WAITOK);
+	xs = (struct xseg *)malloc(segsize, M_TEMP, M_WAITOK);
 	error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t)xs,
-			xep->xe_segsize, xep->xe_segpos,
+			segsize, xep->xe_segpos,
 			UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
 			&resid, p);
 	if (error) {
@@ -130,7 +132,7 @@ exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep)
 		return ENOEXEC;
 	}
 
-	for (nseg = xep->xe_segsize / sizeof(*xs), i = 0; i < nseg; i++) {
+	for (nseg = segsize / sizeof(*xs), i = 0; i < nseg; i++) {
 		switch (xs[i].xs_type) {
 		case XS_TTEXT:	/* text segment */
 
