@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.12 2003/08/19 17:25:49 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.13 2003/08/31 16:53:03 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,6 +72,8 @@
 #define SET_KERNEL_2_NAME	"kern-GENERIC.MP"
 
 #define SET_MD_1_NAME		"toolchain"
+
+#define SET_KERNEL_GENERIC	SET_KERNEL_1
 
 /* Bootblock type */
 EXTERN const char *boottype INIT("");
