@@ -1,4 +1,4 @@
-/* $NetBSD: pci_axppci_33.c,v 1.15 1997/09/02 13:19:39 thorpej Exp $ */
+/* $NetBSD: pci_axppci_33.c,v 1.16 1997/09/02 20:10:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.15 1997/09/02 13:19:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.16 1997/09/02 20:10:29 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,7 +68,7 @@ void
 pci_axppci_33_pickintr(lcp)
 	struct lca_config *lcp;
 {
-	bus_space_tag_t iot = lcp->lc_iot;
+	bus_space_tag_t iot = &lcp->lc_iot;
 	pci_chipset_tag_t pc = &lcp->lc_pc;
 	pcireg_t sioclass;
 	int sioII;
