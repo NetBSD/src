@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.4 1999/10/27 09:29:19 haya Exp $
+#	$NetBSD: files.cardbus,v 1.5 1999/10/29 11:31:40 joda Exp $
 #
 # files.cardbus
 #
@@ -12,6 +12,7 @@ device	cardbus {[dev = -1], [function = -1]}
 attach	cardbus at cbbus
 file	dev/cardbus/cardbus.c		cardbus		needs-flag
 file	dev/cardbus/cardbus_map.c	cardbus
+file	dev/cardbus/cardbus_exrom.c	cardbus
 file	dev/cardbus/rbus.c		cardbus
 defopt	opt_cardbus.h			CARDBUS_DEBUG
 
