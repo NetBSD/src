@@ -1,4 +1,4 @@
-/* $NetBSD: action.c,v 1.1 2003/08/06 22:11:49 jmmv Exp $ */
+/* $NetBSD: action.c,v 1.2 2003/08/06 23:58:40 jmmv Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: action.c,v 1.1 2003/08/06 22:11:49 jmmv Exp $");
+__RCSID("$NetBSD: action.c,v 1.2 2003/08/06 23:58:40 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -93,7 +93,7 @@ action_startup(struct mouse *m)
 {
 
 	if (Initialized) {
-		warnx("action mode already initialized");
+		log_warnx("action mode already initialized");
 		return 1;
 	}
 
@@ -130,7 +130,7 @@ action_wsmouse_event(struct wscons_event evt)
 			break;
 
 		default:
-			warnx("unknown button event");
+			log_warnx("unknown button event");
 		}
 	}
 }
@@ -151,6 +151,8 @@ run_action(int button, const char *ud)
 
 	conf = config_get_mode("action");
 	cmd = block_get_propval(conf, buf, NULL);
-	if (cmd != NULL)
+	if (cmd != NULL) {
+		log_info("running command `%s'", cmd);
 		system(cmd);
+	}
 }

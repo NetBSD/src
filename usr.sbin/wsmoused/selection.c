@@ -1,4 +1,4 @@
-/* $NetBSD: selection.c,v 1.4 2003/08/06 18:07:53 jmmv Exp $ */
+/* $NetBSD: selection.c,v 1.5 2003/08/06 23:58:40 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: selection.c,v 1.4 2003/08/06 18:07:53 jmmv Exp $");
+__RCSID("$NetBSD: selection.c,v 1.5 2003/08/06 23:58:40 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -160,7 +160,7 @@ selection_startup(struct mouse *m)
 	struct block *conf;
 
 	if (Initialized) {
-		warnx("selection mode already initialized");
+		log_warnx("selection mode already initialized");
 		return 1;
 	}
 
@@ -180,7 +180,7 @@ selection_startup(struct mouse *m)
 
 	/* Get terminal size */
 	if (ioctl(0, TIOCGWINSZ, &ws) < 0) {
-		warn("cannot get terminal size");
+		log_warn("cannot get terminal size");
 		return 0;
 	}
 
@@ -194,7 +194,7 @@ selection_startup(struct mouse *m)
 	ch.row = ch.col = 0;
 	if (ioctl(Selmouse.sm_ttyfd, WSDISPLAYIO_GETWSCHAR, &ch) < 0) {
 		(void)close(Selmouse.sm_ttyfd);
-		warn("ioctl(WSDISPLAYIO_GETWSCHAR) failed");
+		log_warn("ioctl(WSDISPLAYIO_GETWSCHAR) failed");
 		return 0;
 	}
 
@@ -269,7 +269,7 @@ selection_wsmouse_event(struct wscons_event evt)
 			break;
 
 		default:
-			warnx("unknown event");
+			log_warnx("unknown event");
 		}
 
 		if (Selmouse.sm_selecting)
@@ -300,7 +300,7 @@ selection_wsmouse_event(struct wscons_event evt)
 			break;
 
 		default:
-			warnx("unknown button event");
+			log_warnx("unknown button event");
 		}
 	}
 }
@@ -381,7 +381,7 @@ open_tty(int ttyno)
 		(void)snprintf(buf, sizeof(buf), _PATH_TTYPREFIX "%d", ttyno);
 		Selmouse.sm_ttyfd = open(buf, O_RDONLY | O_NONBLOCK);
 		if (Selmouse.sm_ttyfd < 0)
-			warnx("cannot open %s", buf);
+			log_warnx("cannot open %s", buf);
 	}
 }
 
@@ -399,7 +399,7 @@ char_invert(size_t row, size_t col)
 	ch.col = col;
 
 	if (ioctl(Selmouse.sm_ttyfd, WSDISPLAYIO_GETWSCHAR, &ch) == -1) {
-		warn("ioctl(WSDISPLAYIO_GETWSCHAR) failed");
+		log_warn("ioctl(WSDISPLAYIO_GETWSCHAR) failed");
 		return;
 	}
 
@@ -408,7 +408,7 @@ char_invert(size_t row, size_t col)
 	ch.background = t;
 
 	if (ioctl(Selmouse.sm_ttyfd, WSDISPLAYIO_PUTWSCHAR, &ch) == -1)
-		warn("ioctl(WSDISPLAYIO_PUTWSCHAR) failed");
+		log_warn("ioctl(WSDISPLAYIO_PUTWSCHAR) failed");
 }
 
 /* ---------------------------------------------------------------------- */
@@ -422,7 +422,7 @@ alloc_sel(size_t len)
 
 	ptr = malloc(len);
 	if (ptr == NULL)
-		warn("cannot allocate memory for selection (%lu bytes)",
+		log_warn("cannot allocate memory for selection (%lu bytes)",
 		    (unsigned long)len);
 	return ptr;
 }
@@ -439,7 +439,7 @@ fill_buf(char *ptr, size_t row, size_t col, size_t end)
 	for (ch.col = col; ch.col < end; ch.col++) {
 		if (ioctl(Selmouse.sm_ttyfd, WSDISPLAYIO_GETWSCHAR,
 		    &ch) == -1) {
-			warn("ioctl(WSDISPLAYIO_GETWSCHAR) failed");
+			log_warn("ioctl(WSDISPLAYIO_GETWSCHAR) failed");
 			*ptr++ = ' ';
 		} else {
 			*ptr++ = ch.letter;
@@ -461,7 +461,7 @@ row_length(size_t row)
 	ch.row = row;
 	do {
 		if (ioctl(Selmouse.sm_ttyfd, WSDISPLAYIO_GETWSCHAR, &ch) == -1)
-			warn("ioctl(WSDISPLAYIO_GETWSCHAR) failed");
+			log_warn("ioctl(WSDISPLAYIO_GETWSCHAR) failed");
 		ch.col--;
 	} while (isspace((unsigned char)ch.letter) && ch.col >= 0);
 	return ch.col + 2;
@@ -641,5 +641,5 @@ selarea_paste(void)
 	for (i = 0; i < Selarea.sa_buflen; i++)
 		if (ioctl(Selmouse.sm_ttyfd, TIOCSTI,
 		    &Selarea.sa_buf[i]) == -1)
-			warn("ioctl(TIOCSTI)");
+			log_warn("ioctl(TIOCSTI)");
 }
