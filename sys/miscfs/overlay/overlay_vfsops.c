@@ -1,11 +1,11 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.6 2001/01/22 12:17:39 jdolecek Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.7 2001/06/07 13:44:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
  * All rights reserved.
  *
  * This software was written by William Studenmund of the
- * Numerical Aerospace Similation Facility, NASA Ames Research Center.
+ * Numerical Aerospace Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -73,8 +73,8 @@
  */
 
 /*
- * Null Layer
- * (See null_vnops.c for a description of what this does.)
+ * Overlay Layer
+ * (See overlay_vnops.c for a description of what this does.)
  */
 
 #include <sys/param.h>
