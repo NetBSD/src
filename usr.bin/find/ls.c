@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: ls.c,v 1.4 1994/01/06 23:13:13 jtc Exp $";
+static char rcsid[] = "$Id: ls.c,v 1.5 1994/03/27 09:01:41 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ printlong(name, accpath, sb)
 		(void)printf("%3d, %3d ", major(sb->st_rdev),
 		    minor(sb->st_rdev));
 	else
-		(void)printf("%8ld ", sb->st_size);
+		(void)printf("%8qd ", sb->st_size);
 	printtime(sb->st_mtime);
 	(void)printf("%s", name);
 	if (S_ISLNK(sb->st_mode))
