@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1983 Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,17 +31,36 @@
  * SUCH DAMAGE.
  */
 
+/* Portions Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
+ *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * from getnetent.c	1.1 (Coimbra) 93/06/02
+ */
+
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)getnetent.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$Id: getnetent.c,v 1.1.1.3 1997/04/13 09:12:11 mrg Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>
+#include <arpa/nameser.h>
+
 #include <stdio.h>
+#include <resolv.h>
+#include <netdb.h>
 #include <string.h>
+
+#ifndef _PATH_NETWORKS 
+#define _PATH_NETWORKS  "/etc/networks"
+#endif
 
 #define	MAXALIASES	35
 
@@ -51,10 +70,31 @@ static struct netent net;
 static char *net_aliases[MAXALIASES];
 int _net_stayopen;
 
+void _setnetent __P((int));
+void _endnetent __P((void));
+
 void
-setnetent(f)
+setnetent(stayopen)
+	int stayopen;
+{
+
+	sethostent(stayopen);
+	_setnetent(stayopen);
+}
+
+void
+endnetent()
+{
+
+	endhostent();
+	_endnetent();
+}
+
+void
+_setnetent(f)
 	int f;
 {
+
 	if (netf == NULL)
 		netf = fopen(_PATH_NETWORKS, "r" );
 	else
@@ -63,8 +103,9 @@ setnetent(f)
 }
 
 void
-endnetent()
+_endnetent()
 {
+
 	if (netf) {
 		fclose(netf);
 		netf = NULL;
@@ -103,18 +144,19 @@ again:
 	net.n_net = inet_network(cp);
 	net.n_addrtype = AF_INET;
 	q = net.n_aliases = net_aliases;
-	if (p != NULL) 
+	if (p != NULL) {
 		cp = p;
-	while (cp && *cp) {
-		if (*cp == ' ' || *cp == '\t') {
-			cp++;
-			continue;
+		while (cp && *cp) {
+			if (*cp == ' ' || *cp == '\t') {
+				cp++;
+				continue;
+			}
+			if (q < &net_aliases[MAXALIASES - 1])
+				*q++ = cp;
+			cp = strpbrk(cp, " \t");
+			if (cp != NULL)
+				*cp++ = '\0';
 		}
-		if (q < &net_aliases[MAXALIASES - 1])
-			*q++ = cp;
-		cp = strpbrk(cp, " \t");
-		if (cp != NULL)
-			*cp++ = '\0';
 	}
 	*q = NULL;
 	return (&net);

@@ -33,8 +33,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)sethostent.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$Id: sethostent.c,v 1.1.1.3 1997/04/13 09:12:16 mrg Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
@@ -43,7 +45,10 @@ static char sccsid[] = "@(#)sethostent.c	8.1 (Berkeley) 6/4/93";
 
 void
 sethostent(stayopen)
+	int stayopen;
 {
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+		return;
 	if (stayopen)
 		_res.options |= RES_STAYOPEN | RES_USEVC;
 }
@@ -52,5 +57,5 @@ void
 endhostent()
 {
 	_res.options &= ~(RES_STAYOPEN | RES_USEVC);
-	_res_close();
+	res_close();
 }
