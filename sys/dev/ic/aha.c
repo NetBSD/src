@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.14 1998/02/04 05:14:03 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.15 1998/02/09 10:53:07 thorpej Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -132,13 +132,13 @@ void aha_queue_ccb __P((struct aha_softc *, struct aha_ccb *));
 void aha_collect_mbo __P((struct aha_softc *));
 void aha_start_ccbs __P((struct aha_softc *));
 void aha_done __P((struct aha_softc *, struct aha_ccb *));
-void aha_init __P((struct aha_softc *));
+int aha_init __P((struct aha_softc *));
 void aha_inquire_setup_information __P((struct aha_softc *));
 void ahaminphys __P((struct buf *));
 int aha_scsi_cmd __P((struct scsipi_xfer *));
 int aha_poll __P((struct aha_softc *, struct scsipi_xfer *, int));
 void aha_timeout __P((void *arg));
-int aha_create_ccbs __P((struct aha_softc *, void *, size_t, int));
+int aha_create_ccbs __P((struct aha_softc *, struct aha_ccb *, int));
 void aha_enqueue __P((struct aha_softc *, struct scsipi_xfer *, int));
 struct scsipi_xfer *aha_dequeue __P((struct aha_softc *));
 
@@ -356,7 +356,10 @@ aha_attach(sc, apd)
 	sc->sc_link.type = BUS_SCSI;
 
 	aha_inquire_setup_information(sc);
-	aha_init(sc);
+	if (aha_init(sc) != 0) {
+		/* Error during initialization! */
+		return;
+	}
 
 	/*
 	 * ask the adapter what subunits are present
@@ -374,6 +377,10 @@ aha_finish_ccbs(sc)
 
 	wmbi = wmbx->tmbi;
 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+	    AHA_MBI_OFF(wmbi), sizeof(struct aha_mbx_in),
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
 	if (wmbi->stat == AHA_MBI_FREE) {
 		for (i = 0; i < AHA_MBX_SIZE; i++) {
 			if (wmbi->stat != AHA_MBI_FREE) {
@@ -382,6 +389,9 @@ aha_finish_ccbs(sc)
 				goto AGAIN;
 			}
 			aha_nextmbx(wmbi, wmbx, mbi);
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+			    AHA_MBI_OFF(wmbi), sizeof(struct aha_mbx_in),
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		}
 #ifdef AHADIAGnot
 		printf("%s: mbi interrupt with no full mailboxes\n",
@@ -398,6 +408,10 @@ AGAIN:
 			    sc->sc_dev.dv_xname);
 			goto next;
 		}
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		    AHA_CCB_OFF(ccb), sizeof(struct aha_ccb),
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 #ifdef AHADEBUG
 		if (aha_debug) {
@@ -445,7 +459,13 @@ AGAIN:
 
 	next:
 		wmbi->stat = AHA_MBI_FREE;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		    AHA_MBI_OFF(wmbi), sizeof(struct aha_mbx_in),
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		aha_nextmbx(wmbi, wmbx, mbi);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		    AHA_MBI_OFF(wmbi), sizeof(struct aha_mbx_in), 
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	} while (wmbi->stat != AHA_MBI_FREE);
 
 	wmbx->tmbi = wmbi;
@@ -543,42 +563,13 @@ aha_init_ccb(sc, ccb)
 	int hashnum, error;
 
 	/*
-	 * XXX Should we put a DIAGNOSTIC check for multiple
-	 * XXX CCB inits here?
+	 * Create the DMA map for this CCB.
 	 */
-
-	bzero(ccb, sizeof(struct aha_ccb));
-
-	/*
-	 * Create DMA maps for this CCB.
-	 */
-	error = bus_dmamap_create(dmat, sizeof(struct aha_ccb), 1,
-	    sizeof(struct aha_ccb), 0, BUS_DMA_NOWAIT, &ccb->dmamap_self);
-	if (error) {
-		printf("%s: can't create ccb dmamap_self\n",
-		    sc->sc_dev.dv_xname);
-		return (error);
-	}
-
 	error = bus_dmamap_create(dmat, AHA_MAXXFER, AHA_NSEG, AHA_MAXXFER,
 	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &ccb->dmamap_xfer);
 	if (error) {
-		printf("%s: can't create ccb dmamap_xfer\n",
-		    sc->sc_dev.dv_xname);
-		bus_dmamap_destroy(dmat, ccb->dmamap_self);
-		return (error);
-	}
-
-	/*
-	 * Load the permanent DMA maps.
-	 */
-	error = bus_dmamap_load(dmat, ccb->dmamap_self, ccb,
-	    sizeof(struct aha_ccb), NULL, BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: can't load ccb dmamap_self\n",
-		    sc->sc_dev.dv_xname);
-		bus_dmamap_destroy(dmat, ccb->dmamap_self);
-		bus_dmamap_destroy(dmat, ccb->dmamap_xfer);
+		printf("%s: unable to create ccb DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
 		return (error);
 	}
 
@@ -586,7 +577,8 @@ aha_init_ccb(sc, ccb)
 	 * put in the phystokv hash table
 	 * Never gets taken out.
 	 */
-	ccb->hashkey = ccb->dmamap_self->dm_segs[0].ds_addr;
+	ccb->hashkey = sc->sc_dmamap_control->dm_segs[0].ds_addr +
+	    AHA_CCB_OFF(ccb);
 	hashnum = CCB_HASH(ccb->hashkey);
 	ccb->nexthash = sc->sc_ccbhash[hashnum];
 	sc->sc_ccbhash[hashnum] = ccb;
@@ -595,62 +587,30 @@ aha_init_ccb(sc, ccb)
 }
 
 /*
- * Create a set of ccbs and add them to the free list.
+ * Create a set of ccbs and add them to the free list.  Called once
+ * by aha_init().  We return the number of CCBs successfully created.
  */
 int
-aha_create_ccbs(sc, mem, size, max_ccbs)
+aha_create_ccbs(sc, ccbstore, count)
 	struct aha_softc *sc;
-	void *mem;
-	size_t size;
-	int max_ccbs;
+	struct aha_ccb *ccbstore;
+	int count;
 {
-	bus_dma_segment_t seg;
 	struct aha_ccb *ccb;
-	int rseg, error;
+	int i, error;
 
-	if (sc->sc_numccbs >= AHA_CCB_MAX)
-		return (0);
-
-	if (max_ccbs > AHA_CCB_MAX)
-		max_ccbs = AHA_CCB_MAX;
-
-	if ((ccb = mem) != NULL)
-		goto have_mem;
-
-	size = NBPG;
-	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, &rseg,
-	    BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: can't allocate memory for ccbs\n",
-		    sc->sc_dev.dv_xname);
-		return (error);
-	}
-
-	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-	    (caddr_t *)&ccb, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
-		printf("%s: can't map memory for ccbs\n",
-		    sc->sc_dev.dv_xname);
-		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-		return (error);
-	}
-
- have_mem:
-	bzero(ccb, size);
-	while (size > sizeof(struct aha_ccb) && sc->sc_numccbs < max_ccbs) {
-		error = aha_init_ccb(sc, ccb);
-		if (error) {
-			printf("%s: can't initialize ccb\n",
-			    sc->sc_dev.dv_xname);
-			return (error);
+	bzero(ccbstore, sizeof(struct aha_ccb) * count);
+	for (i = 0; i < count; i++) {
+		ccb = &ccbstore[i];
+		if ((error = aha_init_ccb(sc, ccb)) != 0) {
+			printf("%s: unable to initialize ccb, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			goto out;
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, chain);
-		(caddr_t)ccb += ALIGN(sizeof(struct aha_ccb));
-		size -= ALIGN(sizeof(struct aha_ccb));
-		sc->sc_numccbs++;
 	}
-
-	return (0);
+ out:
+	return (i);
 }
 
 /*
@@ -678,20 +638,6 @@ aha_get_ccb(sc, flags)
 		if (ccb) {
 			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
 			break;
-		}
-		if (sc->sc_numccbs < AHA_CCB_MAX) {
-			/*
-			 * aha_create_ccbs() might have managed to create
-			 * one before it failed.  If so, don't abort,
-			 * just grab it and continue to hobble along.
-			 */
-			if (aha_create_ccbs(sc, NULL, 0, AHA_CCB_MAX) != 0 &&
-			    sc->sc_free_ccb.tqh_first == NULL) {
-				printf("%s: can't allocate ccbs\n",
-				    sc->sc_dev.dv_xname);
-				goto out;
-			}
-			continue;
 		}
 		if ((flags & SCSI_NOSLEEP) != 0)
 			goto out;
@@ -752,6 +698,9 @@ aha_collect_mbo(sc)
 	wmbo = wmbx->cmbo;
 
 	while (sc->sc_mbofull > 0) {
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		    AHA_MBO_OFF(wmbo), sizeof(struct aha_mbx_out),
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		if (wmbo->cmd != AHA_MBO_FREE)
 			break;
 
@@ -802,11 +751,16 @@ aha_start_ccbs(sc)
 #endif
 
 		/* Link ccb to mbo. */
-		ltophys(ccb->dmamap_self->dm_segs[0].ds_addr, wmbo->ccb_addr);
+		ltophys(sc->sc_dmamap_control->dm_segs[0].ds_addr +
+		    AHA_CCB_OFF(ccb), wmbo->ccb_addr);
 		if (ccb->flags & CCB_ABORT)
 			wmbo->cmd = AHA_MBO_ABORT;
 		else
 			wmbo->cmd = AHA_MBO_START;
+
+		 bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		     AHA_MBO_OFF(wmbo), sizeof(struct aha_mbx_out),
+		     BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		/* Tell the card to poll immediately. */
 		bus_space_write_1(iot, ioh, AHA_CMD_PORT, AHA_START_SCSI);
@@ -1016,7 +970,7 @@ aha_find(iot, ioh, sc)
 /*
  * Start the board, ready for normal operation
  */
-void
+int
 aha_init(sc)
 	struct aha_softc *sc;
 {
@@ -1026,7 +980,7 @@ aha_init(sc)
 	struct aha_devices devices;
 	struct aha_setup setup;
 	struct aha_mailbox mailbox;
-	int i, j, initial_ccbs, rseg;
+	int error, i, j, initial_ccbs, rseg;
 
 	/*
 	 * XXX
@@ -1082,6 +1036,8 @@ aha_init(sc)
 		}
 	}
 	initial_ccbs *= sc->sc_link.openings;
+	if (initial_ccbs > AHA_CCB_MAX)
+		initial_ccbs = AHA_CCB_MAX;
 
 	/* Obtain setup information from. */
 	setup.cmd.opcode = AHA_INQUIRE_SETUP;
@@ -1105,38 +1061,66 @@ aha_init(sc)
 	}
 
 	/*
-	 * Allocate the mailbox.
+	 * Allocate the mailbox and control blocks.
 	 */
-	if (bus_dmamem_alloc(sc->sc_dmat, NBPG, NBPG, 0, &seg, 1,
-	    &rseg, BUS_DMA_NOWAIT) ||
-	    bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
-	    (caddr_t *)&wmbx, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
-		panic("aha_init: can't create or map mailbox");
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct aha_control),
+	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to allocate control structures, "
+		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		return (error);
+	}
+	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
+	    sizeof(struct aha_control), (caddr_t *)&sc->sc_control,
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("%s: unable to map control structures, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return (error);
+	}
 
 	/*
-	 * Since DMA memory allocation is always rounded up to a
-	 * page size, create some ccbs from the leftovers.
+	 * Create and load the DMA map used for the mailbox and
+	 * control blocks.
 	 */
-	if (aha_create_ccbs(sc, ((caddr_t)wmbx) +
-	    ALIGN(sizeof(struct aha_mbx)),
-	    NBPG - ALIGN(sizeof(struct aha_mbx)), initial_ccbs))
-		panic("aha_init: can't create ccbs");
+	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct aha_control),
+	    1, sizeof(struct aha_control), 0, BUS_DMA_NOWAIT,
+	    &sc->sc_dmamap_control)) != 0) {
+		printf("%s: unable to create control DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return (error);
+	}
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_control,
+	    sc->sc_control, sizeof(struct aha_control), NULL,
+	    BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to load control DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return (error);
+	}
 
 	/*
-	 * Create and load the mailbox DMA map.
+	 * Initialize the control blocks.
 	 */
-	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct aha_mbx), 1,
-	    sizeof(struct aha_mbx), 0, BUS_DMA_NOWAIT, &sc->sc_dmamap_mbox) ||
-	    bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_mbox, wmbx,
-	    sizeof(struct aha_mbx), NULL, BUS_DMA_NOWAIT))
-		panic("aha_init: can't create or load mailbox dma map");
+	i = aha_create_ccbs(sc, sc->sc_control->ac_ccbs, initial_ccbs);
+	if (i == 0) {
+		printf("%s: unable to create control blocks\n",
+		    sc->sc_dev.dv_xname);
+		return (ENOMEM);
+	} else if (i != initial_ccbs) {
+		printf("%s: WARNING: only %d of %d control blocks created\n",
+		    sc->sc_dev.dv_xname, i, initial_ccbs);
+	}
 
 	/*
 	 * Set up initial mail box for round-robin operation.
 	 */
 	for (i = 0; i < AHA_MBX_SIZE; i++) {
 		wmbx->mbo[i].cmd = AHA_MBO_FREE;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		    AHA_MBO_OFF(&wmbx->mbo[i]), sizeof(struct aha_mbx_out),
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		wmbx->mbi[i].stat = AHA_MBI_FREE;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		    AHA_MBI_OFF(&wmbx->mbi[i]), sizeof(struct aha_mbx_in),
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 	wmbx->cmbo = wmbx->tmbo = &wmbx->mbo[0];
 	wmbx->tmbi = &wmbx->mbi[0];
@@ -1145,10 +1129,12 @@ aha_init(sc)
 	/* Initialize mail box. */
 	mailbox.cmd.opcode = AHA_MBX_INIT;
 	mailbox.cmd.nmbx = AHA_MBX_SIZE;
-	ltophys(sc->sc_dmamap_mbox->dm_segs[0].ds_addr, mailbox.cmd.addr);
+	ltophys(sc->sc_dmamap_control->dm_segs[0].ds_addr +
+	    offsetof(struct aha_control, ac_mbx), mailbox.cmd.addr);
 	aha_cmd(iot, ioh, sc,
 	    sizeof(mailbox.cmd), (u_char *)&mailbox.cmd,
 	    0, (u_char *)0);
+	return (0);
 }
 
 void
@@ -1394,8 +1380,9 @@ aha_scsi_cmd(xs)
 			    ccb->scat_gath[seg].seg_len);
 		}
 
-		ltophys(ccb->dmamap_self->dm_segs[0].ds_addr +
-		    offsetof(struct aha_ccb, scat_gath), ccb->data_addr);
+		ltophys(sc->sc_dmamap_control->dm_segs[0].ds_addr +
+		    AHA_CCB_OFF(ccb) + offsetof(struct aha_ccb, scat_gath),
+		    ccb->data_addr);
 		ltophys(ccb->dmamap_xfer->dm_nsegs *
 		    sizeof(struct aha_scat_gath), ccb->data_length);
 	} else {
@@ -1415,6 +1402,10 @@ aha_scsi_cmd(xs)
 	ccb->target_stat = 0x00;
 	ccb->link_id = 0;
 	ltophys(0, ccb->link_addr);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+	    AHA_CCB_OFF(ccb), sizeof(struct aha_ccb),
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	s = splbio();
 	aha_queue_ccb(sc, ccb);
