@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/02/08 04:40:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2002/02/26 22:54:05 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -38,14 +38,12 @@ netbsd.${K}.gz: .NOTMAIN ${KERNOBJDIR}/${K}/netbsd ${R}
 	mv netbsd.tmp.gz ${.TARGET}
 .endfor
 
+CLEANFILES+=	netbsd.tmp ${KERNELS} ${KERNELSYMS}
+
 #	do the work
 #
-all: ${KERNELS}
+realall: ${KERNELS}
 
 release:
 
-clean cleandir distclean:
-	rm -f *.core netbsd.tmp ${KERNELS} ${KERNELSYMS}
-
-.include <bsd.obj.mk>
 .include <bsd.prog.mk>
