@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlgetmibinfo.c,v 1.1 2004/03/25 19:36:26 atatat Exp $ */
+/*	$NetBSD: sysctlgetmibinfo.c,v 1.2 2004/03/26 22:54:42 he Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ static struct sysctlnode sysctl_mibroot = {
 	0
 #else /* !lint */
 	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
-	.sysctl_size = sizeof(struct sysctlnode),
+	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
 	.sysctl_name = "(root)",
 #endif /* !lint */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.115 2004/03/25 19:36:26 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.116 2004/03/26 22:54:42 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1059,6 +1059,13 @@ struct sysctlnode0 {
 	struct { uint32_t __sysc_spad; type __sysc_sdatum; } __sysc_ustr; }
 #endif
 #define __sysc_unpad(x) x.__sysc_ustr.__sysc_sdatum
+
+/*
+ * The following is for gcc2, which doesn't handle __sysc_unpad().
+ * The code gets a little less ugly this way.
+ */
+#define sysc_init_field(field, value) 	\
+	.field = { .__sysc_ustr = { .__sysc_sdatum = (value), }, }
 
 struct sysctlnode {
 	uint32_t sysctl_flags;		/* flags and type */
