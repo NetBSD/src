@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.459 2004/09/22 20:53:34 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.460 2004/09/22 20:54:21 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7553,3 +7553,8 @@ etc/rc.d/ipfilter				1.12
 	rules, rather than relying upon running "ipf -Fa" beforehand (which
 	only flushes IPv4). Should fix PR 26885 and PR 26857.
 	[martti, ticket #866]
+
+distrib/notes/common/main			edit
+
+	Start initial list of "what's changed" between 1.6 and 2.0
+	[jmc]
