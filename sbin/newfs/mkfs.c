@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.59 2001/12/31 07:07:58 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.60 2002/01/07 12:00:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.59 2001/12/31 07:07:58 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.60 2002/01/07 12:00:09 simonb Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/mman.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <ufs/ufs/dinode.h>
@@ -52,6 +53,7 @@ __RCSID("$NetBSD: mkfs.c,v 1.59 2001/12/31 07:07:58 lukem Exp $");
 #include <ufs/ffs/ffs_extern.h>
 #include <sys/disklabel.h>
 
+#include <err.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
@@ -63,9 +65,8 @@ __RCSID("$NetBSD: mkfs.c,v 1.59 2001/12/31 07:07:58 lukem Exp $");
 
 #include "extern.h"
 
-
 static void initcg(int, time_t);
-static void fsinit(time_t);
+static int fsinit(time_t, mode_t, uid_t, gid_t);
 static int makedir(struct direct *, int);
 static daddr_t alloc(int, int);
 static void iput(struct dinode *, ino_t);
@@ -76,6 +77,8 @@ static void clrblock(struct fs *, unsigned char *, int);
 static void setblock(struct fs *, unsigned char *, int);
 static int32_t calcipg(int32_t, int32_t, off_t *);
 static void swap_cg(struct cg *, struct cg *);
+static void calc_memfree(void);
+static void *mkfs_malloc(size_t size);
 
 static int count_digits(int);
 
@@ -90,11 +93,11 @@ static int count_digits(int);
  *
  * N.B.: MAXIPG must be a multiple of INOPB(fs).
  */
-#define MAXIPG(fs)	roundup((fs)->fs_bsize * NBBY / 3, INOPB(fs))
+#define	MAXIPG(fs)	roundup((fs)->fs_bsize * NBBY / 3, INOPB(fs))
 
-#define UMASK		0755
-#define MAXINOPB	(MAXBSIZE / DINODE_SIZE)
-#define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
+#define	UMASK		0755
+#define	MAXINOPB	(MAXBSIZE / DINODE_SIZE)
+#define	POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
 union {
 	struct fs fs;
@@ -116,10 +119,11 @@ char writebuf[MAXBSIZE];
 int	fsi, fso;
 
 void
-mkfs(struct partition *pp, const char *fsys, int fi, int fo)
+mkfs(struct partition *pp, const char *fsys, int fi, int fo,
+    mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
 	int32_t i, mincpc, mincpg, inospercg;
-	int32_t cylno, rpos, blk, j, warn = 0;
+	int32_t cylno, rpos, blk, j, warning = 0;
 	int32_t used, mincpgcnt, bpcg;
 	off_t usedb;
 	int32_t mapcramped, inodecramped;
@@ -133,10 +137,10 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo)
 	time(&utime);
 #endif
 	if (mfs) {
-		(void)malloc(0);
+		calc_memfree();
 		if (fssize * sectorsize > memleft)
-			fssize = (memleft - 16384) / sectorsize;
-		if ((membase = malloc(fssize * sectorsize)) == 0)
+			fssize = memleft / sectorsize;
+		if ((membase = mkfs_malloc(fssize * sectorsize)) == 0)
 			exit(12);
 	}
 	fsi = fi;
@@ -416,7 +420,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo)
 	sblock.fs_ncyl = fssize * NSPF(&sblock) / sblock.fs_spc;
 	if (fssize * NSPF(&sblock) > sblock.fs_ncyl * sblock.fs_spc) {
 		sblock.fs_ncyl++;
-		warn = 1;
+		warning = 1;
 	}
 	if (sblock.fs_ncyl < 1) {
 		printf("file systems must have at least one cylinder\n");
@@ -523,9 +527,9 @@ next:
 		sblock.fs_ncyl -= sblock.fs_ncyl % sblock.fs_cpg;
 		sblock.fs_size = fssize = sblock.fs_ncyl * sblock.fs_spc /
 		    NSPF(&sblock);
-		warn = 0;
+		warning = 0;
 	}
-	if (warn && !mfs) {
+	if (warning && !mfs) {
 		printf("Warning: %d sector(s) in last cylinder unallocated\n",
 		    sblock.fs_spc -
 		    (fssize * NSPF(&sblock) - (sblock.fs_ncyl - 1)
@@ -571,7 +575,7 @@ next:
 		printf("%s:\t%d sectors in %d %s of %d tracks, %d sectors\n",
 		    fsys, sblock.fs_size * NSPF(&sblock), sblock.fs_ncyl,
 		    "cylinders", sblock.fs_ntrak, sblock.fs_nsect);
-#define B2MBFACTOR (1 / (1024.0 * 1024.0))
+#define	B2MBFACTOR (1 / (1024.0 * 1024.0))
 		printf("\t%.1fMB in %d cyl groups (%d c/g, %.2fMB/g, %d i/g)\n",
 		    (float)sblock.fs_size * sblock.fs_fsize * B2MBFACTOR,
 		    sblock.fs_ncg, sblock.fs_cpg,
@@ -611,7 +615,8 @@ next:
 	 * Now construct the initial file system,
 	 * then write out the super-block.
 	 */
-	fsinit(utime);
+	if (fsinit(utime, mfsmode, mfsuid, mfsgid) == 0 && mfs)
+		errx(1, "Error making filesystem");
 	sblock.fs_time = utime;
 	memcpy(writebuf, &sblock, sbsize);
 	if (needswap)
@@ -629,7 +634,7 @@ next:
 	 * to get swapped to.
 	 */
 	if (needswap) {
-		if ((writebuf2=malloc(sblock.fs_cssize)) == NULL)
+		if ((writebuf2 = malloc(sblock.fs_cssize)) == NULL)
 			exit(12);
 		ffs_csum_swap(fscs, (struct csum*)writebuf2, sblock.fs_cssize);
 	} else
@@ -811,9 +816,9 @@ initcg(int cylno, time_t utime)
 struct dinode node;
 
 #ifdef LOSTDIR
-#define PREDEFDIR 3
+#define	PREDEFDIR 3
 #else
-#define PREDEFDIR 2
+#define	PREDEFDIR 2
 #endif
 
 struct direct root_dir[] = {
@@ -850,8 +855,8 @@ struct odirect olost_found_dir[] = {
 char buf[MAXBSIZE];
 static void copy_dir(struct direct *, struct direct *);
 
-void
-fsinit(time_t utime)
+int
+fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
 #ifdef LOSTDIR
 	int i;
@@ -892,21 +897,27 @@ fsinit(time_t utime)
 	/*
 	 * create the root directory
 	 */
-	if (mfs)
-		node.di_mode = IFDIR | 01777;
-	else
+	if (mfs) {
+		node.di_mode = IFDIR | mfsmode;
+		node.di_uid = mfsuid;
+		node.di_gid = mfsgid;
+	} else {
 		node.di_mode = IFDIR | UMASK;
+		node.di_uid = geteuid();
+		node.di_gid = getegid();
+	}
 	node.di_nlink = PREDEFDIR;
 	if (Oflag)
 		node.di_size = makedir((struct direct *)oroot_dir, PREDEFDIR);
 	else
 		node.di_size = makedir(root_dir, PREDEFDIR);
 	node.di_db[0] = alloc(sblock.fs_fsize, node.di_mode);
+	if (node.di_db[0] == 0)
+		return (0);
 	node.di_blocks = btodb(fragroundup(&sblock, node.di_size));
-	node.di_uid = geteuid();
-	node.di_gid = getegid();
 	wtfs(fsbtodb(&sblock, node.di_db[0]), sblock.fs_fsize, buf);
 	iput(&node, ROOTINO);
+	return (1);
 }
 
 /*
@@ -1068,82 +1079,6 @@ iput(struct dinode *ip, ino_t ino)
 	} else
 		ibuf[ino_to_fsbo(&sblock, ino)] = *ip;
 	wtfs(d, sblock.fs_bsize, ibuf);
-}
-
-/*
- * Replace libc function with one suited to our needs.
- */
-void *
-malloc(size_t size)
-{
-	void *p;
-	char *base, *i;
-	static u_long pgsz;
-	struct rlimit rlp;
-
-	if (pgsz == 0) {
-		base = sbrk(0);
-		pgsz = getpagesize() - 1;
-		i = (char *)((u_long)(base + pgsz) &~ pgsz);
-		base = sbrk(i - base);
-		if (getrlimit(RLIMIT_DATA, &rlp) < 0)
-			perror("getrlimit");
-		rlp.rlim_cur = rlp.rlim_max;
-		if (setrlimit(RLIMIT_DATA, &rlp) < 0)
-			perror("setrlimit");
-		memleft = rlp.rlim_max - (u_long)base;
-	}
-	size = (size + pgsz) &~ pgsz;
-	if (size > memleft)
-		size = memleft;
-	memleft -= size;
-	if (size == 0)
-		return (NULL);
-	p = sbrk(size);
-	if (p == (void *)-1)
-		p = NULL;
-	return (p);
-}
-
-/*
- * Replace libc function with one suited to our needs.
- */
-void *
-realloc(void *ptr, size_t size)
-{
-	void *p;
-
-	if ((p = malloc(size)) == NULL)
-		return (NULL);
-	memmove(p, ptr, size);
-	free(ptr);
-	return (p);
-}
-
-/*
- * Replace libc function with one suited to our needs.
- */
-void *
-calloc(size_t size, size_t numelm)
-{
-	void *base;
-
-	size *= numelm;
-	base = malloc(size);
-	if (base == NULL)
-		return (NULL);
-	memset(base, 0, size);
-	return (base);
-}
-
-/*
- * Replace libc function with one suited to our needs.
- */
-void
-free(void *ptr)
-{
-	
-	/* do not worry about it for now */
 }
 
 /*
@@ -1381,4 +1316,54 @@ count_digits(int num)
 	for(ndig = 1; num > 9; num /=10, ndig++);
 
 	return (ndig);
+}
+
+/*
+ * XXX!
+ * Attempt to guess how much more space is available for process data.  The
+ * heuristic we use is
+ *
+ *	max_data_limit - (sbrk(0) - etext) - 128kB
+ *
+ * etext approximates that start address of the data segment, and the 128kB
+ * allows some slop for both segment gap between text and data, and for other
+ * (libc) malloc usage.
+ */
+static void
+calc_memfree(void)
+{
+	extern char etext;
+	struct rlimit rlp;
+	u_long base;
+
+	base = (u_long)sbrk(0) - (u_long)&etext;
+	if (getrlimit(RLIMIT_DATA, &rlp) < 0)
+		perror("getrlimit");
+	rlp.rlim_cur = rlp.rlim_max;
+	if (setrlimit(RLIMIT_DATA, &rlp) < 0)
+		perror("setrlimit");
+	memleft = rlp.rlim_max - base - (128 * 1024);
+}
+
+/*
+ * Internal version of malloc that trims the requested size if not enough
+ * memory is available.
+ */
+static void *
+mkfs_malloc(size_t size)
+{
+	u_long pgsz;
+
+	if (size == 0)
+		return (NULL);
+	if (memleft == 0)
+		calc_memfree();
+
+	pgsz = getpagesize() - 1;
+	size = (size + pgsz) &~ pgsz;
+	if (size > memleft)
+		size = memleft;
+	memleft -= size;
+	return (mmap(0, size, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
+	    -1, 0));
 }
