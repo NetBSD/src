@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.63 1998/03/21 11:15:25 pk Exp $
+# 	$NetBSD: GENERIC,v 1.64 1998/04/18 19:03:00 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -184,6 +184,10 @@ vme0	at mainbus0				# sun4
 iommu0	at mainbus0				# sun4m
 sbus0	at iommu0				# sun4m
 vme0	at iommu0				# sun4m
+
+## SBus expander box
+xbox*	at sbus? slot ? offset ?
+sbus*	at xbox?
 
 #### Standard system devices -- all required for a given architecture
 
