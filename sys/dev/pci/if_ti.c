@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.8.4.1 2000/09/26 20:18:16 martin Exp $ */
+/* $NetBSD: if_ti.c,v 1.8.4.2 2000/12/31 21:19:53 jhawk Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -136,11 +136,15 @@
 
 static struct ti_type ti_devs[] = {
 	{ PCI_VENDOR_ALTEON,	PCI_PRODUCT_ALTEON_ACENIC,
-		"Alteon AceNIC Gigabit Ethernet" },
+		"Alteon AceNIC 1000baseSX Gigabit Ethernet" },
+	{ PCI_VENDOR_ALTEON,	PCI_PRODUCT_ALTEON_ACENIC_COPPER,
+		"Alteon AceNIC 1000baseT Gigabit Ethernet" },
 	{ PCI_VENDOR_3COM,	PCI_PRODUCT_3COM_3C985,
 		"3Com 3c985-SX Gigabit Ethernet" },
 	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620,
-		"Netgear GA620 Gigabit Ethernet" },
+		"Netgear GA620 1000baseSX Gigabit Ethernet" },
+	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620T,
+		"Netgear GA620 1000baseT Gigabit Ethernet" },
 	{ PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,
 		"Silicon Graphics Gigabit Ethernet" },
 	{ 0, 0, NULL }
@@ -626,21 +630,12 @@ static int ti_alloc_jumbo_mem(sc)
 
 	/*
 	 * Now divide it up into 9K pieces and save the addresses
-	 * in an array. Note that we play an evil trick here by using
-	 * the first few bytes in the buffer to hold the address
-	 * of the softc structure for this interface. This is because
-	 * ti_jfree() needs it, but it is called by the mbuf management
-	 * code which will not pass it to us explicitly.
+	 * in an array.
 	 */
 	ptr = sc->ti_cdata.ti_jumbo_buf;
 	for (i = 0; i < TI_JSLOTS; i++) {
-		u_int64_t		**aptr;
-		aptr = (u_int64_t **)ptr;
-		aptr[0] = (u_int64_t *)sc;
-		ptr += sizeof(u_int64_t);
-		sc->ti_cdata.ti_jslots[i].ti_buf = ptr;
-		sc->ti_cdata.ti_jslots[i].ti_inuse = 0;
-		ptr += (TI_JLEN - sizeof(u_int64_t));
+		sc->ti_cdata.ti_jslots[i] = ptr;
+		ptr += TI_JLEN;
 		entry = malloc(sizeof(struct ti_jpool_entry), 
 			       M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
@@ -675,8 +670,7 @@ static void *ti_jalloc(sc)
 
 	SIMPLEQ_REMOVE_HEAD(&sc->ti_jfree_listhead, entry, jpool_entries);
 	SIMPLEQ_INSERT_HEAD(&sc->ti_jinuse_listhead, entry, jpool_entries);
-	sc->ti_cdata.ti_jslots[entry->slot].ti_inuse = 1;
-	return(sc->ti_cdata.ti_jslots[entry->slot].ti_buf);
+	return(sc->ti_cdata.ti_jslots[entry->slot]);
 }
 
 /*
@@ -685,45 +679,33 @@ static void *ti_jalloc(sc)
 static void ti_jfree(buf, size, arg)
 	caddr_t			buf;
 	u_int			size;
-	void *arg; /* XXX NetBSD: we should really use it */
+	void *arg;
 {
 	struct ti_softc		*sc;
-	u_int64_t		**aptr;
 	int		        i;
 	struct ti_jpool_entry   *entry;
 
 	/* Extract the softc struct pointer. */
-	aptr = (u_int64_t **)(buf - sizeof(u_int64_t));
-	sc = (struct ti_softc *)(aptr[0]);
+	sc = (struct ti_softc *)arg;
 
 	if (sc == NULL)
-		panic("ti_jfree: can't find softc pointer!");
-
-	if (size != TI_JUMBO_FRAMELEN)
-		panic("ti_jfree: freeing buffer of wrong size!");
+		panic("ti_jfree: didn't get softc pointer!");
 
 	/* calculate the slot this buffer belongs to */
 
-	i = ((caddr_t)aptr 
+	i = ((caddr_t)buf
 	     - (caddr_t)sc->ti_cdata.ti_jumbo_buf) / TI_JLEN;
 
 	if ((i < 0) || (i >= TI_JSLOTS))
 		panic("ti_jfree: asked to free buffer that we don't manage!");
-	else if (sc->ti_cdata.ti_jslots[i].ti_inuse == 0)
-		panic("ti_jfree: buffer already free!");
-	else {
-		sc->ti_cdata.ti_jslots[i].ti_inuse--;
-		if(sc->ti_cdata.ti_jslots[i].ti_inuse == 0) {
-			entry = SIMPLEQ_FIRST(&sc->ti_jinuse_listhead);
-			if (entry == NULL)
-				panic("ti_jfree: buffer not in use!");
-			entry->slot = i;
-			SIMPLEQ_REMOVE_HEAD(&sc->ti_jinuse_listhead, 
-					    entry, jpool_entries);
-			SIMPLEQ_INSERT_HEAD(&sc->ti_jfree_listhead, 
-					     entry, jpool_entries);
-		}
-	}
+	entry = SIMPLEQ_FIRST(&sc->ti_jinuse_listhead);
+	if (entry == NULL)
+		panic("ti_jfree: buffer not in use!");
+	entry->slot = i;
+	SIMPLEQ_REMOVE_HEAD(&sc->ti_jinuse_listhead, 
+	    entry, jpool_entries);
+	SIMPLEQ_INSERT_HEAD(&sc->ti_jfree_listhead, 
+	     entry, jpool_entries);
 
 	return;
 }
@@ -1485,9 +1467,7 @@ static int ti_gibinit(sc)
 #ifdef TI_CSUM_OFFLOAD
 	rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM|TI_RCB_FLAG_IP_CKSUM;
 #endif
-#if NVLAN > 0
 	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
-#endif
 
 	/* Set up the jumbo receive ring. */
 	rcb = &sc->ti_rdata->ti_info.ti_jumbo_rx_rcb;
@@ -1498,9 +1478,7 @@ static int ti_gibinit(sc)
 #ifdef TI_CSUM_OFFLOAD
 	rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM|TI_RCB_FLAG_IP_CKSUM;
 #endif
-#if NVLAN > 0
 	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
-#endif
 
 	/*
 	 * Set up the mini ring. Only activated on the
@@ -1518,9 +1496,7 @@ static int ti_gibinit(sc)
 #ifdef TI_CSUM_OFFLOAD
 	rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM|TI_RCB_FLAG_IP_CKSUM;
 #endif
-#if NVLAN > 0
 	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
-#endif
 
 	/*
 	 * Set up the receive return ring.
@@ -1555,9 +1531,7 @@ static int ti_gibinit(sc)
 		rcb->ti_flags = 0;
 	else
 		rcb->ti_flags = TI_RCB_FLAG_HOST_RING;
-#if NVLAN > 0
 	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
-#endif
 	rcb->ti_max_len = TI_TX_RING_CNT;
 	if (sc->ti_hwrev == TI_HWREV_TIGON)
 		TI_HOSTADDR(rcb->ti_hostaddr) = TI_TX_RING_BASE;
@@ -1570,7 +1544,8 @@ static int ti_gibinit(sc)
 		    - (caddr_t)sc->ti_rdata);
 
 	/* Set up tuneables */
-	if (ifp->if_mtu > (ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN))
+	if (ifp->if_mtu > (ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN) ||
+	    (sc->ethercom.ec_capenable & ETHERCAP_VLAN_MTU))
 		CSR_WRITE_4(sc, TI_GCR_RX_COAL_TICKS,
 		    (sc->ti_rx_coal_ticks / 10));
 	else
@@ -1785,6 +1760,21 @@ static void ti_attach(parent, self, aux)
 		goto fail2;
 	}
 
+	/*
+	 * We really need a better way to tell a 1000baseTX card
+	 * from a 1000baseSX one, since in theory there could be
+	 * OEMed 1000baseTX cards from lame vendors who aren't
+	 * clever enough to change the PCI ID. For the moment
+	 * though, the AceNIC is the only copper card available.
+	 */
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALTEON &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTEON_ACENIC_COPPER) ||
+	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETGEAR &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETGEAR_GA620T))
+		sc->ti_copper = 1;
+	else
+		sc->ti_copper = 0;
+
 	/* Set default tuneable values. */
 	sc->ti_stat_ticks = 2 * TI_TICKS_PER_SEC;
 	sc->ti_rx_coal_ticks = TI_TICKS_PER_SEC / 5000;
@@ -1803,14 +1793,37 @@ static void ti_attach(parent, self, aux)
 	ifp->if_watchdog = ti_watchdog;
 	ifp->if_snd.ifq_maxlen = TI_TX_RING_CNT - 1;
 
+	/*
+	 * We can support 802.1Q VLAN-sized frames.
+	 */
+	sc->ethercom.ec_capabilities |=
+	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
+
 	/* Set up ifmedia support. */
 	ifmedia_init(&sc->ifmedia, IFM_IMASK, ti_ifmedia_upd, ti_ifmedia_sts);
-	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_FL, 0, NULL);
-	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_FL|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_FX, 0, NULL);
-	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_FX|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_SX, 0, NULL);
-	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_SX|IFM_FDX, 0, NULL);
+	if (sc->ti_copper) {
+                /*
+                 * Copper cards allow manual 10/100 mode selection,
+                 * but not manual 1000baseTX mode selection. Why?
+                 * Becuase currently there's no way to specify the
+                 * master/slave setting through the firmware interface,
+                 * so Alteon decided to just bag it and handle it
+                 * via autonegotiation.
+                 */
+                ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
+                ifmedia_add(&sc->ifmedia,
+                    IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
+                ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
+                ifmedia_add(&sc->ifmedia,
+                    IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
+                ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_TX, 0, NULL);
+                ifmedia_add(&sc->ifmedia,
+                    IFM_ETHER|IFM_1000_TX|IFM_FDX, 0, NULL);
+	} else {
+		/* Fiber cards don't support 10/100 modes. */
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_SX, 0, NULL);
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_SX|IFM_FDX, 0, NULL);
+	}
 	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->ifmedia, IFM_ETHER|IFM_AUTO);
 
@@ -1855,10 +1868,8 @@ static void ti_rxeof(sc)
 		u_int32_t		rxidx;
 		struct ether_header	*eh;
 		struct mbuf		*m = NULL;
-#if NVLAN > 0
 		u_int16_t		vlan_tag = 0;
 		int			have_tag = 0;
-#endif
 #ifdef TI_CSUM_OFFLOAD
 		struct ip		*ip;
 #endif
@@ -1869,12 +1880,10 @@ static void ti_rxeof(sc)
 		rxidx = cur_rx->ti_idx;
 		TI_INC(sc->ti_rx_saved_considx, TI_RETURN_RING_CNT);
 
-#if NVLAN > 0
 		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {
 			have_tag = 1;
 			vlan_tag = cur_rx->ti_vlan_tag;
 		}
-#endif
 
 		if (cur_rx->ti_flags & TI_BDFLAG_JUMBO_RING) {
 			TI_INC(sc->ti_jumbo, TI_JUMBO_RX_RING_CNT);
@@ -1958,17 +1967,19 @@ static void ti_rxeof(sc)
 			m->m_flags |= M_HWCKSUM;
 #endif
 
-#if NVLAN > 0 /* XXX NetBSD: broken because m points to ether pkt */
-		/*
-		 * If we received a packet with a vlan tag, pass it
-		 * to vlan_input() instead of ether_input().
-		 */
 		if (have_tag) {
-			vlan_input_tag(eh, m, vlan_tag);
+			struct mbuf *n;
+			n = m_aux_add(m, AF_LINK, ETHERTYPE_VLAN);
+			if (n) {
+				*mtod(n, int *) = vlan_tag;
+				n->m_len = sizeof(int);
+			} else {
+				printf("%s: no mbuf for tag\n", ifp->if_xname);
+				m_freem(m);
+				continue;
+			}
 			have_tag = vlan_tag = 0;
-			continue;
 		}
-#endif
 		(*ifp->if_input)(ifp, m);
 	}
 
@@ -2107,14 +2118,7 @@ static int ti_encap(sc, m_head, txidx)
 	struct txdmamap_pool_entry *dma;
 	bus_dmamap_t dmamap;
 	int error, i;
-#if NVLAN > 0
-	struct ifvlan		*ifv = NULL;
-
-	if ((m_head->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-	    m_head->m_pkthdr.rcvif != NULL &&
-	    m_head->m_pkthdr.rcvif->if_type == IFT_8021_VLAN)
-		ifv = m_head->m_pkthdr.rcvif->if_softc;
-#endif
+	struct mbuf *n;
 
 	dma = SIMPLEQ_FIRST(&sc->txdma_list);
 	if (dma == NULL) {
@@ -2162,14 +2166,13 @@ static int ti_encap(sc, m_head, txidx)
 			TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
 			f->ti_len = dmamap->dm_segs[i].ds_len;
 			f->ti_flags = 0;
-#if NVLAN > 0
-			if (ifv != NULL) {
+			n = m_aux_find(m_head, AF_LINK, ETHERTYPE_VLAN);
+			if (n) {
 				f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-				f->ti_vlan_tag = ifv->ifv_tag;
+				f->ti_vlan_tag = *mtod(n, int *);
 			} else {
 				f->ti_vlan_tag = 0;
 			}
-#endif
 			/*
 			 * Sanity check: avoid coming within 16 descriptors
 			 * of the end of the ring.
@@ -2290,8 +2293,13 @@ static void ti_init2(sc)
 
 	/* Specify MTU and interface index. */
 	CSR_WRITE_4(sc, TI_GCR_IFINDEX, sc->sc_dev.dv_unit); /* ??? */
-	CSR_WRITE_4(sc, TI_GCR_IFMTU, ifp->if_mtu +
-	    ETHER_HDR_LEN + ETHER_CRC_LEN);
+	if ((sc->ethercom.ec_capenable & ETHERCAP_VLAN_MTU) &&
+	    ifp->if_mtu < ETHERMTU + ETHER_VLAN_ENCAP_LEN)
+		CSR_WRITE_4(sc, TI_GCR_IFMTU, ETHER_MAX_LEN +
+		    ETHER_VLAN_ENCAP_LEN);
+	else
+		CSR_WRITE_4(sc, TI_GCR_IFMTU, ifp->if_mtu +
+		    ETHER_HDR_LEN + ETHER_CRC_LEN);
 	TI_DO_CMD(TI_CMD_UPDATE_GENCOM, 0, 0);
 
 	/* Load our MAC address. */
@@ -2323,7 +2331,7 @@ static void ti_init2(sc)
 	ti_init_rx_ring_std(sc);
 
 	/* Init jumbo RX ring. */
-	if (ifp->if_mtu > (ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN))
+	if (ifp->if_mtu > (MCLBYTES - ETHER_HDR_LEN - ETHER_CRC_LEN))
 		ti_init_rx_ring_jumbo(sc);
 
 	/*
@@ -2391,17 +2399,28 @@ static int ti_ifmedia_upd(ifp)
 		    TI_CMD_CODE_NEGOTIATE_BOTH, 0);
 		break;
 	case IFM_1000_SX:
-		CSR_WRITE_4(sc, TI_GCR_GLINK, TI_GLNK_PREF|TI_GLNK_1000MB|
-		    TI_GLNK_FULL_DUPLEX|TI_GLNK_RX_FLOWCTL_Y|TI_GLNK_ENB);
+	case IFM_1000_TX:
+		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX) {
+			CSR_WRITE_4(sc, TI_GCR_GLINK,
+			    TI_GLNK_PREF|TI_GLNK_1000MB|TI_GLNK_FULL_DUPLEX|
+			    TI_GLNK_RX_FLOWCTL_Y|TI_GLNK_ENB);
+		} else {
+			CSR_WRITE_4(sc, TI_GCR_GLINK,
+			    TI_GLNK_PREF|TI_GLNK_1000MB|
+			    TI_GLNK_RX_FLOWCTL_Y|TI_GLNK_ENB);
+		}
 		CSR_WRITE_4(sc, TI_GCR_LINK, 0);
 		TI_DO_CMD(TI_CMD_LINK_NEGOTIATION,
 		    TI_CMD_CODE_NEGOTIATE_GIGABIT, 0);
 		break;
 	case IFM_100_FX:
 	case IFM_10_FL:
+	case IFM_100_TX:
+	case IFM_10_T:
 		CSR_WRITE_4(sc, TI_GCR_GLINK, 0);
 		CSR_WRITE_4(sc, TI_GCR_LINK, TI_LNK_ENB|TI_LNK_PREF);
-		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_FX) {
+		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_FX ||
+		    IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX) {
 			TI_SETBIT(sc, TI_GCR_LINK, TI_LNK_100MB);
 		} else {
 			TI_SETBIT(sc, TI_GCR_LINK, TI_LNK_10MB);
@@ -2430,6 +2449,7 @@ static void ti_ifmedia_sts(ifp, ifmr)
 	struct ifmediareq	*ifmr;
 {
 	struct ti_softc		*sc;
+	u_int32_t               media = 0;
 
 	sc = ifp->if_softc;
 
@@ -2441,15 +2461,29 @@ static void ti_ifmedia_sts(ifp, ifmr)
 
 	ifmr->ifm_status |= IFM_ACTIVE;
 
-	if (sc->ti_linkstat == TI_EV_CODE_GIG_LINK_UP)
-		ifmr->ifm_active |= IFM_1000_SX|IFM_FDX;
-	else if (sc->ti_linkstat == TI_EV_CODE_LINK_UP) {
-		u_int32_t		media;
+	if (sc->ti_linkstat == TI_EV_CODE_GIG_LINK_UP) {
+		media = CSR_READ_4(sc, TI_GCR_GLINK_STAT);
+		if (sc->ti_copper)
+			ifmr->ifm_active |= IFM_1000_TX;
+		else
+			ifmr->ifm_active |= IFM_1000_SX;
+		if (media & TI_GLNK_FULL_DUPLEX)
+			ifmr->ifm_active |= IFM_FDX;
+		else
+			ifmr->ifm_active |= IFM_HDX;
+	} else if (sc->ti_linkstat == TI_EV_CODE_LINK_UP) {
 		media = CSR_READ_4(sc, TI_GCR_LINK_STAT);
-		if (media & TI_LNK_100MB)
-			ifmr->ifm_active |= IFM_100_FX;
-		if (media & TI_LNK_10MB)
-			ifmr->ifm_active |= IFM_10_FL;
+		if (sc->ti_copper) {
+			if (media & TI_LNK_100MB)
+				ifmr->ifm_active |= IFM_100_TX;
+			if (media & TI_LNK_10MB)
+				ifmr->ifm_active |= IFM_10_T;
+		} else {
+			if (media & TI_LNK_100MB)
+				ifmr->ifm_active |= IFM_100_FX;
+			if (media & TI_LNK_10MB)
+				ifmr->ifm_active |= IFM_10_FL;
+		}
 		if (media & TI_LNK_FULL_DUPLEX)
 			ifmr->ifm_active |= IFM_FDX;
 		if (media & TI_LNK_HALF_DUPLEX)
