@@ -1,4 +1,4 @@
-/* $NetBSD: info.h,v 1.7 1998/12/31 00:04:07 tron Exp $ */
+/* $NetBSD: info.h,v 1.8 1999/01/19 17:02:00 hubertf Exp $ */
 
 /* from FreeBSD Id: info.h,v 1.10 1997/02/22 16:09:40 peter Exp */
 
@@ -50,6 +50,7 @@
 
 extern int Flags;
 extern Boolean AllInstalled;
+extern Boolean File2Pkg;
 extern Boolean Quiet;
 extern char *InfoPrefix;
 extern char PlayPen[];

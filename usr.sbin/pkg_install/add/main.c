@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.7 1998/10/12 12:03:24 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1999/01/19 17:01:57 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.7 1998/10/12 12:03:24 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 1999/01/19 17:01:57 hubertf Exp $");
 #endif
 #endif
 
@@ -65,7 +65,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-    int ch, err;
+    int ch, error;
     char **start;
     char *cp;
 
@@ -161,10 +161,10 @@ main(int argc, char **argv)
     else if (ch > 1 && AddMode == MASTER)
 	warnx("only one package name may be specified with master mode"),
 	usage();
-    if ((err = pkg_perform(pkgs)) != 0) {
+    if ((error = pkg_perform(pkgs)) != 0) {
 	if (Verbose)
-	    warnx("%d package addition(s) failed", err);
-	return err;
+	    warnx("%d package addition(s) failed", error);
+	return error;
     }
     else
 	return 0;

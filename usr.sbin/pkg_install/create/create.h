@@ -1,4 +1,4 @@
-/* $NetBSD: create.h,v 1.9 1998/10/26 17:39:22 agc Exp $ */
+/* $NetBSD: create.h,v 1.10 1999/01/19 17:01:59 hubertf Exp $ */
 
 /* from FreeBSD Id: create.h,v 1.13 1997/10/08 07:46:19 charnier Exp */
 
@@ -47,7 +47,7 @@ extern int	PlistOnly;
 extern int	RelativeLinks;
 extern int	ReorderDirs;
 
-void		check_list(char *, package_t *);
+void		check_list(char *, package_t *, const char *);
 int		pkg_perform(char **);
 void		copy_plist(char *, package_t *);
 
