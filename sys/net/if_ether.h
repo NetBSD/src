@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.17 2000/06/17 20:57:20 matt Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.18 2000/09/28 07:15:27 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -139,6 +139,7 @@ extern u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 int	ether_addmulti (struct ifreq *, struct ethercom *);
 int	ether_delmulti (struct ifreq *, struct ethercom *);
 int	ether_changeaddr (struct ifreq *, struct ethercom *);
+int	ether_multiaddr(struct sockaddr *, u_int8_t[], u_int8_t[]);
 #endif /* _KERNEL */
 
 /*
