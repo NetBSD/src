@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.3 2002/05/31 16:45:16 atatat Exp $ */
+/*	$NetBSD: stat.c,v 1.4 2002/07/08 18:48:42 atatat Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,13 +38,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stat.c,v 1.3 2002/05/31 16:45:16 atatat Exp $");
+__RCSID("$NetBSD: stat.c,v 1.4 2002/07/08 18:48:42 atatat Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <err.h>
 #include <string.h>
 #include <stdio.h>
@@ -129,9 +130,9 @@ __RCSID("$NetBSD: stat.c,v 1.3 2002/05/31 16:45:16 atatat Exp $");
 #define SHOW_filename	'N'
 #define SHOW_sizerdev	'Z'
 
-void	usage(void);
+void	usage(const char *);
 void	output(const struct stat *, const char *,
-	    const char *, int, int);
+	    const char *, int, int, int);
 int	format1(const struct stat *,	/* stat info */
 	    const char *,		/* the file name */
 	    const char *, int,		/* the format string itself */
@@ -140,31 +141,45 @@ int	format1(const struct stat *,	/* stat info */
 	    int, int);
 
 char *timefmt;
+int linkfail;
 
-#define addchar(b, n, l, c, nl) \
+#define addchar(s, c, nl) \
 	do { \
-		if ((*(n)) < (l)) { \
-			(b)[(*(n))++] = (c); \
-			(*nl) = ((c) == '\n'); \
-		} \
+		(void)fputc((c), (s)); \
+		(*nl) = ((c) == '\n'); \
 	} while (0/*CONSTCOND*/)
 
 int
 main(int argc, char *argv[])
 {
 	struct stat st;
-	int ch, rc, errs;
-	int lsF, fmtchar, usestat, fn, nonl;
-	char *statfmt;
+	int ch, rc, errs, am_readlink;
+	int lsF, fmtchar, usestat, fn, nonl, quiet;
+	char *statfmt, *options, *synopsis;
 
+	am_readlink = 0;
 	lsF = 0;
 	fmtchar = '\0';
 	usestat = 0;
 	nonl = 0;
+	quiet = 0;
+	linkfail = 0;
 	statfmt = NULL;
 	timefmt = NULL;
 
-	while ((ch = getopt(argc, argv, "f:FlLnrst:x")) != -1)
+	if (strcmp(getprogname(), "readlink") == 0) {
+		am_readlink = 1;
+		options = "n";
+		synopsis = "[-n] [file ...]";
+		statfmt = "%Y";
+		fmtchar = 'f';
+		quiet = 1;
+	} else {
+		options = "f:FlLnqrst:x";
+		synopsis = "[-FlLnqrsx] [-f format] [-t timefmt] [file ...]";
+	}
+
+	while ((ch = getopt(argc, argv, options)) != -1)
 		switch (ch) {
 		case 'F':
 			lsF = 1;
@@ -174,6 +189,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			nonl = 1;
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		case 'f':
 			statfmt = optarg;
@@ -191,7 +209,7 @@ main(int argc, char *argv[])
 			timefmt = optarg;
 			break;
 		default:
-			usage();
+			usage(synopsis);
 		}
 
 	argc -= optind;
@@ -229,7 +247,7 @@ main(int argc, char *argv[])
 			timefmt = "%c";
 		break;
 	default:
-		usage();
+		usage(synopsis);
 		/*NOTREACHED*/
 	}
 
@@ -247,26 +265,27 @@ main(int argc, char *argv[])
 
 		if (rc == -1) {
 			errs = 1;
-			warn("%s: stat", argc == 0 ? "(stdin)" : argv[0]);
+			linkfail = 1;
+			if (!quiet)
+				warn("%s: stat",
+				    argc == 0 ? "(stdin)" : argv[0]);
 		}
 		else
-			output(&st, argv[0], statfmt, fn, nonl);
+			output(&st, argv[0], statfmt, fn, nonl, quiet);
 
 		argv++;
 		argc--;
 		fn++;
 	} while (argc > 0);
 
-	return (errs);
+	return (am_readlink ? linkfail : errs);
 }
 
 void
-usage(void)
+usage(const char *synopsis)
 {
 
-	(void)fprintf(stderr,
-	    "usage: %s [-FlLnrsx] [-f format] [-t timefmt] [file ...]\n",
-	    getprogname());
+	(void)fprintf(stderr, "usage: %s %s\n", getprogname(), synopsis);
 	exit(1);
 }
 
@@ -275,22 +294,21 @@ usage(void)
  */
 void
 output(const struct stat *st, const char *file,
-    const char *statfmt, int fn, int nonl)
+    const char *statfmt, int fn, int nonl, int quiet)
 {
 	int flags, size, prec, ofmt, hilo, what;
-	char buf[4096], subbuf[MAXPATHLEN];
+	char buf[MAXPATHLEN];
 	const char *subfmt;
 	int nl, t, i;
-	size_t len;
 
-	len = 0;
+	nl = 1;
 	while (*statfmt != '\0') {
 
 		/*
 		 * Non-format characters go straight out.
 		 */
 		if (*statfmt != FMT_MAGIC) {
-			addchar(buf, &len, sizeof(buf), *statfmt, &nl);
+			addchar(stdout, *statfmt, &nl);
 			statfmt++;
 			continue;
 		}
@@ -307,15 +325,15 @@ output(const struct stat *st, const char *file,
 		 */
 		switch (*statfmt) {
 		case SIMPLE_NEWLINE:
-			addchar(buf, &len, sizeof(buf), '\n', &nl);
+			addchar(stdout, '\n', &nl);
 			statfmt++;
 			continue;
 		case SIMPLE_TAB:
-			addchar(buf, &len, sizeof(buf), '\t', &nl);
+			addchar(stdout, '\t', &nl);
 			statfmt++;
 			continue;
 		case SIMPLE_PERCENT:
-			addchar(buf, &len, sizeof(buf), '%', &nl);
+			addchar(stdout, '%', &nl);
 			statfmt++;
 			continue;
 		case SIMPLE_NUMBER: {
@@ -323,7 +341,7 @@ output(const struct stat *st, const char *file,
 
 			snprintf(num, sizeof(num), "%d", fn);
 			for (p = &num[0]; *p; p++)
-				addchar(buf, &len, sizeof(buf), *p, &nl);
+				addchar(stdout, *p, &nl);
 			statfmt++;
 			continue;
 		}
@@ -442,11 +460,11 @@ output(const struct stat *st, const char *file,
 		t = format1(st,
 		     file,
 		     subfmt, statfmt - subfmt,
-		     subbuf, sizeof(subbuf),
+		     buf, sizeof(buf),
 		     flags, size, prec, ofmt, hilo, what);
 
-		for (i = 0; i < t && i < sizeof(subbuf); i++)
-			addchar(buf, &len, sizeof(buf), subbuf[i], &nl);
+		for (i = 0; i < t && i < sizeof(buf); i++)
+			addchar(stdout, buf[i], &nl);
 
 		continue;
 
@@ -455,9 +473,9 @@ output(const struct stat *st, const char *file,
 		    (int)(statfmt - subfmt + 1), subfmt);
 	}
 
-	(void)write(STDOUT_FILENO, buf, len);
 	if (!nl && !nonl)
-		(void)write(STDOUT_FILENO, "\n", sizeof("\n") - 1);
+		(void)fputc('\n', stdout);
+	(void)fflush(stdout);
 }
 
 /*
@@ -659,14 +677,17 @@ format1(const struct stat *st,
 			snprintf(path, sizeof(path), " -> ");
 			l = readlink(file, path + 4, sizeof(path) - 4);
 			if (l == -1) {
+				linkfail = 1;
 				l = 0;
 				path[0] = '\0';
 			}
 			path[l + 4] = '\0';
 			sdata = path + (ofmt == FMT_STRING ? 0 : 4);
 		}
-		else
+		else {
+			linkfail = 1;
 			sdata = "";
+		}
 		formats = FMT_STRING;
 		if (ofmt == 0)
 			ofmt = FMT_STRING;
