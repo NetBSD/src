@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.140 2003/09/09 19:51:04 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.141 2003/09/09 20:22:49 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1512,4 +1512,15 @@ share/misc/bsd-family-tree			1.12-1.21
 	Sync w/ FreeBSD v1.73 (add FreeBSD 5.1 and BSD/OS 5.0 to the family
 	tree).
 	[cjep, ticket #1451]
+
+sbin/disklabel/disklabel.5			1.16-1.18
+sys/sys/disklabel.h				1.74,1.76
+
+	Add DTYPE_LD to match disklabel.h
+	[tv, ticket #1454]
+	Add DTYPE_JFS2 and FS_JFS2 for IBM Journaled File System
+	this is to match FreeBSD's disklabel.h revision 1.73
+	FreeBSD change was requested by Hiten Pandya <hiten@uk.FreeBSD.org>
+	Add a type for CGD.
+	[tv, ticket #1454]
 
