@@ -32,7 +32,20 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-divert(0)
-VERSIONID(`@(#)cs.hidden.m4	8.1 (Berkeley) 6/7/93')
-DOMAIN(cs.exposed)dnl
-MASQUERADE_AS(CS.Berkeley.EDU)dnl
+
+#
+#  This is a Berkeley-specific configuration file for Ultrix 4.x.
+#  It applies only to the Sequoia 2000 Project at Berkeley,
+#  and should not be used elsewhere.   It is provided on the sendmail
+#  distribution as a sample only.  To create your own configuration
+#  file, create an appropriate domain file in ../domain, change the
+#  `DOMAIN' macro below to reference that file, and copy the result
+#  to a name of your own choosing.
+#
+
+divert(0)dnl
+VERSIONID(`@(#)s2k-ultrix4.mc	8.5 (Berkeley) 6/3/97')
+OSTYPE(ultrix4)dnl
+DOMAIN(S2K.Berkeley.EDU)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl
