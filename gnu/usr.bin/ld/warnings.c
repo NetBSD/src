@@ -1,5 +1,5 @@
 /*
- * $Id: warnings.c,v 1.17 1994/12/23 20:33:01 pk Exp $
+ * $Id: warnings.c,v 1.18 1994/12/28 10:37:38 pk Exp $
  */
 
 #include <sys/param.h>
@@ -723,6 +723,7 @@ int
 do_warnings(outfile)
 	FILE	*outfile;
 {
+
 	list_unresolved_refs = !relocatable_output &&
 		( (undefined_global_sym_count - undefined_weak_sym_count) > 0
 		   || undefined_shobj_sym_count
@@ -741,10 +742,11 @@ do_warnings(outfile)
 
 	each_file(do_file_warnings, (void *)outfile);
 
-	if (reported_undefineds !=
+	if (list_unresolved_refs &&
+	    reported_undefineds !=
 	    (undefined_global_sym_count - undefined_weak_sym_count))
 		warnx("Spurious undefined symbols: "
-		      "# undefined symbols %d, reported %d\n",
+		      "# undefined symbols %d, reported %d",
 		      (undefined_global_sym_count - undefined_weak_sym_count),
 		      reported_undefineds);
 
