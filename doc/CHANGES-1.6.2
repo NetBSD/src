@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.117 2003/08/17 13:53:38 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.118 2003/08/19 14:43:30 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1320,4 +1320,9 @@ share/man/man5/dir.5				1.10-1.16
 	Much easier to read and write, and supported by groff for ages.
 	Okayed by ross.
 	[wiz, ticket #1372]
+
+src/distrib/utils/sysinst/run.c			patch
+
+	Stop sysinst from dumping core randomly. This fixes PR install/17223.
+	[dsl, ticket #1393]
 
