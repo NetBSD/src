@@ -18,6 +18,7 @@ setlogmask(int mask)
 {
 }
 
+__strong_alias(_syslog, syslog)
 void
 syslog(int fac, const char *fmt, ...)
 {
@@ -25,25 +26,15 @@ syslog(int fac, const char *fmt, ...)
 	va_start(ap, fmt);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
+	(void)fprintf(stderr, "\n");
+	fflush(stderr);
 }
 
+__strong_alias(_vsyslog, vsyslog)
 void
 vsyslog(int fac, const char *fmt, va_list ap)
 {
 	(void)vfprintf(stderr, fmt, ap);
-}
-
-void
-_syslog(int fac, const char *fmt, ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-}
-
-void
-_vsyslog(int fac, const char *fmt, va_list ap)
-{
-	(void)vfprintf(stderr, fmt, ap);
+	(void)fprintf(stderr, "\n");
+	fflush(stderr);
 }
