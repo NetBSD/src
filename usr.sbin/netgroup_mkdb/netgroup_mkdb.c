@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char *rcsid = "$Id: netgroup_mkdb.c,v 1.2 1995/04/17 15:13:00 christos Exp $";
+static char *rcsid = "$Id: netgroup_mkdb.c,v 1.3 1995/06/02 21:40:51 christos Exp $";
 #endif
 
 #include <sys/types.h>
@@ -93,6 +93,9 @@ static void	 cleanup __P((void));
 static void	 ng_dump __P((DB *));
 static void	 ng_rdump __P((DB *));
 #endif /* DEBUG_NG */
+
+static const char ng_empty[] = "";
+#define NG_EMPTY(a)	((a) ? (a) : ng_empty)
 
 static char    *dbname = _PATH_NETGROUP_DB;
 
@@ -475,9 +478,9 @@ ng_print(e, str)
 
 		case _NG_GROUP:
 			(void) snprintf(ptr, e->n_size, "(%s,%s,%s)",
-					e->n_group->ng_host,
-					e->n_group->ng_user,
-					e->n_group->ng_domain);
+					NG_EMPTY(e->n_group->ng_host),
+					NG_EMPTY(e->n_group->ng_user),
+					NG_EMPTY(e->n_group->ng_domain));
 			break;
 
 		default:
