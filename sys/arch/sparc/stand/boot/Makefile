@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2003/03/01 13:01:56 pk Exp $
+#	$NetBSD: Makefile,v 1.29 2003/07/30 15:58:39 mrg Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c \
@@ -9,6 +9,7 @@ CLEANFILES:=	vers.c ${FILES}
 LINKS=		${BINDIR}/boot.${RELOC_DEFAULT} ${BINDIR}/boot
 
 CPPFLAGS+=	-DBOOT_AOUT -DBOOT_ELF32
+CFLAGS+=	-freestanding
 
 INCLUDE_LIBZ=	yes
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes
