@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.14 2000/11/07 06:02:24 thorpej Exp $
+#	$NetBSD: SWINGER,v 1.15 2001/04/21 21:10:43 fvdl Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"SWINGER-$Revision: 1.14 $"
+#ident 		"SWINGER-$Revision: 1.15 $"
 
 maxusers	64		# estimated number of users
 
@@ -63,7 +63,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
+options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger

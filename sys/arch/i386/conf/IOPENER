@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.12 2001/01/16 03:38:23 augustss Exp $
+#	$NetBSD: IOPENER,v 1.13 2001/04/21 21:10:42 fvdl Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"IOPENER-$Revision: 1.12 $"
+#ident 		"IOPENER-$Revision: 1.13 $"
 
 maxusers	32		# estimated number of users
 
@@ -46,7 +46,7 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
+options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
