@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.19 1997/04/24 08:14:06 mycroft Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.20 1997/04/28 17:03:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -706,6 +706,7 @@ m_devget(buf, totlen, off0, ifp, copy)
 		if (len >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
+				m_free(m);
 				m_freem(top);
 				return (0);
 			}
