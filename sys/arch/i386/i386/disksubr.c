@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.36 1998/11/07 01:30:57 jonathan Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.37 1998/11/07 04:39:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -52,6 +52,64 @@ int fat_types[] = { DOSPTYP_FAT12, DOSPTYP_FAT16S,
 		    DOSPTYP_FAT16B, DOSPTYP_FAT32,
 		    DOSPTYP_FAT32L, DOSPTYP_FAT16L,
 		    -1 };
+
+#define NO_MBR_SIGNATURE ((struct dos_partition *) -1)
+
+static struct dos_partition *
+mbr_findslice __P((struct dos_partition* dp, struct buf *bp));
+
+
+/* 
+ * Scan MBR for  NetBSD partittion.  Return NO_MBR_SIGNATURE if no MBR found
+ * Otherwise, copy valid MBR partition-table into dp, and if a NetBSD
+ * partition is found, return a pointer to it; else return  NULL.
+ */
+static
+struct dos_partition*
+mbr_findslice(dp, bp)
+	struct dos_partition *dp;
+	struct buf *bp;
+{
+	struct dos_partition *ourdp = NULL;
+	int i;
+
+	/* XXX "there has to be a better check than this." */
+	if (memcmp(bp->b_data + MBRSIGOFS, mbrsig, sizeof(mbrsig)))
+		return (NO_MBR_SIGNATURE);
+
+	/* XXX how do we check veracity/bounds of this? */
+	memcpy(dp, bp->b_data + DOSPARTOFF, NDOSPART * sizeof(*dp));
+
+	/* look for NetBSD partition */
+	for (i = 0; i < NDOSPART; i++) {
+		if (dp[i].dp_typ == DOSPTYP_NETBSD) {
+			ourdp = &dp[i];
+			break;
+		}
+	}
+
+#ifdef COMPAT_386BSD_MBRPART
+	/* didn't find it -- look for 386BSD partition */
+	if (!ourdp) {
+		for (i = 0; i < NDOSPART; i++) {
+			if (dp[i].dp_typ == DOSPTYP_386BSD) {
+				printf("WARNING: old BSD partition ID!\n");
+				ourdp = &dp[i];
+ 				/*
+				 * If more than one matches, take last,
+				 * as NetBSD install tool does.
+				 */
+#if 0
+				break;
+#endif
+			}
+		}
+	}
+#endif	/* COMPAT_386BSD_MBRPART */
+
+		return (ourdp);
+}
+
 
 /*
  * Attempt to read a disk label from a device
@@ -131,38 +189,10 @@ readdisklabel(dev, strat, lp, osdep)
 	} else {
 		struct dos_partition *ourdp = NULL;
 
-		if (memcmp(bp->b_data + MBRSIGOFS, mbrsig, sizeof(mbrsig)))
+		ourdp = mbr_findslice(dp, bp);
+		if (ourdp ==  NO_MBR_SIGNATURE)
 			goto nombrpart;
 
-		/* XXX how do we check veracity/bounds of this? */
-		memcpy(dp, bp->b_data + DOSPARTOFF,
-		      NDOSPART * sizeof(*dp));
-
-		/* look for NetBSD partition */
-		for (i = 0; i < NDOSPART; i++) {
-			if (dp[i].dp_typ == DOSPTYP_NETBSD) {
-				ourdp = &dp[i];
-				break;
-			}
-		}
-#ifdef COMPAT_386BSD_MBRPART
-		/* didn't find it -- look for 386BSD partition */
-		if (!ourdp) {
-			for (i = 0; i < NDOSPART; i++) {
-				if (dp[i].dp_typ == DOSPTYP_386BSD) {
-					printf("WARNING: old BSD partition ID!\n");
-					ourdp = &dp[i];
-	 				/*
-					 * If more than one matches, take last,
-					 * as NetBSD install tool does.
-					 */
-#if 0
-					break;
-#endif
-				}
-			}
-		}
-#endif	/* COMPAT_386BSD_MBRPART */
 		for (i = 0; i < NDOSPART; i++, dp++) {
 			/* Install in partition e, f, g, or h. */
 			pp = &lp->d_partitions[RAW_PART + 1 + i];
@@ -353,7 +383,7 @@ writedisklabel(dev, strat, lp, osdep)
 	struct dos_partition *dp;
 	struct buf *bp;
 	struct disklabel *dlp;
-	int error, dospartoff, cyl, i;
+	int error, dospartoff, cyl;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
@@ -376,38 +406,10 @@ writedisklabel(dev, strat, lp, osdep)
 	if ((error = biowait(bp)) == 0) {
 		struct dos_partition *ourdp = NULL;
 
-		if (memcmp(bp->b_data + MBRSIGOFS, mbrsig, sizeof(mbrsig)))
+		ourdp = mbr_findslice(dp, bp);
+		if (ourdp ==  NO_MBR_SIGNATURE)
 			goto nombrpart;
 
-		/* XXX how do we check veracity/bounds of this? */
-		memcpy(dp, bp->b_data + DOSPARTOFF,
-		      NDOSPART * sizeof(*dp));
-
-		/* look for NetBSD partition */
-		for (i = 0; i < NDOSPART; i++) {
-			if (dp[i].dp_typ == DOSPTYP_NETBSD) {
-				ourdp = &dp[i];
-				break;
-			}
-		}
-#ifdef COMPAT_386BSD_MBRPART
-		/* didn't find it -- look for 386BSD partition */
-		if (!ourdp) {
-			for (i = 0; i < NDOSPART; i++) {
-				if (dp[i].dp_typ == DOSPTYP_386BSD) {
-					printf("WARNING: old BSD partition ID!\n");
-					ourdp = &dp[i];
-	 				/*
-					 * If more than one matches, take last,
-					 * as NetBSD install tool does.
-					 */
-#if 0
-					break;
-#endif
-				}
-			}
-		}
-#endif	/* COMPAT_386BSD_MBRPART */
 		if (ourdp) {
 			/* need sector address for SCSI/IDE,
 			 cylinder for ESDI/ST506/RLL */
