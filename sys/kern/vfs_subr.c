@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.234 2004/09/21 03:10:35 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.235 2004/09/22 11:47:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.234 2004/09/21 03:10:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.235 2004/09/22 11:47:23 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2658,11 +2658,12 @@ vfs_unmountall(p)
 	struct mount *mp, *nmp;
 	int allerror, error;
 
+	printf("unmounting file systems...");
 	for (allerror = 0,
 	     mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
 		nmp = mp->mnt_list.cqe_prev;
 #ifdef DEBUG
-		printf("unmounting %s (%s)...\n",
+		printf("\nunmounting %s (%s)...",
 		    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
 #endif
 		/*
@@ -2680,6 +2681,7 @@ vfs_unmountall(p)
 			allerror = 1;
 		}
 	}
+	printf(" done\n");
 	if (allerror)
 		printf("WARNING: some file systems would not unmount\n");
 }
