@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.15 1997/01/31 05:56:11 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.16 1997/03/31 00:03:11 thorpej Exp $
 #
 # Diskless HP 9000/300-series workstation
 #
@@ -72,6 +72,7 @@ options 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
 
 # Debugging options
 options 	DDB		# Kernel Dynamic Debugger
+makeoptions	DEBUG="-g"	# netbsd.gdb with full debugging symbols
 
 # Verbose descriptions of unconfigured DIO devices
 # (Warning: this compiles in a large string table)
