@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.1 2000/01/26 06:37:23 thorpej Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.2 2000/03/15 02:03:51 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,14 +63,13 @@
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/cardbus/cardbusdevs.h>
 
-#include <dev/ic/aic7xxxreg.h>
 #include <dev/ic/aic7xxxvar.h>
 
 #define	AHC_CARDBUS_IOBA	0x10
 #define	AHC_CARDBUS_MMBA	0x14
 
 struct ahc_cardbus_softc {
-	struct ahc_data sc_ahc;		/* real AHC */
+	struct ahc_softc sc_ahc;	/* real AHC */
 
 	/* CardBus-specific goo. */
 	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
@@ -85,7 +84,7 @@ int	ahc_cardbus_match __P((struct device *, struct cfdata *, void *));
 void	ahc_cardbus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ahc_cardbus_ca = {
-	sizeof(struct ahc_data), ahc_cardbus_match, ahc_cardbus_attach,
+	sizeof(struct ahc_softc), ahc_cardbus_match, ahc_cardbus_attach,
 };
 
 int
@@ -110,15 +109,18 @@ ahc_cardbus_attach(parent, self, aux)
 {
 	struct cardbus_attach_args *ca = aux;
 	struct ahc_cardbus_softc *csc = (void *) self;
-	struct ahc_data *ahc = &csc->sc_ahc;
+	struct ahc_softc *ahc = &csc->sc_ahc;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 	pcireg_t reg;
-	ahc_type ahc_t = AHC_NONE;
-	ahc_flag ahc_f = AHC_FNONE;
+	u_int sxfrctl1 = 0;
+	ahc_chip ahc_t = AHC_NONE;
+	ahc_feature ahc_fe = AHC_FENONE;
+	ahc_flag ahc_f = AHC_FNONE; 
+
 
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
@@ -174,10 +176,19 @@ ahc_cardbus_attach(parent, self, aux)
 	/*
 	 * On all CardBus adapters, we allow SCB paging.
 	 */
-	ahc_f |= AHC_PAGESCBS;
+	ahc_f = AHC_PAGESCBS;
 
-	ahc_reset(ahc->sc_dev.dv_xname, bst, bsh);
-	ahc_construct(ahc, bst, bsh, ca->ca_dmat, ahc_t, ahc_f);
+	ahc_fe = AHC_AIC7860_FE;
+	ahc_t = AHC_AIC7860;
+
+	if (ahc_alloc(ahc, bsh, bst, ca->ca_dmat, ahc_t, ahc_fe, ahc_f) < 0) {
+		printf("%s: unable to initialize softc\n", ahc_name(ahc));
+		return;
+	}
+
+	ahc->channel = 'A';
+
+	ahc_reset(ahc->sc_dev.dv_xname);
 
 	/*
 	 * Establish the interrupt.
@@ -201,7 +212,7 @@ ahc_cardbus_attach(parent, self, aux)
 		switch (ahc->type) {
 		case AHC_AIC7860:
 			id_string = "aic7860 ";
-			ahc_load_seeprom(ahc);
+			check_export(ahc, &sxfrctl1);
 			break;
 
 		default:
@@ -213,14 +224,14 @@ ahc_cardbus_attach(parent, self, aux)
 		/*
 		 * Take the LED out of diagnostic mode.
 		 */
-		sblkctl = AHC_INB(ahc, SBLKCTL);
-		AHC_OUTB(ahc, SBLKCTL, (sblkctl & ~(DIAGLEDEN|DIAGLEDON)));
+		sblkctl = ahc_inb(ahc, SBLKCTL);
+		ahc_outb(ahc, SBLKCTL, (sblkctl & ~(DIAGLEDEN|DIAGLEDON)));
 
 		/*
 		 * I don't know where this is set in the SEEPROM or by the
 		 * BIOS, so we default to 100%.
 		 */
-		AHC_OUTB(ahc, DSPCISTATUS, DFTHRSH_100);
+		ahc_outb(ahc, DSPCISTATUS, DFTHRSH_100);
 
 		if (ahc->flags & AHC_USEDEFAULTS) {
 			/*
@@ -234,6 +245,17 @@ ahc_cardbus_attach(parent, self, aux)
 
 		printf("%s: %s", ahc_name(ahc), id_string);
 	}
+
+	/*
+	 * XXX does this card have external SRAM? - fvdl
+	 */
+
+	/*
+	 * Record our termination setting for the
+	 * generic initialization routine.
+	 */
+        if ((sxfrctl1 & STPWEN) != 0)
+		ahc->flags |= AHC_TERM_ENB_A;
 
 	if (ahc_init(ahc)) {
 		ahc_free(ahc);
