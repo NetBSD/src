@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.1 2002/05/29 19:39:07 drochner Exp $ */
+/* $NetBSD: main.c,v 1.2 2004/07/04 14:11:44 drochner Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -30,8 +30,6 @@
  * Generate an in-core disklabel for a CD, containing entries for
  * previous data tracks (supposed to be of previous sessions).
  * TODO:
- *  - check ISO9660 volume descriptor, print volume labels, perhaps
- *    allow selection by creation date
  *  - support simulation of multisession CDs in a vnd(4) disk
  */
 
@@ -48,6 +46,7 @@
 #include <string.h>
 
 #include "dkcksum.h"
+#include "mscdlabel.h"
 
 int main(int, char **);
 
@@ -67,13 +66,19 @@ main(argc, argv)
 	struct cd_toc_entry *tocbuf, *track;
 	struct disklabel label;
 	struct partition *p;
+	int readonly = 0;
 
 	if (argc > 1)
 		disk = argv[1];
 
 	fd = opendisk(disk, O_RDWR, fullname, MAXPATHLEN, 0);
-	if (fd < 0)
-		err(1, "opendisk %s", disk);
+	if (fd < 0) {
+		warn("opendisk (read-write) %s", disk);
+		fd = opendisk(disk, O_RDONLY, fullname, MAXPATHLEN, 0);
+		if (fd < 0)
+			err(1, "opendisk %s", disk);
+		readonly = 1;
+	}
 
 	/*
 	 * get the TOC
@@ -83,7 +88,8 @@ main(argc, argv)
 	if (res < 0)
 		err(2, "CDIOREADTOCHEADER");
 	ntracks = th.ending_track - th.starting_track + 1;
-	tocbufsize = ntracks * sizeof(struct cd_toc_entry);
+	/* one more for leadout track, for tracklen calculation */
+	tocbufsize = (ntracks + 1) * sizeof(struct cd_toc_entry);
 	tocbuf = malloc(tocbufsize);
 	if (!tocbuf)
 		err(3, "alloc TOC buffer");
@@ -115,7 +121,9 @@ main(argc, argv)
 		track = &tocbuf[i];
 		printf("track (ctl=%d) at sector %d\n", track->control,
 		       track->addr.lba);
-		if (track->control & 4) { /* data track */
+		if ((track->control & 4) /* data track */
+		    && check_primary_vd(fd, track->addr.lba,
+		      (track+1)->addr.lba - track->addr.lba)) {
 			printf(" adding as '%c'\n", 'a' + j);
 			p = &label.d_partitions[j];
 			memset(p, 0, sizeof(struct partition));
@@ -130,12 +138,15 @@ main(argc, argv)
 		label.d_npartitions = j;
 	strncpy(label.d_packname, "mscdlabel's", 16);
 
-	/* write back label */
-	label.d_checksum = 0;
-	label.d_checksum = dkcksum(&label);
-	res = ioctl(fd, DIOCSDINFO, &label);
-	if (res < 0)
-		err(6, "DIOCSDINFO");
+	if (!readonly) {
+		/* write back label */
+		label.d_checksum = 0;
+		label.d_checksum = dkcksum(&label);
+		res = ioctl(fd, DIOCSDINFO, &label);
+		if (res < 0)
+			err(6, "DIOCSDINFO");
+	} else
+		printf("disklabel not written\n");
 
 	free(tocbuf);
 	close(fd);
