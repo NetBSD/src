@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.42 2004/03/20 05:21:53 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.43 2004/03/23 21:53:36 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.42 2004/03/20 05:21:53 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.43 2004/03/23 21:53:36 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -355,8 +355,18 @@ rf_FreeFuncList(RF_FuncList_t *funcList)
 caller (ie. the data of the associated PDA).  Glue this buffer
 into our dag_h cleanup structure. */
 
+void *
+rf_AllocBuffer(RF_Raid_t *raidPtr, int size, RF_AllocListElem_t * allocList)
+{
+	void *p;
+	
+	RF_MallocAndAdd(p, size, (char *), allocList);
+        return ((void *) p);
+}
+
+
 void   *
-rf_AllocBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h, int size)
+rf_AllocBuffer2(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h, int size)
 {
 	RF_VoidPointerListElem_t *vple;
 	void *p;
@@ -954,7 +964,7 @@ rf_MapUnaccessedPortionOfStripe(RF_Raid_t *raidPtr,
 	if (!rf_RaidAddressStripeAligned(layoutPtr, asmap->raidAddress)) {
 		sosRaidAddress = rf_RaidAddressOfPrevStripeBoundary(layoutPtr, asmap->raidAddress);
 		sosNumSector = asmap->raidAddress - sosRaidAddress;
-		*sosBuffer = rf_AllocBuffer(raidPtr, dag_h, rf_RaidAddressToByte(raidPtr, sosNumSector));
+		*sosBuffer = rf_AllocBuffer(raidPtr, rf_RaidAddressToByte(raidPtr, sosNumSector), allocList);
 		new_asm_h[0] = rf_MapAccess(raidPtr, sosRaidAddress, sosNumSector, *sosBuffer, RF_DONT_REMAP);
 		new_asm_h[0]->next = dag_h->asmList;
 		dag_h->asmList = new_asm_h[0];
@@ -970,7 +980,7 @@ rf_MapUnaccessedPortionOfStripe(RF_Raid_t *raidPtr,
 	if (!rf_RaidAddressStripeAligned(layoutPtr, asmap->endRaidAddress)) {
 		eosRaidAddress = asmap->endRaidAddress;
 		eosNumSector = rf_RaidAddressOfNextStripeBoundary(layoutPtr, eosRaidAddress) - eosRaidAddress;
-		*eosBuffer = rf_AllocBuffer(raidPtr, dag_h, rf_RaidAddressToByte(raidPtr, eosNumSector));
+		*eosBuffer = rf_AllocBuffer(raidPtr, rf_RaidAddressToByte(raidPtr, eosNumSector), allocList);
 		new_asm_h[1] = rf_MapAccess(raidPtr, eosRaidAddress, eosNumSector, *eosBuffer, RF_DONT_REMAP);
 		new_asm_h[1]->next = dag_h->asmList;
 		dag_h->asmList = new_asm_h[1];
@@ -1071,7 +1081,7 @@ rf_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		dag_h->asmList = new_asm_h[0];
 		for (pda = new_asm_h[0]->stripeMap->physInfo; pda; pda = pda->next) {
 			rf_RangeRestrictPDA(raidPtr, failedPDA, pda, RF_RESTRICT_NOBUFFER, 0);
-			pda->bufPtr = rf_AllocBuffer(raidPtr, dag_h, pda->numSector << raidPtr->logBytesPerSector);
+			pda->bufPtr = rf_AllocBuffer(raidPtr, pda->numSector << raidPtr->logBytesPerSector, allocList);
 		}
 		(*nXorBufs) += new_asm_h[0]->stripeMap->numStripeUnitsAccessed;
 	}
@@ -1080,14 +1090,14 @@ rf_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		dag_h->asmList = new_asm_h[1];
 		for (pda = new_asm_h[1]->stripeMap->physInfo; pda; pda = pda->next) {
 			rf_RangeRestrictPDA(raidPtr, failedPDA, pda, RF_RESTRICT_NOBUFFER, 0);
-			pda->bufPtr = rf_AllocBuffer(raidPtr, dag_h, pda->numSector << raidPtr->logBytesPerSector);
+			pda->bufPtr = rf_AllocBuffer(raidPtr, pda->numSector << raidPtr->logBytesPerSector, allocList);
 		}
 		(*nXorBufs) += new_asm_h[1]->stripeMap->numStripeUnitsAccessed;
 	}
 	
 	/* allocate a buffer for parity */
 	if (rpBufPtr) 
-		*rpBufPtr = rf_AllocBuffer(raidPtr, dag_h, failedPDA->numSector << raidPtr->logBytesPerSector);
+		*rpBufPtr = rf_AllocBuffer(raidPtr, failedPDA->numSector << raidPtr->logBytesPerSector, allocList);
 
 	/* the last step is to figure out how many more distinct buffers need
 	 * to get xor'd to produce the missing unit.  there's one for each

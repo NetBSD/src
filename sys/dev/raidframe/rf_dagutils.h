@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.h,v 1.15 2004/03/20 16:48:05 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.h,v 1.16 2004/03/23 21:53:36 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -81,7 +81,8 @@ void rf_FreeDAGPCache(void *);
 RF_FuncList_t *rf_AllocFuncList(void);
 void rf_FreeFuncList(RF_FuncList_t *);
 
-void *rf_AllocBuffer(RF_Raid_t *, RF_DagHeader_t *, int);
+void *rf_AllocBuffer(RF_Raid_t *, int, RF_AllocListElem_t *);
+void *rf_AllocBuffer2(RF_Raid_t *, RF_DagHeader_t *, int);
 void *rf_AllocIOBuffer(RF_Raid_t *, int);
 void rf_FreeIOBuffer(RF_Raid_t *, void *);
 
