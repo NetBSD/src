@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.9 1998/09/15 13:43:35 frueauf Exp $	*/
+/*	$NetBSD: subs.c,v 1.10 1999/02/10 12:29:48 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subs.c,v 1.9 1998/09/15 13:43:35 frueauf Exp $");
+__RCSID("$NetBSD: subs.c,v 1.10 1999/02/10 12:29:48 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,11 +47,11 @@ __RCSID("$NetBSD: subs.c,v 1.9 1998/09/15 13:43:35 frueauf Exp $");
 int     buffnum;
 char    outbuff[BUFSIZ];
 
-static char plred[] = "Player is red, computer is white.";
-static char plwhite[] = "Player is white, computer is red.";
-static char nocomp[] = "(No computer play.)";
+static const char plred[] = "Player is red, computer is white.";
+static const char plwhite[] = "Player is white, computer is red.";
+static const char nocomp[] = "(No computer play.)";
 
-char   *descr[] = {
+const char   *const descr[] = {
 	"Usage:  backgammon [-] [n r w b pr pw pb t3a]\n",
 	"\t-\tgets this list\n\tn\tdon't ask for rules or instructions",
 	"\tr\tplayer is red (implies n)\n\tw\tplayer is white (implies n)",
@@ -136,10 +136,10 @@ writec(c)
 
 void
 writel(l)
-	char   *l;
+	const char   *l;
 {
 #ifdef DEBUG
-	char   *s;
+	const char   *s;
 
 	if (trace == NULL)
 		trace = fopen("bgtrace", "w");

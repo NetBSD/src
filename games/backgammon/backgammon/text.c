@@ -1,4 +1,4 @@
-/*	$NetBSD: text.c,v 1.5 1997/10/10 08:59:38 lukem Exp $	*/
+/*	$NetBSD: text.c,v 1.6 1999/02/10 12:29:47 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,13 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)text.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: text.c,v 1.5 1997/10/10 08:59:38 lukem Exp $");
+__RCSID("$NetBSD: text.c,v 1.6 1999/02/10 12:29:47 hubertf Exp $");
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
-char   *instr[] = {
+const char   *const instr[] = {
 	"    If you did not notice by now, this program reacts to things as",
 	"soon as you type them, without waiting for a newline.  This means that",
 	"the special characters RUBOUT, ESC, and CONTROL-D, will not perform",
@@ -112,10 +112,10 @@ char   *instr[] = {
 
 int
 text(t)
-	char  **t;
+	const char  *const *t;
 {
 	int     i;
-	char   *s, *a;
+	const char   *s, *a;
 
 	fixtty(&noech);
 	while (*t != 0) {
