@@ -108,7 +108,7 @@ extern int h_errno;
 #  include <net/if_types.h>
 #endif
 
-#ifdef __alpha__
+#if defined(__alpha__) || defined(__sparc_v9__)
 #define PTRSIZE_64BIT
 #endif
 
