@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.14 2001/07/08 13:01:21 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.15 2001/07/18 12:27:53 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -290,82 +290,82 @@ struct _form_struct {
 /* Public function prototypes. */
 __BEGIN_DECLS
 
-FIELD *current_field(FORM *);
-int data_ahead(FORM *);
-int data_behind(FORM *);
-FIELD *dup_field(FIELD *, int, int);
-int dynamic_field_info(FIELD *, int *, int *, int *);
-char *field_arg(FIELD *);
-chtype field_back(FIELD *);
-char *field_buffer(FIELD *, int);
-int field_count(FORM *);
-chtype field_fore(FIELD *);
-int field_index(FIELD *);
-int field_info(FIELD *, int *, int *, int *, int *, int *, int *);
-Form_Hook field_init(FORM *);
-int field_just(FIELD *);
+FIELD       *current_field(FORM *);
+int          data_ahead(FORM *);
+int          data_behind(FORM *);
+FIELD       *dup_field(FIELD *, int, int);
+int          dynamic_field_info(FIELD *, int *, int *, int *);
+char        *field_arg(FIELD *);
+chtype       field_back(FIELD *);
+char        *field_buffer(FIELD *, int);
+int          field_count(FORM *);
+chtype       field_fore(FIELD *);
+int          field_index(FIELD *);
+int          field_info(FIELD *, int *, int *, int *, int *, int *, int *);
+Form_Hook    field_init(FORM *);
+int          field_just(FIELD *);
 Form_Options field_opts(FIELD *);
-int field_opts_off(FIELD *, Form_Options);
-int field_opts_on(FIELD *, Form_Options);
-int field_pad(FIELD *);
-int field_status(FIELD *);
-Form_Hook field_term(FORM *);
-FIELDTYPE *field_type(FIELD *);
-void *field_userptr(FIELD *);
-int form_driver(FORM *, int);
-FIELD **form_fields(FORM *);
-Form_Hook form_init(FORM *);
-int form_max_page(FORM *);
+int          field_opts_off(FIELD *, Form_Options);
+int          field_opts_on(FIELD *, Form_Options);
+int          field_pad(FIELD *);
+int          field_status(FIELD *);
+Form_Hook    field_term(FORM *);
+FIELDTYPE   *field_type(FIELD *);
+void        *field_userptr(FIELD *);
+int          form_driver(FORM *, int);
+FIELD      **form_fields(FORM *);
+Form_Hook    form_init(FORM *);
+int          form_max_page(FORM *);
 Form_Options form_opts(FORM *);
-int form_opts_off(FORM *, Form_Options);
-int form_opts_on(FORM *, Form_Options);
-int form_page(FORM *);
-WINDOW *form_sub(FORM *);
-Form_Hook form_term(FORM *);
-void *form_userptr(FORM *);
-WINDOW *form_win(FORM *);
-int free_field(FIELD *);
-int free_fieldtype(FIELDTYPE *);
-int free_form(FORM *);
-FIELD *link_field(FIELD *, int, int);
-FIELDTYPE *link_fieldtype(FIELDTYPE *, FIELDTYPE *);
-int move_field(FIELD *, int, int);
-FIELD *new_field(int, int, int, int, int, int);
-FIELDTYPE *new_fieldtype(int (* field_check)(FIELD *, char *),
-					     int (* char_check)(int, char *));
-FORM *new_form(FIELD **);
-int new_page(FIELD *);
-int pos_form_cursor(FORM *);
-int post_form(FORM *);
-int scale_form(FORM *, int *, int *);
-int set_current_field(FORM *, FIELD *);
-int set_field_back(FIELD *, chtype);
-int set_field_buffer(FIELD *, int, char *);
-int set_field_fore(FIELD *, chtype);
-int set_field_init(FORM *, Form_Hook);
-int set_field_just(FIELD *, int);
-int set_field_opts(FIELD *, Form_Options);
-int set_field_pad(FIELD *, int);
-int set_field_status(FIELD *, int);
-int set_field_term(FORM *, Form_Hook);
-int set_field_type(FIELD *, FIELDTYPE *, ...);
-int set_field_userptr(FIELD *, void *);
-int set_fieldtype_arg(FIELDTYPE *, char *(*)(va_list *),
-			   char *(*)(char *),
-			   void (*)(char *));
-int set_fieldtype_choice(FIELDTYPE *, int (*)(FIELD *, char *),
-			      int (*)(FIELD *, char *));
-int set_form_fields(FORM *, FIELD **);
-int set_form_init(FORM *, Form_Hook);
-int set_form_opts(FORM *, Form_Options);
-int set_form_page(FORM *, int);
-int set_form_sub(FORM *, WINDOW *);
-int set_form_term(FORM *, Form_Hook);
-int set_form_userptr(FORM *, void *);
-int set_form_win(FORM *, WINDOW *);
-int set_max_field(FIELD *, int);
-int set_new_page(FIELD *, int);
-int unpost_form(FORM *);
+int          form_opts_off(FORM *, Form_Options);
+int          form_opts_on(FORM *, Form_Options);
+int          form_page(FORM *);
+WINDOW      *form_sub(FORM *);
+Form_Hook    form_term(FORM *);
+void        *form_userptr(FORM *);
+WINDOW      *form_win(FORM *);
+int          free_field(FIELD *);
+int          free_fieldtype(FIELDTYPE *);
+int          free_form(FORM *);
+FIELD       *link_field(FIELD *, int, int);
+FIELDTYPE   *link_fieldtype(FIELDTYPE *, FIELDTYPE *);
+int          move_field(FIELD *, int, int);
+FIELD       *new_field(int, int, int, int, int, int);
+FIELDTYPE   *new_fieldtype(int (* field_check)(FIELD *, char *),
+			   int (* char_check)(int, char *));
+FORM        *new_form(FIELD **);
+int          new_page(FIELD *);
+int          pos_form_cursor(FORM *);
+int          post_form(FORM *);
+int          scale_form(FORM *, int *, int *);
+int          set_current_field(FORM *, FIELD *);
+int          set_field_back(FIELD *, chtype);
+int          set_field_buffer(FIELD *, int, char *);
+int          set_field_fore(FIELD *, chtype);
+int          set_field_init(FORM *, Form_Hook);
+int          set_field_just(FIELD *, int);
+int          set_field_opts(FIELD *, Form_Options);
+int          set_field_pad(FIELD *, int);
+int          set_field_status(FIELD *, int);
+int          set_field_term(FORM *, Form_Hook);
+int          set_field_type(FIELD *, FIELDTYPE *, ...);
+int          set_field_userptr(FIELD *, void *);
+int          set_fieldtype_arg(FIELDTYPE *, char *(*)(va_list *),
+			       char *(*)(char *),
+			       void (*)(char *));
+int          set_fieldtype_choice(FIELDTYPE *, int (*)(FIELD *, char *),
+				  int (*)(FIELD *, char *));
+int          set_form_fields(FORM *, FIELD **);
+int          set_form_init(FORM *, Form_Hook);
+int          set_form_opts(FORM *, Form_Options);
+int          set_form_page(FORM *, int);
+int          set_form_sub(FORM *, WINDOW *);
+int          set_form_term(FORM *, Form_Hook);
+int          set_form_userptr(FORM *, void *);
+int          set_form_win(FORM *, WINDOW *);
+int          set_max_field(FIELD *, int);
+int          set_new_page(FIELD *, int);
+int          unpost_form(FORM *);
 
 __END_DECLS
 
