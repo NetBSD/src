@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.11 2002/06/29 09:46:39 lukem Exp $
+.\"	$NetBSD: prep,v 1.12 2003/02/12 08:18:22 leo Exp $
 .
 .Ss2 Preparing your hard disk for the NetBSD installation.
 Note you will be modifying your HD's if you mess something up here you
@@ -240,9 +240,19 @@ remove the
 kernel boot floppy from the drive if present and insert the
 .Nx
 install floppy 1.
-Now type
-.Sq Ic md0a
-to tell the kernel to load the install file system into RAMdisk.
+Now enter the name of the boot device depending on the floppy type you have
+inserted. Use:
+.(bullet
+.Ic md0a
+for the old installer (1MB filesystem) on 720KB floppy's.
+.It
+.Ic md1a
+for the sysinst installer on 720KB floppy's.
+.It
+.Ic md2a
+for the sysinst installer on 1.44MB floppy's.
+.bullet)
+The kernel will load the install file system into RAMdisk.
 While the kernel is loading, it will show a
 .Sq \&.
 for each track loaded.
@@ -251,9 +261,3 @@ At this time, insert the
 .Nx
 install floppy 2 and press any key.
 The kernel continues loading another 40 tracks before it continues to boot.
-.(Note
-If you are using 1.44 MB floppies, you should select
-.Sq Ic md1a
-instead of
-.Sq Ic md0a .
-.Note)
