@@ -1,4 +1,4 @@
-/*	$NetBSD: closedir.c,v 1.3 1995/02/25 08:51:01 cgd Exp $	*/
+/*	$NetBSD: closedir.c,v 1.4 1995/06/16 07:05:27 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)closedir.c	8.1 (Berkeley) 6/10/93";
 #else
-static char rcsid[] = "$NetBSD: closedir.c,v 1.3 1995/02/25 08:51:01 cgd Exp $";
+static char rcsid[] = "$NetBSD: closedir.c,v 1.4 1995/06/16 07:05:27 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,7 +59,7 @@ closedir(dirp)
 	fd = dirp->dd_fd;
 	dirp->dd_fd = -1;
 	dirp->dd_loc = 0;
-	(void)free((void *)dirp->dd_buf);
-	(void)free((void *)dirp);
+	free((void *)dirp->dd_buf);
+	free((void *)dirp);
 	return(close(fd));
 }

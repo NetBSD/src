@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.4 1995/02/27 04:12:20 cgd Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.5 1995/06/16 07:05:30 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getcwd.c,v 1.4 1995/02/27 04:12:20 cgd Exp $";
+static char rcsid[] = "$NetBSD: getcwd.c,v 1.5 1995/06/16 07:05:30 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -130,7 +130,7 @@ getcwd(pt, size)
 			 * path to the beginning of the buffer, but it's always
 			 * been that way and stuff would probably break.
 			 */
-			(void)bcopy(bpt, pt, ept - bpt);
+			bcopy(bpt, pt, ept - bpt);
 			free(up);
 			return (pt);
 		}
@@ -206,7 +206,7 @@ getcwd(pt, size)
 				goto err;
 			bpt = pt + off;
 			ept = pt + ptsize;
-			(void)bcopy(bpt, ept - len, len);
+			bcopy(bpt, ept - len, len);
 			bpt = ept - len;
 		}
 		if (!first)
