@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.7 1995/09/05 07:02:21 leo Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.8 1995/09/12 19:58:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -158,6 +158,17 @@ extern __inline__ int wait_req_false(void)
 	while ((GET_5380_REG(NCR5380_IDSTAT) & SC_S_REQ) && --timeout)
 		delay(1);
 	return (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_REQ));
+}
+
+extern __inline__ void ack_message()
+{
+	SET_5380_REG(NCR5380_ICOM, 0);
+}
+
+extern __inline__ void nack_message(SC_REQ *reqp)
+{
+	SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
+	reqp->msgout = MSG_ABORT;
 }
 
 extern __inline__ void finish_req(SC_REQ *reqp)
@@ -730,7 +741,7 @@ SC_REQ	*reqp;
 				u_char	phase = PH_MSGOUT;
 				u_char	msg   = MSG_ABORT;
 
-				transfer_pio(&phase, &msg, &len);
+				transfer_pio(&phase, &msg, &len, 0);
 			}
 			else if (GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY)
 					scsi_reset(sc);
@@ -845,7 +856,7 @@ SC_REQ	*reqp;
 				(reqp->dr_flag & DRIVER_NOINT) ? 0 : 1);
 	cnt    = 1;
 	phase  = PH_MSGOUT;
-	if (transfer_pio(&phase, tmp, &cnt) || cnt) {
+	if (transfer_pio(&phase, tmp, &cnt, 0) || cnt) {
 		DBG_SELPRINT ("Target %d: failed to send identify\n",
 							reqp->targ_id);
 		/*
@@ -857,7 +868,7 @@ SC_REQ	*reqp;
 			u_char	phase = PH_MSGOUT;
 			u_char	msg   = MSG_ABORT;
 
-			transfer_pio(&phase, &msg, &len);
+			transfer_pio(&phase, &msg, &len, 0);
 		}
 		else scsi_reset(sc);
 
@@ -959,7 +970,7 @@ information_transfer()
 			if (transfer_pdma(&phase, reqp->xdata_ptr, &len) == 0)
 				return (0);
 #else
-			transfer_pio(&phase, reqp->xdata_ptr, &len);
+			transfer_pio(&phase, reqp->xdata_ptr, &len, 0);
 #endif
 			reqp->xdata_ptr += reqp->xdata_len - len;
 			reqp->xdata_len  = len;
@@ -970,12 +981,12 @@ information_transfer()
 		 * We only expect single byte messages here.
 		 */
 		len = 1;
-		transfer_pio(&phase, &tmp, &len);
+		transfer_pio(&phase, &tmp, &len, 1);
 		reqp->message = tmp;
 		return (handle_message(reqp, tmp));
 	   case PH_MSGOUT:
 		len = 1;
-		transfer_pio(&phase, &reqp->msgout, &len);
+		transfer_pio(&phase, &reqp->msgout, &len, 0);
 		if (reqp->msgout == MSG_ABORT) {
 			busy     &= ~(1 << reqp->targ_id);
 			connected = NULL;
@@ -988,12 +999,12 @@ information_transfer()
 		return (-1);
 	   case PH_CMD :
 		len = command_size(reqp->xcmd.opcode);
-		transfer_pio(&phase, (u_char *)&reqp->xcmd, &len);
+		transfer_pio(&phase, (u_char *)&reqp->xcmd, &len, 0);
 		PID("info_transf5");
 		return (-1);
 	   case PH_STATUS:
 		len = 1;
-		transfer_pio(&phase, &tmp, &len);
+		transfer_pio(&phase, &tmp, &len, 0);
 		reqp->status = tmp;
 		PID("info_transf6");
 		return (-1);
@@ -1030,11 +1041,11 @@ u_int	msg;
 		case MSG_LINK_CMD_COMPLETEF:
 			if (reqp->link == NULL) {
 				ncr_tprint(reqp, "No link for linked command");
-				reqp->msgout = MSG_ABORT;
-				SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
+				nack_message(reqp);
 				PID("hmessage2");
 				return (-1);
 			}
+			ack_message();
 			reqp->xs->error = 0;
 
 #ifdef AUTO_SENSE
@@ -1052,6 +1063,7 @@ u_int	msg;
 			return (-1);
 		case MSG_ABORT:
 		case MSG_CMDCOMPLETE:
+			ack_message();
 			connected = NULL;	
 			busy     &= ~(1 << reqp->targ_id);
 			if (!(reqp->dr_flag & DRIVER_AUTOSEN)) {
@@ -1070,9 +1082,11 @@ u_int	msg;
 			PID("hmessage5");
 			return (0);
 		case MSG_MESSAGE_REJECT:
+			ack_message();
 			PID("hmessage6");
 			return (-1);
 		case MSG_DISCONNECT:
+			ack_message();
 #ifdef DBG_REQ
 			if (dbg_target_mask & (1 << reqp->targ_id))
 				show_request(reqp, "DISCON");
@@ -1090,13 +1104,18 @@ u_int	msg;
 			 * We save pointers implicitely at disconnect.
 			 * So we can ignore these messages.
 			 */
+			ack_message();
 			PID("hmessage8");
+			return (-1);
+		case MSG_EXTENDED:
+			nack_message(reqp);
+			PID("hmessage9");
 			return (-1);
 		default: 
 			ncr_tprint(reqp, "Unkown message %x\n", msg);
 			return (-1);
 	}
-	PID("hmessage9");
+	PID("hmessage10");
 	return (-1);
 }
 
@@ -1124,12 +1143,11 @@ struct ncr_softc *sc;
 	 * SEL is true and BSY was false for at least one bus settle
 	 * delay (400 ns.).
 	 * We must assert BSY ourselves, until the target drops the SEL signal.
-	 * This should happen within 2 deskew delays (2 * 45ns.) We wait too
-	 * long for this, but it's better to wait for slow targets than to
-	 * reset the bus too early...
+	 * The SCSI-spec specifies no maximum time for this, so we have to
+	 * choose something long enough to suit all targets.
 	 */
 	SET_5380_REG(NCR5380_ICOM, SC_A_BSY);
-	len = 2;
+	len = 100;
 	while ((GET_5380_REG(NCR5380_IDSTAT) & SC_S_SEL) && (len > 0)) {
 		delay(1);
 		len--;
@@ -1147,7 +1165,7 @@ struct ncr_softc *sc;
 	 */
 	phase = PH_MSGIN;
 	len   = 1;
-	transfer_pio(&phase, &msg, &len);
+	transfer_pio(&phase, &msg, &len, 0);
 	if (len || !MSG_ISIDENTIFY(msg)) {
 		ncr_aprint(sc, "Expecting IDENTIFY, got 0x%x\n", msg);
 		abort = 1;
@@ -1177,7 +1195,7 @@ struct ncr_softc *sc;
 		phase = PH_MSGOUT;
 
 		SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
-		transfer_pio(&phase, &msg, &len);
+		transfer_pio(&phase, &msg, &len, 0);
 	}
 	else {
 		connected = tmp;
@@ -1192,18 +1210,19 @@ struct ncr_softc *sc;
 /*
  * Transfer data in a given phase using programmed I/O.
  * Returns -1 when a different phase is entered without transferring the
- * maximum number of bytes, 0 if all bytes or exit is in the same
+ * maximum number of bytes, 0 if all bytes transferred or exit is in the same
  * phase.
  */
 static int
-transfer_pio(phase, data, len)
+transfer_pio(phase, data, len, dont_drop_ack)
 u_char	*phase;
 u_char	*data;
 u_long	*len;
+int	dont_drop_ack;
 {
 	u_int	cnt = *len;
 	u_char	ph  = *phase;
-	u_char	tmp;
+	u_char	tmp, new_icom;
 
 	DBG_PIOPRINT ("SCSI: transfer_pio start: phase: %d, len: %d\n", ph,cnt);
 	PID("tpio1");
@@ -1220,6 +1239,9 @@ u_long	*len;
 	    if (PH_IN(ph)) {
 		*data++ = GET_5380_REG(NCR5380_DATA);
 		SET_5380_REG(NCR5380_ICOM, SC_A_ACK);
+		if ((cnt == 1) && dont_drop_ack)
+			new_icom = SC_A_ACK;
+		else new_icom = 0;
 	    }
 	    else {
 		SET_5380_REG(NCR5380_DATA, *data++);
@@ -1233,20 +1255,20 @@ u_long	*len;
 		if (!( (ph == PH_MSGOUT) && (cnt > 1) )) {
 			SET_5380_REG(NCR5380_ICOM, SC_ADTB);
 			SET_5380_REG(NCR5380_ICOM, SC_ADTB | SC_A_ACK);
+			new_icom = 0;
 		}
 		else {
 			SET_5380_REG(NCR5380_ICOM, SC_ADTB | SC_A_ATN);
 			SET_5380_REG(NCR5380_ICOM, SC_ADTB|SC_A_ATN|SC_A_ACK);
+			new_icom = SC_A_ATN;
 		}
 	    }
 	    if (!wait_req_false()) {
 		DBG_PIOPRINT ("SCSI: transfer_pio - REQ not dropping\n", 0, 0);
 		break;
 	    }
+	    SET_5380_REG(NCR5380_ICOM, new_icom);
 
-	    if (!( (ph == PH_MSGOUT) && (cnt > 1) ))
-		SET_5380_REG(NCR5380_ICOM, 0);
-	    else SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
 	} while (--cnt);
 
 	if ((tmp = GET_5380_REG(NCR5380_IDSTAT)) & SC_S_REQ)
@@ -1780,10 +1802,37 @@ char	*qtxt;
 		show_data_sense(reqp->xs);
 }
 
+static char *sig_names[] = {
+	"PAR", "SEL", "I/O", "C/D", "MSG", "REQ", "BSY", "RST",
+	"ACK", "ATN", "LBSY", "PMATCH", "IRQ", "EPAR", "DREQ", "EDMA"
+};
+
+static void
+show_signals(dmstat, idstat)
+u_char	dmstat, idstat;
+{
+	u_short	tmp, mask;
+	int	i, j, need_pipe;
+
+	tmp = idstat | ((dmstat & 3) << 8);
+	printf("Bus signals (%02x/%02x): ", idstat, dmstat & 3);
+	for (mask = 1, j = need_pipe = 0; mask <= tmp; mask <<= 1, j++) {
+		if (tmp & mask)
+			printf("%s%s", need_pipe++ ? "|" : "", sig_names[j]);
+	}
+	printf("\nDma status (%02x): ", dmstat);
+	for (mask = 4, j = 10, need_pipe = 0; mask <= dmstat; mask <<= 1, j++) {
+		if (dmstat & mask)
+			printf("%s%s", need_pipe++ ? "|" : "", sig_names[j]);
+	}
+	printf("\n");
+}
+
 scsi_show()
 {
 	SC_REQ	*tmp;
 	int	sps = splhigh();
+	u_char	idstat, dmstat;
 
 #ifndef DBG_PID
 	#define	last_hit	""
@@ -1796,9 +1845,9 @@ scsi_show()
 		show_request(tmp, "DISCONNECTED");
 	if (connected)
 		show_request(connected, "CONNECTED");
-	printf("idstat: %x, dmstat: %x\n", GET_5380_REG(NCR5380_IDSTAT),
-					   GET_5380_REG(NCR5380_DMSTAT));
-	/* show_signals(); */
+	idstat = GET_5380_REG(NCR5380_IDSTAT);
+	dmstat = GET_5380_REG(NCR5380_DMSTAT);
+	show_signals(dmstat, idstat);
 	if (connected)
 		printf("phase = %d, ", connected->phase);
 	printf("busy:%x, last_hit:%s, olast_hit:%s spl:%04x\n", busy,
