@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.109 2004/06/14 02:43:44 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.110 2004/06/14 02:48:29 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1048,3 +1048,12 @@ sys/compat/linux/arch/powerpc/linux_sysent.c	regen
 	Bring netbsd-1-6 inline with -current sources after the mistakes in 
 	ticket #1686
 	[skrll, ticket #1708]
+
+sys/netinet6/in6.h				1.45
+sys/netinet6/in6_pcb.h				1.25
+sys/netinet6/ip6_output.c			1.83
+sys/netinet6/raw_ip6.c				1.65
+sys/netinet6/udp6_output.c			1.18
+
+	Implement IPV6_USE_MIN_MTU sockopt.
+	[itojun, ticket #1709]
