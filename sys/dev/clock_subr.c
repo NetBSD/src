@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.8 2003/08/07 16:30:51 agc Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.9 2003/08/13 11:35:25 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -84,9 +84,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.8 2003/08/07 16:30:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.9 2003/08/13 11:35:25 ragge Exp $");
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
 
 #include <dev/clock_subr.h>
