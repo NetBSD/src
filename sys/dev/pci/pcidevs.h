@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.60 1998/03/28 02:10:40 cgd Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.61 1998/03/28 06:39:13 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.54 1998/03/28 02:09:29 cgd Exp 
+ *	NetBSD: pcidevs,v 1.55 1998/03/28 06:38:46 thorpej Exp 
  */
 
 /*
@@ -666,6 +666,7 @@
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
+#define	PCI_PRODUCT_CONTAQ_82C693	0xc693		/* 82C693 PCI-ISA Bridge */
 
 /* Corollary Products */
 #define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* \"C-Bus II\"-PCI Bridge */

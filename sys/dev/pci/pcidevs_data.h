@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.59 1998/03/28 02:10:40 cgd Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.60 1998/03/28 06:39:14 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.54 1998/03/28 02:09:29 cgd Exp 
+ *	NetBSD: pcidevs,v 1.55 1998/03/28 06:38:46 thorpej Exp 
  */
 
 /*
@@ -644,6 +644,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Contaq Microsystems",
 	    "82C599 PCI-VLB Bridge",
+	},
+	{
+	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C693,
+	    0,
+	    "Contaq Microsystems",
+	    "82C693 PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_COROLLARY, PCI_PRODUCT_COROLLARY_CBUSII_PCIB,
