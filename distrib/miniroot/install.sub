@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.30 1999/06/28 07:59:39 mrg Exp $
+#	$NetBSD: install.sub,v 1.31 1999/10/07 00:10:03 sjg Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -264,7 +264,7 @@ __labelmoredisks_1
 	echo -n	"Label which disk? [done] "
 	getresp "done"
 	case "$resp" in
-		done)
+		"done")
 			;;
 
 		*)
@@ -764,37 +764,41 @@ install_from_mounted_fs() {
 	_dirname=$1
 	_sets=""
 
-	echo ""
-	echo "The directory at the mount point, \"${_dirname}\", contains: "
-	echo ""
-	ls -F ${_dirname}
-	echo ""
-	echo    "Enter the subdirectory relative to the mountpoint, that"
-	echo -n "contains the savesets: [try this directory] "
-	getresp ""
-	if [ "X${resp}" != "X" ]; then
-		_dirname=${_dirname}/$resp
-	fi
+	if ! dir_has_sets ${_dirname} $THESETS
+	then
 
-	while ! dir_has_sets ${_dirname} $THESETS; do
 		echo ""
-		echo -n "There are no NetBSD install sets available in "
-		echo "\"${_dirname}\"."
-		echo "\"${_dirname}\" contains: "
+		echo "The directory at the mount point, \"${_dirname}\", contains: "
 		echo ""
 		ls -F ${_dirname}
 		echo ""
-		echo -n "Enter subdirectory: [try other install media] "
+		echo    "Enter the subdirectory relative to the mountpoint, that"
+		echo -n "contains the savesets: [try this directory] "
 		getresp ""
-		if [ "X${resp}" = "X" ]; then
-			return
-		fi
-		if [ ! -d ${_dirname}/${resp} ]; then
-			echo "\"${resp}\" is no directory; try again."
-		else
+		if [ "X${resp}" != "X" ]; then
 			_dirname=${_dirname}/$resp
 		fi
-	done
+
+		while ! dir_has_sets ${_dirname} $THESETS; do
+			echo ""
+			echo -n "There are no NetBSD install sets available in "
+			echo "\"${_dirname}\"."
+			echo "\"${_dirname}\" contains: "
+			echo ""
+			ls -F ${_dirname}
+			echo ""
+			echo -n "Enter subdirectory: [try other install media] "
+			getresp ""
+			if [ "X${resp}" = "X" ]; then
+				return
+			fi
+			if [ ! -d ${_dirname}/${resp} ]; then
+				echo "\"${resp}\" is no directory; try again."
+			else
+				_dirname=${_dirname}/$resp
+			fi
+		done
+	fi
 
 	for _f in $THESETS ; do
 		if [ -f ${_dirname}/${_f}.tar.gz ]; then
@@ -1316,6 +1320,11 @@ network server.
 
 __install_sets_1
 
+	if [ -d ${Default_sets_dir:-/dev/null} ]; then
+		if dir_has_sets $Default_sets_dir $THESETS; then
+			local_sets_dir=$Default_sets_dir
+		fi
+	fi
 	if [ "X$local_sets_dir" != "X" ]; then
 		install_from_mounted_fs ${local_sets_dir}
 		if [ X"$_setsdone" != X ]; then
