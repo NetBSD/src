@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.36 2000/09/11 21:20:41 he Exp $
+.\" $NetBSD: main,v 1.6.2.37 2000/09/20 09:40:36 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -247,6 +247,29 @@ See
 under
 .Sx Installing the NetBSD System
 for more details.
+.if r_i386 \{\
+.It
+If the disk you are going to install on currently has LILO from
+Linux installed as the boot loader, the
+.Nx
+sysinst tool may not properly replace the boot code, and you will
+have problems booting from the disk.  To work around this problem,
+do ``fdisk -i diskname'' after sysinst is done but before trying
+to boot from the disk.
+.\}
+.It
+No major changes have been made to LFS in 1.4.3, so it is still
+of
+.Dq beta test
+quality.
+.It
+The version of the IPF packet filtering software in
+.Nx
+1.4.3 must be enabled with
+.Dq ipf -E
+before filtering rules can be set.
+Failure to do so may result in a panic.
+(Enabling NAT will however auto-enable IPF.)
 .El
 .Ss Major Changes Between 1.4.1 and 1.4.2
 The complete list of changes between
