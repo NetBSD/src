@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.2 1998/01/09 08:07:00 perry Exp $	*/
+/*	$NetBSD: options.h,v 1.3 2000/06/19 20:09:37 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -88,6 +88,7 @@ struct _optlist {
 #define	OPT_NOSET	0x010		/* Option may not be unset. */
 #define	OPT_NOUNSET	0x020		/* Option may not be unset. */
 #define	OPT_NOZERO	0x040		/* Option may not be set to 0. */
+#define	OPT_EARLYSET	0x080		/* Func called after value is set */
 	u_int8_t flags;
 };
 
