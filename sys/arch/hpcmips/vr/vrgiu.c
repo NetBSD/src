@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.14 2000/09/25 03:47:37 sato Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.15 2000/09/25 09:03:33 sato Exp $	*/
 /*-
  * Copyright (c) 1999
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -38,7 +38,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
-#include <sys/boot_flag.h>
+#include <sys/reboot.h>
 
 #define	TAILQ_EMPTY(head) ((head)->tqh_first == NULL)
 
