@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.12 1996/05/20 14:37:24 mark Exp $
+#	$NetBSD: Makefile.arm32,v 1.13 1996/08/10 05:29:30 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -21,20 +21,20 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS?=	as
 CC?=	cc
-CPP?=	cpp
 LD?=	ld
+MKDEP?=	mkdep
 STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
-S=	../../../..
-ARM32=	../..
+S!=	cd ../../../..; pwd
+ARM32=	$S/arch/arm32
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Darm32
-CFLAGS=		${DEBUG} -O2 -Werror
+CWARNFLAGS=	-Werror
+CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-Ttext F0000020 -e start
 
@@ -94,7 +94,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} $@; ${STRIP} $@
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S
 .endif
 
 %LOAD
@@ -148,11 +148,11 @@ SRCS=	${ARM32}/arm32/locore.S modedefs.c \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${ARM32}/arm32/locore.S
-	mkdep -a ${CFLAGS} ${CPPFLAGS} modedefs.c
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${ARM32}/arm32/genassym.c
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ARM32}/arm32/locore.S
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} modedefs.c
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${ARM32}/arm32/genassym.c
 
 
 # depend on root or device configuration

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.29 1996/05/19 22:44:12 mhitch Exp $
+#	$NetBSD: Makefile.pmax,v 1.30 1996/08/10 05:29:48 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -21,20 +21,20 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS?=	as
 CC?=	cc
-CPP?=	cpp
 LD?=	ld
+MKDEP?=	mkdep
 STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
-S=	../../../..
-PMAX=	../..
+S!=	cd ../../../..; pwd
+PMAX=	$S/arch/pmax
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dpmax ${GP}
-CFLAGS=		${DEBUG} -O2 -Werror
+CWARNFLAGS=	-Werror
+CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80030000 -e start
 
@@ -94,7 +94,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} $@; ${STRIP} $@
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S
 .endif
 
 SYSTEM_LD_TAIL+=;\
@@ -153,10 +153,10 @@ SRCS=	${PMAX}/pmax/locore.S ${PMAX}/pmax/fp.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore.S ${PMAX}/pmax/fp.S
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${S}/arch/mips/mips/genassym.c
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore.S ${PMAX}/pmax/fp.S
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${S}/arch/mips/mips/genassym.c
 
 
 # depend on root or device configuration
