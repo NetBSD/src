@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.3 2003/01/18 18:45:53 christos Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.4 2003/03/08 08:03:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pthread_debug.c,v 1.4 2003/03/08 08:03:35 lukem Exp $");
 
 #include <err.h>
 #include <errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.13 2003/02/28 18:37:44 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.14 2003/03/08 08:03:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pthread.c,v 1.14 2003/03/08 08:03:34 lukem Exp $");
+
 #include <err.h>
 #include <errno.h>
 #include <lwp.h>
@@ -45,8 +48,6 @@
 #include <string.h>
 #include <ucontext.h>
 #include <unistd.h>
-
-#include <sys/cdefs.h>
 
 #include <sched.h>
 #include "pthread.h"
