@@ -1,3 +1,4 @@
+sys/arch/alpha/common/bus_dma.c
 sys/arch/alpha/common/sgmap_common.c
 sys/arch/alpha/common/sgmap_typedep.c
 sys/arch/alpha/common/sgmap_typedep.h
