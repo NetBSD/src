@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.13 1996/11/13 06:36:56 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.14 1996/11/13 06:41:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -816,9 +816,9 @@ fdcstatus(dv, n, s)
 		    NE7_ST0BITS, bits, sizeof(bits)));
 		printf("st1 %s ", bitmask_snprintf(fdc->sc_status[1],
 		    NE7_ST1BITS, bits, sizeof(bits)));
-		printf("st2 %s cyl %d head %d sec %d)\n",
-		    bitmask_snprintf(fdc->sc_status[2], NE7_ST2BITS,
-		    bits, sizeof(bits)),
+		printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
+		    NE7_ST2BITS, bits, sizeof(bits)));
+		printf(" cyl %d head %d sec %d)\n",
 		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
 		break;
 #ifdef DIAGNOSTIC
@@ -1189,9 +1189,9 @@ fdcretry(fdc)
 		    NE7_ST0BITS, bits, sizeof(bits)));
 		printf("st1 %s ", bitmask_snprintf(fdc->sc_status[1],
 		    NE7_ST1BITS, bits, sizeof(bits)));
-		printf("st2 %s cyl %d head %d sec %d)\n",
-		    bitmask_snprintf(fdc->sc_status[2], NE7_ST2BITS,
-		    bits, sizeof(bits)),
+		printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
+		    NE7_ST2BITS, bits, sizeof(bits)));
+		printf(" cyl %d head %d sec %d)\n",
 		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
 
 		bp->b_flags |= B_ERROR;
