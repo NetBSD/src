@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.85 1999/10/05 00:29:41 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.86 1999/10/05 17:45:57 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -1518,7 +1518,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.85 1999/10/05 00:29:41 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.86 1999/10/05 17:45:57 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -7543,8 +7543,8 @@ static void ncr_opennings (ncb_p np, lcb_p lp, struct scsipi_xfer * xp)
 		if (!diff) return;
 
 #ifdef __NetBSD__
-		if (diff > xp->sc_link->openings)
-			diff = xp->sc_link->openings;
+		if (diff > (xp->sc_link->openings - xp->sc_link->active))
+			diff = (xp->sc_link->openings - xp->sc_link->active);
 
 		xp->sc_link->openings	-= diff;
 #else /* !__NetBSD__ */
