@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: fdesc_vnops.c,v 1.3 1993/03/30 05:16:56 cgd Exp $
+ *	$Id: fdesc_vnops.c,v 1.4 1993/06/07 05:25:22 cgd Exp $
  */
 
 /*
@@ -111,7 +111,7 @@ fdesc_lookup(dvp, ndp, p)
 #ifdef FDESC_DIAGNOSTIC
 	printf("fdesc_lookup: allocate new vnode\n");
 #endif
-	error = getnewvnode(VT_UFS, dvp->v_mount, &fdesc_vnodeops, &fvp);
+	error = getnewvnode(VT_FDESC, dvp->v_mount, &fdesc_vnodeops, &fvp);
 	if (error)
 		goto bad;
 	VTOFDESC(fvp)->f_fd = fd;
@@ -430,7 +430,7 @@ fdesc_inactive(vp, p)
 fdesc_print(vp)
 	struct vnode *vp;
 {
-	printf("tag VT_NON, fdesc vnode\n");
+	printf("tag VT_FDESC, fdesc vnode\n");
 }
 
 /*
