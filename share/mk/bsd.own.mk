@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.335 2003/06/26 06:30:08 tshiozak Exp $
+#	$NetBSD: bsd.own.mk,v 1.336 2003/06/30 18:48:52 wiz Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -191,6 +191,7 @@ MKMAGIC=	${TOOLDIR}/bin/${_TOOL_PREFIX}file
 MKTEMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}mktemp
 MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}msgc
 MTREE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mtree
+NROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}nroff
 PAX=		${TOOLDIR}/bin/${_TOOL_PREFIX}pax
 PIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}pic
 PREPMKBOOTIMAGE=${TOOLDIR}/bin/${_TOOL_PREFIX}prep-mkbootimage
