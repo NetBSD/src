@@ -1,9 +1,9 @@
-/*	$NetBSD: if_iy.c,v 1.51 2001/03/22 14:30:47 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.52 2001/03/23 13:15:27 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996,2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -636,6 +636,7 @@ struct ifnet *ifp;
 	u_int llen, residual;
 	int avail;
 	caddr_t data;
+	unsigned temp;
 	u_int16_t resval, stat;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -647,6 +648,8 @@ struct ifnet *ifp;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
                 return;
+
+	iy_intr_tx(sc);
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
@@ -706,7 +709,18 @@ struct ifnet *ifp;
 			printf("%s: len = %d, avail = %d, setting OACTIVE\n",
 			    sc->sc_dev.dv_xname, len, avail);
 #endif
+			/* mark interface as full ... */
 			ifp->if_flags |= IFF_OACTIVE;
+
+			/* and wait for any transmission result */
+			bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
+
+			temp = bus_space_read_1(iot, ioh, REG1);
+			bus_space_write_1(iot, ioh, REG1,
+	    			temp & ~XMT_CHAIN_INT);
+
+			bus_space_write_1(iot, ioh, 0, BANK_SEL(0));
+
 			return;
 		}
 	
@@ -829,6 +843,13 @@ struct ifnet *ifp;
 		sc->tx_last = last;
 		sc->tx_end = end;
 	}
+	/* and wait only for end of transmission chain */
+	bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
+
+	temp = bus_space_read_1(iot, ioh, REG1);
+	bus_space_write_1(iot, ioh, REG1, temp | XMT_CHAIN_INT);
+
+	bus_space_write_1(iot, ioh, 0, BANK_SEL(0));
 }
 
 
@@ -924,14 +945,18 @@ int
 iyintr(arg)
 	void *arg;
 {
-	struct iy_softc *sc = arg;
+	struct iy_softc *sc;
+	struct ifnet *ifp;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
 	u_short status;
 
+	sc = arg;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
+
+	ifp = &sc->sc_ethercom.ec_if;
 
 	status = bus_space_read_1(iot, ioh, STATUS_REG);
 #ifdef IYDEBUG
@@ -958,7 +983,10 @@ iyintr(arg)
 		bus_space_write_1(iot, ioh, STATUS_REG, RX_INT);
 	}
 	if (status & TX_INT) {
-		iy_intr_tx(sc);
+		/* Tell feeders we may be able to accept more data... */
+		ifp->if_flags &= ~IFF_OACTIVE;
+		/* and get more data. */
+		iystart(ifp);
 		bus_space_write_1(iot, ioh, STATUS_REG, TX_INT);
 	}
 
@@ -1143,11 +1171,6 @@ struct iy_softc *sc;
 		if ((txstat2 & 0x2000) == 0)
 			++ifp->if_oerrors;
 	}
-	/* Nearly done. Tell feeders we may be able to accept more data... */
-	ifp->if_flags &= ~IFF_OACTIVE;
-
-	/* and get more data. */
-	iystart(ifp);
 }
 
 int
