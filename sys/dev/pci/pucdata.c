@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.7 1999/11/16 03:15:17 jun Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -511,6 +511,25 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x28 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x30 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x38 },
+	    },
+	},
+
+	/* NEC PK-UG-X001 K56flex PCI Modem card.
+	   NEC MARTH bridge chip and Rockwell RCVDL56ACF/SP using. */
+	{   "NEC PK-UG-X001 K56flex PCI Modem",
+	    {	0x1033,	0x0074,	0x1033,	0x8014	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
+	    },
+	},
+
+	/*NEC PK-UG-X008 */
+	{   "NEC PK-UG-X008",
+	    {	0x1033,	0x007d,	0x1033,	0x8012	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
 	    },
 	},
 
