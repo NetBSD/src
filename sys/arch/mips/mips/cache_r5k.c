@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.2.2.2 2002/01/11 23:38:39 nathanw Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.2.2.3 2002/02/01 04:57:44 gmcgarry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -74,6 +74,8 @@
  * XXX Does not handle split secondary caches.
  */
 
+#define	round_line16(x)		(((x) + 15) & ~15)
+#define	trunc_line16(x)		((x) & ~15)
 #define	round_line(x)		(((x) + 31) & ~31)
 #define	trunc_line(x)		((x) & ~31)
 
@@ -158,6 +160,24 @@ r5k_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 		cache_op_r4k_line(w2va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
 		va += 32;
 		w2va += 32;
+	}
+}
+
+void
+r5k_pdcache_wbinv_all_16(void)
+{
+	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
+	vaddr_t eva = va + mips_pdcache_size;
+
+	/*
+	 * Since we're hitting the whole thing, we don't have to
+	 * worry about the 2 different "ways".
+	 */
+
+	while (va < eva) {
+		cache_r4k_op_32lines_16(va,
+		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		va += (32 * 16);
 	}
 }
 
@@ -282,6 +302,38 @@ r5k_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 }
 
 void
+r5k_pdcache_wbinv_range_index_16(vaddr_t va, vsize_t size)
+{
+	vaddr_t w2va, eva;
+
+	/*
+	 * Since we're doing Index ops, we expect to not be able
+	 * to access the address we've been given.  So, get the
+	 * bits that determine the cache index, and make a KSEG0
+	 * address out of them.
+	 */
+	va = MIPS_PHYS_TO_KSEG0(va & mips_pdcache_way_mask);
+
+	eva = round_line16(va + size);
+	va = trunc_line16(va);
+	w2va = va + mips_pdcache_way_size;
+
+	while ((eva - va) >= (16 * 16)) {
+		cache_r4k_op_16lines_16_2way(va, w2va,
+		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		va += (16 * 16);
+		w2va += (16 * 16);
+	}
+
+	while (va < eva) {
+		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		va += 16;
+		w2va += 16;
+	}
+}
+
+void
 r5k_pdcache_wbinv_range_index_32(vaddr_t va, vsize_t size)
 {
 	vaddr_t w2va, eva;
@@ -372,6 +424,24 @@ r4600v2_pdcache_inv_range_32(vaddr_t va, vsize_t size)
 }
 
 void
+r5k_pdcache_inv_range_16(vaddr_t va, vsize_t size)
+{
+	vaddr_t eva = round_line16(va + size);
+
+	va = trunc_line16(va);
+
+	while ((eva - va) >= (32 * 16)) {
+		cache_r4k_op_32lines_16(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
+		va += (32 * 16);
+	}
+
+	while (va < eva) {
+		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
+		va += 16;
+	}
+}
+
+void
 r5k_pdcache_inv_range_32(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
@@ -448,6 +518,24 @@ r4600v2_pdcache_wb_range_32(vaddr_t va, vsize_t size)
 }
 
 void
+r5k_pdcache_wb_range_16(vaddr_t va, vsize_t size)
+{
+	vaddr_t eva = round_line16(va + size);
+
+	va = trunc_line16(va);
+
+	while ((eva - va) >= (32 * 16)) {
+		cache_r4k_op_32lines_16(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
+		va += (32 * 16);
+	}
+
+	while (va < eva) {
+		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
+		va += 16;
+	}
+}
+
+void
 r5k_pdcache_wb_range_32(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
@@ -465,5 +553,7 @@ r5k_pdcache_wb_range_32(vaddr_t va, vsize_t size)
 	}
 }
 
+#undef round_line16
+#undef trunc_line16
 #undef round_line
 #undef trunc_line
