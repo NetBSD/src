@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.8 1995/05/11 21:29:48 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.9 1996/06/25 16:47:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -110,3 +110,4 @@ int shiftcmd __P((int, char **));
 int setcmd __P((int, char **));
 int getoptscmd __P((int, char **));
 int nextopt __P((char *));
+void getoptsreset __P((const char *));

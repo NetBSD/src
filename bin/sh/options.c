@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.15 1996/06/04 21:00:09 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.16 1996/06/25 16:47:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: options.c,v 1.15 1996/06/04 21:00:09 christos Exp $";
+static char rcsid[] = "$NetBSD: options.c,v 1.16 1996/06/25 16:47:43 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -352,6 +352,14 @@ setcmd(argc, argv)
 }
 
 
+void
+getoptsreset(value)
+	const char *value;
+{
+	if (number(value) == 1)
+		shellparam.optnext;
+}
+
 /*
  * The getopts builtin.  Shellparam.optnext points to the next argument
  * to be processed.  Shellparam.optptr points to the next character to
@@ -394,6 +402,7 @@ getopts(optstr, optvar, optfirst, optnext, optptr)
 	char c = '?';
 	int done = 0;
 	int ind = 0;
+	int err = 0;
 	char s[10];
 
 	if ((p = *optptr) == NULL || *p == '\0') {
@@ -417,14 +426,14 @@ atend:
 			if (optstr[0] == ':') {
 				s[0] = c;
 				s[1] = '\0';
-				setvar("OPTARG", s, 0);
+				err |= setvarsafe("OPTARG", s, 0);
 			}
 			else {
 				out1fmt("Illegal option -%c\n", c);
-				unsetvar("OPTARG");
+				(void) unsetvar("OPTARG");
 			}
 			c = '?';
-			goto out;
+			goto bad;
 		}
 		if (*++q == ':')
 			q++;
@@ -435,30 +444,43 @@ atend:
 			if (optstr[0] == ':') {
 				s[0] = c;
 				s[1] = '\0';
-				setvar("OPTARG", s, 0);
+				err |= setvarsafe("OPTARG", s, 0);
 				c = ':';
 			}
 			else {
 				out1fmt("No arg for -%c option\n", c);
-				unsetvar("OPTARG");
+				(void) unsetvar("OPTARG");
 				c = '?';
 			}
-			goto out;
+			ind = 1;
+			*optnext = NULL;
+			goto bad;
 		}
 
 		if (p == **optnext)
 			(*optnext)++;
 		ind = *optnext - optfirst + 1;
-		setvar("OPTARG", p, 0);
+		setvarsafe("OPTARG", p, 0);
 		p = NULL;
+		goto out;
 	}
+bad:
+	ind = 1;
+	*optnext = NULL;
+	p = NULL;
 out:
 	*optptr = p;
 	fmtstr(s, sizeof(s), "%d", ind);
-	setvar("OPTIND", s, 0);
+	err |= setvarsafe("OPTIND", s, VNOFUNC);
 	s[0] = c;
 	s[1] = '\0';
-	setvar(optvar, s, 0);
+	err |= setvarsafe(optvar, s, 0);
+	if (err) {
+		*optnext = NULL;
+		*optptr = NULL;
+		flushall();
+		exraise(EXERROR);
+	}
 	return done;
 }
 
