@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.21 1995/06/12 00:46:47 mycroft Exp $	*/
+/*	$NetBSD: if.c,v 1.22 1995/06/12 02:22:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@ ifinit()
 {
 	register struct ifnet *ifp;
 
-	for (ifp = ifnet.tqh_first; ifp != 0 ; ifp = ifp->if_list.tqe_next)
+	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
 		if (ifp->if_snd.ifq_maxlen == 0)
 			ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	if_slowtimo(NULL);
@@ -89,9 +89,11 @@ if_attach(ifp)
 	static int if_indexlim = 8;
 	extern void link_rtrequest();
 
+	if (if_index == 0)
+		TAILQ_INIT(&ifnet);
+	TAILQ_INIT(&ifp->if_addrlist);
 	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
 	ifp->if_index = ++if_index;
-	TAILQ_INIT(&ifp->if_addrlist);
 	if (ifnet_addrs == 0 || if_index >= if_indexlim) {
 		unsigned n = (if_indexlim <<= 1) * sizeof(ifa);
 		struct ifaddr **q = (struct ifaddr **)
