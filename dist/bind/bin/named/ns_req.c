@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_req.c,v 1.1.1.1.8.2 2001/01/28 15:52:39 he Exp $	*/
+/*	$NetBSD: ns_req.c,v 1.1.1.1.8.3 2002/07/01 17:13:48 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
-static const char rcsid[] = "Id: ns_req.c,v 8.129 2001/01/08 23:46:41 marka Exp";
+static const char rcsid[] = "Id: ns_req.c,v 8.169 2002/05/12 23:41:52 marka Exp";
 #endif /* not lint */
 
 /*
@@ -155,16 +155,128 @@ static enum req_action	req_query(HEADER *hp, u_char **cpp, u_char *eom,
 				  int *buflenp, int *msglenp,
 				  u_char *msg, int dfd, int *ra,
 				  struct sockaddr_in from,
-				  struct tsig_record *in_tsig);
+				  struct tsig_record *in_tsig,
+				  u_int16_t udpsize);
 
 static enum req_action	req_iquery(HEADER *hp, u_char **cpp, u_char *eom,
-				   int *buflenp, u_char *msg,
-				   struct sockaddr_in from);
+				   int *buflenp, struct sockaddr_in from);
 
 #ifdef BIND_NOTIFY
 static enum req_action	req_notify(HEADER *hp, u_char **cpp, u_char *eom,
 				   u_char *msg,struct sockaddr_in from);
 #endif
+
+/*
+ * See if there is a OPT record at the end of the message.
+ *
+ * Results:
+ * -1	FORMERR
+ *  0	last RR is not a OPT record
+ * n>0	lenght of OPT record
+ */
+int
+ns_get_opt(u_char *msg, u_char *eom,
+	   u_int8_t *versionp, u_int16_t *rcodep, u_int16_t *flagp,
+	   u_int16_t *bufsizep, u_char **optionsp, size_t *optsizep)
+{
+	HEADER *hp = (HEADER *) msg;
+	u_char *start, *options, *cp;
+	u_int8_t version;
+	u_int16_t rdlen, type, bufsize, flags, optsize, rcode;
+	int i, n, root;
+
+	if (msg == NULL || eom == NULL || (msg + HFIXEDSZ) > eom)
+		return (-1);
+
+	if (ntohs(hp->arcount) == 0)
+		return (0);
+
+	cp = msg + HFIXEDSZ;
+	n = ns_skiprr(cp, eom, ns_s_qd, ntohs(hp->qdcount));
+	if (n < 0)
+		return (-1);
+	cp += n;
+	n = ns_skiprr(cp, eom, ns_s_an, ntohs(hp->ancount));
+	if (n < 0)
+		return (-1);
+	cp += n;
+	n = ns_skiprr(cp, eom, ns_s_ns, ntohs(hp->nscount));
+	if (n < 0)
+		return (-1);
+	cp += n;
+	i = ntohs(hp->arcount);
+	while (i-- > 0) {
+		start = cp;
+		if (cp >= eom)
+			return (-1);
+		root = (*cp == 0);
+		n = dn_skipname(cp, eom);
+		if (n < 0)
+			return (-1);
+		cp += n;
+		if (cp + (2 + 2 + 4 + 2) > eom)
+			return (-1);
+		GETSHORT(type, cp);
+		if (type != ns_t_opt) {
+			cp += INT16SZ + INT32SZ;	/* class, ttl */
+			GETSHORT(rdlen, cp);
+			if (cp + rdlen > eom)
+				return (-1);
+			cp += rdlen;
+			continue;
+		}
+		/* We have the OPT record.  Check it out in detail. */
+		if (!root)
+			return (-1);
+		GETSHORT(bufsize, cp);
+		rcode = (*cp++ <<4) + hp->rcode ;
+		version = *cp++;
+		GETSHORT(flags, cp);
+		GETSHORT(rdlen, cp);
+		if (cp + rdlen > eom)
+			return (-1);
+		options = cp;
+		optsize = rdlen;
+		if (versionp != NULL)
+			*versionp = version;
+		if (rcodep != NULL)
+			*rcodep = rcode;
+		if (flagp != NULL)
+			*flagp = flags;
+		if (bufsizep != NULL)
+			*bufsizep = bufsize;
+		if (optionsp != NULL)
+			*optionsp = options;
+		if (optsizep != NULL)
+			*optsizep = optsize;
+		return (cp - start);
+	}
+	/* OPT not found */
+	return (0);
+}
+
+int
+ns_add_opt(u_char *msg, u_char *cp, size_t buflen, u_int8_t version,
+	   u_int16_t rcode, u_int16_t size, u_int16_t flags,
+	   u_char *options, size_t optlen)
+{
+	HEADER *hp = (HEADER *) msg;
+
+	if ((cp + 1 + 2 + 2 + 4 + 2 + optlen) > (msg + buflen))
+		return (-1);
+
+	*cp++ = 0;			/* "." */
+	PUTSHORT(ns_t_opt, cp);		/* type */
+	PUTSHORT(size, cp);		/* class (udp size) */
+	*cp++ = (rcode >> 4) & 0xff;	/* ttl (rcode + version + flags) */
+	hp->rcode = rcode & 0xf;
+	*cp++ = version;
+	PUTSHORT(flags, cp);
+	PUTSHORT(optlen, cp);		/* rdlen */
+	memcpy(cp, options, optlen);	/* options */
+	hp->arcount = htons(ntohs(hp->arcount) + 1);
+	return (1 + 2 + 2 + 4 + 2 + optlen);
+}
 
 /*
  * Process request using database; assemble and send response.
@@ -175,8 +287,8 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 {
 	HEADER *hp = (HEADER *) msg;
 	u_char *cp, *eom;
-	enum req_action action;
-	int n, ra, has_tsig, tsig_size, sig2len;
+	enum req_action action = Return;
+	int n, ra, has_tsig, tsig_size = 0, opt_size = 0, sig2len;
 	u_char *tsigstart;
 	u_char sig[TSIG_SIG_SIZE], sig2[TSIG_SIG_SIZE];
 	struct tsig_record *in_tsig = NULL;
@@ -184,8 +296,14 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 	int msglen_orig = msglen;
 	int buflen_orig = buflen;
 	int siglen = sizeof sig;
-	DST_KEY *key;
+	DST_KEY *key = NULL;
 	time_t tsig_time;
+	int opt = 0;
+	u_int8_t version = 0;
+	u_int16_t rcode = ns_r_noerror;
+	u_int16_t udpsize = 0;
+	int drop;
+	int tsig_adjust = 0;
 
 #ifdef DEBUG
 	if (debug > 3) {
@@ -194,28 +312,50 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 	}
 #endif
 	
+	drop = drop_port(ntohs(from.sin_port));
+	if (qsp == NULL && drop == 1)
+		return;
+
 	tsigstart = ns_find_tsig(msg, msg + msglen);
 	if (tsigstart == NULL)
 		has_tsig = 0;
 	else {
 		char buf[MAXDNAME];
+		u_char tmp[NS_MAXCDNAME];
 
 		has_tsig = 1;
-		n = dn_expand(msg, msg + msglen, tsigstart, buf, sizeof buf);
+		n = ns_name_unpack(msg, msg + msglen, tsigstart,
+				   tmp, sizeof tmp);
+		if (n > 0) {
+			tsig_adjust = dn_skipname(tmp, tmp + sizeof(tmp)) - n;
+			if (ns_name_ntop(tmp, buf, sizeof buf) == -1)
+				n = -1;
+			else if (buf[0] == '.')
+				buf[0] = '\0';
+		}
 		if (n < 0) {
 			ns_debug(ns_log_default, 1,
-				 "ns_req: bad TSIG key name",
-				 buf);
+				 "ns_req: bad TSIG key name");
+			error = ns_r_formerr;
+			hp->rcode = ns_r_formerr;
 			key = NULL;
-		}
-		key = find_key(buf, NULL);
-		if (key == NULL) {
+		} else if ((key = find_key(buf, NULL)) == NULL) {
 			error = ns_r_badkey;
 			hp->rcode = ns_r_notauth;
 			ns_debug(ns_log_default, 1,
 				 "ns_req: TSIG verify failed - unknown key %s",
 				 buf);
 		}
+#ifdef LOG_TSIG_BUG
+		if (n < 0 || key == NULL)
+			ns_error(ns_log_security,
+	  "SECURITY: POSSIBLE ATTEMPT TO EXERCISE \"TSIG BUG\" FROM %s: %s%s%s",
+				 sin_ntoa(from),
+				 (n < 0) ? "bad key (formerr)" :
+					   "unknown key (",
+				 (n < 0) ? "" : (buf[0] != '\0' ? buf : "."),
+				 (n < 0) ? "" : ")");
+#endif
 	}
 	if (has_tsig && key != NULL) {
 		n = ns_verify(msg, &msglen, key, NULL, 0, sig, &siglen, 
@@ -253,6 +393,8 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 		in_tsig->siglen = siglen;
 		memcpy(in_tsig->sig, sig, siglen);
 		tsig_size = msglen_orig - msglen;
+		/* AXFR/IXFR need the uncompressed tsig size. */
+		in_tsig->tsig_size = tsig_size + tsig_adjust;
 	} else if (has_tsig) {
 		action = Finish;
 		in_tsig = memget(sizeof(struct tsig_record));
@@ -261,12 +403,37 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 		in_tsig->key = NULL;
 		in_tsig->siglen = 0;
 		tsig_size = msg + msglen - tsigstart;
+		in_tsig->tsig_size = tsig_size;
 		msglen = tsigstart - msg;
 	}
 
 	/* Hash some stuff so it's nice and random */
 	nsid_hash((u_char *)&tt, sizeof(tt));
 	nsid_hash(msg, (msglen > 512) ? 512 : msglen);
+
+	if (error == NOERROR) {
+
+		opt = ns_get_opt(msg, msg + msglen, &version,
+				 NULL, NULL, &udpsize, NULL, NULL);
+		if (opt < 0) {
+			rcode = ns_r_formerr;
+			action = Finish;
+		} else if (opt == 0) {
+			if (qsp == NULL && buflen > PACKETSZ)
+				buflen_orig = buflen = PACKETSZ;
+		} else if (opt > 0) {
+			if (version != 0) {
+				rcode = ns_r_badvers;
+				action = Finish;
+			}
+			opt_size = 11;
+			if (udpsize < 512)
+				udpsize = 512;
+			if (qsp == NULL && buflen > udpsize)
+				buflen_orig = buflen = udpsize;
+		}
+	} else if (qsp == NULL && buflen > PACKETSZ)
+		buflen_orig = buflen = PACKETSZ;
 
 	/*
 	 * It's not a response so these bits have no business
@@ -283,6 +450,8 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 
 	if (error == NOERROR)
 		hp->rcode = ns_r_noerror;
+	if (rcode == ns_r_noerror)
+		rcode = hp->rcode;
 	cp = msg + HFIXEDSZ;
 	eom = msg + msglen;
 	buflen -= HFIXEDSZ;
@@ -290,16 +459,17 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 	free_addinfo();	/* sets addcount to zero */
 	dnptrs[0] = NULL;
 
-	if (error == NOERROR) {
+	if (error == NOERROR && rcode == ns_r_noerror) {
 		switch (hp->opcode) {
 		case ns_o_query:
 			action = req_query(hp, &cp, eom, qsp,
 					   &buflen, &msglen,
-					   msg, dfd, &ra, from, in_tsig);
+					   msg, dfd, &ra, from,
+					   in_tsig, udpsize);
 			break;
 
 		case ns_o_iquery:
-			action = req_iquery(hp, &cp, eom, &buflen, msg, from);
+			action = req_iquery(hp, &cp, eom, &buflen, from);
 			break;
 
 #ifdef BIND_NOTIFY
@@ -310,8 +480,7 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 
 #ifdef BIND_UPDATE
 		case ns_o_update:
-			action = req_update(hp, cp, eom, msg, qsp, dfd, from,
-					    in_tsig);
+			action = req_update(hp, cp, eom, msg, from, in_tsig);
 			break;
 #endif /* BIND_UPDATE */
 
@@ -327,6 +496,7 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 			hp->rcode = ns_r_notimpl;
 			action = Finish;
 		}
+		rcode = hp->rcode;
 	}
 
 	if (in_tsig != NULL) {
@@ -335,13 +505,20 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 	}
 
 	/*
+	 * Loop advoidance.
+	 */
+	if (qsp == NULL && drop == 2 && 
+	    (hp->rcode == FORMERR || hp->rcode == NOTIMP))
+			action = Return;
+
+	/*
 	 * Vector via internal opcode.
 	 */
 	switch (action) {
 	case Return:
 		return;
 	case Refuse:
-		hp->rcode = ns_r_refused;
+		rcode = hp->rcode = ns_r_refused;
 		cp = eom;
 		/*FALLTHROUGH*/
 	case Finish:
@@ -358,13 +535,14 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 	hp->qr = 1;		/* set Response flag */
 	hp->ra = ra;		/* init above, may be modified by req_query */
 
-	if (!hp->tc && has_tsig > 0 && buflen < tsig_size)
+	if (!hp->tc && (has_tsig > 0 || opt > 0) &&
+	    buflen < (tsig_size + opt_size))
 		hp->tc = 1;
 
 	/*
 	 * If there was a format error, then we don't know what the msg has.
 	 */
-	if (hp->rcode == ns_r_formerr) {
+	if (hp->rcode == ns_r_formerr || rcode == ns_r_badvers) {
 		hp->qdcount = htons(0);
 		hp->ancount = htons(0);
 		hp->nscount = htons(0);
@@ -373,46 +551,74 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 	}
 
 	/*
-	 * If the query had a TSIG and the message is truncated or there was
-	 * a TSIG error, build a new message with no data and a TSIG.
+	 * If the query had a TSIG / OPT and the message is truncated or
+	 * there was a TSIG error, build a new message with no data and a
+	 * TSIG / OPT.
 	 */
-	if ((hp->tc || error != NOERROR) && has_tsig > 0) {
+	if ((hp->tc || error != NOERROR) && (has_tsig > 0 || opt > 0)) {
  sign_again:
 		hp->ancount = htons(0);
 		hp->nscount = htons(0);
 		hp->arcount = htons(0);
 		cp = msg + HFIXEDSZ;
 		cp += ns_skiprr(cp, msg + msglen, ns_s_qd, ntohs(hp->qdcount));
-		sig2len = sizeof sig2;
-		msglen = cp - msg;
-		buflen = buflen_orig - msglen;
-		n = ns_sign(msg, &msglen, msglen + buflen, error, key,
-			    sig, siglen, sig2, &sig2len, tsig_time);
-		if (n == NS_TSIG_ERROR_NO_SPACE && ntohs(hp->qdcount) != 0) {
-			hp->qdcount = htons(0);
-			goto sign_again;
+		ns_name_rollback(cp, (const u_char **)dnptrs,
+				 (const u_char **)dnptrs_end);
+		if (opt > 0) {
+			n = ns_add_opt(msg, cp, buflen_orig, 0,
+				       rcode, EDNS_MESSAGE_SZ, 0, NULL, 0);
+			if (n < 0) {
+				hp->qdcount = htons(0);
+				goto sign_again;
+			}
+			cp += n;
 		}
-		if (n != 0)
-			ns_info(ns_log_default,
-				"ns_req: unable to sign response");
-		cp = msg + msglen;
+		if (has_tsig > 0) {
+			sig2len = sizeof sig2;
+			msglen = cp - msg;
+			buflen = buflen_orig - msglen;
+			n = ns_sign2(msg, &msglen, msglen + buflen, error, key,
+				     sig, siglen, sig2, &sig2len, tsig_time,
+				     dnptrs, dnptrs_end);
+			if (n == NS_TSIG_ERROR_NO_SPACE &&
+				ntohs(hp->qdcount) != 0) {
+				hp->qdcount = htons(0);
+				goto sign_again;
+			}
+			if (n != 0)
+				ns_info(ns_log_default,
+					"ns_req: unable to sign response");
+			cp = msg + msglen;
+		}
 	}
-	/* Either the message is not truncated or there was no TSIG */
+	/* Either the message is not truncated or there was no TSIG & OPT */
 	else {
 		/*
 		 * Reserve space for tsig if required.
 		 */
-		if (has_tsig > 0)
-			buflen -= tsig_size;
+		if (has_tsig > 0 || opt_size != 0)
+			buflen -= tsig_size + opt_size;
+		INSIST(buflen >= 0);
+		msglen = cp - msg;
 		n = doaddinfo(hp, cp, buflen);
 		cp += n;
 		buflen -= n;
+		msglen += n;
+		if (opt > 0) {
+			buflen += opt_size;
+			n = ns_add_opt(msg, cp, msglen + buflen, 0,
+				       rcode, EDNS_MESSAGE_SZ, 0, NULL, 0);
+			INSIST(n > 0);
+			cp += n;
+			buflen -= n;
+			msglen += n;
+		}
 		if (has_tsig > 0) {
 			buflen += tsig_size;
 			sig2len = sizeof sig2;
-			msglen = cp - msg;
-			n = ns_sign(msg, &msglen, msglen + buflen, error, key,
-				    sig, siglen, sig2, &sig2len, tsig_time);
+			n = ns_sign2(msg, &msglen, msglen + buflen, error, key,
+				     sig, siglen, sig2, &sig2len, tsig_time,
+				     dnptrs, dnptrs_end);
 			if (n != 0) {
 				INSIST(0);
 			}
@@ -421,10 +627,12 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 	}
 
 #ifdef DEBUG
-	ns_debug(ns_log_default, 1,
-		 "ns_req: answer -> %s fd=%d id=%d size=%d rc=%d",
-		 sin_ntoa(from), (qsp == NULL) ? dfd : qsp->s_rfd,
-		 ntohs(hp->id), cp - msg, hp->rcode);
+	if (ns_wouldlog(ns_log_default, 1)) {
+		ns_debug(ns_log_default, 1,
+			 "ns_req: answer -> %s fd=%d id=%d size=%d rc=%d",
+			 sin_ntoa(from), (qsp == NULL) ? dfd : qsp->s_rfd,
+			 ntohs(hp->id), cp - msg, hp->rcode);
+	}
 	if (debug >= 10)
 		res_pquery(&res, msg, cp - msg,
 			    log_get_stream(packet_channel));
@@ -514,6 +722,13 @@ req_notify(HEADER *hp, u_char **cpp, u_char *eom, u_char *msg,
 	/* XXX - when answers are allowed, we'll need to do compression
 	 * correctly here, and we will need to check for packet underflow.
 	 */
+	/*
+	 * We are ignoring the other field, make sure the header reflects
+	 * *cpp.
+	 */
+	hp->ancount = htons(0);
+	hp->nscount = htons(0);
+	hp->arcount = htons(0);
 	/* Find the zone this NOTIFY refers to. */
 	zp = find_auth_zone(dnbuf, class);
 	if (zp == NULL) {
@@ -538,7 +753,7 @@ req_notify(HEADER *hp, u_char **cpp, u_char *eom, u_char *msg,
 			 * AXFR from you.
 			 */
 			ns_info(ns_log_notify,
-			    "NOTIFY(SOA) for non-secondary name (%s), from %s",
+			    "NOTIFY(SOA) for non-slave zone (%s), from %s",
 				dnbuf, sin_ntoa(from));
 			goto refuse;
 		}
@@ -567,6 +782,7 @@ req_notify(HEADER *hp, u_char **cpp, u_char *eom, u_char *msg,
 			ns_info(ns_log_notify,
 				"NOTIFY(SOA) for zone already xferring (%s)",
 				dnbuf);
+			zp->z_flags |= Z_NEEDREFRESH;
 			goto noerror;
 		}
 		zp->z_time = tt.tv_sec;
@@ -591,16 +807,42 @@ req_notify(HEADER *hp, u_char **cpp, u_char *eom, u_char *msg,
 }
 #endif /*BIND_NOTIFY*/
 
+static int
+add_bind(HEADER *hp, u_char **cpp, u_char *msg, int *msglenp,
+	 const char *label, const char *data)
+{
+	u_char *tp;
+
+	hp->ancount = htons(1);
+	hp->nscount = htons(0);
+	hp->arcount = htons(0);
+	hp->rcode = ns_r_noerror;
+	hp->aa = 1;
+	hp->ra = 0;
+	copyCharString(cpp, label);	/* Name */
+	copyCharString(cpp, "BIND");
+	*(*cpp)++ = 0x00;
+	PUTSHORT(T_TXT, *cpp);		/* Type */
+	PUTSHORT(C_CHAOS, *cpp);	/* Class */
+	PUTLONG(0, *cpp);		/* TTL */
+	tp = *cpp;			/* Temp RdLength */
+	PUTSHORT(0, *cpp);
+	copyCharString(cpp, data);
+	PUTSHORT((*cpp) - (tp + INT16SZ), tp);	/* Real RdLength */
+	*msglenp = *cpp - msg;		/* Total message length */
+	return (Finish);
+}
 
 static enum req_action
 req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 	  int *buflenp, int *msglenp, u_char *msg, int dfd, int *ra,
-	  struct sockaddr_in from, struct tsig_record *in_tsig)
+	  struct sockaddr_in from, struct tsig_record *in_tsig,
+	  u_int16_t udpsize)
 {
 	int n, class, type, count, zone, foundname, founddata, omsglen, cname;
 	int recursion_blocked_by_acl;
 	u_int16_t id;
-	u_int32_t serial_ixfr;
+	u_int32_t serial_ixfr = 0;
 	int ixfr_found;
 	int ixfr_error = 0;
 	char dnbuf2[MAXDNAME];
@@ -614,6 +856,8 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 	struct zoneinfo *zp;
 	struct databuf *dp;
 	DST_KEY *in_key = (in_tsig != NULL) ? in_tsig->key : NULL;
+	int access_class;
+	int adjustlen = 0;
 
 	nameserIncr(from.sin_addr, nssRcvdQ);
 
@@ -631,12 +875,17 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 
 	/* valid queries have one question and zero answers */
 	if ((ntohs(hp->qdcount) != 1)
-	    || ntohs(hp->ancount) != 0
-	    || ntohs(hp->arcount) != 0) {
+	    || ntohs(hp->ancount) != 0) {
 		ns_debug(ns_log_default, 1,
 			 "FORMERR Query header counts wrong");
 		hp->rcode = ns_r_formerr;
 		return (Finish);
+	}
+
+	if (ntohs(hp->arcount) != 0) {
+		ns_debug(ns_log_default, 1, "Ignoring addition section");
+		hp->arcount = htons(0);
+		adjustlen = 1;
 	}
 
 	/*
@@ -663,8 +912,9 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 	GETSHORT(type, *cpp);
 	GETSHORT(class, *cpp);
 	if (*cpp < eom && type != ns_t_ixfr) {
-		ns_debug(ns_log_default, 6,
-			 "message length > received message");
+		if (!adjustlen)
+			ns_debug(ns_log_default, 6,
+				 "message length > received message");
 		*msglenp = *cpp - msg;
 	}
 
@@ -731,7 +981,7 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 		}
 		GETLONG(serial_ixfr, *cpp);
 		/* ignore other soa counters */
-		if ((*cpp + (4 * INT32SZ)) < eom)
+		if ((*cpp + (4 * INT32SZ)) < eom && !adjustlen)
 			ns_debug(ns_log_default, 6,
 				 "ixfr: message length > received message");
 		/* Reset msglenp to cover just the question. */
@@ -806,11 +1056,30 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 #endif /*YPKLUDGE*/
 
 	/*
+	 * Don't accept in a query names which would be rejected in responses.
+	 * (This is primarily in case we have to forward it, but it's also a
+	 * matter of architectural symmetry.)
+	 */
+	if (!ns_nameok(NULL, dname, class, NULL, response_trans,
+		       ns_ownercontext(type, response_trans),
+		       dname, from.sin_addr)) {
+		ns_debug(ns_log_default, 1, "bad name in query"); 
+		hp->rcode = ns_r_formerr;
+		return (Refuse);
+	}
+
+	/*
 	 * Begin Access Control Point
 	 */
-
 	zone = DB_Z_CACHE;
+
+	/*
+	 * Map class ANY to to class IN for the purpose of access control.
+	 */
+	access_class = (class == C_ANY && !ns_t_xfr_p(type)) ? C_IN : class;
+
 	if (np) {
+#ifndef FORWARD_ALLOWS
 		struct namebuf *access_np;
 
 		/*
@@ -825,13 +1094,35 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 		for (access_np = np; access_np != NULL;
 		     access_np = np_parent(access_np)) {
 			dp = access_np->n_data;
-			while (dp && dp->d_class != class)
+			while (dp && dp->d_class != access_class)
 				dp = dp->d_next;
 			if (dp != NULL) {
 				zone = dp->d_zone;
 				break;
 			}
 		}
+#else
+		/*
+		 * Try looking for forward zone.  It can be deeper than
+		 * any entry in the cache.
+		 */
+		if (zone == DB_Z_CACHE) {
+			char *s = dname;
+			int escape = 0;
+			while ((zp = find_zone(s, access_class)) == NULL) {
+				if (*s == '\0')
+					break;
+				while (*s != '\0' && (escape || *s != '.')) {
+					escape = escape ? 0 : (*s == '\\');
+					s++;
+				}   
+				if (*s == '.')
+					s++;
+			}
+			if (zp != NULL)
+				zone = zp - zones;
+		}
+#endif
 	}
 
 	zp = &zones[zone];
@@ -911,8 +1202,9 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 				for (access_np = np; access_np != NULL;
 				     access_np = np_parent(access_np)) {
 					dp = access_np->n_data;
-					while (dp && (dp->d_class != class ||
-					       dp->d_zone == DB_Z_CACHE))
+					while (dp &&
+					       (dp->d_class != access_class ||
+					        dp->d_zone == DB_Z_CACHE))
 						dp = dp->d_next;
 					if (dp != NULL) {
 						zone = dp->d_zone;
@@ -930,11 +1222,17 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 					goto fetchns;
 				}
 			}
+#ifdef NXDOMAIN_ON_DENIAL
+			hp->rcode = ns_r_nxdomain;
+			return (Finish);
+#else
 			ns_notice(ns_log_security,
-				  "denied query from %s for \"%s\"",
-				  sin_ntoa(from), *dname ? dname : ".");
+				  "denied query from %s for \"%s\" %s/%s",
+				  sin_ntoa(from), *dname ? dname : ".",
+				  p_type(type), p_class(class));
 			nameserIncr(from.sin_addr, nssRcvdUQ);
 			return (Refuse);
+#endif
 		}
 	} else {
 		ip_match_list transfer_acl;
@@ -951,9 +1249,9 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 					       in_key))
 		{
 			ns_notice(ns_log_security,
-				  "denied %s from %s for \"%s\" (acl)",
+				  "denied %s from %s for \"%s\" %s (acl)",
 				  p_type(type), sin_ntoa(from),
-				  *dname ? dname : ".");
+				  *dname ? dname : ".", p_class(class));
 			nameserIncr(from.sin_addr, nssRcvdUXFR);
 			if (type == ns_t_ixfr) {
 				hp->rcode = ns_r_refused;
@@ -981,9 +1279,9 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 
 		if ((zp->z_flags & Z_AUTH) == 0) {
 			ns_notice(ns_log_security,
-			 "denied %s from %s for \"%s\" (not authoritative)",
+			 "denied %s from %s for \"%s\" %s (not authoritative)",
 				  p_type(type), sin_ntoa(from),
-				  *dname ? dname : ".");
+				  *dname ? dname : ".", p_class(class));
 			nameserIncr(from.sin_addr, nssRcvdUXFR);
 			if (type == ns_t_ixfr) {
 				hp->rcode = ns_r_refused;
@@ -996,9 +1294,9 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 
 		if (ns_samename(zp->z_origin, dname) != 1) {
 			ns_notice(ns_log_security,
-			  "denied %s from %s for \"%s\" (not zone top)",
+			  "denied %s from %s for \"%s\" %s (not zone top)",
 				  p_type(type), sin_ntoa(from),
-				  *dname ? dname : ".");
+				  *dname ? dname : ".", p_class(class));
 			nameserIncr(from.sin_addr, nssRcvdUXFR);
 			if (type == ns_t_ixfr) {
 				hp->rcode = ns_r_refused;
@@ -1023,28 +1321,18 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 	 * Yow!
 	 */
 	if (class == ns_c_chaos && type == ns_t_txt &&
-	    ns_samename(dnbuf, "VERSION.BIND") == 1) {
-		u_char *tp;
+	    ns_samename(dnbuf, "VERSION.BIND") == 1 &&
+	    server_options->version != NULL &&
+	    server_options->version[0] != '\0')
+		return (add_bind(hp, cpp, msg, msglenp,
+			"VERSION", server_options->version));
 
-		hp->ancount = htons(1);
-		hp->nscount = htons(0);
-		hp->arcount = htons(0);
-		hp->rcode = ns_r_noerror;
-		hp->aa = 1;
-		hp->ra = 0;
-		copyCharString(cpp, "VERSION");	/* Name */
-		copyCharString(cpp, "BIND");
-		*(*cpp)++ = 0x00;
-		PUTSHORT(T_TXT, *cpp);		/* Type */
-		PUTSHORT(C_CHAOS, *cpp);	/* Class */
-		PUTLONG(0, *cpp);		/* TTL */
-		tp = *cpp;			/* Temp RdLength */
-		PUTSHORT(0, *cpp);
-		copyCharString(cpp, server_options->version);
-		PUTSHORT((*cpp) - (tp + INT16SZ), tp);	/* Real RdLength */
-		*msglenp = *cpp - msg;		/* Total message length */
-		return (Finish);
-	}
+	if (class == ns_c_chaos && type == ns_t_txt &&
+	    ns_samename(dnbuf, "HOSTNAME.BIND") == 1 &&
+	    server_options->hostname != NULL &&
+	    server_options->hostname[0] != '\0')
+		return (add_bind(hp, cpp, msg, msglenp,
+			"HOSTNAME", server_options->hostname));
 
 	/*
 	 * If we don't know anything about the requested name,
@@ -1273,8 +1561,8 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 
 	if (!founddata && hp->rd && recursion_blocked_by_acl) {
 		ns_notice(ns_log_security,
-			  "denied recursion for query from %s for %s",
-			  sin_ntoa(from), *dname ? dname : ".");
+			  "denied recursion for query from %s for %s %s",
+			  sin_ntoa(from), *dname ? dname : ".", p_class(class));
 		nameserIncr(from.sin_addr, nssRcvdURQ);
 	}
 
@@ -1334,6 +1622,8 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 		if (n < 0) {
 			ns_info(ns_log_default, "res_mkquery(%s) failed",
 				dname);
+			memcpy(msg, omsg, omsglen);
+			memput(omsg, omsglen);
 			hp->rcode = ns_r_servfail;
 			free_nsp(nsp);
 			return (Finish);
@@ -1343,7 +1633,9 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 	n = ns_forw(nsp, msg, *msglenp, from, qsp, dfd, &qp,
 		    dname, class, type, np, 0, in_tsig);
 	if (n != FW_OK && cname) {
+		memcpy(msg, omsg, omsglen);
 		memput(omsg, omsglen);
+		*msglenp = omsglen;
 		omsg = NULL;
 	}
 	switch (n) {
@@ -1352,8 +1644,14 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 			qp->q_cname = cname;
 			qp->q_cmsg = omsg;
 			qp->q_cmsglen = omsglen;
+			qp->q_cmsgsize = omsglen;
 			qp->q_id = id;
 		}
+		if (udpsize != 0) {
+			qp->q_flags |= Q_EDNS;
+			qp->q_udpsize = udpsize;
+		} else
+			qp->q_udpsize = PACKETSZ;
 		break;
 	case FW_DUP:
 		break;		/* Duplicate request dropped */
@@ -1408,7 +1706,7 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 
 static enum req_action
 req_iquery(HEADER *hp, u_char **cpp, u_char *eom, int *buflenp,
-	   u_char *msg, struct sockaddr_in from)
+	   struct sockaddr_in from)
 {
 	u_int rdata_offset;
 	size_t alen;
@@ -1528,7 +1826,7 @@ req_iquery(HEADER *hp, u_char **cpp, u_char *eom, int *buflenp,
 	*buflenp -= INT16SZ;
 
 	hp->qdcount = htons(1);
-	if (alen > *buflenp) {
+	if ((int)alen > *buflenp) {
 		hp->tc = 1;
 		return (Finish);
 	}
@@ -1545,6 +1843,10 @@ int
 stale(struct databuf *dp) {
 	struct zoneinfo *zp = &zones[dp->d_zone];
 
+#ifdef CHECK_MAGIC
+	INSIST(dp->d_magic == DATABUF_MAGIC);
+#endif
+
 	switch (zp->z_type) {
 
 	case z_master:
@@ -1559,7 +1861,7 @@ stale(struct databuf *dp) {
 #endif
 	case z_slave:
 		/*
-		 * Check to see whether a secondary zone has expired or
+		 * Check to see whether a slave zone has expired or
 		 * time warped; if so clear authority flag for zone,
 		 * schedule the zone for immediate maintenance, and
 		 * return true.
@@ -1571,7 +1873,7 @@ stale(struct databuf *dp) {
 				zp->z_origin);
 			if (!haveComplained((u_long)zp, (u_long)stale)) {
 				ns_notice(ns_log_default,
-					  "secondary zone \"%s\" expired",
+					  "slave zone \"%s\" expired",
 					  zp->z_origin);
 			}
 			zp->z_flags &= ~Z_AUTH;
@@ -1584,7 +1886,7 @@ stale(struct databuf *dp) {
 		if (zp->z_lastupdate > tt.tv_sec) {
 			if (!haveComplained((u_long)zp, (u_long)stale)) {
 				ns_notice(ns_log_default,
-					  "secondary zone \"%s\" time warp",
+					  "slave zone \"%s\" time warp",
 					  zp->z_origin);
 			}
 			zp->z_flags &= ~Z_AUTH;
@@ -1608,7 +1910,6 @@ stale(struct databuf *dp) {
 
 	default:
 		/* FALLTHROUGH */ ;
-
 	}
 	panic("stale: impossible condition", NULL);
 	/* NOTREACHED */
@@ -1630,6 +1931,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 	int32_t n;
 	int16_t type = dp->d_type;
 	u_int32_t ttl;
+	u_char naptr_flag;
 
 	ns_debug(ns_log_default, 5,
 		 "make_rr(%s, %lx, %lx, %d, %d) %d zone %d ttl %lu",
@@ -1769,6 +2071,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		buflen -= n + 1;
 		if (buflen < 0)
 			goto cleanup;
+		naptr_flag = (n == 1) ? *cp1 : 0;
 		*cp++ = n;
 		memcpy(cp, cp1, n);
 		cp += n;
@@ -1807,6 +2110,14 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		if (n < 0)
 			goto cleanup;
 		cp += n;
+		if (doadd && *cp1 != 0) {
+			if (naptr_flag == 's' || naptr_flag == 'S')
+				addname((char*)cp1, name, type, T_SRV,
+					dp->d_class);
+			if (naptr_flag == 'a' || naptr_flag == 'A')
+				addname((char*)cp1, name, type, T_A,
+					dp->d_class);
+		}
 
 		/* save data length */
 		n = (u_int16_t)((cp - sp) - INT16SZ);
@@ -1990,8 +2301,9 @@ doaddinfo(HEADER *hp, u_char *msg, int msglen) {
 	const char *fname;
 	register int n, count;
 	register int ns_logging;
-	int finishedA = 0;
-	int save_addcount = addcount;
+	int pass = 0;
+	int i, doadd;
+	
 
 	if (!addcount)
 		return (0);
@@ -2011,15 +2323,21 @@ doaddinfo(HEADER *hp, u_char *msg, int msglen) {
 	count = 0;
 	cp = msg;
 loop:
-	for (ap = addinfo; --addcount >= 0; ap++) {
-		int     foundany = 0,
+	for (ap = addinfo, i = 0; i < addcount; ap++, i++) {
+		int     auth = 0,
+			founda = 0,
+			foundaaaa = 0,
+			founda6 = 0,
 			foundcname = 0,
 			save_count = count,
 			save_msglen = msglen;
 		u_char	*save_cp = cp;
 
-		if ((finishedA == 1 && ap->a_type == T_A) ||
-		    (finishedA == 0 && ap->a_type == T_KEY))
+		if ((pass != 0 &&
+	             (pass != 1 || server_options->preferred_glue == 0) &&
+		     ap->a_type == T_A) ||
+		    (pass != 0 && ap->a_type == T_SRV) ||
+		    (pass != 2 && ap->a_type == T_KEY))
 			continue;
 		if (ns_logging)
 			ns_debug(ns_log_default, 3,
@@ -2034,35 +2352,61 @@ loop:
 		/* look for the data */
 		(void)delete_stale(np);
 		for (dp = np->n_data; dp != NULL; dp = dp->d_next) {
-			if (dp->d_rcode)
+			if (dp->d_class != ap->a_class)
 				continue;
-			if ((match(dp, (int)ap->a_class, T_CNAME) &&
-			     dp->d_type == T_CNAME) ||
-			    (match(dp, C_IN, T_CNAME) &&
-			     dp->d_type == T_CNAME)) {
+			if (dp->d_rcode == NXDOMAIN) {
+				founda = founda6 = foundaaaa = 1;
+				continue;
+			}
+			switch (dp->d_type) {
+			case ns_t_a: founda = 1; break;
+			case ns_t_a6: founda6 = 1; break;
+			case ns_t_aaaa: foundaaaa = 1; break;
+			}
+			if (!dp->d_rcode && dp->d_type == T_CNAME) {
 				foundcname++;
 				break;
 			}
+			if (auth == 0 && ap->a_type == T_A &&
+			    (dp->d_type == ns_t_a || dp->d_type == ns_t_a6 ||
+			     dp->d_type == ns_t_aaaa) &&
+			    (zones[dp->d_zone].z_type == z_master ||
+			     zones[dp->d_zone].z_type == z_slave))
+				auth = 1;
+			if (pass == 0 && ap->a_type == T_A && 
+			    server_options->preferred_glue != 0 &&
+			    !match(dp, (int)ap->a_class,
+				   server_options->preferred_glue)) {
+				continue;
+			} 
+			if (pass != 0 && ap->a_type == T_A &&
+			    server_options->preferred_glue != 0 &&
+			    match(dp, (int)ap->a_class,
+				   server_options->preferred_glue)) {
+				continue;
+			} 
 			if (ap->a_type == T_A &&
 			    !match(dp, (int)ap->a_class, T_A) &&
-			    !match(dp, C_IN, T_A) &&
 			    !match(dp, (int)ap->a_class, T_AAAA) &&
-			    !match(dp, C_IN, T_AAAA) &&
-			    !match(dp, (int)ap->a_class, ns_t_a6) &&
-			    !match(dp, C_IN, ns_t_a6)) {
+			    !match(dp, (int)ap->a_class, ns_t_a6)) {
 				continue;
 			}
 			if (ap->a_type == T_KEY &&
-			    !match(dp, (int)ap->a_class, T_KEY) &&
-			    !match(dp, C_IN, T_KEY))
+			    !match(dp, (int)ap->a_class, T_KEY))
 				continue;
-
-			foundany++;
+			if (ap->a_type == T_SRV &&
+			    !match(dp, (int)ap->a_class, T_SRV))
+				continue;
+			if (dp->d_rcode)
+				continue;
 			/*
 			 *  Should be smart and eliminate duplicate
 			 *  data here.	XXX
 			 */
-			if ((n = make_rr(ap->a_dname, dp, cp, msglen, 0,
+			doadd = 0;
+			if (ap->a_type == T_SRV)
+				doadd = 1;
+			if ((n = make_rr(ap->a_dname, dp, cp, msglen, doadd,
 					 dnptrs, dnptrs_end, 0)) < 0) {
 				/* truncation in the additional-data section
 				 * is not all that serious.  we do not set TC,
@@ -2094,11 +2438,20 @@ loop:
 		}
  next_rr:
 		if (!NS_OPTION_P(OPTION_NOFETCHGLUE) && 
-		    !foundcname && !foundany &&
-		    (ap->a_type == T_A || ap->a_type == T_AAAA)) {
+		    !foundcname && ap->a_type == T_A) {
 			/* ask a real server for this info */
-			(void) sysquery(ap->a_dname, (int)ap->a_class,
-					ap->a_type, NULL, 0, ns_port, QUERY);
+			if (!founda && !auth)
+				(void) sysquery(ap->a_dname, (int)ap->a_class,
+						ns_t_a, NULL, NULL, 0, ns_port,
+						QUERY, 0);
+			if (!foundaaaa && !auth)
+				(void) sysquery(ap->a_dname, (int)ap->a_class,
+						ns_t_aaaa, NULL, NULL, 0,
+						ns_port, QUERY, 0);
+			if (!founda6 && !auth)
+				(void) sysquery(ap->a_dname, (int)ap->a_class,
+						ns_t_a6, NULL, NULL, 0, ns_port,
+						QUERY, 0);
 		}
 		if (foundcname) {
 			if (!haveComplained(nhash(ap->a_dname),
@@ -2109,15 +2462,15 @@ loop:
 					p_type(ap->a_rtype), ap->a_dname);
 			}
 		}
-		freestr(ap->a_dname);
-		freestr(ap->a_rname);
 	}
-	if (finishedA == 0) {
-		finishedA = 1;
-		addcount = save_addcount;
+	if (pass++ < 2)
 		goto loop; /* now do the KEYs... */
-	}
 	hp->arcount = htons((u_int16_t)count);
+	for (ap = addinfo, i = 0; i < addcount; ap++, i++) {
+		ap->a_dname = freestr(ap->a_dname);
+		ap->a_rname = freestr(ap->a_rname);
+	}
+	addcount = 0;
 	return (cp - msg);
 }
 
@@ -2156,27 +2509,16 @@ free_addinfo() {
 	struct addinfo *ap;
 
 	for (ap = addinfo; --addcount >= 0; ap++) {
-		freestr(ap->a_dname);
-		freestr(ap->a_rname);
+		ap->a_dname = freestr(ap->a_dname);
+		ap->a_rname = freestr(ap->a_rname);
 	}
 	addcount = 0;
 }
 
 void
 free_nsp(struct databuf **nsp) {
-	while (*nsp) {
-		DRCNTDEC(*nsp);
-		if ((*nsp)->d_rcnt)
-			ns_debug(ns_log_default, 3, "free_nsp: %s rcnt %d",
-				 (*nsp)->d_data, (*nsp)->d_rcnt);
-		else {
-			ns_debug(ns_log_default, 3,
-				 "free_nsp: %s rcnt %d delayed",
-				 (*nsp)->d_data, (*nsp)->d_rcnt);
-			db_freedata(*nsp);	/* delayed free */
-		}
-		*nsp++ = NULL;
-	}
+	while (*nsp)
+		db_detach(nsp++);
 }
 
 static void
@@ -2185,4 +2527,21 @@ copyCharString(u_char **dst, const char *src) {
 	*(*dst)++ = (u_char) len;
 	memcpy(*dst, src, len);
 	*dst += len;
+}
+
+/*
+ * Questionable source ports for queries / responses.
+ */
+int
+drop_port(u_int16_t port) {
+	switch (port) {
+	case 7: /* echo */
+	case 13: /* daytime */
+	case 19: /* chargen */
+	case 37: /* time */
+		return (1);
+	case 464: /* kpasswd */
+		return (2);
+	}
+	return (0);
 }

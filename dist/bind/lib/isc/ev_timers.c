@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_timers.c,v 1.1.1.1.8.3 2001/01/28 15:52:41 he Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.1.1.1.8.4 2002/07/01 17:13:51 he Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: ev_timers.c,v 1.26 2000/07/17 07:36:54 vixie Exp";
+static const char rcsid[] = "Id: ev_timers.c,v 1.32 2001/11/01 05:35:47 marka Exp";
 #endif
 
 /* Import. */
@@ -40,6 +40,7 @@ static const char rcsid[] = "Id: ev_timers.c,v 1.26 2000/07/17 07:36:54 vixie Ex
 
 /* Constants. */
 
+#define	MILLION 1000000
 #define BILLION 1000000000
 
 /* Forward. */
@@ -113,7 +114,6 @@ evNowTime() {
 
 	if (gettimeofday(&now, NULL) < 0)
 		return (evConsTime(0, 0));
-	INSIST(now.tv_usec >= 0 && now.tv_usec < 1000000);
 	return (evTimeSpec(now));
 }
 
@@ -203,7 +203,7 @@ evClearTimer(evContext opaqueCtx, evTimerID id) {
 	}
 
 	if (heap_element(ctx->timers, del->index) != del)
-		ERR(ENOENT);
+		EV_ERR(ENOENT);
 
 	if (heap_delete(ctx->timers, del->index) < 0)
 		return (-1);
@@ -231,7 +231,7 @@ evResetTimer(evContext opaqueCtx,
 	int result=0;
 
 	if (heap_element(ctx->timers, timer->index) != timer)
-		ERR(ENOENT);
+		EV_ERR(ENOENT);
 
 	old_due = timer->due;
 
@@ -334,6 +334,9 @@ evTouchIdleTimer(evContext opaqueCtx, evTimerID id) {
 
 heap_context
 evCreateTimers(const evContext_p *ctx) {
+
+	UNUSED(ctx);
+
 	return (heap_new(due_sooner, set_index, 2048));
 }
 
@@ -365,6 +368,9 @@ set_index(void *what, int index) {
 static void
 free_timer(void *what, void *uap) {
 	evTimer *t = what;
+
+	UNUSED(uap);
+
 	FREE(t);
 }
 
@@ -390,6 +396,9 @@ idle_timeout(evContext opaqueCtx,
 	evContext_p *ctx = opaqueCtx.opaque;
 	idle_timer *this = uap;
 	struct timespec idle;
+
+	UNUSED(due);
+	UNUSED(inter);
 	
 	idle = evSubTime(ctx->lastEventTime, this->lastTouched);
 	if (evCmpTime(idle, this->max_idle) >= 0) {
