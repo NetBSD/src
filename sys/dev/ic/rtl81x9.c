@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.37 2001/08/07 02:59:53 kanaoka Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.38 2001/08/14 11:57:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1290,7 +1290,7 @@ STATIC void rtk_start(ifp)
 		 * fit in one DMA segment, and we need to copy.  Note,
 		 * the packet must also be aligned.
 		 */
-		if ((mtod(m_head, bus_addr_t) & 3) != 0 ||
+		if ((mtod(m_head, uintptr_t) & 3) != 0 ||
 		    bus_dmamap_load_mbuf(sc->sc_dmat, txd->txd_dmamap,
 			m_head, BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m_new, M_DONTWAIT, MT_DATA);

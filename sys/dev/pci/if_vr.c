@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.51 2001/07/23 17:26:50 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.52 2001/08/14 11:57:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -937,7 +937,7 @@ vr_start(ifp)
 		 * fit in one DMA segment, and we need to copy.  Note,
 		 * the packet must also be aligned.
 		 */
-		if ((mtod(m0, bus_addr_t) & 3) != 0 ||
+		if ((mtod(m0, uintptr_t) & 3) != 0 ||
 		    bus_dmamap_load_mbuf(sc->vr_dmat, ds->ds_dmamap, m0,
 		     BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
