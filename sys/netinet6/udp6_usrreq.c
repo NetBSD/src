@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.58 2003/09/04 09:17:09 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.59 2003/09/06 03:12:55 itojun Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.58 2003/09/04 09:17:09 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.59 2003/09/06 03:12:55 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -335,11 +335,6 @@ udp6_usrreq(so, req, m, addr6, control, p)
 		}
 		s = splsoftnet();
 		error = in6_pcbconnect(in6p, addr6);
-		if (ip6_auto_flowlabel) {
-			in6p->in6p_flowinfo &= ~IPV6_FLOWLABEL_MASK;
-			in6p->in6p_flowinfo |=
-				(htonl(ip6_flow_seq++) & IPV6_FLOWLABEL_MASK);
-		}
 		splx(s);
 		if (error == 0)
 			soisconnected(so);
