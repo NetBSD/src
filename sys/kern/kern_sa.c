@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.8 2001/11/17 21:26:19 thorpej Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.9 2001/11/27 04:35:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,16 +64,19 @@ int	sadebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
+int	sa_upcall0(struct lwp *, int, struct lwp *, struct lwp *,
+	    size_t, void *, struct sadata_upcall *);
+
 /*
  * sadata_upcall_alloc:
  *
  *	Allocate an sadata_upcall structure.
  */
 struct sadata_upcall *
-sadata_upcall_alloc(void)
+sadata_upcall_alloc(int waitok)
 {
 
-	return (pool_get(&saupcall_pool, PR_WAITOK));
+	return (pool_get(&saupcall_pool, waitok ? PR_WAITOK : PR_NOWAIT));
 }
 
 /*
@@ -275,14 +278,22 @@ int
 sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	size_t argsize, void *arg)
 {
-	struct proc *p = l->l_proc;
-	struct sadata *sd = p->p_sa;
 	struct sadata_upcall *s;
 
 	l->l_flag &= ~L_SA; /* XXX prevent recursive upcalls if we sleep for 
 			      memory */
-	s = sadata_upcall_alloc();
+	s = sadata_upcall_alloc(1);
 	l->l_flag |= L_SA;
+
+	return (sa_upcall0(l, type, event, interrupted, argsize, arg, s));
+}
+
+int
+sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
+    size_t argsize, void *arg, struct sadata_upcall *s)
+{
+	struct proc *p = l->l_proc;
+	struct sadata *sd = p->p_sa;
 
 	s->sau_type = type;
 	s->sau_argsize = argsize;
@@ -307,16 +318,23 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 
 /* 
  * Called by tsleep(). Block current LWP and switch to another.
+ *
+ * WE ARE NOT ALLOWED TO SLEEP HERE!  WE ARE CALLED FROM WITHIN
+ * TSLEEP() ITSELF!  We are called with sched_lock held, and must
+ * hold it right through the mi_switch() call.
  */
 void
 sa_switch(struct lwp *l, int type)
 {
 	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;
+	struct sadata_upcall *sd;
 	struct lwp *l2;
 	int s, error;
 
 	DPRINTF(("sa_switch(type: %d pid: %d.%d)\n", type, p->p_pid, l->l_lid));
+
+	SCHED_ASSERT_LOCKED();
 
 	/* Get an LWP */
 	/* The process of allocating a new LWP could cause
@@ -342,9 +360,20 @@ sa_switch(struct lwp *l, int type)
 	LIST_REMOVE(l2, l_sibling);
 	/* XXX unlock */
 
+	/*
+	 * XXX We need to allocate the sadata_upcall structure here,
+	 * XXX since we can't sleep while waiting for memory inside
+	 * XXX sa_upcall().  It would be nice if we could safely
+	 * XXX allocate the sadata_upcall structure on the stack, here.
+	 */
+	sd = sadata_upcall_alloc(0);
+	if (sd == NULL)
+		goto sa_upcall_failed;
+
 	cpu_setfunc(l2, sa_switchcall, l);
-	error = sa_upcall(l2, SA_UPCALL_BLOCKED, l, NULL, 0, NULL);
+	error = sa_upcall0(l2, SA_UPCALL_BLOCKED, l, NULL, 0, NULL, sd);
 	if (error) {
+ sa_upcall_failed:
 		/* Put the lwp back */
 		/* XXX lock sadata */
 		LIST_INSERT_HEAD(&sa->sa_lwpcache, l2, l_sibling);
@@ -357,11 +386,9 @@ sa_switch(struct lwp *l, int type)
 	p->p_nlwps++;
 	p->p_nrlwps++;
 
-	SCHED_LOCK(s);
 	l2->l_priority = l2->l_usrpri;
 	setrunnable(l2);
 	PRELE(l2); /* Remove the artificial hold-count */
-	SCHED_UNLOCK(s);
 
 	KDASSERT(l2 != l);
 	KDASSERT(l2->l_wchan == 0);
@@ -374,6 +401,8 @@ sa_switch(struct lwp *l, int type)
 	DPRINTF(("sa_switch: pid %d returned to %d.\n", p->p_pid,
 	    l->l_lid));
 	KDASSERT(l->l_wchan == 0);
+
+	SCHED_ASSERT_UNLOCKED();
 
 	/*
 	 * Okay, now we've been woken up. This means that it's time
