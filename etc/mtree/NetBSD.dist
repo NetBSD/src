@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.186 2002/04/07 15:31:56 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.187 2002/04/08 19:12:42 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -620,7 +620,7 @@
 ./usr/share/man/html8/newsmips
 ./usr/share/man/html8/next68k
 ./usr/share/man/html8/pc532
-./usr/share/man/html8/playstation
+./usr/share/man/html8/playstation2
 ./usr/share/man/html8/pmax
 ./usr/share/man/html8/prep
 ./usr/share/man/html8/sandpoint
