@@ -1,4 +1,4 @@
-.\"	$NetBSD: wscons.conf.5,v 1.2.2.2 2000/09/20 20:16:25 hubertf Exp $
+.\"	$NetBSD: wscons.conf.5,v 1.2.2.3 2000/09/20 20:17:54 hubertf Exp $
 .\"
 .\" Copyright notice
 .\"
@@ -26,9 +26,11 @@ Add and configure virtual console number
 .Sy idx
 using a screen type of
 .Sy scr
-and a
+(e.g. 80x25) and a
 .Sy emul
-terminal emulation (e.g. vt100). 
+terminal emulation (e.g. vt100). See
+.Xr wsconscfg 8
+for further parameter description.
 .Pp
 .It Sy font        name width height enc file
 Used to load a font via
@@ -39,7 +41,6 @@ gives a font name that can be used later,
 can be used to specify the width of a font character in pixel, 
 .Sy height
 is the same, just for the font characters' height.
-If both are ``-'', the font's default is assumes.
 .Sy enc
 is used to declare the font's encoding, see the description on
 .Xr wsfontload 8 's
@@ -63,12 +64,15 @@ Used to attach and configure keyboard/mouse multiplexors. See
 for more information.
 .Pp
 .El
+Command arguments can be specified as
+.Dq -
+which makes default values come into effect as described in the
+documentation of the utilities.
 .Sh FILES
 .Bl -tag -width /etc/wscons.conf -compact
 .It Pa /etc/wscons.conf
 .El
 .Sh SEE ALSO
 .Xr wscons 4 , 
-.Xr wsconsctl 8 ,
 .Xr wsconscfg 8 ,
 .Xr wsfontload 8
