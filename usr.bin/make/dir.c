@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.24 1999/09/15 08:43:22 mycroft Exp $	*/
+/*	$NetBSD: dir.c,v 1.25 1999/11/25 22:34:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: dir.c,v 1.24 1999/09/15 08:43:22 mycroft Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.25 1999/11/25 22:34:16 mrg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.24 1999/09/15 08:43:22 mycroft Exp $");
+__RCSID("$NetBSD: dir.c,v 1.25 1999/11/25 22:34:16 mrg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1144,10 +1144,8 @@ Dir_MTime (gn)
 
     if (gn->type & OP_ARCHV) {
 	return Arch_MTime (gn);
-    } else if (gn->type & OP_PHONY)
-	return 0;
-    else if (gn->path == (char *)NULL) {
-	if (gn->type & OP_NOPATH)
+    } else if (gn->path == (char *)NULL) {
+	if (gn->type & (OP_PHONY|OP_NOPATH))
 	    fullName = NULL;
 	else
 	    fullName = Dir_FindFile (gn->name, dirSearchPath);
