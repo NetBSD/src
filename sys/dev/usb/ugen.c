@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.45 2000/12/13 04:05:14 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.46 2001/09/15 16:16:27 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -516,7 +516,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 				return (EWOULDBLOCK);
 			}
 			sce->state |= UGEN_ASLP;
-			DPRINTFN(5, ("ugenread: sleep on %p\n", sc));
+			DPRINTFN(5, ("ugenread: sleep on %p\n", sce));
 			error = tsleep(sce, PZERO | PCATCH, "ugenri", 0);
 			DPRINTFN(5, ("ugenread: woke, error=%d\n", error));
 			if (sc->sc_dying)
@@ -580,7 +580,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 				return (EWOULDBLOCK);
 			}
 			sce->state |= UGEN_ASLP;
-			DPRINTFN(5, ("ugenread: sleep on %p\n", sc));
+			DPRINTFN(5, ("ugenread: sleep on %p\n", sce));
 			error = tsleep(sce, PZERO | PCATCH, "ugenri", 0);
 			DPRINTFN(5, ("ugenread: woke, error=%d\n", error));
 			if (sc->sc_dying)
