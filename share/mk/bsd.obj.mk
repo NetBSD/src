@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.14 1998/08/27 16:54:59 tv Exp $
+#	$NetBSD: bsd.obj.mk,v 1.15 1998/08/27 20:33:45 tv Exp $
 
 .if defined(NOOBJ)
 obj:
@@ -45,5 +45,5 @@ obj:
 	fi;
 .endif
 
-show-objdir:
+print-objdir:
 	@echo ${.OBJDIR}
