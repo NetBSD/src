@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.15 1999/02/13 15:53:17 explorer Exp $	*/
+/*	$NetBSD: wc.c,v 1.16 1999/02/14 18:03:18 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.15 1999/02/13 15:53:17 explorer Exp $");
+__RCSID("$NetBSD: wc.c,v 1.16 1999/02/14 18:03:18 mjacob Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ __RCSID("$NetBSD: wc.c,v 1.15 1999/02/13 15:53:17 explorer Exp $");
 static u_int64_t	tlinect, twordct, tcharct;
 static int		doline, doword, dochar;
 static int 		rval = 0;
+static char *qfmt;
 
 static void	cnt __P((char *));
 static void	print_counts __P((u_int64_t, u_int64_t, u_int64_t, char *));
@@ -86,6 +87,10 @@ main(argc, argv)
 	int ch;
 
 	setlocale(LC_ALL, "");
+	if (sizeof (u_int64_t) > 4)
+		qfmt = " %7u";
+	else
+		qfmt = " %7qu";
 
 	while ((ch = getopt(argc, argv, "lwcm")) != -1)
 		switch((char)ch) {
@@ -253,11 +258,11 @@ print_counts(lines, words, chars, name)
 {
 
 	if (doline)
-		printf(" %7qu", lines);
+		printf(qfmt, lines);
 	if (doword)
-		printf(" %7qu", words);
+		printf(qfmt, words);
 	if (dochar)
-		printf(" %7qu", chars);
+		printf(qfmt, chars);
 
 	printf(" %s\n", name);
 }
