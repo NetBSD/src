@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_lcd.c,v 1.6 2001/07/07 06:29:13 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_lcd.c,v 1.7 2001/07/08 14:45:03 ichiro Exp $	*/
 #define SALCD_DEBUG
 
 /*
@@ -59,6 +59,8 @@
 #include <hpcarm/sa11x0/sa11x0_lcdreg.h>
 #include <hpcarm/sa11x0/sa11x0_lcdvar.h>
 
+#include <hpcarm/sa11x0/sa11x0_gpioreg.h>
+
 #ifdef SALCD_DEBUG
 #define DPRINTFN(n, x)  if (salcddebug > (n)) printf x
 int     salcddebug = 0xff;
@@ -112,9 +114,7 @@ salcd_attach(parent, self, aux)
 
 	sc->sc_iot = &sa11x0_bs_tag;
 	sc->sc_parent = (struct sa11x0_softc *)parent;
-#ifdef XXX
-	(u_long)bootinfo->fb_addr = 0x48200000; /* XXX For iPAQ*/
-#endif
+
 	salcd_init(sc);
 	salcd_fbinit(&sc->sc_fbconf);
 
@@ -134,74 +134,42 @@ salcd_attach(parent, self, aux)
         ha.ha_dspconflist = &sc->sc_dspconf;
 
         config_found(&sc->sc_dev, &ha, hpcfbprint);
-
 }
 
 void
 salcd_init(sc)
 	struct salcd_softc *sc;
 {
-	int buf_r0, buf_r1, buf_r2, buf_r3;
+#if 0
+	/* Initialization of Extended GPIO */
+	bus_space_write_4(sc->sc_iot, sc->sc_parent->sc_egpioh,
+			  0, EGPIO_LCD_INIT);
+#endif
 
 	if (bus_space_map(sc->sc_iot, SALCD_BASE, SALCD_NPORTS,
 			  0, &sc->sc_ioh))
                 panic("salcd_init:Cannot map registers\n");
-	/*
-	 * must initialize DMA Channel Base Address Register 
-	 * before enabling LCD(LEN = 1) 
-	 */
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			SALCD_BA1, (u_long)bootinfo->fb_addr);
-
-#if 1 /* XXX for iPAQ */
-	buf_r0 = buf_r1 = buf_r2 = buf_r3 = 0x0;
-	/*
-	 * LCD Control Register 0 
-	 * LEN = 1, PAS = 1
-	 */
-	buf_r0 |= CR0_LEN | CR0_PAS;
+	(u_long)bootinfo->fb_addr =
+		bus_space_read_4(sc->sc_iot, sc->sc_ioh, SALCD_BA1);
 
 	/*
-	 * LCD Control Register 1
-	 * PPL = 304(0x0130),VSW = (1 << 11)
-	 * EFW = (1 << 16),BFW = (0x0a << 24)
-	 */
-	buf_r1 |= (bootinfo->fb_width - 16) | (1 << 11) | (1 << 20) | (0x0b << 24);
-
-	/*
-	 * LCD Control Register 2
-	 * LPP = 240(0xf0), VSW = (1 << 11)
-	 * EFW = (1 << 16), (0x0a << 24)
-	 */
-	buf_r2 |= (bootinfo->fb_height) | (1 << 11) | (1 << 16) |(0x0a << 24);
-
-	/*
-	 * LCD Control Register 3
-	 * PCD = 0x10,
-	 * VSP = (1 << 20) , HSP = (1 << 21)
-	 */
-	buf_r3 |= 0x10 | (1 << 20) | (1 << 21);
-
-#endif
-	/*
-	 * initialize LCD Control Register 0 - 3 
+	 * Initialize LCD Control Register 0 - 3 
+	 *  must initialize DMA Channel Base Address Register 
+	 *  before enabling LCD(LEN = 1) 
 	 */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			SALCD_CR0, buf_r0);
+					SALCD_CR1, IPAQ_LCCR1);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			SALCD_CR1, buf_r1);
+					SALCD_CR2, IPAQ_LCCR2);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			SALCD_CR2, buf_r2);
+					SALCD_CR3, IPAQ_LCCR3);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			SALCD_CR3, buf_r3);
-
-	(u_long)bootinfo->fb_addr = 
-		bus_space_read_4(sc->sc_iot, sc->sc_ioh, SALCD_CA1);
+					SALCD_CR0, IPAQ_LCCR0);
 
 	DPRINTF(("DMA_BASE= %08x : DMA_CUR = %08x \n"
 		 "LCCR0   = %08x : LCCR1   = %08x \n"
-		 "LCCR2   = %08x : LCCR3   = %08x \n",
+		 "LCCR2   = %08x : LCCR3   = %08x",
 		bus_space_read_4(sc->sc_iot, sc->sc_ioh, SALCD_BA1),
 		bus_space_read_4(sc->sc_iot, sc->sc_ioh, SALCD_CA1),
 		bus_space_read_4(sc->sc_iot, sc->sc_ioh, SALCD_CR0),
