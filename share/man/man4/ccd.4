@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccd.4,v 1.24 2003/02/25 10:35:13 wiz Exp $
+.\"	$NetBSD: ccd.4,v 1.25 2003/03/02 14:31:11 enami Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -145,6 +145,12 @@ of the largest component sector divided by
 Note that best performance is achieved if all component disks have the same
 geometry and size.
 Optimum striping cannot occur with different disk types.
+.Pp
+Also note that the total size of concatenated disk may vary depending on
+the interleave factor even if the exact same components are concatenated.
+And an old on-disk disklabel may be read after interleave factor change.
+As a result, the disklabel may contain wrong partition geometry and
+will cause an error when doing I/O near the end of concatenated disk.
 .Pp
 There is a run-time utility that is used for configuring
 .Nm Ns s .
