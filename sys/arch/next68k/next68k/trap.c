@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 2000/05/27 00:40:37 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.23 2000/06/06 18:52:43 soren Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -50,6 +50,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
 #include "opt_compat_netbsd.h"

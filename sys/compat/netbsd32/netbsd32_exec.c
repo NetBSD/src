@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.19 2000/04/11 04:37:50 chs Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.20 2000/06/06 19:04:17 soren Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -35,6 +35,7 @@
 #define	ELFSIZE		32
 
 #include "opt_compat_sunos.h"
+#include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
