@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.97 2001/10/31 19:53:07 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.98 2001/11/18 12:02:13 kleink Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -41,6 +41,7 @@ MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
 	bus_space.9 bus_space_copy_region_4.9 \
 	bus_space.9 bus_space_copy_region_8.9 \
 	bus_space.9 bus_space_free.9 bus_space.9 bus_space_map.9 \
+	bus_space.9 bus_space_mmap.9 \
 	bus_space.9 bus_space_read_1.9 bus_space.9 bus_space_read_2.9 \
 	bus_space.9 bus_space_read_4.9 bus_space.9 bus_space_read_8.9 \
 	bus_space.9 bus_space_read_multi_1.9 \
