@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.100 2004/05/29 14:18:33 darrenr Exp $	*/
+/*	$NetBSD: bpf.c,v 1.101 2004/06/06 04:35:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.100 2004/05/29 14:18:33 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.101 2004/06/06 04:35:53 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -106,6 +106,9 @@ struct bpf_if	*bpf_iflist;
 struct bpf_d	bpf_dtab[NBPFILTER];
 
 static int	bpf_allocbufs __P((struct bpf_d *));
+static void	bpf_deliver(struct bpf_if *,
+		            void *(*cpfn)(void *, const void *, size_t),
+			    void *, u_int, u_int, struct ifnet *);
 static void	bpf_freed __P((struct bpf_d *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
 static void	*bpf_mcpy __P((void *, const void *, size_t));
@@ -1257,18 +1260,6 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 	}
 }
 
-static __inline u_int
-bpf_measure(struct mbuf *m)
-{
-	struct mbuf *m0;
-	u_int pktlen;
-
-	pktlen = 0;
-	for (m0 = m; m0 != 0; m0 = m0->m_next)
-		pktlen += m0->m_len;
-	return pktlen;
-}
-
 /*
  * Incoming linkage from device drivers, when the head of the packet is in
  * a buffer, and the tail is in an mbuf chain.
@@ -1284,13 +1275,14 @@ bpf_mtap2(arg, data, dlen, m)
 	u_int pktlen;
 	struct mbuf mb;
 
-	pktlen = bpf_measure(m) + dlen;
+	pktlen = m_length(m) + dlen;
 
 	/*
 	 * Craft on-stack mbuf suitable for passing to bpf_filter.
 	 * Note that we cut corners here; we only setup what's
 	 * absolutely needed--this mbuf should never go anywhere else.
 	 */
+	(void)memset(&mb, 0, sizeof(mb));
 	mb.m_next = m;
 	mb.m_data = data;
 	mb.m_len = dlen;
@@ -1311,7 +1303,7 @@ bpf_mtap(arg, m)
 	u_int pktlen, buflen;
 	void *marg;
 
-	pktlen = bpf_measure(m);
+	pktlen = m_length(m);
 
 	if (pktlen == m->m_len) {
 		cpfn = memcpy;
