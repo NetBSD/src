@@ -1,4 +1,4 @@
-/* $NetBSD: oak.c,v 1.4 1996/04/26 22:38:15 mark Exp $ */
+/* $NetBSD: oak.c,v 1.5 1996/08/27 21:55:30 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson 1996.
@@ -91,7 +91,7 @@ struct oak_softc {
 
 int  oakprobe 	__P(( struct device *, void *, void * ));
 void oakattach 	__P(( struct device *, struct device *, void * ));
-int  oakprint   __P(( void *, char * ));
+int  oakprint   __P(( void *, const char * ));
 void oakminphys __P(( struct buf * ));
 
 #ifdef USE_OWN_PIO_ROUTINES
@@ -198,7 +198,7 @@ oakattach(parent, self, aux)
 int
 oakprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	if (name != NULL)
 		printf("%s: scsibus ", name);

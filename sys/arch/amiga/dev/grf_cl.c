@@ -1,4 +1,4 @@
-/*      $NetBSD: grf_cl.c,v 1.12 1996/06/03 18:55:10 is Exp $        */
+/*      $NetBSD: grf_cl.c,v 1.13 1996/08/27 21:54:46 cgd Exp $        */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -101,7 +101,7 @@ void cl_writesprpos __P((volatile char *, short, short));
 void writeshifted __P((volatile char *, char, char));
 
 void grfclattach __P((struct device *, struct device *, void *));
-int grfclprint __P((void *, char *));
+int grfclprint __P((void *, const char *));
 int grfclmatch __P((struct device *, void *, void *));
 void cl_memset __P((unsigned char *, unsigned char, int));
 
@@ -355,7 +355,7 @@ grfclattach(pdp, dp, auxp)
 int
 grfclprint(auxp, pnp)
 	void   *auxp;
-	char   *pnp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("ite at %s: ", pnp);

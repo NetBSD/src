@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.10 1996/04/21 21:12:12 veego Exp $	*/
+/*	$NetBSD: mlhsc.c,v 1.11 1996/08/27 21:55:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -47,7 +47,7 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-int mlhscprint __P((void *auxp, char *));
+int mlhscprint __P((void *auxp, const char *));
 void mlhscattach __P((struct device *, struct device *, void *));
 int mlhscmatch __P((struct device *, void *, void *));
 
@@ -161,7 +161,7 @@ mlhscattach(pdp, dp, auxp)
 int
 mlhscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 1996/04/07 05:45:08 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34 1996/08/27 21:57:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -170,7 +170,7 @@ int bus_scan(parent, child, aux)
 int
 bus_print(args, name)
 	void *args;
-	char *name;
+	const char *name;
 {
 	struct confargs *ca = args;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 1996/05/29 05:04:41 chuck Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 1996/08/27 21:56:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,7 +82,7 @@ int	cpuspeed = MHZ_16;	/* relative cpu speed */
 
 void mainbus_attach __P((struct device *, struct device *, void *));
 int  mainbus_match __P((struct device *, void *, void *));
-int  mainbus_print __P((void *, char *));
+int  mainbus_print __P((void *, const char *));
 
 struct mainbus_softc {
 	struct device sc_dev;
@@ -166,7 +166,7 @@ mainbus_attach(parent, self, args)
 int
 mainbus_print(aux, cp)
 	void *aux;
-	char *cp;
+	const char *cp;
 {
 	char *devname = aux;
 

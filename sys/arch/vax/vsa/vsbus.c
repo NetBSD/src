@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.1 1996/07/20 18:55:16 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.2 1996/08/27 21:58:51 cgd Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -65,7 +65,7 @@
 
 int	vsbus_match	__P((struct device *, void *, void *));
 void	vsbus_attach	__P((struct device *, struct device *, void *));
-int	vsbus_print	__P((void *, char *));
+int	vsbus_print	__P((void *, const char *));
 
 void	ka410_attach	__P((struct device *, struct device *, void *));
 void	ka43_attach	__P((struct device *, struct device *, void *));
@@ -140,7 +140,7 @@ struct confargs ka43_devs[] = {
 int
 vsbus_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	struct confargs *ca = aux;
 

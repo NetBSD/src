@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.11 1996/08/21 19:46:47 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.12 1996/08/27 21:55:32 cgd Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -196,7 +196,7 @@ podulebusmatch(parent, match, aux)
 int
 podulebusprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	struct podule_attach_args *pa = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.39 1996/05/24 19:59:36 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.40 1996/08/27 21:54:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -43,7 +43,7 @@
 void setroot __P((void));
 void swapconf __P((void));
 void mbattach __P((struct device *, struct device *, void *));
-int mbprint __P((void *, char *));
+int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, void *, void *));
 
 int cold;	/* 1 if still booting */
@@ -270,7 +270,7 @@ mbattach(pdp, dp, auxp)
 int
 mbprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("%s at %s", (char *)auxp, pnp);

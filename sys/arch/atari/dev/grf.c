@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.10 1996/04/18 08:51:54 leo Exp $	*/
+/*	$NetBSD: grf.c,v 1.11 1996/08/27 21:55:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -99,13 +99,13 @@ int grfbanked_set __P((dev_t, int));
 static void grf_viewsync __P((struct grf_softc *));
 static int  grf_mode __P((struct grf_softc *, int, void *, int, int));
 
-int grfbusprint __P((void *auxp, char *));
+int grfbusprint __P((void *auxp, const char *));
 int grfbusmatch __P((struct device *, void *, void *));
 void grfbusattach __P((struct device *, struct device *, void *));
 
 void grfattach __P((struct device *, struct device *, void *));
 int grfmatch __P((struct device *, void *, void *));
-int grfprint __P((void *, char *));
+int grfprint __P((void *, const char *));
 /*
  * pointers to grf drivers device structs 
  */
@@ -193,7 +193,7 @@ void		*auxp;
 int
 grfbusprint(auxp, name)
 void  *auxp;
-char  *name;
+const char  *name;
 {
 	if(name == NULL)
 		return(UNCONF);
@@ -294,7 +294,7 @@ void		*auxp;
 int
 grfprint(auxp, pnp)
 void *auxp;
-char *pnp;
+const char *pnp;
 {
 	if(pnp)
 		printf("ite at %s", pnp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.66 1996/05/12 23:53:54 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.67 1996/08/27 21:59:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -329,7 +329,7 @@ struct scsi_device uha_dev = {
 
 int	uhaprobe __P((struct device *, void *, void *));
 void	uhaattach __P((struct device *, struct device *, void *));
-int	uhaprint __P((void *, char *));
+int	uhaprint __P((void *, const char *));
 
 struct cfattach uha_ca = {
 	sizeof(struct uha_softc), uhaprobe, uhaattach
@@ -577,7 +577,7 @@ uhaprobe(parent, match, aux)
 int
 uhaprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	if (name != NULL)       
 		printf("%s: scsibus ", name);
