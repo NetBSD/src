@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.34 2000/02/08 18:45:27 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.35 2000/02/29 21:37:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -296,6 +296,7 @@ ugenopen(dev, flag, mode, p)
 		sc->sc_is_open[USB_CONTROL_ENDPOINT] = 1;
 		return (0);
 	}
+
 	/* Make sure there are pipes for all directions. */
 	for (dir = OUT; dir <= IN; dir++) {
 		if (flag & (dir == OUT ? FWRITE : FREAD)) {
