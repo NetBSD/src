@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.3 1995/09/02 05:36:22 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.4 1995/09/02 19:29:42 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -65,7 +65,7 @@
 #undef	DBG_PIO			/* Show the polled-I/O process		*/
 #undef	DBG_INF			/* Show information transfer process	*/
 #define	DBG_NOSTATIC		/* No static functions, all in DDB trace*/
-#define	DBG_PID			/* Keep track of driver			*/
+#undef	DBG_PID			/* Keep track of driver			*/
 #undef 	REAL_DMA		/* Use DMA if sensible			*/
 #define fair_to_keep_dma()	1
 #define claimed_dma()		1
@@ -89,9 +89,14 @@ static volatile u_char	*ncr		= (volatile u_char *) 0x10000;
 static volatile u_char	*ncr_5380_with_drq	= (volatile u_char *)  0x6000;
 static volatile u_char	*ncr_5380_without_drq	= (volatile u_char *) 0x12000;
 
+static volatile u_char	*scsi_enable		= NULL;
+
 #define SCSI_5380		((struct scsi_5380 *) ncr)
 #define GET_5380_REG(rnum)	SCSI_5380->scsi_5380[((rnum)<<4)]
 #define SET_5380_REG(rnum,val)	(SCSI_5380->scsi_5380[((rnum)<<4)] = (val))
+
+void	ncr5380_irq_intr(void);
+void	ncr5380_drq_intr(void);
 
 static __inline__ void
 scsi_clr_ipend()
@@ -107,10 +112,7 @@ scsi_ienable()
 	int	s;
 
 	s = splhigh();
-	if (VIA2 == VIA2OFF)
-		via_reg(VIA2, vIER) = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
-	else
-		via_reg(VIA2, rIER) = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
+	*scsi_enable = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
 	splx(s);
 }
 
@@ -120,10 +122,7 @@ scsi_idisable()
 	int	s;
 
 	s = splhigh();
-	if (VIA2 == VIA2OFF)
-		via_reg(VIA2, vIER) = (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
-	else
-		via_reg(VIA2, rIER) = (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
+	*scsi_enable = V2IF_SCSIIRQ | V2IF_SCSIDRQ;
 	splx(s);
 }
 
@@ -142,6 +141,14 @@ scsi_mach_init(sc)
 			  (SCSIBase + (u_int) ncr_5380_with_drq);
 	ncr_5380_without_drq	= (volatile u_char *)
 			  (SCSIBase + (u_int) ncr_5380_without_drq);
+
+	if (VIA2 == VIA2OFF)
+		scsi_enable = Via1Base + VIA2 * 0x2000 + vIER;
+	else
+		scsi_enable = Via1Base + VIA2 * 0x2000 + rIER;
+
+	mac68k_register_scsi_irq(ncr5380_irq_intr);
+	mac68k_register_scsi_drq(ncr5380_drq_intr);
 }
 
 static int
@@ -161,26 +168,25 @@ machine_match(pdp, cdp, auxp, cd)
 }
 
 #if USE_PDMA
-int		pdma_5380_dir = 0;
-void		(*pdma_xfer_fun)(void) = NULL;
+int	pdma_5380_dir = 0;
 
-volatile int	pdma_5380_pending = 0;
-volatile u_char	*pending_5380_data;
-volatile u_long	pending_5380_count;
+u_char	*pending_5380_data;
+u_long	pending_5380_count;
 
-#define DEBUG 1 /* 	Maybe we try with this off eventually. */
+/* #define DEBUG 1 	Maybe we try with this off eventually. */
 #if DEBUG
 int		pdma_5380_sends = 0;
 int		pdma_5380_bytes = 0;
 
-volatile char	*pdma_5380_state="";
+char	*pdma_5380_state="";
+
 void
 pdma_stat()
 {
 	printf("PDMA SCSI: %d xfers completed for %d bytes, pending = %d.\n",
-		pdma_5380_sends, pdma_5380_bytes, pdma_5380_pending);
-	printf("xfer fun = 0x%x, pdma_5380_dir = %d.\n",
-		pdma_xfer_fun, pdma_5380_dir);
+		pdma_5380_sends, pdma_5380_bytes);
+	printf("pdma_5380_dir = %d.\n",
+		pdma_5380_dir);
 	printf("datap = 0x%x, remainder = %d.\n",
 		pending_5380_data, pending_5380_count);
 	printf("pdma_5380_state = %s.\n", pdma_5380_state);
@@ -196,8 +202,7 @@ pdma_cleanup(void)
 
 	s = splbio();
 
-	pdma_5380_pending = 0;
-	pdma_xfer_fun = NULL;
+	pdma_5380_dir = 0;
 
 #if DEBUG
 	pdma_5380_state = "in pdma_cleanup().";
@@ -232,10 +237,10 @@ pdma_cleanup(void)
 	run_main(cur_softc);
 }
 
-static int
+static __inline__ int
 scsi_main_irq()
 {
-	if (pdma_xfer_fun) {
+	if (pdma_5380_dir) {
 #if DEBUG
 		pdma_5380_state = "got irq interrupt in xfer.";
 #endif
@@ -278,83 +283,83 @@ ncr5380_irq_intr(void)
 	}
 }
 
-void
-ncr5380_drq_intr(void)
-{
 #if USE_PDMA
-	if (pdma_xfer_fun) {
-#if DEBUG
-		pdma_5380_state = "got drq interrupt.";
-#endif
-		pdma_xfer_fun();
-	}
-#endif
-}
-
-#if USE_PDMA
-static void
-pdma_xfer_in()
-{
-	/*
-	 * Can we "unroll" this any?  I don't think so--in fact, I
-	 * question the safety of using long word transfers.  The
-	 * device could theoretically disconnect at any time.
-	 * The long word xfer is controlled by the Mac's circuitry,
-	 * and we can't know how much it transferred if the device
-	 * decides to disconnect on us.
-	 * If it does disconnect in the middle of a long xfer, it
-	 * should get a bus error--we might be able to derive from
-	 * that bus error where the transaction stopped, but I
-	 * don't want to think about that...
-	 */
-	while (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
-		if (pending_5380_count) {
-			*((u_char *) pending_5380_data)++ = *ncr_5380_with_drq;
-			pending_5380_count --;
-		} else {
-#if DEBUG
-			pdma_5380_state = "done in xfer in.";
-#endif
-			SET_5380_REG(NCR5380_MODE,
-				     GET_5380_REG(NCR5380_MODE) & ~SC_M_DMA);
-			return;
-		}
-#if DEBUG
-	pdma_5380_state = "handled drq interrupt.";
-#endif
-}
-
 /*
  * Macroed for readability.
  */
 #define DONE   (   (GET_5380_REG(NCR5380_DMSTAT) & SC_ACK_STAT) \
 		|| (GET_5380_REG(NCR5380_IDSTAT) &    SC_S_REQ) )
+#endif
 
-static void
-pdma_xfer_out()
+void
+ncr5380_drq_intr(void)
 {
-	/*
-	 * See comment on pdma_xfer_in(), above.
-	 */
-	while (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
-		if (pending_5380_count) {
-			*ncr_5380_with_drq = *((u_char *) pending_5380_data)++;
-			pending_5380_count --;
-		} else {
+#if USE_PDMA
+
 #if DEBUG
-			pdma_5380_state = "done in xfer out--waiting.";
+	pdma_5380_state = "got drq interrupt.";
 #endif
-			while (!DONE);
+	if (pdma_5380_dir == 2) { /* Data In */
+		/*
+		 * Can we "unroll" this any?  I don't think so--in fact, I
+		 * question the safety of using long word transfers.  The
+		 * device could theoretically disconnect at any time.
+		 * The long word xfer is controlled by the Mac's circuitry,
+		 * and we can't know how much it transferred if the device
+		 * decides to disconnect on us.
+		 * If it does disconnect in the middle of a long xfer, it
+		 * should get a bus error--we might be able to derive from
+		 * that bus error where the transaction stopped, but I
+		 * don't want to think about that...
+		 */
+		while (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
+			if (pending_5380_count) {
+				*pending_5380_data++ = *ncr_5380_with_drq;
+				pending_5380_count --;
+			} else {
 #if DEBUG
-			pdma_5380_state = "done in xfer out--really done.";
+				pdma_5380_state = "done in xfer in.";
 #endif
-			pdma_cleanup();
-			return;
+				SET_5380_REG(NCR5380_MODE,
+				    GET_5380_REG(NCR5380_MODE) & ~SC_M_DMA);
+				return;
+			}
+#if DEBUG
+		pdma_5380_state = "handled drq interrupt.";
+#endif
+		return;
+	} else if (pdma_5380_dir == 1) {
+		/*
+		 * See comment on pdma_xfer_in(), above.
+		 */
+		while (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
+			if (pending_5380_count) {
+				*ncr_5380_with_drq = *pending_5380_data++;
+				pending_5380_count --;
+			} else {
+#if DEBUG
+				pdma_5380_state = "done in xfer out--waiting.";
+#endif
+				while (!DONE);
+#if DEBUG
+				pdma_5380_state = "really done in xfer out.";
+#endif
+				pdma_cleanup();
+				return;
 		}
+#if DEBUG
+	} else {
+		pdma_5380_state = "drq when out of phase.";
+		return;
+#endif
+	}
 #if DEBUG
 	pdma_5380_state = "handled drq interrupt.";
 #endif
+#endif	/* if USE_PDMA */
 }
+
+#if USE_PDMA
 
 #define SCSI_TIMEOUT_VAL	10000000
 
@@ -368,7 +373,7 @@ transfer_pdma(phasep, data, count)
 	int	len = *count, i, scsi_timeout = SCSI_TIMEOUT_VAL;
 	int	s, err;
 
-	if (pdma_5380_pending) {
+	if (pdma_5380_dir) {
 		panic("ncrscsi: transfer_pdma called when operation already "
 			"pending.\n");
 	}
@@ -387,17 +392,6 @@ transfer_pdma(phasep, data, count)
 #endif
 		transfer_pio(phasep, data, count);
 		return -1;
-	}
-
-	switch (*phasep) {
-	default:
-		panic("Unexpected phase in transfer_pdma.\n");
-	case PH_DATAOUT:
-		pdma_5380_dir = 1;
-		break;
-	case PH_DATAIN:
-		pdma_5380_dir = 2;
-		break;
 	}
 
 	/*
@@ -443,9 +437,9 @@ transfer_pdma(phasep, data, count)
 	SET_5380_REG(NCR5380_ICOM, GET_5380_REG(NCR5380_ICOM) | SC_ADTB);
 
 	/*
-	 * Load static/volatile values for DRQ interrupt handlers.
+	 * Load transfer values for DRQ interrupt handlers.
 	 */
-	pending_5380_data = (volatile u_char *) data;
+	pending_5380_data = data;
 	pending_5380_count = len;
 
 #if DEBUG
@@ -456,8 +450,16 @@ transfer_pdma(phasep, data, count)
 	 * Set the transfer function to be called on DRQ interrupts.
 	 * And note that we're waiting.
 	 */
-	pdma_xfer_fun = (pdma_5380_dir == 1) ? pdma_xfer_out : pdma_xfer_in;
-	pdma_5380_pending = 1;
+	switch (*phasep) {
+	default:
+		panic("Unexpected phase in transfer_pdma.\n");
+	case PH_DATAOUT:
+		pdma_5380_dir = 1;
+		break;
+	case PH_DATAIN:
+		pdma_5380_dir = 2;
+		break;
+	}
 
 	/*
 	 * Initiate the DMA transaction--sending or receiving.
