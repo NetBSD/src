@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.25 1997/03/13 18:06:15 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.26 1997/03/13 18:08:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-static char rcsid[] = "$NetBSD: inetd.c,v 1.25 1997/03/13 18:06:15 mycroft Exp $";
+static char rcsid[] = "$NetBSD: inetd.c,v 1.26 1997/03/13 18:08:19 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -503,7 +503,11 @@ main(argc, argv, envp)
 			ctrl = sep->se_fd;
 		(void) sigblock(SIGBLOCK);
 		pid = 0;
+#ifdef LIBWRAP
+		dofork = 1;
+#else
 		dofork = (sep->se_bi == 0 || sep->se_bi->bi_fork);
+#endif
 		if (dofork) {
 			if (sep->se_count++ == 0)
 			    (void)gettimeofday(&sep->se_time,
