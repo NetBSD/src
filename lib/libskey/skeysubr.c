@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.10 1997/06/28 01:12:19 christos Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.10.2.1 1998/07/14 23:29:14 mellon Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -42,8 +42,6 @@ char *passwd;	/* Password, any length */
 	char *buf;
 	MD4_CTX md;
 	unsigned int buflen;
-	int i;
-	register int tmp;
 	u_int32_t hash[4];
 	
 	buflen = strlen(seed) + strlen(passwd);
@@ -64,19 +62,7 @@ char *passwd;	/* Password, any length */
 	hash[0] ^= hash[2];
 	hash[1] ^= hash[3];
 
-	/* Default (but slow) code that will convert to
-	 * little-endian byte ordering on any machine
-	 */
-	for (i=0; i<2; i++) {
-		tmp = hash[i];
-		*result++ = tmp;
-		tmp >>= 8;
-		*result++ = tmp;
-		tmp >>= 8;
-		*result++ = tmp;
-		tmp >>= 8;
-		*result++ = tmp;
-	}
+	(void)memcpy(result, hash, 8);
 
 	return 0;
 }
@@ -87,7 +73,6 @@ f(x)
 	char *x;
 {
 	MD4_CTX md;
-	register int tmp;
 	u_int32_t hash[4];
 
 	MD4Init(&md);
@@ -98,26 +83,7 @@ f(x)
 	hash[0] ^= hash[2];
 	hash[1] ^= hash[3];
 
-	/* Default (but slow) code that will convert to
-	 * little-endian byte ordering on any machine
-	 */
-	tmp = hash[0];
-	*x++ = tmp;
-	tmp >>= 8;
-	*x++ = tmp;
-	tmp >>= 8;
-	*x++ = tmp;
-	tmp >>= 8;
-	*x++ = tmp;
-
-	tmp = hash[1];
-	*x++ = tmp;
-	tmp >>= 8;
-	*x++ = tmp;
-	tmp >>= 8;
-	*x++ = tmp;
-	tmp >>= 8;
-	*x = tmp;
+	(void)memcpy(x, hash, 8);
 }
 
 /* Strip trailing cr/lf from a line of text */
@@ -210,10 +176,10 @@ trapped(sig)
  */
 int
 atob8(out, in)
-	register char *out, *in;
+	char *out, *in;
 {
-	register int i;
-	register int val;
+	int i;
+	int val;
 
 	if (in == NULL || out == NULL)
 		return -1;
@@ -237,9 +203,9 @@ atob8(out, in)
 /* Convert 8-byte binary array to hex-ascii string */
 int
 btoa8(out, in)
-	register char *out, *in;
+	char *out, *in;
 {
-	register int i;
+	int i;
 
 	if (in == NULL || out == NULL)
 		return -1;
@@ -255,7 +221,7 @@ btoa8(out, in)
 /* Convert hex digit to binary integer */
 int
 htoi(c)
-	register char c;
+	char c;
 {
 	if ('0' <= c && c <= '9')
 		return c - '0';
@@ -268,7 +234,7 @@ htoi(c)
 
 char *
 skipspace(cp)
-	register char *cp;
+	char *cp;
 {
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
