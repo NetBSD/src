@@ -176,7 +176,7 @@ If scrolling is not allowed,
 and the window encompasses the lower right-hand corner of the terminal,
 the corners are left blank to avoid a scroll.
 .Ds
-.Fn can_change_colors ""
+.Fn can_change_color ""
 .De
 Check if terminal can change colors.
 .Ds
@@ -1061,6 +1061,10 @@ If the mapping is not done,
 .Fn refresh
 can do more optimization,
 so it is recommended, but not required, to turn it off.
+.Ds
+.Fn no_color_video ""
+.De
+Return attributes that cannot be combined with color.
 .Ds
 .Fn nocbreak "" \(dg
 .De

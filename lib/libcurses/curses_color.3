@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_color.3,v 1.2 2002/10/21 14:17:54 wiz Exp $
+.\"	$NetBSD: curses_color.3,v 1.3 2003/01/27 21:03:05 jdc Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -28,20 +28,21 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 13, 2002
+.Dd January 27, 2003
 .Dt CURSES_COLOR 3
 .Os
 .Sh NAME
 .Nm curses_color ,
 .Nm has_colors ,
-.Nm can_change_colors ,
+.Nm can_change_color ,
 .Nm start_color ,
 .Nm init_pair ,
 .Nm pair_content ,
 .Nm COLOR_PAIR ,
 .Nm PAIR_NUMBER ,
 .Nm init_color ,
-.Nm color_content
+.Nm color_content ,
+.Nm no_color_video
 .Nd curses color manipulation routines
 .Sh LIBRARY
 .Lb libcurses
@@ -65,6 +66,8 @@
 .Fn init_color "short color" "short red" "short green" "short blue"
 .Ft int
 .Fn color_content "short color" "short *red" "short *green" "short *blue"
+.Ft attr_t
+.Fn no_color_video void
 .Ft extern int
 .Dv COLOR_PAIRS
 .Ft extern int
@@ -82,7 +85,7 @@ if the terminal is capable of displaying color attributes and
 otherwise.
 .Pp
 The function
-.Fn can_change_colors
+.Fn can_change_color
 indicates whether a terminal is capable of redefining colors.
 It returns
 .Dv TRUE
@@ -179,6 +182,10 @@ in the variables
 and
 .Fa blue ,
 respectively.
+.Pp
+The function
+.Fn no_color_video
+returns those attributes that a terminal is unable to combine with color.
 .Sh RETURN VALUES
 The functions
 .Fn start_color ,
@@ -197,6 +204,10 @@ The
 .Nx
 Curses library complies with the X/Open Curses specification, part of the
 Single Unix Specification.
+.Pp
+The function
+.Fn no_color_video
+is an extension to the X/Open Curses specification.
 .Sh HISTORY
 These functions first appeared in
 .Nx 1.5 .
