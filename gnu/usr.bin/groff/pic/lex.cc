@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,14 +15,13 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include "pic.h"
 #include "ptable.h"
 #include "object.h"
 #include "pic.tab.h"
-#include "key.h"
 
 declare_ptable(char)
 implement_ptable(char)
@@ -136,7 +135,7 @@ macro_input::macro_input(const char *str)
 
 macro_input::~macro_input()
 {
-  delete s;
+  a_delete s;
 }
 
 int macro_input::get()
@@ -155,7 +154,8 @@ int macro_input::peek()
     return (unsigned char)*p;
 }
 
-#define ARG1 11
+// Character respresenting $1.  Must be illegal input character.
+#define ARG1 14
 
 char *process_body(const char *body)
 {
@@ -185,8 +185,8 @@ argument_macro_input::argument_macro_input(const char *body, int ac, char **av)
 argument_macro_input::~argument_macro_input()
 {
   for (int i = 0; i < argc; i++)
-    delete argv[i];
-  delete s;
+    a_delete argv[i];
+  a_delete s;
 }
 
 int argument_macro_input::get()
@@ -241,11 +241,16 @@ public:
   static int peek_char();
   static int get_location(const char **fnp, int *lnp);
   static void push_back(unsigned char c, int was_bol = 0);
-  static inline int bol() { return bol_flag; }
+  static int bol();
 };
 
 input *input_stack::current_input = 0;
 int input_stack::bol_flag = 0;
+
+inline int input_stack::bol()
+{
+  return bol_flag;
+}
 
 void input_stack::clear()
 {
@@ -360,6 +365,7 @@ void interpolate_macro_with_args(const char *body)
     argv[i] = 0;
   int level = 0;
   int c;
+  enum { NORMAL, IN_STRING, IN_STRING_QUOTED } state = NORMAL;
   do {
     token_buffer.clear();
     for (;;) {
@@ -368,7 +374,7 @@ void interpolate_macro_with_args(const char *body)
 	lex_error("end of input while scanning macro arguments");
 	break;
       }
-      if (level == 0 && (c == ',' || c == ')')) {
+      if (state == NORMAL && level == 0 && (c == ',' || c == ')')) {
 	if (token_buffer.length() > 0) {
 	  token_buffer +=  '\0';
 	  argv[argc] = strsave(token_buffer.contents());
@@ -379,13 +385,149 @@ void interpolate_macro_with_args(const char *body)
 	break;
       }
       token_buffer += char(c);
-      if (c == '(')
-	level++;
-      else if (c == ')')
-	level--;
+      switch (state) {
+      case NORMAL:
+	if (c == '"')
+	  state = IN_STRING;
+	else if (c == '(')
+	  level++;
+	else if (c == ')')
+	  level--;
+	break;
+      case IN_STRING:
+	if (c == '"')
+	  state = NORMAL;
+	else if (c == '\\')
+	  state = IN_STRING_QUOTED;
+	break;
+      case IN_STRING_QUOTED:
+	state = IN_STRING;
+	break;
+      }
     }
   } while (c != ')' && c != EOF);
   input_stack::push(new argument_macro_input(body, argc, argv));
+}
+
+static int docmp(const char *s1, int n1, const char *s2, int n2)
+{
+  if (n1 < n2) {
+    int r = memcmp(s1, s2, n1);
+    return r ? r : -1;
+  }
+  else if (n1 > n2) {
+    int r = memcmp(s1, s2, n2);
+    return r ? r : 1;
+  }
+  else
+    return memcmp(s1, s2, n1);
+}
+
+int lookup_keyword(const char *str, int len)
+{
+  static struct keyword {
+    const char *name;
+    int token;
+  } table[] = {
+    "Here", HERE,
+    "above", ABOVE,
+    "aligned", ALIGNED,
+    "and", AND,
+    "arc", ARC,
+    "arrow", ARROW,
+    "at", AT,
+    "atan2", ATAN2,
+    "below", BELOW,
+    "between", BETWEEN,
+    "bottom", BOTTOM,
+    "box", BOX,
+    "by", BY,
+    "ccw", CCW,
+    "center", CENTER,
+    "chop", CHOP,
+    "circle", CIRCLE,
+    "command", COMMAND,
+    "copy", COPY,
+    "cos", COS,
+    "cw", CW,
+    "dashed", DASHED,
+    "define", DEFINE,
+    "diam", DIAMETER,
+    "diameter", DIAMETER,
+    "do", DO,
+    "dotted", DOTTED,
+    "down", DOWN,
+    "ellipse", ELLIPSE,
+    "else", ELSE,
+    "end", END,
+    "exp", EXP,
+    "fill", FILL,
+    "filled", FILL,
+    "for", FOR,
+    "from", FROM,
+    "height", HEIGHT,
+    "ht", HEIGHT,
+    "if", IF,
+    "int", INT,
+    "invis", INVISIBLE,
+    "invisible", INVISIBLE,
+    "last", LAST,
+    "left", LEFT,
+    "line", LINE,
+    "ljust", LJUST,
+    "log", LOG,
+    "lower", LOWER,
+    "max", K_MAX,
+    "min", K_MIN,
+    "move", MOVE,
+    "of", OF,
+    "plot", PLOT,
+    "print", PRINT,
+    "rad", RADIUS,
+    "radius", RADIUS,
+    "rand", RAND,
+    "reset", RESET,
+    "right", RIGHT,
+    "rjust", RJUST,
+    "same", SAME,
+    "sh", SH,
+    "sin", SIN,
+    "spline", SPLINE,
+    "sprintf", SPRINTF,
+    "sqrt", SQRT,
+    "start", START,
+    "the", THE,
+    "then", THEN,
+    "thick", THICKNESS,
+    "thickness", THICKNESS,
+    "thru", THRU,
+    "to", TO,
+    "top", TOP,
+    "undef", UNDEF,
+    "until", UNTIL,
+    "up", UP,
+    "upper", UPPER,
+    "way", WAY,
+    "wid", WIDTH,
+    "width", WIDTH,
+    "with", WITH,
+  };
+  
+  const keyword *start = table;
+  const keyword *end = table + sizeof(table)/sizeof(table[0]);
+  while (start < end) {
+    // start <= target < end
+    const keyword *mid = start + (end - start)/2;
+    
+    int cmp = docmp(str, len, mid->name, strlen(mid->name));
+    if (cmp == 0)
+      return mid->token;
+    if (cmp < 0)
+      end = mid;
+    else
+      start = mid + 1;
+  }
+  return 0;
 }
 
 int get_token_after_dot(int c)
@@ -591,6 +733,7 @@ int get_token_after_dot(int c)
 	if (c == 't') {
 	  input_stack::get_char();
 	  context_buffer = ".left";
+	  return DOT_W;
 	}
 	input_stack::push_back('f');
       }
@@ -623,6 +766,7 @@ int get_token_after_dot(int c)
 	  if (c == 't') {
 	    input_stack::get_char();
 	    context_buffer = ".right";
+	    return DOT_E;
 	  }
 	  input_stack::push_back('h');
 	}
@@ -688,7 +832,7 @@ int get_token(int lookup_flag)
 	token_buffer += char(c);
       }
       context_buffer = token_buffer;
-      return COMMAND;
+      return COMMAND_LINE;
     }
     switch (c) {
     case EOF:
@@ -918,6 +1062,23 @@ int get_token(int lookup_flag)
 	return NUMBER;
       }
       break;
+    case '\'':
+      {
+	c = input_stack::peek_char();
+	if (c == 't') {
+	  input_stack::get_char();
+	  c = input_stack::peek_char();
+	  if (c == 'h') {
+	    input_stack::get_char();
+	    context_buffer = "'th";
+	    return TH;
+	  }
+	  else
+	    input_stack::push_back('t');
+	}
+	context_buffer = "'";
+	return '\'';
+      }
     case '.':
       {
 	c = input_stack::peek_char();
@@ -1014,11 +1175,11 @@ int get_token(int lookup_flag)
 	  input_stack::get_char();
 	  token_buffer += char(c);
 	}
-	const keyword *ky = lookup_keyword(token_buffer.contents(),
-				     token_buffer.length());
-	if (ky != 0) {
+	int tok = lookup_keyword(token_buffer.contents(),
+				 token_buffer.length());
+	if (tok != 0) {
 	  context_buffer = token_buffer;
-	  return ky->token;
+	  return tok;
 	}
 	char *def = 0;
 	if (lookup_flag) {
@@ -1055,7 +1216,7 @@ int get_delimited()
 {
   token_buffer.clear();
   int c = input_stack::get_char();
-  while (c == ' ' || c == '\n')
+  while (c == ' ' || c == '\t' || c == '\n')
     c = input_stack::get_char();
   if (c == EOF) {
     lex_error("missing delimiter");
@@ -1131,10 +1292,11 @@ void do_define()
   }
   token_buffer += '\0';
   string nm = token_buffer;
+  const char *name = nm.contents();
   if (!get_delimited())
     return;
   token_buffer += '\0';
-  macro_table.define(nm.contents(), strsave(token_buffer.contents()));
+  macro_table.define(name, strsave(token_buffer.contents()));
 }
 
 void do_undef()
@@ -1172,8 +1334,8 @@ for_input::for_input(char *vr, double t, int bim, double b, char *bd)
 
 for_input::~for_input()
 {
-  delete var;
-  delete body;
+  a_delete var;
+  a_delete body;
 }
 
 int for_input::get()
@@ -1241,6 +1403,7 @@ void do_for(char *var, double from, double to, int by_is_multiplicative,
 
 void do_copy(const char *filename)
 {
+  errno = 0;
   FILE *fp = fopen(filename, "r");
   if (fp == 0) {
     lex_error("can't open `%1': %2", filename, strerror(errno));
@@ -1333,8 +1496,8 @@ copy_thru_input::copy_thru_input(const char *b, const char *u)
 
 copy_thru_input::~copy_thru_input()
 {
-  delete body;
-  delete until;
+  a_delete body;
+  a_delete until;
 }
 
 int copy_thru_input::get()
@@ -1484,6 +1647,7 @@ int simple_file_input::get_location(const char **fnp, int *lnp)
 
 void copy_file_thru(const char *filename, const char *body, const char *until)
 {
+  errno = 0;
   FILE *fp = fopen(filename, "r");
   if (fp == 0) {
     lex_error("can't open `%1': %2", filename, strerror(errno));
@@ -1599,7 +1763,7 @@ int yylex()
     case NUMBER:
       yylval.x = token_double;
       return t;
-    case COMMAND:
+    case COMMAND_LINE:
     case TEXT:
       token_buffer += '\0';
       if (!input_stack::get_location(&yylval.lstr.filename,

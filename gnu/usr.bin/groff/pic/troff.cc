@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,11 +15,12 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include "pic.h"
 #include "common.h"
+
 
 const double RELATIVE_THICKNESS = -1.0;
 const double BAD_THICKNESS = -2.0;
@@ -251,7 +252,11 @@ inline position troff_output::transform(const position &pos)
 
 #define FILL_REG "00"
 
-// if this register is defined, geqn won't produce `\x's
+// If this register > 0, then pic will generate \X'ps: ...' commands
+// if the aligned attribute is used.
+#define GROPS_REG "0p"
+
+// If this register is defined, geqn won't produce `\x's.
 #define EQN_NO_EXTRA_SPACE_REG "0x"
 
 void troff_output::start_picture(double sc,
@@ -271,6 +276,9 @@ void troff_output::start_picture(double sc,
   printf(".\\\" %.3fi %.3fi %.3fi %.3fi\n", 0.0, height, width, 0.0);
   printf(".nr " FILL_REG " \\n(.u\n.nf\n");
   printf(".nr " EQN_NO_EXTRA_SPACE_REG " 1\n");
+  // This guarantees that if the picture is used in a diversion it will
+  // have the right width.
+  printf("\\h'%.3fi'\n.sp -1\n", width);
 }
 
 void troff_output::finish_picture()
@@ -281,7 +289,7 @@ void troff_output::finish_picture()
     printf(".sp %.3fi+1\n", height);
   printf(".if \\n(" FILL_REG " .fi\n");
   printf(".br\n");
-  printf(".rr " EQN_NO_EXTRA_SPACE_REG "\n");
+  printf(".nr " EQN_NO_EXTRA_SPACE_REG " 0\n");
   // this is a little gross
   set_location(current_filename, current_lineno);
   fputs(flyback_flag ? ".PF\n" : ".PE\n", stdout);
@@ -315,7 +323,7 @@ void troff_output::simple_ellipse(int filled, const position &cent,
   position c = transform(cent);
   printf("\\h'%.3fi'"
 	 "\\v'%.3fi'"
-	 "\\D'%c%.3fi %.3fi%'"
+	 "\\D'%c%.3fi %.3fi'"
 	 "\n.sp -1\n",
 	 c.x - dim.x/(2.0*scale),
 	 c.y,
@@ -358,11 +366,11 @@ void troff_output::simple_spline(const position &start,
   fputs("\\D'~", stdout);
   for (int i = 0; i < n; i++) {
     position temp = transform(v[i]);
-    distance v = temp - pos;
+    distance d = temp - pos;
     pos = temp;
     if (i != 0)
       putchar(' ');
-    printf("%.3fi %.3fi", v.x, v.y);
+    printf("%.3fi %.3fi", d.x, d.y);
   }
   printf("'\n.sp -1\n");
 }
@@ -378,11 +386,11 @@ void troff_output::simple_polygon(int filled, const position *v, int n)
   printf("\\D'%c", (filled ? 'P' : 'p'));
   for (int i = 1; i < n; i++) {
     position temp = transform(v[i]);
-    distance v = temp - pos;
+    distance d = temp - pos;
     pos = temp;
     if (i != 1)
       putchar(' ');
-    printf("%.3fi %.3fi", v.x, v.y);
+    printf("%.3fi %.3fi", d.x, d.y);
   }
   printf("'\n.sp -1\n");
 }
@@ -397,8 +405,21 @@ static const char *choose_delimiter(const char *text)
     return "\\(ts";
 }
 
-void troff_output::text(const position &center, text_piece *v, int n, double)
+void troff_output::text(const position &center, text_piece *v, int n,
+			double ang)
 {
+  int rotate_flag = 0;
+  if (driver_extension_flag && ang != 0.0) {
+    rotate_flag = 1;
+    position c = transform(center);
+    printf(".if \\n(" GROPS_REG " \\{\\\n"
+	   "\\h'%.3fi'"
+	   "\\v'%.3fi'"
+	   "\\X'ps: exec gsave currentpoint 2 copy translate %.4f rotate neg exch neg exch translate'"
+	   "\n.sp -1\n"
+	   ".\\}\n",
+	   c.x, c.y, -ang*180.0/M_PI);
+  }
   for (int i = 0; i < n; i++)
     if (v[i].text != 0 && *v[i].text != '\0') {
       position c = transform(center);
@@ -424,6 +445,10 @@ void troff_output::text(const position &center, text_piece *v, int n, double)
       fputs(v[i].text, stdout);
       fputs("\n.sp -1\n", stdout);
     }
+  if (rotate_flag)
+    printf(".if '\\*(.T'ps' \\{\\\n"
+	   "\\X'ps: exec grestore'\n.sp -1\n"
+	   ".\\}\n");
 }
 
 void troff_output::line_thickness(double p)
@@ -448,7 +473,7 @@ const double DOT_AXIS = .044;
 
 void troff_output::dot(const position &cent, const line_type &lt)
 {
-  if (zero_length_line_flag) {
+  if (driver_extension_flag) {
     line_thickness(lt.thickness);
     simple_line(cent, cent);
   }
@@ -471,54 +496,4 @@ void troff_output::set_location(const char *s, int n)
     printf(".lf %d %s\n", n, s);
     last_filename = s;
   }
-}
-
-class grops_output : public troff_output {
-public:
-  grops_output();
-  ~grops_output();
-  void text(const position &, text_piece *, int, double);
-};
-
-grops_output::grops_output()
-{
-}
-
-grops_output::~grops_output()
-{
-}
-
-output *make_grops_output()
-{
-  return new grops_output;
-}
-
-void grops_output::text(const position &center, text_piece *v, int n,
-			double ang)
-{
-  int rotate_flag = 0;
-  if (ang != 0.0) {
-    rotate_flag = 1;
-    position c = transform(center);
-#if 0
-    printf("\\h'%.3fi'"
-	   "\\v'%.3fi'"
-	   "\\X'ps: rotate %.4f'"
-	   "\n.sp -1\n",
-	   c.x, c.y, -ang*180.0/M_PI);
-#else
-    printf("\\h'%.3fi'"
-	   "\\v'%.3fi'"
-	   "\\X'ps: exec gsave currentpoint 2 copy translate %.4f rotate neg exch neg exch translate'"
-	   "\n.sp -1\n",
-	   c.x, c.y, -ang*180.0/M_PI);
-#endif
-  }
-  troff_output::text(center, v, n, ang);
-  if (rotate_flag)
-#if 0
-    printf("\\X'ps: end rotate'\n.sp -1\n");
-#else
-    printf("\\X'ps: exec grestore'\n.sp -1\n");
-#endif
 }

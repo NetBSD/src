@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include "pic.h"
@@ -35,7 +35,7 @@ output::output() : desired_height(0.0), desired_width(0.0), args(0)
 
 output::~output()
 {
-  delete args;
+  a_delete args;
 }
 
 void output::set_desired_width_height(double wid, double ht)
@@ -46,7 +46,7 @@ void output::set_desired_width_height(double wid, double ht)
 
 void output::set_args(const char *s)
 {
-  delete args;
+  a_delete args;
   if (s == 0 || *s == '\0')
     args = 0;
   else
@@ -100,9 +100,9 @@ double output::compute_scale(double sc, const position &ll, const position &ur)
     if (sc <= 0.0)
       sc = 1.0;
     distance sdim = dim/sc;
-    double max_width;
+    double max_width = 0.0;
     lookup_variable("maxpswid", &max_width);
-    double max_height;
+    double max_height = 0.0;
     lookup_variable("maxpsht", &max_height);
     if ((max_width > 0.0 && sdim.x > max_width)
 	|| (max_height > 0.0 && sdim.y > max_height)) {
@@ -117,8 +117,11 @@ double output::compute_scale(double sc, const position &ll, const position &ur)
 
 position::position(const place &pl)
 {
-  if (pl.obj != 0)
-    *this = pl.obj->origin();
+  if (pl.obj != 0) {
+    // Use two statements to work around bug in SGI C++.
+    object *tem = pl.obj;
+    *this = tem->origin();
+  }
   else {
     x = pl.x;
     y = pl.y;
@@ -219,6 +222,10 @@ void draw_arrow(const position &pos, const distance &dir,
 		const arrow_head_type &aht, const line_type &lt)
 {
   double hyp = hypot(dir);
+  if (hyp == 0.0) {
+    error("cannot draw arrow on object with zero length");
+    return;
+  }
   position base = -dir;
   base *= aht.height/hyp;
   position n(dir.y, -dir.x);
@@ -397,7 +404,7 @@ text_item::text_item(char *t, const char *fn, int ln)
 
 text_item::~text_item()
 {
-  delete text;
+  a_delete text;
 }
 
 object_spec::object_spec(object_type t) : type(t)
@@ -452,7 +459,7 @@ command_object::command_object(char *p, const char *fn, int ln)
 
 command_object::~command_object()
 {
-  delete s;
+  a_delete s;
 }
 
 void command_object::print()
@@ -532,7 +539,7 @@ text_piece::text_piece()
 
 text_piece::~text_piece()
 {
-  delete text;
+  a_delete text;
 }
 
 class graphic_object : public object {
@@ -619,7 +626,8 @@ void graphic_object::print_text()
 
 graphic_object::~graphic_object()
 {
-  delete [ntext] text;
+  if (text)
+    ad_delete(ntext) text;
 }
 
 class rectangle_object : public graphic_object {
@@ -683,7 +691,8 @@ void closed_object::set_fill(double f)
 
 
 class box_object : public closed_object {
-  double rad;
+  double xrad;
+  double yrad;
 public:
   box_object(const position &, double);
   object_type type() { return BOX_OBJECT; }
@@ -695,7 +704,7 @@ public:
 };
 
 box_object::box_object(const position &pos, double r)
-: closed_object(pos), rad(r)
+: closed_object(pos), xrad(dim.x > 0 ? r : -r), yrad(dim.y > 0 ? r : -r)
 {
 }
 
@@ -703,33 +712,33 @@ const double CHOP_FACTOR = 1.0 - 1.0/M_SQRT2;
 
 position box_object::north_east()
 {
-  return position(cent.x + dim.x/2.0 - CHOP_FACTOR*rad,
-		  cent.y + dim.y/2.0 - CHOP_FACTOR*rad);
+  return position(cent.x + dim.x/2.0 - CHOP_FACTOR*xrad,
+		  cent.y + dim.y/2.0 - CHOP_FACTOR*yrad);
 }
 
 position box_object::north_west()
 {
-  return position(cent.x - dim.x/2.0 + CHOP_FACTOR*rad,
-		  cent.y + dim.y/2.0 - CHOP_FACTOR*rad);
+  return position(cent.x - dim.x/2.0 + CHOP_FACTOR*xrad,
+		  cent.y + dim.y/2.0 - CHOP_FACTOR*yrad);
 }
 
 position box_object::south_east()
 {
-  return position(cent.x + dim.x/2.0 - CHOP_FACTOR*rad,
-		  cent.y - dim.y/2.0 + CHOP_FACTOR*rad);
+  return position(cent.x + dim.x/2.0 - CHOP_FACTOR*xrad,
+		  cent.y - dim.y/2.0 + CHOP_FACTOR*yrad);
 }
 
 position box_object::south_west()
 {
-  return position(cent.x - dim.x/2.0 + CHOP_FACTOR*rad,
-		  cent.y - dim.y/2.0 + CHOP_FACTOR*rad);
+  return position(cent.x - dim.x/2.0 + CHOP_FACTOR*xrad,
+		  cent.y - dim.y/2.0 + CHOP_FACTOR*yrad);
 }
 
 void box_object::print()
 {
   if (lt.type == line_type::invisible && fill < 0.0)
     return;
-  if (rad == 0.0) {
+  if (xrad == 0.0) {
     distance dim2 = dim/2.0;
     position vec[4];
     vec[0] = cent + position(dim2.x, -dim2.y);
@@ -738,8 +747,10 @@ void box_object::print()
     vec[3] = cent + position(-dim2.x, -dim2.y);
     out->polygon(vec, 4, lt, fill);
   }
-  else
-    out->rounded_box(cent, dim, rad, lt, fill);
+  else {
+    distance abs_dim(fabs(dim.x), fabs(dim.y));
+    out->rounded_box(cent, abs_dim, fabs(xrad), lt, fill);
+  }
 }
 
 graphic_object *object_spec::make_box(position *curpos, direction *dirp)
@@ -770,10 +781,11 @@ graphic_object *object_spec::make_box(position *curpos, direction *dirp)
   last_box_height = height;
   last_box_radius = radius;
   have_last_box = 1;
-  if (radius*2.0 > width)
-    radius = width/2.0;
-  if (radius*2.0 > height)
-    radius = height/2.0;
+  radius = fabs(radius);
+  if (radius*2.0 > fabs(width))
+    radius = fabs(width/2.0);
+  if (radius*2.0 > fabs(height))
+    radius = fabs(height/2.0);
   box_object *p = new box_object(position(width, height), radius);
   if (!position_rectangle(p, curpos, dirp)) {
     delete p;
@@ -1284,7 +1296,7 @@ void spline_object::print()
 
 line_object::~line_object()
 {
-  delete v;
+  a_delete v;
 }
 
 linear_object *object_spec::make_line(position *curpos, direction *dirp)
@@ -1719,7 +1731,7 @@ string_list::string_list(char *s)
 
 string_list::~string_list()
 {
-  delete str;
+  a_delete str;
 }
   
 /* A path is used to hold the argument to the with attribute. For example,
