@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.27 1997/03/15 18:11:37 is Exp $
+#	$NetBSD: files.isa,v 1.28 1997/04/04 20:56:41 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -45,9 +45,13 @@ file	dev/isa/rtfps.c			rtfps
 
 # 8250/16[45]50-based "com" ports
 device	com: tty
+file	dev/isa/com.c		com needs-flag
+
 attach	com at isa with com_isa
-attach	com at commulti with com_commulti
-file	dev/isa/com.c			com & (com_isa | com_commulti) needs-flag
+file	dev/isa/com_isa.c		com_isa
+
+attach	com at commulti with com_multi
+file	dev/isa/com_multi.c		com_multi
 
 # Cyclades Cyclom-8/16/32 
 attach	cy at isa with cy_isa
@@ -143,6 +147,7 @@ attach	el at isa
 file	dev/isa/if_el.c			el
 
 # 3Com 3C509 Ethernet controller
+# device declaration in sys/conf/files
 attach	ep at isa with ep_isa: elink
 file	dev/isa/if_ep_isa.c		ep_isa
 
