@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.9 1996/05/16 19:32:25 mark Exp $ */
+/* $NetBSD: kbd.c,v 1.10 1996/06/03 22:20:32 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -615,6 +615,15 @@ int kbdintr __P((struct kbd_softc *));
 
 void autorepeatstart __P((void *));
 void autorepeat __P((void *));
+
+extern int physconkbd		__P((int key));
+extern void console_switch	__P((u_int number));
+extern int console_switchdown	__P((void));
+extern int console_switchup	__P((void));
+extern int console_unblank	__P((void));
+extern int console_scrollback	__P((void));
+extern int console_scrollforward	__P((void));
+extern void pmap_debug		__P((int level));
 
 /* Device structures */
 
