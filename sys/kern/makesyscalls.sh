@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.20 1996/12/22 06:33:46 cgd Exp $
+#	$NetBSD: makesyscalls.sh,v 1.21 1996/12/22 06:45:14 cgd Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
 # All rights reserved.
@@ -316,17 +316,23 @@ function parseline() {
 		varargc = argc;
 }
 function putent(nodefs, compatwrap) {
-	# output syscall declaration for switch table
-	prototype = "__P((struct proc *, void *, register_t *))"
-	if (compatwrap == "")
-		printf("int\t%s\t%s;\n", funcname, prototype) > sysprotos
-	else
-		printf("int\t%s_%s\t%s;\n", compatwrap, funcname, prototype) > sysprotos
+	# output syscall declaration for switch table.  INDIR functions
+	# get none, since they always have sys_nosys() for their table
+	# entries.
+	if (nodefs != "INDIR") {
+		prototype = "__P((struct proc *, void *, register_t *))"
+		if (compatwrap == "")
+			printf("int\t%s\t%s;\n", funcname,
+			    prototype) > sysprotos
+		else
+			printf("int\t%s_%s\t%s;\n", compatwrap, funcname,
+			    prototype) > sysprotos
+	}
 
 	# output syscall switch entry
 	if (nodefs == "INDIR") {
-		printf("\t{ 0, 0,\n\t    sys_nosys },\t\t\t/* %d = %s */\n", \
-		    syscall, comment) > sysent
+		printf("\t{ 0, 0,\n\t    sys_nosys },\t\t\t/* %d = %s (indir) */\n", \
+		    syscall, funcalias) > sysent
 	} else {
 #		printf("\t{ { %d", argc) > sysent
 #		for (i = 1; i <= argc; i++) {
@@ -385,7 +391,7 @@ function putent(nodefs, compatwrap) {
 		    compatwrap, funcalias) > sysnumhdr
 
 	# output syscall argument structure, if it has arguments
-	if (argc != 0 && nodefs != "NOARGS" && nodefs != "INDIRECT") {
+	if (argc != 0 && nodefs != "NOARGS" && nodefs != "INDIR") {
 		if (compatwrap == "")
 			printf("\nstruct %s_args {\n", funcname) > sysarghdr
 		else
