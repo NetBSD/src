@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.5 2003/05/29 20:22:33 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.6 2003/06/01 19:14:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -840,7 +840,7 @@ mpacpi_pci_attach_hook(struct device *parent, struct device *self,
 		return EINVAL;
 
 	mpb = &mp_busses[pba->pba_bus];
-	if (strcmp(mpb->mb_name, "pci"))
+	if (mpb->mb_name == NULL || strcmp(mpb->mb_name, "pci"))
 		return EINVAL;
 
 	mpb->mb_configured = 1;
