@@ -1,3 +1,46 @@
+2004-04-06  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* cvs.texinfo (Assigning revisions): Note that client/server mode
+	only considers files sent to the server to determine the major
+	revision for new files.
+	(Reported by Krzysztof GORBIEL <Krzysztof_GORBIEL@raiffeisen.pl>.)
+	* stamp-vti, version.texi: Regenerated.
+
+2004-03-15  Derek Price  <derek@ximbiot.com>
+
+	* stamp-vti, version.texi: Regenerated.
+
+2004-03-11  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* cvs.texinfo (loginfo, Error messages): Note that not reading all of
+	the log info can result in a broken pipe signal.
+	(Reported by Steven Nicoloso <spn@nwmail.wh.lucent.com>.)
+	* stamp-vti, version.texi: Regenerated.
+
+2004-02-04  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo (File Permissions): Clarify index entry.
+	* stamp-vti, version.texi: Regenerated.
+
+2004-01-22  Derek Price  <derek@ximbiot.com>
+
+	* stamp-vti, version.texi: Regenerated.
+
+2004-01-08  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* cvs.texinfo (user-defined logging): Move taginfo stuff from here...
+	(Administrative files): ...to its own node under here.
+
+2003-12-18  Derek Price  <derek@ximbiot.com>
+
+	* stamp-1, stamp-vti, version-client.texi, version.texi: Regenerated
+	for 1.11.11.1.
+
+2003-12-18  Derek Price  <derek@ximbiot.com>
+
+	* stamp-1, stamp-vti, version-client.texi, version.texi: Regenerated
+	for 1.11.11.
+
 2003-12-05  Derek Price  <derek@ximbiot.com>
 
 	* stamp-1, stamp-vti, version-client.texi, version.texi: Regenerated.
@@ -532,7 +575,7 @@
 	* Makefile.in: Regenerated.
 	* stamp-1: New file.
 	* version-client.texi: Ditto.
-	(Reportred by Alexey Mahotkin <alexm@hsys.msk.ru>.)
+	(Reported by Alexey Mahotkin <alexm@hsys.msk.ru>.)
 
 2001-09-04  Derek Price  <dprice@collab.net>
 
