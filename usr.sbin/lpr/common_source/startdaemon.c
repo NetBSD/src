@@ -1,4 +1,4 @@
-/*	$NetBSD: startdaemon.c,v 1.7 1995/11/28 19:43:32 jtc Exp $	*/
+/*	$NetBSD: startdaemon.c,v 1.7.4.1 1997/01/26 05:25:44 rat Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -73,7 +73,7 @@ startdaemon(printer)
 	}
 	memset(&un, 0, sizeof(un));
 	un.sun_family = AF_UNIX;
-	strcpy(un.sun_path, _PATH_SOCKETNAME);
+	strncpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path) - 1);
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
@@ -81,27 +81,26 @@ startdaemon(printer)
 	if (connect(s, (struct sockaddr *)&un, SUN_LEN(&un)) < 0) {
 		seteuid(uid);
 		perr("connect");
-		(void) close(s);
+		(void)close(s);
 		return(0);
 	}
 	seteuid(uid);
-	(void) sprintf(buf, "\1%s\n", printer);
-	n = strlen(buf);
+	n = snprintf(buf, sizeof(buf), "\1%s\n", printer);
 	if (write(s, buf, n) != n) {
 		perr("write");
-		(void) close(s);
+		(void)close(s);
 		return(0);
 	}
 	if (read(s, buf, 1) == 1) {
 		if (buf[0] == '\0') {		/* everything is OK */
-			(void) close(s);
+			(void)close(s);
 			return(1);
 		}
 		putchar(buf[0]);
 	}
 	while ((n = read(s, buf, sizeof(buf))) > 0)
 		fwrite(buf, 1, n, stdout);
-	(void) close(s);
+	(void)close(s);
 	return(0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
+/*	$NetBSD: printjob.c,v 1.9.4.4 1997/01/26 05:25:59 rat Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -141,11 +141,11 @@ printjob()
 	int count = 0;
 
 	init();					/* set up capabilities */
-	(void) write(1, "", 1);			/* ack that daemon is started */
-	(void) close(2);			/* set up log file */
+	(void)write(1, "", 1);			/* ack that daemon is started */
+	(void)close(2);			/* set up log file */
 	if (open(LF, O_WRONLY|O_APPEND, 0664) < 0) {
 		syslog(LOG_ERR, "%s: %m", LF);
-		(void) open(_PATH_DEVNULL, O_WRONLY);
+		(void)open(_PATH_DEVNULL, O_WRONLY);
 	}
 	setgid(getegid());
 	pid = getpid();				/* for use with lprm */
@@ -155,7 +155,7 @@ printjob()
 	signal(SIGQUIT, abortpr);
 	signal(SIGTERM, abortpr);
 
-	(void) mktemp(tempfile);
+	(void)mktemp(tempfile);
 
 	/*
 	 * uses short form file names
@@ -181,8 +181,7 @@ printjob()
 	/*
 	 * write process id for others to know
 	 */
-	sprintf(line, "%u\n", pid);
-	pidoff = i = strlen(line);
+	pidoff = i = snprintf(line, sizeof(line), "%u\n", pid);
 	if (write(lfd, line, i) != i) {
 		syslog(LOG_ERR, "%s: %s: %m", printer, LO);
 		exit(1);
@@ -212,9 +211,8 @@ again:
 		if (stat(q->q_name, &stb) < 0)
 			continue;
 	restart:
-		(void) lseek(lfd, (off_t)pidoff, 0);
-		(void) sprintf(line, "%s\n", q->q_name);
-		i = strlen(line);
+		(void)lseek(lfd, (off_t)pidoff, 0);
+		i = snprintf(line, sizeof(line), "%s\n", q->q_name);
 		if (write(lfd, line, i) != i)
 			syslog(LOG_ERR, "%s: %s: %m", printer, LO);
 		if (!remote)
@@ -245,12 +243,12 @@ again:
 			syslog(LOG_INFO, "restarting %s", printer);
 			if (ofilter > 0) {
 				kill(ofilter, SIGCONT);	/* to be sure */
-				(void) close(ofd);
+				(void)close(ofd);
 				while ((i = wait(0)) > 0 && i != ofilter)
 					;
 				ofilter = 0;
 			}
-			(void) close(pfd);	/* close printer */
+			(void)close(pfd);	/* close printer */
 			if (ftruncate(lfd, pidoff) < 0)
 				syslog(LOG_WARNING, "%s: %s: %m", printer, LO);
 			openpr();		/* try to reopen printer */
@@ -269,17 +267,18 @@ again:
 	done:
 		if (count > 0) {	/* Files actually printed */
 			if (!SF && !tof)
-				(void) write(ofd, FF, strlen(FF));
+				(void)write(ofd, FF, strlen(FF));
 			if (TR != NULL)		/* output trailer */
-				(void) write(ofd, TR, strlen(TR));
+				(void)write(ofd, TR, strlen(TR));
 		}
-		(void) unlink(tempfile);
+		(void)unlink(tempfile);
 		exit(0);
 	}
 	goto again;
 }
 
-char	fonts[4][50];	/* fonts for troff */
+#define FONTLEN	50
+char	fonts[4][FONTLEN];	/* fonts for troff */
 
 char ifonts[4][40] = {
 	_PATH_VFONTR,
@@ -311,9 +310,10 @@ printit(file)
 	 * Reset troff fonts.
 	 */
 	for (i = 0; i < 4; i++)
-		strcpy(fonts[i], ifonts[i]);
-	sprintf(&width[2], "%d", PW);
-	strcpy(indent+2, "0");
+		strncpy(fonts[i], ifonts[i], FONTLEN);
+	(void)snprintf(&width[2], sizeof(width) - 2, "%d", PW);
+	indent[2] = '0';
+	indent[3] = '\0';
 
 	/*
 	 *      read the control file for work to do
@@ -356,13 +356,13 @@ printit(file)
 	while (getline(cfp))
 		switch (line[0]) {
 		case 'H':
-			strcpy(fromhost, line+1);
+			strncpy(fromhost, line+1, sizeof(fromhost) - 1);
 			if (class[0] == '\0')
-				strncpy(class, line+1, sizeof(class)-1);
+				strncpy(class, line+1, sizeof(class) - 1);
 			continue;
 
 		case 'P':
-			strncpy(logname, line+1, sizeof(logname)-1);
+			strncpy(logname, line+1, sizeof(logname) - 1);
 			if (RS) {			/* restricted */
 				if (getpwnam(logname) == NULL) {
 					bombed = NOACCT;
@@ -387,20 +387,22 @@ printit(file)
 
 		case 'J':
 			if (line[1] != '\0')
-				strncpy(jobname, line+1, sizeof(jobname)-1);
-			else
-				strcpy(jobname, " ");
+				strncpy(jobname, line+1, sizeof(jobname) - 1);
+			else {
+				jobname[0] = ' ';
+				jobname[1] = '\0';
+			}
 			continue;
 
 		case 'C':
 			if (line[1] != '\0')
-				strncpy(class, line+1, sizeof(class)-1);
+				strncpy(class, line+1, sizeof(class) - 1);
 			else if (class[0] == '\0')
 				gethostname(class, sizeof(class));
 			continue;
 
 		case 'T':	/* header title for pr */
-			strncpy(title, line+1, sizeof(title)-1);
+			strncpy(title, line+1, sizeof(title) - 1);
 			continue;
 
 		case 'L':	/* identification line */
@@ -413,15 +415,15 @@ printit(file)
 		case '3':
 		case '4':
 			if (line[1] != '\0')
-				strcpy(fonts[line[0]-'1'], line+1);
+				strncpy(fonts[line[0]-'1'], line+1, FONTLEN - 1);
 			continue;
 
 		case 'W':	/* page width */
-			strncpy(width+2, line+1, sizeof(width)-3);
+			strncpy(width+2, line+1, sizeof(width) - 3);
 			continue;
 
 		case 'I':	/* indent amount */
-			strncpy(indent+2, line+1, sizeof(indent)-3);
+			strncpy(indent+2, line+1, sizeof(indent) - 3);
 			continue;
 
 		default:	/* some file to print */
@@ -431,7 +433,7 @@ printit(file)
 					bombed = FATALERR;
 				break;
 			case REPRINT:
-				(void) fclose(cfp);
+				(void)fclose(cfp);
 				return(REPRINT);
 			case FILTERERR:
 			case ACCESS:
@@ -464,13 +466,13 @@ pass2:
 			continue;
 
 		case 'U':
-			(void) unlink(line+1);
+			(void)unlink(line+1);
 		}
 	/*
 	 * clean-up in case another control file exists
 	 */
-	(void) fclose(cfp);
-	(void) unlink(file);
+	(void)fclose(cfp);
+	(void)unlink(file);
 	return(bombed == OK ? OK : ERROR);
 }
 
@@ -509,17 +511,17 @@ print(format, file)
 	    (stb.st_dev != fdev || stb.st_ino != fino))
 		return(ACCESS);
 	if (!SF && !tof) {		/* start on a fresh page */
-		(void) write(ofd, FF, strlen(FF));
+		(void)write(ofd, FF, strlen(FF));
 		tof = 1;
 	}
 	if (IF == NULL && (format == 'f' || format == 'l')) {
 		tof = 0;
 		while ((n = read(fi, buf, BUFSIZ)) > 0)
 			if (write(ofd, buf, n) != n) {
-				(void) close(fi);
+				(void)close(fi);
 				return(REPRINT);
 			}
-		(void) close(fi);
+		(void)close(fi);
 		return(OK);
 	}
 	switch (format) {
@@ -540,17 +542,17 @@ print(format, file)
 			dup2(fi, 0);		/* file is stdin */
 			dup2(p[1], 1);		/* pipe is stdout */
 			for (n = 3; n < NOFILE; n++)
-				(void) close(n);
+				(void)close(n);
 			execl(_PATH_PR, "pr", width, length,
 			    "-h", *title ? title : " ", 0);
 			syslog(LOG_ERR, "cannot execl %s", _PATH_PR);
 			exit(2);
 		}
-		(void) close(p[1]);		/* close output side */
-		(void) close(fi);
+		(void)close(p[1]);		/* close output side */
+		(void)close(fi);
 		if (prchild < 0) {
 			prchild = 0;
-			(void) close(p[0]);
+			(void)close(p[0]);
 			return(ERROR);
 		}
 		fi = p[0];			/* use pipe for input */
@@ -578,19 +580,19 @@ print(format, file)
 	case 't':	/* print troff output */
 	case 'n':	/* print ditroff output */
 	case 'd':	/* print tex output */
-		(void) unlink(".railmag");
+		(void)unlink(".railmag");
 		if ((fo = creat(".railmag", FILMOD)) < 0) {
 			syslog(LOG_ERR, "%s: cannot create .railmag", printer);
-			(void) unlink(".railmag");
+			(void)unlink(".railmag");
 		} else {
 			for (n = 0; n < 4; n++) {
 				if (fonts[n][0] != '/')
-					(void) write(fo, _PATH_VFONT,
+					(void)write(fo, _PATH_VFONT,
 					    sizeof(_PATH_VFONT) - 1);
-				(void) write(fo, fonts[n], strlen(fonts[n]));
-				(void) write(fo, "\n", 1);
+				(void)write(fo, fonts[n], strlen(fonts[n]));
+				(void)write(fo, "\n", 1);
 			}
-			(void) close(fo);
+			(void)close(fo);
 		}
 		prog = (format == 't') ? TF : (format == 'n') ? NF : DF;
 		av[1] = pxwidth;
@@ -616,7 +618,7 @@ print(format, file)
 		n = 3;
 		break;
 	default:
-		(void) close(fi);
+		(void)close(fi);
 		syslog(LOG_ERR, "%s: illegal format character '%c'",
 			printer, format);
 		return(ERROR);
@@ -638,7 +640,7 @@ print(format, file)
 		    wait3((int *)&status, WUNTRACED, 0)) > 0 && pid != ofilter)
 			;
 		if (status.w_stopval != WSTOPPED) {
-			(void) close(fi);
+			(void)close(fi);
 			syslog(LOG_WARNING, "%s: output filter died (%d)",
 				printer, status.w_retcode);
 			return(REPRINT);
@@ -653,12 +655,12 @@ start:
 		if (n >= 0)
 			dup2(n, 2);
 		for (n = 3; n < NOFILE; n++)
-			(void) close(n);
+			(void)close(n);
 		execv(prog, av);
 		syslog(LOG_ERR, "cannot execv %s", prog);
 		exit(2);
 	}
-	(void) close(fi);
+	(void)close(fi);
 	if (child < 0)
 		status.w_retcode = 100;
 	else
@@ -748,7 +750,7 @@ sendit(file)
 			continue;
 		}
 		if (line[0] >= 'a' && line[0] <= 'z') {
-			strcpy(last, line);
+			strncpy(last, line, sizeof(last) - 1);
 			while (i = getline(cfp))
 				if (strcmp(last, line))
 					break;
@@ -758,7 +760,7 @@ sendit(file)
 					goto again;
 				break;
 			case REPRINT:
-				(void) fclose(cfp);
+				(void)fclose(cfp);
 				return(REPRINT);
 			case ACCESS:
 				sendmail(logname, ACCESS);
@@ -769,7 +771,7 @@ sendit(file)
 		}
 	}
 	if (err == OK && sendfile('\2', file) > 0) {
-		(void) fclose(cfp);
+		(void)fclose(cfp);
 		return(REPRINT);
 	}
 	/*
@@ -778,12 +780,12 @@ sendit(file)
 	fseek(cfp, 0L, 0);
 	while (getline(cfp))
 		if (line[0] == 'U')
-			(void) unlink(line+1);
+			(void)unlink(line+1);
 	/*
 	 * clean-up in case another control file exists
 	 */
-	(void) fclose(cfp);
-	(void) unlink(file);
+	(void)fclose(cfp);
+	(void)unlink(file);
 	return(err);
 }
 
@@ -811,12 +813,11 @@ sendfile(type, file)
 	if ((stb.st_mode & S_IFMT) == S_IFLNK && fstat(f, &stb) == 0 &&
 	    (stb.st_dev != fdev || stb.st_ino != fino))
 		return(ACCESS);
-	(void) sprintf(buf, "%c%qd %s\n", type, stb.st_size, file);
-	amt = strlen(buf);
+	amt = snprintf(buf, sizeof(buf), "%c%qd %s\n", type, stb.st_size, file);
 	for (i = 0;  ; i++) {
 		if (write(pfd, buf, amt) != amt ||
 		    (resp = response()) < 0 || resp == '\1') {
-			(void) close(f);
+			(void)close(f);
 			return(REPRINT);
 		} else if (resp == '\0')
 			break;
@@ -837,7 +838,7 @@ sendfile(type, file)
 		if (sizerr == 0 && read(f, buf, amt) != amt)
 			sizerr = 1;
 		if (write(pfd, buf, amt) != amt) {
-			(void) close(f);
+			(void)close(f);
 			return(REPRINT);
 		}
 	}
@@ -845,11 +846,11 @@ sendfile(type, file)
 
 
 
-	(void) close(f);
+	(void)close(f);
 	if (sizerr) {
 		syslog(LOG_INFO, "%s: %s: changed size", printer, file);
 		/* tell recvjob to ignore this file */
-		(void) write(pfd, "\1", 1);
+		(void)write(pfd, "\1", 1);
 		return(ERROR);
 	}
 	if (write(pfd, "", 1) != 1 || response())
@@ -886,35 +887,35 @@ banner(name1, name2)
 
 	time(&tvec);
 	if (!SF && !tof)
-		(void) write(ofd, FF, strlen(FF));
+		(void)write(ofd, FF, strlen(FF));
 	if (SB) {	/* short banner only */
 		if (class[0]) {
-			(void) write(ofd, class, strlen(class));
-			(void) write(ofd, ":", 1);
+			(void)write(ofd, class, strlen(class));
+			(void)write(ofd, ":", 1);
 		}
-		(void) write(ofd, name1, strlen(name1));
-		(void) write(ofd, "  Job: ", 7);
-		(void) write(ofd, name2, strlen(name2));
-		(void) write(ofd, "  Date: ", 8);
-		(void) write(ofd, ctime(&tvec), 24);
-		(void) write(ofd, "\n", 1);
+		(void)write(ofd, name1, strlen(name1));
+		(void)write(ofd, "  Job: ", 7);
+		(void)write(ofd, name2, strlen(name2));
+		(void)write(ofd, "  Date: ", 8);
+		(void)write(ofd, ctime(&tvec), 24);
+		(void)write(ofd, "\n", 1);
 	} else {	/* normal banner */
-		(void) write(ofd, "\n\n\n", 3);
+		(void)write(ofd, "\n\n\n", 3);
 		scan_out(ofd, name1, '\0');
-		(void) write(ofd, "\n\n", 2);
+		(void)write(ofd, "\n\n", 2);
 		scan_out(ofd, name2, '\0');
 		if (class[0]) {
-			(void) write(ofd,"\n\n\n",3);
+			(void)write(ofd,"\n\n\n",3);
 			scan_out(ofd, class, '\0');
 		}
-		(void) write(ofd, "\n\n\n\n\t\t\t\t\tJob:  ", 15);
-		(void) write(ofd, name2, strlen(name2));
-		(void) write(ofd, "\n\t\t\t\t\tDate: ", 12);
-		(void) write(ofd, ctime(&tvec), 24);
-		(void) write(ofd, "\n", 1);
+		(void)write(ofd, "\n\n\n\n\t\t\t\t\tJob:  ", 15);
+		(void)write(ofd, name2, strlen(name2));
+		(void)write(ofd, "\n\t\t\t\t\tDate: ", 12);
+		(void)write(ofd, ctime(&tvec), 24);
+		(void)write(ofd, "\n", 1);
 	}
 	if (!SF)
-		(void) write(ofd, FF, strlen(FF));
+		(void)write(ofd, FF, strlen(FF));
 	tof = 1;
 }
 
@@ -965,7 +966,7 @@ scan_out(scfd, scsp, dlm)
 			;
 		strp++;
 		*strp++ = '\n';	
-		(void) write(scfd, outbuf, strp-outbuf);
+		(void)write(scfd, outbuf, strp-outbuf);
 	}
 }
 
@@ -1010,12 +1011,12 @@ sendmail(user, bombed)
 	if ((s = dofork(DORETURN)) == 0) {		/* child */
 		dup2(p[0], 0);
 		for (i = 3; i < NOFILE; i++)
-			(void) close(i);
+			(void)close(i);
 		if ((cp = rindex(_PATH_SENDMAIL, '/')) != NULL)
 			cp++;
 	else
 			cp = _PATH_SENDMAIL;
-		sprintf(buf, "%s@%s", user, fromhost);
+		(void)snprintf(buf, sizeof(buf), "%s@%s", user, fromhost);
 		execl(_PATH_SENDMAIL, cp, buf, 0);
 		exit(0);
 	} else if (s > 0) {				/* parent */
@@ -1045,16 +1046,16 @@ sendmail(user, bombed)
 			printf("\nwas printed but had the following errors:\n");
 			while ((i = getc(fp)) != EOF)
 				putchar(i);
-			(void) fclose(fp);
+			(void)fclose(fp);
 			break;
 		case ACCESS:
 			printf("\nwas not printed because it was not linked to the original file\n");
 		}
 		fflush(stdout);
-		(void) close(1);
+		(void)close(1);
 	}
-	(void) close(p[0]);
-	(void) close(p[1]);
+	(void)close(p[0]);
+	(void)close(p[1]);
 	wait(&s);
 }
 
@@ -1110,7 +1111,7 @@ static void
 abortpr(signo)
 	int signo;
 {
-	(void) unlink(tempfile);
+	(void)unlink(tempfile);
 	kill(0, SIGINT);
 	if (ofilter > 0)
 		kill(ofilter, SIGCONT);
@@ -1152,16 +1153,16 @@ init()
 		FF = DEFFF;
 	if (cgetnum(bp, "pw", &PW) < 0)
 		PW = DEFWIDTH;
-	sprintf(&width[2], "%d", PW);
+	(void)snprintf(&width[2], sizeof(width) - 2, "%d", PW);
 	if (cgetnum(bp, "pl", &PL) < 0)
 		PL = DEFLENGTH;
-	sprintf(&length[2], "%d", PL);
+	(void)snprintf(&length[2], sizeof(length) - 2, "%d", PL);
 	if (cgetnum(bp,"px", &PX) < 0)
 		PX = 0;
-	sprintf(&pxwidth[2], "%d", PX);
+	(void)snprintf(&pxwidth[2], sizeof(pxwidth) - 2, "%d", PX);
 	if (cgetnum(bp, "py", &PY) < 0)
 		PY = 0;
-	sprintf(&pxlength[2], "%d", PY);
+	(void)snprintf(&pxlength[2], sizeof(pxlength) - 2, "%d", PY);
 	cgetstr(bp, "rm", &RM);
 	if (s = checkremote())
 		syslog(LOG_WARNING, s);
@@ -1229,12 +1230,11 @@ openpr()
 			resp = -1;
 			pfd = getport(RM);
 			if (pfd >= 0) {
-				(void) sprintf(line, "\2%s\n", RP);
-				n = strlen(line);
+				n = snprintf(line, sizeof(line), "\2%s\n", RP);
 				if (write(pfd, line, n) == n &&
 				    (resp = response()) == '\0')
 					break;
-				(void) close(pfd);
+				(void)close(pfd);
 			}
 			if (i == 1) {
 				if (resp < 0)
@@ -1265,7 +1265,7 @@ openpr()
 			dup2(p[0], 0);		/* pipe is std in */
 			dup2(pfd, 1);		/* printer is std out */
 			for (i = 3; i < NOFILE; i++)
-				(void) close(i);
+				(void)close(i);
 			if ((cp = rindex(OF, '/')) == NULL)
 				cp = OF;
 			else
@@ -1274,7 +1274,7 @@ openpr()
 			syslog(LOG_ERR, "%s: %s: %m", printer, OF);
 			exit(1);
 		}
-		(void) close(p[0]);		/* close input side */
+		(void)close(p[0]);		/* close input side */
 		ofd = p[1];			/* use pipe for output */
 	} else {
 		ofd = pfd;
@@ -1428,9 +1428,9 @@ pstatus(msg, va_alist)
 		exit(1);
 	}
 	ftruncate(fd, 0);
-	(void)vsnprintf(buf, sizeof(buf), msg, ap);
+	(void)vsnprintf(buf, sizeof(buf) - 2, msg, ap);
 	va_end(ap);
-	strcat(buf, "\n");
-	(void) write(fd, buf, strlen(buf));
-	(void) close(fd);
+	strncat(buf, "\n", 2);
+	(void)write(fd, buf, strlen(buf));
+	(void)close(fd);
 }
