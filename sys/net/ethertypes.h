@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertypes.h,v 1.6 1998/10/13 02:55:18 kim Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.7 1999/03/20 03:37:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -79,7 +79,9 @@
 #define ETHERTYPE_XTP		0x817D	/* Protocol Engines XTP */
 #define ETHERTYPE_STP		0x8181	/* Scheduled Transfer STP, HIPPI-ST */
 #define	ETHERTYPE_IPV6		0x86DD	/* IP protocol version 6 */
-#define	ETHERTYPE_PPP		0x880B	/* PPP */
+#define	ETHERTYPE_PPP		0x880B	/* PPP (obsolete by PPPOE) */
+#define	ETHERTYPE_PPPOEDISC	0x8863	/* PPP Over Ethernet Discovery Stage */
+#define	ETHERTYPE_PPPOE		0x8864	/* PPP Over Ethernet Session Stage */
 #define	ETHERTYPE_LOOPBACK	0x9000	/* Loopback */
 #define ETHERTYPE_LBACK		ETHERTYPE_LOOPBACK	/* DEC MOP loopback */
 #define	ETHERTYPE_MAX		0xFFFF	/* Maximum valid ethernet type */
