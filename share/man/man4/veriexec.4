@@ -1,4 +1,4 @@
-.\"	$NetBSD: veriexec.4,v 1.1 2002/10/29 12:37:49 blymn Exp $
+.\"	$NetBSD: veriexec.4,v 1.2 2002/10/29 12:42:10 wiz Exp $
 .\"
 .\" Copyright (c) 2002, Brett Lymn.  All rights reserved.
 .\"
@@ -40,7 +40,7 @@ driver provides a method of loading the fingerprints used by the
 verified exec feature.
 The fingerprints are loaded by opening
 .Nm
-and then using the 
+and then using the
 .Dv VERIEXECLOAD
 ioctl to feed the fingerprints into kernel space.
 Note that the loading should only be done after a mount of all file systems
@@ -52,12 +52,12 @@ is set to 0.
 The
 .Nm
 device will return
-.Dv EPERM
+.Er EPERM
 if
 .Dv securelevel
 is greater than 0.
 An
-.Dv ENOENT
+.Er ENOENT
 error will be returned if the file path passed in does not exist.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
@@ -67,4 +67,5 @@ The
 .Nm
 driver was originally written for
 .Nx
-by Brett Lymn.
+by
+.An Brett Lymn .
