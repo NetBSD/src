@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.9 2004/07/28 08:57:40 dyoung Exp $	*/
+/*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -122,6 +122,9 @@ struct ath_softc {
 	void			(*sc_node_copy)(struct ieee80211com *,
 					struct ieee80211_node *,
 					const struct ieee80211_node *);
+	void			(*sc_recv_mgmt)(struct ieee80211com *,
+				    struct mbuf *, struct ieee80211_node *,
+				    int, int, u_int32_t);
 #ifdef __FreeBSD__
 	device_t		sc_dev;
 #endif
