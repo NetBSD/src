@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.171 2003/12/04 19:38:21 atatat Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.172 2003/12/06 15:20:04 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.171 2003/12/04 19:38:21 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.172 2003/12/06 15:20:04 simonb Exp $");
 
 #include "opt_cputype.h"
 
@@ -1115,6 +1115,7 @@ setregs(l, pack, stack)
 	l->l_md.md_ss_addr = 0;
 }
 
+#ifdef __HAVE_BOOTINFO_H
 /*
  * Machine dependent system variables.
  */
@@ -1133,6 +1134,7 @@ sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
 	node.sysctl_size = sizeof(bibp->bootpath);
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
+#endif
 
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
