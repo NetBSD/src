@@ -1,25 +1,25 @@
-# $NetBSD: sshd,v 1.5 2005/03/14 23:41:49 christos Exp $
+# $NetBSD: sshd,v 1.6 2005/03/17 01:07:51 christos Exp $
 #
 # PAM configuration for the "sshd" service
 #
 
 # auth
-auth		required		pam_nologin.so	no_warn
-auth		sufficient,optional	pam_krb5.so	no_warn try_first_pass
+auth		required	pam_nologin.so	no_warn
+auth		sufficient	pam_krb5.so	no_warn try_first_pass
 # pam_ssh has potential security risks.  See pam_ssh(8).
-#auth		sufficient		pam_ssh.so	no_warn try_first_pass
-auth		required		pam_unix.so	no_warn try_first_pass
+#auth		sufficient	pam_ssh.so	no_warn try_first_pass
+auth		required	pam_unix.so	no_warn try_first_pass
 
 # account
-account		required,optional	pam_krb5.so
-account		required		pam_login_access.so
-account		required		pam_unix.so
+account		requiredl	pam_krb5.so
+account		required	pam_login_access.so
+account		required	pam_unix.so
 
 # session
 # pam_ssh has potential security risks.  See pam_ssh(8).
-#session	optional		pam_ssh.so
-session		required		pam_permit.so
+#session	optional	pam_ssh.so
+session		required	pam_permit.so
 
 # password
-password	sufficient,optional	pam_krb5.so	no_warn try_first_pass
-password	required		pam_unix.so	no_warn try_first_pass
+password	sufficient	pam_krb5.so	no_warn try_first_pass
+password	required	pam_unix.so	no_warn try_first_pass
