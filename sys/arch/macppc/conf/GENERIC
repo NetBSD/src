@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.185 2004/11/24 20:49:24 bouyer Exp $
+# $NetBSD: GENERIC,v 1.186 2005/01/08 03:24:58 briggs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.185 $"
+#ident 		"GENERIC-$Revision: 1.186 $"
 
 maxusers	32
 
@@ -269,7 +269,7 @@ slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 wdc*	at pci? dev ? function ?	# Kauai ATA
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
-obio0	at pci? dev ? function ?
+obio*	at pci? dev ? function ?
 #macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
 
 acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
@@ -345,7 +345,7 @@ rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 
 wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
-wsmouse0 at ams?
+wsmouse* at ams?
 
 # Cryptographic Devices
 
