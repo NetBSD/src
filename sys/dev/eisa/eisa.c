@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.8 1996/03/17 00:47:19 thorpej Exp $	*/
+/*	$NetBSD: eisa.c,v 1.9 1996/03/30 23:08:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -130,7 +130,6 @@ eisaattach(parent, self, aux)
 	 */
 	for (slot = 1; slot < EISA_MAX_SLOT; slot++) {
 		struct eisa_attach_args ea;
-		struct cfdata *cf;
 		u_int slotaddr;
 		bus_io_handle_t slotioh;
 		int i;
@@ -145,7 +144,8 @@ eisaattach(parent, self, aux)
 		 * about it.
 		 */
 		if (bus_io_map(bc, slotaddr, EISA_SLOT_SIZE, &slotioh)) {
-			printf("%s: can't map I/O space for slot %d\n", slot);
+			printf("%s: can't map I/O space for slot %d\n",
+			    self->dv_xname, slot);
 			continue;
 		}
 
