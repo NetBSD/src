@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.1 1996/05/17 21:18:34 chuck Exp $	*/
+/*	$NetBSD: if_le.c,v 1.2 2000/07/24 18:39:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -68,10 +68,14 @@
 
 #include <machine/prom.h>
 
-#include "stand.h"
+#include <lib/libkern/libkern.h>
+#include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
+
 #include "libsa.h"
 #include "netif.h"
 #include "config.h"
+#include "dev_net.h"
 
 #include "if_lereg.h"
 
@@ -341,7 +345,7 @@ le_put(desc, pkt, len)
 	volatile struct lereg1 *ler1 = le_softc.sc_r1;
 	volatile struct lereg2 *ler2 = le_softc.sc_r2;
 	volatile struct letmd *tmd;
-	int     timo = 100000, stat, i;
+	int     timo = 100000, stat;
 	unsigned int a;
 
 	ler1->ler1_rap = LE_CSR0;

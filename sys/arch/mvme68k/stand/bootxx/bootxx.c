@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.4 2000/07/09 14:07:06 jdolecek Exp $ */
+/*	$NetBSD: bootxx.c,v 1.5 2000/07/24 18:39:21 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,9 @@
 #include "stand.h"
 #include "libsa.h"
 
+int copyboot __P((struct open_file *, char *));
+void main __P((void));
+
 /*
  * Boot device is derived from ROM provided information.
  */
@@ -73,18 +76,19 @@ int     	block_size = 512;	/* default */
 int     	block_count = MAXBLOCKNUM;	/* length of table */
 daddr_t 	block_table[MAXBLOCKNUM] = { 0 };
 
-extern		char *version;
+extern		char bootprog_name[], bootprog_rev[];
 
-
+void
 main()
 {
 	struct open_file	f;
 	char	*addr;
-	int n, error;
+	int error;
 
 	printf("Boot: bug device: ctrl=%d, dev=%d\n", 
 		bugargs.ctrl_lun, bugargs.dev_lun);
-	printf("\nbootxx: first level bootstrap program [%s]\n\n", version);
+	printf("\nbootxx: %s first level bootstrap program [%s]\n\n",
+		bootprog_name, bootprog_rev);
 
 	f.f_flags = F_RAW;
 	if (devopen(&f, 0, &addr)) {
@@ -95,9 +99,9 @@ main()
 	addr = (char*)LOADADDR;
 	error = copyboot(&f, addr);
 	f.f_dev->dv_close(&f);
-	if (!error) {
-		bugexec((void (*)())addr);
-	}
+	if (!error)
+		bugexec((void (*)__P((void)))addr);
+
 	/* copyboot had a problem... */
 	_rtt();
 }

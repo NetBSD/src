@@ -1,4 +1,4 @@
-/*	$NetBSD: bugcrt.c,v 1.4 1999/09/18 09:39:55 scw Exp $	*/
+/*	$NetBSD: bugcrt.c,v 1.1 2000/07/24 18:39:41 jdolecek Exp $	*/
 
 #include <sys/types.h>
 #include <machine/prom.h>

@@ -1,0 +1,4 @@
+$NetBSD: version,v 1.1 2000/07/24 18:39:16 jdolecek Exp $
+
+1.1:	Initial bootst (from Dale Rahn)
+1.2:	Update based on sun3 tapeboot (by Chuck Cranor)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sboot.h,v 1.4 1998/11/23 20:45:26 scw Exp $	*/
+/*	$NetBSD: sboot.h,v 1.5 2000/07/24 18:40:07 jdolecek Exp $	*/
 
 /*
  *
@@ -36,27 +36,21 @@
  * sboot.h: stuff for MVME147's serial line boot
  */
 
-typedef unsigned short u_short;
-typedef unsigned long u_long;
-typedef unsigned char u_char;
-typedef unsigned int u_int;
-typedef u_long size_t;
-typedef char *caddr_t;
+#include <lib/libkern/libkern.h>
+#include <lib/libsa/stand.h>
+
 extern caddr_t end;
 
-#define NULL ((char *)0)
-
-void bcopy(const void *, void *, size_t); /* libc_sa */
-void printf(const char *, ...); /* libc_sa */
 
 /* console */
 void puts(char *);
-void putchar(char);
-char cngetc();
+void putchar(int);
+char cngetc(void);
 char *ngets(char *, int);
+void consinit(void);
 
 /* sboot */
-void callrom();
+void callrom(void);
 void do_cmd(char *, char *);
 
 /* le */
@@ -71,11 +65,11 @@ int le_put(u_char *, size_t);
 /* etherfun */
 #define READ 0
 #define ACKN 1 
-void do_rev_arp();
-int get_rev_arp();
-int rev_arp();
-void do_send_tftp( int );
-int do_get_file(); 
+void do_rev_arp(void);
+int get_rev_arp(void);
+int rev_arp(void);
+void do_send_tftp(int);
+int do_get_file(void); 
 void tftp_file(char *, u_long);
 
 /* clock */
@@ -83,6 +77,9 @@ u_long time(void);
 
 /* checksum */
 u_long oc_cksum (void *, u_long, u_long);
+
+/* start */
+void go(int, void *, void *);
 
 #define CONS_ZS_ADDR (0xfffe3002)
 #define CLOCK_ADDR (0xfffe07f8)

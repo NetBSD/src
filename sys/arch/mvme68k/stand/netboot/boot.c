@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2000/07/24 09:25:54 scw Exp $ */
+/*	$NetBSD: boot.c,v 1.6 2000/07/24 18:39:48 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -39,19 +39,24 @@
 #include <sys/reboot.h>
 #include <machine/prom.h>
 
+#include <lib/libkern/libkern.h>
+
 #include "stand.h"
 #include "libsa.h"
 
-extern	char *version;
+void main(void);
+
+extern	char bootprog_name[], bootprog_rev[];
 char	line[80];
 
+void
 main()
 {
 	char *cp, *file;
 	int ask = 0, howto, part, sboot = 0;
 
-	printf(">> BSD MVME%x netboot (via %s) [%s]\n", bugargs.cputyp, 
-		bugargs.arg_start, version);
+	printf(">> %s MVME%x netboot (via %s) [%s]\n",
+		bootprog_name, bugargs.cputyp, bugargs.arg_start, bootprog_rev);
 	if (bcmp("sboot", bugargs.arg_start, 5) == 0)
 		sboot = 1;
 	/* cycle in the correct args */

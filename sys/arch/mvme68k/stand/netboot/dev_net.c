@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.7 1999/05/07 16:19:27 drochner Exp $ */
+/*	$NetBSD: dev_net.c,v 1.8 2000/07/24 18:39:49 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -55,15 +55,18 @@
 #include <netinet/in_systm.h>
 
 #include <machine/prom.h>
+#include <machine/stdarg.h>
 
 #include <lib/libkern/libkern.h>
+#include <lib/libsa/stand.h>
+#include <lib/libsa/nfs.h>
 
-#include "stand.h"
 #include "libsa.h"
 #include "net.h"
 #include "netif.h"
 #include "config.h"
 #include "bootparam.h"
+#include "dev_net.h"
 
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 
@@ -74,15 +77,20 @@ int netdev_sock = -1;
 static int open_count;
 
 /*
- * Called by devopen after it sets f->f_dev to our devsw entry.
+ * Called by devopen() after it sets f->f_dev to our devsw entry.
  * This opens the low-level device and sets f->f_devdata.
  */
 int
-net_open(f, devname)
-	struct open_file *f;
-	char *devname;		/* Device part of file name (or NULL). */
+net_open(struct open_file *f, ...)
 {
+	char *devname;		/* Device part of file name (or NULL). */
 	int error = 0;
+	va_list ap;
+
+	/* get devname */
+	va_start(ap, f);
+	devname = va_arg(ap, char *);
+	va_end(ap);
 
 	/* On first open, do netif open, mount, etc. */
 	if (open_count == 0) {
@@ -106,16 +114,27 @@ net_close(f)
 		if (--open_count == 0)
 			netif_close(netdev_sock);
 	f->f_devdata = NULL;
+
+	return (0);
 }
 
 int
-net_ioctl()
+net_ioctl(f, cmd, data)
+	struct open_file *f;
+	u_long cmd;
+	void *data;
 {
 	return EIO;
 }
 
 int
-net_strategy()
+net_strategy(devdata, rw, blk, size, buf, rsize)
+	void *devdata;
+	int rw;
+	daddr_t blk;
+	size_t size;
+	void *buf;
+	size_t *rsize;
 {
 	return EIO;
 }

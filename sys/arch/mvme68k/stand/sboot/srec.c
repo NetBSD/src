@@ -1,4 +1,4 @@
-/*	$NetBSD: srec.c,v 1.2 2000/07/10 21:30:31 jdolecek Exp $	*/
+/*	$NetBSD: srec.c,v 1.3 2000/07/24 18:40:08 jdolecek Exp $	*/
 
 /*
  * Public domain, believed to be by Mike Price.
@@ -9,11 +9,12 @@
 #include <stdio.h>
 #include <ctype.h>
 
-int get32();
-void put32();
-void sput();
-void put();
-int checksum();
+int get32(char *);
+void put32(int, int, char *, int, int);
+void sput(char *);
+void put(int);
+int checksum(int, char *, int, int);
+int main(int, char *[]);
 
 int mask;
 int size;
