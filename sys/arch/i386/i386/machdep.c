@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.229 1997/03/27 21:01:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.230 1997/04/02 23:44:44 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -1793,7 +1793,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 	vm_offset_t va;
 
 	pa = i386_trunc_page(bpa);
-	endpa = i386_round_page((bpa + size) - 1);
+	endpa = i386_round_page(bpa + size);
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)
@@ -1840,7 +1840,7 @@ bus_space_unmap(t, bsh, size)
 	case I386_BUS_SPACE_MEM:
 		ex = iomem_ex;
 		va = i386_trunc_page(bsh);
-		endva = i386_round_page((bsh + size) - 1);
+		endva = i386_round_page(bsh + size);
 
 #ifdef DIAGNOSTIC
 		if (endva <= va)
