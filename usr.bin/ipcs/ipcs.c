@@ -24,7 +24,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ipcs.c,v 1.6 1994/06/18 22:05:08 cgd Exp $
+ *	$Id: ipcs.c,v 1.7 1994/09/05 00:28:59 mycroft Exp $
  */
 
 #include <stdio.h>
@@ -332,7 +332,7 @@ main(argc, argv)
 					cvt_time(shmptr->shm_dtime, dtime_buf);
 					cvt_time(shmptr->shm_ctime, ctime_buf);
 
-					printf("q %6d %10d %s %8s %8s",
+					printf("m %6d %10d %s %8s %8s",
 					    IXSEQ_TO_IPCID(i, shmptr->shm_perm),
 					    shmptr->shm_perm.key,
 					    fmt_perm(shmptr->shm_perm.mode),
@@ -429,7 +429,7 @@ main(argc, argv)
 					cvt_time(semaptr->sem_otime, otime_buf);
 					cvt_time(semaptr->sem_ctime, ctime_buf);
 
-					printf("q %6d %10d %s %8s %8s",
+					printf("s %6d %10d %s %8s %8s",
 					    IXSEQ_TO_IPCID(i, semaptr->sem_perm),
 					    semaptr->sem_perm.key,
 					    fmt_perm(semaptr->sem_perm.mode),
