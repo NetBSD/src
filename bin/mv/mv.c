@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.16 1997/10/19 12:55:07 mycroft Exp $	*/
+/*	$NetBSD: mv.c,v 1.17 1998/07/28 04:01:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.16 1997/10/19 12:55:07 mycroft Exp $");
+__RCSID("$NetBSD: mv.c,v 1.17 1998/07/28 04:01:03 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ main(argc, argv)
 	int ch;
 	char path[MAXPATHLEN + 1];
 
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "if")) != -1)
 		switch (ch) {

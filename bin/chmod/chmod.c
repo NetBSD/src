@@ -1,4 +1,4 @@
-/*	$NetBSD: chmod.c,v 1.17 1997/10/11 03:11:04 enami Exp $	*/
+/*	$NetBSD: chmod.c,v 1.18 1998/07/28 04:01:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.17 1997/10/11 03:11:04 enami Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.18 1998/07/28 04:01:03 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,28 +74,27 @@ main(argc, argv)
 	mode_t *set;
 	long val;
 	int oct, omode;
-	int Hflag, Lflag, Pflag, Rflag, ch, fflag, fts_options, hflag, rval;
+	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval;
 	char *ep, *mode;
 	int (*change_mode) __P((const char *, mode_t));
 
 	set = NULL;	/* XXX gcc -Wuninitialized */
 	omode = 0;	/* XXX gcc -Wuninitialized */
 
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
-	Hflag = Lflag = Pflag = Rflag = fflag = hflag = 0;
+	Hflag = Lflag = Rflag = fflag = hflag = 0;
 	while ((ch = getopt(argc, argv, "HLPRXfghorstuwx")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
-			Lflag = Pflag = 0;
+			Lflag = 0;
 			break;
 		case 'L':
 			Lflag = 1;
-			Hflag = Pflag = 0;
+			Hflag = 0;
 			break;
 		case 'P':
-			Pflag = 1;
 			Hflag = Lflag = 0;
 			break;
 		case 'R':
@@ -215,6 +214,7 @@ done:	argv += optind;
 	if (errno)
 		err(1, "fts_read");
 	exit(rval);
+	/* NOTREACHED */
 }
 
 void

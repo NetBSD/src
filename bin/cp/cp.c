@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.20 1998/07/28 03:47:14 mycroft Exp $	*/
+/*	$NetBSD: cp.c,v 1.21 1998/07/28 04:10:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.20 1998/07/28 03:47:14 mycroft Exp $");
+__RCSID("$NetBSD: cp.c,v 1.21 1998/07/28 04:10:36 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,9 +230,11 @@ main(argc, argv)
 		 */
 		if (r == -1) {
 			if (rflag || (Rflag && (Lflag || Hflag)))
-				stat(*argv, &tmp_stat);
+				r = stat(*argv, &tmp_stat);
 			else
-				lstat(*argv, &tmp_stat);
+				r = lstat(*argv, &tmp_stat);
+			if (r == -1)
+				err(1, "%s", *argv);
 			
 			if (S_ISDIR(tmp_stat.st_mode) && (Rflag || rflag))
 				type = DIR_TO_DNE;
