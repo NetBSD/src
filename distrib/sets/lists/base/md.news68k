@@ -1,4 +1,3 @@
-# $NetBSD: md.news68k,v 1.2 2001/01/26 01:37:19 jwise Exp $
+# $NetBSD: md.news68k,v 1.3 2002/05/21 16:16:25 tsutsui Exp $
 ./usr/mdec/boot			base-sysutil-bin
 ./usr/mdec/bootxx		base-sysutil-bin
-./usr/mdec/installboot		base-sysutil-bin
