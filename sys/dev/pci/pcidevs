@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.430 2002/05/25 07:28:15 ichiro Exp $
+$NetBSD: pcidevs,v 1.431 2002/05/27 08:52:13 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1205,6 +1205,7 @@ product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
 /* FZ Juelich / ZEL products */
 product FZJZEL	GIGALINK	0x0001	Gigabit link / STR1100
 product FZJZEL	PLXHOTLINK	0x0002	HOTlink interface
+product FZJZEL	COUNTTIME	0x0003	Counter / Timer
 product FZJZEL	PLXCAMAC	0x0004	CAMAC controller
 product FZJZEL	PROFIBUS	0x0005	PROFIBUS interface
 product FZJZEL	AMCCHOTLINK	0x0006	old HOTlink interface
