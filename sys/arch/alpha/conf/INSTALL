@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.24 1999/04/29 01:28:41 ross Exp $
+# $NetBSD: INSTALL,v 1.25 1999/06/27 15:58:18 christos Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -120,13 +120,14 @@ bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
-ex*	at	pci? dev ? function ?		# 3COM 3c90x[B] Ethernet
 epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
+ex*	at	pci? dev ? function ?		# 3COM 3c90x[B] Ethernet
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
@@ -135,7 +136,7 @@ sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
-ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
+vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
 
 # MII/PHY support
 exphy*	at	mii? phy ?
