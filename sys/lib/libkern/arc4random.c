@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.1 2002/05/28 10:09:24 itojun Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.2 2002/05/28 12:21:22 itojun Exp $	*/
 
 /*-
  * THE BEER-WARE LICENSE
@@ -17,8 +17,6 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-
-#include <lib/libkern/libkern.h>
 
 #if NRND > 0
 #include <dev/rnd.h>
