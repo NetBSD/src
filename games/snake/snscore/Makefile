@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 1995/04/22 08:34:41 cgd Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 1997/11/08 06:10:35 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	snscore
-CFLAGS+=-I${.CURDIR}/../snake
+CPPFLAGS+=-I${.CURDIR}/../snake
 NOMAN=	noman
 HIDEGAME=hidegame
 
