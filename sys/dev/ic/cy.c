@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.16 2000/11/01 23:54:57 eeh Exp $	*/
+/*	$NetBSD: cy.c,v 1.17 2001/01/20 02:15:02 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -213,7 +213,7 @@ cy_attach(parent, self, aux)
 
 	} /* for(each CD1400 on a card... ) */
 
-	printf(": %d ports\n", port);
+	printf("%s: %d ports\n", sc->sc_dev.dv_xname, port);
 
 	/* ensure an edge for the next interrupt */
 	bus_space_write_1(sc->sc_memt, sc->sc_bsh,
