@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.58 2001/06/02 16:17:11 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.59 2001/07/26 17:24:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -469,22 +469,37 @@ do {									\
 	} while (/* CONSTCOND */ 0)
 
 /*
+ * Determine if an mbuf's data area is read-only.  This is true
+ * for non-cluster external storage and for clusters that are
+ * being referenced by more than one mbuf.
+ */
+#define	M_READONLY(m)							\
+	(((m)->m_flags & M_EXT) != 0 &&					\
+	  (((m)->m_flags & M_CLUSTER) == 0 || MCLISREFERENCED(m)))
+
+/*
  * Compute the amount of space available
  * before the current start of data in an mbuf.
  */
-#define	M_LEADINGSPACE(m) \
-	((m)->m_flags & M_EXT ? /* (m)->m_data - (m)->m_ext.ext_buf */ 0 : \
-	    (m)->m_flags & M_PKTHDR ? (m)->m_data - (m)->m_pktdat : \
-	    (m)->m_data - (m)->m_dat)
+#define	_M_LEADINGSPACE(m)						\
+	((m)->m_flags & M_EXT ? (m)->m_data - (m)->m_ext.ext_buf :	\
+	 (m)->m_flags & M_PKTHDR ? (m)->m_data - (m)->m_pktdat :	\
+	 (m)->m_data - (m)->m_dat)
+
+#define	M_LEADINGSPACE(m)						\
+	(M_READONLY((m)) ? 0 : _M_LEADINGSPACE((m)))
 
 /*
  * Compute the amount of space available
  * after the end of data in an mbuf.
  */
-#define	M_TRAILINGSPACE(m) \
+#define	_M_TRAILINGSPACE(m)						\
 	((m)->m_flags & M_EXT ? (m)->m_ext.ext_buf + (m)->m_ext.ext_size - \
-	    ((m)->m_data + (m)->m_len) : \
-	    &(m)->m_dat[MLEN] - ((m)->m_data + (m)->m_len))
+	 ((m)->m_data + (m)->m_len) :					\
+	 &(m)->m_dat[MLEN] - ((m)->m_data + (m)->m_len))
+
+#define	M_TRAILINGSPACE(m)						\
+	(M_READONLY((m)) ? 0 : _M_TRAILINGSPACE((m)))
 
 /*
  * Arrange to prepend space of size plen to mbuf m.
