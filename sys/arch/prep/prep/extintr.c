@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.11 2002/03/04 02:19:08 simonb Exp $	*/
+/*	$NetBSD: extintr.c,v 1.12 2002/05/13 06:17:36 matt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -105,7 +105,7 @@ int fakeintr(void *);
 void ext_intr(void);
 
 int imen = 0xffffffff;
-volatile int cpl, ipending, astpending, tickspending;
+volatile int cpl, ipending, tickspending;
 int imask[NIPL];
 int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 2002/04/25 20:36:50 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 2002/05/13 06:17:36 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -88,9 +88,6 @@ void initppc __P((u_long, u_long, u_int, void *));
 void dumpsys __P((void));
 void strayintr __P((int));
 int lcsplx __P((int));
-
-/* Our exported CPU info; we have only one right now. */  
-struct cpu_info cpu_info_store;
 
 /*
  * Global variables used here and there
