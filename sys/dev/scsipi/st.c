@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: st.c,v 1.20 1994/03/29 04:29:43 mycroft Exp $
+ *	$Id: st.c,v 1.21 1994/04/01 06:49:22 mycroft Exp $
  */
 
 /*
@@ -114,55 +114,59 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
     {"pre-scsi", " unknown model  ", "????",
 	0,
 	{
-	    {512, ST_Q_FORCE_FIXED_MODE, 0},	/* minor  0,1,2,3 */
-	    {512, ST_Q_FORCE_FIXED_MODE, QIC_24},	/* minor  4,5,6,7 */
-	    {0, ST_Q_FORCE_VAR_MODE, HALFINCH_1600},	/* minor  8,9,10,11 */
-	    {0, ST_Q_FORCE_VAR_MODE, HALFINCH_6250}	/* minor  12,13,14,15 */
+	    {512, ST_Q_FORCE_FIXED_MODE, 0},		/* minor 0-3 */
+	    {512, ST_Q_FORCE_FIXED_MODE, QIC_24},	/* minor 4-7 */
+	    {0, ST_Q_FORCE_VAR_MODE, HALFINCH_1600},	/* minor 8-11 */
+	    {0, ST_Q_FORCE_VAR_MODE, HALFINCH_6250}	/* minor 12-15 */
 	}
     },
     {"TANDBERG", " TDC 3600", "????",
 	ST_Q_NEEDS_PAGE_0,
 	{
-	    {0, 0, 0},		/* minor  0,1,2,3 */
-	    {0, ST_Q_FORCE_VAR_MODE, QIC_525},	/* minor  4,5,6,7 */
-	    {0, 0, QIC_150},	/* minor  8,9,10,11 */
-	    {0, 0, QIC_120}	/* minor  12,13,14,15 */
+	    {0, 0, 0},					/* minor 0-3 */
+	    {0, ST_Q_FORCE_VAR_MODE, QIC_525},		/* minor 4-7 */
+	    {0, 0, QIC_150},				/* minor 8-11 */
+	    {0, 0, QIC_120}				/* minor 12-15 */
 	}
     },
-    {"ARCHIVE ", "VIPER 2525 25462", "-005",
+    /*
+     * At least -005 and -007 need this.  I'll assume they all do unless I
+     * hear otherwise.  - mycroft, 31MAR94
+     */
+    {"ARCHIVE ", "VIPER 2525 25462", "????",
 	0,
 	{
-	    {0, ST_Q_SNS_HLP, 0},	/* minor  0,1,2,3 */
-	    {0, ST_Q_SNS_HLP, QIC_525},		/* minor  4,5,6,7 */
-	    {0, 0, QIC_150},	/* minor  8,9,10,11 */
-	    {0, 0, QIC_120}	/* minor  12,13,14,15 */
+	    {0, ST_Q_SNS_HLP, 0},			/* minor 0-3 */
+	    {0, ST_Q_SNS_HLP, QIC_525},			/* minor 4-7 */
+	    {0, 0, QIC_150},				/* minor 8-11 */
+	    {0, 0, QIC_120}				/* minor 12-15 */
 	}
     },
     {"ARCHIVE ", "VIPER 150", "????",
 	ST_Q_NEEDS_PAGE_0,
 	{
-	    {0, 0, 0},		/* minor  0,1,2,3 */
-	    {0, 0, QIC_150},	/* minor  4,5,6,7 */
-	    {0, 0, QIC_120},	/* minor  8,9,10,11 */
-	    {0, 0, QIC_24}	/* minor  12,13,14,15 */
+	    {0, 0, 0},					/* minor 0-3 */
+	    {0, 0, QIC_150},				/* minor 4-7 */
+	    {0, 0, QIC_120},				/* minor 8-11 */
+	    {0, 0, QIC_24}				/* minor 12-15 */
 	}
     },
     {"WANGTEK ", "5525ES SCSI REV7", "????",
 	0,
 	{
-	    {0, 0, 0},		/* minor  0,1,2,3 */
-	    {0, ST_Q_BLKSIZ, QIC_525},	/* minor  4,5,6,7 */
-	    {0, 0, QIC_150},	/* minor  8,9,10,11 */
-	    {0, 0, QIC_120}	/* minor  12,13,14,15 */
+	    {0, 0, 0},					/* minor 0-3 */
+	    {0, ST_Q_BLKSIZ, QIC_525},			/* minor 4-7 */
+	    {0, 0, QIC_150},				/* minor 8-11 */
+	    {0, 0, QIC_120}				/* minor 12-15 */
 	}
     },
     {"WangDAT ", "Model 1300", "????",
 	0,
 	{
-	    {0, 0, 0},					/* minor  0,1,2,3 */
-	    {512, ST_Q_FORCE_FIXED_MODE, 0x13},		/* minor  4,5,6,7 */
-	    {1024, ST_Q_FORCE_FIXED_MODE, 0x13},	/* minor  8,9,10,11 */
-	    {0, ST_Q_FORCE_VAR_MODE, 0x13}		/* minor  12,13,14,15 */
+	    {0, 0, 0},					/* minor 0-3 */
+	    {512, ST_Q_FORCE_FIXED_MODE, 0x13},		/* minor 4-7 */
+	    {1024, ST_Q_FORCE_FIXED_MODE, 0x13},	/* minor 8-11 */
+	    {0, ST_Q_FORCE_VAR_MODE, 0x13}		/* minor 12-15 */
 	}
     },
     {(char *) 0}
