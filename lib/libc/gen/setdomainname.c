@@ -1,4 +1,4 @@
-/*	$NetBSD: setdomainname.c,v 1.6 1997/07/21 14:07:29 jtc Exp $	*/
+/*	$NetBSD: setdomainname.c,v 1.7 1998/05/06 19:53:41 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sethostname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setdomainname.c,v 1.6 1997/07/21 14:07:29 jtc Exp $");
+__RCSID("$NetBSD: setdomainname.c,v 1.7 1998/05/06 19:53:41 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,15 +51,10 @@ __RCSID("$NetBSD: setdomainname.c,v 1.6 1997/07/21 14:07:29 jtc Exp $");
 __weak_alias(setdomainname,_setdomainname);
 #endif
 
-#if __STDC__
-int
-setdomainname(const char *name, int namelen)
-#else
 int
 setdomainname(name, namelen)
-	char *name;
-	int namelen;
-#endif
+	const char *name;
+	size_t namelen;
 {
 	int mib[2];
 
