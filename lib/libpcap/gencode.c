@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.35 2004/09/27 23:02:53 dyoung Exp $	*/
+/*	$NetBSD: gencode.c,v 1.36 2004/09/28 06:35:38 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/libpcap/gencode.c,v 1.193.2.8 2004/03/29 20:53:47 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.35 2004/09/27 23:02:53 dyoung Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.36 2004/09/28 06:35:38 dyoung Exp $");
 #endif
 #endif
 
@@ -156,7 +156,7 @@ struct chunk {
 static struct chunk chunks[NCHUNKS];
 static int cur_chunk;
 
-static void *newchunk(u_int);
+static void *newchunk(size_t);
 static void freechunks(void);
 static __inline struct block *new_block(int);
 static __inline struct slist *new_stmt(int);
