@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.27 2002/10/23 09:10:48 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.28 2003/04/01 23:47:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -130,10 +130,10 @@ mmrw(dev, uio, flags)
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
+			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
-			    (vaddr_t)vmmap + NBPG);
+			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			break;
 
@@ -166,10 +166,10 @@ mmrw(dev, uio, flags)
 			}
 			if (devzeropage == NULL) {
 				devzeropage = (caddr_t)
-				    malloc(NBPG, M_TEMP, M_WAITOK);
-				bzero(devzeropage, NBPG);
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+				bzero(devzeropage, PAGE_SIZE);
 			}
-			c = min(iov->iov_len, NBPG);
+			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(devzeropage, c, uio);
 			break;
 

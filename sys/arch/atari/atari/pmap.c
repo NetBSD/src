@@ -79,7 +79,6 @@
  *	For 68020/68030 machines with 68851, or 68030 MMUs
  *	Don't even pay lip service to multiprocessor support.
  *
- *	will only work for PAGE_SIZE == NBPG
  *	right now because of the assumed one-to-one relationship of PT
  *	pages to STEs.
  */
@@ -438,7 +437,7 @@ u_int	hw_addr, hw_pages;
 	 * Allocate all the submaps we need
 	 */
 #define	SYSMAP(c, p, v, n)	\
-	v = (c)va; va += ((n)*NBPG); p = pte; pte += (n);
+	v = (c)va; va += ((n)*PAGE_SIZE); p = pte; pte += (n);
 
 	va = virtual_avail;
 	pte = pmap_pte(pmap_kernel(), va);
@@ -559,7 +558,7 @@ pmap_init()
 	 * we need enough pages to map the page tables for each process 
 	 * plus some slop.
 	 */
-	npg = howmany(((maxproc + 16) * ATARI_UPTSIZE / NPTEPG), NBPG);
+	npg = howmany(((maxproc + 16) * ATARI_UPTSIZE / NPTEPG), PAGE_SIZE);
 #ifdef NKPTADD
 	npg += NKPTADD;
 #else
@@ -595,7 +594,7 @@ pmap_init()
 	kpt_pages = &((struct kpt_page *)addr2)[npg];
 	kpt_free_list = NULL;
 	do {
-		addr2 -= NBPG;
+		addr2 -= PAGE_SIZE;
 		(--kpt_pages)->kpt_next = kpt_free_list;
 		kpt_free_list = kpt_pages;
 		kpt_pages->kpt_va = addr2;
@@ -665,7 +664,7 @@ pmap_init()
 		while (addr2 < (vaddr_t)Segtabzeropa + ATARI_STSIZE) {
 			pmap_changebit(addr2, PG_CCB, 0);
 			pmap_changebit(addr2, PG_CI, 1);
-			addr2 += NBPG;
+			addr2 += PAGE_SIZE;
 		}
 
 		DCIS();
@@ -681,7 +680,7 @@ pmap_alloc_pv()
 	int i;
 
 	if (pv_nfree == 0) {
-		pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, NBPG);
+		pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, PAGE_SIZE);
 		if (pvp == 0)
 			panic("pmap_alloc_pv: uvm_km_zalloc() failed");
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
@@ -725,7 +724,7 @@ pmap_free_pv(pv)
 	case NPVPPG:
 		pv_nfree -= NPVPPG - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-		uvm_km_free(kernel_map, (vaddr_t)pvp, NBPG);
+		uvm_km_free(kernel_map, (vaddr_t)pvp, PAGE_SIZE);
 		break;
 	}
 }
@@ -1445,7 +1444,7 @@ pmap_kremove(va, len)
 				TBIS(sva);
 			}
 			pte++;
-			sva += NBPG;
+			sva += PAGE_SIZE;
 		}
 	}
 }
@@ -1625,7 +1624,7 @@ pmap_collect1(pmap, startpa, endpa)
 	int opmapdebug = 0;
 #endif
 
-	for (pa = startpa; pa < endpa; pa += NBPG) {
+	for (pa = startpa; pa < endpa; pa += PAGE_SIZE) {
 		register struct kpt_page *kpt, **pkpt;
 
 		/*
@@ -1651,7 +1650,7 @@ pmap_collect1(pmap, startpa, endpa)
 		continue;
 ok:
 #endif
-		pte = (int *)(pv->pv_va + NBPG);
+		pte = (int *)(pv->pv_va + PAGE_SIZE);
 		while (--pte >= (pt_entry_t *)pv->pv_va && *pte == PG_NV)
 			;
 		if (pte >= (pt_entry_t *)pv->pv_va)
@@ -2419,7 +2418,7 @@ pmap_enter_ptpage(pmap, va)
 				    ATARI_STSIZE) {
 					pmap_changebit(stpa, PG_CCB, 0);
 					pmap_changebit(stpa, PG_CI, 1);
-					stpa += NBPG;
+					stpa += PAGE_SIZE;
 				}
 				DCIS(); /* XXX */
 	 		}
@@ -2468,12 +2467,12 @@ pmap_enter_ptpage(pmap, va)
 		/*
 		 * Since a level 2 descriptor maps a block of SG4_LEV3SIZE
 		 * level 3 descriptors, we need a chunk of NPTEPG/SEG4_LEV3SIZE
-		 * (64) such descriptors (NBPG/SG4_LEV3SIZE bytes) to map a
+		 * (64) such descriptors (PAGE_SIZE/SG4_LEV3SIZE bytes) to map a
 		 * PT page -- the unit of allocation.  We set 'ste' to point
 		 * to the first entry of that chunk which is validated in its
 		 * entirety below.
 		 */
-		ste = (u_int *)((int)ste & ~(NBPG / SG4_LEV3SIZE - 1));
+		ste = (u_int *)((int)ste & ~(PAGE_SIZE / SG4_LEV3SIZE - 1));
 #ifdef DEBUG
 		if (pmapdebug &  (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
 			printf("enter_pt: ste2 %p (%p)\n",
@@ -2514,7 +2513,7 @@ pmap_enter_ptpage(pmap, va)
 		kpt->kpt_next = kpt_used_list;
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
-		bzero((char *)kpt->kpt_va, NBPG);
+		bzero((char *)kpt->kpt_va, PAGE_SIZE);
 		pmap_enter(pmap, va, ptpa, VM_PROT_READ | VM_PROT_WRITE,
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		pmap_update(pmap);
@@ -2714,7 +2713,7 @@ pmap_check_wiring(str, va)
 	}
 
 	count = 0;
-	for (pte = (pt_entry_t *)va; pte < (pt_entry_t *)(va + NBPG); pte++)
+	for (pte = (pt_entry_t *)va; pte < (pt_entry_t *)(va + PAGE_SIZE); pte++)
 		if (*pte)
 			count++;
 	if (pg->wire_count != count)

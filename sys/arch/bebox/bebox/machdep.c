@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 2003/03/18 16:40:18 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79 2003/04/01 23:48:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -244,7 +244,7 @@ cpu_startup()
 	/*
 	 * BeBox Mother Board's Register Mapping
 	 */
-	bebox_mb_reg = (vaddr_t) mapiodev(MOTHER_BOARD_REG, NBPG);
+	bebox_mb_reg = (vaddr_t) mapiodev(MOTHER_BOARD_REG, PAGE_SIZE);
 	if (!bebox_mb_reg)
 		panic("cpu_startup: no room for interrupt register");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.56 2003/01/17 22:34:23 thorpej Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.57 2003/04/01 23:47:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -145,7 +145,7 @@ vaddr_t	page_zero;
 #define	ST_POOL_SIZE	40			/* XXX: enough? */
 #endif
 
-u_long	st_pool_size = ST_POOL_SIZE * NBPG;	/* Patchable	*/
+u_long	st_pool_size = ST_POOL_SIZE * PAGE_SIZE; /* Patchable	*/
 u_long	st_pool_virt, st_pool_phys;
 
 /*
@@ -285,8 +285,8 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 */
 	Sysseg     = (st_entry_t *)pstart;
 	Sysseg_pa  = (u_int)Sysseg + kbase;
-	pstart    += kstsize * NBPG;
-	avail     -= kstsize * NBPG;
+	pstart    += kstsize * PAGE_SIZE;
+	avail     -= kstsize * PAGE_SIZE;
   
 	/*
 	 * Determine the number of pte's we need for extra's like
@@ -317,8 +317,8 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * allocate kernel page table map
 	 */
 	Sysptmap = (pt_entry_t *)pstart;
-	pstart  += NBPG;
-	avail   -= NBPG;
+	pstart  += PAGE_SIZE;
+	avail   -= PAGE_SIZE;
 
 	/*
 	 * Set Sysmap; mapped after page table pages. Because I too (LWP)
@@ -359,8 +359,9 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 */
 	pg_proto = (0 + kbase) | PG_RO | PG_V;
 	pg       = pt;
-	*pg++ = PG_NV; pg_proto += NBPG;
-	for(i = NBPG; i < (u_int)etext; i += NBPG, pg_proto += NBPG)
+	*pg++ = PG_NV; pg_proto += PAGE_SIZE;
+	for(i = PAGE_SIZE; i < (u_int)etext;
+	    i += PAGE_SIZE, pg_proto += PAGE_SIZE)
 		*pg++ = pg_proto;
 
 	/* 
@@ -379,11 +380,11 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	    if (kernel_copyback)
 		pg_proto |= PG_CCB;
 
-	    for (; i < (u_int)Sysseg; i += NBPG, pg_proto += NBPG)
+	    for (; i < (u_int)Sysseg; i += PAGE_SIZE, pg_proto += PAGE_SIZE)
 		*pg++ = pg_proto;
 
 	    pg_proto = (pg_proto & ~PG_CCB) | PG_CI;
-	    for (; i < pstart; i += NBPG, pg_proto += NBPG)
+	    for (; i < pstart; i += PAGE_SIZE, pg_proto += PAGE_SIZE)
 		*pg++ = pg_proto;
 	    pg_proto = (pg_proto & ~PG_CI);
 	    if (kernel_copyback)
@@ -395,7 +396,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * go till end of data allocated so far
 	 * plus proc0 u-area (to be allocated)
 	 */
-	for(; i < pstart + USPACE; i += NBPG, pg_proto += NBPG)
+	for(; i < pstart + USPACE; i += PAGE_SIZE, pg_proto += PAGE_SIZE)
 		*pg++ = pg_proto;
 
 	/*
@@ -428,12 +429,12 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * Physcal space is already reserved!
 	 */
 	st_pool_virt = vstart;
-	pg           = &pt[vstart / NBPG];
+	pg           = &pt[vstart / PAGE_SIZE];
 	pg_proto     = st_pool_phys | PG_RW | PG_CI | PG_V;
 	vstart      += st_pool_size;
 	while(pg_proto < (st_pool_phys + st_pool_size)) {
 		*pg++     = pg_proto;
-		pg_proto += NBPG;
+		pg_proto += PAGE_SIZE;
 	}
 
 	/*
@@ -443,11 +444,11 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * copying there....).
 	 */
 	page_zero  = vstart;
-	pg         = &pt[vstart / NBPG];
+	pg         = &pt[vstart / PAGE_SIZE];
 	*pg++      = PG_RW | PG_CI | PG_V;
-	vstart    += NBPG;
-	*pg        = PG_RW | PG_CI | PG_V | NBPG;
-	vstart    += NBPG;
+	vstart    += PAGE_SIZE;
+	*pg        = PG_RW | PG_CI | PG_V | PAGE_SIZE;
+	vstart    += PAGE_SIZE;
 
 	lowram  = 0 >> PGSHIFT; /* XXX */
 
@@ -468,7 +469,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 		 * Note: Because physical page-zero is partially mapped to ROM
 		 *       by hardware, it is unusable.
 		 */
-		usable_segs[0].start  = NBPG;
+		usable_segs[0].start  = PAGE_SIZE;
 		usable_segs[1].start += pstart;
 	}
 	else usable_segs[0].start += pstart;
@@ -481,7 +482,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	for (i = 1; usable_segs[i].start; i++) {
 		usable_segs[i].first_page  = usable_segs[i-1].first_page;
 		usable_segs[i].first_page +=
-			(usable_segs[i-1].end - usable_segs[i-1].start) / NBPG;
+		    (usable_segs[i-1].end - usable_segs[i-1].start) / PAGE_SIZE;
 	}
 	for (i = 0, physmem = 0; usable_segs[i].start; i++)
 		physmem += usable_segs[i].end - usable_segs[i].start;
@@ -715,14 +716,14 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
 	pt_entry_t	pg_proto;
 	u_long		mask;
 
-	ioaddr = ((ptsize / sizeof(pt_entry_t)) - ptextra) * NBPG;
+	ioaddr = ((ptsize / sizeof(pt_entry_t)) - ptextra) * PAGE_SIZE;
 
 	/*
 	 * Map ST-IO area
 	 */
 	stio_addr = ioaddr;
 	ioaddr   += STIO_SIZE;
-	pg        = &pt[stio_addr / NBPG];
+	pg        = &pt[stio_addr / PAGE_SIZE];
 	epg       = &pg[btoc(STIO_SIZE)];
 #ifdef _MILANHW_
 	/*
@@ -737,7 +738,7 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
 #endif
 	while(pg < epg) {
 		*pg++     = pg_proto;
-		pg_proto += NBPG;
+		pg_proto += PAGE_SIZE;
 	}
 
 	/*
@@ -749,7 +750,7 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
 		 */
 		pci_conf_addr = ioaddr;
 		ioaddr       += PCI_CONF_SIZE;
-		pg            = &pt[pci_conf_addr / NBPG];
+		pg            = &pt[pci_conf_addr / PAGE_SIZE];
 		epg           = &pg[btoc(PCI_CONF_SIZE)];
 		mask          = PCI_CONFM_PHYS;
 		pg_proto      = PCI_CONFB_PHYS | PG_RW | PG_CI | PG_V;
@@ -761,12 +762,12 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
 	if (machineid & (ATARI_HADES|ATARI_MILAN)) {
 		pci_io_addr   = ioaddr;
 		ioaddr       += PCI_IO_SIZE;
-		pg	      = &pt[pci_io_addr / NBPG];
+		pg	      = &pt[pci_io_addr / PAGE_SIZE];
 		epg           = &pg[btoc(PCI_IO_SIZE)];
 		pg_proto      = PCI_IO_PHYS | PG_RW | PG_CI | PG_V;
 		while(pg < epg) {
 			*pg++     = pg_proto;
-			pg_proto += NBPG;
+			pg_proto += PAGE_SIZE;
 		}
 
 		pci_mem_addr  = ioaddr;
@@ -777,7 +778,7 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
 		pg_proto      = PCI_VGA_PHYS | PG_RW | PG_CI | PG_V;
 		while(pg < epg) {
 			*pg++     = pg_proto;
-			pg_proto += NBPG;
+			pg_proto += PAGE_SIZE;
 		}
 	}
 
@@ -854,7 +855,7 @@ u_long	kbase;
 	 * Initialize the `dispatcher' portion of the header.
 	 */
 	strcpy(h->name, machine);
-	h->page_size = NBPG;
+	h->page_size = PAGE_SIZE;
 	h->kernbase = KERNBASE;
 
 	/*
@@ -926,8 +927,8 @@ mmu030_setup(sysseg, kstsize, pt, ptsize, sysptmap, sysptsize, kbase)
 	while(pg < epg) {
 		*sg++ = sg_proto;
 		*pg++ = pg_proto;
-		sg_proto += NBPG;
-		pg_proto += NBPG;
+		sg_proto += PAGE_SIZE;
+		pg_proto += PAGE_SIZE;
 	}
 
 	/* 
@@ -1005,7 +1006,7 @@ mmu040_setup(sysseg, kstsize, pt, ptsize, sysptmap, sysptsize, kbase)
 	pg_proto = ((u_int)pt + kbase) | PG_RW | PG_CI | PG_V;
 	while (sg < esg) {
 		*sg++     = pg_proto;
-		pg_proto += NBPG;
+		pg_proto += PAGE_SIZE;
 	}
 	/*
 	 * Invalidate rest of Sysptmap page
@@ -1149,7 +1150,7 @@ vmtophys(ste, vm)
 {
 	ste = (u_int *) (*(ste + (vm >> SEGSHIFT)) & SG_FRAME);
 		ste += (vm & SG_PMASK) >> PGSHIFT;
-	return((*ste & -NBPG) | (vm & (NBPG - 1)));
+	return((*ste & -PAGE_SIZE) | (vm & (PAGE_SIZE - 1)));
 }
 
 #endif
