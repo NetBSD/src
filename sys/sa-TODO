@@ -12,6 +12,9 @@ Bugs:
   unblocked upcall. The kernel appears to jump into space.
   sh3 appears to also have the same problem.
 
+- MI/MD bug: The PMC framework does not work with SAs .. at all.  This
+  needs to be straightened out.
+
 ABI concerns:
 
 - mcontext needs to be sanity-checked on every platform before it is
