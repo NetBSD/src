@@ -1,7 +1,7 @@
 ./usr/lib/crtn.o
 ./usr/lib/libc.so
 ./usr/lib/libc.so.12
-./usr/lib/libc.so.12.17
+./usr/lib/libc.so.12.20
 ./usr/lib/libamu.so
 ./usr/lib/libamu.so.0
 ./usr/lib/libamu.so.0.0
