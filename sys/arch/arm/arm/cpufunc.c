@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.37 2002/03/27 01:34:47 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.38 2002/03/28 16:47:49 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -843,7 +843,6 @@ set_cpufuncs()
 			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
 			       PMNC_CC_IF));
 
-		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
 		cpufuncs = xscale_cpufuncs;
 
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
