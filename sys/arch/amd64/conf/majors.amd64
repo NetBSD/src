@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.9 2003/10/22 17:08:13 jdolecek Exp $
+#	$NetBSD: majors.amd64,v 1.10 2003/10/22 17:12:54 jdolecek Exp $
 #
 # Device majors for amd64
 #
@@ -86,6 +86,7 @@ device-major	dpti		char 88			dpti
 device-major	joy		char 89			joy
 device-major	cir		char 90			cir
 device-major	radio		char 91			radio
+device-major	kttcp		char 92			kttcp
 
 device-major	dpt		char 96			dpt
 device-major	twe		char 97			twe
