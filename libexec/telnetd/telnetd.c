@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.37 2003/05/17 21:28:53 itojun Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.38 2003/07/13 09:40:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.37 2003/05/17 21:28:53 itojun Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.38 2003/07/13 09:40:21 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -919,10 +919,10 @@ doit(who)
 	if (secflag) {
 		char slave_dev[16];
 
-		sprintf(tty_dev, "/dev/pty/%03d", ptynum);
+		snprintf(tty_dev, sizeof(tty_dev), "/dev/pty/%03d", ptynum);
 		if (setdevs(tty_dev, &dv) < 0)
 		 	fatal(net, "cannot set pty security");
-		sprintf(slave_dev, "/dev/ttyp%03d", ptynum);
+		snprintf(slave_dev, sizeof(slave_dev) "/dev/ttyp%03d", ptynum);
 		if (setdevs(slave_dev, &dv) < 0)
 		 	fatal(net, "cannot set tty security");
 	}
