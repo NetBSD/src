@@ -1,5 +1,5 @@
 KAME/NetBSD integration TODOs
-$NetBSD: TODO,v 1.9 2000/02/01 00:15:22 itojun Exp $
+$NetBSD: TODO,v 1.10 2000/02/03 19:29:20 itojun Exp $
 Jun-ichiro itojun Hagino <itojun@itojun.org>
 
 
@@ -59,6 +59,20 @@ Others (IPsec items) are used across IPv4 and IPv6 so they cannot be in
 M_PROTO0 kind of thing.
 
 When we switch to m->m_pkthdr.aux, we don't need those flags in m->m_flags.
+
+* if_detach improvement
+
+* use of xx_control() from kernel
+
+xx_control() are designed to be called from userland process, not
+from within the kernel.  Calling xx_control() from interrupt context would
+cause various problems, like M_WAIT/NOWAIT issue, spl issue and others.
+we need to clean it up.  The right thing to happen is to split those
+necessary functions into (1) called-from-userland function, (2) called-from-
+interrupt function, and (3) common backend which shares as much code as
+possible.
+
+* more LP64 friendliness
 
 
 USERLAND
