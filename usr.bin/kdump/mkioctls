@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.14 2004/04/22 22:31:18 christos Exp $
+#	$NetBSD: mkioctls,v 1.15 2004/05/08 21:03:43 jmc Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -38,6 +38,8 @@ echo "#define const" 	# XXX: timepps lossage
 echo "struct ap_control { int _xxx; };" # XXX: ip_nat.h lossage
 echo "#define COMPAT_43"
 echo "struct lwp;"
+echo "struct videomemory_t { int _xxx; };" # XXX arm video lossage
+echo "typedef struct videomemory_t videomemory_t;" # XXX arm video lossage
 echo "#include <sys/types.h>"
 echo "#include <sys/param.h>"
 echo "#include <sys/disk.h>"
