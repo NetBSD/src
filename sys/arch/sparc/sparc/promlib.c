@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.29 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.30 2004/03/18 15:24:19 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.29 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.30 2004/03/18 15:24:19 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -284,92 +284,33 @@ prom_getpropint(node, name, deflt)
 	return (*ip);
 }
 
-#if 0
 /*
- * prom_search() recursively searches a PROM tree for a given node
+ * Node Name Matching per IEEE 1275, section 4.3.6.
  */
-int
-prom_search(rootnode, name)
-	int rootnode;
-	const char *name;
+static int prom_matchname(int node, const char *name)
 {
-	int rtnnode;
-	int node = rootnode;
-	char buf[32];
+	char buf[32], *cp;
 
-#define GPSA(nm)	prom_getpropstringA(node, nm, buf, sizeof buf)
-	if (node == findroot() ||
-	    !strcmp("hierarchical", GPSA("device type")))
-		node = firstchild(node);
+	prom_getpropstringA(node, "name", buf, sizeof buf);
+	if (strcmp(buf, name) == 0)
+		/* Exact match */
+		return (1);
 
-	if (node == 0)
-		panic("prom_search: null node");
+	/* If name has a comma, an exact match is required */
+	if (strchr(name, ','))
+		return (0);
 
-	do {
-		if (strcmp(GPSA("name"), name) == 0)
-			return (node);
-
-		if ((strcmp(GPSA("device_type"), "hierarchical") == 0 ||
-		    strcmp(GPSA("name"), "iommu") == 0)
-		    && (rtnnode = prom_search(node, name)) != 0)
-			return (rtnnode);
-
-	} while ((node = nextsibling(node)) != NULL);
+	/*
+	 * Otherwise, if the node's name contains a comma, we can match
+	 * against the trailing string defined by the first comma.
+	 */
+	if ((cp = strchr(buf, ',')) != NULL) {
+		if (strcmp(cp + 1, name) == 0)
+			return (1);
+	}
 
 	return (0);
 }
-#endif
-
-/*
- * Find the named device in the PROM device tree.
- * XXX - currently we discard any qualifiers attached to device component names
- */
-int
-obp_v2_finddevice(name)
-	char *name;
-{
-	int node;
-	char component[64];
-	char c, *startp, *endp, *cp;
-#define IS_SEP(c)	((c) == '/' || (c) == '@' || (c) == ':')
-
-	if (name == NULL)
-		return (-1);
-
-	node = prom_findroot();
-
-	for (startp = name; *startp != '\0'; ) {
-		node = prom_firstchild(node);
-
-		/*
-		 * Identify next component in pathname
-		 */
-		while (*startp == '/')
-			startp++;
-
-		endp = startp;
-		while ((c = *endp) != '\0' && !IS_SEP(c))
-			endp++;
-
-		/* Copy component */
-		for (cp = component; startp != endp;)
-			*cp++ = *startp++;
-
-		/* Zero terminate this component */
-		*cp = '\0';
-
-		/* Advance `startp' over any non-slash separators */
-		while ((c = *startp) != '\0' && c != '/')
-			startp++;
-
-		node = prom_findnode(node, component);
-		if (node == 0)
-			return (-1);
-	}
-
-	return (node);
-}
-
 
 /*
  * Translate device path to node
@@ -414,11 +355,9 @@ prom_findnode(first, name)
 	const char *name;
 {
 	int node;
-	char buf[32];
 
 	for (node = first; node != 0; node = prom_nextsibling(node)) {
-		if (strcmp(prom_getpropstringA(node, "name", buf, sizeof(buf)),
-			   name) == 0)
+		if (prom_matchname(node, name))
 			return (node);
 	}
 	return (0);
@@ -435,6 +374,85 @@ prom_node_has_property(node, prop)
 
 	return (prom_getproplen(node, (char *)prop) != -1);
 }
+
+/*
+ * prom_search() recursively searches a PROM subtree for a given node name
+ * See IEEE 1275 `Search for matching child node', section 4.3.3.
+ */
+int
+prom_search(node, name)
+	int node;
+	const char *name;
+{
+
+	if (node == 0)
+		node = prom_findroot();
+
+	if (prom_matchname(node, name))
+		return (node);
+
+	for (node = prom_firstchild(node); node != 0;
+	     node = prom_nextsibling(node)) {
+		int cnode;
+		if ((cnode = prom_search(node, name)) != 0)
+			return (cnode);
+	}
+
+	return (0);
+}
+
+/*
+ * Find the named device in the PROM device tree.
+ * XXX - currently we discard any qualifiers attached to device component names
+ */
+int
+obp_v2_finddevice(path)
+	char *path;
+{
+	int node;
+	char component[64];
+	char c, *startp, *endp, *cp;
+#define IS_SEP(c)	((c) == '/' || (c) == '@' || (c) == ':')
+
+	if (path == NULL)
+		return (-1);
+
+	node = prom_findroot();
+
+	for (startp = path; *startp != '\0'; ) {
+		/*
+		 * Identify next component in path
+		 */
+		while (*startp == '/')
+			startp++;
+
+		endp = startp;
+		while ((c = *endp) != '\0' && !IS_SEP(c))
+			endp++;
+
+		/* Copy component */
+		for (cp = component; startp != endp;) {
+			/* Check component bounds */
+			if (cp > component + sizeof component - 1)
+				return (-1);
+			*cp++ = *startp++;
+		}
+
+		/* Zero terminate this component */
+		*cp = '\0';
+
+		/* Advance `startp' over any non-slash separators */
+		while ((c = *startp) != '\0' && c != '/')
+			startp++;
+
+		node = prom_findnode(prom_firstchild(node), component);
+		if (node == 0)
+			return (-1);
+	}
+
+	return (node);
+}
+
 
 /*
  * Get the global "options" node Id.
