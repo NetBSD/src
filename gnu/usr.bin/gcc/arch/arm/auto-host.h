@@ -169,7 +169,6 @@
 /* #undef inline */
 
 /* Define to `long' if <sys/types.h> doesn't define.  */
-#define off_t int32_t
 /* #undef off_t */
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
