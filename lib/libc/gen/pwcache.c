@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.21 2002/02/26 22:29:40 tv Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.22 2002/07/03 17:17:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -75,7 +75,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.21 2002/02/26 22:29:40 tv Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.22 2002/07/03 17:17:35 pooka Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -244,6 +244,7 @@ grptb_start(void)
 	return (0);
 }
 
+#if !HAVE_USER_FROM_UID
 /*
  * user_from_uid()
  *	caches the name (if any) for the uid. If noname clear, we always
@@ -383,6 +384,7 @@ group_from_gid(gid_t gid, int noname)
 	}
 	return (ptr->name);
 }
+#endif /* HAVE_USER_FROM_UID */
 
 /*
  * uid_from_user()
