@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.28 2002/05/18 07:00:44 pooka Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.29 2002/05/21 12:51:27 christos Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -49,7 +49,7 @@
 #if 0
 FILE_RCSID("@(#)Id: apprentice.c,v 1.46 2002/05/16 18:45:56 christos Exp ")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.28 2002/05/18 07:00:44 pooka Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.29 2002/05/21 12:51:27 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -693,9 +693,11 @@ GetDesc:
 	while ((m->desc[i++] = *l++) != '\0' && i<MAXDESC)
 		/* NULLBODY */;
 
+#ifndef COMPILE_ONLY
 	if (action == CHECK) {
 		mdump(m);
 	}
+#endif
 	++(*nmagicp);		/* make room for next */
 	return 0;
 }
