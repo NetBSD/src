@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.4 1993/10/07 14:50:17 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.5 1993/10/09 22:19:25 mycroft Exp $
  */
 
 /*
@@ -68,9 +68,12 @@
 #define BEEP_TIME (hz/4)
 #endif
 
-#define PCBURST 128
+#define MONO_BASE	0x3B4
+#define MONO_BUF	0xB0000
+#define CGA_BASE	0x3D4
+#define CGA_BUF		0xB8000
 
-u_short *Crtat;
+#define PCBURST 128
 
 struct	pc_softc {
 	struct	device sc_dev;
@@ -270,8 +273,6 @@ void
 pcattach(dev)
 	struct isa_device *dev;
 {
-	u_short *cp = Crtat + (CGA_BUF-MONO_BUF)/CHR;
-	u_short was;
 
 	printf("pc%d: ", dev->id_unit);
 	if (vs.color == 0)
@@ -610,6 +611,7 @@ pcpoll(onoff)
  *   as when a portion of screen memory is 0, the cursor may dissappear.
  */
 
+static u_short *Crtat;
 static u_short *crtat = 0;
 
 cursor(int a)
@@ -672,26 +674,24 @@ static sputc(c, ka)
 
 	if (crtat == 0)
 	{
-		u_short volatile *cp = Crtat + (CGA_BUF-MONO_BUF)/CHR;
+		u_short volatile *cp = ISA_HOLE_VADDR(MONO_BUF);
 		u_short was;
 		unsigned cursorat;
 
 		/*
-		 *   Crtat  initialized  to  point  to  MONO  buffer  if not present
-		 *   change   to  CGA_BUF  offset  ONLY  ADD  the  difference  since
-		 *   locore.s adds in the remapped offset at the right time
+		 * Set Crtat to MONO_BUF if it exists; otherwise use CGA_BUF.
 		 */
-
 		was = *cp;
 		*cp = (u_short) 0xA55A;
 		if (*cp != 0xA55A) {
 			addr_6845 = MONO_BASE;
 			vs.color=0;
+			Crtat = cp;
 		} else {
 			*cp = was;
 			addr_6845 = CGA_BASE;
-			Crtat = Crtat + (CGA_BUF-MONO_BUF)/CHR;
 			vs.color=1;
+			Crtat = ISA_HOLE_VADDR(CGA_BUF);
 		}
 		/* Extract cursor location */
 		outb(addr_6845,14);
