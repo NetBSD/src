@@ -1,5 +1,5 @@
-/*	$NetBSD: route6d.c,v 1.24 2001/02/07 13:46:04 itojun Exp $	*/
-/*	$KAME: route6d.c,v 1.58 2001/02/07 13:42:02 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.25 2001/03/08 03:24:47 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.60 2001/03/08 02:15:42 onoe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.24 2001/02/07 13:46:04 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.25 2001/03/08 03:24:47 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -2085,6 +2085,10 @@ ifrt_p2p(ifcp, again)
 			 * do not install network route to route6d routing
 			 * table (if we do, it would prevent route installation
 			 * for other p2p interface that shares addr/plen).
+			 *
+			 * XXX what should we do if dest is ::?  it will not
+			 * get announced anyways (see following filter),
+			 * but we need to think.
 			 */
 			advert |= P2PADVERT_ADDR;
 			advert |= P2PADVERT_DEST;
@@ -2092,15 +2096,29 @@ ifrt_p2p(ifcp, again)
 			break;
 		case ROUTE6D:
 			/*
-			 * just for testing...
+			 * just for testing.  actually the code is redundant
+			 * given the current p2p interface address assignment
+			 * rule for kame kernel.
+			 *
+			 * intent:
+			 *	A/n -> announce A/n
+			 *	A B/n, A and B share prefix -> A/n (= B/n)
+			 *	A B/n, do not share prefix -> A/128 and B/128
+			 * actually, A/64 and A B/128 are the only cases
+			 * permitted by the kernel:
+			 *	A/64 -> A/64
+			 *	A B/128 -> A/128 and B/128
 			 */
-			if (IN6_ARE_ADDR_EQUAL(&addr, &dest))
+			if (!IN6_IS_ADDR_UNSPECIFIED(&ifa->ifa_raddr)) {
+				if (IN6_ARE_ADDR_EQUAL(&addr, &dest))
+					advert |= P2PADVERT_NETWORK;
+				else {
+					advert |= P2PADVERT_ADDR;
+					advert |= P2PADVERT_DEST;
+					ignore |= P2PADVERT_NETWORK;
+				}
+			} else
 				advert |= P2PADVERT_NETWORK;
-			else {
-				advert |= P2PADVERT_ADDR;
-				advert |= P2PADVERT_DEST;
-				ignore |= P2PADVERT_NETWORK;
-			}
 			break;
 		}
 
@@ -2674,6 +2692,8 @@ delroute(np, gw)
 	rtm->rtm_seq = ++seq;
 	rtm->rtm_pid = pid;
 	rtm->rtm_flags = RTF_UP | RTF_GATEWAY;
+	if (np->rip6_plen == sizeof(struct in6_addr) * 8)
+		rtm->rtm_flags |= RTF_HOST;
 	rtm->rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
 	sin = (struct sockaddr_in6 *)&buf[sizeof(struct rt_msghdr)];
 	/* Destination */
