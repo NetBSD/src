@@ -32,11 +32,9 @@
 
 .include <bsd.obj.mk>
 
-.if exists(${.CURDIR}/../common/${__objdir})
-COBJDIR= ${.CURDIR}/../common/${__objdir}
-.else
-COBJDIR= ${.CURDIR}/../common    
-.endif
+COBJDIR!=cd $(.CURDIR)/../common; \
+	printf "xxx:\n\techo \$${.OBJDIR}\n" | \
+	${MAKE} -r -s -f - xxx
 
 CFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
 LDADD=  ${COBJDIR}/libdhcp.a          
