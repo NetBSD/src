@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.20 1999/01/13 07:30:06 ross Exp $	
+.\"	$NetBSD: install,v 1.21 1999/05/31 06:38:16 ender Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -215,6 +215,12 @@ off[*]. You can do this by booting into MacOS with the
 down. You may have to restart your Macintosh for changes to take effect
 before proceeding.
 .(tag Em [*]Note:
+If your version of the Memory control panel does not have a 32-bit
+addressing mode radio button, this means that your system is already
+32-bit clean and is running in 32-bit addressing mode by default.  If the
+Booter complains that your are not in 32-bit mode, it may be necessary
+for you to press the "Use Defaults" button in the Memory control panel to
+restore 32-bit addressing.  You should probably reboot after doing so.
 If you have an older II-class system (including the II, IIx, IIcx,
 and SE/30), it is necessary to install Connectix's MODE32 to work around
 ROM issues which prevent you from enabling 32-bit addressing. Please see
