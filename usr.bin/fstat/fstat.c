@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.49 2001/06/19 12:59:18 wiz Exp $	*/
+/*	$NetBSD: fstat.c,v 1.50 2001/07/08 20:24:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.49 2001/06/19 12:59:18 wiz Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.50 2001/07/08 20:24:05 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -931,7 +931,7 @@ ptrans(fp, cpipe, i)
 
 	PREFIX(i);
 	
-	/* fill in socket */
+	/* fill in pipe */
 	if (!KVM_READ(cpipe, &cp, sizeof(struct pipe))) {
 		dprintf("can't read pipe at %p", cpipe);
 		goto bad;
