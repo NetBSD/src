@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.19 1999/11/17 17:56:52 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.20 1999/11/19 10:42:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1426,9 +1426,13 @@ ex_printstats(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	ex_getstats(sc);
-	printf("in %ld out %ld ierror %ld oerror %ld ibytes %ld obytes %ld\n",
-	    ifp->if_ipackets, ifp->if_opackets, ifp->if_ierrors,
-	    ifp->if_oerrors, ifp->if_ibytes, ifp->if_obytes);
+	printf("in %llu out %llu ierror %llu oerror %llu ibytes %llu obytes "
+	    "%llu\n", (unsigned long long)ifp->if_ipackets,
+	    (unsigned long long)ifp->if_opackets,
+	    (unsigned long long)ifp->if_ierrors,
+	    (unsigned long long)ifp->if_oerrors,
+	    (unsigned long long)ifp->if_ibytes,
+	    (unsigned long long)ifp->if_obytes);
 }
 
 void
