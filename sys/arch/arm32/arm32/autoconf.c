@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.5 1996/05/12 21:30:15 mark Exp $ */
+/* $NetBSD: autoconf.c,v 1.6 1996/06/03 21:28:59 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -15,15 +15,16 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Brini.
+ *	This product includes software developed by Mark Brinicombe for
+ *      the NetBSD project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL BRINI OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
  * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -72,6 +73,7 @@ extern int pmap_debug_level;
 
 char *	strstr	__P((char */*s1*/, char */*s2*/));
 long	strtoul __P((const char *, char **, int));
+void	dumpconf __P(());
 
 /* Table major numbers for the device names, NULL terminated */
 
@@ -114,8 +116,20 @@ get_device(name)
 		if (strncmp(name, rootdevices[loop].name,
 		    strlen(rootdevices[loop].name)) == 0) {
 			name += strlen(rootdevices[loop].name);
-			unit = name[0] - '0';
-			part = name[1] - 'a';
+
+			if (name[0] >= '0' && name[0] <= '9')
+				unit = name[0] - '0';
+			else if (name[0] == 0 || name[0] == ' ')
+				unit = 0;
+			else
+				unit = -1;
+			if (name[1] >= 'a' && name[1] <= 'z')
+				part = name[1] - 'a';
+			else if (name[1] == 0 || name[1] == ' ')
+				part = 0;
+			else
+				part = -1;
+
 			if (unit < 0 || unit > 9)
 				return(NODEV);
 			if (part < 0 || part > MAXPARTITIONS)
@@ -140,9 +154,11 @@ set_root_device()
 		if (ptr) {
 			ptr += 5;
 			rootdev = get_device(ptr);
-              
+
+#ifdef DEBUG              
 			if (pmap_debug_level >= 0)
 				printf("rootdev = %08x\n", rootdev);
+#endif
 		}
 	}
 
