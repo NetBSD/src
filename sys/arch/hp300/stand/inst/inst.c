@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.2 1997/02/04 19:34:09 thorpej Exp $	*/
+/*	$NetBSD: inst.c,v 1.3 1997/04/27 21:17:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.
@@ -111,7 +111,7 @@ main()
 	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
-	printf(">> HP 9000/%s CPU\n", getmachineid());
+	printf(">> HP 9000/%s SPU\n", getmachineid());
 	gethelp();
 
 	for (;;) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uboot.c,v 1.2 1997/02/04 19:40:07 thorpej Exp $	*/
+/*	$NetBSD: uboot.c,v 1.3 1997/04/27 21:17:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@ main()
 	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);  
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
-	printf(">> HP 9000/%s CPU\n", getmachineid());
+	printf(">> HP 9000/%s SPU\n", getmachineid());
 	printf(">> Enter \"reset\" to reset system.\n");
 
 	bdev   = B_TYPE(bootdev);
