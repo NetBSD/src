@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.25 1997/10/09 12:59:54 mycroft Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.26 1998/01/07 22:47:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -222,6 +222,7 @@ int 	soo_close __P((struct file *fp, struct proc *p));
 int	soo_stat __P((struct socket *, struct stat *));
 int	uipc_usrreq __P((struct socket *, int , struct mbuf *,
 	    struct mbuf *, struct mbuf *, struct proc *));
+int	uipc_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 void	sbappend __P((struct sockbuf *sb, struct mbuf *m));
 int	sbappendaddr __P((struct sockbuf *sb, struct sockaddr *asa,
 	    struct mbuf *m0, struct mbuf *control));
