@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.60 2002/11/22 12:21:04 wiz Exp $
+# $NetBSD: GENERIC,v 1.61 2003/01/16 06:59:19 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,11 +22,12 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.60 $"
+#ident		"GENERIC-$Revision: 1.61 $"
 
 maxusers	32
 
 # Platform support
+options 	PLATFORM_IBM_6040		# IBM ThinkPad 820
 options 	PLATFORM_IBM_6050		# IBM Personal Power Series 830
 options 	PLATFORM_IBM_7248		# IBM RS/6000 7248-100/120/133
 options 	PLATFORM_IBM_7043_140		# IBM RS/6000 43P 7043-140
