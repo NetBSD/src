@@ -1,4 +1,4 @@
-/*	$NetBSD: gtethreg.h,v 1.1 2003/03/05 22:08:20 matt Exp $	*/
+/*	$NetBSD: gtethreg.h,v 1.2 2003/03/17 16:41:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
 #define ETH__LLBIT(bit)			(1LLU << (bit))
 #define ETH__MASK(bit)			(ETH__BIT(bit) - 1)
 #define ETH__LLMASK(bit)		(ETH__LLBIT(bit) - 1)
-#define ETH__GEN(n, off)		(0x2400+((n) << 10)+(off))
+#define ETH__GEN(n, off)		(0x2400+((n) << 10)+(ETH__ ## off))
 #define	ETH__EXT(data, bit, len)	(((data) >> (bit)) & ETH__MASK(len))
 #define	ETH__LLEXT(data, bit, len)	(((data) >> (bit)) & ETH__LLMASK(len))
 #define	ETH__CLR(data, bit, len)	((data) &= ~(ETH__MASK(len) << (bit)))
@@ -133,39 +133,75 @@ struct gt_eth_desc {
 #define	ETH_BASE_ETH0	0x2400		/* Ethernet0 Register Base */
 #define	ETH_BASE_ETH1	0x2800		/* Ethernet1 Register Base */
 #define	ETH_BASE_ETH2	0x2c00		/* Ethernet2 Register Base */
+#define	ETH_SIZE	0x0400		/* Register Space */
 
-#define	ETH_EPCR(n)	ETH__GEN(n, 0x0000)	/* Port Config. Register */
-#define	ETH_EPCXR(n)	ETH__GEN(n, 0x0008)	/* Port Config. Extend Reg */
-#define	ETH_EPCMR(n)	ETH__GEN(n, 0x0010)	/* Port Command Register */
-#define	ETH_EPSR(n)	ETH__GEN(n, 0x0018)	/* Port Status Register */
-#define	ETH_ESPR(n)	ETH__GEN(n, 0x0020)	/* Port Serial Parameters Reg */
-#define	ETH_EHTPR(n)	ETH__GEN(n, 0x0028)	/* Port Hash Table Pointer Reg*/
-#define	ETH_EFCSAL(n)	ETH__GEN(n, 0x0030)	/* Flow Control Src Addr Low */
-#define	ETH_EFCSAH(n)	ETH__GEN(n, 0x0038)	/* Flow Control Src Addr High */
-#define	ETH_ESDCR(n)	ETH__GEN(n, 0x0040)	/* SDMA Configuration Reg */
-#define	ETH_ESDCMR(n)	ETH__GEN(n, 0x0048)	/* SDMA Command Register */
-#define	ETH_EICR(n)	ETH__GEN(n, 0x0050)	/* Interrupt Cause Register */
-#define	ETH_EIMR(n)	ETH__GEN(n, 0x0058)	/* Interrupt Mask Register */
-#define	ETH_EFRDP0(n)	ETH__GEN(n, 0x0080)	/* First Rx Desc Pointer 0 */
-#define	ETH_EFRDP1(n)	ETH__GEN(n, 0x0084)	/* First Rx Desc Pointer 1 */
-#define	ETH_EFRDP2(n)	ETH__GEN(n, 0x0088)	/* First Rx Desc Pointer 2 */
-#define	ETH_EFRDP3(n)	ETH__GEN(n, 0x008c)	/* First Rx Desc Pointer 3 */
-#define	ETH_ECRDP0(n)	ETH__GEN(n, 0x00a0)	/* Current Rx Desc Pointer 0 */
-#define	ETH_ECRDP1(n)	ETH__GEN(n, 0x00a4)	/* Current Rx Desc Pointer 1 */
-#define	ETH_ECRDP2(n)	ETH__GEN(n, 0x00a8)	/* Current Rx Desc Pointer 2 */
-#define	ETH_ECRDP3(n)	ETH__GEN(n, 0x00ac)	/* Current Rx Desc Pointer 3 */
-#define	ETH_ECTDP0(n)	ETH__GEN(n, 0x00e0)	/* Current Tx Desc Pointer 0 */
-#define	ETH_ECTDP1(n)	ETH__GEN(n, 0x00e4)	/* Current Tx Desc Pointer 1 */
-#define	ETH_EDSCP2P0L(n) ETH__GEN(n, 0x0060)	/* IP Differentiated Services
+#define	ETH__EBASE	0x0000		/* Base of Registers */
+#define	ETH__EPCR	0x0000		/* Port Config. Register */
+#define	ETH__EPCXR	0x0008		/* Port Config. Extend Reg */
+#define	ETH__EPCMR	0x0010		/* Port Command Register */
+#define	ETH__EPSR	0x0018		/* Port Status Register */
+#define	ETH__ESPR	0x0020		/* Port Serial Parameters Reg */
+#define	ETH__EHTPR	0x0028		/* Port Hash Table Pointer Reg*/
+#define	ETH__EFCSAL	0x0030		/* Flow Control Src Addr Low */
+#define	ETH__EFCSAH	0x0038		/* Flow Control Src Addr High */
+#define	ETH__ESDCR	0x0040		/* SDMA Configuration Reg */
+#define	ETH__ESDCMR	0x0048		/* SDMA Command Register */
+#define	ETH__EICR	0x0050		/* Interrupt Cause Register */
+#define	ETH__EIMR	0x0058		/* Interrupt Mask Register */
+#define	ETH__EFRDP0	0x0080		/* First Rx Desc Pointer 0 */
+#define	ETH__EFRDP1	0x0084		/* First Rx Desc Pointer 1 */
+#define	ETH__EFRDP2	0x0088		/* First Rx Desc Pointer 2 */
+#define	ETH__EFRDP3	0x008c		/* First Rx Desc Pointer 3 */
+#define	ETH__ECRDP0	0x00a0		/* Current Rx Desc Pointer 0 */
+#define	ETH__ECRDP1	0x00a4		/* Current Rx Desc Pointer 1 */
+#define	ETH__ECRDP2	0x00a8		/* Current Rx Desc Pointer 2 */
+#define	ETH__ECRDP3	0x00ac		/* Current Rx Desc Pointer 3 */
+#define	ETH__ECTDP0	0x00e0		/* Current Tx Desc Pointer 0 */
+#define	ETH__ECTDP1	0x00e4		/* Current Tx Desc Pointer 1 */
+#define	ETH__EDSCP2P0L	0x0060		/* IP Differentiated Services
+					   CodePoint to Priority0 low */
+#define	ETH__EDSCP2P0H	0x0064		/* IP Differentiated Services
+					   CodePoint to Priority0 high*/
+#define	ETH__EDSCP2P1L	0x0068		/* IP Differentiated Services
+					   CodePoint to Priority1 low */
+#define	ETH__EDSCP2P1H	0x006c		/* IP Differentiated Services
+					   CodePoint to Priority1 high*/
+#define	ETH__EVPT2P	0x0068		/* VLAN Prio. Tag to Priority */
+#define	ETH__EMIBCTRS	0x0100		/* MIB Counters */
+
+#define	ETH_BASE(n)	ETH__GEN(n, EBASE)
+#define	ETH_EPCR(n)	ETH__GEN(n, EPCR)	/* Port Config. Register */
+#define	ETH_EPCXR(n)	ETH__GEN(n, EPCXR)	/* Port Config. Extend Reg */
+#define	ETH_EPCMR(n)	ETH__GEN(n, EPCMR)	/* Port Command Register */
+#define	ETH_EPSR(n)	ETH__GEN(n, EPSR)	/* Port Status Register */
+#define	ETH_ESPR(n)	ETH__GEN(n, ESPR)	/* Port Serial Parameters Reg */
+#define	ETH_EHTPR(n)	ETH__GEN(n, EHPTR)	/* Port Hash Table Pointer Reg*/
+#define	ETH_EFCSAL(n)	ETH__GEN(n, EFCSAL)	/* Flow Control Src Addr Low */
+#define	ETH_EFCSAH(n)	ETH__GEN(n, EFCSAH)	/* Flow Control Src Addr High */
+#define	ETH_ESDCR(n)	ETH__GEN(n, ESDCR)	/* SDMA Configuration Reg */
+#define	ETH_ESDCMR(n)	ETH__GEN(n, ESDCMR)	/* SDMA Command Register */
+#define	ETH_EICR(n)	ETH__GEN(n, EICR)	/* Interrupt Cause Register */
+#define	ETH_EIMR(n)	ETH__GEN(n, EIMR)	/* Interrupt Mask Register */
+#define	ETH_EFRDP0(n)	ETH__GEN(n, EFRDP0)	/* First Rx Desc Pointer 0 */
+#define	ETH_EFRDP1(n)	ETH__GEN(n, EFRDP1)	/* First Rx Desc Pointer 1 */
+#define	ETH_EFRDP2(n)	ETH__GEN(n, EFRDP2)	/* First Rx Desc Pointer 2 */
+#define	ETH_EFRDP3(n)	ETH__GEN(n, EFRDP3)	/* First Rx Desc Pointer 3 */
+#define	ETH_ECRDP0(n)	ETH__GEN(n, ECRDP0)	/* Current Rx Desc Pointer 0 */
+#define	ETH_ECRDP1(n)	ETH__GEN(n, ECRDP1)	/* Current Rx Desc Pointer 1 */
+#define	ETH_ECRDP2(n)	ETH__GEN(n, ECRDP2)	/* Current Rx Desc Pointer 2 */
+#define	ETH_ECRDP3(n)	ETH__GEN(n, ECRDP3)	/* Current Rx Desc Pointer 3 */
+#define	ETH_ECTDP0(n)	ETH__GEN(n, ECTDP0)	/* Current Tx Desc Pointer 0 */
+#define	ETH_ECTDP1(n)	ETH__GEN(n, ECTDP1)	/* Current Tx Desc Pointer 1 */
+#define	ETH_EDSCP2P0L(n) ETH__GEN(n, EDSCP2P0L)	/* IP Differentiated Services
 						   CodePoint to Priority0 low */
-#define	ETH_EDSCP2P0H(n) ETH__GEN(n, 0x0064)	/* IP Differentiated Services
+#define	ETH_EDSCP2P0H(n) ETH__GEN(n, EDSCP2P0H)	/* IP Differentiated Services
 						   CodePoint to Priority0 high*/
-#define	ETH_EDSCP2P1L(n) ETH__GEN(n, 0x0068)	/* IP Differentiated Services
+#define	ETH_EDSCP2P1L(n) ETH__GEN(n, EDSCP2P1L)	/* IP Differentiated Services
 						   CodePoint to Priority1 low */
-#define	ETH_EDSCP2P1H(n) ETH__GEN(n, 0x006c)	/* IP Differentiated Services
+#define	ETH_EDSCP2P1H(n) ETH__GEN(n, EDSCP1P1H)	/* IP Differentiated Services
 						   CodePoint to Priority1 high*/
-#define	ETH_EVPT2P(n)	 ETH__GEN(n, 0x0068)	/* VLAN Prio. Tag to Priority */
-#define	ETH_EMIBCTRS(n) ETH__GEN(n, 0x0100)	/* MIB Counters */
+#define	ETH_EVPT2P(n)	ETH__GEN(n, EVPT2P)	/* VLAN Prio. Tag to Priority */
+#define	ETH_EMIBCTRS(n) ETH__GEN(n, EMIBCTRS)	/* MIB Counters */
 
 #define	ETH_EPAR_PhyAD_GET(v, n)	(((v) >> ((n) * 5)) & 0x1f)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.2 2003/03/16 07:05:34 matt Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.3 2003/03/17 16:41:15 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -82,11 +82,9 @@
 #include <dev/marvell/if_gfevar.h>
 
 #define	GE_READ(sc, reg) \
-	bus_space_read_4((sc)->sc_gt_memt, (sc)->sc_gt_memh, \
-	    ETH_ ## reg ((sc)->sc_macno))
+	bus_space_read_4((sc)->sc_gt_memt, (sc)->sc_memh, ETH__ ## reg)
 #define	GE_WRITE(sc, reg, v) \
-	bus_space_write_4((sc)->sc_gt_memt, (sc)->sc_gt_memh, \
-	    ETH_ ## reg ((sc)->sc_macno), (v))
+	bus_space_write_4((sc)->sc_gt_memt, (sc)->sc_memh, ETH__ ## reg, (v))
 
 #define	GE_DEBUG
 #if 0
@@ -217,6 +215,11 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gt_memh = ga->ga_memh;
 	sc->sc_dmat = ga->ga_dmat;
 	sc->sc_macno = ga->ga_unit;
+
+	if (bus_space_subregion(sc->sc_gt_memt, sc->sc_gt_memh,
+		    ETH_BASE(sc->sc_macno), ETH_SIZE, &sc->sc_memh)) {
+		aprint_error(": failed to map registers\n");
+	}
 
 	callout_init(&sc->sc_co);
 
