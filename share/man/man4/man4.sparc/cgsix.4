@@ -1,4 +1,4 @@
-.\"	$NetBSD: cgsix.4,v 1.4 1998/06/11 08:32:20 fair Exp $
+.\"	$NetBSD: cgsix.4,v 1.5 1999/10/11 21:22:26 pk Exp $
 .\"
 .\" Copyright 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,3 +60,31 @@ It supports the minimal ioctl's needed to run
 .Xr cgfour 4 ,
 .Xr cgeight 4 ,
 .Xr tcx 4
+.Sh BUGS
+Several firmware revisions on
+.Nm
+boards have a terminal emulation bug that shows up when using the
+screen control sequences for inserting blank lines
+near the bottom end of the screen
+(i.e., the control sequences produced by the
+.So al Sc and So AL Sc
+capabilities found in the
+.Xr termcap 5
+database).
+The most likely occasion for triggering
+this bug is to use a full-screen editor such as
+.Xr vi 1
+on the workstation's console.
+.Pp
+To work around this you can set your
+.Ev TERM
+environment variable to the
+.Sq sun-cgsix
+terminal definition which is the same as the
+.Sq sun
+entry, except that the
+.Sq al
+and
+.Sq AL
+capabilities have been removed (at the cost of making slower the scrolling of
+the screen).
