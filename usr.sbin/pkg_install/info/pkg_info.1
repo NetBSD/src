@@ -1,6 +1,6 @@
-.\" $NetBSD: pkg_info.1,v 1.21.4.3 2002/02/23 18:09:35 he Exp $
+.\" $NetBSD: pkg_info.1,v 1.21.4.4 2003/03/15 20:12:10 he Exp $
 .\"
-.\" FreeBSD install - a package for the installation and maintainance
+.\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -68,9 +68,9 @@ the binary package (the "Build information") for each package.
 Show the
 .Nx
 RCS Id strings from the files used in the construction
-of the binary package (the "Build version") for each package. These files are the
-package Makefile, any patch files, any checksum files, and the packing
-list file.
+of the binary package (the "Build version") for each package.
+These files are the package Makefile, any patch files, any checksum
+files, and the packing list file.
 .It Fl c
 Show the one-line comment field for each package.
 .It Fl D
@@ -92,7 +92,7 @@ option.
 If the given
 .Ar pkg-name
 contains a
-shell metacharacter, it will be matched against all installed
+shell meta character, it will be matched against all installed
 packages using
 .Xr fnmatch 3 .
 .Xr csh 1
@@ -109,15 +109,28 @@ will match versions 1.3 and later of the
 .Pa name
 package.
 The collating sequence of the various package version numbers is
-unusual, but strives to be consistent. The magic string ``rc''
-equates to
+unusual, but strives to be consistent.
+The magic string ``alpha'' equates to
+.Pa alpha version
+and sorts before a beta version.
+The magic string ``beta'' equates to
+.Pa beta version
+and sorts before a release candidate.
+The magic string ``rc'' equates to
 .Pa release candidate
-and sorts before a release. For example,
+and sorts before a release.
+For example,
 .Pa name-1.3rc3
 will sort before
 .Pa name-1.3
 and after
 .Pa name-1.2.9
+Similarily
+.Pa name-1.3alpha2
+will sort before
+.Pa name-1.3beta1
+and they both sort before
+.Pa name-1.3rc1
 In addition, alphabetic characters sort in the same place as
 their numeric counterparts, so that
 .Pa name-1.2e
@@ -128,8 +141,9 @@ The magic string ``pl'' equates to a
 and has the same value as a dot in the dewey-decimal ordering schemes.
 .It Fl F
 Interpret any pkg-name given as filename, and translate it to a
-package name using the Package Database. This can be used to query
-information on a per-file basis, e.g. in conjunction with the
+package name using the Package Database.
+This can be used to query information on a per-file basis, e.g. in
+conjunction with the
 .Fl e
 flag to find out which package a file belongs to.
 .It Fl f
@@ -141,9 +155,9 @@ Show the install script (if any) for each package.
 .It Fl k
 Show the de-install script (if any) for each package.
 .It Fl L
-Show the files within each package.  This is different from just
-viewing the packing list, since full pathnames for everything
-are generated.
+Show the files within each package.
+This is different from just viewing the packing list, since full pathnames
+for everything are generated.
 .It Fl l Ar str
 Prefix each information category header (see
 .Fl q )
@@ -152,8 +166,8 @@ shown with
 This is primarily of use to front-end programs that want to request a
 lot of different information fields at once for a package, but don't
 necessary want the output intermingled in such a way that they can't
-organize it.  This lets you add a special token to the start of
-each field.
+organize it.
+This lets you add a special token to the start of each field.
 .It Fl m
 Show the mtree file (if any) for each package.
 .It Fl n
@@ -171,8 +185,8 @@ Show the requirements script (if any) for each package.
 Show the size of this package and all the packages it requires,
 in bytes.
 .It Fl s
-Show the size of this package in bytes. The size is calculated by
-adding up the size of each file of the package.
+Show the size of this package in bytes.
+The size is calculated by adding up the size of each file of the package.
 .It Fl V
 Print version number and exit.
 .It Fl v
@@ -188,9 +202,8 @@ can be overridden by specifying an alternative directory in the
 environment variable.
 .It Ev PKG_PATH
 This can be used to specify a semicolon-separated list of paths and URLs to search for
-package files.  The current directory is always searched first, even if
-.Ev PKG_PATH
-is set.  If
+package files.
+If
 .Ev PKG_PATH
 is used, the suffix
 .Pa .tgz
@@ -203,7 +216,8 @@ literally.
 These are tried in turn (if set) as candidate directories in which
 to create a ``staging area'' for any files extracted by
 .Nm
-from package files.  If neither
+from package files.
+If neither
 .Ev PKG_TMPDIR
 nor
 .Ev TMPDIR
@@ -212,7 +226,8 @@ yields a suitable scratch directory,
 .Pa /tmp ,
 and
 .Pa /usr/tmp
-are tried in turn.  Note that
+are tried in turn.
+Note that
 .Pa /usr/tmp
 may be created, if it doesn't already exist.
 .Pp
@@ -230,12 +245,12 @@ in
 .Pa /var/db/pkg/\*[Lt]pkg-name\*[Gt] .
 .Pp
 A filename can be given instead of a (installed) package name to query
-information on the package this file belongs to. This filename is then
-resolved to a package name using the Package Database. For this
-translation to take place, the
+information on the package this file belongs to.
+This filename is then resolved to a package name using the Package Database.
+For this translation to take place, the
 .Fl F
-flag must be given. The filename must be absolute, compare the output
-of pkg_info
+flag must be given.
+The filename must be absolute, compare the output of pkg_info
 .Fl aF .
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
@@ -243,6 +258,7 @@ of pkg_info
 .Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
 .Xr mktemp 3 ,
+.Xr packages 7 ,
 .Xr mtree 8
 .Sh AUTHORS
 .Bl -tag -width indent -compact
