@@ -1,9 +1,9 @@
-/*	$NetBSD: supcparse.c,v 1.10 2002/07/10 18:54:00 wiz Exp $	*/
+/*	$NetBSD: supcparse.c,v 1.11 2002/07/10 20:19:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
@@ -36,16 +36,16 @@
  * Revision 1.6  92/08/11  12:07:38  mrt
  * 	Added use-rel-suffix option corresponding to -u switch.
  * 	[92/07/26            mrt]
- * 
+ *
  * Revision 1.5  92/02/08  18:24:19  mja
  * 	Added "keep" supfile option, corresponding to -k switch.
  * 	[92/01/17            vdelvecc]
- * 
+ *
  * Revision 1.4  91/05/16  14:49:50  ern
- * 	Change default timeout from none to 3 hours so we don't accumalute 
+ * 	Change default timeout from none to 3 hours so we don't accumalute
  * 	processes running sups to dead hosts especially for users.
  * 	[91/05/16  14:49:21  ern]
- * 
+ *
  *
  * 10-Feb-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added timeout to backoff.
@@ -66,61 +66,60 @@
 #ifdef	lint
 static char _argbreak;
 #else
-extern char _argbreak;			/* break character from nxtarg */
+extern char _argbreak;		/* break character from nxtarg */
 #endif
 
-typedef enum {				/* supfile options */
+typedef enum {			/* supfile options */
 	OHOST, OBASE, OHOSTBASE, OPREFIX, ORELEASE,
 	ONOTIFY, OLOGIN, OPASSWORD, OCRYPT,
 	OBACKUP, ODELETE, OEXECUTE, OOLD, OTIMEOUT, OKEEP, OURELSUF,
 	OCOMPRESS
-} OPTION;
+}    OPTION;
 
 struct option {
 	char *op_name;
 	OPTION op_enum;
-} options[] = {
-	{ "host",	OHOST },
-	{ "base",	OBASE },
-	{ "hostbase",	OHOSTBASE },
-	{ "prefix",	OPREFIX },
-	{ "release",	ORELEASE },
-	{ "notify",	ONOTIFY },
-	{ "login",	OLOGIN },
-	{ "password",	OPASSWORD },
-	{ "crypt",	OCRYPT },
-	{ "backup",	OBACKUP },
-	{ "delete",	ODELETE },
-	{ "execute",	OEXECUTE },
-	{ "old",	OOLD },
-	{ "timeout",	OTIMEOUT },
-	{ "keep",	OKEEP },
+}      options[] = {
+	{ "host", OHOST },
+	{ "base", OBASE },
+	{ "hostbase", OHOSTBASE },
+	{ "prefix", OPREFIX },
+	{ "release", ORELEASE },
+	{ "notify", ONOTIFY },
+	{ "login", OLOGIN },
+	{ "password", OPASSWORD },
+	{ "crypt", OCRYPT },
+	{ "backup", OBACKUP },
+	{ "delete", ODELETE },
+	{ "execute", OEXECUTE },
+	{ "old", OOLD },
+	{ "timeout", OTIMEOUT },
+	{ "keep", OKEEP },
 	{ "use-rel-suffix", OURELSUF },
- 	{ "compress", 	OCOMPRESS }
+	{ "compress", OCOMPRESS }
 };
 
-static void passdelim(char **, int );
+static void passdelim(char **, char);
 
-static void passdelim (ptr,delim)		/* skip over delimiter */
-char **ptr,delim;
-{
-	*ptr = skipover (*ptr, " \t");
+static void 
+passdelim(char **ptr, char delim)
+{				/* skip over delimiter */
+	*ptr = skipover(*ptr, " \t");
 	if (_argbreak != delim && **ptr == delim) {
 		(*ptr)++;
-		*ptr = skipover (*ptr, " \t");
+		*ptr = skipover(*ptr, " \t");
 	}
 }
 
-int parsecoll(c,collname,args)
-COLLECTION *c;
-char *collname,*args;
+int 
+parsecoll(COLLECTION * c, char *collname, char *args)
 {
-	register char *arg,*p;
-	register OPTION option;
+	char *arg, *p;
+	OPTION option;
 	int opno;
 
 	c->Cnext = NULL;
-	c->Cname = salloc (collname);
+	c->Cname = salloc(collname);
 	c->Chost = NULL;
 	c->Chtree = NULL;
 	c->Cbase = NULL;
@@ -131,71 +130,73 @@ char *collname,*args;
 	c->Clogin = NULL;
 	c->Cpswd = NULL;
 	c->Ccrypt = NULL;
-	c->Ctimeout = 3*60*60;	/* default to 3 hours instead of no timeout */
+	c->Ctimeout = 3 * 60 * 60;	/* default to 3 hours instead of no
+					 * timeout */
 	c->Cflags = 0;
 	c->Cnogood = FALSE;
 	c->Clockfd = -1;
-	args = skipover (args," \t");
-	while (*(arg=nxtarg(&args," \t="))) {
+	args = skipover(args, " \t");
+	while (*(arg = nxtarg(&args, " \t="))) {
 		for (opno = 0; opno < sizeofA(options); opno++)
-			if (strcmp (arg,options[opno].op_name) == 0)
+			if (strcmp(arg, options[opno].op_name) == 0)
 				break;
 		if (opno == sizeofA(options)) {
-			logerr ("Invalid supfile option %s for collection %s",
-				arg,c->Cname);
-			return(-1);
+			logerr("Invalid supfile option %s for collection %s",
+			    arg, c->Cname);
+			return (-1);
 		}
 		option = options[opno].op_enum;
 		switch (option) {
 		case OHOST:
-			passdelim (&args,'=');
+			passdelim(&args, '=');
 			do {
-				arg = nxtarg (&args,", \t");
-				(void) Tinsert (&c->Chtree,arg,FALSE);
+				arg = nxtarg(&args, ", \t");
+				(void) Tinsert(&c->Chtree, arg, FALSE);
 				arg = args;
-				p = skipover (args," \t");
-				if (*p++ == ',')  args = p;
+				p = skipover(args, " \t");
+				if (*p++ == ',')
+					args = p;
 			} while (arg != args);
 			break;
 		case OBASE:
-			passdelim (&args,'=');
-			arg = nxtarg (&args," \t");
-			c->Cbase = salloc (arg);
+			passdelim(&args, '=');
+			arg = nxtarg(&args, " \t");
+			c->Cbase = salloc(arg);
 			break;
 		case OHOSTBASE:
-			passdelim (&args,'=');
-			arg = nxtarg (&args," \t");
-			c->Chbase = salloc (arg);
+			passdelim(&args, '=');
+			arg = nxtarg(&args, " \t");
+			c->Chbase = salloc(arg);
 			break;
 		case OPREFIX:
-			passdelim (&args,'=');
-			arg = nxtarg (&args," \t");
-			c->Cprefix = salloc (arg);
+			passdelim(&args, '=');
+			arg = nxtarg(&args, " \t");
+			c->Cprefix = salloc(arg);
 			break;
 		case ORELEASE:
-			passdelim (&args,'=');
-			arg = nxtarg (&args," \t");
-			c->Crelease = salloc (arg);
+			passdelim(&args, '=');
+			arg = nxtarg(&args, " \t");
+			c->Crelease = salloc(arg);
 			break;
 		case ONOTIFY:
-			passdelim (&args,'=');
-			arg = nxtarg (&args," \t");
-			c->Cnotify = salloc (arg);
+			passdelim(&args, '=');
+			arg = nxtarg(&args, " \t");
+			c->Cnotify = salloc(arg);
 			break;
 		case OLOGIN:
-			passdelim (&args,'=');
-			arg = nxtarg (&args," \t");
-			c->Clogin = salloc (arg);
+			passdelim(&args, '=');
+			arg = nxtarg(&args, " \t");
+			c->Clogin = salloc(arg);
 			break;
 		case OPASSWORD:
-			passdelim (&args,'=');
-			arg = nxtarg (&args," \t");
-			c->Cpswd = salloc (arg);
+			passdelim(&args, '=');
+			arg = nxtarg(&args, " \t");
+			c->Cpswd = salloc(arg);
 			break;
 		case OCRYPT:
-			passdelim (&args,'=');
-			arg = nxtarg (&args," \t");
-			c->Ccrypt = salloc (arg);
+			passdelim(&args, '=');
+			arg = nxtarg(&args, " \t");
+			c->Ccrypt = salloc(arg);
 			break;
 		case OBACKUP:
 			c->Cflags |= CFBACKUP;
@@ -219,26 +220,25 @@ char *collname,*args;
 			c->Cflags |= CFCOMPRESS;
 			break;
 		case OTIMEOUT:
-			passdelim (&args,'=');
-			arg = nxtarg (&args," \t");
-			c->Ctimeout = atoi (arg);
+			passdelim(&args, '=');
+			arg = nxtarg(&args, " \t");
+			c->Ctimeout = atoi(arg);
 			break;
 		}
 	}
-	return(0);
+	return (0);
 }
 
 
 time_t
-getwhen(collection, relsuffix)
-	char *collection, *relsuffix;
+getwhen(char *collection, char *relsuffix)
 {
 	char buf[STRINGLENGTH];
 	char *ep;
 	FILE *fp;
 	time_t tstamp;
 
-	(void) sprintf (buf,FILEWHEN,collection,relsuffix);
+	(void) sprintf(buf, FILEWHEN, collection, relsuffix);
 
 	if ((fp = fopen(buf, "r")) == NULL)
 		return 0;
@@ -247,7 +247,6 @@ getwhen(collection, relsuffix)
 		(void) fclose(fp);
 		return 0;
 	}
-
 	(void) fclose(fp);
 
 	if ((tstamp = strtol(buf, &ep, 0)) == -1 || *ep != '\n')
@@ -257,14 +256,12 @@ getwhen(collection, relsuffix)
 }
 
 int
-putwhen(fname, tstamp)
-	char *fname;
-	time_t tstamp;
+putwhen(char *fname, time_t tstamp)
 {
 	FILE *fp;
 	if ((fp = fopen(fname, "w")) == NULL)
 		return 0;
-	if (fprintf(fp, "%lu\n", (u_long)tstamp) < 0)
+	if (fprintf(fp, "%lu\n", (u_long) tstamp) < 0)
 		return 0;
 	if (fclose(fp) != 0)
 		return 0;

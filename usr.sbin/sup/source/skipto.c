@@ -1,9 +1,9 @@
-/*	$NetBSD: skipto.c,v 1.4 1997/06/17 21:38:25 christos Exp $	*/
+/*	$NetBSD: skipto.c,v 1.5 2002/07/10 20:19:43 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
@@ -55,35 +55,34 @@
 #include "supcdefs.h"
 #include "supextern.h"
 
-static char tab[256] = {
-	0};
+static char tab[256] = { 0 };
 
-char *skipto (string, charset)
-char *string, *charset;
+char *
+skipto(char *string, char *charset)
 {
 	char *setp, *strp;
 
 	tab[0] = 1;		/* Stop on a null, too. */
-	for (setp = charset;  *setp;  setp++)
+	for (setp = charset; *setp; setp++)
 		tab[(unsigned char) *setp] = 1;
-	for (strp = string;  tab[(unsigned char) *strp]==0;  strp++)
+	for (strp = string; tab[(unsigned char) *strp] == 0; strp++)
 		continue;
-	for (setp = charset;  *setp;  setp++)
+	for (setp = charset; *setp; setp++)
 		tab[(unsigned char) *setp] = 0;
 	return strp;
 }
 
-char *skipover (string, charset)
-char *string, *charset;
+char *
+skipover(char *string, char *charset)
 {
 	char *setp, *strp;
 
 	tab[0] = 0;		/* Do not skip over nulls. */
-	for (setp = charset;  *setp;  setp++)
+	for (setp = charset; *setp; setp++)
 		tab[(unsigned char) *setp] = 1;
-	for (strp = string;  tab[(unsigned char) *strp];  strp++)
+	for (strp = string; tab[(unsigned char) *strp]; strp++)
 		continue;
-	for (setp = charset;  *setp;  setp++)
+	for (setp = charset; *setp; setp++)
 		tab[(unsigned char) *setp] = 0;
 	return strp;
 }

@@ -1,9 +1,9 @@
-/*	$NetBSD: path.c,v 1.3 1997/06/17 18:56:27 christos Exp $	*/
+/*	$NetBSD: path.c,v 1.4 2002/07/10 20:19:41 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
@@ -62,40 +62,45 @@
 #include "supextern.h"
 
 void
-path (original,direc,file)
-char *original,*direc,*file;
+path(char *original, char *direc, char *file)
 {
-	register char *y;
+	char *y;
 	/* x is direc */
-	register char *p;
+	char *p;
 
 	/* copy and note the end */
 	p = original;
 	y = direc;
-	while ((*y++ = *p++) != '\0') ;		/* copy string */
+	while ((*y++ = *p++) != '\0');	/* copy string */
 	/* y now points to first char after null */
-	--y;	/* y now points to null */
-	--y;	/* y now points to last char of string before null */
+	--y;			/* y now points to null */
+	--y;			/* y now points to last char of string before
+				 * null */
 
 	/* chop off trailing / except as first character */
-	while (y>direc && *y == '/') --y;	/* backpedal past / */
+	while (y > direc && *y == '/')
+		--y;		/* backpedal past / */
 	/* y now points to char before first trailing / or null */
-	*(++y) = 0;				/* chop off end of string */
+	*(++y) = 0;		/* chop off end of string */
 	/* y now points to null */
 
 	/* find last /, if any.  If found, change to null and bump y */
-	while (y>direc && *y != '/') --y;
+	while (y > direc && *y != '/')
+		--y;
 	/* y now points to / or direc.  Note *direc may be / */
 	if (*y == '/') {
 		*y++ = 0;
 	}
-
 	/* find file name part */
-	if (*y)  strcpy (file,y);
-	else     strcpy (file,".");
+	if (*y)
+		strcpy(file, y);
+	else
+		strcpy(file, ".");
 
 	/* find directory part */
-	if (direc == y)        strcpy (direc,".");
-	else if (*direc == 0)  strcpy (direc,"/");
+	if (direc == y)
+		strcpy(direc, ".");
+	else if (*direc == 0)
+		strcpy(direc, "/");
 	/* else direc already has proper value */
 }

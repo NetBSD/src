@@ -1,9 +1,9 @@
-/*	$NetBSD: ffilecopy.c,v 1.4 1997/06/17 18:56:15 christos Exp $	*/
+/*	$NetBSD: ffilecopy.c,v 1.5 2002/07/10 20:19:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
@@ -50,39 +50,42 @@
 #include "supcdefs.h"
 #include "supextern.h"
 
-int ffilecopy (here,there)
-FILE *here, *there;
+int 
+ffilecopy(FILE * here, FILE * there)
 {
-	register int i, herefile, therefile;
+	int i, herefile, therefile;
 
 	herefile = fileno(here);
 	therefile = fileno(there);
 
-	if (fflush (there) == EOF)		/* flush pending output */
+	if (fflush(there) == EOF)	/* flush pending output */
 		return (EOF);
 
 #if	defined(__386BSD__) || defined(__NetBSD__)
-	if ((here->_r) > 0) {			/* flush buffered input */
-		i = write (therefile, here->_p, here->_r);
-		if (i != here->_r)  return (EOF);
+	if ((here->_r) > 0) {	/* flush buffered input */
+		i = write(therefile, here->_p, here->_r);
+		if (i != here->_r)
+			return (EOF);
 		here->_p = here->_bf._base;
 		here->_r = 0;
 	}
 #else
-	if ((here->_cnt) > 0) {			/* flush buffered input */
-		i = write (therefile, here->_ptr, here->_cnt);
-		if (i != here->_cnt)  return (EOF);
+	if ((here->_cnt) > 0) {	/* flush buffered input */
+		i = write(therefile, here->_ptr, here->_cnt);
+		if (i != here->_cnt)
+			return (EOF);
 		here->_ptr = here->_base;
 		here->_cnt = 0;
 	}
 #endif
-	i = filecopy (herefile, therefile);	/* fast file copy */
-	if (i < 0)  return (EOF);
+	i = filecopy(herefile, therefile);	/* fast file copy */
+	if (i < 0)
+		return (EOF);
 
 #if	defined(__386BSD__) || defined(__NetBSD__)
-	(here->_flags) |= __SEOF;		/* indicate EOF */
+	(here->_flags) |= __SEOF;	/* indicate EOF */
 #else
-	(here->_flag) |= _IOEOF;		/* indicate EOF */
+	(here->_flag) |= _IOEOF;	/* indicate EOF */
 #endif
 	return (0);
 }
