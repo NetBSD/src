@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.31 1998/01/12 18:04:12 thorpej Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.32 1998/10/06 09:32:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -425,7 +425,7 @@ ncr5380_scsi_cmd(struct scsipi_xfer *xs)
 
 	run_main(xs->sc_link->adapter_softc);
 
-	if (xs->flags & (SCSI_POLL|ITSDONE))
+	if (xs->flags & SCSI_POLL)
 		return (COMPLETE); /* We're booting or run_main has completed */
 	return (SUCCESSFULLY_QUEUED);
 }
