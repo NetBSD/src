@@ -1,4 +1,4 @@
-/* 	$Id: lwp.h,v 1.1.2.19 2002/12/04 21:59:09 nathanw Exp $	*/
+/* 	$Id: lwp.h,v 1.1.2.20 2002/12/15 23:31:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ int	cpu_switch (struct lwp *, struct lwp *);
 #endif
 void	cpu_preempt (struct lwp *, struct lwp *);
 
-int newlwp(struct lwp *, struct proc *, vaddr_t, int,
+int newlwp(struct lwp *, struct proc *, vaddr_t, int /* XXX boolean_t */, int,
     void *, size_t, void (*)(void *), void *, struct lwp **);
 
 /* Flags for _lwp_wait1 */
