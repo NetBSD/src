@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.122 2002/10/24 20:37:59 atatat Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.123 2002/10/24 22:22:28 atatat Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.122 2002/10/24 20:37:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.123 2002/10/24 22:22:28 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -787,18 +787,16 @@ forwardmerge:
 		 * XXX call amap_extend() to merge backwards here if needed.  -- @@@
 		 */
 		if (merged) {
-			if (prev_entry->aref.ar_amap) {
-				error = amap_extend(prev_entry,
-				    prev_entry->next->end -
-				    prev_entry->next->start);
-				if (error) {
-					vm_map_unlock(map);
-					if (new_entry) {
-						uvm_mapent_free(new_entry);
-					}
-					return error;
-				}
-			}
+			/*
+			 * Try to extend the amap of the previous entry to
+			 * cover the next entry as well.  If it doesn't work
+			 * just skip on, don't actually give up, since we've
+			 * already completed the back merge.
+			 */
+			if (prev_entry->aref.ar_amap &&
+			    amap_extend(prev_entry, prev_entry->next->end -
+				prev_entry->next->start))
+				goto nomerge;
 		}
 
 		if (merged) {
