@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.26 1999/03/10 00:20:00 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.27 1999/03/24 11:05:31 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -72,7 +72,6 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_quota.h"
-#include "opt_uvm.h"
 #endif
 
 #include <sys/param.h>
