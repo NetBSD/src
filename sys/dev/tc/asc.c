@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.35 1997/04/06 10:07:54 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.36 1997/04/07 03:21:14 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -974,11 +974,16 @@ again:
 			goto done;
 
 		default:
+			printf("asc_intr: target %d, unknown phase 0x%x\n", 
+			  	asc->target, status);
 			goto abort;
 		}
 
-		if (state->script)
+		if (state->script) {
+			printf("asc_intr: target %d, incomplete script 0x%x\n", 
+			  	asc->target, state->script);
 			goto abort;
+		}
 
 		/* check for DMA in progress */
 		ASC_TC_GET(regs, len);
@@ -986,9 +991,10 @@ again:
 		/* flush any data in the FIFO */
 		if (fifo) {
 			if (state->flags & DMA_OUT) {
-				if (fifo != 0x10)
-		 			printf("asc: DMA_OUT, fifo resid %d, len %d, flags 0x%x\n",
-					    fifo, len, state->flags);
+#if 0
+	 			printf("asc: DMA_OUT, fifo resid %d, len %d, flags 0x%x\n",
+				    fifo, len, state->flags);
+#endif
 				len += fifo;
 			} else if (state->flags & DMA_IN) {
 				printf("asc_intr: IN: dmalen %d len %d fifo %d\n",
@@ -1187,8 +1193,12 @@ again:
 		unsigned fifo, id, msg;
 
 		fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
-		if (fifo < 2)
+		if (fifo < 2) {
+			printf("asc_intr: target %d, reselect, fifo %d too small for msg\n", 
+			  	asc->target, fifo);
+
 			goto abort;
+		}
 		/* read unencoded SCSI ID and convert to binary */
 		msg = regs->asc_fifo & asc->myidmask;
 		for (id = 0; (msg & 1) == 0; id++)
@@ -1206,8 +1216,11 @@ again:
 		state = &asc->st[id];
 		asc->script = state->script;
 		state->script = (script_t *)0;
-		if (!(state->flags & DISCONN))
+		if (!(state->flags & DISCONN)) {
+			printf("asc_intr: reselect tgt %d, flags 0x%x not disconnected\n",
+			       asc->target, state->flags);
 			goto abort;
+		}
 		state->flags &= ~DISCONN;
 		regs->asc_syn_p = state->sync_period;
 		regs->asc_syn_o = state->sync_offset;
@@ -1217,9 +1230,10 @@ again:
 	}
 
 	/* check if we are being selected as a target */
-	if (ir & (ASC_INT_SEL | ASC_INT_SEL_ATN))
+	if (ir & (ASC_INT_SEL | ASC_INT_SEL_ATN)) {
+			printf("asc_intr: host adaptor selected as target\n");
 		goto abort;
-
+	}
 	/*
 	 * 'ir' must be just ASC_INT_FC.
 	 * This is normal if canceling an ASC_ENABLE_SEL.
@@ -1863,8 +1877,11 @@ asc_msg_in(asc, status, ss, ir)
 			state->msglen = msg;
 			return (1);
 		}
-		if (state->msgcnt >= state->msglen)
+		if (state->msgcnt >= state->msglen) {
+		  	printf("asc: msg_in too big, msgcnt %d msglen %\n",
+			       state->msgcnt, state->msglen);
 			goto abort;
+		}
 		state->msg_in[state->msgcnt++] = msg;
 
 		/* did we just read the last byte of the message? */
@@ -1988,8 +2005,11 @@ asc_msg_in(asc, status, ss, ir)
 		break;
 
 	case SCSI_DISCONNECT:
-		if (state->flags & DISCONN)
+		if (state->flags & DISCONN) {
+			printf("asc: disconnected target %d disconnecting again\n",
+			    asc->target);
 			goto abort;
+		}
 		state->flags |= DISCONN;
 		regs->asc_cmd = ASC_CMD_MSG_ACPT;
 		readback(regs->asc_cmd);
@@ -2011,6 +2031,8 @@ done:
 	regs->asc_cmd = ASC_CMD_MSG_ACPT;
 	readback(regs->asc_cmd);
 	if (!state->script) {
+	  	printf("asc_msg_in: target %d, no script?\n", asc->target);
+
 	abort:
 #ifdef DEBUG
 		asc_DumpLog("asc_msg_in");
