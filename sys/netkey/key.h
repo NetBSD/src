@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.15 2003/09/07 15:59:38 itojun Exp $	*/
+/*	$NetBSD: key.h,v 1.16 2003/09/08 06:51:59 itojun Exp $	*/
 /*	$KAME: key.h,v 1.32 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -56,6 +56,7 @@ extern int key_checkrequest
 	__P((struct ipsecrequest *isr, struct secasindex *));
 extern struct secasvar *key_allocsa __P((u_int, caddr_t, caddr_t,
 					u_int, u_int32_t));
+extern struct secpolicy *key_getspbyid __P((u_int32_t));
 extern void key_freesp __P((struct secpolicy *));
 extern void key_freesav __P((struct secasvar *));
 extern struct secpolicy *key_newsp __P((u_int32_t));
@@ -67,9 +68,12 @@ extern int key_cmpspidx_exactly
 extern int key_cmpspidx_withmask
 	__P((struct secpolicyindex *, struct secpolicyindex *));
 extern int key_spdacquire __P((struct secpolicy *));
+extern struct mbuf *key_setdumpsp __P((struct secpolicy *,
+	u_int8_t, u_int32_t, u_int32_t));
 extern void key_timehandler __P((void *));
 extern void key_randomfill __P((void *, size_t));
 extern void key_freereg __P((struct socket *));
+struct mbuf *key_setdumpsa_spi __P((u_int32_t));
 extern int key_parse __P((struct mbuf *, struct socket *));
 extern void key_init __P((void));
 extern int key_checktunnelsanity __P((struct secasvar *, u_int,

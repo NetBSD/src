@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/12/12 12:06:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2003/09/08 06:51:59 itojun Exp $
 
 .include "../Makefile.inc"
 
@@ -7,6 +7,6 @@
 KMOD=	kernfs
 
 SRCS=	lkminit_vfs.c
-SRCS+=	kernfs_vfsops.c kernfs_vnops.c
+SRCS+=	kernfs_vfsops.c kernfs_vnops.c kernfs_subr.c
 
 .include <bsd.kmod.mk>
