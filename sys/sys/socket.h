@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.44 1999/07/01 08:13:00 itojun Exp $	*/
+/*	$NetBSD: socket.h,v 1.45 1999/07/01 20:09:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -405,7 +405,7 @@ struct cmsghdr {
 /* given pointer to struct cmsghdr, return pointer to next cmsghdr */
 #define	CMSG_NXTHDR(mhdr, cmsg)	\
 	(((caddr_t)(cmsg) + (cmsg)->cmsg_len + sizeof(struct cmsghdr) > \
-	    (caddr_t) ((mhdr)->msg_control + (mhdr)->msg_controllen)) ? \
+	    (((caddr_t)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
 	    (struct cmsghdr *)NULL : \
 	    (struct cmsghdr *)((caddr_t)(cmsg) + CMSG_ALIGN((cmsg)->cmsg_len)))
 
