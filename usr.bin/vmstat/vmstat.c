@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.40 1998/01/04 03:59:05 thorpej Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.41 1998/02/07 15:42:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.40 1998/01/04 03:59:05 thorpej Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.41 1998/02/07 15:42:32 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,54 +74,37 @@ __RCSID("$NetBSD: vmstat.c,v 1.40 1998/01/04 03:59:05 thorpej Exp $");
 #include <limits.h>
 #include "dkstats.h"
 
-#define NEWVM			/* XXX till old has been updated or purged */
 struct nlist namelist[] = {
 #define	X_CPTIME	0
 	{ "_cp_time" },
-#define X_SUM		1
-	{ "_cnt" },
-#define	X_BOOTTIME	2
+#define	X_BOOTTIME	1
 	{ "_boottime" },
-#define X_HZ		3
+#define X_HZ		2
 	{ "_hz" },
-#define X_STATHZ	4
+#define X_STATHZ	3
 	{ "_stathz" },
-#define X_NCHSTATS	5
+#define X_NCHSTATS	4
 	{ "_nchstats" },
-#define	X_INTRNAMES	6
+#define	X_INTRNAMES	5
 	{ "_intrnames" },
-#define	X_EINTRNAMES	7
+#define	X_EINTRNAMES	6
 	{ "_eintrnames" },
-#define	X_INTRCNT	8
+#define	X_INTRCNT	7
 	{ "_intrcnt" },
-#define	X_EINTRCNT	9
+#define	X_EINTRCNT	8
 	{ "_eintrcnt" },
-#define	X_KMEMSTAT	10
+#define	X_KMEMSTAT	9
 	{ "_kmemstats" },
-#define	X_KMEMBUCKETS	11
+#define	X_KMEMBUCKETS	10
 	{ "_bucket" },
-#define X_ALLEVENTS	12
+#define X_ALLEVENTS	11
 	{ "_allevents" },
-#ifdef notdef
-#define	X_DEFICIT	13
-	{ "_deficit" },
-#define X_REC		14
-	{ "_rectime" },
-#define X_PGIN		15
-	{ "_pgintime" },
-#define	X_XSTATS	16
-	{ "_xstats" },
-#define X_END		17
+#if defined(UVM)
+#define X_END		12
 #else
+#define X_SUM		12
+	{ "_cnt" },
 #define X_END		13
-#endif
-#ifdef tahoe
-#define	X_VBDINIT	(X_END)
-	{ "_vbdinit" },
-#define	X_CKEYSTATS	(X_END+1)
-	{ "_ckeystats" },
-#define	X_DKEYSTATS	(X_END+2)
-	{ "_dkeystats" },
 #endif
 #if defined(pc532)
 #define	X_IVT		(X_END)
@@ -135,7 +118,11 @@ extern struct _disk	cur;
 extern char	**dr_name;
 extern int	*dk_select, dk_ndrive;
 
+#if defined(UVM)
+struct	uvmexp uvmexp, ouvmexp;
+#else
 struct	vmmeter sum, osum;
+#endif
 int		ndrives;
 
 int	winlines = 20;
@@ -146,7 +133,6 @@ kvm_t *kd;
 #define	INTRSTAT	0x02
 #define	MEMSTAT		0x04
 #define	SUMSTAT		0x08
-#define	TIMESTAT	0x10
 #define	VMSTAT		0x20
 
 void	cpustats __P((void));
@@ -162,9 +148,6 @@ void	printhdr __P((void));
 long	pct __P((long, long));
 void	usage __P((void));
 void	doforkst __P((void));
-#ifdef notdef
-void	dotimes __P((void));
-#endif
 
 int	main __P((int, char **));
 char	**choosedrives __P((char **));
@@ -213,11 +196,6 @@ main(argc, argv)
 		case 's':
 			todo |= SUMSTAT;
 			break;
-#ifndef notdef
-		case 't':
-			todo |= TIMESTAT;
-			break;
-#endif
 		case 'w':
 			interval = atoi(optarg);
 			break;
@@ -295,10 +273,6 @@ main(argc, argv)
 		domem();
 	if (todo & SUMSTAT)
 		dosum();
-#ifdef notdef
-	if (todo & TIMESTAT)
-		dotimes();
-#endif
 	if (todo & INTRSTAT)
 		dointr();
 	if (todo & VMSTAT)
@@ -371,6 +345,7 @@ dovmstat(interval, reps)
 	time_t uptime, halfuptime;
 	int mib[2];
 	size_t size;
+	int pagesize = getpagesize();
 
 	uptime = getuptime();
 	halfuptime = uptime / 2;
@@ -386,7 +361,17 @@ dovmstat(interval, reps)
 			printhdr();
 		/* Read new disk statistics */
 		dkreadstats();
+#if defined(UVM)
+		size = sizeof(uvmexp);
+		mib[0] = CTL_VM;
+		mib[1] = VM_UVMEXP;
+		if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+			printf("can't get uvmexp: %s\n", strerror(errno));
+			bzero(&uvmexp, sizeof(uvmexp));
+		}
+#else
 		kread(X_SUM, &sum, sizeof(sum));
+#endif
 		size = sizeof(total);
 		mib[0] = CTL_VM;
 		mib[1] = VM_METER;
@@ -396,30 +381,19 @@ dovmstat(interval, reps)
 		}
 		(void)printf("%2d%2d%2d",
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
-#define pgtok(a) (long)((a) * (sum.v_page_size >> 10))
+#define pgtok(a) (long)((a) * (pagesize >> 10))
 #define	rate(x)	(u_long)(((x) + halfuptime) / uptime)	/* round */
 		(void)printf("%6ld%6ld ",
 		    pgtok(total.t_avm), pgtok(total.t_free));
-#ifdef NEWVM
+#if defined(UVM)
+		/* XXX FILL ME IN! */
+#else
 		(void)printf("%4lu ", rate(sum.v_faults - osum.v_faults));
 		(void)printf("%3lu ",
 		    rate(sum.v_reactivated - osum.v_reactivated));
 		(void)printf("%3lu ", rate(sum.v_pageins - osum.v_pageins));
 		(void)printf("%3lu %3lu ",
 		    rate(sum.v_pageouts - osum.v_pageouts), (u_long)0);
-#else
-		(void)printf("%3lu %2lu ",
-		    rate(sum.v_pgrec - (sum.v_xsfrec+sum.v_xifrec) -
-		    (osum.v_pgrec - (osum.v_xsfrec+osum.v_xifrec))),
-		    rate(sum.v_xsfrec + sum.v_xifrec -
-		    osum.v_xsfrec - osum.v_xifrec));
-		(void)printf("%3lu ",
-		    rate(pgtok(sum.v_pgpgin - osum.v_pgpgin)));
-		(void)printf("%3lu %3lu ",
-		    rate(pgtok(sum.v_pgpgout - osum.v_pgpgout)),
-		    rate(pgtok(sum.v_dfree - osum.v_dfree)));
-		(void)printf("%3d ", pgtok(deficit));
-#endif
 		(void)printf("%3lu ", rate(sum.v_scan - osum.v_scan));
 		dkstats();
 		(void)printf("%4lu %4lu %3lu ",
@@ -432,6 +406,7 @@ dovmstat(interval, reps)
 		if (reps >= 0 && --reps <= 0)
 			break;
 		osum = sum;
+#endif
 		uptime = interval;
 		/*
 		 * We round upward to avoid losing low-frequency events
@@ -449,26 +424,14 @@ printhdr()
 
 	(void)printf(" procs   memory     page%*s", 20, "");
 	if (ndrives > 0)
-#ifdef NEWVM
 		(void)printf("%s %*sfaults   cpu\n",
 		   ((ndrives > 1) ? "disks" : "disk"),
-#else
-		(void)printf("disks %*sfaults      cpu\n",
-#endif
 		   ((ndrives > 1) ? ndrives * 3 - 4 : 0), "");
 	else
-#ifdef NEWVM
 		(void)printf("%*s  faults   cpu\n",
-#else
-		(void)printf("%*s  faults      cpu\n",
-#endif
 		   ndrives * 3, "");
 
-#ifdef NEWVM
 	(void)printf(" r b w   avm   fre  flt  re  pi  po  fr  sr ");
-#else
-	(void)printf(" r b w   avm   fre  re at  pi  po  fr  de  sr ");
-#endif
 	for (i = 0; i < dk_ndrive; i++)
 		if (dk_select[i])
 			(void)printf("%c%c ", dr_name[i][0],
@@ -488,26 +451,6 @@ needhdr(dummy)
 	hdrcnt = 1;
 }
 
-#ifdef notdef
-void
-dotimes()
-{
-	u_int pgintime, rectime;
-
-	kread(X_REC, &rectime, sizeof(rectime));
-	kread(X_PGIN, &pgintime, sizeof(pgintime));
-	kread(X_SUM, &sum, sizeof(sum));
-	(void)printf("%u reclaims, %u total time (usec)\n",
-	    sum.v_pgrec, rectime);
-	(void)printf("average: %u usec / reclaim\n", rectime / sum.v_pgrec);
-	(void)printf("\n");
-	(void)printf("%u page ins, %u total time (msec)\n",
-	    sum.v_pgin, pgintime / 10);
-	(void)printf("average: %8.1f msec / page in\n",
-	    pgintime / (sum.v_pgin * 10.0));
-}
-#endif
-
 long
 pct(top, bot)
 	long top, bot;
@@ -522,22 +465,26 @@ pct(top, bot)
 
 #define	PCT(top, bot) (int)pct((long)(top), (long)(bot))
 
-#if defined(tahoe)
-#include <machine/cpu.h>
-#endif
-
 void
 dosum()
 {
 	struct nchstats nchstats;
-#ifndef NEWVM
-	struct xstats xstats;
-#endif
 	long nchtotal;
-#if defined(tahoe)
-	struct keystats keystats;
-#endif
 
+#if defined(UVM)
+	int	mib[2];
+	size_t	size;
+
+	size = sizeof(uvmexp);
+	mib[0] = CTL_VM;
+	mib[1] = VM_UVMEXP;
+	if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+		printf("can't get uvmexp: %s\n", strerror(errno));
+		bzero(&uvmexp, sizeof(uvmexp));
+	}
+
+	/* XXX fill me in! */
+#else
 	kread(X_SUM, &sum, sizeof(sum));
 	(void)printf("%9u cpu context switches\n", sum.v_swtch);
 	(void)printf("%9u device interrupts\n", sum.v_intr);
@@ -559,7 +506,6 @@ dosum()
 	(void)printf("%9u zero fill page faults\n", sum.v_zfod / CLSIZE);
 	(void)printf("%9u pages examined by the clock daemon\n", sum.v_scan);
 	(void)printf("%9u revolutions of the clock hand\n", sum.v_rev);
-#ifdef NEWVM
 	(void)printf("%9u VM object cache lookups\n", sum.v_lookups);
 	(void)printf("%9u VM object hits\n", sum.v_hits);
 	(void)printf("%9u total VM faults taken\n", sum.v_vm_faults);
@@ -574,23 +520,6 @@ dosum()
 	(void)printf("%9u target inactive pages\n", sum.v_inactive_target);
 	(void)printf("%9u target free pages\n", sum.v_free_target);
 	(void)printf("%9u minimum free pages\n", sum.v_free_min);
-#else
-	(void)printf("%9u sequential process pages freed\n", sum.v_seqfree);
-	(void)printf("%9u total reclaims (%d%% fast)\n", sum.v_pgrec,
-	    PCT(sum.v_fastpgrec, sum.v_pgrec));
-	(void)printf("%9u reclaims from free list\n", sum.v_pgfrec);
-	(void)printf("%9u executable fill pages created\n",
-	    sum.v_nexfod / CLSIZE);
-	(void)printf("%9u executable fill page faults\n",
-	    sum.v_exfod / CLSIZE);
-	(void)printf("%9u swap text pages found in free list\n",
-	    sum.v_xsfrec);
-	(void)printf("%9u inode text pages found in free list\n",
-	    sum.v_xifrec);
-	(void)printf("%9u file fill pages created\n", sum.v_nvrfod / CLSIZE);
-	(void)printf("%9u file fill page faults\n", sum.v_vrfod / CLSIZE);
-	(void)printf("%9u pages freed by the clock daemon\n",
-	    sum.v_dfree / CLSIZE);
 #endif
 	kread(X_NCHSTATS, &nchstats, sizeof(nchstats));
 	nchtotal = nchstats.ncs_goodhits + nchstats.ncs_neghits +
@@ -606,43 +535,34 @@ dosum()
 	    PCT(nchstats.ncs_badhits, nchtotal),
 	    PCT(nchstats.ncs_falsehits, nchtotal),
 	    PCT(nchstats.ncs_long, nchtotal));
-#ifndef NEWVM
-	kread(X_XSTATS, &xstats, sizeof(xstats));
-	(void)printf("%9lu total calls to xalloc (cache hits %d%%)\n",
-	    xstats.alloc, PCT(xstats.alloc_cachehit, xstats.alloc));
-	(void)printf("%9s sticky %lu flushed %lu unused %lu\n", "",
-	    xstats.alloc_inuse, xstats.alloc_cacheflush, xstats.alloc_unused);
-	(void)printf("%9lu total calls to xfree", xstats.free);
-	(void)printf(" (sticky %lu cached %lu swapped %lu)\n",
-	    xstats.free_inuse, xstats.free_cache, xstats.free_cacheswap);
-#endif
-#if defined(tahoe)
-	kread(X_CKEYSTATS, &keystats, sizeof(keystats));
-	(void)printf("%9d %s (free %d%% norefs %d%% taken %d%% shared %d%%)\n",
-	    keystats.ks_allocs, "code cache keys allocated",
-	    PCT(keystats.ks_allocfree, keystats.ks_allocs),
-	    PCT(keystats.ks_norefs, keystats.ks_allocs),
-	    PCT(keystats.ks_taken, keystats.ks_allocs),
-	    PCT(keystats.ks_shared, keystats.ks_allocs));
-	kread(X_DKEYSTATS, &keystats, sizeof(keystats));
-	(void)printf("%9d %s (free %d%% norefs %d%% taken %d%% shared %d%%)\n",
-	    keystats.ks_allocs, "data cache keys allocated",
-	    PCT(keystats.ks_allocfree, keystats.ks_allocs),
-	    PCT(keystats.ks_norefs, keystats.ks_allocs),
-	    PCT(keystats.ks_taken, keystats.ks_allocs),
-	    PCT(keystats.ks_shared, keystats.ks_allocs));
-#endif
 }
 
 void
 doforkst()
 {
+#if defined(UVM)
+	int	mib[2];
+	size_t	size;
+
+	size = sizeof(uvmexp);
+	mib[0] = CTL_VM;
+	mib[1] = VM_UVMEXP;
+	if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+		printf("can't get uvmexp: %s\n", strerror(errno));
+		bzero(&uvmexp, sizeof(uvmexp));
+	}
+	(void)printf("%u forks total\n", uvmexp.forks);
+	(void)printf("%u forks blocked parent\n", uvmexp.forks_ppwait);
+	(void)printf("%u forks shared address space with parent\n",
+	    uvmexp.forks_sharevm);
+#else
 
 	kread(X_SUM, &sum, sizeof(sum));
 	(void)printf("%u forks total\n", sum.v_forks);
 	(void)printf("%u forks blocked parent\n", sum.v_forks_ppwait);
 	(void)printf("%u forks shared address space with parent\n",
 	    sum.v_forks_sharevm);
+#endif
 }
 
 void
@@ -927,13 +847,8 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-#ifndef NEWVM
-	    "usage: vmstat [-fimst] [-c count] [-M core] \
-[-N system] [-w wait] [disks]\n");
-#else
 	    "usage: vmstat [-ims] [-c count] [-M core] \
 [-N system] [-w wait] [disks]\n");
-#endif
 	exit(1);
 }
 
