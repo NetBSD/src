@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,12 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: trap.h 1.1 90/07/09
- *	from: @(#)trap.h	7.5 (Berkeley) 5/9/91
- *	$Id: trap.h,v 1.5 1994/04/10 02:22:15 chopps Exp $
+ * from: Utah $Hdr: trap.h 1.7 91/03/25$
+ *
+ *	@(#)trap.h	8.1 (Berkeley) 6/10/93
  */
-#ifndef _M68K_TRAP_H_
-#define _M68K_TRAP_H_
 
 /*
  * Trap codes
@@ -62,7 +60,8 @@
 #define T_ASTFLT	13
 #define T_TRAP15	15
 #define	T_BREAKPOINT	T_TRAP15
+#define T_FPEMULI	16
+#define T_FPEMULD	17
 
 #define	T_USER		0x80		/* user-mode flag or'ed with type */
 
-#endif /* !_M68K_TRAP_H_ */

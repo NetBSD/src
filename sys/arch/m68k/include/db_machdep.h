@@ -59,10 +59,11 @@ struct mc68020_saved_state {
 	int		a6;
 	int		sp;		/* stack pointer */
 	short		empty;
+	short		stackadj;
 	unsigned short	sr;		/* status register */
 	unsigned int	pc;		/* program counter - UNALIGNED!!! */
-	unsigned int	stkfmt	: 4;	/* rte stack frame format */
-	unsigned int	vector	: 12;	/* vector number */
+	unsigned short	stkfmt	: 4;	/* rte stack frame format */
+	unsigned short	vector	: 12;	/* vector number */
 };
 typedef struct mc68020_saved_state db_regs_t;
 db_regs_t	ddb_regs;		/* register state */
