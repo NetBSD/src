@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.h,v 1.1 1996/01/31 23:23:02 mark Exp $ */
+/* $NetBSD: rtc.h,v 1.2 1996/03/14 23:11:43 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,11 +41,8 @@
  * Header file for RTC / CMOS stuff
  *
  * Created      : 13/10/94
- * Last updated : 13/10/94
  *
  * Based of kate/display/iiccontrol.c
- *
- *    $Id: rtc.h,v 1.1 1996/01/31 23:23:02 mark Exp $
  */
 
 /* IIC addresses for RTC chip */

@@ -1,4 +1,4 @@
-/*	$NetBSD: podule.h,v 1.1 1996/01/31 23:22:36 mark Exp $	*/
+/*	$NetBSD: podule.h,v 1.2 1996/03/14 23:11:31 mark Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -29,8 +29,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: podule.h,v 1.1 1996/01/31 23:22:36 mark Exp $
  */
 
 #ifndef	_ARM32_PODULE_H_

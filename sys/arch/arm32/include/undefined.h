@@ -1,7 +1,7 @@
-/* $NetBSD: undefined.h,v 1.1 1996/01/31 23:23:21 mark Exp $ */
+/* $NetBSD: undefined.h,v 1.2 1996/03/14 23:11:51 mark Exp $ */
 
 /*
- * Copyright (c) 1995 Mark Brinicombe.
+ * Copyright (c) 1995-1996 Mark Brinicombe.
  * Copyright (c) 1995 Brini.
  * All rights reserved.
  *
@@ -41,9 +41,6 @@
  * Undefined instruction types, symbols and prototypes
  *
  * Created      : 08/02/95
- * Last updated : 01/07/95
- *
- *    $Id: undefined.h,v 1.1 1996/01/31 23:23:21 mark Exp $
  */
 
 #ifdef _KERNEL

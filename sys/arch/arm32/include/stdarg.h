@@ -1,4 +1,4 @@
-/* $NetBSD: stdarg.h,v 1.1 1996/01/31 23:23:13 mark Exp $ */
+/* $NetBSD: stdarg.h,v 1.2 1996/03/14 23:11:49 mark Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdarg.h	8.1 (Berkeley) 6/10/93
- *	$Id: stdarg.h,v 1.1 1996/01/31 23:23:13 mark Exp $
  */
 
 #ifndef _STDARG_H_

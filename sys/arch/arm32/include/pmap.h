@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.2 1996/02/12 21:25:18 christos Exp $ */
+/* $NetBSD: pmap.h,v 1.3 1996/03/14 23:11:29 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -30,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: pmap.h,v 1.2 1996/02/12 21:25:18 christos Exp $
  */
 
 #ifndef	_ARM32_PMAP_H_
