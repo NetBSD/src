@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.2 1995/10/13 18:10:23 gwr Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.3 1999/03/13 19:08:44 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -48,7 +48,8 @@
 static FILE *_gr_fp;
 static struct group _gr_group;
 static int _gr_stayopen;
-static int grscan(), start_gr();
+static int grscan __P((int, int, const char *));
+static int start_gr __P((void));
 
 #define	MAXGRP		200
 static char *members[MAXGRP];
@@ -58,7 +59,7 @@ static char line[MAXLINELENGTH];
 struct group *
 getgrent()
 {
-	if (!_gr_fp && !start_gr() || !grscan(0, 0, NULL))
+	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL))
 		return(NULL);
 	return(&_gr_group);
 }
@@ -133,7 +134,7 @@ endgrent()
 static int
 grscan(search, gid, name)
 	register int search, gid;
-	register char *name;
+	register const char *name;
 {
 	register char *cp, **m;
 	char *bp;
