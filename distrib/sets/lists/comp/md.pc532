@@ -59,6 +59,7 @@
 ./usr/include/g++/tempbuf.cc
 ./usr/include/g++/tree.cc
 ./usr/include/ns32k
+./usr/include/objc/list.h
 ./usr/include/pc532
 ./usr/include/pc532/_G_config.h
 ./usr/include/pc532/ansi.h

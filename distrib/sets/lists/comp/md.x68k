@@ -72,4 +72,5 @@
 ./usr/include/machine/remote-sl.h
 ./usr/include/machine/sram.h
 ./usr/include/machine/vuid_event.h
+./usr/include/objc/list.h
 ./usr/include/x68k/_G_config.h
