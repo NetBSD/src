@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.46 2004/12/29 00:43:02 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.47 2004/12/29 01:55:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.46 2004/12/29 00:43:02 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.47 2004/12/29 01:55:25 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.46 2004/12/29 00:43:02 christos Exp $");
+__RCSID("$NetBSD: suff.c,v 1.47 2004/12/29 01:55:25 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -130,6 +130,9 @@ __RCSID("$NetBSD: suff.c,v 1.46 2004/12/29 00:43:02 christos Exp $");
  *	    	  	    	a target based on its suffix. Returns the
  *	    	  	    	bottom-most node added to the graph or NILGNODE
  *	    	  	    	if the target had no implicit sources.
+ *
+ *	Suff_FindPath	    	Return the appropriate path to search in
+ *				order to find the node.
  */
 
 #include    	  <stdio.h>
@@ -1631,16 +1634,12 @@ SuffExpandChildren(LstNode prevLN, GNode *pgn)
 	return(1);
     } else if (Dir_HasWildcards(cgn->name)) {
 	Lst 	explist;    /* List of expansions */
-	Lst 	path;	    /* Search path along which to expand */
-
-	path = Suff_FindPath(cgn);
-
 
 	/*
 	 * Expand the word along the chosen path
 	 */
 	explist = Lst_Init(FALSE);
-	Dir_Expand(cgn->name, path, explist);
+	Dir_Expand(cgn->name, Suff_FindPath(cgn), explist);
 
 	while (!Lst_IsEmpty(explist)) {
 	    /*
@@ -1683,13 +1682,25 @@ SuffExpandChildren(LstNode prevLN, GNode *pgn)
     return(0);
 }
 
-/*
- * Find a path along which to expand the word.
+/*-
+ *-----------------------------------------------------------------------
+ * Suff_FindPath --
+ *	Find a path along which to expand the node.
  *
- * If the word has a known suffix, use that path.
- * If it has no known suffix and we're allowed to use the null
- *   suffix, use its path.
- * Else use the default system search path.
+ *	If the word has a known suffix, use that path.
+ *	If it has no known suffix, use the default system search path.
+ *
+ * Input:
+ *	gn		Node being examined
+ *
+ * Results:
+ *	The appropriate path to search for the GNode.
+ *
+ * Side Effects:
+ *	XXX: We could set the suffix here so that we don't have to scan
+ *	again.
+ *
+ *-----------------------------------------------------------------------
  */
 Lst
 Suff_FindPath(GNode* gn)
