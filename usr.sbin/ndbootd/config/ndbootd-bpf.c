@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd-bpf.c,v 1.2 2001/05/22 14:41:59 fredette Exp $	*/
+/*	$NetBSD: ndbootd-bpf.c,v 1.3 2001/05/23 02:59:36 fredette Exp $	*/
 
 /* ndbootd-bpf.c - the Sun Network Disk (nd) daemon BPF component: */
 
@@ -25,10 +25,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* <<Header: /data/home/fredette/project/THE-WEIGHT-CVS/ndbootd/config/ndbootd-bpf.c,v 1.3 2001/05/22 13:13:24 fredette Exp >> */
+/* <<Header: /data/home/fredette/project/THE-WEIGHT-CVS/ndbootd/config/ndbootd-bpf.c,v 1.4 2001/05/23 02:35:49 fredette Exp >> */
 
 /*
  * <<Log: ndbootd-bpf.c,v >>
+ * Revision 1.4  2001/05/23 02:35:49  fredette
+ * Changed many debugging printfs to compile quietly on the
+ * alpha.  Patch from Andrew Brown <atatat@atatdot.net>.
+ *
  * Revision 1.3  2001/05/22 13:13:24  fredette
  * Ran indent(1) with NetBSD's KNF-approximating profile.
  *
@@ -40,7 +44,7 @@
  *
  */
 
-static const char _ndbootd_bpf_c_rcsid[] = "<<Id: ndbootd-bpf.c,v 1.3 2001/05/22 13:13:24 fredette Exp >>";
+static const char _ndbootd_bpf_c_rcsid[] = "<<Id: ndbootd-bpf.c,v 1.4 2001/05/23 02:35:49 fredette Exp >>";
 
 /* includes: */
 #include <net/bpf.h>
@@ -246,7 +250,7 @@ ndbootd_raw_read(struct ndbootd_interface * interface, void *packet_buffer, size
 				_NDBOOTD_DEBUG((fp, "bpf: failed to read packets: %s", strerror(errno)));
 				return (-1);
 			}
-			_NDBOOTD_DEBUG((fp, "bpf: read %d bytes of packets", buffer_end));
+			_NDBOOTD_DEBUG((fp, "bpf: read %ld bytes of packets", (long) buffer_end));
 			interface_bpf->_ndbootd_interface_bpf_buffer_offset = 0;
 			interface_bpf->_ndbootd_interface_bpf_buffer_end = buffer_end;
 		}
