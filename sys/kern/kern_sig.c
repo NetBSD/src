@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.144 2003/07/17 18:16:58 fvdl Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.145 2003/07/21 22:57:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.144 2003/07/17 18:16:58 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.145 2003/07/21 22:57:46 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -528,10 +528,8 @@ sigsuspend1(struct proc *p, const sigset_t *ss)
 		(void) spl0();		/* XXXSMP */
 	}
 
-
-
 	while (tsleep((caddr_t) ps, PPAUSE|PCATCH, "pause", 0) == 0)
-		;	/* void  */
+		/* void */;
 	
 	/* always return EINTR rather than ERESTART... */
 	return (EINTR);
@@ -953,7 +951,6 @@ psignal1(struct proc *p, int signum,
 				goto out;
 			}
 
-
 			/*
 			 * When a sleeping process receives a stop
 			 * signal, process immediately if possible.
@@ -977,7 +974,6 @@ psignal1(struct proc *p, int signum,
 				proc_stop(p);	/* XXXSMP: recurse? */
 				goto out;
 			}
-
 
 			if (l == NULL) {
 				/*
@@ -1109,8 +1105,6 @@ psendsig(struct lwp *l, int sig, sigset_t *mask, u_long code)
 
 		sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li, 
 			    sizeof(siginfo_t), si);
-
-		
 		l->l_flag |= s;
 		return;
 	}
@@ -1166,7 +1160,6 @@ issignal(struct lwp *l)
 	int		dolock = (l->l_flag & L_SINTR) == 0, locked = !dolock;
 	sigset_t	ss;
 
-	
 	if (l->l_flag & L_SA) {
 		struct sadata *sa = p->p_sa;	
 
@@ -1174,7 +1167,6 @@ issignal(struct lwp *l)
 		if (sa->sa_vp != l)
 			return 0;
 	}
-
 
 	if (p->p_stat == SSTOP) {
 		/*
@@ -1358,8 +1350,6 @@ proc_stop(struct proc *p)
 
 	SCHED_ASSERT_LOCKED();
 
-
-
 	/* XXX lock process LWP state */
 	p->p_stat = SSTOP;
 	p->p_flag &= ~P_WAITED;
@@ -1423,7 +1413,6 @@ else if (l->l_stat == LSRUN) {
 	}
 	/* XXX unlock process LWP state */
 
-	    
 	sched_wakeup((caddr_t)p->p_pptr);
 }
 
@@ -1631,7 +1620,6 @@ lwp_coredump_hook(struct lwp *l, void *arg)
 void
 sigexit(struct lwp *l, int signum)
 {
-
 	struct proc	*p;
 #if 0
 	struct lwp	*l2;
