@@ -1,5 +1,5 @@
 /*
- *	$Id: ld.h,v 1.11 1994/06/10 15:16:11 pk Exp $
+ *	$Id: ld.h,v 1.12 1994/06/29 11:18:50 pk Exp $
  */
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -368,7 +368,7 @@ typedef struct glosym {
 	int	symbolnum;	/* Symbol index in output symbol table */
 	int	rrs_symbolnum;	/* Symbol index in RRS symbol table */
 
-	struct nlist	*def_nlist;	/* The local symbol that gave this
+	localsymbol_t	*def_lsp;	/* The local symbol that gave this
 					   global symbol its definition */
 
 	char	defined;	/* Definition of this symbol */
@@ -523,6 +523,7 @@ struct file_entry {
 #define E_DYNAMIC		0x20	/* File is a shared object */
 #define E_SCRAPPED		0x40	/* Ignore this file */
 #define E_SYMBOLS_USED		0x80	/* Symbols from this entry were used */
+#define E_SECONDCLASS		0x100	/* Shared object is a subsidiary */
 };
 
 /*

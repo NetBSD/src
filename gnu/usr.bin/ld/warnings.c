@@ -1,5 +1,5 @@
 /*
- * $Id: warnings.c,v 1.12 1994/06/24 13:33:50 pk Exp $
+ * $Id: warnings.c,v 1.13 1994/06/29 11:18:56 pk Exp $
  */
 
 #include <sys/param.h>
@@ -483,6 +483,9 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
 			if (!g->warning)
 				continue;
 
+			if (BIT_SET_P(nlist_bitvector, lsp - start_of_syms))
+				continue;
+
 			/* Mark as being noted by relocation warning pass.  */
 			SET_BIT(nlist_bitvector, lsp - start_of_syms);
 
@@ -649,6 +652,15 @@ warnx("Unexpected multiple definitions of symbol `%s', type %#x\n", g->name, np-
 			else
 				errfmt = "Undefined symbol `%s' referenced";
 			line_number = -1;
+		} else if (g->def_lsp && g->def_lsp->entry != entry &&
+			   !(entry->flags & E_DYNAMIC) &&
+			   g->def_lsp->entry->flags & E_SECONDCLASS) {
+			fprintf(outfile,
+			"%s: Undefined symbol `%s' referenced (use %s ?)\n",
+				entry->filename,
+				g->name,
+				g->def_lsp->entry->local_sym_name);
+			continue;
 		} else if (g->warning) {
 			/*
 			 * There are two cases in which we don't want to do
