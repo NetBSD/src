@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94"; */
-static char *rcsid = "$Id: pstat.c,v 1.4 1994/06/13 15:09:06 cgd Exp $";
+static char *rcsid = "$Id: pstat.c,v 1.5 1994/06/22 05:38:22 chopps Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -148,6 +148,16 @@ struct nlist nl[] = {
 	{ "_com_tty" },
 #define SCCOM	(SNPTY+4)
 	{ "_comcd" },
+#endif
+#ifdef amiga
+#define SSER	(SNPTY + 1)
+	{ "_ser_tty" },
+#define SCSER	(SNPTY + 2)
+	{ "_sercd" },
+#define SITE	(SNPTY + 3)
+	{ "_ite_tty" },
+#define SCITE	(SNPTY + 4)
+	{ "_itecd" },
 #endif
 
 	{ "" }
@@ -749,6 +759,12 @@ ttymode()
 		ttytype_newcf("pc", SPC, SCPC);
 	if (nl[SCCOM].n_type != 0)
 		ttytype_newcf("com", SCOM, SCCOM);
+#endif
+#ifdef amiga
+	if (nl[SCSER].n_type != 0)
+		ttytype_newcf("ser", SSER, SCSER);
+	if (nl[SCITE].n_type != 0)
+		ttytype_newcf("ite", SITE, SCITE);
 #endif
 	if (nl[SNPTY].n_type != 0)
 		ttytype_oldcf("pty", SPTY, SNPTY);
