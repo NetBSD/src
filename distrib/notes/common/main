@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.135 2001/08/03 15:08:46 yamt Exp $
+.\"	$NetBSD: main,v 1.136 2001/08/17 07:04:41 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -265,10 +265,14 @@ For the boot floppy image and bootloader on your hard drive (Open Firmware
 You may need to replace both 9's with your drive's partition number.
 .Pp
 For boot CDs, the command is something like
-.Dq Ic "boot cd:0,OFWBOOT.XCF NETBSD.RAM" .
-You will most likely need to keep
-.Ic OFWBOOT.XCF No and Ic NETBSD.RAM
-capitalized.  You may need to replace
+.Dq Ic "boot cd:,\eofwboot.xcf netbsd.macppc"
+(for Open Firmware 3) or
+.Dq Ic "boot scsi-int/sd@3:0,\eOFWBOOT.XCF NETBSD.MACPPC"
+(for earlier Open Firmware versions).
+You will need to use the correct case for
+.Ic OFWBOOT.XCF No and Ic NETBSD.MACPPC
+depending on how your version of Open Firmware interprets the ISO 
+filesystem.  You may need to replace
 .Ic cd
 with
 .Ic "scsi/sd@3 , scsi-int/sd@3 , scsi-ext/sd@3 , ata/atapi-disk ,"
@@ -277,7 +281,7 @@ or some other device alias.  You should also use the Open Firmware
 command to confirm that the
 .Nx*M
 kernel is called
-.Pa NETBSD.RAM .
+.Pa NETBSD.MACPPC .
 .\}
 .if r_sparc \{\
 .It

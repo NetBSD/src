@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.15 2001/07/05 05:03:02 mbw Exp $
+.\"	$NetBSD: install,v 1.16 2001/08/17 07:04:42 mbw Exp $
 .
 .Ss2 Booting the installer
 .
@@ -174,9 +174,14 @@ becomes
 .Pp
 Another thing to note is that you
 .Em must
-use capital letters when specifying the filename to load.
+use the same case when specifying the filename to load that Open Firmware 
+uses.
 Also, keep in mind what format your CD-R has to be for your version of
-Open Firmware (pure ISO versus hybrid ISO/HFS) before giving up.
+Open Firmware (pure ISO versus hybrid ISO/HFS) before giving up.  The
+official bootable
+.Nx \*V 
+CD-ROM image is magically able to boot all Open Firmware versions.  Don't 
+ask how.
 .Pp
 You may be able to get a directory listing of the files on your CD-ROM
 disk with the following command (where
@@ -189,12 +194,12 @@ If you have subdirectories, you can examine them as well:
 Here are some examples of what you might use to boot from CD-ROM (Apple
 usually sets their CD-ROM drives to SCSI ID 3):
 .Pp
-.Dl 0 > Ic "boot scsi-int/sd@3:0,OFWBOOT.XCF NETBSD.RAM"
-.Dl 0 > Ic "boot scsi/sd@3:0,OFWBOOT.XCF NETBSD.RAM"
-.Dl 0 > Ic "boot scsi-ext/sd@3:0,OFWBOOT.XCF NETBSD.RAM"
-.Dl 0 > Ic "boot ata/atapi-disk:0,OFWBOOT.XCF NETBSD.RAM"
-.Dl 0 > Ic "boot ide1/disk@0:0,OFWBOOT.XCF NETBSD.RAM"
-.Dl 0 > Ic "boot cd:0,OFWBOOT.XCF NETBSD.RAM"
+.Dl 0 > Ic "boot scsi-int/sd@3:0,OFWBOOT.XCF NETBSD.MACPPC"
+.Dl 0 > Ic "boot scsi/sd@3:0,OFWBOOT.XCF NETBSD.MACPPC"
+.Dl 0 > Ic "boot scsi-ext/sd@3:0,OFWBOOT.XCF NETBSD.MACPPC"
+.Dl 0 > Ic "boot ata/atapi-disk:0,OFWBOOT.XCF NETBSD.MACPPC"
+.Dl 0 > Ic "boot ide1/disk@0:0,OFWBOOT.XCF NETBSD.MACPPC"
+.Dl 0 > Ic "boot cd:0,ofwboot.xcf netbsd.macppc"
 .It
 .Em "IDE or SCSI drive with a"
 .Sq "partition zero"
@@ -239,6 +244,10 @@ that has your bootloader.  If you're running
 you can run the following command to print out the partition table on your
 drive:
 .Dl % Ic "sudo pdisk /dev/disk0 -dump"
+.Pp
+If you are confused by the various partition numbering schemes, see the 
+explanation in the FAQ
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#partitions
 .Pp
 You may be able to get a directory listing of the files on your hard
 drive with the following command (where
