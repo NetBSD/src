@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.58 1997/05/30 21:36:26 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.59 1997/05/31 22:38:59 cjs Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
-
-.include <bsd.own.mk>	# for BUILDDIR
 
 # sys sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
@@ -68,7 +66,7 @@ OBJS+=	${ASM} ${NOERR} ${PSEUDONOERR}
 LOBJS+=	${LASM} ${LNOERR} ${LPSEUDONOERR}
 
 ${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    ${BUILDDIR}/usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
 	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
@@ -76,28 +74,28 @@ ${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@rm -f ${.TARGET}.o
 
 ${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    ${BUILDDIR}/usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
 	    ${CPP} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
 ${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    ${BUILDDIR}/usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
 	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${LASM} ${LNOERR}: ${BUILDDIR}/usr/include/sys/syscall.h \
+${LASM} ${LNOERR}: ${DESTDIR}/usr/include/sys/syscall.h \
     ${.CURDIR}/sys/makelintstub
 	@echo creating ${.TARGET}
 	@${.CURDIR}/sys/makelintstub ${.PREFIX} | \
 	    ${LINT} -z ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} -
 
 ${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    ${BUILDDIR}/usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
 	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
@@ -105,14 +103,14 @@ ${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@rm -f ${.TARGET}.o
 
 ${SNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    ${BUILDDIR}/usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
 	    ${CPP} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
 ${NOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    ${BUILDDIR}/usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
 	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
@@ -120,7 +118,7 @@ ${NOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@rm -f ${.TARGET}.o
 
 ${PPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    ${BUILDDIR}/usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
@@ -129,7 +127,7 @@ ${PPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@rm -f ${.TARGET}.o
 
 ${SPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    ${BUILDDIR}/usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
@@ -138,7 +136,7 @@ ${SPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 
 
 ${PSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    ${BUILDDIR}/usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
@@ -146,7 +144,7 @@ ${PSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${LPSEUDONOERR}: ${BUILDDIR}/usr/include/sys/syscall.h \
+${LPSEUDONOERR}: ${DESTDIR}/usr/include/sys/syscall.h \
     ${.CURDIR}/sys/makelintstub
 	@echo creating ${.TARGET}
 	@${.CURDIR}/sys/makelintstub ${.PREFIX:S/_//} ${.PREFIX} | \
