@@ -1,6 +1,6 @@
 /* Configuration for an i386 running 386BSD as the target machine. 
 
-	$Id: tm.h,v 1.2 1993/10/03 13:57:57 pk Exp $
+	$Id: tm.h,v 1.3 1993/11/26 07:02:08 pk Exp $
 */
 
 /* This is tested by i386gas.h.  */
@@ -123,7 +123,6 @@
    Some svr4 assemblers need to also have something extra said about the
    function's return value.  We allow for that here.  */
 
-#ifdef notyet
 #define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)			\
   do {									\
     fprintf (FILE, "\t%s\t ", TYPE_ASM_OP);				\
@@ -172,17 +171,5 @@
 	assemble_name (FILE, (FNAME));					\
 	putc ('\n', FILE);						\
       }									\
-  } while (0)
-#endif
-
-#define ASM_DECLARE_OBJECT_NAME(FILE, NAME, DECL)			\
-  do {									\
-    if (!flag_inhibit_size_directive)					\
-      {									\
-	fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);				\
-	assemble_name (FILE, NAME);					\
-	fprintf (FILE, ",%d\n",  int_size_in_bytes (TREE_TYPE (decl)));	\
-      }									\
-    ASM_OUTPUT_LABEL(FILE, NAME);					\
   } while (0)
 
