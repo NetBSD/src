@@ -1,4 +1,4 @@
-/*	$NetBSD: users.c,v 1.7 1998/02/03 04:19:15 perry Exp $	*/
+/*	$NetBSD: users.c,v 1.8 1998/10/14 00:58:00 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)users.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: users.c,v 1.7 1998/02/03 04:19:15 perry Exp $");
+__RCSID("$NetBSD: users.c,v 1.8 1998/10/14 00:58:00 wsanchez Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: users.c,v 1.7 1998/02/03 04:19:15 perry Exp $");
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <unistd.h>
 #include <utmp.h>
