@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos.c,v 1.4 2002/06/15 00:10:18 matt Exp $	*/
+/*	$NetBSD: n_sincos.c,v 1.5 2002/06/23 21:54:37 matt Exp $	*/
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -71,6 +71,12 @@ sin(double x)
 	return x+x*sin__S(x*x);
 }
 
+float
+sinf(float x)
+{
+	return sin(x);
+}
+
 double
 cos(double x)
 {
@@ -99,4 +105,10 @@ cos(double x)
 	z *= __half;
 	a = (z >= thresh ? __half-((z-__half)-c) : __one-(z-c));
 	return copysign(a,s);
+}
+
+float
+cosf(float x)
+{
+	return cos(x);
 }
