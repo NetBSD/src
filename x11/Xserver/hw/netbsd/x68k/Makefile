@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/03/14 20:11:24 wiz Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -8,7 +8,7 @@ LIB=	x68k
 SRCS=	x68kInit.c x68kConfig.c x68kIo.c x68kMouse.c x68kKbd.c x68kKeyMap.c \
 	x68kFb.c x68kGraph.c x68kText.c x68kInEx.c
 
-# trim fonts / extentions / XSERVERINCDIR if possible
+# trim fonts / extensions / XSERVERINCDIR if possible
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/x68k \
 		-I${X11SRCDIR.xc}/programs/Xserver \
 		-I${X11SRCDIR.xc}/programs/Xserver/mi \
