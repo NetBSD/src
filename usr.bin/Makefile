@@ -1,15 +1,15 @@
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.45 1994/09/21 03:19:59 glass Exp $
+#	$Id: Makefile,v 1.46 1994/11/14 20:19:19 jtc Exp $
 
 SUBDIR=	apply apropos ar asa at biff basename cal calendar cap_mkdb \
-	checknr chpass cksum cmp col colcrt colrm column comm compress \
-	crontab ctags cut dirname du \
+	checknr chflags chpass cksum cmp col colcrt colrm column comm \
+	compress crontab ctags cut dirname du \
 	env error expand false file find finger fmt fold fpr from \
 	fsplit fstat ftp gencat getconf getopt gprof head hexdump id indent \
-	ipcrm ipcs join kdump ktrace last lastcomm leave lex locate lock \
-	logger login logname look lorder m4 machine mail make man mesg mkdep \
-	mkfifo mkstr modstat more msgs netstat newsyslog nfsstat nice nm \
-	nohup pagesize passwd paste patch pr printenv printf quota ranlib \
+	ipcrm ipcs join jot kdump ktrace lam last lastcomm leave lex locate \
+	lock logger login logname look lorder m4 machine mail make man mesg \
+	mkdep mkfifo mkstr modstat more msgs netstat newsyslog nfsstat nice \
+	nm nohup pagesize passwd paste patch pr printenv printf quota ranlib \
 	rdist renice rev rlogin rpcgen rpcinfo \
 	rsh rup ruptime rusers rwall rwho \
 	script sed shar showmount size skey skeyinit soelim split strings \
