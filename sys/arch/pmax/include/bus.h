@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 1998/06/03 04:38:41 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.6.4.1 1999/01/22 04:13:49 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -639,7 +639,7 @@ int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    vm_offset_t low, vm_offset_t high));
+	    vaddr_t low, vaddr_t high));
 
 extern struct pmax_bus_dma_tag pmax_default_bus_dma_tag;
 #endif /* _PMAX_BUS_DMA_PRIVATE */
