@@ -1,4 +1,4 @@
-.\" $NetBSD: cpio.1,v 1.2 2002/10/12 22:36:01 wiz Exp $
+.\" $NetBSD: cpio.1,v 1.3 2002/10/16 21:47:13 christos Exp $
 .\"
 .\" Copyright (c) 1997 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -66,20 +66,23 @@ The
 .Nm
 command copies files to and from a
 .Nm
-archive.
+archive. If the archive is of the form: 
+.Ar [[user@]host:]file
+then the archive will be processed using
+.Xr rmt 8 .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl o
+.It Fl o -create
 Create an archive.
 Reads the list of files to store in the
 archive from standard input, and writes the archive on standard
 output.
 .Bl -tag -width Ds
-.It Fl a
+.It Fl a -reset-access-time
 Reset the access times on files that have been copied to the
 archive.
-.It Fl A
+.It Fl A -append
 Append to the specified archive.
 .It Fl B
 Set block size of output to 5120 bytes.
@@ -129,7 +132,7 @@ Compress archive using
 .Xr compress 1
 format.
 .El
-.It Fl i
+.It Fl i -extract
 Restore files from an archive.
 Reads the archive file from
 standard input and extracts files matching the
@@ -147,20 +150,20 @@ Expect the archive headers to be in ASCII format.
 .It Fl C Ar bytes
 Read archive written with a block size of
 .Ar bytes .
-.It Fl d
+.It Fl d -make-directories
 Create any intermediate directories as needed during
 restore.
-.It Fl E Ar file
+.It Fl E Ar file Fl -pattern-file Ar file
 Read list of file name patterns to extract or list from
 .Ar file .
-.It Fl f
+.It Fl f -nonmathing
 Restore all files except those matching the
 .Ar patterns
 given on the command line.
-.It Fl F Ar archive
+.It Fl F Ar archive Fl -file Ar archive
 .It Fl I Ar archive
 Use the specified file as the input for the archive.
-.It Fl H Ar format
+.It Fl H Ar format Fl -format Ar format
 Read an archive of the specified format.
 Recognized formats are:
 .Pp
@@ -184,19 +187,19 @@ POSIX ustar format.
 .El
 .It Fl m
 Restore modification times on files.
-.It Fl r
+.It Fl r -rename
 Rename restored files interactively.
 .It Fl s
 Swap bytes after reading data from the archive.
-.It Fl S
+.It Fl S -swap-halfwords
 Swap words after reading data from the archive.
-.It Fl t
+.It Fl t -list
 Only list the contents of the archive, no files or
 directories will be created.
-.It Fl u
+.It Fl u -unconditional
 Overwrite files even when the file in the archive is
 older than the one that will be overwritten.
-.It Fl v
+.It Fl v -verbose
 Be verbose about operations.
 List filenames as they are copied in from the archive.
 .It Fl z
@@ -212,7 +215,7 @@ Process old-style
 .Nm
 format archives.
 .El
-.It Fl p
+.It Fl p -pass-through
 Copy files from one location to another in a single pass.
 The list of files to copy are read from standard input and
 written out to a directory relative to the specified
@@ -224,12 +227,12 @@ Reset the access times on files that have been copied.
 .It Fl d
 Create any intermediate directories as needed to write
 the files at the new location.
-.It Fl l
+.It Fl l -link
 When possible, link files rather than creating an
 extra copy.
-.It Fl L
+.It Fl L -dereference
 Follow symbolic links.
-.It Fl m
+.It Fl m -preserve-modification-time
 Restore modification times on files.
 .It Fl u
 Overwrite files even when the original file being copied is
@@ -237,6 +240,13 @@ older than the one that will be overwritten.
 .It Fl v
 Be verbose about operations.
 List filenames as they are copied.
+.It Fl -force-local
+Do not interpret filenames that contain a `:' as remote files.
+.It Fl -insecure
+Normally
+.Nm
+ignores filenames that contain `..' as a path component. With this option,
+files that contain `..' can be processed.
 .El
 .El
 .Sh ERRORS
