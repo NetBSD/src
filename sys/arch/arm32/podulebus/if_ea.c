@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.14 1997/03/19 02:45:06 mark Exp $ */
+/* $NetBSD: if_ea.c,v 1.15 1997/07/31 00:13:18 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -1261,12 +1261,10 @@ eagetpackets(sc)
 		if (status & 0x0f) {
 			++ifp->if_ierrors;
 			printf("rx packet error (%02x) - dropping packet\n", status & 0x0f);
-/*			sc->sc_config2 |= EA_CFG2_OUTPUT;
+			sc->sc_config2 |= EA_CFG2_OUTPUT;
 			WriteShort(iobase + EA_8005_CONFIG2, sc->sc_config2);
 			ea_reinit(sc);
-			return; */
-			addr = ptr;
-			continue;
+			return;
 		}
 
 /* Is the packet too big ? - this will probably be trapped above as a receive error */
@@ -1278,8 +1276,6 @@ eagetpackets(sc)
 			WriteShort(iobase + EA_8005_CONFIG2, sc->sc_config2);
 			ea_reinit(sc);
 			return;
-			addr = ptr;
-			continue;
 		}
 
 		ea_readbuf(sc, sc->sc_pktbuf, addr + 4, len);
