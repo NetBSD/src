@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.19 1997/09/02 13:18:16 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.20 1997/09/13 10:01:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.19 1997/09/02 13:18:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.20 1997/09/13 10:01:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,26 +146,40 @@ machine_check(framep, vector, param)
 
 	mces = alpha_pal_rdmces();
 
-	/* If not a machine check, we have no clue ho we got here. */
-	if ((mces & ALPHA_MCES_MIP) == 0) {
+	/* Make sure it's an error we know about. */
+	if ((mces & (ALPHA_MCES_MIP|ALPHA_MCES_SCE|ALPHA_MCES_PCE)) == 0) {
 		type = "fatal machine check or error (unknown type)";
 		goto fatal;
 	}
 
-	/* If we weren't expecting it, then we punt. */
-	if (!mc_expected) {
-		type = "unexpected machine check";
-		goto fatal;
+	/* Machine checks. */
+	if (mces & ALPHA_MCES_MIP) {
+		/* If we weren't expecting it, then we punt. */
+		if (!mc_expected) {
+			type = "unexpected machine check";
+			goto fatal;
+		}
+
+		mc_expected = 0;
+		mc_received = 1;
 	}
 
-	mc_expected = 0;
-	mc_received = 1;
+	/* System correctable errors. */
+	if (mces & ALPHA_MCES_SCE)
+		printf("Warning: received system correctable error.\n");
+
+	/* Processor correctable errors. */
+	if (mces & ALPHA_MCES_PCE)
+		printf("Warning: received processor correctable error.\n"); 
 
 	/* Clear pending machine checks and correctable errors */
 	alpha_pal_wrmces(mces);
 	return;
 
 fatal:
+	/* Clear pending machine checks and correctable errors */
+	alpha_pal_wrmces(mces);
+
 	printf("\n");
 	printf("%s:\n", type);
 	printf("\n");
