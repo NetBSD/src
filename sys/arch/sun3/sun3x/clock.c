@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 1997/01/25 21:46:19 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 1997/01/26 06:17:07 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -140,7 +140,7 @@ set_clk_mode(on, off, enable)
 	register int s;
 
 	/* If we don't have this, we must not have touched it! */
-	if (!clock_va)
+	if (!interrupt_reg)
 		return;
 
 	s = getsr();
