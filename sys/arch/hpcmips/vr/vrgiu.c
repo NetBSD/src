@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.4 1999/12/23 06:26:10 takemura Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.5 2000/01/27 06:23:05 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -154,11 +154,14 @@ vrgiu_attach(parent, self, aux)
 #ifdef VRGIUDEBUG
 	/* Display port status (Input/Output) for debugging */
 	if (vrgiu_debug & DEBUG_IO) {
-u_int32_t preg[2];
+		u_int32_t preg[2];
+
 		printf("I/O setting:                                ");
 		vrgiu_dump_iosetting(sc);
 		printf("\n");
 
+		preg[0] = vrgiu_regread_4(sc, GIUPIOD_REG);
+		preg[1] = vrgiu_regread_4(sc, GIUPODAT_REG);
 		printf("       data:");
 		bitdisp64(preg);
 	}
