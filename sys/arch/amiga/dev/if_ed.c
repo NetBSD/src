@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.31 1999/03/25 23:10:13 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.31.2.1 2000/02/12 21:45:55 he Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -659,9 +659,11 @@ loop:
 			++ifp->if_ipackets;
 		} else {
 			/* Really BAD.  The ring pointers are corrupted. */
+#ifdef DEBUG_AMIGA_IF_ED
 			log(LOG_ERR,
 			    "%s: NIC memory corrupt - invalid packet length %d\n",
 			    sc->sc_dev.dv_xname, len);
+#endif
 			++ifp->if_ierrors;
 			ed_reset(sc);
 			return;
