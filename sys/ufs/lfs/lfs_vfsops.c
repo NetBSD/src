@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.19 1998/06/08 04:27:51 scottr Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.20 1998/06/09 07:46:33 scottr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -35,7 +35,9 @@
  *	@(#)lfs_vfsops.c	8.20 (Berkeley) 6/10/95
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_quota.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
