@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.39 2001/01/18 06:50:12 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.40 2001/02/07 08:59:48 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.107 2000/10/06 04:58:30 itojun Exp $	*/
 
 /*
@@ -846,6 +846,9 @@ in6_purgeaddr(ifa, ifp)
 	struct ifnet *ifp;
 {
 	struct in6_ifaddr *oia, *ia = (void *) ifa;
+
+	/* stop DAD processing */
+	nd6_dad_stop(ifa);
 
 	in6_ifscrub(ifp, ia);
 
