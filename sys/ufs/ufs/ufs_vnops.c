@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.28 1997/06/30 20:16:31 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.29 1997/10/03 16:45:49 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1495,7 +1495,11 @@ ufs_readlink(v)
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
-	int isize;
+	int isize, error;
+
+	error = VOP_ACCESS(vp, VREAD, ap->a_cred, ap->a_uio->uio_procp);
+	if (error != 0)
+		return (error);
 
 	isize = ip->i_ffs_size;
 	if (isize < vp->v_mount->mnt_maxsymlinklen ||
