@@ -1,4 +1,4 @@
-/*	$NetBSD: turbochannel.h,v 1.5 1995/03/28 18:19:35 jtc Exp $	*/
+/*	$NetBSD: turbochannel.h,v 1.6 1995/08/04 00:16:01 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -133,4 +133,7 @@ typedef struct {
 extern	tc_option_t	tc_slot_info[];
 
 extern	void (*tc_slot_hand_fill) __P((tc_option_t *));
+extern	void	(*tc_enable_interrupt)  __P ((u_int slotno,
+					      void (*handler)(int),
+					      int unit, int onoff)); 
 #endif /* _KERNEL */
