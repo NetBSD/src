@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)test.c	5.4 (Berkeley) 2/12/93";*/
-static char *rcsid = "$Id: test.c,v 1.11 1994/04/10 05:37:11 cgd Exp $";
+static char *rcsid = "$Id: test.c,v 1.12 1994/06/29 22:10:16 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -136,12 +136,6 @@ main(argc, argv)
 		return (1);
 		break;
 	case 1:				/* % test arg */
-		/* make sure it's not e.g. 'test -f' */
-		if (argv[1] != 0 &&
-		    (lookup_op(argv[1], unary_op) != -1 ||
-		    lookup_op(argv[1], binary_op) != -1 ||
-		    lookup_op(argv[1], andor_op) != -1))
-			syntax();
 		/* MIPS machine returns NULL of '[ ]' is called. */
 		return (argv[1] == 0 || *argv[1] == '\0') ? 1 : 0;
 		break;
