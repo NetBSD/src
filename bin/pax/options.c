@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.15 1999/01/20 14:45:09 mrg Exp $	*/
+/*	$NetBSD: options.c,v 1.16 1999/02/02 23:31:52 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.15 1999/01/20 14:45:09 mrg Exp $");
+__RCSID("$NetBSD: options.c,v 1.16 1999/02/02 23:31:52 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -670,8 +670,9 @@ tar_options(argc, argv)
 			pmtime = 0;
 			break;
 		case 'o':
-			if (opt_add("write_opt=nodir") < 0)
-				tar_usage();
+			/* Change output type to V7 tar. */
+			if (act == ARCHIVE)
+				frmt = &(fsub[F_TAR]);
 			break;
 		case 'p':
 			/*
@@ -783,12 +784,6 @@ tar_options(argc, argv)
 	}
 	argc -= optind;
 	argv += optind;
-
-	/*
-	 * if we are writing (ARCHIVE) specify tar, otherwise run like pax
-	 */
-	if (act == ARCHIVE)
-		frmt = &(fsub[F_TAR]);
 
 	/*
 	 * process the args as they are interpreted by the operation mode
