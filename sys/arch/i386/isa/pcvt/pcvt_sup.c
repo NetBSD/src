@@ -874,6 +874,7 @@ vgapaletteio(unsigned idx, struct rgb *val, int writeit)
 void
 async_update(int arg)
 {
+	static int lastadr = 0;
 	static int lastpos = 0;
 	static int counter = PCVT_UPDATESLOW;
 
@@ -908,14 +909,25 @@ async_update(int arg)
 	/* this takes place on EVERY virtual screen (if not in X mode etc...)*/
 	/*-------------------------------------------------------------------*/
 
-	if ( cursor_pos_valid &&
-	    (lastpos != (vsp->Crtat + vsp->cur_offset - Crtat)))
+	if (cursor_pos_valid)
 	{
-		lastpos = vsp->Crtat + vsp->cur_offset - Crtat;
-	 	outb(addr_6845, CRTC_CURSORH);	/* high register */
-		outb(addr_6845+1, ((lastpos) >> 8));
-		outb(addr_6845, CRTC_CURSORL);	/* low register */
-		outb(addr_6845+1, (lastpos));
+		if (lastadr != (vsp->Crtat - Crtat))
+		{
+			lastadr = vsp->Crtat - Crtat;
+		 	outb(addr_6845, CRTC_STARTADRH);	/* high register */
+			outb(addr_6845+1, ((lastadr) >> 8));
+			outb(addr_6845, CRTC_STARTADRL);	/* low register */
+			outb(addr_6845+1, (lastadr));
+		}
+
+		if (lastpos != (lastadr + vsp->cur_offset))
+		{
+			lastpos = lastadr + vsp->cur_offset;
+		 	outb(addr_6845, CRTC_CURSORH);	/* high register */
+			outb(addr_6845+1, ((lastpos) >> 8));
+			outb(addr_6845, CRTC_CURSORL);	/* low register */
+			outb(addr_6845+1, (lastpos));
+		}
 	}
 
 	if (arg == UPDATE_KERN)		/* Magic arg: for kernel printfs */
