@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.3 1998/01/09 08:03:41 perry Exp $	*/
+/*	$NetBSD: hunt.h,v 1.4 1998/09/11 13:46:30 hubertf Exp $	*/
 
 /*
  *  Hunt
@@ -260,7 +260,6 @@ typedef struct sockaddr_in	SOCKET;
 # else
 typedef struct sockaddr_un	SOCKET;
 # endif
-typedef struct sgttyb		TTYB;
 
 struct ident_def {
 	char	i_name[NAMELEN];
