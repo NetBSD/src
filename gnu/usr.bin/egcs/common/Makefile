@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2001/12/12 01:49:04 tv Exp $
+#	$NetBSD: Makefile,v 1.32 2002/03/24 22:24:41 bjh21 Exp $
 
 NOLINKLIB=# defined
 NOMAN=	# defined
@@ -18,8 +18,6 @@ GCC_ARCH?=	sh
 .elif (${MACHINE_ARCH} == "sparc64")
 GCC_ARCH?=	sparc
 # GCC uses "arm", not "armv2" internally.
-.elif (${MACHINE_ARCH} == "arm26")
-GCC_ARCH?=	arm
 .else
 GCC_ARCH?=	${MACHINE_GNU_ARCH}
 .endif
