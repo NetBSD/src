@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.29 2004/04/11 06:00:26 kochi Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.30 2004/04/30 02:44:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.29 2004/04/11 06:00:26 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.30 2004/04/30 02:44:03 christos Exp $");
 
 #include "opt_pcibios.h"
 
@@ -575,12 +575,44 @@ int
 pciintr_irq_release(u_int16_t *pciirq)
 {
 	int i, bit;
+	u_int16_t bios_pciirq;
+	int reg;
 
+#ifdef PCIINTR_DEBUG
+	printf("pciintr_irq_release: fixup pciirq level/edge map 0x%04x\n",
+	    *pciirq);
+#endif
+
+	/* Get bios level/edge setting. */
+	bios_pciirq = 0;
+	for (i = 0, bit = 1; i < 16; i++, bit <<= 1) {
+		(void)pciintr_icu_get_trigger(pciintr_icu_tag,
+		    pciintr_icu_handle, i, &reg);
+		if (reg == IST_LEVEL)
+			bios_pciirq |= bit;
+	}
+
+#ifdef PCIINTR_DEBUG
+	printf("pciintr_irq_release: bios  pciirq level/edge map 0x%04x\n",
+	    bios_pciirq);
+#endif /* PCIINTR_DEBUG */
+
+	/* fixup final level/edge setting. */
+	*pciirq |= bios_pciirq;
 	for (i = 0, bit = 1; i < 16; i++, bit <<= 1) {
 		if ((*pciirq & bit) == 0)
-			(void) pciintr_icu_set_trigger(pciintr_icu_tag,
-			    pciintr_icu_handle, i, IST_EDGE);
+			reg = IST_EDGE;
+		else
+			reg = IST_LEVEL;
+		(void) pciintr_icu_set_trigger(pciintr_icu_tag,
+			    pciintr_icu_handle, i, reg);
+
 	}
+
+#ifdef PCIINTR_DEBUG
+	printf("pciintr_irq_release: final pciirq level/edge map 0x%04x\n",
+	    *pciirq);
+#endif /* PCIINTR_DEBUG */
 
 	return (0);
 }
