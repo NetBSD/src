@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.9 1997/03/12 20:18:19 christos Exp $	*/
+/*	$NetBSD: pppd.h,v 1.10 1997/05/17 22:14:27 christos Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -99,6 +99,7 @@ extern int	lcp_echo_interval; /* Interval between LCP echo-requests */
 extern int	lcp_echo_fails;	/* Tolerance to unanswered echo-requests */
 extern char	our_name[];	/* Our name for authentication purposes */
 extern char	remote_name[];	/* Peer's name for authentication */
+extern int	explicit_remote;/* remote_name specified with remotename opt */
 extern int	usehostname;	/* Use hostname for our_name */
 extern int	disable_defaultip; /* Don't use hostname for default IP adrs */
 extern int	demand;		/* Do dial-on-demand */
@@ -113,6 +114,10 @@ extern struct	bpf_program pass_filter;   /* Filter for pkts to pass */
 extern struct	bpf_program active_filter; /* Filter for link-active pkts */
 #endif
 
+#ifdef MSLANMAN
+extern int	ms_lanman;	/* Nonzero if use LanMan password instead of NT */
+				/* Has meaning only with MS-CHAP challenges */
+#endif
 
 /*
  * Values for phase.
@@ -174,9 +179,9 @@ extern struct protent *protocols[];
 void die __P((int));		/* Cleanup and exit */
 void quit __P((void));		/* like die(1) */
 void novm __P((char *));	/* Say we ran out of memory, and die */
-void timeout __P((void (*func)(caddr_t), caddr_t arg, int t));
+void timeout __P((void (*func)(void *), void *arg, int t));
 				/* Call func(arg) after t seconds */
-void untimeout __P((void (*func)(caddr_t), caddr_t arg));
+void untimeout __P((void (*func)(void *), void *arg));
 				/* Cancel call to func(arg) */
 int run_program __P((char *prog, char **args, int must_exist));
 				/* Run program prog with args in child */
@@ -184,7 +189,7 @@ void demuxprotrej __P((int, int));
 				/* Demultiplex a Protocol-Reject */
 void format_packet __P((u_char *, int, void (*) (void *, char *, ...),
 		void *));	/* Format a packet in human-readable form */
-void log_packet __P((u_char *, int, char *));
+void log_packet __P((u_char *, int, char *, int));
 				/* Format a packet and log it with syslog */
 void print_string __P((char *, int,  void (*) (void *, char *, ...),
 		void *));	/* Format a string for output */
