@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.249 2003/10/30 08:16:41 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.250 2003/11/05 02:53:38 uwe Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -616,6 +616,7 @@
 ./usr/share/man/cat4/dreamcast
 ./usr/share/man/cat4/evbarm
 ./usr/share/man/cat4/hp300
+./usr/share/man/cat4/hpcsh
 ./usr/share/man/cat4/i386
 ./usr/share/man/cat4/mac68k
 ./usr/share/man/cat4/macppc
@@ -717,6 +718,7 @@
 ./usr/share/man/man4/dreamcast
 ./usr/share/man/man4/evbarm
 ./usr/share/man/man4/hp300
+./usr/share/man/man4/hpcsh
 ./usr/share/man/man4/i386
 ./usr/share/man/man4/mac68k
 ./usr/share/man/man4/macppc
