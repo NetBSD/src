@@ -1,4 +1,4 @@
-/*	$NetBSD: fpr.c,v 1.4 1997/10/18 15:05:47 lukem Exp $	*/
+/*	$NetBSD: fpr.c,v 1.4.14.1 2002/05/30 20:43:15 tv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fpr.c,v 1.4 1997/10/18 15:05:47 lukem Exp $");
+__RCSID("$NetBSD: fpr.c,v 1.4.14.1 2002/05/30 20:43:15 tv Exp $");
 #endif				/* not lint */
 
 #include <err.h>
@@ -87,7 +87,7 @@ int     maxpos;
 int     maxcol;
 
 void	flush __P((void));
-void	gettext __P((void));
+void	get_text __P((void));
 void	init __P((void));
 int	main __P((int, char **));
 void	nospace __P((void));
@@ -134,7 +134,7 @@ main(argc, argv)
 					}
 
 	while (!ateof) {
-		gettext();
+		get_text();
 		ch = getchar();
 		if (ch == EOF) {
 			flush();
@@ -210,7 +210,7 @@ init()
 }
 
 void
-gettext()
+get_text()
 {
 	int i;
 	char ateol;
