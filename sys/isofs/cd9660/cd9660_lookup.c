@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.21 1999/04/07 21:37:11 tron Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.22 1999/07/08 01:06:00 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -128,9 +128,12 @@ cd9660_lookup(v)
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	struct ucred *cred = cnp->cn_cred;
-	int flags = cnp->cn_flags;
+	int flags;
 	int nameiop = cnp->cn_nameiop;
 	
+	cnp->cn_flags &= ~PDIRUNLOCK;
+	flags = cnp->cn_flags;
+
 	bp = NULL;
 	*vpp = NULL;
 	vdp = ap->a_dvp;
@@ -179,13 +182,19 @@ cd9660_lookup(v)
 			error = 0;
 		} else if (flags & ISDOTDOT) {
 			VOP_UNLOCK(pdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
 			error = vget(vdp, LK_EXCLUSIVE);
-			if (!error && lockparent && (flags & ISLASTCN))
+			if (!error && lockparent && (flags & ISLASTCN)) {
 				error = vn_lock(pdp, LK_EXCLUSIVE);
+				if (error == 0)
+					cnp->cn_flags &= ~PDIRUNLOCK;
+			}
 		} else {
 			error = vget(vdp, LK_EXCLUSIVE);
-			if (!lockparent || error || !(flags & ISLASTCN))
+			if (!lockparent || error || !(flags & ISLASTCN)) {
 				VOP_UNLOCK(pdp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
 		}
 		/*
 		 * Check that the capability number did not change
@@ -195,11 +204,14 @@ cd9660_lookup(v)
 			if (vpid == vdp->v_id)
 				return (0);
 			vput(vdp);
-			if (lockparent && pdp != vdp && (flags & ISLASTCN))
+			if (lockparent && pdp != vdp && (flags & ISLASTCN)) {
 				VOP_UNLOCK(pdp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
 		}
 		if ((error = vn_lock(pdp, LK_EXCLUSIVE)) != 0)
 			return (error);
+		cnp->cn_flags &= ~PDIRUNLOCK;
 		vdp = pdp;
 		dp = VTOI(pdp);
 		*vpp = NULL;
@@ -422,11 +434,13 @@ found:
 	 */
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
+		cnp->cn_flags |= PDIRUNLOCK;
 		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
 					     dp->i_ino != ino, ep);
 		brelse(bp);
 		if (error) {
-			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
+			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
+				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN) &&
@@ -434,6 +448,7 @@ found:
 			vput(tdp);
 			return (error);
 		}
+		cnp->cn_flags &= ~PDIRUNLOCK;
 		*vpp = tdp;
 	} else if (dp->i_number == dp->i_ino) {
 		brelse(bp);
@@ -445,8 +460,10 @@ found:
 		brelse(bp);
 		if (error)
 			return (error);
-		if (!lockparent || !(flags & ISLASTCN))
+		if (!lockparent || !(flags & ISLASTCN)) {
 			VOP_UNLOCK(pdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		*vpp = tdp;
 	}
 	

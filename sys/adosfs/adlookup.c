@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.22 1998/08/09 20:20:11 perry Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.23 1999/07/08 01:05:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -88,6 +88,7 @@ adosfs_lookup(v)
 	*vpp = NULL;
 	ucp = cnp->cn_cred;
 	nameiop = cnp->cn_nameiop;
+	cnp->cn_flags &= ~PDIRUNLOCK;
 	flags = cnp->cn_flags;
 	p = cnp->cn_proc;
 	last = flags & ISLASTCN;
@@ -121,25 +122,33 @@ adosfs_lookup(v)
 			error = 0;
 		} else if (flags & ISDOTDOT) {
 			VOP_UNLOCK(vdp, 0);	/* race */
+			cnp->cn_flags |= PDIRUNLOCK;
 			error = vget(*vpp, LK_EXCLUSIVE);
-			if (error == 0 && lockp && last)
-				error = vn_lock(vdp, LK_EXCLUSIVE);
+			if (error == 0 && lockp && last) {
+				if ((error = vn_lock(vdp, LK_EXCLUSIVE)))
+					cnp->cn_flags &= ~PDIRUNLOCK;
+			}
 		} else {
 			error = vget(*vpp, LK_EXCLUSIVE);
 			/* if (lockp == 0 || error || last) */
-			if (lockp == 0 || error || last == 0)
+			if (lockp == 0 || error || last == 0) {
 				VOP_UNLOCK(vdp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
 		}
 		if (error == 0) {
 			if (vpid == vdp->v_id)
 				return (0);
 			vput(*vpp);
-			if (lockp && vdp != *vpp && last)
+			if (lockp && vdp != *vpp && last) {
 				VOP_UNLOCK(vdp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
 		}
 		*vpp = NULL;
 		if ((error = vn_lock(vdp, LK_EXCLUSIVE)) != 0)
 			return (error);
+		cnp->cn_flags &= ~PDIRUNLOCK;
 	}
 
 	/*
@@ -173,12 +182,18 @@ adosfs_lookup(v)
 		 * 
 		 */
 		VOP_UNLOCK(vdp, 0); /* race */
+		cnp->cn_flags |= PDIRUNLOCK;
 		if ((error = VFS_VGET(vdp->v_mount, 
-				      (ino_t)adp->pblock, vpp)) != 0)
-			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
-		else if (last && lockp &&
-		    (error = vn_lock(vdp, LK_EXCLUSIVE)))
+				      (ino_t)adp->pblock, vpp)) != 0) {
+			if (vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY) == 0)
+				cnp->cn_flags &= ~PDIRUNLOCK;
+		} else if (last && lockp ) {
+		    if ((error = vn_lock(vdp, LK_EXCLUSIVE))) {
 			vput(*vpp);
+		    } else {
+			cnp->cn_flags &= ~PDIRUNLOCK;
+		    }
+		}
 		if (error) {
 			*vpp = NULL;
 			return (error);
@@ -239,8 +254,10 @@ adosfs_lookup(v)
 #endif
 			return (error);
 		}
-		if (lockp == 0)
+		if (lockp == 0) {
 			VOP_UNLOCK(vdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		cnp->cn_nameiop |= SAVENAME;
 #ifdef ADOSFS_DIAGNOSTIC
 		printf("EJUSTRETURN)");
@@ -277,8 +294,10 @@ found:
 	}
 	if (vdp == *vpp)
 		VREF(vdp);
-	else if (lockp == 0 || last == 0)
+	else if (lockp == 0 || last == 0) {
 		VOP_UNLOCK(vdp, 0);
+		cnp->cn_flags |= PDIRUNLOCK;
+	}
 found_lockdone:
 	if ((cnp->cn_flags & MAKEENTRY) && nocache == 0)
 		cache_enter(vdp, *vpp, cnp);
