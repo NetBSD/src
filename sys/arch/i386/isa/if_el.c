@@ -9,7 +9,7 @@
 /*
  * 3COM Etherlink 3C501 device driver
  *
- *	$Id: if_el.c,v 1.9 1994/04/07 06:50:46 mycroft Exp $
+ *	$Id: if_el.c,v 1.10 1994/04/08 18:22:24 mycroft Exp $
  */
 
 /*
@@ -497,7 +497,7 @@ elintr(sc)
 	if (stat & EL_AS_RXBUSY) {
 		(void)inb(iobase+EL_RXC);
 		outb(iobase+EL_AC, EL_AC_IRQE | EL_AC_RX);
-		return;
+		return 0;
 	}
 
 	done = 0;
@@ -506,7 +506,7 @@ elintr(sc)
 		if (rxstat & EL_RXS_STALE) {
 			(void)inb(iobase+EL_RXC);
 			outb(iobase+EL_AC, EL_AC_IRQE | EL_AC_RX);
-			return;
+			return 1;
 		}
 
 		/* If there's an overflow, reinit the board. */
@@ -522,7 +522,7 @@ elintr(sc)
 			outb(iobase+EL_RBC, 0);
 			(void)inb(iobase+EL_RXC);
 			outb(iobase+EL_AC, EL_AC_IRQE | EL_AC_RX);
-			return;
+			return 1;
 		}
 
 		/* Incoming packet. */
@@ -544,7 +544,7 @@ elintr(sc)
 			outb(iobase+EL_RBC, 0);
 			(void)inb(iobase+EL_RXC);
 			outb(iobase+EL_AC, EL_AC_IRQE | EL_AC_RX);
-			return;
+			return 1;
 		}
 
 		sc->sc_arpcom.ac_if.if_ipackets++;
@@ -574,7 +574,7 @@ elintr(sc)
 
 	(void)inb(iobase+EL_RXC);
 	outb(iobase+EL_AC, EL_AC_IRQE | EL_AC_RX);
-	return;
+	return 1;
 }
 
 /*
