@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.7 2003/05/26 09:46:47 lukem Exp $
+#	$NetBSD: list,v 1.8 2003/10/21 10:08:40 lukem Exp $
 
 SRCDIRS	bin
 
@@ -123,6 +123,7 @@ PROG	ldd
 SRCDIRS	usr.sbin
 
 PROG	chown		chgrp
+PROG	installboot
 
 SPECIAL ldd	srcdir	usr.bin/ldd/${LDD_CMD}
 
