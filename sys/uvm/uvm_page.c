@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.23 1999/05/25 01:34:13 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.24 1999/07/22 22:58:38 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -858,7 +858,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 
 	if (uvmexp.free < uvmexp.freemin || (uvmexp.free < uvmexp.freetarg &&
 	    uvmexp.inactive < uvmexp.inactarg))
-		thread_wakeup(&uvm.pagedaemon);
+		wakeup(&uvm.pagedaemon);
 
 	/*
 	 * fail if any of these conditions is true:
