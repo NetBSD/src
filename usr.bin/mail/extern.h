@@ -156,7 +156,7 @@ int	 ishead __P((char []));
 int	 isign __P((char *, struct ignoretab []));
 int	 isprefix __P((char *, char *));
 void	 istrcpy __P((char *, char *));
-struct cmd *
+const struct cmd *
 	 lex __P((char []));
 void	 load __P((char *));
 struct var *
