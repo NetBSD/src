@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.9 2003/08/27 00:20:56 thorpej Exp $ */
+/*	$NetBSD: xform.c,v 1.10 2003/08/27 14:23:28 itojun Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.9 2003/08/27 00:20:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.10 2003/08/27 14:23:28 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -549,13 +549,11 @@ rijndael128_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	int err;
 
-	MALLOC(*sched, u_int8_t *, 2 * sizeof(rijndael_ctx), M_CRYPTO_DATA,
+	MALLOC(*sched, u_int8_t *, sizeof(rijndael_ctx), M_CRYPTO_DATA,
 	    M_WAITOK);
 	if (*sched != NULL) {
 		bzero(*sched, 2 * sizeof(rijndael_ctx));
-		rijndael_set_key((rijndael_ctx *) *sched, (u_char *) key, len * 8, 1);
-		rijndael_set_key(((rijndael_ctx *) *sched) + 1, (u_char *) key,
-		    len * 8, 0);
+		rijndael_set_key((rijndael_ctx *) *sched, (u_char *) key, len * 8);
 		err = 0;
 	} else
 		err = ENOMEM;
