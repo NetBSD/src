@@ -93,33 +93,6 @@ struct xmmctx
     unsigned char r4[16 * 14];
   };
 
-void
-nbsd_reg_to_internal(regs)
-     char *regs;
-{
-  supply_gregset((gregset_t *)regs);
-}
-void
-nbsd_fpreg_to_internal(fregs)
-     char *fregs;
-{
-  supply_fpregset((fpregset_t *)fregs);
-}
-
-void
-nbsd_internal_to_reg(regs)
-     char *regs;
-{
-    /* XXX */
-}
-
-void
-nbsd_internal_to_fpreg(regs)
-     char *regs;
-{
-    /* XXX */
-}
-
 #ifdef PT_GETXMMREGS
 static void
 supply_xmmregs (sxmm)
