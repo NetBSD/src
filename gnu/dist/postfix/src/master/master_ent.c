@@ -402,6 +402,8 @@ MASTER_SERV *get_master_ent()
     argv_add(serv->args, command, (char *) 0);
     if (serv->max_proc == 1)
 	argv_add(serv->args, "-l", (char *) 0);
+    if (serv->max_proc == 0)
+	argv_add(serv->args, "-z", (char *) 0);
     if (strcmp(basename(command), name) != 0)
 	argv_add(serv->args, "-n", name, (char *) 0);
     argv_add(serv->args, "-t", transport, (char *) 0);
