@@ -1,4 +1,4 @@
-$NetBSD: IMPLEMENTATION,v 1.1 2000/05/31 03:42:34 matt Exp $
+$NetBSD: IMPLEMENTATION,v 1.2 2001/04/30 09:02:38 jmc Exp $
 
 At time point in time, there are 3 controller drivers planned:
 
@@ -15,28 +15,32 @@ The device heirarchy will look like (using fwohci as the example):
 # The controller driver.  Handles the device-specific 1394 functions.
 #
 fwohci*	at pci? dev ? function ?
-#
-# This is the actual controller-independent device.  It has two
-# parts: a netif (e.g interface fw0) and access via a character
-# device of /dev/fwN.  Access to isochronous service will be via
-# the character device.  Control of the firewire will also be via
-# the character device.
-#
-fw* at fwohci?
-#
 # For each remote 1394 device on the 1394 bus, there will be a corresponding
 # fwnode.  If a 1394 device offers any supported services, they will be
 # a child of corresponding fwnode.  A particular fwnode can be tied to a
 # specific device by specifing its nodeid as its identifier (XXX this
 # is a 64 bit quantity and locators used by config must be 32 bit integers).
 #
-fwnode* at fw? nodeid ?
+fwnode* at fwbus? idhigh ? idlow ?
+#
+# An ip capable interface can be added to the local bus as a service to offer
+# on the bus. (the code will only attach to the local bridge so 2 boxes plugged
+# into each other would only each have fw0, but would see there's another one
+# out there when they probe the config rom's)
+#
+fw* at fwbus?
+#
+# NOTE: All fwbus's, fw's, fwnode's derive their device struct from an
+# ieee1394_softc which allows the various layers to have a standard way to
+# look at values in their children nodes. (updating nodeid's, etc)
 #
 # One of the services that a node might offer is access to SCSI devices via
-# SBP-2.  As decsribed above, this mean a scsibus is a child of fwnode.
+# SBP-2.  As decsribed above, this mean a scsibus is a child of fwnode at some
+# point. (Making it a direct child is bad since that drags in the whole scsi
+# code base even if all a person wants is an fwnode and camera support)
 #
-scsibus* at fwnode?
-
+fwscsi* at fwnode?
+scsibus* at fwscsi?
 
 Note that with advent of highly mobile storage devices, the need for 
 signatures or other mechanisms to identity disks indepentend of their
@@ -47,6 +51,4 @@ fwohci0: interrupting at isa irq 15
 fwohci0: OHCI 1.0
 fw0 at fwohci0: Id 00:d0:f5:20:00:00:5e:84, 400Mb/s, 1024 byte packets max
 fw0: isochronous channels: 16 transmit, 16 receive
-fwnode0 at fw0: Id xx:xx:xx:xx:xx:xx:xx:xx
-
-The first time 
+fwnode0 at fwohci0: Id xx:xx:xx:xx:xx:xx:xx:xx
