@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/05/02 13:16:56 perry Exp $
+#	$NetBSD: Makefile,v 1.5 2000/12/29 02:50:35 itojun Exp $
 
 # Note that the order here is picked to look much like that in the
 # original Makefile.in in order to make it easier to visually compare
@@ -6,10 +6,17 @@
 
 # The first four of these are libraries and have to be built first.
 
+.include <bsd.own.mk>
+
 SUBDIR=	util global dns masterlib master postfix sendmail error \
 	pickup cleanup smtpd local trivial-rewrite qmgr smtp bounce pipe \
 	showq postalias postcat postconf postdrop postkick postlock postlog \
-	postmap postsuper man conf # postfix-script
+	postmap postsuper man # postfix-script
+
+.if ${MKSHARE} != "no" || \
+	make(clean) || make(cleandir) || make(distclean) || make(obj)
+SUBDIR+=conf
+.endif
 
 # We don't want to build postfix-script (at least for now) because
 # we're now treating it as a configuration file, per Wietse Venema's
