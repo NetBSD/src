@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.11 2000/04/13 08:29:56 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.12 2000/06/04 18:29:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 Matthew R. Green.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: swap.c,v 1.11 2000/04/13 08:29:56 mrg Exp $");
+__RCSID("$NetBSD: swap.c,v 1.12 2000/06/04 18:29:14 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -144,7 +144,7 @@ labelswap()
 
 void
 showswap() {
-	int	col, div, i, j, avail, used, xsize, free;
+	int	col, div, i, avail, used, xsize, free;
 	struct	swapent *sep;
 	char	*p;
 
@@ -168,17 +168,15 @@ showswap() {
 		avail += xsize;
 		free += xsize - used;
 		mvwprintw(wnd, i + 1, col, "%9d  ", used / div);
-		for (j = (100 * used / xsize + 1) / 2; j > 0; j--)
-			waddch(wnd, 'X');
 		wclrtoeol(wnd);
+		whline(wnd, 'X', (100 * used / xsize + 1) / 2);
 	}
 	/* do total if necessary */
 	if (nswap > 1) {
 		used = avail - free;
 		mvwprintw(wnd, i + 1, 0, "%-5s%*d%9d  ",
 		    "Total", hlen, avail / div, used / div);
-		for (j = (100 * used / avail + 1) / 2; j > 0; j--)
-			waddch(wnd, 'X');
 		wclrtoeol(wnd);
+		whline(wnd, 'X', (100 * used / avail + 1) / 2);
 	}
 }

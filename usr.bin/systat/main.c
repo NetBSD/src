@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2000/04/11 01:01:26 jwise Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2000/06/04 18:29:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.24 2000/04/11 01:01:26 jwise Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2000/06/04 18:29:13 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -248,7 +248,7 @@ void
 display(signo)
 	int signo;
 {
-	int i, j;
+	int j;
 	sigset_t set;
 
 	sigemptyset(&set);
@@ -270,9 +270,9 @@ display(signo)
 		if (dellave < 0.1)
 			c = '|';
 		dellave = avenrun[0];
-		wmove(wload, 0, 0); wclrtoeol(wload);
-		for (i = (j > 50) ? 50 : j; i > 0; i--)
-			waddch(wload, c);
+		wmove(wload, 0, 0);
+		wclrtoeol(wload);
+		whline(wload, c, (j > 50) ? 50 : j);
 		if (j > 50)
 			wprintw(wload, " %4.1f", avenrun[0]);
 	}
