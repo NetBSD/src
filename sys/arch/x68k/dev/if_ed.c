@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.2 1996/05/07 02:35:07 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -104,7 +104,7 @@ int ed_find_Novell __P((caddr_t, caddr_t));
 int edintr __P((int));
 int edioctl __P((struct ifnet *, u_long, caddr_t));
 void edstart __P((struct ifnet *));
-void edwatchdog __P((int));
+void edwatchdog __P((struct ifnet *));
 void edreset __P((struct ed_softc *));
 void edinit __P((struct ed_softc *));
 void edstop __P((struct ed_softc *));
@@ -468,8 +468,8 @@ edattach(parent, self, aux)
 	edstop(sc);
 
 	/* Initialize ifnet structure. */
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = ed_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = edstart;
 	ifp->if_ioctl = edioctl;
 	ifp->if_watchdog = edwatchdog;
@@ -537,10 +537,10 @@ edstop(sc)
  * an interrupt after a transmit has been started on it.
  */
 void
-edwatchdog(unit)
-	int unit;
+edwatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct ed_softc *sc = ed_cd.cd_devs[unit];
+	struct ed_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -715,7 +715,7 @@ void
 edstart(ifp)
 	struct ifnet *ifp;
 {
-	struct ed_softc *sc = ed_cd.cd_devs[ifp->if_unit];
+	struct ed_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
 	caddr_t buffer;
 	int len;
@@ -1066,7 +1066,7 @@ edioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ed_softc *sc = ed_cd.cd_devs[ifp->if_unit];
+	struct ed_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;

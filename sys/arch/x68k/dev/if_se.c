@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: if_se.c,v 1.2 1996/05/07 02:35:09 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
@@ -147,7 +147,7 @@ int	se_start __P((struct ifnet *));
 int	se_ioctl __P((struct ifnet *, int, caddr_t));
 int	se_probe();
 void sestart __P((register int unit));
-int	se_watchdog();
+int	se_watchdog __P((struct ifnet *));
 void sestrategy __P((struct buf *bp));
 static int seerror __P((int unit, register struct se_softc *sc, register struct\
  x68k_device *am, int stat));
@@ -274,8 +274,9 @@ sefind(xd)
 	/*
 	 * Initialize ifnet structure
 	 */
-	ifp->if_unit = xd->x68k_unit;		/* se->se_dev.dv_unit */
-	ifp->if_name = sedriver.d_name;		/* secd.cd_name */
+	/* XXX: se->se_dev.dv_unit, se_cd.cd_name */
+	sprintf(ifp->if_xname, "%s%d", sedriver.d_name, xd->x68k_unit);
+	ifp->if_softc = sc;
 	ifp->if_output = ether_output;
 	ifp->if_start = se_start;
 	ifp->if_ioctl = se_ioctl;
@@ -640,10 +641,10 @@ se_stop(sc)
  *	generate an interrupt after a transmit has been started on it.
  */
 int
-se_watchdog(unit)
-	short unit;
+se_watchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct se_softc *sc = &se_softc[unit];
+	struct se_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "se%d: device timeout\n", unit);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -661,11 +662,11 @@ se_init(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i, s;
 	u_char	command;
+	struct x68k_device *xd = sc->sc_xd;
 	int unit = ifp->if_unit;
-	register struct buf *bp = setab[unit].b_actf;
+	register struct buf *bp = setab[xd->x68k_unit].b_actf;
 	int ctlr, slave;
 	int stat;
-	struct x68k_device *xd = sc->sc_xd;
 
 	printf("se_init()\n");
 
@@ -708,7 +709,7 @@ se_init(sc)
 static inline void se_xmit(ifp)
 	struct ifnet *ifp;
 {
-	struct se_softc *sc = &se_softc[ifp->if_unit];
+	struct se_softc *sc = ifp->if_softc;
 	u_short len = sc->txb_next_len;
 	register struct buf *bp = malloc(sizeof *bp, M_DEVBUF, M_WAITOK);
 	register struct scsi_fmt_cdb *cmd = &secmd[sc->sc_punit];
@@ -816,7 +817,7 @@ int
 se_start(ifp)
 	struct ifnet *ifp;
 {
-	struct se_softc *sc = &se_softc[ifp->if_unit];
+	struct se_softc *sc = if->if_softc;
 	int unit;
 	int ctlr, slave;
 	struct mbuf *m0, *m;
@@ -875,7 +876,8 @@ outloop:
 	printf("sc->txb_inuse == %d\n", sc->txb_inuse);
 	if (sc->txb_inuse)
 		if (sc->xmit_busy == 0) {
-			printf("se%d: packets buffers, but transmitter idle\n", ifp->if_unit);
+			printf("%s: packets buffers, but transmitter idle\n",
+			    ifp->if_xname);
 			se_xmit(ifp);
 		} else {
 			/* See if there is room to put another packet in the buffer. */
@@ -1236,7 +1238,7 @@ se_ioctl(ifp, command, data)
 	caddr_t data;
 {
 	register struct ifaddr *ifa = (struct ifaddr *)data;
-	struct se_softc *sc = &se_softc[ifp->if_unit];
+	struct se_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
