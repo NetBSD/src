@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.10 1999/02/17 13:11:19 bouyer Exp $	*/
+/*	$NetBSD: setup.c,v 1.11 2000/01/26 16:21:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.10 1999/02/17 13:11:19 bouyer Exp $");
+__RCSID("$NetBSD: setup.c,v 1.11 2000/01/26 16:21:32 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,6 +224,12 @@ setup(dev)
 			(unsigned)(maxino + 1));
 		goto badsblabel;
 	}
+	typemap = calloc((unsigned)(maxino + 1), sizeof(char));
+	if (typemap == NULL) {
+		printf("cannot alloc %u bytes for typemap\n",
+		    (unsigned)(maxino + 1));
+		goto badsblabel; 
+	}
 	lncntp = (int16_t *)calloc((unsigned)(maxino + 1), sizeof(int16_t));
 	if (lncntp == NULL) {
 		printf("cannot alloc %u bytes for lncntp\n", 
@@ -364,17 +370,17 @@ readsb(listerr)
 	asblk.b_un.b_fs->e2fs_rgid = sblk.b_un.b_fs->e2fs_rgid;
 	asblk.b_un.b_fs->e2fs_block_group_nr =
 	    sblk.b_un.b_fs->e2fs_block_group_nr;
-	if (sblk.b_un.b_fs->e2fs_features_compat != 0 ||
-	    sblk.b_un.b_fs->e2fs_features_incompat != 0 ||
-	    sblk.b_un.b_fs->e2fs_features_compat_ro != 0) {
+	if (sblk.b_un.b_fs->e2fs_rev > E2FS_REV0 &&
+	    ((sblk.b_un.b_fs->e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP) ||
+	    (sblk.b_un.b_fs->e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP))) {
 		if (debug) {
 			printf("compat 0x%08x, incompat 0x%08x, compat_ro "
 			    "0x%08x\n",
 			    sblk.b_un.b_fs->e2fs_features_compat,
 			    sblk.b_un.b_fs->e2fs_features_incompat,
-			    sblk.b_un.b_fs->e2fs_features_compat_ro);
+			    sblk.b_un.b_fs->e2fs_features_rocompat);
 		}
-		badsb(listerr,"UNKNOWN FEATURE BITS IN SUPER BLOCK");
+		badsb(listerr,"INCOMPATIBLE FEATURE BITS IN SUPER BLOCK");
 		return 0;
 	}
 	if (memcmp(sblk.b_un.b_fs, asblk.b_un.b_fs, SBSIZE)) {

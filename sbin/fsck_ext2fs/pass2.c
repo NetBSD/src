@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.4 1997/10/09 13:19:38 bouyer Exp $	*/
+/*	$NetBSD: pass2.c,v 1.5 2000/01/26 16:21:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.4 1997/10/09 13:19:38 bouyer Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.5 2000/01/26 16:21:32 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: pass2.c,v 1.4 1997/10/09 13:19:38 bouyer Exp $");
 #include <ufs/ext2fs/ext2fs.h>
 
 #include <ufs/ufs/dinode.h> /* for IFMT & friends */
+#include <ufs/ufs/dir.h> /* for IFTODT & friends */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -216,7 +217,7 @@ pass2check(idesc)
 	 */
 	if (idesc->id_entryno != 0)
 		goto chk1;
-	if (fs2h32(dirp->e2d_ino) != 0 && fs2h16(dirp->e2d_namlen) == 1 &&
+	if (fs2h32(dirp->e2d_ino) != 0 && dirp->e2d_namlen == 1 &&
 		dirp->e2d_name[0] == '.') {
 		if (fs2h32(dirp->e2d_ino) != idesc->id_number) {
 			direrror(idesc->id_number, "BAD INODE NUMBER FOR '.'");
@@ -224,13 +225,26 @@ pass2check(idesc)
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
 		}
+		if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+		    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)
+		    && (dirp->e2d_type != IFTODT(EXT2_IFDIR))) {
+			direrror(idesc->id_number, "BAD TYPE VALUE FOR '.'");
+			dirp->e2d_type = IFTODT(EXT2_IFDIR);
+			if (reply("FIX") == 1)
+				ret |= ALTERED;
+		}
 		goto chk1;
 	}
 	direrror(idesc->id_number, "MISSING '.'");
 	proto.e2d_ino = h2fs32(idesc->id_number);
-	proto.e2d_namlen = h2fs16(1);
+	proto.e2d_namlen = 1;
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
+		proto.e2d_type = IFTODT(EXT2_IFDIR);
+	else
+		proto.e2d_type = 0;
 	(void)strcpy(proto.e2d_name, ".");
-	entrysize = EXT2FS_DIRSIZ(fs2h16(proto.e2d_namlen));
+	entrysize = EXT2FS_DIRSIZ(proto.e2d_namlen);
 	if (fs2h32(dirp->e2d_ino) != 0 && strcmp(dirp->e2d_name, "..") != 0) {
 		pfatal("CANNOT FIX, FIRST ENTRY IN DIRECTORY CONTAINS %s\n",
 			dirp->e2d_name);
@@ -258,11 +272,16 @@ chk1:
 		goto chk2;
 	inp = getinoinfo(idesc->id_number);
 	proto.e2d_ino = h2fs32(inp->i_parent);
-	proto.e2d_namlen = h2fs16(2);
+	proto.e2d_namlen = 2;
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
+		proto.e2d_type = IFTODT(EXT2_IFDIR);
+	else
+		proto.e2d_type = 0;
 	(void)strcpy(proto.e2d_name, "..");
 	entrysize = EXT2FS_DIRSIZ(2);
 	if (idesc->id_entryno == 0) {
-		n = EXT2FS_DIRSIZ(fs2h16(dirp->e2d_namlen));
+		n = EXT2FS_DIRSIZ(dirp->e2d_namlen);
 		if (fs2h16(dirp->e2d_reclen) < n + entrysize)
 			goto chk2;
 		proto.e2d_reclen = h2fs16(fs2h16(dirp->e2d_reclen) - n);
@@ -274,13 +293,21 @@ chk1:
 		dirp->e2d_reclen = proto.e2d_reclen;
 	}
 	if (fs2h32(dirp->e2d_ino) != 0 &&
-		fs2h16(dirp->e2d_namlen) == 2 && 
-		strncmp(dirp->e2d_name, "..", 2) == 0) {
+	    dirp->e2d_namlen == 2 && 
+	    strncmp(dirp->e2d_name, "..", 2) == 0) {
 		inp->i_dotdot = fs2h32(dirp->e2d_ino);
+		if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+		    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)
+		    && dirp->e2d_type != IFTODT(EXT2_IFDIR)) {
+			direrror(idesc->id_number, "BAD TYPE VALUE FOR '..'");
+			dirp->e2d_type = IFTODT(EXT2_IFDIR);
+			if (reply("FIX") == 1)
+				ret |= ALTERED;
+		}
 		goto chk2;
 	}
 	if (fs2h32(dirp->e2d_ino) != 0 &&
-		fs2h16(dirp->e2d_namlen) == 1 &&
+		dirp->e2d_namlen == 1 &&
 		strncmp(dirp->e2d_name, ".", 1) != 0) {
 		fileerror(inp->i_parent, idesc->id_number, "MISSING '..'");
 		pfatal("CANNOT FIX, SECOND ENTRY IN DIRECTORY CONTAINS %s\n",
@@ -308,10 +335,10 @@ chk1:
 chk2:
 	if (fs2h32(dirp->e2d_ino) == 0)
 		return (ret|KEEPON);
-	if (fs2h16(dirp->e2d_namlen) <= 2 &&
+	if (dirp->e2d_namlen <= 2 &&
 	    dirp->e2d_name[0] == '.' &&
 	    idesc->id_entryno >= 2) {
-		if (fs2h16(dirp->e2d_namlen) == 1) {
+		if (dirp->e2d_namlen == 1) {
 			direrror(idesc->id_number, "EXTRA '.' ENTRY");
 			dirp->e2d_ino = 0;
 			if (reply("FIX") == 1)
@@ -385,6 +412,17 @@ again:
 			/* fall through */
 
 		case FSTATE:
+			if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+			    (sblock.e2fs.e2fs_features_incompat &
+				EXT2F_INCOMPAT_FTYPE) &&
+			    dirp->e2d_type != typemap[fs2h32(dirp->e2d_ino)]) {
+				dirp->e2d_type = typemap[fs2h32(dirp->e2d_ino)];
+				fileerror(idesc->id_number,
+				    fs2h32(dirp->e2d_ino),
+				    "BAD TYPE VALUE");
+				if (reply("FIX") == 1)
+					ret |= ALTERED;
+			}
 			lncntp[fs2h32(dirp->e2d_ino)]--;
 			break;
 

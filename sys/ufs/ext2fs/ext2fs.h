@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.8 1999/02/17 13:09:43 bouyer Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.9 2000/01/26 16:21:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -119,7 +119,7 @@ struct ext2fs {
 	u_int16_t  e2fs_magic;		/* magic number */
 	u_int16_t  e2fs_state;		/* file system state */
 	u_int16_t  e2fs_beh;		/* behavior on errors */
-	u_int16_t  reserved;
+	u_int16_t  e2fs_minrev;		/* minor revision level */
 	u_int32_t  e2fs_lastfsck;	/* time of last fsck */
 	u_int32_t  e2fs_fsckintv;	/* max time between fscks */
 	u_int32_t  e2fs_creator;	/* creator OS */
@@ -130,10 +130,17 @@ struct ext2fs {
 	u_int32_t  e2fs_first_ino;	/* first non-reserved inode */
 	u_int16_t  e2fs_inode_size;	/* size of inode structure */
 	u_int16_t  e2fs_block_group_nr;	/* block grp number of this sblk*/
-	u_int32_t  e2fs_features_compat; /*  OK to mount if unknown */
-	u_int32_t  e2fs_features_incompat; /* not OK to mount if unknown */
-	u_int32_t  e2fs_features_compat_ro; /* OK to mount ro if unknown */
-	u_int32_t  reserved2[230];
+	u_int32_t  e2fs_features_compat; /*  compatible feature set */
+	u_int32_t  e2fs_features_incompat; /* incompatible feature set */
+	u_int32_t  e2fs_features_rocompat; /* RO-compatible feature set */
+	u_int8_t   e2fs_uuid[16];	/* 128-bit uuid for volume */
+	char       e2fs_vname[16];	/* volume name */
+	char       e2fs_fsmnt[64]; 	/* name mounted on */
+	u_int32_t  e2fs_algo;		/* For compression */
+	u_int8_t   e2fs_prealloc;	/* # of blocks to preallocate */
+	u_int8_t   e2fs_dir_prealloc;	/* # of blocks to preallocate for dir */
+	u_int16_t  pad1;
+	u_int32_t  reserved2[204];
 };
 
 
@@ -161,7 +168,23 @@ struct m_ext2fs {
  * Filesystem identification
  */
 #define	E2FS_MAGIC	0xef53	/* the ext2fs magic number */
-#define E2FS_REV	0	/* revision level */
+#define E2FS_REV0	0	/* revision levels */
+#define E2FS_REV1	1	/* revision levels */
+
+/* compatible/imcompatible features */
+#define EXT2F_COMPAT_PREALLOC		0x0001
+
+#define EXT2F_ROCOMPAT_SPARSESUPER	0x0001
+#define EXT2F_ROCOMPAT_LARGEFILE	0x0002
+#define EXT2F_ROCOMPAT_BTREE_DIR	0x0004
+
+#define EXT2F_INCOMPAT_COMP		0x0001
+#define EXT2F_INCOMPAT_FTYPE		0x0002
+
+/* features supported in this implementation */
+#define EXT2F_COMPAT_SUPP		0x0000
+#define EXT2F_ROCOMPAT_SUPP		0x0000
+#define EXT2F_INCOMPAT_SUPP		EXT2F_INCOMPAT_FTYPE
 
 /*
  * OS identification
@@ -174,7 +197,7 @@ struct m_ext2fs {
  * Filesystem clean flags
  */
 #define	E2FS_ISCLEAN	0x01
-#define	E2FS_ERRORS		0x02
+#define	E2FS_ERRORS	0x02
 
 /* ext2 file system block group descriptor */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.3 1997/10/09 13:19:34 bouyer Exp $	*/
+/*	$NetBSD: dir.c,v 1.4 2000/01/26 16:21:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,12 +39,13 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.3 1997/10/09 13:19:34 bouyer Exp $");
+__RCSID("$NetBSD: dir.c,v 1.4 2000/01/26 16:21:31 bouyer Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <ufs/ufs/dir.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
 #include <ufs/ext2fs/ext2fs.h>
@@ -61,12 +62,10 @@ __RCSID("$NetBSD: dir.c,v 1.3 1997/10/09 13:19:34 bouyer Exp $");
 
 char	*lfname = "lost+found";
 int	lfmode = 01777;
-/* XXX DIRBLKSIZ id bsize ! */
-#define DIRBLKSIZ 0 /* just for now */
 struct	ext2fs_dirtemplate emptydir = { 0, DIRBLKSIZ }; 
 struct	ext2fs_dirtemplate dirhead = {
-	0, 12, 1, ".",
-	0, DIRBLKSIZ - 12, 2, ".."
+	0, 12, 1, IFTODT(EXT2_IFDIR), ".",
+	0, DIRBLKSIZ - 12, 2, IFTODT(EXT2_IFDIR), ".."
 };
 #undef DIRBLKSIZ
 
@@ -189,6 +188,7 @@ fsck_readdir(idesc)
 		dp->e2d_reclen = h2fs16(sblock.e2fs_bsize);
 		dp->e2d_ino = 0;
 		dp->e2d_namlen = 0;
+		dp->e2d_type = 0;
 		dp->e2d_name[0] = '\0';
 		if (fix)
 			dirty(bp);
@@ -235,7 +235,6 @@ dircheck(idesc, dp)
 	int size;
 	char *cp;
 	int spaceleft;
-	u_int16_t namlen;
 	u_int16_t reclen = fs2h16(dp->e2d_reclen);
 
 	spaceleft = sblock.e2fs_bsize - (idesc->id_loc % sblock.e2fs_bsize);
@@ -246,13 +245,16 @@ dircheck(idesc, dp)
 		return (0);
 	if (dp->e2d_ino == 0)
 		return (1);
-	namlen = fs2h16(dp->e2d_namlen);
-	size = EXT2FS_DIRSIZ(namlen);
+	if (sblock.e2fs.e2fs_rev < E2FS_REV0 ||
+	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE) == 0)
+		if (dp->e2d_type != 0)
+			return (1);
+	size = EXT2FS_DIRSIZ(dp->e2d_namlen);
 	if (reclen < size ||
 	    idesc->id_filesize < size ||
-	    namlen > EXT2FS_MAXNAMLEN)
+	    dp->e2d_namlen > EXT2FS_MAXNAMLEN)
 		return (0);
-	for (cp = dp->e2d_name, size = 0; size < namlen; size++)
+	for (cp = dp->e2d_name, size = 0; size < dp->e2d_namlen; size++)
 		if (*cp == '\0' || (*cp++ == '/'))
 			return (0);
 	return (1);
@@ -330,10 +332,13 @@ mkentry(idesc)
 	struct ext2fs_direct newent;
 	int newlen, oldlen;
 
-	newent.e2d_namlen = h2fs16(strlen(idesc->id_name));
-	newlen = EXT2FS_DIRSIZ(fs2h16(newent.e2d_namlen));
+	newent.e2d_namlen = strlen(idesc->id_name);
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
+		newent.e2d_type = typemap[idesc->id_parent];
+	newlen = EXT2FS_DIRSIZ(newent.e2d_namlen);
 	if (dirp->e2d_ino != 0)
-		oldlen = EXT2FS_DIRSIZ(fs2h16(dirp->e2d_namlen));
+		oldlen = EXT2FS_DIRSIZ(dirp->e2d_namlen);
 	else
 		oldlen = 0;
 	if (fs2h16(dirp->e2d_reclen) - oldlen < newlen)
@@ -344,7 +349,8 @@ mkentry(idesc)
 	dirp->e2d_ino = h2fs32(idesc->id_parent); /* ino to be entered is in id_parent */
 	dirp->e2d_reclen = newent.e2d_reclen;
 	dirp->e2d_namlen = newent.e2d_namlen;
-	memcpy(dirp->e2d_name, idesc->id_name, (size_t)fs2h16(dirp->e2d_namlen));
+	dirp->e2d_type = newent.e2d_type;
+	memcpy(dirp->e2d_name, idesc->id_name, (size_t)(dirp->e2d_namlen));
 	return (ALTERED|STOP);
 }
 
@@ -353,12 +359,17 @@ chgino(idesc)
 	struct inodesc *idesc;
 {
 	struct ext2fs_direct *dirp = idesc->id_dirp;
-	u_int16_t namlen = fs2h16(dirp->e2d_namlen);
+	u_int16_t namlen = dirp->e2d_namlen;
 
 	if (strlen(idesc->id_name) != namlen ||
 		strncmp(dirp->e2d_name, idesc->id_name, (int)namlen))
 		return (KEEPON);
 	dirp->e2d_ino = h2fs32(idesc->id_parent);
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
+		dirp->e2d_type = typemap[idesc->id_parent];
+	else
+		dirp->e2d_type = 0;
 	return (ALTERED|STOP);
 }
 
@@ -601,8 +612,18 @@ allocdir(parent, request, mode)
 	ino = allocino(request, IFDIR|mode);
 	dirhead.dot_reclen = h2fs16(12); /* XXX */
 	dirhead.dotdot_reclen = h2fs16(sblock.e2fs_bsize - 12); /* XXX */
-	dirhead.dot_namlen = h2fs16(1);
-	dirhead.dotdot_namlen = h2fs16(2);
+	dirhead.dot_namlen = 1;
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
+		dirhead.dot_type = IFTODT(EXT2_IFDIR);
+	else
+		dirhead.dot_type = 0;
+	dirhead.dotdot_namlen = 2;
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
+		dirhead.dotdot_type = IFTODT(EXT2_IFDIR);
+	else
+		dirhead.dotdot_type = 0;
 	dirp = &dirhead;
 	dirp->dot_ino = h2fs32(ino);
 	dirp->dotdot_ino = h2fs32(parent);

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.6 1999/02/17 13:11:19 bouyer Exp $	*/
+/*	$NetBSD: inode.c,v 1.7 2000/01/26 16:21:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.6 1999/02/17 13:11:19 bouyer Exp $");
+__RCSID("$NetBSD: inode.c,v 1.7 2000/01/26 16:21:32 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: inode.c,v 1.6 1999/02/17 13:11:19 bouyer Exp $");
 #include <ufs/ext2fs/ext2fs.h>
 
 #include <ufs/ufs/dinode.h> /* for IFMT & friends */
+#include <ufs/ufs/dir.h> /* for IFTODT & friends */
 #ifndef SMALL
 #include <pwd.h>
 #endif
@@ -502,7 +503,7 @@ findname(idesc)
 	struct inodesc *idesc;
 {
 	struct ext2fs_direct *dirp = idesc->id_dirp;
-	u_int16_t namlen = fs2h16(dirp->e2d_namlen);
+	u_int16_t namlen = dirp->e2d_namlen;
 
 	if (fs2h32(dirp->e2d_ino) != idesc->id_parent)
 		return (KEEPON);
@@ -637,6 +638,7 @@ allocino(request, type)
 	dp->e2di_nblock = h2fs32(btodb(sblock.e2fs_bsize));
 	n_files++;
 	inodirty();
+	typemap[ino] = IFTODT(type);
 	return (ino);
 }
 
