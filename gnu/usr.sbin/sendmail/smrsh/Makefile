@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/02/13 22:14:28 veego Exp $
+#	$NetBSD: Makefile,v 1.4 2000/05/03 10:51:00 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -8,8 +8,14 @@ DIST=		${.CURDIR}/../../../dist
 BINDIR=		/usr/libexec
 PROG=		smrsh
 
-MAN=		smrsh.8
-CPPFLAGS+=	-I${DIST}/sendmail/src
+LIBSMUTILDIR!=	cd ${.CURDIR}/../libsmutil; make print-objdir
+LIBSMDBDIR!=	cd ${.CURDIR}/../libsmdb; make print-objdir
+
+CPPFLAGS+=	-DNOT_SENDMAIL
 CPPFLAGS+=	-DCMDDIR=\"/usr/libexec/sm.bin\"
+LDADD+=		-L${LIBSMUTILDIR} -lsmutil
+DPADD+=		${LIBSMUTILDIR}/libsmutil.a
+
+MAN=		smrsh.8
 
 .include <bsd.prog.mk>

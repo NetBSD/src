@@ -153,4 +153,4 @@ a typical system follows:
 	host.domain# /usr/sbin/sendmail -bd -q30m
 
 
-$Revision: 1.1.1.2 $, Last updated $Date: 2000/05/03 09:27:21 $
+Revision: 8.6, Last updated Date: 1999/04/28 01:09:51

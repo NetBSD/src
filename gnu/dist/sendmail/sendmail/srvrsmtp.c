@@ -15,9 +15,9 @@
 
 #ifndef lint
 # if SMTP
-static char id[] = "@(#)$Id: srvrsmtp.c,v 1.1.1.1 2000/05/03 09:27:23 itojun Exp $ (with SMTP)";
+static char id[] = "@(#)Id: srvrsmtp.c,v 8.471 2000/04/06 08:39:58 gshapiro Exp (with SMTP)";
 # else /* SMTP */
-static char id[] = "@(#)$Id: srvrsmtp.c,v 1.1.1.1 2000/05/03 09:27:23 itojun Exp $ (without SMTP)";
+static char id[] = "@(#)Id: srvrsmtp.c,v 8.471 2000/04/06 08:39:58 gshapiro Exp (without SMTP)";
 # endif /* SMTP */
 #endif /* ! lint */
 

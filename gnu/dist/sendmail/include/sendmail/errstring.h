@@ -7,7 +7,7 @@
  * the sendmail distribution.
  *
  *
- *	$Id: errstring.h,v 1.1.1.1 2000/05/03 09:27:24 itojun Exp $
+ *	Id: errstring.h,v 8.6 2000/02/26 01:32:11 gshapiro Exp
  */
 
 /*
