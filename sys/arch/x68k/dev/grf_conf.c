@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_conf.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: grf_conf.c,v 1.2 1997/10/12 14:44:12 oki Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -54,8 +54,10 @@
 #include <x68k/x68k/iodevice.h>
 /*#include <x68k/dev/grfreg.h>*/
 
-extern	int cc_init(), cc_mode();
-extern	int gv_init(), gv_mode();
+int cc_init __P((struct grf_softc *, caddr_t));
+int cc_mode __P((struct grf_softc *, u_long, caddr_t));
+int gv_init __P((struct grf_softc *, caddr_t));
+int gv_mode __P((struct grf_softc *, u_long, caddr_t));
 #if 0
 extern	int tc_init(), tc_mode();
 extern	int gb_init(), gb_mode();

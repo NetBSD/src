@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.4 1996/10/13 03:35:02 christos Exp $	*/
+/*	$NetBSD: par.c,v 1.5 1997/10/12 14:44:14 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,13 +55,19 @@
 #include <sys/file.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <x68k/x68k/iodevice.h>
 #include <x68k/dev/parioctl.h>
 
-void partimo();
-void parstart();
-void parintr();
+void partimo __P((void *));
+void parstart __P((void *);)
+void parintr __P((void *));
+int parrw __P((dev_t, struct uio *));
+int parhztoms __P((int));
+int parmstohz __P((int));
+int parsendch __P((u_char));
+int parsend __P((u_char *, int));
 
 struct	par_softc {
 	struct	device sc_dev;
@@ -97,6 +103,8 @@ int	pardebug = 0;
 
 #define	PRTI_EN	0x01
 #define	PRT_INT	0x20
+
+cdev_decl(par);
 
 int parmatch __P((struct device *, struct cfdata *, void *));
 void parattach __P((struct device *, struct device *, void *));
@@ -134,9 +142,10 @@ parattach(pdp, dp, aux)
 }
 
 int
-paropen(dev, flags)
+paropen(dev, flags, mode, p)
 	dev_t dev;
-	int flags;
+	int flags, mode;
+	struct proc *p;
 {
 	register int unit = UNIT(dev);
 	register struct par_softc *sc = par_cd.cd_devs[unit];
@@ -162,9 +171,10 @@ paropen(dev, flags)
 }
 
 int
-parclose(dev, flags)
+parclose(dev, flags, mode, p)
 	dev_t dev;
-	int flags;
+	int flags, mode;
+	struct proc *p;
 {
 	int unit = UNIT(dev);
 	int s;
@@ -181,9 +191,10 @@ parclose(dev, flags)
 }
 
 void
-parstart(unit)
-	int unit;
+parstart(arg)
+	void *arg;
 {
+	int unit = (int)arg;
 	struct par_softc *sc = par_cd.cd_devs[unit];
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
@@ -194,9 +205,10 @@ parstart(unit)
 }
 
 void
-partimo(unit)
-	int unit;
+partimo(arg)
+	void *arg;
 {
+	int unit = (int)arg;
 	struct par_softc *sc = par_cd.cd_devs[unit];
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
@@ -207,9 +219,10 @@ partimo(unit)
 }
 
 int
-parwrite(dev, uio)
+parwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	
 #ifdef DEBUG
@@ -276,7 +289,7 @@ parrw(dev, uio)
 		/*
 		 * Perform the operation
 		 */
-		cnt = parsend (cp, len);
+		cnt = parsend(cp, len);
 		if (cnt < 0) {
 			error = -cnt;
 			break;
@@ -452,7 +465,7 @@ parintr(arg)
 }
 
 int
-parsendch (ch)
+parsendch(ch)
 	u_char ch;
 {
 	int error = 0;
@@ -510,7 +523,7 @@ parsendch (ch)
 
 
 int
-parsend (buf, len)
+parsend(buf, len)
 	u_char *buf;
 	int len;
 {

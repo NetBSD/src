@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.7 1997/01/19 06:37:47 oki Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.8 1997/10/12 14:45:43 oki Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -68,6 +68,9 @@ int grfbussearch __P((struct device *, void *, void *));
 void grfattach __P((struct device *, struct device *, void *));
 int grfmatch __P((struct device *, void *, void *));
 int grfprint __P((void *, const char *));
+
+void grfconfig __P((struct device *));
+int grfinit __P((void *, int));
 
 struct cfattach grfbus_ca = {
 	sizeof(struct device), grfbusmatch, grfbusattach
