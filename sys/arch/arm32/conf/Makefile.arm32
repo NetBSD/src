@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.18 1996/09/09 21:06:57 mycroft Exp $
+#	$NetBSD: Makefile.arm32,v 1.19 1996/10/15 00:35:48 mark Exp $
 
 # Makefile for NetBSD
 #
@@ -30,12 +30,12 @@ STRIP?=	strip
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
-ARM32=	$S/arch/arm32
+ARM32=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Darm32
-CWARNFLAGS=	-Werror
+		-Darm32 -Wcomment
+CWARNFLAGS=	-Werror -Wreturn-type
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-Ttext F0000020 -e start
@@ -150,11 +150,11 @@ SRCS=	${ARM32}/arm32/locore.S modedefs.c \
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ARM32}/arm32/locore.S
-	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} modedefs.c
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-	    ${ARM32}/arm32/genassym.c
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} modedefs.c
+	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} ${ARM32}/arm32/genassym.c
+	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} ${ARM32}/arm32/makemodes.c
 
 
 # depend on root or device configuration
