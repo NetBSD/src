@@ -17,7 +17,8 @@ timezone	8 dst
 maxusers	48
 options		INET
 options		NS
-options		KADB
+# umm, no can do, on this one...
+#options		KADB
 options		QUOTA
 options		FIFO
 options		NFS
@@ -39,7 +40,7 @@ options		MAPMEM,SYSVSHM
 #options		HPUXCOMPAT
 
 
-config		vmunix swap generic
+config		netbsd swap generic
 
 master		hpib0	at scode7
 master		hpib1	at scode?

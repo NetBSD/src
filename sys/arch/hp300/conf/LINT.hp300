@@ -31,7 +31,7 @@ options		KTRACE
 # DIAGNOSTIC: compile in lots of debugging and consistancy checking code.
 options		DIAGNOSTIC
 
-config		vmunix swap generic
+config		netbsd swap generic
 
 master		hpib0	at scode7
 master		hpib1	at scode?
