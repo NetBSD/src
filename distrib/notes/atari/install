@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.6 1998/01/14 06:50:27 scottr Exp $	
+	$NetBSD: install,v 1.7 1998/06/17 11:55:39 leo Exp $	
 
 Installing NetBSD is a relatively complex process, but, if you have
 this document in hand and are careful to read and remember the
@@ -133,8 +133,10 @@ begin again from scratch.
 
     7. Configure your network
     =========================
-	Don't do this right now. As non of the network cards are supported,
-	it doesn't make any sense.
+	Currently none of the kernels supplied in the distribution has
+	network support builtin. If you compiled your own kernel, network
+	configuration mostly works. [ Due to space limitiations, some
+	of the network commands are not present on the install floppy ]
 
     8. Edit the fstab - again....
     =============================
