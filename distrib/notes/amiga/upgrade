@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.17 1999/04/09 20:55:28 is Exp $	
+.\"	$NetBSD: upgrade,v 1.18 1999/04/26 19:18:23 is Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,9 +81,9 @@ machines, use this instead:
 This description is for V40 (OS 3.1) ROMs. For older ROMs,
 there might be small differences. Check your AmigaOS documentation
 to learn about the exact procedure.
+Booting using bootblocks doesn't work at all on some systems, and may
+require a mountable filesystem on others.
 .tag)
-.tm [XXX another note about bootblock support?]
-.Em [XXX another note about bootblock support?]
 .Pp
 Reboot your machine, holding down both mouse buttons if you
 have a 2-button mouse, the outer mouse buttons if you have

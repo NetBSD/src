@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.17 1999/01/13 07:30:02 ross Exp $	
+.\"	$NetBSD: install,v 1.18 1999/04/26 19:18:23 is Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,8 +87,6 @@ enable the use of all memory segments.
 [This description is for V40 (OS 3.1) ROMs. For older ROMs,
 there might be small differences. Check your AmigaOS documentation
 to learn about the exact procedure.]
-.tm [XXX should note someplace that using bootblocks may not work on some
-.tm systems, and may require a mountable filesystem on others?]
 Using bootblocks may not work on some
 systems, and may require a mountable filesystem on others.
 .Pp
