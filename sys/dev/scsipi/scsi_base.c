@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.24 1994/12/30 05:33:06 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.25 1995/01/13 14:38:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -513,6 +513,11 @@ scsi_scsi_cmd(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_cmd\n"));
 
+#ifdef DIAGNOSTIC
+	if (bp != 0 && (flags & SCSI_NOSLEEP) == 0)
+		panic("scsi_scsi_cmd: buffer without nosleep");
+#endif
+
 	if ((xs = scsi_make_xs(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 	    retries, timeout, bp, flags)) == NULL)
 		return ENOMEM;
@@ -761,6 +766,12 @@ scsi_interpret_sense(xs)
 				default:
 					printf(", info = %d (decimal)", info);
 				}
+			}
+			if (sense->extended_extra_len != 0) {
+				int n;
+				printf(", data =");
+				for (n = 0; n < sense->extended_extra_len; n++)
+					printf(" %02x", sense->extended_extra_bytes[n]);
 			}
 			printf("\n");
 		}
