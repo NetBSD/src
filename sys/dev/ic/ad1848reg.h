@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848reg.h,v 1.3 1997/03/19 06:45:21 mikel Exp $	*/
+/*	$NetBSD: ad1848reg.h,v 1.4 1997/05/07 20:23:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -130,6 +130,7 @@
 #define FMT_ULAW		0x20	/* 8-bit mu-law */
 #define FMT_TWOS_COMP		0x40	/* 16-bit signed */
 #define FMT_ALAW		0x60	/* 8-bit alaw */
+#define FMT_ADPCM		0xa0	/* IMA ADPCM */
 #define FMT_TWOS_COMP_BE	0xc0	/* 16-bit signed, big endian */
 
 /* Interface Configuration reg bits */
