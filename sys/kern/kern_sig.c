@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.128 2002/11/28 21:00:27 jdolecek Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.129 2002/12/06 22:44:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.128 2002/11/28 21:00:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.129 2002/12/06 22:44:49 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1417,7 +1417,7 @@ coredump(struct proc *p)
 		return error;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
-	error = vn_open(&nd, O_CREAT | FWRITE | FNOSYMLINK, S_IRUSR | S_IWUSR);
+	error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE, S_IRUSR | S_IWUSR);
 	if (error)
 		return (error);
 	vp = nd.ni_vp;
