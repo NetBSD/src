@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stream.c,v 1.4 2001/06/14 20:32:46 thorpej Exp $	 */
+/*	$NetBSD: svr4_32_stream.c,v 1.5 2001/06/25 19:24:03 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1637,7 +1637,7 @@ svr4_32_sys_putmsg(p, v, retval)
 			aiov.iov_base = (caddr_t)(u_long)dat.buf;
 			aiov.iov_len = dat.len;
 			error = sendit(p, SCARG(uap, fd), &msg,
-				       SCARG(uap, flags), retval);
+				       SCARG(uap, flags), retval, 0);
 
 			*retval = 0;
 			return error;
@@ -1902,7 +1902,8 @@ svr4_32_sys_getmsg(p, v, retval)
 		aiov.iov_len = dat.maxlen;
 		msg.msg_flags = 0;
 
-		error = recvit(p, SCARG(uap, fd), &msg, (caddr_t) flen, retval);
+		error = recvit(p, SCARG(uap, fd), &msg, (caddr_t) flen,
+		    retval, 0);
 
 		if (error) {
 			DPRINTF(("getmsg: recvit failed %d\n", error));

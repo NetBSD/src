@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.60 2001/06/16 12:00:02 jdolecek Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.61 2001/06/25 19:24:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -397,7 +397,7 @@ sys_sendto(struct proc *p, void *v, register_t *retval)
 #endif
 	aiov.iov_base = (char *)SCARG(uap, buf);	/* XXX kills const */
 	aiov.iov_len = SCARG(uap, len);
-	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
+	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval, 0));
 }
 
 int
@@ -432,7 +432,7 @@ sys_sendmsg(struct proc *p, void *v, register_t *retval)
 #ifdef COMPAT_OLDSOCK
 	msg.msg_flags = 0;
 #endif
-	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval, 0);
 done:
 	if (iov != aiov)
 		free(iov, M_IOV);
@@ -440,7 +440,8 @@ done:
 }
 
 int
-sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
+sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize,
+	int kernsa)
 {
 	struct file	*fp;
 	struct uio	auio;
@@ -486,10 +487,14 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 		}
 	}
 	if (mp->msg_name) {
-		error = sockargs(&to, mp->msg_name, mp->msg_namelen,
+		if (kernsa)
+			to = (struct mbuf *) mp->msg_name;
+		else {
+			error = sockargs(&to, mp->msg_name, mp->msg_namelen,
 				 MT_SONAME);
-		if (error)
-			goto out;
+			if (error)
+				goto out;
+		}
 	} else
 		to = 0;
 	if (mp->msg_control) {
@@ -589,7 +594,7 @@ sys_recvfrom(struct proc *p, void *v, register_t *retval)
 	msg.msg_control = 0;
 	msg.msg_flags = SCARG(uap, flags);
 	return (recvit(p, SCARG(uap, s), &msg,
-		       (caddr_t)SCARG(uap, fromlenaddr), retval));
+		       (caddr_t)SCARG(uap, fromlenaddr), retval, 0));
 }
 
 int
@@ -628,7 +633,7 @@ sys_recvmsg(struct proc *p, void *v, register_t *retval)
 #else
 	msg.msg_flags = SCARG(uap, flags);
 #endif
-	if ((error = recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval)) == 0) {
+	if ((error = recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval,0)) ==0){
 		msg.msg_iov = uiov;
 		error = copyout((caddr_t)&msg, (caddr_t)SCARG(uap, msg),
 		    sizeof(msg));
@@ -641,7 +646,7 @@ done:
 
 int
 recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
-	register_t *retsize)
+	register_t *retsize, int kernsa)
 {
 	struct file	*fp;
 	struct uio	auio;
@@ -730,10 +735,14 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 			if (len > from->m_len)
 				len = from->m_len;
 			/* else if len < from->m_len ??? */
-			error = copyout(mtod(from, caddr_t),
+			if (kernsa)
+				memcpy(mp->msg_name, mtod(from, caddr_t), len);
+			else {
+				error = copyout(mtod(from, caddr_t),
 					(caddr_t)mp->msg_name, (unsigned)len);
-			if (error)
-				goto out;
+				if (error)
+					goto out;
+			}
 		}
 		mp->msg_namelen = len;
 		if (namelenp &&
