@@ -57,4 +57,8 @@
 #endif
 #include <sys/time.h>
 
+#ifndef INADDR_LOOPBACK
+#define	INADDR_LOOPBACK		(u_long)0x7F000001
+#endif
+
 #endif /* !_RPC_TYPES_H */
