@@ -7,9 +7,10 @@
 <H4>Synopsis</H4>
 
 <TT>ntpd [ -aAbdm ] [ -c <I>conffile</I> ] [ -f <I>driftfile</I> ] [ -g
-] [ -k <I>keyfile</I> ] [ -l <I>logfile</I> ] [ -p <I>pidfile</I> ] [ -r
-<I>broadcastdelay</I> ] [ -s <I>statsdir</I> ] [ -t <I>key</I> ] [ -v
-<I>variable</I> ] [ -V <I>variable</I> ] [ -x ]</TT>
+] [ -i <I>chrootdir</I> ] [ -k <I>keyfile</I> ] [ -l <I>logfile</I> ]
+[ -p <I>pidfile</I> ] [ -r <I>broadcastdelay</I> ] [ -s <I>statsdir</I> ]
+[ -t <I>key</I> ] [ -u user[:group] ] [ -v <I>variable</I> ]
+[ -V <I>variable</I> ] [ -x ]</TT>
 
 <H4>Description</H4>
 
@@ -86,7 +87,10 @@ each occurrence indicating greater detail of display.</DD>
 <DD>Normally, the daemon exits if the offset exceeds a 1000-s sanity
 limit. This option overrides this limit and allows the time to be set to
 any value without restriction; however, this can happen only once. After
-that, the daemon will exit if the limit is exceeded.
+that, the daemon will exit if the limit is exceeded.</DD>
+
+<DT><TT>-i <I>chrootdir</I></TT></DT>
+<DD>Specify the path to a directory in which ntpd will run chrooted.</DD>
 
 <DT><TT>-k <I>keyfile</I></TT></DT>
 <DD>Specify the name and path of the file containing the NTP
@@ -118,6 +122,9 @@ facility.</DD>
 
 <DT><TT>-t <I>key</I></TT></DT>
 <DD>Add a key number to the trusted key list.</DD>
+
+<DT><TT>-u <I>user[:group]</I></TT></DT>
+<DD>Specify user (and optionally group) as which ntpd will run.</DD>
 
 <DT><TT>-v <I>variable</I></TT></DT>
 <DT><TT>-V <I>variable</I></TT></DT>
