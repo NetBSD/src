@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.80 1997/03/14 06:12:11 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.81 1997/04/10 19:45:40 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -107,10 +107,7 @@ check_exec(p, epp)
 
 	/* check for regular file */
 	if (vp->v_type != VREG) {
-		if (vp->v_type == VDIR)
-			error = EISDIR;
-		else
-			error = EACCES;
+		error = EACCES;
 		goto bad1;
 	}
 
