@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.19 2001/08/05 23:39:59 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.20 2001/11/02 03:40:47 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -114,6 +114,10 @@ const struct fxp_pci_product {
 	  "Intel InBusiness Ethernet" },
 	{ PCI_PRODUCT_INTEL_82801BA_LAN,
 	  "Intel i82562 Ethernet" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_0,
+	  "Intel PRO/100 VE Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_1,
+	  "Intel PRO/100 VE Network Controller" },
 	{ 0,
 	  NULL },
 };
