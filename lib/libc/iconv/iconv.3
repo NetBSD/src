@@ -1,4 +1,4 @@
-.\" $NetBSD: iconv.3,v 1.3 2003/07/04 13:45:35 wiz Exp $
+.\" $NetBSD: iconv.3,v 1.4 2003/07/05 16:54:23 tshiozak Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -87,7 +87,7 @@ Pointer to the byte just after the last character fetched.
 Number of remaining bytes in the source buffer.
 .It *dst
 Pointer to the byte just after the last character stored.
-.It *srcleft
+.It *dstleft
 Number of remainder bytes in the destination buffer.
 .El
 .Pp
@@ -128,6 +128,11 @@ places the destination into its initial state and stores the shift
 sequence for switching to the initial state in the buffer pointed
 to by
 .Fa *dst .
+The buffer size is specified by the value pointed by
+.Fa dstleft
+similarly above.
+.Fn iconv
+will fail if the buffer is too small to store the shift sequence.
 .It "(src == NULL || *src == NULL) \*[Am]\*[Am] (dst == NULL || *dst == NULL)"
 If the source codeset is stateful,
 .Fa iconv
