@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.30 1997/07/04 21:02:00 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.31 1997/07/07 20:41:10 phil Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.30 1997/07/04 21:02:00 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.31 1997/07/07 20:41:10 phil Exp $");
 #endif
 #endif /* not lint */
 
@@ -804,7 +804,9 @@ numvar:
 		}
 		/* fall through */
 	case '*':
-		sep = ' ';
+		sep = ((p=bltinlookup("IFS", 1)) == NULL || p[0] == '\0')
+			? ' ' : p[0];
+
 allargs:
 		for (ap = shellparam.p ; (p = *ap++) != NULL ; ) {
 			STRTODEST(p);
