@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.17 2001/11/23 05:00:28 atatat Exp $
+#	$NetBSD: GENERIC,v 1.18 2001/12/07 05:10:59 briggs Exp $
 #
 # GENERIC for Motorola Sandpoint
 #
 
 include "arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.18 $"
 
 maxusers	32
 
@@ -22,10 +22,11 @@ options 	TRAP_PANICWAIT
 options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	KTRACE
-#options 	NEWPMAP
+options 	NEWPMAP
 #options 	PMAPCHECK
 #options 	PMAPDEBUG
 options 	OPENPIC_SERIAL_MODE
+options 	SYMTAB_SPACE=200000
 
 options 	COMPAT_43
 options 	COMPAT_09
@@ -68,7 +69,7 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	loop
 
 # mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux
+#pseudo-device	wsmux
 
 # miscellaneous pseudo-devices
 pseudo-device	rnd			# /dev/random and in-kernel generator
@@ -99,8 +100,6 @@ isa*	at pcib?			# ISA on PCI-ISA bridge
 
 #pciide* at pci? dev ? function ?	# Winbond/Symphony IDE interface
 
-vga*	at pci? dev ? function ?
-
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 options 	TLP_MATCH_21040
@@ -112,14 +111,16 @@ tlp*	at pci? dev ? function ?	# DEC Tulip and similar
 ukphy*	at mii? phy ?			# generic unknown PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 
-pckbc0		at isa?			# PS/2 keyboard controller
-pckbd*		at pckbc?		# PC keyboard
-pms*		at pckbc?		# PS/2 mouse for wsmouse
-pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
-wsdisplay*	at vga? console ?
-wskbd* 		at pckbd? console ?
-wsmouse* 	at pms? mux 0
-wsmouse* 	at pmsi? mux 0
+#vga*	at pci? dev ? function ?
+
+#pckbc0		at isa?			# PS/2 keyboard controller
+#pckbd*		at pckbc?		# PC keyboard
+#pms*		at pckbc?		# PS/2 mouse for wsmouse
+#pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
+#wsdisplay*	at vga? console ?
+#wskbd* 		at pckbd? console ?
+#wsmouse* 	at pms? mux 0
+#wsmouse* 	at pmsi? mux 0
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
