@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.121 2003/09/13 14:09:15 bouyer Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.122 2003/09/17 02:24:33 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.121 2003/09/13 14:09:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.122 2003/09/17 02:24:33 enami Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -961,6 +961,7 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 	daddr_t sblockloc;
 {
 	off_t maxfilesize;
+	int old_ufs1;
 
 	if (fs->fs_magic != FS_UFS1_MAGIC)
 		return;
@@ -969,7 +970,8 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 	 * If not yet done, update UFS1 superblock with new wider fields,
 	 * and  update fs_flags location and value of fs_sblockloc.
 	 */
-	if (fs->fs_maxbsize != fs->fs_bsize) {
+	old_ufs1 = fs->fs_maxbsize != fs->fs_bsize;
+	if (old_ufs1) {
 		fs->fs_maxbsize = fs->fs_bsize;
 		fs->fs_time = fs->fs_old_time;
 		fs->fs_size = fs->fs_old_size;
@@ -979,19 +981,19 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 		fs->fs_flags = fs->fs_old_flags;
 		fs->fs_old_flags |= FS_FLAGS_UPDATED;
 	}
+
 	/*
 	 * If the new fields haven't been set yet, or if the filesystem
 	 * was mounted and modified by an old kernel, use the old csum
 	 * totals, and update the flags
 	 */
-	if (fs->fs_maxbsize != fs->fs_bsize || fs->fs_time < fs->fs_old_time) {
+	if (old_ufs1 || fs->fs_time < fs->fs_old_time) {
 		fs->fs_cstotal.cs_ndir = fs->fs_old_cstotal.cs_ndir;
 		fs->fs_cstotal.cs_nbfree = fs->fs_old_cstotal.cs_nbfree;
 		fs->fs_cstotal.cs_nifree = fs->fs_old_cstotal.cs_nifree;
 		fs->fs_cstotal.cs_nffree = fs->fs_old_cstotal.cs_nffree;
 		fs->fs_flags |= (fs->fs_old_flags & ~FS_FLAGS_UPDATED);
 	}
-
 
 	if (fs->fs_old_inodefmt < FS_44INODEFMT) {
 		fs->fs_maxfilesize = (u_quad_t) 1LL << 39;
