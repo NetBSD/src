@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.15 1998/03/01 02:23:29 fvdl Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.16 1998/03/01 22:16:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -89,7 +89,7 @@ struct vfsops mfs_vfsops = {
 	ffs_vptofh,
 	mfs_init,
 	ffs_sysctl,
-	mfs_mountroot,
+	NULL,
 	mfs_vnodeopv_descs,
 };
 
