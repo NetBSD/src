@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_sunos.8,v 1.7 1997/02/27 08:05:39 mikel Exp $
+.\"	$NetBSD: compat_sunos.8,v 1.8 1997/10/19 15:03:16 fvdl Exp $
 .\"
 .\" Copyright (c) 1984 Theo de Raadt
 .\" All rights reserved.
@@ -97,3 +97,20 @@ first, where they do not conflict with the standard libraries.
 .Sh BUGS
 A list of things which fail to work in compatibility mode should
 be here.
+.Pp
+SunOS executables can not handle directory offset cookies > 32 bits.
+Should such an offset occur, you will see the message "sunos_getdents:
+dir offset too large for emulated program". Currently, this can only 
+happen on NFS mounted filesystems, mounted from servers that return
+offsets with information in the upper 32 bits. These errors should 
+rarely happen, but can be avoided by mounting this filesystem with offset
+translation enabled. See the
+.Fl X
+option to
+.Xr mount_nfs 8 .
+The
+.Fl 2
+option to
+.Xr mount_nfs 8
+will also have the desired effect, but is less preferable.
+
