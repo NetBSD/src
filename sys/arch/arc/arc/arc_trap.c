@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.19 2001/02/17 04:27:53 tsutsui Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.20 2001/06/13 15:08:05 soda Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 
 #include <arc/jazz/pica.h>
 #include <arc/jazz/rd94.h>
-#include <arc/arc/arctype.h>
 
 int arc_hardware_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 
@@ -104,7 +103,7 @@ arc_hardware_intr(status, cause, pc, ipending)
  *	Events are checked in priority order.
  */
 void
-set_intr(mask, int_hand, prio)
+arc_set_intr(mask, int_hand, prio)
 	int	mask;
 	int	(*int_hand)(u_int, struct clockframe *);
 	int	prio;
@@ -121,32 +120,6 @@ set_intr(mask, int_hand, prio)
 	cpu_int_tab[prio].int_hand = int_hand;
 	cpu_int_tab[prio].int_mask = mask;
 	cpu_int_mask |= mask >> 10;
-
-	/*
-	 *  Update external interrupt mask but don't enable clock.
-	 */
-	switch(cputype) {
-	case ACER_PICA_61:
-	case MAGNUM:
-		out32(R4030_SYS_EXT_IMASK,
-		    cpu_int_mask & (~MIPS_INT_MASK_4 >> 10));
-		break;
-	case NEC_R94:
-	case NEC_RAx94:
-	case NEC_RD94:
-	case NEC_R96:
-	case NEC_JC94:
-		out32(RD94_SYS_EXT_IMASK,
-		    cpu_int_mask & (~MIPS_INT_MASK_3 >> 10));
-		break;
-	case DESKSTATION_TYNE:
-		break;
-	case DESKSTATION_RPC44:
-		break;
-	case ALGOR_P4032:
-	case ALGOR_P5064:
-		break;
-	}
 }
 
 /*
