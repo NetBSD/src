@@ -139,7 +139,7 @@ static CORE_ADDR flag_addr;
 #define LM_NEXT(so) (SOLIB_EXTRACT_ADDRESS ((so) -> lm.l_next))
 #define LM_NAME(so) (SOLIB_EXTRACT_ADDRESS ((so) -> lm.l_name))
 #ifdef __mips__
-#define LM_OFFS(so) ((so) -> lm.l_offs)
+#define LM_OFFS(so) (u_int32_t)((so) -> lm.l_offs)
 #endif
 /* Test for first link map entry; first entry is the exec-file. */
 #define IGNORE_FIRST_LINK_MAP_ENTRY(so) \

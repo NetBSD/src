@@ -172,7 +172,8 @@ m88*-*-*)		gdb_target=m88k ;;
 
 mcore*-*-*)		gdb_target=mcore ;;
 
-mips*-*-netbsd*)	gdb_target=nbsd ;;
+mipseb-*-netbsd*)	gdb_target=nbsdeb ;;
+mipsel-*-netbsd*)	gdb_target=nbsdel ;;
 mips64*-big-*)		gdb_target=bigmips64 ;;
 mips*-big-*)		gdb_target=bigmips ;;
 mips*-dec-mach3*)	gdb_target=mach3 ;;
