@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.83 1998/12/15 19:37:12 itohy Exp $	*/
+/*	$NetBSD: trap.c,v 1.84 1999/03/18 04:56:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -575,7 +575,15 @@ trap(type, code, v, tf)
 			goto dopanic;
 		}
 		ucode = v;
-		sig = SIGSEGV;
+		if (rv == KERN_RESOURCE_SHORTAGE) {
+			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
+			       p->p_pid, p->p_comm,
+			       p->p_cred && p->p_ucred ?
+			       p->p_ucred->cr_uid : -1);
+			sig = SIGKILL;
+		} else {
+			sig = SIGSEGV;
+		}
 		break;
 		} /* T_MMUFLT */
 	} /* switch */
