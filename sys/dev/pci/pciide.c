@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.84 2000/08/02 21:49:09 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.85 2000/08/09 13:23:07 drochner Exp $	*/
 
 
 /*
@@ -240,6 +240,11 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  0,
 	  "Intel 82371AB IDE controller (PIIX4)",
 	  piix_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82440MX_IDE,
+	  0,
+	  "Intel 82440MX IDE controller",
+	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801AA_IDE,
 	  0,
@@ -1319,6 +1324,7 @@ piix_chip_map(sc, pa)
 		sc->sc_wdcdev.irqack = pciide_irqack;
 		switch(sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_INTEL_82371AB_IDE:
+		case PCI_PRODUCT_INTEL_82440MX_IDE:
 		case PCI_PRODUCT_INTEL_82801AA_IDE:
 		case PCI_PRODUCT_INTEL_82801AB_IDE:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
