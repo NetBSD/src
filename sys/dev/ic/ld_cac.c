@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.1 2000/11/26 17:44:05 ad Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.2 2000/12/11 13:19:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -64,6 +64,8 @@
 struct ld_cac_softc {
 	struct	ld_softc sc_ld;
 	int	sc_hwunit;
+	struct	timeval sc_serrtm;
+	int	sc_serrcnt;
 };
 
 static void	ld_cac_attach(struct device *, struct device *, void *);
@@ -71,6 +73,8 @@ static void	ld_cac_done(struct device *, void *, int);
 static int	ld_cac_dump(struct ld_softc *, void *, int, int);
 static int	ld_cac_match(struct device *, struct cfdata *, void *);
 static int	ld_cac_start(struct ld_softc *, struct buf *);
+
+static struct	timeval ld_cac_serrintvl = { 60, 0 };
 
 struct cfattach ld_cac_ca = {
 	sizeof(struct ld_cac_softc), ld_cac_match, ld_cac_attach
@@ -184,8 +188,28 @@ static void
 ld_cac_done(struct device *dv, void *context, int error)
 {
 	struct buf *bp;
+	struct ld_cac_softc *sc;
 
 	bp = context;
+
+	if ((error & CAC_RET_HARD_ERROR) != 0) {
+		printf("%s: hard error\n", dv->dv_xname);
+		error = EIO;
+	}
+	if ((error & CAC_RET_CMD_REJECTED) != 0) {
+		printf("%s: invalid request\n", dv->dv_xname);
+		error = EIO;
+	}
+	if ((error & CAC_RET_SOFT_ERROR) != 0) {
+		sc = (struct ld_cac_softc *)dv;
+		sc->sc_serrcnt++;
+		if (ratecheck(&sc->sc_serrtm, &ld_cac_serrintvl)) {
+			printf("%s: %d soft errors; array may be degraded\n",
+			    dv->dv_xname, sc->sc_serrcnt);
+			sc->sc_serrcnt = 0;
+		}
+		error = 0;
+	}
 
 	if (error) {
 		bp->b_flags |= B_ERROR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.15 2000/11/14 18:21:01 thorpej Exp $	*/
+/*	$NetBSD: cac.c,v 1.16 2000/12/11 13:19:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -405,7 +405,6 @@ static void
 cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 	struct device *dv;
-	const char *errdvn;
 	void *context;
 	int error;
 
@@ -424,27 +423,22 @@ cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap_xfer);
 	}
 
-	if (ccb->ccb_context.cc_dv != NULL)
-		errdvn = ccb->ccb_context.cc_dv->dv_xname;
-	else
-		errdvn = sc->sc_dv.dv_xname;
-
-	if ((ccb->ccb_req.error & CAC_RET_SOFT_ERROR) != 0)
-		printf("%s: soft error; corrected\n", errdvn);
-	if ((ccb->ccb_req.error & CAC_RET_HARD_ERROR) != 0) {
-		error = 1;
-		printf("%s: hard error\n", errdvn);
-	}
-	if ((ccb->ccb_req.error & CAC_RET_CMD_REJECTED) != 0) {
-		error = 1;
-		printf("%s: invalid request\n", errdvn);
-	}
-
+	error = ccb->ccb_req.error;
 	if (ccb->ccb_context.cc_handler != NULL) {
 		dv = ccb->ccb_context.cc_dv;
 		context = ccb->ccb_context.cc_context;
 		cac_ccb_free(sc, ccb);
 		(*ccb->ccb_context.cc_handler)(dv, context, error);
+	} else {
+		if ((error & CAC_RET_SOFT_ERROR) != 0)
+			printf("%s: soft error; array may be degraded\n",
+			    sc->sc_dv.dv_xname);
+		if ((error & CAC_RET_HARD_ERROR) != 0)
+			printf("%s: hard error\n", sc->sc_dv.dv_xname);
+		if ((error & CAC_RET_CMD_REJECTED) != 0) {
+			error = 1;
+			printf("%s: invalid request\n", sc->sc_dv.dv_xname);
+		}
 	}
 }
 
