@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.5 2000/04/18 22:45:24 jdc Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.6 2000/04/24 14:09:43 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: insdelln.c,v 1.6 2000/04/24 14:09:43 blymn Exp $");
+#endif				/* not lint */
 
 /* 
  * Based on deleteln.c and insertln.c -

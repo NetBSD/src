@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.4 2000/04/23 14:14:49 blymn Exp $	*/
+/*	$NetBSD: copywin.c,v 1.5 2000/04/24 14:09:42 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -28,6 +28,11 @@
  *
  *
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: copywin.c,v 1.5 2000/04/24 14:09:42 blymn Exp $");
+#endif				/* not lint */
 
 #include <ctype.h>
 #include <string.h>

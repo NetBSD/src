@@ -1,4 +1,4 @@
-/*	$NetBSD: clearok.c,v 1.3 2000/04/15 13:17:03 blymn Exp $	*/
+/*	$NetBSD: clearok.c,v 1.4 2000/04/24 14:09:42 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: clearok.c,v 1.4 2000/04/24 14:09:42 blymn Exp $");
+#endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"

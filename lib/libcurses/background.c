@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.5 2000/04/18 22:44:21 jdc Exp $	*/
+/*	$NetBSD: background.c,v 1.6 2000/04/24 14:09:42 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: background.c,v 1.6 2000/04/24 14:09:42 blymn Exp $");
+#endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"

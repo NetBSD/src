@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.5 2000/04/18 22:43:25 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.6 2000/04/24 14:09:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -113,6 +113,8 @@ int	 __notimeout(void);
 char	*__parse_cap(const char *, ...);
 void	 __restartwin(void);
 void	 __restore_colors(void);
+void     __restore_cursor_vis(void);
+void     __restore_meta_state(void);
 void	 __restore_termios(void);
 void	 __restore_stophandler(void);
 void	 __save_termios(void);

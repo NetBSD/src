@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.7 2000/04/21 15:54:42 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.8 2000/04/24 14:09:42 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: color.c,v 1.8 2000/04/24 14:09:42 blymn Exp $");
+#endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
