@@ -41,8 +41,9 @@ ENTRY(ceil)
 	subl	$8,%esp
 
 	fstcw	-12(%ebp)		/* store fpu control word */
-	movw	-12(%ebp),%dx		/* reset RC bit */
-	orw	$0x0800,%dx
+	movw	-12(%ebp),%dx
+	orw	$0x0800,%dx		/* round towards +oo */
+	andl	$0xfbff,%dx
 	movw	%dx,-16(%ebp)
 	fldcw	-16(%ebp)		/* load modfied control word */
 
