@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.1.1.4 2003/01/26 23:15:30 wiz Exp $	*/
+/*	$NetBSD: grep.c,v 1.1.1.5 2003/02/13 07:43:16 wiz Exp $	*/
 
 /* grep.c - main driver file for grep.
    Copyright 1992, 1997-1999, 2000 Free Software Foundation, Inc.
@@ -541,6 +541,8 @@ prline (char const *beg, char const *lim, int sep)
 	  char const *b = beg + match_offset;
 	  if (b == lim)
 	    break;
+	  if (match_size == 0)
+	    break;
 	  if(color_option)
 	    printf("\33[%sm", grep_color);
 	  fwrite(b, sizeof (char), match_size, stdout);
@@ -585,12 +587,15 @@ prline (char const *beg, char const *lim, int sep)
 	  lastout = lim;
 	  return;
 	}
-      while ((match_offset = (*execute) (beg, lim - beg, &match_size, 1))
+      while (lim-beg && (match_offset = (*execute) (beg, lim - beg, &match_size, 1))
 	     != (size_t) -1)
 	{
 	  char const *b = beg + match_offset;
 	  /* Avoid matching the empty line at the end of the buffer. */
 	  if (b == lim)
+	    break;
+	  /* Avoid hanging on grep --color "" foo */
+	  if (match_size == 0)
 	    break;
 	  fwrite (beg, sizeof (char), match_offset, stdout);
 	  printf ("\33[%sm", grep_color);
@@ -1521,6 +1526,7 @@ main (int argc, char **argv)
 
       case 'q':
 	exit_on_match = 1;
+	close_stdout_set_status(0);
 	break;
 
       case 'R':
