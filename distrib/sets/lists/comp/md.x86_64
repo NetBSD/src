@@ -1,8 +1,9 @@
-# $NetBSD: md.x86_64,v 1.4 2003/03/09 22:42:25 fvdl Exp $
+# $NetBSD: md.x86_64,v 1.5 2003/04/26 10:51:16 fvdl Exp $
 ./usr/include/x86                       comp-c-include
 ./usr/include/x86/aout_machdep.h        comp-c-include
 ./usr/include/x86/bootinfo.h            comp-c-include
 ./usr/include/x86/bus.h			comp-c-include
+./usr/include/x86/cacheinfo.h		comp-c-include
 ./usr/include/x86/cpuvar.h		comp-c-include
 ./usr/include/x86/float.h		comp-c-include
 ./usr/include/x86/ieee.h		comp-c-include
