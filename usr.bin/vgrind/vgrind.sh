@@ -1,6 +1,6 @@
 #!/bin/csh -f
 #
-#	$NetBSD: vgrind.sh,v 1.3 1994/11/17 08:28:06 jtc Exp $
+#	$NetBSD: vgrind.sh,v 1.4 2002/10/27 12:29:11 kleink Exp $
 #
 # Copyright (c) 1980, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -118,10 +118,10 @@ if (-r index) then
     else
 	if ("$head" != "") then
 	    $vf $options -h "$head" $files | \
-		sh -c "psroff -rx1 $voptions -i -mvgrind 2>> xindex"
+		sh -c "groff -Tps -l -C -rx1 $voptions -i -mvgrind 2>> xindex"
 	else
 	    $vf $options $files | \
-		sh -c "psroff -rx1 $voptions -i -mvgrind 2>> xindex"
+		sh -c "groff -Tps -l -C -rx1 $voptions -i -mvgrind 2>> xindex"
 	endif
     endif
     sort -df +0 -2 xindex >index
@@ -135,9 +135,9 @@ else
 	endif
     else
 	if ("$head" != "") then
-	    $vf $options -h "$head" $files | psroff -i $voptions -mvgrind
+	    $vf $options -h "$head" $files | groff -Tps -l -C -i $voptions -mvgrind
 	else
-	    $vf $options $files | psroff -i $voptions -mvgrind
+	    $vf $options $files | groff -Tps -l -C -i $voptions -mvgrind
 	endif
     endif
 endif
