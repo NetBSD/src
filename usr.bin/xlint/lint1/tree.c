@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.36 2003/05/30 13:37:49 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.37 2004/06/20 22:20:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -31,9 +31,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.36 2003/05/30 13:37:49 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.37 2004/06/20 22:20:17 jmc Exp $");
 #endif
 
 #include <stdlib.h>

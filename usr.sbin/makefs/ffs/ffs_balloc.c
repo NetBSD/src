@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.12 2003/08/07 11:25:33 agc Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.13 2004/06/20 22:20:18 jmc Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
 /*
@@ -32,9 +32,13 @@
  *	@(#)ffs_balloc.c	8.8 (Berkeley) 6/16/95
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_balloc.c,v 1.12 2003/08/07 11:25:33 agc Exp $");
+__RCSID("$NetBSD: ffs_balloc.c,v 1.13 2004/06/20 22:20:18 jmc Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>

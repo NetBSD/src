@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.34 2004/01/26 21:51:11 dsl Exp $ */
+/* $NetBSD: xlint.c,v 1.35 2004/06/20 22:20:17 jmc Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -32,9 +32,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.34 2004/01/26 21:51:11 dsl Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.35 2004/06/20 22:20:17 jmc Exp $");
 #endif
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.61 2004/06/04 07:28:26 thorpej Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.62 2004/06/20 22:20:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,10 @@
  *
  *	from: @(#)mkmakefile.c	8.1 (Berkeley) 6/6/93
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/param.h>
 #include <ctype.h>

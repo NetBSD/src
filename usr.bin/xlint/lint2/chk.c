@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.16 2002/01/31 19:36:55 tv Exp $ */
+/* $NetBSD: chk.c,v 1.17 2004/06/20 22:20:17 jmc Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -32,9 +32,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.16 2002/01/31 19:36:55 tv Exp $");
+__RCSID("$NetBSD: chk.c,v 1.17 2004/06/20 22:20:17 jmc Exp $");
 #endif
 
 #include <ctype.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.15 2003/08/07 11:14:31 agc Exp $	*/
+/*	$NetBSD: expr.c,v 1.16 2004/06/20 22:20:15 jmc Exp $	*/
 /*	$OpenBSD: expr.c,v 1.11 2000/01/11 14:00:57 espie Exp $	*/
 
 /*
@@ -33,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)expr.c	8.2 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: expr.c,v 1.15 2003/08/07 11:14:31 agc Exp $");
+__RCSID("$NetBSD: expr.c,v 1.16 2004/06/20 22:20:15 jmc Exp $");
 #endif
 #endif /* not lint */
 

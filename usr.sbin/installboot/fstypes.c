@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.c,v 1.6 2003/07/27 07:51:40 lukem Exp $	*/
+/*	$NetBSD: fstypes.c,v 1.7 2004/06/20 22:20:17 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,9 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: fstypes.c,v 1.6 2003/07/27 07:51:40 lukem Exp $");
+__RCSID("$NetBSD: fstypes.c,v 1.7 2004/06/20 22:20:17 jmc Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
