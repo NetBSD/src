@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.29 1999/03/18 12:08:43 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.30 1999/05/09 14:37:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1066,6 +1066,8 @@ usb_start_next(pipe)
 	usbd_request_handle reqh;
 	usbd_status r;
 
+	DPRINTFN(10, ("usb_start_next: pipe=%p\n", pipe));
+	
 #ifdef DIAGNOSTIC
 	if (SIMPLEQ_FIRST(&pipe->queue) == 0) {
 		printf("usb_start_next: empty\n");
