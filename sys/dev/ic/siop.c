@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.68 2003/10/25 18:35:43 christos Exp $	*/
+/*	$NetBSD: siop.c,v 1.69 2003/10/28 18:35:06 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.68 2003/10/25 18:35:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.69 2003/10/28 18:35:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,9 +340,9 @@ siop_intr(v)
 		    SIOP_ISTAT, 0);
 	}
 	/* use DSA to find the current siop_cmd */
+	siop_cmd = NULL;
 	dsa = bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA);
-	for (cbdp = TAILQ_FIRST(&sc->cmds); cbdp != NULL;
-	    cbdp = TAILQ_NEXT(cbdp, next)) {
+	TAILQ_FOREACH(cbdp, &sc->cmds, next) {
 		if (dsa >= cbdp->xferdma->dm_segs[0].ds_addr &&
 	    	    dsa < cbdp->xferdma->dm_segs[0].ds_addr + PAGE_SIZE) {
 			dsa -= cbdp->xferdma->dm_segs[0].ds_addr;
@@ -352,9 +352,6 @@ siop_intr(v)
 			break;
 		}
 	} 
-	if (cbdp == NULL) {
-		siop_cmd = NULL;
-	}
 	if (siop_cmd) {
 		xs = siop_cmd->cmd_c.xs;
 		siop_target = (struct siop_target *)siop_cmd->cmd_c.siop_target;
