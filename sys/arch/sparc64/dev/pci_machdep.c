@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.24 2001/09/15 19:32:14 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.25 2001/10/17 22:16:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -171,13 +171,14 @@ pci_dev_funcorder(pc, busno, device, funcs)
 	}
 #endif
 	/*
-	 * Functions are siblings.  Presumably we're only called when the
-	 * first instance of this device is detected, so we should be able to
-	 * get to all the other functions with OF_peer().  But there seems
-	 * some issues with this scheme, so we always go to the first node on
-	 * this bus segment for a scan.  
+	 * Initially, curnode is the root of the pci tree.  As we
+	 * attach bridges, curnode should be set to that of the bridge.
+	 *
+	 * Note this search is almost exactly the same as pci_bus_devorder()'s,
+	 * except that we limit the search to only those with a matching
+	 * "device" number.
 	 */
-	for (node = OF_child(OF_parent(node)); node; node = OF_peer(node)) {
+	for (node = OF_child(node); node; node = OF_peer(node)) {
 		len = OF_getproplen(node, "reg");
 		if (len < sizeof(reg))
 			continue;
