@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.77.2.2 1998/03/09 21:58:32 mellon Exp $
+#	$NetBSD: Makefile,v 1.77.2.3 1998/10/29 03:02:32 cgd Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -7,7 +7,7 @@ SUBDIR=	apply apropos asa at audioctl banner basename bdes \
 	biff cal calendar cap_mkdb checknr chflags chpass \
 	cksum cmp col colcrt colrm column comm compress \
 	crontab crunch ctags cut dirname du eject env \
-	error expand false file find finger fmt fold fpr \
+	error expand false fdformat file find finger fmt fold fpr \
 	from fsplit fstat ftp gencat getconf getopt gprof head \
 	hexdump id indent ipcrm ipcs join jot kdump ktrace \
 	lam last lastcomm leave less lex locate lock \
@@ -27,7 +27,7 @@ SUBDIR=	apply apropos asa at audioctl banner basename bdes \
 	ypmatch ypwhich
 
 .if	make(clean) || make(cleandir)
-SUBDIR+=ar elf2aout elf2ecoff elfstrip fdformat \
+SUBDIR+=ar elf2aout elf2ecoff elfstrip \
 	ldd nm ranlib size strip telnet
 .else
 
@@ -45,11 +45,6 @@ SUBDIR+=telnet
 SUBDIR+= ar nm ranlib size strip
 .else
 SUBDIR+= ldd
-.endif
-
-.if (${MACHINE_ARCH} == "i386" || ${MACHINE} == "atari" || \
-     ${MACHINE_ARCH} == "arm32" || ${MACHINE_ARCH} == "sparc")
-SUBDIR+= fdformat
 .endif
 
 # Build ELF to {ecoff, aout} tools on mips, for old bootblocks/PROMs.
