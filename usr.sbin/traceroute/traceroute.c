@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.13 1996/08/16 21:36:18 explorer Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.14 1996/09/11 23:53:38 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$NetBSD: traceroute.c,v 1.13 1996/08/16 21:36:18 explorer Exp $";
+static char rcsid[] = "$NetBSD: traceroute.c,v 1.14 1996/09/11 23:53:38 explorer Exp $";
 #endif
 #endif /* not lint */
 
@@ -471,6 +471,7 @@ main(argc, argv)
 #endif IP_HDRINCL
 	}
 
+	setuid(getuid());
 	Fprintf(stderr, "traceroute to %s (%s)", hostname,
 		inet_ntoa(to.sin_addr));
 	if (source)
@@ -799,9 +800,10 @@ inetname(in)
 	if (first && !nflag) {
 		first = 0;
 		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
-		    (cp = index(domain, '.')))
-			(void) strcpy(domain, cp + 1);
-		else
+		    (cp = index(domain, '.'))) {
+			(void) strncpy(domain, cp + 1, sizeof(domain));
+			domain[sizeof(domain) - 1] = '\0';
+		} else
 			domain[0] = 0;
 	}
 	cp = 0;
@@ -814,9 +816,10 @@ inetname(in)
 			cp = hp->h_name;
 		}
 	}
-	if (cp)
-		(void) strcpy(line, cp);
-	else {
+	if (cp) {
+		(void) strncpy(line, cp, sizeof(line));
+		line[sizeof(line) - 1] = '\0';
+	} else {
 		in.s_addr = ntohl(in.s_addr);
 #define C(x)	((x) & 0xff)
 		Sprintf(line, "%lu.%lu.%lu.%lu", C(in.s_addr >> 24),
