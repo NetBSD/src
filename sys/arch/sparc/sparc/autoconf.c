@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45 1996/03/17 21:40:11 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.46 1996/03/25 20:46:56 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1340,12 +1340,12 @@ romgetcursoraddr(rowp, colp)
 	 */
 	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009)
 		sprintf(buf,
-		    "' line# >body >user %p ! ' column# >body >user %p !",
-		    rowp, colp);
+		    "' line# >body >user %lx ! ' column# >body >user %lx !",
+		    (u_long)rowp, (u_long)colp);
 	else
 		sprintf(buf,
-		    "stdout @ is my-self addr line# %p ! addr column# %p !",
-		    rowp, colp);
+		    "stdout @ is my-self addr line# %lx ! addr column# %lx !",
+		    (u_long)rowp, (u_long)colp);
 	*rowp = *colp = NULL;
 	rominterpret(buf);
 	return (*rowp == NULL || *colp == NULL);
