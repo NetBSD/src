@@ -1473,6 +1473,9 @@
 ./usr/share/man/cat3/inet_aton.0
 ./usr/share/man/cat3/inet_lnaof.0
 ./usr/share/man/cat3/inet_makeaddr.0
+./usr/share/man/cat3/inet_net.0
+./usr/share/man/cat3/inet_net_ntop.0
+./usr/share/man/cat3/inet_net_pton.0
 ./usr/share/man/cat3/inet_netof.0
 ./usr/share/man/cat3/inet_network.0
 ./usr/share/man/cat3/inet_ntoa.0
