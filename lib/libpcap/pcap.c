@@ -1,7 +1,7 @@
-/*	$NetBSD: pcap.c,v 1.2 1995/03/06 11:39:05 mycroft Exp $	*/
+/*	$NetBSD: pcap.c,v 1.3 1996/12/13 08:26:13 mikel Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994
+ * Copyright (c) 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,23 +35,35 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: pcap.c,v 1.12 94/06/12 14:32:23 leres Exp (LBL)";
+    "@(#) Header: pcap.c,v 1.25 96/06/05 21:45:26 leres Exp (LBL)";
 #endif
 
 #include <sys/types.h>
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "gnuc.h"
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
+#endif
 
 #include "pcap-int.h"
 
 int
 pcap_dispatch(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 {
+	register int cc;
+
 	if (p->sf.rfile != NULL)
 		return (pcap_offline_read(p, cnt, callback, user));
-	else
-		return (pcap_read(p, cnt, callback, user));
+	/* XXX keep reading until we get something (or an error occurs) */
+	do {
+		cc = pcap_read(p, cnt, callback, user);
+	} while (cc == 0);
+	return (cc);
 }
 
 int
@@ -59,7 +71,7 @@ pcap_loop(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 {
 	for (;;) {
 		int n = pcap_dispatch(p, cnt, callback, user);
-		if (n < 0)
+		if (n <= 0)
 			return (n);
 		if (cnt > 0) {
 			cnt -= n;
@@ -89,7 +101,7 @@ pcap_next(pcap_t *p, struct pcap_pkthdr *h)
 	struct singleton s;
 
 	s.hdr = h;
-	if (pcap_dispatch(p, 1, pcap_oneshot, (u_char*)&s) < 0)
+	if (pcap_dispatch(p, 1, pcap_oneshot, (u_char*)&s) <= 0)
 		return (0);
 	return (s.pkt);
 }
@@ -154,8 +166,18 @@ pcap_geterr(pcap_t *p)
 char *
 pcap_strerror(int errnum)
 {
-
+#ifdef HAVE_STRERROR
 	return (strerror(errnum));
+#else
+	extern int sys_nerr;
+	extern const char *const sys_errlist[];
+	static char ebuf[20];
+
+	if ((unsigned int)errnum < sys_nerr)
+		return ((char *)sys_errlist[errnum]);
+	(void)sprintf(ebuf, "Unknown error: %d", errnum);
+	return(ebuf);
+#endif
 }
 
 void
@@ -165,7 +187,7 @@ pcap_close(pcap_t *p)
 	if (p->fd >= 0)
 		close(p->fd);
 	if (p->sf.rfile != NULL) {
-		fclose(p->sf.rfile);
+		(void)fclose(p->sf.rfile);
 		if (p->sf.base != NULL)
 			free(p->sf.base);
 	} else if (p->buffer != NULL)
