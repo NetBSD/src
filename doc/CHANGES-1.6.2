@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.129 2003/09/01 07:35:39 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.130 2003/09/01 07:40:54 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1430,4 +1430,11 @@ gnu/usr.bin/gzip/znew				1.4
 	PR/21819: Jeremy Reed: znew and gzexe create/use unsafe tmp files.
 	Replaced with the FreeBSD current version.
 	[christos, ticket #1392]
+
+sys/netinet6/in6_ifattach.c			1.55 (via patch)
+sys/netinet6/ip6_mroute.c			1.50
+sys/netinet6/ip6_mroute.h			1.9
+
+	On interface detach, clear multicast forwarding table.  from kame
+	[itojun, ticket #1375]
 
