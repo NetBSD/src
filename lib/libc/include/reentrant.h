@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.5 1998/09/14 11:03:05 kleink Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.6 2000/06/02 23:11:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997,98 The NetBSD Foundation, Inc.
@@ -99,7 +99,13 @@
 
 #define mutex_init(m, a)	pthread_mutex_init(m, a)
 #define mutex_lock(m)		pthread_mutex_lock(m)
+#define mutex_trylock(m)	pthread_mutex_trylock(m)
 #define mutex_unlock(m)		pthread_mutex_unlock(m)
+
+#define cond_t			pthread_cond_t
+#define cond_signal(m)		pthread_cond_signal(m)
+#define cond_wait(c, m)		pthread_cond_wait(c, m)
+#define cond_init(c, a, p)	pthread_cond_init(c, a)
 
 #define rwlock_t		pthread_rwlock_t
 #define RWLOCK_INITIALIZER	PTHREAD_RWLOCK_INITIALIZER
@@ -109,6 +115,15 @@
 #define rwlock_wrlock(l)	pthread_rwlock_wrlock(l)
 #define rwlock_unlock(l)	pthread_rwlock_unlock(l)
 
+#define thread_key_t		pthread_key_t
+#define thr_keycreate(k, d)	pthread_key_create(k, d)
+#define thr_setspecific(k, p)	pthread_setspecific(k, p)
+#define thr_getspecific(k)	pthread_getspecific(k)
+#define thr_sigsetmask(f, n, o)	pthread_sigmask(f, n, o)
+
+#define thr_self()		pthread_self()
+#define thr_exit(x)		pthread_exit(x)
+
 #define FLOCKFILE(fp)		flockfile(fp)
 #define FUNLOCKFILE(fp)		funlockfile(fp)
 
@@ -116,12 +131,25 @@
 
 #define mutex_init(m, a)	
 #define mutex_lock(m)		
+#define mutex_trylock(m)
 #define mutex_unlock(m)		
+
+#define cond_signal(m)
+#define cond_wait(c, m)
+#define cond_init(c, a, p)
 
 #define rwlock_init(l, a)	
 #define rwlock_rdlock(l)	
 #define rwlock_wrlock(l)	
 #define rwlock_unlock(l)	
+
+#define thr_keycreate(k, d)
+#define thr_setspecific(k, p)
+#define thr_getspecific(k)
+#define thr_sigsetmask(f, n, o)
+
+#define thr_self()
+#define thr_exit()
 
 #define FLOCKFILE(fp)		
 #define FUNLOCKFILE(fp)		

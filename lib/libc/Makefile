@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.88 2000/04/02 15:35:48 minoura Exp $
+#	$NetBSD: Makefile,v 1.89 2000/06/02 23:11:05 fvdl Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -34,6 +34,8 @@ CLEANFILES+=	${.CURDIR}/tags ${.OBJDIR}/tags
 
 # Don't try to lint the C library against itself when creating llib-lc.ln
 LLIBS=
+
+INCSDIR=	/usr/include
 
 .if exists (${ARCHDIR}/Makefile.inc)
 .PATH:	${ARCHDIR}
