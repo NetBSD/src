@@ -1,5 +1,18 @@
+Wed Jun 13 21:19:11 2001  Matthew Fredette  <fredette@alum.mit.edu>
+
+	* README: Bumped the version.
+	* configure.in: Bumped the version.
+	* ndbootd.c (main): Don't assume that a successful, but short, read
+	leaves a zero in errno.  Instead, just check for the short
+	read by looking at the byte count that read returned.
+
+Wed May 23 02:37:40 2001  Matthew Fredette  <fredette@alum.mit.edu>
+
+	* configure.in: Bumped the version.
+
 Wed May 23 02:35:49 2001  Matthew Fredette  <fredette@alum.mit.edu>
 
+	* Release 0.4 out.
 	* configure.in: Bumped the version.
 	* ndbootd.c: Changed many debugging printfs to compile quietly on the
 	alpha.  Patch from Andrew Brown <atatat@atatdot.net>.
