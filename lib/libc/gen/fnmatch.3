@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Guido van Rossum.
@@ -31,10 +31,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)fnmatch.3	5.4 (Berkeley) 6/28/92
-.\"	$Id: fnmatch.3,v 1.4 1993/07/30 08:35:54 mycroft Exp $
+.\"     from: @(#)fnmatch.3	8.1 (Berkeley) 6/9/93
+.\"	$Id: fnmatch.3,v 1.5 1993/11/06 00:34:46 cgd Exp $
 .\"
-.Dd June 28, 1992
+.Dd June 9, 1993
 .Dt FNMATCH 3
 .Os
 .Sh NAME
@@ -114,8 +114,7 @@ otherwise, it returns the value
 .Sh HISTORY
 The
 .Fn fnmatch
-function is
-.Ud .
+function first appeared in 4.4BSD.
 .Sh BUGS
 Quotes and slashes in range patterns are not handled correctly by
 this implementation.
