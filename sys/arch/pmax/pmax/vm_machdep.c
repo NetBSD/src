@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 1997/06/15 18:21:17 mhitch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.17 1997/06/16 00:16:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
