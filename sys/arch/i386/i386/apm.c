@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.6 1996/09/13 03:10:56 jtk Exp $ */
+/*	$NetBSD: apm.c,v 1.7 1996/09/13 22:58:27 jtk Exp $ */
 
 /*-
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
@@ -611,7 +611,7 @@ void *xxx;
 }
 #endif
 
-static int bogusbios;
+int apm_bogus_bios = 0;
 
 #define I386_FLAGBITS "\020\017NT\014OVFL\0130UP\012IEN\011TF\010NF\007ZF\005AF\003PF\001CY"
 
@@ -623,6 +623,9 @@ apmprobe(parent, match, aux)
 	struct apm_attach_args *aaa = aux;
 	extern int biosbasemem;
 	struct apmregs regs;
+	u_int okbases[] = { 0, biosbasemem*1024 };
+	u_int oklimits[] = { NBPG, IOM_END-1 };
+	register u_int i;
 
 	if (apminited)
 		return 0;
@@ -713,7 +716,7 @@ apmprobe(parent, match, aux)
 				 * expanded size, in case it's in some place
 				 * that costs us nothing to map).
 				 */
-				bogusbios = 1;
+				apm_bogus_bios = 1;
 				apminfo.apm_data_seg_len = 65536;
 				DPRINTF(("apm lame v%d.%d bios gave zero len data, tentative 64k\n",
 					 APM_MAJOR_VERS(apminfo.apm_detail),
@@ -733,68 +736,79 @@ apmprobe(parent, match, aux)
 			DPRINTF(("apm code32 segment starts outside ISA hole [%x]\n",
 				 apminfo.apm_code32_seg_base));
 			return 0;
-		} else {
-			if (apminfo.apm_code32_seg_base +
-			    apminfo.apm_code32_seg_len > IOM_END) {
-				DPRINTF(("apm code32 segment oversized: [%x,%x), truncating\n",
-					 apminfo.apm_code32_seg_base,
-					 apminfo.apm_code32_seg_base +
-					 apminfo.apm_code32_seg_len-1));
-				apminfo.apm_code32_seg_len = IOM_END - apminfo.apm_code32_seg_base;
-			}
+		} 
+		if (apminfo.apm_code32_seg_base +
+		    apminfo.apm_code32_seg_len > IOM_END) {
+		    DPRINTF(("apm code32 segment oversized: [%x,%x), truncating\n",
+			     apminfo.apm_code32_seg_base,
+			     apminfo.apm_code32_seg_base +
+			     apminfo.apm_code32_seg_len-1));
+		    apminfo.apm_code32_seg_len =
+			IOM_END - apminfo.apm_code32_seg_base;
 		}
 		if (apminfo.apm_code16_seg_base < IOM_BEGIN ||
 		    apminfo.apm_code16_seg_base >= IOM_END) {
 			DPRINTF(("apm code16 segment starts outside ISA hole [%x]\n",
 				 apminfo.apm_code16_seg_base));
 			return 0;
-		} else {
-			if (apminfo.apm_code16_seg_base +
-			    apminfo.apm_code32_seg_len > IOM_END) {
-				DPRINTF(("apm code16 segment oversized: [%x,%x), giving up\n",
-					 apminfo.apm_code16_seg_base,
-					 apminfo.apm_code16_seg_base +
-					 apminfo.apm_code32_seg_len-1));
-				/*
-				 * give up since we may have to trash the
-				 * 32bit segment length otherwise.
-				 */
-				return 0;
-			}
+		}
+		if (apminfo.apm_code16_seg_base +
+		    apminfo.apm_code32_seg_len > IOM_END) {
+		    DPRINTF(("apm code16 segment oversized: [%x,%x), giving up\n",
+			     apminfo.apm_code16_seg_base,
+			     apminfo.apm_code16_seg_base +
+			     apminfo.apm_code32_seg_len-1));
+		    /*
+		     * give up since we may have to trash the
+		     * 32bit segment length otherwise.
+		     */
+		    return 0;
 		}
 		/*
 		 * allow data segment to be zero length, within ISA hole or
 		 * at page zero or above biosbasemem and below ISA hole end.
-		 * Otherwise, give up if not "bogusbios".
+		 * truncate it if it doesn't quite fit in the space
+		 * we allow.
+		 *
+		 * Otherwise, give up if not "apm_bogus_bios".
 		 */
-		if (apminfo.apm_data_seg_len &&
-		    (apminfo.apm_data_seg_base != 0 ||
-		     apminfo.apm_data_seg_len > NBPG) &&
-		    (apminfo.apm_data_seg_base < biosbasemem*1024 ||
-		     apminfo.apm_data_seg_base + apminfo.apm_data_seg_len > IOM_END)) {
-			DPRINTF(("apm data segment not within ISA hole, page zero, or above biosbasemem: [%x,%x)\n",
-				 apminfo.apm_data_seg_base,
-				 apminfo.apm_data_seg_base +
-				 apminfo.apm_data_seg_len));
-			if (apminfo.apm_data_seg_base >= biosbasemem*1024 &&
-			    apminfo.apm_data_seg_len + apminfo.apm_data_seg_base-1 >= IOM_END) {
-				/* truncate length */
-				apminfo.apm_data_seg_len = IOM_END - apminfo.apm_data_seg_base;
-				DPRINTF(("truncated to [%x,%x)\n",
-					 apminfo.apm_data_seg_base,
-					 apminfo.apm_data_seg_base +
-					 apminfo.apm_data_seg_len));
+		for (i = 0; i < 2; i++) {
+			if (apminfo.apm_data_seg_base >= okbases[i] &&
+			    apminfo.apm_data_seg_base < oklimits[i]-1) {
+				/* starts OK */
+				if (apminfo.apm_data_seg_base +
+				    apminfo.apm_data_seg_len-1 > oklimits[i]) {
+					DPRINTF(("apm data segment oversized: [%x,%x)",
+						 apminfo.apm_data_seg_base,
+						 apminfo.apm_data_seg_base +
+						 apminfo.apm_data_seg_len));
+					apminfo.apm_data_seg_len =
+						oklimits[i] -
+						apminfo.apm_data_seg_base;
+					DPRINTF(("; resized to [%x,%x)\n",
+						 apminfo.apm_data_seg_base,
+						 apminfo.apm_data_seg_base +
+						 apminfo.apm_data_seg_len));
+					return 1;
+				} else {
+					DPRINTF(("apm data segment fine: [%x,%x)\n",
+						 apminfo.apm_data_seg_base,
+						 apminfo.apm_data_seg_base +
+						 apminfo.apm_data_seg_len));
+				}
 				return 1;
 			}
-			if (bogusbios) {
-				DPRINTF(("bogus bios data seg location, ignoring\n"));
-				apminfo.apm_data_seg_base = 0;
-				apminfo.apm_data_seg_len = 0;
-				return 1;
-			}
-			return 0;
 		}
-		return 1;
+		if (apm_bogus_bios) {
+			DPRINTF(("bogus bios data seg location, ignoring\n"));
+			apminfo.apm_data_seg_base = 0;
+			apminfo.apm_data_seg_len = 0;
+			return 1;
+		}
+		DPRINTF(("apm data segment [%x,%x) not in an available location\n",
+			 apminfo.apm_data_seg_base,
+			 apminfo.apm_data_seg_base +
+			 apminfo.apm_data_seg_len));
 	}
 	return 0;
 }
@@ -839,8 +853,7 @@ apmattach(parent, self, aux)
 			setsegment(&dynamic_gdt[GAPMDATA_SEL].sd,
 				   (void *)ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
 				   0, SDT_MEMROA, SEL_KPL, 0, 0);
-		} else if ((apminfo.apm_data_seg_base == 0 ||
-			   apminfo.apm_data_seg_base < IOM_BEGIN) &&
+		} else if (apminfo.apm_data_seg_base < IOM_BEGIN &&
 			   apminfo.apm_data_seg_len > 0) {
 			/*
 			 * need page zero or biosbasemem area mapping.
