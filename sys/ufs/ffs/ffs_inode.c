@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.19 1998/03/18 15:57:27 bouyer Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.20 1998/06/08 04:27:51 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,6 +35,7 @@
  *	@(#)ffs_inode.c	8.13 (Berkeley) 4/21/95
  */
 
+#include "opt_quota.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>

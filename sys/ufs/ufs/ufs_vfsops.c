@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.6 1998/03/01 02:23:37 fvdl Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.7 1998/06/08 04:27:52 scottr Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -39,6 +39,8 @@
  *
  *	@(#)ufs_vfsops.c	8.8 (Berkeley) 5/20/95
  */
+
+#include "opt_quota.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
