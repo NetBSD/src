@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 2001/04/23 11:20:41 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.16 2001/06/24 05:00:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -142,8 +142,38 @@ microtime(tvp)
 {
 	int s = splclock();
 	static struct timeval lasttime;
+	static u_long numerator = 0;
+	static u_long denominator = 0;
 
+	/*
+	 * 1/hz resolution ``time'' which is counted up at hardclock().
+	 */
 	*tvp = time;
+
+	/*
+	 * diff = (PCLOCK/16/hz - 1 - SHREG_TCNT1) / (PCLOCK/16/hz - 1)
+	 *         * 1/hz * 10^6. [usec]
+	 */
+
+	if (denominator == 0) {
+		numerator = 1000000 / hz;
+		denominator = PCLOCK/16/hz - 1;
+	}
+
+	diff = (denominator - SHREG_TCNT1) * numerator / denominator;
+
+	/*
+	 * add ``diff'' to ``time''
+	 */
+	tvp->tv_usec += diff;
+	while (tvp->tv_usec >= 1000000) {
+		tvp->tv_usec -= 1000000;
+		tvp->tv_sec++;
+	}
+
+	/*
+	 * microtime() always gains 1usec at least.
+	 */
 
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
@@ -152,6 +182,7 @@ microtime(tvp)
 		tvp->tv_usec -= 1000000;
 	}
 	lasttime = *tvp;
+
 	splx(s);
 }
 
