@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.2.2.5 1998/06/23 08:07:36 leo Exp $    */
+/*	$NetBSD: wdcvar.h,v 1.2.2.6 1998/08/13 14:27:50 bouyer Exp $    */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -102,7 +102,6 @@ struct wdc_softc { /* Per controller state */
 	/* if WDC_CAPABILITY_HWLOCK set in 'cap' */
 	int            (*claim_hw) __P((void *, int));
 	void            (*free_hw) __P((void *));
-
 };
 
  /*
@@ -115,6 +114,7 @@ struct wdc_xfer {
 #define C_ATAPI  	0x0002 /* xfer is ATAPI request */
 #define C_TIMEOU  	0x0004 /* xfer processing timed out */
 #define C_NEEDDONE  	0x0010 /* need to call upper-level done */
+#define C_POLL		0x0020 /* cmd is polled */
 
 	/* Information about our location */
 	u_int8_t drive;
@@ -149,7 +149,7 @@ void  wdcrestart __P((void*));
 int   wdcreset	__P((struct channel_softc *, int));
 #define VERBOSE 1 
 #define SILENT 0 /* wdcreset will not print errors */
-int   wdcwait __P((struct channel_softc *, int));
+int   wdcwait __P((struct channel_softc *, int, int, int));
 void  wdcbit_bucket __P(( struct channel_softc *, int));
 void  wdccommand __P((struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
 	                  u_int8_t, u_int8_t, u_int8_t, u_int8_t));
@@ -160,9 +160,14 @@ void  wdctimeout	__P((void *arg));
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
  * command is aborted.
  */   
-#define wait_for_drq(chp)	wdcwait(chp, WDCS_DRDY | WDCS_DSC | WDCS_DRQ)
-#define wait_for_unbusy(chp)	wdcwait(chp, 0)
-#define wait_for_ready(chp) 	wdcwait(chp, WDCS_DRDY | WDCS_DSC)
+#define wait_for_drq(chp, timeout) wdcwait((chp), \
+	WDCS_DRDY | WDCS_DSC | WDCS_DRQ, \
+	WDCS_DRDY | WDCS_DSC | WDCS_DRQ, (timeout))
+#define wait_for_unbusy(chp, timeout)	wdcwait((chp), 0, 0, (timeout))
+#define wait_for_ready(chp, timeout) wdcwait((chp), WDCS_DRDY | WDCS_DSC, \
+	WDCS_DRDY | WDCS_DSC, (timeout))
+/* ATA/ATAPI specs says a device can take 31s to reset */
+#define WDC_RESET_WAIT 31000
 
 void wdc_atapibus_attach __P((struct channel_softc *));
 void wdc_ata_attach __P((struct channel_softc *));

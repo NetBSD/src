@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.1.2.2 1998/06/05 08:38:57 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.1.2.3 1998/08/13 14:27:47 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -71,9 +71,9 @@ ata_get_params(drvp, flags, prms)
 
 	WDCDEBUG_PRINT(("wdc_ata_get_parms\n"), DEBUG_FUNCS);
 
-	bzero(tb, DEV_BSIZE);
-	bzero(prms, sizeof(struct ataparams));
-	bzero(&wdc_c, sizeof(struct wdc_command));
+	memset(tb, 0, DEV_BSIZE);
+	memset(prms, 0, sizeof(struct ataparams));
+	memset(&wdc_c, 0, sizeof(struct wdc_command));
 
 	if (drvp->drive_flags & DRIVE_ATA) {
 		wdc_c.r_command = WDCC_IDENTIFY;
@@ -84,7 +84,8 @@ ata_get_params(drvp, flags, prms)
 		wdc_c.r_st_bmask = 0;
 		wdc_c.r_st_pmask = WDCS_DRDY | WDCS_DRQ;
 	}
-	wdc_c.flags = AT_READ | AT_WAIT | flags;
+	wdc_c.flags = AT_READ | flags;
+	wdc_c.timeout = 1000; /* 1s */
 	wdc_c.data = tb;
 	wdc_c.bcount = DEV_BSIZE;
 	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE)
@@ -93,7 +94,7 @@ ata_get_params(drvp, flags, prms)
 		return CMD_ERR;
 	} else {
 		/* Read in parameter block. */
-		bcopy(tb, prms, sizeof(struct ataparams));
+		memcpy(prms, tb, sizeof(struct ataparams));
 #if BYTE_ORDER == LITTLE_ENDIAN
 		/*
 		 * Shuffle string byte order.
@@ -132,14 +133,15 @@ ata_set_mode(drvp, mode, flags)
 	struct wdc_command wdc_c;
 
 	WDCDEBUG_PRINT(("wdc_ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
-	bzero(&wdc_c, sizeof(struct wdc_command));
+	memset(&wdc_c, 0, sizeof(struct wdc_command));
 
 	wdc_c.r_command = SET_FEATURES;
 	wdc_c.r_st_bmask = 0;
 	wdc_c.r_st_pmask = 0;
 	wdc_c.r_precomp = WDSF_SET_MODE;
 	wdc_c.r_count = mode;
-	wdc_c.flags = AT_READ | AT_WAIT | flags;
+	wdc_c.flags = AT_READ | flags;
+	wdc_c.timeout = 1000; /* 1s */
 	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE)
 		return CMD_AGAIN;
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {

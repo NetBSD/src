@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.8.2.2 1998/07/27 19:02:46 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.8.2.3 1998/08/13 14:27:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -335,10 +335,11 @@ struct scsi_quirk_inquiry_pattern {
 #define	scsipi_command_direct(xs)					\
 	(*(xs)->sc_link->adapter->scsipi_cmd)((xs))
 
+void	scsipi_init __P((void));
 caddr_t	scsipi_inqmatch __P((struct scsipi_inquiry_pattern *, caddr_t,
 	    int, int, int *));
 char	*scsipi_dtype __P((int));
-void	scsipi_strvis __P((u_char *, u_char *, int));
+void	scsipi_strvis __P((u_char *, int, u_char *, int));
 int	scsipi_execute_xs __P((struct scsipi_xfer *));
 u_long	scsipi_size __P((struct scsipi_link *, int));
 int	scsipi_test_unit_ready __P((struct scsipi_link *, int));
