@@ -21,11 +21,18 @@ alpha*-*-linux-gnu*)
   HOSTING_LIBS='`if [ -f ../gcc/libgcc.a ] ; then echo ../gcc/libgcc.a ; else ${CC} -print-libgcc-file-name; fi` -L`dirname \`${CC} --print-file-name=libc.so\`` -lc `if [ -f ../gcc/libgcc.a ] ; then echo ../gcc/libgcc.a ; else ${CC} -print-libgcc-file-name; fi` `if [ -f ../gcc/crtend.o ]; then echo ../gcc/crtend.o; else ${CC} --print-file-name=crtend.o; fi` `${CC} --print-file-name=crtn.o`'
   ;;
 
-*-*-netbsd*)
+alpha*-*-netbsd* | mips*-*-netbsd* | sparc64-*-netbsd* | *-*-netbsdelf*)
   # The new BSD `make' has a bug: it doesn't pass empty arguments in
   # shell commands.  So we need to make this value non-empty in order
   # for the genscripts.sh call to work.  There's nothing magic about
   # the value `/lib'; it's just a dummy.
+  NATIVE_LIB_DIRS=/lib
+  HOSTING_CRT0='-dynamic-linker /usr/libexec/ld.elf_so /usr/lib/crt0.o /usr/lib/crtbegin.o'
+  HOSTING_LIBS="$HOSTING_LIBS /usr/lib/crtend.o"
+  ;;
+
+*-*-netbsd*)
+  # NetBSD non-ELF platforms.
   NATIVE_LIB_DIRS=/lib
   HOSTING_CRT0=/usr/lib/crt0.o
   ;;
