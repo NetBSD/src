@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$NetBSD: Makefile,v 1.10 2001/12/12 12:24:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2003/02/14 15:20:17 grant Exp $
 
 NOOBJ=		# defined
 
@@ -20,7 +20,7 @@ SECTIONS?=	1 2 3 4 5 6 7 8 9
 
 # Takes out some fluff from the PostScript files created bye
 # grops which does some VM saving/restoring that bloats the
-# PDF file pdf2ps generates.              By uwe@netbsd.org.
+# PDF file pdf2ps generates.              By uwe@NetBSD.org.
 OPTIMIZE_PDF?=	\
 			-e '/^\/level0 0 def/d' 		\
 			-e '/^\/level0 save/d' 			\
