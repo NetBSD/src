@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.83 1995/11/10 19:39:23 christos Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.84 1995/11/13 20:50:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -65,7 +65,6 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include "isa.h"
 #include "pci.h"
 
 #include <machine/cpu.h>
@@ -167,7 +166,7 @@ epaddcard(iobase, irq, bustype)
 	epcards[nepcards].bustype = bustype;
 	nepcards++;
 }
-	
+
 /*
  * 3c579 cards on the EISA bus are probed by their slot number. 3c509
  * cards on the ISA bus are probed in ethernet address order. The probe
@@ -379,25 +378,9 @@ epattach(parent, self, aux)
 {
 	struct ep_softc *sc = (void *)self;
 	u_short conn = 0;
-#if NISA > 0
-	extern struct cfdriver isacd;
-#endif
 #if NPCI > 0
 	extern struct cfdriver pcicd;
-#endif
 
-
-#if NISA > 0
-	if (parent->dv_cfdata->cf_driver == &isacd) {
-		struct isa_attach_args *ia = aux;
-
-		sc->ep_iobase = ia->ia_iobase;
-		GO_WINDOW(0);
-		conn = inw(ia->ia_iobase + EP_W0_CONFIG_CTRL);
-	}
-#endif
-
-#if NPCI > 0
 	if (parent->dv_cfdata->cf_driver == &pcicd) {
 		struct pci_attach_args *pa = aux;
 		int iobase;
@@ -423,25 +406,27 @@ epattach(parent, self, aux)
 
 		GO_WINDOW(0);
 	}
+	else
 #endif
+	{
+		struct isa_attach_args *ia = aux;
+
+		sc->ep_iobase = ia->ia_iobase;
+		GO_WINDOW(0);
+		conn = inw(ia->ia_iobase + EP_W0_CONFIG_CTRL);
+	}
 
 	epconfig(sc, conn);
 
-#if NISA > 0
-	if (parent->dv_cfdata->cf_driver == &isacd) {
-		struct isa_attach_args *ia = aux;
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE,
-					       ISA_IPL_NET, epintr, sc);
-	}
-#endif
 
 #if NPCI > 0
 	if (parent->dv_cfdata->cf_driver == &pcicd) {
 		struct pci_attach_args *pa = aux;
 
 		pci_conf_write(pa->pa_tag, PCI_COMMAND_STATUS_REG,
-                    pci_conf_read(pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-                    PCI_COMMAND_MASTER_ENABLE);
+			       pci_conf_read(pa->pa_tag,
+					     PCI_COMMAND_STATUS_REG) |
+			       PCI_COMMAND_MASTER_ENABLE);
 
 		sc->sc_ih = pci_map_int(pa->pa_tag, PCI_IPL_NET, epintr, sc);
 		if (sc->sc_ih == NULL) {
@@ -450,7 +435,13 @@ epattach(parent, self, aux)
 			return;
 		}
 	}
+	else
 #endif
+	{
+		struct isa_attach_args *ia = aux;
+		sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE,
+					       ISA_IPL_NET, epintr, sc);
+	}
 }
 
 /*
