@@ -22,6 +22,8 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
+ *
+ *	$Id: clock.h,v 1.2 1993/08/04 00:42:52 mycroft Exp $
  */
 /*
   Copyright 1988, 1989 by Intel Corporation, Santa Clara, California.
