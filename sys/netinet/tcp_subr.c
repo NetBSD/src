@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.54 1998/05/12 21:45:51 kml Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.55 1998/07/17 23:02:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -557,8 +557,9 @@ tcp_ctlinput(cmd, sa, v)
 }
 
 /*
- * When a source quench is received, close congestion window
- * to one segment.  We will gradually open it again as we proceed.
+ * When a source quence is received, we are being notifed of congestion.
+ * Close the congestion window down to the Loss Window (one segment).
+ * We will gradually open it again as we proceed.
  */
 void
 tcp_quench(inp, errno)
@@ -568,7 +569,7 @@ tcp_quench(inp, errno)
 	struct tcpcb *tp = intotcpcb(inp);
 
 	if (tp)
-		tp->snd_cwnd = TCP_INITIAL_WINDOW(1, tp->t_segsz);
+		tp->snd_cwnd = tp->t_segsz;
 }
 
 /*
