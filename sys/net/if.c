@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.76 2000/12/12 17:48:29 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.77 2000/12/13 22:06:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -944,16 +944,8 @@ void
 if_qflush(ifq)
 	struct ifqueue *ifq;
 {
-	struct mbuf *m, *n;
 
-	n = ifq->ifq_head;
-	while ((m = n) != NULL) {
-		n = m->m_act;
-		m_freem(m);
-	}
-	ifq->ifq_head = 0;
-	ifq->ifq_tail = 0;
-	ifq->ifq_len = 0;
+	IFQ_PURGE(ifq);
 }
 
 /*
