@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.392 2004/12/29 08:38:44 imp Exp $
+$NetBSD: usbdevs,v 1.393 2005/01/22 16:38:55 hamajima Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1671,6 +1671,8 @@ product SONY CLIE_S360		0x0095	Sony Clie s360
 product SONY CLIE_41_MS		0x0099	Sony Clie v4.1 Memory Stick slot
 product SONY CLIE_41		0x009a	Sony Clie v4.1
 product SONY CLIE_NX60		0x00da	Sony Clie nx60
+product SONY PS2EYETOY4		0x0154	PlayStation2 EyeToy v154
+product SONY PS2EYETOY5		0x0155	PlayStation2 EyeToy v155
 product SONY CLIE_TJ25		0x0169	Sony Clie tj25
 
 /* SOURCENEXT products */

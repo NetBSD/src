@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.50 2004/06/23 02:30:52 mycroft Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.51 2005/01/22 16:38:55 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.50 2004/06/23 02:30:52 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.51 2005/01/22 16:38:55 hamajima Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,8 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_DALLAS, USB_PRODUCT_DALLAS_J6502,	    0x0a2, { UQ_AU_NO_XU }},
  { USB_VENDOR_ALTEC, USB_PRODUCT_ALTEC_ADA70,	    0x103, { UQ_BAD_ADC }},
  { USB_VENDOR_ALTEC, USB_PRODUCT_ALTEC_ASC495,      0x000, { UQ_BAD_AUDIO }},
+ { USB_VENDOR_SONY, USB_PRODUCT_SONY_PS2EYETOY4,    0x000, { UQ_BAD_AUDIO }},
+ { USB_VENDOR_SONY, USB_PRODUCT_SONY_PS2EYETOY5,    0x000, { UQ_BAD_AUDIO }},
  { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMPRONB,
 	0x000, { UQ_BAD_AUDIO }},
  { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMPRO4K,
