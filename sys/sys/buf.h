@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.31 1998/08/09 20:58:14 perry Exp $	*/
+/*	$NetBSD: buf.h,v 1.32 1998/11/09 01:18:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -105,7 +105,6 @@ struct buf {
 #define	B_ASYNC		0x00000004	/* Start I/O, do not wait. */
 #define	B_BAD		0x00000008	/* Bad block revectoring in progress. */
 #define	B_BUSY		0x00000010	/* I/O in progress. */
-#define	B_CACHE		0x00000020	/* Bread found us in the cache. */
 #define	B_CALL		0x00000040	/* Call b_iodone from biodone. */
 #define	B_DELWRI	0x00000080	/* Delay I/O until buffer reused. */
 #define	B_DIRTY		0x00000100	/* Dirty page to be pushed out async. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.9 1998/06/09 07:46:33 scottr Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.10 1998/11/09 01:18:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -180,7 +180,7 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 	 * in which case we need to do accounting (i.e. check
 	 * for free space and update the inode number of blocks.
 	 */
-	if (!(bp->b_flags & (B_CACHE | B_DONE | B_DELWRI))) {
+	if (!(bp->b_flags & (B_DONE | B_DELWRI))) {
 		if (daddr == UNASSIGNED) 
 			if (!ISSPACE(fs, bb, curproc->p_ucred)) {
 				bp->b_flags |= B_INVAL;

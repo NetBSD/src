@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.13 1998/10/23 00:32:35 thorpej Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.14 1998/11/09 01:18:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -641,7 +641,8 @@ lfs_updatemeta(sp)
 			 * Bread may create a new indirect block which needs
 			 * to get counted for the inode.
 			 */
-			if (bp->b_blkno == -1 && !(bp->b_flags & B_CACHE)) {
+			if (bp->b_blkno == -1 &&
+			    !(bp->b_flags & (B_DELWRI | B_DONE))) {
 				ip->i_ffs_blocks += fsbtodb(fs, 1);
 				fs->lfs_bfree -= fragstodb(fs, fs->lfs_frag);
 			}
