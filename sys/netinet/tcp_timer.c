@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.16 1996/09/09 14:51:22 mycroft Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.17 1996/12/10 18:20:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -171,7 +171,6 @@ tcp_timers(tp, timer)
 	register struct tcpcb *tp;
 	int timer;
 {
-	register int rexmt;
 
 	switch (timer) {
 
@@ -203,9 +202,9 @@ tcp_timers(tp, timer)
 			break;
 		}
 		tcpstat.tcps_rexmttimeo++;
-		rexmt = TCP_REXMTVAL(tp) * tcp_backoff[tp->t_rxtshift];
-		TCPT_RANGESET(tp->t_rxtcur, rexmt, tp->t_rttmin,
-		    TCPTV_REXMTMAX);
+		TCPT_RANGESET(tp->t_rxtcur,
+		    TCP_REXMTVAL(tp) * tcp_backoff[tp->t_rxtshift],
+		    tp->t_rttmin, TCPTV_REXMTMAX);
 		tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
 		/*
 		 * If losing, let the lower level know and try for
