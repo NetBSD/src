@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.13 1996/08/23 04:35:41 cgd Exp 
+ *	NetBSD: pcidevs,v 1.14 1996/08/26 20:12:16 cgd Exp 
  */
 
 /*
@@ -479,9 +479,11 @@
 #define	PCI_PRODUCT_DEC_NVRAM	0x0007		/* Zephyr NV-RAM */
 #define	PCI_PRODUCT_DEC_KZPSA	0x0008		/* KZPSA */
 #define	PCI_PRODUCT_DEC_21140	0x0009		/* DECchip 21140 (\"FasterNet\") */
+#define	PCI_PRODUCT_DEC_PBXGB	0x000d		/* TGA2 */
 #define	PCI_PRODUCT_DEC_DEFPA	0x000f		/* DEFPA */
 /* product DEC ???	0x0010	??? VME Interface */
 #define	PCI_PRODUCT_DEC_21041	0x0014		/* DECchip 21041 (\"Tulip Pass 3\") */
+#define	PCI_PRODUCT_DEC_DGLPB	0x0016		/* DGLPB (\"OPPO\") */
 
 /* Diamond products */
 #define	PCI_PRODUCT_DIAMOND_vIPER	0x9001		/* Viper/PCI */
