@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 2/12/91";*/
-static char rcsid[] = "$Id: util.c,v 1.2 1993/08/01 18:17:54 mycroft Exp $";
+static char rcsid[] = "$Id: util.c,v 1.3 1994/01/03 08:21:14 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,8 +61,8 @@ ttoa(tval)
 
 	if (tval) {
 		tp = localtime(&tval);
-		(void)sprintf(tbuf, "%s %d, 19%d", months[tp->tm_mon],
-		    tp->tm_mday, tp->tm_year);
+		(void)sprintf(tbuf, "%s %d, %d", months[tp->tm_mon],
+		    tp->tm_mday, tp->tm_year + TM_YEAR_BASE);
 	}
 	else
 		*tbuf = '\0';
