@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.1 2001/10/15 16:22:52 uch Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.2 2002/05/18 07:14:32 uch Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* MD Message catalog -- french, i386 version */
+/* MD Message catalog -- french, playstation2 version */
 
 message md_hello
 {
@@ -292,3 +292,25 @@ message bootsel_header
 
 message bootsel_row
 {%-6d %-32s %s\n}
+
+message askfsroot
+{Je vais vous demander la taille et le point de "montage" de quelque partitions.
+
+Et tout d'abord la partition racine. Il vous reste %d %s de libre sur votre
+disque.
+Taille de la partition racine ? }
+
+message askfsswap
+{
+Et maintenant la taille de swap. Il vous reste %d %s de libre sur votre disque.
+Taille du swap ? }
+
+message askfsusr
+{
+Et ensuite la partition /usr. Il vous reste %d %s de libre sur votre disque.
+Taille de la partition/usr ? }
+
+message askfspart
+{La partition suivante est /dev/%s%c . Il vous reste %d %s de libre sur votre
+disque.
+Taille de la partition ? }
