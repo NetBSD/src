@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.1 1997/10/14 06:48:56 sakamoto Exp $	*/
+/*	$NetBSD: icu.h,v 1.1.2.1 1997/11/28 19:45:09 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,29 +53,6 @@
  */
 extern	unsigned imen;		/* interrupt mask enable */
 
-/*
-#define	outb(x, y)							\
-	    (*(volatile unsigned char *)(BEBOX_BUS_SPACE_IO + x)	\
-		= (unsigned char)y)
-#define SET_ICUS()	(outb(IO_ICU1 + 1, imen), outb(IO_ICU2 + 1, imen >> 8))
-*/
-#define SET_ICUS(x)	\
-	{		\
-	*(volatile unsigned char *)(BEBOX_BUS_SPACE_IO + IO_ICU1 + 1) = x; \
-	*(volatile unsigned char *)(BEBOX_BUS_SPACE_IO + IO_ICU2 + 1) = x >> 8; \
-	}
-
 #endif /* !_LOCORE */
-
-/*
- * Interrupt enable bits -- in order of priority
- */
-#define	IRQ_SLAVE	2
-
-/*
- * Interrupt Control offset into Interrupt descriptor table (IDT)
- */
-#define	ICU_OFFSET	32		/* 0-31 are processor exceptions */
-#define	ICU_LEN		16		/* 32-47 are ISA interrupts */
 
 #endif /* !_I386_ISA_ICU_H_ */
