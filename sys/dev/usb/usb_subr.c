@@ -1,4 +1,5 @@
-/*	$NetBSD: usb_subr.c,v 1.55 1999/11/16 22:15:50 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.56 1999/11/18 23:32:32 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,12 +44,12 @@
 #include <sys/malloc.h>
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
+#include <sys/select.h>
 #elif defined(__FreeBSD__)
 #include <sys/module.h>
 #include <sys/bus.h>
 #endif
 #include <sys/proc.h>
-#include <sys/select.h>
 
 #include <machine/bus.h>
 
@@ -77,8 +78,8 @@ extern int usbdebug;
 static usbd_status	usbd_set_config __P((usbd_device_handle, int));
 static char *usbd_get_string __P((usbd_device_handle, int, char *));
 static int usbd_getnewaddr __P((usbd_bus_handle bus));
-static int usbd_print __P((void *aux, const char *pnp));
 #if defined(__NetBSD__)
+static int usbd_print __P((void *aux, const char *pnp));
 static int usbd_submatch __P((device_ptr_t, struct cfdata *cf, void *));
 #elif defined(__OpenBSD__)
 static int usbd_submatch __P((device_ptr_t, void *, void *));
@@ -953,7 +954,7 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	up->device = dev;
 	dd = &dev->ddesc;
 	/* Try a few times in case the device is slow (i.e. outside specs.) */
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < 3; i++) {
 		/* Get the first 8 bytes of the device descriptor. */
 		err = usbd_get_desc(dev, UDESC_DEVICE, 0, USB_MAX_IPACKET, dd);
 		if (!err)
@@ -1134,7 +1135,7 @@ usbd_fill_deviceinfo(dev, di)
 	struct usb_device_info *di;
 {
 	struct usbd_port *p;
-	int i, r, s;
+	int i, err, s;
 
 	di->config = dev->config;
 	usbd_devinfo_vp(dev, di->vendor, di->product);
@@ -1152,19 +1153,19 @@ usbd_fill_deviceinfo(dev, di)
 		     i++) {
 			p = &dev->hub->ports[i];
 			if (p->device)
-				r = p->device->address;
+				err = p->device->address;
 			else {
 				s = UGETW(p->status.wPortStatus);
 				if (s & UPS_PORT_ENABLED)
-					r = USB_PORT_ENABLED;
+					err = USB_PORT_ENABLED;
 				else if (s & UPS_SUSPEND)
-					r = USB_PORT_SUSPENDED;
+					err = USB_PORT_SUSPENDED;
 				else if (s & UPS_PORT_POWER)
-					r = USB_PORT_POWERED;
+					err = USB_PORT_POWERED;
 				else
-					r = USB_PORT_DISABLED;
+					err = USB_PORT_DISABLED;
 			}
-			di->ports[i] = r;
+			di->ports[i] = err;
 		}
 		di->nports = dev->hub->hubdesc.bNbrPorts;
 	} else
@@ -1222,13 +1223,13 @@ usb_disconnect_port(up, parent)
 		    up, dev, up->portno));
 
 #ifdef DIAGNOSTIC
-	if (dev == NULL) {
+	if (!dev) {
 		printf("usb_disconnect_port: no device\n");
 		return;
 	}
 #endif
 
-	if (dev->cdesc == NULL) {
+	if (!dev->cdesc) {
 		/* Partially attached device, just drop it. */
 		dev->bus->devices[dev->address] = 0;
 		up->device = 0;
@@ -1245,7 +1246,13 @@ usb_disconnect_port(up, parent)
 			if (up->portno != 0)
 				printf(" port %d", up->portno);
 			printf(" (addr %d) disconnected\n", dev->address);
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 			config_detach(dev->subdevs[i], DETACH_FORCE);
+#elif defined(__FreeBSD__)
+                        device_delete_child(device_get_parent(dev->subdevs[i]),
+					    dev->subdevs[i]);
+#endif
+
 		}
 	}
 

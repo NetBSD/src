@@ -1,4 +1,5 @@
-/*	$NetBSD: ohcivar.h,v 1.14 1999/11/12 00:34:57 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.15 1999/11/18 23:32:27 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +99,9 @@ typedef struct ohci_softc {
 
 usbd_status	ohci_init __P((ohci_softc_t *));
 int		ohci_intr __P((void *));
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int		ohci_detach __P((ohci_softc_t *, int));
 int		ohci_activate __P((device_ptr_t, enum devact));
+#endif
 
 #define MS_TO_TICKS(ms) ((ms) * hz / 1000)

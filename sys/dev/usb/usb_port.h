@@ -1,4 +1,5 @@
-/*	$NetBSD: usb_port.h,v 1.15 1999/11/16 12:04:28 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.16 1999/11/18 23:32:31 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +78,7 @@ typedef struct device *device_ptr_t;
 
 #define logprintf printf
 
-#define USB_DECLARE_DRIVER_NAME_INIT(_1, dname, _2)  \
+#define USB_DECLARE_DRIVER(dname)  \
 int __CONCAT(dname,_match) __P((struct device *, struct cfdata *, void *)); \
 void __CONCAT(dname,_attach) __P((struct device *, struct device *, void *)); \
 int __CONCAT(dname,_detach) __P((struct device *, int)); \
@@ -196,7 +197,7 @@ typedef struct device device_ptr_t;
 #define usb_timeout(f, d, t, h) timeout((f), (d), (t))
 #define usb_untimeout(f, d, h) untimeout((f), (d))
 
-#define USB_DECLARE_DRIVER_NAME_INIT(_1, dname, _2)  \
+#define USB_DECLARE_DRIVER(dname)  \
 int __CONCAT(dname,_match) __P((struct device *, void *, void *)); \
 void __CONCAT(dname,_attach) __P((struct device *, struct device *, void *)); \
 int __CONCAT(dname,_detach) __P((struct device *, int)); \
@@ -274,6 +275,7 @@ __CONCAT(dname,_detach)(self, flags) \
 
 #define USBVERBOSE
 
+#define device_ptr_t device_t
 #define USBBASEDEVICE device_t
 #define USBDEV(bdev) (bdev)
 #define USBDEVNAME(bdev) device_get_nameunit(bdev)
@@ -285,23 +287,22 @@ __CONCAT(dname,_detach)(self, flags) \
  */
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
 #define	memset(d, v, l)		bzero((d),(l))
-#define bswap32(x)		swap32(x)		/* XXX not available in FreeBSD */
-#define kthread_create1
-#define kthread_create
+#define bswap32(x)		swap32(x)
+#define kthread_create1(function, sc, priv, string, name)
+#define kthread_create(create_function, sc)
+#define kthread_exit(err)
 
 #define usb_timeout(f, d, t, h) ((h) = timeout((f), (d), (t)))
 #define usb_untimeout(f, d, h) untimeout((f), (d), (h))
 
-#define clalloc(p, s, x) (clist_alloc_cblocks((p), (s), (x)), 0)
+#define clalloc(p, s, x) (clist_alloc_cblocks((p), (s), (s)), 0)
 #define clfree(p) clist_free_cblocks((p))
 
 #define powerhook_establish(fn, sc) 0
 #define powerhook_disestablish(hdl)
 #define PWR_RESUME 0
 
-#define config_detach(d, _1) device_delete_child(device_get_parent((d)), (d))
-
-#define USB_DECLARE_DRIVER_NAME_INIT(name, dname, init) \
+#define USB_DECLARE_DRIVER_INIT(dname, init) \
 static device_probe_t __CONCAT(dname,_match); \
 static device_attach_t __CONCAT(dname,_attach); \
 static device_detach_t __CONCAT(dname,_detach); \
@@ -317,10 +318,13 @@ static device_method_t __CONCAT(dname,_methods)[] = { \
 }; \
 \
 static driver_t __CONCAT(dname,_driver) = { \
-        name, \
+        #dname, \
         __CONCAT(dname,_methods), \
         sizeof(struct __CONCAT(dname,_softc)) \
 }
+#define METHODS_NONE			{0,0}
+#define USB_DECLARE_DRIVER(dname)	USB_DECLARE_DRIVER_INIT(dname, METHODS_NONE)
+
 
 #define USB_MATCH(dname) \
 static int \
@@ -387,14 +391,3 @@ __CONCAT(dname,_detach)(device_t self)
 #define logprintf		printf
 
 #endif /* __FreeBSD__ */
-
-#define NONE {0,0}
-
-#define USB_DECLARE_DRIVER_NAME(name, dname) \
-	USB_DECLARE_DRIVER_NAME_INIT(#name, dname, NONE )
-#define USB_DECLARE_DRIVER_INIT(dname, init) \
-	USB_DECLARE_DRIVER_NAME_INIT(#dname, dname, init)
-#define USB_DECLARE_DRIVER(dname) \
-	USB_DECLARE_DRIVER_NAME_INIT(#dname, dname, NONE )
-
-#undef NONE
