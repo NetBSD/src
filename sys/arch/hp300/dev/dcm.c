@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.27 1996/05/17 15:08:13 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.28 1996/06/06 15:36:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -418,9 +418,10 @@ dcmopen(dev, flag, mode, p)
 	if ((sc->sc_flags & DCM_ACTIVE) == 0)
 		return (ENXIO);
 
-	if (sc->sc_tty[port] == NULL)
+	if (sc->sc_tty[port] == NULL) {
 		tp = sc->sc_tty[port] = ttymalloc();
-	else
+		tty_attach(tp);
+	} else
 		tp = sc->sc_tty[port];
 
 	tp->t_oproc = dcmstart;
@@ -530,6 +531,7 @@ dcmclose(dev, flag, mode, p)
 	splx(s);
 	ttyclose(tp);
 #if 0
+	tty_detach(tp);
 	ttyfree(tp);
 	sc->sc_tty[port] == NULL;
 #endif
