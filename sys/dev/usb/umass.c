@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.52 2001/02/24 00:03:46 cgd Exp $	*/
+/*	$NetBSD: umass.c,v 1.53 2001/03/23 14:11:39 fvdl Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -710,7 +710,6 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 
 	if (UGETW(dd->idVendor) == USB_VENDOR_SONY
 	    && UGETW(dd->idProduct) == USB_PRODUCT_SONY_MSC) {
-		printf("XXX Sony MSC\n");
 		sc->quirks |= FORCE_SHORT_INQUIRY;
 	}
 
