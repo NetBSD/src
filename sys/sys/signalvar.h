@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.45 2003/09/25 21:58:12 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.46 2003/09/26 12:02:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -187,7 +187,7 @@ void	kpsendsig __P((struct lwp *, const struct ksiginfo *,
 #ifdef __HAVE_SIGINFO
 void	sendsig __P((const struct ksiginfo *, const sigset_t *));
 #else
-void	sendsig __P((int, sigset_t *, u_long));
+void	sendsig __P((int, const sigset_t *, u_long));
 #endif
 struct core;
 struct core32;

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.138 2003/08/07 16:30:20 agc Exp $	 */
+/* $NetBSD: machdep.c,v 1.139 2003/09/26 12:02:57 simonb Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2003/08/07 16:30:20 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2003/09/26 12:02:57 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -510,7 +510,7 @@ struct otrampframe {
 };
 
 static void
-oldsendsig(int sig, sigset_t *mask, u_long code)
+oldsendsig(int sig, const sigset_t *mask, u_long code)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -614,7 +614,7 @@ struct trampoline {
  * The trampoline code will save r0-r5 before doing anything else.
  */
 void
-sendsig(int sig, sigset_t *mask, u_long code)
+sendsig(int sig, const sigset_t *mask, u_long code)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = curproc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2003/08/07 16:26:35 agc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2003/09/26 12:02:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2003/08/07 16:26:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2003/09/26 12:02:56 simonb Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -498,7 +498,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 void
 sendsig(sig, mask, code)
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;

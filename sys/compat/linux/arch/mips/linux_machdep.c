@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.18 2003/08/02 19:51:23 jdolecek Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.19 2003/09/26 12:02:57 simonb Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.18 2003/08/02 19:51:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.19 2003/09/26 12:02:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ linux_setregs(l, pack, stack)
 void
 linux_sendsig(sig, mask, code)  /* XXX Check me */
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;
