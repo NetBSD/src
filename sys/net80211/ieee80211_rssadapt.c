@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.5 2004/05/06 03:03:20 dyoung Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.6 2004/05/06 07:11:40 dyoung Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -152,45 +152,44 @@ sysctl_ieee80211_rssadapt_expavgctl(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_ieee80211_rssadapt,
     "sysctl ieee80211 rssadapt subtree setup")
 {
-	int rc, ieee80211_node_num, rssadapt_node_num;
+	int rc;
 	struct sysctlnode *node;
 
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "net", NULL,
 	    NULL, 0, NULL, 0, CTL_NET, CTL_EOL)) != 0)
 		goto err;
 
-	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	if ((rc = sysctl_createv(clog, 0, &node, &node,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "link", NULL,
+	    NULL, 0, NULL, 0, PF_LINK, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &node, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ieee80211", NULL,
-	    NULL, 0, NULL, 0, CTL_NET, CTL_CREATE, CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
-	ieee80211_node_num = node->sysctl_num;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	if ((rc = sysctl_createv(clog, 0, &node, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "rssadapt", NULL,
-	    NULL, 0, NULL, 0, CTL_NET, ieee80211_node_num, CTL_CREATE,
-	    CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
-
-	rssadapt_node_num = node->sysctl_num;
 
 #ifdef IEEE80211_DEBUG
 	/* control debugging printfs */
-	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	if ((rc = sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "debug", NULL,
 	    sysctl_ieee80211_rssadapt_debug, 0, &ieee80211_rssadapt_debug, 0,
-	    CTL_NET, ieee80211_node_num, rssadapt_node_num, CTL_CREATE,
-	    CTL_EOL)) != 0)
+	    CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 #endif /* IEEE80211_DEBUG */
 
 	/* control rate of decay for exponential averages */
-	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	if ((rc = sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_STRUCT,
 	    "expavgctl", NULL, sysctl_ieee80211_rssadapt_expavgctl, 0,
-	    &master_expavgctl, sizeof(master_expavgctl), CTL_NET,
-	    ieee80211_node_num, rssadapt_node_num, CTL_CREATE, CTL_EOL)) != 0)
+	    &master_expavgctl, sizeof(master_expavgctl), CTL_CREATE,
+	    CTL_EOL)) != 0)
 		goto err;
 
 	return;
