@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.46.4.10 2003/02/07 18:19:12 tron Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.46.4.11 2003/02/07 18:25:42 tron Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.4.10 2003/02/07 18:19:12 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.4.11 2003/02/07 18:25:42 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -2268,21 +2268,21 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 			break;
 
 		case LCP_OPT_ASYNC_MAP:
-			/* Async control character map -- check to be zero. */
-			if (! p[2] && ! p[3] && ! p[4] && ! p[5]) {
-				if (debug)
-					addlog(" [empty]");
-				continue;
-			}
-			if (debug)
-				addlog(" [non-empty]");
-			/* suggest a zero one */
-#ifndef BROKEN_98 /* XXX - broken Win98 drivers INSIST on having an ASYNC_MAP */
-			p[2] = p[3] = p[4] = p[5] = 0;
-			break;
-#else
+			/*
+			 * Async control character map -- just ignore it.
+			 *
+			 * Quote from RFC 1662, chapter 6:
+			 * To enable this functionality, synchronous PPP
+			 * implementations MUST always respond to the
+			 * Async-Control-Character-Map Configuration
+			 * Option with the LCP Configure-Ack.  However,
+			 * acceptance of the Configuration Option does
+			 * not imply that the synchronous implementation
+			 * will do any ACCM mapping.  Instead, all such
+			 * octet mapping will be performed by the
+			 * asynchronous-to-synchronous converter.
+			 */
 			continue;
-#endif
 
 		case LCP_OPT_MRU:
 			/*
