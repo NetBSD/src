@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp300,v 1.5 2003/07/27 14:18:20 itojun Exp $
+#	$NetBSD: majors.hp300,v 1.6 2003/08/01 01:43:18 tsutsui Exp $
 #
 # Device majors for hp300
 #
@@ -35,7 +35,11 @@ device-major	rnd		char 33			rnd
 device-major	scsibus		char 34			scsibus
 device-major	raid		char 35  block 15	raid
 device-major	svr4_net	char 36			compat_svr4
-
+#device-major	wsdisplay	char 37			wsdisplay
+#device-major	wskbd		char 38			wskbd
+#device-major	wsmouse		char 39			wsmouse
+#device-major	wsmux		char 40			wsmux
+#device-major	wsfont		char 41			wsfont
 device-major	clockctl	char 42			clockctl
 device-major	systrace	char 43			systrace
 device-major	cgd		char 44  block 16	cgd
