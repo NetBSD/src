@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.3 2000/01/10 07:43:07 mark Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.4 2000/02/13 05:00:57 mark Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -90,6 +90,7 @@ struct footbridge_softc *clock_sc;
 /* Set to non-zero to enable verbose reporting of footbridge system ints */
 int footbridge_intr_report = 0;
 
+int footbridge_found;
 
 void
 footbridge_pci_bs_tag_init(void)
@@ -133,9 +134,9 @@ footbridge_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	if (cf->cf_unit == 0)
-		return(1);
-	return(0);
+	if (footbridge_found)
+		return(0);
+	return(1);
 }
 
 
@@ -153,6 +154,9 @@ footbridge_attach(parent, self, aux)
 	struct footbridge_softc *sc = (struct footbridge_softc *)self;
 	union footbridge_attach_args fba;
 	int vendor, device, rev;
+
+	/* There can only be 1 footbridge. */
+	footbridge_found = 1;
 
 	clock_sc = sc;
 
@@ -175,6 +179,8 @@ footbridge_attach(parent, self, aux)
 	/* Disable all interrupts from the footbridge */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IRQ_ENABLE_CLEAR, 0xffffffff);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, FIQ_ENABLE_CLEAR, 0xffffffff);
+
+/*	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0x18, 0x40000000);*/
 
 	/* Install a generic handler to catch a load of system interrupts */
 	sc->sc_serr_ih = intr_claim(IRQ_SERR, IPL_NONE,

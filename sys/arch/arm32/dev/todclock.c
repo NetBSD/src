@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.5 2000/01/07 23:43:45 mark Exp $	*/
+/*	$NetBSD: todclock.c,v 1.6 2000/02/13 05:00:57 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -109,7 +109,7 @@ todclockmatch(parent, cf, aux)
 {
 	struct todclock_attach_args *ta = aux;
 
-	if (cf->cf_unit > 0)
+	if (todclock_sc != NULL)
 		return(0);
 	if (strcmp(ta->ta_name, "todclock") != 0)
 		return(0);
