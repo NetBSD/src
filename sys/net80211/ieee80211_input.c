@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.18 2004/01/14 04:11:09 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.19 2004/01/15 08:16:24 onoe Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.12 2003/10/17 23:59:11 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.18 2004/01/14 04:11:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.19 2004/01/15 08:16:24 onoe Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -991,13 +991,16 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			ic->ic_stats.is_rx_badchan++;
 			return;
 		}
-		if (chan != bchan) {
+		if (chan != bchan && ic->ic_phytype != IEEE80211_T_FH) {
 			/*
 			 * Frame was received on a channel different from the
-			 * one indicated in the DS/FH params element id;
+			 * one indicated in the DS params element id;
 			 * silently discard it.
 			 *
 			 * NB: this can happen due to signal leakage.
+			 *     But we should take it for FH phy because
+			 *     the rssi value should be correct even for
+			 *     different hop pattern in FH.
 			 */
 			IEEE80211_DPRINTF(("%s: ignore %s on channel %u marked "
 				"for channel %u\n", __func__,
