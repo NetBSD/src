@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.28 2000/05/27 04:52:42 thorpej Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.29 2000/05/29 17:12:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -237,7 +237,7 @@ int
 ffs_fsync(v)
 	void *v;
 {
-        struct vop_fsync_args /* {
+	struct vop_fsync_args /* {
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_flags;
@@ -245,11 +245,7 @@ ffs_fsync(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp, *nbp;
-	struct timespec ts;
 	int s, error, passes, skipmeta;
-
-	if (vp->v_dirtyblkhd.lh_first == NULL && (ap->a_flags & FSYNC_RECLAIM))
-		return 0;
 
 	if (vp->v_type == VBLK &&
 	    vp->v_specmountpoint != NULL &&
@@ -265,11 +261,11 @@ ffs_fsync(v)
 		skipmeta = 1;
 	s = splbio();
 loop:
-	for (bp = vp->v_dirtyblkhd.lh_first; bp;
-	     bp = bp->b_vnbufs.le_next)
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp;
+	     bp = LIST_NEXT(bp, b_vnbufs))
 		bp->b_flags &= ~B_SCANNED;
-	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
-		nbp = bp->b_vnbufs.le_next;
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_flags & (B_BUSY | B_SCANNED))
 			continue;
 		if ((bp->b_flags & B_DELWRI) == 0)
@@ -292,7 +288,7 @@ loop:
 		 * Since we may have slept during the I/O, we need
 		 * to start from a known point.
 		 */
-		nbp = vp->v_dirtyblkhd.lh_first;
+		nbp = LIST_FIRST(&vp->v_dirtyblkhd);
 	}
 	if (skipmeta && !(ap->a_flags & FSYNC_DATAONLY)) {
 		skipmeta = 0;
@@ -304,44 +300,40 @@ loop:
 			(void) tsleep(&vp->v_numoutput, PRIBIO + 1,
 			    "ffsfsync", 0);
 		}
+		splx(s);
 
-		if (ap->a_flags & FSYNC_DATAONLY) {
-			splx(s);
-			return 0;
-		}
-
+		if (ap->a_flags & FSYNC_DATAONLY)
+			return (0);
 
 		/* 
 		 * Ensure that any filesystem metadata associated
 		 * with the vnode has been written.
 		 */
-		splx(s);
 		if ((error = softdep_sync_metadata(ap)) != 0)
 			return (error);
-		s = splbio();
 
-                if (vp->v_dirtyblkhd.lh_first) {
-                       /*
-                        * Block devices associated with filesystems may
-                        * have new I/O requests posted for them even if
-                        * the vnode is locked, so no amount of trying will
-                        * get them clean. Thus we give block devices a
-                        * good effort, then just give up. For all other file
-                        * types, go around and try again until it is clean.
-                        */
-                       if (passes > 0) {
-                               passes -= 1;
-                               goto loop;
-                       }
+		s = splbio();
+		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
+			/*
+			* Block devices associated with filesystems may
+			* have new I/O requests posted for them even if
+			* the vnode is locked, so no amount of trying will
+			* get them clean. Thus we give block devices a
+			* good effort, then just give up. For all other file
+			* types, go around and try again until it is clean.
+			*/
+			if (passes > 0) {
+				passes--;
+				goto loop;
+			}
 #ifdef DIAGNOSTIC
-		       if (vp->v_type != VBLK)
-			       vprint("ffs_fsync: dirty", vp);
+			if (vp->v_type != VBLK)
+				vprint("ffs_fsync: dirty", vp);
 #endif
-                }
-        }
-        splx(s);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	return (VOP_UPDATE(vp, &ts, &ts,
+		}
+	}
+	splx(s);
+	return (VOP_UPDATE(vp, NULL, NULL,
 	    (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
 }
 
