@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 2001/12/16 03:41:57 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 2001/12/16 03:53:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2252,7 +2252,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 			pmap_check_wiring("remove", ptpva);
 #endif
 		/*
-		 * If reference count drops to 1, and we're not instructed
+		 * If reference count drops to 0, and we're not instructed
 		 * to keep it around, free the PT page.
 		 */
 		if (refs == 0 && (flags & PRM_KEEPPTPAGE) == 0) {
