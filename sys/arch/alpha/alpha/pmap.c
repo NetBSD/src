@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.115 1999/11/13 00:26:22 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.116 1999/11/26 23:04:33 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.115 1999/11/13 00:26:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 1999/11/26 23:04:33 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1477,19 +1477,16 @@ pmap_protect(pmap, sva, eva, prot)
 	isactive = PMAP_ISACTIVE(pmap);
 
 	l1pte = pmap_l1pte(pmap, sva);
-	for (; sva < eva;
-	     sva = alpha_trunc_l1seg(sva) + ALPHA_L1SEG_SIZE, l1pte++) {
+	for (; sva < eva; sva = l1eva, l1pte++) {
+		l1eva = alpha_trunc_l1seg(sva) + ALPHA_L1SEG_SIZE;
 		if (pmap_pte_v(l1pte)) {
 			l2pte = pmap_l2pte(pmap, sva, l1pte);
-			for (l1eva = alpha_trunc_l1seg(sva) + ALPHA_L1SEG_SIZE;
-			     sva < l1eva;
-			     sva = alpha_trunc_l2seg(sva) + ALPHA_L2SEG_SIZE,
-			      l2pte++) {
+			for (; sva < l1eva && sva < eva; sva = l2eva, l2pte++) {
+				l2eva =
+				    alpha_trunc_l2seg(sva) + ALPHA_L2SEG_SIZE;
 				if (pmap_pte_v(l2pte)) {
 					l3pte = pmap_l3pte(pmap, sva, l2pte);
-					for (l2eva = alpha_trunc_l2seg(sva) +
-						 ALPHA_L2SEG_SIZE;
-					     sva < l2eva;
+					for (; sva < l2eva && sva < eva;
 					     sva += PAGE_SIZE, l3pte++) {
 						if (pmap_pte_v(l3pte) &&
 						    pmap_pte_prot_chg(l3pte,
