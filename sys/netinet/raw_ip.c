@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.29 1996/05/24 19:03:13 mycroft Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.30 1996/05/28 23:27:04 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -59,6 +59,10 @@
 #include <machine/stdarg.h>
 
 struct inpcbtable rawcbtable;
+
+int	 rip_bind __P((struct inpcb *, struct mbuf *));
+int	 rip_connect __P((struct inpcb *, struct mbuf *));
+void	 rip_disconnect __P((struct inpcb *));
 
 /*
  * Nominal space allocated to a raw ip socket.
