@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpdate.8,v 1.4 1997/05/29 07:47:05 mikel Exp $
+.\"	$NetBSD: ntpdate.8,v 1.5 1997/06/23 17:34:33 christos Exp $
 .\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
 .\"
 .Dd April 17, 1997
@@ -91,7 +91,8 @@ The following options are available:
 .It Fl a Ar key
 Enable the authentication function and specify the key identifier to
 be used for authentication as the argument
-.Ar key .
+.Ar key
+.Nm 
 The keys and key identifiers must match
 in both the client and server key files. The default is to disable the
 authentication function.
@@ -160,13 +161,13 @@ scripts.
 .It Fl t Ar timeout
 Specify the maximum time waiting for a server response as the value
 .Ar timeout ,
-in seconds and fraction. The value is rounded to a
+in seconds and fraction. The value is is rounded to a
 multiple of 0.2 seconds. The default is 1 second, a value suitable for
 polling across a LAN.
 .It Fl u
 Direct 
 .Nm
-to use an unprivileged port for outgoing
+to use an unprivileged port or outgoing
 packets. This is most useful when behind a firewall that blocks incoming
 traffic to privileged ports, and you want to synchronise with hosts
 beyond the firewall. Note that the 
@@ -181,8 +182,7 @@ identification string to be logged.
 .El
 .Sh FILES
 .Bl -tag -width /etc/ntp.keys -compact
-.It Pa /etc/ntp.keys
-default authentication key file.
+.It Pa /etc/gettytab
 .El
 .Sh BUGS
 The slew adjustment is actually 50% larger than the measured offset,
