@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.28 1998/12/12 17:26:09 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.29 1999/04/02 17:22:21 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -58,12 +58,19 @@ struct	sockaddr route_src = { 2, PF_ROUTE, };
 struct	sockproto route_proto = { PF_ROUTE, };
 
 struct walkarg {
-	int	w_op, w_arg, w_given, w_needed, w_tmemsize;
-	caddr_t	w_where, w_tmem;
+	int	w_op;
+	int	w_arg;
+	int	w_given;
+	int	w_needed;
+	caddr_t	w_where;
+	int	w_tmemsize;
+	int	w_tmemneeded;
+	caddr_t	w_tmem;
 };
 
 static struct mbuf *rt_msg1 __P((int, struct rt_addrinfo *));
-static int rt_msg2 __P((int, struct rt_addrinfo *, caddr_t, struct walkarg *));
+static int rt_msg2 __P((int, struct rt_addrinfo *, caddr_t, struct walkarg *,
+    int *));
 static void rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
 static __inline void rt_adjustcount __P((int, int));
 
@@ -277,8 +284,8 @@ route_output(m, va_alist)
 					ifaaddr = 0;
 			    }
 			}
-			len = rt_msg2(rtm->rtm_type, &info, (caddr_t)0,
-			    (struct walkarg *)0);
+			(void)rt_msg2(rtm->rtm_type, &info, (caddr_t)0,
+			    (struct walkarg *)0, &len);
 			if (len > rtm->rtm_msglen) {
 				struct rt_msghdr *new_rtm;
 				R_Malloc(new_rtm, struct rt_msghdr *, len);
@@ -288,7 +295,7 @@ route_output(m, va_alist)
 				Free(rtm); rtm = new_rtm;
 			}
 			(void)rt_msg2(rtm->rtm_type, &info, (caddr_t)rtm,
-			    (struct walkarg *)0);
+			    (struct walkarg *)0, 0);
 			rtm->rtm_flags = rt->rt_flags;
 			rtm->rtm_rmx = rt->rt_rmx;
 			rtm->rtm_addrs = info.rti_addrs;
@@ -470,12 +477,26 @@ rt_msg1(type, rtinfo)
 	return (m);
 }
 
+/*
+ * rt_msg2
+ *
+ *	 fills 'cp' or 'w'.w_tmem with the routing socket message and
+ *		returns the length of the message in 'lenp'.
+ *
+ * if walkarg is 0, cp is expected to be 0 or a buffer large enough to hold
+ *	the message
+ * otherwise walkarg's w_needed is updated and if the user buffer is
+ *	specified and w_needed indicates space exists the information is copied
+ *	into the temp space (w_tmem). w_tmem is [re]allocated if necessary,
+ *	if the allocation fails ENOBUFS is returned.
+ */
 static int
-rt_msg2(type, rtinfo, cp, w)
+rt_msg2(type, rtinfo, cp, w, lenp)
 	int type;
 	register struct rt_addrinfo *rtinfo;
 	caddr_t cp;
 	struct walkarg *w;
+	int *lenp;
 {
 	register int i;
 	int len, dlen, second_time = 0;
@@ -529,8 +550,10 @@ again:
 				cp = rw->w_tmem;
 				second_time = 1;
 				goto again;
-			} else
-				rw->w_where = 0;
+			} else {
+				rw->w_tmemneeded = len;
+				return (ENOBUFS);
+			}
 		}
 	}
 	if (cp) {
@@ -540,7 +563,9 @@ again:
 		rtm->rtm_type = type;
 		rtm->rtm_msglen = len;
 	}
-	return (len);
+	if (lenp)
+		*lenp = len;
+	return (0);
 }
 
 /*
@@ -687,8 +712,9 @@ sysctl_dumpentry(rn, v)
 		if (rt->rt_ifp->if_flags & IFF_POINTOPOINT)
 			brdaddr = rt->rt_ifa->ifa_dstaddr;
 	}
-	size = rt_msg2(RTM_GET, &info, 0, w);
-	if (w->w_where && w->w_tmem) {
+	if ((error = rt_msg2(RTM_GET, &info, 0, w, &size)))
+		return (error);
+	if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 		register struct rt_msghdr *rtm = (struct rt_msghdr *)w->w_tmem;
 
 		rtm->rtm_flags = rt->rt_flags;
@@ -721,9 +747,10 @@ sysctl_iflist(af, w)
 			continue;
 		ifa = ifp->if_addrlist.tqh_first;
 		ifpaddr = ifa->ifa_addr;
-		len = rt_msg2(RTM_IFINFO, &info, (caddr_t)0, w);
+		if ((error = rt_msg2(RTM_IFINFO, &info, (caddr_t)0, w, &len)))
+			return (error);
 		ifpaddr = 0;
-		if (w->w_where && w->w_tmem) {
+		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 			register struct if_msghdr *ifm;
 
 			ifm = (struct if_msghdr *)w->w_tmem;
@@ -742,8 +769,9 @@ sysctl_iflist(af, w)
 			ifaaddr = ifa->ifa_addr;
 			netmask = ifa->ifa_netmask;
 			brdaddr = ifa->ifa_dstaddr;
-			len = rt_msg2(RTM_NEWADDR, &info, 0, w);
-			if (w->w_where && w->w_tmem) {
+			if ((error = rt_msg2(RTM_NEWADDR, &info, 0, w, &len)))
+				return (error);
+			if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 				register struct ifa_msghdr *ifam;
 
 				ifam = (struct ifa_msghdr *)w->w_tmem;
@@ -781,12 +809,21 @@ sysctl_rtable(name, namelen, where, given, new, newlen)
 	if (namelen != 3)
 		return (EINVAL);
 	af = name[0];
-	Bzero(&w, sizeof(w));
-	w.w_where = where;
-	w.w_given = *given;
-	w.w_needed = 0 - w.w_given;
+	w.w_tmemneeded = 0;
+	w.w_tmemsize = 0;
+	w.w_tmem = NULL;
+again:
+	/* we may return here if a later [re]alloc of the t_mem buffer fails */
+	if (w.w_tmemneeded) {
+		w.w_tmem = (caddr_t) malloc(w.w_tmemneeded, M_RTABLE, M_WAITOK);
+		w.w_tmemsize = w.w_tmemneeded;
+		w.w_tmemneeded = 0;
+	}
 	w.w_op = name[1];
 	w.w_arg = name[2];
+	w.w_given = *given;
+	w.w_needed = 0 - w.w_given;
+	w.w_where = where;
 
 	s = splsoftnet();
 	switch (w.w_op) {
@@ -804,6 +841,11 @@ sysctl_rtable(name, namelen, where, given, new, newlen)
 		error = sysctl_iflist(af, &w);
 	}
 	splx(s);
+
+	/* check to see if we couldn't allocate memory with NOWAIT */
+	if (error == ENOBUFS && w.w_tmem == 0 && w.w_tmemneeded)
+		goto again;
+
 	if (w.w_tmem)
 		free(w.w_tmem, M_RTABLE);
 	w.w_needed += w.w_given;
