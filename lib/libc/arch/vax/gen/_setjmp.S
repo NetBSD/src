@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: _setjmp.S,v 1.7 2002/03/28 04:16:54 matt Exp $"
+	.asciz "$NetBSD: _setjmp.S,v 1.8 2002/03/30 04:58:36 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -52,7 +52,7 @@
 
 #include "DEFS.h"
 
-ENTRY(_setjmp, 0)
+ENTRY(_setjmp, R6)
 	movl	4(%ap),%r0
 	movl	12(%fp),12(%r0)		# save frame pointer of caller
 	movl	16(%fp),20(%r0)		# save pc of caller
@@ -61,7 +61,7 @@ ENTRY(_setjmp, 0)
 	clrl	%r1			# clear arg count
 	bbc	$13,6(%fp),1f		# was this a callg?
 	addl3	$1,(%ap),%r1		# get real arg count+1 for calls
-1:	moval	20(%fp)[%r1],8(%r0)	# save sp of caller
+1:	moval	24(%fp)[%r1],8(%r0)	# save sp of caller
 	movpsl	24(%r0)			# save current psl
 	movw	4(%fp),24(%r0)		# save psw of caller
 	movq	%r6,44(%r0)		# save r6/r7
@@ -81,7 +81,8 @@ ENTRY(_longjmp, 0)
 	movq	52(%r1),%r8		# restore r8/r9
 	movq	60(%r1),%r10		# restore r10/r11
 	movl	16(%r1),%ap		# restore ap
-	movq	8(%r1),%sp		# restore sp/fp
+	movl	8(%r1),%sp		# restore sp
+	movl	12(%r1),%fp		# restore fp
 	movq	20(%r1),-(%sp)		# save pc/psl to new stack
 	rei				# and go back to saved pc/psl
 #else
