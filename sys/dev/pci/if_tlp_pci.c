@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.46 2000/08/03 03:07:31 castor Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.47 2000/10/03 04:32:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -182,6 +182,9 @@ const struct tulip_pci_product {
 
 	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AL981,
 	  TULIP_CHIP_AL981 },
+
+	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AN985,
+	  TULIP_CHIP_AN985 },
 
 #if 0
 	{ PCI_VENDOR_ASIX,		PCI_PRODUCT_ASIX_AX88140A,
@@ -414,6 +417,27 @@ tlp_pci_attach(parent, self, aux)
 
 	case TULIP_CHIP_WB89C840F:
 		sc->sc_regshift = 2;
+		break;
+
+	case TULIP_CHIP_AN985:
+		/*
+		 * The AN983 and AN985 are very similar, and are
+		 * differentiated by a "signature" register that
+		 * is like, but not identical, to a PCI ID register.
+		 */
+		reg = pci_conf_read(pc, pa->pa_tag, 0x80);
+		switch (reg) {
+		case 0x09811317:
+			sc->sc_chip = TULIP_CHIP_AN985;
+			break;
+
+		case 0x09851317:
+			sc->sc_chip = TULIP_CHIP_AN983;
+			break;
+
+		default:
+			/* Unknown -- use default. */
+		}
 		break;
 
 	case TULIP_CHIP_AX88140:
@@ -830,6 +854,24 @@ tlp_pci_attach(parent, self, aux)
 		 * special registers.
 		 */
 		sc->sc_mediasw = &tlp_al981_mediasw;
+		break;
+
+	case TULIP_CHIP_AN983:
+	case TULIP_CHIP_AN985:
+		/*
+		 * The ADMtek AN985's Ethernet address is located
+		 * at offset 8 of its EEPROM.
+		 */
+		memcpy(enaddr, &sc->sc_srom[8], ETHER_ADDR_LEN);
+
+		/*
+		 * The ADMtek AN985 can be configured in Single-Chip
+		 * mode or MAC-only mode.  Single-Chip uses the built-in
+		 * PHY, MAC-only has an external PHY (usually HomePNA).
+		 * The selection is based on an EEPROM setting, and both
+		 * PHYs are accessed via MII attached to SIO.
+		 */
+		sc->sc_mediasw = &tlp_sio_mii_mediasw;
 		break;
 
 	case TULIP_CHIP_DM9102:

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.72 2000/10/01 23:32:43 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.73 2000/10/03 04:32:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -244,6 +244,8 @@ tlp_attach(sc, enaddr)
 		break;
 
 	case TULIP_CHIP_AL981:
+	case TULIP_CHIP_AN983:
+	case TULIP_CHIP_AN985:
 		sc->sc_filter_setup = tlp_al981_filter_setup;
 		break;
 
@@ -1872,6 +1874,8 @@ tlp_init(sc)
 	    }
 
 	case TULIP_CHIP_AL981:
+	case TULIP_CHIP_AN983:
+	case TULIP_CHIP_AN985:
 	    {
 		u_int32_t reg;
 		u_int8_t *enaddr = LLADDR(ifp->if_sadl);

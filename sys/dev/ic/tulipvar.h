@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.37 2000/08/03 03:07:30 castor Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.38 2000/10/03 04:32:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -143,9 +143,11 @@ typedef enum {
 	TULIP_CHIP_DM9102    = 18,	/* Davicom DM9102 */
 	TULIP_CHIP_DM9102A   = 19,	/* Davicom DM9102A */
 	TULIP_CHIP_AL981     = 20,	/* ADMtek AL981 */
-	TULIP_CHIP_AX88140   = 21,	/* ASIX AX88140 */
-	TULIP_CHIP_AX88141   = 22,	/* ASIX AX88141 */
-	TULIP_CHIP_X3201_3   = 23,	/* Xircom X3201-3 */
+	TULIP_CHIP_AN983     = 21,	/* ADMtek AN983 */
+	TULIP_CHIP_AN985     = 22,	/* ADMtek AN985 */
+	TULIP_CHIP_AX88140   = 23,	/* ASIX AX88140 */
+	TULIP_CHIP_AX88141   = 24,	/* ASIX AX88141 */
+	TULIP_CHIP_X3201_3   = 25,	/* Xircom X3201-3 */
 } tulip_chip_t;
 
 #define	TULIP_CHIP_NAMES						\
@@ -171,6 +173,8 @@ typedef enum {
 	"Davicom DM9102",						\
 	"Davicom DM9102A",						\
 	"ADMtek AL981",							\
+	"ADMtek AN983",							\
+	"ADMtek AN985",							\
 	"ASIX AX88140",							\
 	"ASIX AX88141",							\
 	"Xircom X3201-3",						\
