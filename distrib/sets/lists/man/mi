@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.446 2002/02/12 02:20:57 thorpej Exp $
+# $NetBSD: mi,v 1.447 2002/02/25 12:07:45 lukem Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1532,6 +1532,7 @@
 ./usr/share/man/cat8/rc.0			man-rc-catman
 ./usr/share/man/cat8/rc.d.0			man-rc-catman
 ./usr/share/man/cat8/rc.shutdown.0		man-rc-catman
+./usr/share/man/cat8/rc.subr.0			man-rc-catman
 ./usr/share/man/cat8/rcorder.0			man-sysutil-catman
 ./usr/share/man/cat8/rdate.0			man-netutil-catman
 ./usr/share/man/cat8/rdisc.0			man-netutil-catman
@@ -3203,6 +3204,7 @@
 ./usr/share/man/man8/rc.8			man-rc-man
 ./usr/share/man/man8/rc.d.8			man-rc-man
 ./usr/share/man/man8/rc.shutdown.8		man-rc-man
+./usr/share/man/man8/rc.subr.8			man-rc-man
 ./usr/share/man/man8/rcorder.8			man-sysutil-man
 ./usr/share/man/man8/rdate.8			man-netutil-man
 ./usr/share/man/man8/rdisc.8			man-netutil-man
