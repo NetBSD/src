@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.10 2001/09/10 06:09:41 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.11 2002/09/05 15:38:29 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -158,8 +158,8 @@ _rtld_relocate_plt_object(
 #define PLTRESOLVE_SIZE	24
 
 void
-_rtld_setup_powerpc_plt(obj)
-	const Obj_Entry * obj;
+_rtld_setup_pltgot(obj)
+	const Obj_Entry *obj;
 {
 	Elf_Word *pltcall, *pltresolve;
 	Elf_Word *jmptab;

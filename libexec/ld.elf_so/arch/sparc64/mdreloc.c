@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.5 2001/04/25 12:24:51 kleink Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.6 2002/09/05 15:38:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -622,3 +622,39 @@ _rtld_bind_start_0_stub(x, y)
 	return (n);
 }
 
+void
+_rtld_setup_pltgot(const Obj_Entry *obj)
+{
+	/*
+	 * On sparc64 we got troubles.
+	 *
+	 * Instructions are 4 bytes long.
+	 * Elf[64]_Addr is 8 bytes long, so are our pltglot[]
+	 * array entries.
+	 * Each PLT entry jumps to PLT0 to enter the dynamic
+	 * linker.
+	 * Loading an arbitrary 64-bit pointer takes 6
+	 * instructions and 2 registers.
+	 *
+	 * Somehow we need to issue a save to get a new stack
+	 * frame, load the address of the dynamic linker, and
+	 * jump there, in 8 instructions or less.
+	 *
+	 * Oh, we need to fill out both PLT0 and PLT1.
+	 */
+	{
+		Elf_Word *entry = (Elf_Word *)obj->pltgot;
+		extern void _rtld_bind_start_0 __P((long, long));
+		extern void _rtld_bind_start_1 __P((long, long));
+
+		/* Install in entries 0 and 1 */
+		_rtld_install_plt(&entry[0], (Elf_Addr) &_rtld_bind_start_0);
+		_rtld_install_plt(&entry[8], (Elf_Addr) &_rtld_bind_start_1);
+
+		/* 
+		 * Install the object reference in first slot
+		 * of entry 2.
+		 */
+		obj->pltgot[8] = (Elf_Addr) obj;
+	}
+}
