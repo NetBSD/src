@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/08/17 18:03:28 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2003/09/24 02:36:11 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -52,12 +52,12 @@ LIBBFDDIR!=  cd ${.CURDIR}/../bfd && ${PRINTOBJDIR}
 LIBREADLINEDIR!=  cd ${.CURDIR}/../readline && ${PRINTOBJDIR}
 LIBIBERTYDIR!=  cd ${.CURDIR}/../libiberty && ${PRINTOBJDIR}
 
-# PSIM support for PowerPC.
-.if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle
-PSIMOBJ!=	cd ${TOP}/usr.bin/sim/ppc && ${PRINTOBJDIR}
-LDADD+=		-L${PSIMOBJ} -lsim
-DPADD+=		${PSIMOBJ}/libsim.a
-.endif
+## PSIM support for PowerPC.
+#.if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle
+#PSIMOBJ!=	cd ${TOP}/usr.bin/sim/ppc && ${PRINTOBJDIR}
+#LDADD+=		-L${PSIMOBJ} -lsim
+#DPADD+=		${PSIMOBJ}/libsim.a
+#.endif
 
 LDADD+= -L${LIBOPCODESDIR} -lopcodes\
 	-L${LIBBFDDIR} -lbfd \
