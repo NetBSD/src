@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_overlay.c,v 1.5 2003/08/07 10:04:30 agc Exp $	*/
+/*	$NetBSD: mount_overlay.c,v 1.6 2005/01/31 05:19:19 erh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_overlay.c,v 1.5 2003/08/07 10:04:30 agc Exp $");
+__RCSID("$NetBSD: mount_overlay.c,v 1.6 2005/01/31 05:19:19 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ mount_overlay(argc, argv)
 {
 	struct overlay_args args;
 	int ch, mntflags;
-	char target[MAXPATHLEN];
+	char target[MAXPATHLEN], canon_dir[MAXPATHLEN];
 
 	mntflags = 0;
 	while ((ch = getopt(argc, argv, "o:")) != -1)
@@ -103,13 +103,24 @@ mount_overlay(argc, argv)
 	if (argc != 2)
 		usage();
 
-	if (realpath(argv[0], target) == 0)
-		err(1, "%s", target);
+	if (realpath(argv[0], target) == NULL)        /* Check device path */
+		err(1, "realpath %s", argv[0]);
+	if (strncmp(argv[0], target, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", argv[0]);
+		warnx("using \"%s\" instead.", target);
+	}
+
+	if (realpath(argv[1], canon_dir) == NULL)    /* Check mounton path */
+		err(1, "realpath %s", argv[1]);
+	if (strncmp(argv[1], canon_dir, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", argv[1]);
+		warnx("using \"%s\" instead.", canon_dir);
+	}
 
 	args.la.target = target;
 
-	if (mount(MOUNT_OVERLAY, argv[1], mntflags, &args))
-		err(1, "%s on %s", target, argv[1]);
+	if (mount(MOUNT_OVERLAY, canon_dir, mntflags, &args))
+		err(1, "%s on %s", target, canon_dir);
 	exit(0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.20 2004/07/06 16:39:37 wiz Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.21 2005/01/31 05:19:19 erh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.20 2004/07/06 16:39:37 wiz Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.21 2005/01/31 05:19:19 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,8 @@ mount_lfs(argc, argv)
 {
 	struct ufs_args args;
 	int ch, mntflags, noclean, mntsize, oldflags, i;
-	char *fs_name, *options;
+	char fs_name[MAXPATHLEN], canon_dev[MAXPATHLEN];
+	char *options;
 
 	const char *errcause;
 	struct statvfs *mntbuf;
@@ -135,8 +136,20 @@ mount_lfs(argc, argv)
 	if (argc != 2)
 		usage();
 
-	args.fspec = argv[0];	/* the name of the device file */
-	fs_name = argv[1];	/* the mount point */
+	if (realpath(argv[0], canon_dev) == NULL)     /* Check device path */
+		err(1, "realpath %s", argv[0]);
+	if (strncmp(argv[0], canon_dev, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", argv[0]);
+		warnx("using \"%s\" instead.", canon_dev);
+	}
+	args.fspec = canon_dev;
+
+	if (realpath(argv[1], fs_name) == NULL)      /* Check mounton path */
+		err(1, "realpath %s", argv[1]);
+	if (strncmp(argv[1], fs_name, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", argv[1]);
+		warnx("using \"%s\" instead.", fs_name);
+	}
 
 #define DEFAULT_ROOTUID	-2
 	args.export.ex_root = DEFAULT_ROOTUID;

@@ -1,4 +1,4 @@
-/* $NetBSD: mount_filecore.c,v 1.9 2004/06/25 14:48:01 wiz Exp $ */
+/* $NetBSD: mount_filecore.c,v 1.10 2005/01/31 05:19:19 erh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -125,7 +125,7 @@ mount_filecore(argc, argv)
 {
 	struct filecore_args args;
 	int ch, mntflags, opts, useuid;
-	char *dev, *dir;
+	char *dev, *dir, canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
 
 	mntflags = opts = 0;
 	useuid = 1;
@@ -169,6 +169,22 @@ mount_filecore(argc, argv)
 
 	dev = argv[0];
 	dir = argv[1];
+
+	if (realpath(dev, canon_dev) == NULL)        /* Check device path */
+		err(1, "realpath %s", dev);
+	if (strncmp(dev, canon_dev, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", dev);
+		dev = canon_dev;
+		warnx("using \"%s\" instead.", dev);
+	}
+
+	if (realpath(dir, canon_dir) == NULL)        /* Check mounton path */
+		err(1, "realpath %s", dir);
+	if (strncmp(dir, canon_dir, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", dir);
+		dir = canon_dir;
+		warnx("using \"%s\" instead.", dir);
+	}
 
 #define DEFAULT_ROOTUID	-2
 	/*
