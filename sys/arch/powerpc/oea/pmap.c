@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2003/03/16 06:54:46 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 2003/03/17 23:15:33 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -809,8 +809,8 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 				next_pvo = TAILQ_NEXT(pvo, pvo_olink);
 
 				/*
-				 * If we don't have to move (either we were
-				 * the last entry or the next entry was valid,
+				 * If we don't have to move (either we were the
+				 * last entry or the next entry was valid),
 				 * don't change our position.  Otherwise 
 				 * move ourselves to the tail of the queue.
 				 */
