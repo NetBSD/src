@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.11 1998/07/26 22:35:48 mycroft Exp $	*/
+/*	$NetBSD: externs.h,v 1.12 1998/11/06 19:54:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -42,7 +42,7 @@
 /*
  * ucb stdio.h defines BSD as something wierd
  */
-#if defined(sun) && defined(__svr4__)
+#if defined(sun) && defined(__svr4__) && !defined(BSD)
 #define BSD 43
 #endif
 
@@ -314,7 +314,7 @@ void willoption P((int));
 void wontoption P((int));
 char **mklist P((char *, char *));
 int is_unique P((char *, char **, char **));
-int setupterm P((char *, int, int *));
+int setup_term P((char *, int, int *));
 char *gettermname P((void));
 void lm_will P((unsigned char *, int));
 void lm_wont P((unsigned char *, int));
