@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.30 1998/03/22 12:52:03 drochner Exp $ */
+/*	$NetBSD: apm.c,v 1.31 1998/04/03 18:18:05 cgd Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -409,9 +409,12 @@ apm_event_handle(sc, regs)
 
 	case APM_STANDBY_REQ:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: system standby request\n"));
-		if (apm_standbys || apm_suspends)
+		if (apm_standbys || apm_suspends) {
 			DPRINTF(APMDEBUG_EVENTS | APMDEBUG_ANOM,
 			    ("damn fool BIOS did not wait for answer\n"));
+			/* just give up the fight */
+			apm_damn_fool_bios = 1;
+		}
 		if (apm_do_standby) {
 			if (apm_record_event(sc, regs->bx))
 				apm_standbys++;
