@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.24 2003/10/05 15:38:08 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.25 2003/10/05 15:44:36 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/sgimips/conf/std.sgimips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.24 $"
+#ident		"GENERIC-$Revision: 1.25 $"
 
 maxusers	32
 
@@ -175,7 +175,9 @@ mcclock0	at mace0 offset 0x3a0000
 ex* 	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp* 	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
+pcn* 	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
+tl* 	at pci? dev ? function ?	# ThnderLAN-based Ethernet
 #tlp* 	at pci? dev ? function ?	# DECchip 21x4x and clones
 wm*	at pci? dev ? function ?	# Intel gigabit Ethernet
 
@@ -187,6 +189,7 @@ gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
+tlphy* 	at mii? phy ?			# ThunderLAN PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # O2 SCSI
