@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.143 2004/01/18 12:34:53 bjh21 Exp $
+#	$NetBSD: DEVNAMES,v 1.144 2004/01/18 12:38:59 bjh21 Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -1135,7 +1135,6 @@ tlsb			alpha
 tlsbmem			alpha
 tms320av110		MI		Attribute
 tod			sun2
-todclock		acorn32
 todclock		cats
 todclock		netwinder
 todservice		cats		Attribute
