@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.36 2003/10/15 01:28:49 lukem Exp $
+#	$NetBSD: newvers.sh,v 1.37 2004/01/05 03:33:06 lukem Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -35,8 +35,7 @@
 #
 #	@(#)newvers.sh	8.1 (Berkeley) 4/20/94
 
-if [ ! -e version ]
-then
+if [ ! -e version ]; then
 	echo 0 > version
 fi
 
@@ -45,15 +44,16 @@ t=$(date)
 u=${USER-root}
 h=$(hostname)
 d=$(pwd)
+cwd=$(dirname $0)
+copyright=$(awk '{ print "\""$0"\\n\""}' ${cwd}/copyright)
 
-if [ -f ident ]
-then
+if [ -f ident ]; then
 	id="$(cat ident)"
 else
 	id=$(basename ${d})
 fi
 
-osrelcmd=$(dirname $0)/osrelease.sh
+osrelcmd=${cwd}/osrelease.sh
 
 ost="NetBSD"
 osr=$(sh $osrelcmd)
@@ -75,6 +75,9 @@ const char ostype[] = "${ost}";
 const char osrelease[] = "${osr}";
 const char sccs[] = "@(#)${fullversion}";
 const char version[] = "${fullversion}";
+const char copyright[] =
+${copyright}
+"\n";
 
 #ifdef notyet
 /*
