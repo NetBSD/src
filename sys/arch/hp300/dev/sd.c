@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.52 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: sd.c,v 1.53 2002/09/10 04:19:57 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.52 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.53 2002/09/10 04:19:57 gmcgarry Exp $");
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -108,13 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.52 2002/09/06 13:18:43 gehenna Exp $");
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
 #endif
-
-/*
-extern void disksort();
-extern void biodone();
-extern int physio();
-extern void TBIS();
-*/
 
 int	sdmatch __P((struct device *, struct cfdata *, void *));
 void	sdattach __P((struct device *, struct device *, void *));
@@ -316,14 +309,6 @@ sdattach(parent, self, aux)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
 #endif
-}
-
-void
-sdreset(sc)
-	struct sd_softc *sc;
-{
-
-	sc->sc_stats.sdresets++;
 }
 
 /*
