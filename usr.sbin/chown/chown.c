@@ -1,4 +1,4 @@
-/*	$NetBSD: chown.c,v 1.23 2000/08/04 07:51:32 enami Exp $	*/
+/*	$NetBSD: chown.c,v 1.24 2000/08/25 06:25:59 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.23 2000/08/04 07:51:32 enami Exp $");
+__RCSID("$NetBSD: chown.c,v 1.24 2000/08/25 06:25:59 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ main(argc, argv)
 	myname = (cp = strrchr(*argv, '/')) ? cp + 1 : *argv;
 	ischown = (myname[2] == 'o');
 
-	Hflag = Lflag = hflag = 0;
+	Hflag = Lflag = Rflag = fflag = hflag = 0;
 	while ((ch = getopt(argc, argv, "HLPRfh")) != -1)
 		switch (ch) {
 		case 'H':
