@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.276 2005/03/02 21:30:43 schwarz Exp $
+.\"	$NetBSD: main,v 1.277 2005/03/13 01:43:52 riz Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1648,6 +1648,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Scott Reynolds Ta Mt scottr@NetBSD.org
 .It Ta Michael Richardson Ta Mt mcr@NetBSD.org
 .It Ta Tim Rightnour Ta Mt garbled@NetBSD.org
+.It Ta Jeff Rizzo Ta Mt riz@NetBSD.org
 .It Ta Gordon Ross Ta Mt gwr@NetBSD.org
 .It Ta Steve Rumble Ta Mt rumble@NetBSD.org
 .It Ta Ilpo Ruotsalainen Ta Mt lonewolf@NetBSD.org
