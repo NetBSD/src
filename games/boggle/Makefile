@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2000/12/30 17:51:26 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.18 2002/03/05 19:17:44 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/11/93
 
 .include <bsd.own.mk>
@@ -10,7 +10,7 @@ MKDICT=${MKDICTDIR}/mkdict
 MKINDEXDIR!= cd $(.CURDIR)/mkindex; ${PRINTOBJDIR}
 MKINDEX=${MKINDEXDIR}/mkindex
 WORDS=${.CURDIR}/../../share/dict/web2
-DICTFILES=${.OBJDIR}/dictionary ${.OBJDIR}/dictindex
+DICTFILES=dictionary dictindex
 .if ${MKSHARE} != "no"
 FILES=${DICTFILES}
 FILESDIR=/usr/share/games/boggle
@@ -25,13 +25,13 @@ ${MKDICT}:
 ${MKINDEX}:
 	@cd ${.CURDIR}/mkindex && ${MAKE}
 
-${.OBJDIR}/dictionary: ${WORDS} ${MKDICT}
+dictionary: ${WORDS} ${MKDICT}
 	rm -f ${.TARGET}
 	${MKDICT} < ${WORDS} > ${.TARGET}
 
-${.OBJDIR}/dictindex: ${.OBJDIR}/dictionary ${MKINDEX}
+dictindex: dictionary ${MKINDEX}
 	rm -f ${.TARGET}
-	${MKINDEX} < ${.OBJDIR}/dictionary > ${.TARGET}
+	${MKINDEX} < dictionary > ${.TARGET}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
