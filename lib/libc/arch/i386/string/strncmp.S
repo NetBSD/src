@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strncmp.S,v 1.7 1994/02/14 17:44:39 jtc Exp $
+ *	$Id: strncmp.S,v 1.8 1994/02/14 20:06:10 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: strncmp.S,v 1.7 1994/02/14 17:44:39 jtc Exp $"
+	.asciz "$Id: strncmp.S,v 1.8 1994/02/14 20:06:10 mycroft Exp $"
 #endif
 
 #include <machine/asm.h>
@@ -69,80 +69,80 @@ ENTRY(strncmp)
 L1:	incl	%eax
 	incl	%ecx
 	decl	%edx
-L2:	je	L4			/* strings are equal */
+L2:	jz	L4			/* strings are equal */
 	movb	(%eax),%bl
 	testb	%bl,%bl
-	je	L3
+	jz	L3
 	cmpb	%bl,(%ecx)
 	jne	L3
 
 	incl	%eax
 	incl	%ecx
 	decl	%edx
-	je	L4
+	jz	L4
 	movb	(%eax),%bl
 	testb	%bl,%bl
-	je	L3
+	jz	L3
 	cmpb	%bl,(%ecx)
 	jne	L3
 
 	incl	%eax
 	incl	%ecx
 	decl	%edx
-	je	L4
+	jz	L4
 	movb	(%eax),%bl
 	testb	%bl,%bl
-	je	L3
+	jz	L3
 	cmpb	%bl,(%ecx)
 	jne	L3
 
 	incl	%eax
 	incl	%ecx
 	decl	%edx
-	je	L4
+	jz	L4
 	movb	(%eax),%bl
 	testb	%bl,%bl
-	je	L3
+	jz	L3
 	cmpb	%bl,(%ecx)
 	jne	L3
 
 	incl	%eax
 	incl	%ecx
 	decl	%edx
-	je	L4
+	jz	L4
 	movb	(%eax),%bl
 	testb	%bl,%bl
-	je	L3
+	jz	L3
 	cmpb	%bl,(%ecx)
 	jne	L3
 
 	incl	%eax
 	incl	%ecx
 	decl	%edx
-	je	L4
+	jz	L4
 	movb	(%eax),%bl
 	testb	%bl,%bl
-	je	L3
+	jz	L3
 	cmpb	%bl,(%ecx)
 	jne	L3
 
 	incl	%eax
 	incl	%ecx
 	decl	%edx
-	je	L4
+	jz	L4
 	movb	(%eax),%bl
 	testb	%bl,%bl
-	je	L3
+	jz	L3
 	cmpb	%bl,(%ecx)
 	jne	L3
 
 	incl	%eax
 	incl	%ecx
 	decl	%edx
-	je	L4
+	jz	L4
 	movb	(%eax),%bl
 	testb	%bl,%bl
-	je	L3
+	jz	L3
 	cmpb	%bl,(%ecx)
 	je	L1
 
