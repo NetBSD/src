@@ -21,7 +21,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)Id: vacation.c,v 8.68 2000/03/17 07:32:51 gshapiro Exp";
+static char id[] = "@(#)Id: vacation.c,v 8.68.4.4 2000/07/18 05:10:29 gshapiro Exp";
 #endif /* ! lint */
 
 #include <ctype.h>
@@ -99,12 +99,23 @@ SMDB_DATABASE *Db;
 
 char From[MAXLINE];
 
+#if _FFR_DEBUG
+void (*msglog)(int, const char *, ...) = &syslog;
+static void debuglog __P((int, const char *, ...));
+#else /* _FFR_DEBUG */
+# define msglog		syslog
+#endif /* _FFR_DEBUG */
+
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	bool iflag, emptysender, exclude;
+#if _FFR_LISTDB
+	bool lflag = FALSE;
+#endif /* _FFR_LISTDB */
+	int mfail = 0, ufail = 0;
 	int ch;
 	int result;
 	time_t interval;
@@ -153,7 +164,23 @@ main(argc, argv)
 	exclude = FALSE;
 	interval = INTERVAL_UNDEF;
 	*From = '\0';
-	while ((ch = getopt(argc, argv, "a:f:Iim:r:s:t:xz")) != -1)
+
+#if _FFR_DEBUG && _FFR_LISTDB
+# define OPTIONS		"a:df:Iilm:r:s:t:xz"
+#else /* _FFR_DEBUG && _FFR_LISTDB */
+# if _FFR_DEBUG
+#  define OPTIONS		"a:df:Iim:r:s:t:xz"
+# else /* _FFR_DEBUG */
+#  if _FFR_LISTDB
+#   define OPTIONS		"a:f:Iilm:r:s:t:xz"
+#  else /* _FFR_LISTDB */
+#   define OPTIONS		"a:f:Iim:r:s:t:xz"
+#  endif /* _FFR_LISTDB */
+# endif /* _FFR_DEBUG */
+#endif /* _FFR_DEBUG && _FFR_LISTDB */
+
+	while (mfail == 0 && ufail == 0 &&
+	       (ch = getopt(argc, argv, OPTIONS)) != -1)
 	{
 		switch((char)ch)
 		{
@@ -161,15 +188,20 @@ main(argc, argv)
 			cur = (ALIAS *)malloc((u_int)sizeof(ALIAS));
 			if (cur == NULL)
 			{
-				syslog(LOG_NOTICE,
-				       "vacation: can't allocate memory for alias %s.\n",
-				       optarg);
+				mfail++;
 				break;
 			}
 			cur->name = optarg;
 			cur->next = Names;
 			Names = cur;
 			break;
+
+#if _FFR_DEBUG
+		case 'd':			/* debug mode */
+			msglog = &debuglog;
+			break;
+#endif /* _FFR_DEBUG */
+
 
 		  case 'f':		/* alternate database */
 			dbfilename = optarg;
@@ -180,6 +212,12 @@ main(argc, argv)
 			iflag = TRUE;
 			break;
 
+#if _FFR_LISTDB
+		  case 'l':
+			lflag = TRUE;		/* list the database */
+			break;
+#endif /* _FFR_LISTDB */
+
 		  case 'm':		/* alternate message file */
 			msgfilename = optarg;
 			break;
@@ -189,7 +227,7 @@ main(argc, argv)
 			{
 				interval = atol(optarg) * SECSPERDAY;
 				if (interval < 0)
-					usage();
+					ufail++;
 			}
 			else
 				interval = ONLY_ONCE;
@@ -212,20 +250,33 @@ main(argc, argv)
 
 		  case '?':
 		  default:
-			usage();
+			ufail++;
 			break;
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
+	if (mfail != 0)
+	{
+		msglog(LOG_NOTICE,
+		       "vacation: can't allocate memory for alias.\n");
+		exit(EX_TEMPFAIL);
+	}
+	if (ufail != 0)
+		usage();
+
 	if (argc != 1)
 	{
-		if (!iflag && !exclude)
+		if (!iflag &&
+#if _FFR_LISTDB
+		    !lflag &&
+#endif /* _FFR_LISTDB */
+		    !exclude)
 			usage();
 		if ((pw = getpwuid(getuid())) == NULL)
 		{
-			syslog(LOG_ERR,
+			msglog(LOG_ERR,
 			       "vacation: no such user uid %u.\n", getuid());
 			exit(EX_NOUSER);
 		}
@@ -235,13 +286,13 @@ main(argc, argv)
 #else /* _FFR_BLACKBOX */
 	else if ((pw = getpwnam(*argv)) == NULL)
 	{
-		syslog(LOG_ERR, "vacation: no such user %s.\n", *argv);
+		msglog(LOG_ERR, "vacation: no such user %s.\n", *argv);
 		exit(EX_NOUSER);
 	}
 	name = pw->pw_name;
 	if (chdir(pw->pw_dir) != 0)
 	{
-		syslog(LOG_NOTICE,
+		msglog(LOG_NOTICE,
 		       "vacation: no such directory %s.\n", pw->pw_dir);
 		exit(EX_NOINPUT);
 	}
@@ -257,10 +308,21 @@ main(argc, argv)
 				    SMDB_TYPE_DEFAULT, &user_info, NULL);
 	if (result != SMDBE_OK)
 	{
-		syslog(LOG_NOTICE, "vacation: %s: %s\n", dbfilename,
+		msglog(LOG_NOTICE, "vacation: %s: %s\n", dbfilename,
 		       errstring(result));
 		exit(EX_DATAERR);
 	}
+
+#if _FFR_LISTDB
+	if (lflag)
+	{
+		static void listdb __P((void));
+
+		listdb();
+		(void)Db->smdb_close(Db);
+		exit(EX_OK);
+	}
+#endif /* _FFR_LISTDB */
 
 	if (interval != INTERVAL_UNDEF)
 		setinterval(interval);
@@ -281,7 +343,7 @@ main(argc, argv)
 
 	if ((cur = (ALIAS *)malloc((u_int)sizeof(ALIAS))) == NULL)
 	{
-		syslog(LOG_NOTICE,
+		msglog(LOG_NOTICE,
 		       "vacation: can't allocate memory for username.\n");
 		exit(EX_OSERR);
 	}
@@ -327,7 +389,7 @@ readheaders()
 	extern bool nsearch __P((char *, char *));
 
 	cont = tome = FALSE;
-	while (!tome && fgets(buf, sizeof(buf), stdin) && *buf != '\n')
+	while (fgets(buf, sizeof(buf), stdin) && *buf != '\n')
 	{
 		switch(*buf)
 		{
@@ -346,7 +408,7 @@ readheaders()
 						p++;
 						if (*p == '\0')
 						{
-							syslog(LOG_NOTICE,
+							msglog(LOG_NOTICE,
 							       "vacation: badly formatted \"From \" line.\n");
 							exit(EX_DATAERR);
 						}
@@ -361,7 +423,7 @@ readheaders()
 				}
 				if (quoted)
 				{
-					syslog(LOG_NOTICE,
+					msglog(LOG_NOTICE,
 					       "vacation: badly formatted \"From \" line.\n");
 					exit(EX_DATAERR);
 				}
@@ -428,7 +490,7 @@ findme:
 		exit(EX_OK);
 	if (*From == '\0')
 	{
-		syslog(LOG_NOTICE, "vacation: no initial \"From \" line.\n");
+		msglog(LOG_NOTICE, "vacation: no initial \"From \" line.\n");
 		exit(EX_DATAERR);
 	}
 }
@@ -714,21 +776,21 @@ sendmessage(myname, msgfn, emptysender)
 	if (mfp == NULL)
 	{
 		if (msgfn[0] == '/')
-			syslog(LOG_NOTICE, "vacation: no %s file.\n", msgfn);
+			msglog(LOG_NOTICE, "vacation: no %s file.\n", msgfn);
 		else
-			syslog(LOG_NOTICE, "vacation: no ~%s/%s file.\n",
+			msglog(LOG_NOTICE, "vacation: no ~%s/%s file.\n",
 			       myname, msgfn);
 		exit(EX_NOINPUT);
 	}
 	if (pipe(pvect) < 0)
 	{
-		syslog(LOG_ERR, "vacation: pipe: %s", errstring(errno));
+		msglog(LOG_ERR, "vacation: pipe: %s", errstring(errno));
 		exit(EX_OSERR);
 	}
 	i = fork();
 	if (i < 0)
 	{
-		syslog(LOG_ERR, "vacation: fork: %s", errstring(errno));
+		msglog(LOG_ERR, "vacation: fork: %s", errstring(errno));
 		exit(EX_OSERR);
 	}
 	if (i == 0)
@@ -741,7 +803,7 @@ sendmessage(myname, msgfn, emptysender)
 			myname = "<>";
 		(void) execl(_PATH_SENDMAIL, "sendmail", "-f", myname, "--",
 		      From, NULL);
-		syslog(LOG_ERR, "vacation: can't exec %s: %s",
+		msglog(LOG_ERR, "vacation: can't exec %s: %s",
 			_PATH_SENDMAIL, errstring(errno));
 		exit(EX_UNAVAILABLE);
 	}
@@ -759,7 +821,7 @@ sendmessage(myname, msgfn, emptysender)
 	else
 	{
 		(void) fclose(mfp);
-		syslog(LOG_ERR, "vacation: can't open pipe to sendmail");
+		msglog(LOG_ERR, "vacation: can't open pipe to sendmail");
 		exit(EX_UNAVAILABLE);
 	}
 }
@@ -767,10 +829,133 @@ sendmessage(myname, msgfn, emptysender)
 void
 usage()
 {
-	syslog(LOG_NOTICE, "uid %u: usage: vacation [-i] [-a alias] [-f db] [-m msg] [-r interval] [-s sender] [-t time] [-x] [-z] login\n",
-	    getuid());
+	msglog(LOG_NOTICE, "uid %u: usage: vacation [-i] [-a alias]%s [-f db]%s [-m msg] [-r interval] [-s sender] [-t time] [-x] [-z] login\n",
+	       getuid(),
+#if _FFR_DEBUG
+	       " [-d]",
+#else /* _FFR_DEBUG */
+	       "",
+#endif /* _FFR_DEBUG */
+#if _FFR_LISTDB
+	       " [-l]"
+#else /* _FFR_LISTDB */
+	       ""
+#endif /* _FFR_LISTDB */
+	       );
 	exit(EX_USAGE);
 }
+
+#if _FFR_LISTDB
+/*
+** LISTDB -- list the contents of the vacation database
+**
+**	Parameters:
+**		none.
+**
+**	Returns:
+**		nothing.
+*/
+
+static void
+listdb()
+{
+	int result;
+	time_t t;
+	SMDB_CURSOR *cursor = NULL;
+	SMDB_DBENT db_key, db_value;
+
+	memset(&db_key, '\0', sizeof db_key);
+	memset(&db_value, '\0', sizeof db_value);
+
+	result = Db->smdb_cursor(Db, &cursor, 0);
+	if (result != SMDBE_OK)
+	{
+		fprintf(stderr, "vacation: set cursor: %s\n",
+			errstring(result));
+		return;
+	}
+
+	while ((result = cursor->smdbc_get(cursor, &db_key, &db_value,
+					   SMDB_CURSOR_GET_NEXT)) == SMDBE_OK)
+	{
+		/* skip magic VIT entry */
+		if ((int)db_key.data.size -1 == strlen(VIT) &&
+		    strncmp((char *)db_key.data.data, VIT,
+			    (int)db_key.data.size - 1) == 0)
+			continue;
+
+		/* skip bogus values */
+		if (db_value.data.size != sizeof t)
+		{
+			fprintf(stderr, "vacation: %.*s invalid time stamp\n",
+				(int) db_key.data.size,
+				(char *) db_key.data.data);
+			continue;
+		}
+
+		memcpy(&t, db_value.data.data, sizeof t);
+
+		if (db_key.data.size > 40)
+			db_key.data.size = 40;
+
+		printf("%-40.*s %-10s",
+		       (int) db_key.data.size, (char *) db_key.data.data,
+		       ctime(&t));
+
+		memset(&db_key, '\0', sizeof db_key);
+		memset(&db_value, '\0', sizeof db_value);
+	}
+
+	if (result != SMDBE_OK && result != SMDBE_LAST_ENTRY)
+	{
+		fprintf(stderr,	"vacation: get value at cursor: %s\n",
+			errstring(result));
+		if (cursor != NULL)
+		{
+			(void) cursor->smdbc_close(cursor);
+			cursor = NULL;
+		}
+		return;
+	}
+	(void) cursor->smdbc_close(cursor);
+	cursor = NULL;
+}
+#endif /* _FFR_LISTDB */
+
+#if _FFR_DEBUG
+/*
+** DEBUGLOG -- write message to standard error
+**
+**	Append a message to the standard error for the convenience of
+**	end-users debugging without access to the syslog messages.
+**
+**	Parameters:
+**		i -- syslog log level
+**		fmt -- string format
+**
+**	Returns:
+**		nothing.
+*/
+
+/*VARARGS2*/
+static void
+#ifdef __STDC__
+debuglog(int i, const char *fmt, ...)
+#else /* __STDC__ */
+debuglog(i, fmt, va_alist)
+	int i;
+	const char *fmt;
+	va_dcl
+#endif /* __STDC__ */
+
+{
+	VA_LOCAL_DECL
+
+	VA_START(fmt);
+	vfprintf(stderr, fmt, ap);
+	VA_END;
+}
+#endif /* _FFR_DEBUG */
 
 /*VARARGS1*/
 void

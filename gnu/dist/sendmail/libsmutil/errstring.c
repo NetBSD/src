@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: errstring.c,v 8.8 2000/02/26 01:32:16 gshapiro Exp";
+static char id[] = "@(#)Id: errstring.c,v 8.8.4.1 2000/05/26 18:16:28 geir Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -203,3 +203,4 @@ errstring(errnum)
 	}
 #endif /* HASSTRERROR */
 }
+

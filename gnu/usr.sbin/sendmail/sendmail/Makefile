@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/05/06 15:33:25 itojun Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2000/08/13 16:48:57 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ PROG=		sendmail
 BINOWN=		root
 BINMODE=	4555
 
-LIBSMUTILDIR!=	cd ${.CURDIR}/../libsmutil; make print-objdir
+LIBSMUTILDIR!=	cd ${.CURDIR}/../libsmutil; ${MAKE} print-objdir
 
 LDADD+=		-lwrap -L${LIBSMUTILDIR} -lsmutil
 DPADD+=		${LIBWRAP} ${LIBSMUTILDIR}/libsmutil.a
@@ -26,8 +26,10 @@ SRCS=		alias.c arpadate.c bf_torek.c clock.c collect.c \
 
 MAN=		aliases.5 mailq.1 newaliases.1 sendmail.8
 
-afterinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-		${DIST}/sendmail/sendmail/helpfile ${DESTDIR}/etc/mail
+FILES=		${DIST}/sendmail/sendmail/helpfile
+FILESDIR=	/etc/mail
+FILESOWN=	${BINOWN}
+FILESGRP=	${BINGRP}
+FILESMODE=	${NONBINMODE}
 
 .include <bsd.prog.mk>

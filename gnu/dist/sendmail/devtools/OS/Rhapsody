@@ -1,11 +1,11 @@
-#	Id: Rhapsody,v 8.4 1999/08/13 21:31:10 gshapiro Exp
+#	Id: Rhapsody,v 8.4.18.1 2000/06/15 06:37:04 gshapiro Exp
 #
 # Wilfredo Sanchez <wsanchez@apple.com>:
 #    We look a lot more like 4.4BSD than NeXTStep or OpenStep.
 #
 define(`confCC', `cc -traditional-cpp -pipe ${Extra_CC_Flags}')
 define(`confMAPDEF',   `-DNEWDB -DNIS -DMAP_REGEX -DNETINFO -DAUTO_NETINFO_ALIASES -DAUTO_NETINFO_HOSTS')
-define(`confENVDEF',   `-DNETISO')
+define(`confENVDEF',   `-DDARWIN -DNETISO')
 define(`confLDOPTS',   `${Extra_LD_Flags}')
 define(`confOPTIMIZE', `-O3')
 define(`confRANLIBOPTS', `-c')

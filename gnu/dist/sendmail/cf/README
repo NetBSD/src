@@ -966,12 +966,13 @@ smrsh		Use the SendMail Restricted SHell (smrsh) provided
 promiscuous_relay
 		By default, the sendmail configuration files do not permit
 		mail relaying (that is, accepting mail from outside your
-		domain and sending it to another host outside your domain).
-		This option sets your site to allow mail relaying from any
-		site to any site.  In general, it is better to control the
-		relaying more carefully with the access db and class {R}.
-		Domains can be added to class {R} by the macros RELAY_DOMAIN
-		or RELAY_DOMAIN_FILE (analogously to MASQUERADE_DOMAIN and
+		local host (class {w}) and sending it to another host than
+		your local host).  This option sets your site to allow
+		mail relaying from any site to any site.  In almost all
+		cases, it is better to control relaying more carefully
+		with the access map, class {R}, or authentication.  Domains
+		can be added to class {R} by the macros RELAY_DOMAIN or
+		RELAY_DOMAIN_FILE (analogously to MASQUERADE_DOMAIN and
 		MASQUERADE_DOMAIN_FILE, see below).
 
 relay_entire_domain
@@ -1003,11 +1004,15 @@ relay_based_on_MX
 		FEATURE(`loose_relay_check').
 
 relay_mail_from
-		Allows relaying if the mail sender is listed as RELAY in the
-		access map.  If an optional argument `domain' is given, the
-		domain portion of the mail sender is checked too.  This
-		should only be used if absolutely necessary as the sender
-		address can be easily forged.
+		Allows relaying if the mail sender is listed as RELAY in
+		the access map.  If an optional argument `domain' is given,
+		the domain portion of the mail sender is checked too.
+		This should only be used if absolutely necessary as the
+		sender address can be easily forged.  Use of this feature
+		requires the "From:" tag be prepended to the key in the
+		access map; see the discussion of tags and
+		FEATURE(`relay_mail_from') in the section on ANTI-SPAM
+		CONFIGURATION CONTROL.
 
 relay_local_from
 		Allows relaying if the domain portion of the mail sender
@@ -1117,15 +1122,6 @@ subdomains.
 Complex sites will need more local configuration information, such as
 lists of UUCP hosts they speak with directly.  This can get a bit more
 tricky.  For an example of a "complex" site, see cf/ucbvax.mc.
-
-If your host is known by several different names, you need to augment
-class {w}.  This is a list of names by which you are known, and
-anything sent to an address using a host name in this list will be
-treated as local mail.  You can do this in two ways:  either create the
-file /etc/mail/local-host-names containing a list of your aliases (one per
-line), and use ``FEATURE(`use_cw_file')'' in the .mc file, or add
-``LOCAL_DOMAIN(`alias.host.name')''.  Be sure you use the fully-qualified
-name of the host, rather than a short name.
 
 The SITECONFIG macro allows you to indirectly reference site-dependent
 configuration information stored in the siteconfig subdirectory.  For
@@ -1569,14 +1565,20 @@ The primary anti-spam features available in sendmail are:
 * Access database.
 * Header checks.
 
-Relaying (transmission of messages from a site outside your domain to
-another site outside your domain) is denied by default.  Note that
-this changed in sendmail 8.9; previous versions allowed relaying by
-default.  If you want to revert to the old behaviour, you will need
-to use FEATURE(`promiscuous_relay').  You can allow certain domains to
-relay through your server by adding their domain name or IP address to
-class {R} using RELAY_DOMAIN() and RELAY_DOMAIN_FILE() or via the
-access database (described below).
+Relaying (transmission of messages from a site outside your host (class
+{w}) to another site except yours) is denied by default.  Note that this
+changed in sendmail 8.9; previous versions allowed relaying by default.
+If you really want to revert to the old behaviour, you will need to use
+FEATURE(`promiscuous_relay').  You can allow certain domains to relay
+through your server by adding their domain name or IP address to class
+{R} using RELAY_DOMAIN() and RELAY_DOMAIN_FILE() or via the access database
+(described below).  The file consists (like any other file based class)
+of entries listed on separate lines, e.g.,
+
+	sendmail.org
+	128.32
+	1:2:3:4:5:6:7
+	host.mydomain.com
 
 If you use
 
@@ -1871,10 +1873,32 @@ will not be called when a client connects or issues a MAIL command,
 respectively.  Instead, those rulesets will be called by the check_rcpt
 ruleset; they will be skipped if a sender has been authenticated using
 a "trusted" mechanism, i.e., one that is defined via TRUST_AUTH_MECH().
-Moreover, an argument can be specified for this option:
+If check_mail returns an error then the RCPT TO command will be rejected
+with that error.  If it returns some other result starting with $# then
+check_relay will be skipped.  If the sender address (or a part of it) is
+listed in the access map and it has a RHS of OK or RELAY, then check_relay
+will be skipped.  This has an interesting side effect: if your domain is
+my.domain and you have
 
-	friend: enable spamfriend test
-	hater: enable spamhater test
+	my.domain	RELAY
+
+in the access map, then all e-mail with a sender address of
+<user@my.domain> gets through, even if check_relay would reject it
+(e.g., based on the hostname or IP address).  This allows spammers
+to get around DNS based blacklist by faking the sender address.  To
+avoid this problem you have to use tagged entries:
+
+	To:my.domain		RELAY
+	Connect:my.domain	RELAY
+
+if you need those entries at all (class {R} may take care of them).
+ 
+FEATURE(`delay_checks') can take an optional argument:
+
+	FEATURE(`delay_checks', `friend')
+		 enables spamfriend test
+	FEATURE(`delay_checks', `hater')
+		 enables spamhater test
 
 If such an argument is given, the recipient will be looked up in the access
 map (using the tag To:).  If the argument is `friend', then the other
@@ -1956,6 +1980,126 @@ probably not be used in production.
 	R$*			$#error $: 553 Header Error
 
 +--------------------------------+
+| STARTTLS                       |
++--------------------------------+
+
+In this text, cert will be used as an abreviation for X.509 certificate,
+DN is the distinguished name of a cert, and CA is a certification authority.
+
+Macros related to STARTTLS are:
+
+${cert_issuer} holds the DN of the CA (the cert issuer).
+${cert_subject} holds the DN of the cert (called the cert subject).
+${tls_version} the TLS/SSL version used for the connection, e.g., TLSv1,
+	SSLv3, SSLv2.
+${cipher} the cipher used for the connection, e.g., EDH-DSS-DES-CBC3-SHA,
+	EDH-RSA-DES-CBC-SHA, DES-CBC-MD5, DES-CBC3-SHA.
+${cipher_bits} the keylength (in bits) of the symmetric encryption algorithm
+	used for the connection.
+${verify} holds the result of the verification of the presented cert. Possible
+	values are:
+	OK	verification succeeded.
+	NO	no cert presented.
+	FAIL	cert presented but could not be verified, e.g., the signing
+		CA is missing.
+	NONE	STARTTLS has not been performed.
+	TEMP	temporary error occurred.
+	PROTOCOL some protocol error occurred.
+	SOFTWARE STARTTLS handshake failed.
+${server_name}	the name of the server of the current outgoing SMTP
+	connection.
+${server_addr}	the address of the server of the current outgoing SMTP
+	connection.
+
+Relaying
+
+SMTP STARTTLS can allow relaying for senders who have successfully
+authenticated themselves. This is done in the ruleset RelayAuth. If the
+verification of the cert failed (${verify} != OK), relaying is subject to
+the usual rules. Otherwise the DN of the issuer is looked up in the access
+map using the tag CERTISSUER. If the resulting value is RELAY, relaying is
+allowed. If it is SUBJECT, the DN of the cert subject is looked up next in
+the access map. using the tag CERTSUBJECT. If the value is RELAY, relaying
+is allowed.
+
+To make things a bit more flexible (or complicated), the values for
+${cert_issuer} and ${cert_subject} can be optionally modified by regular
+expressions defined in the m4 variables _CERT_REGEX_ISSUER_ and
+_CERT_REGEX_SUBJECT_, respectively. To avoid problems with those macros in
+rulesets and map lookups, they are modified as follows: each non-printable
+character and the characters '<', '>', '(', ')', '"', '+' are replaced by
+their HEX value with a leading '+'. For example:
+
+/C=US/ST=California/O=endmail.org/OU=private/CN=Darth Mail (Cert)/Email=
+darth+cert@endmail.org
+
+is encoded as:
+
+/C=US/ST=California/O=endmail.org/OU=private/CN=
+Darth+20Mail+20+28Cert+29/Email=darth+2Bcert@endmail.org
+
+(line breaks have been inserted for readability).
+
+Of course it is also possible to write a simple rulesets that allows
+relaying for everyone who can present a cert that can be verified, e.g.,
+
+LOCAL_RULESETS
+SLocal_check_rcpt
+R$*	$: $&{verify}
+ROK	$# OK
+
+Allowing Connections
+
+The rulesets tls_server and tls_client are used to decide whether an SMTP
+connection is accepted (or should continue).
+
+tls_server is called when sendmail acts as client after a STARTTLS command
+(should) have been issued. The parameter is the value of ${verify}.
+
+tls_client is called when sendmail acts as server, after a STARTTLS command
+has been issued, and from check_mail. The parameter is the value of
+${verify} and STARTTLS or MAIL, respectively.
+
+Both rulesets behave the same. If no access map is in use, the connection
+will be accepted unless ${verify} is SOFTWARE, in which case the connection
+is always aborted.  Otherwise, ${client_name} (${server_name}) is looked
+up in the access map using the tag TLS_Srv (or TLS_Clt), which is done
+with the ruleset LookUpDomain. If no entry is found, ${client_addr}
+(${server_addr}) is looked up in the access map (same tag, ruleset
+LookUpAddr). If this doesn't result in an entry either, just the tag is
+looked up in the access map (included the trailing :).  The result of the
+lookups is then used to call the ruleset tls_connection, which checks the
+requirement specified by the RHS in the access map against the actual
+parameters of the current TLS connection, esp. ${verify} and
+${cipher_bits}. Legal RHSs in the access map are:
+
+VERIFY		verification must have succeeded
+VERIFY:bits	verification must have succeeded and ${cipher_bits} must
+		be greater than or equal bits.
+ENCR:bits	${cipher_bits} must be greater than or equal bits.
+
+The RHS can optionally be prefixed by TEMP+ or PERM+ to select a temporary
+or permanent error. The default is a temporary error code (403 4.7.0)
+unless the macro TLS_PERM_ERR is set during generation of the .cf file.
+
+If a certain level of encryption is required, then it might also be
+possible that this level is provided by the security layer from a SASL
+algorithm, e.g., DIGEST-MD5.
+
+Example: e-mail send to secure.example.com should only use an encrypted
+connection. e-mail received from hosts within the laptop.example.com domain
+should only be accepted if they have been authenticated.
+TLS_Srv:secure.example.com      ENCR:112
+TLS_Clt:laptop.example.com      PERM+VERIFY:112
+
+Received: Header
+
+The Received: header reveals whether STARTTLS has been used. It contains an
+extra line:
+
+(using ${tls_version} with cipher ${cipher} (${cipher_bits} bits) verified ${verify})
+
++--------------------------------+
 | SMTP AUTHENTICATION            |
 +--------------------------------+
 
@@ -1989,6 +2133,10 @@ parameter if it is identical to the authenticated user.
 Per default, relaying is allowed for any user who authenticated
 via a "trusted" mechanism, i.e., one that is defined via
 TRUST_AUTH_MECH(`list of mechanisms')
+
+If the selected mechanism provides a security layer the number of
+bits used for the key of the symmetric cipher is stored in the
+macro ${auth_ssf}.
 
 +--------------------------------+
 | ADDING NEW MAILERS OR RULESETS |
@@ -2113,6 +2261,24 @@ name.  This is usually done using:
 
 	Dmbar.com
 	define(`confDOMAIN_NAME', `$w.$m')dnl
+
+
++-----------------------------------+
+| ACCEPTING MAIL FOR MULTIPLE NAMES |
++-----------------------------------+
+
+If your host is known by several different names, you need to augment
+class {w}.  This is a list of names by which your host is known, and
+anything sent to an address using a host name in this list will be
+treated as local mail.  You can do this in two ways:  either create the
+file /etc/mail/local-host-names containing a list of your aliases (one per
+line), and use ``FEATURE(`use_cw_file')'' in the .mc file, or add
+``LOCAL_DOMAIN(`alias.host.name')''.  Be sure you use the fully-qualified
+name of the host, rather than a short name.
+
+If you want to have different address in different domains, take
+a look at the virtusertable feature, which is also explained at
+http://www.sendmail.org/virtual-hosting.html
 
 
 +--------------------+
@@ -2829,6 +2995,32 @@ confLDAP_DEFAULT_SPEC	LDAPDefaultSpec	[undefined] Default map
 					maps unless they are specified in
 					the individual map specification
 					('K' command).
+confCACERT_PATH		CACERTPath	[undefined] Path to directory
+					with certs of CAs.
+confCACERT		CACERTFile	[undefined] File containing one CA
+					cert.
+confSERVER_CERT		ServerCertFile	[undefined] File containing the
+					cert of the server, i.e., this cert
+					is used when sendmail acts as
+					server.
+confSERVER_KEY		ServerKeyFile	[undefined] File containing the
+					private key belonging to the server
+					cert.
+confCLIENT_CERT		ClientCertFile	[undefined] File containing the
+					cert of the client, i.e., this cert
+					is used when sendmail acts as
+					client.
+confCLIENT_KEY		ClientKeyFile	[undefined] File containing the
+					private key belonging to the client
+					cert.
+confDH_PARAMETERS	DHParameters	[undefined] File containing the
+					DH parameters.
+confRAND_FILE		RandFile	[undefined] File containing random
+					data or the name of the Unix socket
+					if EGD is used.  STARTTLS requires
+					this option if the compile flag
+					HASURANDOM is not set (see
+					sendmail/README).
 
 See also the description of OSTYPE for some parameters that can be
 tweaked (generally pathnames to mailers).
@@ -2862,6 +3054,11 @@ using the default SMTP port, use
 
 Note that if the first of those DAEMON_OPTIONS lines were omitted, then
 there would be no listener on the standard SMTP port.
+
+Example 3: To listen on both IPv4 and IPv6 interfaces, use
+
+	DAEMON_OPTIONS(`Name=MTA-v4, Family=inet')
+	DAEMON_OPTIONS(`Name=MTA-v6, Family=inet6')
 
 A "Message Submission Agent" still uses all of the same rulesets for
 processing the message (and therefore still allows message rejection via
@@ -3034,4 +3231,4 @@ M4 DIVERSIONS
    8	DNS based blacklists
    9	special local rulesets (1 and 2)
 
-Revision: 8.383, Last updated Date: 2000/04/06 20:27:43
+Revision: 8.383.2.1.2.15, Last updated Date: 2000/07/19 22:27:29

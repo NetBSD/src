@@ -19,7 +19,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)Id: mail.local.c,v 8.143 2000/03/17 07:32:44 gshapiro Exp";
+static char id[] = "@(#)Id: mail.local.c,v 8.143.4.13 2000/07/18 05:41:38 gshapiro Exp";
 #endif /* ! lint */
 
 /*
@@ -30,6 +30,7 @@ static char id[] = "@(#)Id: mail.local.c,v 8.143 2000/03/17 07:32:44 gshapiro Ex
 **  files to do their work).  IT IS NOT A BUG that this doesn't
 **  work on such architectures.
 */
+
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,6 +113,12 @@ extern size_t	strlcat __P((char *, const char *, size_t));
 # define USE_SETRESUID	1
 # define USE_VSYSLOG	0
 #endif /* defined(__hpux) */
+
+#ifdef DGUX
+# define HASSNPRINTF	1
+# define USE_LOCKF	1
+# define USE_VSYSLOG	0
+#endif /* DGUX */
 
 #if defined(_CRAY)
 # if !defined(MAXPATHLEN)
@@ -231,6 +238,10 @@ extern int	vsnprintf __P((char *, size_t, const char *, ...));
 # define S_ISREG(mode)	(((mode) & _S_IFMT) == S_IFREG)
 #endif /* ! S_ISREG */
 
+#ifdef MAILLOCK
+# include <maillock.h>
+#endif /* MAILLOCK */
+
 #ifndef INADDRSZ
 # define INADDRSZ	4		/* size of an IPv4 address in bytes */
 #endif /* ! INADDRSZ */
@@ -238,10 +249,6 @@ extern int	vsnprintf __P((char *, size_t, const char *, ...));
 #ifndef MAILER_DAEMON
 # define MAILER_DAEMON	"MAILER-DAEMON"
 #endif /* ! MAILER_DAEMON */
-
-#ifdef MAILLOCK
-# include <maillock.h>
-#endif /* MAILLOCK */
 
 #ifdef CONTENTLENGTH
 char	ContentHdr[40] = "Content-Length: ";
@@ -264,6 +271,7 @@ int	lockmbox __P((char *));
 void	unlockmbox __P((void));
 void	mailerr __P((const char *, const char *, ...));
 
+
 int
 main(argc, argv)
 	int argc;
@@ -277,6 +285,7 @@ main(argc, argv)
 	extern int optind;
 	extern void dolmtp __P((bool));
 
+
 	/* make sure we have some open file descriptors */
 	for (fd = 10; fd < 30; fd++)
 		(void) close(fd);
@@ -284,14 +293,14 @@ main(argc, argv)
 	/* use a reasonable umask */
 	(void) umask(0077);
 
-#ifdef LOG_MAIL
+# ifdef LOG_MAIL
 	openlog("mail.local", 0, LOG_MAIL);
-#else /* LOG_MAIL */
+# else /* LOG_MAIL */
 	openlog("mail.local", 0);
-#endif /* LOG_MAIL */
+# endif /* LOG_MAIL */
 
 	from = NULL;
-	while ((ch = getopt(argc, argv, "7bdf:r:l")) != EOF)
+	while ((ch = getopt(argc, argv, "7bdf:r:l")) != -1)
 	{
 		switch(ch)
 		{
@@ -676,7 +685,8 @@ store(from, lmtprcpts)
 	FILE *fp = NULL;
 	time_t tval;
 	bool eline;
-	bool fullline = TRUE;
+	bool fullline = TRUE;	/* current line is terminated */
+	bool prevfl;		/* previous line was terminated */
 	char line[2048];
 	int fd;
 	char tmpbuf[sizeof _PATH_LOCTMP + 1];
@@ -713,16 +723,19 @@ store(from, lmtprcpts)
 #endif /* CONTENTLENGTH */
 
 	line[0] = '\0';
-	for (eline = TRUE; fgets(line, sizeof(line), stdin); )
+	eline = TRUE;
+	while (fgets(line, sizeof(line), stdin) != (char *)NULL)
 	{
 		size_t line_len = 0;
 		int peek;
+
+		prevfl = fullline;	/* preserve state of previous line */
 		while (line[line_len] != '\n' && line_len < sizeof(line) - 2)
 			line_len++;
 		line_len++;
 
 		/* Check for dot-stuffing */
-		if (fullline && lmtprcpts && line[0] == '.')
+		if (prevfl && lmtprcpts && line[0] == '.')
 		{
 			if (line[1] == '\n' ||
 			    (line[1] == '\r' && line[2] == '\n'))
@@ -731,7 +744,7 @@ store(from, lmtprcpts)
 			line_len--;
 		}
 
-		/* Check to see if we have the full line from the fgets() */
+		/* Check to see if we have the full line from fgets() */
 		fullline = FALSE;
 		if (line_len > 0)
 		{
@@ -739,12 +752,11 @@ store(from, lmtprcpts)
 			{
 				if (line_len >= 2 &&
 				    line[line_len - 2] == '\r')
-				    {
-					(void) strlcpy(line + line_len - 2,
-						       "\n", sizeof line -
-							     line_len + 2);
+				{
+					line[line_len - 2] = '\n';
+					line[line_len - 1] = '\0';
 					line_len--;
-				    }
+				}
 				fullline = TRUE;
 			}
 			else if (line[line_len - 1] == '\r')
@@ -764,7 +776,7 @@ store(from, lmtprcpts)
 			fullline = TRUE;
 
 #ifdef CONTENTLENGTH
-		if (line[0] == '\n' && HeaderLength == 0)
+		if (prevfl && line[0] == '\n' && HeaderLength == 0)
 		{
 			eline = FALSE;
 			HeaderLength = ftell(fp);
@@ -779,7 +791,7 @@ store(from, lmtprcpts)
 			}
 		}
 #else /* CONTENTLENGTH */
-		if (line[0] == '\n')
+		if (prevfl && line[0] == '\n')
 			eline = TRUE;
 #endif /* CONTENTLENGTH */
 		else
@@ -790,10 +802,17 @@ store(from, lmtprcpts)
 			eline = FALSE;
 #ifdef CONTENTLENGTH
 			/* discard existing "Content-Length:" headers */
-			if (HeaderLength == 0 &&
+			if (prevfl && HeaderLength == 0 &&
 			    (line[0] == 'C' || line[0] == 'c') &&
 			    strncasecmp(line, ContentHdr, 15) == 0)
-					continue;
+			{
+				/*
+				**  be paranoid: clear the line
+				**  so no "wrong matches" may occur later
+				*/
+				line[0] = '\0';
+				continue;
+			}
 #endif /* CONTENTLENGTH */
 
 		}
@@ -882,7 +901,8 @@ deliver(fd, name, bouncequota)
 	char *name;
 	bool bouncequota;
 {
-	struct stat fsb, sb;
+	struct stat fsb;
+	struct stat sb;
 	struct passwd *pw;
 	char path[MAXPATHLEN];
 	int mbfd, nr = 0, nw, off;
@@ -943,7 +963,9 @@ deliver(fd, name, bouncequota)
 			*p = '.';
 	}
 
+
 	(void) snprintf(path, sizeof(path), "%s/%s", _PATH_MAILDIR, name);
+
 
 	/*
 	**  If the mailbox is linked or a symlink, fail.  There's an obvious

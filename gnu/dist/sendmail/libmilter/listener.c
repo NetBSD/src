@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: listener.c,v 8.38 2000/02/11 00:12:30 ca Exp";
+static char id[] = "@(#)Id: listener.c,v 8.38.2.1.2.7 2000/05/25 21:44:26 gshapiro Exp";
 #endif /* ! lint */
 
 #if _FFR_MILTER
@@ -19,10 +19,10 @@ static char id[] = "@(#)Id: listener.c,v 8.38 2000/02/11 00:12:30 ca Exp";
 
 #include "libmilter.h"
 
-#if NETINET || NETINET6
-# include <arpa/inet.h>
-#endif /* NETINET || NETINET6 */
 
+# if NETINET || NETINET6
+#  include <arpa/inet.h>
+# endif /* NETINET || NETINET6 */
 /*
 **  MI_MILTEROPEN -- setup socket to listen on
 **
@@ -219,7 +219,7 @@ mi_milteropen(conn, backlog, socksize, name)
 			*at = '\0';
 
 		if (isascii(*colon) && isdigit(*colon))
-			port = htons(atoi(colon));
+			port = htons((u_short) atoi(colon));
 		else
 		{
 # ifdef NO_GETSERVBYNAME
@@ -356,7 +356,7 @@ mi_milteropen(conn, backlog, socksize, name)
 #endif /* NETINET || NETINET6 */
 
 	sock = socket(addr.sa.sa_family, SOCK_STREAM, 0);
-	if (sock < 0)
+	if (!ValidSocket(sock))
 	{
 		smi_log(SMI_LOG_ERR,
 			"%s: Unable to create new socket: %s",
@@ -436,15 +436,15 @@ mi_listener(conn, dbg, smfi, timeout)
 {
 	int connfd = -1;
 	int listenfd = -1;
-	int clilen;
 	int sockopt = 1;
 	int r;
 	int ret = MI_SUCCESS;
 	int cnt_m = 0;
 	int cnt_t = 0;
-	pthread_t thread_id;
+	sthread_t thread_id;
 	_SOCK_ADDR cliaddr;
 	SOCKADDR_LEN_T socksize;
+	SOCKADDR_LEN_T clilen;
 	SMFICTX_PTR ctx;
 	fd_set readset, excset;
 	struct timeval chktime;
@@ -473,9 +473,9 @@ mi_listener(conn, dbg, smfi, timeout)
 	{
 		/* select on interface ports */
 		FD_ZERO(&readset);
-		FD_SET(listenfd, &readset);
+		FD_SET((u_int) listenfd, &readset);
 		FD_ZERO(&excset);
-		FD_SET(listenfd, &excset);
+		FD_SET((u_int) listenfd, &excset);
 		chktime.tv_sec = MI_CHK_TIME;
 		chktime.tv_usec = 0;
 		r = select(listenfd + 1, &readset, NULL, &excset, &chktime);
@@ -528,7 +528,7 @@ mi_listener(conn, dbg, smfi, timeout)
 		}
 		cnt_m = 0;
 		memset(ctx, '\0', sizeof *ctx);
-		ctx->ctx_fd = connfd;
+		ctx->ctx_sd = connfd;
 		ctx->ctx_dbg = dbg;
 		ctx->ctx_timeout = timeout;
 		ctx->ctx_smfi = smfi;
@@ -539,24 +539,26 @@ mi_listener(conn, dbg, smfi, timeout)
 		if (smfi->xxfi_close == NULL)
 #endif /* 0 */
 		if (smfi->xxfi_connect == NULL)
-			smfi->xxfi_flags |= SMFIF_NOCONNECT;
+			ctx->ctx_pflags |= SMFIP_NOCONNECT;
 		if (smfi->xxfi_helo == NULL)
-			smfi->xxfi_flags |= SMFIF_NOHELO;
+			ctx->ctx_pflags |= SMFIP_NOHELO;
 		if (smfi->xxfi_envfrom == NULL)
-			smfi->xxfi_flags |= SMFIF_NOMAIL;
+			ctx->ctx_pflags |= SMFIP_NOMAIL;
 		if (smfi->xxfi_envrcpt == NULL)
-			smfi->xxfi_flags |= SMFIF_NORCPT;
+			ctx->ctx_pflags |= SMFIP_NORCPT;
 		if (smfi->xxfi_header == NULL)
-			smfi->xxfi_flags |= SMFIF_NOHDRS;
+			ctx->ctx_pflags |= SMFIP_NOHDRS;
+		if (smfi->xxfi_eoh == NULL)
+			ctx->ctx_pflags |= SMFIP_NOEOH;
 		if (smfi->xxfi_body == NULL)
-			smfi->xxfi_flags |= SMFIF_NOBODY;
+			ctx->ctx_pflags |= SMFIP_NOBODY;
 
-		if ((r = pthread_create(&thread_id, NULL,
+		if ((r = thread_create(&thread_id,
 					mi_thread_handle_wrapper,
-					(void *) ctx)) != 0)
+					(void *) ctx)) != MI_SUCCESS)
 		{
 			smi_log(SMI_LOG_ERR,
-				"%s: pthread_create() failed: %d",
+				"%s: thread_create() failed: %d",
 				smfi->xxfi_name,  r);
 			sleep(++cnt_t);
 			(void) close(connfd);

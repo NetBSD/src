@@ -11,8 +11,12 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: bf_torek.c,v 8.19 1999/10/11 23:37:26 ca Exp";
+static char id[] = "@(#)Id: bf_torek.c,v 8.19.18.1 2000/07/18 16:52:26 gshapiro Exp";
 #endif /* ! lint */
+
+#if SFIO
+   ERROR README: Can not use bf_torek.c with SFIO.
+#endif /* SFIO */
 
 #include <sys/types.h>
 #include <sys/uio.h>

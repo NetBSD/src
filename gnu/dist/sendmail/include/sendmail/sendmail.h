@@ -10,14 +10,18 @@
  * the sendmail distribution.
  *
  *
- *	Id: sendmail.h,v 8.34 2000/03/16 22:05:28 gshapiro Exp
+ *	Id: sendmail.h,v 8.34.4.4 2000/07/15 17:35:17 gshapiro Exp
  */
 
 /*
 **  SENDMAIL.H -- Global definitions for sendmail.
 */
 
+#if SFIO
+# include <sfio/stdio.h>
+#else /* SFIO */
 # include <stdio.h>
+#endif /* SFIO */
 #include <string.h>
 #include "conf.h"
 #include "sendmail/errstring.h"
@@ -144,8 +148,9 @@ extern bool	filechanged __P((char *, int, struct stat *));
 #define DBS_NONROOTSAFEADDR				31
 #define DBS_TRUSTSTICKYBIT				32
 #define DBS_DONTWARNFORWARDFILEINUNSAFEDIRPATH		33
+#define DBS_INSUFFICIENTENTROPY				34
 #if _FFR_UNSAFE_SASL
-#define DBS_GROUPREADABLESASLFILE			34
+#define DBS_GROUPREADABLESASLFILE			35
 #endif /* _FFR_UNSAFE_SASL */
 
 /* struct defining such things */
@@ -163,11 +168,10 @@ extern int	dflush __P((void));
 #define dflush()	fflush(stdout)
 #endif /* _FFR_DPRINTF */
 
-#if !HASSNPRINTF
-extern int	snprintf __P((char *, size_t, const char *, ...));
-extern int	vsnprintf __P((char *, size_t, const char *, va_list));
-#endif /* !HASSNPRINTF */
+extern int	sm_snprintf __P((char *, size_t, const char *, ...));
+extern int	sm_vsnprintf __P((char *, size_t, const char *, va_list));
 extern char	*quad_to_string __P((QUAD_T));
 
 extern size_t	strlcpy __P((char *, const char *, size_t));
 extern size_t	strlcat __P((char *, const char *, size_t));
+
