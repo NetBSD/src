@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.42 2001/01/28 23:30:47 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.43 2001/02/06 10:53:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -342,6 +342,7 @@ uvn_releasepg(pg, nextpgp)
 /*
  * uvn_flush: flush pages out of a uvm object.
  *
+ * => "stop == 0" means flush all pages at or after "start".
  * => object should be locked by caller.   we may _unlock_ the object
  *	if (and only if) we need to clean a page (PGO_CLEANIT), or
  *	if PGO_SYNCIO is set and there are pages busy.
@@ -425,6 +426,9 @@ uvn_flush(uobj, start, stop, flags)
 	 * get init vals and determine how we are going to traverse object
 	 */
 
+	if (stop == 0) {
+		stop = trunc_page(LLONG_MAX);
+	}
 	curoff = 0;
 	need_iosync = FALSE;
 	retval = TRUE;
@@ -1034,7 +1038,7 @@ uvm_vnp_setsize(vp, newsize)
 	 */
 
 	if (uvn->u_size > newsize && uvn->u_size != VSIZENOTSET) {
-		(void) uvn_flush(&uvn->u_obj, newsize, uvn->u_size, PGO_FREE);
+		(void) uvn_flush(&uvn->u_obj, newsize, 0, PGO_FREE);
 	}
 	uvn->u_size = newsize;
 	simple_unlock(&uvn->u_obj.vmobjlock);
