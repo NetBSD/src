@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.57 2002/06/08 02:06:48 mbw Exp $
+.\"	$NetBSD: contents,v 1.58 2002/06/14 13:18:53 itojun Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,9 +50,9 @@ The
 .Xr more 1
 conventions for indicating italic and bold display.
 .	It Pa binary/
-.	(tag instkernel/ -compact
+.	(tag kernel/ -compact
 .		It Pa kernel/
-.		(tag netbsd.INSTALL_LAPTOP.gz -compact
+.		(tag netbsd.gz -compact
 .if !r_atari \{\
 .			It Pa netbsd-GENERIC.gz
 A gzipped
@@ -182,7 +182,7 @@ see below.
 .	tag)
 .	It Pa installation/
 .
-.	(tag instkernel/ -compact
+.	(tag kernel/ -compact
 .
 .if \n[alpha]:\n[amiga]:\n[atari]:\n[bebox]:\n[i386]:\n[news68k]:\
 \n[newsmips]:\n[pc532]:\n[x68k]:\n[prep]:\n[sandpoint] \{\
