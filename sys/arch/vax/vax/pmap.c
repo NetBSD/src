@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82.2.2 2000/08/27 15:25:03 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.82.2.3 2000/11/01 22:29:14 tv Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -748,10 +748,6 @@ if (startpmapdebug)
 
 	oldpte = patch[i] & ~(PG_V|PG_M);
 
-	/* No mapping change. Not allowed to happen. */
-	if (newpte == oldpte)
-		panic("pmap_enter onto myself");
-
 	pv = pv_table + (p >> PGSHIFT);
 
 	/* wiring change? */
@@ -760,6 +756,12 @@ if (startpmapdebug)
 		RECURSEEND;
 		return (KERN_SUCCESS);
 	}
+#ifdef DIAGNOSTIC
+	/* No mapping change. Not allowed to happen. */
+	if (newpte == oldpte)
+		panic("pmap_enter onto myself");
+#endif
+
 	/* Changing mapping? */
 	oldpte &= PG_FRAME;
 	if ((newpte & PG_FRAME) == oldpte) {
