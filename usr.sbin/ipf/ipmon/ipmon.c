@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.1.1.2 1997/03/29 02:49:44 darrenr Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.1.1.3 1997/05/25 11:46:42 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -17,9 +17,11 @@
 #include <strings.h>
 #include <sys/dir.h>
 #else
+#include <sys/filio.h>
 #include <sys/byteorder.h>
 #endif
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/file.h>
 #include <stdlib.h>
@@ -47,12 +49,15 @@
 #include <ctype.h>
 #include <syslog.h>
 
-#include <netinet/ip_fil.h>
 #include <netinet/ip_compat.h>
+#include <netinet/ip_fil.h>
+#include "ip_proxy.h"
+#include <netinet/ip_nat.h>
+#include <netinet/ip_state.h>
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: ipmon.c,v 1.1.1.2 1997/03/29 02:49:44 darrenr Exp $";
+static	char	rcsid[] = "$Id: ipmon.c,v 1.1.1.3 1997/05/25 11:46:42 darrenr Exp $";
 #endif
 
 
@@ -75,21 +80,34 @@ struct	flags	tcpfl[] = {
 static	char	line[2048];
 static	int	opts = 0;
 static	void	usage __P((char *));
-static	void	printpacket __P((FILE *, char *, int));
+static	void	print_ipflog __P((FILE *, char *, int));
+static	void	print_natlog __P((FILE *, char *, int));
+static	void	print_statelog __P((FILE *, char *, int));
 static	void	dumphex __P((FILE *, u_char *, int));
 static	void	printiplci __P((struct ipl_ci *));
 static	void	resynclog __P((int, struct ipl_ci *, FILE *));
-static	int	readlogentry __P((int, int *, char *, int, FILE *));
+static	int	read_ipflog __P((int, int *, char *, int, FILE *));
+static	int	read_natlog __P((int, int *, char *, int, FILE *));
+static	int	read_statelog __P((int, int *, char *, int, FILE *));
 char	*hostname __P((int, struct in_addr));
 char	*portname __P((int, char *, u_short));
 int	main __P((int, char *[]));
 
-#define	OPT_SYSLOG	0x01
-#define	OPT_RESOLVE	0x02
-#define	OPT_HEXBODY	0x04
-#define	OPT_VERBOSE	0x08
-#define	OPT_HEXHDR	0x10
-#define	OPT_TAIL	0x20
+static	int	(*readfunc[3]) __P((int, int *, char *, int, FILE *)) =
+		{ read_ipflog, read_natlog, read_statelog };
+static	void	(*printfunc[3]) __P((FILE *, char *, int)) =
+		{ print_ipflog, print_natlog, print_statelog };
+
+
+#define	OPT_SYSLOG	0x001
+#define	OPT_RESOLVE	0x002
+#define	OPT_HEXBODY	0x004
+#define	OPT_VERBOSE	0x008
+#define	OPT_HEXHDR	0x010
+#define	OPT_TAIL	0x020
+#define	OPT_ALL		0x040
+#define	OPT_NAT		0x080
+#define	OPT_STATE	0x100
 
 #ifndef	LOGFAC
 #define	LOGFAC	LOG_LOCAL0
@@ -179,7 +197,73 @@ FILE *log;
 }
 
 
-static int readlogentry(fd, lenp, buf, bufsize, log)
+static int read_natlog(fd, lenp, buf, bufsize, log)
+int fd, bufsize, *lenp;
+char *buf;
+FILE *log;
+{
+	int	len, avail = 0, want = sizeof(struct natlog);
+
+	*lenp = 0;
+
+	if (ioctl(fd, FIONREAD, &avail) == -1) {
+		perror("ioctl(FIONREAD");
+		return 1;
+	}
+
+	if (avail < want)
+		return 2;
+
+	while (want) {
+		len = read(fd, buf, want);
+		if (len > 0)
+			want -= len;
+		else
+			break;
+	}
+
+	if (!want) {
+		*lenp = sizeof(struct natlog);
+		return 0;
+	}
+	return !len ? 2 : -1;
+}
+
+
+static int read_statelog(fd, lenp, buf, bufsize, log)
+int fd, bufsize, *lenp;
+char *buf;
+FILE *log;
+{
+	int	len, avail = 0, want = sizeof(struct ipslog);
+
+	*lenp = 0;
+
+	if (ioctl(fd, FIONREAD, &avail) == -1) {
+		perror("ioctl(FIONREAD");
+		return 1;
+	}
+
+	if (avail < want)
+		return 2;
+
+	while (want) {
+		len = read(fd, buf, want);
+		if (len > 0)
+			want -= len;
+		else
+			break;
+	}
+
+	if (!want) {
+		*lenp = sizeof(struct ipslog);
+		return 0;
+	}
+	return !len ? 2 : -1;
+}
+
+
+static int read_ipflog(fd, lenp, buf, bufsize, log)
 int fd, bufsize, *lenp;
 char *buf;
 FILE *log;
@@ -195,21 +279,17 @@ FILE *log;
 		nr = read(fd, s, tr);
 		if (nr > 0)
 			tr -= nr;
-		else {
-			if (!nr && (opts & OPT_TAIL))
-				sleep(1);
-			else
-				return -1;
-		}
+		else
+			return -1;
 	}
 
 	now = time(NULL);
 	if ((icp->hlen > 92) || (now < icp->sec) ||
 	    ((now - icp->sec) > (86400*5))) {
 		if (opts & OPT_SYSLOG)
-			syslog(LOG_INFO, "Out of sync! (1,%x)\n", now);
+			syslog(LOG_INFO, "Out of sync! (1,%lx)\n", now);
 		else
-			fprintf(log, "Out of sync! (1,%x)\n", now);
+			fprintf(log, "Out of sync! (1,%lx)\n", now);
 		dumphex(log, buf, sizeof(struct ipl_ci));
 		resynclog(fd, icp, log);
 	}
@@ -326,7 +406,138 @@ int	len;
 }
 
 
-static	void	printpacket(log, buf, blen)
+static	void	print_natlog(log, buf, blen)
+FILE	*log;
+char	*buf;
+int	blen;
+{
+	struct	natlog	*nl = (struct natlog *)buf;
+	char	*t = line;
+	struct	tm	*tm;
+	int	res;
+
+	res = (opts & OPT_RESOLVE) ? 1 : 0;
+	tm = localtime((time_t *)&nl->nl_tv.tv_sec);
+	if (!(opts & OPT_SYSLOG)) {
+		(void) sprintf(t, "%2d/%02d/%4d ",
+			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
+		t += strlen(t);
+	}
+	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld @%hd ",
+		tm->tm_hour, tm->tm_min, tm->tm_sec, nl->nl_tv.tv_usec,
+		nl->nl_rule);
+	t += strlen(t);
+
+	if (nl->nl_type == NL_NEWMAP)
+		strcpy(t, "NAT:MAP ");
+	else if (nl->nl_type == NL_NEWRDR)
+		strcpy(t, "NAT:RDR ");
+	else if (nl->nl_type == ISL_EXPIRE)
+		strcpy(t, "NAT:EXPIRE ");
+	else
+		sprintf(t, "Type: %d ", nl->nl_type);
+	t += strlen(t);
+
+	(void) sprintf(t, "%s,%s <- -> ", hostname(res, nl->nl_inip),
+		portname(res, NULL, nl->nl_inport));
+	t += strlen(t);
+	(void) sprintf(t, "%s,%s ", hostname(res, nl->nl_outip),
+		portname(res, NULL, nl->nl_outport));
+	t += strlen(t);
+	(void) sprintf(t, "[%s,%s]", hostname(res, nl->nl_origip),
+		portname(res, NULL, nl->nl_origport));
+	t += strlen(t);
+	if (nl->nl_type == NL_EXPIRE) {
+#ifdef	USE_QUAD_T
+		(void) sprintf(t, " Pkts %qd Bytes %qd",
+#else
+		(void) sprintf(t, " Pkts %ld Bytes %ld",
+#endif
+				nl->nl_pkts, nl->nl_bytes);
+		t += strlen(t);
+	}
+
+	*t++ = '\n';
+	*t++ = '\0';
+	if (opts & OPT_SYSLOG)
+		syslog(LOG_INFO, "%s", line);
+	else
+		(void) fprintf(log, "%s", line);
+}
+
+
+static	void	print_statelog(log, buf, blen)
+FILE	*log;
+char	*buf;
+int	blen;
+{
+	struct	ipslog *sl = (struct ipslog *)buf;
+	struct	protoent *pr;
+	char	*t = line, *proto, pname[6];
+	struct	tm	*tm;
+	int	res;
+
+	res = (opts & OPT_RESOLVE) ? 1 : 0;
+	tm = localtime((time_t *)&sl->isl_tv.tv_sec);
+	if (!(opts & OPT_SYSLOG)) {
+		(void) sprintf(t, "%2d/%02d/%4d ",
+			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
+		t += strlen(t);
+	}
+	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld ",
+		tm->tm_hour, tm->tm_min, tm->tm_sec, sl->isl_tv.tv_usec);
+	t += strlen(t);
+
+	if (sl->isl_type == ISL_NEW)
+		strcpy(t, "STATE:NEW ");
+	else if (sl->isl_type == ISL_EXPIRE)
+		strcpy(t, "STATE:EXPIRE ");
+	else
+		sprintf(t, "Type: %d ", sl->isl_type);
+	t += strlen(t);
+
+	pr = getprotobynumber((int)sl->isl_p);
+	if (!pr) {
+		proto = pname;
+		sprintf(proto, "%d", (u_int)sl->isl_p);
+	} else
+		proto = pr->p_name;
+
+	if (sl->isl_p == IPPROTO_TCP || sl->isl_p == IPPROTO_UDP) {
+		(void) sprintf(t, "%s,%s -> ",
+			hostname(res, sl->isl_src),
+			portname(res, proto, sl->isl_sport));
+		t += strlen(t);
+		(void) sprintf(t, "%s,%s PR %s",
+			hostname(res, sl->isl_dst),
+			portname(res, proto, sl->isl_dport), proto);
+	} else if (sl->isl_p == IPPROTO_ICMP) {
+		(void) sprintf(t, "%s -> ", hostname(res, sl->isl_src));
+		t += strlen(t);
+		(void) sprintf(t, "%s PR icmp %d",
+			hostname(res, sl->isl_dst), sl->isl_itype);
+	}
+	t += strlen(t);
+	if (sl->isl_type != ISL_NEW) {
+#ifdef	USE_QUAD_T
+		(void) sprintf(t, " Pkts %qd Bytes %qd",
+#else
+		(void) sprintf(t, " Pkts %ld Bytes %ld",
+#endif
+				sl->isl_pkts, sl->isl_bytes);
+		t += strlen(t);
+	}
+
+	*t++ = '\n';
+	*t++ = '\0';
+	if (opts & OPT_SYSLOG)
+		syslog(LOG_INFO, "%s", line);
+	else
+		(void) fprintf(log, "%s", line);
+}
+
+
+static	void	print_ipflog(log, buf, blen)
 FILE	*log;
 char	*buf;
 int	blen;
@@ -506,8 +717,6 @@ int	blen;
 		dumphex(log, buf, sizeof(struct ipl_ci));
 	if (opts & OPT_HEXBODY)
 		dumphex(log, (u_char *)ip, lp->plen + lp->hlen);
-	if (!(opts & OPT_SYSLOG))
-		fflush(log);
 }
 
 
@@ -519,42 +728,86 @@ char *prog;
 }
 
 
+void flushlogs(file, log)
+char *file;
+FILE *log;
+{
+	int	fd, flushed = 0;
+
+	if ((fd = open(file, O_RDWR)) == -1) {
+		(void) fprintf(stderr, "%s: ", file);
+		perror("open");
+		exit(-1);
+	}
+
+	if (ioctl(fd, SIOCIPFFB, &flushed) == 0) {
+		printf("%d bytes flushed from log buffer\n",
+			flushed);
+		fflush(stdout);
+	} else
+		perror("SIOCIPFFB");
+	(void) close(fd);
+
+	if (flushed) {
+		if (opts & OPT_SYSLOG)
+			syslog(LOG_INFO, "%d bytes flushed from log\n",
+				flushed);
+		else
+			fprintf(log, "%d bytes flushed from log\n", flushed);
+	}
+}
+
+
 int main(argc, argv)
 int argc;
 char *argv[];
 {
+	struct	stat	stat;
 	FILE	*log = NULL;
-	int	fd = -1, flushed = 0, doread, n;
+	int	fd[3] = {-1, -1, -1}, flushed = 0, doread, n, i, nfd = 1;
+	int	tr, nr, regular;
+	int	fdt[3] = {IPL_LOGIPF, IPL_LOGNAT, IPL_LOGSTATE};
 	char	buf[512], c, *iplfile = IPL_NAME;
 	extern	int	optind;
 	extern	char	*optarg;
 
-	while ((c = getopt(argc, argv, "?Nf:FhstvxX")) != -1)
+	while ((c = getopt(argc, argv, "?af:FhnNsStvxX")) != -1)
 		switch (c)
 		{
+		case 'a' :
+			opts |= OPT_ALL;
+			nfd = 3;
+			break;
 		case 'f' :
 			iplfile = optarg;
 			break;
 		case 'F' :
-			if ((fd == -1) &&
-			    (fd = open(iplfile, O_RDWR)) == -1) {
-				(void) fprintf(stderr, "%s: ", IPL_NAME);
-				perror("open");
-				exit(-1);
+			if (!(opts & OPT_ALL))
+				flushlogs(iplfile, log);
+			else {
+				flushlogs(IPL_NAME, log);
+				flushlogs(IPL_NAT, log);
+				flushlogs(IPL_STATE, log);
 			}
-			if (ioctl(fd, SIOCIPFFB, &flushed) == 0) {
-				printf("%d bytes flushed from log buffer\n",
-					flushed);
-				fflush(stdout);
-			} else
-				perror("SIOCIPFFB");
+			break;
+		case 'n' :
+			opts |= OPT_RESOLVE;
 			break;
 		case 'N' :
-			opts |= OPT_RESOLVE;
+			opts |= OPT_NAT;
+			fdt[0] = IPL_LOGNAT;
+			readfunc[0] = read_natlog;
+			printfunc[0] = print_natlog;
 			break;
 		case 's' :
 			openlog(argv[0], LOG_NDELAY|LOG_PID, LOGFAC);
 			opts |= OPT_SYSLOG;
+			break;
+		case 'S' :
+			opts |= OPT_STATE;
+			fdt[0] = IPL_LOGSTATE;
+			readfunc[0] = read_statelog;
+			printfunc[0] = print_statelog;
 			break;
 		case 't' :
 			opts |= OPT_TAIL;
@@ -574,10 +827,23 @@ char *argv[];
 			usage(argv[0]);
 		}
 
-	if ((fd == -1) && (fd = open(iplfile, O_RDONLY)) == -1) {
-		(void) fprintf(stderr, "%s: ", IPL_NAME);
+	if ((fd[0] == -1) && (fd[0] = open(iplfile, O_RDONLY)) == -1) {
+		(void) fprintf(stderr, "%s: ", iplfile);
 		perror("open");
 		exit(-1);
+	}
+
+	if ((opts & OPT_ALL)) {
+		if ((fd[1] = open(IPL_NAT, O_RDONLY)) == -1) {
+			(void) fprintf(stderr, "%s: ", IPL_NAT);
+			perror("open");
+			exit(-1);
+		}
+		if ((fd[2] = open(IPL_STATE, O_RDONLY)) == -1) {
+			(void) fprintf(stderr, "%s: ", IPL_STATE);
+			perror("open");
+			exit(-1);
+		}
 	}
 
 	if (!(opts & OPT_SYSLOG)) {
@@ -585,37 +851,65 @@ char *argv[];
 		setvbuf(log, NULL, _IONBF, 0);
 	}
 
-	if (flushed) {
-		if (opts & OPT_SYSLOG)
-			syslog(LOG_INFO, "%d bytes flushed from log\n",
-				flushed);
-		else
-			fprintf(log, "%d bytes flushed from log\n", flushed);
+	if (fstat(fd[0], &stat) == -1) {
+		fprintf(stderr, "%s :", iplfile);
+		perror("fstat");
+		exit(-1);
 	}
 
-	for (doread = 1; doread; )
-		switch (readlogentry(fd, &n, buf, sizeof(buf), log))
-		{
-		case -1 :
-			if (opts & OPT_SYSLOG)
-				syslog(LOG_ERR, "read: %m\n");
-			else
-				perror("read");
-			doread = 0;
-			break;
-		case 1 :
-			if (opts & OPT_SYSLOG)
-				syslog(LOG_ERR, "aborting logging\n");
-			else
-				fprintf(log, "aborting logging\n");
-			doread = 0;
-			break;
-		case 2 :
-			break;
-		case 0 :
-			printpacket(log, buf, n);
-			break;
+	regular = !S_ISCHR(stat.st_mode);
+
+	for (doread = 1; doread; ) {
+		nr = 0;
+
+		for (i = 0; i < nfd; i++) {
+			tr = 0;
+			if (!regular) {
+				if (ioctl(fd[i], FIONREAD, &tr) == -1) {
+					perror("ioctl(FIONREAD)");
+					exit(-1);
+				}
+			} else {
+				tr = (lseek(fd[i], 0, SEEK_CUR) <
+				      stat.st_size);
+				if (!tr && !(opts & OPT_TAIL))
+					doread = 0;
+			}
+			if (!tr)
+				continue;
+			nr += tr;
+
+			tr = (*readfunc[i])(fd[i], &n, buf, sizeof(buf), log);
+			switch (tr)
+			{
+			case -1 :
+				if (opts & OPT_SYSLOG)
+					syslog(LOG_ERR, "read: %m\n");
+				else
+					perror("read");
+				doread = 0;
+				break;
+			case 1 :
+				if (opts & OPT_SYSLOG)
+					syslog(LOG_ERR, "aborting logging\n");
+				else
+					fprintf(log, "aborting logging\n");
+				doread = 0;
+				break;
+			case 2 :
+				break;
+			case 0 :
+				if (n > 0) {
+					(*printfunc[i])(log, buf, n);
+					if (!(opts & OPT_SYSLOG))
+						fflush(log);
+				}
+				break;
+			}
 		}
+		if (!nr && regular && (opts & OPT_TAIL))
+			sleep(1);
+	}
 	exit(0);
 	/* NOTREACHED */
 }

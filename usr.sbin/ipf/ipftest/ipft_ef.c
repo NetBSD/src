@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_ef.c,v 1.1.1.2 1997/03/29 02:49:48 darrenr Exp $	*/
+/*	$NetBSD: ipft_ef.c,v 1.1.1.3 1997/05/25 11:46:00 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -33,6 +33,7 @@ etherfind -n -t
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netinet/in_systm.h>
@@ -44,12 +45,13 @@ etherfind -n -t
 #include <netinet/tcpip.h>
 #include <net/if.h>
 #include <netdb.h>
+#include <netinet/ip_compat.h>
 #include "ipf.h"
 #include "ipt.h"
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static char sccsid[] = "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_ef.c,v 1.1.1.2 1997/03/29 02:49:48 darrenr Exp $";
+static	char	rcsid[] = "$Id: ipft_ef.c,v 1.1.1.3 1997/05/25 11:46:00 darrenr Exp $";
 #endif
 
 static	int	etherf_open __P((char *));
