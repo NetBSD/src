@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.163 2001/08/02 05:47:59 garbled Exp $
+#	$NetBSD: NetBSD.dist,v 1.164 2001/08/09 01:32:46 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -3008,7 +3008,7 @@ msgs		uname=daemon
 ..
 
 # ./var/named
-named		mode=0750 gname=named
+named
 
 # ./var/named/dev
 dev
