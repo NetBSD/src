@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.3 2000/09/27 22:14:15 fvdl Exp $
+#	$NetBSD: list,v 1.4 2000/10/06 14:40:37 fvdl Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -48,8 +48,6 @@ SYMLINK	/bin/cat		usr/bin/ftp
 SYMLINK	/bin/cat		usr/bin/gunzip
 SYMLINK	/bin/cat		usr/bin/gzcat
 SYMLINK	/bin/cat		usr/bin/gzip
-SYMLINK	/bin/cat		usr/bin/less
-SYMLINK	/bin/cat		usr/bin/more
 SYMLINK	/bin/cat		usr/bin/sed
 SYMLINK	/bin/cat		usr/bin/tar
 SYMLINK	/bin/cat		usr/bin/tip
