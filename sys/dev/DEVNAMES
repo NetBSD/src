@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.147 2004/01/28 17:29:03 drochner Exp $
+#	$NetBSD: DEVNAMES,v 1.148 2004/01/28 18:09:11 jdolecek Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -921,6 +921,7 @@ pfckbd			hpcsh
 pica			arc
 piixide			MI
 pioc			acorn32
+plip			MI
 plum			hpcmips
 plumicu			hpcmips
 plumif			hpcmips
