@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.171 1999/11/07 08:32:16 sommerfeld Exp $
+# $NetBSD: mi,v 1.172 1999/11/07 21:04:32 dmcmahill Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -520,6 +520,7 @@
 ./usr/share/man/cat4/wss.0
 ./usr/share/man/cat4/wt.0
 ./usr/share/man/cat4/ym.0
+./usr/share/man/cat4/zero.0
 ./usr/share/man/cat4/zstty.0
 ./usr/share/man/cat5/a.out.0
 ./usr/share/man/cat5/acct.0
@@ -1412,6 +1413,7 @@
 ./usr/share/man/man4/wss.4
 ./usr/share/man/man4/wt.4
 ./usr/share/man/man4/ym.4
+./usr/share/man/man4/zero.4
 ./usr/share/man/man4/zstty.4
 ./usr/share/man/man5/a.out.5
 ./usr/share/man/man5/acct.5
