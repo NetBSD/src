@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: acl.h,v 1.1.1.2 2000/12/29 01:43:08 assar Exp $ */
+/* $KTH-KRB: acl.h,v 1.7 1999/12/02 16:58:37 joda Exp $
+   $NetBSD: acl.h,v 1.1.1.3 2002/09/12 12:22:08 joda Exp $ */
 
 #ifndef __ACL_H
 #define __ACL_H

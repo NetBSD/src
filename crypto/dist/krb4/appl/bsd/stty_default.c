@@ -33,7 +33,8 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: stty_default.c,v 1.1.1.2 2000/12/29 01:42:23 assar Exp $");
+__RCSID("$KTH-KRB: stty_default.c,v 1.7 1999/12/02 16:58:28 joda Exp $"
+      "$NetBSD: stty_default.c,v 1.1.1.3 2002/09/12 12:22:04 joda Exp $");
 
 #include <termios.h>
 

@@ -33,7 +33,8 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: utmp_login.c,v 1.1.1.3 2001/09/17 12:09:44 assar Exp $");
+__RCSID("$KTH-KRB: utmp_login.c,v 1.17 2001/02/08 16:13:08 assar Exp $"
+      "$NetBSD: utmp_login.c,v 1.1.1.4 2002/09/12 12:22:04 joda Exp $");
 
 void
 shrink_hostname (const char *hostname,

@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: com_right.h,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $ */
+/* $KTH-KRB: com_right.h,v 1.11 2000/07/31 01:11:08 assar Exp $
+   $NetBSD: com_right.h,v 1.1.1.4 2002/09/12 12:22:13 joda Exp $ */
 
 #ifndef __COM_RIGHT_H__
 #define __COM_RIGHT_H__

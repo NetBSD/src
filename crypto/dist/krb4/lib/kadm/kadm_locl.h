@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kadm_locl.h,v 1.1.1.3 2001/09/17 12:09:53 assar Exp $ */
+/* $KTH-KRB: kadm_locl.h,v 1.14 2002/09/09 15:26:17 joda Exp $
+   $NetBSD: kadm_locl.h,v 1.1.1.4 2002/09/12 12:22:09 joda Exp $ */
 
 #include "config.h"
 #include "protos.h"
@@ -79,15 +80,3 @@ struct hostent  *gethostbyname(const char *);
 #include <krb_db.h>
 #include <kadm.h>
 #include <kadm_err.h>
-
-int vts_long __P((u_int32_t, u_char **, int));
-int vals_to_stream __P((Kadm_vals *, u_char **));
-int stream_to_vals __P((u_char *, Kadm_vals *, int));
-
-int kadm_init_link __P((char n[], char i[], char r[]));
-int kadm_change_pw __P((des_cblock));
-int kadm_add __P((Kadm_vals *));
-int kadm_mod __P((Kadm_vals *, Kadm_vals *));
-int kadm_get __P((Kadm_vals *, u_char fl[4]));
-
-

@@ -19,7 +19,8 @@ provided "as is" without express or implied warranty.
 
 #include "slav_locl.h"
 
-RCSID("$Id: kprop.c,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $");
+__RCSID("$KTH-KRB: kprop.c,v 1.39 2001/08/26 01:46:15 assar Exp $"
+      "$NetBSD: kprop.c,v 1.1.1.4 2002/09/12 12:22:14 joda Exp $");
 
 #include "kprop.h"
 

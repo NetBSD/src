@@ -1,5 +1,6 @@
 dnl
-dnl $Id: with-all.m4,v 1.1.1.1 2001/09/17 12:10:07 assar Exp $
+dnl $KTH-KRB: with-all.m4,v 1.1 2001/08/29 17:01:23 assar Exp $
+dnl $NetBSD: with-all.m4,v 1.1.1.2 2002/09/12 12:22:14 joda Exp $
 dnl
 
 dnl AC_WITH_ALL(name)

@@ -42,7 +42,8 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: rlogind.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
+__RCSID("$KTH-KRB: rlogind.c,v 1.118 2002/09/09 15:19:11 joda Exp $"
+      "$NetBSD: rlogind.c,v 1.1.1.4 2002/09/12 12:22:04 joda Exp $");
 
 extern int __check_rhosts_file;
 
@@ -317,7 +318,7 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
 
-    openlog("rlogind", LOG_PID | LOG_CONS, LOG_AUTH);
+    openlog("rlogind", LOG_PID, LOG_AUTH);
 
     opterr = 0;
     while ((ch = getopt(argc, argv, ARGSTR)) != -1)

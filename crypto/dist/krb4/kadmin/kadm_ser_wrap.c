@@ -30,7 +30,8 @@ unwraps wrapped packets and calls the appropriate server subroutine
 
 #include "kadm_locl.h"
 
-RCSID("$Id: kadm_ser_wrap.c,v 1.1.1.2 2000/12/29 01:43:06 assar Exp $");
+__RCSID("$KTH-KRB: kadm_ser_wrap.c,v 1.27 2002/08/15 11:32:14 joda Exp $"
+      "$NetBSD: kadm_ser_wrap.c,v 1.1.1.3 2002/09/12 12:22:08 joda Exp $");
 
 /* GLOBAL */
 Kadm_Server server_parm;
@@ -42,7 +43,8 @@ set up the server_parm structure
 int
 kadm_ser_init(int inter,	/* interactive or from file */
 	      char *realm,
-	      struct in_addr addr)
+	      struct in_addr addr,
+	      int port)
 {
   struct hostent *hp;
   char hostname[MaxHostNameLen];
@@ -66,9 +68,7 @@ kadm_ser_init(int inter,	/* interactive or from file */
   /* setting up the addrs */
   memset(&server_parm.admin_addr,0, sizeof(server_parm.admin_addr));
 
-  server_parm.admin_addr.sin_port = k_getportbyname (KADM_SNAME,
-						     "tcp",
-						     htons(751));
+  server_parm.admin_addr.sin_port = port;
   server_parm.admin_addr.sin_family = AF_INET;
   if ((hp = gethostbyname(hostname)) == NULL)
       return KADM_NO_HOSTNAME;
@@ -133,8 +133,8 @@ kadm_ser_in(u_char **dat, int *dat_len, u_char *errdat)
     if ((retc = krb_rd_req(&authent, server_parm.sname, server_parm.sinst,
 			  server_parm.recv_addr.sin_addr.s_addr, &ad, NULL)))
     {
-	errpkt(errdat, dat, dat_len, retc + krb_err_base);
-	return retc + krb_err_base;
+	errpkt(errdat, dat, dat_len, retc + ERROR_TABLE_BASE_krb);
+	return retc + ERROR_TABLE_BASE_krb;
     }
 
 #define clr_cli_secrets() {memset(sess_sched, 0, sizeof(sess_sched)); memset(ad.session, 0,sizeof(ad.session));}
@@ -159,8 +159,8 @@ kadm_ser_in(u_char **dat, int *dat_len, u_char *errdat)
 				 &server_parm.recv_addr,
 				 &server_parm.admin_addr, &msg_st))) {
 	clr_cli_secrets();
-	errpkt(errdat, dat, dat_len, retc + krb_err_base);
-	return retc + krb_err_base;
+	errpkt(errdat, dat, dat_len, retc + ERROR_TABLE_BASE_krb);
+	return retc + ERROR_TABLE_BASE_krb;
     }
     switch (msg_st.app_data[0]) {
     case CHANGE_PW:
@@ -188,6 +188,7 @@ kadm_ser_in(u_char **dat, int *dat_len, u_char *errdat)
 	errpkt(errdat, dat, dat_len, KADM_NO_OPCODE);
 	return KADM_NO_OPCODE;
     }
+
     /* Now seal the response back into a priv msg */
     tmpdat = (u_char *) malloc(retlen + KADM_VERSIZE + 4);
     if (tmpdat == NULL) {

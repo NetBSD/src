@@ -33,7 +33,8 @@
 
 #include "rxkad_locl.h"
 
-RCSID("$Id: rxk_clnt.c,v 1.1.1.3 2001/09/17 12:09:55 assar Exp $");
+__RCSID("$KTH-KRB: rxk_clnt.c,v 1.37 2000/03/07 22:17:05 assar Exp $"
+      "$NetBSD: rxk_clnt.c,v 1.1.1.4 2002/09/12 12:22:10 joda Exp $");
 
 /* This code also links into the kernel so we need to use osi_Alloc()
  * to avoid calling malloc(). Similar trick with memcpy() */

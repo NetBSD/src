@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: kuserok.c,v 1.1.1.2 2000/12/29 01:43:17 assar Exp $");
+__RCSID("$KTH-KRB: kuserok.c,v 1.25 1999/12/02 16:58:42 joda Exp $"
+      "$NetBSD: kuserok.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 #define OK 0
 #define NOTOK 1

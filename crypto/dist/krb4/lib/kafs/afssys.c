@@ -33,7 +33,8 @@
 
 #include "kafs_locl.h"
 
-RCSID("$Id: afssys.c,v 1.1.1.3 2001/09/17 12:10:05 assar Exp $");
+__RCSID("$KTH-KRB: afssys.c,v 1.67 2000/07/08 12:06:03 assar Exp $"
+      "$NetBSD: afssys.c,v 1.1.1.4 2002/09/12 12:22:13 joda Exp $");
 
 int _kafs_debug; /* this should be done in a better way */
 

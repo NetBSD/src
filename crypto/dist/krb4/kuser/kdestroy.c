@@ -35,7 +35,8 @@
 #include <kafs.h>
 #include <getarg.h>
 
-RCSID("$Id: kdestroy.c,v 1.1.1.3 2001/09/17 12:09:53 assar Exp $");
+__RCSID("$KTH-KRB: kdestroy.c,v 1.19 2001/02/20 23:07:55 assar Exp $"
+      "$NetBSD: kdestroy.c,v 1.1.1.4 2002/09/12 12:22:08 joda Exp $");
 
 int ticket_flag = -1;
 int unlog_flag  = -1;

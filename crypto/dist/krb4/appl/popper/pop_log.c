@@ -5,7 +5,8 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_log.c,v 1.1.1.2 2000/12/29 01:42:46 assar Exp $");
+__RCSID("$KTH-KRB: pop_log.c,v 1.13 1997/10/14 21:59:07 joda Exp $"
+      "$NetBSD: pop_log.c,v 1.1.1.3 2002/09/12 12:22:06 joda Exp $");
 
 /* 
  *  log:    Make a log entry

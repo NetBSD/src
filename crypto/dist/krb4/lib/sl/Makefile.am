@@ -1,13 +1,13 @@
-# $Id: Makefile.am,v 1.1.1.3 2001/09/17 12:10:04 assar Exp $
+# $KTH-KRB: Makefile.am,v 1.29 2002/08/13 13:48:17 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.4 2002/09/12 12:22:13 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 if do_roken_rename
-IS = -DROKEN_RENAME
 ES = strtok_r.c snprintf.c strdup.c strupr.c getprogname.c
 endif
 
-INCLUDES += $(IS)
+INCLUDES += $(ROKEN_RENAME)
 
 YFLAGS = -d
 
@@ -27,7 +27,8 @@ libss_la_SOURCES = $(libsl_la_SOURCES) ss.c ss.h
 
 bin_PROGRAMS = mk_cmds
 
-mk_cmds_SOURCES = make_cmds.c make_cmds.h parse.y lex.l $(ES)
+mk_cmds_SOURCES = make_cmds.c make_cmds.h parse.y lex.l
+mk_cmds_LDADD = libsl.la $(LDADD)
 
 ssincludedir = $(includedir)/ss
 ssinclude_HEADERS = ss.h

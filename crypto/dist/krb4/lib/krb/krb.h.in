@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * $Id: krb.h.in,v 1.1.1.1 2001/09/17 12:09:54 assar Exp $
+ * $Id: krb.h.in,v 1.1.1.2 2002/09/12 12:22:09 joda Exp $
  *
  * Copyright 1987, 1988 by the Massachusetts Institute of Technology. 
  *
@@ -15,7 +15,8 @@
 #define signed
 #endif
 
-#include <ktypes.h>
+#include <sys/types.h>
+#include <inttypes.h>
 #include <time.h>
 
 #ifndef __KRB_H__

@@ -36,7 +36,8 @@
  */
 #include "bsd_locl.h"
 
-RCSID("$Id: rlogin.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
+__RCSID("$KTH-KRB: rlogin.c,v 1.72 2002/05/28 21:49:54 bg Exp $"
+      "$NetBSD: rlogin.c,v 1.1.1.4 2002/09/12 12:22:04 joda Exp $");
 
 CREDENTIALS cred;
 Key_schedule schedule;
@@ -348,7 +349,7 @@ stop(int all)
 	signal(SIGCHLD, catch_child);
 	mode(1);
 #ifdef SIGWINCH
-	kill(SIGWINCH, getpid()); /* check for size changes, if caught */
+	kill(getpid(), SIGWINCH); /* check for size changes, if caught */
 #endif
 }
 

@@ -30,7 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* $Id: sia_locl.h,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $ */
+/* $KTH-KRB: sia_locl.h,v 1.3 2001/09/13 01:15:34 assar Exp $
+   $NetBSD: sia_locl.h,v 1.1.1.4 2002/09/12 12:22:13 joda Exp $ */
 
 #ifndef __sia_locl_h__
 #define __sia_locl_h__
