@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.1 2001/12/12 15:27:24 augustss Exp $	*/
+/*	$NetBSD: uirda.c,v 1.2 2001/12/13 02:16:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.1 2001/12/12 15:27:24 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.2 2001/12/13 02:16:21 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,6 +447,11 @@ uirda_open(void *h, int flag, int mode, struct proc *p)
 		goto bad4;
 	}
 
+	sc->sc_rd_count = 0;
+	sc->sc_params.speed = 0;
+	sc->sc_params.ebofs = 0;
+	sc->sc_params.maxsize = 0;
+
 	return (0);
 
 bad4:
@@ -474,13 +479,20 @@ uirda_close(void *h, int flag, int mode, struct proc *p)
 		usbd_close_pipe(sc->sc_rd_pipe);
 		sc->sc_rd_pipe = NULL;
 	}
+	if (sc->sc_wr_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_wr_pipe);
+		usbd_close_pipe(sc->sc_wr_pipe);
+		sc->sc_wr_pipe = NULL;
+	}
 	if (sc->sc_rd_xfer != NULL) {
 		usbd_free_xfer(sc->sc_rd_xfer);
 		sc->sc_rd_xfer = NULL;
+		sc->sc_rd_buf = NULL;
 	}
 	if (sc->sc_wr_xfer != NULL) {
 		usbd_free_xfer(sc->sc_wr_xfer);
 		sc->sc_wr_xfer = NULL;
+		sc->sc_wr_buf = NULL;
 	}
 
 	return (0);
@@ -493,8 +505,9 @@ uirda_read(void *h, struct uio *uio, int flag)
 	usbd_status err;
 	int s;
 	int error;
+	u_int n;
 
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(1,("%s: sc=%p\n", __FUNCTION__, sc));
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -502,30 +515,44 @@ uirda_read(void *h, struct uio *uio, int flag)
 	if (sc->sc_rd_buf == NULL)
 		return (EINVAL);
 
-	s = splusb();
-	while (sc->sc_rd_count == 0) {
-		error = tsleep((caddr_t)sc->sc_rd_count, PZERO | PCATCH, 
-			       "uirdrd", 0);
-		if (sc->sc_dying)
-			error = EIO;
-		if (error) {
-			splx(s);
-			return (error);
-		}
-	}
-	splx(s);
-
 	sc->sc_refcnt++;
-	lockmgr(&sc->sc_rd_buf_lk, LK_EXCLUSIVE, NULL);
-	uiomove(sc->sc_rd_buf+1, min(uio->uio_resid, sc->sc_rd_count-1), uio);
-	lockmgr(&sc->sc_rd_buf_lk, LK_RELEASE, NULL);
+
+	do {
+		s = splusb();
+		while (sc->sc_rd_count == 0) {
+			error = tsleep(&sc->sc_rd_count, PZERO | PCATCH,
+				       "uirdrd", 0);
+			if (sc->sc_dying)
+				error = EIO;
+			if (error) {
+				splx(s);
+				DPRINTF(("uirda_read: tsleep() = %d\n", error));
+				goto ret;
+			}
+		}
+		splx(s);
+		
+		lockmgr(&sc->sc_rd_buf_lk, LK_EXCLUSIVE, NULL);
+		n = sc->sc_rd_count - 1;
+		DPRINTFN(1,("%s: sc=%p n=%u\n", __FUNCTION__, sc, n));
+		if (n > uio->uio_resid)
+			error = EINVAL;
+		else
+			error = uiomove(sc->sc_rd_buf+1, n, uio);
+		sc->sc_rd_count = 0;
+		lockmgr(&sc->sc_rd_buf_lk, LK_RELEASE, NULL);
+		
+		err = uirda_start_read(sc);
+		/* XXX check err */
+
+	} while (n == 0);
+
+	DPRINTFN(1,("uirda_read: return %d\n", error));
+
+ ret:
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
-
-	err = uirda_start_read(sc);
-	/* XXX check err */
-
-	return (0);
+	return (error);
 }
 
 int
@@ -536,7 +563,7 @@ uirda_write(void *h, struct uio *uio, int flag)
 	u_int32_t n;
 	int error = 0;
 
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(1,("%s: sc=%p\n", __FUNCTION__, sc));
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -583,7 +610,7 @@ uirda_poll(void *h, int events, struct proc *p)
 	int revents = 0;
 	int s;
 
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(1,("%s: sc=%p\n", __FUNCTION__, sc));
 
 	s = splusb();
 	if (events & (POLLOUT | POLLWRNORM))
@@ -651,6 +678,8 @@ uirda_set_params(void *h, struct irda_params *p)
 		;
 	}
 	if (p->maxsize != sc->sc_params.maxsize) {
+		DPRINTF(("%s: new buffers, old size=%d\n", __FUNCTION__,
+			 sc->sc_params.maxsize));
 		if (p->maxsize > 10000 || p < 0) /* XXX */
 			return (EINVAL);
 
@@ -670,10 +699,12 @@ uirda_set_params(void *h, struct irda_params *p)
 			usbd_free_buffer(sc->sc_rd_xfer);
 		sc->sc_rd_buf = usbd_alloc_buffer(sc->sc_rd_xfer, p->maxsize+1);
 		sc->sc_rd_count = 0;
+		if (sc->sc_rd_buf == NULL) {
+			lockmgr(&sc->sc_rd_buf_lk, LK_RELEASE, NULL);
+			return (ENOMEM);
+		}
 		err = uirda_start_read(sc); /* XXX check */
 		lockmgr(&sc->sc_rd_buf_lk, LK_RELEASE, NULL);
-		if (sc->sc_rd_buf == NULL)
-			return (ENOMEM);
 	}
 	if (hdr != 0) {
 		/* 
@@ -681,10 +712,15 @@ uirda_set_params(void *h, struct irda_params *p)
 		 * the new settings.  The 0 length frame is not sent to the
 		 * device.
 		 */
+		DPRINTFN(1,("%s: sc=%p setting speed\n", __FUNCTION__, sc));
+		lockmgr(&sc->sc_wr_buf_lk, LK_EXCLUSIVE, NULL);
+		sc->sc_wr_buf[0] = hdr;
+		n = 1;
 		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
 			  USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
-			  UIRDA_WR_TIMEOUT, &hdr, &n, "uirdast");
-		if (err != 0) {
+			  UIRDA_WR_TIMEOUT, sc->sc_wr_buf, &n, "uirdast");
+		lockmgr(&sc->sc_wr_buf_lk, LK_RELEASE, NULL);
+		if (err) {
 			printf("%s: set failed, err=%d\n",
 			    USBDEVNAME(sc->sc_dev), err);
 			usbd_clear_endpoint_stall(sc->sc_wr_pipe);
@@ -756,6 +792,8 @@ uirda_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	struct uirda_softc *sc = priv;
 	u_int32_t size;
 
+	DPRINTFN(1,("%s: sc=%p\n", __FUNCTION__, sc));
+
 	if (status == USBD_CANCELLED) /* this is normal */
 		return;
 	if (status) {
@@ -763,8 +801,9 @@ uirda_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	}
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &size, NULL);
+	DPRINTFN(1,("%s: sc=%p size=%u\n", __FUNCTION__, sc, size));
 	sc->sc_rd_count = size;
-	wakeup(&sc->sc_rd_count);
+	wakeup(&sc->sc_rd_count); /* XXX should use flag */
 	selwakeup(&sc->sc_rd_sel);
 }
 
@@ -773,12 +812,15 @@ uirda_start_read(struct uirda_softc *sc)
 {
 	usbd_status err;
 
+	DPRINTFN(1,("%s: sc=%p\n", __FUNCTION__, sc));
+
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
 
 	usbd_setup_xfer(sc->sc_rd_xfer, sc->sc_rd_pipe, sc, sc->sc_rd_buf,
 			sc->sc_params.maxsize+1,
-			USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, uirda_rd_cb);
+			USBD_SHORT_XFER_OK | USBD_NO_COPY,
+			USBD_NO_TIMEOUT, uirda_rd_cb);
 	err = usbd_transfer(sc->sc_rd_xfer);
 	if (err != USBD_IN_PROGRESS)
 		return (err);
