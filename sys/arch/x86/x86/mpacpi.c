@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.16 2003/10/31 20:56:55 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.17 2003/11/13 23:00:54 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.16 2003/10/31 20:56:55 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.17 2003/11/13 23:00:54 fvdl Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -866,7 +866,6 @@ mpacpi_scan_pci(struct device *self, struct pcibus_attach_args *pba,
 		if (mpb->mb_name == NULL)
 			continue;
 		if (!strcmp(mpb->mb_name, "pci") && mpb->mb_configured == 0) {
-			printf("configuring bus %d\n", i);
 			pba->pba_bus = i;
 			config_found(self, pba, print);
 		}
