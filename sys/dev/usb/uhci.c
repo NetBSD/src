@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.26 1999/05/16 11:43:32 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.27 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2265,6 +2265,7 @@ uhci_root_ctrl_start(reqh)
 				goto ret;
 			}
 			totlen = l = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
+			USETW(uhci_devd.idVendor, sc->sc_id_vendor);
 			memcpy(buf, &uhci_devd, l);
 			break;
 		case UDESC_CONFIG:
