@@ -29,12 +29,11 @@
 
 #define BPT_VECTOR 0x2
 
-/* Address of end of stack space.  */
-#define STACK_END_ADDR USRSTACK
+/* For NetBSD, sigtramp is 32 bytes before STACK_END_ADDR,
+   but we don't know where that is until run-time!  */
 
-/* For NetBSD, sigtramp is 32 bytes before STACK_END_ADDR.  */
-#define SIGTRAMP_START(pc) (STACK_END_ADDR - 32)
-#define SIGTRAMP_END(pc) (STACK_END_ADDR)
+extern int nbsd_in_sigtramp(CORE_ADDR);
+#define IN_SIGTRAMP(pc, name) nbsd_in_sigtramp (pc)
 
 #include "m68k/tm-m68k.h"
 #include <tm-nbsd.h>
