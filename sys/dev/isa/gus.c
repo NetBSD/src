@@ -1,7 +1,7 @@
-/*	$NetBSD: gus.c,v 1.64 1999/02/17 02:37:41 mycroft Exp $	*/
+/*	$NetBSD: gus.c,v 1.65 1999/02/17 21:44:55 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

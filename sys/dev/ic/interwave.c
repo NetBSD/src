@@ -1,7 +1,7 @@
-/*	$NetBSD: interwave.c,v 1.10 1999/02/17 02:43:13 mycroft Exp $	*/
+/*	$NetBSD: interwave.c,v 1.11 1999/02/17 21:44:55 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Author: Kari Mettinen
