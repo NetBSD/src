@@ -1,4 +1,4 @@
-/*	$NetBSD: iha_pci.c,v 1.1 2001/06/03 13:43:48 tsutsui Exp $ */
+/*	$NetBSD: iha_pci.c,v 1.2 2001/09/27 15:12:30 tsutsui Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -50,6 +50,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
