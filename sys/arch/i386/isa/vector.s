@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.10.2.10 1993/10/27 08:21:18 mycroft Exp $
+ *	$Id: vector.s,v 1.10.2.11 1993/10/29 04:36:51 mycroft Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -338,8 +338,6 @@ _intrnames:
 _eintrnames:
 
 	ALIGN_TEXT
-	.globl	_ether_output
-_ether_output:	
 	.globl	_isa_memalloc
 _isa_memalloc:	
 	.globl	_isa_memcheck
