@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.17 1997/06/24 02:26:13 thorpej Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.18 1997/07/18 19:30:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -116,9 +116,11 @@ spp_input(m, va_alist)
 		}
 		si = mtod(m, struct spidp *);
 	}
-	si->si_seq = ntohs(si->si_seq);
-	si->si_ack = ntohs(si->si_ack);
-	si->si_alo = ntohs(si->si_alo);
+
+	/* Convert some header fields to host format. */
+	NTOHS(si->si_seq);
+	NTOHS(si->si_ack);
+	NTOHS(si->si_alo);
 
 	so = nsp->nsp_socket;
 	if (so->so_options & SO_DEBUG || traceallspps) {
@@ -279,9 +281,10 @@ spp_input(m, va_alist)
 dropwithreset:
 	if (dropsocket)
 		(void) soabort(so);
-	si->si_seq = ntohs(si->si_seq);
-	si->si_ack = ntohs(si->si_ack);
-	si->si_alo = ntohs(si->si_alo);
+	/* Convert back to network format. */
+	HTONS(si->si_seq);
+	HTONS(si->si_ack);
+	HTONS(si->si_alo);
 	ns_error(m, NS_ERR_NOSOCK, 0);
 	if (cb->s_nspcb->nsp_socket->so_options & SO_DEBUG || traceallspps)
 		spp_trace(SA_DROP, (u_char)ostate, cb, &spp_savesi, 0);
@@ -304,9 +307,9 @@ int spprexmtthresh = 3;
  */
 int
 spp_reass(cb, si, m0)
-register struct sppcb *cb;
-register struct spidp *si;
-register struct mbuf *m0;
+	register struct sppcb *cb;
+	register struct spidp *si;
+	register struct mbuf *m0;
 {
 	register struct spidp_q *p, *q, *si_q;
 	register struct mbuf *m;
@@ -610,7 +613,6 @@ spp_ctlinput(cmd, sa, arg)
 	void *arg;
 {
 	struct ns_addr *na;
-	extern u_char nsctlerrmap[];
 	struct ns_errp *errp = NULL;
 	struct nspcb *nsp;
 	struct sockaddr_ns *sns;
@@ -656,7 +658,7 @@ spp_ctlinput(cmd, sa, arg)
 		errp = arg;
 		na = &errp->ns_err_idp.idp_dna;
 		type = errp->ns_err_num;
-		type = ntohs((u_short)type);
+		type = ntohs((u_int16_t)type);
 		break;
 	}
 
@@ -897,7 +899,7 @@ spp_output(m0, va_alist)
 				len = (1 + sizeof(*si));
 			}
 		}
-		si->si_len = htons((u_short)len);
+		si->si_len = htons((u_int16_t)len);
 		m->m_pkthdr.len = ((len - 1) | 1) + 1;
 		/*
 		 * queue stuff up for output
@@ -977,7 +979,7 @@ again:
 	 * then want to send a window update to peer.
 	 */
 	if (rcv_win > 0) {
-		u_short delta =  1 + cb->s_alo - cb->s_ack;
+		u_int16_t delta = 1 + cb->s_alo - cb->s_ack;
 		int adv = rcv_win - (delta * cb->s_mtu);
 		
 		if ((so->so_rcv.sb_cc == 0 && adv >= (2 * cb->s_mtu)) ||
@@ -1042,11 +1044,7 @@ send:
 		 * must make a copy of this packet for
 		 * idp_output to monkey with
 		 */
-#if 0
-		m = m_copy(dtom(si), 0, (int)M_COPYALL);
-#else
 		m = m_copy(m, 0, (int)M_COPYALL);
-#endif
 		if (m == NULL) {
 			return (ENOBUFS);
 		}
