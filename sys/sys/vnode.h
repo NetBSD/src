@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.34 1996/02/02 07:50:24 mycroft Exp $	*/
+/*	$NetBSD: vnode.h,v 1.35 1996/02/02 21:05:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -343,7 +343,7 @@ struct vop_generic_args {
 /*
  * Finally, include the default set of vnode operations.
  */
-#include <vnode_if.h>
+#include "vnode_if.h"
 
 /*
  * Public vnode manipulation functions.
