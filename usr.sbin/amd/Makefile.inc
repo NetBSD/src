@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.14 2000/11/20 00:24:41 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2000/11/21 02:03:26 wiz Exp $
 
 WARNS?=	1
+WFORMAT=2
 
 IDIST=	${.CURDIR}/../../../dist/am-utils
 
