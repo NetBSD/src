@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.375 2001/09/16 09:22:48 manu Exp $
+#	$NetBSD: mi,v 1.376 2001/09/18 19:53:15 ad Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -176,8 +176,8 @@
 ./usr/include/dev/sun/fbio.h		comp-c-include
 ./usr/include/dev/tc			comp-c-include
 ./usr/include/dev/tc/sfbreg.h		comp-c-include
+./usr/include/dev/tc/sticio.h		comp-c-include
 ./usr/include/dev/tc/sticreg.h		comp-c-include
-./usr/include/dev/tc/sticvar.h		comp-c-include
 ./usr/include/dev/usb			comp-c-include
 ./usr/include/dev/usb/urio.h		comp-c-include
 ./usr/include/dev/usb/usb.h		comp-c-include
