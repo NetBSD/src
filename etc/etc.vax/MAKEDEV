@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.33 2000/10/29 13:03:44 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.34 2000/11/07 23:17:41 matt Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -279,9 +279,9 @@ cd*)
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a   b $blk $(($unit * 8 + 0))
-	mknod ${name}${unit}d   b $blk $(($unit * 8 + 3))
+	mknod ${name}${unit}c   b $blk $(($unit * 8 + 2))
 	mknod r${name}${unit}a  c $chr $(($unit * 8 + 0))
-	mknod r${name}${unit}d  c $chr $(($unit * 8 + 3))
+	mknod r${name}${unit}c  c $chr $(($unit * 8 + 2))
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
 	;;
