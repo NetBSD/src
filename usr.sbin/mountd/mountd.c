@@ -1,4 +1,4 @@
-/* $NetBSD: mountd.c,v 1.50 1998/11/02 15:38:26 christos Exp $	 */
+/* $NetBSD: mountd.c,v 1.51 1998/11/07 18:31:36 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.50 1998/11/02 15:38:26 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.51 1998/11/07 18:31:36 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -861,6 +861,8 @@ get_exportlist(n)
 			(void)fprintf(stderr, "Got line %s\n", line);
 		cp = line;
 		nextfield(&cp, &endcp);
+		if (cp == endcp)
+			continue;	/* skip empty line */
 		/*
 		 * Set defaults.
 		 */
