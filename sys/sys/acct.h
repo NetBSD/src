@@ -1,4 +1,4 @@
-/*	$NetBSD: acct.h,v 1.11 1994/10/29 08:20:12 cgd Exp $	*/
+/*	$NetBSD: acct.h,v 1.12 1994/10/30 19:09:08 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -58,7 +58,7 @@ struct acct {
 	int16_t	ac_mem;		/* average memory usage */
 	comp_t	ac_io;		/* count of IO blocks */
 	dev_t	ac_tty;		/* controlling tty */
-	int8_t	ac_flag;	/* accounting flags; see below. */
+	u_int8_t ac_flag;	/* accounting flags; see below. */
 };
 
 #define	AFORK	0x01		/* forked but not execed */
