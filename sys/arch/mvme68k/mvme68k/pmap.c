@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 1998/02/21 19:03:26 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.14 1998/02/24 07:42:06 thorpej Exp $        */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1363,7 +1363,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (pmap->pm_ptab == NULL)
 #if defined(UVM)
 		pmap->pm_ptab = (pt_entry_t *)
-			uvm_km_zalloc(pt_map, HP_MAX_PTSIZE);
+			uvm_km_valloc_wait(pt_map, HP_MAX_PTSIZE);
 #else
 		pmap->pm_ptab = (pt_entry_t *)
 			kmem_alloc_wait(pt_map, HP_MAX_PTSIZE);
