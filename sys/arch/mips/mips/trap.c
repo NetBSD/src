@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.114 1999/11/10 08:06:05 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.115 1999/11/18 06:47:49 jun Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.114 1999/11/10 08:06:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.115 1999/11/18 06:47:49 jun Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -674,18 +674,20 @@ trap(status, cause, vaddr, opc, frame)
 		sig = SIGILL;
 		break; /* SIGNAL */
 	case T_COP_UNUSABLE+T_USER:
-#ifdef SOFTFLOAT /* No FPU; avoid touching FPU registers */
-		sig = SIGILL;
-		break; /* SIGNAL */
-#endif
 		if ((cause & MIPS_CR_COP_ERR) != 0x10000000) {
 			sig = SIGILL;	/* only FPU instructions allowed */
 			break; /* SIGNAL */
 		}
+#ifndef SOFTFLOAT
 		switchfpregs(fpcurproc, p);
+#endif
 		fpcurproc = p;
+#ifdef SOFTFLOAT
+		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
+#else
 		((struct frame *)p->p_md.md_regs)->f_regs[SR]
 			|= MIPS_SR_COP_1_BIT;
+#endif
 		p->p_md.md_flags |= MDP_FPUSED;
 		userret(p, opc, sticks);
 		return; /* GEN */

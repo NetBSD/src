@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.78 1999/11/03 16:21:22 mycroft Exp $	*/
+/*	$NetBSD: locore.S,v 1.79 1999/11/18 06:47:49 jun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -996,6 +996,7 @@ LEAF_NOPROFILE(mips_read_causereg)
 END(mips_read_causereg)
 
 
+#ifndef SOFTFLOAT
 /*
  * void switchfpregs(struct proc *old, struct proc *new)
  *
@@ -1173,6 +1174,7 @@ LEAF(savefpregs)
 	j	ra
 	mtc0	v0, MIPS_COP_0_STATUS	# Restore the status register.
 END(savefpregs)
+#endif /* !SOFTFLOAT */
 
 /*----------------------------------------------------------------------------
  *
@@ -1215,12 +1217,14 @@ XNESTED(MachFPTrap)
 	nop				# 1st extra nop for r4k
 	nop				# 2nd extra nop for r4k
 
+#ifndef SOFTFLOAT
 	cfc1	t0, MIPS_FPU_CSR	# stall til FP done
 	cfc1	t0, MIPS_FPU_CSR	# now get status
 	nop
 	sll	t2, t0, (31 - 17)	# unimplemented operation?
 	bgez	t2, 3f			# no, normal trap
 	nop
+#endif
 /*
  * We got an unimplemented operation trap so
  * fetch the instruction, compute the next PC and emulate the instruction.
@@ -1259,18 +1263,28 @@ XNESTED(MachFPTrap)
  * Check to see if the instruction to be emulated is a floating-point
  * instruction.
  */
+	sw	zero, FRAME_ZERO(a3)
+
 	srl	t0, a0, MIPS_OPCODE_SHIFT
-	beq	t0, MIPS_OPCODE_C1, 4f		# this should never fail
+	beq	t0, MIPS_OPCODE_C1, 4f
 	nop
+
+#ifdef SOFTFLOAT
+	beq	t0, 0x31, 5f	# lwc1
+	nop
+	beq	t0, 0x35, 6f	# ldc1
+	nop
+	beq	t0, 0x39, 7f	# swc1
+	nop
+	beq	t0, 0x3d, 8f	# sdc1
+	nop
+#endif
+
 /*
- * Send a floating point exception signal to the current process.
+ * Send a illegal instruction signal to the current process.
  */
 3:
-	lw	a0, _C_LABEL(curproc)		# get current process
-	cfc1	a2, MIPS_FPU_CSR		# code = FP execptions
-	ctc1	zero, MIPS_FPU_CSR		# Clear exceptions
-	jal	_C_LABEL(trapsignal)
-	li	a1, SIGFPE
+	li	v0, SIGILL
 	b	FPReturn
 	nop
 
@@ -1278,9 +1292,20 @@ XNESTED(MachFPTrap)
  * Finally, we can call MachEmulateFP() where a0 is the instruction to emulate.
  */
 4:
+#ifdef SOFTFLOAT
+	move	a1, a3		
+#endif
 	jal	_C_LABEL(MachEmulateFP)
 	nop
 
+FPemuldone:
+	beq	v0, zero, FPReturn
+	nop
+
+	move	a2, a0				# code = instruction
+	lw	a0, _C_LABEL(curproc)		# get current process
+	jal	_C_LABEL(trapsignal)
+	move	a1, v0
 /*
  * Turn off the floating point coprocessor and return.
  */
@@ -1291,7 +1316,35 @@ FPReturn:
 	mtc0	t0, MIPS_COP_0_STATUS
 	j	ra
 	addu	sp, sp, CALLFRAME_SIZ
+
+#ifdef SOFTFLOAT
+5:	# lwc1
+	jal	_C_LABEL(MachEmulateLWC1)
+	move	a1, a3
+	j	FPemuldone
+	nop
+
+6:	# ldc1
+	jal	_C_LABEL(MachEmulateLDC1)
+	move	a1, a3
+	j	FPemuldone
+	nop
+
+7:	# swc1
+	jal	_C_LABEL(MachEmulateSWC1)
+	move	a1, a3
+	j	FPemuldone
+	nop
+
+8:	# sdc1
+	jal	_C_LABEL(MachEmulateSDC1)
+	move	a1, a3
+	j	FPemuldone
+	nop
+
+#endif
 END(MachFPInterrupt)
+
 
 #ifndef DDB_TRACE
 

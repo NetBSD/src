@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12 1999/05/18 01:36:52 nisimura Exp $
+#	$NetBSD: genassym.cf,v 1.13 1999/11/18 06:47:49 jun Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -75,6 +75,8 @@ define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
 define	UVMEXP_SWTCH		offsetof(struct uvmexp, swtch)
 
 define	SIGFPE		 	SIGFPE
+define	SIGILL		 	SIGILL
+define	SIGSEGV			SIGSEGV
 
 define	MIPSX_FLUSHICACHE	offsetof(mips_locore_jumpvec_t, flushICache)
 define	MIPSX_CPU_SWITCH_RESUME	offsetof(mips_locore_jumpvec_t, cpu_switch_resume)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.58 1999/10/20 14:21:10 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.59 1999/11/18 06:47:49 jun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.58 1999/10/20 14:21:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.59 1999/11/18 06:47:49 jun Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -725,9 +725,11 @@ sendsig(catcher, sig, mask, code)
 	/* Save the floating-pointstate, if necessary, then copy it. */
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
+#ifndef SOFTFLOAT
 		/* if FPU has current state, save it first */
 		if (p == fpcurproc)
 			savefpregs(p);
+#endif
 		*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
 	}
 
