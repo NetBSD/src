@@ -307,6 +307,7 @@
 ./usr/share/man/cat4/ahb.0
 ./usr/share/man/cat4/ahc.0
 ./usr/share/man/cat4/aic.0
+./usr/share/man/cat4/aria.0
 ./usr/share/man/cat4/arp.0
 ./usr/share/man/cat4/ast.0
 ./usr/share/man/cat4/atalk.0
@@ -1307,6 +1308,7 @@
 ./usr/share/man/man4/ahb.4
 ./usr/share/man/man4/ahc.4
 ./usr/share/man/man4/aic.4
+./usr/share/man/man4/aria.4
 ./usr/share/man/man4/arp.4
 ./usr/share/man/man4/ast.4
 ./usr/share/man/man4/atalk.4
