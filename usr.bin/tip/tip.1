@@ -1,4 +1,4 @@
-.\"	$NetBSD: tip.1,v 1.11 2000/05/29 19:49:48 bjh21 Exp $
+.\"	$NetBSD: tip.1,v 1.12 2001/04/04 09:48:11 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,17 +37,17 @@
 .Dt TIP 1
 .Os
 .Sh NAME
-.Nm tip 
+.Nm tip
 .\" .Nm cu
 .Nd connect to a remote system
 .Sh SYNOPSIS
 .Nm
 .Op Fl v
-.Fl Ns Ns Ar speed 
+.Fl Ns Ns Ar speed
 .Ar system\-name
 .Nm ""
 .Op Fl v
-.Fl Ns Ns Ar speed 
+.Fl Ns Ns Ar speed
 .Ar phone\-number
 .\" .Nm cu
 .\" .Ar phone\-number
@@ -90,7 +90,7 @@ are recognized:
 Drop the connection and exit
 (you may still be logged in on the
 remote machine).
-.It Ic \&~c Op Ar name 
+.It Ic \&~c Op Ar name
 Change directory to
 .Ar name
 (no argument
@@ -107,7 +107,7 @@ Copy file from remote to local.
 .Nm
 prompts first for the name of the file to be sent, then for
 a command to be executed on the remote machine.
-.It Ic \&~p Ar from Op Ar to 
+.It Ic \&~p Ar from Op Ar to
 Send a file to a remote
 .Ux
 host.  The put command causes the remote
@@ -119,7 +119,7 @@ file.  If the ``to'' file isn't specified the ``from'' file name is used.
 This command is actually a
 .Ux
 specific version of the ``~>'' command.
-.It Ic \&~t Ar from Op Ar to 
+.It Ic \&~t Ar from Op Ar to
 Take a file from a remote
 .Ux
 host.
@@ -436,7 +436,7 @@ Record file.
 Line access log.
 .It Pa /var/spool/lock/LCK..*
 Lock file to avoid conflicts with
-.Xr uucp .
+.Xr uucp 1 .
 .El
 .Sh DIAGNOSTICS
 Diagnostics are, hopefully, self explanatory.
