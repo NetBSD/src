@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.6 2001/11/16 01:57:08 augustss Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.7 2001/11/16 15:33:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,8 +37,10 @@
  */
 
 /*
- * EHCI 0.96 spec can be found at
+ * The EHCI 0.96 spec can be found at
  * http://developer.intel.com/technology/usb/download/ehci-r096.pdf
+ * and the USB 2.0 spec at
+ * http://www.usb.org/developers/data/usb_20.zip
  */
 
 #ifndef _DEV_PCI_EHCIREG_H_
@@ -164,5 +166,74 @@
 #define  EHCI_PS_CLEAR		(EHCI_PS_OCC|EHCI_PS_PEC|EHCI_PS_CSC)
 
 #define EHCI_FLALIGN_ALIGN	0x1000
+
+typedef u_int32_t ehci_link_t;
+#define EHCI_LINK_TERMINATE	0x00000001
+#define EHCI_LINK_TYPE(x)	((x) & 0x00000006)
+#define  EHCI_LINK_ITD		0x0
+#define  EHCI_LINK_QH		0x2
+#define  EHCI_LINK_SITD		0x4
+#define  EHCI_LINK_FSTN		0x6
+
+typedef u_int32_t ehci_physaddr_t;
+
+/* Isochronous Transfer Descriptor */
+typedef struct {
+	ehci_link_t	itd_next;
+	/* XXX many more */
+} ehci_itd_t;
+#define EHCI_ITD_ALIGN 32
+
+/* Split Transaction Isochronous Transfer Descriptor */
+typedef struct {
+	ehci_link_t	sitd_next;
+	/* XXX many more */
+} ehci_sitd_t;
+#define EHCI_SITD_ALIGN 32
+
+/* Queue Element Transfer Descriptor */
+typedef struct {
+	ehci_link_t	qtd_next;
+	ehci_link_t	qtd_altnext;
+	u_int32_t	qtd_status;
+#define EHCI_QTD_STATUS(x)	(((x) >>  0) & 0xff)
+#define  EHCI_QTD_ACTIVE	0x80
+#define  EHCI_QTD_HALTED	0x40
+#define  EHCI_QTD_BUFERR	0x20
+#define  EHCI_QTD_BABBLE	0x10
+#define  EHCI_QTD_XACTERR	0x08
+#define  EHCI_QTD_MISSEDMICRO	0x04
+#define  EHCI_QTD_SPLITXSTATE	0x02
+#define  EHCI_QTD_PINGSTATE	0x01
+#define EHCI_QTD_PID(x)		(((x) >>  8) &  0x3)
+#define  EHCI_QTD_PID_OUT	0x0
+#define  EHCI_QTD_PID_IN	0x1
+#define  EHCI_QTD_PID_SETUP	0x2
+#define EHCI_QTD_CERR(x)	(((x) >> 10) &  0x3)
+#define EHCI_QTD_C_PAGE(x)	(((x) >> 12) &  0x7)
+#define EHCI_QTD_IOC(x)		(((x) >> 15) &  0x1)
+#define EHCI_QTD_BYTES(x)	(((x) >> 16) &  0x7fff)
+#define EHCI_QTD_TOGGLE(x)	(((x) >> 31) &  0x1)
+	ehci_physaddr_t	qtd_buffer[5];
+#define EHCI_BUFFER_OFFS(x)	((x) & 0x00000fff)
+} ehci_qtd_t;
+#define EHCI_QTD_ALIGN 32
+
+/* Queue Head */
+typedef struct {
+	ehci_link_t	qh_link;
+	u_int32_t	qh_endp;
+	u_int32_t	qh_endphub;
+	ehci_link_t	qh_curqtd;
+	ehci_qtd_t	qh_qtd;
+} ehci_qh_t;
+#define EHCI_QH_ALIGN 32
+
+/* Periodic Frame Span Traversal Node */
+typedef struct {
+	ehci_link_t	fstn_link;
+	ehci_link_t	fstn_back;
+} ehci_fstn_t;
+#define EHCI_FSTN_ALIGN 32
 
 #endif /* _DEV_PCI_EHCIREG_H_ */
