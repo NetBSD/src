@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/05/07 15:59:08 mycroft Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 1997/11/08 05:48:49 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/11/93
 
 PROG=	mkdict
@@ -6,7 +6,7 @@ HOST_CFLAGS+=-I${.CURDIR}/../boggle
 NOMAN=	noman
 
 # XXX for "make depend"
-CFLAGS+=-I${.CURDIR}/../boggle
+CPPFLAGS+=-I${.CURDIR}/../boggle
 
 # only needed during build
 proginstall::
