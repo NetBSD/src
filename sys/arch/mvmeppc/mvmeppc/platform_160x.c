@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_160x.c,v 1.3 2003/07/28 14:55:46 chs Exp $	*/
+/*	$NetBSD: platform_160x.c,v 1.4 2003/07/28 21:45:14 scw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.3 2003/07/28 14:55:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.4 2003/07/28 21:45:14 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -142,6 +142,15 @@ p160x_cpu_setup(struct device *dev)
 static void
 p160x_reset(void)
 {
+	/*
+	 * The mvme160x programmer's manual makes reference to an
+	 * "IBC Port 92" register which can be used to reset the board.
+	 * Unfortunately, I can't find any documentation for this
+	 * register.
+	 * Fortunately, it appears that simply setting bit-0 does
+	 * the trick...
+	 */
+	outb(0x80000092, inb(0x80000092) | 1);
 }
 
 static void
