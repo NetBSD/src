@@ -1,6 +1,7 @@
-/*	$NetBSD: rcmd.c,v 1.19 1997/02/08 04:38:30 mycroft Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.20 1997/05/26 14:18:29 mrg Exp $	*/
 
 /*
+ * Copyright (c) 1997 Matthew R. Green.
  * Copyright (c) 1983, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.19 1997/02/08 04:38:30 mycroft Exp $";
+static char *rcsid = "$NetBSD: rcmd.c,v 1.20 1997/05/26 14:18:29 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,10 +61,20 @@ static char *rcsid = "$NetBSD: rcmd.c,v 1.19 1997/02/08 04:38:30 mycroft Exp $";
 #include <ctype.h>
 #include <string.h>
 #include <syslog.h>
+#include <stdlib.h>
+#include <paths.h>
 
+#include "pathnames.h"
+
+int	orcmd __P((char **, u_short, const char *, const char *, const char *,
+	    int *));
 int	__ivaliduser __P((FILE *, u_int32_t, const char *, const char *));
-static int __icheckhost __P((u_int32_t, const char *));
-static char *__gethostloop __P((u_int32_t));
+static	int rshrcmd __P((char **, u_short, const char *, const char *,
+	    const char *, int *, char *));
+static	int hprcmd __P((struct hostent *, char **, u_short, const char *,
+	    const char *, const char *, int *));
+static	int __icheckhost __P((u_int32_t, const char *));
+static	char *__gethostloop __P((u_int32_t));
 
 int
 rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
@@ -73,30 +84,77 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	int *fd2p;
 {
 	struct hostent *hp;
-	struct sockaddr_in sin, from;
-	struct pollfd reads[2];
-	int oldmask;
-	pid_t pid;
-	int s, lport, timo;
-	char c;
+	struct servent *sp;
 
-	pid = getpid();
+	/*
+	 * Canonicalise hostname.
+	 * XXX: Should we really do this?
+	 */
 	hp = gethostbyname(*ahost);
 	if (hp == NULL) {
 		herror(*ahost);
 		return (-1);
 	}
 	*ahost = hp->h_name;
+
+	/*
+	 * Check if rport is the same as the shell port, and that the fd2p.  If
+	 * it is not, the program isn't expecting 'rsh' and so we can't use the
+	 * RCMD_CMD environment.
+	 */
+	sp = getservbyname("shell", "tcp");
+	if (sp != NULL && sp->s_port == rport)
+		return (rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p,
+		    getenv("RCMD_CMD")));
+	else
+		return (hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p));
+}
+
+/* this is simply a wrapper around hprcmd() that handles ahost first */
+int
+orcmd(ahost, rport, locuser, remuser, cmd, fd2p)
+	char **ahost;
+	u_short rport;
+	const char *locuser, *remuser, *cmd;
+	int *fd2p;
+{
+	struct hostent *hp;
+
+	hp = gethostbyname(*ahost);
+	if (hp == NULL) {
+		herror(*ahost);
+		return (-1);
+	}
+	*ahost = hp->h_name;
+	
+	return (hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p));
+}
+
+static int
+hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
+	struct hostent *hp;
+	char **ahost;
+	u_short rport;
+	const char *locuser, *remuser, *cmd;
+	int *fd2p;
+{
+	struct sockaddr_in sin, from;
+	struct pollfd reads[2];
+	int oldmask;
+	pid_t pid;
+	int s, lport, timo;
+	int pollr;
+	char c;
+
+	pid = getpid();
 	oldmask = sigblock(sigmask(SIGURG));
 	for (timo = 1, lport = IPPORT_RESERVED - 1;;) {
 		s = rresvport(&lport);
 		if (s < 0) {
 			if (errno == EAGAIN)
-				(void)fprintf(stderr,
-				    "rcmd: socket: All ports in use\n");
+				warnx("rcmd: socket: All ports in use");
 			else
-				(void)fprintf(stderr, "rcmd: socket: %s\n",
-				    strerror(errno));
+				warn("rcmd: socket");
 			sigsetmask(oldmask);
 			return (-1);
 		}
@@ -104,7 +162,7 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 		sin.sin_len = sizeof(struct sockaddr_in);
 		sin.sin_family = hp->h_addrtype;
 		sin.sin_port = rport;
-		bcopy(hp->h_addr_list[0], &sin.sin_addr, hp->h_length);
+		memmove(&sin.sin_addr, hp->h_addr_list[0], hp->h_length);
 		if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
 			break;
 		(void)close(s);
@@ -120,12 +178,13 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 		if (hp->h_addr_list[1] != NULL) {
 			int oerrno = errno;
 
-			(void)fprintf(stderr, "connect to address %s: ",
+			warnx("rcmd: connect to address %s",
 			    inet_ntoa(sin.sin_addr));
 			errno = oerrno;
 			perror(0);
 			hp->h_addr_list++;
-			bcopy(hp->h_addr_list[0], &sin.sin_addr, hp->h_length);
+			memmove(&sin.sin_addr, hp->h_addr_list[0],
+			    hp->h_length);
 			(void)fprintf(stderr, "Trying %s...\n",
 			    inet_ntoa(sin.sin_addr));
 			continue;
@@ -147,10 +206,8 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 			goto bad;
 		listen(s2, 1);
 		(void)snprintf(num, sizeof(num), "%d", lport);
-		if (write(s, num, strlen(num)+1) != strlen(num)+1) {
-			(void)fprintf(stderr,
-			    "rcmd: write (setting up stderr): %s\n",
-			    strerror(errno));
+		if (write(s, num, strlen(num) + 1) != strlen(num) + 1) {
+			warn("rcmd: write (setting up stderr)");
 			(void)close(s2);
 			goto bad;
 		}
@@ -159,23 +216,19 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 		reads[1].fd = s2;
 		reads[1].events = POLLIN;
 		errno = 0;
-		if (poll(reads, 2, INFTIM) < 1 ||
-		    (reads[1].revents & POLLIN) == 0) {
+		pollr = poll(reads, 2, INFTIM);
+		if (pollr < 1 || (reads[1].revents & POLLIN) == 0) {
 			if (errno != 0)
-				(void)fprintf(stderr,
-				    "rcmd: poll (setting up stderr): %s\n",
-				    strerror(errno));
+				warn("poll: setting up stderr");
 			else
-				(void)fprintf(stderr,
-				"poll: protocol failure in circuit setup\n");
+				warnx("poll: protocol failure in circuit setup");
 			(void)close(s2);
 			goto bad;
 		}
 		s3 = accept(s2, (struct sockaddr *)&from, &len);
 		(void)close(s2);
 		if (s3 < 0) {
-			(void)fprintf(stderr,
-			    "rcmd: accept: %s\n", strerror(errno));
+			warn("rcmd: accept");
 			lport = 0;
 			goto bad;
 		}
@@ -184,17 +237,16 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 		if (from.sin_family != AF_INET ||
 		    from.sin_port >= IPPORT_RESERVED ||
 		    from.sin_port < IPPORT_RESERVED / 2) {
-			(void)fprintf(stderr,
-			    "socket: protocol failure in circuit setup.\n");
+			warnx("rcmd: protocol failure in circuit setup.");
 			goto bad2;
 		}
 	}
+
 	(void)write(s, locuser, strlen(locuser)+1);
 	(void)write(s, remuser, strlen(remuser)+1);
 	(void)write(s, cmd, strlen(cmd)+1);
 	if (read(s, &c, 1) != 1) {
-		(void)fprintf(stderr,
-		    "rcmd: %s: %s\n", *ahost, strerror(errno));
+		warn("%s", *ahost);
 		goto bad2;
 	}
 	if (c != 0) {
@@ -214,6 +266,117 @@ bad:
 	(void)close(s);
 	sigsetmask(oldmask);
 	return (-1);
+}
+
+/*
+ * based on code written by Chris Siebenmann <cks@utcc.utoronto.ca>
+ */
+static int
+rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
+	char  	**ahost;
+	u_short	rport;
+	const	char *locuser, *remuser, *cmd;
+	int	*fd2p;
+	char	*rshcmd;
+{
+	pid_t pid;
+	int sp[2], ep[2];
+	char *p;
+	struct passwd *pw;
+
+	/* What rsh/shell to use. */
+	if (rshcmd == NULL)
+		rshcmd = _PATH_BIN_RCMD;
+
+	/* locuser must exist on this host. */
+	if ((pw = getpwnam(locuser)) == NULL) {
+		warnx("rshrcmd: unknown user: %s", locuser);
+		return(-1);
+	}
+
+	/* get a socketpair we'll use for stdin and stdout. */
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sp) < 0) {
+		warn("rshrcmd: socketpair");
+		return (-1);
+	}
+	/* we will use this for the fd2 pointer */
+	if (fd2p) {
+		if (socketpair(AF_UNIX, SOCK_STREAM, 0, ep) < 0) {
+			warn("rshrcmd: socketpair");
+			return (-1);
+		}
+		*fd2p = ep[0];
+	}
+	
+	pid = fork();
+	if (pid < 0) {
+		warn("rshrcmd: fork");
+		return (-1);
+	}
+	if (pid == 0) {
+		/*
+		 * child
+		 * - we use sp[1] to be stdin/stdout, and close sp[0]
+		 * - with fd2p, we use ep[1] for stderr, and close ep[0]
+		 */
+		(void)close(sp[0]);
+		if (dup2(sp[1], 0) < 0 || dup2(0, 1) < 0) {
+			warn("rshrcmd: dup2");
+			_exit(1);
+		}
+		if (fd2p) {
+			if (dup2(ep[1], 2) < 0) {
+				warn("rshrcmd: dup2");
+				_exit(1);
+			}
+			(void)close(ep[0]);
+			(void)close(ep[1]);
+		} else if (dup2(0, 2) < 0) {
+			warn("rshrcmd: dup2");
+			_exit(1);
+		}
+		/* fork again to lose parent. */
+		pid = fork();
+		if (pid < 0) {
+			warn("rshrcmd: second fork");
+			_exit(1);
+		}
+		if (pid > 0)
+			_exit(0);
+
+		/* Orphan.  Become local user for rshprog. */
+		if (setuid(pw->pw_uid)) {
+			warn("rshrcmd: setuid(%u)", pw->pw_uid);
+			_exit(1);
+		}
+
+		/*
+		 * If we are rcmd'ing to "localhost" as the same user as we are,
+		 * then avoid running remote shell for efficiency.
+		 */
+		if (strcmp(*ahost, "localhost") == 0 &&
+		    strcmp(locuser, remuser) == 0) {
+			if (pw->pw_shell[0] == '\0')
+				rshcmd = _PATH_BSHELL;
+			else
+				rshcmd = pw->pw_shell;
+			p = strrchr(rshcmd, '/');
+			execlp(rshcmd, p ? p + 1 : rshcmd, "-c", cmd, NULL);
+		} else {
+			p = strrchr(rshcmd, '/');
+			execlp(rshcmd, p ? p + 1 : rshcmd, *ahost, "-l",
+			    remuser, cmd, NULL);
+		}
+		warn("rshrcmd: exec %s", rshcmd);
+		_exit(1);
+	}
+	/* Parent */
+	(void)close(sp[1]);
+	if (fd2p)
+		(void)close(ep[1]);
+
+	(void)waitpid(pid, NULL, 0);
+	return (sp[0]);
 }
 
 int
@@ -263,7 +426,7 @@ ruserok(rhost, superuser, ruser, luser)
 	if ((hp = gethostbyname(rhost)) == NULL)
 		return (-1);
 	for (i = 0, ap = hp->h_addr_list; *ap && i < MAXADDRS; ++ap, ++i)
-		bcopy(*ap, &addrs[i], sizeof(addrs[i]));
+		memmove(&addrs[i], *ap, sizeof(addrs[i]));
 	addrs[i] = 0;
 
 	for (i = 0; i < MAXADDRS && addrs[i]; i++)
@@ -526,7 +689,7 @@ __icheckhost(raddr, lhost)
 
 	/* Spin through ip addresses. */
 	for (pp = hp->h_addr_list; *pp; ++pp)
-		if (!bcmp(&raddr, *pp, sizeof(u_int32_t)))
+		if (!memcmp(&raddr, *pp, sizeof(u_int32_t)))
 			return (1);
 
 	/* No match. */
@@ -561,7 +724,7 @@ __gethostloop(raddr)
 		return (NULL);
 
 	for (; hp->h_addr_list[0] != NULL; hp->h_addr_list++)
-		if (!bcmp(hp->h_addr_list[0], (caddr_t)&raddr, sizeof(raddr)))
+		if (!memcmp(hp->h_addr_list[0], (caddr_t)&raddr, sizeof(raddr)))
 			return (remotehost);
 
 	/*
