@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_usrreq.c,v 1.11 1998/01/05 07:03:10 perry Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.12 1998/11/19 15:38:23 mrg Exp $	*/
 
 /*ARGSUSED*/
 int
@@ -243,6 +243,9 @@ fbmmap(dev, off, prot)
 {
 	int len;
 	register struct fbinfo *fi;
+
+	if (off < 0)
+		return (-1);
 
 	if (minor(dev) >= fbcd.cd_ndevs ||
 	    (fi = fbcd.cd_devs[minor(dev)]) == NULL)

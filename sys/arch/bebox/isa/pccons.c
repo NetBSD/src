@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.13 1998/08/15 04:49:48 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.14 1998/11/19 15:38:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2364,7 +2364,7 @@ pcmmap(dev, offset, nprot)
 	int nprot;
 {
 
-	if (offset > 0x20000)
+	if ((u_int)offset >= 0x20000)
 		return (-1);
 	return ((int)ISA_MEM(0xa0000 + offset));
 }

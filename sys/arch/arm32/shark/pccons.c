@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.6 1998/10/18 12:21:51 mellon Exp $       */
+/*      $NetBSD: pccons.c,v 1.7 1998/11/19 15:38:21 mrg Exp $       */
 
 /*
  * Copyright 1997
@@ -3337,6 +3337,9 @@ pcmmap(dev_t   dev,
 {
 #ifdef SHARK
     vm_offset_t pam_io_data, vam_mem_data;
+
+    if (offset < 0)
+	return (-1);
 
     if(offset >> 24 == displayInfo(paddr) >> 24)
     {

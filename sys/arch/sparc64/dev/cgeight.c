@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.2 1998/08/13 02:10:40 eeh Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.3 1998/11/19 15:38:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -414,7 +414,9 @@ cgeightmmap(dev, off, prot)
 	if (off & PGOFSET)
 		panic("cgeightmap");
 
-	if ((u_int)off >= NOOVERLAY) {
+	if (off < 0)
+		return (-1);
+	else if ((u_int)off >= NOOVERLAY) {
 		off -= NOOVERLAY;
 
 		/*
@@ -422,7 +424,7 @@ cgeightmmap(dev, off, prot)
 		 * there really is. We compensate by double-mapping the
 		 * first page for as many other pages as it wants
 		 */
-		while (off >= COLOR_SIZE)
+		while ((u_int)off >= COLOR_SIZE)
 			off -= COLOR_SIZE;	/* XXX thorpej ??? */
 
 		poff = off + PFOUR_COLOR_OFF_COLOR;
