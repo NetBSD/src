@@ -1,4 +1,4 @@
-/* $NetBSD: flt_rounds.c,v 1.5 2003/07/26 19:24:31 salo Exp $ */
+/* $NetBSD: flt_rounds.c,v 1.6 2003/07/27 05:04:18 mrg Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -53,7 +53,7 @@ __flt_rounds()
 	__asm__("trapb");
 	__asm__("mf_fpcr %0" : "=f" (fpcrval));
 	__asm__("trapb");
-	old = *(u_int64_t *)&fpcrval;
+	old = *(u_int64_t *)(void *)&fpcrval;
 
 	return map[(old >> 58) & 0x3];
 }
