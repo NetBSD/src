@@ -1,4 +1,4 @@
-/*	$NetBSD: hilvar.h,v 1.12 1997/03/31 07:34:22 scottr Exp $	*/
+/*	$NetBSD: hilvar.h,v 1.13 1997/04/01 03:07:21 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -125,5 +125,15 @@ void	kbddisable __P((int));
 int	kbdgetc __P((int *));
 void	kbdcninit __P((void));
 
-int	kbdnmi __P((int));
+int	kbdnmi __P((void));
+
+void	hilsoftinit __P((int, struct hil_dev *));
+void	hilinit __P((int, struct hil_dev *));
+
+void	send_hil_cmd __P((struct hil_dev *, u_char,
+				u_char *, u_char, u_char *));
+void	send_hildev_cmd __P((struct hil_softc *, char, char));
+
+void	polloff __P((struct hil_dev *));
+void	pollon __P((struct hil_dev *));
 #endif /* _KERNEL */
