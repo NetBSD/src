@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vnops.c,v 1.14 1993/12/18 03:56:12 mycroft Exp $
+ *	$Id: kernfs_vnops.c,v 1.15 1993/12/20 12:39:12 cgd Exp $
  */
 
 /*
@@ -126,9 +126,9 @@ kernfs_xread(kt, buf, len, lenp)
 
 	case KTT_AVENRUN:
 		sprintf(buf, "%d %d %d %d\n",
-				averunnable[0],
-				averunnable[1],
-				averunnable[2],
+				averunnable.ldavg[0],
+				averunnable.ldavg[1],
+				averunnable.ldavg[2],
 				FSCALE);
 		break;
 
@@ -203,19 +203,25 @@ kernfs_lookup(dvp, ndp, p)
 	 * /kern/rootdev is the root device
 	 */
 	if (ndp->ni_namelen == 7 && bcmp(pname, "rootdev", 7) == 0) {
-		if (vfinddev(rootdev, VBLK, &fvp))
-			return (ENXIO);
+		if (!rootvp) {
+			error = ENOENT;
+			goto bad;
+		}
 		ndp->ni_dvp = dvp;
-		ndp->ni_vp = fvp;
-		VREF(fvp);
-		VOP_LOCK(fvp);
+		ndp->ni_vp = rootvp;
+		VREF(rootvp);
+		VOP_LOCK(rootvp);
 		return (0);
 	}
 
 	/*
-	 * /kern/rrootdev is the root device
+	 * /kern/rrootdev is the raw root device
 	 */
 	if (ndp->ni_namelen == 8 && bcmp(pname, "rrootdev", 7) == 0) {
+		if (!rrootdevvp) {
+			error = ENOENT;
+			goto bad;
+		}
 		ndp->ni_dvp = dvp;
 		ndp->ni_vp = rrootdevvp;
 		VREF(rrootdevvp);
