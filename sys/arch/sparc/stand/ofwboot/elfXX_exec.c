@@ -1,4 +1,4 @@
-/*	$NetBSD: elfXX_exec.c,v 1.4 2004/05/02 19:45:55 martin Exp $	*/
+/*	$NetBSD: elfXX_exec.c,v 1.5 2005/01/16 23:26:19 chs Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Eduardo Horvath.  All rights reserved.
@@ -47,9 +47,6 @@
 #define CAT3(s,m,e)	CONCAT(s,CONCAT(m,e))
 #define	MEG	(1024*1024)
 
-#if 0
-int	CAT3(elf,ELFSIZE,_exec) __P((int, CAT3(Elf,ELFSIZE,_Ehdr) *, u_int64_t *, void **, void **));
-#endif
 #if defined(ELFSIZE) && (ELFSIZE == 32)
 #define ELF_ALIGN(x)	(((x)+3)&(~3))
 #elif defined(ELFSIZE) && (ELFSIZE == 64)
@@ -69,10 +66,9 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	CAT3(Elf,ELFSIZE,_Shdr) *shp;
 	CAT3(Elf,ELFSIZE,_Off) off;
 	void *addr;
-	size_t size;
+	size_t size, ssize;
 	u_int align;
-	int i, first = 1;
-	int n;
+	int i, n, first = 1;
 
 	/*
 	 * Don't display load address for ELF; it's encoded in
@@ -85,19 +81,20 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 
 	for (i = 0; i < elf->e_phnum; i++) {
 		CAT3(Elf,ELFSIZE,_Phdr) phdr;
-		size = lseek(fd, (size_t)(elf->e_phoff + sizeof(phdr) * i), SEEK_SET);
-		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr)) {
+		size = lseek(fd, (size_t)(elf->e_phoff + sizeof(phdr) * i),
+			     SEEK_SET);
+		if (read(fd, &phdr, sizeof(phdr)) != sizeof(phdr)) {
 			printf("read phdr: %s\n", strerror(errno));
 			return (1);
 		}
-		if (phdr.p_type != PT_LOAD ||
-		    (phdr.p_flags & (PF_W|PF_X)) == 0)
+		if (phdr.p_type != PT_LOAD || (phdr.p_flags & (PF_W|PF_X)) == 0)
 			continue;
 
 		/* Read in segment. */
 		printf("%s%lu@0x%lx", first ? "" : "+", (u_long)phdr.p_filesz,
 		    (u_long)phdr.p_vaddr);
 		(void)lseek(fd, (size_t)phdr.p_offset, SEEK_SET);
+
 		/* 
 		 * If the segment's VA is aligned on a 4MB boundary, align its
 		 * request 4MB aligned physical memory.  Otherwise use default
@@ -120,9 +117,10 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 
 		/* Zero BSS. */
 		if (phdr.p_filesz < phdr.p_memsz) {
-			printf("+%lu@0x%lx", (u_long)phdr.p_memsz - phdr.p_filesz,
+			printf("+%lu@0x%lx",
+			    (u_long)phdr.p_memsz - phdr.p_filesz,
 			    (u_long)(phdr.p_vaddr + phdr.p_filesz));
-			bzero((void*)(long)phdr.p_vaddr + phdr.p_filesz,
+			bzero((void *)(uintptr_t)phdr.p_vaddr + phdr.p_filesz,
 			    (size_t)phdr.p_memsz - phdr.p_filesz);
 		}
 		first = 0;
@@ -133,19 +131,19 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	/*
 	 * Compute the size of the symbol table.
 	 */
-	size = sizeof(CAT3(Elf,ELFSIZE,_Ehdr)) + (elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
+	size = sizeof(CAT3(Elf,ELFSIZE,_Ehdr)) +
+		(elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
 	shp = addr = alloc(elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
 	(void)lseek(fd, (off_t)elf->e_shoff, SEEK_SET);
-	if (read(fd, addr, (size_t)(elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)))) !=
-	    elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr))) {
+	ssize = (size_t)(elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
+	if (read(fd, addr, ssize) != ssize) {
 		printf("read section headers: %s\n", strerror(errno));
 		return (1);
 	}
 	for (i = 0; i < elf->e_shnum; i++, shp++) {
 		if (shp->sh_type == SHT_NULL)
 			continue;
-		if (shp->sh_type != SHT_SYMTAB
-		    && shp->sh_type != SHT_STRTAB) {
+		if (shp->sh_type != SHT_SYMTAB && shp->sh_type != SHT_STRTAB) {
 			shp->sh_offset = 0; 
 			shp->sh_type = SHT_NOBITS;
 			continue;
@@ -168,17 +166,15 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	elf->e_phentsize = 0;
 	elf->e_phnum = 0;
 	bcopy(elf, addr, sizeof(CAT3(Elf,ELFSIZE,_Ehdr)));
-	bcopy(shp, addr + sizeof(CAT3(Elf,ELFSIZE,_Ehdr)), 
-	      elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
-	free(shp, elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
+	bcopy(shp, addr + sizeof(CAT3(Elf,ELFSIZE,_Ehdr)), ssize);
+	free(shp, ssize);
 	*ssymp = addr;
 
 	/*
 	 * Now load the symbol sections themselves.
 	 */
 	shp = addr + sizeof(CAT3(Elf,ELFSIZE,_Ehdr));
-	size = sizeof(CAT3(Elf,ELFSIZE,_Ehdr)) +
-		(elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
+	size = sizeof(CAT3(Elf,ELFSIZE,_Ehdr)) + ssize);
 	size = ELF_ALIGN(size);
 	addr += size;
 	off = size;
