@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.3 2001/10/31 17:20:50 thorpej Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.4 2001/10/31 21:24:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -103,6 +103,203 @@
 
 #define	ELFROUND	(ELFSIZE / 8)
 
+#ifndef _STANDALONE
+#include "byteorder.h"
+
+/*
+ * Byte swapping may be necessary in the non-_STANDLONE case because
+ * we may be built with a host compiler.
+ */
+#define	E16(f)								\
+	f = (bo == ELFDATA2LSB) ? sa_htole16(f) : sa_htobe16(f)
+#define	E32(f)								\
+	f = (bo == ELFDATA2LSB) ? sa_htole32(f) : sa_htobe32(f)
+#define	E64(f)								\
+	f = (bo == ELFDATA2LSB) ? sa_htole64(f) : sa_htobe64(f)
+
+#define	I16(f)								\
+	f = (bo == ELFDATA2LSB) ? sa_le16toh(f) : sa_be16toh(f)
+#define	I32(f)								\
+	f = (bo == ELFDATA2LSB) ? sa_le32toh(f) : sa_be32toh(f)
+#define	I64(f)								\
+	f = (bo == ELFDATA2LSB) ? sa_le64toh(f) : sa_be64toh(f)
+
+static void
+internalize_ehdr(Elf_Byte bo, Elf_Ehdr *ehdr)
+{
+
+#if ELFSIZE == 32
+	I16(ehdr->e_type);
+	I16(ehdr->e_machine);
+	I32(ehdr->e_version);
+	I32(ehdr->e_entry);
+	I32(ehdr->e_phoff);
+	I32(ehdr->e_shoff);
+	I32(ehdr->e_flags);
+	I16(ehdr->e_ehsize);
+	I16(ehdr->e_phentsize);
+	I16(ehdr->e_phnum);
+	I16(ehdr->e_shentsize);
+	I16(ehdr->e_shnum);
+	I16(ehdr->e_shstrndx);
+#elif ELFSIZE == 64
+	I16(ehdr->e_type);
+	I16(ehdr->e_machine);
+	I32(ehdr->e_version);
+	I64(ehdr->e_entry);
+	I64(ehdr->e_phoff);
+	I64(ehdr->e_shoff);
+	I32(ehdr->e_flags);
+	I16(ehdr->e_ehsize);
+	I16(ehdr->e_phentsize);
+	I16(ehdr->e_phnum);
+	I16(ehdr->e_shentsize);
+	I16(ehdr->e_shnum);
+	I16(ehdr->e_shstrndx);
+#else
+#error ELFSIZE is not 32 or 64
+#endif
+}
+
+static void
+externalize_ehdr(Elf_Byte bo, Elf_Ehdr *ehdr)
+{
+
+#if ELFSIZE == 32
+	E16(ehdr->e_type);
+	E16(ehdr->e_machine);
+	E32(ehdr->e_version);
+	E32(ehdr->e_entry);
+	E32(ehdr->e_phoff);
+	E32(ehdr->e_shoff);
+	E32(ehdr->e_flags);
+	E16(ehdr->e_ehsize);
+	E16(ehdr->e_phentsize);
+	E16(ehdr->e_phnum);
+	E16(ehdr->e_shentsize);
+	E16(ehdr->e_shnum);
+	E16(ehdr->e_shstrndx);
+#elif ELFSIZE == 64
+	E16(ehdr->e_type);
+	E16(ehdr->e_machine);
+	E32(ehdr->e_version);
+	E64(ehdr->e_entry);
+	E64(ehdr->e_phoff);
+	E64(ehdr->e_shoff);
+	E32(ehdr->e_flags);
+	E16(ehdr->e_ehsize);
+	E16(ehdr->e_phentsize);
+	E16(ehdr->e_phnum);
+	E16(ehdr->e_shentsize);
+	E16(ehdr->e_shnum);
+	E16(ehdr->e_shstrndx);
+#else
+#error ELFSIZE is not 32 or 64
+#endif
+}
+
+static void
+internalize_phdr(Elf_Byte bo, Elf_Phdr *phdr)
+{
+
+#if ELFSIZE == 32
+	I32(phdr->p_type);
+	I32(phdr->p_offset);
+	I32(phdr->p_vaddr);
+	I32(phdr->p_paddr);
+	I32(phdr->p_filesz);
+	I32(phdr->p_memsz);
+	I32(phdr->p_flags);
+	I32(phdr->p_align);
+#elif ELFSIZE == 64
+	I32(phdr->p_type);
+	I32(phdr->p_offset);
+	I64(phdr->p_vaddr);
+	I64(phdr->p_paddr);
+	I64(phdr->p_filesz);
+	I64(phdr->p_memsz);
+	I64(phdr->p_flags);
+	I64(phdr->p_align);
+#else
+#error ELFSIZE is not 32 or 64
+#endif
+}
+
+static void
+internalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
+{
+
+#if ELFSIZE == 32
+	I32(shdr->sh_name);
+	I32(shdr->sh_type);
+	I32(shdr->sh_flags);
+	I32(shdr->sh_addr);
+	I32(shdr->sh_offset);
+	I32(shdr->sh_size);
+	I32(shdr->sh_link);
+	I32(shdr->sh_info);
+	I32(shdr->sh_addralign);
+	I32(shdr->sh_entsize);
+#elif ELFSIZE == 64
+	I32(shdr->sh_name);
+	I32(shdr->sh_type);
+	I64(shdr->sh_flags);
+	I64(shdr->sh_addr);
+	I64(shdr->sh_offset);
+	I64(shdr->sh_size);
+	I32(shdr->sh_link);
+	I32(shdr->sh_info);
+	I64(shdr->sh_addralign);
+	I64(shdr->sh_entsize);
+#else
+#error ELFSIZE is not 32 or 64
+#endif
+}
+
+static void
+externalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
+{
+
+#if ELFSIZE == 32
+	E32(shdr->sh_name);
+	E32(shdr->sh_type);
+	E32(shdr->sh_flags);
+	E32(shdr->sh_addr);
+	E32(shdr->sh_offset);
+	E32(shdr->sh_size);
+	E32(shdr->sh_link);
+	E32(shdr->sh_info);
+	E32(shdr->sh_addralign);
+	E32(shdr->sh_entsize);
+#elif ELFSIZE == 64
+	E32(shdr->sh_name);
+	E32(shdr->sh_type);
+	E64(shdr->sh_flags);
+	E64(shdr->sh_addr);
+	E64(shdr->sh_offset);
+	E64(shdr->sh_size);
+	E32(shdr->sh_link);
+	E32(shdr->sh_info);
+	E64(shdr->sh_addralign);
+	E64(shdr->sh_entsize);
+#else
+#error ELFSIZE is not 32 or 64
+#endif
+}
+#else /* _STANDALONE */
+/*
+ * Byte swapping is never necessary in the _STANDALONE case because
+ * we are being built with the target compiler.
+ */
+#define	internalize_ehdr(bo, ehdr)	/* nothing */
+#define	externalize_ehdr(bo, ehdr)	/* nothing */
+
+#define	internalize_phdr(bo, phdr)	/* nothing */
+
+#define	internalize_shdr(bo, shdr)	/* nothing */
+#define	externalize_shdr(bo, shdr)	/* nothing */
+#endif /* _STANDALONE */
+
 int
 ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 	int fd;
@@ -117,6 +314,8 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 	paddr_t minp = ~0, maxp = 0, pos = 0;
 	paddr_t offset = marks[MARK_START], shpp, elfp = NULL;
 
+	internalize_ehdr(elf->e_ident[EI_DATA], elf);
+
 	for (first = 1, i = 0; i < elf->e_phnum; i++) {
 		Elf_Phdr phdr;
 		if (lseek(fd, elf->e_phoff + sizeof(phdr) * i, SEEK_SET)
@@ -128,6 +327,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 			WARN(("read phdr"));
 			return 1;
 		}
+		internalize_phdr(elf->e_ident[EI_DATA], &phdr);
 		if (phdr.p_type != PT_LOAD ||
 		    (phdr.p_flags & (PF_W|PF_X)) == 0)
 			continue;
@@ -207,6 +407,12 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 		shpp = maxp;
 		maxp += roundup(sz, ELFROUND);
 
+#ifndef _STANDALONE
+		/* Internalize the section headers. */
+		for (i = 0; i < elf->e_shnum; i++)
+			internalize_shdr(elf->e_ident[EI_DATA], &shp[i]);
+#endif /* ! _STANDALONE */
+
 		/*
 		 * Now load the symbol sections themselves.  Make sure
 		 * the sections are aligned. Don't bother with any
@@ -251,6 +457,12 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 			shp[i].sh_name = 0;
 		}
 		if (flags & LOAD_SYM) {
+#ifndef _STANDALONE
+			/* Externalize the section headers. */
+			for (i = 0; i < elf->e_shnum; i++)
+				externalize_shdr(elf->e_ident[EI_DATA],
+				    &shp[i]);
+#endif /* ! _STANDALONE */
 			BCOPY(shp, shpp, sz);
 
 			if (first == 0)
@@ -269,7 +481,9 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 		elf->e_phentsize = 0;
 		elf->e_phnum = 0;
 		elf->e_shstrndx = SHN_UNDEF;
+		externalize_ehdr(elf->e_ident[EI_DATA], elf);
 		BCOPY(elf, elfp, sizeof(*elf));
+		internalize_ehdr(elf->e_ident[EI_DATA], elf);
 	}
 
 	marks[MARK_START] = LOADADDR(minp);
