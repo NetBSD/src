@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.8 2002/09/18 01:45:25 chs Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.9 2003/06/26 20:47:10 aymeric Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,19 +34,24 @@
  * Device I/O routines using Open Firmware
  */
 
+#include "ofdev.h"
+
+#include <string.h>
+
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/disklabel_mbr.h>
 
 #include <netinet/in.h>
 
-#include <lib/libsa/stand.h>
+#include <lib/libsa/byteorder.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/dosfs.h>
 #include <lib/libsa/nfs.h>
 
-#include "ofdev.h"
+#include "net.h"
+#include "openfirm.h"
 
 extern char bootdev[];
 
@@ -57,9 +62,7 @@ extern char bootdev[];
 #endif
 
 static char *
-filename(str, ppart)
-	char *str;
-	char *ppart;
+filename(char *str, char *ppart)
 {
 	char *cp, *lp;
 	char savec;
@@ -118,16 +121,11 @@ filename(str, ppart)
 }
 
 static int
-strategy(devdata, rw, blk, size, buf, rsize)
-	void *devdata;
-	int rw;
-	daddr_t blk;
-	size_t size;
-	void *buf;
-	size_t *rsize;
+strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
+	 size_t *rsize)
 {
 	struct of_dev *dev = devdata;
-	uint64_t pos;
+	u_quad_t pos;
 	int n;
 
 	if (rw != F_READ)
@@ -135,7 +133,7 @@ strategy(devdata, rw, blk, size, buf, rsize)
 	if (dev->type != OFDEV_DISK)
 		panic("strategy");
 
-	pos = (uint64_t)(blk + dev->partoff) * dev->bsize;
+	pos = (u_quad_t)((blk + dev->partoff) * dev->bsize);
 
 	for (;;) {
 		if (OF_seek(dev->handle, pos) < 0)
@@ -152,8 +150,12 @@ strategy(devdata, rw, blk, size, buf, rsize)
 }
 
 static int
-devclose(of)
-	struct open_file *of;
+devopen_dummy(struct open_file *of, ...) {
+	return -1;
+}
+
+static int
+devclose(struct open_file *of)
 {
 	struct of_dev *op = of->f_devdata;
 
@@ -161,14 +163,11 @@ devclose(of)
 		net_close(op);
 	OF_close(op->handle);
 	op->handle = -1;
+	return 0;
 }
 
 static struct devsw devsw[1] = {
-	"OpenFirmware",
-	strategy,
-	(int (*)__P((struct open_file *, ...)))nodev,
-	devclose,
-	noioctl
+	{ "OpenFirmware", strategy, devopen_dummy, devclose, noioctl }
 };
 int ndevs = sizeof devsw / sizeof devsw[0];
 
@@ -198,8 +197,7 @@ char opened_name[256];
 int floppyboot;
 
 static u_long
-get_long(p)
-	const void *p;
+get_long(const void *p)
 {
 	const unsigned char *cp = p;
 
@@ -210,12 +208,8 @@ get_long(p)
  * Find a valid disklabel.
  */
 static int
-search_label(devp, off, buf, lp, off0)
-	struct of_dev *devp;
-	u_long off;
-	char *buf;
-	struct disklabel *lp;
-	u_long off0;
+search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
+								u_long off0)
 {
 	size_t read;
 	struct mbr_partition *p;
@@ -274,10 +268,7 @@ search_label(devp, off, buf, lp, off0)
 }
 
 int
-devopen(of, name, file)
-	struct open_file *of;
-	const char *name;
-	char **file;
+devopen(struct open_file *of, const char *name, char **file)
 {
 	char *cp;
 	char partition;
@@ -388,7 +379,7 @@ devopen(of, name, file)
 		of->f_devdata = &ofdev;
 		file_system[0] = file_system_nfs;
 		nfsys = 1;
-		if (error = net_open(&ofdev))
+		if ((error = net_open(&ofdev)) != 0)
 			goto bad;
 		return 0;
 	}
