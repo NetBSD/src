@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.118 2001/05/08 11:26:16 dillo Exp $
+.\"	$NetBSD: main,v 1.119 2001/05/08 23:58:14 hubertf Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -760,9 +760,9 @@ because there is a
 .Xr named.conf 5
 option to change the version string:
 .(disp
-option {
+ option {
 	version "newstring";
-};
+ };
 .disp)
 .
 .It
