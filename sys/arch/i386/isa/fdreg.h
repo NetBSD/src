@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.6 1994/10/27 04:17:15 cgd Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.7 1995/01/29 02:58:26 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -40,7 +40,7 @@
  */
 
 /* uses NEC765 controller */
-#include <i386/isa/ic/nec765.h>
+#include <dev/ic/nec765.h>
 
 /* registers */
 #define	fdout	2	/* Digital Output Register (W) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.9 1994/10/30 21:43:32 cgd Exp $	*/
+/*	$NetBSD: cy.c,v 1.10 1995/01/29 02:58:24 cgd Exp $	*/
 
 /*
  * cyclades cyclom-y serial driver
@@ -78,7 +78,7 @@
 #include <machine/cpufunc.h>
 
 #include <i386/isa/isa_device.h>
-#include <i386/isa/ic/cd1400.h>
+#include <dev/ic/cd1400.h>
 
 #define RxFifoThreshold	3	/* 3 characters (out of 12) in the receive
 				 * FIFO before an interrupt is generated
