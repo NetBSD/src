@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.1 2002/03/24 15:46:48 bjh21 Exp $ */
+/* $NetBSD: start.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -25,14 +25,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 /*
  * start.c -- In the beginning...
  */
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.1 2002/03/24 15:46:48 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
