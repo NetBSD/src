@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.16.4.1 2003/07/13 09:45:22 jlam Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.16.4.2 2003/07/31 19:17:37 jlam Exp $
 .\"
 .\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
@@ -37,6 +37,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl V
+.Bk -words
+.Op Fl s Ar sfx_pattern
+.Ek
 .Ar command Op args ...
 .Sh DESCRIPTION
 This command performs various administrative tasks around the
@@ -47,6 +50,13 @@ Available commands are:
 .Bl -tag -width check
 .It Fl V
 Print version number and exit.
+.It Fl s Ar sfx_pattern
+Set the shell glob pattern for package suffices when matching package
+names for
+.Cm lsall
+and
+.Cm lsbest .
+The default pattern is ".t[bg]z".
 .It Cm check Op Ar pkg ...
 Use this command to check the files belonging to some or all of the
 packages installed on the local machine against their MD5 checksum
@@ -84,15 +94,15 @@ yui# cd /usr/pkgsrc/packages/i386ELF/All/
 yui# ls unzip*
 unzip-5.40.tgz  unzip-5.41.tgz
 yui# pkg_admin lsall 'unzip*'
-unzip-5.40.tgz
-unzip-5.41.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.40.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.41.tgz
 yui# pkg_admin lsall 'unzip\*[Ge]5.40'
-unzip-5.40.tgz
-unzip-5.41.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.40.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.41.tgz
 yui# pkg_admin lsall 'unzip\*[Ge]5.41'
-unzip-5.41.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.41.tgz
 yui# pkg_admin lsbest 'unzip\*[Ge]5.40'
-unzip-5.41.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.41.tgz
 yui# pkg_admin lsall /usr/pkgsrc/packages/i386ELF/All/'{mit,unproven}-pthread*'
 /usr/pkgsrc/packages/i386ELF/All/mit-pthreads-1.60b6.tgz
 /usr/pkgsrc/packages/i386ELF/All/unproven-pthreads-0.15.tgz

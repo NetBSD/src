@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.28.2.2 2003/07/31 17:34:45 jlam Exp $	*/
+/*	$NetBSD: main.c,v 1.28.2.3 2003/07/31 19:17:36 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.28.2.2 2003/07/31 17:34:45 jlam Exp $");
+__RCSID("$NetBSD: main.c,v 1.28.2.3 2003/07/31 19:17:36 jlam Exp $");
 #endif
 
 /*
@@ -46,6 +46,10 @@ __RCSID("$NetBSD: main.c,v 1.28.2.2 2003/07/31 17:34:45 jlam Exp $");
 #include <stdio.h>
 
 #include "lib.h"
+
+#define DEFAULT_SFX	".t[bg]z"	/* default suffix for ls{all,best} */
+
+static const char Options[] = "s:V";
 
 void    usage(void);
 
@@ -338,21 +342,40 @@ lspattern_fn(const char *pkg, void *vp)
 int 
 main(int argc, char *argv[])
 {
+	int	ch;
+	char	sfx[FILENAME_MAX];
+	Boolean	use_default_sfx = TRUE;
+
 	setprogname(argv[0]);
 
 	if (argc < 2)
 		usage();
 
-	if (strcmp(argv[1], "-V") == 0) {
+	while ((ch = getopt(argc, argv, Options)) != -1)
+		switch (ch) {
+		case 's':
+			(void) strlcpy(sfx, optarg, sizeof(sfx));
+			use_default_sfx = FALSE;
+			break;
 
-		show_version();
-		/* NOTREACHED */
+		case 'V':
+			show_version();
+			/* NOTREACHED */
 
-	} else if (strcasecmp(argv[1], "pmatch") == 0) {
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	argc -= optind;
+	argv += optind;
+
+	if (use_default_sfx)
+		(void) snprintf(sfx, sizeof(sfx), "%s", DEFAULT_SFX);
+
+	if (strcasecmp(argv[0], "pmatch") == 0) {
 
 		char *pattern, *pkg;
 		
-		argv++;		/* argv[0] */
 		argv++;		/* "pmatch" */
 
 		pattern = argv[0];
@@ -368,14 +391,13 @@ main(int argc, char *argv[])
 			return 1;
 		}
 	  
-	} else if (strcasecmp(argv[1], "rebuild") == 0) {
+	} else if (strcasecmp(argv[0], "rebuild") == 0) {
 
 		rebuild();
 		printf("Done.\n");
 
-	} else if (strcasecmp(argv[1], "check") == 0) {
+	} else if (strcasecmp(argv[0], "check") == 0) {
 
-		argv++;		/* argv[0] */
 		argv++;		/* "check" */
 
 		if (*argv != NULL) {
@@ -429,10 +451,9 @@ main(int argc, char *argv[])
 		}
 		printf("Done.\n");
 
-	} else if (strcasecmp(argv[1], "lsall") == 0) {
+	} else if (strcasecmp(argv[0], "lsall") == 0) {
 		int saved_wd;
 
-		argv++;		/* argv[0] */
 		argv++;		/* "lsall" */
 
 		/* preserve cwd */
@@ -449,7 +470,7 @@ main(int argc, char *argv[])
 
 			dir = dirname_of(*argv);
 			basep = basename_of(*argv);
-			snprintf(base, sizeof(base), "%s.t[bg]z", basep);
+			snprintf(base, sizeof(base), "%s%s", basep, sfx);
 
 			fchdir(saved_wd);
 			rc = chdir(dir);
@@ -467,10 +488,9 @@ main(int argc, char *argv[])
 
 		close(saved_wd);
 
-	} else if (strcasecmp(argv[1], "lsbest") == 0) {
+	} else if (strcasecmp(argv[0], "lsbest") == 0) {
 		int saved_wd;
 
-		argv++;		/* argv[0] */
 		argv++;		/* "lsbest" */
 
 		/* preserve cwd */
@@ -488,7 +508,7 @@ main(int argc, char *argv[])
 
 			dir = dirname_of(*argv);
 			basep = basename_of(*argv);
-			snprintf(base, sizeof(base), "%s.t[bg]z", basep);
+			snprintf(base, sizeof(base), "%s%s", basep, sfx);
 
 			fchdir(saved_wd);
 			rc = chdir(dir);
@@ -508,15 +528,15 @@ main(int argc, char *argv[])
 
 		close(saved_wd);
 
-	} else if (strcasecmp(argv[1], "list") == 0 ||
-	    strcasecmp(argv[1], "dump") == 0) {
+	} else if (strcasecmp(argv[0], "list") == 0 ||
+	    strcasecmp(argv[0], "dump") == 0) {
 
 		pkgdb_dump();
 
 	}
 #ifdef PKGDB_DEBUG
-	else if (strcasecmp(argv[1], "del") == 0 ||
-	    strcasecmp(argv[1], "delete") == 0) {
+	else if (strcasecmp(argv[0], "del") == 0 ||
+	    strcasecmp(argv[0], "delete") == 0) {
 
 		int     rc;
 
@@ -533,7 +553,7 @@ main(int argc, char *argv[])
 		
 		pkgdb_close();
 
-	} else if (strcasecmp(argv[1], "add") == 0) {
+	} else if (strcasecmp(argv[0], "add") == 0) {
 
 		int     rc;
 
@@ -568,7 +588,7 @@ main(int argc, char *argv[])
 void 
 usage(void)
 {
-	printf("usage: pkg_admin [-V] command args ...\n"
+	printf("usage: pkg_admin [-V] [-s sfx] command args ...\n"
 	    "Where 'commands' and 'args' are:\n"
 	    " rebuild                     - rebuild pkgdb from +CONTENTS files\n"
 	    " check [pkg ...]             - check md5 checksum of installed files\n"
