@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.12 1996/05/19 20:22:09 pk Exp $	*/
+/*	$NetBSD: move.c,v 1.13 1996/07/03 04:17:24 chopps Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 7/19/93";
 #else
-static char rcsid[] = "$NetBSD: move.c,v 1.12 1996/05/19 20:22:09 pk Exp $";
+static char rcsid[] = "$NetBSD: move.c,v 1.13 1996/07/03 04:17:24 chopps Exp $";
 #endif
 #endif /* not lint */
 
@@ -604,11 +604,13 @@ getcap()
 	if (DO == 0)
 		DO = "\n";
 
-	BS = tgetstr("bc", &ap);
-	if (BS == 0 && tgetflag("bs"))
-		BS = "\b";
-	if (BS)
-		xBC = *BS;
+	BS = tgetstr("le", &ap);
+	if (BS == 0) {
+		/* try using obsolete capabilities */
+		BS = tgetstr("bc", &ap);
+		if (BS == 0 && tgetflag("bs"))
+			BS = "\b";
+	}
 
 	TA = tgetstr("ta", &ap);
 	if (TA == 0 && tgetflag("pt"))
@@ -654,7 +656,8 @@ getcap()
 	}
 	NDlength = strlen(ND);
 	if (BS == 0) {
-		fprintf(stderr, "Terminal must have `bs' or `bc' capability\n");
+		fprintf(stderr,
+		    "Terminal must have 'le' or `bs' or `bc' capability\n");
 		exit(5);
 	}
 	BSlength = strlen(BS);
