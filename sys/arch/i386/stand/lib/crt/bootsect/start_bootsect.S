@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.6 1998/10/15 15:28:22 ws Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.7 1998/11/11 16:46:38 ws Exp $	*/
 	
 /* BIOS bootsector startup
  parts from netbsd:sys/arch/i386/boot/start.S
@@ -96,6 +96,9 @@ pacify_braindead_bios:
 	# ljmp to the next instruction to adjust %cs
 	data32
 	ljmp $0x7c0, $start1
+
+	/* some BIOSs insist on patching the BPB, esp. on LS120 drives */
+	. = _C_LABEL(boot1) + 0x25
 
 start1:
 	# set up %ds
