@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.44 1999/10/11 09:18:09 mrg Exp $	*/
+/*	$NetBSD: print.c,v 1.45 1999/10/15 19:31:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.44 1999/10/11 09:18:09 mrg Exp $");
+__RCSID("$NetBSD: print.c,v 1.45 1999/10/15 19:31:24 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: print.c,v 1.44 1999/10/11 09:18:09 mrg Exp $");
 #include "ps.h"
 
 extern kvm_t *kd;
-extern int needenv, needcomm, commandonly;
+extern int needenv, needcomm, commandonly, dontuseprocfs;
 
 static char *cmdpart __P((char *));
 static void  printval __P((char *, VAR *));
@@ -144,6 +144,7 @@ command(ki, ve)
 {
 	VAR *v;
 	int left;
+	static int use_procfs=0;
 	char **argv, **p, *name;
 
 	v = ve->var;
@@ -156,7 +157,7 @@ command(ki, ve)
 			left = v->width;
 	} else
 		left = -1;
-	if (needenv) {
+	if (needenv && kd) {
 		argv = kvm_getenvv(kd, ki->ki_p, termwidth);
 		if ((p = argv) != NULL) {
 			while (*p) {
@@ -169,7 +170,13 @@ command(ki, ve)
 	if (needcomm) {
 		name = KI_PROC(ki)->p_comm;
 		if (!commandonly) {
-			argv = kvm_getargv(kd, ki->ki_p, termwidth);
+			argv = NULL;
+			if (kd && !use_procfs)
+				argv = kvm_getargv(kd, ki->ki_p, termwidth);
+			if (argv == NULL && !dontuseprocfs) {
+				argv = procfs_getargv(ki->ki_p, termwidth);
+				use_procfs = 1;
+			}
 			if ((p = argv) != NULL) {
 				while (*p) {
 					fmt_puts(*p, &left);
@@ -181,6 +188,10 @@ command(ki, ve)
 				fmt_putc('(', &left);
 				fmt_puts(name, &left);
 				fmt_putc(')', &left);
+			}
+			if (use_procfs) {
+				free(argv[0]);
+				free(argv);
 			}
 		} else {
 			fmt_puts(name, &left);
@@ -549,7 +560,7 @@ getpcpu(k)
 	static int failure;
 
 	if (!nlistread)
-		failure = donlist();
+		failure = (kd) ? donlist() : 1;
 	if (failure)
 		return (0.0);
 
@@ -588,7 +599,7 @@ getpmem(k)
 	int szptudot;
 
 	if (!nlistread)
-		failure = donlist();
+		failure = (kd) ? donlist() : 1;
 	if (failure)
 		return (0.0);
 

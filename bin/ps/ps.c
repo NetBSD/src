@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.28 1999/03/27 21:38:08 bgrayson Exp $	*/
+/*	$NetBSD: ps.c,v 1.29 1999/10/15 19:31:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.28 1999/03/27 21:38:08 bgrayson Exp $");
+__RCSID("$NetBSD: ps.c,v 1.29 1999/10/15 19:31:25 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,7 @@ int	needuser, needcomm, needenv, commandonly;
 
 enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 
+static KINFO	*getkinfo_kvm __P((kvm_t *, int, int, int *, int));
 static char	*kludge_oldps_options __P((char *));
 static int	 pscomp __P((const void *, const void *));
 static void	 saveuser __P((KINFO *));
@@ -112,7 +113,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	struct kinfo_proc *kp;
 	struct varent *vent;
 	struct winsize ws;
 	gid_t egid = getegid();
@@ -305,8 +305,14 @@ main(argc, argv)
 		(void)setegid(egid);
 
 	kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
-	if (kd == 0)
-		errx(1, "%s", errbuf);
+	if (kd == 0) {
+		if (dontuseprocfs)
+			errx(1, "%s", errbuf);
+		else {
+			warnx("kvm_openfiles: %s", errbuf);
+			fprintf(stderr, "ps: falling back to /proc-based lookup\n");
+		}
+	}
 
 	if (nlistf == NULL && memf == NULL && swapf == NULL)
 		(void)setgid(getgid());
@@ -319,10 +325,11 @@ main(argc, argv)
 	 * and adjusting header widths as appropiate.
 	 */
 	scanvars();
+
 	/*
 	 * select procs
 	 */
-	if ((kp = kvm_getprocs(kd, what, flag, &nentries)) == 0)
+	if (!kd || !(kinfo = getkinfo_kvm(kd, what, flag, &nentries, needuser)))
 	{
 		/*  If/when the /proc-based code is ripped out
 		 *  again, make sure all references to the -K
@@ -339,14 +346,15 @@ main(argc, argv)
 		 *  mounted) to grab as much information as we can.  
 		 *  The guts of emulating kvm_getprocs() is in
 		 *  the file procfs_ops.c.  */
-		warnx("%s.", kvm_geterr(kd));
+		if (kd)
+			warnx("%s.", kvm_geterr(kd));
 		if (dontuseprocfs) {
 			exit(1);
 		}
 		/*  procfs_getprocs supports all but the
 		 *  KERN_PROC_RUID flag.  */
-		kp=procfs_getprocs(what, flag, &nentries);
-		if (kp == 0) {
+		kinfo = getkinfo_procfs(what, flag, &nentries);
+		if (kinfo == 0) {
 		  errx(1, "fallback /proc-based lookup also failed.  %s",
 				  "Giving up...");
 		}
@@ -354,13 +362,7 @@ main(argc, argv)
 		    "Warning:  /proc does not provide ",
 		    "valid data for all fields.\n");
 	}
-	if ((kinfo = malloc(nentries * sizeof(*kinfo))) == NULL)
-		err(1, "%s", "");
-	for (i = nentries; --i >= 0; ++kp) {
-		kinfo[i].ki_p = kp;
-		if (needuser)
-			saveuser(&kinfo[i]);
-	}
+
 	/*
 	 * print header
 	 */
@@ -396,6 +398,29 @@ main(argc, argv)
 	/* NOTREACHED */
 }
 
+static KINFO *
+getkinfo_kvm(kd, what, flag, nentriesp, needuser)
+	kvm_t *kd;
+	int what, flag, *nentriesp, needuser;
+{
+	struct kinfo_proc *kp;
+	KINFO *kinfo=NULL;
+	size_t i;
+
+	if ((kp = kvm_getprocs(kd, what, flag, nentriesp)) != 0)
+	{
+		if ((kinfo = malloc((*nentriesp) * sizeof(*kinfo))) == NULL)
+			err(1, "%s", "");
+		for (i = *nentriesp; --i >= 0; ++kp) {
+			kinfo[i].ki_p = kp;
+			if (needuser)
+				saveuser(&kinfo[i]);
+		}
+	}
+
+	return (kinfo);
+}
+
 static void
 scanvars()
 {
@@ -425,7 +450,7 @@ saveuser(ki)
 	struct usave *usp;
 
 	usp = &ki->ki_u;
-	if (kvm_read(kd, (u_long)&KI_PROC(ki)->p_addr->u_stats,
+	if (kd && kvm_read(kd, (u_long)&KI_PROC(ki)->p_addr->u_stats,
 	    (char *)&pstats, sizeof(pstats)) == sizeof(pstats)) {
 		/*
 		 * The u-area might be swapped out, and we can't get
