@@ -1,7 +1,7 @@
-/*	$NetBSD: pch.c,v 1.10 2002/03/15 19:44:54 kristerw Exp $	*/
+/*	$NetBSD: pch.c,v 1.11 2002/03/16 22:36:42 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pch.c,v 1.10 2002/03/15 19:44:54 kristerw Exp $");
+__RCSID("$NetBSD: pch.c,v 1.11 2002/03/16 22:36:42 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -36,6 +36,7 @@ static LINENUM p_sline;			/* and the line number for it */
 static LINENUM p_hunk_beg;		/* line number of current hunk */
 static LINENUM p_efake = -1;		/* end of faked up lines--don't free */
 static LINENUM p_bfake = -1;		/* beg of faked up lines */
+static FILE *pfp = NULL;		/* patch file pointer */
 
 /* Prepare to look for the next patch in the patch file. */
 static void malformed(void);
@@ -154,7 +155,7 @@ there_is_another_patch(void)
 	while (filearg[0] == NULL) {
 		if (force || batch) {
 			say("No file to patch.  Skipping...\n");
-			filearg[0] = savestr(bestguess);
+			filearg[0] = xstrdup(bestguess);
 			skip_rest_of_patch = TRUE;
 			return TRUE;
 		}
@@ -162,7 +163,7 @@ there_is_another_patch(void)
 		if (*buf != '\n') {
 			if (bestguess)
 				free(bestguess);
-			bestguess = savestr(buf);
+			bestguess = xstrdup(buf);
 			filearg[0] = fetchname(buf, 0, FALSE);
 		}
 		if (filearg[0] == NULL) {
@@ -247,17 +248,17 @@ intuit_diff_type(void)
 			p_indent = indent;	/* assume this for now */
 		}
 		if (!stars_last_line && strnEQ(s, "*** ", 4))
-			oldtmp = savestr(s+4);
+			oldtmp = xstrdup(s + 4);
 		else if (strnEQ(s, "--- ", 4))
-			newtmp = savestr(s+4);
+			newtmp = xstrdup(s + 4);
 		else if (strnEQ(s, "+++ ", 4))
-			oldtmp = savestr(s+4);	/* pretend it is the old name */
+			oldtmp = xstrdup(s + 4);	/* pretend it is the old name */
 		else if (strnEQ(s, "Index:", 6))
-			indtmp = savestr(s+6);
+			indtmp = xstrdup(s + 6);
 		else if (strnEQ(s, "Prereq:", 7)) {
 			for (t = s + 7; isspace((unsigned char)*t); t++)
 				;
-			revision = savestr(t);
+			revision = xstrdup(t);
 			for (t = revision;
 			     *t && !isspace((unsigned char)*t);
 			     t++)
@@ -334,23 +335,23 @@ intuit_diff_type(void)
 					    ok_to_create_file);
 		if (oldname && newname) {
 			if (strlen(oldname) < strlen(newname))
-				filearg[0] = savestr(oldname);
+				filearg[0] = xstrdup(oldname);
 			else
-				filearg[0] = savestr(newname);
+				filearg[0] = xstrdup(newname);
 		}
 		else if (oldname)
-			filearg[0] = savestr(oldname);
+			filearg[0] = xstrdup(oldname);
 		else if (newname)
-			filearg[0] = savestr(newname);
+			filearg[0] = xstrdup(newname);
 		else if (indname)
-			filearg[0] = savestr(indname);
+			filearg[0] = xstrdup(indname);
 	}
 	if (bestguess) {
 		free(bestguess);
 		bestguess = NULL;
 	}
 	if (filearg[0] != NULL)
-		bestguess = savestr(filearg[0]);
+		bestguess = xstrdup(filearg[0]);
 	else if (indtmp != NULL)
 		bestguess = fetchname(indtmp, strippath, TRUE);
 	else {
