@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.43 2000/12/19 15:44:27 lukem Exp $ */
+/*	$NetBSD: fdisk.c,v 1.44 2000/12/19 16:01:28 lukem Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.43 2000/12/19 15:44:27 lukem Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.44 2000/12/19 16:01:28 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@ static char lbuf[LBUF];
 #define	_PATH_DEFDISK	"/dev/rwd0d"
 #endif
 
-char *disk = _PATH_DEFDISK;
+const char *disk = _PATH_DEFDISK;
 
 struct disklabel disklabel;		/* disk parameters */
 
@@ -142,8 +142,8 @@ int bootsize;		/* actual size of bootcode */
 static char reserved[] = "reserved";
 
 struct part_type {
-	int type;
-	char *name;
+	int		 type;
+	const char	*name;
 } part_types[] = {
 	{0x00, "unused"},
 	{0x01, "Primary DOS with 12 bit FAT"},
@@ -262,11 +262,12 @@ struct part_type {
 void	usage(void);
 void	print_s0(int);
 void	print_part(int);
+void	print_mbr_partition(struct mbr_partition *, off_t, int);
 int	read_boot(const char *, void *, size_t);
 void	init_sector0(int, int);
 void	intuit_translated_geometry(void);
 void	get_geometry(void);
-void	get_diskname(char *, char *, size_t);
+void	get_diskname(const char *, char *, size_t);
 int	try_heads(quad_t, quad_t, quad_t, quad_t, quad_t, quad_t, quad_t,
 		       quad_t);
 int	try_sectors(quad_t, quad_t, quad_t, quad_t, quad_t);
@@ -276,10 +277,10 @@ void	change_active(int);
 void	get_params_to_use(void);
 void	dos(int, unsigned char *, unsigned char *, unsigned char *);
 int	open_disk(int);
-int	read_disk(int, void *);
-int	write_disk(int, void *);
+int	read_disk(off_t, void *);
+int	write_disk(off_t, void *);
 int	get_params(void);
-int	read_s0(void);
+int	read_s0(off_t, struct mboot *);
 int	write_s0(void);
 int	yesno(const char *);
 void	decimal(const char *, int *);
@@ -391,7 +392,7 @@ main(int argc, char *argv[])
 	if (open_disk(B_flag || a_flag || i_flag || u_flag) < 0)
 		exit(1);
 
-	if (read_s0())
+	if (read_s0(0, &mboot))
 		init_sector0(sectors > 63 ? 63 : sectors, 1);
 
 #ifdef __i386__
@@ -539,22 +540,50 @@ print_part(int part)
 		printf("PART%dESEC=%d\n", part, MBR_PSECT(partp->mbrp_esect));
 		return;
 	}
+	print_mbr_partition(partp, 0, 0);
+}
 
-	/* Not sh_flag. */
+void
+print_mbr_partition(struct mbr_partition *partp, off_t offset, int indent)
+{
+	int	empty;
+	off_t	start;
+
+	empty = (partp->mbrp_typ == 0);
+	start = (off_t)getlong(&partp->mbrp_start) + offset;
 	if (empty) {
 		printf("<UNUSED>\n");
 		return;
 	}
-	printf("sysid %d (%s)\n", partp->mbrp_typ, get_type(partp->mbrp_typ));
-	printf("    start %ld, size %ld (%ld MB), flag 0x%x\n",
-	    getlong(&partp->mbrp_start), getlong(&partp->mbrp_size),
+	printf("sysid %d (%s)\n",
+	    partp->mbrp_typ, get_type(partp->mbrp_typ));
+	printf("%*s    start %lld, size %ld (%ld MB), flag 0x%x\n",
+	    indent, "",
+	    start, getlong(&partp->mbrp_size),
 	    getlong(&partp->mbrp_size) * 512 / (1024 * 1024), partp->mbrp_flag);
-	printf("\tbeg: cylinder %4d, head %3d, sector %2d\n",
+	printf("%*s        beg: cylinder %4d, head %3d, sector %2d\n",
+	    indent, "",
 	    MBR_PCYL(partp->mbrp_scyl, partp->mbrp_ssect),
 	    partp->mbrp_shd, MBR_PSECT(partp->mbrp_ssect));
-	printf("\tend: cylinder %4d, head %3d, sector %2d\n",
+	printf("%*s        end: cylinder %4d, head %3d, sector %2d\n",
+	    indent, "",
 	    MBR_PCYL(partp->mbrp_ecyl, partp->mbrp_esect),
 	    partp->mbrp_ehd, MBR_PSECT(partp->mbrp_esect));
+
+	if (partp->mbrp_typ == MBR_PTYPE_EXT ||
+	    partp->mbrp_typ == MBR_PTYPE_EXT_LBA) {
+		struct mboot	eboot;
+		int		part;
+
+		printf("%*s    Extended partition table:\n", indent, "");
+		if (read_s0(start, &eboot) == -1)
+			return;
+		indent += 8;
+		for (part = 0; part < NMBRPART; part++) {
+			printf("%*s%d: ", indent, "", part);
+			print_mbr_partition(&eboot.parts[part], start, indent);
+		}
+	}
 }
 
 int
@@ -609,10 +638,9 @@ init_sector0(int start, int dopart)
 #ifdef __i386__
 
 void	    
-get_diskname(char *fullname, char *diskname, size_t size)
+get_diskname(const char *fullname, char *diskname, size_t size)
 {	       
-	char *p;
-	char *p2;
+	const char *p, *p2;
 	size_t len;
 
 	p = strrchr(fullname, '/');
@@ -896,7 +924,7 @@ void
 intuit_translated_geometry(void)
 {
 
-	int cylinders = -1, heads = -1, sectors = -1, i, j;
+	int xcylinders = -1, xheads = -1, xsectors = -1, i, j;
 	int c1, h1, s1, c2, h2, s2;
 	long a1, a2;
 	quad_t num, denom;
@@ -911,15 +939,15 @@ intuit_translated_geometry(void)
 			num = (quad_t)h1*(a2-s2) - (quad_t)h2*(a1-s1);
 			denom = (quad_t)c2*(a1-s1) - (quad_t)c1*(a2-s2);
 			if (denom != 0 && num % denom == 0) {
-				heads = num / denom;
+				xheads = num / denom;
 				break;
 			}
 		}
-		if (heads != -1)	
+		if (xheads != -1)	
 			break;
 	}
 
-	if (heads == -1)
+	if (xheads == -1)
 		return;
 
 	/* Now figure out the number of sectors from a single mapping. */
@@ -927,18 +955,18 @@ intuit_translated_geometry(void)
 		if (get_mapping(i, &c1, &h1, &s1, &a1) < 0)
 			continue;
 		num = a1 - s1;
-		denom = c1 * heads + h1;
+		denom = c1 * xheads + h1;
 		if (denom != 0 && num % denom == 0) {
-			sectors = num / denom;
+			xsectors = num / denom;
 			break;
 		}
 	}
 
-	if (sectors == -1)
+	if (xsectors == -1)
 		return;
 
 	/* Estimate the number of cylinders. */
-	cylinders = disklabel.d_secperunit / heads / sectors;
+	xcylinders = disklabel.d_secperunit / xheads / xsectors;
 
 	/* Now verify consistency with each of the partition table entries.
 	 * Be willing to shove cylinders up a little bit to make things work,
@@ -946,18 +974,18 @@ intuit_translated_geometry(void)
 	for (i = 0; i < NMBRPART * 2; i++) {
 		if (get_mapping(i, &c1, &h1, &s1, &a1) < 0)
 			continue;
-		if (sectors * (c1 * heads + h1) + s1 != a1)
+		if (xsectors * (c1 * xheads + h1) + s1 != a1)
 			return;
-		if (c1 >= cylinders)
-			cylinders = c1 + 1;
+		if (c1 >= xcylinders)
+			xcylinders = c1 + 1;
 	}
 
 	/* Everything checks out.  Reset the geometry to use for further
 	 * calculations. */
-	dos_cylinders = cylinders;
-	dos_heads = heads;
-	dos_sectors = sectors;
-	dos_cylindersectors = heads * sectors;
+	dos_cylinders = xcylinders;
+	dos_heads = xheads;
+	dos_sectors = xsectors;
+	dos_cylindersectors = xheads * xsectors;
 }
 
 /* For the purposes of intuit_translated_geometry(), treat the partition
@@ -1199,15 +1227,15 @@ checkcyl(int cyl)
 }
 #endif
 
-int fd;
+int fd = -1;
 
 int
-open_disk(int u_flag)
+open_disk(int update)
 {
 	static char namebuf[MAXPATHLEN + 1];
 	struct stat st;
 
-	fd = opendisk(disk, u_flag ? O_RDWR : O_RDONLY, namebuf,
+	fd = opendisk(disk, update ? O_RDWR : O_RDONLY, namebuf,
 	    sizeof(namebuf), 0);
 	if (fd < 0) {
 		warn("%s", namebuf);
@@ -1232,19 +1260,23 @@ open_disk(int u_flag)
 }
 
 int
-read_disk(int sector, void *buf)
+read_disk(off_t sector, void *buf)
 {
 
-	if (lseek(fd, (off_t)(sector * 512), 0) == -1)
+	if (fd == -1)
+		errx(1, "read_disk(); fd == -1");
+	if (lseek(fd, sector * 512, 0) == -1)
 		return (-1);
 	return (read(fd, buf, 512));
 }
 
 int
-write_disk(int sector, void *buf)
+write_disk(off_t sector, void *buf)
 {
 
-	if (lseek(fd, (off_t)(sector * 512), 0) == -1)
+	if (fd == -1)
+		errx(1, "write_disk(); fd == -1");
+	if (lseek(fd, sector * 512, 0) == -1)
 		return (-1);
 	return (write(fd, buf, 512));
 }
@@ -1271,15 +1303,17 @@ get_params(void)
 }
 
 int
-read_s0(void)
+read_s0(off_t offset, struct mboot *boot)
 {
 
-	if (read_disk(0, mboot.bootinst) == -1) {
-		warn("can't read fdisk partition table");
+	if (read_disk(offset, boot->bootinst) == -1) {
+		warn("can't read %s partition table",
+		    offset ? "extended" : "fdisk");
 		return (-1);
 	}
-	if (getshort(&mboot.signature) != MBR_MAGIC) {
-		warnx("invalid fdisk partition table found");
+	if (getshort(&boot->signature) != MBR_MAGIC) {
+		warnx("invalid %s partition table found",
+		    offset ? "extended" : "fdisk");
 		return (-1);
 	}
 	return (0);
