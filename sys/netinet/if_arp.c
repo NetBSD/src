@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.82 2002/06/24 08:06:22 itojun Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.83 2002/06/24 08:42:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.82 2002/06/24 08:06:22 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.83 2002/06/24 08:42:33 itojun Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -632,7 +632,12 @@ arprequest(ifp, sip, tip, enaddr)
 	ah = mtod(m, struct arphdr *);
 	bzero((caddr_t)ah, m->m_len);
 	switch (ifp->if_type) {
-	case IFT_IEEE1394:
+	case IFT_ETHER:		/* RFC826 */
+	case IFT_FDDI:		/* RFC1390 */
+	case IFT_HIPPI:		/* RFC1374 */
+		ah->ar_hrd = htons(ARPHRD_ETHER);
+		break;
+	case IFT_IEEE1394:	/* RFC2734 */
 		ah->ar_hrd = htons(ARPHRD_IEEE1394);
 		break;
 	default:
