@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1 2001/06/13 06:02:00 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.2 2001/07/22 15:09:10 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	bzero(mapstore, mapsize);
+	memset(mapstore, 0, mapsize);
 	map = (struct galaxy_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
