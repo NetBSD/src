@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.1 2002/01/14 23:14:38 bjh21 Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.2 2002/01/17 22:50:38 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1 2002/01/14 23:14:38 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.2 2002/01/17 22:50:38 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,13 @@ linux_setregs(p, epp, stack)
 	setregs(p, epp, stack);
 }
 
+static __inline struct trapframe *
+process_frame(struct proc *p)
+{
+
+	return p->p_addr->u_pcb.pcb_tf;
+}
+
 void
 linux_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
@@ -94,8 +101,95 @@ linux_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
+	struct proc *p = curproc;
+	struct trapframe *tf;
+	struct linux_sigframe *fp, frame;
+	int onstack;
 
-	panic("linux_sendsig not implemented");
+	tf = process_frame(p);
+
+	/*
+	 * The Linux version of this code is in
+	 * linux/arch/arm/kernel/signal.c.
+	 */
+
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
+	if (onstack)
+		fp = (struct linux_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+					  p->p_sigctx.ps_sigstk.ss_size);
+	else
+		fp = (struct linux_sigframe *)tf->tf_usr_sp;
+	fp--;
+
+	/* Build stack frame for signal trampoline. */
+
+	/* Save register context. */
+	frame.sf_sc.sc_r0     = tf->tf_r0;
+	frame.sf_sc.sc_r1     = tf->tf_r1;
+	frame.sf_sc.sc_r2     = tf->tf_r2;
+	frame.sf_sc.sc_r3     = tf->tf_r3;
+	frame.sf_sc.sc_r4     = tf->tf_r4;
+	frame.sf_sc.sc_r5     = tf->tf_r5;
+	frame.sf_sc.sc_r6     = tf->tf_r6;
+	frame.sf_sc.sc_r7     = tf->tf_r7;
+	frame.sf_sc.sc_r8     = tf->tf_r8;
+	frame.sf_sc.sc_r9     = tf->tf_r9;
+	frame.sf_sc.sc_r10    = tf->tf_r10;
+	frame.sf_sc.sc_r11    = tf->tf_r11;
+	frame.sf_sc.sc_r12    = tf->tf_r12;
+	frame.sf_sc.sc_sp     = tf->tf_usr_sp;
+	frame.sf_sc.sc_lr     = tf->tf_usr_lr;
+	frame.sf_sc.sc_pc     = tf->tf_pc;
+	frame.sf_sc.sc_cpsr   = tf->tf_spsr;
+
+	/* Save signal stack. */
+	/* Linux doesn't save the onstack flag in sigframe */
+
+	/* Save signal mask. */
+	native_to_linux_old_extra_sigset(mask, &frame.sf_sc.sc_mask,
+	    frame.sf_extramask);
+
+	/* Other state (mostly faked) */
+	/*
+	 * trapno should indicate the trap that caused the signal:
+	 * 6  -> undefined instruction
+	 * 11 -> address exception
+	 * 14 -> data/prefetch abort
+	 */
+	frame.sf_sc.sc_trapno = 0;
+	frame.sf_sc.sc_error_code = 0;
+	frame.sf_sc.sc_fault_address = code;
+
+	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
+	}
+	/*
+	 * Build context to run handler in.
+	 */
+	tf->tf_r0 = native_to_linux_sig[sig];
+	tf->tf_r1 = 0; /* XXX Should be a siginfo_t */
+	tf->tf_r2 = 0;
+	tf->tf_r3 = (register_t)catcher;
+	tf->tf_usr_sp = (register_t)fp;
+	tf->tf_pc = (register_t)p->p_sigctx.ps_sigcode;
+#ifndef arm26
+	cpu_cache_syncI();
+#endif
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+
 }
 /*
  * System call to cleanup state after a signal
@@ -123,8 +217,64 @@ linux_sys_sigreturn(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+	struct linux_sigframe *sfp, frame;
+	struct trapframe *tf;
+	sigset_t mask;
 
-	return ENOSYS;
+	tf = process_frame(p);
+
+	/*
+	 * The trampoline code hands us the context.
+	 * It is unsafe to keep track of it ourselves, in the event that a
+	 * program jumps out of a signal handler.
+	 */
+	sfp = (struct linux_sigframe *)tf->tf_usr_sp;
+	if (copyin((caddr_t)sfp, &frame, sizeof(*sfp)) != 0)
+		return (EFAULT);
+
+	/*
+	 * Make sure the processor mode has not been tampered with and
+	 * interrupts have not been disabled.
+	 */
+#ifdef __PROG32
+	if ((frame.sf_sc.sc_cpsr & PSR_MODE) != PSR_USR32_MODE ||
+	    (frame.sf_sc.sc_cpsr & (I32_bit | F32_bit)) != 0)
+		return (EINVAL);
+#else /* __PROG26 */
+	if ((frame.sf_sc.sc_pc & R15_MODE) != R15_MODE_USR ||
+	    (frame.sf_sc.sc_pc & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
+		return EINVAL;
+#endif
+
+	/* Restore register context. */
+	tf = process_frame(p);
+	tf->tf_r0    = frame.sf_sc.sc_r0;
+	tf->tf_r1    = frame.sf_sc.sc_r1;
+	tf->tf_r2    = frame.sf_sc.sc_r2;
+	tf->tf_r3    = frame.sf_sc.sc_r3;
+	tf->tf_r4    = frame.sf_sc.sc_r4;
+	tf->tf_r5    = frame.sf_sc.sc_r5;
+	tf->tf_r6    = frame.sf_sc.sc_r6;
+	tf->tf_r7    = frame.sf_sc.sc_r7;
+	tf->tf_r8    = frame.sf_sc.sc_r8;
+	tf->tf_r9    = frame.sf_sc.sc_r9;
+	tf->tf_r10   = frame.sf_sc.sc_r10;
+	tf->tf_r11   = frame.sf_sc.sc_r11;
+	tf->tf_r12   = frame.sf_sc.sc_r12;
+	tf->tf_usr_sp = frame.sf_sc.sc_sp;
+	tf->tf_usr_lr = frame.sf_sc.sc_lr;
+	tf->tf_pc    = frame.sf_sc.sc_pc;
+	tf->tf_spsr  = frame.sf_sc.sc_cpsr;
+
+	/* Restore signal stack. */
+	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	/* Restore signal mask. */
+	linux_old_extra_to_native_sigset(&frame.sf_sc.sc_mask,
+	    frame.sf_extramask, &mask);
+	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+
+	return (EJUSTRETURN);
 }
 
 /* 
