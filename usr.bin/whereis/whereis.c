@@ -1,4 +1,4 @@
-/*	$NetBSD: whereis.c,v 1.11 2002/06/11 06:06:21 itojun Exp $	*/
+/*	$NetBSD: whereis.c,v 1.12 2003/04/03 18:16:45 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)whereis.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: whereis.c,v 1.11 2002/06/11 06:06:21 itojun Exp $");
+__RCSID("$NetBSD: whereis.c,v 1.12 2003/04/03 18:16:45 perry Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,7 +69,7 @@ main(argc, argv)
 	size_t len;
 	int ch, sverrno, mib[2];
 	char *p, *t, *std, path[MAXPATHLEN];
-	int useenvpath = 0;
+	int useenvpath = 0, found = 0;
 
 	while ((ch = getopt(argc, argv, "p")) != -1)
 		switch (ch) {
@@ -120,13 +120,15 @@ main(argc, argv)
 				if (strlen(t) == 0)
 					t = ".";
 			(void)snprintf(path, sizeof(path), "%s/%s", t, *argv);
-			if (!stat(path, &sb))
+			if (!stat(path, &sb)) {
 				(void)printf("%s\n", path);
+				found++;
+			}
 			if (p == NULL)
 				break;
 		}
-
-	return (0);
+	
+	return ((found == 0) ? 3 : ((found == argc) ? 0 : 2));
 }
 
 void
