@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.41 2003/06/11 21:35:43 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.42 2003/06/12 12:41:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,6 +60,13 @@
  *      base, etc, comp, games, man, misc, text,
  *      xbase, xfont, xserver, xcontrib, xcomp.
  */
+
+#define SET_KERNEL_GENERIC	SET_KERNEL_1
+#define SET_KERNEL_MP		SET_KERNEL_2
+#define SET_KERNEL_TINY		SET_KERNEL_3
+#define SET_KERNEL_LAPTOP	SET_KERNEL_4
+#define SET_KERNEL_DIAGNOSTIC	SET_KERNEL_5
+#define SET_KERNEL_PS2		SET_KERNEL_6
 
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
 #define SET_KERNEL_2_NAME	"kern-GENERIC.MP"

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.85 2003/06/12 10:51:41 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.86 2003/06/12 12:41:55 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,7 +76,7 @@ static int mbr_part_above_chs(struct mbr_partition *);
 static int mbr_partstart_above_chs(struct mbr_partition *);
 static void md_upgrade_mbrtype(void);
 #if defined(__i386__)
-static char *get_bootmodel(void);
+static unsigned int get_bootmodel(void);
 #endif
 
 
@@ -357,9 +357,9 @@ md_cleanup_install(void)
 	 * For GENERIC_TINY, do not enable any extra screens or wsmux.
 	 * Otherwise, run getty on 4 VTs.
 	 */
-	if (strcmp(get_bootmodel(), "tiny") == 0) {
-		strncpy(realfrom, target_expand("/etc/wscons.conf"), STRSIZE);
-		strncpy(realto, target_expand("/etc/wscons.conf.install"),
+	if (sets_selected & SET_KERNEL_TINY) {
+		strlcpy(realfrom, target_expand("/etc/wscons.conf"), STRSIZE);
+		strlcpy(realto, target_expand("/etc/wscons.conf.install"),
 		    STRSIZE);
 		snprintf(cmd, sizeof cmd, "sed"
 			    " -e '/^screen/s/^/#/'"
@@ -368,8 +368,8 @@ md_cleanup_install(void)
 	} else
 #endif
 	       {
-		strncpy(realfrom, target_expand("/etc/ttys"), STRSIZE);
-		strncpy(realto, target_expand("/etc/ttys.install"), STRSIZE);
+		strlcpy(realfrom, target_expand("/etc/ttys"), STRSIZE);
+		strlcpy(realto, target_expand("/etc/ttys.install"), STRSIZE);
 		snprintf(cmd, sizeof cmd, "sed "
 				"-e '/^ttyE[1-9]/s/off/on/'"
 				" < %s > %s", realfrom, realto);
@@ -479,7 +479,7 @@ mbr_partstart_above_chs(mbr_partition_t *pt)
 }
 
 #if defined(__i386__)
-char *
+unsigned int
 get_bootmodel(void)
 {
 	struct utsname ut;
@@ -488,27 +488,28 @@ get_bootmodel(void)
 
 	envstr = getenv("BOOTMODEL");
 	if (envstr != NULL)
-		return envstr;
+		return atoi(envstr);
 #endif
 
 	if (uname(&ut) < 0)
-		return "";
+		ut.version[0] = 0;
 
 	if (strstr(ut.version, "TINY") != NULL)
-		return "tiny";
-	else if (strstr(ut.version, "SMALL") != NULL)
-		return "small";
-	else if (strstr(ut.version, "LAPTOP") != NULL)
-		return "laptop";
-	else if (strstr(ut.version, "PS2") != NULL)
-		return "ps2";
-	return "";
+		return SET_KERNEL_TINY;
+	if (strstr(ut.version, "LAPTOP") != NULL)
+		return SET_KERNEL_LAPTOP;
+	if (strstr(ut.version, "PS2") != NULL)
+		return SET_KERNEL_PS2;
+	return SET_KERNEL_GENERIC;
 }
 #endif
 
 void
 md_init(void)
 {
+
+	/* Default to install same type of kernel as we are running */
+	sets_selected = (sets_selected & ~SET_KERNEL) | get_bootmodel();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.11 2003/06/12 11:20:08 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.12 2003/06/12 12:41:56 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -141,15 +141,15 @@ chcesz to zrobic?
 message set_kernel_1
 {Kernel (GENERIC)}
 message set_kernel_2
-{Kernel (GENERIC_TINY)}
-message set_kernel_3
-{Kernel (GENERIC_LAPTOP)}
-message set_kernel_4
-{Kernel (GENERIC_DIAGNOSTIC)}
-message set_kernel_5
-{Kernel (GENERIC_PS2TINY)}
-message set_kernel_6 
 {Kernel (GENERIC.MP)}
+message set_kernel_3
+{Kernel (GENERIC_TINY)}
+message set_kernel_4
+{Kernel (GENERIC_LAPTOP)}
+message set_kernel_5
+{Kernel (GENERIC_DIAGNOSTIC)}
+message set_kernel_6
+{Kernel (GENERIC_PS2TINY)}
 
 message set_md_1        
 {GNU toochain}          /* for amd64 */

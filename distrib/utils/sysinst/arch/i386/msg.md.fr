@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.26 2003/06/12 11:20:07 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.27 2003/06/12 12:41:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -139,15 +139,15 @@ ne sera peut-etre pas possible. Voulez-vous reelement faire ceci ?
 message set_kernel_1
 {Kernel (GENERIC)}
 message set_kernel_2
-{Kernel (GENERIC_TINY)}
-message set_kernel_3
-{Kernel (GENERIC_LAPTOP)}
-message set_kernel_4
-{Kernel (GENERIC_DIAGNOSTIC)}
-message set_kernel_5
-{Kernel (GENERIC_PS2TINY)}
-message set_kernel_6 
 {Kernel (GENERIC.MP)}
+message set_kernel_3
+{Kernel (GENERIC_TINY)}
+message set_kernel_4
+{Kernel (GENERIC_LAPTOP)}
+message set_kernel_5
+{Kernel (GENERIC_DIAGNOSTIC)}
+message set_kernel_6
+{Kernel (GENERIC_PS2TINY)}
 
 message set_md_1        
 {GNU toochain}          /* for amd64 */
