@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.4 1998/07/31 15:07:42 mycroft Exp $	*/
+/*	$NetBSD: endian.h,v 1.5 1999/01/15 13:31:27 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -59,9 +59,6 @@ in_addr_t htonl __P((in_addr_t));
 in_port_t htons __P((in_port_t));
 in_addr_t ntohl __P((in_addr_t));
 in_port_t ntohs __P((in_port_t));
-u_int16_t	bswap16 __P((u_int16_t));
-u_int32_t	bswap32 __P((u_int32_t));
-u_int64_t	bswap64 __P((u_int64_t));
 __END_DECLS
 
 /*

@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.9 1998/08/04 01:26:20 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.10 1999/01/15 13:31:15 bouyer Exp $
 
 KMINCLUDES=
 KMSRCS=	divrem.m4 \
 	bcopy.S bzero.S ffs.S \
-	memcpy.S memmove.S \
-	htonl.S htons.S ntohl.S ntohs.S \
-	byte_swap_2.S byte_swap_4.S
+	memcpy.S memmove.S
 #KMSRCS=	bcmp.S strcat.S strcmp.S strcpy.S strlen.S
 
 # `source' files built from m4 source
