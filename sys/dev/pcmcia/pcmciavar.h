@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.21 2004/08/08 23:17:13 mycroft Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.22 2004/08/09 20:02:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -142,9 +142,7 @@ struct pcmcia_function {
 	bus_addr_t	pf_mfc_iobase[2];
 	bus_size_t	pf_mfc_iomask;
 	int		pf_mfc_windows;
-	int		(*ih_fct) __P((void *));
-	void		*ih_arg;
-	int		ih_ipl;
+	void		*pf_ih;
 	int		pf_flags;
 
 	union pcmcia_funce pf_funce; /* CISTPL_FUNCE */
