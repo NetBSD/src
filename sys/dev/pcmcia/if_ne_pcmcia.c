@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.10 1998/02/13 04:51:22 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.11 1998/03/06 20:00:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -96,8 +96,6 @@ struct ne2000dev {
     { "DEC DEPCM-BA", 
       0x0000, 0x0000, "DIGITAL", "DEPCM-XX", 0,
       0x0ff0, { 0x00, 0x00, 0xe8 } },
-    /* this card might need pcic_alloc_iobase < 0x400, and/or
-       CIRRUS_PD672X on TI TravelMate 5000 needs it: */
     { "Linksys EthernetCard",
       0x0149, 0x0265, "LINKSYS", "E-CARD",
       0, -1, { 0x00, 0x80, 0xc8 } },
@@ -105,7 +103,6 @@ struct ne2000dev {
       0x0149, 0xc1ab, NULL, NULL,
       0, -1, { 0x00, 0x80, 0xc8 } },
     { "Planet SmartCOM 2000",
-      /* This card doesn't have manufacturer and product id in CIS.  */
       PCMCIA_MANUFACTURER_INVALID, PCMCIA_PRODUCT_INVALID,
       "PCMCIA", "UE2212", 0,
       0xff0, { 0x00, 0x00, 0xe8 } },
@@ -116,6 +113,10 @@ struct ne2000dev {
     { "I-O DATA PCLA/T",
       0x01bf, 0x2216, NULL, NULL, 0,
       -1 /* two possible location, 0x01c0 or 0x0ff0 */, { 0x00, 0xa0, 0xb0 } },
+    { "Dayna CommuniCard E",
+      0x0194, 0x002d,
+      "Dayna", "CommuniCard E", 0,
+      0x0110, { 0x00, 0x80, 0x19 } },
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
