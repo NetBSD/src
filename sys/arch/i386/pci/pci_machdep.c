@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4 1994/10/27 04:21:39 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5 1994/11/03 22:27:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -58,6 +58,17 @@
 #include <i386/pci/pcireg.h>
 
 int pci_mode = -1;
+
+int
+pcimatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+
+	if (pci_mode_detect() == 0)
+		return 0;
+	return 1;
+}
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
 #define	PCI_MODE1_ADDRESS_REG	0x0cf8
