@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.17.2.1 1999/04/26 20:52:18 perry Exp $	
+.\"	$NetBSD: install,v 1.17.2.2 1999/04/27 20:59:39 perry Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,6 +82,9 @@ If your machine has a fragmented physical memory space, as,
 e.g., DraCo machines, you should add the
 .Fl n2 No option to 
 enable the use of all memory segments.
+.Pp
+If you have a M680x0 + PPC board, make sure the PPC cpu is inactive
+before using loadbsd, else the kernel will hang!
 .Ss2 Directly\ booting\ NetBSD,\ with\ boot\ blocks\ installed:
 .Pp
 [This description is for V40 (OS 3.1) ROMs. For older ROMs,

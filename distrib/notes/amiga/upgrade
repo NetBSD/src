@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.16.2.2 1999/04/26 20:53:21 perry Exp $	
+.\"	$NetBSD: upgrade,v 1.16.2.3 1999/04/27 21:02:14 perry Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,6 +76,9 @@ command:
 If you machine has a split memory space, like, e.g., DraCo
 machines, use this instead:
 .Dl loadbsd -bn2 netbsd
+.Pp
+If you have a M680x0 + PPC board, make sure the PPC cpu is inactive
+before using loadbsd, else the kernel will hang!
 .Ss2 Directly\ booting\ NetBSD,\ with\ boot\ blocks\ installed:
 .(tag Note:
 This description is for V40 (OS 3.1) ROMs. For older ROMs,
