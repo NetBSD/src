@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.72 2003/04/03 22:18:25 fvdl Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.73 2003/04/19 19:16:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -460,6 +460,7 @@ struct scsipi_periph {
 #define PQUIRK_NOBIGMODESENSE	0x00040000	/* has no big mode-sense op */
 #define PQUIRK_CAP_SYNC		0x00080000	/* SCSI device with ST sync op*/
 #define PQUIRK_CAP_WIDE16	0x00100000	/* SCSI device with ST wide op*/
+#define PQUIRK_CAP_NODT		0x00200000	/* signals DT, but can't. */
 
 
 /*
