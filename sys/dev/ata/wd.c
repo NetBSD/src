@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -34,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.40 1994/02/25 17:45:28 mycroft Exp $
+ *	$Id: wd.c,v 1.41 1994/02/25 18:08:21 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -78,12 +79,12 @@
 #include <i386/isa/wdreg.h>
 
 #ifndef WDCNDELAY
-#define WDCNDELAY	400000	/* delay = 25us; so 10s for a controller state change */
+#define WDCNDELAY	100000	/* delay = 100us; so 10s for a controller state change */
 #endif
-#define WDCDELAY	25
+#define WDCDELAY	100
 
-/* if you enable this, it will report any delays more than 25us * N long */
-/*#define WDCNDELAY_DEBUG	6 */
+/* if you enable this, it will report any delays more than 100us * N long */
+/*#define WDCNDELAY_DEBUG	2*/
 
 #define	WDIORETRIES	5	/* number of retries before giving up */
 
@@ -1577,10 +1578,9 @@ wdtimeout(caddr_t arg)
 	if (wdtimeoutstatus[unit] && --wdtimeoutstatus[unit] == 0) {
 		struct disk *du = wddrives[unit];
 		int wdc = du->dk_port;
-/* #ifdef WDDEBUG */
+
 		printf("wd%d: lost interrupt - status %x, error %x\n",
 		    unit, inb(wdc+wd_status), inb(wdc+wd_error));
-/* #endif */
 		outb(wdc+wd_ctlr, WDCTL_RST | WDCTL_IDS);
 		DELAY(1000);
 		outb(wdc+wd_ctlr, WDCTL_IDS);
@@ -1591,7 +1591,7 @@ wdtimeout(caddr_t arg)
 		du->dk_flags |= DKFL_SINGLE;
 		wdstart(du->dk_ctrlr);		/* start controller */
 	}
-	timeout((timeout_t)wdtimeout, (caddr_t)unit, 50);
+	timeout((timeout_t)wdtimeout, (caddr_t)unit, hz/2);
 	splx(x);
 	return 0;
 }
