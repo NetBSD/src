@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.3 2003/02/01 06:23:42 thorpej Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.4 2003/02/17 09:55:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -84,7 +84,7 @@ MALLOC_DEFINE(M_SMBFSDATA, "SMBFS data", "SMBFS private data");
 /*
  * Total number of days that have passed for each month in a regular year.
  */
-static u_short regyear[] = {
+static const u_short regyear[] = {
 	31, 59, 90, 120, 151, 181,
 	212, 243, 273, 304, 334, 365
 };
@@ -92,7 +92,7 @@ static u_short regyear[] = {
 /*
  * Total number of days that have passed for each month in a leap year.
  */
-static u_short leapyear[] = {
+static const u_short leapyear[] = {
 	31, 60, 91, 121, 152, 182,
 	213, 244, 274, 305, 335, 366
 };
@@ -123,7 +123,7 @@ smb_time_server2local(u_long seconds, int tzoff, struct timespec *tsp)
 /*
  * Number of seconds between 1970 and 1601 year
  */
-int64_t DIFF1970TO1601 = 11644473600ULL;
+const int64_t DIFF1970TO1601 = 11644473600ULL;
 
 /*
  * Time from server comes as UTC, so no need to use tz
@@ -148,7 +148,7 @@ smb_time_unix2dos(struct timespec *tsp, int tzoff, u_int16_t *ddp,
 	u_int16_t *dtp,	u_int8_t *dhp)
 {
 	u_long t, days, year, month, inc;
-	u_short *months;
+	const u_short *months;
 
 	/*
 	 * If the time from the last conversion is the same as now, then
@@ -218,7 +218,7 @@ smb_dos2unixtime(u_int dd, u_int dt, u_int dh, int tzoff,
 	u_long month;
 	u_long year;
 	u_long days;
-	u_short *months;
+	const u_short *months;
 
 	if (dd == 0) {
 		tsp->tv_sec = 0;
