@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 1997/02/03 16:55:00 oki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 1997/02/03 21:08:48 oki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -67,9 +67,6 @@ configure()
 	extern int x68k_realconfig;
 	
 	x68k_realconfig = 1;
-
-	/* Initialize the mountroot_hook list. */
-	LIST_INIT(&mrh_list);
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
@@ -173,7 +170,7 @@ findroot(devpp, partp)
 	for (i = 0; x68k_nam2blk[i].d_name != NULL; i++)
 		if (majdev == x68k_nam2blk[i].d_maj)
 			break;
-	if (x68k_nam2blk[i] == NULL)
+	if (x68k_nam2blk[i].d_name == NULL)
 		return;
 
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
