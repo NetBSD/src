@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.53 2002/06/26 23:05:33 christos Exp $ */
+/* $NetBSD: vga.c,v 1.54 2002/06/27 06:26:53 junyoung Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.53 2002/06/26 23:05:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.54 2002/06/27 06:26:53 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,8 +597,7 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 
 void
 vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
-		  bus_space_tag_t memt, int type, int quirks,
-		  const struct vga_funcs *vf)
+		  bus_space_tag_t memt, int type, const struct vga_funcs *vf)
 {
 	int console;
 	struct vga_config *vc;
@@ -615,7 +614,7 @@ vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
 	}
 
 	vc->vc_type = type;
-	vc->vc_nfontslots = (quirks & VGA_QUIRK_ONEFONT) ? 1 : 8;
+	vc->vc_nfontslots = 8;
 	vc->vc_funcs = vf;
 
 	sc->sc_vc = vc;
@@ -648,7 +647,6 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 #else
 	scr = vga_console_vc.currenttype;
 #endif
-	vga_console_vc.vc_nfontslots = 1; /* for now assume buggy adapter */
 	vga_init_screen(&vga_console_vc, &vga_console_screen, scr, 1, &defattr);
 
 	wsdisplay_cnattach(scr, &vga_console_screen,
@@ -846,17 +844,18 @@ vga_usefont(struct vga_config *vc, struct egavga_font *f)
 			goto loadit;
 		}
 	}
-
-	/*
-	 * This should only happen if there is only 1 font slot
-	 * which is occupied by the builtin font.
-	 * Last resort: kick out the builtin font.
-	 */
-	KASSERT(vc->vc_fonts[0] == &vga_builtinfont);
-	TAILQ_REMOVE(&vc->vc_fontlist, &vga_builtinfont, next);
-	slot = 0;
+	panic("vga_usefont");
 
 loadit:
+#ifdef VGA_CONSOLE_ATI_BROKEN_FONTSEL
+	if (slot == 1) {
+		/* Load the builtin font to slot 1. */
+		vga_loadchars(&vc->hdl, slot, 0, 256, f->wsfont->fontheight,
+			      NULL);
+		vc->vc_fonts[slot] = &vga_builtinfont;
+		slot++;
+	}
+#endif
 	vga_loadchars(&vc->hdl, slot, f->wsfont->firstchar,
 		      f->wsfont->numchars, f->wsfont->fontheight,
 		      f->wsfont->data);
