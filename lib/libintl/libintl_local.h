@@ -1,4 +1,4 @@
-/*	$NetBSD: libintl_local.h,v 1.5 2001/02/16 07:20:35 minoura Exp $	*/
+/*	$NetBSD: libintl_local.h,v 1.6 2001/09/27 15:27:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -24,13 +24,15 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $Citrus: xpg4dl/FreeBSD/lib/libintl/libintl_local.h,v 1.13 2001/09/27 15:18:45 yamt Exp $
  */
 
 #define MO_MAGIC		0x950412de
 #define MO_MAGIC_SWAPPED	0xde120495
 #define MO_REVISION		0
 
-#define GETTEXT_MMAP_MAX	(64 * 1024)	/*XXX*/
+#define GETTEXT_MMAP_MAX	(1024 * 1024)	/*XXX*/
 
 #define DEFAULT_DOMAINNAME	"messages"
 
