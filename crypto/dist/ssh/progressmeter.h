@@ -1,8 +1,7 @@
-/*	$NetBSD: crc32.h,v 1.1.1.8 2003/04/03 05:57:20 itojun Exp $	*/
-/*	$OpenBSD: crc32.h,v 1.14 2003/02/12 21:39:50 markus Exp $	*/
-
+/*	$NetBSD: progressmeter.h,v 1.1.1.1 2003/04/03 05:57:27 itojun Exp $	*/
+/*	$OpenBSD: progressmeter.h,v 1.1 2003/01/10 08:19:07 fgsch Exp $	*/
 /*
- * Copyright (c) 2003 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2002 Nils Nordman.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,7 +24,5 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SSH_CRC32_H
-#define SSH_CRC32_H
-u_int32_t	 ssh_crc32(const u_char *, u_int32_t);
-#endif
+void	start_progress_meter(char *, off_t, off_t *);
+void	stop_progress_meter(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.1.1.13 2002/10/01 13:40:00 itojun Exp $	*/
+/*	$NetBSD: ssh-keyscan.c,v 1.1.1.14 2003/04/03 05:57:37 itojun Exp $	*/
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.40 2002/07/06 17:47:58 stevesk Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.41 2003/02/16 17:09:57 markus Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -336,6 +336,8 @@ keygrab_ssh2(con *c)
 	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = c->c_keytype == KT_DSA?
 	    "ssh-dss": "ssh-rsa";
 	c->c_kex = kex_setup(myproposal);
+	c->c_kex->kex[KEX_DH_GRP1_SHA1] = kexdh_client;
+	c->c_kex->kex[KEX_DH_GEX_SHA1] = kexgex_client;
 	c->c_kex->verify_host_key = hostjump;
 
 	if (!(j = setjmp(kexjmp))) {

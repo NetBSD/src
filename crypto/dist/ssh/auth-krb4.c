@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-krb4.c,v 1.1.1.9 2002/10/01 13:39:55 itojun Exp $	*/
+/*	$NetBSD: auth-krb4.c,v 1.1.1.10 2003/04/03 05:57:14 itojun Exp $	*/
 /*
  * Copyright (c) 1999 Dug Song.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-krb4.c,v 1.28 2002/09/26 11:38:43 markus Exp $");
+RCSID("$OpenBSD: auth-krb4.c,v 1.29 2003/02/21 10:34:48 mpech Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -272,7 +272,7 @@ auth_krb4(Authctxt *authctxt, KTEXT auth, char **client, KTEXT reply)
 		reply->length = r;
 
 	/* Clear session key. */
-	memset(&adat.session, 0, sizeof(&adat.session));
+	memset(&adat.session, 0, sizeof(adat.session));
 	return (1);
 }
 #endif /* KRB4 */
