@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.25 1999/08/19 14:12:34 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.26 1999/08/19 19:37:22 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.25 1999/08/19 14:12:34 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.26 1999/08/19 19:37:22 hubertf Exp $");
 #endif
 #endif
 
@@ -76,6 +76,7 @@ pkg_do(char *pkg)
 		if ((cp = fileFindByPath(NULL, pkg)) != NULL)
 			strncpy(fname, cp, FILENAME_MAX);
 	}
+	
 	if (cp) {
 		if (URLlength(pkg) > 0) {
 			/* file is already unpacked by fileGetURL() */
@@ -99,17 +100,32 @@ pkg_do(char *pkg)
 				goto bail;
 			}
 		}
-	}
-	/*
-	 * It's not an uninstalled package, try and find it among the
-	 * installed
-	 */
-	else {
+	} else {
+	    /*
+	     * It's not an uninstalled package, try and find it among the
+	     * installed
+	     */
 		char           *tmp;
 
-		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
+		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s",
+				(tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
 			pkg);
 		if (!fexists(log_dir) || !isdir(log_dir)) {
+			{
+			    /* Check if the given package name matches something
+			     * with 'pkg-[0-9]*'
+			     */
+			    char try[FILENAME_MAX];
+			    snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
+			    if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
+						 find_fn, NULL) != 0) {
+				return 0; /* we've just appended some names to the pkgs list,
+					   * they will be processed after this package.
+					   */
+			    }
+			}
+
+			/* No match */
 			warnx("can't find package `%s' installed or in a file!", pkg);
 			return 1;
 		}
@@ -226,6 +242,17 @@ CheckForPkg(char *pkgspec, char *dbdir)
 	if (!error && !Quiet) {
 		printf("%s\n", pkgspec);
 	}
+	if (error) {
+	    /* found nothing - try 'pkg-[0-9]*'
+	     */
+	    char try[FILENAME_MAX];
+	    snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkgspec);
+	    if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
+				 foundpkg, NULL) != 0) {
+                error = 0;
+	    }
+	    
+	}
 	return error;
 }
 
@@ -290,6 +317,7 @@ pkg_perform(lpkg_head_t *pkgs)
 		}
 	    }
 	} else {
+	    /* Show info on individual pkg(s) */
 	    lpkg_t *lpp;
 
 	    while ((lpp = TAILQ_FIRST(pkgs))) {
