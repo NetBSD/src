@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.h,v 1.1 1998/11/13 04:20:26 oster Exp $	*/
+/*	$NetBSD: rf_acctrace.h,v 1.2 1999/01/26 02:33:49 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,76 +32,6 @@
  *
  *****************************************************************************/
 
-/* :  
- *
- * Log: rf_acctrace.h,v 
- * Revision 1.32  1996/08/02 15:12:38  jimz
- * remove dead code
- *
- * Revision 1.31  1996/07/27  14:34:39  jimz
- * remove bogus semicolon
- *
- * Revision 1.30  1996/07/18  22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.29  1996/07/17  21:00:58  jimz
- * clean up timer interface, tracing
- *
- * Revision 1.28  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.27  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- * /
- *
- * Revision 1.26  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.25  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.24  1996/05/30  12:59:18  jimz
- * make etimer happier, more portable
- *
- * Revision 1.23  1996/05/28  12:34:30  jimz
- * nail down size of reconacc
- *
- * Revision 1.22  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.21  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.20  1996/05/02  14:57:24  jimz
- * change to boolean_t
- *
- * Revision 1.19  1995/12/14  18:37:06  jimz
- * convert to rf_types.h types
- *
- * Revision 1.18  1995/11/30  16:26:49  wvcii
- * added copyright info
- *
- * Revision 1.17  1995/09/30  19:49:23  jimz
- * add AccTotals structure, for capturing totals in kernel
- *
- * Revision 1.16  1995/09/12  00:20:55  wvcii
- * added support for tracing disk queue time
- *
- * Revision 1.15  95/09/06  19:23:12  wvcii
- * increased MAX_IOS_PER_TRACE_ENTRY from 1 to 4
- * 
- */
 
 #ifndef _RF__RF_ACCTRACE_H_
 #define _RF__RF_ACCTRACE_H_

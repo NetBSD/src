@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.c,v 1.1 1998/11/13 04:20:28 oster Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.2 1999/01/26 02:33:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,109 +36,6 @@
  * and to the allocation list stuff.
  */
 
-/* :  
- * Log: rf_debugMem.c,v 
- * Revision 1.38  1996/08/20 14:45:43  jimz
- * add debugging to track memory allocated (amount only, w/out
- * excessive sanity checking)
- *
- * Revision 1.37  1996/07/27  23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.36  1996/07/18  22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.35  1996/06/13  08:55:38  jimz
- * make error messages refer to file, line of original
- * allocation
- *
- * Revision 1.34  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.33  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.32  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.31  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.30  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.29  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.28  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.27  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.26  1996/05/21  18:53:46  jimz
- * return NULL for failed allocations, not panic
- *
- * Revision 1.25  1996/05/20  16:14:19  jimz
- * switch to rf_{mutex,cond}_{init,destroy}
- *
- * Revision 1.24  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.23  1996/05/17  12:42:35  jimz
- * wrap get_threadid stuff in #ifndef UTILITY for utils which use
- * redzone allocation stuff
- *
- * Revision 1.22  1996/05/16  23:06:09  jimz
- * don't warn about NULL alists
- *
- * Revision 1.21  1996/05/16  22:25:02  jimz
- * show allocations for [MC]allocAndAdd
- *
- * Revision 1.20  1996/05/15  18:30:22  jimz
- * print memory allocation as well as frees if memDebug > 1
- *
- * Revision 1.19  1996/05/07  17:41:17  jimz
- * add "level 2" for memDebug, which will print freed address ranges
- *
- * Revision 1.18  1996/05/02  20:41:53  jimz
- * really fix malloc problem out-of-kernel in memory_hash_insert()
- *
- * Revision 1.17  1996/05/02  20:04:29  jimz
- * fixed malloc deadlock previous change introduced
- *
- * Revision 1.16  1996/05/01  16:27:26  jimz
- * get rid of ALLOCMH
- * stop using ccmn_ memory management
- *
- * Revision 1.15  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.14  1995/12/01  15:56:17  root
- * added copyright info
- *
- */
-
 #include "rf_types.h"
 #include "rf_sys.h"
 
@@ -150,10 +47,6 @@
 #include "rf_utility.h"
 #endif /* RF_UTILITY == 0 */
 
-#ifndef KERNEL
-#include <stdio.h>
-#include <assert.h>
-#endif /* !KERNEL */
 #include "rf_debugMem.h"
 #include "rf_general.h"
 
@@ -177,7 +70,7 @@ static int mh_table_initialized=0;
 static void memory_hash_insert(void *addr, int size, int line, char *filen);
 static int memory_hash_remove(void *addr, int sz);
 
-#ifndef KERNEL                    /* no redzones or "real_" routines in the kernel */
+#ifndef _KERNEL                    /* no redzones or "real_" routines in the kernel */
 
 static void rf_redzone_free_failed(void *ptr, int size, int line, char *file);
 
@@ -436,7 +329,7 @@ static void rf_redzone_free_failed(ptr,size,line,file)
   RF_ASSERT(0);
 }
 
-#endif /* !KERNEL */
+#endif /* !_KERNEL */
 
 void rf_record_malloc(p, size, line, filen)
 void *p;
@@ -521,11 +414,7 @@ char *filen;
     /* search for this address in the hash table */
     for (p=mh_table[bucket]; p && (p->address != addr); p=p->next);
     if (!p) {
-#ifdef KERNEL
       RF_Malloc(p,sizeof(struct mh_struct),(struct mh_struct *));
-#else /* KERNEL */
-      p = (struct mh_struct *)malloc(sizeof(struct mh_struct));
-#endif /* KERNEL */
       RF_ASSERT(p);
       p->next = mh_table[bucket];
       mh_table[bucket] = p;
@@ -569,9 +458,4 @@ int sz;
 void rf_ReportMaxMem()
 {
     printf("Max memory used:  %d bytes\n",(int)max_mem);
-#ifndef KERNEL
-    fflush(stdout);
-    fprintf(stderr,"Max memory used:  %d bytes\n",max_mem);
-    fflush(stderr);
-#endif /* !KERNEL */
 }

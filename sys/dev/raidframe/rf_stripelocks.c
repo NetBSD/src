@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.1 1998/11/13 04:20:34 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.2 1999/01/26 02:34:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -24,93 +24,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-
-/* :  
- * Log: rf_stripelocks.c,v 
- * Revision 1.35  1996/06/10 12:50:57  jimz
- * Add counters to freelists to track number of allocations, frees,
- * grows, max size, etc. Adjust a couple sets of PRIME params based
- * on the results.
- *
- * Revision 1.34  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.33  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.32  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.31  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.30  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.29  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.28  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.27  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.26  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.25  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.24  1996/05/20  16:15:00  jimz
- * switch to rf_{mutex,cond}_{init,destroy}
- *
- * Revision 1.23  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.22  1996/05/16  22:28:11  jimz
- * misc cleanup
- *
- * Revision 1.21  1996/05/15  23:39:52  jimz
- * remove #if 0 code
- *
- * Revision 1.20  1996/05/15  23:37:38  jimz
- * convert to using RF_FREELIST stuff for StripeLockDesc allocation
- *
- * Revision 1.19  1996/05/08  18:00:53  jimz
- * fix number of args to debug printf
- *
- * Revision 1.18  1996/05/06  22:33:07  jimz
- * added better debug info
- *
- * Revision 1.17  1996/05/06  22:09:01  wvcii
- * added copyright info and change log
- *
  */
 
 /*
@@ -143,10 +56,6 @@
  * searching through stripe lock descriptors.
  */
 
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
 #include "rf_types.h"
 #include "rf_raid.h"
 #include "rf_stripelocks.h"
@@ -167,11 +76,7 @@
 #define Dprintf7(s,a,b,c,d,e,f,g) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),NULL)
 #define Dprintf8(s,a,b,c,d,e,f,g,h) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),(void *)((unsigned long)h))
 
-#ifndef KERNEL
-#define FLUSH fflush(stdout)
-#else /* !KERNEL */
 #define FLUSH
-#endif /* !KERNEL */
 
 #define HASH_STRIPEID(_sid_)  ( (_sid_) & (rf_lockTableSize-1) )
 #define MAX_FREELIST 100

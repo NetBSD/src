@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.1 1998/11/13 04:20:28 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.2 1999/01/26 02:33:53 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -47,172 +47,6 @@
  *    to check to find out whether or not the acquire was suppressed.
  */
 
-/* :  
- * Log: rf_dagfuncs.c,v 
- * Revision 1.64  1996/07/31 16:29:26  jimz
- * LONGSHIFT -> RF_LONGSHIFT, defined in rf_types.h
- *
- * Revision 1.63  1996/07/30  04:00:20  jimz
- * define LONGSHIFT for mips
- *
- * Revision 1.62  1996/07/28  20:31:39  jimz
- * i386netbsd port
- * true/false fixup
- *
- * Revision 1.61  1996/07/27  23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.60  1996/07/22  19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.59  1996/07/18  22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.58  1996/07/17  21:00:58  jimz
- * clean up timer interface, tracing
- *
- * Revision 1.57  1996/07/15  17:22:18  jimz
- * nit-pick code cleanup
- * resolve stdlib problems on DEC OSF
- *
- * Revision 1.56  1996/06/11  01:27:50  jimz
- * Fixed bug where diskthread shutdown would crash or hang. This
- * turned out to be two distinct bugs:
- * (1) [crash] The thread shutdown code wasn't properly waiting for
- * all the diskthreads to complete. This caused diskthreads that were
- * exiting+cleaning up to unlock a destroyed mutex.
- * (2) [hang] TerminateDiskQueues wasn't locking, and DiskIODequeue
- * only checked for termination _after_ a wakeup if the queues were
- * empty. This was a race where the termination wakeup could be lost
- * by the dequeueing thread, and the system would hang waiting for the
- * thread to exit, while the thread waited for an I/O or a signal to
- * check the termination flag.
- *
- * Revision 1.55  1996/06/10  22:23:18  wvcii
- * disk and xor funcs now optionally support undo logging
- * for backward error recovery experiments
- *
- * Revision 1.54  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.53  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.52  1996/06/06  17:28:44  jimz
- * add new read mirror partition func, rename old read mirror
- * to rf_DiskReadMirrorIdleFunc
- *
- * Revision 1.51  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.50  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.49  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.48  1996/05/30  12:59:18  jimz
- * make etimer happier, more portable
- *
- * Revision 1.47  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.46  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.45  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.44  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.43  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.42  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.41  1996/05/08  21:01:24  jimz
- * fixed up enum type names that were conflicting with other
- * enums and function names (ie, "panic")
- * future naming trends will be towards RF_ and rf_ for
- * everything raidframe-related
- *
- * Revision 1.40  1996/05/08  15:24:14  wvcii
- * modified GenericWakeupFunc to use recover, undone, and panic node states
- *
- * Revision 1.39  1996/05/02  17:18:01  jimz
- * fix up headers for user-land, following ccmn cleanup
- *
- * Revision 1.38  1996/05/01  16:26:51  jimz
- * don't include rf_ccmn.h (get ready to phase out)
- *
- * Revision 1.37  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.36  1995/12/04  19:19:09  wvcii
- * modified DiskReadMirrorFunc
- *  - added fifth parameter, physical disk address of mirror copy
- *  - SelectIdleDisk conditionally swaps parameters 0 & 4
- *
- * Revision 1.35  1995/12/01  15:58:33  root
- * added copyright info
- *
- * Revision 1.34  1995/11/17  18:12:17  amiri
- * Changed DiskReadMirrorFunc to use the generic mapping routines
- * to find the mirror of the data, function was assuming RAID level 1.
- *
- * Revision 1.33  1995/11/17  15:15:59  wvcii
- * changes in DiskReadMirrorFunc
- *   - added ASSERTs
- *   - added call to MapParityRAID1
- *
- * Revision 1.32  1995/11/07  16:25:50  wvcii
- * added DiskUnlockFuncForThreads
- * general debugging of undo functions (first time they were used)
- *
- * Revision 1.31  1995/09/06  19:23:36  wvcii
- * fixed tracing for parity logging nodes
- *
- * Revision 1.30  95/07/07  00:13:01  wvcii
- * added 4th parameter to ParityLogAppend
- * 
- */
-
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
-#ifndef KERNEL
-#include <errno.h>
-#endif /* !KERNEL */
-
 #include <sys/ioctl.h>
 #include <sys/param.h>
 
@@ -228,9 +62,7 @@
 #include "rf_engine.h"
 #include "rf_dagutils.h"
 
-#ifdef KERNEL
 #include "rf_kintf.h"
-#endif /* KERNEL */
 
 #if RF_INCLUDE_PARITYLOGGING > 0
 #include "rf_paritylog.h"
@@ -453,9 +285,7 @@ int rf_DiskReadFuncForThreads(node)
   caddr_t        undoBuf;
 #endif
 
-#ifdef KERNEL
   if (node->dagHdr->bp) b_proc = (void *) ((struct buf *) node->dagHdr->bp)->b_proc;
-#endif /* KERNEL */
 
   RF_ASSERT( !(lock && unlock) );
   flags |= (lock)   ? RF_LOCK_DISK_QUEUE   : 0;
@@ -507,9 +337,7 @@ int rf_DiskWriteFuncForThreads(node)
   caddr_t undoBuf;
 #endif
 
-#ifdef KERNEL
   if (node->dagHdr->bp) b_proc = (void *) ((struct buf *) node->dagHdr->bp)->b_proc;
-#endif /* KERNEL */
 
 #if RF_BACKWARD > 0
   /* This area is used only for backward error recovery experiments
@@ -868,16 +696,7 @@ int rf_bxor(src, dest, len, bp)
 }
 
 /* map a user buffer into kernel space, if necessary */
-#ifdef KERNEL
-#ifdef __NetBSD__
-/* XXX Not a clue if this is even close.. */
 #define REMAP_VA(_bp,x,y) (y) = (x)
-#else
-#define REMAP_VA(_bp,x,y) (y) = (unsigned long *) ((IS_SYS_VA(x)) ? (unsigned long *)(x) : (unsigned long *) rf_MapToKernelSpace((struct buf *) (_bp), (caddr_t)(x)))
-#endif /* __NetBSD__ */
-#else /* KERNEL */
-#define REMAP_VA(_bp,x,y) (y) = (x)
-#endif /* KERNEL */
 
 /* When XORing in kernel mode, we need to map each user page to kernel space before we can access it.
  * We don't want to assume anything about which input buffers are in kernel/user

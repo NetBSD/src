@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.h,v 1.1 1998/11/13 04:20:34 oster Exp $	*/
+/*	$NetBSD: rf_revent.h,v 1.2 1999/01/26 02:34:02 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,37 +31,6 @@
  * rf_revent.h -- header file for reconstruction event handling code
  *
  *******************************************************************/
-
-/* :  
- * Log: rf_revent.h,v 
- * Revision 1.7  1996/07/15 05:40:41  jimz
- * some recon datastructure cleanup
- * better handling of multiple failures
- * added undocumented double-recon test
- *
- * Revision 1.6  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.5  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.4  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.3  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.2  1995/12/06  15:04:20  root
- * added copyright info
- *
- */
 
 #ifndef _RF__RF_REVENT_H_
 #define _RF__RF_REVENT_H_

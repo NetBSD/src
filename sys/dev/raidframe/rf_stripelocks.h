@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.h,v 1.1 1998/11/13 04:20:34 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.h,v 1.2 1999/01/26 02:34:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -24,58 +24,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-
-/* :  
- * Log: rf_stripelocks.h,v 
- * Revision 1.22  1996/06/10 11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.21  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.20  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.19  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.18  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.17  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.16  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.15  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.14  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.13  1996/05/06  22:08:46  wvcii
- * added copyright info and change log
- *
  */
 
 /*****************************************************************************

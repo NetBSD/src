@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sstf.c,v 1.1 1998/11/13 04:20:34 oster Exp $	*/
+/*	$NetBSD: rf_sstf.c,v 1.2 1999/01/26 02:34:02 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,35 +31,6 @@
  * sstf.c --  prioritized shortest seek time first disk queueing code
  *
  ******************************************************************************/
-
-/*
- * :  
- * Log: rf_sstf.c,v 
- * Revision 1.7  1996/06/19 14:09:56  jimz
- * SstfPeek wasn't calling closest_to_arm() properly- would bogart
- * low priority I/Os
- *
- * Revision 1.6  1996/06/18  20:53:11  jimz
- * fix up disk queueing (remove configure routine,
- * add shutdown list arg to create routines)
- *
- * Revision 1.5  1996/06/13  20:42:13  jimz
- * add scan, cscan
- *
- * Revision 1.4  1996/06/07  22:26:27  jimz
- * type-ify which_ru (RF_ReconUnitNum_t)
- *
- * Revision 1.3  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.2  1996/06/06  01:11:35  jimz
- * fixed many priority-related bugs
- *
- * Revision 1.1  1996/06/05  19:17:40  jimz
- * Initial revision
- *
- */
 
 #include "rf_alloclist.h"
 #include "rf_stripelocks.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.h,v 1.1 1998/11/13 04:20:31 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.h,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -43,15 +43,7 @@ struct RF_MCPair_s {
   RF_MCPair_t  *next;
 };
 
-#ifdef KERNEL
-#ifndef __NetBSD__
-#define RF_WAIT_MCPAIR(_mcp)  mpsleep(&((_mcp)->flag), PZERO, "mcpair", 0, (void *) simple_lock_addr((_mcp)->mutex), MS_LOCK_SIMPLE)
-#else
 #define RF_WAIT_MCPAIR(_mcp)  tsleep(&((_mcp)->flag), PRIBIO | PCATCH, "mcpair", 0)
-#endif
-#else /* KERNEL */
-#define RF_WAIT_MCPAIR(_mcp)  RF_WAIT_COND((_mcp)->cond, (_mcp)->mutex)
-#endif /* KERNEL */
 
 int rf_ConfigureMCPair(RF_ShutdownList_t **listp);
 RF_MCPair_t *rf_AllocMCPair(void);

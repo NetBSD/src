@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.1 1998/11/13 04:20:32 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.2 1999/01/26 02:34:00 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -26,165 +26,6 @@
  * rights to redistribute these changes.
  */
 
-/* :  
- * Log: rf_paritylogging.c,v 
- * Revision 1.42  1996/11/05 21:10:40  jimz
- * failed pda generalization
- *
- * Revision 1.41  1996/07/31  16:56:18  jimz
- * dataBytesPerStripe, sectorsPerDisk init arch-indep.
- *
- * Revision 1.40  1996/07/28  20:31:39  jimz
- * i386netbsd port
- * true/false fixup
- *
- * Revision 1.39  1996/07/18  22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.38  1996/07/13  00:00:59  jimz
- * sanitized generalized reconstruction architecture
- * cleaned up head sep, rbuf problems
- *
- * Revision 1.37  1996/06/17  03:24:14  jimz
- * switch to new shutdown function typing
- *
- * Revision 1.36  1996/06/14  23:15:38  jimz
- * attempt to deal with thread GC problem
- *
- * Revision 1.35  1996/06/11  13:48:30  jimz
- * get it to compile in-kernel
- *
- * Revision 1.34  1996/06/11  10:16:35  jimz
- * Check return values on array configuration- back out if failed.
- * Reorder shutdown to avoid using deallocated resources.
- * Get rid of bogus join op in shutdown.
- *
- * Revision 1.33  1996/06/10  18:29:17  wvcii
- * fixed bug in rf_IdentifyStripeParityLogging
- * - added array initialization
- *
- * Revision 1.32  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.31  1996/06/07  22:26:27  jimz
- * type-ify which_ru (RF_ReconUnitNum_t)
- *
- * Revision 1.30  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.29  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.28  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.27  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.26  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.25  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.24  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.23  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.22  1996/05/24  01:59:45  jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.21  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.20  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.19  1996/05/20  16:16:30  jimz
- * switch to rf_{mutex,cond}_{init,destroy}
- *
- * Revision 1.18  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.17  1996/05/03  19:47:11  wvcii
- * added includes of new dag library
- *
- * Revision 1.16  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.15  1995/12/06  20:57:43  wvcii
- * added prototypes
- * reintegration of logs on shutdown now conditional on forceParityLogReint
- *
- * Revision 1.14  1995/11/30  16:06:42  wvcii
- * added copyright info
- *
- * Revision 1.13  1995/11/17  19:01:29  wvcii
- * added prototyping to MapParity
- *
- * Revision 1.12  1995/11/07  15:36:03  wvcii
- * changed ParityLoggingDagSelect prototype
- * function no longer returns numHdrSucc, numTermAnt
- *
- * Revision 1.11  1995/10/08  20:42:54  wvcii
- * lots of random debugging - debugging incomplete
- *
- * Revision 1.10  1995/09/07  01:26:55  jimz
- * Achive basic compilation in kernel. Kernel functionality
- * is not guaranteed at all, but it'll compile. Mostly. I hope.
- *
- * Revision 1.9  1995/09/06  19:21:17  wvcii
- * explicit shutdown (forced reintegration) for simulator version
- *
- * Revision 1.8  1995/07/08  18:19:16  rachad
- * Parity verifies can not be done in the simulator.
- *
- * Revision 1.7  1995/07/07  00:17:20  wvcii
- * this version free from deadlock, fails parity verification
- *
- * Revision 1.6  1995/06/23  13:39:59  robby
- * updeated to prototypes in rf_layout.h
- *
- * Revision 1.5  1995/06/09  13:14:56  wvcii
- * code is now nonblocking
- *
- * Revision 1.4  95/06/01  17:02:23  wvcii
- * code debug
- * 
- * Revision 1.3  95/05/31  13:08:57  wvcii
- * code debug
- * 
- * Revision 1.2  95/05/21  15:35:00  wvcii
- * code debug
- * 
- *
- *
- */
 
 /*
   parity logging configuration, dag selection, and mapping is implemented here
@@ -797,7 +638,7 @@ static void rf_ShutdownParityLogging(RF_ThreadArg_t arg)
     rf_get_threadid(tid);
     printf("[%d] ShutdownParityLogging\n", tid);
   }
-#ifndef SIMULATE
+
   /* shutdown disk thread */
   /* This has the desirable side-effect of forcing all regions to be
      reintegrated.  This is necessary since all parity log maps are
@@ -816,10 +657,6 @@ static void rf_ShutdownParityLogging(RF_ThreadArg_t arg)
     RF_WAIT_COND(raidPtr->parityLogDiskQueue.cond, raidPtr->parityLogDiskQueue.mutex);
   }
   RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
-#else /* !SIMULATE */
-  /* explicitly call shutdown routines which force reintegration */
-  rf_ShutdownLogging(raidPtr);
-#endif /* !SIMULATE */
   if (rf_parityLogDebug) {
     int tid;
     rf_get_threadid(tid);

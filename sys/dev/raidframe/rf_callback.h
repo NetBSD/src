@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.h,v 1.1 1998/11/13 04:20:26 oster Exp $	*/
+/*	$NetBSD: rf_callback.h,v 1.2 1999/01/26 02:33:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -40,35 +40,6 @@
  * a function that will restart operation on the indicated disk.
  *
  ****************************************************************************************/
-
-/* :  
- * Log: rf_callback.h,v 
- * Revision 1.8  1996/08/01 15:57:28  jimz
- * minor cleanup
- *
- * Revision 1.7  1996/07/27  23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.6  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.5  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.4  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.3  1996/05/17  16:30:46  jimz
- * add prototypes
- *
- * Revision 1.2  1995/12/01  15:15:55  root
- * added copyright info
- *
- */
 
 #ifndef _RF__RF_CALLBACK_H_
 #define _RF__RF_CALLBACK_H_

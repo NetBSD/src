@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_fifo.c,v 1.1 1998/11/13 04:20:29 oster Exp $	*/
+/*	$NetBSD: rf_fifo.c,v 1.2 1999/01/26 02:33:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,68 +35,6 @@
  *
  ***************************************************/
 
-/*
- * :  
- * Log: rf_fifo.c,v 
- * Revision 1.20  1996/06/18 20:53:11  jimz
- * fix up disk queueing (remove configure routine,
- * add shutdown list arg to create routines)
- *
- * Revision 1.19  1996/06/14  00:08:21  jimz
- * make happier in all environments
- *
- * Revision 1.18  1996/06/13  20:41:24  jimz
- * add random queueing
- *
- * Revision 1.17  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.16  1996/06/07  22:26:27  jimz
- * type-ify which_ru (RF_ReconUnitNum_t)
- *
- * Revision 1.15  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.14  1996/06/06  01:15:02  jimz
- * added debugging
- *
- * Revision 1.13  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.12  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.11  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.10  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.9  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.8  1995/12/01  18:22:15  root
- * added copyright info
- *
- * Revision 1.7  1995/11/07  15:32:16  wvcii
- * added function FifoPeek()
- *
- */
-
 #include "rf_types.h"
 #include "rf_alloclist.h"
 #include "rf_stripelocks.h"
@@ -108,11 +46,6 @@
 #include "rf_threadid.h"
 #include "rf_options.h"
 
-#if !defined(KERNEL) && RF_INCLUDE_QUEUE_RANDOM > 0
-#include "rf_randmacros.h"
-RF_DECLARE_STATIC_RANDOM
-#endif /* !KERNEL && RF_INCLUDE_QUEUE_RANDOM > 0 */
-
 /* just malloc a header, zero it (via calloc), and return it */
 /*ARGSUSED*/
 void *rf_FifoCreate(sectPerDisk, clList, listp)
@@ -122,14 +55,8 @@ void *rf_FifoCreate(sectPerDisk, clList, listp)
 {
   RF_FifoHeader_t *q;
 
-#if !defined(KERNEL) && RF_INCLUDE_QUEUE_RANDOM > 0
-  RF_INIT_STATIC_RANDOM(1);
-#endif /* !KERNEL && RF_INCLUDE_QUEUE_RANDOM > 0 */
   RF_CallocAndAdd(q, 1, sizeof(RF_FifoHeader_t), (RF_FifoHeader_t *), clList);
   q->hq_count = q->lq_count = 0;
-#if !defined(KERNEL) && RF_INCLUDE_QUEUE_RANDOM > 0
-  q->rval = (long)RF_STATIC_RANDOM();
-#endif /* !KERNEL && RF_INCLUDE_QUEUE_RANDOM > 0 */
   return((void *)q);
 }
 

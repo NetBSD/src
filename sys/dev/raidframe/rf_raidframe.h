@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raidframe.h,v 1.1 1998/11/13 04:20:33 oster Exp $	*/
+/*	$NetBSD: rf_raidframe.h,v 1.2 1999/01/26 02:34:01 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,56 +34,6 @@
  *
  *****************************************************/
 
-/*
- * :  
- *
- * Log: rf_raidframe.h,v 
- * Revision 1.21  1996/06/17 03:00:15  jimz
- * Change RAIDFRAME_GET_INFO interface to work around ioctl
- * size limitation problem. This operation now takes a pointer
- * to a pointer, and does its own copyout() (so it can transfer
- * more than 8k at a time).
- *
- * Revision 1.20  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.19  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.18  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.17  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.16  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.15  1996/05/02  22:09:48  jimz
- * change devs and spares in device_config to RF_RaidDisk_t
- *
- * Revision 1.14  1995/12/06  15:03:33  root
- * added copyright info
- *
- * Revision 1.13  1995/09/30  20:39:54  jimz
- * added new ioctls:
- *   RAIDFRAME_RESET_ACCTOTALS
- *   RAIDFRAME_GET_ACCTOTALS
- *   RAIDFRAME_KEEP_ACCTOTALS
- *
- * Revision 1.12  1995/09/25  20:11:51  wvcii
- * Added #include "rf_raid.h"
- *
- *
- */
 
 #ifndef _RF__RF_RAIDFRAME_H_
 #define _RF__RF_RAIDFRAME_H_

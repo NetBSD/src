@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.2 1998/11/13 11:48:26 simonb Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.3 1999/01/26 02:33:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,162 +54,7 @@
  *                                                                          *
  ****************************************************************************/
 
-/* 
- * :  
- *
- * Log: rf_engine.c,v 
- * Revision 1.56  1996/07/28 20:31:39  jimz
- * i386netbsd port
- * true/false fixup
- *
- * Revision 1.55  1996/07/22  19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.54  1996/07/17  21:00:58  jimz
- * clean up timer interface, tracing
- *
- * Revision 1.53  1996/07/15  17:22:18  jimz
- * nit-pick code cleanup
- * resolve stdlib problems on DEC OSF
- *
- * Revision 1.52  1996/06/17  03:17:08  jimz
- * correctly shut down engine thread in kernel
- *
- * Revision 1.51  1996/06/14  15:02:10  jimz
- * make new engine code happy in simulator
- *
- * Revision 1.50  1996/06/14  14:19:48  jimz
- * use diskgroup to control engine thread, make all engine-thread-related
- * stuff per-array
- *
- * Revision 1.49  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.48  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.47  1996/06/06  01:23:23  jimz
- * fix bug in node traversal when firing multiple nodes simultaneously
- *
- * Revision 1.46  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.45  1996/05/30  12:59:18  jimz
- * make etimer happier, more portable
- *
- * Revision 1.44  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.43  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.42  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.41  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.40  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.39  1996/05/20  16:15:17  jimz
- * switch to rf_{mutex,cond}_{init,destroy}
- *
- * Revision 1.38  1996/05/18  20:09:54  jimz
- * bit of cleanup to compile cleanly in kernel, once again
- *
- * Revision 1.37  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.36  1996/05/15  20:24:19  wvcii
- * fixed syntax bug in SIMULATE clause above ProcessNode
- *
- * Revision 1.35  1996/05/08  21:01:24  jimz
- * fixed up enum type names that were conflicting with other
- * enums and function names (ie, "panic")
- * future naming trends will be towards RF_ and rf_ for
- * everything raidframe-related
- *
- * Revision 1.34  1996/05/08  15:25:28  wvcii
- * eliminated dead code
- * merged common cases (sim/user/kernel)
- * entire node lists (arrays) now fired atomically
- * reordered source code for readability
- * beefed-up & corrected comments
- *
- * Revision 1.33  1996/05/07  19:39:40  jimz
- * 1. fixed problems in PropogateResults() with nodes being referenced
- * after they were no longer valid
- * 2. fixed problems in PropogateResults() with the node list being
- * incorrectly threaded
- *
- * Revision 1.32  1996/05/07  19:03:56  wvcii
- * in PropagateResults, fixed a bug in the  rollBackward case:
- *   node data is copied before the call to FinishNode which
- *   frees the node and destroys its data.
- *
- * Revision 1.31  1996/05/07  17:45:17  jimz
- * remove old #if 0 code from PropogateResults() (was kept in
- * previous version for archival purposes (rcsdiff))
- *
- * Revision 1.30  1996/05/07  17:44:19  jimz
- * fix threading of nodes to be fired in PropagateResults()
- * fix iteration through skiplist in PropagateResults()
- * fix incorrect accesses to freed memory (dereferencing a
- *   node that was freed by the action of calling FinishNode()
- *   on it, which in turn completed its DAG) in PropagateResults()
- *
- * Revision 1.29  1996/05/02  15:04:15  wvcii
- * fixed bad array index in PropagateResults
- *
- * Revision 1.28  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.27  1995/12/08  15:07:03  arw
- * cache code cleanup
- *
- * Revision 1.26  1995/11/07  16:18:01  wvcii
- * numerous changes associated with roll-away error recovery
- * when a node fails, dag enters rollForward or rollBackward state
- *
- * Revision 1.25  1995/09/06  19:27:17  wvcii
- * added debug vars enableRollAway and debugRecovery
- *
- */
-
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
 #include "rf_threadstuff.h"
-
-#ifndef KERNEL
-#include <stdio.h>
-#include <stdlib.h>
-#endif /* !KERNEL */
 
 #include <sys/errno.h>
 
@@ -222,9 +67,7 @@
 #include "rf_shutdown.h"
 #include "rf_raid.h"
 
-#ifndef SIMULATE
 static void DAGExecutionThread(RF_ThreadArg_t arg);
-#endif /* !SIMULATE */
 
 #define DO_INIT(_l_,_r_) { \
   int _rc; \
@@ -239,28 +82,14 @@ static void DAGExecutionThread(RF_ThreadArg_t arg);
 }
 
 /* synchronization primitives for this file.  DO_WAIT should be enclosed in a while loop. */
-#ifndef KERNEL
-
-#define DO_LOCK(_r_)      RF_LOCK_MUTEX((_r_)->node_queue_mutex)
-#define DO_UNLOCK(_r_)    RF_UNLOCK_MUTEX((_r_)->node_queue_mutex)
-#define DO_WAIT(_r_)      RF_WAIT_COND((_r_)->node_queue_cond, (_r_)->node_queue_mutex)
-#define DO_SIGNAL(_r_)    RF_SIGNAL_COND((_r_)->node_queue_cond)
-
-#else /* !KERNEL */
 
 /*
  * XXX Is this spl-ing really necessary?
  */
 #define DO_LOCK(_r_)      { ks = splbio(); RF_LOCK_MUTEX((_r_)->node_queue_mutex); }
 #define DO_UNLOCK(_r_)    { RF_UNLOCK_MUTEX((_r_)->node_queue_mutex); splx(ks); }
-#ifndef __NetBSD__
-#define DO_WAIT(_r_)      mpsleep(&(_r_)->node_queue, PZERO, "raidframe nq", 0, (void *) simple_lock_addr((_r_)->node_queue_mutex), MS_LOCK_SIMPLE)
-#else
 #define DO_WAIT(_r_)   tsleep(&(_r_)->node_queue, PRIBIO | PCATCH, "raidframe nq",0)
-#endif
 #define DO_SIGNAL(_r_)    wakeup(&(_r_)->node_queue)
-
-#endif /* !KERNEL */
 
 static void rf_ShutdownEngine(void *);
 
@@ -270,17 +99,12 @@ static void rf_ShutdownEngine(arg)
   RF_Raid_t *raidPtr;
 
   raidPtr = (RF_Raid_t *)arg;
-#ifndef SIMULATE
   raidPtr->shutdown_engine = 1;
   DO_SIGNAL(raidPtr);
   /* XXX something is missing here... */
 #ifdef DEBUG
   printf("IGNORING WAIT_STOP\n"); 
 #endif
-#if 0
-  RF_THREADGROUP_WAIT_STOP(&raidPtr->engine_tg);
-#endif
-#endif /* !SIMULATE */
 }
 
 int rf_ConfigureEngine(
@@ -299,7 +123,6 @@ int rf_ConfigureEngine(
   raidPtr->node_queue = NULL;
   raidPtr->dags_in_flight = 0;
 
-#ifndef SIMULATE
   rc = rf_init_managed_threadgroup(listp, &raidPtr->engine_tg);
   if (rc)
     return(rc);
@@ -330,7 +153,6 @@ int rf_ConfigureEngine(
   if (rf_engineDebug) {
     printf("[%d] Engine thread running and waiting for events\n", tid);
   }
-#endif /* !SIMULATE */
 
   rc = rf_ShutdownCreate(listp, rf_ShutdownEngine, raidPtr);
   if (rc) {
@@ -381,20 +203,6 @@ static int BranchDone(RF_DagNode_t *node)
   }
 }
 
-#ifdef SIMULATE
-/* this is only ifdef SIMULATE because nothing else needs it */
-/* recursively determine if a DAG has completed execution */
-static int DAGDone(RF_DagHeader_t *dag)
-{
-  int i;
-
-  for (i = 0; i < dag->numSuccedents; i++)
-    if (!BranchDone(dag->succedents[i]))
-      return RF_FALSE;
-  return RF_TRUE;
-}
-#endif /* SIMULATE */
-
 static int NodeReady(RF_DagNode_t *node)
 {
   int ready;
@@ -444,7 +252,6 @@ static void FireNode(RF_DagNode_t *node)
       rf_get_threadid(tid);
       printf("[%d] Firing node 0x%lx (%s)\n",tid,(unsigned long) node, node->name);
     }
-#ifdef KERNEL
     if (node->flags & RF_DAGNODE_FLAG_YIELD) {
 #if defined(__NetBSD__) && defined(_KERNEL)
 	    /* 	    thread_block(); */
@@ -455,7 +262,6 @@ static void FireNode(RF_DagNode_t *node)
 	    thread_block();
 #endif
     }
-#endif /* KERNEL */
     (*(node->doFunc)) (node);
     break;
   case rf_recover :
@@ -464,7 +270,6 @@ static void FireNode(RF_DagNode_t *node)
         rf_get_threadid(tid);
         printf("[%d] Firing (undo) node 0x%lx (%s)\n",tid,(unsigned long) node, node->name);
       }
-#ifdef KERNEL
       if (node->flags & RF_DAGNODE_FLAG_YIELD)
 #if defined(__NetBSD__) && defined(_KERNEL)
 	      /* 	      thread_block(); */
@@ -474,7 +279,6 @@ static void FireNode(RF_DagNode_t *node)
 #else
         thread_block();
 #endif
-#endif /* KERNEL */
       (*(node->undoFunc)) (node);
     break;
   default :
@@ -527,7 +331,6 @@ static void FireNodeArray(
 }
 
 
-#ifndef SIMULATE
 /* user context:
  * Attempt to fire each node in a linked list.
  * The entire list is fired atomically.
@@ -569,9 +372,6 @@ static void FireNodeList(RF_DagNode_t *nodeList)
     }
   }
 }
-#endif /* !SIMULATE */
-
-
 
 /* interrupt context:
  * for each succedent
@@ -596,15 +396,11 @@ static void PropagateResults(
   RF_DagNode_t *s, *a;
   RF_Raid_t *raidPtr;
   int tid, i, ks;
-#ifdef SIMULATE
-  RF_PropHeader_t *p;         /* prop list for succedent i */
-#else /* SIMULATE */
   RF_DagNode_t *finishlist = NULL; /* a list of NIL nodes to be finished */
   RF_DagNode_t *skiplist = NULL;   /* list of nodes with failed truedata antecedents */
   RF_DagNode_t *firelist = NULL;   /* a list of nodes to be fired */
   RF_DagNode_t *q = NULL, *qh = NULL, *next;
   int j, skipNode;
-#endif /* SIMULATE */
 
   rf_get_threadid(tid);
 
@@ -623,29 +419,6 @@ static void PropagateResults(
   switch (node->dagHdr->status) {
   case rf_enable :
   case rf_rollForward :
-#ifdef SIMULATE
-      /* currently we never propagate results unless in simulation */
-    for (i = 0; i < node->numSuccedents; i++) {
-      s = *(node->succedents + i);      
-      RF_ASSERT(s->status == rf_wait);
-      (s->numAntDone)++;
-      if (node->propList == NULL)
-	/* null propList implies no results to be propagated */
-	p = NULL;
-      else
-	/* p=head of prop list for succedent i */
-	p = *(node->propList + i);
-      while (p != NULL) {
-	/* bind node results to succedent's parameters */
-#if 0
-	*(s->params + p->paramNum) = *(node->results + p->resultNum);
-#else
-	s->params[p->paramNum].p = node->results[p->resultNum];
-#endif
-	p = p->next;
-      }
-    }
-#else  /* SIMULATE */
     for (i = 0; i < node->numSuccedents; i++) {
       s = *(node->succedents + i);      
       RF_ASSERT(s->status == rf_wait);
@@ -729,12 +502,9 @@ static void PropagateResults(
     }
     /* fire all nodes in firelist */
     FireNodeList(firelist);
-#endif   /* SIMULATE */
     break;
 
   case rf_rollBackward :
-#ifdef SIMULATE
-#else /* SIMULATE */
     for (i = 0; i < node->numAntecedents; i++) {
       a = *(node->antecedents + i);
       RF_ASSERT(a->status == rf_good);
@@ -788,7 +558,6 @@ static void PropagateResults(
     }
     /* fire all nodes in firelist */
     FireNodeList(firelist);
-#endif /* SIMULATE */
 
     break;
   default :
@@ -845,60 +614,8 @@ static void ProcessNode(
     break;
   }
 
-#ifdef SIMULATE
-  /* simulator fires nodes here.
-   * user/kernel rely upon PropagateResults to do this.
-   * XXX seems like this code should be merged so that the same thing happens for
-   * both sim, user, and kernel.  -wvcii
-   */
-  switch (node->dagHdr->status) {
-  case rf_enable :
-  case rf_rollForward :
-    if (node->numSuccedents == 0) {
-      /* process terminal node */
-      if (rf_engineDebug) if (!DAGDone(node->dagHdr)) {
-	rf_get_threadid(tid);
-	printf("[%d] ProcessNode:  !!!done but dag still in flight\n",tid);
-	RF_PANIC();
-      }
-      if (rf_engineDebug) printf("[%d] ProcessNode:  !!!done will return true\n",tid);    
-      /* Mark dag as done */
-      (node->dagHdr)->done=RF_TRUE;
-      raidPtr->dags_in_flight--;
-    }
-    else {
-      PropagateResults(node, context);
-      FireNodeArray(node->numSuccedents, node->succedents);
-    }
-    break;
-  case rf_rollBackward :
-    if (node->numAntecedents == 0) {
-      /* reached head of dag, we're done */
-      if (rf_engineDebug) if (!DAGDone(node->dagHdr)) {
-	rf_get_threadid(tid);
-	printf("[%d] ProcessNode:  !!!done but dag still in flight\n",tid);
-	RF_PANIC();
-      }
-      if (rf_engineDebug) printf("[%d] ProcessNode:  !!!done will return true\n",tid);    
-      /* Mark dag as done */
-      (node->dagHdr)->done=RF_TRUE;
-      raidPtr->dags_in_flight--;
-    }
-    else {
-      PropagateResults(node, context);
-      FireNodeArray(node->numAntecedents, node->antecedents);
-    }
-    break;
-  default :
-    RF_PANIC();
-    break;
-  }
-
-
-#else /* SIMULATE */
   /* enqueue node's succedents (antecedents if rollBackward) for execution */
   PropagateResults(node, context);
-#endif /* SIMULATE */
 }
 
 
@@ -916,11 +633,6 @@ int rf_FinishNode(
   int retcode = RF_FALSE;
   node->dagHdr->numNodesCompleted++;
   ProcessNode(node, context);
-
-#ifdef SIMULATE
- if ((node->dagHdr)->done == RF_TRUE)
-   retcode = RF_TRUE;
-#endif /* SIMULATE */
 
  return(retcode); 
 }
@@ -980,16 +692,12 @@ int rf_DispatchDAG(
  * characteristics from the aio_completion_thread.
  */
 
-#ifndef SIMULATE
 static void DAGExecutionThread(RF_ThreadArg_t arg)
 {
   RF_DagNode_t *nd, *local_nq, *term_nq, *fire_nq;
   RF_Raid_t *raidPtr;
   int ks, tid;
   int s;
-#ifndef __NetBSD__
-  RF_Thread_t thread;
-#endif
 
   raidPtr = (RF_Raid_t *)arg;
 
@@ -999,7 +707,6 @@ static void DAGExecutionThread(RF_ThreadArg_t arg)
     printf("[%d] Engine thread is running\n", tid);
   }
 
-#ifdef KERNEL
 #ifndef __NetBSD__
   thread = current_thread();
   thread_swappable(thread, RF_FALSE);
@@ -1009,8 +716,6 @@ static void DAGExecutionThread(RF_ThreadArg_t arg)
   /* XXX what to put here XXX */
 
   s=splbio();
-
-#endif /* KERNEL */
 
   RF_THREADGROUP_RUNNING(&raidPtr->engine_tg);
 
@@ -1080,7 +785,6 @@ static void DAGExecutionThread(RF_ThreadArg_t arg)
   DO_UNLOCK(raidPtr);
 
   RF_THREADGROUP_DONE(&raidPtr->engine_tg);
-#ifdef KERNEL
 #ifdef __NetBSD__
   splx(s);
   kthread_exit(0);
@@ -1089,7 +793,4 @@ static void DAGExecutionThread(RF_ThreadArg_t arg)
   thread_terminate(thread);
   thread_halt_self();
 #endif
-#endif /* KERNEL */
 }
-
-#endif /* !SIMULATE */
