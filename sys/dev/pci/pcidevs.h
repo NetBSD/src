@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.249 2000/07/10 16:32:07 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.250 2000/07/20 14:47:35 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.243 2000/07/10 16:14:02 ad Exp 
+ *	NetBSD: pcidevs,v 1.244 2000/07/20 14:46:51 ad Exp 
  */
 
 /*
@@ -511,6 +511,7 @@
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
 #define	PCI_VENDOR_DAVICOM	0x1282		/* Davicom Semiconductor */
+#define	PCI_VENDOR_ESSTECH2	0x1285		/* ESS Technology Inc */
 #define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
 #define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
@@ -955,6 +956,9 @@
 #define	PCI_PRODUCT_ESSTECH_MAESTRO2E	0x1978		/* Maestro 2E PCI Audio Accelerator */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO3	0x1998		/* Maestro 3 PCI Audio Accelerator */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO3MODEM	0x1999		/* Maestro 3 Modem */
+
+/* ESS Technology Inc products */
+#define	PCI_PRODUCT_ESSTECH2_MAESTRO1	0x0100		/* Maestro 1 PCI Audio Accelerator */
 
 /* O2 Micro Inc */
 #define	PCI_PRODUCT_O2MICRO_OZ6832	0x6832		/* OZ6832 CardBus Controller */
