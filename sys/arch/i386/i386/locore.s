@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.246 2001/08/02 21:04:43 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.247 2001/08/04 00:54:30 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -855,28 +855,28 @@ ENTRY(kcopy)
  * later.
  */
 #if defined(I386_CPU)
-#define	DEFAULT_COPYOUT		i386_copyout
-#define	DEFAULT_COPYIN		i386_copyin
+#define	DEFAULT_COPYOUT		_C_LABEL(i386_copyout)
+#define	DEFAULT_COPYIN		_C_LABEL(i386_copyin)
 #elif defined(I486_CPU)
-#define	DEFAULT_COPYOUT		i486_copyout
-#define	DEFAULT_COPYIN		i386_copyin
+#define	DEFAULT_COPYOUT		_C_LABEL(i486_copyout)
+#define	DEFAULT_COPYIN		_C_LABEL(i386_copyin)
 #elif defined(I586_CPU)
-#define	DEFAULT_COPYOUT		i486_copyout	/* XXX */
-#define	DEFAULT_COPYIN		i386_copyin	/* XXX */
+#define	DEFAULT_COPYOUT		_C_LABEL(i486_copyout)	/* XXX */
+#define	DEFAULT_COPYIN		_C_LABEL(i386_copyin)	/* XXX */
 #elif defined(I686_CPU)
-#define	DEFAULT_COPYOUT		i486_copyout	/* XXX */
-#define	DEFAULT_COPYIN		i386_copyin	/* XXX */
+#define	DEFAULT_COPYOUT		_C_LABEL(i486_copyout)	/* XXX */
+#define	DEFAULT_COPYIN		_C_LABEL(i386_copyin)	/* XXX */
 #endif
 
 	.data
 
 	.globl	_C_LABEL(copyout_func)
 _C_LABEL(copyout_func):
-	.long	_C_LABEL(DEFAULT_COPYOUT)
+	.long	DEFAULT_COPYOUT
 
 	.globl	_C_LABEL(copyin_func)
 _C_LABEL(copyin_func):
-	.long	_C_LABEL(DEFAULT_COPYIN)
+	.long	DEFAULT_COPYIN
 
 	.text
 
