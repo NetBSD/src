@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.11 1997/03/12 20:27:01 christos Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -572,8 +572,10 @@ pppasyncstart(sc)
 		 */
 		if (len) {
 		    s = spltty();
-		    if (putc(PPP_ESCAPE, &tp->t_outq))
+		    if (putc(PPP_ESCAPE, &tp->t_outq)) {
+			splx(s);
 			break;
+		    }
 		    if (putc(*start ^ PPP_TRANS, &tp->t_outq)) {
 			(void) unputc(&tp->t_outq);
 			splx(s);
