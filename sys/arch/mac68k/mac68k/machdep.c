@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 1995/09/03 14:54:31 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 1995/09/14 02:49:11 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1559,7 +1559,7 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
 	/*
-	 * Quadra, Centris merged table (650, 610, Q800)
+	 * Quadra, Centris merged table (C650, 610, Q700, 800)
 	 * (BG - this is a mish-mash of various sources, none complete,
 	 *  so this may not work.)
 	 */
@@ -1672,8 +1672,8 @@ struct cpu_model_info cpu_models[] = {
 /* The rest of the II series... */
 	{MACH_MACIICI, "IIci ", "", MACH_CLASSIIci, &romvecs[4]},
 	{MACH_MACIISI, "IIsi ", "", MACH_CLASSIIsi, &romvecs[2]},
-	{MACH_MACIIVI, "IIvi ", "", MACH_CLASSIIsi, &romvecs[2]},
-	{MACH_MACIIVX, "IIvx ", "", MACH_CLASSIIsi, &romvecs[2]},
+	{MACH_MACIIVI, "IIvi ", "", MACH_CLASSIIvx, &romvecs[2]},
+	{MACH_MACIIVX, "IIvx ", "", MACH_CLASSIIvx, &romvecs[2]},
 	{MACH_MACIIFX, "IIfx ", "", MACH_CLASSIIfx, NULL},
 
 /* The Centris/Quadra series. */
@@ -1706,7 +1706,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACPB270, "PowerBook", " 270 ", MACH_CLASSPB, &romvecs[10]},
 
 /* The Performas... */
-	{MACH_MACP600, "Performa", " 600 ", MACH_CLASSIIsi, &romvecs[2]},
+	{MACH_MACP600, "Performa", " 600 ", MACH_CLASSIIvx, &romvecs[2]},
 	{MACH_MACP460, "Performa", " 460 ", MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACP550, "Performa", " 550 ", MACH_CLASSLC, &romvecs[3]},
 
@@ -1968,6 +1968,15 @@ setmachdep()
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
+	case MACH_CLASSIIvx:
+		VIA2 = 0x13;
+		IOBase = 0x50f00000;
+		Via1Base = (volatile u_char *) IOBase;
+		mac68k_machine.scsi80 = 1;
+		mac68k_machine.sccClkConst = 122400;
+		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
+		break;
 	case MACH_CLASSLC:
 		VIA2 = 0x13;
 		IOBase = 0x50f00000;
@@ -2026,6 +2035,12 @@ mac68k_set_io_offsets(base)
 		ASCBase = (volatile u_char *) base + 0x14000;
 		SCSIBase = base;
 		break;
+	case MACH_CLASSIIvx:
+		Via1Base = (volatile u_char *) base;
+		sccA = (volatile u_char *) base + 0x4000;
+		ASCBase = (volatile u_char *) base + 0x14000;
+		SCSIBase = base;
+		break;
 	case MACH_CLASSLC:
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0x4000;
@@ -2035,6 +2050,7 @@ mac68k_set_io_offsets(base)
 	default:
 	case MACH_CLASSH:
 	case MACH_CLASSIIfx:
+		panic("Unknown/unsupported machine class.");
 		break;
 	}
 	Via2Base = Via1Base + 0x2000 * VIA2;
@@ -2293,11 +2309,12 @@ get_mapping(void)
 		}
 	}
 	if (i == nbnumranges) {
-		if (0x60000000 < videoaddr && videoaddr < 0x70000000) {
+		if (0x60000000 <= videoaddr && videoaddr < 0x70000000) {
 			/*
-			 * Kludge for IIvx internal video. ???
+			 * Kludge for IIvx internal video (60b0 0000).
+			 * PB 520 (6000 0000)
 			 */
-			check_video("IIvx kludge", 1 * 1024 * 1024,
+			check_video("IIvx/PB kludge", 1 * 1024 * 1024,
 						   1 * 1024 * 1024);
 		} else if (0x50F40000 <= videoaddr && videoaddr < 0x50FBFFFF) {
 			/*
