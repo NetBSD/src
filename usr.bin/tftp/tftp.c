@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.11.4.3 2004/04/07 22:27:14 jmc Exp $	*/
+/*	$NetBSD: tftp.c,v 1.11.4.4 2004/04/09 04:23:35 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.11.4.3 2004/04/07 22:27:14 jmc Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.11.4.4 2004/04/09 04:23:35 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,9 @@ __RCSID("$NetBSD: tftp.c,v 1.11.4.3 2004/04/07 22:27:14 jmc Exp $");
  * TFTP User Program -- Protocol Machines
  */
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 
 #include <netinet/in.h>
@@ -60,6 +62,7 @@ __RCSID("$NetBSD: tftp.c,v 1.11.4.3 2004/04/07 22:27:14 jmc Exp $");
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
@@ -71,23 +74,78 @@ extern  struct sockaddr_storage peeraddr; /* filled in by main */
 extern  int     f;			/* the opened socket */
 extern  int     trace;
 extern  int     verbose;
+extern  int     def_rexmtval;
 extern  int     rexmtval;
 extern  int     maxtimeout;
+extern	int	tsize;
+extern	int	tout;
+extern	int	def_blksize;
+extern	int	blksize;
 
-#define PKTSIZE    SEGSIZE+4
 char    ackbuf[PKTSIZE];
 int	timeout;
 jmp_buf	toplevel;
 jmp_buf	timeoutbuf;
 
 static void nak __P((int, struct sockaddr *));
-static int makerequest __P((int, const char *, struct tftphdr *, const char *));
+static int makerequest __P((int, const char *, struct tftphdr *, const char *, off_t));
 static void printstats __P((const char *, unsigned long));
 static void startclock __P((void));
 static void stopclock __P((void));
 static void timer __P((int));
 static void tpacket __P((const char *, struct tftphdr *, int));
 static int cmpport __P((struct sockaddr *, struct sockaddr *));
+
+static void get_options(struct tftphdr *, int);
+
+static void
+get_options(struct tftphdr *ap, int size)
+{
+	unsigned long val;
+	char *opt, *endp, *nextopt, *valp;
+	int l;
+
+	size -= 2;	/* skip over opcode */
+	opt = ap->th_stuff;
+	endp = opt + size - 1;
+	*endp = '\0';
+	
+	while (opt < endp) {
+		l = strlen(opt) + 1;
+		valp = opt + l;
+		if (valp < endp) {
+			val = strtoul(valp, NULL, 10);
+			l = strlen(valp) + 1;
+			nextopt = valp + l;
+			if (val == ULONG_MAX && errno == ERANGE) {
+				/* Report illegal value */
+				opt = nextopt;
+				continue;
+			}
+		} else {
+			/* Badly formed OACK */
+			break;
+		}
+		if (strcmp(opt, "tsize") == 0) {
+			/* cool, but we'll ignore it */
+		} else if (strcmp(opt, "timeout") == 0) {
+			if (val >= 1 && val <= 255) {
+				rexmtval = val;
+			} else {
+				/* Report error? */
+			}
+		} else if (strcmp(opt, "blksize") == 0) {
+			if (val >= 8 && val <= MAXSEGSIZE) {
+				blksize = val;
+			} else {
+				/* Report error? */
+			}
+		} else {
+			/* unknown option */
+		}
+		opt = nextopt;
+	}
+}
 
 /*
  * Send the requested file.
@@ -105,6 +163,8 @@ sendfile(fd, name, mode)
 	volatile int size, convert;
 	volatile unsigned long amount;
 	struct sockaddr_storage from;
+	struct stat sbuf;
+	off_t filesize=0;
 	int fromlen;
 	FILE *file;
 	struct sockaddr_storage peer;
@@ -113,6 +173,13 @@ sendfile(fd, name, mode)
 	startclock();		/* start stat's clock */
 	dp = r_init();		/* reset fillbuf/read-ahead code */
 	ap = (struct tftphdr *)ackbuf;
+	if (tsize) {
+		if (fstat(fd, &sbuf) == 0) {
+			filesize = sbuf.st_size;
+		} else {
+			filesize = -1ULL;
+		}
+	}
 	file = fdopen(fd, "r");
 	convert = !strcmp(mode, "netascii");
 	block = 0;
@@ -123,10 +190,10 @@ sendfile(fd, name, mode)
 	signal(SIGALRM, timer);
 	do {
 		if (block == 0)
-			size = makerequest(WRQ, name, dp, mode) - 4;
+			size = makerequest(WRQ, name, dp, mode, filesize) - 4;
 		else {
 		/*	size = read(fd, dp->th_data, SEGSIZE);	 */
-			size = readit(file, &dp, convert);
+			size = readit(file, &dp, blksize, convert);
 			if (size < 0) {
 				nak(errno + 100, (struct sockaddr *)&peer);
 				break;
@@ -145,7 +212,8 @@ send_data:
 			warn("sendto");
 			goto abort;
 		}
-		read_ahead(file, convert);
+		if (block)
+			read_ahead(file, blksize, convert);
 		for ( ; ; ) {
 			alarm(rexmtval);
 			do {
@@ -179,13 +247,24 @@ send_data:
 			if (ap->th_opcode == ACK) {
 				int j;
 
+				if (ap->th_block == 0) {
+					/*
+					 * If the extended options are enabled,
+					 * the server just refused 'em all.
+					 * The only one that _really_
+					 * matters is blksize, but we'll
+					 * clear timeout, too.
+					 */
+					blksize = def_blksize;
+					rexmtval = def_rexmtval;
+				}
 				if (ap->th_block == block) {
 					break;
 				}
 				/* On an error, try to synchronize
 				 * both sides.
 				 */
-				j = synchnet(f);
+				j = synchnet(f, blksize+4);
 				if (j && trace) {
 					printf("discarded %d packets\n",
 							j);
@@ -194,11 +273,19 @@ send_data:
 					goto send_data;
 				}
 			}
+			if (ap->th_opcode == OACK) {
+				if (block == 0) {
+					blksize = def_blksize;
+					rexmtval = def_rexmtval;
+					get_options(ap, n);
+					break;
+				}
+			}
 		}
 		if (block > 0)
 			amount += size;
 		block++;
-	} while (size == SEGSIZE || block == 1);
+	} while (size == blksize || block == 1);
 abort:
 	fclose(file);
 	stopclock();
@@ -217,12 +304,12 @@ recvfile(fd, name, mode)
 {
 	struct tftphdr *ap;
 	struct tftphdr *dp;
-	int n;
+	int n, oack=0;
 	volatile unsigned int block;
 	volatile int size, firsttrip;
 	volatile unsigned long amount;
 	struct sockaddr_storage from;
-	int fromlen;
+	int fromlen, readlen;
 	FILE *file;
 	volatile int convert;		/* true if converting crlf -> lf */
 	struct sockaddr_storage peer;
@@ -242,11 +329,13 @@ recvfile(fd, name, mode)
 	signal(SIGALRM, timer);
 	do {
 		if (firsttrip) {
-			size = makerequest(RRQ, name, ap, mode);
+			size = makerequest(RRQ, name, ap, mode, 0);
+			readlen = PKTSIZE;
 			firsttrip = 0;
 		} else {
 			ap->th_opcode = htons((u_short)ACK);
 			ap->th_block = htons((u_short)(block));
+			readlen = blksize+4;
 			size = 4;
 			block++;
 		}
@@ -266,7 +355,7 @@ send_ack:
 			alarm(rexmtval);
 			do  {
 				fromlen = sizeof(from);
-				n = recvfrom(f, dp, PKTSIZE, 0,
+				n = recvfrom(f, dp, readlen, 0,
 				    (struct sockaddr *)&from, &fromlen);
 			} while (n <= 0);
 			alarm(0);
@@ -295,18 +384,36 @@ send_ack:
 			if (dp->th_opcode == DATA) {
 				int j;
 
+				if (dp->th_block == 1 && !oack) {
+					/* no OACK, revert to defaults */
+					blksize = def_blksize;
+					rexmtval = def_rexmtval;
+				}
 				if (dp->th_block == block) {
 					break;		/* have next packet */
 				}
 				/* On an error, try to synchronize
 				 * both sides.
 				 */
-				j = synchnet(f);
+				j = synchnet(f, blksize);
 				if (j && trace) {
 					printf("discarded %d packets\n", j);
 				}
 				if (dp->th_block == (block-1)) {
 					goto send_ack;	/* resend ack */
+				}
+			}
+			if (dp->th_opcode == OACK) {
+				if (block == 1) {
+					oack = 1;
+					blksize = def_blksize;
+					rexmtval = def_rexmtval;
+					get_options(dp, n);
+					ap->th_opcode = htons(ACK);
+					ap->th_block = 0;
+					readlen = blksize+4;
+					size = 4;
+					goto send_ack;
 				}
 			}
 		}
@@ -317,7 +424,7 @@ send_ack:
 			break;
 		}
 		amount += size;
-	} while (size == SEGSIZE);
+	} while (size == blksize || block == 1);
 abort:						/* ok to ack, since user */
 	ap->th_opcode = htons((u_short)ACK);	/* has seen err msg */
 	ap->th_block = htons((u_short)block);
@@ -331,11 +438,12 @@ abort:						/* ok to ack, since user */
 }
 
 static int
-makerequest(request, name, tp, mode)
+makerequest(request, name, tp, mode, filesize)
 	int request;
 	const char *name;
 	struct tftphdr *tp;
 	const char *mode;
+	off_t filesize;
 {
 	char *cp;
 
@@ -351,6 +459,30 @@ makerequest(request, name, tp, mode)
 	strcpy(cp, mode);
 	cp += strlen(mode);
 	*cp++ = '\0';
+	if (tsize) {
+		strcpy(cp, "tsize");
+		cp += strlen(cp);
+		*cp++ = '\0';
+		sprintf(cp, "%lu", (unsigned long) filesize);
+		cp += strlen(cp);
+		*cp++ = '\0';
+	}
+	if (tout) {
+		strcpy(cp, "timeout");
+		cp += strlen(cp);
+		*cp++ = '\0';
+		sprintf(cp, "%d", rexmtval);
+		cp += strlen(cp);
+		*cp++ = '\0';
+	}
+	if (blksize != SEGSIZE) {
+		strcpy(cp, "blksize");
+		cp += strlen(cp);
+		*cp++ = '\0';
+		sprintf(cp, "%d", blksize);
+		cp += strlen(cp);
+		*cp++ = '\0';
+	}
 	return (cp - (char *)tp);
 }
 
@@ -366,6 +498,7 @@ const struct errmsg {
 	{ EBADID,	"Unknown transfer ID" },
 	{ EEXISTS,	"File already exists" },
 	{ ENOUSER,	"No such user" },
+	{ EOPTNEG,	"Option negotiation failed" },
 	{ -1,		0 }
 };
 
@@ -413,11 +546,12 @@ tpacket(s, tp, n)
 	int n;
 {
 	static char *opcodes[] =
-	   { "#0", "RRQ", "WRQ", "DATA", "ACK", "ERROR" };
-	char *cp, *file;
+	   { "#0", "RRQ", "WRQ", "DATA", "ACK", "ERROR", "OACK" };
+	char *cp, *file, *endp, *opt, *spc;
 	u_short op = ntohs(tp->th_opcode);
+	int i, o;
 
-	if (op < RRQ || op > ERROR)
+	if (op < RRQ || op > OACK)
 		printf("%s opcode=%x ", s, op);
 	else
 		printf("%s %s ", s, opcodes[op]);
@@ -431,9 +565,26 @@ tpacket(s, tp, n)
 #else
 		cp = (void *) &tp->th_stuff;
 #endif
+		endp = cp + n - 1;
+		if (*endp != '\0') {	/* Shouldn't happen, but... */
+			*endp = '\0';
+		}
 		file = cp;
-		cp = strchr(cp, '\0');
-		printf("<file=%s, mode=%s>\n", file, cp + 1);
+		cp = strchr(cp, '\0') + 1;
+		printf("<file=%s, mode=%s", file, cp);
+		cp = strchr(cp, '\0') + 1;
+		o = 0;
+		while (cp < endp) {
+			i = strlen(cp) + 1;
+			if (o) {
+				printf(", %s=%s", opt, cp);
+			} else {
+				opt = cp;
+			}
+			o = (o+1) % 2;
+			cp += i;
+		}
+		printf(">\n");
 		break;
 
 	case DATA:
@@ -446,6 +597,30 @@ tpacket(s, tp, n)
 
 	case ERROR:
 		printf("<code=%d, msg=%s>\n", ntohs(tp->th_code), tp->th_msg);
+		break;
+
+	case OACK:
+		o = 0;
+		n -= 2;
+		cp = tp->th_stuff;
+		endp = cp + n - 1;
+		if (*endp != '\0') {	/* Shouldn't happen, but... */
+			*endp = '\0';
+		}
+		printf("<");
+		spc = "";
+		while (cp < endp) {
+			i = strlen(cp) + 1;
+			if (o) {
+				printf("%s%s=%s", spc, opt, cp);
+				spc = ", ";
+			} else {
+				opt = cp;
+			}
+			o = (o+1) % 2;
+			cp += i;
+		}
+		printf(">\n");
 		break;
 	}
 }
