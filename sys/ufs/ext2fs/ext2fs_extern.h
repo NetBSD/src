@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.3 1998/06/22 22:01:07 sommerfe Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.4 1998/06/23 23:15:50 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -37,7 +37,9 @@
  * Modified for ext2fs by Manuel Bouyer.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_fifo.h"
+#endif
 
 struct buf;
 struct fid;
