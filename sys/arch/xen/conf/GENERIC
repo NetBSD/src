@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.4 2004/04/24 18:24:14 cl Exp $
+# $NetBSD: GENERIC,v 1.5 2004/04/24 20:05:49 cl Exp $
 # NetBSD: GENERIC,v 1.596 2004/04/07 13:13:59 augustss Exp 
 #
 # GENERIC machine description file
@@ -23,7 +23,7 @@ include 	"arch/xen/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -187,7 +187,7 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
-#config		netbsd	root on xbd0a type ffs
+#config		netbsd	root on wd0a type ffs
 #config		netbsd	root on ? type nfs
 
 #
@@ -206,6 +206,9 @@ xencons*	at hypervisor?		# Xen virtual console
 xennet* 	at hypervisor?		# Xen virtual network interface
 
 xbd*		at hypervisor?		# Xen virtual block device
+wd*		at hypervisor?		# Xen vbd (wd identity)
+sd*		at hypervisor?		# Xen vbd (sd identity)
+cd*		at hypervisor?		# Xen vbd (cd identity)
 
 
 # Pull in optional local configuration

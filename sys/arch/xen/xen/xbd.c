@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.4 2004/04/24 19:32:37 cl Exp $ */
+/* $NetBSD: xbd.c,v 1.5 2004/04/24 20:05:49 cl Exp $ */
 
 /*
  *
@@ -33,7 +33,9 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.4 2004/04/24 19:32:37 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.5 2004/04/24 20:05:49 cl Exp $");
+
+#include "xbd.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.4 2004/04/24 19:32:37 cl Exp $");
 #include <sys/lock.h>
 #include <sys/conf.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 
 #include <uvm/uvm.h>
 
@@ -64,38 +67,115 @@ __KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.4 2004/04/24 19:32:37 cl Exp $");
 #include <machine/events.h>
 
 
-int xbd_match(struct device *, struct cfdata *, void *);
 void xbd_attach(struct device *, struct device *, void *);
 
+#if NXBD > 0
+int xbd_match(struct device *, struct cfdata *, void *);
 CFATTACH_DECL(xbd, sizeof(struct xbd_softc),
     xbd_match, xbd_attach, NULL, NULL);
 
 extern struct cfdriver xbd_cd;
+#endif
+
+#if NWD > 0
+int xbd_wd_match(struct device *, struct cfdata *, void *);
+CFATTACH_DECL(wd, sizeof(struct xbd_softc),
+    xbd_wd_match, xbd_attach, NULL, NULL);
+
+extern struct cfdriver wd_cd;
+#endif
+
+#if NSD > 0
+int xbd_sd_match(struct device *, struct cfdata *, void *);
+CFATTACH_DECL(sd, sizeof(struct xbd_softc),
+    xbd_sd_match, xbd_attach, NULL, NULL);
+
+extern struct cfdriver sd_cd;
+#endif
+
+#if NCD > 0
+int xbd_cd_match(struct device *, struct cfdata *, void *);
+CFATTACH_DECL(cd, sizeof(struct xbd_softc),
+    xbd_cd_match, xbd_attach, NULL, NULL);
+
+extern struct cfdriver cd_cd;
+#endif
+
 
 dev_type_open(xbdopen);
 dev_type_close(xbdclose);
 dev_type_read(xbdread);
 dev_type_write(xbdwrite);
 dev_type_ioctl(xbdioctl);
+dev_type_ioctl(xbdioctl_cdev);
 dev_type_strategy(xbdstrategy);
 dev_type_dump(xbddump);
 dev_type_size(xbdsize);
 
+#if NXBD > 0
 const struct bdevsw xbd_bdevsw = {
 	xbdopen, xbdclose, xbdstrategy, xbdioctl,
 	xbddump, xbdsize, D_DISK
 };
 
 const struct cdevsw xbd_cdevsw = {
-	xbdopen, xbdclose, xbdread, xbdwrite, xbdioctl,
+	xbdopen, xbdclose, xbdread, xbdwrite, xbdioctl_cdev,
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
+
+static dev_t xbd_major;
+#endif
+
+#if NWD > 0
+const struct bdevsw wd_bdevsw = {
+	xbdopen, xbdclose, xbdstrategy, xbdioctl,
+	xbddump, xbdsize, D_DISK
+};
+
+const struct cdevsw wd_cdevsw = {
+	xbdopen, xbdclose, xbdread, xbdwrite, xbdioctl_cdev,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
+
+static dev_t xbd_wd_major;
+static dev_t xbd_wd_cdev_major;
+#endif
+
+#if NSD > 0
+const struct bdevsw sd_bdevsw = {
+	xbdopen, xbdclose, xbdstrategy, xbdioctl,
+	xbddump, xbdsize, D_DISK
+};
+
+const struct cdevsw sd_cdevsw = {
+	xbdopen, xbdclose, xbdread, xbdwrite, xbdioctl_cdev,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
+
+static dev_t xbd_sd_major;
+static dev_t xbd_sd_cdev_major;
+#endif
+
+#if NCD > 0
+const struct bdevsw cd_bdevsw = {
+	xbdopen, xbdclose, xbdstrategy, xbdioctl,
+	xbddump, xbdsize, D_DISK
+};
+
+const struct cdevsw cd_cdevsw = {
+	xbdopen, xbdclose, xbdread, xbdwrite, xbdioctl_cdev,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
+
+static dev_t xbd_cd_major;
+static dev_t xbd_cd_cdev_major;
+#endif
 
 
 static int	xbdstart(struct dk_softc *, struct buf *);
 static int	xbd_response_handler(void *);
 
-static int	xbdinit(struct xbd_softc *, xen_disk_t *);
+static int	xbdinit(struct xbd_softc *, xen_disk_t *, struct dk_intf *);
 
 /* Pseudo-disk Interface */
 static struct dk_intf dkintf_esdi = {
@@ -106,6 +186,7 @@ static struct dk_intf dkintf_esdi = {
 	xbdstrategy,
 	xbdstart,
 };
+#if NSD > 0
 static struct dk_intf dkintf_scsi = {
 	DTYPE_SCSI,
 	"Xen Virtual SCSI",
@@ -114,6 +195,35 @@ static struct dk_intf dkintf_scsi = {
 	xbdstrategy,
 	xbdstart,
 };
+#endif
+
+#if NXBD > 0
+static struct xbd_attach_args xbd_ata = {
+	.xa_device = "xbd",
+	.xa_dkintf = &dkintf_esdi,
+};
+#endif
+
+#if NWD > 0
+static struct xbd_attach_args wd_ata = {
+	.xa_device = "wd",
+	.xa_dkintf = &dkintf_esdi,
+};
+#endif
+
+#if NSD > 0
+static struct xbd_attach_args sd_ata = {
+	.xa_device = "sd",
+	.xa_dkintf = &dkintf_scsi,
+};
+#endif
+
+#if NCD > 0
+static struct xbd_attach_args cd_ata = {
+	.xa_device = "cd",
+	.xa_dkintf = &dkintf_esdi,
+};
+#endif
 
 
 #if defined(XBDDEBUG) && !defined(DEBUG)
@@ -240,14 +350,38 @@ static unsigned int state = STATE_SUSPENDED;
 
 #define XBDUNIT(x)		DISKUNIT(x)
 #define GETXBD_SOFTC(_xs, x)	if (!((_xs) = getxbd_softc(x))) return ENXIO
+#define GETXBD_SOFTC_CDEV(_xs, x) do {			\
+	dev_t bx = devsw_chr2blk((x));			\
+	if (bx == NODEV)				\
+		return ENXIO;				\
+	if (!((_xs) = getxbd_softc(bx)))		\
+		return ENXIO;				\
+} while (/*CONSTCOND*/0)
 
 static struct xbd_softc *
 getxbd_softc(dev_t dev)
 {
 	int	unit = XBDUNIT(dev);
 
-	DPRINTF_FOLLOW(("getxbd_softc(0x%x): unit = %d\n", dev, unit));
-	return device_lookup(&xbd_cd, unit);
+	DPRINTF_FOLLOW(("getxbd_softc(0x%x): major = %d unit = %d\n", dev,
+	    major(dev), unit));
+#if NXBD > 0
+	if (major(dev) == xbd_major)
+		return device_lookup(&xbd_cd, unit);
+#endif
+#if NWD > 0
+	if (major(dev) == xbd_wd_major || major(dev) == xbd_wd_cdev_major)
+		return device_lookup(&wd_cd, unit);
+#endif
+#if NSD > 0
+	if (major(dev) == xbd_sd_major || major(dev) == xbd_sd_cdev_major)
+		return device_lookup(&sd_cd, unit);
+#endif
+#if NCD > 0
+	if (major(dev) == xbd_cd_major || major(dev) == xbd_cd_cdev_major)
+		return device_lookup(&cd_cd, unit);
+#endif
+	return NULL;
 }
 
 static int
@@ -335,12 +469,35 @@ signal_requests_to_xen(void)
 }
 
 int
-xbd_scan(struct device *self, struct xbd_attach_args *xbda, cfprint_t print)
+xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
+    cfprint_t print)
 {
 	struct xbdreq *xr;
+	struct xbd_attach_args *xbda;
+	xen_disk_t *xd;
 	int i;
 
 	init_interface();
+
+#if NXBD > 0
+	xbd_major = devsw_name2blk("xbd", NULL, 0);
+#endif
+#if NWD > 0
+	xbd_wd_major = devsw_name2blk("wd", NULL, 0);
+	/* XXX Also handle the cdev majors since stuff like
+	 * read_sector calls strategy on the cdev.  This only works if
+	 * all the majors we care about are different.
+	 */
+	xbd_wd_cdev_major = major(devsw_blk2chr(makedev(xbd_wd_major, 0)));
+#endif
+#if NSD > 0
+	xbd_sd_major = devsw_name2blk("sd", NULL, 0);
+	xbd_sd_cdev_major = major(devsw_blk2chr(makedev(xbd_sd_major, 0)));
+#endif
+#if NCD > 0
+	xbd_cd_major = devsw_name2blk("cd", NULL, 0);
+	xbd_cd_cdev_major = major(devsw_blk2chr(makedev(xbd_cd_major, 0)));
+#endif
 
 	MALLOC(xr, struct xbdreq *, BLK_RING_SIZE * sizeof(struct xbdreq),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
@@ -358,8 +515,50 @@ xbd_scan(struct device *self, struct xbd_attach_args *xbda, cfprint_t print)
 		goto out;
 
 	for (i = 0; i < nr_vbds; i++) {
-		xbda->xa_disk = i;
-		config_found(self, xbda, print);
+		xd = &vbd_info[i];
+		switch (XEN_MAJOR(xd->device)) {
+#if NSD > 0
+		case XEN_SCSI_DISK0_MAJOR:
+		case XEN_SCSI_DISK1_MAJOR ... XEN_SCSI_DISK7_MAJOR:
+		case XEN_SCSI_DISK8_MAJOR ... XEN_SCSI_DISK15_MAJOR:
+			xbda = &sd_ata;
+			break;
+		case XEN_SCSI_CDROM_MAJOR:
+			xbda = &cd_ata;
+			break;
+#endif
+#if NWD > 0
+		case XEN_IDE0_MAJOR:
+		case XEN_IDE1_MAJOR:
+		case XEN_IDE2_MAJOR:
+		case XEN_IDE3_MAJOR:
+		case XEN_IDE4_MAJOR:
+		case XEN_IDE5_MAJOR:
+		case XEN_IDE6_MAJOR:
+		case XEN_IDE7_MAJOR:
+		case XEN_IDE8_MAJOR:
+		case XEN_IDE9_MAJOR:
+			switch (XD_TYPE(xd->info)) {
+			case XD_TYPE_CDROM:
+				xbda = &cd_ata;
+				break;
+			case XD_TYPE_DISK:
+				xbda = &wd_ata;
+				break;
+			default:
+				xbda = NULL;
+				break;
+			}
+			break;
+#endif
+		default:
+			xbda = &xbd_ata;
+			break;
+		}
+		if (xbda) {
+			xbda->xa_disk = i;
+			config_found(self, xbda, print);
+		}
 	}
 
 	return 0;
@@ -375,6 +574,7 @@ xbd_scan(struct device *self, struct xbd_attach_args *xbda, cfprint_t print)
 	return 0;
 }
 
+#if NXBD > 0
 int
 xbd_match(struct device *parent, struct cfdata *match, void *aux)
 {
@@ -384,6 +584,43 @@ xbd_match(struct device *parent, struct cfdata *match, void *aux)
 		return 1;
 	return 0;
 }
+#endif
+
+#if NWD > 0
+int
+xbd_wd_match(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct xbd_attach_args *xa = (struct xbd_attach_args *)aux;
+
+	if (strcmp(xa->xa_device, "wd") == 0)
+		return 1;
+	return 0;
+}
+#endif
+
+#if NSD > 0
+int
+xbd_sd_match(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct xbd_attach_args *xa = (struct xbd_attach_args *)aux;
+
+	if (strcmp(xa->xa_device, "sd") == 0)
+		return 1;
+	return 0;
+}
+#endif
+
+#if NCD > 0
+int
+xbd_cd_match(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct xbd_attach_args *xa = (struct xbd_attach_args *)aux;
+
+	if (strcmp(xa->xa_device, "cd") == 0)
+		return 1;
+	return 0;
+}
+#endif
 
 void
 xbd_attach(struct device *parent, struct device *self, void *aux)
@@ -395,7 +632,7 @@ xbd_attach(struct device *parent, struct device *self, void *aux)
 
 	simple_lock_init(&xs->sc_slock);
 	dk_sc_init(&xs->sc_dksc, xs, xs->sc_dev.dv_xname);
-	xbdinit(xs, &vbd_info[xbda->xa_disk]);
+	xbdinit(xs, &vbd_info[xbda->xa_disk], xbda->xa_dkintf);
 }
 
 int
@@ -404,7 +641,16 @@ xbdopen(dev_t dev, int flags, int fmt, struct proc *p)
 	struct	xbd_softc *xs;
 
 	DPRINTF_FOLLOW(("xbdopen(0x%04x, %d)\n", dev, flags));
-	GETXBD_SOFTC(xs, dev);
+	switch (fmt) {
+	case S_IFCHR:
+		GETXBD_SOFTC_CDEV(xs, dev);
+		break;
+	case S_IFBLK:
+		GETXBD_SOFTC(xs, dev);
+		break;
+	default:
+		return ENXIO;
+	}
 	return dk_open(xs->sc_di, &xs->sc_dksc, dev, flags, fmt, p);
 }
 
@@ -414,7 +660,16 @@ xbdclose(dev_t dev, int flags, int fmt, struct proc *p)
 	struct	xbd_softc *xs;
 
 	DPRINTF_FOLLOW(("xbdclose(%d, %d)\n", dev, flags));
-	GETXBD_SOFTC(xs, dev);
+	switch (fmt) {
+	case S_IFCHR:
+		GETXBD_SOFTC_CDEV(xs, dev);
+		break;
+	case S_IFBLK:
+		GETXBD_SOFTC(xs, dev);
+		break;
+	default:
+		return ENXIO;
+	}
 	return dk_close(xs->sc_di, &xs->sc_dksc, dev, flags, fmt, p);
 }
 
@@ -728,7 +983,7 @@ xbdread(dev_t dev, struct uio *uio, int flags)
 	struct	dk_softc *dksc;
 
 	DPRINTF_FOLLOW(("xbdread(%d, %p, %d)\n", dev, uio, flags));
-	GETXBD_SOFTC(xs, dev);
+	GETXBD_SOFTC_CDEV(xs, dev);
 	dksc = &xs->sc_dksc;
 	if ((dksc->sc_flags & DKF_INITED) == 0)
 		return ENXIO;
@@ -744,7 +999,7 @@ xbdwrite(dev_t dev, struct uio *uio, int flags)
 	struct	dk_softc *dksc;
 
 	DPRINTF_FOLLOW(("xbdwrite(%d, %p, %d)\n", dev, uio, flags));
-	GETXBD_SOFTC(xs, dev);
+	GETXBD_SOFTC_CDEV(xs, dev);
 	dksc = &xs->sc_dksc;
 	if ((dksc->sc_flags & DKF_INITED) == 0)
 		return ENXIO;
@@ -778,6 +1033,17 @@ xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int
+xbdioctl_cdev(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	dev_t bdev;
+
+	bdev = devsw_chr2blk(dev);
+	if (bdev == NODEV)
+		return ENXIO;
+	return xbdioctl(bdev, cmd, data, flag, p);
+}
+
+int
 xbddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	struct	xbd_softc *xs;
@@ -789,7 +1055,7 @@ xbddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 }
 
 static int
-xbdinit(struct xbd_softc *xs, xen_disk_t *xd)
+xbdinit(struct xbd_softc *xs, xen_disk_t *xd, struct dk_intf *dkintf)
 {
 	struct dk_geom *pdg;
 	char buf[9];
@@ -799,28 +1065,7 @@ xbdinit(struct xbd_softc *xs, xen_disk_t *xd)
 
 	xs->sc_dksc.sc_size = xd->capacity;
 	xs->sc_xd_device = xd->device;
-
-	switch (XEN_MAJOR(xd->device)) {
-	case XEN_SCSI_DISK0_MAJOR:
-	case XEN_SCSI_DISK1_MAJOR ... XEN_SCSI_DISK7_MAJOR:
-	case XEN_SCSI_DISK8_MAJOR ... XEN_SCSI_DISK15_MAJOR:
-	case XEN_SCSI_CDROM_MAJOR:
-		xs->sc_di = &dkintf_scsi;
-		break;
-	case XEN_IDE0_MAJOR:
-	case XEN_IDE1_MAJOR:
-	case XEN_IDE2_MAJOR:
-	case XEN_IDE3_MAJOR:
-	case XEN_IDE4_MAJOR:
-	case XEN_IDE5_MAJOR:
-	case XEN_IDE6_MAJOR:
-	case XEN_IDE7_MAJOR:
-	case XEN_IDE8_MAJOR:
-	case XEN_IDE9_MAJOR:
-	default:
-		xs->sc_di = &dkintf_esdi;
-		break;
-	}
+	xs->sc_di = dkintf;
 
 	/*
 	 * XXX here we should probe the underlying device.  If we
