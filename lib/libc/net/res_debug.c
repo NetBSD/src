@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.18 1998/08/18 23:57:02 thorpej Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.19 1998/08/19 20:58:42 ross Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.18 1998/08/18 23:57:02 thorpej Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.19 1998/08/19 20:58:42 ross Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1207,7 +1207,7 @@ latlon2ul(latlonstrptr,which)
 	int *which;
 {
 	register const char *cp;
-	u_int32_t retval;
+	u_int32_t retval = 0;
 	int deg = 0, min = 0, secs = 0, secsfrac = 0;
 
 	cp = *latlonstrptr;
