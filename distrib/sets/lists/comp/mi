@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.433 2002/03/24 18:27:49 wiz Exp $
+#	$NetBSD: mi,v 1.434 2002/03/30 06:29:00 thorpej Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1077,8 +1077,8 @@
 ./usr/share/man/cat2/access.0		comp-c-catman
 ./usr/share/man/cat2/acct.0		comp-c-catman
 ./usr/share/man/cat2/adjtime.0		comp-c-catman
-./usr/share/man/cat2/arm32_drain_writebuf.0	comp-c-catman
-./usr/share/man/cat2/arm32_sync_icache.0	comp-c-catman
+./usr/share/man/cat2/arm_drain_writebuf.0	comp-c-catman
+./usr/share/man/cat2/arm_sync_icache.0	comp-c-catman
 ./usr/share/man/cat2/bind.0		comp-c-catman
 ./usr/share/man/cat2/brk.0		comp-c-catman
 ./usr/share/man/cat2/chdir.0		comp-c-catman
@@ -3557,8 +3557,8 @@
 ./usr/share/man/man2/access.2		comp-c-man
 ./usr/share/man/man2/acct.2		comp-c-man
 ./usr/share/man/man2/adjtime.2		comp-c-man
-./usr/share/man/man2/arm32_drain_writebuf.2		comp-c-man
-./usr/share/man/man2/arm32_sync_icache.2		comp-c-man
+./usr/share/man/man2/arm_drain_writebuf.2	comp-c-man
+./usr/share/man/man2/arm_sync_icache.2	comp-c-man
 ./usr/share/man/man2/bind.2		comp-c-man
 ./usr/share/man/man2/brk.2		comp-c-man
 ./usr/share/man/man2/chdir.2		comp-c-man
