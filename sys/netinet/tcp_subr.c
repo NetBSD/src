@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.82 1999/12/08 16:22:20 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.83 1999/12/12 19:51:49 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -494,6 +494,9 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 			ip6->ip6_nxt = IPPROTO_TCP;
 			break;
 #endif
+		default:	/*pacify gcc*/
+			th = NULL;
+			break;
 		}
 		*th = *th0;
 		xchg(th->th_dport, th->th_sport, u_int16_t);
