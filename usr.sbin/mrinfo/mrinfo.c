@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.23 2004/01/05 23:23:38 jmmv Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.24 2004/10/30 08:56:00 dsl Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -80,7 +80,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.23 2004/01/05 23:23:38 jmmv Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.24 2004/10/30 08:56:00 dsl Exp $");
 #endif
 #endif
 
@@ -285,7 +285,7 @@ get_number(int *var, int deflt, char ***pargv, int *pargc)
 {
 	if ((*pargv)[0][2] == '\0') {	/* Get the value from the next
 					 * argument */
-		if (*pargc > 1 && isdigit((*pargv)[1][0])) {
+		if (*pargc > 1 && isdigit((unsigned char)(*pargv)[1][0])) {
 			(*pargv)++, (*pargc)--;
 			*var = atoi((*pargv)[0]);
 			return 1;
@@ -295,7 +295,7 @@ get_number(int *var, int deflt, char ***pargv, int *pargc)
 		} else
 			return 0;
 	} else {		/* Get value from the rest of this argument */
-		if (isdigit((*pargv)[0][2])) {
+		if (isdigit((unsigned char)(*pargv)[0][2])) {
 			*var = atoi((*pargv)[0] + 2);
 			return 1;
 		} else {
