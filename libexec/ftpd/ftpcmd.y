@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.57 2000/11/28 09:31:29 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.58 2000/11/30 02:59:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.57 2000/11/28 09:31:29 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.58 2000/11/30 02:59:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1383,10 +1383,11 @@ getline(char *s, int n, FILE *iop)
 		return (NULL);
 	*cs++ = '\0';
 	if (debug) {
-		if (curclass.type != CLASS_GUEST &&
-		    strncasecmp("pass ", s, 5) == 0) {
+		if ((curclass.type != CLASS_GUEST &&
+		    strncasecmp(s, "PASS ", 5) == 0) ||
+		    strncasecmp(s, "ACCT ", 5) == 0) {
 			/* Don't syslog passwords */
-			syslog(LOG_DEBUG, "command: %.5s ???", s);
+			syslog(LOG_DEBUG, "command: %.4s ???", s);
 		} else {
 			char *cp;
 			int len;
@@ -1439,10 +1440,11 @@ yylex(void)
 		(void) alarm(0);
 		if ((cp = strchr(cbuf, '\r'))) {
 			*cp = '\0';
-#ifdef HASSETPROCTITLE
-			if (strncasecmp(cbuf, "PASS", 4) != 0)
+#if HAVE_SETPROCTITLE
+			if (strncasecmp(cbuf, "PASS", 4) != 0 &&
+			    strncasecmp(cbuf, "ACCT", 4) != 0)
 				setproctitle("%s: %s", proctitle, cbuf);
-#endif /* HASSETPROCTITLE */
+#endif /* HAVE_SETPROCTITLE */
 			*cp++ = '\n';
 			*cp = '\0';
 		}

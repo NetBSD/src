@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.114 2000/11/28 09:46:34 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.115 2000/11/30 02:59:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.114 2000/11/28 09:46:34 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.115 2000/11/30 02:59:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,6 +218,7 @@ static void	 lostconn(int);
 static void	 myoob(int);
 static int	 receive_data(FILE *, FILE *);
 static int	 send_data(FILE *, FILE *, off_t, int);
+static int	 valid_passwd(const struct passwd *, const char *);
 static struct passwd *sgetpwnam(const char *);
 
 int	main(int, char *[]);
@@ -864,8 +865,7 @@ pass(const char *passwd)
 			}
 		}
 #endif
-		if (!sflag && *pw->pw_passwd != '\0' &&
-		    !strcmp(crypt(passwd, pw->pw_passwd), pw->pw_passwd)) {
+		if (!sflag && valid_passwd(pw, passwd)) {
 			rval = 0;
 			goto skip;
 		}
@@ -1104,13 +1104,13 @@ pass(const char *passwd)
 	show_chdir_messages(230);
 	if (curclass.type == CLASS_GUEST) {
 		reply(230, "Guest login ok, access restrictions apply.");
-#ifdef HASSETPROCTITLE
+#if HAVE_SETPROCTITLE
 		snprintf(proctitle, sizeof(proctitle),
 		    "%s: anonymous/%.*s", remotehost,
 		    (int) (sizeof(proctitle) - sizeof(remotehost) -
 		    sizeof(": anonymous/")), passwd);
 		setproctitle("%s", proctitle);
-#endif /* HASSETPROCTITLE */
+#endif /* HAVE_SETPROCTITLE */
 		if (logging)
 			syslog(LOG_INFO,
 			"ANONYMOUS FTP LOGIN FROM %s, %s (class: %s, type: %s)",
@@ -1118,11 +1118,11 @@ pass(const char *passwd)
 			    curclass.classname, CURCLASSTYPE);
 	} else {
 		reply(230, "User %s logged in.", pw->pw_name);
-#ifdef HASSETPROCTITLE
+#if HAVE_SETPROCTITLE
 		snprintf(proctitle, sizeof(proctitle),
 		    "%s: %s", remotehost, pw->pw_name);
 		setproctitle("%s", proctitle);
-#endif /* HASSETPROCTITLE */
+#endif /* HAVE_SETPROCTITLE */
 		if (logging)
 			syslog(LOG_INFO,
 			    "FTP LOGIN FROM %s as %s (class: %s, type: %s)",
@@ -2110,10 +2110,10 @@ dolog(struct sockinet *who)
 	    who->su_len, remotehost, sizeof(remotehost), NULL, 0, 0))
 		strlcpy(remotehost, "?", sizeof(remotehost));
 
-#ifdef HASSETPROCTITLE
+#if HAVE_SETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
 	setproctitle("%s", proctitle);
-#endif /* HASSETPROCTITLE */
+#endif /* HAVE_SETPROCTITLE */
 	if (logging)
 		syslog(LOG_INFO, "connection from %s to %s",
 		    remotehost, hostname);
@@ -2774,6 +2774,28 @@ logcmd(const char *command, off_t bytes, const char *file1, const char *file2,
 		len += snprintf(buf + len, sizeof(buf) - len, ": %s", error);
 
 	syslog(LOG_INFO, "%s", buf);
+}
+
+/*
+ * determine if password is valid for user given in pw
+ * returns 1 if ok, 0 if not.
+ */
+int
+valid_passwd(const struct passwd *pw, const char *password)
+{
+	char *orig, *new;
+	int rv;
+
+			/* save existing password */
+	orig = pw->pw_passwd;
+			/* don't let people without passwords in */
+	if (orig[0] == '\0')
+		return 0;
+			/* encrypt given password */
+	new = crypt(password, orig);
+			/* compare */
+	rv = strcmp(new, orig) == 0;
+	return (rv);
 }
 
 char *

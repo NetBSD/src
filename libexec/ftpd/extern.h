@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.35 2000/11/16 13:15:13 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.36 2000/11/30 02:59:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -239,6 +239,7 @@ struct ftpclass {
 #include <netinet/in.h>
 
 #ifdef BSD4_4
+# define HAVE_SETPROCTITLE	1
 # define HAVE_SOCKADDR_SA_LEN	1
 #endif
 
@@ -296,7 +297,7 @@ GLOBAL	krb5_context	kcontext;
 GLOBAL	int		logged_in;
 GLOBAL	int		logging;
 GLOBAL	int		pdata;			/* for passive mode */
-#ifdef HASSETPROCTITLE
+#if HAVE_SETPROCTITLE
 GLOBAL	char		proctitle[BUFSIZ];	/* initial part of title */
 #endif
 GLOBAL	struct passwd  *pw;
