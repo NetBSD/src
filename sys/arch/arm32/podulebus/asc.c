@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.18 1997/08/27 11:23:26 bouyer Exp $	*/
+/*	$NetBSD: asc.c,v 1.19 1997/10/14 22:07:50 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -68,7 +68,7 @@
 #include <arm32/podulebus/podules.h>
 
 void ascattach	__P((struct device *, struct device *, void *));
-int ascmatch	__P((struct device *, void *, void *));
+int ascmatch	__P((struct device *, struct cfdata *, void *));
 
 void asc_enintr __P((struct sbic_softc *));
 void asc_dmastop __P((struct sbic_softc *));
@@ -115,9 +115,10 @@ int asc_poll = 0;
 #endif
 
 int
-ascmatch(pdp, match, auxp)
+ascmatch(pdp, cf, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cf;
+	void *auxp;
 {
 	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
 
@@ -177,13 +178,8 @@ ascattach(pdp, dp, auxp)
 	sbic->sc_link.type = BUS_SCSI;
 
 	/* Provide an override for the host id */
-        if (boot_args) {
-        	char *ptr;
-		ptr = strstr(boot_args, "asc.hostid=");
-		if (ptr)
-			sbic->sc_link.scsipi_scsi.adapter_target =
-				(u_int)strtoul(ptr + 11, NULL, 10);
-	}
+	(void)get_bootconf_option(boot_args, "asc.hostid",
+	    BOOTOPT_TYPE_INT, &sbic->sc_link.scsipi_scsi.adapter_target);
 
 	printf(" hostid=%d", sbic->sc_link.scsipi_scsi.adapter_target);
 
@@ -225,7 +221,7 @@ ascattach(pdp, dp, auxp)
 #ifdef ASC_POLL
 	if (!asc_poll)
 #endif
-	if (irq_claim(IRQ_PODULE, &sc->sc_ih))
+	if (irq_claim(sc->sc_podule->interrupt, &sc->sc_ih))
 		panic("%s: Cannot claim podule IRQ\n", dp->dv_xname);
 
 	/*
