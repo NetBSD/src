@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.80 2003/06/26 18:21:45 wiz Exp $
+.\"	$NetBSD: make.1,v 1.81 2003/07/14 20:39:20 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -625,6 +625,13 @@ Replaces each word in the variable with everything but its suffix.
 Converts variable to lower-case letters.
 .It Cm tu
 Converts variable to upper-case letters.
+.It Cm ts Ar c
+Words in the variable are normally separated by a space on expansion.
+This modifier sets the separator to the character
+.Ar c .
+If
+.Ar c
+is omitted, then no separator is used.
 .Sm off
 .It Cm S No \&/ Ar old_string Xo
 .No \&/ Ar new_string
