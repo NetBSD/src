@@ -1,7 +1,8 @@
-/*	$NetBSD: machdep.c,v 1.36 2002/05/03 01:13:55 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 2002/05/03 01:49:22 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
+ * Copyright (c) 2001, 2002 Rafal K. Boni
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
