@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.46 1997/04/28 03:49:57 mycroft Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.47 1997/05/05 07:14:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -493,19 +493,17 @@ procfs_getattr(v)
 	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_ctime);
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 
-	/*
-	 * If the process has exercised some setuid or setgid
-	 * privilege, then rip away read/write permission so
-	 * that only root can gain access.
-	 */
 	switch (pfs->pfs_type) {
 	case Pmem:
 	case Pregs:
 	case Pfpregs:
+		/*
+		 * If the process has exercised some setuid or setgid
+		 * privilege, then rip away read/write permission so
+		 * that only root can gain access.
+		 */
 		if (procp->p_flag & P_SUGID)
-			vap->va_mode &= ~((VREAD|VWRITE)|
-					  ((VREAD|VWRITE)>>3)|
-					  ((VREAD|VWRITE)>>6));
+			vap->va_mode &= ~(S_IRUSR|S_IWUSR);
 		/* FALLTHROUGH */
 	case Pctl:
 	case Pstatus:
