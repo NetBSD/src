@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.6 2002/07/09 21:25:00 atatat Exp $ */
+/*	$NetBSD: stat.c,v 1.7 2002/08/13 14:05:41 atatat Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,20 +38,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stat.c,v 1.6 2002/07/09 21:25:00 atatat Exp $");
+__RCSID("$NetBSD: stat.c,v 1.7 2002/08/13 14:05:41 atatat Exp $");
 #endif
 
-#include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/syslimits.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
-#include <fcntl.h>
-#include <err.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -304,7 +303,7 @@ output(const struct stat *st, const char *file,
     const char *statfmt, int fn, int nonl, int quiet)
 {
 	int flags, size, prec, ofmt, hilo, what;
-	char buf[MAXPATHLEN];
+	char buf[PATH_MAX];
 	const char *subfmt;
 	int nl, t, i;
 
@@ -500,7 +499,7 @@ format1(const struct stat *st,
 {
 	u_int64_t data;
 	char *sdata, lfmt[24], tmp[20];
-	char smode[12], sid[12], path[MAXPATHLEN + 4];
+	char smode[12], sid[12], path[PATH_MAX + 4];
 	struct passwd *pw;
 	struct group *gr;
 	const struct timespec *tsp;
