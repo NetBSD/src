@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.60 1995/06/28 04:31:28 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.61 1995/07/04 06:47:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -664,8 +664,15 @@ comstart(tp)
 	if ((tp->t_cflag & CRTSCTS) != 0 &&
 	    (sc->sc_msr & MSR_CTS) == 0)
 		goto out;
-	if (tp->t_outq.c_cc == 0)
-		goto out;
+	if (tp->t_outq.c_cc <= tp->t_lowat) {
+		if (tp->t_state & TS_ASLEEP) {
+			tp->t_state &= ~TS_ASLEEP;
+			wakeup((caddr_t)&tp->t_outq);
+		}
+		if (tp->t_outq.c_cc == 0)
+			goto out;
+		selwakeup(&tp->t_wsel);
+	}
 	tp->t_state |= TS_BUSY;
 	if (sc->sc_hwflags & COM_HW_FIFO) {
 		u_char buffer[16], *cp = buffer;
@@ -675,13 +682,6 @@ comstart(tp)
 		} while (--n);
 	} else
 		outb(iobase + com_data, getc(&tp->t_outq));
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
 out:
 	splx(s);
 }
@@ -761,6 +761,11 @@ compoll(arg)
 
 		ibufp = sc->sc_ibuf;
 		ibufend = sc->sc_ibufp;
+
+		if (ibufp == ibufend) {
+			splx(s);
+			continue;
+		}
 
 		sc->sc_ibufp = sc->sc_ibuf = (ibufp == sc->sc_ibufs[0]) ?
 					     sc->sc_ibufs[1] : sc->sc_ibufs[0];
