@@ -37,7 +37,7 @@
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)Ovfork.s	5.1 (Berkeley) 4/23/90"*/
-	.asciz "$Id: Ovfork.s,v 1.4 1993/08/26 02:14:11 mycroft Exp $"
+	.asciz "$Id: Ovfork.s,v 1.5 1993/09/28 21:04:52 pk Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -61,7 +61,14 @@ vforkok:
 	jmp 	parent 
 .globl	_errno
 verror:
+#ifdef PIC
+	PIC_PROLOGUE
+	movl	PIC_GOT(_errno), %edx
+	movl	%eax,(%edx)
+	PIC_EPILOGUE
+#else
 	movl	%eax,_errno
+#endif
 	movl	$-1,%eax
 	jmp	%ecx
 child:
