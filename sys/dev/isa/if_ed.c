@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.82 1995/07/24 02:40:38 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.83 1995/07/24 02:43:11 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -2150,7 +2150,7 @@ edget(sc, src, total_len)
 	u_short total_len;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct mbuf *tmp, **mp, *m;
+	struct mbuf *top, **mp, *m;
 	int len;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
