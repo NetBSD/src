@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.160 2002/11/10 19:52:16 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.161 2002/11/12 01:38:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.160 2002/11/10 19:52:16 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.161 2002/11/12 01:38:09 itojun Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -1826,13 +1826,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_MTUDISC:
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_mtudisc);
-		if (ip_mtudisc != 0 && ip_mtudisc_timeout_q == NULL) {
-			ip_mtudisc_timeout_q =
-			    rt_timer_queue_create(ip_mtudisc_timeout);
-		} else if (ip_mtudisc == 0 && ip_mtudisc_timeout_q != NULL) {
-			rt_timer_queue_destroy(ip_mtudisc_timeout_q, TRUE);
-			ip_mtudisc_timeout_q = NULL;
-		}
+		if (ip_mtudisc == 0)
+			rt_timer_queue_remove_all(ip_mtudisc_timeout_q, TRUE);
 		return error;
 	case IPCTL_ANONPORTMIN:
 		old = anonportmin;
@@ -1868,9 +1863,7 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			ip_mtudisc_timeout = old;
 			return (EINVAL);
 		}
-		if (ip_mtudisc_timeout_q != NULL)
-			rt_timer_queue_change(ip_mtudisc_timeout_q,
-					      ip_mtudisc_timeout);
+		rt_timer_queue_change(ip_mtudisc_timeout_q, ip_mtudisc_timeout);
 		return (error);
 #ifdef GATEWAY
 	case IPCTL_MAXFLOWS:
