@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.6 2000/08/10 22:43:45 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.7 2000/08/10 22:57:01 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -52,7 +52,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.6 2000/08/10 22:43:45 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.7 2000/08/10 22:57:01 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -276,6 +276,10 @@ eaattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iobase = pa->pa_memc_h + EA_8005_BASE;
 
 	/* Get the Ethernet address from the device description string. */
+	if (pa->pa_descr == NULL) {
+		printf(": No description for Ethernet address\n");
+		return;
+	}
 	ptr = strchr(pa->pa_descr, '(');
 	if (ptr == NULL) {
 		printf(": Ethernet address not found in description\n");
