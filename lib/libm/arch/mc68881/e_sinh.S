@@ -40,11 +40,13 @@
 ;_sccsid:
 ;.asciz	"from: @(#)sinh.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: e_sinh.S,v 1.3 1995/05/09 01:22:19 jtc Exp $")
+RCSID("$NetBSD: e_sinh.S,v 1.4 1999/08/15 18:45:18 kleink Exp $")
 
 ENTRY(__ieee754_sinh)
 	fsinhd	sp@(4),fp0
+#ifndef __SVR4_ABI__
 	fmoved	fp0,sp@-
 	movel	sp@+,d0
 	movel	sp@+,d1
+#endif
 	rts

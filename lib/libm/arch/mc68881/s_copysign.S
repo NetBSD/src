@@ -40,11 +40,22 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_copysign.S,v 1.3 1995/05/09 01:46:33 jtc Exp $")
+RCSID("$NetBSD: s_copysign.S,v 1.4 1999/08/15 18:45:18 kleink Exp $")
 
 | copysign(x,y)
 | returns x with the sign of y.
 ENTRY(copysign)
+#ifdef __SVR4_ABI__
+	tstw	sp@(12)
+	jmi	Lneg
+	bclr	#31,sp@(4)
+	fmoved	sp@(4),fp0
+	rts
+Lneg:
+	bset	#31,sp@(4)
+	fmoved	sp@(4),fp0
+	rts
+#else
 	movl	sp@(4),d0
 	movl	sp@(8),d1
 	tstw	sp@(12)
@@ -54,3 +65,4 @@ ENTRY(copysign)
 Lneg:
 	bset	#31,d0
 	rts
+#endif

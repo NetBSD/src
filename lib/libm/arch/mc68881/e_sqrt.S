@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)sqrt.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: e_sqrt.S,v 1.4 1999/07/02 15:37:34 simonb Exp $")
+RCSID("$NetBSD: e_sqrt.S,v 1.5 1999/08/15 18:45:18 kleink Exp $")
 
 /*
  * sqrt(x)
@@ -50,7 +50,9 @@ RCSID("$NetBSD: e_sqrt.S,v 1.4 1999/07/02 15:37:34 simonb Exp $")
 
 ENTRY(__ieee754_sqrt)
 	fsqrtd	sp@(4),fp0
+#ifndef __SVR4_ABI__
 	fmoved	fp0,sp@-
 	movel	sp@+,d0
 	movel	sp@+,d1
+#endif
 	rts
