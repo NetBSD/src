@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.16 1998/06/03 02:41:11 thorpej Exp $
+.\"	$NetBSD: netstat.1,v 1.17 1998/07/18 05:04:10 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -122,9 +122,11 @@ for
 for
 .Dv AF_APPLETALK ;
 and
+.Ar local
+or
 .Ar unix ,
 for
-.Dv AF_UNIX .
+.Dv AF_LOCAL .
 .It Fl g
 Show information related to multicast (group address) routing.
 By default, show the IP Multicast virtual-interface and routing tables.

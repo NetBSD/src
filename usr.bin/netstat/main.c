@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 1998/07/12 03:20:14 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.17 1998/07/18 05:04:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 1998/07/12 03:20:14 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 1998/07/18 05:04:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -251,8 +251,9 @@ main(argc, argv)
 				af = AF_NS;
 			else if (strcmp(optarg, "inet") == 0)
 				af = AF_INET;
-			else if (strcmp(optarg, "unix") == 0)
-				af = AF_UNIX;
+			else if (strcmp(optarg, "unix") == 0
+			    || strcmp(optarg, "local") == 0)
+				af = AF_LOCAL;
 			else if (strcmp(optarg, "iso") == 0)
 				af = AF_ISO;
 			else if (strcmp(optarg, "atalk") == 0)
@@ -306,7 +307,7 @@ main(argc, argv)
 			tflag = 1;
 			break;
 		case 'u':
-			af = AF_UNIX;
+			af = AF_LOCAL;
 			break;
 		case 'w':
 			interval = atoi(optarg);
@@ -437,7 +438,7 @@ main(argc, argv)
 	if (af == AF_ISO || af == AF_UNSPEC)
 		for (tp = isoprotox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
-	if ((af == AF_UNIX || af == AF_UNSPEC) && !sflag)
+	if ((af == AF_LOCAL || af == AF_UNSPEC) && !sflag)
 		unixpr(nl[N_UNIXSW].n_value);
 	exit(0);
 }
