@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.4 2002/07/11 14:15:32 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5 2002/07/11 21:23:30 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -154,7 +154,6 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sigcontext *scp, ksc;
 	struct trapframe *tf;
-	register_t effmask;
 	int i;
 
 	tf = p->p_md.md_regs;
@@ -179,9 +178,8 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 	 * a kernel-mode exception when trying to restore invalid
 	 * values to them just before returning to user-mode.
 	 */
-	effmask = ~((1ULL << SH5_NEFF_BITS) - 1);
 	for (i = 0; i < 8; i++) {
-		if ((llabs(ksc.sc_regs.r_tr[i]) & effmask) != 0 ||
+		if (!SH5_EFF_IS_VALID(ksc.sc_regs.r_tr[i]) ||
 		    (ksc.sc_regs.r_tr[i] & 0x3) == 0x3)
 			return (EINVAL);
 	}
@@ -189,7 +187,7 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 	/*
 	 * Ditto for the PC
 	 */
-	if ((llabs(ksc.sc_regs.r_pc) & effmask) != 0 ||
+	if (!SH5_EFF_IS_VALID(ksc.sc_regs.r_pc) ||
 	    (ksc.sc_regs.r_pc & 0x3) == 0x3)
 		return (EINVAL);
 
