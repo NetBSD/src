@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.4 1995/08/08 20:34:05 gwr Exp $
+.\"	$NetBSD: diskless.8,v 1.5 1995/08/08 21:37:40 gwr Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
@@ -139,8 +139,8 @@ getattr funciton to determine the size of the swap area.
 .Sh CONFIGURATION
 Before a client can boot over the network,
 its server must be configured correctly.
-This example will demonstrate how a NetBSD/sun3 client
-might be configured -- other setups will be similar.
+This example will demonstrate how a Sun client
+might be configured -- other clients should be similar.
 .Pp
 Assuming the client's hostname is to be
 "myclient",
@@ -174,7 +174,7 @@ in the directory
 .Pp
 .It 4.
 Install a copy of the appropriate diskless boot loader (such as
-.Pa boot.sun3.sunos.4.1.1
+.Pa boot.sun4.sunos.4.1.1
 from the SunOS media) in the
 .Pa /tftpboot
 directory.
@@ -226,7 +226,10 @@ Export the required filesystems in
 .Pa /etc/exports :
 .Bd -literal -offset indent -compact
 /usr -ro myclient
-/export/myclient -rw=myclient,root=myclient
+# for SunOS:
+# /export/myclient -rw=myclient,root=myclient
+# for NetBSD:
+/export/myclient -maproot=root myclient
 .Ed
 .Pp
 If the server and client are of the same architecture, then the client
