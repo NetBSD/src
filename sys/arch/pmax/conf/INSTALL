@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.43.6.1 2002/03/15 14:22:40 ad Exp $
+# 	$NetBSD: INSTALL,v 1.43.6.2 2002/03/16 12:12:52 ad Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -58,17 +58,19 @@ options 	VNODE_OP_NOINLINE	# Save space by not inlining vnode op calls
 options 	INET			# Internet protocols
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-
+# Compatibility options
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
-# Raster console options
-options 	FONT_BOLD8x16		# Font for fb devices
-options 	FONT_LUCIDA16x29	# Font for px devices
-#options 	FONT_GALLANT12x22
-#options 	FONT_QVSS8x15
+# Workstation console options
+options 	FONT_BOLD8x16		# Font for pm devices
+options 	FONT_GALLANT12x22	# Default font
+
+options		WSEMUL_VT100
+options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
 
 # pmax specific
 options 	HZ=256		# RTC rate required
@@ -84,12 +86,15 @@ cpu*		at mainbus0
 ## Peripheral Bus Support (for devices to attach to)
 ## ----------------------------------------------------------------------------
 
+# TURBOchannel bus support
+tc*	at	mainbus0
+
 # 3MIN, 3MAX+ and MAXINE have IOASIC in system slot
 ioasic0	at	tc?
 mcclock* at	ioasic? offset ?	# DS1287 RTC
 le*	at	ioasic? offset ?	# LANCE
 dt*	at	ioasic? offset ?	# MAXINE kbd and mouse
-bba*	at	ioasic? offset ?	# MAXINE baseboard audio
+#bba*	at	ioasic? offset ?	# MAXINE baseboard audio
 #fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
 zsc0	at	ioasic? offset 0x100000	# Z85C30
 zsc1	at	ioasic? offset 0x180000	# Z85C30
@@ -100,7 +105,7 @@ zstty*	at	zsc? channel ?		# serial ports on B channels
 lkkbd*	at	zsc1 channel ?		# keyboard port on A channels
 vsms*	at	zsc0 channel ?		# mouse port on A channels
 
-audio*	at	bba?
+#audio*	at	bba?
 
 dtkbd*	at	dt? addr ?
 dtms*	at	dt? addr ?
