@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_bus_io.c,v 1.3 1997/04/07 05:19:39 cgd Exp $ */
+/* $NetBSD: dwlpx_bus_io.c,v 1.4 1997/04/07 06:36:51 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -29,6 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>

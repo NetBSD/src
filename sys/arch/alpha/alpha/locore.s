@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.29 1997/04/07 05:39:10 cgd Exp $ */
+/* $NetBSD: locore.s,v 1.30 1997/04/07 06:36:27 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <machine/asm.h>
 #ifndef EVCNT_COUNTERS
