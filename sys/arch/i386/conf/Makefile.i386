@@ -1,6 +1,6 @@
 # Copyright 1990 W. Jolitz
 # from @(#)Makefile.i386	7.1 5/10/91
-# $Id: Makefile.i386,v 1.24 1993/07/18 21:26:34 mycroft Exp $
+# $Id: Makefile.i386,v 1.25 1993/07/19 16:52:16 mycroft Exp $
 #
 # Makefile for NetBSD
 #
@@ -31,7 +31,7 @@ I386=	../..
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Di386
 ASFLAGS=
-CFLAGS=	-O ${COPTS}
+CFLAGS=	-O ${DEBUG} ${COPTS}
 
 NORMAL_C= ${CC} -c ${CFLAGS} ${PROF} $<
 NORMAL_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
@@ -42,7 +42,7 @@ SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o
 SYSTEM_DEP=Makefile symbols.sort ${SYSTEM_OBJS}
 SYSTEM_LD_HEAD= 	@echo loading $@; rm -f $@
 SYSTEM_LD= @${LD} -z -T ${LOAD_ADDRESS} -o $@ -X vers.o ${SYSTEM_OBJS}
-SYSTEM_LD_TAIL= @echo rearranging symbols; symorder symbols.sort $@; /usr/sbin/dbsym -T ${LOAD_ADDRESS} $@; size $@; chmod 755 $@
+SYSTEM_LD_TAIL= @echo rearranging symbols; symorder symbols.sort $@; /usr/sbin/dbsym -fT ${LOAD_ADDRESS} $@; size $@; chmod 755 $@
 
 # (XXX) ok, this is weird.  but we've got a working ed, and a broken ex, and
 # the script is identical for either... -- cgd
