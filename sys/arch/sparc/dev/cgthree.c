@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.16 1995/10/08 01:39:18 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.17 1995/11/29 01:45:40 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -149,6 +149,7 @@ cgthreeattach(parent, self, args)
 
 	sc->sc_fb.fb_driver = &cgthreefbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
+	sc->sc_fb.fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 	/*
 	 * The defaults below match my screen, but are not guaranteed
 	 * to be correct as defaults go...
@@ -215,7 +216,7 @@ cgthreeattach(parent, self, args)
 	if (sbus)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	if (node == fbnode)
-		fb_attach(&sc->sc_fb);
+		fb_attach(&sc->sc_fb, isconsole);
 }
 
 int
