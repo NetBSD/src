@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.5 1998/09/05 14:15:26 christos Exp $
+$NetBSD: isapnpdevs,v 1.6 1998/09/12 21:48:57 wrstuden Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@ devcompat	sb	PNPB003		Generic SB 16
 /*
  * wdc
  */
+devlogic	wdc	OPT0007		OPTi Audio 16 IDE controller
 devcompat	wdc	PNP0600		Western Digital Compatible Controller
 
 /*
