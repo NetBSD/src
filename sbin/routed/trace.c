@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.27 2002/11/30 04:04:24 christos Exp $	*/
+/*	$NetBSD: trace.c,v 1.28 2003/04/21 08:54:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -41,7 +41,7 @@
 #include <fcntl.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: trace.c,v 1.27 2002/11/30 04:04:24 christos Exp $");
+__RCSID("$NetBSD: trace.c,v 1.28 2003/04/21 08:54:42 itojun Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -135,7 +135,8 @@ naddr_ntoa(naddr a)
 	struct in_addr addr;
 
 	addr.s_addr = a;
-	s = strcpy(bufs[bufno].str, inet_ntoa(addr));
+	strlcpy(bufs[bufno].str, inet_ntoa(addr), sizeof(bufs[bufno].str));
+	s = bufs[bufno].str;
 	bufno = (bufno+1) % NUM_BUFS;
 	return s;
 #undef NUM_BUFS
@@ -372,7 +373,7 @@ set_tracefile(const char *filename,
 		trace_close(file_trace = 1);
 
 		if (fn != savetracename)
-			strncpy(savetracename, fn, sizeof(savetracename)-1);
+			strlcpy(savetracename, fn, sizeof(savetracename));
 		ftrace = n_ftrace;
 
 		fflush(stdout);
@@ -445,9 +446,12 @@ addrname(naddr	addr,			/* in network byte order */
 	} bufs[NUM_BUFS];
 	char *s, *sp;
 	naddr dmask;
+	size_t l;
 	int i;
 
-	s = strcpy(bufs[bufno].str, naddr_ntoa(addr));
+	strlcpy(bufs[bufno].str, naddr_ntoa(addr), sizeof(bufs[bufno].str));
+	s = bufs[bufno].str;
+	l = sizeof(bufs[bufno].str);
 	bufno = (bufno+1) % NUM_BUFS;
 
 	if (force == 1 || (force == 0 && mask != std_mask(addr))) {
@@ -457,10 +461,11 @@ addrname(naddr	addr,			/* in network byte order */
 		if (mask + dmask == 0) {
 			for (i = 0; i != 32 && ((1<<i) & mask) == 0; i++)
 				continue;
-			(void)sprintf(sp, "/%d", 32-i);
+			(void)snprintf(sp, s + l - sp, "/%d", 32-i);
 
 		} else {
-			(void)sprintf(sp, " (mask %#x)", (u_int)mask);
+			(void)snprintf(sp, s + l - sp, " (mask %#x)",
+			    (u_int)mask);
 		}
 	}
 
@@ -590,8 +595,11 @@ rtname(naddr dst,
 			+3*4+3+1];	/* "xxx.xxx.xxx.xxx" */
 	int i;
 
-	i = sprintf(buf, "%-16s-->", addrname(dst, mask, 0));
-	(void)sprintf(&buf[i], "%-*s", 15+20-MAX(20,i), naddr_ntoa(gate));
+	i = snprintf(buf, sizeof(buf), "%-16s-->", addrname(dst, mask, 0));
+	if (i >= sizeof(buf) || i < 0)
+		return buf;
+	(void)snprintf(&buf[i], sizeof(buf) - i, "%-*s", 15+20-MAX(20, i),
+	    naddr_ntoa(gate));
 	return buf;
 }
 
