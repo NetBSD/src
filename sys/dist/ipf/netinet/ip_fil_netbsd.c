@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.4 2005/02/08 07:01:55 martti Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.5 2005/02/09 08:19:24 he Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -849,7 +849,10 @@ fr_info_t *fin;
 mb_t *m, **mpp;
 {
 	fr_info_t fnew;
-	ip_t *ip, *oip;
+	ip_t *ip;
+#ifdef INET
+	ip_t *oip;
+#endif
 	int hlen;
 
 	ip = mtod(m, ip_t *);
