@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.63 2002/10/04 18:50:44 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.64 2002/11/14 20:11:48 nathanw Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -208,7 +208,6 @@ extern Obj_Entry _rtld_objself;
 extern Search_Path *_rtld_paths;
 extern Library_Xform *_rtld_xforms;
 extern bool _rtld_trust;
-extern const char *_rtld_error_message;
 extern Objlist _rtld_list_global;
 extern Objlist _rtld_list_main;
 extern Elf_Sym _rtld_sym_zero;
