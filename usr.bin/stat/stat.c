@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
+/*	$NetBSD: stat.c,v 1.20 2004/12/31 03:24:31 atatat Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: stat.c,v 1.20 2004/12/31 03:24:31 atatat Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -325,8 +325,9 @@ main(int argc, char *argv[])
 			errs = 1;
 			linkfail = 1;
 			if (!quiet)
-				warn("%s: stat",
-				    argc == 0 ? "(stdin)" : argv[0]);
+				warn("%s: %s",
+				    argc == 0 ? "(stdin)" : argv[0],
+				    usestat ? "stat" : "lstat");
 		}
 		else
 			output(&st, argv[0], statfmt, fn, nonl, quiet);
@@ -842,10 +843,40 @@ format1(const struct stat *st,
 	case SHOW_filename:
 		small = 0;
 		data = 0;
-		if (file == NULL)
+		if (file == NULL) {
 			(void)strncpy(path, "(stdin)", sizeof(path));
-		else
+			if (hilo == HIGH_PIECE || hilo == LOW_PIECE)
+				hilo = 0;
+		}
+		else if (hilo == 0)
 			(void)strncpy(path, file, sizeof(path));
+		else {
+			char *s;
+			(void)strncpy(path, file, sizeof(path));
+			s = strrchr(path, '/');
+			if (s != NULL) {
+				/* trim off trailing /'s */
+				while (s != path &&
+				    s[0] == '/' && s[1] == '\0')
+					*s-- = '\0';
+				s = strrchr(path, '/');
+			}
+			if (hilo == HIGH_PIECE) {
+				if (s == NULL)
+					(void)strncpy(path, ".", sizeof(path));
+				else {
+					while (s != path && s[0] == '/')
+						*s-- = '\0';
+				}
+				hilo = 0;
+			}
+			else if (hilo == LOW_PIECE) {
+				if (s != NULL && s[1] != '\0')
+					(void)strncpy(path, s + 1,
+						      sizeof(path));
+				hilo = 0;
+			}
+		}
 		sdata = path;
 		formats = FMTF_STRING;
 		if (ofmt == 0)
