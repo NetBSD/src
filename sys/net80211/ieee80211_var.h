@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.8 2004/07/16 02:36:58 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.9 2004/07/16 02:57:32 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -44,6 +44,7 @@
 #include <net80211/ieee80211_ioctl.h>		/* for ieee80211_stats */
 #include <net80211/ieee80211_node.h>
 #include <net80211/ieee80211_proto.h>
+#include <net80211/ieee80211_channel.h>
 
 #define	IEEE80211_CHAN_MAX	255
 #define	IEEE80211_CHAN_ANY	0xffff		/* token for ``any channel'' */
@@ -88,65 +89,6 @@ enum ieee80211_protmode {
 	IEEE80211_PROT_CTSONLY	= 1,	/* CTS to self */
 	IEEE80211_PROT_RTSCTS	= 2,	/* RTS-CTS */
 };
-
-/*
- * Channels are specified by frequency and attributes.
- */
-struct ieee80211_channel {
-	u_int16_t	ic_freq;	/* setting in Mhz */
-	u_int16_t	ic_flags;	/* see below */
-};
-
-/* bits 0-3 are for private use by drivers */
-/* channel attributes */
-#define	IEEE80211_CHAN_TURBO	0x0010	/* Turbo channel */
-#define	IEEE80211_CHAN_CCK	0x0020	/* CCK channel */
-#define	IEEE80211_CHAN_OFDM	0x0040	/* OFDM channel */
-#define	IEEE80211_CHAN_2GHZ	0x0080	/* 2 GHz spectrum channel. */
-#define	IEEE80211_CHAN_5GHZ	0x0100	/* 5 GHz spectrum channel */
-#define	IEEE80211_CHAN_PASSIVE	0x0200	/* Only passive scan allowed */
-#define	IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
-#define	IEEE80211_CHAN_GFSK	0x0800	/* GFSK channel (FHSS PHY) */
-
-/*
- * Useful combinations of channel characteristics.
- */
-#define	IEEE80211_CHAN_FHSS \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_GFSK)
-#define	IEEE80211_CHAN_A \
-	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM)
-#define	IEEE80211_CHAN_B \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_CCK)
-#define	IEEE80211_CHAN_PUREG \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM)
-#define	IEEE80211_CHAN_G \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_DYN)
-#define	IEEE80211_CHAN_T \
-	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
-
-#define	IEEE80211_IS_CHAN_FHSS(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_FHSS) == IEEE80211_CHAN_FHSS)
-#define	IEEE80211_IS_CHAN_A(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_A) == IEEE80211_CHAN_A)
-#define	IEEE80211_IS_CHAN_B(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_B) == IEEE80211_CHAN_B)
-#define	IEEE80211_IS_CHAN_PUREG(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_PUREG) == IEEE80211_CHAN_PUREG)
-#define	IEEE80211_IS_CHAN_G(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_G) == IEEE80211_CHAN_G)
-#define	IEEE80211_IS_CHAN_T(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_T) == IEEE80211_CHAN_T)
-
-#define	IEEE80211_IS_CHAN_2GHZ(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_2GHZ) != 0)
-#define	IEEE80211_IS_CHAN_5GHZ(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_5GHZ) != 0)
-#define	IEEE80211_IS_CHAN_OFDM(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_OFDM) != 0)
-#define	IEEE80211_IS_CHAN_CCK(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_CCK) != 0)
-#define	IEEE80211_IS_CHAN_GFSK(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_GFSK) != 0)
 
 /* ni_chan encoding for FH phy */
 #define	IEEE80211_FH_CHANMOD	80
