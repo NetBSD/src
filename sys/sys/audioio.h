@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.13 1997/08/24 22:31:37 augustss Exp $	*/
+/*	$NetBSD: audioio.h,v 1.14 1997/08/26 19:03:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -259,7 +259,7 @@ typedef struct mixer_ctrl {
 #define AudioNwave	"wave"
 #define AudioNmidi	"midi"
 #define AudioNmixerout	"mixerout"
-#define AudioNswap	"swap"
+#define AudioNswap	"swap"	/* swap left and right channels */
 
 #define AudioEmulaw "mulaw"
 #define AudioEalaw "alaw"
