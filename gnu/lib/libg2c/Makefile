@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/08/18 17:25:32 tv Exp $
+#	$NetBSD: Makefile,v 1.2 1998/08/18 17:26:36 tv Exp $
 
 LIB=		g2c
 
@@ -115,4 +115,4 @@ ${E77OBJS:.o=.po}: f2cext.c
 
 .include <bsd.lib.mk>
 
-${OBJS}: g2c.h
+${OBJS} ${SOBJS} ${POBJS}: g2c.h
