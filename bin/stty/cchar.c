@@ -1,4 +1,4 @@
-/*	$NetBSD: cchar.c,v 1.11 1997/07/20 21:31:23 christos Exp $	*/
+/*	$NetBSD: cchar.c,v 1.12 1998/07/28 11:40:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cchar.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cchar.c,v 1.11 1997/07/20 21:31:23 christos Exp $");
+__RCSID("$NetBSD: cchar.c,v 1.12 1998/07/28 11:40:57 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,8 @@ static int
 c_cchar(a, b)
         const void *a, *b;
 {
-        return (strcmp(((struct cchar *)a)->name, ((struct cchar *)b)->name));
+        return (strcmp(((const struct cchar *)a)->name,
+	    ((const struct cchar *)b)->name));
 }
 
 int
@@ -142,7 +143,7 @@ csearch(argvp, ip)
 			warnx("option requires a numeric argument -- %s", name);
 			usage();
 		}
-		ip->t.c_cc[cp->sub] = val;
+		ip->t.c_cc[cp->sub] = (cc_t)val;
 	} else if (arg[0] == '^')
 		ip->t.c_cc[cp->sub] = (arg[1] == '?') ? 0177 :
 		    (arg[1] == '-') ? _POSIX_VDISABLE : arg[1] & 037;

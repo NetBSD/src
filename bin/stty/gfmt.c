@@ -1,4 +1,4 @@
-/*	$NetBSD: gfmt.c,v 1.11 1997/07/20 21:31:24 christos Exp $	*/
+/*	$NetBSD: gfmt.c,v 1.12 1998/07/28 11:40:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gfmt.c	8.6 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: gfmt.c,v 1.11 1997/07/20 21:31:24 christos Exp $");
+__RCSID("$NetBSD: gfmt.c,v 1.12 1998/07/28 11:40:58 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,10 +64,8 @@ gerr(s)
 }
 
 void
-gprint(tp, wp, ldisc)
+gprint(tp)
 	struct termios *tp;
-	struct winsize *wp;
-	int ldisc;
 {
 	const struct cchar *cp;
 
