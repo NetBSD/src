@@ -29,7 +29,7 @@ the BIOS.
 4/ Boot1 will look at block0 (which might be itself if there are no DOS
 partitions) and will find the 386bsd partition, and using the information
 regarding the start position of that partition, will load the next 13 sectors
-or so, to around 90000 (640k - 64k). and will jump into it at the appropriate
+or so, to around 60000 (640k - 256k). and will jump into it at the appropriate
 entry point. Since boot1 and boot2 were compiled together as one file
 and then split later, boot1 knows the exact position within boot2 of the
 entry point.
