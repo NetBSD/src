@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.4 1996/10/13 03:34:47 christos Exp $	*/
+/*	$NetBSD: grf.c,v 1.5 1996/11/23 09:44:54 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,7 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/mman.h>
+#include <sys/poll.h>
 
 #include <x68k/dev/grfioctl.h>
 #include <x68k/dev/grfvar.h>
@@ -205,13 +206,16 @@ grfioctl(dev, cmd, data, flag, p)
 
 /*ARGSUSED*/
 int
-grfselect(dev, rw)
+grfpoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
+	struct proc *p;
 {
-	if (rw == FREAD)
-		return(0);
-	return(1);
+	int revents = 0;
+
+	if (events & (POLLOUT | POLLWRNORM))
+		revents |= events & (POLLOUT | POLLWRNORM);
+	return (revents);
 }
 
 /*ARGSUSED*/
