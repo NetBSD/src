@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.48.4.1 2002/06/05 04:24:55 lukem Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.48.4.2 2002/06/05 13:49:39 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -112,7 +112,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.48.4.1 2002/06/05 04:24:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.48.4.2 2002/06/05 13:49:39 lukem Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.67 2002/04/27 15:23:39 darrenr Exp";
@@ -1157,7 +1157,7 @@ tcp_mss_clamp(tcp, maxmss, fin, csump)
 	hlen = tcp->th_off << 2;
 	if (hlen > sizeof(*tcp)) {
 		cp = (uint8_t *)tcp + sizeof(*tcp);
-		ep = cp + hlen;
+		ep = (uint8_t *)tcp + hlen;
 
 		while (cp < ep) {
 			opt = cp[0];
@@ -1168,20 +1168,20 @@ tcp_mss_clamp(tcp, maxmss, fin, csump)
 				continue;
 			}
 
-			if (&cp[1] > ep)
+			if (&cp[1] >= ep)
 				break;
 			advance = cp[1];
-			if (&cp[advance] > ep)
+			if (&cp[advance] >= ep)
 				break;
 			switch (opt) {
 			case TCPOPT_MAXSEG:
 				if (advance != 4)
 					break;
-				memcpy(&v, &cp[2], sizeof(mss));
+				memcpy(&v, &cp[2], sizeof(v));
 				mss = ntohs(v);
 				if (mss > maxmss) {
 					v = htons(maxmss);
-					memcpy(&cp[2], &v, sizeof(mss));
+					memcpy(&cp[2], &v, sizeof(v));
 					CALC_SUMD(mss, maxmss, sumd);
 					fix_outcksum(fin, csump, sumd);
 				}
@@ -2802,6 +2802,7 @@ maskloop:
 				 */
 				if (nat->nat_age == fr_tcpclosed)
 					nat->nat_age = fr_tcplastack;
+
 				MUTEX_EXIT(&nat->nat_lock);
 			} else if (fin->fin_p == IPPROTO_UDP) {
 				udphdr_t *udp = (udphdr_t *)tcp;
