@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_samedomain.c,v 1.2 2002/11/14 02:04:29 itojun Exp $	*/
+/*	$NetBSD: ns_samedomain.c,v 1.3 2002/11/17 14:09:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_samedomain.c,v 8.9 1999/10/15 21:06:51 vixie Exp";
+static const char rcsid[] = "Id: ns_samedomain.c,v 8.9.6.2 2002/11/14 22:36:46 marka Exp";
 #endif
 
 #include "port_before.h"
