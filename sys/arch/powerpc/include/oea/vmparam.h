@@ -114,18 +114,32 @@
  */
 #if 0
 /*
- * Move the SR# to the top 4 bits to make the lower 20 bits entirely random
+ * Move the SR# to the top bits to make the lower bits entirely random
  * so to give better PTE distribution.
  */
-#define	VSID_MAKE(sr, hash)	(((sr) << (ADDR_SR_SHFT-4))|((hash) & 0xfffff))
-#define	VSID_TO_SR(vsid)	(((vsid) >> (ADDR_SR_SHFT-4)) & 0xF)
-#define	VSID_TO_HASH(vsid)	((vsid) & 0xfffff)
-#define	VSID_SR_INCREMENT	0x00100000
+#define	VSID__KEYSHFT		(SR_VSID_WIDTH - SR_KEY_LEN)
+#define	VSID_SR_INCREMENT	((1L << VSID__KEYSHFT) - 1)
+#define VSID__HASHMASK		(VSID_SR_INCREMENT - 1)
+#define	VSID_MAKE(sr, hash) \
+	(( \
+	    (((sr) << VSID__KEYSHFT) | ((hash) & VSID__HASMASK))
+	    << SR_VSID_SHFT) & SR_VSID)
+#define	VSID_TO_SR(vsid) \
+	(((vsid) & SR_VSID) >> (SR_VSID_SHFT + VSID__KEYSHFT))
+#define	VSID_TO_HASH(vsid) \
+	(((vsid) & SR_VSID) >> SR_VSID_SHFT) & VSID__HASHMASK)
 #else
-#define	VSID_MAKE(sr, hash)	((sr) | (((hash) & 0xfffff) << 4))
-#define	VSID_TO_SR(vsid)	((vsid) & 0xF)
-#define	VSID_TO_HASH(vsid)	(((vsid) >> 4) & 0xfffff)
-#define	VSID_SR_INCREMENT	0x00000001
+#define	VSID__HASHSHFT		(SR_KEY_LEN)
+#define	VSID_SR_INCREMENT	(1L << 0)
+#define	VSID__KEYMASK		((1L << VSID__HASHSHFT) - 1)
+#define	VSID_MAKE(sr, hash) \
+	(( \
+	    (((hash) << VSID__HASHSHFT) | ((sr) & VSID__KEYMASK)) \
+	     << SR_VSID_SHFT) & SR_VSID)
+#define	VSID_TO_SR(vsid) \
+	(((vsid) >> SR_VSID_SHFT) & VSID__KEYMASK)
+#define	VSID_TO_HASH(vsid) \
+	(((vsid) & SR_VSID) >> (SR_VSID_SHFT + VSID__HASHSHFT))
 #endif
 
 /*
