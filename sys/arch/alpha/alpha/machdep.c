@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 1996/11/06 20:19:19 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 1996/11/11 21:03:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -94,6 +94,9 @@
 #ifdef DEC_21000
 #include <alpha/alpha/dec_21000.h>
 #endif
+#ifdef DEC_EB164
+#include <alpha/alpha/dec_eb164.h>
+#endif
 
 #include <net/netisr.h>
 #include <net/if.h>
@@ -177,6 +180,17 @@ char	*model_names[] = {
 	"DEC KN20AA",
 	"UNKNOWN (16)",
 	"DEC 1000 (\"Mikasa\")",
+	"UNKNOWN (18)",
+	"EB66",
+	"EB64+",
+	"UNKNOWN (21)",
+	"DEC 4100 (\"Rawhide\")",
+	"??? (\"Lego\")",
+	"DEC 2100A/A500 (\"Lynx\")",
+	"UNKNOWN (25)",
+	"EB164",
+	"DEC 1000A (\"Noritake\")",
+	"AlphaVME 224 (\"Cortex\")",
 };
 int	nmodel_names = sizeof model_names/sizeof model_names[0];
 
@@ -455,6 +469,15 @@ alpha_init(pfn, ptb)
 		cpu_device_register = dec_21000_device_register;
 		cpu_iobus = "tlsb";
 	XXX DEC 21000 NOT SUPPORTED
+		break;
+#endif
+
+#ifdef DEC_EB164
+	case ST_EB164:
+		cpu_modelname = dec_eb164_modelname;
+		cpu_consinit = dec_eb164_consinit;
+		cpu_device_register = dec_eb164_device_register;
+		cpu_iobus = "cia";
 		break;
 #endif
 
