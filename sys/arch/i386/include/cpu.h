@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.2 2000/02/21 18:46:14 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.3 2000/02/24 05:09:26 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -191,6 +191,7 @@ int want_resched;
  * We need a machine-independent name for this.
  */
 extern void (*delay_func) __P((int));
+struct timeval;
 extern void (*microtime_func) __P((struct timeval *));
 
 #define	DELAY(x)		(*delay_func)(x)
