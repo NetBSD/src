@@ -1,2 +1,3 @@
-/*	$NetBSD: ptrace.h,v 1.2 1998/01/05 07:03:17 perry Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.3 2001/08/26 02:47:40 matt Exp $	*/
 
+#include <powerpc/ptrace.h>
