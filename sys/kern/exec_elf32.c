@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.31 1998/06/25 23:22:51 thorpej Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.32 1998/06/26 00:07:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -35,6 +35,7 @@
 
 #include "opt_compat_linux.h"
 #include "opt_compat_ibcs2.h"
+#include "opt_compat_svr4.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
