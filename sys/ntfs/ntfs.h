@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.3 1999/07/26 14:02:30 jdolecek Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.4 1999/08/04 18:46:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,6 +29,9 @@
  */
 
 /*#define NTFS_DEBUG 1*/
+#if defined(__NetBSD__) && defined(_KERNEL) && !defined(_LKM)
+#include "opt_ntfs.h"
+#endif
 
 typedef u_int64_t cn_t;
 typedef u_int16_t wchar;

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.306 1999/08/03 19:02:31 drochner Exp $
+#	$NetBSD: files,v 1.307 1999/08/04 18:46:58 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -99,6 +99,7 @@ deffs	fs_coda.h CODA
 # file system options
 defopt	QUOTA
 defopt	opt_ffs.h	FFS_EI
+defopt	opt_ntfs.h	NTFS_DEBUG
 
 # buffer cache size options
 defopt	opt_bufcache.h	BUFCACHE BUFPAGES
