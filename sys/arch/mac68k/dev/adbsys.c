@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.23 1996/10/13 03:21:14 christos Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.24 1997/01/13 07:01:23 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -43,9 +43,9 @@
 extern	struct mac68k_machine_S mac68k_machine;
 
 /* from adb.c */
-void    adb_processevent(adb_event_t * event);
+void    adb_processevent __P((adb_event_t * event));
 
-extern void adb_jadbproc(void);
+extern void adb_jadbproc __P((void));
 
 void 
 adb_complete(buffer, data_area, adb_command)
@@ -53,27 +53,29 @@ adb_complete(buffer, data_area, adb_command)
 	caddr_t data_area;
 	int adb_command;
 {
-	register int i;
-	register char *sbuf, *dbuf;
 	adb_event_t event;
 	ADBDataBlock adbdata;
 	int adbaddr;
 	int error;
+#ifdef MRG_DEBUG
+	register int i;
 
-#if defined(MRG_DEBUG)
 	printf("adb: transaction completion\n");
 #endif
 
 	adbaddr = (adb_command & 0xf0) >> 4;
 	error = GetADBInfo(&adbdata, adbaddr);
-#if defined(MRG_DEBUG)
+#ifdef MRG_DEBUG
 	printf("adb: GetADBInfo returned %d\n", error);
 #endif
 
 	event.addr = adbaddr;
 	event.hand_id = adbdata.devType;
 	event.def_addr = adbdata.origADBAddr;
-#if defined(MRG_DEBUG)
+	event.byte_count = buffer[0];
+	memcpy(event.bytes, buffer + 1, event.byte_count);
+
+#ifdef MRG_DEBUG
 	printf("adb: from %d at %d (org %d) %d:", event.addr,
 		event.hand_id, event.def_addr, buffer[0]);
 	for (i = 1; i <= buffer[0]; i++)
@@ -81,33 +83,26 @@ adb_complete(buffer, data_area, adb_command)
 	printf("\n");
 #endif
 
-	i = event.byte_count = buffer[0];
-	sbuf = &buffer[1];
-	dbuf = &event.bytes[0];
-	while (i--)
-		*dbuf++ = *sbuf++;
-
 	microtime(&event.timestamp);
 
 	adb_processevent(&event);
 }
 
-static int extdms_done;
+static volatile int extdms_done;
 
 /*
  * initialize extended mouse - probes devices as
  * described in _Inside Macintosh, Devices_.
  */
 void
-extdms_init()
+extdms_init(totaladbs)
+	int totaladbs;
 {
 	ADBDataBlock adbdata;
-	int totaladbs;
 	int adbindex, adbaddr;
 	short cmd;
 	char buffer[9];
 
-	totaladbs = CountADBs();
 	for (adbindex = 1; adbindex <= totaladbs; adbindex++) {
 		/* Get the ADB information */
 		adbaddr = GetIndADB(&adbdata, adbindex);
@@ -190,12 +185,12 @@ adb_init()
 		return;
 	}
 	printf("adb: bus subsystem\n");
-#if defined(MRG_DEBUG)
+#ifdef MRG_DEBUG
 	printf("adb: call mrg_initadbintr\n");
 #endif
 
 	mrg_initadbintr();	/* Mac ROM Glue okay to do ROM intr */
-#if defined(MRG_DEBUG)
+#ifdef MRG_DEBUG
 	printf("adb: returned from mrg_initadbintr\n");
 #endif
 
@@ -203,19 +198,18 @@ adb_init()
 	JADBProc = adb_jadbproc;
 
 	/* Initialize ADB */
-#if defined(MRG_DEBUG)
+#ifdef MRG_DEBUG
 	printf("adb: calling ADBAlternateInit.\n");
 #endif
 
 	ADBAlternateInit();
 
-#if defined(MRG_DEBUG)
+#ifdef MRG_DEBUG
 	printf("adb: done with ADBReInit\n");
 #endif
 
-	extdms_init();
-
 	totaladbs = CountADBs();
+	extdms_init(totaladbs);
 
 	/* for each ADB device */
 	for (adbindex = 1; adbindex <= totaladbs; adbindex++) {
@@ -299,7 +293,7 @@ adb_init()
 		adbinfo.siServiceRtPtr = (Ptr) adb_asmcomplete;
 		adbinfo.siDataAreaAddr = NULL;
 		error = SetADBInfo(&adbinfo, adbaddr);
-#if defined(MRG_DEBUG)
+#ifdef MRG_DEBUG
 		printf("returned %d from SetADBInfo\n", error);
 #endif
 	}
