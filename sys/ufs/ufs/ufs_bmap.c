@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.6 1998/03/01 02:23:36 fvdl Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.7 1998/03/18 15:57:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -55,6 +55,7 @@
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufs_bswap.h>
 
 /*
  * Bmap converts a the logical block number of a file to its physical block
@@ -145,19 +146,23 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 
 	num = *nump;
 	if (num == 0) {
-		*bnp = blkptrtodb(ump, ip->i_ffs_db[bn]);
+		*bnp = blkptrtodb(ump, ufs_rw32(ip->i_ffs_db[bn],
+			UFS_MPNEEDSWAP(vp->v_mount)));
 		if (*bnp == 0)
 			*bnp = -1;
 		else if (runp)
 			for (++bn; bn < NDADDR && *runp < maxrun &&
-			    is_sequential(ump, ip->i_ffs_db[bn - 1], ip->i_ffs_db[bn]);
+			    is_sequential(ump,
+					ufs_rw32(ip->i_ffs_db[bn - 1],
+						UFS_MPNEEDSWAP(vp->v_mount)),
+					ufs_rw32(ip->i_ffs_db[bn], UFS_MPNEEDSWAP(vp->v_mount)));
 			    ++bn, ++*runp);
 		return (0);
 	}
 
 
 	/* Get disk address out of indirect block array */
-	daddr = ip->i_ffs_ib[xap->in_off];
+	daddr = ufs_rw32(ip->i_ffs_ib[xap->in_off], UFS_MPNEEDSWAP(vp->v_mount));
 
 	devvp = VFSTOUFS(vp->v_mount)->um_devvp;
 	for (bp = NULL, ++xap; --num; ++xap) {
@@ -197,13 +202,16 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 				return (error);
 			}
 		}
-
-		daddr = ((ufs_daddr_t *)bp->b_data)[xap->in_off];
+		daddr = ufs_rw32(((ufs_daddr_t *)bp->b_data)[xap->in_off],
+			UFS_MPNEEDSWAP(mp));
 		if (num == 1 && daddr && runp)
 			for (bn = xap->in_off + 1;
 			    bn < MNINDIR(ump) && *runp < maxrun &&
-			    is_sequential(ump, ((ufs_daddr_t *)bp->b_data)[bn - 1],
-			    ((ufs_daddr_t *)bp->b_data)[bn]);
+			    is_sequential(ump,
+				ufs_rw32(((ufs_daddr_t *)bp->b_data)[bn - 1],
+					UFS_MPNEEDSWAP(mp)),
+			    ufs_rw32(((ufs_daddr_t *)bp->b_data)[bn],
+					UFS_MPNEEDSWAP(mp)));
 			    ++bn, ++*runp);
 	}
 	if (bp)
