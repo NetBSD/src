@@ -1,3 +1,5 @@
+/*	$Id: condcancel1.c,v 1.2 2003/11/21 19:25:50 nathanw Exp $	*/
+
 #include <err.h>
 #include <pthread.h>
 #include <stdio.h>
