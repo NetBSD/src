@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.85 1998/04/26 19:10:33 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.86 1998/05/08 21:02:35 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1151,7 +1151,7 @@ vclean(vp, flags, p)
 	 */
 	if (active) {
 		if (flags & DOCLOSE)
-			VOP_CLOSE(vp, IO_NDELAY, NOCRED, NULL);
+			VOP_CLOSE(vp, FNONBLOCK, NOCRED, NULL);
 		VOP_INACTIVE(vp, p);
 	} else {
 		/*
