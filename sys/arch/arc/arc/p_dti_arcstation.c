@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_arcstation.c,v 1.2 2003/05/25 14:00:12 tsutsui Exp $	*/
+/*	$NetBSD: p_dti_arcstation.c,v 1.3 2003/06/14 08:09:47 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ struct platform platform_desktech_arcstation_i = {
 	"DESKTECH-ARCStation I",
 	NULL, /* unknown, probably "DESKTECH"? */
 	"",
-	"DESKstation rPC44",
+	"DeskStation rPC44",
 	"DESKTECH",
 	150, /* MHz ?? */
 	p_dti_arcstation_mainbusdevs,
