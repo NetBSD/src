@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.24 2000/01/22 22:19:12 mycroft Exp $	*/
+/*	$NetBSD: syslog.c,v 1.25 2000/12/30 16:27:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.24 2000/01/22 22:19:12 mycroft Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.25 2000/12/30 16:27:33 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -123,7 +123,7 @@ void
 vsyslog(pri, fmt, ap)
 	int pri;
 	const char *fmt;
-	va_list ap;
+	_BSD_VA_LIST_ ap;
 {
 	size_t cnt;
 	char ch, *p, *t;
