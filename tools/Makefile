@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.57 2002/09/14 23:34:16 chris Exp $
+#	$NetBSD: Makefile,v 1.58 2002/09/17 23:18:26 thorpej Exp $
 
 .include <bsd.own.mk>
 
-# XXX We can't currently build the toolchain for hppa, ns32k, or x86-64.
-# XXX In theory, we could use in-tree BFD for hppa.  Explore that later.
-.if ${MACHINE_ARCH} != "hppa" && ${MACHINE_ARCH} != "ns32k" && \
-    ${MACHINE_ARCH} != "x86_64"
+.if !defined(TOOLCHAIN_MISSING)
 TOOLCHAIN_BITS= toolchain .WAIT dbsym mdsetimage
+# XXX Eventually, we want to be able to build dbsym and mdsetimage
+# XXX if EXTERNAL_TOOLCHAIN is set.
 .endif
 
 # Dependencies in SUBDIR below ordered to maximize parallel ability.

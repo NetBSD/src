@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/04/10 17:29:25 tv Exp $
+#	$NetBSD: Makefile,v 1.9 2002/09/17 23:18:27 thorpej Exp $
 
 PROG=		crunchgen
 SRCS=		crunchgen.c crunched_skel.c
@@ -9,9 +9,14 @@ crunched_skel.c: mkskel.sh crunched_main.c
 
 .ifndef HOSTPROG
 .include <bsd.prog.mk>
-.endif
 
-# XXX This should go away and the code cleaned up with all ports are converted
-.if defined(USE_NEW_TOOLCHAIN)
+# Native tool -- key only off TOOLCHAIN_MISSING
+.if ${TOOLCHAIN_MISSING} != "yes"
 CPPFLAGS+=	-DNEW_TOOLCHAIN
 .endif
+.else
+# Host tool -- We can also pay attention to EXTERNAL_TOOLCHAIN.
+.if ${TOOLCHAIN_MISSING} != "yes" || defined(EXTERNAL_TOOLCHAIN)
+CPPFLAGS+=	-DNEW_TOOLCHAIN
+.endif
+.endif	# ! HOSTPROG
