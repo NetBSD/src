@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.9 2003/08/07 16:29:31 agc Exp $	*/
+/*	$NetBSD: asm.h,v 1.10 2003/08/10 22:18:12 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -370,8 +370,8 @@
 	pta/u	x, tr
 #else
 #define	PIC_GET_GOT(tr)					\
-	LEAR(_GLOBAL_OFFSET_TABLE_, 1f, r12)		;\
-1:	ptrel/u	r12, tr					;\
+	LEAR(_GLOBAL_OFFSET_TABLE_, 666f, r12)		;\
+666:	ptrel/u	r12, tr					;\
 	gettr	tr, r12
 #define	PIC_PROLOGUE					\
 	addi	r15, -8, r15				;\
