@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: create_c.c,v 1.1.1.1 2000/06/16 18:32:50 thorpej Exp $");
+RCSID("$Id: create_c.c,v 1.1.1.1.2.1 2001/04/05 23:23:47 he Exp $");
 
 kadm5_ret_t
 kadm5_c_create_principal(void *server_handle,
@@ -47,6 +47,10 @@ kadm5_c_create_principal(void *server_handle,
     unsigned char buf[1024];
     int32_t tmp;
     krb5_data reply;
+
+    ret = _kadm5_connect(server_handle);
+    if(ret)
+	return ret;
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL)

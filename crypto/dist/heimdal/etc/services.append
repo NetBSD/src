@@ -1,5 +1,5 @@
 #
-# $Id: services.append,v 1.1.1.1 2000/06/16 18:32:09 thorpej Exp $
+# $Id: services.append,v 1.1.1.1.2.1 2001/04/05 23:23:43 he Exp $
 #
 # Kerberos services
 #
@@ -25,3 +25,5 @@ kf		2110/tcp			# forward credentials
 kx		2111/tcp			# X over kerberos
 kip		2112/tcp			# IP over kerberos
 kauth		2120/tcp			# Remote kauth
+iprop		2121/tcp			# incremental propagation
+krb524		4444/udp			# MIT 5->4

@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: gen_locl.h,v 1.1.1.1 2000/06/16 18:32:39 thorpej Exp $ */
+/* $Id: gen_locl.h,v 1.1.1.1.2.1 2001/04/05 23:23:44 he Exp $ */
 
 #ifndef __GEN_LOCL_H__
 #define __GEN_LOCL_H__
@@ -67,7 +67,6 @@ void init_generate (const char *filename, const char *basename);
 const char *filename (void);
 void close_generate(void);
 int yyparse(void);
-int yylex(void);
 
 extern FILE *headerfile, *codefile, *logfile;
 

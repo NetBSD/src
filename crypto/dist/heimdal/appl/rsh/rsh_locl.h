@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: rsh_locl.h,v 1.1.1.1 2000/06/16 18:32:05 thorpej Exp $ */
+/* $Id: rsh_locl.h,v 1.1.1.1.2.1 2001/04/05 23:23:41 he Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -110,6 +110,10 @@
 
 #ifndef _PATH_DEFPATH
 #define _PATH_DEFPATH	"/usr/bin:/bin"
+#endif
+
+#ifndef _PATH_ETC_ENVIRONMENT
+#define _PATH_ETC_ENVIRONMENT "/etc/environment"
 #endif
 
 /*

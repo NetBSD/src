@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,16 +31,16 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: otp_md.h,v 1.1.1.1 2000/06/16 18:32:43 thorpej Exp $ */
+/* $Id: otp_md.h,v 1.1.1.1.2.1 2001/04/05 23:23:51 he Exp $ */
 
-int otp_md4_init (OtpKey key, char *pwd, char *seed);
-int otp_md4_hash (char *, size_t, unsigned char *res);
+int otp_md4_init (OtpKey key, const char *pwd, const char *seed);
+int otp_md4_hash (const char *, size_t, unsigned char *res);
 int otp_md4_next (OtpKey key);
 
-int otp_md5_init (OtpKey key, char *pwd, char *seed);
-int otp_md5_hash (char *, size_t, unsigned char *res);
+int otp_md5_init (OtpKey key, const char *pwd, const char *seed);
+int otp_md5_hash (const char *, size_t, unsigned char *res);
 int otp_md5_next (OtpKey key);
 
-int otp_sha_init (OtpKey key, char *pwd, char *seed);
-int otp_sha_hash (char *, size_t, unsigned char *res);
+int otp_sha_init (OtpKey key, const char *pwd, const char *seed);
+int otp_sha_hash (const char *, size_t, unsigned char *res);
 int otp_sha_next (OtpKey key);

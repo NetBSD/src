@@ -32,7 +32,7 @@
  */
 
 #include "krb5_locl.h"
-RCSID("$Id: convert_creds.c,v 1.1.1.1 2000/06/16 18:32:56 thorpej Exp $");
+RCSID("$Id: convert_creds.c,v 1.1.1.1.2.1 2001/04/05 23:23:50 he Exp $");
 
 static krb5_error_code
 check_ticket_flags(TicketFlags f)
@@ -166,10 +166,32 @@ krb524_convert_creds_kdc(krb5_context context,
     if(ret)
 	goto out2;
 
-    ret = krb5_sendto_kdc (context,
+    {
+	char **hostlist;
+	int port;
+	port = krb5_getportbyname (context, "krb524", "udp", 4444);
+	
+	ret = krb5_get_krbhst (context, krb5_princ_realm(context, 
+							 v5_creds->server), 
+			       &hostlist);
+	if(ret)
+	    goto out2;
+	
+	ret = krb5_sendto (context,
 			   &v5_creds->ticket,
-			   krb5_princ_realm(context, v5_creds->server),
+			   hostlist,
+			   port,
 			   &reply);
+	if(ret == KRB5_KDC_UNREACH) {
+	    port = krb5_getportbyname (context, "kerberos", "udp", 88);
+	    ret = krb5_sendto (context,
+			       &v5_creds->ticket,
+			       hostlist,
+			       port,
+			       &reply);
+	}
+	krb5_free_krbhst (context, hostlist);
+    }
     if (ret)
 	goto out2;
     sp = krb5_storage_from_mem(reply.data, reply.length);

@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: send_recv.c,v 1.1.1.1 2000/06/16 18:32:53 thorpej Exp $");
+RCSID("$Id: send_recv.c,v 1.1.1.1.2.1 2001/04/05 23:23:49 he Exp $");
 
 kadm5_ret_t 
 _kadm5_client_send(kadm5_client_context *context, krb5_storage *sp)
@@ -42,6 +42,8 @@ _kadm5_client_send(kadm5_client_context *context, krb5_storage *sp)
     krb5_error_code ret;
     size_t len;
     krb5_storage *sock;
+
+    assert(context->sock != -1);
 
     len = sp->seek(sp, 0, SEEK_CUR);
     ret = krb5_data_alloc(&msg, len);
