@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_jnf.c,v 1.7 1999/07/02 15:37:40 simonb Exp $");
+__RCSID("$NetBSD: e_jnf.c,v 1.8 2002/04/09 01:55:13 thorpej Exp $");
 #endif
 
 #include "math.h"
@@ -26,7 +26,9 @@ static const float
 #else
 static float
 #endif
+#if 0
 invsqrtpi=  5.6418961287e-01, /* 0x3f106ebb */
+#endif
 two   =  2.0000000000e+00, /* 0x40000000 */
 one   =  1.0000000000e+00; /* 0x3F800000 */
 
