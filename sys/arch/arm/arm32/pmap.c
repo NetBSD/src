@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108 2002/08/10 00:48:35 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.109 2002/08/13 03:36:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2002/08/10 00:48:35 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2002/08/13 03:36:30 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2730,6 +2730,17 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			npte |= L2_TYPE_INV;
 	}
 
+#if ARM_MMU_XSCALE == 1 && defined(XSCALE_CACHE_READ_WRITE_ALLOCATE)
+#if ARM_NMMUS > 1
+# error "XXX Unable to use read/write-allocate and configure non-XScale"
+#endif
+	/*
+	 * XXX BRUTAL HACK!  This allows us to limp along with
+	 * XXX the read/write-allocate cache mode.
+	 */
+	if (pmap == pmap_kernel())
+		npte &= ~L2_XSCALE_T_TEX(TEX_XSCALE_X);
+#endif
 	ptes[arm_btop(va)] = npte;
 
 	if (pg != NULL) {
