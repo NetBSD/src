@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.14 2004/11/28 07:44:05 thorpej Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.15 2004/11/30 04:25:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.14 2004/11/28 07:44:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.15 2004/11/30 04:25:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -580,21 +580,6 @@ dmio_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
 }
 
 /*
- * dmio_fcntl:
- *
- *	Fcntl file op.
- */
-static int
-dmio_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p)
-{
-
-	if (cmd == F_SETFL)
-		return (0);
-
-	return (EOPNOTSUPP);
-}
-
-/*
  * dmio_poll:
  *
  *	Poll file op.
@@ -641,18 +626,6 @@ dmio_poll(struct file *fp, int events, struct proc *p)
 	splx(s);
 
 	return (revents);
-}
-
-/*
- * dmio_stat:
- *
- *	Stat file op.
- */
-static int
-dmio_stat(struct file *fp, struct stat *sb, struct proc *p)
-{
-
-	return (EOPNOTSUPP);
 }
 
 /*
@@ -704,14 +677,15 @@ dmio_close(struct file *fp, struct proc *p)
 	return (0);
 }
 
-static struct fileops dmio_fileops = {
+static const struct fileops dmio_fileops = {
 	dmio_read,
 	dmio_write,
 	dmio_ioctl,
-	dmio_fcntl,
+	fnullop_fcntl,
 	dmio_poll,
-	dmio_stat,
+	fbadop_stat,
 	dmio_close,
+	fnullop_kqueue
 };
 
 /*
@@ -738,14 +712,5 @@ dmoverioopen(dev_t dev, int flag, int mode, struct proc *p)
 	TAILQ_INIT(&ds->ds_pending);
 	TAILQ_INIT(&ds->ds_complete);
 
-	fp->f_flag = FREAD | FWRITE;
-	fp->f_type = DTYPE_MISC;
-	fp->f_ops = &dmio_fileops;
-	fp->f_data = (caddr_t) ds;
-
-	curlwp->l_dupfd = fd;	/* XXX */
-	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp, p);
-
-	return (ENXIO);
+	return fdclone(p, fp, fd, &dmio_fileops, ds);
 }

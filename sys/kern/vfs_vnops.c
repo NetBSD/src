@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.82 2004/11/06 07:34:53 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.83 2004/11/30 04:25:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.82 2004/11/06 07:34:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.83 2004/11/30 04:25:44 christos Exp $");
 
 #include "fs_union.h"
 
@@ -85,7 +85,7 @@ static int vn_fcntl(struct file *fp, u_int com, void *data, struct proc *p);
 static int vn_statfile(struct file *fp, struct stat *sb, struct proc *p);
 static int vn_ioctl(struct file *fp, u_long com, void *data, struct proc *p);
 
-struct 	fileops vnops = {
+const struct fileops vnops = {
 	vn_read, vn_write, vn_ioctl, vn_fcntl, vn_poll,
 	vn_statfile, vn_closefile, vn_kqfilter
 };
