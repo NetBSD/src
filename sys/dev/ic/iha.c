@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.12 2001/11/17 21:26:12 tsutsui Exp $ */
+/*	$NetBSD: iha.c,v 1.13 2001/11/18 14:33:10 tsutsui Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.12 2001/11/17 21:26:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.13 2001/11/18 14:33:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.12 2001/11/17 21:26:12 tsutsui Exp $");
  * SCSI Rate Table, indexed by FLAG_SCSI_RATE field of
  * tcs flags.
  */
-static const u_int8_t iha_rate_tbl[8] = {
+static const u_int8_t iha_rate_tbl[] = {
 	/* fast 20		  */
 	/* nanosecond divide by 4 */
 	12,	/* 50ns,  20M	  */
@@ -86,6 +86,7 @@ static const u_int8_t iha_rate_tbl[8] = {
 	50,	/* 200ns, 5M	  */
 	62	/* 250ns, 4M	  */
 };
+#define IHA_MAX_PERIOD	62
 
 #ifdef notused
 static u_int16_t eeprom_default[EEPROM_SIZE] = {
@@ -228,6 +229,7 @@ static void iha_abort_xs(struct iha_softc *, struct scsipi_xfer *, u_int8_t);
 
 void iha_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t,
     void *arg);
+void iha_update_xfer_mode(struct iha_softc *, int);
 
 /*
  * iha_intr - the interrupt service routine for the iha driver
@@ -352,7 +354,30 @@ iha_scsipi_request(chan, req, arg)
 		return; /* XXX */
 
 	case ADAPTER_REQ_SET_XFER_MODE:
-		return; /* XXX */
+		{
+			struct tcs *tcs;
+			struct scsipi_xfer_mode *xm = arg;
+
+			tcs = &sc->sc_tcs[xm->xm_target];
+
+			if ((xm->xm_mode & PERIPH_CAP_WIDE16) != 0 &&
+			    (tcs->flags & FLAG_NO_WIDE) == 0)
+				tcs->flags &= ~(FLAG_WIDE_DONE|FLAG_SYNC_DONE);
+
+			if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0 &&
+			    (tcs->flags & FLAG_NO_SYNC) == 0)
+				tcs->flags &= ~FLAG_SYNC_DONE;
+
+			/*
+			 * If we're not going to negotiate, send the
+			 * notification now, since it won't happen later.
+			 */
+			if ((tcs->flags & (FLAG_WIDE_DONE|FLAG_SYNC_DONE)) ==
+			    (FLAG_WIDE_DONE|FLAG_SYNC_DONE))
+				iha_update_xfer_mode(sc, xm->xm_target);
+
+			return;
+		}
 	}
 }
 
@@ -1997,13 +2022,16 @@ iha_msgin_extended(sc)
 		flags = sc->sc_actscb->tcs->flags;
 
 		if ((flags & FLAG_NO_WIDE) != 0)
-			sc->sc_msg[2] = 0;	/* Offer async xfers only    */
+			/* Offer 8bit xfers only */
+			sc->sc_msg[2] = MSG_EXT_WDTR_BUS_8_BIT;
 
-		else if (sc->sc_msg[2] > 2)	/* BAD MSG: 2 is max  value  */
+		else if (sc->sc_msg[2] > MSG_EXT_WDTR_BUS_32_BIT)
+			/* BAD MSG */
 			return (iha_msgout_reject(sc));
 
-		else if (sc->sc_msg[2] == 2)	/* a request for 32 bit xfers*/
-			sc->sc_msg[2] = 1;	/* Offer 16 instead	     */
+		else if (sc->sc_msg[2] == MSG_EXT_WDTR_BUS_32_BIT)
+			/* Offer 16bit instead */
+			sc->sc_msg[2] = MSG_EXT_WDTR_BUS_16_BIT;
 
 		else {
 			iha_wide_done(sc);
@@ -2041,29 +2069,31 @@ iha_msgin_sdtr(sc)
 
 	default_period = iha_rate_tbl[flags & FLAG_SCSI_RATE];
 
-	if (sc->sc_msg[3] == 0) /* target offered async only. Accept it. */
+	if (sc->sc_msg[3] == 0)
+		/* target offered async only. Accept it. */
 		return (0);
 
 	newoffer = 0;
 
 	if ((flags & FLAG_NO_SYNC) != 0) {
 		sc->sc_msg[3] = 0;
-		newoffer   = 1;
+		newoffer = 1;
 	}
 
 	if (sc->sc_msg[3] > IHA_MAX_OFFSET) {
 		sc->sc_msg[3] = IHA_MAX_OFFSET;
-		newoffer   = 1;
+		newoffer = 1;
 	}
 
 	if (sc->sc_msg[2] < default_period) {
 		sc->sc_msg[2] = default_period;
-		newoffer   = 1;
+		newoffer = 1;
 	}
 
-	if (sc->sc_msg[2] >= 59) { /* XXX magic */
+	if (sc->sc_msg[2] > IHA_MAX_PERIOD) {
+		/* Use async */
 		sc->sc_msg[3] = 0;
-		newoffer   = 1;
+		newoffer = 1;
 	}
 
 	return (newoffer);
@@ -2156,13 +2186,13 @@ static int
 iha_msgout_sdtr(sc)
 	struct iha_softc *sc;
 {
-	int rateindex;
+	struct tcs *tcs = sc->sc_actscb->tcs;
 
-	rateindex = sc->sc_actscb->tcs->flags & FLAG_SCSI_RATE;
+	tcs->flags |= FLAG_SYNC_DONE;
 
 	sc->sc_msg[0] = MSG_EXT_SDTR_LEN;
 	sc->sc_msg[1] = MSG_EXT_SDTR;
-	sc->sc_msg[2] = iha_rate_tbl[rateindex];
+	sc->sc_msg[2] = iha_rate_tbl[tcs->flags & FLAG_SCSI_RATE];
 	sc->sc_msg[3] = IHA_MAX_OFFSET; /* REQ/ACK */
 
 	return (iha_msgout_extended(sc));
@@ -2187,6 +2217,8 @@ iha_wide_done(sc)
 	tcs->flags &= ~FLAG_SYNC_DONE;
 	tcs->flags |=  FLAG_WIDE_DONE;
 
+	iha_update_xfer_mode(sc, sc->sc_actscb->target);
+
 	bus_space_write_1(iot, ioh, TUL_SCONFIG0, tcs->sconfig0);
 	bus_space_write_1(iot, ioh, TUL_SYNCM, tcs->syncm);
 }
@@ -2200,26 +2232,26 @@ iha_sync_done(sc)
 	struct tcs *tcs = sc->sc_actscb->tcs;
 	int i;
 
-	if ((tcs->flags & FLAG_SYNC_DONE) == 0) {
-		tcs->period = sc->sc_msg[2];
-		tcs->offset = sc->sc_msg[3];
-		if (tcs->offset != 0) {
-			tcs->syncm |= tcs->offset;
+	tcs->period = sc->sc_msg[2];
+	tcs->offset = sc->sc_msg[3];
+	if (tcs->offset != 0) {
+		tcs->syncm |= tcs->offset;
 
-			/* pick the highest possible rate */
-			for (i = 0; i < 8; i++)
-				if (iha_rate_tbl[i] >= tcs->period)
-					break;
+		/* pick the highest possible rate */
+		for (i = 0; i < sizeof(iha_rate_tbl); i++)
+			if (iha_rate_tbl[i] >= tcs->period)
+				break;
 
-			tcs->syncm |= (i << 4);
-			tcs->sconfig0 |= ALTPD;
-		}
-
-		tcs->flags |= FLAG_SYNC_DONE;
-
-		bus_space_write_1(iot, ioh, TUL_SCONFIG0, tcs->sconfig0);
-		bus_space_write_1(iot, ioh, TUL_SYNCM, tcs->syncm);
+		tcs->syncm |= (i << 4);
+		tcs->sconfig0 |= ALTPD;
 	}
+
+	tcs->flags |= FLAG_SYNC_DONE;
+
+	iha_update_xfer_mode(sc, sc->sc_actscb->target);
+
+	bus_space_write_1(iot, ioh, TUL_SCONFIG0, tcs->sconfig0);
+	bus_space_write_1(iot, ioh, TUL_SYNCM, tcs->syncm);
 }
 
 void
@@ -2850,3 +2882,29 @@ iha_reset_tcs(tcs, config0)
 	tcs->syncm = 0;
 	tcs->sconfig0 = config0;
 }
+
+void
+iha_update_xfer_mode(sc, target)
+	struct iha_softc *sc;
+	int target;
+{
+	struct tcs *tcs = &sc->sc_tcs[target];
+	struct scsipi_xfer_mode xm;
+
+	xm.xm_target = target;
+	xm.xm_mode = 0;
+	xm.xm_period = 0;
+	xm.xm_offset = 0;
+
+	if (tcs->syncm & PERIOD_WIDE_SCSI)
+		xm.xm_mode |= PERIPH_CAP_WIDE16;
+
+	if (tcs->period) {
+		xm.xm_mode |= PERIPH_CAP_SYNC;
+		xm.xm_period = tcs->period;
+		xm.xm_offset = tcs->offset;
+	}
+
+	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
+}
+
