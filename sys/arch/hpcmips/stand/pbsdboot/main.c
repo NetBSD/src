@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2000/02/05 03:25:26 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2000/02/09 13:03:31 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -187,7 +187,7 @@ struct fb_setting fb_settings[] = {
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_INTERTOP_IT310 },
 	{ TEXT("IBM WorkPad z50"), BIFB_D16_0000,
 		640, 480, 1280, 0xa000000,
-		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_IBM_WORKPAD_Z50 },
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_IBM_WORKPAD_26011AU },
 	{ TEXT("Philips Nino 312"), BIFB_D2_M2L_0,
 		240, 320, 0, 0,
 		PLATID_CPU_MIPS_TX_3912, PLATID_MACH_PHILIPS_NINO_312 },
@@ -499,7 +499,7 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		 */
 		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
 			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.10.0 2000.01.30\r\n")
+			       TEXT("Version 1.10.1 2000.02.09\r\n")
 			       TEXT("\r\n")
 			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 			       TEXT("All rights reserved.\r\n")
