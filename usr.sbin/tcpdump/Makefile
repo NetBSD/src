@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 1993/12/05 01:01:38 deraadt Exp $
+# $Id: Makefile,v 1.3 1994/02/22 04:08:21 cgd Exp $
 #
 # Possible Options:
 #  -DCSLIP	include support for kernel slip interface
@@ -12,6 +12,9 @@ PROG=	tcpdump
 MAN8=	tcpdump.0
 DEFINES = -DCSLIP -DPPP -DFDDI
 CFLAGS+=-I. -I${.CURDIR} ${DEFINES}
+.if ${MACHINE_ARCH} == "sparc"
+CFLAGS+=-DTCPDUMP_ALIGN
+.endif
 
 LDADD=  -ll
 DPADD=  ${LIBL}
