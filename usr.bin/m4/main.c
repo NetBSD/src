@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2000/10/18 17:23:18 jdolecek Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2001/03/05 20:19:54 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.24 2000/10/18 17:23:18 jdolecek Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2001/03/05 20:19:54 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -462,7 +462,7 @@ ndptr
 inspect(tp)
 	char *tp;
 {
-	char c;
+	int c;
 	char *name = tp;
 	char *etp = tp+MAXTOK;
 	ndptr p;
