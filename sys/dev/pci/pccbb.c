@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.109 2004/08/16 15:46:37 mycroft Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.110 2004/08/16 16:43:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.109 2004/08/16 15:46:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.110 2004/08/16 16:43:29 mrg Exp $");
 
 /*
 #define CBB_DEBUG
@@ -2371,7 +2371,7 @@ pccbb_pcmcia_delay(ph, timo, wmesg)
 #endif
 #endif
 	DPRINTF(("pccbb_pcmcia_delay: \"%s\" %p, sleep %d ms\n",
-	    wmesg, h->event_thread, timo));
+	    wmesg, ph->event_thread, timo));
 	tsleep(pccbb_pcmcia_delay, PWAIT, wmesg, roundup(timo * hz, 1000) / 1000);
 }
 
