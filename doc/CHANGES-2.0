@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.542 2004/11/29 06:05:57 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.543 2004/11/29 06:10:04 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8118,3 +8118,10 @@ distrib/notes/common/contents			1.114
 
 	Small correction to macppc X server info
 	[mbw, ticket #983]
+
+dist/ipf/tools/ipnat_y.y			1.7
+
+	Fix a regression from 3.4 behaviour where the destination of a 
+	redirect rule could be either a hostname or an IP address (now it can 
+	only be an IP#)
+	[darrenr, ticket #994]
