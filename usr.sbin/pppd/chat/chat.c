@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.14 1998/07/26 15:48:43 mycroft Exp $	*/
+/*	$NetBSD: chat.c,v 1.15 1998/09/02 20:55:55 christos Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -84,7 +84,7 @@
 #if 0
 static char rcsid[] = "Id: chat.c,v 1.19 1998/03/24 23:57:48 paulus Exp ";
 #else
-__RCSID("$NetBSD: chat.c,v 1.14 1998/07/26 15:48:43 mycroft Exp $");
+__RCSID("$NetBSD: chat.c,v 1.15 1998/09/02 20:55:55 christos Exp $");
 #endif
 #endif
 
@@ -1484,11 +1484,11 @@ vfmtmsg(buf, buflen, fmt, args)
     int width, prec, fillch;
     int base, len, neg, quoted;
     unsigned long val = 0;
-    char *buf0, *s;
-    const char *str, *f;
+    char *str, *buf0;
+    const char *f;
     unsigned char *p;
     char num[32];
-    static const char hexchars[] = "0123456789abcdef";
+    static char hexchars[] = "0123456789abcdef";
 
     buf0 = buf;
     --buflen;
@@ -1626,25 +1626,24 @@ vfmtmsg(buf, buflen, fmt, args)
 	    continue;
 	}
 	if (base != 0) {
-	    s = num + sizeof(num);
-	    *--s = 0;
-	    while (s > num + neg) {
-		*--s = hexchars[val % base];
+	    str = num + sizeof(num);
+	    *--str = 0;
+	    while (str > num + neg) {
+		*--str = hexchars[val % base];
 		val = val / base;
 		if (--prec <= 0 && val == 0)
 		    break;
 	    }
 	    switch (neg) {
 	    case 1:
-		*--s = '-';
+		*--str = '-';
 		break;
 	    case 2:
-		*--s = 'x';
-		*--s = '0';
+		*--str = 'x';
+		*--str = '0';
 		break;
 	    }
-	    len = num + sizeof(num) - 1 - s;
-	    str = s;
+	    len = num + sizeof(num) - 1 - str;
 	} else {
 	    len = strlen(str);
 	    if (prec > 0 && len > prec)
