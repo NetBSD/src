@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/02/09 05:58:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2004/03/12 03:59:42 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,7 @@ CONFIG_SUBST=	${HOST_SH} ${XCURSORDIR}/config-subst \
 		exec_prefix="${X11BINDIR}" \
 		libdir="${X11USRLIBDIR}" \
 		includedir="${X11INCDIR}" \
+		hardcode_libdir_flag_spec="-Wl,-rpath,${X11USRLIBDIR}" \
 		PACKAGE_VERSION="1.0.0"
 
 xcursor.pc:
