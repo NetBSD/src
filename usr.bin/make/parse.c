@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.19 1996/02/07 23:04:04 thorpej Exp $	*/
+/*	$NetBSD: parse.c,v 1.20 1996/02/17 13:28:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.19 1996/02/07 23:04:04 thorpej Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.20 1996/02/17 13:28:09 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -2535,7 +2535,8 @@ Parse_File(name, stream)
 		    }
 		}
 #ifdef SYSVINCLUDE
-	    } else if (strncmp (line, "include", 7) == 0 && 
+	    } else if (strncmp (line, "include", 7) == 0 &&
+		       isspace((unsigned char) line[7]) &&
 		       strchr(line, ':') == NULL) {
 		/*
 		 * It's an S3/S5-style "include".
