@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxpvar.h,v 1.3 1997/10/20 01:15:56 thorpej Exp $	*/
+/*	$NetBSD: if_fxpvar.h,v 1.4 1998/01/22 08:32:35 thorpej Exp $	*/
 
 /*                  
  * Copyright (c) 1995, David Greenman
@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: if_fxpvar.h,v 1.3 1997/09/29 11:27:43 davidg Exp
+ *	Id: if_fxpvar.h,v 1.4 1997/11/29 08:11:01 davidg Exp
  */
 
 /*
@@ -53,18 +53,18 @@ struct fxp_softc {
 	struct fxp_cb_tx *cbl_base;	/* base of TxCB list */
 	struct fxp_cb_tx *cbl_first;	/* first active TxCB in list */
 	struct fxp_cb_tx *cbl_last;	/* last active TxCB in list */
+	int tx_queued;			/* # of active TxCB's */
+	int need_mcsetup;		/* multicast filter needs programming */
 	struct mbuf *rfa_headm;		/* first mbuf in receive frame area */
 	struct mbuf *rfa_tailm;		/* last mbuf in receive frame area */
 	struct fxp_stats *fxp_stats;	/* Pointer to interface stats */
-	int tx_queued;			/* # of active TxCB's */
+	int rx_idle_secs;		/* # of seconds RX has been idle */
+	struct fxp_cb_mcs *mcsp;	/* Pointer to mcast setup descriptor */
+	int all_mcasts;			/* receive all multicasts */
 	int promisc_mode;		/* promiscuous mode enabled */
 	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
-	int rx_idle_secs;		/* # of seconds RX has been idle */
-	int need_mcsetup;		/* multicast filter needs programming */
-	int all_mcasts;			/* receive all multicasts */
-	struct fxp_cb_mcs *mcsp;	/* Pointer to mcast setup descriptor */
 };
 
 /* Macros to ease CSR access. */
