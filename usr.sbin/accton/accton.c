@@ -1,5 +1,4 @@
 /*
- * Copyright (c) 1993 Christopher G. Demetriou
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
  *
@@ -39,38 +38,21 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)accton.c	4.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: accton.c,v 1.3 1993/08/01 18:00:30 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)accton.c	4.3 (Berkeley) 6/1/90"; */
+static char *rcsid = "$Id: accton.c,v 1.4 1993/10/20 00:13:10 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
-#include <string.h>
 
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int turnon;
-	char *tail;
-
-	if ((tail = strrchr(argv[0], '/')) == NULL) {
-		tail = argv[0];
-	} else {
-		tail++;
-	}
-	if (!strcmp(tail, "accton")) {
-		turnon = 1;
-	} else if (!strcmp(tail, "acctoff")) {
-		turnon = 0;
-	} else {
-		turnon = -1;
-	}
-	if (argc != 1 || turnon == -1) {
-		fputs("usage: accton\n", stderr);
-		fputs("or:    acctoff\n", stderr);
+	if (argc > 2) {
+		fputs("usage: accton [file]\n", stderr);
 		exit(1);
 	}
-	if (acct(turnon) < 0) {
+	if (acct(argc == 2 ? argv[1] : (char *)NULL)) {
 		perror("accton");
 		exit(1);
 	}
