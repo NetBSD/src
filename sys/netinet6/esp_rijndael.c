@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_rijndael.c,v 1.7 2001/11/13 00:56:57 lukem Exp $	*/
+/*	$NetBSD: esp_rijndael.c,v 1.7.10.1 2003/01/10 06:44:53 jmc Exp $	*/
 /*	$KAME: esp_rijndael.c,v 1.4 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.7 2001/11/13 00:56:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.7.10.1 2003/01/10 06:44:53 jmc Exp $");
 
 #include "opt_inet.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.7 2001/11/13 00:56:57 lukem Exp $
 
 #include <net/if.h>
 #include <net/route.h>
+#include <netinet/in.h>
 
 #include <netinet6/ipsec.h>
 #include <netinet6/esp.h>
