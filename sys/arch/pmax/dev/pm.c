@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.7 1995/09/11 07:45:43 jonathan Exp $	*/
+/*	$NetBSD: pm.c,v 1.8 1995/09/11 21:31:25 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -235,6 +235,8 @@ pminit(fi, unit, silent)
 	int silent;
 {
 	register PCCRegs *pcc = (PCCRegs *)MACH_PHYS_TO_UNCACHED(KN01_SYS_PCC);
+
+	if (fi == 0) fi = &pmfi;
 
 	/* Set address of frame buffer... */
 	fi->fi_pixels = (caddr_t)MACH_PHYS_TO_UNCACHED(KN01_PHYS_FBUF_START);
