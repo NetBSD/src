@@ -1,10 +1,47 @@
-$NetBSD: am-utils.info-4,v 1.1.1.3 1998/08/08 22:05:40 christos Exp $
+$NetBSD: am-utils.info-4,v 1.1.1.4 1999/02/01 18:47:03 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
 START-INFO-DIR-ENTRY
 * Am-utils: (am-utils).          The Amd automounter suite of utilities
 END-INFO-DIR-ENTRY
+
+
+File: am-utils.info,  Node: Amq -m option,  Next: Amq -M-option,  Prev: Amq -l option,  Up: Controlling Amd
+
+Amq `-m' option
+---------------
+
+   The `-m' option displays similar information about mounted
+filesystems, rather than automount points.  The output includes the
+following information:
+
+   * the mount information,
+
+   * the mount point,
+
+   * the filesystem type,
+
+   * the number of references to this filesystem,
+
+   * the server hostname,
+
+   * the state of the file server,
+
+   * any error which has occurred.
+
+   For example:
+
+     "root"           truth:(pid602)     root   1 localhost is up
+     hesiod.home      /home              toplvl 1 localhost is up
+     hesiod.vol       /vol               toplvl 1 localhost is up
+     hesiod.homes     /homes             toplvl 1 localhost is up
+     amy:/home/amy    /a/amy/home/amy    nfs    5 amy is up
+     swan:/home/swan  /a/swan/home/swan  nfs    0 swan is up (Permission denied)
+     ex:/home/ex      /a/ex/home/ex      nfs    0 ex is down
+
+   When the reference count is zero the filesystem is not mounted but
+the mount point and server information is still being maintained by Amd.
 
 
 File: am-utils.info,  Node: Amq -M-option,  Next: Amq -p option,  Prev: Amq -m option,  Up: Controlling Amd
@@ -1349,25 +1386,4 @@ by Hlfsd.
 * Centralized Mail Spool Directory::
 * Distributed Mail Spool Service::
 * Why Deliver Into the Home Directory?::
-
-
-File: am-utils.info,  Node: Single-Host Mail Spool Directory,  Next: Centralized Mail Spool Directory,  Prev: Background to Mail Delivery,  Up: Background to Mail Delivery
-
-Single-Host Mail Spool Directory
---------------------------------
-
-   The most common method for mail delivery is for mail to be appended
-to a mailbox file in a standard spool directory on the designated "mail
-home" machine of the user. The greatest advantage of this method is
-that it is the default method most vendors provide with their systems,
-thus very little (if any) configuration is required on the SA's part.
-All they need to set up are mail aliases directing mail to the host on
-which the user's mailbox file is assigned.  (Otherwise, mail is
-delivered locally, and users find mailboxes on many machines.)
-
-   As users become more sophisticated, and aided by windowing systems,
-they find themselves logging in on multiple hosts at once, performing
-several tasks concurrently.  They ask to be able to read their mail on
-any host on the network, not just the one designated as their "mail
-home".
 
