@@ -1,4 +1,4 @@
-/*	$NetBSD: unexpand.c,v 1.9 2003/04/08 09:44:47 dsl Exp $	*/
+/*	$NetBSD: unexpand.c,v 1.10 2003/04/08 10:47:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unexpand.c,v 1.9 2003/04/08 09:44:47 dsl Exp $");
+__RCSID("$NetBSD: unexpand.c,v 1.10 2003/04/08 10:47:03 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -53,28 +53,49 @@ __RCSID("$NetBSD: unexpand.c,v 1.9 2003/04/08 09:44:47 dsl Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
+#include <err.h>
 
 char	genbuf[BUFSIZ];
 char	linebuf[BUFSIZ];
 
 int	main(int, char **);
-void	tabify(int);
+void	tabify(int, uint);
 
 int
 main(int argc, char **argv)
 {
 	int all, c;
-	char *cp;
+	uint tabsize;
+	ulong l;
+	char *ep;
+
+	setprogname(argv[0]);
 
 	all = 0;
-	while ((c = getopt(argc, argv, "a")) != -1) {
+	tabsize = 8;
+	while ((c = getopt(argc, argv, "at:")) != -1) {
 		switch (c) {
 		case 'a':
 			all++;
 			break;
+		case 't':
+			errno = 0;
+			l = strtoul(optarg, &ep, 0);
+			/*
+			 * If every input char is a tab, the line length
+			 * must not exceed maxuint.
+			 */
+			tabsize = (int)l * BUFSIZ;
+			tabsize /= BUFSIZ;
+			if (*ep != 0 || errno != 0 || (ulong)tabsize != l)
+				errx(EXIT_FAILURE, "Invalid tabstop \"%s\"",
+				    optarg);
+			break;
 		case '?':
 		default:
-			fprintf(stderr, "usage: unexpand [-a] [file ...]\n");
+			fprintf(stderr, "usage: %s [-a] [-t tabstop] [file ...]\n",
+				getprogname());
 			exit(EXIT_FAILURE);
 			/* NOTREACHED */
 		}
@@ -91,11 +112,7 @@ main(int argc, char **argv)
 			argc--, argv++;
 		}
 		while (fgets(genbuf, BUFSIZ, stdin) != NULL) {
-			for (cp = linebuf; *cp; cp++)
-				continue;
-			if (cp > linebuf)
-				cp[-1] = 0;
-			tabify(all);
+			tabify(all, tabsize);
 			printf("%s", linebuf);
 		}
 	} while (argc > 0);
@@ -104,12 +121,12 @@ main(int argc, char **argv)
 }
 
 void
-tabify(c)
-	int c;
+tabify(int all, uint tabsize)
 {
 	char *cp, *dp;
-	int dcol;
-	int ocol;
+	uint dcol;
+	uint ocol;
+	uint tcol;
 
 	ocol = 0;
 	dcol = 0;
@@ -122,28 +139,28 @@ tabify(c)
 			break;
 
 		case '\t':
-			dcol += 8;
-			dcol &= ~07;
+			dcol = (dcol + tabsize) / tabsize * tabsize;
 			break;
 
 		default:
-			while (((ocol + 8) &~ 07) <= dcol) {
-				if (ocol + 1 == dcol)
-					break;
-				*dp++ = '\t';
-				ocol += 8;
-				ocol &= ~07;
+			if (dcol > ocol + 1) {
+				tcol = (ocol + tabsize) / tabsize * tabsize;
+				while (tcol <= dcol) {
+					*dp++ = '\t';
+					ocol = tcol;
+					tcol += tabsize;
+				}
 			}
 			while (ocol < dcol) {
 				*dp++ = ' ';
 				ocol++;
 			}
-			if (*cp == 0 || c == 0) {
+			if (*cp == 0 || all == 0) {
 				strcpy(dp, cp);
 				return;
 			}
 			*dp++ = *cp;
-			ocol++, dcol++;
+			dcol = ++ocol;
 		}
 		cp++;
 	}
