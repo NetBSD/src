@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/7/93
-#	$Id: Makefile,v 1.5 1993/07/30 21:40:42 mycroft Exp $
+#	$Id: Makefile,v 1.6 1993/08/14 21:33:13 mycroft Exp $
 
 M4=	m4
 #M4=	/usr/src/usr.bin/m4/obj/m4
@@ -21,7 +21,7 @@ ALL=	cs-hidden.cf cs-exposed.cf \
 	ultrix4.1-cs-exposed.cf ultrix4.1-cs-hidden.cf \
 	mail.cs.cf mail.eecs.cf ucbvax.cf vangogh.cf \
 	chez.cf knecht.cf cogsci.cf alpha.cf s2k.cf auspex.cf \
-	python.cf sun-lamp.cf boat-anchor.cf\
+	python.cf sun-lamp.cf boat-anchor.cf trinity.cf \
 	tcpproto.cf uucpproto.cf 
 
 all: $(ALL)
