@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.12 1998/11/04 06:19:56 chs Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.13 1998/12/02 10:41:01 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -358,8 +358,8 @@ lockmgr(lkp, flags, interlkp)
 	case LK_RELEASE:
 		if (lkp->lk_exclusivecount != 0) {
 			if (pid != lkp->lk_lockholder)
-				panic("lockmgr: pid %d, not %s %d unlocking",
-				    pid, "exclusive lock holder",
+				panic("lockmgr: pid %d, not exclusive lock "
+				    "holder %d unlocking", pid,
 				    lkp->lk_lockholder);
 			lkp->lk_exclusivecount--;
 			COUNT(p, -1);
