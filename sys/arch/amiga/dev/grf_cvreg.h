@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cvreg.h,v 1.5 1996/05/19 21:05:30 veego Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.6 1997/07/29 17:42:03 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -83,12 +83,12 @@ struct grfcvtext_mode {
 
 int grfcv_cnprobe __P((void));
 void grfcv_iteinit __P((struct grf_softc *));
-static inline void GfxBusyWait __P((volatile caddr_t));    
-static inline void GfxFifoWait __P((volatile caddr_t));    
-static inline unsigned char RAttr __P((volatile caddr_t, short)); 
-static inline unsigned char RSeq __P((volatile caddr_t, short)); 
-static inline unsigned char RCrt __P((volatile caddr_t, short)); 
-static inline unsigned char RGfx __P((volatile caddr_t, short)); 
+static __inline void GfxBusyWait __P((volatile caddr_t));    
+static __inline void GfxFifoWait __P((volatile caddr_t));    
+static __inline unsigned char RAttr __P((volatile caddr_t, short)); 
+static __inline unsigned char RSeq __P((volatile caddr_t, short)); 
+static __inline unsigned char RCrt __P((volatile caddr_t, short)); 
+static __inline unsigned char RGfx __P((volatile caddr_t, short)); 
 
 
 /*
@@ -362,7 +362,7 @@ static inline unsigned char RGfx __P((volatile caddr_t, short));
 
 /* Gfx engine busy wait */
 
-static inline void 
+static __inline void 
 GfxBusyWait (ba) 
 	volatile caddr_t ba;
 {
@@ -375,7 +375,7 @@ GfxBusyWait (ba)
 }
 
 
-static inline void
+static __inline void
 GfxFifoWait(ba) 
 	volatile caddr_t ba;
 {
@@ -391,10 +391,10 @@ GfxFifoWait(ba)
  *
  * The methods have diverged a bit for each board, so
  * WPass(P) has been converted into a set of specific
- * inline functions.
+ * __inline functions.
  */
 
-static inline unsigned char
+static __inline unsigned char
 RAttr(ba, idx)
 	volatile caddr_t ba;
 	short idx;
@@ -405,7 +405,7 @@ RAttr(ba, idx)
 	return vgar(ba, ACT_ADDRESS_R);
 }
 
-static inline unsigned char
+static __inline unsigned char
 RSeq(ba, idx)
 	volatile caddr_t ba;
 	short idx;
@@ -414,7 +414,7 @@ RSeq(ba, idx)
 	return vgar(ba, SEQ_ADDRESS_R);
 }
 
-static inline unsigned char
+static __inline unsigned char
 RCrt(ba, idx)
 	volatile caddr_t ba;
 	short idx;
@@ -423,7 +423,7 @@ RCrt(ba, idx)
 	return vgar(ba, CRT_ADDRESS_R);
 }
 
-static inline unsigned char
+static __inline unsigned char
 RGfx(ba, idx)
 	volatile caddr_t ba; 
 	short idx;

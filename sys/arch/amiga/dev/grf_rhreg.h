@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rhreg.h,v 1.7 1996/05/19 21:05:41 veego Exp $	*/
+/*	$NetBSD: grf_rhreg.h,v 1.8 1997/07/29 17:42:09 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -652,22 +652,22 @@ struct MonDef {
 	vgaw(ba, PLL_ADDRESS_W, (val >> 8)); } while (0)
 
 
-static inline unsigned char RAttr(volatile void * ba, short idx) {
+static __inline unsigned char RAttr(volatile void * ba, short idx) {
 	vgaw (ba, ACT_ADDRESS, idx);
 	return vgar (ba, ACT_ADDRESS_R);
 }
 
-static inline unsigned char RSeq(volatile void * ba, short idx) {
+static __inline unsigned char RSeq(volatile void * ba, short idx) {
 	vgaw (ba, SEQ_ADDRESS, idx);
 	return vgar (ba, SEQ_ADDRESS_R);
 }
 
-static inline unsigned char RCrt(volatile void * ba, short idx) {
+static __inline unsigned char RCrt(volatile void * ba, short idx) {
 	vgaw (ba, CRT_ADDRESS, idx);
 	return vgar (ba, CRT_ADDRESS_R);
 }
 
-static inline unsigned char RGfx(volatile void * ba, short idx) {
+static __inline unsigned char RGfx(volatile void * ba, short idx) {
 	vgaw(ba, GCT_ADDRESS, idx);
 	return vgar (ba, GCT_ADDRESS_R);
 }
