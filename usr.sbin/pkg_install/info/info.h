@@ -1,4 +1,4 @@
-/* $NetBSD: info.h,v 1.15 2004/05/07 16:40:30 jlam Exp $ */
+/* $NetBSD: info.h,v 1.16 2004/05/07 21:38:57 jlam Exp $ */
 
 /* from FreeBSD Id: info.h,v 1.10 1997/02/22 16:09:40 peter Exp */
 
@@ -51,7 +51,7 @@
 #define SHOW_PKG_SIZE		0x08000
 #define SHOW_ALL_SIZE		0x10000
 #define SHOW_BLD_DEPENDS	0x20000
-#define SHOW_BI_VAR		0x20000
+#define SHOW_BI_VAR		0x40000
 
 extern int Flags;
 extern Boolean AllInstalled;
@@ -66,7 +66,7 @@ extern size_t termwidth;
 extern lpkg_head_t pkgs;
 
 extern void show_file(char *, char *);
-extern void show_build_info_var(const char *);
+extern void show_var(const char *, const char *);
 extern void show_plist(char *, package_t *, pl_ent_t);
 extern void show_files(char *, package_t *);
 extern void show_depends(char *, package_t *);
