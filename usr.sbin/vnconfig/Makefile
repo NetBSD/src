@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1994/12/22 11:45:40 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1995/12/30 18:14:01 thorpej Exp $
 
 PROG=		vnconfig
 MAN=		vnconfig.8

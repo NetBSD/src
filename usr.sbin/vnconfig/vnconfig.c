@@ -1,3 +1,5 @@
+/*	$NetBSD: vnconfig.c,v 1.8 1995/12/30 18:14:03 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
