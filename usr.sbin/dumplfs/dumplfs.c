@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.12 1998/09/11 21:22:53 pk Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.13 1999/05/02 00:26:01 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.12 1998/09/11 21:22:53 pk Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.13 1999/05/02 00:26:01 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,10 +162,11 @@ main(argc, argv)
 	    lfs_sb1.lfs_sboffs[1] << daddr_shift, &(lfs_sb2.lfs_dlfs), sizeof(struct dlfs));
 
 	lfs_master = &lfs_sb1;
-	if (lfs_sb1.lfs_tstamp < lfs_sb2.lfs_tstamp)
+	if (lfs_sb1.lfs_tstamp > lfs_sb2.lfs_tstamp) {
 		lfs_master = &lfs_sb2;
+	}
 
-	(void)printf("Master Superblock:\n");
+	(void)printf("Master Superblock at 0x%x:\n", (lfs_master==&lfs_sb1 ? (LFS_LABELPAD>>daddr_shift) : lfs_sb1.lfs_sboffs[1]));
 	dump_super(lfs_master);
 
 	dump_ifile(fd, lfs_master, do_ientries);
