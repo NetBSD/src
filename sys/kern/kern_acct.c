@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.37 1994/12/14 19:07:07 mycroft Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.38 1994/12/24 15:07:22 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -94,6 +94,7 @@ int	acctchkfreq = 15;	/* frequency (in seconds) to check space */
  * Accounting system call.  Written based on the specification and
  * previous implementation done by Mark Tinguely.
  */
+int
 acct(p, uap, retval)
 	struct proc *p;
 	struct acct_args /* {
@@ -152,6 +153,7 @@ acct(p, uap, retval)
  * and are enumerated below.  (They're also noted in the system
  * "acct.h" header file.)
  */
+int
 acct_process(p)
 	struct proc *p;
 {
