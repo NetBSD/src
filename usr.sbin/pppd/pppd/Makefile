@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2005/02/20 11:12:44 cube Exp $
+#	$NetBSD: Makefile,v 1.35 2005/02/22 00:34:27 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -14,8 +14,6 @@ MAN=	pppd.8
 BINMODE=4555
 BINOWN=	root
 
-LDADD= -lpcap -lcrypt -lutil -Wl,--export-dynamic
-DPADD= ${LIBPCAP} ${LIBCRYPT} ${LIBUTIL}
 CPPFLAGS+= -I${.CURDIR} -DHAVE_PATHS_H -DSUPPORT_UTMP -DSUPPORT_UTMPX -DPLUGIN
 CPPFLAGS+= -I${PPPDDIR} -DPPP_FILTER
 CPPFLAGS+= -DCBCP_SUPPORT -DUSE_CRYPT -DCHAPMS -DMSLANMAN -DMPPE
@@ -26,4 +24,12 @@ CPPFLAGS+= -DINET6
 SRCS+=	eui64.c ipv6cp.c
 .endif
 
+.if (${USE_PAM} != "no")
+CPPFLAGS+= -DUSE_PAM
+LDADD+=-lpam
+DPADD+=${LIBPAM}
+.endif
+
+LDADD+= -lpcap -lcrypt -lutil -Wl,--export-dynamic
+DPADD+= ${LIBPCAP} ${LIBCRYPT} ${LIBUTIL}
 .include <bsd.prog.mk>
