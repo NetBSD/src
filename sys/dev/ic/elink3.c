@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.100 2001/11/13 13:14:37 lukem Exp $	*/
+/*	$NetBSD: elink3.c,v 1.101 2001/12/15 11:41:09 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.100 2001/11/13 13:14:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.101 2001/12/15 11:41:09 soren Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1135,7 +1135,7 @@ epstart(ifp)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m, *m0;
 	int sh, len, pad;
-	bus_addr_t txreg;
+	bus_size_t txreg;
 
 	/* Don't transmit if interface is busy or not running */
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
@@ -1603,7 +1603,7 @@ epget(sc, totlen)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
-	bus_addr_t rxreg;
+	bus_size_t rxreg;
 	int len, remaining;
 	int s;
 	caddr_t newdata;
@@ -1906,7 +1906,7 @@ epbusyeeprom(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	bus_addr_t eecmd;
+	bus_size_t eecmd;
 	int i = 100, j;
 	uint16_t busybit;
 
@@ -1950,7 +1950,7 @@ ep_read_eeprom(sc, offset)
 	struct ep_softc *sc;
 	u_int16_t offset;
 {
-	bus_addr_t eecmd, eedata;
+	bus_size_t eecmd, eedata;
 	u_int16_t readcmd;
 
 	if (sc->ep_chipset == ELINK_CHIPSET_CORKSCREW) {
