@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.22 2003/01/18 08:32:04 thorpej Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.23 2003/09/23 18:54:24 cl Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.22 2003/01/18 08:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.23 2003/09/23 18:54:24 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ osf1_sys_sigaction(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct osf1_sigaction *nosa, *oosa, tmposa;
 	struct sigaction *nbsa, *obsa, tmpbsa;
-	struct sys___sigaction14_args sa;
+	struct compat_16_sys___sigaction14_args sa;
 	caddr_t sg;
 	int error;
 
@@ -107,7 +107,7 @@ osf1_sys_sigaction(l, v, retval)
 	SCARG(&sa, nsa) = nbsa;
 	SCARG(&sa, osa) = obsa;
 
-	if ((error = sys___sigaction14(l, &sa, retval)) != 0)
+	if ((error = compat_16_sys___sigaction14(l, &sa, retval)) != 0)
 		return error;
 
 	if (oosa != NULL) {
