@@ -114,6 +114,7 @@
 ./usr/bin/basename
 ./usr/bin/batch
 ./usr/bin/bc
+./usr/bin/bdes
 ./usr/bin/biff
 ./usr/bin/cal
 ./usr/bin/calendar
@@ -477,6 +478,7 @@
 ./usr/sbin/repquota
 ./usr/sbin/rmt
 ./usr/sbin/rpc.bootparamd
+./usr/sbin/rpc.pcnfsd
 ./usr/sbin/rwhod
 ./usr/sbin/sa
 ./usr/sbin/sendmail
