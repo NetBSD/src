@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.20 1996/12/20 12:49:38 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.21 1997/01/08 11:28:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -315,11 +315,6 @@ itecngetc(dev)
 {
 	int c;
 
-	/* XXX this should be moved */
-	if (!kbd_init) {
-		kbd_init = 1;
-		kbdenable();
-	}
 	do {
 		c = kbdgetcn();
 		c = ite_cnfilter(c, ITEFILT_CONSOLE);
