@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.28 1996/02/05 01:54:05 christos Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.29 1997/01/03 18:00:25 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -622,7 +622,7 @@ vm_page_insert(mem, object, offset)
 
 /*
  *	vm_page_remove:		[ internal use only ]
- *				NOTE: used by device pager as well -wfj
+ * XXX: used by device pager as well
  *
  *	Removes the given mem entry from the object/offset-page
  *	table and the object page list.
@@ -726,6 +726,7 @@ vm_page_rename(mem, new_object, new_offset)
 	register vm_object_t	new_object;
 	vm_offset_t		new_offset;
 {
+
 	if (mem->object == new_object)
 		return;
 
@@ -799,6 +800,7 @@ void
 vm_page_free(mem)
 	register vm_page_t	mem;
 {
+
 	vm_page_remove(mem);
 	if (mem->flags & PG_ACTIVE) {
 		TAILQ_REMOVE(&vm_page_queue_active, mem, pageq);
@@ -838,6 +840,7 @@ void
 vm_page_wire(mem)
 	register vm_page_t	mem;
 {
+
 	VM_PAGE_CHECK(mem);
 
 	if (mem->wire_count == 0) {
@@ -868,6 +871,7 @@ void
 vm_page_unwire(mem)
 	register vm_page_t	mem;
 {
+
 	VM_PAGE_CHECK(mem);
 
 	mem->wire_count--;
@@ -892,6 +896,7 @@ void
 vm_page_deactivate(m)
 	register vm_page_t	m;
 {
+
 	VM_PAGE_CHECK(m);
 
 	/*
@@ -931,6 +936,7 @@ void
 vm_page_activate(m)
 	register vm_page_t	m;
 {
+
 	VM_PAGE_CHECK(m);
 
 	if (m->flags & PG_INACTIVE) {
@@ -959,6 +965,7 @@ boolean_t
 vm_page_zero_fill(m)
 	vm_page_t	m;
 {
+
 	VM_PAGE_CHECK(m);
 
 	m->flags &= ~PG_CLEAN;
@@ -976,6 +983,7 @@ vm_page_copy(src_m, dest_m)
 	vm_page_t	src_m;
 	vm_page_t	dest_m;
 {
+
 	VM_PAGE_CHECK(src_m);
 	VM_PAGE_CHECK(dest_m);
 
