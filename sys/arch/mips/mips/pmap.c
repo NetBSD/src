@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.85 2000/03/28 01:00:00 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.86 2000/03/28 01:04:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2000/03/28 01:00:00 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2000/03/28 01:04:22 simonb Exp $");
 
 /*
  *	Manages physical address maps.
@@ -218,7 +218,6 @@ boolean_t	pmap_initialized = FALSE;
 /* Forward function declarations */
 void pmap_remove_pv __P((pmap_t pmap, vaddr_t va, paddr_t pa));
 int pmap_alloc_asid __P((struct proc *p));
-void pmap_zero_page __P((paddr_t phys));
 void pmap_enter_pv __P((pmap_t, vaddr_t, paddr_t, u_int *));
 pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
 
@@ -226,7 +225,6 @@ pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
 void pmap_page_cache __P((paddr_t, int));
 void mips_dump_segtab __P((struct proc *));
 #endif
-int pmap_is_page_ro __P((pmap_t, vaddr_t, int));
 
 void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
