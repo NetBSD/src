@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.199 2004/10/01 16:30:55 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.200 2005/01/06 19:26:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.199 2004/10/01 16:30:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.200 2005/01/06 19:26:41 mycroft Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1390,9 +1390,12 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 			le = l;
 		else
 			li = l;
-
-		sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li, 
-			    sizeof(siginfo_t), si);
+		if (sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li, 
+		    sizeof(*si), si) != 0) {
+			pool_put(&siginfo_pool, si);
+			if (KSI_TRAP_P(ksi))
+				/* XXX What do we do here?? */;
+		}
 		l->l_flag |= f;
 		return;
 	}
