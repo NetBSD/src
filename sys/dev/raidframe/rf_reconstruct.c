@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.65 2004/01/04 21:06:04 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.66 2004/02/29 04:03:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.65 2004/01/04 21:06:04 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.66 2004/02/29 04:03:50 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -156,16 +156,11 @@ rf_ShutdownReconstruction(void *ignored)
 int 
 rf_ConfigureReconstruction(RF_ShutdownList_t **listp)
 {
-	int     rc;
 
 	pool_init(&rf_recond_pool, sizeof(RF_RaidReconDesc_t), 0, 0, 0,
 		  "rf_recond_pl", NULL);
-	rc = rf_ShutdownCreate(listp, rf_ShutdownReconstruction, NULL);
-	if (rc) {
-		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
-		rf_ShutdownReconstruction(NULL);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, rf_ShutdownReconstruction, NULL);
+
 	return (0);
 }
 

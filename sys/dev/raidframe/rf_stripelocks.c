@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.22 2004/01/23 01:57:08 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.23 2004/02/29 04:03:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.22 2004/01/23 01:57:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.23 2004/02/29 04:03:50 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -169,19 +169,13 @@ int
 rf_ConfigureStripeLockFreeList(RF_ShutdownList_t **listp)
 {
 	unsigned mask;
-	int     rc;
 
 	pool_init(&rf_stripelock_pool, sizeof(RF_StripeLockDesc_t),
 		  0, 0, 0, "rf_stripelock_pl", NULL);
 	pool_sethiwat(&rf_stripelock_pool, RF_MAX_FREE_STRIPELOCK);
 	pool_prime(&rf_stripelock_pool, RF_STRIPELOCK_INITIAL);
 
-	rc = rf_ShutdownCreate(listp, rf_ShutdownStripeLockFreeList, NULL);
-	if (rc) {
-		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
-		rf_ShutdownStripeLockFreeList(NULL);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, rf_ShutdownStripeLockFreeList, NULL);
 
 	for (mask = 0x1; mask; mask <<= 1)
 		if (rf_lockTableSize == mask)
@@ -233,17 +227,12 @@ int
 rf_ConfigureStripeLocks(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 			RF_Config_t *cfgPtr)
 {
-	int     rc;
 
 	raidPtr->lockTable = rf_MakeLockTable();
 	if (raidPtr->lockTable == NULL)
 		return (ENOMEM);
-	rc = rf_ShutdownCreate(listp, rf_RaidShutdownStripeLocks, raidPtr);
-	if (rc) {
-		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
-		rf_ShutdownStripeLocks(raidPtr->lockTable);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, rf_RaidShutdownStripeLocks, raidPtr);
+
 	return (0);
 }
 /* returns 0 if you've got the lock, and non-zero if you have to wait.
