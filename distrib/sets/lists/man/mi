@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.628 2003/11/10 18:49:14 augustss Exp $
+# $NetBSD: mi,v 1.629 2003/11/24 22:47:37 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -690,11 +690,9 @@
 ./usr/share/man/cat4/guspnp.0			man-sys-catman
 ./usr/share/man/cat4/hcide.0			man-sys-catman
 ./usr/share/man/cat4/hme.0			man-sys-catman
-./usr/share/man/cat4/hp300/apci.0		man-sys-catman
 ./usr/share/man/cat4/hp300/autoconf.0		man-sys-catman
 ./usr/share/man/cat4/hp300/cons.0		man-sys-catman
 ./usr/share/man/cat4/hp300/ct.0			man-sys-catman
-./usr/share/man/cat4/hp300/dca.0		man-sys-catman
 ./usr/share/man/cat4/hp300/dcm.0		man-sys-catman
 ./usr/share/man/cat4/hp300/dio.0		man-sys-catman
 ./usr/share/man/cat4/hp300/dnkbd.0		man-sys-catman
@@ -2444,11 +2442,9 @@
 ./usr/share/man/man4/guspnp.4			man-sys-man
 ./usr/share/man/man4/hcide.4			man-sys-man
 ./usr/share/man/man4/hme.4			man-sys-man
-./usr/share/man/man4/hp300/apci.4		man-sys-man
 ./usr/share/man/man4/hp300/autoconf.4		man-sys-man
 ./usr/share/man/man4/hp300/cons.4		man-sys-man
 ./usr/share/man/man4/hp300/ct.4			man-sys-man
-./usr/share/man/man4/hp300/dca.4		man-sys-man
 ./usr/share/man/man4/hp300/dcm.4		man-sys-man
 ./usr/share/man/man4/hp300/dio.4		man-sys-man
 ./usr/share/man/man4/hp300/dnkbd.4		man-sys-man
