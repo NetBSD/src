@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.36 2001/02/19 13:29:41 bjh21 Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.37 2001/02/21 00:51:27 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -191,8 +191,8 @@ extern void dump_spl_masks	__P((void));
 extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
 extern void db_machine_init	__P((void));
 extern void console_flush	__P((void));
-extern void vidcconsole_reinit	__P((void));
-extern int vidcconsole_blank	__P((struct vconsole *vc, int type));
+extern void vidcrender_reinit	__P((void));
+extern int vidcrender_blank	__P((struct vconsole *vc, int type));
 void rpc_sa110_cc_setup		__P((void));
 
 extern void parse_mi_bootargs	__P((char *args));
@@ -826,7 +826,7 @@ initarm_new_bootloader(bootconf)
 		bootconfig.display_start = VMEM_VBASE;
 	};
 	physcon_display_base(VMEM_VBASE);
-	vidcconsole_reinit();
+	vidcrender_reinit();
 
 #ifdef VERBOSE_INIT_ARM
 	printf("running on the new L1 page table!\n");
@@ -1457,7 +1457,7 @@ initarm_old_bootloader(bootconf)
 
 	/* If no VRAM kill the VIDC DAC's until the end of the bootstrap */
 	if (bootconfig.vram[0].pages == 0)
-		vidcconsole_blank(vconsole_current, BLANK_OFF);
+		vidcrender_blank(vconsole_current, BLANK_OFF);
 
 	/* If we don't have VRAM ..
 	 * Ahhhhhhhhhhhhhhhhhhhhhh
@@ -1861,10 +1861,10 @@ initarm_old_bootloader(bootconf)
 	if (videodram_size != 0) {
 		bootconfig.display_start = VMEM_VBASE;
 		physcon_display_base(VMEM_VBASE);
-		vidcconsole_reinit();
+		vidcrender_reinit();
 
 		/* Turn the VIDC DAC's on again. */
-		vidcconsole_blank(vconsole_current, BLANK_NONE);
+		vidcrender_blank(vconsole_current, BLANK_NONE);
 		printf("\x0cSecondary bootstrap: ");
 	}
 
