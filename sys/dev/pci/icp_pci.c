@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.8 2003/05/13 15:42:34 thorpej Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.9 2003/06/29 01:20:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.8 2003/05/13 15:42:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.9 2003/06/29 01:20:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,7 +573,7 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	icp->icp_pci_bus = pa->pa_bus;
 	icp->icp_pci_device = pa->pa_device;
-	icp->icp_pci_device_id = pa->pa_id;
+	icp->icp_pci_device_id = PCI_PRODUCT(pa->pa_id);
 	icp->icp_pci_subdevice_id = pci_conf_read(pa->pa_pc, pa->pa_tag,
 	    PCI_SUBSYS_ID_REG);
 
