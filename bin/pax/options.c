@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.17 1999/02/02 23:42:41 tv Exp $	*/
+/*	$NetBSD: options.c,v 1.18 1999/02/07 00:56:55 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.17 1999/02/02 23:42:41 tv Exp $");
+__RCSID("$NetBSD: options.c,v 1.18 1999/02/07 00:56:55 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ __RCSID("$NetBSD: options.c,v 1.17 1999/02/02 23:42:41 tv Exp $");
 int cpio_mode;			/* set if we are in cpio mode */
 char *chdir_dir;		/* directory to chdir to before operating */
 
+static int nopids;		/* tar mode: suppress "pids" for -p option */
 static char *flgch = FLGCH;	/* list of all possible flags (pax) */
 static OPLIST *ophead = NULL;	/* head for format specific options -x */
 static OPLIST *optail = NULL;	/* option tail */
@@ -132,7 +133,7 @@ FSUB fsub[] = {
 #define F_CPIO		1	/* old octal character cpio format */
 #define F_SV4CPIO	2	/* SVR4 hex cpio format */
 #define F_SV4CRC	3	/* SVR4 hex with crc cpio format */
-#define F_TAR		4	/* format when called as tar */
+#define F_TAR		4	/* old V7 UNIX tar format */
 #define F_USTAR		5	/* ustar format */
 #define DEFLT		F_USTAR	/* default write format from list above */
 
@@ -670,16 +671,30 @@ tar_options(argc, argv)
 			pmtime = 0;
 			break;
 		case 'o':
-			/* Change output type to V7 tar. */
-			if (act == ARCHIVE)
+			/*
+			 * This option does several things based on whether
+			 * this is a create or extract operation.
+			 */
+			if (act == ARCHIVE) {
+				/* 4.2BSD: don't add directory entries. */
+				if (opt_add("write_opt=nodir") < 0)
+					tar_usage();
+
+				/* GNU tar: write V7 format archives. */
 				frmt = &(fsub[F_TAR]);
+			} else {
+				/* SUS: don't preserve owner/group. */
+				pids = 0;
+				nopids = 1;
+			}
 			break;
 		case 'p':
 			/*
 			 * preserve user id, group id, file
 			 * mode, access/modification times
 			 */
-			pids = 1;
+			if (!nopids)
+				pids = 1;
 			pmode = 1;
 			patime = 1;
 			pmtime = 1;
@@ -1197,11 +1212,11 @@ bad_opt()
 
 #if __STDC__
 int
-opt_add(char *str)
+opt_add(const char *str)
 #else
 int
 opt_add(str)
-	char *str;
+	const char *str;
 #endif
 {
 	OPLIST *opt;
@@ -1213,7 +1228,7 @@ opt_add(str)
 		tty_warn(0, "Invalid option name");
 		return(-1);
 	}
-	frpt = endpt = str;
+	frpt = endpt = strdup(str);
 
 	/*
 	 * break into name and values pieces and stuff each one into a
