@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.45 2000/07/06 01:56:23 mjacob Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.46 2000/09/22 16:45:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -148,8 +148,10 @@ struct scsipi_device {
  *	scsipi_ioctl		optional
  *	scsipi_enable		optional
  *	scsipi_getgeom		optional
+ *	scsipi_accesschk	optional
  */
 struct disk_parms;
+struct scsipi_inquiry_pattern;
 struct scsipi_adapter {
 	int	scsipi_refcnt;		/* adapter reference count */
 	int	(*scsipi_cmd) __P((struct scsipi_xfer *));
@@ -159,6 +161,8 @@ struct scsipi_adapter {
 	int	(*scsipi_enable) __P((void *, int));
 	int	(*scsipi_getgeom) __P((struct scsipi_link *,
 		    struct disk_parms *, u_long));
+	int	(*scsipi_accesschk) __P((struct scsipi_link *,
+		    struct scsipi_inquiry_pattern *));
 };
 
 /*
