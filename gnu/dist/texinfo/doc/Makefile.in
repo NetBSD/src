@@ -236,7 +236,7 @@ stamp-vti: texinfo.txi $(top_srcdir)/configure
 	  || (echo "Updating version.texi"; \
 	      cp vti.tmp version.texi)
 	-@rm -f vti.tmp
-	@cp version.texi $@
+	@cp version.texi stamp-vti
 
 mostlyclean-vti:
 	-rm -f vti.tmp
@@ -268,7 +268,7 @@ stamp-1: info-stnd.texi $(top_srcdir)/configure
 	  || (echo "Updating version-stnd.texi"; \
 	      cp 1.tmp version-stnd.texi)
 	-@rm -f 1.tmp
-	@cp version-stnd.texi $@
+	@cp version-stnd.texi stamp-1
 
 mostlyclean-1:
 	-rm -f 1.tmp
