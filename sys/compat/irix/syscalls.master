@@ -1,0 +1,175 @@
+	$NetBSD: syscalls.master,v 1.1 2001/09/22 18:51:36 manu Exp $
+
+;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
+
+; NetBSD COMPAT_IRIX system call name/number "master" file.
+; (See syscalls.conf to see what it is processed into.)
+;
+; Fields: number type [type-dependent ...]
+;	number	system call number, must be in order
+;	type	one of STD, OBSOL, UNIMPL, NODEF, NOARGS, or one of
+;		the compatibility options defined in syscalls.conf.
+;
+; types:
+;	STD	always included
+;	OBSOL	obsolete, not included in system
+;	UNIMPL	unimplemented, not included in system
+;	NODEF	included, but don't define the syscall number
+;	NOARGS	included, but don't define the syscall args structure
+;
+; The compat options are defined in the syscalls.conf file, and the
+; compat option name is prefixed to the syscall name.  Other than
+; that, they're like NODEF (for 'compat' options), or STD (for
+; 'libcompat' options).
+;
+; The type-dependent arguments are as follows:
+; For STD, NODEF, NOARGS, and compat syscalls:
+;	{ pseudo-proto } [alias]
+; For other syscalls:
+;	[comment]
+;
+; #ifdef's, etc. may be included, and are copied to the output files.
+; #include's are copied to the syscall names and switch definition files only.
+
+#if defined(_KERNEL_OPT)
+#include "opt_ntp.h"
+#include "opt_sysv.h"
+#endif
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/signal.h>
+#include <sys/mount.h>
+#include <sys/poll.h>
+#include <sys/syscallargs.h>
+
+%%
+
+0	UNIMPL	
+1	UNIMPL	
+2	UNIMPL	
+3	UNIMPL	
+4	UNIMPL	
+5	UNIMPL	
+6	UNIMPL	
+7	UNIMPL	
+8	UNIMPL	
+9	UNIMPL	
+10	UNIMPL	
+11	UNIMPL	
+12	UNIMPL	
+13	UNIMPL	
+14	UNIMPL	
+15	UNIMPL	
+16	UNIMPL	
+17	UNIMPL	
+18	UNIMPL	
+19	UNIMPL	
+20	UNIMPL	
+21	UNIMPL	
+22	UNIMPL	
+23	UNIMPL	
+24	UNIMPL	
+25	UNIMPL	
+26	UNIMPL
+27	UNIMPL
+28	UNIMPL
+29	UNIMPL
+30	UNIMPL
+31	UNIMPL	
+32	UNIMPL
+33	UNIMPL
+34	UNIMPL
+35	UNIMPL
+36	UNIMPL
+37	UNIMPL
+38	UNIMPL
+39	UNIMPL
+40	UNIMPL
+41	UNIMPL
+42	UNIMPL
+43	UNIMPL
+44	UNIMPL
+45	UNIMPL
+46	UNIMPL
+47	UNIMPL
+48	UNIMPL
+49	UNIMPL
+50	UNIMPL
+51	UNIMPL
+52	UNIMPL
+53	UNIMPL
+54	UNIMPL
+55	UNIMPL
+56	UNIMPL
+57	UNIMPL
+58	UNIMPL
+59	UNIMPL
+60	UNIMPL
+61	UNIMPL
+62	UNIMPL
+63	UNIMPL
+64	UNIMPL
+65	UNIMPL
+66	UNIMPL
+67	UNIMPL
+68	UNIMPL
+69	UNIMPL
+70	UNIMPL
+71	UNIMPL
+72	UNIMPL
+73	UNIMPL
+74	UNIMPL
+75	UNIMPL
+76	UNIMPL
+77	UNIMPL
+78	UNIMPL
+79	UNIMPL
+80	UNIMPL
+81	UNIMPL
+82	UNIMPL
+83	UNIMPL
+84	UNIMPL
+85	UNIMPL
+86	UNIMPL
+87	UNIMPL
+88	UNIMPL
+89	UNIMPL
+90	UNIMPL
+91	UNIMPL
+92	UNIMPL
+93	UNIMPL
+94	UNIMPL
+95	UNIMPL
+96	UNIMPL
+97	UNIMPL
+98	UNIMPL
+99	UNIMPL
+100	UNIMPL
+101	UNIMPL
+102	UNIMPL
+103	UNIMPL
+104	UNIMPL
+105	UNIMPL
+106	UNIMPL
+107	UNIMPL
+108	UNIMPL
+109	UNIMPL
+110	UNIMPL
+111	UNIMPL
+112	UNIMPL
+113	UNIMPL
+114	UNIMPL
+115	UNIMPL
+116	UNIMPL
+117	UNIMPL
+118	UNIMPL
+119	UNIMPL
+120	UNIMPL
+121	UNIMPL
+122	UNIMPL
+123	UNIMPL
+124	UNIMPL
+125	UNIMPL
+126	UNIMPL
+127	UNIMPL
