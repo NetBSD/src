@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.h,v 1.2 2001/05/11 16:49:22 kleink Exp $	 */
+/*	$NetBSD: svr4_32_machdep.h,v 1.3 2001/05/11 17:37:14 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -55,9 +55,9 @@ typedef struct {
 
 typedef u_int32_t svr4_32_gwindowp_t;
 typedef struct {
-	int		 cnt;
-	u_int		*sp[SVR4_SPARC_MAXWIN];
-	svr4_32_rwindow_t   win[SVR4_SPARC_MAXWIN];
+	int		   cnt;
+	netbsd32_intp	   sp[SVR4_SPARC_MAXWIN];
+	svr4_32_rwindow_t  win[SVR4_SPARC_MAXWIN];
 } svr4_32_gwindow_t;
 
 typedef svr4_32_greg_t svr4_32_gregset_t[SVR4_SPARC_MAXREG];
@@ -67,7 +67,7 @@ typedef struct {
 		u_int	 fp_ri[32];
 		double	 fp_rd[16];
 	} fpu_regs;
-	void		*fp_q;
+	netbsd32_voidp	 fp_q;
 	unsigned	 fp_fsr;
 	u_char		 fp_nqel;
 	u_char		 fp_nqsize;
@@ -76,16 +76,18 @@ typedef struct {
 
 typedef struct {
 	u_int		 id;
-	void		*ptr;
+	netbsd32_voidp	 ptr;
 } svr4_32_xrs_t;
 
 typedef struct svr4_32_mcontext {
-	svr4_32_gregset_t	 greg;
-	svr4_32_gwindowp_t	 gwin;
-	svr4_32_fregset_t	 freg;
-	svr4_32_xrs_t	 xrs;
-	netbsd32_long		 pad[19];
+	svr4_32_gregset_t	greg;
+	svr4_32_gwindowp_t	gwin;
+	svr4_32_fregset_t	freg;
+	svr4_32_xrs_t		xrs;
+	netbsd32_long		pad[19];
 } svr4_32_mcontext_t;
+
+#define	SVR4_32_UC_MACHINE_PAD	23	/* size of uc_pad */
 
 struct svr4_32_ucontext;
 
