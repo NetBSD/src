@@ -1,6 +1,5 @@
-# $NetBSD: Makefile.inc,v 1.4 1999/11/20 19:47:10 veego Exp $
+# $NetBSD: Makefile.inc,v 1.5 1999/11/20 20:42:39 veego Exp $
 
-LDSTATIC?=      -static
 WARNS=0
 
 BIND_DIR=	${.CURDIR}/..
