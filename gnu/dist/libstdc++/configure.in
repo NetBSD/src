@@ -20,6 +20,7 @@ fi
 srctrigger=sinst.cc
 srcname="ANSI C++ library"
 package_makefile_frag=Make.pack
+package_makefile_rules_frag=Make.pack.r
 
 # per-host:
 
@@ -64,6 +65,14 @@ case "${target}" in
 esac
 
 for frag in ${frags}; do
+  case ${frag} in
+    ../* )
+      if [ ${srcdir} = . ]; then
+	[ -n "${with_target_subdir}" ] && frag=../${frag}
+	[ -n "${with_multisrctop}" ] && frag=${with_multisrctop}${frag}
+      fi
+      ;;
+  esac
   frag=${srcdir}/config/$frag
   if [ -f ${frag} ]; then
     echo "Appending ${frag} to target-mkfrag"
@@ -83,7 +92,7 @@ MOSTLYCLEAN='*.o pic stamp-picdir core so_locations $(MOSTLYCLEAN_JUNK)'
 CLEAN='$(CLEAN_JUNK)'
 EXTRA_DISTCLEAN='target-mkfrag'
 
-(. ${srcdir}/${TO_TOPDIR}libio/config.shared) >${package_makefile_frag}
+(. ${srcdir}/${TO_TOPDIR}libio/config.shared) >${package_makefile_frag} 2>${package_makefile_rules_frag}
 
 # post-target:
 
@@ -91,7 +100,7 @@ EXTRA_DISTCLEAN='target-mkfrag'
 if [ -n "${with_cross_host}" ] ; then
     rm -f Makefile.tem
     sed \
-        -e 's|INSTALLDIR.*=.*$|INSTALLDIR = $(tooldir)/lib|' \
+        -e 's|\(INSTALLDIR[ 	]*=[ 	]*\)[^ 	;]*|\1$(tooldir)/lib|' \
         Makefile >Makefile.tem
     mv -f Makefile.tem Makefile
 fi

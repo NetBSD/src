@@ -34,7 +34,6 @@
 #endif
 
 #include <string>
-#include <std/bastring.cc>
 
 #ifdef C
 typedef char c;
