@@ -1,5 +1,4 @@
-/*	$Id: cardslot.c,v 1.1 1999/10/15 06:07:19 haya Exp $ */
-
+/*	$NetBSD: cardslot.c,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
 /*
  * Copyright (c) 1999
  *       HAYAKAWA Koichi.  All rights reserved.
