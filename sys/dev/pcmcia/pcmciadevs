@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.209 2005/03/19 21:59:56 christos Exp $
+$NetBSD: pcmciadevs,v 1.210 2005/03/23 11:58:56 martin Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -336,6 +336,7 @@ product PANASONIC KME		0x2604 Panasonic CD-R/RW Interface
 /* Proxim */
 product PROXIM ROAMABOUT_2400FH	0x1058 Digital RoamAbout 2400FH
 product PROXIM RANGELAN2_7401	0x1158 Proxim RangeLAN2 7401
+product PROXIM RANGELANDS_8430  0x8000 Proxim RangeLAN-DS 8430
 
 /* Psion */
 product PSION GOLDCARD		0x0020 Psion Gold Card
