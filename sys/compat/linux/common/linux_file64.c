@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.16 2002/05/19 18:03:17 jdolecek Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.17 2002/05/20 06:40:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.16 2002/05/19 18:03:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.17 2002/05/20 06:40:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,6 +458,7 @@ again:
 			outp++;
 			break;
 		}
+		off = *cookie++;	/* each entry points to next */
 		/*
 		 * Massage in place to make a Linux-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
@@ -480,7 +481,6 @@ again:
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
-		off = *cookie++;	/* each entry points to itself */
 		/* advance output past Linux-shaped entry */
 		outp += linux_reclen;
 		resid -= linux_reclen;
