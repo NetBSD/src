@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.32 2003/11/16 09:41:01 dyoung Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.33 2004/01/23 02:32:52 wrstuden Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.32 2003/11/16 09:41:01 dyoung Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.33 2004/01/23 02:32:52 wrstuden Exp $");
 #endif
 
 struct wi_table {
@@ -610,7 +610,8 @@ static struct wi_table wi_table[] = {
 
 static struct wi_table wi_crypt_table[] = {
 	{ WI_RID_ENCRYPTION, WI_BOOL, "WEP encryption:\t\t\t\t" },
-	{ WI_RID_CNFAUTHMODE, WI_WORDS, "Authentication type \n(1=OpenSys, 2=Shared Key):\t\t" },
+	{ WI_RID_CNFAUTHMODE, WI_WORDS, "Authentication type \n(1=OpenSys, 2=Shared Key):\t\t",
+	    'A', "authentication type" },
         { WI_RID_TX_CRYPT_KEY, WI_WORDS, "TX encryption key:\t\t\t" },
         { WI_RID_DEFLT_CRYPT_KEYS, WI_KEYSTRUCT, "Encryption keys:\t\t\t" },
 	{ 0, WI_NONE }
@@ -825,7 +826,7 @@ int main(argc, argv)
 	}
 
 	while ((ch = getopt(argc, argv,
-	    "a:d:g:hi:m:or:s:M:R:D")) != -1) {
+	    "a:d:g:hi:m:or:s:A:M:R:D")) != -1) {
 		if (ch != 'i')
 			dumpinfo = 0;
 		/*
