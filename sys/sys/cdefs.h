@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.56 2004/09/23 17:40:16 yamt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.57 2004/09/23 22:13:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -145,7 +145,7 @@
  * dependencies.
  */
 #ifdef __GNUC__
-#define	__UNCONST(p)	((__typeof__(*(p)) *)(unsigned long)p)
+#define	__UNCONST(p)	((__typeof__(*(p)) *)(unsigned long)(p))
 #else
 #define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
 #endif
