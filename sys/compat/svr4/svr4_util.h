@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_util.h,v 1.9 1998/09/04 19:54:41 christos Exp $	 */
+/*	$NetBSD: svr4_util.h,v 1.10 1999/02/09 20:46:41 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -51,5 +51,8 @@ extern const char svr4_emul_path[];
 
 #define SVR4_CHECK_ALT_EXIST(p, sgp, path) \
     CHECK_ALT_EXIST(p, sgp, svr4_emul_path, path)
+
+#define SVR4_CHECK_ALT_CREAT(p, sgp, path) \
+    CHECK_ALT_CREAT(p, sgp, svr4_emul_path, path)
 
 #endif /* !_SVR4_UTIL_H_ */
