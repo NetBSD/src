@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.42 1994/05/17 13:32:31 mycroft Exp $
+#	$Id: Makefile.inc,v 1.43 1994/05/19 06:09:10 jtc Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -14,7 +14,7 @@ SRCS+=	alarm.c assert.c clock.c confstr.c ctermid.c ctime.c ctype_.c \
 	gethostname.c getloadavg.c getlogin.c getmntinfo.c getnetgrent.c \
 	getpagesize.c getpass.c getpwent.c getsubopt.c getttyent.c \
 	getusershell.c glob.c infinity.c initgroups.c isatty.c isctype.c \
-	isinf.c lfind.c lsearch.c \
+	isinf.c \
 	msgctl.c msgget.c msgsnd.c msgrcv.c \
 	mktemp.c nice.c nlist.c pause.c popen.c psignal.c pwcache.c raise.c \
 	scandir.c semconfig.c semctl.c semget.c semop.c \
@@ -98,7 +98,6 @@ MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpassent.3 getpwent.3 getpwnam.3 \
 MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 getttyent.3 setttyent.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
 MLINKS+=glob.3 globfree.3
-MLINKS+=lsearch.3 lfind.3
 MLINKS+=popen.3 pclose.3
 MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3
 MLINKS+=pwcache.3 user_from_uid.3 pwcache.3 group_from_gid.3
