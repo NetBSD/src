@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.h,v 1.2 2002/01/04 02:39:39 deberg Exp $	*/
+/*	$NetBSD: smb_conn.h,v 1.3 2003/03/03 21:16:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -391,7 +391,6 @@ int  smb_share_get(struct smb_share *ssp, int flags, struct smb_cred *scred);
 void smb_share_put(struct smb_share *ssp, struct smb_cred *scred);
 int  smb_share_lock(struct smb_share *ssp, int flags);
 void smb_share_unlock(struct smb_share *ssp, int flags);
-void smb_share_invalidate(struct smb_share *ssp);
 int  smb_share_valid(struct smb_share *ssp);
 const char * smb_share_getpass(struct smb_share *ssp);
 
@@ -407,7 +406,9 @@ int  smb_read(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 	struct smb_cred *scred);
 int  smb_write(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 	struct smb_cred *scred);
+#if 0
 int  smb_smb_echo(struct smb_vc *vcp, struct smb_cred *scred);
+#endif
 
 /*
  * smbiod thread

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.11 2003/02/25 09:12:11 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.12 2003/03/03 21:16:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.11 2003/02/25 09:12:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.12 2003/03/03 21:16:02 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,23 +138,6 @@ smb_memdupin(void *umem, int len)
 		return p;
 	free(p, M_SMBSTR);
 	return NULL;
-}
-
-/*
- * duplicate memory block in the kernel space.
- */
-void *
-smb_memdup(const void *umem, int len)
-{
-	char *p;
-
-	if (len > 8 * 1024)
-		return NULL;
-	p = malloc(len, M_SMBSTR, M_WAITOK);
-	if (p == NULL)
-		return NULL;
-	bcopy(umem, p, len);
-	return p;
 }
 
 void
@@ -337,6 +320,7 @@ smb_put_dstring(struct mbchain *mbp, struct smb_vc *vcp, const char *src,
 	return mb_put_uint8(mbp, 0);
 }
 
+#if 0
 int
 smb_put_asunistring(struct smb_rq *rqp, const char *src)
 {
@@ -353,6 +337,7 @@ smb_put_asunistring(struct smb_rq *rqp, const char *src)
 	}
 	return mb_put_uint16le(mbp, 0);
 }
+#endif
 
 struct sockaddr *
 dup_sockaddr(struct sockaddr *sa, int canwait)

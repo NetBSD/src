@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.8 2003/02/26 11:12:28 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.9 2003/03/03 21:16:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.8 2003/02/26 11:12:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.9 2003/03/03 21:16:02 jdolecek Exp $");
 
 /*
  * Connection engine.
@@ -782,12 +782,6 @@ smb_share_access(struct smb_share *ssp, struct smb_cred *scred, mode_t mode)
 	if (!groupmember(ssp->ss_grp, cred))
 		mode >>= 3;
 	return (ssp->ss_mode & mode) == mode ? 0 : EACCES;
-}
-
-void
-smb_share_invalidate(struct smb_share *ssp)
-{
-	ssp->ss_tid = SMB_TID_UNKNOWN;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.5 2003/02/25 09:12:11 jdolecek Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.6 2003/03/03 21:16:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.5 2003/02/25 09:12:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.6 2003/03/03 21:16:02 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -643,6 +643,7 @@ smb_write(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 	return error;
 }
 
+#if 0
 int
 smb_smb_echo(struct smb_vc *vcp, struct smb_cred *scred)
 {
@@ -665,3 +666,4 @@ smb_smb_echo(struct smb_vc *vcp, struct smb_cred *scred)
 	smb_rq_done(rqp);
 	return error;
 }
+#endif
