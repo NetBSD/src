@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.42 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.43 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -180,3 +180,7 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		This is inline with what other ELF systems do, and paves
 		the way to using GCC-supplied crtbegin/crtend.
 		[thorpej 20021121]
+	i386: reworked interrupt code to be more independent of the
+		underlying interrupt controller, to perform better
+		with shared lines, and to be more clean in general
+		[fvdl 20021122]
