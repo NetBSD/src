@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.4 1998/06/04 02:46:24 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.5 1998/06/05 03:26:52 enami Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -115,11 +115,10 @@ wdc_pcmcia_attach(parent, self, aux)
 {
 	struct wdc_pcmcia_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
-	struct pcmcia_config_entry *cfe = pa->pf->cfe_head.sqh_first;
+	struct pcmcia_config_entry *cfe;
 
-	printf("\n");
-
-	for (; cfe != NULL; cfe = cfe->cfe_list.sqe_next) {
+	for (cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head); cfe != NULL;
+	    cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
 		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
 		    cfe->iospace[0].length, 0, &sc->sc_pioh))
 			continue;
@@ -152,22 +151,24 @@ wdc_pcmcia_attach(parent, self, aux)
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
-		printf("%s: function enable failed\n", self->dv_xname);
+		printf(": function enable failed\n");
 		return;
 	}
 
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 			  sc->sc_pioh.size, &sc->sc_pioh,
 			  &sc->sc_iowindow)) {
-		printf("%s: can't map first I/O space\n", self->dv_xname);
+		printf(": can't map first I/O space\n");
 		return;
 	} 
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 			  sc->sc_auxpioh.size, &sc->sc_auxpioh,
 			  &sc->sc_auxiowindow)) {
-		printf("%s: can't map second I/O space\n", self->dv_xname);
+		printf(": can't map second I/O space\n");
 		return;
 	}
+
+	printf("\n");
 
 	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_BIO, wdcintr, sc);
 	if (sc->sc_ih == NULL) {
