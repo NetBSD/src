@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.6 1997/06/26 01:26:56 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.7 1997/07/17 02:28:39 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -69,6 +69,7 @@ db_regs_t		ddb_regs;	/* register state */
 #define	inst_branch(ins)	(((ins) & 0x0f000000) == 0x0a000000)
 #define inst_load(ins)		0
 #define inst_store(ins)		0
+#define inst_unconditional_flow_transfer(ins)	(((ins) & 0xf0000000) == 0xe0000000)
 
 #define getreg_val		(0)
 #define next_instr_address(pc, bd)	(pc + 4)
