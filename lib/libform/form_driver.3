@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_driver.3,v 1.5 2002/08/06 12:44:34 wiz Exp $
+.\"	$NetBSD: form_driver.3,v 1.6 2002/10/01 19:15:15 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -47,10 +47,11 @@ The
 is the heart of the forms library, it takes commands in the
 .Fa request
 parameter that is either a request to the driver to perform some
-action or is a character to be inserted into the current field.  The
-form driver will attempt to insert any printable character passed to
-it into the current field.  This may or may not succeed depending on
-the state of the current field.  If the character passed is not
+action or is a character to be inserted into the current field.
+The form driver will attempt to insert any printable character passed to
+it into the current field.
+This may or may not succeed depending on the state of the current field.
+If the character passed is not
 printable then the driver attempts to process it as a driver request.
 If the character passed is not a valid request then the driver will
 return an unknown command error.
@@ -144,7 +145,8 @@ Enter overlay mode, characters added to the field will replace the
 ones already there.
 .It REQ_INS_MODE
 Enter insert mode, characters will be inserted at the current cursor
-position.  Any characters to the right of the cursor will be moved
+position.
+Any characters to the right of the cursor will be moved
 right to accomodate the new characters.
 .It REQ_SCR_FLINE
 Scroll the field forward one line.
@@ -172,9 +174,9 @@ Scroll the field horizontally forward half a field line.
 Scroll the field horizontally backward half a field line.
 .It REQ_VALIDATION
 Request the contents of the current field be validated using any field
-validation function that has been set for the field.  Normally, the
-field is validated before the current field changes.  This request
-allows the current field to be validated.
+validation function that has been set for the field.
+Normally, the field is validated before the current field changes.
+This request allows the current field to be validated.
 .It REQ_PREV_CHOICE
 Select the previous choice in an enumerated type field.
 .It REQ_NEXT_CHOICE
@@ -211,7 +213,8 @@ validation for the current field.
 .Sh NOTES
 Field sorting is done by location of the field on the form page, the
 fields are sorted by position starting with the top-most, left-most
-field and progressing left to right.  For the purposes of sorting, the
+field and progressing left to right.
+For the purposes of sorting, the
 fields top left corner is used as the sort criteria.
 The header
 .Pa \*[Lt]form.h\*[Gt]

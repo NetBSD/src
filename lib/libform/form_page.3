@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_page.3,v 1.5 2002/08/06 12:44:35 wiz Exp $
+.\"	$NetBSD: form_page.3,v 1.6 2002/10/01 19:15:17 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -60,11 +60,14 @@
 The
 .Fn current_field
 returns a pointer to the structure for the field that is currently
-active on the page.  If there is an error,
+active on the page.
+If there is an error,
 .Fn current_field
-will return NULL.  Calling
+will return NULL.
+Calling
 .Fn field_index
-will return the index of the given field in the form field array.  The
+will return the index of the given field in the form field array.
+The
 current page the form is on can be determined by using
 .Fn form_page ,
 the current page of a form can be programmatically set by calling
@@ -74,9 +77,8 @@ calling the function
 .Fn form_max_page
 but note that this function is a
 .Nx
-extension and must not be used
-in portable forms library programs.  The current field on the form may
-be set by calling
+extension and must not be used in portable forms library programs.
+The current field on the form may be set by calling
 .Fn set_current_field
 which will set the current field to the one given.
 .Sh RETURN VALUES
