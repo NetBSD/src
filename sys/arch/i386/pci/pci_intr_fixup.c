@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.3 1999/12/13 15:42:05 uch Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.4 2000/01/25 17:20:47 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -377,6 +377,11 @@ pciintr_link_fixup()
 #endif
 		}
 	}
+
+#ifdef PCIBIOS_IRQS
+	/* In case the user supplied a mask for the PCI irqs we use it. */
+	pciirq = PCIBIOS_IRQS;
+#endif
 
 	/*
 	 * Stage 2: Attempt to connect PIRQs which we didn't
