@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.6 1997/07/06 23:57:39 jonathan Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.7 1997/07/07 00:02:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -64,7 +64,7 @@ struct sect {
   unsigned long len;
 };
 
-int debug = 1;
+int debug = 0;
 
 int phcmp (Elf32_Phdr *h1, Elf32_Phdr *h2);
 
