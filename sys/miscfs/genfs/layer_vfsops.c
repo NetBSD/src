@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.16 2004/05/22 20:28:38 christos Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.17 2004/05/22 23:17:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.16 2004/05/22 20:28:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.17 2004/05/22 23:17:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -150,17 +150,38 @@ layerfs_statvfs(mp, sbp, p)
 	struct proc *p;
 {
 	int error;
+	struct statvfs *sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 
 #ifdef LAYERFS_DIAGNOSTIC
 	printf("layerfs_statvfs(mp = %p, vp = %p->%p)\n", mp,
 	    MOUNTTOLAYERMOUNT(mp)->layerm_rootvp,
 	    LAYERVPTOLOWERVP(MOUNTTOLAYERMOUNT(mp)->layerm_rootvp));
 #endif
-	error = VFS_STATVFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, sbp, p);
-	if (error)
-		return (error);
+
+	(void)memset(sbuf, 0, sizeof(*sbuf));
+
+	error = VFS_STATVFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, sbuf, p);
+ 	if (error)
+		goto done;
+
+	/* now copy across the "interesting" information and fake the rest */
+	sbp->f_flag = sbuf->f_flag;
+	sbp->f_bsize = sbuf->f_bsize;
+	sbp->f_frsize = sbuf->f_frsize;
+	sbp->f_iosize = sbuf->f_iosize;
+	sbp->f_blocks = sbuf->f_blocks;
+	sbp->f_bfree = sbuf->f_bfree;
+	sbp->f_bavail = sbuf->f_bavail;
+	sbp->f_bresvd = sbuf->f_bresvd;
+	sbp->f_files = sbuf->f_files;
+	sbp->f_ffree = sbuf->f_ffree;
+	sbp->f_favail = sbuf->f_favail;
+	sbp->f_fresvd = sbuf->f_fresvd;
+	sbp->f_namemax = sbuf->f_namemax;
 	copy_statvfs_info(sbp, mp);
-	return (0);
+done:
+	free(sbuf, M_TEMP);
+	return error;
 }
 
 int
