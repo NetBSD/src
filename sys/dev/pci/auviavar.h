@@ -1,4 +1,4 @@
-/*	$NetBSD: auviavar.h,v 1.2 2000/12/10 15:43:02 jdolecek Exp $	*/
+/*	$NetBSD: auviavar.h,v 1.3 2002/10/05 18:08:30 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,6 +54,9 @@ struct auvia_softc {
 	struct device sc_dev;
 
 	char sc_revision[8];
+	u_int	sc_flags;
+#define	AUVIA_FLAGS_VT8233		0x0001
+
 	u_long sc_fixed_rate;		/* if codec doesn't support variable
 					 * rate audio, set to the fixed rate
 					 * it uses */
