@@ -329,8 +329,8 @@ struct scsi_device sea_dev = {
 	0,
 };
 
-int seaprobe();
-void seaattach();
+int seaprobe __P((struct device *, void *, void *));
+void seaattach __P((struct device *, struct device *, void *));
 
 struct cfdriver seacd = {
 	NULL, "sea", seaprobe, seaattach, DV_DULL, sizeof(struct sea_softc)
@@ -361,11 +361,11 @@ sea_queue_length(sea)
  * Returns 1 if card recognized, 0 if errors.
  */
 int
-seaprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+seaprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct sea_softc *sea = (void *)self;
+	struct sea_softc *sea = match;
 	struct isa_attach_args *ia = aux;
 	int i;
 

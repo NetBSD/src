@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.15 1994/10/30 21:44:02 cgd Exp $	*/
+/*	$NetBSD: lms.c,v 1.16 1994/11/03 23:17:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -66,8 +66,8 @@ struct lms_softc {		/* driver status information */
 	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
 };
 
-int lmsprobe();
-void lmsattach();
+int lmsprobe __P((struct device *, void *, void *));
+void lmsattach __P((struct device *, struct device *, void *));
 int lmsintr __P((struct lms_softc *));
 
 struct cfdriver lmscd = {
@@ -77,9 +77,9 @@ struct cfdriver lmscd = {
 #define	LMSUNIT(dev)	(minor(dev))
 
 int
-lmsprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lmsprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;

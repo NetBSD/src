@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.39 1994/10/27 04:18:19 cgd Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.40 1994/11/03 23:08:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -354,8 +354,8 @@ struct scsi_device uha_dev = {
 	0
 };
 
-int uhaprobe();
-void uhaattach();
+int uhaprobe __P((struct device *, void *, void *));
+void uhaattach __P((struct device *, struct device *, void *));
 
 struct cfdriver uhacd = {
 	NULL, "uha", uhaprobe, uhaattach, DV_DULL, sizeof(struct uha_softc)
@@ -570,11 +570,11 @@ u24_poll(uha, wait)
  * from autoconf.c
  */
 int
-uhaprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+uhaprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct uha_softc *uha = (void *)self;
+	struct uha_softc *uha = match;
 	struct isa_attach_args *ia = aux;
 
 	uha->sc_iobase = ia->ia_iobase;

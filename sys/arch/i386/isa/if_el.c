@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.15 1994/10/30 21:43:51 cgd Exp $	*/
+/*	$NetBSD: if_el.c,v 1.16 1994/11/03 23:14:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -95,8 +95,8 @@ static inline void elread __P((struct el_softc *, caddr_t, int));
 static struct mbuf *elget __P((caddr_t, int, struct ifnet *));
 static inline void el_hardreset __P((struct el_softc *));
 
-int elprobe();
-void elattach();
+int elprobe __P((struct device *, void *, void *));
+void elattach __P((struct device *, struct device *, void *));
 
 /* isa_driver structure for autoconf */
 struct cfdriver elcd = {
@@ -110,11 +110,11 @@ struct cfdriver elcd = {
  * (XXX - cgd -- needs help)
  */
 int
-elprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+elprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct el_softc *sc = (void *)self;
+	struct el_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;
 	u_char station_addr[ETHER_ADDR_LEN];

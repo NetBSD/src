@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.58 1994/10/30 21:43:44 cgd Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.59 1994/11/03 23:14:43 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -107,8 +107,8 @@ struct ed_softc {
 	u_char	next_packet;	/* pointer to next unread RX packet */
 };
 
-int edprobe();
-void edattach();
+int edprobe __P((struct device *, void *, void *));
+void edattach __P((struct device *, struct device *, void *));
 int edintr __P((struct ed_softc *));
 int ed_ioctl __P((struct ifnet *, u_long, caddr_t));
 int ed_start __P((struct ifnet *));
@@ -171,11 +171,11 @@ static u_short ed_790_intr_mask[] = {
  * Determine if the device is present.
  */
 int
-edprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+edprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct ed_softc *sc = (void *)self;
+	struct ed_softc *sc = match;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	struct isa_attach_args *ia = aux;
 
