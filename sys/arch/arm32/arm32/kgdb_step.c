@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_step.c,v 1.2 1996/03/27 22:42:20 mark Exp $	*/
+/*	$NetBSD: kgdb_step.c,v 1.3 1996/10/15 02:11:32 mark Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -69,11 +69,15 @@ execute(inst, args, regs)
 	/*
 	 * For now, no user level emulation
 	 */
-	if (PSR_USER(regs[PSR]) || !PSR_32(regs[PSR]))
+	if (PSR_IN_USR_MODE(regs[PSR]) || !PSR_IN_32_MODE(regs[PSR]))
 		panic("execute");
+	/*
 	sp = kgdb_find_stack();
-	regs[PSR] = Execute(inst, regs[PSR], args, sp);
+	*/
+	regs[PSR] = Execute(inst, regs[PSR], args, 0);
+	/*
 	kgdb_free_stack(sp);
+	*/
 }
 
 static __inline int
