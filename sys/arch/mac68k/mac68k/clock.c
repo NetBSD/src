@@ -73,7 +73,7 @@
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
  *   from: @(#)clock.c   7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.8 1994/08/02 16:39:57 grantham Exp $
+ *	$Id: clock.c,v 1.9 1994/08/03 06:23:10 grantham Exp $
  */
 
 #if !defined(STANDALONE)
@@ -300,10 +300,10 @@ u_long pramt_2_ugmt(u_long t)
    return(t = t - DIFF19041970 + tz.tz_minuteswest);
 }
 
-	/* time booter left MacOS ; default is 1990 */
-unsigned long macos_boottime = DIFF19701990;
+	/* time booter left MacOS */
+unsigned long macos_boottime;
 	/* BIAS in minutes from GMT */
-long macos_gmtbias = -300;
+long macos_gmtbias;
 
 /*
  * Set global GMT time register, using a file system time base for comparison
@@ -324,7 +324,8 @@ void inittodr(time_t base)
 
 	/* GMT bias is passwd in from Booter */
 	/* To get GMT, *subtract* GMTBIAS from *our* time */
-   timbuf -= macos_gmtbias;
+	/* (gmtbias is in minutes, mult by 60) */
+   timbuf -= macos_gmtbias * 60;
 
    if (base < 5*SECYR) {
       printf("WARNING: file system time earlier than 1975\n");
