@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.8.8.1 2000/11/01 03:48:08 tv Exp $
+.\"	$NetBSD: prep,v 1.8.8.2 2001/05/06 22:28:02 he Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -96,15 +96,17 @@ the geometry that
 uses is the
 .Em real geometry .
 .Pp
-.Li sysinst
-will try to discover both the real geometry and
+.Ic sysinst ,
+the
+.Nx
+installation program, will try to discover both the real geometry and
 .Tn BIOS
 geometry.
 .Pp
 It is
 .Em important
 that
-.Li sysinst
+.Ic sysinst
 know the proper
 .Tn BIOS
 geometry to be able
