@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.3.2.3 1996/08/22 03:23:49 mrg Exp $
+#	$NetBSD: install.md,v 1.3.2.4 1996/08/26 01:55:02 thorpej Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 #
 # machine dependent section of installation/upgrade script.
 #
+
+# Machine-dependent install sets
+MDSETS="xbin xman xinc xcon"
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
@@ -226,8 +229,4 @@ To boot the installed system, enter halt at the command prompt. Once the
 system has halted, reset the machine and boot from the disk.
 
 __congratulations_1
-}
-
-md_install_sets() {
-MDSETS='xbin xman xinc xcon'
 }
