@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.10 2004/01/01 17:18:54 thorpej Exp $	*/
+/*	$NetBSD: hcide.c,v 1.11 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.10 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.11 2004/01/03 01:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.10 2004/01/01 17:18:54 thorpej Exp $");
 
 struct hcide_softc {
 	struct wdc_softc sc_wdc;
-	struct channel_softc *sc_chp[HCIDE_NCHANNELS];/* pointers to sc_chan */
-	struct channel_softc sc_chan[HCIDE_NCHANNELS];
+	struct wdc_channel *sc_chp[HCIDE_NCHANNELS];/* pointers to sc_chan */
+	struct wdc_channel sc_chan[HCIDE_NCHANNELS];
 	struct ata_queue sc_chq[HCIDE_NCHANNELS];
 };
 
@@ -80,7 +80,7 @@ hcide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hcide_softc *sc = (void *)self;
 	struct podulebus_attach_args *pa = aux;
-	struct channel_softc *ch;
+	struct wdc_channel *ch;
 	int i, j;
 
 	sc->sc_wdc.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_NOIRQ;

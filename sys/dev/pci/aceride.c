@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.4 2003/11/27 23:02:40 fvdl Exp $	*/
+/*	$NetBSD: aceride.c,v 1.5 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #include <dev/pci/pciide_acer_reg.h>
 
 static void acer_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void acer_setup_channel(struct channel_softc*);
+static void acer_setup_channel(struct wdc_channel*);
 static int  acer_pci_intr(void *);
 
 static int  aceride_match(struct device *, struct cfdata *, void *);
@@ -169,7 +169,7 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-acer_setup_channel(struct channel_softc *chp)
+acer_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
@@ -267,7 +267,7 @@ acer_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct channel_softc *wdc_cp;
+	struct wdc_channel *wdc_cp;
 	int i, rv, crv; 
 	u_int32_t chids;
 

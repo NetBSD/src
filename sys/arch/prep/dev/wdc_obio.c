@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.11 2004/01/01 17:18:54 thorpej Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.12 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.11 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.12 2004/01/03 01:50:53 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.11 2004/01/01 17:18:54 thorpej Exp $"
 
 struct wdc_obio_softc {
 	struct	wdc_softc sc_wdcdev;
-	struct	channel_softc wdc_chanlist[1];
-	struct	channel_softc wdc_channel;
+	struct	wdc_channel wdc_chanlist[1];
+	struct	wdc_channel wdc_channel;
 	struct	ata_queue wdc_chqueue;
 	void	*sc_ih;
 };
@@ -77,7 +77,7 @@ CFATTACH_DECL(wdc_obio, sizeof(struct wdc_obio_softc),
 static int
 wdc_obio_probe(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct channel_softc ch;
+	struct wdc_channel ch;
 	struct obio_attach_args *oa = aux;
 	int result = 0;
 

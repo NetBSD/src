@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.6 2004/01/01 17:18:53 thorpej Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.7 2004/01/03 01:50:53 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.6 2004/01/01 17:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.7 2004/01/03 01:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -202,7 +202,7 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 	bus_size_t *cmdsizep, *ctlsizep;
 {
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	struct channel_softc *wdc_cp = &cp->wdc_channel;
+	struct wdc_channel *wdc_cp = &cp->wdc_channel;
 	int i;
 
 	cp->compat = 1;
@@ -254,7 +254,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	int (*pci_intr) __P((void *));
 {
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	struct channel_softc *wdc_cp = &cp->wdc_channel;
+	struct wdc_channel *wdc_cp = &cp->wdc_channel;
 	const char *intrstr;
 	pci_intr_handle_t intrhandle;
 	int i;
@@ -455,7 +455,7 @@ pciide_pci_intr(arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct channel_softc *wdc_cp;
+	struct wdc_channel *wdc_cp;
 	int i, rv, crv;
 
 	rv = 0;
@@ -726,7 +726,7 @@ pciide_dma_finish(v, channel, drive, force)
 
 void
 pciide_irqack(chp)
-	struct channel_softc *chp;
+	struct wdc_channel *chp;
 {
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
@@ -774,7 +774,7 @@ pciide_mapchan(pa, cp, interface, cmdsizep, ctlsizep, pci_intr)
 	bus_size_t *cmdsizep, *ctlsizep;
 	int (*pci_intr) __P((void *));
 {
-	struct channel_softc *wdc_cp = &cp->wdc_channel;
+	struct wdc_channel *wdc_cp = &cp->wdc_channel;
 
 	if (interface & PCIIDE_INTERFACE_PCI(wdc_cp->channel))
 		pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr);
@@ -946,7 +946,7 @@ next:
 
 void
 sata_setup_channel(chp)
-	struct channel_softc *chp;
+	struct wdc_channel *chp;
 {
 	struct ata_drive_datas *drvp;
 	int drive;

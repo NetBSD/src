@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.65 2004/01/01 17:18:53 thorpej Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.66 2004/01/03 01:50:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.65 2004/01/01 17:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.66 2004/01/03 01:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.65 2004/01/01 17:18:53 thorpej Exp 
 
 struct wdc_pcmcia_softc {
 	struct wdc_softc sc_wdcdev;
-	struct channel_softc *wdc_chanlist[1];
-	struct channel_softc wdc_channel;
+	struct wdc_channel *wdc_chanlist[1];
+	struct wdc_channel wdc_channel;
 	struct ata_queue wdc_chqueue;
 	struct pcmcia_io_handle sc_pioh;
 	struct pcmcia_io_handle sc_auxpioh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.5 2003/12/14 00:17:05 thorpej Exp $	*/
+/*	$NetBSD: rccide.c,v 1.6 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.5 2003/12/14 00:17:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.6 2004/01/03 01:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.5 2003/12/14 00:17:05 thorpej Exp $");
 
 static void serverworks_chip_map(struct pciide_softc *,
 				 struct pci_attach_args *);
-static void serverworks_setup_channel(struct channel_softc *);
+static void serverworks_setup_channel(struct wdc_channel *);
 static int  serverworks_pci_intr(void *);
 static int  serverworkscsb6_pci_intr(void *);
 
@@ -170,7 +170,7 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-serverworks_setup_channel(struct channel_softc *chp)
+serverworks_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
@@ -251,7 +251,7 @@ serverworks_pci_intr(arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct channel_softc *wdc_cp;
+	struct wdc_channel *wdc_cp;
 	int rv = 0;
 	int dmastat, i, crv;
 
@@ -281,7 +281,7 @@ serverworkscsb6_pci_intr(arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct channel_softc *wdc_cp;
+	struct wdc_channel *wdc_cp;
 	int rv = 0;
 	int i, crv;
 

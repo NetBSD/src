@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.19 2003/12/19 19:29:10 thorpej Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.20 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -115,10 +115,10 @@ struct pciide_softc {
 	/* Chip description */
 	const struct pciide_product_desc *sc_pp;
 	/* common definitions */
-	struct channel_softc *wdc_chanarray[PCIIDE_MAX_CHANNELS];
+	struct wdc_channel *wdc_chanarray[PCIIDE_MAX_CHANNELS];
 	/* internal bookkeeping */
 	struct pciide_channel {			/* per-channel data */
-		struct channel_softc wdc_channel; /* generic part */
+		struct wdc_channel wdc_channel; /* generic part */
 		const char	*name;
 		int		compat;	/* is it compat? */
 		void		*ih;	/* compat or pci handle */
@@ -186,14 +186,14 @@ pciide_pci_write(pc, pa, reg, val)
 }
 
 void default_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void sata_setup_channel __P((struct channel_softc*));
+void sata_setup_channel __P((struct wdc_channel*));
 
 void pciide_channel_dma_setup __P((struct pciide_channel *));
 int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
 int  pciide_dma_init __P((void*, int, int, void *, size_t, int));
 void pciide_dma_start __P((void*, int, int));
 int  pciide_dma_finish __P((void*, int, int, int));
-void pciide_irqack __P((struct channel_softc *));
+void pciide_irqack __P((struct wdc_channel *));
 
 /*
  * Functions defined by machine-dependent code.

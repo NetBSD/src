@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.3 2003/11/27 23:02:40 fvdl Exp $	*/
+/*	$NetBSD: siside.c,v 1.4 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,8 +39,8 @@
 #include <dev/pci/pciide_sis_reg.h>
 
 static void sis_chip_map(struct pciide_softc *, struct pci_attach_args *);
-static void sis_setup_channel(struct channel_softc *);
-static void sis96x_setup_channel(struct channel_softc *);
+static void sis_setup_channel(struct wdc_channel *);
+static void sis96x_setup_channel(struct wdc_channel *);
 
 static int  sis_hostbr_match(struct pci_attach_args *);
 static int  sis_south_match(struct pci_attach_args *);
@@ -292,7 +292,7 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-sis96x_setup_channel(struct channel_softc *chp)
+sis96x_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
@@ -356,7 +356,7 @@ sis96x_setup_channel(struct channel_softc *chp)
 }
 
 static void
-sis_setup_channel(struct channel_softc *chp)
+sis_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
