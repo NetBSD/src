@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.338 2001/07/25 01:44:59 thorpej Exp $
+$NetBSD: pcidevs,v 1.339 2001/07/28 00:33:01 pooka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -573,6 +573,7 @@ vendor INVALID		0xffff	INVALID VENDOR ID
 
 /* 3COM Products */
 product 3COM 3C985	0x0001	3c985 Gigabit Ethernet
+product 3COM 3C556MODEM	0x1007	3c556 V.90 MiniPCI Modem
 product 3COM 3C450TX	0x4500	3c450-TX 10/100 Ethernet
 product 3COM 3C590	0x5900	3c590 Ethernet
 product 3COM 3C595TX	0x5950	3c595-TX 10/100 Ethernet
