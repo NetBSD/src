@@ -101,7 +101,6 @@
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 #include <vm/lock.h>
-#include <vm/vm_statistics.h>
 #include <vm/pmap.h>
 #include <vm/vm_prot.h>
 
@@ -163,17 +162,18 @@ mmrw(dev, uio, flags)
 /* minor device 1 is kernel memory */
 		case 1:
 			c = MIN(iov->iov_len, MAXPHYS);
-			if (!kernacc((caddr_t)uio->uio_offset, c,
+			if (!kernacc((caddr_t)(long)uio->uio_offset, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)uio->uio_offset, (int)c, uio);
+			error = uiomove((caddr_t)(long)uio->uio_offset, (int)c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
 		case 2:
-			if (uio->uio_rw == UIO_WRITE)
-				uio->uio_resid = 0;
-			return (0);
+			if (uio->uio_rw == UIO_READ)
+				return (0);
+			c = iov->iov_len;
+			break;
 
 /* minor device 11 (/dev/eeprom) accesses Non-Volatile RAM */
 		case 11:
