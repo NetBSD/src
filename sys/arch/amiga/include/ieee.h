@@ -1,4 +1,3 @@
-/*	$NetBSD: ieee.h,v 1.1 1999/03/15 12:42:51 minoura Exp $	*/
+/*	$NetBSD: ieee.h,v 1.2 1999/08/30 18:58:01 mycroft Exp $	*/
 
-/* Just use the common m68k definition */
 #include <m68k/ieee.h>
