@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.36.4.1 2001/04/05 12:43:22 he Exp $	*/
+/*	$NetBSD: route.c,v 1.36.4.2 2001/11/13 21:17:07 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -510,6 +510,10 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 		if (rt->rt_gwroute) {
 			rt = rt->rt_gwroute; RTFREE(rt);
 			(rt = (struct rtentry *)rn)->rt_gwroute = 0;
+		}
+		if (rt->rt_parent) {
+			rt->rt_parent->rt_refcnt--;
+			rt->rt_parent = NULL;
 		}
 		rt->rt_flags &= ~RTF_UP;
 		if ((ifa = rt->rt_ifa) && ifa->ifa_rtrequest)
