@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.27 1997/03/15 18:11:09 is Exp $
+#       $NetBSD: files.vax,v 1.28 1997/06/13 08:18:49 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -298,6 +298,7 @@ file	arch/vax/uba/dh.c		dh needs-count
 # These are general files needed for compilation.
 file	dev/cons.c
 file	dev/cninit.c
+file	dev/clock_subr.c		vax8200|vax410|vax43|vax630
 file	arch/vax/vax/locore.c
 file	arch/vax/vax/mem.c
 file	arch/vax/vax/clock.c
@@ -316,7 +317,7 @@ file	arch/vax/vax/uvax.c		vax630 | vax410 | vax43
 file	arch/vax/vax/ka630.c		vax630
 file	arch/vax/vax/ka410.c		vax410
 file	arch/vax/vax/ka43.c		vax43
-file	arch/vax/vax/emulate.s		vax630|vax650|vax410|vax420
+file	arch/vax/vax/emulate.s		vax630|vax650|vax410
 file	arch/vax/vax/ka650.c		vax650
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/urem.s
