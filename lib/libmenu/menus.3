@@ -1,0 +1,177 @@
+.\" Copyright (c) 1999
+.\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	$Id: menus.3,v 1.1.1.1 1999/11/23 11:12:36 blymn Exp $
+.\"
+.Dd September, 1999
+.Dt MENUS 3
+.Os BSD 4
+.Sh NAME
+.Nm Menus
+.Nd menu library
+.Sh LIBRARY
+.Lb libmenu
+.Sh SYNOPSIS
+.Fd #include <menu.h>
+.Sh DESCRIPTION
+The
+.Xr menu 3
+provides a terminal independent menu system using the 
+.Xr curses 3
+library.  Before using the 
+.Xr menu 3
+functions the terminal must be set up by
+.Xr curses 3
+using the
+.Fn initscr
+function or similar.  Programs using
+.Xr menu
+functions must be linked with the
+.Xr curses 3
+library
+.Xr -lcurses .
+.Pp
+The
+.Xr menu 3
+library provides facilties for defining menu items, placing a menu on the
+terminal screen, assign pre and post change operations and setting the
+attributes of both the menu and it's items.
+.Sh Defining default attributes for menus and items
+The
+.Xr menu 3
+library allows any settable attribute or option of both the menu and item
+objects to be defined such that any new menu or item automatically inherits
+the value as default.  Setting the default value will not affect any item or
+menu that has already been created but will be applied to subsequent objects.
+To set the default attribute or option the set routine is passed a NULL
+pointer in the item or menu parameter when calling the set routine.  The
+current default value can be retrieved by calling the get routine with a
+NULL pointer for the item or menu parameter.
+.Pp
+.ta 20
+.nf
+.ft 3
+menus Routine Name      Manual Page Name
+.sp 0.5
+current_item		menu_item_current(3)
+free_item		menu_item_new(3)
+free_menu		menu_new(3)
+item_count		menu_items(3)
+item_description	menu_item_name(3)
+item_index		menu_item_current(3)
+item_init		menu_hook(3)
+item_name		menu_item_name(3)
+item_opts		menu_item_opts(3)
+item_opts_off		menu_item_opts(3)
+item_opts_on		menu_item_opts(3)
+item_term		menu_hook(3)
+item_userptr		menu_item_userptr(3)
+item_value		menu_item_value(3)
+item_visible		menu_item_visible(3)
+menu_back		menu_attributes(3)
+menu_driver		menu_driver(3)
+menu_fore		menu_attributes(3)
+menu_format		menu_format(3)
+menu_grey		menu_attributes(3)
+menu_init		menu_hook(3)
+menu_items		menu_items(3)
+menu_mark		menu_mark(3)
+menu_opts		menu_opts(3)
+menu_opts_off		menu_opts(3)
+menu_opts_on		menu_opts(3)
+menu_pad		menu_attributes(3)
+menu_pattern		menu_pattern(3)
+menu_sub		menu_win(3)
+menu_term		menu_hook(3)
+menu_unmark		menu_mark(3)
+menu_userptr		menu_userptr(3)
+men_win			menu_win(3)
+new_item		menu_item_new(3)
+new_menu		menu_new(3)
+pos_menu_cursor		menu_cursor(3)
+post_menu		menu_post(3)
+scale_window		menu_win(3)
+set_current_item	menu_item_current(3)
+set_item_init		menu_hook(3)
+set_item_opts		menu_item_opts(3)
+set_item_term		menu_hook(3)
+set_item_userptr	menu_item_userptr(3)
+set_item_value		menu_item_value(3)
+set_menu_back		menu_attributes(3)
+set_menu_fore		menu_attributes(3)
+set_menu_format		menu_format(3)
+set_menu_grey		menu_attributes(3)
+set_menu_init		menu_hook(3)
+set_menu_items		menu_items(3)
+set_menu_mark		menu_mark(3)
+set_menu_opts		menu_opts(3)
+set_menu_pad		menu_attributes(3)
+set_menu_pattern	menu_pattern(3)
+set_menu_sub		menu_win(3)
+set_menu_term		menu_hook(3)
+set_menu_unmark		menu_mark(3)
+set_menu_userptr	menu_userptr(3)
+set_menu_win		menu_win(3)
+set_top_row		menu_item_current(3)
+top_row			menu_item_current(3)
+unpost_menu		menu_post(3)
+.fi
+.ft 1
+.br
+.ne 8
+.Sh RETURN VALUES
+Any function returning a string pointer will return NULL if an error
+occurs.  Functions returning an integer will return one of the
+following:
+.Pp
+.ta 20
+.nf
+E_OK			The function was successful
+E_SYSTEM_ERROR		There was a system error during the call.
+E_BAD_ARGUMENT		One or more of the arguments passed to the function
+			was incorrect.
+E_POSTED		The menu is already posted.
+E_CONNECTED		An item was already connected to a menu.
+E_BAD_STATE		The function was called from within an initialisation
+			or termination routine.
+E_NO_ROOM		The menu does not fit within the subwindow.
+E_NOT_POSTED		The menu is not posted
+E_UNKNOWN_COMMAND	The menu driver does not recognise the request
+			passed to it.
+E_NO_MATCH		The character search failed to find a match.
+E_NOT_SELECTABLE	The item could not be selected.
+E_NOT_CONNECTED		The item is not connected to a menu.
+E_REQUEST_DENIED	The menu driver could not process the request.
+.fi
+.ft 1
+.br
+.ne 8
+.Sh SEE ALSO
+.Xr curses 3
+
