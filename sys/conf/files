@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.319 1999/09/28 14:47:02 bouyer Exp $
+#	$NetBSD: files,v 1.320 1999/10/11 16:15:13 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -792,17 +792,6 @@ file netatalk/at_rmx.c			netatalkdebug
 file netatalk/ddp_input.c		netatalk
 file netatalk/ddp_output.c		netatalk
 file netatalk/ddp_usrreq.c		netatalk
-file netipx/ipx.c			ipx
-file netipx/ipx_cksum.c			ipx
-file netipx/ipx_input.c			ipx
-file netipx/ipx_ip.c			ipx
-file netipx/ipx_outputfl.c		ipx
-file netipx/ipx_pcb.c			ipx
-file netipx/ipx_proto.c			ipx
-file netipx/ipx_tun.c			ipx
-file netipx/ipx_usrreq.c		ipx
-file netipx/spx_debug.c			ipx
-file netipx/spx_usrreq.c		ipx
 file netiso/clnp_debug.c		iso
 file netiso/clnp_er.c			iso
 file netiso/clnp_frag.c			iso
