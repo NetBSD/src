@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)af.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: af.c,v 1.5 1994/05/13 08:04:31 mycroft Exp $";
+static char *rcsid = "$Id: af.c,v 1.6 1994/12/18 05:43:48 cgd Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -41,10 +41,14 @@ static char *rcsid = "$Id: af.c,v 1.5 1994/05/13 08:04:31 mycroft Exp $";
 /*
  * Address family support routines
  */
-int	inet_hash(), inet_netmatch(), inet_output(),
-	inet_portmatch(), inet_portcheck(),
-	inet_checkhost(), inet_rtflags(), inet_sendroute(), inet_canon();
-char	*inet_format();
+int inet_canon __P((struct sockaddr_in *));
+int inet_checkhost __P((struct sockaddr_in *));
+char *inet_format __P((struct sockaddr_in *));
+int inet_hash __P((struct sockaddr_in *, struct afhash *));
+int inet_netmatch __P((struct sockaddr_in *, struct sockaddr_in *));
+int inet_portcheck __P((struct sockaddr_in *));
+int inet_portmatch __P((struct sockaddr_in *));
+int inet_output __P((int, int, struct sockaddr_in *, int));
 
 #define NIL	{ 0 }
 #define	INET \
@@ -68,13 +72,14 @@ struct sockaddr_in inet_default = {
 #endif
 	AF_INET, INADDR_ANY };
 
+int
 inet_hash(sin, hp)
 	register struct sockaddr_in *sin;
 	struct afhash *hp;
 {
 	register u_long n;
 
-	n = inet_netof(sin->sin_addr);
+	n = inet_netof_subnet(sin->sin_addr);
 	if (n)
 	    while ((n & 0xff) == 0)
 		n >>= 8;
@@ -83,16 +88,19 @@ inet_hash(sin, hp)
 	hp->afh_hosthash &= 0x7fffffff;
 }
 
+int
 inet_netmatch(sin1, sin2)
 	struct sockaddr_in *sin1, *sin2;
 {
 
-	return (inet_netof(sin1->sin_addr) == inet_netof(sin2->sin_addr));
+	return (inet_netof_subnet(sin1->sin_addr) ==
+	    inet_netof_subnet(sin2->sin_addr));
 }
 
 /*
  * Verify the message is from the right port.
  */
+int
 inet_portmatch(sin)
 	register struct sockaddr_in *sin;
 {
@@ -103,6 +111,7 @@ inet_portmatch(sin)
 /*
  * Verify the message is from a "trusted" port.
  */
+int
 inet_portcheck(sin)
 	struct sockaddr_in *sin;
 {
@@ -113,6 +122,7 @@ inet_portcheck(sin)
 /*
  * Internet output routine.
  */
+int
 inet_output(s, flags, sin, size)
 	int s, flags;
 	struct sockaddr_in *sin;
@@ -135,6 +145,7 @@ inet_output(s, flags, sin, size)
  * Return 1 if the address is believed
  * for an Internet host -- THIS IS A KLUDGE.
  */
+int
 inet_checkhost(sin)
 	struct sockaddr_in *sin;
 {
@@ -154,6 +165,7 @@ inet_checkhost(sin)
 	return (1);
 }
 
+int
 inet_canon(sin)
 	struct sockaddr_in *sin;
 {

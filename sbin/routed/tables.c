@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tables.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: tables.c,v 1.9 1994/10/31 04:36:02 cgd Exp $";
+static char *rcsid = "$Id: tables.c,v 1.10 1994/12/18 05:43:59 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -41,8 +41,9 @@ static char *rcsid = "$Id: tables.c,v 1.9 1994/10/31 04:36:02 cgd Exp $";
  */
 #include "defs.h"
 #include <sys/ioctl.h>
-#include <errno.h>
 #include <sys/syslog.h>
+#include <errno.h>
+#include <search.h>
 #include <stdlib.h>
 
 #ifndef DEBUG
@@ -145,6 +146,7 @@ again:
 	return (0);
 }
 
+void
 rtadd(dst, gate, metric, state)
 	struct sockaddr *dst, *gate;
 	int metric, state;
@@ -213,6 +215,7 @@ rtadd(dst, gate, metric, state)
 	}
 }
 
+void
 rtchange(rt, gate, metric)
 	struct rt_entry *rt;
 	struct sockaddr *gate;
@@ -285,6 +288,7 @@ rtchange(rt, gate, metric)
 #endif
 }
 
+void
 rtdelete(rt)
 	struct rt_entry *rt;
 {
@@ -305,6 +309,7 @@ rtdelete(rt)
 	free((char *)rt);
 }
 
+void
 rtdeleteall(sig)
 	int sig;
 {
@@ -341,6 +346,7 @@ again:
  * but this entry prevents us from listening to other people's defaults
  * and installing them in the kernel here.
  */
+void
 rtdefault()
 {
 	extern struct sockaddr inet_default;
@@ -349,6 +355,7 @@ rtdefault()
 		RTS_CHANGED | RTS_PASSIVE | RTS_INTERNAL);
 }
 
+void
 rtinit()
 {
 	register struct rthash *rh;
@@ -359,6 +366,7 @@ rtinit()
 		rh->rt_forw = rh->rt_back = (struct rt_entry *)rh;
 }
 
+int
 rtioctl(action, ort)
 	int action;
 	struct rtuentry *ort;

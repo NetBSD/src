@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inet.c	8.2 (Berkeley) 8/14/93";*/
-static char *rcsid = "$Id: inet.c,v 1.6 1994/08/06 05:51:03 mycroft Exp $";
+static char *rcsid = "$Id: inet.c,v 1.7 1994/12/18 05:43:52 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -74,7 +74,8 @@ inet_makeaddr(net, host)
 /*
  * Return the network number from an internet address.
  */
-inet_netof(in)
+u_long
+inet_netof_subnet(in)
 	struct in_addr in;
 {
 	register u_long i = ntohl(in.s_addr);
@@ -98,10 +99,13 @@ inet_netof(in)
 	return (net);
 }
 
+#ifdef notdef
 /*
  * Return the host portion of an internet address.
+ * XXX THIS FUNCTION UNUSED.
  */
-inet_lnaof(in)
+u_long
+inet_lnaof_subnet(in)
 	struct in_addr in;
 {
 	register u_long i = ntohl(in.s_addr);
@@ -128,10 +132,12 @@ inet_lnaof(in)
 			return (host &~ ifp->int_subnetmask);
 	return (host);
 }
+#endif
 
 /*
  * Return the netmask pertaining to an internet address.
  */
+int
 inet_maskof(inaddr)
 	u_long inaddr;
 {
@@ -163,6 +169,7 @@ inet_maskof(inaddr)
  * for an Internet host, RTF_SUBNET for a subnet,
  * 0 for a network.
  */
+int
 inet_rtflags(sin)
 	struct sockaddr_in *sin;
 {
@@ -205,6 +212,7 @@ inet_rtflags(sin)
  * Send it only if dst is on the same logical network if not "internal",
  * otherwise only if the route is the "internal" route for the logical net.
  */
+int
 inet_sendroute(rt, dst)
 	struct rt_entry *rt;
 	struct sockaddr_in *dst;

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: main.c,v 1.5 1994/05/13 08:04:43 mycroft Exp $";
+static char *rcsid = "$Id: main.c,v 1.6 1994/12/18 05:43:55 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -60,21 +60,22 @@ int	supplier = -1;		/* process should supply updates */
 int	gateway = 0;		/* 1 if we are a gateway to parts beyond */
 int	debug = 0;
 int	bufspace = 127*1024;	/* max. input buffer size to request */
-
 struct	rip *msg = (struct rip *)packet;
-void	hup(), rtdeleteall(), sigtrace(), timer();
 
+int getsocket __P((int, int, struct sockaddr_in *));
+void timevalsub __P((struct timeval *, struct timeval *));
+void process __P((int));
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int n, cc, nfd, omask, tflags = 0;
-	struct sockaddr from;
+	int n, nfd, omask, tflags = 0;
 	struct timeval *tvp, waittime;
 	struct itimerval itval;
 	register struct rip *query = msg;
 	fd_set ibits;
-	u_char retry;
 	
 	argv0 = argv;
 #if BSD >= 43
@@ -170,7 +171,7 @@ main(argc, argv)
 	else
 		query->rip_nets[0].rip_dst.sa_family = AF_UNSPEC;
 	query->rip_nets[0].rip_metric = htonl((u_long)HOPCNT_INFINITY);
-	toall(sndmsg);
+	toall(sndmsg, 0, NULL);
 	signal(SIGALRM, timer);
 	signal(SIGHUP, hup);
 	signal(SIGTERM, hup);
@@ -263,6 +264,7 @@ printf("s %d, ibits %x index %d, mod %d, sh %x, or %x &ibits %x\n",
 	}
 }
 
+void
 timevaladd(t1, t2)
 	struct timeval *t1, *t2;
 {
@@ -274,6 +276,7 @@ timevaladd(t1, t2)
 	}
 }
 
+void
 timevalsub(t1, t2)
 	struct timeval *t1, *t2;
 {
@@ -285,6 +288,7 @@ timevalsub(t1, t2)
 	}
 }
 
+void
 process(fd)
 	int fd;
 {
@@ -309,6 +313,7 @@ process(fd)
 	}
 }
 
+int
 getsocket(domain, type, sin)
 	int domain, type;
 	struct sockaddr_in *sin;

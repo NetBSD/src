@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)trace.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: trace.c,v 1.6 1994/09/23 14:28:11 mycroft Exp $";
+static char *rcsid = "$Id: trace.c,v 1.7 1994/12/18 05:44:04 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -55,6 +55,11 @@ int	traceactions = 0;
 static	struct timeval lastlog;
 static	char *savetracename;
 
+static int iftraceinit __P((struct interface *, struct ifdebug *));
+void dumpif __P((FILE *, struct interface *));
+void dumptrace __P((FILE *, char *, struct ifdebug *));
+
+void
 traceinit(ifp)
 	register struct interface *ifp;
 {
@@ -67,7 +72,7 @@ traceinit(ifp)
 	fprintf(stderr, "traceinit: can't init %s\n", ifp->int_name);
 }
 
-static
+static int
 iftraceinit(ifp, ifd)
 	struct interface *ifp;
 	register struct ifdebug *ifd;
@@ -88,6 +93,7 @@ iftraceinit(ifp, ifd)
 	return (1);
 }
 
+void
 traceon(file)
 	char *file;
 {
@@ -108,6 +114,7 @@ traceon(file)
 	fprintf(ftrace, "Tracing enabled %s\n", ctime((time_t *)&now.tv_sec));
 }
 
+void
 traceoff()
 {
 	if (!traceactions)
@@ -151,6 +158,7 @@ sigtrace(s)
  *	traceactions + tracehistory (packets and contents after change)
  *	traceactions + tracepackets + tracecontents
  */
+void
 bumploglevel()
 {
 
@@ -184,6 +192,7 @@ bumploglevel()
 		fflush(ftrace);
 }
 
+void
 trace(ifd, who, p, len, m)
 	register struct ifdebug *ifd;
 	struct sockaddr *who;
@@ -216,6 +225,7 @@ trace(ifd, who, p, len, m)
 	t->ift_metric = m;
 }
 
+void
 traceaction(fd, action, rt)
 	FILE *fd;
 	char *action;
@@ -243,7 +253,6 @@ traceaction(fd, action, rt)
 	register struct bits *p;
 	register int first;
 	char *cp;
-	struct interface *ifp;
 
 	if (fd == NULL)
 		return;
@@ -287,6 +296,7 @@ traceaction(fd, action, rt)
 		traceoff();
 }
 
+void
 tracenewmetric(fd, rt, newmetric)
 	FILE *fd;
 	struct rt_entry *rt;
@@ -310,6 +320,7 @@ tracenewmetric(fd, rt, newmetric)
 		traceoff();
 }
 
+void
 dumpif(fd, ifp)
 	FILE *fd;
 	register struct interface *ifp;
@@ -325,6 +336,7 @@ dumpif(fd, ifp)
 	}
 }
 
+void
 dumptrace(fd, dir, ifd)
 	FILE *fd;
 	char *dir;
@@ -353,6 +365,7 @@ dumptrace(fd, dir, ifd)
 	}
 }
 
+void
 dumppacket(fd, dir, who, cp, size, stamp)
 	FILE *fd;
 	struct sockaddr_in *who;		/* should be sockaddr */
@@ -371,9 +384,9 @@ dumppacket(fd, dir, who, cp, size, stamp)
 		    ctime((time_t *)&stamp->tv_sec));
 	else {
 		fprintf(fd, "Bad cmd 0x%x %s %x.%d %.19s\n", msg->rip_cmd,
-		    dir, inet_ntoa(who->sin_addr), ntohs(who->sin_port));
-		fprintf(fd, "size=%d cp=%x packet=%x\n", size, cp, packet,
+		    dir, inet_ntoa(who->sin_addr), ntohs(who->sin_port),
 		    ctime((time_t *)&stamp->tv_sec));
+		fprintf(fd, "size=%d cp=%x packet=%x\n", size, cp, packet);
 		fflush(fd);
 		return;
 	}

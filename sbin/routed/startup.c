@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)startup.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: startup.c,v 1.8 1994/10/31 04:35:58 cgd Exp $";
+static char *rcsid = "$Id: startup.c,v 1.9 1994/12/18 05:43:57 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -56,6 +56,9 @@ int	externalinterfaces = 0;		/* # of remote and local interfaces */
 int	foundloopback;			/* valid flag for loopaddr */
 struct	sockaddr loopaddr;		/* our address on loopback */
 
+void add_ptopt_localrt __P((struct interface *));
+int getnetorhostname __P((char *, char *, struct sockaddr_in *));
+int gethostnameornumber __P((char *, struct sockaddr_in *));
 
 void
 quit(s)
@@ -105,6 +108,7 @@ rt_xaddrs(cp, cplim, rtinfo)
  * ARPANET IMP), set the lookforinterfaces flag so we'll
  * come back later and look again.
  */
+void
 ifinit()
 {
 	struct interface ifs, *ifp;
@@ -267,6 +271,7 @@ ifinit()
  * otherwise a route to this (sub)network.
  * INTERNET SPECIFIC.
  */
+void
 addrouteforif(ifp)
 	register struct interface *ifp;
 {
@@ -330,6 +335,7 @@ addrouteforif(ifp)
  * If a route to this network is being sent to neighbors on other nets,
  * mark this route as subnet so we don't have to propagate it too.
  */
+void
 add_ptopt_localrt(ifp)
 	register struct interface *ifp;
 {
@@ -373,6 +379,7 @@ add_ptopt_localrt(ifp)
  *
  * PASSIVE ENTRIES AREN'T NEEDED OR USED ON GATEWAYS RUNNING EGP.
  */
+void
 gwkludge()
 {
 	struct sockaddr_in dst, gate;
@@ -440,7 +447,7 @@ gwkludge()
 		memset(ifp, 0, sizeof (*ifp));
 		ifp->int_flags = IFF_REMOTE;
 		/* can't identify broadcast capability */
-		ifp->int_net = inet_netof(dst.sin_addr);
+		ifp->int_net = inet_netof_subnet(dst.sin_addr);
 		if (strcmp(type, "host") == 0) {
 			ifp->int_flags |= IFF_POINTOPOINT;
 			ifp->int_dstaddr = *((struct sockaddr *)&dst);
@@ -454,6 +461,7 @@ gwkludge()
 	fclose(fp);
 }
 
+int
 getnetorhostname(type, name, sin)
 	char *type, *name;
 	struct sockaddr_in *sin;
@@ -499,6 +507,7 @@ getnetorhostname(type, name, sin)
 	return (0);
 }
 
+int
 gethostnameornumber(name, sin)
 	char *name;
 	struct sockaddr_in *sin;
