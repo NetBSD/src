@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.20 2004/06/03 14:51:32 wiz Exp $ */
+/*	$NetBSD: envstat.c,v 1.21 2004/06/03 15:47:04 wiz Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.20 2004/06/03 14:51:32 wiz Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.21 2004/06/03 15:47:04 wiz Exp $");
 #endif
 
 #include <fcntl.h>
@@ -88,7 +88,7 @@ main(int argc, char **argv)
 	sensors = NULL;
 	headrep = 22;
 
-	while ((c = getopt(argc, argv, "cfi:ln:rs:w:r")) != -1) {
+	while ((c = getopt(argc, argv, "fi:ln:rs:w:r")) != -1) {
 		switch(c) {
 		case 'r':
 			rflag = 1;
