@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.2 1993/09/24 08:45:53 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.3 1993/10/06 12:13:48 mycroft Exp $
  */
 
 #include "npx.h"
@@ -189,12 +189,9 @@ again:
 	bufpages = min(NKMEMCLUSTERS*2/5, bufpages);  /* XXX ? - cgd */
 
 	if (nbuf == 0) {
-		nbuf = bufpages / 2;
-		if (nbuf < 16) {
+		nbuf = bufpages;
+		if (nbuf < 16)
 			nbuf = 16;
-			/* XXX (cgd) -- broken vfs_bio currently demands this */
-			bufpages = 32;
-		}
 	}
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
