@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.24 2001/06/21 15:22:38 jdolecek Exp $
+.\"	$NetBSD: uvm.9,v 1.25 2001/07/28 15:31:29 chs Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -108,15 +108,15 @@ initialises the swap sub-system.
 .Pp
 .nr nS 1
 .Ft int
-.Fn uvm_map "vm_map_t map" "vaddr_t *startp" "vsize_t size" "struct uvm_object *uobj" "voff_t uoffset" "uvm_flag_t flags"
+.Fn uvm_map "struct vm_map *map" "vaddr_t *startp" "vsize_t size" "struct uvm_object *uobj" "voff_t uoffset" "uvm_flag_t flags"
 .Ft int
-.Fn uvm_map_pageable "vm_map_t map" "vaddr_t start" "vaddr_t end" "boolean_t new_pageable" "int lockflags"
+.Fn uvm_map_pageable "struct vm_map *map" "vaddr_t start" "vaddr_t end" "boolean_t new_pageable" "int lockflags"
 .Ft boolean_t
-.Fn uvm_map_checkprot "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t protection"
+.Fn uvm_map_checkprot "struct vm_map *map" "vaddr_t start" "vaddr_t end" "vm_prot_t protection"
 .Ft int
-.Fn uvm_map_protect "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t new_prot" "boolean_t set_max"
+.Fn uvm_map_protect "struct vm_map *map" "vaddr_t start" "vaddr_t end" "vm_prot_t new_prot" "boolean_t set_max"
 .Ft int
-.Fn uvm_deallocate "vm_map_t map" "vaddr_t start" "vsize_t size"
+.Fn uvm_deallocate "struct vm_map *map" "vaddr_t start" "vsize_t size"
 
 .Ft struct vmspace *
 .Fn uvmspace_alloc "vaddr_t min" "vaddr_t max" "int pageable"
@@ -343,7 +343,7 @@ necessary by calling
 .Pp
 .nr nS 1
 .Ft int
-.Fn uvm_fault "vm_map_t orig_map" "vaddr_t vaddr" "vm_fault_t fault_type" "vm_prot_t access_type"
+.Fn uvm_fault "struct vm_map *orig_map" "vaddr_t vaddr" "vm_fault_t fault_type" "vm_prot_t access_type"
 .nr nS 0
 .Pp
 .Fn uvm_fault
@@ -364,13 +364,11 @@ returns a standard UVM return value.
 .Ft struct uvm_object *
 .Fn uvn_attach "void *arg" "vm_prot_t accessprot"
 .Ft void
-.Fn uvm_vnp_setsize "struct vnode *vp" "u_quad_t newsize"
+.Fn uvm_vnp_setsize "struct vnode *vp" "voff_t newsize"
+.Ft void *
+.Fn ubc_alloc "struct uvm_object *uobj" "voff_t offset" "vsize_t *lenp" "int flags"
 .Ft void
-.Fn uvm_vnp_sync "struct mount *mp"
-.Ft void
-.Fn uvm_vnp_terminate "struct vnode *vp"
-.Ft boolean_t
-.Fn uvm_vnp_uncache "struct vnode *vp"
+.Fn ubc_release "void *va" "int flags"
 .nr nS 0
 .Pp
 .Fn uvn_attach
@@ -384,37 +382,46 @@ sets the size of vnode
 to
 .Fa newsize .
 Caller must hold a reference to the vnode.  If the vnode shrinks, pages
-no longer used are discarded.  This function will be removed when the
-filesystem and VM buffer caches are merged.
+no longer used are discarded.
 .Pp
-.Fn uvm_vnp_sync
-flushes dirty vnodes from either the mount point passed in
-.Fa mp ,
-or all dirty vnodes if
-.Fa mp
-is
-.Dv NULL .
-This function will be removed when the filesystem and VM buffer caches
-are merged.
+.Fn ubc_alloc
+creates a kernel mappings of
+.Fa uobj
+starting at offset
+.Fa offset .
+the desired length of the mapping is pointed to by
+.Fa lenp ,
+but the actual mapping may be smaller than this.
+.Fa lenp
+is updated to contain the actual length mapped.
+The flags must be one of
+.Bd -literal
+#define UBC_READ	0x01	/* mapping will be accessed for read */
+#define UBC_WRITE	0x02	/* mapping will be accessed for write */
+.Ed
 .Pp
-.Fn uvm_vnp_terminate
-frees all VM resources allocated to vnode
-.Fa vp .
-If the vnode still has references, it will not be destroyed; however
-all future operations using this vnode will fail.  This function will be
-removed when the filesystem and VM buffer caches are merged.
+Currently,
+.Fa uobj
+must actually be a vnode object.
+Once the mapping is created, it must be accessed only by methods that can
+handle faults, such as
+.Fn uiomove
+or
+.Fn kcopy .
+Page faults on the mapping will result in the vnode's
+.Fn VOP_GETPAGES
+method being called to resolve the fault.
 .Pp
-.Fn uvm_vnp_uncache
-disables vnode
-.Fa vp
-from persisting when all references are freed.  This function will be
-removed when the file-system and UVM caches are unified.  Returns
-true if there is no active vnode.
+.Fn ubc_release
+frees the mapping at
+.Fa va
+for reuse.  The mapping may be cached to speed future accesses to the same
+region of the object.  The flags are currently unused.
 .Sh VIRTUAL MEMORY I/O
 .Pp
 .nr nS 1
 .Ft int
-.Fn uvm_io "vm_map_t map" "struct uio *uio"
+.Fn uvm_io "struct vm_map *map" "struct uio *uio"
 .nr nS 0
 .Pp
 .Fn uvm_io
@@ -426,23 +433,23 @@ on the memory described in
 .Pp
 .nr nS 1
 .Ft vaddr_t
-.Fn uvm_km_alloc "vm_map_t map" "vsize_t size"
+.Fn uvm_km_alloc "struct vm_map *map" "vsize_t size"
 .Ft vaddr_t
-.Fn uvm_km_zalloc "vm_map_t map" "vsize_t size"
+.Fn uvm_km_zalloc "struct vm_map *map" "vsize_t size"
 .Ft vaddr_t
-.Fn uvm_km_alloc1 "vm_map_t map" "vsize_t size" "boolean_t zeroit"
+.Fn uvm_km_alloc1 "struct vm_map *map" "vsize_t size" "boolean_t zeroit"
 .Ft vaddr_t
-.Fn uvm_km_kmemalloc "vm_map_t map" "struct uvm_object *obj" "vsize_t size" "int flags"
+.Fn uvm_km_kmemalloc "struct vm_map *map" "struct uvm_object *obj" "vsize_t size" "int flags"
 .Ft vaddr_t
-.Fn uvm_km_valloc "vm_map_t map" "vsize_t size"
+.Fn uvm_km_valloc "struct vm_map *map" "vsize_t size"
 .Ft vaddr_t
-.Fn uvm_km_valloc_wait "vm_map_t map" "vsize_t size"
+.Fn uvm_km_valloc_wait "struct vm_map *map" "vsize_t size"
 .Ft struct vm_map *
-.Fn uvm_km_suballoc "vm_map_t map" "vaddr_t *min" "vaddr_t *max " "vsize_t size" "boolean_t pageable" "boolean_t fixed" "vm_map_t submap"
+.Fn uvm_km_suballoc "struct vm_map *map" "vaddr_t *min" "vaddr_t *max " "vsize_t size" "boolean_t pageable" "boolean_t fixed" "struct vm_map *submap"
 .Ft void
-.Fn uvm_km_free "vm_map_t map" "vaddr_t addr" "vsize_t size"
+.Fn uvm_km_free "struct vm_map *map" "vaddr_t addr" "vsize_t size"
 .Ft void
-.Fn uvm_km_free_wakeup "vm_map_t map" "vaddr_t addr" "vsize_t size"
+.Fn uvm_km_free_wakeup "struct vm_map *map" "vaddr_t addr" "vsize_t size"
 .nr nS 0
 .Pp
 .Fn uvm_km_alloc
@@ -500,6 +507,43 @@ return a newly allocated zero-filled address in the kernel map of size
 .Fn uvm_km_valloc_wait
 will also wait for kernel memory to become available, if there is a
 memory shortage.
+.Pp
+.Fn uvm_km_free
+and
+.Fn uvm_km_free_wakeup
+free
+.Fa size
+bytes of memory in the kernel map, starting at address
+.Fa addr .
+.Fn uvm_km_free_wakeup
+calls
+.Fn wakeup
+on the map before unlocking the map.
+.Pp
+.Fn uvm_km_suballoc
+allocates submap from
+.Fa map ,
+creating a new map if
+.Fa submap
+is
+.Dv NULL .
+The addresses of the submap can be specified exactly by setting the
+.Fa fixed
+argument to non-zero, which causes the
+.Fa min
+argument specify the beginning of the address in the submap.  If
+.Fa fixed
+is zero, any address of size
+.Fa size
+will be allocated from
+.Fa map
+and the start and end addresses returned in
+.Fa min
+and
+.Fa max .
+If
+.Fa pageable
+is non-zero, entries in the map may be paged out.
 .Sh ALLOCATION OF PHYSICAL MEMORY
 .Pp
 .nr nS 1
@@ -580,43 +624,6 @@ and
 of the physical addresses of the segment, and the available start and end
 addresses of pages not already in use.
 .\" XXX expand on "system boot time"!
-.Pp
-.Fn uvm_km_suballoc
-allocates submap from
-.Fa map ,
-creating a new map if
-.Fa submap
-is
-.Dv NULL .
-The addresses of the submap can be specified exactly by setting the
-.Fa fixed
-argument to non-zero, which causes the
-.Fa min
-argument specify the beginning of the address in the submap.  If
-.Fa fixed
-is zero, any address of size
-.Fa size
-will be allocated from
-.Fa map
-and the start and end addresses returned in
-.Fa min
-and
-.Fa max .
-If
-.Fa pageable
-is non-zero, entries in the map may be paged out.
-.Pp
-.Fn uvm_km_free
-and
-.Fn uvm_km_free_wakeup
-free
-.Fa size
-bytes of memory in the kernel map, starting at address
-.Fa addr .
-.Fn uvm_km_free_wakeup
-calls
-.Fn thread_wakeup
-on the map before unlocking the map.
 .Sh PROCESSES
 .Pp
 .nr nS 1
@@ -672,6 +679,10 @@ swaps in the named process.
 .Fn uvm_grow "struct proc *p" "vaddr_t sp"
 .Ft int
 .Fn uvm_coredump "struct proc *p" "struct vnode *vp" "struct ucred *cred" "struct core *chdr"
+
+.Ft void
+.Fn uvn_findpages "struct uvm_object *uobj" "voff_t offset" "int *npagesp" "struct vm_page **pps" "int flags"
+
 .nr nS 0
 .Pp
 The
@@ -688,8 +699,8 @@ with flags:
 .Bd -literal
 #define UAO_FLAG_KERNOBJ        0x1     /* create kernel object */
 #define UAO_FLAG_KERNSWAP       0x2     /* enable kernel swap */
-.Pp
 .Ed
+.Pp
 which can only be used once each at system boot time.
 .Fn uao_reference
 creates an additional reference to the named anonymous memory object.
@@ -862,6 +873,40 @@ with credentials
 .Fa cred
 and core header description in
 .Fa chdr .
+.Pp
+.Fn uvn_findpages
+looks up or creates pages in
+.Fa uobj
+at offset
+.Fa offset ,
+marks them busy and returns them in the
+.Fa pps
+array.
+Currently
+.Fa uobj
+must be a vnode object.
+The number of pages requested is pointed to by
+.Fa npagesp ,
+and this value is updated with the actual number of pages returned.
+The flags can be
+.Bd -literal
+#define UFP_ALL		0x00	/* return all pages requested */
+#define UFP_NOWAIT	0x01	/* don't sleep */
+#define UFP_NOALLOC	0x02	/* don't allocate new pages */
+#define UFP_NOCACHE	0x04	/* don't return pages which already exist */
+#define UFP_NORDONLY	0x08	/* don't return PG_READONLY pages */
+.Ed
+.Pp
+.Dv UFP_ALL
+is a pseudo-flag meaning all requested pages should be returned.
+.Dv UFP_NOWAIT
+means that we must not sleep.
+.Dv UFP_NOALLOC
+causes any pages which do not already exist to be skipped.
+.Dv UFP_NOCACHE
+causes any pages which do already exist to be skipped.
+.Dv UFP_NORDONLY
+causes any pages which are marked PG_READONLY to be skipped.
 .Sh NOTES
 .Fn uvm_chgkprot
 is only available if the kernel has been compiled with options
@@ -899,7 +944,9 @@ and handled the logistical issues involved with merging UVM into the
 source tree.
 .Pp
 Chuck Silvers <chuq@chuq.com> implemented the aobj pager, thus allowing
-UVM to support System V shared memory and process swapping.
+UVM to support System V shared memory and process swapping.  He also
+designed and implemented the UBC part of UVM, which uses UVM pages to
+cache vnode data rather than the traditional buffer cache buffers.
 .Sh SEE ALSO
 .Xr getloadavg 3 ,
 .Xr kvm 3 ,
