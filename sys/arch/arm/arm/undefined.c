@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.5 2001/03/11 16:18:40 bjh21 Exp $	*/
+/*	$NetBSD: undefined.c,v 1.6 2001/03/13 20:22:02 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -51,10 +51,11 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.5 2001/03/11 16:18:40 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.6 2001/03/13 20:22:02 bjh21 Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/signal.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -77,11 +78,14 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.5 2001/03/11 16:18:40 bjh21 Exp $");
 #include <machine/machdep.h>
 #endif
 
+static int gdb_trapper(u_int, u_int, struct trapframe *, int);
+
 #ifdef FAST_FPE
 extern int want_resched;
 #endif
 
 LIST_HEAD(, undefined_handler) undefined_handlers[MAX_COPROCS];
+
 
 void *
 install_coproc_handler(int coproc, undef_handler_t handler)
@@ -114,6 +118,21 @@ remove_coproc_handler(void *cookie)
 	FREE(uh, M_TEMP);
 }
 
+
+static int
+gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
+{
+
+	if (insn == GDB_BREAKPOINT && code == FAULT_USER) {
+		frame->tf_pc -= INSN_SIZE;	/* Adjust to point to the BP */
+		trapsignal(curproc, SIGTRAP, 0);
+		return 0;
+	}
+	return 1;
+}
+
+static struct undefined_handler gdb_uh;
+
 void
 undefined_init()
 {
@@ -122,6 +141,10 @@ undefined_init()
 	/* Not actually necessary -- the initialiser is just NULL */
 	for (loop = 0; loop < MAX_COPROCS; ++loop)
 		LIST_INIT(&undefined_handlers[loop]);
+
+	/* Install handler for GDB breakpoints */
+	gdb_uh.uh_handler = gdb_trapper;
+	install_coproc_handler_static(0, &gdb_uh);
 }
 
 
@@ -208,58 +231,43 @@ undefinedinstruction(trapframe_t *frame)
 		fault_code = 0;
 
 	/* OK this is were we do something about the instruction. */
-	/* Check for coprocessor instruction. */
+	LIST_FOREACH(uh, &undefined_handlers[coprocessor], uh_link)
+	    if (uh->uh_handler(fault_pc, fault_instruction, frame,
+			       fault_code) == 0)
+		    break;
 
-	/* Special cases */
-
-	if (coprocessor == 0 && fault_instruction == GDB_BREAKPOINT
-	    && fault_code == FAULT_USER) {
-		frame->tf_pc -= INSN_SIZE;	/* Adjust to point to the BP */
-		trapsignal(curproc, SIGTRAP, 0);
-	} else {
-		LIST_FOREACH(uh, &undefined_handlers[coprocessor], uh_link)
-			if (uh->uh_handler(fault_pc, fault_instruction, frame,
-					   fault_code) == 0)
-				break;
-		if (uh == NULL) {
-			/* Fault has not been handled */
-
-#ifdef VERBOSE_ARM32
-			s = spltty();
+	if (uh == NULL) {
+		/* Fault has not been handled */
 		
-			if ((fault_instruction & 0x0f000010) == 0x0e000000) {
-				printf("CDP\n");
-				disassemble(fault_pc);
-			}
-			else if ((fault_instruction & 0x0e000000) ==
-			    0x0c000000) {
-				printf("LDC/STC\n");
-				disassemble(fault_pc);
-			}
-			else if ((fault_instruction & 0x0f000010) ==
-			    0x0e000010) {
-				printf("MRC/MCR\n");
-				disassemble(fault_pc);
-			}
-			else if ((fault_instruction & ~INSN_COND_MASK)
-				 != (KERNEL_BREAKPOINT & ~INSN_COND_MASK)) {
-				printf("Undefined instruction\n");
-				disassemble(fault_pc);
-			}
+#ifdef VERBOSE_ARM32
+		s = spltty();
 
-			splx(s);
+		if ((fault_instruction & 0x0f000010) == 0x0e000000) {
+			printf("CDP\n");
+			disassemble(fault_pc);
+		} else if ((fault_instruction & 0x0e000000) == 0x0c000000) {
+			printf("LDC/STC\n");
+			disassemble(fault_pc);
+		} else if ((fault_instruction & 0x0f000010) == 0x0e000010) {
+			printf("MRC/MCR\n");
+			disassemble(fault_pc);
+		} else if ((fault_instruction & ~INSN_COND_MASK)
+			 != (KERNEL_BREAKPOINT & ~INSN_COND_MASK)) {
+			printf("Undefined instruction\n");
+			disassemble(fault_pc);
+		}
+
+		splx(s);
 #endif
         
-			if ((fault_code & FAULT_USER) == 0) {
-				printf("Undefined instruction in kernel\n");
-				for(;;);
+		if ((fault_code & FAULT_USER) == 0) {
+			printf("Undefined instruction in kernel\n");
 #ifdef DDB
-				Debugger();
+			Debugger();
 #endif
-			}
-
-			trapsignal(p, SIGILL, fault_instruction);
 		}
+
+		trapsignal(p, SIGILL, fault_instruction);
 	}
 
 	if ((fault_code & FAULT_USER) == 0)
