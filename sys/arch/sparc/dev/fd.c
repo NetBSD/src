@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.26 1996/03/17 02:01:03 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.27 1996/03/26 00:41:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -250,9 +250,6 @@ static void fdconf __P((struct fdc_softc *));
 #endif
 
 #define OBP_FDNAME	(CPU_ISSUN4M ? "SUNW,fdtwo" : "fd")
-
-static const char fmt1[] = " (st0 %b cyl %d)\n";
-static const char fmt2[] = " (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n";
 
 int
 fdcmatch(parent, match, aux)
@@ -985,12 +982,12 @@ fdcstatus(dv, n, s)
 		printf("\n");
 		break;
 	case 2:
-		printf(fmt1,
+		printf(" (st0 %b cyl %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1]);
 		break;
 	case 7:
-		printf(fmt2,
+		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
 		    fdc->sc_status[2], NE7_ST2BITS,
@@ -1489,7 +1486,7 @@ fdcretry(fdc)
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
 		    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
 
-		printf(fmt2,
+		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
 		    fdc->sc_status[2], NE7_ST2BITS,
