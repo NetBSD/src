@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.3 2004/12/24 18:33:06 christos Exp $ */
+/* $NetBSD: pms.c,v 1.4 2005/01/18 10:22:51 scw Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -25,8 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_pms.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.3 2004/12/24 18:33:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.4 2005/01/18 10:22:51 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +40,9 @@ __KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.3 2004/12/24 18:33:06 christos Exp $");
 #include <machine/bus.h>
 
 #include <dev/pckbport/pckbportvar.h>
+#ifdef PMS_SYNAPTICS_TOUCHPAD
 #include <dev/pckbport/synapticsvar.h>
+#endif
 
 #include <dev/pckbport/pmsreg.h>
 #include <dev/pckbport/pmsvar.h>
@@ -192,14 +196,16 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	sc->buttons = 0;
 	sc->protocol = PMS_UNKNOWN;
 
+#ifdef PMS_SYNAPTICS_TOUCHPAD
 	/* Probe for synaptics touchpad. */
 	if (pms_synaptics_probe_init(sc) == 0) {
 		sc->protocol = PMS_SYNAPTICS;
-	} else {
+	} else
+#endif
 		/* Install generic handler. */
 		pckbport_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
 		    pmsinput, sc, sc->sc_dev.dv_xname);
-	}
+
 	a.accessops = &pms_accessops;
 	a.accesscookie = sc;
 
@@ -237,8 +243,10 @@ do_enable(struct pms_softc *sc)
 
 	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
 
+#ifdef PMS_SYNAPTICS_TOUCHPAD
 	if (sc->protocol == PMS_SYNAPTICS)
 		pms_synaptics_enable(sc);
+#endif
 
 	cmd[0] = PMS_DEV_ENABLE;
 	res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd,
@@ -339,8 +347,10 @@ pms_power(int why, void *v)
 		}
 		break;
 	case PWR_RESUME:
+#ifdef PMS_SYNAPTICS_TOUCHPAD
 		if (sc->protocol == PMS_SYNAPTICS)
 			pms_synaptics_resume(sc);
+#endif
 		if (sc->sc_enabled && sc->sc_suspended) {
 			/* recheck protocol & init mouse */
 			sc->protocol = PMS_UNKNOWN;
@@ -426,10 +436,12 @@ pms_reset_thread(void *arg)
 			DPRINTF(("%s: reset error %d\n", sc->sc_dev.dv_xname, 
 			    res));
 
+#ifdef PMS_SYNAPTICS_TOUCHPAD
 		/* For the synaptics case, leave the protocol alone. */
-		if (sc->protocol != PMS_SYNAPTICS) {
+		if (sc->protocol != PMS_SYNAPTICS)
+#endif
 			sc->protocol = PMS_UNKNOWN;
-		}
+
 		pms_enable(sc);
 		if (sc->protocol != save_protocol) {
 #if defined(PMSDEBUG) || defined(DIAGNOSTIC)
