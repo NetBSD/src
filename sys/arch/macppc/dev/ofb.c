@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.20 2001/06/08 00:32:02 matt Exp $	*/
+/*	$NetBSD: ofb.c,v 1.21 2001/06/10 10:34:27 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -535,8 +535,10 @@ ofb_putcmap(sc, cm)
 	struct offb_softc *sc;
 	struct wsdisplay_cmap *cm;
 {
+	struct offb_devconfig *dc = sc->sc_dc;
 	int index = cm->index;
 	int count = cm->count;
+	int i;
 	u_char *r, *g, *b;
 
 	if (cm->index >= 256 || cm->count > 256 ||
@@ -554,12 +556,10 @@ ofb_putcmap(sc, cm)
 	g = &sc->sc_cmap_green[index];
 	b = &sc->sc_cmap_blue[index];
 
-#if 0
 	for (i = 0; i < count; i++) {
 		OF_call_method_1("color!", dc->dc_ih, 4, *r, *g, *b, index);
 		r++, g++, b++, index++;
 	}
-#endif
 
 	return 0;
 }
