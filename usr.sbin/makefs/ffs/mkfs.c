@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.12 2003/01/24 21:55:33 fvdl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.13 2003/01/28 08:22:08 mrg Exp $	*/
 /* From NetBSD: mkfs.c,v 1.59 2001/12/31 07:07:58 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.12 2003/01/24 21:55:33 fvdl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.13 2003/01/28 08:22:08 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -525,8 +525,8 @@ next:
 	i = MIN(~sblock.fs_cgmask, sblock.fs_ncg - 1);
 	if (cgdmin(&sblock, i) - cgbase(&sblock, i) >= sblock.fs_fpg) {
 		printf("inode blocks/cyl group (%lld) >= data blocks (%d)\n",
-		    (long long)cgdmin(&sblock, i) -
-			cgbase(&sblock, i) / sblock.fs_frag,
+		    (long long)(cgdmin(&sblock, i) -
+			cgbase(&sblock, i) / sblock.fs_frag),
 		    sblock.fs_fpg / sblock.fs_frag);
 		printf("number of cylinders per cylinder group (%d) %s.\n",
 		    sblock.fs_cpg, "must be increased");
@@ -537,8 +537,8 @@ next:
 	    cgdmin(&sblock, j) - cgbase(&sblock, j) > i) {
 		if (j == 0) {
 			printf("File system must have at least %lld sectors\n",
-			    (long long)NSPF(&sblock) *
-			    (cgdmin(&sblock, 0) + 3 * sblock.fs_frag));
+			    (long long)(NSPF(&sblock) *
+			    (cgdmin(&sblock, 0) + 3 * sblock.fs_frag)));
 			exit(30);
 		}
 		printf("Warning: inode blocks/cyl group (%lld) >= "
