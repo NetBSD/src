@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.56 2004/07/31 00:55:51 lukem Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.57 2004/09/13 09:39:40 chs Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -203,6 +203,7 @@ EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gdb@}
 LINKFLAGS+=	${LINKFLAGS_NORMAL}
 .endif
 
+SYSTEM_LD_HEAD+=${SYSTEM_LD_HEAD_EXTRA}
 SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_EXTRA}
 
 ##
