@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: adlookup.c,v 1.1 1994/05/11 18:49:06 chopps Exp $
+ *	$Id: adlookup.c,v 1.2 1994/05/13 04:53:48 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -178,10 +178,7 @@ adosfs_lookup(pvp, ndp, p)
 	 */
 	hval = adoshash(pelt, plen, pap->ntabent);
 	bn = pap->tab[hval];
-	if (pap->tabi[hval] < 0)
-		i = -1;
-	else
-		i = 0;
+	i = MIN(pap->tabi[hval], 0);
 	while (bn != 0) {
 		if (error = aget(amp->mp, bn, &ap)) {
 #ifdef ADOSFS_DIAGNOSTIC
@@ -193,10 +190,8 @@ adosfs_lookup(pvp, ndp, p)
 			if (i < pap->tabi[hval])
 				pap->tabi[hval] = i;	
 			i--;
-			if (ap->hashf == 0) {
-				i = 0;
+			if (ap->hashf == 0)
 				pap->tabi[hval] = -pap->tabi[hval];
-			}
 		}
 #ifdef ADOSFS_DIAGNOSTIC
 		printf("%s =? %s", pelt, ap->name);

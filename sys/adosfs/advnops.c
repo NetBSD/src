@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: advnops.c,v 1.1 1994/05/11 18:49:18 chopps Exp $
+ *	$Id: advnops.c,v 1.2 1994/05/13 04:53:51 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -101,6 +101,7 @@ adosfs_getattr(vp, vap, ucp, p)
 {
 	struct amount *amp;
 	struct anode *ap;
+	u_long fblks;
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("(getattr [0x%x 0x%x 0x%x 0x%x] ", vp, vap, ucp, p);
@@ -116,32 +117,29 @@ adosfs_getattr(vp, vap, ucp, p)
 	vap->va_ctime = vap->va_ctime;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
-	vap->va_rdev = 0;
-	
+	vap->va_rdev = NODEV;
+	vap->va_fileid = ap->block;
+	vap->va_type = vp->v_type;
+	vap->va_mode = amp->mask & adunixprot(ap->adprot);
 	if (vp->v_type == VDIR) {
-		vap->va_type = VDIR;
-		vap->va_mode = amp->mask & adunixprot(ap->adprot);
 		vap->va_nlink = 2;	/* XXX bogus, oh well */
-		vap->va_fileid = ap->block;
 		vap->va_bytes = amp->bsize;
 		vap->va_size = amp->bsize;
-		goto done;
+	} else {
+		/* 
+		 * XXX actually we can track this if we were to walk the list
+		 * of links if it exists.
+		 */
+		vap->va_nlink = 1;
+		/*
+		 * round up to nearest blocks add number of file list 
+		 * blocks needed and mutiply by number of bytes per block.
+		 */
+		fblks = howmany(ap->fsize, amp->bsize);
+		fblks += howmany(fblks, ANODENDATBLKENT(ap));
+		vap->va_bytes = fblks * amp->bsize;
+		vap->va_size = ap->fsize;
 	}
-	vap->va_type = VREG;
-	vap->va_mode = amp->mask & adunixprot(ap->adprot);
-	vap->va_nlink = 1;		/* XXX bogus, oh well */
-	/* 
-	 * we need to figure out how much this is based on 
-	 * how many bytes rounded up plus how many extension (plus hdr)
-	 * blocks we use to describe the data
-	 */
-	vap->va_bytes = amp->bsize * 
-	    (ap->fsize / (ANODETABENT(ap) * amp->bsize));
-	if (vap->va_bytes == 0)
-		vap->va_bytes = 1;
-	vap->va_bytes += roundup(ap->fsize, amp->bsize);
-	vap->va_size = ap->fsize;
-done:
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" 0)");
 #endif
@@ -496,7 +494,7 @@ adosfs_readdir(pvp, uio, ucp, eofp, cookies, ncookies)
 	struct adirent ad, *adp;
 	struct anode *pap, *ap;
 	struct amount *amp;
-	u_long nextbn;
+	u_long nextbn, resid;
 	off_t uoff;
 
 #ifdef ADOSFS_DIAGNOSTIC
@@ -521,6 +519,14 @@ adosfs_readdir(pvp, uio, ucp, eofp, cookies, ncookies)
 	uavail = uio->uio_resid / sizeof(ad);
 	useri = uoff / sizeof(ad);
 
+	/*
+	 * if no slots available or offset requested is not on a slot boundry
+	 */
+	if (uavail < 1 || uoff % sizeof(ad)) {
+		error = EINVAL;
+		goto reterr;
+	}
+
 	while (uavail && (cookies == NULL || ncookies > 0)) {
 		if (hashi == pap->ntabent) {
 			*eofp = 1;
@@ -530,10 +536,8 @@ adosfs_readdir(pvp, uio, ucp, eofp, cookies, ncookies)
 			hashi++;
 			continue;
 		}
-		if (nextbn == 0) {
+		if (nextbn == 0)
 			nextbn = pap->tab[hashi];
-			chainc = 0;
-		}
 
 		/*
 		 * first determine if we can skip this chain
@@ -545,6 +549,7 @@ adosfs_readdir(pvp, uio, ucp, eofp, cookies, ncookies)
 			if (pap->tabi[hashi] > 0 && pap->tabi[hashi] <= skip) {
 				scanned += pap->tabi[hashi];
 				hashi++;
+				nextbn = 0;
 				continue;
 			}
 		}
@@ -566,11 +571,12 @@ adosfs_readdir(pvp, uio, ucp, eofp, cookies, ncookies)
 			if (nextbn == 0) {
 				pap->tabi[hashi] = chainc;
 				hashi++;
+				chainc = 0;
 			} else if (pap->tabi[hashi] <= 0 &&
 			    -chainc < pap->tabi[hashi])
 				pap->tabi[hashi] = -chainc;
 
-			if (scanned <= useri) {
+			if (useri >= scanned) {
 				aput(ap);
 				ap = NULL;
 			}
@@ -602,7 +608,9 @@ adosfs_readdir(pvp, uio, ucp, eofp, cookies, ncookies)
 		useri++;
 		uavail--;
 	}
+#if doesnt_uiomove_handle_this
 	uio->uio_offset = uoff;
+#endif
 reterr:
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);
