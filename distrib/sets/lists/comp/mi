@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.627 2003/10/08 04:25:43 lukem Exp $
+#	$NetBSD: mi,v 1.628 2003/10/10 06:30:06 grog Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -208,6 +208,17 @@
 ./usr/include/dev/usb/urio.h		comp-c-include
 ./usr/include/dev/usb/usb.h		comp-c-include
 ./usr/include/dev/usb/usbhid.h		comp-c-include
+./usr/include/dev/vinum			comp-c-include
+./usr/include/dev/vinum/request.h	comp-c-include
+./usr/include/dev/vinum/vinumext.h	comp-c-include
+./usr/include/dev/vinum/vinumio.h	comp-c-include
+./usr/include/dev/vinum/vinumobj.h	comp-c-include
+./usr/include/dev/vinum/vinumutil.h	comp-c-include
+./usr/include/dev/vinum/statetexts.h	comp-c-include
+./usr/include/dev/vinum/vinumhdr.h	comp-c-include
+./usr/include/dev/vinum/vinumkw.h	comp-c-include
+./usr/include/dev/vinum/vinumstate.h	comp-c-include
+./usr/include/dev/vinum/vinumvar.h	comp-c-include
 ./usr/include/dev/vme			comp-c-include
 ./usr/include/dev/vme/xio.h		comp-c-include
 ./usr/include/dev/vndvar.h		comp-c-include
