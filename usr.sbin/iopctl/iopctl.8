@@ -1,4 +1,4 @@
-
+.\"	$NetBSD: iopctl.8,v 1.3 2000/12/11 19:33:55 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Nm iopctl
 .Op Fl f Ar ctldev
 .Ar command
-.Op tid
+.Op Ar tid
 .Sh DESCRIPTION
 .Nm
 can be used to interrogate, issue commands to and otherwise control
@@ -64,8 +64,8 @@ The following commands are available:
 Reconfigure the IOP: ask all bus ports to rescan their busses, and attach or
 detach devices from the system as necessary.
 .It showddmid Ar tid
-Retrieve and display the device driver module parameter group from the
-specified target.
+Retrieve and display the DDM (device driver module) identity parameter group
+from the specified target.
 .It showdevid Ar tid
 Retrieve and display the device identity parameter group from the specified
 target.
