@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.10 1999/04/27 08:07:26 nisimura Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.11 1999/05/07 06:18:56 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -434,7 +434,6 @@ END(splhigh)
  */
 LEAF(splx)
 ALEAF(_splx)
-ALEAF(_splset)
 	mfc0	v0, MIPS_COP_0_STATUS_REG
 	li	t0, ~(MIPS_INT_MASK | MIPS_SR_INT_IE)
 	and	t0, t0, v0
