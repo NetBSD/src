@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.5 2000/07/30 22:23:53 bouyer Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.6 2000/08/02 21:50:37 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@
 #define WB_CHIPID_83781		0x10
 #define WB_CHIPID_83782		0x30
 #define WB_CHIPID_83627		0x21
+#define WB_CHIPID_83697		0x60
 #define WB_BANK0_FANBAT	0x5D
 /* Bank1 regs */
 #define WB_BANK1_T2H	0x50
@@ -109,6 +110,7 @@
 #define WB_BANK5_VBAT	0x51
 
 #define WB83781_NUM_SENSORS	13
+#define WB83697_NUM_SENSORS	14
 #define WB_NUM_SENSORS	15
 
 struct lm_softc {
