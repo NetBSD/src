@@ -1,4 +1,4 @@
-/*	$NetBSD: lint1.h,v 1.9 1997/11/03 22:36:47 cgd Exp $	*/
+/* $NetBSD: lint1.h,v 1.9.8.1 2000/06/23 16:40:18 minoura Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: emit2.c,v 1.4 1998/02/22 15:40:41 christos Exp $	*/
+/* $NetBSD: emit2.c,v 1.4.8.1 2000/06/23 16:40:20 minoura Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: emit2.c,v 1.4 1998/02/22 15:40:41 christos Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.4.8.1 2000/06/23 16:40:20 minoura Exp $");
 #endif
 
 #include <err.h>

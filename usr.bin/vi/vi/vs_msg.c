@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_msg.c,v 1.2 1998/01/09 08:08:51 perry Exp $	*/
+/*	$NetBSD: vs_msg.c,v 1.2.8.1 2000/06/23 16:40:11 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -619,6 +619,9 @@ vs_ex_resolve(sp, continuep)
 	/* If ex changed the underlying file, the map itself is wrong. */
 	if (F_ISSET(vip, VIP_N_EX_REDRAW))
 		F_SET(sp, SC_SCR_REFORMAT);
+
+	/* Ex may have switched out of the alternate screen, return. */
+	(void)gp->scr_attr(sp, SA_ALTERNATE, 1);
 
 	/*
 	 * Whew.  We're finally back home, after what feels like years.

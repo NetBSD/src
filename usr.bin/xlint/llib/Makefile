@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/01/23 20:59:11 mycroft Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2000/06/23 16:40:21 minoura Exp $
 
 LIBS=	llib-lposix.ln llib-lstdc.ln
 FILES=	${LIBS}
@@ -9,9 +9,9 @@ realall:	${LIBS}
 CLEANFILES+= ${LIBS}
 
 llib-lposix.ln: llib-lposix
-	lint -Cposix ${.ALLSRC}
+	${LINT} ${LINTFLAGS} -Cposix ${.ALLSRC}
 
 llib-lstdc.ln: llib-lstdc
-	lint -Cstdc ${.ALLSRC}
+	${LINT} ${LINTFLAGS} -Cstdc ${.ALLSRC}
 
 .include <bsd.prog.mk>

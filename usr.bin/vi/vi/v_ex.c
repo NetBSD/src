@@ -1,4 +1,4 @@
-/*	$NetBSD: v_ex.c,v 1.8 1999/01/08 06:16:55 abs Exp $	*/
+/*	$NetBSD: v_ex.c,v 1.8.8.1 2000/06/23 16:40:11 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -66,12 +66,17 @@ v_exmode(sp, vp)
 	SCR *sp;
 	VICMD *vp;
 {
+	GS *gp;
+
+	gp = sp->gp;
+
 	/* Try and switch screens -- the screen may not permit it. */
 	if (sp->gp->scr_screen(sp, SC_EX)) {
 		msgq(sp, M_ERR,
 		    "207|The Q command requires the ex terminal interface");
 		return (1);
 	}
+	(void)gp->scr_attr(sp, SA_ALTERNATE, 0);
 
 	/* Save the current cursor position. */
 	sp->frp->lno = sp->lno;

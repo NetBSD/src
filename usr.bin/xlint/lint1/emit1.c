@@ -1,4 +1,4 @@
-/*	$NetBSD: emit1.c,v 1.7 1998/02/22 15:40:39 christos Exp $	*/
+/* $NetBSD: emit1.c,v 1.7.8.1 2000/06/23 16:40:18 minoura Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.

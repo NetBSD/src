@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.16 2000/03/13 23:22:53 soren Exp $	*/
+/* $NetBSD: decl.c,v 1.16.2.1 2000/06/23 16:40:17 minoura Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: chk.c,v 1.8 1998/07/28 05:12:00 mycroft Exp $	*/
+/* $NetBSD: chk.c,v 1.8.8.1 2000/06/23 16:40:19 minoura Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: chk.c,v 1.8 1998/07/28 05:12:00 mycroft Exp $");
+__RCSID("$NetBSD: chk.c,v 1.8.8.1 2000/06/23 16:40:19 minoura Exp $");
 #endif
 
 #include <stdlib.h>

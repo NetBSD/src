@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.14 2000/05/10 05:09:17 simonb Exp $	*/
+/* $NetBSD: scan.l,v 1.14.2.1 2000/06/23 16:40:19 minoura Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan.l,v 1.14 2000/05/10 05:09:17 simonb Exp $");
+__RCSID("$NetBSD: scan.l,v 1.14.2.1 2000/06/23 16:40:19 minoura Exp $");
 #endif
 
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.35 2000/05/26 03:10:31 simonb Exp $	*/
+/*	$NetBSD: w.c,v 1.35.2.1 2000/06/23 16:40:17 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.35 2000/05/26 03:10:31 simonb Exp $");
+__RCSID("$NetBSD: w.c,v 1.35.2.1 2000/06/23 16:40:17 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -229,8 +229,8 @@ main(argc, argv)
 #define WUSED	(sizeof (HEADER) - sizeof ("WHAT\n"))
 	(void)printf(HEADER);
 
-	if ((kp = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc),
-	    &nentries)) == NULL)
+	if ((kp = kvm_getproc2(kd, KERN_PROC_ALL, 0,
+	    sizeof(struct kinfo_proc2), &nentries)) == NULL)
 		errx(1, "%s", kvm_geterr(kd));
 	for (i = 0; i < nentries; i++, kp++) {
 

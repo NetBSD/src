@@ -1,4 +1,4 @@
-/*	$NetBSD: xlint.c,v 1.17 2000/03/22 01:09:34 garbled Exp $	*/
+/* $NetBSD: xlint.c,v 1.17.2.1 2000/06/23 16:40:22 minoura Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.17 2000/03/22 01:09:34 garbled Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.17.2.1 2000/06/23 16:40:22 minoura Exp $");
 #endif
 
 #include <sys/param.h>
