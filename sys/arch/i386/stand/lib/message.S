@@ -1,4 +1,4 @@
-/*	$NetBSD: message.S,v 1.1 2003/04/16 13:24:09 dsl Exp $	*/
+/*	$NetBSD: message.S,v 1.2 2003/04/24 17:40:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,10 +38,12 @@
 
 #include <machine/asm.h>
 
+	.global	message, message_1
+
 /*
  * message: write the error message in %ds:%esi to the console
  */
-ENTRY(message)
+message:
 /*
  * BIOS call "INT 10H Function 0Eh" to write character to console
  *	Call with	%ah = 0x0e
@@ -51,20 +53,16 @@ ENTRY(message)
  */
 	.code16
 	pusha
-ENTRY(message_1)			/* for dump_eax */
-1:
-	cld
+message_1:			/* for dump_eax */
 	lodsb
-	testb	%al, %al
-	jz	2f
-
+1:
 	movb	$0x0e, %ah
 	movw	$0x0001, %bx
 	int	$0x10
+	lodsb
+	testb	%al, %al
+	jnz	1b
 
-	jmp	1b
-
-2:
 #ifdef MESSAGE_PAUSE
 	/* Delay for about 1 second to allow message to be read */
 	movb	$0x86, %ah
