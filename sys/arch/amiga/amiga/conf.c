@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.28 1995/04/23 18:24:21 chopps Exp $	*/
+/*	$NetBSD: conf.c,v 1.29 1995/06/26 02:34:01 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -183,7 +183,9 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NMOUSE,ms),	/* 15: /dev/mouse0 /dev/mouse1 */
 	cdev_view_init(NVIEW,view),	/* 16: /dev/view00 /dev/view01 ... */
 	cdev_tty_init(NMFCS,mfcs),	/* 17: MultiFaceCard III serial */
+#define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 	cdev_disk_init(NFD,fd),		/* 18: floppy disk */
+#undef	fdopen
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
