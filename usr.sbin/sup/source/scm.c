@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.12 2001/09/18 04:36:28 itojun Exp $	*/
+/*	$NetBSD: scm.c,v 1.12.2.1 2005/03/19 01:52:14 tron Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -559,8 +559,7 @@ char *name;
 		return (0);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
-	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
-	hints.ai_flags = AI_NUMERICHOST;
+	hints.ai_socktype = SOCK_DGRAM;	/* dummy */
 	if (getaddrinfo(name, "0", &hints, &res0) != 0)
 		return (0);
 	for (res = res0; res; res = res->ai_next) {
