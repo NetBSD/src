@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 1996/06/01 21:39:21 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.8 1996/12/20 19:44:12 cgd Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # Quad support
@@ -14,6 +14,6 @@ SRCS+=	ashldi3.c ashrdi3.c lshrdi3.c
 .endif
 
 # XXX as far as I can tell, these are never used and can be removed
-SRCS+=	adddi3.c anddi3.c iordi3.c lshrdi3.c notdi2.c subdi3.c xordi3.c
+SRCS+=	adddi3.c anddi3.c iordi3.c notdi2.c subdi3.c xordi3.c
 
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/quad ${.CURDIR}/quad
