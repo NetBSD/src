@@ -1,4 +1,4 @@
-/*  $NetBSD: tlphy.c,v 1.3 1997/11/16 22:38:34 christos Exp $   */
+/*	$NetBSD: tlphy.c,v 1.4 1997/11/17 09:07:32 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -49,17 +49,17 @@
 #include <dev/mii/tlphy.h>
 
 static int tlphy_up __P((struct phy_softc *sc));
-void tlphy_pdown __P((void *v));
-int tlphy_media_set __P((int, void *));
-int tlphy_media_set_aui __P((struct phy_softc *));
-int tlphy_status __P((int, void*));
+void	tlphy_pdown __P((void *v));
+int	tlphy_media_set __P((int, void *));
+int	tlphy_media_set_aui __P((struct phy_softc *));
+int	tlphy_status __P((int, void*));
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-int tlphymatch __P((struct device *, void *, void *));
+int	tlphymatch __P((struct device *, void *, void *));
 #else
-int tlphymatch __P((struct device *, struct cfdata *, void *));
+int	tlphymatch __P((struct device *, struct cfdata *, void *));
 #endif
-void tlphyattach __P((struct device *, struct device *, void *));
+void	tlphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach tlphy_ca = {
 	sizeof(struct phy_softc), tlphymatch, tlphyattach
@@ -71,7 +71,7 @@ struct cfdriver tlphy_cd = {
 
 int
 tlphymatch(parent, match, aux)
-    struct device *parent;
+	struct device *parent;
 #ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
 #else
@@ -83,13 +83,13 @@ tlphymatch(parent, match, aux)
 
 	if (phy->phy_id == 0x40005013 || phy->phy_id == 0x40005014 ||
 	    phy->phy_id == 0x40005015)
-		return 1;
-	return 0;
+		return (1);
+	return (0);
 }
 
 void
 tlphyattach(parent, self, aux)
-    struct device *parent, *self;
+	struct device *parent, *self;
 	void *aux;
 {
 	struct phy_softc *sc = (struct phy_softc *)self;
@@ -124,55 +124,59 @@ tlphyattach(parent, self, aux)
 		}
 	}
 
-	if(sc->phy_link->phy_media) {
+	if (sc->phy_link->phy_media) {
 		printf(": ");
 		phy_media_print(sc->phy_link->phy_media);
 	}
 	printf("\n");
 }
 
-void tlphy_pdown(v)
+void
+tlphy_pdown(v)
 	void *v;
 {
 	struct phy_softc *sc = v;
 	mii_phy_t *phy_link = sc->phy_link;
+
 	mii_writereg(phy_link->mii_softc, phy_link->dev, PHY_CONTROL,
-		CTRL_ISO | CTRL_PDOWN);
+	    CTRL_ISO | CTRL_PDOWN);
 }
 
-static int tlphy_up(sc)
+static int
+tlphy_up(sc)
 	struct phy_softc *sc;
 {
 	int s;
 	mii_phy_t *phy_link = sc->phy_link;
 	int control, i;
+
 	s = splnet();
 
 	/* set control registers to a reasonable value, wait for power_up */
 	mii_writereg(phy_link->mii_softc, phy_link->dev, PHY_CONTROL,
-		CTRL_LOOPBK);
-	mii_writereg(phy_link->mii_softc, phy_link->dev, PHY_TL_CTRL,
-		0);
+	    CTRL_LOOPBK);
+	mii_writereg(phy_link->mii_softc, phy_link->dev, PHY_TL_CTRL, 0);
 	i = 0;
 	do {
 		DELAY(100000);
 		control = mii_readreg(phy_link->mii_softc, phy_link->dev,
-			PHY_TL_ST);
+		    PHY_TL_ST);
 	} while ((control < 0 || (control & TL_ST_PHOK) == 0) && ++i < 10);
 	if (control < 0 || (control & TL_ST_PHOK) == 0) {
 		splx(s);
 		printf("%s: power-up failed\n", sc->sc_dev.dv_xname);
-		return 0;
+		return (0);
 	}
-	if ( phy_reset(sc) == 0) {
+	if (phy_reset(sc) == 0) {
 		splx(s);
-		return 0;
+		return (0);
 	}
 	splx(s);
-	return 1;
+	return (1);
 }
 
-int tlphy_media_set(media, v)
+int
+tlphy_media_set(media, v)
 	int media;
 	void *v;
 {
@@ -180,26 +184,28 @@ int tlphy_media_set(media, v)
 	int subtype;
 
 	if (IFM_TYPE(media) != IFM_ETHER)
-		return EINVAL;
+		return (EINVAL);
 
 	if (tlphy_up(sc) == 0)
-		return EIO;
+		return (EIO);
 	
 	subtype = IFM_SUBTYPE(media);
 	switch (subtype) {
 	case IFM_10_2:
 	case IFM_10_5:
-		if ((subtype == IFM_10_2 && (sc->phy_link->phy_media & PHY_BNC)) ||
-			(subtype == IFM_10_5 && (sc->phy_link->phy_media & PHY_AUI)))
-			return tlphy_media_set_aui(sc);
+		if ((subtype == IFM_10_2 &&
+		     (sc->phy_link->phy_media & PHY_BNC)) ||
+		    (subtype == IFM_10_5 &&
+		     (sc->phy_link->phy_media & PHY_AUI)))
+			return (tlphy_media_set_aui(sc));
 		else
-			return EINVAL;
+			return (EINVAL);
 	case IFM_10_T:
-		return phy_media_set_10_100(sc, media);
+		return (phy_media_set_10_100(sc, media));
 	case IFM_AUTO:
-		return ENODEV;
+		return (ENODEV);
 	default:
-		return EINVAL;
+		return (EINVAL);
 	}
 }
 
@@ -210,14 +216,15 @@ tlphy_media_set_aui(sc)
 	mii_phy_t *phy_link = sc->phy_link;
 
 	mii_writereg(phy_link->mii_softc, phy_link->dev,
-		PHY_CONTROL, 0);
+	    PHY_CONTROL, 0);
 	mii_writereg(phy_link->mii_softc, phy_link->dev,
-		PHY_TL_CTRL, TL_CTRL_AUISEL);
+	    PHY_TL_CTRL, TL_CTRL_AUISEL);
 	DELAY(100000);
-	return 0;
+	return (0);
 }
 
-int tlphy_status(media, v)
+int
+tlphy_status(media, v)
 	int media;
 	void *v;
 {
@@ -225,10 +232,10 @@ int tlphy_status(media, v)
 	int reg;
 	
 	if (IFM_SUBTYPE(media) == IFM_10_T)
-		return phy_status(media, sc);
+		return (phy_status(media, sc));
 	reg = mii_readreg(sc->phy_link->mii_softc, sc->phy_link->dev,
-		PHY_TL_ST);
+	    PHY_TL_ST);
 	if ((reg & PHY_TL_ST) == 0)
-		return ENETDOWN;
-	return 0;
+		return (ENETDOWN);
+	return (0);
 }
