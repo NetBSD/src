@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.31 2003/12/26 11:13:40 shin Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.32 2003/12/27 07:28:21 shin Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.31 2003/12/26 11:13:40 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.32 2003/12/27 07:28:21 shin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,6 +274,13 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 			      { 912,  80, 799,   0 },
 			      { 912, 966, 799, 599 } } } },
 			{ &platid_mask_MACH_NEC_MCR_730,
+			  { 0, 0, 799, 599,
+			    4,
+			    { { 115,  80,   0,   0 },
+			      { 115, 966,   0, 599 },
+			      { 912,  80, 799,   0 },
+			      { 912, 966, 799, 599 } } } },
+			{ &platid_mask_MACH_NEC_MCR_730A,
 			  { 0, 0, 799, 599,
 			    4,
 			    { { 115,  80,   0,   0 },
