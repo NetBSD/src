@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.5 2003/05/21 10:05:24 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.6 2003/05/30 11:56:25 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,18 +77,6 @@ EXTERN distinfo dist_list[]
     {"xmisc",			0, "X11 Misc.    : "},
     { NULL,			0, NULL }
 }
-#endif
-;
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- *
- * We allow "wd" (IDE disks), "sd" (SCSI disks), and "ld" (logical disks
- * on RAID controllers).
- */
-EXTERN	char *disk_names[]
-#ifdef MAIN
-= {"wd", "sd", "ld", NULL}
 #endif
 ;
 
