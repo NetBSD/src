@@ -1,7 +1,6 @@
-/*	$NetBSD: crt0.c,v 1.6 1999/03/20 00:13:51 thorpej Exp $	*/
+/*	$NetBSD: common.h,v 1.1 1999/03/20 00:13:51 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1998 Christos Zoulas
  * Copyright (c) 1995 Christopher G. Demetriou
  * All rights reserved.
  *
@@ -32,70 +31,56 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
+#include <sys/types.h>
+#include <sys/exec.h>
+#include <sys/syscall.h>
 
-static void ___start __P((int, char **, char **, void (*cleanup) __P((void)),
-    const Obj_Entry *, struct ps_strings *));
+#include <stdlib.h>
+#ifdef DYNAMIC
+#include <dlfcn.h>
+#include "rtld.h"
+#else
+typedef void Obj_Entry;
+#endif
 
-__asm("
-	.text
-	.align	2
-	.globl	__start
-__start:
-	pushl	%ebx			# ps_strings
-	pushl	%ecx			# obj
-	pushl	%edx			# cleanup
-	movl	12(%esp),%eax
-	leal	20(%esp,%eax,4),%ecx
-	leal	16(%esp),%edx
-	pushl	%ecx
-	pushl	%edx
-	pushl	%eax
-	call	___start
-");
+extern int	__syscall __P((int, ...));
+#define	_exit(v)	__syscall(SYS_exit, (v))
+#define	write(fd, s, n)	__syscall(SYS_write, (fd), (s), (n))
 
-static void
-___start(argc, argv, envp, cleanup, obj, ps_strings)
-	int argc;
-	char **argv;
-	char **envp;
-	void (*cleanup) __P((void));		/* from shared loader */
-	const Obj_Entry *obj;			/* from shared loader */
-	struct ps_strings *ps_strings;
-{
-	environ = envp;
+#define	_FATAL(str)				\
+do {						\
+	write(2, str, sizeof(str));		\
+	_exit(1);				\
+} while (0)
 
-	if ((__progname = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
-		if ((__progname = _strrchr(__progname, '/')) == NULL)
-			__progname = argv[0];
-		else
-			__progname++;
-	}
+static char	*_strrchr __P((char *, char));
 
-	if (ps_strings != (struct ps_strings *)0)
-		__ps_strings = ps_strings;
+char	**environ;
+char	*__progname = "";
+struct ps_strings *__ps_strings = 0;
+
+extern void	_init __P((void));
+extern void	_fini __P((void));
 
 #ifdef DYNAMIC
-	if (&_DYNAMIC != NULL)
-		_rtld_setup(cleanup, obj);
-#endif
+void	_rtld_setup __P((void (*)(void), const Obj_Entry *obj));
 
-#ifdef MCRT0
-	atexit(_mcleanup);
-	monstartup((u_long)&_eprol, (u_long)&_etext);
-#endif
-
-	atexit(_fini);
-	_init();
-
-	exit(main(argc, argv, environ));
-}
+const Obj_Entry *__mainprog_obj;
 
 /*
- * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
+ * Arrange for _DYNAMIC to be weak and undefined (and therefore to show up
+ * as being at address zero, unless something else defines it).  That way,
+ * if we happen to be compiling without -static but with without any
+ * shared libs present, things will still work.
  */
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.6 1999/03/20 00:13:51 thorpej Exp $");
-#endif /* LIBC_SCCS and not lint */
+asm(".weak _DYNAMIC");
+extern int _DYNAMIC;
+#endif /* DYNAMIC */
 
-#include "common.c"
+#ifdef MCRT0
+extern void	monstartup __P((u_long, u_long));
+extern void	_mcleanup __P((void));
+extern unsigned char _etext, _eprol;
+#endif /* MCRT0 */
+
+int main __P((int, char **, char **));
