@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.58 2000/11/19 00:54:50 sommerfeld Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.59 2000/11/20 01:46:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -634,6 +634,7 @@ int sysctl_string __P((void *, size_t *, void *, size_t, char *, int));
 int sysctl_rdstring __P((void *, size_t *, void *, const char *));
 int sysctl_struct __P((void *, size_t *, void *, size_t, void *, int));
 int sysctl_rdstruct __P((void *, size_t *, void *, const void *, int));
+int sysctl_rdminstruct __P((void *, size_t *, void *, const void *, int));
 struct radix_node;
 struct walkarg;
 int sysctl_clockrate __P((void *, size_t *));
