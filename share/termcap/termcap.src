@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.71 2002/09/13 16:40:02 jdc Exp $
+#	$NetBSD: termcap.src,v 1.72 2002/10/08 20:20:42 martin Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -2174,6 +2174,8 @@ sun-e|sun-nic|sune|Sun Microsystems Workstation without insert character:\
 sun-c|sun-cmd|Sun Microsystems Workstation console with scrollable history:\
 	:li#35:\
 	:te=\E[>4h:ti=\E[>4l:tc=sun:
+sun-type4|Sun Workstation console with type 4 keyboard:\
+	:kd=\E[221z:kl=\E[217z:kr=\E[219z:ku=\E[215z:tc=sun-il:
 
 #### Iris consoles
 #
