@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1999/03/27 07:17:51 simonb Exp $
+#	$NetBSD: Makefile,v 1.10 1999/03/31 04:30:11 simonb Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 S=	${.CURDIR}/../../../..
@@ -9,7 +9,7 @@ VERS_O=			# no version info in first stage
 MKMAN=	no
 
 SRCS=	start.S alloc.c bootxx.c clear_cache.S memcpy.c memset.c printf.S \
-	strcmp.S strcpy.S strlen.S twiddle.c
+	strcmp.S strcpy.S strlen.S
 
 # from sys/lib/libsa:
 SRCS+=	disklabel.c dkcksum.c lseek.c open.c read.c ufs.c
@@ -19,7 +19,7 @@ CLEANFILES+=${PROG}.aout ${PROG}.map mkboot ${ALL}
 .PATH:  ${.CURDIR}/../lib $S/lib/libsa $S/lib/libkern
 
 BOOTDEFADD+=-DBOOTXX -DRELOC=0x${RELOC} -DUFS_NOCLOSE -DUFS_NOSYMLINK \
-	-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
+	-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET -DLIBSA_NO_TWIDDLE
 
 ALL=	rzboot bootrz
 
