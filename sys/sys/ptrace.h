@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ptrace.h	7.4 (Berkeley) 2/22/91
- *	$Id: ptrace.h,v 1.4 1993/09/04 05:32:42 cgd Exp $
+ *	$Id: ptrace.h,v 1.5 1993/09/05 03:54:18 sef Exp $
  */
 
 #ifndef _SYS_PTRACE_H_
@@ -49,6 +49,9 @@
 #define	PT_STEP		9	/* single step the child */
 /*#define	PT_ATTACH	10	/* attach to running process */
 /*#define	PT_DETACH	11	/* detach from running process */
+#define	PT_GETREGS	12	/* fetch registers */
+#define	PT_SETREGS	13	/* set registers */
+
 #ifndef KERNEL
 
 #include <sys/cdefs.h>
