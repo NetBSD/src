@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.7 1996/04/04 21:46:33 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.9 1996/05/13 06:02:18 thorpej Exp 
  */
 
 /*
@@ -75,6 +75,7 @@
 #define	PCI_VENDOR_ACER	0x1025		/* Acer */
 #define	PCI_VENDOR_DELL	0x1028		/* Dell Computer */
 #define	PCI_VENDOR_SIEMENS	0x1029		/* Siemens Nixdorf IS */
+#define	PCI_VENDOR_LSILOGIC	0x102a		/* LSI Logic, Headland div. */
 #define	PCI_VENDOR_MATROX	0x102b		/* Matrox */
 #define	PCI_VENDOR_CHIPS	0x102c		/* Chips and Technologies */
 #define	PCI_VENDOR_WYSE	0x102d		/* WYSE Technology */
@@ -481,11 +482,13 @@
 
 /* S3 products */
 /* Names??? */
-#define	PCI_PRODUCT_S3_TRIO64	0x8811		/* Trio64 */
+#define	PCI_PRODUCT_S3_TRIO64	0x8811		/* Trio32/64/64V+ */
+#define	PCI_PRODUCT_S3_868	0x8880		/* 868 */
 #define	PCI_PRODUCT_S3_928	0x88b0		/* 928 */
 #define	PCI_PRODUCT_S3_864_0	0x88c0		/* Vision 864-0 */
 #define	PCI_PRODUCT_S3_864_1	0x88c1		/* Vision 864-1 */
 #define	PCI_PRODUCT_S3_964	0x88d0		/* 964 */
+#define	PCI_PRODUCT_S3_968	0x88f0		/* 968 */
 
 /* SMC products */
 #define	PCI_PRODUCT_SMC_37C665	0x1000		/* 37C665 */
@@ -496,5 +499,5 @@
 
 /* UMC products */
 #define	PCI_PRODUCT_UMC_UM8673F	0x0101		/* UM8673F */
-#define	PCI_PRODUCT_UMC_UM8881F	0x8881		/* UM8881F */
-#define	PCI_PRODUCT_UMC_UM8886F	0x8886		/* UM8886F */
+#define	PCI_PRODUCT_UMC_UM8881F	0x8881		/* UM8881F PCI-Host bridge */
+#define	PCI_PRODUCT_UMC_UM8886F	0x8886		/* UM8886F PCI-ISA bridge */
