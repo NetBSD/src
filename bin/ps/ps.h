@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.22 2004/03/27 12:09:28 simonb Exp $	*/
+/*	$NetBSD: ps.h,v 1.23 2004/03/27 14:09:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,8 +33,8 @@
 
 #define	UNLIMITED	0	/* unlimited terminal width */
 
-#define PRINTMODE	0	/* print values */
-#define WIDTHMODE	1	/* determine width of column */
+#define	PRINTMODE	0	/* print values */
+#define	WIDTHMODE	1	/* determine width of column */
 
 enum type {
 	UNSPECIFIED,
@@ -55,8 +55,8 @@ typedef struct var {
 #define	COMM	0x01		/* needs exec arguments and environment (XXX) */
 #define	LJUST	0x02		/* left adjust on output (trailing blanks) */
 #define	INF127	0x04		/* 127 = infinity: if > 127, print 127. */
-#define LWP	0x08		/* dispatch to kinfo_lwp routine */
-#define UAREA	0x10		/* need to check p_uvalid */
+#define	LWP	0x08		/* dispatch to kinfo_lwp routine */
+#define	UAREA	0x10		/* need to check p_uvalid */
 #define	ALIAS	0x20		/* entry is alias for 'header' */
 	u_int	flag;
 				/* output routine */
@@ -79,7 +79,7 @@ typedef struct var {
 	double	longestnd;	/* longest negative double */
 } VAR;
 
-#define OUTPUT(vent, ki, kl, mode) do {					\
+#define	OUTPUT(vent, ki, kl, mode) do {					\
 	if ((vent)->var->flag & LWP)					\
 		((vent)->var->oproc)((void *)(kl), (vent), (mode));	\
 	else								\

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.85 2004/03/27 12:59:25 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.86 2004/03/27 14:09:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.85 2004/03/27 12:59:25 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.86 2004/03/27 14:09:10 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -847,7 +847,7 @@ wchan(void *arg, VARENT *ve, int mode)
 	}
 }
 
-#define pgtok(a)        (((a)*getpagesize())/1024)
+#define	pgtok(a)        (((a)*getpagesize())/1024)
 
 void
 vsize(void *arg, VARENT *ve, int mode)
@@ -1212,7 +1212,7 @@ printval(bp, v, mode)
 		{
 			sigset_t *s = (sigset_t *)(void *)bp;
 			size_t i;
-#define SIGSETSIZE	(sizeof(s->__bits) / sizeof(s->__bits[0]))
+#define	SIGSETSIZE	(sizeof(s->__bits) / sizeof(s->__bits[0]))
 			char buf[SIGSETSIZE * 8 + 1];
 
 			for (i = 0; i < SIGSETSIZE; i++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.53 2004/03/27 12:44:08 simonb Exp $	*/
+/*	$NetBSD: ps.c,v 1.54 2004/03/27 14:09:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.53 2004/03/27 12:44:08 simonb Exp $");
+__RCSID("$NetBSD: ps.c,v 1.54 2004/03/27 14:09:10 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -564,14 +564,14 @@ pscomp(const void *a, const void *b)
 	struct varent *ve;
 	sigset_t *sa, *sb;
 
-#define V_SIZE(k) (k->p_vm_dsize + k->p_vm_ssize + k->p_vm_tsize)
-#define RDIFF_N(t, n) \
+#define	V_SIZE(k) (k->p_vm_dsize + k->p_vm_ssize + k->p_vm_tsize)
+#define	RDIFF_N(t, n) \
 	if (((t *)((char *)ka + v->off))[n] > ((t *)((char *)kb + v->off))[n]) \
 		return 1; \
 	if (((t *)((char *)ka + v->off))[n] < ((t *)((char *)kb + v->off))[n]) \
 		return -1;
 
-#define RDIFF(type) RDIFF_N(type, 0); continue
+#define	RDIFF(type) RDIFF_N(type, 0); continue
 
 	for (ve = sorthead; ve != NULL; ve = ve->next) {
 		v = ve->var;

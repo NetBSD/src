@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.22 2004/03/27 12:09:28 simonb Exp $	*/
+/*	$NetBSD: nlist.c,v 1.23 2004/03/27 14:09:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.22 2004/03/27 12:09:28 simonb Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.23 2004/03/27 14:09:10 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ int	fscale;				/* kernel _fscale variable */
 int	maxslp;				/* kernel _maxslp variable */
 int	uspace;				/* kernel USPACE value */
 
-#define kread(x, v) \
+#define	kread(x, v) \
 	kvm_read(kd, psnl[x].n_value, (char *)&v, sizeof v) != sizeof(v)
 
 int
