@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.60 2001/09/27 18:07:51 mjacob Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.61 2001/10/14 19:03:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -285,6 +285,7 @@ struct scsipi_channel {
 	int	chan_defquirks;		/* default device's quirks */
 
 	struct proc *chan_thread;	/* completion thread */
+	int	chan_tflags;		/* flags for the completion thread */
 
 	int	chan_qfreeze;		/* freeze count for queue */
 
@@ -300,13 +301,15 @@ struct scsipi_channel {
 };
 
 /* chan_flags */
-#define	SCSIPI_CHAN_SHUTDOWN	0x01	/* channel is shutting down */
-#define	SCSIPI_CHAN_OPENINGS	0x02	/* use chan_openings */
-#define	SCSIPI_CHAN_CANGROW	0x04	/* channel can grow resources */
-#define	SCSIPI_CHAN_NOSETTLE	0x08	/* don't wait for devices to settle */
-#define	SCSIPI_CHAN_CALLBACK	0x10	/* has to call chan_callback() */
-#define	SCSIPI_CHAN_KICK	0x20	/* need to run queues */
-#define	SCSIPI_CHAN_TACTIVE	0x40	/* completion thread is active */
+#define	SCSIPI_CHAN_OPENINGS	0x01	/* use chan_openings */
+#define	SCSIPI_CHAN_CANGROW	0x02	/* channel can grow resources */
+#define	SCSIPI_CHAN_NOSETTLE	0x04	/* don't wait for devices to settle */
+#define	SCSIPI_CHAN_TACTIVE	0x08	/* completion thread is active */
+
+/* chan thread flags (chan_tflags) */
+#define	SCSIPI_CHANT_SHUTDOWN	0x01	/* channel is shutting down */
+#define	SCSIPI_CHANT_CALLBACK	0x02	/* has to call chan_callback() */
+#define	SCSIPI_CHANT_KICK	0x04	/* need to run queues */
 
 #define	SCSIPI_CHAN_MAX_PERIPH(chan)					\
 	(((chan)->chan_flags & SCSIPI_CHAN_OPENINGS) ?			\
