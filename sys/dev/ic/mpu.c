@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.7 2004/10/29 12:57:17 yamt Exp $	*/
+/*	$NetBSD: mpu.c,v 1.8 2004/12/02 09:50:41 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.7 2004/10/29 12:57:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.8 2004/12/02 09:50:41 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,8 +117,6 @@ void
 mpu_attach(sc)
 	struct mpu_softc *sc;
 {
-	printf("\n");
-
 	midi_attach_mi(&mpu_midi_hw_if, sc, &sc->sc_dev);
 }
 
