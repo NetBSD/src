@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 2001/08/08 21:09:58 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 2001/08/22 22:17:57 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -106,6 +106,7 @@ typedef struct pteg pteg_t;
 volatile pteg_t *pmap_pteg_table;
 unsigned int pmap_pteg_cnt;
 unsigned int pmap_pteg_mask;
+paddr_t pmap_memlimit = -NBPG;		/* there is no limit */
 
 struct pmap kernel_pmap_;
 unsigned int pmap_pages_stolen;
@@ -195,6 +196,17 @@ STATIC void *pmap_pool_malloc(unsigned long, int, int);
 STATIC void pmap_pool_ufree(void *, unsigned long, int);
 STATIC void pmap_pool_mfree(void *, unsigned long, int);
 
+#if defined(DEBUG) || defined(PMAPCHECK) || defined(DDB)
+void pmap_pte_print(volatile pte_t *pt);
+#endif
+
+#ifdef DDB
+void pmap_pteg_check(void);
+void pmap_pteg_dist(void);
+void pmap_print_pte(pmap_t, vaddr_t);
+void pmap_print_mmuregs(void);
+#endif
+
 #if defined(DEBUG) || defined(PMAPCHECK)
 #ifdef PMAPCHECK
 int pmapcheck = 1;
@@ -202,11 +214,6 @@ int pmapcheck = 1;
 int pmapcheck = 0;
 #endif
 void pmap_pvo_verify(void);
-void pmap_pte_print(volatile pte_t *pt);
-void pmap_pteg_check(void);
-void pmap_pteg_dist(void);
-void pmap_print_pte(pmap_t, vaddr_t);
-void pmap_print_mmuregs(void);
 STATIC void pmap_pvo_check(const struct pvo_entry *);
 #define	PMAP_PVO_CHECK(pvo)	 		\
 	do {					\
@@ -237,9 +244,21 @@ static uint32_t pmap_vsid_bitmap[NPMAPS / VSID_NBPW];
 static int pmap_initialized;
 
 #if defined(DEBUG)
+#define	PMAPDEBUG_BOOT		0x0001
+#define	PMAPDEBUG_PTE		0x0002
+#define	PMAPDEBUG_PAMAP		0x0004
+#define	PMAPDEBUG_SYNCICACHE	0x0008
+#define	PMAPDEBUG_PVOENTER	0x0010
+#define	PMAPDEBUG_PVOREMOVE	0x0020
+#define	PMAPDEBUG_ACTIVATE	0x0100
+#define	PMAPDEBUG_CREATE	0x0200
+#define	PMAPDEBUG_ENTER		0x1000
+#define	PMAPDEBUG_KENTER	0x2000
+#define	PMAPDEBUG_KREMOVE	0x4000
+#define	PMAPDEBUG_REMOVE	0x8000
 unsigned int pmapdebug = 0;
 # define DPRINTF(x)		printf x
-# define DPRINTFN(n, x)		if (pmapdebug >= (n)) printf x
+# define DPRINTFN(n, x)		if (pmapdebug & PMAPDEBUG_ ## n) printf x
 #else
 # define DPRINTF(x)
 # define DPRINTFN(n, x)
@@ -334,7 +353,7 @@ va_to_pteg(sr_t sr, vaddr_t addr)
 	return hash & pmap_pteg_mask;
 }
 
-#if defined(DEBUG) || defined(PMAPCHECK)
+#if defined(DEBUG) || defined(PMAPCHECK) || defined(DDB)
 /*
  * Given a PTE in the page table, calculate the VADDR that hashes to it.
  * The only bit of magic is that the top 4 bits of the address doesn't
@@ -568,7 +587,7 @@ pmap_pte_insert(int ptegidx, pte_t *pvo_pt)
 	int i;
 	
 #if defined(DEBUG)
-	DPRINTFN(7, ("pmap_pte_insert: idx 0x%x, pte 0x%x 0x%x\n",
+	DPRINTFN(PTE, ("pmap_pte_insert: idx 0x%x, pte 0x%x 0x%x\n",
 		ptegidx, pvo_pt->pte_hi, pvo_pt->pte_lo));
 #endif
 	/*
@@ -775,7 +794,7 @@ pmap_create(void)
 	memset((caddr_t)pm, 0, sizeof *pm);
 	pmap_pinit(pm);
 	
-	DPRINTFN(7,("pmap_create: pm %p:\n"
+	DPRINTFN(CREATE,("pmap_create: pm %p:\n"
 	    "\t%06x %06x %06x %06x    %06x %06x %06x %06x\n"
 	    "\t%06x %06x %06x %06x    %06x %06x %06x %06x\n", pm,
 	    pm->pm_sr[0], pm->pm_sr[1], pm->pm_sr[2], pm->pm_sr[3], 
@@ -919,7 +938,6 @@ void
 pmap_zero_page(paddr_t pa)
 {
 	caddr_t va;
-	int i;
 
 	if (pa < SEGMENT_LENGTH) {
 		va = (caddr_t) pa;
@@ -931,13 +949,16 @@ pmap_zero_page(paddr_t pa)
 	} else {
 		panic("pmap_zero_page: can't zero pa %#lx", pa);
 	}
-#if 0
+#if 1
 	memset(va, 0, NBPG);
 #else
+	{
+		int i;
 
-	for (i = NBPG/CACHELINESIZE; i > 0; i--) {
-		__asm __volatile ("dcbz 0,%0" :: "r"(va));
-		va += CACHELINESIZE;
+		for (i = NBPG/CACHELINESIZE; i > 0; i--) {
+			__asm __volatile ("dcbz 0,%0" :: "r"(va));
+			va += CACHELINESIZE;
+		}
 	}
 #endif
 	if (pa >= SEGMENT_LENGTH)
@@ -1103,7 +1124,8 @@ pmap_pa_map(struct pvo_entry *pvo, paddr_t pa, pte_t *saved_pt, int *depth_p)
 			pmap_pte_overflow++;
 		}
 		*saved_pt = pvo->pvo_pte;
-		DPRINTFN(3,("pmap_pa_map: saved pte %#x/%#x va %#lx\n",
+		DPRINTFN(PAMAP,
+		    ("pmap_pa_map: saved pte %#x/%#x va %#lx\n",
 		    pvo->pvo_pte.pte_hi, pvo->pvo_pte.pte_lo,
 		    pvo->pvo_vaddr));
 		pvo->pvo_pte.pte_lo &= ~PTE_RPGN;
@@ -1153,9 +1175,9 @@ pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt, int *depth_p)
 		if (depth_p != NULL && --(*depth_p) == 0)
 			panic("pmap_pa_unmap: restoring but depth == 0");
 		pvo->pvo_pte = *saved_pt;
-		DPRINTFN(3,("pmap_pa_unmap: restored pte %#x/%#x "
-		    "va %#lx\n", pvo->pvo_pte.pte_hi,
-		    pvo->pvo_pte.pte_lo, pvo->pvo_vaddr));
+		DPRINTFN(PAMAP,
+		    ("pmap_pa_unmap: restored pte %#x/%#x va %#lx\n",
+		    pvo->pvo_pte.pte_hi, pvo->pvo_pte.pte_lo, pvo->pvo_vaddr));
 		if (!pmap_pte_spill(pvo->pvo_vaddr))
 			panic("pmap_pa_unmap: could not spill pvo %p", pvo);
 		if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0)
@@ -1176,7 +1198,7 @@ pmap_syncicache(paddr_t pa, psize_t len)
 {
 	static int depth;
 	static u_int calls;
-	DPRINTFN(6,("pmap_syncicache[%d]: pa %#lx\n", depth, pa));
+	DPRINTFN(SYNCICACHE, ("pmap_syncicache[%d]: pa %#lx\n", depth, pa));
 	if (pa < SEGMENT_LENGTH) {
 		__syncicache((void *)pa, NBPG);
 		return;
@@ -1358,7 +1380,8 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	LIST_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
 		if (pvo->pvo_pmap == pm && PVO_VADDR(pvo) == va) {
 #ifdef DEBUG
-			if (((pvo->pvo_pte.pte_lo ^ (pa|pte_lo)) &
+			if ((pmapdebug & PMAPDEBUG_PVOENTER) &&
+			    ((pvo->pvo_pte.pte_lo ^ (pa|pte_lo)) &
 			    ~(PTE_REF|PTE_CHG)) == 0 &&
 			   va < VM_MIN_KERNEL_ADDRESS) {
 				printf("pmap_pvo_enter: pvo %p: dup %#x/%#lx\n",
@@ -1431,8 +1454,9 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	pvo->pvo_pmap->pm_stats.resident_count++;
 #if defined(DEBUG)
 	if (pm != pmap_kernel() && va < VM_MIN_KERNEL_ADDRESS)
-		DPRINTFN(4,("pmap_pvo_enter: pvo %p: pm %p va %#lx pa %#lx\n",
-			pvo, pm, va, pa));
+		DPRINTFN(PVOENTER,
+		    ("pmap_pvo_enter: pvo %p: pm %p va %#lx pa %#lx\n",
+		    pvo, pm, va, pa));
 #endif
 	/*
 	 * We hope this succeeds but it isn't required.
@@ -1536,8 +1560,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pvo_flags = PVO_MANAGED;
 	}
 
-	DPRINTFN(16, ("pmap_enter(0x%p, 0x%lx, 0x%lx, 0x%x, 0x%x) ",
-		pm, va, pa, prot, flags));
+	DPRINTFN(ENTER,
+	    ("pmap_enter(0x%p, 0x%lx, 0x%lx, 0x%x, 0x%x) ",
+	    pm, va, pa, prot, flags));
 
 	pte_lo = PTE_I | PTE_G;
 	if ((flags & PMAP_NC) == 0) {
@@ -1603,7 +1628,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		panic("pmap_kenter_pa: attempt to enter "
 		    "non-kernel address %#lx!", va);
 
-	DPRINTFN(5,("pmap_kenter_pa(%#lx,%#lx,%#x)\n", va, pa, prot));
+	DPRINTFN(KENTER,
+	    ("pmap_kenter_pa(%#lx,%#lx,%#x)\n", va, pa, prot));
 
 	pte_lo = PTE_I | PTE_G;
 	for (mp = mem; mp->size; mp++) {
@@ -1641,7 +1667,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		panic("pmap_kremove: attempt to remove "
 		    "non-kernel address %#lx!", va);
 
-	DPRINTFN(5,("pmap_kremove(%#lx,%#lx)\n", va, len));
+	DPRINTFN(KREMOVE,("pmap_kremove(%#lx,%#lx)\n", va, len));
 	pmap_remove(pmap_kernel(), va, va + len);
 }
 
@@ -1889,10 +1915,9 @@ pmap_activate(struct proc *p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	u_int32_t msr;
-	int i;
 
-	DPRINTFN(6,("pmap_activate: proc %p (curproc %p)\n", p, curproc));
+	DPRINTFN(ACTIVATE,
+	    ("pmap_activate: proc %p (curproc %p)\n", p, curproc));
 
 	/*
 	 * XXX Normally performed in cpu_fork().
@@ -1902,30 +1927,13 @@ pmap_activate(struct proc *p)
 		pcb->pcb_pmreal = pmap;
 	}
 
+	/*
+	 * In theory, the SR registers need only be valid on return
+	 * to user space wait to do them there.
+	 */
 	if (p == curproc) {
-		/* Disable interrupts while switching. */
-		msr = pmap_interrupts_off();
-
 		/* Store pointer to new current pmap. */
 		curpm = pmap;
-
-		/*
-		 * Set new segment registers.  Pmap's are always in
-		 * BAT0 so they are always accessible.  Don't load
-		 * the kernel SR.
-		 */
-		DPRINTFN(7,("pmap_activate: pm %p:", pmap));
-		for (i = 0; i < 16; i++) {
-			if (i == KERNEL_SR)
-				continue;
-			__asm __volatile("mtsrin %0,%1"
-			    :: "r"(pmap->pm_sr[i]), "r"(i << ADDR_SR_SHFT));
-			DPRINTFN(7,(" sr[%d]=%#x", i, pmap->pm_sr[i]));
-		}
-		DPRINTFN(7,("\n"));
-
-		/* Interrupts are OK again. */
-		pmap_interrupts_restore(msr);
 	}
 }
 
@@ -2064,7 +2072,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 	splx(s);
 }
 
-#if defined(DEBUG) || defined(PMAPCHECK)
+#if defined(DEBUG) || defined(PMAPCHECK) || defined(DDB)
 void
 pmap_pte_print(volatile pte_t *pt)
 {
@@ -2093,7 +2101,9 @@ pmap_pte_print(volatile pte_t *pt)
 	case PTE_SW: printf("sw]\n"); break;
 	}
 }
+#endif
 
+#if defined(DDB)
 void
 pmap_pteg_check(void)
 {
@@ -2248,7 +2258,7 @@ pmap_pteg_dist(void)
 }
 #endif /* DEBUG */
 
-#ifdef PMAPCHECK
+#if defined(PMAPCHECK) || defined(DEBUG)
 void
 pmap_pvo_verify(void)
 {
@@ -2439,7 +2449,8 @@ pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
 
 	size = round_page(size);
 
-	DPRINTFN(6,("pmap_boot_find_memory: size=%lx, alignment=%lx, at_end=%d",
+	DPRINTFN(BOOT,
+	    ("pmap_boot_find_memory: size=%lx, alignment=%lx, at_end=%d",
 	    size, alignment, at_end));
 
 	if (alignment < NBPG || (alignment & (alignment-1)) != 0)
@@ -2453,9 +2464,17 @@ pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
 		
 		for (mp = &avail[avail_cnt-1]; mp >= avail; mp--) {
 			s = mp->start + mp->size - size;
-			if (s >= mp->start) {
+			if (s >= mp->start && mp->size >= size) {
+				DPRINTFN(BOOT,(": %lx\n", s));
+				DPRINTFN(BOOT,
+				    ("pmap_boot_find_memory: b-avail[%d] start "
+				     "0x%lx size 0x%lx\n", mp - avail,
+				     mp->start, mp->size));
 				mp->size -= size;
-				DPRINTFN(6,(": %lx\n", s));
+				DPRINTFN(BOOT,
+				    ("pmap_boot_find_memory: a-avail[%d] start "
+				     "0x%lx size 0x%lx\n", mp - avail,
+				     mp->start, mp->size));
 				return (void *) s;
 			}
 		}
@@ -2472,33 +2491,54 @@ pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
 		if (s < mp->start || e > mp->start + mp->size)
 			continue;
 
-		DPRINTFN(6,(": %lx\n", s));
+		DPRINTFN(BOOT,(": %lx\n", s));
 		if (s == mp->start) {
 			/*
 			 * If the block starts at the beginning of region,
 			 * adjust the size & start. (the region may now be
 			 * zero in length)
 			 */
+			DPRINTFN(BOOT,
+			    ("pmap_boot_find_memory: b-avail[%d] start "
+			     "0x%lx size 0x%lx\n", i, mp->start, mp->size));
 			mp->start += size;
 			mp->size -= size;
+			DPRINTFN(BOOT,
+			    ("pmap_boot_find_memory: a-avail[%d] start "
+			     "0x%lx size 0x%lx\n", i, mp->start, mp->size));
 		} else if (e == mp->start + mp->size) {
 			/*
 			 * If the block starts at the beginning of region,
 			 * adjust only the size.
 			 */
+			DPRINTFN(BOOT,
+			    ("pmap_boot_find_memory: b-avail[%d] start "
+			     "0x%lx size 0x%lx\n", i, mp->start, mp->size));
 			mp->size -= size;
+			DPRINTFN(BOOT,
+			    ("pmap_boot_find_memory: a-avail[%d] start "
+			     "0x%lx size 0x%lx\n", i, mp->start, mp->size));
 		} else {
 			/*
 			 * Block is in the middle of the region, so we
 			 * have to split it in two.
 			 */
-			for (j = avail_cnt-1; j > i + 1; j--) {
+			for (j = avail_cnt; j > i + 1; j--) {
 				avail[j] = avail[j-1];
 			}
+			DPRINTFN(BOOT,
+			    ("pmap_boot_find_memory: b-avail[%d] start "
+			     "0x%lx size 0x%lx\n", i, mp->start, mp->size));
 			mp[1].start = e;
 			mp[1].size = mp[0].start + mp[0].size - e;
 			mp[0].size = s - mp[0].start;
 			avail_cnt++;
+			for (; i < avail_cnt; i++) {
+				DPRINTFN(BOOT,
+				    ("pmap_boot_find_memory: a-avail[%d] "
+				     "start 0x%lx size 0x%lx\n", i,
+				     avail[i].start, avail[i].size));
+			}
 		}
 		return (void *) s;
 	}
@@ -2524,14 +2564,16 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	 */
 	mem_regions(&mem, &avail);
 #if defined(DEBUG)
-	printf("pmap_bootstrap: memory configuration:\n");
-	for (mp = mem; mp->size; mp++) {
-		printf("pmap_bootstrap: mem start 0x%lx size 0x%lx\n",
-			mp->start, mp->size);
-	}
-	for (mp = avail; mp->size; mp++) {
-		printf("pmap_bootstrap: avail start 0x%lx size 0x%lx\n",
-			mp->start, mp->size);
+	if (pmapdebug & PMAPDEBUG_BOOT) {
+		printf("pmap_bootstrap: memory configuration:\n");
+		for (mp = mem; mp->size; mp++) {
+			printf("pmap_bootstrap: mem start 0x%lx size 0x%lx\n",
+				mp->start, mp->size);
+		}
+		for (mp = avail; mp->size; mp++) {
+			printf("pmap_bootstrap: avail start 0x%lx size 0x%lx\n",
+				mp->start, mp->size);
+		}
 	}
 #endif
 
@@ -2539,15 +2581,14 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	 * Find out how much physical memory we have and in how many chunks.
 	 */
 	for (mem_cnt = 0, mp = mem; mp->size; mp++) {
-#ifdef PMAP_MEMLIMIT
-		if (mp->start >= PMAP_MEMLIMIT * 1024*1024)
+		if (mp->start >= pmap_memlimit)
 			continue;
-		if (mp->start + mp->size > PMAP_MEMLIMIT * 1024*1024) {
-			size = PMAP_MEMLIMIT * 1024*1024 - mp->start;
+		if (mp->start + mp->size > pmap_memlimit) {
+			size = pmap_memlimit - mp->start;
 			physmem += btoc(size);
-		} else
-#endif
-		physmem += btoc(mp->size);
+		} else {
+			physmem += btoc(mp->size);
+		}
 		mem_cnt++;
 	}
 
@@ -2566,15 +2607,15 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		s = trunc_page(mp->start);
 		e = round_page(mp->start + mp->size);
 
-		DPRINTFN(7,("pmap_bootstrap: b-avail[%d] start 0x%lx "
-		    "size 0x%lx\n", i, mp->start, mp->size));
-#ifdef PMAP_MEMLIMIT
+		DPRINTFN(BOOT,
+		    ("pmap_bootstrap: b-avail[%d] start 0x%lx size 0x%lx\n",
+		    i, mp->start, mp->size));
+
 		/*
 		 * Don't allow the end to run beyond our artificial limit
 		 */
-		if (e > PMAP_MEMLIMIT * 1024*1024)
-			e = PMAP_MEMLIMIT * 1024*1024;
-#endif
+		if (e > pmap_memlimit)
+			e = pmap_memlimit;
 
 		/*
 		 * Does this overlap the beginning of kernel?
@@ -2603,21 +2644,20 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 			mp->start = 0;
 			mp->size = 0;
 		}
-#ifdef PMAP_MEMLIMIT
 		/*
 		 * If the user imposed a memory limit, enforce it.
 		 */
-		else if (s >= PMAP_MEMLIMIT * 1024*1024) {
-			mp->start = -NBPG;
+		else if (s >= pmap_memlimit) {
+			mp->start = -NBPG;	/* let's know why */
 			mp->size = 0;
 		}
-#endif /* PMAP_MEMLIMIT */
 		else {
 			mp->start = s;
 			mp->size = e - s;
 		}
-		DPRINTFN(7,("pmap_bootstrap: a-avail[%d] start 0x%lx size "
-			"0x%lx\n", i, mp->start, mp->size));
+		DPRINTFN(BOOT,
+		    ("pmap_bootstrap: a-avail[%d] start 0x%lx size 0x%lx\n",
+		    i, mp->start, mp->size));
 	}
 
 	/*
@@ -2651,10 +2691,12 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		if (mp[0].start + mp[0].size > mp[1].start) {
 			mp[0].size = mp[1].start - mp[0].start;
 		}
-		DPRINTFN(7,("pmap_bootstrap: avail[%d] start 0x%lx size "
-		    "0x%lx\n", i, mp->start, mp->size));
+		DPRINTFN(BOOT,
+		    ("pmap_bootstrap: avail[%d] start 0x%lx size 0x%lx\n",
+		    i, mp->start, mp->size));
 	}
-	DPRINTFN(7,("pmap_bootstrap: avail[%d] start 0x%lx size 0x%lx\n",
+	DPRINTFN(BOOT,
+	    ("pmap_bootstrap: avail[%d] start 0x%lx size 0x%lx\n",
 	    i, mp->start, mp->size));
 
 #ifdef	PTEGCOUNT
@@ -2710,7 +2752,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		u_int npgs = 0;
 		for (i = 0, mp = avail; i < avail_cnt; i++, mp++)
 			npgs += btoc(mp->size);
-		size = (sizeof(struct pvo_head *) + 1) * npgs;
+		size = (sizeof(struct pvo_head) + 1) * npgs;
 		pmap_physseg.pvoh = pmap_boot_find_memory(size, NBPG, 0);
 		pmap_physseg.attrs = (char *) &pmap_physseg.pvoh[npgs];
 #ifdef DIAGNOSTIC
@@ -2762,12 +2804,17 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
 	__asm __volatile ("mtsr %0,%1"
 		      :: "n"(KERNEL_SR), "r"(KERNEL_SEGMENT));
+#ifdef KERNEL2_SR
+	pmap_kernel()->pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT;
+	__asm __volatile ("mtsr %0,%1"
+		      :: "n"(KERNEL2_SR), "r"(KERNEL2_SEGMENT));
+#endif
 	__asm __volatile ("sync; mtsdr1 %0; isync"
 		      :: "r"((u_int)pmap_pteg_table | (pmap_pteg_mask >> 10)));
 	tlbia();
 
 #ifdef DEBUG
-	if (pmapdebug > 3) {
+	if (pmapdebug & PMAPDEBUG_BOOT) {
 		u_int cnt;
 		int bank;
 		char pbuf[9];
@@ -2782,6 +2829,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		format_bytes(pbuf, sizeof(pbuf), ptoa((u_int64_t) cnt));
 		printf("pmap_bootstrap: UVM memory = %s (%u pages)\n",
 		    pbuf, cnt);
+		Debugger();
 	}
 #endif
 
