@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.13 1998/03/01 02:22:37 fvdl Exp $
+#	$NetBSD: vnode_if.src,v 1.14 1998/06/05 19:38:56 kleink Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -202,7 +202,7 @@ vop_mmap {
 vop_fsync {
 	IN struct vnode *vp;
 	IN struct ucred *cred;
-	IN int waitfor;
+	IN int flags;
 	IN struct proc *p;
 };
 
