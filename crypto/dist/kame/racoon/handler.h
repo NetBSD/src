@@ -90,7 +90,7 @@
  * phase 1 handler	I	R		R	I
  * phase 2 handler	I	R		R	I
  * getspi msg		R	I		I	R
- * aquire msg		I	R
+ * acquire msg		I	R
  * ID payload		I	R		I	R
  */
 struct ph1handle {
