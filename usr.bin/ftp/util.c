@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.99 2000/08/01 22:47:29 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.100 2000/08/06 08:51:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.99 2000/08/01 22:47:29 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.100 2000/08/06 08:51:22 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1422,6 +1422,39 @@ formatbuf(char *buf, size_t len, const char *src)
 	}
  endbuf:
 	buf[i] = '\0';
+}
+
+/*
+ * Parse `port' into a TCP port number, defaulting to `defport' if `port' is
+ * an unknown service name. If defport != -1, print a warning upon bad parse.
+ */
+int
+parseport(const char *port, int defport)
+{
+	int	 rv;
+	long	 nport;
+	char	*p, *ep;
+
+	p = xstrdup(port);
+	nport = strtol(p, &ep, 10);
+	if (*ep != '\0' && ep == p) {
+		struct servent	*svp;
+
+		svp = getservbyname(port, "tcp");
+		if (svp == NULL) {
+ badparseport:
+			if (defport != -1)
+				warnx("Unknown port `%s', using port %d",
+				    port, defport);
+			rv = defport;
+		} else
+			rv = ntohs(svp->s_port);
+	} else if (nport < 1 || nport > MAX_IN_PORT_T || *ep != '\0')
+		goto badparseport;
+	else
+		rv = nport;
+	free(p);
+	return (rv);
 }
 
 /*
