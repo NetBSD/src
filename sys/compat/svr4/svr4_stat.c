@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.16 1995/12/19 18:27:02 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.17 1996/02/01 00:19:52 jtc Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -85,9 +85,9 @@ bsd_to_svr4_stat(st, st4)
 	st4->st_gid = st->st_gid;
 	st4->st_rdev = st->st_rdev;
 	st4->st_size = st->st_size;
-	st4->st_atim = st->st_atimespec.ts_sec;
-	st4->st_mtim = st->st_mtimespec.ts_sec;
-	st4->st_ctim = st->st_ctimespec.ts_sec;
+	st4->st_atim = st->st_atimespec.tv_sec;
+	st4->st_mtim = st->st_mtimespec.tv_sec;
+	st4->st_ctim = st->st_ctimespec.tv_sec;
 }
 #endif
 
