@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.20.4.1 2000/06/30 16:27:34 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.20.4.2 2000/09/30 01:46:48 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -510,7 +510,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		    addr + offset + minlen - 1);
 #endif
 		if (CPUISMIPS3)
-			MachFlushDCache(addr + offset, minlen);
+			MachHitFlushDCache(addr + offset, minlen);
 		else {
 			/*
 			 * We can't have a TLB miss; use KSEG0.
