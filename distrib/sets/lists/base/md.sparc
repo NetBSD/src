@@ -1,7 +1,8 @@
-# $NetBSD: md.sparc,v 1.51 2000/09/04 16:29:49 abs Exp $
+# $NetBSD: md.sparc,v 1.52 2000/09/11 23:28:54 fvdl Exp $
 ./dev/apm
 ./sbin/edlabel
 ./usr/bin/fdformat
+./usr/libexec/ld.so
 ./usr/lkm/adosfs.o
 ./usr/lkm/cd9660.o
 ./usr/lkm/coda.o
