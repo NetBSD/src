@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.25 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.26 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -140,3 +140,11 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		[augustss 20021008]
 	tar(1): upgrade to GNU tar 1.13.25 for security fixes
 		[itojun 20021010]
+	Allow pseudo-devices to be parents of "real" devices.
+		[thorpej 20021009]
+	Allow options to register dependencies on attributes (the
+		way it already can for other options).
+		[thorpej 20021010]
+	Allow devices to be orphaned in the kernel config file, but
+		emit an informational message when this happens.
+		[thorpej 20021010]
