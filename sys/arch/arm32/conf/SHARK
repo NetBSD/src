@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.15 1998/09/06 03:38:56 tv Exp $
+#	$NetBSD: SHARK,v 1.16 1998/10/04 19:03:37 mark Exp $
 #
 #	SHARK
 #
@@ -33,7 +33,6 @@ options 	COMPAT_OLD_OFW
 
 # FPA options
 
-#options 	FPE		# Single precision FPE
 #options 	ARMFPE		# ARM Ltd FPE
 
 # File systems
