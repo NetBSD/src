@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.21 1998/02/14 00:37:32 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.22 1998/02/14 19:34:12 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -360,7 +360,7 @@ pgrpdump()
 {
 	register struct pgrp *pgrp;
 	register struct proc *p;
-	register i;
+	register int i;
 
 	for (i = 0; i <= pgrphash; i++) {
 		if ((pgrp = pgrphashtbl[i].lh_first) != NULL) {

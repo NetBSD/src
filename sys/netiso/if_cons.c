@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cons.c,v 1.10 1996/10/13 02:04:23 christos Exp $	*/
+/*	$NetBSD: if_cons.c,v 1.11 1998/02/14 19:34:15 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -195,7 +195,7 @@ nibble_copy(src_octet, src_nibble, dst_octet, dst_nibble, len)
 	int             len;
 {
 
-	register        i;
+	register int i;
 	register unsigned dshift, sshift;
 
 #ifdef ARGO_DEBUG
@@ -245,7 +245,7 @@ nibble_match(src_octet, src_nibble, dst_octet, dst_nibble, len)
 	int             len;
 {
 
-	register        i;
+	register int i;
 	register unsigned dshift, sshift;
 	u_char          nibble_a, nibble_b;
 
