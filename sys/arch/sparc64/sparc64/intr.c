@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.24 2000/06/02 15:36:53 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.25 2000/06/08 23:01:22 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,6 +111,7 @@ void	strayintr __P((const struct trapframe64 *, int));
 int	softintr __P((void *));
 int	softnet __P((void *));
 int	send_softclock __P((void *));
+int	intr_list_handler __P((void *));
 
 /*
  * Stray interrupt handler.  Clear it if possible.
@@ -243,6 +244,35 @@ struct intrhand *intrhand[15] = {
 int fastvec = 0;
 
 /*
+ * PCI devices can share interrupts so we need to have
+ * a handler to hand out interrupts.
+ */
+int
+intr_list_handler(arg)
+	void * arg;
+{
+	int claimed = 0;
+	struct intrhand *ih = (struct intrhand *)arg;
+
+	if (!arg) panic("intr_list_handler: no handlers!");
+	while (ih && !claimed) {
+		claimed = (*ih->ih_fun)(ih->ih_arg);
+#ifdef DEBUG
+		{
+			extern int intrdebug;
+			if (intrdebug)
+				printf("intr %p %x arg %p %s\n",
+					ih, ih->ih_number, ih->ih_arg,
+					claimed ? "claimed" : "");
+		}
+#endif
+		ih = ih->ih_next;
+	}
+	return (claimed);
+}
+
+
+/*
  * Attach an interrupt handler to the vector chain for the given level.
  * This is not possible if it has been taken away as a fast vector.
  */
@@ -275,11 +305,32 @@ intr_establish(level, ih)
 	}
 #endif
 	if (ih->ih_number < MAXINTNUM && ih->ih_number >= 0) {
-		if (intrlev[ih->ih_number]) 
-			panic("intr_establish: intr reused %d", ih->ih_number);
-		intrlev[ih->ih_number] = ih;
+		if ((q = intrlev[ih->ih_number])) {
+			struct intrhand *nih;
+			/*
+			 * Interrupt is already there.  We need to create a
+			 * new interrupt handler and interpose it.
+			 */
+			printf("intr_establish: intr reused %d\n", ih->ih_number);
+
+			if (q->ih_fun != intr_list_handler) {
+				nih = (struct intrhand *)
+					malloc(sizeof(struct intrhand),
+						M_DEVBUF, M_NOWAIT);
+				/* Point the old IH at the new handler */
+				*nih = *q;
+				q->ih_fun = intr_list_handler;
+				q->ih_arg = (void *)nih;
+				nih->ih_next = NULL;
+			}
+			/* Add the ih to the head of the list */
+			ih->ih_next = (struct intrhand *)q->ih_arg;
+			q->ih_arg = (void *)ih;
+		}
+		else
+			intrlev[ih->ih_number] = ih;
 #ifdef NOT_DEBUG
-		printf("\nintr_establish: vector %x pli %x mapintr %p clrintr %p fun %p arg %p\n",
+		printf("\nintr_establish: vector %x pil %x mapintr %p clrintr %p fun %p arg %p\n",
 		       ih->ih_number, ih->ih_pil, (long)ih->ih_map, (long)ih->ih_clr, ih->ih_fun, ih->ih_arg);
 		/*Debugger();*/
 #endif
