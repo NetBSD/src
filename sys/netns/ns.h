@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.h,v 1.8 1996/02/13 22:13:51 christos Exp $	*/
+/*	$NetBSD: ns.h,v 1.9 1996/09/08 14:50:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -68,8 +68,8 @@
 
 /* flags passed to ns_output as last parameter */
 
-#define	NS_FORWARDING		0x1	/* most of idp header exists */
-#define	NS_ROUTETOIF		0x10	/* same as SO_DONTROUTE */
+#define	NS_FORWARDING		0x1		/* most of idp header exists */
+#define	NS_ROUTETOIF		SO_DONTROUTE	/* bypass routing tables */
 #define	NS_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 
 #define NS_MAXHOPS		15
