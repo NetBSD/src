@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.196 2001/11/01 17:25:05 augustss Exp $
+$NetBSD: usbdevs,v 1.197 2001/11/06 12:59:17 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -304,6 +304,7 @@ vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor TODOS		0x0b0c	Todos Data System
 vendor AGATE		0x0c08	Agate Technologies
+vendor DMI		0x0c0b	DMI
 vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
@@ -512,6 +513,9 @@ product DIGI ACCELEPORT8	0x0008	AccelePort USB 8
 
 /* Digital Stream Corp. products */
 product DIGITALSTREAM PS2	0x0001	PS/2 Active Adapter
+
+/* DMI products */
+product DMI SA2_0		0xb001	Storage Adapter
 
 /* EIZO products */
 product EIZO HUB		0x0000	hub
