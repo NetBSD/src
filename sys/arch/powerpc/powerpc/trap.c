@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.33 2000/12/10 12:49:54 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.34 2000/12/14 10:33:42 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,13 +70,10 @@ trap(frame)
 {
 	struct proc *p = curproc;
 	int type = frame->exc;
-	u_quad_t sticks;
 	int ftype, rv;
 
-	if (frame->srr1 & PSL_PR) {
+	if (frame->srr1 & PSL_PR)
 		type |= EXC_USER;
-		sticks = p->p_sticks;
-	}
 
 	switch (type) {
 	case EXC_TRC|EXC_USER:
@@ -165,18 +162,17 @@ trap(frame)
 			size_t argsize;
 			register_t code, error;
 			register_t *params, rval[2];
-			int nsys, n;
+			int n;
 			register_t args[10];
 
 			KERNEL_PROC_LOCK(p);
 
 			uvmexp.syscalls++;
 
-			nsys = p->p_emul->e_nsysent;
-			callp = p->p_emul->e_sysent;
-
 			code = frame->fixreg[0];
+			callp = p->p_emul->e_sysent;
 			params = frame->fixreg + FIRSTARG;
+			n = NARGREG;
 
 			switch (code) {
 			case SYS_syscall:
@@ -185,50 +181,41 @@ trap(frame)
 				 * followed by actual args.
 				 */
 				code = *params++;
+				n -= 1;
 				break;
 			case SYS___syscall:
-				/*
-				 * Like syscall, but code is a quad,
-				 * so as to maintain quad alignment
-				 * for the rest of the args.
-				 */
-				if (callp != sysent)
-					break;
 				params++;
 				code = *params++;
+				n -= 2;
 				break;
 			default:
 				break;
 			}
-			if (code < 0 || code >= nsys)
-				callp += p->p_emul->e_nosys;
-			else
-				callp += code;
+
+			code &= (SYS_NSYSENT - 1);
+			callp += code;
 			argsize = callp->sy_argsize;
-			n = NARGREG - (params - (frame->fixreg + FIRSTARG));
+
 			if (argsize > n * sizeof(register_t)) {
-				bcopy(params, args, n * sizeof(register_t));
-				if (error = copyin(MOREARGS(frame->fixreg[1]),
-						   args + n,
-						   argsize - n * sizeof(register_t))) {
-#ifdef	KTRACE
-					/* Can't get all the arguments! */
-					if (KTRPOINT(p, KTR_SYSCALL))
-						ktrsyscall(p, code, argsize,
-						    args);
-#endif
+				memcpy(args, params, n * sizeof(register_t));
+				error = copyin(MOREARGS(frame->fixreg[1]),
+					       args + n,
+					       argsize - n * sizeof(register_t));
+				if (error)
 					goto syscall_bad;
-				}
 				params = args;
 			}
+
 #ifdef	KTRACE
 			if (KTRPOINT(p, KTR_SYSCALL))
 				ktrsyscall(p, code, argsize, params);
 #endif
-			rval[0] = 0;
-			rval[1] = frame->fixreg[FIRSTARG + 1];
 
-			switch (error = (*callp->sy_call)(p, params, rval)) {
+			rval[0] = 0;
+			rval[1] = 0;
+
+			error = (*callp->sy_call)(p, params, rval);
+			switch (error) {
 			case 0:
 				frame->fixreg[FIRSTARG] = rval[0];
 				frame->fixreg[FIRSTARG + 1] = rval[1];
@@ -251,6 +238,7 @@ syscall_bad:
 				frame->cr |= 0x10000000;
 				break;
 			}
+
 #ifdef	KTRACE
 			if (KTRPOINT(p, KTR_SYSRET))
 				ktrsysret(p, code, error, rval[0]);
@@ -276,7 +264,17 @@ syscall_bad:
 #endif
 
 	case EXC_AST|EXC_USER:
-		/* This is just here that we trap */
+		astpending = 0;		/* we are about to do it */
+		KERNEL_PROC_LOCK(p);
+		uvmexp.softs++;
+		if (p->p_flag & P_OWEUPC) {
+			p->p_flag &= ~P_OWEUPC;
+			ADDUPROF(p);
+		}
+		/* Check whether we are being preempted. */
+		if (want_resched)
+			preempt(NULL);
+		KERNEL_PROC_UNLOCK(p);
 		break;
 
 	case EXC_ALI|EXC_USER:
@@ -328,16 +326,7 @@ brain_damage:
 		panic("trap");
 	}
 
-	astpending = 0;		/* we are about to do it */
-
-	uvmexp.softs++;
-
-	if (p->p_flag & P_OWEUPC) {
-		p->p_flag &= ~P_OWEUPC;
-		ADDUPROF(p);
-	}
-
-	/* take pending signals */
+	/* Take pending signals. */
 	{
 		int sig;
 
@@ -345,26 +334,6 @@ brain_damage:
 			postsig(sig);
 	}
 
-	p->p_priority = p->p_usrpri;
-	if (want_resched) {
-		int sig;
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
-		while (sig = CURSIG(p))
-			postsig(sig);
-	}
-
-	/*
-	 * If profiling, charge recent system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, frame->srr0,
-			    (int)(p->p_sticks - sticks) * psratio);
-	}
 	/*
 	 * If someone stole the fp or vector unit while we were away,
 	 * disable it
@@ -375,7 +344,8 @@ brain_damage:
 	if (p != vecproc)
 		frame->srr1 &= ~PSL_VEC;
 #endif
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
 void
