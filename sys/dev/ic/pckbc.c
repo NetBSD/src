@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.28 2003/12/12 14:30:16 martin Exp $ */
+/* $NetBSD: pckbc.c,v 1.29 2003/12/12 22:35:13 martin Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.28 2003/12/12 14:30:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.29 2003/12/12 22:35:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1001,9 +1001,9 @@ pckbcintr_soft(vsc)
 	struct pckbc_internal *t = sc->id;
 	int data, slot, s;
 #ifndef __GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
-	int s;
+	int st;
 
-	s = spltty();
+	st = spltty();
 #endif
 
 	s = splhigh();
@@ -1020,7 +1020,7 @@ pckbcintr_soft(vsc)
 
 
 #ifndef __GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
-	splx(s);
+	splx(st);
 #endif
 }
 
