@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.98 2000/11/28 23:19:50 jtb Exp $
+.\"	$NetBSD: main,v 1.99 2000/12/18 06:39:38 joff Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1169,6 +1169,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Ken Nakata Ta Mt kenn@netbsd.org
 .It Ta Bob Nestor Ta Mt rnestor@netbsd.org
 .It Ta NONAKA Kimihiro Ta Mt nonaka@netbsd.org
+.It Ta Jesse Off Ta Mt joff@netbsd.org
 .It Ta Masaru Oki Ta Mt oki@netbsd.org
 .It Ta Atsushi Onoe Ta Mt onoe@netbsd.org
 .It Ta Greg Oster Ta Mt oster@netbsd.org
