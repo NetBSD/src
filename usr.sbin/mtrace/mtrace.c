@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.12 1999/01/14 21:54:11 he Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.13 1999/05/23 16:15:18 he Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.12 1999/01/14 21:54:11 he Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.13 1999/05/23 16:15:18 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -793,7 +793,7 @@ print_trace(index, buf)
     char *name;
     int i;
     int hop;
-    char *ms;
+    char *ms, *ft;
 
     i = abs(index);
     r = buf->resps + i - 1;
@@ -807,7 +807,10 @@ print_trace(index, buf)
 	    ms = scale(&hop);
 	    printf("  %d%s", hop, ms);
 	}
-	printf("  %s\n", flag_type(r->tr_rflags));
+	ft = flag_type(r->tr_rflags);
+	if (strlen(ft) != 0)
+	    printf("  %s", ft);
+	printf("\n");
 	memcpy(names[i-1], name, sizeof(names[0]) - 1);
 	names[i-1][sizeof(names[0])-1] = '\0';
     }
