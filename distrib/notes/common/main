@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.12 2000/11/16 17:17:15 tv Exp $
+.\"	$NetBSD: main,v 1.61.2.13 2001/04/06 01:30:10 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -135,6 +135,131 @@ Without the unique cooperation and coordination the net makes
 possible, it's likely that
 .Nx
 wouldn't exist.
+.Ss Upgrade path to NetBSD 1.5.1
+If you are not installing your system ``from scratch'' but instead
+are going to upgrade an existing system already running
+.Nx
+you need to know which versions you can upgrade with
+.Nx
+1.5.1.
+.Pp
+.Nx
+1.5.1 is an upgrade of
+.Nx
+1.5 and earlier major and patch releases of
+.Nx .
+.Pp
+The intermediate development versions of code available on the main trunk
+in our CVS repository (also known as ``NetBSD-current'') from
+.Em after
+the point where the release cycle for 1.5 was started are designated
+by version identifisers such as 1.5A, 1.5B, etc.
+These identifisers do not designate releases, but indicate major changes
+in internal kernel APIs.
+Note that the kernel from
+.Nx
+1.5.1 can
+.Em not
+be used to upgrade a system running one of those intermediate development
+versions.
+Trying to use the
+.Nx
+1.5.1 kernel on such a system
+.Em will
+in all probability result in problems.
+.Pp
+Please also ntoe that it is not possible to do a direct ``version''
+comparison between any of the intermediate development versions mentioned
+above and 1.5.1 to determine if a given feature is present or absent
+in 1.5.1.  The development of 1.5 and the subsequent ``point'' releases
+is done on a separate branch in the CVS repository which was created when
+the release cycle for 1.5 was started, and during the release cycle of
+1.5 and its patch releases, selective fixes and enhancements have been
+imported from the main development trunk.
+So there are features in 1.5.1 which were not in e.g. 1.5B, but the
+reverse is most probably also true.
+.Ss Major Changes Between 1.5 and 1.5.1
+The complete list of changes between
+.Nx
+1.5 and 1.5.1 can be found in the file CHANGES-1.5.1 in the top directory
+of the source tree.
+The following are highlights only:
+.Bl -bullet
+.It
+A driver for the Aironet/Cisco wireless pcmcia cards were added;
+see
+.Xr an 4 .
+.It
+NFS performance has been increased, possibly by as much as with 100%.
+.It
+The
+.Xr siop 4
+driver has improved in performance and robustness.
+.It
+Support for cloning pseudo-interfaces has been added.
+.It
+Support for 802.1Q virtual LANs has been added.
+See
+.Xr vlan 4 .
+.It
+The
+.Xr isp 4
+driver has been upgraded to (among other things) work on MacPPC.
+.It
+BIND has been upgraded to version 8.2.3.
+This fixes SA2001-001.
+.It
+Support for booting off RAIDframe RAID1 mirrors on i386 added.
+.It
+The
+.Xr lfs 4
+file system has again been substantially updated, but is still
+experimental.
+.It
+The
+.Xr pciide 4
+driver has added support for Ultra/100 on HPT370, Promise and Intel ICH2
+controllers, and support for some new controllers was also added.
+.It
+OpenSSH has been updated to deal with a security issue (SA2001-003).
+.It
+Sendmail is upgraded to version 8.11.3.
+.It
+The
+.Xr ex 4
+driver has added support for 3Com 3c555, 3c556 and 3c556B MiniPCI Ethernet
+cards.
+.It
+.Xr ftpd 8
+has been updated to deal with a security issue (SA2000-018).
+.It
+.Xr ntpd 8
+has been updated to deal with a security issue (SA2001-004).
+.It
+.Xr telnetd 8
+has been updated to deal with a security issue (SA2000-017).
+.It
+A vulnerability on i386 related to USER_LDT has been fixed (SA2001-002).
+.It
+The Linux emulation has been enhanced to prepare for the support
+of using the Linux version ov VMware.
+.It
+IP checksumming speed has been improved on i386 compared to 1.5.
+.It
+The DHCP software has been upgraded to ISC version 3, Beta 2, patchlevel 23,
+to fix among many other things core dumps in
+.Xr dhclient 8 .
+.It
+Various fixes and enhancements to INET6 and IPSEC code.
+.It
+Heimdal, our
+.Xr kerberos 8
+implementation has been upgraded to version 0.3e.
+.El
+In addition, many bugs have been fixed -- more than 75 problems
+reported through our prolem tracking system have been fixed,
+and some other non-reported problems have also been found and fixed.
+See the CHANGES-1.5.1 file for the complete list.
 .if \n[FOR_RELEASE] \{\
 .Ss Changes Since The Last Release
 .Pp
