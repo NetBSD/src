@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.9 2003/03/07 18:57:53 jonathan Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.10 2003/06/01 20:26:14 fvdl Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -236,6 +236,8 @@
 #define BGE_ASICREV_BCM5703_A1		0x10010000
 #define BGE_ASICREV_BCM5703_A2		0x10020000
 #define BGE_ASICREV_BCM5704_A0		0x20000000
+#define BGE_ASICREV_BCM5704_A1		0x20010000
+#define BGE_ASICREV_BCM5704_A2		0x20020000
 
 /* PCI DMA Read/Write Control register */
 #define BGE_PCIDMARWCTL_MINDMA		0x000000FF
