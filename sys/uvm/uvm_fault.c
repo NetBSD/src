@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.17.2.2 1999/02/25 04:12:50 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.17.2.3 1999/06/02 05:02:46 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -957,7 +957,8 @@ ReFault:
 				uvmexp.fltnomap++;
 				pmap_enter(ufi.orig_map->pmap, currva,
 				    VM_PAGE_TO_PHYS(pages[lcv]),
-				    UVM_ET_ISCOPYONWRITE(ufi.entry) ?
+				    UVM_ET_ISCOPYONWRITE(ufi.entry) ||
+				    pages[lcv]->flags & PG_RDONLY ?
 				    VM_PROT_READ : enter_prot, wired);
 
 				/* 
@@ -1659,7 +1660,7 @@ Case2:
 	    "  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=%d",
 	    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, promote);
 	pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
-	    enter_prot, wired);
+	    pg->flags & PG_RDONLY ? VM_PROT_READ : enter_prot, wired);
 
 	uvm_lock_pageq();
 	if (fault_type == VM_FAULT_WIRE) {
