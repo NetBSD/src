@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.14 2002/08/12 20:02:00 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.15 2002/08/12 20:13:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -610,7 +610,7 @@ ENTRY(cpu_preempt)
 
 	/* Lower the spl level to spl0 and get the current spl level. */
 	mov	r6, r0		/* save old lwp */
-	mov	r7, r1		/* save new lwp */
+	mov	r5, r1		/* save new lwp */
 
 #ifdef __NEWINTR
 	mov	r0, #(IPL_NONE)
@@ -627,11 +627,6 @@ ENTRY(cpu_preempt)
 	/* Push the old spl level onto the stack */
 	str	r0, [sp, #-0x0004]!
 
-	mov	r0, r6		/* restore old lwp */
-	mov	r1, r7		/* restore new lwp */
-
-	/* rem: r1 = new lwp */
-
 	IRQdisable
 
 	/* Do we have any active queues? */
@@ -641,6 +636,9 @@ ENTRY(cpu_preempt)
 	/* If none, panic! */
 	teq	r3, #0x00000000
 	beq	preempt_noqueues
+
+	mov	r0, r6		/* restore old lwp */
+	mov	r1, r5		/* restore new lwp */
 
 	/* rem: r0 = old lwp */
 	/* rem: r1 = new lwp */
