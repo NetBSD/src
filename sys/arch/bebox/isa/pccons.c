@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.7 1998/02/02 05:54:24 sakamoto Exp $	*/
+/*	$NetBSD: pccons.c,v 1.8 1998/03/21 22:52:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -586,7 +586,6 @@ pcopen(dev, flag, mode, p)
 	tp->t_param = pcparam;
 	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;

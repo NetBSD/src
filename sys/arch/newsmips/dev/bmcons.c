@@ -219,12 +219,10 @@ bmcnopen(dev, flag, mode, p)
 	if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	tp->t_oproc = bmcnstart;
-	tp->t_state |= TS_WOPEN;
 	/*
 	 * If this is first open, initialze tty state to default.
 	 */
 	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
 			tp->t_iflag = TTYDEF_IFLAG;

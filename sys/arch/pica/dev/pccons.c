@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.9 1998/01/12 20:04:29 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.10 1998/03/21 22:53:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -537,7 +537,6 @@ pcopen(dev, flag, mode, p)
 	tp->t_param = pcparam;
 	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
@@ -1865,7 +1864,7 @@ pc_xmode_off()
 #endif
 	async_update();
 }
-/*	$NetBSD: pccons.c,v 1.9 1998/01/12 20:04:29 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.10 1998/03/21 22:53:00 mycroft Exp $	*/
 
 #include <machine/mouse.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.12 1998/03/02 07:44:18 ross Exp $ */
+/* $NetBSD: promcons.c,v 1.13 1998/03/21 22:52:59 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.12 1998/03/02 07:44:18 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.13 1998/03/21 22:52:59 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ promopen(dev, flag, mode, p)
 	tp->t_param = promparam;
 	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN|TS_CARR_ON;
+		tp->t_state |= TS_CARR_ON;
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
