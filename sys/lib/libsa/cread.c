@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.1 1997/01/22 00:40:07 cgd Exp $	*/
+/*	$NetBSD: cread.c,v 1.2 1997/02/04 18:38:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -224,7 +224,17 @@ int
 close(fd)
 	int fd;
 {
+	struct open_file *f;
         struct sd *s;
+
+	if ((unsigned)fd >= SOPEN_MAX) {
+		errno = EBADF;
+		return (-1);
+	}
+	f = &files[fd];
+
+	if(!(f->f_flags & F_READ))
+		return(oclose(fd));
 
 	s = ss[fd];
 
