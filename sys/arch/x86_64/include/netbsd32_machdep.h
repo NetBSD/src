@@ -1,9 +1,12 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.4 2002/07/07 23:27:00 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.5 2002/10/23 13:16:39 scw Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
 
-typedef u_int32_t netbsd32_sigcontextp_t;
+typedef	u_int32_t netbsd32_pointer_t;
+#define	NETBSD32PTR64(p32)	((void *)(u_long)(u_int)(p32))
+
+typedef netbsd32_pointer_t netbsd32_sigcontextp_t;
 
 struct netbsd32_sigcontext13 {
 	int	sc_gs;

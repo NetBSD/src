@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.12 2002/08/26 21:06:02 christos Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.13 2002/10/23 13:16:42 scw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -102,7 +102,7 @@ netbsd32_copyargs(p, pack, arginfo, stackp, argp)
 
 	for (; --argc >= 0; sp += len, dp += len) {
 		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
-		    (error = copyoutstr(sp, (char *)(u_long)dp,
+		    (error = copyoutstr(sp, (char *)NETBSD32PTR64(dp),
 		    ARG_MAX, &len)) != 0)
 			return error;
 	}
@@ -114,7 +114,7 @@ netbsd32_copyargs(p, pack, arginfo, stackp, argp)
 
 	for (; --envc >= 0; sp += len, dp += len) {
 		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
-		    (error = copyoutstr(sp, (char *)(u_long)dp,
+		    (error = copyoutstr(sp, (char *)NETBSD32PTR64(dp),
 		    ARG_MAX, &len)) != 0)
 			return error;
 	}

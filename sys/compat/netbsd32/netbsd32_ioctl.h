@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.9 2002/01/03 15:28:13 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.10 2002/10/23 13:16:43 scw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -245,9 +245,9 @@ struct netbsd32_ifmediareq {
 /* from <net/if.h> */
 struct  netbsd32_ifdrv {
 	char		ifd_name[IFNAMSIZ];	/* if name, e.g. "en0" */
-	unsigned long	ifd_cmd;
-	size_t		ifd_len;
-	void		*ifd_data;
+	netbsd32_u_long	ifd_cmd;
+	netbsd32_size_t	ifd_len;
+	netbsd32_voidp	ifd_data;
 }; 
 #if 1
 /* from <sys/sockio.h> */
