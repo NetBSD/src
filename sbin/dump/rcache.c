@@ -1,4 +1,4 @@
-/*      $NetBSD: rcache.c,v 1.5 2000/10/11 04:57:42 briggs Exp $       */
+/*      $NetBSD: rcache.c,v 1.6 2001/05/27 14:17:57 lukem Exp $       */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ struct cdesc {
 #endif
 };
 
-static int findlru __P((void));
+static int findlru(void);
 
 static void *shareBuffer = NULL;
 static struct cheader *cheader;
@@ -90,11 +90,8 @@ static int64_t physreadsize;
 
 #define CDATA(i)	(cdata + ((i) * nblksread * dev_bsize))
 
-/*-----------------------------------------------------------------------*/
 void 
-initcache(cachesize, readblksize)
-	int cachesize;
-	int readblksize;
+initcache(int cachesize, int readblksize)
 {
 	size_t len;
 	size_t  sharedSize;
@@ -141,11 +138,12 @@ initcache(cachesize, readblksize)
 		memset(shareBuffer, '\0', sharedSize);
 	}
 }
-/*-----------------------------------------------------------------------*/
-/* Find the cache buffer descriptor that shows the minimal access time */
 
+/*
+ * Find the cache buffer descriptor that shows the minimal access time
+ */
 static int 
-findlru()
+findlru(void)
 {
 	int     i;
 	int     minTime = cdesc[0].time;
@@ -160,7 +158,7 @@ findlru()
 
 	return minIdx;
 }
-/*-----------------------------------------------------------------------*/
+
 /*
  * Read data directly from disk, with smart error handling.
  * Try to recover from hard errors by reading in sector sized pieces.
@@ -168,15 +166,11 @@ findlru()
  * consent from the operator to continue.
  */
 
-
 static int breaderrors = 0;
 #define BREADEMAX 32
 
 void 
-rawread(blkno, buf, size)
-	daddr_t blkno;
-	char *buf;
-	int size;
+rawread(daddr_t blkno, char *buf, int size)
 {
 	int cnt, i;
 #ifdef STATS
@@ -231,14 +225,8 @@ err:
 	}
 }
 
-/*-----------------------------------------------------------------------*/
-#define min(a,b)	(((a) < (b)) ? (a) : (b))
-
 void 
-bread(blkno, buf, size)
-	daddr_t blkno;
-	char *buf;
-	int size;
+bread(daddr_t blkno, char *buf, int size)
 {
 	int     osize = size;
 	daddr_t oblkno = blkno;
@@ -288,7 +276,7 @@ retry:
 			if (curr->blkstart <= blkno &&
 			    blkno < curr->blkend) {
 				/* Number of data blocks to be copied */
-				int toCopy = min(size,
+				int toCopy = MIN(size,
 				    (curr->blkend - blkno) * dev_bsize);
 #ifdef DIAGNOSTICS
 				if (toCopy <= 0 ||
@@ -357,7 +345,7 @@ retry:
 
 			blockBlkNo = (blkno / nblksread) * nblksread;
 			idx = findlru();
-			rsize = min(nblksread,
+			rsize = MIN(nblksread,
 			    ufsib->ufs_dsize - blockBlkNo) *
 			    dev_bsize;
 
@@ -428,9 +416,8 @@ retry:
 	return;
 }
 
-/*-----------------------------------------------------------------------*/
 void
-printcachestats()
+printcachestats(void)
 {
 #ifdef STATS
 	fprintf(stderr, "Pid %d: %d reads (%u bytes) "
@@ -440,5 +427,3 @@ printcachestats()
 	    (int) (((physreadsize - readsize) * 100) / readsize));
 #endif
 }
-
-/*-----------------------------------------------------------------------*/

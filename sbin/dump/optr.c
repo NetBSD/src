@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.14 2000/10/10 20:24:50 is Exp $	*/
+/*	$NetBSD: optr.c,v 1.15 2001/05/27 14:17:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.14 2000/10/10 20:24:50 is Exp $");
+__RCSID("$NetBSD: optr.c,v 1.15 2001/05/27 14:17:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,10 +69,10 @@ __RCSID("$NetBSD: optr.c,v 1.14 2000/10/10 20:24:50 is Exp $");
 #include "dump.h"
 #include "pathnames.h"
 
-void	alarmcatch __P((int));
-struct fstab *allocfsent __P((struct fstab *fs));
-int	datesort __P((const void *, const void *));
-static	void sendmes __P((char *, char *));
+void	alarmcatch(int);
+struct fstab *allocfsent(struct fstab *);
+int	datesort(const void *, const void *);
+static	void sendmes(char *, char *);
 
 /*
  *	Query the operator; This previously-fascist piece of code
@@ -89,8 +89,7 @@ static	int timeout;
 static	char *attnmessage;		/* attention message */
 
 int
-query(question)
-	char	*question;
+query(char *question)
 {
 	char	replybuffer[64];
 	int	back, errcount;
@@ -147,9 +146,9 @@ char lastmsg[100];
  *	sleep for 2 minutes in case nobody comes to satisfy dump
  */
 void
-alarmcatch(dummy)
-	int dummy;
+alarmcatch(int dummy)
 {
+
 	if (notify == 0) {
 		if (timeout == 0)
 			(void) fprintf(stderr,
@@ -174,9 +173,9 @@ alarmcatch(dummy)
  *	Here if an inquisitive operator interrupts the dump program
  */
 void
-interrupt(signo)
-	int signo;
+interrupt(int signo)
 {
+
 	msg("Interrupt received.\n");
 	if (query("Do you want to abort dump?"))
 		dumpabort(0);
@@ -193,8 +192,9 @@ struct	group *gp;
  *	Get the names from the group entry "operator" to notify.
  */	
 void
-set_operators()
+set_operators(void)
 {
+
 	if (!notify)		/*not going to notify*/
 		return;
 	gp = getgrnam(OPGRENT);
@@ -213,8 +213,7 @@ struct tm *localclock;
  *	that the process control groups are not messed up
  */
 void
-broadcast(message)
-	char	*message;
+broadcast(char	*message)
 {
 	time_t		clock;
 	FILE	*f_utmp;
@@ -269,8 +268,7 @@ broadcast(message)
 }
 
 static void
-sendmes(tty, message)
-	char *tty, *message;
+sendmes(char *tty, char *message)
 {
 	char t[50], buf[BUFSIZ];
 	char *cp;
@@ -313,7 +311,7 @@ DUMP: NEEDS ATTENTION: ",
 time_t	tschedule = 0;
 
 void
-timeest()
+timeest(void)
 {
 	time_t	tnow, deltat;
 
@@ -332,13 +330,7 @@ timeest()
 }
 
 void
-#if __STDC__
 msg(const char *fmt, ...)
-#else
-msg(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
@@ -346,11 +338,7 @@ msg(fmt, va_alist)
 #ifdef TDEBUG
 	(void) fprintf(stderr, "pid=%d ", getpid());
 #endif
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void) vfprintf(stderr, fmt, ap);
 	(void) fflush(stdout);
 	(void) fflush(stderr);
@@ -359,32 +347,17 @@ msg(fmt, va_alist)
 }
 
 void
-#if __STDC__
 msgtail(const char *fmt, ...)
-#else
-msgtail(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#if __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void) vfprintf(stderr, fmt, ap);
 	va_end(ap);
 }
 
 void
-#if __STDC__
 quit(const char *fmt, ...)
-#else
-quit(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
@@ -392,11 +365,7 @@ quit(fmt, va_alist)
 #ifdef TDEBUG
 	(void) fprintf(stderr, "pid=%d ", getpid());
 #endif
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void) vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void) fflush(stdout);
@@ -410,8 +379,7 @@ quit(fmt, va_alist)
  */
 
 struct fstab *
-allocfsent(fs)
-	struct fstab *fs;
+allocfsent(struct fstab *fs)
 {
 	struct fstab *new;
 
@@ -434,7 +402,7 @@ struct	pfstab {
 static	struct pfstab *table;
 
 void
-getfstab()
+getfstab(void)
 {
 	struct fstab *fs;
 	struct pfstab *pf;
@@ -474,8 +442,7 @@ getfstab()
  * The file name can omit the leading '/'.
  */
 struct fstab *
-fstabsearch(key)
-	char *key;
+fstabsearch(char *key)
 {
 	struct pfstab *pf;
 	struct fstab *fs;
@@ -502,11 +469,11 @@ fstabsearch(key)
 }
 
 /*
- *	Tell the operator what to do
+ *	Tell the operator what to do.
+ *	arg:	w ==> just what to do; W ==> most recent dumps
  */
 void
-lastdump(arg)
-	char	arg;	/* w ==> just what to do; W ==> most recent dumps */
+lastdump(char arg)
 {
 	int i;
 	struct fstab *dt;
@@ -549,8 +516,7 @@ lastdump(arg)
 }
 
 int
-datesort(a1, a2)
-	const void *a1, *a2;
+datesort(const void *a1, const void *a2)
 {
 	struct dumpdates *d1 = *(struct dumpdates **)a1;
 	struct dumpdates *d2 = *(struct dumpdates **)a2;
