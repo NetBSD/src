@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.64 2003/09/28 08:43:29 tsutsui Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.65 2003/10/29 23:41:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -761,8 +761,16 @@
 #define	MIPS_4Kc	0x80	/* MIPS 4Kc			ISA 32  */
 #define	MIPS_5Kc	0x81	/* MIPS 5Kc			ISA 64  */
 #define	MIPS_20Kc	0x82	/* MIPS 20Kc			ISA 64  */
+#define	MIPS_4Kmp	0x83	/* MIPS 4Km/4Kp			ISA 32  */
 #define	MIPS_4KEc	0x84	/* MIPS 4KEc			ISA 32  */
+#define	MIPS_4KEmp	0x85	/* MIPS 4KEm/4KEp		ISA 32  */
 #define	MIPS_4KSc	0x86	/* MIPS 4KSc			ISA 32  */
+#define	MIPS_M4K	0x87	/* MIPS M4K			ISA 32  Rel 2 */
+#define	MIPS_25Kf	0x88	/* MIPS 25Kf			ISA 64  */
+#define	MIPS_5KE	0x89	/* MIPS 5KE			ISA 64  Rel 2 */
+#define	MIPS_4KEc_R2	0x90	/* MIPS 4KEc_R2			ISA 32  Rel 2 */
+#define	MIPS_4KEmp_R2	0x91	/* MIPS 4KEm/4KEp_R2		ISA 32  Rel 2 */
+#define	MIPS_4KSd	0x92	/* MIPS 4KSd			ISA 32  Rel 2 */
 
 /*
  * Alchemy (company ID 3) use the processor ID field to donote the CPU core
