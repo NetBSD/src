@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.97 2003/05/02 08:45:26 dsl Exp $	*/
+/*	$NetBSD: vnd.c,v 1.98 2003/05/10 23:12:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.97 2003/05/02 08:45:26 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.98 2003/05/10 23:12:43 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -404,7 +404,7 @@ vndstrategy(bp)
 	 */
 	wlabel = vnd->sc_flags & (VNF_WLABEL|VNF_LABELLING);
 	if (DISKPART(bp->b_dev) != RAW_PART)
-		if (bounds_check_with_label(bp, lp, wlabel) <= 0)
+		if (bounds_check_with_label(&vnd->sc_dkdev, bp, wlabel) <= 0)
 			goto done;
 
 	/*

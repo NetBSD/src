@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.53 2003/05/08 20:36:12 fvdl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.54 2003/05/10 23:12:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.53 2003/05/08 20:36:12 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.54 2003/05/10 23:12:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,11 +474,12 @@ done:
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(bp, lp, wlabel)
+bounds_check_with_label(dk, bp, wlabel)
+	struct disk *dk;
 	struct buf *bp;
-	struct disklabel *lp;
 	int wlabel;
 {
+	struct disklabel *lp = dk->dk_label;
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int labelsector = lp->d_partitions[2].p_offset + LABELSECTOR;
 	int sz;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 2003/05/02 08:45:24 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 2003/05/10 23:12:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.7 2003/05/02 08:45:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.8 2003/05/10 23:12:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -237,8 +237,9 @@ done:
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
+bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 {
+	struct disklabel *lp = dk->dk_label;
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int labelsect = lp->d_partitions[RAW_PART].p_offset;
 	int maxsz = p->p_size;

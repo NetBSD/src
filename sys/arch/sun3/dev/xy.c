@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.45 2003/05/02 08:45:11 dsl Exp $	*/
+/*	$NetBSD: xy.c,v 1.46 2003/05/10 23:12:40 thorpej Exp $	*/
 
 /*
  *
@@ -1027,7 +1027,7 @@ xystrategy(bp)
 
 	lp = xy->sc_dk.dk_label;
 
-	if (bounds_check_with_label(bp, lp,
+	if (bounds_check_with_label(&xy->sc_dk, bp,
 		(xy->flags & XY_WLABEL) != 0) <= 0)
 		goto done;
 

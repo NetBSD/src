@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.5 2003/05/02 08:45:26 dsl Exp $ */
+/* $NetBSD: dksubr.c,v 1.6 2003/05/10 23:12:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 
 	wlabel = dksc->sc_flags & (DKF_WLABEL|DKF_LABELLING);
 	if (DISKPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, lp, wlabel) <= 0) {
+	    bounds_check_with_label(&dksc->sc_dkdev, bp, wlabel) <= 0) {
 		biodone(bp);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.4 2003/05/02 08:45:15 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5 2003/05/10 23:12:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -245,11 +245,12 @@ writedisklabel(dev, strat, lp, clp)
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(bp, lp, wlabel)
+bounds_check_with_label(dk, bp, wlabel)
+	struct disk *dk;
 	struct buf *bp;
-	struct disklabel *lp;
 	int wlabel;
 {
+	struct disklabel *lp = dk->dk_label;
 	struct partition *p;
 	int sz, maxsz;
 
