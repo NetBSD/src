@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.h,v 1.2 2000/11/14 21:07:26 matt Exp $ */
+/*	$NetBSD: openfirmio.h,v 1.3 2001/06/08 00:19:17 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
  *
  *	@(#)openpromio.h	8.1 (Berkeley) 6/11/93
  */
+#ifndef _DEV_OFW_OPENFIRMIO_H_
+#define _DEV_OFW_OPENFIRMIO_H_
 
 struct ofiocdesc {
 	int	of_nodeid;		/* passed or returned node id */
@@ -59,3 +61,11 @@ struct ofiocdesc {
 #define	OFIOCGETNEXT	_IOWR('O', 5, int)	/* get next node of node */
 #define	OFIOCGETCHILD	_IOWR('O', 6, int)	/* get first child of node */
 #define	OFIOCFINDDEVICE	_IOWR('O', 7, struct ofiocdesc) /* find a specific device */
+
+#ifdef _KERNEL
+int openfirmopen(dev_t, int, int, struct proc *);
+int openfirmclose(dev_t, int, int, struct proc *);
+int openfirmioctl(dev_t, u_long, caddr_t, int, struct proc *);
+#endif
+
+#endif /* _DEV_OFW_OPENFIRMIO_H_ */
