@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.h,v 1.5 2000/02/17 03:12:27 itohy Exp $	*/
+/*	$NetBSD: tar.h,v 1.5.6.1 2004/04/07 06:59:01 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -119,12 +115,12 @@ typedef struct {
 /*
  * default device names
  */
-#define	DEV_0		"/dev/rmt0"
-#define	DEV_1		"/dev/rmt1"
-#define	DEV_4		"/dev/rmt4"
-#define	DEV_5		"/dev/rmt5"
-#define	DEV_7		"/dev/rmt7"
-#define	DEV_8		"/dev/rmt8"
+#define	DEV_0		"/dev/rst0"
+#define	DEV_1		"/dev/rst1"
+#define	DEV_4		"/dev/rst4"
+#define	DEV_5		"/dev/rst5"
+#define	DEV_7		"/dev/rst7"
+#define	DEV_8		"/dev/rst8"
 #endif /* _PAX_ */
 
 /*
