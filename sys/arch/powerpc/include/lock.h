@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2 2000/05/02 04:41:10 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.3 2000/07/06 03:52:25 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,11 +41,69 @@
  */
 
 #ifndef _POWERPC_LOCK_H_
-#define	_POWERPC_LOCK_H_
+#define _POWERPC_LOCK_H_
 
-typedef	__volatile int		__cpu_simple_lock_t;
+typedef __volatile int __cpu_simple_lock_t;
 
-#define	__SIMPLELOCK_LOCKED	1
-#define	__SIMPLELOCK_UNLOCKED	0
+#define __SIMPLELOCK_LOCKED	1
+#define __SIMPLELOCK_UNLOCKED	0
+
+static __inline void
+__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
+{
+	*alp = __SIMPLELOCK_UNLOCKED;
+	__asm __volatile ("sync");
+}
+
+static __inline void
+__cpu_simple_lock(__cpu_simple_lock_t *alp)
+{
+	int old;
+
+	__asm __volatile ("	\n\
+				\n\
+1:	lwarx	%0,0,%1		\n\
+	cmpwi	%0,%2		\n\
+	beq+	3f		\n\
+2:	lwz	%0,0(%1)	\n\
+	cmpwi	%0,%2		\n\
+	beq+	1b		\n\
+	b	2b		\n\
+3:	stwcx.	%3,0,%1		\n\
+	bne-	1b		\n\
+	isync			\n\
+				\n"
+	: "=&r"(old)
+	: "r"(alp), "I"(__SIMPLELOCK_UNLOCKED), "r"(__SIMPLELOCK_LOCKED)
+	: "memory");
+}
+
+static __inline int
+__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
+{
+	int old;
+
+	__asm __volatile ("	\n\
+				\n\
+1:	lwarx	%0,0,%1		\n\
+	cmpwi	%0,%2		\n\
+	bne	2f		\n\
+	stwcx.	%3,0,%1		\n\
+	bne-	1b		\n\
+	isync			\n\
+2:				\n"
+	: "=&r"(old)
+	: "r"(alp), "I"(__SIMPLELOCK_UNLOCKED), "r"(__SIMPLELOCK_LOCKED)
+	: "memory");
+
+	return (old == __SIMPLELOCK_UNLOCKED);
+}
+
+static __inline void
+__cpu_simple_unlock(__cpu_simple_lock_t *alp)
+{
+	__asm __volatile ("sync");
+	*alp = __SIMPLELOCK_UNLOCKED;
+}
 
 #endif /* _POWERPC_LOCK_H_ */
