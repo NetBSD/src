@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.14 2001/04/30 19:57:10 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.15 2001/05/01 11:01:12 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -195,11 +195,14 @@ pull_trapframe:
 	ldr	lr, [sp, #TF_R15]	/* Pull return address and PSR */
 	tst	lr, #R15_MODE		/* Was trap in USR mode? */
 	bne	3f			/* If not, return */
+#ifndef __APCS_26__
+	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_SVC)
+#endif
 	ldr	r4, Lastpending
 1:
 	ldr	r1, [r4]
 	cmp	r1, #0			/* AST pending? */
-	bne	2f			/* If not, return */
+	beq	2f			/* If not, return */
 	mov	r0, sp			/* Reuse old trapframe */
 	bl	_C_LABEL(ast_handler)	/* Handle AST */
 	b	1b			/* Try again */
@@ -458,4 +461,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.14 2001/04/30 19:57:10 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.15 2001/05/01 11:01:12 bjh21 Exp $")
