@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2002/12/09 12:16:00 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 2003/03/04 07:50:59 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,11 +40,17 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
+#include "opt_multiprocessor.h"
 #endif
 
 #ifdef PPC_IBM4XX
 #include <powerpc/ibm4xx/cpu.h>
 #else
+#ifdef MULTIPROCESSOR
+#define CPU_MAXNUM 2
+#else
+#define CPU_MAXNUM 1
+#endif
 #include <powerpc/cpu.h>
 #endif
 

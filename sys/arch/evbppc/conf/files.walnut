@@ -1,11 +1,12 @@
-#	$NetBSD: files.walnut,v 1.1 2002/12/09 12:15:53 scw Exp $
+#	$NetBSD: files.walnut,v 1.2 2003/03/04 07:50:57 matt Exp $
 #
 # walnut-specific configuration info
 
 file	arch/evbppc/walnut/autoconf.c
 file	arch/evbppc/walnut/consinit.c
-file	arch/evbppc/walnut/disksubr.c		disk
 file	arch/evbppc/walnut/machdep.c
+
+#file	arch/evbppc/evbppc/bus_dma.c
 
 # Memory Disk for install kernel
 file	dev/md_root.c				memory_disk_hooks
