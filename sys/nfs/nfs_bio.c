@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.59 2001/01/07 05:54:41 enami Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.60 2001/01/30 03:47:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1149,6 +1149,7 @@ nfs_getpages(v)
 	mbp->b_flags = B_BUSY|B_READ| (async ? B_CALL|B_ASYNC : 0);
 	mbp->b_iodone = uvm_aio_biodone;
 	mbp->b_vp = vp;
+	mbp->b_proc = NULL;		/* XXXUBC */
 	LIST_INIT(&mbp->b_dep);
 
 	/*
@@ -1225,6 +1226,7 @@ nfs_getpages(v)
 			bp->b_flags = B_BUSY|B_READ|B_CALL|B_ASYNC;
 			bp->b_iodone = uvm_aio_biodone1;
 			bp->b_vp = vp;
+			bp->b_proc = NULL;	/* XXXUBC */
 			LIST_INIT(&bp->b_dep);
 		}
 		bp->b_private = mbp;
@@ -1423,6 +1425,7 @@ nfs_putpages(v)
 		(curproc == uvm.pagedaemon_proc ? B_PDAEMON : 0);
 	mbp->b_iodone = uvm_aio_biodone;
 	mbp->b_vp = vp;
+	mbp->b_proc = NULL;		/* XXXUBC */
 	LIST_INIT(&mbp->b_dep);
 
 	for (offset = origoffset;
@@ -1457,6 +1460,7 @@ nfs_putpages(v)
 			bp->b_flags = B_BUSY|B_WRITE|B_CALL|B_ASYNC;
 			bp->b_iodone = uvm_aio_biodone1;
 			bp->b_vp = vp;
+			bp->b_proc = NULL;	/* XXXUBC */
 			LIST_INIT(&bp->b_dep);
 		}
 		bp->b_private = mbp;
