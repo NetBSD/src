@@ -1,3 +1,5 @@
+/*	$NetBSD: rtsold.h,v 1.2 1999/09/03 05:14:38 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -55,13 +57,30 @@ struct ifinfo {
 #define IFS_DOWN	3
 #define IFS_TENTATIVE	4
 
-struct ifinfo *find_ifinfo(int ifindex);
-void rtsol_timer_update(struct ifinfo *ifinfo);
-
-extern int interface_status(struct ifinfo*);
+/* rtsold.c */
+struct ifinfo *find_ifinfo __P((int ifindex));
+void rtsol_timer_update __P((struct ifinfo *ifinfo));
 #ifdef __STDC__
-extern void warnmsg(int, const char *, const char *, ...);
+extern void warnmsg __P((int, const char *, const char *, ...));
 #else
-extern void warnmsg(int, const char *, const char *, va_list);
+extern void warnmsg __P((int, const char *, const char *, va_list));
 #endif
-extern int getinet6sysctl(int code);
+
+/* if.c */
+extern int ifinit __P((void));
+extern int interface_up __P((char *name));
+extern int interface_status __P((struct ifinfo*));
+extern int lladdropt_length __P((struct sockaddr_dl *sdl));
+extern void lladdropt_fill __P((struct sockaddr_dl *sdl,
+				struct nd_opt_hdr *ndopt));
+extern struct sockaddr_dl *if_nametosdl __P((char *name));
+extern int getinet6sysctl __P((int code));
+
+/* rtsol.c */
+extern int sockopen __P((void));
+extern void sendpacket __P((struct ifinfo *ifinfo));
+extern void rtsol_input __P((int s));
+
+/* probe.c */
+extern int probe_init __P((void));
+extern void defrouter_probe __P((int ifindex));

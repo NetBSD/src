@@ -1,3 +1,5 @@
+/*	$NetBSD: if.c,v 1.2 1999/09/03 05:14:37 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -71,9 +73,9 @@
 
 static int ifsock;
 
-static int getifa(char *name, struct in6_ifaddr *ifap);
-static void get_rtaddrs(int addrs, struct sockaddr *sa,
-			struct sockaddr **rti_info);
+static int getifa __P((char *name, struct in6_ifaddr *ifap));
+static void get_rtaddrs __P((int addrs, struct sockaddr *sa,
+			     struct sockaddr **rti_info));
 
 int
 ifinit()
