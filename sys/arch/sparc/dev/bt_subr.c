@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: bt_subr.c,v 1.1 93/10/12 15:28:39 torek Exp 
- * $Id: bt_subr.c,v 1.2 1993/11/29 06:15:27 deraadt Exp $
+ * $Id: bt_subr.c,v 1.3 1994/09/17 23:57:30 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -51,8 +51,8 @@
 
 #include <machine/fbio.h>
 
-#include <sparc/sbus/btreg.h>
-#include <sparc/sbus/btvar.h>
+#include <sparc/dev/btreg.h>
+#include <sparc/dev/btvar.h>
 
 /*
  * Common code for dealing with Brooktree video DACs.

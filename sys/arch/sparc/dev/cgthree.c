@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgthree.c,v 1.8 93/10/31 05:09:24 torek Exp
- * $Id: cgthree.c,v 1.6 1994/07/04 21:37:25 deraadt Exp $
+ * $Id: cgthree.c,v 1.7 1994/09/17 23:57:34 deraadt Exp $
  */
 
 /*
@@ -68,10 +68,10 @@
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
 
-#include <sparc/sbus/btreg.h>
-#include <sparc/sbus/btvar.h>
-#include <sparc/sbus/cgthreereg.h>
-#include <sparc/sbus/sbusvar.h>
+#include <sparc/dev/btreg.h>
+#include <sparc/dev/btvar.h>
+#include <sparc/dev/cgthreereg.h>
+#include <sparc/dev/sbusvar.h>
 
 /* per-display variables */
 struct cgthree_softc {
@@ -86,9 +86,11 @@ struct cgthree_softc {
 
 /* autoconfiguration driver */
 static void	cgthreeattach(struct device *, struct device *, void *);
-struct cfdriver cgthreecd =
-    { NULL, "cgthree", matchbyname, cgthreeattach,
-      DV_DULL, sizeof(struct cgthree_softc) };
+static int	cgthreematch(struct device *, struct cfdata *, void *);
+struct cfdriver cgthreecd = {
+	NULL, "cgthree", cgthreematch, cgthreeattach,
+	DV_DULL, sizeof(struct cgthree_softc)
+};
 
 /* frame buffer generic driver */
 static void	cgthreeunblank(struct device *);
@@ -105,6 +107,34 @@ static void cgthreeloadcmap __P((struct cgthree_softc *, int, int));
 #define	CGTHREE_MAJOR	55		/* XXX */
 
 /*
+ * Match a cgsix.
+ */
+int
+cgthreematch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct confargs *ca = aux;
+	struct romaux *ra = &ca->ca_ra;
+
+	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
+		printf("[addr %8x %8x irq %d]", ra->ra_paddr, ra->ra_vaddr,
+		    ra->ra_intr);
+		ra->ra_len = NBPG;
+
+		/*
+		 * On the VME or OBIO busses, if we don't bus error it
+		 * exists. The obio/vme functions will have mapped the 
+		 * first page for us, but we need to look at a register
+		 * much later on. So, map it instead.
+		 */
+		return (probeget(ra->ra_vaddr, 4) != 0);
+	}
+	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
+}
+
+/*
  * Attach a display.  We need to notice if it is the console, too.
  */
 void
@@ -113,11 +143,13 @@ cgthreeattach(parent, self, args)
 	void *args;
 {
 	register struct cgthree_softc *sc = (struct cgthree_softc *)self;
-	register struct sbus_attach_args *sa = args;
-	register int node = sa->sa_ra.ra_node, ramsize, i;
+	register struct confargs *ca = args;
+	register int node, ramsize, i;
 	register volatile struct bt_regs *bt;
 	register struct cgthree_all *p;
 	int isconsole;
+	int sbus = 1;
+	char *nam;
 
 	sc->sc_fb.fb_major = CGTHREE_MAJOR;	/* XXX to be removed */
 
@@ -128,15 +160,30 @@ cgthreeattach(parent, self, args)
 	 * to be correct as defaults go...
 	 */
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN3COLOR;
-	sc->sc_fb.fb_type.fb_width = getpropint(node, "width", 1152);
-	sc->sc_fb.fb_type.fb_height = getpropint(node, "height", 900);
-	sc->sc_fb.fb_linebytes = getpropint(node, "linebytes", 1152);
+	switch (ca->ca_bustype) {
+	case BUS_OBIO:
+	case BUS_VME:
+		sbus = node = 0;
+		sc->sc_fb.fb_type.fb_width = 1152;
+		sc->sc_fb.fb_type.fb_height = 900;
+		sc->sc_fb.fb_linebytes = 1152;
+		nam = "cgthree";
+		break;
+	case BUS_SBUS:
+		node = ca->ca_ra.ra_node;
+		sc->sc_fb.fb_type.fb_width = getpropint(node, "width", 1152);
+		sc->sc_fb.fb_type.fb_height = getpropint(node, "height", 900);
+		sc->sc_fb.fb_linebytes = getpropint(node, "linebytes", 1152);
+		nam = getpropstring(node, "model");
+		break;
+	}
+
 	ramsize = roundup(sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes,
 		NBPG);
 	sc->sc_fb.fb_type.fb_depth = 8;
 	sc->sc_fb.fb_type.fb_cmsize = 256;
 	sc->sc_fb.fb_type.fb_size = ramsize;
-	printf(": %s, %d x %d", getpropstring(node, "model"),
+	printf(": %s, %d x %d", nam,
 	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
 
 	/*
@@ -146,8 +193,8 @@ cgthreeattach(parent, self, args)
 	 * going to print characters via rconsole.
 	 */
 	isconsole = node == fbnode && fbconstty != NULL;
-	p = (struct cgthree_all *)sa->sa_ra.ra_paddr;
-	if ((sc->sc_fb.fb_pixels = sa->sa_ra.ra_vaddr) == NULL && isconsole) {
+	p = (struct cgthree_all *)ca->ca_ra.ra_paddr;
+	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen, but what the heck */
 		sc->sc_fb.fb_pixels = mapiodev(p->ba_ram, ramsize);
 	}
@@ -172,7 +219,8 @@ cgthreeattach(parent, self, args)
 #endif
 	} else
 		printf("\n");
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+	if (sbus)
+		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	if (node == fbnode)
 		fb_attach(&sc->sc_fb);
 }

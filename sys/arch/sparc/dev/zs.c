@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.12 1994/08/20 09:11:02 deraadt Exp $
+ * $Id: zs.c,v 1.13 1994/09/17 23:57:39 deraadt Exp $
  */
 
 /*
@@ -207,8 +207,15 @@ zs_write(zc, reg, val)
 static int
 zsmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct romaux *ra = aux;
+	struct confargs *ca = aux;
+	struct romaux *ra = &ca->ca_ra;
 
+	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
+		printf("[addr %8x %8x irq %d]", ra->ra_paddr, ra->ra_vaddr,
+		    ra->ra_intr);
+		ra->ra_len = NBPG;
+		return (probeget(ra->ra_vaddr, 1) != 0);
+	}
 	return (getpropint(ra->ra_node, "slave", -2) == cf->cf_unit);
 }
 
@@ -226,7 +233,8 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	register struct zs_chanstate *cs;
 	register volatile struct zsdevice *addr;
 	register struct tty *tp, *ctp;
-	register struct romaux *ra = aux;
+	register struct confargs *ca = aux;
+	register struct romaux *ra = &ca->ca_ra;
 	int pri, softcar;
 	static int didintr, prevpri;
 
