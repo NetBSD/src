@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.282 1999/12/12 11:53:41 soren Exp $
+#	$NetBSD: GENERIC,v 1.283 1999/12/13 20:22:53 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -612,6 +612,7 @@ ugen*	at uhub? port ?
 # Audio Devices
 
 # PCI audio devices
+clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
@@ -647,6 +648,7 @@ opl*	at ym?
 
 # Audio support
 #audio*	at aria?
+audio*	at clcs?
 audio*	at eap?
 audio*	at eso?
 audio*	at ess?
