@@ -1,0 +1,224 @@
+.\"	$NetBSD: prep,v 1.1.2.2 2000/02/22 00:25:19 he Exp $
+.
+.(Note
+Currently
+.Nx
+\*V
+requires a dedicated drive if it is going to be run from a local disk
+drive.  In other words,
+.Nx
+\*V
+cannot be installed on the hard drive on which MacOS and/or any other
+oparating systems reside.  This is because of
+.Nx
+\*V
+currently does not support Apple's Disk Partition Map.
+.Note)
+.Pp
+Before you start, you must choose a boot medium.  There are
+several possibilities:
+.Bl -bullet
+.It
+Boot from the network
+.It
+Boot from floppy (if your machine has one)
+.It
+Boot from a CD-ROM
+.It
+Boot from a disk drive prepared on another machine
+.El
+.Pp
+This latter option is not described further here.
+.Pp
+If you have a newer Macintosh, want to boot from the network, and
+don't want to pass any special options to the boot command, you
+can net-boot by resetting and holding the
+.Dq N
+key down during the boot sequence.  In any other case, you will
+need to issue commands to the OpenFirmware in your Macintosh.
+.Pp
+The various Apple Macintosh machines have slightly different versions
+of OpenFirmware, and they vary somewhat in their capabilities, so
+the documentation provided here is more hints than the definitive
+all-encompassing truth about OpenFirmware on Macintosh machines.
+Some versions of OpenFirmware also has bugs -- check with Apple if
+a firmware update is available for your particular model.
+.Pp
+To get into OpenFirmware, reset the Macintosh and hold down
+Command-Option-O-F while booting.  The firmware checks the state
+of the keys some time after the startup chime -- exactly when varies
+from model to model. The G3 PowerBooks seem to be the pickiest
+about timing. If you're having problems, try waiting until the
+startup chime starts, then quickly press the keys before it finishes
+(and hold them down until you see the OpenFirmware screen).  It's
+also been reported that it's easier to get into Open Firmware from
+a powered-off state than it is from a reboot.
+.Pp
+If your screen remains dark after this procedure, you have an old
+Macintosh where you must interact with OpenFirmware via the serial
+port at 38400 baud, parity none, 8 bits.  Newer machines will give
+you a prompt on the screen.
+.Pp
+The OpenFirmware prompt looks like this:
+.Bd -literal -offset
+	ok
+	0 >
+.Ed
+.Pp
+If you want to always boot to OpenFirmware, enter the following at an
+OpenFirmware prompt
+.Bd -literal -offset
+	setenv auto-boot? false
+.Ed
+.Pp
+This can always be set back with
+.Bd -literal -offset
+	setenv auto-boot? true
+.Ed
+.Pp
+or you can reset all the settings to their defaults with
+.Bd -literal -offset
+	set-defaults
+.Ed
+.Pp
+If you want to boot from floppy, you can use
+.Bd -literal -offset
+	boot fd:0
+.Ed
+.Pp
+If you want to boot from the network, you can use
+.Bd -literal -offset
+	boot enet:0
+.Ed
+.Pp
+or possibly simply
+.Bd -literal -offset
+	boot enet
+.Ed
+.Pp
+When booting from the network the Macintosh will issue a BOOTP/DHCP
+query to get it's IP address, and load the file given in the reply
+using TFTP.  The file loaded is typically
+.Dq ofwboot.elf.
+This second-stage boot loader will in turn use DHCP again to
+get the Mac's IP address, the IP address of an NFS file server,
+and the root path to mount.  ofwboot.elf will then use NFS to load
+the kernel, typically
+.Dq netbsd.
+.Pp
+.(Note
+Older Macintosh machines' OpenFirmware may not have support for loading
+an ELF executable -- the error message may say 
+.Dq OBJECT FILE FORMAT NOT RECOGNIZED.
+In that case, you need to use an XCOFF boot loader, named
+.Dq ofwboot.xcf.
+Once that boot loader runs, it can boot the normal ELF
+kernel just fine.
+.Pp
+Also note that some older Macintoshes which use BOOTP will need to have
+the 
+.Dq Vendor Extensions
+flag set, typically by 
+.Dq always-reply-rfc1048
+in the DHCP daemon configuration file.
+.Note)
+.Pp
+If you want to run your Macintosh diskless, you will need to populate
+the NFS server's area used for your Macintosh with macppc binaries.
+Please also remember to do
+.Dq cd dev; ./MAKEDEV all
+to create the
+required device nodes, and edit etc/rc.conf and etc/fstab.  If, on
+the other hand, you just want to load the install kernel via the network
+to install or upgrade your machine, you only need the install kernel
+installed in the root directory on the NFS server.
+.Pp
+In some cases you may want to interact with the ofwboot program to
+tell it which file to load.  You can do that by passing the
+.Dq -a
+flag to the boot loader, i.e.:
+.Bd -literal -offset
+	boot enet:0 -a
+.Ed
+.Pp
+.(Note
+Using DHCP for network boot has the annoying problem that if you
+have some other network device which responds to 
+.Dq anonymous
+DHCP queries on your network (cable modem, DSL box or the like),
+you may need to disconnect these devices in order to make the
+network boot of the Macintosh work.
+.Note)
+.Pp
+An example dhcpd.conf file follows.
+.Bd -literal -offset
+# Notes:
+# To set up dhcpd, install this file and ensure that /var/db/dhcpd.leases 
+# exists.  
+#
+get-lease-hostnames true;		# DNS lookup for dynamic IP's
+use-host-decl-names true;		# take fixed-ip hostname from the 
+					# host <x> declaration
+
+	subnet 10.50.100.5 netmask 255.255.255.248 {
+	# no dynamically assigned addrs in this subnet
+		option routers 10.50.100.1;
+		option subnet-mask 255.255.255.248;
+		option broadcast-address 10.50.100.7;
+	}
+
+host majic {
+	hardware ethernet 00:05:02:f7:22:d3;
+	filename "ofwboot.elf";
+	next-server 10.50.100.3;
+	option root-path "/usr/export/majic";
+	fixed-address majic;
+#	always-reply-rfc1048 true;
+}
+.Ed
+.Pp
+.(Note
+The root-path has a rather short maximum length, and this may cause
+ofwboot.elf not to load your kernel.  The above reportedly works,
+but adding 
+.Dq /netbsd-nfsroot
+makes it not work.
+.Note)
+.Pp
+To boot from CD-ROM (if your Macintosh supports it; apparently only
+later models do), do
+.Bd -literal -offset
+	boot cd:,ofwboot.elf
+.Ed
+.Pp
+A few commands which may make it easier to get your machine going are:
+.Bd -literal -offset
+	boot scsi/sd@1:0
+.Ed
+.Pp
+boots from the first bootable partition on target 1 on (of one of)
+the SCSI bus(es).
+.Bd -literal -offset
+	devalias
+.Ed
+.Pp
+shows the device aliases on your machine,
+.Dq scsi
+is typically a device alias.  The command
+.Bd -literal -offset
+	dev / ls
+.Ed
+.Pp
+lists the entire device tree.
+.Bd -literal -offset
+	printenv
+.Ed
+.Pp
+displays the current
+.Dq environment
+variable settings in your OpenFirmware. Lastly,
+.Bd -literal -offset
+	reset-all
+.Ed
+.Pp
+reinitializes OpenFirmware.
