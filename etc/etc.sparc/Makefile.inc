@@ -1,7 +1,7 @@
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.3 1994/04/20 12:44:53 deraadt Exp $
+#	$Id: Makefile.inc,v 1.4 1994/04/27 05:14:46 deraadt Exp $
 
 .ifdef DESTDIR
 snap_md: netbsd-sd0 netbsd-sd1 inst
@@ -23,6 +23,7 @@ netbsd-sd0:
 inst:
 	cp ${.CURDIR}/etc.sparc/README ${DESTDIR}/snapshot/README
 	cp ${.CURDIR}/etc.sparc/install.sh ${DESTDIR}/snapshot/install.sh
-	cd ${DESTDIR} && find dev -print | cpio -o | gzip -9 > snapshot/dev.cpio.gz
+	cd ${DESTDIR} ./MAKEDEV all && \
+	    find dev -print | cpio -o | gzip -9 > snapshot/dev.cpio.gz
 
 .endif	# DESTDIR check
