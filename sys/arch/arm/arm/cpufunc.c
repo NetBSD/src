@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.10 2001/06/07 21:07:22 chris Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.11 2001/07/09 19:51:14 reinoud Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -1036,7 +1036,7 @@ arm6_setup(args)
 		 | CPU_CONTROL_AFLT_ENABLE;
 
 #ifdef ARM6_LATE_ABORT
-	cpu_ctrl |= CPU_CONTROL_LABT_ENABLE;
+	cpuctrl |= CPU_CONTROL_LABT_ENABLE;
 #endif	/* ARM6_LATE_ABORT */
 
 	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
