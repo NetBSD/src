@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.278 2000/11/14 16:20:55 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.279 2000/11/18 05:29:27 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.272 2000/11/14 16:20:20 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.273 2000/11/18 05:29:00 thorpej Exp 
  */
 
 /*
@@ -608,6 +608,9 @@
 #define	PCI_PRODUCT_3DLABS_PERMEDIA	0x0004		/* GLINT Permedia */
 #define	PCI_PRODUCT_3DLABS_500MX	0x0006		/* GLINT 500MX */
 #define	PCI_PRODUCT_3DLABS_PERMEDIA2	0x0007		/* GLINT Permedia 2 */
+#define	PCI_PRODUCT_3DLABS_GAMMA	0x0008		/* GLINT GAMMA */
+#define	PCI_PRODUCT_3DLABS_PERMEDIA2V	0x0009		/* GLINT Permedia 2V */
+#define	PCI_PRODUCT_3DLABS_PERMEDIA3	0x000a		/* GLINT Permedia 3 */
 
 /* 3ware products */
 #define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* Escalade IDE RAID */
