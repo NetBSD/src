@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.1 2002/02/10 01:57:54 thorpej Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.2 2002/10/14 22:32:55 bjh21 Exp $	*/
 
 /*
  * Copyright 1997
@@ -219,7 +219,7 @@ Lfind_highest_ipl:
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r7, [pc, #Lirqhandlers - . - 8]
+	ldr	r7, Lirqhandlers
         mov	r9, #0x00000001
 
 irqloop:
@@ -254,13 +254,12 @@ irqloop:
 #endif	/* IRQSTATS */
 
 irqchainloop:
-	add	lr, pc, #nextinchain - . - 8	/* return address */
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
 	teq	r0, #0x00000000		/* If arg is zero pass stack frame */
 	addeq	r0, sp, #8		/* ... stack frame */
+	mov	lr, pc			/* return address */
 	ldr	pc, [r6, #(IH_FUNC)]	/* Call handler */
 
-nextinchain:
 	teq	r0, #0x00000001		/* Was the irq serviced ? */
 	beq	irqdone
 

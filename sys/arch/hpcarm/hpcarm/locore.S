@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5 2002/01/25 19:19:30 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.6 2002/10/14 22:32:54 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -107,10 +107,8 @@ ENTRY_NP(cpu_reset)
 	ldr	r4, [r4]
 
 	ldr	r0, Lcpufuncs
-	add	lr, pc, #Lboot_cache_purged - . - 8
+	mov	lr, pc
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
-
-Lboot_cache_purged:
 
 	/*
  	 * MMU & IDC off, 32 bit program & data space
@@ -146,7 +144,7 @@ ENTRY_NP(Execute)
 	mov	ip, r3
 	ldr	r7, return
 	stmfd	sp!, {r0, r7}
-	add	r7, pc, #LExec - . - 8
+	adr	r7, LExec
 	mov	r5, r1
 	mrs	r4, cpsr
 	ldmia	r2, {r0-r3}
