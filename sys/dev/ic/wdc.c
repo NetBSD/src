@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.114.4.1 2002/06/13 02:35:20 lukem Exp $ */
+/*	$NetBSD: wdc.c,v 1.114.4.2 2002/11/01 16:26:23 tron Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.114.4.1 2002/06/13 02:35:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.114.4.2 2002/11/01 16:26:23 tron Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1148,6 +1148,8 @@ wdc_probe_caps(drvp)
 						printf(" (Ultra/66)");
 					else if (i == 5)
 						printf(" (Ultra/100)");
+					else if (i == 6)
+						printf(" (Ultra/133)");
 					sep = ",";
 					printed = 1;
 				}
