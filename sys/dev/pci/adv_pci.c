@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_pci.c,v 1.6 1999/02/25 20:20:30 dante Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.7 1999/06/12 12:09:58 dante Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -193,8 +193,8 @@ adv_pci_attach(parent, self, aux)
 			bhlcr &= 0xFFFF00FFul;
 			pci_conf_write(pa->pa_pc, pa->pa_tag,
 					PCI_BHLC_REG, bhlcr);
-		} else if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_ULTRA) &&
-			   (PCI_LATTIMER(bhlcr) < 0x20)) {
+		} else if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_ULTRA)
+			    && (PCI_LATTIMER(bhlcr) < 0x20)) {
 			bhlcr &= 0xFFFF00FFul;
 			bhlcr |= 0x00002000ul;
 			pci_conf_write(pa->pa_pc, pa->pa_tag,
@@ -212,11 +212,16 @@ adv_pci_attach(parent, self, aux)
 		       sc->sc_dev.dv_xname);
 		return;
 	}
+
+	ASC_SET_CHIP_CONTROL(iot, ioh, ASC_CC_HALT);
+	ASC_SET_CHIP_STATUS(iot, ioh, 0);
+
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = pa->pa_dmat;
 	sc->pci_device_id = pa->pa_id;
 	sc->bus_type = ASC_IS_PCI;
+	sc->chip_version = ASC_GET_CHIP_VER_NO(iot, ioh);
 
 	/*
 	 * Initialize the board
