@@ -1,4 +1,4 @@
-/*	$NetBSD: talk.h,v 1.4 1997/10/20 00:23:32 lukem Exp $	*/
+/*	$NetBSD: talk.h,v 1.5 1998/07/26 22:26:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -70,7 +70,7 @@ void	ctl_transact __P((struct in_addr, CTL_MSG, int, CTL_RESPONSE *));
 void	display __P((xwin_t *, char *, int));
 void	disp_msg __P((int));
 void	end_msgs __P((void));
-void	get_addrs __P((char *, char *));
+void	get_addrs __P((const char *, const char *));
 void	get_names __P((int, char **));
 void	init_display __P((void));
 void	invite_remote __P((void));

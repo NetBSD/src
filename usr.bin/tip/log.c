@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.6 1997/11/22 08:29:59 lukem Exp $	*/
+/*	$NetBSD: log.c,v 1.7 1998/07/26 22:27:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: log.c,v 1.6 1997/11/22 08:29:59 lukem Exp $");
+__RCSID("$NetBSD: log.c,v 1.7 1998/07/26 22:27:42 mycroft Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -54,7 +54,8 @@ void
 logent(group, num, acu, message)
 	char *group, *num, *acu, *message;
 {
-	char *user, *timestamp;
+	const char *user;
+	char *timestamp;
 	struct passwd *pwd;
 	time_t t;
 
