@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.334 2001/06/18 13:19:07 onoe Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.335 2001/06/20 05:46:24 imp Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.330 2001/06/18 13:18:08 onoe Exp 
+ *	NetBSD: pcidevs,v 1.331 2001/06/20 05:44:33 imp Exp 
  */
 
 /*
@@ -2254,10 +2254,34 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Maestro 1 PCI Audio Accelerator",
 	},
 	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729,
+	    0,
+	    "O2 Micro Inc",
+	    "OZ6729 PCI-PCMCIA Bridge",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6730,
+	    0,
+	    "O2 Micro Inc",
+	    "OZ6730 PCI-PCMCIA Bridge",
+	},
+	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6832,
 	    0,
 	    "O2 Micro Inc",
-	    "OZ6832 CardBus Controller",
+	    "OZ6832/OZ6833 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6860,
+	    0,
+	    "O2 Micro Inc",
+	    "OZ6860 PCI-Cardbus Bridge",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6872,
+	    0,
+	    "O2 Micro Inc",
+	    "OZ6812/OZ6872 PCI-Cardbus Bridge",
 	},
 	{
 	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
