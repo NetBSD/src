@@ -1,4 +1,4 @@
-/*	$NetBSD: ipl.h,v 1.1.1.1.2.2 1999/12/20 21:02:07 he Exp $	*/
+/*	$NetBSD: ipl.h,v 1.1.1.1.2.3 2000/01/08 16:41:20 he Exp $	*/
 
 /*
  * Copyright (C) 1993-1999 by Darren Reed.
@@ -13,6 +13,6 @@
 #ifndef	__IPL_H__
 #define	__IPL_H__
 
-#define	IPL_VERSION	"IP Filter: v3.3.5"
+#define	IPL_VERSION	"IP Filter: v3.3.6"
 
 #endif

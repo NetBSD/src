@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_raudio_pxy.c,v 1.1.1.1.2.2 1999/12/20 21:02:06 he Exp $	*/
+/*	$NetBSD: ip_raudio_pxy.c,v 1.1.1.1.2.3 2000/01/08 16:41:20 he Exp $	*/
 
 #if SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
@@ -235,7 +235,7 @@ nat_t *nat;
 	} else
 		return 0;
 
-	for (a3 = a1, a4 = a2; a4 > 0; a4--, a3++) {
+	for (a3 = a1, a4 = a2; (a4 > 0) && (a3 < 19) && (a3 >= 0); a4--,a3++) {
 		rap->rap_sbf |= (1 << a3);
 		rap->rap_svr[a3] = *s++;
 	}
