@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.14 2000/05/02 12:46:06 simonb Exp $
+# $NetBSD: shl.mi,v 1.14.2.1 2000/05/29 14:02:28 minoura Exp $
 ./usr/lib/libbfd.so.3.0		comp-util-bin
 ./usr/lib/libbz2_pic.a		comp-c-piclib
 ./usr/lib/libc_pic.a		comp-c-piclib
@@ -26,3 +26,9 @@
 ./usr/lib/libutil_pic.a		comp-c-piclib
 ./usr/lib/libwrap_pic.a		comp-c-piclib
 ./usr/lib/libz_pic.a		comp-c-piclib
+./usr/lib/runemodule/libBIG5_pic.a		comp-c-piclib
+./usr/lib/runemodule/libEUCTW_pic.a		comp-c-piclib
+./usr/lib/runemodule/libEUC_pic.a		comp-c-piclib
+./usr/lib/runemodule/libISO2022_pic.a		comp-c-piclib
+./usr/lib/runemodule/libMSKanji_pic.a		comp-c-piclib
+./usr/lib/runemodule/libUTF2_pic.a		comp-c-piclib

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.8 2000/04/04 03:12:22 itojun Exp $
+#	$NetBSD: mi,v 1.8.2.1 2000/05/29 14:02:28 minoura Exp $
 ./bin/ed
 ./etc/openssl/openssl.cnf
 ./usr/bin/compile_et
@@ -12,6 +12,8 @@
 ./usr/bin/nt_gss_client
 ./usr/bin/openssl
 ./usr/bin/string2key
+./usr/bin/tcp_client
+./usr/bin/uu_client
 ./usr/include/gssapi/gssapi.h
 ./usr/include/kadm5/admin.h
 ./usr/include/kadm5/kadm5_err.h
@@ -137,6 +139,8 @@
 ./usr/libexec/kfd
 ./usr/libexec/kpasswdd
 ./usr/libexec/nt_gss_server
+./usr/libexec/tcp_server
+./usr/libexec/uu_server
 ./usr/sbin/kadmin
 ./usr/sbin/kstash
 ./usr/sbin/ktutil
