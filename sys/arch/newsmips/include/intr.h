@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 1999/12/31 08:15:48 tsubai Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2000/04/14 10:11:06 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -54,10 +54,25 @@ extern void _splnone __P((void));
 extern void _setsoftintr __P((int));
 extern void _clrsoftintr __P((int));
 
+/*
+ * software simulated interrupt
+ */
+#define SIR_NET		0x01
+#define SIR_SERIAL	0x02
+
+#define setsoft(x)	do {			\
+	extern u_int ssir;			\
+	int s;					\
+						\
+	s = splhigh();				\
+	ssir |= (x);				\
+	_setsoftintr(MIPS_SOFT_INT_MASK_1);	\
+	splx(s);				\
+} while (0)
+
 #define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
-#define setsoftnet()	_setsoftintr(MIPS_SOFT_INT_MASK_1)
-#define clearsoftclock() _clrsoftintr(MIPS_SOFT_INT_MASK_0)
-#define clearsoftnet()	_clrsoftintr(MIPS_SOFT_INT_MASK_1)
+#define setsoftnet()	setsoft(SIR_NET)
+#define setsoftserial()	setsoft(SIR_SERIAL)
 
 /*
  * nesting interrupt masks.
@@ -107,14 +122,8 @@ extern void _clrsoftintr __P((int));
 extern u_int intrcnt[];
 
 /* handle i/o device interrupts */
-extern int (*mips_hardware_intr) __P((u_int, u_int, u_int, u_int));
-extern int news3400_intr __P((u_int, u_int, u_int, u_int));
-extern int news5000_intr __P((u_int, u_int, u_int, u_int));
-
-/* handle software interrupts */
-extern void (*mips_software_intr) __P((int));
-
-#define SOFTISR_ZS	0x01
+extern void news3400_intr __P((u_int, u_int, u_int, u_int));
+extern void news5000_intr __P((u_int, u_int, u_int, u_int));
 
 extern void (*enable_intr) __P((void));
 extern void (*disable_intr) __P((void));
