@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.43.2.2 2004/08/03 10:56:27 skrll Exp $	*/
+/*	$NetBSD: file.h,v 1.43.2.3 2004/08/21 22:39:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -46,6 +46,7 @@ MALLOC_DECLARE(M_FILE);
 MALLOC_DECLARE(M_IOCTLOPS);
 
 struct proc;
+struct lwp;
 struct uio;
 struct iovec;
 struct stat;
