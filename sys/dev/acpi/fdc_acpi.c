@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.3 2003/01/09 00:22:39 jmcneill Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.4 2003/01/09 01:25:13 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.3 2003/01/09 00:22:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.4 2003/01/09 01:25:13 jmcneill Exp $");
 
 #include "rnd.h"
 
@@ -223,11 +223,16 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_present >= 0) {
 		sc->sc_known = 1;
 		fdc_acpi_getknownfds(asc);
-		fdcattach(sc);
 	} else {
-		printf("%s: unable to enumerate floppy drives\n",
+		/*
+		 * XXX if there is no _FDE control method, attempt to
+		 * probe without pnp
+		 */
+		printf("%s: unable to enumerate, attempting normal probe\n",
 		    sc->sc_dev.dv_xname);
 	}
+
+	fdcattach(sc);
 }
 
 static int
@@ -300,8 +305,12 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 			continue;
 		rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDI", &buf);
 		if (rv != AE_OK) {
+#ifdef ACPI_FDC_DEBUG
 			printf("%s: failed to evalulate _FDI: %x on drive %d\n",
 			    sc->sc_dev.dv_xname, rv, i);
+#endif
+			/* XXX if _FDI fails, assume 1.44MB floppy */
+			sc->sc_knownfds[i] = &fdc_acpi_fdtypes[0];
 			continue;
 		}
 		fdi = (ACPI_OBJECT *)buf.Pointer;
