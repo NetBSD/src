@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.9 2003/07/15 03:35:52 lukem Exp $	*/
+/*	$NetBSD: imc.c,v 1.10 2003/12/14 07:21:51 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.9 2003/07/15 03:35:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.10 2003/12/14 07:21:51 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,12 +47,16 @@ __KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.9 2003/07/15 03:35:52 lukem Exp $");
 struct imc_softc {
 	struct device sc_dev;
 
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+
 	int eisa_present : 1;
 };
 
 static int	imc_match(struct device *, struct cfdata *, void *);
 static void	imc_attach(struct device *, struct device *, void *);
 static int	imc_print(void *, const char *);
+void		imc_bus_reset(void);
 
 CFATTACH_DECL(imc, sizeof(struct imc_softc),
     imc_match, imc_attach, NULL, NULL);
@@ -71,6 +75,8 @@ struct imc_attach_args {
 #endif
 };
 
+struct imc_softc isc;
+
 static int
 imc_match(parent, match, aux)
 	struct device *parent;
@@ -78,17 +84,10 @@ imc_match(parent, match, aux)
 	void *aux;
 {
 
-	/*
-	 * The IMC is an INDY/INDIGO2 thing.
-	 */
-	if (mach_type != MACH_SGI_IP22)
-		return (0);
+	if ( (mach_type == MACH_SGI_IP22) || (mach_type == MACH_SGI_IP20) )
+		return (1);
 
-	/* Make sure it's actually there and readable */
-	if (badaddr((void*)MIPS_PHYS_TO_KSEG1(IMC_SYSID), sizeof(u_int32_t)))
-		return (0);
-
-	return (1);
+	return (0);
 }
 
 static void
@@ -99,25 +98,32 @@ imc_attach(parent, self, aux)
 {
 	u_int32_t reg;
 	struct imc_attach_args iaa;
-	struct imc_softc *isc = (void *) self;
-	u_int32_t sysid = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_SYSID);
+	struct mainbus_attach_args *ma = aux;
+	u_int32_t sysid;
+
+	isc.iot = SGIMIPS_BUS_SPACE_HPC;
+	if (bus_space_map(isc.iot, ma->ma_addr, 0,
+            BUS_SPACE_MAP_LINEAR, &isc.ioh))
+                panic("imc_attach: could not allocate memory\n");
+
+	sysid = bus_space_read_4(isc.iot, isc.ioh, IMC_SYSID);
 
 	/* EISA present bit is on even on Indys, so don't trust it! */
 	if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
-		isc->eisa_present = (sysid & IMC_SYSID_HAVEISA);
+		isc.eisa_present = (sysid & IMC_SYSID_HAVEISA);
 	else
-		isc->eisa_present = 0;
+		isc.eisa_present = 0;
 
 	printf("\nimc0: Revision %d", (sysid & IMC_SYSID_REVMASK));
 
-	if (isc->eisa_present)
+	if (isc.eisa_present)
 		printf(", EISA bus present");
 
 	printf("\n");
 
 	/* Clear CPU/GIO error status registers to clear any leftover bits. */
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_CPU_ERRSTAT) = 0;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_GIO_ERRSTAT) = 0;
+	bus_space_write_4(isc.iot, isc.ioh, IMC_CPU_ERRSTAT, 0);
+	bus_space_write_4(isc.iot, isc.ioh, IMC_GIO_ERRSTAT, 0);
 
 	/*
 	 * Enable parity reporting on GIO/main memory transactions.
@@ -127,15 +133,18 @@ imc_attach(parent, self, aux)
 	 * has the opposite sense... Turning it on turns the checks off!).
 	 * Finally, turn on interrupt writes to the CPU from the MC.
 	 */
-	reg = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_CPUCTRL0);
+	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_CPUCTRL0);
 	reg &= ~IMC_CPUCTRL0_NCHKMEMPAR;
 	reg |= (IMC_CPUCTRL0_GPR | IMC_CPUCTRL0_MPR | IMC_CPUCTRL0_INTENA);
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_CPUCTRL0) = reg;
+	bus_space_write_4(isc.iot, isc.ioh, IMC_CPUCTRL0, reg);
 
 	/* Setup the MC write buffer depth */
-	reg = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_CPUCTRL1);
+	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_CPUCTRL1);
 	reg = (reg & ~IMC_CPUCTRL1_MCHWMSK) | 13;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_CPUCTRL1) = reg;
+	if (mach_type == MACH_SGI_IP20)
+		reg = (reg & ~IMC_CPUCTRL1_HPCLITTLE) | IMC_CPUCTRL1_HPCFX;
+	bus_space_write_4(isc.iot, isc.ioh, IMC_CPUCTRL1, reg);
+
 
 	/*
 	 * Set GIO64 arbitrator configuration register:
@@ -144,39 +153,54 @@ imc_attach(parent, self, aux)
 	 * on the graphics variant present and I'm not sure how to figure
 	 * that out or 100% sure what the correct settings are for each.
 	 */
-	reg = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_GIO64ARB);
+	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_GIO64ARB);
 	reg &= (IMC_GIO64ARB_GRX64 | IMC_GIO64ARB_GRXRT | IMC_GIO64ARB_GRXMST);
 
 	/* GIO64 invariant for all IP22 platforms: one GIO bus, HPC1 @ 64 */
 	reg |= IMC_GIO64ARB_ONEGIO | IMC_GIO64ARB_HPC64;
 
 	/* Rest of settings are machine/board dependant */
-	switch (mach_subtype) {
-	case MACH_SGI_IP22_GUINESS:
-		/* EISA can bus-master, is 64-bit */
-		reg |= (IMC_GIO64ARB_EISAMST | IMC_GIO64ARB_EISA64);
-		break;
+	if (mach_type == MACH_SGI_IP20)
+	{
+	        reg |= (IMC_GIO64ARB_ONEGIO |
+			 IMC_GIO64ARB_EXP1RT | IMC_GIO64ARB_EXP0RT);
+                reg &= ~(IMC_GIO64ARB_HPC64 |
+                         IMC_GIO64ARB_HPCEXP64 | IMC_GIO64ARB_EISA64 |
+                         IMC_GIO64ARB_EXP064   | IMC_GIO64ARB_EXP164 |
+                         IMC_GIO64ARB_EXP0PIPE | IMC_GIO64ARB_EXP1PIPE |
+                         IMC_GIO64ARB_EXP0MST | IMC_GIO64ARB_EXP1MST);
+/* XXX second ethernet adapter */
+                reg |= IMC_GIO64ARB_EXP0MST;
+	}
+	else
+	{
+		switch (mach_subtype) {
+		case MACH_SGI_IP22_GUINESS:
+			/* EISA can bus-master, is 64-bit */
+			reg |= (IMC_GIO64ARB_EISAMST | IMC_GIO64ARB_EISA64);
+			break;
 
-	case MACH_SGI_IP22_FULLHOUSE:
+		case MACH_SGI_IP22_FULLHOUSE:
 		/*
 		 * All Fullhouse boards have a 64-bit HPC2 and pipelined
 		 * EXP0 slot.
 		 */
-		reg |= (IMC_GIO64ARB_HPCEXP64 | IMC_GIO64ARB_EXP0PIPE);
+			reg |= (IMC_GIO64ARB_HPCEXP64 | IMC_GIO64ARB_EXP0PIPE);
 
-		if (mach_boardrev < 2) {
+			if (mach_boardrev < 2) {
 			/* EXP0 realtime, EXP1 can master */
-			reg |= (IMC_GIO64ARB_EXP0RT | IMC_GIO64ARB_EXP1MST);
-		} else {
-			/* EXP1 pipelined as well, EISA masters */
-			reg |= (IMC_GIO64ARB_EXP1PIPE | IMC_GIO64ARB_EISAMST);
+				reg |= (IMC_GIO64ARB_EXP0RT | IMC_GIO64ARB_EXP1MST);
+			} else {
+				/* EXP1 pipelined as well, EISA masters */
+				reg |= (IMC_GIO64ARB_EXP1PIPE | IMC_GIO64ARB_EISAMST);
+			}
+			break;
 		}
-		break;
 	}
 
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_GIO64ARB) = reg;
+	bus_space_write_4(isc.iot, isc.ioh, IMC_GIO64ARB, reg);
 
-	if (isc->eisa_present) {
+	if (isc.eisa_present) {
 #if notyet
 		memset(&iaa, 0, sizeof(iaa));
 
@@ -205,3 +229,9 @@ imc_print(aux, name)
 	return UNCONF;
 }
 
+void
+imc_bus_reset(void)
+{
+	bus_space_write_4(isc.iot, isc.ioh, IMC_CPU_ERRSTAT, 0);
+	bus_space_write_4(isc.iot, isc.ioh, IMC_GIO_ERRSTAT, 0);
+}
