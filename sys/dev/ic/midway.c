@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.11 1996/07/14 20:05:31 cgd Exp $	*/
+/*	$NetBSD: midway.c,v 1.12 1996/07/15 16:40:27 cgd Exp $	*/
 /*	(sync'd to midway.c 1.59)	*/
 
 /*
@@ -122,6 +122,7 @@
 #include <dev/ic/midwayvar.h>
 #if defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
+#undef vtophys
 #define	vtophys(va)	__alpha_bus_XXX_dmamap(sc->en_bc, (void *)(va))
 #endif
 #elif defined(__FreeBSD__)
