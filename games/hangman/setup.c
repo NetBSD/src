@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.7 1999/09/09 17:30:20 jsm Exp $	*/
+/*	$NetBSD: setup.c,v 1.8 1999/09/17 20:45:49 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: setup.c,v 1.7 1999/09/09 17:30:20 jsm Exp $");
+__RCSID("$NetBSD: setup.c,v 1.8 1999/09/17 20:45:49 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -72,9 +72,9 @@ setup()
 	}
 
 	srand(time(NULL) + getpid());
-	if ((Dict = fopen(_PATH_DICT, "r")) == NULL) {
+	if ((Dict = fopen(Dict_name, "r")) == NULL) {
 		endwin();
-		err(1, "fopen %s", _PATH_DICT);
+		err(1, "fopen %s", Dict_name);
 	}
 	fstat(fileno(Dict), &sbuf);
 	Dict_size = sbuf.st_size;
