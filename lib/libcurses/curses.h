@@ -218,19 +218,28 @@ extern char	*ttytype;		/* Full name of current terminal. */
 #define	mvwinsch(w, y, x, c) \
 	(wmove(w, y, x) == ERR ? ERR : winsch(w, c))
 
+
 /* Psuedo functions. */
 #define	clearok(w, bf) \
 	((bf) ? ((w)->flags |= __CLEAROK) : ((w)->flags &= ~__CLEAROK))
 #define	flushok(w, bf) \
 	((bf) ? ((w)->flags |= __FLUSH) : ((w)->flags &= ~__FLUSH))
-#define	getyx(w, y, x) \
-	(y) = (w)->cury, (x) = (w)->curx
 #define	leaveok(w, bf) \
 	((bf) ? ((w)->flags |= __LEAVEOK) : ((w)->flags &= ~__LEAVEOK))
 #define	scrollok(w, bf) \
 	((bf) ? ((w)->flags |= __SCROLLOK) : ((w)->flags &= ~__SCROLLOK))
 #define	winch(w) \
 	((w)->lines[(w)->cury]->line[(w)->curx].ch & 0177)
+
+#define	getyx(w, y, x)		(y) = getcury(w), (x) = getcurx(w)
+#define getbegyx(w, y, x)	(y) = getbegy(w), (x) = getbegx(w)
+#define getmaxyx(w, y, x)	(y) = getmaxy(w), (x) = getmaxx(w)
+#define getcury(w)		((w)->cury)
+#define getcurx(w)		((w)->curx)
+#define getbegy(w)		((w)->begy)
+#define getbegx(w)		((w)->begx)
+#define getmaxy(w)		((w)->maxy)
+#define getmaxx(w)		((w)->maxx)
 
 /* Public function prototypes. */
 __BEGIN_DECLS
