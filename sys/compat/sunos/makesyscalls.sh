@@ -1,6 +1,6 @@
 #! /bin/sh -
 # from:	@(#)makesyscalls.sh	8.1 (Berkeley) 6/11/93
-# $Id: makesyscalls.sh,v 1.3 1993/11/10 01:01:25 deraadt Exp $
+# $Id: makesyscalls.sh,v 1.4 1993/11/22 22:54:48 deraadt Exp $
 
 set -e
 
