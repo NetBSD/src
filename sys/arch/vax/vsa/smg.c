@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
+/*	$NetBSD: smg.c,v 1.22 2000/03/31 18:40:58 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -194,7 +194,7 @@ smg_attach(parent, self, aux)
 	aa.console = !(vax_confdata & 0x20);
 	aa.scrdata = &smg_screenlist;
 	aa.accessops = &smg_accessops;
-	callout_reset(&smc_cursor_ch, hz / 2, smg_crsr_blink, NULL);
+	callout_reset(&smg_cursor_ch, hz / 2, smg_crsr_blink, NULL);
 
 	config_found(self, &aa, wsemuldisplaydevprint);
 }
