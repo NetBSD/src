@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.22 1998/08/09 20:15:39 perry Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.23 1998/10/04 18:07:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -121,10 +121,12 @@ ffs_update(v)
 		brelse(bp);
 		return (error);
 	}
+#ifdef FFS_EI
 	if (UFS_MPNEEDSWAP(ap->a_vp->v_mount))
 		ffs_dinode_swap(&ip->i_din.ffs_din,
 			(struct dinode *)bp->b_data + ino_to_fsbo(fs, ip->i_number));
 	else
+#endif
 		*((struct dinode *)bp->b_data +
 	    	ino_to_fsbo(fs, ip->i_number)) = ip->i_din.ffs_din;
 	if (ap->a_waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
