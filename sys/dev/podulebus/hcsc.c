@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.2 2001/05/28 22:54:10 bjh21 Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.3 2001/06/02 11:43:40 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -72,7 +72,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.2 2001/05/28 22:54:10 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.3 2001/06/02 11:43:40 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -147,8 +147,8 @@ hcsc_attach(struct device *parent, struct device *self, void *aux)
 	char hi_option[sizeof(sc->sc_ncr5380.sc_dev.dv_xname) + 8];
 
 	sc->sc_ncr5380.sc_min_dma_len = 0;
-	sc->sc_ncr5380.sc_no_disconnect = 0xff;
-	sc->sc_ncr5380.sc_parity_disable = 0xff;
+	sc->sc_ncr5380.sc_no_disconnect = 0;
+	sc->sc_ncr5380.sc_parity_disable = 0;
 
 	sc->sc_ncr5380.sc_dma_alloc = NULL;
 	sc->sc_ncr5380.sc_dma_free = NULL;
