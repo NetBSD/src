@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.15 2001/01/09 08:04:53 tsubai Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.16 2001/06/06 17:50:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -356,7 +356,7 @@ find_node_intr(node, addr, intr)
 {
 	int parent, len, mlen, iparent;
 	int match, i;
-	u_int32_t map[64], *mp;
+	u_int32_t map[160], *mp;
 	u_int32_t imask[8], maskedaddr[8];
 	u_int32_t icells;
 	char name[32];

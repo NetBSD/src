@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 2001/05/01 02:19:17 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.17 2001/06/06 17:50:16 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,80 +34,6 @@
 #ifndef _MACHINE_VMPARAM_H_
 #define _MACHINE_VMPARAM_H_
 
-#define	USRTEXT		NBPG
-#define	USRSTACK	VM_MAXUSER_ADDRESS
-
-#ifndef	MAXTSIZ
-#define	MAXTSIZ		(64*1024*1024)		/* max text size */
-#endif
-
-#ifndef	DFLDSIZ
-#define	DFLDSIZ		(128*1024*1024)		/* default data size */
-#endif
-
-#ifndef	MAXDSIZ
-#define	MAXDSIZ		(1*1024*1024*1024)	/* max data size */
-#endif
-
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* default stack size */
-#endif
-
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		(32*1024*1024)		/* max stack size */
-#endif
-
-/*
- * Size of shared memory map
- */
-#ifndef	SHMMAXPGS
-#define	SHMMAXPGS	1024
-#endif
-
-/*
- * Size of User Raw I/O map
- */
-#define	USRIOSIZE	1024
-
-/*
- * The time for a process to be blocked before being very swappable.
- * This is a number of seconds which the system takes as being a non-trivial
- * amount of real time.  You probably shouldn't change this;
- * it is used in subtle ways (fractions and multiples of it are, that is, like
- * half of a ``long time'', almost a long time, etc.)
- * It is related to human patience and other factors which don't really
- * change over time.
- */
-#define	MAXSLP 		20
-
-/*
- * Would like to have MAX addresses = 0, but this doesn't (currently) work
- */
-#define	VM_MIN_ADDRESS		((vaddr_t)0)
-#define	VM_MAXUSER_ADDRESS	((vaddr_t)0x7ffff000)
-#define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
-#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)(KERNEL_SR << ADDR_SR_SHFT))
-#define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + SEGMENT_LENGTH - 1)
-
-/* XXX max. amount of KVM to be used by buffers. */
-#ifndef VM_MAX_KERNEL_BUF
-#define VM_MAX_KERNEL_BUF	(SEGMENT_LENGTH / 2)
-#endif
-
-#define	VM_PHYS_SIZE		(USRIOSIZE * NBPG)
-
-#define	__HAVE_PMAP_PHYSSEG
-
-struct pmap_physseg {
-	struct pv_entry *pvent;
-	char *attrs;
-};
-
-#define VM_PHYSSEG_MAX		16	/* 1? */
-#define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
-
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
+#include <powerpc/mpc6xx/vmparam.h>
 
 #endif /* _MACHINE_VMPARAM_H_ */
