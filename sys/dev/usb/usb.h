@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.26 1999/08/18 07:45:56 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.27 1999/08/18 07:55:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -234,15 +234,6 @@ typedef struct {
 #define  UE_ISO_SYNC	0x0c
 	uWord		wMaxPacketSize;
 	uByte		bInterval;
-	/* 
-	 * The following two entries are only used by the Audio Class.
-	 * And according to the specs the Audio Class is the only one
-	 * allowed to extend the endpoint descriptor.
-	 * Who knows what goes on in the minds of the people in the USB
-	 * standardization?  :-(
-	 */
-	uByte		bRefresh;
-	uByte		bSynchAddress;
 } usb_endpoint_descriptor_t;
 #define USB_ENDPOINT_DESCRIPTOR_SIZE 7
 
