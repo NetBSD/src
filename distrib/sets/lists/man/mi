@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.631 2003/12/05 06:30:18 simonb Exp $
+# $NetBSD: mi,v 1.632 2003/12/10 11:40:11 hannken Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -676,6 +676,7 @@
 ./usr/share/man/cat4/fms.0			man-sys-catman
 ./usr/share/man/cat4/fmv.0			man-sys-catman
 ./usr/share/man/cat4/fpa.0			man-sys-catman
+./usr/share/man/cat4/fss.0			man-sys-catman
 ./usr/share/man/cat4/fta.0			man-sys-catman
 ./usr/share/man/cat4/fwiso.0			man-sys-catman
 ./usr/share/man/cat4/fxp.0			man-sys-catman
@@ -1430,6 +1431,7 @@
 ./usr/share/man/cat8/fsdb.0			man-sysutil-catman
 ./usr/share/man/cat8/fsinfo.0			man-sysutil-catman
 ./usr/share/man/cat8/fsirand.0			man-sysutil-catman
+./usr/share/man/cat8/fssconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/ftpd.0			man-netutil-catman
 ./usr/share/man/cat8/genassym.sh.0		man-sys-catman
 ./usr/share/man/cat8/getNAME.0			man-man-catman
@@ -2429,6 +2431,7 @@
 ./usr/share/man/man4/fms.4			man-sys-man
 ./usr/share/man/man4/fmv.4			man-sys-man
 ./usr/share/man/man4/fpa.4			man-sys-man
+./usr/share/man/man4/fss.4			man-sys-man
 ./usr/share/man/man4/fta.4			man-sys-man
 ./usr/share/man/man4/fwiso.4			man-sys-man
 ./usr/share/man/man4/fxp.4			man-sys-man
@@ -3184,6 +3187,7 @@
 ./usr/share/man/man8/fsdb.8			man-sysutil-man
 ./usr/share/man/man8/fsinfo.8			man-sysutil-man
 ./usr/share/man/man8/fsirand.8			man-sysutil-man
+./usr/share/man/man8/fssconfig.8		man-sysutil-man
 ./usr/share/man/man8/ftpd.8			man-netutil-man
 ./usr/share/man/man8/genassym.sh.8		man-sys-man
 ./usr/share/man/man8/getNAME.8			man-man-man

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.644 2003/12/05 13:49:16 lukem Exp $
+#	$NetBSD: mi,v 1.645 2003/12/10 11:40:11 hannken Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -135,6 +135,7 @@
 ./usr/include/dev/dec/lk201.h		comp-c-include
 ./usr/include/dev/dmover		comp-c-include
 ./usr/include/dev/dmover/dmover_io.h	comp-c-include
+./usr/include/dev/fssvar.h		comp-c-include
 ./usr/include/dev/hpc			comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h		comp-c-include
 ./usr/include/dev/i2o			comp-c-include

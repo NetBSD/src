@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.10 2003/11/24 06:31:44 isaki Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.11 2003/12/10 11:40:11 hannken Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -72,6 +72,7 @@
 #	bmd*	Nereid bank memory disks
 #	ed*	IBM PS/2 ESDI disk devices
 #	fd*	"floppy" disk drives (3 1/2", 5 1/4")
+#	fss*	Files system snapshot devices
 #	gdrom*	Dreamcast "gigadisc" CD-ROM drive
 #	hk*	UNIBUS RK06 and RK07
 #	hp*	MASSBUS RM??
@@ -316,6 +317,7 @@ all)
 	makedev std fd pty0
 	makedev ccd0 ccd1 ccd2 ccd3
 	makedev cgd0 cgd1 cgd2 cgd3
+	makedev fss0 fss1 fss2 fss3
 	makedev md0 md1
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev vnd0 vnd1 vnd2 vnd3
@@ -567,6 +569,14 @@ wt*)
 
 md*)
 	makedisk_minimal md ${i#md} %md_blk% %md_chr%
+	;;
+
+fss*)
+	name=fss; unit=${i#fss};	blk=%fss_blk%;	chr=%fss_chr%
+	mknod $name$unit	b $blk $unit
+	mknod r$name$unit	c $chr $unit
+	chgrp operator $name$unit r$name$unit
+	chmod 660 $name$unit r$name$unit
 	;;
 
 ss*)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.201 2003/11/15 01:19:38 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.202 2003/12/10 11:40:12 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.201 2003/11/15 01:19:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.202 2003/12/10 11:40:12 hannken Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #include "opt_ktrace.h"
+#include "fss.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.201 2003/11/15 01:19:38 thorpej E
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
+
+#if NFSS > 0
+#include <dev/fssvar.h>
+#endif
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 
@@ -535,6 +540,9 @@ dounmount(mp, flags, p)
 	if (mp->mnt_syncer != NULL)
 		vfs_deallocate_syncvnode(mp);
 	if (((mp->mnt_flag & MNT_RDONLY) ||
+#if NFSS > 0
+	    (error = fss_umount_hook(mp, (flags & MNT_FORCE))) == 0 ||
+#endif
 	    (error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p)) == 0) ||
 	    (flags & MNT_FORCE))
 		error = VFS_UNMOUNT(mp, flags, p);
