@@ -35,7 +35,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.10 1994/04/08 18:22:26 mycroft Exp $
+ *	$Id: mcd.c,v 1.11 1994/04/08 18:57:24 mycroft Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -206,6 +206,8 @@ mcdattach(parent, self, aux)
 	mcd_configure(sc);
 #endif
 	
+	printf("\n");
+
 	sc->flags = 0;
 
 	sc->sc_ih.ih_fun = mcdintr;
