@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)param.h	5.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.11 1993/12/20 05:25:32 mycroft Exp $
+ *	$Id: param.h,v 1.12 1993/12/22 17:39:45 cgd Exp $
  */
 
 /*
@@ -56,6 +56,7 @@
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
+#define	NPTEPG		(NBPG/(sizeof (struct pte)))
 
 #define	KERNBASE	0xfe000000	/* start of kernel virtual space */
 #define	KERNSIZE	0x01800000	/* size of kernel virtual space */
