@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftpd.c	5.40 (Berkeley) 7/2/91";*/
-static char rcsid[] = "$Id: ftpd.c,v 1.6 1994/04/14 03:15:41 cgd Exp $";
+static char rcsid[] = "$Id: ftpd.c,v 1.7 1994/05/24 06:53:38 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -384,7 +384,17 @@ user(name)
 			return;
 		}
 	}
-	reply(331, "Password required for %s.", name);
+#ifdef SKEY
+	if (!skey_haskey (name)) {
+		char *c, *skey_keyinfo(char *name);
+
+		c = skey_keyinfo(name);
+		reply(331, "Password [%s] for %s required.",
+			c ? c : "error getting challenge", name);
+	} else
+#endif
+		reply(331, "Password required for %s.", name);
+
 	askpasswd = 1;
 	/*
 	 * Delay before reading passwd after first failed
@@ -456,9 +466,18 @@ pass(passwd)
 				/* the strcmp does not catch null passwords! */
 				if (pw == NULL || *pw->pw_passwd == '\0')
 					rval = 1;   /* failure */
-		else
-					rval = strcmp(crypt(passwd, (pw ? pw->pw_passwd : "xx")), 
-						      pw->pw_passwd);
+		else {
+#ifdef SKEY
+			rval = 1;
+			if (!skey_haskey(pw->pw_name) &&
+			   (skey_passcheck(pw->pw_name, passwd) != -1))
+				rval = 0;
+			
+			if (rval)
+#endif
+				rval = strcmp(crypt(passwd, (pw ? pw->pw_passwd : "xx")), 
+				      pw->pw_passwd);
+		}
 
 		/*
 		 * If rval == 1, the user failed the authentication check

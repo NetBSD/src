@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$Id: su.c,v 1.9 1994/02/12 07:06:07 cgd Exp $";
+static char rcsid[] = "$Id: su.c,v 1.10 1994/05/24 06:52:23 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -169,7 +169,21 @@ main(argc, argv)
 		/* if target requires a password, verify it */
 		if (*pwd->pw_passwd) {
 			p = getpass("Password:");
+#ifdef SKEY
+			if (strcasecmp(p, "s/key") == 0) {
+				if (skey_haskey(user)) {
+					fprintf(stderr, "Sorry, you have no s/key.\n");
+					exit(1);
+				} else {
+					if (skey_authenticate(user)) {
+						goto badlogin;
+					}
+				}
+
+			} else
+#endif
 			if (strcmp(pwd->pw_passwd, crypt(p, pwd->pw_passwd))) {
+badlogin:
 				fprintf(stderr, "Sorry\n");
 				syslog(LOG_AUTH|LOG_WARNING,
 					"BAD SU %s to %s%s", username,
