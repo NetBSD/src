@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.42 1999/04/28 13:35:40 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.43 1999/05/04 14:12:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.42 1999/04/28 13:35:40 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.43 1999/05/04 14:12:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -992,13 +992,6 @@ done:
 	contin2:	;
 		}
 break2:
-		if (bare_lfs) {
-			fprintf(ttyout,
-			"WARNING! %d bare linefeeds received in ASCII mode.\n",
-			    bare_lfs);
-			fputs("File may not have transferred correctly.\n",
-			    ttyout);
-		}
 		if (hash && (!progress || filesize < 0)) {
 			if (bytes < hashbytes)
 				(void)putc('#', ttyout);
@@ -1022,6 +1015,12 @@ break2:
 		(void)signal(SIGPIPE, oldintp);
 	(void)fclose(din);
 	(void)getreply(0);
+	if (bare_lfs) {
+		fprintf(ttyout,
+		    "WARNING! %d bare linefeeds received in ASCII mode.\n",
+		    bare_lfs);
+		fputs("File may not have transferred correctly.\n", ttyout);
+	}
 	if (bytes >= 0 && is_retr) {
 		if (bytes > 0)
 			ptransfer(0);
