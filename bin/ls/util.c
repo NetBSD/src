@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.25 2003/09/02 08:36:21 wiz Exp $	*/
+/*	$NetBSD: util.c,v 1.26 2003/09/14 19:16:07 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.25 2003/09/02 08:36:21 wiz Exp $");
+__RCSID("$NetBSD: util.c,v 1.26 2003/09/14 19:16:07 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,13 +45,39 @@ __RCSID("$NetBSD: util.c,v 1.25 2003/09/02 08:36:21 wiz Exp $");
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <fts.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vis.h>
 
 #include "ls.h"
 #include "extern.h"
+
+int
+safe_print(const char *src)
+{
+	size_t len;
+	char *name;
+
+	len = strlen(src);
+	if (len != 0 && SIZE_T_MAX/len <= 4) {
+		errx(EXIT_FAILURE, "%s: name too long", src);
+		/* NOTREACHED */
+	}
+
+	name = (char *)malloc(4*len+1);
+	if (name != NULL) {
+		len = strvis(name, src, VIS_NL | VIS_CSTYLE);
+		printf("%s", name);
+		free(name);
+		return len;
+	} else
+		errx(EXIT_FAILURE, "out of memory!");
+		/* NOTREACHED */
+}
 
 int
 printescaped(const char *src)
@@ -64,7 +90,7 @@ printescaped(const char *src)
 			(void)putchar(c);
 		else
 			(void)putchar('?');
-	return (n);
+	return n;
 }
 
 void
@@ -72,7 +98,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: ls [-AaCcdFfgikLlmnopqRrSsTtuWx1] [file ...]\n");
+	    "usage: ls [-AabCcdFfgikLlmnopqRrSsTtuWx1] [file ...]\n");
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.h,v 1.13 2003/08/07 09:05:15 agc Exp $	*/
+/*	$NetBSD: ls.h,v 1.14 2003/09/14 19:16:06 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,6 +39,7 @@
 extern long blocksize;		/* block size units */
 
 extern int f_accesstime;	/* use time of last access */
+extern int f_escape;		/* print octal escapes for nongraphic characters */
 extern int f_flags;		/* show flags associated with a file */
 extern int f_grouponly;		/* long listing without owner */
 extern int f_inode;		/* print inode */

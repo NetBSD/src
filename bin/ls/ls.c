@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.50 2003/08/07 09:05:15 agc Exp $	*/
+/*	$NetBSD: ls.c,v 1.51 2003/09/14 19:16:06 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.50 2003/08/07 09:05:15 agc Exp $");
+__RCSID("$NetBSD: ls.c,v 1.51 2003/09/14 19:16:06 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ int rval = EXIT_SUCCESS;	/* exit value - set if error encountered */
 int f_accesstime;		/* use time of last access */
 int f_column;			/* columnated format */
 int f_columnacross;		/* columnated format, sorted across */
+int f_escape;			/* print octal escapes for nongraphic characters */
 int f_flags;			/* show flags associated with a file */
 int f_grouponly;		/* long listing without owner */
 int f_inode;			/* print inode */
@@ -133,7 +134,7 @@ ls_main(int argc, char *argv[])
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "1ACFLRSTWacdfgiklmnopqrstux")) != -1) {
+	while ((ch = getopt(argc, argv, "1ACFLRSTWabcdfgiklmnopqrstux")) != -1) {
 		switch (ch) {
 		/*
 		 * The -1, -C, -l, -m and -x options all override each other so
@@ -194,6 +195,11 @@ ls_main(int argc, char *argv[])
 		case 'A':
 			f_listdot = 1;
 			break;
+		/* the -b option turns off the -q option. */
+		case 'b':
+			f_escape = 1;
+			f_nonprint = 0;
+			break;
 		/* The -d option turns off the -R option. */
 		case 'd':
 			f_listdir = 1;
@@ -218,8 +224,10 @@ ls_main(int argc, char *argv[])
 		case 'p':
 			f_typedir = 1;
 			break;
+		/* the -q option turns off the -b option. */
 		case 'q':
 			f_nonprint = 1;
+			f_escape = 0;
 			break;
 		case 'r':
 			f_reversesort = 1;
