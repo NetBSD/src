@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.14 2004/06/20 22:20:18 jmc Exp $	*/
+/*	$NetBSD: makefs.h,v 1.15 2004/10/12 03:28:30 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,6 +46,7 @@
 #define HAVE_STRUCT_STAT_ST_MTIMENSEC 1
 #define HAVE_STRUCT_STATVFS_F_IOSIZE 1
 #define HAVE_STRUCT_STAT_BIRTHTIME 1
+#define HAVE_FSTATVFS 1
 #endif
 
 #include <sys/stat.h>
