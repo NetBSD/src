@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.50 2002/04/22 09:41:20 augustss Exp $
+#	$NetBSD: files.macppc,v 1.51 2002/06/18 05:22:50 itojun Exp $
 #
 # macppc-specific configuration info
 
@@ -155,6 +155,10 @@ attach adb at obio
 file arch/macppc/dev/adb.c			adb needs-flag
 file arch/macppc/dev/adb_direct.c		adb
 file arch/macppc/dev/pm_direct.c		adb
+
+device apm
+attach apm at adb
+file arch/macppc/dev/apm.c			apm needs-count
 
 device aed
 attach aed at adb
