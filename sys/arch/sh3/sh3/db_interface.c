@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.14 2002/03/24 18:04:40 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.15 2002/04/22 18:57:43 uch Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -65,11 +65,17 @@ extern int trap_types;
 
 void kdb_printtrap(u_int, int);
 void db_tlbdump_cmd(db_expr_t, int, db_expr_t, char *);
+
 void __db_tlbdump_page_size_sh4(u_int32_t);
+
 void __db_tlbdump_pfn(u_int32_t);
 void db_cachedump_cmd(db_expr_t, int, db_expr_t, char *);
+
 void __db_cachedump_sh3(vaddr_t);
+
+
 void __db_cachedump_sh4(vaddr_t);
+
 void db_stackcheck_cmd(db_expr_t, int, db_expr_t, char *);
 void db_frame_cmd(db_expr_t, int, db_expr_t, char *);
 void __db_print_symbol(db_expr_t);
@@ -219,9 +225,9 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	static const char title[] = 
 	    "   VPN    ASID    PFN  AREA VDCGWtPR  SZ";
 	static const char title2[] = "\t\t\t      (user/kernel)";
-	u_int32_t r, e, a;
+	u_int32_t r, e;
 	int i;
-
+#ifdef SH3
 	if (CPU_IS_SH3) {
 		/* MMU configuration. */
 		r = _reg_read_4(SH3_MMUCR);
@@ -233,6 +239,7 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		for (i = 0; i < SH3_MMU_WAY; i++) {
 			db_printf(" [way %d]\n", i);
 			for (e = 0; e < SH3_MMU_ENTRY; e++) {
+				u_int32_t a;
 				/* address/data array common offset. */
 				a = (e << SH3_MMU_VPN_SHIFT) |
 				    (i << SH3_MMU_WAY_SHIFT);
@@ -254,7 +261,10 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 				    r & SH3_MMUDA_D_SZ ? 4 : 1);
 			}
 		}
-	} else {
+	}
+#endif /* SH3 */
+#ifdef SH4
+	if (CPU_IS_SH4) {
 		/* MMU configuration */
 		r = _reg_read_4(SH4_MMUCR);
 		db_printf("%s virtual storage mode, SQ access: (kernel%s)\n",
@@ -311,6 +321,7 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 			    r & SH4_UTLB_DA2_SA_MASK);
 		}
 	}
+#endif /* SH4 */
 }
 
 void
@@ -348,11 +359,14 @@ __db_tlbdump_page_size_sh4(u_int32_t r)
 void
 db_cachedump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	
+#ifdef SH3	
 	if (CPU_IS_SH3)
 		__db_cachedump_sh3(have_addr ? addr : 0);
-	else
+#endif
+#ifdef SH4
+	if (CPU_IS_SH4)
 		__db_cachedump_sh4(have_addr ? addr : 0);
+#endif
 }
 
 #ifdef SH3
