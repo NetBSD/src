@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.2 1997/02/01 10:45:00 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.3 1997/03/13 06:23:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fetch.c,v 1.2 1997/02/01 10:45:00 lukem Exp $";
+static char rcsid[] = "$NetBSD: fetch.c,v 1.3 1997/03/13 06:23:15 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -57,6 +57,7 @@ static char rcsid[] = "$NetBSD: fetch.c,v 1.2 1997/02/01 10:45:00 lukem Exp $";
 #include <err.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -200,6 +201,8 @@ http_get(line)
 	for (i = 0, buflen = sizeof(buf), cp = buf; i < buflen; cp++, i++) {
 		if (read(s, cp, 1) != 1)
 			goto improper;
+		if (*cp == '\r')
+			continue;
 		if (*cp == '\n')
 			break;
 	}
@@ -222,6 +225,8 @@ http_get(line)
 	for (i = 0, buflen = sizeof(buf), cp = buf; i < buflen; cp++, i++) {
 		if (read(s, cp, 1) != 1)
 			goto improper;
+		if (*cp == '\r')
+			continue;
 		if (*cp == '\n' && c == '\n')
 			break;
 		c = *cp;
@@ -260,7 +265,7 @@ http_get(line)
 	oldintr = NULL;
 	if (setjmp(httpabort)) {
 		if (oldintr)
-			(void) signal(SIGINT, oldintr);
+			(void)signal(SIGINT, oldintr);
 		goto cleanup_http_get;
 	}
 	oldintr = signal(SIGINT, aborthttp);
@@ -283,17 +288,17 @@ http_get(line)
 		}
 		if (hash && !progress) {
 			while (bytes >= hashbytes) {
-				(void) putchar('#');
+				(void)putchar('#');
 				hashbytes += mark;
 			}
-			(void) fflush(stdout);
+			(void)fflush(stdout);
 		}
 	}
 	if (hash && !progress && bytes > 0) {
 		if (bytes < mark)
-			(void) putchar('#');
-		(void) putchar('\n');
-		(void) fflush(stdout);
+			(void)putchar('#');
+		(void)putchar('\n');
+		(void)fflush(stdout);
 	}
 	if (len != 0) {
 		warn("Reading from socket");
@@ -301,14 +306,14 @@ http_get(line)
 	}
 	progressmeter(1);
 	if (verbose)
-		printf("Successfully retrieved file.\n");
-	(void) signal(SIGINT, oldintr);
+		puts("Successfully retrieved file.");
+	(void)signal(SIGINT, oldintr);
 
 	close(s);
 	close(out);
 	if (proxy)
 		free(proxy);
-	return(0);
+	return (0);
 
 improper:
 	warnx("improper response from %s", host);
@@ -317,19 +322,20 @@ cleanup_http_get:
 		close(s);
 	if (proxy)
 		free(proxy);
-	return(-1);
+	return (-1);
 }
 
 /*
  * Abort a http retrieval
  */
 void
-aborthttp()
+aborthttp(notused)
+	int notused;
 {
 
 	alarmtimer(0);
-	printf("\nhttp fetch aborted\n");
-	(void) fflush(stdout);
+	puts("\nhttp fetch aborted.");
+	(void)fflush(stdout);
 	longjmp(httpabort, 1);
 }
 
@@ -338,7 +344,7 @@ aborthttp()
  * files of the form "host:path", "ftp://host/path" using the
  * ftp protocol, and files of the form "http://host/path" using
  * the http protocol.
- * If path has a trailing "/", then return(-1);
+ * If path has a trailing "/", then return (-1);
  * the path will be cd-ed into and the connection remains open,
  * and the function will return -1 (to indicate the connection
  * is alive).
@@ -356,16 +362,18 @@ auto_fetch(argc, argv)
 	char *xargv[5];
 	char *cp, *line, *host, *dir, *file, *portnum;
 	int rval, xargc, argpos;
+	int dirhasglob, filehasglob;
+	char rempath[MAXPATHLEN];
 
 	argpos = 0;
 
 	if (setjmp(toplevel)) {
 		if (connected)
 			disconnect(0, NULL);
-		return(argpos + 1);
+		return (argpos + 1);
 	}
-	(void) signal(SIGINT, intr);
-	(void) signal(SIGPIPE, lostpeer);
+	(void)signal(SIGINT, (sig_t)intr);
+	(void)signal(SIGPIPE, (sig_t)lostpeer);
 
 	/*
 	 * Loop through as long as there's files to fetch.
@@ -473,8 +481,18 @@ auto_fetch(argc, argv)
 			}
 		}
 
+		dirhasglob = filehasglob = 0;
+		if (doglob) {
+			if (! EMPTYSTRING(dir) &&
+			    strpbrk(dir, "*?[]{}") != NULL)
+				dirhasglob = 1;
+			if (! EMPTYSTRING(file) &&
+			    strpbrk(file, "*?[]{}") != NULL)
+				filehasglob = 1;
+		}
+
 		/* Change directories, if necessary. */
-		if (! EMPTYSTRING(dir)) {
+		if (! EMPTYSTRING(dir) && !dirhasglob) {
 			xargv[0] = "cd";
 			xargv[1] = dir;
 			xargv[2] = NULL;
@@ -493,13 +511,27 @@ auto_fetch(argc, argv)
 		if (!verbose)
 			printf("Retrieving %s/%s\n", dir ? dir : "", file);
 
-		/* Fetch the file. */
+		if (dirhasglob) {
+			snprintf(rempath, sizeof(rempath), "%s/%s", dir, file);
+			file = rempath;
+		}
+
+		/* Fetch the file(s). */
 		xargv[0] = "get";
 		xargv[1] = file;
 		xargv[2] = NULL;
-		get(2, xargv);
+		if (dirhasglob || filehasglob) {
+			int ointeractive;
 
-		if ((code / 100) != COMPLETE)	/* XXX: is this valid? */
+			ointeractive = interactive;
+			interactive = 0;
+			xargv[0] = "mget";
+			mget(2, xargv);
+			interactive = 1;
+		} else
+			get(2, xargv);
+
+		if ((code / 100) != COMPLETE)
 			rval = argpos + 1;
 	}
 	if (connected && rval != -1)
