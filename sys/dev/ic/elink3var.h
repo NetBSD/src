@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.25 2000/03/23 07:01:30 thorpej Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.26 2000/05/29 17:37:12 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -51,6 +51,7 @@ struct ep_softc {
 	bus_space_handle_t sc_ioh;	/* bus i/o handle		*/
 	bus_space_tag_t sc_memt;	/* RoadRunner only		*/
 	bus_space_handle_t sc_memh;	/* RoadRunner only		*/
+	u_int32_t sc_flags;		/* misc. flags			*/
 #define MAX_MBS	8			/* # of mbufs we keep around	*/
 	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/
 	int	next_mb;		/* Which mbuf to use next. 	*/
@@ -78,6 +79,7 @@ struct ep_softc {
 #define	ELINK_FLAGS_USEFIFOBUFFER		0x08000	/* RoadRunner only */
 #define	ELINK_FLAGS_USESHAREDMEM		0x10000	/* RoadRunner only */
 #define	ELINK_FLAGS_FORCENOWAIT		0x20000	/* RoadRunner only */
+#define ELINK_FLAGS_ATTACHED		0x40000	/* attach has succeeded */
 
 	u_short ep_chipset;		/* Chipset family on this board */
 #define ELINK_CHIPSET_3C509		0x00	/* PIO: 3c509, 3c589 */
@@ -109,6 +111,7 @@ struct ep_softc {
 	void (*disable) __P((struct ep_softc *));
 	int enabled;
 };
+
 
 u_int16_t epreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));
 int	epconfig __P((struct ep_softc *, u_short, u_int8_t *));

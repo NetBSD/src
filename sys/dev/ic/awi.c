@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.16 2000/03/27 12:58:01 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.17 2000/05/29 17:37:12 jhawk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -344,6 +344,9 @@ awi_attach(sc)
 
 	/* ready to accept ioctl */
 	awi_unlock(sc);
+
+	/* Attach is successful. */
+	sc->sc_attached = 1;
 	return 0;
 }
 
@@ -354,6 +357,10 @@ awi_detach(sc)
 {
 	struct ifnet *ifp = sc->sc_ifp;
 	int s;
+
+	/* Succeed if there is no work to do. */
+	if (!sc->sc_attached)
+		return (0);
 
 	s = splnet();
 	sc->sc_invalid = 1;

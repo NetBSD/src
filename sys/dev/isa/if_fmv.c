@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv.c,v 1.23 1998/10/07 04:58:06 enami Exp $	*/
+/*	$NetBSD: if_fmv.c,v 1.24 2000/05/29 17:37:17 jhawk Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -346,7 +346,7 @@ fmv_attach(parent, self, aux)
 	printf("%s: %s Ethernet\n", sc->sc_dev.dv_xname, typestr);
 
 	/* This interface is always enabled. */
-	sc->sc_enabled = 1;
+	sc->sc_flags |= FE_FLAGS_ENABLED;
 
 	/*
 	 * Minimum initialization of the hardware.

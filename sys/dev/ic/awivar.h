@@ -1,4 +1,4 @@
-/* $NetBSD: awivar.h,v 1.7 2000/03/27 12:55:00 onoe Exp $ */
+/* $NetBSD: awivar.h,v 1.8 2000/05/29 17:37:12 jhawk Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -111,7 +111,8 @@ struct awi_softc
 				sc_start_bss:1,
 				sc_rawbpf:1,
 				sc_no_bssid:1,
-				sc_active_scan:1;
+				sc_active_scan:1,
+				sc_attached:1;	/* attach has succeeded */
 	int			sc_sleep_cnt;
 
 	int			sc_mgt_timer;

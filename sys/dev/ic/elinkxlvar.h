@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.5 2000/03/23 07:01:30 thorpej Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.6 2000/05/29 17:37:13 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ struct ex_softc {
 #define EX_FLAGS_SNOOPING		0x0800
 #define EX_FLAGS_100MBIT		0x1000
 #define EX_FLAGS_POWERMGMT		0x2000
+#define EX_FLAGS_ATTACHED		0x4000	/* attach has succeeded */
 
 	u_char	ex_bustype;		/* parent bus type (currently unused) */
 
