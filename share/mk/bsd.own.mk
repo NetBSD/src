@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.267 2002/02/04 08:49:04 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.268 2002/02/07 00:53:34 ross Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -348,6 +348,10 @@ dependall:	.NOTMAIN realdepend .MAKE
 MK${var}:=	no
 .endif
 .endfor
+
+.if defined(NOMAN)
+NOHTML=
+.endif
 
 # MK* options which default to "yes".
 .for var in BFD CATPAGES CRYPTO DOC GCC GDB IEEEFP INFO KERBEROS LINKLIB LINT \
