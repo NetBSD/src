@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.25 2001/03/28 03:18:39 simonb Exp $	*/
+/*	$NetBSD: play.c,v 1.26 2001/05/02 12:49:42 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -112,9 +112,10 @@ main(argc, argv)
 			break;
 		case 'P':
 			decode_int(optarg, &precision);
-			if (precision != 8 && precision != 16 &&
-			    precision != 24 && precision != 32)
-				errx(1, "precision must be between 8, 16, 24 or 32");
+			if (precision != 4 && precision != 8 &&
+			    precision != 16 && precision != 24 &&
+			    precision != 32)
+				errx(1, "precision must be between 4, 8, 16, 24 or 32");
 			break;
 		case 'p':
 			len = strlen(optarg);
