@@ -3089,11 +3089,13 @@
    mov%?\\t%0, %1\\t%@ movhi
    mvn%?\\t%0, #%B1\\t%@ movhi")
 
-
+;; We use a DImode scratch because we may occasionally need an additional
+;; temporary if the address isn't offsettable -- push_reload doesn't seem
+;; to take any notice of the =o constraint on the first operand.
 (define_expand "reload_outhi"
   [(parallel [(match_operand:HI 0 "reload_memory_operand" "=o")
 	      (match_operand:HI 1 "s_register_operand" "r")
-	      (match_operand:SI 2 "s_register_operand" "=&r")])]
+	      (match_operand:DI 2 "s_register_operand" "=&r")])]
   ""
   "
   arm_reload_out_hi (operands);
