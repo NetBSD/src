@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.13 1999/10/11 05:21:06 shin Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.14 1999/10/11 05:25:35 shin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,7 +44,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: _setjmp.S,v 1.13 1999/10/11 05:21:06 shin Exp $")
+	ASMSTR("$NetBSD: _setjmp.S,v 1.14 1999/10/11 05:25:35 shin Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -129,7 +129,9 @@ LEAF(_longjmp)
 	REG_L	s5, (S5 * SZREG + _OFFSETOF_SC_REGS)(a0)
 	REG_L	s6, (S6 * SZREG + _OFFSETOF_SC_REGS)(a0)
 	REG_L	s7, (S7 * SZREG + _OFFSETOF_SC_REGS)(a0)
+#ifndef SOFTFLOAT
 	lw	v0, (32 * 4 + _OFFSETOF_SC_FPREGS)(a0)	# get fpu status
+#endif
 	REG_L	sp, (SP * SZREG + _OFFSETOF_SC_REGS)(a0)
 	REG_L	s8, (S8 * SZREG + _OFFSETOF_SC_REGS)(a0)
 #ifndef SOFTFLOAT
