@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.62 2001/09/07 08:13:01 itojun Exp $	*/
+/*	$NetBSD: socket.h,v 1.63 2001/10/16 19:47:44 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -85,6 +85,20 @@ typedef __sa_family_t	sa_family_t;
 typedef __socklen_t	socklen_t;
 #define socklen_t	__socklen_t
 #endif
+
+#include <machine/ansi.h>
+
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
+#endif
+
+#ifdef	_BSD_SSIZE_T_
+typedef	_BSD_SSIZE_T_	ssize_t;
+#undef	_BSD_SSIZE_T_
+#endif
+
+#include <sys/uio.h>
 
 /*
  * Socket types.
@@ -189,7 +203,7 @@ struct	linger {
  * addresses.
  */
 struct sockaddr {
-	uint8_t		sa_len;		/* total length */
+	__uint8_t	sa_len;		/* total length */
 	sa_family_t	sa_family;	/* address family */
 	char		sa_data[14];	/* actually longer; address value */
 };
@@ -210,17 +224,17 @@ struct sockproto {
  * RFC 2553: protocol-independent placeholder for socket addresses
  */
 #define _SS_MAXSIZE	128
-#define _SS_ALIGNSIZE	(sizeof(int64_t))
+#define _SS_ALIGNSIZE	(sizeof(__int64_t))
 #define _SS_PAD1SIZE	(_SS_ALIGNSIZE - 2)
 #define _SS_PAD2SIZE	(_SS_MAXSIZE - 2 - \
 				_SS_PAD1SIZE - _SS_ALIGNSIZE)
 
 #if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
 struct sockaddr_storage {
-	uint8_t		ss_len;		/* address length */
+	__uint8_t	ss_len;		/* address length */
 	sa_family_t	ss_family;	/* address family */
 	char		__ss_pad1[_SS_PAD1SIZE];
-	int64_t      __ss_align;/* force desired structure storage alignment */
+	__int64_t     __ss_align;/* force desired structure storage alignment */
 	char		__ss_pad2[_SS_PAD2SIZE];
 };
 #endif /* !_XOPEN_SOURCE || ... */
@@ -272,6 +286,17 @@ struct sockaddr_storage {
 #define	PF_MAX		AF_MAX
 
 #if !defined(_XOPEN_SOURCE)
+
+#ifndef	gid_t
+typedef	__gid_t		gid_t;		/* group id */
+#define	gid_t		__gid_t
+#endif
+
+#ifndef	uid_t
+typedef	__uid_t		uid_t;		/* user id */
+#define	uid_t		__uid_t
+#endif
+
 /*
  * Socket credentials.
  */
@@ -425,11 +450,12 @@ struct cmsghdr {
 
 /* given pointer to struct cmsghdr, return pointer to next cmsghdr */
 #define	CMSG_NXTHDR(mhdr, cmsg)	\
-	(((caddr_t)(cmsg) + __CMSG_ALIGN((cmsg)->cmsg_len) + \
+	(((__caddr_t)(cmsg) + __CMSG_ALIGN((cmsg)->cmsg_len) + \
 			    __CMSG_ALIGN(sizeof(struct cmsghdr)) > \
-	    (((caddr_t)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
+	    (((__caddr_t)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
 	    (struct cmsghdr *)NULL : \
-	    (struct cmsghdr *)((caddr_t)(cmsg) + __CMSG_ALIGN((cmsg)->cmsg_len)))
+	    (struct cmsghdr *)((__caddr_t)(cmsg) + \
+	        __CMSG_ALIGN((cmsg)->cmsg_len)))
 
 /*
  * RFC 2292 requires to check msg_controllen, in case that the kernel returns
@@ -462,7 +488,7 @@ struct cmsghdr {
  * 4.3 compat sockaddr, move to compat file later
  */
 struct osockaddr {
-	uint16_t	sa_family;	/* address family */
+	__uint16_t	sa_family;	/* address family */
 	char		sa_data[14];	/* up to 14 bytes of direct address */
 };
 
@@ -470,12 +496,12 @@ struct osockaddr {
  * 4.3-compat message header (move to compat file later).
  */
 struct omsghdr {
-	caddr_t	msg_name;		/* optional address */
-	int	msg_namelen;		/* size of address */
-	struct	iovec *msg_iov;		/* scatter/gather array */
-	int	msg_iovlen;		/* # elements in msg_iov */
-	caddr_t	msg_accrights;		/* access rights sent/received */
-	int	msg_accrightslen;
+	__caddr_t	msg_name;	/* optional address */
+	int		msg_namelen;	/* size of address */
+	struct iovec	*msg_iov;	/* scatter/gather array */
+	int		msg_iovlen;	/* # elements in msg_iov */
+	__caddr_t	msg_accrights;	/* access rights sent/received */
+	int		msg_accrightslen;
 };
 #endif
 
