@@ -1,4 +1,4 @@
-/*	$NetBSD: raster.h,v 1.4 1999/01/11 11:08:14 drochner Exp $ */
+/*	$NetBSD: raster.h,v 1.5 2000/09/29 06:29:47 deberg Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -159,12 +159,20 @@ struct raster_font {
 #define RAS_OR			0xe	/* src | dst */
 #define RAS_SET			0xf	/* 1 */
 
+#ifndef RCONS_16BPP
 #define RAS_COLOR(color) ( ( (color) & 0xff ) << 4 )
+#else
+#define RAS_COLOR(color) ( ( (color) & 0xffff ) << 4 )
+#endif
 
 /* Get the op from a rop. */
 #define RAS_GETOP(op) ( (op) & 0xf )
 /* Get the color from a rop. */
+#ifndef RCONS_16BPP
 #define RAS_GETCOLOR(op) ( ( (op) >> 4 ) & 0xff )
+#else
+#define RAS_GETCOLOR(op) ( ( (op) >> 4 ) & 0xffff )
+#endif
 /* Get the longword address of a pixel. */
 #define RAS_ADDR( r, x, y ) \
     ( (r)->pixels + (y) * (r)->linelongs + (x) * (r)->depth / 32 )

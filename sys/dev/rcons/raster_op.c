@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_op.c,v 1.9 2000/03/30 12:45:41 augustss Exp $ */
+/*	$NetBSD: raster_op.c,v 1.10 2000/09/29 06:29:54 deberg Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,8 +72,8 @@
 
 #include <sys/types.h>
 #ifdef _KERNEL
-#include <dev/rcons/raster.h>
 #include "opt_rcons.h"
+#include <dev/rcons/raster.h>
 #else
 #include "raster.h"
 #endif
@@ -924,7 +924,7 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 
 	    color = RAS_GETCOLOR( rop );
 	    if ( color == 0 )
-		color = 255;
+		color = 0xffff;
 
 	    /* Make 32 bits of color so we can do the ROP without shifting. */
 	    color |= ( color << 16 );
@@ -1538,7 +1538,7 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 
 	color = RAS_GETCOLOR( rop );
 	if ( color == 0 )
-		color = 255; /* XXX */
+		color = 0xffff; /* XXX */
 
 	/* Make 32 bits of color so we can do the ROP without shifting. */
 	color |= ( color << 16 );
