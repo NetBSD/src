@@ -1,10 +1,13 @@
+	$NetBSD: xfer,v 1.6.2.5 1998/05/29 03:30:40 mycroft Exp $	
+
 Installation is currently only supported from the local Macintosh hard
-drive or from an AppleShare volume (however, you may upgrade a system from
-within NetBSD; see the section on upgrading for more details).  This means
-that you'll need at least enough room for the largest file that you will
-have to install.  This is the 8.6M base.tgz file.  There has been talk of
-allowing an install from split files.  If you have the time, desire, and
-knowledge, please feel free to add that functionality.
+drive, from a CD-ROM, or from an AppleShare volume (however, you may upgrade
+a system from within NetBSD; see the section on upgrading for more details).
+If you are installing from a local hard drive, this means that you'll need
+at least enough room for the largest file that you will have to install.
+This is the 8.6M base.tgz file.  There has been talk of allowing an install
+from split files.  If you have the time, desire, and knowledge, please feel
+free to add that functionality.
 
 If the install is being done from an AppleShare-mounted volume, the install
 utility must be in the same folder as the binary distribution sets.
@@ -21,6 +24,9 @@ Each distribution file is in "raw" archive format.
 	by removing the entry associated with ".tgz" files.  Other FTP
 	clients may require separate changes; consult your package's
 	documentation.
+
+    -   If you are installing from a CD-ROM, the distribution sets are
+	already in the proper format and no special handling is required.
 
 You will also need to collect the MacOS installation tools from the
 "mac68k/installation/misc" subdirectory of the NetBSD _VER distribution:
