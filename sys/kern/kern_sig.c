@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.138 2003/03/29 22:48:39 wiz Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.139 2003/04/15 12:11:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.138 2003/03/29 22:48:39 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.139 2003/04/15 12:11:25 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1388,8 +1388,7 @@ proc_stop(struct proc *p)
  * that LWP up to take a signal.
  */
 struct lwp *
-proc_unstop(p)
-	struct proc *p;
+proc_unstop(struct proc *p)
 {
 	struct lwp *l, *lr = NULL;
 	int cantake = 0;
