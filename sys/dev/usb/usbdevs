@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.136 2000/12/28 11:53:01 augustss Exp $
+$NetBSD: usbdevs,v 1.137 2001/01/01 18:50:42 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -613,10 +613,10 @@ product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO	0x002b	Internet Keyboard Pro
 
 /* Microtek products */
-product MICROTEK X6U		0x0099	ScanMaker X6 - X6U
 product MICROTEK 336CX		0x0094	Phantom 336CX - C3 scanner
-product MICROTEK 336CX2		0x00a0	Phantom 336CX - C3 scanner
+product MICROTEK X6U		0x0099	ScanMaker X6 - X6U
 product MICROTEK C6		0x009a	Phantom C6 scanner
+product MICROTEK 336CX2		0x00a0	Phantom 336CX - C3 scanner
 product MICROTEK V6USL		0x00a3	ScanMaker V6USL
 product MICROTEK V6USL2		0x80a3	ScanMaker V6USL
 product MICROTEK V6UL		0x80ac	ScanMaker V6UL
@@ -713,6 +713,9 @@ product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
 
 /* SanDisk products */
 product SANDISK IMAGEMATE	0x0001	USB ImageMate
+
+/* ScanLogic products */
+product SCANLOGIC 336CX		0x0300	Phantom 336CX - C3 scanner
 
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
