@@ -39,7 +39,7 @@
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
  *	trap.c,v 1.3 1993/07/07 07:08:47 cgd Exp
- *	$Id: trap.c,v 1.15 1994/05/05 01:11:34 gwr Exp $
+ *	$Id: trap.c,v 1.16 1994/05/05 04:48:52 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -404,9 +404,9 @@ copyfault:
 		}
 		spl0();
 #ifndef PROFTIMER
-		if ((p->p_flag&SOWEUPC) && p->p_stats->p_prof.pr_scale) {
+		if ((p->p_flag&P_OWEUPC) && p->p_stats->p_prof.pr_scale) {
 			addupc(frame.f_pc, &p->p_stats->p_prof, 1);
-			p->p_flag &= ~SOWEUPC;
+			p->p_flag &= ~P_OWEUPC;
 		}
 #endif
 		goto out;
