@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.33 2003/11/04 03:43:12 uwe Exp $
+#	$NetBSD: files.hpcsh,v 1.34 2004/03/15 03:49:14 uwe Exp $
 #
 maxpartitions 8
 
@@ -61,6 +61,10 @@ attach cpu at mainbus
 file	arch/sh3/sh3/cpu.c			cpu
 
 include	"arch/sh3/conf/files.shb"
+
+device	j6x0lcd
+attach	j6x0lcd at shb
+file	arch/hpcsh/dev/j6x0lcd.c		j6x0lcd
 
 device	j6x0pwr
 attach	j6x0pwr at adc
