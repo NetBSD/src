@@ -1,12 +1,10 @@
-$NetBSD: To.Do,v 1.6 1996/03/11 23:14:43 phil Exp $
+$NetBSD: To.Do,v 1.7 1996/10/09 07:21:47 matthias Exp $
 
 This is the "To Do" list for NetBSD/pc532
   (Order is not in order of importance.)
   (Last updated, 12/6/95)
 
 - improve scn driver (integrate mods from Phil Bunde)
-
-- get kernel debugger working
 
 - write an aic scsi driver
 
@@ -23,6 +21,3 @@ This is the "To Do" list for NetBSD/pc532
 
 - find or write a "usable" comm package to replace kermit for
 	initial downloading.
-
-- find out why profiling does not accumulate any time
-
