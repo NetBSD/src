@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.15 1997/01/05 11:46:12 mrg Exp $
+#	$NetBSD: security,v 1.16 1997/02/14 08:52:05 mikel Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -251,7 +251,7 @@ if [ X"$check_rhosts" = XYES ]; then
 	done
 
 	# Check for special users with .rhosts files.  Only root and toor should
-	# have a .rhosts files.  Also, .rhosts files should not have plus signs.
+	# have .rhosts files.  Also, .rhosts files should not have plus signs.
 	awk -F: '$1 != "root" && $1 != "toor" && \
 		($3 < 100 || $1 == "ftp" || $1 == "uucp") \
 			{ print $1 " " $9 }' /etc/master.passwd |
@@ -522,15 +522,14 @@ fi
 # Create the mtree tree specifications using:
 #
 #	mtree -cx -pDIR -kcksum,gid,mode,nlink,size,link,time,uid > DIR.secure
-#	chown root.wheel DIR.SECURE
-#	chmod 600 DIR.SECURE
+#	chown root.wheel DIR.secure
+#	chmod 600 DIR.secure
 #
 # Note, this is not complete protection against Trojan horsed binaries, as
 # the hacker can modify the tree specification to match the replaced binary.
 # For details on really protecting yourself against modified binaries, see
 # the mtree(8) manual page.
-if [ X"$check_mtree" = XYES ] && cd /etc/mtree; then
-(
+if [ X"$check_mtree" = XYES ]; then
 	mtree -e -p / -f /etc/mtree/special > $OUTPUT
 	if [ -s $OUTPUT ]; then
 		printf "\nChecking special files and directories.\n"
@@ -538,8 +537,8 @@ if [ X"$check_mtree" = XYES ] && cd /etc/mtree; then
 	fi
 
 	> $OUTPUT
-	for file in *.secure; do
-		[ $file = '*.secure' ] && continue
+	for file in /etc/mtree/*.secure; do
+		[ $file = '/etc/mtree/*.secure' ] && continue
 		tree=`sed -n -e '3s/.* //p' -e 3q $file`
 		mtree -f $file -p $tree > $TMP1
 		if [ -s $TMP1 ]; then
@@ -551,7 +550,6 @@ if [ X"$check_mtree" = XYES ] && cd /etc/mtree; then
 		printf "\nChecking system binaries:\n"
 		cat $OUTPUT
 	fi
-)
 fi
 
 # List of files that get backed up and checked for any modifications.  Each
