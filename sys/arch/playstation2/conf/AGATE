@@ -1,13 +1,14 @@
 #
 # -- SCPH-18000 used by uch@NetBSD.org
 #
-# 	$NetBSD: AGATE,v 1.6 2003/12/04 13:05:17 keihan Exp $
+# 	$NetBSD: AGATE,v 1.6.2.1 2004/07/15 20:18:00 he Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
 include 	"arch/playstation2/conf/config.playstation2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 config		netbsd	root on wd0a type ffs
 config		nfsnetbsd root on smap0 type nfs
