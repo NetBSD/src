@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpq.8,v 1.13 2003/06/30 10:42:04 wiz Exp $
+.\"	$NetBSD: ntpq.8,v 1.14 2003/10/25 12:27:08 fredb Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -9,8 +9,9 @@
 .Nd standard NTP query program
 .Sh SYNOPSIS
 .Nm
-.Op Fl ntpq Ar [-inp]
-.Op Fl command] Ar [host]
+.Op Fl dinp
+.Op Fl c Ar command ...
+.Op Ar host ...
 .Sh DESCRIPTION
 .Pa ntpq
 is used to query NTP servers which implement the recommended
@@ -55,6 +56,15 @@ will attempt to read interactive format commands from the standard input.
 The following argument is interpreted as an interactive format command
 and is added to the list of commands to be executed on the specified host(s).
 Multiple -c options may be given.
+.It Fl d
+Set debug mode.
+Most useful with
+.Fl c .
+Multiple
+.Fl d
+options increase the level of verbosity.
+At debug level four,
+the entire raw packet is dumped to the terminal.
 .It Fl i
 Force
 .Pa ntpq
