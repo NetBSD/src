@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.104 2000/07/20 18:33:43 jeffs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105 2000/08/01 23:38:26 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2000/07/20 18:33:43 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2000/08/01 23:38:26 jeffs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -969,8 +969,7 @@ pmap_procwr(p, va, len)
 		printf("pmap_procwr: va %lx len %lx\n", va, len);
 #endif
 		MachFlushDCache(va, len);
-		MachFlushICache(MIPS_PHYS_TO_KSEG0(va &
-		    (mips_L1ICacheSize - 1)), len);
+		MachFlushICache(va, len);
 #endif /* MIPS3 */
 	} else {
 #ifdef MIPS1

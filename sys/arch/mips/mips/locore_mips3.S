@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.43 2000/07/25 18:06:49 jeffs Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.44 2000/08/01 23:38:26 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1564,7 +1564,7 @@ END(mips3_FlushCache)
  *		vaddr_t addr; vsize_t len;
  *
  *	Flush instruction cache for range of addr to addr + len - 1.
- *	The address can be any valid address so long as no TLB misses occur.
+ *	The address is reduced to a kseg0 index.
  *	Assumes a cache line size of 16 bytes for speed.
  *
  * Results:
@@ -1577,7 +1577,12 @@ END(mips3_FlushCache)
  *----------------------------------------------------------------------------
  */
 LEAF(mips3_FlushICache)
+	lw	a2, mips_L1ICacheSize
+	addu	a2, -1
+	and	a0, a0, a2	# get index into primary cache
 	addu	a1, 127		# Align
+	li	a2, MIPS_KSEG0_START
+	addu	a0, a0, a2
 	srl	a1, a1, 7	# Number of unrolled loops
 1:
 	cache	C_IINV_I, 0(a0)
