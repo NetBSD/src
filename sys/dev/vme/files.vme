@@ -1,24 +1,24 @@
-#	$NetBSD: files.vme,v 1.2 1997/11/02 23:14:13 pk Exp $
+#	$NetBSD: files.vme,v 1.3 1998/01/12 09:54:57 thorpej Exp $
 #
 # Config file and device description for machine-independent VME code.
 # Included by ports that need it.
 
-device	vme {addr = -1, pri = -1, vec = -1}
+device	vme class dull {addr = -1, pri = -1, vec = -1}
 file	dev/vme/vme.c			vme
 
 
-device	ie: ifnet, ether, arp, i82586
+device	ie class ifnet: ifnet, ether, arp, i82586
 attach	ie at vme with ie_vme
 file	dev/vme/if_ie_vme.c		ie_vme
 
-device	xdc {drive = -1}
+device	xdc class dull {drive = -1}
 attach	xdc at vme
-device	xd: disk
+device	xd class disk: disk
 attach	xd at xdc
 file	dev/vme/xd.c		xd needs-flag
 
-device	xyc {drive = -1}
+device	xyc class dull {drive = -1}
 attach	xyc at vme
-device	xy: disk
+device	xy class disk: disk
 attach	xy at xyc
 file	dev/vme/xy.c		xy needs-flag
