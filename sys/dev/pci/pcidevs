@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.659 2004/10/26 11:30:52 augustss Exp $
+$NetBSD: pcidevs,v 1.660 2004/10/28 07:22:24 martti Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2063,6 +2063,7 @@ product SYMBIOS FC929_1	0x0623	FC929
 product SYMBIOS FC919	0x0624	FC919
 product SYMBIOS FC919_1	0x0625	FC919
 product SYMBIOS FC929X	0x0626	FC929X
+product SYMBIOS PERC_4SC	0x1960	PERC 4/SC
 
 /* Packet Engines products */
 product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
