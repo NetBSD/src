@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.53 1996/12/02 22:55:44 thorpej Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.54 1996/12/03 00:22:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -68,7 +68,7 @@
 #include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
 
-struct nfsstats nfsstats;
+extern struct nfsstats nfsstats;
 extern int nfs_ticks;
 
 #ifdef notyet
@@ -91,7 +91,7 @@ struct vfsops nfs_vfsops = {
 	nfs_vget,
 	nfs_fhtovp,
 	nfs_vptofh,
-	nfs_init,
+	nfs_vfs_init,
 #ifdef notyet
 	nfs_sysctl
 #endif

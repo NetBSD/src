@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.90 1996/10/13 02:32:30 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.91 1996/12/03 00:22:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -162,6 +162,9 @@ main(framep)
 	extern void roundrobin __P((void *));
 	extern void schedcpu __P((void *));
 	extern void disk_init __P((void));
+#if defined(NFSSERVER) || defined(NFSCLIENT)
+	extern void nfs_init __P((void));
+#endif
 
 	/*
 	 * Initialize the current process pointer (curproc) before
@@ -261,6 +264,9 @@ main(framep)
 	vm_init_limits(p);
 
 	/* Initialize the file systems. */
+#if defined(NFSSERVER) || defined(NFSCLIENT)
+	nfs_init();			/* initialize server/shared data */
+#endif
 	vfsinit();
 
 	/* Start real time and statistics clocks. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.34 1996/12/02 22:55:42 thorpej Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.35 1996/12/03 00:22:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -98,6 +98,9 @@ nfstype nfsv3_type[9] = { NFNON, NFREG, NFDIR, NFBLK, NFCHR, NFLNK, NFSOCK,
 enum vtype nv2tov_type[8] = { VNON, VREG, VDIR, VBLK, VCHR, VLNK, VNON, VNON };
 enum vtype nv3tov_type[8]={ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO };
 int nfs_ticks;
+
+/* NFS client/server stats. */
+struct nfsstats nfsstats;
 
 /*
  * Mapping of old NFS Version 2 RPC numbers to generic numbers.
@@ -525,7 +528,6 @@ extern time_t nqnfsstarttime;
 extern int nqsrv_clockskew;
 extern int nqsrv_writeslack;
 extern int nqsrv_maxlease;
-extern struct nfsstats nfsstats;
 extern int nqnfs_piggy[NFS_NPROCS];
 extern nfstype nfsv2_type[9];
 extern nfstype nfsv3_type[9];
@@ -1067,12 +1069,12 @@ nfsm_strtmbuf(mb, bpos, cp, siz)
 }
 
 /*
- * Called once to initialize data structures...
+ * Called once before VFS init to initialize shared and
+ * server-specific data structures.
  */
 void
 nfs_init()
 {
-	register int i;
 
 #if !defined(alpha) && defined(DIAGNOSTIC)
 	/*
@@ -1114,18 +1116,9 @@ nfs_init()
 	nfs_ticks = (hz * NFS_TICKINTVL + 500) / 1000;
 	if (nfs_ticks < 1)
 		nfs_ticks = 1;
-#ifdef NFSCLIENT
-	/* Ensure async daemons disabled */
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
-		nfs_iodwant[i] = (struct proc *)0;
-		nfs_iodmount[i] = (struct nfsmount *)0;
-	}
-	nfs_nhinit();			/* Init the nfsnode table */
-#endif /* NFSCLIENT */
 #ifdef NFSSERVER
 	nfsrv_init(0);			/* Init server data structures */
 	nfsrv_initcache();		/* Init the server request cache */
-#endif /* NFSSERVER */
 
 	/*
 	 * Initialize the nqnfs server stuff.
@@ -1137,6 +1130,7 @@ nfs_init()
 		CIRCLEQ_INIT(&nqtimerhead);
 		nqfhhashtbl = hashinit(NQLCHSZ, M_NQLEASE, &nqfhhash);
 	}
+#endif /* NFSSERVER */
 
 	/*
 	 * Initialize reply list and start timer
@@ -1146,6 +1140,22 @@ nfs_init()
 }
 
 #ifdef NFSCLIENT
+/*
+ * Called once at VFS init to initialize client-specific data structures.
+ */
+void
+nfs_vfs_init()
+{
+	register int i;
+
+	/* Ensure async daemons disabled */
+	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
+		nfs_iodwant[i] = (struct proc *)0;
+		nfs_iodmount[i] = (struct nfsmount *)0;
+	}
+	nfs_nhinit();			/* Init the nfsnode table */
+}
+
 /*
  * Attribute cache routines.
  * nfs_loadattrcache() - loads or updates the cache contents from attributes

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.22 1996/12/02 22:55:43 thorpej Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.23 1996/12/03 00:22:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -102,7 +102,9 @@ static struct nfsdrt nfsdrt;
 #define	TRUE	1
 #define	FALSE	0
 
+#ifdef NFSCLIENT
 static int nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
+#endif
 
 #ifdef NFSSERVER
 static void nfsd_rt __P((int, struct nfsrv_descript *, int));
@@ -170,10 +172,10 @@ sys_nfssvc(p, v, retval)
 		syscallarg(int) flag;
 		syscallarg(caddr_t) argp;
 	} */ *uap = v;
-	struct nameidata nd;
-	struct nfsmount *nmp;
 	int error;
 #ifdef NFSCLIENT
+	struct nameidata nd;
+	struct nfsmount *nmp;
 	struct nfsd_cargs ncd;
 #endif
 #ifdef NFSSERVER
