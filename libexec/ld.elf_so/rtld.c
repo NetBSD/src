@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.31 2000/04/15 05:41:46 erh Exp $	 */
+/*	$NetBSD: rtld.c,v 1.31.2.1 2000/06/22 15:58:31 minoura Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -278,6 +278,7 @@ _rtld(sp)
 	const char    **argv;
 	Obj_Entry	*obj;
 	const char **real___progname;
+	const Obj_Entry **real___mainprog_obj;
 	char ***real_environ;
 #if defined(RTLD_DEBUG) && !defined(RTLD_RELOCATE_SELF)
 	int             i = 0;
@@ -460,8 +461,8 @@ _rtld(sp)
 		_rtld_die();
 
 	/*
-	 * Set the __progname and environ before calling
-	 * anything that might use them.
+	 * Set the __progname,  environ and, __mainprog_obj before
+	 * calling anything that might use them.
 	 */
 	real___progname = _rtld_objmain_sym("__progname");
 	if (real___progname) {
@@ -473,6 +474,9 @@ _rtld(sp)
 	real_environ = _rtld_objmain_sym("environ");
 	if (real_environ)
 		*real_environ = environ;
+	real___mainprog_obj = _rtld_objmain_sym("__mainprog_obj");
+	if (real___mainprog_obj)
+		*real___mainprog_obj = _rtld_objmain;
 
 	dbg(("calling _init functions"));
 	_rtld_call_init_functions(_rtld_objmain->next);
@@ -593,14 +597,17 @@ static void
 _rtld_unref_dag(root)
 	Obj_Entry *root;
 {
+	assert(root);
 	assert(root->refcount != 0);
 	--root->refcount;
 	if (root->refcount == 0) {
 		const Needed_Entry *needed;
 
 		for (needed = root->needed; needed != NULL;
-		     needed = needed->next)
-			_rtld_unref_dag(needed->obj);
+		     needed = needed->next) {
+			if (needed->obj != NULL)
+				_rtld_unref_dag(needed->obj);
+		}
 	}
 }
 
@@ -655,7 +662,8 @@ _rtld_dlopen(name, mode)
 
 	if (obj != NULL) {
 		++obj->dl_refcount;
-		if (mode & RTLD_GLOBAL && _rtld_objlist_find(&_rtld_list_global, obj) == NULL)
+		if ((mode & RTLD_GLOBAL) &&
+		    _rtld_objlist_find(&_rtld_list_global, obj) == NULL)
 			_rtld_objlist_add(&_rtld_list_global, obj);
 		if (*old_obj_tail != NULL) {	/* We loaded something new. */
 			assert(*old_obj_tail == obj);

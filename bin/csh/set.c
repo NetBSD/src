@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.14 1999/03/19 12:58:34 christos Exp $	*/
+/*	$NetBSD: set.c,v 1.14.8.1 2000/06/22 15:03:42 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.14 1999/03/19 12:58:34 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.14.8.1 2000/06/22 15:03:42 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -656,12 +656,12 @@ static void
 exportpath(val)
     Char  **val;
 {
-    Char    exppath[BUFSIZ];
+    Char    exppath[BUFSIZE];
 
     exppath[0] = 0;
     if (val)
 	while (*val) {
-	    if (Strlen(*val) + Strlen(exppath) + 2 > BUFSIZ) {
+	    if (Strlen(*val) + Strlen(exppath) + 2 > BUFSIZE) {
 		(void) fprintf(csherr,
 			       "Warning: ridiculously long PATH truncated\n");
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.16 1998/07/28 11:41:44 mycroft Exp $	*/
+/*	$NetBSD: glob.c,v 1.16.8.1 2000/06/22 15:03:42 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.16 1998/07/28 11:41:44 mycroft Exp $");
+__RCSID("$NetBSD: glob.c,v 1.16.8.1 2000/06/22 15:03:42 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -662,8 +662,8 @@ backeval(cp, literal)
     struct command faket;
     bool    hadnl;
     int     pvec[2], quoted;
-    Char   *fakecom[2], ibuf[BUFSIZ];
-    char    tibuf[BUFSIZ];
+    Char   *fakecom[2], ibuf[BUFSIZE];
+    char    tibuf[BUFSIZE];
 
     hadnl = 0;
     icnt = 0;
@@ -747,7 +747,7 @@ backeval(cp, literal)
 
 		ip = ibuf;
 		do
-		    icnt = read(pvec[0], tibuf, BUFSIZ);
+		    icnt = read(pvec[0], tibuf, BUFSIZE);
 		while (icnt == -1 && errno == EINTR);
 		if (icnt <= 0) {
 		    c = -1;

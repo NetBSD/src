@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.26 2000/05/20 02:20:18 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.26.2.1 2000/06/22 15:58:15 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -101,14 +101,18 @@
  */
 
 void	blkfree(char **);
+void	closedataconn(FILE *);
 char   *conffilename(const char *);
 char  **copyblk(char **);
 void	count_users(void);
+void	cprintf(FILE *, const char *, ...);
 void	cwd(const char *);
+FILE   *dataconn(const char *, off_t, const char *);
 void	delete(const char *);
 char  **do_conversion(const char *);
 void	dologout(int);
 void	fatal(const char *);
+void	feat(void);
 int	format_file(const char *, int);
 int	ftpd_pclose(FILE *);
 FILE   *ftpd_popen(char *[], const char *, int);
@@ -117,8 +121,11 @@ void	init_curclass(void);
 void	logcmd(const char *, off_t, const char *, const char *,
 	    const struct timeval *, const char *);
 void	logwtmp(const char *, const char *, const char *);
-void	lreply(int, const char *, ...);
+struct tab *lookup(struct tab *, const char *);
 void	makedir(const char *);
+void	mlsd(const char *);
+void	mlst(const char *);
+void	opts(const char *);
 void	parse_conf(const char *);
 void	pass(const char *);
 void	passive(void);
@@ -132,6 +139,7 @@ void	reply(int, const char *, ...);
 void	retrieve(char *[], const char *);
 void	send_file_list(const char *);
 void	show_chdir_messages(int);
+void	sizecmd(const char *);
 void	statcmd(void);
 void	statfilecmd(const char *);
 void	store(const char *, const char *, int);
@@ -147,7 +155,16 @@ typedef enum {
 	CLASS_GUEST,
 	CLASS_CHROOT,
 	CLASS_REAL
-} class_t;
+} class_ft;
+
+struct tab {
+	char	*name;
+	short	 token;
+	short	 state;
+	short	 flags;	/* 1 if command implemented, 2 if has options */
+	char	*help;
+	char	*options;
+};
 
 struct ftpconv {
 	struct ftpconv	*next;
@@ -177,7 +194,7 @@ struct ftpclass {
 	int		 rateget;	/* Get (RETR) transfer rate throttle */
 	int		 rateput;	/* Put (STOR) transfer rate throttle */
 	unsigned int	 timeout;	/* Default timeout */
-	class_t		 type;		/* Class type */
+	class_ft	 type;		/* Class type */
 	mode_t		 umask;		/* Umask to use */
 	int		 upload;	/* As per modify, but also allow
 					   APPE, STOR, STOU */
@@ -215,6 +232,8 @@ GLOBAL	struct ftpclass	curclass;
 GLOBAL	int		debug;
 GLOBAL	jmp_buf		errcatch;
 GLOBAL	int		form;
+GLOBAL	int		gidcount;	/* number of entries in gidlist[] */
+GLOBAL	gid_t		gidlist[NGROUPS_MAX];
 GLOBAL	int		hasyyerrored;
 GLOBAL	char		hostname[MAXHOSTNAMELEN+1];
 #ifdef KERBEROS5
@@ -244,6 +263,25 @@ GLOBAL	off_t		total_bytes_in, total_bytes_out, total_bytes;
 						/* total number of xfers */
 GLOBAL	off_t		total_xfers_in, total_xfers_out, total_xfers;
 
+extern	struct tab	cmdtab[];
+
+#define	INTERNAL_LS	"/bin/ls"
+
+
+#define CMD_IMPLEMENTED(x)	((x)->flags != 0)
+#define CMD_HAS_OPTIONS(x)	((x)->flags == 2)
+
+#define	CPUTC(c, f)	do { \
+				putc(c, f); total_bytes++; total_bytes_out++; \
+			} while (0);
+
+#define CURCLASSTYPE	curclass.type == CLASS_GUEST  ? "GUEST"  : \
+		    	curclass.type == CLASS_CHROOT ? "CHROOT" : \
+		    	curclass.type == CLASS_REAL   ? "REAL"   : \
+			"<unknown>"
+
+#define ISDOTDIR(x)	(x[0] == '.' && x[1] == '\0')
+#define ISDOTDOTDIR(x)	(x[0] == '.' && x[1] == '.' && x[2] == '\0')
 
 #define EMPTYSTR(p)	((p) == NULL || *(p) == '\0')
 #define NEXTWORD(P, W)	do { \
@@ -251,5 +289,3 @@ GLOBAL	off_t		total_xfers_in, total_xfers_out, total_xfers;
 			} while ((W) != NULL && *(W) == '\0')
 #define PLURAL(s)	((s) == 1 ? "" : "s")
 #define REASSIGN(X,Y)	do { if (X) free(X); (X)=(Y); } while (/*CONSTCOND*/0)
-
-#define	INTERNAL_LS	"/bin/ls"

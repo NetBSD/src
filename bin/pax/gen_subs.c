@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.17 2000/02/17 03:12:24 itohy Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.17.2.1 2000/06/22 15:03:44 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.17 2000/02/17 03:12:24 itohy Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.17.2.1 2000/06/22 15:03:44 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -501,7 +501,9 @@ uqd_asc(val, str, len, base)
 #endif
 
 int
-check_Aflag(void) {
+check_Aflag(void)
+{
+
 	if (Aflag > 0)
 		return 1;
 	if (Aflag == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.16 2000/05/26 03:04:28 simonb Exp $	*/
+/*	$NetBSD: ps.h,v 1.16.2.1 2000/06/22 15:03:45 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,6 +36,10 @@
  */
 
 #define	UNLIMITED	0	/* unlimited terminal width */
+
+#define PRINTMODE	0	/* print values */
+#define WIDTHMODE	1	/* determine width of column */
+
 enum type {
 	CHAR, UCHAR, SHORT, USHORT, INT, UINT, LONG, ULONG, KPTR, KPTR24,
 	INT32, UINT32, SIGLIST
@@ -53,11 +57,10 @@ typedef struct var {
 	char	*alias;		/* aliases */
 #define	COMM	0x01		/* needs exec arguments and environment (XXX) */
 #define	LJUST	0x02		/* left adjust on output (trailing blanks) */
-#define	USER	0x04		/* needs user structure */
-#define	INF127	0x08		/* 127 = infinity: if > 127, print 127. */
+#define	INF127	0x04		/* 127 = infinity: if > 127, print 127. */
 	u_int	flag;
 				/* output routine */
-	void	(*oproc) __P((struct kinfo_proc2 *, struct varent *));
+	void	(*oproc) __P((struct kinfo_proc2 *, struct varent *, int));
 	short	width;		/* printing width */
 	/*
 	 * The following (optional) elements are hooks for passing information
@@ -67,9 +70,12 @@ typedef struct var {
 	int	off;		/* offset in structure */
 	enum	type type;	/* type of element */
 	char	*fmt;		/* printf format */
-	/*
-	 * glue to link selected fields together
-	 */
+	/* current longest element */
+	int64_t	longestp;	/* longest positive signed value */
+	int64_t	longestn;	/* longest negative signed value */
+	u_int64_t longestu;	/* longest unsigned value */
+	double	longestpd;	/* longest positive double */
+	double	longestnd;	/* longest negative double */
 } VAR;
 
 #include "extern.h"

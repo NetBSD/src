@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17 2000/05/26 03:04:28 simonb Exp $	*/
+/*	$NetBSD: extern.h,v 1.17.2.1 2000/06/22 15:03:44 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -50,43 +50,42 @@ extern VAR var[];
 extern VARENT *vhead;
 
 __BEGIN_DECLS
-void	 command __P((struct kinfo_proc2 *, VARENT *));
-void	 cputime __P((struct kinfo_proc2 *, VARENT *));
+void	 command __P((struct kinfo_proc2 *, VARENT *, int));
+void	 cputime __P((struct kinfo_proc2 *, VARENT *, int));
 int	 donlist __P((void));
 int	 donlist_sysctl __P((void));
-void	 evar __P((struct kinfo_proc2 *, VARENT *));
 void	 fmt_puts __P((char *, int *));
 void	 fmt_putc __P((int, int *));
 double	 getpcpu __P((struct kinfo_proc2 *));
 double	 getpmem __P((struct kinfo_proc2 *));
-void	 logname __P((struct kinfo_proc2 *, VARENT *));
-void	 longtname __P((struct kinfo_proc2 *, VARENT *));
-void	 lstarted __P((struct kinfo_proc2 *, VARENT *));
-void	 maxrss __P((struct kinfo_proc2 *, VARENT *));
+void	 logname __P((struct kinfo_proc2 *, VARENT *, int));
+void	 longtname __P((struct kinfo_proc2 *, VARENT *, int));
+void	 lstarted __P((struct kinfo_proc2 *, VARENT *, int));
+void	 maxrss __P((struct kinfo_proc2 *, VARENT *, int));
 void	 nlisterr __P((struct nlist *));
-void	 p_rssize __P((struct kinfo_proc2 *, VARENT *));
-void	 pagein __P((struct kinfo_proc2 *, VARENT *));
+void	 p_rssize __P((struct kinfo_proc2 *, VARENT *, int));
+void	 pagein __P((struct kinfo_proc2 *, VARENT *, int));
 void	 parsefmt __P((char *));
-void	 pcpu __P((struct kinfo_proc2 *, VARENT *));
-void	 pmem __P((struct kinfo_proc2 *, VARENT *));
-void	 pnice __P((struct kinfo_proc2 *, VARENT *));
-void	 pri __P((struct kinfo_proc2 *, VARENT *));
+void	 pcpu __P((struct kinfo_proc2 *, VARENT *, int));
+void	 pmem __P((struct kinfo_proc2 *, VARENT *, int));
+void	 pnice __P((struct kinfo_proc2 *, VARENT *, int));
+void	 pri __P((struct kinfo_proc2 *, VARENT *, int));
 void	 printheader __P((void));
 struct kinfo_proc2
-	*getkinfo_procfs __P((int, int, int*));
+	*getkinfo_procfs __P((int, int, int *));
 char	**procfs_getargv __P((const struct kinfo_proc2 *, int));
-void	 pvar __P((struct kinfo_proc2 *, VARENT *));
-void	 rssize __P((struct kinfo_proc2 *, VARENT *));
-void	 runame __P((struct kinfo_proc2 *, VARENT *));
+void	 pvar __P((struct kinfo_proc2 *, VARENT *, int));
+void	 rssize __P((struct kinfo_proc2 *, VARENT *, int));
+void	 runame __P((struct kinfo_proc2 *, VARENT *, int));
 void	 showkey __P((void));
-void	 started __P((struct kinfo_proc2 *, VARENT *));
-void	 state __P((struct kinfo_proc2 *, VARENT *));
-void	 tdev __P((struct kinfo_proc2 *, VARENT *));
-void	 tname __P((struct kinfo_proc2 *, VARENT *));
-void	 tsize __P((struct kinfo_proc2 *, VARENT *));
-void	 ucomm __P((struct kinfo_proc2 *, VARENT *));
-void	 uname __P((struct kinfo_proc2 *, VARENT *));
-void	 uvar __P((struct kinfo_proc2 *, VARENT *));
-void	 vsize __P((struct kinfo_proc2 *, VARENT *));
-void	 wchan __P((struct kinfo_proc2 *, VARENT *));
+void	 started __P((struct kinfo_proc2 *, VARENT *, int));
+void	 state __P((struct kinfo_proc2 *, VARENT *, int));
+void	 tdev __P((struct kinfo_proc2 *, VARENT *, int));
+void	 tname __P((struct kinfo_proc2 *, VARENT *, int));
+void	 tsize __P((struct kinfo_proc2 *, VARENT *, int));
+void	 ucomm __P((struct kinfo_proc2 *, VARENT *, int));
+void	 uname __P((struct kinfo_proc2 *, VARENT *, int));
+void	 uvar __P((struct kinfo_proc2 *, VARENT *, int));
+void	 vsize __P((struct kinfo_proc2 *, VARENT *, int));
+void	 wchan __P((struct kinfo_proc2 *, VARENT *, int));
 __END_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.16 1999/03/23 09:29:51 itohy Exp $	*/
+/*	$NetBSD: file.c,v 1.16.8.1 2000/06/22 15:03:41 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: file.c,v 1.16 1999/03/23 09:29:51 itohy Exp $");
+__RCSID("$NetBSD: file.c,v 1.16.8.1 2000/06/22 15:03:41 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -680,12 +680,12 @@ tenex(inputline, inputline_size)
     int     inputline_size;
 {
     int numitems, num_read;
-    char    tinputline[BUFSIZ];
+    char    tinputline[BUFSIZE];
 
 
     setup_tty(ON);
 
-    while ((num_read = read(SHIN, tinputline, BUFSIZ)) > 0) {
+    while ((num_read = read(SHIN, tinputline, BUFSIZE)) > 0) {
 	int     i;
 	static Char delims[] = {' ', '\'', '"', '\t', ';', '&', '<',
 	'>', '(', ')', '|', '^', '%', '\0'};

@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.c,v 1.21 1999/07/06 14:36:10 christos Exp $	*/
+/*	$NetBSD: rusers_proc.c,v 1.21.6.1 2000/06/22 15:58:35 minoura Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers_proc.c,v 1.21 1999/07/06 14:36:10 christos Exp $");
+__RCSID("$NetBSD: rusers_proc.c,v 1.21.6.1 2000/06/22 15:58:35 minoura Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -97,14 +97,14 @@ static ut_host_t host[MAXUSERS];
 
 extern int from_inetd;
 
-static int getidle __P((char *, char *));
-static int *rusers_num_svc __P((void *, struct svc_req *));
-static utmp_array *do_names_3 __P((int));
-static struct utmpidlearr *do_names_2 __P((int));
+static int getidle(char *, char *);
+static int *rusers_num_svc(void *, struct svc_req *);
+static utmp_array *do_names_3(int);
+static struct utmpidlearr *do_names_2(int);
 
 /* XXX */
-struct utmpidlearr *rusersproc_names_2_svc __P((void *, struct svc_req *));
-struct utmpidlearr *rusersproc_allnames_2_svc __P((void *, struct svc_req *));
+struct utmpidlearr *rusersproc_names_2_svc(void *, struct svc_req *);
+struct utmpidlearr *rusersproc_allnames_2_svc(void *, struct svc_req *);
 
 
 #ifdef XIDLE
@@ -115,15 +115,13 @@ static int XqueryIdle __P((char *));
 static void abortOpen __P((int));
 
 static void
-abortOpen(n)
-	int n;
+abortOpen(int n)
 {
 	siglongjmp(openAbort, 1);
 }
 
 static int
-XqueryIdle(display)
-	char *display;
+XqueryIdle(char *display)
 {
 	int first_event, first_error;
 	Time IdleTime;
@@ -161,8 +159,7 @@ XqueryIdle(display)
 #endif /* XIDLE */
 
 static int
-getidle(tty, display)
-	char *tty, *display;
+getidle(char *tty, char *display)
 {
 	struct stat st;
 	char devname[PATH_MAX];
@@ -212,9 +209,7 @@ getidle(tty, display)
 }
 	
 static int *
-rusers_num_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rusers_num_svc(void *arg, struct svc_req *rqstp)
 {
 	static int num_users = 0;
 	struct utmp usr;
@@ -243,8 +238,7 @@ rusers_num_svc(arg, rqstp)
 }
 
 static utmp_array *
-do_names_3(all)
-	int all;
+do_names_3(int all)
 {
 	static utmp_array ut;
 	struct utmp usr;
@@ -293,18 +287,14 @@ do_names_3(all)
 }
 
 utmp_array *
-rusersproc_names_3_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rusersproc_names_3_svc(void *arg, struct svc_req *rqstp)
 {
 
 	return (do_names_3(0));
 }
 
 utmp_array *
-rusersproc_allnames_3_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rusersproc_allnames_3_svc(void *arg, struct svc_req *rqstp)
 {
 
 	return (do_names_3(1));
@@ -358,25 +348,19 @@ do_names_2(int all)
 }
 
 struct utmpidlearr *
-rusersproc_names_2_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rusersproc_names_2_svc(void *arg, struct svc_req *rqstp)
 {
 	return (do_names_2(0));
 }
 
 struct utmpidlearr *
-rusersproc_allnames_2_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rusersproc_allnames_2_svc(void *arg, struct svc_req *rqstp)
 {
 	return (do_names_2(1));
 }
 
 void
-rusers_service(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+rusers_service(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
 		int fill;
