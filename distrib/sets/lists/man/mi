@@ -620,6 +620,7 @@
 ./usr/share/man/cat8/ipnat.0
 ./usr/share/man/cat8/kvm_mkdb.0
 ./usr/share/man/cat8/lastlogin.0
+./usr/share/man/cat8/ldconfig.0
 ./usr/share/man/cat8/lfs_cleanerd.0
 ./usr/share/man/cat8/lockd.0
 ./usr/share/man/cat8/lpc.0
@@ -1696,6 +1697,7 @@
 ./usr/share/man/man8/ipnat.8
 ./usr/share/man/man8/kvm_mkdb.8
 ./usr/share/man/man8/lastlogin.8
+./usr/share/man/man8/ldconfig.8
 ./usr/share/man/man8/lfs_cleanerd.8
 ./usr/share/man/man8/lockd.8
 ./usr/share/man/man8/lpc.8
