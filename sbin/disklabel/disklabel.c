@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.68 1999/04/30 04:46:50 abs Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.69 1999/05/03 09:45:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.68 1999/04/30 04:46:50 abs Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.69 1999/05/03 09:45:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,6 +158,7 @@ static void makelabel __P((char *, char *, struct disklabel *));
 static void l_perror __P((char *));
 static struct disklabel *readlabel __P((int));
 static struct disklabel *makebootarea __P((char *, struct disklabel *, int));
+static void showinfo __P((FILE *, struct disklabel *));
 static int edit __P((struct disklabel *, int));
 static int editit __P((void));
 static char *skip __P((char *));
@@ -321,8 +322,10 @@ main(argc, argv)
 		lp = readlabel(f);
 		if (tflag)
 			makedisktab(stdout, lp);
-		else
-			display(stdout, lp);
+		else {
+			showinfo(stdout, lp);
+			showpartitions(stdout, lp);
+		}
 		error = checklabel(lp);
 		break;
 
@@ -1098,13 +1101,12 @@ makedisktab(f, lp)
 	(void) fflush(f);
 }
 
-void
-display(f, lp)
+static void
+showinfo(f, lp)
 	FILE *f;
 	struct disklabel *lp;
 {
 	int i, j;
-	struct partition *pp;
 
 	(void) fprintf(f, "# %s:\n", specname);
 	if ((unsigned) lp->d_type < DKMAXTYPES)
@@ -1145,7 +1147,19 @@ display(f, lp)
 		i = 0;
 	for (j = 0; j <= i; j++)
 		(void) fprintf(f, "%d ", lp->d_drivedata[j]);
-	(void) fprintf(f, "\n\n%d partitions:\n", lp->d_npartitions);
+	(void) fprintf(f, "\n\n");
+	(void) fflush(f);
+}
+
+void
+showpartitions(f, lp)
+	FILE *f;
+	struct disklabel *lp;
+{
+	int i;
+	struct partition *pp;
+
+	(void) fprintf(f, "%d partitions:\n", lp->d_npartitions);
 	(void) fprintf(f,
 	    "#        size   offset     fstype   [fsize bsize   cpg]\n");
 	pp = lp->d_partitions;
@@ -1232,7 +1246,8 @@ edit(lp, f)
 		return (1);
 	}
 	(void)fchmod(fd, 0600);
-	display(fp, lp);
+	showinfo(fp, lp);
+	showpartitions(fp, lp);
 	(void) fclose(fp);
 	for (;;) {
 		if (!editit())
@@ -1331,7 +1346,7 @@ word(cp)
 
 /*
  * Read an ascii label in from fd f,
- * in the same format as that put out by display(),
+ * in the same format as that put out by showinfo() and showpartitions(),
  * and fill in lp.
  */
 static int
