@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.70 2002/03/09 01:33:34 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.71 2002/03/09 01:37:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.70 2002/03/09 01:33:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.71 2002/03/09 01:37:19 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -959,7 +959,8 @@ pool_do_put(struct pool *pp, void *v)
 	 */
 	if (ph->ph_nmissing == 0) {
 		pp->pr_nidle++;
-		if (pp->pr_npages > pp->pr_maxpages) {
+		if (pp->pr_npages > pp->pr_maxpages ||
+		    (pp->pr_alloc->pa_flags & PA_WANT) != 0) {
 			pr_rmpage(pp, ph, NULL);
 		} else {
 			TAILQ_REMOVE(&pp->pr_pagelist, ph, ph_pagelist);
