@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.5 2005/02/20 00:36:47 christos Exp $
+# $NetBSD: Makefile,v 1.6 2005/02/20 16:20:36 martin Exp $
 
 USE_SHLIBDIR=	yes
 .include <bsd.own.mk>
 
 WARNS=3
-LINTFLAGS+= -Sw
+LINTFLAGS+= -S
 
 LIB=	radius
 CPPFLAGS+=	-I.
