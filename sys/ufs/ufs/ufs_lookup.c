@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.4 1994/12/30 22:45:55 mycroft Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.5 1995/05/30 10:44:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -337,7 +337,6 @@ searchloop:
 					slotoffset = dp->i_offset;
 					slotsize = ep->d_reclen;
 					dp->i_reclen = slotsize;
-					enduseful = slotoffset + slotsize;
 					ap->a_cnp->cn_flags |= ISWHITEOUT;
 					numdirpasses--;
 					goto notfound;
@@ -395,20 +394,20 @@ notfound:
 		if (slotstatus == NONE) {
 			dp->i_offset = roundup(dp->i_size, DIRBLKSIZ);
 			dp->i_count = 0;
-			enduseful = dp->i_offset;
 		} else if (nameiop == DELETE) {
 			dp->i_offset = slotoffset;
 			if ((dp->i_offset & (DIRBLKSIZ - 1)) == 0)
 				dp->i_count = 0;
 			else
 				dp->i_count = dp->i_offset - prevoff;
+			dp->i_endoff = 0;
 		} else {
 			dp->i_offset = slotoffset;
 			dp->i_count = slotsize;
 			if (enduseful < slotoffset + slotsize)
 				enduseful = slotoffset + slotsize;
+			dp->i_endoff = roundup(enduseful, DIRBLKSIZ);
 		}
-		dp->i_endoff = roundup(enduseful, DIRBLKSIZ);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		/*
 		 * We return with the directory locked, so that
