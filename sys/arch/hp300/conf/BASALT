@@ -1,10 +1,15 @@
-#	$NetBSD: BASALT,v 1.32 1999/09/19 21:13:44 thorpej Exp $
+#	$NetBSD: BASALT,v 1.33 1999/09/19 21:20:43 thorpej Exp $
 #
 # Kernel for basalt.og.org - thorpej's HP380 workstation.
 #
 
 # Include attributes common to all hp300s
 include "arch/hp300/conf/std.hp300"
+
+# Pull in US crypto bits
+prefix ../crypto-us/sys
+cinclude "conf/files.crypto-us"
+prefix
 
 # Support for various CPU types
 options 	HP380
@@ -44,6 +49,10 @@ options 	NFSSERVER	# Network filesystem server
 
 # Networking options
 options 	INET			# Internet protocols
+options 	INET6			# IPv6
+options 	IPSEC			# IP Security
+options 	IPSEC_ESP		# IP Security ESP protocol
+#options 	IPSEC_DEBUG		# IP Security debugging code
 #options 	TCP_COMPAT_42		# compatibility with 4.2BSD TCP/IP
 options 	GATEWAY			# Packet forwarding + larger mb_map
 options 	NMBCLUSTERS=1024	# Crank this up
@@ -107,4 +116,5 @@ pseudo-device	ppp		1	# PPP network interfaces
 pseudo-device	bpfilter	4	# packet filter devices
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	loop			# loopback network interface
-pseudo-device	ipfilter 		# IP Filter
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
