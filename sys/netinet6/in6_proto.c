@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.46 2002/11/11 18:26:42 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.47 2003/04/17 19:58:57 thorpej Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.46 2002/11/11 18:26:42 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.47 2003/04/17 19:58:57 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -123,7 +123,9 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.46 2002/11/11 18:26:42 itojun Exp $"
 
 #include <net/net_osdep.h>
 
+#ifndef offsetof		/* XXX */
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
+#endif
 
 /*
  * TCP/IP protocol family: IP6, ICMP6, UDP, TCP.
