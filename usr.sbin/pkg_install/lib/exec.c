@@ -1,11 +1,11 @@
-/*	$NetBSD: exec.c,v 1.9 2002/06/27 12:05:52 yamt Exp $	*/
+/*	$NetBSD: exec.c,v 1.10 2003/09/23 09:47:21 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: exec.c,v 1.6 1997/10/08 07:47:50 charnier Exp";
 #else
-__RCSID("$NetBSD: exec.c,v 1.9 2002/06/27 12:05:52 yamt Exp $");
+__RCSID("$NetBSD: exec.c,v 1.10 2003/09/23 09:47:21 wiz Exp $");
 #endif
 #endif
 
@@ -55,6 +55,7 @@ vsystem(const char *fmt,...)
 	if (vsnprintf(cmd, maxargs, fmt, args) >= maxargs) {
 		warnx("vsystem args are too long");
 		va_end(args);
+		free(cmd);
 		return 1;
 	}
 #ifdef VSYSTEM_DEBUG
