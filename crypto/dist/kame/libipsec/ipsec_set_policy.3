@@ -1,4 +1,4 @@
-.\"	$KAME: ipsec_set_policy.3,v 1.12 2001/01/03 03:37:28 itojun Exp $
+.\"	$KAME: ipsec_set_policy.3,v 1.13 2001/02/21 09:31:11 sakane Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -163,6 +163,15 @@ and
 .Ar src
 is the other node
 .Pq peer .
+If
+.Ar mode
+is
+.Li transport ,
+Both
+.Ar src
+and
+.Ar dst
+can be omited. 
 .Pp
 .Ar level
 must be set to one of the following:
@@ -230,12 +239,11 @@ Here are several examples
 .Pq long lines are wrapped for readability :
 .Bd -literal -offset indent
 in discard
-out ipsec esp/transport/10.1.1.1-10.1.1.2/require
-in ipsec ah/transport/10.1.1.2-10.1.1.1/require
-out ipsec esp/transport/10.1.1.2-10.1.1.1/use
-        ah/tunnel/10.1.1.2-10.1.1.1/unique:1000
-in ipsec ipcomp/transport/10.1.1.2-10.1.1.1/use
-        esp/transport/10.1.1.2-10.1.1.1/use
+out ipsec esp/transport//require
+in ipsec ah/transport//require
+out ipsec esp/tunnel/10.1.1.2-10.1.1.1/use
+in ipsec ipcomp/transport//use
+        esp/transport//use
 .Ed
 .Sh RETURN VALUES
 .Fn ipsec_set_policy

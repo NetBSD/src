@@ -1,4 +1,4 @@
-/*	$KAME: pfkey.c,v 1.38 2000/12/27 11:38:10 sakane Exp $	*/
+/*	$KAME: pfkey.c,v 1.39 2001/03/05 18:22:17 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -538,6 +538,91 @@ pfkey_send_delete(so, satype, mode, src, dst, spi)
 	if ((len = pfkey_send_x2(so, SADB_DELETE, satype, mode, src, dst, spi)) < 0)
 		return -1;
 
+	return len;
+}
+
+/*
+ * sending SADB_DELETE without spi to the kernel.  This is
+ * the "delete all" request (an extension also present in
+ * Solaris).
+ *
+ * OUT:
+ *	positive: success and return length sent
+ *	-1	: error occured, and set errno
+ */
+int
+pfkey_send_delete_all(so, satype, mode, src, dst)
+	int so;
+	u_int satype, mode;
+	struct sockaddr *src, *dst;
+{
+	struct sadb_msg *newmsg;
+	int len;
+	caddr_t p;
+	int plen;
+	caddr_t ep;
+
+	/* validity check */
+	if (src == NULL || dst == NULL) {
+		__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
+		return -1;
+	}
+	if (src->sa_family != dst->sa_family) {
+		__ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
+		return -1;
+	}
+	switch (src->sa_family) {
+	case AF_INET:
+		plen = sizeof(struct in_addr) << 3;
+		break;
+	case AF_INET6:
+		plen = sizeof(struct in6_addr) << 3;
+		break;
+	default:
+		__ipsec_errcode = EIPSEC_INVAL_FAMILY;
+		return -1;
+	}
+
+	/* create new sadb_msg to reply. */
+	len = sizeof(struct sadb_msg)
+		+ sizeof(struct sadb_address)
+		+ PFKEY_ALIGN8(src->sa_len)
+		+ sizeof(struct sadb_address)
+		+ PFKEY_ALIGN8(dst->sa_len);
+
+	if ((newmsg = CALLOC(len, struct sadb_msg *)) == NULL) {
+		__ipsec_set_strerror(strerror(errno));
+		return -1;
+	}
+	ep = ((caddr_t)newmsg) + len;
+
+	p = pfkey_setsadbmsg((caddr_t)newmsg, ep, SADB_DELETE, len, satype, 0,
+	    getpid());
+	if (!p) {
+		free(newmsg);
+		return -1;
+	}
+	p = pfkey_setsadbaddr(p, ep, SADB_EXT_ADDRESS_SRC, src, plen,
+	    IPSEC_ULPROTO_ANY);
+	if (!p) {
+		free(newmsg);
+		return -1;
+	}
+	p = pfkey_setsadbaddr(p, ep, SADB_EXT_ADDRESS_DST, dst, plen,
+	    IPSEC_ULPROTO_ANY);
+	if (!p || p != ep) {
+		free(newmsg);
+		return -1;
+	}
+
+	/* send message */
+	len = pfkey_send(so, newmsg, len);
+	free(newmsg);
+
+	if (len < 0)
+		return -1;
+
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return len;
 }
 
