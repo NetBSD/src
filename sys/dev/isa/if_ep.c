@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.53 1994/08/23 19:30:12 mycroft Exp $
+ *	$Id: if_ep.c,v 1.54 1994/08/26 12:11:44 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -182,7 +182,7 @@ epprobe(parent, self, aux)
 				continue;
 			}
 
-#ifdef notyet
+#ifndef notyet
 			outb(iobase + EISA_CONTROL, EISA_ENABLE | EISA_RESET);
 			delay(10);
 			outb(iobase + EISA_CONTROL, EISA_ENABLE);
@@ -777,14 +777,14 @@ epread(sc)
 		}
 	}
 
-	splx(sh);
-
 	m0->m_pkthdr.len = save_totlen;
 	m0->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 
 	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
 	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
+
+	splx(sh);
 
 	++sc->sc_arpcom.ac_if.if_ipackets;
 
