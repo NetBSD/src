@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.14 1996/12/06 00:45:48 mrg Exp $	*/
+/*	$NetBSD: inetd.c,v 1.15 1996/12/07 00:37:00 mrg Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
  * All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: inetd.c,v 1.14 1996/12/06 00:45:48 mrg Exp $";
+static char rcsid[] = "$Id: inetd.c,v 1.15 1996/12/07 00:37:00 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -417,7 +417,8 @@ main(argc, argv, envp)
 				continue;
 			}
 #ifdef LIBWRAP
-	request_init(&req, RQ_DAEMON, sep->se_argv[0], RQ_FILE, ctrl, NULL);
+	request_init(&req, RQ_DAEMON, sep->se_argv[0] ? sep->se_argv[0] :
+	    sep->se_service, RQ_FILE, ctrl, NULL);
 	fromhost(&req);
 	if (!hosts_access(&req)) {
 		sp = getservbyport(sep->se_ctrladdr_in.sin_port, sep->se_proto);
