@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.24 1995/12/10 00:49:33 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.25 1995/12/30 21:03:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -59,8 +59,14 @@
 #include <machine/mtpr.h>
 
 #include <hp300/hp300/isr.h>
+
 #ifdef USELEDS
 #include <hp300/hp300/led.h>
+/*
+ * Enable the transmit and receive hooks.
+ */
+#define LE_TINT_HOOK
+#define LE_RINT_HOOK
 #endif
 
 #include <hp300/dev/device.h>
@@ -120,6 +126,30 @@ lerdcsr(sc, port)
 		val = ler1->ler1_rdp;
 	} while ((ler0->ler0_status & LE_ACK) == 0);
 	return (val);
+}
+
+/* ARGSUSED */
+static void
+hp300_le_tint_hook(sc)
+	struct le_softc *sc;
+{
+
+#ifdef USELEDS
+	if (inledcontrol == 0)
+		ledcontrol(0, 0, LED_LANXMT);
+#endif
+}
+
+/* ARGSUSED */
+static void
+hp300_le_rint_hook(sc)
+	struct le_softc *sc;
+{
+
+#ifdef USELEDS
+	if (inledcontrol == 0)
+		ledcontrol(0, 0, LED_LANRCV);
+#endif
 }
 
 int
@@ -183,6 +213,13 @@ leattach(hd)
 	sc->sc_copytobuf = copytobuf_contig;
 	sc->sc_copyfrombuf = copyfrombuf_contig;
 	sc->sc_zerobuf = zerobuf_contig;
+
+#ifdef LE_TINT_HOOK
+	sc->sc_tint_hook = hp300_le_tint_hook;
+#endif
+#ifdef LE_RINT_HOOK
+	sc->sc_rint_hook = hp300_le_rint_hook;
+#endif
 
 	sc->sc_arpcom.ac_if.if_name = ledriver.d_name;
 	leconfig(sc);
