@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.9 1996/10/21 22:34:36 thorpej Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.10 1996/10/23 04:37:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -83,7 +83,7 @@ enum _pdq_type_t {
 #define	PDQ_OS_USEC_DELAY(n)		DELAY(n)
 #define	PDQ_OS_MEMZERO(p, n)		bzero((caddr_t)(p), (n))
 #if defined(__NetBSD__) && defined(__alpha__)
-#define	PDQ_OS_VA_TO_PA(pdq, p)		(vtophys((vm_offset_t)p) | (pdq->pdq_type == PDQ_DEFTA ? 0 : 0x40000000))
+#define	PDQ_OS_VA_TO_PA(pdq, p)		(alpha_XXX_dmamap((void *)p))
 #else
 #define	PDQ_OS_VA_TO_PA(pdq, p)		vtophys(p)
 #endif
