@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.15 2000/12/03 13:15:38 fvdl Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.16 2001/02/02 07:08:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -40,6 +40,8 @@
 
 #include <sys/systm.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
+#include <sys/syscallargs.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
@@ -526,5 +528,8 @@ typedef struct firm_event32 {
  * random other stuff
  */
 #include <compat/common/compat_util.h>
+
+void netbsd32_from_stat43 __P((struct stat43 *, struct netbsd32_stat43 *));
+int netbsd32_execve2(struct proc *, struct sys_execve_args *, register_t *);
  
 #endif /* _COMPAT_NETBSD32_NETBSD32_H_ */
