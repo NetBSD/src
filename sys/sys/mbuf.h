@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.36 1998/10/23 22:36:17 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.37 1999/01/09 21:52:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -98,12 +98,8 @@
 /*
  * Macros for type conversion
  * mtod(m,t) -	convert mbuf pointer to data pointer of correct type
- * mtocl(x) -	convert pointer within cluster to cluster index #
- * cltom(x) -	convert cluster # to ptr to beginning of cluster
  */
 #define	mtod(m,t)	((t)((m)->m_data))
-#define	mtocl(x)	(((u_long)(x) - (u_long)mbutl) >> MCLSHIFT)
-#define	cltom(x)	((caddr_t)((u_long)mbutl + ((u_long)(x) << MCLSHIFT)))
 
 /* header at beginning of each mbuf: */
 struct m_hdr {
