@@ -309,3 +309,127 @@ struct linux_select_args {
 };
 
 #undef	syscallarg
+
+/*
+ * System call prototypes.
+ */
+
+int	nosys	__P((struct proc *, void *, register_t *));
+int	exit	__P((struct proc *, void *, register_t *));
+int	linux_fork	__P((struct proc *, void *, register_t *));
+int	read	__P((struct proc *, void *, register_t *));
+int	write	__P((struct proc *, void *, register_t *));
+int	linux_open	__P((struct proc *, void *, register_t *));
+int	close	__P((struct proc *, void *, register_t *));
+int	linux_waitpid	__P((struct proc *, void *, register_t *));
+int	linux_creat	__P((struct proc *, void *, register_t *));
+int	link	__P((struct proc *, void *, register_t *));
+int	linux_unlink	__P((struct proc *, void *, register_t *));
+int	linux_execve	__P((struct proc *, void *, register_t *));
+int	linux_chdir	__P((struct proc *, void *, register_t *));
+int	linux_time	__P((struct proc *, void *, register_t *));
+int	linux_mknod	__P((struct proc *, void *, register_t *));
+int	linux_chmod	__P((struct proc *, void *, register_t *));
+int	linux_chown	__P((struct proc *, void *, register_t *));
+int	linux_break	__P((struct proc *, void *, register_t *));
+int	compat_43_lseek	__P((struct proc *, void *, register_t *));
+int	getpid	__P((struct proc *, void *, register_t *));
+int	setuid	__P((struct proc *, void *, register_t *));
+int	getuid	__P((struct proc *, void *, register_t *));
+int	linux_alarm	__P((struct proc *, void *, register_t *));
+int	linux_pause	__P((struct proc *, void *, register_t *));
+int	linux_utime	__P((struct proc *, void *, register_t *));
+int	linux_access	__P((struct proc *, void *, register_t *));
+int	sync	__P((struct proc *, void *, register_t *));
+int	linux_kill	__P((struct proc *, void *, register_t *));
+int	linux_rename	__P((struct proc *, void *, register_t *));
+int	linux_mkdir	__P((struct proc *, void *, register_t *));
+int	linux_rmdir	__P((struct proc *, void *, register_t *));
+int	dup	__P((struct proc *, void *, register_t *));
+int	linux_pipe	__P((struct proc *, void *, register_t *));
+int	linux_times	__P((struct proc *, void *, register_t *));
+int	linux_brk	__P((struct proc *, void *, register_t *));
+int	setgid	__P((struct proc *, void *, register_t *));
+int	getgid	__P((struct proc *, void *, register_t *));
+int	linux_signal	__P((struct proc *, void *, register_t *));
+int	geteuid	__P((struct proc *, void *, register_t *));
+int	getegid	__P((struct proc *, void *, register_t *));
+int	acct	__P((struct proc *, void *, register_t *));
+int	linux_ioctl	__P((struct proc *, void *, register_t *));
+int	linux_fcntl	__P((struct proc *, void *, register_t *));
+int	setpgid	__P((struct proc *, void *, register_t *));
+int	linux_oldolduname	__P((struct proc *, void *, register_t *));
+int	umask	__P((struct proc *, void *, register_t *));
+int	chroot	__P((struct proc *, void *, register_t *));
+int	dup2	__P((struct proc *, void *, register_t *));
+int	getppid	__P((struct proc *, void *, register_t *));
+int	getpgrp	__P((struct proc *, void *, register_t *));
+int	setsid	__P((struct proc *, void *, register_t *));
+int	linux_sigaction	__P((struct proc *, void *, register_t *));
+int	linux_siggetmask	__P((struct proc *, void *, register_t *));
+int	linux_sigsetmask	__P((struct proc *, void *, register_t *));
+int	linux_setreuid	__P((struct proc *, void *, register_t *));
+int	linux_setregid	__P((struct proc *, void *, register_t *));
+int	linux_sigsuspend	__P((struct proc *, void *, register_t *));
+int	linux_sigpending	__P((struct proc *, void *, register_t *));
+int	compat_43_sethostname	__P((struct proc *, void *, register_t *));
+int	compat_43_setrlimit	__P((struct proc *, void *, register_t *));
+int	compat_43_getrlimit	__P((struct proc *, void *, register_t *));
+int	getrusage	__P((struct proc *, void *, register_t *));
+int	gettimeofday	__P((struct proc *, void *, register_t *));
+int	settimeofday	__P((struct proc *, void *, register_t *));
+int	getgroups	__P((struct proc *, void *, register_t *));
+int	setgroups	__P((struct proc *, void *, register_t *));
+int	linux_oldselect	__P((struct proc *, void *, register_t *));
+int	linux_symlink	__P((struct proc *, void *, register_t *));
+int	compat_43_lstat	__P((struct proc *, void *, register_t *));
+int	linux_readlink	__P((struct proc *, void *, register_t *));
+int	linux_uselib	__P((struct proc *, void *, register_t *));
+int	swapon	__P((struct proc *, void *, register_t *));
+int	reboot	__P((struct proc *, void *, register_t *));
+int	linux_readdir	__P((struct proc *, void *, register_t *));
+int	linux_mmap	__P((struct proc *, void *, register_t *));
+int	munmap	__P((struct proc *, void *, register_t *));
+int	linux_truncate	__P((struct proc *, void *, register_t *));
+int	compat_43_ftruncate	__P((struct proc *, void *, register_t *));
+int	fchmod	__P((struct proc *, void *, register_t *));
+int	linux_fchown	__P((struct proc *, void *, register_t *));
+int	getpriority	__P((struct proc *, void *, register_t *));
+int	setpriority	__P((struct proc *, void *, register_t *));
+int	profil	__P((struct proc *, void *, register_t *));
+int	linux_statfs	__P((struct proc *, void *, register_t *));
+int	linux_fstatfs	__P((struct proc *, void *, register_t *));
+#ifdef __i386__
+int	linux_ioperm	__P((struct proc *, void *, register_t *));
+#else
+#endif
+int	linux_socketcall	__P((struct proc *, void *, register_t *));
+int	setitimer	__P((struct proc *, void *, register_t *));
+int	getitimer	__P((struct proc *, void *, register_t *));
+int	linux_stat	__P((struct proc *, void *, register_t *));
+int	linux_lstat	__P((struct proc *, void *, register_t *));
+int	linux_fstat	__P((struct proc *, void *, register_t *));
+int	linux_olduname	__P((struct proc *, void *, register_t *));
+#ifdef __i386__
+int	linux_iopl	__P((struct proc *, void *, register_t *));
+#else
+#endif
+int	linux_wait4	__P((struct proc *, void *, register_t *));
+int	linux_ipc	__P((struct proc *, void *, register_t *));
+int	fsync	__P((struct proc *, void *, register_t *));
+int	linux_sigreturn	__P((struct proc *, void *, register_t *));
+int	compat_09_setdomainname	__P((struct proc *, void *, register_t *));
+int	linux_uname	__P((struct proc *, void *, register_t *));
+#ifdef __i386__
+int	linux_modify_ldt	__P((struct proc *, void *, register_t *));
+#else
+#endif
+int	mprotect	__P((struct proc *, void *, register_t *));
+int	linux_sigprocmask	__P((struct proc *, void *, register_t *));
+int	linux_getpgid	__P((struct proc *, void *, register_t *));
+int	fchdir	__P((struct proc *, void *, register_t *));
+int	linux_personality	__P((struct proc *, void *, register_t *));
+int	linux_llseek	__P((struct proc *, void *, register_t *));
+int	linux_getdents	__P((struct proc *, void *, register_t *));
+int	linux_select	__P((struct proc *, void *, register_t *));
+int	flock	__P((struct proc *, void *, register_t *));
