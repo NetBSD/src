@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.19 1998/01/12 09:43:39 thorpej Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.20 1998/02/03 16:22:01 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -639,8 +639,10 @@ struct ifnet *ifp;
        		/* See if there is room to put another packet in the buffer. */
 	
 		if ((len+pad+2*I595_XMT_HDRLEN) > avail) {
+#ifdef IYDEBUG
 			printf("%s: len = %d, avail = %d, setting OACTIVE\n",
 			    sc->sc_dev.dv_xname, len, avail);
+#endif
 			ifp->if_flags |= IFF_OACTIVE;
 			return;
 		}
