@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.6 1997/01/07 12:24:57 tls Exp $	*/
+/*	$NetBSD: primes.c,v 1.7 1997/10/12 01:04:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-static char rcsid[] = "$NetBSD: primes.c,v 1.6 1997/01/07 12:24:57 tls Exp $";
+__RCSID("$NetBSD: primes.c,v 1.7 1997/10/12 01:04:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,7 @@ extern ubig *pr_limit;		/* largest prime in the prime array */
 extern char pattern[];
 extern int pattern_size;	/* length of pattern array */
 
+int	main __P((int, char *[]));
 void	primes __P((ubig, ubig));
 ubig	read_num_buf __P((void));
 void	usage __P((void));
@@ -121,7 +122,7 @@ main(argc, argv)
 	int ch;
 	char *p;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
 		case '?':
 		default:
@@ -223,11 +224,11 @@ primes(start, stop)
 	ubig start;	/* where to start generating */
 	ubig stop;	/* don't generate at or above this value */
 {
-	register char *q;		/* sieve spot */
-	register ubig factor;		/* index and factor */
-	register char *tab_lim;		/* the limit to sieve on the table */
-	register ubig *p;		/* prime table pointer */
-	register ubig fact_lim;		/* highest prime for current block */
+	char *q;		/* sieve spot */
+	ubig factor;		/* index and factor */
+	char *tab_lim;		/* the limit to sieve on the table */
+	ubig *p;		/* prime table pointer */
+	ubig fact_lim;		/* highest prime for current block */
 
 	/*
 	 * A number of systems can not convert double values into unsigned
@@ -262,7 +263,7 @@ primes(start, stop)
 		for (p = &prime[0], factor = prime[0];
 		    factor < stop && p <= pr_limit; factor = *(++p)) {
 			if (factor >= start) {
-				printf("%u\n", factor);
+				printf("%lu\n", (unsigned long) factor);
 			}
 		}
 		/* return early if we are done */
@@ -325,7 +326,7 @@ primes(start, stop)
 		 */
 		for (q = table; q < tab_lim; ++q, start+=2) {
 			if (*q) {
-				printf("%u\n", start);
+				printf("%lu\n", (unsigned long) start);
 			}
 		}
 	}
