@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.47 2002/02/10 00:49:57 gmcgarry Exp $	*/
+/*	$NetBSD: rd.c,v 1.48 2002/03/15 05:55:36 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@
 /*
  * CS80/SS80 disk driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.48 2002/03/15 05:55:36 gmcgarry Exp $");                                                  
 
 #include "opt_useleds.h"
 #include "rnd.h"
