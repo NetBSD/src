@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3 2002/08/26 10:52:13 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.4 2002/08/30 11:06:03 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_sh5_debug.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -80,7 +82,11 @@ ASENTRY_NOPROFILE(start)
  * We are now running mapped in KSEG0, with the MMU enabled.
  */
 Lmapped_start:
+#ifndef SH5_SIM
 	LDC32(0x08000000, r56)		/* RAM size. XXX: Can we probe this? */
+#else
+	LDC32(0x01000000, r56)		/* Fake 16MB for the simulator */
+#endif
 	LEA(_C_LABEL(edata), r0)
 	LEA(_C_LABEL(end), r1)
 	pta/u	1f, tr0
