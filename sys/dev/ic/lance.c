@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.29 2003/08/07 16:31:01 agc Exp $	*/
+/*	$NetBSD: lance.c,v 1.29.4.1 2005/01/24 21:42:01 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.29 2003/08/07 16:31:01 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.29.4.1 2005/01/24 21:42:01 he Exp $");
 
 #include "opt_ccitt.h"
 #include "opt_llc.h"
@@ -609,7 +609,8 @@ lance_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			lance_reset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				lance_reset(sc);
 			error = 0;
 		}
 		break;
