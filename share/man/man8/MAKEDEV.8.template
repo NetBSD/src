@@ -1,6 +1,6 @@
-.\" $NetBSD: MAKEDEV.8.template,v 1.3 2003/02/25 10:35:17 wiz Exp $
+.\" $NetBSD: MAKEDEV.8.template,v 1.4 2003/10/24 20:26:57 jdolecek Exp $
 .\"
-.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd @@@DATE@@@
-.Dt MAKEDEV 8 @@@ARCH@@@
+.Dt MAKEDEV 8
 .Os
 .Sh NAME
 .Nm MAKEDEV
@@ -68,7 +68,7 @@ is used, which can only be used for creating devices by the
 super-user.
 .Pp
 The special targets supported on
-.Nx Ns / Ns @@@ARCH@@@
+.Nx
 are:
 .Pp
 @@@SPECIAL@@@
@@ -102,9 +102,10 @@ The
 .Nm
 command appeared in
 .Bx 4.2 .
-.Sh BUGS
+.Sh NOTES
 This man page is generated automatically from the same sources
 as
 .Pa /dev/MAKEDEV ,
 in which the device files are not always sorted, which may result
-in an unusual (non-alphabetical) order.
+in an unusual (non-alphabetical) order. Not all devices listed
+in this manpage are supported on all platforms.
