@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.19 2001/07/01 02:56:20 gmcgarry Exp $	*/
+/*	$NetBSD: reboot.h,v 1.20 2002/12/31 17:48:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993, 1994
@@ -65,6 +65,8 @@
 #define	AB_NORMAL	0x00000	/* boot normally (default) */
 #define	AB_QUIET	0x10000 /* boot quietly */
 #define	AB_VERBOSE	0x20000	/* boot verbosely */
+#define	AB_SILENT	0x40000	/* boot silently */
+#define	AB_DEBUG	0x80000	/* boot with debug messages */
 
 /*
  * Constants for converting boot-style device number to type,
