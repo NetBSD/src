@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 1997/02/22 04:56:17 scottr Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 1997/02/24 05:55:14 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds.  All rights reserved.
@@ -96,6 +96,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_read_multi_1(t, h, o, a, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
@@ -109,6 +110,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0);
 
 #define	bus_space_read_multi_2(t, h, o, a, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
@@ -122,6 +124,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0);
 
 #define	bus_space_read_multi_4(t, h, o, a, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
@@ -149,6 +152,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_read_region_1(t, h, o, a, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
@@ -162,6 +166,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0);
 
 #define	bus_space_read_region_2(t, h, o, a, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
@@ -175,6 +180,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0);
 
 #define	bus_space_read_region_4(t, h, o, a, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
@@ -223,6 +229,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_write_multi_1(t, h, o, a, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
@@ -236,6 +243,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0);
 
 #define	bus_space_write_multi_2(t, h, o, a, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
@@ -249,6 +257,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0);
 
 #define	bus_space_write_multi_4(t, h, o, a, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
@@ -276,6 +285,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_write_region_1(t, h, o, a, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
@@ -289,6 +299,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0);
 
 #define	bus_space_write_region_2(t, h, o, a, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
@@ -302,6 +313,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0);
 
 #define	bus_space_write_region_4(t, h, o, a, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
@@ -329,6 +341,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_set_multi_1(t, h, o, val, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,d1					;	\
@@ -342,6 +355,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0);
 
 #define	bus_space_set_multi_2(t, h, o, val, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,d1					;	\
@@ -355,6 +369,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0);
 
 #define	bus_space_set_multi_4(t, h, o, val, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,d1					;	\
@@ -382,6 +397,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_set_region_1(t, h, o, val, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,d1					;	\
@@ -395,6 +411,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0);
 
 #define	bus_space_set_region_2(t, h, o, val, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,d1					;	\
@@ -408,6 +425,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0);
 
 #define	bus_space_set_region_4(t, h, o, val, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,d1					;	\
@@ -436,6 +454,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_copy_1(t, h1, o1, h2, o2, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
@@ -449,6 +468,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0);
 
 #define	bus_space_copy_2(t, h1, o1, h2, o2, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
@@ -462,6 +482,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0);
 
 #define	bus_space_copy_4(t, h1, o1, h2, o2, c) do {			\
+	(void) t;							\
 	__asm __volatile ("						\
 		movl	%0,a0					;	\
 		movl	%1,a1					;	\
