@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.27.6.1 1997/03/06 14:36:21 is Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.27.6.2 1997/03/10 15:14:47 is Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -125,7 +125,7 @@ Mode of operation:
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -706,7 +706,7 @@ iewatchdog(ifp)
 	struct ie_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_ethercom.ec_if.if_oerrors;
+	++ifp->if_oerrors;
 
 	iereset(sc);
 }
