@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.6 1997/01/11 02:06:34 tls Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.7 1997/07/20 20:32:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -37,11 +37,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: ar_subs.c,v 1.6 1997/01/11 02:06:34 tls Exp $";
+__RCSID("$NetBSD: ar_subs.c,v 1.7 1997/07/20 20:32:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -363,7 +364,7 @@ wr_archive(arcn, is_app)
 	int hlk;
 	int wr_one;
 	off_t cnt;
-	int (*wrf)();
+	int (*wrf) __P((ARCHD *));
 	int fd = -1;
 
 	/*
@@ -577,7 +578,7 @@ append()
 	if (get_arc() < 0)
 		return;
 	if ((orgfrmt != NULL) && (orgfrmt != frmt)) {
-		warn(1, "Cannot mix current archive format %s with %s",
+		tty_warn(1, "Cannot mix current archive format %s with %s",
 		    frmt->name, orgfrmt->name);
 		return;
 	}
@@ -763,7 +764,7 @@ copy()
 		return;
 	}
 	if (!S_ISDIR(sb.st_mode)) {
-		warn(1, "Destination is not a directory %s", dirptr);
+		tty_warn(1, "Destination is not a directory %s", dirptr);
 		return;
 	}
 
@@ -817,7 +818,7 @@ copy()
 			else
 				res = 0;
 			if ((arcn->nlen - res) > drem) {
-				warn(1, "Destination pathname too long %s",
+				tty_warn(1, "Destination pathname too long %s",
 					arcn->name);
 				continue;
 			}
@@ -1014,16 +1015,18 @@ next_head(arcn)
 			 * storage device, better give the user the bad news.
 			 */
 			if ((ret == 0) || (rd_sync() < 0)) {
-				warn(1,"Premature end of file on archive read");
+				tty_warn(1,
+				    "Premature end of file on archive read");
 				return(-1);
 			}
 			if (!in_resync) {
 				if (act == APPND) {
-					warn(1,
+					tty_warn(1,
 				          "Archive I/O error, cannot continue");
 					return(-1);
 				}
-				warn(1,"Archive I/O error. Trying to recover.");
+				tty_warn(1,
+				    "Archive I/O error. Trying to recover.");
 				++in_resync;
 			}
 
@@ -1084,10 +1087,12 @@ next_head(arcn)
 		 */
 		if (!in_resync) {
 			if (act == APPND) {
-				warn(1,"Unable to append, archive header flaw");
+				tty_warn(1,
+				    "Unable to append, archive header flaw");
 				return(-1);
 			}
-			warn(1,"Invalid header, starting valid header search.");
+			tty_warn(1,
+			    "Invalid header, starting valid header search.");
 			++in_resync;
 		}
 		memmove(hdbuf, hdbuf+1, shftsz);
@@ -1100,7 +1105,7 @@ next_head(arcn)
 	 * the header. NOTE: the parameters are different than trailer routines
 	 * which encode trailers outside of the header!
 	 */
-	if (frmt->inhead && ((*frmt->trail)(arcn) == 0)) {
+	if (frmt->inhead && ((*frmt->subtrail)(arcn) == 0)) {
 		/*
 		 * valid trailer found, drain input as required
 		 */
@@ -1179,7 +1184,8 @@ get_arc()
 			if (!notice) {
 				if (act == APPND)
 					return(-1);
-				warn(1,"Cannot identify format. Searching...");
+				tty_warn(1,
+				    "Cannot identify format. Searching...");
 				++notice;
 			}
 		}
@@ -1214,7 +1220,7 @@ get_arc()
 		if (!notice) {
 			if (act == APPND)
 				return(-1);
-			warn(1, "Cannot identify format. Searching...");
+			tty_warn(1, "Cannot identify format. Searching...");
 			++notice;
 		}
 
@@ -1239,6 +1245,6 @@ get_arc()
 	/*
 	 * we cannot find a header, bow, apologize and quit
 	 */
-	warn(1, "Sorry, unable to determine archive format.");
+	tty_warn(1, "Sorry, unable to determine archive format.");
 	return(-1);
 }
