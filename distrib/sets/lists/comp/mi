@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.440.2.7 2003/10/25 03:33:14 cyber Exp $
+#	$NetBSD: mi,v 1.440.2.8 2004/03/26 22:54:58 jmc Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1532,6 +1532,7 @@
 ./usr/share/man/cat3/alarm.0	comp-c-catman
 ./usr/share/man/cat3/alloca.0	comp-c-catman
 ./usr/share/man/cat3/alphasort.0	comp-c-catman
+./usr/share/man/cat3/arc4random.0	comp-c-catman
 ./usr/share/man/cat3/asctime.0	comp-c-catman
 ./usr/share/man/cat3/asctime_r.0	comp-c-catman
 ./usr/share/man/cat3/asin.0	comp-c-catman
@@ -4032,6 +4033,7 @@
 ./usr/share/man/man3/alarm.3		comp-c-man
 ./usr/share/man/man3/alloca.3		comp-c-man
 ./usr/share/man/man3/alphasort.3		comp-c-man
+./usr/share/man/man3/arc4random.3	comp-c-man
 ./usr/share/man/man3/asctime.3		comp-c-man
 ./usr/share/man/man3/asctime_r.3		comp-c-man
 ./usr/share/man/man3/asin.3		comp-c-man
