@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.34 2002/10/09 16:57:27 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.35 2002/10/21 22:49:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -772,7 +772,7 @@ sa_upcall_userret(struct lwp *l)
 		
 		KDASSERT(sa->sa_nrstacks > 0);
 		st = sa->sa_rstacks[--sa->sa_nrstacks];
-		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED, l, l2, 0, NULL, sau, 
+		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED | SA_UPCALL_DEFER, l, l2, 0, NULL, sau, 
 		    &st) != 0) {
 			/*
 			 * We were supposed to deliver an UNBLOCKED
