@@ -1,4 +1,4 @@
-/*	$NetBSD: show.h,v 1.2 1996/10/16 15:21:51 christos Exp $	*/
+/*	$NetBSD: show.h,v 1.3 1997/04/11 22:58:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -35,6 +35,7 @@
  *	@(#)show.h	1.1 (Berkeley) 5/4/95
  */
 
+union node;
 void showtree __P((union node *));
 void trace __P((const char *, ...));
 void trargs __P((char **));
