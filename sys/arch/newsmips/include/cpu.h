@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 2000/05/26 21:20:02 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 2000/05/30 11:42:05 tsubai Exp $	*/
 
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
@@ -29,6 +29,7 @@ struct cpu_info {
 extern struct cpu_info cpu_info_store;
 
 #define	curcpu()		(&cpu_info_store)
+#define	cpu_number()		0
 #endif /* _KERNEL */
 
 #endif /* _LOCORE */
