@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.c,v 1.8 1998/12/28 19:10:43 mjacob Exp $ */
-/* release_12_28_98_A */
+/* $NetBSD: isp_netbsd.c,v 1.9 1999/01/30 07:31:50 mjacob Exp $ */
+/* release_01_29_99 */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -299,4 +299,55 @@ isp_uninit(isp)
 	}
 
 	ISP_IUNLOCK(isp);
+}
+
+int
+isp_async(isp, cmd, arg)
+	struct ispsoftc *isp;
+	ispasync_t cmd;
+	void *arg;
+{
+	switch (cmd) {
+	case ISPASYNC_NEW_TGT_PARAMS:
+		if (isp->isp_type & ISP_HA_SCSI) {
+			sdparam *sdp = isp->isp_param;
+			char *wt;
+			int ns, flags, tgt;
+
+			tgt = *((int *) arg);
+	
+			flags = sdp->isp_devparam[tgt].dev_flags;
+			if (flags & DPARM_SYNC) {
+				ns = sdp->isp_devparam[tgt].sync_period * 4;
+			} else {
+				ns = 0;
+			}
+			switch (flags & (DPARM_WIDE|DPARM_TQING)) {
+			case DPARM_WIDE:
+				wt = ", 16 bit wide\n";
+				break;
+			case DPARM_TQING:
+				wt = ", Tagged Queueing Enabled\n";
+				break;
+			case DPARM_WIDE|DPARM_TQING:
+				wt = ", 16 bit wide, Tagged Queueing Enabled\n";
+				break;
+			default:
+				wt = "\n";
+				break;
+			}
+			if (ns) {
+				printf("%s: Target %d at %dMHz Max Offset %d%s",
+				    isp->isp_name, tgt, 1000 / ns,
+				    sdp->isp_devparam[tgt].sync_offset, wt);
+			} else {
+				printf("%s: Target %d Async Mode%s",
+				    isp->isp_name, tgt, wt);
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	return (0);
 }
