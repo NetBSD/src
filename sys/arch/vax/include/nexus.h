@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.17 2000/06/04 17:58:19 ragge Exp $	*/
+/*	$NetBSD: nexus.h,v 1.18 2000/06/12 11:13:16 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -41,10 +41,7 @@
 #include <machine/bus.h>
 
 #ifdef _KERNEL
-#include "opt_vax8600.h"
-#include "opt_vax780.h"
-#include "opt_vax750.h"
-#include "opt_vax730.h"
+#include "opt_cputype.h"
 #endif
 /*
  * Different definitions for nicer autoconf probing.
