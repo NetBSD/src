@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.26 1996/03/02 13:45:44 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.27 1996/03/03 11:17:59 ragge Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -601,21 +601,31 @@ dumpsys()
 	}
 }
 
-fuswintr()
+int
+fuswintr(addr)
+	caddr_t	addr;
 {
 	panic("fuswintr: need to be implemented");
+	return 0;
+
 }
 
+int
 suibyte(base, byte)
 	int byte;
 	void *base;
 {
 	panic("suibyte: need to be implemented");
+	return 0;
 }
 
-suswintr()
+int
+suswintr(addr, cnt)
+	caddr_t	addr;
+	u_int	cnt;
 {
 	panic("suswintr: need to be implemented");
+	return 0;
 }
 
 int
