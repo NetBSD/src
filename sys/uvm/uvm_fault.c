@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.76 2002/03/25 01:56:48 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.77 2002/08/29 05:03:30 chs Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.76 2002/03/25 01:56:48 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.77 2002/08/29 05:03:30 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1097,6 +1097,7 @@ ReFault:
 				anon->u.an_page->uanon = NULL;
 				/* in case we owned */
 				anon->u.an_page->pqflags &= ~PQ_ANON;
+				uvm_pageactivate(pg);
 				uvm_unlock_pageq();
 				if (uobj) {
 					simple_unlock(&uobj->vmobjlock);
