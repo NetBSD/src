@@ -48,7 +48,7 @@ struct obio_cf_loc {
     int obio_level;
 };
 
-caddr_t obio_alloc __P((caddr_t, caddr_t, int));
+caddr_t obio_alloc __P((caddr_t, int, int));
 caddr_t obio_vm_alloc __P((int));
 void obio_print __P((caddr_t addr, int level));
 void obio_probe __P((caddr_t addr));
