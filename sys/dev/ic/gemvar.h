@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.5 2001/10/18 15:19:22 thorpej Exp $ */
+/*	$NetBSD: gemvar.h,v 1.6 2002/05/08 02:12:55 matt Exp $ */
 
 /*
  * 
@@ -157,6 +157,7 @@ struct gem_softc {
 
 	int		sc_txfree;	/* number of free Tx descriptors */
 	int		sc_txnext;	/* next ready Tx descriptor */
+	int		sc_txwin;	/* Tx descriptors since last Tx int */
 
 	struct gem_txsq	sc_txfreeq;	/* free Tx descsofts */
 	struct gem_txsq	sc_txdirtyq;	/* dirty Tx descsofts */
