@@ -1,7 +1,5 @@
-# 	$NetBSD: files.wsfont,v 1.5 1999/11/02 10:25:22 takemura Exp $
-#
-# "Workstation Font" config glue used by rcons and wscons.
-#
+# 	$NetBSD: files.wsfont,v 1.6 1999/12/15 15:34:18 ad Exp $
+
 file	dev/wsfont/wsfont.c	rasterconsole | wsdisplay
 
 defopt	opt_wsfont.h		FONT_BOLD8x16
