@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.22 1996/12/11 09:37:42 mycroft Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.22.4.1 1997/03/12 15:57:00 is Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -103,8 +103,22 @@ route_usrreq(so, req, m, nam, control, p)
 			route_cb.iso_count--;
 		route_cb.any_count--;
 	}
+
 	s = splsoftnet();
-	error = raw_usrreq(so, req, m, nam, control, p);
+
+	/*
+	 * Don't call raw_usrreq() in the attach case, because
+	 * we want to allow non-privileged processes to listen on
+	 * and send "safe" commands to the routing socket.
+	 */
+	if (req == PRU_ATTACH) {
+		if (p == 0)
+			error = EACCES;
+		else
+			error = raw_attach(so, (int)(long)nam);
+	} else
+		error = raw_usrreq(so, req, m, nam, control, p);
+
 	rp = sotorawcb(so);
 	if (req == PRU_ATTACH && rp) {
 		int af = rp->rcb_proto.sp_protocol;
@@ -190,6 +204,15 @@ route_output(m, va_alist)
 		else
 			senderr(ENOBUFS);
 	}
+
+	/*
+	 * Verify that the caller has the appropriate privilege; RTM_GET
+	 * is the only operation the non-superuser is allowed.
+	 */
+	if (rtm->rtm_type != RTM_GET &&
+	    suser(curproc->p_ucred, &curproc->p_acflag) != 0)
+		senderr(EACCES);
+
 	switch (rtm->rtm_type) {
 
 	case RTM_ADD:

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 1997/01/23 22:29:07 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.24.4.1 1997/03/12 16:01:16 is Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -8,6 +8,9 @@
 #	KERN_AS	may be set to 'obj' to build a object from the library's
 #		object files.  (Otherwise, a library will be built.)
 #		Defaults to 'library'.
+#	KERNMISCCPPFLAGS
+#		Miscellaneous cpp flags to be passed to the library's Makefile
+#		when building.
 #	KERNMISCMAKEFLAGS
 #		Miscellaneous flags to be passed to the library's Makefile when
 #		building.  See library's Makefile for more details about
@@ -33,6 +36,7 @@ KERNMAKE= \
 	    LD=${LD:Q} STRIP=${STRIP:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    KERNCPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q} \
+	    KERNMISCCPPFLAGS=${KERNMISCCPPFLAGS:Q} \
 	    ${KERNMISCMAKEFLAGS}
 
 ${KERNLIB}:		.NOTMAIN __always_make_kernlib
@@ -67,4 +71,4 @@ dependkernlib:		.NOTMAIN __always_make_kernlib
 	@${KERNMAKE} depend
 
 __always_make_kernlib:	.NOTMAIN
-	@mkdir -p ${KERNDST}
+	@(mkdir -p ${KERNDST})

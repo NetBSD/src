@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1997/01/23 22:29:09 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.2.4.1 1997/03/12 16:01:20 is Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -8,6 +8,9 @@
 #	Z_AS	may be set to 'obj' to build a object from the library's
 #		object files.  (Otherwise, a library will be built.)
 #		Defaults to 'library'.
+#	ZMISCCPPFLAGS
+#		Miscellaneous cpp flags to be passed to the library's Makefile
+#		when building.
 #	ZMISCMAKEFLAGS
 #		Miscellaneous flags to be passed to the library's Makefile when
 #		building.  See library's Makefile for more details about
@@ -33,6 +36,7 @@ ZMAKE= \
 	    LD=${LD:Q} STRIP=${STRIP:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    ZCPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q} \
+	    ZMISCCPPFLAGS=${ZMISCCPPFLAGS:Q} \
 	    ${ZMISCMAKEFLAGS}
 
 ${ZLIB}:		.NOTMAIN __always_make_zlib
