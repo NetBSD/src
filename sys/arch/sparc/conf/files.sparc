@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.89 2000/03/14 15:56:58 oster Exp $
+#	$NetBSD: files.sparc,v 1.90 2000/03/19 14:19:17 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -118,7 +118,7 @@ attach kbd at zs with kbd_zs
 file dev/sun/kbd_zs.c			kbd_zs
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c 		kbd
-file arch/sparc/dev/kd.c 		kbd
+file arch/sparc/dev/kd.c
 
 device ms: zsevent
 attach ms at zs with ms_zs
