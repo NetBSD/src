@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)cut.c	8.20 (Berkeley) 1/23/94"; */
-static char *rcsid = "$Id: cut.c,v 1.2 1994/01/24 06:38:47 cgd Exp $";
+static char *rcsid = "$Id: cut.c,v 1.3 1994/03/09 00:45:14 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -99,22 +99,22 @@ cut(sp, ep, cbp, namep, fm, tm, flags)
 	    LF_ISSET(CUT_LINEMODE) ? " LINE MODE" : "");
 #endif
 	if (cbp == NULL) {
-		if (LF_ISSET(CUT_DELETE) &&
-		    (LF_ISSET(CUT_LINEMODE) || fm->lno != tm->lno)) {
-			(void)cb_rotate(sp);
-			name = '1';
-			goto defcb;
-		}
 		if (namep == NULL) {
+			if (LF_ISSET(CUT_DELETE) &&
+			    (LF_ISSET(CUT_LINEMODE) || fm->lno != tm->lno)) {
+				(void)cb_rotate(sp);
+				name = '1';
+				goto defcb;
+			}
 			cbp = sp->gp->dcb_store;
 			append = namedbuffer = 0;
-			setdefcb = 1;
 		} else {
 			name = *namep;
 defcb:			CBNAME(sp, cbp, name);
 			append = isupper(name);
-			namedbuffer = setdefcb = 1;
+			namedbuffer = 1;
 		}
+		setdefcb = 1;
 	} else
 		append = namedbuffer = setdefcb = 0;
 
