@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.3 1994/11/30 16:22:35 jtc Exp $
+.\"	$NetBSD: tcp.4,v 1.4 1998/04/30 08:50:10 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,61 +47,62 @@
 .Sh DESCRIPTION
 The
 .Tn TCP
-protocol provides reliable, flow-controlled, two-way
-transmission of data.  It is a byte-stream protocol used to
-support the
+provides reliable, flow-controlled, two-way transmission of data.
+It is a byte-stream protocol used to support the
 .Dv SOCK_STREAM
-abstraction.  TCP uses the standard
-Internet address format and, in addition, provides a per-host
-collection of
+abstraction.
+.Tn TCP
+uses the standard Internet address format and, in addition, provides
+a per-host collection of
 .Dq port addresses .
-Thus, each address is composed
-of an Internet address specifying the host and network, with
-a specific
+Thus, each address is composed of an Internet address specifying
+the host and network, with a specific
 .Tn TCP
 port on the host identifying the peer entity.
 .Pp
-Sockets utilizing the tcp protocol are either
+Sockets utilizing
+.Tn TCP
+are either
 .Dq active
 or
 .Dq passive .
 Active sockets initiate connections to passive
-sockets.  By default
+sockets.
+By default
 .Tn TCP
-sockets are created active; to create a
-passive socket the
+sockets are created active; to create a passive socket the
 .Xr listen 2
 system call must be used
 after binding the socket with the
 .Xr bind 2
-system call.  Only
-passive sockets may use the 
+system call.
+Only passive sockets may use the
 .Xr accept 2
-call to accept incoming connections.  Only active sockets may
-use the
+call to accept incoming connections.
+Only active sockets may use the
 .Xr connect 2
 call to initiate connections.
 .Pp
 Passive sockets may
 .Dq underspecify
-their location to match
-incoming connection requests from multiple networks.  This
-technique, termed
+their location to match incoming connection requests from multiple networks.
+This technique, termed
 .Dq wildcard addressing ,
 allows a single
 server to provide service to clients on multiple networks.
 To create a socket which listens on all networks, the Internet
 address
 .Dv INADDR_ANY
-must be bound.  The
+must be bound.
+The
 .Tn TCP
-port may still be specified
-at this time; if the port is not specified the system will assign one.
+port may still be specified at this time; if the port is not
+specified the system will assign one.
 Once a connection has been established the socket's address is
-fixed by the peer entity's location.   The address assigned the
-socket is the address associated with the network interface
-through which packets are being transmitted and received.  Normally
-this address corresponds to the peer entity's network.
+fixed by the peer entity's location.
+The address assigned the socket is the address associated with the
+network interface through which packets are being transmitted and received.
+Normally this address corresponds to the peer entity's network.
 .Pp
 .Tn TCP
 supports one socket option which is set with
@@ -125,7 +126,7 @@ provides a boolean option,
 .Aq Pa netinet/tcp.h ,
 to defeat this algorithm.
 The option level for the
-.Xr setsockopt
+.Xr setsockopt 2
 call is the protocol number for
 .Tn TCP ,
 available from
@@ -133,7 +134,7 @@ available from
 .Pp
 Options at the
 .Tn IP
-transport level may be used with
+network level may be used with
 .Tn TCP ;
 see
 .Xr ip 4 .
@@ -163,7 +164,7 @@ when an attempt
 is made to create a socket with a port which has already been
 allocated;
 .It Bq Er EADDRNOTAVAIL
-when an attempt is made to create a 
+when an attempt is made to create a
 socket with a network address for which no network interface
 exists.
 .El
@@ -173,6 +174,18 @@ exists.
 .Xr intro 4 ,
 .Xr inet 4 ,
 .Xr ip 4
+.Rs
+.%R RFC
+.%N 793
+.%D September 1981
+.%T "Transmission Control Protocol"
+.Re
+.Rs
+.%R RFC
+.%N 1122
+.%D October 1989
+.%T "Requirements for Internet Hosts -- Communication Layers"
+.Re
 .Sh HISTORY
 The
 .Nm
