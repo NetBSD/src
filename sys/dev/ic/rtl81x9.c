@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.34 2001/07/07 16:13:50 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.35 2001/07/19 16:25:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -676,7 +676,7 @@ rtk_attach(sc)
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->recv_dmamap,
 	    sc->rtk_rx_buf, RTK_RXBUFLEN + 16,
-	    NULL, BUS_DMA_NOWAIT)) != 0) {
+	    NULL, BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't load recv buffer DMA map, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
 		goto fail_3;
@@ -1274,7 +1274,7 @@ STATIC void rtk_start(ifp)
 		 */
 		if ((mtod(m_head, bus_addr_t) & 3) != 0 ||
 		    bus_dmamap_load_mbuf(sc->sc_dmat, txd->txd_dmamap,
-			m_head, BUS_DMA_NOWAIT) != 0) {
+			m_head, BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 			if (m_new == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -1295,7 +1295,8 @@ STATIC void rtk_start(ifp)
 			m_new->m_pkthdr.len = m_new->m_len =
 			    m_head->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat,
-			    txd->txd_dmamap, m_new, BUS_DMA_NOWAIT);
+			    txd->txd_dmamap, m_new,
+			    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
