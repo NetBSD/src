@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.225 2003/11/02 16:42:22 jdolecek Exp $	*/
+/*	$NetBSD: init_main.c,v 1.226 2003/11/04 10:33:15 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.225 2003/11/02 16:42:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.226 2003/11/04 10:33:15 dsl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -236,7 +236,6 @@ main(void)
 	 * Initialize the current LWP pointer (curlwp) before
 	 * any possible traps/probes to simplify trap processing.
 	 */
-	simple_lock_init(&proc0.p_raslock);
 	l = &lwp0;
 	curlwp = l;
 	l->l_cpu = curcpu();

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.111 2003/09/16 12:06:07 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.112 2003/11/04 10:33:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.111 2003/09/16 12:06:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.112 2003/11/04 10:33:15 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -276,7 +276,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	simple_lock_init(&p2->p_sigctx.ps_silock);
 	CIRCLEQ_INIT(&p2->p_sigctx.ps_siginfo);
-	simple_lock_init(&p2->p_lwplock);
+	simple_lock_init(&p2->p_lock);
 	LIST_INIT(&p2->p_lwps);
 
 	/*
@@ -296,8 +296,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	crhold(p1->p_ucred);
 
 	LIST_INIT(&p2->p_raslist);
-	p2->p_nras = 0;
-	simple_lock_init(&p2->p_raslock);
 #if defined(__HAVE_RAS)
 	ras_fork(p1, p2);
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.104 2003/10/07 17:04:18 skd Exp $ */
+/* $NetBSD: locore.s,v 1.105 2003/11/04 10:33:16 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.104 2003/10/07 17:04:18 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.105 2003/11/04 10:33:16 dsl Exp $");
 
 #include "assym.h"
 
@@ -910,8 +910,8 @@ switch_resume:
 	 * Check for restartable atomic sequences (RAS).
 	 */
 	ldq	a0, L_PROC(s2)			/* first ras_lookup() arg */
-	ldl	t0, P_NRAS(a0)			/* p->p_nras == 0? */
-	beq	t0, 1f				/* yes, skip */
+	ldq	t0, P_RASLIST(a0)		/* any RAS entries? */
+	beq	t0, 1f				/* no, skip */
 	ldq	s1, L_MD_TF(s2)			/* s1 = l->l_md.md_tf */
 	ldq	a1, (FRAME_PC*8)(s1)		/* second ras_lookup() arg */
 	CALL(ras_lookup)			/* ras_lookup(p, PC) */

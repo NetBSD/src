@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.14 2003/10/30 23:31:21 cl Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.15 2003/11/04 10:33:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.14 2003/10/30 23:31:21 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.15 2003/11/04 10:33:15 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -110,9 +110,9 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 		l2->l_stat = LSRUN;
 		setrunqueue(l2);
 		SCHED_UNLOCK(s);
-		simple_lock(&p->p_lwplock);
+		simple_lock(&p->p_lock);
 		p->p_nrlwps++;
-		simple_unlock(&p->p_lwplock);
+		simple_unlock(&p->p_lock);
 	} else {
 		l2->l_stat = LSSUSPENDED;
 	}
@@ -218,9 +218,9 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 			remrunqueue(t);
 			t->l_stat = LSSUSPENDED;
 			SCHED_UNLOCK(s);
-			simple_lock(&p->p_lwplock);
+			simple_lock(&p->p_lock);
 			p->p_nrlwps--;
-			simple_unlock(&p->p_lwplock);
+			simple_unlock(&p->p_lock);
 			break;
 		case LSSLEEP:
 			t->l_stat = LSSUSPENDED;
@@ -397,11 +397,11 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 			LIST_REMOVE(l2, l_zlist); /* off zomblwp */
 			proclist_unlock_write(s);
 
-			simple_lock(&p->p_lwplock);
+			simple_lock(&p->p_lock);
 			LIST_REMOVE(l2, l_sibling);
 			p->p_nlwps--;
 			p->p_nzlwps--;
-			simple_unlock(&p->p_lwplock);
+			simple_unlock(&p->p_lock);
 			/* XXX decrement limits */
 
 			pool_put(&lwp_pool, l2);
@@ -504,11 +504,11 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	    (arg != NULL) ? arg : l2);
 
 
-	simple_lock(&p2->p_lwplock);
+	simple_lock(&p2->p_lock);
 	l2->l_lid = ++p2->p_nlwpid;
 	LIST_INSERT_HEAD(&p2->p_lwps, l2, l_sibling);
 	p2->p_nlwps++;
-	simple_unlock(&p2->p_lwplock);
+	simple_unlock(&p2->p_lock);
 
 	/* XXX should be locked differently... */
 	s = proclist_lock_write();
@@ -555,9 +555,9 @@ lwp_exit(struct lwp *l)
 	}
 	proclist_unlock_write(s);
 
-	simple_lock(&p->p_lwplock);
+	simple_lock(&p->p_lock);
 	p->p_nrlwps--;
-	simple_unlock(&p->p_lwplock);
+	simple_unlock(&p->p_lock);
 
 	l->l_stat = LSDEAD;
 
