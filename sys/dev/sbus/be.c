@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.12 1999/12/22 16:05:12 pk Exp $	*/
+/*	$NetBSD: be.c,v 1.13 1999/12/23 16:39:56 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -140,6 +140,9 @@ struct be_softc {
 	int		sc_mii_inst;	/* instance of internal phy */
 	int		sc_mii_active;	/* currently active medium */
 	int		sc_mii_ticks;	/* tick counter */
+	int		sc_mii_flags;	/* phy status flags */
+#define MIIF_HAVELINK	0x04000000
+	int		sc_intphy_curspeed;	/* Established link speed */
 
 	struct	qec_softc *sc_qec;	/* QEC parent */
 
@@ -413,17 +416,14 @@ beattach(parent, self, aux)
 			    IFM_MAKEWORD(IFM_ETHER,IFM_10_T,0,instance),
 			    0, NULL);
 		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_10_T,IFM_FDX,instance),
-			    BMCR_FDX, NULL);
-		ifmedia_add(&sc->sc_media,
 			    IFM_MAKEWORD(IFM_ETHER,IFM_100_TX,0,instance),
 			    BMCR_S100, NULL);
 		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_100_TX,IFM_FDX,instance),
-			    BMCR_S100|BMCR_FDX, NULL);
-		ifmedia_add(&sc->sc_media,
 			    IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance),
 			    0, NULL);
+
+		printf("on-board transceiver at %s: 10baseT, 100baseTX, auto\n",
+			self->dv_xname);
 
 		be_mii_reset(sc, BE_PHY_INTERNAL);
 		/* Only set default medium here if there's no external PHY */
@@ -688,7 +688,8 @@ bereset(sc)
 
 	s = splnet();
 	bestop(sc);
-	beinit(sc);
+	if ((sc->sc_ethercom.ec_if.if_flags & IFF_UP) != 0)
+		beinit(sc);
 	splx(s);
 }
 
@@ -1070,10 +1071,7 @@ beinit(sc)
 
 	qec_meminit(&sc->sc_rb, BE_PKT_BUF_SZ);
 
-	be_mii_sync(sc);
-
 	bestop(sc);
-	be_ifmedia_upd(ifp);
 
 	ea = sc->sc_enaddr;
 	bus_space_write_4(t, br, BE_BRI_MACADDR0, (ea[0] << 8) | ea[1]);
@@ -1140,6 +1138,7 @@ beinit(sc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
+	be_ifmedia_upd(ifp);
 	timeout(be_tick, sc, hz);
 	splx(s);
 }
@@ -1262,7 +1261,6 @@ be_pal_gate(sc, phy)
 	bus_space_handle_t tr = sc->sc_tr;
 	u_int32_t v;
 
-printf("  gating phy %d\n", phy);
 	be_mii_sync(sc);
 
 	v = ~(TCVR_PAL_EXTLBACK | TCVR_PAL_MSENSE | TCVR_PAL_LTENABLE);
@@ -1407,7 +1405,6 @@ be_mii_reset(sc, phy)
 
 	for (n = 16; n >= 0; n--) {
 		int bmcr = be_mii_readreg((struct device *)sc, phy, MII_BMCR);
-printf("be_mii_reset: bmcr = 0x%x\n", bmcr);
 		if ((bmcr & BMCR_RESET) == 0)
 			break;
 		DELAY(20);
@@ -1416,6 +1413,7 @@ printf("be_mii_reset: bmcr = 0x%x\n", bmcr);
 		printf("%s: bmcr reset failed\n", sc->sc_dev.dv_xname);
 		return (EIO);
 	}
+
 	return (0);
 }
 
@@ -1506,6 +1504,7 @@ be_intphy_service(sc, mii, cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int bmcr, bmsr;
+	int error;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -1519,32 +1518,49 @@ be_intphy_service(sc, mii, cmd)
 
 	case MII_MEDIACHG:
 
-		bmcr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMCR);
-
 		/*
 		 * If the media indicates a different PHY instance,
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->sc_mii_inst) {
-printf(" MII_MEDIACHG: isolating; bmcr = 0x%x\n", bmcr);
+			bmcr = be_mii_readreg((void *)sc,
+				BE_PHY_INTERNAL, MII_BMCR);
 			be_mii_writereg((void *)sc,
 				BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
+			sc->sc_mii_flags &= ~MIIF_HAVELINK;
+			sc->sc_intphy_curspeed = 0;
 			return (0);
 		}
 
 
+		if ((error = be_mii_reset(sc, BE_PHY_INTERNAL)) != 0)
+			return (error);
+
+		bmcr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMCR);
+
+		/*
+		 * Select the new mode and take out of isolation
+		 */
 		if (IFM_SUBTYPE(ife->ifm_media) == IFM_100_TX)
 			bmcr |= BMCR_S100;
 		else if (IFM_SUBTYPE(ife->ifm_media) == IFM_10_T)
 			bmcr &= ~BMCR_S100;
+		else if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+			if ((sc->sc_mii_flags & MIIF_HAVELINK) != 0) {
+				bmcr &= ~BMCR_S100;
+				bmcr |= sc->sc_intphy_curspeed;
+			} else {
+				/* Keep isolated until link is up */
+				bmcr |= BMCR_ISO;
+				sc->sc_mii_flags |= MIIF_DOINGAUTO;
+			}
+		}
 
 		if ((IFM_OPTIONS(ife->ifm_media) & IFM_FDX) != 0)
 			bmcr |= BMCR_FDX;
 		else
 			bmcr &= ~BMCR_FDX;
 
-		/* Select the new mode and take out of isolation */
-		bmcr &= ~BMCR_ISO;
 		be_mii_writereg((void *)sc, BE_PHY_INTERNAL, MII_BMCR, bmcr);
 		break;
 
@@ -1575,24 +1591,52 @@ printf(" MII_MEDIACHG: isolating; bmcr = 0x%x\n", bmcr);
 
 		if ((bmsr & BMSR_LINK) != 0) {
 			/* We have a carrier */
+			bmcr = be_mii_readreg((void *)sc,
+					BE_PHY_INTERNAL, MII_BMCR);
+
+			if ((sc->sc_mii_flags & MIIF_DOINGAUTO) != 0) {
+				bmcr = be_mii_readreg((void *)sc,
+						BE_PHY_INTERNAL, MII_BMCR);
+
+				sc->sc_mii_flags |= MIIF_HAVELINK;
+				sc->sc_intphy_curspeed = (bmcr & BMCR_S100);
+				sc->sc_mii_flags &= ~MIIF_DOINGAUTO;
+
+				bmcr &= ~BMCR_ISO;
+				be_mii_writereg((void *)sc,
+					BE_PHY_INTERNAL, MII_BMCR, bmcr);
+
+				printf("%s: link up at %s Mbps\n",
+					sc->sc_dev.dv_xname,
+					(bmcr & BMCR_S100) ? "100" : "10");
+			}
 			return (0);
 		}
 
+		if ((sc->sc_mii_flags & MIIF_DOINGAUTO) == 0) {
+			sc->sc_mii_flags |= MIIF_DOINGAUTO;
+			sc->sc_mii_flags &= ~MIIF_HAVELINK;
+			sc->sc_intphy_curspeed = 0;
+			printf("%s: link down\n", sc->sc_dev.dv_xname);
+		}
+
 		/* Only retry autonegotiation every 5 seconds. */
-		if (++sc->sc_mii_ticks != 5)
+		if (++sc->sc_mii_ticks < 5)
 			return(0);
 
 		sc->sc_mii_ticks = 0;
 		bmcr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMCR);
 		/* Just flip the fast speed bit */
-printf(" MII_TICK: flipping: 0x%x -> ", bmcr);
 		bmcr ^= BMCR_S100;
-printf("0x%x\n", bmcr);
 		be_mii_writereg((void *)sc, BE_PHY_INTERNAL, MII_BMCR, bmcr);
 
 		break;
 
 	case MII_DOWN:
+		/* Isolate this phy */
+		bmcr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMCR);
+		be_mii_writereg((void *)sc,
+				BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
 		return (0);
 	}
 
