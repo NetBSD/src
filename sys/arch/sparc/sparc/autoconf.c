@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.137 2000/03/21 21:30:33 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.138 2000/06/08 21:37:43 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -879,8 +879,6 @@ mainbus_match(parent, cf, aux)
 
 	return (1);
 }
-
-int autoconf_nzs = 0;	/* must be global so obio.c can see it */
 
 /* 
  * Helper routines to get some of the more common properties. These
