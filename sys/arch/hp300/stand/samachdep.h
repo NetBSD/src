@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.5 1995/08/05 16:47:50 thorpej Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.6 1996/06/26 17:44:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)samachdep.h	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/types.h>
 
 #define	NHPIB		4
 #define	NSCSI		2
@@ -71,9 +73,23 @@ extern	int howto;
 extern	unsigned int bootdev;
 extern	char *getmachineid();
 
+void	machdep_start_net __P((char *, int, char *, char *, char *));
+void	machdep_start_disk_tape __P((char *, int, char *, char *, char *));
+void	(*__machdep_start) __P((char *, int, char *, char *, char *));
+
 #define DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
 
 /* bogon grfinfo structure to keep grf_softc happy */
 struct grfinfo {
 	int	grf_foo;
 };
+
+extern	struct devsw devsw_net[];
+extern	int ndevs_net;
+
+extern	struct devsw devsw_general[];
+extern	int ndevs_general;
+
+extern	struct fs_ops file_system_rawfs[];
+extern	struct fs_ops file_system_ufs[];
+extern	struct fs_ops file_system_nfs[];

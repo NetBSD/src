@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1996/01/15 01:41:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.20 1996/06/26 17:44:21 thorpej Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -39,7 +39,7 @@ LIBSA=	${SA_LIB}
 
 LIBS=	${OBJS} libdrive.a ${LIBSA} ${LIBKERN}
 
-BOOTS=	pboot netboot sys_inst dboot dcopy tboot tcopy cat #ls
+BOOTS=	uboot inst
 ALL=	${BOOTS} mkboot installboot
 
 all: ${ALL}
@@ -62,76 +62,21 @@ ite.o ite_subr.o ite_dv.o ite_gb.o ite_hy.o ite_rb.o ite_tc.o: Makefile
 srt0.o: ${.CURDIR}/srt0.s
 	${CC} ${INCPATH} ${DEFS} -c ${.CURDIR}/srt0.s
 
-tpsrt0.o: ${.CURDIR}/srt0.s
-	${CC} ${INCPATH} ${DEFS} -DTP -c ${.CURDIR}/srt0.s -o $@
-
-# new boot
-pboot:	srt0.o pboot.o tgets.o conf.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o pboot.o tgets.o conf.o ${LIBS} -o $@
+# unified boot program (disk, network, tape)
+uboot:	srt0.o uboot.o tgets.o netio.o clock.o conf.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin srt0.o uboot.o tgets.o netio.o clock.o \
+	    conf.o ${LIBS} -o $@
 	@size $@
 	@echo $@ total size should not exceed 1044480 bytes
 
-ls:	srt0.o ls.o conf.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o ls.o conf.o ${LIBS} -o $@
+# miniroot installation program
+inst: srt0.o inst.o clock.o conf.o netio.o tgets.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin srt0.o inst.o clock.o conf.o netio.o \
+	    tgets.o ${LIBS} -o $@
 	@size $@
 	@echo $@ total size should not exceed 1044480 bytes
 
-cat:	srt0.o cat.o conf.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o cat.o conf.o ${LIBS} -o $@
-	@size $@
-	@echo $@ total size should not exceed 1044480 bytes
-
-# installation
-sys_inst: srt0.o sys_inst.o clock.o instconf.o inst_netio.o tgets.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o sys_inst.o clock.o instconf.o inst_netio.o tgets.o ${LIBS} -o $@
-	@size $@
-	@echo $@ total size should not exceed 1044480 bytes
-
-instconf.o: ${.CURDIR}/conf.c
-	${CC} ${CFLAGS} -DSYS_INST -c ${.CURDIR}/conf.c -o $@
-
-inst_netio.o: ${.CURDIR}/netio.c
-	${CC} ${CFLAGS} -DSYS_INST -c ${.CURDIR}/netio.c -o $@
-
-# bootable from network
-
-netboot:	srt0.o netboot.o clock.o netconf.o netio.o tgets.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o netboot.o clock.o netconf.o netio.o tgets.o ${LIBS} -o $@
-	@size $@
-	@echo $@ total size should not exceed 1044480 bytes
-
-netconf.o: ${.CURDIR}/conf.c
-	${CC} ${CFLAGS} -DNETBOOT -c ${.CURDIR}/conf.c -o $@
-
-# bootable from tape
-
-tboot:	srt0.o tboot.o conf.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o tboot.o conf.o ${LIBS} -o $@
-	@size $@
-	@echo $@ total size should not exceed 1044480 bytes
-
-tboot.o: ${.CURDIR}/boot.c
-	${CC} ${CFLAGS} -DJUSTASK -c ${.CURDIR}/boot.c -o $@
-
-tcopy:	tpsrt0.o copy.o conf.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin tpsrt0.o copy.o conf.o ${LIBS} -o $@
-	@size $@
-	@echo $@ total size should not exceed 1044480 bytes
-
-# bootable from floppy or real disks
-
-dboot:	srt0.o boot.o tapeconf.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o boot.o tapeconf.o ${LIBS} -o $@
-	@size $@
-	@echo $@ text+data size should not exceed 57344 bytes
-	@echo $@ total size should not exceed 1044480 bytes
-
-tapeconf.o: ${.CURDIR}/conf.c
-	${CC} ${CFLAGS} -DTAPEBOOT -c ${.CURDIR}/conf.c -o $@
-
-dcopy:	srt0.o copy.o conf.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o copy.o conf.o ${LIBS} -o $@
-
+# helper program ... turns OMAGIC into LIF
 mkboot: ${.CURDIR}/mkboot.c
 	${CC} ${CFLAGS} ${.CURDIR}/mkboot.c -o $@
 
@@ -142,35 +87,34 @@ installboot: ${.CURDIR}/installboot.sh
 # utilities
 
 clean::
-	rm -f *.o *.exe *.i errs make.out
-	rm -f a.out pboot cat ls tboot tcopy
-	rm -f boot[a-z]? boot[a-wyz][a-z].c conf[a-wyz][a-z].c
-	rm -f core sboot
-	rm -f libdrive.a mkboot dboot dcopy installboot *.lif
+	rm -f *.o *.i
+	rm -f a.out ${BOOTS}
+	rm -f libdrive.a mkboot installboot *.lif
 
 install: mkboot installboot ${ALL}
-	./mkboot pboot netbsdboot.lif
-	./mkboot netboot netboot.lif
-	./mkboot sys_inst sys_inst.lif
-	./mkboot dboot diskboot.lif
-	./mkboot tboot tcopy tapeboot.lif
+	./mkboot uboot uboot.lif
+	./mkboot inst inst.lif
+	install -d -m 755 -o ${BINOWN} -g ${BINGRP} ${DESTDIR}/usr/mdec/rbootd
 	install -c -o ${BINOWN} -g ${BINGRP} -m 555 installboot \
 	    ${DESTDIR}/usr/mdec
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 netbsdboot.lif \
-	    ${DESTDIR}/usr/mdec/rdboot
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 uboot.lif \
+	    ${DESTDIR}/usr/mdec
+	rm -f ${DESTDIR}/usr/mdec/rdboot
+	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/rdboot
 	rm -f ${DESTDIR}/usr/mdec/bootrd
-	ln ${DESTDIR}/usr/mdec/rdboot ${DESTDIR}/usr/mdec/bootrd
+	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/bootrd
 	rm -f ${DESTDIR}/usr/mdec/sdboot
-	ln ${DESTDIR}/usr/mdec/rdboot ${DESTDIR}/usr/mdec/sdboot
+	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/sdboot
 	rm -f ${DESTDIR}/usr/mdec/bootsd
-	ln ${DESTDIR}/usr/mdec/sdboot ${DESTDIR}/usr/mdec/bootsd
-	install -d -m 755 -o ${BINOWN} -g ${BINGRP} ${DESTDIR}/usr/mdec/rbootd
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 netboot.lif \
-	    ${DESTDIR}/usr/mdec/rbootd/SYS_NBOOT
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 sys_inst.lif \
+	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/bootsd
+	rm -f ${DESTDIR}/usr/mdec/ctboot
+	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/ctboot
+	rm -f ${DESTDIR}/usr/mdec/bootct
+	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/bootct
+	rm -f ${DESTDIR}/usr/mdec/rbootd/SYS_UBOOT
+	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/rbootd/SYS_UBOOT
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 inst.lif \
 	    ${DESTDIR}/usr/mdec/rbootd/SYS_INST
-	install -c -o ${BINOWN} -g ${BINGRP} -m 644 tapeboot.lif \
-	    ${DESTDIR}/usr/mdec/bootct
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_inst.c,v 1.3 1995/10/04 07:24:33 thorpej Exp $	*/
+/*	$NetBSD: inst.c,v 1.1 1996/06/26 17:44:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -69,6 +69,7 @@ extern	u_int opendev;
 extern	char *lowram;
 extern	int noconsole;
 extern	int cons_scode;
+extern	int netio_ask;
 
 char	*kernel_name = "/netbsd";
 
@@ -99,9 +100,15 @@ main()
 {
 	int i, currname = 0;
 
-	printf("\n>> NetBSD INSTALLATION HP9000/%s CPU\n",
+	/*
+	 * We want netopen() to ask for IP address, etc, rather
+	 * that using bootparams.
+	 */
+	netio_ask = 1;
+
+	printf("\n>> NetBSD MINIROOT INSTALLATION HP9000/%s CPU\n",
 	       getmachineid());
-	printf(">> $NetBSD: sys_inst.c,v 1.3 1995/10/04 07:24:33 thorpej Exp $\n");
+	printf(">> $NetBSD: inst.c,v 1.1 1996/06/26 17:44:29 thorpej Exp $\n");
 	gethelp();
 
 	for (;;) {
