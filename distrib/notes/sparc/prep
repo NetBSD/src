@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.8.8.1 2000/11/01 03:48:33 tv Exp $
+.\"	$NetBSD: prep,v 1.8.8.2 2000/11/03 20:38:40 tv Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -50,38 +50,38 @@ turn them off - NetBSD can't deal well with this.
 The OpenBoot PROM 1 machines (SPARCstation/server 1, SPARCstation/server 1+,
 IPC, and SLC) have an odd SCSI quirk you should be aware of.
 There are three SCSI addressing schemes used by your
-system: SCSI ID (set by physical jumpers on the device),
-SCSI target (set by OpenBoot PROM 1, based on its SCSI ID), and the name you
-reference within an operating system (set by the kernel, based on the SCSI
-target).
+system: SCSI target ID (set by physical jumpers on the device), PROM
+.Sq unit
+number (set by OpenBoot PROM 1, based on its SCSI target ID), and the name
+you reference within an operating system (set by the kernel, based on the PROM
+.Sq unit
+number).
 .Pp
-Sun shipped these systems with the internal drive at SCSI ID 0.
-The default value of the OpenBoot PROM variable
+Sun shipped these systems with the internal drives set to SCSI target IDs
+3 and 1.  The default value of the OpenBoot PROM variable
 .Sq Li sd-targets
 is
 .Sq Li 31204567.
-The means that the device at SCSI ID 3 is
-at SCSI target 0, and the SCSI device at ID 0 is at target 3.
-When you type
+This variable maps how the OpenBoot PROM 1 assigns
+.Sq unit
+numbers based on the SCSI target ID.
+Thus the device at SCSI target ID 3 is considered
+.Sq unit
+0, and the SCSI device at target ID 0 is 
+.Sq unit
+3.  When you type
 .Dq Ic boot scsi(0,0,0) ,
-the OpenBoot PROM will boot from target 0 (that is, SCSI ID 3).
-The
+the OpenBoot PROM will boot from
+.Sq unit
+0 (which is SCSI target ID 3, the internal hard drive).  The
 .Tn SunOS
 kernel is hard-wired to map
 .Li sd0
 to SCSI target 3, and
 .Li sd3
 to SCSI target 0.
-This means that SCSI ID 0 (target 3) is
-.Li sd0 ,
-SCSI ID 1 (target 1) is
-.Li sd1 ,
-and so on.
-Essentially,
-.Tn SunOS
-reverses the OpenBoot PROM target remapping.
-.Bl -column -offset indent SCSI\ ID SCSI\ Target SunOS\ name
-.It Em SCSI\ ID Ta Em SCSI\ Target Ta Em SunOS\ name
+.Bl -column -offset indent PROM\ Unit# SCSI\ Target SunOS\ name
+.It Em PROM\ Unit# Ta Em SCSI\ Target Ta Em SunOS\ name
 .It \~\~\~0 Ta \~\~\~3 Ta \~\~\~sd0
 .It \~\~\~1 Ta \~\~\~1 Ta \~\~\~sd1
 .It \~\~\~2 Ta \~\~\~2 Ta \~\~\~sd2
@@ -91,28 +91,41 @@ reverses the OpenBoot PROM target remapping.
 .It \~\~\~6 Ta \~\~\~6 Ta \~\~\~cdrom
 .El
 .Pp
-The
+Unfortunately, the
 .Nx
-kernel is not hard-wired in this manner and names the disks in the order
-that the targets are probed (01234567). If you only have one disk, it is
-always
+kernel believes the 
+.Sq unit
+values returned by the OpenBoot PROM really are the SCSI target IDs.  The
+.Nx*M
+.Li GENERIC 
+kernel does not by default wire things down as does
+.Tn SunOS .
+It names the disks in the order
+that the targets (actually the PROM
+.Sq unit
+numbers) are probed (01234567). If you only have one disk, it is always
 .Li sd0
-irregardless of its SCSI ID or target, and there are no
-problems. If you have two disks, one at
-SCSI ID 2 (target 2) and SCSI ID 3 (target 0), then they are recognized
-as
+regardless of its SCSI target ID or its PROM
+.Sq unit
+number, and there are no problems. If you have two disks, one at
+SCSI ID 2 (
+.Sq unit
+2) and SCSI ID 3 (
+.Sq unit
+0), then they are recognized as
 .Li sd1
 and
 .Li sd0
 respectively. This can be a problem if you are not
 aware of it, particularly when creating an fstab.
 .Pp
-There are two approaches to fixing this problem: changing OpenBoot PROM 1,
-and changing the
+There are two approaches to fixing this problem: changing the
+mapping that OpenBoot PROM 1 does, and changing the
 .Nx
 kernel.
-To get OpenBoot PROM 1 to number the SCSI targets the same as the SCSI
-IDs, you need to run this command:
+To get OpenBoot PROM 1 to number the SCSI 
+.Sq unit
+numbers the same as the SCSI target IDs, you need to run this command:
 .Pp
 .Dl ok Ic "setenv sd-targets 01234567"
 .Pp
@@ -122,10 +135,13 @@ on this machine or if you reset the OpenBoot PROM variables.
 .Pp
 The other approach is to use a
 .Nx
-kernel that reverses this odd target mapping by treating target 0
-(i.e. SCSI ID 3) as
+kernel that reverses this odd target mapping by treating
+.Sq unit
+0 (i.e. SCSI target ID 3) as
 .Li sd3
-and target 3 (i.e. SCSI ID 0) as
+and 
+.Sq unit
+3 (i.e. SCSI target ID 0) as
 .Li sd0 .
 The
 .Li GENERIC_SCSI3
@@ -139,9 +155,19 @@ kernels do not.
 This is also a concern when you start building your own customised kernels.
 .Note)
 .Pp
-The sun4 models and the machines with OpenBoot PROM 2 (SPARCstation/server 2,
-ELC, IPX, and all sun4m models) do not have this target mapping problem.
-You should be aware, however, that some models have their internal hard
+The machines with OpenBoot PROM 2 (SPARCstation/server 2,
+ELC, IPX, and all sun4m models) do not have this mapping problem.
+You should be aware, however, that the OpenBoot PROM
+.Ic devalias
+entries are similarly reversed.  That is, 
+.Li disk0
+is the hard drive at SCSI ID 3, and
+.Li disk3
+is the hard drive at SCSI ID 3.  But don't worry, since
+it is only a device alias the
+.Nx
+kernel finds your SCSI device at the correct target ID.
+Some models have their internal hard
 drives fixed at SCSI ID 3, so it may still be advantageous to use the
 .Li GENERIC_SCSI3
 kernel to ensure that your internal drive shows up as
@@ -185,14 +211,16 @@ lun 0, partition dynamically determined), one would use:
 .Pp
 .Dl ok Ic "boot sd(0,30,)"
 .Pp
-And, to boot from the fourth partition (
+And, to boot from a kernel named
+.Li netbsd-GENERIC
+on the fourth partition (
 .Sq Li d ,
 often the
 .Pa /usr
 partition) on an external hard drive (first SCSI bus, target 2, lun 0,
 partition 3), one would use:
 .Pp
-.Dl ok Ic "boot sd(0,10,3)"
+.Dl ok Ic "boot sd(0,10,3)netbsd-GENERIC"
 .Pp
 Now, for OpenBoot PROM 2, SCSI devices are specified by an OpenBOOT
 .Ic devalias
@@ -212,13 +240,15 @@ one would use:
 .Pp
 .Dl ok Ic "boot cdrom"
 .Pp
-And, to boot from the fourth partition (
+And, to boot from a kernel named
+.Li netbsd-GENERIC
+on the fourth partition (
 .Sq Li d ,
 often the
 .Pa /usr
 partition) on an external hard drive (target 2, partition 3), one would use:
 .Pp
-.Dl ok Ic "boot disk2:d"
+.Dl ok Ic "boot disk2:d netbsd-GENERIC"
 .Pp
 The full device path specifier for OpenBoot PROM 2 depends on how OpenBoot
 PROM 2 recognizes
@@ -245,6 +275,9 @@ there are no restrictions on the size of the swap partition that would render
 part of your memory unusable). A full binary installation takes about 60 MB
 in
 .Pa /usr .
+.Pp
+Most sparc systems have trouble booting if the root partition extends
+beyond the first 2 GB of your disk.
 .
 .Ss2 Configuration of network interfaces
 .
