@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.15 2000/05/08 07:56:00 mycroft Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.16 2001/02/05 00:20:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: arithmetic.c,v 1.15 2000/05/08 07:56:00 mycroft Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.16 2001/02/05 00:20:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,6 +105,8 @@ int rangemax = 10;
 int nright, nwrong;
 time_t qtime;
 #define	NQUESTS	20
+
+extern char *__progname;	/* from crt0.o */
 
 /*
  * Select keys from +-x/ to be asked addition, subtraction, multiplication,
@@ -386,9 +388,7 @@ opnum(op)
 void
 usage()
 {
-	extern char *__progname;	/* from crt0.o */
-
-	(void)fprintf(stderr, "usage: %s [-o +-x/] [-r range]\n",
+	(void)fprintf(stderr, "Usage: %s [-o +-x/] [-r range]\n",
 		__progname);
 	exit(1);
 }
