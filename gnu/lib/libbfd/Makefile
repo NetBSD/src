@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2001/02/02 19:33:54 tsubai Exp $
+#	$NetBSD: Makefile,v 1.20 2001/08/06 15:47:17 tv Exp $
 
 LIB=		bfd
 
@@ -6,9 +6,39 @@ MKLINT=		no
 MKMAN=		no
 MKPROFILE=	no
 
-# for MKPIC, BFD_SLIM, BFD_UNIFIED, OBJECT_FMT
 .include <bsd.own.mk>
 
+.if defined(USE_NEW_TOOLCHAIN)
+
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+
+MKLINKLIB=	no
+
+TOP=		${.CURDIR}/../..
+DIST=		${TOP}/dist/toolchain
+
+GCPPFLAGS=	${G_archdefs} ${G_DEFS} ${G_INCLUDES} ${G_TDEFAULTS}
+CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} -I. \
+		${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
+
+GSRCS=		${G_libbfd_la_OBJECTS:libbfd.lo=lib_bfd.lo} \
+		${G_libbfd_la_DEPENDENCIES:M*.lo} ${G_BFD_MACHINES}
+SRCS=		${GSRCS:.lo=.c} ${G_libopcodes_la_SOURCES}
+
+DPSRCS+=	elf32-target.h elf64-target.h targmatch.h
+CLEANFILES+=	elf32-target.h elf64-target.h targmatch.h
+
+.PATH: ${DIST}/bfd ${DIST}/opcodes
+
+.include <bsd.lib.mk>
+
+${OBJS} ${SOBJS}: elf32-target.h elf64-target.h
+targets.o targets.so: targmatch.h Makefile
+
+.else
+#
+# XXX - BEGIN - Old toolchain build goop - delete when everything migrated - XXX
+#
 .if ${MKPIC} != "no"
 MKLINKLIB=	no
 .endif
@@ -63,15 +93,6 @@ SELECT_VECS=	netbsd_core_vec
 
 bfd.h: bfd-in2.h bfd-h.sed
 	sed -f ${.ALLSRC:M*.sed} ${.ALLSRC:M*.h} >$@
-
-targmatch.h: config.bfd targmatch.sed
-	sed -f ${.ALLSRC:M*.sed} ${.ALLSRC:M*.bfd} >$@
-
-elf32-target.h: elfxx-target.h
-	sed -e s/NN/32/g < $> > $@
-
-elf64-target.h: elfxx-target.h
-	sed -e s/NN/64/g < $> > $@
 
 ##### alpha #####
 
@@ -228,3 +249,16 @@ SELECT_VECS != (for i in ${SELECT_VECS}; do echo $$i; done) | sort | uniq
 
 ${OBJS} ${SOBJS}: bfd.h elf32-target.h elf64-target.h
 targets.o targets.so: targmatch.h Makefile
+#
+# XXX - END - Old toolchain build goop - delete when everything migrated - XXX
+#
+.endif
+
+targmatch.h: config.bfd targmatch.sed
+	sed -f ${.ALLSRC:M*.sed} ${.ALLSRC:M*.bfd} >$@
+
+elf32-target.h: elfxx-target.h
+	sed -e s/NN/32/g < $> > $@
+
+elf64-target.h: elfxx-target.h
+	sed -e s/NN/64/g < $> > $@
