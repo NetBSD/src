@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0reg.h,v 1.3 2003/08/27 03:46:05 bsh Exp $ */
+/* $NetBSD: s3c24x0reg.h,v 1.4 2003/08/27 03:57:05 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation  All rights reserved.
@@ -188,9 +188,11 @@
 #define	 TCON_AUTORELOAD4 	(1<<22)	       /* stupid hardware design */
 #define	 TCON_AUTORELOAD(n)	((n)==4 ? TCON_AUTORELOAD4 : __TCON_AUTORELOAD(n))
 #define	 TCON_MASK(n)		(0x0f << TCON_SHIFT(n))
-#define	TIMER_TB(n) 	(0x0c+0x0c*(n))	/* count buffer */
-#define	TIMER_TCMPB(n)	(0x10+0x0c*(n))	/* compare buffer 0 */
-#define	TIMER_TO(n)	(0x14+0x0c*(n))	/* count observation 0 */
+#define	TIMER_TCNTB(n) 	 (0x0c+0x0c*(n))	/* count buffer */
+#define	TIMER_TCMPB(n)	 (0x10+0x0c*(n))	/* compare buffer */
+#define	__TIMER_TCNTO(n) (0x14+0x0c*(n))	/* count observation */
+#define	TIMER_TCNTO4	0x40
+#define	TIMER_TCNTO(n)	((n)==4 ? TIMER_TCNTO4 : __TIMER_TCNTO(n))
 
 #define	S3C24X0_TIMER_SIZE	0x44
 
