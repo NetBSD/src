@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: lorder.sh,v 1.3 1995/04/24 07:38:52 cgd Exp $
+#	$NetBSD: lorder.sh,v 1.4 1997/04/17 06:48:10 thorpej Exp $
 #
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -48,6 +48,12 @@ case $# in
 		exit ;;
 esac
 
+# What to use for "nm"
+if [ X$NM = "X" ]; then
+	NM="nm"
+	export NM
+fi
+
 # temporary files
 R=/tmp/_reference_$$
 S=/tmp/_symbol_$$
@@ -63,15 +69,15 @@ trap "rm -f $R $S; exit 1" 1 2 3 13 15
 #
 # if the line has " U " it's a globally undefined symbol, put it into
 # the reference file.
-nm -go $* | sed "
+(for file in $* ; do echo $file":" ; done ; $NM -go $*) | sed "
 	/:$/ {
 		s/://
 		s/.*/& &/
 		p
 		d
 	}
-	/ [TD] / {
-		s/:.* [TD] / /
+	/ [TDGR] / {
+		s/:.* [TDGR] / /
 		w $S
 		d
 	}
