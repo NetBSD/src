@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.18 2001/05/17 22:59:37 itojun Exp $
+#	$NetBSD: bind2netbsd,v 1.19 2001/05/27 04:45:20 itojun Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -182,7 +182,7 @@ echo "Fixing file/directory permissions."
 )
 echo done
 
-echo "Split crypto source code."
+echo "Split crypto source code.  You do not need to import crypto portion."
 (
 	mv $d/lib/cylink $dcrypto/lib
 	mv $d/lib/dnssafe $dcrypto/lib
