@@ -1,5 +1,5 @@
-/*	$NetBSD: gifconfig.c,v 1.8 2000/05/17 04:29:14 itojun Exp $	*/
-/*	$KAME: gifconfig.c,v 1.9 2000/05/17 04:26:38 itojun Exp $	*/
+/*	$NetBSD: gifconfig.c,v 1.9 2000/05/22 03:06:46 itojun Exp $	*/
+/*	$KAME: gifconfig.c,v 1.11 2000/05/22 03:01:43 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -105,7 +105,9 @@ char ntop_buf[INET6_ADDRSTRLEN];	/*inet_ntop()*/
 void setifpsrc __P((char *, int));
 void setifpdst __P((char *, int));
 void setifflags __P((char *, int));
+#ifdef SIOCDIFPHYADDR
 void delifaddrs __P((char *, int));
+#endif
 
 #define	NEXTARG		0xffffff
 
@@ -116,7 +118,9 @@ struct	cmd {
 } cmds[] = {
 	{ "up",		IFF_UP,		setifflags } ,
 	{ "down",	-IFF_UP,	setifflags },
+#ifdef SIOCDIFPHYADDR
 	{ "delete",	0,		delifaddrs },
+#endif
 	{ 0,		0,		setifpsrc },
 	{ 0,		0,		setifpdst },
 };
@@ -460,6 +464,7 @@ setifflags(vname, value)
 		Perror(vname);
 }
 
+#ifdef SIOCDIFPHYADDR
 /* ARGSUSED */
 void
 delifaddrs(vname, param)
@@ -472,6 +477,7 @@ delifaddrs(vname, param)
 	if (ioctl(s, SIOCDIFPHYADDR, (caddr_t)&ifr) < 0)
 		err(1, "ioctl(SIOCDIFPHYADDR)");
 }
+#endif
 
 #define	IFFBITS \
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
@@ -561,17 +567,28 @@ phys_status(force)
 	int flags = NI_NUMERICHOST;
 	struct ifreq *ifrp;
 	char *ver = "";
+#ifdef INET6
+	int s6;
+#endif
 
 	force = 0;	/*fool gcc*/
 
 	psrcaddr[0] = pdstaddr[0] = '\0';
 
 #ifdef INET6
-	srccmd = SIOCGIFPSRCADDR_IN6;
-	dstcmd = SIOCGIFPDSTADDR_IN6;
-	ifrp = (struct ifreq *)&in6_ifr;
+	s6 = socket(AF_INET6, SOCK_DGRAM, 0);
+	if (s6 < 0) {
+		ifrp = &ifr;
+		srccmd = SIOCGIFPSRCADDR;
+		dstcmd = SIOCGIFPDSTADDR;
+	} else {
+		close(s6);
+		srccmd = SIOCGIFPSRCADDR_IN6;
+		dstcmd = SIOCGIFPDSTADDR_IN6;
+		ifrp = (struct ifreq *)&in6_ifr;
+	}
 #else /* INET6 */
-	ifrp = ifr;
+	ifrp = &ifr;
 	srccmd = SIOCGIFPSRCADDR;
 	dstcmd = SIOCGIFPDSTADDR;
 #endif /* INET6 */
