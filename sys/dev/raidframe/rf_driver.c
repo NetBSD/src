@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.65 2002/10/18 02:46:36 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.66 2002/10/22 03:15:28 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.65 2002/10/18 02:46:36 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.66 2002/10/22 03:15:28 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,6 +449,7 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	raidPtr->numNewFailures = 0;
 	raidPtr->copyback_in_progress = 0;
 	raidPtr->parity_rewrite_in_progress = 0;
+	raidPtr->adding_hot_spare = 0;
 	raidPtr->recon_in_progress = 0;
 	raidPtr->maxOutstanding = cfgPtr->maxOutstandingDiskReqs;
 

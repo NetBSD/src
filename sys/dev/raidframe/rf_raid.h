@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.16 2002/10/11 02:10:08 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.17 2002/10/22 03:15:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -209,6 +209,7 @@ struct RF_Raid_s {
 	int     recon_in_progress;
 	int     parity_rewrite_in_progress;
 	int     copyback_in_progress;
+	int     adding_hot_spare;
 
 	/*
          * Engine thread control
