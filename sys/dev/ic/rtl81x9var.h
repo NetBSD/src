@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.3 2000/05/01 15:08:55 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.4 2000/05/15 01:55:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -36,31 +36,32 @@
 
 #define RL_ETHER_ALIGN	2
 
-struct rl_chain_data {
+struct rtk_chain_data {
 	u_int16_t		cur_rx;
-	caddr_t			rl_rx_buf;
-	caddr_t			rl_rx_buf_ptr;
+	caddr_t			rtk_rx_buf;
+	caddr_t			rtk_rx_buf_ptr;
 
-	struct mbuf		*rl_tx_chain[RL_TX_LIST_CNT];
+	struct mbuf		*rtk_tx_chain[RL_TX_LIST_CNT];
 	u_int8_t		last_tx;
 	u_int8_t		cur_tx;
 };
 
 #define RL_INC(x)		(x = (x + 1) % RL_TX_LIST_CNT)
-#define RL_CUR_TXADDR(x)	((x->rl_cdata.cur_tx * 4) + RL_TXADDR0)
-#define RL_CUR_TXSTAT(x)	((x->rl_cdata.cur_tx * 4) + RL_TXSTAT0)
-#define RL_CUR_TXMBUF(x)	(x->rl_cdata.rl_tx_chain[x->rl_cdata.cur_tx])
-#define RL_LAST_TXADDR(x)	((x->rl_cdata.last_tx * 4) + RL_TXADDR0)
-#define RL_LAST_TXSTAT(x)	((x->rl_cdata.last_tx * 4) + RL_TXSTAT0)
-#define RL_LAST_TXMBUF(x)	(x->rl_cdata.rl_tx_chain[x->rl_cdata.last_tx])
+#define RL_CUR_TXADDR(x)	((x->rtk_cdata.cur_tx * 4) + RL_TXADDR0)
+#define RL_CUR_TXSTAT(x)	((x->rtk_cdata.cur_tx * 4) + RL_TXSTAT0)
+#define RL_CUR_TXMBUF(x)	(x->rtk_cdata.rtk_tx_chain[x->rtk_cdata.cur_tx])
+#define RL_LAST_TXADDR(x)	((x->rtk_cdata.last_tx * 4) + RL_TXADDR0)
+#define RL_LAST_TXSTAT(x)	((x->rtk_cdata.last_tx * 4) + RL_TXSTAT0)
+#define RL_LAST_TXMBUF(x)	(x->rtk_cdata.rtk_tx_chain[x->rtk_cdata.last_tx])
 
-struct rl_type {
-	u_int16_t		rl_vid;
-	u_int16_t		rl_did;
-	char			*rl_name;
+struct rtk_type {
+	u_int16_t		rtk_vid;
+	u_int16_t		rtk_did;
+	const char		*rtk_name;
+	int			rtk_type;
 };
 
-struct rl_mii_frame {
+struct rtk_mii_frame {
 	u_int8_t		mii_stdelim;
 	u_int8_t		mii_opcode;
 	u_int8_t		mii_phyaddr;
@@ -80,15 +81,15 @@ struct rl_mii_frame {
 #define RL_8129			1
 #define RL_8139			2
 
-struct rl_softc {
+struct rtk_softc {
 	struct device sc_dev;		/* generic device structures */
 	struct ethercom		ethercom;		/* interface info */
 	struct mii_data		mii;
-	struct callout		rl_tick_ch;	/* tick callout */
-	bus_space_handle_t	rl_bhandle;	/* bus space handle */
-	bus_space_tag_t		rl_btag;	/* bus space tag */
-	u_int8_t		rl_type;
-	struct rl_chain_data	rl_cdata;
+	struct callout		rtk_tick_ch;	/* tick callout */
+	bus_space_handle_t	rtk_bhandle;	/* bus space handle */
+	bus_space_tag_t		rtk_btag;	/* bus space tag */
+	u_int8_t		rtk_type;
+	struct rtk_chain_data	rtk_cdata;
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t recv_dmamap, snd_dmamap[RL_TX_LIST_CNT];
 };
@@ -97,18 +98,18 @@ struct rl_softc {
  * register space access macros
  */
 #define CSR_WRITE_4(sc, reg, val)	\
-	bus_space_write_4(sc->rl_btag, sc->rl_bhandle, reg, val)
+	bus_space_write_4(sc->rtk_btag, sc->rtk_bhandle, reg, val)
 #define CSR_WRITE_2(sc, reg, val)	\
-	bus_space_write_2(sc->rl_btag, sc->rl_bhandle, reg, val)
+	bus_space_write_2(sc->rtk_btag, sc->rtk_bhandle, reg, val)
 #define CSR_WRITE_1(sc, reg, val)	\
-	bus_space_write_1(sc->rl_btag, sc->rl_bhandle, reg, val)
+	bus_space_write_1(sc->rtk_btag, sc->rtk_bhandle, reg, val)
 
 #define CSR_READ_4(sc, reg)		\
-	bus_space_read_4(sc->rl_btag, sc->rl_bhandle, reg)
+	bus_space_read_4(sc->rtk_btag, sc->rtk_bhandle, reg)
 #define CSR_READ_2(sc, reg)		\
-	bus_space_read_2(sc->rl_btag, sc->rl_bhandle, reg)
+	bus_space_read_2(sc->rtk_btag, sc->rtk_bhandle, reg)
 #define CSR_READ_1(sc, reg)		\
-	bus_space_read_1(sc->rl_btag, sc->rl_bhandle, reg)
+	bus_space_read_1(sc->rtk_btag, sc->rtk_bhandle, reg)
 
 #define RL_TIMEOUT		1000
 
@@ -129,6 +130,6 @@ struct rl_softc {
 #define RL_PME_STATUS		0x8000
 
 #ifdef _KERNEL
-void	rl_attach __P((struct rl_softc *));
-int	rl_intr __P((void *));
+void	rtk_attach __P((struct rtk_softc *));
+int	rtk_intr __P((void *));
 #endif /* _KERNEL */
