@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_v2.c,v 1.4 1995/08/14 19:50:10 gwr Exp $	*/
+/*	$NetBSD: pcnfsd_v2.c,v 1.5 1997/05/21 07:20:13 lukem Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_v2.c 1.2 91/12/18 13:26:13 SMI */
 /*
@@ -558,6 +558,8 @@ char *map;
 
 	if (err) {
 		msg_out("rpc.pcnfsd: yp_match failed");
+		if (val)
+			free(val);
 		return(NULL);
 	}
 
