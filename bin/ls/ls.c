@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.39 1999/11/02 19:44:07 tron Exp $	*/
+/*	$NetBSD: ls.c,v 1.40 1999/11/09 15:06:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.39 1999/11/02 19:44:07 tron Exp $");
+__RCSID("$NetBSD: ls.c,v 1.40 1999/11/09 15:06:31 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -352,7 +352,7 @@ traverse(argc, argv, options)
 
 	if ((ftsp =
 	    fts_open(argv, options, f_nosort ? NULL : mastercmp)) == NULL)
-		err(EXIT_FAILURE, "%s", "");
+		err(EXIT_FAILURE, NULL);
 
 	display(NULL, fts_children(ftsp, 0));
 	if (f_listdir)
@@ -527,7 +527,7 @@ display(p, list)
 
 				if ((np = malloc(sizeof(NAMES) +
 				    ulen + glen + flen + 3)) == NULL)
-					err(EXIT_FAILURE, "%s", "");
+					err(EXIT_FAILURE, NULL);
 
 				np->user = &np->data[0];
 				(void)strcpy(np->user, user);

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.26 1999/02/17 15:28:09 kleink Exp $	*/
+/*	$NetBSD: print.c,v 1.27 1999/11/09 15:06:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.26 1999/02/17 15:28:09 kleink Exp $");
+__RCSID("$NetBSD: print.c,v 1.27 1999/11/09 15:06:31 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,7 +175,7 @@ printcol(dp)
 		lastentries = dp->entries;
 		if ((array =
 		    realloc(array, dp->entries * sizeof(FTSENT *))) == NULL) {
-			warn("%s", "");
+			warn(NULL);
 			printscol(dp);
 		}
 	}

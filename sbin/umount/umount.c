@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.25 1999/08/02 02:40:38 sommerfeld Exp $	*/
+/*	$NetBSD: umount.c,v 1.26 1999/11/09 15:06:34 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.25 1999/08/02 02:40:38 sommerfeld Exp $");
+__RCSID("$NetBSD: umount.c,v 1.26 1999/11/09 15:06:34 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,7 @@ umountall(typelist)
 
 	n = getmntinfo(&fs, MNT_NOWAIT);
 	if (n == 0)
-		err(1, "%s", "");
+		err(1, NULL);
 
 	rval = 0;
 	while (--n >= 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntopts.c,v 1.5 1997/09/16 12:22:42 lukem Exp $	*/
+/*	$NetBSD: getmntopts.c,v 1.6 1999/11/09 15:06:33 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntopts.c	8.3 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: getmntopts.c,v 1.5 1997/09/16 12:22:42 lukem Exp $");
+__RCSID("$NetBSD: getmntopts.c,v 1.6 1999/11/09 15:06:33 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ getmntopts(options, m0, flagp, altflagp)
 
 	/* Copy option string, since it is about to be torn asunder... */
 	if ((optbuf = strdup(options)) == NULL)
-		err(1, "%s", "");
+		err(1, NULL);
 
 	for (opt = optbuf; (opt = strtok(opt, ",")) != NULL; opt = NULL) {
 		/* Check for "no" prefix. */

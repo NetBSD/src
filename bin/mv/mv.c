@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.22 1999/08/16 07:49:45 christos Exp $	*/
+/*	$NetBSD: mv.c,v 1.23 1999/11/09 15:06:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.22 1999/08/16 07:49:45 christos Exp $");
+__RCSID("$NetBSD: mv.c,v 1.23 1999/11/09 15:06:31 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -267,7 +267,7 @@ fastcopy(from, to, sbp)
 		return (1);
 	}
 	if (!blen && !(bp = malloc(blen = sbp->st_blksize))) {
-		warn("%s", "");
+		warn(NULL);
 		return (1);
 	}
 	while ((nread = read(from_fd, bp, blen)) > 0)

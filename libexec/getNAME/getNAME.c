@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.16 1999/02/08 20:05:57 augustss Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.17 1999/11/09 15:06:33 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, Christos Zoulas
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.16 1999/02/08 20:05:57 augustss Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.17 1999/11/09 15:06:33 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -229,7 +229,7 @@ oldman(pathname, name)
 		if (maxlen + extlen < curlen + len + SLOP) {
 			maxlen = 2 * (curlen + len) + SLOP + extlen;
 			if ((linebuf = realloc(linebuf, maxlen)) == NULL)
-				err(1, "%s", "");
+				err(1, NULL);
 		}
 		if (i != 0)
 			linebuf[curlen++] = ' ';
@@ -330,7 +330,7 @@ newman(pathname, name)
 		if (maxlen + extlen < curlen + len + SLOP) {
 			maxlen = 2 * (curlen + len) + SLOP + extlen;
 			if ((linebuf = realloc(linebuf, maxlen)) == NULL)
-				err(1, "%s", "");
+				err(1, NULL);
 		}
 
 		if (i != 0)

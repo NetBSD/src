@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.5 1997/11/06 00:27:58 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.6 1999/11/09 15:06:30 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.5 1997/11/06 00:27:58 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.6 1999/11/09 15:06:30 drochner Exp $");
 #endif
 
 #include <err.h>
@@ -51,8 +51,7 @@ emalloc(s)
 {
     void *ptr = malloc(s);
     if (ptr == NULL)
-	/* Crappy gcc warning! */
-	err(1, "%s", "");
+	err(1, NULL);
     return ptr;
 }
 
@@ -67,8 +66,7 @@ erealloc(p, s)
 {
     void *ptr = realloc(p, s);
     if (ptr == NULL)
-	/* Crappy gcc warning! */
-	err(1, "%s", "");
+	err(1, NULL);
     return ptr;
 }
 

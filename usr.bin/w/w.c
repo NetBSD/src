@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.32 1999/10/11 12:00:19 mrg Exp $	*/
+/*	$NetBSD: w.c,v 1.33 1999/11/09 15:06:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.32 1999/10/11 12:00:19 mrg Exp $");
+__RCSID("$NetBSD: w.c,v 1.33 1999/11/09 15:06:37 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,7 +210,7 @@ main(argc, argv)
 		    strncmp(utmp.ut_name, sel_user, UT_NAMESIZE) != 0))
 			continue;
 		if ((ep = calloc(1, sizeof(struct entry))) == NULL)
-			err(1, "%s", "");
+			err(1, NULL);
 		*nextp = ep;
 		nextp = &(ep->next);
 		memmove(&(ep->utmp), &utmp, sizeof(struct utmp));

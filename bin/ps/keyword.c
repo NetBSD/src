@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.19 1999/05/03 00:17:30 mrg Exp $	*/
+/*	$NetBSD: keyword.c,v 1.20 1999/11/09 15:06:31 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.19 1999/05/03 00:17:30 mrg Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.20 1999/11/09 15:06:31 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -226,7 +226,7 @@ parsefmt(p)
 		if (!(v = findvar(cp)))
 			continue;
 		if ((vent = malloc(sizeof(struct varent))) == NULL)
-			err(1, "%s", "");
+			err(1, NULL);
 		vent->var = v;
 		vent->next = NULL;
 		if (vhead == NULL)
