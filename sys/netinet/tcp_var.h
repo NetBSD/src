@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.52 1998/09/09 01:32:28 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.53 1998/09/10 10:47:01 mouse Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -381,7 +381,11 @@ struct	tcpstat {
 #define	TCPCTL_CWM		14	/* Congestion Window Monitoring */
 #define	TCPCTL_CWM_BURSTSIZE	15	/* burst size allowed by CWM */
 #define	TCPCTL_ACK_ON_PUSH	16	/* ACK immediately on PUSH */
-#define	TCPCTL_MAXID		17
+#define	TCPCTL_KEEPIDLE		17	/* keepalive idle time */
+#define	TCPCTL_KEEPINTVL	18	/* keepalive probe interval */
+#define	TCPCTL_KEEPCNT		19	/* keepalive count */
+#define	TCPCTL_SLOWHZ		20	/* PR_SLOWHZ (read-only) */
+#define	TCPCTL_MAXID		21
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -401,6 +405,10 @@ struct	tcpstat {
 	{ "cwm", CTLTYPE_INT }, \
 	{ "cwm_burstsize", CTLTYPE_INT }, \
 	{ "ack_on_push", CTLTYPE_INT }, \
+	{ "keepidle",	CTLTYPE_INT }, \
+	{ "keepintvl",	CTLTYPE_INT }, \
+	{ "keepcnt",	CTLTYPE_INT }, \
+	{ "slowhz",	CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -428,23 +436,27 @@ extern	struct syn_cache_head tcp_syn_cache[];
 extern	u_long syn_cache_count;
 
 #define	TCPCTL_VARIABLES { \
-	NULL, \
-	&tcp_do_rfc1323, \
-	&tcp_sendspace, \
-	&tcp_recvspace, \
-	&tcp_mssdflt, \
-	&tcp_syn_cache_limit, \
-	&tcp_syn_bucket_limit, \
-	&tcp_syn_cache_interval, \
-	&tcp_init_win, \
-	&tcp_mss_ifmtu, \
-	&tcp_do_sack, \
-	&tcp_do_win_scale, \
-	&tcp_do_timestamps, \
-	&tcp_compat_42, \
-	&tcp_cwm, \
-	&tcp_cwm_burstsize, \
-	&tcp_ack_on_push, \
+	{ 0 },					\
+	{ 1, 0, &tcp_do_rfc1323 },		\
+	{ 1, 0, &tcp_sendspace },		\
+	{ 1, 0, &tcp_recvspace },		\
+	{ 1, 0, &tcp_mssdflt },			\
+	{ 1, 0, &tcp_syn_cache_limit },		\
+	{ 1, 0, &tcp_syn_bucket_limit },	\
+	{ 1, 0, &tcp_syn_cache_interval },	\
+	{ 1, 0, &tcp_init_win },		\
+	{ 1, 0, &tcp_mss_ifmtu },		\
+	{ 1, 0, &tcp_do_sack },			\
+	{ 1, 0, &tcp_do_win_scale },		\
+	{ 1, 0, &tcp_do_timestamps },		\
+	{ 1, 0, &tcp_compat_42 },		\
+	{ 1, 0, &tcp_cwm },			\
+	{ 1, 0, &tcp_cwm_burstsize },		\
+	{ 1, 0, &tcp_ack_on_push },		\
+	{ 1, 0, &tcp_keepidle },		\
+	{ 1, 0, &tcp_keepintvl },		\
+	{ 1, 0, &tcp_keepcnt },			\
+	{ 1, 1, 0, PR_SLOWHZ },			\
 }
 
 int	 tcp_attach __P((struct socket *));
