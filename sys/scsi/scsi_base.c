@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.16 1994/08/30 17:01:57 deraadt Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.17 1994/11/21 10:39:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -125,7 +125,7 @@ free_xs(xs, sc_link, flags)
 	} else {
 		if (sc_link->device->start) {
 			SC_DEBUG(sc_link, SDEV_DB2, ("calling private start()\n"));
-			(*(sc_link->device->start)) (sc_link->dev_unit);
+			(*(sc_link->device->start)) (sc_link->device_softc);
 		}
 	}
 }
@@ -732,8 +732,8 @@ sc_print_addr(sc_link)
 	struct	scsi_link *sc_link;
 {
 
-	printf("%s%d(%s:%d:%d): ",
-		sc_link->device->name, sc_link->dev_unit,
+	printf("%s(%s:%d:%d): ",
+		((struct device *)sc_link->device_softc)->dv_xname,
 		((struct device *)sc_link->adapter_softc)->dv_xname,
 		sc_link->target, sc_link->lun);		
 }
