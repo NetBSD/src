@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.8 1995/09/13 19:35:58 jonathan Exp $	*/
+/*	$NetBSD: sii.c,v 1.9 1996/01/29 22:52:23 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -230,11 +230,16 @@ siimatch(parent, match, aux)
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 
-	if (!BUS_MATCHNAME(ca, "sii") && !BUS_MATCHNAME(ca, "PMAZ-AA "))
+	if (strcmp(ca->ca_name, "sii") != 0 &&
+	    strncmp(ca->ca_name, "PMAZ-AA ", 8) != 0) /*XXX*/
 		return (0);
 
 	/* XXX check for bad address */
-	/* XXX kn01s have exactly one SII. Does any other machine use them? */
+	/*
+	 * XXX kn01s have exactly one SII. the Decsystem 5100 apparently
+	 * uses them also, but as yet we don't know at what address.
+	 * XXX  PVAXES apparently use the SII also.
+	 */
 	return (1);
 }
 
@@ -249,7 +254,7 @@ siiattach(parent, self, aux)
 	register void *siiaddr;
 	register int i;
 
-	siiaddr = (void*)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
+	siiaddr = (void*)MACH_PHYS_TO_UNCACHED(ca->ca_addr);
 
 	sc->sc_regs = (SIIRegs *)siiaddr;
 	sc->sc_flags = sc->sc_dev.dv_cfdata->cf_flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.11 1995/09/12 22:36:09 jonathan Exp $	*/
+/*	$NetBSD: cfb.c,v 1.12 1996/01/29 22:52:15 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: cfb.c,v 1.11 1995/09/12 22:36:09 jonathan Exp $
+ *      $Id: cfb.c,v 1.12 1996/01/29 22:52:15 jonathan Exp $
  */
 
 /*
@@ -89,6 +89,7 @@
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/device.h>
+#include <dev/tc/tcvar.h>
 
 #include <machine/machConst.h>
 #include <machine/pmioctl.h>
@@ -121,6 +122,10 @@ extern struct cfdriver cfb;
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
 static u_char cmap_bits [NCFB * CMAP_BITS];	/* One colormap per cfb... */
 
+/*
+ * Method table for standard framebuffer operations on a CFB.
+ * The  CFB uses a Brooktree bt479 ramdac.
+ */
 struct fbdriver cfb_driver = {
 	bt459_video_on,
 	bt459_video_off,
@@ -161,26 +166,6 @@ struct cfdriver cfbcd = {
 	NULL, "cfb", cfbmatch, cfbattach, DV_DULL, sizeof(struct fbinfo), 0
 };
 
-#if 0
-/*
- * Look for a cfb. Separated out from cfbmatch() so consinit() can call it.
- */
-int
-cfbprobe(cfbaddr)
-	caddr_t cfbaddr;
-{
-	/* check for no frame buffer */
-	if (badaddr(cfbaddr, 4))
-		return (0);
-
-	/* make sure that we're looking for this type of device. */
-	if (!BUS_MATCHNAME(ca, "PMAG-BA "))
-		return (0);
-
-	return 1;
-}
-#endif
-
 
 int
 cfbmatch(parent, match, aux)
@@ -191,7 +176,6 @@ cfbmatch(parent, match, aux)
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 	static int ncfbs = 1;
-	caddr_t cfbaddr = BUS_CVTADDR(ca);
 
 #ifdef FBDRIVER_DOES_ATTACH
 	/* leave configuration  to the fb driver */
@@ -199,8 +183,7 @@ cfbmatch(parent, match, aux)
 #endif
 
 	/* make sure that we're looking for this type of device. */
-	/*if (!cfbprobe(cfbaddr)) return 0;*/
-	if (!BUS_MATCHNAME(ca, "PMAG-BA "))
+	if (!TC_BUS_MATCHNAME(ca, "PMAG-BA "))
 		return (0);
 
 
@@ -214,7 +197,8 @@ cfbmatch(parent, match, aux)
 
 /*
  * Attach a device.  Hand off all the work to cfbinit(),
- * so console-config cod can attach cfbs early in boot.
+ * so console-config code can attach cfb devices very early in boot,
+ * to use as system console.
  */
 void
 cfbattach(parent, self, aux)
@@ -223,14 +207,14 @@ cfbattach(parent, self, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	caddr_t base = 	BUS_CVTADDR(ca);
+	caddr_t base = 	(caddr_t)(ca->ca_addr);
 	int unit = self->dv_unit;
 	struct fbinfo *fi = (struct fbinfo *) self;
 
 #ifdef notyet
 	/* if this is the console, it's already configured. */
 	if (ca->ca_slotpri == cons_slot)
-		return;	/* XXX patch up f softc pointer */
+		return;	/* XXX patch up softc pointer */
 #endif
 
 	if (!cfbinit(fi, base, unit, 0))
@@ -238,21 +222,23 @@ cfbattach(parent, self, aux)
 
 	/*
 	 * The only interrupt on the CFB proper is the vertical-blank
-	 * interrupt, which cannot be disabled. The CFB always requests it.
+	 * interrupt, which cannot be disabled. The CFB always requests
+	 * an interrupt during every vertical-retrace period.
 	 * We never enable interrupts from CFB cards, except on the
 	 * 3MIN, where TC options interrupt at spl0 through spl2, and
-	 * disabling those interrupts isn't currently honoured.
+	 * disabling of TC option interrupts doesn't work.
 	 */
 	if (pmax_boardtype == DS_3MIN) {
-		BUS_INTR_ESTABLISH(ca, cfb_intr, self);
+		tc_intr_establish(parent, (void*)ca->ca_slotpri, TC_IPL_NONE,
+				  cfb_intr, fi);
 	}
 }
 
 
 
-
 /*
- * Initialization
+ * CFB initialization.  This is divorced from cfbattch() so that
+ * a console framebuffer can be initialized early during boot.
  */
 int
 cfbinit(fi, cfbaddr, unit, silent)
@@ -261,7 +247,12 @@ cfbinit(fi, cfbaddr, unit, silent)
 	int unit;
 	int silent;
 {
+	/*
+	 * If this device is being intialized as the console, malloc()
+	 * is not yet up and we must use statically-allocated space.
+	 */
 	if (fi == NULL) fi = &cfbfi;	/* XXX */
+  	
 
 	/* check for no frame buffer */
 	if (badaddr(cfbaddr, 4)) {
@@ -300,6 +291,8 @@ cfbinit(fi, cfbaddr, unit, silent)
 		printf("cfb%d: vdac init failed.\n", unit);
 		return (0);
 	}
+	/*cfbInitColorMap();*/  /* done by bt459init() */
+
 
 	/*
 	 * qvss/pm-style mmap()ed event queue compatibility glue
@@ -333,8 +326,6 @@ cfbinit(fi, cfbaddr, unit, silent)
 	}
 
 
-	/*cfbInitColorMap();*/  /* done by bt459init() */
-
 	/*
 	 * Connect to the raster-console pseudo-driver
 	 */
@@ -352,8 +343,11 @@ cfbinit(fi, cfbaddr, unit, silent)
  * The original TURBOChannel cfb interrupts on every vertical
  * retrace, and we can't disable the board from requesting those
  * interrupts.  The 4.4BSD kernel never enabled those interrupts;
- * but there's a kernel design bug on the 3MIN, where the cfb
- * interrupts at spl0, spl1, or spl2.
+ * but there's a kernel design bug on the 3MIN, where disabling
+ * (or enabling) TC option interrupts has no effect the interrupts
+ * are mapped to R3000 interrupts and always seem to be taken.
+ * This function simply dismisses CFB interrupts, or the interrupt
+ * request from the card will still be active.
  */
 int
 cfb_intr(sc)

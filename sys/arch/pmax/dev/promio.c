@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.6 1996/01/03 20:39:19 jonathan Exp $	*/
+/*	$NetBSD: promio.c,v 1.7 1996/01/29 22:52:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,7 +105,7 @@ static void romputc __P ((dev_t, int));
 static void rompollc __P((dev_t, int));
 
 
-int	pmax_boardtype;		/* Mother board type */
+extern int	pmax_boardtype;		/* Mother board type */
 
 /*
  * Major device numbers for possible console devices. XXX

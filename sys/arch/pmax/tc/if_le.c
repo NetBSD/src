@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.7 1995/12/28 08:42:15 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.8 1996/01/29 22:52:40 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -149,9 +149,9 @@ lematch(parent, match, aux)
 
 	/* XXX CHECK BUS */
 	/* make sure that we're looking for this type of device. */
-	if (!BUS_MATCHNAME(ca, "PMAD-BA ") &&	/* untested alpha TC option */
-	    !BUS_MATCHNAME(ca, "PMAD-AA ") && /* KN02 baseboard, old option */
-	    !BUS_MATCHNAME(ca, "lance"))	/* NetBSD name for b'board  */
+	if (!TC_BUS_MATCHNAME(ca, "PMAD-BA ") && /* untested alpha TC option */
+	    !TC_BUS_MATCHNAME(ca, "PMAD-AA ") && /* KN02 b'board, old option */
+	    !TC_BUS_MATCHNAME(ca, "lance"))	/* NetBSD name for b'board  */
 		return (0);
 
 #ifdef notdef /* XXX */
@@ -184,7 +184,7 @@ leattach(parent, self, aux)
 		tc_addr_t dma_mask;
 
 		sc->sc_r1 = (struct lereg1 *)
-		    MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
+		    MACH_PHYS_TO_UNCACHED(ca->ca_addr);
 #ifdef alpha
 		sc->sc_r1 = TC_DENSE_TO_SPARSE(sc->sc_r1);
 #endif
@@ -212,11 +212,26 @@ leattach(parent, self, aux)
 		    ASIC_CSR_DMAEN_LANCE;
 		wbflush();
 	}
+	else
+	if (parent->dv_cfdata->cf_driver == &tccd) {
+		/* It's on the turbochannel proper, or on KN02 baseboard. */
+		sc->sc_r1 = (struct lereg1 *)
+		    (ca->ca_addr + LE_OFFSET_LANCE);
+		sc->sc_mem = (void *)
+		    (ca->ca_addr + LE_OFFSET_RAM);
+		cp = (u_char *)(ca->ca_addr + LE_OFFSET_ROM + 2);
+
+		sc->sc_copytodesc = copytobuf_contig;
+		sc->sc_copyfromdesc = copyfrombuf_contig;
+		sc->sc_copytobuf = copytobuf_contig;
+		sc->sc_copyfrombuf = copyfrombuf_contig;
+		sc->sc_zerobuf = zerobuf_contig;
+	}
 #ifdef pmax
 	 else if (parent->dv_cfdata->cf_driver == &mainbuscd) {
 		/* It's on the baseboard, attached directly to mainbus. */
 
-		sc->sc_r1 = (struct lereg1 *)BUS_CVTADDR(ca);
+		sc->sc_r1 = (struct lereg1 *)(ca->ca_addr);
 /*XXX*/		sc->sc_mem = (void *)MACH_PHYS_TO_UNCACHED(0x19000000);
 /*XXX*/		cp = (u_char *)(MACH_PHYS_TO_UNCACHED(KN01_SYS_CLOCK) + 1);
 
@@ -227,21 +242,6 @@ leattach(parent, self, aux)
 		sc->sc_zerobuf = zerobuf_gap2;
 	}
 #endif
-	else
-	if (parent->dv_cfdata->cf_driver == &tccd) {
-		/* It's on the turbochannel proper, or on KN02 baseboard. */
-		sc->sc_r1 = (struct lereg1 *)
-		    (BUS_CVTADDR(ca) + LE_OFFSET_LANCE);
-		sc->sc_mem = (void *)
-		    (BUS_CVTADDR(ca) + LE_OFFSET_RAM);
-		cp = (u_char *)(BUS_CVTADDR(ca) + LE_OFFSET_ROM + 2);
-
-		sc->sc_copytodesc = copytobuf_contig;
-		sc->sc_copyfromdesc = copyfrombuf_contig;
-		sc->sc_copytobuf = copytobuf_contig;
-		sc->sc_copyfrombuf = copyfrombuf_contig;
-		sc->sc_zerobuf = zerobuf_contig;
-	}
 
 	sc->sc_conf3 = 0;
 	sc->sc_addr = 0;

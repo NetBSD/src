@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.3 1996/01/11 05:57:04 jonathan Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.4 1996/01/29 22:52:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,6 +31,8 @@
  * Machine-dependent structures of autoconfiguration
  */
 
+#include <machine/tc_machdep.h>
+
 struct confargs;
 
 /* Handle device interrupt for  given unit of a driver */
@@ -38,43 +40,21 @@ struct confargs;
 typedef void* intr_arg_t;		/* pointer to some softc */
 typedef int (*intr_handler_t) __P((intr_arg_t));
 
-struct abus {
-	struct	device *ab_dv;		/* back-pointer to device */
-	int	ab_type;		/* bus type (see below) */
-	void	(*ab_intr_establish)	/* bus's set-handler function */
-		    __P((struct confargs *, intr_handler_t, intr_arg_t));
-	void	(*ab_intr_disestablish)	/* bus's unset-handler function */
-		    __P((struct confargs *));
-	caddr_t	(*ab_cvtaddr)		/* convert slot/offset to address */
-		    __P((struct confargs *));
-	int	(*ab_matchname)		/* see if name matches driver */
-		    __P((struct confargs *, char *));
-};
-
-#define	BUS_MAIN	1		/* mainbus */
-#define	BUS_TC		2		/* TurboChannel */
-#define	BUS_ASIC	3		/* IOCTL ASIC; under TurboChannel */
-#define	BUS_TCDS	4		/* TCDS ASIC; under TurboChannel */
-
-#define KN02_ASIC_NAME "KN02    "	/* very special */
+#define KN02_ASIC_NAME "KN02    "	/* ROM name in 3max system slot */
 	
 #define	BUS_INTR_ESTABLISH(ca, handler, val)				\
-	    (*(ca)->ca_bus->ab_intr_establish)((ca), (handler), (val))
-#define	BUS_INTR_DISESTABLISH(ca)					\
-	    (*(ca)->ca_bus->ab_intr_establish)(ca)
-#define	BUS_CVTADDR(ca)							\
-	    (*(ca)->ca_bus->ab_cvtaddr)(ca)
-#define	BUS_MATCHNAME(ca, name)						\
-	    (*(ca)->ca_bus->ab_matchname)((ca), (name))
+	    generic_intr_establish((ca), (handler), (val))
+
 
 struct confargs {
-	char	*ca_name;		/* Device name. */
+	char	ca_name[8+1];		/* Device name. */
 	int	ca_slot;		/* Device slot (table entry). */
 	int	ca_offset;		/* Offset into slot. */
+	tc_addr_t ca_addr;		/* Device address. */
 	int	ca_slotpri;		/* Device interrupt "priority" */
-	struct	abus *ca_bus;		/* bus device resides on. */
 };
 
+extern caddr_t baseboard_cvtaddr __P((struct confargs *)); /*XXX*/
 
 #ifndef pmax
 void	set_clockintr __P((void (*)(struct clockframe *)));

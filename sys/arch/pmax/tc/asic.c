@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.6 1995/09/25 20:33:28 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.7 1996/01/29 22:52:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,6 +31,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <dev/tc/tcvar.h>
 
 #include <machine/autoconf.h>
 #include <machine/pte.h>
@@ -61,7 +62,6 @@ extern int cputype;
 
 struct asic_softc {
 	struct	device sc_dv;
-	struct	abus sc_bus;
 	caddr_t	sc_base;
 };
 
@@ -75,8 +75,7 @@ struct cfdriver ioasiccd =
 void    asic_intr_establish __P((struct confargs *, intr_handler_t,
 				 intr_arg_t));
 void    asic_intr_disestablish __P((struct confargs *));
-caddr_t asic_cvtaddr __P((struct confargs *));
-int     asic_matchname __P((struct confargs *, char *));
+caddr_t ioasic_cvtaddr __P((struct confargs *));
 
 #ifndef pmax
 int	asic_intr __P((void *));
@@ -92,11 +91,11 @@ struct asic_slot {
 };
 
 #ifdef	pmax
+#define ASIC_DEBUG
+
 struct asic_slot *asic_slots;
-
 #include "ds-asic-conf.c"
-
-#endif
+#endif	/*pmax*/
 
 #ifdef alpha
 struct asic_slot asic_slots[ASIC_MAX_NSLOTS] =
@@ -115,6 +114,12 @@ struct asic_slot asic_slots[ASIC_MAX_NSLOTS] =
 };
 #endif	/*alpha*/
 
+#ifdef ASIC_DEBUG
+#define ASIC_DPRINTF(x)	printf x
+#else
+#define ASIC_DPRINTF(x)	(void) x
+#endif
+
 caddr_t asic_base;		/* XXX XXX XXX */
 
 int
@@ -126,18 +131,23 @@ asicmatch(parent, cfdata, aux)
 	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
 
-	/* It can only occur on the turbochannel, anyway. */
-	if (ca->ca_bus->ab_type != BUS_TC)
+	ASIC_DPRINTF(("asicmatch: %s slot %d offset 0x%x pri %d\n",
+		ca->ca_name, ca->ca_slot, ca->ca_offset, ca->ca_slotpri));
+
+	/* An IOCTL asic can only occur on the turbochannel, anyway. */
+#ifdef notyet
+	if (parent != &tccd)
 		return (0);
+#endif
 
 	/* The 3MAX (kn02) is special. */
-	if (BUS_MATCHNAME(ca, KN02_ASIC_NAME)) {
+	if (TC_BUS_MATCHNAME(ca, KN02_ASIC_NAME)) {
 		printf("(configuring KN02 system slot as asic)\n");
 		goto gotasic;
 	}
 
 	/* Make sure that we're looking for this type of device. */
-	if (!BUS_MATCHNAME(ca, "IOCTL   "))
+	if (!TC_BUS_MATCHNAME(ca, "IOCTL   "))
 		return (0);
 gotasic:
 
@@ -185,15 +195,11 @@ asicattach(parent, self, aux)
 	if (asic_slots == NULL)
 		panic("asicattach: no asic_slot map\n");
 
-	sc->sc_base = BUS_CVTADDR(ca);
-	asic_base = sc->sc_base;			/* XXX XXX XXX */
+	ASIC_DPRINTF(("asicattach: %s\n", sc->sc_dv.dv_xname));
 
-	sc->sc_bus.ab_dv = (struct device *)sc;
-	sc->sc_bus.ab_type = BUS_ASIC;
-	sc->sc_bus.ab_intr_establish = asic_intr_establish;
-	sc->sc_bus.ab_intr_disestablish = asic_intr_disestablish;
-	sc->sc_bus.ab_cvtaddr = asic_cvtaddr;
-	sc->sc_bus.ab_matchname = asic_matchname;
+	sc->sc_base = (caddr_t)ca->ca_addr;
+
+	asic_base = sc->sc_base;			/* XXX XXX XXX */
 
 #ifdef pmax
 	printf("\n");
@@ -220,25 +226,23 @@ asicattach(parent, self, aux)
         /* Try to configure each CPU-internal device */
         for (i = 0; i < ASIC_MAX_NSLOTS; i++) {
 
-#ifdef DEBUG_ASIC
-		printf("asicattach: entry %d\n", i);		/*XXX*/
-#endif
+		ASIC_DPRINTF(("asicattach: entry %d, base addr %x\n",
+		       i, sc->sc_base));
 
                 nca = &asic_slots[i].as_ca;
 		if (nca == NULL) panic ("bad asic table\n");
-		if (nca->ca_name == NULL && nca->ca_bus == NULL)
+		if (nca->ca_name == NULL || nca->ca_name[0] == 0)
 			break;
-                nca->ca_bus = &sc->sc_bus;
+		nca->ca_addr = ((u_int)sc->sc_base) + nca->ca_offset;
 
-#ifdef DEBUG_ASIC
-		printf(" adding %s subslot %d offset %x\n",	/*XXX*/
-		       nca->ca_name, nca->ca_slot, nca->ca_offset);
-#endif
+		ASIC_DPRINTF((" adding %s subslot %d offset %x addr %x\n",
+		       nca->ca_name, nca->ca_slot, nca->ca_offset,
+		       nca->ca_addr));
 
                 /* Tell the autoconfig machinery we've found the hardware. */
                 config_found(self, nca, asicprint);
         }
-
+	ASIC_DPRINTF(("asicattach: done\n"));
 }
 
 int
@@ -257,7 +261,7 @@ asicprint(aux, pnp)
 
 /*
  * Save interrupt slotname and enable mask (??)
- * On decstaitons this isn't useful, as the turbochannel
+ * On decstations this isn't useful, as the turbochannel
  * decstations all have incompatible ways of mapping interrupts
  * to IO ASIC or r3000 interrupt bits.
  * Instead of writing "as_bits" directly into an IOASIC interrupt-enable
@@ -273,12 +277,10 @@ asic_intr_establish(ca, handler, val)
         intr_arg_t val;
 {
 
-#ifdef DIAGNOSTIC
-#ifdef alpha	/*XXX*/
+#if defined(DIAGNOSTIC) && defined(alpha)
 	if (ca->ca_slot == ASIC_SLOT_RTC)
 		panic("setting clock interrupt incorrectly");
-#endif /*alpha*/
-#endif	/*DIAGNOSTIC*/
+#endif	/*defined(DIAGNOSTIC) && defined(alpha)*/
 
 	/* XXX SHOULD NOT BE THIS LITERAL */
 	if (asic_slots[ca->ca_slot].as_handler != asic_intrnull)
@@ -288,14 +290,15 @@ asic_intr_establish(ca, handler, val)
 	 * XXX  We need to invent a better interface to machine-dependent
 	 * interrupt-enable code, or redo the Decstation configuration
 	 * tables with unused entries, so that slot is always equal
-	 * to "priority" (software pseudo-slot number).
+	 * to "priority" (software pseudo-slot number).  FIXME.
 	 */
-#ifdef pmax
-#ifdef	DEBUG_ASIC
-	printf("asic:%s%d:  intr for entry %d(%d) slot %d\n", 
-		 ca->ca_name, val, ca->ca_slot, ca->ca_slotpri,
+#if defined(ASIC_DEBUG) && 0
+	printf("asic: %s:  intr for entry %d slot %d pri %d\n", 
+		 ca->ca_name, ca->ca_slot, ca->ca_slotpri,
 		 asic_slots[ca->ca_slot].as_val);
-#endif	/*DEBUG*/
+#endif	/*ASIC_DEBUG*/
+
+#ifdef pmax
 	tc_enable_interrupt(ca->ca_slotpri, handler, val, 1);
 
 #else	/* Alpha AXP */
@@ -327,25 +330,7 @@ asic_intr_disestablish(ca)
 #endif
 }
 
-caddr_t
-asic_cvtaddr(ca)
-	struct confargs *ca;
-{
-
-	return
-	    (((struct asic_softc *)ca->ca_bus->ab_dv)->sc_base + ca->ca_offset);
-}
-
-int
-asic_matchname(ca, name)
-	struct confargs *ca;
-	char *name;
-{
-
-	return (strcmp(name, ca->ca_name) == 0);
-}
-
-#ifndef	pmax
+#ifdef	alpha
 /*
  * asic_intr --
  *	ASIC interrupt handler.
