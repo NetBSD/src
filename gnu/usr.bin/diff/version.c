@@ -1,7 +1,5 @@
-/* Version number of GNU diff.
- *    $Id: version.c,v 1.7 1993/11/12 02:26:27 jtc Exp $
- */
+/* Version number of GNU diff.  */
 
-#include "config.h"
+#include <config.h>
 
-char const version_string[] = "2.6";
+char const version_string[] = "2.7";

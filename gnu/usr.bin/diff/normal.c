@@ -17,9 +17,6 @@ You should have received a copy of the GNU General Public License
 along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-#ifndef lint
-static char *rcsid = "$Id: normal.c,v 1.4 1993/09/16 17:39:18 jtc Exp $";
-#endif
 
 #include "diff.h"
 

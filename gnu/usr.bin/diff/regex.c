@@ -3,7 +3,7 @@
    (Implements POSIX draft P10003.2/D11.2, except for
    internationalization features.)
 
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,29 +24,14 @@
   #pragma alloca
 #endif
 
-#ifndef lint
-static char *rcsid = "$Id: regex.c,v 1.5 1993/11/12 02:26:10 jtc Exp $";
-#endif
-
 #define _GNU_SOURCE
 
 #ifdef HAVE_CONFIG_H
-#if defined (CONFIG_BROKETS)
-/* We use <config.h> instead of "config.h" so that a compilation
-   using -I. -I$srcdir will use ./config.h rather than $srcdir/config.h
-   (which it would do because it found this file in $srcdir).  */
 #include <config.h>
-#else
-#include "config.h"
-#endif
 #endif
 
 /* We need this for `regex.h', and perhaps for the Emacs include files.  */
 #include <sys/types.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 /* The `emacs' switch turns on certain matching commands
    that make sense only in Emacs. */
@@ -71,6 +56,7 @@ char *realloc ();
 
 /* We used to test for `BSTRING' here, but only GCC and Emacs define
    `BSTRING', as far as I know, and neither of them use this code.  */
+#ifndef INHIBIT_STRING_HEADER
 #if HAVE_STRING_H || STDC_HEADERS
 #include <string.h>
 #ifndef bcmp
@@ -84,6 +70,7 @@ char *realloc ();
 #endif
 #else
 #include <strings.h>
+#endif
 #endif
 
 /* Define the syntax stuff for \<, \>, etc.  */
@@ -152,32 +139,34 @@ init_syntax_once ()
    macros don't need to be guarded with references to isascii. ...
    Defining isascii to 1 should let any compiler worth its salt
    eliminate the && through constant folding."  */
-#if ! defined (isascii) || defined (STDC_HEADERS)
-#undef isascii
-#define isascii(c) 1
+
+#if defined (STDC_HEADERS) || (!defined (isascii) && !defined (HAVE_ISASCII))
+#define ISASCII(c) 1
+#else
+#define ISASCII(c) isascii(c)
 #endif
 
 #ifdef isblank
-#define ISBLANK(c) (isascii (c) && isblank (c))
+#define ISBLANK(c) (ISASCII (c) && isblank (c))
 #else
 #define ISBLANK(c) ((c) == ' ' || (c) == '\t')
 #endif
 #ifdef isgraph
-#define ISGRAPH(c) (isascii (c) && isgraph (c))
+#define ISGRAPH(c) (ISASCII (c) && isgraph (c))
 #else
-#define ISGRAPH(c) (isascii (c) && isprint (c) && !isspace (c))
+#define ISGRAPH(c) (ISASCII (c) && isprint (c) && !isspace (c))
 #endif
 
-#define ISPRINT(c) (isascii (c) && isprint (c))
-#define ISDIGIT(c) (isascii (c) && isdigit (c))
-#define ISALNUM(c) (isascii (c) && isalnum (c))
-#define ISALPHA(c) (isascii (c) && isalpha (c))
-#define ISCNTRL(c) (isascii (c) && iscntrl (c))
-#define ISLOWER(c) (isascii (c) && islower (c))
-#define ISPUNCT(c) (isascii (c) && ispunct (c))
-#define ISSPACE(c) (isascii (c) && isspace (c))
-#define ISUPPER(c) (isascii (c) && isupper (c))
-#define ISXDIGIT(c) (isascii (c) && isxdigit (c))
+#define ISPRINT(c) (ISASCII (c) && isprint (c))
+#define ISDIGIT(c) (ISASCII (c) && isdigit (c))
+#define ISALNUM(c) (ISASCII (c) && isalnum (c))
+#define ISALPHA(c) (ISASCII (c) && isalpha (c))
+#define ISCNTRL(c) (ISASCII (c) && iscntrl (c))
+#define ISLOWER(c) (ISASCII (c) && islower (c))
+#define ISPUNCT(c) (ISASCII (c) && ispunct (c))
+#define ISSPACE(c) (ISASCII (c) && isspace (c))
+#define ISUPPER(c) (ISASCII (c) && isupper (c))
+#define ISXDIGIT(c) (ISASCII (c) && isxdigit (c))
 
 #ifndef NULL
 #define NULL 0
@@ -258,12 +247,16 @@ char *alloca ();
 
 #define STREQ(s1, s2) ((strcmp (s1, s2) == 0))
 
+#undef MAX
+#undef MIN
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 typedef char boolean;
 #define false 0
 #define true 1
+
+static int re_match_2_internal ();
 
 /* These are the command codes that appear in compiled regular
    expressions.  Some opcodes are followed by argument bytes.  A
@@ -890,7 +883,7 @@ static const char *re_error_msg[] =
 
 /* Avoiding alloca during matching, to placate r_alloc.  */
 
-/* Define MATCH_MAY_ALLOCATE if we need to make sure that the
+/* Define MATCH_MAY_ALLOCATE unless we need to make sure that the
    searching and matching functions should not call alloca.  On some
    systems, alloca is implemented in terms of malloc, and if we're
    using the relocating allocator routines, then malloc could cause a
@@ -898,8 +891,8 @@ static const char *re_error_msg[] =
    ralloc heap) shift the data out from underneath the regexp
    routines.
 
-   Here's another reason to avoid allocation: Emacs insists on
-   processing input from X in a signal handler; processing X input may
+   Here's another reason to avoid allocation: Emacs 
+   processes input from X in a signal handler; processing X input may
    call malloc; if input arrives while a matching routine is calling
    malloc, then we're scrod.  But Emacs can't just block input while
    calling matching routines; then we don't notice interrupts when
@@ -910,8 +903,9 @@ static const char *re_error_msg[] =
 /* Normally, this is fine.  */
 #define MATCH_MAY_ALLOCATE
 
-/* But under some circumstances, it's not.  */
-#if defined (emacs) || (defined (REL_ALLOC) && defined (C_ALLOCA))
+/* The match routines may not allocate if (1) they would do it with malloc
+   and (2) it's not safe for htem to use malloc.  */
+#if (defined (C_ALLOCA) || defined (REGEX_MALLOC)) && (defined (emacs) || defined (REL_ALLOC))
 #undef MATCH_MAY_ALLOCATE
 #endif
 
@@ -1490,6 +1484,10 @@ typedef struct
    The `fastmap' and `newline_anchor' fields are neither
    examined nor set.  */
 
+/* Return, freeing storage we allocated.  */
+#define FREE_STACK_RETURN(value)		\
+  return (free (compile_stack.stack), value)
+
 static reg_errcode_t
 regex_compile (pattern, size, syntax, bufp)
      const char *pattern;
@@ -1502,7 +1500,7 @@ regex_compile (pattern, size, syntax, bufp)
      they can be reliably used as array indices.  */
   register unsigned char c, c1;
   
-  /* A random tempory spot in PATTERN.  */
+  /* A random temporary spot in PATTERN.  */
   const char *p1;
 
   /* Points to the end of the buffer, where we should append.  */
@@ -1596,7 +1594,7 @@ regex_compile (pattern, size, syntax, bufp)
         { /* Caller did not allocate a buffer.  Do it for them.  */
           bufp->buffer = TALLOC (INIT_BUF_SIZE, unsigned char);
         }
-      if (!bufp->buffer) return REG_ESPACE;
+      if (!bufp->buffer) FREE_STACK_RETURN (REG_ESPACE);
 
       bufp->allocated = INIT_BUF_SIZE;
     }
@@ -1651,7 +1649,7 @@ regex_compile (pattern, size, syntax, bufp)
           if (!laststart)
             {
               if (syntax & RE_CONTEXT_INVALID_OPS)
-                return REG_BADRPT;
+                FREE_STACK_RETURN (REG_BADRPT);
               else if (!(syntax & RE_CONTEXT_INDEP_OPS))
                 goto normal_char;
             }
@@ -1684,7 +1682,7 @@ regex_compile (pattern, size, syntax, bufp)
 
                 else if (syntax & RE_BK_PLUS_QM  &&  c == '\\')
                   {
-                    if (p == pend) return REG_EESCAPE;
+                    if (p == pend) FREE_STACK_RETURN (REG_EESCAPE);
 
                     PATFETCH (c1);
                     if (!(c1 == '+' || c1 == '?'))
@@ -1783,7 +1781,7 @@ regex_compile (pattern, size, syntax, bufp)
           {
             boolean had_char_class = false;
 
-            if (p == pend) return REG_EBRACK;
+            if (p == pend) FREE_STACK_RETURN (REG_EBRACK);
 
             /* Ensure that we have enough space to push a charset: the
                opcode, the length count, and the bitset; 34 bytes in all.  */
@@ -1814,14 +1812,14 @@ regex_compile (pattern, size, syntax, bufp)
             /* Read in characters and ranges, setting map bits.  */
             for (;;)
               {
-                if (p == pend) return REG_EBRACK;
+                if (p == pend) FREE_STACK_RETURN (REG_EBRACK);
 
                 PATFETCH (c);
 
                 /* \ might escape characters inside [...] and [^...].  */
                 if ((syntax & RE_BACKSLASH_ESCAPE_IN_LISTS) && c == '\\')
                   {
-                    if (p == pend) return REG_EESCAPE;
+                    if (p == pend) FREE_STACK_RETURN (REG_EESCAPE);
 
                     PATFETCH (c1);
                     SET_LIST_BIT (c1);
@@ -1837,7 +1835,7 @@ regex_compile (pattern, size, syntax, bufp)
                 /* Look ahead to see if it's a range when the last thing
                    was a character class.  */
                 if (had_char_class && c == '-' && *p != ']')
-                  return REG_ERANGE;
+                  FREE_STACK_RETURN (REG_ERANGE);
 
                 /* Look ahead to see if it's a range when the last thing
                    was a character: if this is a hyphen not at the
@@ -1850,7 +1848,7 @@ regex_compile (pattern, size, syntax, bufp)
                   {
                     reg_errcode_t ret
                       = compile_range (&p, pend, translate, syntax, b);
-                    if (ret != REG_NOERROR) return ret;
+                    if (ret != REG_NOERROR) FREE_STACK_RETURN (ret);
                   }
 
                 else if (p[0] == '-' && p[1] != ']')
@@ -1861,7 +1859,7 @@ regex_compile (pattern, size, syntax, bufp)
                     PATFETCH (c1);
                     
                     ret = compile_range (&p, pend, translate, syntax, b);
-                    if (ret != REG_NOERROR) return ret;
+                    if (ret != REG_NOERROR) FREE_STACK_RETURN (ret);
                   }
 
                 /* See if we're at the beginning of a possible character
@@ -1875,7 +1873,7 @@ regex_compile (pattern, size, syntax, bufp)
                     c1 = 0;
 
                     /* If pattern is `[[:'.  */
-                    if (p == pend) return REG_EBRACK;
+                    if (p == pend) FREE_STACK_RETURN (REG_EBRACK);
 
                     for (;;)
                       {
@@ -1906,29 +1904,34 @@ regex_compile (pattern, size, syntax, bufp)
                         boolean is_upper = STREQ (str, "upper");
                         boolean is_xdigit = STREQ (str, "xdigit");
                         
-                        if (!IS_CHAR_CLASS (str)) return REG_ECTYPE;
+                        if (!IS_CHAR_CLASS (str))
+			  FREE_STACK_RETURN (REG_ECTYPE);
 
                         /* Throw away the ] at the end of the character
                            class.  */
                         PATFETCH (c);					
 
-                        if (p == pend) return REG_EBRACK;
+                        if (p == pend) FREE_STACK_RETURN (REG_EBRACK);
 
                         for (ch = 0; ch < 1 << BYTEWIDTH; ch++)
                           {
+			    /* This was split into 3 if's to
+			       avoid an arbitrary limit in some compiler.  */
                             if (   (is_alnum  && ISALNUM (ch))
                                 || (is_alpha  && ISALPHA (ch))
                                 || (is_blank  && ISBLANK (ch))
-                                || (is_cntrl  && ISCNTRL (ch))
-                                || (is_digit  && ISDIGIT (ch))
+                                || (is_cntrl  && ISCNTRL (ch)))
+			      SET_LIST_BIT (ch);
+			    if (   (is_digit  && ISDIGIT (ch))
                                 || (is_graph  && ISGRAPH (ch))
                                 || (is_lower  && ISLOWER (ch))
-                                || (is_print  && ISPRINT (ch))
-                                || (is_punct  && ISPUNCT (ch))
+                                || (is_print  && ISPRINT (ch)))
+			      SET_LIST_BIT (ch);
+			    if (   (is_punct  && ISPUNCT (ch))
                                 || (is_space  && ISSPACE (ch))
                                 || (is_upper  && ISUPPER (ch))
                                 || (is_xdigit && ISXDIGIT (ch)))
-                            SET_LIST_BIT (ch);
+			      SET_LIST_BIT (ch);
                           }
                         had_char_class = true;
                       }
@@ -1994,7 +1997,7 @@ regex_compile (pattern, size, syntax, bufp)
 
 
         case '\\':
-          if (p == pend) return REG_EESCAPE;
+          if (p == pend) FREE_STACK_RETURN (REG_EESCAPE);
 
           /* Do not translate the character after the \, so that we can
              distinguish, e.g., \B from \b, even if we normally would
@@ -2059,7 +2062,7 @@ regex_compile (pattern, size, syntax, bufp)
                 if (syntax & RE_UNMATCHED_RIGHT_PAREN_ORD)
                   goto normal_backslash;
                 else
-                  return REG_ERPAREN;
+                  FREE_STACK_RETURN (REG_ERPAREN);
 
             handle_close:
               if (fixup_alt_jump)
@@ -2079,7 +2082,7 @@ regex_compile (pattern, size, syntax, bufp)
                 if (syntax & RE_UNMATCHED_RIGHT_PAREN_ORD)
                   goto normal_char;
                 else
-                  return REG_ERPAREN;
+                  FREE_STACK_RETURN (REG_ERPAREN);
 
               /* Since we just checked for an empty stack above, this
                  ``can't happen''.  */
@@ -2186,7 +2189,7 @@ regex_compile (pattern, size, syntax, bufp)
                     if (syntax & RE_NO_BK_BRACES)
                       goto unfetch_interval;
                     else
-                      return REG_EBRACE;
+                      FREE_STACK_RETURN (REG_EBRACE);
                   }
 
                 GET_UNSIGNED_NUMBER (lower_bound);
@@ -2206,12 +2209,12 @@ regex_compile (pattern, size, syntax, bufp)
                     if (syntax & RE_NO_BK_BRACES)
                       goto unfetch_interval;
                     else 
-                      return REG_BADBR;
+                      FREE_STACK_RETURN (REG_BADBR);
                   }
 
                 if (!(syntax & RE_NO_BK_BRACES)) 
                   {
-                    if (c != '\\') return REG_EBRACE;
+                    if (c != '\\') FREE_STACK_RETURN (REG_EBRACE);
 
                     PATFETCH (c);
                   }
@@ -2221,7 +2224,7 @@ regex_compile (pattern, size, syntax, bufp)
                     if (syntax & RE_NO_BK_BRACES)
                       goto unfetch_interval;
                     else 
-                      return REG_BADBR;
+                      FREE_STACK_RETURN (REG_BADBR);
                   }
 
                 /* We just parsed a valid interval.  */
@@ -2230,7 +2233,7 @@ regex_compile (pattern, size, syntax, bufp)
                 if (!laststart)
                   {
                     if (syntax & RE_CONTEXT_INVALID_OPS)
-                      return REG_BADRPT;
+                      FREE_STACK_RETURN (REG_BADRPT);
                     else if (syntax & RE_CONTEXT_INDEP_OPS)
                       laststart = b;
                     else
@@ -2251,7 +2254,7 @@ regex_compile (pattern, size, syntax, bufp)
                     we're all done, the pattern will look like:
                       set_number_at <jump count> <upper bound>
                       set_number_at <succeed_n count> <lower bound>
-                      succeed_n <after jump addr> <succed_n count>
+                      succeed_n <after jump addr> <succeed_n count>
                       <body of loop>
                       jump_n <succeed_n addr> <jump count>
                     (The upper bound and `jump_n' are omitted if
@@ -2397,7 +2400,7 @@ regex_compile (pattern, size, syntax, bufp)
               c1 = c - '0';
 
               if (c1 > regnum)
-                return REG_ESUBREG;
+                FREE_STACK_RETURN (REG_ESUBREG);
 
               /* Can't back reference to a subexpression if inside of it.  */
               if (group_in_compile_stack (compile_stack, c1))
@@ -2469,7 +2472,7 @@ regex_compile (pattern, size, syntax, bufp)
     STORE_JUMP (jump_past_alt, fixup_alt_jump, b);
 
   if (!COMPILE_STACK_EMPTY) 
-    return REG_EPAREN;
+    FREE_STACK_RETURN (REG_EPAREN);
 
   free (compile_stack.stack);
 
@@ -2494,16 +2497,32 @@ regex_compile (pattern, size, syntax, bufp)
     /* Since DOUBLE_FAIL_STACK refuses to double only if the current size
        is strictly greater than re_max_failures, the largest possible stack
        is 2 * re_max_failures failure points.  */
-    fail_stack.size = (2 * re_max_failures * MAX_FAILURE_ITEMS);
-    if (fail_stack.stack)
-      fail_stack.stack =
-	(fail_stack_elt_t *) realloc (fail_stack.stack,
-				      (fail_stack.size
-				       * sizeof (fail_stack_elt_t)));
-    else
-      fail_stack.stack =
-	(fail_stack_elt_t *) malloc (fail_stack.size 
-				     * sizeof (fail_stack_elt_t));
+    if (fail_stack.size < (2 * re_max_failures * MAX_FAILURE_ITEMS))
+      {
+	fail_stack.size = (2 * re_max_failures * MAX_FAILURE_ITEMS);
+
+#ifdef emacs
+	if (! fail_stack.stack)
+	  fail_stack.stack
+	    = (fail_stack_elt_t *) xmalloc (fail_stack.size 
+					    * sizeof (fail_stack_elt_t));
+	else
+	  fail_stack.stack
+	    = (fail_stack_elt_t *) xrealloc (fail_stack.stack,
+					     (fail_stack.size
+					      * sizeof (fail_stack_elt_t)));
+#else /* not emacs */
+	if (! fail_stack.stack)
+	  fail_stack.stack
+	    = (fail_stack_elt_t *) malloc (fail_stack.size 
+					   * sizeof (fail_stack_elt_t));
+	else
+	  fail_stack.stack
+	    = (fail_stack_elt_t *) realloc (fail_stack.stack,
+					    (fail_stack.size
+					     * sizeof (fail_stack_elt_t)));
+#endif /* not emacs */
+      }
 
     /* Initialize some other variables the matcher uses.  */
     RETALLOC_IF (regstart,	 num_regs, const char *);
@@ -2684,8 +2703,9 @@ compile_range (p_ptr, pend, translate, syntax, b)
 
      We also want to fetch the endpoints without translating them; the 
      appropriate translation is done in the bit-setting loop below.  */
-  range_start = ((unsigned char *) p)[-2];
-  range_end   = ((unsigned char *) p)[0];
+  /* The SVR4 compiler on the 3B2 had trouble with unsigned const char *.  */
+  range_start = ((const unsigned char *) p)[-2];
+  range_end   = ((const unsigned char *) p)[0];
 
   /* Have to increment the pointer into the pattern string, so the
      caller isn't still at the ending character.  */
@@ -2829,22 +2849,25 @@ re_compile_fastmap (bufp)
 
 
         case anychar:
-          /* `.' matches anything ...  */
-	  for (j = 0; j < (1 << BYTEWIDTH); j++)
-            fastmap[j] = 1;
+	  {
+	    int fastmap_newline = fastmap['\n'];
 
-          /* ... except perhaps newline.  */
-          if (!(bufp->syntax & RE_DOT_NEWLINE))
-            fastmap['\n'] = 0;
+	    /* `.' matches anything ...  */
+	    for (j = 0; j < (1 << BYTEWIDTH); j++)
+	      fastmap[j] = 1;
 
-          /* Return if we have already set `can_be_null'; if we have,
-             then the fastmap is irrelevant.  Something's wrong here.  */
-	  else if (bufp->can_be_null)
-	    return 0;
+	    /* ... except perhaps newline.  */
+	    if (!(bufp->syntax & RE_DOT_NEWLINE))
+	      fastmap['\n'] = fastmap_newline;
 
-          /* Otherwise, have to check alternative paths.  */
-	  break;
+	    /* Return if we have already set `can_be_null'; if we have,
+	       then the fastmap is irrelevant.  Something's wrong here.  */
+	    else if (bufp->can_be_null)
+	      return 0;
 
+	    /* Otherwise, have to check alternative paths.  */
+	    break;
+	  }
 
 #ifdef emacs
         case syntaxspec:
@@ -3025,7 +3048,7 @@ re_set_registers (bufp, regs, num_regs, starts, ends)
     {
       bufp->regs_allocated = REGS_UNALLOCATED;
       regs->num_regs = 0;
-      regs->start = regs->end = (regoff_t) 0;
+      regs->start = regs->end = (regoff_t *) 0;
     }
 }
 
@@ -3158,8 +3181,14 @@ re_search_2 (bufp, string1, size1, string2, size2, startpos, range, regs, stop)
           && !bufp->can_be_null)
 	return -1;
 
-      val = re_match_2 (bufp, string1, size1, string2, size2,
-	                startpos, regs, stop);
+      val = re_match_2_internal (bufp, string1, size1, string2, size2,
+				 startpos, regs, stop);
+#ifndef REGEX_MALLOC
+#ifdef C_ALLOCA
+      alloca (0);
+#endif
+#endif
+
       if (val >= 0)
 	return startpos;
         
@@ -3255,8 +3284,8 @@ static boolean alt_match_null_string_p (),
     FREE_VAR (reg_info_dummy);						\
   } while (0)
 #else /* not REGEX_MALLOC */
-/* Some MIPS systems (at least) want this to free alloca'd storage.  */
-#define FREE_VARIABLES() alloca (0)
+/* This used to do alloca (0), but now we do that in the caller.  */
+#define FREE_VARIABLES() /* Nothing */
 #endif /* not REGEX_MALLOC */
 #else
 #define FREE_VARIABLES() /* Do nothing!  */
@@ -3283,8 +3312,11 @@ re_match (bufp, string, size, pos, regs)
      const char *string;
      int size, pos;
      struct re_registers *regs;
- {
-  return re_match_2 (bufp, NULL, 0, string, size, pos, regs, size); 
+{
+  int result = re_match_2_internal (bufp, NULL, 0, string, size,
+				    pos, regs, size);
+  alloca (0);
+  return result;
 }
 #endif /* not emacs */
 
@@ -3311,6 +3343,23 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
      struct re_registers *regs;
      int stop;
 {
+  int result = re_match_2_internal (bufp, string1, size1, string2, size2,
+				    pos, regs, stop);
+  alloca (0);
+  return result;
+}
+
+/* This is a separate function so that we can force an alloca cleanup
+   afterwards.  */
+static int
+re_match_2_internal (bufp, string1, size1, string2, size2, pos, regs, stop)
+     struct re_pattern_buffer *bufp;
+     const char *string1, *string2;
+     int size1, size2;
+     int pos;
+     struct re_registers *regs;
+     int stop;
+{
   /* General temporaries.  */
   int mcnt;
   unsigned char *p1;
@@ -3328,6 +3377,10 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
   /* Where we are in the pattern, and the end of the pattern.  */
   unsigned char *p = bufp->buffer;
   register unsigned char *pend = p + bufp->used;
+
+  /* Mark the opcode just after a start_memory, so we can test for an
+     empty subpattern when we get to the stop_memory.  */
+  unsigned char *just_past_start_mem = 0;
 
   /* We use this to map every character in the string.  */
   char *translate = bufp->translate;
@@ -3542,17 +3595,27 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
              longest match, try backtracking.  */
           if (d != end_match_2)
 	    {
+	      /* 1 if this match ends in the same string (string1 or string2)
+		 as the best previous match.  */
+	      boolean same_str_p = (FIRST_STRING_P (match_end) 
+				    == MATCHING_IN_FIRST_STRING);
+	      /* 1 if this match is the best seen so far.  */
+	      boolean best_match_p;
+
+	      /* AIX compiler got confused when this was combined
+		 with the previous declaration.  */
+	      if (same_str_p)
+		best_match_p = d > match_end;
+	      else
+		best_match_p = !MATCHING_IN_FIRST_STRING;
+
               DEBUG_PRINT1 ("backtracking.\n");
               
               if (!FAIL_STACK_EMPTY ())
                 { /* More failure points to try.  */
-                  boolean same_str_p = (FIRST_STRING_P (match_end) 
-	        	                == MATCHING_IN_FIRST_STRING);
 
                   /* If exceeds best match so far, save it.  */
-                  if (!best_regs_set
-                      || (same_str_p && d > match_end)
-                      || (!same_str_p && !MATCHING_IN_FIRST_STRING))
+                  if (!best_regs_set || best_match_p)
                     {
                       best_regs_set = true;
                       match_end = d;
@@ -3568,8 +3631,10 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
                   goto fail;	       
                 }
 
-              /* If no failure points, don't restore garbage.  */
-              else if (best_regs_set)   
+              /* If no failure points, don't restore garbage.  And if
+                 last match is real best match, don't restore second
+                 best one. */
+              else if (best_regs_set && !best_match_p)
                 {
   	        restore_best_regs:
                   /* Restore best match.  It may happen that `dend ==
@@ -3809,6 +3874,7 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
 
           /* Move past the register number and inner group count.  */
           p += 2;
+	  just_past_start_mem = p;
           break;
 
 
@@ -3873,7 +3939,7 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
              information for this group that we had before trying this
              last match.  */
           if ((!MATCHED_SOMETHING (reg_info[*p])
-               || (re_opcode_t) p[-3] == start_memory)
+               || just_past_start_mem == p - 1)
 	      && (p + 2) < pend)              
             {
               boolean is_a_jump_n = false;
@@ -4225,11 +4291,13 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
 	      }
             else if ((re_opcode_t) *p2 == charset)
 	      {
+#ifdef DEBUG
 		register unsigned char c
                   = *p2 == (unsigned char) endline ? '\n' : p2[2];
+#endif
 
                 if ((re_opcode_t) p1[3] == exactn
-		    && ! (p2[1] * BYTEWIDTH > p1[4]
+		    && ! ((int) p2[1] * BYTEWIDTH > (int) p1[4]
 			  && (p2[1 + p1[4] / BYTEWIDTH]
 			      & (1 << (p1[4] % BYTEWIDTH)))))
                   {
@@ -4243,9 +4311,9 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
 		    int idx;
 		    /* We win if the charset_not inside the loop
 		       lists every character listed in the charset after.  */
-		    for (idx = 0; idx < p2[1]; idx++)
+		    for (idx = 0; idx < (int) p2[1]; idx++)
 		      if (! (p2[2 + idx] == 0
-			     || (idx < p1[4]
+			     || (idx < (int) p1[4]
 				 && ((p2[2 + idx] & ~ p1[5 + idx]) == 0))))
 			break;
 
@@ -4260,7 +4328,9 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
 		    int idx;
 		    /* We win if the charset inside the loop
 		       has no overlap with the one after the loop.  */
-		    for (idx = 0; idx < p2[1] && idx < p1[4]; idx++)
+		    for (idx = 0;
+			 idx < (int) p2[1] && idx < (int) p1[4];
+			 idx++)
 		      if ((p2[2 + idx] & p1[5 + idx]) != 0)
 			break;
 
@@ -4427,7 +4497,6 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
           goto fail;
 
 #ifdef emacs
-#ifdef emacs19
   	case before_dot:
           DEBUG_PRINT1 ("EXECUTING before_dot.\n");
  	  if (PTR_CHAR_POS ((unsigned char *) d) >= point)
@@ -4445,7 +4514,7 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
           if (PTR_CHAR_POS ((unsigned char *) d) <= point)
   	    goto fail;
   	  break;
-#else /* not emacs19 */
+#if 0 /* not emacs19 */
 	case at_dot:
           DEBUG_PRINT1 ("EXECUTING at_dot.\n");
 	  if (PTR_CHAR_POS ((unsigned char *) d) + 1 != point)
@@ -4463,8 +4532,10 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
 	  mcnt = (int) Sword;
         matchsyntax:
 	  PREFETCH ();
-	  if (SYNTAX (*d++) != (enum syntaxcode) mcnt)
-            goto fail;
+	  /* Can't use *d++ here; SYNTAX may be an unsafe macro.  */
+	  d++;
+	  if (SYNTAX (d[-1]) != (enum syntaxcode) mcnt)
+	    goto fail;
           SET_REGS_MATCHED ();
 	  break;
 
@@ -4478,8 +4549,10 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
 	  mcnt = (int) Sword;
         matchnotsyntax:
 	  PREFETCH ();
-	  if (SYNTAX (*d++) == (enum syntaxcode) mcnt)
-            goto fail;
+	  /* Can't use *d++ here; SYNTAX may be an unsafe macro.  */
+	  d++;
+	  if (SYNTAX (d[-1]) == (enum syntaxcode) mcnt)
+	    goto fail;
 	  SET_REGS_MATCHED ();
           break;
 
