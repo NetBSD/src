@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_cleanerd.8,v 1.11 2002/06/06 01:03:12 perseant Exp $
+.\"	$NetBSD: lfs_cleanerd.8,v 1.12 2002/09/29 14:05:54 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -73,23 +73,26 @@ The following options are available:
 Use bytes written, rather than segments read, when determining how many
 segments to clean at once.
 .It Fl c
-Coalescing mode.  For each live inode, check to see if it has too many
-blocks that are not contiguous, and if it does, rewrite it.  After a
-single pass through the filesystem the cleaner will exit.
+Coalescing mode.
+For each live inode, check to see if it has too many
+blocks that are not contiguous, and if it does, rewrite it.
+After a single pass through the filesystem the cleaner will exit.
 .It Fl d
 Run in debug mode.
-Do not become a daemon process, and print debugging information.  More
+Do not become a daemon process, and print debugging information.
+More
 .Fl d
 s give more detailed debugging information.
 .It Fl f
 Use filesystem idle time as the criterion for aggressive cleaning,
 instead of system load.
 .It Fl l Ar load-threshhold
-Clean more aggressively when the system load is below the given
-threshhold.  The default threshhold is 0.2.
+Clean more aggressively when the system load is below the given threshhold.
+The default threshhold is 0.2.
 .It Fl m
 Use mmap, rather than rereading the Ifile to update the cleaner's
-knowledge of the filesystem.  Do not use this option.
+knowledge of the filesystem.
+Do not use this option.
 .It Fl n Ar number-of-segments
 Clean this number of segments at a time: that is, pass this many
 segments' blocks through a single call to lfs_markv, or, if
@@ -103,16 +106,18 @@ Give an efficiency report after every
 .Ar report-frequency
 times through the main loop.
 .It Fl s
-When cleaning the file system, send only a few blocks through lfs_markv
-at a time.  Don't use this option.
+When cleaning the file system,
+send only a few blocks through lfs_markv at a time.
+Don't use this option.
 .It Fl t Ar timeout
 Poll the filesystem every
 .Ar timeout
-seconds, looking for opportunities to clean.  The default is 300, that
-is, five minutes.  Note that
+seconds, looking for opportunities to clean.
+The default is 300, that is, five minutes.
+Note that
 .Nm
-will be automatically awakened when the filesystem is active, so it is
-not usually necessary to set
+will be automatically awakened when the filesystem is active,
+so it is not usually necessary to set
 .Ar timeout
 to a low value.
 .El

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.21 2002/05/31 09:56:12 wiz Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.22 2002/09/29 14:05:53 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -383,7 +383,8 @@ If zero,
 .Xr ftpd 8
 will use
 .Xr read 2
-instead.  The default is zero.
+instead.
+The default is zero.
 An optional suffix may be provided as per
 .Sy rateget .
 This option affects only binary transfers.
@@ -496,7 +497,8 @@ An optional suffix may be provided, which changes the intrepretation of
 as follows:
 .Bl -tag -width 3n -offset indent -compact
 .It b
-Causes no modification. (Default; optional)
+Causes no modification.
+(Default; optional)
 .It k
 Kilo; multiply the argument by 1024
 .It m
@@ -620,8 +622,8 @@ Otherwise, enable them.
 .It Sy writesize Ar class Ar size
 Limit the number of bytes to
 .Xr write 2
-at a time.  The default is zero, which means
-all the data available as a result of
+at a time.
+The default is zero, which means all the data available as a result of
 .Xr mmap 2
 or
 .Xr read 2

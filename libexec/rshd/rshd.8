@@ -1,4 +1,4 @@
-.\"	$NetBSD: rshd.8,v 1.12 2002/02/08 01:30:08 ross Exp $
+.\"	$NetBSD: rshd.8,v 1.13 2002/09/29 14:05:55 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,18 +45,17 @@
 .Sh DESCRIPTION
 The
 .Nm
-server
-is the server for the
+server is the server for the
 .Xr rcmd 3
 routine and, consequently, for the
 .Xr rsh 1
-program.  The server provides remote execution facilities
+program.
+The server provides remote execution facilities
 with authentication based on privileged port numbers from trusted hosts.
 .Pp
 The
 .Nm
-server
-listens for service requests at the port indicated in
+server listens for service requests at the port indicated in
 the ``cmd'' service specification; see
 .Xr services 5 .
 When a service request is received the following protocol
@@ -68,8 +67,8 @@ If the port is not in the range 512-1023, the server
 aborts the connection.
 .It
 The server reads characters from the socket up
-to a null (`\e0') byte.  The resultant string is
-interpreted as an
+to a null (`\e0') byte.
+The resultant string is interpreted as an
 .Tn ASCII
 number, base 10.
 .It
@@ -78,7 +77,8 @@ it is interpreted as the port number of a secondary
 stream to be used for the
 .Em stderr .
 A second connection is then created to the specified
-port on the client's machine.  The source port of this
+port on the client's machine.
+The source port of this
 second connection is also in the range 512-1023.
 .It
 The server checks the client's source address
@@ -90,8 +90,7 @@ and
 If the hostname cannot be determined,
 the dot-notation representation of the host address is used.
 If the hostname is in the same domain as the server (according to
-the last two components of the domain name),
-or if the
+the last two components of the domain name), or if the
 .Fl a
 option is given,
 the addresses for the hostname are requested,
@@ -100,21 +99,21 @@ If address verification fails, the connection is aborted
 with the message, ``Host address mismatch.''
 .It
 A null terminated user name of at most 16 characters
-is retrieved on the initial socket.  This user name
-is interpreted as the user identity on the
+is retrieved on the initial socket.
+This user name is interpreted as the user identity on the
 .Em client Ns 's
 machine.
 .It
 A null terminated user name of at most 16 characters
-is retrieved on the initial socket.  This user name
-is interpreted as a user identity to use on the
+is retrieved on the initial socket.
+This user name is interpreted as a user identity to use on the
 .Sy server Ns 's
 machine.
 .It
 A null terminated command to be passed to a
-shell is retrieved on the initial socket.  The length of
-the command is limited by the upper bound on the size of
-the system's argument list.
+shell is retrieved on the initial socket.
+The length of the command is limited by the upper
+bound on the size of the system's argument list.
 .It
 .Nm
 then validates the user using
@@ -123,7 +122,8 @@ which uses the file
 .Pa /etc/hosts.equiv
 and the
 .Pa .rhosts
-file found in the user's home directory.  The
+file found in the user's home directory.
+The
 .Fl l
 option prevents
 .Xr ruserok 3
@@ -137,9 +137,8 @@ the connection is closed.
 .It
 A null byte is returned on the initial socket
 and the command line is passed to the normal login
-shell of the user.  The
-shell inherits the network connections established
-by
+shell of the user.
+The shell inherits the network connections established by
 .Nm "" .
 .El
 .Pp
@@ -191,8 +190,8 @@ A
 .Xr fork 2
 by the server failed.
 .It Sy \*[Lt]shellname\*[Gt]: ...
-The user's login shell could not be started.  This message is returned
-on the connection associated with the
+The user's login shell could not be started.
+This message is returned on the connection associated with the
 .Em stderr ,
 and is not preceded by a flag byte.
 .El
@@ -203,8 +202,8 @@ and is not preceded by a flag byte.
 .Xr login.conf 5
 .Sh BUGS
 The authentication procedure used here assumes the integrity
-of each client machine and the connecting medium.  This is
-insecure, but is useful in an ``open'' environment.
+of each client machine and the connecting medium.
+This is insecure, but is useful in an ``open'' environment.
 .Pp
 A facility to allow all data exchanges to be encrypted should be
 present.
@@ -214,8 +213,8 @@ A more extensible protocol (such as Telnet) should be used.
 .Nm
 intentionally rejects accesses from IPv4 mapped address on top of
 .Dv AF_INET6
-socket, since IPv4 mapped address complicates host-address based
-authentication.
+socket, since IPv4 mapped address complicates
+host-address based authentication.
 If you would like to accept connections from IPv4 peers, you will need to run
 .Nm
 on top of

@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnetd.8,v 1.23 2002/01/15 02:28:22 wiz Exp $
+.\"	$NetBSD: telnetd.8,v 1.24 2002/09/29 14:05:55 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -182,7 +182,8 @@ option may be used to enable encryption debugging code.
 Specifies which entry from
 .Pa /etc/gettytab
 should be used to get banner strings, login program and
-other information.  The default entry is
+other information.
+The default entry is
 .Dv default .
 .It Fl h
 Disables the printing of host-specific information before
@@ -190,18 +191,17 @@ login has been completed.
 .It Fl k
 This option is only useful if
 .Nm
-has been compiled with both linemode and kludge linemode
-support.  If the
+has been compiled with both linemode and kludge linemode support.
+If the
 .Fl k
-option is specified, then if the remote client does not
-support the
+option is specified,
+then if the remote client does not support the
 .Dv LINEMODE
 option, then
 .Nm
 will operate in character at a time mode.
 It will still support kludge linemode, but will only
-go into kludge linemode if the remote client requests
-it.
+go into kludge linemode if the remote client requests it.
 (This is done by by the client sending
 .Dv DONT SUPPRESS-GO-AHEAD
 and
@@ -216,8 +216,8 @@ in response to a
 .Dv DO TIMING-MARK )
 for kludge linemode support.
 .It Fl l
-Specifies line mode.  Tries to force clients to use line-
-at-a-time mode.
+Specifies line mode.
+Tries to force clients to use line-at-a-time mode.
 If the
 .Dv LINEMODE
 option is not supported, it will go
@@ -225,7 +225,8 @@ into kludge linemode.
 .It Fl n
 Disable
 .Dv TCP
-keep-alives.  Normally
+keep-alives.
+Normally
 .Nm
 enables the
 .Tn TCP
@@ -239,17 +240,19 @@ This option is only enabled when
 .Nm
 is compiled for
 .Dv UNICOS .
-It specifies an inclusive range of pseudo-terminal devices to
-use.  If the system has sysconf variable
+It specifies an inclusive range of pseudo-terminal devices to use.
+If the system has sysconf variable
 .Dv _SC_CRAY_NPTY
 configured, the default pty search range is 0 to
 .Dv _SC_CRAY_NPTY ;
-otherwise, the default range is 0 to 128.  Either
+otherwise, the default range is 0 to 128.
+Either
 .Ar lowpty
 or
 .Ar highpty
 may be omitted to allow changing
-either end of the search range.  If
+either end of the search range.
+If
 .Ar lowpty
 is omitted, the - character is still required so that
 .Nm
@@ -269,8 +272,7 @@ and thus is only useful if
 .Xr login 1
 supports the
 .Fl s
-flag to indicate that only
-Kerberos or S/Key
+flag to indicate that only Kerberos or S/Key
 validated logins are allowed, and is
 usually useful for controlling remote logins
 from outside of a firewall.
@@ -308,8 +310,7 @@ file.
 This option causes
 .Nm
 to refuse connections from addresses that
-cannot be mapped back into a symbolic name
-via the
+cannot be mapped back into a symbolic name via the
 .Xr gethostbyaddr 3
 routine.
 .It Fl X Ar authtype
@@ -318,8 +319,7 @@ This option is only valid if
 has been built with support for the authentication option.
 It disables the use of
 .Ar authtype
-authentication, and
-can be used to temporarily disable
+authentication, and can be used to temporarily disable
 a specific authentication type without having to recompile
 .Nm "" .
 .It Fl 4
@@ -360,8 +360,7 @@ session is started up,
 sends
 .Tn TELNET
 options to the client side indicating
-a willingness to do the
-following
+a willingness to do the following
 .Tn TELNET
 options, which are described in more detail below:
 .Bd -literal -offset indent
@@ -445,8 +444,7 @@ session is shut down.
 Only sent if
 .Nm
 is compiled with support for data encryption, and
-indicates a willingness to decrypt
-the data stream.
+indicates a willingness to decrypt the data stream.
 .El
 .Pp
 .Nm
@@ -510,8 +508,7 @@ kludge linemode, and the client responded with
 .Dv WONT LINEMODE .
 If the client responds with
 .Dv WILL TM ,
-the it is assumed that the client supports
-kludge linemode.
+the it is assumed that the client supports kludge linemode.
 Note that the
 .Op Fl k
 option can be used to disable this.
@@ -525,8 +522,7 @@ information for automatic login.
 Only sent if
 .Nm
 is compiled with support for data encryption, and
-indicates a willingness to decrypt
-the data stream.
+indicates a willingness to decrypt the data stream.
 .El
 .Pp
 At the end of a login session,

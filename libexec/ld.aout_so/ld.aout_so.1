@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.aout_so.1,v 1.3 2002/02/07 03:15:07 ross Exp $
+.\"	$NetBSD: ld.aout_so.1,v 1.4 2002/09/29 14:05:54 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,9 +42,10 @@
 .Nd run-time link-editor
 .Sh DESCRIPTION
 .Nm
-is a self-contained, position independent program image providing run-time
-support for loading and link-editing shared objects into a process'
-address space. It uses the data structures
+is a self-contained, position independent program image
+providing run-time support for loading and link-editing
+shared objects into a process' address space.
+It uses the data structures
 .Po
 see
 .Xr link 5
@@ -58,17 +59,19 @@ system call.
 After all shared libraries have been successfully loaded,
 .Nm
 proceeds to resolve external references from both the main program and
-all objects loaded. A mechanism is provided for initialisation routines
-to be called, on a per-object basis, giving a shared object an opportunity
+all objects loaded.
+A mechanism is provided for initialisation routines to be called,
+on a per-object basis, giving a shared object an opportunity
 to perform any extra set-up, before execution of the program proper begins.
 .Nm
 looks for a symbol named
 .Em .init
-in each object's symbol table. If present, this symbol is assumed to
-represent a C-function declared as
+in each object's symbol table.
+If present, this symbol is assumed to represent a C-function declared as
 .Ft void
 .Fn .init "void" ,
-which is then called. Similarly, a
+which is then called.
+Similarly, a
 .Ft void
 .Fn .fini "void"
 function is called just before an object is unloaded from the process
@@ -101,8 +104,8 @@ process,
 .Em crt0
 uses the special symbol
 .Va _DYNAMIC
-to determine whether a program is in fact dynamically linked or not. Whenever
-the linker
+to determine whether a program is in fact dynamically linked or not.
+Whenever the linker
 .Xr ld 1
 has relocated this symbol to a location other than 0,
 .Em crt0
@@ -119,7 +122,8 @@ passes control to
 .Nm rtld Ns 's
 entry point before the program's
 .Fn main
-routine is called. Thus,
+routine is called.
+Thus,
 .Nm
 can complete the link-editing process before the dynamic program calls upon
 services of any dynamic library.
@@ -152,11 +156,12 @@ the main program but
 its shared object dependencies.
 .It Ev LD_WARN_NON_PURE_CODE
 When set, issue a warning whenever a link-editing operation requires
-modification of the text segment of some loaded object. This is usually
-indicative of an incorrectly built library.
+modification of the text segment of some loaded object.
+This is usually indicative of an incorrectly built library.
 .It Ev LD_SUPPRESS_WARNINGS
-When set, no warning messages of any kind are issued. Normally, a warning
-is given if satisfactorily versioned library could not be found.
+When set, no warning messages of any kind are issued.
+Normally, a warning is given if satisfactorily versioned
+library could not be found.
 .It Ev LD_TRACE_LOADED_OBJECTS
 When set, causes
 .Nm
@@ -208,7 +213,8 @@ does not process any internal search paths that were recorded in the
 executable.
 .It Ev LD_NOSTD_PATH
 When set, do not include a set of built-in standard directory paths for
-searching. This might be useful when running on a system with a completely
+searching.
+This might be useful when running on a system with a completely
 non-standard filesystem layout.
 .El
 .Sh FILES

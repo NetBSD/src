@@ -1,4 +1,4 @@
-.\"	$NetBSD: identd.8,v 1.12 2002/03/28 15:09:14 sommerfeld Exp $
+.\"	$NetBSD: identd.8,v 1.13 2002/09/29 14:05:53 wiz Exp $
 .\"
 .\" @(#)identd.8 1.9 92/02/11 Lysator
 .\" Copyright (c) 1992 Peter Eriksson, Lysator, Linkoping University.
@@ -38,11 +38,11 @@ protocol specified in
 .B identd
 operates by looking up specific
 .SM TCP/IP
-connections and returning information which may or may not be 
+connections and returning information which may or may not be
 associated with the process owning the connection.
 .PP
-The 
-.B identd 
+The
+.B identd
 server provides little other than a false sense of security; however,
 some legacy services require their clients to run ident servers.
 .SH ARGUMENTS
@@ -56,18 +56,19 @@ resulting in both improved efficiency and increased user privacy (you didn't
 intend to trust my assertion about who I was anyway, right?)
 .PP
 This flag provides a way for a site to support services requiring the ident
-protocol while providing a standard answer to all ident queries.  All queries
-to identd will respond with a host type of `OTHER' and a username of
+protocol while providing a standard answer to all ident queries.
+All queries to identd will respond with a host type
+of `OTHER' and a username of
 .B \*[Lt]user name\*[Gt].
 .PP
 The
 .B \-i
-flag, enabled by default, should be used when starting the
-daemon from
+flag, enabled by default, should be used when starting the daemon from
 .B inetd
 with the "nowait" option in the
 .B /etc/inetd.conf
-file. Use of this mode will make
+file.
+Use of this mode will make
 .B inetd
 start one
 .B identd
@@ -79,16 +80,16 @@ flag should be used when starting the daemon from
 .B inetd
 with the "wait" option in the
 .B /etc/inetd.conf
-file . This is the prefered mode of
-operation since that will start a copy of
+file.
+This is the prefered mode of operation since that will start a copy of
 .B identd
 at the first connection request and then
 .B identd
-will handle subsequent requests
-without having to do the nlist lookup in the kernel file for
-every request as in the
+will handle subsequent requests without having to do the
+nlist lookup in the kernel file for every request as in the
 .B \-i
-mode above. The
+mode above.
+The
 .B identd
 daemon will run either forever, until a bug
 makes it crash or a timeout, as specified by the
@@ -97,35 +98,34 @@ flag, occurs.
 .PP
 The
 .B \-b
-flag can be used to make the daemon run in standalone mode without
-the assistance from
+flag can be used to make the daemon run in standalone
+mode without the assistance from
 .BR inetd.
 This mode is the least prefered mode since
 a bug or any other fatal condition in the server will make it terminate
-and it will then have to be restarted manually. Other than that it has the
-same advantage as the
+and it will then have to be restarted manually.
+Other than that it has the same advantage as the
 .B \-w
 mode in that it parses the nlist only once.
 .PP
 The
 .B \-t\*[Lt]seconds\*[Gt]
-option is used to specify the timeout limit. This is the number
-of seconds a server started with the
+option is used to specify the timeout limit.
+This is the number of seconds a server started with the
 .B \-w
-flag will wait for new connections before terminating. The server is
-automatically restarted by
+flag will wait for new connections before terminating.
+The server is automatically restarted by
 .B inetd
-whenever a new connection is requested
-if it has terminated. A suitable value for this is 120 (2 minutes), if
-used. It defaults to no timeout (i.e. will wait forever, or until a
+whenever a new connection is requested if it has terminated.
+A suitable value for this is 120 (2 minutes), if used.
+It defaults to no timeout (i.e. will wait forever, or until a
 fatal condition occurs in the server).
 .PP
 The
 .B \-u\*[Lt]uid\*[Gt]
 option is used to specify a user id number which the
 .BR ident
-server should
-switch to after binding itself to the
+server should switch to after binding itself to the
 .SM TCP/IP
 port if using the
 .B \-b
@@ -135,8 +135,7 @@ The
 .B \-g\*[Lt]gid\*[Gt]
 option is used to specify a group id number which the
 .BR ident
-server should
-switch to after binding itself to the
+server should switch to after binding itself to the
 .SM TCP/IP
 port if using the
 .B \-b
@@ -144,20 +143,23 @@ mode of operation.
 .PP
 The
 .B \-p\*[Lt]port\*[Gt]
-option is used to specify an alternative port number to bind to if using
-the
+option is used to specify an alternative port number
+to bind to if using the
 .B \-b
-mode of operation. It can be specified by name or by number. Defaults to the
+mode of operation.
+It can be specified by name or by number.
+Defaults to the
 .SM IDENT
 port (113).
 .PP
 The
 .B \-a\*[Lt]address\*[Gt]
-option is used to specify the local address to bind the socket to if using
-the
+option is used to specify the local address to bind
+the socket to if using the
 .B \-b
-mode of operation. Can only be specified by IP address and not by domain
-name. Defaults to the
+mode of operation.
+Can only be specified by IP address and not by domain name.
+Defaults to the
 .SM INADDR_ANY
 address which normally means all local addresses.
 .PP
@@ -236,8 +238,8 @@ The
 flag makes
 .B identd
 check for a file ".noident" in each homedirectory for a user which the
-daemon is about to return the user name for. It that file exists then the
-daemon will give the error
+daemon is about to return the user name for.
+It that file exists then the daemon will give the error
 .B HIDDEN-USER
 instead of the normal USERID response.
 .PP
@@ -245,9 +247,11 @@ instead of the normal USERID response.
 flag makes
 .B identd
 use a mode of operation that will allow multiple requests to be
-processed per session. Each request is specified one per line and
-the responses will be returned one per line. The connection will not
-be closed until the connecting part closes it's end of the line.
+processed per session.
+Each request is specified one per line and
+the responses will be returned one per line.
+The connection will not be closed until the connecting
+part closes it's end of the line.
 PLEASE NOTE THAT THIS MODE VIOLATES THE PROTOCOL SPECIFICATION AS
 IT CURRENTLY STANDS.
 .PP
@@ -261,7 +265,8 @@ The
 .B \-F\*[Lt]format\*[Gt]
 option makes
 .B identd
-use the specified format to display info. The allowed format specifiers are:
+use the specified format to display info.
+The allowed format specifiers are:
 .in +.5i
 .nf
 %u   print user name
@@ -276,12 +281,13 @@ use the specified format to display info. The allowed format specifiers are:
 .in -.5i
 .fi
 The lists of groups (%l, %L) are comma-separated, and start with the primary
-group which is not repeated. The %p and the %c and %C formats are not
-supported on all architecture implementations (printing 0 or empty string
-instead).
+group which is not repeated.
+The %p and the %c and %C formats are not supported on all architecture
+implementations (printing 0 or empty string instead).
 .br
-Any other characters (preceded by %, and those not preceded by it) are
-printed literally. The "default" format is %u, and you should not use
+Any other characters (preceded by %, and those not preceded by it)
+are printed literally.
+The "default" format is %u, and you should not use
 anything else without the
 .B \-o
 flag.
@@ -303,9 +309,11 @@ defaults to the memory space of the normally running kernel.
 .SH UNDERDOCUMENTED FLAGS
 The
 .B \-v
-flag enables more verbose output or messages. (Further occurences of the
+flag enables more verbose output or messages.
+(Further occurences of the
 .B -v
-flag make things even more verbose.) Currently not used: ignored.
+flag make things even more verbose.)
+Currently not used: ignored.
 .PP
 The
 .B \-f\*[Lt]config-file\*[Gt]
@@ -351,7 +359,8 @@ ident stream tcp nowait sys /usr/libexec/identd identd -i
 .PP
 into the
 .B /etc/inetd.conf
-file. User "sys" should have enough rights to READ the kernel
+file.
+User "sys" should have enough rights to READ the kernel
 but NOT to write to it.
 .PP
 To start it using the
@@ -362,26 +371,28 @@ file:
 .PP
 /usr/libexec/identd -b -u2 -g2
 .PP
-This will make it run in the background as user 2, group 2 (user "sys",
-group "kmem" on SunOS 4.1.1).
+This will make it run in the background as user 2, group 2
+(user "sys", group "kmem" on SunOS 4.1.1).
 .SH NOTES
-There should be no need to
-ever use this; if you think you need this, you really need protocols
+There should be no need to ever use this;
+if you think you need this, you really need protocols
 which do strong host and/or user authentication such as ssh and IPsec
 in conjunction with audit trails.
 .Pp
-The username (or UID) returned ought to be the login name. However it
-(probably, for most architecture implementations) is the "real user ID" as
-stored with the process; there is no provision for returning the "effective
-user ID". Thus the UID returned may be different from the login name for
+The username (or UID) returned ought to be the login name.
+However it (probably, for most architecture implementations)
+is the "real user ID" as stored with the process;
+there is no provision for returning the "effective user ID".
+Thus the UID returned may be different from the login name for
 setuid programs (or those running as root) which done a
 .BR setuid (2)
-call and their children. For example, it may (should?) be wrong for an
-incoming
+call and their children.
+For example, it may (should?) be wrong for an incoming
 .B ftpd
 ; and we are probably interested in the running shell, not the
 .B telnetd
-for an incoming telnet session. (But of course
+for an incoming telnet session.
+(But of course
 .B identd
 returns info for outgoing connections, not incoming ones.)
 .PP
@@ -391,12 +402,12 @@ option) are as looked up in the
 .B /etc/passwd
 and
 .B /etc/group
-files, based on the UID returned. Thus these may not relate well to the
-group(s) of the running process for setuid or setgid programs or their
-children.
+files, based on the UID returned.
+Thus these may not relate well to the group(s) of the running
+process for setuid or setgid programs or their children.
 .PP
-The command names returned with formats %c and %C may be different, use
-one or the other or both.
+The command names returned with formats %c and %C may be different,
+use one or the other or both.
 .SH FILES
 .TP
 .B /etc/identd.conf
@@ -411,7 +422,7 @@ this file can be used to specify a secret key for encrypting replies.
 .SH SECURITY CONSIDERATIONS
 May leak information generally considered "private" unless the
 .B \-e
-flag or 
+flag or
 .\"either the
 .B \-L
 .\"or
@@ -423,7 +434,7 @@ attacks.
 .SH "SEE ALSO"
 .BR inetd.conf (5)
 .SH BUGS
-The 
+The
 .B \-e
 and
 .B \-L
