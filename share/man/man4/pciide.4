@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.3 1998/11/10 14:16:09 bouyer Exp $
+.\"	$NetBSD: pciide.4,v 1.4 1999/01/02 01:54:58 kristerw Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -64,7 +64,7 @@ There's no way to reliably know if a PCI064x controller is enabled or not.
 If the driver finds a PCI064x, it will assume it is enabled unless the
 PCIIDE_CMD064x_DISABLE is specified in the kernel config file.
 This will be a problem only if the controller has been disabled in the BIOS
-and another controller has been installed and uses the ISA legaty I/O ports
+and another controller has been installed and uses the ISA legacy I/O ports
 and interrupts.
 .Pp
 The timings used for the PIO and DMA modes for the PCI064x, PIIX and Apollo
