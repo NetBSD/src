@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.51 1999/05/14 02:12:00 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.52 1999/05/26 22:07:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -336,11 +336,9 @@ pagemove(from, to, len)
 }
 
 /*
- * Map a user-space I/O request into kernel virtual address space.
- * NB: We have DVMA, and therefore need no separate phys_map.
- *
- * This routine has user context and can sleep
- * (called only by physio).
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().   
  */
 void
 vmapbuf(bp, len)

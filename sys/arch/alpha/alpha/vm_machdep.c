@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.48 1999/05/26 00:37:40 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.49 1999/05/26 22:07:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48 1999/05/26 00:37:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.49 1999/05/26 22:07:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,6 +349,8 @@ extern vm_map_t phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().
  */
 void
 vmapbuf(bp, len)
