@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.349 1999/04/01 00:37:50 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.350 1999/04/11 04:04:07 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -592,7 +592,7 @@ i386_bufinit()
 			 * 16M of RAM to avoid bouncing file system
 			 * transfers.
 			 */
-			pg = uvm_pagealloc_strat(NULL, 0, NULL,
+			pg = uvm_pagealloc_strat(NULL, 0, NULL, 0,
 			    UVM_PGA_STRAT_FALLBACK, VM_FREELIST_FIRST16);
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.122 1999/04/01 00:17:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123 1999/04/11 04:04:06 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -348,7 +348,7 @@ cpu_startup()
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL);
+			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL) 
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");

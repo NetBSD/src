@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.17 1999/03/26 21:58:39 mycroft Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.18 1999/04/11 04:04:11 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -810,15 +810,17 @@ uvm_page_physdump()
  */
 
 struct vm_page *
-uvm_pagealloc_strat(obj, off, anon, strat, free_list)
+uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	struct uvm_object *obj;
 	vaddr_t off;
+	int flags;
 	struct vm_anon *anon;
 	int strat, free_list;
 {
 	int lcv, s;
 	struct vm_page *pg;
 	struct pglist *freeq;
+	boolean_t use_reserve;
 
 #ifdef DIAGNOSTIC
 	/* sanity check */
@@ -848,10 +850,11 @@ uvm_pagealloc_strat(obj, off, anon, strat, free_list)
 	 *        the requestor isn't the pagedaemon.
 	 */
 
-	if ((uvmexp.free <= uvmexp.reserve_kernel &&
-	     !(obj && obj->uo_refs == UVM_OBJ_KERN)) ||
+	use_reserve = (flags & UVM_PGA_USERESERVE) ||
+		(obj && obj->uo_refs == UVM_OBJ_KERN);
+	if ((uvmexp.free <= uvmexp.reserve_kernel && !use_reserve) ||
 	    (uvmexp.free <= uvmexp.reserve_pagedaemon &&
-	     !(obj == uvmexp.kmem_object && curproc == uvm.pagedaemon_proc)))
+	     !(use_reserve && curproc == uvm.pagedaemon_proc)))
 		goto fail;
 
  again:

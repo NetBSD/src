@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.27 1999/03/29 05:43:31 mycroft Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.28 1999/04/11 04:04:11 chs Exp $	*/
 
 /*
  *
@@ -375,7 +375,7 @@ int uvmfault_anonget(ufi, amap, anon)
 			/*
 			 * no page, we must try and bring it in.
 			 */
-			pg = uvm_pagealloc(NULL, 0, anon);
+			pg = uvm_pagealloc(NULL, 0, anon, 0);
 
 			if (pg == NULL) {		/* out of RAM.  */
 
@@ -1074,7 +1074,7 @@ ReFault:
 			if (anon->an_ref == 1) {
 
 				/* get new un-owned replacement page */
-				pg = uvm_pagealloc(NULL, 0, NULL);
+				pg = uvm_pagealloc(NULL, 0, NULL, 0);
 				if (pg == NULL) {
 					uvmfault_unlockall(&ufi, amap, uobj,
 					    anon);
@@ -1137,7 +1137,7 @@ ReFault:
 		oanon = anon;		/* oanon = old, locked anon */
 		anon = uvm_analloc();
 		if (anon)
-			pg = uvm_pagealloc(NULL, 0, anon);
+			pg = uvm_pagealloc(NULL, 0, anon, 0);
 #ifdef __GNUC__
 		else
 			pg = NULL; /* XXX: gcc */
@@ -1434,7 +1434,7 @@ Case2:
 				/* write fault: must break the loan here */
 
 				/* alloc new un-owned page */
-				pg = uvm_pagealloc(NULL, 0, NULL);
+				pg = uvm_pagealloc(NULL, 0, NULL, 0);
 
 				if (pg == NULL) {
 					/*
@@ -1515,7 +1515,7 @@ Case2:
 
 		anon = uvm_analloc();
 		if (anon)
-			pg = uvm_pagealloc(NULL, 0, anon); /* BUSY+CLEAN+FAKE */
+			pg = uvm_pagealloc(NULL, 0, anon, 0);
 #ifdef __GNUC__
 		else
 			pg = NULL; /* XXX: gcc */

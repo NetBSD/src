@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.167 1999/04/10 01:21:37 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.168 1999/04/11 04:04:04 chs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 1999/04/10 01:21:37 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 1999/04/11 04:04:04 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1064,7 +1064,7 @@ cpu_startup()
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL);
+			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
