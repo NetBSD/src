@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cfb,v 1.9 2004/02/07 06:52:05 lukem Exp $
+#	$NetBSD: Makefile.cfb,v 1.10 2004/02/13 04:49:00 mhitch Exp $
 
 .include <bsd.own.mk>
 
@@ -59,6 +59,12 @@ BUILDSYMLINKS=	cfbline.c cfbseg.c \
 SRCS+=		cfb8bit.c cfbteblt8.c cfbglrop8.c cfbpush8.c cfbrctstp8.c
 BUILDSYMLINKS+=	cfbglblt8.c cfbglrop8.c
 .endif									# }
+
+.include "../Makefile.common"
+
+.if ${XSERVER_XAMIGA} != "no"
+CPPFLAGS+=	-DFORCE_SEPARATE_PRIVATE
+.endif
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/cfb \
 		-I${X11SRCDIR.xc}/programs/Xserver/mfb \
