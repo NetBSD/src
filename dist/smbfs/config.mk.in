@@ -2,7 +2,7 @@
 # copy this file to config.mk and edit as needed.
 # If you want to disable an option just comment it with '#' char.
 #
-# $Id: config.mk.in,v 1.1.1.1 2003/02/16 08:15:07 jdolecek Exp $
+# from: Id: config.mk.in,v 1.16 2001/04/16 04:34:26 bp Exp 
 
 # Where your kernel source tree located (/usr/src/sys for example)
 SYSDIR=/usr/src/sys

@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: rap.c,v 1.1.1.1 2003/02/16 08:15:08 jdolecek Exp $
+ * from: Id: rap.c,v 1.8 2001/02/24 15:56:05 bp Exp 
  *
  * This is very simple implementation of RAP protocol.
  */

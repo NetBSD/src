@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: mount_smbfs.c,v 1.1.1.1 2003/02/16 08:15:08 jdolecek Exp $
+ * from: Id: mount_smbfs.c,v 1.17 2002/04/10 04:17:51 bp Exp 
  */
 #include <sys/param.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1.1.1 2003/02/16 08:15:08 jdolecek Exp $
+# from: Id: Makefile,v 1.5 2001/02/24 15:56:04 bp Exp 
 
 .ifmake !clean && !cleandepend
 .include "../config.int"

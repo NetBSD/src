@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: view.c,v 1.1.1.1 2003/02/16 08:15:08 jdolecek Exp $
+ * from: Id: view.c,v 1.9 2002/02/20 09:26:42 bp Exp 
  */
 #include <sys/param.h>
 #include <sys/errno.h>

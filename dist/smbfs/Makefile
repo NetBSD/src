@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1 2003/02/16 08:15:07 jdolecek Exp $
+#	from: Id: Makefile,v 1.12 2001/04/16 04:34:26 bp Exp 
 #
 #	Valid targets:
 #	install		installs binaries and man pages

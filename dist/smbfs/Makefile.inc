@@ -1,4 +1,4 @@
-# $Id: Makefile.inc,v 1.1.1.1 2003/02/16 08:15:07 jdolecek Exp $
+# from: Id: Makefile.inc,v 1.11 2002/04/16 02:57:46 bp Exp 
 
 .ifmake !clean && !cleandepend
 .if !defined(PREFIX)
