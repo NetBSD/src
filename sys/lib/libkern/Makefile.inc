@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 1997/02/16 21:25:19 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.26 1997/03/07 00:50:30 thorpej Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -71,4 +71,4 @@ dependkernlib:		.NOTMAIN __always_make_kernlib
 	@${KERNMAKE} depend
 
 __always_make_kernlib:	.NOTMAIN
-	@mkdir -p ${KERNDST}
+	@(mkdir -p ${KERNDST})
