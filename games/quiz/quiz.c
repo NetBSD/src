@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quiz.c	5.1 (Berkeley) 11/10/91";*/
-static char rcsid[] = "$Id: quiz.c,v 1.3 1993/11/17 11:58:40 cgd Exp $";
+static char rcsid[] = "$Id: quiz.c,v 1.4 1993/12/22 07:23:27 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -136,6 +136,7 @@ get_file(file)
 			if ((qp->q_next = malloc(sizeof(QE))) == NULL)
 				err("%s", strerror(errno));
 			qp = qp->q_next;
+			lp[len - 1] = '\0';
 			if ((qp->q_text = strdup(lp)) == NULL)
 				err("%s", strerror(errno));
 			qp->q_asked = qp->q_answered = FALSE;
@@ -211,7 +212,7 @@ quiz()
 	register QE *qp;
 	register int i;
 	u_int guesses, rights, wrongs;
-	int next;
+	int len, next;
 	char *s, *t, question[LINE_SZ];
 	char *answer;
 
@@ -261,10 +262,11 @@ quiz()
 		qp->q_asked = TRUE;
 		(void)printf("%s?\n", question);
 		for (;; ++guesses) {
-			if ((answer = fgetline(stdin, NULL)) == NULL) {
+			if ((answer = fgetline(stdin, &len)) == NULL) {
 				score(rights, wrongs, guesses);
 				exit(0);
 			}
+			answer[len - 1] = '\0';
 			downcase(answer);
 			if (rxp_match(answer)) {
 				(void)printf("Right!\n");
