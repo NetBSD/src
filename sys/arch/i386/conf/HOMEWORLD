@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.32 1998/06/26 01:53:58 lukem Exp $
+#	$NetBSD: HOMEWORLD,v 1.33 1998/08/31 17:58:47 thorpej Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -34,8 +34,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #makeoptions	DEBUG="-g"	# compile full symbol table
 #options 	DIAGNOSTIC	# internal consistency checks
 options 	KTRACE		# system call tracing, a la ktrace(1)
-
-#options 	UVM		# Use UVM instead of Mach VM.
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.31 1998/08/11 00:32:04 thorpej Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.32 1998/08/31 17:58:51 thorpej Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -58,8 +58,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 #options 	KTRACE		# system call tracing via ktrace(1)
-
-#options 	UVM		# Use UVM instead of Mach VM.
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
