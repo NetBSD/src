@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 2001/01/12 19:31:25 jdolecek Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 2001/02/19 20:50:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 void	 append  __P((const u_char **, int, int, FILE *,
 	    void (*)(const RECHEADER *, FILE *), struct field *));
 void	 concat __P((FILE *, FILE *));
-length_t enterkey __P((struct recheader *, DBT *, int, struct field *));
+length_t enterkey __P((RECHEADER *, DBT *, int, struct field *));
 void	 fixit __P((int *, char **));
 void	 fldreset __P((struct field *));
 FILE	*ftmp __P((void));
@@ -50,20 +50,20 @@ void	 fmerge __P((int, int, struct filelist *, int,
 void	 fsort __P((int, int, int, struct filelist *, int, FILE *,
 		struct field *));
 int	 geteasy __P((int, int, struct filelist *,
-	    int, struct recheader *, u_char *, struct field *));
+	    int, RECHEADER *, u_char *, struct field *));
 int	 getnext __P((int, int, struct filelist *,
-	    int, struct recheader *, u_char *, struct field *));
+	    int, RECHEADER *, u_char *, struct field *));
 int	 makekey __P((int, int, struct filelist *,
-	    int, struct recheader *, u_char *, struct field *));
+	    int, RECHEADER *, u_char *, struct field *));
 int	 makeline __P((int, int, struct filelist *,
-	    int, struct recheader *, u_char *, struct field *));
+	    int, RECHEADER *, u_char *, struct field *));
 void	 merge __P((int, int, get_func_t, FILE *, put_func_t, struct field *));
 void	 num_init __P((void));
 void	 onepass __P((const u_char **, int, long, long *, u_char *, FILE *));
 int	 optval __P((int, int));
 void	 order __P((struct filelist *, get_func_t, struct field *));
-void	 putline __P((const struct recheader *, FILE *));
-void	 putrec __P((const struct recheader *, FILE *));
+void	 putline __P((const RECHEADER *, FILE *));
+void	 putrec __P((const RECHEADER *, FILE *));
 void	 rd_append __P((int, int, int, FILE *, u_char *, u_char *));
 int	 setfield __P((const char *, struct field *, int));
 void	 settables __P((int));
