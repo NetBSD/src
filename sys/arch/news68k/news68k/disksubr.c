@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 2000/01/18 19:45:52 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3 2000/03/04 06:21:15 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -41,10 +41,6 @@
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-
-char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-		       register struct disklabel *lp,
-		       struct cpu_disklabel *osdep));
 
 /*
  * Attempt to read a disk label from a device
