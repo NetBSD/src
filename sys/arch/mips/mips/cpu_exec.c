@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.8 1996/06/20 07:06:37 jonathan Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.9 1996/10/07 03:15:06 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,6 +55,9 @@
 #include <machine/reg.h>
 
 #include <machine/elf.h>
+/*XXX*/
+int	exec_elf_makecmds __P((struct proc *, struct exec_package *));
+
 
 /*
  * cpu_exec_aout_makecmds():
