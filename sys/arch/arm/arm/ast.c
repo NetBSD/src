@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.4 2001/11/29 17:10:31 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.1 2001/12/21 22:56:16 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -58,11 +58,15 @@
 
 #include <uvm/uvm_extern.h>
 
+#ifdef arm26
+#include <machine/machdep.h>
+#endif
+
 int want_resched = 0;
+int astpending;
 
 void
-userret(p)
-	struct proc *p;
+userret(struct proc *p)
 {
 	int sig;
 
@@ -75,19 +79,23 @@ userret(p)
 
 
 /*
- * void ast(trapframe_t *frame)
- *
  * Handle asynchronous system traps.
  * This is called from the irq handler to deliver signals
  * and switch processes if required.
- * userret() does all the signal delivery and process switching work
  */
 
 void
-ast(frame)
-	trapframe_t *frame;
+ast(struct trapframe *tf)
 {
 	struct proc *p = curproc;
+
+#ifdef arm26
+	/* Enable interrupts if they were enabled before the trap. */
+	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
+		int_on();
+#else
+	/* Interrupts were restored by exception_exit. */
+#endif
 
 	uvmexp.traps++;
 	uvmexp.softs++;
@@ -97,8 +105,6 @@ ast(frame)
 		panic("ast: no curproc!");
 	if (&p->p_addr->u_pcb == 0)
 		panic("ast: no pcb!");
-	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
-		panic("ast: not in SVC32 mode");
 #endif	
 
 	if (p->p_flag & P_OWEUPC) {
