@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.6 2000/12/03 13:34:37 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.7 2000/12/03 15:51:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -642,9 +642,12 @@ iop_configure_devices(struct iop_softc *sc)
 		 * Try to configure the device only if it's not already
 		 * configured.
  		 */
- 		LIST_FOREACH(ii, &sc->sc_iilist, ii_list)
+ 		LIST_FOREACH(ii, &sc->sc_iilist, ii_list) {
+ 			if ((ii->ii_flags & II_UTILITY) != 0)
+ 				continue;
  			if (ia.ia_tid == ii->ii_tid)
 				break;
+		}
 		if (ii != NULL)
 			continue;
 
