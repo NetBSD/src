@@ -1,4 +1,4 @@
-/* $NetBSD: sti.c,v 1.2 2004/09/19 23:00:29 chs Exp $ */
+/* $NetBSD: sti.c,v 1.2.6.1 2005/01/25 13:03:14 yamt Exp $ */
 
 /*	$OpenBSD: sti.c,v 1.35 2003/12/16 06:07:13 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.2 2004/09/19 23:00:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.2.6.1 2005/01/25 13:03:14 yamt Exp $");
 
 #include "wsdisplay.h"
 
@@ -214,7 +214,8 @@ sti_attach_common(struct sti_softc *sc)
 	size = dd->dd_pacode[i] - dd->dd_pacode[STI_BEGIN];
 	if (sc->sc_devtype == STI_DEVTYPE1)
 		size = (size + 3) / 4;
-	if (!(sc->sc_code = uvm_km_alloc1(kernel_map, round_page(size), 0))) {
+	if (!(sc->sc_code = uvm_km_alloc(kernel_map, round_page(size), 0,
+	    UVM_KMF_WIRED))) {
 		printf(": cannot allocate %u bytes for code\n", size);
 		return;
 	}
@@ -255,7 +256,8 @@ sti_attach_common(struct sti_softc *sc)
 	if ((error = uvm_map_protect(kernel_map, sc->sc_code,
 	    sc->sc_code + round_page(size), UVM_PROT_RX, FALSE))) {
 		printf(": uvm_map_protect failed (%d)\n", error);
-		uvm_km_free(kernel_map, sc->sc_code, round_page(size));
+		uvm_km_free(kernel_map, sc->sc_code, round_page(size),
+		    UVM_KMF_WIRED);
 		return;
 	}
 
