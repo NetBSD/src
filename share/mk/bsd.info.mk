@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.3 1999/02/11 15:59:07 tv Exp $
+#	$NetBSD: bsd.info.mk,v 1.4 1999/02/11 16:09:21 tv Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -54,7 +54,7 @@ cleaninfo infoinstall:
 # These need to happen *after* filesinstall.
 .PHONY: infoinstall cleaninfo
 realinstall: infoinstall
-realclean: cleaninfo
+cleandir distclean: cleaninfo
 
 # Make sure all of the standard targets are defined, even if they do nothing.
 clean depend includes lint regress tags:
