@@ -35,7 +35,7 @@
  *
  *	@(#)SYS.h	5.5 (Berkeley) 5/7/91
  *
- *	$Id: SYS.h,v 1.1 1993/10/07 00:20:06 cgd Exp $
+ *	$Id: SYS.h,v 1.2 1994/02/25 07:40:49 phil Exp $
  *
  *  Modified for the ns532 by Phil Nelson, 12/1/92
  *
@@ -50,6 +50,8 @@
 #else
 #define	ENTRY(x)	.globl _/**/x; .text; .align 1; _/**/x: 
 #endif PROF
+
+#define EX(x)   _##x
 
 #define	SYSCALL(x)	ENTRY(x); movd SYS_/**/x, r0; svc; bcs cerror
 #define	RSYSCALL(x)	SYSCALL(x); ret 0
