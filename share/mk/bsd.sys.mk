@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.99 2003/10/19 03:00:55 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.100 2003/10/19 03:21:18 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -16,7 +16,7 @@ _MKSHECHO=	: echo
 _MKMSG=		@echo '   '
 _MKCMD=		@
 _MKSHMSG=	echo '   '
-_MKSHECHO=	echo
+_MKSHECHO=	: echo
 .else	# MAKEVERBOSE == 2 ?
 _MKMSG=		@echo '\#  '
 _MKCMD=	
