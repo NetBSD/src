@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.216 2004/03/14 00:17:37 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.217 2004/05/21 21:14:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.216 2004/03/14 00:17:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.217 2004/05/21 21:14:11 bouyer Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -532,6 +532,7 @@ sdopen(dev, flag, fmt, p)
 		}
 
 		if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0) {
+			int param_error;
 			periph->periph_flags |= PERIPH_MEDIA_LOADED;
 
 			/*
@@ -542,16 +543,19 @@ sdopen(dev, flag, fmt, p)
 			 * The drive should refuse real I/O, if the media is
 			 * unformatted.
 			 */
-			if (sd_get_parms(sd, &sd->params,
-			    0) == SDGP_RESULT_OFFLINE) {
+			if ((param_error = sd_get_parms(sd, &sd->params, 0))
+			     == SDGP_RESULT_OFFLINE) {
 				error = ENXIO;
 				goto bad2;
 			}
 			SC_DEBUG(periph, SCSIPI_DB3, ("Params loaded "));
 
 			/* Load the partition info if not already loaded. */
-			sdgetdisklabel(sd);
-			SC_DEBUG(periph, SCSIPI_DB3, ("Disklabel loaded "));
+			if (param_error == 0) {
+				sdgetdisklabel(sd);
+				SC_DEBUG(periph, SCSIPI_DB3,
+				     ("Disklabel loaded "));
+			}
 		}
 	}
 
@@ -1393,6 +1397,12 @@ sd_interpret_sense(xs)
 			splx(s);
 		}
 	}
+	if ((sense->flags & SSD_KEY) == SKEY_MEDIUM_ERROR &&
+	    sense->add_sense_code == 0x31 &&
+	    sense->add_sense_code_qual == 0x00)	{ /* maybe for any asq ? */
+		/* Medium Format Corrupted */
+		retval = EFTYPE;
+	}
 	return (retval);
 }
 
@@ -1701,6 +1711,10 @@ sd_get_capacity(sd, dp, flags)
 		    sizeof(scsipi_result), SDRETRIES, 20000,
 		    NULL, flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK /*|
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST*/);
+		if (error == EFTYPE) {
+			/* Medium Format Corrupted, handle as not formatted */
+			return (SDGP_RESULT_UNFORMATTED);
+		}
 		if (error || scsipi_result.header.length == 0)
 			return (SDGP_RESULT_OFFLINE);
 
