@@ -1,4 +1,4 @@
-/*	$NetBSD: nextcons.c,v 1.1 1999/03/26 04:42:59 dbj Exp $	*/
+/*	$NetBSD: nextcons.c,v 1.2 1999/04/29 14:51:20 bad Exp $	*/
 
 /*
  * Copyright (c) 1999 Darrin B. Jewell
@@ -53,6 +53,8 @@
 #include <next68k/dev/nextdisplayvar.h>
 #include <next68k/dev/nextkbdvar.h>
 
+#include <next68k/next68k/nextrom.h>
+
 void nextcnprobe __P((struct consdev *));
 void nextcninit __P((struct consdev *));
 int nextcngetc __P((dev_t));
@@ -63,7 +65,13 @@ void nextcnpollc __P((dev_t, int));
 void
 nextcnprobe(struct consdev *cp)
 {
-	cp->cn_pri = CN_INTERNAL;
+
+	if ((rom_machine_type == NeXT_WARP9)
+	    || (rom_machine_type == NeXT_X15))
+		cp->cn_pri = CN_INTERNAL;
+	else 
+		cp->cn_pri = CN_DEAD;
+
 	cp->cn_dev = NODEV;
 }
 
