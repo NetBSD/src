@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2004/12/12 08:18:45 christos Exp $
+# $NetBSD: Makefile,v 1.3 2004/12/29 04:16:17 christos Exp $
 # Copyright 2002 FreeBSD, Inc.
 # All rights reserved.
 #
@@ -30,6 +30,6 @@ SRCS=	pam_ksu.c
 MAN=	pam_ksu.8
 
 DPADD=	${LIBKRB5} ${LIBASN1} ${LIBROKEN} ${LIBCOM_ERR} ${LIBCRYPT} ${LIBCRYPTO}
-LDADD=	-lkrb5 -lasn1 -lroken -lcom_err -lcrypt -lcrypto
+LDADD=	-Wl-L${LIBKRB5DIR}:${LIBASN1DIR}:${LIBROKENDIR}:${LIBCOM_ERRDIR}:${LIBCRYPTDIR}:${LIBCRYPTODIR} -lkrb5 -lasn1 -lroken -lcom_err -lcrypt -lcrypto
 
 .include "${.CURDIR}/../mod.mk"
