@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.25 1999/02/23 10:47:40 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.26 2000/03/02 20:58:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: input.c,v 1.25 1999/02/23 10:47:40 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.26 2000/03/02 20:58:55 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -445,7 +445,13 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 
 	case RIPCMD_TRACEON:
 	case RIPCMD_TRACEOFF:
-		/* verify message came from a privileged port */
+		/* Notice that trace messages are turned off for all possible
+		 * abuse if _PATH_TRACE is undefined in pathnames.h.
+		 * Notice also that because of the way the trace file is
+		 * handled in trace.c, no abuse is plausible even if
+		 * _PATH_TRACE_ is defined.
+		 *
+		 * First verify message came from a privileged port. */
 		if (ntohs(from->sin_port) > IPPORT_RESERVED) {
 			msglog("trace command from untrusted port on %s",
 			       naddr_ntoa(FROM_NADDR));
