@@ -24,7 +24,7 @@
  * rights to redistribute these changes.
  *
  *	From: Id: db_disasm.c,v 2.3 91/02/05 17:11:03 mrt (CMU)
- *	$Id: db_disasm.c,v 1.4 1993/12/19 03:41:30 mycroft Exp $
+ *	$Id: db_disasm.c,v 1.5 1994/04/05 17:31:31 mycroft Exp $
  */
 
 /*
@@ -225,7 +225,7 @@ struct inst	db_inst_0fax[] = {
 /*a0*/	{ "push",  FALSE, NONE,  op1(Si),     0 },
 /*a1*/	{ "pop",   FALSE, NONE,  op1(Si),     0 },
 /*a2*/	{ "",      FALSE, NONE,  0,	      0 },
-/*a3*/	{ "bt",    TRUE,  LONG,  op2(E,R),    0 },
+/*a3*/	{ "bt",    TRUE,  LONG,  op2(R,E),    0 },
 /*a4*/	{ "shld",  TRUE,  LONG,  op3(Ib,E,R), 0 },
 /*a5*/	{ "shld",  TRUE,  LONG,  op3(CL,E,R), 0 },
 /*a6*/	{ "",      FALSE, NONE,  0,	      0 },
@@ -234,7 +234,7 @@ struct inst	db_inst_0fax[] = {
 /*a8*/	{ "push",  FALSE, NONE,  op1(Si),     0 },
 /*a9*/	{ "pop",   FALSE, NONE,  op1(Si),     0 },
 /*aa*/	{ "",      FALSE, NONE,  0,	      0 },
-/*ab*/	{ "bts",   TRUE,  LONG,  op2(E,R),    0 },
+/*ab*/	{ "bts",   TRUE,  LONG,  op2(R,E),    0 },
 /*ac*/	{ "shrd",  TRUE,  LONG,  op3(Ib,E,R), 0 },
 /*ad*/	{ "shrd",  TRUE,  LONG,  op3(CL,E,R), 0 },
 /*a6*/	{ "",      FALSE, NONE,  0,	      0 },
@@ -245,7 +245,7 @@ struct inst	db_inst_0fbx[] = {
 /*b0*/	{ "",      FALSE, NONE,  0,	      0 },
 /*b1*/	{ "",      FALSE, NONE,  0,	      0 },
 /*b2*/	{ "lss",   TRUE,  LONG,  op2(E, R),   0 },
-/*b3*/	{ "bts",   TRUE,  LONG,  op2(R, E),   0 },
+/*b3*/	{ "btr",   TRUE,  LONG,  op2(R, E),   0 },
 /*b4*/	{ "lfs",   TRUE,  LONG,  op2(E, R),   0 },
 /*b5*/	{ "lgs",   TRUE,  LONG,  op2(E, R),   0 },
 /*b6*/	{ "movzb", TRUE,  LONG,  op2(E, R),   0 },
