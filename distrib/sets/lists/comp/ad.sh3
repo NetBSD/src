@@ -1,4 +1,4 @@
-# $NetBSD: ad.sh3,v 1.13 2002/05/05 01:24:24 thorpej Exp $
+# $NetBSD: ad.sh3,v 1.14 2002/05/11 19:23:14 wiz Exp $
 ./usr/include/ieeefp.h	comp-c-include
 ./usr/include/sh3	comp-c-include
 ./usr/include/sh3/ansi.h	comp-c-include
@@ -10,7 +10,6 @@
 ./usr/include/sh3/coff_machdep.h	comp-c-include
 ./usr/include/sh3/cpu.h	comp-c-include
 ./usr/include/sh3/cputypes.h	comp-c-include
-./usr/include/sh3/db_disasm.h	comp-c-include
 ./usr/include/sh3/db_machdep.h	comp-c-include
 ./usr/include/sh3/disklabel.h	comp-c-include
 ./usr/include/sh3/elf_machdep.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.evbsh3,v 1.3 2002/05/09 18:28:57 wiz Exp $
+# $NetBSD: obsolete.evbsh3,v 1.4 2002/05/11 19:23:15 wiz Exp $
 /usr/include/evbsh3/bootinfo.h
 /usr/include/evbsh3/cpufunc.h
 /usr/include/evbsh3/mmeye.h
@@ -6,3 +6,4 @@
 /usr/include/evbsh3/segments.h
 /usr/include/evbsh3/shbvar.h
 /usr/include/evbsh3/trap.h
+/usr/include/sh3/db_disasm.h
