@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.11 2003/01/15 21:38:22 martin Exp $	*/
+/*	$NetBSD: machfb.c,v 1.12 2003/01/20 11:02:47 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -648,9 +648,9 @@ mach64_init(struct mach64_softc *sc)
 	/*
 	 * Test wether the aperture is byte swapped or not
 	 */
-	p32 = (u_int32_t*)sc->sc_aperbase;
+	p32 = (u_int32_t*)(u_long)sc->sc_aperbase;
 	saved_value = *p32;
-	p = (u_int8_t*)sc->sc_aperbase;
+	p = (u_int8_t*)(u_long)sc->sc_aperbase;
 	*p32 = 0x12345678;
 	if (p[0] == 0x12 && p[1] == 0x34 && p[2] == 0x56 && p[3] == 0x78)
 		need_swap = 0;
