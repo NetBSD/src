@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.151 2003/10/26 08:05:26 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.152 2003/10/27 00:16:24 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 2003/10/26 08:05:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 2003/10/27 00:16:24 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -290,12 +290,10 @@ cpu_startup()
 
 #ifdef __arch64__
 #define STACK_OFFSET	BIAS
-#define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
 #undef CCFSZ
 #define CCFSZ	CC64FSZ
 #else
 #define STACK_OFFSET	0
-#define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
 #endif
 
 /* ARGSUSED */
@@ -519,28 +517,9 @@ getframe(struct lwp *l, int sig, int *onstack)
 		return (void *)(tf->tf_out[6] + STACK_OFFSET);
 }
 
-/*
- * Build context to run handler in.  We invoke the handler
- * directly, only returning via the trampoline.  Note the
- * trampoline version numbers are coordinated with machine-
- * dependent code in libc.
- */
-void
-buildcontext(struct lwp *l, void *catcher, const void *addr, void *newsp)
-{
-	struct trapframe64 *tf = l->l_md.md_tf;
-	tf->tf_global[1] = (vaddr_t)catcher;
-	tf->tf_pc = (const vaddr_t)addr;
-	tf->tf_npc = (const vaddr_t)addr + 4;
-	tf->tf_out[6] = (vaddr_t)newsp - STACK_OFFSET;
-}
-
 struct sigframe_siginfo {
-	int		sf_signum;	/* "signum" argument for handler */
-	siginfo_t	*sf_sip;	/* "sip" argument for handler */
-	ucontext_t	*sf_ucp;	/* "ucp" argument for handler */
-	siginfo_t	sf_si;		/* actual saved siginfo */
-	ucontext_t	sf_uc;		/* actual saved ucontext */
+	siginfo_t	sf_si;		/* saved siginfo */
+	ucontext_t	sf_uc;		/* saved ucontext */
 };
 
 static void
@@ -551,10 +530,13 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigacts *ps = p->p_sigacts;
 	int onstack;
 	int sig = ksi->ksi_signo;
-	struct sigframe_siginfo *fp = getframe(l, sig, &onstack), frame;
+	ucontext_t uc;
+	long ucsz;
+	struct sigframe_siginfo *fp = getframe(l, sig, &onstack);
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct trapframe *tf = l->l_md.md_tf;
-	struct rwindow *newsp = (void *)((vaddr_t)fp - sizeof(struct rwindow));
+	struct rwindow *newsp;
+	struct rwindow *oldsp = (void *)(tf->tf_out[6] + STACK_OFFSET);
 	/* Allocate an aligned sigframe */
 	fp = (void *)((u_long)(fp - 1) & ~0x0f);
 
@@ -570,21 +552,28 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		break;
 	}
 
-	frame.sf_signum = sig;
-	frame.sf_sip = &fp->sf_si;
-	frame.sf_ucp = &fp->sf_uc;
-	frame.sf_si._info = ksi->ksi_info;
-	frame.sf_uc.uc_flags = _UC_SIGMASK|_UC_CPU;
-	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = NULL;
-	frame.sf_uc.uc_flags |= (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+	uc.uc_flags = _UC_SIGMASK
+	    | (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
-	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
-	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+	uc.uc_sigmask = *mask;
+	uc.uc_link = NULL;
+	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
+	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
+	ucsz = (char *)&uc.__uc_pad - (char *)&uc;
 
-	write_user_windows();
-	if (rwindow_save(l) || copyout(&frame, fp, sizeof(frame)) != 0 ||
-	    CPOUTREG(&(((struct rwindow *)newsp)->rw_in[6]), tf->tf_out[6])) {
+	/*
+	 * Now copy the stack contents out to user space.
+	 * We need to make sure that when we start the signal handler,
+	 * its %i6 (%fp), which is loaded from the newly allocated stack area,
+	 * joins seamlessly with the frame it was in when the signal occurred,
+	 * so that the debugger and _longjmp code can back up through it.
+	 * Since we're calling the handler directly, allocate a full size
+	 * C stack frame.
+	 */
+	newsp = (struct rwindow *)((u_long)fp - CCFSZ);
+	if (copyout(&ksi->ksi_info, &fp->sf_si, sizeof(ksi->ksi_info)) != 0 ||
+	    copyout(&uc, &fp->sf_uc, ucsz) != 0 ||
+	    copyout(&oldsp, &newsp->rw_in[6], sizeof(oldsp)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -593,7 +582,13 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		/* NOTREACHED */
 	}
 
-	buildcontext(l, catcher, ps->sa_sigdesc[sig].sd_tramp, newsp);
+	tf->tf_pc = (const vaddr_t)catcher;
+	tf->tf_npc = (const vaddr_t)catcher + 4;
+	tf->tf_out[0] = sig;
+	tf->tf_out[1] = (vaddr_t)&fp->sf_si;
+	tf->tf_out[2] = (vaddr_t)&fp->sf_uc;
+	tf->tf_out[6] = (vaddr_t)newsp - STACK_OFFSET;
+	tf->tf_out[7] = (vaddr_t)ps->sa_sigdesc[sig].sd_tramp - 8;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
