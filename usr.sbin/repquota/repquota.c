@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.11 1997/10/17 13:02:09 lukem Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.12 1997/10/18 11:23:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -360,7 +360,7 @@ addid(id, type, name)
 	if (id > highid[type])
 		highid[type] = id;
 	if (name) {
-		bcopy(name, fup->fu_name, len + 1);
+		memmove(fup->fu_name, name, len + 1);
 	} else {
 		sprintf(fup->fu_name, "%lu", (u_long)id);
 	}
