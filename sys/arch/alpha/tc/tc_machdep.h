@@ -1,4 +1,4 @@
-/* $NetBSD: tc_machdep.h,v 1.5 1997/06/06 23:55:35 thorpej Exp $ */
+/* $NetBSD: tc_machdep.h,v 1.6 1998/01/19 02:53:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -90,12 +90,6 @@ typedef int32_t		tc_offset_t;
 		
 #define	TC_PHYS_TO_UNCACHED(addr)					\
     (addr)
-
-/*
- * Functions that may be called by machine-independent code.
- */
-extern bus_dma_tag_t (*tc_dma_get_tag_func) __P((int slot));
-#define	tc_dma_get_tag(s)	(*tc_dma_get_tag_func)((s))
 
 /*
  * These functions are private, and may not be called by
