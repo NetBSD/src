@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.17 2002/07/18 11:59:08 wiz Exp $	*/
+/*	$NetBSD: esiop.c,v 1.18 2003/01/31 00:26:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.17 2002/07/18 11:59:08 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.18 2003/01/31 00:26:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ esiop_attach(sc)
 	TAILQ_INIT(&sc->tag_tblblk);
 	sc->sc_currschedslot = 0;
 #ifdef SIOP_DEBUG
-	printf("%s: script size = %d, PHY addr=0x%x, VIRT=%p\n",
+	aprint_debug("%s: script size = %d, PHY addr=0x%x, VIRT=%p\n",
 	    sc->sc_c.sc_dev.dv_xname, (int)sizeof(esiop_script),
 	    (u_int32_t)sc->sc_c.sc_scriptaddr, sc->sc_c.sc_script);
 #endif
@@ -183,16 +183,16 @@ esiop_attach(sc)
 	 */
 #ifdef DIAGNOSTIC
 	if (ESIOP_NTAG != A_ndone_slots) {
-		printf("%s: size of tag DSA table different from the done"
-		    "ring\n", sc->sc_c.sc_dev.dv_xname);
+		aprint_error("%s: size of tag DSA table different from the done"
+		    " ring\n", sc->sc_c.sc_dev.dv_xname);
 		return;
 	}
 #endif
 	esiop_moretagtbl(sc);
 	tagtbl_donering = TAILQ_FIRST(&sc->free_tagtbl);
 	if (tagtbl_donering == NULL) {
-		printf("%s: no memory for command done ring\n",
-		    "ring\n", sc->sc_c.sc_dev.dv_xname);
+		aprint_error("%s: no memory for command done ring\n",
+		    sc->sc_c.sc_dev.dv_xname);
 		return;
 	}
 	TAILQ_REMOVE(&sc->free_tagtbl, tagtbl_donering, next);

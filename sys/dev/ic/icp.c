@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.6 2003/01/01 00:10:18 thorpej Exp $	*/
+/*	$NetBSD: icp.c,v 1.7 2003/01/31 00:26:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.6 2003/01/01 00:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.7 2003/01/31 00:26:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	nocache = 0;
 
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", icp->icp_dv.dv_xname,
+		aprint_normal("%s: interrupting at %s\n", icp->icp_dv.dv_xname,
 		    intrstr);
 
 	SIMPLEQ_INIT(&icp->icp_ccb_queue);
@@ -135,7 +135,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	if (bus_dmamap_create(icp->icp_dmat, ICP_SCRATCH_SIZE, 1,
 	    ICP_SCRATCH_SIZE, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &icp->icp_scr_dmamap) != 0) {
-		printf("%s: cannot create scratch dmamap\n",
+		aprint_error("%s: cannot create scratch dmamap\n",
 		    icp->icp_dv.dv_xname);
 		return (1);
 	}
@@ -143,7 +143,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 
 	if (bus_dmamem_alloc(icp->icp_dmat, ICP_SCRATCH_SIZE, PAGE_SIZE, 0,
 	    icp->icp_scr_seg, 1, &nsegs, BUS_DMA_NOWAIT) != 0) {
-		printf("%s: cannot alloc scratch dmamem\n",
+		aprint_error("%s: cannot alloc scratch dmamem\n",
 		    icp->icp_dv.dv_xname);
 		goto bail_out;
 	}
@@ -151,14 +151,16 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 
 	if (bus_dmamem_map(icp->icp_dmat, icp->icp_scr_seg, nsegs,
 	    ICP_SCRATCH_SIZE, &icp->icp_scr, 0)) {
-		printf("%s: cannot map scratch dmamem\n", icp->icp_dv.dv_xname);
+		aprint_error("%s: cannot map scratch dmamem\n",
+		    icp->icp_dv.dv_xname);
 		goto bail_out;
 	}
 	state++;
 
 	if (bus_dmamap_load(icp->icp_dmat, icp->icp_scr_dmamap, icp->icp_scr,
 	    ICP_SCRATCH_SIZE, NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: cannot load scratch dmamap\n", icp->icp_dv.dv_xname);
+		aprint_error("%s: cannot load scratch dmamap\n",
+		    icp->icp_dv.dv_xname);
 		goto bail_out;
 	}
 	state++;
@@ -168,7 +170,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	 */
 	ic = malloc(sizeof(*ic) * ICP_NCCBS, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if ((icp->icp_ccbs = ic) == NULL) {
-		printf("%s: malloc() failed\n", icp->icp_dv.dv_xname);
+		aprint_error("%s: malloc() failed\n", icp->icp_dv.dv_xname);
 		goto bail_out;
 	}
 	state++;
@@ -190,7 +192,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	}
 #ifdef DIAGNOSTIC
 	if (icp->icp_nccbs != ICP_NCCBS)
-		printf("%s: %d/%d CCBs usable\n", icp->icp_dv.dv_xname,
+		aprint_error("%s: %d/%d CCBs usable\n", icp->icp_dv.dv_xname,
 		    icp->icp_nccbs, ICP_NCCBS);
 #endif
 
@@ -198,13 +200,13 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	 * Initalize the controller.
 	 */
 	if (!icp_cmd(icp, ICP_SCREENSERVICE, ICP_INIT, 0, 0, 0)) {
-		printf("%s: screen service init error %d\n",
+		aprint_error("%s: screen service init error %d\n",
 		    icp->icp_dv.dv_xname, icp->icp_status);
 		goto bail_out;
 	}
 
 	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_INIT, ICP_LINUX_OS, 0, 0)) {
-		printf("%s: cache service init error %d\n",
+		aprint_error("%s: cache service init error %d\n",
 		    icp->icp_dv.dv_xname, icp->icp_status);
 		goto bail_out;
 	}
@@ -212,20 +214,20 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	icp_cmd(icp, ICP_CACHESERVICE, ICP_UNFREEZE_IO, 0, 0, 0);
 
 	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_MOUNT, 0xffff, 1, 0)) {
-		printf("%s: cache service mount error %d\n",
+		aprint_error("%s: cache service mount error %d\n",
 		    icp->icp_dv.dv_xname, icp->icp_status);
 		goto bail_out;
 	}
 
 	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_INIT, ICP_LINUX_OS, 0, 0)) {
-		printf("%s: cache service post-mount init error %d\n",
+		aprint_error("%s: cache service post-mount init error %d\n",
 		    icp->icp_dv.dv_xname, icp->icp_status);
 		goto bail_out;
 	}
 	cdev_cnt = (u_int16_t)icp->icp_info;
 
 	if (!icp_cmd(icp, ICP_SCSIRAWSERVICE, ICP_INIT, 0, 0, 0)) {
-		printf("%s: raw service init error %d\n",
+		aprint_error("%s: raw service init error %d\n",
 		    icp->icp_dv.dv_xname, icp->icp_status);
 		goto bail_out;
 	}
@@ -241,7 +243,8 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 
 	if ((feat & ICP_SCATTER_GATHER) == 0) {
 #ifdef DIAGNOSTIC
-		printf("%s: scatter/gather not supported (raw service)\n",
+		aprint_normal(
+		    "%s: scatter/gather not supported (raw service)\n",
 		    icp->icp_dv.dv_xname);
 #endif
 		noscsi = 1;
@@ -258,7 +261,8 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 
 	if ((feat & ICP_SCATTER_GATHER) == 0) {
 #ifdef DIAGNOSTIC
-		printf("%s: scatter/gather not supported (cache service)\n",
+		aprint_normal(
+		    "%s: scatter/gather not supported (cache service)\n",
 		    icp->icp_dv.dv_xname);
 #endif
 		nocache = 1;
@@ -269,13 +273,14 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	 */
 	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_IOCTL, ICP_BOARD_INFO,
 	    ICP_INVALID_CHANNEL, sizeof(struct icp_binfo))) {
-		printf("%s: unable to retrive board info\n",
+		aprint_error("%s: unable to retrive board info\n",
 		    icp->icp_dv.dv_xname);
 		goto bail_out;
 	}
 	memcpy(&binfo, icp->icp_scr, sizeof(binfo));
 
-	printf("%s: model <%s>, firmware <%s>, %d channel(s), %dMB memory\n",
+	aprint_normal(
+	    "%s: model <%s>, firmware <%s>, %d channel(s), %dMB memory\n",
 	    icp->icp_dv.dv_xname, binfo.bi_type_string, binfo.bi_raid_string,
 	    binfo.bi_chan_count, le32toh(binfo.bi_memsize) >> 20);
 
@@ -305,7 +310,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 		icp->icp_openings =
 		    (icp->icp_nccbs - ICP_NCCB_RESERVE) / icp->icp_ndevs;
 #ifdef ICP_DEBUG
-	printf("%s: %d openings per device\n", icp->icp_dv.dv_xname,
+	aprint_debug("%s: %d openings per device\n", icp->icp_dv.dv_xname,
 	    icp->icp_openings);
 #endif
 
@@ -341,7 +346,8 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 				    ICP_SCSI_CHAN_CNT | ICP_L_CTRL_PATTERN,
 				    ICP_IO_CHANNEL | ICP_INVALID_CHANNEL,
 				    sizeof(*gc))) {
-				    	printf("%s: unable to get chan info",
+				    	aprint_error(
+					    "%s: unable to get chan info",
 				    	    icp->icp_dv.dv_xname);
 					goto bail_out;
 				}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.36 2003/01/18 10:14:22 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.37 2003/01/31 00:26:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.36 2003/01/18 10:14:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.37 2003/01/31 00:26:31 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -225,13 +225,13 @@ eshconfig(sc)
 				 0, RR_DMA_BOUNDRY, &sc->sc_dmaseg, 1, 
 				 &rseg, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s:  couldn't allocate space for host-side"
+		aprint_error("%s: couldn't allocate space for host-side"
 		       "data structures\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	if (rseg > 1) {
-		printf("%s:  contiguous memory not available\n",
+		aprint_error("%s: contiguous memory not available\n",
 		       sc->sc_dev.dv_xname);
 		goto bad_dmamem_map;
 	}	
@@ -240,7 +240,8 @@ eshconfig(sc)
 			       sc->sc_dma_size, &sc->sc_dma_addr,
 			       BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error) {
-		printf("%s:  couldn't map memory for host-side structures\n",
+		aprint_error(
+		       "%s: couldn't map memory for host-side structures\n",
 		       sc->sc_dev.dv_xname);
 		goto bad_dmamem_map;
 	}
@@ -249,13 +250,15 @@ eshconfig(sc)
 			      1, sc->sc_dma_size, RR_DMA_BOUNDRY, 
 			      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT, 
 			      &sc->sc_dma)) {
-		printf("%s: couldn't create DMA map\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't create DMA map\n",
+		    sc->sc_dev.dv_xname);
 		goto bad_dmamap_create;
 	}
     
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dma, sc->sc_dma_addr, 
 			    sc->sc_dma_size, NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: couldn't load DMA map\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't load DMA map\n",
+		    sc->sc_dev.dv_xname);
 		goto bad_dmamap_load;
 	}
     
@@ -286,7 +289,8 @@ eshconfig(sc)
 
 #ifdef DIAGNOSTIC
 	if (size > sc->sc_dmaseg.ds_len) {
-		printf("%s:  bogus size calculation\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: bogus size calculation\n",
+		    sc->sc_dev.dv_xname);
 		goto bad_other;
 	}
 #endif
@@ -301,7 +305,7 @@ eshconfig(sc)
 			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDRY, 
 			      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT, 
 			      &sc->sc_send.ec_dma)) {
-		printf("%s:  failed bus_dmamap_create\n", 
+		aprint_error("%s: failed bus_dmamap_create\n", 
 		       sc->sc_dev.dv_xname);
 			goto bad_other;
 	}
@@ -315,7 +319,7 @@ eshconfig(sc)
 				      RR_DMA_BOUNDRY, 
 				      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT, 
 				      &sc->sc_snap_recv.ec_dma[i])) {
-			printf("%s:  failed bus_dmamap_create\n", 
+			aprint_error("%s: failed bus_dmamap_create\n", 
 			       sc->sc_dev.dv_xname);
 			for (i--; i >= 0; i--)
 				bus_dmamap_destroy(sc->sc_dmat, 
@@ -346,7 +350,7 @@ eshconfig(sc)
 
 	header_format = esh_read_eeprom(sc, RR_EE_HEADER_FORMAT);
 	if (header_format != RR_EE_HEADER_FORMAT_MAGIC) {
-		printf("%s:  bogus EEPROM header format value %x\n",
+		aprint_error("%s: bogus EEPROM header format value %x\n",
 		       sc->sc_dev.dv_xname, header_format);
 		goto bad_other;
 	}

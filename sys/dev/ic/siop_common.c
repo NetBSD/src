@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.31 2002/09/27 15:37:18 provos Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.32 2003/01/31 00:26:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.31 2002/09/27 15:37:18 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.32 2003/01/31 00:26:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,8 @@ siop_common_attach(sc)
 		error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, 
 		    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 		if (error) {
-			printf("%s: unable to allocate script DMA memory, "
+			aprint_error(
+			    "%s: unable to allocate script DMA memory, "
 			    "error = %d\n", sc->sc_dev.dv_xname, error);
 			return error;
 		}
@@ -86,21 +87,21 @@ siop_common_attach(sc)
 		    (caddr_t *)&sc->sc_script,
 		    BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 		if (error) {
-			printf("%s: unable to map script DMA memory, "
+			aprint_error("%s: unable to map script DMA memory, "
 			    "error = %d\n", sc->sc_dev.dv_xname, error);
 			return error;
 		}
 		error = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1,
 		    PAGE_SIZE, 0, BUS_DMA_NOWAIT, &sc->sc_scriptdma);
 		if (error) {
-			printf("%s: unable to create script DMA map, "
+			aprint_error("%s: unable to create script DMA map, "
 			    "error = %d\n", sc->sc_dev.dv_xname, error);
 			return error;
 		}
 		error = bus_dmamap_load(sc->sc_dmat, sc->sc_scriptdma,
 		    sc->sc_script, PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
 		if (error) {
-			printf("%s: unable to load script DMA map, "
+			aprint_error("%s: unable to load script DMA map, "
 			    "error = %d\n", sc->sc_dev.dv_xname, error);
 			return error;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.71 2003/01/18 10:14:21 thorpej Exp $	*/
+/*	$NetBSD: i82365.c,v 1.72 2003/01/31 00:26:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.71 2003/01/18 10:14:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.72 2003/01/31 00:26:30 thorpej Exp $");
 
 #define	PCICDEBUG
 
@@ -280,18 +280,18 @@ pcic_attach(sc)
 		h = &sc->handle[i];
 		chip = i / 2;
 
-		printf("%s: controller %d (%s) has ", sc->dev.dv_xname, chip,
-		    pcic_vendor_to_string(sc->handle[i].vendor));
+		aprint_normal("%s: controller %d (%s) has ", sc->dev.dv_xname,
+		    chip, pcic_vendor_to_string(sc->handle[i].vendor));
 
 		if ((h->flags & PCIC_FLAG_SOCKETP) &&
 		    ((h+1)->flags & PCIC_FLAG_SOCKETP))
-			printf("sockets A and B\n");
+			aprint_normal("sockets A and B\n");
 		else if (h->flags & PCIC_FLAG_SOCKETP)
-			printf("socket A only\n");
+			aprint_normal("socket A only\n");
 		else if ((h+1)->flags & PCIC_FLAG_SOCKETP)
-			printf("socket B only\n");
+			aprint_normal("socket B only\n");
 		else
-			printf("no sockets\n");
+			aprint_normal("no sockets\n");
 	}
 }
 

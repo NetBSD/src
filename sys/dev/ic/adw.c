@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.38 2002/04/05 18:27:49 bouyer Exp $	 */
+/* $NetBSD: adw.c,v 1.39 2003/01/31 00:26:26 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.38 2002/04/05 18:27:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.39 2003/01/31 00:26:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,15 +159,16 @@ adw_alloc_carriers(ADW_SOFTC *sc)
 	sc->sc_control->carriers = malloc(sizeof(ADW_CARRIER) * ADW_MAX_CARRIER,
 			M_DEVBUF, M_WAITOK);
 	if(!sc->sc_control->carriers) {
-		printf("%s: malloc() failed in allocating carrier structures\n",
-		       sc->sc_dev.dv_xname);
+		aprint_error(
+		    "%s: malloc() failed in allocating carrier structures\n",
+		    sc->sc_dev.dv_xname);
 		return (ENOMEM);
 	}
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER,
 			0x10, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate carrier structures,"
+		aprint_error("%s: unable to allocate carrier structures,"
 		       " error = %d\n", sc->sc_dev.dv_xname, error);
 		return (error);
 	}
@@ -175,7 +176,7 @@ adw_alloc_carriers(ADW_SOFTC *sc)
 			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER,
 			(caddr_t *) &sc->sc_control->carriers,
 			BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map carrier structures,"
+		aprint_error("%s: unable to map carrier structures,"
 			" error = %d\n", sc->sc_dev.dv_xname, error);
 		return (error);
 	}
@@ -187,7 +188,7 @@ adw_alloc_carriers(ADW_SOFTC *sc)
 			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, 1,
 			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, 0,BUS_DMA_NOWAIT,
 			&sc->sc_dmamap_carrier)) != 0) {
-		printf("%s: unable to create carriers DMA map,"
+		aprint_error("%s: unable to create carriers DMA map,"
 			" error = %d\n", sc->sc_dev.dv_xname, error);
 		return (error);
 	}
@@ -195,7 +196,7 @@ adw_alloc_carriers(ADW_SOFTC *sc)
 			sc->sc_dmamap_carrier, sc->sc_control->carriers,
 			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, NULL,
 			BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load carriers DMA map,"
+		aprint_error("%s: unable to load carriers DMA map,"
 			" error = %d\n", sc->sc_dev.dv_xname, error);
 		return (error);
 	}
@@ -396,11 +397,11 @@ adw_init(ADW_SOFTC *sc)
 		warn_code = AdwInitFromEEPROM(sc);
 
 		if (warn_code & ADW_WARN_EEPROM_CHKSUM)
-			printf("%s: Bad checksum found. "
+			aprint_error("%s: Bad checksum found. "
 			       "Setting default values\n",
 			       sc->sc_dev.dv_xname);
 		if (warn_code & ADW_WARN_EEPROM_TERMINATION)
-			printf("%s: Bad bus termination setting."
+			aprint_error("%s: Bad bus termination setting."
 			       "Using automatic termination.\n",
 			       sc->sc_dev.dv_xname);
 	}
@@ -437,11 +438,11 @@ adw_attach(ADW_SOFTC *sc)
 	 */
 	ncontrols = adw_create_ccbs(sc, sc->sc_control->ccbs, ADW_MAX_CCB);
 	if (ncontrols == 0) {
-		printf("%s: unable to create Control Blocks\n",
+		aprint_error("%s: unable to create Control Blocks\n",
 		       sc->sc_dev.dv_xname);
 		return; /* (ENOMEM) */ ;
 	} else if (ncontrols != ADW_MAX_CCB) {
-		printf("%s: WARNING: only %d of %d Control Blocks"
+		aprint_error("%s: WARNING: only %d of %d Control Blocks"
 		       " created\n",
 		       sc->sc_dev.dv_xname, ncontrols, ADW_MAX_CCB);
 	}
@@ -504,7 +505,7 @@ adw_attach(ADW_SOFTC *sc)
 		break;
 
 	case ADW_WARN_BUSRESET_ERROR:
-		printf("%s: WARNING: Bus Reset Error\n",
+		aprint_error("%s: WARNING: Bus Reset Error\n",
 		      sc->sc_dev.dv_xname);
 		break;
 	}

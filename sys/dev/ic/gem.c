@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.23 2002/10/22 00:01:56 fair Exp $ */
+/*	$NetBSD: gem.c,v 1.24 2003/01/31 00:26:30 thorpej Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.23 2002/10/22 00:01:56 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.24 2003/01/31 00:26:30 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -147,7 +147,8 @@ gem_attach(sc, enaddr)
 	if ((error = bus_dmamem_alloc(sc->sc_dmatag,
 	    sizeof(struct gem_control_data), PAGE_SIZE, 0, &sc->sc_cdseg,
 	    1, &sc->sc_cdnseg, 0)) != 0) {
-		printf("%s: unable to allocate control data, error = %d\n",
+		aprint_error(
+		   "%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_0;
 	}
@@ -156,7 +157,7 @@ gem_attach(sc, enaddr)
 	if ((error = bus_dmamem_map(sc->sc_dmatag, &sc->sc_cdseg, sc->sc_cdnseg,
 	    sizeof(struct gem_control_data), (caddr_t *)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map control data, error = %d\n",
+		aprint_error("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
 	}
@@ -164,7 +165,7 @@ gem_attach(sc, enaddr)
 	if ((error = bus_dmamap_create(sc->sc_dmatag,
 	    sizeof(struct gem_control_data), 1,
 	    sizeof(struct gem_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
-		printf("%s: unable to create control data DMA map, "
+		aprint_error("%s: unable to create control data DMA map, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		goto fail_2;
 	}
@@ -172,7 +173,8 @@ gem_attach(sc, enaddr)
 	if ((error = bus_dmamap_load(sc->sc_dmatag, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct gem_control_data), NULL,
 	    0)) != 0) {
-		printf("%s: unable to load control data DMA map, error = %d\n",
+		aprint_error(
+		    "%s: unable to load control data DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_3;
 	}
@@ -195,7 +197,7 @@ gem_attach(sc, enaddr)
 		    ETHER_MAX_LEN_JUMBO, GEM_NTXSEGS,
 		    ETHER_MAX_LEN_JUMBO, 0, 0,
 		    &txs->txs_dmamap)) != 0) {
-			printf("%s: unable to create tx DMA map %d, "
+			aprint_error("%s: unable to create tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_4;
 		}
@@ -208,7 +210,7 @@ gem_attach(sc, enaddr)
 	for (i = 0; i < GEM_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-			printf("%s: unable to create rx DMA map %d, "
+			aprint_error("%s: unable to create rx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
 		}
@@ -222,17 +224,17 @@ gem_attach(sc, enaddr)
 	 */
 
 	/* Announce ourselves. */
-	printf("%s: Ethernet address %s", sc->sc_dev.dv_xname,
+	aprint_normal("%s: Ethernet address %s", sc->sc_dev.dv_xname,
 	    ether_sprintf(enaddr));
 
 	/* Get RX FIFO size */
 	sc->sc_rxfifosize = 64 *
 	    bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_RX_FIFO_SIZE); 
-	printf(", %uKB RX fifo", sc->sc_rxfifosize / 1024);
+	aprint_normal(", %uKB RX fifo", sc->sc_rxfifosize / 1024);
 
 	/* Get TX FIFO size */
 	v = bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_FIFO_SIZE); 
-	printf(", %uKB TX fifo\n", v / 16);
+	aprint_normal(", %uKB TX fifo\n", v / 16);
 
 	/* Initialize ifnet structure. */
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
@@ -279,7 +281,8 @@ gem_attach(sc, enaddr)
 			 * connector.
 			 */
 			if (child->mii_phy > 1 || child->mii_inst > 1) {
-				printf("%s: cannot accomodate MII device %s"
+				aprint_error(
+				    "%s: cannot accomodate MII device %s"
 				       " at phy %d, instance %d\n",
 				       sc->sc_dev.dv_xname,
 				       child->mii_dev.dv_xname,
@@ -299,12 +302,12 @@ gem_attach(sc, enaddr)
 		 */
 		if (sc->sc_phys[1]) {
 #ifdef DEBUG
-			printf("using external phy\n");
+			aprint_debug("using external phy\n");
 #endif
 			sc->sc_mif_config |= GEM_MIF_CONFIG_PHY_SEL;
 		} else {
 #ifdef DEBUG
-			printf("using internal phy\n");
+			aprint_debug("using internal phy\n");
 #endif
 			sc->sc_mif_config &= ~GEM_MIF_CONFIG_PHY_SEL;
 		}
@@ -390,7 +393,7 @@ gem_attach(sc, enaddr)
 	 */
 	sc->sc_powerhook = powerhook_establish(gem_power, sc);
 	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
+		aprint_error("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
 #endif
 

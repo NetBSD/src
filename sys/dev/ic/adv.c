@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.31 2002/04/05 18:27:49 bouyer Exp $	*/
+/*	$NetBSD: adv.c,v 1.32 2003/01/31 00:26:26 thorpej Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.31 2002/04/05 18:27:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.32 2003/01/31 00:26:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,7 @@ adv_init(sc)
 	int             warn;
 
 	if (!AscFindSignature(sc->sc_iot, sc->sc_ioh)) {
-		printf("adv_init: failed to find signature\n");
+		aprint_error("adv_init: failed to find signature\n");
 		return (1);
 	}
 
@@ -368,39 +368,39 @@ adv_init(sc)
 	AscInitASC_SOFTC(sc);
 	warn = AscInitFromEEP(sc);
 	if (warn) {
-		printf("%s -get: ", sc->sc_dev.dv_xname);
+		aprint_error("%s -get: ", sc->sc_dev.dv_xname);
 		switch (warn) {
 		case -1:
-			printf("Chip is not halted\n");
+			aprint_normal("Chip is not halted\n");
 			break;
 
 		case -2:
-			printf("Couldn't get MicroCode Start"
+			aprint_normal("Couldn't get MicroCode Start"
 			       " address\n");
 			break;
 
 		case ASC_WARN_IO_PORT_ROTATE:
-			printf("I/O port address modified\n");
+			aprint_normal("I/O port address modified\n");
 			break;
 
 		case ASC_WARN_AUTO_CONFIG:
-			printf("I/O port increment switch enabled\n");
+			aprint_normal("I/O port increment switch enabled\n");
 			break;
 
 		case ASC_WARN_EEPROM_CHKSUM:
-			printf("EEPROM checksum error\n");
+			aprint_normal("EEPROM checksum error\n");
 			break;
 
 		case ASC_WARN_IRQ_MODIFIED:
-			printf("IRQ modified\n");
+			aprint_normal("IRQ modified\n");
 			break;
 
 		case ASC_WARN_CMD_QNG_CONFLICT:
-			printf("tag queuing enabled w/o disconnects\n");
+			aprint_normal("tag queuing enabled w/o disconnects\n");
 			break;
 
 		default:
-			printf("unknown warning %d\n", warn);
+			aprint_normal("unknown warning %d\n", warn);
 		}
 	}
 	if (sc->scsi_reset_wait > ASC_MAX_SCSI_RESET_WAIT)
@@ -411,18 +411,18 @@ adv_init(sc)
 	 */
 	warn = AscInitFromASC_SOFTC(sc);
 	if (warn) {
-		printf("%s -set: ", sc->sc_dev.dv_xname);
+		aprint_error("%s -set: ", sc->sc_dev.dv_xname);
 		switch (warn) {
 		case ASC_WARN_CMD_QNG_CONFLICT:
-			printf("tag queuing enabled w/o disconnects\n");
+			aprint_normal("tag queuing enabled w/o disconnects\n");
 			break;
 
 		case ASC_WARN_AUTO_CONFIG:
-			printf("I/O port increment switch enabled\n");
+			aprint_normal("I/O port increment switch enabled\n");
 			break;
 
 		default:
-			printf("unknown warning %d\n", warn);
+			aprint_normal("unknown warning %d\n", warn);
 		}
 	}
 	sc->isr_callback = (ASC_CALLBACK) adv_narrow_isr_callback;
@@ -503,12 +503,13 @@ adv_attach(sc)
 	 */
 	i = adv_create_ccbs(sc, sc->sc_control->ccbs, ADV_MAX_CCB);
 	if (i == 0) {
-		printf("%s: unable to create control blocks\n",
+		aprint_error("%s: unable to create control blocks\n",
 		       sc->sc_dev.dv_xname);
 		return; /* (ENOMEM) */ ;
 	} else if (i != ADV_MAX_CCB) {
-		printf("%s: WARNING: only %d of %d control blocks created\n",
-		       sc->sc_dev.dv_xname, i, ADV_MAX_CCB);
+		aprint_error(
+		    "%s: WARNING: only %d of %d control blocks created\n",
+		    sc->sc_dev.dv_xname, i, ADV_MAX_CCB);
 	}
 
 	adapt->adapt_openings = i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.52 2003/01/13 17:00:18 bouyer Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.53 2003/01/31 00:26:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.52 2003/01/13 17:00:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.53 2003/01/31 00:26:31 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -134,7 +134,8 @@ epic_attach(sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct epic_control_data) + ETHER_PAD_LEN, PAGE_SIZE, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate control data, error = %d\n",
+		aprint_error(
+		    "%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_0;
 	}
@@ -143,7 +144,7 @@ epic_attach(sc)
 	    sizeof(struct epic_control_data) + ETHER_PAD_LEN,
 	    (caddr_t *)&sc->sc_control_data,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map control data, error = %d\n",
+		aprint_error("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
 	}
@@ -155,7 +156,7 @@ epic_attach(sc)
 	    sizeof(struct epic_control_data), 1,
 	    sizeof(struct epic_control_data), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_cddmamap)) != 0) {
-		printf("%s: unable to create control data DMA map, "
+		aprint_error("%s: unable to create control data DMA map, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		goto fail_2;
 	}
@@ -163,7 +164,8 @@ epic_attach(sc)
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct epic_control_data), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load control data DMA map, error = %d\n",
+		aprint_error(
+		    "%s: unable to load control data DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_3;
 	}
@@ -175,7 +177,7 @@ epic_attach(sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    EPIC_NFRAGS, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &EPIC_DSTX(sc, i)->ds_dmamap)) != 0) {
-			printf("%s: unable to create tx DMA map %d, "
+			aprint_error("%s: unable to create tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_4;
 		}
@@ -188,7 +190,7 @@ epic_attach(sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &EPIC_DSRX(sc, i)->ds_dmamap)) != 0) {
-			printf("%s: unable to create rx DMA map %d, "
+			aprint_error("%s: unable to create rx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
 		}
@@ -247,7 +249,7 @@ epic_attach(sc)
 			break;
 	}
 
-	printf("%s: %s, Ethernet address %s\n", sc->sc_dev.dv_xname,
+	aprint_normal("%s: %s, Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    devname, ether_sprintf(enaddr));
 
 	miiflags = 0;
@@ -278,7 +280,7 @@ epic_attach(sc)
 			    IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0,
 					 sc->sc_serinst),
 			    0, NULL);
-		printf("%s: 10base2/BNC\n", sc->sc_dev.dv_xname);
+		aprint_normal("%s: 10base2/BNC\n", sc->sc_dev.dv_xname);
 	} else
 		sc->sc_serinst = -1;
 
@@ -308,7 +310,7 @@ epic_attach(sc)
 	 */
 	sc->sc_sdhook = shutdownhook_establish(epic_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
+		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 	return;
 

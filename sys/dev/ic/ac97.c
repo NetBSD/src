@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.39 2003/01/20 07:22:15 simonb Exp $ */
+/*      $NetBSD: ac97.c,v 1.40 2003/01/31 00:26:26 thorpej Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.39 2003/01/20 07:22:15 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.40 2003/01/31 00:26:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -792,7 +792,7 @@ ac97_setup_source_info(as)
 			ouridx++;
 			break;
 		default:
-			printf ("ac97: shouldn't get here\n");
+			aprint_error ("ac97: shouldn't get here\n");
 			break;
 		}
 	}
@@ -889,7 +889,7 @@ ac97_attach(host_if)
 
 	id = (id1 << 16) | id2;
 
-	printf("%s: ", sc_dev->dv_xname);
+	aprint_normal("%s: ", sc_dev->dv_xname);
 
 	for (i = 0; ; i++) {
 		if (ac97codecid[i].id == 0) {
@@ -899,29 +899,29 @@ ac97_attach(host_if)
 #define ISASCII(c) ((c) >= ' ' && (c) < 0x7f)
 			if (ISASCII(pnp[0]) && ISASCII(pnp[1]) &&
 			    ISASCII(pnp[2]))
-				printf("%c%c%c%d", pnp[0], pnp[1], pnp[2],
-				    pnp[3]);
+				aprint_normal("%c%c%c%d",
+				    pnp[0], pnp[1], pnp[2], pnp[3]);
 			else
-				printf("unknown (0x%08x)", id);
+				aprint_normal("unknown (0x%08x)", id);
 			break;
 		}
 		if (ac97codecid[i].id == (id & ac97codecid[i].mask)) {
-			printf("%s", ac97codecid[i].name);
+			aprint_normal("%s", ac97codecid[i].name);
 			if (ac97codecid[i].mask == AC97_VENDOR_ID_MASK) {
-				printf(" (0x%08x)", id);
+				aprint_normal(" (0x%08x)", id);
 			}
 			initfunc = ac97codecid[i].init;
 			break;
 		}
 	}
-	printf(" codec; ");
+	aprint_normal(" codec; ");
 	for (i = j = 0; i < 10; i++) {
 		if (as->caps & (1 << i)) {
-			printf("%s%s", j? ", " : "", ac97feature[i]);
+			aprint_normal("%s%s", j? ", " : "", ac97feature[i]);
 			j++;
 		}
 	}
-	printf("%s%s\n", j ? ", " : "",
+	aprint_normal("%s%s\n", j ? ", " : "",
 	       ac97enhancement[AC97_CAPS_ENHANCEMENT(as->caps)]);
 
 	as->ac97_clock = AC97_STANDARD_CLOCK;
@@ -930,44 +930,44 @@ ac97_attach(host_if)
 			  | AC97_EXT_AUDIO_SPDIF | AC97_EXT_AUDIO_VRM
 			  | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_SDAC
 			  | AC97_EXT_AUDIO_LDAC)) {
-		printf("%s:", sc_dev->dv_xname);
+		aprint_normal("%s:", sc_dev->dv_xname);
 		delim = "";
 
 		ac97_read(as, AC97_REG_EXT_AUDIO_CTRL, &extstat);
 		if (as->ext_id & AC97_EXT_AUDIO_VRA) {
-			printf("%s variable rate audio", delim);
+			aprint_normal("%s variable rate audio", delim);
 			delim = ",";
 			extstat |= AC97_EXT_AUDIO_VRA;
 		}
 		if (as->ext_id & AC97_EXT_AUDIO_DRA) {
-			printf("%s double rate output", delim);
+			aprint_normal("%s double rate output", delim);
 			delim = ",";
 		}
 		extstat &= ~AC97_EXT_AUDIO_DRA;
 		if (as->ext_id & AC97_EXT_AUDIO_SPDIF) {
-			printf("%s S/PDIF", delim);
+			aprint_normal("%s S/PDIF", delim);
 			delim = ",";
 		}
 		if (as->ext_id & AC97_EXT_AUDIO_VRM) {
-			printf("%s variable rate dedicated mic", delim);
+			aprint_normal("%s variable rate dedicated mic", delim);
 			delim = ",";
 			extstat |= AC97_EXT_AUDIO_VRM;
 		}
 		if (as->ext_id & AC97_EXT_AUDIO_CDAC) {
-			printf("%s center DAC", delim);
+			aprint_normal("%s center DAC", delim);
 			delim = ",";
 			extstat |= AC97_EXT_AUDIO_CDAC;
 		}
 		if (as->ext_id & AC97_EXT_AUDIO_SDAC) {
-			printf("%s surround DAC", delim);
+			aprint_normal("%s surround DAC", delim);
 			delim = ",";
 			extstat |= AC97_EXT_AUDIO_SDAC;
 		}
 		if (as->ext_id & AC97_EXT_AUDIO_LDAC) {
-			printf("%s LFE DAC", delim);
+			aprint_normal("%s LFE DAC", delim);
 			extstat |= AC97_EXT_AUDIO_LDAC;
 		}
-		printf("\n");
+		aprint_normal("\n");
 
 		ac97_write(as, AC97_REG_EXT_AUDIO_CTRL, extstat);
 		if (as->ext_id & AC97_EXT_AUDIO_VRA) {
@@ -978,8 +978,9 @@ ac97_attach(host_if)
 			if (rate != 44100) {
 				/* We can't believe ext_id */
 				as->ext_id = 0;
-				printf("%s: Ignore these capabilities.\n",
-				       sc_dev->dv_xname);
+				aprint_normal(
+				    "%s: Ignore these capabilities.\n",
+				    sc_dev->dv_xname);
 			}
 			/* restore the default value */
 			ac97_write(as, AC97_REG_PCM_FRONT_DAC_RATE,

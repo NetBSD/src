@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.201 2002/11/07 08:07:26 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.202 2003/01/31 00:26:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.201 2002/11/07 08:07:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.202 2003/01/31 00:26:28 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -508,20 +508,20 @@ com_attach_subr(struct com_softc *sc)
 #ifdef COM16650
 			bus_space_write_1(iot, ioh, com_lcr, lcr);
 			if (sc->sc_fifolen == 0)
-				printf(": st16650, broken fifo\n");
+				aprint_normal(": st16650, broken fifo\n");
 			else if (sc->sc_fifolen == 32)
-				printf(": st16650a, working fifo\n");
+				aprint_normal(": st16650a, working fifo\n");
 			else
 #endif
-				printf(": ns16550a, working fifo\n");
+				aprint_normal(": ns16550a, working fifo\n");
 		} else
-			printf(": ns16550, broken fifo\n");
+			aprint_normal(": ns16550, broken fifo\n");
 	else
-		printf(": ns8250 or ns16450, no fifo\n");
+		aprint_normal(": ns8250 or ns16450, no fifo\n");
 	bus_space_write_1(iot, ioh, com_fifo, 0);
 	if (ISSET(sc->sc_hwflags, COM_HW_TXFIFO_DISABLE)) {
 		sc->sc_fifolen = 1;
-		printf("%s: txfifo disabled\n", sc->sc_dev.dv_xname);
+		aprint_normal("%s: txfifo disabled\n", sc->sc_dev.dv_xname);
 	}
 #ifdef COM_HAYESP
 	}
@@ -537,7 +537,7 @@ com_attach_subr(struct com_softc *sc)
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = com_rbuf_size;
 	if (sc->sc_rbuf == NULL) {
-		printf("%s: unable to allocate ring buffer\n",
+		aprint_error("%s: unable to allocate ring buffer\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -556,7 +556,7 @@ com_attach_subr(struct com_softc *sc)
 
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
-		printf("%s: console\n", sc->sc_dev.dv_xname);
+		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}
 
 #ifdef KGDB
@@ -568,7 +568,7 @@ com_attach_subr(struct com_softc *sc)
 		com_kgdb_attached = 1;
 
 		SET(sc->sc_hwflags, COM_HW_KGDB);
-		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
+		aprint_normal("%s: kgdb\n", sc->sc_dev.dv_xname);
 	}
 #endif
 

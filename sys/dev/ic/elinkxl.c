@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.67 2002/11/09 11:45:18 enami Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.68 2003/01/31 00:26:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.67 2002/11/09 11:45:18 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.68 2003/01/31 00:26:29 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -204,7 +204,7 @@ ex_config(sc)
 	macaddr[4] = val >> 8;
 	macaddr[5] = val & 0xff;
 
-	printf("%s: MAC address %s\n", sc->sc_dev.dv_xname,
+	aprint_normal("%s: MAC address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(macaddr));
 
 	if (sc->ex_conf & (EX_CONF_INV_LED_POLARITY|EX_CONF_PHY_POWER)) {
@@ -226,7 +226,8 @@ ex_config(sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    EX_NUPD * sizeof (struct ex_upd), PAGE_SIZE, 0, &sc->sc_useg, 1, 
             &sc->sc_urseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: can't allocate upload descriptors, error = %d\n",
+		aprint_error(
+		    "%s: can't allocate upload descriptors, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
@@ -236,7 +237,7 @@ ex_config(sc)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_useg, sc->sc_urseg,
 	    EX_NUPD * sizeof (struct ex_upd), (caddr_t *)&sc->sc_upd,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: can't map upload descriptors, error = %d\n",
+		aprint_error("%s: can't map upload descriptors, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
@@ -247,7 +248,8 @@ ex_config(sc)
 	    EX_NUPD * sizeof (struct ex_upd), 1,
 	    EX_NUPD * sizeof (struct ex_upd), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_upd_dmamap)) != 0) {
-		printf("%s: can't create upload desc. DMA map, error = %d\n",
+		aprint_error(
+		    "%s: can't create upload desc. DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
@@ -257,7 +259,8 @@ ex_config(sc)
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_upd_dmamap,
 	    sc->sc_upd, EX_NUPD * sizeof (struct ex_upd), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: can't load upload desc. DMA map, error = %d\n",
+		aprint_error(
+		    "%s: can't load upload desc. DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
@@ -271,7 +274,8 @@ ex_config(sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    EX_NDPD * sizeof (struct ex_dpd), PAGE_SIZE, 0, &sc->sc_dseg, 1, 
 	    &sc->sc_drseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: can't allocate download descriptors, error = %d\n",
+		aprint_error(
+		    "%s: can't allocate download descriptors, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
@@ -281,7 +285,7 @@ ex_config(sc)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dseg, sc->sc_drseg,
 	    EX_NDPD * sizeof (struct ex_dpd), (caddr_t *)&sc->sc_dpd,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: can't map download descriptors, error = %d\n",
+		aprint_error("%s: can't map download descriptors, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
@@ -293,7 +297,8 @@ ex_config(sc)
 	    EX_NDPD * sizeof (struct ex_dpd), 1,
 	    EX_NDPD * sizeof (struct ex_dpd), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_dpd_dmamap)) != 0) {
-		printf("%s: can't create download desc. DMA map, error = %d\n",
+		aprint_error(
+		    "%s: can't create download desc. DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
@@ -303,7 +308,8 @@ ex_config(sc)
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dpd_dmamap,
 	    sc->sc_dpd, EX_NDPD * sizeof (struct ex_dpd), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: can't load download desc. DMA map, error = %d\n",
+		aprint_error(
+		    "%s: can't load download desc. DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
@@ -318,7 +324,8 @@ ex_config(sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    EX_NTFRAGS, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_tx_dmamaps[i])) != 0) {
-			printf("%s: can't create tx DMA map %d, error = %d\n",
+			aprint_error(
+			    "%s: can't create tx DMA map %d, error = %d\n",
 			    sc->sc_dev.dv_xname, i, error);
 			goto fail;
 		}
@@ -333,7 +340,8 @@ ex_config(sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    EX_NRFRAGS, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_rx_dmamaps[i])) != 0) {
-			printf("%s: can't create rx DMA map %d, error = %d\n",
+			aprint_error(
+			    "%s: can't create rx DMA map %d, error = %d\n",
 			    sc->sc_dev.dv_xname, i, error);
 			goto fail;
 		}
@@ -352,7 +360,7 @@ ex_config(sc)
 		sc->sc_upd[i].upd_frags[0].fr_len =
 		    htole32((MCLBYTES - 2) | EX_FR_LAST);
 		if (ex_add_rxbuf(sc, &sc->sc_rxdescs[i]) != 0) {
-			printf("%s: can't allocate or map rx buffers\n",
+			aprint_error("%s: can't allocate or map rx buffers\n",
 			    sc->sc_dev.dv_xname);
 			goto fail;
 		}
@@ -457,13 +465,13 @@ ex_config(sc)
 	/*  Establish callback to reset card when we reboot. */
 	sc->sc_sdhook = shutdownhook_establish(ex_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
+		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 			sc->sc_dev.dv_xname);
 
 	/* Add a suspend hook to make sure we come back up after a resume. */
 	sc->sc_powerhook = powerhook_establish(ex_power, sc);
 	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
+		aprint_error("%s: WARNING: unable to establish power hook\n",
 			sc->sc_dev.dv_xname);
 
 	/* The attach is successful. */
@@ -558,17 +566,17 @@ ex_probemedia(sc)
 
 	default_media = (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
 
-	printf("%s: ", sc->sc_dev.dv_xname);
+	aprint_normal("%s: ", sc->sc_dev.dv_xname);
 
 	/* Sanity check that there are any media! */
 	if ((reset_options & ELINK_PCI_MEDIAMASK) == 0) {
-		printf("no media present!\n");
+		aprint_error("no media present!\n");
 		ifmedia_add(ifm, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(ifm, IFM_ETHER|IFM_NONE);
 		return;
 	}
 
-#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
+#define	PRINT(str)	aprint_normal("%s%s", sep, str); sep = ", "
 
 	for (exm = ex_native_media; exm->exm_name != NULL; exm++) {
 		if (reset_options & exm->exm_mpbit) {
@@ -601,7 +609,7 @@ ex_probemedia(sc)
 		panic("ex_probemedia: impossible");
 #endif
 
-	printf(", default %s\n", defmedianame);
+	aprint_normal(", default %s\n", defmedianame);
 	ifmedia_set(ifm, defmedia);
 }
 
