@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.8 2004/02/27 02:55:17 oster Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.9 2004/03/01 23:30:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -166,8 +166,9 @@ struct RF_DagHeader_s {
 						 * to be freed */
 	int     nodeNum;	/* used by PrintDAG for debug only */
 	int     numNodesCompleted;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec;	/* perf mon only */
-
+#endif
 	void    (*cbFunc) (void *);	/* function to call when the dag
 					 * completes */
 	void   *cbArg;		/* argument for cbFunc */
