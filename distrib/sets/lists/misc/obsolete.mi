@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.6 2000/06/05 03:17:24 simonb Exp $
+# $NetBSD: obsolete.mi,v 1.7 2000/06/13 01:02:31 wiz Exp $
 /usr/share/doc/xntp
 /usr/share/doc/smm/03.fsck/0.t
 /usr/share/doc/smm/03.fsck/1.t
@@ -17,6 +17,7 @@
 /usr/share/doc/smm/09.sendmail/Makefile
 /usr/share/doc/smm/09.sendmail/intro.me
 /usr/share/misc/sendmail.hf
+/usr/share/postfix
 /usr/share/sendmail/cf/clientproto.mc
 /usr/share/sendmail/cf/tcpproto.mc
 /usr/share/sendmail/cf/trinity.mc
