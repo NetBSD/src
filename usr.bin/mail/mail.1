@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.19 2001/10/17 21:08:15 wiz Exp $
+.\"	$NetBSD: mail.1,v 1.20 2001/12/01 20:34:50 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@
 .Op Fl s Ar subject
 .Op Fl c Ar cc-addr
 .Op Fl b Ar bcc-addr
-.Ar to-addr...
+.Ar to-addr ...
 .Nm ""
 .Op Fl EiInNv
 .Fl f
@@ -132,7 +132,6 @@ The section below
 describes some features of
 .Nm
 available to help you compose your letter.
-.Pp
 .Ss Reading mail
 In normal usage
 .Nm
@@ -152,7 +151,6 @@ and
 .Ql Ic \&\-
 moving backwards and forwards, and
 simple numbers.
-.Pp
 .Ss Disposing of mail
 After examining a message you can
 .Ic delete
@@ -174,7 +172,6 @@ session can be aborted by giving the
 .Pq Ql Ic x
 command.
 Deleted messages will, however, usually disappear never to be seen again.
-.Pp
 .Ss Specifying messages
 Commands such as
 .Ic print
@@ -197,7 +194,6 @@ the last message; thus the command
 which prints the first few lines of a message could be used in
 .Dq Li top \&*
 to print the first few lines of all messages.
-.Pp
 .Ss Replying to or originating mail
 You can use the
 .Ic reply
@@ -223,7 +219,6 @@ to the message and allow you to escape to an editor to revise the
 message or to a shell to run some commands.
 (These options
 are given in the summary below.)
-.Pp
 .Ss Ending a mail processing session
 You can end a
 .Nm
@@ -238,7 +233,6 @@ Unexamined messages go back to the post office.
 (See the
 .Fl f
 option above).
-.Pp
 .Ss Personal and systemwide distribution lists
 It is also possible to create a personal distribution lists so that,
 for instance, you can send mail to
@@ -273,7 +267,6 @@ are not expanded when the mail is sent,
 but any reply returned to the machine will have the system wide
 alias expanded as all mail goes through
 .Xr sendmail 8 .
-.Pp
 .Ss Network mail (ARPA, UUCP, Berknet)
 See
 .Xr mailaddr 7
@@ -693,7 +686,6 @@ Also, you can move to the previous window by using
 .Ic \&z\&\-  .
 .El
 .Ss Tilde/Escapes
-.Pp
 Here is a summary of the tilde escapes,
 which are used when composing messages to perform
 special functions.
