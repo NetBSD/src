@@ -33,7 +33,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/ath/if_athvar.h,v 1.6 2003/09/05 22:22:49 sam Exp $
+ * $FreeBSD: src/sys/dev/ath/if_athvar.h,v 1.10 2003/11/29 01:23:59 sam Exp $
  */
 
 /*
@@ -54,6 +54,14 @@
 #define	ATH_TXBUF	60		/* number of TX buffers */
 #define	ATH_TXDESC	8		/* number of descriptors per buffer */
 
+struct ath_recv_hist {
+	int		arh_ticks;	/* sample time by system clock */
+	u_int8_t	arh_rssi;	/* rssi */
+	u_int8_t	arh_antenna;	/* antenna */
+};
+#define	ATH_RHIST_SIZE		16	/* number of samples */
+#define	ATH_RHIST_NOTIME	(~0)
+
 /* driver-specific node */
 struct ath_node {
 	struct ieee80211_node an_node;	/* base class */
@@ -63,6 +71,8 @@ struct ath_node {
 	int		an_tx_upper;	/* tx upper rate req cnt */
 	u_int		an_tx_antenna;	/* antenna for last good frame */
 	u_int		an_rx_antenna;	/* antenna for last rcvd frame */
+	struct ath_recv_hist an_rx_hist[ATH_RHIST_SIZE];
+	u_int		an_rx_hist_next;/* index of next ``free entry'' */
 };
 #define	ATH_NODE(_n)	((struct ath_node *)(_n))
 
@@ -90,7 +100,6 @@ struct ath_softc {
 	struct mtx		sc_mtx;		/* master lock (recursive) */
 	struct ath_hal		*sc_ah;		/* Atheros HAL */
 	unsigned int		sc_invalid  : 1,/* disable hardware accesses */
-				sc_have11g  : 1,/* have 11g support */
 				sc_doani    : 1,/* dynamic noise immunity */
 				sc_probing  : 1;/* probing AP on beacon miss */
 						/* rate tables */
@@ -145,6 +154,31 @@ struct ath_softc {
 };
 #define	sc_tx_th		u_tx_rt.th
 #define	sc_rx_th		u_rx_rt.th
+
+#define	ATH_LOCK_INIT(_sc) \
+	mtx_init(&(_sc)->sc_mtx, device_get_nameunit((_sc)->sc_dev), \
+		 MTX_NETWORK_LOCK, MTX_DEF | MTX_RECURSE)
+#define	ATH_LOCK_DESTROY(_sc)	mtx_destroy(&(_sc)->sc_mtx)
+#define	ATH_LOCK(_sc)		mtx_lock(&(_sc)->sc_mtx)
+#define	ATH_UNLOCK(_sc)		mtx_unlock(&(_sc)->sc_mtx)
+#define	ATH_LOCK_ASSERT(_sc)	mtx_assert(&(_sc)->sc_mtx, MA_OWNED)
+
+#define	ATH_TXBUF_LOCK_INIT(_sc) \
+	mtx_init(&(_sc)->sc_txbuflock, \
+		device_get_nameunit((_sc)->sc_dev), "xmit buf q", MTX_DEF)
+#define	ATH_TXBUF_LOCK_DESTROY(_sc)	mtx_destroy(&(_sc)->sc_txbuflock)
+#define	ATH_TXBUF_LOCK(_sc)		mtx_lock(&(_sc)->sc_txbuflock)
+#define	ATH_TXBUF_UNLOCK(_sc)		mtx_unlock(&(_sc)->sc_txbuflock)
+#define	ATH_TXBUF_LOCK_ASSERT(_sc) \
+	mtx_assert(&(_sc)->sc_txbuflock, MA_OWNED)
+
+#define	ATH_TXQ_LOCK_INIT(_sc) \
+	mtx_init(&(_sc)->sc_txqlock, \
+		device_get_nameunit((_sc)->sc_dev), "xmit q", MTX_DEF)
+#define	ATH_TXQ_LOCK_DESTROY(_sc)	mtx_destroy(&(_sc)->sc_txqlock)
+#define	ATH_TXQ_LOCK(_sc)		mtx_lock(&(_sc)->sc_txqlock)
+#define	ATH_TXQ_UNLOCK(_sc)		mtx_unlock(&(_sc)->sc_txqlock)
+#define	ATH_TXQ_LOCK_ASSERT(_sc)	mtx_assert(&(_sc)->sc_txqlock, MA_OWNED)
 
 int	ath_attach(u_int16_t, struct ath_softc *);
 int	ath_detach(struct ath_softc *);
@@ -240,12 +274,8 @@ void	ath_intr(void *);
 	((*(_ah)->ah_stopDmaReceive)((_ah)))
 #define	ath_hal_dumpstate(_ah) \
 	((*(_ah)->ah_dumpState)((_ah)))
-#define	ath_hal_dumpeeprom(_ah) \
-	((*(_ah)->ah_dumpEeprom)((_ah)))
-#define	ath_hal_dumprfgain(_ah) \
-	((*(_ah)->ah_dumpRfGain)((_ah)))
-#define	ath_hal_dumpani(_ah) \
-	((*(_ah)->ah_dumpAni)((_ah)))
+#define	ath_hal_getdiagstate(_ah, _id, _data, _size) \
+	((*(_ah)->ah_getDiagState)((_ah), (_id), (_data), (_size)))
 #define	ath_hal_setuptxqueue(_ah, _type, _irq) \
 	((*(_ah)->ah_setupTxQueue)((_ah), (_type), (_irq)))
 #define	ath_hal_resettxqueue(_ah, _q) \
@@ -265,8 +295,8 @@ void	ath_intr(void *);
 		(_flen), (_hlen), (_rate), (_antmode)))
 #define	ath_hal_setuprxdesc(_ah, _ds, _size, _intreq) \
 	((*(_ah)->ah_setupRxDesc)((_ah), (_ds), (_size), (_intreq)))
-#define	ath_hal_rxprocdesc(_ah, _ds) \
-	((*(_ah)->ah_procRxDesc)((_ah), (_ds)))
+#define	ath_hal_rxprocdesc(_ah, _ds, _dspa, _dsnext) \
+	((*(_ah)->ah_procRxDesc)((_ah), (_ds), (_dspa), (_dsnext)))
 #define	ath_hal_setuptxdesc(_ah, _ds, _plen, _hlen, _atype, _txpow, \
 		_txr0, _txtr0, _keyix, _ant, _flags, \
 		_rtsrate, _rtsdura) \

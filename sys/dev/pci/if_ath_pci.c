@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.3 2003/08/13 21:29:35 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.6 2003/11/28 05:28:27 imp Exp $");
 
 /*
  * PCI/Cardbus front-end for the Atheros Wireless LAN controller driver.
@@ -194,14 +194,13 @@ ath_pci_attach(device_t dev)
 		goto bad3;
 	}
 
-	mtx_init(&sc->sc_mtx, device_get_nameunit(dev),
-		 MTX_NETWORK_LOCK, MTX_DEF | MTX_RECURSE);
+	ATH_LOCK_INIT(sc);
 
 	error = ath_attach(pci_get_device(dev), sc);
 	if (error == 0)
 		return error;
 
-	mtx_destroy(&sc->sc_mtx);
+	ATH_LOCK_DESTROY(sc);
 	bus_dma_tag_destroy(sc->sc_dmat);
 bad3:
 	bus_teardown_intr(dev, psc->sc_irq, psc->sc_ih);
@@ -231,7 +230,7 @@ ath_pci_detach(device_t dev)
 	bus_dma_tag_destroy(sc->sc_dmat);
 	bus_release_resource(dev, SYS_RES_MEMORY, BS_BAR, psc->sc_sr);
 
-	mtx_destroy(&sc->sc_mtx);
+	ATH_LOCK_DESTROY(sc);
 
 	return (0);
 }
