@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.17 2002/08/09 14:15:13 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.18 2004/01/23 13:01:17 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -169,6 +169,11 @@ typedef unsigned int Form_Options;
 
 #define REQ_MAX_COMMAND   (KEY_MAX + 0x139) /* must match the last
                                                driver command */
+
+/* The following defines are for ncurses compatibility */
+#define MIN_FORM_COMMAND	REQ_MIN_REQUEST
+#define MAX_FORM_COMMAND	REQ_MAX_COMMAND
+
 
 typedef struct _form_string {
 	size_t allocated;
