@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.68 1995/01/13 08:37:25 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.69 1995/01/13 10:35:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -155,18 +155,22 @@ struct fd_softc {
 
 	struct fd_type *sc_deftype;	/* default type descriptor */
 	struct fd_type *sc_type;	/* current type descriptor */
-	TAILQ_ENTRY(fd_softc) sc_drivechain;
-	struct buf sc_q;		/* head of buf chain */
-	int sc_drive;			/* unit number on this controller */
+
+	daddr_t	sc_blkno;	/* starting block number */
+	int sc_bcount;		/* byte count left */
+	int sc_skip;		/* bytes already transferred */
+	int sc_nblks;		/* number of blocks currently tranferring */
+
+	int sc_drive;		/* physical unit number */
 	int sc_flags;
 #define	FD_OPEN		0x01		/* it's open */
 #define	FD_MOTOR	0x02		/* motor should be on */
 #define	FD_MOTOR_WAIT	0x04		/* motor coming up */
-	int sc_skip;			/* bytes transferred so far */
-	int sc_cylin;			/* where we think the head is */
-	int sc_nblks;			/* number of blocks tranferring */
-	int sc_ops;			/* I/O operations completed */
-	daddr_t	sc_blkno;		/* starting block number */
+	int sc_cylin;		/* where we think the head is */
+
+	TAILQ_ENTRY(fd_softc) sc_drivechain;
+	int sc_ops;		/* I/O ops since last switch */
+	struct buf sc_q;	/* head of buf chain */
 };
 
 /* floppy driver configuration */
@@ -470,15 +474,14 @@ fdstrategy(bp)
 {
 	struct fd_softc *fd;
 	int unit = FDUNIT(bp->b_dev);
-	int nblks;
-	daddr_t blkno;
+	int sz;
  	int s;
 
 	/* Valid unit, controller, and request? */
 	if (unit >= fdcd.cd_ndevs ||
 	    (fd = fdcd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
-	    (bp->b_bcount & DEV_BSIZE) != 0) {
+	    (bp->b_bcount % FDC_BSIZE) != 0) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}
@@ -487,23 +490,25 @@ fdstrategy(bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
-	blkno = bp->b_blkno * DEV_BSIZE / FDC_BSIZE;
- 	nblks = fd->sc_type->size;
-	if (blkno + (bp->b_bcount / FDC_BSIZE) > nblks) {
-		if (blkno == nblks) {
+	sz = howmany(bp->b_bcount, FDC_BSIZE);
+
+	if (bp->b_blkno + sz > fd->sc_type->size) {
+		sz = fd->sc_type->size - bp->b_blkno;
+		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
 			goto done;
-		} else if (blkno > nblks) {
+		}
+		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
 			goto bad;
 		}
 		/* Otherwise, truncate request. */
-		bp->b_bcount = (nblks - blkno) * FDC_BSIZE;
+		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
- 	bp->b_cylin = blkno / fd->sc_type->seccyl;
+ 	bp->b_cylin = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef DEBUG
 	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d nblks %d\n",
@@ -572,7 +577,7 @@ fdfinish(fd, bp)
 		} else
 			fd->sc_q.b_active = 0;
 	}
-	bp->b_resid = bp->b_bcount - fd->sc_skip;
+	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
 	fd->sc_q.b_actf = bp->b_actf;
 	biodone(bp);
@@ -812,7 +817,7 @@ fdcintr(fdc)
 	struct fd_softc *fd;
 	struct buf *bp;
 	int iobase = fdc->sc_iobase;
-	int read, head, trac, sec, i, s, blkno, nblks;
+	int read, head, trac, sec, i, s, nblks;
 	struct fd_type *type;
 
 loop:
@@ -836,7 +841,8 @@ loop:
 	case DEVIDLE:
 		fdc->sc_errors = 0;
 		fd->sc_skip = 0;
-		fd->sc_blkno = bp->b_blkno * DEV_BSIZE / FDC_BSIZE;
+		fd->sc_bcount = bp->b_bcount;
+		fd->sc_blkno = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE);
 		untimeout(fd_motor_off, fd);
 		if ((fd->sc_flags & FD_MOTOR_WAIT) != 0) {
 			fdc->sc_state = MOTORWAIT;
@@ -883,7 +889,7 @@ loop:
 		type = fd->sc_type;
 		sec = fd->sc_blkno % type->seccyl;
 		nblks = type->seccyl - sec;
-		nblks = min(nblks, (bp->b_bcount - fd->sc_skip) / FDC_BSIZE);
+		nblks = min(nblks, fd->sc_bcount / FDC_BSIZE);
 		nblks = min(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
 		fd->sc_nblks = nblks;
 		head = sec / type->sectrac;
@@ -992,16 +998,15 @@ loop:
 			printf("\n");
 			fdc->sc_errors = 0;
 		}
+		fd->sc_blkno += nblks;
 		fd->sc_skip += nblks * FDC_BSIZE;
-		if (fd->sc_skip < bp->b_bcount) {
-			/* set up next transfer */
-			blkno = fd->sc_blkno += nblks;
-			bp->b_cylin = blkno / fd->sc_type->seccyl;
+		fd->sc_bcount -= nblks * FDC_BSIZE;
+		if (fd->sc_bcount > 0) {
+			bp->b_cylin = fd->sc_blkno / fd->sc_type->seccyl;
 			goto doseek;
-		} else {
-			fdfinish(fd, bp);
-			goto loop;
 		}
+		fdfinish(fd, bp);
+		goto loop;
 
 	case DORESET:
 		/* try a reset, keep motor on */
