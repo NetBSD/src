@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.23.2.1 2002/06/02 15:30:32 tv Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.23.2.2 2002/06/02 15:31:24 tv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.23.2.1 2002/06/02 15:30:32 tv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.23.2.2 2002/06/02 15:31:24 tv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,10 +254,10 @@ lfs_segunlock(struct lfs *fs)
 #else
 			s = splbio();
 			bremfree(bp);
-			splx(s);
 			bp->b_flags |= B_DONE|B_INVAL;
 			bp->b_flags &= ~B_DELWRI;
 			reassignbuf(bp,bp->b_vp);
+			splx(s);
 			brelse(bp);
 #endif
 		} else
