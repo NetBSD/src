@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.1.2.3 1999/01/30 15:07:41 minoura Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.1.2.4 1999/01/31 06:44:26 minoura Exp $	*/
 
 /*
  *
@@ -46,8 +46,8 @@
 
 #define cf_addr		cf_loc[INTIOCF_ADDR]
 #define cf_intr		cf_loc[INTIOCF_INTR]
-#define cf_errintr	cf_loc[INTIOCF_ERRINTR]
 #define cf_dma		cf_loc[INTIOCF_DMA]
+#define cf_dmaintr	cf_loc[INTIOCF_DMAINTR]
 
 
 struct intio_attach_args {
@@ -58,8 +58,8 @@ struct intio_attach_args {
 	int		ia_addr; /* addr */
 	int		ia_size;
 	int		ia_intr; /* interrupt vector */
-	int		ia_errintr; /* interrupt vector for device error */
 	int		ia_dma;	/* dma channel */
+	int		ia_dmaintr; /* interrupt vector for dmac */
 };
 
 struct intio_softc {

@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.1.2.3 1999/01/30 15:07:40 minoura Exp $	*/
+/*	$NetBSD: intio.c,v 1.1.2.4 1999/01/31 06:44:26 minoura Exp $	*/
 
 /*
  *
@@ -182,8 +182,8 @@ static struct intio_attach_args initial_ia = {
 	"mfp",			/* ia_name */
 	MFP_ADDR,		/* ia_addr */
 	MFP_INTR,		/* ia_intr */
-	-1,			/* ia_errintr */
 	-1			/* ia_dma */
+	-1,			/* ia_dmaintr */
 };
 
 static void
@@ -235,8 +235,8 @@ intio_search(parent, cf, aux)
 	ia->ia_name = cf->cf_driver->cd_name;
 	ia->ia_addr = cf->cf_addr;
 	ia->ia_intr = cf->cf_intr;
-	ia->ia_errintr = cf->cf_errintr;
 	ia->ia_dma = cf->cf_dma;
+	ia->ia_dmaintr = cf->cf_dmaintr;
 
 	if ((*cf->cf_attach->ca_match)(parent, cf, ia) > 0)
 		config_attach(parent, cf, ia, intio_print);
@@ -253,13 +253,14 @@ intio_print(aux, name)
 
 /*	if (ia->ia_addr > 0)	*/
 		printf (" addr 0x%06x", ia->ia_addr);
-	if (ia->ia_intr > 0) {
+	if (ia->ia_intr > 0)
 		printf (" interrupting at 0x%02x", ia->ia_intr);
-		if (ia->ia_errintr > 0)
-			printf (" and 0x%02x", ia->ia_errintr);
-	}
-	if (ia->ia_dma >= 0)
+	if (ia->ia_dma >= 0) {
 		printf (" using DMA ch%d", ia->ia_dma);
+		if (ia->ia_dmaintr > 0)
+			printf (" interrupting at 0x%02x and 0x%02x",
+				ia->ia_dmaintr, ia->ia_dmaintr+1);
+	}
 
 	return (QUIET);
 }
