@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ne.c	7.4 (Berkeley) 5/21/91
- *	$Id: if_ne.c,v 1.8 1993/07/15 12:57:05 deraadt Exp $
+ *	$Id: if_ne.c,v 1.9 1993/07/17 16:41:27 mycroft Exp $
  */
 
 /*
@@ -343,9 +343,9 @@ neattach(dvp)
 	ifp->if_unit = unit;
 	ifp->if_name = nedriver.name ;
 	ifp->if_mtu = ETHERMTU;
-	printf ("ne%d: ethernet address %s, NE%s\n", unit,
-		ether_sprintf(ns->ns_addrp),
-		(ns->ns_mode & DSDC_WTS) ? "2000" : "1000");
+	printf ("ne%d: ne%s ethernet address %s\n", unit,
+		(ns->ns_mode & DSDC_WTS) ? "2000" : "1000",
+		ether_sprintf(ns->ns_addrp));
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 	ifp->if_init = neinit;
 	ifp->if_output = ether_output;
