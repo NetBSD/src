@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.8 2002/02/02 07:04:48 tls Exp $
+#	$NetBSD: MAKEDEV,v 1.9 2002/02/02 20:58:46 tls Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -118,7 +118,7 @@ case $i in
 
 all)
 	sh $0 std wscons fd fd0 fd1 wd0 wd1 wd2 wd3 md0 md1 sd0 sd1 sd2 sd3
-	sh $0 tty0 tty1 pty0 pty1 st0 st1 ch0 cd0 cd1 vnd0 vnd1
+	sh $0 tty0 tty1 pty0 st0 st1 ch0 cd0 cd1 vnd0 vnd1
 	sh $0 ccd0 ccd1 uk0 uk1 ss0
 	sh $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7

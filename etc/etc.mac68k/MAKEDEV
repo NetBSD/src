@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.54 2002/02/02 07:04:50 tls Exp $
+#	$NetBSD: MAKEDEV,v 1.55 2002/02/02 20:58:48 tls Exp $
 #
 ###########################################################################
 #
@@ -93,7 +93,7 @@ do
 case $i in
 
 all)
-	sh $0 std wscons fd sd0 sd1 sd2 sd3 tty0 tty1 pty0 pty1
+	sh $0 std wscons fd sd0 sd1 sd2 sd3 tty0 tty1 pty0
 	sh $0 st0 st1 ch0 cd0 cd1 fd0 fd1 vnd0 vnd1 vnd2 vnd3
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 uk0 uk1 
 	sh $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
