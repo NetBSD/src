@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.3 2003/08/20 21:48:51 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.4 2004/06/15 11:28:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -136,7 +136,7 @@ IDTVEC(trap07)
 	call	_C_LABEL(fpudna)
 	INTRFASTEXIT
 IDTVEC(trap08)
-	ZTRAP(T_DOUBLEFLT)
+	TRAP(T_DOUBLEFLT)
 IDTVEC(trap09)
 	ZTRAP(T_FPOPFLT)
 IDTVEC(trap0a)
