@@ -1,3 +1,5 @@
+/*	$NetBSD: utils.c,v 1.2 1999/08/25 02:07:46 christos Exp $	*/
+
 /*
  * utils.c - various utility functions used in pppd.
  *
@@ -17,7 +19,14 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#define RCSID	"$Id: utils.c,v 1.1.1.1 1999/08/24 20:25:45 christos Exp $"
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+#define RCSID	"Id: utils.c,v 1.8 1999/08/13 06:46:22 paulus Exp "
+#else
+__RCSID("$NetBSD: utils.c,v 1.2 1999/08/25 02:07:46 christos Exp $");
+#endif
+#endif
 
 #include <stdio.h>
 #include <ctype.h>
@@ -45,7 +54,9 @@
 
 #include "pppd.h"
 
+#ifdef RCSID
 static const char rcsid[] = RCSID;
+#endif
 
 #if defined(SUNOS4)
 extern char *strerror();
