@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86.2.7 2000/08/24 02:33:14 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86.2.8 2000/11/18 22:53:57 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -309,11 +309,21 @@ pagemove(from, to, size)
 		if (cpu_class != CPUCLASS_386)
 #endif
 		{
-			if (otpte & PG_V)
+			if (otpte & PG_V) {
 				pmap_update_pg((vaddr_t) to);
-			if (ofpte & PG_V)
+#ifdef MULTIPROCESSOR
+				pmap_tlb_shootdown(pmap_kernel(),
+				    (vaddr_t)to, otpte);
+#endif
+			}
+			
+			if (ofpte & PG_V) {
 				pmap_update_pg((vaddr_t) from);
-			/* XXX MP tlb shootdown! */
+#ifdef MULTIPROCESSOR
+				pmap_tlb_shootdown(pmap_kernel(),
+				    (vaddr_t)from, ofpte);
+#endif
+			}
 		}
 		from += NBPG;
 		to += NBPG;
