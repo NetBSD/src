@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.56 2001/09/08 01:29:41 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.57 2001/09/09 20:43:42 agc Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -151,11 +151,13 @@ is set.
 .It WRKSRC
 A subdirectory of ${WRKDIR} where the distribution actually
 unpacks to.  The default is
-.Pa ${WRKDIR}/${DISTNAME}
-unless
+.Pa ${WRKDIR}/${DISTNAME} .
+The value of WRKSRC should be set explicitly
+if the package does not follow standard conventions
+and include the package's name as a subdirectory.
+Please note that the old
 .Dv NO_WRKSUBDIR
-is set, in which case it is simply
-.Pa ${WRKDIR} .
+definition has been deprecated and should not be used.
 .It DISTNAME
 Name of package or distribution.
 .It DISTFILES
@@ -322,9 +324,6 @@ Distfile(s) of this package may not be placed on CDROM.  Set this string to
 Distfile(s) of this package may not be made available via ftp.  Set this string to
 .Pa ${RESTRICTED} .
 If this variable is set, the distfile will not be mirrored by ftp.netbsd.org.
-.It NO_WRKSUBDIR
-Assume package unpacks directly into
-.Pa ${WRKDIR} .
 .It NO_DEPENDS
 Don't verify build of dependencies.
 .It CHECK_SHLIBS
