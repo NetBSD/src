@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.87 2001/01/08 22:12:57 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.88 2001/01/16 17:33:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -2881,8 +2881,8 @@ tlp_al981_filter_setup(sc)
 	mchash[0] = mchash[1] = 0xffffffff;
 
  setit:
-	TULIP_WRITE(sc, CSR_ADM_MAR0, mchash[0]);
-	TULIP_WRITE(sc, CSR_ADM_MAR1, mchash[1]);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, CSR_ADM_MAR0, mchash[0]);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, CSR_ADM_MAR1, mchash[1]);
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
 	DPRINTF(sc, ("%s: tlp_al981_filter_setup: returning\n",
 	    sc->sc_dev.dv_xname));
