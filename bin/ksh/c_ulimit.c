@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ulimit.c,v 1.5 2003/06/23 11:38:54 agc Exp $	*/
+/*	$NetBSD: c_ulimit.c,v 1.6 2004/04/17 15:40:12 christos Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -20,7 +20,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ulimit.c,v 1.5 2003/06/23 11:38:54 agc Exp $");
+__RCSID("$NetBSD: c_ulimit.c,v 1.6 2004/04/17 15:40:12 christos Exp $");
 #endif
 
 
@@ -117,7 +117,10 @@ c_ulimit(wp)
 # endif /* UL_GMEMLIM */
 #endif /* RLIMIT_VMEM */
 #ifdef RLIMIT_SWAP
-		{ "swap(kbytes)", RLIMIT_SWAP, RLIMIT_SWAP, 1024, 'w' },
+		{ "swap(kbytes)", RLIMIT, RLIMIT_SWAP, RLIMIT_SWAP, 1024, 'w' },
+#endif
+#ifdef RLIMIT_SBSIZE
+		{ "sbsize(bytes)", RLIMIT, RLIMIT_SBSIZE, RLIMIT_SBSIZE, 1, 'b' },
 #endif
 		{ (char *) 0 }
 	    };

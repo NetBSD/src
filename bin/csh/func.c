@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.27 2003/12/17 17:32:16 christos Exp $ */
+/* $NetBSD: func.c,v 1.28 2004/04/17 15:40:52 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.27 2003/12/17 17:32:16 christos Exp $");
+__RCSID("$NetBSD: func.c,v 1.28 2004/04/17 15:40:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1099,6 +1099,7 @@ static const struct limits {
     { RLIMIT_MEMLOCK,	"memorylocked",	1024,	"kbytes" },
     { RLIMIT_NPROC,	"maxproc",	1,	"" },
     { RLIMIT_NOFILE,	"openfiles",	1,	"" },
+    { RLIMIT_SBSIZE,	"sbsize",	1,	"bytes" },
     { -1,		NULL,		0,	NULL }
 };
 
@@ -1242,7 +1243,7 @@ plim(const struct limits *lp, Char hard)
     struct rlimit rlim;
     RLIM_TYPE limit;
 
-    (void)fprintf(cshout, "%s \t", lp->limname);
+    (void)fprintf(cshout, "%-13.13s", lp->limname);
 
     (void)getrlimit(lp->limconst, &rlim);
     limit = hard ? rlim.rlim_max : rlim.rlim_cur;
