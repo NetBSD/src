@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.5 2001/11/26 20:49:04 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.6 2002/01/25 19:19:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -383,7 +383,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			printf("syncing: %lx,%lx\n", vaddr, length);
 #endif	/* DEBUG_DMA */
 			/* Actually sync the cache */
-			cpu_cache_purgeD_rng(vaddr, length);
+			cpu_dcache_wbinv_range(vaddr, length);
 
 			/* Adjust the length */
 			len -= length;
@@ -522,7 +522,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			 * uncacheable.
 			 */
 			if (flags & BUS_DMA_COHERENT) {
-				cpu_cache_purgeD_rng(va, NBPG);	
+				cpu_dcache_wbinv_range(va, NBPG);
 				cpu_drain_writebuf();
 				ptep = vtopte(va);
 				*ptep = ((*ptep) & (~PT_C | PT_B));

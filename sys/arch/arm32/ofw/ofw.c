@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.29 2001/11/27 01:06:29 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.30 2002/01/25 19:19:26 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -964,7 +964,7 @@ ofw_callbackhandler(args)
 		}
 
 		/* Write-back anything stuck in the cache. */
-		cache_clean();
+		cpu_idcache_wbinv_all();
 
 		/* Install new mappings. */
 		{
@@ -1006,7 +1006,7 @@ ofw_callbackhandler(args)
 		}
 
 		/* Write-back anything stuck in the cache. */
-		cache_clean();
+		cpu_idcache_wbinv_all();
 
 		/* Zero the mappings. */
 		{
