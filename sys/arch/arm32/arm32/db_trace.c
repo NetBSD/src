@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.6 1997/02/04 06:53:41 mark Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.7 1997/10/14 10:12:04 mark Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -36,7 +36,7 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
  
-#define INKERNEL(va)	(((vm_offset_t)(va)) >= USRSTACK)
+#define INKERNEL(va)	(((vm_offset_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
 
 void
 db_stack_trace_cmd(addr, have_addr, count, modif)
@@ -45,7 +45,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	db_expr_t       count;
 	char            *modif;
 {
-	struct frame	*frame;
+	struct frame	*frame, *lastframe;
 	boolean_t	kernel_only = TRUE;
 
 	{
@@ -58,16 +58,20 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	if (count == -1)
 		count = 65535;
 
-/*
- * The frame pointer points to the top word of the stack frame so we
- * need to adjust it by sizeof(struct frame) - sizeof(u_int))
- * to get the address of the start of the frame structure.
- */
+	/*
+	 * The frame pointer points to the top word of the stack frame so we
+	 * need to adjust it by sizeof(struct frame) - sizeof(u_int))
+	 * to get the address of the start of the frame structure.
+	 */
 
 	if (!have_addr)
-		frame = (struct frame *)(DDB_TF->tf_r11 - (sizeof(struct frame) - sizeof(u_int)));
+		frame = (struct frame *)(DDB_TF->tf_r11
+		    - (sizeof(struct frame) - sizeof(u_int)));
 	else
-		frame = (struct frame *)(addr - (sizeof(struct frame) - sizeof(u_int)));
+		frame = (struct frame *)(addr - (sizeof(struct frame)
+		    - sizeof(u_int)));
+
+	lastframe = NULL;
 
 	while (count--) {
 		db_expr_t	offset;
@@ -80,7 +84,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 
 		pc = frame->fr_pc;
 		/* Adjust the PC so the same address is printed no matter what CPU */
-		if (cputype == ID_SA110)
+		if (cputype == ID_SA110 || cputype == ID_ARM810)
 			pc += 4;
 		if (!INKERNEL(pc))
 			break;
@@ -97,9 +101,30 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		/*
 		 * Switch to next frame up
 		 */
-		frame = (struct frame *)(frame->fr_fp - (sizeof(struct frame) - sizeof(u_int)));
+		lastframe = frame;
+		frame = (struct frame *)(frame->fr_fp - (sizeof(struct frame)
+		    - sizeof(u_int)));
 
 		if (frame == NULL)
 			break;
+
+		if (INKERNEL((int)frame)) {
+			/* staying in kernel */
+			if (frame <= lastframe) {
+				db_printf("Bad frame pointer: %p\n", frame);
+				break;
+			}
+		} else if (INKERNEL((int)lastframe)) {
+			/* switch from user to kernel */
+			if (kernel_only)
+				break;	/* kernel stack only */
+		} else {
+			/* in user */
+			if (frame <= lastframe) {
+				db_printf("Bad user frame pointer: %p\n",
+					  frame);
+				break;
+			}
+		}
 	}
 }
