@@ -16,7 +16,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: sd.c,v 1.27 93/04/29 01:22:19 torek Exp 
- * $Id: sd.c,v 1.2 1993/10/27 18:15:07 deraadt Exp $
+ * $Id: sd.c,v 1.3 1993/11/14 15:01:52 deraadt Exp $
  */
 
 /*
@@ -53,7 +53,7 @@
 #endif						/* XXX */
 
 #ifdef SUN_LABEL_HACK
-#include <sparc/sunos/sun_disklabel.h>
+#include <sparc/scsi/sun_disklabel.h>
 #endif
 
 /*
