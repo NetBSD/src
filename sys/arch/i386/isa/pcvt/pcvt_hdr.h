@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_hdr.h,v 1.15 1995/04/21 04:54:57 mycroft Exp $	*/
+/*	$NetBSD: pcvt_hdr.h,v 1.16 1995/04/21 05:10:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -125,6 +125,7 @@
 #endif
 #include "machine/stdarg.h"
 #if PCVT_NETBSD > 9
+#include "i386/isa/isa_machdep.h"
 #include "i386/isa/pcvt/pcvt_ioctl.h"
 #else
 #include "machine/pcvt_ioctl.h"
