@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.454 2002/01/01 21:54:21 augustss Exp $
+# $NetBSD: GENERIC,v 1.455 2002/01/01 22:15:43 augustss Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.454 $"
+#ident 		"GENERIC-$Revision: 1.455 $"
 
 maxusers	32		# estimated number of users
 
@@ -938,7 +938,7 @@ midi*	at umidi?		# USB MIDI
 #sf2r0	at isa? port 0x384      # SoundForte RadioLink SF16-FMR2 FM Radio Card
 
 # PCI radio devices
-#mr*	at pci?			# Guillemot Maxi Radio FM 2000 Radio Card
+#mr*	at pci? dev ? function ? # Guillemot Maxi Radio FM 2000 Radio Card
 
 # Radio support
 #radio*	at az?
