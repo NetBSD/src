@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97reg.h,v 1.7 2002/10/12 07:40:41 kent Exp $	*/
+/*	$NetBSD: ac97reg.h,v 1.8 2002/10/12 10:46:24 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -130,7 +130,7 @@
 
 #define	AC97_REG_VENDOR_ID1		0x7c
 #define	AC97_REG_VENDOR_ID2		0x7e
-#define		AC97_VENDER_ID_MASK		0xffffff00
+#define		AC97_VENDOR_ID_MASK		0xffffff00
 
 #define	AC97_CODEC_ID(a0, a1, a2, x)					\
 	(((a0) << 24) | ((a1) << 16) | ((a2) << 8) | (x))
