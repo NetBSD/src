@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.46 1998/11/29 00:28:29 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.47 1999/03/22 03:25:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.46 1998/11/29 00:28:29 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.47 1999/03/22 03:25:29 ad Exp $");
 
 /*
  * devDC7085.c --
@@ -751,6 +751,7 @@ dcrint(sc)
 	register int c, cc;
 	int overrun = 0;
 	register struct tty **dc_tty;
+	char *cp;
 
 	dc_tty = ((struct dc_softc*)dc_cd.cd_devs[0])->dc_tty;	/* XXX */
 
@@ -783,9 +784,10 @@ dcrint(sc)
 				return;
 			}
 #if NRASTERCONSOLE > 0
-			if ((cc = kbdMapChar(cc)) < 0)
+			if ((cp = kbdMapChar(cc)) == NULL)
 				return;
-			rcons_input(0, cc);
+			while (*cp)
+				rcons_input(0, *cp++);
 #endif
 			return;
 		} else if (tp == dc_tty[DCMOUSE_PORT] && dcMouseButtons) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.46 1999/01/29 08:42:27 kleink Exp $	*/
+/*	$NetBSD: scc.c,v 1.47 1999/03/22 03:25:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.46 1999/01/29 08:42:27 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.47 1999/03/22 03:25:29 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -1139,6 +1139,7 @@ scc_rxintr(sc, chan, regs, unit)
 {
 	register struct tty *tp = sc->scc_tty[chan];
 	int cc, rr1 = 0, rr2 = 0;	/* XXX */
+	char *cp;
 
 	SCC_READ_DATA(regs, chan, cc);
 	if (rr2 == SCC_RR2_A_RECV_SPECIAL ||
@@ -1170,9 +1171,11 @@ scc_rxintr(sc, chan, regs, unit)
 			return;
 		}
 #ifdef HAVE_RCONS
-		if ((cc = kbdMapChar(cc)) < 0)
+		if ((cp = kbdMapChar(cc)) == NULL)
 			return;
-		rcons_input(0, cc);
+		
+		while (*cp)
+			rcons_input(0, *cp++);
 #endif
 	/*
 	 * Now for mousey
@@ -1235,7 +1238,7 @@ sccintr(xxxsc)
 
 	/* Note: only channel A has an RR3 */
 	SCC_READ_REG(regs, SCC_CHANNEL_A, ZSRR_IPEND, rr3);
-
+	
 	/*
 	 * Clear interrupt first to avoid a race condition.
 	 * If a new interrupt condition happens while we are
