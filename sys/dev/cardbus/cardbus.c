@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.59 2004/10/10 22:26:34 enami Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.60 2004/10/14 03:24:00 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.59 2004/10/10 22:26:34 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.60 2004/10/14 03:24:00 enami Exp $");
 
 #include "opt_cardbus.h"
 
@@ -239,13 +239,9 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			SIMPLEQ_FOREACH(p, &rom_image, next) {
 				if (p->rom_image ==
 				    CARDBUS_CIS_ASI_ROM_IMAGE(cis_ptr)) {
-					if (p->image_size > len)
-						panic("image too large: "
-						    "%d > %d",
-						    p->image_size, len);
 					bus_space_read_region_1(p->romt,
 					    p->romh, CARDBUS_CIS_ADDR(cis_ptr),
-					    tuples, p->image_size);
+					    tuples, MIN(p->image_size, len));
 					found++;
 					break;
 				}
@@ -264,12 +260,9 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			cardbus_conf_write(cc, cf, tag,
 			    CARDBUS_COMMAND_STATUS_REG,
 			    command | CARDBUS_COMMAND_MEM_ENABLE);
-			if (bar_size > len)
-				panic("bar_size too large: %d > %d",
-				    (int)bar_size, len);
 			/* XXX byte order? */
 			bus_space_read_region_1(ca->ca_memt, bar_memh,
-			    cis_ptr, tuples, bar_size);
+			    cis_ptr, tuples, MIN(bar_size, len));
 			found++;
 		}
 		command = cardbus_conf_read(cc, cf, tag,
@@ -911,18 +904,25 @@ decode_tuple(u_int8_t *tuple, u_int8_t *end,
 	u_int8_t type;
 	u_int8_t len;
 
-	if (tuple + 2 > end)
-		return (NULL);
-
 	type = tuple[0];
-	len = tuple[1] + 2;
+	switch (type) {
+	case PCMCIA_CISTPL_NULL:
+	case PCMCIA_CISTPL_END:
+		len = 1;
+		break;
+	default:
+		if (tuple + 2 > end)
+			return (NULL);
+		len = tuple[1] + 2;
+		break;
+	}
 
 	if (tuple + len > end)
 		return (NULL);
 
 	(*func)(tuple, len, data);
 
-	if (type == PCMCIA_CISTPL_END)
+	if (type == PCMCIA_CISTPL_END || tuple + len == end)
 		return (NULL);
 
 	return (tuple + len);
