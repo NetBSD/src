@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13 2003/06/26 20:44:51 aymeric Exp $	*/
+/*	$NetBSD: boot.c,v 1.14 2003/07/14 09:46:07 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
 #include <machine/cpu.h>
 
 #include "alloc.h"
+#include "boot.h"
 #include "ofdev.h"
 #include "openfirm.h"
 
@@ -152,7 +153,7 @@ parseargs(char *str, int *howtop)
 }
 
 static void
-chain(void entry(), char *args, void *ssym, void *esym)
+chain(boot_entry_t entry, char *args, void *ssym, void *esym)
 {
 	extern char end[], *cp;
 	u_int l, magic = 0x19730224;
@@ -176,7 +177,7 @@ chain(void entry(), char *args, void *ssym, void *esym)
 	l += sizeof(esym);
 	DPRINTF("args + l -> %p\n", args + l);
 
-	OF_chain((void *)RELOC, end - (char *)RELOC, entry, args, l);
+	OF_chain((void *) RELOC, end - (char *)RELOC, entry, args, l);
 	panic("chain");
 }
 
@@ -275,8 +276,8 @@ main(void)
 	esym = (void *)marks[MARK_END];
 
 	printf(" start=0x%x\n", entry);
-	__syncicache((void *)entry, (u_int)ssym - (u_int)entry);
-	chain((void *)entry, bootline, ssym, esym);
+	__syncicache((void *) entry, (u_int) ssym - (u_int) entry);
+	chain((boot_entry_t) entry, bootline, ssym, esym);
 
 	OF_exit();
 }

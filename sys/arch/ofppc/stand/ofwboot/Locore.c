@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.9 2003/06/26 20:43:48 aymeric Exp $	*/
+/*	$NetBSD: Locore.c,v 1.10 2003/07/14 09:46:06 aymeric Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,10 +37,10 @@
 
 #include <machine/cpu.h>
 
-static int (*openfirmware_entry) __P((void *));
-static int openfirmware __P((void *));
+static int (*openfirmware_entry)(void *);
+static int openfirmware(void *);
 
-static void setup __P((void));
+static void setup(void);
 
 static int stack[8192/4 + 4];
 
@@ -81,7 +81,6 @@ static void
 startup(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 {
 	extern char _end[], _edata[];
-	extern int main();
 
 	memset(_edata, 0, (_end - _edata));
 	openfirmware_entry = openfirm;
@@ -490,7 +489,7 @@ OF_chain(void *virt, u_int size, void (*entry)(), void *arg, u_int len)
 }
 #else
 void
-OF_chain(void *virt, u_int size, void (*entry)(), void *arg, u_int len)
+OF_chain(void *virt, u_int size, boot_entry_t entry, void *arg, u_int len)
 {
 	/*
 	 * This is a REALLY dirty hack till the firmware gets this going
