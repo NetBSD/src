@@ -1,4 +1,4 @@
-/*	$NetBSD: srand48.c,v 1.5 1998/11/15 17:13:52 christos Exp $	*/
+/*	$NetBSD: srand48.c,v 1.6 2000/01/22 22:19:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -17,7 +17,7 @@
 #include "rand48.h"
 
 #ifdef __weak_alias
-__weak_alias(srand48,_srand48);
+__weak_alias(srand48,_srand48)
 #endif
 
 void

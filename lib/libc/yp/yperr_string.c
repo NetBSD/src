@@ -1,4 +1,4 @@
-/*	$NetBSD: yperr_string.c,v 1.4 1999/09/16 09:54:28 lukem Exp $	 */
+/*	$NetBSD: yperr_string.c,v 1.5 2000/01/22 22:19:22 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yperr_string.c,v 1.4 1999/09/16 09:54:28 lukem Exp $");
+__RCSID("$NetBSD: yperr_string.c,v 1.5 2000/01/22 22:19:22 mycroft Exp $");
 #endif
 
 #include "namespace.h"
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: yperr_string.c,v 1.4 1999/09/16 09:54:28 lukem Exp $");
 #include <rpcsvc/ypclnt.h>
 
 #ifdef __weak_alias
-__weak_alias(yperr_string,_yperr_string);
+__weak_alias(yperr_string,_yperr_string)
 #endif
 
 char *

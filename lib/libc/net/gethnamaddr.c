@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.28 1999/12/28 15:47:41 assar Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.29 2000/01/22 22:19:14 mycroft Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.28 1999/12/28 15:47:41 assar Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.29 2000/01/22 22:19:14 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -105,8 +105,8 @@ __RCSID("$NetBSD: gethnamaddr.c,v 1.28 1999/12/28 15:47:41 assar Exp $");
 #endif
 
 #if defined(_LIBC) && defined(__weak_alias)
-__weak_alias(gethostbyaddr,_gethostbyaddr);
-__weak_alias(gethostbyname,_gethostbyname);
+__weak_alias(gethostbyaddr,_gethostbyaddr)
+__weak_alias(gethostbyname,_gethostbyname)
 #endif
 
 #define	MAXALIASES	35

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.11 1999/09/27 16:24:40 kleink Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.12 2000/01/22 22:19:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.11 1999/09/27 16:24:40 kleink Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.12 2000/01/22 22:19:12 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: sysconf.c,v 1.11 1999/09/27 16:24:40 kleink Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(sysconf,_sysconf);
+__weak_alias(sysconf,_sysconf)
 #endif
 
 /*

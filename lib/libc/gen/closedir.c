@@ -1,4 +1,4 @@
-/*	$NetBSD: closedir.c,v 1.9 1999/09/20 04:38:58 lukem Exp $	*/
+/*	$NetBSD: closedir.c,v 1.10 2000/01/22 22:19:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)closedir.c	8.1 (Berkeley) 6/10/93";
 #else
-__RCSID("$NetBSD: closedir.c,v 1.9 1999/09/20 04:38:58 lukem Exp $");
+__RCSID("$NetBSD: closedir.c,v 1.10 2000/01/22 22:19:09 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: closedir.c,v 1.9 1999/09/20 04:38:58 lukem Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(closedir,_closedir);
+__weak_alias(closedir,_closedir)
 #endif
 
 /*

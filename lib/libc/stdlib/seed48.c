@@ -1,4 +1,4 @@
-/*	$NetBSD: seed48.c,v 1.6 1999/09/20 04:39:41 lukem Exp $	*/
+/*	$NetBSD: seed48.c,v 1.7 2000/01/22 22:19:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -20,7 +20,7 @@
 #include "rand48.h"
 
 #ifdef __weak_alias
-__weak_alias(seed48,_seed48);
+__weak_alias(seed48,_seed48)
 #endif
 
 unsigned short *

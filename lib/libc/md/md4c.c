@@ -1,4 +1,4 @@
-/*	$NetBSD: md4c.c,v 1.8 1999/09/20 04:39:08 lukem Exp $	*/
+/*	$NetBSD: md4c.c,v 1.9 2000/01/22 22:19:14 mycroft Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
@@ -99,9 +99,9 @@ static const unsigned char PADDING[64] = {
 }
 
 #ifdef __weak_alias
-__weak_alias(MD4Init,_MD4Init);
-__weak_alias(MD4Update,_MD4Update);
-__weak_alias(MD4Final,_MD4Final);
+__weak_alias(MD4Init,_MD4Init)
+__weak_alias(MD4Update,_MD4Update)
+__weak_alias(MD4Final,_MD4Final)
 #endif
 
 /*

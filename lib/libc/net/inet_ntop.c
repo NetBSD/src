@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.8 1999/09/20 04:39:14 lukem Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.9 2000/01/22 22:19:16 mycroft Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_ntop.c,v 8.7 1996/08/05 08:41:18 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_ntop.c,v 1.8 1999/09/20 04:39:14 lukem Exp $");
+__RCSID("$NetBSD: inet_ntop.c,v 1.9 2000/01/22 22:19:16 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: inet_ntop.c,v 1.8 1999/09/20 04:39:14 lukem Exp $");
 #include <string.h>
 
 #ifdef __weak_alias
-__weak_alias(inet_ntop,_inet_ntop);
+__weak_alias(inet_ntop,_inet_ntop)
 #endif
 
 #ifdef SPRINTF_CHAR

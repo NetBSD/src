@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.11 1999/09/20 04:39:12 lukem Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.12 2000/01/22 22:19:15 mycroft Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -52,7 +52,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.11 1999/09/20 04:39:12 lukem Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.12 2000/01/22 22:19:15 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -72,16 +72,16 @@ __RCSID("$NetBSD: hesiod.c,v 1.11 1999/09/20 04:39:12 lukem Exp $");
 #include <string.h>
 
 #ifdef __weak_alias
-__weak_alias(hesiod_init,_hesiod_init);
-__weak_alias(hesiod_end,_hesiod_end);
-__weak_alias(hesiod_to_bind,_hesiod_to_bind);
-__weak_alias(hesiod_resolve,_hesiod_resolve);
-__weak_alias(hesiod_free_list,_hesiod_free_list);
-__weak_alias(hes_init,_hes_init);
-__weak_alias(hes_to_bind,_hes_to_bind);
-__weak_alias(hes_resolve,_hes_resolve);
-__weak_alias(hes_error,_hes_error);
-__weak_alias(hes_free,_hes_free);
+__weak_alias(hesiod_init,_hesiod_init)
+__weak_alias(hesiod_end,_hesiod_end)
+__weak_alias(hesiod_to_bind,_hesiod_to_bind)
+__weak_alias(hesiod_resolve,_hesiod_resolve)
+__weak_alias(hesiod_free_list,_hesiod_free_list)
+__weak_alias(hes_init,_hes_init)
+__weak_alias(hes_to_bind,_hes_to_bind)
+__weak_alias(hes_resolve,_hes_resolve)
+__weak_alias(hes_error,_hes_error)
+__weak_alias(hes_free,_hes_free)
 #endif
 
 struct hesiod_p {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ualarm.c,v 1.8 1998/11/13 11:57:16 christos Exp $	*/
+/*	$NetBSD: ualarm.c,v 1.9 2000/01/22 22:19:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ualarm.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ualarm.c,v 1.8 1998/11/13 11:57:16 christos Exp $");
+__RCSID("$NetBSD: ualarm.c,v 1.9 2000/01/22 22:19:13 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: ualarm.c,v 1.8 1998/11/13 11:57:16 christos Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(ualarm,_ualarm);
+__weak_alias(ualarm,_ualarm)
 #endif
 
 #define	USPS	1000000		/* # of microseconds in a second */

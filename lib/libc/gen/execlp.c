@@ -1,4 +1,4 @@
-/*	$NetBSD: execlp.c,v 1.5 1997/11/23 01:16:47 enami Exp $	*/
+/*	$NetBSD: execlp.c,v 1.6 2000/01/22 22:19:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execlp.c,v 1.5 1997/11/23 01:16:47 enami Exp $");
+__RCSID("$NetBSD: execlp.c,v 1.6 2000/01/22 22:19:09 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: execlp.c,v 1.5 1997/11/23 01:16:47 enami Exp $");
 #endif
 
 #ifdef __weak_alias
-__weak_alias(execlp,_execlp);
+__weak_alias(execlp,_execlp)
 #endif
 
 int

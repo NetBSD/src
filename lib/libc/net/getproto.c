@@ -1,4 +1,4 @@
-/*	$NetBSD: getproto.c,v 1.7 1998/02/18 12:22:42 kleink Exp $	*/
+/*	$NetBSD: getproto.c,v 1.8 2000/01/22 22:19:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getproto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getproto.c,v 1.7 1998/02/18 12:22:42 kleink Exp $");
+__RCSID("$NetBSD: getproto.c,v 1.8 2000/01/22 22:19:15 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: getproto.c,v 1.7 1998/02/18 12:22:42 kleink Exp $");
 #include <stddef.h>
 
 #ifdef __weak_alias
-__weak_alias(getprotobynumber,_getprotobynumber);
+__weak_alias(getprotobynumber,_getprotobynumber)
 #endif
 
 extern int _proto_stayopen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.19 1999/12/01 18:34:23 thorpej Exp $	*/
+/*	$NetBSD: xdr.c,v 1.20 2000/01/22 22:19:18 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.19 1999/12/01 18:34:23 thorpej Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.20 2000/01/22 22:19:18 mycroft Exp $");
 #endif
 #endif
 
@@ -60,34 +60,34 @@ __RCSID("$NetBSD: xdr.c,v 1.19 1999/12/01 18:34:23 thorpej Exp $");
 #include <rpc/xdr.h>
 
 #ifdef __weak_alias
-__weak_alias(xdr_bool,_xdr_bool);
-__weak_alias(xdr_bytes,_xdr_bytes);
-__weak_alias(xdr_char,_xdr_char);
-__weak_alias(xdr_enum,_xdr_enum);
-__weak_alias(xdr_free,_xdr_free);
-__weak_alias(xdr_hyper,_xdr_hyper);
-__weak_alias(xdr_int,_xdr_int);
-__weak_alias(xdr_int16_t,_xdr_int16_t);
-__weak_alias(xdr_int32_t,_xdr_int32_t);
-__weak_alias(xdr_int64_t,_xdr_int64_t);
-__weak_alias(xdr_long,_xdr_long);
-__weak_alias(xdr_longlong_t,_xdr_longlong_t);
-__weak_alias(xdr_netobj,_xdr_netobj);
-__weak_alias(xdr_opaque,_xdr_opaque);
-__weak_alias(xdr_short,_xdr_short);
-__weak_alias(xdr_string,_xdr_string);
-__weak_alias(xdr_u_char,_xdr_u_char);
-__weak_alias(xdr_u_hyper,_xdr_u_hyper);
-__weak_alias(xdr_u_int,_xdr_u_int);
-__weak_alias(xdr_u_int16_t,_xdr_u_int16_t);
-__weak_alias(xdr_u_int32_t,_xdr_u_int32_t);
-__weak_alias(xdr_u_int64_t,_xdr_u_int64_t);
-__weak_alias(xdr_u_long,_xdr_u_long);
-__weak_alias(xdr_u_longlong_t,_xdr_u_longlong_t);
-__weak_alias(xdr_u_short,_xdr_u_short);
-__weak_alias(xdr_union,_xdr_union);
-__weak_alias(xdr_void,_xdr_void);
-__weak_alias(xdr_wrapstring,_xdr_wrapstring);
+__weak_alias(xdr_bool,_xdr_bool)
+__weak_alias(xdr_bytes,_xdr_bytes)
+__weak_alias(xdr_char,_xdr_char)
+__weak_alias(xdr_enum,_xdr_enum)
+__weak_alias(xdr_free,_xdr_free)
+__weak_alias(xdr_hyper,_xdr_hyper)
+__weak_alias(xdr_int,_xdr_int)
+__weak_alias(xdr_int16_t,_xdr_int16_t)
+__weak_alias(xdr_int32_t,_xdr_int32_t)
+__weak_alias(xdr_int64_t,_xdr_int64_t)
+__weak_alias(xdr_long,_xdr_long)
+__weak_alias(xdr_longlong_t,_xdr_longlong_t)
+__weak_alias(xdr_netobj,_xdr_netobj)
+__weak_alias(xdr_opaque,_xdr_opaque)
+__weak_alias(xdr_short,_xdr_short)
+__weak_alias(xdr_string,_xdr_string)
+__weak_alias(xdr_u_char,_xdr_u_char)
+__weak_alias(xdr_u_hyper,_xdr_u_hyper)
+__weak_alias(xdr_u_int,_xdr_u_int)
+__weak_alias(xdr_u_int16_t,_xdr_u_int16_t)
+__weak_alias(xdr_u_int32_t,_xdr_u_int32_t)
+__weak_alias(xdr_u_int64_t,_xdr_u_int64_t)
+__weak_alias(xdr_u_long,_xdr_u_long)
+__weak_alias(xdr_u_longlong_t,_xdr_u_longlong_t)
+__weak_alias(xdr_u_short,_xdr_u_short)
+__weak_alias(xdr_union,_xdr_union)
+__weak_alias(xdr_void,_xdr_void)
+__weak_alias(xdr_wrapstring,_xdr_wrapstring)
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.13 1999/09/16 11:45:03 lukem Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.14 2000/01/22 22:19:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.13 1999/09/16 11:45:03 lukem Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.14 2000/01/22 22:19:12 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,8 +62,8 @@ __RCSID("$NetBSD: pwcache.c,v 1.13 1999/09/16 11:45:03 lukem Exp $");
 #include "pwcache.h"
 
 #ifdef __weak_alias
-__weak_alias(user_from_uid,_user_from_uid);
-__weak_alias(group_from_gid,_group_from_gid);
+__weak_alias(user_from_uid,_user_from_uid)
+__weak_alias(group_from_gid,_group_from_gid)
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lseek.c,v 1.6 1998/10/14 11:25:19 kleink Exp $	*/
+/*	$NetBSD: lseek.c,v 1.7 2000/01/22 22:19:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lseek.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: lseek.c,v 1.6 1998/10/14 11:25:19 kleink Exp $");
+__RCSID("$NetBSD: lseek.c,v 1.7 2000/01/22 22:19:20 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: lseek.c,v 1.6 1998/10/14 11:25:19 kleink Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(lseek,_lseek);
+__weak_alias(lseek,_lseek)
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypprot_err.c,v 1.3 1997/07/21 14:09:33 jtc Exp $	 */
+/*	$NetBSD: ypprot_err.c,v 1.4 2000/01/22 22:19:22 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ypprot_err.c,v 1.3 1997/07/21 14:09:33 jtc Exp $");
+__RCSID("$NetBSD: ypprot_err.c,v 1.4 2000/01/22 22:19:22 mycroft Exp $");
 #endif
 
 #include "namespace.h"
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: ypprot_err.c,v 1.3 1997/07/21 14:09:33 jtc Exp $");
 #include <rpcsvc/ypclnt.h>
 
 #ifdef __weak_alias
-__weak_alias(ypprot_err,_ypprot_err);
+__weak_alias(ypprot_err,_ypprot_err)
 #endif
 
 int

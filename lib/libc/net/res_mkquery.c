@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.16 1999/09/20 04:39:18 lukem Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.17 2000/01/22 22:19:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.16 1999/09/20 04:39:18 lukem Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.17 2000/01/22 22:19:16 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,7 +78,7 @@ __RCSID("$NetBSD: res_mkquery.c,v 1.16 1999/09/20 04:39:18 lukem Exp $");
 #include <string.h>
 
 #if defined(_LIBC) && defined(__weak_alias)
-__weak_alias(res_mkquery,_res_mkquery);
+__weak_alias(res_mkquery,_res_mkquery)
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.12 1999/09/20 04:38:57 lukem Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.13 2000/01/22 22:19:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.12 1999/09/20 04:38:57 lukem Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.13 2000/01/22 22:19:09 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,8 +84,8 @@ __RCSID("$NetBSD: __glob13.c,v 1.12 1999/09/20 04:38:57 lukem Exp $");
 
 #ifdef __weak_alias
 #ifdef __LIBC12_SOURCE__
-__weak_alias(glob,_glob);
-__weak_alias(globfree,_globfree);
+__weak_alias(glob,_glob)
+__weak_alias(globfree,_globfree)
 #endif /* __LIBC12_SOURCE__ */
 #endif /* __weak_alias */
 
