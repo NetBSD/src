@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.1.2.1 1999/01/30 15:07:41 minoura Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.1.2.2 1999/02/02 23:45:40 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -158,12 +158,15 @@ dmac_init_channels(sc)
  * Channel initialization/deinitialization per user device.
  */
 struct dmac_channel_stat *
-dmac_alloc_channel(self, ch, name, normalv, normal, errorv, error)
+dmac_alloc_channel(self, ch, name,
+		   normalv, normal, normalarg,
+		   errorv, error, errorarg)
 	struct device *self;
 	int ch;
 	char *name;
 	int normalv, errorv;
 	dmac_intr_handler_t normal, error;
+	void *normalarg, *errorarg;
 {
 	struct intio_softc *intio = (void*) self;
 	struct dmac_softc *sc = (void*) intio->sc_dmac;
@@ -189,6 +192,8 @@ dmac_alloc_channel(self, ch, name, normalv, normal, errorv, error)
 	chan->ch_errorv = errorv;
 	chan->ch_normal = normal;
 	chan->ch_error = error;
+	chan->ch_normalarg = normalarg;
+	chan->ch_errorarg = errorarg;
 	chan->ch_xfer_in_progress = 0;
 
 	/* setup the device-specific registers */
@@ -268,7 +273,7 @@ dmac_prepare_xfer (chan, dmat, dmamap, dir, scr, dar)
 	r->dx_tag = dmat;
 	r->dx_ocr = dir & DMAC_OCR_DIR_MASK;
 	r->dx_scr = scr & (DMAC_SCR_MAC_MASK|DMAC_SCR_DAC_MASK);
-	r->dx_device = (void*) pmap_extract (pmap_kernel(), (vaddr_t) dar);
+	r->dx_device = dar;
 	r->dx_done = 0;
 
 	return r;
@@ -341,8 +346,10 @@ dmac_program_arraychain(self, xf)
 	for (i=0, j=xf->dx_done; i<DMAC_MAPSIZE && j<map->dm_nsegs;
 	     i++, j++) {
 		dmac_map[ch][i].da_addr = (void*) map->dm_segs[j].ds_addr;
+#ifdef DIAGNOSTIC
 		if (map->dm_segs[j].ds_len > 0xff00)
-		printf ("dmac_program_arraychain: wrong map: %d\n", map->dm_segs[j].ds_len);
+			panic ("dmac_program_arraychain: wrong map: %d", map->dm_segs[j].ds_len);
+#endif
 		dmac_map[ch][i].da_count = map->dm_segs[j].ds_len;
 	}
 	xf->dx_done = j;
@@ -373,7 +380,7 @@ dmac_done(arg)
 	if (xf->dx_done == map->dm_nsegs) {
 		/* Done */
 		chan->ch_xfer_in_progress = 0;
-		return (*chan->ch_normal) (arg);
+		return (*chan->ch_normal) (chan->ch_normalarg);
 	}
 
 	/* Continue transfer */
@@ -404,11 +411,13 @@ dmac_error(arg)
 	struct dmac_channel_stat *chan = arg;
 	struct dmac_softc *sc = (void*) chan->ch_softc;
 
-	DDUMPREGS(3, ("dmac_error\n"));
+	printf ("DMAC transfer error CSR=%02x, CER=%02x\n",
+		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR),
+		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CER));
 	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
 	DDUMPREGS(3, ("dmac_error\n"));
 
-	return (*chan->ch_error) (arg);
+	return (*chan->ch_error) (chan->ch_errorarg);
 }
 
 
@@ -422,7 +431,7 @@ dmac_dump_regs(void)
 	if ((chan == 0) || (dmacdebug & 0xf0)) return;
 	sc = (void*) chan->ch_softc;
 
-	printf ("DMAC channel %d registers\n");
+	printf ("DMAC channel %d registers\n", chan->ch_channel);
 	printf ("CSR=%02x, CER=%02x, DCR=%02x, OCR=%02x, SCR=%02x,"
 		"CCR=%02x, CPR=%02x, GCR=%02x\n",
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR),
