@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.348 2003/10/15 11:10:45 rjs Exp $
+$NetBSD: usbdevs,v 1.349 2003/10/16 08:05:42 wiz Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,6 @@ $NetBSD: usbdevs,v 1.348 2003/10/15 11:10:45 rjs Exp $
  * make the device recognised by the appropriate device driver.
  */
 
-vendor ACDC		0x0d7e  American Computer & Digital Components
 vendor AOX		0x03e8	AOX
 vendor ATMEL		0x03eb	Atmel
 vendor MITSUMI		0x03ee	Mitsumi
@@ -334,7 +333,7 @@ vendor NEODIO		0x0aec  Neodio
 vendor TODOS		0x0b0c	Todos Data System
 vendor NEC2		0x0b62	NEC
 vendor ATI2		0x0b6f	ATI
-vendor ACER2		0x0b7a	Acer
+vendor ZEEVO		0x0b7a	Zeevo, Inc.
 vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics, Inc.
 vendor ASIX		0x0b95	ASIX Electronics
 vendor GREENHOUSE2	0x0bda	GREENHOUSE
@@ -344,6 +343,7 @@ vendor DMI		0x0c0b	DMI
 vendor EASYDISK		0x0c76	EasyDisk
 vendor TANGTOP		0x0d3d	Tangtop
 vendor PEN		0x0d7d	Pen Drive
+vendor ACDC		0x0d7e  American Computer & Digital Components
 vendor OTI		0x0ea0	Ours Technology Inc.
 vendor PILOTECH		0x0eaf  Pilotech
 vendor MOTOROLA		0x1063	Motorola
@@ -416,9 +416,6 @@ product ABOCOM XX10		0xabc1	XX10
 /* Accton products */
 product ACCTON USB320_EC	0x1046	USB320-EC Ethernet Adapter
 product ACCTON SS1001		0x5046	SpeedStream Ethernet Adapter
-
-/* Acer products */
-product ACER2 BLUETOOTH		0x07d0	BT-500 Bluetooth USB Adapter
 
 /* Acer Peripherals, Inc. products */
 product ACERP ACERSCAN_C310U	0x12a6	Acerscan C310U
@@ -1510,6 +1507,9 @@ product YAMAHA RPU200		0x3104	RP-U200
 
 /* Yano products */
 product YANO U640MO		0x0101	U640MO-03
+
+/* Zeevo, Inc. products */
+product ZEEVO BLUETOOTH		0x07d0	BT-500 Bluetooth USB Adapter
 
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax modem
