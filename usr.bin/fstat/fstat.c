@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.31 1998/07/18 05:04:38 lukem Exp $	*/
+/*	$NetBSD: fstat.c,v 1.32 1998/07/28 21:16:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.31 1998/07/18 05:04:38 lukem Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.32 1998/07/28 21:16:42 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -282,7 +282,8 @@ main(argc, argv)
 	exit(0);
 }
 
-char	*Uname, *Comm;
+const	char *Uname;
+char	*Comm;
 int	Pid;
 
 #define PREFIX(i) printf("%-8.8s %-10s %5d", Uname, Comm, Pid); \
