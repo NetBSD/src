@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.140 2000/04/19 04:49:50 enami Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.141 2000/05/14 18:20:11 dante Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -718,11 +718,16 @@ scsi_probedev(scsi, target, lun)
 		goto bad;
 
 	{
+		u_int8_t *extension = &inqbuf.flags1;
 		int len = inqbuf.additional_length;
 		while (len < 3)
-			inqbuf.unused[len++] = '\0';
+			extension[len++] = '\0';
 		while (len < 3 + 28)
-			inqbuf.unused[len++] = ' ';
+			extension[len++] = ' ';
+		while (len < 3 + 28 + 20)
+			extension[len++] = '\0';
+		while (len < 3 + 28 + 20 + 1)
+			extension[len++] = '\0';
 	}
 
 	sa.sa_sc_link = sc_link;
@@ -745,11 +750,11 @@ scsi_probedev(scsi, target, lun)
 	 * at SCSI-2 or better, set some limiting quirks.
 	 */
 	if ((inqbuf.version & SID_ANSII) >= 2) {
-		if ((inqbuf.flags & SID_CmdQue) == 0)
+		if ((inqbuf.flags3 & SID_CmdQue) == 0)
 			sc_link->quirks |= SDEV_NOTAG;
-		if ((inqbuf.flags & SID_Sync) == 0)
+		if ((inqbuf.flags3 & SID_Sync) == 0)
 			sc_link->quirks |= SDEV_NOSYNC;
-		if ((inqbuf.flags & SID_WBus16) == 0)
+		if ((inqbuf.flags3 & SID_WBus16) == 0)
 			sc_link->quirks |= SDEV_NOWIDE;
 	}
 	/*

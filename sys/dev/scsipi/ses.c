@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.4 2000/02/20 21:30:44 mjacob Exp $ */
+/*	$NetBSD: ses.c,v 1.5 2000/05/14 18:20:11 dante Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -92,7 +92,7 @@ typedef struct {
 #define	SEN_ID		"UNISYS           SUN_SEN"
 #define	SEN_ID_LEN	24
 
-static enctyp ses_type __P((void *, int));
+static enctyp ses_type __P((struct scsipi_inquiry_data *));
 
 
 /* Forward reference to Enclosure Functions */
@@ -276,8 +276,6 @@ ses_attach(parent, self, aux)
 }
 
 
-#define	NETBSD_SAFTE_END	50
-
 static enctyp
 ses_device_type(sa)
 	struct scsipibus_attach_args *sa;
@@ -288,32 +286,7 @@ ses_device_type(sa)
 	if (inqp == NULL)
 		return (SES_NONE);
 
-	/*
-	 * If we can get longer data to check for the
-	 * presence of a  SAF-TE device, try and do so.
-	 *
-	 * Because we do deferred target attach in NetBSD,
-	 * we don't have to run this as a polled command.
-	 */
-
-	if (inqp->additional_length >= NETBSD_SAFTE_END-4) {
-		size_t amt = inqp->additional_length + 4;
-		struct scsipi_generic cmd;
-		static u_char more[64];
-
-		bzero(&cmd, sizeof(cmd));
-		cmd.opcode = INQUIRY;
-		cmd.bytes[3] = amt;
-		if (scsipi_command(sa->sa_sc_link, &cmd, 6, more, amt,
-		    SCSIPIRETRIES, 10000, NULL,
-		    XS_CTL_DATA_IN | XS_CTL_DISCOVERY) == 0) {
-			length = amt;
-			inqp = (struct scsipi_inquiry_data *) more;
-		}
-	} else {
-		length = sizeof (struct scsipi_inquiry_data);
-	}
-	return (ses_type(inqp, length));
+	return (ses_type(inqp));
 }
 
 int
@@ -595,17 +568,18 @@ ses_log(ssc, fmt, va_alist)
 #define	SAFTE_LEN	SAFTE_END-SAFTE_START
 
 static enctyp
-ses_type(void *buf, int buflen)
+ses_type(inqp)
+	struct scsipi_inquiry_data *inqp;
 {
-	unsigned char *iqd = buf;
+	size_t	given_len = inqp->additional_length + 4;
 
-	if (buflen < 8+SEN_ID_LEN)
+	if (given_len < 8+SEN_ID_LEN)
 		return (SES_NONE);
 
-	if ((iqd[0] & 0x1f) == T_ENCLOSURE) {
-		if (STRNCMP(&iqd[8], SEN_ID, SEN_ID_LEN) == 0) {
+	if ((inqp->device & SID_TYPE) == T_ENCLOSURE) {
+		if (STRNCMP(inqp->vendor, SEN_ID, SEN_ID_LEN) == 0) {
 			return (SES_SEN);
-		} else if ((iqd[2] & 0x7) > 2) {
+		} else if ((inqp->version & SID_ANSII) > 2) {
 			return (SES_SES);
 		} else {
 			return (SES_SES_SCSI2);
@@ -614,7 +588,7 @@ ses_type(void *buf, int buflen)
 	}
 
 #ifdef	SES_ENABLE_PASSTHROUGH
-	if ((iqd[6] & 0x40) && (iqd[2] & 0x7) >= 2) {
+	if ((inqp->flags2 & SID_EncServ) && (inqp->version & SID_ANSII) >= 2) {
 		/*
 		 * PassThrough Device.
 		 */
@@ -627,13 +601,14 @@ ses_type(void *buf, int buflen)
 	 * some vendors were chopping it short.
 	 */
 
-	if (buflen < SAFTE_END - 2) {
+	if (given_len < SAFTE_END - 2) {
 		return (SES_NONE);
 	}
 
-	if (STRNCMP((char *)&iqd[SAFTE_START], "SAF-TE", SAFTE_LEN - 2) == 0) {
+	if (STRNCMP((char *)&inqp->vendor_specific[8], "SAF-TE",
+			SAFTE_LEN - 2) == 0) {
 		return (SES_SAFT);
-	}
+
 	return (SES_NONE);
 }
 
