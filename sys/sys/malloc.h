@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.53 2000/06/24 23:52:24 thorpej Exp $	*/
+/*	$NetBSD: malloc.h,v 1.54 2000/11/07 12:12:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -173,7 +173,8 @@
 #define	M_IP6RR		112	/* IPv6 Router Renumbering Prefix */
 #define	M_RR_ADDR	113	/* IPv6 Router Renumbering Ifid */
 #define M_SOFTINTR	114	/* Softinterrupt structures */
-#define M_LAST		115	/* Must be last type + 1 */
+#define M_EMULDATA	115	/* Per-process emulation data */
+#define M_LAST		116	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -291,7 +292,8 @@
 	"ip6rr",	/* 112 M_IP6RR */ \
 	"rp_addr",	/* 113 M_RR_ADDR */ \
 	"softintr",	/* 114 M_SOFTINTR */ \
-	NULL,		/* 115 */ \
+	"emuldata",	/* 115 M_EMULDATA */ \
+	NULL,		/* 116 */ \
 }
 
 struct kmemstats {
