@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.242.2.19 2001/06/11 19:34:12 he Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.242.2.20 2001/06/18 16:51:53 jhawk Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.18 2001/05/15 20:51:04 he Exp 
+ *	NetBSD
  */
 
 /*
@@ -723,6 +723,11 @@
 #define	PCI_PRODUCT_APPLE_UNINORTH_AGP	0x0020		/* UniNorth AGP Interface */
 #define	PCI_PRODUCT_APPLE_GMAC	0x0021		/* GMAC Ethernet */
 #define	PCI_PRODUCT_APPLE_KEYLARGO	0x0022		/* MAC-IO I/O Controller (KeyLargo) */
+#define	PCI_PRODUCT_APPLE_GMAC2	0x0024		/* GMAC Ethernet */
+#define	PCI_PRODUCT_APPLE_PANGEA_MACIO	0x0025		/* MAC-IO I/O Controller (Pangea) */
+#define	PCI_PRODUCT_APPLE_PANGEA_AGP	0x0027		/* Pangea AGP Interface */
+#define	PCI_PRODUCT_APPLE_PANGEA_PCI1	0x0028		/* Pangea Host-PCI Bridge */
+#define	PCI_PRODUCT_APPLE_PANGEA_PCI2	0x0029		/* Pangea Host-PCI Bridge */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
