@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 1997/03/05 22:22:11 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 1997/04/25 18:31:37 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -44,7 +44,20 @@
  */
 
 /*
- * Machine-dependent clock routines for the Mostek48t02
+ * Machine-dependent clock routines.  Sun3X machines may have
+ * either the Mostek 48T02 or the Intersil 7170 clock.
+ *
+ * It is tricky to determine which you have, because there is
+ * always something responding at the address where the Mostek
+ * clock might be found: either a Mostek or plain-old EEPROM.
+ * Therefore, we cheat.  If we find an Intersil clock, assume
+ * that what responds at the end of the EEPROM space is just
+ * plain-old EEPROM (not a Mostek clock).  Worse, there are
+ * H/W problems with probing for an Intersil on the 3/80, so
+ * on that machine we "know" there is a Mostek clock.
+ *
+ * Note that the probing algorithm described above requires
+ * that we probe the intersil before we probe the mostek!
  */
 
 #include <sys/param.h>
@@ -57,22 +70,33 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/mon.h>
+#include <machine/idprom.h>
+#include <machine/leds.h>
 #include <machine/obio.h>
 #include <machine/machdep.h>
-
-#include <dev/clock_subr.h>
+#include <machine/mon.h>
 
 #include <sun3/sun3/interreg.h>
+
+#include <dev/clock_subr.h>
+#include <dev/ic/intersil7170.h>
 #include "mostek48t02.h"
+
+#define SUN3_470	Yes
 
 #define	CLOCK_PRI	5
 #define IREG_CLK_BITS	(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5)
 
+/*
+ * Only one of these two variables should be non-zero after
+ * autoconfiguration determines which clock we have.
+ */
+static volatile void *intersil_va;
+static volatile void *mostek_clk_va;
+
 void _isr_clock __P((void));	/* in locore.s */
 void clock_intr __P((struct clockframe));
 
-static volatile void *clock_va;
 
 static int  clock_match __P((struct device *, struct cfdata *, void *args));
 static void clock_attach __P((struct device *, struct device *, void *));
@@ -86,30 +110,32 @@ struct cfdriver clock_cd = {
 };
 
 
-/*
- * This is called very early (by obio_init()) but after
- * intreg_init() has found the PROM mapping for the
- * interrupt register and cleared it.
- */
-void
-clock_init()
-{
-	/* Yes, use the EEPROM address.  It is the same H/W device. */
-	clock_va = obio_find_mapping(OBIO_EEPROM, sizeof(struct clockreg));
-	if (!clock_va) {
-		mon_printf("clock_init\n");
-		sunmon_abort();
-	}
-}
+#ifdef	SUN3_470
+
+#define intersil_clock ((volatile struct intersil7170 *) intersil_va)
+
+#define intersil_command(run, interrupt) \
+	(run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
+	 INTERSIL_CMD_NORMAL_MODE)
+
+#define intersil_clear() (void)intersil_clock->clk_intr_reg
+
+static int  oclock_match __P((struct device *, struct cfdata *, void *args));
+static void oclock_attach __P((struct device *, struct device *, void *));
+
+struct cfattach oclock_ca = {
+	sizeof(struct device), oclock_match, oclock_attach
+};
+
+struct cfdriver oclock_cd = {
+	NULL, "oclock", DV_DULL
+};
 
 /*
- * XXX  Need to determine which type of clock we have!
- * XXX  The Sun3/80 always has the MK4802, while the
- * XXX  Sun3/470 can (reportedly) have that or the old
- * XXX  intersil7170.  Should have two clock drivers...
+ * Is there an intersil clock?
  */
 static int
-clock_match(parent, cf, args)
+oclock_match(parent, cf, args)
     struct device *parent;
 	struct cfdata *cf;
     void *args;
@@ -120,25 +146,115 @@ clock_match(parent, cf, args)
 	if (cf->cf_unit != 0)
 		return (0);
 
-	/* Validate the given address. */
-	if (ca->ca_paddr != OBIO_CLOCK2)
+	/*
+	 * The 3/80 can not probe the Intersil absent,
+	 * but it never has one, so "just say no."
+	 */
+	if (cpu_machine_id == SUN3X_MACH_80)
 		return (0);
 
-	/* Default interrupt priority. */
-	if (ca->ca_intpri == -1)
-		ca->ca_intpri = CLOCK_PRI;
+	/* OK, really probe for the Intersil. */
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
+		return (0);
 
 	return (1);
 }
 
+/*
+ * Attach the intersil clock.
+ */
+static void
+oclock_attach(parent, self, args)
+	struct device *parent;
+	struct device *self;
+	void *args;
+{
+	struct confargs *ca = args;
+	caddr_t va;
+
+	printf("\n");
+
+	/* Get a mapping for it. */
+	va = obio_mapin(ca->ca_paddr, sizeof(struct intersil7170));
+	if (!va)
+		panic("oclock_attach");
+	intersil_va = va;
+
+#ifdef	DIAGNOSTIC
+	/* Verify correct probe order... */
+	if (mostek_clk_va) {
+		mostek_clk_va = 0;
+		printf("%s: warning - mostek found also!\n",
+			   self->dv_xname);
+	}
+#endif
+
+	/*
+	 * Set the clock to the correct interrupt rate, but
+	 * do not enable the interrupt until cpu_initclocks.
+	 * XXX: Actually, the interrupt_reg should be zero
+	 * at this point, so the clock interrupts should not
+	 * affect us, but we need to set the rate...
+	 */
+	intersil_clock->clk_cmd_reg =
+		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
+	intersil_clear();
+
+	/* Set the clock to 100 Hz, but do not enable it yet. */
+	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
+
+	/*
+	 * Can not hook up the ISR until cpu_initclocks()
+	 * because hardclock is not ready until then.
+	 * For now, the handler is _isr_autovec(), which
+	 * will complain if it gets clock interrupts.
+	 */
+}
+#endif	/* SUN3_470 */
+
+
+/*
+ * Is there a Mostek clock?  Hard to tell...
+ * (See comment at top of this file.)
+ */
+static int
+clock_match(parent, cf, args)
+    struct device *parent;
+	struct cfdata *cf;
+    void *args;
+{
+
+	/* This driver only supports one unit. */
+	if (cf->cf_unit != 0)
+		return (0);
+
+	/* If intersil was found, use that. */
+	if (intersil_va)
+		return (0);
+
+	/* Assume a Mostek is there... */
+	return (1);
+}
+
+/*
+ * Attach the mostek clock.
+ */
 static void
 clock_attach(parent, self, args)
 	struct device *parent;
 	struct device *self;
 	void *args;
 {
+	struct confargs *ca = args;
+	caddr_t va;
 
 	printf("\n");
+
+	/* Get a mapping for it. */
+	va = obio_mapin(ca->ca_paddr, sizeof(struct mostek_clkreg));
+	if (!va)
+		panic("clock_attach");
+	mostek_clk_va = va;
 
 	/*
 	 * Can not hook up the ISR until cpu_initclocks()
@@ -254,6 +370,10 @@ setstatclockrate(newhz)
 }
 
 /*
+ * Clock interrupt handler (for both Intersil and Mostek).
+ * XXX - Is it worth the trouble to save a few cycles here
+ * by making two separate interrupt handlers?
+ *
  * This is is called by the "custom" interrupt handler.
  * Note that we can get ZS interrupts while this runs,
  * and zshard may touch the interrupt_reg, so we must
@@ -264,15 +384,31 @@ void
 clock_intr(cf)
 	struct clockframe cf;
 {
+	extern char _Idle[];	/* locore.s */
+
+#ifdef	SUN3_470
+	if (intersil_va) {
+		/* Read the clock interrupt register. */
+		intersil_clear();
+	}
+#endif	/* SUN3_470 */
 
 	/* Pulse the clock intr. enable low. */
 	single_inst_bclr_b(*interrupt_reg, IREG_CLOCK_ENAB_5);
 	single_inst_bset_b(*interrupt_reg, IREG_CLOCK_ENAB_5);
 
+#ifdef	SUN3_470
+	if (intersil_va) {
+		/* Read the clock intr. reg. AGAIN! */
+		intersil_clear();
+		/* Assume we have 8 LEDS if we have the Intersil. */
+		if (cf.cf_pc == (long)_Idle)
+			leds_intr();
+	}
+#endif	/* SUN3_470 */
+
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
-
-	/* No LED frobbing on the 3/80 */
 }
 
 
@@ -320,8 +456,8 @@ microtime(tvp)
  * Resettodr restores the time of day hardware after a time change.
  */
 
-static long clk_get_secs(void);
-static void clk_set_secs(long);
+static long clk_get_secs __P((void));
+static void clk_set_secs __P((long));
 
 /*
  * Initialize the time of day register, based on the time base
@@ -384,13 +520,154 @@ void resettodr()
 
 
 /*
+ * Now routines to get and set clock as POSIX time.
+ * Our clock keeps "years since 1/1/1968".
+ */
+#define	CLOCK_BASE_YEAR 1968
+#ifdef	SUN3_470
+static void intersil_get_dt __P((struct clock_ymdhms *));
+static void intersil_set_dt __P((struct clock_ymdhms *));
+#endif /* SUN3_470 */
+static void mostek_get_dt __P((struct clock_ymdhms *));
+static void mostek_set_dt __P((struct clock_ymdhms *));
+
+static long
+clk_get_secs()
+{
+	struct clock_ymdhms dt;
+	long secs;
+
+	bzero(&dt, sizeof(dt));
+
+#ifdef	SUN3_470
+	if (intersil_va)
+		intersil_get_dt(&dt);
+#endif	/* SUN3_470 */
+	if (mostek_clk_va) {
+		/* Read the Mostek. */
+		mostek_get_dt(&dt);
+		/* Convert BCD values to binary. */
+		dt.dt_sec  = FROMBCD(dt.dt_sec);
+		dt.dt_min  = FROMBCD(dt.dt_min);
+		dt.dt_hour = FROMBCD(dt.dt_hour);
+		dt.dt_day  = FROMBCD(dt.dt_day);
+		dt.dt_mon  = FROMBCD(dt.dt_mon);
+		dt.dt_year = FROMBCD(dt.dt_year);
+	}
+
+	if ((dt.dt_hour > 24) ||
+		(dt.dt_day  > 31) ||
+		(dt.dt_mon  > 12))
+		return (0);
+
+	dt.dt_year += CLOCK_BASE_YEAR;
+	secs = clock_ymdhms_to_secs(&dt);
+	return (secs);
+}
+
+static void
+clk_set_secs(secs)
+	long secs;
+{
+	struct clock_ymdhms dt;
+
+	clock_secs_to_ymdhms(secs, &dt);
+	dt.dt_year -= CLOCK_BASE_YEAR;
+
+#ifdef	SUN3_470
+	if (intersil_va)
+		intersil_set_dt(&dt);
+#endif	/* SUN3_470 */
+
+	if (mostek_clk_va) {
+		/* Convert binary values to BCD. */
+		dt.dt_sec  = TOBCD(dt.dt_sec);
+		dt.dt_min  = TOBCD(dt.dt_min);
+		dt.dt_hour = TOBCD(dt.dt_hour);
+		dt.dt_day  = TOBCD(dt.dt_day);
+		dt.dt_mon  = TOBCD(dt.dt_mon);
+		dt.dt_year = TOBCD(dt.dt_year);
+		/* Write the Mostek. */
+		mostek_set_dt(&dt);
+	}
+}
+
+#ifdef	SUN3_470
+
+/*
+ * Routines to copy state into and out of the clock.
+ * The intersil registers have to be read or written
+ * in sequential order (or so it appears). -gwr
+ */
+static void
+intersil_get_dt(struct clock_ymdhms *dt)
+{
+	volatile struct intersil_dt *isdt;
+	int s;
+
+	isdt = &intersil_clock->counters;
+	s = splhigh();
+
+	/* Enable read (stop time) */
+	intersil_clock->clk_cmd_reg =
+		intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
+
+	/* Copy the info.  Careful about the order! */
+	dt->dt_sec  = isdt->dt_csec;  /* throw-away */
+	dt->dt_hour = isdt->dt_hour;
+	dt->dt_min  = isdt->dt_min;
+	dt->dt_sec  = isdt->dt_sec;
+	dt->dt_mon  = isdt->dt_month;
+	dt->dt_day  = isdt->dt_day;
+	dt->dt_year = isdt->dt_year;
+	dt->dt_wday = isdt->dt_dow;
+
+	/* Done reading (time wears on) */
+	intersil_clock->clk_cmd_reg =
+		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+	splx(s);
+}
+
+static void
+intersil_set_dt(struct clock_ymdhms *dt)
+{
+	volatile struct intersil_dt *isdt;
+	int s;
+
+	isdt = &intersil_clock->counters;
+	s = splhigh();
+
+	/* Enable write (stop time) */
+	intersil_clock->clk_cmd_reg =
+		intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
+
+	/* Copy the info.  Careful about the order! */
+	isdt->dt_csec = 0;
+	isdt->dt_hour = dt->dt_hour;
+	isdt->dt_min  = dt->dt_min;
+	isdt->dt_sec  = dt->dt_sec;
+	isdt->dt_month= dt->dt_mon;
+	isdt->dt_day  = dt->dt_day;
+	isdt->dt_year = dt->dt_year;
+	isdt->dt_dow  = dt->dt_wday;
+
+	/* Done writing (time wears on) */
+	intersil_clock->clk_cmd_reg =
+		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+	splx(s);
+}
+
+#endif /* SUN3_470 */
+
+
+/*
  * Routines to copy state into and out of the clock.
  * The clock CSR has to be set for read or write.
  */
 static void
-clk_get_dt(struct clock_ymdhms *dt)
+mostek_get_dt(struct clock_ymdhms *dt)
 {
-	volatile struct clockreg *cl = clock_va;
+	volatile struct mostek_clkreg *cl = mostek_clk_va;
 	int s;
 
 	s = splhigh();
@@ -413,9 +690,9 @@ clk_get_dt(struct clock_ymdhms *dt)
 }
 
 static void
-clk_set_dt(struct clock_ymdhms *dt)
+mostek_set_dt(struct clock_ymdhms *dt)
 {
-	volatile struct clockreg *cl = clock_va;
+	volatile struct mostek_clkreg *cl = mostek_clk_va;
 	int s;
 
 	s = splhigh();
@@ -436,55 +713,3 @@ clk_set_dt(struct clock_ymdhms *dt)
 	splx(s);
 }
 
-
-/*
- * Now routines to get and set clock as POSIX time.
- * Our clock keeps "years since 1/1/1968".
- */
-#define	CLOCK_BASE_YEAR 1968
-
-static long
-clk_get_secs()
-{
-	struct clock_ymdhms dt;
-	long secs;
-
-	clk_get_dt(&dt);
-
-	/* Convert BCD values to binary. */
-	dt.dt_sec  = FROMBCD(dt.dt_sec);
-	dt.dt_min  = FROMBCD(dt.dt_min);
-	dt.dt_hour = FROMBCD(dt.dt_hour);
-	dt.dt_day  = FROMBCD(dt.dt_day);
-	dt.dt_mon  = FROMBCD(dt.dt_mon);
-	dt.dt_year = FROMBCD(dt.dt_year);
-
-	if ((dt.dt_hour > 24) ||
-		(dt.dt_day  > 31) ||
-		(dt.dt_mon  > 12))
-		return (0);
-
-	dt.dt_year += CLOCK_BASE_YEAR;
-	secs = clock_ymdhms_to_secs(&dt);
-	return (secs);
-}
-
-static void
-clk_set_secs(secs)
-	long secs;
-{
-	struct clock_ymdhms dt;
-
-	clock_secs_to_ymdhms(secs, &dt);
-	dt.dt_year -= CLOCK_BASE_YEAR;
-
-	/* Convert binary values to BCD. */
-	dt.dt_sec  = TOBCD(dt.dt_sec);
-	dt.dt_min  = TOBCD(dt.dt_min);
-	dt.dt_hour = TOBCD(dt.dt_hour);
-	dt.dt_day  = TOBCD(dt.dt_day);
-	dt.dt_mon  = TOBCD(dt.dt_mon);
-	dt.dt_year = TOBCD(dt.dt_year);
-
-	clk_set_dt(&dt);
-}
