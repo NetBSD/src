@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bebox,v 1.21 2001/05/29 02:20:21 mrg Exp $
+#	$NetBSD: Makefile.bebox,v 1.22 2001/06/01 04:20:05 simonb Exp $
 
 # Makefile for NetBSD
 #
@@ -161,11 +161,11 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${BEBOX}/bebox/locore.s \
+SRCS=	${BEBOX}/bebox/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${BEBOX}/bebox/locore.s
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${BEBOX}/bebox/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 #	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
@@ -189,7 +189,7 @@ machdep.o: Makefile
 locore.o machdep.o: Makefile
 
 
-locore.o: ${BEBOX}/bebox/locore.s assym.h
+locore.o: ${BEBOX}/bebox/locore.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a
