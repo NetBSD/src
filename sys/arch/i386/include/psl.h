@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	5.2 (Berkeley) 1/18/91
- *	$Id: psl.h,v 1.11 1994/08/13 06:55:47 mycroft Exp $
+ *	$Id: psl.h,v 1.12 1994/09/19 05:05:15 mycroft Exp $
  */
 
 #ifndef _I386_PSL_H_
@@ -107,6 +107,8 @@ SPL(softclock, cpl = SIR_CLOCKMASK)
 SPL(softnet, cpl |= SIR_NETMASK)
 #define	splnet()	splsoftnet()
 SPL(softtty, cpl |= SIR_TTYMASK)
+
+extern void spllower __P((void));
 
 static __inline void
 spl0()
