@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.12 2005/01/04 04:52:50 elric Exp $ */
+/* $NetBSD: params.c,v 1.13 2005/03/30 17:10:18 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.12 2005/01/04 04:52:50 elric Exp $");
+__RCSID("$NetBSD: params.c,v 1.13 2005/03/30 17:10:18 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -87,7 +87,7 @@ params_new(void)
 {
 	struct params	*p;
 
-	p = malloc(sizeof(*p));
+	p = emalloc(sizeof(*p));
 	params_init(p);
 	return p;
 }
@@ -298,9 +298,7 @@ keygen_new(void)
 {
 	struct keygen *kg;
 
-	kg = malloc(sizeof(*kg));
-	if (!kg)
-		return NULL;
+	kg = emalloc(sizeof(*kg));
 	kg->kg_method = KEYGEN_UNKNOWN;
 	kg->kg_iterations = -1;
 	kg->kg_salt = NULL;
@@ -625,9 +623,8 @@ print_kvpair_int(FILE *f, int ts, const char *key, int val)
 	if (!key || val == -1)
 		return;
 
-	asprintf(&tmp, "%d", val);
-	if (!tmp)
-		err(1, "malloc");
+	if (asprintf(&tmp, "%d", val) == -1)
+		err(1, NULL);
 	print_kvpair_cstr(f, ts, key, tmp);
 	free(tmp);
 }
