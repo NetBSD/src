@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.2 1997/08/12 07:09:31 mikel Exp $
+.\" $NetBSD: bus_dma.9,v 1.3 1997/08/12 07:31:42 mikel Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,6 +71,9 @@
 "int nsegs" "int *rsegs" "int flags"
 .Ft void
 .Fn bus_dmamem_free "bus_dma_tag_t tag" "bus_dma_segment_t *segs" "int nsegs"
+.Ft int
+.Fn bus_dmamem_map "bus_dma_tag_t tag" "bus_dma_segment_t *segs" "int nsegs" \
+"size_t size" "caddr_t *kvap" "int flags"
 .Ft void
 .Fn bus_dmamem_unmap "bus_dma_tag_t tag" "caddr_t kva" "size_t size"
 .Ft int
@@ -521,7 +524,7 @@ should be used with care.
 .El
 .El
 .Pp
-Behavior is undefined if invalid arguements are passed to
+Behavior is undefined if invalid arguments are passed to
 .Fn bus_dmamem_map .
 .Pp
 Returns 0 on success, or an error code indicating mode of failure.
@@ -541,7 +544,7 @@ The kernel virtual address of the mapped memory.
 The size of the mapping.
 .El
 .Pp
-Behavior is undefined if invalid arguements are passed to
+Behavior is undefined if invalid arguments are passed to
 .Fn bus_dmamem_unmap .
 .Pp
 If given valid arguments, 
@@ -552,7 +555,7 @@ Provides support for user
 .Xr mmap 2 Ns 'ing
 of DMA-safe memory.  This function is to be called by a device
 driver's (*d_mmap)() entry point, which is called by the
-device pager for each page to be mapped.  The arguements are
+device pager for each page to be mapped.  The arguments are
 as follows:
 .Bl -tag -width nsegs -compact
 .It Fa tag
