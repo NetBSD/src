@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 2001/08/20 12:00:51 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 2001/09/05 14:18:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -675,17 +675,17 @@ pmap_bootstrap(nextva)
 	 */
 	size = sizeof(mmu_long_dte_t) * MMU_A_TBL_SIZE;
 	kernAbase = pmap_bootstrap_alloc(size);
-	bzero(kernAbase, size);
+	memset(kernAbase, 0, size);
 
 	/* Now the level-B kernel tables... */
 	size = sizeof(mmu_short_dte_t) * MMU_B_TBL_SIZE * KERN_B_TABLES;
 	kernBbase = pmap_bootstrap_alloc(size);
-	bzero(kernBbase, size);
+	memset(kernBbase, 0, size);
 
 	/* Now the level-C kernel tables... */
 	size = sizeof(mmu_short_pte_t) * MMU_C_TBL_SIZE * KERN_C_TABLES;
 	kernCbase = pmap_bootstrap_alloc(size);
-	bzero(kernCbase, size);
+	memset(kernCbase, 0, size);
 	/*
 	 * Note: In order for the PV system to work correctly, the kernel
 	 * and user-level C tables must be allocated contiguously.
@@ -1095,7 +1095,7 @@ pmap_init_a_tables()
 		 * or kernel, mapping.  This ensures that every process has
 		 * the kernel mapped in the top part of its address space.
 		 */
-		bcopy(kernAbase, a_tbl->at_dtbl, MMU_A_TBL_SIZE * 
+		memcpy(a_tbl->at_dtbl, kernAbase, MMU_A_TBL_SIZE * 
 			sizeof(mmu_long_dte_t));
 
 		/*
@@ -2492,7 +2492,7 @@ void
 pmap_pinit(pmap)
 	pmap_t pmap;
 {
-	bzero(pmap, sizeof(struct pmap));
+	memset(pmap, 0, sizeof(struct pmap));
 	pmap->pm_a_tmgr = NULL;
 	pmap->pm_a_phys = kernAphys;
 	pmap->pm_refcount = 1;
