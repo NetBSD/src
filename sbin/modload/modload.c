@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.15 1997/09/15 03:55:29 lukem Exp $	*/
+/*	$NetBSD: modload.c,v 1.16 1997/09/15 09:27:52 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.15 1997/09/15 03:55:29 lukem Exp $");
+__RCSID("$NetBSD: modload.c,v 1.16 1997/09/15 09:27:52 darrenr Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -50,11 +50,15 @@ __RCSID("$NetBSD: modload.c,v 1.15 1997/09/15 03:55:29 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <nlist.h>
 #include "pathnames.h"
 
 #ifndef DFLT_ENTRY
 #define	DFLT_ENTRY	"xxxinit"
 #endif	/* !DFLT_ENTRY */
+#ifndef DFLT_ENTRYEXT
+#define	DFLT_ENTRYEXT	"_lkmentry"
+#endif	/* !DFLT_ENTRYEXT */
 
 /*
  * Expected linker options:
@@ -149,6 +153,30 @@ cleanup()
 }
 
 int
+verify_entry(entry, filename)
+	char *entry, *filename;
+{
+	struct	nlist	names[2];
+	int n;
+
+	bzero((char *)names, sizeof(names));
+#ifdef	_AOUT_INCLUDE_
+	names[0].n_un.n_name = (char *)malloc(strlen(entry) + 2);
+	names[0].n_un.n_name[0] = '_';
+	strcpy(names[0].n_un.n_name + 1, entry);
+#else
+	names[0].n_name = (char *)malloc(strlen(entry) + 2);
+	names[0].n_name[0] = '_';
+	strcpy(names[0].n_name + 1, entry);
+#endif
+
+	n = nlist(filename, names);
+	if (n == -1)
+		err(1, "nlist %s", filename);
+	return n;
+}
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -222,6 +250,30 @@ main(argc, argv)
 	if (out == NULL) {
 		out = modout;
 		*p = '\0';
+	}
+
+	/*
+	 * Verify that the entry point for the module exists.
+	 */
+	if (verify_entry(entry, modobj)) {
+		/*
+		 * Try <modobj>_init if entry is DFLT_ENTRY.
+		 */
+		if (entry == DFLT_ENTRY) {
+			if ((p = strrchr(modout, '/')))
+				p++;
+			else
+				p = modout;
+			entry = (char *)malloc(strlen(p) +
+			    strlen(DFLT_ENTRYEXT) + 1);
+			strcpy(entry, p);
+			strcat(entry, DFLT_ENTRYEXT);
+			if (verify_entry(entry, modobj))
+				errx(1, "entry point _%s not found in %s",
+				    entry, modobj);
+		} else
+			errx(1, "entry point _%s not found in %s", entry,
+			    modobj);
 	}
 
 	/*
