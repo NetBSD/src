@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_syscall.h,v 1.29 2000/12/09 07:11:18 mycroft Exp $ */
+/* $NetBSD: ibcs2_syscall.h,v 1.30 2000/12/11 03:07:06 mycroft Exp $ */
 
 /*
  * System call numbers.
@@ -325,3 +325,4 @@
 #define	IBCS2_SYS_scoinfo	250
 
 #define	IBCS2_SYS_MAXSYSCALL	260
+#define	IBCS2_SYS_NSYSENT	512
