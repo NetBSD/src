@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.83 2001/06/17 21:23:56 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.84 2001/06/17 22:31:57 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -5323,3 +5323,33 @@ sys/arch/cobalt/cobalt/machdep.c		1.33
 
   Fix handling of boot strings, so that multiple internal disks in
   a raq2 can work.
+
+sys/arch/i386/i386/compat_13_machdep.c		 1.6
+sys/arch/i386/i386/db_interface.c		 1.31
+sys/arch/i386/i386/genassym.cf			 1.28
+sys/arch/i386/i386/ibcs2_machdep.c		 1.15
+sys/arch/i386/i386/ipkdb_glue.c			 1.2
+sys/arch/i386/i386/kgdb_machdep.c		 1.11
+sys/arch/i386/i386/machdep.c			 1.445
+sys/arch/i386/i386/svr4_machdep.c		 1.53
+sys/arch/i386/i386/sys_machdep.c		 1.59
+sys/arch/i386/include/db_machdep.h		 1.17
+sys/arch/i386/include/frame.h			 1.16
+sys/arch/i386/include/pcb.h			 1.28
+sys/compat/linux/arch/i386/linux_machdep.c	 1.65
+sys/arch/i386/i386/db_trace.c			 1.30 via patch
+sys/arch/i386/i386/locore.s			 1.242 via patch
+sys/arch/i386/i386/process_machdep.c		 1.33 via patch
+sys/arch/i386/i386/trap.c			 1.160 via patch
+
+  Add %fs/%gs to trap frame and save/restore them on trap/interupt/
+  syscall entry from userspace.
+
+  Remove special-case ``by hand'' validation of %fs/%gs register
+  values s well as special handling of them in various signal
+  handling paths.  Now, like %ds and %es, they are validated by
+  the hardware on return to userland.
+
+  This paves the way for the use of %fs for per-cpu data on multi-
+  processor systems, and fixes an otherwise difficult-to-fix
+  interaction between threads/clone(2) and USER_LDT.
