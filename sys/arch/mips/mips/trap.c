@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78 1997/10/17 09:35:02 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.78.2.1 1997/11/15 00:49:55 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 1997/10/17 09:35:02 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78.2.1 1997/11/15 00:49:55 mellon Exp $");
 
 #if !defined(MIPS1) && !defined(MIPS3)
 #error  Neither  "MIPS1" (r2000 family), "MIPS3" (r4000 family) was configured.
@@ -946,7 +946,7 @@ trap(status, cause, vaddr, opc, frame)
 }
 
 #include <net/netisr.h>
-#include "ether.h"
+#include "arp.h"
 #include "ppp.h"
 
 /*
@@ -998,7 +998,7 @@ interrupt(status, cause, pc, frame)
 		cnt.v_soft++;
 		intrcnt[SOFTNET_INTR]++;
 #ifdef INET
-#if NETHER > 0
+#if NARP > 0
 		if (isr & (1 << NETISR_ARP)) arpintr();
 #endif
 		if (isr & (1 << NETISR_IP)) ipintr();
