@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.54 2003/10/13 08:10:48 dyoung Exp $	*/
+/*	$NetBSD: awi.c,v 1.55 2003/10/15 07:18:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.54 2003/10/13 08:10:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.55 2003/10/15 07:18:17 simonb Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1640,9 +1640,9 @@ awi_lock(struct awi_softc *sc)
 		 * ioctl requests in progress.
 		 */
 		if (sc->sc_busy) {
-			return EWOULDBLOCK;
 			if (sc->sc_invalid)
 				return ENXIO;
+			return EWOULDBLOCK;
 		}
 		sc->sc_busy = 1;
 		sc->sc_cansleep = 0;
