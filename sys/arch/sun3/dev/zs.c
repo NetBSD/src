@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.23 1995/04/11 02:41:42 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.24 1995/04/26 23:20:24 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -115,7 +115,7 @@ struct zsinfo {
 	struct	zs_chanstate zi_cs[2];	/* channel A and B software state */
 };
 
-struct tty *zs_tty[NZS * 2];		/* XXX should be dynamic */
+static struct tty *zs_tty[NZS * 2]; 	/* XXX should be dynamic */
 
 /* Definition of the driver for autoconfig. */
 static int	zs_match(struct device *, void *, void *);
@@ -376,6 +376,18 @@ zs_attach(struct device *parent, struct device *self, void *args)
 		/* zsparam called by zsiopen */
 		ms_serial(tp, zsiopen, zsiclose);
 	}
+}
+
+/*
+ * XXX - Temporary hack...
+ */
+struct tty *
+zstty(dev)
+	dev_t dev;
+{
+	int unit = minor(dev);
+
+	return (zs_tty[unit]);
 }
 
 /*
@@ -1556,7 +1568,9 @@ zs_kgdb_init()
 		panic("kbdb_attach: zs0 not yet mapped");
 	addr = zsaddr[0];
 
-	zc = unit == 0 ? &addr->zs_chan[ZS_CHAN_A] : &addr->zs_chan[ZS_CHAN_B];
+	zc = (unit == 0) ?
+		&addr->zs_chan[ZS_CHAN_A] :
+		&addr->zs_chan[ZS_CHAN_B];
 	zs_kgdb_savedspeed = zs_getspeed(zc);
 	printf("zs_kgdb_init: attaching zs%d%c at %d baud\n",
 	    zs, unit + 'a', kgdb_rate);
