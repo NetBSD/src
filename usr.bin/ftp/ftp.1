@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.52 1999/10/05 01:16:12 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.53 1999/10/05 13:05:40 lukem Exp $
 .\"
 .\" Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd October 2, 1999
+.Dd October 5, 1999
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -1289,6 +1289,8 @@ receives a
 .Dq status
 argument of
 .Xr stty 1 )
+or
+.Dv SIGQUIT
 signal whilst a transfer is in progress, the current transfer rate
 statistics will be written to the standard error output, in the
 same format as the standard completion message.
