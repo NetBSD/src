@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.5 1995/07/02 00:30:29 briggs Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.6 1995/07/06 17:13:49 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -215,4 +215,12 @@ grfmv_mode(gp, cmd, arg)
 		break;
 	}
 	return EINVAL;
+}
+
+extern caddr_t
+grfmv_phys(gp, addr)
+	struct grf_softc *gp;
+	vm_offset_t addr;
+{
+	return (caddr_t) NUBUS_VIRT_TO_PHYS(addr);
 }
