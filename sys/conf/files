@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.159 1998/01/09 15:03:52 drochner Exp $
+#	$NetBSD: files,v 1.160 1998/01/11 05:57:45 scottr Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -16,6 +16,7 @@ defopt	VNODEPAGER
 
 defopt	NFS_BOOT_BOOTP
 defopt	NFS_BOOT_BOOTPARAM
+defopt	NFS_BOOT_DHCP
 
 # generic attributes
 define	disk
@@ -463,7 +464,7 @@ file netns/spp_usrreq.c			ns
 file nfs/krpc_subr.c			nfs
 file nfs/nfs_bio.c			nfs
 file nfs/nfs_boot.c			nfs
-file nfs/nfs_bootdhcp.c 		nfs & nfs_boot_bootp
+file nfs/nfs_bootdhcp.c 		nfs & (nfs_boot_bootp | nfs_boot_dhcp)
 file nfs/nfs_bootparam.c		nfs & nfs_boot_bootparam
 file nfs/nfs_node.c			nfs
 file nfs/nfs_nqlease.c			nfsserver | nfs
