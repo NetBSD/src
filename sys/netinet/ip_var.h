@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.42 2000/08/25 13:35:06 tron Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.43 2000/10/17 02:57:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -178,6 +178,7 @@ struct ipflow {
 #define	IP_RETURNMTU		0x4		/* pass back mtu on EMSGSIZE */
 #define	IP_ROUTETOIF		SO_DONTROUTE	/* bypass routing tables */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
+#define	IP_MTUDISC		0x0400		/* Path MTU Discovery; set DF */
 
 extern struct ipstat ipstat;		/* ip statistics */
 extern LIST_HEAD(ipqhead, ipq) ipq;	/* ip reass. queue */
