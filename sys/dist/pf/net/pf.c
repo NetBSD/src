@@ -1,5 +1,5 @@
-/*	$NetBSD: pf.c,v 1.10 2004/12/21 12:05:34 peter Exp $	*/
-/*	$OpenBSD: pf.c,v 1.457.2.5 2004/12/16 02:04:55 brad Exp $ */
+/*	$NetBSD: pf.c,v 1.11 2004/12/21 12:06:37 peter Exp $	*/
+/*	$OpenBSD: pf.c,v 1.457.2.6 2004/12/19 18:48:57 brad Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5928,7 +5928,8 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			goto done;
 		}
 		if (dir == PF_IN && pf_check_proto_cksum(m, off,
-		    ntohs(h->ip6_plen), IPPROTO_TCP, AF_INET6)) {
+		    ntohs(h->ip6_plen) - (off - sizeof(struct ip6_hdr)),
+		    IPPROTO_TCP, AF_INET6)) {
 			action = PF_DROP;
 			goto done;
 		}
@@ -5961,7 +5962,8 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			goto done;
 		}
 		if (dir == PF_IN && uh.uh_sum && pf_check_proto_cksum(m,
-		    off, ntohs(h->ip6_plen), IPPROTO_UDP, AF_INET6)) {
+		    off, ntohs(h->ip6_plen) - (off - sizeof(struct ip6_hdr)),
+		    IPPROTO_UDP, AF_INET6)) {
 			action = PF_DROP;
 			goto done;
 		}
@@ -5995,7 +5997,8 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			goto done;
 		}
 		if (dir == PF_IN && pf_check_proto_cksum(m, off,
-		    ntohs(h->ip6_plen), IPPROTO_ICMPV6, AF_INET6)) {
+		    ntohs(h->ip6_plen) - (off - sizeof(struct ip6_hdr)),
+		    IPPROTO_ICMPV6, AF_INET6)) {
 			action = PF_DROP;
 			goto done;
 		}
