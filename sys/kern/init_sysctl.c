@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.11 2003/12/12 23:21:44 simonb Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.12 2003/12/20 07:26:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -727,7 +727,7 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
 static int
 sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 {
-	int error, new_vnodes;
+	int error, new_vnodes, old_vnodes;
 	struct sysctlnode node;
 
 	new_vnodes = desiredvnodes;
@@ -737,9 +737,15 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	if (new_vnodes < desiredvnodes)
-		return (EINVAL);
+	old_vnodes = desiredvnodes;
 	desiredvnodes = new_vnodes;
+	if (new_vnodes < old_vnodes) {
+		error = vfs_drainvnodes(new_vnodes, l->l_proc);
+		if (error) {
+			desiredvnodes = old_vnodes;
+			return (error);
+		}
+	}
 	vfs_reinit();
 	nchreinit();
 
