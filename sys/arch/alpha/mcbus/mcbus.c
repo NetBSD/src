@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.8 2001/05/02 01:24:29 thorpej Exp $ */
+/* $NetBSD: mcbus.c,v 1.9 2002/09/26 20:02:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.8 2001/05/02 01:24:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.9 2002/09/26 20:02:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ mcbusattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	static const char *bcs[CPU_BCacheMask + 1] = {
+	static const char * const bcs[CPU_BCacheMask + 1] = {
 		"No", "1MB", "2MB", "4MB",
 	};
 	struct mcbus_dev_attach_args ta;
