@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.1 1999/04/15 12:21:46 cjs Exp $
+#	$NetBSD: Makefile,v 1.10.2.2 1999/04/26 15:19:17 perry Exp $
 
 PROG=		grep
 SRCS=		bindtextdom.c dcgettext.c dgettext.c gettext.c finddomain.c \
@@ -32,6 +32,7 @@ MLINKS=	grep.1 egrep.1 \
 LINKS=	${BINDIR}/grep ${BINDIR}/egrep \
 	${BINDIR}/grep ${BINDIR}/fgrep
 
+.include <bsd.info.mk>
 .include <bsd.prog.mk>
 
 .PATH: ${DIST}/grep/doc ${DIST}/grep/intl ${DIST}/grep/po ${DIST}/grep/src 
