@@ -1,0 +1,1229 @@
+This is ld.info, produced by makeinfo version 4.0 from ./ld.texinfo.
+
+START-INFO-DIR-ENTRY
+* Ld: (ld).                       The GNU linker.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU linker LD version 2.10.
+
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
+Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+File: ld.info,  Node: Environment,  Prev: Options,  Up: Invocation
+
+Environment Variables
+=====================
+
+   You can change the behavior of `ld' with the environment variables
+`GNUTARGET', `LDEMULATION', and `COLLECT_NO_DEMANGLE'.
+
+   `GNUTARGET' determines the input-file object format if you don't use
+`-b' (or its synonym `--format').  Its value should be one of the BFD
+names for an input format (*note BFD::).  If there is no `GNUTARGET' in
+the environment, `ld' uses the natural format of the target. If
+`GNUTARGET' is set to `default' then BFD attempts to discover the input
+format by examining binary input files; this method often succeeds, but
+there are potential ambiguities, since there is no method of ensuring
+that the magic number used to specify object-file formats is unique.
+However, the configuration procedure for BFD on each system places the
+conventional format for that system first in the search-list, so
+ambiguities are resolved in favor of convention.
+
+   `LDEMULATION' determines the default emulation if you don't use the
+`-m' option.  The emulation can affect various aspects of linker
+behaviour, particularly the default linker script.  You can list the
+available emulations with the `--verbose' or `-V' options.  If the `-m'
+option is not used, and the `LDEMULATION' environment variable is not
+defined, the default emulation depends upon how the linker was
+configured.
+
+   Normally, the linker will default to demangling symbols.  However, if
+`COLLECT_NO_DEMANGLE' is set in the environment, then it will default
+to not demangling symbols.  This environment variable is used in a
+similar fashion by the `gcc' linker wrapper program.  The default may
+be overridden by the `--demangle' and `--no-demangle' options.
+
+
+File: ld.info,  Node: Scripts,  Next: Machine Dependent,  Prev: Invocation,  Up: Top
+
+Linker Scripts
+**************
+
+   Every link is controlled by a "linker script".  This script is
+written in the linker command language.
+
+   The main purpose of the linker script is to describe how the
+sections in the input files should be mapped into the output file, and
+to control the memory layout of the output file.  Most linker scripts
+do nothing more than this.  However, when necessary, the linker script
+can also direct the linker to perform many other operations, using the
+commands described below.
+
+   The linker always uses a linker script.  If you do not supply one
+yourself, the linker will use a default script that is compiled into the
+linker executable.  You can use the `--verbose' command line option to
+display the default linker script.  Certain command line options, such
+as `-r' or `-N', will affect the default linker script.
+
+   You may supply your own linker script by using the `-T' command line
+option.  When you do this, your linker script will replace the default
+linker script.
+
+   You may also use linker scripts implicitly by naming them as input
+files to the linker, as though they were files to be linked.  *Note
+Implicit Linker Scripts::.
+
+* Menu:
+
+* Basic Script Concepts::	Basic Linker Script Concepts
+* Script Format::		Linker Script Format
+* Simple Example::		Simple Linker Script Example
+* Simple Commands::		Simple Linker Script Commands
+* Assignments::			Assigning Values to Symbols
+* SECTIONS::			SECTIONS Command
+* MEMORY::			MEMORY Command
+* PHDRS::			PHDRS Command
+* VERSION::			VERSION Command
+* Expressions::			Expressions in Linker Scripts
+* Implicit Linker Scripts::	Implicit Linker Scripts
+
+
+File: ld.info,  Node: Basic Script Concepts,  Next: Script Format,  Up: Scripts
+
+Basic Linker Script Concepts
+============================
+
+   We need to define some basic concepts and vocabulary in order to
+describe the linker script language.
+
+   The linker combines input files into a single output file.  The
+output file and each input file are in a special data format known as an
+"object file format".  Each file is called an "object file".  The
+output file is often called an "executable", but for our purposes we
+will also call it an object file.  Each object file has, among other
+things, a list of "sections".  We sometimes refer to a section in an
+input file as an "input section"; similarly, a section in the output
+file is an "output section".
+
+   Each section in an object file has a name and a size.  Most sections
+also have an associated block of data, known as the "section contents".
+A section may be marked as "loadable", which mean that the contents
+should be loaded into memory when the output file is run.  A section
+with no contents may be "allocatable", which means that an area in
+memory should be set aside, but nothing in particular should be loaded
+there (in some cases this memory must be zeroed out).  A section which
+is neither loadable nor allocatable typically contains some sort of
+debugging information.
+
+   Every loadable or allocatable output section has two addresses.  The
+first is the "VMA", or virtual memory address.  This is the address the
+section will have when the output file is run.  The second is the
+"LMA", or load memory address.  This is the address at which the
+section will be loaded.  In most cases the two addresses will be the
+same.  An example of when they might be different is when a data section
+is loaded into ROM, and then copied into RAM when the program starts up
+(this technique is often used to initialize global variables in a ROM
+based system).  In this case the ROM address would be the LMA, and the
+RAM address would be the VMA.
+
+   You can see the sections in an object file by using the `objdump'
+program with the `-h' option.
+
+   Every object file also has a list of "symbols", known as the "symbol
+table".  A symbol may be defined or undefined.  Each symbol has a name,
+and each defined symbol has an address, among other information.  If
+you compile a C or C++ program into an object file, you will get a
+defined symbol for every defined function and global or static
+variable.  Every undefined function or global variable which is
+referenced in the input file will become an undefined symbol.
+
+   You can see the symbols in an object file by using the `nm' program,
+or by using the `objdump' program with the `-t' option.
+
+
+File: ld.info,  Node: Script Format,  Next: Simple Example,  Prev: Basic Script Concepts,  Up: Scripts
+
+Linker Script Format
+====================
+
+   Linker scripts are text files.
+
+   You write a linker script as a series of commands.  Each command is
+either a keyword, possibly followed by arguments, or an assignment to a
+symbol.  You may separate commands using semicolons.  Whitespace is
+generally ignored.
+
+   Strings such as file or format names can normally be entered
+directly.  If the file name contains a character such as a comma which
+would otherwise serve to separate file names, you may put the file name
+in double quotes.  There is no way to use a double quote character in a
+file name.
+
+   You may include comments in linker scripts just as in C, delimited by
+`/*' and `*/'.  As in C, comments are syntactically equivalent to
+whitespace.
+
+
+File: ld.info,  Node: Simple Example,  Next: Simple Commands,  Prev: Script Format,  Up: Scripts
+
+Simple Linker Script Example
+============================
+
+   Many linker scripts are fairly simple.
+
+   The simplest possible linker script has just one command:
+`SECTIONS'.  You use the `SECTIONS' command to describe the memory
+layout of the output file.
+
+   The `SECTIONS' command is a powerful command.  Here we will describe
+a simple use of it.  Let's assume your program consists only of code,
+initialized data, and uninitialized data.  These will be in the
+`.text', `.data', and `.bss' sections, respectively.  Let's assume
+further that these are the only sections which appear in your input
+files.
+
+   For this example, let's say that the code should be loaded at address
+0x10000, and that the data should start at address 0x8000000.  Here is a
+linker script which will do that:
+     SECTIONS
+     {
+       . = 0x10000;
+       .text : { *(.text) }
+       . = 0x8000000;
+       .data : { *(.data) }
+       .bss : { *(.bss) }
+     }
+
+   You write the `SECTIONS' command as the keyword `SECTIONS', followed
+by a series of symbol assignments and output section descriptions
+enclosed in curly braces.
+
+   The first line inside the `SECTIONS' command of the above example
+sets the value of the special symbol `.', which is the location
+counter.  If you do not specify the address of an output section in some
+other way (other ways are described later), the address is set from the
+current value of the location counter.  The location counter is then
+incremented by the size of the output section.  At the start of the
+`SECTIONS' command, the location counter has the value `0'.
+
+   The second line defines an output section, `.text'.  The colon is
+required syntax which may be ignored for now.  Within the curly braces
+after the output section name, you list the names of the input sections
+which should be placed into this output section.  The `*' is a wildcard
+which matches any file name.  The expression `*(.text)' means all
+`.text' input sections in all input files.
+
+   Since the location counter is `0x10000' when the output section
+`.text' is defined, the linker will set the address of the `.text'
+section in the output file to be `0x10000'.
+
+   The remaining lines define the `.data' and `.bss' sections in the
+output file.  The linker will place the `.data' output section at
+address `0x8000000'.  After the linker places the `.data' output
+section, the value of the location counter will be `0x8000000' plus the
+size of the `.data' output section.  The effect is that the linker will
+place the `.bss' output section immediately after the `.data' output
+section in memory
+
+   The linker will ensure that each output section has the required
+alignment, by increasing the location counter if necessary.  In this
+example, the specified addresses for the `.text' and `.data' sections
+will probably satisfy any alignment constraints, but the linker may
+have to create a small gap between the `.data' and `.bss' sections.
+
+   That's it!  That's a simple and complete linker script.
+
+
+File: ld.info,  Node: Simple Commands,  Next: Assignments,  Prev: Simple Example,  Up: Scripts
+
+Simple Linker Script Commands
+=============================
+
+   In this section we describe the simple linker script commands.
+
+* Menu:
+
+* Entry Point::			Setting the entry point
+* File Commands::		Commands dealing with files
+
+* Format Commands::		Commands dealing with object file formats
+
+* Miscellaneous Commands::	Other linker script commands
+
+
+File: ld.info,  Node: Entry Point,  Next: File Commands,  Up: Simple Commands
+
+Setting the entry point
+-----------------------
+
+   The first instruction to execute in a program is called the "entry
+point".  You can use the `ENTRY' linker script command to set the entry
+point.  The argument is a symbol name:
+     ENTRY(SYMBOL)
+
+   There are several ways to set the entry point.  The linker will set
+the entry point by trying each of the following methods in order, and
+stopping when one of them succeeds:
+   * the `-e' ENTRY command-line option;
+
+   * the `ENTRY(SYMBOL)' command in a linker script;
+
+   * the value of the symbol `start', if defined;
+
+   * the address of the first byte of the `.text' section, if present;
+
+   * The address `0'.
+
+
+File: ld.info,  Node: File Commands,  Next: Format Commands,  Prev: Entry Point,  Up: Simple Commands
+
+Commands dealing with files
+---------------------------
+
+   Several linker script commands deal with files.
+
+`INCLUDE FILENAME'
+     Include the linker script FILENAME at this point.  The file will
+     be searched for in the current directory, and in any directory
+     specified with the `-L' option.  You can nest calls to `INCLUDE'
+     up to 10 levels deep.
+
+`INPUT(FILE, FILE, ...)'
+`INPUT(FILE FILE ...)'
+     The `INPUT' command directs the linker to include the named files
+     in the link, as though they were named on the command line.
+
+     For example, if you always want to include `subr.o' any time you do
+     a link, but you can't be bothered to put it on every link command
+     line, then you can put `INPUT (subr.o)' in your linker script.
+
+     In fact, if you like, you can list all of your input files in the
+     linker script, and then invoke the linker with nothing but a `-T'
+     option.
+
+     The linker will first try to open the file in the current
+     directory.  If it is not found, the linker will search through the
+     archive library search path.  See the description of `-L' in *Note
+     Command Line Options: Options.
+
+     If you use `INPUT (-lFILE)', `ld' will transform the name to
+     `libFILE.a', as with the command line argument `-l'.
+
+     When you use the `INPUT' command in an implicit linker script, the
+     files will be included in the link at the point at which the linker
+     script file is included.  This can affect archive searching.
+
+`GROUP(FILE, FILE, ...)'
+`GROUP(FILE FILE ...)'
+     The `GROUP' command is like `INPUT', except that the named files
+     should all be archives, and they are searched repeatedly until no
+     new undefined references are created.  See the description of `-('
+     in *Note Command Line Options: Options.
+
+`OUTPUT(FILENAME)'
+     The `OUTPUT' command names the output file.  Using
+     `OUTPUT(FILENAME)' in the linker script is exactly like using `-o
+     FILENAME' on the command line (*note Command Line Options:
+     Options.).  If both are used, the command line option takes
+     precedence.
+
+     You can use the `OUTPUT' command to define a default name for the
+     output file other than the usual default of `a.out'.
+
+`SEARCH_DIR(PATH)'
+     The `SEARCH_DIR' command adds PATH to the list of paths where `ld'
+     looks for archive libraries.  Using `SEARCH_DIR(PATH)' is exactly
+     like using `-L PATH' on the command line (*note Command Line
+     Options: Options.).  If both are used, then the linker will search
+     both paths.  Paths specified using the command line option are
+     searched first.
+
+`STARTUP(FILENAME)'
+     The `STARTUP' command is just like the `INPUT' command, except
+     that FILENAME will become the first input file to be linked, as
+     though it were specified first on the command line.  This may be
+     useful when using a system in which the entry point is always the
+     start of the first file.
+
+
+File: ld.info,  Node: Format Commands,  Next: Miscellaneous Commands,  Prev: File Commands,  Up: Simple Commands
+
+Commands dealing with object file formats
+-----------------------------------------
+
+   A couple of linker script commands deal with object file formats.
+
+`OUTPUT_FORMAT(BFDNAME)'
+`OUTPUT_FORMAT(DEFAULT, BIG, LITTLE)'
+     The `OUTPUT_FORMAT' command names the BFD format to use for the
+     output file (*note BFD::).  Using `OUTPUT_FORMAT(BFDNAME)' is
+     exactly like using `-oformat BFDNAME' on the command line (*note
+     Command Line Options: Options.).  If both are used, the command
+     line option takes precedence.
+
+     You can use `OUTPUT_FORMAT' with three arguments to use different
+     formats based on the `-EB' and `-EL' command line options.  This
+     permits the linker script to set the output format based on the
+     desired endianness.
+
+     If neither `-EB' nor `-EL' are used, then the output format will
+     be the first argument, DEFAULT.  If `-EB' is used, the output
+     format will be the second argument, BIG.  If `-EL' is used, the
+     output format will be the third argument, LITTLE.
+
+     For example, the default linker script for the MIPS ELF target
+     uses this command:
+          OUTPUT_FORMAT(elf32-bigmips, elf32-bigmips, elf32-littlemips)
+     This says that the default format for the output file is
+     `elf32-bigmips', but if the user uses the `-EL' command line
+     option, the output file will be created in the `elf32-littlemips'
+     format.
+
+`TARGET(BFDNAME)'
+     The `TARGET' command names the BFD format to use when reading input
+     files.  It affects subsequent `INPUT' and `GROUP' commands.  This
+     command is like using `-b BFDNAME' on the command line (*note
+     Command Line Options: Options.).  If the `TARGET' command is used
+     but `OUTPUT_FORMAT' is not, then the last `TARGET' command is also
+     used to set the format for the output file.  *Note BFD::.
+
+
+File: ld.info,  Node: Miscellaneous Commands,  Prev: Format Commands,  Up: Simple Commands
+
+Other linker script commands
+----------------------------
+
+   There are a few other linker scripts commands.
+
+`ASSERT(EXP, MESSAGE)'
+     Ensure that EXP is non-zero.  If it is zero, then exit the linker
+     with an error code, and print MESSAGE.
+
+`EXTERN(SYMBOL SYMBOL ...)'
+     Force SYMBOL to be entered in the output file as an undefined
+     symbol.  Doing this may, for example, trigger linking of additional
+     modules from standard libraries.  You may list several SYMBOLs for
+     each `EXTERN', and you may use `EXTERN' multiple times.  This
+     command has the same effect as the `-u' command-line option.
+
+`FORCE_COMMON_ALLOCATION'
+     This command has the same effect as the `-d' command-line option:
+     to make `ld' assign space to common symbols even if a relocatable
+     output file is specified (`-r').
+
+`NOCROSSREFS(SECTION SECTION ...)'
+     This command may be used to tell `ld' to issue an error about any
+     references among certain output sections.
+
+     In certain types of programs, particularly on embedded systems when
+     using overlays, when one section is loaded into memory, another
+     section will not be.  Any direct references between the two
+     sections would be errors.  For example, it would be an error if
+     code in one section called a function defined in the other section.
+
+     The `NOCROSSREFS' command takes a list of output section names.  If
+     `ld' detects any cross references between the sections, it reports
+     an error and returns a non-zero exit status.  Note that the
+     `NOCROSSREFS' command uses output section names, not input section
+     names.
+
+`OUTPUT_ARCH(BFDARCH)'
+     Specify a particular output machine architecture.  The argument is
+     one of the names used by the BFD library (*note BFD::).  You can
+     see the architecture of an object file by using the `objdump'
+     program with the `-f' option.
+
+
+File: ld.info,  Node: Assignments,  Next: SECTIONS,  Prev: Simple Commands,  Up: Scripts
+
+Assigning Values to Symbols
+===========================
+
+   You may assign a value to a symbol in a linker script.  This will
+define the symbol as a global symbol.
+
+* Menu:
+
+* Simple Assignments::		Simple Assignments
+* PROVIDE::			PROVIDE
+
+
+File: ld.info,  Node: Simple Assignments,  Next: PROVIDE,  Up: Assignments
+
+Simple Assignments
+------------------
+
+   You may assign to a symbol using any of the C assignment operators:
+
+`SYMBOL = EXPRESSION ;'
+`SYMBOL += EXPRESSION ;'
+`SYMBOL -= EXPRESSION ;'
+`SYMBOL *= EXPRESSION ;'
+`SYMBOL /= EXPRESSION ;'
+`SYMBOL <<= EXPRESSION ;'
+`SYMBOL >>= EXPRESSION ;'
+`SYMBOL &= EXPRESSION ;'
+`SYMBOL |= EXPRESSION ;'
+   The first case will define SYMBOL to the value of EXPRESSION.  In
+the other cases, SYMBOL must already be defined, and the value will be
+adjusted accordingly.
+
+   The special symbol name `.' indicates the location counter.  You may
+only use this within a `SECTIONS' command.
+
+   The semicolon after EXPRESSION is required.
+
+   Expressions are defined below; see *Note Expressions::.
+
+   You may write symbol assignments as commands in their own right, or
+as statements within a `SECTIONS' command, or as part of an output
+section description in a `SECTIONS' command.
+
+   The section of the symbol will be set from the section of the
+expression; for more information, see *Note Expression Section::.
+
+   Here is an example showing the three different places that symbol
+assignments may be used:
+
+     floating_point = 0;
+     SECTIONS
+     {
+       .text :
+         {
+           *(.text)
+           _etext = .;
+         }
+       _bdata = (. + 3) & ~ 4;
+       .data : { *(.data) }
+     }
+
+In this example, the symbol `floating_point' will be defined as zero.
+The symbol `_etext' will be defined as the address following the last
+`.text' input section.  The symbol `_bdata' will be defined as the
+address following the `.text' output section aligned upward to a 4 byte
+boundary.
+
+
+File: ld.info,  Node: PROVIDE,  Prev: Simple Assignments,  Up: Assignments
+
+PROVIDE
+-------
+
+   In some cases, it is desirable for a linker script to define a symbol
+only if it is referenced and is not defined by any object included in
+the link.  For example, traditional linkers defined the symbol `etext'.
+However, ANSI C requires that the user be able to use `etext' as a
+function name without encountering an error.  The `PROVIDE' keyword may
+be used to define a symbol, such as `etext', only if it is referenced
+but not defined.  The syntax is `PROVIDE(SYMBOL = EXPRESSION)'.
+
+   Here is an example of using `PROVIDE' to define `etext':
+     SECTIONS
+     {
+       .text :
+         {
+           *(.text)
+           _etext = .;
+           PROVIDE(etext = .);
+         }
+     }
+
+   In this example, if the program defines `_etext' (with a leading
+underscore), the linker will give a multiple definition error.  If, on
+the other hand, the program defines `etext' (with no leading
+underscore), the linker will silently use the definition in the program.
+If the program references `etext' but does not define it, the linker
+will use the definition in the linker script.
+
+
+File: ld.info,  Node: SECTIONS,  Next: MEMORY,  Prev: Assignments,  Up: Scripts
+
+SECTIONS command
+================
+
+   The `SECTIONS' command tells the linker how to map input sections
+into output sections, and how to place the output sections in memory.
+
+   The format of the `SECTIONS' command is:
+     SECTIONS
+     {
+       SECTIONS-COMMAND
+       SECTIONS-COMMAND
+       ...
+     }
+
+   Each SECTIONS-COMMAND may of be one of the following:
+
+   * an `ENTRY' command (*note Entry command: Entry Point.)
+
+   * a symbol assignment (*note Assignments::)
+
+   * an output section description
+
+   * an overlay description
+
+   The `ENTRY' command and symbol assignments are permitted inside the
+`SECTIONS' command for convenience in using the location counter in
+those commands.  This can also make the linker script easier to
+understand because you can use those commands at meaningful points in
+the layout of the output file.
+
+   Output section descriptions and overlay descriptions are described
+below.
+
+   If you do not use a `SECTIONS' command in your linker script, the
+linker will place each input section into an identically named output
+section in the order that the sections are first encountered in the
+input files.  If all input sections are present in the first file, for
+example, the order of sections in the output file will match the order
+in the first input file.  The first section will be at address zero.
+
+* Menu:
+
+* Output Section Description::	Output section description
+* Output Section Name::		Output section name
+* Output Section Address::	Output section address
+* Input Section::		Input section description
+* Output Section Data::		Output section data
+* Output Section Keywords::	Output section keywords
+* Output Section Discarding::	Output section discarding
+* Output Section Attributes::	Output section attributes
+* Overlay Description::		Overlay description
+
+
+File: ld.info,  Node: Output Section Description,  Next: Output Section Name,  Up: SECTIONS
+
+Output section description
+--------------------------
+
+   The full description of an output section looks like this:
+     SECTION [ADDRESS] [(TYPE)] : [AT(LMA)]
+       {
+         OUTPUT-SECTION-COMMAND
+         OUTPUT-SECTION-COMMAND
+         ...
+       } [>REGION] [AT>LMA_REGION] [:PHDR :PHDR ...] [=FILLEXP]
+
+   Most output sections do not use most of the optional section
+attributes.
+
+   The whitespace around SECTION is required, so that the section name
+is unambiguous.  The colon and the curly braces are also required.  The
+line breaks and other white space are optional.
+
+   Each OUTPUT-SECTION-COMMAND may be one of the following:
+
+   * a symbol assignment (*note Assignments::)
+
+   * an input section description (*note Input Section::)
+
+   * data values to include directly (*note Output Section Data::)
+
+   * a special output section keyword (*note Output Section Keywords::)
+
+
+File: ld.info,  Node: Output Section Name,  Next: Output Section Address,  Prev: Output Section Description,  Up: SECTIONS
+
+Output section name
+-------------------
+
+   The name of the output section is SECTION.  SECTION must meet the
+constraints of your output format.  In formats which only support a
+limited number of sections, such as `a.out', the name must be one of
+the names supported by the format (`a.out', for example, allows only
+`.text', `.data' or `.bss'). If the output format supports any number
+of sections, but with numbers and not names (as is the case for Oasys),
+the name should be supplied as a quoted numeric string.  A section name
+may consist of any sequence of characters, but a name which contains
+any unusual characters such as commas must be quoted.
+
+   The output section name `/DISCARD/' is special; *Note Output Section
+Discarding::.
+
+
+File: ld.info,  Node: Output Section Address,  Next: Input Section,  Prev: Output Section Name,  Up: SECTIONS
+
+Output section address
+----------------------
+
+   The ADDRESS is an expression for the VMA (the virtual memory
+address) of the output section.  If you do not provide ADDRESS, the
+linker will set it based on REGION if present, or otherwise based on
+the current value of the location counter.
+
+   If you provide ADDRESS, the address of the output section will be
+set to precisely that.  If you provide neither ADDRESS nor REGION, then
+the address of the output section will be set to the current value of
+the location counter aligned to the alignment requirements of the
+output section.  The alignment requirement of the output section is the
+strictest alignment of any input section contained within the output
+section.
+
+   For example,
+     .text . : { *(.text) }
+
+and
+     .text : { *(.text) }
+
+are subtly different.  The first will set the address of the `.text'
+output section to the current value of the location counter.  The
+second will set it to the current value of the location counter aligned
+to the strictest alignment of a `.text' input section.
+
+   The ADDRESS may be an arbitrary expression; *Note Expressions::.
+For example, if you want to align the section on a 0x10 byte boundary,
+so that the lowest four bits of the section address are zero, you could
+do something like this:
+     .text ALIGN(0x10) : { *(.text) }
+
+This works because `ALIGN' returns the current location counter aligned
+upward to the specified value.
+
+   Specifying ADDRESS for a section will change the value of the
+location counter.
+
+
+File: ld.info,  Node: Input Section,  Next: Output Section Data,  Prev: Output Section Address,  Up: SECTIONS
+
+Input section description
+-------------------------
+
+   The most common output section command is an input section
+description.
+
+   The input section description is the most basic linker script
+operation.  You use output sections to tell the linker how to lay out
+your program in memory.  You use input section descriptions to tell the
+linker how to map the input files into your memory layout.
+
+* Menu:
+
+* Input Section Basics::	Input section basics
+* Input Section Wildcards::	Input section wildcard patterns
+* Input Section Common::	Input section for common symbols
+* Input Section Keep::		Input section and garbage collection
+* Input Section Example::	Input section example
+
+
+File: ld.info,  Node: Input Section Basics,  Next: Input Section Wildcards,  Up: Input Section
+
+Input section basics
+....................
+
+   An input section description consists of a file name optionally
+followed by a list of section names in parentheses.
+
+   The file name and the section name may be wildcard patterns, which we
+describe further below (*note Input Section Wildcards::).
+
+   The most common input section description is to include all input
+sections with a particular name in the output section.  For example, to
+include all input `.text' sections, you would write:
+     *(.text)
+
+Here the `*' is a wildcard which matches any file name.  To exclude a
+list of files from matching the file name wildcard, EXCLUDE_FILE may be
+used to match all files except the ones specified in the EXCLUDE_FILE
+list.  For example:
+     (*(EXCLUDE_FILE (*crtend.o *otherfile.o) .ctors))
+   will cause all .ctors sections from all files except `crtend.o' and
+`otherfile.o' to be included.
+
+   There are two ways to include more than one section:
+     *(.text .rdata)
+     *(.text) *(.rdata)
+
+The difference between these is the order in which the `.text' and
+`.rdata' input sections will appear in the output section.  In the
+first example, they will be intermingled.  In the second example, all
+`.text' input sections will appear first, followed by all `.rdata'
+input sections.
+
+   You can specify a file name to include sections from a particular
+file.  You would do this if one or more of your files contain special
+data that needs to be at a particular location in memory.  For example:
+     data.o(.data)
+
+   If you use a file name without a list of sections, then all sections
+in the input file will be included in the output section.  This is not
+commonly done, but it may by useful on occasion.  For example:
+     data.o
+
+   When you use a file name which does not contain any wild card
+characters, the linker will first see if you also specified the file
+name on the linker command line or in an `INPUT' command.  If you did
+not, the linker will attempt to open the file as an input file, as
+though it appeared on the command line.  Note that this differs from an
+`INPUT' command, because the linker will not search for the file in the
+archive search path.
+
+
+File: ld.info,  Node: Input Section Wildcards,  Next: Input Section Common,  Prev: Input Section Basics,  Up: Input Section
+
+Input section wildcard patterns
+...............................
+
+   In an input section description, either the file name or the section
+name or both may be wildcard patterns.
+
+   The file name of `*' seen in many examples is a simple wildcard
+pattern for the file name.
+
+   The wildcard patterns are like those used by the Unix shell.
+
+`*'
+     matches any number of characters
+
+`?'
+     matches any single character
+
+`[CHARS]'
+     matches a single instance of any of the CHARS; the `-' character
+     may be used to specify a range of characters, as in `[a-z]' to
+     match any lower case letter
+
+`\'
+     quotes the following character
+
+   When a file name is matched with a wildcard, the wildcard characters
+will not match a `/' character (used to separate directory names on
+Unix).  A pattern consisting of a single `*' character is an exception;
+it will always match any file name, whether it contains a `/' or not.
+In a section name, the wildcard characters will match a `/' character.
+
+   File name wildcard patterns only match files which are explicitly
+specified on the command line or in an `INPUT' command.  The linker
+does not search directories to expand wildcards.
+
+   If a file name matches more than one wildcard pattern, or if a file
+name appears explicitly and is also matched by a wildcard pattern, the
+linker will use the first match in the linker script.  For example, this
+sequence of input section descriptions is probably in error, because the
+`data.o' rule will not be used:
+     .data : { *(.data) }
+     .data1 : { data.o(.data) }
+
+   Normally, the linker will place files and sections matched by
+wildcards in the order in which they are seen during the link.  You can
+change this by using the `SORT' keyword, which appears before a wildcard
+pattern in parentheses (e.g., `SORT(.text*)').  When the `SORT' keyword
+is used, the linker will sort the files or sections into ascending
+order by name before placing them in the output file.
+
+   If you ever get confused about where input sections are going, use
+the `-M' linker option to generate a map file.  The map file shows
+precisely how input sections are mapped to output sections.
+
+   This example shows how wildcard patterns might be used to partition
+files.  This linker script directs the linker to place all `.text'
+sections in `.text' and all `.bss' sections in `.bss'.  The linker will
+place the `.data' section from all files beginning with an upper case
+character in `.DATA'; for all other files, the linker will place the
+`.data' section in `.data'.
+     SECTIONS {
+       .text : { *(.text) }
+       .DATA : { [A-Z]*(.data) }
+       .data : { *(.data) }
+       .bss : { *(.bss) }
+     }
+
+
+File: ld.info,  Node: Input Section Common,  Next: Input Section Keep,  Prev: Input Section Wildcards,  Up: Input Section
+
+Input section for common symbols
+................................
+
+   A special notation is needed for common symbols, because in many
+object file formats common symbols do not have a particular input
+section.  The linker treats common symbols as though they are in an
+input section named `COMMON'.
+
+   You may use file names with the `COMMON' section just as with any
+other input sections.  You can use this to place common symbols from a
+particular input file in one section while common symbols from other
+input files are placed in another section.
+
+   In most cases, common symbols in input files will be placed in the
+`.bss' section in the output file.  For example:
+     .bss { *(.bss) *(COMMON) }
+
+   Some object file formats have more than one type of common symbol.
+For example, the MIPS ELF object file format distinguishes standard
+common symbols and small common symbols.  In this case, the linker will
+use a different special section name for other types of common symbols.
+In the case of MIPS ELF, the linker uses `COMMON' for standard common
+symbols and `.scommon' for small common symbols.  This permits you to
+map the different types of common symbols into memory at different
+locations.
+
+   You will sometimes see `[COMMON]' in old linker scripts.  This
+notation is now considered obsolete.  It is equivalent to `*(COMMON)'.
+
+
+File: ld.info,  Node: Input Section Keep,  Next: Input Section Example,  Prev: Input Section Common,  Up: Input Section
+
+Input section and garbage collection
+....................................
+
+   When link-time garbage collection is in use (`--gc-sections'), it is
+often useful to mark sections that should not be eliminated.  This is
+accomplished by surrounding an input section's wildcard entry with
+`KEEP()', as in `KEEP(*(.init))' or `KEEP(SORT(*)(.ctors))'.
+
+
+File: ld.info,  Node: Input Section Example,  Prev: Input Section Keep,  Up: Input Section
+
+Input section example
+.....................
+
+   The following example is a complete linker script.  It tells the
+linker to read all of the sections from file `all.o' and place them at
+the start of output section `outputa' which starts at location
+`0x10000'.  All of section `.input1' from file `foo.o' follows
+immediately, in the same output section.  All of section `.input2' from
+`foo.o' goes into output section `outputb', followed by section
+`.input1' from `foo1.o'.  All of the remaining `.input1' and `.input2'
+sections from any files are written to output section `outputc'.
+
+     SECTIONS {
+       outputa 0x10000 :
+         {
+         all.o
+         foo.o (.input1)
+         }
+       outputb :
+         {
+         foo.o (.input2)
+         foo1.o (.input1)
+         }
+       outputc :
+         {
+         *(.input1)
+         *(.input2)
+         }
+     }
+
+
+File: ld.info,  Node: Output Section Data,  Next: Output Section Keywords,  Prev: Input Section,  Up: SECTIONS
+
+Output section data
+-------------------
+
+   You can include explicit bytes of data in an output section by using
+`BYTE', `SHORT', `LONG', `QUAD', or `SQUAD' as an output section
+command.  Each keyword is followed by an expression in parentheses
+providing the value to store (*note Expressions::).  The value of the
+expression is stored at the current value of the location counter.
+
+   The `BYTE', `SHORT', `LONG', and `QUAD' commands store one, two,
+four, and eight bytes (respectively).  After storing the bytes, the
+location counter is incremented by the number of bytes stored.
+
+   For example, this will store the byte 1 followed by the four byte
+value of the symbol `addr':
+     BYTE(1)
+     LONG(addr)
+
+   When using a 64 bit host or target, `QUAD' and `SQUAD' are the same;
+they both store an 8 byte, or 64 bit, value.  When both host and target
+are 32 bits, an expression is computed as 32 bits.  In this case `QUAD'
+stores a 32 bit value zero extended to 64 bits, and `SQUAD' stores a 32
+bit value sign extended to 64 bits.
+
+   If the object file format of the output file has an explicit
+endianness, which is the normal case, the value will be stored in that
+endianness.  When the object file format does not have an explicit
+endianness, as is true of, for example, S-records, the value will be
+stored in the endianness of the first input object file.
+
+   You may use the `FILL' command to set the fill pattern for the
+current section.  It is followed by an expression in parentheses.  Any
+otherwise unspecified regions of memory within the section (for example,
+gaps left due to the required alignment of input sections) are filled
+with the two least significant bytes of the expression, repeated as
+necessary.  A `FILL' statement covers memory locations after the point
+at which it occurs in the section definition; by including more than
+one `FILL' statement, you can have different fill patterns in different
+parts of an output section.
+
+   This example shows how to fill unspecified regions of memory with the
+value `0x9090':
+     FILL(0x9090)
+
+   The `FILL' command is similar to the `=FILLEXP' output section
+attribute (*note Output Section Fill::), but it only affects the part
+of the section following the `FILL' command, rather than the entire
+section.  If both are used, the `FILL' command takes precedence.
+
+
+File: ld.info,  Node: Output Section Keywords,  Next: Output Section Discarding,  Prev: Output Section Data,  Up: SECTIONS
+
+Output section keywords
+-----------------------
+
+   There are a couple of keywords which can appear as output section
+commands.
+
+`CREATE_OBJECT_SYMBOLS'
+     The command tells the linker to create a symbol for each input
+     file.  The name of each symbol will be the name of the
+     corresponding input file.  The section of each symbol will be the
+     output section in which the `CREATE_OBJECT_SYMBOLS' command
+     appears.
+
+     This is conventional for the a.out object file format.  It is not
+     normally used for any other object file format.
+
+`CONSTRUCTORS'
+     When linking using the a.out object file format, the linker uses an
+     unusual set construct to support C++ global constructors and
+     destructors.  When linking object file formats which do not support
+     arbitrary sections, such as ECOFF and XCOFF, the linker will
+     automatically recognize C++ global constructors and destructors by
+     name.  For these object file formats, the `CONSTRUCTORS' command
+     tells the linker to place constructor information in the output
+     section where the `CONSTRUCTORS' command appears.  The
+     `CONSTRUCTORS' command is ignored for other object file formats.
+
+     The symbol `__CTOR_LIST__' marks the start of the global
+     constructors, and the symbol `__DTOR_LIST' marks the end.  The
+     first word in the list is the number of entries, followed by the
+     address of each constructor or destructor, followed by a zero
+     word.  The compiler must arrange to actually run the code.  For
+     these object file formats GNU C++ normally calls constructors from
+     a subroutine `__main'; a call to `__main' is automatically
+     inserted into the startup code for `main'.  GNU C++ normally runs
+     destructors either by using `atexit', or directly from the function
+     `exit'.
+
+     For object file formats such as `COFF' or `ELF' which support
+     arbitrary section names, GNU C++ will normally arrange to put the
+     addresses of global constructors and destructors into the `.ctors'
+     and `.dtors' sections.  Placing the following sequence into your
+     linker script will build the sort of table which the GNU C++
+     runtime code expects to see.
+
+                __CTOR_LIST__ = .;
+                LONG((__CTOR_END__ - __CTOR_LIST__) / 4 - 2)
+                *(.ctors)
+                LONG(0)
+                __CTOR_END__ = .;
+                __DTOR_LIST__ = .;
+                LONG((__DTOR_END__ - __DTOR_LIST__) / 4 - 2)
+                *(.dtors)
+                LONG(0)
+                __DTOR_END__ = .;
+
+     If you are using the GNU C++ support for initialization priority,
+     which provides some control over the order in which global
+     constructors are run, you must sort the constructors at link time
+     to ensure that they are executed in the correct order.  When using
+     the `CONSTRUCTORS' command, use `SORT(CONSTRUCTORS)' instead.
+     When using the `.ctors' and `.dtors' sections, use
+     `*(SORT(.ctors))' and `*(SORT(.dtors))' instead of just
+     `*(.ctors)' and `*(.dtors)'.
+
+     Normally the compiler and linker will handle these issues
+     automatically, and you will not need to concern yourself with
+     them.  However, you may need to consider this if you are using C++
+     and writing your own linker scripts.
+
+
+File: ld.info,  Node: Output Section Discarding,  Next: Output Section Attributes,  Prev: Output Section Keywords,  Up: SECTIONS
+
+Output section discarding
+-------------------------
+
+   The linker will not create output section which do not have any
+contents.  This is for convenience when referring to input sections that
+may or may not be present in any of the input files.  For example:
+     .foo { *(.foo) }
+
+will only create a `.foo' section in the output file if there is a
+`.foo' section in at least one input file.
+
+   If you use anything other than an input section description as an
+output section command, such as a symbol assignment, then the output
+section will always be created, even if there are no matching input
+sections.
+
+   The special output section name `/DISCARD/' may be used to discard
+input sections.  Any input sections which are assigned to an output
+section named `/DISCARD/' are not included in the output file.
+
+
+File: ld.info,  Node: Output Section Attributes,  Next: Overlay Description,  Prev: Output Section Discarding,  Up: SECTIONS
+
+Output section attributes
+-------------------------
+
+   We showed above that the full description of an output section looked
+like this:
+     SECTION [ADDRESS] [(TYPE)] : [AT(LMA)]
+       {
+         OUTPUT-SECTION-COMMAND
+         OUTPUT-SECTION-COMMAND
+         ...
+       } [>REGION] [AT>LMA_REGION] [:PHDR :PHDR ...] [=FILLEXP]
+We've already described SECTION, ADDRESS, and
+OUTPUT-SECTION-COMMAND.  In this section we will describe the remaining
+section attributes.
+
+* Menu:
+
+* Output Section Type::		Output section type
+* Output Section LMA::		Output section LMA
+* Output Section Region::	Output section region
+* Output Section Phdr::		Output section phdr
+* Output Section Fill::		Output section fill
+
+
+File: ld.info,  Node: Output Section Type,  Next: Output Section LMA,  Up: Output Section Attributes
+
+Output section type
+...................
+
+   Each output section may have a type.  The type is a keyword in
+parentheses.  The following types are defined:
+
+`NOLOAD'
+     The section should be marked as not loadable, so that it will not
+     be loaded into memory when the program is run.
+
+`DSECT'
+`COPY'
+`INFO'
+`OVERLAY'
+     These type names are supported for backward compatibility, and are
+     rarely used.  They all have the same effect: the section should be
+     marked as not allocatable, so that no memory is allocated for the
+     section when the program is run.
+
+   The linker normally sets the attributes of an output section based on
+the input sections which map into it.  You can override this by using
+the section type.  For example, in the script sample below, the `ROM'
+section is addressed at memory location `0' and does not need to be
+loaded when the program is run.  The contents of the `ROM' section will
+appear in the linker output file as usual.
+     SECTIONS {
+       ROM 0 (NOLOAD) : { ... }
+       ...
+     }
+
+
+File: ld.info,  Node: Output Section LMA,  Next: Output Section Region,  Prev: Output Section Type,  Up: Output Section Attributes
+
+Output section LMA
+..................
+
+   Every section has a virtual address (VMA) and a load address (LMA);
+see *Note Basic Script Concepts::.  The address expression which may
+appear in an output section description sets the VMA (*note Output
+Section Address::).
+
+   The linker will normally set the LMA equal to the VMA.  You can
+change that by using the `AT' keyword.  The expression LMA that follows
+the `AT' keyword specifies the load address of the section.
+Alternatively, with `AT>LMA_REGION' expression, you may specify a
+memory region for the section's load address. *Note MEMORY::.
+
+   This feature is designed to make it easy to build a ROM image.  For
+example, the following linker script creates three output sections: one
+called `.text', which starts at `0x1000', one called `.mdata', which is
+loaded at the end of the `.text' section even though its VMA is
+`0x2000', and one called `.bss' to hold uninitialized data at address
+`0x3000'.  The symbol `_data' is defined with the value `0x2000', which
+shows that the location counter holds the VMA value, not the LMA value.
+
+     SECTIONS
+       {
+       .text 0x1000 : { *(.text) _etext = . ; }
+       .mdata 0x2000 :
+         AT ( ADDR (.text) + SIZEOF (.text) )
+         { _data = . ; *(.data); _edata = . ;  }
+       .bss 0x3000 :
+         { _bstart = . ;  *(.bss) *(COMMON) ; _bend = . ;}
+     }
+
+   The run-time initialization code for use with a program generated
+with this linker script would include something like the following, to
+copy the initialized data from the ROM image to its runtime address.
+Notice how this code takes advantage of the symbols defined by the
+linker script.
+
+     extern char _etext, _data, _edata, _bstart, _bend;
+     char *src = &_etext;
+     char *dst = &_data;
+     
+     /* ROM has data at end of text; copy it. */
+     while (dst < &_edata) {
+       *dst++ = *src++;
+     }
+     
+     /* Zero bss */
+     for (dst = &_bstart; dst< &_bend; dst++)
+       *dst = 0;
+
+
+File: ld.info,  Node: Output Section Region,  Next: Output Section Phdr,  Prev: Output Section LMA,  Up: Output Section Attributes
+
+Output section region
+.....................
+
+   You can assign a section to a previously defined region of memory by
+using `>REGION'.  *Note MEMORY::.
+
+   Here is a simple example:
+     MEMORY { rom : ORIGIN = 0x1000, LENGTH = 0x1000 }
+     SECTIONS { ROM : { *(.text) } >rom }
+
+
+File: ld.info,  Node: Output Section Phdr,  Next: Output Section Fill,  Prev: Output Section Region,  Up: Output Section Attributes
+
+Output section phdr
+...................
+
+   You can assign a section to a previously defined program segment by
+using `:PHDR'.  *Note PHDRS::.  If a section is assigned to one or more
+segments, then all subsequent allocated sections will be assigned to
+those segments as well, unless they use an explicitly `:PHDR' modifier.
+You can use `:NONE' to tell the linker to not put the section in any
+segment at all.
+
+   Here is a simple example:
+     PHDRS { text PT_LOAD ; }
+     SECTIONS { .text : { *(.text) } :text }
+
+
+File: ld.info,  Node: Output Section Fill,  Prev: Output Section Phdr,  Up: Output Section Attributes
+
+Output section fill
+...................
+
+   You can set the fill pattern for an entire section by using
+`=FILLEXP'.  FILLEXP is an expression (*note Expressions::).  Any
+otherwise unspecified regions of memory within the output section (for
+example, gaps left due to the required alignment of input sections)
+will be filled with the two least significant bytes of the value,
+repeated as necessary.
+
+   You can also change the fill value with a `FILL' command in the
+output section commands; see *Note Output Section Data::.
+
+   Here is a simple example:
+     SECTIONS { .text : { *(.text) } =0x9090 }
+
