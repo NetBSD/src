@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.9 2001/05/16 10:49:18 enami Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.10 2001/05/17 13:10:46 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -204,17 +204,17 @@ vrbcu_dump_regs()
 #if defined VR4122
 	case BCUREVID_RID_4122:
 		{
-			int vt;
+			int vtdiv;
 
-			tclock = cpuclock /
-			    (((spdreg & BCUCLKSPEED_TDIVMODE) >>
-				BCUCLKSPEED_TDIVSHFT) ? 4 : 2);
-			vt = ((spdreg & BCUCLKSPEED_VTDIVMODE) >>
+			vtdiv = ((spdreg & BCUCLKSPEED_VTDIVMODE) >>
 			    BCUCLKSPEED_VTDIVSHFT);
-			if (vt == 0 || vt > BCUCLKSPEED_VTDIV6)
+			if (vtdiv == 0 || vtdiv > BCUCLKSPEED_VTDIV6)
 				vtclock = 0; /* XXX */
 			else
-				vtclock = cpuclock / vt;
+				vtclock = cpuclock / vtdiv;
+			tclock = vtclock /
+			    (((spdreg & BCUCLKSPEED_TDIVMODE) >>
+				BCUCLKSPEED_TDIVSHFT) ? 4 : 2);
 		}
 		break;
 #endif /* VR4122 */
