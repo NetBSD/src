@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.40 2003/04/05 10:06:59 jdc Exp $	*/
+/*	$NetBSD: getch.c,v 1.41 2003/04/08 18:55:43 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.40 2003/04/05 10:06:59 jdc Exp $");
+__RCSID("$NetBSD: getch.c,v 1.41 2003/04/08 18:55:43 jdc Exp $");
 #endif
 #endif					/* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: getch.c,v 1.40 2003/04/05 10:06:59 jdc Exp $");
 #include "curses.h"
 #include "curses_private.h"
 
-#define DEFAULT_DELAY 3			/* default delay for timeout() */
+int	ESCDELAY=300;		/* Delay in ms between keys for esc seq's */
 
 /*
  * Keyboard input handler.  Do this by snarfing
@@ -629,17 +629,17 @@ reread:
 						 * out of keys in the
 						 * backlog */
 
-				/* if we have then switch to
-				   assembling */
+				/* if we have then switch to assembling */
 				state = INKEY_ASSEMBLING;
 			}
 		} else if (state == INKEY_ASSEMBLING) {
 			/* assembling a key sequence */
 			if (delay) {
-				if (__timeout(to ? DEFAULT_DELAY : delay) == ERR)
-						return ERR;
+				if (__timeout(to ? (ESCDELAY / 100) : delay)
+				    == ERR)
+					return ERR;
 			} else {
-				if (to && (__timeout(DEFAULT_DELAY) == ERR))
+				if (to && (__timeout(ESCDELAY / 100) == ERR))
 					return ERR;
 			}
 
