@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/05/03 10:50:59 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2000/12/26 13:11:20 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ LIB=		smutil
 
 CPPFLAGS+=	-DNOT_SENDMAIL
 
-SRCS=		debug.c errstring.c lockfile.c safefile.c snprintf.c strl.c
+SRCS=		debug.c errstring.c lockfile.c safefile.c snprintf.c
 MKSHARE=	no
 MKPIC=		no
 MKPROFILE=	no
