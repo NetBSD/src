@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.11 2004/04/30 23:58:14 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.12 2004/05/01 01:49:03 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.11 2004/04/30 23:58:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.12 2004/05/01 01:49:03 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -266,7 +266,6 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 int
 ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-        struct ifnet *ifp = &ic->ic_if;
         u_int8_t rate;
         int fail;
 
@@ -302,7 +301,7 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    !IEEE80211_ADDR_EQ(ic->ic_des_bssid, ni->ni_bssid))
 		fail |= 0x20;
 #ifdef IEEE80211_DEBUG
-	if (ifp->if_flags & IFF_DEBUG) {
+	if (ic->ic_if.if_flags & IFF_DEBUG) {
 		printf(" %c %s", fail ? '-' : '+',
 		    ether_sprintf(ni->ni_macaddr));
 		printf(" %s%c", ether_sprintf(ni->ni_bssid),
