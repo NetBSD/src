@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.13 1995/05/04 05:37:39 mycroft Exp $	*/
+/*	$NetBSD: segments.h,v 1.14 1995/05/06 20:30:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -223,9 +223,11 @@ void sdtossd __P((struct segment_descriptor *, struct soft_segment_descriptor *)
 #define	GCODE_SEL	1	/* Kernel code descriptor */
 #define	GDATA_SEL	2	/* Kernel data descriptor */
 #define	GLDT_SEL	3	/* LDT - eventually one per process */
-#define	GPROC0_SEL	4	/* Task state process slot zero and up */
-#define	GUSERLDT_SEL	5	/* User LDT */
-#define	NGDT 		(GUSERLDT_SEL + 1)
+#define	GUCODE_SEL	4	/* User code descriptor */
+#define	GUDATA_SEL	5	/* User data descriptor */
+#define	GPROC0_SEL	6	/* Task state process slot zero and up */
+#define	GUSERLDT_SEL	7	/* User LDT */
+#define	NGDT 		8
 
 /*
  * Entries in the Local Descriptor Table (LDT)
@@ -234,6 +236,6 @@ void sdtossd __P((struct segment_descriptor *, struct soft_segment_descriptor *)
 #define	LSYS5SIGR_SEL	1	/* iBCS sigreturn gate */
 #define	LUCODE_SEL	2	/* User code descriptor */
 #define	LUDATA_SEL	3	/* User data descriptor */
-#define	NLDT		(LUDATA_SEL + 1)
+#define	NLDT		4
 
 #endif /* _I386_SEGMENTS_H_ */
