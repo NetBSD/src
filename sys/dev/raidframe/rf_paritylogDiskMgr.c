@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.14 2002/09/07 23:11:46 oster Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.15 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.14 2002/09/07 23:11:46 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.15 2003/12/29 02:38:18 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -135,7 +135,7 @@ ReadRegionLog(
 	/* RF_Malloc(*rrd_pda, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t
 	 * *)); */
 	*rrd_pda = rf_AllocPDAList(1);
-	rf_MapLogParityLogging(raidPtr, regionID, 0, &((*rrd_pda)->row), 
+	rf_MapLogParityLogging(raidPtr, regionID, 0,
 			       &((*rrd_pda)->col), &((*rrd_pda)->startSector));
 	(*rrd_pda)->numSector = raidPtr->regionInfo[regionID].capacity;
 
@@ -192,7 +192,7 @@ WriteCoreLog(
 	*fwr_pda = rf_AllocPDAList(1);
 	regionOffset = log->diskOffset;
 	rf_MapLogParityLogging(raidPtr, regionID, regionOffset, 
-			       &((*fwr_pda)->row), &((*fwr_pda)->col), 
+			       &((*fwr_pda)->col), 
 			       &((*fwr_pda)->startSector));
 	(*fwr_pda)->numSector = raidPtr->numSectorsPerLog;
 
@@ -242,7 +242,7 @@ ReadRegionParity(
 	/* RF_Malloc(*prd_pda, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t
 	 * *)); */
 	*prd_pda = rf_AllocPDAList(1);
-	rf_MapRegionParity(raidPtr, regionID, &((*prd_pda)->row), 
+	rf_MapRegionParity(raidPtr, regionID,
 			   &((*prd_pda)->col), &((*prd_pda)->startSector), 
 			   &((*prd_pda)->numSector));
 	if (rf_parityLogDebug)
@@ -301,7 +301,7 @@ WriteRegionParity(
 	/* RF_Malloc(*pwr_pda, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t
 	 * *)); */
 	*pwr_pda = rf_AllocPDAList(1);
-	rf_MapRegionParity(raidPtr, regionID, &((*pwr_pda)->row), 
+	rf_MapRegionParity(raidPtr, regionID,
 			   &((*pwr_pda)->col), &((*pwr_pda)->startSector), 
 			   &((*pwr_pda)->numSector));
 

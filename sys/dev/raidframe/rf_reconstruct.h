@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.9 2002/11/23 01:58:18 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.10 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -120,8 +120,7 @@ struct RF_ReconCtrl_s {
 	RF_PerDiskReconCtrl_t *perDiskInfo;	/* information maintained
 						 * per-disk */
 	RF_ReconMap_t *reconMap;/* map of what has/has not been reconstructed */
-	RF_RowCol_t spareRow;	/* which of the spare disks we're using */
-	RF_RowCol_t spareCol;
+	RF_RowCol_t spareCol;   /* which of the spare disks we're using */
 	RF_StripeNum_t lastPSID;/* the ID of the last parity stripe we want
 				 * reconstructed */
 	int     percentComplete;/* percentage completion of reconstruction */
@@ -173,15 +172,13 @@ struct RF_ReconCtrl_s {
 int     rf_ConfigureReconstruction(RF_ShutdownList_t ** listp);
 
 int 
-rf_ReconstructFailedDisk(RF_Raid_t * raidPtr, RF_RowCol_t row,
-    RF_RowCol_t col);
+rf_ReconstructFailedDisk(RF_Raid_t * raidPtr, RF_RowCol_t col);
 
 int 
-rf_ReconstructFailedDiskBasic(RF_Raid_t * raidPtr, RF_RowCol_t row,
-    RF_RowCol_t col);
+rf_ReconstructFailedDiskBasic(RF_Raid_t * raidPtr, RF_RowCol_t col);
 
 int 
-rf_ReconstructInPlace(RF_Raid_t * raidPtr, RF_RowCol_t row, RF_RowCol_t col);
+rf_ReconstructInPlace(RF_Raid_t * raidPtr,RF_RowCol_t col);
 
 int     rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t * reconDesc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.h,v 1.10 2003/02/09 10:04:33 jdolecek Exp $	*/
+/*	$NetBSD: rf_layout.h,v 1.11 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -99,7 +99,7 @@ struct RF_RaidLayout_s {
 #define RF_PDA_TYPE_Q      2
 
 struct RF_PhysDiskAddr_s {
-	RF_RowCol_t row, col;	/* disk identifier */
+	RF_RowCol_t col;	/* disk identifier */
 	RF_SectorNum_t startSector;	/* sector offset into the disk */
 	RF_SectorCount_t numSector;	/* number of sectors accessed */
 	int     type;		/* used by higher levels: currently, data,
@@ -135,8 +135,6 @@ struct RF_AccessStripeMap_s {
 	RF_PhysDiskAddr_t *qInfo;	/* list of physical addrs for the Q of
 					 * P + Q */
 	RF_LockReqDesc_t lockReqDesc;	/* used for stripe locking */
-	RF_RowCol_t origRow;	/* the original row:  we may redirect the acc
-				 * to a different row */
 	RF_AccessStripeMap_t *next;
 };
 /* flag values */

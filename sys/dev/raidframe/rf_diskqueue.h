@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.12 2003/02/09 10:04:33 jdolecek Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.13 2003/12/29 02:38:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -182,7 +182,7 @@ void
 rf_FreeDiskQueueData(RF_DiskQueueData_t * p);
 
 int 
-rf_ConfigureDiskQueue(RF_Raid_t *, RF_DiskQueue_t *, RF_RowCol_t, 
+rf_ConfigureDiskQueue(RF_Raid_t *, RF_DiskQueue_t *,
 		      RF_RowCol_t, const RF_DiskQueueSW_t *,
 		      RF_SectorCount_t, dev_t, int, 
 		      RF_ShutdownList_t **,
