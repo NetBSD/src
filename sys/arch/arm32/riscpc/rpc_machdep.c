@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.27 1999/04/06 06:57:00 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.28 1999/05/27 09:04:11 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -175,7 +175,6 @@ vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
 			     u_int flg));
 
 void pmap_bootstrap		__P((vm_offset_t kernel_l1pt, pv_addr_t kernel_ptpt));
-caddr_t allocsys		__P((caddr_t v));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
