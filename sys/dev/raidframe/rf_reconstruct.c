@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.75 2004/03/13 02:00:15 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.76 2004/03/18 16:54:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.75 2004/03/13 02:00:15 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.76 2004/03/18 16:54:54 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -792,8 +792,19 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING) {
 			RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+			while(raidPtr->reconControl->rb_lock) {
+				ltsleep(&raidPtr->reconControl->rb_lock, PRIBIO, "reconctrlpre1", 0, 
+					&raidPtr->reconControl->rb_mutex);
+			}
+			raidPtr->reconControl->rb_lock = 1;
+			RF_UNLOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+
 			raidPtr->numFullReconBuffers--;
 			rf_ReleaseFloatingReconBuffer(raidPtr, rbuf);
+
+			RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+			raidPtr->reconControl->rb_lock = 0;
+			wakeup(&raidPtr->reconControl->rb_lock);
 			RF_UNLOCK_MUTEX(raidPtr->reconControl->rb_mutex);
 		} else
 			if (rbuf->type == RF_RBUF_TYPE_FORCED)
@@ -1307,6 +1318,11 @@ CheckForNewMinHeadSep(RF_Raid_t *raidPtr, RF_HeadSepLimit_t hsCtr)
 
 
 	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	while(reconCtrlPtr->rb_lock) {
+		ltsleep(&reconCtrlPtr->rb_lock, PRIBIO, "reconctlcnmhs", 0, &reconCtrlPtr->rb_mutex);
+	}
+	reconCtrlPtr->rb_lock = 1;
+	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 
 	new_min = ~(1L << (8 * sizeof(long) - 1));	/* 0x7FFF....FFF */
 	for (i = 0; i < raidPtr->numCol; i++)
@@ -1329,6 +1345,9 @@ CheckForNewMinHeadSep(RF_Raid_t *raidPtr, RF_HeadSepLimit_t hsCtr)
 		}
 
 	}
+	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	reconCtrlPtr->rb_lock = 0;
+	wakeup(&reconCtrlPtr->rb_lock);
 	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 }
 
@@ -1362,6 +1381,11 @@ CheckHeadSeparation(RF_Raid_t *raidPtr, RF_PerDiskReconCtrl_t *ctrl,
 	 * 
 	 */
 	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	while(reconCtrlPtr->rb_lock) {
+		ltsleep(&reconCtrlPtr->rb_lock, PRIBIO, "reconctlchs", 0, &reconCtrlPtr->rb_mutex);
+	}
+	reconCtrlPtr->rb_lock = 1;
+	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 	if ((raidPtr->headSepLimit >= 0) &&
 	    ((ctrl->headSepCounter - reconCtrlPtr->minHeadSepCounter) > raidPtr->headSepLimit)) {
 		Dprintf5("raid%d: RECON: head sep stall: col %d hsCtr %ld minHSCtr %ld limit %ld\n",
@@ -1394,6 +1418,9 @@ CheckHeadSeparation(RF_Raid_t *raidPtr, RF_PerDiskReconCtrl_t *ctrl,
 		ctrl->reconCtrl->reconDesc->hsStallCount++;
 #endif				/* RF_RECON_STATS > 0 */
 	}
+	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	reconCtrlPtr->rb_lock = 0;
+	wakeup(&reconCtrlPtr->rb_lock);
 	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 
 	return (retval);

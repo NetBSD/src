@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.20 2004/03/03 13:29:00 oster Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.21 2004/03/18 16:54:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.20 2004/03/03 13:29:00 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.21 2004/03/18 16:54:54 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -141,6 +141,11 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 	RF_LOCK_PSS_MUTEX(raidPtr, rbuf->parityStripeID);
 
 	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	while(reconCtrlPtr->rb_lock) {
+		ltsleep(&reconCtrlPtr->rb_lock, PRIBIO, "reconctlcnmhs", 0, &reconCtrlPtr->rb_mutex);
+	}
+	reconCtrlPtr->rb_lock = 1;
+	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 
 	pssPtr = rf_LookupRUStatus(raidPtr, reconCtrlPtr->pssTable, rbuf->parityStripeID, rbuf->which_ru, RF_PSS_NONE, NULL);
 	RF_ASSERT(pssPtr);	/* if it didn't exist, we wouldn't have gotten
@@ -188,6 +193,9 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 		}
 		if (keep_it) {
 			RF_UNLOCK_PSS_MUTEX(raidPtr, rbuf->parityStripeID);
+			RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+			reconCtrlPtr->rb_lock = 0;
+			wakeup(&reconCtrlPtr->rb_lock);
 			RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 			rf_FreeReconBuffer(rbuf);
 			return (retcode);
@@ -278,6 +286,9 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 
 out:
 	RF_UNLOCK_PSS_MUTEX(raidPtr, rbuf->parityStripeID);
+	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	reconCtrlPtr->rb_lock = 0;
+	wakeup(&reconCtrlPtr->rb_lock);
 	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 	return (retcode);
 }
@@ -329,11 +340,19 @@ rf_GetFullReconBuffer(RF_ReconCtrl_t *reconCtrlPtr)
 	RF_ReconBuffer_t *p;
 
 	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	while(reconCtrlPtr->rb_lock) {
+		ltsleep(&reconCtrlPtr->rb_lock, PRIBIO, "reconctlcnmhs", 0, &reconCtrlPtr->rb_mutex);
+	}
+	reconCtrlPtr->rb_lock = 1;
+	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 
 	if ((p = reconCtrlPtr->fullBufferList) != NULL) {
 		reconCtrlPtr->fullBufferList = p->next;
 		p->next = NULL;
 	}
+	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	reconCtrlPtr->rb_lock = 0;
+	wakeup(&reconCtrlPtr->rb_lock);
 	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 	return (p);
 }
