@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 1998/06/02 20:32:18 mark Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 1998/07/08 04:49:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -135,6 +135,17 @@
  */
 
 #define	VM_PHYSSEG_NOADD
+
+/*
+ * we support 2 free lists:
+ *
+ *	- DEFAULT for all systems
+ *	- ISADMA for the ISA DMA range on Sharks only
+ */
+
+#define	VM_NFREELIST		2
+#define	VM_FREELIST_DEFAULT	0
+#define	VM_FREELIST_ISADMA	1
 
 /*
  * define structure pmap_physseg: there is one of these structures
