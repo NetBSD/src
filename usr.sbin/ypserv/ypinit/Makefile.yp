@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.yp,v 1.19 2003/04/20 20:53:45 christos Exp $
+#	$NetBSD: Makefile.yp,v 1.20 2004/12/29 13:08:24 grant Exp $
 #
 # This is the YP Makefile, used to create and push YP maps.
 #
@@ -48,7 +48,7 @@ SED=		/usr/bin/sed
 SENDMAIL=	/usr/sbin/sendmail
 SORT=		/usr/bin/sort
 STDETHERS=	/usr/sbin/stdethers
-STDHOSTS=	/usr/sbin/stdhosts
+STDHOSTS=	/usr/sbin/stdhosts -n
 TOUCH=		/usr/bin/touch
 YPPUSH=		/usr/sbin/yppush
 
