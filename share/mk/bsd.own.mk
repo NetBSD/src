@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.432 2005/01/11 16:20:49 he Exp $
+#	$NetBSD: bsd.own.mk,v 1.433 2005/01/12 00:39:48 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -573,7 +573,7 @@ MK${var}?=	yes
 #
 .for var in \
 	CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 \
-	MANZ OBJDIRS PAM PRIVATELIB SOFTFLOAT UNPRIVED UPDATE X11
+	MANZ OBJDIRS PRIVATELIB SOFTFLOAT UNPRIVED UPDATE X11
 MK${var}?=	no
 .endfor
 
@@ -656,6 +656,13 @@ HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
 #
 # Set defaults for the USE_xxx variables.
 #
+
+#
+# USE_* options which default to "no" and will be forced to "no" if their
+# corresponding MK* variable is set to "no".
+# (The latter is implemented using the .for loop in the next block.)
+#
+USE_PAM?= no
 
 #
 # USE_* options which default to "yes" unless their corresponding MK*
