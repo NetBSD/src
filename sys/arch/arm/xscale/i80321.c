@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.4 2002/07/29 17:37:14 thorpej Exp $	*/
+/*	$NetBSD: i80321.c,v 1.5 2002/07/31 17:34:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -196,13 +196,15 @@ i80321_attach(struct i80321_softc *sc)
 		    PCI_COMMAND_STATUS_REG, preg);
 	}
 
-	/*
-	 * Initialize the bus space and DMA tags and the PCI chipset tag.
-	 */
+	/* Initialize the bus space tags. */
 	i80321_io_bs_init(&sc->sc_pci_iot, sc);
 	i80321_mem_bs_init(&sc->sc_pci_memt, sc);
-	i80321_pci_dma_init(&sc->sc_pci_dmat, sc);
+
+	/* Initialize the PCI chipset tag. */
 	i80321_pci_init(&sc->sc_pci_chipset, sc);
+
+	/* Initialize the DMA tags. */
+	i80321_pci_dma_init(&sc->sc_pci_dmat, sc);
 	i80321_local_dma_init(&sc->sc_local_dmat, sc);
 
 	/*

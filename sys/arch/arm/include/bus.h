@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 2002/07/28 17:54:06 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 2002/07/31 17:34:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -665,6 +665,17 @@ struct arm32_bus_dma_segment {
 typedef struct arm32_bus_dma_segment	bus_dma_segment_t;
 
 /*
+ *	arm32_dma_range
+ *
+ *	This structure describes a valid DMA range.
+ */
+struct arm32_dma_range {
+	bus_addr_t	dr_sysbase;	/* system base address */
+	bus_addr_t	dr_busbase;	/* appears here on bus */
+	bus_size_t	dr_len;		/* length of range */
+};
+
+/*
  *	bus_dma_tag_t
  *
  *	A machine-dependent opaque type describing the implementation of
@@ -678,7 +689,7 @@ struct arm32_bus_dma_tag {
 	 * may then decide what to do with the transfer.  If the
 	 * range pointer is NULL, it is ignored.
 	 */
-	bus_dma_segment_t *_ranges;
+	struct arm32_dma_range *_ranges;
 	int _nranges;
 
 	/*
@@ -779,6 +790,9 @@ struct arm32_bus_dmamap {
 #define	ARM32_BUFTYPE_MBUF		2
 #define	ARM32_BUFTYPE_UIO		3
 #define	ARM32_BUFTYPE_RAW		4
+
+int	arm32_dma_range_intersect(struct arm32_dma_range *, int,
+	    paddr_t pa, psize_t size, paddr_t *pap, psize_t *sizep);
 
 int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *));
