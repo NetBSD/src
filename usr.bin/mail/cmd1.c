@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,11 +32,12 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cmd1.c	5.22 (Berkeley) 4/1/91";*/
-static char rcsid[] = "$Id: cmd1.c,v 1.2 1993/08/01 18:13:14 mycroft Exp $";
+static char sccsid[] = "from: @(#)cmd1.c	8.1 (Berkeley) 6/6/93";
+static char rcsid[] = "$Id: cmd1.c,v 1.3 1994/06/29 05:09:07 deraadt Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
+#include "extern.h"
 
 /*
  * Mail -- a mail program
@@ -51,6 +52,7 @@ static char rcsid[] = "$Id: cmd1.c,v 1.2 1993/08/01 18:13:14 mycroft Exp $";
 
 static int screen;
 
+int
 headers(msgvec)
 	int *msgvec;
 {
@@ -91,6 +93,7 @@ headers(msgvec)
 /*
  * Scroll to the next/previous screen
  */
+int
 scroll(arg)
 	char arg[];
 {
@@ -129,6 +132,7 @@ scroll(arg)
 /*
  * Compute screen size.
  */
+int
 screensize()
 {
 	int s;
@@ -143,7 +147,7 @@ screensize()
  * Print out the headlines for each message
  * in the passed message list.
  */
-
+int
 from(msgvec)
 	int *msgvec;
 {
@@ -160,8 +164,9 @@ from(msgvec)
  * Print out the header of a specific message.
  * This is a slight improvement to the standard one.
  */
-
+void
 printhead(mesg)
+	int mesg;
 {
 	struct message *mp;
 	char headline[LINESIZE], wcount[LINESIZE], *subjline, dispc, curind;
@@ -206,7 +211,7 @@ printhead(mesg)
 /*
  * Print out the value of dot.
  */
-
+int
 pdot()
 {
 	printf("%d\n", dot - &message[0] + 1);
@@ -216,7 +221,7 @@ pdot()
 /*
  * Print out all the possible commands.
  */
-
+int
 pcmdlist()
 {
 	register struct cmd *cp;
@@ -241,6 +246,7 @@ pcmdlist()
 /*
  * Paginate messages, honor ignored fields.
  */
+int
 more(msgvec)
 	int *msgvec;
 {
@@ -250,6 +256,7 @@ more(msgvec)
 /*
  * Paginate messages, even printing ignored fields.
  */
+int
 More(msgvec)
 	int *msgvec;
 {
@@ -260,6 +267,7 @@ More(msgvec)
 /*
  * Type out messages, honor ignored fields.
  */
+int
 type(msgvec)
 	int *msgvec;
 {
@@ -270,6 +278,7 @@ type(msgvec)
 /*
  * Type out messages, even printing ignored fields.
  */
+int
 Type(msgvec)
 	int *msgvec;
 {
@@ -281,16 +290,16 @@ Type(msgvec)
  * Type out the messages requested.
  */
 jmp_buf	pipestop;
-
+int
 type1(msgvec, doign, page)
 	int *msgvec;
+	int doign, page;
 {
 	register *ip;
 	register struct message *mp;
 	register char *cp;
 	int nlines;
 	FILE *obuf;
-	void brokpipe();
 
 	obuf = stdout;
 	if (setjmp(pipestop))
@@ -338,9 +347,9 @@ close_pipe:
  * Respond to a broken pipe signal --
  * probably caused by quitting more.
  */
-
 void
-brokpipe()
+brokpipe(signo)
+	int signo;
 {
 	longjmp(pipestop, 1);
 }
@@ -350,7 +359,7 @@ brokpipe()
  * The number of lines is taken from the variable "toplines"
  * and defaults to 5.
  */
-
+int
 top(msgvec)
 	int *msgvec;
 {
@@ -392,6 +401,7 @@ top(msgvec)
  * Touch all the given messages so that they will
  * get mboxed.
  */
+int
 stouch(msgvec)
 	int msgvec[];
 {
@@ -408,7 +418,7 @@ stouch(msgvec)
 /*
  * Make sure all passed messages get mboxed.
  */
-
+int
 mboxit(msgvec)
 	int msgvec[];
 {
@@ -425,6 +435,7 @@ mboxit(msgvec)
 /*
  * List the folders the user currently has.
  */
+int
 folders()
 {
 	char dirname[BUFSIZ];
@@ -436,6 +447,6 @@ folders()
 	}
 	if ((cmd = value("LISTER")) == NOSTR)
 		cmd = "ls";
-	(void) run_command(cmd, 0, -1, -1, dirname, NOSTR);
+	(void) run_command(cmd, 0, -1, -1, dirname, NOSTR, NOSTR);
 	return 0;
 }

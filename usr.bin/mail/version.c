@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,12 +32,12 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)version.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: version.c,v 1.2 1993/08/01 18:12:51 mycroft Exp $";
+static char sccsid[] = "from: @(#)version.c	8.1 (Berkeley) 6/6/93";
+static char rcsid[] = "$Id: version.c,v 1.3 1994/06/29 05:09:52 deraadt Exp $";
 #endif /* not lint */
 
 /*
  * Just keep track of the date/sid of this version of Mail.
  * Load this file first to get a "total" Mail version.
  */
-char	*version = "5.5 6/1/90";
+char	*version = "8.1 6/6/93";

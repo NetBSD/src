@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pathnames.h	5.14 (Berkeley) 6/19/91
- *	$Id: pathnames.h,v 1.2 1993/08/01 18:13:17 mycroft Exp $
+ *	from: @(#)pathnames.h	8.1 (Berkeley) 6/6/93
+ *	$Id: pathnames.h,v 1.3 1994/06/29 05:09:36 deraadt Exp $
  */
 
 #include <paths.h>
@@ -39,6 +39,5 @@
 #define	_PATH_EX	"/usr/bin/ex"
 #define	_PATH_HELP	"/usr/share/misc/mail.help"
 #define	_PATH_TILDE	"/usr/share/misc/mail.tildehelp"
-#define	_PATH_MAIL_LOG	"/var/log/maillog"
 #define	_PATH_MASTER_RC	"/etc/mail.rc"
 #define	_PATH_MORE	"/usr/bin/more"

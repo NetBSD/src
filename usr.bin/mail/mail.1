@@ -1,5 +1,5 @@
-.\" Copyright (c) 1980, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1980, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)mail.1	6.19 (Berkeley) 7/27/91
-.\"	$Id: mail.1,v 1.4 1994/01/14 00:50:17 deraadt Exp $
+.\"	from: @(#)mail.1	8.2 (Berkeley) 12/30/93
+.\"	$Id: mail.1,v 1.5 1994/06/29 05:09:32 deraadt Exp $
 .\"
-.Dd July 27, 1991
+.Dd December 30, 1993
 .Dt MAIL 1
 .Os BSD 4
 .Sh NAME
@@ -54,7 +54,7 @@
 .Op Fl u Ar user
 .Sh INTRODUCTION
 .Nm Mail
-is a intelligent mail processing system, which has
+is an intelligent mail processing system, which has
 a command syntax reminiscent of
 .Xr \&ed 1
 with lines replaced by messages.
@@ -63,7 +63,7 @@ with lines replaced by messages.
 .It Fl v
 Verbose mode.
 The details of
-delivery are displayed on the users terminal.
+delivery are displayed on the user's terminal.
 .It Fl i
 Ignore tty interrupt signals.
 This is
@@ -460,7 +460,7 @@ Does not override the
 command.
 .It Ic ignore
 Add the list of header fields named to the
-.Ar ignored list
+.Ar ignored list .
 Header fields in the ignore list are not printed
 on your terminal when you print a message.
 This
@@ -797,7 +797,7 @@ Causes messages saved in
 to be appended to the end rather than prepended.
 This should always be set (perhaps in
 .Pa /etc/mail.rc ) .
-.It Ar ask , asksub
+.It Ar ask, asksub
 Causes
 .Nm mail
 to prompt you for the subject of each message you send.
@@ -884,6 +884,10 @@ and
 commands.
 .It Ar quiet
 Suppresses the printing of the version when first invoked.
+.It Ar searchheaders
+If this option is set, then a message-list specifier in the form ``/x:y''
+will expand to all messages containing the substring ``y'' in the header
+field ``x''.  The string search is case insensitive.
 .It Ar verbose
 Setting the option
 .Ar verbose
@@ -891,7 +895,7 @@ is the same as using the
 .Fl v
 flag on the command line.
 When mail runs in verbose mode,
-the actual delivery of messages is displayed on he users
+the actual delivery of messages is displayed on the user's
 terminal.
 .El
 .Ss Option String Values
