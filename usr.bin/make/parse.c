@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91"; */
-static char *rcsid = "$Id: parse.c,v 1.5 1994/03/05 00:35:04 cgd Exp $";
+static char *rcsid = "$Id: parse.c,v 1.6 1994/03/05 01:58:23 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -2362,15 +2362,10 @@ Parse_File(name, stream)
 		goto nextLine;
 	    }
 	    
-	    if (*line == '\t'
-#ifdef POSIX
-		       || *line == ' '
-#endif
-		       )
-	    {
+	    if (*line == '\t') {
 		/*
-		 * If a line starts with a tab (or space in POSIX-land), it
-		 * can only hope to be a creation command.
+		 * If a line starts with a tab, it can only hope to be
+		 * a creation command.
 		 */
 	    shellCommand:
 		for (cp = line + 1; isspace (*cp); cp++) {
