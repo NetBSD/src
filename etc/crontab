@@ -1,8 +1,4 @@
-# (/root/root.cron installed on Sun Mar 28 20:31:41 1993)
-# (Cron version -- $Header: /cvsroot/src/etc/crontab,v 1.2 1993/04/02 07:18:24 glass Exp $)
-# (crontab.386bsd installed on Sun Mar 28 16:52:10 1993)
-# (Cron version -- $Header: /cvsroot/src/etc/crontab,v 1.2 1993/04/02 07:18:24 glass Exp $)
-# /etc/crontab.src - root's crontab for Vixie's cron
+# /var/cron/tabs/root - root's crontab for Vixie's cron
 #
 SHELL=/bin/sh
 PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
