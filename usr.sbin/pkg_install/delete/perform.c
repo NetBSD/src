@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.23.2.5 2000/01/31 20:57:50 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.23.2.6 2000/07/31 18:18:47 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.23.2.5 2000/01/31 20:57:50 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.23.2.6 2000/07/31 18:18:47 he Exp $");
 #endif
 #endif
 
@@ -199,6 +199,9 @@ require_delete(char *home, int tryall)
 	fail = 0;
 	lpp = TAILQ_FIRST(&lpdelq);
 	for (; lpp; lpp = TAILQ_NEXT(lpp, lp_link)) {
+		int rm_installed;                /* delete expanded pkg, not @pkgdep value */
+		char installed[FILENAME_MAX];
+		
 		/* go to the db dir */
 		if (chdir(pkgdir) == FAIL) {
 			warnx("unable to change directory to %s, deinstall failed (1)",
@@ -208,12 +211,13 @@ require_delete(char *home, int tryall)
 		}
 
 		/* look to see if package was already deleted */
+		rm_installed = 0;
 		if (ispkgpattern(lpp->lp_name)) {
-			char installed[FILENAME_MAX];
 			if (findmatchingname(".", lpp->lp_name, note_whats_installed, installed) != 1) {
 				warnx("%s appears to have been deleted", lpp->lp_name);
 				continue;
 			}
+			rm_installed = 1;
 		} else {
 			if (!fexists(lpp->lp_name)) {
 				warnx("%s appears to have been deleted", lpp->lp_name);
@@ -229,7 +233,7 @@ require_delete(char *home, int tryall)
 		}
 
 		if (Verbose)
-			printf("deinstalling %s\n", lpp->lp_name);
+			printf("deinstalling %s\n", rm_installed?installed:lpp->lp_name);
 
 		/* delete the package */
 		if (Fake)
@@ -243,12 +247,12 @@ require_delete(char *home, int tryall)
 			    NoDeInstall ? "-D" : "",
 			    CleanDirs ? "-d" : "",
 			    Fake ? "-n" : "",
-			    lpp->lp_name);
+			    rm_installed?installed:lpp->lp_name);
 
 		/* check for delete failure */
 		if (rv && !tryall) {
 			fail = 1;
-			warnx("had problem removing %s%s", lpp->lp_name,
+			warnx("had problem removing %s%s", rm_installed?installed:lpp->lp_name,
 			    Force ? ", continuing" : "");
 			if (!Force)
 				break;
