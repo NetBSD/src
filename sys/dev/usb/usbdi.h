@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.7 1998/11/25 22:32:05 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.8 1998/12/02 22:57:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -232,6 +232,8 @@ void usbd_set_polling __P((usbd_interface_handle iface, int on));
 /* Attach data */
 struct usb_attach_arg {
 	int			port;
+	int			configno;
+	int			ifaceno;
 	struct usbd_device     *device;
 	struct usbd_interface  *iface;
 	int			usegeneric;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.h,v 1.2 1998/11/25 22:32:05 augustss Exp $	*/
+/*	$NetBSD: usb_quirks.h,v 1.3 1998/12/02 22:57:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@ struct usbd_quirks {
 #define UQ_SWAP_UNICODE	0x02	/* has some Unicode strings swapped. */
 #define UQ_HUB_POWER	0x04	/* does not respond correctly to get
 				   device status; use get hub status. */
+#define UQ_NO_STRINGS	0x08	/* string descriptors are broken. */
 };
 
 extern struct usbd_quirks usbd_no_quirk;

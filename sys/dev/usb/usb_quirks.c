@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.2 1998/11/25 22:32:05 augustss Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.3 1998/12/02 22:57:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ struct usbd_quirk_entry {
  { USB_VENDOR_INSIDEOUT,USB_PRODUCT_INSIDEOUT_EDGEPORT4, 
    						    0x094, { UQ_SWAP_UNICODE}},
  { USB_VENDOR_UNIXTAR, USB_PRODUCT_UNIXTAR_UTUSB41, 0x100, { UQ_HUB_POWER }},
+ { USB_VENDOR_BTC, USB_PRODUCT_BTC_BTC7932,	    0x100, { UQ_NO_STRINGS }},
  { 0, 0, 0, { 0 } }
 };
 
