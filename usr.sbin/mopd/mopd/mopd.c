@@ -1,4 +1,4 @@
-/*	$NetBSD: mopd.c,v 1.9 2002/07/19 10:05:34 mrg Exp $	*/
+/*	$NetBSD: mopd.c,v 1.10 2002/11/05 14:18:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopd.c,v 1.9 2002/07/19 10:05:34 mrg Exp $");
+__RCSID("$NetBSD: mopd.c,v 1.10 2002/11/05 14:18:05 thorpej Exp $");
 #endif
 
 /*
@@ -80,11 +80,10 @@ main(argc, argv)
 	char  **argv;
 {
 	int	c, pid;
-	char   *interface;
 
 	extern char version[];
 
-	while ((c = getopt(argc, argv, "34adfs:v")) != -1)
+	while ((c = getopt(argc, argv, "34adfs:v")) != -1) {
 		switch (c) {
 			case '3':
 				Not3Flag++;
@@ -111,18 +110,17 @@ main(argc, argv)
 				Usage();
 				/* NOTREACHED */
 		}
-	
+	}
+	argc -= optind;
+	argv += optind;
+
 	if (VersionFlag) {
 		fprintf(stdout,"%s: version %s\n", getprogname(), version);
 		exit(0);
 	}
 
-	interface = argv[optind++];
-
-	if ((AllFlag && interface) ||
-	    (!AllFlag && interface == 0) ||
-	    (argc > optind) ||
-	    (Not3Flag && Not4Flag))  
+	if ((AllFlag && argc != 0) || (!AllFlag && argc == 0) ||
+	    (Not3Flag && Not4Flag))
 		Usage();
 
 	/* All error reporting is done through syslogs. */
@@ -152,8 +150,10 @@ main(argc, argv)
 
 	if (AllFlag)
  		deviceInitAll();
-	else
-		deviceInitOne(interface);
+	else {
+		while (argc--)
+			deviceInitOne(*argv++);
+	}
 
 	Loop();
 	/* NOTREACHED */
@@ -165,8 +165,9 @@ Usage()
 {
 	(void) fprintf(stderr, "usage: %s -a [ -d -f -v ] [ -3 | -4 ]\n",
 	    getprogname());
-	(void) fprintf(stderr, "       %s [ -d -f -v ] [ -3 | -4 ] interface\n",
+	(void) fprintf(stderr, "       %s [ -d -f -v ] [ -3 | -4 ]\n",
 	    getprogname());
+	(void) fprintf(stderr, "           interface [...]\n");
 	exit(1);
 }
 
