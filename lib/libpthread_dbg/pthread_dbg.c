@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.16 2004/02/21 20:48:11 cl Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.17 2004/06/02 21:13:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.16 2004/02/21 20:48:11 cl Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.17 2004/06/02 21:13:42 nathanw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -91,6 +91,30 @@ td_open(struct td_proc_callbacks_t *cb, void *arg, td_proc_t **procp)
 		goto error;
 	}
 	proc->allqaddr = addr;
+
+	val = LOOKUP(proc, "pthread__runqueue", &addr);
+	if (val != 0) {
+		if (val == TD_ERR_NOSYM)
+			val = TD_ERR_NOLIB;
+		goto error;
+	}
+	proc->runqaddr = addr;
+
+	val = LOOKUP(proc, "pthread__idlequeue", &addr);
+	if (val != 0) {
+		if (val == TD_ERR_NOSYM)
+			val = TD_ERR_NOLIB;
+		goto error;
+	}
+	proc->idleqaddr = addr;
+
+	val = LOOKUP(proc, "pthread__suspqueue", &addr);
+	if (val != 0) {
+		if (val == TD_ERR_NOSYM)
+			val = TD_ERR_NOLIB;
+		goto error;
+	}
+	proc->suspqaddr = addr;
 
 	val = LOOKUP(proc, "pthread__maxlwps", &addr);
 	if (val != 0) {
@@ -953,6 +977,288 @@ td_thr_sleepinfo(td_thread_t *thread, td_sync_t **s)
 
 }
 
+#define DPTQ_REMOVE(head, elm, field) do {				\
+	int _val;							\
+	PTQ_ENTRY(__pthread_st) _qent;					\
+									\
+        _val = READ(thread->proc,					\
+	    (elm) + offsetof(struct __pthread_st, field),		\
+	    &_qent, sizeof(_qent));					\
+        if (_val != 0) 							\
+		return _val;						\
+	if (_qent.ptqe_next != NULL) {					\
+		_val = WRITE(thread->proc,				\
+		    (caddr_t)(void *)_qent.ptqe_next + 			\
+		    offsetof(struct __pthread_st, field.ptqe_prev),	\
+		    &_qent.ptqe_prev, sizeof(_qent.ptqe_prev));		\
+		if (_val != 0)						\
+			return _val;					\
+	} else {							\
+		_val = WRITE(thread->proc, (head) +			\
+		    offsetof(struct pthread_queue_t, ptqh_last),	\
+		    &_qent.ptqe_prev, sizeof(_qent.ptqe_prev));		\
+		if (_val != 0)						\
+			return _val;					\
+	}								\
+	_val = WRITE(thread->proc, (caddr_t)(void *)_qent.ptqe_prev,	\
+	    &_qent.ptqe_next, sizeof(_qent.ptqe_next));			\
+	if (_val != 0)							\
+		return _val;						\
+} while (/*CONSTCOND*/0)
+
+#define DPTQ_INSERT_TAIL(head, elm, field) do {				\
+	int _val;							\
+	struct pthread_queue_t _qhead;					\
+	PTQ_ENTRY(__pthread_st) _qent;					\
+									\
+	/* if ((head)->ptqh_last == NULL)			*/	\
+	/*   (head)->ptqh_last = &(head)->ptqh_first;		*/	\
+	_val = READ(thread->proc, (head), &_qhead, sizeof(_qhead));	\
+	 								\
+	if (_val != 0)							\
+		return _val;						\
+	if (_qhead.ptqh_last == NULL)					\
+		_qhead.ptqh_last = (void *)(head);			\
+									\
+	/* (elm)->field.ptqe_prev = (head)->ptqh_last;		*/	\
+	_qent.ptqe_prev = _qhead.ptqh_last;				\
+									\
+	/* *(head)->ptqh_last = (elm);				*/	\
+	_qent.ptqe_next = (void *)elm;	       				\
+	_val = WRITE(thread->proc, (caddr_t)(void *)_qhead.ptqh_last,	\
+	    &_qent.ptqe_next, sizeof(_qent.ptqe_next));			\
+	if (_val != 0)							\
+		return _val;						\
+									\
+	/* (elm)->field.ptqe_next = NULL; */				\
+	_qent.ptqe_next = NULL;						\
+									\
+	/* (head)->ptqh_last = &(elm)->field.ptqe_next;		*/	\
+	_qhead.ptqh_last = (void *) ((elm) +	       			\
+	    offsetof(struct __pthread_st, field.ptqe_next));		\
+									\
+	_val = WRITE(thread->proc, (elm) + 				\
+	    offsetof(struct __pthread_st, field),			\
+	    &_qent, sizeof(_qent));					\
+	if (_val != 0)							\
+		return _val;						\
+	_val = WRITE(thread->proc,					\
+	    (head) + offsetof(struct pthread_queue_t, ptqh_last),	\
+	    &_qhead.ptqh_last, sizeof(_qhead.ptqh_last));		\
+	if (_val != 0)							\
+		return _val;						\
+} while (/*CONSTCOND*/0)
+
+		
+/* Suspend a thread from running */
+int
+td_thr_suspend(td_thread_t *thread)
+{
+	int tmp, tmp1, val;
+	caddr_t addr, sp, nthread, qaddr;
+	struct reg r;
+	struct fpreg fr;
+	ucontext_t uc;
+	struct pthread_queue_t qhead;
+
+	/* validate the thread */
+	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
+	if (val != 0)
+		return val;
+	if (tmp != PT_MAGIC)
+		return TD_ERR_BADTHREAD;
+
+	val = READ(thread->proc, 
+	    thread->addr + offsetof(struct __pthread_st, pt_type), 
+	    &tmp, sizeof(tmp));
+	if (val != 0)
+		return val;
+	if (tmp != PT_THREAD_NORMAL)
+		return TD_ERR_BADTHREAD;
+
+	/* find the thread's current state */
+	if ((val = READ(thread->proc, 
+	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
+	    &tmp, sizeof(tmp))) != 0)
+		return val;
+	if ((val = READ(thread->proc, 
+	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
+	    &tmp1, sizeof(tmp1))) != 0)
+		return val;
+	if (tmp != tmp1)
+		tmp = _PT_STATE_BLOCKED_SYS;
+	else if ((val = READ(thread->proc, 
+		      thread->addr + offsetof(struct __pthread_st, pt_state), 
+		      &tmp, sizeof(tmp))) != 0)
+		return val;
+
+	switch (tmp) {
+	case PT_STATE_RUNNING:
+		/* grab the current thread's state and stash it */
+		val = GETREGS(thread->proc, 0, thread->lwp, &r);
+		if (val != 0)
+			return val;
+		val = GETREGS(thread->proc, 1, thread->lwp, &fr);
+		if (val != 0)
+			return val;
+		_INITCONTEXT_U(&uc);
+		PTHREAD_REG_TO_UCONTEXT(&uc, &r);
+		PTHREAD_FPREG_TO_UCONTEXT(&uc, &fr);
+		sp = (caddr_t)pthread__uc_sp(&uc);
+		sp -= sizeof(uc);
+#ifdef _UC_UCONTEXT_ALIGN
+		sp = (caddr_t) ((unsigned long)sp & _UC_UCONTEXT_ALIGN);
+#endif
+		val = WRITE(thread->proc, sp, &uc, sizeof(uc));
+		if (val != 0)
+			return val;
+		val = WRITE(thread->proc,
+		    thread->addr + offsetof(struct __pthread_st, pt_uc),
+		    &sp, sizeof(sp));
+		
+		/* get a thread from the runq or idleq and put it on the cpu */
+		qaddr = thread->proc->runqaddr;
+		val = READ(thread->proc, qaddr, &qhead, sizeof(qhead));
+		if (val != 0)
+			return val;
+		if (qhead.ptqh_first == NULL) {
+			qaddr = thread->proc->idleqaddr;
+			val = READ(thread->proc, qaddr, &qhead, sizeof(qhead));
+			if (val != 0)
+				return val;
+			if (qhead.ptqh_first == NULL) {
+				/* Well, crap. This isn't supposed to happen */
+				return TD_ERR_ERR;
+			}
+		}
+
+		nthread = (caddr_t)(void *)qhead.ptqh_first;
+		DPTQ_REMOVE(qaddr, nthread, pt_runq);
+		val = READ(thread->proc,
+		    nthread + offsetof(struct __pthread_st, pt_trapuc),
+		    &addr, sizeof(addr));
+		if (val != 0)
+			return val;
+		if (addr == 0) {
+			val = READ(thread->proc,
+			    nthread + offsetof(struct __pthread_st, pt_uc),
+			    &addr, sizeof(addr));
+			if (val != 0)
+				return val;
+		}
+		val = READ(thread->proc, addr, &uc, sizeof(uc));
+		if (val != 0)
+			return val;
+		PTHREAD_UCONTEXT_TO_REG(&r, &uc);
+		PTHREAD_UCONTEXT_TO_FPREG(&fr, &uc);
+		val = SETREGS(thread->proc, 0, thread->lwp, &r);
+		if (val != 0)
+			return val;
+		val = SETREGS(thread->proc, 1, thread->lwp, &fr);
+		if (val != 0)
+			return val;
+
+		/* XXX update thread->lwp or nthread's lwp? */
+		break;
+	case PT_STATE_RUNNABLE:
+		/* remove from runq */
+		DPTQ_REMOVE(thread->proc->runqaddr, thread->addr, pt_runq);
+		break;
+	case PT_STATE_BLOCKED_QUEUE:
+		/* remove from the particular sleepq */
+		val = READ(thread->proc, thread->addr +
+		    offsetof(struct __pthread_st, pt_sleepq),
+		    &addr, sizeof(addr));
+		DPTQ_REMOVE(addr, thread->addr, pt_sleep);
+		break;
+	case _PT_STATE_BLOCKED_SYS:
+		/* set flag so unblock upcall will suspend */
+		val = READ(thread->proc, thread->addr +
+		    offsetof(struct __pthread_st, pt_flags),
+		    &tmp, sizeof(tmp));
+		if (val != 0)
+			return val;
+		tmp |= PT_FLAG_SUSPENDED;
+		val = WRITE(thread->proc, thread->addr +
+		    offsetof(struct __pthread_st, pt_flags),
+		    &tmp, sizeof(tmp));
+		/* all done, don't want to actually go on the queue yet. */
+		return 0;
+	case PT_STATE_SUSPENDED: 
+		/* don't do anything */
+		return 0;
+	case PT_STATE_ZOMBIE:
+	case PT_STATE_DEAD:
+		/* suspending these isn't meaningful */
+		return TD_ERR_BADTHREAD;
+	default:
+		return TD_ERR_ERR;
+	}
+
+	DPTQ_INSERT_TAIL(thread->proc->suspqaddr, thread->addr, pt_runq);
+	tmp = PT_STATE_SUSPENDED;
+	val = WRITE(thread->proc, thread->addr +
+	    offsetof(struct __pthread_st, pt_state),
+	    &tmp, sizeof(tmp));
+	if (val != 0)
+		return val;
+		    
+	return 0;
+}
+
+/* Restore a suspended thread to its previous state */
+int
+td_thr_resume(td_thread_t *thread)
+{
+	int tmp, tmp1, val;
+
+	/* validate the thread */
+	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
+	if (val != 0)
+		return val;
+	if (tmp != PT_MAGIC)
+		return TD_ERR_BADTHREAD;
+
+	/* clear flag */
+	val = READ(thread->proc, thread->addr +
+	    offsetof(struct __pthread_st, pt_flags),
+	    &tmp, sizeof(tmp));
+	if (val != 0)
+		return val;
+	tmp &= ~PT_FLAG_SUSPENDED;
+	val = WRITE(thread->proc, thread->addr +
+	    offsetof(struct __pthread_st, pt_flags),
+	    &tmp, sizeof(tmp));
+
+	/* find the thread's current state */
+	if ((val = READ(thread->proc, 
+	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
+	    &tmp, sizeof(tmp))) != 0)
+		return val;
+	if ((val = READ(thread->proc, 
+	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
+	    &tmp1, sizeof(tmp1))) != 0)
+		return val;
+	if (tmp != tmp1)
+		tmp = _PT_STATE_BLOCKED_SYS;
+	else if ((val = READ(thread->proc, 
+		      thread->addr + offsetof(struct __pthread_st, pt_state), 
+		      &tmp, sizeof(tmp))) != 0)
+		return val;
+	
+	if (tmp == PT_STATE_SUSPENDED) {
+		DPTQ_REMOVE(thread->proc->suspqaddr, thread->addr, pt_runq);
+		/* emulate pthread__sched */
+		tmp = PT_STATE_RUNNABLE;
+		val = WRITE(thread->proc, 
+		    thread->addr + offsetof(struct __pthread_st, pt_state), 
+		    &tmp, sizeof(tmp));
+		DPTQ_INSERT_TAIL(thread->proc->runqaddr, thread->addr, pt_runq);
+	}
+	
+		
+	return 0;
+}
 
 
 static int
