@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425var.h,v 1.3 2003/07/02 11:02:29 ichiro Exp $ */
+/*	$NetBSD: ixp425var.h,v 1.4 2003/09/25 14:11:18 ichiro Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -44,6 +44,23 @@
 
 #include <dev/pci/pcivar.h>
 
+#define	PCI_CSR_WRITE_4(sc, reg, data)	\
+	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,	\
+		reg, data);
+
+#define	PCI_CSR_READ_4(sc, reg)	\
+	bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh, reg);
+
+#define	GPIO_CONF_WRITE_4(sc, reg, data)	\
+	bus_space_write_4(sc->sc_iot, sc->sc_gpio_ioh,  \
+		reg, data);
+
+#define	GPIO_CONF_READ_4(sc, reg) \
+	bus_space_read_4(sc->sc_iot, sc->sc_gpio_ioh, reg);
+
+#define PCI_CONF_LOCK(s)	(s) = disable_interrupts(I32_bit)
+#define PCI_CONF_UNLOCK(s)	restore_interrupts((s))
+
 struct ixp425_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
@@ -52,21 +69,23 @@ struct ixp425_softc {
 	u_int32_t sc_intrmask;
 
 	/* Handles for the various subregions. */
-	/* PCI address */
-	bus_space_handle_t sc_pci_ioh;		/* PCI CSR */
-	bus_space_handle_t sc_conf0_ioh;	/* PCI Configuration 0 */
-	bus_space_handle_t sc_conf1_ioh;	/* PCI Configuration 1 */
-
-	/* I/O window vaddr */
+	bus_space_handle_t sc_pci_ioh;		/* PCI mem handler */
+	bus_space_handle_t sc_gpio_ioh;	/* GPIOs handler */
 
 	/* Bus space, DMA, and PCI tags for the PCI bus */
-	struct bus_space ia_pci_iot;
-        struct bus_space ia_pci_memt;
+	struct bus_space sc_pci_iot;
+	struct bus_space sc_pci_memt;
         struct arm32_bus_dma_tag ia_pci_dmat;
         struct arm32_pci_chipset ia_pci_chipset;
 
 	/* DMA window info for PCI DMA. */
 	struct arm32_dma_range ia_pci_dma_range;
+
+	/* GPIO configuration */
+	u_int32_t sc_gpio_out;
+	u_int32_t sc_gpio_oe;
+	u_int32_t sc_gpio_intr1;
+	u_int32_t sc_gpio_intr2;
 };
 
 /*
@@ -103,19 +122,25 @@ struct pmap_ent {
 	int		cache;
 };
 
+extern struct ixp425_softc *ixp425_softc;
+
+extern struct bus_space ixpsip_bs_tag;
+extern struct bus_space ixp425_bs_tag;
+
 void	ixp425_bs_init(bus_space_tag_t, void *);
+void	ixp425_pci_init(pci_chipset_tag_t, void *);
+void	ixp425_pci_dma_init(struct ixp425_softc *);
 void	ixp425_io_bs_init(bus_space_tag_t, void *);
 void	ixp425_mem_bs_init(bus_space_tag_t, void *);
-void	ixp425_pci_init(pci_chipset_tag_t, void *);
+
+void	ixp425_pci_conf_reg_write(struct ixp425_softc *, uint32_t, uint32_t);
+uint32_t ixp425_pci_conf_reg_read(struct ixp425_softc *, uint32_t); 
 
 void	ixp425_attach(struct ixp425_softc *);
 void	ixp425_icu_init(void);
 void	ixp425_intr_init(void);
 void	*ixp425_intr_establish(int, int, int (*)(void *), void *);
 void    ixp425_intr_disestablish(void *);
-#if XXX
-void	ixp425_expbus_init(void);
-#endif
 
 
 #endif /* _IXP425VAR_H_ */

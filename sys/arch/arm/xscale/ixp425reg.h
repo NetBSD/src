@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.9 2003/07/02 14:03:52 ichiro Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.10 2003/09/25 14:11:18 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -301,6 +301,33 @@
 					  (1 << IXP425_INT_bit22)))
 
 /*
+ * GPIO
+ */
+#define	IXP425_GPIO_HWBASE	IXP425_IO_HWBASE + IXP425_GPIO_OFFSET
+#define IXP425_GPIO_VBASE	IXP425_IO_VBASE  + IXP425_GPIO_OFFSET
+					/* 0xf0004000 */
+#define IXP425_GPIO_SIZE	0x00000020UL
+
+#define	IXP425_GPIO_GPOUTR	0x00
+#define	IXP425_GPIO_GPOER	0x04
+#define	IXP425_GPIO_GPINR	0x08
+#define	IXP425_GPIO_GPISR	0x0c
+#define	IXP425_GPIO_GPIT1R	0x10
+#define	IXP425_GPIO_GPIT2R	0x14
+#define	IXP425_GPIO_GPCLKR	0x18
+# define GPCLKR_MUX14	(1U << 8)
+# define GPCLKR_CLK0TC_SHIFT	4
+# define GPCLKR_CLK0DC_SHIFT	0
+
+/* GPIO Output */
+#define	GPOUT_ON		0x1
+#define	GPOUT_OFF		0x0
+
+/* GPIO direction */
+#define	GPOER_INPUT		0x1
+#define	GPOER_OUTPUT		0x0
+
+/*
  * Expansion Bus
  */
 #define	IXP425_EXP_HWBASE	0xc4000000UL
@@ -394,16 +421,39 @@
 /* PCI_INTERRUPT_REG		0x3c */
 #define	PCI_RTOTTO		0x40
 
+/* PCI Controller CSR Base Address */
+#define	IXP425_PCI_CSR_BASE	IXP425_PCI_VBASE
+
+/* PCI Memory Space */
+#define	IXP425_PCI_MEM_HWBASE	0x48000000UL	/* VA == PA */
+#define	IXP425_PCI_MEM_VBASE	IXP425_PCI_MEM_HWBASE
+#define	IXP425_PCI_MEM_SIZE	0x04000000UL	/* 64MB */
+
+/* PCI I/O Space */
+#define	IXP425_PCI_IO_HWBASE	0x90000000UL
+#define	IXP425_PCI_IO_VBASE	IXP425_PCI_IO_HWBASE
+#define	IXP425_PCI_IO_SIZE	0x00100000UL    /* 1Mbyte */
+
 /* PCI Controller Configuration Offset */
 #define	PCI_NP_AD		0x00
 #define	PCI_NP_CBE		0x04
+# define NP_CBE_SHIFT		4
 #define	PCI_NP_WDATA		0x08
 #define	PCI_NP_RDATA		0x0c
 #define	PCI_CRP_AD_CBE		0x10
 #define	PCI_CRP_AD_WDATA	0x14
 #define	PCI_CRP_AD_RDATA	0x18
 #define	PCI_CSR			0x1c
+# define CSR_PRST		(1U << 16)
+# define CSR_IC			(1U << 15)
+# define CSR_ABE		(1U << 4)
+# define CSR_PDS		(1U << 3)
+# define CSR_ADS		(1U << 2)
 #define	PCI_ISR			0x20
+# define ISR_AHBE		(1U << 3)
+# define ISR_PPE		(1U << 2)
+# define ISR_PFE		(1U << 1)
+# define ISR_PSE		(1U << 0)
 #define	PCI_INTEN		0x24
 #define	PCI_DMACTRL		0x28
 #define	PCI_AHBMEMBASE		0x2c
@@ -424,16 +474,19 @@
 #define	PCI_PTADMA1_PCIADDR	0x68
 #define	PCI_PTADMA1_LENGTH	0x6c
 
-/* PCI target(T)/initiator(I) Interface Commands */
-#define	COMMAND_IA		0x0	/* Interrupt Acknowledge   (I)*/
-#define	COMMAND_SC		0x1	/* Special Cycle	   (I)*/
-#define	COMMAND_IO_READ		0x2	/* I/O Read		(T)(I) */
-#define	COMMAND_IO_WRITE	0x3	/* I/O Write		(T)(I) */
-#define	COMMAND_MEM_READ	0x6	/* Memory Read		(T)(I) */
-#define	COMMAND_MEM_WRITE	0x7	/* Memory Write		(T)(I) */
-#define	COMMAND_CONF_READ	0xa	/* Configuration Read	(T)(I) */
-#define	COMMAND_CONF_WRITE	0xb	/* Configuration Write	(T)(I) */
+/* PCI target(T)/initiator(I) Interface Commands for PCI_NP_CBE register */
+#define	COMMAND_NP_IA		0x0	/* Interrupt Acknowledge   (I)*/
+#define	COMMAND_NP_SC		0x1	/* Special Cycle	   (I)*/
+#define	COMMAND_NP_IO_READ	0x2	/* I/O Read		(T)(I) */
+#define	COMMAND_NP_IO_WRITE	0x3	/* I/O Write		(T)(I) */
+#define	COMMAND_NP_MEM_READ	0x6	/* Memory Read		(T)(I) */
+#define	COMMAND_NP_MEM_WRITE	0x7	/* Memory Write		(T)(I) */
+#define	COMMAND_NP_CONF_READ	0xa	/* Configuration Read	(T)(I) */
+#define	COMMAND_NP_CONF_WRITE	0xb	/* Configuration Write	(T)(I) */
 
+/* PCI Controller Configuration Commands for PCI_CRP_AD_CBE */
+#define COMMAND_CRP_READ	0x0
+#define	COMMAND_CRP_WRITE	(1U << 16)
 /*
  * SDRAM Configuration Register
  */

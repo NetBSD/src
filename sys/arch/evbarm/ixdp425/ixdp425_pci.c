@@ -1,4 +1,5 @@
-/*      $NetBSD: ixdp425_pci.c,v 1.1 2003/05/24 01:59:32 ichiro Exp $ */
+/*      $NetBSD: ixdp425_pci.c,v 1.2 2003/09/25 14:11:18 ichiro Exp $ */
+#define PCI_DEBUG
 /*
  * Copyright (c) 2003
  *      Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.1 2003/05/24 01:59:32 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.2 2003/09/25 14:11:18 ichiro Exp $");
 
 /*
  * IXDP425 PCI interrupt support.
@@ -87,7 +88,7 @@ ixdp425_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	printf("ixdp425_pci_intr_map: v=%p, tag=%08lx intrpin=%d line=%d dev=%d\n",
 		v, intrtag, pin, line, dev);
 #endif
-
+	
 	switch (pin) {
 	case 1:
 		*ihp = PCI_INT_A;
