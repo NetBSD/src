@@ -1,11 +1,11 @@
 #
-# 	$NetBSD: GENERIC,v 1.74 2000/05/02 08:03:53 augustss Exp $
+# 	$NetBSD: GENERIC,v 1.75 2000/05/28 06:02:12 gmcgarry Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
 include		"arch/pmax/conf/std.pmax"
 
-#ident 		"GENERIC-$Revision: 1.74 $"
+#ident 		"GENERIC-$Revision: 1.75 $"
 
 maxusers	64
 
@@ -143,9 +143,8 @@ ioasic0	at	tc?
 mcclock* at	ioasic? offset ?	# DS1287 RTC
 le*	at	ioasic? offset ?	# LANCE
 scc*	at	ioasic? offset ?	# Z85C30
-bba0	at	ioasic? offset ?	# MAXINE audio
+bba*	at	ioasic? offset ?	# MAXINE baseboard audio
 audio*	at	bba?
-#isdn	at	ioasic? offset ?	# MAXINE ISDN (not supported)
 dtop*	at	ioasic? offset ?	# MAXINE kbd and mouse
 #fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
 asc*	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC
