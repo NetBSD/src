@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.11 2004/10/29 20:51:11 dsl Exp $	*/
+/*	$NetBSD: misc.c,v 1.12 2005/03/16 02:53:55 xtraeme Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: misc.c,v 2.9 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: misc.c,v 1.11 2004/10/29 20:51:11 dsl Exp $");
+__RCSID("$NetBSD: misc.c,v 1.12 2005/03/16 02:53:55 xtraeme Exp $");
 #endif
 #endif
 
@@ -52,17 +52,14 @@ __RCSID("$NetBSD: misc.c,v 1.11 2004/10/29 20:51:11 dsl Exp $");
 #define LOG_CRON LOG_DAEMON
 #endif
 
-static int in_file __P((char *, FILE *));
-static void mkprint __P((char *, unsigned char *, int));
+static int in_file(char *, FILE *);
+static void mkprint(char *, unsigned char *, int);
 
 static int		LogFD = ERR;
 
 
 int
-strcmp_until(left, right, until)
-	char	*left;
-	char	*right;
-	int	until;
+strcmp_until(char *left, char *right, int until)
 {
 	int	diff;
 
@@ -85,8 +82,7 @@ strcmp_until(left, right, until)
 /* strdtb(s) - delete trailing blanks in string 's' and return new length
  */
 int
-strdtb(s)
-	char	*s;
+strdtb(char *s)
 {
 	char	*x = s;
 
@@ -114,8 +110,7 @@ strdtb(s)
 
 
 int
-set_debug_flags(flags)
-	char	*flags;
+set_debug_flags(char *flags)
 {
 	/* debug flags are of the form    flag[,flag ...]
 	 *
@@ -181,7 +176,7 @@ set_debug_flags(flags)
 
 
 void
-set_cron_uid()
+set_cron_uid(void)
 {
 #if defined(BSD) || defined(POSIX)
 	if (seteuid(ROOT_UID) < OK) {
@@ -198,7 +193,7 @@ set_cron_uid()
 
 
 void
-set_cron_cwd()
+set_cron_cwd(void)
 {
 	struct stat	sb;
 
@@ -257,8 +252,7 @@ set_cron_cwd()
  * it would be great if fflush() disassociated the file buffer.
  */
 void
-acquire_daemonlock(closeflag)
-	int closeflag;
+acquire_daemonlock(int closeflag)
 {
 	static	FILE	*fp = NULL;
 
@@ -313,8 +307,7 @@ acquire_daemonlock(closeflag)
 /* get_char(file) : like getc() but increment LineNumber on newlines
  */
 int
-get_char(file)
-	FILE	*file;
+get_char(FILE *file)
 {
 	int	ch;
 
@@ -328,9 +321,7 @@ get_char(file)
 /* unget_char(ch, file) : like ungetc but do LineNumber processing
  */
 void
-unget_char(ch, file)
-	int	ch;
-	FILE	*file;
+unget_char(int ch, FILE *file)
 {
 	ungetc(ch, file);
 	if (ch == '\n')
@@ -345,11 +336,7 @@ unget_char(ch, file)
  *		(4) returns EOF or terminating character, whichever
  */
 int
-get_string(string, size, file, terms)
-	char	*string;
-	int	size;
-	FILE	*file;
-	char	*terms;
+get_string(char *string, int size, FILE *file, const char *terms)
 {
 	int	ch;
 
@@ -370,8 +357,7 @@ get_string(string, size, file, terms)
 /* skip_comments(file) : read past comment (if any)
  */
 void
-skip_comments(file)
-	FILE	*file;
+skip_comments(FILE *file)
 {
 	int	ch;
 
@@ -412,9 +398,7 @@ skip_comments(file)
  *	FALSE otherwise.
  */
 static int
-in_file(string, file)
-	char *string;
-	FILE *file;
+in_file(char *string, FILE *file)
 {
 	char line[MAX_TEMPSTR];
 
@@ -435,8 +419,7 @@ in_file(string, file)
  *	or (neither file exists but user=="root" so it's okay)
  */
 int
-allowed(username)
-	char *username;
+allowed(char *username)
 {
 	static int	init = FALSE;
 	static FILE	*allow, *deny;
@@ -471,11 +454,7 @@ allowed(username)
 
 
 void
-log_it(username, xpid, event, detail)
-	char	*username;
-	int	xpid;
-	char	*event;
-	char	*detail;
+log_it(const char *username, int xpid, const char *event, const char *detail)
 {
 	PID_T			pid = xpid;
 #if defined(LOG_FILE)
@@ -556,7 +535,7 @@ log_it(username, xpid, event, detail)
 
 
 void
-log_close() {
+log_close(void) {
 	if (LogFD != ERR) {
 		close(LogFD);
 		LogFD = ERR;
@@ -569,9 +548,8 @@ log_close() {
  *	(2) it returns a pointer to static storage
  */
 char *
-first_word(s, t)
-	char *s;	/* string we want the first word of */
-	char *t;	/* terminators, implicitly including \0 */
+first_word(char *s, /* string we want the first word of */
+           const char *t  /* terminators, implicitly including \0 */)
 {
 	static char retbuf[2][MAX_TEMPSTR + 1];	/* sure wish C had GC */
 	static int retsel = 0;
@@ -602,10 +580,7 @@ first_word(s, t)
  *	heavily ascii-dependent.
  */
 static void
-mkprint(dst, src, len)
-	char *dst;
-	unsigned char *src;
-	int len;
+mkprint(char *dst, unsigned char *src, int len)
 {
 	while(len > 0 && isblank((unsigned char) *src))
 		len--, src++;
@@ -618,9 +593,7 @@ mkprint(dst, src, len)
  *	returns a pointer to malloc'd storage, you must call free yourself.
  */
 char *
-mkprints(src, len)
-	unsigned char *src;
-	unsigned int len;
+mkprints(unsigned char *src, unsigned int len)
 {
 	char *dst = malloc(len*4 + 1);
 
@@ -635,8 +608,7 @@ mkprints(src, len)
  * 1234567890123456789012345678901234567
  */
 char *
-arpadate(clock)
-	time_t *clock;
+arpadate(time_t *clock)
 {
 	static char ret[64];	/* zone name might be >3 chars */
 	time_t t = clock ? *clock : time(NULL);
@@ -657,12 +629,12 @@ arpadate(clock)
 
 #ifdef HAVE_SAVED_UIDS
 static int save_euid;
-int swap_uids() { save_euid = geteuid(); return seteuid(getuid()); }
+int swap_uids(void) { save_euid = geteuid(); return seteuid(getuid()); }
 #if 0
 int swap_uids_back() { return seteuid(save_euid); }
 #endif
 #else /*HAVE_SAVED_UIDS*/
-int swap_uids() { return setreuid(geteuid(), getuid()); }
+int swap_uids(void) { return setreuid(geteuid(), getuid()); }
 #if 0
 int swap_uids_back() { return swap_uids(); }
 #endif

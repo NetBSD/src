@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.12 2004/10/29 20:51:11 dsl Exp $	*/
+/*	$NetBSD: env.c,v 1.13 2005/03/16 02:53:55 xtraeme Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: env.c,v 2.7 1994/01/26 02:25:50 vixie Exp";
 #else
-__RCSID("$NetBSD: env.c,v 1.12 2004/10/29 20:51:11 dsl Exp $");
+__RCSID("$NetBSD: env.c,v 1.13 2005/03/16 02:53:55 xtraeme Exp $");
 #endif
 #endif
 
@@ -31,7 +31,7 @@ __RCSID("$NetBSD: env.c,v 1.12 2004/10/29 20:51:11 dsl Exp $");
 #include <string.h>
 
 char **
-env_init()
+env_init(void)
 {
 	char	**p = (char **) malloc(sizeof(char **));
 
@@ -41,8 +41,7 @@ env_init()
 
 
 void
-env_free(envp)
-	char	**envp;
+env_free(char **envp)
 {
 	char	**p;
 
@@ -53,8 +52,7 @@ env_free(envp)
 
 
 char **
-env_copy(envp)
-	char	**envp;
+env_copy(char **envp)
 {
 	int	count, i;
 	char	**p;
@@ -70,9 +68,7 @@ env_copy(envp)
 
 
 char **
-env_set(envp, envstr)
-	char	**envp;
-	char	*envstr;
+env_set(char **envp, char *envstr)
 {
 	int	count, found;
 	char	**p;
@@ -116,9 +112,7 @@ env_set(envp, envstr)
  *		TRUE = was an env setting
  */
 int
-load_env(envstr, f)
-	char	*envstr;
-	FILE	*f;
+load_env(char *envstr, FILE *f)
 {
 	long	filepos;
 	int	fileline, len;
@@ -202,9 +196,7 @@ load_env(envstr, f)
 
 
 char *
-env_get(name, envp)
-	char	*name;
-	char	**envp;
+env_get(const char *name, char **envp)
 {
 	int	len = strlen(name);
 	char	*p, *q;

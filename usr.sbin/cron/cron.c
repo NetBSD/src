@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.10 2002/04/25 14:45:05 atatat Exp $	*/
+/*	$NetBSD: cron.c,v 1.11 2005/03/16 02:53:55 xtraeme Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 2.11 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.10 2002/04/25 14:45:05 atatat Exp $");
+__RCSID("$NetBSD: cron.c,v 1.11 2005/03/16 02:53:55 xtraeme Exp $");
 #endif
 #endif
 
@@ -39,31 +39,27 @@ __RCSID("$NetBSD: cron.c,v 1.10 2002/04/25 14:45:05 atatat Exp $");
 #endif
 
 
-static	void	usage __P((void)),
-		run_reboot_jobs __P((cron_db *)),
-		cron_tick __P((cron_db *)),
-		cron_sync __P((void)),
-		cron_sleep __P((void)),
+static	void	usage(void),
+		run_reboot_jobs(cron_db *),
+		cron_tick(cron_db *),
+		cron_sync(void),
+		cron_sleep(void),
 #ifdef USE_SIGCHLD
-		sigchld_handler __P((int)),
+		sigchld_handler(int),
 #endif
-		sighup_handler __P((int)),
-		parse_args __P((int c, char *v[]));
+		sighup_handler(int),
+		parse_args(int c, char *v[]);
 
-
-int main __P((int, char *[]));
 
 static void
-usage() {
+usage(void) {
 	fprintf(stderr, "usage:  %s [-x debugflag[,...]]\n", ProgramName);
 	exit(ERROR_EXIT);
 }
 
 
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char **argv)
 {
 	cron_db	database;
 
@@ -133,8 +129,7 @@ main(argc, argv)
 
 
 static void
-run_reboot_jobs(db)
-	cron_db *db;
+run_reboot_jobs(cron_db *db)
 {
 	user		*u;
 	entry		*e;
@@ -151,8 +146,7 @@ run_reboot_jobs(db)
 
 
 static void
-cron_tick(db)
-	cron_db	*db;
+cron_tick(cron_db *db)
 {
 	char		*orig_tz, *job_tz;
  	struct tm	*tm;
@@ -226,7 +220,7 @@ cron_tick(db)
  * that's something sysadmin's know to expect what with crashing computers..
  */
 static void
-cron_sync() {
+cron_sync(void) {
  	struct tm	*tm;
 
 	TargetTime = time((time_t*)0);
@@ -236,7 +230,7 @@ cron_sync() {
 
 
 static void
-cron_sleep() {
+cron_sleep(void) {
 	int	seconds_to_wait;
 
 	do {
@@ -265,8 +259,7 @@ cron_sleep() {
 
 #ifdef USE_SIGCHLD
 static void
-sigchld_handler(x)
-	int x;
+sigchld_handler(int x)
 {
 	WAIT_T		waiter;
 	PID_T		pid;
@@ -297,17 +290,14 @@ sigchld_handler(x)
 
 
 static void
-sighup_handler(x)
-	int x;
+sighup_handler(int x)
 {
 	log_close();
 }
 
 
 static void
-parse_args(argc, argv)
-	int	argc;
-	char	*argv[];
+parse_args(int argc, char **argv)
 {
 	int	argch;
 
