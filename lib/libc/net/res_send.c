@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.28 2000/06/14 01:52:41 itojun Exp $	*/
+/*	$NetBSD: res_send.c,v 1.29 2000/06/18 21:41:23 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.28 2000/06/14 01:52:41 itojun Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.29 2000/06/18 21:41:23 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -410,6 +410,18 @@ res_send(buf, buflen, ans, anssiz)
 	for (try = 0; try < _res.retry; try++) {
 	    for (ns = 0; ns < _res.nscount; ns++) {
 		struct sockaddr *nsap = get_nsaddr(ns);
+		socklen_t salen;
+
+		if (nsap->sa_len)
+			salen = nsap->sa_len;
+#ifdef INET6
+		else if (nsap->sa_family == AF_INET6)
+			salen = sizeof(struct sockaddr_in6);
+#endif
+		else if (nsap->sa_family == AF_INET)
+			salen = sizeof(struct sockaddr_in);
+		else
+			salen = 0;	/* unknown, die on connect */
 
     same_ns:
 		if (badns & (1 << ns)) {
@@ -449,9 +461,8 @@ res_send(buf, buflen, ans, anssiz)
 		}
 
 		Dprint((_res.options & RES_DEBUG) &&
-		       getnameinfo(nsap, (size_t)nsap->sa_len, abuf,
-			   sizeof(abuf), NULL, 0,
-			   NI_NUMERICHOST|NI_WITHSCOPEID) == 0,
+		       getnameinfo(nsap, salen, abuf, sizeof(abuf),
+			   NULL, 0, NI_NUMERICHOST | NI_WITHSCOPEID) == 0,
 		       (stdout, ";; Querying server (# %d) address = %s\n",
 			ns + 1, abuf));
 
@@ -485,11 +496,10 @@ res_send(buf, buflen, ans, anssiz)
 #endif
 				}
 				errno = 0;
-				if (connect(s, (struct sockaddr *)(void *)nsap,
-					    (socklen_t)nsap->sa_len) < 0) {
+				if (connect(s, nsap, salen) < 0) {
 					terrno = errno;
 					Aerror(stderr, "connect/vc",
-					       errno, (struct sockaddr *)nsap);
+					       errno, nsap);
 					badns |= (1 << ns);
 					res_close();
 					goto next_ns;
@@ -661,13 +671,10 @@ read_len:
 				 * receive a response from another server.
 				 */
 				if (!connected) {
-					if (connect(s,
-					    (struct sockaddr *)(void *)nsap,
-					    (socklen_t)nsap->sa_len) < 0) {
+					if (connect(s, nsap, salen) < 0) {
 						Aerror(stderr,
 						       "connect(dg)",
-						       errno,
-						       (struct sockaddr *)nsap);
+						       errno, nsap);
 						badns |= (1 << ns);
 						res_close();
 						goto next_ns;
@@ -710,11 +717,9 @@ read_len:
 					connected = 0;
 					errno = 0;
 				}
-				if (sendto(s, buf, (size_t)buflen, 0,
-					   (struct sockaddr *)(void *)nsap,
-					   (socklen_t)nsap->sa_len) != buflen) {
-					Aerror(stderr, "sendto", errno,
-					    (struct sockaddr *)nsap);
+				if (sendto(s, (char*)buf, buflen, 0,
+					   nsap, salen) != buflen) {
+					Aerror(stderr, "sendto", errno, nsap);
 					badns |= (1 << ns);
 					res_close();
 					goto next_ns;
