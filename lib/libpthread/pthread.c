@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.5 2003/01/19 21:58:24 thorpej Exp $	*/
+/*	$NetBSD: pthread.c,v 1.6 2003/01/25 00:37:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -415,6 +415,7 @@ int
 pthread_join(pthread_t thread, void **valptr)
 {
 	pthread_t self;
+	int num;
 
 	self = pthread__self();
 	SDPRINTF(("(pthread_join %p) Joining %p.\n", self, thread));
@@ -435,8 +436,20 @@ pthread_join(pthread_t thread, void **valptr)
 		return EINVAL;
 	}
 
-	if ((thread->pt_state != PT_STATE_ZOMBIE) &&
-	    (thread->pt_state != PT_STATE_DEAD)) {
+	num = thread->pt_num;
+	while (thread->pt_state != PT_STATE_ZOMBIE) {
+		if ((thread->pt_state == PT_STATE_DEAD) ||
+		    (thread->pt_flags & PT_FLAG_DETACHED) ||
+		    (thread->pt_num != num)) {
+			/*
+			 * Another thread beat us to the join, or called
+			 * pthread_detach(). If num didn't match, the
+			 * thread died and was recycled before we got
+			 * another chance to run.
+			 */
+			pthread_spinunlock(self, &thread->pt_join_lock);
+			return ESRCH;
+		}
 		/*
 		 * "I'm not dead yet!"
 		 * "You will be soon enough."
@@ -456,13 +469,6 @@ pthread_join(pthread_t thread, void **valptr)
 		PTQ_INSERT_TAIL(&thread->pt_joiners, self, pt_sleep);
 		pthread__block(self, &thread->pt_join_lock);
 		pthread_spinlock(self, &thread->pt_join_lock);
-	}
-
-	if ((thread->pt_state == PT_STATE_DEAD) ||
-	    (thread->pt_flags & PT_FLAG_DETACHED)) {
-		/* Someone beat us to the join, or called pthread_detach(). */
-		pthread_spinunlock(self, &thread->pt_join_lock);
-		return ESRCH;
 	}
 
 	/* All ours. */
