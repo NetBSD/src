@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2002/08/19 09:41:28 lukem Exp $
+# $NetBSD: Makefile,v 1.6 2004/07/30 04:44:54 lukem Exp $
 
 NOLINT=		# defined
 
@@ -8,6 +8,10 @@ DIST=		${NETBSDSRCDIR}/dist
 .PATH:		${DIST}/cdk ${DIST}/cdk/include ${DIST}/cdk/man
 
 LIB=		cdk
+
+LDADD+=		-lcurses
+DPADD+=		${LIBCURSES}
+
 CPPFLAGS+=	-I. -I${DIST}/cdk/include -DHAVE_CONFIG_H
 
 SRCS=	alphalist.c binding.c buttonbox.c calendar.c cdk.c cdkscreen.c \
