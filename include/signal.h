@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.38 2004/07/01 23:46:07 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.39 2004/12/10 16:40:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,6 +66,10 @@ int	__libc_sigaction14 __P((int, const struct sigaction *,
     defined(_NETBSD_SOURCE)
 int	pthread_sigmask __P((int, const sigset_t *, sigset_t *));
 int	pthread_kill __P((pthread_t, int));
+int	__libc_thr_sigsetmask(int, const sigset_t *, sigset_t *);
+#ifndef __LIBPTHREAD_SOURCE__
+#define	pthread_sigmask		__libc_thr_sigsetmask
+#endif /* __LIBPTHREAD_SOURCE__ */
 #endif
 
 #ifdef __LIBC12_SOURCE__
