@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2002/03/04 02:19:08 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 2002/03/04 02:25:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2002/03/04 02:19:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2002/03/04 02:25:22 simonb Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -138,12 +138,14 @@ static int __bicons_enable;
 #endif /* NBICONSDEV > 0 */
 
 #ifdef NFS
-extern int nfs_mountroot(void);
-extern int (*mountroot)(void);
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
 #endif
 
 #ifdef MEMORY_DISK_DYNAMIC
-void md_root_setconf(caddr_t, size_t);
+#include <dev/md.h>
 #endif
 
 /* the following is used externally (sysctl_hw) */
