@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.52 1995/01/26 12:05:49 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.53 1995/01/30 11:34:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -227,21 +227,22 @@ cdopen(dev, flag, fmt)
 			return ENXIO;
 	} else {
 		cd->flags |= CDF_LOCKED;
-		sc_link->flags |= SDEV_OPEN;
 
 		/* Check that it is still responding and ok. */
 		if (error = scsi_test_unit_ready(sc_link,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_NOT_READY))
-			goto bad;
-
-		/* Lock the pack in. */
-		if (error = scsi_prevent(sc_link, PR_PREVENT,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE))
-			goto bad;
+			goto bad3;
 
 		/* Start the pack spinning if necessary. */
 		if (error = scsi_start(sc_link, SSS_START,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT))
+			goto bad3;
+
+		sc_link->flags |= SDEV_OPEN;
+
+		/* Lock the pack in. */
+		if (error = scsi_prevent(sc_link, PR_PREVENT,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE))
 			goto bad;
 
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
@@ -297,6 +298,7 @@ bad:
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 		sc_link->flags &= ~SDEV_OPEN;
 
+bad3:
 		cd->flags &= ~CDF_LOCKED;
 		if ((cd->flags & CDF_WANTED) != 0) {
 			cd->flags &= ~CDF_WANTED;
@@ -773,11 +775,11 @@ cdioctl(dev, cmd, addr, flag, p)
 	case CDIOCPAUSE:
 		return cd_pause(cd, 0);
 	case CDIOCSTART:
-		return scsi_start(cd->sc_link, SSS_START, 0);
+		return scsi_start(cd->sc_link, SSS_START|SSS_LOEJ, 0);
 	case CDIOCSTOP:
 		return scsi_start(cd->sc_link, SSS_STOP, 0);
 	case CDIOCEJECT:
-		return scsi_start(cd->sc_link, SSS_LOEJ, 0);
+		return scsi_start(cd->sc_link, SSS_STOP|SSS_LOEJ, 0);
 	case CDIOCALLOW:
 		return scsi_prevent(cd->sc_link, PR_ALLOW, 0);
 	case CDIOCPREVENT:
