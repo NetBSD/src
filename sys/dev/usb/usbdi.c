@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.45 1999/10/13 08:10:58 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.46 1999/10/13 14:28:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -765,7 +765,7 @@ usb_transfer_complete(reqh)
 		pipe->methods->done(reqh);
 
 	/* Remove request from queue. */
-#ifdef DIAGNOSTIC
+#ifdef DIAGNOSTICx
 	if (reqh != SIMPLEQ_FIRST(&pipe->queue))
 		printf("usb_transfer_complete: bad dequeue\n");
 #endif
