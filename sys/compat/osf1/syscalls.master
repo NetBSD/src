@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.5 1996/09/07 14:22:00 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.6 1997/06/27 05:29:37 kleink Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -195,7 +195,7 @@
 			    int *fromlenaddr); }
 126	UNIMPL		setreuid
 127	UNIMPL		setregid
-128	NOARGS		{ int sys_rename(char *from, char *to); }
+128	NOARGS		{ int sys_posix_rename(char *from, char *to); }
 129	STD		{ int osf1_sys_truncate(char *path, off_t length); }
 130	STD		{ int osf1_sys_ftruncate(int fd, off_t length); }
 131	UNIMPL		flock
