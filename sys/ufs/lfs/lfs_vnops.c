@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.22 1999/03/10 00:20:00 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.23 1999/03/25 21:39:19 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -106,15 +106,9 @@ int (**lfs_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, ufs_lookup },		/* lookup */
-#ifndef LFS_USEDIROP
-	{ &vop_create_desc, ufs_create },		/* create */
-	{ &vop_whiteout_desc, ufs_whiteout },		/* whiteout */
-	{ &vop_mknod_desc, ufs_mknod },			/* mknod */
-#else
 	{ &vop_create_desc, lfs_create },		/* create */
 	{ &vop_whiteout_desc, lfs_whiteout },		/* whiteout */
 	{ &vop_mknod_desc, lfs_mknod },			/* mknod */
-#endif
 	{ &vop_open_desc, ufs_open },			/* open */
 	{ &vop_close_desc, lfs_close },			/* close */
 	{ &vop_access_desc, ufs_access },		/* access */
@@ -129,21 +123,12 @@ struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_mmap_desc, ufs_mmap },			/* mmap */
 	{ &vop_fsync_desc, lfs_fsync },			/* fsync */
 	{ &vop_seek_desc, ufs_seek },			/* seek */
-#ifndef LFS_USEDIROP
-	{ &vop_remove_desc, ufs_remove },		/* remove */
-	{ &vop_link_desc, ufs_link },			/* link */
-	{ &vop_rename_desc, ufs_rename },		/* rename */
-	{ &vop_mkdir_desc, ufs_mkdir },			/* mkdir */
-	{ &vop_rmdir_desc, ufs_rmdir },			/* rmdir */
-	{ &vop_symlink_desc, ufs_symlink },		/* symlink */
-#else
 	{ &vop_remove_desc, lfs_remove },		/* remove */
 	{ &vop_link_desc, lfs_link },			/* link */
 	{ &vop_rename_desc, lfs_rename },		/* rename */
 	{ &vop_mkdir_desc, lfs_mkdir },			/* mkdir */
 	{ &vop_rmdir_desc, lfs_rmdir },			/* rmdir */
 	{ &vop_symlink_desc, lfs_symlink },		/* symlink */
-#endif
 	{ &vop_readdir_desc, ufs_readdir },		/* readdir */
 	{ &vop_readlink_desc, ufs_readlink },		/* readlink */
 	{ &vop_abortop_desc, ufs_abortop },		/* abortop */
@@ -291,7 +276,6 @@ lfs_fsync(v)
 			   (ap->a_flags & FSYNC_WAIT) != 0 ? LFS_SYNC : 0)); /* XXX */
 }
 
-#ifdef LFS_USEDIROP
 /*
  * These macros are used to bracket UFS directory ops, so that we can
  * identify all the pages touched during directory ops which need to
@@ -507,7 +491,6 @@ lfs_rename(v)
 	SET_ENDOP(VTOI(ap->a_fdvp)->i_lfs);
 	return (ret);
 }
-#endif /* LFS_USEDIROP */
 
 /* XXX hack to avoid calling ITIMES in getattr */
 int

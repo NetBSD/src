@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.13 1999/03/17 18:38:34 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.14 1999/03/25 21:39:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,13 +74,7 @@
  * Compile-time options for LFS.
  */
 #define LFS_EAGAIN_FAIL          /* markv fail with EAGAIN if ino is locked */
-#define LFS_CONSERVATIVE_LOCK    /* lock ifile ino in lfs_segwrite, if safe */
-
-#define LFS_TOGGLE_SB           /* toggle between first 2 sbs for checkpoint */
-#define LFS_TRACK_IOS           /* attempt to avoid cleaning segments not yet fully written to disk */
-#define LFS_USEDIROP            /* use VDIROP segregation */
-#define LFS_STINGY_CLEAN        /* write only cleaned inodes when cleaning */
-#define LFS_STINGY_BLOCKS       /* write only cleaned blocks when cleaning */
+#define LFS_TRACK_IOS            /* attempt to avoid cleaning segments not yet fully written to disk */
 #define LFS_CANNOT_ROLLFW       /* No roll-forward agent exists */
 
 /* #define DEBUG_LFS */              /* Intensive debugging of LFS subsystem */
@@ -311,21 +305,16 @@ struct lfs {
 	int8_t	  lfs_fmod;		/* super block modified flag */
 	int8_t	  lfs_ronly;		/* mounted read-only flag */
 	int8_t	  lfs_flags;		/* currently unused flag */
-#ifdef LFS_TOGGLE_SB
 	u_int16_t lfs_activesb;         /* toggle between superblocks */
-#endif /* LFS_TOGGLE_SB */
 #ifdef LFS_TRACK_IOS
 	daddr_t   lfs_pending[LFS_THROTTLE]; /* daddrs of pending writes */
 #endif /* LFS_TRACK_IOS */
-#ifdef LFS_USEDIROP
 # define LFS_MAXDIROP 32
 	int       lfs_dirvcount;        /* number of VDIROP-marked vnodes */
-#endif /* LFS_USEDIROP */	
 #ifdef LFS_CANNOT_ROLLFW
 	daddr_t   lfs_sbactive;         /* disk address of in-progress sb write */
 #endif
 	struct vnode *lfs_flushvp;      /* vnode being flushed */
-	int       lfs_loanedbytes;      /* Temp. byte loans for removed inodes */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.7 1999/03/10 00:20:00 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.8 1999/03/25 21:39:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -228,11 +228,6 @@ lfs_bwrite_ext(bp, flags)
 		}
 		
 		ip = VTOI(bp->b_vp);
-#ifndef LFS_STINGY_CLEAN
-		if (!(ip->i_flag & IN_MODIFIED))
-			++fs->lfs_uinodes;
-		ip->i_flag |= IN_CHANGE | IN_MODIFIED | IN_UPDATE;
-#else /* LFS_STINGY_CLEAN */
 		if ((bp->b_flags & (B_CALL|B_INVAL)) == (B_CALL|B_INVAL))
 		{
 			if(!(ip->i_flag & IN_CLEANING))
@@ -243,7 +238,6 @@ lfs_bwrite_ext(bp, flags)
 				++fs->lfs_uinodes;
 			ip->i_flag |= IN_CHANGE | IN_MODIFIED | IN_UPDATE;
 		}
-#endif /* LFS_STINGY_CLEAN */
 		fs->lfs_avail -= db;
 		++locked_queue_count;
 		locked_queue_bytes += bp->b_bufsize;
@@ -260,17 +254,6 @@ lfs_bwrite_ext(bp, flags)
 			bp->b_flags |= B_DELWRI | B_LOCKED;
 		bp->b_flags &= ~(B_READ | B_ERROR);
 		s = splbio();
-		/* XXX - KS - if it's fake and there's another in core, forget it */
-		if((bp->b_flags & (B_CALL|B_INVAL)) == (B_CALL|B_INVAL)
-		   && incore(bp->b_vp,bp->b_lblkno))
-		{
-#ifdef DIAGNOSTIC
-			printf("lfs_bwrite_ext: dropping fake buffer %d/%d",VTOI(bp->b_vp)->i_number, bp->b_lblkno);
-#endif
-			lfs_freebuf(bp);
-			splx(s);
-			return 0;
-		}
 		reassignbuf(bp, bp->b_vp);
 		splx(s);
 	}

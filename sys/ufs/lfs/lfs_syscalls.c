@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.22 1999/03/10 00:20:00 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.23 1999/03/25 21:39:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -168,9 +168,6 @@ lfs_markv(p, v, retval)
 #ifdef LFS_TRACK_IOS
 	int j;
 #endif
-#ifdef THROTTLE_REFERENCES
-	ino_t refed_vnodes[LFS_VREF_THRESHOLD];
-#endif
 	int numlocked=0, numrefed=0;
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -258,26 +255,8 @@ lfs_markv(p, v, retval)
 					VOP_UNLOCK(vp,0);
 					numlocked--;
 				}
-#ifndef THROTTLE_REFERENCES
 				lfs_vunref(vp);
 				numrefed--;
-#else
-				/*
-				 * Have to do this so that getnewvnode doesn't
-				 * get ahold of one of these vnodes while
-				 * we're still processing others, set VXLOCK,
-				 * and prevent us from writing it out.
-				 * XXX Yuck.
-				 */
-				if(numrefed == LFS_VREF_THRESHOLD-1) {
-					lfs_segwrite(mntp, SEGM_SYNC|SEGM_CLEAN|SEGM_CKP);
-					while(--numrefed) {
-						vp = ufs_ihashlookup(VFSTOUFS(mntp)->um_dev, refed_vnodes[numrefed]);
-						if(vp && (VTOI(vp)->i_flag & IN_CLEANING))
-							lfs_vunref(vp);
-					}
-				}
-#endif
 			}
 
 			/*
@@ -315,11 +294,7 @@ lfs_markv(p, v, retval)
 				numlocked++;
 
 			if(!error) {
-#ifndef THROTTLE_REFERENCES
 				numrefed++;
-#else
-				refed_vnodes[numrefed++] = blkp->bi_inode;
-#endif
 			}
 			if(error) {
 #ifdef DIAGNOSTIC
@@ -375,15 +350,9 @@ lfs_markv(p, v, retval)
                                 if(ifp->if_daddr == blkp->bi_daddr
 				   || blkp->bi_daddr == LFS_FORCE_WRITE)
 				{
-#ifndef STINGY_CLEAN
-					if(!(ip->i_flag & IN_MODIFIED))
-						fs->lfs_uinodes++;
-					ip->i_flag |= IN_MODIFIED;
-#else
 					if(!(ip->i_flag & IN_CLEANING))
 						fs->lfs_uinodes++;
 				        ip->i_flag |= IN_CLEANING;
-#endif
 				}
                                 brelse(bp);
                         }
@@ -412,11 +381,6 @@ lfs_markv(p, v, retval)
 		 * allocate a fake buffer so that writeseg can perform
 		 * the copyin and write the buffer.
 		 */
-#if 0 && defined(LFS_STINGY_CLEAN)
-		if(!(ip->i_flag & IN_CLEANING))
-			fs->lfs_uinodes++;
-		ip->i_flag |= IN_CLEANING;
-#endif
 		/*
 		 * XXX - if the block we are reading has been *extended* since
 		 * it was written to disk, then we risk throwing away
@@ -435,15 +399,10 @@ lfs_markv(p, v, retval)
 		}
 		if (blkp->bi_lbn >= 0)	{ /* Data Block */
 			/* XXX KS - should we use incore here, or just always use getblk()? */
-			if((bp=incore(vp, blkp->bi_lbn))!=NULL) {
-				if(bp && bp->b_bcount > blkp->bi_size) {
-					printf("lfs_markv: %ld > %d (fixed)\n",
-						bp->b_bcount, blkp->bi_size);
-					blkp->bi_size = bp->b_bcount;
-				}
-				bp = getblk(vp, blkp->bi_lbn, blkp->bi_size, 0, 0);
-			} else
-				bp = lfs_fakebuf(vp, blkp->bi_lbn, blkp->bi_size, blkp->bi_bp);
+			bp = lfs_fakebuf(vp, blkp->bi_lbn,
+					 blkp->bi_size, blkp->bi_bp);
+			/* Pretend we used bread() to get it */
+			bp->b_blkno = blkp->bi_daddr;
 		} else {	/* Indirect block */
 			bp = getblk(vp, blkp->bi_lbn, blkp->bi_size, 0, 0);
 			if (!(bp->b_flags & (B_DONE|B_DELWRI))) { /* B_CACHE */
@@ -464,14 +423,6 @@ lfs_markv(p, v, retval)
 					goto err2;
 			}
 		}
-#ifndef LFS_STINGY_CLEAN
-		/*
-		 * At this point, we just write the block to be written again.
-		 * lfs_bwrite will not block for us since we are calling it
-		 * with the no-wait flag.
-		 */
-		ip->i_flag |= IN_UPDATE;
-#endif /* LFS_STINGY_CLEAN */
 		if ((error = lfs_bwrite_ext(bp,BW_CLEAN)) != 0)
 			goto err2;
 	}
@@ -488,10 +439,8 @@ lfs_markv(p, v, retval)
 			VOP_UNLOCK(vp,0);
 			numlocked--;
 		}
-#ifndef THROTTLE_REFERENCES
 		lfs_vunref(vp);
 		numrefed--;
-#endif
 	}
 	
 	/*
@@ -501,53 +450,7 @@ lfs_markv(p, v, retval)
 	 * we'd be unhappy at recovery time.
 	 */
 	lfs_segwrite(mntp, SEGM_SYNC|SEGM_CLEAN|SEGM_CKP);
-#ifdef THROTTLE_REFERENCES
-	/* unref the last few vnodes */
-	while(--numrefed) {
-		vp = ufs_ihashlookup(VFSTOUFS(mntp)->um_dev, refed_vnodes[numrefed]);
-		if(vp && (VTOI(vp)->i_flag & IN_CLEANING))
-			lfs_vunref(vp);
-	}
-#endif
 	free(start, M_SEGMENT);
-	
-#ifdef LFS_STINGY_CLEAN
-	/* Now that we've finished the segwrite, go back and unmark all
-	   of the vnodes */
-	/* XXX this inverts the vnode freelist, use the back-hack instead */
- loop:
-	for (vp = mntp->mnt_vnodelist.lh_first;
-	     vp != NULL;
-	     vp = vp->v_mntvnodes.le_next)
-	{
-		if (vp->v_mount != mntp)
-			goto loop;
-		if(lfs_vref(vp))
-			continue;
-		ip = VTOI(vp);
-		if(ip->i_flag & IN_CLEANING) {
-			ip->i_flag &= ~IN_CLEANING;
-			printf("{%d}",ip->i_number);
-			if(ip->i_flag & IN_MODIFIED) {
-				fs->lfs_uinodes--;
-#ifdef DEBUG_LFS
-				if((int32_t)fs->lfs_uinodes<0) {
-					printf("U3");
-					fs->lfs_uinodes=0;
-				}
-#endif
-			} else
-				ip->i_flag |= IN_MODIFIED;
-			if(lfs_clean_vnhead
-			   && (VTOI(vp)->i_flag & (IN_ACCESS|IN_UPDATE|IN_CHANGE|IN_MODIFIED))==0)
-			{
-				lfs_vunref_head(vp);
-				continue;
-			}
-		}
-		lfs_vunref(vp);
-	}
-#endif /* LFS_STINGY_CLEAN */
 	
 	lfs_segunlock(fs);
 
@@ -1018,11 +921,6 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 				VOP_LOCK(*vpp,LK_EXCLUSIVE);
 				*need_unlock |= FVG_UNLOCK;
 			}
-#ifndef LFS_STINGY_CLEAN
-			if (!(ip->i_flag & IN_MODIFIED))
-				++ump->um_lfs->lfs_uinodes;
-			ip->i_flag |= IN_MODIFIED;
-#endif /* LFS_STINGY_CLEAN */
 			return (0);
 		}
 #ifdef USE_UFS_HASHLOCK
@@ -1117,10 +1015,6 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
 	ip->i_devvp = ump->um_devvp;
-#ifndef LFS_STINGY_CLEAN
-	ip->i_flag |= IN_MODIFIED;
-	++ump->um_lfs->lfs_uinodes;
-#endif
 	VREF(ip->i_devvp);
 	*vpp = vp;
 	*need_unlock |= FVG_PUT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.19 1999/03/24 05:51:31 mrg Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.20 1999/03/25 21:39:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -237,15 +237,17 @@ lfs_truncate(v)
 		return (VOP_UPDATE(vp, NULL, NULL, 0));
 	}
 
-#if 0
 	/*
-	 * Make sure no writes happen while we're truncating
-	 * XXX KS - I don't remember why....
+	 * Make sure no writes happen while we're truncating.
+	 * Otherwise, blocks which are accounted for on the inode
+	 * *and* which have been created for cleaning can coexist,
+	 * and cause us to overcount, and panic below.
+	 *
+	 * XXX KS - too restrictive?  Maybe only when cleaning?
 	 */
 	while(fs->lfs_seglock) {
 		tsleep(&fs->lfs_seglock, (PRIBIO+1), "lfs_truncate", 0);
 	}
-#endif
 	
 	/*
 	 * Calculate index into inode's block list of last direct and indirect
