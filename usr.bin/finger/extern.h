@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1998/01/09 08:05:35 perry Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 1998/07/26 21:35:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ extern int pplan;
 void	 enter_lastlog __P((PERSON *));
 PERSON	*enter_person __P((struct passwd *));
 void	 enter_where __P((struct utmp *, PERSON *));
-void	 expandusername __P((char *, char *, char *, int));
+void	 expandusername __P((const char *, const char *, char *, int));
 PERSON	*find_person __P((char *));
 int	 hash __P((char *));
 void	 lflag_print __P((void));
