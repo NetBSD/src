@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.36 1999/03/17 02:58:11 wrstuden Exp $
+#	$NetBSD: security,v 1.37 1999/03/17 19:11:05 wrstuden Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -108,8 +108,11 @@ if checkyesno check_passwd; then
 		column $OUTPUT
 	fi
 
-# the corner case of a "toor " account is caught in the invalid character
-# test above.
+# To not exclude 'toor', a standard duplicate root account, from the duplicate
+# account test, uncomment the line below (without egrep in it)and comment
+# out the line (with egrep in it) below it.
+#
+#	< $MPBYUID uniq -d -f 1 | awk '{ print $2 }' > $TMP2
 	< $MPBYUID egrep -v '^toor ' | uniq -d -f 1 | awk '{ print $2 }' > $TMP2
 	if [ -s $TMP2 ] ; then
 		printf "\n$MP has duplicate user id's.\n"
