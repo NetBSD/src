@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.20 1998/07/04 21:53:11 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.21 1998/09/18 20:20:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.20 1998/07/04 21:53:11 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.21 1998/09/18 20:20:52 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.20 1998/07/04 21:53:11 christos Exp $");
+__RCSID("$NetBSD: suff.c,v 1.21 1998/09/18 20:20:52 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2023,9 +2023,11 @@ SuffFindNormalDeps(gn, slst)
 
 	/*
 	 * Only use the default suffix rules if we don't have commands
-	 * or dependencies defined for this gnode
+	 * defined for this gnode; traditional make programs used to
+	 * not define suffix rules if the gnode had children but we
+	 * don't do this anymore.
 	 */
-	if (Lst_IsEmpty(gn->commands) && Lst_IsEmpty(gn->children))
+	if (Lst_IsEmpty(gn->commands))
 	    SuffAddLevel(srcs, targ);
 	else {
 	    if (DEBUG(SUFF))
