@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.17 2003/07/25 10:12:46 scw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.18 2004/08/16 10:12:40 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.17 2003/07/25 10:12:46 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 2004/08/16 10:12:40 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,7 +546,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			 * them from the cache.  Note: some implementation
 			 * implement dcbi identically to dcbf.  Thus if the
 			 * cacheline has data, it will be written to memory.
-			 * If the DMA is updaing the same cacheline at the
+			 * If the DMA is updating the same cacheline at the
 			 * time, bad things can happen.
 			 */
 			dcbi(addr, seglen, dcache_line_size);
