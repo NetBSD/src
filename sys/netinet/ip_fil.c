@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.16 1997/05/27 01:15:21 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.17 1997/05/28 00:17:15 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -9,11 +9,11 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_fil.c,v 1.16 1997/05/27 01:15:21 thorpej Exp $";
+static	char	rcsid[] = "Id: ip_fil.c,v 2.0.2.12 1997/05/24 07:39:56 darrenr Exp ";
 #endif
 
 #ifndef	SOLARIS
-# define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+#define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
 #endif
 
 #ifdef	__FreeBSD__
@@ -27,9 +27,9 @@ static	char	rcsid[] = "$Id: ip_fil.c,v 1.16 1997/05/27 01:15:21 thorpej Exp $";
 # endif
 #endif
 #ifndef	_KERNEL
-# include <stdio.h>
-# include <stdlib.h>
-# include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #endif
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -43,7 +43,7 @@ static	char	rcsid[] = "$Id: ip_fil.c,v 1.16 1997/05/27 01:15:21 thorpej Exp $";
 #endif
 #include <sys/time.h>
 #ifdef	_KERNEL
-# include <sys/systm.h>
+#include <sys/systm.h>
 #endif
 #include <sys/uio.h>
 #if !SOLARIS
@@ -52,7 +52,7 @@ static	char	rcsid[] = "$Id: ip_fil.c,v 1.16 1997/05/27 01:15:21 thorpej Exp $";
 # else
 #  include <sys/dir.h>
 # endif
-# include <sys/mbuf.h>
+#include <sys/mbuf.h>
 #else
 #include <sys/filio.h>
 #endif
@@ -117,7 +117,11 @@ caddr_t	iplh[3], iplt[3];
 int	iplused[3] = {0,0,0};
 #endif /* IPFILTER_LOG */
 static	void	frflush __P((caddr_t));
+#if defined(__NetBSD__)
 static	int	frrequest __P((u_long, caddr_t, int));
+#else
+static	int	frrequest __P((int, caddr_t, int));
+#endif
 static	void	frzerostats __P((caddr_t));
 #ifdef	_KERNEL
 static	int	(*fr_savep) __P((struct ip *, int, struct ifnet *,
@@ -131,6 +135,7 @@ static int 	no_output __P((struct ifnet *, struct mbuf *,
 static int write_output __P((struct ifnet *, struct mbuf *,
 			     struct sockaddr *, struct rtentry *));
 #endif
+
 
 #if (_BSDI_VERSION >= 199510) && defined(_KERNEL)
 # include <sys/device.h>
@@ -227,15 +232,15 @@ int ipl_enable()
 	fr_saveslowtimo = inetsw[0].pr_slowtimo;
 	inetsw[0].pr_slowtimo = ipfr_slowtimer;
 
-# ifdef IPFILTER_LOG
 	/*
 	 * Set log buffer pointers for each of the log buffers
 	 */
+#ifdef	IPFILTER_LOG
 	for (i = 0; i <= 2; i++) {
 		iplh[i] = iplbuf[i];
 		iplt[i] = iplbuf[i];
 	}
-# endif
+#endif
 	SPLX(s);
 	if (fr_pass & FR_PASS)
 		defpass = "pass";
@@ -497,7 +502,11 @@ int mode;
 
 
 static int frrequest(req, data, set)
+#if defined(__NetBSD__)
 u_long req;
+#else
+int req;
+#endif
 int set;
 caddr_t data;
 {
@@ -605,7 +614,7 @@ caddr_t data;
  * routines below for saving IP headers to buffer
  */
 int iplopen(dev, flags
-# if ((_BSDI_VERSION >= 199510) || (BSD >= 199506) || (NetBSD >= 199511) || \
+#if ((_BSDI_VERSION >= 199510) || (BSD >= 199506) || (NetBSD >= 199511) || \
      (__FreeBSD_version >= 220000)) && defined(_KERNEL)
 , devtype, p)
 int devtype;
@@ -627,7 +636,7 @@ int flags;
 
 
 int iplclose(dev, flags
-# if ((_BSDI_VERSION >= 199510) || (BSD >= 199506) || (NetBSD >= 199511) || \
+#if ((_BSDI_VERSION >= 199510) || (BSD >= 199506) || (NetBSD >= 199511) || \
      (__FreeBSD_version >= 220000)) && defined(_KERNEL)
 , devtype, p)
 int devtype;
@@ -653,12 +662,12 @@ int flags;
  * called during packet processing and cause an inconsistancy to appear in
  * the filter lists.
  */
-# if BSD >= 199306
+#  if BSD >= 199306
 int iplread(dev, uio, ioflag)
 int ioflag;
-# else
+#  else
 int iplread(dev, uio)
-# endif
+#  endif
 dev_t dev;
 register struct uio *uio;
 {
@@ -760,9 +769,9 @@ struct mbuf *m;
 	iplci.hlen = (u_char)hlen;
 	iplci.plen = (u_char)mlen;
 	iplci.rule = fin->fin_rule;
-#  if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603))
+# if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603))
 	strncpy(iplci.ifname, ifp->if_xname, IFNAMSIZ);
-#  else
+# else
 	iplci.unit = (u_char)ifp->if_unit;
 	if ((iplci.ifname[0] = ifp->if_name[0]))
 		if ((iplci.ifname[1] = ifp->if_name[1]))
@@ -800,9 +809,9 @@ struct tcpiphdr *ti;
 	struct tcphdr *tcp;
 	struct mbuf *m;
 	int tlen = 0;
-# if defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)
+#if defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)
 	struct route ro;
-# endif
+#endif
 
 	if (ti->ti_flags & TH_RST)
 		return -1;		/* feedback loop */
@@ -847,17 +856,17 @@ struct tcpiphdr *ti;
 	ip->ip_ttl = ip_defttl;
 # endif
 
-# if defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)
+#if defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)
 	bzero((char *)&ro, sizeof(ro));
 	(void) ip_output(m, (struct mbuf *)0, &ro, 0, 0);
 	if (ro.ro_rt)
 		RTFREE(ro.ro_rt);
-# else
+#else
 	/*
 	 * extra 0 in case of multicast
 	 */
 	(void) ip_output(m, (struct mbuf *)0, 0, 0, 0);
-# endif
+#endif
 	return 0;
 }
 
@@ -903,11 +912,11 @@ frdest_t *fdp;
 	dst = (struct sockaddr_in *)&ro->ro_dst;
 	dst->sin_family = AF_INET;
 	dst->sin_addr = fdp->fd_ip.s_addr ? fdp->fd_ip : ip->ip_dst;
-# ifdef	__bsdi__
+#ifdef	__bsdi__
 	dst->sin_len = sizeof(*dst);
-# endif
-# if	(BSD >= 199306) && !defined(__NetBSD__) && !defined(__bsdi__)
-#  ifdef	RTF_CLONING
+#endif
+#if	(BSD >= 199306) && !defined(__NetBSD__) && !defined(__bsdi__)
+# ifdef	RTF_CLONING
 	rtalloc_ign(ro, RTF_CLONING);
 #  else
 	rtalloc_ign(ro, RTF_PRCLONING);
@@ -1080,18 +1089,18 @@ ip_t *ip;
 	FILE *fp;
 	char fname[32];
 
-# if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606))
+#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606))
 	sprintf(fname, "/tmp/%s", ifp->if_xname);
 	if ((fp = fopen(fname, "a"))) {
 		fclose(fp);
 	}
-# else
+#else
 	sprintf(fname, "/tmp/%s%d", ifp->if_name, ifp->if_unit);
 	if ((fp = fopen(fname, "a"))) {
 		fwrite((char *)ip, ntohs(ip->ip_len), 1, fp);
 		fclose(fp);
 	}
-# endif
+#endif
 }
 
 
@@ -1099,12 +1108,12 @@ struct ifnet *get_unit(name)
 char *name;
 {
 	struct ifnet *ifp, **ifa;
-# if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606))
+#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606))
 	for (ifa = ifneta; ifa && (ifp = *ifa); ifa++) {
 		if (!strcmp(name, ifp->if_xname))
 			return ifp;
 	}
-# else
+#else
 	char ifname[32], *s;
 
 	for (ifa = ifneta; ifa && (ifp = *ifa); ifa++) {
@@ -1112,7 +1121,7 @@ char *name;
 		if (!strcmp(name, ifname))
 			return ifp;
 	}
-# endif
+#endif
 
 	if (!ifneta) {
 		ifneta = (struct ifnet **)malloc(sizeof(ifp) * 2);
@@ -1128,9 +1137,9 @@ char *name;
 	}
 	ifp = ifneta[nifs - 1];
 
-# if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606))
+#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606))
 	strncpy(ifp->if_xname, name, sizeof(ifp->if_xname));
-# else
+#else
 	for (s = name; *s && !isdigit(*s); s++)
 		;
 	if (*s && isdigit(*s)) {
@@ -1142,7 +1151,7 @@ char *name;
 		ifp->if_name = strdup(name);
 		ifp->if_unit = -1;
 	}
-# endif
+#endif
 	ifp->if_output = no_output;
 	return ifp;
 }
@@ -1153,14 +1162,14 @@ void init_ifp()
 	FILE *fp;
 	struct ifnet *ifp, **ifa;
 	char fname[32];
-# if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606))
+#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606))
 	for (ifa = ifneta; ifa && (ifp = *ifa); ifa++) {
 		ifp->if_output = write_output;
 		sprintf(fname, "/tmp/%s", ifp->if_xname);
 		if ((fp = fopen(fname, "w")))
 			fclose(fp);
 	}
-# else
+#else
 
 	for (ifa = ifneta; ifa && (ifp = *ifa); ifa++) {
 		ifp->if_output = write_output;
@@ -1168,7 +1177,7 @@ void init_ifp()
 		if ((fp = fopen(fname, "w")))
 			fclose(fp);
 	}
-# endif
+#endif
 }
 
 
