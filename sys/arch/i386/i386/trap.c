@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.68 1995/02/28 23:18:03 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.69 1995/03/08 07:12:28 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -489,10 +489,9 @@ syscall(frame)
 	register caddr_t params;
 	register struct sysent *callp;
 	register struct proc *p;
-	int error, opc;
-	u_int argsize;
-	int args[8], rval[2];
-	int code, nsys;
+	int error, opc, nsys;
+	size_t argsize;
+	register_t code, args[8], rval[2];
 	u_quad_t sticks;
 #ifdef COMPAT_SVR4
 	extern int nsvr4_sysent;
@@ -506,8 +505,8 @@ syscall(frame)
 #ifdef COMPAT_LINUX
 	extern int nlinux_sysent;
 	extern struct sysent linux_sysent[];
-	extern char sigcode[], esigcode[];
 	extern int linux_error[];
+	extern char sigcode[], esigcode[];
 	int fromtramp;
 #endif
 
@@ -519,7 +518,6 @@ syscall(frame)
 	p->p_md.md_regs = (int *)&frame;
 	opc = frame.tf_eip;
 	code = frame.tf_eax;
-	params = (caddr_t)frame.tf_esp + sizeof(int);
 
 	switch (p->p_emul) {
 	case EMUL_NETBSD:
@@ -530,9 +528,6 @@ syscall(frame)
 	case EMUL_IBCS2_ELF:
 		nsys = nsvr4_sysent;
 		callp = svr4_sysent;
-#ifdef DEBUG_SVR4
-		printf("svr4_syscall(%d)\n", code);
-#endif
 		break;
 #endif
 #ifdef COMPAT_IBCS2
@@ -546,19 +541,24 @@ syscall(frame)
 #endif
 #ifdef COMPAT_LINUX
 	case EMUL_LINUX:
-		/* XXXX This is really horrible */
-		if ((char *) opc > ((char *)PS_STRINGS) - (esigcode - sigcode)
-		    && (char *) opc < (char *) PS_STRINGS) {
+		/*
+		 * XXXX
+		 * This is a kluge until Linux sendsig() and sigreturn() are
+		 * emulated correctly, and a Linux-compatible signal trampoline
+		 * is written.
+		 * Note that `opc' is the value of eip when the call gate is
+		 * entered, which is the address right *after* the instruction.
+		 */
+		if ((caddr_t)opc > (caddr_t)PS_STRINGS - (esigcode - sigcode) &&
+		    (caddr_t)opc <= (caddr_t)PS_STRINGS) {
 			nsys = nsysent;
 			callp = sysent;
 			fromtramp = 1;
-		}
-		else {
+		} else {
 			nsys = nlinux_sysent;
 			callp = linux_sysent;
 			fromtramp = 0;
 		}
-			
 		break;
 #endif
 #ifdef DIAGNOSTIC
@@ -567,6 +567,8 @@ syscall(frame)
 #endif
 	}
 
+	params = (caddr_t)frame.tf_esp + sizeof(int);
+
 	switch (code) {
 	case SYS_syscall:
 #ifdef COMPAT_LINUX
@@ -574,20 +576,23 @@ syscall(frame)
 		if (p->p_emul == EMUL_LINUX && !fromtramp)
 			break;
 #endif
+		/*
+		 * Code is first argument, followed by actual args.
+		 */
 		code = fuword(params);
 		params += sizeof(int);
 		break;
-	
 	case SYS___syscall:
-		if (p->p_emul != EMUL_NETBSD)
-			code = 0;
-		else
-			code = fuword(params + _QUAD_LOWWORD * sizeof(int));
+		/*
+		 * Like syscall, but code is a quad, so as to maintain
+		 * quad alignment for the rest of the arguments.
+		 */
+		if (callp != sysent)
+			break;
+		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
 		break;
-
 	default:
-		/* do nothing by default */
 		break;
 	}
 	if (code < 0 || code >= nsys)
@@ -599,50 +604,42 @@ syscall(frame)
 	/* XXX extra if() for every emul type.. */
 	if (p->p_emul == EMUL_LINUX && !fromtramp) {
 		/*
-		 * Linux passes the args in ebx, ecx, edx, esi, edi,
-		 * in increasing order.
+		 * Linux passes the args in ebx, ecx, edx, esi, edi, in
+		 * increasing order.
 		 */
-		switch(argsize / sizeof (register_t)) {
-		default:
-			/* No Linux syscalls with > 5 arguments */
-			break;
-		case 5:
+		switch (argsize) {
+		case 20:
 			args[4] = frame.tf_edi;
-			/*FALLTHROUGH*/
-		case 4:
+		case 16:
 			args[3] = frame.tf_esi;
-			/*FALLTHROUGH*/
-		case 3:
+		case 12:
 			args[2] = frame.tf_edx;
-			/*FALLTHROUGH*/
-		case 2:
+		case 8:
 			args[1] = frame.tf_ecx;
-			/*FALLTHROUGH*/
-		case 1:
+		case 4:
 			args[0] = frame.tf_ebx;
+			break;
+		default:
+			panic("linux syscall with weird argument size %d",
+			    argsize);
 			break;
 		}
 	}
 	else
 #endif
-	if (argsize && (error = copyin(params, (caddr_t)args, argsize))) {
+	if (argsize)
+		error = copyin(params, (caddr_t)args, argsize);
+	else
+		error = 0;
 #ifdef SYSCALL_DEBUG
-		scdebug_call(p, code, argsize, args);
-#endif
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize,
-			    &args);
-#endif
-		goto bad;
-	}
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, argsize, args);
+	scdebug_call(p, code, args);
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize, &args);
+		ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize, args);
 #endif
+	if (error)
+		goto bad;
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;
 	error = (*callp->sy_call)(p, args, rval);
@@ -657,7 +654,6 @@ syscall(frame)
 		frame.tf_edx = rval[1];
 		frame.tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
-
 	case ERESTART:
 		/*
 		 * The offset to adjust the PC by depends on whether we entered
@@ -666,11 +662,9 @@ syscall(frame)
 		 */
 		frame.tf_eip = opc - frame.tf_err;
 		break;
-
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
-
 	default:
 	bad:
 #ifdef COMPAT_SVR4
@@ -678,9 +672,8 @@ syscall(frame)
 			error = svr4_error[error];
 #endif
 #ifdef COMPAT_LINUX
-		if (p->p_emul == EMUL_LINUX && !fromtramp) {
+		if (p->p_emul == EMUL_LINUX && !fromtramp)
 			error = -linux_error[error];
-		}
 #endif
 		frame.tf_eax = error;
 		frame.tf_eflags |= PSL_C;	/* carry bit */
