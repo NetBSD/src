@@ -68,8 +68,14 @@ Boston, MA 02111-1307, USA.  */
    %{call_shared} %{no_archive} %{exact_version} \
    %{!shared: %{!non_shared: %{!call_shared: -non_shared}}} \
    %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so} \
-   %{nostdlib:-nostdlib} %{!r*:%{!e*:-e __start}} -dc -dp \
+   %{!nostdlib:%{!r*:%{!e*:-e __start}}} -dc -dp \
    %{static:-Bstatic} %{!static:-Bdynamic} %{assert*}"
+
+/*
+ * XXX:   the stdlib line should be
+ *   %{nostdlib:-nostdlib} %{!nostdlib:%{!r*:%{!e*:-e __start}}} -dc -dp \
+ * but "ld -nostdlib" n mips/elf binutils 2.x produces corrupt binaries.
+ */
 
 /* Provide CC1_SPEC appropriate for NetBSD/mips ELF platforms */
 
@@ -246,3 +252,33 @@ do {                                                                         \
 
 /* Since gas and gld are standard on NetBSD, we don't need these */
 #undef ASM_FINAL_SPEC
+
+/* XXXXXX see iris6.h */
+
+/* This is *NOT* how to equate one symbol to another symbol.  The assembler
+   '=' syntax just equates a name to a constant expression.
+   See ASM_OUTPUT_WEAK_ALIAS.  */
+
+#undef ASM_OUTPUT_DEF
+
+#undef SET_ASM_OP	/* Has no equivalent.  See ASM_OUTPUT_DEF below.  */
+
+
+/* -G is incompatible with -KPIC which is the default, so only allow objects
+   in the small data section if the user explicitly asks for it.  */
+#undef MIPS_DEFAULT_GVALUE
+#define MIPS_DEFAULT_GVALUE 0
+
+/* Avoid egcs-1.1 optimization bug where expr.c rev1.76 conflicts with
+   GO_IF_LEGITIMATE_ADDRESS: the former `exposes' the internals of of
+   address operands.  But by default GO_IF_LEGITIMATE_ADDRESS accepts
+   addresses with immediate offsets > bits, relying on the assembler
+   to fix them up.  But the backend has no output patterns which match
+   arithmetic on offests > 16 bits in non-address contexts: they cause
+   a coredump. Turn on TARGET_DBUG_A_MODE to stop
+   GO_IF_LEGITIMATE_ADDRESS ever accepting such addresses. */
+
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT (MASK_GAS|TARGET_DEBUG_A_MODE)
+
+
