@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.96 2002/04/01 01:52:44 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.97 2002/04/01 07:51:58 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.96 2002/04/01 01:52:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.97 2002/04/01 07:51:58 enami Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -204,13 +204,15 @@ ffs_mount(mp, path, data, ndp, p)
 		/* Use the extant mount */
 		ump = VFSTOUFS(mp);
 		devvp = ump->um_devvp;
+		if (args.fspec == NULL)
+			vref(devvp);
 	} else {
 		/* New mounts must have a filename for the device */
 		if (args.fspec == NULL)
 			return (EINVAL);
 	}
 
-	if (args.fspec) {
+	if (args.fspec != NULL) {
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
