@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.72 1996/02/20 12:13:09 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.73 1996/02/26 22:48:32 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -240,7 +240,7 @@ comprobeHAYESP(iobase, sc)
 	 */
 
 	SET(sc->sc_hwflags, COM_HW_HAYESP);
-	printf(", 1024k fifo\n");
+	printf(", 1024 byte fifo\n");
 	return 1;
 }
 #endif
