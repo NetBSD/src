@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_machdep.c,v 1.2 2002/09/10 11:59:50 scw Exp $	*/
+/*	$NetBSD: sh5_machdep.c,v 1.3 2002/09/12 12:37:49 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -63,11 +63,12 @@ u_int _sh5_ctc_ticks_per_us;
  */
 u_int _sh5_delay_constant;
 
-void (*__cpu_cache_dpurge)(vaddr_t, vsize_t);
-void (*__cpu_cache_dpurge_iinv)(vaddr_t, vsize_t);
-void (*__cpu_cache_dinv)(vaddr_t, vsize_t);
-void (*__cpu_cache_dinv_iinv)(vaddr_t, vsize_t);
-void (*__cpu_cache_iinv)(vaddr_t, vsize_t);
+void (*__cpu_cache_dpurge)(vaddr_t, paddr_t, vsize_t);
+void (*__cpu_cache_dpurge_iinv)(vaddr_t, paddr_t, vsize_t);
+void (*__cpu_cache_dinv)(vaddr_t, paddr_t, vsize_t);
+void (*__cpu_cache_dinv_iinv)(vaddr_t, paddr_t, vsize_t);
+void (*__cpu_cache_iinv)(vaddr_t, paddr_t, vsize_t);
+void (*__cpu_cache_iinv_all)(void);
 
 /*
  * These variables are needed by /sbin/savecore
