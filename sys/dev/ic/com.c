@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.206 2003/04/28 02:46:09 briggs Exp $	*/
+/*	$NetBSD: com.c,v 1.207 2003/05/18 15:10:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.206 2003/04/28 02:46:09 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.207 2003/05/18 15:10:08 fvdl Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -554,7 +554,7 @@ com_attach_subr(struct com_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&com_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		tp->t_dev = cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
 		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}
@@ -2004,6 +2004,7 @@ again:	do {
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
 		if (ISSET(lsr, LSR_BI)) {
 			int cn_trapped = 0;
+
 			cn_check_magic(sc->sc_tty->t_dev,
 				       CNC_BREAK, com_cnm_state);
 			if (cn_trapped)
