@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.17 2002/09/24 09:22:51 junyoung Exp $	 */
+/*	$NetBSD: map_object.c,v 1.18 2002/09/24 09:26:43 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -57,33 +57,33 @@ _rtld_map_object(path, fd, sb)
 	int fd;
 	const struct stat *sb;
 {
-	Obj_Entry      *obj;
-	Elf_Ehdr       *ehdr;
-	void           *u;
-	Elf_Phdr       *phdr;
-	Elf_Phdr       *phlimit;
-	Elf_Phdr       *segs[2];
-	int             nsegs;
-	Elf_Phdr       *phdyn;
-	Elf_Phdr       *phphdr;
-	Elf_Phdr       *phinterp;
-	caddr_t         mapbase;
-	size_t          mapsize;
-	Elf_Off         base_offset;
-	Elf_Addr        base_vaddr;
-	Elf_Addr        base_vlimit;
-	Elf_Addr	text_vlimit;
-	caddr_t         base_addr;
-	Elf_Off         data_offset;
-	Elf_Addr        data_vaddr;
-	Elf_Addr        data_vlimit;
-	caddr_t         data_addr;
-	caddr_t		gap_addr;
-	size_t		gap_size;
+	Obj_Entry	*obj;
+	Elf_Ehdr	*ehdr;
+	void		*u;
+	Elf_Phdr	*phdr;
+	Elf_Phdr	*phlimit;
+	Elf_Phdr	*segs[2];
+	int		 nsegs;
+	Elf_Phdr	*phdyn;
+	Elf_Phdr	*phphdr;
+	Elf_Phdr	*phinterp;
+	caddr_t		 mapbase;
+	size_t		 mapsize;
+	Elf_Off		 base_offset;
+	Elf_Addr	 base_vaddr;
+	Elf_Addr	 base_vlimit;
+	Elf_Addr	 text_vlimit;
+	caddr_t		 base_addr;
+	Elf_Off		 data_offset;
+	Elf_Addr	 data_vaddr;
+	Elf_Addr	 data_vlimit;
+	caddr_t		 data_addr;
+	caddr_t		 gap_addr;
+	size_t		 gap_size;
 #ifdef RTLD_LOADER
-	Elf_Addr        clear_vaddr;
-	caddr_t         clear_addr;
-	size_t          nclear;
+	Elf_Addr	 clear_vaddr;
+	caddr_t		 clear_addr;
+	size_t		 nclear;
 #endif
 
 	u = mmap(NULL, PAGESIZE, PROT_READ, MAP_FILE | MAP_SHARED, fd,
