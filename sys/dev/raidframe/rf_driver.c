@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.53 2002/08/03 01:24:03 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.54 2002/08/04 03:22:07 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.53 2002/08/03 01:24:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.54 2002/08/04 03:22:07 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,8 +356,6 @@ rf_Configure(raidPtr, cfgPtr, ac)
 		}
 		/* initialize globals */
 
-		rf_clear_debug_print_buffer();
-
 		DO_INIT_CONFIGURE(rf_ConfigureAllocList);
 
 		/*
@@ -376,7 +374,6 @@ rf_Configure(raidPtr, cfgPtr, ac)
 		DO_INIT_CONFIGURE(rf_ConfigureMCPair);
 		DO_INIT_CONFIGURE(rf_ConfigureDAGs);
 		DO_INIT_CONFIGURE(rf_ConfigureDAGFuncs);
-		DO_INIT_CONFIGURE(rf_ConfigureDebugPrint);
 		DO_INIT_CONFIGURE(rf_ConfigureReconstruction);
 		DO_INIT_CONFIGURE(rf_ConfigureCopyback);
 		DO_INIT_CONFIGURE(rf_ConfigureDiskQueueSystem);
