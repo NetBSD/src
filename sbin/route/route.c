@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.50 2001/10/24 18:40:16 atatat Exp $	*/
+/*	$NetBSD: route.c,v 1.51 2001/11/02 03:51:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.50 2001/10/24 18:40:16 atatat Exp $");
+__RCSID("$NetBSD: route.c,v 1.51 2001/11/02 03:51:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ union	sockunion {
 } so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp;
 
 int	pid, rtm_addrs;
-int	s;
+int	sock;
 int	forcehost, forcenet, doflush, nflag, af, qflag, tflag;
 int	iflag, verbose, aflen = sizeof (struct sockaddr_in);
 int	locking, lockrest, debugonly, shortoutput, rv;
@@ -194,10 +194,10 @@ main(argc, argv)
 
 	pid = getpid();
 	if (tflag)
-		s = open("/dev/null", O_WRONLY, 0);
+		sock = open("/dev/null", O_WRONLY, 0);
 	else
-		s = socket(PF_ROUTE, SOCK_RAW, 0);
-	if (s < 0)
+		sock = socket(PF_ROUTE, SOCK_RAW, 0);
+	if (sock < 0)
 		err(1, "socket");
 
 	if (*argv == NULL) {
@@ -258,7 +258,7 @@ flushroutes(argc, argv)
 	struct rt_msghdr *rtm;
 
 	af = 0;
-	shutdown(s, SHUT_RD); /* Don't want to read back our messages */
+	shutdown(sock, SHUT_RD); /* Don't want to read back our messages */
 	if (argc > 1) {
 		argv++;
 		if (argc == 2 && **argv == '-')
@@ -331,7 +331,7 @@ bad:			usage(*argv);
 			continue;
 		rtm->rtm_type = RTM_DELETE;
 		rtm->rtm_seq = seqno;
-		rlen = write(s, next, rtm->rtm_msglen);
+		rlen = write(sock, next, rtm->rtm_msglen);
 		if (rlen < (int)rtm->rtm_msglen) {
 			warn("write to routing socket, got %d for rlen", rlen);
 			break;
@@ -380,9 +380,9 @@ any_ntoa(sa)
 
 
 int
-netmask_length(nm, af)
+netmask_length(nm, family)
 	struct sockaddr *nm;
-	int af;
+	int family;
 {
 	static int
 	    /* number of bits in a nibble */
@@ -399,12 +399,12 @@ netmask_length(nm, af)
 	good = 1;
 	zeroes = 0;
 
-	switch (af) {
+	switch (family) {
 	case AF_INET: {
-		struct sockaddr_in *sin = (struct sockaddr_in *)nm;
-		maskdata = (unsigned char *) &sin->sin_addr;
-		maskbytes = sin->sin_len -
-		    ((caddr_t)&sin->sin_addr - (caddr_t)sin);
+		struct sockaddr_in *nsin = (struct sockaddr_in *)nm;
+		maskdata = (unsigned char *) &nsin->sin_addr;
+		maskbytes = nsin->sin_len -
+		    ((caddr_t)&nsin->sin_addr - (caddr_t)nsin);
 		break;
 	}
 	case AF_INET6: {
@@ -460,11 +460,11 @@ netmask_string(mask, len)
 		snprintf(smask, sizeof(smask), "%d", len);
 	else {
 		/* XXX AF_INET only?! */
-		struct sockaddr_in sin;
+		struct sockaddr_in nsin;
 	
-		memset(&sin, 0, sizeof(sin));
-		memcpy(&sin, mask, mask->sa_len);
-		snprintf(smask, sizeof(smask), "%s", inet_ntoa(sin.sin_addr));
+		memset(&nsin, 0, sizeof(nsin));
+		memcpy(&nsin, mask, mask->sa_len);
+		snprintf(smask, sizeof(smask), "%s", inet_ntoa(nsin.sin_addr));
 	}
 
 	return smask;
@@ -799,7 +799,7 @@ newroute(argc, argv)
 	char **argv;
 {
 	char *cmd, *dest = "", *gateway = "";
-	const char *err;
+	const char *error;
 	int ishost = 0, ret, attempts, oerrno, flags = RTF_STATIC;
 	int key;
 	struct hostent *hp = 0;
@@ -807,7 +807,7 @@ newroute(argc, argv)
 	cmd = argv[0];
 	af = 0;
 	if (*cmd != 'g')
-		shutdown(s, SHUT_RD); /* Don't want to read back our messages */
+		shutdown(sock, SHUT_RD); /* Don't want to read back our messages */
 	while (--argc > 0) {
 		if (**(++argv)== '-') {
 			switch (key = keyword(1 + *argv)) {
@@ -967,7 +967,7 @@ newroute(argc, argv)
 				gateway = *argv;
 				(void) getaddr(RTA_GATEWAY, *argv, &hp);
 			} else {
-				int ret = atoi(*argv);
+				ret = atoi(*argv);
 
 				if (ret == 0) {
 				    if (!qflag && strcmp(*argv, "0") == 0)
@@ -1030,26 +1030,26 @@ newroute(argc, argv)
 	if (ret != 0) {
 		switch (oerrno) {
 		case ESRCH:
-			err = "not in table";
+			error = "not in table";
 			break;
 		case EBUSY:
-			err = "entry in use";
+			error = "entry in use";
 			break;
 		case ENOBUFS:
-			err = "routing table overflow";
+			error = "routing table overflow";
 			break;
 		default:
-			err = strerror(oerrno);
+			error = strerror(oerrno);
 			break;
 		}
-		(void) printf(": %s\n", err);
+		(void) printf(": %s\n", error);
 	}
 }
 
 static void
-inet_makenetandmask(net, sin)
+inet_makenetandmask(net, isin)
 	u_int32_t net;
-	struct sockaddr_in *sin;
+	struct sockaddr_in *isin;
 {
 	u_int32_t addr, mask = 0;
 	char *cp;
@@ -1077,15 +1077,15 @@ inet_makenetandmask(net, sin)
 		else
 			mask = -1;
 	}
-	sin->sin_addr.s_addr = htonl(addr);
-	sin = &so_mask.sin;
-	sin->sin_addr.s_addr = htonl(mask);
-	sin->sin_len = 0;
-	sin->sin_family = 0;
-	cp = (char *)(&sin->sin_addr + 1);
-	while (*--cp == 0 && cp > (char *)sin)
+	isin->sin_addr.s_addr = htonl(addr);
+	isin = &so_mask.sin;
+	isin->sin_addr.s_addr = htonl(mask);
+	isin->sin_len = 0;
+	isin->sin_family = 0;
+	cp = (char *)(&isin->sin_addr + 1);
+	while (*--cp == 0 && cp > (char *)isin)
 		;
-	sin->sin_len = 1 + cp - (char *)sin;
+	isin->sin_len = 1 + cp - (char *)isin;
 }
 
 #ifdef INET6
@@ -1460,7 +1460,7 @@ monitor()
 	}
 	for(;;) {
 		time_t now;
-		n = read(s, msg, 2048);
+		n = read(sock, msg, 2048);
 		now = time(NULL);
 		(void) printf("got message of size %d on %s", n, ctime(&now));
 		print_rtmsg((struct rt_msghdr *)msg, n);
@@ -1531,14 +1531,14 @@ rtmsg(cmd, flags)
 		print_rtmsg(&rtm, l);
 	if (debugonly)
 		return (0);
-	if ((rlen = write(s, (char *)&m_rtmsg, l)) < 0) {
+	if ((rlen = write(sock, (char *)&m_rtmsg, l)) < 0) {
 		perror("writing to routing socket");
 		return (-1);
 	}
 #ifndef	SMALL
 	if (cmd == RTM_GET) {
 		do {
-			l = read(s, (char *)&m_rtmsg, sizeof(m_rtmsg));
+			l = read(sock, (char *)&m_rtmsg, sizeof(m_rtmsg));
 		} while (l > 0 && (rtm.rtm_seq != seq || rtm.rtm_pid != pid));
 		if (l < 0)
 			err(1, "read from routing socket");
@@ -1792,9 +1792,8 @@ print_getmsg(rtm, msglen)
 	if ((rtm->rtm_addrs & RTF_GATEWAY) == 0)
 		rv = 1;
 	else {
-		char *cp, *name;
-		int addrs, i;
-		struct sockaddr *sa;
+		char *name;
+		int addrs;
 
 		cp = (char *)(rtm + 1);
 		addrs = rtm->rtm_addrs;
