@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.34 2001/05/09 11:19:13 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.35 2001/05/09 11:22:22 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.125 2001/05/09 11:17:33 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.34 2001/05/09 11:19:13 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.35 2001/05/09 11:22:22 itojun Exp $");
 #endif
 #endif
 
@@ -444,6 +444,9 @@ main(argc, argv)
 			preload = strtol(optarg, &e, 10);
 			if (preload < 0 || *optarg == '\0' || *e != '\0')
 				errx(1, "illegal preload value -- %s", optarg);
+			break;
+		case 'n':
+			options &= ~F_HOSTNAME;
 			break;
 		case 'N':
 			options |= F_NIGROUP;
