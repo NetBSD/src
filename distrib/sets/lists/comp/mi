@@ -1318,8 +1318,12 @@
 ./usr/share/man/cat2/pathconf.0
 ./usr/share/man/cat2/pipe.0
 ./usr/share/man/cat2/poll.0
+./usr/share/man/cat2/pread.0
+./usr/share/man/cat2/preadv.0
 ./usr/share/man/cat2/profil.0
 ./usr/share/man/cat2/ptrace.0
+./usr/share/man/cat2/pwrite.0
+./usr/share/man/cat2/pwritev.0
 ./usr/share/man/cat2/quotactl.0
 ./usr/share/man/cat2/read.0
 ./usr/share/man/cat2/readlink.0
@@ -2296,8 +2300,12 @@
 ./usr/share/man/man2/pathconf.2
 ./usr/share/man/man2/pipe.2
 ./usr/share/man/man2/poll.2
+./usr/share/man/man2/pread.2
+./usr/share/man/man2/preadv.2
 ./usr/share/man/man2/profil.2
 ./usr/share/man/man2/ptrace.2
+./usr/share/man/man2/pwrite.2
+./usr/share/man/man2/pwritev.2
 ./usr/share/man/man2/quotactl.2
 ./usr/share/man/man2/read.2
 ./usr/share/man/man2/readlink.2
