@@ -1,4 +1,4 @@
-/* $NetBSD: esareg.h,v 1.3 2002/01/06 16:58:23 augustss Exp $ */
+/* $NetBSD: esareg.h,v 1.4 2002/01/13 10:02:58 pooka Exp $ */
 
 /*
  * Copyright (c) 2002 Lennart Augustsson
@@ -37,6 +37,13 @@
 /* Allegro PCI configuration registers */
 #define PCI_LEGACY_AUDIO_CTRL   0x40
 #define DISABLE_LEGACY          0x00008000
+
+/* Power management */
+#define ESA_CONF_PM_PTR             0x34
+#define ESA_PPMI_D0                 0
+#define ESA_PPMI_D1                 1
+#define ESA_PPMI_D2                 2
+#define ESA_PPMI_D3                 3
 
 #define ESA_PCI_ALLEGRO_CONFIG      0x50
 #define ESA_SB_ADDR_240             0x00000004
@@ -375,22 +382,22 @@
 #define ESA_REV_A_CODE_MEMORY_BEGIN         0x0000
 #define ESA_REV_A_CODE_MEMORY_END           0x0FFF
 #define ESA_REV_A_CODE_MEMORY_UNIT_LENGTH   0x0040
-#define ESA_REV_A_CODE_MEMORY_LENGTH        (REV_A_CODE_MEMORY_END - REV_A_CODE_MEMORY_BEGIN + 1)
+#define ESA_REV_A_CODE_MEMORY_LENGTH        (ESA_REV_A_CODE_MEMORY_END - ESA_REV_A_CODE_MEMORY_BEGIN + 1)
 
 #define ESA_REV_B_CODE_MEMORY_BEGIN         0x0000
 #define ESA_REV_B_CODE_MEMORY_END           0x0BFF
 #define ESA_REV_B_CODE_MEMORY_UNIT_LENGTH   0x0040
-#define ESA_REV_B_CODE_MEMORY_LENGTH        (REV_B_CODE_MEMORY_END - REV_B_CODE_MEMORY_BEGIN + 1)
+#define ESA_REV_B_CODE_MEMORY_LENGTH        (ESA_REV_B_CODE_MEMORY_END - ESA_REV_B_CODE_MEMORY_BEGIN + 1)
 
 #define ESA_REV_A_DATA_MEMORY_BEGIN         0x1000
 #define ESA_REV_A_DATA_MEMORY_END           0x2FFF
 #define ESA_REV_A_DATA_MEMORY_UNIT_LENGTH   0x0080
-#define ESA_REV_A_DATA_MEMORY_LENGTH        (REV_A_DATA_MEMORY_END - REV_A_DATA_MEMORY_BEGIN + 1)
+#define ESA_REV_A_DATA_MEMORY_LENGTH        (ESA_REV_A_DATA_MEMORY_END - ESA_REV_A_DATA_MEMORY_BEGIN + 1)
 
 #define ESA_REV_B_DATA_MEMORY_BEGIN         0x1000
 #define ESA_REV_B_DATA_MEMORY_END           0x2BFF
 #define ESA_REV_B_DATA_MEMORY_UNIT_LENGTH   0x0080
-#define ESA_REV_B_DATA_MEMORY_LENGTH        (REV_B_DATA_MEMORY_END - REV_B_DATA_MEMORY_BEGIN + 1)
+#define ESA_REV_B_DATA_MEMORY_LENGTH        (ESA_REV_B_DATA_MEMORY_END - ESA_REV_B_DATA_MEMORY_BEGIN + 1)
 
 
 #define ESA_NUM_UNITS_KERNEL_CODE          16
