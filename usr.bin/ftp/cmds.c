@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.24 1997/05/17 19:44:36 pk Exp $	*/
+/*	$NetBSD: cmds.c,v 1.25 1997/07/20 09:45:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmds.c,v 1.24 1997/05/17 19:44:36 pk Exp $";
+__RCSID("$NetBSD: cmds.c,v 1.25 1997/07/20 09:45:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -874,8 +875,6 @@ setdebug(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int val;
-
 	if (argc > 2) {
 		printf("usage: %s [ on | off | debuglevel ]\n", argv[0]);
 		code = -1;
@@ -886,13 +885,16 @@ setdebug(argc, argv)
 		else if (strcasecmp(argv[1], "off") == 0)
 			debug = 0;
 		else {
-			val = atoi(argv[1]);
-			if (val < 0) {
+			char *ep;
+			long val;
+
+			val = strtol(argv[1], &ep, 10);
+			if (val < 0 || val > INT_MAX || *ep != '\0') {
 				printf("%s: bad debugging value.\n", argv[1]);
 				code = -1;
 				return;
 			}
-			debug = val;
+			debug = (int)val;
 		}
 	} else
 		debug = !debug;
@@ -1093,7 +1095,7 @@ mls(argc, argv)
 {
 	sig_t oldintr;
 	int ointer, i;
-	const char *cmd;
+	int dolist;
 	char mode[1], *dest;
 
 	if (argc < 2 && !another(&argc, &argv, "remote-files"))
@@ -1112,14 +1114,14 @@ usage:
 			code = -1;
 			return;
 	}
-	cmd = strcmp(argv[0], "mls") == 0 ? "NLST" : "LIST";
+	dolist = strcmp(argv[0], "mls");
 	mname = argv[0];
 	mflag = 1;
 	oldintr = signal(SIGINT, mabort);
 	(void)setjmp(jabort);
 	for (i = 1; mflag && i < argc-1; ++i) {
 		*mode = (i == 1) ? 'w' : 'a';
-		recvrequest(cmd, dest, argv[i], mode, 0);
+		recvrequest(dolist ? "LIST" : "NLST", dest, argv[i], mode, 0);
 		if (!mflag && fromatty) {
 			ointer = interactive;
 			interactive = 1;
