@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.62 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.63 2004/08/28 17:37:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.62 2003/11/17 14:37:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.63 2004/08/28 17:37:02 thorpej Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -151,7 +151,7 @@ int	rderrthresh = RDRETRY-1;	/* when to start reporting errors */
 
 #ifdef DEBUG
 /* error message tables */
-char *err_reject[] = {
+static const char *err_reject[] = {
 	0, 0,
 	"channel parity error",		/* 0x2000 */
 	0, 0,
@@ -166,7 +166,7 @@ char *err_reject[] = {
 	0, 0, 0
 };
 
-char *err_fault[] = {
+static const char *err_fault[] = {
 	0,
 	"cross unit",			/* 0x4000 */
 	0,
@@ -184,7 +184,7 @@ char *err_fault[] = {
 	"retransmit"			/* 0x0001 */
 };
 
-char *err_access[] = {
+static const char *err_access[] = {
 	"illegal parallel operation",	/* 0x8000 */
 	"uninitialized media",		/* 0x4000 */
 	"no spares available",		/* 0x2000 */
@@ -200,7 +200,7 @@ char *err_access[] = {
 	0, 0, 0
 };
 
-char *err_info[] = {
+static const char *err_info[] = {
 	"operator release request",	/* 0x8000 */
 	"diagnostic release request",	/* 0x4000 */
 	"internal maintenance release request",	/* 0x2000 */
@@ -230,7 +230,7 @@ int	rddebug = 0x80;
  * Misc. HW description, indexed by sc_type.
  * Nothing really critical here, could do without it.
  */
-struct rdidentinfo rdidentinfo[] = {
+const struct rdidentinfo rdidentinfo[] = {
 	{ RD7946AID,	0,	"7945A",	NRD7945ABPT,
 	  NRD7945ATRK,	968,	 108416 },
 
@@ -288,45 +288,45 @@ struct rdidentinfo rdidentinfo[] = {
 	{ RD2203AID,	0,	"2203A",	NRD2203ABPT,
 	  NRD2203ATRK,	1449,	1309896 }
 };
-int numrdidentinfo = sizeof(rdidentinfo) / sizeof(rdidentinfo[0]);
+static const int numrdidentinfo = sizeof(rdidentinfo) / sizeof(rdidentinfo[0]);
 
-int	rdident __P((struct device *, struct rd_softc *,
-	    struct hpibbus_attach_args *));
-void	rdreset __P((struct rd_softc *));
-void	rdustart __P((struct rd_softc *));
-int	rdgetinfo __P((dev_t));
-void	rdrestart __P((void *));
-struct buf *rdfinish __P((struct rd_softc *, struct buf *));
+static int	rdident(struct device *, struct rd_softc *,
+		    struct hpibbus_attach_args *);
+static void	rdreset(struct rd_softc *);
+static void	rdustart(struct rd_softc *);
+static int	rdgetinfo(dev_t);
+static void	rdrestart(void *);
+static struct buf *rdfinish(struct rd_softc *, struct buf *);
 
-void	rdgetdefaultlabel __P((struct rd_softc *, struct disklabel *));
-void	rdrestart __P((void *));
-void	rdustart __P((struct rd_softc *));
-struct buf *rdfinish __P((struct rd_softc *, struct buf *));
-void	rdstart __P((void *));
-void	rdgo __P((void *));
-void	rdintr __P((void *));
-int	rdstatus __P((struct rd_softc *));
-int	rderror __P((int));
+static void	rdgetdefaultlabel(struct rd_softc *, struct disklabel *);
+static void	rdrestart(void *);
+static void	rdustart(struct rd_softc *);
+static struct buf *rdfinish(struct rd_softc *, struct buf *);
+static void	rdstart(void *);
+static void	rdgo(void *);
+static void	rdintr(void *);
+static int	rdstatus(struct rd_softc *);
+static int	rderror(int);
 #ifdef DEBUG
-void	rdprinterr __P((char *, short, char **));
+static void	rdprinterr(char *, short, char **);
 #endif
 
-int	rdmatch __P((struct device *, struct cfdata *, void *));
-void	rdattach __P((struct device *, struct device *, void *));
+static int	rdmatch(struct device *, struct cfdata *, void *);
+static void	rdattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(rd, sizeof(struct rd_softc),
     rdmatch, rdattach, NULL, NULL);
 
 extern struct cfdriver rd_cd;
 
-dev_type_open(rdopen);
-dev_type_close(rdclose);
-dev_type_read(rdread);
-dev_type_write(rdwrite);
-dev_type_ioctl(rdioctl);
-dev_type_strategy(rdstrategy);
-dev_type_dump(rddump);
-dev_type_size(rdsize);
+static dev_type_open(rdopen);
+static dev_type_close(rdclose);
+static dev_type_read(rdread);
+static dev_type_write(rdwrite);
+static dev_type_ioctl(rdioctl);
+static dev_type_strategy(rdstrategy);
+static dev_type_dump(rddump);
+static dev_type_size(rdsize);
 
 const struct bdevsw rd_bdevsw = {
 	rdopen, rdclose, rdstrategy, rdioctl, rddump, rdsize, D_DISK
@@ -337,11 +337,8 @@ const struct cdevsw rd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-int
-rdmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+rdmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct hpibbus_attach_args *ha = aux;
 
@@ -366,10 +363,8 @@ rdmatch(parent, match, aux)
 	return (1);
 }
 
-void
-rdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+rdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct rd_softc *sc = (struct rd_softc *)self;
 	struct hpibbus_attach_args *ha = aux;
@@ -416,11 +411,9 @@ rdattach(parent, self, aux)
 #endif
 }
 
-int
-rdident(parent, sc, ha)
-	struct device *parent;
-	struct rd_softc *sc;
-	struct hpibbus_attach_args *ha;
+static int
+rdident(struct device *parent, struct rd_softc *sc,
+    struct hpibbus_attach_args *ha)
 {
 	struct rd_describe *desc = sc != NULL ? &sc->sc_rddesc : NULL;
 	u_char stat, cmd[3];
@@ -531,9 +524,8 @@ rdident(parent, sc, ha)
 	return (1);
 }
 
-void
-rdreset(rs)
-	struct rd_softc *rs;
+static void
+rdreset(struct rd_softc *rs)
 {
 	int ctlr = rs->sc_dev.dv_parent->dv_unit;
 	int slave = rs->sc_slave;
@@ -570,9 +562,8 @@ rdreset(rs)
 /*
  * Read or constuct a disklabel
  */
-int
-rdgetinfo(dev)
-	dev_t dev;
+static int
+rdgetinfo(dev_t dev)
 {
 	int unit = rdunit(dev);
 	struct rd_softc *rs = rd_cd.cd_devs[unit];
@@ -609,11 +600,8 @@ rdgetinfo(dev)
 	return(0);
 }
 
-int
-rdopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+static int
+rdopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = rdunit(dev);
 	struct rd_softc *rs;
@@ -668,11 +656,8 @@ rdopen(dev, flags, mode, p)
 	return(0);
 }
 
-int
-rdclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+static int
+rdclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = rdunit(dev);
 	struct rd_softc *rs = rd_cd.cd_devs[unit];
@@ -706,9 +691,8 @@ rdclose(dev, flag, mode, p)
 	return(0);
 }
 
-void
-rdstrategy(bp)
-	struct buf *bp;
+static void
+rdstrategy(struct buf *bp)
 {
 	int unit = rdunit(bp->b_dev);
 	struct rd_softc *rs = rd_cd.cd_devs[unit];
@@ -778,18 +762,16 @@ done:
 /*
  * Called from timeout() when handling maintenance releases
  */
-void
-rdrestart(arg)
-	void *arg;
+static void
+rdrestart(void *arg)
 {
 	int s = splbio();
 	rdustart((struct rd_softc *)arg);
 	splx(s);
 }
 
-void
-rdustart(rs)
-	struct rd_softc *rs;
+static void
+rdustart(struct rd_softc *rs)
 {
 	struct buf *bp;
 
@@ -800,10 +782,8 @@ rdustart(rs)
 		rdstart(rs);
 }
 
-struct buf *
-rdfinish(rs, bp)
-	struct rd_softc *rs;
-	struct buf *bp;
+static struct buf *
+rdfinish(struct rd_softc *rs, struct buf *bp)
 {
 
 	rs->sc_errcnt = 0;
@@ -821,9 +801,8 @@ rdfinish(rs, bp)
 	return (NULL);
 }
 
-void
-rdstart(arg)
-	void *arg;
+static void
+rdstart(void *arg)
 {
 	struct rd_softc *rs = arg;
 	struct buf *bp = BUFQ_PEEK(&rs->sc_tab);
@@ -900,9 +879,8 @@ again:
 	}
 }
 
-void
-rdgo(arg)
-	void *arg;
+static void
+rdgo(void *arg)
 {
 	struct rd_softc *rs = arg;
 	struct buf *bp = BUFQ_PEEK(&rs->sc_tab);
@@ -923,9 +901,8 @@ rdgo(arg)
 }
 
 /* ARGSUSED */
-void
-rdintr(arg)
-	void *arg;
+static void
+rdintr(void *arg)
 {
 	struct rd_softc *rs = arg;
 	int unit = rs->sc_dev.dv_unit;
@@ -996,9 +973,8 @@ rdintr(arg)
 #endif
 }
 
-int
-rdstatus(rs)
-	struct rd_softc *rs;
+static int
+rdstatus(struct rd_softc *rs)
 {
 	int c, s;
 	u_char stat;
@@ -1046,15 +1022,14 @@ rdstatus(rs)
  * Returns 1 if request should be restarted,
  * 0 if we should just quietly give up.
  */
-int
-rderror(unit)
-	int unit;
+static int
+rderror(int unit)
 {
 	struct rd_softc *rs = rd_cd.cd_devs[unit];
 	struct rd_stat *sp;
 	struct buf *bp;
 	daddr_t hwbn, pbn;
-	char *hexstr __P((int, int)); /* XXX */
+	char *hexstr(int, int); /* XXX */
 
 	if (rdstatus(rs)) {
 #ifdef DEBUG
@@ -1160,33 +1135,22 @@ rderror(unit)
 	return(1);
 }
 
-int
-rdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+rdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(rdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
-int
-rdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+rdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(rdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
-int
-rdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+static int
+rdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int unit = rdunit(dev);
 	struct rd_softc *sc = rd_cd.cd_devs[unit];
@@ -1244,10 +1208,8 @@ rdioctl(dev, cmd, data, flag, p)
 	return(EINVAL);
 }
 
-void
-rdgetdefaultlabel(sc, lp)
-	struct rd_softc *sc;
-	struct disklabel *lp;
+static void
+rdgetdefaultlabel(struct rd_softc *sc, struct disklabel *lp)
 {
 	int type = sc->sc_type;
 
@@ -1279,8 +1241,7 @@ rdgetdefaultlabel(sc, lp)
 }
 
 int
-rdsize(dev)
-	dev_t dev;
+rdsize(dev_t dev)
 {
 	int unit = rdunit(dev);
 	struct rd_softc *rs;
@@ -1309,11 +1270,8 @@ rdsize(dev)
 }
 
 #ifdef DEBUG
-void
-rdprinterr(str, err, tab)
-	char *str;
-	short err;
-	char **tab;
+static void
+rdprinterr(const char *str, short err, const char **tab)
 {
 	int i;
 	int printed;
@@ -1334,12 +1292,8 @@ static int rddoingadump;	/* simple mutex */
 /*
  * Non-interrupt driven, non-DMA dump routine.
  */
-int
-rddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+static int
+rddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	int sectorsize;		/* size of a disk sector */
 	int nsects;		/* number of sectors in partition */

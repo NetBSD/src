@@ -1,4 +1,4 @@
-/*	$NetBSD: com_dioreg.h,v 1.1 2003/11/08 11:18:33 tsutsui Exp $	*/
+/*	$NetBSD: com_dioreg.h,v 1.2 2004/08/28 17:37:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -31,6 +31,8 @@
  *	@(#)dcareg.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _HP300_DEV_COM_DIOREG_H_
+#define	_HP300_DEV_COM_DIOREG_H_
 
 /* interface reset/id */
 #define DCA_ID		0x00			/* read */
@@ -56,3 +58,5 @@
 
 /* clock frequency */
 #define COM_DIO_FREQ	2457600
+
+#endif /* _HP300_DEV_COM_DIOREG_H_ */

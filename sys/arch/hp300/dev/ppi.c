@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.28 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: ppi.c,v 1.29 2004/08/28 17:37:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.28 2003/11/17 14:37:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.29 2004/08/28 17:37:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,32 +109,32 @@ struct	ppi_softc {
 #define PPIF_TIMO	0x08
 #define PPIF_DELAY	0x10
 
-int	ppimatch __P((struct device *, struct cfdata *, void *));
-void	ppiattach __P((struct device *, struct device *, void *));
+static int	ppimatch(struct device *, struct cfdata *, void *);
+static void	ppiattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ppi, sizeof(struct ppi_softc),
     ppimatch, ppiattach, NULL, NULL);
 
 extern struct cfdriver ppi_cd;
 
-dev_type_open(ppiopen);
-dev_type_close(ppiclose);
-dev_type_read(ppiread);
-dev_type_write(ppiwrite);
-dev_type_ioctl(ppiioctl);
+static dev_type_open(ppiopen);
+static dev_type_close(ppiclose);
+static dev_type_read(ppiread);
+static dev_type_write(ppiwrite);
+static dev_type_ioctl(ppiioctl);
 
 const struct cdevsw ppi_cdevsw = {
 	ppiopen, ppiclose, ppiread, ppiwrite, ppiioctl,
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
-void	ppistart __P((void *));
-void	ppinoop __P((void *));
+static void	ppistart(void *);
+static void	ppinoop(void *);
 
-void	ppitimo __P((void *));
-int	ppirw __P((dev_t, struct uio *));
-int	ppihztoms __P((int));
-int	ppimstohz __P((int));
+static void	ppitimo(void *);
+static int	ppirw(dev_t, struct uio *);
+static int	ppihztoms(int);
+static int	ppimstohz(int);
 
 #define UNIT(x)		minor(x)
 
@@ -145,11 +145,8 @@ int	ppidebug = 0x80;
 #define PDB_NOCHECK	0x80
 #endif
 
-int
-ppimatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+ppimatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct hpibbus_attach_args *ha = aux;
 
@@ -172,10 +169,8 @@ ppimatch(parent, match, aux)
 	return (1);
 }
 
-void
-ppiattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+ppiattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ppi_softc *sc = (struct ppi_softc *)self;
 	struct hpibbus_attach_args *ha = aux;
@@ -197,18 +192,14 @@ ppiattach(parent, self, aux)
 	sc->sc_flags = PPIF_ALIVE;
 }
 
-void
-ppinoop(arg)
-	void *arg;
+static void
+ppinoop(void *arg)
 {
 	/* Noop! */
 }
 
 int
-ppiopen(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct proc *p;
+ppiopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc;
@@ -233,11 +224,8 @@ ppiopen(dev, flags, fmt, p)
 	return(0);
 }
 
-int
-ppiclose(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct proc *p;
+static int
+ppiclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
@@ -251,9 +239,8 @@ ppiclose(dev, flags, fmt, p)
 	return(0);
 }
 
-void
-ppistart(arg)
-	void *arg;
+static void
+ppistart(void *arg)
 {
 	struct ppi_softc *sc = arg;
 
@@ -265,9 +252,8 @@ ppistart(arg)
 	wakeup(sc);
 }
 
-void
-ppitimo(arg)
-	void *arg;
+static void
+ppitimo(void *arg)
 {
 	struct ppi_softc *sc = arg;
 
@@ -279,11 +265,8 @@ ppitimo(arg)
 	wakeup(sc);
 }
 
-int
-ppiread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+ppiread(dev_t dev, struct uio *uio, int flags)
 {
 
 #ifdef DEBUG
@@ -293,11 +276,8 @@ ppiread(dev, uio, flags)
 	return (ppirw(dev, uio));
 }
 
-int
-ppiwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+ppiwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 #ifdef DEBUG
@@ -307,10 +287,8 @@ ppiwrite(dev, uio, flags)
 	return (ppirw(dev, uio));
 }
 
-int
-ppirw(dev, uio)
-	dev_t dev;
-	struct uio *uio;
+static int
+ppirw(dev_t dev, struct uio *uio)
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
@@ -467,13 +445,8 @@ again:
 	return (error);
 }
 
-int
-ppiioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+static int
+ppiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct ppi_softc *sc = ppi_cd.cd_devs[UNIT(dev)];
 	struct ppiparam *pp, *upp;
@@ -506,9 +479,8 @@ ppiioctl(dev, cmd, data, flag, p)
 	return (error);
 }
 
-int
-ppihztoms(h)
-	int h;
+static int
+ppihztoms(int h)
 {
 	extern int hz;
 	int m = h;
@@ -518,9 +490,8 @@ ppihztoms(h)
 	return(m);
 }
 
-int
-ppimstohz(m)
-	int m;
+static int
+ppimstohz(int m)
 {
 	extern int hz;
 	int h = m;
