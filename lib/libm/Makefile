@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 12/2/92
-#	$Id: Makefile,v 1.5 1993/10/01 23:56:08 cgd Exp $
+#	$Id: Makefile,v 1.6 1993/10/05 21:52:07 pk Exp $
 #
 # ieee		- for most IEEE machines, we hope.
 # mc68881	- the, ahem, mc68881.
@@ -12,6 +12,7 @@
 
 LIB=	m
 CFLAGS+=-I${.CURDIR}/common_source
+NOPIC=	nopic
 
 .if (${MACHINE} == "ieee")
 
