@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.10 1999/03/26 17:34:15 chs Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.11 1999/06/21 17:25:11 thorpej Exp $	*/
 
 /*
  *
@@ -92,6 +92,8 @@ struct vm_aref {
  * locked by vm_map lock.
  */
 
+#ifdef _KERNEL
+
 /*
  * prototypes
  */
@@ -102,5 +104,7 @@ void uvm_anon_init __P((void));
 void uvm_anon_add __P((int));
 struct vm_page *uvm_anon_lockloanpg __P((struct vm_anon *));
 void uvm_anon_dropswap __P((struct vm_anon *));
+
+#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_ANON_H_ */

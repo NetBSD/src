@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.14 1999/03/25 18:48:56 mrg Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.15 1999/06/21 17:25:12 thorpej Exp $	*/
 
 /*
  *
@@ -63,6 +63,8 @@ struct uvm_cnt {
 	void *p;				/* private data */
 };
 
+#ifdef _KERNEL
+
 extern struct uvm_cnt *uvm_cnt_head;
 
 /*
@@ -92,6 +94,7 @@ do { \
 #define UVMCNT_INCR(C) UVMCNT_ADD(C,1)
 #define UVMCNT_DECR(C) UVMCNT_ADD(C,-1)
 
+#endif /* _KERNEL */
 
 /*
  * history/tracing
@@ -131,6 +134,8 @@ LIST_HEAD(uvm_history_head, uvm_history);
 /* and these are the bit values of each history */
 #define	UVMHIST_MAPHIST		0x00000001	/* maphist */
 #define	UVMHIST_PDHIST		0x00000002	/* pdhist */
+
+#ifdef _KERNEL
 
 /*
  * macros to use the history/tracing code.  note that UVMHIST_LOG
@@ -241,5 +246,7 @@ uvmhist_print(e)
 	printf("\n");
 }
 #endif /* UVMHIST */
+
+#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_STAT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.h,v 1.5 1999/03/25 18:48:51 mrg Exp $	*/
+/*	$NetBSD: uvm_glue.h,v 1.6 1999/06/21 17:25:11 thorpej Exp $	*/
 
 /*
  *
@@ -37,10 +37,14 @@
 #ifndef _UVM_UVM_GLUE_H_
 #define _UVM_UVM_GLUE_H_
 
+#ifdef _KERNEL
+
 /*
  * uvm_glue.h
  */
 
 void uvm_swapout_threads __P((void));
+
+#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_GLUE_H_ */
