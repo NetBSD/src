@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 1999/11/13 21:06:46 thorpej Exp $
+#	$NetBSD: Makefile,v 1.42 2000/10/25 01:49:55 thorpej Exp $
 
 LIB=	sa
 MKPIC=	no
@@ -35,7 +35,7 @@ SRCS+=	loadfile.c
 .endif
 .if (${SA_INCLUDE_NET} == "yes")
 # network routines
-SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
+SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c udp.c
 
 # network info services:
 SRCS+=	bootp.c rarp.c bootparam.c
