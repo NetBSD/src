@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.1.2.3 1997/07/01 21:49:47 thorpej Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.1.2.4 1997/07/01 22:08:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -65,20 +65,22 @@
 #include <dev/scsipi/cd_link.h>
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	atapicdmatch __P((struct device *, void *, void *));
+int	cd_atapibus_match __P((struct device *, void *, void *));
 #else
-int	atapicdmatch __P((struct device *, struct cfdata *, void *));
+int	cd_atapibus_match __P((struct device *, struct cfdata *, void *));
 #endif
-void	atapicdattach __P((struct device *, struct device *, void *));
-int acd_set_mode __P((struct cd_softc *, struct atapi_mode_data *, int));
-int acd_get_mode __P((struct cd_softc *, struct atapi_mode_data *,
-    int, int, int));
+void	cd_atapibus_attach __P((struct device *, struct device *, void *));
+
+int	cd_atapibus_set_mode __P((struct cd_softc *, struct atapi_mode_data *,
+	    int));
+int	cd_atapibus_get_mode __P((struct cd_softc *, struct atapi_mode_data *,
+	    int, int, int));
 
 struct cfattach cd_atapi_ca = {
-	sizeof(struct cd_softc), atapicdmatch, atapicdattach
+	sizeof(struct cd_softc), cd_atapibus_match, cd_atapibus_attach
 };
 
-struct scsipi_inquiry_pattern atapicd_patterns[] = {
+struct scsipi_inquiry_pattern cd_atapibus_patterns[] = {
 	{T_CDROM, T_REMOV,
 	 "",         "",                 ""},
 	{T_WORM, T_REMOV,
@@ -87,20 +89,20 @@ struct scsipi_inquiry_pattern atapicd_patterns[] = {
 	 "NEC                 CD-ROM DRIVE:260", "", "3.04"},
 };
 
-int	acd_setchan __P((struct cd_softc *, int, int, int, int));
-int	acd_getvol __P((struct cd_softc *, struct ioc_vol *));
-int	acd_setvol __P((struct cd_softc *, const struct ioc_vol *));
-int	acd_set_pa_immed __P((struct cd_softc *));
+int	cd_atapibus_setchan __P((struct cd_softc *, int, int, int, int));
+int	cd_atapibus_getvol __P((struct cd_softc *, struct ioc_vol *));
+int	cd_atapibus_setvol __P((struct cd_softc *, const struct ioc_vol *));
+int	cd_atapibus_set_pa_immed __P((struct cd_softc *));
 
-const struct cd_ops cd_atapi_ops = {
-	acd_setchan,
-	acd_getvol,
-	acd_setvol,
-	acd_set_pa_immed,
+const struct cd_ops cd_atapibus_ops = {
+	cd_atapibus_setchan,
+	cd_atapibus_getvol,
+	cd_atapibus_setvol,
+	cd_atapibus_set_pa_immed,
 };
 
 int
-atapicdmatch(parent, match, aux)
+cd_atapibus_match(parent, match, aux)
 	struct device *parent;
 #ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
@@ -116,9 +118,9 @@ atapicdmatch(parent, match, aux)
 		return 0;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)atapicd_patterns,
-		sizeof(atapicd_patterns)/sizeof(atapicd_patterns[0]),
-	    sizeof(atapicd_patterns[0]), &priority);
+	    (caddr_t)cd_atapibus_patterns,
+		sizeof(cd_atapibus_patterns)/sizeof(cd_atapibus_patterns[0]),
+	    sizeof(cd_atapibus_patterns[0]), &priority);
 	return (priority);
 }
 
@@ -127,7 +129,7 @@ atapicdmatch(parent, match, aux)
  * A device suitable for this driver
  */
 void
-atapicdattach(parent, self, aux)
+cd_atapibus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -137,7 +139,7 @@ atapicdattach(parent, self, aux)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdattach: "));
 
-	cdattach(parent, cd, sc_link, &cd_atapi_ops);
+	cdattach(parent, cd, sc_link, &cd_atapibus_ops);
 
 	/* XXX should I get the ATAPI_CAP_PAGE here ? */
 
@@ -145,7 +147,7 @@ atapicdattach(parent, self, aux)
 }
 
 int
-acd_get_mode(cd, data, page, len, flags)
+cd_atapibus_get_mode(cd, data, page, len, flags)
 	struct cd_softc *cd;
 	struct atapi_mode_data *data;
 	int page, len, flags;
@@ -159,15 +161,16 @@ acd_get_mode(cd, data, page, len, flags)
 	_lto2b(len, scsipi_cmd.length);
 	error = cd->sc_link->scsipi_cmd(cd->sc_link,
 		(struct scsipi_generic *)&scsipi_cmd,
-		sizeof(scsipi_cmd), (u_char *)data, sizeof(*data), CDRETRIES, 20000,
-		NULL, SCSI_DATA_IN);
-	SC_DEBUG(cd->sc_link, SDEV_DB2, ("acd_get_mode: error=%d\n", error));
+		sizeof(scsipi_cmd), (u_char *)data, sizeof(*data), CDRETRIES,
+		20000, NULL, SCSI_DATA_IN);
+	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cd_atapibus_get_mode: error=%d\n",
+	    error));
 	return error;
 
 }
 
 int
-acd_set_mode(cd, data, len)
+cd_atapibus_set_mode(cd, data, len)
 	struct cd_softc *cd;
 	struct atapi_mode_data *data;
 	int len;
@@ -183,39 +186,40 @@ acd_set_mode(cd, data, len)
 	_lto2b(len, scsipi_cmd.length);
 	error = cd->sc_link->scsipi_cmd(cd->sc_link,
 		(struct scsipi_generic *)&scsipi_cmd,
-		sizeof(scsipi_cmd), (u_char *)data, sizeof(*data), CDRETRIES, 20000,
-		NULL, SCSI_DATA_OUT);
-	SC_DEBUG(cd->sc_link, SDEV_DB2, ("acd_set_mode: error=%d\n", error));
+		sizeof(scsipi_cmd), (u_char *)data, sizeof(*data), CDRETRIES,
+		20000, NULL, SCSI_DATA_OUT);
+	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cd_atapibus_set_mode: error=%d\n",
+	    error));
 	return error;
 }
 
 int
-acd_setchan(cd, p0, p1, p2, p3)
+cd_atapibus_setchan(cd, p0, p1, p2, p3)
 	struct cd_softc *cd;
 	int p0, p1, p2, p3;
 {
 	struct atapi_mode_data data;
 	int error;
 
-	if ((error = acd_get_mode(cd, &data, ATAPI_AUDIO_PAGE,
+	if ((error = cd_atapibus_get_mode(cd, &data, ATAPI_AUDIO_PAGE,
 	    AUDIOPAGESIZE, 0)) != 0)
 		return error;
 	data.page.audio.port[LEFT_PORT].channels = p0;
 	data.page.audio.port[RIGHT_PORT].channels = p1;
 	data.page.audio.port[2].channels = p2;
 	data.page.audio.port[3].channels = p3;
-	return acd_set_mode(cd, &data, AUDIOPAGESIZE);
+	return cd_atapibus_set_mode(cd, &data, AUDIOPAGESIZE);
 }
 
 int
-acd_getvol(cd, arg)
+cd_atapibus_getvol(cd, arg)
 	struct cd_softc *cd;
 	struct ioc_vol *arg;
 {
 	struct atapi_mode_data data;
 	int error;
 
-	if ((error = acd_get_mode(cd, &data, ATAPI_AUDIO_PAGE,
+	if ((error = cd_atapibus_get_mode(cd, &data, ATAPI_AUDIO_PAGE,
 	    AUDIOPAGESIZE, 0)) != 0)
 		return error;
 	arg->vol[0] = data.page.audio.port[0].volume;
@@ -226,17 +230,17 @@ acd_getvol(cd, arg)
 }
 
 int
-acd_setvol(cd, arg)
+cd_atapibus_setvol(cd, arg)
 	struct cd_softc *cd;
 	const struct ioc_vol *arg;
 {
 	struct atapi_mode_data data, mask;
 	int error;
 
-	if ((error = acd_get_mode(cd, &data, ATAPI_AUDIO_PAGE,
+	if ((error = cd_atapibus_get_mode(cd, &data, ATAPI_AUDIO_PAGE,
 	    AUDIOPAGESIZE, 0)) != 0)
 		return error;
-	if ((error = acd_get_mode(cd, &mask, ATAPI_AUDIO_PAGE_MASK,
+	if ((error = cd_atapibus_get_mode(cd, &mask, ATAPI_AUDIO_PAGE_MASK,
 	    AUDIOPAGESIZE, 0))   != 0)
 		return error;
 
@@ -249,11 +253,11 @@ acd_setvol(cd, arg)
 	data.page.audio.port[3].volume = arg->vol[3] &
 		mask.page.audio.port[3].volume;
 
-	return acd_set_mode(cd, &data, AUDIOPAGESIZE);
+	return cd_atapibus_set_mode(cd, &data, AUDIOPAGESIZE);
 }
 
 int
-acd_set_pa_immed(cd)
+cd_atapibus_set_pa_immed(cd)
 	struct cd_softc *cd;
 {
 
