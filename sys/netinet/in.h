@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.42 1999/07/02 08:46:47 itojun Exp $	*/
+/*	$NetBSD: in.h,v 1.43 1999/11/20 00:37:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -119,7 +119,7 @@
  */
 struct in_addr {
 	u_int32_t s_addr;
-};
+} __attribute__((__packed__));
 
 /*
  * Definitions of bits in internet address integers.
