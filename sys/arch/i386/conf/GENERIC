@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.368 2000/08/21 07:39:42 itohy Exp $
+#	$NetBSD: GENERIC,v 1.369 2000/09/10 11:48:38 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.368 $"
+#ident 		"GENERIC-$Revision: 1.369 $"
 
 maxusers	32		# estimated number of users
 
@@ -168,6 +168,8 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
 options 	PCDISPLAY_SOFTCURSOR
+# modify the screen type of the console; defaults to "80x25"
+#options 	WSCONS_DEFAULT_TYPE="80x24"
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
