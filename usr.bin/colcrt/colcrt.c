@@ -1,4 +1,4 @@
-/*	$NetBSD: colcrt.c,v 1.3 1995/03/26 05:31:00 glass Exp $	*/
+/*	$NetBSD: colcrt.c,v 1.4 1997/10/18 12:59:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,21 +33,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)colcrt.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: colcrt.c,v 1.3 1995/03/26 05:31:00 glass Exp $";
+__RCSID("$NetBSD: colcrt.c,v 1.4 1997/10/18 12:59:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
 /*
  * colcrt - replaces col for crts with new nroff esp. when using tbl.
  * Bill Joy UCB July 14, 1977
@@ -73,12 +76,18 @@ char	printall;
 char	*progname;
 FILE	*f;
 
+int	main __P((int, char **));
+void	move __P((int, int));
+void	pflush __P((int));
+int	plus __P((char, char));
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register c;
-	register char *cp, *dp;
+	int c;
+	char *cp, *dp;
 
 	argc--;
 	progname = *argv++;
@@ -186,20 +195,22 @@ main(argc, argv)
 	exit(0);
 }
 
+int
 plus(c, d)
 	char c, d;
 {
 
-	return (c == '|' && d == '-' || d == '_');
+	return ((c == '|' && d == '-') || d == '_');
 }
 
 int first;
 
+void
 pflush(ol)
 	int ol;
 {
-	register int i, j;
-	register char *cp;
+	int i;
+	char *cp;
 	char lastomit;
 	int l;
 
@@ -222,17 +233,18 @@ pflush(ol)
 		lastomit = 0;
 		printf("%s\n", cp);
 	}
-	bcopy(page[ol], page, (267 - ol) * 132);
-	bzero(page[267- ol], ol * 132);
+	memmove(page, page[ol], (267 - ol) * 132);
+	memset(page[267- ol], 0, ol * 132);
 	outline -= ol;
 	outcol = 0;
 	first = 1;
 }
 
+void
 move(l, m)
 	int l, m;
 {
-	register char *cp, *dp;
+	char *cp, *dp;
 
 	for (cp = page[l], dp = page[m]; *cp; cp++, dp++) {
 		switch (*cp) {
