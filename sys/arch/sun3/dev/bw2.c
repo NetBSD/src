@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.12 1998/01/12 20:32:17 thorpej Exp $	*/
+/*	$NetBSD: bw2.c,v 1.13 1998/02/05 04:56:35 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,11 +63,12 @@
 #include <vm/vm.h>
 
 #include <machine/autoconf.h>
-#include <machine/control.h>
 #include <machine/cpu.h>
 #include <machine/fbio.h>
 #include <machine/idprom.h>
 #include <machine/pmap.h>
+
+#include <sun3/sun3/machdep.h>
 
 #include "fbvar.h"
 #include "bw2reg.h"
@@ -79,6 +80,10 @@ struct bw2_softc {
 	struct	device sc_dev;		/* base device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
 	int 	sc_phys;		/* display RAM (phys addr) */
+	int 	sc_pixeloffset;		/* offset to framebuffer */
+	/* If using overlay plane of something, it is... */
+	int	sc_ovtype;		/* ... this type. */
+	int sc_video_on;
 };
 
 /* autoconfiguration driver */
@@ -121,10 +126,15 @@ bw2match(parent, cf, args)
 #endif
 
 	if (ca->ca_paddr == -1) {
+#ifdef	_SUN3X_
+		/* Demand an address locator on 3X. */
+		return (0);
+#else
 		if (cpu_machine_id == SUN3_MACH_50)
 			ca->ca_paddr = BW2_50_PADDR;
 		else
 			ca->ca_paddr = BW2_FB_PADDR;
+#endif
 	}
 
 	/* The peek returns -1 on bus error. */
@@ -144,30 +154,31 @@ bw2attach(parent, self, args)
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
+#ifdef	_SUN3_
 	int tmp;
+#endif	/* SUN3 */
 
 	sc->sc_phys = ca->ca_paddr;
 
+	fbt = &fb->fb_fbtype;
+	fbt->fb_type = FBTYPE_SUN2BW;
+	fbt->fb_width = 1152;		/* default - see below */
+	fbt->fb_height = 900;		/* default - see below */
+	fbt->fb_depth = 1;
+	fbt->fb_cmsize = 0;
+	fbt->fb_size = BW2_FBSIZE;	/* default - see below */
 	fb->fb_driver = &bw2fbdriver;
 	fb->fb_private = sc;
 	fb->fb_name = sc->sc_dev.dv_xname;
 
-	fbt = &fb->fb_fbtype;
-	fbt->fb_type = FBTYPE_SUN2BW;
-	fbt->fb_depth = 1;
-	fbt->fb_cmsize = 0;
-
-	fbt->fb_width = 1152;
-	fbt->fb_height = 900;
-	fbt->fb_size = BW2_FBSIZE;
-
+#ifdef	_SUN3_
 	switch (cpu_machine_id) {
 	case SUN3_MACH_60:
 		/*
 		 * Only the model 60 can have hi-res.
 		 * XXX - Use PROM screen size values?
 		 */
-	    tmp = bus_peek(BUS_OBMEM, BW2_CR_PADDR, 1);
+		tmp = bus_peek(BUS_OBMEM, BW2_CR_PADDR, 1);
 		if ((tmp != -1) && (tmp & 0x80) == 0)
 			goto high_res;
 		break;
@@ -180,6 +191,7 @@ bw2attach(parent, self, args)
 		fbt->fb_size = BW2_FBSIZE_HIRES;
 		break;
 	}
+#endif	/* SUN3 */
 
 	printf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
 	fb_attach(fb, 1);
@@ -248,14 +260,10 @@ static int bw2gvideo(fb, data)
 	struct fbdevice *fb;
 	void *data;
 {
+	struct bw2_softc *sc = fb->fb_private;
 	int *on = data;
-	int s, ena;
 
-	s = splhigh();
-	ena = get_control_byte(SYSTEM_ENAB);
-	splx(s);
-
-	*on = (ena & SYSTEM_ENAB_VIDEO) ? 1 : 0;
+	*on = sc->sc_video_on;
 	return (0);
 }
 
@@ -264,17 +272,15 @@ static int bw2svideo(fb, data)
 	struct fbdevice *fb;
 	void *data;
 {
+	struct bw2_softc *sc = fb->fb_private;
 	int *on = data;
-	int s, ena;
 
-	s = splhigh();
-	ena = get_control_byte(SYSTEM_ENAB);
+	if (sc->sc_video_on == *on)
+		return (0);
+	sc->sc_video_on = *on;
 
-	if (*on) ena |= SYSTEM_ENAB_VIDEO;
-	else ena &= ~SYSTEM_ENAB_VIDEO;
-
-	set_control_byte(SYSTEM_ENAB, ena);
-	splx(s);
+	/* XXX: P4 support... */
+	enable_video(sc->sc_video_on);
 
 	return(0);
 }

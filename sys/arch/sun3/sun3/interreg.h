@@ -1,4 +1,4 @@
-/*	$NetBSD: interreg.h,v 1.9 1997/01/27 19:41:16 gwr Exp $	*/
+/*	$NetBSD: interreg.h,v 1.10 1998/02/05 04:57:35 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,8 +45,18 @@
 #define IREG_SOFT_ENAB_1   0x02
 #define IREG_ALL_ENAB      0x01
 
+#ifdef	_KERNEL
+
 #define IREG_BITS "\20\8CLK7\7RSV6\6CLK5\5VIDEO\4SOFT3\3SOFT2\2SOFT1\1ALL\n"
+
+#ifdef	_SUN3X_
+#define	IREG_ADDR	0x61001400
+#else
+#define	IREG_ADDR	  0x0A0000
+#endif
 
 extern volatile u_char *interrupt_reg;
 
 void set_clk_mode __P((u_char on, u_char off, int enable));
+
+#endif	/* _KERNEL */

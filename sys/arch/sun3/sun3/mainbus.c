@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 1998/01/12 20:32:31 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 1998/02/05 04:57:43 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,14 +67,6 @@ main_match(parent, cf, aux)
  * This controls the order of autoconfig for important things
  * used early.  For example, idprom is used by Ether drivers.
  */
-static int bus_order[] = {
-	BUS_OBIO,	/* eeprom, clock */
-	BUS_OBMEM,
-	BUS_VME16,
-	BUS_VME32
-};
-#define BUS_ORDER_SZ (sizeof(bus_order)/sizeof(bus_order[0]))
-
 static void
 main_attach(parent, self, args)
 	struct device *parent;
@@ -86,8 +78,8 @@ main_attach(parent, self, args)
 
 	printf("\n");
 
-	for (i = 0; i < BUS_ORDER_SZ; i++) {
-		ca.ca_bustype = bus_order[i];
+	for (i = 0; i < BUS__NTYPES; i++) {
+		ca.ca_bustype = i;
 		(void) config_found(self, &ca, NULL);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98 1998/01/22 23:59:45 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.99 1998/02/05 04:57:47 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -101,16 +101,19 @@
 #include <m68k/m68k.h>
 
 #include <machine/cpu.h>
-#include <machine/control.h>
 #include <machine/dvma.h>
 #include <machine/idprom.h>
 #include <machine/kcore.h>
-#include <machine/machdep.h>
 #include <machine/mon.h>
-#include <machine/obmem.h>
 #include <machine/pmap.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
+
+#include <sun3/sun3/cache.h>
+#include <sun3/sun3/control.h>
+#include <sun3/sun3/fc.h>
+#include <sun3/sun3/machdep.h>
+#include <sun3/sun3/obmem.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>
@@ -216,16 +219,13 @@ static vm_offset_t avail_next;
 /* This is where we map a PMEG without a context. */
 static vm_offset_t temp_seg_va;
 
-/* Called only from locore.s and pmap.c */
-void	_pmap_activate __P((pmap_t pmap));
-
 /*
  * Location to store virtual addresses
  * to be used in copy/zero operations.
  */
 vm_offset_t tmp_vpages[2] = {
-	MONSHORTSEG,
-	MONSHORTSEG + NBPG };
+	SUN3_MONSHORTSEG,
+	SUN3_MONSHORTSEG + NBPG };
 int tmp_vpages_inuse;
 
 static int pmap_version = 1;
@@ -425,6 +425,9 @@ static void pmap_remove_mmu __P((pmap_t, vm_offset_t, vm_offset_t));
 static void pmap_remove_noctx __P((pmap_t, vm_offset_t, vm_offset_t));
 
 static int  pmap_fault_reload __P((struct pmap *, vm_offset_t, int));
+
+/* Called only from locore.s and pmap.c */
+void	_pmap_switch __P((pmap_t pmap));
 
 #ifdef	PMAP_DEBUG
 void pmap_print __P((pmap_t pmap));
@@ -1567,7 +1570,7 @@ pmap_common_init(pmap)
 
 /*
  * Prepare the kernel for VM operations.
- * This is called by sun3_startup:sun3_bootstrap()
+ * This is called by locore2.c:_vm_init()
  * after the "start/end" globals are set.
  * This function must NOT leave context zero.
  */
@@ -1575,7 +1578,7 @@ void
 pmap_bootstrap(nextva)
 	vm_offset_t nextva;
 {
-	MachMonRomVector *rvec;
+	struct sunromvec *rvec;
 	vm_offset_t va, eva;
 	int i, pte, sme;
 	extern char etext[];
@@ -1678,14 +1681,14 @@ pmap_bootstrap(nextva)
 	 * Free up any pmegs in this range which have no mappings.
 	 * VA range: [0x0FE00000 .. 0x0FF00000]
 	 */
-	pmeg_mon_init(MONSTART, MONEND, TRUE);
+	pmeg_mon_init(SUN3_MONSTART, SUN3_MONEND, TRUE);
 
 	/*
 	 * Unmap any pmegs left in DVMA space by the PROM.
 	 * DO NOT kill the last one! (owned by the PROM!)
 	 * VA range: [0x0FF00000 .. 0x0FFE0000]
 	 */
-	pmeg_mon_init(MONEND, MONSHORTSEG, FALSE);
+	pmeg_mon_init(SUN3_MONEND, SUN3_MONSHORTSEG, FALSE);
 
 	/*
 	 * MONSHORTSEG contains MONSHORTPAGE which is a data page
@@ -1693,8 +1696,8 @@ pmap_bootstrap(nextva)
 	 * but clear out all but the last PTE inside it.
 	 * Note we use this for tmp_vpages.
 	 */
-	va = MONSHORTSEG;
-	eva = MONSHORTPAGE;
+	va  = SUN3_MONSHORTSEG;
+	eva = SUN3_MONSHORTPAGE;
 	sme = get_segmap(va);
 	pmeg_reserve(sme);
 	for ( ; va < eva; va += NBPG)
@@ -2728,6 +2731,7 @@ pmap_is_referenced(pa)
 /*
  * This is called by locore.s:cpu_switch() when it is
  * switching to a new process.  Load new translations.
+ * Note: done in-line by locore.s unless PMAP_DEBUG
  *
  * Note that we do NOT allocate a context here, but
  * share the "kernel only" context until we really
@@ -2735,7 +2739,7 @@ pmap_is_referenced(pa)
  * pmap_enter_user().
  */
 void
-_pmap_activate(pmap)
+_pmap_switch(pmap)
 	pmap_t pmap;
 {
 
@@ -2745,9 +2749,10 @@ _pmap_activate(pmap)
 }
 
 /*
- * Exported version of pmap_activate().  Activates the address space
- * for the specified process.  Note that the hardware is not loaded
- * if we are not the current process; that will be done at switch time.
+ * Exported version of pmap_activate().  This is called from the
+ * machine-independent VM code when a process is given a new pmap.
+ * If (p == curproc) do like cpu_switch would do; otherwise just
+ * take this as notification that the process has a new pmap.
  */
 void
 pmap_activate(p)
@@ -2756,10 +2761,11 @@ pmap_activate(p)
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	int s;
 
-	s = splpmap();
-	if (p == curproc)
-		_pmap_activate(pmap);
-	splx(s);
+	if (p == curproc) {
+		s = splpmap();
+		_pmap_switch(pmap);
+		splx(s);
+	}
 }
 
 /*

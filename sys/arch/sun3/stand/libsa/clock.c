@@ -1,22 +1,26 @@
-/*	$NetBSD: clock.c,v 1.3 1998/01/05 07:03:23 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 1998/02/05 04:57:06 gwr Exp $	*/
 
 
 #include <sys/types.h>
 #include <machine/mon.h>
 
-#include "clock.h"
+#include "libsa.h"
 
 int hz = 1000;
 
-time_t getsecs()
+long
+getsecs()
 {
-	register int ticks = getticks();
-	return ((time_t)(ticks / hz));
+	long ticks;
+
+	ticks = getticks();
+	return ((ticks / hz));
 }
 
-int getticks()
+long
+getticks()
 {
-	register int ticks;
+	long ticks;
 
 	ticks = *romVectorPtr->nmiClock;
 	return (ticks);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5 1997/01/27 20:43:57 gwr Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.6 1998/02/05 04:57:50 gwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -52,7 +52,7 @@
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
-#include <machine/machdep.h>
+#include <sun3/sun3/machdep.h>
 
 #ifdef TRACE
 int	nvualarm;

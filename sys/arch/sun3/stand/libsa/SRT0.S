@@ -1,7 +1,10 @@
-|	$NetBSD: SRT0.S,v 1.3 1997/09/18 01:47:08 gwr Exp $
+| $NetBSD: SRT0.S,v 1.4 1998/02/05 04:57:05 gwr Exp $
 
-| Copyright (c) 1995 Gordon W. Ross
+| Copyright (c) 1998 The NetBSD Foundation, Inc.
 | All rights reserved.
+|
+| This code is derived from software contributed to The NetBSD Foundation
+| by Gordon W. Ross.
 |
 | Redistribution and use in source and binary forms, with or without
 | modification, are permitted provided that the following conditions
@@ -11,32 +14,49 @@
 | 2. Redistributions in binary form must reproduce the above copyright
 |    notice, this list of conditions and the following disclaimer in the
 |    documentation and/or other materials provided with the distribution.
-| 3. The name of the author may not be used to endorse or promote products
-|    derived from this software without specific prior written permission.
-| 4. All advertising materials mentioning features or use of this software
+| 3. All advertising materials mentioning features or use of this software
 |    must display the following acknowledgement:
-|      This product includes software developed by Gordon Ross
+|        This product includes software developed by the NetBSD
+|        Foundation, Inc. and its contributors.
+| 4. Neither the name of The NetBSD Foundation nor the names of its
+|    contributors may be used to endorse or promote products derived
+|    from this software without specific prior written permission.
 |
-| THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-| IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-| OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-| IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-| INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-| NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-| DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-| THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-| (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-| THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+| THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+| ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+| TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+| PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+| BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+| CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+| SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+| INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+| CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+| ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+| POSSIBILITY OF SUCH DAMAGE.
 
 |	SRT0.S - Stand-alone Run-Time startup code, part 0
 	.file	"SRT0.S"
+	.data
+
+| Flush the CPU cache using MC68020 values just to be safe.
+| This will cause the MC68030 to run with the data cache
+| disabled, but that is OK for boot programs.
 	.set	IC_CLEAR,0x9
+	.set	PSL_HIGHIPL,0x2700
 
 	.text
-	.globl	__estack
-__estack:
 	.globl	start
+	.globl	_exit
+	.globl	___main
+	.globl	_ICIA
+	.globl	_getvbr
+	.globl	_setjmp
+	.globl	_longjmp
+
 start:
+| Disable interrupts (just in case...)
+	movw	#PSL_HIGHIPL, sr
+
 | Check to see if the code is located correctly.
 | Get current location via PC-relative load, then...
 	lea	pc@(start:w), a0	| current location (0x4000)
@@ -60,40 +80,75 @@ Lcp:
 	lea	restart:l, a0
 	jmp	a0@
 
-restart:
-| now in the relocated code
+| Define the location of our stack (just before relocated text).
+| Leave room the exit jmpbuf at the end of our stack.
+	.set	estack,start-60
 
-| Set up stack (just before relocated text)
-	lea	__estack:l, a0
+restart:
+| Now in the relocated code, using the monitor stack.
+| Save this context so we can return with it.
+	pea	estack
+	jbsr	_setjmp
+	addqw	#4,sp
+	tstl	d0
+	bne	Ldone	| here via longjmp
+
+| Switch to our own stack.
+	lea	estack, a0
 	movl	a0, sp
 	subl	a6, a6
 
+| Clear out BSS...
+	lea	_edata, a0
+	lea	_end, a1
+Lclrbss:
+	clrl	a0@++
+	cmpl	a1,a0
+	ble	Lclrbss
+
 | Call the run-time startup C code, which will:
-|   initialize, call main, call exit
-	jsr	__start:l
+|   initialize, call main, call exit.
+	jbsr	__start
 
-| If _start returns, fall into abort.
-	.globl	_abort
-_abort:
-	trap	#0
+| Switch back to the monitor stack, then either
+| "chain" to the next program or return.
+_exit:
+	pea	estack
+	jbsr	_longjmp	| to next line
+Ldone:
+	movl	_chain_to_func,a0
+	tstl	a0
+	beq	Lret
+	jmp	a0@
+Lret:
+	rts
 
-| If abort returns, fall into reset.
-	.globl	_reset
-_reset:
-	reset
-	jmp	_reset
+| function to clear the I-cache
+_ICIA:
+	movl	#IC_CLEAR, d0
+	movc	d0, cacr
+	rts
 
 | function to get the vector base register
-	.globl	_getvbr
 _getvbr:
 	movc	vbr, d0
 	rts
 
-| function to clear the I-cache
-	.globl	_ICIA
-_ICIA:
-	movl	#IC_CLEAR, d0
-	movc	d0, cacr
+| Kernel version of setjmp/longjmp (label_t is 16 words)
+
+_setjmp:
+	movl	sp@(4),a0	| savearea pointer
+	moveml	#0xFCFC,a0@	| save d2-d7/a2-a7
+	movl	sp@,a0@(48)	| and return address
+	moveq	#0,d0		| return 0
+	rts
+
+_longjmp:
+	movl	sp@(4),a0	| savearea pointer
+	moveml	a0@+,#0xFCFC	| restore d2-d7/a2-a7
+	| Note: just changed sp!
+	movl	a0@,sp@		| and return address
+	moveq	#1,d0		| return 1
 	rts
 
 | The end.

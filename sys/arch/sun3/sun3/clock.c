@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.42 1998/01/12 20:32:30 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.43 1998/02/05 04:57:28 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -57,13 +57,12 @@
 #include <m68k/asm_single.h>
 
 #include <machine/autoconf.h>
-#include <machine/control.h>
 #include <machine/cpu.h>
 #include <machine/leds.h>
-#include <machine/obio.h>
-#include <machine/machdep.h>
 
+#include <sun3/sun3/control.h>
 #include <sun3/sun3/interreg.h>
+#include <sun3/sun3/machdep.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/intersil7170.h>
@@ -103,10 +102,6 @@ clock_match(parent, cf, args)
 	if (cf->cf_unit != 0)
 		return (0);
 
-	/* We use obio_mapin(), so require OBIO. */
-	if (ca->ca_bustype != BUS_OBIO)
-		return (0);
-
 	/* Make sure there is something there... */
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
@@ -130,7 +125,8 @@ clock_attach(parent, self, args)
 	printf("\n");
 
 	/* Get a mapping for it. */
-	va = obio_mapin(ca->ca_paddr, OBIO_CLOCK_SIZE);
+	va = bus_mapin(ca->ca_bustype,
+	    ca->ca_paddr, sizeof(struct intersil7170));
 	if (!va)
 		panic("clock_attach");
 	intersil_va = va;

@@ -1,10 +1,9 @@
-/*	$NetBSD: panic.c,v 1.4 1998/01/05 07:03:27 perry Exp $	*/
+/*	$NetBSD: panic.c,v 1.5 1998/02/05 04:57:13 gwr Exp $	*/
 
 
 #include <stdarg.h>
-#include "stand.h"
-
-extern __dead void abort();
+#include <stand.h>
+#include "libsa.h"
 
 __dead void
 panic(const char *fmt, ...)
@@ -15,5 +14,6 @@ panic(const char *fmt, ...)
 	vprintf(fmt, ap);
 	printf("\n");
 	va_end(ap);
-	abort();
+	breakpoint();
+	exit();
 }

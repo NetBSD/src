@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.16 1997/10/06 19:58:02 gwr Exp $	*/
+/*	$NetBSD: control.c,v 1.17 1998/02/05 04:57:29 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,13 +37,9 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 
 #include <machine/pte.h>
-#include <machine/control.h>
-
-#define CONTROL_ADDR_BUILD(as, va) \
-	((as) | ((va) & CONTROL_ADDR_MASK))
+#include <sun3/sun3/control.h>
 
 int
 get_context()
@@ -58,16 +54,17 @@ set_context(c)
 	set_control_byte(CONTEXT_REG, (c & CONTEXT_MASK));
 }
 
-int
+u_int
 get_pte(va)
 	vm_offset_t va;
 {
 	return (get_control_word(CONTROL_ADDR_BUILD(PGMAP_BASE, va)));
 }
 
-void set_pte(va, pte)
+void
+set_pte(va, pte)
 	vm_offset_t va;
-	int pte;
+	u_int pte;
 {
 	set_control_word(CONTROL_ADDR_BUILD(PGMAP_BASE, va), pte);
 }
@@ -105,7 +102,7 @@ set_segmap_allctx(va, sme)
 	oldctx &= CONTEXT_MASK;
 
 	ctrladdr = CONTROL_ADDR_BUILD(SEGMAP_BASE, va);
-	for (ctx = 0; ctx < NCONTEXT; ctx++) {
+	for (ctx = 0; ctx < CONTEXT_NUM; ctx++) {
 		/* Inlined set_context() */
 		set_control_byte(CONTEXT_REG, ctx);
 		/* Inlined set_segmap() */

@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.14 1997/12/09 22:29:01 gwr Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.15 1998/02/05 04:56:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -120,11 +120,11 @@ static void si_vme_reset __P((struct ncr5380_softc *));
  * New-style autoconfig attachment
  */
 
-static int	si_vmes_match __P((struct device *, struct cfdata *, void *));
-static void	si_vmes_attach __P((struct device *, struct device *, void *));
+static int	si_vme_match __P((struct device *, struct cfdata *, void *));
+static void	si_vme_attach __P((struct device *, struct device *, void *));
 
-struct cfattach si_vmes_ca = {
-	sizeof(struct si_softc), si_vmes_match, si_vmes_attach
+struct cfattach si_vme_ca = {
+	sizeof(struct si_softc), si_vme_match, si_vme_attach
 };
 
 /*
@@ -136,7 +136,7 @@ int si_vme_options = 0x0f;
 
 
 static int
-si_vmes_match(parent, cf, aux)
+si_vme_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -164,7 +164,7 @@ si_vmes_match(parent, cf, aux)
 	if (bus_peek(ca->ca_bustype, probe_addr, 1) != -1) {
 		/* Something responded at 2K+1.  Maybe an "sc" board? */
 #ifdef	DEBUG
-		printf("si_vmes_match: May be an `sc' board at pa=0x%x\n",
+		printf("si_vme_match: May be an `sc' board at pa=0x%x\n",
 			   ca->ca_paddr);
 #endif
 		return(0);
@@ -178,7 +178,7 @@ si_vmes_match(parent, cf, aux)
 }
 
 static void
-si_vmes_attach(parent, self, args)
+si_vme_attach(parent, self, args)
 	struct device	*parent, *self;
 	void		*args;
 {

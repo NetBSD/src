@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.10 1997/12/09 22:25:42 gwr Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.11 1998/02/05 04:56:41 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,16 +82,16 @@ static void wzero __P((void *vb, u_int l));
  * New-style autoconfig attachment
  */
 
-static int  ie_vmes_match __P((struct device *, struct cfdata *, void *));
-static void ie_vmes_attach __P((struct device *, struct device *, void *));
+static int  ie_vme_match __P((struct device *, struct cfdata *, void *));
+static void ie_vme_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ie_vmes_ca = {
-	sizeof(struct ie_softc), ie_vmes_match, ie_vmes_attach
+struct cfattach ie_vme_ca = {
+	sizeof(struct ie_softc), ie_vme_match, ie_vme_attach
 };
 
 
 static int
-ie_vmes_match(parent, cf, args)
+ie_vme_match(parent, cf, args)
 	struct device *parent;
 	struct cfdata *cf;
 	void *args;
@@ -119,7 +119,7 @@ ie_vmes_match(parent, cf, args)
  * to fix this.
  */
 void
-ie_vmes_attach(parent, self, args)
+ie_vme_attach(parent, self, args)
 	struct device *parent;
 	struct device *self;
 	void *args;

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.6 1998/01/12 20:35:06 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.7 1998/02/05 04:56:37 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -64,8 +64,8 @@
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
 
-#include <sun3x/dev/dmareg.h>
-#include <sun3x/dev/dmavar.h>
+#include <sun3/dev/dmareg.h>
+#include <sun3/dev/dmavar.h>
 
 #define	ESP_REG_SIZE	(12*4)
 #define	ESP_DMA_OFF 	0x1000

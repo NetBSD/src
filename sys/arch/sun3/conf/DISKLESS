@@ -1,12 +1,17 @@
-# $NetBSD: DISKLESS,v 1.24 1998/01/28 16:40:19 gwr Exp $
+# $NetBSD: DISKLESS,v 1.25 1998/02/05 04:56:24 gwr Exp $
 
-# DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
+# DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Root and swap on NFS
 # Includes devices needed to run as an X-terminal
 
 include "arch/sun3/conf/std.sun3"
 
-# Machines to be supported by this kernel
+# Machines to be supported by this kernel.  Note:
+# The SUN3 and SUN3X options are mutually exclusive!
+# (Your kernel will only run on one or the other.)
+makeoptions	MACHTYPE=sun3
+options 	_SUN3_
+
 options 	FPU_EMULATE
 options 	HAVECACHE		# Sun3/260 VAC
 
@@ -75,6 +80,22 @@ options 	NFS_BOOT_BOOTPARAM
 
 config		netbsd root on ? type nfs
 
+# On-board I/O space (required)
+include "arch/sun3/conf/obio.sun3"
+
+# On-board memory (optional)
+# See frame-buffers
+obmem0 at mainbus?
+
+# VME bus support (optional)
+# One unit for each address space
+vme0 at mainbus? # A16/D16
+vme1 at mainbus? # A16/D32
+vme2 at mainbus? # A24/D16
+vme3 at mainbus? # A24/D32
+vme4 at mainbus? # A32/D16
+vme5 at mainbus? # A32/D32
+
 #
 # Serial ports
 #
@@ -89,17 +110,20 @@ ms0	at zsc0 channel 1	# mouse
 #
 
 # Intel Ethernet (onboard, or VME)
-ie0 at obio0 addr   0x0C0000 level 3
-ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75
+ie0 at obio0 addr 0x0C0000 ipl 3
+ie1 at vme2  addr 0xe88000 ipl 3 vect 0x75
 
 # Lance Ethernet (only onboard)
-le0 at obio0 addr   0x120000 level 3
+le0 at obio0 addr 0x120000 ipl 3
 
-#
-# Sun3/E stuff
-#
-sebuf0 at vmes0 addr 0xff300000 level 2 vect 0x74
-sebuf1 at vmes0 addr 0xff340000 level 2 vect 0x76
+# All Sun3 machines with an "le" (3/50, 3/60) should be
+# presumed to have the old, buggy LANCE chip. (Rev. C)
+options 	LANCE_REVC_BUG
+
+# Sun3/E SCSI+Ethernet board (VME A24/D16)
+# Note: the board uses vect and vect+1
+sebuf0 at vme2 addr 0x300000 ipl 2 vect 0x74 # and 0x75
+sebuf1 at vme2 addr 0x340000 ipl 2 vect 0x76 # and 0x77
 #si* at sebuf?
 ie* at sebuf?
 
@@ -127,11 +151,11 @@ bwtwo0 at obmem0 addr ?
 # 3/60 plug-in color frame buffer overlay plane
 #bwtwo1 at obmem0 addr 0xff400000
 
-# Sun-3 color board, or CG5 8-bit VME frame buffer.
-cgtwo0 at vmes0 addr 0xff400000 level 4 vect 0xA8
+# Sun-3 color board, or CG5 8-bit frame buffer (VME A24/D16).
+cgtwo0 at vme2 addr 0x400000 ipl 4 vect 0xA8
 
-# Support for the CG9 24-bit VME frame buffer.
-# cgnine0 at vmel0 addr 0x08000000
+# Support for the CG9 24-bit frame buffer (VME A32/D32).
+# cgnine0 at vme5 addr 0x08000000 ipl 4 vect 0xAA
 
 # Misc.
 pseudo-device	loop		1	# network loopback

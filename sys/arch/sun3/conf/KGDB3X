@@ -1,12 +1,21 @@
-# $NetBSD: KGDB3X,v 1.17 1998/01/22 22:27:57 gwr Exp $
+# $NetBSD: KGDB3X,v 1.18 1998/02/05 04:56:29 gwr Exp $
 
-# GENERIC Sun3x (3/80, 3/470)
-# Supports root on: le0, sd*
+# KGDB3X Sun3X (3/80, 3/470)
+# like GENERIC but supports gdb on other machine, i.e.:
+#	% gdb -k netbsd.gdb
+#	(gdb) set remotebaud 19200
+#	(gdb) target remote /dev/ttyb
 
-include "arch/sun3x/conf/std.sun3x"
+include "arch/sun3/conf/std.sun3"
 
-# Machines to be supported by this kernel
-# options 	FPU_EMULATE	# XXX - Ever needed?
+# Machines to be supported by this kernel.  Note:
+# The SUN3 and SUN3X options are mutually exclusive!
+# (Your kernel will only run on one or the other.)
+makeoptions	MACHTYPE=sun3x
+options 	_SUN3X_
+
+# options 	FPU_EMULATE	# Every Sun3X has an FPU, right?
+# options 	HAVE_IOCACHE	# XXX - Not yet supported.
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	4
@@ -22,16 +31,16 @@ options 	SYSVSHM		# System V shared memory
 #options 	UCONSOLE	# Allow non-root TIOCCONS
 
 # Which kernel debugger?  Uncomment either this:
-options 	DDB
+#options 	DDB
 # ... or these for KGDB (gdb remote target)
-#makeoptions DEBUG="-g"		# debugging symbols for gdb
-#options 	KGDB
-#options 	KGDBDEV=0x0C01	# ttya=0C00 ttyb=0C01
+makeoptions DEBUG="-g"		# debugging symbols for gdb
+options 	KGDB
+options 	KGDBDEV=0x0C01	# ttya=0C00 ttyb=0C01
 
 # Other debugging options
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	DEBUG		# kernel debugging code
-#options 	DIAGNOSTIC	# extra kernel sanity checking
+options 	DEBUG		# kernel debugging code
+options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	PMAP_DEBUG
 #options 	SCSIDEBUG
@@ -72,8 +81,25 @@ options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
 # Work-around for root on slow servers (insurance...)
 options 	NFS_BOOT_RWSIZE=1024
+options 	NFS_BOOT_BOOTPARAM
 
 config		netbsd root on ? type ?
+
+# On-board I/O space (required)
+include "arch/sun3/conf/obio.sun3x"
+
+# On-board memory (optional)
+# See frame-buffers
+obmem0 at mainbus?
+
+# VME bus support (optional)
+# One unit for each address space
+vme0 at mainbus? # A16/D16
+vme1 at mainbus? # A16/D32
+vme2 at mainbus? # A24/D16
+vme3 at mainbus? # A24/D32
+vme4 at mainbus? # A32/D16
+vme5 at mainbus? # A32/D32
 
 #
 # Serial ports
@@ -88,7 +114,7 @@ ms0	at zsc0 channel 1	# mouse
 # Network devices
 #
 
-# Intel Ethernet
+# Intel Ethernet (onboard, or VME)
 ie0 at obio0 addr 0x65000000 ipl 3
 ie1 at vme2  addr   0xe88000 ipl 3 vect 0x75
 
@@ -116,18 +142,21 @@ fdc0 at obio0 addr 0x6e000000 ipl 6 vect 0x40
 fd0  at fdc0	# First (and only) floppy drive.
 
 # Sun3 "si" SCSI controller (NCR 5380)
-# This driver has several flags which may be enabled using
-# the "flags" directive.  Valid flags are:
-#
-# 0x000ff	Set (1<<target) to disable disconnect/reselect
-# 0x0ff00	Set (1<<(target+8)) to disable parity checking
-# 0x10000	Set this bit to disable DMA interrupts (poll)
-# 0x20000	Set this bit to disable DMA entirely (use PIO)
-#
-# For example: "flags 0x1000f" would disable DMA interrupts,
-# and disable disconnect/reselect for targets 0-3
-si0 at vme2 addr 0x200000 ipl 2 vect 0x40
-si1 at vme2 addr 0x204000 ipl 2 vect 0x41
+# See GENERIC for the flags description.
+si0 at vme2  addr 0x200000 ipl 2 vect 0x40
+si1 at vme2  addr 0x204000 ipl 2 vect 0x41
+
+# Xylogics 450/451 controllers (VME A16/D16)
+xyc0 at vme0 addr 0xee40 ipl 2 vect 0x48
+xyc1 at vme0 addr 0xee48 ipl 2 vect 0x49
+xy* at xyc? drive ?
+
+# Xylogics 7053 controllers (VME A16/D32)
+xdc0 at vme1 addr 0xee80 ipl 2 vect 0x44
+xdc1 at vme1 addr 0xee90 ipl 2 vect 0x45
+xd* at xdc? drive ?
+
+# Xylogics 472 tape controllers?
 
 #
 # Frame buffer devices
@@ -161,6 +190,6 @@ pseudo-device	tun		2	# network tunneling over tty
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty		32	# pseudo-terminals
 #pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks

@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.15 1998/01/28 16:41:10 gwr Exp $
+#	$NetBSD: RAMDISK,v 1.16 1998/02/05 04:56:30 gwr Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -8,7 +8,12 @@
 
 include "arch/sun3/conf/std.sun3"
 
-# Machines to be supported by this kernel
+# Machines to be supported by this kernel.  Note:
+# The SUN3 and SUN3X options are mutually exclusive!
+# (Your kernel will only run on one or the other.)
+makeoptions	MACHTYPE=sun3
+options 	_SUN3_
+
 # options 	FPU_EMULATE		# No FP code here!
 options 	HAVECACHE		# Sun3/260 VAC
 
@@ -19,7 +24,6 @@ maxusers	2
 # ... debugging options
 options 	DDB
 # Compatability options
-options 	COMPAT_12	# NetBSD 1.2
 options 	COMPAT_13	# NetBSD 1.3
 
 # Filesystem options
@@ -43,6 +47,22 @@ options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
 config		netbsd root on md0 type ffs
 
+# On-board I/O space (required)
+include "arch/sun3/conf/obio.sun3"
+
+# On-board memory (optional)
+# See frame-buffers
+# obmem0 at mainbus?
+
+# VME bus support (optional)
+# One unit for each address space
+vme0 at mainbus? # A16/D16
+vme1 at mainbus? # A16/D32
+vme2 at mainbus? # A24/D16
+vme3 at mainbus? # A24/D32
+vme4 at mainbus? # A32/D16
+vme5 at mainbus? # A32/D32
+
 #
 # Serial ports
 #
@@ -57,11 +77,15 @@ kbd0	at zsc0 channel 0	# keyboard
 #
 
 # Intel Ethernet (onboard, or VME)
-ie0 at obio0 addr   0x0C0000 level 3
-ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75
+ie0 at obio0 addr 0x0C0000 ipl 3
+ie1 at vme2  addr 0xe88000 ipl 3 vect 0x75
 
 # Lance Ethernet (only onboard)
-le0 at obio0 addr   0x120000 level 3
+le0 at obio0 addr 0x120000 ipl 3
+
+# All Sun3 machines with an "le" (3/50, 3/60) should be
+# presumed to have the old, buggy LANCE chip. (Rev. C)
+options 	LANCE_REVC_BUG
 
 #
 # Disk and tape devices
@@ -69,27 +93,26 @@ le0 at obio0 addr   0x120000 level 3
 
 # Sun3 "si" SCSI controller (NCR 5380)
 # See GENERIC for the flags description.
-si0 at obio0 addr   0x140000 level 2
-si0 at vmes0 addr 0xff200000 level 2 vect 0x40
-si1 at vmes0 addr 0xff204000 level 2 vect 0x41
+si0 at obio0 addr 0x140000 ipl 2
+si0 at vme2  addr 0x200000 ipl 2 vect 0x40
+si1 at vme2  addr 0x204000 ipl 2 vect 0x41
 
-# Xylogics 450/451 controllers
-xyc0 at vmes0 addr 0xffffee40 level 2 vect 0x48
-xyc1 at vmes0 addr 0xffffee48 level 2 vect 0x49
+# Xylogics 450/451 controllers (VME A16/D16)
+xyc0 at vme0 addr 0xee40 ipl 2 vect 0x48
+xyc1 at vme0 addr 0xee48 ipl 2 vect 0x49
 xy* at xyc? drive ?
 
-# Xylogics 7053 controllers
-xdc0 at vmel0 addr 0xffffee80 level 2 vect 0x44
-xdc1 at vmel0 addr 0xffffee90 level 2 vect 0x45
+# Xylogics 7053 controllers (VME A16/D32)
+xdc0 at vme1 addr 0xee80 ipl 2 vect 0x44
+xdc1 at vme1 addr 0xee90 ipl 2 vect 0x45
 xd* at xdc? drive ?
 
 # Xylogics 472 tape controllers?
 
-#
-# Sun3/E stuff
-#
-sebuf0 at vmes0 addr 0xff300000 level 2 vect 0x74
-sebuf1 at vmes0 addr 0xff340000 level 2 vect 0x76
+# Sun3/E SCSI+Ethernet board (VME A24/D16)
+# Note: the board uses vect and vect+1
+sebuf0 at vme2 addr 0x300000 ipl 2 vect 0x74 # and 0x75
+sebuf1 at vme2 addr 0x340000 ipl 2 vect 0x76 # and 0x77
 si* at sebuf?
 ie* at sebuf?
 
@@ -107,13 +130,12 @@ st* at scsibus? target ? lun ?		# SCSI tapes
 cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 #ch* at scsibus? target ? lun ?		# SCSI changer devices
 #ss* at scsibus? target ? lun ?		# SCSI scanners
-uk* at scsibus? target ? lun ?		# unknown SCSI devices
+#uk* at scsibus? target ? lun ?		# unknown SCSI devices
 
-# Memory-disk (root for install tape)
+# Memory-disk drivers (root for install tape)
 pseudo-device	md		2
 
 # Misc.
 pseudo-device	loop		1	# network loopback
 pseudo-device	sl		2	# CSLIP
 pseudo-device	ppp		2	# PPP
-

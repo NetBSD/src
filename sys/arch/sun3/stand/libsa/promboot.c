@@ -1,4 +1,4 @@
-/*	$NetBSD: promboot.c,v 1.5 1998/01/05 07:03:27 perry Exp $	*/
+/*	$NetBSD: promboot.c,v 1.6 1998/02/05 04:57:13 gwr Exp $	*/
 
 
 #include <sys/param.h>
@@ -7,12 +7,12 @@
 #include <machine/mon.h>
 
 #include "stand.h"
-#include "promboot.h"
+#include "libsa.h"
 
-char prom_bootdev[32];
-char *prom_bootfile;
-int prom_boothow;
-int debug = 0;
+int 	debug = 0;
+int 	prom_boothow;
+char *	prom_bootfile;
+char	prom_bootdev[32];
 
 /*
  * Get useful info from the PROM bootparams struct, i.e.:
@@ -70,6 +70,6 @@ prom_get_boot_info()
 	if (debug) {
 		printf("Debug level %d - enter c to continue...", debug);
 		/* This will print "\nAbort at ...\n" */
-		asm("	trap #0");
+		breakpoint();
 	}
 }

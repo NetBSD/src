@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.19 1997/07/12 16:20:14 perry Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.20 1998/02/05 04:57:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -64,7 +64,9 @@
 #define	USRSTACK	KERNBASE	/* High end of user stack */
 
 /*
- * Virtual memory related constants, all in bytes
+ * Virtual memory related constants, all in bytes.
+ * The Sun3 has only 224 MB of user-virtual space,
+ * so we need to be conservative with these limits.
  */
 #ifndef MAXTSIZ
 #define	MAXTSIZ		(8*1024*1024)		/* max text size */
@@ -101,45 +103,7 @@
 #endif
 
 /*
- * The time for a process to be blocked before being very swappable.
- * This is a number of seconds which the system takes as being a non-trivial
- * amount of real time.  You probably shouldn't change this;
- * it is used in subtle ways (fractions and multiples of it are, that is, like
- * half of a ``long time'', almost a long time, etc.)
- * It is related to human patience and other factors which don't really
- * change over time.
- */
-#define	MAXSLP 		20
-
-/*
- * A swapped in process is given a small amount of core without being bothered
- * by the page replacement algorithm.  Basically this says that if you are
- * swapped in you deserve some resources.  We protect the last SAFERSS
- * pages against paging and will just swap you out rather than paging you.
- * Note that each process has at least UPAGES+CLSIZE pages which are not
- * paged anyways (this is currently 8+2=10 pages or 5k bytes), so this
- * number just means a swapped in process is given around 25k bytes.
- * Just for fun: current memory prices are 4600$ a megabyte on VAX (4/22/81),
- * so we loan each swapped in process memory worth 100$, or just admit
- * that we don't consider it worthwhile and swap it out to disk which costs
- * $30/mb or about $0.75.
- * Update: memory prices have changed recently (9/96). At the current    
- * value of $6 per megabyte, we lend each swapped in process memory worth
- * $0.15, or just admit that we don't consider it worthwhile and swap it out
- * to disk which costs $0.20/MB, or just under half a cent. 
- */
-#define	SAFERSS		4		/* nominal ``small'' resident set size
-					   protected against replacement */
-
-/*
- * Mach-derived constants, virtual memory map:
- *
- * 0000.0000  user space
- * 0E00.0000  kernel space
- * 0FE0.0000  monitor map (devices)
- * 0FF0.0000  DVMA space
- * 0FFE.0000  monitor RAM seg.
- * 0FFF.E000  monitor RAM page
+ * Mach-derived constants:
  */
 
 /* user/kernel map constants */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.2 1997/02/18 16:09:59 gwr Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.3 1998/02/05 04:57:37 gwr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -52,9 +52,6 @@
 #include <sys/systm.h>
 #include <sys/kgdb.h>
 
-#include <machine/control.h>
-#include <machine/pte.h>
-
 extern void Debugger __P((void));
 
 /*
@@ -65,21 +62,8 @@ kgdb_acc(va, ulen)
 	vm_offset_t va;
 	size_t ulen;
 {
-	int len, pte, pgoff;
 
-	len = (int)ulen;
-	pgoff = va & PGOFSET;
-	va  -= pgoff;
-	len += pgoff;
-
-	while (len > 0) {
-		pte = get_pte(va);
-		if ((pte & PG_VALID) == 0)
-			return (0);
-		va  += NBPG;
-		len -= NBPG;
-	}
-
+	/* Just let the trap handler deal with it. */
 	return (1);
 }
 

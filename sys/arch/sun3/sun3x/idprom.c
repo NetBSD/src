@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.5 1997/10/16 15:56:02 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.6 1998/02/05 04:57:56 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,9 +47,10 @@
 
 #include <machine/autoconf.h>
 #include <machine/idprom.h>
-#include <machine/obio.h>
-#include <machine/machdep.h>
-#include <machine/mon.h>
+/* #include <machine/mon.h> */
+
+#include <sun3/sun3/machdep.h>
+#include <sun3/sun3x/obio.h>
 
 /*
  * This structure is what this driver is all about.
@@ -96,6 +97,7 @@ idprom_init()
 	if (identity_prom.idp_format < 1)
 		printf("idprom: bad version\n");
 
+	cpu_machine_id = identity_prom.idp_machtype;
 	hostid = idprom_hostid();
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 1998/01/24 16:46:47 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109 1998/02/05 04:57:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -89,14 +89,16 @@
 #include <dev/cons.h>
 
 #include <machine/cpu.h>
+#include <machine/dvma.h>
+#include <machine/idprom.h>
+#include <machine/kcore.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
-#include <machine/dvma.h>
-#include <machine/kcore.h>
+
 #include <machine/db_machdep.h>
-#include <machine/idprom.h>
-#include <machine/machdep.h>
+
+#include <sun3/sun3/machdep.h>
 
 /* Defined in locore.s */
 extern char kernel_text[];
@@ -140,14 +142,18 @@ static void initcpu __P((void));
 /*
  * Console initialization: called early on from main,
  * before vm init or cpu_startup.  This system is able
- * to setup the console much earlier than here (thanks
- * to some help from the PROM monitor) so all that is
- * left to do here is the debugger stuff.
+ * to use the console for output immediately (via PROM)
+ * but can not use it for input until after this point.
  */
 void
 consinit()
 {
-	/* Note: cninit() done earlier.  (See _startup.c) */
+
+	/*
+	 * Switch from the PROM console (output only)
+	 * to our own console driver.
+	 */
+	cninit();
 
 #ifdef KGDB
 	/* XXX - Ask on console for kgdb_dev? */
@@ -446,9 +452,9 @@ identifycpu()
 	extern char *cpu_string;	/* XXX */
 
 	/* Other stuff? (VAC, mc6888x version, etc.) */
-	sprintf(cpu_model, "Sun 3/%s", cpu_string);
+	sprintf(cpu_model, "Sun-3 (3/%s)", cpu_string);
 
-	printf("Model: %s (hostid %x)\n", cpu_model, (int) hostid);
+	printf("Model: %s\n", cpu_model);
 }
 
 /*
@@ -724,7 +730,7 @@ dumpsys()
 	kseg_p->c_size = (ctob(DUMP_EXTRA) - sizeof(*kseg_p));
 
 	/* Fill in cpu_kcore_hdr_t part. */
-	bcopy(machine, chdr_p->name, sizeof(chdr_p->name));
+	strncpy(chdr_p->name, "sun3", sizeof(chdr_p->name));
 	chdr_p->page_size = NBPG;
 	chdr_p->kernbase = KERNBASE;
 

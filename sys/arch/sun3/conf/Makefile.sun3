@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.66 1997/11/12 23:12:32 thorpej Exp $
+# $NetBSD: Makefile.sun3,v 1.67 1998/02/05 04:56:30 gwr Exp $
 
 # Makefile for NetBSD
 #
@@ -46,6 +46,12 @@ S!=	cd ../../../..; pwd
 .endif
 SUN3=	$S/arch/sun3
 
+.if ${MACHTYPE} == "sun3x"
+TEXTADDR=F8004000
+.else
+TEXTADDR=0E004000
+.endif
+
 # Override CPP defaults entirely, so cross-compilation works.
 # Keep -nostdinc before all -I flags, similar for -undef ...
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
@@ -57,8 +63,8 @@ CWARNFLAGS= 	-Wall -Wstrict-prototypes # -Wmissing-prototypes -Werror
 CFLAGS= 	${DEBUG} ${COPTS} -msoft-float ${CWARNFLAGS}
 # No, we may NOT assume that the compiler does -x whatever...
 APPFLAGS=	-P -traditional ${CPPFLAGS} -D_LOCORE
-AFLAGS= 	-m68020
-LINKFLAGS=	-N -Ttext 0E004000 -e start
+AFLAGS=
+LINKFLAGS=	-N -Ttext ${TEXTADDR} -e start
 STRIPFLAGS=	-d
 
 ### find out what to use for libkern
@@ -136,7 +142,7 @@ assym.h: genassym.o $S/kern/genassym.awk
 # The above rule lists genassym.o as a prerequisite so that the
 # generated .depend rule is effective, even though we actually
 # use genassym.s instead.   This always creates both.
-genassym.o: ${SUN3}/sun3/genassym.c
+genassym.o: ${SUN3}/${MACHTYPE}/genassym.c
 	${CC} ${CPPFLAGS} -S $<
 	${CC} -c $*.s
 
@@ -182,16 +188,16 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${SUN3}/sun3/locore.s \
+SRCS=	${SUN3}/${MACHTYPE}/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 
 depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	${MKDEP} -a ${CPPFLAGS} ${SUN3}/sun3/genassym.c
+	${MKDEP} -a ${CPPFLAGS} ${SUN3}/${MACHTYPE}/genassym.c
 
 # XXX - see below
-#	${MKDEP} -a ${APPFLAGS} ${SUN3}/sun3/locore.s
+#	${MKDEP} -a ${APPFLAGS} ${SUN3}/${MACHTYPE}/locore.s
 #	${MKDEP} -a ${APPFLAGS} ${SFILES}
 #
 # For cross-compilation, the "gcc -M" mkdep script is convenient,
@@ -220,7 +226,7 @@ kgdb_stub.o: Makefile
 # depends on DDB, etc.
 stub.o: Makefile
 
-locore.o: ${SUN3}/sun3/locore.s
+locore.o: ${SUN3}/${MACHTYPE}/locore.s
 	${NORMAL_S}
 
 # Generated rules follow:

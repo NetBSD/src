@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.41 1998/01/22 23:39:04 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.42 1998/02/05 04:57:34 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -70,17 +70,20 @@
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
+#include <machine/dvma.h>
+#include <machine/mon.h>
 #include <machine/pcb.h>
 #include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
-#include <machine/control.h>
-#include <machine/mon.h>
 #include <machine/vmparam.h>
-#include <machine/dvma.h>
-#include <machine/machdep.h>
 
-#include "buserr.h"
+#include <sun3/sun3/buserr.h>
+#include <sun3/sun3/cache.h>
+#include <sun3/sun3/control.h>
+#include <sun3/sun3/fc.h>
+
+#include <sun3/sun3/enable.h>
 
 /* Note: Avoid /usr/include for cross compilation! */
 extern void printf __P((char *fmt, ...));
@@ -129,14 +132,14 @@ struct nv assyms[] = {
 	def1(CONTEXT_REG),
 	def1(CONTEXT_NUM),
 	def1(SYSTEM_ENAB),
-	def1(SYSTEM_ENAB_FPP),
+	def1(ENA_FPP),
 	def1(SEGMAP_BASE),
 
 	/* sun3 memory map */
 	def1(USRSTACK),
-	def1(MONSTART),
-	def1(PROM_BASE),
-	def1(MONEND),
+	def1(SUN3_MONSTART),
+	def1(SUN3_PROM_BASE),
+	def1(SUN3_MONEND),
 
 	/* kernel-isms */
 	def1(KERNBASE),
