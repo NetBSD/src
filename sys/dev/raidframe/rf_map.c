@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.31 2004/03/07 02:59:25 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.32 2004/03/07 21:57:44 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.31 2004/03/07 02:59:25 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.32 2004/03/07 21:57:44 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -313,18 +313,12 @@ rf_MarkFailuresInASMList(RF_Raid_t *raidPtr,
  *
  ***************************************************************************/
 
-static struct pool rf_asmhdr_pool;
 #define RF_MAX_FREE_ASMHDR 128
 #define RF_MIN_FREE_ASMHDR  32
 
-static struct pool rf_asm_pool;
 #define RF_MAX_FREE_ASM 192
 #define RF_MIN_FREE_ASM  64
 
-static struct pool rf_pda_pool;   /* may need to be visible for
-				     rf_dagdegrd.c and rf_dagdegwr.c, 
-				     if they can be convinced to free
-				     the space easily */ 
 #define RF_MAX_FREE_PDA 192
 #define RF_MIN_FREE_PDA  64
 
@@ -334,33 +328,21 @@ static void rf_ShutdownMapModule(void *);
 static void 
 rf_ShutdownMapModule(void *ignored)
 {
-	pool_destroy(&rf_asmhdr_pool);
-	pool_destroy(&rf_asm_pool);
-	pool_destroy(&rf_pda_pool);
+	pool_destroy(&rf_pools.asm_hdr);
+	pool_destroy(&rf_pools.asmap);
+	pool_destroy(&rf_pools.pda);
 }
 
 int 
 rf_ConfigureMapModule(RF_ShutdownList_t **listp)
 {
 
-	pool_init(&rf_asmhdr_pool, sizeof(RF_AccessStripeMapHeader_t),
-		  0, 0, 0, "rf_asmhdr_pl", NULL);
-	pool_sethiwat(&rf_asmhdr_pool, RF_MAX_FREE_ASMHDR);
-	pool_prime(&rf_asmhdr_pool, RF_MIN_FREE_ASMHDR);
-	pool_setlowat(&rf_asmhdr_pool, RF_MIN_FREE_ASMHDR);
-
-	pool_init(&rf_asm_pool, sizeof(RF_AccessStripeMap_t),
-		  0, 0, 0, "rf_asm_pl", NULL);	
-	pool_sethiwat(&rf_asm_pool, RF_MAX_FREE_ASM);
-	pool_prime(&rf_asm_pool, RF_MIN_FREE_ASM);
-	pool_setlowat(&rf_asm_pool, RF_MIN_FREE_ASM);
-
-	pool_init(&rf_pda_pool, sizeof(RF_PhysDiskAddr_t),
-		  0, 0, 0, "rf_pda_pl", NULL);
-	pool_sethiwat(&rf_pda_pool, RF_MAX_FREE_PDA);
-	pool_prime(&rf_pda_pool, RF_MIN_FREE_PDA);
-	pool_setlowat(&rf_pda_pool, RF_MIN_FREE_PDA);
-
+	rf_pool_init(&rf_pools.asm_hdr, sizeof(RF_AccessStripeMapHeader_t),
+		     "rf_asmhdr_pl", RF_MIN_FREE_ASMHDR, RF_MAX_FREE_ASMHDR);
+	rf_pool_init(&rf_pools.asmap, sizeof(RF_AccessStripeMap_t),
+		     "rf_asm_pl", RF_MIN_FREE_ASM, RF_MAX_FREE_ASM);
+	rf_pool_init(&rf_pools.pda, sizeof(RF_PhysDiskAddr_t),
+		     "rf_pda_pl", RF_MIN_FREE_PDA, RF_MAX_FREE_PDA);
 	rf_ShutdownCreate(listp, rf_ShutdownMapModule, NULL);
 
 	return (0);
@@ -371,7 +353,7 @@ rf_AllocAccessStripeMapHeader()
 {
 	RF_AccessStripeMapHeader_t *p;
 
-	p = pool_get(&rf_asmhdr_pool, PR_WAITOK);
+	p = pool_get(&rf_pools.asm_hdr, PR_WAITOK);
 	memset((char *) p, 0, sizeof(RF_AccessStripeMapHeader_t));
 
 	return (p);
@@ -380,7 +362,7 @@ rf_AllocAccessStripeMapHeader()
 void 
 rf_FreeAccessStripeMapHeader(RF_AccessStripeMapHeader_t *p)
 {
-	pool_put(&rf_asmhdr_pool, p);
+	pool_put(&rf_pools.asm_hdr, p);
 }
 
 RF_PhysDiskAddr_t *
@@ -388,7 +370,7 @@ rf_AllocPhysDiskAddr()
 {
 	RF_PhysDiskAddr_t *p;
 
-	p = pool_get(&rf_pda_pool, PR_WAITOK);
+	p = pool_get(&rf_pools.pda, PR_WAITOK);
 	memset((char *) p, 0, sizeof(RF_PhysDiskAddr_t));
 
 	return (p);
@@ -407,7 +389,7 @@ rf_AllocPDAList(int count)
 	p = NULL;
 	prev = NULL;
 	for (i = 0; i < count; i++) {
-		p = pool_get(&rf_pda_pool, PR_WAITOK);
+		p = pool_get(&rf_pools.pda, PR_WAITOK);
 		p->next = prev;
 		prev = p;
 	}
@@ -419,7 +401,7 @@ rf_AllocPDAList(int count)
 void 
 rf_FreePhysDiskAddr(RF_PhysDiskAddr_t *p)
 {
-	pool_put(&rf_pda_pool, p);
+	pool_put(&rf_pools.pda, p);
 }
 #endif
 
@@ -431,7 +413,7 @@ rf_FreePDAList(RF_PhysDiskAddr_t *pda_list)
 	p=pda_list;
 	while (p) {
 		tmp = p->next;
-		pool_put(&rf_pda_pool, p);
+		pool_put(&rf_pools.pda, p);
 		p = tmp;
 	}
 }
@@ -450,7 +432,7 @@ rf_AllocASMList(int count)
 	p = NULL;
 	prev = NULL;
 	for (i = 0; i < count; i++) {
-		p = pool_get(&rf_asm_pool, PR_WAITOK);
+		p = pool_get(&rf_pools.asmap, PR_WAITOK);
 		p->next = prev;
 		prev = p;
 	}
@@ -465,7 +447,7 @@ rf_FreeASMList(RF_AccessStripeMap_t *asm_list)
 	p=asm_list;
 	while (p) {
 		tmp = p->next;
-		pool_put(&rf_asm_pool, p);
+		pool_put(&rf_pools.asmap, p);
 		p = tmp;
 	}
 }

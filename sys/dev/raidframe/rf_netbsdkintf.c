@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.176 2004/03/05 02:53:58 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.177 2004/03/07 21:57:44 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.176 2004/03/05 02:53:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.177 2004/03/07 21:57:44 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -244,9 +244,6 @@ struct raidbuf {
 	RF_DiskQueueData_t *req;/* the request that this was part of.. */
 };
 
-/* component buffer pool */
-struct pool raidframe_cbufpool;
-
 /* XXX Not sure if the following should be replacing the raidPtrs above,
    or if it should be used in conjunction with that... 
 */
@@ -333,6 +330,8 @@ static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
 			          RAID_AUTOCONFIG as an option in the 
 			          kernel config file.  */
 
+struct RF_Pools_s rf_pools;
+
 void
 raidattach(int num)
 {
@@ -361,10 +360,9 @@ raidattach(int num)
 	}
 
 	/* Initialize the component buffer pool. */
-	pool_init(&raidframe_cbufpool, sizeof(struct raidbuf), 0,
-	    0, 0, "raidpl", NULL);
-	pool_prime(&raidframe_cbufpool, num * RAIDOUTSTANDING);
-	pool_setlowat(&raidframe_cbufpool, num * RAIDOUTSTANDING);
+	rf_pool_init(&rf_pools.cbuf, sizeof(struct raidbuf),
+		     "raidpl", num * RAIDOUTSTANDING,
+		     2 * num * RAIDOUTSTANDING);
 
 	rf_mutex_init(&rf_sparet_wait_mutex);
 
@@ -1818,7 +1816,7 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 		bp->b_error = 0;
 	}
 #endif
-	raidbp = pool_get(&raidframe_cbufpool, PR_NOWAIT);
+	raidbp = pool_get(&rf_pools.cbuf, PR_NOWAIT);
 	if (raidbp == NULL) {
 		bp->b_flags |= B_ERROR;
 		bp->b_error = ENOMEM;
@@ -1957,7 +1955,7 @@ KernelWakeupFunc(struct buf *vbp)
 
 	}
 
-	pool_put(&raidframe_cbufpool, raidbp);
+	pool_put(&rf_pools.cbuf, raidbp);
 
 	/* Fill in the error value */
 
@@ -3299,4 +3297,14 @@ rf_disk_unbusy(RF_RaidAccessDesc_t *desc)
 	bp = (struct buf *)desc->bp;
 	disk_unbusy(&raid_softc[desc->raidPtr->raidid].sc_dkdev, 
 	    (bp->b_bcount - bp->b_resid), (bp->b_flags & B_READ));
+}
+
+void
+rf_pool_init(struct pool *p, size_t size, char *w_chan, 
+	     size_t min, size_t max)
+{
+	pool_init(p, size, 0, 0, 0, w_chan, NULL);	
+	pool_sethiwat(p, max);
+	pool_prime(p, min);
+	pool_setlowat(p, min);
 }
