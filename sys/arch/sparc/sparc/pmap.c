@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.147 1999/06/17 19:23:27 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.148 1999/06/28 14:41:43 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1697,12 +1697,16 @@ region_free(pm, smeg)
 int
 mmu_pagein(pm, va, prot)
 	struct pmap *pm;
-	int va, prot;
+	vaddr_t va;
+	int prot;
 {
 	int *pte;
 	int vr, vs, pmeg, i, s, bits;
 	struct regmap *rp;
 	struct segmap *sp;
+
+	if (va >= (unsigned long)KERNBASE)
+		return (0);
 
 	if (prot != VM_PROT_NONE)
 		bits = PG_V | ((prot & VM_PROT_WRITE) ? PG_W : 0);
@@ -1711,6 +1715,7 @@ mmu_pagein(pm, va, prot)
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
+
 	rp = &pm->pm_regmap[vr];
 #ifdef DEBUG
 if (pm == pmap_kernel())
