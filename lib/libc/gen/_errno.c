@@ -1,4 +1,4 @@
-/*	$NetBSD: _errno.c,v 1.10 2003/01/18 11:23:53 thorpej Exp $	*/
+/*	$NetBSD: _errno.c,v 1.11 2003/05/28 19:57:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,8 +47,6 @@ int *
 __errno(void)
 {
 #ifdef _REENTRANT
-	extern int __isthreaded;
-
 	if (__isthreaded == 0)
 		return &errno;
 
