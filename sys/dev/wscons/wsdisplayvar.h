@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.3 1998/06/11 22:00:05 drochner Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.4 1998/06/20 21:52:50 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -50,8 +50,8 @@ struct device;
  */
 struct wsdisplay_emulops {
 	void	(*cursor) __P((void *c, int on, int row, int col));
-	void	(*putstr) __P((void *c, int row, int col,
-			       char *cp, int n, long));
+	void	(*putchar) __P((void *c, int row, int col,
+				u_int uc, long attr));
 	void	(*copycols) __P((void *c, int row, int srccol, int dstcol,
 		    int ncols));
 	void	(*erasecols) __P((void *c, int row, int startcol,

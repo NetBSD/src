@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.1 1998/06/20 19:17:47 drochner Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.2 1998/06/20 21:52:50 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -371,9 +371,8 @@ wsemul_vt100_output_normal(edp, c, kernel)
 						  edp->ncols - edp->ccol - 1);
 		}
 
-		(*edp->emulops->putstr)(edp->emulcookie, edp->crow, edp->ccol,
-					&c, 1,
-				    kernel ? edp->kernattr : edp->curattr);
+		(*edp->emulops->putchar)(edp->emulcookie, edp->crow, edp->ccol,
+					 c, kernel ? edp->kernattr : edp->curattr);
 
 		if (edp->ccol < edp->ncols - 1)
 			edp->ccol++;
@@ -984,8 +983,8 @@ wsemul_vt100_output_hash(edp, c)
 		int i, j;
 		for (i = 0; i < edp->nrows; i++)
 			for (j = 0; j < edp->ncols; j++)
-				(*edp->emulops->putstr)(edp->emulcookie, i, j,
-							"E", 1, edp->curattr);
+				(*edp->emulops->putchar)(edp->emulcookie, i, j,
+							 'E', edp->curattr);
 		}
 		edp->ccol = 0;
 		edp->crow = 0;
