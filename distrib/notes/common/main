@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.10 1999/08/09 19:24:21 cgd Exp $
+.\" $NetBSD: main,v 1.6.2.11 2000/02/06 19:33:12 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,10 +102,10 @@ Release 2 (Net/2), 4.4BSD-Lite, and 4.4BSD-Lite2 sources.
 runs on twenty different system architectures featuring eight distinct
 families of CPUs, and is being ported to more. The
 .Nx \*V
-release contains complete binary releases for fourteen different
-machine types. (The six remaining are not fully supported at this time
-and are thus not part of the binary distribution. For information on
-them, please see the NetBSD web site at
+release contains complete binary releases for fifteen different
+machine types. (The remaining ones are not fully supported at this
+time and are thus not part of the binary distribution. For information
+on them, please see the NetBSD web site at
 .Lk http://www.netbsd.org/ )
 .Pp
 .Nx
@@ -124,26 +124,176 @@ Without the unique cooperation and coordination the net makes
 possible, it's likely that 
 .Nx
 wouldn't exist.
-.Ss Changes Since The Last Release
+.Ss Upgrade path to NetBSD 1.4.2
+If you are not installing your system ``from scratch'' but instead
+are going to upgrade an existing system already running
+.Nx
+you need to know which versions you can upgrade with
+.Nx
+\*V.
+.Pp
+.Nx
+\*V is an upgrade of 
+.Nx
+1.4.1,
+.Nx
+1.4 and earlier releases of
+.Nx
+such as versions 1.3.3, 1.2 etc.
+.Pp
+The intermediate versions of code available in the main development
+trunk in our CVS repository (also known as ``NetBSD-current'') from
+after the point where the release cycle for 1.4 was started, are
+designated by version identifiers such as 1.4A, 1.4B, 1.4P etc.
+These identifiers do not desingate a release, but try to indicate
+major changes in internal kernel APIs.  Note that the kernel from
+.Nx
+\*V can
+.Em not
+be used to upgrade a system running one of those development
+versions.  Trying to use the
+.Nx \*V
+kernel on such a system
+.Em will
+in all probability result in problems.
+.Pp
+Please also note that it is not possible to do a direct ``feature-wise''
+comparison between \*V and any of the intermediate development
+versions mentioned above.  During the relese cycles for 1.4.1 and
+\*V, selective fixes (with minor impact on the stability of the
+1.4 release branch) have been imported from the main development
+trunk.  So, there may be features in \*V which were not in e.g. 1.4H,
+but the reverse is also true.
+.Ss Major Changes Between 1.4.1 and 1.4.2
+The complete list of changes between
+.Nx
+1.4.1 and 1.4.2 can be found in the file CHANGES-1.4.2 in the top
+directory of the source tree.  The following are the highlights
+only.
+.Bl -bullet
+.It
+A driver for the Alteon Gigabit Ethernet cards has been added, see
+.Xr ti 4 .
+.It
+A driver for the Realtek 8129/8239 Fast Ethernet PCI cards have
+been added, see
+.Xr rl 4 .
+.It
+A driver for the DPT SmartCache and SmartRAID III or IV SCSI adapters
+has been added, see
+.Xr dpt 4 .
+.It
+A driver for the BOCA IOAT66 6-port ISA serial adapter has been
+added, see
+.Xr ioat 4 .
+.It
+Support for the X-surf Amiga board has been added.
+.It
+Support has been added for ext2fs revision 1, with read-only support
+for the ``sparse super'' and the ``filetype'' options.
+.It
+BIND has been upgraded to version 8.2.2-P5.
+.It
+The IPF packet filtering software has been updated to version 3.3.5.
+.It
+Tcpdump now does hex/ascii dumps of packet contents if asked to do
+so.
+.It
+An implementation of the System V user management utilities has been
+added.
+.It
+A utility for making temporary files for shell scripts has been
+added, see
+.Xr mktemp 1 .
+.It
+The automounter utility
+.Xr amd 8
+has been updated to fix a security problem.
+.It
+A security problem in procfs has been fixed.  Procfs is not used
+by default in
+.Nx .
+.It
+The floating point emulation on the ports using the m68k CPU has
+been reverted to the version in
+.Nx
+1.4 (the version in 1.4.1 had problems).
+.It
+Several subsystems have received substantial work, such as RAIDframe,
+LFS, and the package tools.
+.El
+.Pp
+In addition, many, many bugs have been fixed -- more than 100
+problems reported through our problem tracking system have been
+fixed, and many other non-reported problems have also been found
+and fixed.  See the CHANGES-1.4.2 file for the complete list.
+.Ss Known caveats with 1.4.2
+The following are the major known issues with
+.Nx
+1.4.2.
+.Bl -bullet
+.It
+The upgrade of
+.Xr ipf 8
+caused a change of the kernel API.  Thus, if you are using
+.Xr ipf 8
+you need to upgrade both the kernel and the user-land utilities to
+control that feature in order for it to work.
+.It
+As part of fixing a kernel bug, ``struct vfsnode'' needed to change
+size.  This will unfortunately, and contrary to tradition for patch
+releases, cause incompatibilities for users of file system LKMs
+compiled for 1.4 and 1.4.1.
+.It
+Although LFS has been improved between 1.4.1 and 1.4.2, it can
+probably still be characterized as being of ``beta test'' quality,
+e.g. filling the file system still gives ``interesting'' effects.
+It should probably not be used to store critical data quite yet.
+.El
+.Ss Major Changes Between 1.4 and 1.4.1
+The complete list of changes between
+.Nx
+1.4 and 1.4.1 can be found in the file CHANGES-1.4.1 in the top
+directory of the source tree.
+.Bl -bullet
+.It
+The NetBSD/alpha port's compatibility for Digital UNIX executables
+has been greatly improved.
+.It
+Many bug fixes and improvements of the installation tools and utilities.
+.It
+Support for more PCI serial/parallel cards has been added.
+.It
+It is now possible to boot NetBSD/i386 on systems with 1GB of RAM.
+.It
+The floating point emulation on the ports using the m68k CPU has
+been upgraded.
+.It
+A fatal problem with /dev/random has been found and fixed.
+.It
+Support for Alpha 21264 ev6 based systems has been added to
+NetBSD/alpha.
+.El
+.Ss Major Changes Between 1.3 and 1.4
 .if \n[_FOR_RELEASE] \{\
 The
-.Nx \*V
-release is a substantial improvement over its predecessors.  We have
-provided numerous significant functional enhancements, including
+.Nx 1.4
+release is a substantial improvement over its predecessors.  We
+have provided numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
-new and updated kernel subsystems, and many userland enhancements. The
-results of these improvements is a stable operating system fit for
-production use that rivals most commercially available systems.
+new and updated kernel subsystems, and many userland enhancements.
+The results of these improvements is a stable operating system fit
+for production use that rivals most commercially available systems.
 .Pp
 It is impossible to completely summarize the nearly two years of
 development that went into the
-.Nx \*V
+.Nx 1.4
 release. Some highlights include:
 .Bl -bullet
 .It
 Substantial improvements in the TCP/IP implementation, including
-numerous performance enhancements and bug fixes by Jason Thorpe and
-others.
+numerous performance enhancements and bug fixes by Jason Thorpe
+and others.
 .It
 A new, high efficiency kernel memory pool allocator by Paul
 Kranenburg. This has been integrated into most kernel subsystems.
@@ -278,9 +428,13 @@ rather large number of other ideas about what can be done to improve
 .Pp
 We intend to continue our current practice of making the
 NetBSD-current development source available on a daily basis.  In
-addition, we intend to provide Anonymous CVS access to the NetBSD
-source tree in the near future, so that anyone on the internet can
-examine the full NetBSD source code repository.
+addition, Anonymous CVS access to the NetBSD
+source tree has been added since
+.Nx
+1.4.1; see
+.Lk http://www.netbsd.org/Changes/#anoncvs-available
+We have also added a browsable CVS repository on the web at
+.Lk http://cvsweb.netbsd.org/cgi-bin/cvsweb.cgi/
 .Pp
 We intend to integrate free, positive changes from whatever sources
 submit them, providing that they are well thought-out and increase the
