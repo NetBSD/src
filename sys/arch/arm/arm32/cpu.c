@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4 2001/09/05 16:13:18 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5 2001/09/28 09:53:41 chris Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -70,7 +70,8 @@ extern int cpuctrl;		/* cpu control register value */
 void identify_master_cpu __P((struct device *dv, int cpu_number));
 void identify_arm_cpu	__P((struct device *dv, int cpu_number));
 void identify_arm_fpu	__P((struct device *dv, int cpu_number));
-
+int fpa_test __P((u_int, u_int, trapframe_t *, int));
+int fpa_handler __P((u_int, u_int, trapframe_t *, int));
 
 /*
  * void cpusattach(struct device *parent, struct device *dev, void *aux)
@@ -93,10 +94,11 @@ cpu_attach(dv)
  */
 
 int
-fpa_test(address, instruction, frame)
+fpa_test(address, instruction, frame, fault_code)
 	u_int address;
 	u_int instruction;
 	trapframe_t *frame;
+	int fault_code;
 {
 
 	frame->tf_pc += INSN_SIZE;
