@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.17 1993/09/15 21:15:23 phil Exp $";
+static char rcsid[] = "$Id: mkmakefile.c,v 1.18 1993/10/14 01:22:35 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -128,6 +128,7 @@ static	struct users {
 	{ 8, 2, 64 },			/* MACHINE_HP300 */
 	{ 8, 2, 64 },			/* MACHINE_I386 */
 	{ 8, 2, 64 },			/* MACHINE_PC532 */
+	{ 8, 2, 64 },			/* MACHINE_PMAX */
 };
 #define	NUSERS	(sizeof (users) / sizeof (users[0]))
 
