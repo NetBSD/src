@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.14 1993/10/27 09:06:36 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.15 1993/10/27 16:43:51 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -75,17 +75,18 @@
 enum fdc_state {
 	DEVIDLE = 0,
 	FINDWORK,
-	DOSEEK,
-	DOREAD,
-	SEEKCOMPLETE,
-	IOCOMPLETE,
-	RECALCOMPLETE,
-	STARTRECAL,
-	RESETCTLR,
-	SEEKWAIT,
-	RECALWAIT,
 	MOTORWAIT,
-	IOTIMEDOUT
+	DOSEEK,
+	SEEKWAIT,
+	SEEKCOMPLETE,
+	DOIO,
+	IOCOMPLETE,
+	IOTIMEDOUT,
+	DORESET,
+	RESETCOMPLETE,
+	DORECAL,
+	RECALWAIT,
+	RECALCOMPLETE,
 };
 
 /* software state, per controller */
@@ -177,7 +178,7 @@ STATIC struct fd_type *fd_nvtotype __P((char *, int, int));
 STATIC void set_motor __P((struct fd_softc *fd, int reset));
 STATIC void fd_motor_off __P((struct fd_softc *fd));
 STATIC void fd_motor_on __P((struct fd_softc *fd));
-STATIC int in_fdc __P((u_short iobase));
+STATIC int fdc_result __P((struct fdc_softc *fdc));
 STATIC int out_fdc __P((u_short iobase, u_char x));
 STATIC void fdstart __P((struct fdc_softc *fdc));
 STATIC void fd_timeout __P((struct fdc_softc *fdc));
@@ -401,10 +402,11 @@ fdstrategy(bp)
 			bp->b_blkno, bp->b_bcount);
 #endif
 
-	blkno = (u_long)bp->b_blkno * DEV_BSIZE / FDC_BSIZE;
+	blkno = bp->b_blkno * DEV_BSIZE / FDC_BSIZE;
  	nblks = type->size;
 	if (blkno + (bp->b_bcount / FDC_BSIZE) > nblks) {
 		if (blkno == nblks) {
+			/* if we try to read past end of disk, return count of 0 */
 			bp->b_resid = bp->b_bcount;
 		} else {
 			bp->b_error = ENOSPC;
@@ -413,6 +415,8 @@ fdstrategy(bp)
 		goto bad;
 	}
  	bp->b_cylin = (blkno / (type->sectrac * type->heads)) * type->step;
+	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d nblks %d\n",
+	       bp->b_blkno, bp->b_bcount, blkno, bp->b_cylin, nblks);
 	dp = &(fdc->sc_head);
 	s = splbio();
 	disksort(dp, bp);
@@ -465,20 +469,28 @@ fd_motor_on(fd)
 }
 
 STATIC int
-in_fdc(iobase)
-	u_short iobase;
+fdc_result(fdc)
+	struct fdc_softc *fdc;
 {
+	u_short iobase = fdc->sc_iobase;
 	u_char i;
-	int j = 100000;
+	int j = 100000,
+	    n = 0;
 
-	while ((i = inb(iobase + fdsts) & (NE7_DIO|NE7_RQM))
-		!= (NE7_DIO|NE7_RQM) && j-- > 0)
+	for (; j; j--) {
+		i = inb(iobase + fdsts) & (NE7_DIO | NE7_RQM | NE7_CB);
 		if (i == NE7_RQM)
-			return -1;
-	if (j <= 0)
-		return -1;
-	i = inb(iobase + fddata);
-	return i;
+			return n;
+		if (i == (NE7_DIO | NE7_RQM | NE7_CB)) {
+			if (n > 7) {
+				log(LOG_ERR, "fdc_result: overrun\n");
+				return -1;
+			}
+			fdc->sc_status[n++] = inb(iobase + fddata);
+		}
+	}
+	log(LOG_ERR, "fdc_result: timeout\n");
+	return -1;
 }
 
 STATIC int
@@ -555,24 +567,33 @@ fdstart(fdc)
 }
 
 STATIC void
-fd_status(fd, s)
+fd_status(fd, n, s)
 	struct fd_softc *fd;
+	int n;
 	char *s;
 {
 	struct fdc_softc *fdc = (struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent;
 	u_short iobase = fdc->sc_iobase;
-	u_char st0, st3, cyl;
 
-	out_fdc(iobase, NE7CMD_SENSEI);
-	st0 = in_fdc(iobase);
-	cyl = in_fdc(iobase);
+	if (n == 0) {
+		out_fdc(fdc->sc_iobase, NE7CMD_SENSEI);
+		(void) fdc_result(fdc);
+		n = 2;
+	}
 
-	out_fdc(iobase, NE7CMD_SENSED);
-	out_fdc(iobase, fd->sc_hddrv);
-	st3 = in_fdc(iobase);
-
-	printf("%s: %s st0 %b cyl %d st3 %b\n", fd->sc_dk.dk_dev.dv_xname,
-	       s, st0, NE7_ST0BITS, cyl, st3, NE7_ST3BITS);
+	printf("%s: %s st0 %b ", fd->sc_dk.dk_dev.dv_xname, s,
+	       fdc->sc_status[0], NE7_ST0BITS);
+	if (n == 2)
+		printf("cyl %d\n", fdc->sc_status[1]);
+	else if (n == 7)
+		printf("st1 %b st2 %b cyl %d head %d sec %d\n",
+		       fdc->sc_status[1], NE7_ST1BITS, fdc->sc_status[2],
+		       NE7_ST2BITS, fdc->sc_status[3], fdc->sc_status[4],
+		       fdc->sc_status[5]);
+#ifdef DIAGNOSTIC
+	else
+		panic("fd_status: weird size");
+#endif
 }
 
 STATIC void
@@ -583,7 +604,7 @@ fd_timeout(fdc)
 	struct buf *dp, *bp;
 	int s = splbio();
 
-	fd_status(fd, "timeout");
+	fd_status(fd, 0, "timeout");
 
 	dp = &fdc->sc_head;
 	bp = dp->b_actf;
@@ -627,7 +648,9 @@ STATIC int
 fdcstate(fdc)
 	struct fdc_softc *fdc;
 {
-	int	read, head, trac, sec, i, s, sectrac, cyl, st0, blkno;
+#define	st0	fdc->sc_status[0]
+#define	cyl	fdc->sc_status[1]
+	int	read, head, trac, sec, i, s, sectrac, blkno;
 	struct	fd_softc *fd;
 	int	fdu;
 	u_short	iobase = fdc->sc_iobase;
@@ -638,7 +661,7 @@ fdcstate(fdc)
 	if (!bp) {
 		fdc->sc_state = DEVIDLE;
 #ifdef DIAGNOSTIC
-		if (fd) {
+		if (fdc->sc_afd) {
 			printf("%s: stray afd %s\n", fdc->sc_dev.dv_xname,
 				fd->sc_dk.dk_dev.dv_xname);
 			fdc->sc_afd = NULL;
@@ -690,7 +713,7 @@ fdcstate(fdc)
 		}
 
 		/* fall through */
-	    case DOREAD:
+	    case DOIO:
 		at_dma(read, bp->b_un.b_addr + fd->sc_skip, FDC_BSIZE, fdc->sc_drq);
 		blkno = bp->b_blkno*DEV_BSIZE/FDC_BSIZE + fd->sc_skip/FDC_BSIZE;
 		sectrac = fd->sc_type->sectrac;
@@ -725,14 +748,12 @@ fdcstate(fdc)
 	    case SEEKCOMPLETE:
 		/* make sure seek really happened */
 		out_fdc(iobase, NE7CMD_SENSEI);
-		st0 = in_fdc(iobase);
-		cyl = in_fdc(iobase);
-		if ((st0 & 0xf8) != 0x20 || cyl != bp->b_cylin) {
-			fd_status(fd, "seek failed");
+		if (fdc_result(fdc) != 2 || (st0 & 0xf0) != 0x20 || cyl != bp->b_cylin) {
+			fd_status(fd, 2, "seek failed");
 			return fdcretry(fdc);
 		}
 		fd->sc_track = bp->b_cylin;
-		fdc->sc_state = DOREAD;
+		fdc->sc_state = DOIO;
 		return 1;
 
 	    case IOTIMEDOUT:
@@ -741,13 +762,14 @@ fdcstate(fdc)
 
 	    case IOCOMPLETE: /* IO DONE, post-analyze */
 		untimeout((timeout_t)fd_timeout, (caddr_t)fdc);
-		at_dma_terminate(fdc->sc_drq);
-		for (i = 0; i < 7; i++)
-			fdc->sc_status[i] = in_fdc(iobase);
-		if (fdc->sc_status[0] & 0xf8) {
-			fd_status(fd, read ? "read failed" : "write failed");
+		if (fdc_result(fdc) != 7 || (st0 & 0xf0) != 0) {
+			at_dma_abort(fdc->sc_drq);
+			fd_status(fd, 7, read ? "read failed" : "write failed");
+			printf("blkno %d skip %d cylin %d status %x\n", bp->b_blkno,
+			       fd->sc_skip, bp->b_cylin, fdc->sc_status[0]);
 			return fdcretry(fdc);
 		}
+		at_dma_terminate(fdc->sc_drq);
 		fd->sc_skip += FDC_BSIZE;
 		if (fd->sc_skip < bp->b_bcount) {
 			/* set up next transfer */
@@ -763,22 +785,34 @@ fdcstate(fdc)
 			fdc->sc_afd = NULL;
 			fdc->sc_state = FINDWORK;
 		}
-		return 1;
+		return 1;			/* will return immediately */
 
-	    case RESETCTLR:
-		/* Try a reset, keep motor on */
+	    case DORESET:
+		/* try a reset, keep motor on */
 		set_motor(fd, 1);
 		delay(100);
 		set_motor(fd, 0);
 		outb(iobase + fdctl, fd->sc_type->rate);
-		fdc->sc_retry++;
-		fdc->sc_state = STARTRECAL;
-		return 1;			/* will return immediately */
+		fdc->sc_state = RESETCOMPLETE;
+#if 0 /* XXXX */
+		/* allow 1/2 second for reset to complete */
+		timeout((timeout_t)fd_pseudointr, (caddr_t)fdc, hz/2);
+#endif
+		return 0;			/* will return later */
 
-	    case STARTRECAL:
+	    case RESETCOMPLETE:
+		/* clear the controller output buffer */
+		for (i = 0; i < 4; i++) {
+			out_fdc(iobase, NE7CMD_SENSEI);
+			(void) fdc_result(fdc);
+		}
+
 		out_fdc(iobase, NE7CMD_SPECIFY);/* specify command */
 		out_fdc(iobase, fd->sc_type->steprate);
-		out_fdc(iobase, 6);		/* XXXX head load time == 6ms */
+		out_fdc(iobase, 6);		/* XXX head load time == 6ms */
+
+		/* fall through */
+	    case DORECAL:
 		out_fdc(iobase, NE7CMD_RECAL);	/* recalibrate function */
 		out_fdc(iobase, fd->sc_drive);
 		fdc->sc_state = RECALWAIT;
@@ -792,10 +826,8 @@ fdcstate(fdc)
 
 	    case RECALCOMPLETE:
 		out_fdc(iobase, NE7CMD_SENSEI);
-		st0 = in_fdc(iobase);
-		cyl = in_fdc(iobase);
-		if (cyl != 0) {
-			fd_status(fd, "recalibrate failed");
+		if (fdc_result(fdc) != 2 || (st0 & 0xf0) != 0x20 || cyl != 0) {
+			fd_status(fd, 2, "recalibrate failed");
 			return fdcretry(fdc);
 		}
 		fd->sc_track = 0;
@@ -809,12 +841,14 @@ fdcstate(fdc)
 		return 1;			/* will return immediately */
 
 	    default:
-		fd_status(fd, "stray interrupt");
+		fd_status(fd, 0, "stray interrupt");
 		return 0;
 	}
 #ifdef DIAGNOSTIC
 	panic("fdcstate: impossible");
 #endif
+#undef	st0
+#undef	cyl
 }
 
 STATIC int
@@ -832,11 +866,11 @@ fdcretry(fdc)
 	    case 1:
 	    case 2:
 	    case 3:
-		fdc->sc_state = STARTRECAL;
+		fdc->sc_state = DORECAL;
 		break;
 
 	    case 4:
-		fdc->sc_state = RESETCTLR;
+		fdc->sc_state = DORESET;
 		break;
 
 	    default:
