@@ -38,10 +38,12 @@ OMOBJDIR!=cd $(.CURDIR)/../omapip; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 MROBJDIR!=cd $(.CURDIR)/../minires; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+DSTOBJDIR!=cd $(.CURDIR)/../dst; \
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
 CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
-LDADD=  ${OMOBJDIR}/libomapi.a ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a
-DPADD=  ${OMOBJDIR}/libomapi.a ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a
+LDADD=  ${OMOBJDIR}/libomapi.a ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a ${DSTOBJDIR}/libdst.a
+DPADD=  ${OMOBJDIR}/libomapi.a ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a ${DSTOBJDIR}/libdst.a
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
