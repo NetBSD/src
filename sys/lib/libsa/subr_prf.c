@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.7 2003/04/20 22:23:59 bjh21 Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.8 2003/04/26 13:25:47 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,25 +37,6 @@
 
 /*
  * Scaled down version of printf(3).
- *
- * One additional format:
- *
- * The format %b is supported to decode error registers.
- * Its usage is:
- *
- *	printf("reg=%b\n", regval, "<base><arg>*");
- *
- * where <base> is the output base expressed as a control character, e.g.
- * \10 gives octal; \20 gives hex.  Each arg is a sequence of characters,
- * the first of which gives the bit number to be inspected (origin 1), and
- * the next characters (up to a control character, i.e. a character <= 32),
- * give the name of the register.  Thus:
- *
- *	printf("reg=%b\n", 3, "\10\2BITTWO\1BITONE\n");
- *
- * would produce output:
- *
- *	reg=3<BITTWO,BITONE>
  */
 
 #include <sys/cdefs.h>
@@ -115,26 +96,6 @@ reswitch:	switch (ch = *fmt++) {
 		case 'l':
 			lflag = 1;
 			goto reswitch;
-		case 'b':
-			ul = va_arg(ap, int);
-			p = va_arg(ap, char *);
-			kprintn(put, ul, *p++);
-
-			if (!ul)
-				break;
-
-			for (set = 0; (n = *p++);) {
-				if (ul & (1 << (n - 1))) {
-					put(set ? ',' : '<');
-					for (; (n = *p) > ' '; ++p)
-						put(n);
-					set = 1;
-				} else
-					for (; *p > ' '; ++p);
-			}
-			if (set)
-				put('>');
-			break;
 		case 'c':
 			ch = va_arg(ap, int);
 				put(ch & 0x7f);
