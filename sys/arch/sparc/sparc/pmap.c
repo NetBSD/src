@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.215 2002/12/21 12:13:38 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.216 2002/12/21 12:52:56 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -539,14 +539,14 @@ static __inline__ void sp_tlb_flush_page(int va)
 	tlb_flush_page_real(va);
 }
 
-static __inline__ void sp_tlb_flush_segment(int vr, int vs)
+static __inline__ void sp_tlb_flush_segment(int va)
 {
-	tlb_flush_segment_real(vr, vs);
+	tlb_flush_segment_real(va);
 }
 
-static __inline__ void sp_tlb_flush_region(int vr)
+static __inline__ void sp_tlb_flush_region(int va)
 {
-	tlb_flush_region_real(vr);
+	tlb_flush_region_real(va);
 }
 
 static __inline__ void sp_tlb_flush_context(void)
@@ -564,8 +564,8 @@ static __inline__ void sp_tlb_flush_all(void)
  * The SMP versions of the tlb flush routines.
  */
 static __inline__ void	smp_tlb_flush_context __P((void));
-static __inline__ void	smp_tlb_flush_region __P((int));
-static __inline__ void	smp_tlb_flush_segment __P((int, int));
+static __inline__ void	smp_tlb_flush_region __P((int va));
+static __inline__ void	smp_tlb_flush_segment __P((int va));
 static __inline__ void	smp_tlb_flush_page __P((int va));
 static __inline__ void	smp_tlb_flush_all __P((void));
 
@@ -609,21 +609,21 @@ smp_tlb_flush_page(va)
 }
 
 static __inline__ void
-smp_tlb_flush_segment(vr, vs)
-	int vr, vs;
+smp_tlb_flush_segment(va)
+	int va;
 {
 
 	INCR_COUNT(smp_tlb_fs_cnt);
-	xcall((xcall_func_t)sp_tlb_flush_segment, vr, vs, 0/*ctx*/, 0, 0);
+	xcall((xcall_func_t)sp_tlb_flush_segment, va, 0/*ctx*/, 0, 0, 0);
 }
 
 static __inline__ void
-smp_tlb_flush_region(vr)
-	int vr;
+smp_tlb_flush_region(va)
+	int va;
 {
 
 	INCR_COUNT(smp_tlb_fr_cnt);
-	xcall((xcall_func_t)sp_tlb_flush_region, vr, 0/*ctx*/, 0, 0, 0);
+	xcall((xcall_func_t)sp_tlb_flush_region, va, 0/*ctx*/, 0, 0, 0);
 }
 
 static __inline__ void
@@ -645,14 +645,14 @@ smp_tlb_flush_all()
 
 #if defined(MULTIPROCESSOR)
 #define tlb_flush_page(va)		smp_tlb_flush_page((int)va)
-#define tlb_flush_segment(vr, vs)	smp_tlb_flush_segment(vr, vs)
-#define tlb_flush_region(vr)		smp_tlb_flush_region(vr)
+#define tlb_flush_segment(va)		smp_tlb_flush_segment(va)
+#define tlb_flush_region(va)		smp_tlb_flush_region(va)
 #define tlb_flush_context()		smp_tlb_flush_context()
 #define tlb_flush_all()			smp_tlb_flush_all()
 #else
 #define tlb_flush_page(va)		sp_tlb_flush_page(va)
-#define tlb_flush_segment(vr, vs)	sp_tlb_flush_segment(vr, vs)
-#define tlb_flush_region(vr)		sp_tlb_flush_region(vr)
+#define tlb_flush_segment(va)		sp_tlb_flush_segment(va)
+#define tlb_flush_region(va)		sp_tlb_flush_region(va)
 #define tlb_flush_context()		sp_tlb_flush_context()
 #define tlb_flush_all()			sp_tlb_flush_all()
 #endif
@@ -4512,7 +4512,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 		va = VSTOVA(vr,vs);
 
 		if (pm->pm_ctx)
-			tlb_flush_segment(vr, vs);/* Paranoia? */
+			tlb_flush_segment(va);/* Paranoia? */
 		setpgt4m_va(va, &rp->rg_seg_ptps[vs], SRMMU_TEINVALID, 0);
 		sp->sg_pte = NULL;
 		pool_put(&L23_pool, pte0);
@@ -4521,7 +4521,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 			int n;
 
 			if (pm->pm_ctx)
-				tlb_flush_region(vr);/* Paranoia? */
+				tlb_flush_region(va);/* Paranoia? */
 #ifdef MULTIPROCESSOR
 			for (n = 0; n < ncpu; n++)
 #else
@@ -4996,7 +4996,7 @@ pmap_page_protect4m(pg, prot)
 			 * Entire user mode segment is gone
 			 */
 			if (pm->pm_ctx)
-				tlb_flush_segment(vr, vs);
+				tlb_flush_segment(va);
 			setpgt4m_va(va, &rp->rg_seg_ptps[vs], SRMMU_TEINVALID, 0);
 			pool_put(&L23_pool, sp->sg_pte);
 			sp->sg_pte = NULL;
@@ -5004,7 +5004,7 @@ pmap_page_protect4m(pg, prot)
 			if (--rp->rg_nsegmap == 0) {
 				int n;
 				if (pm->pm_ctx)
-					tlb_flush_region(vr);
+					tlb_flush_region(va);
 
 				/*
 				 * Replicate segment de-allocation in each
