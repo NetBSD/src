@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.17 2003/01/18 10:55:52 thorpej Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.18 2003/06/23 13:05:54 agc Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -36,8 +36,13 @@
  *		Tomas Svensson <ts@unix1.net>
  *
  *
- * $Id: m_netbsd15.c,v 1.17 2003/01/18 10:55:52 thorpej Exp $
+ * $Id: m_netbsd15.c,v 1.18 2003/06/23 13:05:54 agc Exp $
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: m_netbsd15.c,v 1.18 2003/06/23 13:05:54 agc Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/sysctl.h>

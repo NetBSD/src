@@ -1,4 +1,4 @@
-/*	$NetBSD: shlock.c,v 1.6 2002/06/14 00:34:58 wiz Exp $	*/
+/*	$NetBSD: shlock.c,v 1.7 2003/06/23 13:05:52 agc Exp $	*/
 
 /*
 ** Program to produce reliable locks for shell scripts.
@@ -31,6 +31,12 @@
 **
 ** Erik E. Fair <fair@clock.org>, May 20, 1997
 */
+
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: shlock.c,v 1.7 2003/06/23 13:05:52 agc Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/file.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: avl.c,v 1.3 2002/03/21 05:15:39 phil Exp $	*/
+/*	$NetBSD: avl.c,v 1.4 2003/06/23 13:05:48 agc Exp $	*/
 
 /*
  * Copyright (c) 1997 Philip A. Nelson.
@@ -45,6 +45,13 @@
  *		/ * Other information fields. * /
  *	} id_rec;
  */
+
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: avl.c,v 1.4 2003/06/23 13:05:48 agc Exp $");
+#endif
+
 
 #include <string.h>
 
