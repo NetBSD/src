@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.1.2.1 1997/07/01 16:52:07 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.1.2.2 1997/07/01 22:37:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -51,16 +51,18 @@ struct atapibus_softc {
 };
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-int atapibusmatch __P((struct device *, void *, void *));
-int atapibussubmatch __P((struct device *, void *, void *));
+int	atapibusmatch __P((struct device *, void *, void *));
+int	atapibussubmatch __P((struct device *, void *, void *));
 #else
-int atapibusmatch __P((struct device *, struct cfdata *, void *));
-int atapibussubmatch __P((struct device *, struct cfdata *, void *));
+int	atapibusmatch __P((struct device *, struct cfdata *, void *));
+int	atapibussubmatch __P((struct device *, struct cfdata *, void *));
 #endif
-void atapibusattach __P((struct device *, struct device *, void *));
-int atapiprint __P((void *, const char *));
-int atapi_probe_bus __P((int, int));
-void atapi_probedev __P((struct atapibus_softc *, int ));
+void	atapibusattach __P((struct device *, struct device *, void *));
+int	atapiprint __P((void *, const char *));
+
+int	atapi_probe_bus __P((int, int));
+void	atapi_probedev __P((struct atapibus_softc *, int ));
+
 struct cfattach atapibus_ca = {
 	sizeof(struct atapibus_softc), atapibusmatch, atapibusattach
 };
@@ -170,7 +172,7 @@ atapibusattach(parent, self, aux)
 
 	nbytes =  2 * sizeof(struct scsipi_link **);
 	ab->sc_link = (struct scsipi_link **)malloc(nbytes, M_DEVBUF,
-		   M_NOWAIT);
+	    M_NOWAIT);
 	if (ab->sc_link == NULL)
 		panic("scsibusattach: can't allocate target links");
 	bzero(ab->sc_link, nbytes);
@@ -216,7 +218,7 @@ atapi_probedev(atapi, target)
 	struct scsi_quirk_inquiry_pattern *finger;
 	int priority;
 	char serial_number[20], model[40], firmware_revision[8];
-	
+
 	/* skip if already attached */
 	if (atapi->sc_link[target])
 		return;
@@ -228,15 +230,15 @@ atapi_probedev(atapi, target)
 		    id->config.cmd_drq_rem & ATAPI_PACKET_SIZE_MASK,
 		    id->config.cmd_drq_rem & ATAPI_DRQ_MASK);
 #endif
-        /*
-         * Shuffle string byte order.
-         * Mitsumi and NEC drives don't need this.
-         */
-        if (((id->model[0] == 'N' && id->model[1] == 'E') ||
-            (id->model[0] == 'F' && id->model[1] == 'X')) == 0)
-                bswap(id->model, sizeof(id->model));
-        bswap(id->serial_number, sizeof(id->serial_number));
-        bswap(id->firmware_revision, sizeof(id->firmware_revision));
+		/*
+		 * Shuffle string byte order.
+		 * Mitsumi and NEC drives don't need this.
+		 */
+		if (((id->model[0] == 'N' && id->model[1] == 'E') ||
+		    (id->model[0] == 'F' && id->model[1] == 'X')) == 0)
+			bswap(id->model, sizeof(id->model));
+		bswap(id->serial_number, sizeof(id->serial_number));
+		bswap(id->firmware_revision, sizeof(id->firmware_revision));
 
 		/*
 		 * Allocate a device link and try and attach
@@ -254,8 +256,8 @@ atapi_probedev(atapi, target)
 		sc_link->scsipi_atapi.drive = target;
 		sc_link->device = NULL;
 #if defined(SCSIDEBUG) && DEBUGTYPE == BUS_ATAPI
-    if (DEBUGTARGET == -1 || target == DEBUGTARGET)
-		sc_link->flags |= DEBUGLEVEL;
+		if (DEBUGTARGET == -1 || target == DEBUGTARGET)
+			sc_link->flags |= DEBUGLEVEL;
 #endif /* SCSIDEBUG */
 		if (id->config.cmd_drq_rem & ATAPI_PACKET_SIZE_16)
 			sc_link->scsipi_atapi.cap |= ACAP_LEN;
@@ -263,13 +265,14 @@ atapi_probedev(atapi, target)
 		    (id->config.cmd_drq_rem & ATAPI_DRQ_MASK) << 3;
 #if 0
 		bcopy(id, &ad_link->id, sizeof(*id));
-           /* Fix strings and look through the quirk table. */
-           atapi_fixquirk(ad_link, id);
+		/* Fix strings and look through the quirk table. */
+		atapi_fixquirk(ad_link, id);
 #endif
 		sa.sa_sc_link = sc_link;
 		sa.sa_inqbuf.type =  id->config.device_type & SID_TYPE;
-		sa.sa_inqbuf.removable = id->config.cmd_drq_rem & ATAPI_REMOVABLE ?
-			T_REMOV : T_FIXED;
+		sa.sa_inqbuf.removable =
+		    id->config.cmd_drq_rem & ATAPI_REMOVABLE ?
+		    T_REMOV : T_FIXED;
 		if (sa.sa_inqbuf.removable)
 			sc_link->flags |= SDEV_REMOVABLE;
 		scsipi_strvis(model, id->model, 40);
@@ -280,17 +283,17 @@ atapi_probedev(atapi, target)
 		sa.sa_inqbuf.revision = firmware_revision;
 
 		finger = (struct scsi_quirk_inquiry_pattern *)scsipi_inqmatch(
-			&sa.sa_inqbuf,
-			(caddr_t)atapi_quirk_patterns,
-			sizeof(atapi_quirk_patterns)/sizeof(atapi_quirk_patterns[0]),
-			sizeof(atapi_quirk_patterns[0]), &priority);
+		    &sa.sa_inqbuf, (caddr_t)atapi_quirk_patterns,
+		    sizeof(atapi_quirk_patterns) /
+		      sizeof(atapi_quirk_patterns[0]),
+		    sizeof(atapi_quirk_patterns[0]), &priority);
 		if (priority != 0)
 			sc_link->quirks |= finger->quirks;
 
-		if ((cf = config_search(atapibussubmatch, (struct device *)atapi,
-			&sa)) != 0) {
+		if ((cf = config_search(atapibussubmatch, &atapi->sc_dev,
+		    &sa)) != 0) {
 			atapi->sc_link[target] = sc_link;
-			config_attach((struct device *)atapi, cf, &sa, atapibusprint);
+			config_attach(&atapi->sc_dev, cf, &sa, atapibusprint);
 			return;
 		} else {
 			atapibusprint(&sa, atapi->sc_dev.dv_xname);
@@ -309,7 +312,7 @@ atapi_probedev(atapi, target)
 
 int
 atapibusprint(aux, pnp)
-    void *aux;
+	void *aux;
 	const char *pnp;
 {
 	struct scsipibus_attach_args *sa = aux;
@@ -318,13 +321,13 @@ atapibusprint(aux, pnp)
 
 	if (pnp != NULL)
 		printf("%s", pnp);
-   
+
 	inqbuf = &sa->sa_inqbuf;
 
 	dtype = scsipi_dtype(inqbuf->type & SID_TYPE);
 	printf(" drive %d: <%s, %s, %s> type %d %s %s",
-		sa->sa_sc_link->scsipi_atapi.drive,inqbuf->vendor, inqbuf->product,
-		inqbuf->revision, inqbuf->type, dtype,
-		inqbuf->removable ? "removable" : "fixed");
+	    sa->sa_sc_link->scsipi_atapi.drive,inqbuf->vendor,
+	    inqbuf->product, inqbuf->revision, inqbuf->type, dtype,
+	    inqbuf->removable ? "removable" : "fixed");
 	return (UNCONF);
 }
