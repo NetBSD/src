@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.5 1994/06/29 06:42:07 cgd Exp $	*/
+/*    $NetBSD: nfs_boot.c,v 1.6 1994/06/29 07:28:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Adam Glass, Gordon Ross
@@ -71,25 +71,24 @@
  */
 
 /* bootparam RPC */
-static int bp_whoami(struct sockaddr_in *bpsin,
-					 struct in_addr *my_ip,
-					 struct in_addr *gw_ip);
-static int bp_getfile(struct sockaddr_in *bpsin, char *key,
-					  struct sockaddr_in *mdsin,
-					  char *servname, char *path);
+static int bp_whoami __P((struct sockaddr_in *bpsin,
+	struct in_addr *my_ip, struct in_addr *gw_ip));
+static int bp_getfile __P((struct sockaddr_in *bpsin, char *key,
+	struct sockaddr_in *mdsin, char *servname, char *path));
 
 /* mountd RPC */
-static int md_mount(struct sockaddr_in *mdsin, char *path, u_char *fh);
+static int md_mount __P((struct sockaddr_in *mdsin, char *path,
+	u_char *fh));
 
 /* other helpers */
-static void get_path_and_handle(struct sockaddr_in *bpsin, char *key,
-								struct nfs_dlmount *ndmntp);
-
+static void get_path_and_handle __P((struct sockaddr_in *bpsin,
+	char *key, struct nfs_dlmount *ndmntp));
 
 /*
  * Called with an empty nfs_diskless struct to be filled in.
  */
-int nfs_boot_init(nd, procp)
+int
+nfs_boot_init(nd, procp)
 	struct nfs_diskless *nd;
 	struct proc *procp;
 {
@@ -131,7 +130,7 @@ int nfs_boot_init(nd, procp)
 		panic("nfs_boot: no suitable interface");
 	sprintf(ireq.ifr_name, "%s%d", ifp->if_name, ifp->if_unit);
 	printf("nfs_boot: using network interface '%s'\n",
-		   ireq.ifr_name);
+	    ireq.ifr_name);
 
 	/*
 	 * Bring up the interface.
@@ -140,7 +139,8 @@ int nfs_boot_init(nd, procp)
 		panic("nfs_boot: socreate, error=%d", error);
 	ireq.ifr_flags = IFF_UP;
 	error = ifioctl(so, SIOCSIFFLAGS, (caddr_t)&ireq, procp);
-	if (error) panic("nfs_boot: SIFFLAGS, error=%d", error);
+	if (error)
+		panic("nfs_boot: SIFFLAGS, error=%d", error);
 
 	/*
 	 * Do RARP for the interface address.  Also
@@ -149,7 +149,7 @@ int nfs_boot_init(nd, procp)
 	if ((error = revarpwhoarewe(ifp, &srv_ip, &my_ip)) != 0)
 		panic("revarp failed, error=%d", error);
 	printf("nfs_boot: client=0x%x, server=0x%x\n",
-		   my_ip.s_addr, srv_ip.s_addr);
+	    my_ip.s_addr, srv_ip.s_addr);
 
 	/*
 	 * Do enough of ifconfig(8) so that the chosen interface can
@@ -161,7 +161,8 @@ int nfs_boot_init(nd, procp)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = my_ip.s_addr;
 	error = ifioctl(so, SIOCSIFADDR, (caddr_t)&ireq, procp);
-	if (error) panic("nfs_boot: set if addr, error=%d", error);
+	if (error)
+		panic("nfs_boot: set if addr, error=%d", error);
 
 	soclose(so);
 
@@ -173,9 +174,9 @@ int nfs_boot_init(nd, procp)
 	bp_sin.sin_family = AF_INET;
 	bp_sin.sin_addr.s_addr = srv_ip.s_addr;
 	hostnamelen = MAXHOSTNAMELEN;
-	error = bp_whoami(&bp_sin,	/*  input: where to send RPC */
-					  &my_ip, 	/*  input: client IP */
-					  &gw_ip);	/* ouptut: gateway IP */
+
+	/* this returns gateway IP address */
+	error = bp_whoami(&bp_sin, &my_ip, &gw_ip);
 	if (error)
 		panic("nfs_boot: bootparam whoami, error=%d", error);
 	printf("nfs_boot: hostname=%s\n", hostname);
@@ -202,11 +203,12 @@ int nfs_boot_init(nd, procp)
 		gw.sin_addr.s_addr = gw_ip.s_addr;
 		/* Netmask: */
 		error = ifioctl(so, SIOCGIFNETMASK, (caddr_t)&ireq, procp);
-		if (error) panic("nfs_boot: get netmask, error=%d", error);
-		
+		if (error)
+			panic("nfs_boot: get netmask, error=%d", error);
+
 		/* add, dest, gw, mask, flags, 0 */
 		error = rtrequest(RTM_ADD, &dst, &gw, &ifr.ifr_addr,
-						  (RTF_UP | RTF_GATEWAY), NULL);
+		    (RTF_UP | RTF_GATEWAY), NULL);
 		if (error)
 			printf("nfs_boot: add route, error=%d\n", error);
 	}
@@ -221,8 +223,8 @@ int nfs_boot_init(nd, procp)
 static void
 get_path_and_handle(bpsin, key, ndmntp)
 	struct sockaddr_in *bpsin;	/* bootparam server */
-	char *key;					/* root or swap */
-	struct nfs_dlmount *ndmntp; /* output */
+	char *key;			/* root or swap */
+	struct nfs_dlmount *ndmntp;	/* output */
 {
 	char pathname[MAXPATHLEN];
 	char *sp, *dp, *endp;
@@ -232,10 +234,8 @@ get_path_and_handle(bpsin, key, ndmntp)
 	 * Get server:pathname for "key" (root or swap)
 	 * using RPC to bootparam/getfile
 	 */
-	error = bp_getfile(bpsin, key,
-					   &ndmntp->ndm_saddr,
-					   ndmntp->ndm_host,
-					   pathname);
+	error = bp_getfile(bpsin, key, &ndmntp->ndm_saddr,
+	    ndmntp->ndm_host, pathname);
 	if (error)
 		panic("nfs_boot: bootparam get %s: %d", key, error);
 	printf("%s on %s:%s\n", key, ndmntp->ndm_host, pathname);
@@ -244,9 +244,7 @@ get_path_and_handle(bpsin, key, ndmntp)
 	 * Get file handle for "key" (root or swap)
 	 * using RPC to mountd/mount
 	 */
-	error = md_mount(&ndmntp->ndm_saddr,
-					 pathname,
-					 ndmntp->ndm_fh);
+	error = md_mount(&ndmntp->ndm_saddr, pathname, ndmntp->ndm_fh);
 	if (error)
 		panic("nfs_boot: mountd %s, error=%d", key, error);
 
@@ -258,7 +256,7 @@ get_path_and_handle(bpsin, key, ndmntp)
 	for (sp = pathname; *sp && dp < endp;)
 		*dp++ = *sp++;
 	*dp = '\0';
-		
+
 }
 
 
@@ -328,9 +326,10 @@ struct bp_inaddr {
  * controvercial, but it is so easy to do it here. -gwr
  */
 static int
-bp_whoami(struct sockaddr_in *bpsin,
-		  struct in_addr *my_ip,
-		  struct in_addr *gw_ip)
+bp_whoami(bpsin, my_ip, gw_ip)
+	struct sockaddr_in *bpsin;
+	struct in_addr *my_ip;
+	struct in_addr *gw_ip;
 {
 	/* The RPC structures */
 	struct bp_inaddr *bia;
@@ -356,15 +355,18 @@ bp_whoami(struct sockaddr_in *bpsin,
 	bia = mtod(m, struct bp_inaddr *);
 	bia->atype = htonl(1);
 	p = (u_char*)my_ip;	/* ugh! */
-	bia->addr[0] = htonl(*p); p++;
-	bia->addr[1] = htonl(*p); p++;
-	bia->addr[2] = htonl(*p); p++;
-	bia->addr[3] = htonl(*p); p++;
+	bia->addr[0] = htonl(*p);
+	p++;
+	bia->addr[1] = htonl(*p);
+	p++;
+	bia->addr[2] = htonl(*p);
+	p++;
+	bia->addr[3] = htonl(*p);
+	p++;
 
 	/* RPC: bootparam/whoami */
 	error = krpc_call((struct sockaddr *)bpsin,
-					  BOOTPARAM_PROG, BOOTPARAM_VERS,
-					  BOOTPARAM_WHOAMI, &m);
+	    BOOTPARAM_PROG, BOOTPARAM_VERS, BOOTPARAM_WHOAMI, &m);
 	if (error)
 		return error;
 
@@ -417,11 +419,11 @@ bp_whoami(struct sockaddr_in *bpsin,
 	*p++ = ntohl(bia->addr[3]);
 	goto out;
 
- bad:
+bad:
 	printf("nfs_boot: bootparam_whoami: bad reply\n");
 	error = EBADRPC;
 
- out:
+out:
 	m_freem(m);
 	return(error);
 }
@@ -435,8 +437,12 @@ bp_whoami(struct sockaddr_in *bpsin,
  *	server pathname
  */
 static int
-bp_getfile(struct sockaddr_in *bpsin, char *key,
-	struct sockaddr_in *md_sin, char *serv_name, char *pathname)
+bp_getfile(bpsin, key, md_sin, serv_name, pathname)
+	struct sockaddr_in *bpsin;
+	char *key;
+	struct sockaddr_in *md_sin;
+	char *serv_name;
+	char *pathname;
 {
 	struct rpc_string *str;
 	struct mbuf *m;
@@ -475,8 +481,7 @@ bp_getfile(struct sockaddr_in *bpsin, char *key,
 
 	/* RPC: bootparam/getfile */
 	error = krpc_call((struct sockaddr *)bpsin,
-					  BOOTPARAM_PROG, BOOTPARAM_VERS,
-					  BOOTPARAM_GETFILE, &m);
+	    BOOTPARAM_PROG, BOOTPARAM_VERS, BOOTPARAM_GETFILE, &m);
 	if (error)
 		return error;
 
@@ -530,11 +535,11 @@ bp_getfile(struct sockaddr_in *bpsin, char *key,
 	pathname[path_len] = '\0';
 	goto out;
 
- bad:
+bad:
 	printf("nfs_boot: bootparam_getfile: bad reply\n");
 	error = EBADRPC;
 
- out:
+out:
 	m_freem(m);
 	return(0);
 }
@@ -572,9 +577,8 @@ md_mount(mdsin, path, fhp)
 
 	/* Do RPC to mountd. */
 	error = krpc_call((struct sockaddr *)mdsin,
-					  RPCPROG_MNT, RPCMNT_VER1,
-					  RPCMNT_MOUNT, &m);
-	if (error) 
+	    RPCPROG_MNT, RPCMNT_VER1, RPCMNT_MOUNT, &m);
+	if (error)
 		return error;	/* message already freed */
 
 	mlen = m->m_len;
@@ -588,14 +592,13 @@ md_mount(mdsin, path, fhp)
 
 	/* Set port number for NFS use. */
 	error = krpc_portmap((struct sockaddr *)mdsin,
-						 NFS_PROG, NFS_VER2,
-						 &mdsin->sin_port);
+	    NFS_PROG, NFS_VER2, &mdsin->sin_port);
 	goto out;
 
- bad:
+bad:
 	error = EBADRPC;
 
- out:
+out:
 	m_freem(m);
 	return error;
 }
