@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.146 2003/09/10 19:19:24 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.147 2003/09/10 19:24:14 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1572,3 +1572,9 @@ sys/dev/pci/pcidevs_data.h			regenerate
 	Correct names and descriptions for i875 entries to be consistent with
 	other Intel chipsets.
 	[tron, ticket #1417]
+
+sys/arch/i386/pci/pchb_rnd.c			1.13
+
+	Add hardware random number generator support for Intel 865 and
+	875P chipsets.
+	[tron, ticket #1418]
