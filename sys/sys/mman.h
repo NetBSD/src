@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.19 1998/06/03 21:52:40 kleink Exp $	*/
+/*	$NetBSD: mman.h,v 1.20 1999/02/06 16:14:52 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -120,6 +120,7 @@ int	mlock __P((const void *, size_t));
 int	munlock __P((const void *, size_t));
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 int	madvise __P((void *, size_t, int));
+int	minherit __P((void *, size_t, int));
 #endif
 __END_DECLS
 
