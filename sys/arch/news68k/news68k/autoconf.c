@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 1999/12/09 14:53:16 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2000/03/19 16:24:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,6 +73,9 @@
  * the machine.
  */
 
+struct device *booted_device;
+int booted_partition;
+
 void	findroot __P((struct device **, int *));
 
 /*
@@ -102,8 +105,6 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
 
 	findroot(&booted_device, &booted_partition);
 
