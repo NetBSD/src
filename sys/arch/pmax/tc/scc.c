@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.37 1998/03/22 09:27:07 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.38 1998/03/24 00:23:56 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.37 1998/03/22 09:27:07 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.38 1998/03/24 00:23:56 jonathan Exp $");
 
 #ifdef alpha
 #include "opt_dec_3000_300.h"
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.37 1998/03/22 09:27:07 jonathan Exp $");
 #include <pmax/pmax/maxine.h>
 #include <pmax/pmax/asic.h>
 #include <pmax/dev/sccreg.h>
+#include <pmax/dev/rconsvar.h>
 #include <pmax/tc/sccvar.h>	/* XXX */
 #endif
 
@@ -172,11 +173,20 @@ extern int pending_remcons;
  * more cleanly.
  */
 
+#ifdef RCONS_BRAINDAMAGE
 static inline int
 raster_console(void)
 {
+#if 1
 	return (cn_tab->cn_pri == CN_NORMAL || cn_tab->cn_pri == CN_INTERNAL);
+#else
+	register int israster =
+	    (cn_tab->cn_pri == CN_NORMAL || cn_tab->cn_pri == CN_INTERNAL);
+	printf("israster: %d\n", israster);
+	return israster;
+#endif
 }
+#endif
 
 
 #define	SCCUNIT(dev)	(minor(dev) >> 1)
@@ -285,6 +295,10 @@ static void	rr __P((char *, scc_regmap_t *));
 static void	scc_modem_intr __P((dev_t));
 static void	sccreset __P((struct scc_softc *));
 
+void		scc_kbd_init __P((struct scc_softc *sc, dev_t dev));
+void		scc_mouse_init __P((struct scc_softc *sc, dev_t dev));
+void		scc_tty_init __P((struct scc_softc *sc, dev_t dev));
+
 int	sccintr __P((void *));
 #ifdef alpha
 void	scc_alphaintr __P((int));
@@ -301,7 +315,6 @@ static struct consdev scccons = {
 	NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
 };
 void scc_consinit __P((dev_t dev, scc_regmap_t *sccaddr));
-void scc_oconsinit __P((struct scc_softc *sc, dev_t dev));
 
 
 /*
@@ -355,27 +368,6 @@ scc_consinit(dev, sccaddr)
 	splx(s);
 }
 
-void
-scc_oconsinit(sc, dev)
-	struct scc_softc *sc;
-	dev_t dev;
-{
-	struct termios cterm;
-	struct tty ctty;
-	int s;
-
-	s = spltty();
-	ctty.t_dev = dev;
-	cterm.c_cflag = CS8;
-#ifdef pmax
-	/* XXX -- why on pmax, not on Alpha? */
-	cterm.c_cflag  |= CLOCAL;
-#endif
-	cterm.c_ospeed = cterm.c_ispeed = 9600;
-	(void) sccparam(&ctty, &cterm);
-	DELAY(1000);
-	splx(s);
-}
 
 /*
  * Test to see if device is present.
@@ -464,19 +456,15 @@ sccattach(parent, self, aux)
 	struct tty *tp;
 	void *sccaddr;
 	int cntr;
+#if 0
 	struct termios cterm;
 	struct tty ctty;
 	int s;
+#endif
 	extern int cputype;
 	int unit;
 
 	unit = sc->sc_dv.dv_unit;
-
-	/* serial console debugging */
-#if defined(DEBUG) && defined(HAVE_RCONS) && 0
-	if (CONSOLE_ON_UNIT(unit) && (cn_tab->cn_pri == CN_REMOTE))
-		printf("\nattaching scc%d, currently PROM console\n", unit);
-#endif /* defined(DEBUG) && defined(HAVE_RCONS)*/
 
 	sccaddr = (void*)MIPS_PHYS_TO_KSEG1(d->iada_addr);
 #ifdef SPARSE
@@ -563,77 +551,41 @@ sccattach(parent, self, aux)
 #ifdef notyet
 		scc_consinit(cn_tab->cn_dev, sccaddr);
 #else
-		scc_oconsinit(sc, cn_tab->cn_dev);
+		scc_tty_init(sc, cn_tab->cn_dev);
 #endif
 
 		printf(" (In sccattach: cn_dev = 0x%x)", cn_tab->cn_dev);
 	 	printf(" (Unit = %d)", unit);
-		printf(": console\n");
+		printf(": console");
 		pending_remcons = 0;
 		/*
 		 * XXX We should support configurations where the PROM
 		 * console device is a serial console, and a
 		 * framebuffer, keyboard, and mouse are present.
 		 */
+#ifdef BREAKS_X_WITH_REMOTE_CONSOLE
 		return;
-	}
-#endif /* pmax */
-#ifdef HAVE_RCONS
-	if ((cn_tab->cn_getc == LKgetc)) {
-		/* XXX test below may be too inclusive ? */
-		/*(1)*/ /*(CONSOLE_ON_UNIT(unit))*/
-		if (major(cn_tab->cn_dev) == SCCDEV) {
-			if (unit == 1) {
-				s = spltty();
-				ctty.t_dev = makedev(SCCDEV, SCCKBD_PORT);
-				cterm.c_cflag = CS8;
-#ifdef pmax
-				/* XXX -- why on pmax, not on Alpha? */
-				cterm.c_cflag |= CLOCAL;
-#endif /* pmax */
-				cterm.c_ospeed = cterm.c_ispeed = 4800;
-				(void) sccparam(&ctty, &cterm);
-				DELAY(10000);
-#ifdef notyet
-				/*
-				 * For some reason doing this hangs the 3min
-				 * during booting. Fortunately the keyboard
-				 * works ok without it.
-				 */
-				KBDReset(ctty.t_dev, sccPutc);
-#endif /* notyet */
-				DELAY(10000);
-				splx(s);
-			} else if (unit == 0) {
-				s = spltty();
-				ctty.t_dev = makedev(SCCDEV, SCCMOUSE_PORT);
-				cterm.c_cflag = CS8 | PARENB | PARODD;
-				cterm.c_ospeed = cterm.c_ispeed = 4800;
-				(void) sccparam(&ctty, &cterm);
-#ifdef HAVE_RCONS
-				DELAY(10000);
-				MouseInit(ctty.t_dev, sccPutc, sccGetc);
-				DELAY(10000);
 #endif
-				splx(s);
-			}
-		}
-	} else
-#endif /* HAVE_RCONS */
-	if (SCCUNIT(cn_tab->cn_dev) == unit)
-	{
-#ifdef alpha
-		s = spltty();
-		ctty.t_dev = makedev(SCCDEV,
-		    sc->sc_dv.dv_unit == 0 ? SCCCOMM2_PORT : SCCCOMM3_PORT);
-		cterm.c_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
-		cterm.c_ospeed = cterm.c_ispeed = 9600;
-		(void) sccparam(&ctty, &cterm);
-		DELAY(1000);
-#endif	/* alpha */
 	}
+#endif /* pmax */
+#ifdef HAVE_RCONS
+	/* XXX test below may be too inclusive ? */
+	if (cputype != DS_MAXINE) {
+		if (unit == 1) {
+			scc_kbd_init(sc, makedev(SCCDEV, SCCKBD_PORT));
+		} else if (unit == 0) {
+			scc_mouse_init(sc, makedev(SCCDEV, SCCMOUSE_PORT));
+		}
+	}
+#endif /* HAVE_RCONS */
 
 #ifdef alpha
+	if (SCCUNIT(cn_tab->cn_dev) == unit) {
+		scc_tty_init(sc,
+		    makedev(SCCDEV, (sc->sc_dv.dv_unit == 0 ?
+		        SCCCOMM2_PORT : SCCCOMM3_PORT)));
+	}
+
 	/*
 	 * XXX
 	 * Unit 1 is the remote console, wire it up now.
@@ -649,9 +601,89 @@ sccattach(parent, self, aux)
 		sc->scc_softCAR |= SCCLINE(cn_tab->cn_dev);
 	} else
 		printf("\n");
-#else	/* !alpha */
+#else	/* pmax */
 	printf("\n");
-#endif	/* !alpha */
+#endif	/* pmax */
+}
+
+
+/*
+ * Initialize line parameters for a serial console.
+ */
+void
+scc_tty_init(sc, dev)
+	struct scc_softc *sc;
+	dev_t dev;
+{
+	struct termios cterm;
+	struct tty ctty;
+	int s;
+
+	s = spltty();
+	ctty.t_dev = dev;
+	cterm.c_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
+#ifdef pmax
+	/* XXX -- why on pmax, not on Alpha? */
+	cterm.c_cflag  |= CLOCAL;
+#endif
+	cterm.c_ospeed = cterm.c_ispeed = 9600;
+	(void) sccparam(&ctty, &cterm);
+	DELAY(1000);
+	splx(s);
+}
+
+void
+scc_kbd_init(sc, dev)
+	struct scc_softc *sc;
+	dev_t dev;
+{
+	struct termios cterm;
+	struct tty ctty;
+	int s;
+
+	s = spltty();
+	ctty.t_dev = dev;
+	cterm.c_cflag = CS8;
+#ifdef pmax
+	/* XXX -- why on pmax, not on Alpha? */
+	cterm.c_cflag |= CLOCAL;
+#endif /* pmax */
+	cterm.c_ospeed = cterm.c_ispeed = 4800;
+	(void) sccparam(&ctty, &cterm);
+	DELAY(10000);
+#ifdef notyet
+	/*
+	 * For some reason doing this hangs the 3min
+	 * during booting. Fortunately the keyboard
+	 * works ok without it.
+	 */
+	KBDReset(ctty.t_dev, sccPutc);
+#endif /* notyet */
+	DELAY(10000);
+	splx(s);
+
+}
+
+void
+scc_mouse_init(sc, dev)
+	struct scc_softc *sc;
+	dev_t dev;
+{
+	struct termios cterm;
+	struct tty ctty;
+	int s;
+
+	s = spltty();
+	ctty.t_dev = dev;
+	cterm.c_cflag = CS8 | PARENB | PARODD;
+	cterm.c_ospeed = cterm.c_ispeed = 4800;
+	(void) sccparam(&ctty, &cterm);
+#ifdef HAVE_RCONS
+	DELAY(10000);
+	MouseInit(ctty.t_dev, sccPutc, sccGetc);
+	DELAY(10000);
+#endif
+	splx(s);
 }
 
 
@@ -738,7 +770,6 @@ sccopen(dev, flag, mode, p)
 	register struct tty *tp;
 	register int unit, line;
 	int s, error = 0;
-	int firstopen = 0;
 
 	unit = SCCUNIT(dev);
 	if (unit >= scc_cd.cd_ndevs)
@@ -760,7 +791,6 @@ sccopen(dev, flag, mode, p)
 	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
-		firstopen = 1;
 #ifndef PORTSELECTOR
 		if (tp->t_ispeed == 0) {
 #endif
@@ -794,14 +824,15 @@ sccopen(dev, flag, mode, p)
 		return (error);
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
 
-#ifdef HAVE_RCONS
+#if defined(HAVE_RCONS) && defined(RCONS_BRAINDAMAGE)
 	/* handle raster console specially */
 	if (tp == scctty(makedev(SCCDEV,SCCKBD_PORT)) &&
 	    raster_console() && firstopen) {
 	  	extern struct tty *fbconstty;
 		tp->t_winsize = fbconstty->t_winsize;
 	}
-#endif /* HAVE_RCONS */		
+#endif /* old rcons brain-damage */
+
 	return (error);
 }
 
@@ -1008,7 +1039,7 @@ cold_sccparam(tp, t, sc)
 
 	/*
 	 * pmax driver used to reset the SCC here. That reset causes the
-	 * other channel on the SCC to drop outpur chars: at least that's
+	 * other channel on the SCC to drop output chars: at least that's
 	 * what CGD reports for the Alpha.  It's a bug.
 	 */
 #if 0
@@ -1206,7 +1237,7 @@ sccintr(xxxsc)
 		/*
 		 * Keyboard needs special treatment.
 		 */
-		if (tp == scctty(makedev(SCCDEV, SCCKBD_PORT)) && raster_console()) {
+		if (tp == scctty(makedev(SCCDEV, SCCKBD_PORT))) {
 #if defined(DDB) && defined(LK_DO)
 			if (cc == LK_DO) {
 				spl0();
@@ -1225,6 +1256,7 @@ sccintr(xxxsc)
 #ifdef HAVE_RCONS
 			if ((cc = kbdMapChar(cc)) < 0)
 				continue;
+			rcons_input(0, cc);
 #endif
 		/*
 		 * Now for mousey
@@ -1287,7 +1319,10 @@ sccstart(tp)
 	}
 	if (tp->t_outq.c_cc == 0)
 		goto out;
+
+#ifdef RCONS_BRAINDAMAGE
 	/* handle console specially */
+	/* XXX raster console output via serial port! */
 	if (tp == scctty(makedev(SCCDEV,SCCKBD_PORT)) && raster_console()) {
 		while (tp->t_outq.c_cc > 0) {
 			cc = getc(&tp->t_outq) & 0x7f;
@@ -1306,6 +1341,7 @@ sccstart(tp)
 		}
 		goto out;
 	}
+#endif
 	cc = ndqb(&tp->t_outq, 0);
 
 	tp->t_state |= TS_BUSY;
@@ -1469,8 +1505,8 @@ scc_modem_intr(dev)
 	 * On pmax, ignore hups on a console tty.
 	 * On alpha, a no-op, for historical reasons. XXXXXX
 	 */
-#ifndef alpha
-	if (!CONSOLE_ON_UNIT(sc->sc_dv.dv_unit)) {
+#ifdef pmax
+	if (!CONSOLE_ON_UNIT(sc->sc_dv.dv_unit) && !pending_remcons) {
 		if (car) {
 			/* carrier present */
 			if (!(tp->t_state & TS_CARR_ON))
@@ -1478,7 +1514,7 @@ scc_modem_intr(dev)
 		} else if (tp->t_state & TS_CARR_ON)
 		  (void)(*linesw[tp->t_line].l_modem)(tp, 0);
 	}
-#endif	/* !alpha */
+#endif	/* pmax */
 	splx(s);
 }
 
