@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.18 1996/02/17 02:29:10 jtk Exp $	*/
+/*	$NetBSD: audio.c,v 1.19 1996/02/20 10:00:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1072,6 +1072,15 @@ audio_ioctl(dev, cmd, addr, flag, p)
 	          IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff));
 	switch (cmd) {
 
+	case FIOASYNC:
+		if (*(int *)addr) {
+			if (sc->sc_async)
+				return (EBUSY);
+			sc->sc_async = p;
+		} else
+			sc->sc_async = 0;
+		break;
+
 	case AUDIO_FLUSH:
 		DPRINTF(("AUDIO_FLUSH\n"));
 		audio_clear(sc);
@@ -1338,6 +1347,8 @@ audio_pint(sc)
 		if (cb->nblk <= sc->sc_lowat) {
 			audio_wakeup(&sc->sc_wchan);
 			selwakeup(&sc->sc_wsel);
+			if (sc->sc_async)
+				psignal(sc->sc_async, SIGIO);
 		}
 	}
 
@@ -1349,6 +1360,8 @@ audio_pint(sc)
 	if (hw->full_duplex) {
 		audio_wakeup(&sc->sc_rchan);
 		selwakeup(&sc->sc_rsel);
+		if (sc->sc_async)
+			psignal(sc->sc_async, SIGIO);
 	}
 }
 
@@ -1403,6 +1416,8 @@ audio_rint(sc)
 
 	    	audio_wakeup(&sc->sc_rchan);
 	    	selwakeup(&sc->sc_rsel);
+		if (sc->sc_async)
+			psignal(sc->sc_async, SIGIO);
 	}
 }
 

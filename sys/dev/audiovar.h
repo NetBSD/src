@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.6 1996/02/17 02:29:05 jtk Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.7 1996/02/20 10:00:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -93,6 +93,7 @@ struct audio_softc {
 
 	struct	selinfo sc_wsel; /* write selector */
 	struct	selinfo sc_rsel; /* read selector */
+	struct	proc *sc_async;	/* process who wants SIGIO */
 
 	/* Sleep channels for reading and writing. */
 	int	sc_rchan;
