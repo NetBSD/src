@@ -1,5 +1,39 @@
-/*	$NetBSD: fault.c,v 1.26 2003/01/17 22:28:49 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.27 2003/04/18 11:08:25 scw Exp $	*/
 
+/*
+ * Copyright 2003 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Steve C. Woodford for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
@@ -47,7 +81,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.26 2003/01/17 22:28:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.27 2003/04/18 11:08:25 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +105,10 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.26 2003/01/17 22:28:49 thorpej Exp $");
 #include <arm/arm32/machdep.h>
  
 extern char fusubailout[];
+
+#ifdef DEBUG
+int last_fault_code;	/* For the benefit of pmap_fault_fixup() */
+#endif
 
 static void report_abort __P((const char *, u_int, u_int, u_int));
 
@@ -194,6 +232,26 @@ badaddr_read(void *addr, size_t size, void *rptr)
 
 #define TRAP_CODE ((fault_status & 0x0f) | (fault_address & 0xfffffff0))
 
+/* Determine if we can recover from a fault */
+#ifdef ARM32_PMAP_NEW
+#define	IS_FATAL_FAULT(x)					\
+	(((1 << (x)) &						\
+	  ((1 << FAULT_WRTBUF_0) | (1 << FAULT_WRTBUF_1) |	\
+	   (1 << FAULT_BUSERR_0) | (1 << FAULT_BUSERR_1) |	\
+	   (1 << FAULT_BUSERR_2) | (1 << FAULT_BUSERR_3) |	\
+	   (1 << FAULT_BUSTRNL1) | (1 << FAULT_BUSTRNL2) |	\
+	   (1 << FAULT_ALIGN_0)  | (1 << FAULT_ALIGN_1))) != 0)
+#else
+#define	IS_FATAL_FAULT(x)					\
+	(((1 << (x)) &						\
+	  ((1 << FAULT_WRTBUF_0) | (1 << FAULT_WRTBUF_1) |	\
+	   (1 << FAULT_BUSERR_0) | (1 << FAULT_BUSERR_1) |	\
+	   (1 << FAULT_BUSERR_2) | (1 << FAULT_BUSERR_3) |	\
+	   (1 << FAULT_BUSTRNL1) | (1 << FAULT_BUSTRNL2) |	\
+	   (1 << FAULT_DOMAIN_S) | (1 << FAULT_DOMAIN_P) |	\
+	   (1 << FAULT_ALIGN_0)  | (1 << FAULT_ALIGN_1))) != 0)
+#endif
+
 void
 data_abort_handler(frame)
 	trapframe_t *frame;
@@ -205,10 +263,16 @@ data_abort_handler(frame)
 	u_int fault_status;
 	u_int fault_pc;
 	u_int fault_instruction;
-	int fault_code;
+	int fault_code, fatal_fault;
 	int user;
 	int error;
+	int rv;
 	void *onfault;
+	vaddr_t va;
+	struct vmspace *vm;
+	struct vm_map *map;
+	vm_prot_t ftype;
+	extern struct vm_map *kernel_map;
 
 	/*
 	 * If we were expecting a Data Abort, signal that we got
@@ -247,6 +311,7 @@ data_abort_handler(frame)
 
 	/* Extract the fault code from the fault status */
 	fault_code = fault_status & FAULT_TYPE_MASK;
+	fatal_fault = IS_FATAL_FAULT(fault_code);
 
 	/* Get the current lwp structure or lwp0 if there is none */
 	l = curlwp == NULL ? &lwp0 : curlwp;
@@ -259,10 +324,8 @@ data_abort_handler(frame)
 	pcb = &l->l_addr->u_pcb;
 
 	/* fusubailout is used by [fs]uswintr to avoid page faulting */
-	if (pcb->pcb_onfault
-	    && ((fault_code != FAULT_TRANS_S && fault_code != FAULT_TRANS_P &&
-		 fault_code != FAULT_PERM_S && fault_code != FAULT_PERM_P)
-	        || pcb->pcb_onfault == fusubailout)) {
+	if (pcb->pcb_onfault &&
+	    (fatal_fault || pcb->pcb_onfault == fusubailout)) {
 
 		frame->tf_r0 = EFAULT;
 copyfault:
@@ -305,8 +368,8 @@ copyfault:
 #endif
 
 #ifdef DEBUG
-	/* Is this needed ? */
-	if (pcb != curpcb) {
+	/* Is this needed ? (XXXSCW: yes. can happen during boot ...) */
+	if (!cold && pcb != curpcb) {
 		printf("data_abort: Alert ! pcb(%p) != curpcb(%p)\n",
 		    pcb, curpcb);
 		printf("data_abort: Alert ! proc(%p), curlwp(%p)\n",
@@ -335,63 +398,16 @@ copyfault:
 	};
 
 	/* Now act on the fault type */
-	switch (fault_code) {
-	case FAULT_WRTBUF_0:              /* Write Buffer Fault */
-	case FAULT_WRTBUF_1:              /* Write Buffer Fault */
-		/* If this happens forget it no point in continuing */
-
-		/* FALLTHROUGH */
-
-	case FAULT_ALIGN_0:              /* Alignment Fault */
-	case FAULT_ALIGN_1:              /* Alignment Fault */
+	if (fatal_fault) {
 		/*
-		 * Really this should just kill the process.
-		 * Alignment faults are turned off in the kernel
-		 * in order to get better performance from shorts with
-		 * GCC so an alignment fault means somebody has played
-		 * with the control register in the CPU. Might as well
-		 * panic as the kernel was not compiled for aligned accesses.
+		 * None of these faults should happen on a perfectly
+		 * functioning system. They indicate either some gross
+		 * problem with the kernel, or a hardware problem.
+		 * In either case, stop.
 		 */
-
-		/* FALLTHROUGH */
-          
-	case FAULT_BUSERR_0:              /* Bus Error LF Section */
-	case FAULT_BUSERR_1:              /* Bus Error Page */
-	case FAULT_BUSERR_2:              /* Bus Error Section */
-	case FAULT_BUSERR_3:              /* Bus Error Page */
-		/* What will accutally cause a bus error ? */
-		/* Real bus errors are not a process problem but hardware */
-
-		/* FALLTHROUGH */
-          
-	case FAULT_DOMAIN_S:              /* Section Domain Error Fault */
-	case FAULT_DOMAIN_P:              /* Page Domain Error Fault*/
-		/*
-		 * Right well we dont use domains, everything is
-		 * always a client and thus subject to access permissions.
-		 * If we get a domain error then we have corrupts PTE's
-		 * so we might as well die !
-		 * I suppose eventually this should just kill the process
-		 * who owns the PTE's but if this happens it implies a
-		 * kernel problem.
-		 */
-
-		/* FALLTHROUGH */
-
-	case FAULT_BUSTRNL1:              /* Bus Error Trans L1 Fault */
-	case FAULT_BUSTRNL2:              /* Bus Error Trans L2 Fault */
-		/*
-		 * These faults imply that the PTE is corrupt.
-		 * Likely to be a kernel fault so we had better stop.
-		 */
-
-		/* FALLTHROUGH */
-
-	default :
-		/* Are there any combinations I have missed ? */
 		report_abort(NULL, fault_status, fault_address, fault_pc);
 
-	we_re_toast:
+we_re_toast:
 		/*
 		 * Were are dead, try and provide some debug
 		 * information before dying.
@@ -404,145 +420,151 @@ copyfault:
 #else
 		panic("Unhandled trap (frame = %p)", frame);
 #endif	/* DDB */
-          
-	case FAULT_TRANS_P:              /* Page Translation Fault */
-	case FAULT_PERM_P:		 /* Page Permission Fault */
-	case FAULT_TRANS_S:              /* Section Translation Fault */
-	case FAULT_PERM_S:		 /* Section Permission Fault */
+	}
+
 	/*
+	 * At this point, we're dealing with one of the following faults:
+	 *
+	 *  FAULT_TRANS_P	Page Translation Fault
+	 *  FAULT_PERM_P	Page Permission Fault
+	 *  FAULT_TRANS_S	Section Translation Fault
+	 *  FAULT_PERM_S	Section Permission Fault
+	 *
+	 * And if ARM32_PMAP_NEW is in effect:
+	 *
+	 *  FAULT_DOMAIN_P	Page Domain Error Fault
+	 *  FAULT_DOMAIN_S	Section Domain Error Fault
+	 *
 	 * Page/section translation/permission fault -- need to fault in
-	 * the page and possibly the page table page.
+	 * the page.
+	 *
+	 * Page/section domain fault -- need to see if the L1 entry can
+	 * be fixed up.
 	 */
-	    {
-		register vaddr_t va;
-		register struct vmspace *vm = p->p_vmspace;
-		register struct vm_map *map;
-		int rv;
-		vm_prot_t ftype;
-		extern struct vm_map *kernel_map;
-
-		va = trunc_page((vaddr_t)fault_address);
+	vm = p->p_vmspace;
+	va = trunc_page((vaddr_t)fault_address);
 
 #ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("page fault: addr=V%08lx ", va);
+	if (pmap_debug_level >= 0)
+		printf("page fault: addr=V%08lx ", va);
 #endif
           
-		/*
-		 * It is only a kernel address space fault iff:
-		 *	1. user == 0  and
-		 *	2. pcb_onfault not set or
-		 *	3. pcb_onfault set but supervisor space fault
-		 * The last can occur during an exec() copyin where the
-		 * argument space is lazy-allocated.
-		 */
-		if (!user &&
-		    (va >= VM_MIN_KERNEL_ADDRESS || va < VM_MIN_ADDRESS)) {
-			/* Was the fault due to the FPE/IPKDB ? */
-			if ((frame->tf_spsr & PSR_MODE) == PSR_UND32_MODE) {
-				report_abort("UND32", fault_status,
-				    fault_address, fault_pc);
-				trapsignal(l, SIGSEGV, TRAP_CODE);
+	/*
+	 * It is only a kernel address space fault iff:
+	 *	1. user == 0  and
+	 *	2. pcb_onfault not set or
+	 *	3. pcb_onfault set but supervisor space fault
+	 * The last can occur during an exec() copyin where the
+	 * argument space is lazy-allocated.
+	 */
+	if (!user &&
+	    (va >= VM_MIN_KERNEL_ADDRESS || va < VM_MIN_ADDRESS)) {
+		/* Was the fault due to the FPE/IPKDB ? */
+		if ((frame->tf_spsr & PSR_MODE) == PSR_UND32_MODE) {
+			report_abort("UND32", fault_status,
+			    fault_address, fault_pc);
+			trapsignal(l, SIGSEGV, TRAP_CODE);
 
-				/*
-				 * Force exit via userret()
-				 * This is necessary as the FPE is an extension
-				 * to userland that actually runs in a
-				 * priveledged mode but uses USR mode
-				 * permissions for its accesses.
-				 */
-				userret(l);
-				return;
-			}
-			map = kernel_map;
-		} else
-			map = &vm->vm_map;
+			/*
+			 * Force exit via userret()
+			 * This is necessary as the FPE is an extension
+			 * to userland that actually runs in a
+			 * priveledged mode but uses USR mode
+			 * permissions for its accesses.
+			 */
+			userret(l);
+			return;
+		}
+		map = kernel_map;
+	} else
+		map = &vm->vm_map;
 
 #ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("vmmap=%p ", map);
+	if (pmap_debug_level >= 0)
+		printf("vmmap=%p ", map);
 #endif
 
-		if (map == NULL)
-			panic("No map for fault address va = 0x%08lx", va);
+	if (map == NULL)
+		printf("No map for fault address va = 0x%08lx", va);
 
-		/*
-		 * We need to know whether the page should be mapped
-		 * as R or R/W. The MMU does not give us the info as
-		 * to whether the fault was caused by a read or a write.
-		 * This means we need to disassemble the instruction
-		 * responsible and determine if it was a read or write
-		 * instruction.
-		 */
-		/* STR instruction ? */
-		if ((fault_instruction & 0x0c100000) == 0x04000000)
-			ftype = VM_PROT_WRITE; 
-		/* STM or CDT instruction ? */
-		else if ((fault_instruction & 0x0a100000) == 0x08000000)
-			ftype = VM_PROT_WRITE; 
-		/* STRH, STRSH or STRSB instruction ? */
-		else if ((fault_instruction & 0x0e100090) == 0x00000090)
-			ftype = VM_PROT_WRITE; 
-		/* SWP instruction ? */
-		else if ((fault_instruction & 0x0fb00ff0) == 0x01000090)
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
-		else
-			ftype = VM_PROT_READ;
+	/*
+	 * We need to know whether the page should be mapped
+	 * as R or R/W. The MMU does not give us the info as
+	 * to whether the fault was caused by a read or a write.
+	 * This means we need to disassemble the instruction
+	 * responsible and determine if it was a read or write
+	 * instruction.
+	 */
+	/* STR instruction ? */
+	if ((fault_instruction & 0x0c100000) == 0x04000000)
+		ftype = VM_PROT_WRITE; 
+	/* STM or CDT instruction ? */
+	else if ((fault_instruction & 0x0a100000) == 0x08000000)
+		ftype = VM_PROT_WRITE; 
+	/* STRH, STRSH or STRSB instruction ? */
+	else if ((fault_instruction & 0x0e100090) == 0x00000090)
+		ftype = VM_PROT_WRITE; 
+	/* SWP instruction ? */
+	else if ((fault_instruction & 0x0fb00ff0) == 0x01000090)
+		ftype = VM_PROT_READ | VM_PROT_WRITE;
+	else
+		ftype = VM_PROT_READ;
 
 #ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("fault protection = %d\n", ftype);
+	if (pmap_debug_level >= 0)
+		printf("fault protection = %d\n", ftype);
 #endif
             
-		if ((ftype & VM_PROT_WRITE) ?
-		    pmap_modified_emulation(map->pmap, va) :
-		    pmap_handled_emulation(map->pmap, va))
-			goto out;
-
-		if (current_intr_depth > 0) {
-#ifdef DDB
-			printf("Non-emulated page fault with intr_depth > 0\n");
-			report_abort(NULL, fault_status, fault_address, fault_pc);
-			kdb_trap(-1, frame);
-			return;
+#ifndef ARM32_PMAP_NEW
+	if ((ftype & VM_PROT_WRITE) ?
+	    pmap_modified_emulation(map->pmap, va) :
+	    pmap_handled_emulation(map->pmap, va))
+		goto out;
 #else
-			panic("Fault with intr_depth > 0");
+	if (pmap_fault_fixup(map->pmap, va, ftype))
+		goto out;
+#endif
+
+	if (current_intr_depth > 0) {
+#ifdef DDB
+		printf("Non-emulated page fault with intr_depth > 0\n");
+		report_abort(NULL, fault_status, fault_address, fault_pc);
+		kdb_trap(-1, frame);
+		return;
+#else
+		panic("Fault with intr_depth > 0");
 #endif	/* DDB */
-		}
-
-		onfault = pcb->pcb_onfault;
-		pcb->pcb_onfault = NULL;
-		rv = uvm_fault(map, va, 0, ftype);
-		pcb->pcb_onfault = onfault;
-		if (rv == 0) {
-			if (user != 0) /* Record any stack growth... */
-				uvm_grow(p, trunc_page(va));
-			goto out;
-		}
-		if (user == 0) {
-			if (pcb->pcb_onfault) {
-				frame->tf_r0 = rv;
-				goto copyfault;
-			}
-			printf("[u]vm_fault(%p, %lx, %x, 0) -> %x\n",
-			    map, va, ftype, rv);
-			goto we_re_toast;
-		}
-
-		report_abort("", fault_status, fault_address, fault_pc);
-		if (rv == ENOMEM) {
-			printf("UVM: pid %d (%s), uid %d killed: "
-			       "out of swap\n", p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
-			trapsignal(l, SIGKILL, TRAP_CODE);
-		} else
-			trapsignal(l, SIGSEGV, TRAP_CODE);
-		break;
-	    }
 	}
-          
- out:
+
+	onfault = pcb->pcb_onfault;
+	pcb->pcb_onfault = NULL;
+	rv = uvm_fault(map, va, 0, ftype);
+	pcb->pcb_onfault = onfault;
+	if (rv == 0) {
+		if (user != 0) /* Record any stack growth... */
+			uvm_grow(p, trunc_page(va));
+		goto out;
+	}
+	if (user == 0) {
+		if (pcb->pcb_onfault) {
+			frame->tf_r0 = rv;
+			goto copyfault;
+		}
+		printf("[u]vm_fault(%p, %lx, %x, 0) -> %x\n", map, va, ftype,
+		    rv);
+		goto we_re_toast;
+	}
+
+	report_abort("", fault_status, fault_address, fault_pc);
+	if (rv == ENOMEM) {
+		printf("UVM: pid %d (%s), uid %d killed: "
+		    "out of swap\n", p->p_pid, p->p_comm,
+		    (p->p_cred && p->p_ucred) ?  p->p_ucred->cr_uid : -1);
+			trapsignal(l, SIGKILL, TRAP_CODE);
+	} else
+		trapsignal(l, SIGSEGV, TRAP_CODE);
+
+out:
 	/* Call userret() if it was a USR mode fault */
 	if (user)
 		userret(l);
@@ -560,8 +582,6 @@ copyfault:
  * does no have read permission so send it a signal.
  * Otherwise fault the page in and try again.
  */
-
-extern int kernel_debug;
 
 void
 prefetch_abort_handler(frame)
@@ -643,6 +663,7 @@ prefetch_abort_handler(frame)
 		return;
 	}
 
+#ifndef ARM32_PMAP_NEW
 #ifdef CPU_SA110
 	/*
 	 * There are bugs in the rev K SA110.  This is a check for one
@@ -656,6 +677,7 @@ prefetch_abort_handler(frame)
 
 		if (pmap_pde_v(pmap_pde(pmap, (vaddr_t) fault_pc)) &&
 		    pmap_pte_v(pte)) {
+			extern int kernel_debug;
 			if (kernel_debug & 1) {
 				printf("prefetch_abort: page is already "
 				    "mapped - pte=%p *pte=%08x\n", pte, *pte);
@@ -677,6 +699,15 @@ prefetch_abort_handler(frame)
 	if (pmap_handled_emulation(map->pmap, va))
 		goto out;
 
+#else	/* ARM32_PMAP_NEW */
+
+	/*
+	 * See if the pmap can handle this fault on its own...
+	 */
+	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ))
+		goto out;
+#endif
+
 	if (current_intr_depth > 0) {
 #ifdef DDB
 		printf("Non-emulated prefetch abort with intr_depth > 0\n");
@@ -694,11 +725,10 @@ prefetch_abort_handler(frame)
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", p->p_pid, p->p_comm,
-		    p->p_cred && p->p_ucred ?
-		    p->p_ucred->cr_uid : -1);
+		    (p->p_cred && p->p_ucred) ?  p->p_ucred->cr_uid : -1);
 		trapsignal(l, SIGKILL, fault_pc);
 	} else
 		trapsignal(l, SIGSEGV, fault_pc);
- out:
+out:
 	userret(l);
 }
