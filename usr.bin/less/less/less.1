@@ -1,4 +1,4 @@
-.\"	$NetBSD: less.1,v 1.8 1999/08/02 12:41:20 sommerfeld Exp $
+.\"	$NetBSD: less.1,v 1.9 1999/09/03 22:07:06 kleink Exp $
 .\"
 .TH LESS 1 "Version 335: 03 Apr 1999"
 .SH NAME
@@ -174,7 +174,8 @@ Same as single quote.
 .IP /pattern
 Search forward in the file for the N-th line containing the pattern.
 N defaults to 1.
-The pattern is a regular expression, as recognized by
+When invoked as less, the pattern is an extended regular expression.
+Otherwise, the pattern is a basic regular expression, as recognized by
 .I ed.
 The search starts at the second line displayed
 (but see the -a and -j options, which change this).
@@ -190,11 +191,13 @@ Search multiple files.
 That is, if the search reaches the END of the current file 
 without finding a match,
 the search continues in the next file in the command line list.
+The * modifier is available when invoked as less only.
 .IP "^F or @"
 Begin the search at the first line of the FIRST file
 in the command line list,
 regardless of what is currently displayed on the screen
 or the settings of the -a or -j options.
+The @ modifier is available when invoked as less only.
 .IP "^K"
 Highlight any text which matches the pattern on the current screen, 
 but don't move to the first match (KEEP current position).
