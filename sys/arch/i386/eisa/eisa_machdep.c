@@ -1,7 +1,7 @@
-/*	$NetBSD: eisa_machdep.c,v 1.6 1997/06/06 23:12:52 thorpej Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.7 1998/02/06 07:51:11 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -113,8 +113,15 @@ eisa_attach_hook(parent, self, eba)
 	struct device *parent, *self;
 	struct eisabus_attach_args *eba;
 {
+	extern int eisa_has_been_seen; 
 
-	/* Nothing to do. */
+	/*
+	 * Notify others that might need to know that the ISA bus
+	 * has now been attached.
+	 */
+	if (eisa_has_been_seen)
+		panic("eisaattach: EISA bus already seen!");
+	eisa_has_been_seen = 1;
 }
 
 int
