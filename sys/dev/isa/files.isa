@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.29 1997/05/09 22:16:35 augustss Exp $
+#	$NetBSD: files.isa,v 1.30 1997/05/17 20:58:47 pk Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -75,6 +75,12 @@ file	dev/isa/aha_isa.c		aha_isa
 device	aic: scsi, isadma
 attach	aic at isa
 file	dev/isa/aic6360.c		aic
+
+# Qlogic ESP406/FAS408 boards
+# ncr53c9x device declaration in sys/conf/files
+device	esp: scsi, ncr53c9x, isadma
+attach	esp at isa with esp_isa
+file	dev/isa/esp_isa.c		esp_isa
 
 # BusLogic BT-[45]4x ISA family
 # device declaration in sys/conf/files
