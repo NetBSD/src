@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.5 2003/04/16 13:35:33 wiz Exp $
+.\"	$NetBSD: signal.9,v 1.6 2003/09/06 22:08:48 christos Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 8, 2002
+.Dd September 6, 2003
 .Dt SIGNAL 9
 .Os
 .Sh NAME
@@ -51,7 +51,6 @@
 .Nm sigaltstack1 ,
 .Nm gsignal ,
 .Nm pgsignal ,
-.Nm trapsignal ,
 .Nm psignal ,
 .Nm sched_psignal ,
 .Nm issignal ,
@@ -59,6 +58,7 @@
 .Nm killproc ,
 .Nm sigexit ,
 .Nm sigmasked ,
+.Nm trapsignal ,
 .Nm sendsig ,
 .Nm sigcode ,
 .Nm sigtramp ,
@@ -92,11 +92,15 @@
 .Ft void
 .Fn gsignal "int pgid" "int signum"
 .Ft void
+.Fn kgsignal "int pgid" "ksiginfo_t *ks" "void *data"
+.Ft void
 .Fn pgsignal "struct pgrp *pgrp" "int signum" "int checkctty"
 .Ft void
-.Fn trapsignal "struct proc *p" "int signum" "u_long code"
+.Fn kpgsignal "struct pgrp *pgrp" "ksiginfo_t *ks" "void *data" "int checkctty"
 .Ft void
 .Fn psignal "struct proc *p" "int signum"
+.Ft void
+.Fn kpsignal "struct proc *p" "ksiginfo_t *ks" "void *data"
 .Ft void
 .Fn sched_psignal "struct proc *p" "int signum"
 .Ft int
@@ -110,7 +114,9 @@
 .Ft int
 .Fn sigmasked "struct proc *p" "int signum"
 .Ft void
-.Fn sendsig "int signum" "sigset_t *mask" "u_long code"
+.Fn trapsignal "struct proc *p" "ksiginfo_t *ks"
+.Ft void
+.Fn sendsig "ksiginfo_t *ks" "sigset_t *mask"
 .Sh DESCRIPTION
 The system defines a set of signals that may be delivered to a process.
 These functions implement the kernel portion of the signal facility.
@@ -237,49 +243,74 @@ This function implements the
 system call.
 .It void Fn gsignal "int pgid" "int signum"
 .Pp
+This is a wrapper function for
+.Fn kgsignal
+which is described below.
+.It void Fn kgsignal "int pgid" "ksiginfo_t *ks" "void *data"
+.Pp
 Schedule the signal
-.Fa signum
+.Fa ks->ksi_signo
 to be delivered to all members of the process group specified by
 .Fa pgid .
-See
-.Fn psignal
+The
+.Fa data
+argument and the complete signal scheduling semantics are described in the
+.Fn kpsignal
+function below.
 below for a complete description of the signal scheduling semantics.
 .It void Fn pgsignal "struct pgrp *pgrp" "int signum" "int checkctty"
 .Pp
+This is a wrapper function for
+.Fn kpgsignal 
+which is described below.
+.It void Fn kpgsignal "struct pgrp *pgrp" "ksiginfo_t *ks" "void *data" "int checkctty"
+.Pp
 Schedule the signal
-.Fa signum
+.Fa ks->ksi_signo
 to be delivered to all members of the process group
 .Fa pgrp .
 If
 .Fa checkctty
 is non-zero, the signal is only sent to processes which have a
 controlling terminal.
-See
-.Fn psignal
-below for a complete description of the signal scheduling semantics.
-.It void Fn trapsignal "struct proc *p" "int signum" "u_long code"
+The
+.Fa data
+argument and the complete signal scheduling semantics are described in the
+.Fn kpsignal
+function below.
+.It void Fn trapsignal "struct proc *p" "ksiginfo_t *ks"
 .Pp
 Sends the signal
-.Fa signum
-with code
-.Fa code
+.Fa ks->ksi_signo
 caused by a hardware trap to the process
 .Fa p .
 This function is meant to be called by machine-dependent trap handling
 code.
 .It void Fn psignal "struct proc *p" "int signum"
 .Pp
+This is a wrapper function for
+.Fn kpgsignal 
+which is described below.
+.It void Fn kpsignal "struct proc *p" "ksiginfo_t *ks" "void *data"
+.Pp
 Schedule the signal
-.Fa signum
+.Fa ks->ksi_signo
 to be delivered to the process
 .Fa p .
+The
+.Fa data
+argument, if not NULL, points to the file descriptor data that caused the
+signal to be generated in the
+.Li SIGIO
+case.
+.Pp
 With a few exceptions noted below, the target process signal disposition is
 updated and is marked as runnable, so further handling of the signal is done
 in the context of the target process after a context switch; see
 .Fn issignal
 below.
 Note that
-.Fn psignal
+.Fn kpsignal
 does not by itself cause a context switch to happen.
 .Pp
 The target process is not marked as runnable in the following cases:
@@ -304,14 +335,14 @@ regardless of the signal action
 .El
 .Pp
 If the target process is being traced,
-.Fn psignal
+.Fn kpsignal
 behaves as if the target process were taking the default action for
 .Fa signum .
 This allows the tracing process to be notified of the signal.
 .It void Fn sched_psignal "struct proc *p" "int signum"
 .Pp
 An alternate version of
-.Fn psignal
+.Fn kpsignal
 which is intended for use by code which holds the scheduler lock.
 .It int Fn issignal "struct proc *p"
 .Pp
@@ -373,7 +404,7 @@ This function returns non-zero if the signal specified by
 .Fa signum
 is ignored or masked for process
 .Fa p .
-.It void Fn sendsig "int sig" "sigset_t *mask" "u_long code"
+.It void Fn sendsig "ksiginfo_t *ks" "sigset_t *mask"
 .Pp
 This function is provided by machine-dependent code, and is used to
 invoke a signal handler for the current process.
@@ -384,29 +415,31 @@ invoke the signal handler stored in the process's
 This may include switching to an alternate signal
 stack specified by the process.
 The previous register, stack, and signal state are stored in a
-.Fa struct sigcontext ,
+.Fa ucontext_t ,
 which is then copied out to the user's stack.
 .Pp
 The registers and stack must be set up to invoke the signal handler as
 follows:
 .Bd -literal -offset indent
-(*handler)(signum, code, scp)
+(*handler)(int signum, siginfo_t *info, void *ctx)
 .Ed
 .Pp
 where
 .Fa signum
 is the signal number,
-.Fa code
-is a signal-specific code, and
-.Fa scp
-is the pointer to the
-.Fa struct sigcontext
+.Fa info
+contains additional signal specific information when
+.Li SA_SIGINFO
+is specified when setting up the signal handler.
+.Fa ctx
+is the pointer to
+.Fa ucontext_t
 on the user's stack.
 The registers and stack must also arrange for the signal handler to
 return to the signal trampoline.
 The trampoline is then used to return to the code which was executing
 when the signal was delivered using the
-.Xr sigreturn 2
+.Xr setcontext 2
 system call.
 .Pp
 For performance reasons, it is recommended that
@@ -474,8 +507,8 @@ The flavor of the signal handler.
 The following flavors are valid:
 .Bl -tag -width sigcontextXX
 .It sigcontext
-Specifies a traditional BSD-style signal handler with the following
-signature:
+Specifies a traditional BSD-style (deprecated) signal handler with the
+following signature:
 .Bd -literal
 void (*handler)(int signum,
 	int code,
@@ -485,20 +518,20 @@ void (*handler)(int signum,
 Specifies a POSIX-style signal handler with the following signature:
 .Bd -literal
 void (*handler)(int signum,
-	struct siginfo *si,
+	siginfo_t *si,
 	void *uc);
 .Ed
 .Pp
-Note: support for POSIX-style signal
-handlers is not yet implemented in the
-.Nx
-kernel.
+Note: sigcontext style signal handlers are deprecated, and retained only
+for compatibility with older binaries.
 .El
 .It \*[Lt]version\*[Gt]
 Specifies the ABI version of the signal trampoline.
 The trampoline ABI is coordinated with the machine-dependent kernel
 .Fn sendsig
 function.
+The trampoline version needs to be unique even across different trampoline
+flavors, in order to simplify trampoline selection in the kernel.
 .El
 .Pp
 The following is an example if a signal trampoline name which indicates
@@ -506,7 +539,13 @@ that the trampoline is used for traditional BSD-style signal handlers
 and implements version 1 of the signal trampoline ABI:
 .Bd -literal -offset indent
 __sigtramp_sigcontext_1
+.Pp
 .Ed
+.Pp
+The current signal trampoline is:
+.Bd -literal -offset indent
+__sigtramp_siginfo_2
+.Pp
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr signal 7 ,
