@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.3 1997/01/30 09:18:37 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.4 1997/03/31 07:30:41 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -123,7 +123,8 @@ dioattach(parent, self, aux)
 		else {
 			va = iomap(pa, NBPG);
 			if (va == NULL) {
-				printf("%s: can't map scode %d\n", scode);
+				printf("%s: can't map scode %d\n",
+				    self->dv_xname, scode);
 				scode++;
 				continue;
 			}
