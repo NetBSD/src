@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.3 2003/12/13 22:34:30 he Exp $	*/
+/*	$NetBSD: wd.c,v 1.4 2003/12/14 11:53:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -199,7 +199,7 @@ wdopen(struct open_file *f, ...)
 {
 	int error;
 	va_list ap;
-	u_int8_t unit, part;
+	u_int unit, part;
 	struct wd_softc *wd;
 
 	va_start(ap, f);
