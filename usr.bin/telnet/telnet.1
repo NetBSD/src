@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnet.1,v 1.11 1999/03/22 18:16:44 garbled Exp $
+.\"	$NetBSD: telnet.1,v 1.12 1999/07/02 15:09:11 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,6 +69,9 @@ protocol
 .Ek
 .Bk -words
 .Op Fl n Ar tracefile
+.Ek
+.Bk -words
+.Op Fl P Ar policy
 .Ek
 .Op Fl r
 .Op Fl x
@@ -190,6 +193,13 @@ for recording trace information.
 See the
 .Ic set tracefile
 command below.
+.It Fl P Ar policy
+Use IPsec policy specification string
+.Ar policy ,
+for the connections.
+See
+.Xr ipsec_set_policy 3
+for details.
 .It Fl r
 Specifies a user interface similar to
 .Xr rlogin 1 .
@@ -1375,6 +1385,7 @@ The
 .Nm Telnet
 command appeared in
 .Bx 4.2 .
+IPsec support was added by WIDE/KAME project, in 1999.
 .Sh NOTES
 .Pp
 On some remote systems, echo has to be turned off manually when in
