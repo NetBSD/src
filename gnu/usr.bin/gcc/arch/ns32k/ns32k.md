@@ -2613,7 +2613,7 @@
   ""
   "*
 {
-  return \"movqb 0,%0; ffsd %1,%0; bfs 1f; addqb 1,%0; 1:\";
+  return \"ffsd %1,%0; bfs 1f; addqb 1,%0; 1:\";
 }")
 
 (define_insn "ffshi2"
@@ -2622,7 +2622,7 @@
   ""
   "*
 {
-  return \"movqw 0,%0; ffsd %1,%0; bfs 1f; addqw 1,%0; 1:\";
+  return \"ffsd %1,%0; bfs 1f; addqb 1,%0; 1: movzbw %0,%0\";
 }")
 
 (define_insn "ffssi2"
@@ -2631,7 +2631,7 @@
   ""
   "*
 {
-  return \"movqd 0,%0; ffsd %1,%0; bfs 1f; addqd 1,%0; 1:\";
+  return \"ffsd %1,%0; bfs 1f; addqb 1,%0; 1: movzbd %0,%0\";
 }")
 
 ;; Speed up stack adjust followed by a HI fixedpoint push.
