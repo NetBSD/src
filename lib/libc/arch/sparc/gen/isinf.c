@@ -35,16 +35,19 @@
  * SUCH DAMAGE.
  *
  * from: Header: isinf.c,v 1.1 91/07/08 19:03:34 torek Exp
- * $Id: isinf.c,v 1.1 1993/10/07 00:21:34 cgd Exp $
+ * $Id: isinf.c,v 1.1.4.1 1995/04/18 04:18:21 jtc Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <machine/ieee.h>
+#include <math.h>
 
+int
 isinf(d)
 	double d;
 {
