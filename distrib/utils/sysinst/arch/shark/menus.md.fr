@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.1 2002/02/10 19:20:53 thorpej Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.2 2002/03/31 02:14:06 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,7 +57,7 @@ menu editfsparts, y=12, exit;
  
 menu md_distcustom, x=26, y=5, exit, title "Sélection des composants";
 	display action { show_cur_distsets (); };
-	option	"Kernel (SHARK)",	 action { toggle_getit (0); };
+	option	"Kernel (GENERIC)",	 action { toggle_getit (0); };
 	option	"Base",			 action { toggle_getit (1); };
 	option	"System (/etc)",	 action { toggle_getit (2); };
 	option  "Outils de développement", 	 action { toggle_getit (3); };
