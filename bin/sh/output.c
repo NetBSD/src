@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)output.c	5.1 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: output.c,v 1.5 1993/09/05 17:32:08 mycroft Exp $";
+static char rcsid[] = "$Id: output.c,v 1.6 1994/05/04 23:45:04 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -116,7 +116,7 @@ open_mem(block, length, file)
 
 void
 out1str(p)
-	char *p;
+	const char *p;
 	{
 	outstr(p, out1);
 }
@@ -124,7 +124,7 @@ out1str(p)
 
 void
 out2str(p)
-	char *p;
+	const char *p;
 	{
 	outstr(p, out2);
 }
@@ -132,7 +132,7 @@ out2str(p)
 
 void
 outstr(p, file)
-	register char *p;
+	register const char *p;
 	register struct output *file;
 	{
 	while (*p)
