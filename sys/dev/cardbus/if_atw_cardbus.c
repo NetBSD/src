@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.7 2004/05/08 23:40:01 christos Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.8 2004/07/22 15:50:50 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.7 2004/05/08 23:40:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.8 2004/07/22 15:50:50 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -412,13 +412,13 @@ atw_cardbus_setup(struct atw_cardbus_softc *csc)
 	(void)cardbus_setpowerstate(sc->sc_dev.dv_xname, ct, csc->sc_tag,
 	    PCI_PWR_D0);
 
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-
 	/* Program the BAR. */
 	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg,
 	    csc->sc_bar_val);
+
+	/* Make sure the right access type is on the CardBus bridge. */
+	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
+	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
