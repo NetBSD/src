@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2002/04/24 08:18:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/09/19 03:09:52 lukem Exp $
 #	install these sources in /usr/share/sendmail
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../../dist
+DIST=		${NETBSDSRCDIR}/gnu/dist
 .PATH: ${DIST}/sendmail/cf ${DIST}/sendmail
 
 .if ${MKSHARE} != "no"

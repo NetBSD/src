@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 2001/04/19 14:40:53 wiz Exp $
+#	$NetBSD: Makefile,v 1.9 2002/09/19 03:09:39 lukem Exp $
 
 .include "../../Makefile.path"
 
-.PATH:		${IIDIST}/font/devdvi
+.PATH:		${IDIST}/font/devdvi
 
 DEVICE=		dvi
 FONTFILES=	R I B BI CW CWI MI S EX H HI HB SA SB DESC $(DEVGENFILES)
