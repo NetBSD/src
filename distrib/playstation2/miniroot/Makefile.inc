@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.3 2002/03/06 12:04:53 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2002/03/23 03:22:56 shin Exp $
 
 IMAGESIZE=	5m
-IMAGEENDIAN=	be
+IMAGEENDIAN=	le
 MAKEDEVTARGETS=	all
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
 MTREECONF+=	${.CURDIR}/mtree.usr.install
