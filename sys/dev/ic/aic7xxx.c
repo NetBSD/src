@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.42 2000/03/15 02:08:28 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.43 2000/03/16 10:33:45 fvdl Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -87,8 +87,6 @@
  */
 
 #include "opt_ddb.h"
-
-#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -196,10 +194,6 @@ typedef enum {
 
 #ifdef AHC_DEBUG
 static int     ahc_debug = AHC_DEBUG;
-#endif
-
-#if NPCI > 0
-extern void ahc_pci_intr(struct ahc_softc *);
 #endif
 
 static int	ahcinitscbdata(struct ahc_softc *);
@@ -1499,10 +1493,9 @@ ahc_intr(void *arg)
 	 * Any interrupts to process?
 	 */
 	if ((intstat & INT_PEND) == 0) {
-#if NPCI > 0
-		if ((ahc_inb(ahc, ERROR) & PCIERRSTAT) != 0) {
-#ifdef AHC_PCI_DEBUG
-			printf("%s: PCI intr: CCHADDR %x HADDR %x SEQADDR %x\n",
+		if (ahc->bus_intr && ahc->bus_intr(ahc)) {
+#ifdef AHC_DEBUG
+			printf("%s: bus intr: CCHADDR %x HADDR %x SEQADDR %x\n",
 			    ahc_name(ahc),
 			    ahc_inb(ahc, CCHADDR) |
 			    (ahc_inb(ahc, CCHADDR+1) << 8)
@@ -1514,10 +1507,8 @@ ahc_intr(void *arg)
 			    ahc_inb(ahc, SEQADDR0) |
 			    (ahc_inb(ahc, SEQADDR1) << 8));
 #endif
-			ahc_pci_intr(ahc);
 			return 1;
 		}
-#endif
 		return 0;
 	}
 
