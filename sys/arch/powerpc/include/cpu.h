@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 2001/08/26 02:47:39 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 2001/08/28 03:03:43 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -161,8 +161,9 @@ extern void delay (unsigned int);
 #if !defined(CACHELINESIZE)
 #define	CACHELINESIZE	32
 #endif
-void __syncicache(void *, int);
 #endif
+
+void __syncicache(void *, int);
 
 /*
  * CTL_MACHDEP definitions.
