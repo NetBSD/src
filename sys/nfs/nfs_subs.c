@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.129 2003/10/02 06:01:51 itojun Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.130 2003/11/29 19:31:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.129 2003/10/02 06:01:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.130 2003/11/29 19:31:13 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2134,8 +2134,7 @@ nfs_zeropad(mp, len, nul)
 	int nul;
 {
 	struct mbuf *m;
-	int count, i;
-	char *cp;
+	int count;
 
 	/*
 	 * Trim from tail.  Scan the mbuf chain,
@@ -2175,10 +2174,15 @@ nfs_zeropad(mp, len, nul)
 		m->m_next = NULL;
 	}
 
+	KDASSERT(m->m_next == NULL);
+
 	/*
 	 * zero-padding.
 	 */
 	if (nul > 0) {
+		char *cp;
+		int i;
+
 		if (M_ROMAP(m) || M_TRAILINGSPACE(m) < nul) {
 			struct mbuf *n;
 
@@ -2186,9 +2190,8 @@ nfs_zeropad(mp, len, nul)
 			n = m_get(M_WAIT, MT_DATA);
 			MCLAIM(n, &nfs_mowner);
 			n->m_len = nul;
-			n->m_next = m->m_next;
+			n->m_next = NULL;
 			m->m_next = n;
-			m = n;
 			cp = mtod(n, caddr_t);
 		} else {
 			cp = mtod(m, caddr_t) + m->m_len;
