@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.13 2003/03/12 14:51:32 drochner Exp $	 */
+/*	$NetBSD: tftp.c,v 1.14 2003/03/18 19:20:09 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -85,7 +85,7 @@ struct tftp_handle {
 	} lastdata;
 };
 
-static int tftperrors[8] = {
+static const int tftperrors[8] = {
 	0,			/* ??? */
 	ENOENT,
 	EPERM,
