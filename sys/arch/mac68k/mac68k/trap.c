@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.90 2001/01/17 08:23:49 ender Exp $	*/
+/*	$NetBSD: trap.c,v 1.91 2001/01/17 19:03:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -504,7 +504,6 @@ copyfault:
 			netintr();
 		}
 		if (ssir & SIR_CLOCK) {
-			void softclock __P((void *));
 			siroff(SIR_CLOCK);
 			uvmexp.softs++;
 			softclock(NULL);
