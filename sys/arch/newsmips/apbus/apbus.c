@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.9 2002/09/27 20:34:16 thorpej Exp $	*/
+/*	$NetBSD: apbus.c,v 1.10 2002/10/02 04:27:51 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -68,9 +68,8 @@ struct apbus_softc {
 	struct device apbs_dev;
 };
 
-const struct cfattach ap_ca = {
-	sizeof(struct apbus_softc), apbusmatch, apbusattach
-};
+CFATTACH_DECL(ap, sizeof(struct apbus_softc),
+    apbusmatch, apbusattach, NULL, NULL);
 
 #define	APBUS_DEVNAMELEN	16
 
