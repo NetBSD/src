@@ -1,4 +1,4 @@
-/*	$NetBSD: j720kbdmap.c,v 1.9 2003/12/19 12:16:36 manu Exp $	*/
+/*	$NetBSD: j720kbdmap.c,v 1.10 2004/03/13 17:23:32 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720kbdmap.c,v 1.9 2003/12/19 12:16:36 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720kbdmap.c,v 1.10 2004/03/13 17:23:32 bjh21 Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-#include <dev/pckbc/wskbdmap_mfii.h>
 
 #define KC(n) KS_KEYCODE(n)
 
