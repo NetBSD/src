@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.4 2002/10/02 15:45:10 thorpej Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.5 2003/03/23 14:12:26 chris Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -35,6 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.5 2003/03/23 14:12:26 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
