@@ -1,6 +1,6 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.20 2002/09/17 16:35:39 fredb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.21 2002/09/21 05:17:52 lukem Exp $
 .\"
-.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 .\" NOTE: After changing this file, run "make build-docs" to generate the
 .\" proper plaintext versions, and check in all BUILDING.* files!
 .\"
-.Dd May 3, 2002
+.Dd September 21, 2002
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -62,7 +62,7 @@ implementation are noted specially, as with the note below:
 .Em Note :
 This document applies only to platforms which use the new toolchain as
 indicated by the default setting of
-.Sy USE_NEW_TOOLCHAIN
+.Sy TOOLCHAIN_MISSING
 in
 .Aq bsd.own.mk .
 Platforms which have not yet been switched to the new toolchain should
@@ -968,11 +968,16 @@ or called with an absolute path.
 .Bl -tag -width "NBUILDJOBS"
 .
 .It Sy NBUILDJOBS
-Now obsolete.  Use the 
+Use the 
 .Xr make 1
 option
 .Sy -j ,
 instead.
+.
+.It Sy USE_NEW_TOOLCHAIN
+The new toolchain is now the default.
+To disable, use
+.Sy TOOLCHAIN_MISSING=yes .
 .El
 .Sh SEE ALSO
 .Xr make 1 ,
@@ -982,16 +987,15 @@ instead.
 .Sh HISTORY
 .
 The
-.Sy USE_NEW_TOOLCHAIN
-based build scheme was introduced in the
-.Dq Nx Ns -current
-development sources between
-.Nx 1.5
-and
-.Nx 1.6 .
+.Nm build.sh
+based build scheme was introduced for
+.Nx 1.6
+as
+.Sy USE_NEW_TOOLCHAIN ,
+and re-worked to
+.Sy TOOLCHAIN_MISSING
+after that.
 .
 .Sh BUGS
 .
-A few platforms are not yet using the
-.Sy USE_NEW_TOOLCHAIN
-system.
+A few platforms are not yet using this build system.
