@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.h,v 1.11 2000/01/08 01:02:36 simonb Exp $	*/
+/*	$NetBSD: scsi.h,v 1.12 2000/03/30 14:45:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -567,17 +567,17 @@ struct scsi_fmt_sense {
  */
 void	scsiGroup0Cmd __P((unsigned cmd,	/* group0 SCSI command */
 			   unsigned lun,	/* Logical Unit Number */
-			   register unsigned block,
+			   unsigned block,
 			   unsigned count,
-			   register ScsiGroup0Cmd *c));
+			   ScsiGroup0Cmd *c));
 
 void	scsiGroup1Cmd __P((unsigned cmd,	/* group0 SCSI command */
 			   unsigned lun,	/* Logical Unit Number */
-			   register unsigned block,
+			   unsigned block,
 			   unsigned count,
-			   register ScsiGroup1Cmd *c));
+			   ScsiGroup1Cmd *c));
 
-void	scsiPrintSense __P((register ScsiClass7Sense *sp, int len));
+void	scsiPrintSense __P((ScsiClass7Sense *sp, int len));
 void	scsiPrintInquiry __P((ScsiInquiryData *inqbuf, int len));
 #endif /* _KERNEL */
 

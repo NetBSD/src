@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.14 2000/03/06 03:09:44 mhitch Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.15 2000/03/30 14:45:07 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -131,7 +131,7 @@ kn230_copytobuf(src, dst, len)
 	int len;
 {
 	u_int *wsrc = (u_int *)src;
-	volatile register u_int *wdst = (volatile u_int *)dst;
+	volatile u_int *wdst = (volatile u_int *)dst;
 	int i, n;
 
 #if defined(DIAGNOSTIC) || defined(DEBUG)
@@ -167,7 +167,7 @@ kn230_copyfrombuf(src, dst, len)
 	char *dst;		/* XXX assume 32-bit aligned? */
 	int len;
 {
-	volatile register u_int *wsrc = (volatile u_int *)src;
+	volatile u_int *wsrc = (volatile u_int *)src;
 	u_int *wdst = (u_int *)dst;
 	int i, n;
 

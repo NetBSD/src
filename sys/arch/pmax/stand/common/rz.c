@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.15 1999/11/27 06:48:08 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.16 2000/03/30 14:45:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,10 +65,10 @@ rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	void *addr;
 	size_t *cnt;	/* out: number of bytes transfered */
 {
-	register struct rz_softc *sc = (struct rz_softc *)devdata;
-	register int part = sc->sc_part;
-	register struct partition *pp = &sc->sc_label.d_partitions[part];
-	register int s;
+	struct rz_softc *sc = (struct rz_softc *)devdata;
+	int part = sc->sc_part;
+	struct partition *pp = &sc->sc_label.d_partitions[part];
+	int s;
 	long offset;
 
 	offset = bn * DEV_BSIZE;
@@ -100,11 +100,11 @@ rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 int
 rzopen(struct open_file *f, ...)
 {
-	register int ctlr, unit, part;
+	int ctlr, unit, part;
 
-	register struct rz_softc *sc;
-	register struct disklabel *lp;
-	register int i;
+	struct rz_softc *sc;
+	struct disklabel *lp;
+	int i;
 	char *msg;
 	char buf[DEV_BSIZE];
 	int cnt;

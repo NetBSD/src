@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.6 2000/03/06 21:36:11 thorpej Exp $	*/
+/*	$NetBSD: promcall.c,v 1.7 2000/03/30 14:45:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.6 2000/03/06 21:36:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.7 2000/03/30 14:45:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -117,7 +117,7 @@ prom_findcons(kbdslot, crtslot, prom_using_screen)
 	int *crtslot;
 	int *prom_using_screen;
 {
-	register char *oscon = 0;	/* PROM osconsole string */
+	char *oscon = 0;	/* PROM osconsole string */
 
 	/*
 	 * Get and parse the "osconsole" environment variable.
