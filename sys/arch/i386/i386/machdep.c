@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.393 2000/08/15 18:21:44 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.394 2000/08/16 04:44:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -393,13 +393,13 @@ i386_proc0_tss_ldt_init()
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
 
-	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
-	tss_alloc(pcb);
+	tss_alloc(&proc0);
 
-	ltr(pcb->pcb_tss_sel);
+	ltr(proc0.p_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
 
 	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
