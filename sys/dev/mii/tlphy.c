@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.9 1998/08/12 20:56:38 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.10 1998/08/17 16:41:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -186,11 +186,11 @@ tlphyattach(parent, self, aux)
 
 	printf("%s: ", sc->sc_mii.mii_dev.dv_xname);
 	if (sc->sc_tlphycap) {
-		if (sc->sc_tlphycap == TLPHY_MEDIA_10_2) {
+		if (sc->sc_tlphycap & TLPHY_MEDIA_10_2) {
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0,
 			    sc->sc_mii.mii_inst), 0);
 			PRINT("10base2/BNC");
-		} else {
+		} else if (sc->sc_tlphycap & TLPHY_MEDIA_10_5) {
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_5, 0,
 			    sc->sc_mii.mii_inst), 0);
 			PRINT("10base5/AUI");
@@ -199,7 +199,8 @@ tlphyattach(parent, self, aux)
 	if (sc->sc_capabilities & BMSR_MEDIAMASK) {
 		printf(sep);
 		mii_add_media(mii, sc->sc_capabilities, sc->sc_mii.mii_inst);
-	} else if (sc->sc_tlphycap == 0)
+	} else if ((sc->sc_tlphycap & (TLPHY_MEDIA_10_2 | TLPHY_MEDIA_10_5))
+	    == 0)
 		printf("no media present");
 	printf("\n");
 #undef ADD
@@ -327,14 +328,11 @@ tlphy_status(sc)
 	struct tlphy_softc *sc;
 {
 	struct mii_data *mii = sc->sc_mii.mii_pdata;
+	struct tl_softc *tlsc = (struct tl_softc *)sc->sc_mii.mii_dev.dv_parent;
 	int bmsr, bmcr, tlctrl;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
-
-	bmsr = TLPHY_READ(sc, MII_BMSR) | TLPHY_READ(sc, MII_BMSR);
-	if (bmsr & BMSR_LINK)   
-		mii->mii_media_status |= IFM_ACTIVE;
 
 	bmcr = TLPHY_READ(sc, MII_BMCR);
 	if (bmcr & BMCR_ISO) {
@@ -345,14 +343,21 @@ tlphy_status(sc)
 
 	tlctrl = TLPHY_READ(sc, MII_TLPHY_CTRL);
 	if (tlctrl & CTRL_AUISEL) {
-		if (sc->sc_tlphycap == TLPHY_MEDIA_10_2)
-			mii->mii_media_status |= IFM_10_2;
+		if (sc->sc_tlphycap & TLPHY_MEDIA_10_2)
+			mii->mii_media_active |= IFM_10_2;
+		else if (sc->sc_tlphycap & TLPHY_MEDIA_10_5)
+			mii->mii_media_active |= IFM_10_5;
 		else
-			mii->mii_media_status |= IFM_10_5;
-		/* XXX Can we sense carrier here? */
-		mii->mii_media_status = 0;
+			printf("%s: AUI selected with no matching media !\n",
+			    sc->sc_mii.mii_dev.dv_xname);
+		if (tlsc->tl_flags & TL_IFACT)
+			mii->mii_media_status |= IFM_ACTIVE;
 		return;
 	}
+
+	bmsr = TLPHY_READ(sc, MII_BMSR) | TLPHY_READ(sc, MII_BMSR);
+	if (bmsr & BMSR_LINK)   
+		mii->mii_media_status |= IFM_ACTIVE;
 
 	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
