@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.38 1999/05/01 02:57:10 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.39 1999/05/01 04:34:20 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -86,8 +86,6 @@
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
 #include <compat/osf1/osf1_cvt.h>
-
-#include <vm/vm.h>
 
 void cvtstat2osf1 __P((struct stat *, struct osf1_stat *));
 void cvtrusage2osf1 __P((struct rusage *, struct osf1_rusage *));
@@ -232,124 +230,6 @@ osf1_sys_setrlimit(p, v, retval)
 	SCARG(&a, rlp) = SCARG(uap, rlp);
 
 	return sys_setrlimit(p, &a, retval);
-}
-
-int
-osf1_sys_mmap(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_mmap_args *uap = v;
-	struct sys_mmap_args a;
-	unsigned long leftovers;
-
-	SCARG(&a, addr) = SCARG(uap, addr);
-	SCARG(&a, len) = SCARG(uap, len);
-	SCARG(&a, fd) = SCARG(uap, fd);
-	SCARG(&a, pad) = 0;
-	SCARG(&a, pos) = SCARG(uap, pos);
-
-	/* translate prot */
-	SCARG(&a, prot) = emul_flags_translate(osf1_mmap_prot_xtab,
-	    SCARG(uap, prot), &leftovers);
-	if (leftovers != 0)
-		return (EINVAL);
-
-	/* translate flags */
-	SCARG(&a, flags) = emul_flags_translate(osf1_mmap_flags_xtab,
-	    SCARG(uap, flags), &leftovers);
-	if (leftovers != 0)
-		return (EINVAL);
-
-	/*
-	 * XXX The following code is evil.
-	 *
-	 * The OSF/1 mmap() function attempts to map non-fixed entries
-	 * near the address that the user specified.  Therefore, for
-	 * non-fixed entires we try to find space in the address space
-	 * starting at that address.  If the user specified zero, we
-	 * start looking at at least NBPG, so that programs can't
-	 * accidentally live through deferencing NULL.
-	 *
-	 * The need for this kludgery is increased by the fact that
-	 * the loader data segment is mapped at
-	 * (end of user address space) - 1G, MAXDSIZ is 1G, and
-	 * the VM system tries allocate non-fixed mappings _AFTER_
-	 * (start of data) + MAXDSIZ.  With the loader, of course,
-	 * that means that it'll start trying at
-	 * (end of user address space), and will never succeed!
-	 *
-	 * Notes:
-	 *
-	 * * Though we find space here, if something else (e.g. a second
-	 *   thread) were mucking with the address space the mapping
-	 *   we found might be used by another mmap(), and this call
-	 *   would clobber that region.
-	 *
-	 * * In general, tricks like this only work for MAP_ANON mappings,
-	 *   because of sharing/cache issues.  That's not a problem on
-	 *   the Alpha, and though it's not good style to abuse that fact,
-	 *   there's little choice.
-	 *
-	 * * In order for this to be done right, the VM system should
-	 *   really try to use the requested 'addr' passed in to mmap()
-	 *   as a hint, even if non-fixed.  If it's passed as zero,
-	 *   _maybe_ then try (start of data) + MAXDSIZ, or maybe
-	 *   provide a better way to avoid the data region altogether.
-	 */
-	if ((SCARG(&a, flags) & MAP_FIXED) == 0) {
-		vaddr_t addr = round_page(SCARG(&a, addr));
-		vsize_t size = round_page(SCARG(&a, len));
-		int fixed = 0;
-
-		vm_map_lock(&p->p_vmspace->vm_map);
-
-		/* if non-NULL address given, start looking there */
-		if (addr != 0 && uvm_map_findspace(&p->p_vmspace->vm_map,
-		    addr, size, &addr, NULL, 0, 0) != NULL) {
-			fixed = 1;
-			goto done;
-		}
-
-		/* didn't find anything.  take it again from the top. */
-		if (uvm_map_findspace(&p->p_vmspace->vm_map, NBPG, size, &addr,
-		    NULL, 0, 0) != NULL) {
-			fixed = 1;
-			goto done;
-		}
-
-done:
-		vm_map_unlock(&p->p_vmspace->vm_map);
-		if (fixed) {
-			SCARG(&a, flags) |= MAP_FIXED;
-			SCARG(&a, addr) = (void *)addr;
-		}
-	}
-
-	return sys_mmap(p, &a, retval);
-}
-
-int
-osf1_sys_mprotect(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_mprotect_args *uap = v;
-	struct sys_mprotect_args a;
-	unsigned long leftovers;
-
-	SCARG(&a, addr) = SCARG(uap, addr);
-	SCARG(&a, len) = SCARG(uap, len);
-
-	/* translate prot */
-	SCARG(&a, prot) = emul_flags_translate(osf1_mmap_prot_xtab,
-	    SCARG(uap, prot), &leftovers);
-	if (leftovers != 0)
-		return (EINVAL);
-
-	return sys_mprotect(p, &a, retval);
 }
 
 int
@@ -996,72 +876,6 @@ cvtrusage2osf1(ru, oru)
 	oru->ru_nsignals = ru->ru_nsignals;
 	oru->ru_nvcsw = ru->ru_nvcsw;
 	oru->ru_nivcsw = ru->ru_nivcsw;
-}
-
-int
-osf1_sys_madvise(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_madvise_args *uap = v;
-	struct sys_madvise_args a;
-	int error;
-
-	SCARG(&a, addr) = SCARG(uap, addr);
-	SCARG(&a, len) = SCARG(uap, len);
-
-	error = 0;
-	switch (SCARG(uap, behav)) {
-	case OSF1_MADV_NORMAL:
-		SCARG(&a, behav) = MADV_NORMAL;
-		break;
-
-	case OSF1_MADV_RANDOM:
-		SCARG(&a, behav) = MADV_RANDOM;
-		break;
-
-	case OSF1_MADV_SEQUENTIAL:
-		SCARG(&a, behav) = MADV_SEQUENTIAL;
-		break;
-
-	case OSF1_MADV_WILLNEED:
-		SCARG(&a, behav) = MADV_WILLNEED;
-		break;
-
-	case OSF1_MADV_DONTNEED_COMPAT:
-		SCARG(&a, behav) = MADV_DONTNEED;
-		break;
-
-	case OSF1_MADV_SPACEAVAIL:
-		SCARG(&a, behav) = MADV_SPACEAVAIL;
-		break;
-
-	case OSF1_MADV_DONTNEED:
-		/*
-		 * XXX not supported.  In Digital UNIX, this flushes all
-		 * XXX data in the region and replaces it with ZFOD pages.
-		 */
-		error = EINVAL;
-		break;
-
-	default:
-		error = EINVAL;
-		break;
-	}
-
-	if (error == 0) {
-		error = sys_madvise(p, &a, retval);
-
-		/*
-		 * NetBSD madvise() currently always returns ENOSYS.
-		 * Digital UNIX says that non-operational requests (i.e.
-		 * valid, but unimplemented 'behav') will return success.
-		 */
-		if (error == ENOSYS)
-			error = 0;
-	}
-	return (error);
 }
 
 int
