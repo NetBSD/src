@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.h,v 1.6 1997/07/22 20:19:10 pk Exp $ */
+/*	$NetBSD: intreg.h,v 1.7 1998/09/20 19:31:37 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,5 +136,9 @@ void	ienab_bic __P((int bic));	/* clear given bits */
 #define SINTR_SBUS(n)		(1 << (7+(n)-1))
 #define SINTR_VMEMASK		0x0000007f	/* VME */
 #define SINTR_VME(n)		(1 << ((n)-1))
+#define SINTR_BITS		"\177\020"				      \
+				"f\0\7VME\0f\7\7SBUS\0b\16K\0b\17S\0b\20E\0"  \
+				"b\21A\0b\22SC\0b\23T\0b\24VI\0b\25MI\0"      \
+				"b\26F\0b\33V\0b\34M\0b\35I\0b\36ME\0b\37MA\0"
 
 #endif
