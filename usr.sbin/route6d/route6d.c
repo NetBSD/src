@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.42 2002/09/24 13:48:14 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.43 2002/09/27 14:43:00 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.88 2002/08/21 16:24:25 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.42 2002/09/24 13:48:14 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.43 2002/09/27 14:43:00 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -591,13 +591,13 @@ init(void)
 		fatal("rip socket");
 		/*NOTREACHED*/
 	}
-	if (bind(ripsock, res->ai_addr, res->ai_addrlen) < 0) {
-		fatal("rip bind");
-		/*NOTREACHED*/
-	}
 	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_V6ONLY,
 	    &int1, sizeof(int1)) < 0) {
 		fatal("rip IPV6_V6ONLY");
+		/*NOTREACHED*/
+	}
+	if (bind(ripsock, res->ai_addr, res->ai_addrlen) < 0) {
+		fatal("rip bind");
 		/*NOTREACHED*/
 	}
 	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
