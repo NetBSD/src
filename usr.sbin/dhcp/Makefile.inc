@@ -30,8 +30,6 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-.include <bsd.obj.mk>
-
 WARNS?=	0
 
 COBJDIR!=cd $(.CURDIR)/../common; \
