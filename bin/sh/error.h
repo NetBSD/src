@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.10 1997/07/04 21:01:55 christos Exp $	*/
+/*	$NetBSD: error.h,v 1.11 1997/07/15 17:44:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -102,7 +102,7 @@ char *errmsg __P((int, int));
  * so we use _setjmp instead.
  */
 
-#ifdef BSD
+#if defined(BSD) && !defined(__SVR4)
 #define setjmp(jmploc)	_setjmp(jmploc)
 #define longjmp(jmploc, val)	_longjmp(jmploc, val)
 #endif
