@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.54 1999/05/12 11:16:43 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.55 1999/06/02 02:03:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.54 1999/05/12 11:16:43 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.55 1999/06/02 02:03:57 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -174,14 +174,14 @@ auth_url(challenge, response, guser, gpass)
 
 	len = strlen(user) + strlen(pass) + 1;		/* user + ":" + pass */
 	clear = (char *)xmalloc(len + 1);
-	sprintf(clear, "%s:%s", user, pass);
+	snprintf(clear, len, "%s:%s", user, pass);
 	if (gpass == NULL)
 		memset(pass, '\0', strlen(pass));
 
 						/* scheme + " " + enc */
 	len = strlen(scheme) + 1 + (len + 2) * 4 / 3;
 	*response = (char *)xmalloc(len + 1);
-	len = sprintf(*response, "%s ", scheme);
+	len = snprintf(*response, len, "%s ", scheme);
 	base64_encode(clear, strlen(clear), *response + len);
 	memset(clear, '\0', strlen(clear));
 	rval = 0;

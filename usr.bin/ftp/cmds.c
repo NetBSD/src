@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.48 1999/05/12 11:06:00 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.49 1999/06/02 02:03:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.48 1999/05/12 11:06:00 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.49 1999/06/02 02:03:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1349,15 +1349,22 @@ user(argc, argv)
 	}
 	n = command("USER %s", argv[1]);
 	if (n == CONTINUE) {
-		if (argc < 3 )
-			argv[2] = getpass("Password: "), argc++;
+		if (argc < 3) {
+			argv[2] = getpass("Password: ");
+			argc++;
+		}
 		n = command("PASS %s", argv[2]);
 	}
 	if (n == CONTINUE) {
 		if (argc < 4) {
 			(void)fputs("Account: ", ttyout);
 			(void)fflush(ttyout);
-			(void)fgets(acct, sizeof(acct) - 1, stdin);
+			if (fgets(acct, sizeof(acct) - 1, stdin) == NULL) {
+				fprintf(ttyout,
+				    "\nEOF received; login aborted.\n");
+				code = -1;
+				return;
+			}
 			acct[strlen(acct) - 1] = '\0';
 			argv[3] = acct; argc++;
 		}
@@ -2255,7 +2262,7 @@ page(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ohash, orestart_point, overbose;
+	int ohash, orestart_point, overbose, len;
 	char *p, *pager, *oldargv1;
 
 	if ((argc < 2 && !another(&argc, &argv, "filename")) || argc > 2) {
@@ -2271,8 +2278,9 @@ page(argc, argv)
 	p = getenv("PAGER");
 	if (p == NULL)
 		p = PAGER;
-	pager = xmalloc(strlen(p) + 2);
-	(void)sprintf(pager, "|%s", p);
+	len = strlen(p) + 2;
+	pager = xmalloc(len);
+	(void)snprintf(pager, len, "|%s", p);
 
 	ohash = hash;
 	orestart_point = restart_point;
