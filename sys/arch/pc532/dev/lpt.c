@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.3 1995/05/16 07:30:33 phil Exp $	*/
+/*	$NetBSD: lpt.c,v 1.4 1995/06/26 23:13:54 phil Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -119,7 +119,7 @@
 #endif
 
 #ifndef PLIPMXERRS		/* Max errors before !RUNNING */
-#define	PLIPMXERRS	100
+#define	PLIPMXERRS	20
 #endif
 #ifndef PLIPMXRETRY
 #define PLIPMXRETRY	20	/* Max number of retransmits */
@@ -148,8 +148,8 @@ struct lpt_softc {
 #if defined(INET) && defined(PLIP)
 	struct	arpcom	sc_arpcom;
 	u_char		*sc_ifbuf;
-	int		sc_iferrs;
-	int		sc_ifretry;
+	int		sc_ifierrs;	/* consecutive input errors */
+	int		sc_ifoerrs;	/* consecutive output errors */
 #if defined(COMPAT_PLIP10)
 	u_char		sc_adrcksum;
 #endif
@@ -680,7 +680,7 @@ plipintr(struct lpt_softc *sc)
 		ether_input(ifp, eh, m);
 	}
 	splx(s);
-	sc->sc_iferrs = 0;
+	sc->sc_ifierrs = 0;
 	ifp->if_ipackets++;
 	i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
 	return;
@@ -688,19 +688,23 @@ plipintr(struct lpt_softc *sc)
 err:
 	i8255->port_b = 0x00;
 
-	ifp->if_ierrors++;
-	sc->sc_iferrs++;
-	if (sc->sc_iferrs > PLIPMXERRS
-	    || (sc->sc_iferrs > 5 && (i8255->port_c & LPC_NBUSY))) {
+	if (sc->sc_ifierrs < PLIPMXERRS) {
+		if (sc->sc_ifierrs > 4 && (i8255->port_c & LPC_NBUSY)) {
+			/* Avoid interrupt nesting ... */
+			sc->sc_ifierrs = PLIPMXERRS - 1;
+		}
+		i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
+	} else {
 		/* We are not able to send receive anything for now,
 		 * so stop wasting our time and leave the interrupt
 		 * disabled.
 		 */
-		if (sc->sc_iferrs == PLIPMXERRS + 1)
+		if (sc->sc_ifierrs == PLIPMXERRS)
 			log(LOG_NOTICE, "plip%d: rx hard error\n", ifp->if_unit);
 		i8255->port_a |= LPA_ACTIVE;
-	} else
-		i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
+	}
+	ifp->if_ierrors++;
+	sc->sc_ifierrs++;
 	return;
 }
 
@@ -742,7 +746,7 @@ plipstart(struct ifnet *ifp)
 		return;
 	ifp->if_flags |= IFF_OACTIVE;
 
-	if (sc->sc_ifretry)
+	if (sc->sc_ifoerrs)
 		untimeout((void (*)(void *))plipstart, ifp);
 
 	i8255->port_a &= ~LPA_ACTIVE;
@@ -795,7 +799,7 @@ plipstart(struct ifnet *ifp)
 
 		ifp->if_opackets++;
 		ifp->if_obytes += len + 4;
-		sc->sc_ifretry = 0;
+		sc->sc_ifoerrs = 0;
 		s = splimp();
 		m_freem(m0);
 		splx(s);
@@ -811,24 +815,23 @@ retry:
 	else
 		ifp->if_oerrors++;
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == (IFF_RUNNING | IFF_UP)
-	    && sc->sc_ifretry < PLIPMXRETRY) {
-		sc->sc_ifretry++;
+	    && sc->sc_ifoerrs < PLIPMXRETRY) {
 		s = splimp();
 		IF_PREPEND(&ifp->if_snd, m0);
 		splx(s);
 		timeout((void (*)(void *))plipstart, ifp, PLIPRETRY);
 	} else {
-		if (sc->sc_ifretry == PLIPMXRETRY) {
-			sc->sc_ifretry++;
+		if (sc->sc_ifoerrs == PLIPMXRETRY) {
 			log(LOG_NOTICE, "plip%d: tx hard error\n", ifp->if_unit);
 		}
 		s = splimp();
 		m_freem(m0);
 		splx(s);
 	}
+	sc->sc_ifoerrs++;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	i8255->port_b = 0x00;
-	if (sc->sc_iferrs > PLIPMXERRS)
+	if (sc->sc_ifierrs >= PLIPMXERRS)
 		i8255->port_a |= LPA_ACTIVE;
 	else
 		i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;

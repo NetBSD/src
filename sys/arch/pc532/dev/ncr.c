@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.14 1995/06/18 07:18:02 phil Exp $  */
+/*	$NetBSD: ncr.c,v 1.15 1995/06/26 23:15:38 phil Exp $  */
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -352,7 +352,7 @@ void		*auxp;
 	intr_disable(IR_SCSI1);
 	i = intr_establish(SOFTINT, run_main, NULL, "softncr", IPL_BIO, 0);
 	intr_establish(IR_SCSI1, ncr_intr, (void *)i, "ncr", IPL_BIO, RAISING_EDGE);
-	printf("\n");
+	printf(" addr 0x%x, irq %d\n", SCSI_5380, IR_SCSI1);
 
 	/*
 	 * attach all scsi units on us
@@ -1857,13 +1857,14 @@ scsi_show()
 #define TIMEOUT	100000
 #define READY(dataout) \
 	i = TIMEOUT; \
-	while ((SCSI_5380->scsi_dmstat & (SC_DMA_REQ|SC_PHS_MTCH)) \
-	       != (SC_DMA_REQ|SC_PHS_MTCH)) \
+	while (/* (SCSI_5380->scsi_dmstat & (SC_DMA_REQ|SC_PHS_MTCH)) != (SC_DMA_REQ|SC_PHS_MTCH) || \
+	       (SCSI_5380->scsi_dmstat & (SC_DMA_REQ|SC_PHS_MTCH)) != (SC_DMA_REQ|SC_PHS_MTCH) || */ \
+	       (SCSI_5380->scsi_dmstat & (SC_DMA_REQ|SC_PHS_MTCH)) != (SC_DMA_REQ|SC_PHS_MTCH)) \
 		if (   !(SCSI_5380->scsi_dmstat & SC_PHS_MTCH) \
 		    || !(SCSI_5380->scsi_idstat & SC_S_BSY) \
 		    || (i-- < 0) ) { \
-			if (i < 0) printf("ncr.c: timeout counter = %d, len = %d count=%d (count-len %d).\n", \
-				i, len, *count, *count - len); \
+			if (i < 0 || ((*count - len) & 0x1ff)) printf("ncr0: timeout counter = %d, len = %d, count=%d, I/O = %c\n", \
+				i, len, *count, *count - len, dataout ? 'O' : 'I'); \
 			if (dataout) { \
 				SCSI_5380->scsi_icom &= ~SC_ADTB; \
 			} \
@@ -1891,11 +1892,13 @@ scsi_show()
 #define byte_data ((volatile u_char *)pdma)
 #define word_data ((volatile u_short *)pdma)
 #define long_data ((volatile u_long *)pdma)
+
 #define W1(n)	*byte_data = *(data + n)
 #define W2(n)	*word_data = *((u_short *)data + n)
 #define W4(n)	*long_data = *((u_long *)data + n)
-#define R1(n)	*data = *(byte_data + n)
+#define R1(n)	*(data + n) = *byte_data
 #define R4(n)	*((u_long *)data + n) = *long_data
+#define BURST	8
 
 static void
 transfer_pdma(u_char *phase, u_char *data, u_long *count)
@@ -1913,32 +1916,36 @@ transfer_pdma(u_char *phase, u_char *data, u_long *count)
 		SCSI_5380->scsi_icom = 0;
 		SCSI_5380->scsi_mode = IMODE_BASE | SC_M_DMA;
 		SCSI_5380->scsi_ircv = 0;
-		while (len >= 64) {
+		while (len >= 64 * BURST) {
+			delay(10);
 			READY(0);
+#if (BURST != 1)
+			i = BURST;
 			di();
-			R4( 0); R4( 1); R4( 2); R4( 3);
-			R4( 4); R4( 5); R4( 6); R4( 7);
-			R4( 8); R4( 9); R4(10); R4(11);
-			R4(12); R4(13); R4(14); R4(15);
+			do {
+#endif
+				R4( 0); R4( 1); R4( 2); R4( 3);
+				R4( 4); R4( 5); R4( 6); R4( 7);
+				R4( 8); R4( 9); R4(10); R4(11);
+				R4(12); R4(13); R4(14); R4(15);
+				data += 64;
+#if (BURST != 1)
+			} while (--i != 0);
+#endif
 			ei();
-			data += 64;
-			len  -= 64;
+			len -= 64 * BURST;
 		}
-		if (len) {
-			di();
-			while (len) {
-				READY(0);
-				R1(0);
-				data++;
-				len--;
-			}
-			ei();
+		while (len) {
+			READY(0);
+			R1(0);
+			data++;
+			len--;
 		}
 	} else {
 		SCSI_5380->scsi_mode = IMODE_BASE | SC_M_DMA;
 		SCSI_5380->scsi_icom = SC_ADTB;
 		SCSI_5380->scsi_dmstat = SC_S_SEND;
-		while (len >= 64) {
+		while (len >= 64 * BURST) {
 			/* The second ready is to
 			 * compensate for DMA-prefetch.
 			 * Since we adjust len only at
@@ -1946,27 +1953,32 @@ transfer_pdma(u_char *phase, u_char *data, u_long *count)
 			 * is no need to correct the
 			 * residue.
 			 */
-			READY(1);
-			di();
-			W1(0); READY(1); W1(1);
-			W2( 1); W4( 1); W4( 2); W4( 3);
-			W4( 4); W4( 5); W4( 6); W4( 7);
-			W4( 8); W4( 9); W4(10); W4(11);
-			W4(12); W4(13); W4(14); W4(15);
-			ei();
-			data += 64;
-			len  -= 64;
+			READY(1); W1(0); READY(1); W1(1); W2(1);
+#if (BURST != 1)
+			i = BURST;
+			goto skip0;
+			do {
+#endif
+				W4( 0);
+			skip0:
+					W4( 1); W4( 2); W4( 3);
+				W4( 4); W4( 5); W4( 6); W4( 7);
+				W4( 8); W4( 9); W4(10); W4(11);
+				W4(12); W4(13); W4(14); W4(15);
+				data += 64;
+#if (BURST != 1)
+			} while (--i != 0);
+#endif
+			len  -= 64 * BURST;
 		}
 		if (len) {
 			READY(1);
-			di();
 			while (len) {
 				W1(0);
 				READY(1);
 				data++;
 				len--;
 			}
-			ei();
 		}
 		i = TIMEOUT;
 		while (((SCSI_5380->scsi_dmstat & (SC_DMA_REQ|SC_PHS_MTCH))
