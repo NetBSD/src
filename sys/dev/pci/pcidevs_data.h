@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.25 2003/09/10 19:17:13 grant Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.26 2003/10/20 04:49:35 cyber Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.29 2003/09/10 19:15:02 grant Exp 
+ *	NetBSD
  */
 
 /*
@@ -4262,6 +4262,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82865 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82865_IGD,
+	    0,
+	    "Intel",
+	    "82865G Integrated Graphics Device",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_HPB,
