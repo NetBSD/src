@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.53 1998/09/30 21:52:24 tls Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.54 1998/10/05 14:33:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -183,7 +183,7 @@ in_pcbbind(v, nam, p)
 	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
 	    ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
 	     (so->so_options & SO_ACCEPTCONN) == 0))
-		wild = INPLOOKUP_WILDCARD;
+		wild = 1;
 	if (nam == 0)
 		goto noname;
 	sin = mtod(nam, struct sockaddr_in *);
@@ -259,7 +259,7 @@ noname:
 			if (lport < min || lport > max)
 				lport = max;
 			if (!in_pcblookup_port(table, inp->inp_laddr,
-			    htons(lport), wild))
+			    htons(lport), 1))
 				goto found;
 		}
 		if (!in_nullhost(inp->inp_laddr))
@@ -609,11 +609,11 @@ in_rtchange(inp, errno)
 }
 
 struct inpcb *
-in_pcblookup_port(table, laddr, lport_arg, flags)
+in_pcblookup_port(table, laddr, lport_arg, lookup_wildcard)
 	struct inpcbtable *table;
 	struct in_addr laddr;
 	u_int lport_arg;
-	int flags;
+	int lookup_wildcard;
 {
 	register struct inpcb *inp, *match = 0;
 	int matchwild = 3, wildcard;
@@ -638,7 +638,7 @@ in_pcblookup_port(table, laddr, lport_arg, flags)
 					continue;
 			}
 		}
-		if (wildcard && (flags & INPLOOKUP_WILDCARD) == 0)
+		if (wildcard && !lookup_wildcard)
 			continue;
 		if (wildcard < matchwild) {
 			match = inp;
