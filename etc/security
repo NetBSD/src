@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.40 1999/09/05 15:11:42 perry Exp $
+#	$NetBSD: security,v 1.41 2000/01/15 01:15:12 christos Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -328,7 +328,7 @@ if checkyesno check_rhosts; then
 
 	while read uid homedir; do
 		if [ -f ${homedir}/.rhosts -a -r ${homedir}/.rhosts ] && \
-		    egrep '\+' ${homedir}/.rhosts > /dev/null ; then
+		    cat -f ${homedir}/.rhosts | egrep '\+' > /dev/null ; then
 			printf "$uid: + in .rhosts file.\n"
 		fi
 	done < $MPBYPATH > $OUTPUT
