@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative,v 1.5 2002/02/27 16:45:11 tv Exp $
+#	$NetBSD: mknative,v 1.6 2002/02/27 17:02:04 tv Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -120,13 +120,11 @@ get_libgcc () {
 ##### gnu/lib/libiberty #####
 
 get_libiberty () {
-	mkdir -p $_TOP/gnu/lib/libiberty/arch/$MACHINE_ARCH
-
 	getvars libiberty/Makefile \
 		ALLOCA EXTRA_OFILES LIBOBJS REQUIRED_OFILES \
-		| write_mk gnu/lib/libiberty/arch/$MACHINE_ARCH/defs.mk
+		| write_mk gnu/lib/libiberty/defs.mk
 
-	write_c gnu/lib/libiberty/arch/$MACHINE_ARCH/config.h \
+	write_c gnu/lib/libiberty/config.h \
 		<$_TMPDIR/libiberty/config.h
 }
 
