@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.215 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.216 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -8,15 +8,9 @@ containing just the word `help' to `majordomo@NetBSD.org'.]
 
 
 Changes from NetBSD 1.6 to NetBSD 2.0:
-	netinet: change port allocation from linked list to a hash table
-		for better performance. [provos 20031023]
-	i386: pmap changed from linked list to splay tree for
-		better performance.  [provos 20031022]
 	libcrypt: support bcrypt password entries.  can be chosen with
 		"blowfish" keyword in passwd.conf.  from openbsd
 		[itojun 20020524]
-	evbarm: Add support for the NOVATEC NTNP425B eval board for
-		the Intel IXP425 Network Processor.  [ichiro 20030523]
 	tcp(4): implement path MTU discovery blackhole detection (turn off path
 		MTU discovery if the connection is losing).  PR 12790.
 		[itojun 20020526]
@@ -404,6 +398,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		Add '-U chr' to specify strunvis(3) decoding of keys/values
 		when writing a database or deleting entries from a database.
 		[seb 20030519]
+	evbarm: Add support for the NOVATEC NTNP425B eval board for
+		the Intel IXP425 Network Processor.  [ichiro 20030523]
 	file(1): update to 4.03. [pooka 20030525]
 	sendmail(8): update to 8.12.9.  [atatat 20030601]
 	named(8): Upgrade to BIND 8.3.5. [itojun 20030603]
@@ -512,3 +508,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	GCC: Update to GCC 3.3.2.  [mrg 20031018]
 	hpcsh: Added j6x0tp(4) driver for Jornada 680/690 touch screen.
 		[uwe 20031019]
+	i386: pmap changed from linked list to splay tree for
+		better performance.  [provos 20031022]
+	netinet: change port allocation from linked list to a hash table
+		for better performance. [provos 20031023]
