@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.55 2000/07/07 05:30:58 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.56 2001/02/28 02:30:31 itojun Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -46,7 +46,7 @@ MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
 MLINKS+=ethers.3 ether_aton.3 ethers.3 ether_hostton.3 ethers.3 ether_line.3 \
 	ethers.3 ether_ntoa.3 ethers.3 ether_ntohost.3
 MLINKS+=gethostbyname.3 endhostent.3 gethostbyname.3 gethostbyaddr.3 \
-	gethostbyname.3 sethostent.3 gethostbyname.3 gethostent.3 \
+	gethostbyname.3 sethostent.3 \
 	gethostbyname.3 herror.3 gethostbyname.3 hstrerror.3 \
 	gethostbyname.3 gethostbyname2.3
 MLINKS+=getnetent.3 endnetent.3 getnetent.3 getnetbyaddr.3 \
