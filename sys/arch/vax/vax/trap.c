@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.89 2003/11/01 01:38:47 cl Exp $     */
+/*	$NetBSD: trap.c,v 1.90 2003/11/06 00:35:23 he Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.89 2003/11/01 01:38:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.90 2003/11/06 00:35:23 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -170,7 +170,7 @@ trap(struct trapframe *frame)
 	u_int	sig = 0, type = frame->trap, trapsig = 1, code = 0;
 	u_int	rv, addr, umode;
 	struct	lwp *l;
-	struct	proc *p;
+	struct	proc *p = NULL;
 	u_quad_t oticks = 0;
 	struct vmspace *vm;
 	struct vm_map *map;
