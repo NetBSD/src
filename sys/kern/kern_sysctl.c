@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.73 2000/06/16 00:57:04 simonb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.73.2.1 2000/07/14 18:10:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -68,7 +68,9 @@
 #include <sys/tty.h>
 #include <sys/unistd.h>
 #include <sys/vnode.h>
+#define	__SYSCTL_PRIVATE
 #include <sys/sysctl.h>
+#include <sys/lock.h>
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 #include <sys/ipc.h>
@@ -89,15 +91,6 @@
 
 #define PTRTOINT64(foo)	((u_int64_t)(uintptr_t)(foo))
 
-/*
- * Locking and stats
- */
-static struct sysctl_lock {
-	int	sl_lock;
-	int	sl_want;
-	int	sl_locked;
-} memlock;
-
 static int sysctl_file __P((void *, size_t *));
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 static int sysctl_sysvipc __P((int *, u_int, void *, size_t *));
@@ -106,6 +99,21 @@ static int sysctl_msgbuf __P((void *, size_t *));
 static int sysctl_doeproc __P((int *, u_int, void *, size_t *));
 static void fill_kproc2 __P((struct proc *, struct kinfo_proc2 *));
 static int sysctl_procargs __P((int *, u_int, void *, size_t *, struct proc *));
+
+/*
+ * The `sysctl_memlock' is intended to keep too many processes from
+ * locking down memory by doing sysctls at once.  Whether or not this
+ * is really a good idea to worry about it probably a subject of some
+ * debate.
+ */
+struct lock sysctl_memlock;
+
+void
+sysctl_init(void)
+{
+
+	lockinit(&sysctl_memlock, PRIBIO|PCATCH, "sysctl", 0, 0);
+}
 
 int
 sys___sysctl(p, v, retval)
@@ -121,7 +129,7 @@ sys___sysctl(p, v, retval)
 		syscallarg(void *) new;
 		syscallarg(size_t) newlen;
 	} */ *uap = v;
-	int error, dolock = 1;
+	int error;
 	size_t savelen = 0, oldlen = 0;
 	sysctlfn *fn;
 	int name[CTL_MAXNAME];
@@ -149,8 +157,6 @@ sys___sysctl(p, v, retval)
 	switch (name[0]) {
 	case CTL_KERN:
 		fn = kern_sysctl;
-		if (name[2] != KERN_VNODE)	/* XXX */
-			dolock = 0;
 		break;
 	case CTL_HW:
 		fn = hw_sysctl;
@@ -184,6 +190,10 @@ sys___sysctl(p, v, retval)
 		return (EOPNOTSUPP);
 	}
 
+	/*
+	 * XXX Hey, we wire `old', but what about `new'?
+	 */
+
 	oldlenp = SCARG(uap, oldlenp);
 	if (oldlenp) {
 		if ((error = copyin(oldlenp, &oldlen, sizeof(oldlen))))
@@ -191,41 +201,21 @@ sys___sysctl(p, v, retval)
 		oldlenp = &oldlen;
 	}
 	if (SCARG(uap, old) != NULL) {
-		if (!uvm_useracc(SCARG(uap, old), oldlen, B_WRITE))
+		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
+		if (error)
+			return (error);
+		if (uvm_vslock(p, SCARG(uap, old), oldlen,
+		    VM_PROT_READ|VM_PROT_WRITE) != KERN_SUCCESS) {
+			(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
 			return (EFAULT);
-		while (memlock.sl_lock) {
-			memlock.sl_want = 1;
-			(void) tsleep(&memlock, PRIBIO+1, "memlock", 0);
-			memlock.sl_locked++;
-		}
-		memlock.sl_lock = 1;
-		if (dolock) {
-			/*
-			 * XXX Um, this is kind of evil.  What should we
-			 * XXX be passing here?
-			 */
-			if (uvm_vslock(p, SCARG(uap, old), oldlen,
-			    VM_PROT_NONE) != KERN_SUCCESS) {
-				memlock.sl_lock = 0;
-				if (memlock.sl_want) {
-					memlock.sl_want = 0;
-					wakeup((caddr_t)&memlock);
-					return (EFAULT);
-				}
-			}
 		}
 		savelen = oldlen;
 	}
 	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, SCARG(uap, old),
 	    oldlenp, SCARG(uap, new), SCARG(uap, newlen), p);
 	if (SCARG(uap, old) != NULL) {
-		if (dolock)
-			uvm_vsunlock(p, SCARG(uap, old), savelen);
-		memlock.sl_lock = 0;
-		if (memlock.sl_want) {
-			memlock.sl_want = 0;
-			wakeup((caddr_t)&memlock);
-		}
+		uvm_vsunlock(p, SCARG(uap, old), savelen);
+		(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
 	}
 	if (error)
 		return (error);
@@ -239,21 +229,24 @@ sys___sysctl(p, v, retval)
  */
 char hostname[MAXHOSTNAMELEN];
 int hostnamelen;
+
 char domainname[MAXHOSTNAMELEN];
 int domainnamelen;
+
 long hostid;
+
 #ifdef INSECURE
 int securelevel = -1;
 #else
 int securelevel = 0;
 #endif
-#ifdef DEFCORENAME
+
+#ifndef DEFCORENAME
+#define	DEFCORENAME	"%n.core"
+#endif
 char defcorename[MAXPATHLEN] = DEFCORENAME;
 int defcorenamelen = sizeof(DEFCORENAME);
-#else
-char defcorename[MAXPATHLEN] = "%n.core";
-int defcorenamelen = sizeof("%n.core");
-#endif
+
 extern	int	kern_logsigexit;
 extern	fixpt_t	ccpu;
 
@@ -295,7 +288,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_OSRELEASE:
 		return (sysctl_rdstring(oldp, oldlenp, newp, osrelease));
 	case KERN_OSREV:
-		return (sysctl_rdint(oldp, oldlenp, newp, NetBSD));
+		return (sysctl_rdint(oldp, oldlenp, newp, __NetBSD_Version__));
 	case KERN_VERSION:
 		return (sysctl_rdstring(oldp, oldlenp, newp, version));
 	case KERN_MAXVNODES:
@@ -880,7 +873,7 @@ sysctl_rdstring(oldp, oldlenp, newp, str)
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
-	char *str;
+	const char *str;
 {
 	int len, error = 0, err2 = 0;
 
@@ -922,7 +915,8 @@ int
 sysctl_rdstruct(oldp, oldlenp, newp, sp, len)
 	void *oldp;
 	size_t *oldlenp;
-	void *newp, *sp;
+	void *newp;
+	const void *sp;
 	int len;
 {
 	int error = 0;
