@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.100 2000/11/10 01:03:29 hubertf Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.101 2000/11/21 00:25:43 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.101 2000/11/10 01:02:32 hubertf Exp 
+ *	NetBSD: pcmciadevs,v 1.102 2000/11/21 00:25:35 soren Exp 
  */
 
 /*-
@@ -290,8 +290,8 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "SkyLINE Wireless"	},
 	},
 	{
-	    PCMCIA_VENDOR_LEXARMEDIA, PCMCIA_PRODUCT_LEXARMEDIA_COMPATFLASH,
-	    PCMCIA_CIS_LEXARMEDIA_COMPATFLASH,
+	    PCMCIA_VENDOR_LEXARMEDIA, PCMCIA_PRODUCT_LEXARMEDIA_COMPACTFLASH,
+	    PCMCIA_CIS_LEXARMEDIA_COMPACTFLASH,
 	    0,
 	    "Lexar Media",
 	    "Lexar Media CompactFlash"	},
