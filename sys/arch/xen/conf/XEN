@@ -1,4 +1,4 @@
-# $NetBSD: XEN,v 1.8 2004/04/24 21:45:58 cl Exp $
+# $NetBSD: XEN,v 1.9 2004/04/26 19:44:54 cl Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -136,12 +136,14 @@ wd*		at hypervisor?		# Xen vbd (wd identity)
 sd*		at hypervisor?		# Xen vbd (sd identity)
 cd*		at hypervisor?		# Xen vbd (cd identity)
 
-xenkbc* 	at hypervisor?		# Xen keyboard/mouse interface
+xenkbc* 	at hypervisor?		# Xen Keyboard/Mouse Interface
 pckbd*		at xenkbc?		# Keyboard
 vga*		at hypervisor?		# Xen VGA display
+pms*		at xenkbc?		# PS/2 Mouse for wsmouse
 
 wskbd*		at pckbd? console ?
 wsdisplay*	at vga? console ?
+wsmouse*	at pms? mux 0
 
 
 include	"arch/xen/conf/GENERIC.local"
