@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 1999/04/01 20:40:07 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.3 1999/06/30 18:33:33 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -55,7 +55,7 @@ int	devtype, bootdev, howto, debug;
 extern	unsigned opendev;
 extern  unsigned *bootregs;
 
-void	usage(), boot();
+void	usage(), boot(), halt();
 
 struct vals {
 	char	*namn;
@@ -64,7 +64,8 @@ struct vals {
 } val[] = {
 	{"?", usage, "Show this help menu"},
 	{"help", usage, "Same as '?'"},
-	{"boot", exec, "load and execute file"},
+	{"boot", boot, "Load and execute file"},
+	{"halt", halt, "Halts the system"},
 	{0, 0},
 };
 
@@ -79,7 +80,7 @@ char *filer[] = {
 Xmain()
 {
 	int io, type, sluttid, askname, filindex = 0;
-	volatile int i, j;
+	int j, senast = 0, nu;
 
 	io=0;
 	autoconf();
@@ -89,9 +90,12 @@ Xmain()
 	printf(">> Press any key to abort autoboot  ");
 	sluttid = getsecs() + 5;
 	for (;;) {
-		printf("%c%d", 8, sluttid - getsecs());
-		if (sluttid <= getsecs())
+		nu = sluttid - getsecs();
+		if (senast != nu)
+			printf("%c%d", 8, nu);
+		if (nu <= 0)
 			break;
+		senast = nu;
 		if ((j = (testkey() & 0177))) {
 			if (j != 10 && j != 13) {
 				printf("\nPress '?' for help");
@@ -99,8 +103,6 @@ Xmain()
 			}
 			break;
 		}
-		for (i = 10000;i; i--)/* Don't read the timer chip too often */
-			;
 	}
 	printf("\n");
 
@@ -123,62 +125,75 @@ Xmain()
 		struct vals *v = &val[0];
 		char *c, *d;
 
-start:		printf("> ");
+		printf("> ");
 		gets(line);
-		if (line[0] == 0)
+
+		c = line;
+		while (*c == ' ')
+			c++;
+
+		if (c[0] == 0)
 			continue;
 
-		if ((c = index(line, ' '))) {
-			*c++ = 0;
-			while (*c == ' ')
-				c++;
-		}
+		if ((d = index(c, ' ')))
+			*d++ = 0;
 
-		/* If *c != '-' then it is a filename */
-		if (c) {
-			if (*c == '-') {
-				d = c;
-				c = filer[0];
-			} else {
-				d = index(c, ' ');
-				if (d) {
-					*d++ = 0;
-					if (*d != '-')
-						goto fail;
-				}
-			}
-
-			while (*++d) {
-				if (*d == 'a')
-					howto |= RB_ASKNAME;
-				else if (*d == 'd')
-					howto |= RB_KDB;
-				else if (*d == 's')
-					howto |= RB_SINGLE;
-#ifdef notyet
-				else if (*d == 'r')
-					rawread++;
-#endif
-				else {
-fail:				printf("usage: boot [filename] [-asd]\n");
-					goto start;
-				}
-			}
-		} else
-			c = filer[0];
 		while (v->namn) {
-			if (strcmp(v->namn, line) == 0)
+			if (strcmp(v->namn, c) == 0)
 				break;
 			v++;
 		}
-		errno = 0;
 		if (v->namn)
-			(*v->func)(c, 0, 0);
+			(*v->func)(d);
 		else
-			printf("Unknown command: %s %s\n", line, (c ? c : ""));
-		if (errno)
-			printf("Command failed: %s\n", strerror(errno));
+			printf("Unknown command: %s\n", c);
+			
 	}
+}
+
+void
+halt()
+{
+	asm("halt");
+}
+
+void
+boot(arg)
+	char *arg;
+{
+	char *fn = "netbsd";
+
+	if (arg) {
+		while (*arg == ' ')
+			arg++;
+
+		if (*arg != '-') {
+			fn = arg;
+			if ((arg = index(arg, ' '))) {
+				*arg++ = 0;
+				while (*arg == ' ')
+					arg++;
+			} else
+				goto load;
+		}
+		if (*arg != '-') {
+fail:			printf("usage: boot [filename] [-asd]\n");
+			return;
+		}
+
+		while (*++arg) {
+			if (*arg == 'a')
+				howto |= RB_ASKNAME;
+			else if (*arg == 'd')
+				howto |= RB_KDB;
+			else if (*arg == 's')
+				howto |= RB_SINGLE;
+			else
+				goto fail;
+		}
+	}
+load:	exec(fn, 0, 0);
+	printf("Boot failed: %s\n", strerror(errno));
 }
 
 /* 750 Patchable Control Store magic */
