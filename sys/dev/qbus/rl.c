@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.11.2.1 2002/05/16 11:50:41 gehenna Exp $	*/
+/*	$NetBSD: rl.c,v 1.11.2.2 2002/06/07 04:43:12 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.11.2.1 2002/05/16 11:50:41 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.11.2.2 2002/06/07 04:43:12 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -304,6 +304,7 @@ rlopen(dev_t dev, int flag, int fmt, struct proc *p)
 	dl = rc->rc_disk.dk_label;
 	if (rc->rc_state == DK_CLOSED) {
 		u_int16_t mp;
+		int maj;
 		RL_WREG(RL_CS, RLCS_RHDR|(rc->rc_hwid << RLCS_USHFT));
 		waitcrdy(sc);
 		mp = RL_RREG(RL_MP);
