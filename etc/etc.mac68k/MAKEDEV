@@ -20,11 +20,11 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.61 2002/06/17 16:21:09 christos Exp $
+#	$NetBSD: MAKEDEV,v 1.62 2002/06/18 13:40:21 wiz Exp $
 #
 ###########################################################################
 #
-#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   PLEASE RUN "cd ../share/man/man8 ; make makedevs"
 #   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
 #
 ###########################################################################

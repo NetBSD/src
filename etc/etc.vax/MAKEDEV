@@ -1,11 +1,11 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.49 2002/06/17 16:21:15 christos Exp $
+#	$NetBSD: MAKEDEV,v 1.50 2002/06/18 13:40:33 wiz Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 ###########################################################################
 #
-#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   PLEASE RUN "cd ../share/man/man8 ; make makedevs"
 #   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
 #
 ###########################################################################
