@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.23 2002/03/25 03:46:01 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.24 2002/04/24 05:31:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		t->pt_blockedlwp = sas[1]->sa_id;
 		if (t->pt_cancel)
 			_lwp_wakeup(t->pt_blockedlwp);
+		t->pt_uc = sas[1]->sa_context;
 		first++; /* Don't handle this SA in the usual processing. */
 		PTHREADD_ADD(PTHREADD_UP_BLOCK);
 		break;
@@ -179,6 +180,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	 */
 
 	next = pthread__next(self);
+	next->pt_state = PT_STATE_RUNNING;
 	SDPRINTF(("(up %p) switching to %p (uc: %p pc: %lx)\n", 
 	    self, next, next->pt_uc, pthread__uc_pc(next->pt_uc)));
 	pthread__upcall_switch(self, next);
@@ -552,7 +554,7 @@ pthread__sa_recycle(pthread_t old, pthread_t new)
 void
 pthread__sa_start(void)
 {
-	pthread_t t;
+	pthread_t self, t;
 	stack_t upcall_stacks[PT_UPCALLSTACKS];
 	int ret, i, errnosave;
 
@@ -560,11 +562,12 @@ pthread__sa_start(void)
 	if (ret)
 		err(1, "sa_register failed");
 
+	self = pthread__self();
 	for (i = 0; i < PT_UPCALLSTACKS; i++) {
 		if (0 != (ret = pthread__stackalloc(&t)))
 			err(1, "Could not allocate upcall stack!");
 		upcall_stacks[i] = t->pt_stack;	
-		pthread__initthread(t);
+		pthread__initthread(self, t);
 		t->pt_type = PT_THREAD_UPCALL;
 		t->pt_flags = PT_FLAG_DETACHED;
 		sigfillset(&t->pt_sigmask); /* XXX hmmmmmm */
