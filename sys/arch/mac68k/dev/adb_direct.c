@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.20 1999/02/11 06:41:07 ender Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.21 1999/03/18 09:10:19 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -652,7 +652,7 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 						 * data, if any */
 			adbOutputBuffer[2 + i] = buffer[i];
 	} else
-		for (i = 0; i <= (adbOutputBuffer[0] + 1); i++)
+		for (i = 0; i <= (in[0] + 1); i++)
 			adbOutputBuffer[i] = in[i];
 
 	adbSentChars = 0;	/* nothing sent yet */
