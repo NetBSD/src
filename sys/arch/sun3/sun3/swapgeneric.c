@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.16 1996/10/11 00:47:28 christos Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.17 1996/10/13 03:47:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -55,7 +55,7 @@
 static int
 no_mountroot()
 {
-	kprintf("swapgeneric: configuration error!\n");
+	printf("swapgeneric: configuration error!\n");
 	boot(RB_HALT, NULL);
 }
 
@@ -152,13 +152,13 @@ static void gc_print_all()
 
 	gc = genconf;
 	for (;;) {
-		kprintf("%s", gc->gc_name);
+		printf("%s", gc->gc_name);
 		gc++;
 		if (gc->gc_major == 0)
 			break;
-		kprintf(", ");
+		printf(", ");
 	}
-	kprintf("\n");
+	printf("\n");
 }
 	
 
@@ -296,7 +296,7 @@ static void ds_query(ds, what)
 
 	for (;;) {
 		len = ds_tostr(ds, buf);
-		kprintf("%s device? [%s] ", what, buf);
+		printf("%s device? [%s] ", what, buf);
 
 		gets(buf);
 		if (buf[0] == '\0')
@@ -306,7 +306,7 @@ static void ds_query(ds, what)
 		if (len > 2)
 			break;
 
-		kprintf("Invalid name.  Use one of: ");
+		printf("Invalid name.  Use one of: ");
 		gc_print_all();
 	}
 }
@@ -342,7 +342,7 @@ swapgeneric()
 		ds_query(&ds, "root");
 	else {
 		ds_tostr(&ds, buf);
-		kprintf("root on %s\n", buf);
+		printf("root on %s\n", buf);
 	}
 	rootdev = ds_todev(&ds);
 
@@ -368,7 +368,7 @@ swapgeneric()
 		ds_query(&ds, "swap");
 	else {
 		ds_tostr(&ds, buf);
-		kprintf("swap on %s\n", buf);
+		printf("swap on %s\n", buf);
 	}
 	swdevt[0].sw_dev = ds_todev(&ds);
 
@@ -379,7 +379,7 @@ swapgeneric()
 		ds_query(&ds, "dump");
 	else {
 		ds_tostr(&ds, buf);
-		kprintf("dump on %s\n", buf);
+		printf("dump on %s\n", buf);
 	}
 	dumpdev = ds_todev(&ds);
 }
@@ -407,7 +407,7 @@ gets(cp)
 		case '\177':
 			if (lp > cp) {
 				lp--;
-				kprintf("\b \b");
+				printf("\b \b");
 			}
 			continue;
 

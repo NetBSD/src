@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.2 1996/10/11 00:47:15 christos Exp $	*/
+/*	$NetBSD: intreg.c,v 1.3 1996/10/13 03:47:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -117,7 +117,7 @@ intreg_attach(parent, self, args)
 	struct intreg_softc *sc = (void *)self;
 	struct cfdata *cf = self->dv_cfdata;
 
-	kprintf("\n");
+	printf("\n");
 
 	sc->sc_reg = interrupt_reg;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.59 1996/10/11 00:47:29 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.60 1996/10/13 03:47:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -227,7 +227,7 @@ trap(type, code, v, frame)
 	switch (type) {
 	default:
 	dopanic:
-		kprintf("trap type=0x%x, code=0x%x, v=0x%x\n", type, code, v);
+		printf("trap type=0x%x, code=0x%x, v=0x%x\n", type, code, v);
 		/*
 		 * Let the kernel debugger see the trap frame that
 		 * caused us to panic.  This is a convenience so
@@ -245,7 +245,7 @@ trap(type, code, v, frame)
 	kgdb_cont:
 		splx(sig);
 		if (panicstr) {
-			kprintf("trap during panic!\n");
+			printf("trap during panic!\n");
 			sun3_mon_abort();
 		}
 		regdump(&frame, 128);
@@ -284,7 +284,7 @@ trap(type, code, v, frame)
 		 * The user has most likely trashed the RTE or FP state info
 		 * in the stack frame of a signal handler.
 		 */
-		kprintf("pid %d: kernel %s exception\n", p->p_pid,
+		printf("pid %d: kernel %s exception\n", p->p_pid,
 		       type==T_COPERR ? "coprocessor" : "format");
 		type |= T_USER;
 		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
@@ -404,7 +404,7 @@ trap(type, code, v, frame)
 		{
 #ifdef	DEBUG
 			if (mmudebug & MDB_CPFAULT) {
-				kprintf("trap: copyfault fu/su bail\n");
+				printf("trap: copyfault fu/su bail\n");
 				Debugger();
 			}
 #endif
@@ -422,7 +422,7 @@ trap(type, code, v, frame)
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
-		kprintf("trap: T_MMUFLT pid=%d, code=%x, v=%x, pc=%x, sr=%x\n",
+		printf("trap: T_MMUFLT pid=%d, code=%x, v=%x, pc=%x, sr=%x\n",
 		       p->p_pid, code, v, frame.f_pc, frame.f_sr);
 #endif
 
@@ -461,7 +461,7 @@ trap(type, code, v, frame)
 					/* XXX - Can this happen? -gwr */
 #ifdef	DEBUG
 					if (mmudebug & MDB_CPFAULT) {
-						kprintf("trap: copyfault kernel_map va < avail\n");
+						printf("trap: copyfault kernel_map va < avail\n");
 						Debugger();
 					}
 #endif
@@ -479,7 +479,7 @@ trap(type, code, v, frame)
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef	DEBUG
 		if (rv && MDB_ISPID(p->p_pid)) {
-			kprintf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 #ifdef	DDB
 			if (mmudebug & MDB_WBFAILED)
@@ -488,9 +488,9 @@ trap(type, code, v, frame)
 		}
 #endif	/* DEBUG */
 #ifdef VMFAULT_TRACE
-		kprintf("vm_fault(%x, %x, %x, 0) -> %x\n",
+		printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 		       map, va, ftype, rv);
-		kprintf("  type=%x, code=%x, pc=%x\n",
+		printf("  type=%x, code=%x, pc=%x\n",
 		       type, code, ((int *) frame.f_regs)[PC]);
 #endif
 		/*
@@ -518,13 +518,13 @@ trap(type, code, v, frame)
 			if (p->p_addr->u_pcb.pcb_onfault) {
 #ifdef	DEBUG
 				if (mmudebug & MDB_CPFAULT) {
-					kprintf("trap: copyfault pcb_onfault\n");
+					printf("trap: copyfault pcb_onfault\n");
 					Debugger();
 				}
 #endif
 				goto copyfault;
 			}
-			kprintf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 			goto dopanic;
 		}
@@ -736,11 +736,11 @@ nodb_trap(type, fp)
 {
 
 	if ((0 <= type) && (type < trap_types))
-		kprintf("\r\nKernel %s,", trap_type[type]);
+		printf("\r\nKernel %s,", trap_type[type]);
 	else
-		kprintf("\r\nKernel trap 0x%x,", type);
-	kprintf(" frame=0x%x\r\n", fp);
-	kprintf("\r\n*No debugger. Doing PROM abort...\r\n");
+		printf("\r\nKernel trap 0x%x,", type);
+	printf(" frame=0x%x\r\n", fp);
+	printf("\r\n*No debugger. Doing PROM abort...\r\n");
 	sun3_mon_abort();
 	/* OK then, just resume... */
 	fp->f_sr &= ~PSL_T;

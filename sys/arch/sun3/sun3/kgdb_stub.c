@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.4 1996/10/11 00:47:19 christos Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.5 1996/10/13 03:47:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -281,10 +281,10 @@ kgdb_connect(verbose)
 		return;
 	fb_unblank();
 	if (verbose)
-		kprintf("kgdb waiting...");
+		printf("kgdb waiting...");
 	Debugger(); 	/* XXX: trap into kgdb */
 	if (verbose)
-		kprintf("connected.\n");
+		printf("connected.\n");
 }
 
 /*
@@ -431,11 +431,11 @@ kgdb_trap(type, tf)
 		while (GETC() != FRAME_END)
 			continue;
 		/*
-		 * Do the kprintf *before* we ack the message.  This way
+		 * Do the printf *before* we ack the message.  This way
 		 * we won't drop any inbound characters while we're
-		 * doing the polling kprintf.
+		 * doing the polling printf.
 		 */
-		kprintf("kgdb started from device %x\n", kgdb_dev);
+		printf("kgdb started from device %x\n", kgdb_dev);
 		kgdb_send(in | KGDB_ACK, (u_char *)0, 0);
 		kgdb_active = 1;
 	}
@@ -548,7 +548,7 @@ kgdb_trap(type, tf)
 
 		case KGDB_KILL:
 			kgdb_active = 0;
-			kprintf("kgdb detached\n");
+			printf("kgdb detached\n");
 			/* FALLTHROUGH */
 
 		case KGDB_CONT:

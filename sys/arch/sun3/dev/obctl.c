@@ -1,4 +1,4 @@
-/*	$NetBSD: obctl.c,v 1.9 1996/10/11 00:46:45 christos Exp $	*/
+/*	$NetBSD: obctl.c,v 1.10 1996/10/13 03:47:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -72,7 +72,7 @@ obctl_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
-	kprintf("\n");
+	printf("\n");
 
 	/* We know ca_bustype == BUS_OBCTL */
 	(void) config_search(bus_scan, self, args);

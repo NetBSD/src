@@ -1,4 +1,4 @@
-/*	$NetBSD: mon.h,v 1.17 1996/10/11 00:47:06 christos Exp $	*/
+/*	$NetBSD: mon.h,v 1.18 1996/10/13 03:47:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -175,7 +175,7 @@ typedef struct {
 	 * Print formatted output to current output sink 
 	 */
 
-	int		(*kprintf)();		/* Similar to "Kernel kprintf" */
+	int		(*printf)();		/* Similar to "Kernel printf" */
 	int		(*printHex)();		/* Format N digits in hex */
 
 	/*
@@ -285,7 +285,7 @@ typedef struct {
  *
  *	int getNum()
  *
- * kprintf -- Scaled down version of C library kprintf.  Only %d, %x, %s, and %c
+ * printf -- Scaled down version of C library printf.  Only %d, %x, %s, and %c
  * 	     are recognized.
  *
  * printhex -- prints rightmost <digs> hex digits of <val>
@@ -309,7 +309,7 @@ typedef struct {
  * Functions and defines to access the monitor.
  */
 
-#define mon_printf (romVectorPtr->kprintf)
+#define mon_printf (romVectorPtr->printf)
 #define mon_putchar (romVectorPtr->putChar)
 #define mon_may_getchar (romVectorPtr->mayGet)
 #define mon_exit_to_mon (romVectorPtr->exitToMon)

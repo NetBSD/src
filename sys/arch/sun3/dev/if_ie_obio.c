@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.3 1996/10/11 00:46:37 christos Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.4 1996/10/13 03:47:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -88,7 +88,7 @@ ie_obio_match(parent, vcf, args)
 
 #ifdef	DIAGNOSTIC
 	if (ca->ca_bustype != BUS_OBIO) {
-		kprintf("ie_obio_match: bustype %d?\n", ca->ca_bustype);
+		printf("ie_obio_match: bustype %d?\n", ca->ca_bustype);
 		return (0);
 	}
 #endif
@@ -122,7 +122,7 @@ ie_obio_attach(parent, self, args)
 	/* Default interrupt level. */
 	if ((intpri = cf->cf_intpri) == -1)
 		intpri = 3;
-	kprintf(" level %d", intpri);
+	printf(" level %d", intpri);
 
 	sc->hard_type = IE_OBIO;
 	sc->reset_586 = ie_obreset;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.7 1996/10/11 00:47:14 christos Exp $	*/
+/*	$NetBSD: fpu.c,v 1.8 1996/10/13 03:47:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -80,7 +80,7 @@ void initfpu()
 	else
 		descr = "unknown type";
 
-	kprintf("fpu: %s\n", descr);
+	printf("fpu: %s\n", descr);
 
 	if (fpu_type == 0) {
 		/* Might as well turn the enable bit back off. */

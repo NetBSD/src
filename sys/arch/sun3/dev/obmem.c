@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.9 1996/10/11 00:46:48 christos Exp $	*/
+/*	$NetBSD: obmem.c,v 1.10 1996/10/13 03:47:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -72,7 +72,7 @@ obmem_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
-	kprintf("\n");
+	printf("\n");
 
 	/* We know ca_bustype == BUS_OBMEM */
 	(void) config_search(bus_scan, self, args);
