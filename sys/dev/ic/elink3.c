@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.32.4.8 1997/10/14 02:28:27 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.32.4.9 1997/10/14 21:26:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -76,10 +76,6 @@
 #define ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN   1518
 #define ETHER_ADDR_LEN  6
-
-/* XXX workaround for MGET weirdshit */
-#undef MGET
-#define MGET(m, how, type) (m) = m_get((how), (type))
 
 /*
  * Structure to map  media-present bits in boards to 
