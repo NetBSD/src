@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.53 2005/01/02 21:12:48 joff Exp $	*/
+/*	$NetBSD: fault.c,v 1.54 2005/01/07 08:02:16 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.53 2005/01/02 21:12:48 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.54 2005/01/07 08:02:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -850,7 +850,8 @@ prefetch_abort_handler(trapframe_t *tf)
 
 	error = uvm_fault(map, va, 0, VM_PROT_READ);
 
-	if (map != kernel_map) l->l_flag &= ~L_SA_PAGEFAULT;
+	if (map != kernel_map)
+		l->l_flag &= ~L_SA_PAGEFAULT;
 
 	if (__predict_true(error == 0)) {
 		UVMHIST_LOG (maphist, " <- uvm", 0, 0, 0, 0);
