@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.25.2.1 1999/04/12 03:10:06 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.25.2.2 1999/06/23 15:00:57 perry Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.25.2.1 1999/04/12 03:10:06 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.25.2.2 1999/06/23 15:00:57 perry Exp $");
 #endif
 #endif
 
@@ -182,6 +182,8 @@ isURL(char *fname)
 	++fname;
     if (!strncmp(fname, "ftp://", 6))
 	return TRUE;
+    if (!strncmp(fname, "http://", 7))
+	return TRUE;
     return FALSE;
 }
 
@@ -194,7 +196,10 @@ fileURLHost(char *fname, char *where, int max)
     while (isspace((unsigned char)*fname))
 	++fname;
     /* Don't ever call this on a bad URL! */
-    fname += strlen("ftp://");
+    if (!strncmp(fname, "ftp://", 6))
+	fname += strlen("ftp://");
+    else
+	fname += strlen("http://");
     /* Do we have a place to stick our work? */
     if ((ret = where) != NULL) {
 	while (*fname && *fname != '/' && max--)
@@ -219,7 +224,10 @@ fileURLFilename(char *fname, char *where, int max)
     while (isspace((unsigned char)*fname))
 	++fname;
     /* Don't ever call this on a bad URL! */
-    fname += strlen("ftp://");
+    if (!strncmp(fname, "ftp://", 6))
+	fname += strlen("ftp://");
+    else
+	fname += strlen("http://");
     /* Do we have a place to stick our work? */
     if ((ret = where) != NULL) {
 	while (*fname && *fname != '/')
