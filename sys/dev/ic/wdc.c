@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.216 2004/10/30 17:17:21 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.217 2004/10/30 23:10:37 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.216 2004/10/30 17:17:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.217 2004/10/30 23:10:37 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1274,6 +1274,8 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 		ata_c->flags |= AT_POLL;
 	if (ata_c->flags & AT_POLL)
 		xfer->c_flags |= C_POLL;
+	if (ata_c->flags & AT_WAIT)
+		xfer->c_flags |= C_WAIT;
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_c->data;
 	xfer->c_bcount = ata_c->bcount;
@@ -1657,7 +1659,7 @@ static void
 __wdcerror(struct ata_channel *chp, char *msg) 
 {
 	struct atac_softc *atac = chp->ch_atac;
-	struct ata_xfer *xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
+	struct ata_xfer *xfer = chp->ch_queue->active_xfer;
 
 	if (xfer == NULL)
 		printf("%s:%d: %s\n", atac->atac_dev.dv_xname, chp->ch_channel,
