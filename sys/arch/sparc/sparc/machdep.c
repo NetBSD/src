@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.229 2003/07/15 00:05:05 lukem Exp $ */
+/*	$NetBSD: machdep.c,v 1.230 2003/08/02 08:10:44 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.229 2003/07/15 00:05:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.230 2003/08/02 08:10:44 pk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -274,6 +274,19 @@ cpu_startup()
 	/*identifycpu();*/
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
+
+	/*
+	 * Tune buffer cache variables based on the capabilities of the MMU
+	 * to cut down on VM space allocated for the buffer caches that
+	 * would lead to MMU resource shortage.
+	 */
+	if (CPU_ISSUN4C) {
+		/* Clip UBC windows */
+		if (cpuinfo.mmu_nsegment <= 128) {
+			ubc_nwins = 256;
+			/*ubc_winshift = 12; tune this too? */
+		}
+	}
 
 	/*
 	 * Find out how much space we need, allocate it,
