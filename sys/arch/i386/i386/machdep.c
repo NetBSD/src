@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.381 2000/04/21 18:37:20 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.382 2000/05/03 20:02:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -271,7 +271,7 @@ cpu_startup()
 	printf(version);
 	identifycpu();
 
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
 
 	/*
@@ -1710,7 +1710,7 @@ init386(first_avail)
 		       "have %d bytes, want %d bytes\n"
 		       "running in degraded mode\n"
 		       "press a key to confirm\n\n",
-		       ctob(physmem), 2*1024*1024);
+		       ptoa(physmem), 2*1024*1024);
 		cngetc();
 	}
 }
