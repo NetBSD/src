@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.17 1997/10/17 21:30:36 thorpej Exp $
+.\"	$NetBSD: sysctl.3,v 1.18 1997/12/11 23:30:47 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -477,6 +477,7 @@ The currently defined protocols and names are:
 .It tcp	syn_cache_limit	integer	yes
 .It tcp	syn_bucket_limit	integer	yes
 .It tcp	syn_cache_interval	integer	yes
+.It tcp	init_win	integer	yes
 .It udp	checksum	integer	yes
 .It udp	sendspace	integer	yes
 .It udp	recvspace	integer	yes
@@ -521,6 +522,10 @@ Returns the maximum number of entries allowed per hash bucket in the TCP
 compressed state engine.
 .It Li tcp.syn_cache_interval
 Returns the TCP compressed state engine's timer interval.
+.It Li tcp.init_win
+If greater than 0, returns the number of segments used for the inital
+slow start congestion window.  A value of 0 indicates that an experimental
+auto-tuning algorithm is being used to compute the initial window.
 .It Li udp.checksum
 Returns 1 when UDP checksums are being computed and checked.
 Disabling UDP checksums is strongly discouraged.
