@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.18 2004/04/30 02:45:37 christos Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.19 2004/05/03 07:08:46 kochi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.18 2004/04/30 02:45:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.19 2004/05/03 07:08:46 kochi Exp $");
 
 #include "opt_pcibios.h"
 
@@ -244,7 +244,7 @@ pcibios_init()
 void
 pcibios_pir_init()
 {
-	char devinfo[256];
+	char *devinfo;
 	paddr_t pa;
 	caddr_t p;
 	unsigned char cksum;
@@ -309,9 +309,13 @@ pcibios_pir_init()
 		    PIR_DEVFUNC_DEVICE(pcibios_pir_header.router_devfunc),
 		    PIR_DEVFUNC_FUNCTION(pcibios_pir_header.router_devfunc));
 		if (pcibios_pir_header.compat_router != 0) {
-			pci_devinfo(pcibios_pir_header.compat_router, 0, 0,
-			    devinfo, sizeof(devinfo));
-			printf(" (%s compatible)", devinfo);
+			devinfo = malloc(256, M_DEVBUF, M_NOWAIT);
+			if (devinfo) {
+				pci_devinfo(pcibios_pir_header.compat_router,
+				    0, 0, devinfo, 256);
+				printf(" (%s compatible)", devinfo);
+				free(devinfo, M_DEVBUF);
+			}
 		}
 		printf("\n");
 		pcibios_print_exclirq();
