@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.6 1996/03/13 21:32:39 mark Exp $ */
+/* $NetBSD: machdep.c,v 1.7 1996/04/26 20:48:25 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -451,9 +451,9 @@ boot(howto)
 void
 bootsync(void)
 {
-	int iter;
+/*	int iter;
 	int nbusy;
-	struct buf *bp;
+	struct buf *bp;*/
 	static int bootsyncdone = 0;
 
 	if (bootsyncdone) return;
@@ -1295,7 +1295,7 @@ cpu_startup()
 	size = allocsys((caddr_t)0);
 	sysbase = (caddr_t)kmem_alloc(kernel_map, round_page(size));
 	if (sysbase == 0)
-		panic("cpu_startup: no room for system tables %d bytes required", size);
+		panic("cpu_startup: no room for system tables %d bytes required", (u_int)size);
 	if ((caddr_t)((allocsys(sysbase) - sysbase)) != size)
 		panic("cpu_startup: system table size inconsistency");
 
