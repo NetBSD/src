@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.9 1994/01/24 18:46:59 cgd Exp $
+#	$Id: Makefile,v 1.10 1994/02/10 02:31:32 cgd Exp $
 
 #
 # set `OBSCENE' to "real" to have obscene fortunes installed,
@@ -20,7 +20,6 @@ STRFILE!=cd $(.CURDIR)/../strfile; \
 all: ${DATFILES}
 
 install:
-	@install -d -o root -g wheel -m 755 ${DESTDIR}/usr/share/games/fortune
 	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${DATFILES} \
 	    ${DESTDIR}/usr/share/games/fortune
 	(cd ${.CURDIR} && install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
