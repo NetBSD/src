@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281reg.h,v 1.2 2001/01/22 01:44:56 augustss Exp $	*/
+/*	$NetBSD: cs4281reg.h,v 1.3 2001/02/07 14:41:11 tacha Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -162,6 +162,7 @@
 #define CS4281_PMCS    0x344 /* Power Management Control/Status */
 #define CS4281_CWPR    0x3E0 /* Configuration Write Protect Register */
 #define CS4281_EPPMC   0x3E4 /* Extended PCI Power Management Control */
+#define  EPPMC_FPDN    (0x1 << 14)
 #define CS4281_GPIOR   0x3E8 /* GPIO Pin Interface Register */
 #define CS4281_SPMC    0x3EC /* Serial Port Power Management Control (& ASDIN2 enable) */
 #define  SPMC_RSTN     0x00000001

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.2 2001/01/22 01:44:57 augustss Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.3 2001/02/07 14:41:12 tacha Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -111,11 +111,12 @@ struct cs428x_softc {
 	char	sc_rrun;
 #endif
 
-#if NMIDI > 0
+	/* Although cs4281 does not support midi (yet),
+	 * don't remove these definition.
+	 */
 	void	(*sc_iintr)(void *, int); /* midi input ready handler */
 	void	(*sc_ointr)(void *);	  /* midi output ready handler */
 	void	*sc_arg;
-#endif
 
 	/*
 	 * XXX
@@ -131,7 +132,6 @@ struct cs428x_softc {
 	/* Power Management */
 	char	sc_suspend;
 	void   *sc_powerhook;		/* Power Hook */
-	u_int16_t  ac97_reg[CS428X_SAVE_REG_MAX + 1];	/* Save ac97 registers */
 };
 
 
@@ -140,9 +140,8 @@ void cs428x_close(void *);
 int  cs428x_round_blocksize(void *, int);
 int  cs428x_get_props(void *);
 int  cs428x_attach_codec(void *, struct ac97_codec_if *);
-int  cs428x_read_codec(void *, u_int8_t , u_int16_t *);
+int  cs428x_read_codec(void *, u_int8_t, u_int16_t *);
 int  cs428x_write_codec(void *, u_int8_t, u_int16_t);
-void cs428x_reset_codec(void *);
 
 int  cs428x_mixer_set_port(void *, mixer_ctrl_t *);
 int  cs428x_mixer_get_port(void *, mixer_ctrl_t *);
@@ -153,13 +152,13 @@ void cs428x_free(void *, void *, int);
 paddr_t cs428x_mappage(void *, void *, off_t, int);
 
 /* internal functions */
-int cs428x_allocmem(struct cs428x_softc*, size_t, int, int, struct cs428x_dma *);
+int cs428x_allocmem(struct cs428x_softc *, size_t, int, int, struct cs428x_dma *);
 int cs428x_src_wait(struct cs428x_softc *);
 
 
 /* DEBUG */
-/*#define CS4280_DEBUG*/
-/*#define CS4281_DEBUG*/
+/* #define CS4280_DEBUG */
+/* #define CS4281_DEBUG */
 
 #if defined(CS4280_DEBUG) || defined(CS4281_DEBUG)
 #define DPRINTF(x)	    if (cs428x_debug) printf x

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280reg.h,v 1.3 2000/05/15 01:35:29 thorpej Exp $	*/
+/*	$NetBSD: cs4280reg.h,v 1.4 2001/02/07 14:41:11 tacha Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -101,46 +101,11 @@
 #define  SERBCM_WRC        0x000000002
 #define CS4280_SERBAD      0x448
 #define CS4280_SERBWP      0x450
-/* AC97 Registers */
-#define CS4280_ACCTL       0x460	/* AC97 Control Register */
-#define  ACCTL_RSTN        0x00000001
-#define  ACCTL_ESYN        0x00000002
-#define  ACCTL_VFRM        0x00000004
-#define  ACCTL_DCV         0x00000008
-#define  ACCTL_CRW         0x00000010
-#define  ACCTL_ASYN        0x00000020
-#define  ACCTL_TC          0x00000040
-#define CS4280_ACSTS       0x464	/* AC97 Status Register */
-#define  ACSTS_CRDY        0x00000001
-#define  ACSTS_VSTS        0x00000002
-#define  ACSTS_WKUP        0x00000004
-#define CS4280_ACOSV       0x468	/* AC97 Output Slot Valid Register */
-#define  ACOSV_SLV3        0x00000001
-#define  ACOSV_SLV4        0x00000002
-#define  ACOSV_SLV5        0x00000004
-#define  ACOSV_SLV6        0x00000008
-#define  ACOSV_SLV7        0x00000010
-#define  ACOSV_SLV8        0x00000020
-#define  ACOSV_SLV9        0x00000040
-#define  ACOSV_SLV10       0x00000080
-#define  ACOSV_SLV11       0x00000100
-#define  ACOSV_SLV12       0x00000200
 
-#define CS4280_ACCAD       0x46c	/* AC97 Command Address Register */
-#define CS4280_ACCDA       0x470	/* AC97 Command Data Register */
-#define CS4280_ACISV       0x474	/* AC97 Input Slot Valid Register */
-#define  ACISV_ISV3        0x00000001
-#define  ACISV_ISV4        0x00000002
-#define  ACISV_ISV5        0x00000004
-#define  ACISV_ISV6        0x00000008
-#define  ACISV_ISV7        0x00000010
-#define  ACISV_ISV8        0x00000020
-#define  ACISV_ISV9        0x00000040
-#define  ACISV_ISV10       0x00000080
-#define  ACISV_ISV11       0x00000100
-#define  ACISV_ISV12       0x00000200
-#define CS4280_ACSAD       0x478	/* AC97 Status Address Register */
-#define CS4280_ACSDA       0x47c	/* AC97 Status Data Register */
+/*
+ * AC97 Registers are moved to cs428xreg.h since 
+ * they are common for CS4280 and CS4281 
+ */
 
 /* Host Access Methods */
 #define CS4280_GPIOR	   0x4b8	/* General Purpose I/O Register */
@@ -276,9 +241,6 @@ struct BA1struct {
 #define CS4280_ICHUNK	2048	/* Bytes between interrupts */
 #define CS4280_DCHUNK	4096	/* Bytes of DMA memory */
 #define CS4280_DALIGN	4096	/* Alignment of DMA memory */
-
-/* AC97 Registers */
-#define CS4280_SAVE_REG_MAX  0x10
 
 /* for AC97_REG_POWER */
 #define   CS4280_POWER_DOWN_ALL       0x7f0f
