@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.10 2002/10/02 16:33:44 thorpej Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.11 2002/12/29 19:30:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.10 2002/10/02 16:33:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.11 2002/12/29 19:30:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,8 +172,8 @@ dzkbd_attach(struct device *parent, struct device *self, void *aux)
 				       M_DEVBUF, M_NOWAIT);
 		dzi->dzi_ks.attmt.sendchar = dzkbd_sendchar;
 		dzi->dzi_ks.attmt.cookie = ls;
-		dzi->dzi_ls = ls;
 	}
+	dzi->dzi_ls = ls;
 	dzkbd->sc_itl = dzi;
 
 	printf("\n");
