@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.1 2002/03/05 23:46:42 simonb Exp $ */
+/* $NetBSD: sbmac.c,v 1.2 2002/03/06 00:05:06 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -67,9 +67,6 @@
 #include <netns/ns_if.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
 #include <machine/locore.h>
 
 #include "sbobiovar.h"
