@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-chall.c,v 1.11 2003/07/10 01:09:42 lukem Exp $	*/
+/*	$NetBSD: auth2-chall.c,v 1.12 2003/09/08 21:00:41 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 #include "includes.h"
 RCSID("$OpenBSD: auth2-chall.c,v 1.20 2002/06/30 21:59:45 deraadt Exp $");
-__RCSID("$NetBSD: auth2-chall.c,v 1.11 2003/07/10 01:09:42 lukem Exp $");
+__RCSID("$NetBSD: auth2-chall.c,v 1.12 2003/09/08 21:00:41 itojun Exp $");
 
 #include "ssh2.h"
 #include "auth.h"
@@ -325,7 +325,7 @@ privsep_challenge_enable(void)
 #ifdef BSD_AUTH
 	extern KbdintDevice mm_bsdauth_device;
 #endif
-#ifdef SKEY
+#if !defined(BSD_AUTH) && defined(SKEY)
 	extern KbdintDevice mm_skey_device;
 #endif
 	/* As long as SSHv1 has devices[0] hard coded this is fine */
