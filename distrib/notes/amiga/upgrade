@@ -38,6 +38,34 @@ To upgrade your system, follow the following instructions:
 
 		loadbsd -bn2 netbsd
 
+	* Directly booting NetBSD, with boot blocks installed:
+
+	[This description is for V41 (OS 3.1) ROMs. For older ROMs,
+	there might be small differences. Check your AmigaOS documentation
+	to learn about the exact procedure.]
+
+	Reboot your machine, holding down both mouse buttons if you
+	have a 2-button mouse, the outer mouse buttons if you have
+	a 3-button mouse. On the DraCo, press the left mouse button
+	instead, when the boot screen prompts you for it.
+
+	From the boot menu, select "Boot Options".
+	Select the swap partition with the miniroot, and then "ok".
+	Select "Boot" now. The machine will boot the bootblock, which
+	will prompt your for a command line. You have a few seconds time
+	to change the default. Entering an empty line will accept the
+	default.
+
+	The bootblock uses command lines of the form:
+
+	file options
+
+	where file is the kernel file name on the partition where the
+	boot block is on, and options are the same as with loadbsd.
+	E.g., instead of "loadbsd -bsSn2 netbsd" use "netbsd -bsSn2".
+
+	* Once your kernel boots:
+
 	You should see the screen clear and some information about
 	your system as the kernel configures the hardware.  Note which
 	hard disk device is configured that contains your root and
@@ -111,12 +139,10 @@ To upgrade your system, follow the following instructions:
 
 	When you are done upgrading all of the distribution sets you
 	wish to upgrade, issue the command "Cleanup".  It will clean
-	up the installation, by remaking some system databases.  When
-	it is complete, you should use "halt" to halt the system.
+	up the installation, by remaking some system databases, and 
+	install the kernel and a bootblock onto the root partition.
+	When it is complete, you should use "halt" to halt the system.
 
-	You will probably also want to copy the release "netbsd" kernel
-	image to your root at some point.
-	
 Your system has now been upgraded to NetBSD 1.2.
 
 	After a new kernel has been copied to your hard disk, your
