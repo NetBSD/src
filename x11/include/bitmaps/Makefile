@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:41 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -16,5 +16,5 @@ INCS=	1x1 2x2 black boxes calculator cntr_ptr cntr_ptrmsk cross_weave \
 	terminal tie_fighter vlines2 vlines3 weird_size wide_weave wingdogs \
 	woman xfd_icon xlogo11 xlogo16 xlogo32 xlogo64 xsnow
 
-.include <bsd.prog.mk>
 .include <bsd.x11.mk>
+.include <bsd.prog.mk>

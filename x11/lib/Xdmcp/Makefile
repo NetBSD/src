@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:52:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:46 lukem Exp $
 
 NOPIC=	1
 
@@ -23,5 +23,5 @@ CPPFLAGS+=-DHASXDMAUTH
 CPPFLAGS.Fill.c=	${X11FLAGS.CONNECTION}
 CPPFLAGS.Flush.c=	${X11FLAGS.CONNECTION}
 
-.include <bsd.lib.mk>
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>
