@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: fdisk.c,v 1.6 1994/09/23 23:48:10 mycroft Exp $";
+static char rcsid[] = "$Id: fdisk.c,v 1.7 1994/10/20 00:06:17 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -333,7 +333,7 @@ change_part(part)
 		return;
 
 	if (i_flag) {
-		memset(partp, '\0', sizeof(*partp));
+		memset(partp, 0, sizeof(*partp));
 		if (part == 3) {
 			init_sector0(1);
 			printf("\nThe static data for the DOS partition 3 has been reinitialized to:\n");
@@ -356,7 +356,7 @@ change_part(part)
 			partp->dp_size = size;
 		}
 
-		if (yesno("Explicitly specifiy beg/end address ?")) {
+		if (yesno("Explicitly specify beg/end address?")) {
 			int tsector, tcylinder, thead;
 
 			tcylinder = DPCYL(partp->dp_scyl, partp->dp_ssect);
@@ -386,7 +386,7 @@ change_part(part)
 		}
 
 		print_part(part);
-	} while (!yesno("Are we happy with this entry?"));
+	} while (!yesno("Is this entry okay?"));
 }
 
 void
@@ -484,9 +484,9 @@ open_disk(u_flag)
 		warn("%s", disk);
 		return (-1);
 	}
-	if (!S_ISCHR(st.st_mode)) {
+	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode)) {
 		close(fd);
-		warnx("%s is not a character device", disk);
+		warnx("%s is not a character device or regular file", disk);
 		return (-1);
 	}
 	if (get_params() == -1) {
@@ -601,13 +601,17 @@ decimal(str, num)
 		printf("Supply a decimal value for \"%s\" [%d] ", str, *num);
 
 		fgets(lbuf, LBUF, stdin);
-		lbuf[strlen(lbuf)-1] = 0;
-		if (lbuf[0] == '\0')
+		lbuf[strlen(lbuf)-1] = '\0';
+		cp = lbuf;
+
+		cp += strspn(cp, " \t");
+		if (*cp == '\0')
 			return;
 
-		acc = strtol(lbuf, &cp, 10);
-		if (cp == lbuf)
+		if (!isdigit(*cp))
 			continue;
+		acc = strtol(lbuf, &cp, 10);
+
 		cp += strspn(cp, " \t");
 		if (*cp != '\0')
 			continue;
