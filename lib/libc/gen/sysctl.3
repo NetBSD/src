@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.45 2000/01/06 03:43:03 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.46 2000/01/06 06:41:18 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -752,8 +752,9 @@ The currently defined protocols and names are:
 .It ip6	defmcasthlim	integer	yes
 .It ip6	gif_hlim	integer	yes
 .It ip6	kame_version	string	no
-.It ip6 use_deprecated  integer yes
-.It ip6 rr_prune        integer yes
+.It ip6	use_deprecated	integer	yes
+.It ip6	rr_prune	integer	yes
+.It ip6	bindv6only	integer	yes
 .It icmp6	rediraccept	integer	yes
 .It icmp6	redirtimeout	integer	yes
 .It icmp6	errratelimit	integer	yes
@@ -849,6 +850,15 @@ The variable controls use of deprecated address, specified in RFC2462 5.5.4.
 .It Li ip6.rr_prune
 The variable specifies interval between IPv6 router renumbering prefix
 babysitting, in seconds.
+.It Li ip6.bindv6only
+The variable specifies initial value for
+.Dv IPV6_BINDV6ONLY
+socket option for
+.Dv AF_INET6
+socket.
+Please refer to
+.Xr ip6 4
+for detail.
 .It Li icmp6.rediraccept
 If set to non-zero, the host will accept ICMPv6 redirect packets.
 Note that IPv6 routers will never accept ICMPv6 redirect packets,

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.54 1999/12/22 04:03:01 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.55 2000/01/06 06:41:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -765,11 +765,25 @@ udp6_realinput(af, src, dst, m, off)
 				 && !in6_mcmatch(in6p, dst6, m->m_pkthdr.rcvif))
 					continue;
 			}
+#ifndef INET6_BINDV6ONLY
+			else {
+				if (IN6_IS_ADDR_V4MAPPED(dst6)
+				 && (in6p->in6p_flags & IN6P_BINDV6ONLY))
+					continue;
+			}
+#endif
 			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
 				if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, src6)
 				 || in6p->in6p_fport != *sport)
 					continue;
 			}
+#ifndef INET6_BINDV6ONLY
+			else {
+				if (IN6_IS_ADDR_V4MAPPED(src6)
+				 && (in6p->in6p_flags & IN6P_BINDV6ONLY))
+					continue;
+			}
+#endif
 
 			last = in6p;
 			udp6_sendup(m, off, (struct sockaddr *)src,
