@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/01/26 15:03:17 aymeric Exp $
+#	$NetBSD: Makefile,v 1.3 2002/03/26 05:19:39 mhitch Exp $
 
 ### what we need:
 
@@ -19,7 +19,7 @@ BINDIR=/usr/mdec
 
 COBJS = main.o console.o xd.o twiddle.o bzero.o gets.o
 COBJS+=  lseek.o open.o read.o close.o dev.o errno.o
-COBJS+=  ufs.o ustarfs.o panic.o vers.o
+COBJS+=  ufs.o ustarfs.o panic.o vers.o files.o
 
 SOBJS = alloc.o ashrdi3.o ashldi3.o bcopy.o muldi3.o printf.o startit.o
 SOBJS += strlen.o strcmp.o fstat.o
