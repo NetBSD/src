@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.54 2003/11/01 03:02:59 grant Exp $
+.\"	$NetBSD: postinstall,v 1.54.2.1 2004/06/15 23:09:08 he Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -430,7 +430,7 @@ file will almost definitely need to be adjusted;
 files aiding in this can be found in
 .Pa /usr/share/sendmail .
 See the
-.Li Tn README
+.Li README
 file there for more information.
 .It
 Edit
