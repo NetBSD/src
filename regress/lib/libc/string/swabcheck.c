@@ -1,4 +1,4 @@
-/*	$NetBSD: swabcheck.c,v 1.1 2001/05/22 18:57:45 christos Exp $	*/
+/*	$NetBSD: swabcheck.c,v 1.2 2001/05/24 21:04:47 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <err.h>
