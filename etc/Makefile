@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.192 2001/11/19 05:05:06 perry Exp $
+#	$NetBSD: Makefile,v 1.193 2001/11/20 16:07:59 thorpej Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -158,6 +158,9 @@ distribution: distrib-dirs
 	(cd ..; ${MAKE} _DISTRIB= includes)
 	(cd ..; ${MAKE} _DISTRIB= install)
 .endif
+	${MAKE} install-etc-files
+
+install-etc-files:
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} \
 	    ${DESTDIR}/etc
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} \
