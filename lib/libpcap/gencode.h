@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.h,v 1.8 1999/10/25 16:39:37 is Exp $	*/
+/*	$NetBSD: gencode.h,v 1.9 1999/12/13 01:44:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -162,8 +162,6 @@ void gen_and(struct block *, struct block *);
 void gen_or(struct block *, struct block *);
 void gen_not(struct block *);
 
-struct stmt *gen_joinsp __P((struct stmt **, int));
-struct block *gen_protochain __P((int, int, int));
 struct block *gen_scode(const char *, struct qual);
 struct block *gen_ecode(const u_char *, struct qual);
 struct block *gen_acode(const u_char *, struct qual);

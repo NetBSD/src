@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.20 1999/10/25 16:39:37 is Exp $	*/
+/*	$NetBSD: gencode.c,v 1.21 1999/12/13 01:44:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.20 1999/10/25 16:39:37 is Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.21 1999/12/13 01:44:31 itojun Exp $");
 #endif
 #endif
 
@@ -163,7 +163,9 @@ static struct block *gen_host(bpf_u_int32, bpf_u_int32, int, int);
 #ifdef INET6
 static struct block *gen_host6(struct in6_addr *, struct in6_addr *, int, int);
 #endif
+#ifndef INET6
 static struct block *gen_gateway(const u_char *, bpf_u_int32 **, int, int);
+#endif
 static struct block *gen_ipfrag(void);
 static struct block *gen_portatom(int, bpf_int32);
 #ifdef INET6
@@ -176,6 +178,7 @@ struct block *gen_portop6(int, int, int);
 static struct block *gen_port6(int, int, int);
 #endif
 static int lookup_proto(const char *, int);
+static struct block *gen_protochain(int, int, int);
 static struct block *gen_proto(int, int, int);
 static struct slist *xfer_to_x(struct arth *);
 static struct slist *xfer_to_a(struct arth *);
@@ -664,6 +667,7 @@ gen_linktype(proto)
 #ifdef INET6
 		case ETHERTYPE_IPV6:
 			proto = PPP_IPV6;
+			/* more to go? */
 			break;
 #endif /* INET6 */
 
@@ -780,6 +784,7 @@ gen_hostop6(addr, mask, dir, proto, src_off, dst_off)
 {
 	struct block *b0, *b1;
 	u_int offset;
+	u_int32_t *a, *m;
 
 	switch (dir) {
 
@@ -808,16 +813,14 @@ gen_hostop6(addr, mask, dir, proto, src_off, dst_off)
 		abort();
 	}
 	/* this order is important */
-	b1 = gen_mcmp(offset + 12, BPF_W, ntohl(addr->s6_addr32[3]),
-		ntohl(mask->s6_addr32[3]));
-	b0 = gen_mcmp(offset + 8, BPF_W, ntohl(addr->s6_addr32[2]),
-		ntohl(mask->s6_addr32[2]));
+	a = (u_int32_t *)addr;
+	m = (u_int32_t *)mask;
+	b1 = gen_mcmp(offset + 12, BPF_W, ntohl(a[3]), ntohl(m[3]));
+	b0 = gen_mcmp(offset + 8, BPF_W, ntohl(a[2]), ntohl(m[2]));
 	gen_and(b0, b1);
-	b0 = gen_mcmp(offset + 4, BPF_W, ntohl(addr->s6_addr32[1]),
-		ntohl(mask->s6_addr32[1]));
+	b0 = gen_mcmp(offset + 4, BPF_W, ntohl(a[1]), ntohl(m[1]));
 	gen_and(b0, b1);
-	b0 = gen_mcmp(offset + 0, BPF_W, ntohl(addr->s6_addr32[0]),
-		ntohl(mask->s6_addr32[0]));
+	b0 = gen_mcmp(offset + 0, BPF_W, ntohl(a[0]), ntohl(m[0]));
 	gen_and(b0, b1);
 	b0 = gen_linktype(proto);
 	gen_and(b0, b1);
@@ -1151,6 +1154,7 @@ gen_host6(addr, mask, proto, dir)
 }
 #endif /*INET6*/
 
+#ifndef INET6
 static struct block *
 gen_gateway(eaddr, alist, proto, dir)
 	const u_char *eaddr;
@@ -1189,6 +1193,7 @@ gen_gateway(eaddr, alist, proto, dir)
 	bpf_error("illegal modifier of 'gateway'");
 	/* NOTREACHED */
 }
+#endif	/*INET6*/
 
 struct block *
 gen_proto_abbrev(proto)
@@ -1538,15 +1543,7 @@ lookup_proto(name, proto)
 	return v;
 }
 
-struct stmt *
-gen_joinsp(s, n)
-	struct stmt **s;
-	int n;
-{
-	return NULL;
-}
-
-struct block *
+static struct block *
 gen_protochain(v, proto, dir)
 	int v;
 	int proto;
@@ -1569,7 +1566,7 @@ gen_protochain(v, proto, dir)
 		break;
 	case Q_DEFAULT:
 		b0 = gen_protochain(v, Q_IP, dir);
-		b = gen_protochain(v, Q_IP, dir);
+		b = gen_protochain(v, Q_IPV6, dir);
 		gen_or(b0, b);
 		return b;
 	default:
@@ -1966,8 +1963,9 @@ gen_scode(name, q)
 	int tproto;
 	u_char *eaddr;
 	bpf_u_int32 mask, addr;
+#ifndef INET6
 	bpf_u_int32 **alist;
-#ifdef INET6
+#else
 	int tproto6;
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
@@ -2106,6 +2104,7 @@ gen_scode(name, q)
 #endif /* INET6 */
 
 	case Q_GATEWAY:
+#ifndef INET6
 		eaddr = pcap_ether_hostton(name);
 		if (eaddr == NULL)
 			bpf_error("unknown ether host: %s", name);
@@ -2114,6 +2113,9 @@ gen_scode(name, q)
 		if (alist == NULL || *alist == NULL)
 			bpf_error("unknown host '%s'", name);
 		return gen_gateway(eaddr, alist, proto, dir);
+#else
+		bpf_error("'gateway' not supported in this configuration");
+#endif /*INET6*/
 
 	case Q_PROTO:
 		real_proto = lookup_proto(name, proto);
@@ -2275,6 +2277,7 @@ gen_mcode6(s1, s2, masklen, q)
 	struct in6_addr *addr;
 	struct in6_addr mask;
 	struct block *b;
+	u_int32_t *a, *m;
 
 	if (s2)
 		bpf_error("no mask %s supported", s2);
@@ -2287,17 +2290,17 @@ gen_mcode6(s1, s2, masklen, q)
 	addr = &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr;
 
 	if (sizeof(mask) * 8 < masklen)
-		bpf_error("mask length must be <= %u", (int)(sizeof(mask) * 8));
+		bpf_error("mask length must be <= %u", (unsigned int)(sizeof(mask) * 8));
 	memset(&mask, 0xff, masklen / 8);
 	if (masklen % 8) {
-		mask.s6_addr8[masklen / 8] =
+		mask.s6_addr[masklen / 8] =
 			(0xff << (8 - masklen % 8)) & 0xff;
 	}
 
-	if ((addr->s6_addr32[0] & ~mask.s6_addr32[0])
-	 || (addr->s6_addr32[1] & ~mask.s6_addr32[1])
-	 || (addr->s6_addr32[2] & ~mask.s6_addr32[2])
-	 || (addr->s6_addr32[3] & ~mask.s6_addr32[3])) {
+	a = (u_int32_t *)addr;
+	m = (u_int32_t *)&mask;
+	if ((a[0] & ~m[0]) || (a[1] & ~m[1])
+	 || (a[2] & ~m[2]) || (a[3] & ~m[3])) {
 		bpf_error("non-network bits set in \"%s/%d\"", s1, masklen);
 	}
 
