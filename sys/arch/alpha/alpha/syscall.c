@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.9 2003/06/29 22:28:04 fvdl Exp $ */
+/* $NetBSD: syscall.c,v 1.10 2003/08/24 16:36:10 chs Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2003/06/29 22:28:04 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2003/08/24 16:36:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,10 +168,8 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	u_int64_t *args, copyargs[10];				/* XXX */
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
+	boolean_t needlock;
 
-	KERNEL_PROC_LOCK(l);
-
-	uvmexp.syscalls++;
 	l->l_md.md_tf = framep;
 
 	callp = p->p_emul->e_sysent;
@@ -227,7 +225,15 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 
 	rval[0] = 0;
 	rval[1] = 0;
+
+	needlock = (callp->sy_flags & SYCALL_MPSAFE) == 0;
+	if (needlock) {
+		KERNEL_PROC_LOCK(l);
+	}
 	error = (*callp->sy_call)(l, args, rval);
+	if (needlock) {
+		KERNEL_PROC_UNLOCK(l);
+	}
 
 	switch (error) {
 	case 0:
@@ -250,7 +256,6 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(l, code, error, rval);
 #endif
-	KERNEL_PROC_UNLOCK(l);
 	userret(l);
 }
 
@@ -322,6 +327,7 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
+	KERNEL_PROC_UNLOCK(l);
 
 	switch (error) {
 	case 0:
