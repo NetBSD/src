@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.33 2001/02/12 09:27:46 itojun Exp $	*/
+/*	$NetBSD: res_send.c,v 1.34 2001/09/13 11:05:02 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.33 2001/02/12 09:27:46 itojun Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.34 2001/09/13 11:05:02 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -669,8 +669,16 @@ read_len:
 			 * however, we don't want to remain connected,
 			 * as we wish to receive answers from the first
 			 * server to respond.
+			 *
+			 * When the option "insecure1" is specified, we'd
+			 * rather expect to see responses from an "unknown"
+			 * address.  In order to let the kernel accept such
+			 * responses, do not connect the socket here.
+			 * XXX: or do we need an explicit option to disable
+			 * connecting?
 			 */
-			if (_res.nscount == 1 || (try == 0 && ns == 0)) {
+			if (!(_res.options & RES_INSECURE1) &&
+			    (_res.nscount == 1 || (try == 0 && ns == 0))) {
 				/*
 				 * Connect only if we are sure we won't
 				 * receive a response from another server.
