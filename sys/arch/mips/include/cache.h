@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.4 2002/11/09 19:34:40 thorpej Exp $	*/
+/*	$NetBSD: cache.h,v 1.5 2002/12/17 12:04:29 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -134,11 +134,21 @@ struct mips_cache_ops {
 	void	(*mco_pdcache_inv_range)(vaddr_t, vsize_t);
 	void	(*mco_pdcache_wb_range)(vaddr_t, vsize_t);
 
+	/* These are called only by the (mipsNN) icache functions. */
+	void	(*mco_intern_pdcache_wbinv_all)(void);
+	void	(*mco_intern_pdcache_wbinv_range_index)(vaddr_t, vsize_t);
+	void	(*mco_intern_pdcache_wb_range)(vaddr_t, vsize_t);
+
 	void	(*mco_sdcache_wbinv_all)(void);
 	void	(*mco_sdcache_wbinv_range)(vaddr_t, vsize_t);
 	void	(*mco_sdcache_wbinv_range_index)(vaddr_t, vsize_t);
 	void	(*mco_sdcache_inv_range)(vaddr_t, vsize_t);
 	void	(*mco_sdcache_wb_range)(vaddr_t, vsize_t);
+
+	/* These are called only by the (mipsNN) icache functions. */
+	void	(*mco_intern_sdcache_wbinv_all)(void);
+	void	(*mco_intern_sdcache_wbinv_range_index)(vaddr_t, vsize_t);
+	void	(*mco_intern_sdcache_wb_range)(vaddr_t, vsize_t);
 };
 
 #ifdef _KERNEL
@@ -195,18 +205,18 @@ extern u_int mips_cache_prefer_mask;
  */
 #define	mips_cache_indexof(x)	(((vaddr_t)(x)) & mips_cache_alias_mask)
 
-#define	__mco_noargs(x)							\
+#define	__mco_noargs(prefix, x)						\
 do {									\
-	(*mips_cache_ops.mco_p ## x )();				\
-	if (*mips_cache_ops.mco_s ## x )				\
-		(*mips_cache_ops.mco_s ## x )();			\
+	(*mips_cache_ops.mco_ ## prefix ## p ## x )();			\
+	if (*mips_cache_ops.mco_ ## prefix ## s ## x )			\
+		(*mips_cache_ops.mco_ ## prefix ## s ## x )();		\
 } while (/*CONSTCOND*/0)
 
-#define	__mco_2args(x, a, b)						\
+#define	__mco_2args(prefix, x, a, b)					\
 do {									\
-	(*mips_cache_ops.mco_p ## x )((a), (b));			\
-	if (*mips_cache_ops.mco_s ## x )				\
-		(*mips_cache_ops.mco_s ## x )((a), (b));		\
+	(*mips_cache_ops.mco_ ## prefix ## p ## x )((a), (b));		\
+	if (*mips_cache_ops.mco_ ## prefix ## s ## x )			\
+		(*mips_cache_ops.mco_ ## prefix ## s ## x )((a), (b));	\
 } while (/*CONSTCOND*/0)
 
 #define	mips_icache_sync_all()						\
@@ -219,21 +229,37 @@ do {									\
 	(*mips_cache_ops.mco_icache_sync_range_index)((v), (s))
 
 #define	mips_dcache_wbinv_all()						\
-	__mco_noargs(dcache_wbinv_all)
+	__mco_noargs(, dcache_wbinv_all)
 
 #define	mips_dcache_wbinv_range(v, s)					\
-	__mco_2args(dcache_wbinv_range, (v), (s))
+	__mco_2args(, dcache_wbinv_range, (v), (s))
 
 #define	mips_dcache_wbinv_range_index(v, s)				\
-	__mco_2args(dcache_wbinv_range_index, (v), (s))
+	__mco_2args(, dcache_wbinv_range_index, (v), (s))
 
 #define	mips_dcache_inv_range(v, s)					\
-	__mco_2args(dcache_inv_range, (v), (s))
+	__mco_2args(, dcache_inv_range, (v), (s))
 
 #define	mips_dcache_wb_range(v, s)					\
-	__mco_2args(dcache_wb_range, (v), (s))
+	__mco_2args(, dcache_wb_range, (v), (s))
+
+
+/*
+ * Private D-cache functions only called from (currently only the
+ * mipsNN) I-cache functions.
+ */
+#define	mips_intern_dcache_wbinv_all()					\
+	__mco_noargs(intern_, dcache_wbinv_all)
+
+#define	mips_intern_dcache_wbinv_range_index(v, s)			\
+	__mco_2args(intern_, dcache_wbinv_range_index, (v), (s))
+
+#define	mips_intern_dcache_wb_range(v, s)				\
+	__mco_2args(intern_, dcache_wb_range, (v), (s))
 
 void	mips_config_cache(void);
 void	mips_dcache_compute_align(void);
+
+#include <mips/cache_mipsNN.h>
 
 #endif /* _KERNEL */
