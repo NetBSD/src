@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.8 1995/09/18 13:52:43 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.9 1995/10/02 09:03:53 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -165,10 +165,10 @@ extern __inline__ void ack_message()
 	SET_5380_REG(NCR5380_ICOM, 0);
 }
 
-extern __inline__ void nack_message(SC_REQ *reqp)
+extern __inline__ void nack_message(SC_REQ *reqp, u_char msg)
 {
 	SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
-	reqp->msgout = MSG_ABORT;
+	reqp->msgout = msg;
 }
 
 extern __inline__ void finish_req(SC_REQ *reqp)
@@ -1090,7 +1090,7 @@ u_int	msg;
 		case MSG_LINK_CMD_COMPLETEF:
 			if (reqp->link == NULL) {
 				ncr_tprint(reqp, "No link for linked command");
-				nack_message(reqp);
+				nack_message(reqp, MSG_ABORT);
 				PID("hmessage2");
 				return (-1);
 			}
@@ -1157,11 +1157,11 @@ u_int	msg;
 			PID("hmessage8");
 			return (-1);
 		case MSG_EXTENDED:
-			nack_message(reqp);
+			nack_message(reqp, MSG_MESSAGE_REJECT);
 			PID("hmessage9");
 			return (-1);
 		default: 
-			ncr_tprint(reqp, "Unkown message %x\n", msg);
+			ncr_tprint(reqp, "Unknown message %x\n", msg);
 			return (-1);
 	}
 	PID("hmessage10");
