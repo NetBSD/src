@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.c	7.14 (Berkeley) 4/20/91
- *	$Id: if.c,v 1.4 1993/06/27 06:02:26 andrew Exp $
+ *	$Id: if.c,v 1.5 1993/08/14 06:38:35 deraadt Exp $
  */
 
 #include "param.h"
@@ -488,6 +488,15 @@ ifioctl(so, cmd, data, p)
 		if (error = suser(p->p_ucred, &p->p_acflag))
 			return (error);
 		ifp->if_metric = ifr->ifr_metric;
+		break;
+
+	case SIOCSIFMTU:
+	case SIOCGIFMTU:
+	case SIOCSIFASYNCMAP:
+	case SIOCGIFASYNCMAP:
+		if (!ifp->if_ioctl)
+			return (EOPNOTSUPP);
+		return ((*ifp->if_ioctl)(ifp, cmd, data));
 		break;
 
 	default:
