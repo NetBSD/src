@@ -34,7 +34,7 @@
 #include "kadm5_locl.h"
 
 __RCSID("$Heimdal: keys.c,v 1.1 2000/07/22 05:53:02 assar Exp $"
-        "$NetBSD: keys.c,v 1.1.1.2 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: keys.c,v 1.2 2002/09/12 13:19:11 joda Exp $");
 
 /*
  * free all the memory used by (len, keys)

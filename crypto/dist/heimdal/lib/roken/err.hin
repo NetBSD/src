@@ -32,7 +32,7 @@
  */
 
 /* $Heimdal: err.hin,v 1.16 2000/12/11 04:40:59 assar Exp $
-   $NetBSD: err.hin,v 1.1.1.2 2002/09/12 12:41:41 joda Exp $ */
+   $NetBSD: err.hin,v 1.2 2002/09/12 13:19:20 joda Exp $ */
 
 #ifndef __ERR_H__
 #define __ERR_H__

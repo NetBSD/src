@@ -1,4 +1,5 @@
-# $Id: Makefile.am,v 1.4 2001/09/17 12:32:34 assar Exp $
+# $Heimdal: Makefile.am,v 1.8 2002/08/12 15:03:43 joda Exp $
+# $NetBSD: Makefile.am,v 1.5 2002/09/12 13:18:51 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -10,9 +11,9 @@ endif
 
 libexec_PROGRAMS = $(DFSPROGS) $(AIX_DFSPROGS)
 
-dpagaix_CFLAGS = @dpagaix_CFLAGS@
-dpagaix_LDFLAGS = @dpagaix_LDFLAGS@
-dpagaix_LDADD = @dpagaix_LDADD@
+dpagaix_CFLAGS = $(dpagaix_cflags)
+dpagaix_LDFLAGS = $(dpagaix_ldflags)
+dpagaix_LDADD = $(dpagaix_ldadd)
 
 dpagaix$(EXEEXT): $(dpagaix_OBJECTS)
 	ld -edpagaix -o dpagaix$(EXEEXT) $(dpagaix_OBJECTS) $(srcdir)/dfspag.exp

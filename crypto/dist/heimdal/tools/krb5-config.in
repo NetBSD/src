@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Heimdal: krb5-config.in,v 1.9 2002/09/09 22:29:06 joda Exp $
-# $NetBSD: krb5-config.in,v 1.1.1.2 2002/09/12 12:41:44 joda Exp $
+# $NetBSD: krb5-config.in,v 1.2 2002/09/12 13:19:24 joda Exp $
 
 do_libs=no
 do_cflags=no
@@ -22,7 +22,7 @@ for i in $*; do
     ;;
   --version)
     echo "@PACKAGE@ @VERSION@"
-    echo '$Id: krb5-config.in,v 1.1.1.2 2002/09/12 12:41:44 joda Exp $'
+    echo '$Id: krb5-config.in,v 1.2 2002/09/12 13:19:24 joda Exp $'
     exit 0
     ;;
   --prefix=*)

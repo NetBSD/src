@@ -5,7 +5,7 @@
 # Public domain
 
 # $Heimdal$
-# $NetBSD: mkinstalldirs,v 1.1.1.2 2002/09/12 12:41:42 joda Exp $
+# $NetBSD: mkinstalldirs,v 1.2 2002/09/12 13:19:21 joda Exp $
 
 errstatus=0
 

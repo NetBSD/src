@@ -1,5 +1,6 @@
 .\" Copyright (c) 1997 Kungliga Tekniska Högskolan
-.\" $Id: krb5_unparse_name.3,v 1.4 2001/11/08 19:47:38 gmcgarry Exp $
+.\" $Heimdal: krb5_unparse_name.3,v 1.6 2002/09/02 12:42:00 joda Exp $
+.\" $NetBSD: krb5_unparse_name.3,v 1.5 2002/09/12 13:19:18 joda Exp $
 .Dd August 8, 1997
 .Dt KRB5_UNPARSE_NAME 3
 .Os
@@ -18,9 +19,10 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh DESCRIPTION
 This function takes a
 .Fa principal ,
-and will convert in to a printable representation with the same syntax as decribed in
+and will convert in to a printable representation with the same syntax
+as described in
 .Xr krb5_parse_name 3 .
-.Fa *name 
+.Fa *name
 will point to allocated data and should be freed by the caller.
 .Sh SEE ALSO
 .Xr krb5_425_conv_principal 3 ,

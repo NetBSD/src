@@ -1,4 +1,5 @@
-# $Id: Makefile.am,v 1.3 2001/09/17 12:32:39 assar Exp $
+# $Heimdal: Makefile.am,v 1.5 2002/08/28 22:57:42 assar Exp $
+# $NetBSD: Makefile.am,v 1.4 2002/09/12 13:19:23 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -14,7 +15,7 @@ if KRB4
 if KRB5
 ## need to link with des here; otherwise, if krb4 is shared the link
 ## will fail with unresolved references
-make_print_version_LDADD = $(LIB_krb4) -ldes
+make_print_version_LDADD = $(LIB_krb4) $(LIB_des)
 endif
 endif
 

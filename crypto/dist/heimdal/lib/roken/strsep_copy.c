@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: strsep_copy.c,v 1.4 2002/08/14 17:20:40 joda Exp $"
-        "$NetBSD: strsep_copy.c,v 1.1.1.2 2002/09/12 12:41:42 joda Exp $");
+        "$NetBSD: strsep_copy.c,v 1.2 2002/09/12 13:19:22 joda Exp $");
 #endif
 
 #include <string.h>

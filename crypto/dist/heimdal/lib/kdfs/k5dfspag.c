@@ -25,7 +25,8 @@
 #include <config.h>
 #endif
 
-RCSID("$Id: k5dfspag.c,v 1.3 2001/06/19 22:39:57 assar Exp $");
+__RCSID("$Heimdal: k5dfspag.c,v 1.6 2002/08/12 15:11:58 joda Exp $"
+        "$NetBSD: k5dfspag.c,v 1.4 2002/09/12 13:19:12 joda Exp $");
 
 #include <krb5.h>
 
@@ -104,7 +105,7 @@ typedef krb5_sigtype sigtype;
 
 #elif defined(_AIX)
 #ifndef DPAGAIX
-#define DPAGAIX LIBEXECDIR ## "/dpagaix"
+#define DPAGAIX LIBEXECDIR "/dpagaix"
 #endif
 int *load();
 static int (*dpagaix)(int, int, int, int, int, int) = 0;
@@ -124,7 +125,7 @@ static int (*dpagaix)(int, int, int, int, int, int) = 0;
 #endif  /* WAIT_USES_INT */
 
 #ifndef K5DCECON
-#define K5DCECON LIBEXECDIR ## "/k5dcecon"
+#define K5DCECON LIBEXECDIR "/k5dcecon"
 #endif
 
 /* 
@@ -281,7 +282,7 @@ int krb5_dfs_pag(context, flag, principal, luser)
 
   /* Make sure that telnetd.c's SIGCHLD action don't happen right now... */
   memset((char *)&newsig, 0, sizeof(newsig));
-  newsig.sa_handler = SIG_IGN;
+  newsig.sa_handler = SIG_DFL;
   sigaction(SIGCHLD, &newsig, &oldsig);
 
   pid = fork();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -36,7 +36,8 @@
 #endif
 #include "roken.h"
 
-RCSID("$Id: strlcat.c,v 1.3 2001/04/07 21:29:25 thorpej Exp $");
+__RCSID("$Heimdal: strlcat.c,v 1.6 2002/08/20 09:46:20 joda Exp $"
+        "$NetBSD: strlcat.c,v 1.4 2002/09/12 13:19:21 joda Exp $");
 
 #ifndef HAVE_STRLCAT
 
@@ -44,6 +45,12 @@ size_t
 strlcat (char *dst, const char *src, size_t dst_sz)
 {
     size_t len = strlen(dst);
+
+    if (dst_sz < len)
+	/* the total size of dst is less than the string it contains;
+           this could be considered bad input, but we might as well
+           handle it */
+	return len + strlen(src);
 
     return len + strlcpy (dst + len, src, dst_sz - len);
 }

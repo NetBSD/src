@@ -1,6 +1,6 @@
 dnl
 dnl $Heimdal: broken-realloc.m4,v 1.1 2000/07/15 18:05:36 joda Exp $
-dnl $NetBSD: broken-realloc.m4,v 1.1.1.2 2002/09/12 12:41:44 joda Exp $
+dnl $NetBSD: broken-realloc.m4,v 1.2 2002/09/12 13:18:55 joda Exp $
 dnl
 dnl Test for realloc that doesn't handle NULL as first parameter
 dnl

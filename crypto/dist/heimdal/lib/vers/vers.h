@@ -32,7 +32,7 @@
  */
 
 /* $Heimdal: vers.h,v 1.1 2000/07/01 19:47:36 assar Exp $
-   $NetBSD: vers.h,v 1.1.1.2 2002/09/12 12:41:41 joda Exp $ */
+   $NetBSD: vers.h,v 1.2 2002/09/12 13:19:24 joda Exp $ */
 
 #ifndef __VERS_H__
 #define __VERS_H__

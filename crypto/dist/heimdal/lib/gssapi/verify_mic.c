@@ -33,7 +33,8 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: verify_mic.c,v 1.5 2001/09/17 12:32:37 assar Exp $");
+__RCSID("$Heimdal: verify_mic.c,v 1.16 2002/05/20 15:14:00 nectar Exp $"
+        "$NetBSD: verify_mic.c,v 1.6 2002/09/12 13:19:08 joda Exp $");
 
 static OM_uint32
 verify_mic_des
@@ -251,6 +252,8 @@ gss_verify_mic
     OM_uint32 ret;
     krb5_keytype keytype;
 
+    if (qop_state != NULL)
+	*qop_state = GSS_C_QOP_DEFAULT;
     ret = gss_krb5_get_remotekey(context_handle, &key);
     if (ret) {
 	gssapi_krb5_set_error_string ();

@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: make-print-version.c,v 1.2 2000/07/08 10:46:36 assar Exp $"
-        "$NetBSD: make-print-version.c,v 1.1.1.2 2002/09/12 12:41:41 joda Exp $");
+        "$NetBSD: make-print-version.c,v 1.2 2002/09/12 13:19:23 joda Exp $");
 #endif
 
 #include <stdio.h>

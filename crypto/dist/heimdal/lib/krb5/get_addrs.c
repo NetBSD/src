@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: get_addrs.c,v 1.6 2001/09/17 12:32:38 assar Exp $");
+__RCSID("$Heimdal: get_addrs.c,v 1.44 2002/08/16 20:50:15 joda Exp $"
+        "$NetBSD: get_addrs.c,v 1.7 2002/09/12 13:19:13 joda Exp $");
 
 #ifdef __osf__
 /* hate */
@@ -229,8 +230,11 @@ get_addrs_int (krb5_context context, krb5_addresses *res, int flags)
 	ret = find_all_addresses (context, res, flags);
 	if(ret || res->len == 0)
 	    ret = gethostname_fallback (context, res);
-    } else
+    } else {
+	res->len = 0;
+	res->val = NULL;
 	ret = 0;
+    }
 
     if(ret == 0 && (flags & EXTRA_ADDRESSES)) {
 	krb5_addresses a;

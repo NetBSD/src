@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,11 +32,15 @@
  */
 
 #include "kpasswd_locl.h"
-RCSID("$Id: kpasswdd.c,v 1.5 2001/06/20 02:01:19 assar Exp $");
+__RCSID("$Heimdal: kpasswdd.c,v 1.53 2002/08/19 15:07:31 joda Exp $"
+        "$NetBSD: kpasswdd.c,v 1.6 2002/09/12 13:19:03 joda Exp $");
 
 #include <kadm5/admin.h>
-
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
 #include <hdb.h>
+#include <kadm5/private.h>
 
 static krb5_context context;
 static krb5_log_facility *log_facility;
