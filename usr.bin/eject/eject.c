@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.4 1997/10/18 13:38:15 lukem Exp $	*/
+/*	$NetBSD: eject.c,v 1.4.2.1 1997/11/12 02:23:04 mellon Exp $	*/
 /*
  * Copyright (c) 1995
  *	Matthieu Herrb.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.4 1997/10/18 13:38:15 lukem Exp $");
+__RCSID("$NetBSD: eject.c,v 1.4.2.1 1997/11/12 02:23:04 mellon Exp $");
 #endif
 
 /*
@@ -94,6 +94,9 @@ static DEVTAB devtab[] = {
 	{ "mcd", "/dev/mcd0", 'a', DISK },
 	{ "mcd0", "/dev/mcd0", 'a', DISK },
 	{ "mcd1", "/dev/mcd1", 'a', DISK },
+	{ "acd", "/dev/acd0", 'a', DISK },
+	{ "acd0", "/dev/acd0", 'a', DISK },
+	{ "acd1", "/dev/acd1", 'a', DISK },
 	{ "tape", "/dev/rst0", '\0', TAPE },
 	{ "tape0", "/dev/rst0", '\0', TAPE },
 	{ "tape1", "/dev/rst1", '\0', TAPE },
@@ -138,7 +141,7 @@ static void
 usage()
 {
 	fprintf(stderr,
-	    "usage: eject [-n][-f][-t devtype][[-d] raw device | nickname ]");
+	    "usage: eject [-n][-f][-t devtype][[-d] raw device | nickname ]\n");
 	exit(1);
 	/*NOTREACHED*/
 }
