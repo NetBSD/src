@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.18 1997/04/09 20:54:41 thorpej Exp $
+#	$NetBSD: files.sun3x,v 1.19 1997/04/25 19:12:57 gwr Exp $
 
 #
 # sun3x-specific configuration info
@@ -21,6 +21,7 @@ file arch/sun3x/sun3x/dvma.c
 file arch/sun3x/sun3x/fpu.c
 file arch/sun3/sun3/isr.c
 file arch/sun3x/sun3x/kgdb_machdep.c 		kgdb
+file arch/sun3x/sun3x/leds.c
 file arch/sun3x/sun3x/machdep.c
 file arch/sun3x/sun3x/mem.c
 file arch/sun3x/sun3x/pmap.c
@@ -31,8 +32,6 @@ file arch/sun3/sun3/trap.c
 file arch/sun3/sun3/vector.c
 file arch/sun3/sun3/vm_machdep.c
 
-file arch/sun3x/dev/idprom.c
-
 # include "arch/m68k/fpe/files.fpe"
 
 file arch/m68k/m68k/sig_machdep.c
@@ -41,8 +40,6 @@ file dev/cons.c
 #
 # Bus types
 #
-# The implementation of the bus_* functions in autoconfig.c
-# requires these all to agree with <autoconf.h> struct bus_loc
 
 device mainbus {}
 attach mainbus at root
@@ -76,6 +73,10 @@ include "../../../scsi/files.scsi"
 #
 # On-Board I/O (OBIO)
 #
+device idprom
+attach idprom at obio
+file arch/sun3x/dev/idprom.c		idprom
+
 device zsc {channel = -1}
 attach zsc at obio
 file arch/sun3/dev/zs.c 		zsc needs-flag
@@ -87,8 +88,10 @@ file arch/sun3x/dev/eeprom.c		eeprom
 
 device clock
 attach clock at obio
-file arch/sun3x/sun3x/clock.c		clock
-file dev/clock_subr.c			clock
+device oclock
+attach oclock at obio
+file arch/sun3x/sun3x/clock.c		clock | oclock
+file dev/clock_subr.c			clock | oclock
 
 device memerr
 attach memerr at obio
