@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.4 2005/01/08 20:21:00 joff Exp $ */
+/* $NetBSD: panel.c,v 1.5 2005/01/11 00:59:35 joff Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.4 2005/01/08 20:21:00 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.5 2005/01/11 00:59:35 joff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.4 2005/01/08 20:21:00 joff Exp $");
 #include <machine/autoconf.h>
 
 #include <dev/ic/hd44780reg.h>
-#include <dev/ic/hd44780_subr.h>
+#include <dev/ic/hd44780var.h>
 #include <dev/ic/lcdkp_subr.h>
 
 #define PANEL_POLLRATE	(hz / 10)
