@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.13 2004/01/29 01:48:45 lukem Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.14 2004/06/10 00:29:58 lukem Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -20,9 +20,9 @@ OBJHOSTMACHINE=	# set
 
 ##### Build rules
 .if defined(HOSTLIB)
-DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${YHEADER:D${SRCS:M*.y:.y=.h}}
+_YHLSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
+DPSRCS+=	${_YHLSRCS}
+CLEANFILES+=	${_YHLSRCS}
 .endif	# defined(HOSTLIB)
 
 .if !empty(SRCS:N*.h:N*.sh)
@@ -30,7 +30,7 @@ OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.lo/g}
 .endif
 
 .if defined(OBJS) && !empty(OBJS)
-.NOPATH: ${OBJS} ${HOSTPROG} ${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
+.NOPATH: ${OBJS} ${HOSTPROG} ${_YHLSRCS}
 
 ${OBJS}: ${DPSRCS}
 

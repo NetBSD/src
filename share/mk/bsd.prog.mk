@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.199 2004/05/21 21:13:58 ross Exp $
+#	$NetBSD: bsd.prog.mk,v 1.200 2004/06/10 00:29:59 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -118,10 +118,10 @@ SRCS?=		${PROG}.cc
 SRCS?=		${PROG}.c
 .endif
 
-DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-DPSRCS+=	${YHEADER:D${SRCS:M*.y:.y=.h}}
-CLEANFILES+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${YHEADER:D${SRCS:M*.y:.y=.h}}
+_YPSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
+
+DPSRCS+=	${_YPSRCS}
+CLEANFILES+=	${_YPSRCS}
 
 .if !empty(SRCS:N*.h:N*.sh:N*.fth)
 OBJS+=		${SRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
@@ -129,7 +129,7 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 
 .if defined(OBJS) && !empty(OBJS)
-.NOPATH: ${OBJS} ${PROG} ${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
+.NOPATH: ${OBJS} ${PROG} ${_YPSRCS}
 
 _PROGLDOPTS=
 .if ${SHLINKDIR} != "/usr/libexec"	# XXX: change or remove if ld.so moves
