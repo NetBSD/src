@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.9 2003/10/18 05:06:43 itojun Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.10 2003/10/23 06:30:32 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.8 2003/08/19 22:17:03 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.9 2003/10/18 05:06:43 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.10 2003/10/23 06:30:32 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -157,8 +157,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				bssid = wh->i_addr1;
 			if (!IEEE80211_ADDR_EQ(bssid, ic->ic_bss->ni_bssid) &&
 			    !IEEE80211_ADDR_EQ(bssid, ifp->if_broadcastaddr) &&
-			    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
-			    IEEE80211_FC0_TYPE_CTL) {
+			    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+			    IEEE80211_FC0_TYPE_DATA) {
 				/* not interested in */
 				IEEE80211_DPRINTF2(("%s: other bss %s\n",
 					__func__, ether_sprintf(wh->i_addr3)));
