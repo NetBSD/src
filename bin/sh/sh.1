@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.26 1999/01/11 19:34:53 garbled Exp $
+.\"	$NetBSD: sh.1,v 1.27 1999/01/28 18:11:50 kleink Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1042,6 +1042,7 @@ Terminate the shell process.  If exitstatus is given it is used as the
 exit status of the shell; otherwise the exit status of the preceding
 command is used.
 .It export Ar name...
+.It export Fl p
 The specified names are exported so that they will appear in the
 environment of subsequent commands. The only way to un-export a variable
 is to unset it. The shell allows the value of a variable to be set at the
@@ -1050,6 +1051,9 @@ same time it is exported by writing
 .Dl export name=value
 .Pp
 With no arguments the export command lists the names of all exported variables.
+With the
+.Fl p
+option specified the output will be formatted suitably for non-interactive use.
 .It Xo fc Op Fl e Ar editor
 .Op Ar first Op Ar last
 .Xc
@@ -1255,6 +1259,7 @@ acts as an escape character, causing the following character to be treated
 literally.  If a backslash is followed by a newline, the backslash and the
 newline will be deleted.
 .It readonly Ar name...
+.It readonly Fl p
 The specified names are marked as read only, so that they cannot be
 subsequently modified or unset.  The shell allows the value of a variable
 to be set at the same time it is marked read only by writing
@@ -1263,6 +1268,10 @@ to be set at the same time it is marked read only by writing
 .Pp
 With no arguments the readonly command lists the names of all read only
 variables.
+With the
+.Fl p
+option specified the output will be formatted suitably for non-interactive use.
+.Pp
 .It Xo set
 .Oo {
 .Fl options | Cm +options | Cm -- }
