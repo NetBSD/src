@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_cd.h,v 1.9 1998/07/13 16:50:56 thorpej Exp $	*/
+/*	$NetBSD: atapi_cd.h,v 1.10 2001/05/14 20:35:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -109,13 +109,28 @@ union atapi_cd_pages {
 };
 
 struct atapi_cd_mode_data {
-	struct atapi_mode_header header;
+	struct scsipi_mode_header_big header;
 	union atapi_cd_pages pages;
 };
 
+/* medium type in scsipi_mode_header_big */
+#define MDT_UNKNOWN	0x00
+#define MDT_DATA_120	0x01
+#define MDT_AUDIO_120	0x02
+#define MDT_COMB_120	0x03
+#define MDT_PHOTO_120	0x04
+#define MDT_DATA_80	0x05
+#define MDT_AUDIO_80	0x06
+#define MDT_COMB_80	0x07
+#define MDT_PHOTO_80	0x08
+#define MDT_NO_DISC	0x70
+#define MDT_DOOR_OPEN	0x71
+#define MDT_FMT_ERROR	0x72
+
+
 #define AUDIOPAGESIZE \
-	(sizeof(struct atapi_mode_header) + sizeof(struct cd_audio_page))
+	(sizeof(struct scsipi_mode_header_big) + sizeof(struct cd_audio_page))
 #define CDROMPAGESIZE \
-	(sizeof(struct atapi_mode_header) + sizeof(struct atapi_cdrom_page))
+	(sizeof(struct scsipi_mode_header_big) + sizeof(struct atapi_cdrom_page))
 #define CAPPAGESIZE \
-	(sizeof(struct atapi_mode_header) + sizeof(struct atapi_cap_page))
+	(sizeof(struct scsipi_mode_header_big) + sizeof(struct atapi_cap_page))

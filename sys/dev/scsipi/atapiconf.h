@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.11 2001/04/25 17:53:38 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.12 2001/05/14 20:35:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -31,8 +31,6 @@
 
 #include <dev/scsipi/scsipiconf.h>
 
-struct atapi_mode_header;
-
 struct atapibus_softc {
 	struct device sc_dev;
 	struct scsipi_channel *sc_channel;	/* our scsipi_channel */
@@ -59,8 +57,4 @@ void	atapi_print_addr __P((struct scsipi_periph *));
 int	atapi_interpret_sense __P((struct scsipi_xfer *));
 int	atapi_scsipi_cmd __P((struct scsipi_periph *, struct scsipi_generic *,
 	    int, void *, size_t, int, int, struct buf *, int));
-int	atapi_mode_select __P((struct scsipi_periph *,
-	    struct atapi_mode_header *, int, int, int, int));
-int	atapi_mode_sense __P((struct scsipi_periph *, int,
-	    struct atapi_mode_header *, int, int, int, int));
 void	atapi_kill_pending __P((struct scsipi_periph *));

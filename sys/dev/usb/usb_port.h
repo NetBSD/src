@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.43 2001/04/12 01:39:04 thorpej Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.44 2001/05/14 20:35:29 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -83,6 +83,8 @@
 #else
 #define Static static
 #endif
+
+#define SCSI_MODE_SENSE		MODE_SENSE
 
 typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
