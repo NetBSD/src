@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 1994/10/14 18:27:30 cgd Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 1995/05/24 21:00:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -40,7 +40,7 @@
 
 /* Just a dummy */
 struct cpu_disklabel {
-	int	cd_dummy;			/* must have one element. */
+	char	cd_block[512];
 };
 
 #endif /* _MACHINE_DISKLABEL_H_ */
