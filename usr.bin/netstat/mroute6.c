@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute6.c,v 1.7 2000/02/26 09:55:24 itojun Exp $	*/
+/*	$NetBSD: mroute6.c,v 1.8 2001/05/28 04:22:56 assar Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -87,8 +87,8 @@
 
 #ifdef INET6
 
-#define	WID_ORG	(lflag ? 39 : (nflag ? 29 : 18)) /* width of origin column */
-#define	WID_GRP	(lflag ? 18 : (nflag ? 16 : 18)) /* width of group column */
+#define	WID_ORG	(lflag ? 39 : (numeric_addr ? 29 : 18)) /* width of origin column */
+#define	WID_GRP	(lflag ? 18 : (numeric_addr ? 16 : 18)) /* width of group column */
 
 void
 mroute6pr(mrpaddr, mfcaddr, mifaddr)
@@ -103,7 +103,7 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 	register mifi_t mifi;
 	register int i;
 	register int banner_printed;
-	register int saved_nflag;
+	register int saved_numeric_addr;
 	mifi_t maxmif = 0;
 	int waitings;
 
@@ -137,8 +137,8 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 		return;
 	}
 
-	saved_nflag = nflag;
-	nflag = 1;
+	saved_numeric_addr = numeric_addr;
+	numeric_addr = 1;
 
 	kread(mifaddr, (char *)&mif6table, sizeof(mif6table));
 	banner_printed = 0;
@@ -214,7 +214,7 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 		printf("\nIPv6 Multicast Routing Table is empty\n");
 
 	printf("\n");
-	nflag = saved_nflag;
+	numeric_addr = saved_numeric_addr;
 }
 
 void
