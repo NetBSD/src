@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.4 2003/10/24 15:47:49 tsutsui Exp $	*/
+/*	$NetBSD: acardide.c,v 1.5 2003/10/24 15:50:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -61,6 +61,16 @@ static const struct pciide_product_desc pciide_acard_products[] =  {
 	{ PCI_PRODUCT_ACARD_ATP860A,
 	  0,
 	  "Acard ATP860-A Ultra66 IDE Controller",
+	  acard_chip_map,
+	},
+	{ PCI_PRODUCT_ACARD_ATP865,
+	  0,
+	  "Acard ATP865 Ultra100 IDE Controller",
+	  acard_chip_map,
+	},
+	{ PCI_PRODUCT_ACARD_ATP865A,
+	  0,
+	  "Acard ATP865-A Ultra100 IDE Controller",
 	  acard_chip_map,
 	},
 	{ 0,
@@ -132,7 +142,19 @@ acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = ACARD_IS_850(sc) ? 2 : 4;
+	switch (sc->sc_pp->ide_product) {
+	case PCI_PRODUCT_ACARD_ATP860:
+	case PCI_PRODUCT_ACARD_ATP860A:
+		sc->sc_wdcdev.UDMA_cap = 4;
+		break;
+	case PCI_PRODUCT_ACARD_ATP865:
+	case PCI_PRODUCT_ACARD_ATP865A:
+		sc->sc_wdcdev.UDMA_cap = 5;
+		break;
+	default:
+		sc->sc_wdcdev.UDMA_cap = 2;
+		break;
+	}
 
 	sc->sc_wdcdev.set_modes = acard_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
