@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.27 1997/08/03 04:27:37 mikel Exp $
+#	$NetBSD: Makefile,v 1.28 1997/10/10 19:56:17 christos Exp $
 
 PROG=	ed
-CFLAGS+=-DBACKWARDS  #-DDES
+CPPFLAGS+=-DBACKWARDS  #-DDES
 SRCS=	buf.c cbc.c glbl.c io.c main.c re.c sub.c undo.c
 
 LDADD+= -lcrypt
