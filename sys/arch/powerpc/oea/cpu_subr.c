@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.7 2003/04/04 04:04:49 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.8 2003/04/10 16:07:15 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -650,8 +650,10 @@ cpu_config_l2cr(int pvr)
 	/*
 	 * Configure L2 cache if not enabled.
 	 */
-	if ((l2cr & L2CR_L2E) == 0 && l2cr_config != 0)
+	if ((l2cr & L2CR_L2E) == 0 && l2cr_config != 0) {
 		cpu_enable_l2cr(l2cr_config);
+		l2cr = mfspr(SPR_L2CR);
+	}
 
 	if ((l2cr & L2CR_L2E) == 0)
 		return;
