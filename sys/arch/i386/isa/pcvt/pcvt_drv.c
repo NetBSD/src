@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_drv.c,v 1.16 1995/04/21 07:56:40 mycroft Exp $	*/
+/*	$NetBSD: pcvt_drv.c,v 1.17 1995/06/02 02:48:41 brezak Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -783,6 +783,7 @@ pccnputc(Dev_t dev, U_char c)
 	if (c == '\n')
 		sput("\r", 1, 1, 0);
 	sput((char *) &c, 1, 1, 0);
+	async_update((void *)2);
 }
 
 
@@ -803,6 +804,7 @@ pccngetc(Dev_t dev)
 #endif /* XSERVER */
 
 	cp = sgetc(0);
+	async_update((void *)2);
 
 	if (*cp == '\r')
 		return('\n');
@@ -883,6 +885,7 @@ getchar(void)
 	x = splhigh();
 
 	sput(">", 1, 1, 0);
+	async_update((void *)2);
 	thechar = *(sgetc(0));
 
 	splx(x);
@@ -1033,7 +1036,7 @@ pcvt_xmode_set(int on, struct proc *p)
 			pcvt_set_scrnsv_tmo(0);	/* turn it off */
 #endif /* PCVT_SCREENSAVER */
 
-		async_update(1);	/* turn off */
+		async_update((void *)1);	/* turn off */
 
 		/* disable text output and save screen contents */
 		/* video board memory -> kernel memory */
