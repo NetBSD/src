@@ -1,4 +1,4 @@
-/*	$KAME: misc.h,v 1.13 2002/06/10 19:58:29 itojun Exp $	*/
+/*	$KAME: cftoken_proto.h,v 1.1 2002/09/27 05:55:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,18 +29,13 @@
  * SUCH DAMAGE.
  */
 
-#define BIT2STR(b) bit2str(b, sizeof(b)<<3)
+extern int yyerrorcount;
 
-#ifdef HAVE_FUNC_MACRO
-#define LOCATION        debug_location(__FILE__, __LINE__, __func__)
-#else
-#define LOCATION        debug_location(__FILE__, __LINE__, NULL)
-#endif
+extern int yylex __P((void));
+extern void yyerror __P((char *, ...));
+extern void yywarn __P((char *, ...));
 
-extern int hexdump __P((void *, size_t));
-extern char *bit2str __P((int, int));
-extern void *get_newbuf __P((void *, size_t));
-extern const char *debug_location __P((const char *, int, const char *));
-extern int getfsize __P((char *));
-struct timeval;
-extern double timedelta __P((struct timeval *, struct timeval *));
+extern int yycf_switch_buffer __P((char *));
+extern int yycf_set_buffer __P((char *));
+extern void yycf_init_buffer __P((void));
+extern void yycf_clean_buffer __P((void));

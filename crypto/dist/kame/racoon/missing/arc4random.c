@@ -1,7 +1,7 @@
-/*	$KAME: misc.h,v 1.13 2002/06/10 19:58:29 itojun Exp $	*/
+/*	$KAME: arc4random.c,v 1.1 2002/06/04 05:20:27 itojun Exp $	*/
 
 /*
- * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * Copyright (C) 2000 WIDE Project.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -28,19 +28,40 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+/*
+ * a stub function to make random() to return good random numbers.
+ */
 
-#define BIT2STR(b) bit2str(b, sizeof(b)<<3)
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/uio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <err.h>
 
-#ifdef HAVE_FUNC_MACRO
-#define LOCATION        debug_location(__FILE__, __LINE__, __func__)
-#else
-#define LOCATION        debug_location(__FILE__, __LINE__, NULL)
-#endif
+#include "arc4random.h"
 
-extern int hexdump __P((void *, size_t));
-extern char *bit2str __P((int, int));
-extern void *get_newbuf __P((void *, size_t));
-extern const char *debug_location __P((const char *, int, const char *));
-extern int getfsize __P((char *));
-struct timeval;
-extern double timedelta __P((struct timeval *, struct timeval *));
+static int fd = -1;
+
+static void
+arc4random_init()
+{
+
+	fd = open("/dev/urandom", O_RDONLY, 0600);
+	if (fd < 0) {
+		err(1, "/dev/urandom");
+		/*NOTREACHED*/
+	}
+}
+
+u_int32_t
+arc4random()
+{
+	u_int32_t v;
+
+	if (fd < 0)
+		arc4random_init();
+	read(fd, &v, sizeof(v));
+	return v;
+}

@@ -1,4 +1,4 @@
-/*	$KAME: pfkey.c,v 1.133 2001/11/16 04:07:41 sakane Exp $	*/
+/*	$KAME: pfkey.c,v 1.134 2002/06/04 05:20:27 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -84,6 +84,9 @@
 #include "strnames.h"
 #include "backupsa.h"
 #include "gcmalloc.h"
+#ifndef HAVE_ARC4RANDOM
+#include "arc4random.h"
+#endif
 
 /* prototype */
 static u_int ipsecdoi2pfkey_aalg __P((u_int));
@@ -2317,7 +2320,7 @@ pk_recv(so, lenp)
 u_int32_t
 pk_getseq()
 {
-	return (u_int32_t)random();
+	return arc4random();
 }
 
 static int
