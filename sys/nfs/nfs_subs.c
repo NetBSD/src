@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.84 2000/09/19 23:26:26 bjh21 Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.85 2000/09/24 06:59:21 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2384,12 +2384,14 @@ loop:
 	for (vp = mp->mnt_vnodelist.lh_first; vp; vp = nvp) {
 		if (vp->v_mount != mp)	/* Paranoia */
 			goto loop;
+		nvp = vp->v_mntvnodes.le_next;
+		if (vp->v_type == VNON)
+			continue;
 		np = VTONFS(vp);
 		np->n_pushlo = np->n_pushhi = np->n_pushedlo =
 		    np->n_pushedhi = 0;
 		np->n_commitflags &=
 		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
-		nvp = vp->v_mntvnodes.le_next;
 		for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
 			nbp = bp->b_vnbufs.le_next;
 			if ((bp->b_flags & (B_BUSY | B_DELWRI | B_NEEDCOMMIT))
