@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.39 2001/09/19 04:09:54 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.40 2001/09/20 13:54:44 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -1672,7 +1672,7 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_bss *bs = &ic->ic_bss;
 	struct ifnet *ifp = &ic->ic_if;
-	int i, error;
+	int error;
 	u_int8_t newmode;
 	enum ieee80211_state ostate;
 #ifdef AWI_DEBUG
@@ -1720,39 +1720,6 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 
 	/* state transition */
 	if (nstate == IEEE80211_S_SCAN) {
-		if (ostate == IEEE80211_S_SCAN &&
-		    (ic->ic_flags & IEEE80211_F_ASCAN) == 0 &&
-		    (ic->ic_flags & IEEE80211_F_ADHOC) != 0 &&
-		    (ic->ic_flags & IEEE80211_F_IBSSON) != 0 &&
-		    sc->sc_adhoc_ap == 0 &&
-		    ic->ic_des_esslen != 0) {
-			/* create IBSS */
-			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: creating ibss\n", ifp->if_xname);
-			ic->ic_flags |= IEEE80211_F_SIBSS;
-			bs->bs_chan = ic->ic_ibss_chan;
-			bs->bs_intval = ic->ic_lintval;
-			bs->bs_nrate = 0;
-			for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
-				if (ic->ic_sup_rates[i])
-					bs->bs_rates[bs->bs_nrate++] =
-					    ic->ic_sup_rates[i];
-			}
-			if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH) {
-				bs->bs_fhdwell = 200;		/* XXX */
-				bs->bs_fhindex = 1;
-			}
-			memcpy(bs->bs_macaddr, ic->ic_myaddr,
-			    IEEE80211_ADDR_LEN);
-			bs->bs_esslen = ic->ic_des_esslen;
-			memcpy(bs->bs_essid, ic->ic_des_essid, bs->bs_esslen);
-			nstate = IEEE80211_S_RUN;
-			sc->sc_substate = AWI_ST_NONE;
-			/* TODO */
-			goto set_ssid;
-		}
-		ic->ic_flags &= ~IEEE80211_F_SIBSS;
-
 		/* SCAN substate */
 		if (sc->sc_substate == AWI_ST_NONE) {
 			sc->sc_nstate = nstate;	/* next state in transition */
@@ -1843,7 +1810,6 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 
 	if (ostate == IEEE80211_S_SCAN) {
 		/* set SSID and channel */
-  set_ssid:
 		/* substate */
 		if (sc->sc_substate == AWI_ST_NONE) {
 			sc->sc_nstate = nstate;	/* next state in transition */
@@ -1879,17 +1845,21 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 				    IEEE80211_FH_CHANSET(bs->bs_chan));
 				awi_write_1(sc, AWI_CA_SYNC_PATTERN,
 				    IEEE80211_FH_CHANPAT(bs->bs_chan));
+				awi_write_1(sc, AWI_CA_SYNC_IDX,
+				    bs->bs_fhindex);
+				awi_write_2(sc, AWI_CA_SYNC_DWELL,
+				    bs->bs_fhdwell);
 			} else {
 				awi_write_1(sc, AWI_CA_SYNC_SET, bs->bs_chan);
 				awi_write_1(sc, AWI_CA_SYNC_PATTERN, 0);
+				awi_write_1(sc, AWI_CA_SYNC_IDX, 0);
+				awi_write_2(sc, AWI_CA_SYNC_DWELL, 0);
 			}
-			awi_write_1(sc, AWI_CA_SYNC_IDX, bs->bs_fhindex);
 			if ((ic->ic_flags & IEEE80211_F_SIBSS) &&
 			    !sc->sc_no_bssid)
 				awi_write_1(sc, AWI_CA_SYNC_STARTBSS, 1);
 			else
 				awi_write_1(sc, AWI_CA_SYNC_STARTBSS, 0);
-			awi_write_2(sc, AWI_CA_SYNC_DWELL, bs->bs_fhdwell);
 			awi_write_2(sc, AWI_CA_SYNC_MBZ, 0);
 			awi_write_bytes(sc, AWI_CA_SYNC_TIMESTAMP,
 			    bs->bs_tstamp, 8);
