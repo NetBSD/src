@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.20 2003/11/01 12:43:30 jdolecek Exp $	*/
+/*	$NetBSD: par.c,v 1.21 2003/11/01 12:53:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.20 2003/11/01 12:43:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.21 2003/11/01 12:53:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -289,7 +289,8 @@ parrw(dev, uio)
 {
 	int unit = UNIT(dev);
 	struct par_softc *sc = par_cd.cd_devs[unit];
-	int s, len, cnt;
+	int len=0xdeadbeef;	/* XXX: shutup gcc */
+	int s, cnt=0;
 	char *cp;
 	int error = 0;
 	int buflen;
@@ -394,6 +395,10 @@ parrw(dev, uio)
 	splx(s);
 	/*
 	 * Adjust for those chars that we uiomove'ed but never wrote
+	 */
+	/*
+	 * XXXjdolecek: this len usage is wrong, this will be incorrect
+	 * if the transfer size is longer than sc_burst
 	 */
 	if (uio->uio_rw == UIO_WRITE && cnt != len) {
 		uio->uio_resid += (len - cnt);
