@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.3 1997/07/30 22:53:55 jtc Exp $ */
+/*	$NetBSD: apm.c,v 1.4 1997/10/17 04:31:56 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,20 +35,22 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <stdio.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <err.h>
-#include <string.h>
 #include <sys/types.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/un.h>
+
 #include <machine/apmvar.h>
+
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "pathnames.h"
 #include "apm-proto.h"
 
@@ -56,11 +58,6 @@
 #define TRUE 1
 
 extern char *__progname;
-extern char *optarg;
-extern int optind;
-extern int optopt;
-extern int opterr;
-extern int optreset;
 
 void usage(void);
 void zzusage(void);
