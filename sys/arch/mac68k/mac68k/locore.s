@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.38 1995/06/25 02:45:14 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.39 1995/06/28 04:09:25 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,32 +112,12 @@ Ljmp0panic:
 	.asciz	"kernel jump to zero"
 	.even
 
-/*
- * Do a dump.
- * Called by auto-restart.
- */
-	.globl	_dumpsys
-	.globl	_doadump
-_doadump:
-	jbsr	_dumpsys
-	jbsr	_doboot
-	/*NOTREACHED*/
-
-
-	.globl	_stacknquit, _stack_list
-
-_stacknquit:
-	moveml	#0xFFFF,sp@-
-	movl	sp, sp@-
-	jbsr	_stack_trace
-	stop	#0x2700
-
 
 /*
  * Trap/interrupt vector routines
  */ 
 
-	.globl	_cpu040, _trap, _nofault, _longjmp, _print_bus
+	.globl	_cpu040, _trap, _nofault, _longjmp
 _buserr:
 	tstl	_nofault		| device probe?
 	jeq	Lberr			| no, handle as usual
@@ -994,7 +974,6 @@ Lloaddone:
 Lnocache0:
 /* final setup for C code */
 	jbsr	_setmachdep		| Set some machine-dep stuff
-	movl	#0,a6			| LAK: so that stack_trace() works
 	movw	#PSL_LOWIPL,sr		| lower SPL ; enable interrupts
 
 /*
