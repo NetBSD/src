@@ -158,7 +158,7 @@ int mmsopen(dev_t dev, int flag, int fmt, struct proc *p)
 	/* Disallow multiple opens */
 
 	if (sc->state & OPEN)
-		return(ENXIO);
+		return(EBUSY);
 
 	/* Initialize state */
 
