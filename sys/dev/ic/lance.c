@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.12 2000/05/12 16:45:42 thorpej Exp $	*/
+/*	$NetBSD: lance.c,v 1.12.4.1 2000/12/31 20:14:57 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -272,6 +272,8 @@ lance_config(sc)
 	printf("%s: %d receive buffers, %d transmit buffers\n",
 	    sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
 
+	/* claim 802.1q capability */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
@@ -468,7 +470,9 @@ lance_read(sc, boff, len)
 	struct ether_header *eh;
 
 	if (len <= sizeof(struct ether_header) ||
-	    len > ETHERMTU + sizeof(struct ether_header)) {
+	    len > ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
+		ETHER_VLAN_ENCAP_LEN + ETHERMTU + sizeof(struct ether_header) :
+		ETHERMTU + sizeof(struct ether_header))) {
 #ifdef LEDEBUG
 		printf("%s: invalid packet size %d; dropping\n",
 		    sc->sc_dev.dv_xname, len);
