@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlbreg.h,v 1.1 2000/06/09 05:22:23 soda Exp $	*/
+/*	$NetBSD: jazzdmatlbreg.h,v 1.2 2000/06/10 12:56:46 soda Exp $	*/
 /*	$OpenBSD: dma.h,v 1.3 1997/04/19 17:19:51 pefo Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 /* XXX */
-#define	PICA_TL_BASE		0xa0008000	/* Base of tl register area */
+#define	PICA_TL_BASE		0xa0180000	/* Base of tl register area */
 #define JAZZ_DMATLB_SIZE	0x00008000	/* Size of tl register area */
 
 #define JAZZ_DMATLBREG_MAP	0x00		/* DMA transl. table base */

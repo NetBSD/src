@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.18 2000/06/09 05:28:48 soda Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.19 2000/06/10 12:56:46 soda Exp $	*/
 /*	$OpenBSD: if_sn.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
 
 /*
@@ -201,7 +201,7 @@ void snreset __P((struct sn_softc *sc));
  *  This should really be 'allocated' but for now we
  *  'hardwire' it.
  */
-#define SONICBUF	0xa0010000
+#define SONICBUF	0xa0190000
 
 /*
  *  Nicely aligned pointers into the sonicbuffers

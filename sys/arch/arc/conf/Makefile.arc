@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arc,v 1.38 2000/05/21 02:50:10 soren Exp $
+#	$NetBSD: Makefile.arc,v 1.39 2000/06/10 12:56:45 soda Exp $
 
 # Makefile for NetBSD
 #
@@ -39,7 +39,7 @@ TSORT?=	tsort -q
 
 COPTS?= 	-O2 # -mmemcpy # XXX: - profile this
 
-TEXTADDR?=	80100000
+TEXTADDR?=	80200000
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
