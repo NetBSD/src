@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.23 1994/04/10 01:52:02 mycroft Exp $
+ *	$Id: ld.c,v 1.24 1994/04/15 10:05:39 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -1867,6 +1867,10 @@ consider_relocation (entry, dataseg)
 			sp = lsp->symbol;
 			if (sp->alias)
 				sp = sp->alias;
+			if (sp->flags & GS_TRACE) {
+				fprintf(stderr, "symbol %s has jmpslot in %s\n",
+						sp->name, get_file_name(entry));
+			}
 			alloc_rrs_jmpslot(entry, sp);
 
 		} else if (RELOC_BASEREL_P(reloc)) {
@@ -1917,6 +1921,11 @@ consider_relocation (entry, dataseg)
 			 */
 
 			if (building_shared_object) {
+				if (sp->flags & GS_TRACE) {
+					fprintf(stderr,
+					    "symbol %s RRS entry in %s\n",
+					    sp->name, get_file_name(entry));
+				}
 				alloc_rrs_reloc(entry, sp);
 				continue;
 			}
@@ -2592,6 +2601,12 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 				if (!pic_code_seen)
 					relocation += sp->value;
 			} else if (sp->defined) {
+				if (sp->flags & GS_TRACE) {
+					fprintf(stderr,
+					    "symbol %s defined as %x in %s\n",
+					    sp->name, sp->defined,
+					    get_file_name(entry) );
+				}
 				if (sp == got_symbol) {
 					/* Handle _GOT_ refs */
 					relocation = addend + sp->value
@@ -2633,11 +2648,22 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 				 * to reflect the changed position in the
 				 * output file.
 				 */
-				if (sp->jmpslot_offset != -1) {
+				if (sp->flags & GS_TRACE) {
+					fprintf(stderr,
+					    "symbol %s claims RRS in %s%s\n",
+					    sp->name, get_file_name(entry),
+					    (sp->so_defined == (N_TEXT+N_EXT) &&
+					    sp->jmpslot_offset != -1)?
+						" (JMPSLOT)":"");
+				}
+				if (sp->so_defined == (N_TEXT+N_EXT) &&
+				    sp->jmpslot_offset != -1) {
 					/*
-					 * Claim a jmpslot if one was
-					 * allocated (dependent on
-					 * `force_alias_flag').
+					 * Claim a jmpslot if one was allocated.
+					 *
+					 * At this point, a jmpslot can only
+					 * result from a shared object reference
+					 * while `force_alias' is in effect.
 					 */
 					relocation = addend +
 						claim_rrs_jmpslot(entry, r,
