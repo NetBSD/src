@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.608 2003/09/26 19:00:24 mycroft Exp $
+# $NetBSD: mi,v 1.609 2003/09/26 20:17:50 mbw Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -483,6 +483,7 @@
 ./usr/share/man/cat4/acpiec.0			man-sys-catman
 ./usr/share/man/cat4/acpilid.0			man-sys-catman
 ./usr/share/man/cat4/acpitz.0			man-sys-catman
+./usr/share/man/cat4/adb.0			man-sys-catman
 ./usr/share/man/cat4/adv.0			man-sys-catman
 ./usr/share/man/cat4/adw.0			man-sys-catman
 ./usr/share/man/cat4/agp.0			man-sys-catman
@@ -491,6 +492,7 @@
 ./usr/share/man/cat4/ahc.0			man-sys-catman
 ./usr/share/man/cat4/ai.0			man-sys-catman
 ./usr/share/man/cat4/aic.0			man-sys-catman
+./usr/share/man/cat4/akbd.0			man-sys-catman
 ./usr/share/man/cat4/alpha/apecs.0		man-sys-catman
 ./usr/share/man/cat4/alpha/asc.0		man-sys-catman
 ./usr/share/man/cat4/alpha/autoconf.0		man-sys-catman
@@ -544,6 +546,7 @@
 ./usr/share/man/cat4/amiga/wesc.0		man-sys-catman
 ./usr/share/man/cat4/amiga/zssc.0		man-sys-catman
 ./usr/share/man/cat4/amr.0			man-sys-catman
+./usr/share/man/cat4/ams.0			man-sys-catman
 ./usr/share/man/cat4/an.0			man-sys-catman
 ./usr/share/man/cat4/arc/intro.0		man-sys-catman
 ./usr/share/man/cat4/aria.0			man-sys-catman
@@ -785,14 +788,12 @@
 ./usr/share/man/cat4/lmc.0			man-sys-catman
 ./usr/share/man/cat4/lo.0			man-sys-catman
 ./usr/share/man/cat4/lxtphy.0			man-sys-catman
-./usr/share/man/cat4/mac68k/adb.0		man-sys-catman
 ./usr/share/man/cat4/mac68k/ae.0		man-sys-catman
 ./usr/share/man/cat4/mac68k/autoconf.0		man-sys-catman
 ./usr/share/man/cat4/mac68k/intro.0		man-sys-catman
 ./usr/share/man/cat4/mac68k/iwm.0		man-sys-catman
 ./usr/share/man/cat4/mac68k/kmem.0		man-sys-catman
 ./usr/share/man/cat4/mac68k/mainbus.0		man-sys-catman
-./usr/share/man/cat4/mac68k/mc.0		man-sys-catman
 ./usr/share/man/cat4/mac68k/mem.0		man-sys-catman
 ./usr/share/man/cat4/mac68k/netdock.0		man-sys-catman
 ./usr/share/man/cat4/mac68k/obio.0		man-sys-catman
@@ -802,11 +803,12 @@
 ./usr/share/man/cat4/macppc/bm.0		man-sys-catman
 ./usr/share/man/cat4/macppc/gm.0		man-sys-catman
 ./usr/share/man/cat4/macppc/intro.0		man-sys-catman
-./usr/share/man/cat4/macppc/mc.0		man-sys-catman
 ./usr/share/man/cat4/macppc/mesh.0		man-sys-catman
+./usr/share/man/cat4/macppc/obio.0		man-sys-catman
 ./usr/share/man/cat4/mainbus.0			man-sys-catman
 ./usr/share/man/cat4/makphy.0			man-sys-catman
 ./usr/share/man/cat4/mbe.0			man-sys-catman
+./usr/share/man/cat4/mc.0			man-sys-catman
 ./usr/share/man/cat4/mca.0			man-sys-catman
 ./usr/share/man/cat4/mcclock.0			man-sys-catman
 ./usr/share/man/cat4/mcd.0			man-sys-catman
@@ -2310,6 +2312,7 @@
 ./usr/share/man/man4/acpiec.4			man-sys-man
 ./usr/share/man/man4/acpilid.4			man-sys-man
 ./usr/share/man/man4/acpitz.4			man-sys-man
+./usr/share/man/man4/adb.4			man-sys-man
 ./usr/share/man/man4/adv.4			man-sys-man
 ./usr/share/man/man4/adw.4			man-sys-man
 ./usr/share/man/man4/agp.4			man-sys-man
@@ -2318,6 +2321,7 @@
 ./usr/share/man/man4/ahc.4			man-sys-man
 ./usr/share/man/man4/ai.4			man-sys-man
 ./usr/share/man/man4/aic.4			man-sys-man
+./usr/share/man/man4/akbd.4			man-sys-man
 ./usr/share/man/man4/alpha/apecs.4		man-sys-man
 ./usr/share/man/man4/alpha/asc.4		man-sys-man
 ./usr/share/man/man4/alpha/autoconf.4		man-sys-man
@@ -2371,6 +2375,7 @@
 ./usr/share/man/man4/amiga/wesc.4		man-sys-man
 ./usr/share/man/man4/amiga/zssc.4		man-sys-man
 ./usr/share/man/man4/amr.4			man-sys-man
+./usr/share/man/man4/ams.4			man-sys-man
 ./usr/share/man/man4/an.4			man-sys-man
 ./usr/share/man/man4/arc/intro.4		man-sys-man
 ./usr/share/man/man4/aria.4			man-sys-man
@@ -2612,14 +2617,12 @@
 ./usr/share/man/man4/lmc.4			man-sys-man
 ./usr/share/man/man4/lo.4			man-sys-man
 ./usr/share/man/man4/lxtphy.4			man-sys-man
-./usr/share/man/man4/mac68k/adb.4		man-sys-man
 ./usr/share/man/man4/mac68k/ae.4		man-sys-man
 ./usr/share/man/man4/mac68k/autoconf.4		man-sys-man
 ./usr/share/man/man4/mac68k/intro.4		man-sys-man
 ./usr/share/man/man4/mac68k/iwm.4		man-sys-man
 ./usr/share/man/man4/mac68k/kmem.4		man-sys-man
 ./usr/share/man/man4/mac68k/mainbus.4		man-sys-man
-./usr/share/man/man4/mac68k/mc.4		man-sys-man
 ./usr/share/man/man4/mac68k/mem.4		man-sys-man
 ./usr/share/man/man4/mac68k/netdock.4		man-sys-man
 ./usr/share/man/man4/mac68k/obio.4		man-sys-man
@@ -2629,11 +2632,12 @@
 ./usr/share/man/man4/macppc/bm.4		man-sys-man
 ./usr/share/man/man4/macppc/gm.4		man-sys-man
 ./usr/share/man/man4/macppc/intro.4		man-sys-man
-./usr/share/man/man4/macppc/mc.4		man-sys-man
 ./usr/share/man/man4/macppc/mesh.4		man-sys-man
+./usr/share/man/man4/macppc/obio.4		man-sys-man
 ./usr/share/man/man4/mainbus.4			man-sys-man
 ./usr/share/man/man4/makphy.4			man-sys-man
 ./usr/share/man/man4/mbe.4			man-sys-man
+./usr/share/man/man4/mc.4			man-sys-man
 ./usr/share/man/man4/mca.4			man-sys-man
 ./usr/share/man/man4/mcclock.4			man-sys-man
 ./usr/share/man/man4/mcd.4			man-sys-man
