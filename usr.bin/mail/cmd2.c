@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.8 1997/10/19 05:03:03 lukem Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.9 1998/12/19 16:31:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.8 1997/10/19 05:03:03 lukem Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.9 1998/12/19 16:31:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -255,7 +255,7 @@ snarf(linebuf, flag)
 	 * Strip away trailing blanks.
 	 */
 
-	while (cp > linebuf && isspace(*cp))
+	while (cp > linebuf && isspace((unsigned char)*cp))
 		cp--;
 	*++cp = 0;
 
@@ -263,13 +263,13 @@ snarf(linebuf, flag)
 	 * Now search for the beginning of the file name.
 	 */
 
-	while (cp > linebuf && !isspace(*cp))
+	while (cp > linebuf && !isspace((unsigned char)*cp))
 		cp--;
 	if (*cp == '\0') {
 		printf("No file specified.\n");
 		return(NOSTR);
 	}
-	if (isspace(*cp))
+	if (isspace((unsigned char)*cp))
 		*cp++ = 0;
 	else
 		*flag = 0;
@@ -382,7 +382,7 @@ core(v)
 	void *v;
 {
 	int pid;
-	extern union wait wait_status;
+	extern int wait_status;
 
 	switch (pid = vfork()) {
 	case -1:
@@ -395,7 +395,7 @@ core(v)
 	printf("Okie dokie");
 	fflush(stdout);
 	wait_child(pid);
-	if (wait_status.w_coredump)
+	if (WCOREDUMP(wait_status))
 		printf(" -- Core dumped.\n");
 	else
 		printf(" -- Can't dump core.\n");
