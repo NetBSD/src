@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 1998/01/24 14:16:27 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 1998/02/08 14:06:22 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -66,6 +66,7 @@ struct device *booted_from;
 struct devnametobdevmaj vax_nam2blk[] = {
 	{ "hp",		0 },
 	{ "ra",		9 },
+	{ "rx",		12 },
 	{ "rd",		19 },
 	{ "sd",		20 },
 	{ "cd",		22 },

@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.30 1998/01/12 20:52:31 thorpej Exp $
+#       $NetBSD: files.vax,v 1.31 1998/02/08 14:05:19 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -219,13 +219,6 @@ attach	hl at uba
 device	rl class disk
 attach	rl at hl
 file	arch/vax/uba/rl.c		rl needs-count
-
-# RX211/RX02 at UBA
-device	fx class dull { drive=-1 }
-attach	fx at uba
-device	rx class disk
-attach	rx at fx
-file	arch/vax/uba/rx.c		rx needs-count
 
 # SC-21/SC-31 at UBA
 device	sc class dull { drive=-1 }

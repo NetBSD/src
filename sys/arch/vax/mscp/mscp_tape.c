@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.8 1998/01/24 14:16:42 ragge Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.9 1998/02/08 14:04:01 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -13,8 +13,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
- *      Lule}, Sweden and its contributors.
+ *	This product includes software developed at Ludd, University of 
+ *	Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -69,8 +69,8 @@ struct mt_softc {
 	int	mt_ioctlerr;	/* Error after last ioctl */
 };
 
-#define	MT_OFFLINE	0
-#define	MT_ONLINE	1
+#define MT_OFFLINE	0
+#define MT_ONLINE	1
 
 int	mtmatch __P((struct device *, struct cfdata *, void *));
 void	mtattach __P((struct device *, struct device *, void *));
@@ -103,9 +103,9 @@ struct	mscp_device mt_device = {
 };
 
 /* This is not good, should allow more than 4 tapes/device type */
-#define	mtunit(dev)	(minor(dev) & T_UNIT)
-#define	mtnorewind(dev)	(dev & T_NOREWIND)
-#define	mthdensity(dev)	(dev & T_1600BPI)
+#define mtunit(dev)	(minor(dev) & T_UNIT)
+#define mtnorewind(dev) (dev & T_NOREWIND)
+#define mthdensity(dev) (dev & T_1600BPI)
 
 struct	cfattach mt_ca = {
 	sizeof(struct mt_softc), mtmatch, mtattach
@@ -269,20 +269,20 @@ bad:
 
 int
 mtread(dev, uio)
-        dev_t dev;
-        struct uio *uio;
+	dev_t dev;
+	struct uio *uio;
 {
 
-        return (physio(mtstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(mtstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
 mtwrite(dev, uio)
-        dev_t dev;
-        struct uio *uio;
+	dev_t dev;
+	struct uio *uio;
 {
 
-        return (physio(mtstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(mtstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 void
@@ -363,12 +363,12 @@ static char *mt_ioerrs[] = {
 	"unit offline",		/* 3 M_ST_OFFLINE */
 	"unknown",		/* 4 M_ST_AVAILABLE */
 	"unknown",		/* 5 M_ST_MFMTERR */
-	"unit write protected",	/* 6 M_ST_WRPROT */
+	"unit write protected", /* 6 M_ST_WRPROT */
 	"compare error",	/* 7 M_ST_COMPERR */
-	"data error", 		/* 8 M_ST_DATAERR */
-	"host buffer access error", 	/* 9 M_ST_HOSTBUFERR */
+	"data error",		/* 8 M_ST_DATAERR */
+	"host buffer access error",	/* 9 M_ST_HOSTBUFERR */
 	"controller error",	/* 10 M_ST_CTLRERR */
-	"drive error", 		/* 11 M_ST_DRIVEERR */
+	"drive error",		/* 11 M_ST_DRIVEERR */
 	"formatter error",	/* 12 M_ST_FORMATTERR */
 	"BOT encountered",	/* 13 M_ST_BOT */
 	"tape mark encountered",/* 14 M_ST_TAPEMARK */
@@ -455,8 +455,8 @@ mtioctl(dev, cmd, data, flag, p)
 int
 mtdump(dev, blkno, va, size)
 	dev_t	dev;
-	daddr_t	blkno;
-	caddr_t	va;
+	daddr_t blkno;
+	caddr_t va;
 	size_t	size;
 {
 	return -1;

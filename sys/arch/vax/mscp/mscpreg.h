@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpreg.h,v 1.2 1997/03/15 16:39:20 ragge Exp $	*/
+/*	$NetBSD: mscpreg.h,v 1.3 1998/02/08 14:04:04 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -45,11 +45,11 @@
  * If you get warnings about your command ring being too small,
  * try increasing the values by one.
  */
-#ifndef	NRSP
-#define	NRSPL2	5
-#define	NCMDL2	5
-#define	NRSP	(1 << NRSPL2)
-#define	NCMD	(1 << NCMDL2)
+#ifndef NRSP
+#define NRSPL2	5
+#define NCMDL2	5
+#define NRSP	(1 << NRSPL2)
+#define NCMD	(1 << NCMDL2)
 #endif
 
 /*
@@ -96,30 +96,30 @@ struct	mscp_pack {
 /*
  * Bits in UDA status register during initialisation
  */
-#define MP_ERR		0x8000  /* error */
-#define MP_STEP4	0x4000  /* step 4 has started */
-#define MP_STEP3	0x2000  /* step 3 has started */
-#define MP_STEP2	0x1000  /* step 2 has started */
-#define MP_STEP1	0x0800  /* step 1 has started */
-#define MP_NV   	0x0400  /* no host settable interrupt vector */
-#define MP_QB   	0x0200  /* controller supports Q22 bus */
-#define MP_DI   	0x0100  /* controller implements diagnostics */
-#define MP_IE   	0x0080  /* interrupt enable */
-#define MP_NCNRMASK	0x003f  /* in STEP1, bits 0-2=NCMDL2, 3-5=NRSPL2 */
-#define MP_IVECMASK	0x007f  /* in STEP2, bits 0-6 are interruptvec / 4 */
-#define MP_PI		0x0001  /* host requests adapter purge interrupts */
-#define	MP_GO		0x0001	/* Go command to ctlr */
+#define MP_ERR		0x8000	/* error */
+#define MP_STEP4	0x4000	/* step 4 has started */
+#define MP_STEP3	0x2000	/* step 3 has started */
+#define MP_STEP2	0x1000	/* step 2 has started */
+#define MP_STEP1	0x0800	/* step 1 has started */
+#define MP_NV		0x0400	/* no host settable interrupt vector */
+#define MP_QB		0x0200	/* controller supports Q22 bus */
+#define MP_DI		0x0100	/* controller implements diagnostics */
+#define MP_IE		0x0080	/* interrupt enable */
+#define MP_NCNRMASK	0x003f	/* in STEP1, bits 0-2=NCMDL2, 3-5=NRSPL2 */
+#define MP_IVECMASK	0x007f	/* in STEP2, bits 0-6 are interruptvec / 4 */
+#define MP_PI		0x0001	/* host requests adapter purge interrupts */
+#define MP_GO		0x0001	/* Go command to ctlr */
 
 #define ALLSTEPS	(MP_ERR | MP_STEP4 | MP_STEP3 | MP_STEP2 | MP_STEP1)
 
 #define STEP0MASK	(ALLSTEPS | MP_NV)
 
-#define STEP1MASK       (ALLSTEPS | MP_IE | MP_NCNRMASK) 
-#define STEP1GOOD       (MP_STEP2 | MP_IE | (NCMDL2 << 3) | NRSPL2)
+#define STEP1MASK	(ALLSTEPS | MP_IE | MP_NCNRMASK) 
+#define STEP1GOOD	(MP_STEP2 | MP_IE | (NCMDL2 << 3) | NRSPL2)
  
-#define STEP2MASK       (ALLSTEPS | MP_IE | MP_IVECMASK)
-#define STEP2GOOD(iv)   (MP_STEP3 | MP_IE | (iv))
+#define STEP2MASK	(ALLSTEPS | MP_IE | MP_IVECMASK)
+#define STEP2GOOD(iv)	(MP_STEP3 | MP_IE | (iv))
  
-#define STEP3MASK       ALLSTEPS
-#define STEP3GOOD       MP_STEP4
+#define STEP3MASK	ALLSTEPS
+#define STEP3GOOD	MP_STEP4
 
