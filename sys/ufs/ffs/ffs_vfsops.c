@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.42 1998/08/09 20:15:39 perry Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.43 1998/09/01 03:11:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -56,6 +56,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/lock.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
@@ -104,6 +105,8 @@ struct vfsops ffs_vfsops = {
 	ffs_mountroot,
 	ffs_vnodeopv_descs,
 };
+
+struct pool ffs_inode_pool;
 
 /*
  * Called by main() when ffs is going to be mounted as root.
@@ -849,7 +852,7 @@ ffs_vget(mp, ino, vpp)
 	struct buf *bp;
 	struct vnode *vp;
 	dev_t dev;
-	int type, error;
+	int error;
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
@@ -864,8 +867,11 @@ ffs_vget(mp, ino, vpp)
 		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 		return (error);
 	}
-	type = ump->um_devvp->v_tag == VT_MFS ? M_MFSNODE : M_FFSNODE; /* XXX */
-	MALLOC(ip, struct inode *, sizeof(struct inode), type, M_WAITOK);
+	/*
+	 * XXX MFS ends up here, too, to allocate an inode.  Should we
+	 * XXX create another pool for MFS inodes?
+	 */
+	ip = pool_get(&ffs_inode_pool, PR_WAITOK);
 	memset((caddr_t)ip, 0, sizeof(struct inode));
 	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	vp->v_data = ip;
@@ -997,6 +1003,9 @@ void
 ffs_init()
 {
 	ufs_init();
+
+	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0, "ffsinopl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FFSNODE);
 }
 
 int
