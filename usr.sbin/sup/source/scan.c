@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.10 1997/11/15 17:42:07 msaitoh Exp $	*/
+/*	$NetBSD: scan.c,v 1.11 1998/03/30 02:29:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -815,12 +815,12 @@ char *scanfile;
 	char buf[STRINGLENGTH];
 	char fname[MAXPATHLEN];
 	struct stat sbuf;
-	register FILE *f;
+	FILE *f;
 	TREE ts;
-	register char *p,*q;
-	register TREE *tmp, *t = NULL;
-	register notwanted;
-	register TREELIST *tl;
+	char *p,*q;
+	TREE *tmp, *t = NULL;
+	int notwanted;
+	TREELIST *tl;
         
 	if (scanfile == NULL)
 		scanfile = FILESCANDEF;
