@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.8 2001/12/05 14:50:14 augustss Exp $	*/
+/*	$NetBSD: irframe.c,v 1.9 2001/12/05 20:00:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -300,7 +300,7 @@ irframepoll(dev_t dev, int events, struct proc *p)
 
 
 struct device *
-irframe_alloc(size_t size, struct irframe_methods *m, void *h)
+irframe_alloc(size_t size, const struct irframe_methods *m, void *h)
 {
 	struct cfdriver *cd = &irframe_cd;
 	struct device *dev;
