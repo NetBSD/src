@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.69.4.1 2000/09/11 19:25:35 fvdl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.69.4.2 2001/03/30 21:41:32 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -338,6 +338,10 @@ linux_sys_fstatfs(p, v, retval)
 	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
 }
 
+char linux_sysname[] = "Linux";
+char linux_release[] = "2.0.38";
+char linux_version[] = "#0 Sun Apr 1 11:11:11 MET 2000";
+
 /*
  * uname(). Just copy the info from the various strings stored in the
  * kernel, and put it in the Linux utsname structure. That structure
@@ -354,26 +358,13 @@ linux_sys_uname(p, v, retval)
 		syscallarg(struct linux_utsname *) up;
 	} */ *uap = v;
 	struct linux_utsname luts;
-	int len;
-	char *cp;
 
-	strncpy(luts.l_sysname, ostype, sizeof(luts.l_sysname));
+	strncpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
 	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
-	strncpy(luts.l_release, osrelease, sizeof(luts.l_release));
-	strncpy(luts.l_version, version, sizeof(luts.l_version));
+	strncpy(luts.l_release, linux_release, sizeof(luts.l_release));
+	strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
 	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
 	strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
-
-	/* This part taken from the uname() in libc */
-	len = sizeof(luts.l_version);
-	for (cp = luts.l_version; len--; ++cp) {
-		if (*cp == '\n' || *cp == '\t') {
-			if (len > 1)
-				*cp = ' ';
-			else
-				*cp = '\0';
-		}
-	}
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }
