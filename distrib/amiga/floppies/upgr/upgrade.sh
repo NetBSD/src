@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: upgrade.sh,v 1.3 1996/09/28 18:06:01 chopps Exp $
+#	$NetBSD: upgrade.sh,v 1.4 1998/01/06 04:45:11 perry Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
