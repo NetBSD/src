@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.59 2000/11/30 23:21:39 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.60 2000/12/01 04:37:54 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/pool.h>
 #include <sys/scsiio.h>
