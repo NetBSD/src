@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.153 1997/07/11 06:02:26 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.154 1997/07/12 06:07:24 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -499,14 +499,14 @@ initcpu()
 	switch (cputype) {
 #ifdef M68060
 	case CPU_68060:
-		vectab[2] = addrerr4060;
-		vectab[3] = buserr60;
+		vectab[2] = buserr60;
+		vectab[3] = addrerr4060;
 		break;
 #endif
 #ifdef M68040
 	case CPU_68040:
-		vectab[2] = addrerr4060;
-		vectab[3] = buserr40;
+		vectab[2] = buserr40;
+		vectab[3] = addrerr4060;
 		break;
 #endif
 	default:
@@ -1984,6 +1984,7 @@ struct {
 	caddr_t	fbbase;
 	u_long	fblen;
 } intvid_info[] =  {
+	{ MACH_MACCLASSICII,	(caddr_t)0xfee09a80,	21888 },
 	{ MACH_MACPB140,	(caddr_t)0xfee00000,	32 * 1024 },
 	{ MACH_MACPB145,	(caddr_t)0xfee00000,	32 * 1024 },
 	{ MACH_MACPB170,	(caddr_t)0xfee00000,	32 * 1024 },
