@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/04/11 06:39:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2002/04/11 13:50:06 shin Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -24,7 +24,7 @@ TARGETS=	RAMDISK			netbsd		\
 .for K I in ${TARGETS}					# {
 IMAGES+=	${I}.gz
 ${I}.gz: .NOTMAIN ${KERNOBJDIR}/${K}/netbsd ${MINIROOTOBJ}/miniroot.fs
-	cp ${KERNOBJDIR}/${K}/netbsd.tmp .
+	cp ${KERNOBJDIR}/${K}/netbsd netbsd.tmp
 	${MDSETIMAGE} netbsd.tmp ${MINIROOTOBJ}/miniroot.fs
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
@@ -38,7 +38,7 @@ realall: ${IMAGES}
 
 release: check_RELEASEDIR .WAIT ${IMAGES}
 .for img in ${IMAGES}
-	${RELINST} ${img} ${ITARGET}/.
+	${RELINSTALL} ${img} ${ITARGET}/.
 .endfor
 	(cd ${ITARGET}; ${UUDECODE} ${PBSDBOOT1}; \
 	    chmod ${NONBINMODE} pbsdboot1.exe)
