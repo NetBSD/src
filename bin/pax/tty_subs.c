@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tty_subs.c	8.2 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: tty_subs.c,v 1.3 1994/06/14 00:43:49 mycroft Exp $";
+static char *rcsid = "$Id: tty_subs.c,v 1.4 1994/10/11 06:06:44 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -241,6 +241,6 @@ syswarn(set, errnum, fmt, va_alist)
 	 * format and print the errno
 	 */
 	if (errnum > 0)
-		(void)fprintf(stderr, " <%s>", sys_errlist[errnum]);
+		(void)fprintf(stderr, " <%s>", strerror(errnum));
 	(void)fputc('\n', stderr);
 }
