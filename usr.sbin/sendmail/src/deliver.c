@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)deliver.c	8.78 (Berkeley) 3/11/94";
+static char sccsid[] = "@(#)deliver.c	8.82 (Berkeley) 4/18/94";
 #endif /* not lint */
 
 #include "sendmail.h"
@@ -232,7 +232,8 @@ sendall(e, mode)
 			ee->e_header = copyheader(e->e_header);
 			ee->e_sendqueue = copyqueue(e->e_sendqueue);
 			ee->e_errorqueue = copyqueue(e->e_errorqueue);
-			ee->e_flags = e->e_flags & ~(EF_INQUEUE|EF_CLRQUEUE|EF_FATALERRS);
+			ee->e_flags = e->e_flags & ~(EF_INQUEUE|EF_CLRQUEUE|EF_FATALERRS|EF_SENDRECEIPT);
+			ee->e_flags |= EF_NORECEIPT;
 			setsender(owner, ee, NULL, TRUE);
 			if (tTd(13, 5))
 			{
@@ -289,6 +290,7 @@ sendall(e, mode)
 		}
 		e->e_from.q_flags |= QDONTSEND;
 		e->e_errormode = EM_MAIL;
+		e->e_flags |= EF_NORECEIPT;
 	}
 
 # ifdef QUEUE
@@ -1296,6 +1298,9 @@ tryhost:
 			}
 			env[i++] = NULL;
 
+			/* run disconnected from terminal */
+			(void) setsid();
+
 			/* try to execute the mailer */
 			execve(m->m_mailer, pv, env);
 			saveerrno = errno;
@@ -1855,7 +1860,7 @@ logdelivery(m, mci, stat, ctladdr, e)
 		(void) strcat(bp, "]");
 # endif
 	}
-	else
+	else if (strcmp(stat, "queued") != 0)
 	{
 		char *p = macvalue('h', e);
 
@@ -1961,7 +1966,7 @@ logdelivery(m, mci, stat, ctladdr, e)
 		(void) strcat(buf, "]");
 # endif
 	}
-	else
+	else if (strcmp(stat, "queued") != 0)
 	{
 		char *p = macvalue('h', e);
 

@@ -37,9 +37,9 @@
 
 #ifndef lint
 #ifdef DAEMON
-static char sccsid[] = "@(#)daemon.c	8.39 (Berkeley) 3/13/94 (with daemon mode)";
+static char sccsid[] = "@(#)daemon.c	8.48 (Berkeley) 4/18/94 (with daemon mode)";
 #else
-static char sccsid[] = "@(#)daemon.c	8.39 (Berkeley) 3/13/94 (without daemon mode)";
+static char sccsid[] = "@(#)daemon.c	8.48 (Berkeley) 4/18/94 (without daemon mode)";
 #endif
 #endif /* not lint */
 
@@ -109,10 +109,12 @@ int		TcpSndBufferSize = 0;		/* size of TCP send buffer */
 getrequests()
 {
 	int t;
-	int on = 1;
 	bool refusingconnections = TRUE;
 	FILE *pidf;
 	int socksize;
+#ifdef XDEBUG
+	bool j_has_dot;
+#endif
 	extern void reapchild();
 
 	/*
@@ -145,61 +147,7 @@ getrequests()
 		printf("getrequests: port 0x%x\n", DaemonAddr.sin.sin_port);
 
 	/* get a socket for the SMTP connection */
-	DaemonSocket = socket(DaemonAddr.sa.sa_family, SOCK_STREAM, 0);
-	if (DaemonSocket < 0)
-	{
-		/* probably another daemon already */
-		syserr("getrequests: can't create socket");
-	  severe:
-# ifdef LOG
-		if (LogLevel > 0)
-			syslog(LOG_ALERT, "problem creating SMTP socket");
-# endif /* LOG */
-		finis();
-	}
-
-	/* turn on network debugging? */
-	if (tTd(15, 101))
-		(void) setsockopt(DaemonSocket, SOL_SOCKET, SO_DEBUG, (char *)&on, sizeof on);
-
-	(void) setsockopt(DaemonSocket, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof on);
-	(void) setsockopt(DaemonSocket, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof on);
-
-#ifdef SO_RCVBUF
-	if (TcpRcvBufferSize > 0)
-	{
-		if (setsockopt(DaemonSocket, SOL_SOCKET, SO_RCVBUF,
-			       (char *) &TcpRcvBufferSize,
-			       sizeof(TcpRcvBufferSize)) < 0)
-			syserr("getrequests: setsockopt(SO_RCVBUF)");
-	}
-#endif
-
-	switch (DaemonAddr.sa.sa_family)
-	{
-# ifdef NETINET
-	  case AF_INET:
-		socksize = sizeof DaemonAddr.sin;
-		break;
-# endif
-
-# ifdef NETISO
-	  case AF_ISO:
-		socksize = sizeof DaemonAddr.siso;
-		break;
-# endif
-
-	  default:
-		socksize = sizeof DaemonAddr;
-		break;
-	}
-
-	if (bind(DaemonSocket, &DaemonAddr.sa, socksize) < 0)
-	{
-		syserr("getrequests: cannot bind");
-		(void) close(DaemonSocket);
-		goto severe;
-	}
+	socksize = opendaemonsocket(TRUE);
 
 	(void) setsignal(SIGCHLD, reapchild);
 
@@ -219,6 +167,14 @@ getrequests()
 		fclose(pidf);
 	}
 
+#ifdef XDEBUG
+	{
+		char jbuf[MAXHOSTNAMELEN];
+
+		expand("\201j", jbuf, &jbuf[sizeof jbuf - 1], CurEnv);
+		j_has_dot = strchr(jbuf, '.') != NULL;
+	}
+#endif
 
 	if (tTd(15, 1))
 		printf("getrequests: %d\n", DaemonSocket);
@@ -233,30 +189,49 @@ getrequests()
 		CurrentLA = getla();
 		if (refuseconnections())
 		{
-			if (!refusingconnections)
+			if (DaemonSocket >= 0)
 			{
-				/* don't queue so peer will fail quickly */
-				(void) listen(DaemonSocket, 0);
-				refusingconnections = TRUE;
+				/* close socket so peer will fail quickly */
+				(void) close(DaemonSocket);
+				DaemonSocket = -1;
 			}
+			refusingconnections = TRUE;
 			setproctitle("rejecting connections: load average: %d",
 				CurrentLA);
-			sleep(5);
+			sleep(15);
 			continue;
 		}
 
 		if (refusingconnections)
 		{
 			/* start listening again */
-			if (listen(DaemonSocket, ListenQueueSize) < 0)
-			{
-				syserr("getrequests: cannot listen");
-				(void) close(DaemonSocket);
-				goto severe;
-			}
+			(void) opendaemonsocket(FALSE);
 			setproctitle("accepting connections");
 			refusingconnections = FALSE;
 		}
+
+#ifdef XDEBUG
+		/* check for disaster */
+		{
+			register STAB *s;
+			char jbuf[MAXHOSTNAMELEN];
+
+			expand("\201j", jbuf, &jbuf[sizeof jbuf - 1], CurEnv);
+			if ((s = stab(jbuf, ST_CLASS, ST_FIND)) == NULL ||
+			    !bitnset('w', s->s_class))
+			{
+				dumpstate("daemon lost $j");
+				syslog(LOG_ALERT, "daemon process doesn't have $j in $=w; see syslog");
+				abort();
+			}
+			else if (j_has_dot && strchr(jbuf, '.') == NULL)
+			{
+				dumpstate("daemon $j lost dot");
+				syslog(LOG_ALERT, "daemon process $j lost dot; see syslog");
+				abort();
+			}
+		}
+#endif
 
 		/* wait for a connection */
 		do
@@ -347,6 +322,118 @@ getrequests()
 		(void) close(t);
 	}
 	/*NOTREACHED*/
+}
+/*
+**  OPENDAEMONSOCKET -- open the SMTP socket
+**
+**	Deals with setting all appropriate options.  DaemonAddr must
+**	be set up in advance.
+**
+**	Parameters:
+**		firsttime -- set if this is the initial open.
+**
+**	Returns:
+**		Size in bytes of the daemon socket addr.
+**
+**	Side Effects:
+**		Leaves DaemonSocket set to the open socket.
+**		Exits if the socket cannot be created.
+*/
+
+#define MAXOPENTRIES	10	/* maximum number of tries to open connection */
+
+int
+opendaemonsocket(firsttime)
+	bool firsttime;
+{
+	int on = 1;
+	int socksize;
+	int ntries = 0;
+	int saveerrno;
+
+	if (tTd(15, 2))
+		printf("opendaemonsocket()\n");
+
+	do
+	{
+		if (ntries > 0)
+			sleep(5);
+		if (firsttime || DaemonSocket < 0)
+		{
+			DaemonSocket = socket(DaemonAddr.sa.sa_family, SOCK_STREAM, 0);
+			if (DaemonSocket < 0)
+			{
+				/* probably another daemon already */
+				saveerrno = errno;
+				syserr("opendaemonsocket: can't create server SMTP socket");
+			  severe:
+# ifdef LOG
+				if (LogLevel > 0)
+					syslog(LOG_ALERT, "problem creating SMTP socket");
+# endif /* LOG */
+				DaemonSocket = -1;
+				continue;
+			}
+
+			/* turn on network debugging? */
+			if (tTd(15, 101))
+				(void) setsockopt(DaemonSocket, SOL_SOCKET,
+						  SO_DEBUG, (char *)&on,
+						  sizeof on);
+
+			(void) setsockopt(DaemonSocket, SOL_SOCKET,
+					  SO_REUSEADDR, (char *)&on, sizeof on);
+			(void) setsockopt(DaemonSocket, SOL_SOCKET,
+					  SO_KEEPALIVE, (char *)&on, sizeof on);
+
+#ifdef SO_RCVBUF
+			if (TcpRcvBufferSize > 0)
+			{
+				if (setsockopt(DaemonSocket, SOL_SOCKET,
+					       SO_RCVBUF,
+					       (char *) &TcpRcvBufferSize,
+					       sizeof(TcpRcvBufferSize)) < 0)
+					syserr("getrequests: setsockopt(SO_RCVBUF)");
+			}
+#endif
+
+			switch (DaemonAddr.sa.sa_family)
+			{
+# ifdef NETINET
+			  case AF_INET:
+				socksize = sizeof DaemonAddr.sin;
+				break;
+# endif
+
+# ifdef NETISO
+			  case AF_ISO:
+				socksize = sizeof DaemonAddr.siso;
+				break;
+# endif
+
+			  default:
+				socksize = sizeof DaemonAddr;
+				break;
+			}
+
+			if (bind(DaemonSocket, &DaemonAddr.sa, socksize) < 0)
+			{
+				saveerrno = errno;
+				syserr("getrequests: cannot bind");
+				(void) close(DaemonSocket);
+				goto severe;
+			}
+		}
+		if (!firsttime && listen(DaemonSocket, ListenQueueSize) < 0)
+		{
+			saveerrno = errno;
+			syserr("getrequests: cannot listen");
+			(void) close(DaemonSocket);
+			goto severe;
+		}
+		return socksize;
+	} while (ntries++ < MAXOPENTRIES && transienterror(saveerrno));
+	finis();
 }
 /*
 **  CLRDAEMON -- reset the daemon connection
@@ -740,7 +827,7 @@ gothostent:
 		if (tTd(16, 101))
 		{
 			int on = 1;
-			(void) setsockopt(DaemonSocket, SOL_SOCKET, SO_DEBUG,
+			(void) setsockopt(s, SOL_SOCKET, SO_DEBUG,
 					  (char *)&on, sizeof on);
 		}
 		if (CurEnv->e_xfp != NULL)
@@ -828,29 +915,48 @@ myhostname(hostbuf, size)
 		(void) strcpy(hostbuf, "localhost");
 	}
 	hp = gethostbyname(hostbuf);
-	if (hp != NULL)
+	if (hp == NULL)
 	{
-		(void) strncpy(hostbuf, hp->h_name, size - 1);
-		hostbuf[size - 1] = '\0';
-
-		if (hp->h_addrtype == AF_INET && hp->h_length == 4)
-		{
-			register int i;
-
-			for (i = 0; hp->h_addr_list[i] != NULL; i++)
-			{
-				char ipbuf[100];
-
-				sprintf(ipbuf, "[%s]",
-					inet_ntoa(*((struct in_addr *) hp->h_addr_list[i])));
-				setclass('w', ipbuf);
-			}
-		}
-
-		return (hp->h_aliases);
+		syserr("!My host name (%s) does not seem to exist!", hostbuf);
 	}
-	else
-		return (NULL);
+	(void) strncpy(hostbuf, hp->h_name, size - 1);
+	hostbuf[size - 1] = '\0';
+
+#if NAMED_BIND
+	/* if still no dot, try DNS directly (i.e., avoid NIS problems) */
+	if (strchr(hostbuf, '.') == NULL)
+	{
+		extern bool getcanonname();
+		extern int h_errno;
+
+		/* try twice in case name server not yet started up */
+		if (!getcanonname(hostbuf, size, TRUE) &&
+		    UseNameServer &&
+		    (h_errno != TRY_AGAIN ||
+		     (sleep(30), !getcanonname(hostbuf, size, TRUE))))
+		{
+			errno = h_errno + E_DNSBASE;
+			syserr("!My host name (%s) not known to DNS",
+				hostbuf);
+		}
+	}
+#endif
+
+	if (hp->h_addrtype == AF_INET && hp->h_length == 4)
+	{
+		register int i;
+
+		for (i = 0; hp->h_addr_list[i] != NULL; i++)
+		{
+			char ipbuf[100];
+
+			sprintf(ipbuf, "[%s]",
+				inet_ntoa(*((struct in_addr *) hp->h_addr_list[i])));
+			setclass('w', ipbuf);
+		}
+	}
+
+	return (hp->h_aliases);
 }
 /*
 **  GETAUTHINFO -- get the real host name asociated with a file descriptor
@@ -880,7 +986,6 @@ char *
 getauthinfo(fd)
 	int fd;
 {
-	SOCKADDR fa;
 	int falen;
 	register char *p;
 #if IDENTPROTO
@@ -895,9 +1000,9 @@ getauthinfo(fd)
 	extern char *hostnamebyanyaddr();
 	extern char RealUserName[];			/* main.c */
 
-	falen = sizeof fa;
-	if (getpeername(fd, &fa.sa, &falen) < 0 || falen <= 0 ||
-	    fa.sa.sa_family == 0)
+	falen = sizeof RealHostAddr;
+	if (getpeername(fd, &RealHostAddr.sa, &falen) < 0 || falen <= 0 ||
+	    RealHostAddr.sa.sa_family == 0)
 	{
 		(void) sprintf(hbuf, "%s@localhost", RealUserName);
 		if (tTd(9, 1))
@@ -905,12 +1010,18 @@ getauthinfo(fd)
 		return hbuf;
 	}
 
+	if (RealHostName == NULL)
+	{
+		/* translate that to a host name */
+		RealHostName = newstr(hostnamebyanyaddr(&RealHostAddr));
+	}
+
 #if IDENTPROTO
 	if (TimeOuts.to_ident == 0)
 		goto noident;
 
 	lalen = sizeof la;
-	if (fa.sa.sa_family != AF_INET ||
+	if (RealHostAddr.sa.sa_family != AF_INET ||
 	    getsockname(fd, &la.sa, &lalen) < 0 || lalen <= 0 ||
 	    la.sa.sa_family != AF_INET)
 	{
@@ -920,7 +1031,7 @@ getauthinfo(fd)
 
 	/* create ident query */
 	(void) sprintf(hbuf, "%d,%d\r\n",
-		ntohs(fa.sin.sin_port), ntohs(la.sin.sin_port));
+		ntohs(RealHostAddr.sin.sin_port), ntohs(la.sin.sin_port));
 
 	/* create local address */
 	la.sin.sin_port = 0;
@@ -928,9 +1039,9 @@ getauthinfo(fd)
 	/* create foreign address */
 	sp = getservbyname("auth", "tcp");
 	if (sp != NULL)
-		fa.sin.sin_port = sp->s_port;
+		RealHostAddr.sin.sin_port = sp->s_port;
 	else
-		fa.sin.sin_port = htons(113);
+		RealHostAddr.sin.sin_port = htons(113);
 
 	s = -1;
 	if (setjmp(CtxAuthTimeout) != 0)
@@ -951,7 +1062,7 @@ getauthinfo(fd)
 		goto noident;
 	}
 	if (bind(s, &la.sa, sizeof la.sin) < 0 ||
-	    connect(s, &fa.sa, sizeof fa.sin) < 0)
+	    connect(s, &RealHostAddr.sa, sizeof RealHostAddr.sin) < 0)
 	{
 		goto closeident;
 	}

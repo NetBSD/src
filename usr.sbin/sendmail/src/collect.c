@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)collect.c	8.9 (Berkeley) 1/31/94";
+static char sccsid[] = "@(#)collect.c	8.14 (Berkeley) 4/18/94";
 #endif /* not lint */
 
 # include <errno.h>
@@ -63,6 +63,9 @@ static char sccsid[] = "@(#)collect.c	8.9 (Berkeley) 1/31/94";
 **		The from person may be set.
 */
 
+char	*CollectErrorMessage;
+bool	CollectErrno;
+
 collect(smtpmode, requeueflag, e)
 	bool smtpmode;
 	bool requeueflag;
@@ -76,13 +79,16 @@ collect(smtpmode, requeueflag, e)
 	extern char *hvalue();
 	extern bool isheader(), flusheol();
 
+	CollectErrorMessage = NULL;
+	CollectErrno = 0;
+
 	/*
 	**  Create the temp file name and create the file.
 	*/
 
 	e->e_df = queuename(e, 'd');
 	e->e_df = newstr(e->e_df);
-	if ((tf = dfopen(e->e_df, O_WRONLY|O_CREAT, FileMode)) == NULL)
+	if ((tf = dfopen(e->e_df, O_WRONLY|O_CREAT|O_TRUNC, FileMode)) == NULL)
 	{
 		syserr("Cannot create %s", e->e_df);
 		NoReturn = TRUE;
@@ -95,6 +101,9 @@ collect(smtpmode, requeueflag, e)
 
 	if (smtpmode)
 		message("354 Enter mail, end with \".\" on a line by itself");
+
+	/* set global timer to monitor progress */
+	sfgetset(TimeOuts.to_datablock);
 
 	/*
 	**  Try to read a UNIX-style From line
@@ -287,17 +296,30 @@ readerr:
 		inputerr = TRUE;
 	}
 
+	/* reset global timer */
+	sfgetset((time_t) 0);
+
 	if (fflush(tf) != 0)
 		tferror(tf, e);
 	if (fsync(fileno(tf)) < 0 || fclose(tf) < 0)
 	{
-		syserr("cannot sync message data to disk (%s)", e->e_df);
+		tferror(tf, e);
 		finis();
 	}
 
-	/* An EOF when running SMTP is an error */
-	if (inputerr && (OpMode == MD_SMTP || OpMode == MD_DAEMON))
+	if (CollectErrorMessage != NULL && Errors <= 0)
 	{
+		if (CollectErrno != 0)
+		{
+			errno = CollectErrno;
+			syserr(CollectErrorMessage, e->e_df);
+			finis();
+		}
+		usrerr(CollectErrorMessage);
+	}
+	else if (inputerr && (OpMode == MD_SMTP || OpMode == MD_DAEMON))
+	{
+		/* An EOF when running SMTP is an error */
 		char *host;
 		char *problem;
 
@@ -314,8 +336,8 @@ readerr:
 # ifdef LOG
 		if (LogLevel > 0 && feof(InChannel))
 			syslog(LOG_NOTICE,
-			    "collect: %s on connection from %s, sender=%s: %m\n",
-			    problem, host, e->e_from.q_paddr);
+			    "collect: %s on connection from %s, sender=%s: %s\n",
+			    problem, host, e->e_from.q_paddr, errstring(errno));
 # endif
 		if (feof(InChannel))
 			usrerr("451 collect: %s on connection from %s, from=%s",
@@ -401,14 +423,12 @@ flusheol(buf, fp)
 	FILE *fp;
 {
 	register char *p = buf;
-	bool printmsg = TRUE;
 	char junkbuf[MAXLINE];
 
 	while (strchr(p, '\n') == NULL)
 	{
-		if (printmsg)
-			usrerr("553 header line too long");
-		printmsg = FALSE;
+		CollectErrorMessage = "553 header line too long";
+		CollectErrno = 0;
 		if (sfgets(junkbuf, MAXLINE, fp, TimeOuts.to_datablock,
 				"long line flush") == NULL)
 			return (FALSE);
@@ -435,14 +455,43 @@ tferror(tf, e)
 	FILE *tf;
 	register ENVELOPE *e;
 {
+	CollectErrno = errno;
 	if (errno == ENOSPC)
 	{
+		struct stat st;
+		long avail;
+		long bsize;
+
+		NoReturn = TRUE;
+		if (fstat(fileno(tf), &st) < 0)
+			st.st_size = 0;
 		(void) freopen(e->e_df, "w", tf);
-		fputs("\nMAIL DELETED BECAUSE OF LACK OF DISK SPACE\n\n", tf);
-		usrerr("452 Out of disk space for temp file");
+		if (st.st_size <= 0)
+			fprintf(tf, "\n*** Mail could not be accepted");
+		else if (sizeof st.st_size > sizeof (long))
+			fprintf(tf, "\n*** Mail of at least %qd bytes could not be accepted\n",
+				st.st_size);
+		else
+			fprintf(tf, "\n*** Mail of at least %ld bytes could not be accepted\n",
+				st.st_size);
+		fprintf(tf, "*** at %s due to lack of disk space for temp file.\n",
+			MyHostName);
+		avail = freespace(QueueDir, &bsize);
+		if (avail > 0)
+		{
+			if (bsize > 1024)
+				avail *= bsize / 1024;
+			else if (bsize < 1024)
+				avail /= 1024 / bsize;
+			fprintf(tf, "*** Currently, %ld kilobytes are available for mail temp files.\n",
+				avail);
+		}
+		CollectErrorMessage = "452 Out of disk space for temp file";
 	}
 	else
-		syserr("collect: Cannot write %s", e->e_df);
+	{
+		CollectErrorMessage = "cannot write message body to disk (%s)";
+	}
 	(void) freopen("/dev/null", "w", tf);
 }
 /*
