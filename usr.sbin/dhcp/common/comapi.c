@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: comapi.c,v 1.8 2001/06/18 19:01:53 drochner Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: comapi.c,v 1.9 2001/06/23 00:10:07 christos Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -570,6 +570,7 @@ isc_result_t dhcp_control_stuff_values (omapi_object_t *c,
 		return ISC_R_INVALIDARG;
 	control = (dhcp_control_object_t *)h;
 
+#ifndef SMALL
 	/* Write out all the values. */
 	status = omapi_connection_put_name (c, "state");
 	if (status != ISC_R_SUCCESS)
@@ -580,6 +581,7 @@ isc_result_t dhcp_control_stuff_values (omapi_object_t *c,
 	status = omapi_connection_put_uint32 (c, control -> state);
 	if (status != ISC_R_SUCCESS)
 		return status;
+#endif
 
 	/* Write out the inner object, if any. */
 	if (h -> inner && h -> inner -> type -> stuff_values) {
