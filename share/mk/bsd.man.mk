@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.76 2002/02/07 00:52:23 ross Exp $
+#	$NetBSD: bsd.man.mk,v 1.77 2002/02/07 01:56:02 ross Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -159,7 +159,8 @@ ${_MNUMBERS:@N@.$N.html$N@}: ${HTMLDEPS}			# build rule
 	${GROFF_HTML} ${.IMPSRC} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 
 .for F in ${HTMLPAGES:O:u}
-_F:=		${HTMLDIR}/${F:T:E}/${F:R}.html		# installed path
+# construct installed path
+_F:=		${HTMLDIR}/${F:T:E}${MANSUBDIR}/${F:R:S-/index$-/x&-}.html
 ${_F}:		${F} __installpage			# install rule
 htmlpages::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
