@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.139 2000/02/29 06:32:22 simonb Exp $
+#	$NetBSD: GENERIC,v 1.140 2000/03/23 22:44:42 is Exp $
 
 #
 #if 0
@@ -8,6 +8,7 @@
 #
 # make AMIGA extracts the AMIGA configuration file.
 # make DRACO extracts the DRACO configuration file.
+# make INSTALL extracts the INSTALL configuration file.
 #
 # commit them, too.
 #endif
@@ -15,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.139 $"
+#ident 		"GENERIC-$Revision: 1.140 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -72,6 +73,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# Packet forwarding
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets
+
+#ifndef INSTALL_CONFIGURATION
 #options 	MROUTING	# Multicast routing
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -79,6 +82,8 @@ options 	ISO,TPIP	# OSI
 options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
+#endif
+
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -89,31 +94,46 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 file-system 	FFS		# Berkeley fast file system
 file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured filesystem (experimental)
+
+#ifndef INSTALL_CONFIGURATION
 file-system 	MFS		# Memory based filesystem
+#endif
+
 file-system 	NFS		# Network File System client side code
 file-system 	ADOSFS		# AmigaDOS file system
 file-system 	CD9660		# ISO 9660 + Rock Ridge filesystem
 file-system 	MSDOSFS		# MS-DOS filesystem
-file-system 	FDESC		# user file descriptor filesystem
+
 file-system 	KERNFS		# kernel data-structure filesystem
+
+#ifndef INSTALL_CONFIGURATION
+file-system 	FDESC		# user file descriptor filesystem
 file-system 	NULLFS		# loopback filesystem
 file-system 	OVERLAY		# overlay filesystem
 #file-system 	PORTAL		# Portal filesystem
 file-system 	PROCFS		# /proc filesystem
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union filesystem
+#endif
 
 # Filesystem options
-options 	QUOTA		# User and group quotas in FFS
+
 #options 	FFS_EI		# FFS Endian Independant support
+
+#ifndef INSTALL_CONFIGURATION
+options 	QUOTA		# User and group quotas in FFS
 #options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
+#endif
+
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
 #
 # Compatability options for various existing systems
 #
+
+#ifndef INSTALL_CONFIGURATION
 options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 options 	COMPAT_43	# compatibility with 4.3BSD interfaces
 options 	COMPAT_09	# compatibility with NetBSD 0.9
@@ -126,25 +146,34 @@ options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
 options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
+#endif
 
+#ifndef INSTALL_CONFIGURATION
 #
 # Support for System V IPC facilities.
 #
 options 	SYSVSHM		# System V-like shared memory
 options 	SYSVMSG		# System V-like messages
 options 	SYSVSEM		# System V-like semaphores
+#endif
 
 #
 # Support for various kernel options
 #
+
+#ifndef INSTALL_CONFIGURATION
 options 	KTRACE		# system call tracing support
 options 	LKM		# Loadable kernel modules
 options 	UCONSOLE	# anyone can redirect a virtual console
+#endif
+
 #options 	INSECURE	# allow, among other insecure stuff, LKM 
 				# loading in multi-user mode.
 options 	SCSIVERBOSE	# Verbose SCSI errors
 
+#ifndef INSTALL_CONFIGURATION
 options 	NTP		# NTP phase/frequency locked loop
+#endif
 
 #
 # Misc. debugging options
@@ -269,6 +298,11 @@ hyper*		at zbus?		# zbus HyperCom3/3+/4/4+
 #hyper*		at mainbus0		# not yet: HyperCom1 + HyperCom3
 com*		at hyper? port ?	# Hypercom3/4 serial ports
 lpt*		at hyper? port ?	# Hypercom3+/4+ parallel port
+
+# not enabled yet... needs more testing and clock frequency autodetection
+#iobl*		at zbus?		# zbus IOBlix
+#com*		at iobl? port ?		# IOBlix serial ports
+#lpt*		at iobl? port ?		# IOBlix parallel ports
 
 #ifdef AMIGA_CONFIGURATION
 #
