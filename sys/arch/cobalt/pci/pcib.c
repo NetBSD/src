@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.1 2000/03/19 23:07:48 soren Exp $	*/
+/*	$NetBSD: pcib.c,v 1.2 2000/03/31 14:51:55 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -29,20 +29,31 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
+#include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/autoconf.h> 
+#include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
-
 #include <dev/pci/pcidevs.h>
+
+#include <dev/isa/isareg.h>
 
 static int	pcib_match(struct device *, struct cfdata *, void *);
 static void	pcib_attach(struct device *, struct device *, void *);
+static int	icu_intr(void *);
 
 struct cfattach pcib_ca = {
 	sizeof(struct device), pcib_match, pcib_attach
 };
+
+static struct {
+        int     (*func)(void *);
+        void    *arg;
+} icu[IO_ICUSIZE];
 
 static int
 pcib_match(parent, match, aux)
@@ -71,4 +82,57 @@ pcib_attach(parent, self, aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf("\n%s: %s, rev %d\n", self->dv_xname, devinfo,
 					PCI_REVISION(pa->pa_class));
+
+	/*
+	 * Initialize ICU. Since we block all these interrupts with
+	 * splbio(), we can just enable all of them all the time here.
+	 */
+	*(volatile u_int8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU1) = 0x10;
+	*(volatile u_int8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU1+1) = 0xff;
+	*(volatile u_int8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU2) = 0x10;
+	*(volatile u_int8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU2+1) = 0xff;
+	wbflush();
+
+	cpu_intr_establish(4, IPL_NONE, icu_intr, NULL);
+}
+
+void *   
+icu_intr_establish(irq, type, level, func, arg)
+        int irq;
+        int type;
+        int level;
+        int (*func)(void *);
+        void *arg;
+{
+	int i;
+
+	for (i = 0; i <= IO_ICUSIZE; i++) {
+		if (i == IO_ICUSIZE)
+			panic("too many IRQs");
+
+		if (icu[i].func != NULL)
+			continue;
+
+		icu[i].func = func;
+		icu[i].arg = arg;
+		break;
+	}
+
+	return (void *)-1;
+}
+
+int
+icu_intr(arg)
+	void *arg;
+{
+	int i;
+
+	for (i = 0; i < IO_ICUSIZE; i++) {
+		if (icu[i].func == NULL)
+			return 0;
+
+		(*icu[i].func)(icu[i].arg);
+	}
+
+	return 0;
 }

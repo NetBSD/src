@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.1 2000/03/19 23:07:45 soren Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.2 2000/03/31 14:51:52 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -91,12 +91,10 @@ com_mainbus_attach(parent, self, aux)
 
 	/* XXX console check */
 	/* XXX map */
-	/* XXX interrupt */
 
 	com_attach_subr(sc);
 
-	/* XXX */
-	com0 = sc;
-	
+	cpu_intr_establish(maa->ma_level, IPL_SERIAL, comintr, sc);
+
 	return;
 }

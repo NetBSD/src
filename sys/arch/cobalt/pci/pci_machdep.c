@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 2000/03/21 02:27:50 soren Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4 2000/03/31 14:51:55 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -37,6 +37,7 @@
 
 #define _COBALT_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -153,16 +154,21 @@ pci_intr_string(pc, ih)
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
 {
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
+	static char irqstr[8];
 
-	sprintf(irqstr, "irq %d", ih);
+	/*
+	 * XXX
+	 */
+
+	if (ih == 4)
+		sprintf(irqstr, "level 1");
+	else if (ih == 13)
+		sprintf(irqstr, "level 2");
+	else
+		sprintf(irqstr, "irq %d", ih);
+
 	return irqstr;
 }
-
-/* XXX */
-extern void * intr_establish(int, int, int, int, int (*)(void *), void *);
-extern void *tlp0;
-extern void *tlp1;
 
 void *
 pci_intr_establish(pc, ih, level, func, arg)
@@ -172,19 +178,16 @@ pci_intr_establish(pc, ih, level, func, arg)
 	void *arg;
 {
 	/*
-	 * XXX XXX XXX
+	 * The two Tulips are wired directly to CPU interrupts.
+	 * XXX
 	 */
 
-	if (ih == 4) {
-		tlp0 = arg;
-		return (void *)-1;
-	}
-	if (ih == 13) {
-		tlp1 = arg;
-		return (void *)-1;
-	}
-
-	return intr_establish(NULL, ih, IST_LEVEL, level, func, arg);
+	if (ih == 4)
+		return cpu_intr_establish(1, level, func, arg);
+	else if (ih == 13)
+		return cpu_intr_establish(2, level, func, arg);
+	else
+		return icu_intr_establish(ih, IST_LEVEL, level, func, arg);
 }
 
 void

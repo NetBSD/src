@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2000/03/19 23:07:44 soren Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2000/03/31 14:51:50 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -53,11 +53,6 @@ mainbus_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct cfdata *cf = match;
-
-	if (cf->cf_unit > 0)
-		return 0;
-
 	return 1;
 }
 
@@ -69,7 +64,11 @@ mainbus_attach(parent, self, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	printf(": Qube/RaQ\n");
+	/*
+	 * XXX Check for Qube/RaQ 1 vs. 2.
+	 */
+
+	printf("\n");
 	
 	config_search(mainbus_search, self, ma);
 }

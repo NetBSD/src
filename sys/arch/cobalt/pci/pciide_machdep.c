@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.1 2000/03/19 23:07:48 soren Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.2 2000/03/31 14:51:55 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -34,9 +34,6 @@
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
-/* XXX */
-void *intr_establish(int, int, int, int, int (*)(void *), void *);
-
 void *
 pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	struct device *dev;
@@ -48,10 +45,8 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	int irq;
 	void *cookie;
 
-	/* XXX XXX XXX */
-
 	irq = PCIIDE_COMPAT_IRQ(chan);
-	cookie = intr_establish(NULL, irq, IST_EDGE, IPL_BIO, func, arg);
+	cookie = icu_intr_establish(irq, IST_EDGE, IPL_BIO, func, arg);
 	if (cookie == NULL)
 		return (NULL);
 	printf("%s: %s channel interrupting at irq %d\n", dev->dv_xname,

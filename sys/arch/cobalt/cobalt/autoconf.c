@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2000/03/19 23:07:43 soren Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2000/03/31 14:51:49 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -33,18 +33,14 @@
 
 #include <machine/cpu.h>
 
-void	findroot(struct device **, int *);
+static void	findroot(struct device **, int *);
 
-int	cpuspeed = 100;	/* XXX Approximate number of instructions per usec */
-
-void	initicu(void);
+int		cpuspeed = 100;		/* Until we know more precisely. */
 
 void
 cpu_configure()
 {
 	(void)splhigh();
-
-	initicu();						/* XXX */
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
@@ -66,15 +62,49 @@ cpu_rootconf()
 	setroot(booted_device, booted_partition);
 }
 
-dev_t	bootdev = 0;
+struct device *booted_device;
+
+extern char	bootstring[];
+extern int	netboot;
 
 void
 findroot(devpp, partp)
 	struct device **devpp;
 	int *partp;
 {
+	struct device *dv;
+
+	if (booted_device) {
+		*devpp = booted_device;
+		return;
+	}              
+
+	/*
+	 * Default to "not found".
+	 */
 	*devpp = NULL;
+
+	if ((booted_device == NULL) && netboot == 0)
+		for (dv = alldevs.tqh_first; dv != NULL;
+		     dv = dv->dv_list.tqe_next)
+			if (dv->dv_class == DV_DISK &&
+			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd"))
+				    *devpp = dv;
+
+	/*
+	 * XXX Match up MBR boot specification with BSD disklabel for root?
+	 */
 	*partp = 0;
 
 	return;
+}
+
+void
+device_register(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	if ((booted_device == NULL) && (netboot == 1))
+		if (dev->dv_class == DV_IFNET)
+			booted_device = dev;
 }
