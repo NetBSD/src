@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_isa.c,v 1.8 2003/08/07 16:31:06 agc Exp $	*/
+/*	$NetBSD: fdc_isa.c,v 1.9 2003/09/25 01:05:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.8 2003/08/07 16:31:06 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.9 2003/09/25 01:05:06 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -225,5 +225,5 @@ fdc_isa_attach(struct device *parent,
 	fdc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_BIO, fdcintr, fdc);
 
-	fdcattach(fdc);
+	config_interrupts(self, fdcattach);
 }
