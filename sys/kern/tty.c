@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.100 1997/10/28 01:53:52 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.101 1997/12/12 12:49:40 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1108,9 +1108,9 @@ ttyblock(tp)
 	 * Block further input iff: current input > threshold
 	 * AND input is available to user program.
 	 */
-	if ((total >= TTYHOG / 2 &&
-	     !ISSET(tp->t_state, TS_TBLOCK) &&
-	     !ISSET(tp->t_lflag, ICANON)) || tp->t_canq.c_cc > 0) {
+	if (total >= TTYHOG / 2 &&
+	    !ISSET(tp->t_state, TS_TBLOCK) &&
+	    (!ISSET(tp->t_lflag, ICANON) || tp->t_canq.c_cc > 0)) {
 		if (ISSET(tp->t_iflag, IXOFF) &&
 		    tp->t_cc[VSTOP] != _POSIX_VDISABLE &&
 		    putc(tp->t_cc[VSTOP], &tp->t_outq) == 0) {
