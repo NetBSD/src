@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.5 1999/03/19 05:13:16 cgd Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.6 1999/04/22 10:12:41 ross Exp $	*/
 
 /*
  * Copyright 1997
@@ -295,5 +295,5 @@ isa_bs_barrier(t, bsh, offset, len, flags)
 	bus_size_t offset, len;
 	int flags;
 {
-	panic("isa_barrier(): Help!\n");
+	/* just return */
 }	
