@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2001/02/23 03:48:11 ichiro Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2001/03/23 08:58:14 toshii Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -51,16 +51,6 @@
 ENTRY_NP(kernel_text)
 
 ASENTRY_NP(start)
-	add	r1, pc, #(Lstart - . - 8)
-	ldmia	r1, {r1, r2, sp}		/* Set initial stack and */
-	sub	r2, r2, r1			/* get zero init data */
-	mov	r3, #0
-
-L1:
-	str	r3, [r1], #0x0004		/* Zero the bss */
-	subs	r2, r2, #4
-	bgt	L1
-
 	mov	fp, #0x00000000			/* trace back starts here */
 	bl	_C_LABEL(initarm)		/* Off we go */
 
@@ -88,14 +78,6 @@ L1:
 
 	b	.
 
-Lstart:
-	.word	_edata
-	.word	_end
-	.word	svcstk + INIT_ARM_STACK_SIZE
-
-	.bss
-svcstk:
-	.space	INIT_ARM_STACK_SIZE
 
 /*
  * Instructions to copy to the bottom of zero page

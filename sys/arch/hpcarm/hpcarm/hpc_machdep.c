@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.7 2001/03/22 03:45:39 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.8 2001/03/23 08:58:14 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -114,6 +114,7 @@ u_int cpu_reset_address = 0;
 
 BootConfig bootconfig;		/* Boot config storage */
 struct bootinfo *bootinfo, bootinfo_storage;
+char booted_kernel[80];
 
 vm_offset_t physical_start;
 vm_offset_t physical_freestart;
@@ -158,7 +159,7 @@ extern int pmap_debug_level;
 #define	KERNEL_PT_IO		3	/* Page table for mapping IO */
 #define	KERNEL_PT_VMDATA	4	/* Page tables for mapping kernel VM */
 #define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
-#define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
+#define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM + 1)
 
 pt_entry_t kernel_pt_table[NUM_KERNEL_PTS];
 
@@ -296,14 +297,15 @@ cpu_reboot(howto, bootstr)
  */
 
 u_int
-initarm(bi)
+initarm(argc, argv, bi)
+	int argc;
+	char **argv;
 	struct bootinfo *bi;
 {
 	int loop;
 	u_int kerneldatasize, symbolsize;
 	u_int l1pagetable;
 	u_int l2pagetable;
-	u_int stackptr;
 	vm_offset_t freemempos;
 	extern char page0[], page0_end[];
 	pv_addr_t kernel_l1pt;
@@ -355,10 +357,24 @@ initarm(bi)
 
 	printf("kernsize=0x%x\n", kerneldatasize);
 	kerneldatasize += symbolsize;
-	kerneldatasize = ((kerneldatasize - 1) & ~(NBPG * 4 - 1)) + NBPG * 4;
+	kerneldatasize = ((kerneldatasize - 1) & ~(NBPG * 4 - 1)) + NBPG * 8;
 
+	/* parse kernel args */
+	strncpy(booted_kernel, *argv, sizeof(booted_kernel));
+	for(argc--, argv++; argc; argc--, argv++)
+		switch(**argv) {
+		case 'a':
+			boothowto |= RB_ASKNAME;
+			break;
+		case 's':
+			boothowto |= RB_SINGLE;
+			break;
+		default:
+			break;
+		}
+		
 	/* copy bootinfo into known kernel space */
-	bootinfo_storage = *(struct bootinfo *)bi;
+	bootinfo_storage = *bi;
 	bootinfo = &bootinfo_storage;
 
 	bootinfo->fb_addr = (void *)FRAMEBUF_BASE;
@@ -653,17 +669,6 @@ initarm(bi)
 	printf("undefined ");
 	undefined_init();
 
-	/* Relocate the stack pointer */
-	stackptr = get_stackptr(PSR_SVC32_MODE);
-	printf("sp: %08x -> ", stackptr);
-	memcpy((char *)(kernelstack.pv_va + NBPG * (UPAGES - 1)),
-	    (char *)(stackptr & ~(NBPG - 1)), NBPG);
-	stackptr = kernelstack.pv_va + NBPG * (UPAGES - 1)
-	    + (stackptr & (NBPG - 1));
-/*	set_stackptr(PSR_SVC32_MODE, stackptr);*/
-	asm("mov sp, %0" : : "r" (stackptr));
-	printf("%08x\n", stackptr);
-
 	/* Set the page table address. */
 	setttb(kernel_l1pt.pv_pa);
 
@@ -675,9 +680,6 @@ initarm(bi)
 	/* Enable MMU, I-cache, D-cache, write buffer. */
 	cpufunc_control(0x337f, 0x107d);
 
-#ifndef FRAMEBUF_HW_BASE
-	bootinfo->bi_cnuse = BI_CNUSE_SERIAL;
-#endif
 	if (bootinfo->bi_cnuse == BI_CNUSE_SERIAL)
 		consinit();
 	else {
