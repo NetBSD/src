@@ -16,28 +16,37 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Written December 1988 by Mike Haertel.
-   The author may be reached (Email) at the address mike@ai.mit.edu,
+   The author may be reached (Email) at the address mike@gnu.ai.mit.edu,
    or (US mail) as Mike Haertel c/o Free Software Foundation. */
 
-#ifndef lint
-static char rcsid[] = "$Id: sort.c,v 1.5 1994/08/06 05:52:05 jtc Exp $";
-#endif /* not lint */
+#ifdef HAVE_CONFIG_H
+#if defined (CONFIG_BROKETS)
+/* We use <config.h> instead of "config.h" so that a compilation
+   using -I. -I$srcdir will use ./config.h rather than $srcdir/config.h
+   (which it would do because it found this file in $srcdir).  */
+#include <config.h>
+#else
+#include "config.h"
+#endif
+#endif
 
+/* Get isblank from GNU libc.  */
 #define _GNU_SOURCE
 #include <ctype.h>
-#ifndef isblank
-#define isblank(c) ((c) == ' ' || (c) == '\t')
+#ifndef ISBLANK
+#define ISBLANK(c) ((c) == ' ' || (c) == '\t')
 #endif
+
 #include <sys/types.h>
-#include <signal.h>
-#include <stdio.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <string.h>
 #include <errno.h>
-#include <stdlib.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 static void usage ();
 
@@ -84,20 +93,20 @@ static struct month
 {
   char *name;
   int val;
-} monthtab[] =
+} const monthtab[] =
 {
-  "APR", 4,
-  "AUG", 8,
-  "DEC", 12,
-  "FEB", 2,
-  "JAN", 1,
-  "JUL", 7,
-  "JUN", 6,
-  "MAR", 3,
-  "MAY", 5,
-  "NOV", 11,
-  "OCT", 10,
-  "SEP", 9
+  {"APR", 4},
+  {"AUG", 8},
+  {"DEC", 12},
+  {"FEB", 2},
+  {"JAN", 1},
+  {"JUL", 7},
+  {"JUN", 6},
+  {"MAR", 3},
+  {"MAY", 5},
+  {"NOV", 11},
+  {"OCT", 10},
+  {"SEP", 9}
 };
 
 /* During the merge phase, the number of files to merge at once. */
@@ -118,7 +127,7 @@ static int linelength = 30;
 #define LINEALLOC 262144
 
 /* Prefix for temporary file names. */
-static char *prefix;
+static char *temp_file_prefix;
 
 /* Flag to reverse the order of all comparisons. */
 static int reverse;
@@ -210,7 +219,7 @@ xmalloc (n)
 {
   char *p;
 
-  p = (char *)malloc (n);
+  p = malloc (n);
   if (p == 0)
     {
       error (0, 0, "virtual memory exhausted");
@@ -303,15 +312,15 @@ static char *
 tempname ()
 {
   static int seq;
-  int len = strlen (prefix);
+  int len = strlen (temp_file_prefix);
   char *name = xmalloc (len + 16);
   struct tempnode *node =
   (struct tempnode *) xmalloc (sizeof (struct tempnode));
 
-  if (len && prefix[len - 1] != '/')
-    sprintf (name, "%s/sort%5.5d%5.5d", prefix, getpid (), ++seq);
+  if (len && temp_file_prefix[len - 1] != '/')
+    sprintf (name, "%s/sort%5.5d%5.5d", temp_file_prefix, getpid (), ++seq);
   else
-    sprintf (name, "%ssort%5.5d%5.5d", prefix, getpid (), ++seq);
+    sprintf (name, "%ssort%5.5d%5.5d", temp_file_prefix, getpid (), ++seq);
   node->name = name;
   node->next = temphead.next;
   temphead.next = node;
@@ -349,13 +358,13 @@ inittables ()
 
   for (i = 0; i < UCHAR_LIM; ++i)
     {
-      if (isblank (i))
+      if (ISBLANK (i))
 	blanks[i] = 1;
       if (ISDIGIT (i))
 	digits[i] = 1;
       if (!ISPRINT (i))
 	nonprinting[i] = 1;
-      if (!ISALNUM (i) && !isblank (i))
+      if (!ISALNUM (i) && !ISBLANK (i))
 	nondictionary[i] = 1;
       if (ISLOWER (i))
 	fold_toupper[i] = toupper (i);
@@ -565,6 +574,11 @@ findlines (buf, lines)
 	      lines->lines[lines->used].keybeg = beg;
 	    }
 	}
+      else
+	{
+	  lines->lines[lines->used].keybeg = 0;
+	  lines->lines[lines->used].keylim = 0;
+	}
 
       ++lines->used;
       beg = ptr + 1;
@@ -641,6 +655,11 @@ numcompare (a, b)
 
   tmpa = UCHAR (*a), tmpb = UCHAR (*b);
 
+  while (blanks[tmpa])
+    tmpa = UCHAR (*++a);
+  while (blanks[tmpb])
+    tmpb = UCHAR (*++b);
+
   if (tmpa == '-')
     {
       tmpa = UCHAR (*++a);
@@ -675,7 +694,7 @@ numcompare (a, b)
       else
 	logb = 0;
 
-      if (tmp = logb - loga)
+      if ((tmp = logb - loga) != 0)
 	return tmp;
 
       if (!loga)
@@ -714,7 +733,7 @@ numcompare (a, b)
       else
 	logb = 0;
 
-      if (tmp = loga - logb)
+      if ((tmp = loga - logb) != 0)
 	return tmp;
 
       if (!loga)
@@ -734,6 +753,9 @@ getmonth (s, len)
 {
   char month[4];
   register int i, lo = 0, hi = 12;
+
+  while (len > 0 && blanks[UCHAR(*s)])
+    ++s, --len;
 
   if (len < 3)
     return 0;
@@ -872,7 +894,7 @@ keycompare (a, b)
 
       if (diff)
 	return key->reverse ? -diff : diff;
-      if (diff = lena - lenb)
+      if ((diff = lena - lenb) != 0)
 	return key->reverse ? -diff : diff;
     }
 
@@ -888,36 +910,34 @@ compare (a, b)
 {
   int diff, tmpa, tmpb, mini;
 
+  /* First try to compare on the specified keys (if any).
+     The only two cases with no key at all are unadorned sort,
+     and unadorned sort -r. */
   if (keyhead.next)
     {
       diff = keycompare (a, b);
-      if (diff)
+      if (diff != 0)
 	return diff;
-      if (!unique && !stable)
-	{
-	  tmpa = a->length, tmpb = b->length;
-	  diff = memcmp (a->text, b->text, min (tmpa, tmpb));
-	  if (!diff)
-	    diff = tmpa - tmpb;
-	}
+      if (unique || stable)
+	return 0;
     }
+
+  /* If the keys all compare equal (or no keys were specified)
+     fall through to the default byte-by-byte comparison. */
+  tmpa = a->length, tmpb = b->length;
+  mini = min (tmpa, tmpb);
+  if (mini == 0)
+    diff = tmpa - tmpb;
   else
     {
-      tmpa = a->length, tmpb = b->length;
-      mini = min (tmpa, tmpb);
-      if (mini == 0)
-	diff = tmpa - tmpb;
-      else
-	{
-	  char *ap = a->text, *bp = b->text;
+      char *ap = a->text, *bp = b->text;
 
-	  diff = *ap - *bp;
+      diff = UCHAR (*ap) - UCHAR (*bp);
+      if (diff == 0)
+	{
+	  diff = memcmp (ap, bp, mini);
 	  if (diff == 0)
-	    {
-	      diff = memcmp (ap, bp, mini);
-	      if (diff == 0)
-		diff = tmpa - tmpb;
-	    }
+	    diff = tmpa - tmpb;
 	}
     }
 
@@ -1080,6 +1100,18 @@ mergefps (fps, nfps, ofp)
 	      saved.length = lines[ord[0]].lines[cur[ord[0]]].length;
 	      bcopy (lines[ord[0]].lines[cur[ord[0]]].text, saved.text,
 		     saved.length + 1);
+	      if (lines[ord[0]].lines[cur[ord[0]]].keybeg != NULL)
+		{
+		  saved.keybeg = saved.text +
+		    (lines[ord[0]].lines[cur[ord[0]]].keybeg
+		     - lines[ord[0]].lines[cur[ord[0]]].text);
+		}
+	      if (lines[ord[0]].lines[cur[ord[0]]].keylim != NULL)
+		{
+		  saved.keylim = saved.text +
+		    (lines[ord[0]].lines[cur[ord[0]]].keylim
+		     - lines[ord[0]].lines[cur[ord[0]]].text);
+		}
 	      savedflag = 1;
 	    }
 	}
@@ -1319,7 +1351,7 @@ sort (files, nfiles, ofp)
     {
       tempfiles = (char **) xmalloc (ntemp * sizeof (char *));
       i = ntemp;
-      for (node = temphead.next; node; node = node->next)
+      for (node = temphead.next; i > 0; node = node->next)
 	tempfiles[--i] = node->name;
       merge (tempfiles, ntemp, ofp);
       free ((char *) tempfiles);
@@ -1353,12 +1385,16 @@ static void
 sighandler (sig)
      int sig;
 {
+#ifdef _POSIX_VERSION
   struct sigaction sigact;
 
   sigact.sa_handler = SIG_DFL;
   sigemptyset (&sigact.sa_mask);
   sigact.sa_flags = 0;
   sigaction (sig, &sigact, NULL);
+#else				/* !_POSIX_VERSION */
+  signal (sig, SIG_DFL);
+#endif				/* _POSIX_VERSION */
   cleanup ();
   kill (getpid (), sig);
 }
@@ -1399,10 +1435,10 @@ set_ordering (s, key, blanktype)
 	  key->ignore = nonprinting;
 	  break;
 	case 'M':
-	  key->skipsblanks = key->skipeblanks = key->month = 1;
+	  key->month = 1;
 	  break;
 	case 'n':
-	  key->skipsblanks = key->skipeblanks = key->numeric = 1;
+	  key->numeric = 1;
 	  break;
 	case 'r':
 	  key->reverse = 1;
@@ -1426,16 +1462,24 @@ main (argc, argv)
   int checkonly = 0, mergeonly = 0, nfiles = 0;
   char *minus = "-", *outfile = minus, **files, *tmp;
   FILE *ofp;
+#ifdef _POSIX_VERSION
   struct sigaction oldact, newact;
+#endif				/* _POSIX_VERSION */
 
   program_name = argv[0];
+
+#if 0
+  parse_long_options (argc, argv, usage);
+#endif
+
   have_read_stdin = 0;
   inittables ();
 
-  prefix = getenv ("TMPDIR");
-  if (prefix == NULL)
-    prefix = "/tmp";
+  temp_file_prefix = getenv ("TMPDIR");
+  if (temp_file_prefix == NULL)
+    temp_file_prefix = "/tmp";
 
+#ifdef _POSIX_VERSION
   newact.sa_handler = sighandler;
   sigemptyset (&newact.sa_mask);
   newact.sa_flags = 0;
@@ -1446,6 +1490,22 @@ main (argc, argv)
   sigaction (SIGHUP, NULL, &oldact);
   if (oldact.sa_handler != SIG_IGN)
     sigaction (SIGHUP, &newact, NULL);
+  sigaction (SIGPIPE, NULL, &oldact);
+  if (oldact.sa_handler != SIG_IGN)
+    sigaction (SIGPIPE, &newact, NULL);
+  sigaction (SIGTERM, NULL, &oldact);
+  if (oldact.sa_handler != SIG_IGN)
+    sigaction (SIGTERM, &newact, NULL);
+#else				/* !_POSIX_VERSION */
+  if (signal (SIGINT, SIG_IGN) != SIG_IGN)
+    signal (SIGINT, sighandler);
+  if (signal (SIGHUP, SIG_IGN) != SIG_IGN)
+    signal (SIGHUP, sighandler);
+  if (signal (SIGPIPE, SIG_IGN) != SIG_IGN)
+    signal (SIGPIPE, sighandler);
+  if (signal (SIGTERM, SIG_IGN) != SIG_IGN)
+    signal (SIGTERM, sighandler);
+#endif				/* !_POSIX_VERSION */
 
   gkey.sword = gkey.eword = -1;
   gkey.ignore = NULL;
@@ -1493,7 +1553,7 @@ main (argc, argv)
 	  if (digits[UCHAR (*s)])
 	    {
 	      if (!key)
-		usage ();
+		usage (2);
 	      for (t = 0; digits[UCHAR (*s)]; ++s)
 		t = t * 10 + *s - '0';
 	      t2 = 0;
@@ -1613,24 +1673,28 @@ main (argc, argv)
 		    else
 		      error (2, 0, "option `-t' requires an argument");
 		    break;
+		  case 'T':
+		    if (s[1])
+		      temp_file_prefix = ++s;
+		    else if (i < argc - 1)
+		      {
+			temp_file_prefix = argv[++i];
+			goto outer;
+		      }
+		    else
+		      error (2, 0, "option `-T' requires an argument");
+		    break;
 		  case 'u':
 		    unique = 1;
 		    break;
-		  case 'T':   /* set temp file prefix */
-                    if (s[1])
-                      prefix = s + 1;
-                    else
-                      {
-                        if (i == argc - 1)
-                          error (2, 0, "option `-T' requires an argument");
-                        else
-                          prefix = argv[++i];
-                      }
-                    goto outer;
+		  case 'y':
+		    /* Accept and ignore e.g. -y0 for compatibility with
+		       Solaris 2.  */
+		    goto outer;
 		  default:
 		    fprintf (stderr, "%s: unrecognized option `-%c'\n",
 			     argv[0], *s);
-		    usage ();
+		    usage (2);
 		  }
 		if (*s)
 		  ++s;
@@ -1661,9 +1725,9 @@ main (argc, argv)
       }
 
   if (!keyhead.next && (gkey.ignore || gkey.translate || gkey.skipsblanks
-			|| gkey.reverse || gkey.skipeblanks
-			|| gkey.month || gkey.numeric))
+			|| gkey.skipeblanks || gkey.month || gkey.numeric))
     insertkey (&gkey);
+  reverse = gkey.reverse;
 
   if (nfiles == 0)
     {
@@ -1712,23 +1776,79 @@ main (argc, argv)
     sort (files, nfiles, ofp);
   cleanup ();
 
+  /* If we wait for the implicit flush on exit, and the parent process
+     has closed stdout (e.g., exec >&- in a shell), then the output file
+     winds up empty.  I don't understand why.  This is under SunOS,
+     Solaris, Ultrix, and Irix.  This premature fflush makes the output
+     reappear. --karl@cs.umb.edu  */
+  if (fflush (ofp) < 0)
+    error (1, errno, "fflush", outfile);
+
   if (have_read_stdin && fclose (stdin) == EOF)
     error (1, errno, "-");
   if (ferror (stdout) || fclose (stdout) == EOF)
-    error (1, 0, "write error");
+    error (1, errno, "write error");
 
   exit (0);
 }
 
+#ifdef BUILTIN_HELP
 static void
-usage ()
+usage (status)
+     int status;
+{
+  if (status != 0)
+    fprintf (stderr, "Try `%s --help' for more information.\n",
+	     program_name);
+  else
+    {
+      printf ("\
+Usage: %s [OPTION]... [FILE]...\n\
+",
+	      program_name);
+      printf ("\
+\n\
+  +POS1 [-POS2]    start a key at POS1, end it before POS2\n\
+  -M               compare (unknown) < `JAN' < ... < `DEC', imply -b\n\
+  -T DIRECT        use DIRECTfor temporary files, not $TEMPDIR nor /tmp\n\
+  -b               ignore leading blanks in sort fields or keys\n\
+  -c               check if given files already sorted, do not sort\n\
+  -d               consider only [a-zA-Z0-9 ] characters in keys\n\
+  -f               fold lower case to upper case characters in keys\n\
+  -i               consider only [\\040-\\0176] characters in keys\n\
+  -k POS1[,POS2]   same as +POS1 [-POS2], but all positions counted from 1\n\
+  -m               merge already sorted files, do not sort\n\
+  -n               compare according to string numerical value, imply -b\n\
+  -o FILE          write result on FILE instead of standard output\n\
+  -r               reverse the result of comparisons\n\
+  -s               stabilize sort by disabling last resort comparison\n\
+  -t SEP           use SEParator instead of non- to whitespace transition\n\
+  -u               with -c, check for strict ordering\n\
+  -u               with -m, only output the first of an equal sequence\n\
+      --help       display this help and exit\n\
+      --version    output version information and exit\n\
+\n\
+POS is F[.C][OPTS], where F is the field number and C the character\n\
+position in the field, both counted from zero.  OPTS is made up of one\n\
+or more of Mbdfinr, this effectively disable global -Mbdfinr settings\n\
+for that key.  If no key given, use the entire line as key.  With no\n\
+FILE, or when FILE is -, read standard input.\n\
+");
+    }
+  exit (status);
+}
+#else  /* use the man page */
+static void
+usage (status)
+     int status;
 {
   fprintf (stderr, "\
 Usage: %s [-cmus] [-t separator] [-o output-file] [-bdfiMnr] [+POS1 [-POS2]]\n\
        [-k POS1[,POS2]] [file...]\n",
 	   program_name);
-  exit (2);
+  exit (status);
 }
+#endif
 
 error (n, e, s, s1)
      int n, e;
