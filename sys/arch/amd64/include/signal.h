@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.5 2003/11/25 23:11:52 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.6 2004/03/25 15:27:26 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -46,25 +46,7 @@ typedef int sig_atomic_t;
 #include <machine/fpu.h>
 #include <machine/mcontext.h>
 
-/*
- * Information pushed on stack when a signal is delivered.
- * This is used by the kernel to restore state following
- * execution of the signal handler.  It is also made available
- * to the handler to allow it to restore state properly if
- * a non-standard exit is performed.
- */
-struct sigcontext {
-	struct fxsave64 *sc_fpstate;
-	u_int64_t	sc_onstack;
-	sigset_t	sc_mask;
-	mcontext_t	sc_mcontext;
-};
-
-#ifdef COMPAT_16
-#define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
-#else
 #define SIGTRAMP_VALID(vers)	((vers) == 2)
-#endif
 
 #endif	/* _NETBSD_SOURCE */
 #endif	/* !_AMD64_SIGNAL_H_ */
