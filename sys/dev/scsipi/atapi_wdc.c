@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.44 2001/11/13 06:56:38 lukem Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.45 2001/12/01 00:00:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.44 2001/11/13 06:56:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.45 2001/12/01 00:00:29 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -91,11 +91,13 @@ void  wdc_atapi_start	__P((struct channel_softc *,struct wdc_xfer *));
 int   wdc_atapi_intr	 __P((struct channel_softc *, struct wdc_xfer *, int));
 void  wdc_atapi_kill_xfer __P((struct channel_softc *, struct wdc_xfer *));
 int   wdc_atapi_ctrl	 __P((struct channel_softc *, struct wdc_xfer *, int));
+void  wdc_atapi_phase_complete __P((struct wdc_xfer *));
 void  wdc_atapi_done	 __P((struct channel_softc *, struct wdc_xfer *));
 void  wdc_atapi_reset	 __P((struct channel_softc *, struct wdc_xfer *));
 void  wdc_atapi_scsipi_request __P((struct scsipi_channel *,
 	scsipi_adapter_req_t, void *));
 void  wdc_atapi_kill_pending __P((struct scsipi_periph *));
+void  wdc_atapi_polldsc __P((void *arg));
 
 #define MAX_SIZE MAXPHYS
 
@@ -291,6 +293,8 @@ wdc_atapi_probe_device(sc, target)
 		periph->periph_type = ATAPI_CFG_TYPE(id->atap_config);
 		if (id->atap_config & ATAPI_CFG_REMOV)
 			periph->periph_flags |= PERIPH_REMOVABLE;
+		if (periph->periph_type == T_SEQUENTIAL)
+			drvp->drive_flags |= DRIVE_ATAPIST;
 
 		sa.sa_periph = periph;
 		sa.sa_inqbuf.type =  ATAPI_CFG_TYPE(id->atap_config);
@@ -372,6 +376,7 @@ wdc_atapi_scsipi_request(chan, req, arg)
 		xfer->c_start = wdc_atapi_start;
 		xfer->c_intr = wdc_atapi_intr;
 		xfer->c_kill_xfer = wdc_atapi_kill_xfer;
+		xfer->c_dscpoll = 0;
 		s = splbio();
 		wdc_exec_xfer(wdc->channels[channel], xfer);
 #ifdef DIAGNOSTIC
@@ -752,47 +757,12 @@ again:
 	case PHASE_ABORTED:
 	case PHASE_COMPLETED:
 		WDCDEBUG_PRINT(("PHASE_COMPLETED\n"), DEBUG_INTR);
-		/* turn off DMA channel */
 		if (xfer->c_flags & C_DMA) {
 			xfer->c_bcount -= sc_xfer->datalen;
 		}
 		sc_xfer->resid = xfer->c_bcount;
-		/*
-		 * Some drive occasionally set WDCS_ERR with 
-		 * "ATA illegal length indication" in the error
-		 * register. If we read some data the sense is valid
-		 * anyway, so don't report the error.
-		 */
-		if (chp->ch_status & WDCS_ERR &&
-		    ((sc_xfer->xs_control & XS_CTL_REQSENSE) == 0 ||
-		    sc_xfer->resid == sc_xfer->datalen)) {
-			/* save the short sense */
-			sc_xfer->error = XS_SHORTSENSE;
-			sc_xfer->sense.atapi_sense = chp->ch_error;
-			if ((sc_xfer->xs_periph->periph_quirks &
-			    PQUIRK_NOSENSE) == 0) {
-				/* ask scsipi to send a REQUEST_SENSE */
-				sc_xfer->error = XS_BUSY;
-				sc_xfer->status = SCSI_CHECK;
-			} else if (chp->wdc->dma_status &
-			    (WDC_DMAST_NOIRQ | WDC_DMAST_ERR)) {
-				ata_dmaerr(drvp);
-				sc_xfer->error = XS_RESET;
-				wdc_atapi_reset(chp, xfer);
-				return (1);
-			}
-		}
-		if (xfer->c_bcount != 0) {
-			WDCDEBUG_PRINT(("wdc_atapi_intr: bcount value is "
-			    "%d after io\n", xfer->c_bcount), DEBUG_XFERS);
-		}
-#ifdef DIAGNOSTIC
-		if (xfer->c_bcount < 0) {
-			printf("wdc_atapi_intr warning: bcount value "
-			    "is %d after io\n", xfer->c_bcount);
-		}
-#endif
-		break;
+		wdc_atapi_phase_complete(xfer);
+		return(1);
 
 	default:
 		if (++retries<500) {
@@ -939,6 +909,90 @@ error:
 }
 
 void
+wdc_atapi_phase_complete(xfer)
+	struct wdc_xfer *xfer;
+{
+	struct channel_softc *chp = xfer->chp;
+	struct scsipi_xfer *sc_xfer = xfer->cmd;
+	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
+
+	/* wait for DSC if needed */
+	if (drvp->drive_flags & DRIVE_ATAPIST) {
+		WDCDEBUG_PRINT(("wdc_atapi_phase_complete(%s:%d:%d) "
+		    "polldsc %d\n", chp->wdc->sc_dev.dv_xname, chp->channel,
+		    xfer->drive, xfer->c_dscpoll), DEBUG_XFERS);
+		if (cold) {
+			if (wdcwait(chp, WDCS_DSC, WDCS_DSC,
+			    sc_xfer->timeout)) {
+				printf("%s:%d:%d: wait_for_dsc failed\n",
+				    chp->wdc->sc_dev.dv_xname, chp->channel,
+				    xfer->drive);
+				sc_xfer->error = XS_TIMEOUT;
+				wdc_atapi_reset(chp, xfer);
+				return;
+			}
+		} else {
+			if (wdcwait(chp, WDCS_DSC, WDCS_DSC, 10)) {
+				/* 10ms not enouth, try again in 1 tick */
+				if (xfer->c_dscpoll++ > 
+				    sc_xfer->timeout * hz / 1000) {
+					printf("%s:%d:%d: wait_for_dsc "
+					    "failed\n",
+					    chp->wdc->sc_dev.dv_xname,
+					    chp->channel, xfer->drive);
+					sc_xfer->error = XS_TIMEOUT;
+					wdc_atapi_reset(chp, xfer);
+					return;
+				}
+				callout_reset(&chp->ch_callout, 1,
+				    wdc_atapi_polldsc, xfer);
+				return;
+			}
+		}
+	}
+
+	/*
+	 * Some drive occasionally set WDCS_ERR with 
+	 * "ATA illegal length indication" in the error
+	 * register. If we read some data the sense is valid
+	 * anyway, so don't report the error.
+	 */
+	if (chp->ch_status & WDCS_ERR &&
+	    ((sc_xfer->xs_control & XS_CTL_REQSENSE) == 0 ||
+	    sc_xfer->resid == sc_xfer->datalen)) {
+		/* save the short sense */
+		sc_xfer->error = XS_SHORTSENSE;
+		sc_xfer->sense.atapi_sense = chp->ch_error;
+		if ((sc_xfer->xs_periph->periph_quirks &
+		    PQUIRK_NOSENSE) == 0) {
+			/* ask scsipi to send a REQUEST_SENSE */
+			sc_xfer->error = XS_BUSY;
+			sc_xfer->status = SCSI_CHECK;
+		} else if (chp->wdc->dma_status &
+		    (WDC_DMAST_NOIRQ | WDC_DMAST_ERR)) {
+			ata_dmaerr(drvp);
+			sc_xfer->error = XS_RESET;
+			wdc_atapi_reset(chp, xfer);
+			return;
+		}
+	}
+	if (xfer->c_bcount != 0) {
+		WDCDEBUG_PRINT(("wdc_atapi_intr: bcount value is "
+		    "%d after io\n", xfer->c_bcount), DEBUG_XFERS);
+	}
+#ifdef DIAGNOSTIC
+	if (xfer->c_bcount < 0) {
+		printf("wdc_atapi_intr warning: bcount value "
+		    "is %d after io\n", xfer->c_bcount);
+	}
+#endif
+	WDCDEBUG_PRINT(("wdc_atapi_phase_complete: wdc_atapi_done(), "
+	    "error 0x%x sense 0x%x\n", sc_xfer->error,
+	    sc_xfer->sense.atapi_sense), DEBUG_INTR);
+	wdc_atapi_done(chp, xfer);
+}
+
+void
 wdc_atapi_done(chp, xfer)
 	struct channel_softc *chp;
 	struct wdc_xfer *xfer;
@@ -977,4 +1031,11 @@ wdc_atapi_reset(chp, xfer)
 	}
 	wdc_atapi_done(chp, xfer);
 	return;
+}
+
+void
+wdc_atapi_polldsc(arg)
+	void *arg;
+{
+	wdc_atapi_phase_complete(arg);
 }
