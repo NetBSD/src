@@ -42,7 +42,7 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: conf.c,v 1.15 93/05/05 09:43:29 torek Exp  (LBL)
- * $Id: conf.c,v 1.7 1994/02/01 06:01:37 deraadt Exp $
+ * $Id: conf.c,v 1.8 1994/02/08 21:41:47 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -284,8 +284,8 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NSD,sd),		/* 17: scsi disk */
 	cdev_notdef(),			/* 18: should be scsi tape */
 	cdev_notdef(),			/* 19 */
-	cdev_ptc_init(NPTY,ptc),	/* 20: pseudo-tty master */
-	cdev_tty_init(NPTY,pts),	/* 21: pseudo-tty slave */
+	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
+	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
 	cdev_fb_init(1,fb),		/* 22: /dev/fb indirect driver */
 	cdev_notdef(),			/* 23 */
 	cdev_fd_init(1,fd),		/* 24: /dev/std{in,out,err} */
