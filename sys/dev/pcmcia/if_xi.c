@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.20 2002/01/12 16:25:15 tsutsui Exp $ */
+/*	$NetBSD: if_xi.c,v 1.21 2002/05/05 03:19:26 takemura Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.20 2002/01/12 16:25:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.21 2002/05/05 03:19:26 takemura Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -994,7 +994,7 @@ xi_get(sc)
 		if (len > 1) {
 		        len &= ~1;
 			bus_space_read_multi_2(sc->sc_bst, sc->sc_bsh,
-			    sc->sc_offset + EDP, data, len>>1);
+			    sc->sc_offset + EDP, (u_int16_t *)data, len>>1);
 		} else
 			*data = bus_space_read_1(sc->sc_bst, sc->sc_bsh,
 			    sc->sc_offset + EDP);
@@ -1339,7 +1339,7 @@ xi_start(ifp)
 	for (m = m0; m; ) {
 		if (m->m_len > 1)
 			bus_space_write_multi_2(bst, bsh, offset + EDP,
-			    mtod(m, u_int8_t *), m->m_len>>1);
+			    mtod(m, u_int16_t *), m->m_len>>1);
 		if (m->m_len & 1)
 			bus_space_write_1(bst, bsh, offset + EDP,
 			    *(mtod(m, u_int8_t *) + m->m_len - 1));
