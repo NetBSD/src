@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.104 2004/08/12 07:15:49 mycroft Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.105 2004/08/12 13:42:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.104 2004/08/12 07:15:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.105 2004/08/12 13:42:17 mycroft Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1302,9 +1302,6 @@ pccbb_power(ct, command)
 
 	status = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
 	sock_ctrl = bus_space_read_4(memt, memh, CB_SOCKET_CTRL);
-#if 0
-	bus_space_write_4(memt, memh, CB_SOCKET_FORCE, 0);
-#endif
 
 	switch (command & CARDBUS_VCCMASK) {
 	case CARDBUS_VCC_UC:
@@ -1365,8 +1362,10 @@ pccbb_power(ct, command)
 		sock_ctrl &= ~CB_SOCKET_CTRL_VCCMASK;
 		sock_ctrl &= ~CB_SOCKET_CTRL_VPPMASK;
 		bus_space_write_4(memt, memh, CB_SOCKET_CTRL, sock_ctrl);
+#if 0
 		bus_space_write_4(memt, memh, CB_SOCKET_FORCE,
 		    CB_SOCKET_FORCE_BADVCC);
+#endif
 		printf("new status 0x%x\n", bus_space_read_4(memt, memh,
 		    CB_SOCKET_STAT));
 		return 0;
