@@ -1,4 +1,4 @@
-$NetBSD: mcadevs,v 1.15 2001/04/27 18:03:41 jdolecek Exp $
+$NetBSD: mcadevs,v 1.16 2001/12/01 10:43:36 jdolecek Exp $
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -308,7 +308,7 @@ product 0x7E76 "Overland XL/2 9-Track Tape Coupler"			[7]
 product 0x7F4C "NCR 53C94 SCSI Host Adapter"				[6]
 product 0x7F4D "NCR 3421 SCSI Host Adapter"				[6]
 product 0x7F4E "NCR SCSI Host Adapter"					[6]
-product 0x7F4F "NCR SCSI Host Adapter"					[6]
+product 0x7F4F NCR53C90 "NCR SCSI Host Adapter"				[6]
 product 0x7F99 "DigiCHANNEL MC/4i or MC/8i"				[6]
 product 0x7FBE "FTG PXL-480 Hi-Res Lightpen Adapter"			[5]
 product 0x7FCE "Connect Tech Intellicon MC8 (Canmax CS-6060MCA)"	[6]
