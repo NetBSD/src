@@ -247,8 +247,9 @@ nodetype2str(type)
 NODETYPE type;
 {
 	static char buf[40];
+	int tmp;
 
-	if (type >= Node_illegal && type <= Node_final)
+	if ((tmp = type) >= Node_illegal && type <= Node_final)
 		return nodetypes[(int) type];
 
 	sprintf(buf, "unknown nodetype %d", (int) type);
