@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON,v 1.31.4.1 2001/05/01 15:46:48 he Exp $
+#	$NetBSD: FALCON,v 1.31.4.2 2002/02/23 16:55:39 he Exp $
 #
 # ATARI-FALCON
 #
@@ -92,7 +92,6 @@ pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
 pseudo-device	md		2	# Boot memory disk
 
-pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #
 # The following sections describe various hardware options.

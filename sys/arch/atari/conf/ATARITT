@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.31.4.1 2001/05/01 15:46:30 he Exp $
+#	$NetBSD: ATARITT,v 1.31.4.2 2002/02/23 16:55:38 he Exp $
 #
 # ATARI-TT
 #
@@ -102,7 +102,6 @@ pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
 pseudo-device	md		2	# Boot memory disk
 
-pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	rnd			# /dev/random and in-kernel generator
 
 #

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES,v 1.22.4.2 2001/06/25 19:17:41 he Exp $
+#	$NetBSD: HADES,v 1.22.4.3 2002/02/23 16:55:40 he Exp $
 #
 # Medusa-Hades
 #
@@ -98,7 +98,6 @@ pseudo-device	loop		# Loopback network
 pseudo-device	vnd	3	# 3 pseudo disks (see vnconfig)
 pseudo-device	md	2	# Boot memory disk
 
-##pseudo-device	vlan		# IEEE 802.1q encapsulation
 pseudo-device	rnd		# /dev/random and in-kernel generator
 #
 # The following sections describe various hardware options.
