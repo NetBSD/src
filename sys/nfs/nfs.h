@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.46 2004/05/12 20:11:27 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.47 2004/10/26 00:27:07 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -129,7 +129,6 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
 /*
  * Oddballs
  */
-#define	NMOD(a)		((a) % nfs_asyncdaemons)
 #define NFS_CMPFH(n, f, s) \
 	((n)->n_fhsize == (s) && !memcmp((caddr_t)(n)->n_fhp,  (caddr_t)(f),  (s)))
 #ifdef NFS_V2_ONLY
