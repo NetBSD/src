@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcireg.h,v 1.1 1998/07/12 19:51:59 augustss Exp $	*/
+/*	$NetBSD: uhcireg.h,v 1.2 1998/07/26 00:40:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,6 +47,8 @@
 #define  PCI_USBREV_1_0		0x10
 
 #define PCI_CBIO		0x20	/* configuration base IO */
+
+#define PCI_INTERFACE_UHCI	0x00
 
 /*** UHCI registers ***/
 
