@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.100 2003/07/28 19:11:51 he Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.101 2003/08/04 04:27:00 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1145,3 +1145,8 @@ sys/dev/pci/if_wi_pci.c				1.21,1.23 via patch
 
 	Support the so-called ``PLX'' bridge for wi(4).
 	[grant, ticket #1281]
+
+lib/libc/gen/getcwd.c				1.29
+
+	fix off-by-one error in realpath()
+	[itojun, ticket #1394]
