@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.old.c,v 1.9 1996/07/09 00:54:07 cgd Exp $	*/
+/*	$NetBSD: pmap.old.c,v 1.10 1996/07/11 03:52:16 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -432,7 +432,7 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 * Set up curproc's (i.e. proc 0's) PCB such that the ptbr
 	 * points to the right place.
 	 */
-	curproc->p_addr->u_pcb.pcb_ptbr = ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map) >> PGSHIFT;
+	curproc->p_addr->u_pcb.pcb_hw.apcb_ptbr = ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map) >> PGSHIFT;
 }
 
 /*
@@ -2261,3 +2261,24 @@ pmap_check_wiring(str, va)
 		       str, va, entry->wired_count, count);
 }
 #endif
+ 
+vm_offset_t
+vtophys(vaddr)
+	vm_offset_t vaddr;
+{
+	vm_offset_t paddr;
+
+	if (vaddr < ALPHA_K0SEG_BASE) {
+		printf("vtophys: invalid vaddr 0x%lx", vaddr);
+		paddr = vaddr;
+	} else if (vaddr <= ALPHA_K0SEG_END)
+		paddr = ALPHA_K0SEG_TO_PHYS(vaddr);
+	else
+		paddr = vatopa(vaddr);
+
+#if 0
+	printf("vtophys(0x%lx) -> %lx\n", vaddr, paddr);
+#endif
+
+	return (paddr);
+}
