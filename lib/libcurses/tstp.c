@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.11 1997/11/13 00:40:27 phil Exp $	*/
+/*	$NetBSD: tstp.c,v 1.12 1998/01/30 04:33:35 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.11 1997/11/13 00:40:27 phil Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.12 1998/01/30 04:33:35 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ __stopwin()
 			tputs(SE, 0, __cputchar);
 			curscr->flags &= ~__WSTANDOUT;
 		}
-		__mvcur(curscr->cury, curscr->cury, curscr->maxy - 1, 0, 0);
+		__mvcur(curscr->cury, curscr->curx, curscr->maxy - 1, 0, 0);
 	}
 
 	(void)tputs(VE, 0, __cputchar);

@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.8 1997/07/22 07:37:03 mikel Exp $	*/
+/*	$NetBSD: setterm.c,v 1.9 1998/01/30 04:33:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)setterm.c	8.7 (Berkeley) 7/27/94";
+static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.8 1997/07/22 07:37:03 mikel Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.9 1998/01/30 04:33:34 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,10 +148,11 @@ setterm(type)
 	 * Test for cursor motion capbility.
 	 *
 	 * XXX
-	 * This is truly stupid -- tgoto returns "OOPS" if it can't
-	 * do cursor motions.
+	 * This is truly stupid -- historically, tgoto returns "OOPS" if it
+	 * can't do cursor motions.  Some systems have been fixed to return
+	 * a NULL pointer.
 	 */
-	if (tgoto(CM, 0, 0)[0] == 'O') {
+	if ((p = tgoto(CM, 0, 0)) == NULL || *p == 'O') {
 		CA = 0;
 		CM = 0;
 	} else
