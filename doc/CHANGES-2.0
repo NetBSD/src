@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.132 2004/04/28 05:32:41 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.133 2004/04/28 05:33:58 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1396,3 +1396,9 @@ lib/libc/gen/sysctl.c				1.26
 
 	Remove dynamic sysctl node version 0 from the tree.
 	[atatat, ticket #193]
+
+sys/compat/darwin/darwin_sysctl.c		1.25
+sys/kern/kern_sysctl.c				1.173
+
+	Be consistent about using sysc_init_field()
+	[atatat, ticket #194]
