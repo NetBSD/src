@@ -1,7 +1,7 @@
 #
 # kernel config file for memory(RAM) disk
 #
-# 	$NetBSD: RAMDISK,v 1.6 2002/04/25 15:06:35 atatat Exp $
+# 	$NetBSD: RAMDISK,v 1.7 2003/05/08 13:36:32 shin Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -11,7 +11,7 @@ include 	"arch/playstation2/conf/config.playstation2"
 
 config		netbsd		root on ? type ?
 
-makeoptions	DEFGP="-G 48"
+#makeoptions	DEFGP="-G 48"
 
 # disk/mass storage pseudo-devices
 pseudo-device	md		1	# memory disk device (ramdisk)
