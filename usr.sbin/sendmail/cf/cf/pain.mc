@@ -35,12 +35,11 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)pain.mc	$Revision: 1.1.1.1 $')
+VERSIONID(`@(#)pain.mc	$Revision: 1.2 $')
 OSTYPE(bsd4.4)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
 define(`MAIL_HUB', mail.netbsd.org)
-define(`LOCAL_HUB', mail.netbsd.org)
 define(`SMART_HOST', mail.netbsd.org)
 define(`confCHECKPOINT_INTERVAL', 10)dnl
 define(`confAUTO_REBUILD', True)dnl
