@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.57 2003/03/06 18:24:52 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.58 2003/05/04 02:10:07 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.57 2003/03/06 18:24:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.58 2003/05/04 02:10:07 gmcgarry Exp $");
 
 #include "opt_kgdb.h"
 
@@ -956,10 +956,6 @@ dcmmint(sc, port, mcnd)
 	struct tty *tp;
 	struct dcmdevice *dcm = sc->sc_dcm;
 
-	tp = sc->sc_tty[port];
-	if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0)
-		return;
-
 #ifdef DEBUG
 	if (dcmdebug & DDB_MODEM)
 		printf("%s port %d: dcmmint: mcnd %x mcndlast %x\n",
@@ -967,6 +963,10 @@ dcmmint(sc, port, mcnd)
 #endif
 	delta = mcnd ^ sc->sc_mcndlast[port];
 	sc->sc_mcndlast[port] = mcnd;
+	tp = sc->sc_tty[port];
+	if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0)
+		return;
+
 	if ((delta & MI_CTS) && (tp->t_state & TS_ISOPEN) &&
 	    (tp->t_cflag & CCTS_OFLOW)) {
 		if (mcnd & MI_CTS) {
