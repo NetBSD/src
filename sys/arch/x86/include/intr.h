@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -234,7 +234,8 @@ extern void Xsoftnet(void);
 extern void Xsoftserial(void);
 
 extern struct intrstub i8259_stubs[];
-extern struct intrstub ioapic_stubs[];
+extern struct intrstub ioapic_edge_stubs[];
+extern struct intrstub ioapic_level_stubs[];
 
 struct cpu_info;
 
