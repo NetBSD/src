@@ -1,5 +1,5 @@
 /*
- * $NetBSD: armfpe.h,v 1.4 1996/06/12 19:37:37 mark Exp $
+ * $NetBSD: armfpe.h,v 1.5 1996/08/21 20:06:26 mark Exp $
  *
  * Copyright (c) 1995 Neil A Carson.
  * All rights reserved.
@@ -41,11 +41,6 @@
  * Created      : 04/01/96
  */
 
-#ifndef __ARM32_ARM_FPE_H
-#define __ARM32_ARM_FPE_H
-
-/************************************ Types ***********************************/
-
 /*
  * An extended precision floating point number
  */
@@ -66,7 +61,7 @@ typedef struct fp_context_frame {
 	fp_extended_precision_t regs[8];
 } fp_context_frame_t;
 
-/************************************* Module *********************************/
+/* Define a structure that overlays the start of the core */
 
 typedef struct {
 	/*
@@ -104,8 +99,6 @@ typedef struct {
 	u_int32_t ContextLength;
 } arm_fpe_mod_hdr_t;
 
-/**************************** Procedures in arm_fpe.c *************************/
-
 #ifdef _KERNEL
 
 /* macro to return the FP context for a process */
@@ -114,7 +107,6 @@ typedef struct {
 
 /* Prototypes */
 
-void arm_fpe_mod_reloc	__P((void));
 int arm_fpe_boot	__P((cpu_t *cpu));
 int initialise_arm_fpe	__P((cpu_t *cpu));
 void arm_fpe_postproc	__P((u_int fpframe, struct trapframe *frame));
@@ -132,6 +124,4 @@ u_int arm_fpe_core_deactivatecontext	__P((void));
 u_int arm_fpe_core_savecontext	__P((u_int context, int *savearea, int pc));
 void arm_fpe_core_loadcontext	__P((u_int context, int *loadarea));
 void arm_fpe_copycontext	__P((u_int c1, u_int c2));
-#endif
-
-#endif
+#endif	/* _KERNEL */
