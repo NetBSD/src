@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.11 2000/02/24 03:52:15 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.12 2000/03/04 03:27:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -130,15 +130,6 @@ static RF_DiskQueueSW_t diskqueuesw[] = {
 		rf_CscanPeek,
 	rf_SstfPromote},
 
-#if !defined(_KERNEL) && RF_INCLUDE_QUEUE_RANDOM > 0
-	/* to make a point to Chris :-> */
-	{"random",		/* random */
-		rf_FifoCreate,
-		rf_FifoEnqueue,
-		rf_RandomDequeue,
-		rf_RandomPeek,
-	rf_FifoPromote},
-#endif				/* !KERNEL && RF_INCLUDE_QUEUE_RANDOM > 0 */
 };
 #define NUM_DISK_QUEUE_TYPES (sizeof(diskqueuesw)/sizeof(RF_DiskQueueSW_t))
 

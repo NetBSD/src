@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_fifo.c,v 1.4 2000/01/08 23:45:05 oster Exp $	*/
+/*	$NetBSD: rf_fifo.c,v 1.5 2000/03/04 03:27:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -146,92 +146,6 @@ rf_FifoDequeue(q_in)
 		}
 	return (nd);
 }
-/* This never gets used!! No loss (I hope) if we don't include it... GO */
-#if !defined(__NetBSD__) && !defined(_KERNEL)
-
-static RF_DiskQueueData_t *
-n_in_q(headp, tailp, countp, n, deq)
-	RF_DiskQueueData_t **headp;
-	RF_DiskQueueData_t **tailp;
-	int    *countp;
-	int     n;
-	int     deq;
-{
-	RF_DiskQueueData_t *r, *s;
-	int     i;
-
-	for (s = NULL, i = n, r = *headp; r; s = r, r = r->next) {
-		if (i == 0)
-			break;
-		i--;
-	}
-	RF_ASSERT(r != NULL);
-	if (deq == 0)
-		return (r);
-	if (s) {
-		s->next = r->next;
-	} else {
-		*headp = r->next;
-	}
-	if (*tailp == r)
-		*tailp = s;
-	(*countp)--;
-	return (r);
-}
-#endif
-
-#if !defined(KERNEL) && RF_INCLUDE_QUEUE_RANDOM > 0
-RF_DiskQueueData_t *
-rf_RandomPeek(q_in)
-	void   *q_in;
-{
-	RF_FifoHeader_t *q = (RF_FifoHeader_t *) q_in;
-	RF_DiskQueueData_t *req;
-	int     n;
-
-	if (q->hq_head) {
-		n = q->rval % q->hq_count;
-		req = n_in_q(&q->hq_head, &q->hq_tail, &q->hq_count, n, 0);
-	} else {
-		RF_ASSERT(q->hq_count == 0);
-		if (q->lq_head == NULL) {
-			RF_ASSERT(q->lq_count == 0);
-			return (NULL);
-		}
-		n = q->rval % q->lq_count;
-		req = n_in_q(&q->lq_head, &q->lq_tail, &q->lq_count, n, 0);
-	}
-	RF_ASSERT((q->hq_count + q->lq_count) == req->queue->queueLength);
-	RF_ASSERT(req != NULL);
-	return (req);
-}
-
-RF_DiskQueueData_t *
-rf_RandomDequeue(q_in)
-	void   *q_in;
-{
-	RF_FifoHeader_t *q = (RF_FifoHeader_t *) q_in;
-	RF_DiskQueueData_t *req;
-	int     n;
-
-	if (q->hq_head) {
-		n = q->rval % q->hq_count;
-		q->rval = (long) RF_STATIC_RANDOM();
-		req = n_in_q(&q->hq_head, &q->hq_tail, &q->hq_count, n, 1);
-	} else {
-		RF_ASSERT(q->hq_count == 0);
-		if (q->lq_head == NULL) {
-			RF_ASSERT(q->lq_count == 0);
-			return (NULL);
-		}
-		n = q->rval % q->lq_count;
-		q->rval = (long) RF_STATIC_RANDOM();
-		req = n_in_q(&q->lq_head, &q->lq_tail, &q->lq_count, n, 1);
-	}
-	RF_ASSERT((q->hq_count + q->lq_count) == (req->queue->queueLength - 1));
-	return (req);
-}
-#endif				/* !KERNEL && RF_INCLUDE_QUEUE_RANDOM > 0 */
 
 /* Return ptr to item at head of queue.  Used to examine request
  * info without actually dequeueing the request.
