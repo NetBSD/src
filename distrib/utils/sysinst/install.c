@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.19.10.3 2000/10/18 17:51:14 tv Exp $	*/
+/*	$NetBSD: install.c,v 1.19.10.4 2000/11/01 02:24:11 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -142,4 +142,7 @@ do_install()
 	sanity_check();
 
 	md_cleanup_install();
+
+	msg_display(MSG_instcomplete);
+	process_menu(MENU_ok);
 }
