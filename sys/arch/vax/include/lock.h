@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.14 2003/09/26 22:46:01 nathanw Exp $	*/
+/*	$NetBSD: lock.h,v 1.15 2004/05/19 22:50:09 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -38,6 +38,7 @@
 #include "opt_multiprocessor.h"
 #endif
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #endif
 
 static __inline void
