@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.65 2003/08/07 16:34:14 agc Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.66 2003/09/04 16:44:06 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -47,6 +47,10 @@ TAILQ_HEAD(soqhead, socket);
  * Variables for socket buffering.
  */
 struct sockbuf {
+	struct selinfo sb_sel;		/* process selecting read/write */
+	struct mowner *sb_mowner;	/* who owns data for this sockbuf */
+	/* When re-zeroing this struct, we zero from sb_startzero to the end */
+#define	sb_startzero	sb_cc
 	u_long	sb_cc;			/* actual chars in buffer */
 	u_long	sb_hiwat;		/* max actual char count */
 	u_long	sb_mbcnt;		/* chars of mbufs used */
@@ -56,8 +60,6 @@ struct sockbuf {
 	struct mbuf *sb_mbtail;		/* the last mbuf in the chain */
 	struct mbuf *sb_lastrecord;	/* first mbuf of last record in
 					   socket buffer */
-	struct mowner *sb_mowner;	/* who owns data for this sockbuf */
-	struct selinfo sb_sel;		/* process selecting read/write */
 	short	sb_flags;		/* flags, see below */
 	short	sb_timeo;		/* timeout for read/write */
 };
