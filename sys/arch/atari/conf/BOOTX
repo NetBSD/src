@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOTX,v 1.4 1996/09/16 06:14:23 leo Exp $
+#	$NetBSD: BOOTX,v 1.5 1996/10/04 07:08:29 leo Exp $
 #
 # BOOTX
 #
@@ -67,6 +67,7 @@ options		DDB		# Kernel debugger
 options		COMPAT_43	# 4.3 BSD compatible system calls (required)
 options		COMPAT_10	# Compatibility to NetBSD1.0
 options		COMPAT_11	# Compatibility to NetBSD1.1
+options		COMPAT_12	# Compatibility to NetBSD1.2
 
 #
 # Support for various kernel options
