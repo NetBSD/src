@@ -1,4 +1,4 @@
-/*	$NetBSD: movstr.S,v 1.1 1999/09/13 10:31:38 itojun Exp $	*/
+/*	$NetBSD: movstr.S,v 1.2 2001/02/14 17:59:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -26,11 +26,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-	.text
-	.align 2
+#include <machine/asm.h>
 
-	.global	___movstr
-___movstr:
+ENTRY(__movstr)
 	mov	#16, r0
 	cmp/gt	r0, r6
 	bf	loop2

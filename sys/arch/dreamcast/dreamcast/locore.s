@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.5 2001/02/05 18:14:42 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.6 2001/02/14 17:57:31 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -1079,7 +1079,7 @@ XLP_ADDR:	.long	P_ADDR
 XLwhichqs:	.long	_C_LABEL(sched_whichqs)
 XLwant_resched:	.long	_C_LABEL(want_resched)
 XXXLcurproc:	.long	_C_LABEL(curproc)
-XL_ConvVtoP:	.long	_ConvVtoP
+XL_ConvVtoP:	.long	_C_LABEL(ConvVtoP)
 XL_KernelSp:	.long	KernelSp
 XL_SHREG_TTB:	.long	SHREG_TTB
 #if defined(LOCKDEBUG)
@@ -1361,7 +1361,7 @@ _C_LABEL(MonTrap600):
 	.align	2
 1:
 	.long	_C_LABEL(ihandler)
-_MonTrap600_end:
+_C_LABEL(MonTrap600_end):
 
 /*
  * Immediate Data
@@ -1496,7 +1496,7 @@ XL_KCSAREA:	.long	0x80000000
 XXL_SHREG_TTB:	.long	SHREG_TTB
 XL_P2AREA:	.long	0xa0000000
 #ifdef SH4
-XL_cacheflush:	.long	_sh4_cache_flush
+XL_cacheflush:	.long	_C_LABEL(sh4_cache_flush)
 #endif
 
 Xrecurse:

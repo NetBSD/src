@@ -1,4 +1,4 @@
-/*	$NetBSD: ashiftrt.S,v 1.1 1999/09/13 10:31:36 itojun Exp $	*/
+/*	$NetBSD: ashiftrt.S,v 1.2 2001/02/14 17:59:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -26,75 +26,65 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-	.globl	___ashiftrt_r4_0, ___ashiftrt_r4_1, ___ashiftrt_r4_2
-	.globl	___ashiftrt_r4_3, ___ashiftrt_r4_4, ___ashiftrt_r4_5
-	.globl	___ashiftrt_r4_6, ___ashiftrt_r4_7, ___ashiftrt_r4_8
-	.globl	___ashiftrt_r4_9, ___ashiftrt_r4_10, ___ashiftrt_r4_11
-	.globl	___ashiftrt_r4_12, ___ashiftrt_r4_13, ___ashiftrt_r4_14
-	.globl	___ashiftrt_r4_15, ___ashiftrt_r4_16, ___ashiftrt_r4_17
-	.globl	___ashiftrt_r4_18, ___ashiftrt_r4_19, ___ashiftrt_r4_20
-	.globl	___ashiftrt_r4_21, ___ashiftrt_r4_22, ___ashiftrt_r4_23
-	.globl	___ashiftrt_r4_24, ___ashiftrt_r4_25, ___ashiftrt_r4_26
-	.globl	___ashiftrt_r4_27, ___ashiftrt_r4_28, ___ashiftrt_r4_29
-	.globl	___ashiftrt_r4_30, ___ashiftrt_r4_31
-	.text
+#include <machine/asm.h>
 
-___ashiftrt_r4_31:
+
+ENTRY(__ashiftrt_r4_31)
 	shll	r4
 	rts
 	subc	r4, r4
 
-___ashiftrt_r4_30:
+ENTRY(__ashiftrt_r4_30)
 	shar	r4
 
-___ashiftrt_r4_29:
+ENTRY(__ashiftrt_r4_29)
 	shar	r4
 
-___ashiftrt_r4_28:
+ENTRY(__ashiftrt_r4_28)
 	shar	r4
 
-___ashiftrt_r4_27:
+ENTRY(__ashiftrt_r4_27)
 	shar	r4
 
-___ashiftrt_r4_26:
+ENTRY(__ashiftrt_r4_26)
 	shar	r4
 
-___ashiftrt_r4_25:
+ENTRY(__ashiftrt_r4_25)
 	shar	r4
 
-___ashiftrt_r4_24:
+ENTRY(__ashiftrt_r4_24)
 	shlr16	r4
 	shlr8	r4
 	rts
 	exts.b	r4, r4
 
-___ashiftrt_r4_23:
+ENTRY(__ashiftrt_r4_23)
 	shar	r4
 
-___ashiftrt_r4_22:
+ENTRY(__ashiftrt_r4_22)
 	shar	r4
 
-___ashiftrt_r4_21:
+ENTRY(__ashiftrt_r4_21)
 	shar	r4
 
-___ashiftrt_r4_20:
+ENTRY(__ashiftrt_r4_20)
 	shar	r4
 
-___ashiftrt_r4_19:
+ENTRY(__ashiftrt_r4_19)
 	shar	r4
 
-___ashiftrt_r4_18:
+ENTRY(__ashiftrt_r4_18)
 	shar	r4
 
-___ashiftrt_r4_17:
+ENTRY(__ashiftrt_r4_17)
 	shar	r4
 
-___ashiftrt_r4_16:
+ENTRY(__ashiftrt_r4_16)
 	shlr16	r4
 	rts
 	exts.w	r4, r4
 
-___ashiftrt_r4_15:
+ENTRY(__ashiftrt_r4_15)
 	swap.w	r4, r4
 	cmp/pz	r4
 	bf/s	1f
@@ -106,49 +96,49 @@ ___ashiftrt_r4_15:
 	rts
 	rotcl	r4
 
-___ashiftrt_r4_14:
+ENTRY(__ashiftrt_r4_14)
 	shar	r4
 
-___ashiftrt_r4_13:
+ENTRY(__ashiftrt_r4_13)
 	shar	r4
 
-___ashiftrt_r4_12:
+ENTRY(__ashiftrt_r4_12)
 	shar	r4
 
-___ashiftrt_r4_11:
+ENTRY(__ashiftrt_r4_11)
 	shar	r4
 
-___ashiftrt_r4_10:
+ENTRY(__ashiftrt_r4_10)
 	shar	r4
 
-___ashiftrt_r4_9:
+ENTRY(__ashiftrt_r4_9)
 	shar	r4
 
-___ashiftrt_r4_8:
+ENTRY(__ashiftrt_r4_8)
 	shar	r4
 
-___ashiftrt_r4_7:
+ENTRY(__ashiftrt_r4_7)
 	shar	r4
 
-___ashiftrt_r4_6:
+ENTRY(__ashiftrt_r4_6)
 	shar	r4
 
-___ashiftrt_r4_5:
+ENTRY(__ashiftrt_r4_5)
 	shar	r4
 
-___ashiftrt_r4_4:
+ENTRY(__ashiftrt_r4_4)
 	shar	r4
 
-___ashiftrt_r4_3:
+ENTRY(__ashiftrt_r4_3)
 	shar	r4
 
-___ashiftrt_r4_2:
+ENTRY(__ashiftrt_r4_2)
 	shar	r4
 
-___ashiftrt_r4_1:
+ENTRY(__ashiftrt_r4_1)
 	rts
 	shar	r4
 
-___ashiftrt_r4_0:
+ENTRY(__ashiftrt_r4_0)
 	rts
 	nop
