@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.h,v 1.1 2003/09/06 11:31:21 rearnsha Exp $	*/
+/*	$NetBSD: ifpga_intr.h,v 1.2 2003/09/21 19:33:13 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -133,4 +133,4 @@ void	_setsoftintr(int);
 
 #endif /* _LOCORE */
 
-#endif _IFPGA_INTR_H_
+#endif /* _IFPGA_INTR_H_ */
