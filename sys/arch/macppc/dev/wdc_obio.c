@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.40 2004/08/20 06:39:38 thorpej Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.41 2004/08/23 08:54:39 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.40 2004/08/20 06:39:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.41 2004/08/23 08:54:39 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,6 @@ wdc_obio_attach(parent, self, aux)
 			return;
 		}
 	}
-	wdc_init_shadow_regs(chp);
 #if 0
 	wdr->data32iot = wdr->cmd_iot;
 	wdr->data32ioh = wdr->cmd_ioh;
@@ -221,6 +220,8 @@ wdc_obio_attach(parent, self, aux)
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = &sc->sc_chqueue;
+
+	wdc_init_shadow_regs(chp);
 
 #define OHARE_FEATURE_REG	0xf3000038
 
