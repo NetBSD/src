@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.7 2003/07/03 14:37:34 kochi Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.8 2003/07/06 03:50:07 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.7 2003/07/03 14:37:34 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.8 2003/07/06 03:50:07 kochi Exp $");
 
 #include "opt_ddb.h"
 
@@ -171,6 +171,6 @@ acpi_osd_debugger(void)
 
 	db_recover = savejmp;
 #else
-	printf("ACPI: WARNING: ACPCICA debugger not present.\n");
+	printf("ACPI: WARNING: ACPICA debugger not present.\n");
 #endif
 }
