@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.49 2001/04/28 15:41:30 kleink Exp $	*/
+/*	$NetBSD: types.h,v 1.50 2001/10/16 18:04:14 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -122,11 +122,21 @@ typedef	u_quad_t	u_longlong_t;	/* ANSI unsigned long long type */
 
 typedef	int64_t		blkcnt_t;	/* fs block count */
 typedef	u_int32_t	blksize_t;	/* fs optimal block size */
-typedef	char *		caddr_t;	/* core address */
+
+#ifndef	caddr_t
+typedef	__caddr_t	caddr_t;	/* core address */
+#define	caddr_t		__caddr_t
+#endif
+
 typedef	int32_t		daddr_t;	/* disk address */
 typedef	u_int32_t	dev_t;		/* device number */
 typedef	u_int32_t	fixpt_t;	/* fixed point number */
-typedef	u_int32_t	gid_t;		/* group id */
+
+#ifndef	gid_t
+typedef	__gid_t		gid_t;		/* group id */
+#define	gid_t		__gid_t
+#endif
+
 typedef	u_int32_t	id_t;		/* group id, process id or user id */
 typedef	u_int32_t	ino_t;		/* inode number */
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
@@ -151,7 +161,12 @@ typedef	__pid_t		pid_t;		/* process id */
 typedef quad_t		rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
 typedef	int32_t		swblk_t;	/* swap offset */
-typedef	u_int32_t	uid_t;		/* user id */
+
+#ifndef	uid_t
+typedef	__uid_t		uid_t;		/* user id */
+#define	uid_t		__uid_t
+#endif
+
 typedef	int32_t		dtime_t;	/* on-disk time_t */
 
 #if defined(_KERNEL) || defined(_LIBC)
