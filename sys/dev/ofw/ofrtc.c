@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.7 1998/03/21 02:05:17 cgd Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.8 2001/08/25 19:05:04 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,8 +34,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <dev/ofw/openfirm.h>
+
+cdev_decl(ofrtc_);
 
 struct ofrtc_softc {
 	struct device sc_dev;
@@ -94,10 +97,11 @@ ofrtc_attach(parent, self, aux)
 }
 
 int
-ofrtc_open(dev, flags, fmt)
+ofrtc_open(dev, flags, fmt, p)
 	dev_t dev;
 	int flags;
 	int fmt;
+	struct proc *p;
 {
 	struct ofrtc_softc *of;
 	int unit = minor(dev);
@@ -129,10 +133,11 @@ ofrtc_open(dev, flags, fmt)
 }
 
 int
-ofrtc_close(dev, flags, fmt)
+ofrtc_close(dev, flags, fmt, p)
 	dev_t dev;
 	int flags;
 	int fmt;
+	struct proc *p;
 {
 	return 0;
 }
