@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32_compat_43.c,v 1.1 1998/08/26 10:20:35 mrg Exp $	*/
+/*	$NetBSD: sparc32_compat_43.c,v 1.2 1998/08/26 13:38:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -378,7 +378,7 @@ compat_43_compat_sparc32_ommap(p, v, retval)
 	SPARC32TO64_UAP(flags);
 	SPARC32TO64_UAP(fd);
 	SPARC32TOX_UAP(pos, long);
-	return (comapt_43_sys_mmap(p, &ua, retval));
+	return (compat_43_sys_mmap(p, &ua, retval));
 }
 
 /* network syscalls */
@@ -398,7 +398,7 @@ compat_43_compat_sparc32_oaccept(p, v, retval)
 	SPARC32TOX_UAP(s, int);
 	SPARC32TOX64_UAP(name, caddr_t);
 	SPARC32TOP_UAP(anamelen, int);
-	return (copmat_43_sys_accept(p, &ua, retval));
+	return (compat_43_sys_accept(p, &ua, retval));
 }
 
 int
@@ -419,7 +419,7 @@ compat_43_compat_sparc32_osend(p, v, retval)
 	SPARC32TOX64_UAP(buf, caddr_t);
 	SPARC32TO64_UAP(len);
 	SPARC32TO64_UAP(flags);
-	return (copmat_43_sys_send(p, &ua, retval));
+	return (compat_43_sys_send(p, &ua, retval));
 }
 
 int
@@ -440,7 +440,7 @@ compat_43_compat_sparc32_orecv(p, v, retval)
 	SPARC32TOX64_UAP(buf, caddr_t);
 	SPARC32TO64_UAP(len);
 	SPARC32TO64_UAP(flags);
-	return (copmat_43_sys_recv(p, &ua, retval));
+	return (compat_43_sys_recv(p, &ua, retval));
 }
 
 /*
