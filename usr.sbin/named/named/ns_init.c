@@ -1,6 +1,8 @@
+/*	$NetBSD: ns_init.c,v 1.3 1997/10/04 15:12:00 mrg Exp $	*/
+
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)ns_init.c	4.38 (Berkeley) 3/21/91";
-static char rcsid[] = "$Id: ns_init.c,v 1.2 1997/04/13 10:51:35 mrg Exp $";
+static char rcsid[] = "from: Id: ns_init.c,v 8.25 1997/06/01 20:34:34 vixie Exp ";
 #endif /* not lint */
 
 /*
@@ -233,7 +235,7 @@ boot_read(filename, includefile)
 	int includefile;
 {
 	register struct zoneinfo *zp;
-	char buf[BUFSIZ], obuf[BUFSIZ], *source;
+	char buf[MAXDNAME], obuf[MAXDNAME], *source;
 	FILE *fp;
 	int type;
 	int class;
@@ -576,21 +578,25 @@ boot_read(filename, includefile)
 			    (strcmp(source, zp->z_source) ||
 			     (stat(zp->z_source, &f_time) == -1 ||
 			      (zp->z_ftime != f_time.st_mtime)))) {
-				dprintf(1, (ddt, "backup file changed\n"));
+				dprintf(1, (ddt,
+				        "backup file changed or missing\n"));
 				free(zp->z_source);
 				zp->z_source = NULL;
-				zp->z_flags &= ~Z_AUTH;
 				zp->z_serial = 0;	/* force xfer */
+				if (zp->z_flags & Z_AUTH) {
+					zp->z_flags &= ~Z_AUTH;
 #ifdef	CLEANCACHE
-                        	remove_zone(hashtab, zp - zones, 1);
+					remove_zone(hashtab, zp - zones, 1);
 #else
-                        	remove_zone(hashtab, zp - zones);
+					remove_zone(hashtab, zp - zones);
 #endif
-				/*
-				 * reload parent so that NS records are
-				 * present during the zone transfer.
-				 */
-				do_reload(zp->z_origin, zp->z_type, zp->z_class);
+					/*
+					 * reload parent so that NS records are
+					 * present during the zone transfer.
+					 */
+					do_reload(zp->z_origin, zp->z_type,
+						  zp->z_class);
+				}
 			}
 			if (zp->z_source)
 				free(source);
@@ -674,7 +680,7 @@ static void
 get_forwarders(fp)
 	FILE *fp;
 {
-	char buf[BUFSIZ];
+	char buf[MAXDNAME];
 	register struct fwdinfo *fip = NULL, *ftp = NULL;
 
 #ifdef SLAVE_FORWARD

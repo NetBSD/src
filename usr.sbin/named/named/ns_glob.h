@@ -1,6 +1,8 @@
+/*	$NetBSD: ns_glob.h,v 1.3 1997/10/04 15:11:56 mrg Exp $	*/
+
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90
- *	$Id: ns_glob.h,v 1.2 1997/04/13 10:51:34 mrg Exp $
+ *	from: Id: ns_glob.h,v 8.12 1997/06/01 20:34:34 vixie Exp 
  */
 
 /*
@@ -248,6 +250,7 @@ DECL	const char		sendtoStr[]	INIT("sendto");
 
 	/* defined in version.c, can't use DECL/INIT */
 extern	char			Version[];
+extern	char			ShortVersion[];
 
 	/* max value of xfers_running */
 DECL	int			max_xfers_running      INIT(MAX_XFERS_RUNNING);
