@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tip.h	5.7 (Berkeley) 3/27/91
+ *      @(#)tip.h	8.1 (Berkeley) 6/6/93
  */
 
 /*
@@ -71,8 +72,8 @@ char	*PH;			/* phone number file */
 char	*RM;			/* remote file name */
 char	*HO;			/* host name */
 
-int	BR;			/* line speed for conversation */
-int	FS;			/* frame size for transfers */
+long	BR;			/* line speed for conversation */
+long	FS;			/* frame size for transfers */
 
 char	DU;			/* this host is dialed up */
 char	HW;			/* this device is hardwired, see hunt.c */
@@ -82,9 +83,9 @@ char	*FO;			/* force (literal next) char*/
 char	*RC;			/* raise character */
 char	*RE;			/* script record file */
 char	*PR;			/* remote prompt */
-int	DL;			/* line delay for file transfers to remote */
-int	CL;			/* char delay for file transfers to remote */
-int	ET;			/* echocheck timeout */
+long	DL;			/* line delay for file transfers to remote */
+long	CL;			/* char delay for file transfers to remote */
+long	ET;			/* echocheck timeout */
 char	HD;			/* this host is half duplex - do local echo */
 
 /*
