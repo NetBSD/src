@@ -1,4 +1,4 @@
-/*	$NetBSD: ruptime.c,v 1.8 1998/12/19 21:44:31 christos Exp $	*/
+/*	$NetBSD: ruptime.c,v 1.9 2000/12/31 17:35:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	8.2 (Berkeley) 4/5/94";*/
-__RCSID("$NetBSD: ruptime.c,v 1.8 1998/12/19 21:44:31 christos Exp $");
+__RCSID("$NetBSD: ruptime.c,v 1.9 2000/12/31 17:35:20 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -212,10 +212,10 @@ interval(tval, updown)
 	hours %= HOURSPERDAY;
 	if (days)
 		(void)snprintf(resbuf, sizeof(resbuf),
-		    "%s %2d+%02d:%02d", updown, days, hours, minutes);
+		    "%s%4d+%02d:%02d", updown, days, hours, minutes);
 	else
 		(void)snprintf(resbuf, sizeof(resbuf),
-		    "%s    %2d:%02d", updown, hours, minutes);
+		    "%s     %2d:%02d", updown, hours, minutes);
 	return (resbuf);
 }
 
