@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.62 1999/10/30 01:35:47 enami Exp $	*/
+/*	$NetBSD: elink3.c,v 1.63 1999/10/30 12:07:08 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -277,7 +277,6 @@ static inline void
 ep_finish_reset(iot, ioh)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-
 {
 	int i;
 
