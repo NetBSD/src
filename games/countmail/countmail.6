@@ -1,4 +1,4 @@
-.\"	$NetBSD: countmail.6,v 1.2 1997/10/10 05:39:47 mrg Exp $
+.\"	$NetBSD: countmail.6,v 1.3 1998/04/28 04:07:04 fair Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -47,11 +47,12 @@ first appeared in
 was first written by Noah Friedman <friedman@splode.com> in 1993.
 This version was written by Charles Hannum <mycroft@mit.edu>.
 .Sh CAVEATS
-The read loop is horrendously slow on every shell implementation 
-tried.
+The read loop is horrendously slow on every shell implementation tried.
 .Nm
 uses
-from(1) and wc(1) instead, though these are
-not shell builtins.
+.Xr from 1
+and
+.Xr wc 1
+instead, though these are not shell builtins.
 .Sh SEE ALSO
 .Xr from 1 .
