@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.11 1999/10/07 03:28:56 itohy Exp $	*/
+/*	$NetBSD: ym.c,v 1.12 1999/10/07 08:16:51 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
 #define YM_POWER_OFF_SEC	5
 #endif
 
-/* Default mixer settings. /
+/* Default mixer settings. */
 #ifndef YM_VOL_MASTER
 #define YM_VOL_MASTER		220
 #endif
