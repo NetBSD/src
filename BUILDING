@@ -631,7 +631,7 @@ EXAMPLES
           Using unprivileged mode, build a complete distribution to a DESTDIR
           directory that build.sh selects (and will display).
 
-     3.   # ./build.sh -U install=/
+     3.   ./build.sh -U install=/
 
           As root, install to / the distribution that was built by example 2.
           Even though this is run as root, -U is required so that the permis-
