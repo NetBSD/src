@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.35 1999/08/14 14:49:32 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.36 1999/08/16 20:24:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,8 +150,8 @@ usbd_status	uhci_alloc_std_chain __P((struct uhci_pipe *, uhci_softc_t *,
 void		uhci_timo __P((void *));
 void		uhci_waitintr __P((uhci_softc_t *, usbd_request_handle));
 void		uhci_check_intr __P((uhci_softc_t *, uhci_intr_info_t *));
-void		uhci_ii_done __P((uhci_intr_info_t *));
-void		uhci_ii_finish __P((uhci_intr_info_t *));
+void		uhci_idone __P((uhci_intr_info_t *));
+void		uhci_done __P((uhci_intr_info_t *));
 void		uhci_abort_req __P((usbd_request_handle, usbd_status status));
 void		uhci_timeout __P((void *));
 void		uhci_wakeup_ctrl __P((void *, int, int, void *, int));
@@ -315,7 +315,7 @@ uhci_init(sc)
 		return (r);
 	sc->sc_pframes = KERNADDR(&sc->sc_dma);
 	UWRITE2(sc, UHCI_FRNUM, 0);		/* set frame number to 0 */
-	UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma)); /* set frame list */
+	UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma)); /* set frame list*/
 
 	/* Allocate the dummy QH where bulk traffic will be queued. */
 	bsqh = uhci_alloc_sqh(sc);
@@ -547,6 +547,8 @@ uhci_timo(addr)
 	if (UREAD2(sc, UHCI_PORTSC2) & (UHCI_PORTSC_CSC|UHCI_PORTSC_OCIC))
 		p[0] |= 1<<2;
 	s = splusb();
+	if (!reqh->pipe->repeat)
+		SIMPLEQ_REMOVE_HEAD(&pipe->queue, reqh, next);
 	if (p[0] != 0) {
 		reqh->actlen = 1;
 		reqh->status = USBD_NORMAL_COMPLETION;
@@ -811,12 +813,12 @@ uhci_check_intr(sc, ii)
  done:
 	usb_untimeout(uhci_timeout, ii, ii->timeout_handle);
 	upipe = (struct uhci_pipe *)ii->reqh->pipe;
-	uhci_ii_done(ii);
+	uhci_idone(ii);
 	upipe->pipe.endpoint->toggle = upipe->nexttoggle;
 }
 
 void
-uhci_ii_done(ii)
+uhci_idone(ii)
 	uhci_intr_info_t *ii;
 {
 	usbd_request_handle reqh = ii->reqh;
@@ -825,14 +827,14 @@ uhci_ii_done(ii)
 	int actlen;
 
 #ifdef USB_DEBUG
-	DPRINTFN(10, ("uhci_ii_done: ii=%p ready\n", ii));
+	DPRINTFN(10, ("uhci_idone: ii=%p ready\n", ii));
 	if (uhcidebug > 10)
 		uhci_dump_tds(ii->stdstart);
 #endif
 
 	if (reqh->status == USBD_CANCELLED ||
 	    reqh->status == USBD_TIMEOUT) {
-		DPRINTF(("uhci_ii_done: aborted reqh=%p\n", reqh));
+		DPRINTF(("uhci_idone: aborted reqh=%p\n", reqh));
 		return;
 	}
 
@@ -841,7 +843,7 @@ uhci_ii_done(ii)
 		int s = splhigh();
 		if (ii->isdone) {
 			splx(s);
-			printf("uhci_ii_done: ii=%p is done!\n", ii);
+			printf("uhci_idone: ii=%p is done!\n", ii);
 			return;
 		}
 		ii->isdone = 1;
@@ -865,7 +867,7 @@ uhci_ii_done(ii)
 	reqh->actlen = actlen;
 	if (status != 0) {
 		DPRINTFN(-1+((status&UHCI_TD_STALLED)!=0),
-			 ("uhci_ii_done: error, addr=%d, endpt=0x%02x, "
+			 ("uhci_idone: error, addr=%d, endpt=0x%02x, "
 			  "status 0x%b\n",
 			  reqh->pipe->device->address,
 			  reqh->pipe->endpoint->edesc->bEndpointAddress,
@@ -879,34 +881,38 @@ uhci_ii_done(ii)
 	} else {
 		reqh->status = USBD_NORMAL_COMPLETION;
 	}
-	uhci_ii_finish(ii);
+
+	uhci_done(ii);
+	if (ii->reqh->pipe->intrreqh != ii->reqh)
+		usb_start_next(ii->reqh->pipe);
 }
 
 void
-uhci_ii_finish(ii)
+uhci_done(ii)
 	uhci_intr_info_t *ii;
 {
 	usbd_request_handle reqh = ii->reqh;
+	usbd_pipe_handle pipe = reqh->pipe;
 
 	DPRINTFN(5, ("uhci_ii_finish: calling handler ii=%p\n", ii));
 
-	switch (reqh->pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE) {
+	switch (pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_CONTROL:
 		uhci_ctrl_done(ii);
-		usb_start_next(reqh->pipe);
 		break;
 	case UE_ISOCHRONOUS:
 		uhci_isoc_done(ii);
-		usb_start_next(reqh->pipe);
 		break;
 	case UE_BULK:
 		uhci_bulk_done(ii);
-		usb_start_next(reqh->pipe);
 		break;
 	case UE_INTERRUPT:
 		uhci_intr_done(ii);
 		break;
 	}
+
+	/* Remove request from queue. */
+	SIMPLEQ_REMOVE_HEAD(&pipe->queue, reqh, next);
 
 	/* And finally execute callback. */
 	reqh->xfercb(reqh);
@@ -959,7 +965,7 @@ uhci_waitintr(sc, reqh)
 	     ii = LIST_NEXT(ii, list))
 		;
 	if (ii)
-		uhci_ii_done(ii);
+		uhci_idone(ii);
 	else
 		panic("uhci_waitintr: lost intr_info\n");
 }
@@ -1367,7 +1373,7 @@ uhci_abort_req(reqh, status)
 
 	/* and call final part of interrupt handler. */
 	s = splusb();
-	uhci_ii_finish(ii);
+	uhci_done(ii);
 	splx(s);
 }
 
@@ -1541,17 +1547,12 @@ void
 uhci_device_intr_abort(reqh)
 	usbd_request_handle reqh;
 {
-	struct uhci_pipe *upipe;
-
-	DPRINTFN(1, ("uhci_device_intr_abort: reqh=%p\n", reqh));
-	/* XXX inactivate */
-	usb_delay_ms(reqh->pipe->device->bus, 2); /* make sure it is done */
-	if (reqh->pipe->repeat) {
-		DPRINTF(("uhci_device_intr_abort: remove\n"));
-		reqh->pipe->repeat = 0;
-		upipe = (struct uhci_pipe *)reqh->pipe;
-		uhci_intr_done(upipe->u.intr.qhs[0]->intr_info);
+	DPRINTFN(1,("uhci_device_intr_abort: reqh=%p\n", reqh));
+	if (reqh->pipe->intrreqh == reqh) {
+		DPRINTFN(1,("uhci_device_intr_abort: remove\n"));
+		reqh->pipe->intrreqh = 0;
 	}
+	uhci_abort_req(reqh, USBD_CANCELLED);
 }
 
 /* Close a device interrupt pipe. */
@@ -1956,7 +1957,6 @@ uhci_intr_done(ii)
 	} else {
 		usb_freemem(sc->sc_dmatag, dma);
 		ii->stdstart = 0;	/* mark as inactive */
-		usb_start_next(reqh->pipe);
 	}
 }
 
@@ -2630,6 +2630,7 @@ uhci_root_ctrl_start(reqh)
 	reqh->actlen = totlen;
 	r = USBD_NORMAL_COMPLETION;
  ret:
+	SIMPLEQ_REMOVE_HEAD(&reqh->pipe->queue, reqh, next);
 	reqh->status = r;
 	reqh->xfercb(reqh);
 	usb_start_next(reqh->pipe);
@@ -2651,7 +2652,6 @@ uhci_root_ctrl_close(pipe)
 {
 	uhci_softc_t *sc = (uhci_softc_t *)pipe->device->bus;
 
-	usb_untimeout(uhci_timo, pipe->intrreqh, pipe->intrreqh->timo_handle);
 	sc->sc_has_timo = 0;
 	DPRINTF(("uhci_root_ctrl_close\n"));
 }
