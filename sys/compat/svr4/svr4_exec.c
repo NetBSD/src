@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.20 1996/10/03 05:02:07 cgd Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.21 1996/10/07 21:47:34 cgd Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -36,6 +36,7 @@
 #include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/exec.h>
 #include <sys/exec_elf.h>
 
 #include <sys/mman.h>
@@ -45,7 +46,6 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/exec.h>
 #include <machine/svr4_machdep.h>
 
 #include <compat/svr4/svr4_util.h>
