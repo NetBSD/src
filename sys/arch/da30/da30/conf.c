@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.1 1994/02/22 23:49:32 paulus Exp $
+ *	$Id: conf.c,v 1.2 1994/06/18 12:09:45 paulus Exp $
  */
 
 #include <sys/param.h>
@@ -40,7 +40,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
-#include <dev/cons.h>
+#include <sys/vnode.h>
 
 int	rawread		__P((dev_t, struct uio *, int));
 int	rawwrite	__P((dev_t, struct uio *, int));
@@ -54,8 +54,8 @@ int	ttselect	__P((dev_t, int, struct proc *));
 	int n __P((dev_t, int, caddr_t, int, struct proc *))
 
 /* bdevsw-specific types */
-#define	dev_type_dump(n)	int n __P((dev_t))
-#define	dev_type_size(n)	int n __P((dev_t, int *))
+#define	dev_type_dump(n)	int n()
+#define	dev_type_size(n)	int n __P((dev_t))
 
 #define	dev_decl(n,t)	__CONCAT(dev_type_,t)(__CONCAT(n,t))
 #define	dev_init(c,n,t) \
@@ -136,8 +136,8 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
 /* open, close, read, write, ioctl, strategy */
 #define	cdev_tape_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	dev_init(c,n,open), dev_init(c,n,close), rawread, rawwrite, \
+	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) nullop, 0, seltrue, (dev_type_map((*))) enodev, \
 	dev_init(c,n,strategy) }
 
@@ -303,23 +303,132 @@ int	mem_no = 2; 	/* major device number of memory special file */
 dev_t	swapdev = makedev(3, 0);
 
 /*
- * Possible console devices.
+ * Returns true if dev is /dev/mem or /dev/kmem.
  */
-/* XXX - all this could be autoconfig()ed */
-#if NGSP > 0
-int gspcnprobe(), gspcninit(), gspcngetc(), gspcnputc();
+iskmemdev(dev)
+	dev_t dev;
+{
+
+	return (major(dev) == mem_no && minor(dev) < 2);
+}
+
+/*
+ * Returns true if dev is /dev/zero.
+ */
+iszerodev(dev)
+	dev_t dev;
+{
+
+	return (major(dev) == mem_no && minor(dev) == 12);
+}
+
+/*
+ * Returns true if dev is a disk device.
+ */
+isdisk(dev, type)
+	dev_t dev;
+	int type;
+{
+
+	/* XXXX This needs to be dynamic for LKMs. */
+	switch (major(dev)) {
+	case 1:
+	case 2:
+	case 4:
+	case 6:
+		return (type == VBLK);
+	case 8:
+	case 9:
+	case 10:
+	case 19:
+		return (type == VCHR);
+	default:
+		return (0);
+	}
+}
+
+static int chrtoblktbl[] = {
+	/* XXXX This needs to be dynamic for LKMs. */
+	/*VCHR*/	/*VBLK*/
+	/*  0 */	NODEV,
+	/*  1 */	NODEV,
+	/*  2 */	NODEV,
+	/*  3 */	NODEV,
+	/*  4 */	NODEV,
+	/*  5 */	NODEV,
+	/*  6 */	NODEV,
+	/*  7 */	NODEV,
+	/*  8 */	1,
+	/*  9 */	2,
+	/* 10 */	4,
+	/* 11 */	NODEV,
+	/* 12 */	NODEV,
+	/* 13 */	NODEV,
+	/* 14 */	NODEV,
+	/* 15 */	NODEV,
+	/* 16 */	NODEV,
+	/* 17 */	NODEV,
+	/* 18 */	NODEV,
+	/* 19 */	6,
+	/* 20 */	NODEV,
+	/* 21 */	NODEV,
+	/* 22 */	NODEV,
+};
+
+/*
+ * Convert a character device number to a block device number.
+ */
+chrtoblk(dev)
+	dev_t dev;
+{
+	int blkmaj;
+
+	if (major(dev) >= nchrdev)
+		return (NODEV);
+	blkmaj = chrtoblktbl[major(dev)];
+	if (blkmaj == NODEV)
+		return (NODEV);
+	return (makedev(blkmaj, minor(dev)));
+}
+
+/*
+ * This entire table could be autoconfig()ed but that would mean that
+ * the kernel's idea of the console would be out of sync with that of
+ * the standalone boot.  I think it best that they both use the same
+ * known algorithm unless we see a pressing need otherwise.
+ */
+#include <dev/cons.h>
+
+/* console-specific types */
+#if 0 /* XXX */
+#define	dev_type_cnprobe(n)	void n __P((struct consdev *))
+#define	dev_type_cninit(n)	void n __P((struct consdev *))
+#define	dev_type_cngetc(n)	int n __P((dev_t))
+#define	dev_type_cnputc(n)	void n __P((dev_t, int))
+#else
+#define	dev_type_cnprobe(n)	int n()
+#define	dev_type_cninit(n)	int n()
+#define	dev_type_cngetc(n)	int n()
+#define	dev_type_cnputc(n)	int n()
 #endif
-#if NZS > 0
-int zscnprobe(), zscninit(), zscngetc(), zscnputc();
-#endif
+
+#define	cons_decl(n) \
+	dev_decl(n,cnprobe); dev_decl(n,cninit); dev_decl(n,cngetc); \
+	dev_decl(n,cnputc)
+
+#define	cons_init(n) { \
+	dev_init(1,n,cnprobe), dev_init(1,n,cninit), dev_init(1,n,cngetc), \
+	dev_init(1,n,cnputc) }
+
+cons_decl(gsp);
+cons_decl(zs);
 
 struct	consdev constab[] = {
 #if NGSP > 0
-	{ gspcnprobe,	gspcninit,	gspcngetc,	gspcnputc },
+	cons_init(gsp),
 #endif
 #if NZS > 0
-	{ zscnprobe,	zscninit,	zscngetc,	zscnputc },
+	cons_init(zs),
 #endif
 	{ 0 },
 };
-/* end XXX */

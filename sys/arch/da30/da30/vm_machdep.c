@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: vm_machdep.c 1.21 91/04/06
- *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.1 1994/02/22 23:50:05 paulus Exp $
+ * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
+ *
+ *	from: @(#)vm_machdep.c	8.6 (Berkeley) 1/12/94
+ *	$Id: vm_machdep.c,v 1.2 1994/06/18 12:10:12 paulus Exp $
  */
 
 #include <sys/param.h>
@@ -45,6 +46,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/vnode.h>
 #include <sys/user.h>
 
 #include <machine/cpu.h>
@@ -62,6 +64,7 @@
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
+int
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
@@ -70,13 +73,16 @@ cpu_fork(p1, p2)
 	extern caddr_t getsp();
 	extern char kstack[];
 
+	p2->p_md.md_regs = p1->p_md.md_regs;
+	p2->p_md.md_flags = (p1->p_md.md_flags & ~MDP_AST);
+
 	/*
 	 * Copy pcb and stack from proc p1 to p2. 
 	 * We do this as cheaply as possible, copying only the active
 	 * part of the stack.  The stack and pcb need to agree;
 	 * this is tricky, as the final pcb is constructed by savectx,
 	 * but its frame isn't yet on the stack when the stack is copied.
-	 * swtch compensates for this when the child eventually runs.
+	 * switch compensates for this when the child eventually runs.
 	 * This should be done differently, with a single call
 	 * that copies and updates the pcb+stack,
 	 * replacing the bcopy and savectx.
@@ -105,11 +111,11 @@ cpu_fork(p1, p2)
  * cpu_exit is called as the last action during exit.
  * We release the address space and machine-dependent resources,
  * including the memory for the user structure and kernel stack.
- * Once finished, we call swtch_exit, which switches to a temporary
+ * Once finished, we call switch_exit, which switches to a temporary
  * pcb and stack and never returns.  We block memory allocation
- * until swtch_exit has made things safe again.
+ * until switch_exit has made things safe again.
  */
-__dead void
+void
 cpu_exit(p)
 	struct proc *p;
 {
@@ -118,8 +124,23 @@ cpu_exit(p)
 
 	(void) splimp();
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-	swtch_exit();
+	switch_exit();
 	/* NOTREACHED */
+}
+
+/*
+ * Dump the machine specific header information at the start of a core dump.
+ */
+int
+cpu_coredump(p, vp, cred)
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
+{
+
+	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
+	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL,
+	    p));
 }
 
 /*
@@ -131,22 +152,28 @@ pagemove(from, to, size)
 	register caddr_t from, to;
 	int size;
 {
-	register struct pte *fpte, *tpte;
+	register vm_offset_t pa;
 
-	if (size % CLBYTES)
+#ifdef DEBUG
+	if (size & CLOFSET)
 		panic("pagemove");
-	fpte = kvtopte(from);
-	tpte = kvtopte(to);
+#endif
 	while (size > 0) {
-		*tpte++ = *fpte;
-		*(int *)fpte++ = PG_NV;
-		TBIS(from);
-		TBIS(to);
-		from += NBPG;
-		to += NBPG;
-		size -= NBPG;
+		pa = pmap_extract(kernel_pmap, (vm_offset_t)from);
+#ifdef DEBUG
+		if (pa == 0)
+			panic("pagemove 2");
+		if (pmap_extract(kernel_pmap, (vm_offset_t)to) != 0)
+			panic("pagemove 3");
+#endif
+		pmap_remove(kernel_pmap,
+			    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
+		pmap_enter(kernel_pmap,
+			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+		from += PAGE_SIZE;
+		to += PAGE_SIZE;
+		size -= PAGE_SIZE;
 	}
-	DCIS();
 }
 
 /*
@@ -217,22 +244,12 @@ kvtop(addr)
 extern vm_map_t phys_map;
 
 /*
- * Map an IO request into kernel virtual address space.  Requests fall into
- * one of five catagories:
+ * Map an IO request into kernel virtual address space.
  *
- *	B_PHYS|B_UAREA:	User u-area swap.
- *			Address is relative to start of u-area (p_addr).
- *	B_PHYS|B_PAGET:	User page table swap.
- *			Address is a kernel VA in usrpt (Usrptmap).
- *	B_PHYS|B_DIRTY:	Dirty page push.
- *			Address is a VA in proc2's address space.
- *	B_PHYS|B_PGIN:	Kernel pagein of user pages.
- *			Address is VA in user's address space.
- *	B_PHYS:		User "raw" IO request.
- *			Address is VA in user's address space.
- *
- * All requests are (re)mapped into kernel VA space via the useriomap
- * (a name with only slightly more meaning than "kernelmap")
+ * XXX we allocate KVA space by using kmem_alloc_wait which we know
+ * allocates space without backing physical memory.  This implementation
+ * is a total crock, the multiple mappings of these physical pages should
+ * be reflected in the higher-level VM structures to avoid problems.
  */
 vmapbuf(bp)
 	register struct buf *bp;
@@ -247,12 +264,12 @@ vmapbuf(bp)
 
 	if ((flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	addr = bp->b_saveaddr = bp->b_un.b_addr;
+	addr = bp->b_saveaddr = bp->b_data;
 	off = (int)addr & PGOFSET;
 	p = bp->b_proc;
 	npf = btoc(round_page(bp->b_bcount + off));
 	kva = kmem_alloc_wait(phys_map, ctob(npf));
-	bp->b_un.b_addr = (caddr_t) (kva + off);
+	bp->b_data = (caddr_t)(kva + off);
 	while (npf--) {
 		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
 		    (vm_offset_t)addr);
@@ -267,20 +284,109 @@ vmapbuf(bp)
 
 /*
  * Free the io map PTEs associated with this IO operation.
- * We also invalidate the TLB entries and restore the original b_addr.
  */
 vunmapbuf(bp)
 	register struct buf *bp;
 {
+	register caddr_t addr;
 	register int npf;
-	register caddr_t addr = bp->b_un.b_addr;
 	vm_offset_t kva;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
+	addr = bp->b_data;
 	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
 	kva = (vm_offset_t)((int)addr & ~PGOFSET);
 	kmem_free_wakeup(phys_map, kva, ctob(npf));
-	bp->b_un.b_addr = bp->b_saveaddr;
+	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
+
+#ifdef MAPPEDCOPY
+u_int mappedcopysize = 4096;
+
+mappedcopyin(fromp, top, count)
+	register char *fromp, *top;
+	register int count;
+{
+	register vm_offset_t kva, upa;
+	register int off, len;
+	int alignable;
+	pmap_t upmap;
+	extern caddr_t CADDR1;
+
+	kva = (vm_offset_t) CADDR1;
+	off = (vm_offset_t)fromp & PAGE_MASK;
+	alignable = (off == ((vm_offset_t)top & PAGE_MASK));
+	upmap = vm_map_pmap(&curproc->p_vmspace->vm_map);
+	while (count > 0) {
+		/*
+		 * First access of a page, use fubyte to make sure
+		 * page is faulted in and read access allowed.
+		 */
+		if (fubyte(fromp) == -1)
+			return (EFAULT);
+		/*
+		 * Map in the page and bcopy data in from it
+		 */
+		upa = pmap_extract(upmap, trunc_page(fromp));
+		if (upa == 0)
+			panic("mappedcopyin");
+		len = min(count, PAGE_SIZE-off);
+		pmap_enter(kernel_pmap, kva, upa, VM_PROT_READ, TRUE);
+		if (len == PAGE_SIZE && alignable && off == 0)
+			copypage(kva, top);
+		else
+			bcopy((caddr_t)(kva+off), top, len);
+		fromp += len;
+		top += len;
+		count -= len;
+		off = 0;
+	}
+	pmap_remove(kernel_pmap, kva, kva+PAGE_SIZE);
+	return (0);
+}
+
+mappedcopyout(fromp, top, count)
+	register char *fromp, *top;
+	register int count;
+{
+	register vm_offset_t kva, upa;
+	register int off, len;
+	int alignable;
+	pmap_t upmap;
+	extern caddr_t CADDR2;
+
+	kva = (vm_offset_t) CADDR2;
+	off = (vm_offset_t)top & PAGE_MASK;
+	alignable = (off == ((vm_offset_t)fromp & PAGE_MASK));
+	upmap = vm_map_pmap(&curproc->p_vmspace->vm_map);
+	while (count > 0) {
+		/*
+		 * First access of a page, use subyte to make sure
+		 * page is faulted in and write access allowed.
+		 */
+		if (subyte(top, *fromp) == -1)
+			return (EFAULT);
+		/*
+		 * Map in the page and bcopy data out to it
+		 */
+		upa = pmap_extract(upmap, trunc_page(top));
+		if (upa == 0)
+			panic("mappedcopyout");
+		len = min(count, PAGE_SIZE-off);
+		pmap_enter(kernel_pmap, kva, upa,
+			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		if (len == PAGE_SIZE && alignable && off == 0)
+			copypage(fromp, kva);
+		else
+			bcopy(fromp, (caddr_t)(kva+off), len);
+		fromp += len;
+		top += len;
+		count -= len;
+		off = 0;
+	}
+	pmap_remove(kernel_pmap, kva, kva+PAGE_SIZE);
+	return (0);
+}
+#endif

@@ -5,20 +5,17 @@ This directory contains a port of NetBSD to the DA-30, a single-board
 computer based on the MC68030 microprocessor.  There is exactly one
 DA-30 in existence: it's the wire-wrap prototype of a robot
 controller.  Unfortunately the local company making the robots that I
-designed the DA-30 for stopped making robots and started imported them
+designed the DA-30 for stopped making robots and started importing them
 instead :-(.  So I added some disk and a graphics interface, and now
 it's my home system.  This port won't be directly applicable to
 anybody else's machine, but I hope it will be useful as an example;
 perhaps some of the drivers may be useful to somebody also.
 
-This system deviates from "traditional" NetBSD in that one hard disk
+This system differs from "traditional" NetBSD in that one hard disk
 has a sector size of 1024 bytes rather than 512.  The file "patches"
-in this directory contains modifications to files in the (supposedly)
-machine-independent part of NetBSD to support sector sizes other than
-512 bytes.  The most significant modification is that the d_psize
-function for a block device now takes a second parameter, which is a
-pointer to an integer variable where the sector size of the disk is
-stored. 
+in this directory contains modifications to miscfs/specfs/spec_vnops.c
+to support sector sizes other than 512 bytes.  (The system still
+requires that swap disks have 512-byte sectors.)
 
 Specifications:
 

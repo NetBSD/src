@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isr.h	7.1 (Berkeley) 5/8/90
- *	$Id: isr.h,v 1.1 1994/02/22 23:49:42 paulus Exp $
+ *	$Id: isr.h,v 1.2 1994/06/18 12:09:52 paulus Exp $
  */
 
 struct isr {

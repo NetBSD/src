@@ -44,9 +44,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: clock.c 1.18 91/01/21
- *	from: @(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.1 1994/02/22 23:49:28 paulus Exp $
+ *	$Id: clock.c,v 1.2 1994/06/18 12:09:43 paulus Exp $
  */
 
 #include <sys/param.h>
@@ -58,17 +56,29 @@
 #include <machine/psl.h>
 #include <machine/cpu.h>
 
-#if defined(GPROF) && defined(PROFTIMER)
-#include <sys/gprof.h>
+#if defined(GPROF)
+#include <sys/gmon.h>
 #endif
+
+/*
+ * Machine-dependent clock routines.
+ *
+ * The DA30 has a DP8570 timer/clock chip.  We use the 1/100 second
+ * periodic interrupt for the hardclock interrupts.  The DP8570
+ * has two timers, of which we could use one for statclock interrupts,
+ * but that isn't implemented yet.  It also maintains the current
+ * time of day in BCD in a set of registers.
+ */
 
 static int month_days[12] = {
 	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 struct rtc_tm *gmt_to_rtc();
 static int tobin(), tobcd();
-volatile struct rtc *rtcaddr = NULL;
+volatile struct rtc *RTCbase = NULL;
 static int rtcinited = 0;
+int clockdiv;
+int clockcnt;
 
 /*
  * Connect up with autoconfiguration stuff,
@@ -78,7 +88,7 @@ void clockattach __P((struct device *, struct device *, void *));
 int  clockmatch __P((struct device *, struct cfdata *, void *));
 
 struct cfdriver clockcd = {
-    NULL, "clock", clockmatch, clockattach, DV_TTY, sizeof(struct device), 0
+    NULL, "clock", clockmatch, clockattach, DV_DULL, sizeof(struct device), 0
 };
 
 int
@@ -87,7 +97,7 @@ clockmatch(parent, cf, args)
     struct cfdata *cf;
     void *args;
 {
-    return rtcaddr == NULL && !badbaddr((caddr_t) IIO_CFLOC_ADDR(cf));
+    return RTCbase == NULL && !badbaddr((caddr_t) IIO_CFLOC_ADDR(cf));
 }
 
 void
@@ -97,46 +107,75 @@ clockattach(parent, self, args)
 {
     iio_print(self->dv_cfdata);
 
-    rtcaddr = (volatile struct rtc *) IIO_CFLOC_ADDR(self->dv_cfdata);
+    RTCbase = (volatile struct rtc *) IIO_CFLOC_ADDR(self->dv_cfdata);
 }
 
 /*
- * Machine-dependent clock routines.
- *
- * Startrtclock restarts the real-time clock, which provides
- * hardclock interrupts to kern_clock.c, but doesn't enable
- * interrupts.  We use the 1/100 second periodic interrupt of
- * the DP8570 for this.
- *
- * Enablertclock enables clock interrupts.
- *
- * Inittodr initializes the time of day hardware which provides
- * date functions.
- *
- * Resettodr restores the time of day hardware after a time change.
+ * Set up real-time clock; we don't have a statistics clock at
+ * present.
  */
-
-/*
- * Start the real-time clock.
- */
-startrtclock()
+cpu_initclocks()
 {
-	if( !rtcinited )
-		init_rtc();
+    register volatile struct rtc *rtc = RTCbase;
+
+    if( !rtcinited )
+	init_rtc();
+    if( rtc != NULL ){
+	if (hz == 0 || 100 % hz) {
+	    printf("%d Hz clock not available; using 100 Hz\n", hz);
+	    hz = 100;
+	}
+	clockdiv = 100 / hz;
+	clockcnt = 0;
+	rtc->msr = REG_SEL;
+	rtc->ictrl0 |= PER_10MIL;  /* enable 1/100 second interrupt */
+    } else
+	printf("WARNING: cannot enable periodic interrupts\n");
+    stathz = 0;
+}
+
+void
+setstatclockrate(newhz)
+    int newhz;
+{
+}
+
+void
+statintr(fp)
+    struct clockframe *fp;
+{
 }
 
 /*
- * Enable periodic interrupts from the RTC.
+ * Return the best possible estimate of the time in the timeval
+ * to which tvp points.  We do this by returning the current time
+ * plus the amount of time since the last clock interrupt (clock.c:clkread).
+ *
+ * Check that this time is no less than any previously-reported time,
+ * which could happen around the time of a clock adjustment.  Just for fun,
+ * we guarantee that the time will be greater than the value obtained by a
+ * previous call.
  */
-enablertclock()
+microtime(tvp)
+	register struct timeval *tvp;
 {
-	register volatile struct rtc *rtc = rtcaddr;
+	int s = splhigh();
+	static struct timeval lasttime;
 
-	if( (rtc = rtcaddr) != NULL ){
-		rtc->msr = REG_SEL;
-		rtc->ictrl0 |= PER_10MIL;  /* enable 1/100 second interrupt */
-	} else
-		printf("enablertclock: warning: cannot enable periodic interrupts\n");
+	*tvp = time;
+	tvp->tv_usec += clkread();
+	while (tvp->tv_usec > 1000000) {
+		tvp->tv_sec++;
+		tvp->tv_usec -= 1000000;
+	}
+	if (tvp->tv_sec == lasttime.tv_sec &&
+	    tvp->tv_usec <= lasttime.tv_usec &&
+	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+		tvp->tv_sec++;
+		tvp->tv_usec -= 1000000;
+	}
+	lasttime = *tvp;
+	splx(s);
 }
 
 /*
@@ -145,106 +184,10 @@ enablertclock()
  */
 clkread()
 {
-	register volatile struct rtc *rtc = rtcaddr;
+	register volatile struct rtc *rtc = RTCbase;
 
 	return 0;
 }
-
-#ifdef PROFTIMER
-#error proftimer stuff not implemented yet
-/*
- * This code allows the kernel to use one of the extra timers on
- * the clock chip for profiling, instead of the regular system timer.
- * The advantage of this is that the profiling timer can be turned up to
- * a higher interrupt rate, giving finer resolution timing. The profclock
- * routine is called from the lev6intr in locore, and is a specialized
- * routine that calls addupc. The overhead then is far less than if
- * hardclock/softclock was called. Further, the context switch code in
- * locore has been changed to turn the profile clock on/off when switching
- * into/out of a process that is profiling (startprofclock/stopprofclock).
- * This reduces the impact of the profiling clock on other users, and might
- * possibly increase the accuracy of the profiling. 
- */
-int  profint   = PRF_INTERVAL;	/* Clock ticks between interrupts */
-int  profscale = 0;		/* Scale factor from sys clock to prof clock */
-char profon    = 0;		/* Is profiling clock on? */
-
-/* profon values - do not change, locore.s assumes these values */
-#define PRF_NONE	0x00
-#define	PRF_USER	0x01
-#define	PRF_KERNEL	0x80
-
-initprofclock()
-{
-	/*
-	 * The profile interrupt interval must be an even divisor
-	 * of the CLK_INTERVAL so that scaling from a system clock
-	 * tick to a profile clock tick is possible using integer math.
-	 */
-	if (profint > CLK_INTERVAL || (CLK_INTERVAL % profint) != 0)
-		profint = CLK_INTERVAL;
-	profscale = CLK_INTERVAL / profint;
-}
-
-startprofclock()
-{
-	register struct clkreg *clk = (struct clkreg *)clkstd[0];
-
-	clk->clk_msb3 = (profint-1) >> 8 & 0xFF;
-	clk->clk_lsb3 = (profint-1) & 0xFF;
-
-	clk->clk_cr2 = CLK_CR3;
-	clk->clk_cr3 = CLK_IENAB;
-}
-
-stopprofclock()
-{
-	register struct clkreg *clk = (struct clkreg *)clkstd[0];
-
-	clk->clk_cr2 = CLK_CR3;
-	clk->clk_cr3 = 0;
-}
-
-#ifdef GPROF
-/*
- * profclock() is expanded in line in lev6intr() unless profiling kernel.
- * Assumes it is called with clock interrupts blocked.
- */
-profclock(pc, ps)
-	caddr_t pc;
-	int ps;
-{
-	/*
-	 * Came from user mode.
-	 * If this process is being profiled record the tick.
-	 */
-	if (USERMODE(ps)) {
-		if (p->p_stats.p_prof.pr_scale)
-			addupc(pc, &curproc->p_stats.p_prof, 1);
-	}
-	/*
-	 * Came from kernel (supervisor) mode.
-	 * If we are profiling the kernel, record the tick.
-	 */
-	else if (profiling < 2) {
-		register int s = pc - s_lowpc;
-
-		if (s < s_textsize)
-			kcount[s / (HISTFRACTION * sizeof (*kcount))]++;
-	}
-	/*
-	 * Kernel profiling was on but has been disabled.
-	 * Mark as no longer profiling kernel and if all profiling done,
-	 * disable the clock.
-	 */
-	if (profiling && (profon & PRF_KERNEL)) {
-		profon &= ~PRF_KERNEL;
-		if (profon == PRF_NONE)
-			stopprofclock();
-	}
-}
-#endif
-#endif
 
 /*
  * Initialize the time of day register, based on the time base which is, e.g.
@@ -265,7 +208,7 @@ inittodr(base)
 	 * time is more recent than the gmt time in the clock,
 	 * then use the filesystem time and warn the user.
  	 */
-	if (rtcaddr != NULL && (!rtc_to_gmt(&timbuf) || timbuf < base) ){
+	if (RTCbase != NULL && (!rtc_to_gmt(&timbuf) || timbuf < base) ){
 		printf("WARNING: bad date in battery-backed clock\n");
 		timbuf = base;
 	}
@@ -281,7 +224,7 @@ inittodr(base)
 
 resettodr()
 {
-	register volatile struct rtc *rtc = rtcaddr;
+	register volatile struct rtc *rtc = RTCbase;
 	register struct rtc_tm *tm;
 
 	if( rtc == NULL )
@@ -306,7 +249,7 @@ resettodr()
 
 init_rtc()
 {
-	register volatile struct rtc *rtc = rtcaddr;
+	register volatile struct rtc *rtc = RTCbase;
 
 	rtcinited = 1;
 	if (rtc == NULL) {
@@ -387,10 +330,10 @@ rtc_to_gmt(timbuf)
 {
 	register int i;
 	register u_long tmp;
-	register volatile struct rtc *rtc = rtcaddr;
+	register volatile struct rtc *rtc = RTCbase;
 	int year, month, day, hour, min, sec;
 
-	if( rtcaddr == NULL )
+	if( RTCbase == NULL )
 		return 0;
 	rtc->msr = REG_SEL;
 	if( (rtc->rtm & START) == 0 )
