@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.14 1999/08/05 04:00:04 sommerfeld Exp $
+.\"	$NetBSD: pool.9,v 1.15 2000/05/31 15:27:33 pk Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,6 +38,7 @@
 .Dt POOL 9
 .Os
 .Sh NAME
+.Nm pool_init ,
 .Nm pool_create ,
 .Nm pool_destroy ,
 .Nm pool_get ,
@@ -52,6 +53,19 @@
 .Ft struct pool *
 .\" too many arguments for a single .Fn
 .Fo pool_create
+.Fa "size_t size"
+.Fa "u_int align"
+.Fa "u_int align_offset"
+.Fa "int nitems"
+.Fa "char *wchan"
+.Fa "u_int pagesz"
+.Fa "void *(*palloc)(unsigned long sz, int flags, int tag)"
+.Fa "void (*prelease)(void *v, unsigned long sz, int tag)"
+.Fa "int mtag"
+.Fc
+.Ft void
+.Fo pool_init
+.Fa "struct pool *"
 .Fa "size_t size"
 .Fa "u_int align"
 .Fa "u_int align_offset"
@@ -129,12 +143,12 @@ The unit which is used to allocate additional memory to the pool.
 It must be a power of two.
 .It Fa palloc
 is called to add additional memory if the pool is depleted.
-It returns
+It must return
 .Fa pagesz
 aligned memory.
 The argument
 .Fa sz
-will be a multiple of
+shall be a multiple of
 .Fa pagesz .
 .It Fa prelease
 is called to release pages back to the system.
@@ -158,28 +172,23 @@ The memory tag passed to
 and
 .Fn prelease
 when allocating or releasing memory pages.
-.It Fa storage
-Optional storage provided by the caller to use in lieu of
-.Xr malloc 9
-for both the pool handle and all pool items.
 .El
 .Pp
 If not enough memory is available to create the pool resource,
 .Fn pool_create
 returns
 .Dv NULL .
-If the
-.Fa storage
-parameter is used,
-the client is responsible for providing enough storage
-to accommodate the number of pool items specified by
-.Fa nitems ,
-as well as the space required by the pool's administrative overhead
-.Pq i.e. the pool handle .
 .\"The macro
 .\".Fn POOL_STORAGE_SIZE "size" "nitems"
 .\"can be used to determine the amount of storage needed to setup a pool,
 .\"given the size and number of the pool items.
+.Pp
+.Fn pool_init
+can be used to initialize a pre-allocated pool structure. It takes a pointer
+to an existing
+.Fa struct pool
+as its first argument. The other arguments are as described for
+.Fn pool_create .
 .Ss ALLOCATING ITEMS FROM A POOL
 .Fn pool_get
 allocates an item from the pool and returns a pointer to it.
@@ -246,11 +255,14 @@ A pointer to a pool item previously obtained by
 .Ss PRIMING A POOL
 .Fn pool_prime
 adds items to the pool.
-Storage space for the items is either allocated directly using
-.Xr malloc 9
-or given to
+Storage space for the items is either allocated by using the page allocation
+routine specified to
+.Fn pool_create ,
+or provided to
 .Fn pool_prime
-preallocated by the calling function.
+by the caller through the
+.Fa storage
+parameter.
 .Pp
 .Fn pool_prime
 .Bl -tag -offset indent -width "nitems"
@@ -258,19 +270,15 @@ preallocated by the calling function.
 The handle identifying the pool resource instance.
 .It Fa nitems
 The number of items to add to the pool.
-Storage for the pool items can be passed in the
-.Fa storage
-argument.
-If this parameter is
-.Dv NULL ,
-the items are allocated by using
-.Xr malloc 9 .
+.It Fa storage
+Optional pre-allocated storage.
+.El
+.Pp
 This function may return
 .Dv ENOMEM
 in case the requested number of items could not be allocated.
 Otherwise,
 the return value is 0.
-.El
 .Ss SETTING POOL RESOURCE WATERMARKS
 A pool will attempt to increase its resource usage to keep up with the demand
 for its items.
