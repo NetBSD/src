@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_subr.c,v 1.3 2003/05/30 22:41:52 uwe Exp $ */
+/*	$NetBSD: igsfb_subr.c,v 1.4 2004/11/26 22:29:36 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.3 2003/05/30 22:41:52 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.4 2004/11/26 22:29:36 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,7 +347,7 @@ igsfb_init_dac(dc)
 {
 	bus_space_tag_t iot = dc->dc_iot;
 	bus_space_handle_t ioh = dc->dc_ioh;
-	u_int8_t reg;
+	uint8_t reg;
 
 	/* RAMDAC address 2 select */
 	reg = igs_ext_read(iot, ioh, IGS_EXT_SPRITE_CTL);
