@@ -1,3 +1,4 @@
+/*	$NetBSD$	*/
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting, Atheros
  * Communications, Inc.  All rights reserved.
