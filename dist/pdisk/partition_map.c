@@ -875,7 +875,7 @@ sync_device_size(partition_map_header *map)
 	return;
     }
     d = map->media_size;
-    size = (d * map->logical_block) / map->physical_block;
+    size = (d * map->logical_block) / p->sbBlkSize;
     if (p->sbBlkCount != size) {
 	p->sbBlkCount = size;
     }
