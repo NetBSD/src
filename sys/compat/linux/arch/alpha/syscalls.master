@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.30 2000/12/21 20:42:15 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.31 2000/12/29 20:11:32 fvdl Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -95,7 +95,7 @@
 			    int options, struct osf1_rusage *rusage); }
 ;8	ALIAS		osf1_sys_old_creat, NOT USED
 8	STD		{ int linux_sys_creat(const char *path, mode_t mode); }
-9	NOARGS		{ int sys_link(const char *path, const char *link); }
+9	STD		{ int linux_sys_link(const char *path, const char *link); }
 10	STD		{ int linux_sys_unlink(const char *path); }
 11	UNIMPL
 12	STD		{ int linux_sys_chdir(const char *path); }
