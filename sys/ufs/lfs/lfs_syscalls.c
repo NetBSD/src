@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.37 1999/11/23 23:52:42 fvdl Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.38 2000/01/14 21:41:11 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -399,13 +399,14 @@ sys_lfs_markv(p, v, retval)
 			}
 			splx(s);
 		}
-		if (blkp->bi_lbn >= 0)	{ /* Data Block */
-			/* XXX KS - should we use incore here, or just always use getblk()? */
+		if (ip->i_number != LFS_IFILE_INUM && blkp->bi_lbn >= 0) {
+			/* Data Block */
 			bp = lfs_fakebuf(vp, blkp->bi_lbn,
 					 blkp->bi_size, blkp->bi_bp);
 			/* Pretend we used bread() to get it */
 			bp->b_blkno = blkp->bi_daddr;
-		} else {	/* Indirect block */
+		} else {
+			/* Indirect block */
 			bp = getblk(vp, blkp->bi_lbn, blkp->bi_size, 0, 0);
 			if (!(bp->b_flags & (B_DONE|B_DELWRI))) { /* B_CACHE */
 				/*
