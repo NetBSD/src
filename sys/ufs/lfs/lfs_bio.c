@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.43 2002/05/14 20:03:53 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.44 2002/06/20 22:10:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.43 2002/05/14 20:03:53 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.44 2002/06/20 22:10:24 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,24 +113,24 @@ extern int lfs_dostats;
  * requires the vnode lock to be honored.  If there is not enough space, give
  * up the vnode lock temporarily and wait for the space to become available.
  *
- * Called with vp locked.  (Note nowever that if nb < 0, vp is ignored.)
+ * Called with vp locked.  (Note nowever that if fsb < 0, vp is ignored.)
  */
 int
-lfs_reserve(struct lfs *fs, struct vnode *vp, int nb)
+lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
 {
 	CLEANERINFO *cip;
 	struct buf *bp;
 	int error, slept;
 
 	slept = 0;
-	while (nb > 0 && !lfs_fits(fs, nb + fs->lfs_ravail)) {
+	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail)) {
 		VOP_UNLOCK(vp, 0);
 
 		if (!slept) {
 #ifdef DEBUG
 			printf("lfs_reserve: waiting for %ld (bfree = %d,"
 			       " est_bfree = %d)\n",
-			       nb + fs->lfs_ravail, fs->lfs_bfree,
+			       fsb + fs->lfs_ravail, fs->lfs_bfree,
 			       LFS_EST_BFREE(fs));
 #endif
 		}
@@ -148,9 +148,11 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, int nb)
 		if (error)
 			return error;
 	}
+#ifdef DEBUG
 	if (slept)
 		printf("lfs_reserve: woke up\n");
-	fs->lfs_ravail += nb;
+#endif
+	fs->lfs_ravail += fsb;
 	return 0;
 }
 
@@ -183,10 +185,10 @@ lfs_bwrite(void *v)
 }
 
 /* 
- * Determine if there is enough room currently available to write db
- * disk blocks.  We need enough blocks for the new blocks, the current
- * inode blocks, a summary block, plus potentially the ifile inode and
- * the segment usage table, plus an ifile page.
+ * Determine if there is enough room currently available to write fsb
+ * blocks.  We need enough blocks for the new blocks, the current
+ * inode blocks (including potentially the ifile inode), a summary block,
+ * and the segment usage table, plus an ifile block.
  */
 int
 lfs_fits(struct lfs *fs, int fsb)
@@ -194,8 +196,8 @@ lfs_fits(struct lfs *fs, int fsb)
 	int needed;
 
 	needed = fsb + btofsb(fs, fs->lfs_sumsize) +
-		fsbtodb(fs, howmany(fs->lfs_uinodes + 1, INOPB(fs)) +
-			    fs->lfs_segtabsz + btofsb(fs, fs->lfs_sumsize));
+		 ((howmany(fs->lfs_uinodes + 1, INOPB(fs)) + fs->lfs_segtabsz +
+		   1) << (fs->lfs_blktodb - fs->lfs_fsbtodb));
 
 	if (needed >= fs->lfs_avail) {
 #ifdef DEBUG
@@ -209,13 +211,13 @@ lfs_fits(struct lfs *fs, int fsb)
 }
 
 int
-lfs_availwait(struct lfs *fs, int db)
+lfs_availwait(struct lfs *fs, int fsb)
 {
 	int error;
 	CLEANERINFO *cip;
 	struct buf *cbp;
 
-	while (!lfs_fits(fs, db)) {
+	while (!lfs_fits(fs, fsb)) {
 		/*
 		 * Out of space, need cleaner to run.
 		 * Update the cleaner info, then wake it up.
