@@ -1,8 +1,13 @@
-/*	$NetBSD: scheck.c,v 1.4 1997/06/18 01:12:50 jtc Exp $	*/
+/*	$NetBSD: scheck.c,v 1.5 1997/07/13 20:26:52 christos Exp $	*/
 
+#include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
+#if 0
 static char	elsieid[] = "@(#)scheck.c	8.14";
+#else
+__RCSID("$NetBSD: scheck.c,v 1.5 1997/07/13 20:26:52 christos Exp $");
+#endif
 #endif /* !defined lint */
 #endif /* !defined NOID */
 

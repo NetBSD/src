@@ -1,4 +1,4 @@
-/*	$NetBSD: tzfile.h,v 1.6 1997/06/18 01:12:57 jtc Exp $	*/
+/*	$NetBSD: tzfile.h,v 1.7 1997/07/13 20:26:54 christos Exp $	*/
 
 #ifndef TZFILE_H
 #define TZFILE_H
@@ -22,7 +22,9 @@
 
 #ifndef lint
 #ifndef NOID
+#if 0
 static char	tzfilehid[] = "@(#)tzfile.h	7.9";
+#endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
 

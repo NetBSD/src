@@ -1,13 +1,18 @@
-/*	$NetBSD: difftime.c,v 1.4 1996/09/10 22:04:29 jtc Exp $	*/
+/*	$NetBSD: difftime.c,v 1.5 1997/07/13 20:26:48 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
 ** June 5, 1996 by Arthur David Olson (arthur_david_olson@nih.gov).
 */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
+#if 0
 static char	elsieid[] = "@(#)difftime.c	7.7";
+#else
+__RCSID("$NetBSD: difftime.c,v 1.5 1997/07/13 20:26:48 christos Exp $");
+#endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
