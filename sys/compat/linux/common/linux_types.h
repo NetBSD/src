@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.3 1995/08/14 01:12:17 mycroft Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.4 1995/08/21 03:42:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -72,6 +72,22 @@ struct linux_utsname {
 	char l_version[65];
 	char l_machine[65];
 	char l_domainname[65];
+};
+
+struct linux_oldutsname {
+	char l_sysname[65];
+	char l_nodename[65];
+	char l_release[65];
+	char l_version[65];
+	char l_machine[65];
+};
+
+struct linux_oldoldutsname {
+	char l_sysname[9];
+	char l_nodename[9];
+	char l_release[9];
+	char l_version[9];
+	char l_machine[9];
 };
 
 /*
