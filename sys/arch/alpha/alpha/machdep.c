@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 1996/10/01 18:41:08 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 1996/10/01 20:21:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -884,7 +884,7 @@ cpu_dump()
 	/*
 	 * Add the machine-dependent header info
 	 */
-	cpuhdrp->lev1map_pa = (u_int64_t)Lev1map;
+	cpuhdrp->lev1map_pa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map);
 	cpuhdrp->page_size = PAGE_SIZE;
 	cpuhdrp->core_seg.start = ctob(firstusablepage);
 	cpuhdrp->core_seg.size = ctob(physmem);
