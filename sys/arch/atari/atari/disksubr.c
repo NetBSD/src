@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.20 2001/04/24 06:15:42 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21 2001/07/26 22:55:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -372,7 +372,7 @@ bsd_label(dev, strat, label, blkno, offsetp)
 /*
  * Check for consistency between the NetBSD partition table
  * and the AHDI auxilary root sectors. There's no good reason
- * to force such consistency, but issueing a warning may help
+ * to force such consistency, but issuing a warning may help
  * an inexperienced sysadmin to prevent corruption of AHDI
  * partitions.
  */
