@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.21 1997/05/14 19:26:32 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.22 1997/05/15 00:33:59 phil Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -2079,9 +2079,23 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 -#undef STARTFILE_SPEC
 %% end patch
 %% patch arch
---- gcc/arch/netbsd.h	Tue May 13 11:47:12 1997
-+++ gcc.current/arch/netbsd.h	Tue May 13 09:23:01 1997
-@@ -58,8 +58,13 @@
+--- /sd0f/phil/gcc-2.7.2.2/config/netbsd.h	Mon Jun 12 11:49:50 1995
++++ arch/netbsd.h	Wed May 14 17:21:06 1997
+@@ -35,6 +35,13 @@
+ #endif
+ 
+ 
++/* Provide a STARTFILE_SPEC appropriate for NetBSD.  Here we provide
++   support for the special GCC option -static.  */
++
++#undef STARTFILE_SPEC
++#define STARTFILE_SPEC \
++  "%{!shared:%{pg:gcrt0%O%s}%{!pg:%{p:mcrt0%O%s}%{!p:%{!static:crt0%O%s}%{static:scrt0%O%s}}}}"
++
+ /* Provide a CPP_SPEC appropriate for NetBSD.  Current we just deal with
+    the GCC option `-posix'.  */
+ 
+@@ -58,8 +65,13 @@
  
  #undef LINK_SPEC
  #define LINK_SPEC \
@@ -2096,7 +2110,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
  
  /* We have atexit(3).  */
  
-@@ -68,22 +73,28 @@
+@@ -68,22 +80,28 @@
  /* Implicit library calls should use memcpy, not bcopy, etc.  */
  
  #define TARGET_MEM_FUNCTIONS
