@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.5 1999/12/11 00:32:59 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.6 1999/12/11 00:39:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -247,6 +247,33 @@ tlp_cardbus_attach(parent, self, aux)
 
 	default:
 		/* Nothing. */
+	}
+
+	if (cardbus_get_capability(cc, cf, ca->ca_tag, PCI_CAP_PWRMGMT, 0, 0)) {
+		if (tcp->tcp_pmreg == 0) {
+			printf("%s: don't know location of PMCSR for this "
+			    "chip\n", sc->sc_dev.dv_xname);
+			return;
+		}
+		reg = cardbus_conf_read(cc, cf, ca->ca_tag,
+		    tcp->tcp_pmreg) & 0x03;
+#if 1 /* XXX Probably not right for CardBus. */
+		if (reg == 3) {
+			/*
+			 * The card has lost all configuration data in
+			 * this state, so punt.
+			 */
+			printf("%s: unable to wake up from power state D3\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+#endif
+		if (reg != 0) {
+			printf("%s: waking up from power state D%d\n",
+			    sc->sc_dev.dv_xname, reg);
+			cardbus_conf_write(cc, cf, ca->ca_tag,
+			    tcp->tcp_pmreg, 0);
+		}
 	}
 
 	/*
