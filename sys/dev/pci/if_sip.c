@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.63 2002/08/10 22:57:15 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.64 2002/08/16 07:10:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.63 2002/08/10 22:57:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.64 2002/08/16 07:10:56 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -2859,7 +2859,16 @@ SIP_DECL(dp83820_mii_readreg)(struct device *self, int phy, int reg)
 		case MII_ANAR:		tbireg = SIP_TANAR; break;
 		case MII_ANLPAR:	tbireg = SIP_TANLPAR; break;
 		case MII_ANER:		tbireg = SIP_TANER; break;
-		case MII_EXTSR:		tbireg = SIP_TESR; break;
+		case MII_EXTSR:
+			/*
+			 * Don't even bother reading the TESR register.
+			 * The manual documents that the device has
+			 * 1000baseX full/half capability, but the
+			 * register itself seems read back 0 on some
+			 * boards.  Just hard-code the result.
+			 */
+			return (EXTSR_1000XFDX|EXTSR_1000XHDX);
+
 		default:
 			return (0);
 		}
@@ -2874,6 +2883,15 @@ SIP_DECL(dp83820_mii_readreg)(struct device *self, int phy, int reg)
 				rv |= BMSR_LINK;
 			if (val & TBISR_MR_AN_COMPLETE)
 				rv |= BMSR_ACOMP;
+
+			/*
+			 * The manual claims this register reads back 0
+			 * on hard and soft reset.  But we want to let
+			 * the gentbi driver know that we support auto-
+			 * negotiation, so hard-code this bit in the
+			 * result.
+			 */
+			rv |= BMSR_ANEG | BMSR_EXTCAP;
 		}
 
 		return (rv);
