@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.25 1998/12/15 19:50:21 itohy Exp $
+#	$NetBSD: GENERIC,v 1.25.2.1 1998/12/23 16:47:26 minoura Exp $
 
 #
 #	GENERIC
@@ -28,7 +28,7 @@ options 	FPSP			# floating point emulation for MC68040
 options 	M060SP			# int/fp emulation for MC68060
 options 	JUPITER			# support for "Jupiter-X" accelerator
 options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
-options 	EIOMAPSIZE=0		# do not map PCI address space
+#options 	ZSCONSOLE,ZSCN_SPEED="9600"	# use serial console
 
 
 #### System options that are the same for all ports
@@ -39,6 +39,7 @@ options 	EIOMAPSIZE=0		# do not map PCI address space
 ## automagically determined at boot time.
 
 config		netbsd	root on ? type ?
+#config		netbsd	root on sd0 type ffs
 
 ## RTC is offset from GMT; -540 means JST-9
 options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
@@ -58,7 +59,7 @@ options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 ## Loadable kernel module support
-options 	LKM
+#options 	LKM
 
 ## NFS boot options; not supported currently: needs nfsboot program
 #options 	NFS_BOOT_BOOTPARAM
@@ -70,10 +71,10 @@ options 	LKM
 ## The DDB in-kernel debugger runs at panic (unless DDB_ONPANIC=0), or at
 ## serial console break or keyboard reset, where the PROM would normally
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
-options 	DDB			# kernel dynamic debugger
-options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
-options 	PANICBUTTON		# interrupt switch invokes DDB
+#options 	DDB			# kernel dynamic debugger
+#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+#options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+#options 	PANICBUTTON		# interrupt switch invokes DDB
 
 ## You may also use gdb, on another computer connected to this machine over
 ## a serial port.  Both KGDBDEV and KGDBRATE should be specified; KGDBDEV is
@@ -167,7 +168,7 @@ options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
 #options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
-#options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
+options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 #options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 #options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 #options 	PPP_FILTER	# Add active filters for ppp (via bpf)
@@ -176,60 +177,66 @@ options 	NTP		# Network Time Protocol in-kernel support
 
 #### Device configurations
 
-## Fundamental devices
-mainbus0 at root			# MANDATORY
+## Fundamental devices; see also std.x68k
 
 ## Display devices and console
 grfbus0	at mainbus0			# bitmapped displays
 grf0	at grfbus0			# multiplane graphics
 grf1	at grfbus0			# flexible graphics
 
+kbd0	at mfp0				# standard keyboard
 ite0	at grf0				# internal terminal emulator
-pseudo-device	kbd			# standard keyboard
-pseudo-device	pow		2	# software power switch
+#!pow0	at mfp0 flags 0			# power switch status; intr enabled
+#!pow1	at mfp0 flags 1			# power switch status; read only
+pseudo-device	pow		2	#! software power switch
 
 ## floppy disks
-fdc0	at mainbus0			# floppy controller
+#!fdc0	at intio0 addr 0xe92000 intr 96 dma 0
+fdc0	at mainbus0			#! floppy controller
 fd*	at fdc0 unit ?			# builtin floppy drives
 
 ## SCSI devices
-spc0	at mainbus0				# builtin scsi
-spc1	at mainbus0				# external scsi
+#!spc0	at intio0 addr 0xe96020 intr 108	# genuin SCSI
+#!spc1	at intio0 addr 0xea0000 intr 246	# genuin SCSI
+spc0	at mainbus0				#! builtin scsi
+spc1	at mainbus0				#! external scsi
 scsibus* at spc?
-mha0	at mainbus0				# MK-HA1 mach-2 SCSI
+#!mha0	at intio0 addr 0xea0000 intr 246	# Mankai MK-HA1 (Mach-2)
+mha0	at mainbus0				#! MK-HA1 mach-2 SCSI
 scsibus* at mha0
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 st*	at scsibus? target ? lun ?	# SCSI tapes
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
-#ch*	at scsibus? target ? lun ?	# SCSI changer devices
+ch*	at scsibus? target ? lun ?	# SCSI changer devices
 #uk*	at scsibus? target ? lun ?	# SCSI unknown devices
 
 ## Serial ports
-zsc0	at mainbus0
+zsc0	at intio0 addr 0xe98000 intr 112
 zstty0	at zsc0 channel 0		# built-in RS-232C
 ms0	at zsc0 channel 1		# standard mouse
-#zsc1	at mainbus0
+#zsc1	at intio0 addr 0xeafc00 intr 113
 #zstty2	at zsc1 channel 0
 #zstty3	at zsc1 channel 1
-#zsc2	at mainbus0
+#zsc2	at intio0 addr 0xeafc10 intr 114
 #zstty4	at zsc2 channel 0
 #zstty5	at zsc2 channel 1
 
-#xcom0	at mainbus0			# NS16550 fast serial
-#xcom1	at mainbus0
+pseudo-device	sram			#! battery-backuped static RAM
+pseudo-device	bell			#! OPM bell
 
-pseudo-device	sram			# battery-backuped static RAM
-pseudo-device	bell			# OPM bell
+xcom0	at mainbus0			# NS16550 fast serial
+xcom1	at mainbus0
 
-
-## Audio device; broken
-#okiadpcm0 at mainbus0
+## Audio device
+#okiadpcm0 at intio0 addr 0xe92000 intr 106 errintr 107 dma 3
 #audio*	at okiadpcm*
 
 ## Network interfaces
-ed0	at mainbus0				# Neptune-X
+neptune0 at intio0 addr 0xece000 intr 249	# Neptune-X
+neptune1 at intio0 addr 0xece400 intr 249	# Neptune-X at alt. addr.
+ne0	at neptune? addr 0x300			# NE2000 or clone
 #se0	at scsibus? target ? lun ?		# Ether+; not supported
 
 
@@ -243,7 +250,7 @@ pseudo-device	vnd	4
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
 
-pseudo-device	ccd	4
+#pseudo-device	ccd	4
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 

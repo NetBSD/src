@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.5 1998/08/05 16:08:36 minoura Exp $ */
+/*	$NetBSD: ms.c,v 1.5.6.1 1998/12/23 16:47:30 minoura Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,7 @@
 
 #include <arch/x68k/dev/event_var.h>
 #include <machine/vuid_event.h>
+#include <arch/x68k/dev/mfp.h>
 
 #include "locators.h"
 
@@ -92,8 +93,8 @@
  * where b is the button state, encoded as 0x80|(buttons)---there are
  * two buttons (2=left, 1=right)---and dx,dy are X and Y delta values.
  *
- * It needs trigger for the transmission.  When zs RTS negated, the mouse
- * begins the sequence.  RTS assertion has no effect.
+ * It needs a trigger for the transmission.  When zs RTS negated, the
+ * mouse begins the sequence.  RTS assertion has no effect.
  */
 struct ms_softc {
 	struct	device ms_dev;		/* required first: base device */
@@ -161,8 +162,10 @@ ms_match(parent, cf, aux)
 		return 0;
 	if (args->channel != 1)
 		return 0;
+	if (&zsc->zsc_addr->zs_chan_b != (struct zschan *) ZSMS_PHYSADDR)
+		return 0;
 
-	return 1;
+	return 2;
 }
 
 void 
@@ -215,8 +218,8 @@ msopen(dev, flags, mode, p)
 {
 	struct ms_softc *ms;
 	int unit;
+	int s;
 
-printf ("msopen\n");
 	unit = minor(dev);
 	if (unit >= ms_cd.cd_ndevs)
 		return (ENXIO);
@@ -232,7 +235,9 @@ printf ("msopen\n");
 
 	ms->ms_ready = 1;		/* start accepting events */
 	ms->ms_rts = 1;
+	s = splzs();
 	ms_trigger(ms->ms_cs, 1);	/* set MSCTR high (standby) */
+	splx(s);
 	ms->ms_byteno = -1;
 	ms->ms_nodata = 0;
 	return (0);
@@ -640,8 +645,7 @@ ms_trigger (cs, onoff)
 	zs_write_reg(cs, 5, cs->cs_preg[5]);
 
 	/* for keyborad connected one */
-	while (!(mfp.tsr & MFP_TSR_BE));
-	mfp.udr = onoff | 0x40;
+	mfp_send_usart (onoff | 0x40);
 }
 
 /*
@@ -652,8 +656,8 @@ void
 ms_modem(void)
 {
 	struct ms_softc *ms = ms_cd.cd_devs[0];
-	int s;
 
+	/* we are in higher intr. level than splzs. no need splzs(). */
 	if (!ms->ms_ready)
 		return;
 	if (ms->ms_nodata++ > 300) { /* XXX */
@@ -666,7 +670,6 @@ ms_modem(void)
 		return;
 	}
 
-	s = splzs();
 	if (ms->ms_rts) {
 		if (ms->ms_byteno == -1) {
 			/* start next sequence */
@@ -678,5 +681,4 @@ ms_modem(void)
 		ms->ms_rts = 1;
 		ms_trigger(ms->ms_cs, ms->ms_rts);
 	}
-	splx(s);
 }

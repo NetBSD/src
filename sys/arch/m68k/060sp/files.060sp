@@ -1,5 +1,0 @@
-#	$NetBSD: files.060sp,v 1.1 1997/09/28 20:49:58 is Exp $
-#
-# Config file for the Motorola 68060 support package
-#
-file	arch/m68k/060sp/netbsd060sp.S	m060sp	compile-with "$(M060SPAS)"

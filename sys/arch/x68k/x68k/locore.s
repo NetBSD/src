@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.37 1998/11/11 06:43:52 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.37.4.1 1998/12/23 16:47:34 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -513,39 +513,6 @@ Lbrkpt3:
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
 	rte				| XXX mfpcure (x680x0 hardware bug)
 
-_zstrap:
-#include "zsc.h"
-#if NZSC > 0
-	INTERRUPT_SAVEREG
-	movw	sp@(22),sp@-		| push exception vector info
-	movw	sr,d0
-	movw	#PSL_HIGHIPL,sr
-	movw	d0,sp@-
-	jbsr	_C_LABEL(zshard)
-	addql	#4,sp
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+48
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	rte
-
-_kbdtrap:
-	INTERRUPT_SAVEREG
-	jbsr	_kbdintr
-	INTERRUPT_RESTOREREG
-	addql	#1,_C_LABEL(intrcnt)+40
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-/*	jra	rei*/
-	rte
-
 _kbdtimer:
 	rte
 
@@ -752,21 +719,13 @@ _com1trap:
 #endif
 	jra	rei
 
-_edtrap:
-#include "ed.h"
-#if NED > 0
+_intiotrap:
 	INTERRUPT_SAVEREG
-	movel	#0,sp@-
-	jbsr	_edintr
+	movw	#PSL_HIGHIPL,sr		| XXX
+	pea	sp@(16-(FR_HW))		| XXX
+	jbsr	_C_LABEL(intio_intr)
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+64
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 _lev1intr:
@@ -1083,6 +1042,7 @@ Lstploaddone:
 	RELOC(_mmutype, a0)
 	cmpl	#MMU_68040,a0@		| 68040?
 	jne	Lmotommu2		| no, skip
+#include "opt_jupiter.h"
 #ifdef JUPITER
 	/* JUPITER-X: set system register "SUPER" bit */
 	movl	#0x0200a240,d0		| translate DRAM area transparently

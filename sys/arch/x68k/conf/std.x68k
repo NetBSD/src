@@ -1,5 +1,4 @@
-#	$NetBSD: std.x68k,v 1.5 1998/09/08 15:43:27 minoura Exp $
-
+#	$NetBSD: std.x68k,v 1.5.6.1 1998/12/23 16:47:27 minoura Exp $
 
 #
 # Mandatory NetBSD/x68k kernel options.
@@ -13,3 +12,11 @@ options 	DEVPAGER	# mapped devices
 
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_SCRIPT	# execve(2) support for scripts
+
+
+## Fundamental devices
+mainbus0 at root			# MANDATORY
+intio0	at mainbus0			# MANDATORY: internal I/O space
+mfp0	at intio0 addr 0xe88000 intr 64	# MANDATORY: Multi Function Periferal
+clock0	at mfp0				# MANDATORY: system tick
+rtc0	at intio0 addr 0xe8a000		# MANDATORY: Realtime Clock

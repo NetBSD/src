@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 1998/12/13 15:04:01 minoura Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.2.1 1998/12/23 16:47:32 minoura Exp $	*/
 
 /*
  *

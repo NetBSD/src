@@ -1,0 +1,134 @@
+/*	$NetBSD: intiovar.h,v 1.1.2.1 1998/12/23 16:47:29 minoura Exp $	*/
+
+/*
+ *
+ * Copyright (c) 1998 NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Charles D. Cranor and
+ *      Washington University.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * NetBSD/x68k internal I/O virtual bus.
+ */
+
+#ifndef _INTIOVAR_H_
+#define _INTIOVAR_H_
+
+#include <machine/frame.h>
+#include <sys/malloc.h>
+#include <sys/extent.h>
+#include "locators.h"
+
+#define cf_addr		cf_loc[INTIOCF_ADDR]
+#define cf_intr		cf_loc[INTIOCF_INTR]
+#define cf_errintr	cf_loc[INTIOCF_ERRINTR]
+#define cf_dma		cf_loc[INTIOCF_DMA]
+
+
+struct intio_attach_args {
+	bus_space_tag_t	ia_bst;	/* bus_space tag */
+	bus_dma_tag_t	ia_dmat; /* bus_dma tag */
+
+	int		ia_addr; /* addr */
+	int		ia_size;
+	int		ia_intr; /* interrupt vector */
+	int		ia_errintr; /* interrupt vector for device error */
+	int		ia_dma;	/* dma channel */
+};
+
+struct intio_softc {
+	struct device	sc_dev;
+	bus_space_tag_t	sc_bst;
+	bus_dma_tag_t	sc_dmat;
+	struct extent	*sc_map;
+};
+
+enum intio_map_flag {
+	INTIO_MAP_ALLOCATE = 0,
+	INTIO_MAP_TESTONLY = 1
+};
+int intio_map_allocate_region __P((struct device*, struct intio_attach_args*, enum intio_map_flag));
+int intio_map_free_region __P((struct device*, struct intio_attach_args*));
+
+
+typedef int (*intio_intr_handler_t) __P((void*));
+
+int intio_intr_establish __P((int, const char *, intio_intr_handler_t, void *));
+int intio_intr_disestablish __P((int, void *));
+int intio_intr __P((struct frame *));
+
+
+#define PHYS_INTIODEV 0x00c00000
+  
+extern u_int8_t *intiobase;
+
+#define INTIO_ADDR(a)	((volatile u_int8_t *) (((u_int32_t) (a)) - (PHYS_INTIODEV) + intiobase))
+
+#define INTIO_SYSPORT		(0x00e8e000)
+#define intio_sysport		INTIO_ADDR(INTIO_SYSPORT)
+#define sysport_contrast	1
+#define sysport_tvctrl		3
+#define sysport_imageunit	5
+#define sysport_keyctrl		7
+#define sysport_waitctrl	9
+#define sysport_mpustat		11
+#define sysport_sramwp		13
+#define sysport_powoff		15
+
+#define intio_set_sysport_contrast(a) \
+	intio_sysport[sysport_contrast] = (a) /* 0-15 */
+#define intio_set_sysport_tvctrl(a) \
+	intio_sysport[sysport_tvctrl] = (a)
+#define INTIO_SYSPORT_TVCTRL	0x08
+#define intio_set_sysport_imageunit(a) \
+	intio_sysport[sysport_imageunit] = (a)
+#define intio_set_sysport_keyctrl(a) \
+	intio_sysport[sysport_keyctrl] = (a)
+#define INTIO_SYSPORT_KBENABLE	0x08
+#define intio_set_sysport_waitctrl(a) \
+	intio_sysport[sysport_waitctrl] = (a) /* X68030 only */
+#define intio_set_sysport_sramwp(a) \
+	intio_sysport[sysport_sramwp] = (a)
+#define INTIO_SYSPORT_SRAMWP	0x31
+#define intio_set_sysport_powoff(a) \
+	intio_sysport[sysport_powoff] = (a)
+
+#define intio_get_sysport_contrast() \
+	(intio_sysport[sysport_contrast])
+#define intio_get_sysport_tvctrl() \
+	(intio_sysport[sysport_tvctrl])
+#define INTIO_SYSPORT_TVSTAT	0x08
+#define intio_get_sysport_keyctrl() \
+	(intio_sysport[sysport_keyctrl])
+#define INTIO_SYSPORT_KBEXIST	0x08
+#define intio_get_sysport_waitctrl() \
+	(intio_sysport[sysport_waitctrl])
+#define intio_get_sysport_mpustat() \
+	(intio_sysport[sysport_mpustat])
+
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: iodevice.h,v 1.5 1998/08/05 16:08:37 minoura Exp $	*/
+/*	$NetBSD: iodevice.h,v 1.5.6.1 1998/12/23 16:47:34 minoura Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Masaru Oki
@@ -370,6 +370,7 @@ volatile struct IODEVICE *IODEVbase;
 #define	ioctlr	(IODEVbase->io_ctlr)
 #endif
 
+#if 0
 /* 
  * devices that need to configure before console use this
  * *and know it* (i.e. everything is really tight certain params won't be 
@@ -378,3 +379,4 @@ volatile struct IODEVICE *IODEVbase;
 #include <sys/device.h>
 int x68k_config_found __P((struct cfdata *, struct device *,
 			   void *, cfprint_t));
+#endif

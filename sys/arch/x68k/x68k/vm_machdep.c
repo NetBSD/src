@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 1998/11/18 10:05:35 itohy Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16.4.1 1998/12/23 16:47:35 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -195,13 +195,13 @@ cpu_coredump(p, vp, cred, chdr)
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred,
-	    NULL, p);
+	    (int *)0, p);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)0, p);
 	if (error)
 		return error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock_var.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: rtclock_var.h,v 1.1.1.1.24.1 1998/12/23 16:47:31 minoura Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -33,6 +33,13 @@
 #ifndef _RTCLOCKVAR_H_
 #define _RTCLOCKVAR_H_
 
+struct rtc_softc {
+	struct device		sc_dev;
+
+	bus_space_tag_t		sc_bst;
+	bus_space_handle_t	sc_bht;
+};
+
 /*
  * commands written to mode, HOLD before reading the clock,
  * FREE after done reading.
@@ -41,8 +48,44 @@
 #define RTC_HOLD_CLOCK	0
 #define RTC_FREE_CLOCK	8
 
-#define RTC_REG(x) (rtc_addr->bank0.x & 0x0f)
-#define RTC_WRITE(r,x,v) (r)->bank0.x = (v)
+#define RTC_REG(x) (bus_space_read_1(rtc->sc_bst, rtc->sc_bht, (x)) & 0x0f)
+#define RTC_WRITE(x,v) bus_space_write_1(rtc->sc_bst, rtc->sc_bht, (x), (v))
+
+#define RTC_ADDR	0xe8a000
+
+/* RTC register bank 0 */
+#define RTC_SEC		0x01
+#define RTC_SEC10	0x03
+#define RTC_MIN		0x05
+#define RTC_MIN10	0x07
+#define RTC_HOUR	0x09
+#define RTC_HOUR10	0x0b
+#define RTC_WEEK	0x0d
+#define RTC_DAY		0x0f
+#define RTC_DAY10	0x11
+#define RTC_MON		0x13
+#define RTC_MON10	0x15
+#define RTC_YEAR	0x17
+#define RTC_YEAR10	0x19
+#define RTC_MODE	0x1b
+#define RTC_TEST	0x1d
+#define RTC_RESET	0x1f
+
+/* RTC register bank 1 */
+#define RTC_CLKOUT	0x01
+#define RTC_ADJUST	0x03
+#define RTC_AL_MIN	0x05
+#define RTC_AL_MIN10	0x07
+#define RTC_AL_HOUR	0x09
+#define RTC_AL_HOUR10	0x0b
+#define RTC_AL_WEEK	0x0d
+#define RTC_AL_DAY	0x0f
+#define RTC_AL_DAY10	0x11
+#define RTC_UNUSED1	0x13
+#define RTC_AMPM	0x15
+#define RTC_LEAP	0x17
+#define RTC_UNUSED2	0x19
+
 
 #define FEBRUARY	2
 #define	STARTOFTIME	1970

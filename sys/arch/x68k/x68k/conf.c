@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1998/11/13 04:47:10 oster Exp $	*/
+/*	$NetBSD: conf.c,v 1.16.4.1 1998/12/23 16:47:34 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -159,6 +159,7 @@ cdev_decl(vnd);
 cdev_decl(md);
 cdev_decl(st);
 cdev_decl(fd);
+#include "kbd.h"
 cdev_decl(kbd);
 #include "ms.h"
 cdev_decl(ms);
@@ -206,7 +207,11 @@ struct cdevsw	cdevsw[] =
 	cdev_par_init(NPAR,par),	/* 11: parallel interface */
 	cdev_tty_init(NZSTTY,zs),	/* 12: zs serial */
 	cdev_ite_init(NITE,ite),	/* 13: console terminal emulator */
+#if NKBD > 0
 	cdev_gen_init(1,kbd),		/* 14: /dev/kbd */
+#else
+	cdev_notdef(),
+#endif
 #if NMS > 0
 	cdev_gen_init(1,ms),		/* 15: /dev/mouse */
 #else
@@ -328,10 +333,14 @@ chrtoblk(dev)
 
 #define	itecnpollc	nullcnpollc
 cons_decl(ite);
+cons_decl(zs);
 
 struct	consdev constab[] = {
-#if NITE > 0
+#if NITE > 0 && NKBD > 0
 	cons_init(ite),
+#endif
+#if NZSTTY > 0
+	cons_init(zs),
 #endif
 	{ 0 },
 };

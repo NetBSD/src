@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.5 1998/08/06 14:08:54 minoura Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.5.6.1 1998/12/23 16:47:29 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -35,11 +35,13 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 
+#include <machine/bus.h>
 #include <machine/grfioctl.h>
 
-#include <x68k/x68k/iodevice.h>
-#include <x68k/dev/itevar.h>
-#include <x68k/dev/grfvar.h>
+#include <arch/x68k/x68k/iodevice.h>
+#include <arch/x68k/dev/itevar.h>
+#include <arch/x68k/dev/grfvar.h>
+#include <arch/x68k/dev/mfp.h>
 
 /*
  * ITE device dependent routine for X680x0 Text-Video framebuffer.
@@ -70,7 +72,6 @@ char   *tv_font[256];
 __volatile char *tv_kfont[0x7f];
 
 u_char kern_font[256 * FONTHEIGHT];
-u_char kbdled;
 
 #define PHYSLINE(y)  ((tv_top + (y)) % PLANELINES)
 #define ROWOFFSET(y) ((y) * FONTHEIGHT * ROWBYTES)
@@ -116,10 +117,7 @@ txrascpy (src, dst, size, mode)
 	/*s = splhigh();*/
 	while (--size >= 0) {
 		/* wait for hsync */
-		while (mfp.gpip & MFP_GPIP_HSYNC)
-			asm("nop");
-		while (!(mfp.gpip & MFP_GPIP_HSYNC))
-			asm("nop");
+		mfp_wait_for_hsync ();
 		CRTC.r22 = (src << 8) | dst;	/* specify raster number */
 		/* start raster copy */
 		CRTC.crtctrl = 8;
@@ -130,10 +128,8 @@ txrascpy (src, dst, size, mode)
 	/*splx(s);*/
 
 	/* wait for hsync */
-	while (mfp.gpip & MFP_GPIP_HSYNC)
-		asm("nop");
-	while (!(mfp.gpip & MFP_GPIP_HSYNC))
-		asm("nop");
+	mfp_wait_for_hsync ();
+
 	/* stop raster copy */
 	CRTC.crtctrl = 0;
 
@@ -210,7 +206,6 @@ tv_deinit(ip)
 	struct ite_softc *ip;
 {
 	ip->flags &= ~ITE_INITED; /* XXX? */
-	mfp.udr = 0x48;     /* send character from keyboard disable */
 }
 
 typedef void tv_putcfunc __P((struct ite_softc *, int, char *));

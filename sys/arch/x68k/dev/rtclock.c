@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.3 1997/10/12 12:13:52 oki Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.3.10.1 1998/12/23 16:47:31 minoura Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -43,12 +43,72 @@
 #include <sys/reboot.h>
 #include <sys/file.h>
 #include <sys/kernel.h>
+#include <sys/device.h>
 
-#include <x68k/dev/rtclock_var.h>
-#include <x68k/x68k/iodevice.h>
+#include <machine/bus.h>
+
+#include <arch/x68k/dev/rtclock_var.h>
+#include <arch/x68k/dev/intiovar.h>
 
 static u_long rtgettod __P((void));
 static int  rtsettod __P((long));
+
+static int rtc_match __P((struct device *, struct cfdata *, void *));
+static void rtc_attach __P((struct device *, struct device *, void *));
+
+struct cfattach rtc_ca = {
+	sizeof(struct rtc_softc), rtc_match, rtc_attach
+};
+
+static int
+rtc_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct intio_attach_args *ia = aux;
+
+	if (cf->cf_unit != 0)
+		return (0);
+
+	/* fixed address */
+	if (ia->ia_addr != RTC_ADDR)
+		return (0);
+	if (ia->ia_intr != -1)
+		return (0);
+
+	return (1);
+}
+
+
+static struct rtc_softc *rtc;	/* XXX: softc cache */
+
+static void
+rtc_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct rtc_softc *sc = (struct rtc_softc *)self;
+	struct intio_attach_args *ia = aux;
+	int r;
+
+	ia->ia_size = 0x20;
+	r = intio_map_allocate_region (parent, ia, INTIO_MAP_ALLOCATE);
+#ifdef DIAGNOSTIC
+	if (r)
+		panic ("IO map for RTC corruption??");
+#endif
+
+
+	sc->sc_bst = ia->ia_bst;
+	bus_space_map(sc->sc_bst, ia->ia_addr, 0x2000, 0, &sc->sc_bht);
+	rtc = sc;
+
+	rtclockinit();
+	printf (": RP5C15\n");
+}
+
+
 
 /*
  * x68k/clock.c calls thru this vector, if it is set, to read
@@ -57,14 +117,11 @@ static int  rtsettod __P((long));
 u_long (*gettod) __P((void));
 int (*settod) __P((long));
 
-static volatile union rtc *rtc_addr = 0;
 int rtclockinit __P((void));
 
 int
 rtclockinit()
 {
-	rtc_addr = &IODEVbase->io_rtc;
-
 	if (rtgettod())	{
 		gettod = rtgettod;
 		settod = rtsettod;
@@ -86,18 +143,18 @@ rtgettod()
 	int year, month, day, hour, min, sec;
 
 	/* hold clock */
-	RTC_WRITE(rtc_addr, mode, RTC_HOLD_CLOCK);
+	RTC_WRITE(RTC_MODE, RTC_HOLD_CLOCK);
 
 	/* read it */
-	sec   = RTC_REG(sec10)  * 10 + RTC_REG(sec);
-	min   = RTC_REG(min10)  * 10 + RTC_REG(min);
-	hour  = RTC_REG(hour10) * 10 + RTC_REG(hour);
-	day   = RTC_REG(day10)  * 10 + RTC_REG(day);
-	month = RTC_REG(mon10)  * 10 + RTC_REG(mon);
-	year  = RTC_REG(year10) * 10 + RTC_REG(year)  + 1980;
+	sec   = RTC_REG(RTC_SEC10)  * 10 + RTC_REG(RTC_SEC);
+	min   = RTC_REG(RTC_MIN10)  * 10 + RTC_REG(RTC_MIN);
+	hour  = RTC_REG(RTC_HOUR10) * 10 + RTC_REG(RTC_HOUR);
+	day   = RTC_REG(RTC_DAY10)  * 10 + RTC_REG(RTC_DAY);
+	month = RTC_REG(RTC_MON10)  * 10 + RTC_REG(RTC_MON);
+	year  = RTC_REG(RTC_YEAR10) * 10 + RTC_REG(RTC_YEAR)  + 1980;
 
 	/* let it run again.. */
-	RTC_WRITE(rtc_addr, mode, RTC_FREE_CLOCK);
+	RTC_WRITE(RTC_MODE, RTC_FREE_CLOCK);
 
 	range_test(hour, 0, 23);
 	range_test(day, 1, 31);
@@ -139,13 +196,6 @@ rtsettod (tim)
 	u_char mon1, mon2;
 	u_char year1, year2;
 
-	/*
-	 * there seem to be problems with the bitfield addressing
-	 * currently used..
-	 */
-	if (!rtc_addr)
-		return 0;
-
 	tim -= (rtc_offset * 60);
 
 	/* prepare values to be written to clock */
@@ -185,20 +235,20 @@ rtsettod (tim)
 	day1 = day / 10;
 	day2 = day % 10;
 
-	RTC_WRITE(rtc_addr, mode,   RTC_HOLD_CLOCK);
-	RTC_WRITE(rtc_addr, sec10,  sec1);
-	RTC_WRITE(rtc_addr, sec,    sec2);
-	RTC_WRITE(rtc_addr, min10,  min1);
-	RTC_WRITE(rtc_addr, min,    min2);
-	RTC_WRITE(rtc_addr, hour10, hour1);
-	RTC_WRITE(rtc_addr, hour,   hour2);
-	RTC_WRITE(rtc_addr, day10,  day1);
-	RTC_WRITE(rtc_addr, day,    day2);
-	RTC_WRITE(rtc_addr, mon10,  mon1);
-	RTC_WRITE(rtc_addr, mon,    mon2);
-	RTC_WRITE(rtc_addr, year10, year1);
-	RTC_WRITE(rtc_addr, year,   year2);
-	RTC_WRITE(rtc_addr, mode,   RTC_FREE_CLOCK);
+	RTC_WRITE(RTC_MODE,   RTC_HOLD_CLOCK);
+	RTC_WRITE(RTC_SEC10,  sec1);
+	RTC_WRITE(RTC_SEC,    sec2);
+	RTC_WRITE(RTC_MIN10,  min1);
+	RTC_WRITE(RTC_MIN,    min2);
+	RTC_WRITE(RTC_HOUR10, hour1);
+	RTC_WRITE(RTC_HOUR,   hour2);
+	RTC_WRITE(RTC_DAY10,  day1);
+	RTC_WRITE(RTC_DAY,    day2);
+	RTC_WRITE(RTC_MON10,  mon1);
+	RTC_WRITE(RTC_MON,    mon2);
+	RTC_WRITE(RTC_YEAR10, year1);
+	RTC_WRITE(RTC_YEAR,   year2);
+	RTC_WRITE(RTC_MODE,   RTC_FREE_CLOCK);
 
 	return 1;
 }
