@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.1 1998/09/30 21:36:28 erh Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.2 1998/12/10 00:31:50 erh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
 
 /* Min/max real-time linux signal */
 #define LINUX_SIGRTMIN		32
-#define LINUX_SIGRTMAX		(_NSIG-1)
+#define LINUX_SIGRTMAX		(LINUX__NSIG - 1)
 
 /* sa_flags */
 #define LINUX_SA_ONSTACK	0x00000001
