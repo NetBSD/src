@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.8 2001/02/24 04:35:34 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.9 2001/02/24 22:39:19 matt Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -837,11 +837,6 @@ cpu_startup()
 	bufinit();
 }
 
-void
-cpu_dumpconf()
-{
-}
-
 /*
  * consinit
  * Initialize system console.
@@ -855,33 +850,6 @@ consinit()
 	*/
 	cninit();
 }
-
-/*
- * Machine dependent system variables
- */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1) {
-		return ENOTDIR;
-	}
-
-	switch (name[0]) {
-	case CPU_CACHELINE:
-		return sysctl_rdint(oldp, oldlenp, newp, CACHELINESIZE);
-	default:
-		return EOPNOTSUPP;
-	}
-}
-
 
 /*
  * Halt or reboot the machine after syncing/dumping according to howto
