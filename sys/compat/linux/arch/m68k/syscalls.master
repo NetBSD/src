@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.19 2000/12/09 05:27:29 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.20 2000/12/09 05:31:10 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -52,6 +52,7 @@
 
 #include <compat/linux/linux_syscallargs.h>
 
+%%
 
 0	NOARGS		{ int sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }
