@@ -1,4 +1,4 @@
-/*	$NetBSD: hmereg.h,v 1.14 2003/05/14 19:46:59 petrov Exp $	*/
+/*	$NetBSD: hmereg.h,v 1.15 2003/06/02 22:52:36 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,6 +102,8 @@
 
 #ifdef HMEDEBUG
 #define HME_SEB_STAT_DEBUG_ERRORS	(HME_SEB_STAT_DTIMEXP | HME_SEB_STAT_RFIFOVF)
+#else
+#define HME_SEB_STAT_DEBUG_ERRORS	0
 #endif
 
 #define HME_SEB_STAT_ALL_ERRORS	\
