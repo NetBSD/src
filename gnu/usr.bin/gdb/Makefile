@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 1999/02/07 17:35:28 christos Exp $
+# $NetBSD: Makefile,v 1.22 1999/02/10 16:15:21 tron Exp $
 
 TOP=	$(.CURDIR)/../..
 dist=	$(TOP)/dist
@@ -10,7 +10,7 @@ srcdir= $(dist)/gdb
 
 PROG=	gdb
 
-BFDOBJ!=cd ${TOP}/lib/bfd; \
+BFDOBJ!=cd ${TOP}/lib/libbfd; \
         printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
 # Note: nm.h, tm.h are in $(.OBJDIR),
