@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.13 1997/10/17 11:46:30 lukem Exp $	*/
+/*	$NetBSD: compare.c,v 1.14 1997/10/24 03:12:06 enami Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.13 1997/10/17 11:46:30 lukem Exp $");
+__RCSID("$NetBSD: compare.c,v 1.14 1997/10/24 03:12:06 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,8 @@ typeerr:		LABEL;
 	if (s->flags & F_SIZE && s->st_size != p->fts_statp->st_size) {
 		LABEL;
 		(void)printf("%ssize (%qd, %qd)\n",
-		    tab, s->st_size, p->fts_statp->st_size);
+		    tab, (long long)s->st_size,
+		    (long long)p->fts_statp->st_size);
 		tab = "\t";
 	}
 	/*
