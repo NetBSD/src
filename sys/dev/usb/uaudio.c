@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.17 2000/02/02 13:18:45 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.18 2000/02/08 18:45:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2018,7 +2018,7 @@ uaudio_chan_pintr(xfer, priv, status)
 	if (status == USBD_CANCELLED)
 		return;
 
-	usbd_get_xfer_status(xfer, 0, 0, &count, 0);
+	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
 	DPRINTFN(5,("uaudio_chan_pintr: count=%d, transferred=%d\n",
 		    count, ch->transferred));
 #ifdef DIAGNOSTIC
@@ -2109,7 +2109,7 @@ uaudio_chan_rintr(xfer, priv, status)
 	if (status == USBD_CANCELLED)
 		return;
 
-	usbd_get_xfer_status(xfer, 0, 0, &count, 0);
+	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
 	DPRINTFN(5,("uaudio_chan_rintr: count=%d, transferred=%d\n",
 		    count, ch->transferred));
 #ifdef DIAGNOSTIC
