@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.105 2002/10/11 17:31:11 fvdl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.106 2002/10/22 20:51:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.105 2002/10/11 17:31:11 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.106 2002/10/22 20:51:43 christos Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -381,7 +381,7 @@ vmapbuf(bp, len)
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
+	faddr = trunc_page((vaddr_t)(bp->b_saveaddr = bp->b_data));
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr= uvm_km_valloc_wait(phys_map, len);
