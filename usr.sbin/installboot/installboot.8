@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.10 2002/04/22 17:17:36 lukem Exp $
+.\"	$NetBSD: installboot.8,v 1.11 2002/04/30 14:45:12 lukem Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -224,9 +224,19 @@ as the type of
 The default operation is to attempt to auto-detect this setting.
 The following file system types are currently supported by
 .Nm "" :
-.Bd -ragged -offset indent
-.Sy ffs
-.Ed
+.
+.Bl -tag -offset indent -width ffs
+.
+.It Sy ffs
+.Bx
+Fast File System.
+.
+.It Sy raw
+.Sq Raw
+image.
+Note: the block offset of the secondary bootstrap cannot be searched
+for on this file system type.
+.El
 .
 .It Fl v
 Verbose operation.
@@ -305,6 +315,7 @@ Install the Berkeley Fast File System primary bootstrap on to disk sd0:
 .Pp
 Remove the primary bootstrap from disk sd1:
 .Dl Ic installboot -c /dev/swd1c
+.Pp
 Install the ISO 9660 primary bootstrap in the file
 .Pa /tmp/cd-image :
 .Dl Ic installboot -m pmax /tmp/cd-image /usr/mdec/bootxx_cd9660
