@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.5 2002/03/13 13:12:27 simonb Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.6 2003/09/18 15:00:26 lonewolf Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -63,36 +63,36 @@ struct hpc_dma_desc {
 #define HPC_PBUS_DMAREGS	0x00000000	/* DMA registers for PBus */
 #define HPC_PBUS_DMAREGS_SIZE	0x0000ffff	/* channels 0 - 7 */
 
-#define HPC_PBUS_CH0_BP		0x00000004	/* Chan 0 Buffer Ptr */
-#define HPC_PBUS_CH0_DP		0x00000008	/* Chan 0 Descriptor Ptr */
+#define HPC_PBUS_CH0_BP		0x00000000	/* Chan 0 Buffer Ptr */
+#define HPC_PBUS_CH0_DP		0x00000004	/* Chan 0 Descriptor Ptr */
 #define HPC_PBUS_CH0_CTL	0x00001000	/* Chan 0 Control Register */
 
-#define HPC_PBUS_CH1_BP		0x00002004	/* Chan 1 Buffer Ptr */
-#define HPC_PBUS_CH1_DP		0x00002008	/* Chan 1 Descriptor Ptr */
+#define HPC_PBUS_CH1_BP		0x00002000	/* Chan 1 Buffer Ptr */
+#define HPC_PBUS_CH1_DP		0x00002004	/* Chan 1 Descriptor Ptr */
 #define HPC_PBUS_CH1_CTL	0x00003000	/* Chan 1 Control Register */
 
-#define HPC_PBUS_CH2_BP		0x00004004	/* Chan 2 Buffer Ptr */
-#define HPC_PBUS_CH2_DP		0x00004008	/* Chan 2 Descriptor Ptr */
+#define HPC_PBUS_CH2_BP		0x00004000	/* Chan 2 Buffer Ptr */
+#define HPC_PBUS_CH2_DP		0x00004004	/* Chan 2 Descriptor Ptr */
 #define HPC_PBUS_CH2_CTL	0x00005000	/* Chan 2 Control Register */
 
-#define HPC_PBUS_CH3_BP		0x00006004	/* Chan 3 Buffer Ptr */
-#define HPC_PBUS_CH3_DP		0x00006008	/* Chan 3 Descriptor Ptr */
+#define HPC_PBUS_CH3_BP		0x00006000	/* Chan 3 Buffer Ptr */
+#define HPC_PBUS_CH3_DP		0x00006004	/* Chan 3 Descriptor Ptr */
 #define HPC_PBUS_CH3_CTL	0x00007000	/* Chan 3 Control Register */
 
-#define HPC_PBUS_CH4_BP		0x00008004	/* Chan 4 Buffer Ptr */
-#define HPC_PBUS_CH4_DP		0x00008008	/* Chan 4 Descriptor Ptr */
+#define HPC_PBUS_CH4_BP		0x00008000	/* Chan 4 Buffer Ptr */
+#define HPC_PBUS_CH4_DP		0x00008004	/* Chan 4 Descriptor Ptr */
 #define HPC_PBUS_CH4_CTL	0x00009000	/* Chan 4 Control Register */
 
-#define HPC_PBUS_CH5_BP		0x0000a004	/* Chan 5 Buffer Ptr */
-#define HPC_PBUS_CH5_DP		0x0000a008	/* Chan 5 Descriptor Ptr */
+#define HPC_PBUS_CH5_BP		0x0000a000	/* Chan 5 Buffer Ptr */
+#define HPC_PBUS_CH5_DP		0x0000a004	/* Chan 5 Descriptor Ptr */
 #define HPC_PBUS_CH5_CTL	0x0000b000	/* Chan 5 Control Register */
 
-#define HPC_PBUS_CH6_BP		0x0000c004	/* Chan 6 Buffer Ptr */
-#define HPC_PBUS_CH6_DP		0x0000c008	/* Chan 6 Descriptor Ptr */
+#define HPC_PBUS_CH6_BP		0x0000c000	/* Chan 6 Buffer Ptr */
+#define HPC_PBUS_CH6_DP		0x0000c004	/* Chan 6 Descriptor Ptr */
 #define HPC_PBUS_CH6_CTL	0x0000d000	/* Chan 6 Control Register */
 
-#define HPC_PBUS_CH7_BP		0x0000e004	/* Chan 7 Buffer Ptr */
-#define HPC_PBUS_CH7_DP		0x0000e008	/* Chan 7 Descriptor Ptr */
+#define HPC_PBUS_CH7_BP		0x0000e000	/* Chan 7 Buffer Ptr */
+#define HPC_PBUS_CH7_DP		0x0000e004	/* Chan 7 Descriptor Ptr */
 #define HPC_PBUS_CH7_CTL	0x0000f000	/* Chan 7 Control Register */
 
 #define HPC_SCSI0_REGS		0x00010000	/* SCSI channel 0 registers */
@@ -121,6 +121,7 @@ struct hpc_dma_desc {
 #define HPC_SCSI1_DMACFG	0x00001010	/* DMA configururation */
 #define HPC_SCSI1_PIOCFG	0x00001014	/* PIO configururation */
 
+/* These are only valid for SCSI/ENETR, PBUS uses different definitions */
 #define HPC_DMACTL_IRQ    0x01 /* IRQ asserted, either dma done or parity */
 #define HPC_DMACTL_ENDIAN 0x02 /* DMA endian mode, 0=BE, 1=LE */
 #define HPC_DMACTL_DIR    0x04 /* DMA direction, 0=dev->mem, 1=mem->dev */
@@ -130,6 +131,19 @@ struct hpc_dma_desc {
 #define HPC_DMACTL_RESET  0x40 /* Resets dma channel and external controller */
 #define HPC_DMACTL_PERR   0x80 /* Parity error on interface to controller */
 
+/* HPC_PBUS_CHx_CTL read: */
+#define HPC_PBUS_DMACTL_IRQ	0x01 /* IRQ asserted, DMA done */
+#define HPC_PBUS_DMACTL_ACT	0x02 /* DMA channel is active */
+/* HPC_PBUS_CHx_CTL write: */
+#define HPC_PBUS_DMACTL_ENDIAN	0x02 /* DMA endianness, 0=BE 1=LE */
+#define HPC_PBUS_DMACTL_RECEIVE	0x04 /* DMA direction, 1=dev->mem, 0=mem->dev */
+#define HPC_PBUS_DMACTL_FLUSH	0x08 /* Flush DMA FIFO */
+#define HPC_PBUS_DMACTL_ACT	0x10 /* Activate DMA channel */
+#define HPC_PBUS_DMACTL_ACT_LD	0x20 /* Load enable for ACT */
+#define HPC_PBUS_DMACTL_RT	0x40 /* Enable real time GIO service for DMA */
+#define HPC_PBUS_DMACTL_HIGHWATER_SHIFT	8
+#define HPC_PBUS_DMACTL_FIFOBEG_SHIFT	16
+#define HPC_PBUS_DMACTL_FIFOEND_SHIFT	24
 
 #define HPC_ENET_REGS		0x00014000	/* Ethernet registers */
 #define HPC_ENET_REGS_SIZE	0x00003fff
