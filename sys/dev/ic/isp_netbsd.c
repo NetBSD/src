@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.42 2001/04/25 17:53:32 bouyer Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.43 2001/05/16 03:52:10 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -610,7 +610,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		const char fmt[] = "Target %d (Loop 0x%x) Port ID 0x%x "
 		    "(role %s) %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x";
 		const static char *roles[4] = {
-		    "No", "Target", "Initiator", "Target/Initiator"
+		    "None", "Target", "Initiator", "Target/Initiator"
 		};
 		fcparam *fcp = isp->isp_param;
 		int tgt = *((int *) arg);
@@ -626,10 +626,9 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		break;
 	}
 	case ISPASYNC_CHANGE_NOTIFY:
-		if (arg == (void *) 1) {
-			isp_prt(isp, ISP_LOGINFO,
-			    "Name Server Database Changed");
-		} else {
+		if (arg == ISPASYNC_CHANGE_PDB) {
+			isp_prt(isp, ISP_LOGINFO, "Port Database Changed");
+		} else if (arg == ISPASYNC_CHANGE_SNS) {
 			isp_prt(isp, ISP_LOGINFO,
 			    "Name Server Database Changed");
 		}
