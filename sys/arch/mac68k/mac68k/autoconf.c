@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 1995/03/29 07:38:34 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 1995/04/20 15:31:23 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -172,40 +172,44 @@ root_matchbyname(parent, cf, aux)
 }
 
 extern int
-matchbyname(parent, cf, aux)
+matchbyname(parent, match, aux)
 	struct device	*parent;
-	struct cfdata	*cf;
+	void		*match;
 	void		*aux;
 {
 	struct newconf_S	*c = (struct newconf_S *) aux;
+	struct device		*dv = (struct device *) match;
 
-	return (strcmp(cf->cf_driver->cd_name, c->name) == 0);
+/*	printf("matchbyname: (%s) and (%s).\n", dv->dv_xname, c->name);
+*/
+
+	return (strcmp(dv->dv_xname, c->name) == 0);
 }
 
 static void
-mainbus_attach(parent, dev, aux)
-	struct device	*parent, *dev;
+mainbus_attach(parent, self, aux)
+	struct device	*parent, *self;
 	void		*aux;
 {
 	struct newconf_S	conf_data[] = {
-					{"ite",       1},
-					{"adb",       1},
-/*					{"clock",     1},	*/
-					{"nubus",     1},
-					{"ser",       0},
-					{"ncrscsi",   0},
-					{"ncr96scsi", 0},
-					{"asc",       0},
-					{"fpu",       0},
-					{"floppy",    0},
-					{NULL,        0}
+					{"ite0",       1},
+					{"adb0",       1},
+					{"ser0",       0},
+					{"ser1",       0},
+					{"nubus0",     1},
+					{"ncrscsi0",   0},
+					{"ncr96scsi0", 0},
+					{"asc0",       0},
+					{"fpu0",       0},
+					{"floppy0",    0},
+					{NULL,         0}
 			 	};
 	struct newconf_S	*c;
 	int			fail=0, warn=0;
 
 	printf("\n");
 	for (c=conf_data ; c->name ; c++) {
-		if (config_found(dev, c, mbprint)) {
+		if (config_found(self, c, mbprint)) {
 		} else {
 			if (c->req) {
 				fail++;
@@ -222,7 +226,7 @@ mainbus_attach(parent, dev, aux)
 
 struct cfdriver mainbuscd =
       { NULL, "mainbus", root_matchbyname, mainbus_attach,
-	DV_DULL, sizeof(struct device), NULL, 0 };
+	DV_DULL, sizeof(struct device), 1, 0 };
 
 /*
  * Configure swap space and related parameters.
