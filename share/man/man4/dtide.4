@@ -1,4 +1,4 @@
-.\" $NetBSD: dtide.4,v 1.6 2003/06/27 18:20:11 wiz Exp $
+.\" $NetBSD: dtide.4,v 1.7 2003/10/08 11:20:09 bouyer Exp $
 .\"
 .\" Copyright (c) 2000 Ben Harris
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 13, 2001
+.Dd October 8, 2003
 .Os
 .Dt DTIDE 4
 .Sh NAME
@@ -33,8 +33,7 @@
 .Nd D.T. Software IDE interface driver
 .Sh SYNOPSIS
 .Cd "dtide* at podulebus0 slot ?"
-.Cd "wd* at dtide? channel ? drive ?"
-.Cd "atapibus* at dtide? channel ?"
+.Cd "atabus* at dtide? channel ?
 .Sh DESCRIPTION
 The
 .Nm
@@ -42,14 +41,13 @@ driver handles a D.T. Software IDE interface plugged into an Acorn expansion
 slot.  It uses the standard
 .Nx
 IDE controller driver, and hence can use the standard
-.Nm wd
-and
-.Nm atapibus
-drivers.
+.Nm atabus
+driver.
 .Pp
 The card provides two IDE channels.  The external IDE connector is channel 0,
 while the internal connector is channel 1.
 .Sh SEE ALSO
+.Xr atabus 4 ,
 .Xr atapibus 4 ,
 .Xr podulebus 4 ,
 .Xr wd 4
