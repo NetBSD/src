@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.41 1996/10/07 16:16:14 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -78,6 +78,7 @@
 #include <compat/svr4/svr4_wait.h>
 #include <compat/svr4/svr4_statvfs.h>
 #include <compat/svr4/svr4_sysconfig.h>
+#include <compat/svr4/svr4_acl.h>
 
 #include <vm/vm.h>
 
@@ -1242,4 +1243,60 @@ svr4_sys_gettimeofday(p, v, retval)
 	}
 
 	return 0;
+}
+
+
+int
+svr4_sys_facl(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_facl_args *uap = v;
+
+	*retval = 0;
+
+	switch (SCARG(uap, cmd)) {
+	case SVR4_SYS_SETACL:
+		/* We don't support acls on any filesystem */
+		return ENOSYS;
+
+	case SVR4_SYS_GETACL:
+		return copyout(retval, &SCARG(uap, num),
+		    sizeof(SCARG(uap, num)));
+
+	case SVR4_SYS_GETACLCNT:
+		return 0;
+
+	default:
+		return EINVAL;
+	}
+}
+
+
+int
+svr4_sys_acl(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return svr4_sys_facl(p, v, retval);	/* XXX: for now the same */
+}
+
+
+int
+svr4_sys_memcntl(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_memcntl_args *uap = v;
+	struct sys_mprotect_args ap;
+
+	SCARG(&ap, addr) = SCARG(uap, addr);
+	SCARG(&ap, len) = SCARG(uap, len);
+	SCARG(&ap, prot) = SCARG(uap, attr);
+
+	/* XXX: no locking, invalidating, or syncing supported */
+	return sys_mprotect(p, &ap, retval);
 }
