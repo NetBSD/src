@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.8 1999/04/20 21:23:56 thorpej Exp $ */
+/* $NetBSD: db_machdep.h,v 1.9 1999/04/20 21:30:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -51,10 +51,8 @@ db_regs_t		ddb_regs;	/* register state */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-#if 0
 #define	FIXUP_PC_AFTER_BREAK(regs) \
 	((regs)->tf_regs[FRAME_PC] -= BKPT_SIZE)
-#endif
 
 #define	SOFTWARE_SSTEP	1		/* no hardware support */
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == ALPHA_KENTRY_IF && \
