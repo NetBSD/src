@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.3 2000/02/04 13:48:23 augustss Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.4 2000/03/01 20:50:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -208,7 +208,7 @@ ohci_cardbus_detach(self, flags)
 		sc->sc_ih = NULL;
 	}
 	if (sc->sc_size) {
-		Cardbus_mapreg_unmap(ct, CARDBUS_MAPREG_TYPE_IO, sc->sc.iot,
+		Cardbus_mapreg_unmap(ct, CARDBUS_CBMEM, sc->sc.iot,
 		    sc->sc.ioh, sc->sc_size);
 		sc->sc_size = 0;
 	}
