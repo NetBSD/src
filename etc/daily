@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.31 2000/01/10 17:03:49 ad Exp $
+#	$NetBSD: daily,v 1.32 2000/01/20 04:13:54 itojun Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -187,7 +187,11 @@ rm -f $TMP
 if checkyesno check_network; then
 	echo ""
 	echo "network:"
-	netstat -i
+	# excluding IPv6
+	netstat -in | awk 'NR == 1 {print;} NR > 1 {if ($3 !~ /:/) print; }'
+	echo ""
+	echo "IPv6 network:"
+	netstat -inv | awk 'NR == 1 {print;} NR > 1 {if ($3 ~ /:/) print; }'
 	echo ""
 	t=/var/rwho/*
 	if [ "$t" != '/var/rwho/*' ]; then
