@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.34 1998/11/18 18:38:07 thorpej Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.35 1998/11/18 18:40:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -403,9 +403,8 @@ config_detach(dev, flags)
 	 * remain set.  Otherwise, if DVF_ACTIVE is still set, the
 	 * device is busy, and the detach fails.
 	 */
-	rv = config_deactivate(dev);
-	if (rv == EOPNOTSUPP)
-		rv = 0;
+	if (ca->ca_activate != NULL)
+		rv = config_deactivate(dev);
 
 	/*
 	 * Try to detach the device.  If that's not possible, then
