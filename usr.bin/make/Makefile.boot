@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.boot,v 1.9 1998/05/21 17:19:46 tv Exp $
+#	$NetBSD: Makefile.boot,v 1.10 1999/04/03 04:39:10 gwr Exp $
 #
 # a very simple makefile...
 #
@@ -6,13 +6,17 @@
 #
 # modify MACHINE and MACHINE_ARCH as appropriate for your target architecture
 #
+CC=gcc -O
 
 .c.o:
 	${CC} ${CFLAGS} -c $< -o $@
 
 MACHINE=sun
 MACHINE_ARCH=sparc
-CFLAGS= -I. -DTARGET_MACHINE=\"${MACHINE}\" -DTARGET_MACHINE_ARCH=\"${MACHINE_ARCH}\" \
+CFLAGS= -I.\
+	-DTARGET_MACHINE=\"${MACHINE}\" \
+	-DTARGET_MACHINE_ARCH=\"${MACHINE_ARCH}\" \
+	-DMACHINE=\"sparc\" \
 	-DMAKE_BOOTSTRAP
 LIBS=
 
