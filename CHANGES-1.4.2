@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.49 1999/10/01 12:09:28 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.50 1999/10/05 22:28:24 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -612,3 +612,30 @@ libexec/ftpd/ftpd.c				1.70
 
   Avoid segmentation fault if there is an empty line in /etc/ftpusers,
   fixing PR#8504.
+
+sys/arch/amiga/dev/sbic.c			1.36
+
+  Make this compile with options DEBUG.
+
+sys/dev/pci/if_tireg.h				1.1 (new)
+sys/dev/pci/ti_fw.h				1.1 (new)
+sys/dev/pci/ti_fw2.h				1.1 (new)
+sys/dev/pci/if_ti.c				1.1+patch (new)
+sys/dev/pci/files.pci				1.62 via patch
+sys/dev/pci/pcidevs				1.150 via patch
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/pcidevs.h				regenerate
+
+  Back-port of driver for Alteon Gigabit Ethernet driver, originally
+  from FreeBSD.
+
+sys/nfs/nfs_boot.c				1.51-1.52
+
+  Mount diskless root with "noconn" option to allow easier use of
+  multi-homed servers.
+  Wait a while between bringing up interface and using it, to allow
+  e.g. if_ti driver to establish the link.
+
+libexec/ftpd/ftpcmd.y				1.39
+
+  Don't use an undefined C expression, fixing PR#8534.
