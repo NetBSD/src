@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.36 1998/04/24 01:58:45 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.37 1998/04/26 16:47:40 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -67,6 +67,7 @@
 #define    NUBUS_DRHW_CB364	0x026F	/* RasterOps ColorBoard 364 */
 #define	   NUBUS_DRHW_RPC8	0x0291	/* Radius PrecisionColor 8 */
 #define	   NUBUS_DRHW_LAPIS	0x0292	/* SE/30 Lapis ProColorServer 8 PDS */
+#define	   NUBUS_DRHW_ROPS24LXI	0x02A0	/* RasterOps 8/24 XLi */
 #define    NUBUS_DRHW_FUTURASX	0x02AE	/* E-Machines Futura-SX */
 #define    NUBUS_DRHW_THUNDER24	0x02CB	/* SuperMac Thunder/24 */
 #define	   NUBUS_DRHW_RPC24XP	0x0406	/* Radius PrecisionColor 24Xp */
