@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.23 2003/01/05 21:27:32 agc Exp $	*/
+/*	$NetBSD: pen.c,v 1.24 2003/03/15 20:54:25 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.23 2003/01/05 21:27:32 agc Exp $");
+__RCSID("$NetBSD: pen.c,v 1.24 2003/03/15 20:54:25 hubertf Exp $");
 #endif
 #endif
 
@@ -162,7 +162,7 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 		cleanup(0);
 		errx(2, "can't chdir to '%s'", pen);
 	}
-	strcpy(Current, pen); CurrentSet = 1;
+	CurrentSet = 0; strcpy(Current, pen); CurrentSet = 1;
 	
 	return Previous;
 }
