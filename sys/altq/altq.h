@@ -1,4 +1,4 @@
-/*	$NetBSD: altq.h,v 1.2 2000/12/14 08:49:49 thorpej Exp $	*/
+/*	$NetBSD: altq.h,v 1.3 2002/11/02 07:17:31 perry Exp $	*/
 /*	$KAME: altq.h,v 1.6 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ struct pktcntr {
 };
 
 #define	PKTCNTR_ADD(cntr, len)	\
-	do { (cntr)->packets++; (cntr)->bytes += len; } while (0)
+	do { (cntr)->packets++; (cntr)->bytes += len; } while (/*CONSTCOND*/ 0)
 
 /*
  * altq related ioctls

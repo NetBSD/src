@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_kernel.h,v 1.3 1998/09/15 02:02:58 rvb Exp $	*/
+/*	$NetBSD: coda_kernel.h,v 1.4 2002/11/02 07:18:36 perry Exp $	*/
 
 /*
  * 
@@ -41,7 +41,7 @@ struct queue {
 do {                                         \
     (head).forw = (struct queue *)&(head);   \
     (head).back = (struct queue *)&(head);   \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define GETNEXT(head) (head).forw
 
@@ -55,7 +55,7 @@ do {                                                 \
 	(el).back = (head).back;                     \
 	((head).back)->forw = (struct queue *)&(el); \
 	(head).back = (struct queue *)&(el);         \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define REMQUE(el)                         \
 do {                                       \
