@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.44.6.2 2002/08/01 04:22:29 lukem Exp $
+#	$NetBSD: DR-EVIL,v 1.44.6.3 2004/11/11 23:45:16 he Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -426,7 +426,7 @@ ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
-#scsibus* at adv?
+scsibus* at adv?
 #scsibus* at adw?
 #scsibus* at aha?
 #scsibus* at ahb?
