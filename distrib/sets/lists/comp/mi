@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.578 2003/06/04 22:50:19 matt Exp $
+#	$NetBSD: mi,v 1.579 2003/06/05 15:59:39 jwise Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2367,7 +2367,6 @@
 ./usr/share/man/cat3/jnf.0	comp-c-catman
 ./usr/share/man/cat3/jrand48.0	comp-c-catman
 ./usr/share/man/cat3/kafs.0	comp-c-catman
-./usr/share/man/cat3/kerberos.0	comp-c-catman
 ./usr/share/man/cat3/keypad.0		comp-c-catman
 ./usr/share/man/cat3/killchar.0		comp-c-catman
 ./usr/share/man/cat3/killpg.0	comp-c-catman
@@ -3514,7 +3513,6 @@
 ./usr/share/man/cat8/cvsbug.0		comp-cvs-catman
 ./usr/share/man/cat8/kerberos.0 comp-c-catman
 ./usr/share/man/cat8/kgmon.0		comp-sysutil-catman
-./usr/share/man/cat8/verify_krb5_conf.0		comp-sysutil-catman
 ./usr/share/man/cat9/CALLOUT_INITIALIZER.0	comp-sys-catman
 ./usr/share/man/cat9/CALLOUT_INITIALIZER_SETFUNC.0	comp-sys-catman
 ./usr/share/man/cat9/CARDBUS_PRODUCT.0		comp-sys-catman
@@ -6838,9 +6836,7 @@
 ./usr/share/man/man7/operator.7		comp-c-man
 ./usr/share/man/man8/config.8		comp-sysutil-man
 ./usr/share/man/man8/cvsbug.8		comp-cvs-man
-./usr/share/man/man8/kerberos.8 comp-c-man
 ./usr/share/man/man8/kgmon.8		comp-sysutil-man
-./usr/share/man/man8/verify_krb5_conf.8		comp-sysutil-man
 ./usr/share/man/man9/CALLOUT_INITIALIZER.9	comp-sys-man
 ./usr/share/man/man9/CALLOUT_INITIALIZER_SETFUNC.9	comp-sys-man
 ./usr/share/man/man9/CARDBUS_PRODUCT.9		comp-sys-man
