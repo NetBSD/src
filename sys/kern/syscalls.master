@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.124 2003/01/24 01:17:53 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.125 2003/01/24 01:23:27 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -541,16 +541,16 @@
 255	EXCL		sys__ksem_destroy
 256	UNIMPL		sys__ksem_timedwait
 #endif
-257	UNIMPL
-258	UNIMPL
-259	UNIMPL
-260	UNIMPL
-261	UNIMPL
-262	UNIMPL
-263	UNIMPL
-264	UNIMPL
-265	UNIMPL
-266	UNIMPL
+257	UNIMPL		sys_mq_open
+258	UNIMPL		sys_mq_close
+259	UNIMPL		sys_mq_unlink
+260	UNIMPL		sys_mq_getattr
+261	UNIMPL		sys_mq_setattr
+262	UNIMPL		sys_mq_notify
+263	UNIMPL		sys_mq_send
+264	UNIMPL		sys_mq_receive
+265	UNIMPL		sys_mq_timedsend
+266	UNIMPL		sys_mq_timedreceive
 267	UNIMPL
 268	UNIMPL
 269	UNIMPL
