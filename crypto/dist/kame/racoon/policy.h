@@ -1,4 +1,4 @@
-/*	$KAME: policy.h,v 1.17 2001/06/27 15:55:58 sakane Exp $	*/
+/*	$KAME: policy.h,v 1.18 2001/10/02 04:10:17 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,6 @@ struct policyindex;
 extern struct secpolicy *getsp __P((struct policyindex *));
 extern struct secpolicy *getsp_r __P((struct policyindex *));
 struct secpolicy *getspbyspid __P((u_int32_t));
-extern int cmpspidx __P((struct policyindex *, struct policyindex *));
 extern int cmpspidxstrict __P((struct policyindex *, struct policyindex *));
 extern int cmpspidxwild __P((struct policyindex *, struct policyindex *));
 extern struct secpolicy *newsp __P((void));

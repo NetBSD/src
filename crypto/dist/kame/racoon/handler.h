@@ -1,4 +1,4 @@
-/*	$KAME: handler.h,v 1.41 2001/07/14 05:48:32 sakane Exp $	*/
+/*	$KAME: handler.h,v 1.43 2001/12/13 17:13:02 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -116,11 +116,10 @@ struct ph1handle {
 	u_int32_t msgid;		/* message id */
 
 	struct sched *sce;		/* schedule for expire */
+
 	struct sched *scr;		/* schedule for resend */
 	int retry_counter;		/* for resend. */
 	vchar_t *sendbuf;		/* buffer for re-sending */
-	struct recvedpkt *rlist;	/* list of all packets received. */
-	time_t time_sent;		/* timestamp to sent packet */
 
 	vchar_t *dhpriv;		/* DH; private value */
 	vchar_t *dhpub;			/* DH; public value */
@@ -169,7 +168,7 @@ struct ph1handle {
 #endif
 
 	u_int32_t msgid2;		/* msgid counter for Phase 2 */
-	int ph2cnt;			/* count to negotiate phase 2. */
+	int ph2cnt;	/* the number which is negotiated by this phase 1 */
 	LIST_HEAD(_ph2ofph1_, ph2handle) ph2tree;
 
 	LIST_ENTRY(ph1handle) chain;
@@ -222,10 +221,10 @@ struct ph2handle {
 
 	struct sched *sce;		/* schedule for expire */
 	struct sched *scr;		/* schedule for resend */
+	int retry_counter;		/* for resend. */
 	vchar_t *sendbuf;		/* buffer for re-sending */
-	struct recvedpkt *rlist;	/* list of all packets received. */
-	int retry_counter;
-	time_t sent;			/* timestamp to sent packet */
+	vchar_t *msg1;			/* buffer for re-sending */
+				/* used for responder's first message */
 
 	int retry_checkph1;		/* counter to wait phase 1 finished. */
 					/* NOTE: actually it's timer. */
@@ -260,7 +259,6 @@ struct ph2handle {
 	vchar_t *id_p;			/* peer's ID minus general header */
 	vchar_t *nonce;			/* nonce value in phase 2 */
 	vchar_t *nonce_p;		/* partner's nonce value in phase 2 */
-	vchar_t *hash;			/* HASH2 minus general header */
 
 	vchar_t *sa;			/* whole SA payload to send/to be sent*/
 					/* to calculate HASH */
@@ -293,9 +291,18 @@ struct contacted {
 /*
  * for checking a packet retransmited.
  */
-struct recvedpkt {
-	struct recvedpkt *next;
-	vchar_t *hash;
+struct recvdpkt {
+	struct sockaddr *remote;	/* the remote address */
+	struct sockaddr *local;		/* the local address */
+	vchar_t *hash;			/* hash of the received packet */
+	vchar_t *sendbuf;		/* buffer for the response */
+	int retry_counter;		/* how many times to send */
+	time_t time_send;		/* timestamp to send a packet */
+	time_t created;			/* timestamp to create a queue */
+
+	struct sched *scr;		/* schedule for resend, may not used */
+
+	LIST_ENTRY(recvdpkt) chain;
 };
 
 /* for parsing ISAKMP header. */
@@ -408,6 +415,8 @@ extern struct contacted *getcontacted __P((struct sockaddr *));
 extern int inscontacted __P((struct sockaddr *));
 extern void initctdtree __P((void));
 
-extern int check_recvedpkt __P((vchar_t *, struct recvedpkt *));
-extern int add_recvedpkt __P((vchar_t *, struct recvedpkt **));
-extern void flush_recvedpkt __P((struct recvedpkt *));
+extern int check_recvdpkt __P((struct sockaddr *,
+	struct sockaddr *, vchar_t *));
+extern int add_recvdpkt __P((struct sockaddr *, struct sockaddr *,
+	vchar_t *, vchar_t *));
+extern void init_recvdpkt __P((void));

@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_agg.c,v 1.49 2001/03/27 02:39:57 thorpej Exp $	*/
+/*	$KAME: isakmp_agg.c,v 1.55 2001/12/12 15:29:13 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -104,6 +104,11 @@ agg_i1send(iph1, msg)
 #endif
 
 	/* validity check */
+	if (msg != NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"msg has to be NULL in this function.\n");
+		goto end;
+	}
 	if (iph1->status != PHASE1ST_START) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"status mismatched %d.\n", iph1->status);
@@ -222,15 +227,12 @@ agg_i1send(iph1, msg)
 	isakmp_printpacket(iph1->sendbuf, iph1->local, iph1->remote, 0);
 #endif
 
-	/* send to responder */
-	if (isakmp_send(iph1, iph1->sendbuf) < 0)
+	/* send the packet, add to the schedule to resend */
+	iph1->retry_counter = iph1->rmconf->retry_counter;
+	if (isakmp_ph1resend(iph1) == -1)
 		goto end;
 
 	iph1->status = PHASE1ST_MSG1SENT;
-
-	iph1->retry_counter = iph1->rmconf->retry_counter;
-	iph1->scr = sched_new(iph1->rmconf->retry_interval,
-	    isakmp_ph1resend_stub, iph1);
 
 	error = 0;
 
@@ -352,7 +354,7 @@ agg_i2recv(iph1, msg)
 	/* XXX to be checked each authentication method. */
 
 	/* verify identifier */
-	if (ipsecdoi_checkid1(iph1) < 0) {
+	if (ipsecdoi_checkid1(iph1) != 0) {
 		plog(LLV_ERROR, LOCATION, iph1->remote,
 			"invalid ID payload.\n");
 		goto end;
@@ -574,6 +576,13 @@ agg_i2send(iph1, msg)
 	if (isakmp_send(iph1, iph1->sendbuf) < 0)
 		goto end;
 
+	/* the sending message is added to the received-list. */
+	if (add_recvdpkt(iph1->remote, iph1->local, iph1->sendbuf, msg) == -1) {
+		plog(LLV_ERROR , LOCATION, NULL,
+			"failed to add a response packet to the tree.\n");
+		goto end;
+	}
+
 	/* set encryption flag */
 	iph1->flags |= ISAKMP_FLAG_E;
 
@@ -684,7 +693,7 @@ agg_r1recv(iph1, msg)
 	/* XXX to be checked each authentication method. */
 
 	/* verify identifier */
-	if (ipsecdoi_checkid1(iph1) < 0) {
+	if (ipsecdoi_checkid1(iph1) != 0) {
 		plog(LLV_ERROR, LOCATION, iph1->remote,
 			"invalid ID payload.\n");
 		goto end;
@@ -1029,15 +1038,19 @@ agg_r1send(iph1, msg)
 	isakmp_printpacket(iph1->sendbuf, iph1->local, iph1->remote, 1);
 #endif
 
-	/* send HDR;SA to responder */
-	if (isakmp_send(iph1, iph1->sendbuf) < 0)
+	/* send the packet, add to the schedule to resend */
+	iph1->retry_counter = iph1->rmconf->retry_counter;
+	if (isakmp_ph1resend(iph1) == -1)
 		goto end;
 
-	iph1->status = PHASE1ST_MSG1SENT;
+	/* the sending message is added to the received-list. */
+	if (add_recvdpkt(iph1->remote, iph1->local, iph1->sendbuf, msg) == -1) {
+		plog(LLV_ERROR , LOCATION, NULL,
+			"failed to add a response packet to the tree.\n");
+		goto end;
+	}
 
-	iph1->retry_counter = iph1->rmconf->retry_counter;
-	iph1->scr = sched_new(iph1->rmconf->retry_interval,
-	    isakmp_ph1resend_stub, iph1);
+	iph1->status = PHASE1ST_MSG1SENT;
 
 	error = 0;
 
@@ -1200,4 +1213,3 @@ agg_r2send(iph1, msg)
 end:
 	return error;
 }
-

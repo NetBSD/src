@@ -1,4 +1,4 @@
-/*	$KAME: ipsec_dump_policy.c,v 1.11 2000/05/07 05:29:47 itojun Exp $	*/
+/*	$KAME: ipsec_dump_policy.c,v 1.12 2001/11/13 12:38:47 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -291,11 +291,7 @@ set_address(buf, len, sa)
 	size_t len;
 	struct sockaddr *sa;
 {
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST;
-#endif
 
 	if (len < 1)
 		return NULL;

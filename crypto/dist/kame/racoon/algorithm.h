@@ -1,4 +1,4 @@
-/*	$KAME: algorithm.h,v 1.19 2001/08/16 06:17:12 sakane Exp $	*/
+/*	$KAME: algorithm.h,v 1.20 2001/12/12 18:23:41 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,6 +96,7 @@ enum {
 	algtype_modp2048,
 	algtype_modp3072,
 	algtype_modp4096,
+	algtype_modp6144,
 	algtype_modp8192,
 
 	/* authentication method. */

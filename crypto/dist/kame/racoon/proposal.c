@@ -1,4 +1,4 @@
-/*	$KAME: proposal.c,v 1.37 2001/08/16 11:18:02 sakane Exp $	*/
+/*	$KAME: proposal.c,v 1.47 2002/04/16 04:10:23 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/queue.h>
 
 #include <netkey/key_var.h>
@@ -253,10 +254,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 		}
 
 		/* lifebyte */
-		if (pp1->lifebyte <= pp2->lifebyte) {
-			newpp->lifebyte = pp1->lifebyte;
-			break;
-		} else {
+		if (pp1->lifebyte > pp2->lifebyte) {
 			newpp->lifebyte = pp2->lifebyte;
 			newpp->claim |= IPSECDOI_ATTR_SA_LD_TYPE_SEC;
 			plog(LLV_NOTIFY, LOCATION, NULL,
@@ -264,6 +262,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 				"my:%d peer:%d\n",
 				pp2->lifebyte, pp1->lifebyte);
 		}
+		newpp->lifebyte = pp1->lifebyte;
 
     		goto prop_pfs_check;
 		break;
@@ -490,14 +489,14 @@ cmpsatrns(tr1, tr2)
 		plog(LLV_ERROR, LOCATION, NULL,
 			"trns_id mismatched: "
 			"my:%d peer:%d\n",
-			tr1->trns_id, tr2->trns_id);
+			tr2->trns_id, tr1->trns_id);
 		return 1;
 	}
 	if (tr1->authtype != tr2->authtype) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"authtype mismatched: "
 			"my:%d peer:%d\n",
-			tr1->authtype, tr2->authtype);
+			tr2->authtype, tr1->authtype);
 		return 1;
 	}
 
@@ -509,7 +508,7 @@ cmpsatrns(tr1, tr2)
 		plog(LLV_WARNING, LOCATION, NULL,
 			"less key length proposed, "
 			"mine:%d peer:%d.  Use initiaotr's one.\n",
-			tr1->encklen, tr2->encklen);
+			tr2->encklen, tr1->encklen);
 		/* FALLTHRU */
 	}
 
@@ -749,6 +748,8 @@ flushsaproto(head)
 	for (p = head; p != NULL; p = save) {
 		save = p->next;
 		flushsatrns(p->head);
+		vfree(p->keymat);
+		vfree(p->keymat_p);
 		racoon_free(p);
 	}
 
@@ -905,9 +906,9 @@ print_proppair(pri, p)
 }
 
 int
-set_proposal_from_policy(iph2, sp_in, sp_out)
+set_proposal_from_policy(iph2, sp_main, sp_sub)
 	struct ph2handle *iph2;
-	struct secpolicy *sp_in, *sp_out;
+	struct secpolicy *sp_main, *sp_sub;
 {
 	struct saprop *newpp;
 	struct ipsecrequest *req;
@@ -934,7 +935,7 @@ set_proposal_from_policy(iph2, sp_in, sp_out)
 	 * transport mode.
 	 */
 	encmodesv = IPSEC_MODE_TRANSPORT;
-	for (req = sp_out->req; req; req = req->next) {
+	for (req = sp_main->req; req; req = req->next) {
 		if (req->saidx.mode == IPSEC_MODE_TUNNEL) {
 			encmodesv = pfkey2ipsecdoi_mode(req->saidx.mode);
 			break;
@@ -942,29 +943,28 @@ set_proposal_from_policy(iph2, sp_in, sp_out)
 	}
 
     skip1:
-	for (req = sp_out->req; req; req = req->next) {
+	for (req = sp_main->req; req; req = req->next) {
 		struct saproto *newpr;
-		struct sockaddr *psaddr = NULL;
-		struct sockaddr *pdaddr = NULL;
+		caddr_t paddr = NULL;
 
-		/* XXX check if SA bundle ? */
+		/*
+		 * check if SA bundle ?
+		 * nested SAs negotiation is NOT supported.
+		 *       me +--- SA1 ---+ peer1
+		 *       me +--- SA2 --------------+ peer2
+		 */
 		if (req->saidx.src.ss_len && req->saidx.dst.ss_len) {
 
-			psaddr = (struct sockaddr *)&req->saidx.src;
-			pdaddr = (struct sockaddr *)&req->saidx.dst;
+			/* check the end of ip addresses of SA */
+			if (iph2->side == INITIATOR)
+				paddr = (caddr_t)&req->saidx.dst;
+			else
+				paddr = (caddr_t)&req->saidx.src;
 
-			/* check end addresses of SA */
-			if (memcmp(iph2->src, psaddr, iph2->src->sa_len)
-			 || memcmp(iph2->dst, pdaddr, iph2->dst->sa_len)){
-				/*
-				 * XXX nested SAs with each destination
-				 * address are different.
-				 *       me +--- SA1 ---+ peer1
-				 *       me +--- SA2 --------------+ peer2
-				 */
+			if (memcmp(iph2->dst, paddr, iph2->dst->sa_len)){
 				plog(LLV_ERROR, LOCATION, NULL,
-					"not supported nested SA. Ignore.\n");
-				break;
+					"not supported nested SA.");
+				goto err;
 			}
 		}
 
@@ -996,10 +996,10 @@ set_proposal_from_policy(iph2, sp_in, sp_out)
 	}
 
 	/* get reqid_in from inbound policy */
-	if (sp_in) {
+	if (sp_sub) {
 		struct saproto *pr;
 
-		req = sp_in->req;
+		req = sp_sub->req;
 		pr = newpp->head;
 		while (req && pr) {
 			pr->reqid_in = req->saidx.reqid;
@@ -1007,10 +1007,9 @@ set_proposal_from_policy(iph2, sp_in, sp_out)
 			req = req->next;
 		}
 		if (pr || req) {
-			plog(LLV_ERROR, LOCATION, NULL,
+			plog(LLV_NOTIFY, LOCATION, NULL,
 				"There is a difference "
 				"between the in/out bound policies in SPD.\n");
-			goto err;
 		}
 	}
 
@@ -1032,9 +1031,9 @@ int
 set_proposal_from_proposal(iph2)
 	struct ph2handle *iph2;
 {
+        struct saprop *newpp = NULL, *pp0, *pp_peer = NULL;
+	struct saproto *newpr = NULL, *pr;
 	struct prop_pair **pair;
-	struct saprop *pp;
-	struct saproto *pr;
 	int error = -1;
 	int i;
 
@@ -1043,39 +1042,74 @@ set_proposal_from_proposal(iph2)
 	if (pair == NULL)
 		goto end;
 
-	/* choice the first proposal */
-	for (i = 0; i < MAXPROPPAIRLEN; i++) {
-		if (pair[i] != NULL)
-			break;
+	/*
+	 * make my proposal according as the client proposal.
+	 * XXX assumed there is only one proposal even if it's the SA bundle.
+	 */
+        for (i = 0; i < MAXPROPPAIRLEN; i++) {
+                if (pair[i] == NULL)
+                        continue;
+		pp_peer = aproppair2saprop(pair[i]);
+		if (pp_peer == NULL)
+			goto end;
+
+		pp0 = newsaprop();
+		if (pp0 == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to allocate saprop.\n");
+			goto end;
+		}
+		pp0->prop_no = 1;
+		pp0->lifetime = iph2->sainfo->lifetime;
+		pp0->lifebyte = iph2->sainfo->lifebyte;
+		pp0->pfs_group = iph2->sainfo->pfs_group;
+
+		if (pp_peer->next != NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"pp_peer is inconsistency, ignore it.\n");
+			/*FALLTHROUGH*/
+		}
+
+		for (pr = pp_peer->head; pr; pr = pr->next) { 
+
+			newpr = newsaproto();
+			if (newpr == NULL) {
+				plog(LLV_ERROR, LOCATION, NULL,
+				    "failed to allocate saproto.\n");
+				goto end;
+			}
+			newpr->proto_id = pr->proto_id;
+			newpr->spisize = pr->spisize;
+			newpr->encmode = pr->encmode;
+			newpr->spi = 0;
+			newpr->spi_p = pr->spi;	/* copy peer's SPI */
+			newpr->reqid_in = 0;
+			newpr->reqid_out = 0;
+		}
+
+		if (set_satrnsbysainfo(newpr, iph2->sainfo) < 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to get algorithms.\n");
+			goto end;
+		}
+
+		inssaproto(pp0, newpr);
+		inssaprop(&newpp, pp0);
 	}
 
-	if (i == MAXPROPPAIRLEN)
-		goto end;
+	plog(LLV_DEBUG, LOCATION, NULL, "make a proposal from peer's:\n");
+	printsaprop0(LLV_DEBUG, newpp);  
 
-	pp = aproppair2saprop(pair[i]);
-	if (!pp)
-		goto end;
-
-	/* reverse SPI */
-	for (pr = pp->head; pr; pr = pr->next) {
-		pr->spi_p = pr->spi;	/* copy peer's SPI */
-		pr->spi = 0;		/* initialize */
-	}
-
-	plog(LLV_DEBUG, LOCATION, NULL, "choice a proposal from peer's:\n");
-	printsaprop0(LLV_DEBUG, pp);  
-
-	iph2->approval = pp;
-
-	/* make a SA to be replayed. */ 
-	/* SPI must be updated later. */
-	iph2->sa_ret = get_sabyproppair(pair[i], iph2->ph1);
-	if (iph2->sa_ret == NULL)
-		goto end;
+	iph2->proposal = newpp;
 
 	error = 0;
 
 end:
+	if (error && newpp)
+		flushsaprop(newpp);
+
+	if (pp_peer)
+		flushsaprop(pp_peer);
 	free_proppair(pair);
 	return error;
 }

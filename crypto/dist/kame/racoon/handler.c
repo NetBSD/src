@@ -1,4 +1,4 @@
-/*	$KAME: handler.c,v 1.49 2001/06/27 15:57:49 sakane Exp $	*/
+/*	$KAME: handler.c,v 1.57 2002/01/21 08:45:54 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <errno.h>
 
 #include "var.h"
@@ -46,6 +47,7 @@
 #include "debug.h"
 
 #include "schedule.h"
+#include "grabmyaddr.h"
 #include "algorithm.h"
 #include "crypto_openssl.h"
 #include "policy.h"
@@ -55,6 +57,7 @@
 #include "isakmp_inf.h"
 #include "oakley.h"
 #include "remoteconf.h"
+#include "localconf.h"
 #include "handler.h"
 #include "gcmalloc.h"
 
@@ -65,6 +68,11 @@
 static LIST_HEAD(_ph1tree_, ph1handle) ph1tree;
 static LIST_HEAD(_ph2tree_, ph2handle) ph2tree;
 static LIST_HEAD(_ctdtree_, contacted) ctdtree;
+static LIST_HEAD(_rcptree_, recvdpkt) rcptree;
+
+static void del_recvdpkt __P((struct recvdpkt *));
+static void rem_recvdpkt __P((struct recvdpkt *));
+static void sweep_recvdpkt __P((void *));
 
 /*
  * functions about management of the isakmp status table
@@ -214,9 +222,6 @@ delph1(iph1)
 
 	VPTRINIT(iph1->sendbuf);
 
-	flush_recvedpkt(iph1->rlist);
-	iph1->rlist = NULL;
-
 	VPTRINIT(iph1->dhpriv);
 	VPTRINIT(iph1->dhpub);
 	VPTRINIT(iph1->dhpub_p);
@@ -312,31 +317,6 @@ initph1tree()
 }
 
 /* %%% management phase 2 handler */
-/*
- * search ph2handle with policyindex.
- */
-#if 0
-struct ph2handle *
-getph2byspidx(spidx)
-	struct policyindex *spidx;
-{
-	struct ph2handle *p;
-
-	LIST_FOREACH(p, &ph2tree, chain) {
-		/*
-		 * there are ph2handle independent on policy
-		 * such like informational exchange.
-		 */
-		if (p->spidx == NULL)
-			continue;
-		if (cmpspidx(spidx, p->spidx) == 0)
-			return p;
-	}
-
-	return NULL;
-}
-#endif
-
 /*
  * search ph2handle with policy id.
  */
@@ -457,15 +437,12 @@ void
 initph2(iph2)
 	struct ph2handle *iph2;
 {
-
 	sched_scrub_param(iph2);
 	iph2->sce = NULL;
 	iph2->scr = NULL;
 
 	VPTRINIT(iph2->sendbuf);
-
-	flush_recvedpkt(iph2->rlist);
-	iph2->rlist = NULL;
+	VPTRINIT(iph2->msg1);
 
 	/* clear spi, keep variables in the proposal */
 	if (iph2->proposal) {
@@ -500,7 +477,6 @@ initph2(iph2)
 	VPTRINIT(iph2->id_p);
 	VPTRINIT(iph2->nonce);
 	VPTRINIT(iph2->nonce_p);
-	VPTRINIT(iph2->hash);
 	VPTRINIT(iph2->sa);
 	VPTRINIT(iph2->sa_ret);
 
@@ -656,7 +632,7 @@ getcontacted(remote)
 	struct contacted *p;
 
 	LIST_FOREACH(p, &ctdtree, chain) {
-		if (cmpsaddrwild(remote, p->remote) == 0)
+		if (cmpsaddrstrict(remote, p->remote) == 0)
 			return p;
 	}
 
@@ -691,48 +667,104 @@ initctdtree()
 }
 
 /*
- * checking a packet whether is received or not.
+ * check the response has been sent to the peer.  when not, simply reply
+ * the buffered packet to the peer.
  * OUT:
- *	 0:	the packet is first received.
- *	 1:	the packet was reveiced before, or error happened.
+ *	 0:	the packet is received at the first time.
+ *	 1:	the packet was processed before.
+ *	 2:	the packet was processed before, but the address mismatches.
+ *	-1:	error happened.
  */
 int
-check_recvedpkt(msg, list)
-	vchar_t *msg;
-	struct recvedpkt *list;
+check_recvdpkt(remote, local, rbuf)
+	struct sockaddr *remote, *local;
+	vchar_t *rbuf;
 {
-	vchar_t *buf;
-	struct recvedpkt *n;
+	vchar_t *hash;
+	struct recvdpkt *r;
+	time_t t;
+	int len, s;
 
-	buf = eay_md5_one(msg);
-	if (!buf) {
+	/* set current time */
+	t = time(NULL);
+
+	hash = eay_md5_one(rbuf);
+	if (!hash) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to allocate buffer.\n");
-		return 1;
+		return -1;
 	}
 
-	for (n = list; n; n = n->next) {
-		if (memcmp(buf->v, n->hash->v, n->hash->l) == 0)
+	LIST_FOREACH(r, &rcptree, chain) {
+		if (memcmp(hash->v, r->hash->v, r->hash->l) == 0)
 			break;
 	}
+	vfree(hash);
 
-	vfree(buf);
+	/* this is the first time to receive the packet */
+	if (r == NULL)
+		return 0;
 
-	if (n)
-		return 1;
+	/*
+	 * the packet was processed before, but the remote address mismatches.
+	 */
+	if (cmpsaddrstrict(remote, r->remote) != 0)
+		return 2;
 
-	return 0;
+	/*
+	 * it should not check the local address because the packet
+	 * may arrive at other interface.
+	 */
+
+	/* check the previous time to send */
+	if (t - r->time_send < 1) {
+		plog(LLV_WARNING, LOCATION, NULL,
+			"the packet retransmitted in a short time from %s\n",
+			saddr2str(remote));
+		/*XXX should it be error ? */
+	}
+
+	/* select the socket to be sent */
+	s = getsockmyaddr(r->local);
+	if (s == -1)
+		return -1;
+
+	/* resend the packet if needed */
+	len = sendfromto(s, r->sendbuf->v, r->sendbuf->l,
+			r->local, r->remote, lcconf->count_persend);
+	if (len == -1) {
+		plog(LLV_ERROR, LOCATION, NULL, "sendfromto failed\n");
+		return -1;
+	}
+
+	/* check the retry counter */
+	r->retry_counter--;
+	if (r->retry_counter <= 0) {
+		rem_recvdpkt(r);
+		del_recvdpkt(r);
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"deleted the retransmission packet to %s.\n",
+			saddr2str(remote));
+	} else
+		r->time_send = t;
+
+	return 1;
 }
 
 /*
  * adding a hash of received packet into the received list.
  */
 int
-add_recvedpkt(msg, list)
-	vchar_t *msg;
-	struct recvedpkt **list;
+add_recvdpkt(remote, local, sbuf, rbuf)
+	struct sockaddr *remote, *local;
+	vchar_t *sbuf, *rbuf;
 {
-	struct recvedpkt *new;
+	struct recvdpkt *new = NULL;
+
+	if (lcconf->retry_counter == 0) {
+		/* no need to add it */
+		return 0;
+	}
 
 	new = racoon_calloc(1, sizeof(*new));
 	if (!new) {
@@ -740,29 +772,98 @@ add_recvedpkt(msg, list)
 			"failed to allocate buffer.\n");
 		return -1;
 	}
-	new->hash = eay_md5_one(msg);
+
+	new->hash = eay_md5_one(rbuf);
 	if (!new->hash) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to allocate buffer.\n");
-		racoon_free(new);
+		del_recvdpkt(new);
+		return -1;
+	}
+	new->remote = dupsaddr(remote);
+	if (new->remote == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to allocate buffer.\n");
+		del_recvdpkt(new);
+		return -1;
+	}
+	new->local = dupsaddr(local);
+	if (new->local == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to allocate buffer.\n");
+		del_recvdpkt(new);
+		return -1;
+	}
+	new->sendbuf = vdup(sbuf);
+	if (new->sendbuf == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to allocate buffer.\n");
+		del_recvdpkt(new);
 		return -1;
 	}
 
-	new->next = *list;
-	*list = new;
+	new->retry_counter = lcconf->retry_counter;
+	new->time_send = 0;
+	new->created = time(NULL);
+
+	LIST_INSERT_HEAD(&rcptree, new, chain);
 
 	return 0;
 }
 
 void
-flush_recvedpkt(list)
-	struct recvedpkt *list;
+del_recvdpkt(r)
+	struct recvdpkt *r;
 {
-	struct recvedpkt *n, *next;
+	if (r->remote)
+		racoon_free(r->remote);
+	if (r->local)
+		racoon_free(r->local);
+	if (r->hash)
+		vfree(r->hash);
+	if (r->sendbuf)
+		vfree(r->sendbuf);
+	racoon_free(r);
+}
 
-	for (n = list; n; n = next) {
-		next = n->next;
-		vfree(n->hash);
-		racoon_free(n);
+void
+rem_recvdpkt(r)
+	struct recvdpkt *r;
+{
+	LIST_REMOVE(r, chain);
+}
+
+void
+sweep_recvdpkt(dummy)
+	void *dummy;
+{
+	struct recvdpkt *r, *next;
+	time_t t, lt;
+
+	/* set current time */
+	t = time(NULL);
+
+	/* set the lifetime of the retransmission */
+	lt = lcconf->retry_counter * lcconf->retry_interval;
+
+	for (r = LIST_FIRST(&rcptree); r; r = next) {
+		next = LIST_NEXT(r, chain);
+
+		if (t - r->created > lt) {
+			rem_recvdpkt(r);
+			del_recvdpkt(r);
+		}
 	}
+
+	sched_new(lt, sweep_recvdpkt, NULL);
+}
+
+void
+init_recvdpkt()
+{
+	time_t lt = lcconf->retry_counter * lcconf->retry_interval;
+
+	LIST_INIT(&rcptree);
+
+	sched_new(lt, sweep_recvdpkt, NULL);
 }
