@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.3 1995/03/03 01:36:38 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.4 1995/03/24 14:52:24 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -98,6 +98,7 @@
 #include <pmax/dev/fbreg.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 
 #include <alpha/tc/asic.h>
 #include <alpha/tc/tc.h>
@@ -264,6 +265,7 @@ sccattach(parent, self, aux)
         struct termios cterm;
         struct tty ctty;
         int s;
+	extern int cputype;
 
 	/* Get the address, and check it for validity. */
 	sccaddr = BUS_CVTADDR(ca);
@@ -283,7 +285,8 @@ sccattach(parent, self, aux)
 		SCCUNIT(cn_tab.cn_dev) == cp->pmax_unit)
 		DELAY(10000);
 #else
-	if (sc->sc_dv.dv_unit == 1)
+	if ((cputype == ST_DEC_3000_500 && sc->sc_dv.dv_unit == 1) ||
+	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0))
 		DELAY(10000);
 #endif
 	pdp = &sc->scc_pdma[0];
@@ -356,12 +359,14 @@ sccattach(parent, self, aux)
 	 * XXX
 	 * Unit 1 is the remote console, wire it up now.
 	 */
-	if (sc->sc_dv.dv_unit == 1) {
+	if ((cputype == ST_DEC_3000_500 && sc->sc_dv.dv_unit == 1) ||
+	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0)) {
 		static struct consdev scccons = {
-		    NULL, NULL, sccGetc, sccPutc, sccPollc,
-		    makedev(SCCDEV, SCCCOMM3_PORT), 0
+		    NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
 		};
 		cn_tab = &scccons;
+		cn_tab->cn_dev = makedev(SCCDEV, sc->sc_dv.dv_unit * 2);
+
 		printf(": console\n");
 
 		/* wire carrier for console. */
