@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2002/05/03 01:51:38 rafal Exp $	*/
+/*	$NetBSD: intr.h,v 1.14 2003/09/15 06:39:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -54,12 +54,14 @@
 #define IST_LEVEL	3	/* level-triggered */
 
 /* Soft interrupt numbers */
-#define	IPL_SOFTSERIAL	0	/* serial software interrupts */
-#define	IPL_SOFTNET	1	/* network software interrupts */
-#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
-#define	IPL_NSOFT	3
+#define	IPL_SOFT	0	/* generic software interrupts */
+#define	IPL_SOFTSERIAL	1	/* serial software interrupts */
+#define	IPL_SOFTNET	2	/* network software interrupts */
+#define	IPL_SOFTCLOCK	3	/* clock software interrupts */
+#define	_IPL_NSOFT	4
 
 #define	IPL_SOFTNAMES {							\
+	"misc",								\
 	"serial",							\
 	"net",								\
 	"clock",							\
@@ -72,30 +74,6 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <mips/cpuregs.h>
-
-/*
- * software simulated interrupt
- */
-#define setsoft(x)	do {			\
-	extern u_int ssir;			\
-	int s;					\
-						\
-	s = splhigh();				\
-	ssir |= 1 << (x);			\
-	_setsoftintr(MIPS_SOFT_INT_MASK_1);	\
-	splx(s);				\
-} while (0)
-
-#define softintr_schedule(arg)						\
-do {									\
-	struct sgimips_intrhand *__ih = (arg);				\
-	__ih->ih_pending = 1;						\
-	setsoft(__ih->ih_intrhead->intr_ipl);				\
-} while (0)
-
-extern struct sgimips_intrhand *softnet_intrhand;
-
-#define	setsoftnet()	softintr_schedule(softnet_intrhand)
 
 #define NINTR	32
 
@@ -152,10 +130,8 @@ extern u_int32_t 	clockmask;
 #define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_1)
 
 extern void *		cpu_intr_establish(int, int, int (*)(void *), void *);
-void *			softintr_establish(int, void (*)(void *), void *);
-void			softintr_disestablish(void *);
-void			softintr_init(void);
-void			softintr_dispatch(void);
+
+#include <mips/softintr.h>
 
 #endif /* _LOCORE */
 #endif /* !_KERNEL */
