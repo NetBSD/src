@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.5 2000/07/24 07:30:54 mycroft Exp $	*/
+/*	$NetBSD: bzero.S,v 1.6 2000/07/24 15:24:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1999
@@ -51,7 +51,7 @@
 #if 0
 	.asciz "@(#)bzero.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: bzero.S,v 1.5 2000/07/24 07:30:54 mycroft Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.6 2000/07/24 15:24:55 mycroft Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -200,10 +200,7 @@ Lbzero_block:
  *
  */	
 	save	%sp, -(CC64FSZ+16*4+BLOCK_SIZE), %sp	! Allocate an fpstate
-	add	%sp, (CC64FSZ+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
-	btst	1, %sp
-	add	%l0, BIAS, %l1				! Fixup 64-bit stack pointers
-	movnz	%xcc, %l1, %l0
+	add	%sp, (CC64FSZ+BLOCK_SIZE-1+BIAS), %l0	! Calculate pointer to fpstate
 	andn	%l0, BLOCK_ALIGN, %l0			! And make it block aligned
 
 !	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
