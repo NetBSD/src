@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.61 2004/04/17 11:50:23 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.62 2004/04/17 23:45:40 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ struct module_info {
 
 	void (*get_syncflt)(void);
 	int  (*get_asyncflt)(u_int *, u_int *);
-	void (*sp_cache_flush)(caddr_t, u_int, int);
+	void (*cache_flush)(caddr_t, u_int);
 	void (*sp_vcache_flush_page)(int, int);
 	void (*ft_vcache_flush_page)(int, int);
 	void (*sp_vcache_flush_segment)(int, int, int);
@@ -84,6 +84,8 @@ struct module_info {
 	void (*ft_vcache_flush_region)(int, int);
 	void (*sp_vcache_flush_context)(int);
 	void (*ft_vcache_flush_context)(int);
+	void (*sp_vcache_flush_range)(int, int, int);
+	void (*ft_vcache_flush_range)(int, int, int);
 	void (*pcache_flush_page)(paddr_t, int);
 	void (*pure_vcache_flush)(void);
 	void (*cache_flush_all)(void);
@@ -230,8 +232,7 @@ struct cpu_info {
 	 * all processor modules.
 	 * The `ft_' versions are fast trap cache flush handlers.
 	 */
-	void	(*cache_flush)(caddr_t, u_int, int);
-	void	(*sp_cache_flush)(caddr_t, u_int, int);
+	void	(*cache_flush)(caddr_t, u_int);
 	void	(*vcache_flush_page)(int, int);
 	void	(*sp_vcache_flush_page)(int, int);
 	void	(*ft_vcache_flush_page)(int, int);
@@ -244,6 +245,10 @@ struct cpu_info {
 	void	(*vcache_flush_context)(int);
 	void	(*sp_vcache_flush_context)(int);
 	void	(*ft_vcache_flush_context)(int);
+
+	/* The are helpers for (*cache_flush)() */
+	void	(*sp_vcache_flush_range)(int, int, int);
+	void	(*ft_vcache_flush_range)(int, int, int);
 
 	void	(*pcache_flush_page)(paddr_t, int);
 	void	(*pure_vcache_flush)(void);
