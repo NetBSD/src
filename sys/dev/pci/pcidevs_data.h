@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.148 1999/08/01 08:32:48 veego Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.149 1999/08/12 09:43:19 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.143 1999/08/01 08:32:08 veego Exp 
+ *	NetBSD: pcidevs,v 1.144 1999/08/12 09:42:11 bouyer Exp 
  */
 
 /*
@@ -2173,7 +2173,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA33,
 	    0,
 	    "Promise Technology",
-	    "Ultra DMA/ATA Bus Master IDE Accelerator",
+	    "Ultra33/ATA Bus Master IDE Accelerator",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA66,
+	    0,
+	    "Promise Technology",
+	    "Ultra66/ATA Bus Master IDE Accelerator",
 	},
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
