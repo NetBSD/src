@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.107 2000/05/05 14:51:46 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.108 2000/05/05 15:05:29 matt Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1371,7 +1371,7 @@ after_listen:
 			    tp->t_peermss);
 
 		tcp_rmx_rtt(tp);
-		if (tiflags & TH_ACK && SEQ_GT(tp->snd_una, tp->iss)) {
+		if (tiflags & TH_ACK) {
 			tcpstat.tcps_connects++;
 			soisconnected(so);
 			tcp_established(tp);
