@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscall.h,v 1.38 2000/12/09 05:37:02 mycroft Exp $ */
+/* $NetBSD: freebsd_syscall.h,v 1.39 2000/12/09 06:19:41 mycroft Exp $ */
 
 /*
  * System call numbers.
@@ -675,3 +675,4 @@
 #define	FREEBSD_SYS___sigpending14	343
 
 #define	FREEBSD_SYS_MAXSYSCALL	364
+#define	FREEBSD_SYS_NSYSENT	512
