@@ -1,4 +1,4 @@
-.\" $NetBSD: audioctl.1,v 1.4 1997/10/08 22:31:53 jtc Exp $
+.\" $NetBSD: audioctl.1,v 1.5 1997/10/18 12:05:22 lukem Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -39,25 +39,25 @@
 .Nm audioctl
 .Nd control audio device
 .Sh SYNOPSIS
-.Nm audioctl
+.Nm
 .Op Fl f Ar file
 .Op Fl n
 .Fl a
-.Nm audioctl
+.Nm ""
 .Op Fl f Ar file
 .Op Fl n
 .Ar name ...
-.Nm audioctl
+.Nm ""
 .Op Fl f Ar file
 .Op Fl n
 .Fl w
 .Ar name=value ...
 .Sh DESCRIPTION
 The 
-.Nm audioctl
+.Nm
 command displays or sets various audio system driver variables.
 If a list of variables is present on the command line, then
-.Nm audioctl
+.Nm
 prints the current value of those variables for the specified device.
 If the 
 .Fl a
@@ -65,7 +65,7 @@ flag is specified, all variables for the device are printed.
 If the
 .Fl w
 flag is specified
-.Nm audioctl
+.Nm
 attempts to set the specified variables to the given values.
 .Pp
 The
@@ -81,7 +81,7 @@ To set the playing sampling rate to 11025 you can enter
 .Dl audioctl -w play.sample_rate=11025
 Note that many of the variables that can be inspected and changed
 with
-.Nm audioctl
+.Nm
 are reset when the device is opened.  This can be circumvented
 like this
 .Dl (cat file.au; audioctl -f /dev/stdout -a) > /dev/audio
@@ -98,6 +98,6 @@ audio device
 .Xr sysctl 8
 .Sh HISTORY
 The
-.Nm audioctl
+.Nm
 command first appeared in
 .Nx 1.3 .
