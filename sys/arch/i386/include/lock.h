@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.5.10.2 2002/03/20 01:28:33 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.5.10.3 2002/03/20 01:55:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -72,10 +72,12 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	for (;;) {
 		__asm __volatile("xchgb %0, %2"
 			: "=r" (__val)
-			: "0" (__val), "m" (*alp));
+			: "0" (__val), "m" (*alp)
+			: "memory");
 		if (__val == __SIMPLELOCK_UNLOCKED)
 			break;
-		__asm __volatile("pause");
+		while (*alp != __SIMPLELOCK_UNLOCKED)
+			__asm __volatile("pause");
 	}
 }
 
@@ -86,7 +88,8 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 
 	__asm __volatile("xchgb %0, %2"
 		: "=r" (__val)
-		: "0" (__val), "m" (*alp));
+		: "0" (__val), "m" (*alp)
+		: "memory");
 
 	return ((__val == __SIMPLELOCK_UNLOCKED) ? 1 : 0);
 }
