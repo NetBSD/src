@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91"; */
-static char *rcsid = "$Id: main.c,v 1.13 1994/03/05 00:34:53 cgd Exp $";
+static char *rcsid = "$Id: main.c,v 1.14 1994/06/06 22:45:33 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -309,7 +309,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 					optind = 1;     /* - */
 				goto rearg;
 			}
-			(void)Lst_AtEnd(create, (ClientData)*argv);
+			(void)Lst_AtEnd(create, (ClientData)strdup(*argv));
 		}
 }
 
@@ -334,6 +334,7 @@ Main_ParseArgLine(line)
 {
 	char **argv;			/* Manufactured argument vector */
 	int argc;			/* Number of arguments in argv */
+	char *p1;
 
 	if (line == NULL)
 		return;
@@ -371,7 +372,7 @@ main(argc, argv)
 	Lst targs;	/* target nodes to create -- passed to Make_Init */
 	Boolean outOfDate = TRUE; 	/* FALSE if all targets up to date */
 	struct stat sb, sa;
-	char *p, *path, *pwd, *getenv(), *getwd();
+	char *p, *p1, *path, *pwd, *getenv(), *getwd();
 	char mdpath[MAXPATHLEN + 1];
 	char obpath[MAXPATHLEN + 1];
 	char cdpath[MAXPATHLEN + 1];
@@ -488,6 +489,7 @@ main(argc, argv)
 				 * directories */
 	Var_Init();		/* As well as the lists of variables for
 				 * parsing arguments */
+        str_init();
 	if (objdir != curdir)
 		Dir_AddDir(dirSearchPath, curdir);
 	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
@@ -569,15 +571,19 @@ main(argc, argv)
 
 	(void)ReadMakefile(".depend");
 
-	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL), VAR_GLOBAL);
+	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
+	if (p1)
+	    free(p1);
 
 	/* Install all the flags into the MAKE envariable. */
-	if (((p = Var_Value(MAKEFLAGS, VAR_GLOBAL)) != NULL) && *p)
+	if (((p = Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1)) != NULL) && *p)
 #ifdef POSIX
 		setenv("MAKEFLAGS", p, 1);
 #else
 		setenv("MAKE", p, 1);
 #endif
+	if (p1)
+	    free(p1);
 
 	/*
 	 * For compatibility, look at the directories in the VPATH variable
@@ -658,9 +664,21 @@ main(argc, argv)
 		 */
 		Compat_Run(targs);
     
+	Lst_Destroy(targs, NOFREE);
+	Lst_Destroy(makefiles, NOFREE);
+	Lst_Destroy(create, (void (*) __P((ClientData))) free);
+
 	/* print the graph now it's been processed if the user requested it */
 	if (DEBUG(GRAPH2))
 		Targ_PrintGraph(2);
+
+	Suff_End();
+        Targ_End();
+	Arch_End();
+	str_end();
+	Var_End();
+	Parse_End();
+	Dir_End();
 
 	if (queryFlag && outOfDate)
 		return(1);
@@ -878,11 +896,11 @@ Finish(errors)
  */
 char *
 emalloc(len)
-	u_int len;
+	size_t len;
 {
 	char *p;
 
-	if (!(p = malloc(len)))
+	if ((p = (char *) malloc(len)) == NULL)
 		enomem();
 	return(p);
 }
@@ -909,4 +927,14 @@ usage()
 "usage: make [-eiknqrst] [-D variable] [-d flags] [-f makefile ]\n\
             [-I directory] [-j max_jobs] [variable=value]\n");
 	exit(2);
+}
+
+
+int
+PrintAddr(a, b)
+    ClientData a;
+    ClientData b;
+{
+    printf("%lx ", (unsigned long) a);
+    return b ? 0 : 0;
 }

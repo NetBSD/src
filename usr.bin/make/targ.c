@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)targ.c	5.9 (Berkeley) 3/1/91"; */
-static char *rcsid = "$Id: targ.c,v 1.3 1994/03/05 00:35:13 cgd Exp $";
+static char *rcsid = "$Id: targ.c,v 1.4 1994/06/06 22:45:47 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -49,6 +49,8 @@ static char *rcsid = "$Id: targ.c,v 1.3 1994/03/05 00:35:13 cgd Exp $";
  *
  * Interface:
  *	Targ_Init 	    	Initialization procedure.
+ *
+ *	Targ_End 	    	Cleanup the module
  *
  *	Targ_NewGN	    	Create a new GNode for the passed target
  *	    	  	    	(string). The node is *not* placed in the
@@ -87,9 +89,15 @@ static char *rcsid = "$Id: targ.c,v 1.3 1994/03/05 00:35:13 cgd Exp $";
 #include	  "dir.h"
 
 static Lst        allTargets;	/* the list of all targets found so far */
+static Lst	  allGNs;	/* List of all the GNodes */
 static Hash_Table targets;	/* a hash table of same */
 
 #define HTSIZE	191		/* initial size of hash table */
+
+static int TargPrintOnlySrc __P((ClientData, ClientData));
+static int TargPrintName __P((ClientData, ClientData));
+static int TargPrintNode __P((ClientData, ClientData));
+static void TargFreeGN __P((ClientData));
 
 /*-
  *-----------------------------------------------------------------------
@@ -112,6 +120,27 @@ Targ_Init ()
 
 /*-
  *-----------------------------------------------------------------------
+ * Targ_End --
+ *	Finalize this module
+ *
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ *	All lists and gnodes are cleared
+ *-----------------------------------------------------------------------
+ */
+void
+Targ_End ()
+{
+    Lst_Destroy(allTargets, NOFREE);
+    if (allGNs)
+	Lst_Destroy(allGNs, TargFreeGN);
+    Hash_DeleteTable(&targets);
+}
+
+/*-
+ *-----------------------------------------------------------------------
  * Targ_NewGN  --
  *	Create and initialize a new graph node
  *
@@ -120,7 +149,7 @@ Targ_Init ()
  *	of the passed name
  *
  * Side Effects:
- *	None.
+ *	The gnode is added to the list of all gnodes.
  *-----------------------------------------------------------------------
  */
 GNode *
@@ -146,14 +175,53 @@ Targ_NewGN (name)
     gn->cohorts =   	Lst_Init (FALSE);
     gn->parents =   	Lst_Init (FALSE);
     gn->children =  	Lst_Init (FALSE);
-    gn->successors = 	Lst_Init(FALSE);
-    gn->preds =     	Lst_Init(FALSE);
+    gn->successors = 	Lst_Init (FALSE);
+    gn->preds =     	Lst_Init (FALSE);
     gn->context =   	Lst_Init (FALSE);
     gn->commands =  	Lst_Init (FALSE);
     gn->suffix =	NULL;
 
+    if (allGNs == NULL)
+	allGNs = Lst_Init(FALSE);
+    Lst_AtEnd(allGNs, (ClientData) gn);
+
     return (gn);
 }
+
+/*-
+ *-----------------------------------------------------------------------
+ * TargFreeGN  --
+ *	Destroy a GNode
+ *
+ * Results:
+ *	None.
+ *
+ * Side Effects:
+ *	None.
+ *-----------------------------------------------------------------------
+ */
+static void
+TargFreeGN (gnp)
+    ClientData gnp;
+{
+    GNode *gn = (GNode *) gnp;
+
+
+    free(gn->name);
+    if (gn->path)
+	free(gn->path);
+
+    Lst_Destroy(gn->iParents, NOFREE);
+    Lst_Destroy(gn->cohorts, NOFREE);
+    Lst_Destroy(gn->parents, NOFREE);
+    Lst_Destroy(gn->children, NOFREE);
+    Lst_Destroy(gn->successors, NOFREE);
+    Lst_Destroy(gn->preds, NOFREE);
+    Lst_Destroy(gn->context, NOFREE);
+    Lst_Destroy(gn->commands, NOFREE);
+    free((Address)gn);
+}
+
 
 /*-
  *-----------------------------------------------------------------------
@@ -344,11 +412,11 @@ Targ_SetMain (gn)
 }
 
 static int
-/*ARGSUSED*/
-TargPrintName (gn, ppath)
-    GNode          *gn;
-    int		    ppath;
+TargPrintName (gnp, ppath)
+    ClientData     gnp;
+    ClientData	    ppath;
 {
+    GNode *gn = (GNode *) gnp;
     printf ("%s ", gn->name);
 #ifdef notdef
     if (ppath) {
@@ -360,16 +428,17 @@ TargPrintName (gn, ppath)
 	}
     }
 #endif /* notdef */
-    return (0);
+    return (ppath ? 0 : 0);
 }
 
 
 int
-Targ_PrintCmd (cmd)
-    char           *cmd;
+Targ_PrintCmd (cmd, dummy)
+    ClientData cmd;
+    ClientData dummy;
 {
-    printf ("\t%s\n", cmd);
-    return (0);
+    printf ("\t%s\n", (char *) cmd);
+    return (dummy ? 0 : 0);
 }
 
 /*-
@@ -463,10 +532,12 @@ Targ_PrintType (type)
  *-----------------------------------------------------------------------
  */
 static int
-TargPrintNode (gn, pass)
-    GNode         *gn;
-    int	    	  pass;
+TargPrintNode (gnp, passp)
+    ClientData   gnp;
+    ClientData	 passp;
 {
+    GNode         *gn = (GNode *) gnp;
+    int	    	  pass = *(int *) passp;
     if (!OP_NOP(gn->type)) {
 	printf("#\n");
 	if (gn == mainTarg) {
@@ -523,7 +594,7 @@ TargPrintNode (gn, pass)
 	Lst_ForEach (gn->commands, Targ_PrintCmd, (ClientData)0);
 	printf("\n\n");
 	if (gn->type & OP_DOUBLEDEP) {
-	    Lst_ForEach (gn->cohorts, TargPrintNode, (ClientData)pass);
+	    Lst_ForEach (gn->cohorts, TargPrintNode, (ClientData)&pass);
 	}
     }
     return (0);
@@ -543,14 +614,15 @@ TargPrintNode (gn, pass)
  *-----------------------------------------------------------------------
  */
 static int
-TargPrintOnlySrc(gn)
-    GNode   	  *gn;
+TargPrintOnlySrc(gnp, dummy)
+    ClientData 	  gnp;
+    ClientData 	  dummy;
 {
-    if (OP_NOP(gn->type)) {
-	printf("#\t%s [%s]\n", gn->name,
-		  gn->path ? gn->path : gn->name);
-    }
-    return (0);
+    GNode   	  *gn = (GNode *) gnp;
+    if (OP_NOP(gn->type))
+	printf("#\t%s [%s]\n", gn->name, gn->path ? gn->path : gn->name);
+
+    return (dummy ? 0 : 0);
 }
 
 /*-
@@ -571,10 +643,10 @@ Targ_PrintGraph (pass)
 			 * 2 => processing done */
 {
     printf("#*** Input graph:\n");
-    Lst_ForEach (allTargets, TargPrintNode, (ClientData)pass);
+    Lst_ForEach (allTargets, TargPrintNode, (ClientData)&pass);
     printf("\n\n");
     printf("#\n#   Files that are only sources:\n");
-    Lst_ForEach (allTargets, TargPrintOnlySrc);
+    Lst_ForEach (allTargets, TargPrintOnlySrc, (ClientData) 0);
     printf("#*** Global Variables:\n");
     Var_Dump (VAR_GLOBAL);
     printf("#*** Command-line Variables:\n");

@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)job.c	5.15 (Berkeley) 3/1/91"; */
-static char *rcsid = "$Id: job.c,v 1.5 1994/03/05 00:34:48 cgd Exp $";
+static char *rcsid = "$Id: job.c,v 1.6 1994/06/06 22:45:29 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -243,11 +243,11 @@ Lst		stoppedJobs;	/* Lst of Job structures describing
 # endif
 #endif
 
-static int JobCondPassSig __P((Job *, int));
+static int JobCondPassSig __P((ClientData, ClientData));
 static void JobPassSig __P((int));
-static int JobCmpPid __P((Job *, int));
-static int JobPrintCommand __P((char *, Job *));
-static int JobSaveCommand __P((char *, GNode *));
+static int JobCmpPid __P((ClientData, ClientData));
+static int JobPrintCommand __P((ClientData, ClientData));
+static int JobSaveCommand __P((ClientData, ClientData));
 static void JobFinish __P((Job *, union wait));
 static void JobExec __P((Job *, char **));
 static void JobMakeArgv __P((Job *, char **));
@@ -272,10 +272,12 @@ static void JobInterrupt __P((int));
  *-----------------------------------------------------------------------
  */
 static int
-JobCondPassSig(job, signo)
-    Job	    	*job;	    /* Job to biff */
-    int	    	signo;	    /* Signal to send it */
+JobCondPassSig(jobp, signop)
+    ClientData	    	jobp;	    /* Job to biff */
+    ClientData	    	signop;	    /* Signal to send it */
 {
+    Job	*job = (Job *) jobp;
+    int	signo = *(int *) signop;
 #ifdef RMT_WANTS_SIGNALS
     if (job->flags & JOB_REMOTE) {
 	(void)Rmt_Signal(job, signo);
@@ -344,7 +346,8 @@ JobPassSig(signo)
 
     kill(getpid(), signo);
 
-    Lst_ForEach(jobs, JobCondPassSig, (ClientData)SIGCONT);
+    signo = SIGCONT;
+    Lst_ForEach(jobs, JobCondPassSig, (ClientData) &signo);
 
     sigsetmask(mask);
     signal(signo, JobPassSig);
@@ -367,10 +370,10 @@ JobPassSig(signo)
  */
 static int
 JobCmpPid (job, pid)
-    int             pid;	/* process id desired */
-    Job            *job;	/* job to examine */
+    ClientData        job;	/* job to examine */
+    ClientData        pid;	/* process id desired */
 {
-    return (pid - job->pid);
+    return ( *(int *) pid - ((Job *) job)->pid);
 }
 
 /*-
@@ -401,9 +404,9 @@ JobCmpPid (job, pid)
  *-----------------------------------------------------------------------
  */
 static int
-JobPrintCommand (cmd, job)
-    char     	  *cmd;	    	    /* command string to print */
-    Job           *job;	    	    /* job for which to print it */
+JobPrintCommand (cmdp, jobp)
+    ClientData    cmdp;	    	    /* command string to print */
+    ClientData    jobp;	    	    /* job for which to print it */
 {
     Boolean	  noSpecials;	    /* true if we shouldn't worry about
 				     * inserting special commands into
@@ -417,6 +420,8 @@ JobPrintCommand (cmd, job)
 				     * command */
     char    	  *cmdStart;	    /* Start of expanded command */
     LstNode 	  cmdNode;  	    /* Node for replacing the command */
+    char     	  *cmd = (char *) cmdp;
+    Job           *job = (Job *) jobp;	
 
     noSpecials = (noExecute && ! (job->node->type & OP_MAKE));
 
@@ -556,11 +561,11 @@ JobPrintCommand (cmd, job)
  */
 static int
 JobSaveCommand (cmd, gn)
-    char    *cmd;
-    GNode   *gn;
+    ClientData   cmd;
+    ClientData   gn;
 {
-    cmd = Var_Subst (NULL, cmd, gn, FALSE);
-    (void)Lst_AtEnd (postCommands->commands, (ClientData)cmd);
+    cmd = (ClientData) Var_Subst (NULL, (char *) cmd, (GNode *) gn, FALSE);
+    (void)Lst_AtEnd (postCommands->commands, cmd);
     return (0);
 }
 
@@ -914,6 +919,7 @@ Job_CheckCommands (gn, abortProc)
 	 * commands 
 	 */
 	if ((DEFAULT != NILGNODE) && !Lst_IsEmpty(DEFAULT->commands)) {
+	    char *p1;
 	    /*
 	     * Make only looks for a .DEFAULT if the node was never the
 	     * target of an operator, so that's what we do too. If
@@ -924,7 +930,9 @@ Job_CheckCommands (gn, abortProc)
 	     * .DEFAULT itself.
 	     */
 	    Make_HandleUse(DEFAULT, gn);
-	    Var_Set (IMPSRC, Var_Value (TARGET, gn), gn);
+	    Var_Set (IMPSRC, Var_Value (TARGET, gn, &p1), gn);
+	    if (p1)
+		free(p1);
 	} else if (Dir_MTime (gn) == 0) {
 	    /*
 	     * The node wasn't the target of an operator we have no .DEFAULT
@@ -1361,7 +1369,7 @@ JobRestart(job)
 static int
 JobStart (gn, flags, previous)
     GNode         *gn;	      /* target to create */
-    short	  flags;      /* flags for the job to override normal ones.
+    int	  	   flags;      /* flags for the job to override normal ones.
 			       * e.g. JOB_SPECIAL or JOB_IGNDOTS */
     Job 	  *previous;  /* The previous Job structure for this node,
 			       * if any. */
@@ -1949,11 +1957,11 @@ Job_CatchChildren (block)
 	    printf("Process %d exited or stopped.\n", pid);
 	    
 
-	jnode = Lst_Find (jobs, (ClientData)pid, JobCmpPid);
+	jnode = Lst_Find (jobs, (ClientData)&pid, JobCmpPid);
 
 	if (jnode == NILLNODE) {
 	    if (WIFSIGNALED(status) && (status.w_termsig == SIGCONT)) {
-		jnode = Lst_Find(stoppedJobs, (ClientData)pid, JobCmpPid);
+		jnode = Lst_Find(stoppedJobs, (ClientData) &pid, JobCmpPid);
 		if (jnode == NILLNODE) {
 		    Error("Resumed child (%d) not in table", pid);
 		    continue;

@@ -38,10 +38,41 @@
 
 #ifndef lint
 /* from: static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: str.c,v 1.6 1994/05/17 15:55:42 jtc Exp $";
+static char *rcsid = "$Id: str.c,v 1.7 1994/06/06 22:45:43 jtc Exp $";
 #endif				/* not lint */
 
 #include "make.h"
+
+static char **argv, *buffer;
+static int argmax, curlen;
+
+/*
+ * str_init --
+ *	Initialize the strings package
+ *
+ */
+void
+str_init()
+{
+    char *p1;
+    argv = (char **)emalloc((argmax = 50) * sizeof(char *));
+    argv[0] = Var_Value(".MAKE", VAR_GLOBAL, &p1);
+}
+
+
+/*
+ * str_end --
+ *	Cleanup the strings package
+ *
+ */
+void
+str_end()
+{
+    free(argv[0]);
+    free((Address) argv);
+    if (buffer)
+	free(buffer);
+}
 
 /*-
  * str_concat --
@@ -104,25 +135,20 @@ brk_string(str, store_argc)
 	register char *str;
 	int *store_argc;
 {
-	static int argmax, curlen;
-	static char **argv, *buf;
 	register int argc, ch;
 	register char inquote, *p, *start, *t;
 	int len;
-
-	/* save off pmake variable */
-	if (!argv) {
-		argv = (char **)emalloc((argmax = 50) * sizeof(char *));
-		argv[0] = Var_Value(".MAKE", VAR_GLOBAL);
-	}
 
 	/* skip leading space chars. */
 	for (; *str == ' ' || *str == '\t'; ++str)
 		continue;
 
 	/* allocate room for a copy of the string */
-	if ((len = strlen(str) + 1) > curlen)
-		buf = emalloc(curlen = len);
+	if ((len = strlen(str) + 1) > curlen) {
+		if (buffer)
+		    free(buffer);
+		buffer = emalloc(curlen = len);
+	}
 
 	/*
 	 * copy the string; at the same time, parse backslashes,
@@ -130,7 +156,7 @@ brk_string(str, store_argc)
 	 */
 	argc = 1;
 	inquote = '\0';
-	for (p = str, start = t = buf;; ++p) {
+	for (p = str, start = t = buffer;; ++p) {
 		switch(ch = *p) {
 		case '"':
 		case '\'':

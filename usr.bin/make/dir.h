@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dir.h	5.4 (Berkeley) 12/28/90
- *	$Id: dir.h,v 1.1 1994/03/05 00:34:43 cgd Exp $
+ *	$Id: dir.h,v 1.2 1994/06/06 22:45:27 jtc Exp $
  */
 
 /* dir.h --
@@ -54,6 +54,7 @@ typedef struct Path {
 } Path;
 
 void Dir_Init __P((void));
+void Dir_End __P((void));
 Boolean Dir_HasWildcards __P((char *));
 void Dir_Expand __P((char *, Lst, Lst));
 char *Dir_FindFile __P((char *, Lst));
@@ -64,7 +65,7 @@ void Dir_ClearPath __P((Lst));
 void Dir_Concat __P((Lst, Lst));
 void Dir_PrintDirectories __P((void));
 void Dir_PrintPath __P((Lst));
-void Dir_Destroy __P((Path *));
-ClientData Dir_CopyDir __P((Path *));
+void Dir_Destroy __P((ClientData));
+ClientData Dir_CopyDir __P((ClientData));
 
 #endif /* _DIR */
