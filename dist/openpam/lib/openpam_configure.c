@@ -193,7 +193,7 @@ openpam_read_chain(pam_handle_t *pamh,
 		}
 
 		/* allocate new entry */
-		if ((this = calloc(1, sizeof *this)) == NULL)
+		if ((this = calloc((size_t)1, sizeof *this)) == NULL)
 			goto syserr;
 
 		/* control flag */

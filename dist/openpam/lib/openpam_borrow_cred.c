@@ -72,7 +72,7 @@ openpam_borrow_cred(pam_handle_t *pamh,
 		    (int)geteuid());
 		RETURNC(PAM_PERM_DENIED);
 	}
-	scred = calloc(1, sizeof *scred);
+	scred = calloc((size_t)1, sizeof *scred);
 	if (scred == NULL)
 		RETURNC(PAM_BUF_ERR);
 	scred->euid = geteuid();

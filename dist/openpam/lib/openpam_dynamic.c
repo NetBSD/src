@@ -62,7 +62,7 @@ openpam_dynamic(const char *path)
 	int i;
 
 	dlh = NULL;
-	if ((module = calloc(1, sizeof *module)) == NULL)
+	if ((module = calloc((size_t)1, sizeof *module)) == NULL)
 		goto buf_err;
 
 	/* try versioned module first, then unversioned module */
