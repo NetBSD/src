@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.62 2000/01/09 15:08:42 ad Exp $
+# 	$NetBSD: GENERIC,v 1.63 2000/01/20 19:12:35 wrstuden Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
@@ -60,6 +60,7 @@ file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern (kernel informational filesystem)
 file-system 	NULLFS		# loopback file system
+file-system 	OVERLAY		# overlay file system
 file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
