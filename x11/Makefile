@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2003/11/02 23:46:02 matt Exp $
+#	$NetBSD: Makefile,v 1.5 2003/12/23 05:02:42 grant Exp $
 
 .include <bsd.own.mk>
 
-
 SUBDIR=	tools include lib bin share Xserver
-
 
 .if ${MKUPDATE} == "no" && !defined(NOCLEANDIR)
 BUILDTARGETS+=  cleandir
@@ -25,7 +23,6 @@ BUILDTARGETS+=	do-build
 
 .ORDER: ${BUILDTARGETS}
 
-
 START_TIME!=	date
 
 build:
@@ -36,7 +33,6 @@ build:
 	@echo   "Build started at:  ${START_TIME}"
 	@printf "Build finished at: " && date
 
-
 do-build:
 .for targ in dependall install
 	(cd ${.CURDIR} && ${MAKE} ${targ})
@@ -45,10 +41,9 @@ do-build:
 .for dir in	tools lib/X11 lib/ICE lib/Xau lib/SM lib/Xext lib/Xt lib/Xpm \
 		lib/Xrender lib/GL lib/Xmu lib/dps lib
 do-${dir:S/\//-/g}:
-.for targ in dependall install
+.  for targ in dependall install
 	(cd ${.CURDIR}/${dir} && ${MAKE} ${targ})
+.  endfor
 .endfor
-.endfor
-
 
 .include <bsd.subdir.mk>
