@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.29 2002/05/02 17:12:04 martti Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.30 2002/05/02 17:13:29 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -93,10 +93,11 @@ extern struct timeout ipfr_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.29 2002/05/02 17:12:04 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.30 2002/05/02 17:13:29 martti Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.21 2002/04/10 04:56:10 darrenr Exp";
+#endif
 #endif
 
 
