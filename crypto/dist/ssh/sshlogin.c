@@ -1,4 +1,4 @@
-/*	$NetBSD: sshlogin.c,v 1.13 2004/07/06 02:59:55 christos Exp $	*/
+/*	$NetBSD: sshlogin.c,v 1.14 2004/11/11 22:08:39 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshlogin.c,v 1.5 2002/08/29 15:57:25 stevesk Exp $");
-__RCSID("$NetBSD: sshlogin.c,v 1.13 2004/07/06 02:59:55 christos Exp $");
+__RCSID("$NetBSD: sshlogin.c,v 1.14 2004/11/11 22:08:39 christos Exp $");
 
 #include <util.h>
 #ifdef SUPPORT_UTMP
@@ -118,6 +118,7 @@ record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
 #endif
 #ifdef SUPPORT_UTMPX
 	struct utmpx ux, *uxp = &ux;
+	struct lastlogx llx;
 #endif
 	(void)gettimeofday(&tv, NULL);
 	/*
@@ -180,6 +181,14 @@ record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
 		if (pututxline(&ux) == NULL)
 			logit("could not add utmpx line: %.100s",
 			    strerror(errno));
+		/* Update lastlog. */
+		(void)gettimeofday(&llx.ll_tv, NULL);
+		strncpy(llx.ll_line, ttyname + 5, sizeof(llx.ll_line));
+		strncpy(llx.ll_host, host, sizeof(llx.ll_host));
+		(void)memcpy(&llx.ll_ss, addr, addrlen);
+		if (updlastlogx(_PATH_LASTLOGX, uid, &llx) == -1)
+			logit("Could not update %.100s: %.100s",
+			    _PATH_LASTLOGX, strerror(errno));
 	} else {
 		if ((uxp = getutxline(&ux)) == NULL)
 			logit("could not find utmpx line for %.100s",
