@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.39 2004/09/28 11:34:37 yamt Exp $	*/
+/*	$NetBSD: ath.c,v 1.40 2004/12/27 07:01:00 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.39 2004/09/28 11:34:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.40 2004/12/27 07:01:00 dyoung Exp $");
 #endif
 
 /*
@@ -130,7 +130,7 @@ static int	ath_init(struct ifnet *);
 #endif
 static int	ath_init1(struct ath_softc *);
 static int	ath_intr1(struct ath_softc *);
-static void	ath_stop(struct ifnet *);
+static void	ath_stop(struct ifnet *, int);
 static void	ath_start(struct ifnet *);
 static void	ath_reset(struct ath_softc *);
 static int	ath_media_change(struct ifnet *);
@@ -643,7 +643,7 @@ ath_detach(struct ath_softc *sc)
 	DPRINTF(ATH_DEBUG_ANY, ("%s: if_flags %x\n", __func__, ifp->if_flags));
 
 	ath_softc_critsect_begin(sc, s);
-	ath_stop(ifp);
+	ath_stop(ifp, 1);
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
@@ -701,7 +701,7 @@ ath_suspend(struct ath_softc *sc, int why)
 
 	DPRINTF(ATH_DEBUG_ANY, ("%s: if_flags %x\n", __func__, ifp->if_flags));
 
-	ath_stop(ifp);
+	ath_stop(ifp, 1);
 	if (sc->sc_power != NULL)
 		(*sc->sc_power)(sc, why);
 }
@@ -731,7 +731,7 @@ ath_shutdown(void *arg)
 {
 	struct ath_softc *sc = arg;
 
-	ath_stop(&sc->sc_ic.ic_if);
+	ath_stop(&sc->sc_ic.ic_if, 1);
 }
 #else
 void
@@ -744,7 +744,7 @@ ath_shutdown(struct ath_softc *sc)
 
 	DPRINTF(ATH_DEBUG_ANY, ("%s: if_flags %x\n", __func__, ifp->if_flags));
 
-	ath_stop(ifp);
+	ath_stop(ifp, 1);
 #endif
 }
 #endif
@@ -934,7 +934,7 @@ ath_init1(struct ath_softc *sc)
 	 * Stop anything previously setup.  This is safe
 	 * whether this is the first time through or not.
 	 */
-	ath_stop(ifp);
+	ath_stop(ifp, 0);
 
 	/*
 	 * The basic interface to setting the hardware in a good
@@ -997,7 +997,7 @@ done:
 }
 
 static void
-ath_stop(struct ifnet *ifp)
+ath_stop(struct ifnet *ifp, int disable)
 {
 	struct ieee80211com *ic = (struct ieee80211com *) ifp;
 	struct ath_softc *sc = ifp->if_softc;
@@ -1043,7 +1043,8 @@ ath_stop(struct ifnet *ifp)
 			ath_hal_setpower(ah, HAL_PM_FULL_SLEEP, 0);
 		}
 #ifdef __NetBSD__
-		ath_disable(sc);
+		if (disable)
+			ath_disable(sc);
 #endif
 	}
 	ath_softc_critsect_end(sc, s);
@@ -1294,7 +1295,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					ath_init(ifp);	/* XXX lose error */
 			}
 		} else
-			ath_stop(ifp);
+			ath_stop(ifp, 1);
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
