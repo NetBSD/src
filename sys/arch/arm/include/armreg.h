@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.24 2003/05/04 02:00:10 thorpej Exp $	*/
+/*	$NetBSD: armreg.h,v 1.25 2003/05/13 11:45:52 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -204,6 +204,9 @@
 #define	CPU_ID_80321_600	0x69052430
 #define	CPU_ID_80321_400_B0	0x69052c20
 #define	CPU_ID_80321_600_B0	0x69052c30
+#define	CPU_ID_IXP425_533	0x690541c0
+#define	CPU_ID_IXP425_400	0x690541d0
+#define	CPU_ID_IXP425_266	0x690541f0
 
 /* ARM3-specific coprocessor 15 registers */
 #define ARM3_CP15_FLUSH		1
