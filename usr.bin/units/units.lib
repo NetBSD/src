@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.12 2003/08/23 04:15:33 atatat Exp $
+/	$NetBSD: units.lib,v 1.13 2005/02/01 01:08:10 groo Exp $
 
 / primitive units
 
@@ -444,7 +444,7 @@ hectare			1e+4 m2
 hefnercandle		.92 cd
 hertz			/sec
 Hz			hertz
-hogshead		2 barrel
+hogshead		63 gallon
 hd			hogshead
 homestead		1|4 mi2
 horsepower		550 ft-lb-g/sec
