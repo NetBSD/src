@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.6 1999/12/12 17:08:37 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.7 1999/12/12 18:40:33 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -46,8 +46,6 @@
 #include <machine/intr.h>
 
 #include <hpcmips/hpcmips/machdep.h> /* cpu_model */
-#include <hpcmips/dev/biconsvar.h>
-#include <hpcmips/dev/bicons.h>
 
 #include <hpcmips/tx/tx39biureg.h>
 #include <hpcmips/tx/tx39reg.h>
@@ -172,7 +170,7 @@ tx_fb_init(kernend)
 			bootinfo->fb_height, &fb_addr, &fb_size, 
 			&fb_line_bytes);
 
-	/* Set bootinfo for bicons */
+	/* Setup bootinfo */
 	bootinfo->fb_line_bytes = fb_line_bytes;
 	bootinfo->fb_addr = (unsigned char*)MIPS_PHYS_TO_KSEG1(fb_addr);
 
@@ -182,7 +180,7 @@ tx_fb_init(kernend)
 #ifdef TX392X 
 	/* 
 	 *  Plum V-RAM isn't accessible until pmap_bootstrap,
-	 * at this time, bicons is disabled.
+	 * at this time, frame buffer device is disabled.
 	 */
 	bootinfo->fb_addr = 0;
 #endif /* TX392X */
