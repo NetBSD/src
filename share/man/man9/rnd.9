@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.1 1997/11/01 10:00:39 explorer Exp $
+.\"	$NetBSD: rnd.9,v 1.2 1997/11/12 00:51:26 mrg Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,11 @@
 .Dt RND 9
 .Os NetBSD
 .Sh NAME
-.Nm RND
+.Nm RND ,
+.Nm rnd_attach_source ,
+.Nm rnd_detach_source ,
+.Nm rnd_add_data ,
+.Nm rnd_add_uint32
 .Nd functions to make a device available for entropy collection
 .Sh SYNOPSIS
 .Fd #include <sys/rnd.h>
