@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_compat.h,v 1.3 2003/09/23 15:57:25 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_compat.h,v 1.4 2003/10/15 08:13:28 itojun Exp $	*/
 /*-
  * Copyright (c) 2003, 2004 David Young
  * All rights reserved.
@@ -34,7 +34,8 @@
 #endif
 
 #ifdef __NetBSD__
-void if_printf(struct ifnet *, const char *, ...);
+void if_printf(struct ifnet *, const char *, ...)
+    __attribute__((__format__(__printf__,2,3)));
 #endif
 
 #ifdef __NetBSD__
