@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.11 2001/04/30 01:13:21 lukem Exp $ */
+/* $NetBSD: sched.h,v 1.12 2001/05/06 13:47:14 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -162,8 +162,8 @@ struct schedstate_percpu {
 #define NICE_WEIGHT 2			/* priorities per nice level */
 #define	ESTCPULIM(e) min((e), NICE_WEIGHT * PRIO_MAX - PPQ)
 
-int	schedhz;			/* ideally: 16 */
-int	rrticks;			/* ticks per roundrobin() */
+extern int schedhz;			/* ideally: 16 */
+extern int rrticks;			/* ticks per roundrobin() */
 
 /*
  * Global scheduler state.  We would like to group these all together
