@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.120 1999/03/24 18:59:47 mellon Exp $
+#	$NetBSD: rc,v 1.121 1999/03/26 01:11:45 oster Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -25,7 +25,6 @@ fi
 for dev in 0 1 2 3; do
 	if [ -f /etc/raid$dev.conf ]; then
 		raidctl -c /etc/raid$dev.conf raid$dev
-		raidctl -r raid$dev
 	fi
 done
 
