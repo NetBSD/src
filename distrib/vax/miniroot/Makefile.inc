@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2000/05/18 02:12:43 matt Exp $
+# $NetBSD commit to lose -kk$
 
 PRELABEL=${DESTDIR}/sbin/disklabel -w -r ${VND_RDEV} miniroot
 # To install the boot block...
