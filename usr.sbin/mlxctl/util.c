@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3.2.2 2001/12/09 19:38:21 he Exp $	*/
+/*	$NetBSD: util.c,v 1.3.2.3 2002/04/11 21:14:01 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.3.2.2 2001/12/09 19:38:21 he Exp $");
+__RCSID("$NetBSD: util.c,v 1.3.2.3 2002/04/11 21:14:01 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -130,8 +130,8 @@ mlx_enquiry(struct mlx_enquiry2 *enq)
 
 		enq->me_firmware_id[0] = meo.me_fwmajor;
 		enq->me_firmware_id[1] = meo.me_fwminor;
-		enq->me_firmware_id[2] = '0';
-		enq->me_firmware_id[3] = 0;
+		enq->me_firmware_id[2] = 0;
+		enq->me_firmware_id[3] = '0';
 	}
 }
 
