@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.9 1998/06/26 07:04:00 mrg Exp $	*/
+/*	$NetBSD: at.c,v 1.10 1998/06/26 08:28:20 mrg Exp $	*/
 
 /*
  * at.c : Put file into atrun queue
@@ -64,7 +64,7 @@
 
 /* File scope variables */
 #ifndef lint
-__RCSID("$NetBSD: at.c,v 1.9 1998/06/26 07:04:00 mrg Exp $");
+__RCSID("$NetBSD: at.c,v 1.10 1998/06/26 08:28:20 mrg Exp $");
 #endif
 
 char *no_export[] =
@@ -286,13 +286,6 @@ writefile(runtimer, queue)
 			perr("Cannot open input file");
 	}
 
-	/*
-	 * We no longer need suid root; now we just need to be able to
-	 * write to the directory, if necessary.
-	 */
-
-	REDUCE_PRIV(effective_uid);
-
 	fprintf(fp, "#! /bin/sh\n# mail %8s %d\n", mailname, send_mail);
 
 	/* Write out the umask at the time of invocation */
@@ -362,8 +355,13 @@ writefile(runtimer, queue)
 	/*
 	 * Set the x bit so that we're ready to start executing
 	 */
+
+	PRIV_START
+
 	if (fchmod(fd2, S_IRUSR | S_IWUSR | S_IXUSR) < 0)
 		perr("Cannot give away file");
+
+	PRIV_END
 
 	close(fd2);
 	fprintf(stderr, "Job %s will be executed using /bin/sh\n", ppos);
@@ -389,7 +387,7 @@ list_jobs()
 
 	PRIV_START
 
-	    if (chdir(_PATH_ATJOBS) != 0)
+	if (chdir(_PATH_ATJOBS) != 0)
 		perr2("Cannot change to ", _PATH_ATJOBS);
 
 	if ((spool = opendir(".")) == NULL)
@@ -445,7 +443,7 @@ delete_jobs(argc, argv)
 
 	PRIV_START
 
-	    if (chdir(_PATH_ATJOBS) != 0)
+	if (chdir(_PATH_ATJOBS) != 0)
 		perr2("Cannot change to ", _PATH_ATJOBS);
 
 	for (i = optind; i < argc; i++) {
