@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.52 2002/06/05 05:56:48 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.53 2002/06/27 03:43:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -724,6 +724,7 @@
  */
 #define	MIPS_4Kc	0x80	/* MIPS 4Kc			ISA 32  */
 #define	MIPS_5Kc	0x81	/* MIPS 5Kc			ISA 64  */
+#define	MIPS_20Kc	0x82	/* MIPS 20Kc			ISA 64  */
 #define	MIPS_4KEc	0x84	/* MIPS 4KEc			ISA 32  */
 #define	MIPS_4KSc	0x86	/* MIPS 4KSc			ISA 32  */
 
