@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.41 1998/08/28 20:05:48 thorpej Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.42 1998/09/08 23:44:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -140,6 +140,7 @@ void		 vm_fault_unwire __P((vm_map_t, vaddr_t, vaddr_t));
 int		 vm_fault_wire __P((vm_map_t, vaddr_t, vaddr_t));
 #if !defined(UVM)
 void		 vm_fork __P((struct proc *, struct proc *, boolean_t));
+void		 vm_exit __P((struct proc *));
 #endif
 int		 vm_inherit __P((vm_map_t,
 		    vaddr_t, vsize_t, vm_inherit_t));
