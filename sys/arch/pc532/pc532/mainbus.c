@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10 2002/09/27 02:24:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthias Pfaller.
@@ -53,7 +53,7 @@ mbprobe(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return(strcmp(cf->cf_driver->cd_name, "mainbus") == 0);
+	return(strcmp(cf->cf_name, "mainbus") == 0);
 }
 
 static void

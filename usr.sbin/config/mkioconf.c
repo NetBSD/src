@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.63 2002/09/26 21:07:49 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.64 2002/09/27 02:24:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -196,7 +196,7 @@ emitcfdrivers(FILE *fp)
 		if (fprintf(fp, "struct cfdriver %s_cd = {\n",
 			    d->d_name) < 0)
 			return (1);
-		if (fprintf(fp, "\tNULL, \"%s\", %s, 0, ",
+		if (fprintf(fp, "\t{ }, NULL, \"%s\", %s, 0, ",
 			    d->d_name, d->d_classattr != NULL ?
 			    d->d_classattr->a_devclass : "DV_DULL") < 0)
 			return (1);
@@ -207,6 +207,20 @@ emitcfdrivers(FILE *fp)
 		if (fprintf(fp, "\n};\n\n") < 0)
 			return (1);
 	}
+
+	NEWLINE;
+	if (fprintf(fp,
+		  "struct cfdriver * const cfdriver_list_initial[] = {\n") < 0)
+		return (1);
+	TAILQ_FOREACH(d, &allbases, d_next) {
+		if (!devbase_has_instances(d, WILD))
+			continue;
+		if (fprintf(fp, "\t&%s_cd,\n", d->d_name) < 0)
+			return (1);
+	}
+	if (fprintf(fp, "\tNULL\n};\n") < 0)
+		return (1);
+
 	return (0);
 }
 
@@ -337,7 +351,7 @@ emitcfdata(FILE *fp)
 #define STAR FSTATE_STAR\n\
 \n\
 struct cfdata cfdata[] = {\n\
-    /* attachment       driver        unit state loc   flags pspec\n\
+    /* driver           attachment    unit state loc   flags pspec\n\
        locnames */\n") < 0)
 		return (1);
 	for (p = packed; (i = *p) != NULL; p++) {
@@ -397,12 +411,12 @@ struct cfdata cfdata[] = {\n\
 			loc = locbuf;
 		} else
 			loc = "loc";
-		if (fprintf(fp, "    {&%s_ca,%s&%s_cd,%s%2d, %s, %7s, %#6x, ",
-			    attachment, strlen(attachment) < 6 ? "\t\t"
+		if (fprintf(fp, "    {\"%s\",%s&%s_ca,%s%2d, %s, %7s, %#6x, ",
+			    basename, strlen(basename) < 8 ? "\t\t"
+			    				   : "\t",
+			    attachment, strlen(attachment) < 3 ? "\t\t"
 			    				       : "\t",
-			    basename, strlen(basename) < 3 ? "\t\t"
-			    				   : "\t", unit,
-			    state, loc, i->i_cfflags) < 0)
+			    unit, state, loc, i->i_cfflags) < 0)
 			return (1);
 		if (ps != NULL) {
 			if (fprintf(fp, "&pspec%d,\n", ps->p_inst) < 0)

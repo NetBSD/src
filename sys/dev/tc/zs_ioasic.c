@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.14 2002/09/26 20:37:42 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.15 2002/09/27 02:24:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.14 2002/09/26 20:37:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.15 2002/09/27 02:24:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -425,7 +425,7 @@ zs_ioasic_submatch(parent, cf, aux)
 		else
 			defname = "zstty"; /* 3min/3max+, DEC3000/500 */
 
-		if (strcmp(cf->cf_driver->cd_name, defname))
+		if (strcmp(cf->cf_name, defname))
 			return (0);
 	}
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));

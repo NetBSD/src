@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.3 2002/08/25 17:54:57 thorpej Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.4 2002/09/27 02:24:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ bootbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct cpuunit_attach_args *cpua = aux;
 
-	if (strcmp(cpua->cpua_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(cpua->cpua_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);

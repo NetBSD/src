@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465.c,v 1.3 2002/03/28 15:27:01 uch Exp $	*/
+/*	$NetBSD: hd64465.c,v 1.4 2002/09/27 02:24:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ int
 hd64465_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	if (strcmp("hd64465if", cf->cf_driver->cd_name))
+	if (strcmp("hd64465if", cf->cf_name))
 		return (0);
 
 	if (hd64465_reg_read_2(HD64465_SDIDR) != 0x8122) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.43 2002/06/14 11:57:21 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.44 2002/09/27 02:24:31 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.43 2002/06/14 11:57:21 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.44 2002/09/27 02:24:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -213,7 +213,7 @@ udaattach(struct device *parent, struct device *self, void *aux)
 	 * ctlr type it is, we check what is generated and later
 	 * set the correct vcid.
 	 */
-	ma.ma_type = (strcmp(self->dv_cfdata->cf_driver->cd_name, "mtc") ?
+	ma.ma_type = (strcmp(self->dv_cfdata->cf_name, "mtc") ?
 	    MSCPBUS_DISK : MSCPBUS_TAPE);
 
 	ma.ma_mc = &uda_mscp_ctlr;

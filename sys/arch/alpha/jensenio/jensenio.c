@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.3 2001/07/27 00:25:19 thorpej Exp $ */
+/* $NetBSD: jensenio.c,v 1.4 2002/09/27 02:24:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.3 2001/07/27 00:25:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.4 2002/09/27 02:24:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ jensenio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(ma->ma_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(ma->ma_name, cf->cf_name) != 0)
 		return (0);
 
 	/* There can be only one. */

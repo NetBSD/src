@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.3 2001/06/15 04:01:40 thorpej Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.4 2002/09/27 02:24:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.3 2001/06/15 04:01:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.4 2002/09/27 02:24:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ com_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 	struct mainbus_attach_args *ma = aux;
 
 	/* Always present. */
-	if (strcmp(ma->ma_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(ma->ma_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

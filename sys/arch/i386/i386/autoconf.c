@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.62 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.63 2002/09/27 02:24:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63 2002/09/27 02:24:16 thorpej Exp $");
 
 #include "opt_compat_oldboot.h"
 
@@ -213,12 +213,12 @@ matchbiosdisks()
 			continue;
 #ifdef GEOM_DEBUG
 		printf("matchbiosdisks: trying to match (%s) %s\n",
-		    dv->dv_xname, dv->dv_cfdata->cf_driver->cd_name);
+		    dv->dv_xname, dv->dv_cfdata->cf_name);
 #endif
 		if (is_valid_disk(dv)) {
 			n++;
 			sprintf(i386_alldisks->dl_nativedisks[n].ni_devname,
-			    "%s%d", dv->dv_cfdata->cf_driver->cd_name,
+			    "%s%d", dv->dv_cfdata->cf_name,
 			    dv->dv_unit);
 
 			bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
@@ -394,7 +394,7 @@ findroot(void)
 			if (dv->dv_class != DV_DISK)
 				continue;
 
-			if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "fd")) {
+			if (!strcmp(dv->dv_cfdata->cf_name, "fd")) {
 				/*
 				 * Assume the configured unit number matches
 				 * the BIOS device number.  (This is the old
@@ -497,7 +497,7 @@ device_register(dev, aux)
 		 */
 
 		if (bin->bus == BI_BUS_ISA &&
-		    !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name,
+		    !strcmp(dev->dv_parent->dv_cfdata->cf_name,
 		    "isa")) {
 			struct isa_attach_args *iaa = aux;
 
@@ -509,7 +509,7 @@ device_register(dev, aux)
 		}
 #if NPCI > 0
 		if (bin->bus == BI_BUS_PCI &&
-		    !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name,
+		    !strcmp(dev->dv_parent->dv_cfdata->cf_name,
 		    "pci")) {
 			struct pci_attach_args *paa = aux;
 			int b, d, f;
@@ -547,7 +547,7 @@ is_valid_disk(struct device *dv)
 	if (dv->dv_class != DV_DISK)
 		return (0);
 
-	name = dv->dv_cfdata->cf_driver->cd_name;
+	name = dv->dv_cfdata->cf_name;
 
 	return (strcmp(name, "sd") == 0 || strcmp(name, "wd") == 0 ||
 	    strcmp(name, "ld") == 0 || strcmp(name, "ed") == 0);

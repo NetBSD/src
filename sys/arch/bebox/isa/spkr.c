@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.8 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: spkr.c,v 1.9 2002/09/27 02:24:10 thorpej Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -427,7 +427,7 @@ spkrprobe (parent, match, aux)
 	 * child of a real keyboard controller driver.)
 	 */
 	if ((parent == NULL) ||
-	    (strcmp(parent->dv_cfdata->cf_driver->cd_name, "pc") != 0))
+	    (strcmp(parent->dv_cfdata->cf_name, "pc") != 0))
 		return (0);
 	if (match->cf_loc[PCKBDCF_PORT] != PITAUX_PORT)
 		return (0);

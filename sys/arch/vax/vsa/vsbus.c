@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.34 2002/09/25 22:21:30 thorpej Exp $ */
+/*	$NetBSD: vsbus.c,v 1.35 2002/09/27 02:24:27 thorpej Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -254,7 +254,7 @@ vsbus_search(parent, cf, aux)
 
 fail:
 	printf("%s%d at %s csr 0x%x %s\n",
-	    cf->cf_driver->cd_name, cf->cf_unit, parent->dv_xname,
+	    cf->cf_name, cf->cf_unit, parent->dv_xname,
 	    cf->cf_loc[0], (i ? "zero vector" : "didn't interrupt"));
 forgetit:
 	return 0;

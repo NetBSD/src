@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 2002/09/26 20:32:25 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34 2002/09/27 02:24:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -111,7 +111,7 @@ device_register(dev, aux)
 	static int found;
 	static struct device *booted_controller;
 	struct device *parent = dev->dv_parent;
-	const char *name = dev->dv_cfdata->cf_driver->cd_name;
+	const char *name = dev->dv_cfdata->cf_name;
 
 	if (found)
 		return;

@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.2 2002/03/24 23:37:43 bjh21 Exp $ */
+/* $NetBSD: iobus.c,v 1.3 2002/09/27 02:24:07 thorpej Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iobus.c,v 1.2 2002/03/24 23:37:43 bjh21 Exp $");
+__RCSID("$NetBSD: iobus.c,v 1.3 2002/09/27 02:24:07 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ iobus_search_ioc(struct device *parent, struct cfdata *cf, void *aux)
 
 	ioa.ioa_tag = 2;
 	ioa.ioa_base = (bus_addr_t)MEMC_IO_BASE + cf->cf_loc[IOBUSCF_BASE];
-	if (strcmp(cf->cf_driver->cd_name, "ioc") == 0 &&
+	if (strcmp(cf->cf_name, "ioc") == 0 &&
 	    (cf->cf_attach->ca_match)(parent, cf, &ioa) > 0)
 		config_attach(parent, cf, &ioa, iobus_print);
 

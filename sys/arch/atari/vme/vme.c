@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.3 1998/01/12 18:04:22 thorpej Exp $	*/
+/*	$NetBSD: vme.c,v 1.4 2002/09/27 02:24:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ vmematch(parent, cf, aux)
 {
 	struct vmebus_attach_args *vba = aux;
 
-	if (strcmp(vba->vba_busname, cf->cf_driver->cd_name))
+	if (strcmp(vba->vba_busname, cf->cf_name))
 		return (0);
 
         return (1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.4 2002/04/12 19:32:31 thorpej Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.5 2002/09/27 02:24:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ com_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct obio_attach_args *oba = aux;
 
-	if (strcmp(cf->cf_driver->cd_name, oba->oba_name) == 0)
+	if (strcmp(cf->cf_name, oba->oba_name) == 0)
 		return (1);
 
 	return (0);

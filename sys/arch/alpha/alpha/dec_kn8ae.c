@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.29 2002/09/26 19:05:03 thorpej Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.30 2002/09/27 02:24:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.29 2002/09/26 19:05:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.30 2002/09/27 02:24:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ dec_kn8ae_device_register(dev, aux)
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_driver->cd_name;
+	const char *name = cf->cf_name;
 
 	if (found)
 		return;

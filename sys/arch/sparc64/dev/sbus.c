@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.51 2002/08/23 02:53:12 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.52 2002/09/27 02:24:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -175,7 +175,7 @@ sbus_match(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 /*

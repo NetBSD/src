@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.66 2002/09/26 04:07:35 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.67 2002/09/27 02:24:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.66 2002/09/26 04:07:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.67 2002/09/27 02:24:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -110,6 +110,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.66 2002/09/26 04:07:35 thorpej E
  */
 extern struct cfdata cfdata[];
 extern short cfroots[];
+
+/*
+ * List of all cfdriver structures.  We use this to detect duplicates
+ * when other cfdrivers are loaded.
+ */
+struct cfdriverlist allcfdrivers;
 
 /*
  * List of cfdata tables.  We always have one such list -- the one
@@ -153,15 +159,25 @@ struct evcntlist allevents = TAILQ_HEAD_INITIALIZER(allevents);
 
 __volatile int config_pending;		/* semaphore for mountroot */
 
+#define	STREQ(s1, s2)			\
+	((s1)[0] == (s2)[0] && strcmp((s1), (s2)) == 0)
+
 /*
  * Configure the system's hardware.
  */
 void
 configure(void)
 {
+	extern struct cfdriver * const cfdriver_list_initial[];
+	int i;
+
+	LIST_INIT(&allcfdrivers);
+	for (i = 0; cfdriver_list_initial[i] != NULL; i++)
+		if (config_cfdriver_attach(cfdriver_list_initial[i]) != 0)
+			panic("configure: duplicate `%s' drivers",
+			    cfdriver_list_initial[i]->cd_name);
 
 	TAILQ_INIT(&allcftables);
-
 	initcftable.ct_cfdata = cfdata;
 	TAILQ_INSERT_TAIL(&allcftables, &initcftable, ct_list);
 
@@ -198,6 +214,62 @@ configure(void)
 }
 
 /*
+ * Add a cfdriver to the system.
+ */
+int
+config_cfdriver_attach(struct cfdriver *cd)
+{
+	struct cfdriver *lcd;
+
+	/* Make sure this driver isn't already in the system. */
+	LIST_FOREACH(lcd, &allcfdrivers, cd_list) {
+		if (STREQ(lcd->cd_name, cd->cd_name))
+			return (EEXIST);
+	}
+
+	LIST_INSERT_HEAD(&allcfdrivers, cd, cd_list);
+
+	return (0);
+}
+
+/*
+ * Remove a cfdriver from the system.
+ */
+int
+config_cfdriver_detach(struct cfdriver *cd)
+{
+	int i;
+
+	/* Make sure there are no active instances. */
+	for (i = 0; i < cd->cd_ndevs; i++) {
+		if (cd->cd_devs[i] != NULL)
+			return (EBUSY);
+	}
+
+	LIST_REMOVE(cd, cd_list);
+
+	KASSERT(cd->cd_devs == NULL);
+
+	return (0);
+}
+
+/*
+ * Look up a cfdriver by name.
+ */
+static struct cfdriver *
+config_cfdriver_lookup(const char *name)
+{
+	struct cfdriver *cd;
+
+	LIST_FOREACH(cd, &allcfdrivers, cd_list) {
+		if (STREQ(cd->cd_name, name))
+			return (cd);
+	}
+
+	return (NULL);
+}
+
+/*
  * Apply the matching function and choose the best.  This is used
  * a few times and we want to keep the code small.
  */
@@ -211,7 +283,7 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 	else {
 	        if (cf->cf_attach->ca_match == NULL) {
 			panic("mapply: no match function for '%s' device\n",
-			    cf->cf_driver->cd_name);
+			    cf->cf_name);
 		}
 		pri = (*cf->cf_attach->ca_match)(m->parent, cf, m->aux);
 	}
@@ -228,9 +300,12 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 static int
 cfparent_match(struct device *parent, const struct cfparent *cfp)
 {
-	struct cfdriver *pcd = parent->dv_cfdata->cf_driver;
+	struct cfdriver *pcd;
 	const char * const *cpp;
 	const char *cp;
+
+	pcd = config_cfdriver_lookup(parent->dv_cfdata->cf_name);
+	KASSERT(pcd != NULL);
 
 	/*
 	 * First, ensure this parent has the correct interface
@@ -239,8 +314,7 @@ cfparent_match(struct device *parent, const struct cfparent *cfp)
 	if (pcd->cd_attrs == NULL)
 		return (0);	/* no interface attributes -> no children */
 	for (cpp = pcd->cd_attrs; (cp = *cpp) != NULL; cpp++) {
-		if (cp[0] == cfp->cfp_iattr[0] &&
-		    strcmp(cp, cfp->cfp_iattr) == 0) {
+		if (STREQ(cp, cfp->cfp_iattr)) {
 			/* Match. */
 			break;
 		}
@@ -298,7 +372,7 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
 	m.pri = 0;
 
 	TAILQ_FOREACH(ct, &allcftables, ct_list) {
-		for (cf = ct->ct_cfdata; cf->cf_driver; cf++) {
+		for (cf = ct->ct_cfdata; cf->cf_name; cf++) {
 			/*
 			 * Skip cf if no longer eligible, otherwise scan
 			 * through parents for one matching `parent', and
@@ -341,7 +415,7 @@ config_rootsearch(cfmatch_t fn, const char *rootname, void *aux)
 	 */
 	for (p = cfroots; *p >= 0; p++) {
 		cf = &cfdata[*p];
-		if (strcmp(cf->cf_driver->cd_name, rootname) == 0)
+		if (strcmp(cf->cf_name, rootname) == 0)
 			mapply(&m, cf);
 	}
 	return (m.match);
@@ -450,7 +524,8 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 	int myunit;
 	char num[10];
 
-	cd = cf->cf_driver;
+	cd = config_cfdriver_lookup(cf->cf_name);
+	KASSERT(cd != NULL);
 	ca = cf->cf_attach;
 	if (ca->ca_devsize < sizeof(struct device))
 		panic("config_attach");
@@ -520,8 +595,8 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 	 * otherwise identical.
 	 */
 	TAILQ_FOREACH(ct, &allcftables, ct_list) {
-		for (cf = ct->ct_cfdata; cf->cf_driver; cf++) {
-			if (cf->cf_driver == cd &&
+		for (cf = ct->ct_cfdata; cf->cf_name; cf++) {
+			if (STREQ(cf->cf_name, cd->cd_name) &&
 			    cf->cf_unit == dev->dv_unit) {
 				if (cf->cf_fstate == FSTATE_NOTFOUND)
 					cf->cf_fstate = FSTATE_FOUND;
@@ -570,8 +645,9 @@ config_detach(struct device *dev, int flags)
 	if (cf->cf_fstate != FSTATE_FOUND && cf->cf_fstate != FSTATE_STAR)
 		panic("config_detach: bad device fstate");
 #endif
+	cd = config_cfdriver_lookup(cf->cf_name);
+	KASSERT(cd != NULL);
 	ca = cf->cf_attach;
-	cd = cf->cf_driver;
 
 	/*
 	 * Ensure the device is deactivated.  If the device doesn't
@@ -626,8 +702,8 @@ config_detach(struct device *dev, int flags)
 	 * Mark cfdata to show that the unit can be reused, if possible.
 	 */
 	TAILQ_FOREACH(ct, &allcftables, ct_list) {
-		for (cf = ct->ct_cfdata; cf->cf_driver; cf++) {
-			if (cf->cf_driver == cd) {
+		for (cf = ct->ct_cfdata; cf->cf_name; cf++) {
+			if (STREQ(cf->cf_name, cd->cd_name)) {
 				if (cf->cf_fstate == FSTATE_FOUND &&
 				    cf->cf_unit == dev->dv_unit)
 					cf->cf_fstate = FSTATE_NOTFOUND;

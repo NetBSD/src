@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2 2000/08/15 04:56:46 wdk Exp $	*/
+/*	$NetBSD: obio.c,v 1.3 2002/09/27 02:24:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ obio_search(parent, cf, aux)
 	struct confargs *ca = aux;
 
 	ca->ca_addr = cf->cf_addr;
-	ca->ca_name = cf->cf_driver->cd_name;
+	ca->ca_name = cf->cf_name;
 
 	if ((*cf->cf_attach->ca_match)(parent, cf, ca) != 0)
 		config_attach(parent, cf, ca, obio_print);
