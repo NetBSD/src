@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac_0266.h,v 1.1 1999/12/09 14:53:04 tsutsui Exp $	*/
+/*	$NetBSD: dmac_0266.h,v 1.2 2004/12/11 03:32:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -29,21 +29,21 @@
 /* DMAC 266 register definition */
 
 struct dma_regs {
-	u_int32_t	ctl;			/* Control Register	*/
+	uint32_t	ctl;			/* Control Register	*/
 #define	 DC_CTL_RST	0x04			/* Soft Reset		*/
 #define	 DC_CTL_MOD	0x02			/* set transfer dir	*/
 #define	 DC_CTL_ENB	0x01			/* set Enable		*/
 
-	u_int32_t	stat;			/* Status Register 	*/
+	uint32_t	stat;			/* Status Register 	*/
 #define	 DC_ST_TCZ	0x10			/* Transfer Count Zero 	*/
 #define	 DC_ST_INT	0x08			/* Interrupt 		*/
 #define	 DC_ST_MOD	0x02			/* monitor transfer dir	*/
 #define	 DC_ST_ENB	0x01			/* monitor Enable	*/
 
-	u_int32_t	tcnt;			/* transfer counter	*/
-	u_int32_t	tag;			/* Tag Register 	*/
-	u_int32_t	offset;			/* Offset Register 	*/
-	u_int32_t	mapent;			/* Map entry Register 	*/
+	uint32_t	tcnt;			/* transfer counter	*/
+	uint32_t	tag;			/* Tag Register 	*/
+	uint32_t	offset;			/* Offset Register 	*/
+	uint32_t	mapent;			/* Map entry Register 	*/
 };
 
 #define DMAC_WAIT	__asm __volatile ("nop; nop; nop; nop; nop; nop")
