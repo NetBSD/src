@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.126 1999/06/30 06:48:05 augustss Exp $
+#	$NetBSD: rc,v 1.127 1999/07/03 03:29:29 itojun Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -411,6 +411,14 @@ fi
 
 if checkyesno mrouted; then
 	echo -n ' mrouted';		mrouted $mrouted_flags
+fi
+
+if checkyesno route6d; then
+	echo -n ' route6d';		route6d $route6d_flags
+fi
+
+if checkyesno rtadvd; then
+	echo -n ' rtadvd';		rtadvd $rtadvd_flags
 fi
 
 if checkyesno timed; then
