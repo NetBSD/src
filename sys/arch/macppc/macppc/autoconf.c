@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2000/09/29 10:14:20 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 2001/04/01 10:40:46 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -379,4 +379,33 @@ pcidev_to_ofdev(pc, tag)
 		}
 	}
 	return 0;
+}
+
+int
+getnodebyname(start, target)
+	int start;
+	char *target;
+{
+	int node, next;
+	char name[64];
+
+	if (start == 0)
+		start = OF_peer(0);
+
+	for (node = start; node; node = next) {
+		bzero(name, sizeof name);
+		OF_getprop(node, "name", name, sizeof name - 1);
+		if (strcmp(name, target) == 0)
+			break;
+
+		if ((next = OF_child(node)) != 0)
+			continue;
+		while (node) {
+			if ((next = OF_peer(node)) != 0)
+				break;
+			node = OF_parent(node);
+		}
+	}
+
+	return node;
 }
