@@ -1,4 +1,4 @@
-.\" $NetBSD: mixerctl.1,v 1.14 2002/01/27 10:09:55 jdolecek Exp $
+.\" $NetBSD: mixerctl.1,v 1.15 2002/09/26 01:23:00 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,12 +93,12 @@ flag suppresses printing of the variable name.
 The
 .Fl v
 flag shows the possible values of enumeration and set valued
-variables.  Enumerated values are shown in [] and set values
-are shown in {}.
+variables.
+Enumerated values are shown in [] and set values are shown in {}.
 .Pp
 The exact set of controls that can be manipulated depends on
-the mixer.  The general format (in both getting and setting a value)
-is
+the mixer.
+The general format (in both getting and setting a value) is
 .br
 .Va "class.name" = value
 .br
@@ -109,18 +109,21 @@ can have values like
 or
 .Li outputs
 indicating that the control affects the input resp. output to the
-mixer.  The
+mixer.
+The
 .Va name
 indicates what part of the mixer the control affects.
-Continous mixer values, e.g., volume, have numeric values
-in the range 0-255.  If value can be set for each channel independently
-the values are printed separated by commas.  Discrete mixer values, e.g.,
-the recording source, have symbolic names.  Depending on the mixer it
-may either be an enumeration or a set.
+Continuous mixer values, e.g., volume, have numeric values
+in the range 0-255.
+If value can be set for each channel independently
+the values are printed separated by commas.
+Discrete mixer values, e.g., the recording source, have symbolic names.
+Depending on the mixer it may either be an enumeration or a set.
 .Pp
 The suffixes ++ and -- can be used to step through the values of a
-mixer control.  For numeric controls these operators may increase
-(resp. decrease) the value by an amount (the delta) suitable to make
+mixer control.
+For numeric controls these operators may increase (resp. decrease)
+the value by an amount (the delta) suitable to make
 the control assume the next possible value.
 .Sh ENVIRONMENT
 .Bl -tag -width MIXERDEVICE
@@ -133,7 +136,7 @@ the mixer device to use.
 mixer audio device
 .El
 .Sh EXAMPLES
-The commmand
+The command
 .Dl "mixerctl -a -v"
 can produce
 .Bd -literal
@@ -159,4 +162,5 @@ command first appeared in
 .Sh COMPATIBILITY
 The old
 .Fl f
-flag is still supported. This support will be removed eventually.
+flag is still supported.
+This support will be removed eventually.
