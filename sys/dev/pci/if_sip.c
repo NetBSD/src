@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.54 2002/06/01 23:50:59 lukem Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.55 2002/06/30 18:04:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.54 2002/06/01 23:50:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.55 2002/06/30 18:04:12 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -787,15 +787,21 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 * friends -- it affects packet data, not descriptors.
 	 */
 #ifdef DP83820
+	/*
+	 * XXX Need some PCI flags indicating support for
+	 * XXX 64-bit addressing.
+	 */
+	sc->sc_cfg &= ~(CFG_M64ADDR | CFG_T64ADDR);
+
 	reg = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CFG);
 	if (reg & CFG_PCI64_DET) {
 		printf("%s: 64-bit PCI slot detected\n", sc->sc_dev.dv_xname);
-		/*
-		 * XXX Need some PCI flags indicating support for
-		 * XXX 64-bit addressing (SAC or DAC) and 64-bit
-		 * XXX data path.
-		 */
-	}
+		if ((sc->sc_cfg & CFG_DATA64_EN) == 0)
+			printf("%s: 64-bit data transfers disabled in EEPROM\n",
+			    sc->sc_dev.dv_xname);
+	} else
+		sc->sc_cfg &= ~CFG_DATA64_EN;
+
 	if (sc->sc_cfg & (CFG_TBI_EN|CFG_EXT_125)) {
 		const char *sep = "";
 		printf("%s: using ", sc->sc_dev.dv_xname);
@@ -3058,9 +3064,15 @@ SIP_DECL(dp83820_read_macaddr)(struct sip_softc *sc,
 	sc->sc_gpior = eeprom_data[0x04];
 
 	/* Get various CFG related bits. */
-	if ((eeprom_data[0x05] >> 0) & 1)
-		sc->sc_cfg |= CFG_EXT_125; 
-	if ((eeprom_data[0x05] >> 9) & 1)
+	if (eeprom_data[0x05] & DP83820_CONFIG2_CFG_EXT_125)
+		sc->sc_cfg |= CFG_EXT_125;
+	if (eeprom_data[0x05] & DP83820_CONFIG2_CFG_M64ADDR)
+		sc->sc_cfg |= CFG_M64ADDR;
+	if (eeprom_data[0x05] & DP83820_CONFIG2_CFG_DATA64_EN)
+		sc->sc_cfg |= CFG_DATA64_EN;
+	if (eeprom_data[0x05] & DP83820_CONFIG2_CFG_T64ADDR)
+		sc->sc_cfg |= CFG_T64ADDR;
+	if (eeprom_data[0x05] & DP83820_CONFIG2_CFG_TBI_EN)
 		sc->sc_cfg |= CFG_TBI_EN;
 }
 #else /* ! DP83820 */

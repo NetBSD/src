@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.10 2002/03/27 21:41:35 briggs Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.11 2002/06/30 18:04:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -745,6 +745,10 @@ struct sip_desc {
 #define	SIP_DP83820_EEPROM_SUBSYSTEM_ID	0x00	/* PCI subsystem ID */
 #define	SIP_DP83820_EEPROM_SUBVENDOR_ID	0x02	/* PCI subvendor ID */
 #define	SIP_DP83820_EEPROM_CFGINT	0x04	/* PCI INT [31:16] */
+#define	SIP_DP83820_EEPROM_CONFIG0	0x06	/* configuration word 0 */
+#define	SIP_DP83820_EEPROM_CONFIG1	0x08	/* configuration word 1 */
+#define	SIP_DP83820_EEPROM_CONFIG2	0x0a	/* configuration word 2 */
+#define	SIP_DP83820_EEPROM_CONFIG3	0x0c	/* configuration word 3 */
 #define	SIP_DP83820_EEPROM_SOPAS0	0x0e	/* SecureOn [47:32] */
 #define	SIP_DP83820_EEPROM_SOPAS1	0x10	/* SecureOn [31:16] */
 #define	SIP_DP83820_EEPROM_SOPAS2	0x12	/* SecureOn [15:0] */
@@ -753,5 +757,14 @@ struct sip_desc {
 #define	SIP_DP83820_EEPROM_PMATCH2	0x18	/* MAC [15:0] */
 #define	SIP_DP83820_EEPROM_CHECKSUM	0x1a	/* checksum */
 #define	SIP_DP83820_EEPROM_LENGTH	0x1c	/* length of EEPROM data */
+
+#define	DP83820_CONFIG2_CFG_EXT_125	(1U << 0)
+#define	DP83820_CONFIG2_CFG_M64ADDR	(1U << 1)
+#define	DP83820_CONFIG2_CFG_DATA64_EN	(1U << 2)
+#define	DP83820_CONFIG2_CFG_T64ADDR	(1U << 3)
+#define	DP83820_CONFIG2_CFG_MWI_DIS	(1U << 4)
+#define	DP83820_CONFIG2_CFG_MRM_DIS	(1U << 5)
+#define	DP83820_CONFIG2_CFG_MODE_1000	(1U << 7)
+#define	DP83820_CONFIG2_CFG_TBI_EN	(1U << 9)
 
 #endif /* _DEV_PCI_IF_SIPREG_H_ */
