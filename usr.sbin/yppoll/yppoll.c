@@ -1,4 +1,4 @@
-/*	$NetBSD: yppoll.c,v 1.7 2000/04/14 06:26:55 simonb Exp $	*/
+/*	$NetBSD: yppoll.c,v 1.8 2000/07/04 20:27:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppoll.c,v 1.7 2000/04/14 06:26:55 simonb Exp $");
+__RCSID("$NetBSD: yppoll.c,v 1.8 2000/07/04 20:27:41 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: yppoll.c,v 1.7 2000/04/14 06:26:55 simonb Exp $");
 #include <sys/socket.h>
 #include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <netdb.h>
 #include <unistd.h>

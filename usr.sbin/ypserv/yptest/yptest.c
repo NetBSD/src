@@ -1,4 +1,4 @@
-/*	$NetBSD: yptest.c,v 1.3 1997/10/13 07:44:01 lukem Exp $	 */
+/*	$NetBSD: yptest.c,v 1.4 2000/07/04 20:27:41 matt Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,12 +33,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yptest.c,v 1.3 1997/10/13 07:44:01 lukem Exp $");
+__RCSID("$NetBSD: yptest.c,v 1.4 2000/07/04 20:27:41 matt Exp $");
 #endif
 
 #include <sys/types.h>
 #include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
