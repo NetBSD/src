@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.c,v 1.5 1997/06/22 18:51:47 christos Exp $	*/
+/*	$NetBSD: skey.c,v 1.6 1997/10/19 23:20:17 lukem Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.c)
@@ -22,6 +22,11 @@
  */
 
 #include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: skey.c,v 1.6 1997/10/19 23:20:17 lukem Exp $");
+#endif
+
+#include <sys/cdefs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,6 +34,7 @@
 #include <sgtty.h>
 #include <skey.h>
 
+int	main __P((int, char **));
 void    usage __P((char *));
 
 int
@@ -43,7 +49,7 @@ main(argc, argv)
 
 	cnt = 1;
 
-	while ((i = getopt(argc, argv, "n:p:")) != EOF) {
+	while ((i = getopt(argc, argv, "n:p:")) != -1) {
 		switch (i) {
 		case 'n':
 			cnt = atoi(optarg);
