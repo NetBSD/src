@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.14 2000/11/14 18:21:02 thorpej Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.15 2001/03/29 02:58:39 petrov Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@ void
 lsi64854_attach(sc)
 	struct lsi64854_softc *sc;
 {
+	u_int32_t csr;
 
 	/* Indirect functions */
 	switch (sc->sc_channel) {
@@ -118,8 +119,9 @@ lsi64854_attach(sc)
 		return;
 	}
 
-	printf(": rev ");
-	sc->sc_rev = L64854_GCSR(sc) & L64854_DEVID;
+	printf(": dma rev ");
+	csr = L64854_GCSR(sc);
+	sc->sc_rev = csr & L64854_DEVID;
 	switch (sc->sc_rev) {
 	case DMAREV_0:
 		printf("0");
@@ -136,13 +138,19 @@ lsi64854_attach(sc)
 	case DMAREV_2:
 		printf("2");
 		break;
+	case DMAREV_HME:
+		printf("fas");
+		break;
 	default:
 		printf("unknown (0x%x)", sc->sc_rev);
 	}
-	printf("\n");
 
+	DPRINTF(LDB_ANY, (", burst 0x%x, csr 0x%x\n", sc->sc_burst, csr));
 }
 
+/*
+ * DMAWAIT  waits while condition is true
+ */
 #define DMAWAIT(SC, COND, MSG, DONTPANIC) do if (COND) {		\
 	int count = 500000;						\
 	while ((COND) && --count > 0) DELAY(1);				\
@@ -165,17 +173,19 @@ lsi64854_attach(sc)
 	 * other revs: D_ESC_R_PEND bit reads as 0			\
 	 */								\
 	DMAWAIT(sc, L64854_GCSR(sc) & D_ESC_R_PEND, "R_PEND", dontpanic);\
-	/*								\
-	 * Select drain bit based on revision				\
-	 * also clears errors and D_TC flag				\
-	 */								\
-	csr = L64854_GCSR(sc);					\
-	if (sc->sc_rev == DMAREV_1 || sc->sc_rev == DMAREV_0)		\
-		csr |= D_ESC_DRAIN;					\
-	else								\
-		csr |= L64854_INVALIDATE;				\
+	if (sc->sc_rev != DMAREV_HME) {                                 \
+	        /*							\
+	         * Select drain bit based on revision			\
+	         * also clears errors and D_TC flag			\
+	         */							\
+	        csr = L64854_GCSR(sc);					\
+	        if (sc->sc_rev == DMAREV_1 || sc->sc_rev == DMAREV_0)	\
+		        csr |= D_ESC_DRAIN;				\
+	        else							\
+		        csr |= L64854_INVALIDATE;			\
 									\
-	L64854_SCSR(sc,csr);						\
+	        L64854_SCSR(sc,csr);					\
+	}								\
 	/*								\
 	 * Wait for draining to finish					\
 	 *  rev0 & rev1 call this PACKCNT				\
@@ -194,7 +204,7 @@ lsi64854_attach(sc)
 	DMAWAIT(sc, L64854_GCSR(sc) & D_ESC_R_PEND, "R_PEND", dontpanic);\
 	csr = L64854_GCSR(sc);					\
 	csr &= ~(L64854_WRITE|L64854_EN_DMA); /* no-ops on ENET */	\
-	csr |= L64854_INVALIDATE;					\
+	csr |= L64854_INVALIDATE;	 	/* XXX FAS ? */		\
 	L64854_SCSR(sc,csr);						\
 } while(0)
 
@@ -206,6 +216,19 @@ lsi64854_reset(sc)
 
 	DMA_FLUSH(sc, 1);
 	csr = L64854_GCSR(sc);
+
+	DPRINTF(LDB_ANY, ("lsi64854_reset: csr 0x%x\n", csr));
+
+	/*
+	 * XXX is sync needed?
+	 */
+	if (sc->sc_dmamap->dm_nsegs > 0)
+		bus_dmamap_unload(sc->sc_dmatag, sc->sc_dmamap);
+
+	if (sc->sc_rev == DMAREV_HME)
+		L64854_SCSR(sc, csr | D_HW_RESET_FAS366);
+
+
 	csr |= L64854_RESET;		/* reset DMA */
 	L64854_SCSR(sc, csr);
 	DELAY(200);			/* > 10 Sbus clocks(?) */
@@ -218,11 +241,16 @@ lsi64854_reset(sc)
 
 	csr = L64854_GCSR(sc);
 	csr |= L64854_INT_EN;		/* enable interrupts */
-	if (sc->sc_rev > DMAREV_1 && sc->sc_channel == L64854_CHANNEL_SCSI)
-		csr |= D_FASTER;
+	if (sc->sc_rev > DMAREV_1 && sc->sc_channel == L64854_CHANNEL_SCSI) {
+		if (sc->sc_rev == DMAREV_HME)
+			csr |= D_TWO_CYCLE;
+		else
+			csr |= D_FASTER;
+	}
 
 	/* Set burst */
 	switch (sc->sc_rev) {
+	case DMAREV_HME:
 	case DMAREV_2:
 		csr &= ~L64854_BURST_SIZE;
 		if (sc->sc_burst == 32) {
@@ -244,7 +272,13 @@ lsi64854_reset(sc)
 	}
 	L64854_SCSR(sc, csr);
 
+	if (sc->sc_rev == DMAREV_HME) {
+		bus_space_write_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR, 0);
+		sc->sc_dmactl = csr;
+	}
 	sc->sc_active = 0;
+
+	DPRINTF(LDB_ANY, ("lsi64854_reset: done, csr 0x%x\n", csr));
 }
 
 
@@ -270,9 +304,6 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
-	DPRINTF(LDB_ANY, ("%s: start %ld@%p,%d\n", sc->sc_dev.dv_xname,
-		(long)*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
-
 	/*
 	 * the rules say we cannot transfer more than the limit
 	 * of this DMA chip (64k for old and 16Mb for new),
@@ -283,13 +314,24 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 
 	DPRINTF(LDB_ANY, ("dma_setup: dmasize = %ld\n", (long)sc->sc_dmasize));
 
+	/*
+	 * XXX what length? 
+	 */
+	if (sc->sc_rev == DMAREV_HME) {
+
+		L64854_SCSR(sc, sc->sc_dmactl | L64854_RESET);
+		L64854_SCSR(sc, sc->sc_dmactl);
+
+		bus_space_write_4(sc->sc_bustag, sc->sc_regs, L64854_REG_CNT, *dmasize);
+	}
+
 	/* Program the DMA address */
 	if (sc->sc_dmasize) {
 		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
 		if (bus_dmamap_load(sc->sc_dmatag, sc->sc_dmamap,
 				*sc->sc_dmaaddr, sc->sc_dmasize,
 				NULL /* kernel address */,   
-				BUS_DMA_NOWAIT))
+		                BUS_DMA_NOWAIT | BUS_DMA_COHERENT))
 			panic("%s: cannot allocate DVMA address",
 			      sc->sc_dev.dv_xname);
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
@@ -310,13 +352,20 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 		bus_space_write_4(sc->sc_bustag, sc->sc_regs, L64854_REG_CNT,
 				  bcnt);
 	}
+
 	/* Setup DMA control register */
 	csr = L64854_GCSR(sc);
+
 	if (datain)
 		csr |= L64854_WRITE;
 	else
 		csr &= ~L64854_WRITE;
 	csr |= L64854_INT_EN;
+
+	if (sc->sc_rev == DMAREV_HME) {
+		csr |= (D_DSBL_SCSI_DRN | D_EN_DMA);
+	}
+
 	L64854_SCSR(sc, csr);
 
 	return (0);
@@ -341,7 +390,7 @@ lsi64854_scsi_intr(arg)
 
 	csr = L64854_GCSR(sc);
 
-	DPRINTF(LDB_SCSI, ("%s: intr: addr 0x%x, csr %s\n", sc->sc_dev.dv_xname,
+	DPRINTF(LDB_SCSI, ("%s: dmaintr: addr 0x%x, csr %s\n", sc->sc_dev.dv_xname,
 		 bus_space_read_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR),
 		 bitmask_snprintf(csr, DDMACSR_BITS, bits, sizeof(bits))));
 
@@ -369,10 +418,10 @@ lsi64854_scsi_intr(arg)
 	if (sc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
 		DPRINTF(LDB_SCSI, ("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
-			NCR_READ_REG(nsc, NCR_TCL) |
-				(NCR_READ_REG(nsc, NCR_TCM) << 8),
-			NCR_READ_REG(nsc, NCR_TCL),
-			NCR_READ_REG(nsc, NCR_TCM)));
+		        NCR_READ_REG(nsc, NCR_TCL) |
+		                (NCR_READ_REG(nsc, NCR_TCM) << 8),
+		        NCR_READ_REG(nsc, NCR_TCL),
+		        NCR_READ_REG(nsc, NCR_TCM)));
 		return 0;
 	}
 
