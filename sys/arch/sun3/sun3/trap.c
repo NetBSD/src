@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53 1995/08/08 21:11:47 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.54 1995/09/26 03:53:46 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -706,7 +706,11 @@ child_return(p)
 	f->f_sr &= ~PSL_C;
 	f->f_format = FMT0;
 
-	userret(p, f, p->p_sticks, (u_int)0, 0);
+	/*
+	 * Old ticks (3rd arg) is zero so we will charge the child
+	 * for any clock ticks that might happen before this point.
+	 */
+	userret(p, f, 0, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
