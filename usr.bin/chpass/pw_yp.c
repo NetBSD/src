@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_yp.c,v 1.8 1997/02/11 08:26:27 mrg Exp $	*/
+/*	$NetBSD: pw_yp.c,v 1.9 1997/05/21 02:19:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$NetBSD: pw_yp.c,v 1.8 1997/02/11 08:26:27 mrg Exp $";
+static char rcsid[] = "$NetBSD: pw_yp.c,v 1.9 1997/05/21 02:19:06 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,8 +78,12 @@ check_yppasswdd()
 	 * Find the host for the passwd map; it should be running
 	 * the daemon.
 	 */
-	if (yp_master(domain, "passwd.byname", &master) != 0)
+	master = NULL;
+	if (yp_master(domain, "passwd.byname", &master) != 0) {
+		if (master != NULL)
+			free (master);
 		return (1);
+	}
 
 	/*
 	 * Ask the portmapper for the port of the daemon.
@@ -117,7 +121,10 @@ pw_yp(pw, uid)
 	 * Find the host for the passwd map; it should be running
 	 * the daemon.
 	 */
+	master = NULL;
 	if ((r = yp_master(domain, "passwd.byname", &master)) != 0) {
+		if (master)
+			free (master);
 		warnx("can't find the master YP server.  Reason: %s",
 		    yperr_string(r));
 		return (1);
@@ -250,14 +257,13 @@ ypgetpwnam(nam)
 		errx(1, "can't get local YP domain. Reason: %s",
 		    yperr_string(reason));
 
+	val = NULL;
 	reason = yp_match(domain, "passwd.byname", nam, strlen(nam),
 	    &val, &vallen);
-	switch(reason) {
-	case 0:
-		break;
-	default:
+	if (reason != 0) {
+		if (val)
+			free (val);
 		return (NULL);
-		break;
 	}
 	val[vallen] = '\0';
 	(void)strncpy(line, val, sizeof(line) - 1);
@@ -281,14 +287,13 @@ ypgetpwuid(uid)
 		    yperr_string(reason));
 
 	(void)snprintf(namebuf, sizeof namebuf, "%d", uid);
+	val = NULL;
 	reason = yp_match(domain, "passwd.byuid", namebuf, strlen(namebuf),
 	    &val, &vallen);
-	switch(reason) {
-	case 0:
-		break;
-	default:
+	if (reason != 0) {
+		if (val)
+			free (val);
 		return (NULL);
-		break;
 	}
 	val[vallen] = '\0';
 	(void)strncpy(line, val, sizeof(line) - 1);
