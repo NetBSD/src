@@ -1,4 +1,4 @@
-/*	$NetBSD: stpcide.c,v 1.2 2003/11/27 23:02:40 fvdl Exp $	*/
+/*	$NetBSD: stpcide.c,v 1.3 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Toru Nishimura
@@ -38,7 +38,7 @@
 #include <dev/pci/pciidevar.h>
 
 static void stpc_chip_map(struct pciide_softc *, struct pci_attach_args *);
-static void stpc_setup_channel(struct channel_softc *);
+static void stpc_setup_channel(struct wdc_channel *);
 
 static int  stpcide_match(struct device *, struct cfdata *, void *);
 static void stpcide_attach(struct device *, struct device *, void *);
@@ -132,7 +132,7 @@ static const u_int16_t dmatbl[] = { 0x7C00, 0x1800, 0x0800 };
 static const u_int16_t piotbl[] = { 0x03C0, 0x0230, 0x01A0, 0x0110, 0x0010 };
 
 static void
-stpc_setup_channel(struct channel_softc *chp)
+stpc_setup_channel(struct wdc_channel *chp)
 {
 	struct pciide_channel *cp = (struct pciide_channel *)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;

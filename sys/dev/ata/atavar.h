@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.39 2004/01/01 17:18:54 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.40 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -43,7 +43,7 @@ struct ata_xfer {
 	__volatile u_int c_flags;	/* command state flags */
 	
 	/* Channel and drive that are to process the request. */
-	struct channel_softc *c_chp;
+	struct wdc_channel *c_chp;
 	int	c_drive;
 
 	void	*c_cmd;			/* private request structure pointer */
@@ -56,9 +56,9 @@ struct ata_xfer {
 	TAILQ_ENTRY(ata_xfer) c_xferchain;
 
 	/* Low-level protocol handlers. */
-	void	(*c_start)(struct channel_softc *, struct ata_xfer *);
-	int	(*c_intr)(struct channel_softc *, struct ata_xfer *, int);
-	void	(*c_kill_xfer)(struct channel_softc *, struct ata_xfer *);
+	void	(*c_start)(struct wdc_channel *, struct ata_xfer *);
+	int	(*c_intr)(struct wdc_channel *, struct ata_xfer *, int);
+	void	(*c_kill_xfer)(struct wdc_channel *, struct ata_xfer *);
 };
 
 #define	C_ATAPI		0x0001		/* xfer is ATAPI request */
@@ -75,7 +75,7 @@ struct ata_queue {
 /* ATA bus instance state information. */
 struct atabus_softc {
 	struct device sc_dev;
-	struct channel_softc *sc_chan;	/* XXXwdc */
+	struct wdc_channel *sc_chan;	/* XXXwdc */
 };
 
 /*

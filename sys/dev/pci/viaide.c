@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.7 2003/11/27 23:02:40 fvdl Exp $	*/
+/*	$NetBSD: viaide.c,v 1.8 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -43,7 +43,7 @@ static int	via_pcib_match(struct pci_attach_args *);
 static void	via_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void	via_sata_chip_map(struct pciide_softc *,
 		    struct pci_attach_args *);
-static void	via_setup_channel(struct channel_softc *);
+static void	via_setup_channel(struct wdc_channel *);
 
 static int	viaide_match(struct device *, struct cfdata *, void *);
 static void	viaide_attach(struct device *, struct device *, void *);
@@ -330,7 +330,7 @@ unknown:
 }
 
 static void
-via_setup_channel(struct channel_softc *chp)
+via_setup_channel(struct wdc_channel *chp)
 {
 	u_int32_t udmatim_reg, datatim_reg;
 	u_int8_t idedma_ctl;

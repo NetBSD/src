@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.9 2004/01/01 17:18:53 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.10 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -267,8 +267,8 @@ CFATTACH_DECL(satalink, sizeof(struct pciide_softc),
 
 static void sii3112_chip_map(struct pciide_softc*, struct pci_attach_args*);
 static void sii3114_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void sii3112_drv_probe(struct channel_softc*);
-static void sii3112_setup_channel(struct channel_softc*);
+static void sii3112_drv_probe(struct wdc_channel*);
+static void sii3112_setup_channel(struct wdc_channel*);
 
 static const struct pciide_product_desc pciide_satalink_products[] =  {
 	{ PCI_PRODUCT_CMDTECH_3112,
@@ -556,7 +556,7 @@ static void
 sii3114_mapchan(struct pciide_channel *cp)
 {
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	struct channel_softc *wdc_cp = &cp->wdc_channel;
+	struct wdc_channel *wdc_cp = &cp->wdc_channel;
 	int i;
 
 	cp->compat = 0;
@@ -736,7 +736,7 @@ static const char *sata_speed[] = {
 };
 
 static void
-sii3112_drv_probe(struct channel_softc *chp)
+sii3112_drv_probe(struct wdc_channel *chp)
 {
 	struct pciide_channel *cp = (struct pciide_channel *)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
@@ -836,7 +836,7 @@ sii3112_drv_probe(struct channel_softc *chp)
 }
 
 static void
-sii3112_setup_channel(struct channel_softc *chp)
+sii3112_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;

@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.18 2004/01/01 17:18:54 thorpej Exp $	*/
+/*	$NetBSD: icside.c,v 1.19 2004/01/03 01:50:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.18 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.19 2004/01/03 01:50:52 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -83,9 +83,9 @@ struct icside_softc {
 	bus_space_tag_t		sc_latchiot;	/* EEPROM page latch etc */
 	bus_space_handle_t	sc_latchioh;
 	void			*sc_shutdownhook;
-	struct channel_softc *sc_chp[ICSIDE_MAX_CHANNELS];
+	struct wdc_channel *sc_chp[ICSIDE_MAX_CHANNELS];
 	struct icside_channel {
-		struct channel_softc	wdc_channel;	/* generic part */
+		struct wdc_channel	wdc_channel;	/* generic part */
 		struct ata_queue	wdc_chqueue;	/* channel queue */
 		void			*ic_ih;		/* interrupt handler */
 		struct evcnt		ic_intrcnt;	/* interrupt count */
@@ -178,7 +178,7 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 	u_int iobase;
 	int channel, i;
 	struct icside_channel *icp;
-	struct channel_softc *cp;
+	struct wdc_channel *cp;
 	int loop;
 	int id;
 

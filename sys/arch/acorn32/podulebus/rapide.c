@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.17 2004/01/01 17:18:54 thorpej Exp $	*/
+/*	$NetBSD: rapide.c,v 1.18 2004/01/03 01:50:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.17 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.18 2004/01/03 01:50:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.17 2004/01/01 17:18:54 thorpej Exp $");
 
 struct rapide_softc {
 	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
-	struct channel_softc	*wdc_chanarray[2]; /* channels definition */
+	struct wdc_channel	*wdc_chanarray[2]; /* channels definition */
 	podule_t 		*sc_podule;		/* Our podule info */
 	int 			sc_podule_number;	/* Our podule number */
 	int			sc_intr_enable_mask;	/* Global intr mask */
@@ -118,7 +118,7 @@ struct rapide_softc {
 	bus_space_tag_t		sc_ctliot;		/* Bus tag */
 	bus_space_handle_t	sc_ctlioh;		/* control handler */
 	struct rapide_channel {
-		struct channel_softc wdc_channel;	/* generic part */
+		struct wdc_channel wdc_channel;	/* generic part */
 		struct ata_queue wdc_chqueue;		/* channel queue */
 		irqhandler_t	rc_ih;			/* interrupt handler */
 		int		rc_irqmask;	/* IRQ mask for this channel */
@@ -200,7 +200,7 @@ rapide_attach(parent, self, aux)
 	u_int iobase;
 	int channel, i;
 	struct rapide_channel *rcp;
-	struct channel_softc *cp;
+	struct wdc_channel *cp;
 	irqhandler_t *ihp;
 
 	/* Note the podule number and validate */

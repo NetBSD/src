@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.13 2004/01/01 17:18:54 thorpej Exp $ */
+/* $NetBSD: dtide.c,v 1.14 2004/01/03 01:50:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.13 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.14 2004/01/03 01:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.13 2004/01/01 17:18:54 thorpej Exp $");
 
 struct dtide_softc {
 	struct wdc_softc sc_wdc;
-	struct channel_softc *sc_chp[DTIDE_NCHANNELS];/* pointers to sc_chan */
-	struct channel_softc sc_chan[DTIDE_NCHANNELS];
+	struct wdc_channel *sc_chp[DTIDE_NCHANNELS];/* pointers to sc_chan */
+	struct wdc_channel sc_chan[DTIDE_NCHANNELS];
 	struct ata_queue sc_chq[DTIDE_NCHANNELS];
 	bus_space_tag_t		sc_magict;
 	bus_space_handle_t	sc_magich;
@@ -80,7 +80,7 @@ dtide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 	struct dtide_softc *sc = (void *)self;
-	struct channel_softc *ch;
+	struct wdc_channel *ch;
 	int i, j;
 	bus_space_tag_t bst;
 

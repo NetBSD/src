@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.13 2004/01/01 17:18:54 thorpej Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.14 2004/01/03 01:50:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.13 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.14 2004/01/03 01:50:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.13 2004/01/01 17:18:54 thorpej Exp $"
 
 struct wdc_pioc_softc {
 	struct	wdc_softc sc_wdcdev;
-	struct	channel_softc *wdc_chanlist[1];
-	struct	channel_softc wdc_channel;
+	struct	wdc_channel *wdc_chanlist[1];
+	struct	wdc_channel wdc_channel;
 	struct	ata_queue wdc_chqueue;
 	void	*sc_ih;
 };
@@ -86,7 +86,7 @@ wdc_pioc_probe(parent, cf, aux)
 	void *aux;
 {
 	struct pioc_attach_args *pa = aux;
-	struct channel_softc ch;
+	struct wdc_channel ch;
 	int res, i;
 	u_int iobase;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.9 2004/01/01 17:18:54 thorpej Exp $	*/
+/*	$NetBSD: kauai.c,v 1.10 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.9 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.10 2004/01/03 01:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.9 2004/01/01 17:18:54 thorpej Exp $");
 
 struct kauai_softc {
 	struct wdc_softc sc_wdcdev;
-	struct channel_softc wdc_chanlist[1];
-	struct channel_softc wdc_channel;
+	struct wdc_channel wdc_chanlist[1];
+	struct wdc_channel wdc_channel;
 	struct ata_queue wdc_queue;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
@@ -75,7 +75,7 @@ void kauai_attach __P((struct device *, struct device *, void *));
 int kauai_dma_init __P((void *, int, int, void *, size_t, int));
 void kauai_dma_start __P((void *, int, int));
 int kauai_dma_finish __P((void *, int, int, int));
-void kauai_set_modes __P((struct channel_softc *));
+void kauai_set_modes __P((struct wdc_channel *));
 static void calc_timing_kauai __P((struct kauai_softc *, int));
 static int getnodebypci(pci_chipset_tag_t, pcitag_t);
 
@@ -105,7 +105,7 @@ kauai_attach(parent, self, aux)
 {
 	struct kauai_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
-	struct channel_softc *chp = &sc->wdc_channel;
+	struct wdc_channel *chp = &sc->wdc_channel;
 	pci_intr_handle_t ih;
 	paddr_t regbase, dmabase;
 	int node, reg[5], i;
@@ -196,7 +196,7 @@ kauai_attach(parent, self, aux)
 
 void
 kauai_set_modes(chp)
-	struct channel_softc *chp;
+	struct wdc_channel *chp;
 {
 	struct kauai_softc *sc = (void *)chp->wdc;
 	struct ata_drive_datas *drvp0 = &chp->ch_drive[0];
@@ -253,7 +253,7 @@ calc_timing_kauai(sc, drive)
 	struct kauai_softc *sc;
 	int drive;
 {
-	struct channel_softc *chp = &sc->wdc_channel;
+	struct wdc_channel *chp = &sc->wdc_channel;
 	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 	int piomode = drvp->PIO_mode;
 	int dmamode = drvp->DMA_mode;
@@ -284,7 +284,7 @@ kauai_dma_init(v, channel, drive, databuf, datalen, flags)
 {
 	struct kauai_softc *sc = v;
 	dbdma_command_t *cmdp = sc->sc_dmacmd;
-	struct channel_softc *chp = &sc->wdc_channel;
+	struct wdc_channel *chp = &sc->wdc_channel;
 	vaddr_t va = (vaddr_t)databuf;
 	int read = flags & WDC_DMA_READ;
 	int cmd = read ? DBDMA_CMD_IN_MORE : DBDMA_CMD_OUT_MORE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.33 2004/01/01 17:18:54 thorpej Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.34 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.33 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.34 2004/01/03 01:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.33 2004/01/01 17:18:54 thorpej Exp $"
 
 struct wdc_obio_softc {
 	struct wdc_softc sc_wdcdev;
-	struct channel_softc wdc_chanptr[1];
-	struct channel_softc wdc_channel;
+	struct wdc_channel wdc_chanptr[1];
+	struct wdc_channel wdc_channel;
 	struct ata_queue wdc_chqueue;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
@@ -86,9 +86,9 @@ int wdc_obio_dma_init __P((void *, int, int, void *, size_t, int));
 void wdc_obio_dma_start __P((void *, int, int));
 int wdc_obio_dma_finish __P((void *, int, int, int));
 
-static void wdc_obio_select __P((struct channel_softc *, int));
-static void adjust_timing __P((struct channel_softc *));
-static void ata4_adjust_timing __P((struct channel_softc *));
+static void wdc_obio_select __P((struct wdc_channel *, int));
+static void adjust_timing __P((struct wdc_channel *));
+static void ata4_adjust_timing __P((struct wdc_channel *));
 
 CFATTACH_DECL(wdc_obio, sizeof(struct wdc_obio_softc),
     wdc_obio_probe, wdc_obio_attach, wdc_obio_detach, wdcactivate);
@@ -125,7 +125,7 @@ wdc_obio_attach(parent, self, aux)
 {
 	struct wdc_obio_softc *sc = (void *)self;
 	struct confargs *ca = aux;
-	struct channel_softc *chp = &sc->wdc_channel;
+	struct wdc_channel *chp = &sc->wdc_channel;
 	int intr, i;
 	int use_dma = 0;
 	char path[80];
@@ -273,7 +273,7 @@ static struct ide_timings udma_timing[5] = {
 
 void
 wdc_obio_select(chp, drive)
-	struct channel_softc *chp;
+	struct wdc_channel *chp;
 	int drive;
 {
 	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->wdc;
@@ -283,7 +283,7 @@ wdc_obio_select(chp, drive)
 
 void
 adjust_timing(chp)
-	struct channel_softc *chp;
+	struct wdc_channel *chp;
 {
 	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->wdc;
 	int drive;
@@ -350,7 +350,7 @@ adjust_timing(chp)
 
 void
 ata4_adjust_timing(chp)
-	struct channel_softc *chp;
+	struct wdc_channel *chp;
 {
 	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->wdc;
 	int drive;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.18 2004/01/01 17:18:54 thorpej Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.19 2004/01/03 01:50:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.18 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.19 2004/01/03 01:50:52 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,8 +72,8 @@ static void	write_multi_2_swap __P((bus_space_tag_t, bus_space_handle_t,
 
 struct wdc_mb_softc {
 	struct wdc_softc sc_wdcdev;
-	struct	channel_softc wdc_chanlist[1];
-	struct  channel_softc wdc_channel;
+	struct	wdc_channel wdc_chanlist[1];
+	struct  wdc_channel wdc_channel;
 	struct	ata_queue wdc_chqueue;
 	void	*sc_ih;
 };
@@ -91,7 +91,7 @@ wdc_mb_probe(parent, cfp, aux)
 	void *aux;
 {
 	static int	wdc_matched = 0;
-	struct channel_softc ch;
+	struct wdc_channel ch;
 	int	result = 0;
 	u_char	sv_ierb;
 

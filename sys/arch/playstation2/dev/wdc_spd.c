@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.10 2004/01/01 17:18:54 thorpej Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.11 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.10 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.11 2004/01/03 01:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,8 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.10 2004/01/01 17:18:54 thorpej Exp $")
 
 struct wdc_spd_softc {
 	struct wdc_softc sc_wdcdev;
-	struct channel_softc wdc_chanlist[1];
-	struct channel_softc wdc_channel;
+	struct wdc_channel wdc_chanlist[1];
+	struct wdc_channel wdc_channel;
 	struct ata_queue wdc_chqueue;
 	void *sc_ih;
 };
@@ -97,7 +97,7 @@ extern struct cfdriver wdc_cd;
 
 STATIC void __wdc_spd_enable(void);
 STATIC void __wdc_spd_disable(void) __attribute__((__unused__));
-STATIC void __wdc_spd_bus_space(struct channel_softc *);
+STATIC void __wdc_spd_bus_space(struct wdc_channel *);
 
 /*
  * wdc register is 16 bit wide.
@@ -172,7 +172,7 @@ int
 wdc_spd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct spd_attach_args *spa = aux;
-	struct channel_softc ch;
+	struct wdc_channel ch;
 	int i, result;
 
 	if (spa->spa_slot != SPD_HDD)
@@ -196,7 +196,7 @@ wdc_spd_attach(struct device *parent, struct device *self, void *aux)
 	struct spd_attach_args *spa = aux;
 	struct wdc_spd_softc *sc = (void *)self;
 	struct wdc_softc *wdc = &sc->sc_wdcdev;
-	struct channel_softc *ch = &sc->wdc_channel;
+	struct wdc_channel *ch = &sc->wdc_channel;
 
 	printf(": %s\n", spa->spa_product_name);
 
@@ -220,7 +220,7 @@ wdc_spd_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-__wdc_spd_bus_space(struct channel_softc *ch)
+__wdc_spd_bus_space(struct wdc_channel *ch)
 {
 	int i;
 

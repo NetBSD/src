@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.3 2003/12/14 11:53:52 tsutsui Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.4 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define PCIIDE_CHANNEL_NDEV	2
 #define NUNITS			(PCIIDE_CHANNEL_NDEV * PCIIDE_NUM_CHANNELS)
 
-struct channel_softc {
+struct wdc_channel {
 	volatile u_int8_t *c_base;
 	volatile u_int16_t *c_data;
 
@@ -65,7 +65,7 @@ struct wd_softc {
 
 	struct ataparams sc_params;
 	struct disklabel sc_label;
-	struct channel_softc sc_channel;
+	struct wdc_channel sc_channel;
 };
 
 struct wdc_command {
@@ -90,6 +90,6 @@ int	wdccommandext		(struct wd_softc*, struct wdc_command*);
 int	wdc_exec_read		(struct wd_softc*, u_int8_t, daddr_t, void*);
 int	wdc_exec_identify	(struct wd_softc*, void*);
 
-int	pciide_init		(struct channel_softc*, u_int*);
+int	pciide_init		(struct wdc_channel*, u_int*);
 
 #endif /* _STAND_WDVAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.17 2004/01/01 17:18:54 thorpej Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.18 2004/01/03 01:50:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.17 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.18 2004/01/03 01:50:52 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.17 2004/01/01 17:18:54 thorpej Exp $
 
 struct wdc_amiga_softc {
 	struct wdc_softc sc_wdcdev;
-	struct	channel_softc wdc_chanlist[1];
-	struct  channel_softc wdc_channel;
+	struct	wdc_channel wdc_chanlist[1];
+	struct  wdc_channel wdc_channel;
 	struct	ata_queue wdc_chqueue;
 	struct isr sc_isr;
 	volatile u_char *sc_intreg;

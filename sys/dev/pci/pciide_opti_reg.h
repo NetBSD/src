@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_opti_reg.h,v 1.4 2003/11/27 23:02:40 fvdl Exp $	*/
+/*	$NetBSD: pciide_opti_reg.h,v 1.5 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  * by an interrupt routine while this magic sequence is executing.
  */
 static __inline__ u_int8_t __attribute__((__unused__))
-opti_read_config(struct channel_softc *chp, int reg)
+opti_read_config(struct wdc_channel *chp, int reg)
 {
 	u_int8_t rv;
 	int s = splhigh();
@@ -137,7 +137,7 @@ opti_read_config(struct channel_softc *chp, int reg)
 }
 
 static __inline__ void __attribute__((__unused__))
-opti_write_config(struct channel_softc *chp, int reg, u_int8_t val)
+opti_write_config(struct wdc_channel *chp, int reg, u_int8_t val)
 {
 	int s = splhigh();
 

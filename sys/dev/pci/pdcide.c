@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.9 2003/11/27 23:02:40 fvdl Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.10 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,8 +39,8 @@
 #include <dev/pci/pciide_pdc202xx_reg.h>
 
 static void pdc202xx_chip_map(struct pciide_softc *, struct pci_attach_args *);
-static void pdc202xx_setup_channel(struct channel_softc *);
-static void pdc20268_setup_channel(struct channel_softc *);
+static void pdc202xx_setup_channel(struct wdc_channel *);
+static void pdc20268_setup_channel(struct wdc_channel *);
 static int  pdc202xx_pci_intr(void *);
 static int  pdc20265_pci_intr(void *);
 static void pdc20262_dma_start(void *, int, int);
@@ -323,7 +323,7 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-pdc202xx_setup_channel(struct channel_softc *chp)
+pdc202xx_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
@@ -438,7 +438,7 @@ pdc202xx_setup_channel(struct channel_softc *chp)
 }
 
 static void
-pdc20268_setup_channel(struct channel_softc *chp)
+pdc20268_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
@@ -491,7 +491,7 @@ pdc202xx_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct channel_softc *wdc_cp;
+	struct wdc_channel *wdc_cp;
 	int i, rv, crv; 
 	u_int32_t scr;
 
@@ -520,7 +520,7 @@ pdc20265_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct channel_softc *wdc_cp;
+	struct wdc_channel *wdc_cp;
 	int i, rv, crv; 
 	u_int32_t dmastat;
 
@@ -581,7 +581,7 @@ pdc20262_dma_finish(void *v, int channel, int drive, int force)
 	struct pciide_softc *sc = v;
 	struct pciide_dma_maps *dma_maps =
 	    &sc->pciide_channels[channel].dma_maps[drive];
-	struct channel_softc *chp;
+	struct wdc_channel *chp;
 	int atapi, error;
 
 	error = pciide_dma_finish(v, channel, drive, force);

@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.6 2003/12/14 01:32:02 thorpej Exp $	*/
+/*	$NetBSD: piixide.c,v 1.7 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,8 +39,8 @@
 #include <dev/pci/pciide_piix_reg.h>
 
 static void piix_chip_map(struct pciide_softc*, struct pci_attach_args *);
-static void piix_setup_channel(struct channel_softc *);
-static void piix3_4_setup_channel(struct channel_softc *);
+static void piix_setup_channel(struct wdc_channel *);
+static void piix3_4_setup_channel(struct wdc_channel *);
 static u_int32_t piix_setup_idetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static u_int32_t piix_setup_idetim_drvs(struct ata_drive_datas *);
 static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
@@ -311,7 +311,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-piix_setup_channel(struct channel_softc *chp)
+piix_setup_channel(struct wdc_channel *chp)
 {
 	u_int8_t mode[2], drive;
 	u_int32_t oidetim, idetim, idedma_ctl;
@@ -417,7 +417,7 @@ end:	/*
 }
 
 static void
-piix3_4_setup_channel(struct channel_softc *chp)
+piix3_4_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	u_int32_t oidetim, idetim, sidetim, udmareg, ideconf, idedma_ctl;
@@ -569,7 +569,7 @@ piix_setup_idetim_drvs(drvp)
 	struct ata_drive_datas *drvp;
 {
 	u_int32_t ret = 0;
-	struct channel_softc *chp = drvp->chnl_softc;
+	struct wdc_channel *chp = drvp->chnl_softc;
 	u_int8_t channel = chp->channel;
 	u_int8_t drive = drvp->drive;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.6 2003/11/27 23:02:40 fvdl Exp $	*/
+/*	$NetBSD: acardide.c,v 1.7 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -36,7 +36,7 @@
 #include <dev/pci/pciide_acard_reg.h>
 
 static void acard_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void acard_setup_channel(struct channel_softc*);
+static void acard_setup_channel(struct wdc_channel*);
 #if 0 /* XXX !! */
 static int  acard_pci_intr(void *);
 #endif
@@ -176,7 +176,7 @@ acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-acard_setup_channel(struct channel_softc *chp)
+acard_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
@@ -292,7 +292,7 @@ acard_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct channel_softc *wdc_cp;
+	struct wdc_channel *wdc_cp;
 	int rv = 0;
 	int dmastat, i, crv;
 

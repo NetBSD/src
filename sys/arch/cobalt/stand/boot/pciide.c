@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.2 2003/12/14 11:53:52 tsutsui Exp $	*/
+/*	$NetBSD: pciide.c,v 1.3 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 int
 pciide_init(chp, unit)
-	struct channel_softc *chp;
+	struct wdc_channel *chp;
 	u_int *unit;
 {
 	u_long bpa, addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.7 2003/11/28 20:08:29 chs Exp $	*/
+/*	$NetBSD: hptide.c,v 1.8 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #include <dev/pci/pciide_hpt_reg.h>
 
 static void hpt_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void hpt_setup_channel(struct channel_softc*);
+static void hpt_setup_channel(struct wdc_channel*);
 static int  hpt_pci_intr(void *);
 
 static int  hptide_match(struct device *, struct cfdata *, void *);
@@ -268,7 +268,7 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-hpt_setup_channel(struct channel_softc *chp)
+hpt_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
@@ -377,7 +377,7 @@ hpt_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct channel_softc *wdc_cp;
+	struct wdc_channel *wdc_cp;
 	int rv = 0;
 	int dmastat, i, crv;
 
