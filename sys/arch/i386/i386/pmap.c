@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.20 1994/09/07 20:48:55 mycroft Exp $
+ *	$Id: pmap.c,v 1.21 1994/09/08 21:03:43 mycroft Exp $
  */
 
 /*
@@ -172,10 +172,12 @@ vm_offset_t    	avail_start;	/* PA of first available physical page */
 vm_offset_t	avail_end;	/* PA of last available physical page */
 vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
+int		npages;
 
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
 char		*pmap_attributes;	/* reference and modify bits */
-TAILQ_HEAD(, pv_page) pv_freelist;
+TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
+int		pv_nfree;
 
 pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 
@@ -313,26 +315,26 @@ void
 pmap_init()
 {
 	vm_offset_t addr, addr2;
-	vm_size_t npg, s;
+	vm_size_t s;
 	int rv;
 	extern int KPTphys;
 
 	if (PAGE_SIZE != NBPG)
 		panic("pmap_init: CLSIZE != 1");
 
-	npg = pmap_page_index(avail_end - 1) + 1;
-	s = (vm_size_t) (sizeof(struct pv_entry) * npg + npg);
+	npages = pmap_page_index(avail_end - 1) + 1;
+	s = (vm_size_t) (sizeof(struct pv_entry) * npages + npages);
 	s = round_page(s);
 	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
 	pv_table = (struct pv_entry *) addr;
-	addr += sizeof(struct pv_entry) * npg;
+	addr += sizeof(struct pv_entry) * npages;
 	pmap_attributes = (char *) addr;
-	TAILQ_INIT(&pv_freelist);
+	TAILQ_INIT(&pv_page_freelist);
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT)
 		printf("pmap_init: %x bytes (%x pgs): tbl %x attr %x\n",
-		       s, npg, pv_table, pmap_attributes);
+		       s, npages, pv_table, pmap_attributes);
 #endif
 
 	/*
@@ -348,21 +350,22 @@ pmap_alloc_pv()
 	struct pv_entry *pv;
 	int i;
 
-	pvp = pv_freelist.tqh_first;
-	if (pvp == 0) {
+	if (pv_nfree == 0) {
 		MALLOC(pvp, struct pv_page *, NBPG, M_VMPVENT, M_NOWAIT);
 		if (pvp == 0)
 			panic("pmap_alloc_pv: kmem_alloc() failed");
-		pvp->pvp_pgi.pgi_nfree = NPVPPG - 1;
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
 		for (i = NPVPPG - 2; i; i--, pv++)
 			pv->pv_next = pv + 1;
 		pv->pv_next = 0;
-		TAILQ_INSERT_TAIL(&pv_freelist, pvp, pvp_pgi.pgi_list);
+		pv_nfree += pvp->pvp_pgi.pgi_nfree = NPVPPG - 1;
+		TAILQ_INSERT_HEAD(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
 		pv = &pvp->pvp_pv[0];
 	} else {
+		--pv_nfree;
+		pvp = pv_page_freelist.tqh_first;
 		if (--pvp->pvp_pgi.pgi_nfree == 0) {
-			TAILQ_REMOVE(&pv_freelist, pvp, pvp_pgi.pgi_list);
+			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
 		}
 		pv = pvp->pvp_pgi.pgi_freelist;
 #ifdef DIAGNOSTIC
@@ -384,15 +387,74 @@ pmap_free_pv(pv)
 	pvp = (struct pv_page *) trunc_page(pv);
 	switch (++pvp->pvp_pgi.pgi_nfree) {
 	case 1:
-		TAILQ_INSERT_TAIL(&pv_freelist, pvp, pvp_pgi.pgi_list);
+		TAILQ_INSERT_TAIL(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
 	default:
 		pv->pv_next = pvp->pvp_pgi.pgi_freelist;
 		pvp->pvp_pgi.pgi_freelist = pv;
+		++pv_nfree;
 		break;
 	case NPVPPG:
-		TAILQ_REMOVE(&pv_freelist, pvp, pvp_pgi.pgi_list);
+		pv_nfree -= NPVPPG - 1;
+		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
 		FREE(pvp, M_VMPVENT);
 		break;
+	}
+}
+
+void
+pmap_collect_pv()
+{
+	struct pv_page_list pv_page_collectlist;
+	struct pv_page *pvp, *npvp;
+	struct pv_entry *ph, *ppv, *pv, *npv;
+	int s;
+
+	TAILQ_INIT(&pv_page_collectlist);
+
+	for (pvp = pv_page_freelist.tqh_first; pvp; pvp = npvp) {
+		if (pv_nfree < NPVPPG)
+			break;
+		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
+		if (pvp->pvp_pgi.pgi_nfree > NPVPPG / 3) {
+			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+			TAILQ_INSERT_TAIL(&pv_page_collectlist, pvp, pvp_pgi.pgi_list);
+			pv_nfree -= pvp->pvp_pgi.pgi_nfree;
+			pvp->pvp_pgi.pgi_nfree = -1;
+		}
+	}
+
+	if (pv_page_collectlist.tqh_first == 0)
+		return;
+
+	for (ph = &pv_table[npages - 1]; ph >= &pv_table[0]; ph--) {
+		if (ph->pv_pmap == 0)
+			continue;
+		s = splimp();
+		for (ppv = ph; (pv = ppv->pv_next) != 0; ) {
+			pvp = (struct pv_page *) trunc_page(pv);
+			if (pvp->pvp_pgi.pgi_nfree == -1) {
+				pvp = pv_page_freelist.tqh_first;
+				if (--pvp->pvp_pgi.pgi_nfree == 0) {
+					TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+				}
+				npv = pvp->pvp_pgi.pgi_freelist;
+#ifdef DIAGNOSTIC
+				if (npv == 0)
+					panic("pmap_collect_pv: pgi_nfree inconsistent");
+#endif
+				pvp->pvp_pgi.pgi_freelist = npv->pv_next;
+				*npv = *pv;
+				ppv->pv_next = npv;
+				ppv = npv;
+			} else
+				ppv = pv;
+		}
+		splx(s);
+	}
+
+	for (pvp = pv_page_collectlist.tqh_first; pvp; pvp = npvp) {
+		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
+		FREE(pvp, M_VMPVENT);
 	}
 }
 
