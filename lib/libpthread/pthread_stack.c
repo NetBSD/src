@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.5 2003/01/19 20:58:01 thorpej Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.6 2003/02/15 00:52:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <signal.h>
