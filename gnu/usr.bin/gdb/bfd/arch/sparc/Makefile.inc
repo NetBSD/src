@@ -1,8 +1,8 @@
-# $Id: Makefile.inc,v 1.2 1994/05/25 11:24:14 pk Exp $
+# $Id: Makefile.inc,v 1.3 1994/09/19 23:51:32 deraadt Exp $
 
 SRCS+=		netbsd_sparc.c cpu-sparc.c
 
-CFLAGS+=	-DNETBSD_CORE -DTRAD_CORE
+CFLAGS+=	-DNETBSD_CORE
 
 VECTORS=	-DDEFAULT_VECTOR=netbsd_sparc_vec \
 		-DSELECT_ARCHITECTURES=bfd_sparc_arch \
