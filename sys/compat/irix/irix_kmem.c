@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_kmem.c,v 1.1 2002/03/15 17:21:26 manu Exp $ */
+/*	$NetBSD: irix_kmem.c,v 1.2 2002/03/25 18:43:59 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.1 2002/03/15 17:21:26 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.2 2002/03/25 18:43:59 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,18 @@ __KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.1 2002/03/15 17:21:26 manu Exp $");
 #include <compat/irix/irix_kmem.h>
 #include <compat/irix/irix_sysmp.h>
 
+/*
+ * We have no idea of theses value's meaning yet, but time will come
+ */
+long irix_kernel_var[32] = { 0x7fff2fc8, 0x0fb72194, 0x00000000, 0x0fb68890, 
+			     0x7fff2f74, 0x7fff2fc8, 0x7fff2fc8, 0x7fff2f74, 
+			     0x7fff2f7c, 0x0fb7246c, 0x0fbd9178, 0x0fb910d4, 
+			     0x0fb65440, 0x00000800, 0x00400034, 0x0000000a, 
+			     0x00000008, 0x0fb73fb0, 0x00000000, 0x00000000, 
+			     0x00000000, 0x7fff3000, 0x00000001, 0x7fff2f74, 
+			     0x7fff2d24, 0x0fa85880, 0x00000001, 0x0fb60188, 
+			     0x00000004, 0x00000000, 0x00000000, 0x00000001,
+			   };
 struct irix_kmem_softc {
 	struct device irix_kmem_dev;
 };
@@ -99,6 +111,11 @@ irix_kmemread(dev, uio, flag)
 		iav.ldavg[2] = averunnable.ldavg[2] / scale;
 		buf = (void *)&iav;
 		buflen = sizeof(iav);
+	}
+
+	if (offset == &irix_kernel_var) { /* kernel variables */
+		buf = &irix_kernel_var;
+		buflen = sizeof(irix_kernel_var);
 	}
 
 	if (buflen != 0)
