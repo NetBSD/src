@@ -1,7 +1,7 @@
-/*	$NetBSD: gets.c,v 1.1.1.2 1995/06/01 20:37:58 gwr Exp $	*/
+/*	$NetBSD: boot.c,v 1.1.1.1 1995/06/01 20:38:08 gwr Exp $ */
 
 /*-
- * Copyright (c) 1993
+ * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,85 +32,52 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)gets.c	8.1 (Berkeley) 6/11/93
+ * 	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/param.h>
+#include <sys/reboot.h>
+
+#include <machine/mon.h>
 
 #include "stand.h"
+#include "promboot.h"
+
+int debug;
+int errno;
 
 /*
- * This implementation assumes that getchar() does echo, because
- * on some machines, it is hard to keep echo from being done.
- * Those that need it can do echo in their getchar() function.
- *
- * Yes, the code below will echo CR, DEL, and other control chars,
- * but sending CR or DEL here is harmless.  All the other editing
- * characters will be followed by a newline, so it doesn't matter.
- * (Most terminals will not show them anyway.)
+ * Boot device is derived from ROM provided information.
  */
+#define LOADADDR	0x4000
 
-void
-gets(buf)
-	char *buf;
+extern char		*version;
+char	defname[32] = "netbsd";
+char	line[80];
+
+
+main()
 {
-	register int c;
-	register char *lp;
+	char *cp, *file;
+	int	io;
 
-top:
-	lp = buf;
+	printf(">> NetBSD ufsboot [%s]\n", version);
+	prom_get_boot_info();
+	file = defname;
+
+	cp = prom_bootfile;
+	if (cp && *cp)
+		file = cp;
 
 	for (;;) {
-		c = getchar() & 0177;
-
-#ifdef	GETS_MUST_ECHO	/* Preserved in case someone wants it... */
-		putchar(c);
-#endif
-
-		switch (c) {
-
-		default:
-			*lp++ = c;
-			continue;
-
-		case '\177':
-			putchar('\b');
-			/* fall through */
-		case '\b':
-			putchar(' ');
-			putchar('\b');
-			/* fall through */
-		case '#':
-			if (lp > buf)
-				lp--;
-			continue;
-
-#ifdef	GETS_REPRINT
-		/*
-		 * This is not very useful in a boot program.
-		 * (It costs you 52 bytes on m68k, gcc -O3).
-		 */
-		case 'r'&037: {
-			register char *p;
-			putchar('\n');
-			for (p = buf; p < lp; ++p)
-				putchar(*p);
-			continue;
+		if (prom_boothow & RB_ASKNAME) {
+			printf("boot: ");
+			gets(line);
+			if (line[0])
+				file = line;
 		}
-#endif
-
-		case '@':
-		case 'u'&037:
-		case 'w'&037:
-			putchar('\n');
-			goto top;
-
-		case '\r':
-			putchar('\n');
-			/* fall through */
-		case '\n':
-			*lp = '\0';
-			return;
-
-		} /* switch */
+		exec_sun(file, LOADADDR);
+		printf("boot: %s\n", strerror(errno));
+		prom_boothow |= RB_ASKNAME;
 	}
-	/*NOTREACHED*/
 }
