@@ -100,6 +100,7 @@ extern int h_errno;
 #define INADDR_LOOPBACK	((u_int32_t)0x7f000001)
 #define EOL	'\n'
 #define VOIDPTR	void *
+#define SOCKLEN_T int
 
 /*
  * Time stuff...

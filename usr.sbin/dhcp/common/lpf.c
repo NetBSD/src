@@ -37,7 +37,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: lpf.c,v 1.1.1.7 2000/09/04 23:10:11 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: lpf.c,v 1.1.1.8 2000/10/17 15:08:14 taca Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -170,11 +170,14 @@ void if_deregister_send (info)
    in bpf includes... */
 extern struct sock_filter dhcp_bpf_filter [];
 extern int dhcp_bpf_filter_len;
+
+#if defined (HAVE_TR_SUPPORT)
 extern struct sock_filter dhcp_bpf_tr_filter [];
 extern int dhcp_bpf_tr_filter_len;
+static void lpf_tr_filter_setup (struct interface_info *);
+#endif
 
 static void lpf_gen_filter_setup (struct interface_info *);
-static void lpf_tr_filter_setup (struct interface_info *);
 
 void if_register_receive (info)
 	struct interface_info *info;
@@ -182,9 +185,11 @@ void if_register_receive (info)
 	/* Open a LPF device and hang it on this interface... */
 	info -> rfdesc = if_register_lpf (info);
 
+#if defined (HAVE_TR_SUPPORT)
 	if (info -> hw_address.hbuf [0] == HTYPE_IEEE802)
 		lpf_tr_filter_setup (info);
 	else
+#endif
 		lpf_gen_filter_setup (info);
 
 	if (!quiet_interface_discovery)
@@ -247,6 +252,7 @@ static void lpf_gen_filter_setup (info)
 	}
 }
 
+#if defined (HAVE_TR_SUPPORT)
 static void lpf_tr_filter_setup (info)
 	struct interface_info *info;
 {
@@ -279,6 +285,7 @@ static void lpf_tr_filter_setup (info)
 		log_fatal ("Can't install packet filter program: %m");
 	}
 }
+#endif /* HAVE_TR_SUPPORT */
 #endif /* USE_LPF_RECEIVE */
 
 #ifdef USE_LPF_SEND

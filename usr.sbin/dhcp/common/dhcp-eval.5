@@ -15,7 +15,7 @@
 .\"
 .\" Support and other services are available for ISC products - see
 .\" http://www.isc.org for more information.
-.TH dhcpd-options 5
+.TH dhcpd-eval 5
 .SH NAME
 dhcp-conditionals - ISC DHCP conditional evaluation
 .SH DESCRIPTION
@@ -101,17 +101,6 @@ treated as false in conditionals.
 .SH BOOLEAN EXPRESSIONS
 The following is the current list of boolean expressions that are
 supported by the DHCP distribution.
-.PP
-.B check \fIclass-name\fR
-.RS 0.25i
-.PP
-The check operator returns a true value if the packet being considered
-comes from a client that falls into the specified
-class.
-.I Class-name
-must be a string that corresponds to the name of a defined class.
-Classes are only supported in the DHCP server.
-.RE
 .PP
 .I data-expression-1 \fB=\fI data-expression-2\fR
 .RS 0.25i

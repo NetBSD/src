@@ -197,6 +197,7 @@ ns_rcode find_cached_zone (const char *, ns_class, char *,
 int find_tsig_key (ns_tsig_key **, const char *, void *);
 int forget_zone (void *);
 int repudiate_zone (void *);
+void cache_found_zone (ns_class, char *, struct in_addr *, int);
 
 #define DprintQ(a,b,c,d)
 #define Dprint(a,b)

@@ -51,7 +51,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: socket.c,v 1.1.1.12 2000/09/04 23:10:15 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: socket.c,v 1.1.1.13 2000/10/17 15:08:31 taca Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -184,7 +184,7 @@ void if_register_send (info)
 		       info -> shared_network -> name : ""));
 }
 
-#if !defined (USE_SOCKET_FALLBACK)
+#if defined (USE_SOCKET_SEND)
 void if_deregister_send (info)
 	struct interface_info *info;
 {
@@ -200,7 +200,7 @@ void if_deregister_send (info)
 		      (info -> shared_network ?
 		       info -> shared_network -> name : ""));
 }
-#endif /* !USE_SOCKET_FALLBACK */
+#endif /* USE_SOCKET_SEND */
 #endif /* USE_SOCKET_SEND || USE_SOCKET_FALLBACK */
 
 #ifdef USE_SOCKET_RECEIVE
@@ -354,18 +354,23 @@ void maybe_setup_fallback ()
 {
 #if defined (USE_SOCKET_FALLBACK)
 	isc_result_t status;
-	struct interface_info *fbi;
-	fbi = setup_fallback ();
-	if (fbi) {
+	struct interface_info *fbi = (struct interface_info *)0;
+	if (setup_fallback (&fbi, MDL)) {
 		fbi -> wfdesc = if_register_socket (fbi);
-		fbi -> refcnt = 1;
-		fbi -> type = dhcp_type_interface;
+		fbi -> rfdesc = fbi -> wfdesc;
+		log_info ("Sending on   Socket/%s%s%s",
+		      fbi -> name,
+		      (fbi -> shared_network ? "/" : ""),
+		      (fbi -> shared_network ?
+		       fbi -> shared_network -> name : ""));
+	
 		status = omapi_register_io_object ((omapi_object_t *)fbi,
 						   if_readsocket, 0,
 						   fallback_discard, 0, 0);
 		if (status != ISC_R_SUCCESS)
 			log_fatal ("Can't register I/O handle for %s: %s",
 				   fbi -> name, isc_result_totext (status));
+		interface_dereference (&fbi, MDL);
 	}
 #endif
 }

@@ -60,6 +60,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <memory.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <ctype.h>

@@ -44,7 +44,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: nit.c,v 1.1.1.9 2000/09/04 23:10:12 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: nit.c,v 1.1.1.10 2000/10/17 15:08:15 taca Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -120,7 +120,7 @@ int if_register_nit (info)
 	/* XXX code below assumes ethernet interface! */
 	info -> hw_address.hlen = 7;
 	info -> hw_address.hbuf [0] = ARPHRD_ETHER;
-	memcpy (&info -> hw_address.jbuf [1],
+	memcpy (&info -> hw_address.hbuf [1],
 		ifr.ifr_ifru.ifru_addr.sa_data, 6);
 
 	if (ioctl (sock, I_PUSH, "pf") < 0)
@@ -321,10 +321,10 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	assemble_hw_header (interface, (unsigned char *)junk, &hbufp, hto);
 	assemble_udp_ip_header (interface, buf, &ibufp,
 				from.s_addr, to -> sin_addr.s_addr,
-				to -> sin_port, raw, len);
+				to -> sin_port, (unsigned char *)raw, len);
 
 	/* Copy the data into the buffer (yuk). */
-	memcpy (buf + bufp, raw, len);
+	memcpy (buf + ibufp, raw, len);
 
 	/* Set up the sockaddr structure... */
 #if USE_SIN_LEN

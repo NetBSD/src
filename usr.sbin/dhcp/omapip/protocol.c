@@ -66,7 +66,7 @@ isc_result_t omapi_protocol_connect (omapi_object_t *h,
 		return status;
 
 	status = omapi_connect ((omapi_object_t *)obj, server_name, port);
-	if (status != ISC_R_SUCCESS) {
+	if (status != ISC_R_SUCCESS && status != ISC_R_INCOMPLETE) {
 		omapi_protocol_dereference (&obj, MDL);
 		return status;
 	}

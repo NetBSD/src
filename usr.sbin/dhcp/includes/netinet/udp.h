@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.h,v 1.1.1.1 1997/03/29 21:52:18 mellon Exp $	*/
+/*	$NetBSD: udp.h,v 1.1.1.2 2000/10/17 15:09:17 taca Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -42,6 +42,6 @@
 struct udphdr {
 	u_int16_t uh_sport;		/* source port */
 	u_int16_t uh_dport;		/* destination port */
-	int16_t	  uh_ulen;		/* udp length */
+	u_int16_t uh_ulen;		/* udp length */
 	u_int16_t uh_sum;		/* udp checksum */
 };
