@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfevar.h,v 1.1 2003/03/05 22:08:23 matt Exp $	*/
+/*	$NetBSD: if_gfevar.h,v 1.2 2003/03/16 07:05:34 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -35,10 +35,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * gevar.h -- placeholder for ge driver
  */
 
 #define	GE_RXDESC_MEMSIZE		(1 * NBPG)
@@ -127,7 +123,8 @@ struct gfe_softc {
 	/*
 	 * 
 	 */
-	bus_space_tag_t sc_memt;
+	bus_space_tag_t sc_gt_memt;
+	bus_space_handle_t sc_gt_memh;
 	bus_dma_tag_t sc_dmat;
 	int sc_macno;			/* which mac? 0, 1, or 2 */
 
