@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.28 2003/07/27 07:45:09 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.29 2003/08/05 13:35:29 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -265,38 +265,47 @@ message partition_sizes_ok		/* XXX translate */
 {Partition sizes ok}
 
 message edfspart
-{Powinienes najpierw ustawic rodzaj systemu plikow (SP). Pozniej inne wartosci.
+{Powinienes najpierw ustawic rodzaj systemu plikow (SP). 
+Pozniej inne wartosci.
 
 Aktualne wartosci dla partycji %c:
 
+                          MB cylinders   sectors
+                     ------- --------- ---------
 }
 
 message fstype_fmt		/* XXX translate */
-{  FStype: %9s}
+{        FStype: %9s}
 
 message start_fmt		/* XXX translate */
-{   start: %9d %9d %9d}
+{         start: %9d %9d %9d}
 
 message size_fmt		/* XXX translate */
-{    size: %9d %9d %9d}
+{          size: %9d %9d %9d}
 
-message end_fmt		/* XXX translate */
-{     end: %9d %9d %9d}
+message end_fmt			/* XXX translate */
+{           end: %9d %9d %9d}
 
 message bsize_fmt		/* XXX translate */
-{   bsize: %9d bytes}
+{    block size: %9d bytes}
 
 message fsize_fmt		/* XXX translate */
-{   fsize: %9d bytes}
+{ fragment size: %9d bytes}
 
 message newfs_fmt		/* XXX translate */
-{   newfs: %9s}
+{         newfs: %9s}
 
 message mount_fmt		/* XXX translate */
-{   mount: %9s}
+{         mount: %9s}
+
+message mount_options_fmt	/* XXX translate */
+{ mount options: }
 
 message mountpt_fmt		/* XXX translate */
-{mount pt: %9s}
+{   mount point: %9s}
+
+message toggle		/* XXX translate */
+{Toggle}
 
 message restore		/* XXX translate */
 {Restore original values}
@@ -330,13 +339,8 @@ message invalid_sector_number	/* XXX translate */
 message Select_file_system_block_size	/* XXX translate */
 {Select file system block size}
 
-message Select_number_of_fragments_per_block	/* XXX translate */
-{Select number of fragments per filesystem block}
-
-message f8_per_block {8 per block}	/* XXX translate */
-message f4_per_block {4 per block}	/* XXX translate */
-message f2_per_block {2 per block}	/* XXX translate */
-message f1_per_block {1 per block}	/* XXX translate */
+message Select_file_system_fragment_size	/* XXX translate */
+{Select file system fragment size}
 
 message packname
 {Podaj nazwe dla swojego dysku NetBSD}
@@ -354,7 +358,7 @@ message disksetupdone
 disklabel na dysk doceloway, oraz utworzyl system plikow i sprawdzil
 nowe partycje, ktore podales jako docelowe.
 
-Kolejny krok to sciagniecie i rozpakowanie pakietow dystrybucji.
+Kolejny krok to sciagniecie i rozpakowanie pakietow dystrybucji. 
 Nacisnij <enter> aby kontynuowac.
 }
 
@@ -363,7 +367,7 @@ message disksetupdoneupdate
 disklabel na dysk docelowy, oraz sprawdzil nowe partycje, ktore
 podales jako docelowe.
 
-Kolejny krok to sciagniecie i rozpakowanie pakietow dystrybucji.
+Kolejny krok to sciagniecie i rozpakowanie pakietow dystrybucji. 
 Nacisnij <enter> aby kontynuowac.
 }
 

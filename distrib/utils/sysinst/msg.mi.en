@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.117 2003/07/31 13:50:05 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.118 2003/08/05 13:35:28 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -265,40 +265,47 @@ message partition_sizes_ok
 {Partition sizes ok}
 
 message edfspart
-{You should set the file system (FS) kind first.  Then set the other values.
+{You should set the file system (FS) kind first. 
+Then set the other values.
 
 The current values for partition %c are:
 
-                    MB cylinders   sectors
-	       ------- --------- ---------
+                          MB cylinders   sectors
+	             ------- --------- ---------
 }
 
 message fstype_fmt
-{  FStype: %9s}
+{        FStype: %9s}
 
 message start_fmt
-{   start: %9d %9d %9d}
+{         start: %9d %9d %9d}
 
 message size_fmt
-{    size: %9d %9d %9d}
+{          size: %9d %9d %9d}
 
 message end_fmt
-{     end: %9d %9d %9d}
+{           end: %9d %9d %9d}
 
 message bsize_fmt
-{   bsize: %9d bytes}
+{    block size: %9d bytes}
 
 message fsize_fmt
-{   fsize: %9d bytes}
+{ fragment size: %9d bytes}
 
 message newfs_fmt
-{   newfs: %9s}
+{         newfs: %9s}
 
 message mount_fmt
-{   mount: %9s}
+{         mount: %9s}
+
+message mount_options_fmt
+{ mount options: }
 
 message mountpt_fmt
-{mount pt: %9s}
+{   mount point: %9s}
+
+message toggle
+{Toggle}
 
 message restore
 {Restore original values}
@@ -332,13 +339,8 @@ message invalid_sector_number
 message Select_file_system_block_size
 {Select file system block size}
 
-message Select_number_of_fragments_per_block
-{Select number of fragments per filesystem block}
-
-message f8_per_block {8 per block}
-message f4_per_block {4 per block}
-message f2_per_block {2 per block}
-message f1_per_block {1 per block}
+message Select_file_system_fragment_size
+{Select file system fragment size}
 
 message packname
 {Please enter a name for your NetBSD disk}
@@ -356,7 +358,7 @@ message disksetupdone
 written a disklabel to the target disk, and newfs'ed and fsck'ed
 the new partitions you specified for the target disk.
 
-The next step is to fetch and unpack the distribution filesets.
+The next step is to fetch and unpack the distribution filesets. 
 Press <return> to proceed.
 }
 
@@ -365,7 +367,7 @@ message disksetupdoneupdate
 written a disklabel to the target disk, and fsck'ed the new
 partitions you specified for the target disk.
 
-The next step is to fetch and unpack the distribution filesets.
+The next step is to fetch and unpack the distribution filesets. 
 Press <return> to proceed.
 }
 

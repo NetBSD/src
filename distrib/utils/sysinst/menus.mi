@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.10 2003/07/27 07:45:08 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.11 2003/08/05 13:35:27 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ allow dynamic menus;
 allow dynamic messages;
 
 
-menu selfskind, title MSG_Select_the_type, y=15, exitstring MSG_unchanged;
+menu selfskind, title MSG_Select_the_type, exitstring MSG_unchanged;
 	display action {
 		switch (((partinfo *)arg)->pi_fstype) {
 		case FS_UNUSED:	menu->cursel = 0; break;
@@ -75,7 +75,7 @@ menu selfskind, title MSG_Select_the_type, y=15, exitstring MSG_unchanged;
 		};
 	};
 	option "unused", exit, action 
-	    { ((partinfo *)arg)->pi_fstype = FS_UNUSED; set_bsize(arg, 0); };
+	    { memset(arg, 0, sizeof (partinfo)); };
 	option "4.2BSD", exit, action 
 	    { ((partinfo *)arg)->pi_fstype = FS_BSDFFS; set_bsize(arg, 8192); };
 	option "swap", exit, action 
@@ -88,17 +88,46 @@ menu selfskind, title MSG_Select_the_type, y=15, exitstring MSG_unchanged;
 	    { extern int all_fstype_menu;
 	      m->opts[m->cursel].opt_menu = all_fstype_menu; };
 
-menu selbsize, title MSG_Select_file_system_block_size, y = 15;
-	option  "8192", exit, action { set_bsize(arg, 8192); };
+menu selbsize, title MSG_Select_file_system_block_size, y=10, x=40;
+	display action {
+		partinfo *pi = arg;
+		int b;
+		b = ffs(pi->pi_fsize * pi->pi_frag / 4096) - 1;
+		if (b < 0 || b >= menu->numopts)
+			b = 1;
+		menu->cursel = b;
+	};
 	option  "4096", exit, action { set_bsize(arg, 4096); };
+	option  "8192", exit, action { set_bsize(arg, 8192); };
 	option "16384", exit, action { set_bsize(arg, 16384); };
 	option "32768", exit, action { set_bsize(arg, 32768); };
 
-menu selfsize, title MSG_Select_number_of_fragments_per_block, y = 15;
-	option MSG_f8_per_block, exit, action { set_fsize(arg, 8); };
-	option MSG_f4_per_block, exit, action { set_fsize(arg, 4); };
-	option MSG_f2_per_block, exit, action { set_fsize(arg, 2); };
-	option MSG_f1_per_block, exit, action { set_fsize(arg, 1); };
+menu selfsize, title MSG_Select_file_system_fragment_size, y=11, x=40;
+	display action {
+		partinfo *pi = arg;
+		int b;
+		b = ffs(pi->pi_fsize / 512) - 1;
+		if (b < 0 || b >= menu->numopts)
+			b = 1;
+		menu->cursel = b;
+	};
+	option   "512", exit, action { set_fsize(arg, 512); };
+	option  "1024", exit, action { set_fsize(arg, 1024); };
+	option  "2048", exit, action { set_fsize(arg, 2048); };
+	option  "4096", exit, action { set_fsize(arg, 4096); };
+	option  "8192", exit, action { set_fsize(arg, 8192); };
+	option "16384", exit, action { set_fsize(arg, 16384); };
+	option "32768", exit, action { set_fsize(arg, 32768); };
+
+menu mountoptions, title MSG_toggle, y=6, x= 20, exitstring MSG_unchanged;
+	option "async", exit, action
+		{ ((partinfo *)arg)->pi_flags ^= PIF_ASYNC; };
+	option "noatime", exit, action
+		{ ((partinfo *)arg)->pi_flags ^= PIF_NOATIME; };
+	option "nodevmtime", exit, action
+		{ ((partinfo *)arg)->pi_flags ^= PIF_NODEVMTIME; };
+	option "softdep", exit, action
+		{ ((partinfo *)arg)->pi_flags ^= PIF_SOFTDEP; };
 
 menu netbsd, title MSG_NetBSD_VERSION_Install_System,
     exit, exitstring MSG_Exit_Install_System;
