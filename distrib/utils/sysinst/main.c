@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1997/11/21 12:08:06 simonb Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1997/11/25 06:53:10 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,7 +71,6 @@ int main(int argc, char **argv)
 		case 'r':
 			/* Release name other than compiled in release. */
 			strncpy (rel, optarg, SSTRSIZE);
-			strncpy (rels, optarg, SSTRSIZE);
 			break;
 		case '?':
 		default:
@@ -82,14 +81,6 @@ int main(int argc, char **argv)
 	/* initialize message window */
 	win = newwin(22,78,1,1);
        	msg_window(win);
-
-	/* Change X.Y release number into XY */
-	{	char *t, *r;
-		for (t=r=rels; *t; t++)
-			if (*t != '.')
-				*r++=*t;
-		*r = 0;
-	}
 
 	/* Watch for SIGINT and clean up */
 	(void) signal(SIGINT, inthandler);
