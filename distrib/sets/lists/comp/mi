@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.683 2004/03/23 21:56:53 jdc Exp $
+#	$NetBSD: mi,v 1.684 2004/03/24 19:37:10 atatat Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5254,6 +5254,7 @@
 ./usr/share/man/cat9/sysctl_notavail.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sysctl_null.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sysctl_query.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_teardown.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sysctl_unlock.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_badaddr.0		comp-sys-catman		.cat
@@ -8891,6 +8892,7 @@
 ./usr/share/man/man9/sysctl_notavail.9		comp-sys-man		.man
 ./usr/share/man/man9/sysctl_null.9		comp-sys-man		.man
 ./usr/share/man/man9/sysctl_query.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_teardown.9		comp-sys-man		.man
 ./usr/share/man/man9/sysctl_unlock.9		comp-sys-man		.man
 ./usr/share/man/man9/tc.9			comp-sys-man		.man
 ./usr/share/man/man9/tc_badaddr.9		comp-sys-man		.man
