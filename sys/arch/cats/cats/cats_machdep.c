@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.49 2003/07/15 01:29:18 lukem Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.49 2003/07/15 01:29:18 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -362,6 +362,7 @@ initarm(bootargs)
 	u_int l1pagetable;
 	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 	pv_addr_t kernel_l1pt;
+	extern u_int cpu_get_control(void);
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
@@ -388,7 +389,9 @@ initarm(bootargs)
 	 * Once all the memory map changes are complete we can call consinit()
 	 * and not have to worry about things moving.
 	 */
-	/* fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode); */
+#ifdef FCOM_INIT_ARM
+	 fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode);
+#endif
 
 	/* Talk to the user */
 	printf("NetBSD/cats booting ...\n");
@@ -661,7 +664,32 @@ initarm(bootargs)
 	 * Now we have the real page tables in place so we can switch to them.
 	 * Once this is done we will be running with the REAL kernel page tables.
 	 */
+#ifdef VERBOSE_INIT_ARM
+	/* checking sttb address */
+	printf("setttb address = %p\n", cpufuncs.cf_setttb);
 
+	printf("kernel_l1pt=0x%08x old = 0x%08x, phys = 0x%08x\n",
+			((uint*)kernel_l1pt.pv_va)[0xf00],
+			((uint*)ebsabootinfo.bt_l1)[0xf00],
+			((uint*)kernel_l1pt.pv_pa)[0xf00]);
+
+	printf("old pt @ %p, new pt @ %p\n", (uint*)kernel_l1pt.pv_pa, (uint*)ebsabootinfo.bt_l1);
+
+	printf("Enabling System access\n");
+#endif
+	/* 
+	 * enable the system bit in the control register, otherwise we can't
+	 * access the kernel after the switch to the new L1 table
+	 * I suspect cyclone hid this problem, by enabling the ROM bit
+	 * Note can not have both SYST and ROM enabled together, the results
+	 * are "undefined"
+	 */
+	cpu_control(CPU_CONTROL_SYST_ENABLE | CPU_CONTROL_ROM_ENABLE, CPU_CONTROL_SYST_ENABLE);
+#ifdef VERBOSE_INIT_ARM
+	printf("switching domains\n");
+#endif
+	/* be a client to all domains */
+	cpu_domains(0x55555555);
 	/* Switch tables */
 #ifdef VERBOSE_INIT_ARM
 	printf("switching to new L1 page table\n");
@@ -671,9 +699,10 @@ initarm(bootargs)
 	 * Ok the DC21285 CSR registers are about to be moved.
 	 * Detach the diagnostic serial port.
 	 */
-	/* fcomcndetach(); */
+#ifdef FCOM_INIT_ARM
+	fcomcndetach();
+#endif
 	
-	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 	setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
