@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.133 2000/02/09 08:15:12 tron Exp $
+#	$NetBSD: Makefile,v 1.134 2000/02/14 18:37:39 erh Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -25,6 +25,10 @@
 #   BUILD_KERNELS are a machine-dependent list of kernels that should just
 #	be built in place but not made into sets or installed, e.g., an
 #	INSTALL kernel used later in src/distrib/.
+#   CRYPTOPATH is automatically defined by bsd.crypto.mk to be either
+#	../crypto-us or ../crypto-intl.  It controls the building of
+#	the secr set, which can be disabled by setting CRYPTOPATH to
+#	"none".
 # 
 # Targets:
 #    distribution: makes a full NetBSD distribution in DESTDIR. If
@@ -36,8 +40,10 @@
 #	stuff for this target is found in etc.${MACHINE}/Makefile.inc.
 #    release: a synonym for `snapshot'
 
-# XXX: For NO_SENDMAIL and INSTPRIV
+# For NO_SENDMAIL and INSTPRIV and CRYPTOPATH
 .include <bsd.own.mk>
+SRCTOP= ..
+.include <bsd.crypto.mk>
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME?=	US/Pacific
@@ -238,7 +244,7 @@ release snapshot snap_pre snap_md_pre snap_md_post:
 release snapshot: distribution snap_pre snap_md_pre snap_kern snap_md_post
 	sh ../distrib/sets/maketars -s ../distrib/sets \
 		-d ${DESTDIR} -t ${RELEASEDIR}/binary/sets
-.if exists(../domestic) && !defined(EXPORTABLE_SYSTEM)
+.if defined(CRYPTOPATH) && exists(${CRYPTOPATH})
 	sh ../distrib/sets/maketars -s ../distrib/sets \
 		-d ${DESTDIR} -t ${RELEASEDIR}/binary/security secr
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/security
