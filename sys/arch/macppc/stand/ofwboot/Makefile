@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2000/10/13 00:19:30 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.18 2000/10/28 15:41:25 garbled Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -27,7 +27,7 @@ FIXCOFF=	${FIXCOFFDIR}/fixcoff
 FIXCOFFTARG=	${FIXCOFF}
 
 ${FIXCOFF}:
-	(cd ${.CURDIR}/../fixcoff; make)
+	(cd ${.CURDIR}/../fixcoff; ${MAKE})
 
 .endif
 .else
