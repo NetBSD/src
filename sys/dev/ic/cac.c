@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.11 2000/09/01 14:17:15 ad Exp $	*/
+/*	$NetBSD: cac.c,v 1.12 2000/09/08 12:16:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 		return (-1);
 	}
 
-	if ((error = bus_dmamap_create(sc->sc_dmat, size, size, 1, 0, 
+	if ((error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0, 
 	    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
 		printf("%s: unable to create CCB DMA map, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
@@ -138,9 +138,10 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 
 	for (i = 0; i < CAC_MAX_CCBS; i++, ccb++) {
 		/* Create the DMA map for this CCB's data */
-		error = bus_dmamap_create(sc->sc_dmat, CAC_MAX_XFER, 
-		    CAC_SG_SIZE, CAC_MAX_XFER, 0, 
-		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ccb->ccb_dmamap_xfer);
+		error = bus_dmamap_create(sc->sc_dmat, CAC_MAX_XFER,
+		    CAC_SG_SIZE, CAC_MAX_XFER, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    &ccb->ccb_dmamap_xfer);
 
 		if (error) {
 			printf("%s: can't create ccb dmamap (%d)\n", 
@@ -326,6 +327,9 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 			cac_ccb_free(sc, ccb);
 			rv = -1;
 		} else {
+#ifdef DIAGNOSTIC
+			ccb->ccb_flags |= CAC_CCB_ACTIVE;
+#endif
 			(*sc->sc_cl->cl_submit)(sc, ccb);
 			cac_ccb_poll(sc, ccb, 2000);
 			cac_ccb_free(sc, ccb);
