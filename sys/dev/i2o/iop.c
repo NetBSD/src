@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.9 2001/01/03 21:04:01 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.10 2001/01/03 21:17:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -2065,8 +2065,10 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    	break;
 		}
 		for (i = 0; i < pt->pt_nbufs; i++)
-			if (pt->pt_bufs[i].ptb_datalen > ((MAXPHYS + 3) & ~3))
-				return (ENOMEM);
+			if (pt->pt_bufs[i].ptb_datalen > ((MAXPHYS + 3) & ~3)) {
+				rv = ENOMEM;
+				goto bad;
+			}
 
 		rv = iop_msg_alloc(sc, NULL, &im, IM_NOINTR | IM_NOSTATUS);
 		if (rv != 0)
@@ -2085,15 +2087,18 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			ptb = &pt->pt_bufs[i];
 			buf = sc->sc_ptb + i * ((MAXPHYS + 3) & ~3);
 
-			if (ptb->ptb_out != 0)
+			if (ptb->ptb_out != 0) {
 				rv = copyin(ptb->ptb_data, buf,
 				    ptb->ptb_datalen);
+				if (rv != 0)
+					goto bad;
+			}
 
 			rv = iop_msg_map(sc, im, buf, ptb->ptb_datalen,
 			    ptb->ptb_out != 0);
 			if (rv != 0) {
 				iop_msg_free(sc, NULL, im);
-				break;
+				goto bad;
 			}
 		}
 
@@ -2169,7 +2174,7 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	}
 
+bad:
 	PRELE(p);
-
 	return (rv);
 }
