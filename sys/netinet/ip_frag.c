@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.16 2000/03/23 07:03:28 thorpej Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.17 2000/03/24 22:40:11 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_frag.c,v 1.16 2000/03/23 07:03:28 thorpej Exp $";
+static const char rcsid[] = "$NetBSD: ip_frag.c,v 1.17 2000/03/24 22:40:11 thorpej Exp $";
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.4.2.3 1999/09/18 15:03:54 darrenr Exp ";
@@ -93,6 +93,7 @@ extern struct callout_handle ipfr_slowtimer_ch;
 # endif
 #endif
 #if defined(__NetBSD__)
+#include <sys/callout.h>
 extern struct callout ipfr_slowtimer_ch;
 #endif
 
