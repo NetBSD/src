@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.84 1999/07/23 01:04:02 mrg Exp $
+#	$NetBSD: NetBSD.dist,v 1.85 1999/07/30 19:25:19 aidan Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -37,6 +37,11 @@ disklabels
 # ./etc/kerberosIV
 kerberosIV
 # ./etc/kerberosIV
+..
+
+# ./etc/kerberosV
+kerberosV
+# ./etc/kerberosV
 ..
 
 # ./etc/mtree
@@ -169,6 +174,27 @@ objc
 # ./usr/include/kerberosIV
 kerberosIV
 # ./usr/include/kerberosIV
+..
+
+# ./usr/include/krb5
+krb5
+# ./usr/include/krb5
+..
+
+# ./usr/include/gssapi
+gssapi
+
+# ./usr/include/gssapi/rpc
+rpc
+# ./usr/include/gssapi/rpc
+..
+
+# ./usr/include/gssapi
+..
+
+# ./usr/include/kadm5
+kadm5
+# ./usr/include/kadm5
 ..
 
 # ./usr/include/openssl
@@ -1924,6 +1950,11 @@ phantasia	uname=games gname=games mode=0775
 ..
 
 # ./var/games
+..
+
+# ./var/krb5kdc
+krb5kdc
+# ./var/krb5kdc
 ..
 
 # ./var/log
