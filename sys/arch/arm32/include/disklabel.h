@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.4 1998/06/08 20:21:18 mark Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.5 1999/01/27 20:43:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -53,7 +53,7 @@
 
 #include <sys/dkbad.h>
 #include <machine/disklabel_acorn.h>
-#include <machine/disklabel_mbr.h>
+#include <sys/disklabel_mbr.h>
 
 struct cpu_disklabel {
 #if 0 /* XXX not actually used by anything */
@@ -66,8 +66,17 @@ struct cpu_disklabel {
 };
 
 #ifdef _KERNEL
+struct buf;
 struct disklabel;
 int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
+
+/* for readdisklabel.  rv != 0 -> matches, msg == NULL -> success */
+int	mbr_label_read __P((dev_t, void (*)(struct buf *), struct disklabel *,
+	    struct cpu_disklabel *, char **, int *, int *));
+
+/* for writedisklabel.  rv == 0 -> dosen't match, rv > 0 -> success */
+int	mbr_label_locate __P((dev_t, void (*)(struct buf *),
+	    struct disklabel *, struct cpu_disklabel *, int *, int *));
 #endif /* _KERNEL */
 
 #endif /* _ARM32_DISKLABEL_H_ */
