@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.8.2.3 2002/08/27 23:45:21 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.8.2.4 2002/10/18 02:39:37 nathanw Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -64,7 +64,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.1.2.2 2002/02/28 04:11:55 nathanw Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.1.2.3 2002/10/18 02:39:48 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -57,9 +57,8 @@ struct vga_ofbus_softc {
 int	vga_ofbus_match (struct device *, struct cfdata *, void *);
 void	vga_ofbus_attach (struct device *, struct device *, void *);
 
-struct cfattach vga_ofbus_ca = {
-	sizeof(struct vga_ofbus_softc), vga_ofbus_match, vga_ofbus_attach,
-};
+CFATTACH_DECL(vga_ofbus, sizeof(struct vga_ofbus_softc),
+    vga_ofbus_match, vga_ofbus_attach, NULL, NULL);
 
 static const char *compat_strings[] = { "pnpPNP,900", 0 };
 

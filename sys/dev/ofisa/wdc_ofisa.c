@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.6.2.2 2002/06/20 03:45:18 nathanw Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.6.2.3 2002/10/18 02:42:51 nathanw Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.6.2.2 2002/06/20 03:45:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.6.2.3 2002/10/18 02:42:51 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,9 +67,8 @@ struct wdc_ofisa_softc {
 int wdc_ofisa_probe __P((struct device *, struct cfdata *, void *));
 void wdc_ofisa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach wdc_ofisa_ca = {
-	sizeof(struct wdc_ofisa_softc), wdc_ofisa_probe, wdc_ofisa_attach
-};
+CFATTACH_DECL(wdc_ofisa, sizeof(struct wdc_ofisa_softc),
+    wdc_ofisa_probe, wdc_ofisa_attach, NULL, NULL);
 
 int
 wdc_ofisa_probe(parent, cf, aux)

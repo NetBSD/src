@@ -1,4 +1,4 @@
-/*	$NetBSD: pnaphy.c,v 1.2.6.5 2002/08/01 02:45:07 nathanw Exp $	*/
+/*	$NetBSD: pnaphy.c,v 1.2.6.6 2002/10/18 02:42:48 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.2.6.5 2002/08/01 02:45:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.2.6.6 2002/10/18 02:42:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,10 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.2.6.5 2002/08/01 02:45:07 nathanw Exp $
 int	pnaphymatch(struct device *, struct cfdata *, void *);
 void	pnaphyattach(struct device *, struct device *, void *);
 
-struct cfattach pnaphy_ca = {
-	sizeof(struct mii_softc), pnaphymatch, pnaphyattach,
-	    mii_phy_detach, mii_phy_activate
-};
+CFATTACH_DECL(pnaphy, sizeof(struct mii_softc),
+    pnaphymatch, pnaphyattach, mii_phy_detach, mii_phy_activate);
 
 int	pnaphy_service(struct mii_softc *, struct mii_data *, int);
 void	pnaphy_status(struct mii_softc *);
@@ -117,7 +115,7 @@ pnaphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &pnaphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = ma->mii_flags;
+	sc->mii_flags = ma->mii_flags | MIIF_IS_HPNA; /* force HomePNA */
 	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_mca.c,v 1.1.2.4 2001/11/14 19:15:00 nathanw Exp $	*/
+/*	$NetBSD: if_le_mca.c,v 1.1.2.5 2002/10/18 02:42:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.1.2.4 2001/11/14 19:15:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.1.2.5 2002/10/18 02:42:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +106,8 @@ static __inline void le_mca_wrreg __P((struct le_mca_softc *, int, int));
 #define le_mca_set_RAP(sc, reg_number) \
 		le_mca_wrreg(sc, reg_number, RAP | REGWRITE)
 
-struct cfattach le_mca_ca = {
-	sizeof(struct le_mca_softc), le_mca_match, le_mca_attach
-};
+CFATTACH_DECL(le_mca, sizeof(struct le_mca_softc),
+    le_mca_match, le_mca_attach, NULL, NULL);
 
 /* SKNET MC+ POS mapping */
 static const u_int8_t sknet_mcp_irq[] = {

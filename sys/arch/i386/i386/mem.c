@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.47.4.8 2002/09/17 21:15:08 nathanw Exp $	*/
+/*	$NetBSD: mem.c,v 1.47.4.9 2002/10/18 02:37:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.47.4.8 2002/09/17 21:15:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.47.4.9 2002/10/18 02:37:46 nathanw Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.47.4.8 2002/09/17 21:15:08 nathanw Exp $")
 
 #include <uvm/uvm_extern.h>
 
-#define	DEV_IO		14	/* iopl for compat_10 */
+#define	DEV_IO	14		/* iopl for compat_10 */
 
 extern char *vmmap;            /* poor name! */
 caddr_t zeropage;
@@ -76,6 +76,7 @@ const struct cdevsw mem_cdevsw = {
 	mmopen, nullclose, mmrw, mmrw, mmioctl,
 	nostop, notty, nopoll, mmmmap,
 };
+
 
 /*ARGSUSED*/
 int

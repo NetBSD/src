@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.4.6.2 2002/08/19 21:39:08 thorpej Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.4.6.3 2002/10/18 02:35:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -55,10 +55,6 @@
 #include <dev/isa/isavar.h>
 #endif
 
-#ifdef netwinder
-void		netwinder_pci_attach_hook __P((struct device *,
-		    struct device *, struct pcibus_attach_args *));
-#endif
 void		footbridge_pci_attach_hook __P((struct device *,
 		    struct device *, struct pcibus_attach_args *));
 int		footbridge_pci_bus_maxdevs __P((void *, int));
@@ -344,7 +340,7 @@ footbridge_pci_intr_string(pcv, ih)
 	printf("footbridge_pci_intr_string(pcv=0x%p, ih=0x%lx)\n", pcv, ih);
 #endif
 	if (ih == 0)
-		panic("footbridge_pci_intr_string: bogus handle 0x%lx\n", ih);
+		panic("footbridge_pci_intr_string: bogus handle 0x%lx", ih);
 
 #if NISA > 0
 	if (ih >= 0x80 && ih <= 0x8f) {

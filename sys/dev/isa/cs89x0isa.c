@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.3.2.2 2002/01/08 00:30:22 nathanw Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.3.2.3 2002/10/18 02:42:09 nathanw Exp $ */
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* isa dma routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.3.2.2 2002/01/08 00:30:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.3.2.3 2002/10/18 02:42:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ void cs_isa_dma_chipinit(struct cs_softc *sc)
 		    isc->sc_dmasize, NULL, DMAMODE_READ | DMAMODE_LOOPDEMAND,
 		    BUS_DMA_NOWAIT)) {
 			/* XXX XXX XXX */
-			panic("%s: unable to start DMA\n", sc->sc_dev.dv_xname);
+			panic("%s: unable to start DMA", sc->sc_dev.dv_xname);
 		}
 		isc->sc_dmacur = isc->sc_dmabase;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.2.8.4 2002/02/28 04:13:46 nathanw Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.2.8.5 2002/10/18 02:42:31 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.2.8.4 2002/02/28 04:13:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.2.8.5 2002/10/18 02:42:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,8 @@ struct pckbc_isa_softc {
 	int sc_irq[PCKBC_NSLOTS];
 };
 
-struct cfattach pckbc_isa_ca = {
-	sizeof(struct pckbc_isa_softc), pckbc_isa_match, pckbc_isa_attach,
-};
+CFATTACH_DECL(pckbc_isa, sizeof(struct pckbc_isa_softc),
+    pckbc_isa_match, pckbc_isa_attach, NULL, NULL);
 
 void	pckbc_isa_intr_establish __P((struct pckbc_softc *, pckbc_slot_t));
 
@@ -126,7 +125,9 @@ pckbc_isa_match(parent, match, aux)
 		}
 		res = pckbc_poll_data1(&t, PCKBC_KBD_SLOT, 0);
 		if (res != 0x55) {
+#ifdef DEBUG
 			printf("kbc selftest: %x\n", res);
+#endif
 			ok = 0;
 		}
  out:

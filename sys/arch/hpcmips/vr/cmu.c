@@ -1,4 +1,4 @@
-/*	$NetBSD: cmu.c,v 1.5.4.2 2002/02/28 04:10:03 nathanw Exp $	*/
+/*	$NetBSD: cmu.c,v 1.5.4.3 2002/10/18 02:37:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi
@@ -68,9 +68,8 @@ void	vrcmu_attach(struct device *, struct device *, void *);
 int	vrcmu_supply(vrcmu_chipset_tag_t, u_int16_t, int);
 int	vrcmu_hardpower(void *, int, long, void *);
 
-struct cfattach vrcmu_ca = {
-	sizeof(struct vrcmu_softc), vrcmu_match, vrcmu_attach
-};
+CFATTACH_DECL(vrcmu, sizeof(struct vrcmu_softc),
+    vrcmu_match, vrcmu_attach, NULL, NULL);
 
 int
 vrcmu_match(struct device *parent, struct cfdata *cf, void *aux)

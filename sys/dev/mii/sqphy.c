@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.19.2.8 2002/08/27 23:46:47 nathanw Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.19.2.9 2002/10/18 02:42:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.19.2.8 2002/08/27 23:46:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.19.2.9 2002/10/18 02:42:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,10 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.19.2.8 2002/08/27 23:46:47 nathanw Exp $
 int	sqphymatch(struct device *, struct cfdata *, void *);
 void	sqphyattach(struct device *, struct device *, void *);
 
-struct cfattach sqphy_ca = {
-	sizeof(struct mii_softc), sqphymatch, sqphyattach, mii_phy_detach,
-	    mii_phy_activate
-};
+CFATTACH_DECL(sqphy, sizeof(struct mii_softc),
+    sqphymatch, sqphyattach, mii_phy_detach, mii_phy_activate);
 
 int	sqphy_service(struct mii_softc *, struct mii_data *, int);
 void	sqphy_status(struct mii_softc *);
@@ -302,10 +300,11 @@ sqphy_84220_reset(struct mii_softc *sc)
 	 *
 	 * This sucks.
 	 */
-	if ((sc->mii_inst == 0 || (sc->mii_flags & MIIF_NOISOLATE)) &&
+	while ((sc->mii_inst == 0 || (sc->mii_flags & MIIF_NOISOLATE)) &&
 	    ((reg = PHY_READ(sc, MII_BMCR)) & BMCR_ISO) != 0) {
 
-		delay(30000);
+		delay(35000);
 		PHY_WRITE(sc, MII_BMCR, reg & ~BMCR_ISO);
+		delay(35000);
 	}
 }

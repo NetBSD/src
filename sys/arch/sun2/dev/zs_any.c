@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_any.c,v 1.4.8.3 2002/08/01 02:43:52 nathanw Exp $	*/
+/*	$NetBSD: zs_any.c,v 1.4.8.4 2002/10/18 02:40:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,17 +82,14 @@
 static int	zs_any_match __P((struct device *, struct cfdata *, void *));
 static void	zs_any_attach __P((struct device *, struct device *, void *));
 
-struct cfattach zs_obio_ca = {
-	sizeof(struct zsc_softc), zs_any_match, zs_any_attach
-};
+CFATTACH_DECL(zs_obio, sizeof(struct zsc_softc),
+    zs_any_match, zs_any_attach, NULL, NULL);
 
-struct cfattach zs_obmem_ca = {
-	sizeof(struct zsc_softc), zs_any_match, zs_any_attach
-};
+CFATTACH_DECL(zs_obmem, sizeof(struct zsc_softc),
+    zs_any_match, zs_any_attach, NULL, NULL);
 
-struct cfattach zs_mbmem_ca = {
-	sizeof(struct zsc_softc), zs_any_match, zs_any_attach
-};
+CFATTACH_DECL(zs_mbmem, sizeof(struct zsc_softc),
+    zs_any_match, zs_any_attach, NULL, NULL);
 
 /*
  * Is the zs chip present?

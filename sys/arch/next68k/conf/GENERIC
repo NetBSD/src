@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.45.6.7 2002/09/17 21:16:19 nathanw Exp $
+# $NetBSD: GENERIC,v 1.45.6.8 2002/10/18 02:39:13 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,13 +22,14 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.45.6.7 $"
+#ident 		"GENERIC-$Revision: 1.45.6.8 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
 
 # Standard system options
 options 	KTRACE		# system call tracing
+options 	SYSTRACE	# system call vetting via systrace(1)
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 #options 	SEMMNI=10	# number of semaphore identifiers
@@ -41,7 +42,7 @@ options 	SYSVSHM		# System V shared memory
 options 	LKM		# loadable kernel modules
 options 	INSECURE	# disable kernel security level
 options 	UCONSOLE	# Allow non-root TIOCCONS
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 options 	DEBUG		# kernel debugging code
@@ -85,7 +86,7 @@ options 	COMPAT_AOUT_M68K # support for NetBSD a.out executables
 options 	EXEC_AOUT	# support for a.out executables
 
 # File systems
-#file-system 	FFS		# UFS
+file-system 	FFS		# UFS
 #file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
@@ -178,7 +179,7 @@ zsc0	at intio? ipl 5
 
 xe*	at intio? ipl 3			# ethernet
 
-esp0	at intio? ipl 3	flags 0xff00	# Turn off sync negotiation
+esp0	at intio? ipl 3	flags 0xffff00	# Turn off sync negotiation
 
 #
 # Serial ports
@@ -190,13 +191,13 @@ zstty1	at zsc0 channel 1	# ttyb
 scsibus* at scsi?
 
 # SCSI devices
-#sd*	at scsibus? target ? lun ?	# SCSI disk drives
-#st*	at scsibus? target ? lun ?	# SCSI tape drives
-#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-#ch*	at scsibus? target ? lun ?	# SCSI autochangers
-#se*	at scsibus? target ? lun ?	# SCSI ethernet
-#ss*	at scsibus? target ? lun ?	# SCSI scanners
-#uk*	at scsibus? target ? lun ?	# SCSI unknown
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
+se*	at scsibus? target ? lun ?	# SCSI ethernet
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
 # Memory-disk drivers

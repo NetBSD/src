@@ -1,5 +1,6 @@
-/*	$NetBSD: uvax.h,v 1.6 2000/06/02 21:39:54 matt Exp $ */
+/*	$NetBSD: uvax.h,v 1.6.10.1 2002/10/18 02:40:31 nathanw Exp $ */
 /*
+ * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
@@ -15,8 +16,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
- *      Lule}, Sweden and its contributors.
+ *	This product includes software developed at Ludd, University of 
+ *	Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -38,49 +39,82 @@
 /*
  * Generic definitions common on all MicroVAXen clock chip.
  */
-#define	uVAX_CLKVRT	0200
-#define	uVAX_CLKUIP	0200
-#define	uVAX_CLKRATE	040
-#define	uVAX_CLKENABLE	06
-#define	uVAX_CLKSET	0206
+#define uVAX_CLKVRT	0200
+#define uVAX_CLKUIP	0200
+#define uVAX_CLKRATE	040
+#define uVAX_CLKENABLE	06
+#define uVAX_CLKSET	0206
 
 /* cpmbx bits  */
-#define	uVAX_CLKHLTACT	03
+#define uVAX_CLKHLTACT	03
 
 /* halt action values */
-#define	uVAX_CLKRESTRT	01
-#define	uVAX_CLKREBOOT	02
-#define	uVAX_CLKHALT	03
+#define uVAX_CLKRESTRT	01
+#define uVAX_CLKREBOOT	02
+#define uVAX_CLKHALT	03
 
 /* in progress flags */
-#define	uVAX_CLKBOOT	04
-#define	uVAX_CLKRSTRT	010
-#define	uVAX_CLKLANG	0360
+#define uVAX_CLKBOOT	04
+#define uVAX_CLKRSTRT	010
+#define uVAX_CLKLANG	0360
 
 /*
  * Miscellaneous registers common on most VAXststions.
  */
 struct vs_cpu {
-        u_long  vc_hltcod;      /* 00 - Halt Code Register */
-        u_long  vc_410mser;	/* 04 - VS2K */
-        u_long  vc_410cear;	/* 08 - VS2K */
+	u_long	vc_hltcod;	/* 00 - Halt Code Register */
+	u_long	vc_410mser;	/* 04 - VS2K */
+	u_long	vc_410cear;	/* 08 - VS2K */
 	u_char	vc_intmsk;	/* 0c - Interrupt mask register */
 	u_char	vc_vdcorg;	/* 0d - Mono display origin */
 	u_char	vc_vdcsel;	/* 0e - Video interrupt select */
 	u_char	vc_intreq;	/* 0f - Interrupt request register */
-#define	vc_intclr vc_intreq
-        u_short vc_diagdsp;     /* 10 - Diagnostic display register */
-        u_short pad4;		/* 12 */
-        u_long  vc_parctl;      /* 14 - Parity Control Register */
-#define	vc_bwf0	vc_parctl
-        u_short pad5;		/* 16 */
-        u_short pad6;		/* 18 */
-        u_short vc_diagtimu;	/* 1a - usecond timer KA46 */
-        u_short vc_diagtme;     /* 1c - Diagnostic time register */
-#define	vc_diagtimm vc_diagtme	/* msecond time KA46 */
+#define vc_intclr vc_intreq
+	u_short vc_diagdsp;	/* 10 - Diagnostic display register */
+	u_short pad4;		/* 12 */
+	u_long	vc_parctl;	/* 14 - Parity Control Register */
+#define vc_bwf0 vc_parctl
+	u_short pad5;		/* 16 */
+	u_short pad6;		/* 18 */
+	u_short vc_diagtimu;	/* 1a - usecond timer KA46 */
+	u_short vc_diagtme;	/* 1c - Diagnostic time register */
+#define vc_diagtimm vc_diagtme	/* msecond time KA46 */
 };
-#define	PARCTL_DMA	0x1000000
-#define	PARCTL_CPEN	2
-#define	PARCTL_DPEN	1
+#define PARCTL_DMA	0x1000000
+#define PARCTL_CPEN	2
+#define PARCTL_DPEN	1
+
+
+/*
+ * Console Mailbox layout common to several models.
+ */
+
+struct cpmbx {
+	unsigned int mbox_halt:2;	/* mailbox halt action */
+	unsigned int mbox_bip:1;	/* bootstrap in progress */
+	unsigned int mbox_rip:1;	/* restart in progress */
+	unsigned int mbox_lang:4;	/* language info */
+	unsigned int terminal:8;	/* terminal info */
+	unsigned int keyboard:8;	/* keyboard info */
+	unsigned int user_four:4;	/* unknown */
+	unsigned int user_halt:3;	/* user halt action */
+	unsigned int user_one:1;	/* unknown */
+};
+
+extern struct cpmbx *cpmbx;
+
+void   generic_halt(void);
+void   generic_reboot(int);
+
+#define	MHALT_RESTART_REBOOT	0
+#define	MHALT_RESTART		1
+#define	MHALT_REBOOT		2
+#define	MHALT_HALT		3
+
+#define	UHALT_DEFAULT		0
+#define	UHALT_RESTART		1
+#define	UHALT_REBOOT		2
+#define	UHALT_HALT		3
+#define	UHALT_RESTART_REBOOT	4
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.5.8.1 2002/09/17 21:13:50 nathanw Exp $	*/
+/*	$NetBSD: et4000.c,v 1.5.8.2 2002/10/18 02:35:59 nathanw Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -128,9 +128,8 @@ struct et_softc {
 
 #define ET_SC_FLAGS_INUSE 1
 
-struct cfattach et_ca = {
-	sizeof(struct et_softc), et_vme_match, et_vme_attach
-};
+CFATTACH_DECL(et, sizeof(struct et_softc),
+    et_vme_match, et_vme_attach, NULL, NULL);
 
 extern struct cfdriver et_cd;
 
@@ -360,9 +359,9 @@ et_vme_attach(parent, self, aux)
 	printf("\n");
 
 	if (bus_space_map(va->va_iot, va->va_iobase, va->va_iosize, 0, &ioh))
-		panic("et attach: cannot map io area\n");
+		panic("et attach: cannot map io area");
 	if (bus_space_map(va->va_memt, va->va_maddr, va->va_msize, 0, &memh))
-		panic("et attach: cannot map mem area\n");
+		panic("et attach: cannot map mem area");
 
 	sc->sc_iot = va->va_iot;
 	sc->sc_ioh = ioh;

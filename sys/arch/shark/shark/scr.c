@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.1.2.3 2002/09/17 21:17:35 nathanw Exp $	*/
+/*	$NetBSD: scr.c,v 1.1.2.4 2002/10/18 02:39:49 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -128,7 +128,7 @@
     #ifdef DDB
         #define DEBUGGER printf("file = %s, line = %d\n",__FILE__,__LINE__);Debugger()        
     #else
-        #define DEBUGGER panic("file = %s, line = %d\n",__FILE__,__LINE__);
+        #define DEBUGGER panic("file = %s, line = %d",__FILE__,__LINE__);
     #endif
 #else
     #define DEBUGGER
@@ -179,7 +179,7 @@
 #else
     #define ASSERT(f)
     #define TOGGLE_TEST_PIN()
-    //#define INVALID_STATE_CMD(sc,state,cmd)  panic("scr: invalid state/cmd, sc = %X, state = %X, cmd = %X, line = %d\n",sc,state,cmd,__LINE__);
+    //#define INVALID_STATE_CMD(sc,state,cmd)  panic("scr: invalid state/cmd, sc = %X, state = %X, cmd = %X, line = %d",sc,state,cmd,__LINE__);
     #define INVALID_STATE_CMD(sc,state,cmd)  sc->bigTrouble = TRUE;
 
 #endif
@@ -650,10 +650,8 @@ static void scrUntimeout   __P((void (*func)(struct scr_softc*,int), struct scr_
 
 
 
-struct cfattach scr_ca =
-{
-        sizeof(struct scr_softc), (cfmatch_t)scrprobe, scrattach
-};
+CFATTACH_DECL(scr, sizeof(struct scr_softc),
+    (cfmatch_t)scrprobe, scrattach, NULL, NULL);
 
 extern struct cfdriver scr_cd;
 
@@ -709,9 +707,9 @@ int scrprobe(parent, match, aux)
     int                     rv = 0;           
 
     KERN_DEBUG (scrdebug, SCRPROBE_DEBUG_INFO,("scrprobe: called, name = %s\n",
-                                               parent->dv_cfdata->cf_driver->cd_name));
+                                               parent->dv_cfdata->cf_name));
 
-    if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "ofisascr") == 0 &&
+    if (strcmp(parent->dv_cfdata->cf_name, "ofisascr") == 0 &&
         devices == 0)
     {
         /* set "devices" to ensure that we respond only once */
@@ -775,7 +773,7 @@ void scrattach(parent, self, aux)
     struct scr_softc       *sc = (void *)self;
 
     printf("\n");
-    if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "ofisascr"))
+    if (!strcmp(parent->dv_cfdata->cf_name, "ofisascr"))
     {
         KERN_DEBUG (scrdebug, SCRATTACH_DEBUG_INFO,("scrattach: called \n"));
 

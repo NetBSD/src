@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.2.6.2 2002/01/08 00:28:08 nathanw Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.2.6.3 2002/10/18 02:40:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -150,9 +150,8 @@ void ec_mediastatus __P((struct ifnet *, struct ifmediareq *));
 int ec_match __P((struct device *, struct cfdata *, void *));
 void ec_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ec_ca = {
-	sizeof(struct ec_softc), ec_match, ec_attach
-};
+CFATTACH_DECL(ec, sizeof(struct ec_softc),
+    ec_match, ec_attach, NULL, NULL);
 
 /*
  * Copy board memory to kernel.

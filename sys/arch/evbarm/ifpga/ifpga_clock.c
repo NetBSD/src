@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_clock.c,v 1.1.2.3 2002/02/28 04:09:09 nathanw Exp $ */
+/*	$NetBSD: ifpga_clock.c,v 1.1.2.4 2002/10/18 02:36:27 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -173,7 +173,7 @@ load_timer(int base, int intvl)
 	int control;
 
 	if (intvl & ~0x0000ffff)
-		panic("clock: Invalid interval\n");
+		panic("clock: Invalid interval");
 
 	control = (TIMERx_CTRL_ENABLE | TIMERx_CTRL_MODE_PERIODIC | 
 	    TIMERx_CTRL_PRESCALE_DIV16);
@@ -264,7 +264,7 @@ cpu_initclocks()
 	clock_sc->sc_clockintr = intr_claim(IFPGA_TIMER1_IRQ, IPL_CLOCK,
 	    "tmr1 hard clk", clockhandler, 0);
 	if (clock_sc->sc_clockintr == NULL)
-		panic("%s: Cannot install timer 1 interrupt handler\n",
+		panic("%s: Cannot install timer 1 interrupt handler",
 		    clock_sc->sc_dev.dv_xname);
 
 	clock_sc->sc_clock_count
@@ -283,7 +283,7 @@ cpu_initclocks()
 	clock_sc->sc_statclockintr = intr_claim(IFPGA_TIMER2_IRQ,
 	    IPL_STATCLOCK, "tmr2 stat clk", statclockhandler, 0);
 	if (clock_sc->sc_statclockintr == NULL)
-		panic("%s: Cannot install timer 2 interrupt handler\n",
+		panic("%s: Cannot install timer 2 interrupt handler",
 		    clock_sc->sc_dev.dv_xname);
 	load_timer(IFPGA_TIMER2_BASE, statint);
 }
@@ -315,7 +315,7 @@ microtime(struct timeval *tvp)
 
 #ifdef DIAGNOSTIC
 	if (deltatm < 0)
-		panic("opps deltatm < 0 tm=%d deltatm=%d\n", tm, deltatm);
+		panic("opps deltatm < 0 tm=%d deltatm=%d", tm, deltatm);
 #endif
 
 	/* Fill in the timeval struct */

@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.1.10.4 2002/09/17 21:12:55 nathanw Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.1.10.5 2002/10/18 02:34:45 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.1.10.4 2002/09/17 21:12:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.1.10.5 2002/10/18 02:34:45 nathanw Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -106,11 +106,8 @@ struct amidisplaycc_softc
 static int  amidisplaycc_match(struct device *, struct cfdata *, void *);
 static void amidisplaycc_attach(struct device *, struct device *, void *);
 
-struct cfattach amidisplaycc_ca = {
-	sizeof(struct amidisplaycc_softc),
-	amidisplaycc_match,
-	amidisplaycc_attach
-};
+CFATTACH_DECL(amidisplaycc, sizeof(struct amidisplaycc_softc),
+    amidisplaycc_match, amidisplaycc_attach, NULL, NULL);
 
 cons_decl(amidisplaycc_);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.37.6.3 2002/09/17 21:13:42 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.37.6.4 2002/10/18 02:35:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -267,9 +267,8 @@ static int	fdcmatch __P((struct device *, struct cfdata *, void *));
 static int	fdcprint __P((void *, const char *));
 static void	fdcattach __P((struct device *, struct device *, void *));
 
-struct cfattach fdc_ca = {
-	sizeof(struct device), fdcmatch, fdcattach
-};
+CFATTACH_DECL(fdc, sizeof(struct device),
+    fdcmatch, fdcattach, NULL, NULL);
 
 const struct bdevsw fd_bdevsw = {
 	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
@@ -361,9 +360,8 @@ static void	fdattach __P((struct device *, struct device *, void *));
 
 struct dkdriver fddkdriver = { fdstrategy };
 
-struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdmatch, fdattach
-};
+CFATTACH_DECL(fd, sizeof(struct fd_softc),
+    fdmatch, fdattach, NULL, NULL);
 
 extern struct cfdriver fd_cd;
 
@@ -800,7 +798,7 @@ int	drive, head, dense;
 			DMA->dma_drvmode = (FDC_HDSET|FDC_HDSIG);
 			break;
 		default:
-			panic("fdselect: unknown density code\n");
+			panic("fdselect: unknown density code");
 	}
 	if(i != selected) {
 		selected = i;

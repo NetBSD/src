@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2.6.5 2002/08/27 23:45:06 nathanw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2.6.6 2002/10/18 02:39:29 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -63,9 +63,8 @@ static struct cputab models[] = {
 static int	cpumatch(struct device *, struct cfdata *, void *);
 static void	cpuattach(struct device *, struct device *, void *);
 
-struct cfattach cpu_ca = {
-	sizeof(struct device), cpumatch, cpuattach
-};
+CFATTACH_DECL(cpu, sizeof(struct device),
+    cpumatch, cpuattach, NULL, NULL);
 
 int ncpus;
 
@@ -79,7 +78,7 @@ cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 	struct plb_attach_args *paa = aux;
 
 	/* make sure that we're looking for a CPU */
-	if (strcmp(paa->plb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->plb_name, cf->cf_name) != 0)
 		return (0);
 
 	return !cpufound;

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17.8.2 2002/09/17 21:13:48 nathanw Exp $	*/
+/*	$NetBSD: view.c,v 1.17.8.3 2002/10/18 02:35:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -46,7 +46,6 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/conf.h>
-#include <sys/poll.h>
 #include <machine/cpu.h>
 #include <atari/dev/grfabs_reg.h>
 #include <atari/dev/viewioctl.h>
@@ -71,12 +70,11 @@ int view_default_depth  = 1;
 dev_type_open(viewopen);
 dev_type_close(viewclose);
 dev_type_ioctl(viewioctl);
-dev_type_poll(viewpoll);
 dev_type_mmap(viewmmap);
 
 const struct cdevsw view_cdevsw = {
 	viewopen, viewclose, nullread, nullwrite, viewioctl,
-	nostop, notty, viewpoll, viewmmap,
+	nostop, notty, nopoll, viewmmap,
 };
 
 /* 
@@ -445,20 +443,6 @@ viewmmap(dev, off, prot)
 		return(((paddr_t)bmd_start - bmd_lin + off) >> PGSHIFT);
 
 	return(-1);
-}
-
-/*ARGSUSED*/
-int
-viewpoll(dev, events, p)
-dev_t		dev;
-int		events;
-struct proc	*p;
-{
-	int revents = 0;
-
-	if (events & (POLLOUT | POLLWRNORM))
-		revents |= events & (POLLOUT | POLLWRNORM);
-	return (revents);
 }
 
 view_t	*

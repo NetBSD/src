@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.1.6.5 2002/06/24 22:04:55 nathanw Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.1.6.6 2002/10/18 02:37:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.1.6.5 2002/06/24 22:04:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.1.6.6 2002/10/18 02:37:44 nathanw Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -76,17 +76,17 @@ mach_syscall_intern(p)
 {
 #ifdef KTRACE
 	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = mach_syscall_fancy;
 		return;
 	}
 #endif
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = mach_syscall_fancy;
 		return;
 	} 
 #endif
-	p->p_md.md_syscall = syscall_plain;
+	p->p_md.md_syscall = mach_syscall_plain;
 }
 
 

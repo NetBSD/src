@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.35.4.2 2002/01/08 00:27:05 nathanw Exp $	*/
+/*	$NetBSD: pm.c,v 1.35.4.3 2002/10/18 02:39:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.35.4.2 2002/01/08 00:27:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.35.4.3 2002/10/18 02:39:25 nathanw Exp $");
 
 
 #include <sys/param.h>
@@ -110,9 +110,8 @@ static int  pmmatch __P((struct device *, struct cfdata *, void *));
 static void pmattach __P((struct device *, struct device *, void *));
 static int  pminit __P((struct fbinfo *, caddr_t, int));
 
-struct cfattach pm_ds_ca = {
-	sizeof(struct device), pmmatch, pmattach
-};
+CFATTACH_DECL(pm_ds, sizeof(struct device),
+    pmmatch, pmattach, NULL, NULL);
 
 int
 pm_cnattach()

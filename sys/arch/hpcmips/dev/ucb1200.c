@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200.c,v 1.6.4.3 2002/06/20 03:38:50 nathanw Exp $ */
+/*	$NetBSD: ucb1200.c,v 1.6.4.4 2002/10/18 02:37:08 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -87,9 +87,8 @@ int	ucb1200_check_id(u_int16_t, int);
 void	ucb1200_dump(struct ucb1200_softc *);
 #endif
 
-struct cfattach ucb_ca = {
-	sizeof(struct ucb1200_softc), ucb1200_match, ucb1200_attach
-};
+CFATTACH_DECL(ucb, sizeof(struct ucb1200_softc),
+    ucb1200_match, ucb1200_attach, NULL, NULL);
 
 const struct ucb_id {
 	u_int16_t	id;
@@ -154,7 +153,7 @@ ucb1200_search(struct device *parent, struct cfdata *cf, void *aux)
 	ucba.ucba_sib	   = sc->sc_parent;
 	ucba.ucba_ucb	   = parent;
 	
-	if ((*cf->cf_attach->ca_match)(parent, cf, &ucba))
+	if (config_match(parent, cf, &ucba))
 		config_attach(parent, cf, &ucba, ucb1200_print);
 
 	return (0);

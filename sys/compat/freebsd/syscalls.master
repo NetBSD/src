@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.34.2.5 2002/06/20 03:42:48 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.34.2.6 2002/10/18 02:41:00 nathanw Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -504,7 +504,7 @@
 ; syscall numbers initially used in OpenBSD
 250	NOARGS		{ int sys_minherit(void *addr, size_t len, \
 			    int inherit); }
-251	UNIMPL		rfork
+251	STD		{ int freebsd_sys_rfork(int flags); }
 252	UNIMPL		openbsd_poll
 253	NOARGS		{ int sys_issetugid(void); }
 254	STD		{ int freebsd_sys_lchown(const char *path, int uid, \

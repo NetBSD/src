@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cesfic,v 1.2.2.2 2002/09/17 21:14:04 nathanw Exp $
+#	$NetBSD: majors.cesfic,v 1.2.2.3 2002/10/18 02:36:12 nathanw Exp $
 #
 # Device majors for cesfic
 #
@@ -23,3 +23,4 @@ device-major	md		char 15  block 3	md
 device-major	rnd		char 21			rnd
 device-major	clockctl	char 22			clockctl
 device-major	systrace	char 23			systrace
+device-major	cgd		char 24  block 4	cgd

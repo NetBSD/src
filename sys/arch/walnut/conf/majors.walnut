@@ -1,4 +1,4 @@
-#	$NetBSD: majors.walnut,v 1.2.2.2 2002/09/17 21:18:40 nathanw Exp $
+#	$NetBSD: majors.walnut,v 1.2.2.3 2002/10/18 02:40:39 nathanw Exp $
 #
 # Device majors for walnut
 #
@@ -53,3 +53,4 @@ device-major	systrace	char 60			systrace
 device-major	kttcp		char 61			kttcp
 device-major	sysmon		char 62			sysmon
 device-major	pci		char 63			pci
+device-major	cgd		char 64  block 13	cgd

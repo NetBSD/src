@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.12.8.5 2002/09/17 21:14:28 nathanw Exp $	*/
+/*	$NetBSD: apci.c,v 1.12.8.6 2002/10/18 02:36:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.12.8.5 2002/09/17 21:14:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.12.8.6 2002/10/18 02:36:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,9 +140,8 @@ struct apci_softc {
 int	apcimatch __P((struct device *, struct cfdata *, void *));
 void	apciattach __P((struct device *, struct device *, void *));
 
-struct cfattach apci_ca = {
-	sizeof(struct apci_softc), apcimatch, apciattach
-};
+CFATTACH_DECL(apci, sizeof(struct apci_softc),
+    apcimatch, apciattach, NULL, NULL);
 
 extern struct cfdriver apci_cd;
 

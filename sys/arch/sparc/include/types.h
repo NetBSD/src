@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.25.4.3 2002/04/01 07:42:45 nathanw Exp $ */
+/*	$NetBSD: types.h,v 1.25.4.4 2002/10/18 02:39:57 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,5 +92,10 @@ typedef paddr_t			psize_t;
 
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
+#define	__HAVE_MD_RUNQUEUE
+
+#ifdef SUN4U
+#define __HAVE_CPU_COUNTER	/* sparc64 has %tick */
+#endif
 
 #endif	/* _MACHTYPES_H_ */

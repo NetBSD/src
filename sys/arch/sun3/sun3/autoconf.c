@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56.6.2 2002/06/20 03:41:52 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56.6.3 2002/10/18 02:40:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -107,7 +107,6 @@ int bus_scan(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	cfmatch_t mf;
 
 #ifdef	DIAGNOSTIC
 	if (cf->cf_fstate == FSTATE_STAR)
@@ -128,8 +127,7 @@ int bus_scan(parent, cf, aux)
 	 * preserved for the related attach call.
 	 * XXX - This is a hack...
 	 */
-	mf = cf->cf_attach->ca_match;
-	if ((*mf)(parent, cf, ca) > 0) {
+	if (config_match(parent, cf, ca) > 0) {
 		config_attach(parent, cf, ca, bus_print);
 	}
 	return (0);

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.5.6.4 2002/01/08 00:30:03 nathanw Exp $ */
+/* $NetBSD: pckbc.c,v 1.5.6.5 2002/10/18 02:41:58 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.5.6.4 2002/01/08 00:30:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.5.6.5 2002/10/18 02:41:58 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,7 +292,7 @@ pckbc_submatch(parent, cf, aux)
 	if (cf->cf_loc[PCKBCCF_SLOT] != PCKBCCF_SLOT_DEFAULT &&
 	    cf->cf_loc[PCKBCCF_SLOT] != pa->pa_slot)
 		return (0);
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

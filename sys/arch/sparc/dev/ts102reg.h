@@ -1,4 +1,4 @@
-/*	$NetBSD: ts102reg.h,v 1.6 2000/07/25 09:57:59 toddpw Exp $ */
+/*	$NetBSD: ts102reg.h,v 1.6.8.1 2002/10/18 02:39:55 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #define	TS102_REG_UCTRL_DATA	0x0024	/* Microcontroller Data Register */
 #define	TS102_REG_UCTRL_STS	0x0028	/* Microcontroller Status Register */
 
-/* TS102 Card Interrupt Register defintions.
+/* TS102 Card Interrupt Register definitions.
  *
  * There is one 16-bit interrupt register for each card.  Each register
  * contains interrupt status (read) and clear (write) bits and an 

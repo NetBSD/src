@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.6.2.5 2002/10/15 18:01:59 nathanw Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.6.2.6 2002/10/18 02:37:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,8 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * NOTE: We simply use the primary CPU's cpuid_level and tsc_freq
+ * here.  Might want to change this later.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6.2.5 2002/10/15 18:01:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6.2.6 2002/10/18 02:37:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,17 +57,15 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6.2.5 2002/10/15 18:01:59 natha
 #include <machine/specialreg.h>
 
 extern int i386_fpu_present, i386_fpu_exception, i386_fpu_fdivbug;
-extern u_int64_t cpu_tsc_freq;
 extern int cpu_feature;
 extern char cpu_model[];
-extern char cpu_vendor[];
-extern int cpu_id, cpu_class;
+extern int cpu_class;
 
 static const char * const i386_features[] = {
 	"fpu", "vme", "de", "pse", "tsc", "msr", "pae", "mce",
 	"cx8", "apic", "10", "sep", "mtrr", "pge", "mca", "cmov",
-	"fgpat", "pse36", "psn", "19", "20", "21", "22", "mmx",
-	"fxsr", "xmm", "26", "27", "28", "29", "30", "31"
+	"pat", "pse36", "pn", "clflush", "20", "dts", "acpi", "mmx",
+	"fxsr", "sse", "sse2", "ss", "ht", "tm", "ia64", "31"
 };
 
 
@@ -79,9 +82,9 @@ procfs_getcpuinfstr(char *buf, int *len)
 	char featurebuf[256], *p;
 	u_int64_t freq, fraq;
 
-	if (cpu_tsc_freq != 0) {
-		freq = (cpu_tsc_freq + 4999) / 1000000;
-		fraq = ((cpu_tsc_freq + 4999) / 10000) % 100;
+	if (cpu_info_list->ci_tsc_freq != 0) {
+		freq = (cpu_info_list->ci_tsc_freq + 4999) / 1000000;
+		fraq = ((cpu_info_list->ci_tsc_freq + 4999) / 10000) % 100;
 	}
 
 	p = featurebuf;
@@ -106,9 +109,11 @@ procfs_getcpuinfstr(char *buf, int *len)
 		"model name\t: %s\n"
 		"stepping\t: ",
 		0,
-		cpu_vendor,
-		cpuid_level >= 0 ? ((cpu_id >> 8) & 15) : cpu_class + 3,
-		cpuid_level >= 0 ? ((cpu_id >> 4) & 15) : 0,
+		(char *)cpu_info_list->ci_vendor,
+		cpu_info_list->ci_cpuid_level >= 0 ?
+		    ((cpu_info_list->ci_signature >> 8) & 15) : cpu_class + 3,
+		cpu_info_list->ci_cpuid_level >= 0 ?
+		    ((cpu_info_list->ci_signature >> 4) & 15) : 0,
 		cpu_model
 	    );
 
@@ -117,8 +122,8 @@ procfs_getcpuinfstr(char *buf, int *len)
 	if (left <= 0)
 		return 0;
 
-	if (cpuid_level >= 0)
-		l = snprintf(p, left, "%d\n", cpu_id & 15);
+	if (cpu_info_list->ci_cpuid_level >= 0)
+		l = snprintf(p, left, "%d\n", cpu_info_list->ci_signature & 15);
 	else
 		l = snprintf(p, left, "unknown\n");
 
@@ -128,7 +133,7 @@ procfs_getcpuinfstr(char *buf, int *len)
 		return 0;
 
 		
-	if (cpu_tsc_freq != 0)
+	if (cpu_info_list->ci_tsc_freq != 0)
 		l = snprintf(p, left, "cpu MHz\t\t: %qd.%qd\n",
 		    freq, fraq);
 	else
@@ -149,7 +154,7 @@ procfs_getcpuinfstr(char *buf, int *len)
 		i386_fpu_fdivbug ? "yes" : "no",
 		i386_fpu_present ? "yes" : "no",
 		i386_fpu_exception ? "yes" : "no",
-		cpuid_level,
+		cpu_info_list->ci_cpuid_level,
 		(rcr0() & CR0_WP) ? "yes" : "no",
 		featurebuf);
 

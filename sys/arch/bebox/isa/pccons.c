@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.21.6.5 2002/09/17 21:13:57 nathanw Exp $	*/
+/*	$NetBSD: pccons.c,v 1.21.6.6 2002/10/18 02:36:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -176,9 +176,8 @@ void pcattach __P((struct device *, struct device *, void *));
 int pcintr __P((void *));
 void pcinit __P((void));
 
-struct cfattach pc_ca = {
-	sizeof(struct pc_softc), pcprobe, pcattach
-};
+CFATTACH_DECL(pc, sizeof(struct pc_softc),
+    pcprobe, pcattach, NULL, NULL);
 
 extern struct cfdriver pc_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11.4.10 2002/10/05 07:11:56 gmcgarry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11.4.11 2002/10/18 02:40:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -131,13 +131,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/clist.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/extent.h>

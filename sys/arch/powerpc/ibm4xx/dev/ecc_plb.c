@@ -1,4 +1,4 @@
-/*	$NetBSD: ecc_plb.c,v 1.1.2.2 2002/08/27 23:45:07 nathanw Exp $	*/
+/*	$NetBSD: ecc_plb.c,v 1.1.2.3 2002/10/18 02:39:29 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,9 +61,8 @@ static void	ecc_plbattach(struct device *, struct device *, void *);
 static void	ecc_plb_deferred(struct device *);
 static int	ecc_plb_intr(void *);
 
-struct cfattach ecc_plb_ca = {
-	sizeof(struct ecc_plb_softc), ecc_plbmatch, ecc_plbattach
-};
+CFATTACH_DECL(ecc_plb, sizeof(struct ecc_plb_softc),
+    ecc_plbmatch, ecc_plbattach, NULL, NULL);
 
 static int ecc_plb_found;
 
@@ -72,11 +71,11 @@ ecc_plbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct plb_attach_args *paa = aux;
 
-	if (strcmp(paa->plb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->plb_name, cf->cf_name) != 0)
 		return (0);
 
 	if (cf->cf_loc[PLBCF_IRQ] == PLBCF_IRQ_DEFAULT)
-		panic("ecc_plbmatch: wildcard IRQ not allowed\n");
+		panic("ecc_plbmatch: wildcard IRQ not allowed");
 
 	paa->plb_irq = cf->cf_loc[PLBCF_IRQ];
 

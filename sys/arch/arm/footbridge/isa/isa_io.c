@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.1.2.2 2002/02/28 04:07:29 nathanw Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.1.2.3 2002/10/18 02:35:26 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -288,7 +288,7 @@ isa_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("isa_alloc(): Help!\n");
+	panic("isa_alloc(): Help!");
 }
 
 void    
@@ -297,7 +297,7 @@ isa_bs_free(t, bsh, size)
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
-	panic("isa_free(): Help!\n");
+	panic("isa_free(): Help!");
 }
 
 void *

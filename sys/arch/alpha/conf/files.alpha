@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.142.2.8 2002/09/17 21:12:45 nathanw Exp $
+# $NetBSD: files.alpha,v 1.142.2.9 2002/10/18 02:34:10 nathanw Exp $
 #
 # alpha-specific configuration info
 
@@ -32,9 +32,6 @@ defflag		API_UP1000	# EV6		Alpha Processor, Inc. UP1000
 # Miscellaneous CPU-specific option headers
 defflag		FIX_UNALIGNED_VAX_FP
 defflag		ZS_IOASIC_DMA
-
-# XXX Temporary, until integration is finished.
-defflag		NEW_SCC_DRIVER
 
 # realtime clock compatible to OSF/1
 defflag		CLOCK_COMPAT_OSF1
@@ -188,11 +185,6 @@ file	dev/tc/px.c			px		needs-flag
 device	pxg: wsemuldisplaydev, stic
 attach	pxg at tc
 file	dev/tc/pxg.c			pxg		needs-flag
-
-# 8530 UARTs
-device	scc: tty
-attach	scc at ioasic
-file	arch/alpha/tc/scc.c		scc		needs-count
 
 # 8530 UARTs using the MI 8530 driver
 device	zsc { channel = -1 }

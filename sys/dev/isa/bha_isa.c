@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.16.2.5 2002/02/28 04:13:38 nathanw Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.16.2.6 2002/10/18 02:42:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.16.2.5 2002/02/28 04:13:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.16.2.6 2002/10/18 02:42:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.16.2.5 2002/02/28 04:13:38 nathanw Exp
 int	bha_isa_probe __P((struct device *, struct cfdata *, void *));
 void	bha_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach bha_isa_ca = {
-	sizeof(struct bha_softc), bha_isa_probe, bha_isa_attach
-};
+CFATTACH_DECL(bha_isa, sizeof(struct bha_softc),
+    bha_isa_probe, bha_isa_attach, NULL, NULL);
 
 /*
  * Check the slots looking for a board we recognise

@@ -1,6 +1,14 @@
-#	$NetBSD: files,v 1.427.2.19 2002/09/17 21:19:10 nathanw Exp $
+#	$NetBSD: files,v 1.427.2.20 2002/10/18 02:41:20 nathanw Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
+
+#
+# device classes
+#
+devclass disk
+devclass tape
+devclass ifnet
+devclass tty
 
 # options understood by the machine-independent part of the kernel
 # (note, these are case-sensitive)
@@ -64,26 +72,32 @@ defflag				COMPAT_PECOFF
 defflag	opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 				COMPAT_13 COMPAT_14 COMPAT_15 COMPAT_NOMID
 
-# networking protocols
 #
-defflag	opt_tcp_debug.h		TCP_DEBUG
-defparam opt_tcp_debug.h	TCP_NDEBUG
-defflag	opt_inet.h		INET INET6 INET6_MD_CKSUM
-defflag	opt_ipsec.h		IPSEC IPSEC_ESP
-defparam opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
-defflag	opt_atalk.h		NETATALK
-defflag	opt_ns.h		NS NSIP		# NS network stack,
-						# XNS tunneled over IP
-defflag	opt_iso.h		ISO TPIP	# ISO network stack
+# Cryptography support.  Include this early, since several things
+# use it.
+#
+include "crypto/arc4/files.arc4"
+include "crypto/des/files.des"
+include "crypto/blowfish/files.blowfish"
+include "crypto/cast128/files.cast128"
+include "crypto/rijndael/files.rijndael"
+
+#
+# Networking protocols
+#
+include "netatalk/files.netatalk"
+include "netccitt/files.netccitt"
+include "netinet/files.netinet"
+include "netinet/files.ipfilter"
+include "netinet6/files.netinet6"
+include "netinet6/files.netipsec"
+include "netiso/files.netiso"
+include "netnatm/files.netnatm"
+include "netns/files.netns"
+
 defflag opt_smb.h		SMB		# SMB network stack
 defflag				IPX		# IPX network stack
-defflag				EON		# ISO clnp over IP
-defflag				CCITT		#
-defflag				HDLC		# CCITT over HDLC
-defflag				LLC		# CCITT over LLC2 (& IEEE LLC?)
-defflag				NATM		# "native" ATM protocols
 defflag				PFIL_HOOKS	# pfil(9)
-defflag				IPFILTER_LOG	# logging of ip packets
 defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
 						# Include deflate or bsd
 						# compression, enable pppd
@@ -92,13 +106,6 @@ defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
 # networking options
 #
 defflag				GATEWAY
-defflag				MROUTING
-defflag				TCP_COMPAT_42
-
-defparam opt_tcp_space.h	TCP_RECVSPACE TCP_SENDSPACE
-
-defflag	opt_inet_csum.h		INET_CSUM_COUNTERS TCP_CSUM_COUNTERS
-				UDP_CSUM_COUNTERS
 
 defparam			SB_MAX
 
@@ -119,7 +126,6 @@ defparam opt_bufcache.h		BUFCACHE BUFPAGES
 # userconf
 #
 defflag				USERCONF
-
 
 #
 # Not entirely MI, but present on multiple arch's
@@ -151,24 +157,16 @@ defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_ROOT_SIZE
 #
 defflag	opt_perfctrs.h		PERFCTRS
 
-# device classes
-#
-devclass disk
-devclass tape
-devclass ifnet
-devclass tty
-
 # generic attributes
 #
 define	audiobus	{ }
 define	midibus		{ }
 define	midisyn
 define	wdc_base
-define	scsi		{[channel = -1]}
+define	scsi_core
+define	scsi		{[channel = -1]}: scsi_core
 define	ata		{[channel = -1], [drive = -1]}
 define	atapi		{[channel = -1]}
-define	irbus		{ }
-define	btbus		{ }
 define	radiodev	{ }
 
 # audio device attributes
@@ -185,20 +183,11 @@ attach	audio at audiobus
 device	midi
 attach	midi at midibus
 
-# IrDA physical frame level driver
-define	irdasir
-define	irframedrv
-device	irframe { } : irframedrv
-attach	irframe at irbus
+# IR device support
+include	"dev/ir/files.ir"
 
-# Consumer Ir driver
-device	cir
-attach	cir at irbus
-
-# Bluetooth host controller driver
-define	bthcidrv
-device	bthci { } : bthcidrv
-attach	bthci at btbus
+# Bluetooth device support
+include "dev/bluetooth/files.bluetooth"
 
 # raster operations attributes
 #
@@ -223,7 +212,7 @@ define	hippi
 define	ieee1394
 define	token
 define	sppp
-define	wlan
+define	wlan: arc4
 define	crypto
 
 # devices ARPing IPv4 pull this in:
@@ -235,16 +224,10 @@ define	arp
 #
 include "altq/files.altq"
 
-# Device description for machine-independent IPKDB code.
 #
-defflag	opt_ipkdb.h		IPKDB				: IPKDBKEY
-defflag	opt_ipkdb.h		IPKDBSECURE			: IPKDB
-defparam opt_ipkdb.h		IPKDBKEY			: IPKDB
-
-# Common files for any ipkdb support
+# IPKDB kernel debugger
 #
-file	ipkdb/ipkdb_ipkdb.c		ipkdb
-file	ipkdb/ipkdb_if.c		ipkdb
+include "ipkdb/files.ipkdb"
 
 # Logical disk
 #
@@ -425,10 +408,8 @@ file	dev/ic/am79c930.c		awi
 
 # Lucent & Intersil WaveLan IEEE (802.11)
 #
-#device wi: arp, wlan, ifnet
-device wi: arp, ifnet
+device wi: arp, wlan, ifnet
 file	dev/ic/wi.c			wi
-file	dev/ic/wi_hostap.c		wi
 
 # 3Com Etherlink-III Ethernet controller
 #
@@ -472,9 +453,9 @@ file	dev/ic/gem.c			gem
 
 # 8390-family Ethernet controllers
 #
-defflag	opt_ipkdb.h		IPKDB_DP8390			: IPKDB
+defflag	opt_ipkdb.h		IPKDB_DP8390
 define	dp8390nic
-file	dev/ic/dp8390.c			dp8390nic | IPKDB_DP8390
+file	dev/ic/dp8390.c			dp8390nic | ipkdb_dp8390
 
 # National Semiconductor DP83905 AT/LANTIC Ethernet media support
 #
@@ -589,7 +570,7 @@ file	dev/ic/tms320av110.c		tms320av110
 #
 defflag	opt_ipkdb.h		IPKDB_NE			: IPKDB_DP8390
 device	ne: ether, ifnet, arp, dp8390nic, mii
-file	dev/ic/ne2000.c			ne | IPKDB_NE
+file	dev/ic/ne2000.c			ne | ipkdb_ne
 
 # 8250/16[45]50-based "com" ports
 # XXX In a perfect world, this would be done with attributes
@@ -750,7 +731,11 @@ file	dev/ic/we.c			we
 # Allied-Telesis Ethernet driver based on Fujitsu MB8696xA controllers
 #
 device	ate: arp, ether, ifnet, mb86960
-file	dev/ic/ate_subr.c		ate
+
+# Fujitsu FMV-18x Ethernet driver based on Fujitsu MB8696xA controllers
+#
+device	fmv: arp, ether, ifnet, mb86960
+file	dev/ic/fmv.c			fmv
 
 # Crystal Semiconductor CS8900, CS8920, and CS8920M Ethernet
 #
@@ -784,13 +769,17 @@ file	dev/ic/pcdisplay_chars.c	pcdisplayops
 #
 defparam opt_vga.h		VGA_CONSOLE_SCREENTYPE
 defflag opt_vga.h 		VGA_CONSOLE_ATI_BROKEN_FONTSEL
+defflag opt_vga.h		VGA_RASTERCONSOLE
 device	vga: wsemuldisplaydev, pcdisplayops
-file	dev/ic/vga.c			vga			needs-flag
-file	dev/ic/vga_subr.c		vga
+file	dev/ic/vga.c		vga & !vga_rasterconsole	needs-flag
+file	dev/ic/vga_raster.c	vga_rasterconsole		needs-flag
+file	dev/ic/vga_subr.c	vga | vga_rasterconsole
+file	dev/ic/vga_common.c	vga | vga_rasterconsole
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
 device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8
 file	dev/ic/igsfb.c			igsfb
+file	dev/ic/igsfb_subr.c		igsfb
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
@@ -904,6 +893,7 @@ file	dev/ic/daic.c			daic
 #
 defpseudo vnd:		disk
 defpseudo ccd:		disk
+defpseudo cgd:		disk, des, blowfish, cast128, rijndael
 defpseudo md:		disk
 defpseudo netsmb
 
@@ -921,12 +911,10 @@ defpseudo vlan:		ifnet, ether
 defpseudo bridge:	ifnet, ether
 defpseudo bpfilter:	ifnet, bpf_filter
 defpseudo strip:	ifnet
-defpseudo ipfilter:	ifnet
 defpseudo gre:		ifnet
 defpseudo gif:		ifnet
 defpseudo faith:	ifnet
 defpseudo stf:		ifnet
-defpseudo irframetty:	irframedrv, irdasir
 
 defpseudo sequencer
 defpseudo clockctl
@@ -973,17 +961,6 @@ include "ufs/files.ufs"
 #
 # kernel sources
 #
-file	crypto/arc4/arc4.c		wlan
-file	crypto/des/des_ecb.c		ipsec & ipsec_esp
-file	crypto/des/des_setkey.c		ipsec & ipsec_esp
-file	crypto/des/des_enc.c		ipsec & ipsec_esp & !crypto_md_des_enc
-#file    crypto/des/des_cbc.c		ipsec & ipsec_esp & !crypto_md_des_cbc
-file	crypto/blowfish/bf_enc.c	ipsec & ipsec_esp & !crypto_md_bf_enc
-#file	crypto/blowfish/bf_cbc.c	ipsec & ipsec_esp & !crypto_md_bf_cbc
-file	crypto/blowfish/bf_skey.c	ipsec & ipsec_esp
-file	crypto/cast128/cast128.c	ipsec & ipsec_esp
-file	crypto/rijndael/rijndael-alg-fst.c ipsec & ipsec_esp
-file	crypto/rijndael/rijndael-api-fst.c ipsec & ipsec_esp
 file	ddb/db_access.c			ddb | kgdb
 file	ddb/db_aout.c			ddb
 file	ddb/db_break.c			ddb
@@ -1004,17 +981,13 @@ file	ddb/db_write_cmd.c		ddb
 file	ddb/db_xxx.c			ddb
 file	dev/auconv.c			auconv
 file	dev/audio.c			audio | midi | midibus	needs-flag
-file	dev/bluetooth/bluetooth.c	bthcidrv
-file	dev/bluetooth/bthci.c		bthcidrv		needs-flag
 file	dev/ccd.c			ccd			needs-flag
+file	dev/cgd.c			cgd			needs-flag
+file	dev/cgd_crypto.c		cgd
 file	dev/clockctl.c			clockctl		needs-flag
+file	dev/dksubr.c			cgd
 file	dev/i2c/i2c_bus.c		i2c
 file	dev/i2c/i2c_eeprom.c		i2c_eeprom
-file	dev/ir/cir.c			cir			needs-flag
-file	dev/ir/ir.c			cir | irframedrv
-file	dev/ir/irframe.c		irframe | irframedrv	needs-flag
-file	dev/ir/irframe_tty.c		irframetty		needs-flag
-file	dev/ir/sir.c			irdasir
 file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midisyn.c			midisyn
@@ -1078,7 +1051,6 @@ file	kern/subr_pool.c
 file	kern/subr_prf.c
 file	kern/subr_prof.c
 file	kern/subr_prop.c
-file	kern/subr_rmap.c
 file	kern/subr_userconf.c		userconf
 file	kern/subr_xxx.c
 file	kern/sys_generic.c
@@ -1164,147 +1136,13 @@ file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | irip
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec
-file	netatalk/aarp.c			netatalk
-file	netatalk/at_control.c		netatalk
-file	netatalk/at_proto.c		netatalk
-file	netatalk/at_rmx.c		netatalkdebug
-file	netatalk/ddp_input.c		netatalk
-file	netatalk/ddp_output.c		netatalk
-file	netatalk/ddp_usrreq.c		netatalk
-file	netccitt/ccitt_proto.c		ccitt
-file	netccitt/hd_debug.c		hdlc
-file	netccitt/hd_input.c		hdlc
-file	netccitt/hd_output.c		hdlc
-file	netccitt/hd_subr.c		hdlc
-file	netccitt/hd_timer.c		hdlc
-file	netccitt/if_x25subr.c		ccitt
-file	netccitt/llc_input.c		llc
-file	netccitt/llc_output.c		llc
-file	netccitt/llc_subr.c		llc
-file	netccitt/llc_timer.c		llc
-file	netccitt/pk_acct.c		ccitt
-file	netccitt/pk_debug.c		ccitt
-file	netccitt/pk_input.c		ccitt
-file	netccitt/pk_llcsubr.c		llc | hdlc
-file	netccitt/pk_output.c		ccitt
-file	netccitt/pk_subr.c		ccitt
-file	netccitt/pk_timer.c		ccitt
-file	netccitt/pk_usrreq.c		ccitt
-file	netinet/fil.c			ipfilter
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm
-file	netinet/igmp.c			inet
-file	netinet/in.c			inet
 file	netinet/in_gif.c		gif & inet
-file	netinet/in_pcb.c		inet
-file	netinet/in_proto.c		inet
-file	netinet/ip_auth.c		ipfilter		needs-flag
 file	netinet/ip_ecn.c		ipsec | gif | stf
 file	netinet/ip_encap.c		inet | inet6
-file	netinet/ip_fil.c		ipfilter
-file	netinet/ip_flow.c		inet & gateway
-file	netinet/ip_frag.c		ipfilter
 file	netinet/ip_gre.c		inet & gre
-file	netinet/ip_icmp.c		inet
-file	netinet/ip_input.c		inet
-file	netinet/ip_log.c		ipfilter & ipfilter_log
-file	netinet/ip_mroute.c		inet & mrouting
-file	netinet/ip_nat.c		ipfilter
-file	netinet/ip_output.c		inet
-file	netinet/ip_proxy.c		ipfilter
-file	netinet/ip_state.c		ipfilter
-file	netinet/raw_ip.c		inet
-file	netinet/tcp_debug.c		inet | inet6
-file	netinet/tcp_input.c		inet | inet6
-file	netinet/tcp_output.c		inet | inet6
-file	netinet/tcp_subr.c		inet | inet6
-file	netinet/tcp_timer.c		inet | inet6
-file	netinet/tcp_usrreq.c		inet | inet6
-file	netinet/udp_usrreq.c		inet | inet6
-file	netinet6/ah_core.c		ipsec
-file	netinet6/ah_input.c		ipsec
-file	netinet6/ah_output.c		ipsec
-file	netinet6/dest6.c		inet6
-file	netinet6/esp_core.c		ipsec & ipsec_esp
-file	netinet6/esp_output.c		ipsec & ipsec_esp
-file	netinet6/esp_input.c		ipsec & ipsec_esp
-file	netinet6/esp_rijndael.c		ipsec & ipsec_esp
-file	netinet6/frag6.c		inet6
-file	netinet6/icmp6.c		inet6
-file	netinet6/in6.c			inet6
-file	netinet6/in6_cksum.c		inet6 & !inet6_md_cksum
 file	netinet6/in6_gif.c		gif & inet6
-file	netinet6/in6_ifattach.c		inet6
-file	netinet6/in6_pcb.c		inet6
-file	netinet6/in6_proto.c		inet6
-file	netinet6/in6_src.c		inet6
-file	netinet6/ip6_forward.c		inet6
-file	netinet6/ip6_input.c		inet6
-file	netinet6/ip6_mroute.c		inet6
-file	netinet6/ip6_output.c		inet6
-file	netinet6/ipcomp_core.c		ipsec
-file	netinet6/ipcomp_input.c		ipsec
-file	netinet6/ipcomp_output.c	ipsec
-file	netinet6/ipsec.c		ipsec
-file	netinet6/mld6.c			inet6
-file	netinet6/nd6.c			inet6
-file	netinet6/nd6_nbr.c		inet6
-file	netinet6/nd6_rtr.c		inet6
-file	netinet6/raw_ip6.c		inet6
-file	netinet6/route6.c		inet6
-file	netinet6/udp6_output.c		inet6
-file	netinet6/udp6_usrreq.c		inet6
-file	netiso/clnp_debug.c		iso
-file	netiso/clnp_er.c		iso
-file	netiso/clnp_frag.c		iso
-file	netiso/clnp_input.c		iso
-file	netiso/clnp_options.c		iso
-file	netiso/clnp_output.c		iso
-file	netiso/clnp_raw.c		iso
-file	netiso/clnp_subr.c		iso
-file	netiso/clnp_timer.c		iso
-file	netiso/cltp_usrreq.c		iso
-file	netiso/esis.c			iso
-file	netiso/idrp_usrreq.c		iso
-file	netiso/if_cons.c		iso
-file	netiso/if_eon.c			eon
-file	netiso/iso.c			iso
-file	netiso/iso_chksum.c		iso
-file	netiso/iso_pcb.c		iso
-file	netiso/iso_proto.c		iso
-file	netiso/iso_snpac.c		iso
-file	netiso/tp_astring.c		iso | tpip
-file	netiso/tp_cons.c		iso
-file	netiso/tp_driver.c		iso | tpip
-file	netiso/tp_emit.c		iso | tpip
-file	netiso/tp_inet.c		iso | tpip
-file	netiso/tp_input.c		iso | tpip
-file	netiso/tp_iso.c			iso
-file	netiso/tp_meas.c		iso | tpip
-file	netiso/tp_output.c		iso | tpip
-file	netiso/tp_pcb.c			iso | tpip
-file	netiso/tp_subr.c		iso | tpip
-file	netiso/tp_subr2.c		iso | tpip
-file	netiso/tp_timer.c		iso | tpip
-file	netiso/tp_trace.c		iso | tpip
-file	netiso/tp_usrreq.c		iso | tpip
-file	netkey/key.c			ipsec
-file	netkey/key_debug.c		ipsec
-file	netkey/keydb.c			ipsec
-file	netkey/keysock.c		ipsec
-file	netnatm/natm.c			natm
-file	netnatm/natm_pcb.c		natm
-file	netnatm/natm_proto.c		natm
-file	netns/idp_usrreq.c		ns
-file	netns/ns.c			ns
-file	netns/ns_error.c		ns
-file	netns/ns_input.c		ns
-file	netns/ns_ip.c			ns & nsip
-file	netns/ns_output.c		ns
-file	netns/ns_pcb.c			ns
-file	netns/ns_proto.c		ns
-file	netns/spp_debug.c		ns
-file	netns/spp_usrreq.c		ns
 file	netsmb/iconv.c			netsmb
 file	netsmb/smb_conn.c		netsmb	needs-count
 file	netsmb/smb_crypt.c		netsmb	needs-count

@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.18.8.2 2002/09/17 21:18:30 nathanw Exp $ */
+/*	$NetBSD: ts.c,v 1.18.8.3 2002/10/18 02:40:32 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -125,7 +125,6 @@ int tstrace = 1;
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/file.h>
-#include <sys/map.h>
 #include <sys/syslog.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
@@ -194,9 +193,8 @@ int	tsmatch __P((struct device *, void *, void *));
 void	tsattach __P((struct device *, struct device *, void *));
 void	tsstrategy __P((struct buf *));
 
-struct	cfattach ts_ca = {
-	sizeof(struct ts_softc), tsmatch, tsattach
-};
+CFATTACH_DECL(ts, sizeof(struct ts_softc),
+    tsmatch, tsattach, NULL, NULL);
 
 extern struct cfdriver ts_cd;
 

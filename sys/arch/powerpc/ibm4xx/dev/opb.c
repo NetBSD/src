@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.2.2.3 2002/08/27 23:45:11 nathanw Exp $ */
+/* $NetBSD: opb.c,v 1.2.2.4 2002/10/18 02:39:30 nathanw Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -99,10 +99,8 @@ static void	opb_attach(struct device *, struct device *, void *);
 static int	opb_submatch(struct device *, struct cfdata *, void *);
 static int	opb_print(void *, const char *);
 
-struct cfattach opb_ca = {
-	sizeof(struct device), opb_match, opb_attach
-};
-
+CFATTACH_DECL(opb, sizeof(struct device),
+    opb_match, opb_attach, NULL, NULL);
 
 /*
  * Probe for the opb; always succeeds.
@@ -113,7 +111,7 @@ opb_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct opb_attach_args *oaa = aux;
 
 	/* match only opb devices */ 
-	if (strcmp(oaa->opb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(oaa->opb_name, cf->cf_name) != 0)
 		return (0);
 
 	return (1);
@@ -128,7 +126,7 @@ opb_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[OPBCF_ADDR] != oaa->opb_addr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

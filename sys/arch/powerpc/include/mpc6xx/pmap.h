@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3.8.3 2002/08/01 02:43:05 nathanw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3.8.4 2002/10/18 02:39:31 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -55,6 +55,7 @@ struct pmap {
 	sr_t pm_sr[16];		/* segments used in this pmap */
 	int pm_refs;		/* ref count */
 	struct pmap_statistics pm_stats;	/* pmap statistics */
+	unsigned int pm_evictions;	/* pvo's not in page table */
 };
 
 typedef	struct pmap *pmap_t;
@@ -73,6 +74,12 @@ extern struct pmap kernel_pmap_;
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
+
+static __inline void
+pmap_remove_all(struct pmap *pmap)
+{
+	/* Nothing. */
+}
 
 /*
  * pmap_bootstrap interface
@@ -95,7 +102,7 @@ void pmap_syncicache (paddr_t, psize_t);
 #define PMAP_NEED_PROCWR
 void pmap_procwr (struct proc *, vaddr_t, size_t);
 
-int pmap_pte_spill(vaddr_t va);
+int pmap_pte_spill(struct pmap *, vaddr_t);
 
 #define	PMAP_NC			0x1000
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.2.4.3 2001/11/14 19:15:13 nathanw Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.2.4.4 2002/10/18 02:43:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.2.4.3 2001/11/14 19:15:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.2.4.4 2002/10/18 02:43:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -87,9 +87,8 @@ struct an_pci_softc {
 int	an_pci_match __P((struct device *, struct cfdata *, void *));
 void	an_pci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach an_pci_ca = {
-	sizeof(struct an_pci_softc), an_pci_match, an_pci_attach,
-};
+CFATTACH_DECL(an_pci, sizeof(struct an_pci_softc),
+    an_pci_match, an_pci_attach, NULL, NULL);
 
 const struct an_pci_product {
 	u_int32_t	app_vendor;	/* PCI vendor ID */

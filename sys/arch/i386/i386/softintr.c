@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1.6.3 2002/01/08 00:25:29 nathanw Exp $	*/
+/*	$NetBSD: softintr.c,v 1.1.6.4 2002/10/18 02:37:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1.6.3 2002/01/08 00:25:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1.6.4 2002/10/18 02:37:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -77,6 +77,7 @@ softintr_init(void)
 	for (i = 0; i < I386_NSOFTINTR; i++) {
 		si = &i386_soft_intrs[i];
 		TAILQ_INIT(&si->softintr_q);
+		simple_lock_init(&si->softintr_slock);
 		si->softintr_ssir = i386_soft_intr_to_ssir[i];
 	}
 }

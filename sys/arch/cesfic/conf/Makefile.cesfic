@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cesfic,v 1.5.2.3 2002/06/20 03:38:26 nathanw Exp $
+#	$NetBSD: Makefile.cesfic,v 1.5.2.4 2002/10/18 02:36:12 nathanw Exp $
 
 # Makefile for NetBSD
 #
@@ -31,7 +31,7 @@ GENASSYM=	${CESFIC}/cesfic/genassym.cf
 ##
 ## (2) compile settings
 ##
-WEAK_POINTERS=	yes
+CPPFLAGS+=	-Dcesfic
 CWARNFLAGS+=	-Wno-format
 CFLAGS+=	-msoft-float
 .if defined(HAVE_GCC3)

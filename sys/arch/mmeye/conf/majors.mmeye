@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mmeye,v 1.1.4.1 2002/09/17 21:15:59 nathanw Exp $
+#	$NetBSD: majors.mmeye,v 1.1.4.2 2002/10/18 02:38:55 nathanw Exp $
 #
 # Device majors for mmeye
 #
@@ -42,3 +42,4 @@ device-major	esh		char 50			esh
 device-major	wdog		char 51			wdog
 device-major	clockctl	char 52			clockctl
 device-major	systrace	char 53			systrace
+device-major	cgd		char 54  block 19	cgd

@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.35.8.4 2002/04/01 07:40:42 nathanw Exp $	*/
+/*	$NetBSD: mms.c,v 1.35.8.5 2002/10/18 02:38:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.35.8.4 2002/04/01 07:40:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.35.8.5 2002/10/18 02:38:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,8 @@ int mmsprobe __P((struct device *, struct cfdata *, void *));
 void mmsattach __P((struct device *, struct device *, void *));
 int mmsintr __P((void *));
 
-struct cfattach mms_ca = {
-	sizeof(struct mms_softc), mmsprobe, mmsattach
-};
+CFATTACH_DECL(mms, sizeof(struct mms_softc),
+    mmsprobe, mmsattach, NULL, NULL);
 
 int	mms_enable __P((void *));
 int	mms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));

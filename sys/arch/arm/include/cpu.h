@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16.2.11 2002/08/19 21:39:14 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.2.12 2002/10/18 02:35:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -203,16 +203,21 @@ struct cpu_info {
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
 	struct device *ci_dev;		/* Device corresponding to this CPU */
-	u_int32_t ci_cpuid;		/* aggregate CPU id */
-	u_int32_t ci_cputype;		/* CPU type */
-	u_int32_t ci_cpurev;		/* CPU revision */
+	u_int32_t ci_arm_cpuid;		/* aggregate CPU id */
+	u_int32_t ci_arm_cputype;	/* CPU type */
+	u_int32_t ci_arm_cpurev;	/* CPU revision */
 	u_int32_t ci_ctrl;		/* The CPU control register */
 	struct evcnt ci_arm700bugcount;
+#ifdef MULTIPROCESSOR
+	MP_CPU_INFO_MEMBERS
+#endif
 };
 
+#ifndef MULTIPROCESSOR
 extern struct cpu_info cpu_info_store;
 #define	curcpu()	(&cpu_info_store)
 #define cpu_number()	0
+#endif
 #define	cpu_proc_fork(p1, p2)
 
 
@@ -253,6 +258,7 @@ int	want_resched;		/* resched() was called */
 
 struct device;
 void	cpu_attach	__P((struct device *));
+int	cpu_alloc_idlepcb	__P((struct cpu_info *));
 #endif
 
 

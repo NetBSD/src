@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.14.8.4 2002/09/17 21:13:48 nathanw Exp $	*/
+/*	$NetBSD: ser.c,v 1.14.8.5 2002/10/18 02:35:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -258,9 +258,8 @@ static volatile int ser_softintr_scheduled = 0;
 static void serattach __P((struct device *, struct device *, void *));
 static int  sermatch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach ser_ca = {
-	sizeof(struct ser_softc), sermatch, serattach
-};
+CFATTACH_DECL(ser, sizeof(struct ser_softc),
+    sermatch, serattach, NULL, NULL);
 
 extern struct cfdriver ser_cd;
 

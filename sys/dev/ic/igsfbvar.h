@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.1.2.3 2002/08/01 02:44:43 nathanw Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.1.2.4 2002/10/18 02:41:53 nathanw Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -149,13 +149,57 @@ igs_idx_write(t, h, idxport, idx, val)
 	bus_space_write_1(t, h, idxport + 1, val);
 }
 
-/* more sugar for extended registers */
+
+/* sugar for sequencer controller */
+#define igs_seq_read(t,h,x)	\
+	(igs_idx_read((t),(h),IGS_SEQ_IDX,(x)))
+#define igs_seq_write(t,h,x,v)	\
+	(igs_idx_write((t),(h),IGS_SEQ_IDX,(x),(v)))
+
+
+/* sugar for CRT controller */
+#define igs_crtc_read(t,h,x)	\
+	(igs_idx_read((t),(h),IGS_CRTC_IDX,(x)))
+#define igs_crtc_write(t,h,x,v)	\
+	(igs_idx_write((t),(h),IGS_CRTC_IDX,(x),(v)))
+
+
+/* sugar for attribute controller */
+#define igs_attr_flip_flop(t,h)	\
+	((void)bus_space_read_1((t),(h),IGS_INPUT_STATUS1));
+#define igs_attr_read(t,h,x)	\
+	(igs_idx_read((t),(h),IGS_ATTR_IDX,(x)))
+
+static __inline__ void
+igs_attr_write(bus_space_tag_t, bus_space_handle_t, u_int8_t, u_int8_t);
+
+static __inline__ void
+igs_attr_write(t, h, idx, val)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	u_int8_t idx, val;
+{
+	bus_space_write_1(t, h, IGS_ATTR_IDX, idx);
+	bus_space_write_1(t, h, IGS_ATTR_IDX, val); /* sic, same register */
+}
+
+
+/* sugar for graphics controller registers */
+#define igs_grfx_read(t,h,x)	(igs_idx_read((t),(h),IGS_GRFX_IDX,(x)))
+#define igs_grfx_write(t,h,x,v)	(igs_idx_write((t),(h),IGS_GRFX_IDX,(x),(v)))
+
+
+/* sugar for extended registers */
 #define igs_ext_read(t,h,x)	(igs_idx_read((t),(h),IGS_EXT_IDX,(x)))
 #define igs_ext_write(t,h,x,v)	(igs_idx_write((t),(h),IGS_EXT_IDX,(x),(v)))
 
 
-/* methods for bus attachment glue to call */
+/* igsfb_subr.c */
 int	igsfb_enable(bus_space_tag_t);
+void	igsfb_hw_setup(struct igsfb_softc *);
+void	igsfb_1024x768_8bpp_60Hz(struct igsfb_softc *);
+
+/* igsfb.c */
 void	igsfb_common_attach(struct igsfb_softc *, int);
 
 #endif /* _DEV_IC_IGSFBVAR_H_ */

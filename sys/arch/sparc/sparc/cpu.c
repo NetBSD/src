@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.124.4.8 2002/08/27 23:45:38 nathanw Exp $ */
+/*	$NetBSD: cpu.c,v 1.124.4.9 2002/10/18 02:39:58 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -103,17 +103,15 @@ static	int cpu_instance;		/* current # of CPUs wired by us */
 static void cpu_mainbus_attach __P((struct device *, struct device *, void *));
 int  cpu_mainbus_match __P((struct device *, struct cfdata *, void *));
 
-struct cfattach cpu_mainbus_ca = {
-	sizeof(struct cpu_softc), cpu_mainbus_match, cpu_mainbus_attach
-};
+CFATTACH_DECL(cpu_mainbus, sizeof(struct cpu_softc),
+    cpu_mainbus_match, cpu_mainbus_attach, NULL, NULL);
 
 #if defined(SUN4D)
 static int cpu_cpuunit_match(struct device *, struct cfdata *, void *);
 static void cpu_cpuunit_attach(struct device *, struct device *, void *);
 
-struct cfattach cpu_cpuunit_ca = {
-	sizeof(struct cpu_softc), cpu_cpuunit_match, cpu_cpuunit_attach
-};
+CFATTACH_DECL(cpu_cpuunit, sizeof(struct cpu_softc),
+    cpu_cpuunit_match, cpu_cpuunit_attach, NULL, NULL);
 #endif /* SUN4D */
 
 static void cpu_attach(struct cpu_softc *, int, int);
@@ -276,7 +274,7 @@ cpu_mainbus_match(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 static void
@@ -306,7 +304,7 @@ cpu_cpuunit_match(parent, cf, aux)
 {
 	struct cpuunit_attach_args *cpua = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, cpua->cpua_type) == 0);
+	return (strcmp(cf->cf_name, cpua->cpua_type) == 0);
 }
 
 static void

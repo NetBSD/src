@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.11.8.2 2002/04/01 07:40:59 nathanw Exp $	*/
+/*	$NetBSD: pte.h,v 1.11.8.3 2002/10/18 02:38:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -66,8 +66,6 @@ typedef union pt_entry {
 	struct mips1_pte pt_mips1_pte;	/* for getting to bits by name */
 	struct mips3_pte pt_mips3_pte;
 } pt_entry_t;
-
-#define	PT_ENTRY_NULL	((pt_entry_t *) 0)
 
 /*
  * Macros/inline functions to hide PTE format differences.

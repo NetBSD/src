@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.1 1999/08/11 02:00:09 matt Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.1.20.1 2002/10/18 02:39:56 nathanw Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,56 +37,7 @@
 #ifndef __SPARC_APM_H__
 #define __SPARC_APM_H__
 
-#define		APM_AC_OFF		0x00
-#define		APM_AC_ON		0x01
-#define		APM_AC_BACKUP		0x02
-#define		APM_AC_UNKNOWN		0xff
-
-#define		APM_BATT_HIGH		0x00
-#define		APM_BATT_LOW		0x01
-#define		APM_BATT_CRITICAL	0x02
-#define		APM_BATT_CHARGING	0x03
-#define		APM_BATT_ABSENT		0x04
-#define		APM_BATT_UNKNOWN	0xff
-
-#define		APM_STANDBY_REQ		0x0001
-#define		APM_SUSPEND_REQ		0x0002
-#define		APM_NORMAL_RESUME	0x0003
-#define		APM_CRIT_RESUME		0x0004 /* suspend/resume happened
-						  without us */
-#define		APM_BATTERY_LOW		0x0005
-#define		APM_POWER_CHANGE	0x0006
-#define		APM_UPDATE_TIME		0x0007
-#define		APM_CRIT_SUSPEND_REQ	0x0008
-#define		APM_USER_STANDBY_REQ	0x0009
-#define		APM_USER_SUSPEND_REQ	0x000A
-#define		APM_SYS_STANDBY_RESUME	0x000B
-
-struct apm_event_info {
-	u_int type;
-	u_int index;
-	u_int spare[8];
-};
-
-struct apm_power_info {
-	u_char battery_state;
-	u_char ac_state;
-	u_char battery_life;
-	u_char spare1;
-	u_int minutes_left;		/* estimate */
-	u_int spare2[6];
-};
-
-struct apm_ctl {
-	u_int dev;
-	u_int mode;
-};
-
-#define	APM_IOC_REJECT	_IOW('A', 0, struct apm_event_info) /* reject request # */
-#define	APM_IOC_STANDBY	_IO('A', 1)	/* put system into standby */
-#define	APM_IOC_SUSPEND	_IO('A', 2)	/* put system into suspend */
-#define	APM_IOC_GETPOWER _IOR('A', 3, struct apm_power_info) /* fetch battery state */
-#define	APM_IOC_NEXTEVENT _IOR('A', 4, struct apm_event_info) /* fetch event */
-#define	APM_IOC_DEV_CTL	_IOW('A', 5, struct apm_ctl) /* put device into mode */
+#include <dev/apm/apmbios.h>
+#include <dev/apm/apmio.h>
 
 #endif /* __SPARC_APM_H__ */

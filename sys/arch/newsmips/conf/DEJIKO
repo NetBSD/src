@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.4.8.2 2002/06/20 03:40:12 nathanw Exp $
+# 	$NetBSD: DEJIKO,v 1.4.8.3 2002/10/18 02:39:11 nathanw Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -18,7 +18,7 @@ options 	DDB			# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DEBUG			# extra kernel debugging support
 options 	DIAGNOSTIC		# extra kernel sanity checking
-#options 	USERCONF		# userconf(4) support
+options 	USERCONF		# userconf(4) support
 
 # Filesystem options
 file-system	FFS			# Berkeley Fast Filesystem

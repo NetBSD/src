@@ -1,4 +1,4 @@
-/*	$NetBSD: txioman.c,v 1.3.8.2 2002/02/28 04:10:03 nathanw Exp $ */
+/*	$NetBSD: txioman.c,v 1.3.8.3 2002/10/18 02:37:14 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -51,9 +51,8 @@ void txioman_callback(struct device *);
 int txioman_print(void *, const char *);
 hpcio_chip_t tx_conf_reference_ioman(void *, int);
 
-struct cfattach txioman_ca = {
-	sizeof(struct device), txioman_match, txioman_attach
-};
+CFATTACH_DECL(txioman, sizeof(struct device),
+    txioman_match, txioman_attach, NULL, NULL);
 
 int
 txioman_match(struct device *parent, struct cfdata *cf, void *aux)

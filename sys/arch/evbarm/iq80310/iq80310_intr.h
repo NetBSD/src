@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.h,v 1.1.2.2 2002/08/19 21:39:36 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.h,v 1.1.2.3 2002/10/18 02:36:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -68,8 +68,7 @@
 
 void	iq80310_do_soft(void);
 
-#if !defined(EVBARM_SPL_NOINLINE)
-static __inline int
+static __inline int __attribute__((__unused__))
 iq80310_splraise(int ipl)
 {
 	extern __volatile int current_spl_level;
@@ -82,7 +81,7 @@ iq80310_splraise(int ipl)
 	return (old);
 }
 
-static __inline void
+static __inline void __attribute__((__unused__))
 iq80310_splx(int new)
 {
 	extern __volatile int iq80310_ipending;
@@ -110,7 +109,7 @@ iq80310_splx(int new)
 		i80200_intr_enable(INTCTL_IM | INTCTL_PM);
 }
 
-static __inline int
+static __inline int __attribute__((__unused__))
 iq80310_spllower(int ipl)
 {
 	extern __volatile int current_spl_level;
@@ -121,10 +120,13 @@ iq80310_spllower(int ipl)
 	return (old);
 }
 
+#if !defined(EVBARM_SPL_NOINLINE)
+
 #define _splraise(ipl)		iq80310_splraise(ipl)
 #define	_spllower(ipl)		iq80310_spllower(ipl)
 #define	splx(spl)		iq80310_splx(spl)
 void	_setsoftintr(int);
+
 #else
 
 int	_splraise(int);
@@ -132,6 +134,6 @@ int	_spllower(int);
 void	splx(int);
 void	_setsoftintr(int);
 
-#endif
+#endif /* ! EVBARM_SPL_NOINLINE */
 
 #endif /* _IQ80310_INTR_H_ */

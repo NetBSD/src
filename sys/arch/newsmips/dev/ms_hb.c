@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.1.10.1 2002/04/01 07:41:41 nathanw Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.1.10.2 2002/10/18 02:39:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -59,9 +59,8 @@ int ms_hb_enable(void *);
 int ms_hb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void ms_hb_disable(void *);
 
-struct cfattach ms_hb_ca = {
-	sizeof(struct ms_hb_softc), ms_hb_match, ms_hb_attach
-};
+CFATTACH_DECL(ms_hb, sizeof(struct ms_hb_softc),
+    ms_hb_match, ms_hb_attach, NULL, NULL);
 
 struct wsmouse_accessops ms_hb_accessops = {
 	ms_hb_enable,

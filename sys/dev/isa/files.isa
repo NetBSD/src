@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.111.2.9 2002/08/13 02:19:33 nathanw Exp $
+#	$NetBSD: files.isa,v 1.111.2.10 2002/10/18 02:42:11 nathanw Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -209,9 +209,9 @@ file	dev/isa/if_cs_isa.c		cs_isa
 
 # Fujitsu MB86960-based boards
 # (Fujitsu FMV-180 series)
-device	fmv: arp, ether, ifnet, mb86960
-attach	fmv at isa
-file	dev/isa/if_fmv.c		fmv
+# device in sys/conf/files
+attach	fmv at isa with fmv_isa
+file	dev/isa/if_fmv_isa.c		fmv_isa
 
 # HP Lan Ethernet controllers
 # XXX currently broken

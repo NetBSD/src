@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.25.6.4 2002/08/13 02:18:28 nathanw Exp $	*/
+/*	$NetBSD: ofb.c,v 1.25.6.5 2002/10/18 02:38:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -67,9 +67,8 @@ int	ofbmatch __P((struct device *, struct cfdata *, void *));
 void	ofbattach __P((struct device *, struct device *, void *));
 int	ofbprint __P((void *, const char *));
 
-struct cfattach ofb_ca = {
-	sizeof(struct ofb_softc), ofbmatch, ofbattach,
-};
+CFATTACH_DECL(ofb, sizeof(struct ofb_softc),
+    ofbmatch, ofbattach, NULL, NULL);
 
 struct ofb_devconfig ofb_console_dc;
 

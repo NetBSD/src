@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.5.4.2 2002/04/01 07:41:39 nathanw Exp $	*/
+/*	$NetBSD: spifi.c,v 1.5.4.3 2002/10/18 02:39:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -130,9 +130,8 @@ static void spifi_write_count(struct spifi_reg *, int);
 #define DMAC3_FASTACCESS(sc)  dmac3_misc((sc)->sc_dma, DMAC3_CONF_FASTACCESS)
 #define DMAC3_SLOWACCESS(sc)  dmac3_misc((sc)->sc_dma, DMAC3_CONF_SLOWACCESS)
 
-struct cfattach spifi_ca = {
-	sizeof(struct spifi_softc), spifi_match, spifi_attach
-};
+CFATTACH_DECL(spifi, sizeof(struct spifi_softc),
+    spifi_match, spifi_attach, NULL, NULL);
 
 int
 spifi_match(parent, cf, aux)
@@ -234,7 +233,7 @@ spifi_scsipi_request(chan, req, arg)
 
 		scb = spifi_get_scb(sc);
 		if (scb == NULL) {
-			panic("spifi_scsipi_request: no scb\n");
+			panic("spifi_scsipi_request: no scb");
 		}
 
 		scb->xs = xs;

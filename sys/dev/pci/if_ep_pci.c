@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.33.2.3 2001/11/14 19:15:14 nathanw Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.33.2.4 2002/10/18 02:43:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.33.2.3 2001/11/14 19:15:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.33.2.4 2002/10/18 02:43:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,9 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.33.2.3 2001/11/14 19:15:14 nathanw E
 int ep_pci_match __P((struct device *, struct cfdata *, void *));
 void ep_pci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ep_pci_ca = {
-	sizeof(struct ep_softc), ep_pci_match, ep_pci_attach
-};
+CFATTACH_DECL(ep_pci, sizeof(struct ep_softc),
+    ep_pci_match, ep_pci_attach, NULL, NULL);
 
 struct ep_pci_product {
 	u_int32_t	epp_prodid;	/* PCI product ID */

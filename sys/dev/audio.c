@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.135.2.11 2002/09/17 21:19:15 nathanw Exp $	*/
+/*	$NetBSD: audio.c,v 1.135.2.12 2002/10/18 02:41:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.135.2.11 2002/09/17 21:19:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.135.2.12 2002/10/18 02:41:24 nathanw Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -198,10 +198,8 @@ const struct cdevsw audio_cdevsw = {
 struct audio_params audio_default =
 	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0, 1, 1 };
 
-struct cfattach audio_ca = {
-	sizeof(struct audio_softc), audioprobe, audioattach,
-	audiodetach, audioactivate
-};
+CFATTACH_DECL(audio, sizeof(struct audio_softc),
+    audioprobe, audioattach, audiodetach, audioactivate);
 
 extern struct cfdriver audio_cd;
 
@@ -347,7 +345,6 @@ audioactivate(struct device *self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
@@ -1430,7 +1427,7 @@ audio_fill_silence(struct audio_params *params, u_char *p, int n)
 			n -= nfill - 1;
 		}
 		while (n >= nfill) {
-			int k;
+			int k = nfill;
 			*p++ = auzero0;
 			while (--k > 0)
 				*p++ = auzero1;

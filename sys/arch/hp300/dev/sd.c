@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.46.8.9 2002/09/17 21:14:35 nathanw Exp $	*/
+/*	$NetBSD: sd.c,v 1.46.8.10 2002/10/18 02:36:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.8.9 2002/09/17 21:14:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.8.10 2002/10/18 02:36:51 nathanw Exp $");
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -112,9 +112,8 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.8.9 2002/09/17 21:14:35 nathanw Exp $");
 int	sdmatch __P((struct device *, struct cfdata *, void *));
 void	sdattach __P((struct device *, struct device *, void *));
 
-struct cfattach sd_ca = {
-	sizeof(struct sd_softc), sdmatch, sdattach
-};
+CFATTACH_DECL(sd, sizeof(struct sd_softc),
+    sdmatch, sdattach, NULL, NULL);
 
 extern struct cfdriver sd_cd;
 

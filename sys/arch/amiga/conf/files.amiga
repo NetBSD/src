@@ -1,12 +1,12 @@
-#	$NetBSD: files.amiga,v 1.110.2.5 2002/09/17 21:12:54 nathanw Exp $
+#	$NetBSD: files.amiga,v 1.110.2.6 2002/10/18 02:34:43 nathanw Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
 
 maxusers 2 8 64
 
-defflag	opt_amigaccgrf.h	GRF_PAL	:GRF_NTSC	# temporary workaround
 defflag	opt_amigaccgrf.h	GRF_NTSC
+defflag	opt_amigaccgrf.h	GRF_PAL	:GRF_NTSC	# temporary workaround
 defflag	opt_amigaccgrf.h	GRF_ECS GRF_AGA
 defflag	opt_amigaccgrf.h	GRF_A2024:GRF_ECS
 defflag	opt_amigaccgrf.h	GRF_AGA_VGA:GRF_AGA

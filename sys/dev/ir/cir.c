@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.2.2.3 2002/09/17 21:19:58 nathanw Exp $	*/
+/*	$NetBSD: cir.c,v 1.2.2.4 2002/10/18 02:42:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,10 +67,8 @@ void cir_attach(struct device *parent, struct device *self, void *aux);
 int cir_activate(struct device *self, enum devact act);
 int cir_detach(struct device *self, int flags);
 
-struct cfattach cir_ca = {
-	sizeof(struct cir_softc), cir_match, cir_attach,
-	cir_detach, cir_activate
-};
+CFATTACH_DECL(cir, sizeof(struct cir_softc),
+    cir_match, cir_attach, cir_detach, cir_activate);
 
 extern struct cfdriver cir_cd;
 
@@ -97,7 +95,7 @@ cir_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_methods->im_read == NULL ||
 	    sc->sc_methods->im_write == NULL ||
 	    sc->sc_methods->im_setparams == NULL)
-		panic("%s: missing methods\n", sc->sc_dev.dv_xname);
+		panic("%s: missing methods", sc->sc_dev.dv_xname);
 #endif
 	printf("\n");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.14 2000/07/11 04:10:25 nisimura Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.14.8.1 2002/10/18 02:39:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.14 2000/07/11 04:10:25 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.14.8.1 2002/10/18 02:39:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,8 @@ static int kn03_ioasic_ndevs = ARRAY_SIZEOF(kn03_ioasic_devs);
 static int	ioasicmatch __P((struct device *, struct cfdata *, void *));
 static void	ioasicattach __P((struct device *, struct device *, void *));
 
-const struct cfattach ioasic_ca = {
-	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach
-};
+CFATTACH_DECL(ioasic, sizeof(struct ioasic_softc),
+    ioasicmatch, ioasicattach, NULL, NULL);
 
 tc_addr_t ioasic_base;	/* XXX XXX XXX */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: com_sableio.c,v 1.1 2000/12/21 20:51:56 thorpej Exp $ */
+/* $NetBSD: com_sableio.c,v 1.1.4.1 2002/10/18 02:34:26 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.1 2000/12/21 20:51:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.1.4.1 2002/10/18 02:34:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +77,8 @@ int	com_sableio_match(struct device *, struct cfdata *, void *);
 void	com_sableio_attach(struct device *, struct device *, void *);
 void	com_sableio_cleanup(void *);
 
-struct cfattach com_sableio_ca = {
-	sizeof(struct com_sableio_softc), com_sableio_match, com_sableio_attach
-};
+CFATTACH_DECL(com_sableio, sizeof(struct com_sableio_softc),
+    com_sableio_match, com_sableio_attach, NULL, NULL);
 
 int
 com_sableio_match(struct device *parent, struct cfdata *match, void *aux)
@@ -87,7 +86,7 @@ com_sableio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct sableio_attach_args *sa = aux;
 
 	/* Always present. */
-	if (strcmp(sa->sa_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(sa->sa_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

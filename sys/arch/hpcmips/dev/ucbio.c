@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbio.c,v 1.4.4.2 2002/02/28 04:09:55 nathanw Exp $	*/
+/*	$NetBSD: ucbio.c,v 1.4.4.3 2002/10/18 02:37:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,9 +75,8 @@ struct ucbio_softc {
 	struct hpcio_chip sc_hc;
 };
 
-struct cfattach ucbio_ca = {
-	sizeof(struct ucbio_softc), ucbio_match, ucbio_attach
-};
+CFATTACH_DECL(ucbio, sizeof(struct ucbio_softc),
+    ucbio_match, ucbio_attach, NULL, NULL);
 
 /* I/O */
 static int betty_in(hpcio_chip_t, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.8 2000/06/29 08:28:23 mrg Exp $	*/
+/*	$NetBSD: intr.c,v 1.8.8.1 2002/10/18 02:35:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -296,7 +296,7 @@ struct clockframe	frame;
 		vec_list = &autovec_list[vector - AVEC_LOC];
 	else if (vector <= (UVEC_LOC+UVEC_MAX) && vector >= UVEC_LOC)
 		vec_list = &uservec_list[vector - UVEC_LOC];
-	else panic("intr_dispatch: Bogus vector %d\n", vector);
+	else panic("intr_dispatch: Bogus vector %d", vector);
 
 	if ((ih = vec_list->lh_first) == NULL) {
 		printf("intr_dispatch: vector %d unexpected\n", vector);

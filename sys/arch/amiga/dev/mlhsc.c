@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.23.8.2 2002/02/28 04:06:53 nathanw Exp $ */
+/*	$NetBSD: mlhsc.c,v 1.23.8.3 2002/10/18 02:35:02 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlhsc.c,v 1.23.8.2 2002/02/28 04:06:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlhsc.c,v 1.23.8.3 2002/10/18 02:35:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,9 +69,8 @@ extern int sci_debug;
 
 extern int sci_data_wait;
 
-struct cfattach mlhsc_ca = {
-	sizeof(struct sci_softc), mlhscmatch, mlhscattach
-};
+CFATTACH_DECL(mlhsc, sizeof(struct sci_softc),
+    mlhscmatch, mlhscattach, NULL, NULL);
 
 /*
  * if we are my Hacker's SCSI board we are here.

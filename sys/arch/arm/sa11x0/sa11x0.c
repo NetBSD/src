@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.3.6.3 2002/08/01 02:41:18 nathanw Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.3.6.4 2002/10/18 02:35:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -86,9 +86,8 @@ static int 	sa11x0_search(struct device *, struct cfdata *, void *);
 static int	sa11x0_print(void *, const char *);
 
 /* attach structures */
-struct cfattach saip_ca = {
-	sizeof(struct sa11x0_softc), sa11x0_match, sa11x0_attach
-};
+CFATTACH_DECL(saip, sizeof(struct sa11x0_softc),
+    sa11x0_match, sa11x0_attach, NULL, NULL);
 
 extern struct bus_space sa11x0_bs_tag;
 extern vaddr_t saipic_base;
@@ -145,29 +144,29 @@ sa11x0_attach(parent, self, aux)
 	/* Map the SAIP */
 	if (bus_space_map(sc->sc_iot, SAIPIC_BASE, SAIPIC_NPORTS,
 			0, &sc->sc_ioh))
-		panic("%s: Cannot map registers\n", self->dv_xname);
+		panic("%s: Cannot map registers", self->dv_xname);
 	saipic_base = sc->sc_ioh;
 
 	/* Map the GPIO registers */
 	if (bus_space_map(sc->sc_iot, SAGPIO_BASE, SAGPIO_NPORTS,
 			  0, &sc->sc_gpioh))
-		panic("%s: unable to map GPIO registers\n", self->dv_xname);
+		panic("%s: unable to map GPIO registers", self->dv_xname);
 	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_EDR, 0xffffffff);
 
 	/* Map the PPC registers */
 	if (bus_space_map(sc->sc_iot, SAPPC_BASE, SAPPC_NPORTS,
 			  0, &sc->sc_ppch))
-		panic("%s: unable to map PPC registers\n", self->dv_xname);
+		panic("%s: unable to map PPC registers", self->dv_xname);
 
 	/* Map the DMA controller registers */
 	if (bus_space_map(sc->sc_iot, SADMAC_BASE, SADMAC_NPORTS,
 			  0, &sc->sc_dmach))
-		panic("%s: unable to map DMAC registers\n", self->dv_xname);
+		panic("%s: unable to map DMAC registers", self->dv_xname);
 
 	/* Map the reset controller registers */
 	if (bus_space_map(sc->sc_iot, SARCR_BASE, NBPG,
 			  0, &sc->sc_reseth))
-		panic("%s: unable to map reset registers\n", self->dv_xname);
+		panic("%s: unable to map reset registers", self->dv_xname);
 
 	printf("\n");
 
@@ -222,7 +221,7 @@ sa11x0_search(parent, cf, aux)
         sa.sa_intr = cf->cf_loc[SAIPCF_INTR];
 	sa.sa_gpio = cf->cf_loc[SAIPCF_GPIO];
 
-        if ((*cf->cf_attach->ca_match)(parent, cf, &sa) > 0)
+        if (config_match(parent, cf, &sa) > 0)
                 config_attach(parent, cf, &sa, sa11x0_print);
 
         return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.2.2.3 2002/08/01 02:45:21 nathanw Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.2.2.4 2002/10/18 02:43:09 nathanw Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -32,7 +32,7 @@
  * Only tested on IGA 1682 in Krups JavaStation-NC.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.2.2.3 2002/08/01 02:45:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.2.2.4 2002/10/18 02:43:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.2.2.3 2002/08/01 02:45:21 nathanw Ex
 #include <sys/malloc.h>
 #include <sys/buf.h>
 
+#ifdef __sparc__  /* XXX: this doesn't belong here */
 #include <machine/autoconf.h>
+#endif
 #include <machine/bus.h>
 #include <machine/intr.h>
 
@@ -57,10 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.2.2.3 2002/08/01 02:45:21 nathanw Ex
 static int	igsfb_pci_match(struct device *, struct cfdata *, void *);
 static void	igsfb_pci_attach(struct device *, struct device *, void *);
 
-const struct cfattach igsfb_pci_ca = {
-	sizeof(struct igsfb_softc), igsfb_pci_match, igsfb_pci_attach,
-};
-
+CFATTACH_DECL(igsfb_pci, sizeof(struct igsfb_softc),
+    igsfb_pci_match, igsfb_pci_attach, NULL, NULL);
 
 static int
 igsfb_pci_match(parent, match, aux)
@@ -75,6 +75,9 @@ igsfb_pci_match(parent, match, aux)
 
 	/* probably can drive iga1680 and cyberpro cards as well */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEGRAPHICS_IGA1682)
+		return (1);
+
+	if (PCI_PRODUCT(pa->pa_id) == 0x2000) /* XXX */
 		return (1);
 
 	return (0);
@@ -98,7 +101,7 @@ igsfb_pci_attach(parent, self, aux)
 	char devinfo[256];
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s, revision 0x%02x\n", devinfo, PCI_REVISION(pa->pa_class));
+	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEGRAPHICS_IGA1682)
 		sc->sc_is2k = 0;
@@ -106,17 +109,9 @@ igsfb_pci_attach(parent, self, aux)
 		sc->sc_is2k = 1;
 
 	/*
-	 * Enable the chip.  This always goes through i/o space
-	 * because that's the only way that is guaranteed to enable
-	 * completely uninitialized card.
-	 */
-	if (igsfb_enable(pa->pa_iot) != 0)
-		return;
-
-	/*
 	 * Configure memory space first since for CyberPro we use
 	 * memory-mapped i/o access.  Note that we are NOT mapping any
-	 * of it yet.  (XXX: search for memory BAR)
+	 * of it yet.  (XXX: search for memory BAR?)
 	 */
 #define IGS_MEM_MAPREG (PCI_MAPREG_START + 0)
 
@@ -137,6 +132,9 @@ igsfb_pci_attach(parent, self, aux)
 		sc->sc_iot = sc->sc_memt;
 		iobase = IGS_MEM_MMIO_SELECT | sc->sc_memaddr;
 		ioflags = sc->sc_memflags;
+		printf("mem = 0x%08x, io = 0x%08x\n",
+		       (u_int32_t)sc->sc_memaddr,
+		       (u_int32_t)iobase);
 	} else {
 		/* feh, 1682 config denies having io space registers */
 		sc->sc_iot = pa->pa_iot;
@@ -157,7 +155,24 @@ igsfb_pci_attach(parent, self, aux)
 		return;
 	}
 
-	/* TODO: Map CRTC???  This simple driver doesn't use it so far. */
+	/*
+	 * Enable the chip.
+	 * 
+	 * XXX: for CyberPro sc->sc_iot is actually MMIO.  Make sure
+	 * that the card responds to memory cycles first?
+	 */
+	if (igsfb_enable(sc->sc_iot) != 0)
+		return;
+
+#ifdef __arm__ /* XXX: uwe: netwinder */
+	/*
+	 * On Netwinder the card is absolutely out of whack.
+	 * Program the registers to bring the card into a usable state.
+	 * On Krups we rely on OFW to program the card correctly
+	 * (XXX: re-check the case when the console is on serial).
+	 */
+	igsfb_hw_setup(sc);
+#endif
 
 	/*
 	 * TODO: Map graphic coprocessor registers.  not sure if this
@@ -165,7 +180,12 @@ igsfb_pci_attach(parent, self, aux)
 	 * attach code.
 	 */
 
+
 	isconsole = 0;
+#ifdef __arm__
+	isconsole = 1;		/* XXX */
+#endif
+
 #ifdef __sparc__  /* XXX: this doesn't belong here */
 	if (PCITAG_NODE(pa->pa_tag) == prom_instance_to_package(prom_stdout()))
 		isconsole = 1;

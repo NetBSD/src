@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.306.2.19 2002/09/17 21:20:19 nathanw Exp $
+$NetBSD: pcidevs,v 1.306.2.20 2002/10/18 02:43:13 nathanw Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -50,6 +50,7 @@ $NetBSD: pcidevs,v 1.306.2.19 2002/09/17 21:20:19 nathanw Exp $
 vendor PEAK		0x001c	Peak System Technik
 vendor MARTINMARIETTA	0x003d	Martin-Marietta Corporation 
 vendor HAUPPAUGE	0x0070	Hauppauge Computer Works
+vendor DYNALINK		0x0675	Dynalink
 vendor COMPAQ		0x0e11	Compaq
 vendor SYMBIOS		0x1000	Symbios Logic
 vendor ATI		0x1002	ATI Technologies
@@ -786,6 +787,8 @@ product AMD PBC756_PMC	0x740b	AMD756 Power Management Controller
 product AMD PBC756_USB	0x740c	AMD756 USB Host Controller
 product AMD SC762_NB	0x700c	AMD762 NorthBridge
 product AMD SC762_PPB	0x700d	AMD762 AGP Bridge
+product AMD SC761_SC	0x700e	AMD761 System Controller
+product AMD SC761_PPB	0x700f	AMD761 PCI-to-PCI Bridge
 product AMD PBC766_ISA	0x7410	AMD766 SouthBridge
 product AMD PBC766_IDE	0x7411	AMD766 IDE controller
 product AMD PBC766_PMC	0x7413	AMD766 Power Management Controller
@@ -846,6 +849,9 @@ product ARC 2000MT	0xa0a1	2000MT
 
 /* ASIX Electronics products */
 product ASIX AX88140A	0x1400	AX88140A 10/100 Ethernet
+
+/* Asustek products */
+product	ASUSTEK HFCPCI		0x0675	Asustek ISDN
 
 /* ATI products */
 product ATI MACH32		0x4158	Mach32
@@ -947,6 +953,7 @@ product CCUBE CINEMASTER	0x8888	Cinemaster C 3.0 DVD Decoder
 
 /* AVM products */
 product AVM FRITZ_CARD		0x0a00	Fritz! Card ISDN Interface
+product AVM FRITZ_PCI_V2_ISDN	0x0e00	Fritz!PCI v2.0 ISDN Interface
 product AVM B1			0x0700	Basic Rate B1 ISDN Interface
 product AVM T1			0x1200	Primary Rate T1 ISDN Interface
 
@@ -963,6 +970,7 @@ product BIT3 PCIVME2706		0x0300	PCI-VME Interface Mod. 2706
 /* Broadcom Corporation products */
 product BROADCOM BCM5700	0x1644	BCM5700 10/100/1000 Ethernet
 product BROADCOM BCM5701	0x1645	BCM5701 10/100/1000 Ethernet
+product BROADCOM BCM4401	0x4401	BCM4401 10/100 Ethernet
 
 /* Brooktree products */
 product	BROOKTREE BT848		0x0350	Bt848 Video Capture
@@ -1178,6 +1186,9 @@ product DOLPHIN PCISCI	0x0658	PCI-SCI Bridge
 
 /* Domex products */
 product DOMEX PCISCSI	0x0001	DMX-3191D
+
+/* Dynalink products */
+product	DYNALINK IS64PH		0x1702	Dynalink IS64PH ISDN Adapter
 
 /* ELSA products */
 product ELSA	QS1PCI	0x1000	QuickStep 1000 ISDN card
@@ -2165,13 +2176,14 @@ product VIATECH VT3043		0x3043	VT3043 (Rhine) 10/100 Ethernet
 product VIATECH VT6306		0x3044	VT3606 OHCI IEEE 1394 Controller
 product VIATECH VT82C686A_SMB	0x3057	VT82C686A SMBus Controller
 product VIATECH VT82C686A_AC97	0x3058	VT82C686A AC-97 Audio Controller
-product VIATECH VT8233_AC97	0x3059	VT8233 AC-97 Audio Controller
+product VIATECH VT8233_AC97	0x3059	VT8233/VT8235 AC-97 Audio Controller
 product	VIATECH	VT6102		0x3065	VT6102 (Rhine II) 10/100 Ethernet
 product VIATECH VT82C686A_MC97	0x3068	VT82C686A MC-97 Modem Controller
 product VIATECH VT8233		0x3074	VT8233 PCI-ISA Bridge
 product VIATECH VT8366		0x3099	VT8366 (Apollo KT266) CPU-PCI Bridge
 product VIATECH VT8653		0x3101	VT8653 (Apollo Pro 266T) CPU-PCI Bridge
 product VIATECH VT8233A		0x3147	VT8233A PCI-ISA Bridge
+product VIATECH VT8235		0x3177	VT8235 (Apollo KT400) PCI-ISA Bridge
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
 product VIATECH VT8231		0x8231	VT8231 IDE Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 KT133 PCI to AGP Bridge
@@ -2281,12 +2293,13 @@ product WD WD34C296	0x4296	WD34C296
 product WD 90C		0xc24a	90C
 
 /* Winbond Electronics products */
-product WINBOND W83769F	0x0001	W83769F
+product WINBOND W83769F		0x0001	W83769F
 product WINBOND W83C553F_0	0x0565	W83C553F PCI-ISA Bridge
 product WINBOND W83C553F_1	0x0105	W83C553F IDE Controller
-product WINBOND W89C840F 0x0840	W89C840F 10/100 Ethernet
-product WINBOND W89C940F 0x0940	W89C940F Ethernet
-product WINBOND W89C940F_1 0x5a5a	W89C940F Ethernet
+product WINBOND W89C840F	0x0840	W89C840F 10/100 Ethernet
+product WINBOND W89C940F	0x0940	W89C940F Ethernet
+product WINBOND W89C940F_1	0x5a5a	W89C940F Ethernet
+product	WINBOND	W6692		0x6692	W6692 ISDN 
 
 /* Xircom products */
 /* is the `-3' here just indicating revision 3, or is it really part

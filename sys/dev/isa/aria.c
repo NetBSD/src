@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.8.2.4 2002/02/28 04:13:37 nathanw Exp $	*/
+/*	$NetBSD: aria.c,v 1.8.2.5 2002/10/18 02:42:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.8.2.4 2002/02/28 04:13:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.8.2.5 2002/10/18 02:42:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,9 +184,8 @@ int	aria_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	aria_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	aria_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
 
-struct cfattach aria_ca = {
-	sizeof(struct aria_softc), ariaprobe, ariaattach
-};
+CFATTACH_DECL(aria, sizeof(struct aria_softc),
+    ariaprobe, ariaattach, NULL, NULL);
 
 /* XXX temporary test for 1.3 */
 #ifndef AudioNaux

@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.9.2.2 2001/11/14 19:15:13 nathanw Exp $	*/
+/*	$NetBSD: fms.c,v 1.9.2.3 2002/10/18 02:43:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.9.2.2 2001/11/14 19:15:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.9.2.3 2002/10/18 02:43:01 nathanw Exp $");
 
 #include "mpu.h"
 
@@ -106,9 +106,8 @@ int	fms_trigger_output __P((void *, void *, void *, int, void (*)(void *),
 int	fms_trigger_input __P((void *, void *, void *, int, void (*)(void *),
 			       void *, struct audio_params *));
 
-struct cfattach fms_ca = {
-	sizeof (struct fms_softc), fms_match, fms_attach
-};
+CFATTACH_DECL(fms, sizeof (struct fms_softc),
+    fms_match, fms_attach, NULL, NULL);
 
 struct audio_device fms_device = {
 	"Forte Media 801",
@@ -910,7 +909,7 @@ fms_trigger_output(addr, start, end, blksize, intr, arg, param)
 	
 	if (!p)
 		panic("fms_trigger_output: request with bad start "
-		      "address (%p)\n", start);
+		      "address (%p)", start);
 
 	sc->sc_play_start = p->map->dm_segs[0].ds_addr;
 	sc->sc_play_end = sc->sc_play_start + ((char *)end - (char *)start);
@@ -948,7 +947,7 @@ fms_trigger_input(addr, start, end, blksize, intr, arg, param)
 	
 	if (!p)
 		panic("fms_trigger_input: request with bad start "
-		      "address (%p)\n", start);
+		      "address (%p)", start);
 
 	sc->sc_rec_start = p->map->dm_segs[0].ds_addr;
 	sc->sc_rec_end = sc->sc_rec_start + ((char *)end - (char *)start);

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.62.6.6 2002/08/13 02:19:07 nathanw Exp $
+# $NetBSD: GENERIC,v 1.62.6.7 2002/10/18 02:40:41 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.62.6.6 $"
+#ident 		"GENERIC-$Revision: 1.62.6.7 $"
 
 maxusers	8
 
@@ -66,6 +66,7 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
+options 	SYSTRACE	# system call vetting via systrace(1)
 
 ## Collect statistics on kernel malloc's and free's.  This does have a
 ## significant performance hit on slower machines, so it is intended for
@@ -85,7 +86,7 @@ options 	SYSVSHM		# System V shared memory
 ## Loadable kernel module support
 #options 	LKM
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; not supported currently: needs nfsboot program
@@ -206,6 +207,7 @@ options 	INET6		# IPV6
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
 options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 #options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 #options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 #options 	PPP_FILTER	# Add active filters for ppp (via bpf)
@@ -397,6 +399,10 @@ pseudo-device	vnd	4
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
 
 #pseudo-device	ccd	4
+
+## Cryptographic disk devices.  See cgd(4).
+
+#pseudo-device	cgd	4
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.6.2.2 2002/02/28 04:13:16 nathanw Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.6.2.3 2002/10/18 02:41:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.6.2.2 2002/02/28 04:13:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.6.2.3 2002/10/18 02:41:38 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -121,9 +121,8 @@ struct tulip_eisa_softc {
 int	tlp_eisa_match __P((struct device *, struct cfdata *, void *));
 void	tlp_eisa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach tlp_eisa_ca = {
-	sizeof(struct tulip_eisa_softc), tlp_eisa_match, tlp_eisa_attach,
-};
+CFATTACH_DECL(tlp_eisa, sizeof(struct tulip_eisa_softc),
+    tlp_eisa_match, tlp_eisa_attach, NULL, NULL);
 
 const int tlp_eisa_irqs[] = { 5, 9, 10, 11 };
 

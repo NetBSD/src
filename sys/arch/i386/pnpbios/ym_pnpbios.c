@@ -1,4 +1,4 @@
-/* $NetBSD: ym_pnpbios.c,v 1.4.6.2 2002/04/01 07:40:43 nathanw Exp $ */
+/* $NetBSD: ym_pnpbios.c,v 1.4.6.3 2002/10/18 02:38:08 nathanw Exp $ */
 /*
  * Copyright (c) 1999
  *	Matthias Drochner.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.4.6.2 2002/04/01 07:40:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.4.6.3 2002/10/18 02:38:08 nathanw Exp $");
 
 #include "mpu_ym.h"
 
@@ -64,9 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.4.6.2 2002/04/01 07:40:43 nathanw E
 int ym_pnpbios_match __P((struct device *, struct cfdata *, void *));
 void ym_pnpbios_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ym_pnpbios_ca = {
-	sizeof(struct ym_softc), ym_pnpbios_match, ym_pnpbios_attach
-};
+CFATTACH_DECL(ym_pnpbios, sizeof(struct ym_softc),
+    ym_pnpbios_match, ym_pnpbios_attach, NULL, NULL);
 
 int
 ym_pnpbios_match(parent, match, aux)

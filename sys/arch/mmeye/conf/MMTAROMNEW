@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.16.2.2 2002/08/01 02:42:39 nathanw Exp $
+#	$NetBSD: MMTAROMNEW,v 1.16.2.3 2002/10/18 02:38:55 nathanw Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -46,7 +46,7 @@ options 	HZ=10		# clock interrupt generates every 1/10 sec
 
 #options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

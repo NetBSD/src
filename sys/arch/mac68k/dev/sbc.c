@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.41 2000/03/18 16:13:23 mycroft Exp $	*/
+/*	$NetBSD: sbc.c,v 1.41.12.1 2002/10/18 02:38:20 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -624,7 +624,7 @@ sbc_dma_alloc(ncr_sc)
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
-		panic("sbc_dma_alloc: len=0x%x\n", xlen);
+		panic("sbc_dma_alloc: len=0x%x", xlen);
 
 	/*
 	 * Find free PDMA handle.  Guaranteed to find one since we
@@ -772,7 +772,7 @@ sbc_dma_stop(ncr_sc)
 #endif
 
 		if (ntrans > ncr_sc->sc_datalen)
-			panic("sbc_dma_stop: excess transfer\n");
+			panic("sbc_dma_stop: excess transfer");
 
 		/* Adjust data pointer */
 		ncr_sc->sc_dataptr += ntrans;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2 2000/10/14 07:19:24 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2.10.1 2002/10/18 02:39:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 
 #include <machine/bus.h>
 
@@ -175,7 +174,7 @@ news68k_bus_space_probe(t, bsh, offset, sz)
 		break;
 
 	default:
-		panic("bus_space_probe: unupported data size %d\n", sz);
+		panic("bus_space_probe: unupported data size %d", sz);
 		/* NOTREACHED */
 	}
 

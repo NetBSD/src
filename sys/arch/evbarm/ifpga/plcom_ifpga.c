@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpga.c,v 1.1.2.2 2002/02/28 04:09:10 nathanw Exp $ */
+/*      $NetBSD: plcom_ifpga.c,v 1.1.2.3 2002/10/18 02:36:28 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -55,16 +55,13 @@ static int  plcom_ifpga_match(struct device *, struct cfdata *, void *);
 static void plcom_ifpga_attach(struct device *, struct device *, void *);
 static void plcom_ifpga_set_mcr(void *, int, u_int);
 
-struct cfattach plcom_ifpga_ca = {
-	sizeof(struct plcom_softc), plcom_ifpga_match, plcom_ifpga_attach
-};
+CFATTACH_DECL(plcom_ifpga, sizeof(struct plcom_softc),
+    plcom_ifpga_match, plcom_ifpga_attach, NULL, NULL);
 
 static int
 plcom_ifpga_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	if (strcmp(cf->cf_driver->cd_name, "plcom") == 0)
-		return 1;
-	return 0;
+	return 1;
 }
 
 static void
@@ -97,7 +94,7 @@ plcom_ifpga_attach(struct device *parent, struct device *self, void *aux)
 	isc->sc_ih = intr_claim(ifa->ifa_irq, IPL_SERIAL, irqname, plcomintr,
 	    sc);
 	if (isc->sc_ih == NULL)
-		panic("%s: cannot install interrupt handler\n",
+		panic("%s: cannot install interrupt handler",
 		    sc->sc_dev.dv_xname);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.44.2.5 2002/08/01 02:45:12 nathanw Exp $	*/
+/*	$NetBSD: eap.c,v 1.44.2.6 2002/10/18 02:42:59 nathanw Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.44.2.5 2002/08/01 02:45:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.44.2.6 2002/10/18 02:42:59 nathanw Exp $");
 
 #include "midi.h"
 
@@ -157,9 +157,8 @@ int	eap_freemem(struct eap_softc *, struct eap_dma *);
 #define EREAD2(sc, r) bus_space_read_2((sc)->iot, (sc)->ioh, (r))
 #define EREAD4(sc, r) bus_space_read_4((sc)->iot, (sc)->ioh, (r))
 
-struct cfattach eap_ca = {
-	sizeof(struct eap_softc), eap_match, eap_attach
-};
+CFATTACH_DECL(eap, sizeof(struct eap_softc),
+    eap_match, eap_attach, NULL, NULL);
 
 int	eap_open(void *, int);
 void	eap_close(void *);
@@ -1139,7 +1138,8 @@ eap_trigger_output(
 		EWRITE4(sc, E1371_SRC, 0);
 
 	icsc = EREAD4(sc, EAP_ICSC);
-	EWRITE4(sc, EAP_ICSC, icsc | EAP_DAC2_EN);
+	icsc |= EAP_DAC2_EN;
+	EWRITE4(sc, EAP_ICSC, icsc);
 
 	DPRINTFN(1, ("eap_trigger_output: set ICSC = 0x%08x\n", icsc));
 
@@ -1207,7 +1207,8 @@ eap_trigger_input(
 		EWRITE4(sc, E1371_SRC, 0);
 
 	icsc = EREAD4(sc, EAP_ICSC);
-	EWRITE4(sc, EAP_ICSC, icsc | EAP_ADC_EN);
+	icsc |= EAP_ADC_EN;
+	EWRITE4(sc, EAP_ICSC, icsc);
 
 	DPRINTFN(1, ("eap_trigger_input: set ICSC = 0x%08x\n", icsc));
 

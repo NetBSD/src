@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_ofbus.c,v 1.1.2.2 2002/02/28 04:11:54 nathanw Exp $	*/
+/*	$NetBSD: cpu_ofbus.c,v 1.1.2.3 2002/10/18 02:39:47 nathanw Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,5 @@ cpu_ofbus_attach(parent, self, aux)
 	cpu_attach(self);
 }
 
-struct cfattach cpu_ofbus_ca = {
-	sizeof(struct device), cpu_ofbus_match, cpu_ofbus_attach
-};
+CFATTACH_DECL(cpu_ofbus, sizeof(struct device),
+    cpu_ofbus_match, cpu_ofbus_attach, NULL, NULL);

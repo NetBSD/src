@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.20.2.4 2002/04/01 07:46:17 nathanw Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.20.2.5 2002/10/18 02:42:52 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.20.2.4 2002/04/01 07:46:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.20.2.5 2002/10/18 02:42:52 nathanw Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -67,9 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.20.2.4 2002/04/01 07:46:17 nathanw Exp $
 #include <ipkdb/ipkdb.h>
 #include <machine/ipkdb.h>
 
-struct cfattach ipkdb_ofn_ca = {
-	0, ipkdb_probe, ipkdb_attach
-};
+CFATTACH_DECL(ipkdb_ofn, 0,
+    ipkdb_probe, ipkdb_attach, NULL, NULL);
 
 static struct ipkdb_if *kifp;
 static struct ofnet_softc *ipkdb_of;
@@ -88,9 +87,8 @@ struct ofnet_softc {
 static int ofnet_match (struct device *, struct cfdata *, void *);
 static void ofnet_attach (struct device *, struct device *, void *);
 
-struct cfattach ofnet_ca = {
-	sizeof(struct ofnet_softc), ofnet_match, ofnet_attach
-};
+CFATTACH_DECL(ofnet, sizeof(struct ofnet_softc),
+    ofnet_match, ofnet_attach, NULL, NULL);
 
 static void ofnet_read (struct ofnet_softc *);
 static void ofnet_timer (void *);
@@ -166,10 +164,6 @@ ofnet_attach(struct device *parent, struct device *self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
-
-#ifdef __BROKEN_DK_ESTABLISH
-	dk_establish(0, self);					/* XXX */
-#endif
 }
 
 static char buf[ETHERMTU + sizeof(struct ether_header)];
@@ -179,16 +173,17 @@ ofnet_read(struct ofnet_softc *of)
 {
 	struct ifnet *ifp = &of->sc_ethercom.ec_if;
 	struct mbuf *m, **mp, *head;
-	int l, len;
+	int s, l, len;
 	char *bufp;
 
+	s = splnet();
 #if NIPKDB_OFN > 0
 	ipkdbrint(kifp, ifp);
 #endif	
-	while (1) {
+	for (;;) {
 		if ((len = OF_read(of->sc_ihandle, buf, sizeof buf)) < 0) {
 			if (len == -2 || len == 0)
-				return;
+				break;
 			ifp->if_ierrors++;
 			continue;
 		}
@@ -278,6 +273,7 @@ ofnet_read(struct ofnet_softc *of)
 		ifp->if_ipackets++;
 		(*ifp->if_input)(ifp, head);
 	}
+	splx(s);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: nwmmu.S,v 1.2.10.4 2002/04/17 00:03:58 nathanw Exp $	*/
+/*	$NetBSD: nwmmu.S,v 1.2.10.5 2002/10/18 02:39:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ _C_LABEL(nwstart):
 	/*
 	 * Step 1: Map the entire address space VA==PA.
 	 */
-	add	r0, pc, #(Ltable - . - 8)
+	adr	r0, Ltable
 	ldr	r0, [r0]		/* r0 = &l1table */
 
 	mov	r3, #(L1_S_AP(AP_KRW))
@@ -78,7 +78,7 @@ _C_LABEL(nwstart):
 	/*
 	 * Step 2: Map VA 0xf0000000->0xf3ffffff to PA 0x00000000->0x03ffffff.
 	 */
-	add	r0, pc, #(Ltable - . - 8)
+	adr	r0, Ltable
 	ldr	r0, [r0]		/* r0 = &l1table */
 
 	mov	r3, #(L1_S_AP(AP_KRW))
@@ -94,7 +94,7 @@ _C_LABEL(nwstart):
 	/*
 	 * Step 3: Map VA 0xfd200000 to PA 0x7c000000
 	 */
-	add	r0, pc, #(Ltable - . - 8)
+	adr	r0, Ltable
 	ldr	r0, [r0]		/* r0 = &l1table */
 
 	mov	r3, #(L1_S_AP(AP_KRW))
@@ -104,7 +104,7 @@ _C_LABEL(nwstart):
 	str	r3, [r0, #0x08]		/* -> 0xfd2xxxxx */
 
 	/* OK!  Page table is set up.  Give it to the CPU. */
-	add	r0, pc, #(Ltable - . - 8)
+	adr	r0, Ltable
 	ldr	r0, [r0]
 	mcr	p15, 0, r0, c2, c0, 0
 
@@ -125,8 +125,7 @@ _C_LABEL(nwstart):
 	nop
 
 	/* ...and now we jump to the "real" kernel entry point! */
-	add	r0, pc, #(Lstart - . - 8)
-	ldr	pc, [r0]
+	ldr	pc, Lstart
 
 Ltable:
 	.word	0x00008000

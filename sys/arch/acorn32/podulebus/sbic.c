@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.1.4.3 2002/04/01 07:38:46 nathanw Exp $ */
+/* $NetBSD: sbic.c,v 1.1.4.4 2002/10/18 02:33:45 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -78,14 +78,16 @@
 #define UNPROTECTED_CSR
 #endif
 
+#ifndef DEBUG
 #define DEBUG
+#endif
 /* #define SBIC_DEBUG(a) a */
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.1.4.3 2002/04/01 07:38:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.1.4.4 2002/10/18 02:33:45 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -1807,7 +1809,7 @@ sbicmsgin(struct sbic_softc *dev)
 						(SBIC_ASR_DBR | SBIC_ASR_INT)))
 						GET_SBIC_asr(regs, asr);
 					if (asr & SBIC_ASR_DBR)
-						panic("msgin: jammed again!\n");
+						panic("msgin: jammed again!");
 					GET_SBIC_csr(regs, csr);
 					CSR_TRACE('e', csr, asr, dev->target);
 					if ((csr & 0x07) != MESG_OUT_PHASE) {

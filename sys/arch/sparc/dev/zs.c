@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.84.4.4 2002/09/17 21:17:44 nathanw Exp $	*/
+/*	$NetBSD: zs.c,v 1.84.4.5 2002/10/18 02:39:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -177,21 +177,18 @@ static void zs_attach_obio __P((struct device *, struct device *, void *));
 static int  zs_match_bootbus __P((struct device *, struct cfdata *, void *));
 static void zs_attach_bootbus __P((struct device *, struct device *, void *));
 
-struct cfattach zs_bootbus_ca = {
-	sizeof(struct zsc_softc), zs_match_bootbus, zs_attach_bootbus
-};
+CFATTACH_DECL(zs_bootbus, sizeof(struct zsc_softc),
+    zs_match_bootbus, zs_attach_bootbus, NULL, NULL);
 #endif /* SUN4D */
 
 static void zs_attach __P((struct zsc_softc *, struct zsdevice *, int));
 static int  zs_print __P((void *, const char *name));
 
-struct cfattach zs_mainbus_ca = {
-	sizeof(struct zsc_softc), zs_match_mainbus, zs_attach_mainbus
-};
+CFATTACH_DECL(zs_mainbus, sizeof(struct zsc_softc),
+    zs_match_mainbus, zs_attach_mainbus, NULL, NULL);
 
-struct cfattach zs_obio_ca = {
-	sizeof(struct zsc_softc), zs_match_obio, zs_attach_obio
-};
+CFATTACH_DECL(zs_obio, sizeof(struct zsc_softc),
+    zs_match_obio, zs_attach_obio, NULL, NULL);
 
 extern struct cfdriver zs_cd;
 
@@ -220,7 +217,7 @@ zs_match_mainbus(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) != 0)
+	if (strcmp(cf->cf_name, ma->ma_name) != 0)
 		return (0);
 
 	return (1);
@@ -238,7 +235,7 @@ zs_match_obio(parent, cf, aux)
 	if (uoba->uoba_isobio4 == 0) {
 		struct sbus_attach_args *sa = &uoba->uoba_sbus;
 
-		if (strcmp(cf->cf_driver->cd_name, sa->sa_name) != 0)
+		if (strcmp(cf->cf_name, sa->sa_name) != 0)
 			return (0);
 
 		return (1);
@@ -258,7 +255,7 @@ zs_match_bootbus(parent, cf, aux)
 {
 	struct bootbus_attach_args *baa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, baa->ba_name) == 0);
+	return (strcmp(cf->cf_name, baa->ba_name) == 0);
 }
 #endif /* SUN4D */
 
@@ -358,7 +355,11 @@ zs_attach_obio(parent, self, aux)
 		}
 		zsc->zsc_bustag = oba->oba_bustag;
 		zsc->zsc_dmatag = oba->oba_dmatag;
-		/* Find prom unit by physical address */
+		/*
+		 * Find prom unit by physical address
+		 * We're just comparing the address (not the iospace) here
+		 */
+		paddr = BUS_ADDR_PADDR(paddr);
 		if (cpuinfo.cpu_type == CPUTYP_4_100)
 			/*
 			 * On the sun4/100, the top-most 4 bits are zero

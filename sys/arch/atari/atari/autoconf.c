@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36.8.2 2002/09/17 21:13:37 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36.8.3 2002/10/18 02:35:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -98,6 +98,7 @@ atari_config_found(pcfp, pdp, auxp, pfn)
 {
 	struct device temp;
 	struct cfdata *cf;
+	const struct cfattach *ca;
 	extern int	atari_realconfig;
 
 	if (atari_realconfig)
@@ -108,9 +109,12 @@ atari_config_found(pcfp, pdp, auxp, pfn)
 
 	pdp->dv_cfdata = pcfp;
 	if ((cf = config_search((cfmatch_t)NULL, pdp, auxp)) != NULL) {
-		cf->cf_attach->ca_attach(pdp, NULL, auxp);
-		pdp->dv_cfdata = NULL;
-		return(1);
+		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
+		if (ca != NULL) {
+			(*ca->ca_attach)(pdp, NULL, auxp);
+			pdp->dv_cfdata = NULL;
+			return(1);
+		}
 	}
 	pdp->dv_cfdata = NULL;
 	return(0);
@@ -125,6 +129,8 @@ void
 config_console()
 {	
 	struct cfdata *cf;
+
+	config_init();
 
 	/*
 	 * we need mainbus' cfdata.
@@ -246,9 +252,8 @@ findroot(void)
 /* 
  * mainbus driver 
  */
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mbmatch, mbattach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mbmatch, mbattach, NULL, NULL);
 
 int
 mbmatch(pdp, cfp, auxp)

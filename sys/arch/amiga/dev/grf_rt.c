@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.39.6.5 2002/09/17 21:13:01 nathanw Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.39.6.6 2002/10/18 02:34:55 nathanw Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.39.6.5 2002/09/17 21:13:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.39.6.6 2002/10/18 02:34:55 nathanw Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -777,9 +777,8 @@ int rt_putcmap(struct grf_softc *, struct grf_colormap *);
 int rt_bitblt(struct grf_softc *, struct grf_bitblt *);
 int rt_blank(struct grf_softc *, int *);
 
-struct cfattach grfrt_ca = {
-	sizeof(struct grf_softc), grfrtmatch, grfrtattach
-};
+CFATTACH_DECL(grfrt, sizeof(struct grf_softc),
+    grfrtmatch, grfrtattach, NULL, NULL);
 
 /*
  * only used in console init

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.16.20.1 2001/11/14 19:14:56 nathanw Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.16.20.2 2002/10/18 02:42:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isapnp.c,v 1.16.20.1 2001/11/14 19:14:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isapnp.c,v 1.16.20.2 2002/10/18 02:42:40 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,9 +69,8 @@ struct com_isapnp_softc {
 int	com_isapnp_match __P((struct device *, struct cfdata *, void *));
 void	com_isapnp_attach __P((struct device *, struct device *, void *));
 
-struct cfattach com_isapnp_ca = {
-	sizeof(struct com_isapnp_softc), com_isapnp_match, com_isapnp_attach
-};
+CFATTACH_DECL(com_isapnp, sizeof(struct com_isapnp_softc),
+    com_isapnp_match, com_isapnp_attach, NULL, NULL);
 
 int
 com_isapnp_match(parent, match, aux)

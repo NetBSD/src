@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.2.4.8 2002/08/13 02:19:33 nathanw Exp $	*/
+/*	$NetBSD: makphy.c,v 1.2.4.9 2002/10/18 02:42:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.2.4.8 2002/08/13 02:19:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.2.4.9 2002/10/18 02:42:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,10 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.2.4.8 2002/08/13 02:19:33 nathanw Exp $
 int	makphymatch(struct device *, struct cfdata *, void *);
 void	makphyattach(struct device *, struct device *, void *);
 
-struct cfattach makphy_ca = {
-	sizeof(struct mii_softc), makphymatch, makphyattach,
-	    mii_phy_detach, mii_phy_activate
-};
+CFATTACH_DECL(makphy, sizeof(struct mii_softc),
+    makphymatch, makphyattach, mii_phy_detach, mii_phy_activate);
 
 int	makphy_service(struct mii_softc *, struct mii_data *, int);
 void	makphy_status(struct mii_softc *);

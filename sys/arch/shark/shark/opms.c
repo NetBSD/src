@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.1.6.3 2002/09/17 21:17:33 nathanw Exp $        */
+/*      $NetBSD: opms.c,v 1.1.6.4 2002/10/18 02:39:48 nathanw Exp $        */
 
 /*
  * Copyright 1997
@@ -192,10 +192,8 @@ int                  opmsintr         __P((void *));
 */
 
 /* Autoconfiguration data structures */
-struct cfattach opms_ca = 
-{
-        sizeof(struct opms_softc), opmsprobe, opmsattach,
-};
+CFATTACH_DECL(opms, sizeof(struct opms_softc),
+    opmsprobe, opmsattach, NULL, NULL);
 
 extern struct cfdriver opms_cd;
 
@@ -268,8 +266,8 @@ opmsprobe(parent, match, aux)
     ** child of a real keyboard controller driver.)
     */
     if ((parent != NULL) &&
-        (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "pc") ||
-         (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "vt"))))
+        (!strcmp(parent->dv_cfdata->cf_name, "pc") ||
+         (!strcmp(parent->dv_cfdata->cf_name, "vt"))))
     {
         /* 
         ** The mouse shares registers with the parent, so

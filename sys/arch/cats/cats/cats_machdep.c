@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.5.2.9 2002/08/27 06:03:18 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.5.2.10 2002/10/18 02:36:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -378,7 +378,7 @@ initarm(bootargs)
 
 	if (ebsabootinfo.bt_magic != BT_MAGIC_NUMBER_EBSA
 	    && ebsabootinfo.bt_magic != BT_MAGIC_NUMBER_CATS)
-		panic("Incompatible magic number passed in boot args\n");
+		panic("Incompatible magic number passed in boot args");
 
 /*	{
 	int loop;
@@ -495,7 +495,7 @@ initarm(bootargs)
 #ifdef DIAGNOSTIC
 	/* This should never be able to happen but better confirm that. */
 	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (L1_TABLE_SIZE-1)) != 0)
-		panic("initarm: Failed to align the kernel page directory\n");
+		panic("initarm: Failed to align the kernel page directory");
 #endif
 
 	/*
@@ -564,7 +564,7 @@ initarm(bootargs)
 	/* Now we fill in the L2 pagetable for the kernel static code/data */
 
 	if (N_GETMAGIC(kernexec[0]) != ZMAGIC)
-		panic("Illegal kernel format\n");
+		panic("Illegal kernel format");
 	else {
 		extern int end;
 
@@ -906,7 +906,7 @@ consinit(void)
 
 #if NISA > 0
 	/* Initialise the ISA subsystem early ... */
-	isa_cats_init(DC21285_PCI_IO_VBASE, DC21285_PCI_ISA_MEM_VBASE);
+	isa_footbridge_init(DC21285_PCI_IO_VBASE, DC21285_PCI_ISA_MEM_VBASE);
 #endif
 
 	footbridge_pci_bs_tag_init();

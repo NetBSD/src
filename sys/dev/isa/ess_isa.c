@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.5.14.1 2002/02/28 04:13:40 nathanw Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.5.14.2 2002/10/18 02:42:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.5.14.1 2002/02/28 04:13:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.5.14.2 2002/10/18 02:42:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.5.14.1 2002/02/28 04:13:40 nathanw Exp
 int ess_isa_probe __P((struct device *, struct cfdata *, void *));
 void ess_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ess_isa_ca = {
-	sizeof(struct ess_softc), ess_isa_probe, ess_isa_attach
-};
+CFATTACH_DECL(ess_isa, sizeof(struct ess_softc),
+    ess_isa_probe, ess_isa_attach, NULL, NULL);
 
 int
 ess_isa_probe(parent, match, aux)

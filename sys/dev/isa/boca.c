@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.34.2.3 2002/02/28 04:13:38 nathanw Exp $	*/
+/*	$NetBSD: boca.c,v 1.34.2.4 2002/10/18 02:42:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.34.2.3 2002/02/28 04:13:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.34.2.4 2002/10/18 02:42:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,9 +73,8 @@ int bocaintr __P((void *));
 void boca_fixup __P((void *));
 int bocaprint __P((void *, const char *));
 
-struct cfattach boca_ca = {
-	sizeof(struct boca_softc), bocaprobe, bocaattach,
-};
+CFATTACH_DECL(boca, sizeof(struct boca_softc),
+    bocaprobe, bocaattach, NULL, NULL);
 
 int
 bocaprobe(parent, self, aux)

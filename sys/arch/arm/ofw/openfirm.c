@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.1.2.2 2002/02/28 04:07:42 nathanw Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.1.2.3 2002/10/18 02:35:39 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -704,15 +704,15 @@ OF_exit()
 }
 
 void
-(*OF_set_callback(newfunc))()
-	void (*newfunc)();
+(*OF_set_callback(newfunc))(void *)
+	void (*newfunc)(void *);
 {
 	static struct {
 		char *name;
 		int nargs;
 		int nreturns;
-		void (*newfunc)();
-		void (*oldfunc)();
+		void (*newfunc)(void *);
+		void (*oldfunc)(void *);
 	} args = {
 		"set-callback",
 		1,

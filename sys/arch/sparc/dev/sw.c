@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.5.6.2 2002/04/01 07:42:43 nathanw Exp $	*/
+/*	$NetBSD: sw.c,v 1.5.6.3 2002/10/18 02:39:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -219,9 +219,8 @@ void	sw_intr_off __P((struct ncr5380_softc *));
 
 
 /* The Sun "SCSI Weird" 4/100 obio controller. */
-struct cfattach sw_ca = {
-	sizeof(struct sw_softc), sw_match, sw_attach
-};
+CFATTACH_DECL(sw, sizeof(struct sw_softc),
+    sw_match, sw_attach, NULL, NULL);
 
 static int
 sw_match(parent, cf, aux)
@@ -345,7 +344,7 @@ sw_attach(parent, self, aux)
 	i = SCI_OPENINGS * sizeof(struct sw_dma_handle);
 	sc->sc_dma = (struct sw_dma_handle *)malloc(i, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_dma == NULL)
-		panic("sw: dma handle malloc failed\n");
+		panic("sw: dma handle malloc failed");
 
 	for (i = 0; i < SCI_OPENINGS; i++) {
 		sc->sc_dma[i].dh_flags = 0;
@@ -515,7 +514,7 @@ sw_dma_alloc(ncr_sc)
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
-		panic("sw_dma_alloc: xlen=0x%x\n", xlen);
+		panic("sw_dma_alloc: xlen=0x%x", xlen);
 
 	/* Find free DMA handle.  Guaranteed to find one since we have
 	   as many DMA handles as the driver has processes. */

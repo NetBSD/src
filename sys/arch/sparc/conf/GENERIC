@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.123.6.6 2002/09/17 21:17:37 nathanw Exp $
+# $NetBSD: GENERIC,v 1.123.6.7 2002/10/18 02:39:50 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.123.6.6 $"
+#ident 		"GENERIC-$Revision: 1.123.6.7 $"
 
 maxusers	32
 
@@ -63,6 +63,7 @@ config		netbsd	root on ? type ?
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
+options 	SYSTRACE	# system call vetting via systrace(1)
 
 ## Collect statistics on kernel malloc's and free's.  This does have a
 ## significant performance hit on slower machines, so it is intended for
@@ -82,7 +83,7 @@ options 	SYSVSHM		# System V shared memory
 ## Loadable kernel module support; still under development.
 options 	LKM
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
@@ -205,6 +206,7 @@ options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
 options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 options 	PPP_FILTER	# Add active filters for ppp (via bpf)
@@ -425,6 +427,10 @@ pseudo-device	vnd	4
 
 pseudo-device	ccd	4
 
+## Cryptographic disk devices;  See cgd(4)
+
+#pseudo-device	cgd	4
+
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
 pseudo-device	raid	8
@@ -551,7 +557,7 @@ pseudo-device	bridge
 ## /dev/audio support (`audioamd' plus `audio')
 ##
 audioamd0	at mainbus0				# sun4c
-#audioamd0	at obio0				# sun4m
+audioamd0	at obio0				# sun4m
 audioamd0	at sbus0 slot ? offset ?		# sun4m
 audio*		at audioamd0
 

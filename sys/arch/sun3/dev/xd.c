@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.34.6.3 2002/09/17 21:18:16 nathanw Exp $	*/
+/*	$NetBSD: xd.c,v 1.34.6.4 2002/10/18 02:40:21 nathanw Exp $	*/
 
 /*
  *
@@ -254,13 +254,11 @@ int	xdgetdisklabel __P((struct xd_softc *, void *));
  * cfattach's: device driver interface to autoconfig
  */
 
-struct cfattach xdc_ca = {
-	sizeof(struct xdc_softc), xdcmatch, xdcattach
-};
+CFATTACH_DECL(xdc, sizeof(struct xdc_softc),
+    xdcmatch, xdcattach, NULL, NULL);
 
-struct cfattach xd_ca = {
-	sizeof(struct xd_softc), xdmatch, xdattach
-};
+CFATTACH_DECL(xd, sizeof(struct xd_softc),
+    xdmatch, xdattach, NULL, NULL);
 
 extern struct cfdriver xd_cd;
 

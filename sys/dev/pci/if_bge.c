@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.19.2.2 2002/08/01 02:45:14 nathanw Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.19.2.3 2002/10/18 02:43:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -197,9 +197,8 @@ int	bgedebug = 0;
 #define	BGE_QUIRK_LINK_STATE_BROKEN	0x00000001
 #define	BGE_QUIRK_CSUM_BROKEN		0x00000002
 
-struct cfattach bge_ca = {
-	sizeof(struct bge_softc), bge_probe, bge_attach
-};
+CFATTACH_DECL(bge, sizeof(struct bge_softc),
+    bge_probe, bge_attach, NULL, NULL);
 
 u_int32_t
 bge_readmem_ind(sc, off)
@@ -1693,7 +1692,6 @@ bge_attach(parent, self, aux)
 	u_int32_t		hwcfg = 0;
 	u_int32_t		command;
 	struct ifnet		*ifp;
-	int			unit;
 	caddr_t			kva;
 	u_char			eaddr[ETHER_ADDR_LEN];
 	pcireg_t		memtype;
@@ -1776,7 +1774,8 @@ bge_attach(parent, self, aux)
 	 */
 	if (bge_read_eeprom(sc, (caddr_t)eaddr,
 	    BGE_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
-		printf("bge%d: failed to read station address\n", unit);
+		printf("%s: failed to read station address\n",
+		    sc->bge_dev.dv_xname);
 		bge_release_resources(sc);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: awivar.h,v 1.13.2.2 2001/09/21 22:35:34 nathanw Exp $	*/
+/*	$NetBSD: awivar.h,v 1.13.2.3 2002/10/18 02:41:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -87,7 +87,6 @@ struct awi_softc {
 				sc_busy:1,
 				sc_cansleep:1,
 				sc_enab_intr:1,
-				sc_no_bssid:1,
 				sc_adhoc_ap:1,
 				sc_invalid:1;
 	struct ifmedia		sc_media;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.24 2002/09/18 23:57:32 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.25 2002/10/18 02:35:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,6 +44,7 @@
  */
 
 #include "opt_armfpe.h"
+#include "opt_multiprocessor.h"
 
 #include "assym.h"
 #include <machine/param.h>
@@ -69,12 +70,6 @@
 	bic	r14, r14, #(I32_bit) ; \
 	msr	cpsr_c, r14 ; \
 
-/*
- * setrunqueue() and remrunqueue()
- *
- * Functions to add and remove a process for the run queue.
- */
-
 	.text
 
 .Lwhichqs:
@@ -84,134 +79,28 @@
 	.word	_C_LABEL(sched_qs)
 
 /*
- * On entry
- *	r0 = lwp
- */
-
-ENTRY(setrunqueue)
-	/*
-	 * Local register usage
-	 * 	r0 = process
-	 * 	r1 = queue
-	 * 	r2 = &qs[queue] and temp
-	 * 	r3 = temp
-	 *	r12 = whichqs
-	 */
-#ifdef DIAGNOSTIC
-	ldr	r1, [r0, #(L_BACK)]
-	teq	r1, #0x00000000
-	bne	.Lsetrunqueue_erg
-
-	ldr	r1, [r0, #(L_WCHAN)]
-	teq	r1, #0x00000000
-	bne	.Lsetrunqueue_erg
-#endif
-
-	/* Get the priority of the queue */
-	ldrb	r1, [r0, #(L_PRIORITY)]
-
-	/* Indicate that there is a process on this queue */
-	ldr	r12, .Lwhichqs
-	mov	r1, r1, lsr #2
-	ldr	r2, [r12]
-	mov	r3, #0x00000001
-	mov	r3, r3, lsl r1
-	orr	r2, r2, r3
-	str	r2, [r12]
-
-	/* Get the address of the queue */
-	ldr	r2, .Lqs
-	add	r1, r2, r1, lsl # 3
-
-	/* Hook the process in */
-	str	r1, [r0, #(L_FORW)]
-	ldr	r2, [r1, #(L_BACK)]
-
-	str	r0, [r1, #(L_BACK)]
-#ifdef DIAGNOSTIC
-	teq	r2, #0x00000000
-	beq	.Lsetrunqueue_erg
-#endif
-	str	r0, [r2, #(L_FORW)]
-	str	r2, [r0, #(L_BACK)]
-
-	mov	pc, lr
-
-#ifdef DIAGNOSTIC
-.Lsetrunqueue_erg:
-	mov	r2, r1
-	mov	r1, r0
-	add	r0, pc, #.Ltext1 - . - 8
-	bl	_C_LABEL(printf)
-
-	ldr	r2, .Lqs
-	ldr	r1, [r2]
-	add	r0, pc, #.Ltext2 - . - 8
-	b	_C_LABEL(panic)	
-
-.Ltext1:
-	.asciz	"setrunqueue : %08x %08x\n"
-.Ltext2:
-	.asciz	"setrunqueue : [qs]=%08x qs=%08x\n"
-	.align	0
-#endif
-
-/*
- * On entry
- *	r0 = lwp
- */
-
-ENTRY(remrunqueue)
-	/*
-	 * Local register usage
-	 *	r0 = oldproc
-	 * 	r1 = queue
-	 * 	r2 = &qs[queue] and scratch
-	 *	r3 = scratch
-	 *	r12 = whichqs
-	 */
-
-	/* Get the priority of the queue */
-	ldrb	r1, [r0, #(L_PRIORITY)]
-	mov	r1, r1, lsr #2
-
-	/* Unhook the process */
-	ldr	r2, [r0, #(L_FORW)]
-	ldr	r3, [r0, #(L_BACK)]
-
-	str	r3, [r2, #(L_BACK)]
-	str	r2, [r3, #(L_FORW)]
-
-	/* If the queue is now empty clear the queue not empty flag */
-	teq	r2, r3
-
-	/* This could be reworked to avoid the use of r4 */
-	ldreq	r12, .Lwhichqs
-	moveq	r3, #0x00000001
-	ldreq	r2, [r12]
-	moveq	r3, r3, lsl r1
-	biceq	r2, r2, r3
-	streq	r2, [r12]
-
-	/* Remove the back pointer for the process */
-	mov	r1, #0x00000000
-	str	r1, [r0, #(L_BACK)]
-
-	mov	pc, lr
-
-
-/*
  * cpuswitch()
  *
  * preforms a process context switch.
  * This function has several entry points
  */
 
+#ifdef MULTIPROCESSOR
+.Lcpu_info_store:
+	.word	_C_LABEL(cpu_info_store)
+.Lcurlwp:
+	/* FIXME: This is bogus in the general case. */
+	.word	_C_LABEL(cpu_info_store) + CI_CURLWP
+
+.Lcurpcb:
+	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
+#else
 .Lcurlwp:
 	.word	_C_LABEL(curlwp)
 
 .Lcurpcb:
 	.word	_C_LABEL(curpcb)
+#endif
 
 .Lwant_resched:
 	.word	_C_LABEL(want_resched)
@@ -219,11 +108,13 @@ ENTRY(remrunqueue)
 .Lcpufuncs:	
 	.word	_C_LABEL(cpufuncs)
 	
+#ifndef MULTIPROCESSOR
 	.data
 	.global	_C_LABEL(curpcb)
 _C_LABEL(curpcb):
 	.word	0x00000000
 	.text
+#endif
 
 .Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
@@ -240,7 +131,7 @@ _C_LABEL(curpcb):
  */
 /* LINTSTUB: Ignore */
 ASENTRY_NP(idle)
-#if defined(LOCKDEBUG) 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 	ldr	r3, .Lcpu_do_powersave
@@ -268,7 +159,7 @@ ASENTRY_NP(idle)
 
 	/* if saving power, don't want to pageidlezero */
 	mov	r0, #0
-	add	lr, pc, #3b - . - 8
+	adr	lr, 3b
 	ldr	pc, [r4, #(CF_SLEEP)]
 	/* loops back around */
 
@@ -309,7 +200,7 @@ ENTRY(cpu_switch)
 	/* stash the old proc while we call functions */
 	mov	r5, r1
 
-#if defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* release the sched_lock before handling interrupts */
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
@@ -339,7 +230,7 @@ ENTRY(cpu_switch)
 
 .Lswitch_search:
 	IRQdisable
-#if defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
 
@@ -437,7 +328,7 @@ ENTRY(cpu_switch)
 	 */
 	str	r0, [r6, #(L_BACK)]
 
-#if defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/*
 	 * unlock the sched_lock, but leave interrupts off, for now.
 	 */
@@ -447,7 +338,13 @@ ENTRY(cpu_switch)
 #endif
 
 .Lswitch_resume:
+#ifdef MULTIPROCESSOR
+	/* XXX use curcpu() */
+	ldr	r0, .Lcpu_info_store
+	str	r0, [r6, #(L_CPU)]
+#else
 	/* l->l_cpu initialized in fork1() for single-processor */
+#endif
 
 	/* Process is now on a processor. */
 	mov	r0, #LSONPROC			/* l->l_stat = LSONPROC */
@@ -585,10 +482,8 @@ ENTRY(cpu_switch)
 
 	stmfd	sp!, {r0-r3}
 	ldr	r1, .Lcpufuncs
-	add	lr, pc, #.Lcs_cache_purged - . - 8
+	mov	lr, pc
 	ldr	pc, [r1, #CF_IDCACHE_WBINV_ALL]
-
-.Lcs_cache_purged:
 	ldmfd	sp!, {r0-r3}
 
 .Lcs_cache_purge_skipped:
@@ -612,7 +507,7 @@ ENTRY(cpu_switch)
 	/* Switch the memory to the new process */
 	ldr	r3, .Lcpufuncs
 	mov	r0, r11
-	add	lr, pc, #.Lcs_context_switched - . - 8
+	mov	lr, pc
 	ldr	pc, [r3, #CF_CONTEXT_SWITCH]
 
 .Lcs_context_switched:
@@ -851,10 +746,9 @@ ENTRY(switch_exit)
 	stmfd	sp!, {r0-r3}
 
 	ldr	r0, .Lcpufuncs
-	add	lr, pc, #.Lse_cache_purged - . - 8
+	mov	lr, pc
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
-.Lse_cache_purged:
 	ldmfd	sp!, {r0-r3}
 
 	IRQdisable
@@ -864,10 +758,9 @@ ENTRY(switch_exit)
 
 	/* Switch the memory to the new process */
 	ldr	r4, .Lcpufuncs
-	add	lr, pc, #.Lse_context_switched - . - 8
+	mov	lr, pc
 	ldr	pc, [r4, #CF_CONTEXT_SWITCH]
        
-.Lse_context_switched:
 	/* Restore all the save registers */
 	add	r7, r2, #PCB_R8
 	ldmia	r7, {r8-r13}
@@ -993,12 +886,14 @@ ENTRY(savectx)
 	ldmfd	sp!, {r4-r7, pc}
 
 ENTRY(proc_trampoline)
-	add	lr, pc, #(.Ltrampoline_return - . - 8)
+#ifdef MULTIPROCESSOR
+	bl	_C_LABEL(proc_trampoline_mp)
+#endif
 	mov	r0, r5
 	mov	r1, sp
+	mov	lr, pc
 	mov	pc, r4
 
-.Ltrampoline_return:
 	/* Kill irq's */
         mrs     r0, cpsr
         orr     r0, r0, #(I32_bit)

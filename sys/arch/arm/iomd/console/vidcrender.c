@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.2.4.4 2002/09/17 21:13:33 nathanw Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.2.4.5 2002/10/18 02:35:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -53,7 +53,6 @@
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/device.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/syslog.h>
@@ -70,6 +69,7 @@
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
 #include <arm/iomd/vidc.h>
+#include <arm/iomd/console/console.h>
 #include <machine/vconsole.h>
 
 #include <arm/iomd/console/fonts/font_normal.h>
@@ -133,21 +133,48 @@ int p_cursor_normal;
 int p_cursor_transparent;
 
 /* Local function prototypes */
-static void	vidcrender_cls		__P((struct vconsole *vc));
-static int	vidc_cursor_init	__P((struct vconsole *vc));
-int		vidcrender_cursorintr	__P((void *arg));
-int		vidcrender_flashintr	__P((void *arg));
-static int	vidcrender_textpalette	__P((struct vconsole *vc));
-static void	vidcrender_render	__P((struct vconsole *vc, char c));
-static void	vidcrender_mode	__P((struct vconsole *vc, struct vidc_mode *mode));
-int		vidcrender_flash	__P((struct vconsole *vc, int flash));
-int		vidcrender_cursorflash	__P((struct vconsole *vc, int flash));
-int		vidcrender_flash_go	__P((struct vconsole *vc));
-int		vidcrender_blank	__P((struct vconsole *vc, int /*type*/));
-void 		vidcrender_putchar	__P((dev_t dev, char c, struct vconsole *vc));
-extern int	vidcrendermc_cls	__P((unsigned char *, unsigned char *, int));
+static int	vidcrender_coldinit(struct vconsole *);
+static void	vidcrender_cls(struct vconsole *);
+static int	vidc_cursor_init(struct vconsole *);
+int		vidcrender_cursorintr(void *);
+int		vidcrender_flashintr(void *);
+static int	vidcrender_textpalette(struct vconsole *);
+static void	vidcrender_render(struct vconsole *, char);
+static void	vidcrender_mode(struct vconsole *, struct vidc_mode *);
+int		vidcrender_init(struct vconsole *);
+int		vidcrender_flash(struct vconsole *, int);
+int		vidcrender_cursorflash(struct vconsole *, int);
+int		vidcrender_flash_go(struct vconsole *);
+int		vidcrender_blank(struct vconsole *, int);
+void		vidcrender_reinit(void);
+void 		vidcrender_putchar(dev_t, char, struct vconsole *);
+int		vidcrender_spawn(struct vconsole *);
+int		vidcrender_redraw(struct vconsole *, int, int, int, int);
+int		vidcrender_swapin(struct vconsole *);
+paddr_t		vidcrender_mmap(struct vconsole *, off_t, int);
+void		vidcrender_scrollup(struct vconsole *, int, int);
+void		vidcrender_scrolldown(struct vconsole *, int, int);
+int		vidcrender_scrollback(struct vconsole *);
+void		vidcrender_update(struct vconsole *);
+int		vidcrender_scrollforward(struct vconsole *);
+int		vidcrender_scrollbackend(struct vconsole *);
+int		vidcrender_clreos(struct vconsole *, int);
+int		vidcrender_debugprint(struct vconsole *);
+static int	vidcrender_cursorupdate(struct vconsole *);
+static int	vidcrender_cursorflashrate(struct vconsole *, int);
+int		vidcrender_setfgcol(struct vconsole *, int);
+int		vidcrender_setbgcol(struct vconsole *, int);
+int		vidcrender_sgr(struct vconsole *, int);
+int		vidcrender_scrollregion(struct vconsole *, int, int);
+int		vidcrender_ioctl(struct vconsole *, dev_t, int, caddr_t, int,
+				 struct proc *);
+int		vidcrender_attach(struct vconsole *, struct device *,
+				  struct device *, void *);
 
-struct vconsole *vconsole_spawn_re	__P((dev_t dev, struct vconsole *vc));
+extern int	vidcrendermc_cls(unsigned char *, unsigned char *, int);
+extern void	vidcrendermc_render(unsigned char *, unsigned char *, int, int);
+
+void		physcon_display_base(u_int);
 
 /*
  * This will be called while still in the mode that we were left
@@ -539,7 +566,7 @@ vidcrender_init(vc)
 }
 
 void
-vidcrender_reinit()
+vidcrender_reinit(void)
 {
 	vidcrender_coldinit(vconsole_current);
 	vidcrender_mode(vconsole_current, vidc_currentmode);
@@ -715,9 +742,6 @@ vidcrender_mmap(vc, offset, nprot)
 		return (-1);
 	return(arm_btop(((videomemory.vidm_pbase) + (offset))));
 }
-
-extern void vidcrendermc_render __P(( unsigned char *addr, unsigned char *fontaddr,
-			      int fast_render, int xres ));
 
 void
 vidcrender_render(vc, c)
@@ -1222,7 +1246,7 @@ vidc_cursor_init(vc)
 		/* Allocate cursor memory first time round */
 		cursor_data = (char *)uvm_km_zalloc(kernel_map, NBPG);
 		if (!cursor_data)
-			panic("Cannot allocate memory for hardware cursor\n");
+			panic("Cannot allocate memory for hardware cursor");
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_data, &pa);
 		IOMD_WRITE_WORD(IOMD_CURSINIT, pa);
 	}
@@ -1457,8 +1481,6 @@ vidcrender_blank(vc, type)
 	}
 	return 0;
 }
-
-extern struct tty *find_tp __P((dev_t dev));
 
 int vidcrender_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
 			int flag, struct proc *p )

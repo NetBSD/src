@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28.6.5 2002/06/20 03:39:56 nathanw Exp $
+# $NetBSD: GENERIC,v 1.28.6.6 2002/10/18 02:38:56 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.28.6.5 $"
+#ident 		"GENERIC-$Revision: 1.28.6.6 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -44,9 +44,10 @@ options 	DIAGNOSTIC, DEBUG
 
 #options 	SYSVSHM
 options 	KTRACE
+options 	SYSTRACE	# system call vetting via systrace(1)
 options 	COMPAT_43
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 file-system 	FFS
@@ -102,6 +103,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
+#pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	vnd 2
 pseudo-device	clockctl		# user control of clock subsystem
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.68.6.5 2002/06/20 03:38:36 nathanw Exp $
+# $NetBSD: GENERIC,v 1.68.6.6 2002/10/18 02:36:42 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.68.6.5 $"
+#ident 		"GENERIC-$Revision: 1.68.6.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -44,10 +44,11 @@ options 	FPSP		# floating point interface for 68040
 
 # Standard system options
 options 	KTRACE		# system call tracing support
+options 	SYSTRACE	# system call vetting via systrace(1)
 options 	LKM		# Loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
@@ -132,6 +133,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Options for HP hardware
@@ -223,6 +225,7 @@ ac*		at oscsi? target ? lun ?	# SCSI changers
 
 # disk pseudo-devices
 pseudo-device	ccd		4	# concatenated disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

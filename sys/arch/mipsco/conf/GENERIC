@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.9.6.5 2002/06/20 03:39:53 nathanw Exp $
+# $NetBSD: GENERIC,v 1.9.6.6 2002/10/18 02:38:51 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,6 +28,7 @@ options 	MIPS1			# R2000/R3000 support
 
 # Standard system options
 options 	KTRACE			# system call tracing support
+options 	SYSTRACE		# system call vetting via systrace(1)
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 #options 	SEMMNI=10		# number of semaphore identifiers
@@ -40,7 +41,7 @@ options 	SYSVSHM			# System V shared memory
 #options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
 options 	HZ=25
-#options 	USERCONF		# userconf(4) support
+options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Debugging options
@@ -100,6 +101,7 @@ options 	INET		# Internet protocols
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 config		netbsd	root on ? type ?
@@ -144,6 +146,7 @@ pseudo-device	tun		4	# Network "tunnel" device
 pseudo-device	bpfilter	16	# Berkeley Packet Filter
 #pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated and striped disks
+#pseudo-device	cgd		4	# cryptographic disks
 #pseudo-device	raid		8	# RAIDframe disk driver
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.14.2.3 2002/02/28 04:10:20 nathanw Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.14.2.4 2002/10/18 02:37:59 nathanw Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.14.2.3 2002/02/28 04:10:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.14.2.4 2002/10/18 02:37:59 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,9 +173,8 @@ int	ahc_isa_probe __P((struct device *, struct cfdata *, void *));
 void	ahc_isa_attach __P((struct device *, struct device *, void *));
 void	aha2840_load_seeprom __P((struct ahc_softc *ahc));
 
-struct cfattach ahc_isa_ca = {
-	sizeof(struct ahc_softc), ahc_isa_probe, ahc_isa_attach
-};
+CFATTACH_DECL(ahc_isa, sizeof(struct ahc_softc),
+    ahc_isa_probe, ahc_isa_attach, NULL, NULL);
 
 /*
  * This keeps track of which slots are to be checked next if the

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.8.2.5 2002/02/28 04:13:43 nathanw Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.8.2.6 2002/10/18 02:42:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.8.2.5 2002/02/28 04:13:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.8.2.6 2002/10/18 02:42:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1021,6 +1021,5 @@ ix_attach(parent, self, aux)
 			sc->sc_dev.dv_xname));
 }
 
-struct cfattach ix_ca = {
-	sizeof(struct ix_softc), ix_match, ix_attach
-};
+CFATTACH_DECL(ix, sizeof(struct ix_softc),
+    ix_match, ix_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.57.4.2 2002/06/20 03:37:40 nathanw Exp $ */
+/* $NetBSD: cia.c,v 1.57.4.3 2002/10/18 02:34:19 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.57.4.2 2002/06/20 03:37:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.57.4.3 2002/10/18 02:34:19 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,9 +114,8 @@ __KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.57.4.2 2002/06/20 03:37:40 nathanw Exp $")
 int	ciamatch __P((struct device *, struct cfdata *, void *));
 void	ciaattach __P((struct device *, struct device *, void *));
 
-struct cfattach cia_ca = {
-	sizeof(struct cia_softc), ciamatch, ciaattach,
-};
+CFATTACH_DECL(cia, sizeof(struct cia_softc),
+    ciamatch, ciaattach, NULL, NULL);
 
 extern struct cfdriver cia_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.29.2.7 2002/08/01 02:42:01 nathanw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.29.2.8 2002/10/18 02:37:39 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.29.2.7 2002/08/01 02:42:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.29.2.8 2002/10/18 02:37:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,25 +45,50 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.29.2.7 2002/08/01 02:42:01 nathanw Ex
 /*
  * Machine register set.
  */
+
+#define dbreg(xx) (long *)offsetof(db_regs_t, tf_ ## xx)
+
+static int db_i386_regop (const struct db_variable *, db_expr_t *, int);
+
 const struct db_variable db_regs[] = {
-	{ "ds",		(long *)&ddb_regs.tf_ds,     FCN_NULL },
-	{ "es",		(long *)&ddb_regs.tf_es,     FCN_NULL },
-	{ "fs",		(long *)&ddb_regs.tf_fs,     FCN_NULL },
-	{ "gs",		(long *)&ddb_regs.tf_gs,     FCN_NULL },
-	{ "edi",	(long *)&ddb_regs.tf_edi,    FCN_NULL },
-	{ "esi",	(long *)&ddb_regs.tf_esi,    FCN_NULL },
-	{ "ebp",	(long *)&ddb_regs.tf_ebp,    FCN_NULL },
-	{ "ebx",	(long *)&ddb_regs.tf_ebx,    FCN_NULL },
-	{ "edx",	(long *)&ddb_regs.tf_edx,    FCN_NULL },
-	{ "ecx",	(long *)&ddb_regs.tf_ecx,    FCN_NULL },
-	{ "eax",	(long *)&ddb_regs.tf_eax,    FCN_NULL },
-	{ "eip",	(long *)&ddb_regs.tf_eip,    FCN_NULL },
-	{ "cs",		(long *)&ddb_regs.tf_cs,     FCN_NULL },
-	{ "eflags",	(long *)&ddb_regs.tf_eflags, FCN_NULL },
-	{ "esp",	(long *)&ddb_regs.tf_esp,    FCN_NULL },
-	{ "ss",		(long *)&ddb_regs.tf_ss,     FCN_NULL },
+	{ "ds",		dbreg(ds),     db_i386_regop },
+	{ "es",		dbreg(es),     db_i386_regop },
+	{ "fs",		dbreg(fs),     db_i386_regop },
+	{ "gs",		dbreg(gs),     db_i386_regop },
+	{ "edi",	dbreg(edi),    db_i386_regop },
+	{ "esi",	dbreg(esi),    db_i386_regop },
+	{ "ebp",	dbreg(ebp),    db_i386_regop },
+	{ "ebx",	dbreg(ebx),    db_i386_regop },
+	{ "edx",	dbreg(edx),    db_i386_regop },
+	{ "ecx",	dbreg(ecx),    db_i386_regop },
+	{ "eax",	dbreg(eax),    db_i386_regop },
+	{ "eip",	dbreg(eip),    db_i386_regop },
+	{ "cs",		dbreg(cs),     db_i386_regop },
+	{ "eflags",	dbreg(eflags), db_i386_regop },
+	{ "esp",	dbreg(esp),    db_i386_regop },
+	{ "ss",		dbreg(ss),     db_i386_regop },
 };
-const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs =
+    db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+
+static int
+db_i386_regop (const struct db_variable *vp, db_expr_t *val, int opcode)
+{
+	db_expr_t *regaddr =
+	    (db_expr_t *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
+	
+	switch (opcode) {
+	case DB_VAR_GET:
+		*val = *regaddr;
+		break;
+	case DB_VAR_SET:
+		*regaddr = *val;
+		break;
+	default:
+		panic("db_i386_regop: unknown op %d", opcode);
+	}
+	return 0;
+}
 
 /*
  * Stack trace.
@@ -80,6 +105,8 @@ struct i386_frame {
 #define	TRAP		1
 #define	SYSCALL		2
 #define	INTERRUPT	3
+#define INTERRUPT_TSS	4
+#define TRAP_TSS	5
 
 db_addr_t	db_trap_symbol_value = 0;
 db_addr_t	db_syscall_symbol_value = 0;
@@ -142,6 +169,7 @@ db_numargs(fp)
  *   It might be possible to dig out from the next frame up the name
  *   of the function that faulted, but that could get hairy.
  */
+
 void
 db_nextframe(fp, ip, argp, is_trap, pr)
 	struct i386_frame **fp;		/* in/out */
@@ -150,6 +178,8 @@ db_nextframe(fp, ip, argp, is_trap, pr)
 	int is_trap;			/* in */
 	void (*pr) __P((const char *, ...)); /* in */
 {
+	struct trapframe *tf;
+	struct i386tss *tss;
 
 	switch (is_trap) {
 	    case NONE:
@@ -159,8 +189,21 @@ db_nextframe(fp, ip, argp, is_trap, pr)
 			db_get_value((int) &(*fp)->f_frame, 4, FALSE);
 		break;
 
-	    default: {
-		struct trapframe *tf;
+	    case TRAP_TSS:
+	    case INTERRUPT_TSS:
+		tss = (struct i386tss *)*argp;
+		*ip = tss->__tss_eip;
+		*fp = (struct i386_frame *)tss->tss_ebp;
+		if (is_trap == INTERRUPT_TSS)
+			printf("--- interrupt via task gate ---\n");
+		else
+			printf("--- trap via task gate ---\n");
+		break;
+
+	    case TRAP:
+	    case SYSCALL:
+	    case INTERRUPT:
+	    default:
 
 		/* The only argument to trap() or syscall() is the trapframe. */
 		tf = (struct trapframe *)argp;
@@ -178,7 +221,6 @@ db_nextframe(fp, ip, argp, is_trap, pr)
 		*fp = (struct i386_frame *)tf->tf_ebp;
 		*ip = (db_addr_t)tf->tf_eip;
 		break;
-	    }
 	}
 }
 
@@ -269,8 +311,15 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			}
 		}
 		if (INKERNEL((int)frame) && name) {
+			/*
+			 * XXX traps should be based off of the Xtrap*
+			 * locations rather than on trap, since some traps
+			 * (e.g., npxdna) don't go through trap()
+			 */
 #ifdef __ELF__
-			if (!strcmp(name, "trap")) {
+			if (!strcmp(name, "trap_tss")) {
+				is_trap = TRAP_TSS;
+			} else if (!strcmp(name, "trap")) {
 				is_trap = TRAP;
 			} else if (!strcmp(name, "syscall")) {
 				is_trap = SYSCALL;
@@ -283,13 +332,17 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				    !strcmp(name, "Xdoreti") ||
 				    !strncmp(name, "Xsoft", 5)) {
 					is_trap = INTERRUPT;
+				} else if (!strncmp(name, "Xtss_", 5)) {
+					is_trap = INTERRUPT_TSS;
 				} else
 					goto normal;
 			} else
 				goto normal;
 			narg = 0;
 #else
-			if (!strcmp(name, "_trap")) {
+			if (!strcmp(name, "_trap_tss")) {
+				is_trap = TRAP_TSS;
+			} else if (!strcmp(name, "_trap")) {
 				is_trap = TRAP;
 			} else if (!strcmp(name, "_syscall")) {
 				is_trap = SYSCALL;
@@ -302,6 +355,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				    !strcmp(name, "_Xdoreti") ||
 				    !strncmp(name, "_Xsoft", 6)) {
 					is_trap = INTERRUPT;
+				} else if (!strncmp(name, "_Xtss_", 6)) {
+					is_trap = INTERRUPT_TSS;
 				} else
 					goto normal;
 			} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.29.8.3 2002/06/20 03:39:31 nathanw Exp $	*/
+/*	$NetBSD: esp.c,v 1.29.8.4 2002/10/18 02:38:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -109,9 +109,8 @@ void	espattach	__P((struct device *, struct device *, void *));
 int	espmatch	__P((struct device *, struct cfdata *, void *));
 
 /* Linkup to the rest of the kernel */
-struct cfattach esp_ca = {
-	sizeof(struct esp_softc), espmatch, espattach
-};
+CFATTACH_DECL(esp, sizeof(struct esp_softc),
+    espmatch, espattach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.
@@ -517,7 +516,7 @@ esp_quick_dma_intr(sc)
 	int trans=0, resid=0;
 
 	if (esc->sc_active == 0)
-		panic("dma_intr--inactive DMA\n");
+		panic("dma_intr--inactive DMA");
 
 	esc->sc_active = 0;
 
@@ -743,7 +742,7 @@ restart_dmago:
 						len+=2; addr--;
 					}
 					if (res != len) {
-						panic("esp_quick_dma_go: res %d != len %d\n",
+						panic("esp_quick_dma_go: res %d != len %d",
 							res, len);
 					}
 				}

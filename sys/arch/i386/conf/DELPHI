@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.1.6.10 2002/08/13 02:18:17 nathanw Exp $
+#	$NetBSD: DELPHI,v 1.1.6.11 2002/10/18 02:37:26 nathanw Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.1.6.10 $"
+ident 		"DELPHI-$Revision: 1.1.6.11 $"
 
 maxusers	64		# estimated number of users
 
@@ -189,7 +189,7 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
-
+cpu0	at mainbus0
 #apm0	at mainbus0			# Advanced power management
 
 # Tuning for power management, see apm(4) for more details.

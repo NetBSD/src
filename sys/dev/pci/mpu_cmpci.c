@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_cmpci.c,v 1.1.6.3 2001/11/14 19:15:21 nathanw Exp $	*/
+/*	$NetBSD: mpu_cmpci.c,v 1.1.6.4 2002/10/18 02:43:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_cmpci.c,v 1.1.6.3 2001/11/14 19:15:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_cmpci.c,v 1.1.6.4 2002/10/18 02:43:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_cmpci.c,v 1.1.6.3 2001/11/14 19:15:21 nathanw Ex
 static int mpu_cmpci_match __P((struct device *, struct cfdata *, void *));
 static void mpu_cmpci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mpu_cmpci_ca = {
-	sizeof (struct mpu_softc), mpu_cmpci_match, mpu_cmpci_attach
-};
+CFATTACH_DECL(mpu_cmpci, sizeof (struct mpu_softc),
+    mpu_cmpci_match, mpu_cmpci_attach, NULL, NULL);
 
 static int
 mpu_cmpci_match(parent, match, aux)

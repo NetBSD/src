@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.2.4.6 2002/06/20 03:38:13 nathanw Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.2.4.7 2002/10/18 02:35:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.2.4.6 2002/06/20 03:38:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.2.4.7 2002/10/18 02:35:33 nathanw Exp $");
 
 #include <sys/conf.h>   /* autoconfig functions */
 #include <sys/device.h> /* device calls */
@@ -104,9 +104,8 @@ void vidcaudio_shutdown	__P((void));
 
 static int sound_dma_intr;
 
-struct cfattach vidcaudio_ca = {
-	sizeof(struct vidcaudio_softc), vidcaudio_probe, vidcaudio_attach
-};
+CFATTACH_DECL(vidcaudio, sizeof(struct vidcaudio_softc),
+    vidcaudio_probe, vidcaudio_attach, NULL, NULL);
 
 int    vidcaudio_query_encoding  __P((void *, struct audio_encoding *));
 int    vidcaudio_set_params	 __P((void *, int, int, struct audio_params *, struct audio_params *));
@@ -219,7 +218,7 @@ vidcaudio_attach(parent, self, aux)
 	/* Program the silence buffer and reset the DMA channel */
 	ag.silence = uvm_km_alloc(kernel_map, NBPG);
 	if (ag.silence == NULL)
-		panic("vidcaudio: Cannot allocate memory\n");
+		panic("vidcaudio: Cannot allocate memory");
 
 	memset((char *)ag.silence, 0, NBPG);
 	memcpy((char *)ag.silence, (char *)beep_waveform, sizeof(beep_waveform));
@@ -250,7 +249,7 @@ vidcaudio_attach(parent, self, aux)
 	disable_irq(sound_dma_intr);
 
 	if (irq_claim(sound_dma_intr, &(ag.ih)))
-		panic("vidcaudio: couldn't claim IRQ %d\n", sound_dma_intr);
+		panic("vidcaudio: couldn't claim IRQ %d", sound_dma_intr);
 
 	disable_irq(sound_dma_intr);
 

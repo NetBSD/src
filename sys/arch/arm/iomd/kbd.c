@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.1.4.2 2002/09/17 21:13:30 nathanw Exp $	*/
+/*	$NetBSD: kbd.c,v 1.1.4.3 2002/10/18 02:35:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -67,6 +67,7 @@
 #include <machine/bus.h>
 #include <machine/kbd.h>
 #include <arm/iomd/kbdvar.h>
+#include <arm/iomd/console/console.h>
 #include "vt.h"
 #include "kbd.h"
 
@@ -141,12 +142,6 @@ void autorepeatstart __P((void *));
 void autorepeat __P((void *));
 
 extern int physconkbd		__P((int key));
-extern void console_switch	__P((u_int number));
-/*extern int console_switchdown	__P((void));
-extern int console_switchup	__P((void));*/
-extern int console_unblank	__P((void));
-extern int console_scrollback	__P((void));
-extern int console_scrollforward	__P((void));
 #ifdef PMAP_DEBUG
 extern void pmap_debug		__P((int level));
 #endif
@@ -156,6 +151,7 @@ extern struct cfdriver kbd_cd;
 
 dev_type_open(kbdopen);
 dev_type_close(kbdclose);
+dev_type_poll(kbdpoll);
 dev_type_read(kbdread);
 dev_type_ioctl(kbdioctl);
 
@@ -959,6 +955,7 @@ kbddecodekey(sc, code)
 				case 0x200:
 					console_scrollback();
 					break;
+#if CHUQ
 /*
 				case 0x202:
 					console_switchdown();
@@ -967,6 +964,7 @@ kbddecodekey(sc, code)
 					console_switchup();
 					break;
 */
+#endif
 #endif
 				case 0x204:
 					--kbdautorepeat.ka_rate;

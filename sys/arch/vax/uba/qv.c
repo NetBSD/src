@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.6.6.3 2002/09/17 21:18:29 nathanw Exp $	*/
+/*	$NetBSD: qv.c,v 1.6.6.4 2002/10/18 02:40:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -137,10 +137,8 @@
 #include "sys/user.h"
 #include "qvioctl.h"
 #include "sys/tty.h"
-#include "sys/map.h"
 #include "sys/buf.h"
 #include "sys/vm.h"
-#include "sys/clist.h"
 #include "sys/file.h"
 #include "sys/uio.h"
 #include "sys/kernel.h"

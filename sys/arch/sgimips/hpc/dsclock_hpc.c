@@ -1,4 +1,4 @@
-/*	$NetBSD: dsclock_hpc.c,v 1.1.2.4 2002/04/01 07:42:22 nathanw Exp $	*/
+/*	$NetBSD: dsclock_hpc.c,v 1.1.2.5 2002/10/18 02:39:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -66,9 +66,8 @@ const struct clockfns dsclock_clockfns = {
 	dsclock_init, dsclock_get, dsclock_set,
 };
 
-struct cfattach dsclock_ca = {
-	sizeof(struct dsclock_softc), dsclock_match, dsclock_attach
-};
+CFATTACH_DECL(dsclock, sizeof(struct dsclock_softc),
+    dsclock_match, dsclock_attach, NULL, NULL);
 
 #define	ds1286_write(dev, reg, datum)					\
     bus_space_write_1(dev->sc_rtct, dev->sc_rtch, reg, datum)
@@ -80,7 +79,7 @@ dsclock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 
-	if (strcmp(ha->ha_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(ha->ha_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);

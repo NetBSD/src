@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.12.6.1 2001/11/14 19:14:02 nathanw Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.12.6.2 2002/10/18 02:41:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.12.6.1 2001/11/14 19:14:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.12.6.2 2002/10/18 02:41:34 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -113,10 +113,8 @@ struct fxp_cardbus_softc {
 	bus_size_t size;
 };
 
-struct cfattach fxp_cardbus_ca = {
-	sizeof(struct fxp_cardbus_softc), fxp_cardbus_match, fxp_cardbus_attach,
-	    fxp_cardbus_detach, fxp_activate
-};
+CFATTACH_DECL(fxp_cardbus, sizeof(struct fxp_cardbus_softc),
+    fxp_cardbus_match, fxp_cardbus_attach, fxp_cardbus_detach, fxp_activate);
 
 #ifdef CBB_DEBUG
 #define DPRINTF(X) printf X
@@ -282,7 +280,7 @@ fxp_cardbus_detach(self, flags)
 
 #ifdef DIAGNOSTIC
 	if (ct == NULL)
-		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
 #endif
 
 	rv = fxp_detach(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.4.6 2002/09/17 21:15:57 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.4.7 2002/10/18 02:38:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.4.6 2002/09/17 21:15:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.4.7 2002/10/18 02:38:53 nathanw Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.4.6 2002/09/17 21:15:57 nathanw Exp
 #include <sys/param.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
@@ -667,7 +666,7 @@ unimpl_intr_establish(level, func, arg)
 	int (*func) __P((void *));
 	void *arg;
 {
-	panic("sysconf.init didn't init intr_establish\n");
+	panic("sysconf.init didn't init intr_establish");
 }
 
 void

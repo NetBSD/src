@@ -1,4 +1,4 @@
-/*	$NetBSD: vrled.c,v 1.3.4.2 2002/02/28 04:10:07 nathanw Exp $	*/
+/*	$NetBSD: vrled.c,v 1.3.4.3 2002/10/18 02:37:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi. All rights reserved.
@@ -65,9 +65,8 @@ static int vrled_event(void *, int, long, void *);
 
 int vrled_intr(void *);
 
-struct cfattach vrled_ca = {
-	sizeof(struct vrled_softc), vrledmatch, vrledattach
-};
+CFATTACH_DECL(vrled, sizeof(struct vrled_softc),
+    vrledmatch, vrledattach, NULL, NULL);
 
 struct vrled_softc *this_led;
 

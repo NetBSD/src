@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200subr.c,v 1.1.12.2 2002/06/20 03:38:49 nathanw Exp $	*/
+/*	$NetBSD: mq200subr.c,v 1.1.12.3 2002/10/18 02:37:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin
@@ -194,7 +194,7 @@ mq200_setup_regctx(struct mq200_softc *sc)
 		if (offsets[i] == 0)
 #ifdef MQ200_DEBUG
 			if (i != MQ200_I_PMC)
-				panic("%s(%d): register context %d is empty\n",
+				panic("%s(%d): register context %d is empty",
 				    __FILE__, __LINE__, i);
 #endif
 		sc->sc_regctxs[i].offset = offsets[i];

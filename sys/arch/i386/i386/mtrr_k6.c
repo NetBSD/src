@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_k6.c,v 1.1.2.4 2002/08/27 23:44:38 nathanw Exp $	*/
+/*	$NetBSD: mtrr_k6.c,v 1.1.2.5 2002/10/18 02:37:47 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.1.2.4 2002/08/27 23:44:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.1.2.5 2002/10/18 02:37:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,6 +320,11 @@ k6_mtrr_set(struct mtrr *mtrrp, int *n, struct proc *p, int flags)
 	struct mtrr mtrr;
 	int i, error;
 
+	if (*n > MTRR_K6_NVAR) {
+		*n = 0;
+		return EINVAL;
+	}
+
 	error = 0;
 	for (i = 0; i < *n; i++) {
 		if (flags & MTRR_GETSET_USER) {
@@ -350,6 +355,8 @@ k6_mtrr_get(struct mtrr *mtrrp, int *n, struct proc *p, int flags)
 		*n = MTRR_K6_NVAR;
 		return (0);
 	}
+
+	error = 0;
 
 	for (i = 0; i < MTRR_K6_NVAR && i < *n; i++) {
 		if (flags & MTRR_GETSET_USER) {

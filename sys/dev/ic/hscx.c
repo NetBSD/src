@@ -27,14 +27,14 @@
  *	i4b - Siemens HSCX chip (B-channel) handling
  *	--------------------------------------------
  *
- *	$Id: hscx.c,v 1.1.2.4 2002/06/20 03:44:36 nathanw Exp $ 
+ *	$Id: hscx.c,v 1.1.2.5 2002/10/18 02:41:51 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.1.2.4 2002/06/20 03:44:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.1.2.5 2002/10/18 02:41:51 nathanw Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 300001
@@ -179,7 +179,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 			if(chan->in_mbuf == NULL)
 			{
 				if((chan->in_mbuf = i4b_Bgetmbuf(BCH_MAX_DATALEN)) == NULL)
-					panic("L1 isic_hscx_irq: RME, cannot allocate mbuf!\n");
+					panic("L1 isic_hscx_irq: RME, cannot allocate mbuf!");
 				chan->in_cbptr = chan->in_mbuf->m_data;
 				chan->in_len = 0;
 			}
@@ -251,7 +251,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 		if(chan->in_mbuf == NULL)
 		{
 			if((chan->in_mbuf = i4b_Bgetmbuf(BCH_MAX_DATALEN)) == NULL)
-				panic("L1 isic_hscx_irq: RPF, cannot allocate mbuf!\n");
+				panic("L1 isic_hscx_irq: RPF, cannot allocate mbuf!");
 			chan->in_cbptr = chan->in_mbuf->m_data;
 			chan->in_len = 0;
 		}
@@ -306,7 +306,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 				/* alloc new buffer */
 				
 				if((chan->in_mbuf = i4b_Bgetmbuf(BCH_MAX_DATALEN)) == NULL)
-					panic("L1 isic_hscx_irq: RPF, cannot allocate new mbuf!\n");
+					panic("L1 isic_hscx_irq: RPF, cannot allocate new mbuf!");
 	
 				/* setup new data ptr */
 				

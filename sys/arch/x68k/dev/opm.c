@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.6.8.2 2002/01/08 00:28:41 nathanw Exp $	*/
+/*	$NetBSD: opm.c,v 1.6.8.3 2002/10/18 02:40:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -60,9 +60,8 @@ struct opm_softc	*opm0;	/* XXX */
 static int opm_match __P((struct device *, struct cfdata *, void *));
 static void opm_attach __P((struct device *, struct device *, void *));
 
-struct cfattach opm_ca = {
-	sizeof (struct opm_softc), opm_match, opm_attach
-};
+CFATTACH_DECL(opm, sizeof (struct opm_softc),
+    opm_match, opm_attach, NULL, NULL);
 
 static int
 opm_match(parent, cf, aux)

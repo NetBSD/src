@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.1.4.4 2002/04/17 00:02:32 nathanw Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.1.4.5 2002/10/18 02:35:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -320,7 +320,7 @@ dma_init(ch, extp, dmasize, ipl)
 	dp->dc_ih.ih_maskbits = (1 << ch);
 
 	if (irq_claim(IRQ_DMACH0 + ch, &dp->dc_ih))
-		panic("Cannot install DMA IRQ handler\n");
+		panic("Cannot install DMA IRQ handler");
 
 	return(dp);
 }

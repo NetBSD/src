@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.5.2.2 2002/01/08 00:31:08 nathanw Exp $	*/
+/*	$NetBSD: oboe.c,v 1.5.2.3 2002/10/18 02:43:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -151,10 +151,8 @@ static void oboe_startchip(struct oboe_softc *);
 static void oboe_stopchip(struct oboe_softc *);
 static int oboe_setbaud(struct oboe_softc *, int);
 
-struct cfattach oboe_ca = {
-	sizeof(struct oboe_softc), oboe_match, oboe_attach,
-	oboe_detach, oboe_activate
-};
+CFATTACH_DECL(oboe, sizeof(struct oboe_softc),
+    oboe_match, oboe_attach, oboe_detach, oboe_activate);
 
 struct irframe_methods oboe_methods = {
 	oboe_open, oboe_close, oboe_read, oboe_write, oboe_poll, 

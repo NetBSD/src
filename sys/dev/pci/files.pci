@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.123.2.16 2002/09/17 21:20:15 nathanw Exp $
+#	$NetBSD: files.pci,v 1.123.2.17 2002/10/18 02:43:01 nathanw Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -215,10 +215,10 @@ attach	gem at pci with gem_pci
 file	dev/pci/if_gem_pci.c		gem_pci
 
 # NE2000-compatible PCI Ethernet cards
-defparam opt_ipkdb.h	IPKDB_NE_PCISLOT	: IPKDB_NE_PCI
-defflag	opt_ipkdb.h	IPKDB_NE_PCI		: IPKDB_NE IPKDB_NE_PCISLOT
+defparam opt_ipkdb.h	IPKDB_NE_PCISLOT
+defflag	opt_ipkdb.h	IPKDB_NE_PCI		: IPKDB_NE
 attach	ne at pci with ne_pci: rtl80x9
-file	dev/pci/if_ne_pci.c		ne_pci | IPKDB_NE_PCI
+file	dev/pci/if_ne_pci.c		ne_pci | ipkdb_ne_pci
 
 # Texas Instruments ThunderLAN Chip.
 device	tl: ether, ifnet, arp, i2c, i2c_eeprom, mii, mii_bitbang
@@ -299,13 +299,18 @@ device	eap: audiobus, auconv, mulaw, ac97, midibus
 attach	eap at pci
 file	dev/pci/eap.c			eap
 
+# Avance Logic ALS4000 audio
+device	als: audiobus, auconv, mulaw
+attach	als at pci
+file	dev/pci/als.c			als
+
 # Intel ICH AC'97 audio
 device	auich: audiobus, auconv, mulaw, ac97, aurateconv
 attach	auich at pci
 file	dev/pci/auich.c			auich
 
-# VIA VT82C686A AC'97 Audio
-device	auvia: audiobus, auconv, mulaw, ac97
+# VIA VT82C686A/VT8233/VT8235 AC'97 Audio
+device	auvia: audiobus, auconv, mulaw, ac97, aurateconv
 attach	auvia at pci
 file	dev/pci/auvia.c			auvia
 
@@ -551,6 +556,14 @@ file	dev/pci/isic_pci_elsa_qs1p.c	isic_pci
 device	ifpci: isdndev, passive_isdn
 attach	ifpci at pci
 file	dev/pci/ifpci.c			ifpci
+
+# Winbond W6692
+device	iwic: isdndev, passive_isdn
+attach	iwic at pci with iwic_pci
+file	dev/pci/iwic_pci.c		iwic
+file	dev/pci/iwic_bchan.c		iwic
+file	dev/pci/iwic_dchan.c		iwic
+file	dev/pci/iwic_fsm.c		iwic
 
 # IrDA devices
 #  Toshiba Fast Infrared Type O IrDA driver

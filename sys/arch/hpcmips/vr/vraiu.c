@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.1.2.2 2002/04/01 07:40:28 nathanw Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.1.2.3 2002/10/18 02:37:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -83,9 +83,8 @@ int vraiu_match(struct device *, struct cfdata *, void *);
 void vraiu_attach(struct device *, struct device *, void *);
 int vraiu_intr(void *);
 
-struct cfattach vraiu_ca = {
-	sizeof(struct vraiu_softc), vraiu_match, vraiu_attach
-};
+CFATTACH_DECL(vraiu, sizeof(struct vraiu_softc),
+    vraiu_match, vraiu_attach, NULL, NULL);
 
 struct audio_device aiu_device = {
 	"VR4121 AIU",

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.90.6.6 2002/09/17 21:18:24 nathanw Exp $
+# $NetBSD: GENERIC,v 1.90.6.7 2002/10/18 02:40:29 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90.6.6 $"
+#ident 		"GENERIC-$Revision: 1.90.6.7 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -51,6 +51,7 @@ maxusers	8
 options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	KTRACE
+options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	DIAGNOSTIC
 #options 	DEBUG,KMEMSTATS,PMAPDEBUG,TRAPDEBUG,LOCKDEBUG
 
@@ -71,11 +72,12 @@ options 	INET6		# IPV6
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
-#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-#options 	PPP_DEFLATE	# Deflate compression support for PPP
-#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # All supported filesystem types
 file-system 	FFS
@@ -132,7 +134,7 @@ options 	COMPAT_IBCS2	# DEC SVR.3 compatilibity
 
 options 	LKM
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Kernel(s) to compile
@@ -255,7 +257,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter 8		# Not supported by de yet.
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 #pseudo-device	sl	2
-#pseudo-device	ppp	2
+pseudo-device	ppp	2
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun	2
 #pseudo-device	gre	2		# generic L3 over IP tunnel
@@ -267,6 +269,7 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	tb	1
 pseudo-device	vnd	4
 pseudo-device	ccd	4
+#pseudo-device	cgd	4		# cryptographic disk devices
 pseudo-device	raid	8		# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

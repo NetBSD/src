@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.186.2.10 2002/08/27 23:44:21 nathanw Exp $ */
+/* $NetBSD: pmap.c,v 1.186.2.11 2002/10/18 02:34:04 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -148,13 +148,12 @@
  */
 
 #include "opt_lockdebug.h"
-#include "opt_new_scc_driver.h"
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.186.2.10 2002/08/27 23:44:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.186.2.11 2002/10/18 02:34:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1010,13 +1009,7 @@ int
 pmap_uses_prom_console(void)
 {
 
-#if defined(NEW_SCC_DRIVER)
 	return (cputype == ST_DEC_21000);
-#else
-	return (cputype == ST_DEC_21000
-	    || cputype == ST_DEC_3000_300
-	    || cputype == ST_DEC_3000_500);
-#endif /* NEW_SCC_DRIVER */
 }
 #endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 
@@ -2606,7 +2599,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 	/*
 	 * PTE not provided, compute it from pmap and va.
 	 */
-	if (pte == PT_ENTRY_NULL) {
+	if (pte == NULL) {
 		pte = pmap_l3pte(pmap, va, NULL);
 		if (pmap_pte_v(pte) == 0)
 			return (FALSE);

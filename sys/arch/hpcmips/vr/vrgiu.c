@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.26.4.4 2002/06/20 03:38:56 nathanw Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.26.4.5 2002/10/18 02:37:19 nathanw Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -172,9 +172,8 @@ static struct hpcio_chip vrgiu_iochip = {
 	.hc_dump =		vrgiu_dump,
 };
 
-struct cfattach vrgiu_ca = {
-	sizeof(struct vrgiu_softc), vrgiu_match, vrgiu_attach
-};
+CFATTACH_DECL(vrgiu, sizeof(struct vrgiu_softc),
+    vrgiu_match, vrgiu_attach, NULL, NULL);
 
 struct vrgiu_softc *this_giu;
 
@@ -205,7 +204,7 @@ vrgiu_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_useupdn_reg = VR4122_GIUUSEUPDN_REG_W;
 		sc->sc_termupdn_reg = VR4122_GIUTERMUPDN_REG_W;
 	} else {
-		panic("%s: unknown base address 0x%lx\n",
+		panic("%s: unknown base address 0x%lx",
 		    sc->sc_dev.dv_xname, va->va_addr);
 	}
 #endif /* SINGLE_VRIP_BASE */
@@ -393,7 +392,7 @@ vrgiu_dump_regs(struct vrgiu_softc *sc)
 {
 
 	if (sc == NULL) {
-		panic("%s(%d): VRGIU device not initialized\n",
+		panic("%s(%d): VRGIU device not initialized",
 		    __FILE__, __LINE__);
 	}
 	printf("    IOSEL: %08x\n", vrgiu_regread_4(sc, GIUIOSEL_REG));

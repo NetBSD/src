@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1.8.6 2002/09/17 21:18:41 nathanw Exp $	*/
+/*	$NetBSD: pchb.c,v 1.1.8.7 2002/10/18 02:40:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,9 +60,8 @@ static int	pchbmatch(struct device *, struct cfdata *, void *);
 static void	pchbattach(struct device *, struct device *, void *);
 static int	pchbprint(void *, const char *);
 
-struct cfattach pchb_ca = {
-	sizeof(struct device), pchbmatch, pchbattach
-};
+CFATTACH_DECL(pchb, sizeof(struct device),
+    pchbmatch, pchbattach, NULL, NULL);
 
 static int pcifound = 0;
 
@@ -76,7 +75,7 @@ pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
 	int class, id;
 
 	/* match only pchb devices */
-	if (strcmp(paa->plb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->plb_name, cf->cf_name) != 0)
 		return 0;
 
 	pci_machdep_init();

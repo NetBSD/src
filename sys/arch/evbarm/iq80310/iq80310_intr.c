@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.4.4.7 2002/08/19 21:39:35 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.4.4.8 2002/10/18 02:36:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -34,6 +34,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef EVBARM_SPL_NOINLINE
+#define	EVBARM_SPL_NOINLINE
+#endif
 
 /*
  * Interrupt support for the Intel IQ80310.
@@ -282,76 +286,26 @@ iq80310_do_soft(void)
 	restore_interrupts(oldirqstate);
 }
 
-#if defined(EVBARM_SPL_NOINLINE)
 int
 _splraise(int ipl)
 {
-	int old;
 
-	old = current_spl_level;
-	current_spl_level |= iq80310_imask[ipl];
-
-	return (old);
+	return (iq80310_splraise(ipl));
 }
 
 __inline void
 splx(int new)
 {
-	int old;
 
-	old = current_spl_level;
-	current_spl_level = new;
-
-	/* If there are software interrupts to process, do it. */
-	if ((iq80310_ipending & ~IRQ_BITS) & ~new)
-		iq80310_do_soft();
-
-	/*
-	 * If there are pending hardware interrupts (i.e. the
-	 * external interrupt is disabled in the ICU), and all
-	 * hardware interrupts are being unblocked, then re-enable
-	 * the external hardware interrupt.
-	 *
-	 * XXX We have to wait for ALL hardware interrupts to
-	 * XXX be unblocked, because we currently lose if we
-	 * XXX get nested interrupts, and I don't know why yet.
-	 */
-	if ((new & IRQ_BITS) == 0 && (iq80310_ipending & IRQ_BITS))
-		i80200_intr_enable(INTCTL_IM | INTCTL_PM);
+	return (iq80310_splx(new));
 }
 
 int
 _spllower(int ipl)
 {
-	int old = current_spl_level;
 
-	iq80310_splx(iq80310_imask[ipl]);
-	return (old);
+	return (iq80310_spllower(ipl));
 }
-
-#else
-
-#undef _splraise
-int
-_splraise(int ipl)
-{
-	return iq80310_splraise(ipl);
-}
-
-#undef splx
-__inline void
-splx(int new)
-{
-	return iq80310_splx(new);
-}
-
-#undef _spllower
-int
-_spllower(int ipl)
-{
-	return iq80310_spllower(ipl);
-}
-#endif
 
 void
 _setsoftintr(int si)

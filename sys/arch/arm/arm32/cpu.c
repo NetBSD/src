@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9.2.8 2002/09/17 21:13:19 nathanw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9.2.9 2002/10/18 02:35:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.2.8 2002/09/17 21:13:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.2.9 2002/10/18 02:35:20 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -86,19 +86,21 @@ cpu_attach(struct device *dv)
 	
 	/* Get the cpu ID from coprocessor 15 */
 
-	curcpu()->ci_cpuid = cpu_id();
-	curcpu()->ci_cputype = curcpu()->ci_cpuid & CPU_ID_CPU_MASK;
-	curcpu()->ci_cpurev = curcpu()->ci_cpuid & CPU_ID_REVISION_MASK;
+	curcpu()->ci_arm_cpuid = cpu_id();
+	curcpu()->ci_arm_cputype = curcpu()->ci_arm_cpuid & CPU_ID_CPU_MASK;
+	curcpu()->ci_arm_cpurev =
+	    curcpu()->ci_arm_cpuid & CPU_ID_REVISION_MASK;
 
 	identify_arm_cpu(dv, curcpu());
 
-	if (curcpu()->ci_cputype == CPU_ID_SA110 && curcpu()->ci_cpurev < 3) {
+	if (curcpu()->ci_arm_cputype == CPU_ID_SA110 &&
+	    curcpu()->ci_arm_cpurev < 3) {
 		printf("%s: SA-110 with bugged STM^ instruction\n",
 		       dv->dv_xname);
 	}
 
 #ifdef CPU_ARM8
-	if ((curcpu()->ci_cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
+	if ((curcpu()->ci_arm_cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
 		int clock = arm8_clock_config(0, 0);
 		char *fclk;
 		printf("%s: ARM810 cp15=%02x", dv->dv_xname, clock);
@@ -171,35 +173,35 @@ enum cpu_class {
 	CPU_CLASS_ARM10E
 };
 
-static const char *generic_steppings[16] = {
+static const char * const generic_steppings[16] = {
 	"rev 0",	"rev 1",	"rev 2",	"rev 3",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *sa110_steppings[16] = {
+static const char * const sa110_steppings[16] = {
 	"rev 0",	"step J",	"step K",	"step S",
 	"step T",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *sa1100_steppings[16] = {
+static const char * const sa1100_steppings[16] = {
 	"rev 0",	"step B",	"step C",	"rev 3",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
 	"step D",	"step E",	"rev 10"	"step G",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *sa1110_steppings[16] = {
+static const char * const sa1110_steppings[16] = {
 	"step A-0",	"rev 1",	"rev 2",	"rev 3",
 	"step B-0",	"step B-1",	"step B-2",	"step B-3",
 	"step B-4",	"step B-5",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *ixp12x0_steppings[16] = {
+static const char * const ixp12x0_steppings[16] = {
 	"(IXP1200 step A)",		"(IXP1200 step B)",
 	"rev 2",			"(IXP1200 step C)",
 	"(IXP1200 step D)",		"(IXP1240/1250 step A)",
@@ -208,21 +210,21 @@ static const char *ixp12x0_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *xscale_steppings[16] = {
+static const char * const xscale_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step C-0",
 	"step D-0",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *i80321_steppings[16] = {
+static const char * const i80321_steppings[16] = {
 	"step A-0",	"step B-0",	"rev 2",	"rev 3",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *pxa2x0_steppings[16] = {
+static const char * const pxa2x0_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step B-1",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
@@ -233,7 +235,7 @@ struct cpuidtab {
 	u_int32_t	cpuid;
 	enum		cpu_class cpu_class;
 	const char	*cpu_name;
-	const char	**cpu_steppings;
+	const char * const *cpu_steppings;
 };
 
 const struct cpuidtab cpuids[] = {
@@ -351,7 +353,7 @@ const struct cpu_classtab cpu_classes[] = {
  * The remaining fields in the cpu structure are filled in appropriately.
  */
 
-static const char *wtnames[] = {
+static const char * const wtnames[] = {
 	"write-through",
 	"write-back",
 	"write-back",
@@ -377,7 +379,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	enum cpu_class cpu_class;
 	int i;
 
-	cpuid = ci->ci_cpuid;
+	cpuid = ci->ci_arm_cpuid;
 
 	if (cpuid == 0) {
 		printf("Processor failed probe - no CPU ID\n");
@@ -512,5 +514,52 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	}
 			       
 }
+#ifdef MULTIPROCESSOR
+int
+cpu_alloc_idlepcb(struct cpu_info *ci)
+{
+	vaddr_t uaddr;
+	struct pcb *pcb;
+	struct trapframe *tf;
+	int error;
+
+	/*
+	 * Generate a kernel stack and PCB (in essence, a u-area) for the
+	 * new CPU.
+	 */
+	uaddr = uvm_uarea_alloc();
+	error = uvm_fault_wire(kernel_map, uaddr, uaddr + USPACE,
+	    VM_FAULT_WIRE, VM_PROT_READ | VM_PROT_WRITE);
+	if (error)
+		return error;
+	ci->ci_idlepcb = pcb = (struct pcb *)uaddr;
+
+	/*
+	 * This code is largely derived from cpu_fork(), with which it
+	 * should perhaps be shared.
+	 */
+
+	/* Copy the pcb */
+	*pcb = proc0.p_addr->u_pcb;
+
+	/* Set up the undefined stack for the process. */
+	pcb->pcb_un.un_32.pcb32_und_sp = uaddr + USPACE_UNDEF_STACK_TOP;
+	pcb->pcb_un.un_32.pcb32_sp = uaddr + USPACE_SVC_STACK_TOP;
+
+#ifdef STACKCHECKS
+	/* Fill the undefined stack with a known pattern */
+	memset(((u_char *)uaddr) + USPACE_UNDEF_STACK_BOTTOM, 0xdd,
+	    (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM));
+	/* Fill the kernel stack with a known pattern */
+	memset(((u_char *)uaddr) + USPACE_SVC_STACK_BOTTOM, 0xdd,
+	    (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM));
+#endif	/* STACKCHECKS */
+
+	pcb->pcb_tf = tf =
+	    (struct trapframe *)pcb->pcb_un.un_32.pcb32_sp - 1;
+	*tf = *proc0.p_addr->u_pcb.pcb_tf;
+	return 0;
+}
+#endif /* MULTIPROCESSOR */
 
 /* End of cpu.c */

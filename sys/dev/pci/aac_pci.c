@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.2.6.3 2002/08/13 02:19:34 nathanw Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.2.6.4 2002/10/18 02:42:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.2.6.3 2002/08/13 02:19:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.2.6.4 2002/10/18 02:42:53 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,9 +309,8 @@ struct aac_ident {
 	},
 };
 
-struct cfattach aac_pci_ca = {
-	sizeof(struct aac_softc), aac_pci_match, aac_pci_attach
-};
+CFATTACH_DECL(aac_pci, sizeof(struct aac_softc),
+    aac_pci_match, aac_pci_attach, NULL, NULL);
 
 const struct aac_ident *
 aac_find_ident(struct pci_attach_args *pa)

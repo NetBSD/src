@@ -1,4 +1,4 @@
-/*	$NetBSD: dzvar.h,v 1.1.2.2 2002/02/28 04:13:15 nathanw Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.1.2.3 2002/10/18 02:41:35 nathanw Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  */
 
-/* A DZ-11 has 8 ports while a DZV/DZQ-11 has only 4. We use 8 by default */
+/* A DZ-11 has 8 ports while a DZV/DZQ-11 has only 4. */
 
 #define	NDZLINE 	8
 
@@ -56,12 +56,13 @@ struct	dz_softc {
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
 	int		sc_type;	/* DZ11 or DZV11? */
+	int		sc_consline;	/* console line, or -1 */
 	int		sc_rxint;	/* Receive interrupt count XXX */
 	u_char		sc_brk;		/* Break asserted on some lines */
 	u_char		sc_dsr;		/* DSR set bits if no mdm ctrl */
 	struct dz_linestate {
 		struct	dz_softc *dz_sc;	/* backpointer to softc */
-		int		dz_line;	/* sub-driver unit number */
+		int		dz_line;	/* channel number */
 		void		*dz_private;	/* sub-driver data pointer */
 		int		(*dz_catch) __P((void *, int)); /* Fast catch recv */
 		struct	tty *	dz_tty;		/* what we work on */
@@ -72,7 +73,7 @@ struct	dz_softc {
 	} sc_dz[NDZLINE];
 };
 
-void	dzattach(struct dz_softc *, struct evcnt *);
+void	dzattach(struct dz_softc *, struct evcnt *, int);
 void	dzrint(void *);
 void	dzxint(void *);
 void	dzreset(struct device *);

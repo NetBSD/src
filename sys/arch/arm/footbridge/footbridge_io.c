@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.4.4.4 2002/04/17 00:02:29 nathanw Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.4.4.5 2002/10/18 02:35:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -223,7 +223,7 @@ footbridge_mem_bs_map(t, bpa, size, cacheable, bshp)
 	pmap_update(pmap_kernel());
 
 /*	if (bpa >= DC21285_PCI_MEM_VSIZE && bpa != DC21285_ARMCSR_VBASE)
-		panic("footbridge_bs_map: Address out of range (%08lx)\n", bpa);
+		panic("footbridge_bs_map: Address out of range (%08lx)", bpa);
 */
 	return(0);
 }
@@ -238,7 +238,7 @@ footbridge_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("footbridge_alloc(): Help!\n");
+	panic("footbridge_alloc(): Help!");
 }
 
 
@@ -284,7 +284,7 @@ footbridge_bs_free(t, bsh, size)
 	bus_size_t size;
 {
 
-	panic("footbridge_free(): Help!\n");
+	panic("footbridge_free(): Help!");
 	/* footbridge_bs_unmap() does all that we need to do. */
 /*	footbridge_bs_unmap(t, bsh, size);*/
 }

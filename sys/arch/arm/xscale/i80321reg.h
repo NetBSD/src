@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.1.2.6 2002/08/13 02:17:59 nathanw Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.1.2.7 2002/10/18 02:35:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -314,7 +314,8 @@
  * INTERRUPTS.  See i80321_icu.c
  */
 #define	ICU_INT_HPI		31	/* high priority interrupt */
-#define	ICU_INT_XINT(x)		((x) + 27) /* external interrupts */
+#define	ICU_INT_XINT0		27	/* external interrupts */
+#define	ICU_INT_XINT(x)		((x) + ICU_INT_XINT0)
 #define	ICU_INT_bit26		26
 #define	ICU_INT_SSP		25	/* SSP serial port */
 #define	ICU_INT_MUE		24	/* msg unit error */

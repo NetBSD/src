@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.26.4.3 2002/09/17 21:17:23 nathanw Exp $ */
+/*	$NetBSD: scif.c,v 1.26.4.4 2002/10/18 02:39:43 nathanw Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -264,9 +264,8 @@ struct callout scif_soft_ch = CALLOUT_INITIALIZER;
 
 u_int scif_rbuf_size = SCIF_RING_SIZE;
 
-struct cfattach scif_ca = {
-	sizeof(struct scif_softc), scif_match, scif_attach
-};
+CFATTACH_DECL(scif, sizeof(struct scif_softc),
+    scif_match, scif_attach, NULL, NULL);
 
 extern struct cfdriver scif_cd;
 
@@ -421,7 +420,7 @@ static int
 scif_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 
-	if (strcmp(cfp->cf_driver->cd_name, "scif")
+	if (strcmp(cfp->cf_name, "scif")
 	    || cfp->cf_unit >= SCIF_MAX_UNITS)
 		return 0;
 

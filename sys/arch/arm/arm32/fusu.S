@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.1.8.4 2002/08/19 21:39:04 thorpej Exp $	*/
+/*	$NetBSD: fusu.S,v 1.1.8.5 2002/10/18 02:35:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -32,11 +32,18 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include "assym.h"
 #include <machine/asm.h>
 
+#ifdef MULTIPROCESSOR
+.Lcpu_info:
+	.word	_C_LABEL(cpu_info)
+#else
 .Lcurpcb:
 	.word	_C_LABEL(curpcb)
+#endif
 
 /*
  * fuword(caddr_t uaddr);
@@ -44,15 +51,25 @@
  */
 
 ENTRY(fuword)
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
 	beq	.Lfusupcbfault
 #endif
 
-	add	r1, pc, #.Lfusufault - . - 8
+	adr	r1, .Lfusufault
 	str	r1, [r2, #PCB_ONFAULT]
 
 	ldrt	r3, [r0]
@@ -68,15 +85,25 @@ ENTRY(fuword)
  */
 
 ENTRY(fusword)
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
 	beq	.Lfusupcbfault
 #endif
 
-	add	r1, pc, #.Lfusufault - . - 8
+	adr	r1, .Lfusufault
 	str	r1, [r2, #PCB_ONFAULT]
 
 	ldrt	r3, [r0]
@@ -100,15 +127,25 @@ ENTRY(fuswintr)
 	mvnne	r0, #0x00000000
 	movne	pc, lr
 
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
 	beq	.Lfusupcbfault
 #endif
 
-	add	r1, pc, #_C_LABEL(fusubailout) - . - 8
+	adr	r1, _C_LABEL(fusubailout)
 	str	r1, [r2, #PCB_ONFAULT]
 
 	ldrt	r3, [r0]
@@ -135,15 +172,25 @@ _C_LABEL(block_userspace_access):
  */
 
 ENTRY(fubyte)
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
 	beq	.Lfusupcbfault
 #endif
 
-	add	r1, pc, #.Lfusufault - . - 8
+	adr	r1, .Lfusufault
 	str	r1, [r2, #PCB_ONFAULT]
 
 	ldrbt	r3, [r0]
@@ -184,7 +231,7 @@ _C_LABEL(fusubailout):
 
 .Lfusupcbfault:
 	mov	r1, r0
-	add	r0, pc, #fusupcbfaulttext - . - 8
+	adr	r0, fusupcbfaulttext
 	b	_C_LABEL(panic)
 
 fusupcbfaulttext:
@@ -198,15 +245,25 @@ fusupcbfaulttext:
  */
 
 ENTRY(suword)
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0, r1, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r1, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
 	beq	.Lfusupcbfault
 #endif
 
-	add	r3, pc, #.Lfusufault - . - 8
+	adr	r3, .Lfusufault
 	str	r3, [r2, #PCB_ONFAULT]
 
 	strt	r1, [r0]
@@ -228,15 +285,24 @@ ENTRY(suswintr)
 	mvnne	r0, #0x00000000
 	movne	pc, lr
 
+#ifdef MULTIPROCESSOR
+	stmfd	sp!, {r0, r1, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r1, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
 	beq	.Lfusupcbfault
 #endif
 
-	add	r3, pc, #_C_LABEL(fusubailout) - . - 8
+	adr	r3, _C_LABEL(fusubailout)
 	str	r3, [r2, #PCB_ONFAULT]
 
 	strbt	r1, [r0], #1
@@ -253,15 +319,24 @@ ENTRY(suswintr)
  */
 
 ENTRY(susword)
+#ifdef MULTIPROCESSOR
+	stmfd	sp!, {r0, r1, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r1, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
 	beq	.Lfusupcbfault
 #endif
 
-	add	r3, pc, #.Lfusufault - . - 8
+	adr	r3, .Lfusufault
 	str	r3, [r2, #PCB_ONFAULT]
 
 	strbt	r1, [r0], #1
@@ -278,8 +353,17 @@ ENTRY(susword)
  */
 
 ENTRY(subyte)
+#ifdef MULTIPROCESSOR
+	stmfd	sp!, {r0, r1, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r1, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 
 #ifdef DIAGNOSTIC
@@ -287,7 +371,7 @@ ENTRY(subyte)
 	beq	.Lfusupcbfault
 #endif
 
-	add	r3, pc, #.Lfusufault - . - 8
+	adr	r3, .Lfusufault
 	str	r3, [r2, #PCB_ONFAULT]
 
 	strbt	r1, [r0]

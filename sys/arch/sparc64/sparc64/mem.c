@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19.4.4 2002/09/17 21:18:04 nathanw Exp $ */
+/*	$NetBSD: mem.c,v 1.19.4.5 2002/10/18 02:40:10 nathanw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -192,8 +192,6 @@ mmrw(dev, uio, flags)
 				uio->uio_offset += cnt;
 				c -= cnt;
 			}
-			/* Should not be necessary */
-			blast_vcache();
 			break;
 #endif
 

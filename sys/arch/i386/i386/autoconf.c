@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55.2.8 2002/09/17 21:15:02 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55.2.9 2002/10/18 02:37:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,14 +41,14 @@
 /*
  * Setup the system to run on the current machine.
  *
- * Configure() is called at boot time and initializes the vba 
+ * Configure() is called at boot time and initializes the vba
  * device tables and the memory controller monitoring.  Available
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55.2.8 2002/09/17 21:15:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55.2.9 2002/10/18 02:37:37 nathanw Exp $");
 
 #include "opt_compat_oldboot.h"
 
@@ -71,8 +71,15 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55.2.8 2002/09/17 21:15:02 nathanw Ex
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
+#include <machine/gdt.h>
 #include <machine/pcb.h>
 #include <machine/bootinfo.h>
+
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#endif
 
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
 static void matchbiosdisks __P((void));
@@ -128,11 +135,18 @@ cpu_configure()
 		panic("configure: mainbus not configured");
 
 	printf("biomask %x netmask %x ttymask %x\n",
-	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
-	    (u_short)imask[IPL_TTY]);
+	    (u_short)IMASK(IPL_BIO), (u_short)IMASK(IPL_NET),
+	    (u_short)IMASK(IPL_TTY));
 
-	/* resync after FPU configuration */
+#if NIOAPIC > 0
+	ioapic_enable();
+#endif
+	/* resync cr0 after FPU configuration */
 	lwp0.l_addr->u_pcb.pcb_cr0 = rcr0();
+#ifdef MULTIPROCESSOR
+	/* propagate this to the idle pcb's. */
+	cpu_init_idle_pcbs();
+#endif
 
 	spl0();
 
@@ -213,12 +227,12 @@ matchbiosdisks()
 			continue;
 #ifdef GEOM_DEBUG
 		printf("matchbiosdisks: trying to match (%s) %s\n",
-		    dv->dv_xname, dv->dv_cfdata->cf_driver->cd_name);
+		    dv->dv_xname, dv->dv_cfdata->cf_name);
 #endif
 		if (is_valid_disk(dv)) {
 			n++;
 			sprintf(i386_alldisks->dl_nativedisks[n].ni_devname,
-			    "%s%d", dv->dv_cfdata->cf_driver->cd_name,
+			    "%s%d", dv->dv_cfdata->cf_name,
 			    dv->dv_unit);
 
 			bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
@@ -394,7 +408,7 @@ findroot(void)
 			if (dv->dv_class != DV_DISK)
 				continue;
 
-			if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "fd")) {
+			if (!strcmp(dv->dv_cfdata->cf_name, "fd")) {
 				/*
 				 * Assume the configured unit number matches
 				 * the BIOS device number.  (This is the old
@@ -497,7 +511,7 @@ device_register(dev, aux)
 		 */
 
 		if (bin->bus == BI_BUS_ISA &&
-		    !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name,
+		    !strcmp(dev->dv_parent->dv_cfdata->cf_name,
 		    "isa")) {
 			struct isa_attach_args *iaa = aux;
 
@@ -509,7 +523,7 @@ device_register(dev, aux)
 		}
 #if NPCI > 0
 		if (bin->bus == BI_BUS_PCI &&
-		    !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name,
+		    !strcmp(dev->dv_parent->dv_cfdata->cf_name,
 		    "pci")) {
 			struct pci_attach_args *paa = aux;
 			int b, d, f;
@@ -547,7 +561,7 @@ is_valid_disk(struct device *dv)
 	if (dv->dv_class != DV_DISK)
 		return (0);
 
-	name = dv->dv_cfdata->cf_driver->cd_name;
+	name = dv->dv_cfdata->cf_name;
 
 	return (strcmp(name, "sd") == 0 || strcmp(name, "wd") == 0 ||
 	    strcmp(name, "ld") == 0 || strcmp(name, "ed") == 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.2.2.6 2002/08/27 23:45:45 nathanw Exp $ */
+/*	$NetBSD: msiiep.c,v 1.2.2.7 2002/10/18 02:40:00 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.2.2.6 2002/08/27 23:45:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.2.2.7 2002/10/18 02:40:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -68,9 +68,8 @@ static int	msiiep_match(struct device *, struct cfdata *, void *);
 static void	msiiep_attach(struct device *, struct device *, void *);
 /* static int	msiiep_print(void *, const char *); */
 
-struct cfattach msiiep_ca = {
-	sizeof(struct device), msiiep_match, msiiep_attach
-};
+CFATTACH_DECL(msiiep, sizeof(struct device),
+    msiiep_match, msiiep_attach, NULL, NULL);
 
 static struct idprom	msiiep_idprom_store;
 static void		msiiep_getidprom(void);
@@ -83,10 +82,8 @@ static int	mspcic_match(struct device *, struct cfdata *, void *);
 static void	mspcic_attach(struct device *, struct device *, void *);
 static int	mspcic_print(void *, const char *);
 
-struct cfattach mspcic_ca = {
-	sizeof(struct mspcic_softc), mspcic_match, mspcic_attach
-};
-
+CFATTACH_DECL(mspcic, sizeof(struct mspcic_softc),
+    mspcic_match, mspcic_attach, NULL, NULL);
 
 /**
  * ms-IIep PCIC registers are mapped at fixed VA

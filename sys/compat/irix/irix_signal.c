@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.3.2.8 2002/08/13 02:19:14 nathanw Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.3.2.9 2002/10/18 02:41:03 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.3.2.8 2002/08/13 02:19:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.3.2.9 2002/10/18 02:41:03 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.3.2.8 2002/08/13 02:19:14 nathanw 
 #include <sys/user.h>
 
 #include <machine/regnum.h>
+#include <machine/trap.h>
 
 #include <compat/common/compat_util.h>
 
@@ -64,13 +65,17 @@ __KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.3.2.8 2002/08/13 02:19:14 nathanw 
 #include <compat/svr4/svr4_syscallargs.h>
 
 #include <compat/irix/irix_signal.h>
+#include <compat/irix/irix_errno.h>
 #include <compat/irix/irix_exec.h>
 #include <compat/irix/irix_syscallargs.h>
 
 extern const int native_to_svr4_signo[];
 extern const int svr4_to_native_signo[];
 
-static int irix_setinfo __P((struct proc *, int, irix_irix5_siginfo_t *));
+static int irix_wait_siginfo __P((struct proc *, int, 
+    struct irix_irix5_siginfo *));
+static void irix_signal_siginfo __P((struct irix_irix5_siginfo *, 
+    int, u_long, caddr_t));
 static void irix_set_ucontext __P((struct irix_ucontext*, sigset_t *, 
     int, struct proc *));
 static void irix_set_sigcontext __P((struct irix_sigcontext*, sigset_t *, 
@@ -85,15 +90,16 @@ static void irix_get_sigcontext __P((struct irix_sigcontext*, struct proc *));
 #define irix_sigaddset(s, n)    ((s)->bits[irix_sigword(n)] |= irix_sigmask(n))
 
 /* 
+ * Build a struct siginfo wor waitsys/waitid
  * This is ripped from svr4_setinfo. See irix_sys_waitsys...
  */
 static int
-irix_setinfo(p, st, s)
+irix_wait_siginfo(p, st, s)
 	struct proc *p;
 	int st;
-	irix_irix5_siginfo_t *s;
+	struct irix_irix5_siginfo *s;
 {
-	irix_irix5_siginfo_t i;
+	struct irix_irix5_siginfo i;
 	int sig;
 
 	memset(&i, 0, sizeof(i));
@@ -139,6 +145,85 @@ irix_setinfo(p, st, s)
 	return copyout(&i, s, sizeof(i));
 }
 
+/*
+ * Build a struct siginfo for signal delivery
+ */
+static void
+irix_signal_siginfo(isi, sig, code, addr)
+	struct irix_irix5_siginfo *isi;
+	int sig;
+	u_long code;
+	caddr_t addr;
+{
+	isi->isi_signo = native_to_svr4_signo[sig];
+	isi->isi_errno = 0;
+	isi->isi_addr = (irix_app32_ptr_t)addr;
+
+	switch (code) {
+	case T_TLB_MOD:
+	case T_TLB_LD_MISS:
+	case T_TLB_ST_MISS:
+		switch (sig) {
+		case SIGSEGV:
+			isi->isi_code = IRIX_SEGV_MAPERR;
+			isi->isi_errno = IRIX_EFAULT;
+			break;
+		case SIGBUS:
+			isi->isi_code = IRIX_BUS_ADRERR;
+			isi->isi_errno = IRIX_EACCES;
+			break;
+		case SIGKILL:
+			isi->isi_code = IRIX_SEGV_MAPERR;
+			isi->isi_errno = IRIX_ENOMEM;
+			break;
+		default:
+			isi->isi_code = 0;
+		}
+		break;
+
+	case T_ADDR_ERR_LD:
+	case T_ADDR_ERR_ST:
+	case T_BUS_ERR_IFETCH:
+	case T_BUS_ERR_LD_ST:
+		/* NetBSD issues a SIGSEGV here, IRIX rather uses SIGBUS */
+		isi->isi_code = IRIX_SEGV_MAPERR; 
+		isi->isi_errno = IRIX_EFAULT;
+		break;
+
+	case T_BREAK:
+		isi->isi_code = IRIX_TRAP_BRKPT;
+		break;
+
+	case T_RES_INST:
+	case T_COP_UNUSABLE:
+		/* NetBSD issues SIGSEGV here, IRIX rather uses SIGILL */
+		isi->isi_code = IRIX_SEGV_MAPERR;
+		isi->isi_errno = IRIX_EFAULT;
+		break;
+
+	case T_OVFLOW:
+		isi->isi_errno = IRIX_EOVERFLOW;
+	case T_TRAP:
+		isi->isi_code = IRIX_FPE_INTOVF;
+		break;
+
+	case T_FPE:
+		isi->isi_code = IRIX_FPE_FLTINV;
+		break;
+	
+	case T_WATCH:
+	case T_VCEI:
+	case T_VCED:
+	case T_INT:
+	case T_SYSCALL:
+	default:
+		isi->isi_code = 0;
+#ifdef DEBUG_IRIX
+		printf("irix_signal_siginfo: sig %d code %ld\n", sig, code);
+#endif
+		break;
+	}
+}
 
 void
 native_to_irix_sigset(bss, sss)
@@ -221,10 +306,13 @@ irix_sendsig(sig, mask, code)
 	 * Build the signal frame
 	 */
 	bzero(&sf, sizeof(sf));
-	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO)
-		irix_set_ucontext(&sf.isf_ctx.iuc, mask, code, p);
-	else
+	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO) {
+		irix_set_ucontext(&sf.isf_ctx.iss.iuc, mask, code, p);
+		irix_signal_siginfo(&sf.isf_ctx.iss.iis, sig, 
+		    code, (caddr_t)f->f_regs[BADVADDR]);
+	} else {
 		irix_set_sigcontext(&sf.isf_ctx.isc, mask, code, p);
+	}
 	
 	/*
 	 * Compute the new stack address after copying sigframe
@@ -248,28 +336,33 @@ irix_sendsig(sig, mask, code)
 		/* NOTREACHED */
 	}
 
+
 	/* 
 	 * Set up signal trampoline arguments. 
 	 */
-	f->f_regs[A0] = native_to_svr4_signo[sig];	/* signo/signo */
-	f->f_regs[A1] = 0;			/* code/siginfo */
-	f->f_regs[A2] = (unsigned long)sp;	/* sigcontext/ucontext */
+	f->f_regs[A0] = native_to_svr4_signo[sig];	/* signo */
+	f->f_regs[A1] = 0;			/* NULL */
+	f->f_regs[A2] = (unsigned long)sp;	/* ucontext/sigcontext */
 	f->f_regs[A3] = (unsigned long)catcher; /* signal handler address */
 
 	/* 
 	 * When siginfo is selected, the higher bit of A0 is set
-	 * This is how the signal trampoline is able to discover if
-	 * A2 points to a struct irix_sigcontext or struct irix_ucontext.
+	 * This is how the signal trampoline is able to discover if A2
+	 * points to a struct irix_sigcontext or struct irix_ucontext.
+	 * Also, A1 points to struct siginfo instead of being NULL.
 	 */
-	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO) 
+	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO) {
 		f->f_regs[A0] |= 0x80000000;
+		f->f_regs[A1] = (u_long)sp + 
+		    ((u_long)&sf.isf_ctx.iss.iis - (u_long)&sf); 
+	}
 
 	/*
 	 * Set up the new stack pointer
 	 */
 	f->f_regs[SP] = (unsigned long)sp;
 #ifdef DEBUG_IRIX
-	printf("stack pointer at %p\n", sp);
+	printf("stack pointer at %p, A1 = %p\n", sp, (void *)f->f_regs[A1]);
 #endif /* DEBUG_IRIX */
 
 	/* 
@@ -320,6 +413,8 @@ irix_set_sigcontext (scp, mask, code, p)
 	scp->isc_mdhi = f->f_regs[MULHI];
 	scp->isc_mdlo = f->f_regs[MULLO];
 	scp->isc_pc = f->f_regs[PC];
+	scp->isc_badvaddr = f->f_regs[BADVADDR];
+	scp->isc_cause = f->f_regs[CAUSE];
 
 	/* 
 	 * Save the floating-pointstate, if necessary, then copy it. 
@@ -370,6 +465,7 @@ irix_set_ucontext(ucp, mask, code, p)
 	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_MDLO] = f->f_regs[MULLO];
 	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_MDHI] = f->f_regs[MULHI];
 	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_EPC] = f->f_regs[PC];
+	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_CAUSE] = f->f_regs[CAUSE];
 
 	/* 
 	 * Save the floating-pointstate, if necessary, then copy it. 
@@ -445,11 +541,11 @@ irix_sys_sigreturn(p, v, retval)
 	if (usf == NULL) {
 		usf = (void *)SCARG(uap, ucp);
 
-		if ((error = copyin(usf, &ksf.isf_ctx.iuc, 
+		if ((error = copyin(usf, &ksf.isf_ctx.iss.iuc, 
 		    sizeof(ksf.isf_ctx))) != 0)
 			return error;
 
-		irix_get_ucontext(&ksf.isf_ctx.iuc, p);
+		irix_get_ucontext(&ksf.isf_ctx.iss.iuc, p);
 	} else {
 		if ((error = copyin(usf, &ksf.isf_ctx.isc, 
 		    sizeof(ksf.isf_ctx))) != 0)
@@ -716,7 +812,7 @@ out:
  * and not in the SVR4 version.
  * Both version could be merged by creating a svr4_sys_waitsys1() with the
  * rusage argument, and by calling it with NULL from svr4_sys_waitsys().
- * irix_setinfo is here because 1) svr4_setinfo is static and cannot be 
+ * irix_wait_siginfo is here because 1) svr4_setinfo is static and cannot be 
  * used here and 2) because struct irix_irix5_siginfo is quite different
  * from svr4_siginfo. In order to merge, we need to include irix_signal.h
  * from svr4_misc.c, or push the irix_irix5_siginfo into svr4_siginfo.h
@@ -778,7 +874,7 @@ loop:
 #ifdef DEBUG_IRIX
 			printf("irix_sys_wait(): found %d\n", q->p_pid);
 #endif
-			if ((error = irix_setinfo(q, q->p_xstat,
+			if ((error = irix_wait_siginfo(q, q->p_xstat,
 						  SCARG(uap, info))) != 0)
 				return error;
 
@@ -859,7 +955,7 @@ loop:
 			if (((SCARG(uap, options) & SVR4_WNOWAIT)) == 0)
 				q->p_flag |= P_WAITED;
 			*retval = 0;
-			return irix_setinfo(q, W_STOPCODE(q->p_xstat),
+			return irix_wait_siginfo(q, W_STOPCODE(q->p_xstat),
 					    SCARG(uap, info));
 		}
 	}
@@ -869,7 +965,7 @@ loop:
 
 	if (SCARG(uap, options) & SVR4_WNOHANG) {
 		*retval = 0;
-		if ((error = irix_setinfo(NULL, 0, SCARG(uap, info))) != 0)
+		if ((error = irix_wait_siginfo(NULL, 0, SCARG(uap, info))) != 0)
 			return error;
 		return 0;
 	}

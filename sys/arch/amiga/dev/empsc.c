@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.20.8.2 2002/02/28 04:06:35 nathanw Exp $ */
+/*	$NetBSD: empsc.c,v 1.20.8.3 2002/10/18 02:34:50 nathanw Exp $ */
 
 /*
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: empsc.c,v 1.20.8.2 2002/02/28 04:06:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: empsc.c,v 1.20.8.3 2002/10/18 02:34:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +64,8 @@ extern int sci_debug;
 
 extern int sci_data_wait;
 
-struct cfattach empsc_ca = {
-	sizeof(struct sci_softc), empscmatch, empscattach
-};
+CFATTACH_DECL(empsc, sizeof(struct sci_softc),
+    empscmatch, empscattach, NULL, NULL);
 
 /*
  * if this is an EMPLANT board

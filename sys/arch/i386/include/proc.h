@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.13.4.2 2001/09/21 22:35:10 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.13.4.3 2002/10/18 02:37:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -63,3 +63,12 @@ struct mdproc {
 /* md_flags */
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
 #define MDP_USEDMTRR	0x0002	/* has set volatile MTRRs */
+
+/* kernel stack params */
+#ifndef NOREDZONE
+/* override default for redzone */
+#define	KSTACK_LOWEST_ADDR(l)	\
+	((caddr_t)(l)->l_addr + NBPG*2)
+#define	KSTACK_SIZE	\
+	(USPACE - NBPG*2)
+#endif

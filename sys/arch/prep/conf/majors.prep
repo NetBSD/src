@@ -1,4 +1,4 @@
-#	$NetBSD: majors.prep,v 1.2.2.2 2002/09/17 21:17:10 nathanw Exp $
+#	$NetBSD: majors.prep,v 1.2.2.3 2002/10/18 02:39:34 nathanw Exp $
 #
 # Device majors for prep
 #
@@ -62,3 +62,4 @@ device-major	wsfont		char 71			wsfont
 device-major	pci		char 72			pci
 device-major	clockctl	char 73			clockctl
 device-major	systrace	char 74			systrace
+device-major	cgd		char 75  block 19	cgd

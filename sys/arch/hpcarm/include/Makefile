@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.9.6.4 2002/08/13 02:18:12 nathanw Exp $
+#	$NetBSD: Makefile,v 1.9.6.5 2002/10/18 02:37:02 nathanw Exp $
 
 KDIR=	/sys/arch/hpcarm/include
 INCSDIR= /usr/include/hpcarm
 
-INCS=	ansi.h aout_machdep.h asm.h \
+INCS=	ansi.h apmvar.h aout_machdep.h asm.h \
 	bswap.h bus.h \
 	cdefs.h cpu.h \
 	db_machdep.h disklabel.h \

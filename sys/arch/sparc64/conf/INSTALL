@@ -1,8 +1,8 @@
-# 	$NetBSD: INSTALL,v 1.3.2.6 2002/08/01 02:43:34 nathanw Exp $
+# 	$NetBSD: INSTALL,v 1.3.2.7 2002/10/18 02:40:02 nathanw Exp $
 
 include "arch/sparc64/conf/GENERIC32"
 
-#ident 		"INSTALL-$Revision: 1.3.2.6 $"
+#ident 		"INSTALL-$Revision: 1.3.2.7 $"
 
 include "arch/sparc64/conf/std.sparc64-64"
 
@@ -16,7 +16,6 @@ options 	DIAGNOSTIC
 makeoptions	DEBUG="-g"
 options 	DEBUG
 #options 	SYSCALL_DEBUG
-#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem

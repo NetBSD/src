@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.7.8.2 2002/09/17 21:15:24 nathanw Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.7.8.3 2002/10/18 02:38:18 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -60,12 +60,11 @@
 dev_type_open(grfopen);
 dev_type_close(grfclose);
 dev_type_ioctl(grfioctl);
-dev_type_poll(grfpoll);
 dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
 	grfopen, grfclose, noread, nowrite, grfioctl,
-	nostop, notty, grfpoll, grfmmap,
+	nostop, notty, nopoll, grfmmap,
 };
 
 void	grf_scinit __P((struct grf_softc *, const char *, int));
@@ -300,15 +299,6 @@ grfioctl(dev, cmd, data, flag, p)
 		break;
 	}
 	return rv;
-}
-
-int
-grfpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-	return EINVAL;
 }
 
 paddr_t

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.2.8.2 2002/08/27 07:14:37 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.2.8.3 2002/10/18 02:33:24 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.2.8.2 2002/08/27 07:14:37 thorpej Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.2.8.3 2002/10/18 02:33:24 nathanw Exp $");
 
 #include <sys/buf.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
@@ -171,7 +171,7 @@ cpu_exit(struct lwp *l, int proc)
 	else
 		lwp_exit2(l);
 	SCHED_LOCK(s);		/* expected by cpu_switch */
-	(void) cpu_switch(l);
+	cpu_switch(l, NULL);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.14.12.4 2002/09/17 21:14:33 nathanw Exp $	*/
+/*	$NetBSD: mt.c,v 1.14.12.5 2002/10/18 02:36:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.14.12.4 2002/09/17 21:14:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.14.12.5 2002/10/18 02:36:49 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,9 +136,8 @@ int	mtdebug = 0;
 int	mtmatch __P((struct device *, struct cfdata *, void *));
 void	mtattach __P((struct device *, struct device *, void *));
 
-struct cfattach mt_ca = {
-	sizeof(struct mt_softc), mtmatch, mtattach
-};
+CFATTACH_DECL(mt, sizeof(struct mt_softc),
+    mtmatch, mtattach, NULL, NULL);
 
 extern struct cfdriver mt_cd;
 

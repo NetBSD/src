@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.2.2.4 2002/04/17 00:03:46 nathanw Exp $	*/
+/*	$NetBSD: cache.c,v 1.2.2.5 2002/10/18 02:38:45 nathanw Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -600,7 +600,7 @@ primary_cache_is_2way:
 #endif /* MIPS3 || MIPS4 */
 
 	default:
-		panic("can't handle primary cache on impl 0x%x\n",
+		panic("can't handle primary cache on impl 0x%x",
 		    MIPS_PRID_IMPL(cpu_id));
 	}
 
@@ -692,20 +692,20 @@ primary_cache_is_2way:
 				break;
 
 			default:
-				panic("r4k sdcache %d way line size %d\n",
+				panic("r4k sdcache %d way line size %d",
 				    mips_sdcache_ways, mips_sdcache_line_size);
 			}
 			break;
 
 		default:
-			panic("r4k sdcache %d way line size %d\n",
+			panic("r4k sdcache %d way line size %d",
 			    mips_sdcache_ways, mips_sdcache_line_size);
 		}
 		break;
 #endif /* MIPS3 || MIPS4 */
 
 	default:
-		panic("can't handle secondary cache on impl 0x%x\n",
+		panic("can't handle secondary cache on impl 0x%x",
 		    MIPS_PRID_IMPL(cpu_id));
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.7.2.15 2002/09/23 15:40:23 thorpej Exp $	*/
+/*	$NetBSD: wireg.h,v 1.7.2.16 2002/10/18 02:42:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -39,130 +39,12 @@
 
 #define WI_TIMEOUT	65536
 
-#define WI_PORT0	0
-#define WI_PORT1	1
-#define WI_PORT2	2
-#define WI_PORT3	3
-#define WI_PORT4	4
-#define WI_PORT5	5
-
-/* Default port: 0 (only 0 exists on stations) */
-#define WI_DEFAULT_PORT	(WI_PORT0 << 8)
-
-/* Default TX rate: 2Mbps, auto fallback */
-#define WI_DEFAULT_TX_RATE	3
-
-/* Default network name: ANY */
-/*
- * [sommerfeld 1999/07/15] Changed from "ANY" to ""; according to Bill Fenner,
- * ANY is used in MS driver user interfaces, while "" is used over the
- * wire..
- */
-#define WI_DEFAULT_NETNAME	""
-
-#define WI_DEFAULT_AP_DENSITY	1
-
-#define WI_DEFAULT_RTS_THRESH	2347
-
-#define WI_DEFAULT_DATALEN	2304
-
-#define WI_DEFAULT_CREATE_IBSS	0
-
-#define WI_DEFAULT_PM_ENABLED	0
-
-#define WI_DEFAULT_MAX_SLEEP	100
-
-#define WI_DEFAULT_ROAMING	1
-
-#define WI_DEFAULT_AUTHTYPE	1
-
-#ifdef __NetBSD__
-#define OS_STRING_NAME	"NetBSD"
-#endif
-#ifdef __FreeBSD__
-#define OS_STRING_NAME	"FreeBSD"
-#endif
-#ifdef __OpenBSD__
-#define OS_STRING_NAME	"OpenBSD"
-#endif
-
-#define WI_DEFAULT_NODENAME	OS_STRING_NAME " WaveLAN/IEEE node"
-
-#define WI_DEFAULT_IBSS		OS_STRING_NAME " IBSS"
-
-#define WI_DEFAULT_CHAN		3
-
-/*
- * register space access macros
- */
-#ifdef WI_AT_BIGENDIAN_BUS_HACK
-	/*
-	 * XXX - ugly hack for sparc bus_space_* macro deficiencies:
-	 *       assume the bus we are accessing is big endian.
-	 */
-
-#define CSR_WRITE_4(sc, reg, val)	\
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg) , htole32(val))
-#define CSR_WRITE_2(sc, reg, val)	\
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg), htole16(val))
-#define CSR_WRITE_1(sc, reg, val)	\
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg), val)
-
-#define CSR_READ_4(sc, reg)		\
-	le32toh(bus_space_read_4(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg)))
-#define CSR_READ_2(sc, reg)		\
-	le16toh(bus_space_read_2(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg)))
-#define CSR_READ_1(sc, reg)		\
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg))
-
-#else
-
-#define CSR_WRITE_4(sc, reg, val)	\
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg) , val)
-#define CSR_WRITE_2(sc, reg, val)	\
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg), val)
-#define CSR_WRITE_1(sc, reg, val)	\
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg), val)
-
-#define CSR_READ_4(sc, reg)		\
-	bus_space_read_4(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg))
-#define CSR_READ_2(sc, reg)		\
-	bus_space_read_2(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg))
-#define CSR_READ_1(sc, reg)		\
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg))
-#endif
-
-#ifndef __BUS_SPACE_HAS_STREAM_METHODS
-#define bus_space_write_stream_2	bus_space_write_2
-#define bus_space_write_multi_stream_2	bus_space_write_multi_2
-#define bus_space_read_stream_2		bus_space_read_2
-#define bus_space_read_multi_stream_2		bus_space_read_multi_2
-#endif
-
-#define CSR_WRITE_STREAM_2(sc, reg, val)	\
-	bus_space_write_stream_2(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg), val)
-#define CSR_WRITE_MULTI_STREAM_2(sc, reg, val, count)	\
-	bus_space_write_multi_stream_2(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg), val, count)
-#define CSR_READ_STREAM_2(sc, reg)		\
-	bus_space_read_stream_2(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg))
-#define CSR_READ_MULTI_STREAM_2(sc, reg, buf, count)		\
-	bus_space_read_multi_stream_2(sc->sc_iot, sc->sc_ioh,	\
-			(sc->sc_pci? reg * 2: reg), buf, count)
+#define WI_PORT0	(0 << 8)
+#define WI_PORT1	(1 << 8)
+#define WI_PORT2	(2 << 8)
+#define WI_PORT3	(3 << 8)
+#define WI_PORT4	(4 << 8)
+#define WI_PORT5	(5 << 8)
 
 /*
  * The WaveLAN/IEEE cards contain an 802.11 MAC controller which Lucent
@@ -208,8 +90,6 @@
  */
 #define WI_IOSIZE		0x40
 #define WI_PCI_CBMA		0x10	/* Configuration Base Memory Address */
-
-#define WI_PCI_COR_OFFSET        0x4C
 
 /*
  * Hermes & Prism2 register definitions 
@@ -276,10 +156,9 @@
 /*
  * Buffer Access Path (BAP) registers.
  * These are I/O channels. I believe you can use each one for
- * any desired purpose independently of the other. In general
- * though, we use BAP1 for reading and writing LTV records and
- * reading received data frames, and BAP0 for writing transmit
- * frames. This is a convention though, not a rule.
+ * any desired purpose independently of the other.
+ * Currently, we only use BAP0, and perhaps BAP1 can be used
+ * within interrupt context.
  */
 #define WI_SEL0			0x18
 #define WI_SEL1			0x1A
@@ -287,8 +166,6 @@
 #define WI_OFF1			0x1E
 #define WI_DATA0		0x36
 #define WI_DATA1		0x38
-#define WI_BAP0			WI_DATA0
-#define WI_BAP1			WI_DATA1
 
 #define WI_OFF_BUSY		0x8000
 #define WI_OFF_ERR		0x4000
@@ -311,9 +188,6 @@
 #define WI_EV_TX_EXC		0x0004	/* async xmit completed with failure */
 #define WI_EV_TX		0x0002	/* async xmit completed succesfully */
 #define WI_EV_RX		0x0001	/* async rx completed */
-
-#define WI_INTRS	\
-	(WI_EV_RX|WI_EV_TX|WI_EV_TX_EXC|WI_EV_ALLOC|WI_EV_INFO|WI_EV_INFO_DROP)
 
 /* Host software registers */
 #define WI_SW0			0x28
@@ -361,9 +235,6 @@
 #define WI_PCI_MASTER0_LEN	0x88
 #define WI_PCI_MASTER0_CON	0x8C
 
-#define WI_COR_SOFT_RESET	(1 << 7)
-#define WI_COR_CLEAR		0x00
-
 #define WI_PCI_STATUS		0x98
 
 #define WI_PCI_MASTER1_ADDRH	0xA0
@@ -371,7 +242,8 @@
 #define WI_PCI_MASTER1_LEN	0xA8
 #define WI_PCI_MASTER1_CON	0xAC
 
-#define WI_PCI_SOFT_RESET	(1 << 7)
+#define WI_COR_SOFT_RESET	(1 << 7)
+#define WI_COR_CLEAR		0x00
 
 /*
  * One form of communication with the Hermes is with what Lucent calls
@@ -379,48 +251,16 @@
  * and type are 16 bits and are in native byte order. The value is in
  * multiples of 16 bits and is in little endian byte order.
  */
-struct wi_ltv_gen {
+struct wi_lt_hdr {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
-	u_int16_t		wi_val;
+	/* value is vary depends on resource id */
 };
-
-struct wi_ltv_str {
-	u_int16_t		wi_len;
-	u_int16_t		wi_type;
-	u_int16_t		wi_str[17];
-};
-
-#define WI_SETVAL(recno, val)			\
-	do {					\
-		struct wi_ltv_gen	g;	\
-						\
-		g.wi_len = 2;			\
-		g.wi_type = recno;		\
-		g.wi_val = htole16(val);	\
-		wi_write_record(sc, &g);	\
-	} while (0)
-
-#define WI_SETSTR(recno, str)					\
-	do {							\
-		struct wi_ltv_str	s;			\
-		int			l;			\
-								\
-		l = (strlen(str) + 1) & ~0x1;			\
-		memset((char *)&s, 0, sizeof(s));		\
-		s.wi_len = (l / 2) + 2;				\
-		s.wi_type = recno;				\
-		s.wi_str[0] = htole16(strlen(str));		\
-		memcpy((char *)&s.wi_str[1], str, strlen(str));	\
-		wi_write_record(sc, (struct wi_ltv_gen *)&s);	\
-	} while (0)
 
 /*
  * Download buffer location and length (0xFD01).
  */
-struct wi_ltv_dnld_buf {
-	u_int16_t		wi_len;
-	u_int16_t		wi_type;
+struct wi_dnld_buf {
 	u_int16_t		wi_buf_pg; /* page addr of intermediate dl buf*/
 	u_int16_t		wi_buf_off; /* offset of idb */
 	u_int16_t		wi_buf_len; /* len of idb */
@@ -429,9 +269,7 @@ struct wi_ltv_dnld_buf {
 /*
  * Mem sizes (0xFD02).
  */
-struct wi_ltv_memsz {
-	u_int16_t		wi_len;
-	u_int16_t		wi_type;
+struct wi_memsz {
 	u_int16_t		wi_mem_ram;
 	u_int16_t		wi_mem_nvram;
 };
@@ -439,9 +277,7 @@ struct wi_ltv_memsz {
 /*
  * NIC Identification (0xFD0B, 0xFD20)
  */
-struct wi_ltv_ver {
-	u_int16_t		wi_len;
-	u_int16_t		wi_type;
+struct wi_ver {
 	u_int16_t		wi_ver[4];
 };
 
@@ -510,27 +346,21 @@ struct wi_ltv_ver {
 /*
  * List of intended regulatory domains (0xFD11).
  */
-struct wi_ltv_domains {
-	u_int16_t		wi_len;
-	u_int16_t		wi_type;
+struct wi_domains {
 	u_int16_t		wi_domains[6];
 };
 
 /*
  * CIS struct (0xFD13).
  */
-struct wi_ltv_cis {
-	u_int16_t		wi_len;
-	u_int16_t		wi_type;
+struct wi_cis {
 	u_int16_t		wi_cis[240];
 };
 
 /*
  * Communications quality (0xFD43).
  */
-struct wi_ltv_commqual {
-	u_int16_t		wi_len;
-	u_int16_t		wi_type;
+struct wi_commqual {
 	u_int16_t		wi_coms_qual;
 	u_int16_t		wi_sig_lvl;
 	u_int16_t		wi_noise_lvl;
@@ -539,9 +369,7 @@ struct wi_ltv_commqual {
 /*
  * Actual system scale thresholds (0xFC06, 0xFD46).
  */
-struct wi_ltv_scalethresh {
-	u_int16_t		wi_len;
-	u_int16_t		wi_type;
+struct wi_scalethresh {
 	u_int16_t		wi_energy_detect;
 	u_int16_t		wi_carrier_detect;
 	u_int16_t		wi_defer;
@@ -553,9 +381,7 @@ struct wi_ltv_scalethresh {
 /*
  * PCF info struct (0xFD87).
  */
-struct wi_ltv_pcf {
-	u_int16_t		wi_len;
-	u_int16_t		wi_type;
+struct wi_pcf {
 	u_int16_t		wi_medium_occupancy_limit;
 	u_int16_t		wi_cfp_period;
 	u_int16_t		wi_cfp_max_duration;
@@ -579,47 +405,41 @@ struct wi_ltv_pcf {
 /*
  * Mac addresses. (0xFC01, 0xFC08)
  */
-struct wi_ltv_macaddr {
-	u_int16_t		wi_len;
-	u_int16_t		wi_type;
+struct wi_macaddr {
 	u_int8_t		wi_mac_addr[6];
 };
 
 /*
  * Station set identification (SSID). (0xFC02, 0xFC04)
  */
-struct wi_ltv_ssid {
+struct wi_ssid {
 	u_int16_t		wi_len;
-	u_int16_t		wi_type;
-	u_int16_t		wi_id[17];
+	u_int8_t		wi_ssid[32];
 };
 
 /*
  * Set our station name. (0xFC0E)
  */
-struct wi_ltv_nodename {
-	u_int16_t		wi_len;
-	u_int16_t		wi_type;
-	u_int16_t		wi_nodename[17];
+struct wi_nodename {
+	u_int16_t		wi_nodelen;
+	u_int8_t		wi_nodename[32];
 };
 
 /*
  * Multicast addresses to be put in filter. We're
  * allowed up to 16 addresses in the filter. (0xFC80)
  */
-struct wi_ltv_mcast {
-	u_int16_t		wi_len;
-	u_int16_t		wi_type;
+struct wi_mcast {
 	struct ether_addr	wi_mcast[16];
 };
 
 /*
- * Supported rates.
+ * Join request. (0xFCE2)
  */
-#define	WI_SUPPRATES_1M		0x0001
-#define	WI_SUPPRATES_2M		0x0002
-#define	WI_SUPPRATES_5M		0x0004
-#define	WI_SUPPRATES_11M	0x0008
+struct wi_joinreq {
+	struct ether_addr	wi_bssid;
+	u_int16_t		wi_chan;
+};
 
 /*
  * Information frame types.
@@ -629,6 +449,12 @@ struct wi_ltv_mcast {
 #define WI_INFO_SCAN_RESULTS	0xF101	/* Scan results */
 #define WI_INFO_HOST_SCAN_RESULTS	0xF104	/* Scan results */
 #define WI_INFO_LINK_STAT	0xF200	/* Link status */
+#define	CONNECTED	1
+#define	DISCONNECTED	2
+#define	AP_CHANGE	3
+#define	AP_OUT_OF_RANGE	4
+#define	AP_IN_RANGE	5
+#define	ASSOC_FAILED	6
 #define WI_INFO_ASSOC_STAT	0xF201	/* Association status */
 struct wi_assoc {
 	u_int16_t		wi_assoc_stat;	/* Association Status */
@@ -698,45 +524,19 @@ struct wi_scan_data {
  */
 struct wi_frame {
 	u_int16_t		wi_status;	/* 0x00 */
-	u_int16_t		wi_rsvd0;	/* 0x02 */ /* 0 */
-	u_int16_t		wi_rsvd1;	/* 0x04 */ /* 0 */
-	u_int16_t		wi_q_info;	/* 0x06 */
-	u_int16_t		wi_rsvd2;	/* 0x08 */
-	u_int8_t		wi_tx_rtry;	/* 0x0A */ /* (Prism2 Only) */
-	u_int8_t		wi_tx_rate;	/* 0x0B */ /* (Prism2 Only) */
-	u_int16_t		wi_tx_ctl;	/* 0x0C */
-	u_int16_t		wi_frame_ctl;	/* 0x0E */
-	u_int16_t		wi_id;		/* 0x10 */
-	u_int8_t		wi_addr1[6];	/* 0x12 */
-	u_int8_t		wi_addr2[6];	/* 0x18 */
-	u_int8_t		wi_addr3[6];	/* 0x1E */
-	u_int16_t		wi_seq_ctl;	/* 0x24 */
-	u_int8_t		wi_addr4[6];	/* 0x26 */
-	u_int16_t		wi_dat_len;	/* 0x2C */
-	u_int8_t		wi_dst_addr[6];	/* 0x2E */
-	u_int8_t		wi_src_addr[6];	/* 0x34 */
-	u_int16_t		wi_len;		/* 0x3A */
-#if 0
-	struct llc		wi_llc;		/* 0x3C */ /* SNAP header */
-#endif
-};
-
-#define WI_TX_BUFSIZE (ETHER_MAX_LEN + sizeof(struct wi_frame) + 8)
-
-#define WI_802_3_OFFSET		0x2E
-#define WI_802_11_OFFSET	0x44
-#define WI_802_11_OFFSET_RAW	0x3C
-#define	WI_802_11_OFFSET_HDR	0x0E
-
-#define WI_HWSPEC_END		0x0E
-#define WI_802_11_BEGIN		0x0E
-#define WI_SHORT_802_11_END	0x26
-#define WI_LONG_802_11_END	0x2C
-#define WI_802_3_BEGIN		0x2E
-#define WI_802_3_END		0x3C
-#define WI_DATA_BEGIN		0x3C
-#define WI_LLC_BEGIN		0x3C
-#define WI_LLC_END		0x44
+	u_int16_t		wi_rx_tstamp1;	/* 0x02 */
+	u_int16_t		wi_rx_tstamp0;	/* 0x04 */
+	u_int8_t		wi_rx_silence;	/* 0x06 */
+	u_int8_t		wi_rx_signal;	/* 0x07 */
+	u_int8_t		wi_rx_rate;	/* 0x08 */
+	u_int8_t		wi_rx_flow;	/* 0x09 */
+	u_int8_t		wi_tx_rtry;	/* 0x0a */ /* Prism2 AP Only */
+	u_int8_t		wi_tx_rate;	/* 0x0b */ /* Prism2 AP Only */
+	u_int16_t		wi_tx_ctl;	/* 0x0c */
+	struct ieee80211_frame_addr4 wi_whdr;	/* 0x0e */
+	u_int16_t		wi_dat_len;	/* 0x2c */
+	struct ether_header	wi_ehdr;	/* 0x2e */
+} __attribute__((__packed__));
 
 /* Tx Status Field */
 #define	WI_TXSTAT_RET_ERR	0x0001
@@ -751,11 +551,15 @@ struct wi_frame {
 #define WI_STAT_MAC_PORT	0x0700
 #define	WI_STAT_PCF		0x1000
 #define WI_RXSTAT_MSG_TYPE	0xE000
-#define  WI_STAT_NORMAL		0x0000
 #define  WI_STAT_1042		0x2000	/* RFC1042 encoded */
 #define  WI_STAT_TUNNEL		0x4000	/* Bridge-tunnel encoded */
 #define  WI_STAT_WMP_MSG	0x6000	/* WaveLAN-II management protocol */
 #define	 WI_STAT_MGMT		0x8000	/* 802.11b management frames */
+
+#define WI_ENC_TX_E_II		0x0E
+
+#define WI_ENC_TX_1042		0x00
+#define WI_ENC_TX_TUNNEL	0xF8
 
 /* TxControl Field (enhanced) */
 #define	WI_TXCNTL_TX_OK		0x0002
@@ -765,11 +569,3 @@ struct wi_frame {
 #define	 WI_ENC_TX_802_11	0x08
 #define	WI_TXCNTL_ALTRTRY	0x0020
 #define	WI_TXCNTL_NOCRYPT	0x0080
-
-/*
- * SNAP (sub-network access protocol) constants for transmission
- * of IP datagrams over IEEE 802 networks, taken from RFC1042.
- * We need these for the LLC/SNAP header fields in the TX/RX frame
- * structure.
- */
-#define WI_SNAP_LEN		8

@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.3.2.3 2002/08/19 21:38:50 thorpej Exp $	*/
+/*	$NetBSD: copystr.S,v 1.3.2.4 2002/10/18 02:35:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -38,17 +38,24 @@
  * Created      : 16/05/95
  */
 
+#include "opt_multiprocessor.h"
+	
 #include "assym.h"
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copystr.S,v 1.3.2.3 2002/08/19 21:38:50 thorpej Exp $")
+RCSID("$NetBSD: copystr.S,v 1.3.2.4 2002/10/18 02:35:19 nathanw Exp $")
 
 #include <sys/errno.h>
 
 	.text
 	.align	0
+#ifdef MULTIPROCESSOR
+.Lcpu_info:
+	.word	_C_LABEL(cpu_info)
+#else
 .Lcurpcb:
 	.word	_C_LABEL(curpcb)
+#endif
 
 /*
  * r0 - from
@@ -107,15 +114,25 @@ ENTRY(copyinstr)
 	moveq	r0, #ENAMETOOLONG
 	beq	2f
 
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0-r3, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r4, .Lcpu_info
+	ldr	r4, [r4, r0, lsl #2]
+	ldr	r4, [r4, #CI_CURPCB]
+	ldmfd	sp!, {r0-r3, r14}
+#else
 	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
 	beq	.Lcopystrpcbfault
 #endif
 
-	add	r5, pc, #.Lcopystrfault - . - 8
+	adr	r5, .Lcopystrfault
 	str	r5, [r4, #PCB_ONFAULT]
 
 1:	ldrbt	r5, [r0], #0x0001
@@ -154,15 +171,25 @@ ENTRY(copyoutstr)
 	moveq	r0, #ENAMETOOLONG
 	beq	2f
 
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0-r3, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r4, .Lcpu_info
+	ldr	r4, [r4, r0, lsl #2]
+	ldr	r4, [r4, #CI_CURPCB]
+	ldmfd	sp!, {r0-r3, r14}
+#else
 	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
 	beq	.Lcopystrpcbfault
 #endif
 
-	add	r5, pc, #.Lcopystrfault - . - 8
+	adr	r5, .Lcopystrfault
 	str	r5, [r4, #PCB_ONFAULT]
 
 1:	ldrb	r5, [r0], #0x0001
@@ -196,7 +223,7 @@ ENTRY(copyoutstr)
 .Lcopystrpcbfault:
 	mov	r2, r1
 	mov	r1, r0
-	add	r0, pc, #Lcopystrpcbfaulttext - . - 8
+	adr	r0, Lcopystrpcbfaulttext
 	bic	sp, sp, #7			/* align stack to 8 bytes */
 	b	_C_LABEL(panic)
 

@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.28.2.6 2002/06/20 03:37:58 nathanw Exp $
+#	$NetBSD: PICA,v 1.28.2.7 2002/10/18 02:35:10 nathanw Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -26,7 +26,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

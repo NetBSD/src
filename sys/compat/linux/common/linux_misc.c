@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.83.2.18 2002/08/01 02:44:17 nathanw Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.83.2.19 2002/10/18 02:41:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.83.2.18 2002/08/01 02:44:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.83.2.19 2002/10/18 02:41:13 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ const int linux_ptrace_request_map[] = {
 	-1
 };
 
-const static struct mnttypes {
+static const struct mnttypes {
 	char *bsd;
 	int linux;
 } fstypes[] = {

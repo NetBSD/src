@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.26.4.3 2002/09/17 21:17:23 nathanw Exp $ */
+/* $NetBSD: sci.c,v 1.26.4.4 2002/10/18 02:39:43 nathanw Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -257,9 +257,8 @@ struct callout sci_soft_ch = CALLOUT_INITIALIZER;
 
 u_int sci_rbuf_size = SCI_RING_SIZE;
 
-struct cfattach sci_ca = {
-	sizeof(struct sci_softc), sci_match, sci_attach
-};
+CFATTACH_DECL(sci, sizeof(struct sci_softc),
+    sci_match, sci_attach, NULL, NULL);
 
 extern struct cfdriver sci_cd;
 
@@ -393,7 +392,7 @@ static int
 sci_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 
-	if (strcmp(cfp->cf_driver->cd_name, "sci")
+	if (strcmp(cfp->cf_name, "sci")
 	    || cfp->cf_unit >= SCI_MAX_UNITS) //XXX __BROKEN_CONFIG_UNIT_USAGE
 		return 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.3.2.4 2002/08/27 06:03:15 thorpej Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.3.2.5 2002/10/18 02:35:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -35,17 +35,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include "assym.h"
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: bcopyinout.S,v 1.3.2.4 2002/08/27 06:03:15 thorpej Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.3.2.5 2002/10/18 02:35:18 nathanw Exp $")	
 
 	.text
 	.align	0
 
+#ifdef MULTIPROCESSOR
+.Lcpu_info:
+	.word	_C_LABEL(cpu_info)
+#else
 .Lcurpcb:
 	.word _C_LABEL(curpcb)
+#endif
 
 #ifdef __PROG32
 #define SAVE_REGS	stmfd	sp!, {r4-r11}
@@ -80,11 +87,21 @@ ENTRY(copyin)
 	moveq	pc, lr
 
 	SAVE_REGS
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0-r2, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r4, .Lcpu_info
+	ldr	r4, [r4, r0, lsl #2]
+	ldr	r4, [r4, #CI_CURPCB]
+	ldmfd	sp!, {r0-r2, r14}
+#else
 	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
+#endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
-	add	r3, pc, #.Lcopyfault - . - 8
+	adr	r3, .Lcopyfault
 	str	r3, [r4, #PCB_ONFAULT]
 
 	PREFETCH(r0, 0)
@@ -293,11 +310,21 @@ ENTRY(copyout)
 	moveq	pc, lr
 
 	SAVE_REGS
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0-r2, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r4, .Lcpu_info
+	ldr	r4, [r4, r0, lsl #2]
+	ldr	r4, [r4, #CI_CURPCB]
+	ldmfd	sp!, {r0-r2, r14}
+#else
 	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
+#endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
-	add	r3, pc, #.Lcopyfault - . - 8
+	adr	r3, .Lcopyfault
 	str	r3, [r4, #PCB_ONFAULT]
 
 	PREFETCH(r0, 0)
@@ -496,11 +523,21 @@ ENTRY(kcopy)
 	moveq	pc, lr
 
 	SAVE_REGS
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0-r2, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r4, .Lcpu_info
+	ldr	r4, [r4, r0, lsl #2]
+	ldr	r4, [r4, #CI_CURPCB]
+	ldmfd	sp!, {r0-r2, r14}
+#else
 	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
+#endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
-	add	r3, pc, #.Lcopyfault - . - 8
+	adr	r3, .Lcopyfault
 	str	r3, [r4, #PCB_ONFAULT]
 
 	PREFETCH(r0, 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.21 1999/03/24 14:07:39 minoura Exp $	*/
+/*	$NetBSD: spc.c,v 1.21.26.1 2002/10/18 02:40:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,10 +60,8 @@
 static int spc_intio_match __P((struct device *, struct cfdata *, void *));
 static void spc_intio_attach __P((struct device *, struct device *, void *));
 
-struct cfattach spc_intio_ca = {
-	sizeof (struct spc_softc), spc_intio_match, spc_intio_attach
-};
-
+CFATTACH_DECL(spc_intio, sizeof (struct spc_softc),
+    spc_intio_match, spc_intio_attach, NULL, NULL);
 
 static int
 spc_intio_match(parent, cf, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_nbsd.c,v 1.7.2.7 2002/06/20 03:45:25 nathanw Exp $	*/
+/*	$NetBSD: if_lmc_nbsd.c,v 1.7.2.8 2002/10/18 02:43:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc_nbsd.c,v 1.7.2.7 2002/06/20 03:45:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc_nbsd.c,v 1.7.2.8 2002/10/18 02:43:05 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,9 +214,8 @@ lmc_pci_probe(struct device *parent, struct cfdata *match,
 static void  lmc_pci_attach(struct device * const parent,
 			     struct device * const self, void * const aux);
 
-struct cfattach lmc_ca = {
-    sizeof(lmc_softc_t), lmc_pci_probe, lmc_pci_attach
-};
+CFATTACH_DECL(lmc, sizeof(lmc_softc_t),
+    lmc_pci_probe, lmc_pci_attach, NULL, NULL);
 
 static void
 lmc_pci_attach(struct device * const parent,

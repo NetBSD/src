@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.2.2.6 2002/04/17 00:05:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.2.2.7 2002/10/18 02:42:44 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -89,9 +89,8 @@ static int isic_isapnp_probe __P((struct device *, struct cfdata *, void *));
 #endif
 static void isic_isapnp_attach __P((struct device *, struct device *, void *));
 
-struct cfattach isic_isapnp_ca = {
-	sizeof(struct isic_softc), isic_isapnp_probe, isic_isapnp_attach
-};
+CFATTACH_DECL(isic_isapnp, sizeof(struct isic_softc),
+    isic_isapnp_probe, isic_isapnp_attach, NULL, NULL);
 
 typedef void (*allocmaps_func)(struct isapnp_attach_args *ipa, struct isic_softc *sc);
 typedef void (*attach_func)(struct isic_softc *sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53.4.15 2002/08/27 23:45:20 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.4.16 2002/10/18 02:39:33 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -82,6 +82,7 @@ trap(struct trapframe *frame)
 	struct lwp *l = curlwp;
 	struct proc *p = l ? l->l_proc : NULL;
 	struct pcb *pcb = curpcb;
+	struct vm_map *map;
 	int type = frame->exc;
 	int ftype, rv;
 
@@ -114,7 +115,6 @@ trap(struct trapframe *frame)
 		 */
 		ci->ci_ev_kdsi.ev_count++;
 		if (intr_depth < 0) {
-			struct vm_map *map;
 			vaddr_t va;
 
 			if (frame->dsisr & DSISR_STORE)
@@ -135,6 +135,19 @@ trap(struct trapframe *frame)
 			} else {
 				map = kernel_map;
 			}
+
+			/*
+			 * Try to spill an evicted pte into the page table
+			 * if this wasn't a protection fault and the pmap
+			 * has some evicted pte's.
+			 */
+			if ((frame->dsisr & DSISR_NOTFOUND) &&
+			    vm_map_pmap(map)->pm_evictions > 0 &&
+			    pmap_pte_spill(vm_map_pmap(map), trunc_page(va))) {
+				KERNEL_UNLOCK();
+				return;
+			}
+
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
 			if (map != kernel_map) {
 				/*
@@ -143,7 +156,6 @@ trap(struct trapframe *frame)
 				if (rv == 0)
 					uvm_grow(p, trunc_page(va));
 				/* KERNEL_PROC_UNLOCK(l); */
-			} else {
 			}
 			KERNEL_UNLOCK();
 			if (rv == 0)
@@ -175,8 +187,20 @@ trap(struct trapframe *frame)
 			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
-		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
-		    0, ftype);
+		/*
+		 * Try to spill an evicted pte into the page table
+		 * if this wasn't a protection fault and the pmap
+		 * has some evicted pte's.
+		 */
+		map = &p->p_vmspace->vm_map;
+		if ((frame->dsisr & DSISR_NOTFOUND) &&
+		    vm_map_pmap(map)->pm_evictions > 0 &&
+		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->dar))) {
+			KERNEL_PROC_UNLOCK(p);
+			break;
+		}
+
+		rv = uvm_fault(map, trunc_page(frame->dar), 0, ftype);
 		if (rv == 0) {
 			/*
 			 * Record any stack growth...
@@ -205,16 +229,30 @@ trap(struct trapframe *frame)
 		}
 		KERNEL_PROC_UNLOCK(l);
 		break;
+
 	case EXC_ISI:
 		printf("trap: kernel ISI by %#x (SRR1 %#x)\n",
 		    frame->srr0, frame->srr1);
 		goto brain_damage2;
+
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(l);
 		ci->ci_ev_isi.ev_count++;
+		/*
+		 * Try to spill an evicted pte into the page table
+		 * if this wasn't a protection fault and the pmap
+		 * has some evicted pte's.
+		 */
+		map = &p->p_vmspace->vm_map;
+		if ((frame->srr1 & DSISR_NOTFOUND) &&
+		    vm_map_pmap(map)->pm_evictions > 0 &&
+		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->srr0))) {
+			KERNEL_PROC_UNLOCK(p);
+			break;
+		}
+
 		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
-		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
-		    0, ftype);
+		rv = uvm_fault(map, trunc_page(frame->srr0), 0, ftype);
 		if (rv == 0) {
 			KERNEL_PROC_UNLOCK(l);
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.18.2.2 2001/11/14 19:14:57 nathanw Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.18.2.3 2002/10/18 02:42:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.18.2.2 2001/11/14 19:14:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.18.2.3 2002/10/18 02:42:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,28 +102,47 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.18.2.2 2001/11/14 19:14:57 nathan
 #include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
-#include <dev/isapnp/if_levar.h>
+
+#define	LE_ISAPNP_MEMSIZE	16384
+
+#define	PCNET_SAPROM	0x00
+#define	PCNET_RDP	0x10
+#define	PCNET_RAP	0x12
+
+/*
+ * Ethernet software status per interface.
+ *
+ * Each interface is referenced by a network interface structure,
+ * ethercom.ec_if, which the routing code uses to locate the interface.
+ * This structure contains the output queue for the interface, its address, ...
+ */
+struct le_isapnp_softc {
+	struct	am7990_softc sc_am7990;	/* glue to MI code */
+
+	void	*sc_ih;
+	bus_space_tag_t sc_iot;		/* space cookie */
+	bus_space_handle_t sc_ioh;	/* bus space handle */
+	bus_dma_tag_t	sc_dmat;	/* bus dma tag */
+	bus_dmamap_t	sc_dmam;	/* bus dma map */
+	int	sc_rap, sc_rdp;		/* offsets to LANCE registers */
+};
 
 int le_isapnp_match __P((struct device *, struct cfdata *, void *));
 void le_isapnp_attach __P((struct device *, struct device *, void *));
 
-struct cfattach le_isapnp_ca = {
-	sizeof(struct le_softc), le_isapnp_match, le_isapnp_attach
-};
+CFATTACH_DECL(le_isapnp, sizeof(struct le_isapnp_softc),
+    le_isapnp_match, le_isapnp_attach, NULL, NULL);
 
 int	le_isapnp_intredge __P((void *));
 static void le_isapnp_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
 static u_int16_t le_isapnp_rdcsr __P((struct lance_softc *, u_int16_t));
-
-
-#define	LE_ISAPNP_MEMSIZE	16384
 
 static void
 le_isapnp_wrcsr(sc, port, val)
 	struct lance_softc *sc;
 	u_int16_t port, val;
 {
-	struct le_softc *lesc = (struct le_softc *)sc;
+	struct le_isapnp_softc *lesc = (struct le_isapnp_softc *)sc;
 	bus_space_tag_t iot = lesc->sc_iot;
 	bus_space_handle_t ioh = lesc->sc_ioh;
 
@@ -136,7 +155,7 @@ le_isapnp_rdcsr(sc, port)
 	struct lance_softc *sc;
 	u_int16_t port;
 {
-	struct le_softc *lesc = (struct le_softc *)sc;
+	struct le_isapnp_softc *lesc = (struct le_isapnp_softc *)sc;
 	bus_space_tag_t iot = lesc->sc_iot;
 	bus_space_handle_t ioh = lesc->sc_ioh;
 	u_int16_t val;
@@ -165,7 +184,7 @@ le_isapnp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct le_softc *lesc = (void *)self;
+	struct le_isapnp_softc *lesc = (struct le_isapnp_softc *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct isapnp_attach_args *ipa = aux;
 	bus_space_tag_t iot;
@@ -175,8 +194,7 @@ le_isapnp_attach(parent, self, aux)
 	int i, rseg, error;
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n",
-		    sc->sc_dev.dv_xname);
+		printf(": error in region allocation\n");
 		return;
 	}
 
@@ -191,21 +209,19 @@ le_isapnp_attach(parent, self, aux)
 	 * Extract the physical MAC address from the ROM.
 	 */
 	for (i = 0; i < sizeof(sc->sc_enaddr); i++)
-		sc->sc_enaddr[i] = bus_space_read_1(iot, ioh, PCNET_SAPROM+i);
+		sc->sc_enaddr[i] = bus_space_read_1(iot, ioh, PCNET_SAPROM + i);
 
 	/*
 	 * Allocate a DMA area for the card.
 	 */
 	if (bus_dmamem_alloc(dmat, LE_ISAPNP_MEMSIZE, PAGE_SIZE, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: couldn't allocate memory for card\n",
-		    sc->sc_dev.dv_xname);
+		printf(": couldn't allocate memory for card\n");
 		return;
 	}
 	if (bus_dmamem_map(dmat, &seg, rseg, LE_ISAPNP_MEMSIZE,
 	    (caddr_t *)&sc->sc_mem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
-		printf("%s: couldn't map memory for card\n",
-		    sc->sc_dev.dv_xname);
+		printf(": couldn't map memory for card\n");
 		return;
 	}
 
@@ -214,15 +230,13 @@ le_isapnp_attach(parent, self, aux)
 	 */
 	if (bus_dmamap_create(dmat, LE_ISAPNP_MEMSIZE, 1,
 	    LE_ISAPNP_MEMSIZE, 0, BUS_DMA_NOWAIT, &lesc->sc_dmam)) {
-		printf("%s: couldn't create DMA map\n",
-		    sc->sc_dev.dv_xname);
+		printf(": couldn't create DMA map\n");
 		bus_dmamem_free(dmat, &seg, rseg);
 		return;
 	}
 	if (bus_dmamap_load(dmat, lesc->sc_dmam,
 	    sc->sc_mem, LE_ISAPNP_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: coundn't load DMA map\n",
-		    sc->sc_dev.dv_xname);
+		printf(": coundn't load DMA map\n");
 		bus_dmamem_free(dmat, &seg, rseg);
 		return;
 	}
@@ -244,8 +258,7 @@ le_isapnp_attach(parent, self, aux)
 	if (ipa->ipa_ndrq > 0) {
 		if ((error = isa_dmacascade(ipa->ipa_ic,
 		    ipa->ipa_drq[0].num)) != 0) {
-			printf("%s: unable to cascade DRQ, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
+			printf(": unable to cascade DRQ, error = %d\n", error);
 			return;
 		}
 	}
@@ -253,8 +266,9 @@ le_isapnp_attach(parent, self, aux)
 	lesc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_NET, le_isapnp_intredge, sc);
 
-	printf("%s: %s %s\n", sc->sc_dev.dv_xname, ipa->ipa_devident,
-	    ipa->ipa_devclass);
+	printf(": %s %s\n", ipa->ipa_devident, ipa->ipa_devclass);
+
+	printf("%s", sc->sc_dev.dv_xname);
 	am7990_config(&lesc->sc_am7990);
 }
 

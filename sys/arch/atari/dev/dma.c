@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.14 1997/01/27 07:54:40 leo Exp $	*/
+/*	$NetBSD: dma.c,v 1.14.44.1 2002/10/18 02:35:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -101,7 +101,7 @@ st_dma_init()
 		TAILQ_INSERT_HEAD(&dma_free, &dmatable[i], entries);
 
 	if (intr_establish(7, USER_VEC, 0, cdmaint, NULL) == NULL)
-		panic("st_dma_init: Can't establish interrupt\n");
+		panic("st_dma_init: Can't establish interrupt");
 }
 
 int
@@ -127,7 +127,7 @@ int		rcaller;
 	 * Create a request...
 	 */
 	if(dma_free.tqh_first == NULL)
-		panic("st_dmagrab: Too many outstanding requests\n");
+		panic("st_dmagrab: Too many outstanding requests");
 	req = dma_free.tqh_first;
 	TAILQ_REMOVE(&dma_free, dma_free.tqh_first, entries);
 	req->call_func = call_func;
@@ -180,7 +180,7 @@ int	*lock_stat;
 	 * Some validity checks first.
 	 */
 	if((req = dma_active.tqh_first) == NULL)
-		panic("st_dmafree: empty active queue\n");
+		panic("st_dmafree: empty active queue");
 	if(req->softc != softc)
 		printf("Caller of st_dmafree is not lock-owner!\n");
 

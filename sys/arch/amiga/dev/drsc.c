@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.18.8.2 2002/02/28 04:06:35 nathanw Exp $ */
+/*	$NetBSD: drsc.c,v 1.18.8.3 2002/10/18 02:34:50 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.18.8.2 2002/02/28 04:06:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.18.8.3 2002/10/18 02:34:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,11 +67,8 @@ void drsc_dump(void);
 #ifdef DEBUG
 #endif
 
-struct cfattach drsc_ca = {
-	sizeof(struct siop_softc),
-	drscmatch,
-	drscattach
-};
+CFATTACH_DECL(drsc, sizeof(struct siop_softc),
+    drscmatch, drscattach, NULL, NULL);
 
 static struct siop_softc *drsc_softc;
 

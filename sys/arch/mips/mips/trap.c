@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165.2.18 2002/09/17 21:15:51 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.165.2.19 2002/10/18 02:38:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.18 2002/09/17 21:15:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.19 2002/10/18 02:38:47 nathanw Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -342,7 +342,11 @@ trap(status, cause, vaddr, opc, frame)
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
 		va = trunc_page(vaddr);
-		rv = uvm_fault(map, va, 0, ftype);
+
+		if (p->p_emul->e_fault)
+			rv = (*p->p_emul->e_fault)(p, va, 0, ftype);
+		else
+			rv = uvm_fault(map, va, 0, ftype);
 #ifdef VMFAULT_TRACE
 		printf(
 	    "uvm_fault(%p (pmap %p), %lx (0x%x), 0, %d) -> %d at pc %p\n",
@@ -703,7 +707,7 @@ extern char mips3_UserIntr[];
 extern char mips3_SystemCall[];
 extern int main(void *);
 extern void mips_idle(void);
-extern int cpu_switch(struct lwp *);
+extern void cpu_switch(struct lwp *, struct lwp *);
 
 /*
  *  stack trace code, also useful to DDB one day

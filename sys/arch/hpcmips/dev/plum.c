@@ -1,4 +1,4 @@
-/*	$NetBSD: plum.c,v 1.2.4.2 2002/02/28 04:09:54 nathanw Exp $ */
+/*	$NetBSD: plum.c,v 1.2.4.3 2002/10/18 02:37:06 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,9 +64,8 @@ struct plum_softc {
 	int			sc_pri;
 };
 
-struct cfattach plum_ca = {
-	sizeof(struct plum_softc), plum_match, plum_attach
-};
+CFATTACH_DECL(plum, sizeof(struct plum_softc),
+    plum_match, plum_attach, NULL, NULL);
 
 plumreg_t plum_idcheck(bus_space_tag_t);
 
@@ -165,7 +164,7 @@ plum_search(struct device *parent, struct cfdata *cf, void *aux)
 	pa.pa_memt	= sc->sc_csmemt;
 	pa.pa_irq	= sc->sc_irq;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, &pa) == sc->sc_pri) {
+	if (config_match(parent, cf, &pa) == sc->sc_pri) {
 		config_attach(parent, cf, &pa, plum_print);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.1.2.4 2002/08/19 21:39:30 thorpej Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.1.2.5 2002/10/18 02:36:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -325,7 +325,7 @@ ifpga_pci_intr_string(void *pcv, pci_intr_handle_t ih)
 	printf("ifpga_pci_intr_string(pcv=0x%p, ih=0x%lx)\n", pcv, ih);
 #endif
 	if (ih == 0)
-		panic("ifpga_pci_intr_string: bogus handle 0x%lx\n", ih);
+		panic("ifpga_pci_intr_string: bogus handle 0x%lx", ih);
 
 	sprintf(irqstr, "pciint%ld", ih - IFPGA_INTRNUM_PCIINT0);
 	return irqstr;	

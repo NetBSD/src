@@ -27,14 +27,14 @@
  *	i4b_l1fsm.c - isdn4bsd layer 1 I.430 state machine
  *	--------------------------------------------------
  *
- *	$Id: isic_l1fsm.c,v 1.1.2.4 2002/06/20 03:44:43 nathanw Exp $ 
+ *	$Id: isic_l1fsm.c,v 1.1.2.5 2002/10/18 02:41:54 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.1.2.4 2002/06/20 03:44:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.1.2.5 2002/10/18 02:41:54 nathanw Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -482,17 +482,17 @@ isic_next_state(struct isic_softc *sc, int event)
 	int currstate, newstate;
 
 	if(event >= N_EVENTS)
-		panic("i4b_l1fsm.c: event >= N_EVENTS\n");
+		panic("i4b_l1fsm.c: event >= N_EVENTS");
 
 	currstate = sc->sc_I430state;
 
 	if(currstate >= N_STATES)
-		panic("i4b_l1fsm.c: currstate >= N_STATES\n");	
+		panic("i4b_l1fsm.c: currstate >= N_STATES");	
 
 	newstate = isic_state_tab[event][currstate].newstate;
 
 	if(newstate >= N_STATES)
-		panic("i4b_l1fsm.c: newstate >= N_STATES\n");	
+		panic("i4b_l1fsm.c: newstate >= N_STATES");	
 	
 	NDBGL1(L1_F_MSG, "FSM event [%s]: [%s => %s]", event_text[event],
                                            state_text[currstate],

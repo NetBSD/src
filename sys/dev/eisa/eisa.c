@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.24.2.1 2001/11/14 19:14:04 nathanw Exp $	*/
+/*	$NetBSD: eisa.c,v 1.24.2.2 2002/10/18 02:41:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.24.2.1 2001/11/14 19:14:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.24.2.2 2002/10/18 02:41:37 nathanw Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -56,9 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.24.2.1 2001/11/14 19:14:04 nathanw Exp $"
 int	eisamatch(struct device *, struct cfdata *, void *);
 void	eisaattach(struct device *, struct device *, void *);
 
-struct cfattach eisa_ca = {
-	sizeof(struct device), eisamatch, eisaattach
-};
+CFATTACH_DECL(eisa, sizeof(struct device),
+    eisamatch, eisaattach, NULL, NULL);
 
 int	eisasubmatch(struct device *, struct cfdata *, void *);
 int	eisaprint(void *, const char *);
@@ -69,7 +68,7 @@ eisamatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct eisabus_attach_args *eba = aux;
 
-	if (strcmp(eba->eba_busname, cf->cf_driver->cd_name))
+	if (strcmp(eba->eba_busname, cf->cf_name))
 		return (0);
 
 	/* XXX check other indicators */
@@ -99,7 +98,7 @@ eisasubmatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (cf->eisacf_slot != EISA_UNKNOWN_SLOT &&
 	    cf->eisacf_slot != ea->ea_slot)
 		return (0);
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.31.6.5 2002/09/17 21:13:00 nathanw Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.31.6.6 2002/10/18 02:34:55 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.31.6.5 2002/09/17 21:13:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.31.6.6 2002/10/18 02:34:55 nathanw Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -1520,9 +1520,8 @@ void grfrhattach(struct device *, struct device *, void *);
 int  grfrhprint(void *, const char *);
 int  grfrhmatch(struct device *, struct cfdata *, void *);
 
-struct cfattach grfrh_ca = {
-	sizeof(struct grf_softc), grfrhmatch, grfrhattach
-};
+CFATTACH_DECL(grfrh, sizeof(struct grf_softc),
+    grfrhmatch, grfrhattach, NULL, NULL);
 
 static struct cfdata *cfdata;
 

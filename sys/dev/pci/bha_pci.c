@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.17.2.3 2002/01/08 00:30:59 nathanw Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.17.2.4 2002/10/18 02:42:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.17.2.3 2002/01/08 00:30:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.17.2.4 2002/10/18 02:42:55 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.17.2.3 2002/01/08 00:30:59 nathanw Exp
 int	bha_pci_match __P((struct device *, struct cfdata *, void *));
 void	bha_pci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach bha_pci_ca = {
-	sizeof(struct bha_softc), bha_pci_match, bha_pci_attach
-};
+CFATTACH_DECL(bha_pci, sizeof(struct bha_softc),
+    bha_pci_match, bha_pci_attach, NULL, NULL);
 
 /*
  * Check the slots looking for a board we recognise

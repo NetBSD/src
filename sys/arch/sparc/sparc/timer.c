@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.3.2.4 2002/08/27 23:45:46 nathanw Exp $ */
+/*	$NetBSD: timer.c,v 1.3.2.5 2002/10/18 02:40:00 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -190,7 +190,6 @@ timerattach_obio(struct device *parent, struct device *self, void *aux)
 #endif /* SUN4 */
 }
 
-struct cfattach timer_obio_ca = {
-	sizeof(struct device), timermatch_obio, timerattach_obio
-};
+CFATTACH_DECL(timer_obio, sizeof(struct device),
+    timermatch_obio, timerattach_obio, NULL, NULL);
 #endif /* SUN4 || SUN4M */

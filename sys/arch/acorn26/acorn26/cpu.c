@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.3.8.2 2002/08/27 07:14:35 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.3.8.3 2002/10/18 02:33:24 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.8.2 2002/08/27 07:14:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.8.3 2002/10/18 02:33:24 nathanw Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -67,9 +67,8 @@ struct cpu_softc {
 	struct device sc_dev;
 };
 
-struct cfattach cpu_root_ca = {
-	sizeof(struct cpu_softc), cpu_match, cpu_attach
-};
+CFATTACH_DECL(cpu_root, sizeof(struct cpu_softc),
+    cpu_match, cpu_attach, NULL, NULL);
 
 /* cf_flags bits */
 #define CFF_NOCACHE	0x00000001
@@ -131,7 +130,7 @@ static int
 cpu_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	
-	if ((cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, NULL);
 
 	return 0;

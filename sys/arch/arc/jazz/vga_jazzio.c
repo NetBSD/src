@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazzio.c,v 1.6.4.2 2002/08/01 02:41:10 nathanw Exp $ */
+/* $NetBSD: vga_jazzio.c,v 1.6.4.3 2002/10/18 02:35:17 nathanw Exp $ */
 /* NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp  */
 
 /*
@@ -60,9 +60,8 @@ paddr_t	vga_jazzio_mmap __P((void *, off_t, int));
 int	vga_jazzio_match __P((struct device *, struct cfdata *, void *));
 void	vga_jazzio_attach __P((struct device *, struct device *, void *));
 
-struct cfattach vga_jazzio_ca = {
-	sizeof(struct vga_softc), vga_jazzio_match, vga_jazzio_attach,
-};
+CFATTACH_DECL(vga_jazzio, sizeof(struct vga_softc),
+    vga_jazzio_match, vga_jazzio_attach, NULL, NULL);
 
 const struct vga_funcs vga_jazzio_funcs = {
 	NULL,

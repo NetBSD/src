@@ -1,4 +1,4 @@
-/* $NetBSD: sf16fmr2.c,v 1.4.2.5 2002/09/17 21:20:02 nathanw Exp $ */
+/* $NetBSD: sf16fmr2.c,v 1.4.2.6 2002/10/18 02:42:34 nathanw Exp $ */
 /* $OpenBSD: sf16fmr2.c,v 1.3 2001/12/18 18:48:08 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
@@ -105,9 +105,8 @@ struct sf2r_softc {
 	struct tea5757_t	tea;
 };
 
-struct cfattach sf2r_ca = {
-	sizeof(struct sf2r_softc), sf2r_probe, sf2r_attach
-};
+CFATTACH_DECL(sf2r, sizeof(struct sf2r_softc),
+    sf2r_probe, sf2r_attach, NULL, NULL);
 
 void	sf2r_set_mute(struct sf2r_softc *);
 int	sf2r_find(bus_space_tag_t, bus_space_handle_t);
@@ -247,7 +246,7 @@ sf2r_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 		tea5757_set_freq(&sc.tea, sc.stereo, sc.lock, sc.freq);
 		sf2r_set_mute(&sc);
 		freq = sf2r_read_register(iot, ioh, sc.tea.offset);
-		if (tea5757_decode_freq(freq) == sc.freq)
+		if (tea5757_decode_freq(freq, 0) == sc.freq)
 			return 1;
 	}
 
@@ -319,7 +318,7 @@ sf2r_get_info(void *v, struct radio_info *ri)
 	ri->lock = tea5757_decode_lock(sc->lock);
 
 	buf = sf2r_read_register(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
-	ri->freq  = sc->freq = tea5757_decode_freq(buf);
+	ri->freq  = sc->freq = tea5757_decode_freq(buf, 0);
 	ri->info = 3 & (buf >> 24);
 
 	return (0);

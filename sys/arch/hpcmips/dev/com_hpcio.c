@@ -1,4 +1,4 @@
-/*	$NetBSD: com_hpcio.c,v 1.2.4.3 2002/04/17 00:03:07 nathanw Exp $	*/
+/*	$NetBSD: com_hpcio.c,v 1.2.4.4 2002/10/18 02:37:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin. All rights reserved.
@@ -78,9 +78,8 @@ bus_space_protos(bs_notimpl);
 bus_space_protos(bs_through);
 bus_space_protos(com_hpcio);
 
-struct cfattach com_hpcio_ca = {
-	sizeof(struct com_hpcio_softc), com_hpcio_probe, com_hpcio_attach
-};
+CFATTACH_DECL(com_hpcio, sizeof(struct com_hpcio_softc),
+    com_hpcio_probe, com_hpcio_attach, NULL, NULL);
 
 struct bus_space_ops com_hpcio_bs_ops = {
 	/* mapping/unmapping */

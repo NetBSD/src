@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.3.2.4 2002/06/20 03:45:20 nathanw Exp $	*/
+/*	$NetBSD: autri.c,v 1.3.2.5 2002/10/18 02:42:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -99,6 +99,7 @@ int	autri_attach_codec(void *sc, struct ac97_codec_if *);
 int	autri_read_codec(void *sc, u_int8_t a, u_int16_t *d);
 int	autri_write_codec(void *sc, u_int8_t a, u_int16_t d);
 void	autri_reset_codec(void *sc);
+enum ac97_host_flags	autri_flags_codec(void *sc);
 
 static void autri_powerhook(int why,void *addr);
 static int  autri_init(void *sc);
@@ -114,9 +115,8 @@ static void autri_enable_loop_interrupt(void *sc);
 static void autri_disable_loop_interrupt(void *sc);
 #endif
 
-struct cfattach autri_ca = {
-	sizeof(struct autri_softc), autri_match, autri_attach
-};
+CFATTACH_DECL(autri, sizeof(struct autri_softc),
+    autri_match, autri_attach, NULL, NULL);
 
 int	autri_open(void *, int);
 void	autri_close(void *);
@@ -434,6 +434,12 @@ autri_reset_codec(void *sc_)
 		       sc->sc_dev.dv_xname);
 }
 
+enum ac97_host_flags
+autri_flags_codec(void *sc_)
+{
+	return AC97_HOST_DONT_READ;
+}
+
 /*
  *
  */
@@ -535,6 +541,7 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 	codec->host_if.reset = autri_reset_codec;
 	codec->host_if.read = autri_read_codec;
 	codec->host_if.write = autri_write_codec;
+	codec->host_if.flags = autri_flags_codec;
 
 	if ((r = ac97_attach(&codec->host_if)) != 0) {
 		printf("%s: can't attach codec (error 0x%X)\n",

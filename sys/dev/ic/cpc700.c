@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.2.2.3 2002/08/01 02:44:41 nathanw Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.2.2.4 2002/10/18 02:41:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ cpc_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (cf->cf_loc[CPCBUSCF_ADDR] != caa->cpca_addr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ess.c,v 1.4.14.1 2001/11/14 19:14:52 nathanw Exp $	*/
+/*	$NetBSD: opl_ess.c,v 1.4.14.2 2002/10/18 02:42:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_ess.c,v 1.4.14.1 2001/11/14 19:14:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_ess.c,v 1.4.14.2 2002/10/18 02:42:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,8 @@ extern int	ess_speaker_ctl __P((void *, int));
 int	opl_ess_match __P((struct device *, struct cfdata *, void *));
 void	opl_ess_attach __P((struct device *, struct device *, void *));
 
-struct cfattach opl_ess_ca = {
-	sizeof (struct opl_softc), opl_ess_match, opl_ess_attach
-};
+CFATTACH_DECL(opl_ess, sizeof(struct opl_softc),
+    opl_ess_match, opl_ess_attach, NULL, NULL);
 
 int
 opl_ess_match(parent, match, aux)

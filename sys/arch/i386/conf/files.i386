@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.182.2.11 2002/09/17 21:14:59 nathanw Exp $
+#	$NetBSD: files.i386,v 1.182.2.12 2002/10/18 02:37:34 nathanw Exp $
 #
 # new style config file for i386 architecture
 #
@@ -46,6 +46,8 @@ defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 # understand boot device passed by pre-1.3 bootblocks
 defflag			COMPAT_OLDBOOT
 
+defflag	opt_mpbios.h MPVERBOSE MPDEBUG
+
 # PCI BIOS options
 defflag	opt_pcibios.h	PCIBIOS PCIBIOSVERBOSE
 			PCIBIOS_ADDR_FIXUP PCIBIOS_BUS_FIXUP
@@ -55,6 +57,9 @@ defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
 
 # Large page size
 defflag			LARGEPAGES
+
+# No unmapped page below kernel stack
+defflag			NOREDZONE
 
 # kernel stack debug
 defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
@@ -77,6 +82,7 @@ file	arch/i386/i386/machdep.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/microtime.s
+file	arch/i386/i386/tsc_microtime.c	i586_cpu | i686_cpu
 file	arch/i386/i386/mtrr_i686.c	mtrr
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	netns/ns_cksum.c		ns
@@ -90,12 +96,17 @@ file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
 file	dev/cons.c
 
+file	arch/i386/i386/mptramp.s  	multiprocessor
+file	arch/i386/i386/lock_machdep.c	lockdebug
+file    arch/i386/i386/ipifuncs.c       multiprocessor
+
 file	arch/i386/i386/pmc.c		perfctrs
 
-file	crypto/des/arch/i386/des_enc.S		ipsec & ipsec_esp
-#file	crypto/des/arch/i386/des_cbc.S		ipsec & ipsec_esp
-file	crypto/blowfish/arch/i386/bf_enc.S	ipsec & ipsec_esp
-#file	crypto/blowfish/arch/i386/bf_cbc.S	ipsec & ipsec_esp
+file	crypto/des/arch/i386/des_enc.S		des
+file	crypto/des/arch/i386/des_cbc.S		des
+
+file	crypto/blowfish/arch/i386/bf_enc.S	blowfish
+file	crypto/blowfish/arch/i386/bf_cbc.S	blowfish
 
 #
 # Machine-independent SCSI drivers
@@ -131,7 +142,7 @@ file	arch/i386/i386/bios32.c		bios32 needs-flag
 # System bus types
 #
 
-define	mainbus { }
+define	mainbus { [apid = -1] }
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32, acpibus
 attach	mainbus at root
@@ -188,6 +199,12 @@ file	arch/i386/pci/pcib.c		pcib
 device	pcmb: mcabus
 attach	pcmb at pci
 file	arch/i386/pci/pcmb.c		pcmb
+
+device	p64h2apic
+attach	p64h2apic at pci
+file	arch/i386/pci/p64h2apic.c	p64h2apic
+
+
 
 # Game adapter (joystick)
 file	arch/i386/isa/joy_timer.c	joy
@@ -299,6 +316,29 @@ device	apm: bioscall
 attach	apm at mainbus
 file	arch/i386/i386/apm.c		apm needs-count
 file	arch/i386/i386/apmcall.s	apm
+
+# Intel SMP specification 1.4
+define mpbios
+file    arch/i386/i386/mpbios.c		mpbios needs-flag
+
+# CPUS
+
+define cpu { [apid = -1] }
+device cpu
+attach cpu at mainbus
+file	arch/i386/i386/cpu.c		cpu
+
+# Common APIC support routines
+file	arch/i386/i386/apic.c		ioapic | lapic 
+
+# Local APIC (required for multiprocessor)
+define lapic
+file	arch/i386/i386/lapic.c		lapic needs-flag
+
+# I/O apics
+device ioapic: bioscall, mpbios, lapic
+attach ioapic at mainbus
+file	arch/i386/i386/ioapic.c		ioapic needs-flag
 
 #
 # Compatibility modules

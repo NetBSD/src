@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.8.8.2 2002/08/01 02:41:44 nathanw Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.8.8.3 2002/10/18 02:37:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -51,9 +51,8 @@ static int 	ipaq_search(struct device *, struct cfdata *, void *);
 static int	ipaq_print(void *, const char *);
 
 /* attach structures */
-struct cfattach ipaqbus_ca = {
-	sizeof(struct ipaq_softc), ipaq_match, ipaq_attach
-};
+CFATTACH_DECL(ipaqbus, sizeof(struct ipaq_softc),
+    ipaq_match, ipaq_attach, NULL, NULL);
 
 static int
 ipaq_print(aux, name)
@@ -89,7 +88,7 @@ ipaq_attach(parent, self, aux)
 
 	/* Map the Extended GPIO registers */
 	if (bus_space_map(sc->sc_iot, SAEGPIO_BASE, 1, 0, &sc->sc_egpioh))
-		panic("%s: unable to map Extended GPIO registers\n",
+		panic("%s: unable to map Extended GPIO registers",
 			self->dv_xname);
 
 	sc->ipaq_egpio = EGPIO_INIT;
@@ -97,7 +96,7 @@ ipaq_attach(parent, self, aux)
 
 	/* Map the SSP registers */
 	if (bus_space_map(sc->sc_iot, SASSP_BASE, SASSP_NPORTS, 0, &sc->sc_ssph))
-		panic("%s: unable to map SSP registers\n",
+		panic("%s: unable to map SSP registers",
 			self->dv_xname);
 
 	sc->sc_ppch = psc->sc_ppch;
@@ -115,7 +114,7 @@ ipaq_search(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, ipaq_print);
 
         return 0;

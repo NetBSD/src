@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.1.4.6 2002/08/13 01:02:37 nathanw Exp $	*/
+/*	$NetBSD: asc.c,v 1.1.4.7 2002/10/18 02:33:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -74,7 +74,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.1.4.6 2002/08/13 01:02:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.1.4.7 2002/10/18 02:33:41 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -122,9 +122,8 @@ void asc_dump		(void);
 int	asc_dmadebug = 0;
 #endif
 
-struct cfattach asc_ca = {
-	sizeof(struct asc_softc), ascmatch, ascattach
-};
+CFATTACH_DECL(asc, sizeof(struct asc_softc),
+    ascmatch, ascattach, NULL, NULL);
 
 extern struct cfdriver asc_cd;
 
@@ -189,7 +188,7 @@ ascattach(struct device *pdp, struct device *dp, void *auxp)
 	if (bus_space_map (sbic->sc_sbicp.sc_sbiciot,
 	    sc->sc_podule->mod_base + ASC_SBIC, ASC_SBIC_SPACE, 0,
 	    &sbic->sc_sbicp.sc_sbicioh))
-		panic("%s: Cannot map SBIC\n", dp->dv_xname);
+		panic("%s: Cannot map SBIC", dp->dv_xname);
 
 	sbic->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
 
@@ -249,7 +248,7 @@ ascattach(struct device *pdp, struct device *dp, void *auxp)
 		sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 		    asc_intr, sc, &sc->sc_intrcnt);
 		if (sc->sc_ih == NULL)
-			panic("%s: Cannot claim podule IRQ\n", dp->dv_xname);
+			panic("%s: Cannot claim podule IRQ", dp->dv_xname);
 	}
 
 	/*
@@ -281,7 +280,7 @@ asc_dmasetup (void *dma_h, bus_dma_tag_t dma_t, struct sbic_acb *acb, int dir)
 #ifdef DDB
 	Debugger();
 #else
-	panic("Hit a brick wall\n");
+	panic("Hit a brick wall");
 #endif
 	return 0;
 }
@@ -293,7 +292,7 @@ asc_dmanext (void *dma_h, bus_dma_tag_t dma_t, struct sbic_acb *acb, int dir)
 #ifdef DDB
 	Debugger();
 #else
-	panic("Hit a brick wall\n");
+	panic("Hit a brick wall");
 #endif
 	return 0;
 }

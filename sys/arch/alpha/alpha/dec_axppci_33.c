@@ -1,4 +1,4 @@
-/* $NetBSD: dec_axppci_33.c,v 1.50.4.2 2002/09/17 21:12:38 nathanw Exp $ */
+/* $NetBSD: dec_axppci_33.c,v 1.50.4.3 2002/10/18 02:33:59 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.50.4.2 2002/09/17 21:12:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.50.4.3 2002/10/18 02:33:59 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,7 +218,7 @@ dec_axppci_33_cons_init()
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
 
-		panic("consinit: unknown console type %ld\n",
+		panic("consinit: unknown console type %ld",
 		    ctb->ctb_term_type);
 	}
 #ifdef KGDB
@@ -237,7 +237,7 @@ dec_axppci_33_device_register(dev, aux)
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	struct cfdriver *cd = cf->cf_driver;
+	const char *name = cf->cf_name;
 
 	if (found)
 		return;
@@ -253,7 +253,7 @@ dec_axppci_33_device_register(dev, aux)
 	}
 
 	if (pcidev == NULL) {
-		if (strcmp(cd->cd_name, "pci"))
+		if (strcmp(name, "pci"))
 			return;
 		else {
 			struct pcibus_attach_args *pba = aux;
@@ -289,9 +289,9 @@ dec_axppci_33_device_register(dev, aux)
 	}
 
 	if (scsiboot &&
-	    (!strcmp(cd->cd_name, "sd") ||
-	     !strcmp(cd->cd_name, "st") ||
-	     !strcmp(cd->cd_name, "cd"))) {
+	    (!strcmp(name, "sd") ||
+	     !strcmp(name, "st") ||
+	     !strcmp(name, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != scsidev)
@@ -304,12 +304,12 @@ dec_axppci_33_device_register(dev, aux)
 
 		switch (b->boot_dev_type) {
 		case 0:
-			if (strcmp(cd->cd_name, "sd") &&
-			    strcmp(cd->cd_name, "cd"))
+			if (strcmp(name, "sd") &&
+			    strcmp(name, "cd"))
 				return;
 			break;
 		case 1:
-			if (strcmp(cd->cd_name, "st"))
+			if (strcmp(name, "st"))
 				return;
 			break;
 		default:

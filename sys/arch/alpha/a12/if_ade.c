@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.12.2.2 2002/06/20 03:37:27 nathanw Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.12.2.3 2002/10/18 02:33:53 nathanw Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -640,7 +640,7 @@ tulip_media_link_monitor(
 
     if (mi == NULL) {
 #if defined(DIAGNOSTIC) || defined(TULIP_DEBUG)
-	panic("tulip_media_link_monitor: %s: botch at line %d\n",
+	panic("tulip_media_link_monitor: %s: botch at line %d",
 	      tulip_mediums[sc->tulip_media],__LINE__);
 #endif
 	return TULIP_LINK_UNKNOWN;
@@ -921,7 +921,7 @@ tulip_media_poll(
 	    }
 	    default: {
 #if defined(DIAGNOSTIC) || defined(TULIP_DEBUG)
-		panic("tulip_media_poll: botch at line %d\n", __LINE__);
+		panic("tulip_media_poll: botch at line %d", __LINE__);
 #endif
 		break;
 	    }
@@ -1573,7 +1573,7 @@ tulip_mii_autonegotiate(
 	}
 	default: {
 #if defined(DIAGNOSTIC)
-	    panic("tulip_media_poll: botch at line %d\n", __LINE__);
+	    panic("tulip_media_poll: botch at line %d", __LINE__);
 #endif
 	    break;
 	}
@@ -4975,9 +4975,8 @@ tulip_pci_probe(
 
 static void tulip_pci_attach(TULIP_PCI_ATTACH_ARGS);
 
-struct cfattach ade_ca = {
-    sizeof(tulip_softc_t), tulip_pci_probe, tulip_pci_attach
-};
+CFATTACH_DECL(ade, sizeof(tulip_softc_t),
+    tulip_pci_probe, tulip_pci_attach, NULL, NULL);
 
 #endif /* __NetBSD__ */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.2 2000/01/15 02:06:31 nisimura Exp $ */
+/* $NetBSD: autoconf.c,v 1.2.14.1 2002/10/18 02:38:12 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,11 +38,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2000/01/15 02:06:31 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.14.1 2002/10/18 02:38:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/reboot.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.45.2.4 2001/11/14 19:14:29 nathanw Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.45.2.5 2002/10/18 02:41:55 nathanw Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,9 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.45.2.4 2001/11/14 19:14:29 nathanw Exp $");
-
-#define FE_VERSION "if_fe.c ver. 0.8"
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.45.2.5 2002/10/18 02:41:55 nathanw Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -146,7 +144,7 @@ mb86960_attach(sc, type, myea)
 
 	switch (sc->type) {
 	case MB86960_TYPE_86960:
-		sc->proto_dlcr7 = FE_D7_BYTSWP_LH | FE_D7_IDENT_EC;
+		sc->proto_dlcr7 = FE_D7_BYTSWP_LH | FE_D7_ED_TEST; /* XXX */
 		break;
 	case MB86960_TYPE_86965:
 		sc->proto_dlcr7 = FE_D7_BYTSWP_LH;
@@ -1846,6 +1844,85 @@ mb86960_detach(sc)
 	return (0);
 }
 
+/*
+ * Routines to read all bytes from the config EEPROM (93C06) through MB86965A.
+ */
+void
+mb86965_read_eeprom(iot, ioh, data)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	u_int8_t *data;
+{
+	int addr, op, bit;
+	u_int16_t val;
+
+	/* Read bytes from EEPROM; two bytes per an iteration. */
+	for (addr = 0; addr < FE_EEPROM_SIZE / 2; addr++) {
+		/* Reset the EEPROM interface. */
+		bus_space_write_1(iot, ioh, FE_BMPR16, 0x00);
+		bus_space_write_1(iot, ioh, FE_BMPR17, 0x00);
+		bus_space_write_1(iot, ioh, FE_BMPR16, FE_B16_SELECT);
+
+		/* Send start bit. */
+		bus_space_write_1(iot, ioh, FE_BMPR17, FE_B17_DATA);
+		FE_EEPROM_DELAY();
+		bus_space_write_1(iot, ioh,
+		    FE_BMPR16, FE_B16_SELECT | FE_B16_CLOCK);
+		FE_EEPROM_DELAY();
+		bus_space_write_1(iot, ioh, FE_BMPR16, FE_B16_SELECT);
+
+		/* Send read command and read address. */
+		op = 0x80 | addr;	/* READ instruction */
+		for (bit = 8; bit > 0; bit--) {
+			bus_space_write_1(iot, ioh, FE_BMPR17,
+			    (op & (1 << (bit - 1))) ? FE_B17_DATA : 0);
+			FE_EEPROM_DELAY();
+			bus_space_write_1(iot, ioh,
+			    FE_BMPR16, FE_B16_SELECT | FE_B16_CLOCK);
+			FE_EEPROM_DELAY();
+			bus_space_write_1(iot, ioh, FE_BMPR16, FE_B16_SELECT);
+		}
+		bus_space_write_1(iot, ioh, FE_BMPR17, 0x00);
+
+		/* Read two bytes in each address */
+		val = 0;
+		for (bit = 16; bit > 0; bit--) {
+			FE_EEPROM_DELAY();
+			bus_space_write_1(iot, ioh,
+			    FE_BMPR16, FE_B16_SELECT | FE_B16_CLOCK);
+			FE_EEPROM_DELAY();
+			if (bus_space_read_1(iot, ioh, FE_BMPR17) &
+			    FE_B17_DATA)
+				val |= 1 << (bit - 1);
+			bus_space_write_1(iot, ioh,
+			    FE_BMPR16, FE_B16_SELECT);
+		}
+		data[addr * 2]     = val >> 8;
+		data[addr * 2 + 1] = val & 0xff;
+	}
+
+	/* Make sure the EEPROM is turned off. */
+	bus_space_write_1(iot, ioh, FE_BMPR16, 0);
+	bus_space_write_1(iot, ioh, FE_BMPR17, 0);
+
+#if FE_DEBUG >= 3
+	/* Report what we got. */
+	log(LOG_INFO, "mb86965_read_eeprom: "
+	    " %02x%02x%02x%02x %02x%02x%02x%02x -"
+	    " %02x%02x%02x%02x %02x%02x%02x%02x -"
+	    " %02x%02x%02x%02x %02x%02x%02x%02x -"
+	    " %02x%02x%02x%02x %02x%02x%02x%02x\n",
+	    data[ 0], data[ 1], data[ 2], data[ 3],
+	    data[ 4], data[ 5], data[ 6], data[ 7],
+	    data[ 8], data[ 9], data[10], data[11],
+	    data[12], data[13], data[14], data[15],
+	    data[16], data[17], data[18], data[19],
+	    data[20], data[21], data[22], data[23],
+	    data[24], data[25], data[26], data[27],
+	    data[28], data[29], data[30], data[31]);
+#endif
+}
+
 #if FE_DEBUG >= 1
 void
 mb86960_dump(level, sc)
@@ -1909,3 +1986,4 @@ mb86960_dump(level, sc)
 	bus_space_write_1(bst, bsh, FE_DLCR7, save_dlcr7);
 }
 #endif
+

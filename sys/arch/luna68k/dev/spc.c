@@ -1,4 +1,4 @@
-/* $NetBSD: spc.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
+/* $NetBSD: spc.c,v 1.1.14.1 2002/10/18 02:38:11 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.1.14.1 2002/10/18 02:38:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $");
 static int  spc_match __P((struct device *, struct cfdata *, void *));
 static void spc_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach spc_ca = {
-	sizeof(struct spc_softc), spc_match, spc_attach
-};
+CFATTACH_DECL(spc, sizeof(struct spc_softc),
+    spc_match, spc_attach, NULL, NULL);
 extern struct cfdriver spc_cd;
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.21.2.10 2002/09/17 21:19:52 nathanw Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.21.2.11 2002/10/18 02:41:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.21.2.10 2002/09/17 21:19:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.21.2.11 2002/10/18 02:41:58 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.21.2.10 2002/09/17 21:19:52 nathanw Ex
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 

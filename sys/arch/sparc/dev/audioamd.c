@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.7.4.3 2002/06/20 03:41:04 nathanw Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.7.4.4 2002/10/18 02:39:51 nathanw Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -107,21 +107,20 @@ struct audioamd_softc {
 void	audioamd_mainbus_attach __P((struct device *,
 		struct device *, void *));
 int	audioamd_mainbus_match __P((struct device *, struct cfdata *, void *));
+void	audioamd_obio_attach __P((struct device *, struct device *, void *));
+int	audioamd_obio_match __P((struct device *, struct cfdata *, void *));
 void	audioamd_sbus_attach __P((struct device *, struct device *, void *));
 int	audioamd_sbus_match __P((struct device *, struct cfdata *, void *));
 void	audioamd_attach(struct audioamd_softc *sc, int);
 
-struct cfattach audioamd_mainbus_ca = {
-	sizeof(struct audioamd_softc),
-	audioamd_mainbus_match,
-	audioamd_mainbus_attach
-};
+CFATTACH_DECL(audioamd_mainbus, sizeof(struct audioamd_softc),
+    audioamd_mainbus_match, audioamd_mainbus_attach, NULL, NULL);
 
-struct cfattach audioamd_sbus_ca = {
-	sizeof(struct audioamd_softc),
-	audioamd_sbus_match,
-	audioamd_sbus_attach
-};
+CFATTACH_DECL(audioamd_obio, sizeof(struct audioamd_softc),
+    audioamd_obio_match, audioamd_obio_attach, NULL, NULL);
+
+CFATTACH_DECL(audioamd_sbus, sizeof(struct audioamd_softc),
+    audioamd_sbus_match, audioamd_sbus_attach, NULL, NULL);
 
 /*
  * Define our interface into the am7930 MI driver.
@@ -208,6 +207,20 @@ audioamd_mainbus_match(parent, cf, aux)
 }
 
 int
+audioamd_obio_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+
+	if (uoba->uoba_isobio4 != 0)
+		return (0);
+
+	return (strcmp("audio", uoba->uoba_sbus.sa_name) == 0);
+}
+
+int
 audioamd_sbus_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -242,6 +255,28 @@ audioamd_mainbus_attach(parent, self, aux)
 	audioamd_attach(sc, ma->ma_pri);
 }
 
+void
+audioamd_obio_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct sbus_attach_args *sa = &uoba->uoba_sbus;
+	struct audioamd_softc *sc = (struct audioamd_softc *)self;
+	bus_space_handle_t bh;
+
+	sc->sc_bt = sa->sa_bustag;
+
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot, sa->sa_offset,
+			 AM7930_DREG_SIZE,
+			 0, &bh) != 0) {
+		printf("%s: cannot map registers\n", self->dv_xname);
+		return;
+	}
+	sc->sc_bh = bh;
+	audioamd_attach(sc, sa->sa_pri);
+}
 
 void
 audioamd_sbus_attach(parent, self, aux)

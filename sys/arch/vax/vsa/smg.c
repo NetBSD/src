@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.27.8.5 2002/09/17 21:18:39 nathanw Exp $ */
+/*	$NetBSD: smg.c,v 1.27.8.6 2002/10/18 02:40:38 nathanw Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -116,9 +116,8 @@ struct	smg_softc {
 	struct	device ss_dev;
 };
 
-struct cfattach smg_ca = {
-	sizeof(struct smg_softc), smg_match, smg_attach,
-};
+CFATTACH_DECL(smg, sizeof(struct smg_softc),
+    smg_match, smg_attach, NULL, NULL);
 
 static void	smg_cursor(void *, int, int, int);
 static int	smg_mapchar(void *, int, unsigned int *);

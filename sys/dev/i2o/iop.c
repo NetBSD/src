@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.10.2.14 2002/09/17 21:19:34 nathanw Exp $	*/
+/*	$NetBSD: iop.c,v 1.10.2.15 2002/10/18 02:41:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10.2.14 2002/09/17 21:19:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10.2.15 2002/10/18 02:41:42 nathanw Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -885,7 +885,7 @@ iop_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (cf->iopcf_tid != IOPCF_TID_DEFAULT && cf->iopcf_tid != ia->ia_tid)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

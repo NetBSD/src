@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.2.4.3 2002/06/20 03:38:12 nathanw Exp $	*/
+/*	$NetBSD: vidc.h,v 1.2.4.4 2002/10/18 02:35:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -180,8 +180,9 @@ extern int vidc_fref;		/* reference frequency of detected VIDC */
 
 #ifdef _KERNEL
 extern int  vidc_write		__P((u_int /*reg*/, int /*value*/));
-extern void vidc_setstate	__P((struct vidc_state */*vidc*/));
-extern void vidc_setpalette	__P((struct vidc_state */*vidc*/));
+extern void vidc_setstate	__P((struct vidc_state * /*vidc*/));
+extern void vidc_getstate	__P((struct vidc_state * /*vidc*/));
+extern void vidc_setpalette	__P((struct vidc_state * /*vidc*/));
 extern void vidc_stdpalette	__P((void));
 extern int  vidc_col		__P((int /*red*/, int /*green*/, int /*blue*/));
 extern struct vidc_state vidc_current[];

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.3.2.2 2002/09/17 21:13:25 nathanw Exp $
+#	$NetBSD: majors.arm32,v 1.3.2.3 2002/10/18 02:35:23 nathanw Exp $
 #
 # Device majors for arm32
 #
@@ -24,6 +24,7 @@ device-major	md		char 18  block 18	md
 device-major	vnd		char 19  block 19	vnd
 
 device-major	ccd		char 21  block 21	ccd
+device-major	cgd		char 22  block 22	cgd
 
 device-major	sd		char 24  block 24	sd
 device-major	st		char 25  block 25	st
@@ -98,3 +99,4 @@ device-major	kttcp		char 99			kttcp
 device-major	ixpcom		char 100		ixpcom
 device-major	sysmon		char 101		sysmon
 device-major	dmoverio	char 102		dmoverio
+device-major	apm		char 103		apm

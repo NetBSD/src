@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.11.6.2 2002/09/17 21:14:53 nathanw Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.11.6.3 2002/10/18 02:37:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -137,10 +137,8 @@ STATIC void hd64461video_info(struct hd64461video_softc *);
 STATIC void hd64461video_dump(void) __attribute__((__unused__));
 #endif
 
-struct cfattach hd64461video_ca = {
-	sizeof(struct hd64461video_softc), hd64461video_match,
-	hd64461video_attach
-};
+CFATTACH_DECL(hd64461video, sizeof(struct hd64461video_softc),
+    hd64461video_match, hd64461video_attach, NULL, NULL);
 
 int hd64461video_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t hd64461video_mmap(void *, off_t, int);
@@ -325,7 +323,7 @@ hd64461video_setup_hpcfbif(struct hd64461video_chip *hvc)
 
 	switch (depth) {
 	default:
-		panic("%s: not supported color depth\n", __FUNCTION__);
+		panic("%s: not supported color depth", __FUNCTION__);
 		/* NOTREACHED */
 	case 16:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1.8.2 2002/09/17 21:14:05 nathanw Exp $	*/
+/*	$NetBSD: zs.c,v 1.1.8.3 2002/10/18 02:36:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ zs_config(zsc, base)
 			cs = &zs_conschan_store;
 		} else {
 			cs = malloc(sizeof(struct zs_chanstate),
-				    M_DEVBUF, M_NOWAIT);
+				    M_DEVBUF, M_NOWAIT | M_ZERO);
 			if(channel==0){
 				cs->cs_reg_csr  = base+7;
 				cs->cs_reg_data = base+15;
@@ -487,8 +487,8 @@ zs_cninit(base)
 	zs_hwflags[0][0] = ZS_HWFLAG_CONSOLE;
 
 	/* Setup temporary chanstate. */
-	cs->cs_reg_csr  = base+7;
-	cs->cs_reg_data = base+15;
+	cs->cs_reg_csr  = (char *)base + 7;
+	cs->cs_reg_data = (char *)base + 15;
 
 	/* Initialize the pending registers. */
 	bcopy(zs_init_reg, cs->cs_preg, 16);

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24.2.8 2002/09/17 21:15:04 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.24.2.9 2002/10/18 02:37:40 nathanw Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ if defined(_KERNEL_OPT)
 include "opt_compat_svr4.h"
 include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"
+include "opt_multiprocessor.h"
 endif
 
 include <sys/param.h>
@@ -119,6 +120,10 @@ ifdef COMPAT_FREEBSD
 include <machine/freebsd_machdep.h>
 endif
 
+ifdef MULTIPROCESSOR
+include <machine/cpu.h>
+endif
+
 if defined(_KERNEL) && !defined(_LKM)
 include "isa.h"
 endif
@@ -126,6 +131,7 @@ if NISA > 0
 include <machine/isa_machdep.h>
 endif
 
+include <machine/tlog.h>
 define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
 
@@ -148,6 +154,7 @@ define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
+define	L_CPU			offsetof(struct proc, l_cpu)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_NRAS			offsetof(struct proc, p_nras)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
@@ -173,6 +180,7 @@ define	PCB_ESP			offsetof(struct pcb, pcb_esp)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
 
 define	TF_CS			offsetof(struct trapframe, tf_cs)
 define	TF_EIP			offsetof(struct trapframe, tf_eip)
@@ -221,6 +229,40 @@ define	BIOSCALLREG_ESI		offsetof(struct bioscallregs, ESI)
 define	BIOSCALLREG_EDI		offsetof(struct bioscallregs, EDI)
 define	BIOSCALLREG_EFLAGS	offsetof(struct bioscallregs, EFLAGS)
 endif
+
+define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
+define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
+define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
+define	CPU_INFO_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
+define  CPU_INFO_IDLE_TSS_SEL	offsetof(struct cpu_info, ci_idle_tss_sel)
+define	CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
+
+define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_cpuid_level)
+define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
+define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
+define	CPU_INFO_FEATURES	offsetof(struct cpu_info, ci_feature_flags)
+define	CPU_INFO_BRAND		offsetof(struct cpu_info, ci_brand_id)
+
+define	CPU_TLOG_OFFSET		offsetof(struct cpu_info, ci_tlog_offset)
+define	CPU_TLOG_BASE		offsetof(struct cpu_info, ci_tlog_base)
+
+define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
+
+define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
+
+define	TREC_SP			offsetof(struct trec, tr_sp)
+define	TREC_HPC		offsetof(struct trec, tr_hpc)
+define	TREC_IPC		offsetof(struct trec, tr_ipc)
+define	TREC_TSC		offsetof(struct trec, tr_tsc)
+define	TREC_LBF		offsetof(struct trec, tr_lbf)
+define	TREC_LBT		offsetof(struct trec, tr_lbt)
+define	TREC_IBF		offsetof(struct trec, tr_ibf)
+define	TREC_IBT		offsetof(struct trec, tr_ibt)
+
+define	SIZEOF_TREC		sizeof(struct trec)
+define	SIZEOF_TLOG		sizeof(struct tlog)
+
 
 if defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
 define	__HAVE_GENERIC_SOFT_INTERRUPTS 1

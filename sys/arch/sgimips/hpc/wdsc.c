@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.2.2.3 2002/04/01 07:42:25 nathanw Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.2.2.4 2002/10/18 02:39:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -75,9 +75,8 @@ struct wdsc_softc {
 void	wdsc_attach	__P((struct device *, struct device *, void *));
 int	wdsc_match	__P((struct device *, struct cfdata *, void *));
 
-struct cfattach wdsc_ca = {
-	sizeof(struct wdsc_softc), wdsc_match, wdsc_attach
-};
+CFATTACH_DECL(wdsc, sizeof(struct wdsc_softc),
+    wdsc_match, wdsc_attach, NULL, NULL);
 
 int	wdsc_dmasetup	__P((struct wd33c93_softc *, caddr_t *,size_t *,
 				int, size_t *));
@@ -103,7 +102,7 @@ wdsc_match(pdp, cf, auxp)
 {
 	struct hpc_attach_args *haa = auxp;
 
-	if (strcmp(haa->ha_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(haa->ha_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.1.2.2 2002/08/27 23:45:46 nathanw Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.1.2.3 2002/10/18 02:40:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -219,6 +219,5 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 	timerok = 1;
 }
 
-struct cfattach timer_msiiep_ca = {
-	sizeof(struct device), timermatch_msiiep, timerattach_msiiep
-};
+CFATTACH_DECL(timer_msiiep, sizeof(struct device), 
+    timermatch_msiiep, timerattach_msiiep, NULL, NULL);

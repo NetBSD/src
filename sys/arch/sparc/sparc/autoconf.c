@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.157.4.8 2002/08/27 23:45:37 nathanw Exp $ */
+/*	$NetBSD: autoconf.c,v 1.157.4.9 2002/10/18 02:39:57 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -57,7 +57,6 @@
 #include <sys/systm.h>
 #include <sys/endian.h>
 #include <sys/proc.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/device.h>
@@ -157,7 +156,7 @@ matchbyname(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	printf("%s: WARNING: matchbyname\n", cf->cf_driver->cd_name);
+	printf("%s: WARNING: matchbyname\n", cf->cf_name);
 	return (0);
 }
 
@@ -922,7 +921,7 @@ cpu_configure()
 		int node = findroot();
 		cp = PROM_getpropstringA(node, "device_type", buf, sizeof buf);
 		if (strcmp(cp, "cpu") != 0)
-			panic("PROM root device type = %s (need CPU)\n", cp);
+			panic("PROM root device type = %s (need CPU)", cp);
 	}
 #endif
 
@@ -1337,10 +1336,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #endif /* SUN4C || SUN4M */
 }
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbus_match, mainbus_attach
-};
-
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbus_match, mainbus_attach, NULL, NULL);
 
 int
 makememarr(ap, max, which)
@@ -1697,14 +1694,14 @@ static int
 bus_class(dev)
 	struct device *dev;
 {
-	char *name;
+	const char *name;
 	int i, class;
 
 	class = BUSCLASS_NONE;
 	if (dev == NULL)
 		return (class);
 
-	name = dev->dv_cfdata->cf_driver->cd_name;
+	name = dev->dv_cfdata->cf_name;
 	for (i = sizeof(bus_class_tab)/sizeof(bus_class_tab[0]); i-- > 0;) {
 		if (strcmp(name, bus_class_tab[i].name) == 0) {
 			class = bus_class_tab[i].class;
@@ -1852,7 +1849,8 @@ device_register(dev, aux)
 	void *aux;
 {
 	struct bootpath *bp = bootpath_store(0, NULL);
-	char *dvname, *bpname;
+	const char *dvname;
+	char *bpname;
 
 	/*
 	 * If device name does not match current bootpath component
@@ -1865,7 +1863,7 @@ device_register(dev, aux)
 	 * Translate PROM name in case our drivers are named differently
 	 */
 	bpname = bus_compatible(bp->name);
-	dvname = dev->dv_cfdata->cf_driver->cd_name;
+	dvname = dev->dv_cfdata->cf_name;
 
 	DPRINTF(ACDB_BOOTDEV,
 	    ("\n%s: device_register: dvname %s(%s) bpname %s(%s)\n",

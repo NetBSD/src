@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.28.8.2 2002/02/28 04:06:45 nathanw Exp $ */
+/*	$NetBSD: gtsc.c,v 1.28.8.3 2002/10/18 02:34:56 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtsc.c,v 1.28.8.2 2002/02/28 04:06:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtsc.c,v 1.28.8.3 2002/10/18 02:34:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,8 @@ int gtsc_clock_override = 0;
 int gtsc_debug = 0;
 #endif
 
-struct cfattach gtsc_ca = {
-	sizeof(struct sbic_softc), gtscmatch, gtscattach
-};
+CFATTACH_DECL(gtsc, sizeof(struct sbic_softc),
+    gtscmatch, gtscattach, NULL, NULL);
 
 int
 gtscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)

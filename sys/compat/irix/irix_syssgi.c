@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.11.2.5 2002/06/20 03:42:54 nathanw Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.11.2.6 2002/10/18 02:41:05 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.2.5 2002/06/20 03:42:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.2.6 2002/10/18 02:41:05 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.2.5 2002/06/20 03:42:54 nathanw
 
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_signal.h>
+#include <compat/irix/irix_exec.h>
 #include <compat/irix/irix_prctl.h>
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_syscallargs.h>
@@ -164,6 +165,48 @@ irix_sys_syssgi(p, v, retval)
 		return irix_syssgi_pathconf((char *)SCARG(uap, arg1),
 		    (int)SCARG(uap, arg2), p, retval);
 		break;
+
+	case IRIX_SGI_RUSAGE: {	/* BSD getrusage(2) */
+		struct sys_getrusage_args cup;
+
+		SCARG(&cup, who) = (int)SCARG(uap, arg1);
+		SCARG(&cup, rusage) = (struct rusage *)SCARG(uap, arg2);
+		return sys_getrusage(p, &cup, retval);
+		break;
+	}
+
+	case IRIX_SGI_NUM_MODULES: /* <sys/systeminfo.h> get_num_modules() */
+		*retval = 1;
+		return 0;
+		break;
+		
+	case IRIX_SGI_MODULE_INFO: { /* <sys/systeminfo.h> get_module_info() */
+		int module_num = (int)SCARG(uap, arg1);
+		struct irix_module_info_s *imip = SCARG(uap, arg2);
+		int mss = (int)SCARG(uap, arg3);
+		struct irix_module_info_s imi;
+		char *idx;
+
+		if (module_num != 0)
+			return EINVAL;
+
+		imi.serial_num = (u_int64_t)hostid;
+		imi.mod_num = 0;
+		(void)snprintf(imi.serial_str, IRIX_MAX_SERIAL_SIZE, 
+		    "0800%08x", (u_int32_t)hostid);
+
+		/* Convert to upper case */
+		for (idx = imi.serial_str; *idx; idx++)
+			if (*idx >= 'a' && *idx <= 'f')
+				*idx += ('A' - 'a');
+
+		/* Don't copyout irrelevant data on user request */
+		if (mss > sizeof(struct irix_module_info_s))
+			mss = sizeof(struct irix_module_info_s);
+
+		return copyout(&imi, imip, mss);
+		break;
+	}
 
 	case IRIX_SGI_RDNAME: {	/* Read Processes' name */
 		struct proc *tp;
@@ -389,12 +432,12 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 			vcp = &vcset.evs_cmds[j];
 			if (vcp->ev_flags & VMCMD_RELATIVE) {
 				if (base_vcp == NULL)
-					panic("irix_syssgi_mapelf():  bad vmcmd base\n");
+					panic("irix_syssgi_mapelf():  bad vmcmd base");
 				   
 				vcp->ev_addr += base_vcp->ev_addr;
 			}
-			/* Eventually do it for a whole share group */
-			if ((error = irix_sync_saddr_vmcmd(p, vcp)) != 0)
+			IRIX_VM_SYNC(p, error = (*vcp->ev_proc)(p, vcp));
+			if (error)
 				goto bad;
 		}
 		pht++;

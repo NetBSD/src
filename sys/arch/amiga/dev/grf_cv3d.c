@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.7.26.3 2002/08/13 02:17:41 nathanw Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.7.26.4 2002/10/18 02:34:54 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.7.26.3 2002/08/13 02:17:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.7.26.4 2002/10/18 02:34:54 nathanw Exp $");
 
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
@@ -264,9 +264,8 @@ static volatile caddr_t cv3d_special_register_base;
 long cv3d_memclk = 55000000;
 
 /* standard driver stuff */
-struct cfattach grfcv3d_ca = {
-	sizeof(struct grf_softc), grfcv3dmatch, grfcv3dattach
-};
+CFATTACH_DECL(grfcv3d, sizeof(struct grf_softc),
+    grfcv3dmatch, grfcv3dattach, NULL, NULL);
 
 static struct cfdata *cfdata;
 

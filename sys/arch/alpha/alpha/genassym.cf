@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.4.4.3 2002/06/24 22:03:08 nathanw Exp $
+# $NetBSD: genassym.cf,v 1.4.4.4 2002/10/18 02:34:01 nathanw Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -39,7 +39,6 @@
 
 include <sys/param.h>
 include <sys/buf.h>
-include <sys/map.h>
 include <sys/proc.h>
 include <sys/sched.h>
 include <sys/mbuf.h>
@@ -126,6 +125,7 @@ define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_MD_PCBPADDR		offsetof(struct lwp, l_md.md_pcbpaddr)
 
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
+define	P_NRAS			offsetof(struct proc, p_nras)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 define	PH_LINK			offsetof(struct prochd, ph_link)

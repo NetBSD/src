@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.41.6.7 2002/08/13 02:18:40 nathanw Exp $
+# 	$NetBSD: INSTALL,v 1.41.6.8 2002/10/18 02:39:24 nathanw Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -39,7 +39,7 @@ options 	DEC_3MAXPLUS		#  5000/240 (kn03), 5000/260 (kn05)
 #options 	COMPAT_43		# compatibility with 4.3BSD binaries
 #options 	KTRACE			# system call tracing support
 #options 	LKM			# loadable kernel modules
-#options 	USERCONF		# userconf(4) support
+options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 

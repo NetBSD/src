@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.1.14.1 2002/04/01 07:42:21 nathanw Exp $	*/
+/*	$NetBSD: gio.c,v 1.1.14.2 2002/10/18 02:39:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -52,9 +52,8 @@ static void	gio_attach(struct device *, struct device *, void *);
 static int	gio_print(void *, const char *);
 static int	gio_search(struct device *, struct cfdata *, void *);
 
-struct cfattach gio_ca = {
-	sizeof(struct gio_softc), gio_match, gio_attach
-};
+CFATTACH_DECL(gio, sizeof(struct gio_softc),
+    gio_match, gio_attach, NULL, NULL);
 
 static int
 gio_match(parent, match, aux)
@@ -64,7 +63,7 @@ gio_match(parent, match, aux)
 {
 	struct giobus_attach_args *gba = aux;
 
-	if (strcmp(gba->gba_busname, match->cf_driver->cd_name) != 0)
+	if (strcmp(gba->gba_busname, match->cf_name) != 0)
 		return 0;
 
 	return 1;
@@ -114,7 +113,7 @@ gio_search(parent, cf, aux)
 		ga->ga_addr = cf->cf_loc[GIOCF_ADDR];
 		ga->ga_iot = 0;
 		ga->ga_ioh = MIPS_PHYS_TO_KSEG1(ga->ga_addr);
-		if ((*cf->cf_attach->ca_match)(parent, cf, ga) > 0)
+		if (config_match(parent, cf, ga) > 0)
 			config_attach(parent, cf, ga, gio_print);
 	} while (cf->cf_fstate == FSTATE_STAR);
 

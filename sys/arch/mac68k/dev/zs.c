@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.34.8.3 2002/09/17 21:15:26 nathanw Exp $	*/
+/*	$NetBSD: zs.c,v 1.34.8.4 2002/10/18 02:38:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -220,9 +220,8 @@ static int	zsc_match __P((struct device *, struct cfdata *, void *));
 static void	zsc_attach __P((struct device *, struct device *, void *));
 static int  zsc_print __P((void *, const char *name));
 
-struct cfattach zsc_ca = {
-	sizeof(struct zsc_softc), zsc_match, zsc_attach
-};
+CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
+    zsc_match, zsc_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 
@@ -270,7 +269,7 @@ zsc_attach(parent, self, aux)
 
 	/* Make sure everything's inited ok. */
 	if (zsaddr[zsc_unit] == NULL)
-		panic("zs_attach: zs%d not mapped\n", zsc_unit);
+		panic("zs_attach: zs%d not mapped", zsc_unit);
 
 	chip = 0; /* We'll deal with chip types post 1.2 */
 	printf(" chip type %d \n",chip);

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.70.2.5 2002/02/28 04:13:40 nathanw Exp $	*/
+/*	$NetBSD: gus.c,v 1.70.2.6 2002/10/18 02:42:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.70.2.5 2002/02/28 04:13:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.70.2.6 2002/10/18 02:42:12 nathanw Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -124,7 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.70.2.5 2002/02/28 04:13:40 nathanw Exp $")
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/icu.h>
 
 #include <dev/ic/ics2101reg.h>
 #include <dev/ic/cs4231reg.h>
@@ -443,9 +442,8 @@ void	stereo_dmaintr __P((void *));
 int	gusprobe __P((struct device *, struct cfdata *, void *));
 void	gusattach __P((struct device *, struct device *, void *));
 
-struct cfattach gus_ca = {
-	sizeof(struct gus_softc), gusprobe, gusattach,
-};
+CFATTACH_DECL(gus, sizeof(struct gus_softc),
+    gusprobe, gusattach, NULL, NULL);
 
 /*
  * A mapping from IRQ/DRQ values to the values used in the GUS's internal

@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.2.2.7 2002/08/13 01:02:36 nathanw Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.2.2.8 2002/10/18 02:33:35 nathanw Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -106,7 +106,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options

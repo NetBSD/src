@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.21.12.1 2002/04/01 07:39:51 nathanw Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.21.12.2 2002/10/18 02:36:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.21.12.1 2002/04/01 07:39:51 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.21.12.2 2002/10/18 02:36:45 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,9 +156,8 @@ struct fhpib_softc {
 int	fhpibmatch __P((struct device *, struct cfdata *, void *));
 void	fhpibattach __P((struct device *, struct device *, void *));
 
-struct cfattach fhpib_ca = {
-	sizeof(struct fhpib_softc), fhpibmatch, fhpibattach
-};
+CFATTACH_DECL(fhpib, sizeof(struct fhpib_softc),
+    fhpibmatch, fhpibattach, NULL, NULL);
 
 int
 fhpibmatch(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.18 2002/09/17 21:18:02 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.112.4.19 2002/10/18 02:40:10 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -93,7 +93,6 @@
 #include <sys/user.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
@@ -101,7 +100,6 @@
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/clist.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
@@ -1001,12 +999,11 @@ printf("starting dump, blkno %d\n", blkno);
 			/* print out how many MBs we have dumped */
 			if (i && (i % (1024*1024)) == 0)
 				printf("%d ", i / (1024*1024));
-			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
-					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+			pmap_kenter_pa(dumpspace, maddr, VM_PROT_READ);
 			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
-			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
+			pmap_kremove(dumpspace, n);
 			pmap_update(pmap_kernel());
 			if (error)
 				break;
@@ -1350,7 +1347,7 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 			(bus_size_t)len, flags);
 		if (map->dm_mapsize != len) {
 			printf("load_mbuf: mapsize %ld != len %lx\n",
-				map->dm_mapsize, len);
+				(long)map->dm_mapsize, len);
 			Debugger();
 		}
 		sglen = 0;
@@ -1491,22 +1488,23 @@ _bus_dmamap_unload(t, map)
 	bus_dmamap_t map;
 {
 	int i;
-	struct vm_page *m;
-	struct pglist *mlist;
+	struct vm_page *pg;
+	struct pglist *pglist;
 	paddr_t pa;
 
-	for (i=0; i<map->dm_nsegs; i++) {
-		if ((mlist = map->dm_segs[i]._ds_mlist) == NULL) {
-			/* 
-			 * We were asked to load random VAs and lost the 
+	for (i = 0; i < map->dm_nsegs; i++) {
+		if ((pglist = map->dm_segs[i]._ds_mlist) == NULL) {
+
+			/*
+			 * We were asked to load random VAs and lost the
 			 * PA info so just blow the entire cache away.
 			 */
-			blast_vcache();
+			blast_dcache();
 			break;
 		}
-		for (m = TAILQ_FIRST(mlist); m != NULL;
-		     m = TAILQ_NEXT(m,pageq)) {
-			pa = VM_PAGE_TO_PHYS(m);
+		TAILQ_FOREACH(pg, pglist, pageq) {
+			pa = VM_PAGE_TO_PHYS(pg);
+
 			/* 
 			 * We should be flushing a subrange, but we
 			 * don't know where the segments starts.
@@ -1514,6 +1512,7 @@ _bus_dmamap_unload(t, map)
 			dcache_flush_page(pa);
 		}
 	}
+
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
@@ -1533,8 +1532,8 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	int ops;
 {
 	int i;
-	struct vm_page *m;
-	struct pglist *mlist;
+	struct vm_page *pg;
+	struct pglist *pglist;
 
 	/*
 	 * We sync out our caches, but the bus must do the same.
@@ -1542,6 +1541,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	 * Actually a #Sync is expensive.  We should optimize.
 	 */
 	if ((ops & BUS_DMASYNC_PREREAD) || (ops & BUS_DMASYNC_PREWRITE)) {
+
 		/* 
 		 * Don't really need to do anything, but flush any pending
 		 * writes anyway. 
@@ -1550,18 +1550,16 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	}
 	if (ops & BUS_DMASYNC_POSTREAD) {
 		/* Invalidate the vcache */
-		for (i=0; i<map->dm_nsegs; i++) {
-			if ((mlist = map->dm_segs[i]._ds_mlist) == NULL)
+		for (i = 0; i < map->dm_nsegs; i++) {
+			if ((pglist = map->dm_segs[i]._ds_mlist) == NULL)
 				/* Should not really happen. */
 				continue;
-			for (m = TAILQ_FIRST(mlist);
-			     m != NULL; m = TAILQ_NEXT(m,pageq)) {
+			TAILQ_FOREACH(pg, pglist, pageq) {
 				paddr_t start;
 				psize_t size = NBPG;
 
 				if (offset < NBPG) {
-					start = VM_PAGE_TO_PHYS(m) + offset;
-					size = NBPG;
+					start = VM_PAGE_TO_PHYS(pg) + offset;
 					if (size > len)
 						size = len;
 					cache_flush_phys(start, size, 0);
@@ -1592,7 +1590,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int flags;
 {
 	vaddr_t low, high;
-	struct pglist *mlist;
+	struct pglist *pglist;
 	int error;
 
 	/* Always round the size. */
@@ -1600,7 +1598,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	low = vm_first_phys;
 	high = vm_first_phys + vm_num_phys - PAGE_SIZE;
 
-	if ((mlist = malloc(sizeof(*mlist), M_DEVBUF,
+	if ((pglist = malloc(sizeof(*pglist), M_DEVBUF,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
@@ -1618,7 +1616,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 * Allocate pages from the VM system.
 	 */
 	error = uvm_pglistalloc(size, low, high,
-	    alignment, boundary, mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+	    alignment, boundary, pglist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
 
@@ -1637,7 +1635,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 * NOBODY SHOULD TOUCH THE pageq FIELDS WHILE THESE PAGES
 	 * ARE IN OUR CUSTODY.
 	 */
-	segs[0]._ds_mlist = mlist;
+	segs[0]._ds_mlist = pglist;
 
 	/* The bus driver should do the actual mapping */
 	return (0);
@@ -1678,7 +1676,6 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int flags;
 {
 	vaddr_t va, sva;
-	struct pglist *mlist;
 	int r, cbit;
 	size_t oversize;
 	u_long align;
@@ -1708,14 +1705,11 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 	/* Return excess virtual addresses */
 	if (va != sva)
-		(void)uvm_unmap(kernel_map, sva, va);
+		uvm_unmap(kernel_map, sva, va);
 	if (va + size != sva + oversize)
-		(void)uvm_unmap(kernel_map, va + size, sva + oversize);
-
+		uvm_unmap(kernel_map, va + size, sva + oversize);
 
 	*kvap = (caddr_t)va;
-	mlist = segs[0]._ds_mlist;
-
 	return (0);
 }
 
@@ -1811,7 +1805,7 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 	u_int64_t pa;
 	paddr_t	pm_flags = 0;
 	vm_prot_t pm_prot = VM_PROT_READ;
-	int err;
+	int err, map_little = 0;
 
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
@@ -1850,13 +1844,13 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 		return (0);
 		/* FALLTHROUGH */
 	case PCI_IO_BUS_SPACE:
-		pm_flags = PMAP_LITTLE;
+		map_little = 1;
 		break;
 	case PCI_MEMORY_BUS_SPACE:
-		pm_flags = PMAP_LITTLE;
+		map_little = 1;
 		break;
 	default:
-		pm_flags = 0;
+		map_little = 0;
 		break;
 	}
 
@@ -1864,10 +1858,10 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 	/* If it's not LINEAR don't bother to map it.  Use phys accesses. */
 	if ((flags & BUS_SPACE_MAP_LINEAR) == 0) {
 		hp->_ptr = addr;
-		if (pm_flags & PMAP_LITTLE)
+		if (map_little)
 			hp->_asi = ASI_PHYS_NON_CACHED_LITTLE;
 		else
-		hp->_asi = ASI_PHYS_NON_CACHED;
+			hp->_asi = ASI_PHYS_NON_CACHED;
 		hp->_sasi = ASI_PHYS_NON_CACHED;
 		return (0);
 	}
@@ -1877,18 +1871,19 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 
 	if ((err = extent_alloc(io_space, size, NBPG,
 		0, EX_NOWAIT|EX_BOUNDZERO, (u_long *)&v)))
-			panic("sparc_bus_map: cannot allocate io_space: %d\n", err);
+			panic("sparc_bus_map: cannot allocate io_space: %d", err);
 
 	/* note: preserve page offset */
 	hp->_ptr = (v | ((u_long)addr & PGOFSET));
-	hp->_asi = ASI_PRIMARY;
-	if (pm_flags & PMAP_LITTLE)
-		hp->_sasi = ASI_PRIMARY_LITTLE;
+	hp->_sasi = ASI_PRIMARY;
+	if (map_little)
+		hp->_asi = ASI_PRIMARY_LITTLE;
 	else
-		hp->_sasi = ASI_PRIMARY;
+		hp->_asi = ASI_PRIMARY;
 
 	pa = addr & ~PAGE_MASK; /* = trunc_page(addr); Will drop high bits */
-	if (!(flags&BUS_SPACE_MAP_READONLY)) pm_prot |= VM_PROT_WRITE;
+	if (!(flags&BUS_SPACE_MAP_READONLY))
+		pm_prot |= VM_PROT_WRITE;
 
 	DPRINTF(BSDB_MAP, ("\nsparc_bus_map: type %x flags %x "
 		"addr %016llx size %016llx virt %llx paddr %016llx\n",
@@ -1897,11 +1892,10 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 		(unsigned long long)pa));
 
 	do {
-		DPRINTF(BSDB_MAP, ("sparc_bus_map: phys %llx virt %p hp %llx\n", 
+		DPRINTF(BSDB_MAP, ("sparc_bus_map: phys %llx virt %p hp %llx\n",
 			(unsigned long long)pa, (char *)v,
 			(unsigned long long)hp->_ptr));
-		pmap_enter(pmap_kernel(), v, pa | pm_flags, pm_prot,
-			pm_prot|PMAP_WIRED);
+		pmap_kenter_pa(v, pa | pm_flags, pm_prot);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);

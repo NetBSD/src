@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.50.4.4 2002/08/27 23:45:28 nathanw Exp $	*/
+/*	$NetBSD: obio.c,v 1.50.4.5 2002/10/18 02:39:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -76,10 +76,8 @@ union obio_softc {
 static	int obiomatch  __P((struct device *, struct cfdata *, void *));
 static	void obioattach __P((struct device *, struct device *, void *));
 
-struct cfattach obio_ca = {
-	sizeof(union obio_softc), obiomatch, obioattach
-};
-
+CFATTACH_DECL(obio, sizeof(union obio_softc),
+    obiomatch, obioattach, NULL, NULL);
 
 /*
  * This `obio4_busattachargs' data structure only exists to pass down
@@ -130,7 +128,7 @@ obiomatch(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 void
@@ -268,7 +266,7 @@ obiosearch(parent, cf, aux)
 	struct obio4_attach_args *oba = &uoba.uoba_oba4;
 
 	/* Check whether we're looking for a specifically named device */
-	if (oap->name != NULL && strcmp(oap->name, cf->cf_driver->cd_name) != 0)
+	if (oap->name != NULL && strcmp(oap->name, cf->cf_name) != 0)
 		return (0);
 
 	/*
@@ -296,7 +294,7 @@ obiosearch(parent, cf, aux)
 	oba->oba_paddr = BUS_ADDR(PMAP_OBIO, cf->cf_loc[0]);
 	oba->oba_pri = cf->cf_loc[1];
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, &uoba) == 0)
+	if (config_match(parent, cf, &uoba) == 0)
 		return (0);
 
 	config_attach(parent, cf, &uoba, obioprint);

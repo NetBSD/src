@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.20.2.4 2002/07/12 01:39:56 nathanw Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.20.2.5 2002/10/18 02:40:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.20.2.4 2002/07/12 01:39:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.20.2.5 2002/10/18 02:40:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,7 @@ stackgap_alloc(p, sgp, sz)
 	
 	sz = ALIGN(sz);
 	nsgp = *sgp + sz;
-	if (nsgp > (((const caddr_t)p->p_psstr) - sigsize))
+	if (nsgp > (((caddr_t)p->p_psstr) - sigsize))
 		return NULL;
 	*sgp = nsgp;
 	return n;

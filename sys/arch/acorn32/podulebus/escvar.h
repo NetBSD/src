@@ -1,4 +1,4 @@
-/* $NetBSD: escvar.h,v 1.1.4.2 2002/02/28 04:05:57 nathanw Exp $ */
+/* $NetBSD: escvar.h,v 1.1.4.3 2002/10/18 02:33:43 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -55,7 +55,7 @@
  * adress.
  */
 struct	esc_dma_chain {
-	vm_offset_t	ptr;
+	void		*ptr;
 	u_short		len;
 	short		flg;
 };
@@ -91,10 +91,10 @@ struct nexus {
 	u_char			*buf;		/* Virtual adress of data */
 	int			 len;		/* Bytes left to transfer */
 
-	vm_offset_t		 dma_buf;	/* Current DMA adress */
+	void			*dma_buf;	/* Current DMA adress */
 	int			 dma_len;	/* Current DMA length */
 
-	vm_offset_t		 dma_blk_ptr;	/* Current chain adress */
+	void			*dma_blk_ptr;	/* Current chain adress */
 	int			 dma_blk_len;	/* Current chain length */
 	u_char			 dma_blk_flg;	/* Current chain flags */
 
@@ -164,7 +164,7 @@ struct	esc_softc {
 	void			*sc_spec;	/* Board-specific data */
 
 	u_char			*sc_bump_va;	/* Bumpbuf virtual adr */
-	vm_offset_t		 sc_bump_pa;	/* Bumpbuf physical adr */
+	void			*sc_bump_pa;	/* Bumpbuf physical adr */
 	int			 sc_bump_sz;	/* Bumpbuf size */
 
 /* Configuration registers, must be set BEFORE escinitialize */
@@ -194,9 +194,9 @@ struct	esc_softc {
 	u_char			*sc_buf;	/* va */
 	int			 sc_len;
 
-	vm_offset_t		 sc_dma_buf;	/* pa */
+	void			*sc_dma_buf;	/* pa */
 	int			 sc_dma_len;
-	vm_offset_t		 sc_dma_blk_ptr;
+	void			*sc_dma_blk_ptr;
 	int			 sc_dma_blk_len;
 	short			 sc_dma_blk_flg;
 

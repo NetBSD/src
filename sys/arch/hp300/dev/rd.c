@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.45.4.7 2002/09/17 21:14:34 nathanw Exp $	*/
+/*	$NetBSD: rd.c,v 1.45.4.8 2002/10/18 02:36:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.45.4.7 2002/09/17 21:14:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.45.4.8 2002/10/18 02:36:50 nathanw Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -280,9 +280,8 @@ void	rdprinterr __P((char *, short, char **));
 int	rdmatch __P((struct device *, struct cfdata *, void *));
 void	rdattach __P((struct device *, struct device *, void *));
 
-struct cfattach rd_ca = {
-	sizeof(struct rd_softc), rdmatch, rdattach
-};
+CFATTACH_DECL(rd, sizeof(struct rd_softc),
+    rdmatch, rdattach, NULL, NULL);
 
 extern struct cfdriver rd_cd;
 

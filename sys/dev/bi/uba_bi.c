@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_bi.c,v 1.4.14.1 2001/11/14 19:14:00 nathanw Exp $ */
+/*	$NetBSD: uba_bi.c,v 1.4.14.2 2002/10/18 02:41:32 nathanw Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.4.14.1 2001/11/14 19:14:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.4.14.2 2002/10/18 02:41:32 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -92,9 +92,8 @@ static	void bua_purge __P((struct uba_softc *, int));
 
 static	int allocvec;
 
-struct	cfattach uba_bi_ca = {
-	sizeof(struct uba_softc), uba_bi_match, uba_bi_attach,
-};
+CFATTACH_DECL(uba_bi, sizeof(struct uba_softc),
+    uba_bi_match, uba_bi_attach, NULL, NULL);
 
 struct dwbua_regs {
 	struct  biiregs bn_biic;   /* interface */

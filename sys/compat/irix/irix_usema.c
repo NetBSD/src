@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.4.2.4 2002/09/17 21:18:57 nathanw Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.4.2.5 2002/10/18 02:41:07 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.4.2.4 2002/09/17 21:18:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.4.2.5 2002/10/18 02:41:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,16 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.4.2.4 2002/09/17 21:18:57 nathanw E
 #include <compat/irix/irix_ioctl.h>
 #include <compat/irix/irix_syscallargs.h>
 
-dev_type_open(irix_usemaopen);
-dev_type_close(irix_usemaclose);
-dev_type_read(irix_usemaread);
-dev_type_write(irix_usemawrite);
-dev_type_ioctl(irix_usemaioctl);
-dev_type_poll(irix_usemapoll);
-
 const struct cdevsw irix_usema_cdevsw = {
-	irix_usemaopen, irix_usemaclose, irix_usemaread, irix_usemawrite,
-	irix_usemaioctl, nostop, notty, irix_usemapoll, nommap,
+	nullopen, nullclose, noread, nowrite,
+	noioctl, nostop, notty, nopoll, nommap,
 };
 
 /*
@@ -174,17 +167,6 @@ irix_usemaattach(parent, self, aux)
 
 	return;
 }
-
-/* 
- * Standard device operations. Unused here.
- */
-int irix_usemaopen(dev_t dev, int flags, int fmp, struct proc *p) { return 0; }
-int irix_usemaread(dev_t dev, struct uio *uio, int flag) { return ENXIO; }
-int irix_usemawrite(dev_t dev, struct uio *uio, int flag) { return ENXIO; }
-int irix_usemaioctl(dev_t dev, u_long cmd, caddr_t data, int fl, struct proc *p)
-    { return ENXIO; }
-int irix_usemapoll(dev_t dev, int events, struct proc *p) { return ENXIO; }
-int irix_usemaclose(dev_t dev, int flags, int fmt, struct proc *p) { return 0; }
 
 /*
  * vnode operations on the device

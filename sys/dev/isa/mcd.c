@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.70.2.7 2002/09/17 21:20:00 nathanw Exp $	*/
+/*	$NetBSD: mcd.c,v 1.70.2.8 2002/10/18 02:42:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.70.2.7 2002/09/17 21:20:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.70.2.8 2002/10/18 02:42:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,9 +191,8 @@ int mcd_find __P((bus_space_tag_t, bus_space_handle_t, struct mcd_softc *));
 int mcdprobe __P((struct device *, struct cfdata *, void *));
 void mcdattach __P((struct device *, struct device *, void *));
 
-struct cfattach mcd_ca = {
-	sizeof(struct mcd_softc), mcdprobe, mcdattach
-};
+CFATTACH_DECL(mcd, sizeof(struct mcd_softc),
+    mcdprobe, mcdattach, NULL, NULL);
 
 extern struct cfdriver mcd_cd;
 

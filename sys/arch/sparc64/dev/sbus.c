@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.46.4.4 2002/08/27 23:45:50 nathanw Exp $ */
+/*	$NetBSD: sbus.c,v 1.46.4.5 2002/10/18 02:40:05 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -93,9 +93,8 @@ int	sbus_match __P((struct device *, struct cfdata *, void *));
 void	sbus_attach __P((struct device *, struct device *, void *));
 
 
-struct cfattach sbus_ca = {
-	sizeof(struct sbus_softc), sbus_match, sbus_attach
-};
+CFATTACH_DECL(sbus, sizeof(struct sbus_softc),
+    sbus_match, sbus_attach, NULL, NULL);
 
 extern struct cfdriver sbus_cd;
 
@@ -175,7 +174,7 @@ sbus_match(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 /*

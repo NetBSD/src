@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.28.12.2 2002/04/01 07:39:54 nathanw Exp $	*/
+/*	$NetBSD: scsi.c,v 1.28.12.3 2002/10/18 02:36:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi.c,v 1.28.12.2 2002/04/01 07:39:54 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: scsi.c,v 1.28.12.3 2002/10/18 02:36:51 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,9 +159,8 @@ void	scsiattach __P((struct device *, struct device *, void *));
 void	scsi_attach_children __P((struct scsi_softc *));
 int	scsisubmatch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach oscsi_ca = {
-	sizeof(struct scsi_softc), scsimatch, scsiattach
-};
+CFATTACH_DECL(oscsi, sizeof(struct scsi_softc),
+    scsimatch, scsiattach, NULL, NULL);
 
 extern struct cfdriver oscsi_cd;
 
@@ -468,7 +467,7 @@ scsisubmatch(parent, match, aux)
 	    match->cf_loc[OSCSICF_LUN] != osa->osa_lun)
 		return (0);
 
-	return ((*match->cf_attach->ca_match)(parent, match, aux));
+	return (config_match(parent, match, aux));
 }
 
 int

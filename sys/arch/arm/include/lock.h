@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.1.10.1 2001/11/15 19:25:44 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.1.10.2 2002/10/18 02:35:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -53,6 +53,15 @@ typedef	__volatile int		__cpu_simple_lock_t;
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
 
+static __inline int
+__swp(int __val, __volatile int *__ptr)
+{
+
+	__asm __volatile("swp %0, %1, [%2]"
+	    : "=r" (__val) : "r" (__val), "r" (__ptr) : "memory");
+	return __val;
+}
+
 static __inline void __attribute__((__unused__))
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
@@ -63,27 +72,16 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 static __inline void __attribute__((__unused__))
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
-	int __val = __SIMPLELOCK_LOCKED;
 
-	do {
-		__asm __volatile("swp %0, %1, [%2]"
-			: "=r" (__val)
-			: "0" (__val), "r" (alp)
-			: "memory");
-	} while (__val != __SIMPLELOCK_UNLOCKED);
+	while (__swp(__SIMPLELOCK_LOCKED, alp) != __SIMPLELOCK_UNLOCKED)
+		continue;
 }
 
 static __inline int __attribute__((__unused__))
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
-	int __val = __SIMPLELOCK_LOCKED;
 
-	__asm __volatile("swp %0, %1, [%2]"
-		: "=r" (__val)
-		: "0" (__val), "r" (alp)
-		: "memory");
-
-	return ((__val == __SIMPLELOCK_UNLOCKED) ? 1 : 0);
+	return (__swp(__SIMPLELOCK_LOCKED, alp) == __SIMPLELOCK_UNLOCKED);
 }
 
 static __inline void __attribute__((__unused__))

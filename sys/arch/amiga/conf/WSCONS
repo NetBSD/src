@@ -1,9 +1,9 @@
-# $NetBSD: WSCONS,v 1.1.6.5 2002/08/01 02:41:07 nathanw Exp $
+# $NetBSD: WSCONS,v 1.1.6.6 2002/10/18 02:34:42 nathanw Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.2 2002/07/05 13:18:21 abs Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.7 2002/10/14 18:23:30 elric Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1.6.5 $"
+#ident 		"GENERIC-$Revision: 1.1.6.6 $"
 
 
 maxusers	8
@@ -81,6 +81,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # Filesystems
 file-system 	FFS		# Berkeley fast file system
@@ -150,11 +151,12 @@ options 	SYSVSEM		# System V-like semaphores
 #
 
 options 	KTRACE		# system call tracing support
+options 	SYSTRACE	# system call vetting via systrace(1)
 options 	LKM		# Loadable kernel modules
 options 	UCONSOLE	# anyone can redirect a virtual console
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 options 	NTP		# NTP phase/frequency locked loop
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
@@ -420,6 +422,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.11.2.5 2002/09/17 21:20:02 nathanw Exp $	*/
+/*	$NetBSD: satlink.c,v 1.11.2.6 2002/10/18 02:42:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.11.2.5 2002/09/17 21:20:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.11.2.6 2002/10/18 02:42:33 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,9 +104,8 @@ int	satlinkprobe __P((struct device *, struct cfdata *, void *));
 void	satlinkattach __P((struct device *, struct device *, void *));
 void	satlinktimeout __P((void *));
 
-struct cfattach satlink_ca = {
-	sizeof(struct satlink_softc), satlinkprobe, satlinkattach
-};
+CFATTACH_DECL(satlink, sizeof(struct satlink_softc),
+    satlinkprobe, satlinkattach, NULL, NULL);
 
 extern struct cfdriver satlink_cd;
 

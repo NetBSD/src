@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.28.8.3 2002/09/17 21:15:43 nathanw Exp $	*/
+/*	$NetBSD: types.h,v 1.28.8.4 2002/10/18 02:38:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -92,6 +92,7 @@ typedef int		register_t;
 #ifdef MIPS3_PLUS	/* XXX bogus! */
 #define	__HAVE_CPU_COUNTER
 #endif
-#define __HAVE_RAS
+#define	__HAVE_RAS
+#define	__HAVE_MD_RUNQUEUE
 
 #endif	/* _MACHTYPES_H_ */

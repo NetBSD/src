@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.32.2.7 2002/09/17 21:19:54 nathanw Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.32.2.8 2002/10/18 02:41:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.32.2.7 2002/09/17 21:19:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.32.2.8 2002/10/18 02:41:59 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -144,7 +144,12 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.32.2.7 2002/09/17 21:19:54 nathanw Ex
 
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
 #define bus_space_write_multi_stream_2 bus_space_write_multi_2
+#define bus_space_write_multi_stream_4 bus_space_write_multi_4
 #define bus_space_read_multi_stream_2  bus_space_read_multi_2
+#define bus_space_read_multi_stream_4  bus_space_read_multi_4
+
+#define bus_space_write_stream_4 bus_space_write_4
+#define bus_space_read_stream_4  bus_space_read_4
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 /* XXX Hardware padding doesn't work yet(?) */
@@ -209,6 +214,7 @@ void	smc91cxx_init __P((struct smc91cxx_softc *));
 void	smc91cxx_read __P((struct smc91cxx_softc *));
 void	smc91cxx_reset __P((struct smc91cxx_softc *));
 void	smc91cxx_start __P((struct ifnet *));
+void	smc91cxx_copy_tx_frame __P((struct smc91cxx_softc *, struct mbuf *));
 void	smc91cxx_resume __P((struct smc91cxx_softc *));
 void	smc91cxx_stop __P((struct smc91cxx_softc *));
 void	smc91cxx_watchdog __P((struct ifnet *));
@@ -577,7 +583,7 @@ smc91cxx_start(ifp)
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int len;
-	struct mbuf *m, *top;
+	struct mbuf *m;
 	u_int16_t length, npages;
 	u_int8_t packetno;
 	int timo, pad;
@@ -598,7 +604,7 @@ smc91cxx_start(ifp)
 	 * number of bytes.  Below, we assume that the packet length
 	 * is even.
 	 */
-	for (len = 0, top = m; m != NULL; m = m->m_next)
+	for (len = 0; m != NULL; m = m->m_next)
 		len += m->m_len;
 	pad = (len & 1);
 
@@ -691,17 +697,7 @@ smc91cxx_start(ifp)
 	/*
 	 * Push the packet out to the card.
 	 */
-	for (top = m; m != NULL; m = m->m_next) {
-		/* Words... */
-		if (m->m_len > 1)
-			bus_space_write_multi_stream_2(bst, bsh, DATA_REG_W,
-			    mtod(m, u_int16_t *), m->m_len >> 1);
-
-		/* ...and the remaining byte, if any. */
-		if (m->m_len & 1)
-			bus_space_write_1(bst, bsh, DATA_REG_B,
-			  *(u_int8_t *)(mtod(m, u_int8_t *) + (m->m_len - 1)));
-	}
+	smc91cxx_copy_tx_frame(sc, m);
 
 #ifdef SMC91CXX_SW_PAD
 	/*
@@ -737,11 +733,11 @@ smc91cxx_start(ifp)
 #if NBPFILTER > 0
 	/* Hand off a copy to the bpf. */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, top);
+		bpf_mtap(ifp->if_bpf, m);
 #endif
 
 	ifp->if_opackets++;
-	m_freem(top);
+	m_freem(m);
 
  readcheck:
 	/*
@@ -751,6 +747,86 @@ smc91cxx_start(ifp)
 	 */
 	if (bus_space_read_2(bst, bsh, FIFO_PORTS_REG_W) & FIFO_REMPTY)
 		goto again;
+}
+
+/*
+ * Squirt a (possibly misaligned) mbuf to the device
+ */
+void
+smc91cxx_copy_tx_frame(sc, m0)
+	struct smc91cxx_softc *sc;
+	struct mbuf *m0;
+{
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
+	struct mbuf *m;
+	int len, leftover;
+	u_int16_t dbuf;
+	u_int8_t *p;
+#ifdef DIAGNOSTIC
+	u_int8_t *lim;
+#endif
+
+	/* start out with no leftover data */
+	leftover = 0;
+	dbuf = 0;
+
+	/* Process the chain of mbufs */
+	for (m = m0; m != NULL; m = m->m_next) {
+		/*
+		 * Process all of the data in a single mbuf.
+		 */
+		p = mtod(m, u_int8_t *);
+		len = m->m_len;
+#ifdef DIAGNOSTIC
+		lim = p + len;
+#endif
+
+		while (len > 0) {
+			if (leftover) {
+				/*
+				 * Data left over (from mbuf or realignment).
+				 * Buffer the next byte, and write it and
+				 * the leftover data out.
+				 */
+				dbuf |= *p++ << 8;
+				len--;
+				bus_space_write_2(bst, bsh, DATA_REG_W, dbuf);
+				leftover = 0;
+			} else if ((long) p & 1) {
+				/*
+				 * Misaligned data.  Buffer the next byte.
+				 */
+				dbuf = *p++;
+				len--;
+				leftover = 1;
+			} else {
+				/*
+				 * Aligned data.  This is the case we like.
+				 *
+				 * Write-region out as much as we can, then
+				 * buffer the remaining byte (if any).
+				 */
+				leftover = len & 1;
+				len &= ~1;
+				bus_space_write_multi_stream_2(bst, bsh,
+				    DATA_REG_W, (u_int16_t *)p, len >> 1);
+				p += len;
+
+				if (leftover)
+					dbuf = *p++;
+				len = 0;
+			}
+		}
+		if (len < 0)
+			panic("smc91cxx_copy_tx_frame: negative len");
+#ifdef DIAGNOSTIC
+		if (p != lim)
+			panic("smc91cxx_copy_tx_frame: p != lim");
+#endif
+	}
+	if (leftover)
+		bus_space_write_1(bst, bsh, DATA_REG_B, dbuf);
 }
 
 /*
@@ -1054,9 +1130,11 @@ smc91cxx_read(sc)
 			*data = bus_space_read_1(bst, bsh, DATA_REG_B);
 		}
 	} else {
+		u_int8_t *dp;
+
 		m->m_data = (caddr_t) ALIGN(mtod(m, caddr_t));
 		eh = mtod(m, struct ether_header *);
-		data = mtod(m, u_int8_t *);
+		dp = data = mtod(m, u_int8_t *);
 		if (packetlen > 3)
 			bus_space_read_multi_stream_4(bst, bsh, DATA_REG_W,
 			    (u_int32_t *)data, packetlen >> 2);
@@ -1085,6 +1163,8 @@ smc91cxx_read(sc)
 		}
 	}
 
+	m->m_pkthdr.len = m->m_len = packetlen;
+
 #if NBPFILTER > 0
 	/*
 	 * Hand the packet off to bpf listeners.
@@ -1093,7 +1173,6 @@ smc91cxx_read(sc)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 
-	m->m_pkthdr.len = m->m_len = packetlen;
 	(*ifp->if_input)(ifp, m);
 
  out:

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcisa.c,v 1.1.12.3 2002/02/28 04:08:26 nathanw Exp $	*/
+/*	$NetBSD: fdcisa.c,v 1.1.12.4 2002/10/18 02:35:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,9 +97,8 @@ struct fdc_isa_softc {
 	bus_space_handle_t	sc_baseioh;	/* base I/O handle */
 };
 
-struct cfattach fdcisa_ca = {
-	sizeof(struct fdc_isa_softc), fdc_isa_probe, fdc_isa_attach
-};
+CFATTACH_DECL(fdcisa, sizeof(struct fdc_isa_softc),
+    fdc_isa_probe, fdc_isa_attach, NULL, NULL);
 
 int
 fdc_isa_probe(parent, cfp, aux)

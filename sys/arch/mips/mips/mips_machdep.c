@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.22 2002/09/17 21:15:49 nathanw Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.23 2002/10/18 02:38:46 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.22 2002/09/17 21:15:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.23 2002/10/18 02:38:46 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -133,7 +133,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.22 2002/09/17 21:15:49 nath
 #include <sys/reboot.h>
 #include <sys/mount.h>			/* fsid_t for syscallargs */
 #include <sys/buf.h>
-#include <sys/clist.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/signal.h>
@@ -834,9 +833,9 @@ mips_vector_init(void)
 #endif /* defined(MIPS32) || defined(MIPS64) */
 
 	if (cpu_arch < 1)
-		panic("Unknown CPU ISA for CPU type 0x%x\n", cpu_id);
+		panic("Unknown CPU ISA for CPU type 0x%x", cpu_id);
 	if (mips_num_tlb_entries < 1)
-		panic("Unknown number of TLBs for CPU type 0x%x\n", cpu_id);
+		panic("Unknown number of TLBs for CPU type 0x%x", cpu_id);
 
 	/*
 	 * Check cpu-specific flags.

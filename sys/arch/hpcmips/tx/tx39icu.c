@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.14.4.4 2002/06/20 03:38:53 nathanw Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.14.4.5 2002/10/18 02:37:12 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -228,9 +228,8 @@ void	tx39_irqhigh_establish(tx_chipset_tag_t, int, int, int,
 void	tx39_irqhigh_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 int	tx39_irqhigh(int, int);
 
-struct cfattach tx39icu_ca = {
-	sizeof(struct tx39icu_softc), tx39icu_match, tx39icu_attach
-};
+CFATTACH_DECL(tx39icu, sizeof(struct tx39icu_softc),
+    tx39icu_match, tx39icu_attach, NULL, NULL);
 
 int
 tx39icu_match(struct device *parent, struct cfdata *cf, void *aux)

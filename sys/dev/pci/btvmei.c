@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.4.2.3 2002/04/01 07:46:19 nathanw Exp $ */
+/* $NetBSD: btvmei.c,v 1.4.2.4 2002/10/18 02:42:55 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.4.2.3 2002/04/01 07:46:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.4.2.4 2002/10/18 02:42:55 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,12 +69,8 @@ struct b3_617_vmeresc {
 	int firstpage, maplen;
 };
 
-struct cfattach btvmei_ca = {
-	sizeof(struct b3_617_softc), b3_617_match, b3_617_attach,
-#ifdef notyet
-	b3_617_detach
-#endif
-};
+CFATTACH_DECL(btvmei, sizeof(struct b3_617_softc),
+    b3_617_match, b3_617_attach, NULL, NULL);
 
 static int
 b3_617_match(parent, match, aux)
@@ -225,7 +221,7 @@ b3_617_slaveconfig(dev, va)
 
 #ifdef DIAGNOSTIC
 	if (vmect != va->va_vct)
-		panic("pcivme_slaveconfig: chipset tag?\n");
+		panic("pcivme_slaveconfig: chipset tag?");
 #endif
 
 	for (i = 0; i < va->numcfranges; i++) {

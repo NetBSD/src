@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.44.8.5 2002/09/17 21:14:30 nathanw Exp $	*/
+/*	$NetBSD: dca.c,v 1.44.8.6 2002/10/18 02:36:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.44.8.5 2002/09/17 21:14:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.44.8.6 2002/10/18 02:36:44 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -133,9 +133,8 @@ struct	dca_softc {
 int	dcamatch __P((struct device *, struct cfdata *, void *));
 void	dcaattach __P((struct device *, struct device *, void *));
 
-struct cfattach dca_ca = {
-	sizeof(struct dca_softc), dcamatch, dcaattach
-};
+CFATTACH_DECL(dca, sizeof(struct dca_softc),
+    dcamatch, dcaattach, NULL, NULL);
 
 extern struct cfdriver dca_cd;
 

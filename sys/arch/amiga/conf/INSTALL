@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.17.6.7 2002/08/01 02:41:06 nathanw Exp $
+# $NetBSD: INSTALL,v 1.17.6.8 2002/10/18 02:34:40 nathanw Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.2 2002/07/05 13:18:21 abs Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.7 2002/10/14 18:23:30 elric Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.17.6.7 $"
+#ident 		"GENERIC-$Revision: 1.17.6.8 $"
 
 makeoptions	COPTS="-Os"
 
@@ -74,6 +74,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # Filesystems
 file-system 	FFS		# Berkeley fast file system
@@ -114,7 +115,7 @@ options 	COMPAT_AOUT_M68K # actually make some system calls work.
 
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
@@ -397,6 +398,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.10.4.4 2002/06/20 03:38:48 nathanw Exp $ */
+/*	$NetBSD: it8368.c,v 1.10.4.5 2002/10/18 02:37:05 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -148,9 +148,8 @@ static struct pcmcia_chip_functions it8368_functions = {
 	it8368_chip_socket_disable
 };
 
-struct cfattach it8368e_ca = {
-	sizeof(struct it8368e_softc), it8368e_match, it8368e_attach
-};
+CFATTACH_DECL(it8368e, sizeof(struct it8368e_softc),
+    it8368e_match, it8368e_attach, NULL, NULL);
 
 /*
  *	IT8368 configuration register is big-endian.
@@ -381,7 +380,7 @@ int
 it8368_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 void

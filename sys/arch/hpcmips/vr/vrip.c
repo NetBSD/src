@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.12.4.4 2002/04/01 07:40:30 nathanw Exp $	*/
+/*	$NetBSD: vrip.c,v 1.12.4.5 2002/10/18 02:37:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -109,9 +109,8 @@ static const struct vrip_chipset_tag vrip_chipset_methods = {
 };
 
 #ifdef SINGLE_VRIP_BASE
-struct cfattach vrip_ca = {
-	sizeof(struct vrip_softc), vripmatch, vripattach
-};
+CFATTACH_DECL(vrip, sizeof(struct vrip_softc),
+    vripmatch, vripattach, NULL, NULL);
 
 static const struct vrip_unit vrip_units[] = {
 	[VRIP_UNIT_PMU] = { "pmu",
@@ -191,7 +190,7 @@ vripmatch(struct device *parent, struct cfdata *match, void *aux)
 	if (!platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
 		return (0);
 #endif /* SINGLE_VRIP_BASE && TX39XX */
-	if (strcmp(ma->ma_name, match->cf_driver->cd_name))
+	if (strcmp(ma->ma_name, match->cf_name))
 		return (0);
 
 	return (1);
@@ -294,7 +293,7 @@ vrip_search(struct device *parent, struct cfdata *cf, void *aux)
 	va.va_cc = sc->sc_chipset.vc_cc;
 	va.va_ac = sc->sc_chipset.vc_ac;
 	va.va_dc = sc->sc_chipset.vc_dc;
-	if (((*cf->cf_attach->ca_match)(parent, cf, &va) == sc->sc_pri))
+	if ((config_match(parent, cf, &va) == sc->sc_pri))
 		config_attach(parent, cf, &va, vrip_print);
 
 	return (0);

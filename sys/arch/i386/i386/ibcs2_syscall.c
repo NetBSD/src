@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.14.4.6 2002/06/24 22:04:50 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.14.4.7 2002/10/18 02:37:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.14.4.6 2002/06/24 22:04:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.14.4.7 2002/10/18 02:37:41 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -146,7 +146,11 @@ ibcs2_syscall_plain(frame)
 
 	rval[0] = 0;
 	rval[1] = 0;
+
+	KERNEL_PROC_LOCK(l);
 	error = (*callp->sy_call)(l, args, rval);
+	KERNEL_PROC_UNLOCK(l);	
+
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
@@ -226,12 +230,15 @@ ibcs2_syscall_fancy(frame)
 			goto bad;
 	}
 
+	KERNEL_PROC_LOCK(l);
 	if ((error = trace_enter(l, code, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
+	KERNEL_PROC_UNLOCK(l);
+	
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.1.8.2 2002/04/17 00:02:35 nathanw Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.1.8.3 2002/10/18 02:35:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -108,11 +108,16 @@ u_int irqmasks[IPL_LEVELS];
 u_int irqblock[NIRQS];
 
 
-extern void set_spl_masks();
+extern void set_spl_masks(void);
 static int fakeintr(void *);
 #ifdef DEBUG
-static int dumpirqhandlers();
+static int dumpirqhandlers(void);
 #endif
+void intr_calculatemasks(void);
+
+const struct evcnt *sa11x0_intr_evcnt(sa11x0_chipset_tag_t, int);
+void stray_irqhandler(void *);
+
 /*
  * Recalculate the interrupt masks from scratch.
  * We could code special registry and deregistry versions of this function that
@@ -120,7 +125,7 @@ static int dumpirqhandlers();
  * happen very much anyway.
  */
 void
-intr_calculatemasks()
+intr_calculatemasks(void)
 {
 	int irq, level;
 	struct irqhandler *q;

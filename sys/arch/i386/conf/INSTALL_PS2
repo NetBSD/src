@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_PS2,v 1.4.4.6 2002/08/01 02:41:56 nathanw Exp $
+#	$NetBSD: INSTALL_PS2,v 1.4.4.7 2002/10/18 02:37:31 nathanw Exp $
 #
 #	INSTALL_PS2 - PS/2 Installation kernel.
 #
@@ -12,7 +12,7 @@ include "arch/i386/conf/GENERIC_PS2TINY"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44M, same as a floppy
+options 	MEMORY_DISK_ROOT_SIZE=3200	# size of memory disk, in blocks
 
 # File systems
 file-system 	MFS			# memory file system

@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.1.2.3 2002/08/01 02:45:10 nathanw Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.1.2.4 2002/10/18 02:42:49 nathanw Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.1.2.3 2002/08/01 02:45:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.1.2.4 2002/10/18 02:42:49 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,10 +66,8 @@ int urlphydebug = URLPHY_DEBUG;
 int urlphy_match(struct device *, struct cfdata *, void *);
 void urlphy_attach(struct device *, struct device *, void *);
 
-struct cfattach urlphy_ca = {
-	sizeof(struct mii_softc), urlphy_match, urlphy_attach, mii_phy_detach,
-	mii_phy_activate
-};
+CFATTACH_DECL(urlphy, sizeof(struct mii_softc),
+    urlphy_match, urlphy_attach, mii_phy_detach, mii_phy_activate);
 
 int urlphy_service(struct mii_softc *, struct mii_data *, int);
 void urlphy_status(struct mii_softc *);
@@ -93,7 +91,7 @@ urlphy_match(struct device *parent, struct cfdata *match, void *aux)
 	/*
 	 * Make sure the parent is an 'url' device.
 	 */
-	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "url") != 0)
+	if (strcmp(parent->dv_cfdata->cf_name, "url") != 0)
 		return(0);
 
 	return (10);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.2.2.6 2002/08/01 02:41:33 nathanw Exp $ */
+/*	$NetBSD: ifpga.c,v 1.2.2.7 2002/10/18 02:36:26 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -70,9 +70,8 @@ static int  ifpga_print		(void *, const char *);
 static int  ifpga_pci_print	(void *, const char *);
 
 /* Drive and attach structures */
-struct cfattach ifpga_ca = {
-	sizeof(struct ifpga_softc), ifpga_match, ifpga_attach
-};
+CFATTACH_DECL(ifpga, sizeof(struct ifpga_softc),
+    ifpga_match, ifpga_attach, NULL, NULL);
 
 int ifpga_found;
 
@@ -143,7 +142,7 @@ ifpga_search(struct device *parent, struct cfdata *cf, void *aux)
 		ifa.ifa_sc_ioh = sc->sc_sc_ioh;
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &ifa) > 0) {
+		if (config_match(parent, cf, &ifa) > 0) {
 			config_attach(parent, cf, &ifa, ifpga_print);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}

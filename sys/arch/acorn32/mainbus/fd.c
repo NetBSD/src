@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.1.4.6 2002/09/17 21:12:26 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.1.4.7 2002/10/18 02:33:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -186,9 +186,8 @@ int fdcprobe __P((struct device *, struct cfdata *, void *));
 int fdprint __P((void *, const char *));
 void fdcattach __P((struct device *, struct device *, void *));
 
-struct cfattach fdc_ca = {
-	sizeof(struct fdc_softc), fdcprobe, fdcattach
-};
+CFATTACH_DECL(fdc, sizeof(struct fdc_softc),
+    fdcprobe, fdcattach, NULL, NULL);
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -264,9 +263,8 @@ void fdattach __P((struct device *, struct device *, void *));
 extern char floppy_read_fiq[], floppy_read_fiq_end[];
 extern char floppy_write_fiq[], floppy_write_fiq_end[];
 
-struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdprobe, fdattach
-};
+CFATTACH_DECL(fd, sizeof(struct fd_softc),
+    fdprobe, fdattach, NULL, NULL);
 
 extern struct cfdriver fd_cd;
 
@@ -408,7 +406,7 @@ fdcattach(parent, self, aux)
 	fdc->sc_ih = intr_claim(pa->pa_irq, IPL_BIO, "fdc",
 	    fdcintr, fdc);
 	if (!fdc->sc_ih)
-		panic("%s: Cannot claim IRQ %d\n", self->dv_xname, pa->pa_irq);
+		panic("%s: Cannot claim IRQ %d", self->dv_xname, pa->pa_irq);
 
 #if 0
 	/*
@@ -1086,7 +1084,7 @@ loop:
 		    fdc->sc_fr.fh_r12, (u_int)bp->b_data, fd->sc_skip);
 #endif
 		if (fiq_claim(&fdc->sc_fh) == -1)
-			panic("%s: Cannot claim FIQ vector\n", fdc->sc_dev.dv_xname);
+			panic("%s: Cannot claim FIQ vector", fdc->sc_dev.dv_xname);
 		IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x01);
 		bus_space_write_2(iot, ioh, fdctl, type->rate);
 #ifdef FD_DEBUG
@@ -1628,7 +1626,7 @@ load_memory_disc_from_floppy(md, dev)
 		fdstrategy(bp);
 
 		if (biowait(bp))
-			panic("Cannot load floppy image\n");
+			panic("Cannot load floppy image");
                                                  
 		memcpy((caddr_t)md->md_addr + loop * fd_types[type].sectrac
 		    * DEV_BSIZE, (caddr_t)bp->b_data,

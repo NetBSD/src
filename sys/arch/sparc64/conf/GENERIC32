@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.23.2.8 2002/09/17 21:17:52 nathanw Exp $
+# 	$NetBSD: GENERIC32,v 1.23.2.9 2002/10/18 02:40:02 nathanw Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.23.2.8 $"
+#ident 		"GENERIC-$Revision: 1.23.2.9 $"
 
 maxusers	64
 
@@ -41,6 +41,7 @@ config		netbsd	root on ? type ?
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
+options 	SYSTRACE		# system call vetting via systrace(1)
 
 ## Collect statistics on kernel malloc's and free's.  This does have a
 ## significant performance hit on slower machines, so it is intended for
@@ -56,13 +57,13 @@ options 	SYSVSHM		# System V shared memory
 ## Loadable kernel module support; still under development.
 options 	LKM
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-## NFS boot options; default on sparc is the bootparam protocol
+## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 options 	NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTP
-#options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_DHCP
 
 #### Debugging options
 
@@ -185,6 +186,7 @@ options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
 options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 options 	PPP_FILTER	# Add active filters for ppp (via bpf)
@@ -265,10 +267,16 @@ cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 ## sun4u on-board SCSI, and FSBE/S SBus SCSI cards, an NCR53c94 or
 ## equivalent behind an LSI Logic DMA controller
 
-dma*	at sbus? slot ? offset ?		# SBus
-esp*	at dma? flags 0x0000			# SBus
+# XXX - the esp driver has problems with tagged queueing.
+# To avoid these, tagged queueing has been disabled for the first 8 targets
+# by setting those bits to 1 (starting at bit 16, see esp(4) for details).
+# If you want tagged queueing, and are sure it works for you, set the flags
+# value to 0. CAVEAT: using tagged queueing currently can cause data loss!
 
-esp*	at sbus? slot ? offset ?
+dma*	at sbus? slot ? offset ?		# SBus
+esp*	at dma? flags 0x00ff0000		# SBus
+
+esp*	at sbus? slot ? offset ? flags 0x00ff0000
 isp*	at sbus? slot ? offset ?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 siop*	at pci? 			# 53C875 "glm" compatible
@@ -336,6 +344,10 @@ pseudo-device	vnd	4
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
 
 pseudo-device	ccd	4
+
+## Cryptographic disk devices.  See cgd(4).
+
+#pseudo-device	cgd	4
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 

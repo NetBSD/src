@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_milan.c,v 1.4.10.2 2002/02/28 04:08:26 nathanw Exp $	*/
+/*	$NetBSD: isa_milan.c,v 1.4.10.3 2002/10/18 02:35:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -239,7 +239,7 @@ isa_intr_disestablish(ic, handler)
 	isa_intr_info_t *iinfo_p = (isa_intr_info_t *)handler;
 
 	if (iinfo_p->ifunc == NULL)
-	    panic("isa_intr_disestablish: interrupt was not established\n");
+	    panic("isa_intr_disestablish: interrupt was not established");
 
 	iinfo_p->ifunc = NULL;
 	new_imask();

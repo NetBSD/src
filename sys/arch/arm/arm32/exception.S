@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.1.8.4 2002/08/19 21:39:02 thorpej Exp $	*/
+/*	$NetBSD: exception.S,v 1.1.8.5 2002/10/18 02:35:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -167,7 +167,7 @@ ASENTRY_NP(prefetch_abort_entry)
 
  	mov	r0, sp			/* pass the stack pointer as r0 */
 
-	add	lr, pc, #exception_exit - . - 8
+	adr	lr, exception_exit
 	ldr	r1, Lprefetch_abort_handler_address
 	ldr	pc, [r1]
 	
@@ -182,7 +182,7 @@ _C_LABEL(prefetch_abort_handler_address):
 
 	.text
 abortprefetch:
-        add     r0, pc, #abortprefetchmsg - . - 8
+        adr     r0, abortprefetchmsg
 	b	_C_LABEL(panic)
 
 abortprefetchmsg:
@@ -202,7 +202,7 @@ ASENTRY_NP(data_abort_entry)
 
 	mov	r0, sp			/* pass the stack pointer as r0 */
 
-	add	lr, pc, #exception_exit - . - 8
+	adr	lr, exception_exit
 	ldr	r1, Ldata_abort_handler_address
 	ldr	pc, [r1]
 
@@ -216,7 +216,7 @@ _C_LABEL(data_abort_handler_address):
 
 	.text
 abortdata:
-        add     r0, pc, #abortdatamsg - . - 8
+        adr     r0, abortdatamsg
 	b	_C_LABEL(panic)
 
 abortdatamsg:

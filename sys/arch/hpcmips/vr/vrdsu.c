@@ -1,4 +1,4 @@
-/*	$NetBSD: vrdsu.c,v 1.3.4.2 2002/02/28 04:10:06 nathanw Exp $	*/
+/*	$NetBSD: vrdsu.c,v 1.3.4.3 2002/10/18 02:37:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -48,9 +48,8 @@ static void vrdsuattach(struct device *, struct device *, void *);
 static void vrdsu_write(struct vrdsu_softc *, int, unsigned short);
 static unsigned short vrdsu_read(struct vrdsu_softc *, int);
 
-struct cfattach vrdsu_ca = {
-	sizeof(struct vrdsu_softc), vrdsumatch, vrdsuattach
-};
+CFATTACH_DECL(vrdsu, sizeof(struct vrdsu_softc),
+    vrdsumatch, vrdsuattach, NULL, NULL);
 
 struct vrdsu_softc *the_dsu_sc = NULL;
 

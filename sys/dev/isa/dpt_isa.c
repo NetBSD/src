@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_isa.c,v 1.4.4.4 2002/02/28 04:13:39 nathanw Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.4.4.5 2002/10/18 02:42:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.4.4.4 2002/02/28 04:13:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.4.4.5 2002/10/18 02:42:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,8 @@ static int	dpt_isa_probe(struct isa_attach_args *, int);
 static int	dpt_isa_wait(bus_space_handle_t, bus_space_tag_t, u_int8_t,
 			     u_int8_t);
 
-struct cfattach dpt_isa_ca = {
-	sizeof(struct dpt_softc), dpt_isa_match, dpt_isa_attach
-};
+CFATTACH_DECL(dpt_isa, sizeof(struct dpt_softc),
+    dpt_isa_match, dpt_isa_attach, NULL, NULL);
 
 /* Try 'less intrusive' addresses first */
 static const int	dpt_isa_iobases[] = { 0x230, 0x330, 0x1f0, 0x170, 0 };

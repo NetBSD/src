@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.1.2.4 2002/09/17 21:17:35 nathanw Exp $	*/
+/*	$NetBSD: profile.c,v 1.1.2.5 2002/10/18 02:39:49 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -46,7 +46,6 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ioctl.h>
-#include <sys/map.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
@@ -227,7 +226,7 @@ profread(dev, uio, flags)
 		}
 		else
 		{
-		    panic("profiler lost buffer\n");
+		    panic("profiler lost buffer");
 		}
 	    }
 	    /* now initialise the backup copy before switching over.

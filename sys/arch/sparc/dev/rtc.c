@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1.2.5 2002/04/17 00:04:25 nathanw Exp $ */
+/*	$NetBSD: rtc.c,v 1.1.2.6 2002/10/18 02:39:55 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -61,10 +61,8 @@ struct rtc_ebus_softc {
 static int	rtcmatch_ebus(struct device *, struct cfdata *, void *);
 static void	rtcattach_ebus(struct device *, struct device *, void *);
 
-struct cfattach rtc_ebus_ca = {
-	sizeof(struct rtc_ebus_softc), rtcmatch_ebus, rtcattach_ebus
-};
-
+CFATTACH_DECL(rtc_ebus, sizeof(struct rtc_ebus_softc),
+    rtcmatch_ebus, rtcattach_ebus, NULL, NULL);
 
 /* XXX: global TOD clock handle (sparc/clock.c) */
 extern todr_chip_handle_t todr_handle;
@@ -116,7 +114,7 @@ rtcmatch_ebus(parent, cf, aux)
 {
 	struct ebus_attach_args *ea = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, ea->ea_name) == 0);
+	return (strcmp(cf->cf_name, ea->ea_name) == 0);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960reg.h,v 1.3.26.1 2002/01/08 00:29:57 nathanw Exp $	*/
+/*	$NetBSD: mb86960reg.h,v 1.3.26.2 2002/10/18 02:41:57 nathanw Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -21,8 +21,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#define FE_MB86960_H_VERSION "mb86960.h ver. 0.8"
 
 /*
  * Registers of Fujitsu MB86960A/MB86965A Ethernet controller.
@@ -202,6 +200,7 @@
 #define FE_D7_RBS	0x0C	/* Register bank select			*/
 #define FE_D7_RDYPNS	0x10	/* Senses RDYPNSEL input signal		*/
 #define FE_D7_POWER	0x20	/* Stand-by (power down) mode control	*/
+#define FE_D7_ED	0xC0	/* Encoder/Decoder config (for MB86960)	*/
 #define FE_D7_IDENT	0xC0	/* Chip identification			*/
 
 #define FE_D7_BYTSWP_LH	0x00	/* DEC/Intel byte order		*/
@@ -214,12 +213,19 @@
 #define FE_D7_POWER_DOWN	0x00	/* Power down (stand-by) mode	*/
 #define FE_D7_POWER_UP		0x20	/* Normal operation		*/
 
-#define FE_D7_IDENT_NICE	0x80
-#define FE_D7_IDENT_EC		0xC0
+#define FE_D7_ED_NORMAL		0x00	/* Normal NICE			*/
+#define FE_D7_ED_MON		0x40	/* NICE + Monitor		*/
+#define FE_D7_ED_BYPASS		0x80	/* Encoder/Decorder Bypass	*/
+#define FE_D7_ED_TEST		0xC0	/* Encoder/Decorder Test	*/
+
+#define FE_D7_IDENT_86960	0x00	/* MB86960 (NICE)		*/
+#define FE_D7_IDENT_86964	0x40	/* MB86964			*/
+#define FE_D7_IDENT_86967	0x80	/* MB86967			*/
+#define FE_D7_IDENT_86965	0xC0	/* MB86965 (EtherCoupler)	*/
 
 /* DLCR8 thru DLCR13 are for Ethernet station address.  */
 
-/* DLCR14 and DLCR15 are for TDR.  (BTW, what is TDR?  FIXME.)  */
+/* DLCR14 and DLCR15 are for TDR (Time Domain Reflectometry).  */
 
 /* MAR8 thru MAR15 are for Multicast address filter.  */
 
@@ -286,9 +292,9 @@
 /* BMPR17 -- EEPROM data */
 #define FE_B17_DATA	0x80	/* EEPROM data bit			*/
 
-/* BMPR18 ??? */
+/* BMPR18 I/O Base Address (Only JLI mode) */
 
-/* BMPR19 -- ISA interface configuration */
+/* BMPR19 -- Jumperless Setting (Only JLI mode) */
 #define FE_B19_IRQ		0xC0
 #define FE_B19_IRQ_SHIFT	6
 
@@ -303,10 +309,26 @@
  */
 
 /* Number of bytes in an EEPROM accessible through 86965.  */
-#define FE_EEPROM_SIZE	32
+#define FE_EEPROM_SIZE		32
 
 /* Offset for JLI config; automatically copied into BMPR19 at startup.  */
-#define FE_EEPROM_CONF	0
+#define FE_EEPROM_CONF		0x00
+
+/* Delay for 93c06 EEPROM access */
+#define FE_EEPROM_DELAY()	DELAY(4)
+
+/*
+ * EEPROM allocation of AT1700/RE2000.
+ */
+#define FE_ATI_EEP_ADDR		0x08	/* Station address (0x08-0x0d)	*/
+#define FE_ATI_EEP_MEDIA	0x18	/* Media type			*/
+#define FE_ATI_EEP_MAGIC	0x19	/* XXX Magic			*/
+#define FE_ATI_EEP_MODEL	0x1e	/* Hardware type		*/
+#define  FE_ATI_MODEL_AT1700T	0x00
+#define  FE_ATI_MODEL_AT1700BT	0x01
+#define  FE_ATI_MODEL_AT1700FT	0x02
+#define  FE_ATI_MODEL_AT1700AT	0x03
+#define FE_ATI_EEP_REVISION	0x1f	/* Hardware revision		*/
 
 /*
  * Some 86960 specific constants.

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.18.4.11 2002/08/23 02:47:07 petrov Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.18.4.12 2002/10/18 02:40:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -45,7 +45,6 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/map.h>
 #include <sys/select.h>
 #include <sys/ucontext.h>
 #include <sys/ioctl.h>

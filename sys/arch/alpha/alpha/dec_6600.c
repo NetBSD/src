@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.12.4.3 2002/09/17 21:12:37 nathanw Exp $ */
+/* $NetBSD: dec_6600.c,v 1.12.4.4 2002/10/18 02:33:58 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.12.4.3 2002/09/17 21:12:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.12.4.4 2002/10/18 02:33:58 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ dec_6600_cons_init()
 		    " hose = %ld\n", ctb->ctb_term_type, ctbslot,
 		    CTB_TURBOSLOT_HOSE(ctbslot));
 
-		panic("consinit: unknown console type %ld\n",
+		panic("consinit: unknown console type %ld",
 		    ctb->ctb_term_type);
 	}
 #ifdef KGDB
@@ -188,7 +188,7 @@ dec_6600_device_register(dev, aux)
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	struct cfdriver *cd = cf->cf_driver;
+	const char *name = cf->cf_name;
 
 	if (found)
 		return;
@@ -208,7 +208,7 @@ dec_6600_device_register(dev, aux)
 		initted = 1;
 	}
 	if (primarydev == NULL) {
-		if (strcmp(cd->cd_name, "tsp"))
+		if (strcmp(name, "tsp"))
 			return;
 		else {
 			struct tsp_attach_args *tsp = aux;
@@ -224,7 +224,7 @@ dec_6600_device_register(dev, aux)
 	if (pcidev == NULL) {
 		if (parent != primarydev)
 			return;
-		if (strcmp(cd->cd_name, "pci"))
+		if (strcmp(name, "pci"))
 			return;
 		else {
 			struct pcibus_attach_args *pba = aux;
@@ -256,9 +256,9 @@ dec_6600_device_register(dev, aux)
 		}
 	}
 	if ((ideboot || scsiboot) &&
-	    (!strcmp(cd->cd_name, "sd") ||
-	     !strcmp(cd->cd_name, "st") ||
-	     !strcmp(cd->cd_name, "cd"))) {
+	    (!strcmp(name, "sd") ||
+	     !strcmp(name, "st") ||
+	     !strcmp(name, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != scsipidev)
@@ -275,12 +275,12 @@ dec_6600_device_register(dev, aux)
 
 		switch (b->boot_dev_type) {
 		case 0:
-			if (strcmp(cd->cd_name, "sd") &&
-			    strcmp(cd->cd_name, "cd"))
+			if (strcmp(name, "sd") &&
+			    strcmp(name, "cd"))
 				return;
 			break;
 		case 1:
-			if (strcmp(cd->cd_name, "st"))
+			if (strcmp(name, "st"))
 				return;
 			break;
 		default:
@@ -297,7 +297,7 @@ dec_6600_device_register(dev, aux)
 	/*
 	 * Support to boot from IDE drives.
 	 */
-	if ((ideboot || scsiboot) && !strcmp(cd->cd_name, "wd")) {
+	if ((ideboot || scsiboot) && !strcmp(name, "wd")) {
 		struct ata_device *adev = aux;
 		if ((strncmp("pciide", parent->dv_xname, 6) != 0)) {
 			return;

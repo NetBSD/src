@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.3.2.6 2002/06/20 03:44:25 nathanw Exp $	*/
+/*	$NetBSD: iopl.c,v 1.3.2.7 2002/10/18 02:41:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.3.2.6 2002/06/20 03:44:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.3.2.7 2002/10/18 02:41:43 nathanw Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -130,9 +130,8 @@ static int	iopl_ioctl(struct ifnet *, u_long, caddr_t);
 static void	iopl_start(struct ifnet *);
 static void	iopl_stop(struct ifnet *, int);
 
-struct cfattach iopl_ca = {
-	sizeof(struct iopl_softc), iopl_match, iopl_attach,
-};
+CFATTACH_DECL(iopl, sizeof(struct iopl_softc),
+    iopl_match, iopl_attach, NULL, NULL);
 
 #ifdef I2OVERBOSE
 static const char * const iopl_errors[] = {
@@ -382,13 +381,13 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef I2ODEBUG
 	if (sc->sc_tx_maxsegs == 0)
-		panic("%s: sc->sc_tx_maxsegs == 0\n", self->dv_xname);
+		panic("%s: sc->sc_tx_maxsegs == 0", self->dv_xname);
 	if (sc->sc_tx_maxout == 0)
-		panic("%s: sc->sc_tx_maxsegs == 0\n", self->dv_xname);
+		panic("%s: sc->sc_tx_maxsegs == 0", self->dv_xname);
 	if (sc->sc_tx_maxreq == 0)
-		panic("%s: sc->sc_tx_maxsegs == 0\n", self->dv_xname);
+		panic("%s: sc->sc_tx_maxsegs == 0", self->dv_xname);
 	if (sc->sc_rx_maxbkt == 0)
-		panic("%s: sc->sc_rx_maxbkt == 0\n", self->dv_xname);
+		panic("%s: sc->sc_rx_maxbkt == 0", self->dv_xname);
 #endif
 
 	/*
@@ -942,7 +941,7 @@ iopl_intr_rx(struct device *dv, struct iop_msg *im, void *reply)
 
 #ifdef I2ODEBUG
 			if (pkt >= IOPL_MAX_BATCH)
-				panic("iopl_intr_rx: too many packets\n");
+				panic("iopl_intr_rx: too many packets");
 #endif
 			/*
 			 * Break out at the right spot later on if this is

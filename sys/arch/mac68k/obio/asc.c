@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.39.8.1 2002/09/17 21:15:31 nathanw Exp $	*/
+/*	$NetBSD: asc.c,v 1.39.8.2 2002/10/18 02:38:29 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -70,7 +70,6 @@
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/poll.h>
 #include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
@@ -107,9 +106,8 @@ static void	asc_intr __P((void *));
 static int	ascmatch __P((struct device *, struct cfdata *, void *));
 static void	ascattach __P((struct device *, struct device *, void *));
 
-struct cfattach asc_ca = {
-	sizeof(struct asc_softc), ascmatch, ascattach
-};
+CFATTACH_DECL(asc, sizeof(struct asc_softc),
+    ascmatch, ascattach, NULL, NULL);
 
 extern struct cfdriver asc_cd;
 
@@ -118,12 +116,11 @@ dev_type_close(ascclose);
 dev_type_read(ascread);
 dev_type_write(ascwrite);
 dev_type_ioctl(ascioctl);
-dev_type_poll(ascpoll);
 dev_type_mmap(ascmmap);
 
 const struct cdevsw asc_cdevsw = {
 	ascopen, ascclose, ascread, ascwrite, ascioctl,
-	nostop, notty, ascpoll, ascmmap,
+	nostop, notty, nopoll, ascmmap,
 };
 
 static int
@@ -289,15 +286,6 @@ ascioctl(dev, cmd, data, flag, p)
 		break;
 	}
 	return (error);
-}
-
-int
-ascpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-	return (events & (POLLOUT | POLLWRNORM));
 }
 
 paddr_t

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.next68k,v 1.2.2.2 2002/09/17 21:16:20 nathanw Exp $
+#	$NetBSD: majors.next68k,v 1.2.2.3 2002/10/18 02:39:13 nathanw Exp $
 #
 # Device majors for next68k
 #
@@ -8,7 +8,7 @@ device-major	ctty		char 1
 device-major	mem		char 2
 device-major	swap		char 3   block 3
 device-major	pts		char 4			pty
-device-major	ptc		char 5			ptc
+device-major	ptc		char 5			pty
 device-major	log		char 6
 
 device-major	zstty		char 12			zstty
@@ -42,3 +42,4 @@ device-major	svr4_net	char 44			compat_svr4
 device-major	wsmux		char 45			wsmux
 device-major	clockctl	char 46			clockctl
 device-major	systrace	char 47			systrace
+device-major	cgd		char 48  block 21	cgd

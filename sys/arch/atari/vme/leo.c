@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.3.8.1 2002/09/17 21:13:51 nathanw Exp $	*/
+/*	$NetBSD: leo.c,v 1.3.8.2 2002/10/18 02:36:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -100,9 +100,8 @@ static int leo_probe __P((bus_space_tag_t *, bus_space_tag_t *,
 static int leo_init __P((struct leo_softc *, int));
 static int leo_scroll __P((struct leo_softc *, int));
 
-struct cfattach leo_ca = {
-	sizeof(struct leo_softc), leo_match, leo_attach
-};
+CFATTACH_DECL(leo, sizeof(struct leo_softc),
+    leo_match, leo_attach, NULL, NULL);
 
 extern struct cfdriver leo_cd;
 
@@ -230,10 +229,10 @@ leo_attach(parent, self, aux)
 
 	printf("\n");
 	if (bus_space_map(va->va_iot, va->va_iobase, va->va_iosize, 0, &ioh))
-		panic("leo_attach: cannot map io area\n");
+		panic("leo_attach: cannot map io area");
 	if (bus_space_map(va->va_memt, va->va_maddr, va->va_msize,
 			  BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE, &memh))
-		panic("leo_attach: cannot map memory area\n");
+		panic("leo_attach: cannot map memory area");
 #ifdef SET_REGION /* XXX seems to be unimplemented on atari? */
 	bus_space_set_region_4(va->va_memt, memh, 0, 0, va->va_msize >> 2);
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.11.20.1 2002/04/01 07:42:42 nathanw Exp $ */
+/*	$NetBSD: power.c,v 1.11.20.2 2002/10/18 02:39:55 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -51,9 +51,8 @@
 static int powermatch __P((struct device *, struct cfdata *, void *));
 static void powerattach __P((struct device *, struct device *, void *));
 
-struct cfattach power_ca = {
-	sizeof(struct device), powermatch, powerattach
-};
+CFATTACH_DECL(power, sizeof(struct device),
+    powermatch, powerattach, NULL, NULL);
 
 /*
  * This is the driver for the "power" register available on some Sun4m

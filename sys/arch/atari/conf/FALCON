@@ -1,12 +1,12 @@
 #
-# $NetBSD: FALCON,v 1.40.8.6 2002/09/17 21:13:39 nathanw Exp $
+# $NetBSD: FALCON,v 1.40.8.7 2002/10/18 02:35:48 nathanw Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.6 2002/09/02 12:10:46 leo Exp $
-#		NetBSD: GENERIC.in,v 1.22 2002/09/02 12:10:46 leo Exp $
+#		NetBSD: GENERIC.in,v 1.27 2002/10/14 18:24:33 elric Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -67,7 +67,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
+#options  	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -135,8 +135,9 @@ options 	SYSVSEM			# System V semaphores
 #Support for various kernel options
 
 options 	KTRACE			# Add kernel tracing system call
+options 	SYSTRACE		# system call vetting via systrace(1)
 options 	DIAGNOSTIC		# Add additional error checking code
-#options 	USERCONF		# userconf(4) support
+options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #These options enable verbose messages for several subsystems.
@@ -184,6 +185,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 pseudo-device	ccd		4	# concatenating disk driver
+#pseudo-device	cgd		4	# cryptographic disk driver
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #Options to enable various other RAIDframe RAID types.

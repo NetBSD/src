@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.4.8 2002/08/27 23:44:28 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.4.9 2002/10/18 02:36:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -32,7 +32,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.36 1999/05/18 23:52:54 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.36.20.1 2002/10/18 02:40:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -156,9 +156,8 @@ void	de_setaddr __P((u_char *, struct de_softc *));
 void	deintr __P((int));
 
 
-struct	cfattach de_ca = {
-	sizeof(struct de_softc), dematch, deattach
-};
+CFATTACH_DECL(de, sizeof(struct de_softc),
+    dematch, deattach, NULL, NULL);
 
 extern struct cfdriver de_cd;
 

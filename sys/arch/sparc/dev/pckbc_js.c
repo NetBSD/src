@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.2.2.2 2002/02/28 04:12:02 nathanw Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.2.2.3 2002/10/18 02:39:55 nathanw Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -65,15 +65,12 @@ static void	pckbc_js_attach_common(	struct pckbc_js_softc *,
 static void	pckbc_js_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 /* Mr.Coffee */
-struct cfattach pckbc_obio_ca = {
-	sizeof(struct pckbc_js_softc), pckbc_obio_match, pckbc_obio_attach
-};
+CFATTACH_DECL(pckbc_obio, sizeof(struct pckbc_js_softc),
+    pckbc_obio_match, pckbc_obio_attach, NULL, NULL);
 
 /* ms-IIep */
-struct cfattach pckbc_ebus_ca = {
-	sizeof(struct pckbc_js_softc), pckbc_ebus_match, pckbc_ebus_attach
-};
-
+CFATTACH_DECL(pckbc_ebus, sizeof(struct pckbc_js_softc),
+    pckbc_ebus_match, pckbc_ebus_attach, NULL, NULL);
 
 #define PCKBC_PROM_DEVICE_NAME "8042"
 
@@ -139,14 +136,24 @@ pckbc_ebus_attach(parent, self, aux)
 	struct ebus_attach_args *ea = aux;
 	bus_space_tag_t iot;
 	bus_addr_t ioaddr;
-	int intr, isconsole;
+	int intr;
+	int stdin_node,	node;
+	int isconsole;
 
 	iot = ea->ea_bustag;
 	ioaddr = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
 	intr = ea->ea_nintr ? ea->ea_intr[0] : /* line */ 0;
 
-	/* TODO: see comment in pckbc_obio_attach above */
-	isconsole = 1;
+	/* search children of "8042" node for stdin (keyboard) */
+	stdin_node = prom_instance_to_package(prom_stdin());
+	isconsole = 0;
+
+	for (node = prom_firstchild(ea->ea_node);
+	     node != 0; node = prom_nextsibling(node))
+		if (node == stdin_node) {
+			isconsole = 1;
+			break;
+		}
 
 	pckbc_js_attach_common(jsc, iot, ioaddr, intr, isconsole);
 }

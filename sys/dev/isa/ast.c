@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.46.6.3 2002/02/28 04:13:38 nathanw Exp $	*/
+/*	$NetBSD: ast.c,v 1.46.6.4 2002/10/18 02:42:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.46.6.3 2002/02/28 04:13:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.46.6.4 2002/10/18 02:42:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,9 +69,8 @@ void astattach __P((struct device *, struct device *, void *));
 int astintr __P((void *));
 int astprint __P((void *, const char *));
 
-struct cfattach ast_ca = {
-	sizeof(struct ast_softc), astprobe, astattach
-};
+CFATTACH_DECL(ast, sizeof(struct ast_softc),
+    astprobe, astattach, NULL, NULL);
 
 int
 astprobe(parent, self, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.20 1999/09/29 06:04:51 scottr Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.20.20.1 2002/10/18 02:38:28 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -62,9 +62,8 @@ static void	sn_nubus_attach __P((struct device *, struct device *, void *));
 static int	sn_nb_card_vendor __P((bus_space_tag_t, bus_space_handle_t,
 		    struct nubus_attach_args *));
 
-struct cfattach sn_nubus_ca = {
-	sizeof(struct sn_softc), sn_nubus_match, sn_nubus_attach
-};
+CFATTACH_DECL(sn_nubus, sizeof(struct sn_softc),
+    sn_nubus_match, sn_nubus_attach, NULL, NULL);
 
 
 static int

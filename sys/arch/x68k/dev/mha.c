@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.23.2.4 2002/06/20 03:42:31 nathanw Exp $	*/
+/*	$NetBSD: mha.c,v 1.23.2.5 2002/10/18 02:40:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -271,9 +271,8 @@ void	mha_dump_driver __P((struct mha_softc *));
 
 static int mha_dataio_dma __P((int, int, struct mha_softc *, u_char *, int));
 
-struct cfattach mha_ca = {
-	sizeof(struct mha_softc), mhamatch, mhaattach
-};
+CFATTACH_DECL(mha, sizeof(struct mha_softc),
+    mhamatch, mhaattach, NULL, NULL);
 
 extern struct cfdriver mha_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.5.4.2 2002/09/17 21:13:56 nathanw Exp $	*/
+/*	$NetBSD: lms.c,v 1.5.4.3 2002/10/18 02:36:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -75,9 +75,8 @@ int lmsprobe __P((struct device *, struct cfdata *, void *));
 void lmsattach __P((struct device *, struct device *, void *));
 int lmsintr __P((void *));
 
-struct cfattach lms_ca = {
-	sizeof(struct lms_softc), lmsprobe, lmsattach
-};
+CFATTACH_DECL(lms, sizeof(struct lms_softc),
+    lmsprobe, lmsattach, NULL, NULL);
 
 extern struct cfdriver lms_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9.34.1 2002/04/17 00:03:38 nathanw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9.34.2 2002/10/18 02:38:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,9 +47,8 @@ static int	mainbus_match __P((struct device *, struct cfdata *, void *));
 static void	mainbus_attach __P((struct device *, struct device *, void *));
 static int	mainbus_search __P((struct device *, struct cfdata *, void *));
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbus_match, mainbus_attach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbus_match, mainbus_attach, NULL, NULL);
 
 struct m68k_bus_dma_tag mac68k_bus_dma_tag = {
 	NULL,					/* _cookie */
@@ -110,7 +109,7 @@ mainbus_search(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	if ((*cf->cf_attach->ca_match)(parent, cf, aux) > 0)
+	if (config_match(parent, cf, aux) > 0)
 		config_attach(parent, cf, aux, NULL);
 	return 0;
 }

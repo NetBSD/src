@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.12.4.2 2002/02/28 04:10:03 nathanw Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.12.4.3 2002/10/18 02:37:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -68,9 +68,8 @@ int	vr_major=-1;
 int	vr_minor=-1;
 int	vr_cpuid=-1;
 
-struct cfattach vrbcu_ca = {
-	sizeof(struct vrbcu_softc), vrbcu_match, vrbcu_attach
-};
+CFATTACH_DECL(vrbcu, sizeof(struct vrbcu_softc),
+    vrbcu_match, vrbcu_attach, NULL, NULL);
 
 struct vrbcu_softc *the_bcu_sc = NULL;
 
@@ -95,7 +94,7 @@ vrbcu_addr()
 
 	if (addr == NULL) {
 		if ((p = platid_search_data(&platid, addrs)) == NULL)
-			panic("%s: can't find VR BCU address\n", __FUNCTION__);
+			panic("%s: can't find VR BCU address", __FUNCTION__);
 		addr = (bus_addr_t)p->data;
 	}
 
@@ -459,7 +458,7 @@ vrbcu_vrip_getcpuclock(void)
 		cpuspeed = (cpuclock / 3 + MHZ / 2) / MHZ;
 		break;
 	default:
-		panic("unknown CPU type %d\n", cpuid);
+		panic("unknown CPU type %d", cpuid);
 		break;
 	}
 

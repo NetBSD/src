@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.1.4.3 2002/08/13 01:02:38 nathanw Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.1.4.4 2002/10/18 02:33:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -52,8 +52,6 @@
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <uvm/uvm_extern.h>
-#include <machine/pmap.h>
 #include <machine/io.h>
 #include <machine/intr.h>
 #include <machine/bootconfig.h>
@@ -65,20 +63,21 @@
 #include <dev/podulebus/podules.h>
 #include <dev/podulebus/powerromreg.h>
 
-void ptscattach __P((struct device *, struct device *, void *));
 int  ptscmatch  __P((struct device *, struct cfdata *, void *));
+void ptscattach __P((struct device *, struct device *, void *));
 
-struct cfattach ptsc_ca = {
-	sizeof(struct ptsc_softc), ptscmatch, ptscattach
-};
+CFATTACH_DECL(ptsc, sizeof(struct ptsc_softc),
+    ptscmatch, ptscattach, NULL, NULL);
 
-int ptsc_intr		 __P((void *arg));
-int ptsc_setup_dma	 __P((struct sfas_softc *sc, void *ptr, int len,
-			      int mode));
-int ptsc_build_dma_chain __P((struct sfas_softc *sc,
-			      struct sfas_dma_chain *chain, void *p, int l));
-int ptsc_need_bump	 __P((struct sfas_softc *sc, void *ptr, int len));
-void ptsc_led		 __P((struct sfas_softc *sc, int mode));
+int ptsc_intr(void *);
+int ptsc_setup_dma(void *, void *, int, int);
+int ptsc_build_dma_chain(void *, void *, void *, int);
+int ptsc_need_bump(void *, void *, int);
+void ptsc_led(void *, int);
+
+void ptsc_set_dma_adr(struct sfas_softc *, void *);
+void ptsc_set_dma_tc(struct sfas_softc *, unsigned int);
+void ptsc_set_dma_mode(struct sfas_softc *, int);
 
 /*
  * if we are a Power-tec SCSI-2 card
@@ -201,7 +200,7 @@ ptscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 	    ptsc_intr, &sc->sc_softc, &sc->sc_softc.sc_intrcnt);
 	if (sc->sc_softc.sc_ih == NULL)
-	    panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
+	    panic("%s: Cannot install IRQ handler", dp->dv_xname);
 #else
 	printf(" polling");
 	sc->sc_softc.sc_adapter.adapt_flags = SCSIPI_ADAPT_POLL_ONLY;
@@ -301,22 +300,22 @@ ptsc_set_dma_mode(sc, mode)
 
 /* Initialize DMA for transfer */
 int
-ptsc_setup_dma(sc, ptr, len, mode)
-	struct sfas_softc *sc;
-	void		 *ptr;
-	int		  len;
-	int		  mode;
+ptsc_setup_dma(v, ptr, len, mode)
+	void	*v;
+	void	*ptr;
+	int	len;
+	int	mode;
 {
+	return(0);
+
+#if 0
+	struct sfas_softc *sc = v;
 	int	retval;
 
 	retval = 0;
 
-#if 0
 	printf("ptsc_setup_dma(sc, ptr = 0x%08x, len = 0x%08x, mode = 0x%08x)\n", (u_int)ptr, len, mode);
-#endif
-	return(0);
 
-#if 0
 	switch(mode) {
 	case SFAS_DMA_READ:
 	case SFAS_DMA_WRITE:
@@ -348,10 +347,10 @@ ptsc_setup_dma(sc, ptr, len, mode)
 
 /* Check if address and len is ok for DMA transfer */
 int
-ptsc_need_bump(sc, ptr, len)
-	struct sfas_softc *sc;
-	void		 *ptr;
-	int		  len;
+ptsc_need_bump(v, ptr, len)
+	void	*v;
+	void	*ptr;
+	int	len;
 {
 	int	p;
 
@@ -369,11 +368,7 @@ ptsc_need_bump(sc, ptr, len)
 
 /* Interrupt driven routines */
 int
-ptsc_build_dma_chain(sc, chain, p, l)
-	struct sfas_softc	*sc;
-	struct sfas_dma_chain	*chain;
-	void			*p;
-	int			 l;
+ptsc_build_dma_chain(void *v1, void *v2, void *p, int l)
 {
 #if 0
 	vm_offset_t  pa, lastpa;
@@ -449,10 +444,9 @@ do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
 
 /* Turn on/off led */
 void
-ptsc_led(sc, mode)
-	struct sfas_softc *sc;
-	int		  mode;
+ptsc_led(void *v, int mode)
 {
+	struct sfas_softc	*sc = v;
 	ptsc_regmap_p		rp;
 
 	rp = (ptsc_regmap_p)sc->sc_fas;

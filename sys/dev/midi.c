@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.21.2.4 2002/09/17 21:19:21 nathanw Exp $	*/
+/*	$NetBSD: midi.c,v 1.21.2.5 2002/10/18 02:41:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.21.2.4 2002/09/17 21:19:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.21.2.5 2002/10/18 02:41:28 nathanw Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -103,10 +103,8 @@ const struct cdevsw midi_cdevsw = {
 	nostop, notty, midipoll, nommap,
 };
 
-struct cfattach midi_ca = {
-	sizeof(struct midi_softc), midiprobe, midiattach,
-	mididetach, midiactivate
-};
+CFATTACH_DECL(midi, sizeof(struct midi_softc),
+    midiprobe, midiattach, mididetach, midiactivate);
 
 #ifdef MIDI_SAVE
 #define MIDI_SAVE_SIZE 100000
@@ -168,7 +166,6 @@ midiactivate(struct device *self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->dying = 1;

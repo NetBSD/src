@@ -1,0 +1,5 @@
+#	$NetBSD: files.arc4,v 1.1.2.2 2002/10/18 02:41:21 nathanw Exp $
+
+define	arc4
+
+file	crypto/arc4/arc4.c		arc4

@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.39.4.5 2002/08/01 02:43:37 nathanw Exp $	*/
+/*	$NetBSD: psycho.c,v 1.39.4.6 2002/10/18 02:40:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -125,9 +125,8 @@ static	int	psycho_match __P((struct device *, struct cfdata *, void *));
 static	void	psycho_attach __P((struct device *, struct device *, void *));
 static	int	psycho_print __P((void *aux, const char *p));
 
-struct cfattach psycho_ca = {
-        sizeof(struct psycho_softc), psycho_match, psycho_attach
-};
+CFATTACH_DECL(psycho, sizeof(struct psycho_softc),
+    psycho_match, psycho_attach, NULL, NULL);
 
 /*
  * "sabre" is the UltraSPARC IIi onboard UPA to PCI bridge.  It manages a
@@ -719,7 +718,7 @@ psycho_bus_a(arg)
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
 
-	panic("%s: PCI bus A error AFAR %llx AFSR %llx\n",
+	panic("%s: PCI bus A error AFAR %llx AFSR %llx",
 		sc->sc_dev.dv_xname, 
 		(long long)regs->psy_pcictl[0].pci_afar, 
 		(long long)regs->psy_pcictl[0].pci_afsr);
@@ -736,7 +735,7 @@ psycho_bus_b(arg)
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
 
-	panic("%s: PCI bus B error AFAR %llx AFSR %llx\n",
+	panic("%s: PCI bus B error AFAR %llx AFSR %llx",
 		sc->sc_dev.dv_xname, 
 		(long long)regs->psy_pcictl[0].pci_afar, 
 		(long long)regs->psy_pcictl[0].pci_afsr);

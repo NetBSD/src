@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.15.6.3 2002/04/17 00:05:27 nathanw Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.15.6.4 2002/10/18 02:41:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.15.6.3 2002/04/17 00:05:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.15.6.4 2002/10/18 02:41:38 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -67,9 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.15.6.3 2002/04/17 00:05:27 nathanw Ex
 int	uha_eisa_match __P((struct device *, struct cfdata *, void *));
 void	uha_eisa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach uha_eisa_ca = {
-	sizeof(struct uha_softc), uha_eisa_match, uha_eisa_attach
-};
+CFATTACH_DECL(uha_eisa, sizeof(struct uha_softc),
+    uha_eisa_match, uha_eisa_attach, NULL, NULL);
 
 #ifndef	DDB
 #define Debugger() panic("should call debugger here (uha_eisa.c)")

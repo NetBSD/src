@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.75.4.7 2002/08/01 02:41:52 nathanw Exp $
+#	$NetBSD: DISKLESS,v 1.75.4.8 2002/10/18 02:37:26 nathanw Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -47,7 +47,7 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
@@ -109,7 +109,7 @@ options 	SCSIVERBOSE	# verbose SCSI error messages
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 mainbus0 at root
-
+cpu0	at mainbus0
 pci0	at mainbus0 bus ?
 eisa0	at mainbus0
 

@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.36.2.16 2002/09/17 21:19:14 nathanw Exp $
+#	$NetBSD: DEVNAMES,v 1.36.2.17 2002/10/18 02:41:24 nathanw Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -56,7 +56,7 @@ amibus_b16		amiga		Attribute
 amibus_bl		amiga		Attribute
 amibus_wb		amiga		Attribute
 amibus_ww		amiga		Attribute
-amps			arm32
+amps			acorn32
 amr			MI
 ams			mac68k
 ams			macppc
@@ -75,7 +75,7 @@ aria			MI
 arp			MI		Attribute
 asc			alpha
 asc			arc
-asc			arm32
+asc			acorn32
 asc			mac68k
 asc			mipsco
 asc			pmax
@@ -194,7 +194,7 @@ cmpci			MI
 cnw			MI		
 com			MI		
 commulti		MI		Attribute
-cosc			arm32
+cosc			acorn32
 cprofb			MI
 cpc			MI
 cpcbus			MI		Attribute
@@ -226,8 +226,8 @@ cpu			x68k
 crime			sgimips
 crypto			MI		Attribute
 cs			MI		
-csa			arm32
-csc			arm32
+csa			acorn32
+csc			acorn32
 ct			hp300
 ct			vax
 cue			MI		
@@ -308,7 +308,7 @@ es			amiga
 es			amigappc
 es			arm32
 esa			MI
-esc			arm32		Attribute
+esc			acorn32		Attribute
 esh			MI		
 esl			MI		
 esm			MI		
@@ -335,7 +335,7 @@ fd			alpha
 fd			amiga
 fd			amigappc
 fd			arc
-fd			arm32
+fd			acorn32
 fd			atari
 fd			bebox
 fd			hpcmips
@@ -352,7 +352,7 @@ fdc			alpha
 fdc			amiga
 fdc			amigappc
 fdc			arc
-fdc			arm32
+fdc			acorn32
 fdc			atari
 fdc			bebox
 fdc			evbsh3
@@ -461,6 +461,7 @@ hpcfbif			hpcmips		Attribute
 hpibbus			hp300
 hpibdev			hp300		Attribute
 ht			vax
+hydra			acorn32
 hyper			amiga
 hyper			amigappc
 hyper			hp300
@@ -473,13 +474,13 @@ ibus			vax
 icp			MI
 icpsp			MI
 ics2101			MI		Attribute
-icside			arm32
+icside			acorn32
 icsphy			MI		
 idc			vax
 idesc			amiga
 idesc			amigappc
 ie			MI		
-ie			arm32
+ie			acorn32
 ie			sun3
 ieee1394		MI
 ifpci			MI
@@ -867,7 +868,7 @@ pcscp			MI
 pdq			MI		Attribute
 pfb			bebox
 pica			arc
-pioc			arm32
+pioc			acorn32
 plum			hpcmips
 plumicu			hpcmips
 plumif			hpcmips
@@ -891,7 +892,7 @@ ppi			hp300
 ps			vax
 pss			MI		
 psycho			sparc64
-ptsc			arm32
+ptsc			acorn32
 puc			MI		
 pwctl			hpcmips
 px			pmax
@@ -908,7 +909,7 @@ ra			MI
 radio			MI		
 radio			MI		Attribute
 rambo			mipsco
-rapide			arm32
+rapide			acorn32
 rasops1			MI		Attribute
 rasops15		MI		Attribute
 rasops16		MI		Attribute
@@ -957,7 +958,7 @@ sbi			vax
 sbic			acorn26		Attribute
 sbic			amiga		Attribute
 sbic			amigappc	Attribute
-sbic			arm32		Attribute
+sbic			acorn32		Attribute
 sbic			mvme68k		Attribute
 sbmac			sbmips
 sbobio			sbmips
@@ -993,7 +994,7 @@ ser			atari
 ses			MI		
 sf			MI		
 sf2r			MI
-sfas			arm32		Attribute
+sfas			acorn32		Attribute
 sfb			alpha
 sfb			pmax
 sgec			MI		Attribute
@@ -1005,7 +1006,7 @@ si			MI
 si			news68k
 si			sun3
 sii			pmax
-simide			arm32
+simide			acorn32
 sio			alpha
 sio			luna68k
 sio16			sparc

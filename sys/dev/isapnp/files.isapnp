@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.27.2.3 2002/06/20 03:45:11 nathanw Exp $
+#	$NetBSD: files.isapnp,v 1.27.2.4 2002/10/18 02:42:41 nathanw Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -17,6 +17,10 @@ file	dev/isapnp/isapnpdevs.c			isapnp
 # 3Com 3C509B
 attach	ep at isapnp with ep_isapnp
 file	dev/isapnp/if_ep_isapnp.c		ep_isapnp
+
+# Fujitsu FMV-183/184
+attach	fmv at isapnp with fmv_isapnp
+file	dev/isapnp/if_fmv_isapnp.c		fmv_isapnp
 
 # PCnet-PnP
 attach	le at isapnp with le_isapnp: le24

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd_iomd.c,v 1.1.4.3 2002/04/01 07:39:11 nathanw Exp $	*/
+/*	$NetBSD: rpckbd_iomd.c,v 1.1.4.4 2002/10/18 02:35:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,9 +66,8 @@ extern struct rpckbd_softc console_kbd;
 
 /* Device structures */
 
-struct cfattach rpckbd_iomd_ca = {
-	sizeof(struct rpckbd_softc), rpckbd_iomd_probe, rpckbd_iomd_attach
-};
+CFATTACH_DECL(rpckbd_iomd, sizeof(struct rpckbd_softc),
+    rpckbd_iomd_probe, rpckbd_iomd_attach, NULL, NULL);
 
 static int
 rpckbd_iomd_probe(parent, cf, aux)
@@ -117,7 +116,7 @@ rpckbd_iomd_attach(parent, self, aux)
 	if (error == 0) {
 		sc->sc_ih = intr_claim(ka->ka_rxirq, IPL_TTY, "kbd rx", rpckbd_intr, sc);
 		if (!sc->sc_ih)
-			panic("%s: Cannot claim RX interrupt\n", sc->sc_device.dv_xname);
+			panic("%s: Cannot claim RX interrupt", sc->sc_device.dv_xname);
 	};
 }
 

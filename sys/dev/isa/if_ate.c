@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.24.4.6 2002/02/28 04:13:41 nathanw Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.24.4.7 2002/10/18 02:42:13 nathanw Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.24.4.6 2002/02/28 04:13:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.24.4.7 2002/10/18 02:42:13 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,10 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.24.4.6 2002/02/28 04:13:41 nathanw Exp 
 
 #include <dev/ic/mb86960reg.h>
 #include <dev/ic/mb86960var.h>
-#include <dev/ic/ate_subr.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/if_fereg.h>	/* XXX */
 
 int	ate_match __P((struct device *, struct cfdata *, void *));
 void	ate_attach __P((struct device *, struct device *, void *));
@@ -64,15 +62,8 @@ struct ate_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-struct cfattach ate_isa_ca = {
-	sizeof(struct ate_softc), ate_match, ate_attach
-};
-
-#if NetBSD <= 199712
-struct cfdriver ate_isa_cd = {
-	NULL, "ate", DV_IFNET
-};
-#endif
+CFATTACH_DECL(ate_isa, sizeof(struct ate_softc),
+    ate_match, ate_attach, NULL, NULL);
 
 struct fe_simple_probe_struct {
 	u_char port;	/* Offset from the base I/O address. */
@@ -232,7 +223,7 @@ ate_find(iot, ioh, iobase, irq)
 	bus_space_handle_t ioh;
 	int *iobase, *irq;
 {
-	u_char eeprom[FE_EEPROM_SIZE];
+	u_int8_t eeprom[FE_EEPROM_SIZE];
 	int n;
 
 	static int const irqmap[4][4] = {
@@ -253,7 +244,7 @@ ate_find(iot, ioh, iobase, irq)
 	};
 
 #if ATE_DEBUG >= 4
-	log(LOG_INFO, "ate_find: probe (0x%x) for ATI\n", iobase);
+	log(LOG_INFO, "ate_find: probe (0x%x) for ATE\n", iobase);
 #if 0
 	fe_dump(LOG_INFO, sc);
 #endif
@@ -282,7 +273,7 @@ ate_find(iot, ioh, iobase, irq)
 	 * at this stage, but I cannot test the presence of the chip
 	 * any further without reading EEPROM.  FIXME.
 	 */
-	ate_read_eeprom(iot, ioh, eeprom);
+	mb86965_read_eeprom(iot, ioh, eeprom);
 
 	/* Make sure that config info in EEPROM and 86965 agree. */
 	if (eeprom[FE_EEPROM_CONF] != bus_space_read_1(iot, ioh, FE_BMPR19)) {
@@ -330,18 +321,18 @@ ate_detect(iot, ioh, enaddr)
 	bus_space_handle_t ioh;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 {
-	u_char eeprom[FE_EEPROM_SIZE];
+	u_int8_t eeprom[FE_EEPROM_SIZE];
 	int type;
 
 	/* Get our station address from EEPROM. */
-	ate_read_eeprom(iot, ioh, eeprom);
+	mb86965_read_eeprom(iot, ioh, eeprom);
 	memcpy(enaddr, eeprom + FE_ATI_EEP_ADDR, ETHER_ADDR_LEN);
 
 	/* Make sure we got a valid station address. */
 	if ((enaddr[0] & 0x03) != 0x00 ||
 	    (enaddr[0] == 0x00 && enaddr[1] == 0x00 && enaddr[2] == 0x00)) {
 #ifdef ATE_DEBUG
-		printf("fmv_detect: invalid ethernet address\n");
+		printf("ate_detect: invalid ethernet address\n");
 #endif
 		return (0);
 	}
@@ -363,7 +354,7 @@ ate_detect(iot, ioh, enaddr)
 		type = FE_TYPE_AT1700AT;
 		break;
 	default:
-		type = FE_TYPE_RE2000;
+		type = FE_TYPE_AT_UNKNOWN;
 		break;
 	}
 
@@ -384,11 +375,9 @@ ate_attach(parent, self, aux)
 	const char *typestr;
 	int type;
 
-	printf("\n");
-
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, ATE_NPORTS, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		printf(": can't map i/o space\n");
 		return;
 	}
 
@@ -399,28 +388,28 @@ ate_attach(parent, self, aux)
 	type = ate_detect(iot, ioh, myea);
 	switch (type) {
 	case FE_TYPE_AT1700T:
-		typestr = "AT-1700T";
+		typestr = "AT-1700T/RE2001";
 		break;
 	case FE_TYPE_AT1700BT:
-		typestr = "AT-1700BT";
+		typestr = "AT-1700BT/RE2003";
 		break;
 	case FE_TYPE_AT1700FT:
-		typestr = "AT-1700FT";
+		typestr = "AT-1700FT/RE2009";
 		break;
 	case FE_TYPE_AT1700AT:
-		typestr = "AT-1700AT";
+		typestr = "AT-1700AT/RE2005";
 		break;
-	case FE_TYPE_RE2000:
-		typestr = "unknown (RE-2000?)";
+	case FE_TYPE_AT_UNKNOWN:
+		typestr = "unknown AT-1700/RE2000";
 		break;
 
 	default:
 	  	/* Unknown card type: maybe a new model, but... */
-		printf("%s: where did the card go?!\n", sc->sc_dev.dv_xname);
+		printf(": where did the card go?!\n");
 		panic("unknown card");
 	}
 
-	printf("%s: %s Ethernet\n", sc->sc_dev.dv_xname, typestr);
+	printf(": %s Ethernet\n", typestr);
 
 	/* This interface is always enabled. */
 	sc->sc_flags |= FE_FLAGS_ENABLED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.2.2.4 2002/01/08 00:25:26 nathanw Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.2.2.5 2002/10/18 02:37:47 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.2.2.4 2002/01/08 00:25:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.2.2.5 2002/10/18 02:37:47 nathanw Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.2.2.4 2002/01/08 00:25:26 nathanw Ex
 #include <uvm/uvm_extern.h>
 
 #include <machine/specialreg.h>
+#include <machine/atomic.h>
+#include <machine/cpuvar.h>
 #include <machine/cpufunc.h>
 #include <machine/mtrr.h>
 
@@ -158,13 +160,13 @@ i686_mtrr_reload(int synch)
 #ifdef MULTIPROCESSOR
 	uint32_t mymask = 1 << cpu_number();
 #endif
-	
+
 	/*
 	 * 2. Disable interrupts
 	 */
 
 	disable_intr();
-	
+
 #ifdef MULTIPROCESSOR
 	if (synch) {
 		/*
@@ -177,7 +179,7 @@ i686_mtrr_reload(int synch)
 			DELAY(10);
 	}
 #endif
-	
+
 	/*
 	 * 4. Enter the no-fill cache mode (set the CD flag in CR0 to 1 and
 	 * the NW flag to 0)
@@ -187,13 +189,13 @@ i686_mtrr_reload(int synch)
 	cr0 |= CR0_CD;
 	cr0 &= ~CR0_NW;
 	lcr0(cr0);
-	
+
 	/*
 	 * 5. Flush all caches using the WBINVD instruction.
 	 */
 
 	wbinvd();
-	
+
 	/*
 	 * 6. Clear the PGE flag in control register CR4 (if set).
 	 */
@@ -201,7 +203,7 @@ i686_mtrr_reload(int synch)
 	origcr4 = cr4 = rcr4();
 	cr4 &= ~CR4_PGE;
 	lcr4(cr4);
-	
+
 	/*
 	 * 7. Flush all TLBs (execute a MOV from control register CR3
 	 * to another register and then a move from that register back
@@ -210,7 +212,7 @@ i686_mtrr_reload(int synch)
 
 	cr3 = rcr3();
 	lcr3(cr3);
-	
+
 	/*
 	 * 8. Disable all range registers (by clearing the E flag in
 	 * register MTRRdefType.  If only variable ranges are being
@@ -219,7 +221,7 @@ i686_mtrr_reload(int synch)
 	 */
 	/* disable MTRRs (E = 0) */
 	wrmsr(MSR_MTRRdefType, rdmsr(MSR_MTRRdefType) & ~MTRR_I686_ENABLE_MASK);
-	
+
 	/*
 	 * 9. Update the MTRR's
 	 */
@@ -231,7 +233,7 @@ i686_mtrr_reload(int synch)
 			val &= ~MTRR_I686_ENABLE_MASK;
 		wrmsr(addr, val);
 	}
-	
+
 	/*
 	 * 10. Enable all range registers (by setting the E flag in
 	 * register MTRRdefType).  If only variable-range registers
@@ -240,7 +242,7 @@ i686_mtrr_reload(int synch)
 	 */
 
 	wrmsr(MSR_MTRRdefType, rdmsr(MSR_MTRRdefType) | MTRR_I686_ENABLE_MASK);
-	
+
 	/*
 	 * 11. Flush all caches and all TLB's a second time. (repeat
 	 * steps 5, 7)
@@ -426,7 +428,7 @@ i686_soft2raw(void)
 }
 
 static void
-i686_mtrr_init_cpu(struct cpu_info *ci) 
+i686_mtrr_init_cpu(struct cpu_info *ci)
 {
 	i686_mtrr_reload(0);
 #if 0
@@ -636,6 +638,11 @@ i686_mtrr_set(struct mtrr *mtrrp, int *n, struct proc *p, int flags)
 	int i, error;
 	struct mtrr mtrr;
 
+	if (*n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR)) {
+		*n = 0;
+		return EINVAL;
+	}
+
 	error = 0;
 	for (i = 0; i < *n; i++) {
 		if (flags & MTRR_GETSET_USER) {
@@ -666,6 +673,8 @@ i686_mtrr_get(struct mtrr *mtrrp, int *n, struct proc *p, int flags)
 		*n = MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR;
 		return 0;
 	}
+
+	error = 0;
 
 	for (idx = i = 0; i < MTRR_I686_NFIXED_SOFT && idx < *n; idx++, i++) {
 		if (flags & MTRR_GETSET_USER) {

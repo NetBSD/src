@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.39.2.7 2002/04/17 00:05:56 nathanw Exp $	*/
+/*	$NetBSD: seagate.c,v 1.39.2.8 2002/10/18 02:42:34 nathanw Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.39.2.7 2002/04/17 00:05:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.39.2.8 2002/10/18 02:42:34 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,9 +298,8 @@ void	sea_grow_scb __P((struct sea_softc *));
 int	seaprobe __P((struct device *, struct cfdata *, void *));
 void	seaattach __P((struct device *, struct device *, void *));
 
-struct cfattach sea_ca = {
-	sizeof(struct sea_softc), seaprobe, seaattach
-};
+CFATTACH_DECL(sea, sizeof(struct sea_softc),
+    seaprobe, seaattach, NULL, NULL);
 
 extern struct cfdriver sea_cd;
 

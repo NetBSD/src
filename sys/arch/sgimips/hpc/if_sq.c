@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.7.8.4 2002/06/20 03:40:48 nathanw Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.7.8.5 2002/10/18 02:39:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -145,16 +145,15 @@ void sq_trace_dump(struct sq_softc* sc);
 	}								\
 } while (0)
 
-struct cfattach sq_ca = {
-	sizeof(struct sq_softc), sq_match, sq_attach
-};
+CFATTACH_DECL(sq, sizeof(struct sq_softc),
+    sq_match, sq_attach, NULL, NULL);
 
 static int
 sq_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 
-	if (strcmp(ha->ha_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(ha->ha_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);

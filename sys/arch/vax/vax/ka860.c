@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.16.8.1 2002/08/01 02:44:00 nathanw Exp $	*/
+/*	$NetBSD: ka860.c,v 1.16.8.2 2002/10/18 02:40:34 nathanw Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -346,9 +346,8 @@ static	int abus_print __P((void *, const char *));
 static  int abus_match __P((struct device *, struct cfdata *, void *));
 static  void abus_attach __P((struct device *, struct device *, void*));
 
-struct  cfattach abus_ca = {
-        sizeof(struct device), abus_match, abus_attach
-};
+CFATTACH_DECL(abus, sizeof(struct device),
+    abus_match, abus_attach, NULL, NULL);
 
 /*
  * Abus is the master bus on VAX 8600.

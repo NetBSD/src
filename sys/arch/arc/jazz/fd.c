@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.3.8.3 2002/09/17 21:13:17 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.3.8.4 2002/10/18 02:35:15 nathanw Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -181,9 +181,8 @@ void fdattach __P((struct device *, struct device *, void *));
 
 extern struct cfdriver fd_cd;
 
-struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdprobe, fdattach
-};
+CFATTACH_DECL(fd, sizeof(struct fd_softc),
+    fdprobe, fdattach, NULL, NULL);
 
 dev_type_open(fdopen);
 dev_type_close(fdclose);

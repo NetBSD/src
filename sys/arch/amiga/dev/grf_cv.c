@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.27.26.3 2002/08/13 02:17:41 nathanw Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.27.26.4 2002/10/18 02:34:53 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.27.26.3 2002/08/13 02:17:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.27.26.4 2002/10/18 02:34:53 nathanw Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -257,9 +257,8 @@ long cv_memclk = 50000000;
 #endif
 
 /* standard driver stuff */
-struct cfattach grfcv_ca = {
-	sizeof(struct grf_cv_softc), grfcvmatch, grfcvattach
-};
+CFATTACH_DECL(grfcv, sizeof(struct grf_cv_softc),
+    grfcvmatch, grfcvattach, NULL, NULL);
 
 static struct cfdata *cfdata;
 

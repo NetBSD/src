@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.28.8.2 2002/02/28 04:06:33 nathanw Exp $ */
+/*	$NetBSD: bzsc.c,v 1.28.8.3 2002/10/18 02:34:47 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.28.8.2 2002/02/28 04:06:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.28.8.3 2002/10/18 02:34:47 nathanw Exp $");
 
 /*
  * Initial amiga Blizzard 1230-II driver by Daniel Widenfalk.  Conversion to
@@ -75,9 +75,8 @@ void	bzscattach(struct device *, struct device *, void *);
 int	bzscmatch(struct device *, struct cfdata *, void *);
 
 /* Linkup to the rest of the kernel */
-struct cfattach bzsc_ca = {
-	sizeof(struct bzsc_softc), bzscmatch, bzscattach
-};
+CFATTACH_DECL(bzsc, sizeof(struct bzsc_softc),
+    bzscmatch, bzscattach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.

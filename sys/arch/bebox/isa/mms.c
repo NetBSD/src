@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.6.4.2 2002/09/17 21:13:56 nathanw Exp $	*/
+/*	$NetBSD: mms.c,v 1.6.4.3 2002/10/18 02:36:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -71,9 +71,8 @@ int mmsprobe __P((struct device *, struct cfdata *, void *));
 void mmsattach __P((struct device *, struct device *, void *));
 int mmsintr __P((void *));
 
-struct cfattach mms_ca = {
-	sizeof(struct mms_softc), mmsprobe, mmsattach
-};
+CFATTACH_DECL(mms, sizeof(struct mms_softc),
+    mmsprobe, mmsattach, NULL, NULL);
 
 extern struct cfdriver mms_cd;
 
