@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: inetd.c,v 1.7 1994/05/17 20:47:29 pk Exp $";
+static char rcsid[] = "$Id: inetd.c,v 1.8 1994/05/25 02:49:38 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -125,15 +125,6 @@ static char rcsid[] = "$Id: inetd.c,v 1.7 1994/05/17 20:47:29 pk Exp $";
 #endif
 
 #define RPC
-
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/file.h>
-#include <sys/wait.h>
-#include <sys/time.h>
-#include <sys/resource.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
