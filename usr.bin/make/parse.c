@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.25 1996/09/13 04:22:09 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.26 1996/09/27 02:36:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.25 1996/09/13 04:22:09 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.26 1996/09/27 02:36:58 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -2597,7 +2597,7 @@ Parse_MainName()
     main = Lst_Init (FALSE);
 
     if (mainNode == NILGNODE) {
-	Punt ("make: no target to make.\n");
+	Punt ("no target to make.");
     	/*NOTREACHED*/
     } else if (mainNode->type & OP_DOUBLEDEP) {
 	(void) Lst_AtEnd (main, (ClientData)mainNode);
