@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.5 2004/02/21 09:16:25 jdolecek Exp $	*/
+/*	$NetBSD: iconv.c,v 1.6 2004/12/21 11:33:07 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.5 2004/02/21 09:16:25 jdolecek Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.6 2004/12/21 11:33:07 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -54,9 +54,12 @@ usage(void)
  * qsort() helper function
  */
 static int
-scmp(const void *s1, const void *s2)
+scmp(const void *v1, const void *v2)
 {
-	return strcasecmp(*(const char **)s1, *(const char **)s2);
+	const char * const *s1 = v1;
+	const char * const *s2 = v2;
+
+	return strcasecmp(*s1, *s2);
 }
 
 static void
