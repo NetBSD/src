@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.34 2003/09/14 22:15:23 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.35 2003/09/26 17:44:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.34 2003/09/14 22:15:23 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.35 2003/09/26 17:44:51 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: readline.c,v 1.34 2003/09/14 22:15:23 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
+#include <vis.h>
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #endif
@@ -78,6 +79,7 @@ FILE *rl_outstream = NULL;
 int rl_point = 0;
 int rl_end = 0;
 char *rl_line_buffer = NULL;
+VFunction *rl_linefunc = NULL;
 
 int history_base = 1;		/* probably never subject to change */
 int history_length = 0;
@@ -144,6 +146,7 @@ static int _rl_complete_show_all = 0;
 
 static History *h = NULL;
 static EditLine *e = NULL;
+static Function *map[256];
 static int el_rl_complete_cmdnum = 0;
 
 /* internal functions */
@@ -251,11 +254,11 @@ rl_initialize(void)
 		el_get(e, EL_TERMINAL, &rl_terminal_name);
 
 	/*
-	 * Word completition - this has to go AFTER rebinding keys
+	 * Word completion - this has to go AFTER rebinding keys
 	 * to emacs-style.
 	 */
 	el_set(e, EL_ADDFN, "rl_complete",
-	    "ReadLine compatible completition function",
+	    "ReadLine compatible completion function",
 	    _el_rl_complete);
 	el_set(e, EL_BIND, "^I", "rl_complete", NULL);
 	/*
@@ -1241,7 +1244,7 @@ history_search_pos(const char *str,
 
 
 /********************************/
-/* completition functions	*/
+/* completion functions	*/
 
 /*
  * does tilde expansion of strings of type ``~user/foo''
@@ -1451,7 +1454,7 @@ _el_rl_complete(EditLine *el __attribute__((__unused__)), int ch)
 
 
 /*
- * returns list of completitions for text given
+ * returns list of completions for text given
  */
 char **
 completion_matches(const char *text, CPFunction *genfunc)
@@ -1638,7 +1641,7 @@ rl_complete_internal(int what_to_do)
 		if (matches[2] == NULL && strcmp(matches[0], matches[1]) == 0) {
 			/*
 			 * We found exact match. Add a space after
-			 * it, unless we do filename completition and the
+			 * it, unless we do filename completion and the
 			 * object is a directory.
 			 */
 			size_t alen = strlen(matches[0]);
@@ -1805,4 +1808,92 @@ rl_insert(int count, int c)
 		el_push(e, arr);
 
 	return (0);
+}
+
+/*ARGSUSED*/
+int
+rl_newline(int count, int c)
+{
+	/*
+	 * Readline-4.0 appears to ignore the args.
+	 */
+	return rl_insert(1, '\n');
+}
+
+/*ARGSUSED*/
+static unsigned char
+rl_bind_wrapper(EditLine *el, unsigned char c)
+{
+	if (map[c] == NULL)
+	    return CC_ERROR;
+	(*map[c])(NULL, c);
+	return CC_NORM;
+}
+
+int
+rl_add_defun(const char *name, Function *fun, int c)
+{
+	char dest[8];
+	if (c >= sizeof(map) / sizeof(map[0]) || c < 0)
+		return -1;
+	map[(unsigned char)c] = fun;
+	el_set(e, EL_ADDFN, name, name, rl_bind_wrapper);
+	el_set(e, EL_BIND, vis(dest, c, VIS_WHITE, 0), name);
+	return 0;
+}
+
+void
+rl_callback_read_char()
+{
+	int count = 0;
+	const char *buf = el_gets(e, &count);
+	char *wbuf;
+
+	if (buf == NULL || count-- <= 0)
+		return;
+	if ((buf[count] == '\n' || buf[count] == '\r') && rl_linefunc != NULL) {
+		el_set(e, EL_UNBUFFERED, 0);
+		if ((wbuf = strdup(buf)) != NULL)
+		    wbuf[count] = '\0';
+		(*(void (*)(const char *))rl_linefunc)(wbuf);
+	}
+}
+
+void 
+rl_callback_handler_install (const char *prompt, VFunction *linefunc)
+{
+	if (e == NULL) {
+		rl_initialize();
+	}
+	if (rl_prompt)
+		free(rl_prompt);
+	rl_prompt = prompt ? strdup(strchr(prompt, *prompt)) : NULL;
+	rl_linefunc = linefunc;
+	el_set(e, EL_UNBUFFERED, 1);
+}   
+
+void 
+rl_callback_handler_remove(void)
+{
+	el_set(e, EL_UNBUFFERED, 0);
+}
+
+void
+rl_redisplay(void)
+{
+	char a[2];
+	a[0] = CTRL('r');
+	a[1] = '\0';
+	el_push(e, a);
+}
+
+int
+rl_get_previous_history(int count, int key)
+{
+	char a[2];
+	a[0] = key;
+	a[1] = '\0';
+	while (count--)
+		el_push(e, a);
+	return 0;
 }
