@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.25 1994/01/13 13:56:20 mycroft Exp $
+ *	$Id: machdep.c,v 1.26 1994/01/30 18:21:47 mycroft Exp $
  */
 
 #include "param.h"
@@ -1483,19 +1483,21 @@ cpu_exec_aout_makecmds(p, epp)
 	struct exec_package *epp;
 {
 #ifdef COMPAT_NOMID
-	int error;
 	u_long midmag, magic;
 	u_short mid;
+	int error;
+	struct exec *execp = epp->ep_hdr;
 
-	midmag = ntohl(epp->ep_execp->a_midmag);
-	mid = (midmag >> 16 ) & 0xffff;
+	midmag = ntohl(execp->a_midmag);
+	mid = (midmag >> 16) & 0xffff;
 	magic = midmag & 0xffff;
 
-	switch (mid << 16 | magic) {
+	midmag = mid << 16 | magic;
+
+	switch (midmag) {
 	case (MID_ZERO << 16) | ZMAGIC:
 		error = cpu_exec_aout_prep_oldzmagic(p, epp);
 		break;
-
 	default:
 		error = ENOEXEC;
 	}
@@ -1520,7 +1522,7 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct exec *execp = epp->ep_execp;
+	struct exec *execp = epp->ep_hdr;
 
 	epp->ep_taddr = 0;
 	epp->ep_tsize = execp->a_text;
