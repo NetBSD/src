@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.123 2004/04/27 18:00:25 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.124 2004/04/27 18:58:19 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1303,9 +1303,9 @@ src/sbin/newfs/mkfs.c				1.88
 	Fix support for creating APPLE_UFS filesystems with -v.
 	This includes most of the support for creating fs level 3
 	compatible filesystems, although there is currently no command
-	line option to invoke it when not using apple_ufs
+	line option to invoke it when not using apple_ufs.
 	PR#23924.
-	[dbj, ticket 184]
+	[dbj, ticket #184]
 
 src/sbin/fsck_ffs/utilities.c			1.46
 src/sbin/fsck_ffs/setup.c			1.72-1.73
@@ -1321,5 +1321,18 @@ src/etc/rc.d/Makefile				1.47
 	Fix problems related to superblock upgrade issues which may be
 	experienced by -current users from 2003.
 	PR#17910, PR#21283, PR#21404, PR#23925, PR#23926, PR#25138, 
-	[dbj, ticket 185]
+	[dbj, ticket #185]
+
+src/sys/dev/scsipi/cd.c				1.201
+
+	Some older devices do not understand the `disable block descriptor'
+	bit in the mode sense request.  So fall back on mode sense data
+	including a block descriptor section.
+	PR#25210.
+	[pk, ticket #186]
+
+src/sys/netinet/ip_rules.c			1.2
+
+	Fix VAX kernel problem: always include <sys/param.h> first.
+	[matt, ticket #187]
 
