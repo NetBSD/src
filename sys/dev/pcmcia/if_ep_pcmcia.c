@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.44 2004/08/09 15:40:56 mycroft Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.45 2004/08/09 18:11:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.44 2004/08/09 15:40:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.45 2004/08/09 18:11:01 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,16 +180,17 @@ ep_pcmcia_enable(sc)
 	struct pcmcia_function *pf = psc->sc_pf;
 	int error;
 
-	if ((error = ep_pcmcia_enable1(sc)) != 0)
-		return error;
-
 	/* establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, epintr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
-		ep_pcmcia_disable1(sc);
 		return (1);
+	}
+
+	if ((error = ep_pcmcia_enable1(sc)) != 0) {
+		pcmcia_intr_disestablish(pf, sc->sc_ih);
+		return error;
 	}
 
 	return 0;
@@ -263,70 +264,60 @@ ep_pcmcia_attach(parent, self, aux)
 	int i;
 
 	aprint_normal("\n");
-
 	psc->sc_pf = pa->pf;
-	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
 
-	/* Enable the card. */
-	pcmcia_function_init(pa->pf, cfe);
-	if (ep_pcmcia_enable1(sc)) {
-		aprint_error("%s: function enable failed\n", self->dv_xname);
-		goto enable_failed;
-	}
-	sc->enabled = 1;
+	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
+		if (cfe->num_memspace != 0)
+			continue;
+		if (cfe->num_iospace != 1)
+			continue;
 
-	if (cfe->num_memspace != 0) {
-		aprint_error("%s: unexpected number of memory spaces %d should be 0\n",
-		    self->dv_xname, cfe->num_memspace);
-		goto ioalloc_failed;
-	}
+		if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
+			/*
+			 * the 3c562 can only use 0x??00-0x??7f
+			 * according to the Linux driver
+			 */
 
-	if (cfe->num_iospace != 1) {
-		aprint_error("%s: unexpected number of I/O spaces %d should be 1\n",
-		    self->dv_xname, cfe->num_iospace);
-		goto ioalloc_failed;
-	}
-
-	if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
-		/*
-		 * the 3c562 can only use 0x??00-0x??7f
-		 * according to the Linux driver
-		 */
-
-		/*
-		 * 3c562 i/o may decodes address line not only A0-3
-		 * but also A7.  Anyway, we must sweep at most
-		 * [0x0000, 0x0100).  The address higher is given by a
-		 * pcmcia bridge.  But pcmcia bus-space allocation
-		 * function implies cards will decode 10-bit address
-		 * line.  So we must search [0x0000, 0x0400).
-		 *
-		 * XXX: We must not check the bunch of I/O space range
-		 * [0x400*n, 0x300 + 0x400*n) because they are
-		 * reserved for legacy ISA devices and their alias
-		 * images on PC/AT architecture.
-		 */
-		for (i = 0x0300; i < 0x0380; i += 0x10) {
-			if (pcmcia_io_alloc(pa->pf, i, cfe->iospace[0].length,
-			    0, &psc->sc_pcioh) == 0)
+			/*
+			 * 3c562 i/o may decodes address line not only A0-3
+			 * but also A7.  Anyway, we must sweep at most
+			 * [0x0000, 0x0100).  The address higher is given by a
+			 * pcmcia bridge.  But pcmcia bus-space allocation
+			 * function implies cards will decode 10-bit address
+			 * line.  So we must search [0x0000, 0x0400).
+			 *
+			 * XXX: We must not check the bunch of I/O space range
+			 * [0x400*n, 0x300 + 0x400*n) because they are
+			 * reserved for legacy ISA devices and their alias
+			 * images on PC/AT architecture.
+			 */
+			for (i = 0x0300; i < 0x0380; i += 0x10) {
+				if (pcmcia_io_alloc(pa->pf, i,
+				    cfe->iospace[0].length,
+				    cfe->iospace[0].length,
+				    &psc->sc_pcioh) == 0)
+					break;
+			}
+			if (i != 0x0380)
+				break;
+		} else {
+			if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
+			    cfe->iospace[0].length, cfe->iospace[0].length,
+			    &psc->sc_pcioh) == 0)
 				break;
 		}
-		if (i == 0x0380) {
-			aprint_error("%s: can't allocate i/o space\n",
-			    self->dv_xname);
-			goto ioalloc_failed;
-		}
-	} else {
-		if (pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
-		    cfe->iospace[0].length, &psc->sc_pcioh)) {
-			aprint_error("%s: can't allocate i/o space\n",
-			    self->dv_xname);
-			goto ioalloc_failed;
-		}
+	}
+	if (!cfe) {
+		aprint_error("%s: failed to allocate I/O space\n",
+		    self->dv_xname);
+		goto ioalloc_failed;
 	}
 
 	sc->sc_iot = psc->sc_pcioh.iot;
 	sc->sc_ioh = psc->sc_pcioh.ioh;
+
+	/* Enable the card. */
+	pcmcia_function_init(pa->pf, cfe);
 
 	if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16) ?
 	    PCMCIA_WIDTH_AUTO : PCMCIA_WIDTH_IO8), &psc->sc_pcioh,
@@ -334,6 +325,12 @@ ep_pcmcia_attach(parent, self, aux)
 		aprint_error("%s: can't map i/o space\n", self->dv_xname);
 		goto iomap_failed;
 	}
+
+	if (ep_pcmcia_enable(sc)) {
+		aprint_error("%s: function enable failed\n", self->dv_xname);
+		goto enable_failed;
+	}
+	sc->enabled = 1;
 
 	switch (pa->product) {
 	case PCMCIA_PRODUCT_3COM_3C562:
@@ -372,22 +369,17 @@ ep_pcmcia_attach(parent, self, aux)
 	}
 
 	sc->enabled = 0;
-	ep_pcmcia_disable1(sc);
+	ep_pcmcia_disable(sc);
 	return;
 
- config_failed:
-	/* Unmap our i/o window. */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
-
- iomap_failed:
-	/* Free our i/o space. */
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
-
- ioalloc_failed:
+config_failed:
 	sc->enabled = 0;
-	ep_pcmcia_disable1(sc);
-
- enable_failed:
+	ep_pcmcia_disable(sc);
+enable_failed:
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+iomap_failed:
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+ioalloc_failed:
 	psc->sc_io_window = -1;
 }
 

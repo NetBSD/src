@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.4 2004/08/09 16:05:00 mycroft Exp $	*/
+/*	$NetBSD: xirc.c,v 1.5 2004/08/09 18:11:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.4 2004/08/09 16:05:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.5 2004/08/09 18:11:01 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -192,7 +192,6 @@ xirc_attach(parent, self, aux)
 	int rv;
 
 	aprint_normal("\n");
-
 	sc->sc_pf = pa->pf;
 
 	pcmcia_socket_enable(parent);
@@ -235,35 +234,29 @@ xirc_attach(parent, self, aux)
 	if (sc->sc_id & (XIMEDIA_MODEM << 8)) {
 		if (sc->sc_chipset >= XI_CHIPSET_DINGO) {
 			cfe = xirc_dingo_alloc_modem(sc);
-			if (!cfe) {
-				aprint_error("%s: failed to allocate I/O for modem\n",
-				    self->dv_xname);
-				goto fail;
+			if (cfe && sc->sc_id & (XIMEDIA_ETHER << 8)) {
+				if (!xirc_dingo_alloc_ethernet(sc)) {
+					pcmcia_io_free(pa->pf,
+					    &sc->sc_modem_pcioh);
+					cfe = 0;
+				}
 			}
-			if (sc->sc_id & (XIMEDIA_ETHER << 8)) {
-				if (!xirc_dingo_alloc_ethernet(sc))
-					aprint_error("%s: failed to allocate I/O for ethernet\n",
-					    self->dv_xname);
-			}
-		} else {
+		} else
 			cfe = xirc_mako_alloc(sc);
-			if (!cfe) {
-				aprint_error("%s: failed to allocate I/O\n",
-				    self->dv_xname);
-				goto fail;
-			}
-		}
-	} else {
+	} else
 		cfe = xirc_dingo_alloc_ethernet(sc);
-		if (!cfe)
-			aprint_error("%s: failed to allocate I/O for ethernet\n",
-			    self->dv_xname);
+	if (!cfe) {
+		aprint_error("%s: failed to allocate I/O space\n",
+		    self->dv_xname);
+		goto fail;
 	}
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
-	if (pcmcia_function_enable(pa->pf)) {
-		aprint_error("%s: function enable failed\n", self->dv_xname);
+
+	if (xirc_enable(sc, XIRC_MODEM_ENABLED|XIRC_ETHERNET_ENABLED,
+	    sc->sc_id & (XIMEDIA_MODEM|XIMEDIA_ETHER))) {
+		aprint_error("%s: enable failed\n", self->dv_xname);
 		goto fail;
 	}
 
@@ -274,7 +267,8 @@ xirc_attach(parent, self, aux)
 	if (sc->sc_id & (XIMEDIA_ETHER << 8))
 		sc->sc_ethernet = config_found(self, "xi", xirc_print);
 
-	pcmcia_function_disable(pa->pf);
+	xirc_disable(sc, XIRC_MODEM_ENABLED|XIRC_ETHERNET_ENABLED,
+	    sc->sc_id & (XIMEDIA_MODEM|XIMEDIA_ETHER));
 	return;
 
 fail:
@@ -412,9 +406,7 @@ xirc_detach(self, flags)
 		rv = config_detach(sc->sc_modem, flags);
 		if (rv != 0)
 			return (rv);
-#ifdef not_necessary
 		sc->sc_modem = NULL;
-#endif
 	}
 
 	/* Unmap our i/o windows. */
@@ -494,10 +486,9 @@ xirc_enable(sc, flag, media)
 	int flag, media;
 {
 
-	if (sc->sc_flags & flag) {
-		printf("%s: %s already enabled\n", sc->sc_dev.dv_xname,
-		    (flag & XIRC_MODEM_ENABLED) ? "modem" : "ethernet");
-		panic("xirc_enable");
+	if ((sc->sc_flags & flag) == flag) {
+		printf("%s: already enabled\n", sc->sc_dev.dv_xname);
+		return (0);
 	}
 
 	if ((sc->sc_flags & (XIRC_MODEM_ENABLED|XIRC_ETHERNET_ENABLED)) != 0) {
@@ -546,17 +537,16 @@ xirc_disable(sc, flag, media)
 	int flag, media;
 {
 
+	if ((sc->sc_flags & flag) == 0) {
+		printf("%s: already disabled\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
 	if (sc->sc_chipset < XI_CHIPSET_DINGO &&
 	    sc->sc_id & (XIMEDIA_MODEM << 8)) {
 		sc->sc_mako_intmask &= ~media;
 		bus_space_write_1(sc->sc_ethernet_pcioh.iot,
 		    sc->sc_ethernet_pcioh.ioh, 0x10, sc->sc_mako_intmask);
-	}
-
-	if ((sc->sc_flags & flag) == 0) {
-		printf("%s: %s already disabled\n", sc->sc_dev.dv_xname,
-		    (flag & XIRC_MODEM_ENABLED) ? "modem" : "ethernet");
-		panic("xirc_disable");
 	}
 
 	sc->sc_flags &= ~flag;
