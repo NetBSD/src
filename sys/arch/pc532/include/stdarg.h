@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.12 1995/12/25 23:15:34 mycroft Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.13 1998/07/27 13:55:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,6 +51,6 @@ typedef _BSD_VA_LIST_	va_list;
 #define	va_arg(ap, type) \
 	(*(type *)((ap) += __va_size(type), (ap) - __va_size(type)))
 
-#define	va_end(ap)	((void)0)
+#define	va_end(ap)	
 
 #endif /* !_PC532_STDARG_H_ */
