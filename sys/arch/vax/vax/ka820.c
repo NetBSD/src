@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.24 2000/06/11 07:50:12 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.25 2000/06/12 11:26:26 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -123,7 +123,7 @@ struct ka820_softc {
 };
 
 struct cfattach cpu_bi_ca = {
-	sizeof(struct cpu_info), ka820_match, ka820_attach
+	sizeof(struct ka820_softc), ka820_match, ka820_attach
 };
 
 #ifdef notyet
