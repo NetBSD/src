@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5.c,v 1.7 2002/09/23 02:40:09 oster Exp $	*/
+/*	$NetBSD: rf_raid5.c,v 1.8 2003/11/16 20:32:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.7 2002/09/23 02:40:09 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.8 2003/11/16 20:32:05 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -196,7 +196,7 @@ rf_RaidFiveDagSelect(
 
 	if (asmap->numDataFailed + asmap->numParityFailed > 1) {
 		RF_ERRORMSG("Multiple disks failed in a single group!  Aborting I/O operation.\n");
-		 /* *infoFunc = */ *createFunc = NULL;
+		*createFunc = NULL;
 		return;
 	} else
 		if (asmap->numDataFailed + asmap->numParityFailed == 1) {
