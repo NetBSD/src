@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2.c,v 1.4 1999/04/08 18:34:27 tron Exp $	*/
+/*	$NetBSD: bzip2.c,v 1.5 2001/02/05 01:35:45 christos Exp $	*/
 
 /*-----------------------------------------------------------*/
 /*--- A block-sorting, lossless compressor        bzip2.c ---*/
@@ -282,6 +282,15 @@ Char    progNameReally[FILE_NAME_LEN];
 FILE    *outputHandleJustInCase;
 Int32   workFactor;
 
+
+typedef
+   struct zzzz {
+      Char        *name;
+      struct zzzz *link;
+   }
+   Cell;
+
+
 void    panic                 ( Char* )   NORETURN;
 void    ioError               ( void )    NORETURN;
 void    outOfMemory           ( void )    NORETURN;
@@ -296,6 +305,30 @@ void    compressedStreamEOF   ( void )    NORETURN;
 void    copyFileName ( Char*, Char* );
 void*   myMalloc ( Int32 );
 
+
+void	compressStream ( FILE *, FILE * );
+Bool	uncompressStream ( FILE *, FILE * );
+Bool	testStream ( FILE * );
+void	cadvise ( void );
+void	showFileNames ( void );
+void	mySignalCatcher ( IntNative );
+void	mySIGSEGVorSIGBUScatcher ( IntNative );
+void	pad ( Char * );
+Bool	fileExists ( Char * );
+Bool	notAStandardFile ( Char *, IntNative );
+void	copyDatePermissionsAndOwner ( Char *, Char * );
+void	setInterimPermissions ( Char * );
+Bool	endsInBz2 ( Char * );
+Bool	containsDubiousChars ( Char * );
+void	compress ( Char * );
+void	uncompress ( Char * );
+void	testf ( Char * );
+void	license ( void );
+void	usage ( Char * );
+Cell	*mkCell ( void );
+Cell	*snocString ( Cell *, Char * );
+Bool	myfeof ( FILE* f );
+IntNative	main ( IntNative, Char *[] );
 
 
 /*---------------------------------------------------*/
@@ -1261,15 +1294,6 @@ void usage ( Char *fullProgName )
   The actual Dirty Work is done by the platform-specific
   macro APPEND_FILESPEC.
 --*/
-
-typedef
-   struct zzzz {
-      Char        *name;
-      struct zzzz *link;
-   }
-   Cell;
-
-
 /*---------------------------------------------*/
 void *myMalloc ( Int32 n )
 {
