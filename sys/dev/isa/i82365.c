@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.1.2.15 1997/10/16 22:46:19 thorpej Exp $	*/
+/*	$NetBSD: i82365.c,v 1.1.2.16 1997/10/17 02:52:46 enami Exp $	*/
 
 #define	PCICDEBUG
 
@@ -962,8 +962,10 @@ pcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	bus_addr_t ioaddr = pcihp->addr + offset;
-	static char *width_names[] = { "auto", "io8", "io16" };
 	int i, win;
+#ifdef PCICDEBUG
+	static char *width_names[] = { "auto", "io8", "io16" };
+#endif
 
 	/* XXX Sanity check offset/size. */
 
