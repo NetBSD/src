@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.1 1993/06/07 19:52:39 cgd Exp $
+ *	$Id: kern_lkm.c,v 1.2 1993/06/07 23:10:09 cgd Exp $
  */
 
 #include "param.h"
@@ -183,6 +183,8 @@ int		flag;
 
 	switch( cmd) {
 	case LMRESERV:		/* reserve pages for a module*/
+		if ((flag & FWRITE) == 0) /* only allow this if writing */
+			return EPERM;
 
 		resrvp = (struct lmc_resrv *)data;
 
@@ -222,6 +224,9 @@ int		flag;
 		break;
 
 	case LMLOADBUF:		/* Copy in; stateful, follows LMRESERV*/
+		if ((flag & FWRITE) == 0) /* only allow this if writing */
+			return EPERM;
+
 		loadbufp = (struct lmc_loadbuf *)data;
 		if( lkm_state != LKMS_RESERVED && lkm_state != LKMS_LOADING) {
 			err = ENOMEM;
@@ -251,6 +256,9 @@ int		flag;
 		break;
 
 	case LMUNRESRV:		/* discard reserved pages for a module*/
+		if ((flag & FWRITE) == 0) /* only allow this if writing */
+			return EPERM;
+
 		lkmunreserve();	/* coerce state to LKM_IDLE*/
 #ifdef DEBUG
 		printf( "LKM: LMUNRESERV\n");
@@ -258,6 +266,9 @@ int		flag;
 		break;
 
 	case LMREADY:		/* module loaded: call entry*/
+		if ((flag & FWRITE) == 0) /* only allow this if writing */
+			return EPERM;
+
 		if( lkm_state != LKMS_LOADED) {
 
 #ifdef DEBUG
@@ -289,6 +300,9 @@ int		flag;
 		break;
 
 	case LMUNLOAD:		/* unload a module*/
+		if ((flag & FWRITE) == 0) /* only allow this if writing */
+			return EPERM;
+
 		unloadp = (struct lmc_unload *)data;
 
 		if( ( i = unloadp->id) == -1) {		/* unload by name*/
@@ -332,6 +346,8 @@ int		flag;
 		break;
 
 	case LMSTAT:		/* stat a module by id/name*/
+		/* allow readers and writers to stat */
+
 		statp = (struct lmc_stat *)data;
 
 		if( ( i = statp->id) == -1) {		/* stat by name*/
