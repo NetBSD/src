@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.21 1994/12/01 00:19:57 gwr Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.22 1994/12/01 15:39:17 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -492,7 +492,7 @@ pmap_startup(startp, endp)
 	vm_offset_t	*startp;
 	vm_offset_t	*endp;
 {
-	unsigned int	i, pmap_idx, freepages;
+	unsigned int	i, freepages;
 	vm_offset_t	paddr;
 	
 	/*
@@ -549,8 +549,7 @@ pmap_startup(startp, endp)
 		/* Are there more physical pages? */
 		if (!pmap_next_page(&paddr))
 			break;
-		pmap_idx = pmap_page_index(paddr);
-		i = pmap_idx - first_page;
+		i = pmap_page_index(paddr) - first_page;
 
 		/* Don't trust pmap_page_index()... */
 		if (i < 0 || i >= vm_page_count)
