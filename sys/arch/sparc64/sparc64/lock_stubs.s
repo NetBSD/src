@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.1.2.1 2002/03/19 02:32:07 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.2.2 2002/03/22 00:41:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -75,7 +75,11 @@ _ENTRY(_C_LABEL(mutex_enter))
 	bnz	_C_LABEL(mutex_vector_enter)	! nope, hard case
 	 nop
 	retl
+#if defined(MUTEX_DEBUG)
+	 st	%o7, [%o0 + MTX_DBG_LOCKED]
+#else
 	 nop
+#endif
 
 _ENTRY(_C_LABEL(mutex_tryenter))
 	sethi	%hi(CURPROC), %o3
@@ -87,6 +91,9 @@ _ENTRY(_C_LABEL(mutex_tryenter))
 	tst	%o3				! lock was unowned?
 	bnz	_C_LABEL(mutex_vector_tryenter)	! nope, hard case
 	 nop
+#if defined(MUTEX_DEBUG)
+	st	%o7, [%o0 + MTX_DBG_LOCKED]
+#endif
 	retl
 	 or	%g0, 1, %o0
 
@@ -113,6 +120,9 @@ _ENTRY(_C_LABEL(mutex_tryenter))
  * XXX BUT WE DON'T RIGHT NOW!
  */
 _ENTRY(_C_LABEL(mutex_exit))
+#if defined(MUTEX_DEBUG)
+	b	_C_LABEL(mutex_vector_exit)
+#else
 	sethi	%hi(CURPROC), %o3
 	ld	[%o3 + %lo(CURPROC)], %o3	! current thread
 	mov	%g0, %o4			! new value (0)
@@ -128,6 +138,7 @@ _ENTRY(_C_LABEL(mutex_exit))
 	 nop
 	retl
 	 nop
+#endif /* MUTEX_DEBUG */
 
 _ENTRY(_C_LABEL(_mutex_set_waiters))
 1:	membar	#MemIssue
