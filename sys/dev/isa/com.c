@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.85 1996/09/02 06:44:47 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.86 1996/09/05 16:42:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -118,7 +118,7 @@ void	comdiag		__P((void *));
 int	comspeed	__P((long));
 int	comparam	__P((struct tty *, struct termios *));
 void	comstart	__P((struct tty *));
-void	compoll		__P((void *));
+void	comsoft		__P((void *));
 
 /* XXX: These belong elsewhere */
 cdev_decl(com);
@@ -561,7 +561,7 @@ comopen(dev, flag, mode, p)
 		ttsetwater(tp);
 
 		if (comsopen++ == 0)
-			timeout(compoll, NULL, 1);
+			timeout(comsoft, NULL, 1);
 
 		sc->sc_ibufp = sc->sc_ibuf = sc->sc_ibufs[0];
 		sc->sc_ibufhigh = sc->sc_ibuf + COM_IHIGHWATER;
@@ -676,7 +676,7 @@ comclose(dev, flag, mode, p)
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 	if (--comsopen == 0)
-		untimeout(compoll, NULL);
+		untimeout(comsoft, NULL);
 	splx(s);
 	ttyclose(tp);
 #ifdef notyet /* XXXX */
@@ -1092,7 +1092,7 @@ comdiag(arg)
 }
 
 void
-compoll(arg)
+comsoft(arg)
 	void *arg;
 {
 	int unit;
@@ -1168,7 +1168,7 @@ compoll(arg)
 	}
 
 out:
-	timeout(compoll, NULL, 1);
+	timeout(comsoft, NULL, 1);
 }
 
 int
