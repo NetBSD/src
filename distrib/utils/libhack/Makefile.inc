@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.15 2002/03/28 04:33:24 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.16 2002/04/06 18:12:50 tsutsui Exp $
 #
 # Include this fragment to build libhack.o
 # It is .o and not .a to make sure these are the
@@ -22,10 +22,6 @@ HACKOBJS+=	getcap.o getgrent.o getnet.o getnetgr.o getpwent.o \
 
 libhack.o: ${HACKOBJS}
 	${LD} -r -o $@ ${HACKOBJS}
-
-.if ${MACHINE_ARCH} != "sparc64"
-DBG= -Os
-.endif
 
 
 # XXX .PATH won't work here, because of crunchgen used by various builds
