@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1 2000/07/17 07:04:20 jeffs Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.2 2000/07/17 07:06:13 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -89,7 +89,8 @@
 #include <sys/reboot.h>
 #include <sys/kgdb.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+
 #include <mips/pte.h>
 #include <mips/cpu.h>
 #include <mips/locore.h>
