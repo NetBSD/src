@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.176 2002/05/09 09:45:28 mbw Exp $
+.\"	$NetBSD: main,v 1.177 2002/05/12 22:47:17 kleink Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,11 +45,11 @@
 .nr FOR_RELEASE 1
 .nr DOC_XR 1
 .ds MACHINE_LIST acorn26 acorn32 algor alpha amiga amigappc arc atari bebox
-.as MACHINE_LIST " cats cobalt dreamcast evbarm evbmips evbsh3 hp300 hpcarm
-.as MACHINE_LIST " hpcmips hpcsh i386 luna68k mac68k macppc mmeye mvme68k
-.as MACHINE_LIST " mvmeppc netwinder news68k newsmips next68k ofppc pc532
-.as MACHINE_LIST " playstation2 pmax prep sbmips sgimips shark sparc sparc64
-.as MACHINE_LIST " sun2 sun3 vax x68k
+.as MACHINE_LIST " cats cesfic cobalt dreamcast evbarm evbmips evbsh3 hp300 
+.as MACHINE_LIST " hpcarm hpcmips hpcsh i386 luna68k mac68k macppc mipsco
+.as MACHINE_LIST " mmeye mvme68k mvmeppc netwinder news68k newsmips next68k
+.as MACHINE_LIST " ofppc pc532 playstation2 pmax prep sandpoint sbmips
+.as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax walnut x68k x86_64
 .
 .so \*[.CURDIR]/../common/macros
 .
