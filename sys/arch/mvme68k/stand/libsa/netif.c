@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.2 1995/10/12 22:48:24 chuck Exp $	*/
+/*	$NetBSD: netif.c,v 1.3 1996/04/12 18:33:59 chuck Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -396,7 +396,7 @@ int le_put(desc, pkt, len)
     while(tmd->tmd1_bits & LE_T1_OWN) {
 	printf("le: output buffer busy\n");
     }
-    bcopy(pkt, ler2->ler2_tbuf[le_softc.next_tmd], len);
+    bcopy(pkt, (void *)ler2->ler2_tbuf[le_softc.next_tmd], len);
     if (len < 64) 
 	tmd->tmd2 = -64;
     else 
@@ -516,7 +516,7 @@ int le_poll(desc, pkt, len)
       if (length > len) 
 	length = len;
 
-      bcopy((void *)&ler2->ler2_rbuf[le_softc.next_rmd], pkt, length);
+      bcopy((void *)ler2->ler2_rbuf[le_softc.next_rmd], pkt, length);
     }
 
  cleanup: 
