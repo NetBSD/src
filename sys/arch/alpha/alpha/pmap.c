@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.118 1999/11/28 19:53:11 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.119 1999/11/29 18:37:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 1999/11/28 19:53:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 1999/11/29 18:37:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1240,10 +1240,6 @@ pmap_reference(pmap)
 	}
 }
 
-/* XXX testing purposes, for now.  --thorpej */
-void	pmap_remove_old __P((pmap_t, vaddr_t, vaddr_t));
-int	pmap_remove_new = 0;
-
 /*
  * pmap_remove:			[ INTERFACE ]
  *
@@ -1270,10 +1266,6 @@ pmap_remove(pmap, sva, eva)
 
 	if (pmap == NULL)
 		return;
-
-	/* XXX testing purposes, for now. --thorpej */
-	if (pmap_remove_new == 0)
-		pmap_remove_old(pmap, sva, eva);
 
 	/*
 	 * If this is the kernel pmap, we can use a faster method
@@ -1409,108 +1401,6 @@ pmap_remove(pmap, sva, eva)
 		alpha_pal_imb();
 
  out:
-	PMAP_UNLOCK(pmap);
-	PMAP_MAP_TO_HEAD_UNLOCK();
-}
-
-void
-pmap_remove_old(pmap, sva, eva)
-	pmap_t pmap;
-	vaddr_t sva, eva;
-{
-	pt_entry_t *l1pte, *l2pte, *l3pte;
-	boolean_t needisync = FALSE;
-	long cpu_id = alpha_pal_whami();
-
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
-		printf("pmap_remove(%p, %lx, %lx)\n", pmap, sva, eva);
-#endif
-
-	if (pmap == NULL)
-		return;
-
-	/*
-	 * If this is the kernel pmap, we can use a faster method
-	 * for accessing the PTEs (since the PT pages are always
-	 * resident).
-	 *
-	 * Note that this routine should NEVER be called from an
-	 * interrupt context; pmap_kremove() is used for that.
-	 */
-	if (pmap == pmap_kernel()) {
-		PMAP_MAP_TO_HEAD_LOCK();
-		PMAP_LOCK(pmap);
-
-		while (sva < eva) {
-			l3pte = PMAP_KERNEL_PTE(sva);
-			if (pmap_pte_v(l3pte)) {
-#ifdef DIAGNOSTIC
-				if (PAGE_IS_MANAGED(pmap_pte_pa(l3pte)) &&
-				    pmap_pte_pv(l3pte) == 0)
-					panic("pmap_remove: managed page "
-					    "without PG_PVLIST for 0x%lx",
-					    sva);
-#endif
-				needisync |= pmap_remove_mapping(pmap, sva,
-				    l3pte, TRUE, cpu_id, NULL);
-			}
-			sva += PAGE_SIZE;
-		}
-
-		PMAP_UNLOCK(pmap);
-		PMAP_MAP_TO_HEAD_UNLOCK();
-
-		if (needisync) {
-			alpha_pal_imb();
-#if defined(MULTIPROCESSOR) && 0
-			alpha_broadcast_ipi(ALPHA_IPI_IMB);
-#endif
-		}
-		return;
-	}
-
-#ifdef DIAGNOSTIC
-	if (sva > VM_MAXUSER_ADDRESS || eva > VM_MAXUSER_ADDRESS)
-		panic("pmap_remove: (0x%lx - 0x%lx) user pmap, kernel "
-		    "address range", sva, eva);
-#endif
-
-	PMAP_MAP_TO_HEAD_LOCK();
-	PMAP_LOCK(pmap);
-
-	while (sva < eva) {
-		/*
-		 * If level 1 mapping is invalid, just skip it.
-		 */
-		l1pte = pmap_l1pte(pmap, sva);
-		if (pmap_pte_v(l1pte) == 0) {
-			sva = alpha_trunc_l1seg(sva) + ALPHA_L1SEG_SIZE;
-			continue;
-		}
-
-		/*
-		 * If level 2 mapping is invalid, just skip it.
-		 */
-		l2pte = pmap_l2pte(pmap, sva, l1pte);
-		if (pmap_pte_v(l2pte) == 0) {
-			sva = alpha_trunc_l2seg(sva) + ALPHA_L2SEG_SIZE;
-			continue;
-		}
-
-		/*
-		 * Invalidate the mapping if it's valid.
-		 */
-		l3pte = pmap_l3pte(pmap, sva, l2pte);
-		if (pmap_pte_v(l3pte))
-			needisync |= pmap_remove_mapping(pmap, sva, l3pte,
-			    TRUE, cpu_id, NULL);
-		sva += PAGE_SIZE;
-	}
-
-	if (needisync)
-		alpha_pal_imb();
-
 	PMAP_UNLOCK(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 }
