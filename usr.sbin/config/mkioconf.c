@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.66 2002/09/30 18:54:36 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.67 2002/10/02 16:49:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -201,7 +201,7 @@ emitcfdrivers(FILE *fp)
 			return (1);
 		else if (has_iattrs == 0 && fprintf(fp, "NULL") < 0)
 			return (1);
-		if (fprintf(fp, /* ( */ ")\n\n") < 0)
+		if (fprintf(fp, /* ( */ ");\n\n") < 0)
 			return (1);
 	}
 
