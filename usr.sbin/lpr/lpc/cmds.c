@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.6 1995/11/15 22:27:30 pk Exp $	*/
+/*	$NetBSD: cmds.c,v 1.7 1996/01/14 17:25:21 hpeyerl Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -833,7 +833,7 @@ prstat()
 	fd = open(line, O_RDONLY);
 	if (fd < 0 || flock(fd, LOCK_SH|LOCK_NB) == 0) {
 		(void) close(fd);	/* unlocks as well */
-		printf("\tno daemon present\n");
+		printf("\tprinter idle\n");
 		return;
 	}
 	(void) close(fd);
