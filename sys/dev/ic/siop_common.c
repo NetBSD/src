@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.32 2003/01/31 00:26:31 thorpej Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.33 2004/03/10 22:02:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.32 2003/01/31 00:26:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.33 2004/03/10 22:02:53 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,6 +193,9 @@ siop_common_reset(sc)
 	    1 << sc->sc_chan.chan_id);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_DCNTL,
 	    (sc->features & SF_CHIP_PF) ? DCNTL_COM | DCNTL_PFEN : DCNTL_COM);
+	if (sc->features & SF_CHIP_AAIP)
+		bus_space_write_1(sc->sc_rt, sc->sc_rh,
+		    SIOP_AIPCNTL1, AIPCNTL1_DIS);
 
 	/* enable clock doubler or quadruler if appropriate */
 	if (sc->features & (SF_CHIP_DBLR | SF_CHIP_QUAD)) {
