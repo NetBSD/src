@@ -1,11 +1,11 @@
-.\" $NetBSD: bus_space.9,v 1.16 2000/11/23 22:56:53 scw Exp $
+.\" $NetBSD: bus_space.9,v 1.17 2001/05/27 16:04:46 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
-.\" 
+.\"
 .\" This code is derived from software contributed to The NetBSD Foundation
 .\" by Christopher G. Demetriou.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -21,7 +21,7 @@
 .\" 4. Neither the name of The NetBSD Foundation nor the names of its
 .\"    contributors may be used to endorse or promote products derived
 .\"    from this software without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -350,7 +350,7 @@ The
 functions exist to allow device drivers
 machine-independent access to bus memory and register areas.  All of the
 functions and types described in this document can be used by including
-the 
+the
 .Pa Aq machine/bus.h
 header file.
 .Pp
@@ -536,12 +536,12 @@ function maps the region of bus space named by the
 and
 .Fa size
 arguments.  If successful, it returns zero
-and fills in the bus space handle pointed to by 
+and fills in the bus space handle pointed to by
 .Fa handlep
 with the handle
 that can be used to access the mapped region.  If unsuccessful,
 it will return non-zero and leave the bus space handle pointed
-to by 
+to by
 .Fa handlep
 in an undefined state.
 .Pp
@@ -586,7 +586,7 @@ methods is strongly recommended.
 .El
 .Pp
 Not all combinations of flags make sense or are supported with all
-spaces.  For instance, 
+spaces.  For instance,
 .Dv BUS_SPACE_MAP_CACHEABLE
 may be meaningless when
 used on many systems' I/O port spaces, and on some systems
@@ -618,7 +618,7 @@ The
 .Fn bus_space_unmap
 function unmaps a region of bus space mapped with
 .Fn bus_space_map .
-When unmapping a region, the 
+When unmapping a region, the
 .Fa size
 specified should be
 the same as the size given to
@@ -633,7 +633,7 @@ either.)
 .Pp
 This function will never fail.  If it would fail (e.g. because of an
 argument error), that indicates a software bug which should cause a
-panic.  In that case, 
+panic.  In that case,
 .Fn bus_space_unmap
 will never return.
 .Pp
@@ -643,11 +643,11 @@ The
 .Fn bus_space_subregion
 function is a convenience function which makes a
 new handle to some subregion of an already-mapped region of bus space.
-The subregion described by the new handle starts at byte offset 
+The subregion described by the new handle starts at byte offset
 .Fa offset
-into the region described by 
+into the region described by
 .Fa handle ,
-with the size give by 
+with the size given by
 .Fa size ,
 and must be wholly contained within the original region.
 .Pp
@@ -664,7 +664,7 @@ undefined state.  In either case, the handle described by
 .Fa handle
 remains valid and is unmodified.
 .Pp
-When done with a handle created by 
+When done with a handle created by
 .Fn bus_space_subregion ,
 the handle should
 be thrown away.  Under no circumstances should
@@ -715,16 +715,16 @@ corresponding to the given constraints.  If successful, it returns
 zero, fills in the bus address pointed to by
 .Fa addrp
 with the bus space address of the allocated region, and fills in
-the bus space handle pointed to by 
+the bus space handle pointed to by
 .Fa handlep
 with the handle that can be used to access that region.
 If unsuccessful, it returns non-zero and leaves the bus address pointed to by
 .Fa addrp
-and the bus space handle pointed to by 
+and the bus space handle pointed to by
 .Fa handlep
 in an undefined state.
 .Pp
-Constraints on the allocation are given by the 
+Constraints on the allocation are given by the
 .Fa reg_start ,
 .Fa reg_end ,
 .Fa alignment ,
@@ -824,9 +824,9 @@ The
 family of functions reads a 1, 2, 4, or 8 byte data item from
 the offset specified by
 .Fa offset
-into the region specified by 
+into the region specified by
 .Fa handle
-of the bus space specified by 
+of the bus space specified by
 .Fa space .
 The location being read must lie within the bus space region specified by
 .Fa handle .
@@ -837,7 +837,7 @@ plus the offset should be a multiple of the size of data item being read.
 On some systems, not obeying this requirement may cause incorrect data to
 be read, on others it may cause a system crash.
 .Pp
-Read operations done by the 
+Read operations done by the
 .Fn bus_space_read_N
 functions may be executed out
 of order with respect to other pending read and write operations unless
@@ -861,7 +861,7 @@ specified by
 .Fa offset
 into the region specified by
 .Fa handle
-of the bus space specified by 
+of the bus space specified by
 .Fa space .
 The location being written must lie within
 the bus space region specified by
@@ -958,15 +958,15 @@ The
 family of functions cautiously read a 1, 2, 4, or 8 byte data item from
 the offset specified by
 .Fa offset
-in the region specified by 
+in the region specified by
 .Fa handle
-of the bus space specified by 
+of the bus space specified by
 .Fa space .
 The data item read is stored in the location pointed to by
 .Fa datap .
 It is permissible for
 .Fa datap
-to be NULL, in which case the data item will be discared after being read.
+to be NULL, in which case the data item will be discarded after being read.
 .Pp
 .It Fn bus_space_poke_1 "space" "handle" "offset" "value"
 .It Fn bus_space_poke_2 "space" "handle" "offset" "value"
@@ -982,7 +982,7 @@ to the offset specified by
 .Fa offset
 in the region specified by
 .Fa handle
-of the bus space specified by 
+of the bus space specified by
 .Fa space .
 .El
 .Pp
@@ -1002,14 +1002,14 @@ The
 function enforces ordering of bus space read and write operations
 for the specified subregion (described by the
 .Fa offset
-and 
+and
 .Fa length
 parameters) of the region named by
 .Fa handle
 in the space named by
 .Fa space .
 .Pp
-The 
+The
 .Fa flags
 argument controls what types of operations are to be ordered.
 Supported flags are:
@@ -1157,7 +1157,7 @@ in the region specified by
 .Fa handle
 of the bus space specified
 by
-.Fa space . 
+.Fa space .
 Each successive data item is written to an offset 1, 2, 4,
 or 8 bytes after the previous data item (depending on which function is
 used).  All locations being written must lie within the bus space region
@@ -1216,7 +1216,7 @@ an offset 1, 2, 4, or 8 bytes after the previous data item (depending
 on which function is used).  All locations being read and written must
 lie within the bus space region specified by their respective handles.
 .Pp
-For portability, the starting addresses of the regions specified by the
+For portability, the starting addresses of the regions specified by
 each handle plus its respective offset should be a multiple of the size
 of data items being copied.  On some systems, not obeying this
 requirement may cause incorrect data to be copied, on others it may cause
@@ -1258,8 +1258,8 @@ data items in bus space starting at byte offset
 .Fa offset
 in the region specified by
 .Fa handle
-of the bus space specified by 
-.Fa space . 
+of the bus space specified by
+.Fa space .
 Each successive data item has an offset 1, 2, 4, or 8 bytes after the
 previous data item (depending on which function is used).  All
 locations being written must lie within the bus space region specified
@@ -1395,7 +1395,7 @@ panic.  In that case, they will never return.
 .Pp
 .Sh STREAM FUNCTIONS
 .Pp
-Most of the 
+Most of the
 .Nm
 functions imply a host byte-order and a bus byte-order and take care of
 any translation for the caller.  In some cases, however, hardware may
