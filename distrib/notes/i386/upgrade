@@ -1,19 +1,19 @@
-The upgrade to NetBSD 1.2 is a binary upgrade; it would be prohibitive
-to make users upgrade by compiling and installing the 1.2 sources, and
+The upgrade to NetBSD 1.2G is a binary upgrade; it would be prohibitive
+to make users upgrade by compiling and installing the 1.2G sources, and
 it would be very difficult to even compile a set of instructions that
 allowed them to do so.  Because of the many changes to the system, it
 is difficult impractical to upgrade by recompiling from the sources
 and installing.
 
-To do the upgrade, you must have the appropriate upgrade floppy image
-(either upgr12D.fs or upgrs12D.fs).  You must also have at least the
-"base12D" and "kern12D" binary distribution sets available, so that
-you can upgrade with it, using one of the upgrade methods described
-above.  Finally, you must have sufficient disk space available to
-install the new binaries.  Since the old binaries are being
-overwritten in place, you only need space for the new binaries, which
-weren't previously on the system.  If you have a few megabytes free on
-each of your root and /usr partitions, you should have enough space.
+To do the upgrade, you must have the boot floppy image (boot-12G.fs)
+available.  You must also have at least the "base12G" and "kern12G"
+binary distribution sets available, so that you can upgrade with it,
+using one of the upgrade methods described above.  Finally, you must
+have sufficient disk space available to install the new binaries.
+Since the old binaries are being overwritten in place, you only need
+space for the new binaries, which weren't previously on the system.
+If you have a few megabytes free on each of your root and /usr
+partitions, you should have enough space.
 
 Since upgrading involves replacing the boot blocks on your NetBSD
 partition, the kernel, and most of the system binaries, it has the
@@ -42,6 +42,9 @@ To upgrade your system, follow the following instructions:
 	completely normal.  When you reach the prompt asking you for a
 	shell name, just hit return.
 
+	You will be asked if you wish to install or upgrade your
+	system or go to a shell prompt. Enter "upgrade".
+
 	You will be presented with some information about the upgrade
 	process and a warning message, and will be asked if you wish
 	to proceed with the upgrade process.  If you answer
@@ -58,7 +61,7 @@ To upgrade your system, follow the following instructions:
 	probably do it manually after the install process is complete,
 	by using "fsck -c 2". Read the fsck(8) manual page for more
 	details. NOTE: ONLY UPGRADE YOUR FILE SYSTEMS IF YOU ARE
-        UPGRADING FROM A PRE-NetBSD 1.0 RELEASE
+        UPGRADING FROM A PRE-NetBSD 1.0 RELEASE.
 
         If you choose to upgrade your file systems, the upgrade
         program will then check your root file system, and, if you
@@ -86,13 +89,13 @@ To upgrade your system, follow the following instructions:
 
 	After the software has been transferred to the machine (or
 	mounted, in the case of upgrading via NFS), change into the
-	directory containing the "base12" distribution set.  Once you
+	directory containing the "base12G" distribution set.  Once you
 	are there, run the "Set_tmp_dir" command, and hit return at
 	the prompt to select the default answer for the temporary
 	directory's path name.  (It should be the path name of the
 	directory that you're in.)
 
-	Run the command "Extract base12" to upgrade the base
+	Run the command "Extract base12G" to upgrade the base
 	distribution.
 
 	Repeat the above two steps for all of the sets you wish to
@@ -100,8 +103,8 @@ To upgrade your system, follow the following instructions:
 	set, run "Set_tmp_dir" and accept the default path name, then
 	run the "Extract <setname>" command.)
 
-        NOTE: YOU MUST INSTALL THE "kern12D" DISTRIBUTION, AS IT
-        CONTAINS THE NEW NetBSD 1.2D KERNEL! This step is different
+        NOTE: YOU MUST INSTALL THE "kern12G" DISTRIBUTION, AS IT
+        CONTAINS THE NEW NetBSD 1.2G KERNEL! This step is different
         from previous netbsd upgrade procedures, which installed the
         kernel from a boot floppy using a special procedure.
 
@@ -117,10 +120,10 @@ To upgrade your system, follow the following instructions:
 	it is complete, you should use "halt" to halt the system, or
 	"reboot" to reboot it.
 
-Your system has now been upgraded to NetBSD 1.2.
+Your system has now been upgraded to NetBSD 1.2G.
 
         After a new kernel has been copied to your hard disk, your
-	machine is a complete NetBSD 1.2 system.  However, that
+	machine is a complete NetBSD 1.2G system.  However, that
 	doesn't mean that you're finished with the upgrade process.
 	There are several things that you should do, or might have to
 	do, to insure that the system works properly.
@@ -131,7 +134,7 @@ Your system has now been upgraded to NetBSD 1.2.
         with "fsck -c 2".  If you are unsure about the process, it's
         suggested that you read the fsck(8) manual page.
 
-	Second, you will probably want to get the etc12D distribution,
+	Second, you will probably want to get the etc12G distribution,
 	extract it, and compare its contents with those in your /etc/
 	directory.  You will probably want to replace some of your
 	system configuration files, or incorporate some of the changes
