@@ -1,4 +1,4 @@
-/*	$NetBSD: mkastosc.c,v 1.5 1998/03/11 09:00:00 thorpej Exp $	*/
+/*	$NetBSD: mkastosc.c,v 1.6 1998/09/06 02:54:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -49,11 +49,7 @@ __RCSID("$NetBS$");
 #endif /* not lint */
 
 #include <stdio.h>
-#if	defined(unix)
-#include <strings.h>
-#else	/* defined(unix) */
 #include <string.h>
-#endif	/* defined(unix) */
 #include <err.h>
 #include <ctype.h>
 

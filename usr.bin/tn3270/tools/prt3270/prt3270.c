@@ -1,4 +1,4 @@
-/*	$NetBSD: prt3270.c,v 1.4 1998/03/04 13:16:15 christos Exp $	*/
+/*	$NetBSD: prt3270.c,v 1.5 1998/09/06 02:54:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,12 +44,10 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)prt3270.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: prt3270.c,v 1.4 1998/03/04 13:16:15 christos Exp $");
+__RCSID("$NetBSD: prt3270.c,v 1.5 1998/09/06 02:54:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#if defined(unix)
-#endif
 #include <stdio.h>
 #include <ctype.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdstoas.c,v 1.4 1998/03/04 13:16:13 christos Exp $	*/
+/*	$NetBSD: mkdstoas.c,v 1.5 1998/09/06 02:54:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,16 +44,12 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)mkdstoas.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkdstoas.c,v 1.4 1998/03/04 13:16:13 christos Exp $");
+__RCSID("$NetBSD: mkdstoas.c,v 1.5 1998/09/06 02:54:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
-#if	defined(unix)
-#include <strings.h>
-#else	/* defined(unix) */
 #include <string.h>
-#endif	/* defined(unix) */
 #include <ctype.h>
 #include "../api/asc_ebc.h"
 #include "../api/ebc_disp.h"

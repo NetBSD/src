@@ -1,4 +1,4 @@
-/*	$NetBSD: general.h,v 1.7 1998/03/11 16:49:19 thorpej Exp $	*/
+/*	$NetBSD: general.h,v 1.8 1998/09/06 02:54:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,32 +44,10 @@
 #define	numberof(x)	(sizeof x/sizeof x[0])
 #define	highestof(x)	(numberof(x)-1)
 
-#if	defined(unix)
-#define	ClearElement(x)		bzero((char *)&x, sizeof x)
-#define	ClearArray(x)		bzero((char *)x, sizeof x)
-#else	/* defined(unix) */
 #define	ClearElement(x)		memset((char *)&x, 0, sizeof x)
 #define	ClearArray(x)		memset((char *)x, 0, sizeof x)
-#endif	/* defined(unix) */
 
-/* Define BSD equivalent mem* functions */
-#if	defined(unix) && !defined(__NetBSD__)
-#define	memcpy(dest,src,n)	bcopy(src,dest,n)
-#define	memmove(dest,src,n)	bcopy(src,dest,n)
-#define	memset(s,c,n)		if (c == 0) { \
-				    bzero(s,n); \
-				} else { \
-				    char *src = s; \
-				    int count = n; \
-					\
-				    while (count--) { \
-					*src++ = c; \
-				    } \
-				}
-#define	memcmp(s1,s2,n)		bcmp(s1,s2,n)
-#else /* !(defined(unix) && !defined(__NetBSD__)) */
 #include <string.h>
-#endif	/* !(defined(unix) && !defined(__NetBSD__)) */
 
 /* genbsubs.c */
 int bunequal __P((char *, char *, int));
