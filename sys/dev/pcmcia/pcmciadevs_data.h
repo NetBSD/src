@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.50 1999/09/27 04:28:27 enami Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.51 1999/09/27 22:58:57 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.47 1999/09/27 04:27:28 enami Exp 
+ *	NetBSD: pcmciadevs,v 1.48 1999/09/27 22:57:26 enami Exp 
  */
 
 /*-
@@ -402,11 +402,11 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Planet SmartCOM 2000"	},
 	},
 	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_PLANEX_FMW3600T,
-	    PCMCIA_CIS_PLANEX_FMW3600T,
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_PLANEX_FNW3600T,
+	    PCMCIA_CIS_PLANEX_FNW3600T,
 	    0,
 	    "Planex Communications Inc",
-	    "Planex FMW-3600-T"	},
+	    "Planex FNW-3600-T"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DLINK_DE650,
