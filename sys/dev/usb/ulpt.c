@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.13 1999/07/14 19:12:07 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.14 1999/08/14 14:49:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,8 +71,8 @@
 #define	ULPT_BSIZE	1024
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (ulptdebug) printf x
-#define DPRINTFN(n,x)	if (ulptdebug>(n)) printf x
+#define DPRINTF(x)	if (ulptdebug) logprintf x
+#define DPRINTFN(n,x)	if (ulptdebug>(n)) logprintf x
 int	ulptdebug = 0;
 #else
 #define DPRINTF(x)

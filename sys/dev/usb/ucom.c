@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.8 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.9 1999/08/14 14:49:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,8 +69,8 @@
 #include <dev/usb/hid.h>
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (ucomdebug) printf x
-#define DPRINTFN(n,x)	if (ucomdebug>(n)) printf x
+#define DPRINTF(x)	if (ucomdebug) logprintf x
+#define DPRINTFN(n,x)	if (ucomdebug>(n)) logprintf x
 int	ucomdebug = 0;
 #else
 #define DPRINTF(x)
