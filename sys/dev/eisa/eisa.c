@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.2 1996/02/27 21:51:17 cgd Exp $	*/
+/*	$NetBSD: eisa.c,v 1.3 1996/03/02 01:09:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -202,6 +202,9 @@ eisa_devinfo(id, cp)
 #ifdef EISAVERBOSE
 	struct eisa_knowndev *edp;
 	int match;
+	const char *unmatched = "unknown device ";
+#else
+	const char *unmatched = "";
 #endif
 
 	onlyvendor = 0;
@@ -226,8 +229,8 @@ eisa_devinfo(id, cp)
 #endif
 
 	if (name == NULL)
-		cp += sprintf(cp, "unknown device %s", id);
-	else if (onlyvendor)
+		cp += sprintf(cp, "%s%s", unmatched, id);
+	else if (onlyvendor)			/* never if not EISAVERBOSE */
 		cp += sprintf(cp, "unknown %s device %s", name, id);
 	else
 		cp += sprintf(cp, "%s", name);
