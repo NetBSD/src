@@ -1,11 +1,8 @@
-/*	$NetBSD: ntohl.S,v 1.6 1998/02/22 06:40:18 mycroft Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * William Jolitz.
+ * This code is derived from locore.s.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,19 +31,75 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)ntohl.s	5.2 (Berkeley) 12/17/90
  */
 
 #include <machine/asm.h>
+
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: ntohl.S,v 1.6 1998/02/22 06:40:18 mycroft Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.1 1998/02/22 06:40:17 mycroft Exp $")
 #endif
 
-/* hostorder = ntohl(netorder) */
-ENTRY(ntohl)
-	movl	4(%esp),%eax
-	rorw	$8,%ax
-	roll	$16,%eax
-	rorw	$8,%ax
+	/*
+	 * (ov)bcopy (src,dst,cnt)
+	 *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800
+	 */
+
+#ifdef MEMCOPY
+ENTRY(memcpy)
+#else
+#ifdef MEMMOVE
+ENTRY(memmove)
+#else
+ENTRY(bcopy)
+#endif
+#endif
+	pushl	%esi
+	pushl	%edi
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	movl	12(%esp),%edi
+	movl	16(%esp),%esi
+#else
+	movl	12(%esp),%esi
+	movl	16(%esp),%edi
+#endif
+	movl	20(%esp),%ecx
+	movl	%edi,%eax
+	subl	%esi,%eax
+	cmpl	%ecx,%eax	/* overlapping? */
+	jb	1f
+	cld			/* nope, copy forwards. */
+	shrl	$2,%ecx		/* copy by words */
+	rep
+	movsl
+	movl	20(%esp),%ecx
+	andl	$3,%ecx		/* any bytes left? */
+	rep
+	movsb
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	movl	12(%esp),%eax
+#endif
+	popl	%edi
+	popl	%esi
+	ret
+1:
+	addl	%ecx,%edi	/* copy backwards. */
+	addl	%ecx,%esi
+	std
+	andl	$3,%ecx		/* any fractional bytes? */
+	decl	%edi
+	decl	%esi
+	rep
+	movsb
+	movl	20(%esp),%ecx	/* copy remainder by words */
+	shrl	$2,%ecx
+	subl	$3,%esi
+	subl	$3,%edi
+	rep
+	movsl
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	movl	12(%esp),%eax
+#endif
+	popl	%edi
+	popl	%esi
+	cld
 	ret
