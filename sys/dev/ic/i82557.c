@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.35 2000/06/28 17:12:57 mrg Exp $	*/
+/*	$NetBSD: i82557.c,v 1.36 2000/06/29 16:53:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -923,6 +923,7 @@ fxp_intr(arg)
 				 * We have processed all of the
 				 * receive buffers.
 				 */
+				FXP_RFASYNC(sc, m, BUS_DMASYNC_PREREAD);
 				goto do_transmit;
 			}
 
