@@ -1,4 +1,4 @@
-#	$NetBSD: DRACO,v 1.21 1998/02/05 20:07:17 is Exp $
+#	$NetBSD: DRACO,v 1.22 1998/02/22 22:51:47 is Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
@@ -97,6 +97,15 @@ options 	DDB		# Kernel debugger
 #
 # Amiga specific options
 #
+#options        LIMITMEM=24     # Don't use more than LIMITMEM MB of the
+				# first memory bank. Default: unlimited
+#options        NKPTADD=4       # set this for 4 additional KPT pages
+#options        NKPTADDSHIFT=24 # set this for 1 additional KPT page
+				# per 16 MB (1<<24 bytes) of RAM (default)
+				# define and decrease this, or define and
+				# increase NKPTADD if you get "out of PT pages"
+				# panics.
+
 options 	MACHINE_NONCONTIG # Non-contiguous memory support 
 				  # higly recommended for DraCo
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 1998/01/22 23:13:40 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 1998/02/22 22:51:46 is Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -198,7 +198,17 @@ int	protection_codes[8];
 
 /*
  * Kernel page table page management.
+ *
+ * One additional page of KPT allows for 16 MB of virtual buffer cache.
+ * A GENERIC kernel allocates this for 2 MB of real buffer cache,
+ * which in turn is allocated for 38 MB of RAM.
+ * We add one per 16 MB of RAM to allow for tuning the machine-independent
+ * options.
  */
+#ifndef NKPTADDSHIFT
+#define NKPTADDSHIFT 24
+#endif
+
 struct kpt_page {
 	struct kpt_page *kpt_next;	/* link on either used or free list */
 	vm_offset_t	kpt_va;		/* always valid kernel VA */
@@ -554,7 +564,15 @@ pmap_init(phys_start, phys_end)
 	 * plus some slop.
 	 */
 	npg = howmany(((maxproc + 16) * AMIGA_UPTSIZE / NPTEPG), NBPG);
-	npg = min(atop(AMIGA_MAX_KPTSIZE), npg);
+#ifdef NKPTADD
+	npg += NKPTADD;
+#else
+	npg += mem_size >> NKPTADDSHIFT;
+#endif
+#if 1/*def DEBUG*/
+	printf("Maxproc %d, mem_size %ld MB: allocating %ld KPT pages\n",
+	    maxproc, mem_size>>20, npg);
+#endif
 	s = ptoa(npg) + round_page(npg * sizeof(struct kpt_page));
 
 	/*

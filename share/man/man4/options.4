@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.42 1998/02/09 22:14:43 is Exp $
+.\"	$NetBSD: options.4,v 1.43 1998/02/22 22:51:47 is Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -943,18 +943,23 @@ a M68060 cpu without FPU, go look into the Processor Configuration Register
 to find out. You need this with Amiga ROMs up to (at least) V40.xxx (OS3.1),
 when you boot via the bootblocks and don't have a DraCo.
 .It Cd options LIMITMEM=value
-If there, limit memory usage by NetBSD to value megabytes.
+If there, limit the part of the first memory bank used by NetBSD to
+value
+megabytes. Default is unlimited.
+.It Cd options NKPTADD=addvalue
+.It Cd options NKPTADDSHIFT=shiftvalue
+The cpu specific MMU table for the kernel is pre-allocated at kernel startup
+time. Part of it is scaled with maxproc, to have enough room to hold the
+user program MMU tables; the second part is a fixed amount for the kernel
+itself.
 .br
-The machine specific part of the virtual memory system contains tables which 
-are fixed in size (due to the way initialization is done currently), but would
-need scaling with kernel data space virtual size (see NKMEMCLUSTERS).
-However, the kernel data area contains at least two variables: address space
-of big graphics boards, and the file buffer cache (the latter scales with
-memory size). As the size of the table would get very large if it should
-handle big spaces conveniently, it would make booting on
-small Amigas very painful due to excessive paging.
-This option allows to work around this problem by limiting what the kernel
-things is the memory size.
+The third part accounts for the size of the file buffer cache. Its size is
+either NKPTADD pages (if defined) or memorysize in bytes divided by two to
+the power of NKPTADDSHIFT. The default is undefined NKPTADD and
+NKPTADDSHIFT=24, allowing for 16 buffers per megabyte of main memory (while
+a GENERIC kernel allocates about half of that). When you get "can't get KPT
+page" panics, you should increase NKPTADD (if defined), or decrease
+NKPTADDSHIFT by one.
 .Ss atari-specific Options
 .Bl -ohang
 .It Cd options DISKLABEL_AHDI
