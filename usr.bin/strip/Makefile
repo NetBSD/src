@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.13 1997/03/24 21:59:50 christos Exp $
+#	$NetBSD: Makefile,v 1.14 1997/05/07 16:06:02 mycroft Exp $
 #	@(#)Makefile	5.4 (Berkeley) 5/11/90
 
 PROG=	strip
-
-realinstall: proginstall
 
 .include <bsd.prog.mk>
 
@@ -20,4 +18,3 @@ ${DESTDIR}${BINDIR}/${PROG}: ${PROG}
 	./strip ${.TARGET}
 	chmod ${BINMODE} ${.TARGET}
 	-if [ "${COPY}" = "" ]; then rm -f ./strip; fi
-
