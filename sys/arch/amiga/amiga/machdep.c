@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.37 1994/07/18 08:04:32 chopps Exp $
+ *	$Id: machdep.c,v 1.38 1994/10/06 19:11:30 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -109,6 +109,7 @@
 #include "ser.h"
 #include "idesc.h"
 #include "ether.h"
+#include "afsc.h"
 
 /* vm_map_t buffer_map; */
 extern vm_offset_t avail_end;
@@ -1418,6 +1419,10 @@ intrhand(sr)
 		if (wesc_dmaintr())
 			goto intports_done;
 #endif
+#if NAFSC > 0
+		if (afsc_dmaintr())
+			goto intports_done;
+#endif
 #if NWSTSC > 0
 		if (wstsc_intr())
 			goto intports_done;
@@ -1648,4 +1653,3 @@ cpu_exec_aout_makecmds(p, epp)
 #endif
 	return(error);
 }
-
