@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.25 2000/07/23 14:17:49 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.26 2000/08/01 00:53:15 wiz Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -295,6 +295,7 @@
 /usr/include/sys/vlimit.h
 /usr/include/sys/vsio.h
 /usr/include/ufs/mfs/mfsiom.h
+/usr/include/uvm/uvm_inherit.h
 /usr/include/vm/device_pager.h
 /usr/include/vm/lock.h
 /usr/include/vm/pglist.h
