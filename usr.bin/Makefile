@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.73 1997/06/22 18:50:33 christos Exp $
+#	$NetBSD: Makefile,v 1.74 1997/07/16 02:43:35 mark Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -43,7 +43,8 @@ SUBDIR+= ar gprof nm ranlib size strip
 SUBDIR+= ldd
 .endif
 
-.if (${MACHINE_ARCH} == "i386" || ${MACHINE} == "atari")
+.if (${MACHINE_ARCH} == "i386" || ${MACHINE} == "atari" || \
+     ${MACHINE_ARCH} == "arm32")
 SUBDIR+= fdformat
 .endif
 
