@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.9 2000/03/02 05:00:47 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.10 2000/03/02 05:54:22 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.9 2000/03/02 05:00:47 enami Exp $
+ *	$Id: if_wi.c,v 1.10 2000/03/02 05:54:22 enami Exp $
  */
 
 /*
@@ -116,7 +116,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.9 2000/03/02 05:00:47 enami Exp $";
+	"$Id: if_wi.c,v 1.10 2000/03/02 05:54:22 enami Exp $";
 #endif
 
 #ifdef foo
@@ -1278,15 +1278,9 @@ static int wi_ioctl(ifp, command, data)
 		    memcmp(sc->wi_netid.ws_id, nwid, len) == 0)
 			break;
 		wi_set_ssid(&sc->wi_netid, nwid, len);
-		if (sc->sc_enabled != 0) {
-			error = wi_write_ssid(sc, WI_RID_DESIRED_SSID, &wreq,
-			    &sc->wi_netid);
-			if (error == 0 &&
-			    (ifp->if_flags & IFF_RUNNING) != 0) {
-				untimeout(wi_inquire, sc);
-				wi_inquire(sc);
-			}
-		}
+		if (sc->sc_enabled != 0)
+			/* Reinitialize WaveLAN. */
+			wi_init(sc);
 		break;
 	default:
 		error = EINVAL;
@@ -1640,7 +1634,7 @@ wi_request_fill_ssid(wreq, ws)
 
 	memset(&wreq->wi_val[0], 0, sizeof(wreq->wi_val));
 	wreq->wi_val[0] = ws->ws_len;
-	wreq->wi_len = roundup(wreq->wi_val[0], 2) / 2 + 1;
+	wreq->wi_len = roundup(wreq->wi_val[0], 2) / 2 + 2;
 	memcpy(&wreq->wi_val[1], ws->ws_id, wreq->wi_val[0]);
 }
 
