@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.18 1999/09/03 09:17:28 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.19 1999/09/03 09:51:07 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -227,3 +227,9 @@ sys/ufs/lfs/lfs_segment.c			1.28
 
   Fix a printf format bug that gives compiler warnings/errors on 
   64-bit platforms, fixing PR#8241.  (perseant)
+
+lib/libc/gen/__fts13.c				1.16-1.25
+
+  Fix various bug in fts(3), preventing a buffer overflow on a very
+  deep tree, and a silent trucation of the path when fts_pathlen 
+  overflows.  Also, make this compile on Linux.  (bouyer)
