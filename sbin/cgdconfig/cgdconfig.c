@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.9 2003/09/23 17:24:46 cb Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.10 2004/03/17 01:29:13 dan Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.9 2003/09/23 17:24:46 cb Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.10 2004/03/17 01:29:13 dan Exp $");
 #endif
 
 #include <err.h>
@@ -97,7 +97,7 @@ static int	 configure_params(int, const char *, const char *,
 static bits_t	*getkey(const char *, struct keygen *, int);
 static bits_t	*getkey_storedkey(const char *, struct keygen *, int);
 static bits_t	*getkey_randomkey(const char *, struct keygen *, int);
-static bits_t	*getkey_pkcs5_pbkdf2(const char *, struct keygen *, int);
+static bits_t	*getkey_pkcs5_pbkdf2(const char *, struct keygen *, int, int);
 static int	 opendisk_werror(const char *, char *, int);
 static int	 unconfigure_fd(int);
 static int	 verify(struct params *, int);
@@ -257,8 +257,12 @@ getkey(const char *dev, struct keygen *kg, int len)
 		case KEYGEN_RANDOMKEY:
 			tmp = getkey_randomkey(dev, kg, len);
 			break;
-		case KEYGEN_PKCS5_PBKDF2:
-			tmp = getkey_pkcs5_pbkdf2(dev, kg, len);
+		case KEYGEN_PKCS5_PBKDF2_SHA1:
+			tmp = getkey_pkcs5_pbkdf2(dev, kg, len, 0);
+			break;
+		/* provide backwards compatibility for old config files */
+		case KEYGEN_PKCS5_PBKDF2_OLD:
+			tmp = getkey_pkcs5_pbkdf2(dev, kg, len, 1);
 			break;
 		default:
 			warnx("unrecognised keygen method %d in getkey()",
@@ -294,8 +298,16 @@ getkey_randomkey(const char *target, struct keygen *kg, int keylen)
 }
 
 /*ARGSUSED*/
+/* 
+ * XXX take, and pass through, a compat flag that indicates whether we
+ * provide backwards compatibility with a previous bug.  The previous
+ * behaviour is indicated by the keygen method pkcs5_pbkdf2, and a
+ * non-zero compat flag. The new default, and correct keygen method is
+ * called pcks5_pbkdf2/sha1.  When the old method is removed, so will
+ * be the compat argument.
+ */
 static bits_t *
-getkey_pkcs5_pbkdf2(const char *target, struct keygen *kg, int keylen)
+getkey_pkcs5_pbkdf2(const char *target, struct keygen *kg, int keylen, int compat)
 {
 	bits_t		*ret;
 	char		*passp;
@@ -306,7 +318,7 @@ getkey_pkcs5_pbkdf2(const char *target, struct keygen *kg, int keylen)
 	passp = getpass(buf);
 	if (pkcs5_pbkdf2(&tmp, BITS2BYTES(keylen), passp, strlen(passp),
 	    bits_getbuf(kg->kg_salt), BITS2BYTES(bits_len(kg->kg_salt)),
-	    kg->kg_iterations)) {
+	    kg->kg_iterations, compat)) {
 		warnx("failed to generate PKCS#5 PBKDF2 key");
 		return NULL;
 	}
@@ -641,14 +653,16 @@ verify_reenter(struct params *p)
 
 	ret = 0;
 	for (kg = p->keygen; kg && !ret; kg = kg->next) {
-		if (kg->kg_method != KEYGEN_PKCS5_PBKDF2)
+		if ((kg->kg_method != KEYGEN_PKCS5_PBKDF2_SHA1) && 
+		    (kg->kg_method != KEYGEN_PKCS5_PBKDF2_OLD ))
 			continue;
 
 		orig_key = kg->kg_key;
 		kg->kg_key = NULL;
 
+		/* add a compat flag till the _OLD method goes away */
 		key = getkey_pkcs5_pbkdf2("re-enter device", kg,
-			    bits_len(orig_key));
+			bits_len(orig_key), kg->kg_method == KEYGEN_PKCS5_PBKDF2_OLD);
 		ret = !bits_match(key, orig_key);
 
 		bits_free(key);
@@ -676,7 +690,7 @@ generate(struct params *p, int argc, char **argv, const char *outfile)
 		return ret;
 
 	if (!p->keygen) {
-		p->keygen = keygen_generate(KEYGEN_PKCS5_PBKDF2);
+		p->keygen = keygen_generate(KEYGEN_PKCS5_PBKDF2_SHA1);
 		if (!p->keygen)
 			return -1;
 	}
@@ -737,7 +751,7 @@ generate_convert(struct params *p, int argc, char **argv, const char *outfile)
 	params_free(oldp);
 
 	if (!p->keygen) {
-		p->keygen = keygen_generate(KEYGEN_PKCS5_PBKDF2);
+		p->keygen = keygen_generate(KEYGEN_PKCS5_PBKDF2_SHA1);
 		if (!p->keygen)
 			return -1;
 	}
