@@ -1,5 +1,5 @@
 KAME/NetBSD integration TODOs
-$NetBSD: TODO,v 1.1 1999/07/01 08:12:52 itojun Exp $
+$NetBSD: TODO,v 1.2 1999/07/01 18:28:55 itojun Exp $
 Jun-ichiro itojun Hagino <itojun@itojun.org>
 
 
@@ -117,13 +117,27 @@ KAME codebase includes several routing daemons, like route6d or bgpd (which
 does RIPng and BGP4+, respectively).  Should we put these into
 /usr/src/usr.sbin, or should we treat those as third-party code (pkgsrc)?
 
+* IPv6-support in resolvers
+
+Dual stack resolver code is from KAME.  The change may not be compatible with
+future bind8 code, so we may have to merge future bind8 carefully.
+(or we should volunteer for bind8 improvements)
+
+At this moment IPv6 support in lib/libc/net/* is implemented in very
+conservative way so that it will not break existing codebase.
+To be RFC2553 compilient, we need to supply getipnodeby{name,addr}.
+However, it needs a total rewrite of gethostby{name,addr}.
+It will make future upgrade to bind8x really harder.
+
+rcmd() and iruserok() must be extended to support multiple address families.
+
 * IPsec library
 
 Should IPsec library be enabled on userland programs by default?
 (NOTE: no crypto code will be put into userland - crypto code for IPsec
 is in kernel only)
 
-* -DINET6
+* -DINET6, -DIPSEC
 
 Where should we define -DINET6?  Should it be global option like 
 EXPORTABLE_SYSTEM=1 (in /etc/mk.conf), or local option defined somewhere?
