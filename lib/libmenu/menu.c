@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.13 2002/08/19 11:01:11 blymn Exp $	*/
+/*	$NetBSD: menu.c,v 1.14 2002/08/22 11:30:18 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -82,7 +82,7 @@ set_menu_mark(MENU *m, char *mark)
           /* if there was an old mark string, free it first */
         if (menu->mark.string != NULL) free(menu->mark.string);
 
-        if ((menu->mark.string = (char *) malloc(strlen(mark))) == NULL)
+        if ((menu->mark.string = (char *) malloc(strlen(mark) + 1)) == NULL)
                 return E_SYSTEM_ERROR;
 
         strcpy(menu->mark.string, mark);
@@ -118,7 +118,7 @@ set_menu_unmark(MENU *m, char *mark)
           /* if there was an old mark string, free it first */
         if (menu->unmark.string != NULL) free(menu->unmark.string);
 
-        if ((menu->unmark.string = (char *) malloc(strlen(mark))) == NULL)
+        if ((menu->unmark.string = (char *) malloc(strlen(mark) + 1)) == NULL)
                 return E_SYSTEM_ERROR;
 
         strcpy(menu->unmark.string, mark);
@@ -428,7 +428,7 @@ set_menu_pattern(MENU *param_menu, char *pat)
 		if (!isprint((unsigned char) *p++)) return E_BAD_ARGUMENT;
 	
         if ((menu->pattern = (char *) realloc(menu->pattern,
-                                     sizeof(char) * strlen(pat))) == NULL)
+                                     sizeof(char) * strlen(pat) + 1)) == NULL)
                 return E_SYSTEM_ERROR;
 
         strcpy(menu->pattern, pat);
@@ -466,7 +466,7 @@ new_menu(ITEM **items)
 		}
 
 		strlcpy(the_menu->mark.string, _menui_default_menu.mark.string,
-			(unsigned) _menui_default_menu.mark.length);
+			(unsigned) _menui_default_menu.mark.length + 1);
 	}
 	
 	  /* make a private copy of the unmark string too */
@@ -480,7 +480,7 @@ new_menu(ITEM **items)
 
 		strlcpy(the_menu->unmark.string,
 			_menui_default_menu.unmark.string,
-			(unsigned) _menui_default_menu.unmark.length);
+			(unsigned) _menui_default_menu.unmark.length+ 1 );
 	}
 
           /* now attach the items, if any */
