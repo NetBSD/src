@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1998/04/18 00:48:18 ross Exp $
+#	$NetBSD: Makefile,v 1.16 1998/09/27 17:22:03 lukem Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
 
 PROG=	chess
@@ -7,8 +7,10 @@ CPPFLAGS+=-DNEWMOVE=12
 DPADD=	${LIBCURSES} ${LIBGNUMALLOC}
 LDADD=	-lcurses -lgnumalloc
 HIDEGAME=hidegame
+.if !defined(NOSHARE)
 FILES=gnuchess.book
 FILESDIR=/usr/share/games
+.endif
 
 MAN=	chess.6
 CLEANFILES += chess.6

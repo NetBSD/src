@@ -1,9 +1,10 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$NetBSD: Makefile,v 1.2 1997/10/13 11:21:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 1998/09/27 17:22:10 lukem Exp $
 
-NOOBJ=
-
+.if !defined(NOSHARE)
 FILES=		makewhatis.sed COPYRIGHT
 FILESDIR=	/usr/share/man
+.endif
+NOOBJ=
 
 .include <bsd.prog.mk>

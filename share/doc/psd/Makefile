@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/22 22:12:30 enami Exp $
+#	$NetBSD: Makefile,v 1.8 1998/09/27 17:22:06 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 5/23/94
 
 # The following modules do not build/install:
@@ -12,7 +12,9 @@
 # 11.adb 15.yacc 16.lex
 
 BINDIR=	/usr/share/doc/psd
+.if !defined(NOSHARE)
 FILES=	00.contents Makefile Title
+.endif
 SUBDIR=	05.sysman 20.ipctut 21.ipc
 .if exists(12.make)
 SUBDIR+= 12.make

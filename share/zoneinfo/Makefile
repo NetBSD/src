@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1997/06/18 01:56:03 jtc Exp $
+#	$NetBSD: Makefile,v 1.20 1998/09/27 17:22:10 lukem Exp $
 
 NOOBJ=
 
@@ -72,9 +72,13 @@ posix_right: posix_only other_two
 .PHONY:	right_posix
 right_posix: right_only other_two
 
+.if !defined(NOSHARE)
 afterinstall: ${DATA} ${REDO}
 	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -p ${POSIXRULES}
 	chown -R ${BINOWN}:${BINGRP} ${TZDIR}
 	find ${TZDIR} -type f | xargs chmod a=r
+.else
+afterinstall:
+.endif
 
 .include <bsd.prog.mk>
