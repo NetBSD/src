@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.2 2000/05/14 22:50:01 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.3 2000/05/24 17:29:41 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.2 2000/05/14 22:50:01 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.3 2000/05/24 17:29:41 thorpej Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -86,6 +86,9 @@ userret(struct proc *p, vaddr_t pc, u_quad_t oticks)
 		postsig(sig);
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
+		/*
+		 * We are being preempted.
+		 */
 		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
