@@ -1,7 +1,7 @@
-/* $NetBSD: dtide.c,v 1.1 2001/06/08 20:13:24 bjh21 Exp $ */
+/* $NetBSD: dtide.c,v 1.2 2001/06/13 18:29:40 bjh21 Exp $ */
 
 /*-
- * Copyright (c) 2000 Ben Harris
+ * Copyright (c) 2000, 2001 Ben Harris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,10 +33,12 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: dtide.c,v 1.1 2001/06/08 20:13:24 bjh21 Exp $");
+__RCSID("$NetBSD: dtide.c,v 1.2 2001/06/13 18:29:40 bjh21 Exp $");
 
 #include <sys/device.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
+
 #include <machine/bus.h>
 
 #include <dev/podulebus/podulebus.h>
@@ -48,10 +50,9 @@ __RCSID("$NetBSD: dtide.c,v 1.1 2001/06/08 20:13:24 bjh21 Exp $");
 
 struct dtide_softc {
 	struct wdc_softc sc_wdc;
-	struct channel_softc *sc_chp[2]; /* pointers to the following */
-	struct channel_softc sc_chan[2];
-	void			*sc_ih[2];
-	struct evcnt		sc_intrcnt[2];
+	struct channel_softc *sc_chp[DTIDE_NCHANNELS];/* pointers to sc_chan */
+	struct channel_softc sc_chan[DTIDE_NCHANNELS];
+	struct channel_queue sc_chq[DTIDE_NCHANNELS];
 	bus_space_tag_t		sc_magict;
 	bus_space_handle_t	sc_magich;
 };
@@ -63,9 +64,8 @@ struct cfattach dtide_ca = {
 	sizeof(struct dtide_softc), dtide_match, dtide_attach
 };
 
-static const char *dtide_intrnames[] = {
-	"channel 0 intr", "channel 1 intr",
-};
+static const int dtide_cmdoffsets[] = { DTIDE_CMDBASE0, DTIDE_CMDBASE1 };
+static const int dtide_ctloffsets[] = { DTIDE_CTLBASE0, DTIDE_CTLBASE1 };
 
 static int
 dtide_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -83,38 +83,30 @@ dtide_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 	bus_space_tag_t bst;
 
-	sc->sc_wdc.cap = WDC_CAPABILITY_DATA16;
+	sc->sc_wdc.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_NOIRQ;
 	sc->sc_wdc.PIO_cap = 0; /* XXX correct? */
 	sc->sc_wdc.DMA_cap = 0; /* XXX correct? */
 	sc->sc_wdc.UDMA_cap = 0;
-	sc->sc_wdc.nchannels = 2;
+	sc->sc_wdc.nchannels = DTIDE_NCHANNELS;
 	sc->sc_wdc.channels = sc->sc_chp;
-	sc->sc_chp[0] = &sc->sc_chan[0];
-	sc->sc_chp[1] = &sc->sc_chan[1];
 	sc->sc_magict = pa->pa_fast_t;
 	bus_space_map(pa->pa_fast_t, pa->pa_fast_base + DTIDE_MAGICBASE, 0, 1,
 	    &sc->sc_magich);
 	podulebus_shift_tag(pa->pa_fast_t, DTIDE_REGSHIFT, &bst);
-	for (i = 0; i < 2; i++) {
+	printf("\n");
+	for (i = 0; i < DTIDE_NCHANNELS; i++) {
+		sc->sc_chp[i] = &sc->sc_chan[i];
 		sc->sc_chan[i].channel = i;
 		sc->sc_chan[i].wdc = &sc->sc_wdc;
 		sc->sc_chan[i].cmd_iot = bst;
 		sc->sc_chan[i].ctl_iot = bst;
-	}
-	bus_space_map(bst, pa->pa_fast_base + DTIDE_CMDBASE0, 0, 0x100,
-	    &sc->sc_chan[0].cmd_ioh);
-	bus_space_map(bst, pa->pa_fast_base + DTIDE_CTLBASE0, 0, 0x100,
-	    &sc->sc_chan[0].ctl_ioh);
-	bus_space_map(bst, pa->pa_fast_base + DTIDE_CMDBASE1, 0, 0x100,
-	    &sc->sc_chan[1].cmd_ioh);
-	bus_space_map(bst, pa->pa_fast_base + DTIDE_CTLBASE1, 0, 0x100,
-	    &sc->sc_chan[1].ctl_ioh);
-	printf("\n");
-	for (i = 0; i < 2; i++) {
-		evcnt_attach_dynamic(&sc->sc_intrcnt[i], EVCNT_TYPE_INTR, NULL,
-		    self->dv_xname, dtide_intrnames[i]);
-		sc->sc_ih[i] = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
-		    wdcintr, &sc->sc_chan[i], &sc->sc_intrcnt[i]);
+		sc->sc_chan[i].ch_queue = &sc->sc_chq[i];
+		bus_space_map(pa->pa_fast_t,
+		    pa->pa_fast_base + dtide_cmdoffsets[i], 0, 8,
+		    &sc->sc_chan[i].cmd_ioh);
+		bus_space_map(pa->pa_fast_t,
+		    pa->pa_fast_base + dtide_ctloffsets[i], 0, 8,
+		    &sc->sc_chan[i].ctl_ioh);
 		wdcattach(&sc->sc_chan[i]);
 	}
 }
