@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.247 2003/02/22 03:20:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.248 2003/03/08 00:22:29 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -326,39 +326,39 @@ CDROM.image=${RELEASEDIR}/${MACHINE}/installation/cdrom/netbsd-${MACHINE}.iso
 CDROM.dir=	cdrom.dir
 CDROM.pathlist=	cdrom.pathlist
 
-iso-image: check_DESTDIR check_RELEASEDIR .WAIT iso-image_md_post
-#	empty target
+iso-image: check_DESTDIR check_RELEASEDIR .WAIT iso-image-md-post
+	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/cdrom '*.iso'
 
-iso-image_setup: check_RELEASEDIR
+iso-image-setup: check_RELEASEDIR
 	rm -f ${CDROM.pathlist}
 	echo "${MACHINE}=${RELEASEDIR}/${MACHINE}" >> ${CDROM.pathlist}
 	mkdir -p ${CDROM.dir}
 	mkdir -p ${RELEASEDIR}/${MACHINE}/installation/cdrom
 
-# iso-image_mi --
+# iso-image-mi --
 #	Create the image after the MD operations have completed.
-iso-image_mi: check_DESTDIR check_RELEASEDIR .WAIT \
-		iso-image_setup .WAIT iso-image_md_pre
+#
+iso-image-mi: check_DESTDIR check_RELEASEDIR .WAIT \
+		iso-image-setup .WAIT iso-image-md-pre
 	@if ! ${MKISOFS} --version; then \
 		echo "install pkgsrc/sysutils/cdrecord and run 'make iso-image'." ; \
 		false; \
 	fi
 	${MKISOFS} ${MKISOFS_FLAGS} -graft-points -path-list ${CDROM.pathlist} \
 	    -o ${CDROM.image} ${CDROM.dir}
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/cdrom '*.iso'
 
-# iso-image_md_pre --
+# iso-image-md-pre --
 #	Setup ${CDROM.dir} to produce a bootable CD image.
 #	Overridden by etc.$MACHINE/Makefile.inc
 #
-iso-image_md_pre: check_DESTDIR check_RELEASEDIR
+iso-image-md-pre: check_DESTDIR check_RELEASEDIR
 #	(empty -- look in the machine-dependent Makefile.inc)
 
-# iso-image_md_post --
+# iso-image-md-post --
 #	Fixup the CD-image to be bootable.
 #	Overridden by etc.$MACHINE/Makefile.inc
 #
-iso-image_md_post: check_DESTDIR check_RELEASEDIR .WAIT iso-image_mi
+iso-image-md-post: check_DESTDIR check_RELEASEDIR .WAIT iso-image-mi
 #	(empty -- look in the machine-dependent Makefile.inc)
 
 
