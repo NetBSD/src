@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.27 2003/05/03 18:11:17 wiz Exp $ */
+/*	$NetBSD: gem.c,v 1.28 2003/08/24 18:07:03 chs Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.27 2003/05/03 18:11:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.28 2003/08/24 18:07:03 chs Exp $");
 
 #include "bpfilter.h"
 
@@ -1312,6 +1312,7 @@ gem_tint(sc)
 		progress = 1;
 	}
 
+#if 0
 	DPRINTF(sc, ("gem_tint: GEM_TX_STATE_MACHINE %x "
 		"GEM_TX_DATA_PTR %llx "
 		"GEM_TX_COMPLETION %x\n",
@@ -1321,6 +1322,7 @@ gem_tint(sc)
 			     bus_space_read_4(sc->sc_bustag, sc->sc_h,
 			GEM_TX_DATA_PTR_LO),
 		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_COMPLETION)));
+#endif
 
 	if (progress) {
 		if (sc->sc_txfree == GEM_NTXDESC - 1)
@@ -1456,7 +1458,7 @@ gem_rint(sc)
 		if (i == sc->sc_rxptr) {
 			GEM_COUNTER_INCR(sc, sc_ev_rxfull);
 #ifdef GEM_DEBUG
-			if (ifp->if_flags & GEM_DEBUG)
+			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: rint: ring wrap\n",
 				    sc->sc_dev.dv_xname);
 #endif
@@ -1467,7 +1469,7 @@ gem_rint(sc)
 #ifdef GEM_COUNTERS
 	if (progress <= 4) {
 		GEM_COUNTER_INCR(sc, sc_ev_rxhist[progress]);
-	} else if (progress > 31) {
+	} else if (progress < 32) {
 		if (progress < 16)
 			GEM_COUNTER_INCR(sc, sc_ev_rxhist[5]);
 		else
@@ -1573,8 +1575,8 @@ gem_intr(v)
 	sc->sc_ev_intr.ev_count++;
 
 	status = bus_space_read_4(t, seb, GEM_STATUS);
-	DPRINTF(sc, ("%s: gem_intr: cplt %xstatus %s\n",
-		sc->sc_dev.dv_xname, (status>>19),
+	DPRINTF(sc, ("%s: gem_intr: cplt 0x%x status %s\n",
+		sc->sc_dev.dv_xname, (status >> 19),
 		bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits))));
 
 	if ((status & (GEM_INTR_RX_TAG_ERR | GEM_INTR_BERR)) != 0)
@@ -1758,7 +1760,7 @@ gem_mii_statchg(dev)
 #ifdef GEM_DEBUG
 	if (sc->sc_debug)
 		printf("gem_mii_statchg: status change: phy = %d\n", 
-			sc->sc_phys[instance];);
+			sc->sc_phys[instance]);
 #endif
 
 
