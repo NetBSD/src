@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.c,v 1.7 1998/06/01 14:00:11 kleink Exp $	*/
+/*	$NetBSD: chap_ms.c,v 1.8 1998/09/04 19:13:04 christos Exp $	*/
 
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: chap_ms.c,v 1.8 1998/04/01 00:15:43 paulus Exp ";
+static char rcsid[] = "Id: chap_ms.c,v 1.9 1998/09/04 18:48:12 christos Exp ";
 #else
-__RCSID("$NetBSD: chap_ms.c,v 1.7 1998/06/01 14:00:11 kleink Exp $");
+__RCSID("$NetBSD: chap_ms.c,v 1.8 1998/09/04 19:13:04 christos Exp $");
 #endif
 #endif
 
