@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.4 2000/10/04 17:00:45 tsutsui Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.5 2000/11/11 11:03:31 pk Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -238,4 +238,14 @@ mk48txx_setcal(handle, v)
 	int v;
 {
 	return (EOPNOTSUPP);
+}
+
+int
+mk48txx_get_nvram_size(handle, vp)
+	todr_chip_handle_t handle;
+	u_int *vp;
+{
+	struct mk48txx *mk = handle->cookie;
+	*vp = mk->mk_nvramsz;
+	return (0);
 }
