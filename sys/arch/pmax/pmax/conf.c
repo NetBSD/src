@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.35 1999/11/15 22:45:28 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.36 1999/11/16 06:00:13 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -151,8 +151,7 @@ cdev_decl(raid);
 cdev_decl(bpf);
 #include "dtop.h"
 cdev_decl(dtop);
-#include "dc_ioasic.h"
-#include "dc_ds.h"
+#include "dc.h"
 cdev_decl(dc);
 #include "scc.h"
 cdev_decl(scc);
@@ -181,12 +180,6 @@ cdev_decl(vnd);
 
 #include "scsibus.h"
 cdev_decl(scsibus);
-
-#if (NDC_DS > 0) || (NDC_IOASIC > 0)
-# define NDC 1
-#else
-# define NDC 0
-#endif
 
 
 /* a framebuffer with an attached mouse: */
