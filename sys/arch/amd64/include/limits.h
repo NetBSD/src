@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.5 2003/08/07 16:26:36 agc Exp $	*/
+/*	$NetBSD: limits.h,v 1.6 2003/09/19 12:09:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -80,7 +80,7 @@
 #endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-#define LONG_BIT	32
+#define LONG_BIT	64
 #define WORD_BIT	32
 
 #define DBL_DIG		15
