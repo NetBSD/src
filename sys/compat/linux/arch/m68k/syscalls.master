@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.41 2003/06/23 21:25:57 christos Exp $
+	$NetBSD: syscalls.master,v 1.42 2003/06/29 16:07:58 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -50,6 +50,7 @@
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_mmap.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
