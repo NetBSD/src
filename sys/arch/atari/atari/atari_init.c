@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.14 1996/04/26 06:59:15 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.15 1996/07/12 13:14:23 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -63,6 +63,7 @@
 #include <atari/dev/ym2149reg.h>
 
 void start_c __P((int, u_int, u_int, u_int, char *));
+static void cpu_init_kcorehdr __P((u_long));
 
 /*
  * All info needed to generate a panic dump. All fields are setup by
@@ -70,7 +71,6 @@ void start_c __P((int, u_int, u_int, u_int, char *));
  * XXX: Should sheck usage of phys_segs. There is some unwanted overlap
  *      here.... Also, the name is badly choosen. Phys_segs contains the
  *      segment descriptions _after_ reservations are made.
- * XXX: The 'boot_*' stuff is obsoleted by the cpu_kcore_hdr
  * XXX: 'lowram' is obsoleted by the new panicdump format
  */
 static cpu_kcore_hdr_t cpu_kcore_hdr;
@@ -148,20 +148,11 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	u_int		ptextra;
 	u_long		kbase;
 
-	boot_ttphystart = ttphystart;
-	boot_ttphysize  = ttphysize;
-	boot_stphysize  = stphysize;
-
-	/*
-	 * Initialize the cpu_kcore_header.
-	 */
-	cpu_kcore_hdr.ram_segs[0].start = 0;
-	cpu_kcore_hdr.ram_segs[0].size  = stphysize;
-	cpu_kcore_hdr.ram_segs[1].start = ttphystart;
-	cpu_kcore_hdr.ram_segs[1].size  = ttphysize;
-	cpu_kcore_hdr.ram_segs[2].start = 0;
-	cpu_kcore_hdr.ram_segs[2].size  = 0;
-	cpu_kcore_hdr.mmutype = mmutype;
+	boot_segs[0].start       = 0;
+	boot_segs[0].end         = stphysize;
+	boot_segs[1].start       = ttphystart;
+	boot_segs[1].end         = ttphystart + ttphysize;
+	boot_segs[2].start = boot_segs[2].end = 0; /* End of segments! */
 
 	/*
 	 * The following is a hack. We do not know how much ST memory we
@@ -286,10 +277,12 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * initialize kernel page table page(s).
 	 * Assume load at VA 0.
 	 * - Text pages are RO
+	 * - Page zero is invalid
 	 */
 	pg_proto = (0 + kbase) | PG_RO | PG_V;
 	pg       = (u_int *) pt;
-	for(i = 0; i < (u_int)etext; i += NBPG, pg_proto += NBPG)
+	*pg++ = PG_NV; pg_proto += NBPG;
+	for(i = NBPG; i < (u_int)etext; i += NBPG, pg_proto += NBPG)
 		*pg++ = pg_proto;
 
 	/* 
@@ -353,80 +346,54 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	}
 
 	/*
-	 * Map physical page zero (First ST-ram page)
+	 * Map physical page_zero and page-zero+1 (First ST-ram page). We need
+	 * to reference it in the reboot code. Two pages are mapped, because
+	 * we must make sure 'doboot()' is contained in it (see the tricky
+	 * copying there....).
 	 */
 	page_zero  = vstart;
 	pg         = (u_int *) pt + (vstart / NBPG);
-	*pg        = PG_RW | PG_CI | PG_V;
+	*pg++      = PG_RW | PG_CI | PG_V;
+	vstart    += NBPG;
+	*pg        = PG_RW | PG_CI | PG_V | NBPG;
 	vstart    += NBPG;
 
 	lowram  = 0 >> PGSHIFT; /* XXX */
 
 	/*
-	 * Fill in segments. The page indexes will be initialized
+	 * Fill in usable segments. The page indexes will be initialized
 	 * later when all reservations are made.
 	 */
-	phys_segs[0].start       = 0;
-	phys_segs[0].end         = stphysize;
-	phys_segs[1].start       = ttphystart;
-	phys_segs[1].end         = ttphystart + ttphysize;
-	phys_segs[2].start       = 0; /* End of segments! */
+	usable_segs[0].start = 0;
+	usable_segs[0].end   = stphysize;
+	usable_segs[1].start = ttphystart;
+	usable_segs[1].end   = ttphystart + ttphysize;
+	usable_segs[2].start = usable_segs[2].end = 0; /* End of segments! */
 
 	if(kbase) {
 		/*
 		 * First page of ST-ram is unusable, reserve the space
 		 * for the kernel in the TT-ram segment.
+		 * Note: Because physical page-zero is partially mapped to ROM
+		 *       by hardware, it is unusable.
 		 */
-		phys_segs[0].start  = NBPG;
-		phys_segs[1].start += pstart;
+		usable_segs[0].start  = NBPG;
+		usable_segs[1].start += pstart;
 	}
-	else {
-		/*
-		 * Because the first 8 addresses of ST-memory are mapped to
-		 * ROM, we remap them. This makes the debugger stack-trace
-		 * work.
-		 */
-		extern	u_long	first_8_bytes[];
-			u_long	*sp, *dp;
-
-		/*
-		 * Copy page zero and set first 8 bytes.
-		 */
-		sp = (u_long *)0;
-		dp = (u_long *)pstart;
-		while(dp < (u_long *)(pstart+NBPG))
-			*dp++ = *sp++;
-		dp    = (u_long *)pstart;
-		*dp++ = first_8_bytes[0];
-		*dp   = first_8_bytes[1];
-
-		/*
-		 * Enter into the page-table
-		 */
-		pg  = (u_int *)pt;
-		*pg = pstart | PG_RO | PG_V;
-
-
-		/*
-		 * Reserve space for page 0, and allocate the kernel
-		 * space from the ST-ram segment.
-		 */
-		pstart += NBPG;
-		phys_segs[0].start += pstart;
-	}
+	else usable_segs[0].start += pstart;
 
 	/*
 	 * As all segment sizes are now valid, calculate page indexes and
 	 * available physical memory.
 	 */
-	phys_segs[0].first_page = 0;
-	for (i = 1; phys_segs[i].start; i++) {
-		phys_segs[i].first_page  = phys_segs[i-1].first_page;
-		phys_segs[i].first_page +=
-			(phys_segs[i-1].end - phys_segs[i-1].start) / NBPG;
+	usable_segs[0].first_page = 0;
+	for (i = 1; usable_segs[i].start; i++) {
+		usable_segs[i].first_page  = usable_segs[i-1].first_page;
+		usable_segs[i].first_page +=
+			(usable_segs[i-1].end - usable_segs[i-1].start) / NBPG;
 	}
-	for (i = 0, physmem = 0; phys_segs[i].start; i++)
-		physmem += phys_segs[i].end - phys_segs[i].start;
+	for (i = 0, physmem = 0; usable_segs[i].start; i++)
+		physmem += usable_segs[i].end - usable_segs[i].start;
 	physmem >>= PGSHIFT;
   
 	/*
@@ -441,11 +408,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	protorp[0] = 0x80000202;
 	protorp[1] = Sysseg + kbase;	/* + segtable address */
 
-	/*
-	 * Finish init of cpu_kcore_hdr
-	 */
-	cpu_kcore_hdr.kernel_pa = kbase;
-	cpu_kcore_hdr.sysseg_pa = (st_entry_t *)(Sysseg + kbase);
+	cpu_init_kcorehdr(kbase);
 
 	/*
 	 * copy over the kernel (and all now initialized variables) 
@@ -454,20 +417,12 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 */
 	if(kbase) {
 		register u_long	*lp, *le, *fp;
-		extern	 u_long	first_8_bytes[];
 
 		lp = (u_long *)0;
 		le = (u_long *)pstart;
 		fp = (u_long *)kbase;
 		while(lp < le)
 			*fp++ = *lp++;
-
-		/*
-		 * Fill in reset stuff
-		 */
-		fp    = (u_long *)kbase;
-		*fp++ = first_8_bytes[0];
-		*fp   = first_8_bytes[1];
 	}
 
 	asm volatile ("pmove %0@,srp" : : "a" (&protorp[0]));
@@ -570,6 +525,29 @@ daddr_t	*p_blkno;
 	*p_blkno += 1;
 	return (error);
 }
+
+#if (NPHYS_RAM_SEGS < NMEM_SEGS)
+#error "Configuration error: NPHYS_RAM_SEGS < NMEM_SEGS"
+#endif
+/*
+ * Initialize the cpu_kcore_header.
+ */
+static void
+cpu_init_kcorehdr(kbase)
+u_long	kbase;
+{
+	int	i;
+
+	for (i = 0; i < NMEM_SEGS; i++) {
+		cpu_kcore_hdr.ram_segs[i].start = boot_segs[i].start;
+		cpu_kcore_hdr.ram_segs[i].size  = boot_segs[i].end
+							- boot_segs[i].start;
+	}
+	cpu_kcore_hdr.mmutype   = mmutype;
+	cpu_kcore_hdr.kernel_pa = kbase;
+	cpu_kcore_hdr.sysseg_pa = (st_entry_t *)(Sysseg + kbase);
+}
+
 
 #ifdef DEBUG
 void
