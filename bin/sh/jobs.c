@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.57 2003/01/27 12:54:08 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.58 2003/08/07 09:05:33 agc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.57 2003/01/27 12:54:08 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.58 2003/08/07 09:05:33 agc Exp $");
 #endif
 #endif /* not lint */
 
