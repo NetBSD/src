@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.45.2.2 2004/08/03 10:52:59 skrll Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.45.2.3 2004/08/24 17:57:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.45.2.2 2004/08/03 10:52:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.45.2.3 2004/08/24 17:57:37 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -234,7 +234,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
 	}
 
-	error = vget(vp, LK_NOWAIT, cnp->cn_lwp);
+	error = vget(vp, LK_NOWAIT);
 
 	/* Release the name cache mutex while we get reference to the vnode */
 	simple_unlock(&namecache_slock);
@@ -374,7 +374,7 @@ cache_lookup_raw(struct vnode *dvp, struct vnode **vpp,
 		return (ENOENT);
 	}
 
-	error = vget(vp, LK_NOWAIT, cnp->cn_lwp);
+	error = vget(vp, LK_NOWAIT);
 
 	/* Release the name cache mutex while we get reference to the vnode */
 	simple_unlock(&namecache_slock);

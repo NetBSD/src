@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.109.2.2 2004/08/03 10:56:59 skrll Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.109.2.3 2004/08/24 17:57:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.109.2.2 2004/08/03 10:56:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.109.2.3 2004/08/24 17:57:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -585,7 +585,7 @@ lfs_mknod(void *v)
 	lfs_vunref(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
-	error = VFS_VGET(mp, ino, vpp, cnp->cn_lwp);
+	error = VFS_VGET(mp, ino, vpp);
 	if (error != 0) {
 		*vpp = NULL;
 		return (error);

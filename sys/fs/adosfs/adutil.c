@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.2.2.1 2003/07/03 01:19:03 wrstuden Exp $	*/
+/*	$NetBSD: adutil.c,v 1.2.2.2 2004/08/24 17:57:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.2.2.1 2003/07/03 01:19:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.2.2.2 2004/08/24 17:57:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -54,10 +54,9 @@ static int CapitalChar __P((int, int));
 extern struct simplelock adosfs_hashlock;
 
 struct vnode * 
-adosfs_ahashget(mp, an, l)
+adosfs_ahashget(mp, an)
 	struct mount *mp;
 	ino_t an;
-	struct lwp *l;
 {
 	struct anodechain *hp;
 	struct anode *ap;
@@ -72,7 +71,7 @@ start_over:
 			vp = ATOV(ap);
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&adosfs_hashlock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, l))
+			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto start_over;
 			return (ATOV(ap));
 		}

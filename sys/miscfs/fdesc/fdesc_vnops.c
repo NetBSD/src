@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.77.2.2 2004/08/03 10:54:04 skrll Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.77.2.3 2004/08/24 17:57:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.77.2.2 2004/08/03 10:54:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.77.2.3 2004/08/24 17:57:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ fdesc_allocvp(ftype, ix, mp, vpp)
 loop:
 	for (fd = fc->lh_first; fd != 0; fd = fd->fd_hash.le_next) {
 		if (fd->fd_ix == ix && fd->fd_vnode->v_mount == mp) {
-			if (vget(fd->fd_vnode, LK_EXCLUSIVE, curlwp))
+			if (vget(fd->fd_vnode, LK_EXCLUSIVE))
 				goto loop;
 			*vpp = fd->fd_vnode;
 			return (error);
@@ -374,7 +374,7 @@ fdesc_lookup(v)
 		if (cnp->cn_namelen == 2 && memcmp(pname, "..", 2) == 0) {
 			VOP_UNLOCK(dvp, 0);
 			cnp->cn_flags |= PDIRUNLOCK;
-			error = fdesc_root(dvp->v_mount, vpp, l);
+			error = fdesc_root(dvp->v_mount, vpp);
 			if (error)
 				goto bad;
 			/*

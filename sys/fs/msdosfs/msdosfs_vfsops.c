@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.7.2.2 2004/08/03 10:52:42 skrll Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.7.2.3 2004/08/24 17:57:37 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.7.2.2 2004/08/03 10:52:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.7.2.3 2004/08/24 17:57:37 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -86,12 +86,12 @@ int msdosfs_mount __P((struct mount *, const char *, void *,
     struct nameidata *, struct lwp *));
 int msdosfs_start __P((struct mount *, int, struct lwp *));
 int msdosfs_unmount __P((struct mount *, int, struct lwp *));
-int msdosfs_root __P((struct mount *, struct vnode **, struct lwp *));
+int msdosfs_root __P((struct mount *, struct vnode **));
 int msdosfs_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
 int msdosfs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int msdosfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int msdosfs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
-int msdosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **, struct lwp *));
+int msdosfs_vget __P((struct mount *, ino_t, struct vnode **));
+int msdosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int msdosfs_checkexp __P((struct mount *, struct mbuf *, int *,
     struct ucred **));
 int msdosfs_vptofh __P((struct vnode *, struct fid *));
@@ -169,7 +169,7 @@ update_mp(mp, argp, l)
 		if (FAT32(pmp))
 			pmp->pm_flags |= MSDOSFSMNT_LONGNAME;
 		else {
-			if ((error = msdosfs_root(mp, &rootvp, l)) != 0)
+			if ((error = msdosfs_root(mp, &rootvp)) != 0)
 				return error;
 			pmp->pm_flags |= findwin95(VTODE(rootvp))
 				? MSDOSFSMNT_LONGNAME
@@ -843,10 +843,9 @@ msdosfs_unmount(mp, mntflags, l)
 }
 
 int
-msdosfs_root(mp, vpp, l)
+msdosfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct denode *ndep;
@@ -948,7 +947,7 @@ loop:
 			continue;
 		}
 		simple_unlock(&mntvnode_slock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, l);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
 			simple_lock(&mntvnode_slock);
 			if (error == ENOENT)
@@ -975,11 +974,10 @@ loop:
 }
 
 int
-msdosfs_fhtovp(mp, fhp, vpp, l)
+msdosfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct defid *defhp = (struct defid *) fhp;
@@ -1031,11 +1029,10 @@ msdosfs_vptofh(vp, fhp)
 }
 
 int
-msdosfs_vget(mp, ino, vpp, l)
+msdosfs_vget(mp, ino, vpp)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
