@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.7 2003/08/07 16:42:17 agc Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.8 2004/03/26 22:15:03 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sigreturn.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sigreturn.S,v 1.7 2003/08/07 16:42:17 agc Exp $")
+	ASMSTR("$NetBSD: sigreturn.S,v 1.8 2004/03/26 22:15:03 drochner Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -44,6 +44,6 @@
  */
 
 WARN_REFERENCES(sigreturn, \
-    "warning: reference to compatibility sigreturn(); include <signal.h> for correct reference")
+    "warning: reference to compatibility sigreturn()")
 
 PSEUDO(sigreturn,compat_13_sigreturn13)
