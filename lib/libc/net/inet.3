@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet.3,v 1.4 1995/02/27 09:45:26 chopps Exp $
+.\"	$NetBSD: inet.3,v 1.5 1997/01/22 07:57:19 mikel Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
 .Fd #include <netinet/in.h>
 .Fd #include <arpa/inet.h>
 .Ft int 
-.Fn inet_aton "const char *cp" "struct in_addr *pin"
+.Fn inet_aton "const char *cp" "struct in_addr *addr"
 .Ft unsigned long 
 .Fn inet_addr "const char *cp"
 .Ft unsigned long 
@@ -58,7 +58,7 @@
 .Ft char *
 .Fn inet_ntoa "struct in_addr in"
 .Ft struct in_addr 
-.Fn inet_makeaddr "int net" "int lna"
+.Fn inet_makeaddr "unsigned long net" "unsigned long lna"
 .Ft unsigned long 
 .Fn inet_lnaof "struct in_addr in"
 .Ft unsigned long 
@@ -173,7 +173,7 @@ for malformed requests.
 .Xr gethostbyname 3 ,
 .Xr getnetent 3 ,
 .Xr hosts 5 ,
-.Xr networks 5 ,
+.Xr networks 5
 .Sh HISTORY
 These
 functions appeared in 
@@ -193,5 +193,6 @@ The string returned by
 .Fn inet_ntoa
 resides in a static memory area.
 .Pp
-Inet_addr should return a
+.Fn inet_addr
+should return a
 .Fa struct in_addr .
