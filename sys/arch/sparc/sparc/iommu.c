@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.74 2003/01/01 02:20:48 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.75 2003/04/02 04:35:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -212,8 +212,8 @@ iommu_attach(parent, self, aux)
 		sc->sc_hasiocache = 0;
 	has_iocache = sc->sc_hasiocache; /* Set global flag */
 
-	sc->sc_pagesize = js1_implicit_iommu ? NBPG
-				: PROM_getpropint(node, "page-size", NBPG),
+	sc->sc_pagesize = js1_implicit_iommu ? PAGE_SIZE
+				: PROM_getpropint(node, "page-size", PAGE_SIZE),
 
 	/*
 	 * Allocate memory for I/O pagetables.
@@ -241,7 +241,7 @@ iommu_attach(parent, self, aux)
 	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
 		paddr_t pa = VM_PAGE_TO_PHYS(m);
 		pmap_kenter_pa(va, pa | PMAP_NC, VM_PROT_READ | VM_PROT_WRITE);
-		va += NBPG;
+		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 
@@ -480,9 +480,9 @@ if ((int)sc->sc_dvmacur + len > 0)
 		pte |= IOMMU_V | IOMMU_W;
 		sta(sc->sc_ptes + atop(tva - sc->sc_dvmabase), ASI_BYPASS, pte);
 		sc->sc_reg->io_flushpage = tva;
-		len -= NBPG;
-		va += NBPG;
-		tva += NBPG;
+		len -= PAGE_SIZE;
+		va += PAGE_SIZE;
+		tva += PAGE_SIZE;
 	}
 	return iovaddr + off;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.11 2003/04/02 04:35:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -345,7 +345,7 @@ findzs(zs)
 		 * Have the obio module figure out which virtual
 		 * address the device is mapped to.
 		 */
-		if (obio_find_rom_map(paddr, PMAP_OBIO, NBPG, &bh) != 0)
+		if (obio_find_rom_map(paddr, PMAP_OBIO, PAGE_SIZE, &bh) != 0)
 			return (NULL);
 
 		return ((void *)bh);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.31 2002/10/23 09:12:07 jdolecek Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.32 2003/04/02 04:35:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -223,9 +223,9 @@ cgfourteenattach(parent, self, aux)
 	 */
 	fb->fb_linebytes = (fb->fb_type.fb_width * fb->fb_type.fb_depth) / 8;
 	ramsize = roundup(START + (fb->fb_type.fb_height * fb->fb_linebytes),
-			NBPG);
+			PAGE_SIZE);
 #else
-	ramsize = roundup(fb->fb_type.fb_height * fb->fb_linebytes, NBPG);
+	ramsize = roundup(fb->fb_type.fb_height * fb->fb_linebytes, PAGE_SIZE);
 #endif
 	fb->fb_type.fb_cmsize = CG14_CLUT_SIZE;
 	fb->fb_type.fb_size = ramsize;

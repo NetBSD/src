@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.17 2002/12/10 13:44:50 pk Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.18 2003/04/02 04:35:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -184,7 +186,7 @@ leattach_obio(parent, self, aux)
 	}
 
 	/* Allocate DMA buffer */
-	if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, NBPG, 0,
+	if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, PAGE_SIZE, 0,
 			     &seg, 1, &rseg,
 			     BUS_DMA_NOWAIT | BUS_DMA_24BIT)) != 0) {
 		printf("%s: DMA memory allocation error %d\n",

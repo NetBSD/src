@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.192 2003/02/26 17:39:06 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.193 2003/04/02 04:35:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -937,7 +937,7 @@ cpu_configure()
 			/* Clear top bits of physical address on 4/100 */
 			paddr &= ~0xf0000000;
 
-		if (obio_find_rom_map(paddr, NBPG, &bh) != 0)
+		if (obio_find_rom_map(paddr, PAGE_SIZE, &bh) != 0)
 			panic("configure: ROM hasn't mapped memreg!");
 
 		par_err_reg = (volatile int *)bh;

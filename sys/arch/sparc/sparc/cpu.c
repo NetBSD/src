@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.174 2003/02/26 17:39:07 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.175 2003/04/02 04:35:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -161,7 +161,7 @@ alloc_cpuinfo_global_va(ismaster, sizep)
 	 * NOTE: we're using the cache properties of the boot CPU to
 	 * determine the alignment (XXX).
 	 */
-	align = NBPG;
+	align = PAGE_SIZE;
 	if (CACHEINFO.c_totalsize > align)
 		/* Assumes `c_totalsize' is power of two */
 		align = CACHEINFO.c_totalsize;
@@ -177,8 +177,8 @@ alloc_cpuinfo_global_va(ismaster, sizep)
 		sz += INT_STACK_SIZE;	/* interrupt stack for this CPU */
 	}
 
-	sz = (sz + NBPG - 1) & -NBPG;
-	esz = sz + align - NBPG;
+	sz = (sz + PAGE_SIZE - 1) & -PAGE_SIZE;
+	esz = sz + align - PAGE_SIZE;
 
 	if ((sva = uvm_km_valloc(kernel_map, esz)) == 0)
 		panic("alloc_cpuinfo_global_va: no virtual space");
@@ -213,15 +213,15 @@ alloc_cpuinfo()
 
 	/* Allocate physical pages */
 	low = vm_first_phys;
-	high = vm_first_phys + vm_num_phys - NBPG;
-	if (uvm_pglistalloc(sz, low, high, NBPG, 0, &mlist, 1, 0) != 0)
+	high = vm_first_phys + vm_num_phys - PAGE_SIZE;
+	if (uvm_pglistalloc(sz, low, high, PAGE_SIZE, 0, &mlist, 1, 0) != 0)
 		panic("alloc_cpuinfo: no pages");
 
 	/* Map the pages */
 	for (m = TAILQ_FIRST(&mlist); m != NULL; m = TAILQ_NEXT(m, pageq)) {
 		paddr_t pa = VM_PAGE_TO_PHYS(m);
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-		va += NBPG;
+		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 
