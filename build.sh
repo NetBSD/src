@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.11 2001/10/31 00:08:03 reinoud Exp $
+#  $NetBSD: build.sh,v 1.12 2001/10/31 01:56:10 tv Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -77,7 +77,8 @@ resolvepath () {
 
 usage () {
 	echo "Usage:"
-	echo "$0 [-r] [-a arch] [-j njob] [-m mach] [-D dest] [-R release] [-T tools]"
+	echo "$0 [-oru] [-a arch] [-j njob] [-m mach]"
+	echo "   [-D dest] [-O obj] [-R release] [-T tools]"
 	echo "    -m: set target MACHINE to mach (REQUIRED)"
 	echo "    -D: set DESTDIR to dest (REQUIRED unless -b is specified)"
 	echo "    -T: set TOOLDIR to tools (REQUIRED)"
@@ -85,19 +86,26 @@ usage () {
 	echo "    -a: set target MACHINE_ARCH to arch (otherwise deduced from MACHINE)"
 	echo "    -b: do not build the system; just build nbmake if required."
 	echo "    -j: set NBUILDJOBS to njob"
-	echo "    -n: show the commands that would be executed, but do not execute them"
-	echo "    -r: remove TOOLDIR and DESTDIR before the build"
+	echo "    -n: show commands that would be executed, but do not execute them"
+	echo "    -o: do not create objdirs at start of build (sets MKOBJDIRS=no)"
+	echo "    -r: remove TOOLDIR and DESTDIR before building"
+	echo "    -u: do not clobber up-to-date files (sets UPDATE)"
+	echo "    -O: set obj root directory to obj (sets a MAKEOBJDIR pattern)"
 	echo "    -R: build a release (set RELEASEDIR) to release"
 	exit 1
 }
 
 # Set defaults.
+MKOBJDIRS=yes
+buildtarget=build
 cwd=`pwd`
 do_buildsystem=true
 do_rebuildmake=false
 do_removedirs=false
+extraenv=''
+extraflags=''
 opt_a=no
-opts='a:bhj:m:nrD:R:T:'
+opts='a:bhj:m:noruD:O:R:T:'
 runcmd=''
 
 if type getopts >/dev/null 2>&1; then
@@ -124,7 +132,7 @@ while eval $getoptcmd; do case $opt in
 	-b)	do_buildsystem=false;;
 
 	-j)	eval $optargcmd
-		buildjobflag="NBUILDJOBS=$OPTARG";;
+		extraflags="$extraflags NBUILDJOBS=$OPTARG";;
 
 	# -m overrides MACHINE_ARCH unless "-a" is specified
 	-m)	eval $optargcmd
@@ -132,13 +140,20 @@ while eval $getoptcmd; do case $opt in
 
 	-n)	runcmd=echo;;
 
+	-o)	MKOBJDIRS=no;;
+
 	-r)	do_removedirs=true; do_rebuildmake=true;;
+
+	-u)	extraflags="$extraflags UPDATE=yes";;
 
 	-D)	eval $optargcmd; resolvepath
 		DESTDIR="$OPTARG";;
 
+	-O)	eval $optargcmd; resolvepath
+		extraenv="$extraenv MAKEOBJDIR=\${.CURDIR:C,^$cwd,$OPTARG,}";;
+
 	-R)	eval $optargcmd; resolvepath
-		releasedirflag="RELEASEDIR=$OPTARG"; buildtarget=release;;
+		extraflags="$extraflags RELEASEDIR=$OPTARG"; buildtarget=release;;
 
 	-T)	eval $optargcmd; resolvepath
 		TOOLDIR="$OPTARG";;
@@ -193,9 +208,9 @@ if $do_rebuildmake; then
 	trap "exit 1" 1 2 3 15
 	$runcmd cd $tmpdir
 
-	${runcmd-eval} "${HOST_CC-cc} ${HOST_CFLAGS} -DMAKE_BOOTSTRAP \
+	$runcmd ${HOST_CC-cc} ${HOST_CFLAGS} -DMAKE_BOOTSTRAP \
 		-o $TOOLDIR/bin/nbmake -I$cwd/usr.bin/make \
-		$cwd/usr.bin/make/*.c $cwd/usr.bin/make/lst.lib/*.c" \
+		$cwd/usr.bin/make/*.c $cwd/usr.bin/make/lst.lib/*.c \
 		|| bomb "build of nbmake failed"
 
 	# Clean up.
@@ -204,8 +219,7 @@ if $do_rebuildmake; then
 	trap 0 1 2 3 15
 
 	# Some compilers are just *that* braindead.
-	${runcmd-eval} "rm -f $cwd/usr.bin/make/*.o \
-		$cwd/usr.bin/make/lst.lib/*.o"
+	$runcmd rm -f $cwd/usr.bin/make/*.o $cwd/usr.bin/make/lst.lib/*.o
 fi
 
 # Build a nbmake wrapper script, usable by hand as well as by build.sh.
@@ -221,7 +235,7 @@ if $do_rebuildmake || [ ! -f $makeprog ] || [ $makeprog -ot build.sh ]; then
 	eval $mkscriptcmd <<EOF
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.11 2001/10/31 00:08:03 reinoud Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.12 2001/10/31 01:56:10 tv Exp $
 #
 exec $TOOLDIR/bin/nbmake MACHINE=$MACHINE MACHINE_ARCH=$MACHINE_ARCH \
 USETOOLS=yes USE_NEW_TOOLCHAIN=yes TOOLDIR="$TOOLDIR" \${1+\$@}
@@ -231,7 +245,7 @@ EOF
 fi
 
 if $do_buildsystem; then
-	${runcmd-exec} $makeprog -m `pwd`/share/mk ${buildtarget-build} \
+	${runcmd-exec} env $extraenv $makeprog -m `pwd`/share/mk \
 		MKTOOLS=yes DESTDIR="$DESTDIR" TOOLDIR="$TOOLDIR" \
-		$buildjobflag $releasedirflag
+		MKOBJDIRS=$MKOBJDIRS $extraflags $buildtarget
 fi
