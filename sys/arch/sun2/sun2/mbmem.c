@@ -1,4 +1,4 @@
-/*	$NetBSD: mbmem.c,v 1.5 2001/06/14 15:54:18 fredette Exp $	*/
+/*	$NetBSD: mbmem.c,v 1.6 2001/06/27 03:00:45 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -98,9 +98,9 @@ mbmem_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
-	return (cpu_has_multibus && (ca->ca_name == NULL || strcmp(cf->cf_driver->cd_name, ca->ca_name) == 0));
+	return (cpu_has_multibus && (ma->ma_name == NULL || strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0));
 }
 
 static void
@@ -109,9 +109,9 @@ mbmem_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 	struct mbmem_softc *sc = (struct mbmem_softc *)self;
-	struct confargs sub_ca;
+	struct mbmem_attach_args mbma;
 	const char *const *cpp;
 	static const char *const special[] = {
 		/* find these first */
@@ -127,8 +127,8 @@ mbmem_attach(parent, self, aux)
 	}
 	printf("\n");
 
-	sc->sc_bustag = ca->ca_bustag;
-	sc->sc_dmatag = ca->ca_dmatag;
+	sc->sc_bustag = ma->ma_bustag;
+	sc->sc_dmatag = ma->ma_dmatag;
 
 	mbmem_space_tag.cookie = sc;
 	mbmem_space_tag.parent = sc->sc_bustag;
@@ -144,21 +144,20 @@ mbmem_attach(parent, self, aux)
 	 * sun68k_bus_search about which locators must and must not
 	 * be defined.
 	 */
-	sub_ca = *ca;
-	sub_ca.ca_bustag = &mbmem_space_tag;
-	sub_ca.ca_dmatag = &mbmem_dma_tag;
-	sub_ca.ca_intpri = LOCATOR_OPTIONAL;
-	sub_ca.ca_intvec = LOCATOR_FORBIDDEN;
+	mbma = *ma;
+	mbma.mbma_bustag = &mbmem_space_tag;
+	mbma.mbma_dmatag = &mbmem_dma_tag;
+	mbma.mbma_pri = LOCATOR_OPTIONAL;
 
 	/* Find all `early' mbmem devices */
 	for (cpp = special; *cpp != NULL; cpp++) {
-		sub_ca.ca_name = *cpp;
-		(void)config_search(sun68k_bus_search, self, &sub_ca);
+		mbma.mbma_name = *cpp;
+		(void)config_search(sun68k_bus_search, self, &mbma);
 	}
 
 	/* Find all other mbmem devices */
-	sub_ca.ca_name = NULL;
-	(void)config_search(sun68k_bus_search, self, &sub_ca);
+	mbma.mbma_name = NULL;
+	(void)config_search(sun68k_bus_search, self, &mbma);
 }
 
 int
