@@ -31,15 +31,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
- *	$Id: kern_xxx.c,v 1.6 1993/07/17 15:24:37 mycroft Exp $
+ *	$Id: kern_xxx.c,v 1.7 1993/12/18 04:21:21 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "kernel.h"
-#include "proc.h"
-#include "reboot.h"
-#include "utsname.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/utsname.h>
 
 /* ARGSUSED */
 int

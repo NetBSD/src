@@ -31,16 +31,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)subr_xxx.c	7.10 (Berkeley) 4/20/91
- *	$Id: subr_xxx.c,v 1.6 1993/09/11 00:08:06 jtc Exp $
+ *	$Id: subr_xxx.c,v 1.7 1993/12/18 04:21:31 mycroft Exp $
  */
 
 /*
  * Miscellaneous trivial functions, including many
  * that are often inline-expanded or done in assembler.
  */
-#include "param.h"
-#include "systm.h"
-#include "machine/cpu.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+
+#include <machine/cpu.h>
 
 /*
  * Unsupported device function (e.g. writing to read-only device).

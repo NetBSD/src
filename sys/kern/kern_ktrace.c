@@ -31,18 +31,18 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_ktrace.c	7.15 (Berkeley) 6/21/91
- *	$Id: kern_ktrace.c,v 1.6 1993/09/15 22:30:35 cgd Exp $
+ *	$Id: kern_ktrace.c,v 1.7 1993/12/18 04:20:37 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "file.h"
-#include "namei.h"
-#include "vnode.h"
-#include "ktrace.h"
-#include "malloc.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/ktrace.h>
+#include <sys/malloc.h>
+#include <sys/syslog.h>
 
 void ktrwrite __P((struct vnode *vp, struct ktr_header *kth));
 

@@ -31,25 +31,25 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)spec_vnops.c	7.37 (Berkeley) 5/30/91
- *	$Id: spec_vnops.c,v 1.8 1993/11/12 05:56:10 cgd Exp $
+ *	$Id: spec_vnops.c,v 1.9 1993/12/18 03:59:02 mycroft Exp $
  */
 
-#include "param.h"
-#include "proc.h"
-#include "systm.h"
-#include "kernel.h"
-#include "conf.h"
-#include "buf.h"
-#include "mount.h"
-#include "namei.h"
-#include "vnode.h"
-#include "miscfs/specfs/specdev.h" /* XXX */
-#include "stat.h"
-#include "errno.h"
-#include "ioctl.h"
-#include "file.h"
-#include "dkbad.h"	/* XXX */
-#include "disklabel.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <miscfs/specfs/specdev.h> /* XXX */
+#include <sys/stat.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/dkbad.h>	/* XXX */
+#include <sys/disklabel.h>
 
 /* symbolic sleep message strings for devices */
 char	devopn[] = "devopn";
