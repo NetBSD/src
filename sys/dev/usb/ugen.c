@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.26 1999/10/28 07:28:51 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.27 1999/10/28 12:08:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -842,6 +842,8 @@ ugen_do_ioctl(sc, endpt, cmd, addr, flag, p)
 		if (endpt == USB_CONTROL_ENDPOINT)
 			return (EINVAL);
 		sce = &sc->sc_endpoints[endpt][IN];
+		if (sce == NULL)
+			return (EINVAL);
 #ifdef DIAGNOSTIC
 		if (!sce->pipeh) {
 			printf("ugenioctl: USB_SET_SHORT_XFER, no pipe\n");
@@ -855,6 +857,8 @@ ugen_do_ioctl(sc, endpt, cmd, addr, flag, p)
 		return (0);
 	case USB_SET_TIMEOUT:
 		sce = &sc->sc_endpoints[endpt][IN];
+		if (sce == NULL)
+			return (EINVAL);
 #ifdef DIAGNOSTIC
 		if (!sce->pipeh) {
 			printf("ugenioctl: USB_SET_TIMEOUT, no pipe\n");
@@ -1112,6 +1116,8 @@ ugenpoll(dev, events, p)
 
 	/* XXX always IN */
 	sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
+	if (sce == NULL)
+		return (EINVAL);
 #ifdef DIAGNOSTIC
 	if (!sce->edesc) {
 		printf("ugenwrite: no edesc\n");
