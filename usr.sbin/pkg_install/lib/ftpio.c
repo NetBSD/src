@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.20.2.11 2001/05/01 11:01:41 he Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.20.2.12 2002/02/23 18:13:26 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.20.2.11 2001/05/01 11:01:41 he Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.20.2.12 2002/02/23 18:13:26 he Exp $");
 #endif
 
 /*
@@ -231,7 +231,7 @@ ftp_cmd(const char *cmd, const char *expectstr)
 	    if (expectstr) {
 		    /* set "rc" to the FTP error code: */
 		    if (expect(ftpio.answer, expectstr, &rc) == -1)
-			    rc = -1;	/* some error occured */
+			    rc = -1;	/* some error occurred */
 	    }
     } else {	
 	    if (Verbose)
@@ -570,8 +570,8 @@ expandURL(char *expandedurl, const char *wildcardurl)
 			
 			filename[strlen(filename)-1] = '\0';
 
-			strip_txz(s_filename, filename);
-			strip_txz(s_pkg, pkg);
+			strip_txz(s_filename, NULL, filename);
+			strip_txz(s_pkg, NULL, pkg);
 			
 			if (pmatch(s_pkg, s_filename)) {
 				matches++;
@@ -658,7 +658,7 @@ unpackURL(const char *url, const char *dir)
 			printf("unpackURL '%s' to '%s'\n", url, dir);
 
 		/* yes, this is gross, but needed for borken ftp(1) */
-		(void) snprintf(cmd, sizeof(cmd), "get %s \"| ( cd %s ; gunzip 2>/dev/null | tar -%sx -f - | tee /dev/stderr )\"\n", pkg, dir, Verbose?"vv":"");
+		(void) snprintf(cmd, sizeof(cmd), "get %s \"| ( cd %s ; gunzip 2>/dev/null | " TAR_FULLPATHNAME " -%sx -f - | tee /dev/stderr )\"\n", pkg, dir, Verbose?"vv":"");
 		rc = ftp_cmd(cmd, "\n(226|550).*\n");
 		if (rc != 226) {
 			warnx("Cannot fetch file (%d!=226)!", rc);
