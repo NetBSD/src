@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.20 1997/09/15 10:38:14 lukem Exp $	*/
+/*	$NetBSD: input.c,v 1.21 1997/09/15 11:51:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: input.c,v 1.20 1997/09/15 10:38:14 lukem Exp $");
+__RCSID("$NetBSD: input.c,v 1.21 1997/09/15 11:51:56 lukem Exp $");
 #endif
 
 #include "defs.h"
@@ -884,7 +884,7 @@ ck_passwd(struct interface *aifp,
 			continue;
 
 		if (NA->a_type == RIP_AUTH_PW) {
-			if (!bcmp(NA->au.au_pw, ap->key, RIP_AUTH_PW_LEN))
+			if (!memcmp(ap->key, NA->au.au_pw, RIP_AUTH_PW_LEN))
 				return 1;
 
 		} else {
@@ -912,7 +912,7 @@ ck_passwd(struct interface *aifp,
 			if (na2->a_family != RIP_AF_AUTH
 			    || na2->a_type != 1
 			    || NA->au.a_md5.md5_auth_len != RIP_AUTH_PW_LEN
-			    || bcmp(hash, na2->au.au_pw, sizeof(hash)))
+			    || memcmp(hash, na2->au.au_pw, sizeof(hash)))
 				return 0;
 			return 1;
 		}

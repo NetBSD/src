@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.17 1997/09/15 10:38:22 lukem Exp $	*/
+/*	$NetBSD: trace.c,v 1.18 1997/09/15 11:52:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.c,v 1.17 1997/09/15 10:38:22 lukem Exp $");
+__RCSID("$NetBSD: trace.c,v 1.18 1997/09/15 11:52:00 lukem Exp $");
 #endif
 
 #define	RIPCMDS
@@ -154,7 +154,7 @@ ts(time_t secs) {
 #ifdef sgi
 	(void)cftime(s, "%T", &secs);
 #else
-	bcopy(ctime(&secs)+11, s, 8);
+	memmove(s, ctime(&secs)+11, 8);
 	s[8] = '\0';
 #endif
 	return s;
