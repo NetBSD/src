@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.3 2001/07/19 16:25:24 thorpej Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.4 2001/07/23 17:20:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -991,7 +991,8 @@ sf_init(struct ifnet *ifp)
 				sf_rxdrain(sc);
 				goto out;
 			}
-		}
+		} else
+			SF_INIT_RXDESC(sc, i);
 	}
 	sf_funcreg_write(sc, SF_RxDescQueueHighAddress, 0);
 	sf_funcreg_write(sc, SF_RxDescQueue1LowAddress, SF_CDRXDADDR(sc, 0));
