@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.13 2005/01/18 03:59:11 uwe Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.14 2005/01/18 04:09:09 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.13 2005/01/18 03:59:11 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.14 2005/01/18 04:09:09 uwe Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -75,7 +75,7 @@ STATIC struct pfckbd_core {
 	struct callout pc_soft_ch;
 	struct hpckbd_ic_if pc_if;
 	struct hpckbd_if *pc_hpckbd;
-	u_int16_t pc_column[8];
+	uint16_t pc_column[8];
 	void (*pc_callout)(void *);
 } pfckbd_core;
 
@@ -94,7 +94,7 @@ CFATTACH_DECL(pfckbd, sizeof(struct device),
 STATIC int pfckbd_poll(void *);
 STATIC void pfckbd_ifsetup(struct pfckbd_core *);
 STATIC int pfckbd_input_establish(void *, struct hpckbd_if *);
-STATIC void pfckbd_input(struct hpckbd_if *, u_int16_t *, u_int16_t, int);
+STATIC void pfckbd_input(struct hpckbd_if *, uint16_t *, uint16_t, int);
 
 /*
  * Matrix scan keyboard connected to SH7709, SH7709A PFC module.
@@ -188,11 +188,11 @@ pfckbd_ifsetup(struct pfckbd_core *pc)
 }
 
 void
-pfckbd_input(struct hpckbd_if *hpckbd, u_int16_t *buf, u_int16_t data,
+pfckbd_input(struct hpckbd_if *hpckbd, uint16_t *buf, uint16_t data,
     int column)
 {
 	int row, type, val;
-	u_int16_t edge, mask;
+	uint16_t edge, mask;
 
 	if ((edge = (data ^ buf[column]))) {
 		buf[column] = data;
@@ -247,20 +247,20 @@ pfckbd_callout_hp(void *arg)
 	 * Pull the n'th scan line in D low.
 	 */
 #define PD(n)								\
-	{ (u_int16_t)(PFCKBD_HP_PDCR_MASK & (~(1 << (2*(n)+1)))),	\
-	  (u_int16_t)(PFCKBD_HP_PECR_MASK & 0xffff),			\
-	  (u_int8_t)~(1 << (n)),					\
+	{ (uint16_t)(PFCKBD_HP_PDCR_MASK & (~(1 << (2*(n)+1)))),	\
+	  (uint16_t)(PFCKBD_HP_PECR_MASK & 0xffff),			\
+	  (uint8_t)~(1 << (n)),						\
 	  0xff }
 
 	/* Ditto for E */
 #define PE(n)								\
-	{ (u_int16_t)(PFCKBD_HP_PDCR_MASK & 0xffff),			\
-	  (u_int16_t)(PFCKBD_HP_PECR_MASK & (~(1 << (2*(n)+1)))),	\
+	{ (uint16_t)(PFCKBD_HP_PDCR_MASK & 0xffff),			\
+	  (uint16_t)(PFCKBD_HP_PECR_MASK & (~(1 << (2*(n)+1)))),	\
 	  0xff,								\
-	  (u_int8_t)~(1 << (n)) }
+	  (uint8_t)~(1 << (n)) }
 
 	static const struct {
-		u_int16_t dc, ec; u_int8_t d, e;
+		uint16_t dc, ec; uint8_t d, e;
 	} scan[] = {
 		PD(1), PD(5), PE(1), PE(6), PE(7), PE(3), PE(0), PD(7)
 	};
@@ -269,9 +269,9 @@ pfckbd_callout_hp(void *arg)
 #undef PE
 
 	struct pfckbd_core *pc = arg;
-	u_int16_t dc, ec;
+	uint16_t dc, ec;
 	int column;
-	u_int16_t data;
+	uint16_t data;
 
 	if (!pc->pc_enabled)
 		goto reinstall;
@@ -335,33 +335,33 @@ pfckbd_callout_hitachi(void *arg)
 	 * Pull the n'th scan line in C low.
 	 */
 #define PC(n)								\
-	{ (u_int16_t)(PFCKBD_HITACHI_PCCR_MASK & (~(1 << (2*(n)+1)))),	\
-	  (u_int16_t)(PFCKBD_HITACHI_PDCR_MASK & 0xffff),		\
-	  (u_int16_t)(PFCKBD_HITACHI_PECR_MASK & 0xffff),		\
-	  (u_int8_t)(PFCKBD_HITACHI_PCDR_SCN_MASK & ~(1 << (n))),	\
+	{ (uint16_t)(PFCKBD_HITACHI_PCCR_MASK & (~(1 << (2*(n)+1)))),	\
+	  (uint16_t)(PFCKBD_HITACHI_PDCR_MASK & 0xffff),		\
+	  (uint16_t)(PFCKBD_HITACHI_PECR_MASK & 0xffff),		\
+	  (uint8_t)(PFCKBD_HITACHI_PCDR_SCN_MASK & ~(1 << (n))),	\
 	  PFCKBD_HITACHI_PDDR_SCN_MASK,					\
 	  PFCKBD_HITACHI_PEDR_SCN_MASK }
 
 	/* Ditto for D */
 #define PD(n)								\
-	{ (u_int16_t)(PFCKBD_HITACHI_PCCR_MASK & 0xffff),		\
-	  (u_int16_t)(PFCKBD_HITACHI_PDCR_MASK & (~(1 << (2*(n)+1)))),	\
-	  (u_int16_t)(PFCKBD_HITACHI_PECR_MASK & 0xffff),		\
+	{ (uint16_t)(PFCKBD_HITACHI_PCCR_MASK & 0xffff),		\
+	  (uint16_t)(PFCKBD_HITACHI_PDCR_MASK & (~(1 << (2*(n)+1)))),	\
+	  (uint16_t)(PFCKBD_HITACHI_PECR_MASK & 0xffff),		\
 	  PFCKBD_HITACHI_PCDR_SCN_MASK,					\
-	  (u_int8_t)(PFCKBD_HITACHI_PDDR_SCN_MASK & ~(1 << (n))),	\
+	  (uint8_t)(PFCKBD_HITACHI_PDDR_SCN_MASK & ~(1 << (n))),	\
 	  PFCKBD_HITACHI_PEDR_SCN_MASK }
 
 	/* Ditto for E */
 #define PE(n)								\
-	{ (u_int16_t)(PFCKBD_HITACHI_PCCR_MASK & 0xffff),		\
-	  (u_int16_t)(PFCKBD_HITACHI_PDCR_MASK & 0xffff),		\
-	  (u_int16_t)(PFCKBD_HITACHI_PECR_MASK & (~(1 << (2*(n)+1)))),	\
+	{ (uint16_t)(PFCKBD_HITACHI_PCCR_MASK & 0xffff),		\
+	  (uint16_t)(PFCKBD_HITACHI_PDCR_MASK & 0xffff),		\
+	  (uint16_t)(PFCKBD_HITACHI_PECR_MASK & (~(1 << (2*(n)+1)))),	\
 	  PFCKBD_HITACHI_PCDR_SCN_MASK,					\
 	  PFCKBD_HITACHI_PDDR_SCN_MASK,					\
-	  (u_int8_t)(PFCKBD_HITACHI_PEDR_SCN_MASK & ~(1 << (n))) }
+	  (uint8_t)(PFCKBD_HITACHI_PEDR_SCN_MASK & ~(1 << (n))) }
 
 	static const struct {
-		u_int16_t cc, dc, ec; u_int8_t c, d, e;
+		uint16_t cc, dc, ec; uint8_t c, d, e;
 	} scan[] = {
 		PE(6), PE(3), PE(1), PE(0), PC(7), PC(6), PC(5), PC(4),
 		PC(3), PC(2), PD(1), PC(1)
@@ -372,7 +372,7 @@ pfckbd_callout_hitachi(void *arg)
 #undef PE
 
 	struct pfckbd_core *pc = arg;
-	u_int16_t cc, dc, ec;
+	uint16_t cc, dc, ec;
 	uint8_t data[2];
 	int i;
 
