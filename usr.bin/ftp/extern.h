@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.34 1999/07/12 13:20:34 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.35 1999/09/22 07:18:32 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -144,7 +144,6 @@ void	pwd __P((int, char **));
 void	quit __P((int, char **));
 void	quote __P((int, char **));
 void	quote1 __P((const char *, int, char **));
-void	rcvbuf __P((int, char **));
 void    recvrequest __P((const char *, const char *, const char *,
 	    const char *, int, int));
 void	reget __P((int, char **));
@@ -154,7 +153,6 @@ time_t	remotemodtime __P((const char *, int));
 void	removedir __P((int, char **));
 void	renamefile __P((int, char **));
 void    reset __P((int, char **));
-void	resetsockbufsize __P((void));
 void	restart __P((int, char **));
 void	rmthelp __P((int, char **));
 void	rmtstatus __P((int, char **));
@@ -192,11 +190,11 @@ void	setttywidth __P((int));
 void	settype __P((int, char **));
 void	setupsockbufsize __P((int));
 void	setverbose __P((int, char **));
+void	setxferbuf __P((int, char **));
 void	shell __P((int, char **));
 void	site __P((int, char **));
 void	sizecmd __P((int, char **));
 char   *slurpstring __P((void));
-void	sndbuf __P((int, char **));
 void	status __P((int, char **));
 int	strsuftoi __P((const char *));
 void	syst __P((int, char **));

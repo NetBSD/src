@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.46 1999/07/12 13:20:34 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.47 1999/09/22 07:18:34 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd July 12, 1999
+.Dd September 22, 1999
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -977,6 +977,9 @@ is not supplied, the current throttle rates are displayed.
 Note:
 .Ic rate
 is not yet implemented for ascii mode transfers.
+.It Ic rcvbuf Ar size
+Set the size of the socket receive buffer to
+.Ar size .
 .It Ic recv Ar remote-file Op Ar local-file
 A synonym for
 .Ic get .
@@ -1088,6 +1091,9 @@ for certain
 implementations which do ignore
 .Dv PORT
 commands but, incorrectly, indicate they've been accepted.
+.It Ic sndbuf Ar size
+Set the size of the socket send buffer to
+.Ar size .
 .It Ic site Ar arg1 arg2 ...
 The arguments specified are sent, verbatim, to the remote
 .Tn FTP
@@ -1186,6 +1192,9 @@ if verbose is on, when a file transfer completes, statistics
 regarding the efficiency of the transfer are reported.
 By default,
 verbose is on.
+.It Ic xferbuf Ar size
+Set the size of the socket send and receive buffers to
+.Ar size .
 .It Ic ? Op Ar command
 A synonym for
 .Ic help .
@@ -1202,9 +1211,10 @@ argument to force the setting appropriately.
 .Pp
 Commands which take a byte count as an argument
 (e.g.,
-.Ic hash
+.Ic hash ,
+.Ic rate ,
 and
-.Ic rate )
+.Ic xferbuf )
 support an optional suffix on the argument which changes the
 interpretation of the argument.
 Supported suffixes are:
@@ -1711,8 +1721,7 @@ and transfer rate throttling
 were implemented in
 .Nx 1.3
 (and later releases)
-by Luke Mewburn,
-with the original code for HTTP retrieval supplied by Jason Thorpe.
+by Luke Mewburn.
 .Pp
 IPv6 support was added by the WIDE/KAME project.
 .Sh BUGS
