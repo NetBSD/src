@@ -1,3 +1,3 @@
-# $NetBSD: Makefile.inc,v 1.3 1997/05/11 08:59:00 veego Exp $
+# $NetBSD: Makefile.inc,v 1.4 2002/01/19 03:37:36 reinoud Exp $
 
-REV!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh -s
+REV!=sh ${.CURDIR}/../../../../sys/conf/osrelease.sh -s
