@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.1 2002/11/23 14:14:47 martin Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.1.2.2 2002/11/28 16:09:26 uwe Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,12 +46,22 @@
  */
 
 #include <machine/asm.h>
+#include <machine/trap.h>
 #include "assym.h"
 
-#define STACK_ALIGN(x)	(((x) + 0xf) & ~0xf)
+#define STACK_ALIGN(x)	(((x) + 0x7) & ~0x7)
 
-#define NOTREACHED	/* illtrap	10 */
+#define NOTREACHED		t T_DIV0
 
+
+/*
+ * void	pthread__switch(pthread_t self, pthread_t next);
+ *
+ * Plain switch that doesn't do any special checking or handle
+ * spin-preemption. It isn't used much by normal code, actually; it's
+ * main purpose is to be a basic switch engine when the MI code is
+ * already dealing with spin-preemption or other gunk.  
+ */
 ENTRY(pthread__switch)
 	/*
 	 * XXX Get space on stack for return address and ucontext,
@@ -60,11 +70,10 @@ ENTRY(pthread__switch)
 	 */
 	save	%sp, -STACK_ALIGN(CCFSZ + CONTEXTSIZE), %sp
 
-	add	%fp, BIAS - CONTEXTSIZE, %l0
-	st	%l0, [%i0 + PT_UC]
-	ld	[%i1 + PT_UC], %o1
+	add	%fp, -CONTEXTSIZE, %o0
+	st	%o0, [%i0 + PT_UC]
 	call	_C_LABEL(_swapcontext_u)
-	 mov	%l0, %o0
+	 ld	[%i1 + PT_UC], %o1
 
 	ret
 	 restore
@@ -75,14 +84,13 @@ ENTRY(pthread__switch)
  * comment in the i386 pthread_switch.S file.
  */
 
-
 /*
- * pt register which contains *pthread, which stack will be used
- * tmp temporary register which will have *ucontext_t for that pthread
+ * pt  - register which contains *pthread, which stack will be used
+ * tmp - temporary register which will have *ucontext_t for that pthread
  */
-#define STACK_SWITCH(pt,tmp)		  \
-	ld	[pt + PT_UC], tmp		; \
-	add	tmp, - STACK_ALIGN(STACKSPACE + CONTEXTSIZE) - BIAS, %sp
+#define STACK_SWITCH(pt, tmp)						  \
+	ld	[pt + PT_UC], tmp					; \
+	add	tmp, -STACK_ALIGN(STACKSPACE + CONTEXTSIZE), %sp
 
 
 /*
@@ -99,7 +107,7 @@ ENTRY(pthread__switch)
 
 ENTRY(pthread__switch_away)
 
-	STACK_SWITCH(%i1,%l2)
+	STACK_SWITCH(%i1, %l2)
 
 	/* If we're invoked from the switch-to-next provisions of
 	 * pthread__locked_switch or pthread__upcall_switch, there may
@@ -117,6 +125,7 @@ ENTRY(pthread__switch_away)
 1:	call	_C_LABEL(_setcontext_u)
 	 mov	%l2, %o0
 	NOTREACHED
+
 	
 /*
  * void	pthread__upcall_switch(pthread_t self, pthread_t next);
@@ -134,7 +143,7 @@ ENTRY(pthread__upcall_switch)
 	/*
 	 * switch to next thread stack so we could recycle self's one
 	 */
-	STACK_SWITCH(%i1,%l2)
+	STACK_SWITCH(%i1, %l2)
 
 	/* Check if the upcall code was preempted and continued to here. */
 	ld	[%i0 + PT_NEXT], %l0
@@ -147,13 +156,13 @@ ENTRY(pthread__upcall_switch)
 	 */
 	st	%i1, [%i0 + PT_SWITCHTO]
 	st	%l2, [%i0 + PT_SWITCHTOUC]
-	or	%g0, PT_STATE_RECYCLABLE, %l1
+	mov	PT_STATE_RECYCLABLE, %l1
 	st	%l1, [%i0 + PT_STATE]
 	mov	%i1, %i0
 	mov	%l0, %i1
 	ba	pthread__switch_away
 	 mov	1, %i2
-	
+
 	/* No old-upcall-preemption */
 1:	mov	%i0, %o0
 	call	_C_LABEL(pthread__sa_recycle)
@@ -164,7 +173,7 @@ ENTRY(pthread__upcall_switch)
 	dec	%l0
 	st	%l0, [%i1 + PT_SPINLOCKS]
 
-	/* Check if we were preempted and continued while faking the lock */
+	/* Check if we were preempted and continued while faking the lock. */
 	ld	[%i1 + PT_NEXT], %l0
 	tst	%l0
 	bz	2f
@@ -181,8 +190,7 @@ ENTRY(pthread__upcall_switch)
 	 mov	0, %i2
 
 	/* No new-upcall-preemption */
-2:
-	call	_C_LABEL(_setcontext_u)
+2:	call	_C_LABEL(_setcontext_u)
 	 ld	[%i1 + PT_UC], %o0
 	NOTREACHED
 
@@ -203,18 +211,18 @@ ENTRY(pthread__locked_switch)
 	st	%l0, [%i1 + PT_SPINLOCKS]
 
 	/* Get the current context */
-	add	%fp, BIAS - CONTEXTSIZE, %l3
+	add	%fp, -CONTEXTSIZE, %l3
 	st	%l3, [%i0 + PT_UC]
 	call	_C_LABEL(_getcontext_u)
-	 mov %l3, %o0
+	 mov	%l3, %o0
 
 	/* Edit the context to make it continue below, rather than here */
 #ifdef PIC
-	PICCY_SET(locked_return_point,%l1,%l5)
+	PICCY_SET(locked_return_point, %l1, %l5)
 #else
-	set locked_return_point, %l1
+	set	locked_return_point, %l1
 #endif
-	st %l1, [%l3 + UC_GREG + _REG_PC * 8]
+	st	%l1, [%l3 + UC_GREG + _REG_PC * 4]
 
 	STACK_SWITCH(%i1, %l2)
 
@@ -263,7 +271,7 @@ ENTRY(pthread__locked_switch)
 	/* ... actually release the lock.. */
 !	membar	#Sync
 
-	st	%g0, [%i2]
+	clr	[%i2]
 	/* .. and remove the fake lock */
 	ld	[%i1 + PT_SPINLOCKS], %l0
 	dec	%l0
@@ -281,7 +289,7 @@ ENTRY(pthread__locked_switch)
 	mov	%i1, %i0
 	mov	%l0, %i1
 	ba	pthread__switch_away
-	 mov	%g0, %i2
+	 mov	0, %i2
 
 2:	/* %l2 points to next thread's ucontext */
 	call	_C_LABEL(_setcontext_u)
@@ -291,5 +299,3 @@ ENTRY(pthread__locked_switch)
 locked_return_point:
 	ret
 	 restore
-
-
