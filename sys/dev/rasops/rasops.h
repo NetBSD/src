@@ -1,4 +1,4 @@
-/* $NetBSD: rasops.h,v 1.3 1999/04/13 03:02:40 ad Exp $ */
+/* 	$NetBSD: rasops.h,v 1.4 1999/04/26 04:27:47 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -69,7 +69,7 @@ struct rasops_info {
 	int	ri_flg;		/* flags */
 	int	ri_crow;	/* cursor row */
 	int	ri_ccol;	/* cursor column */
-	int	ri_pelbytes;	/* bytes per pel */
+	int	ri_pelbytes;	/* bytes per pel (may be zero) */
 	int	ri_fontscale;	/* fontheight * fontstride */
 	int	ri_xscale;	/* fontwidth * pelbytes */
 	int	ri_yscale;	/* fontheight * stride */
@@ -78,11 +78,12 @@ struct rasops_info {
 	/* For 15, 16, 24, 32 bits */
 	int32_t	ri_devcmap[16]; /* device colormap (WSCOL_*) */
 
-	/* The emulops you need to use */
+	/* The emulops you need to use, and the screen caps for wscons */
 	struct	wsdisplay_emulops ri_ops;
+	int	ri_caps;
 	
 	/* Callbacks so we can share some code */
-	void	(*ri_do_cursor)(struct rasops_info *);
+	void	(*ri_do_cursor) __P((struct rasops_info *));
 };
 
 #define RASOPS_CURSOR		(0x01)	/* cursor is on */
@@ -100,16 +101,24 @@ struct rasops_info {
  *
  * In terms of optimization, fonts that are a multiple of 8 pixels wide
  * work the best: this is important, and will cost you if you don't use 'em.
+ *
+ * rasops_init() takes care of rasops_setfont(). You only need to use this
+ * when you want to switch fonts later on. The integer parameters to both
+ * are the same. Before calling rasops_setfont(), set ri.ri_font. This
+ * should happen at _splhigh_.
  */
 
 /* rasops.c */
 int	rasops_init __P((struct rasops_info *, int, int, int, int));
+int	rasops_setfont __P((struct rasops_info *, int, int, int, int));
 void	rasops_unpack_attr __P((long, int *, int *, int *));
 
-/* This should not be called outside rasops */
-void	rasops_init_devcmap __P((struct rasops_info *));
+/* These should _not_ be called outside rasops */
+void	rasops_eraserows __P((void *, int, int, long));
+void	rasops_erasecols __P((void *, int, int, int, long));
+void	rasops_copycols __P((void *, int, int, int, int));
 
-extern u_char rasops_isgray[16];
-extern u_char rasops_cmap[256*3];
+extern u_char	rasops_isgray[16];
+extern u_char	rasops_cmap[256*3];
 
 #endif /* _RASOPS_H_ */
