@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.202 2003/07/30 12:09:47 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.203 2003/07/30 12:10:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.202 2003/07/30 12:09:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.203 2003/07/30 12:10:58 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -3048,9 +3048,9 @@ vfs_vnode_print(vp, full, pr)
 		vp->v_tag < sizeof(vnode_tags) / sizeof(vnode_tags[0])) ?
 		vnode_tags[vp->v_tag] : "UNKNOWN";
 	
-	(*pr)("type %s(%d) tag %s(%d) id 0x%lx mount %p typedata %p\n",
+	(*pr)("type %s(%d) tag %s(%d) mount %p typedata %p\n",
 	      vtype, vp->v_type, vtag, vp->v_tag,
-	      vp->v_id, vp->v_mount, vp->v_mountedhere);
+	      vp->v_mount, vp->v_mountedhere);
 
 	if (full) {
 		struct buf *bp;

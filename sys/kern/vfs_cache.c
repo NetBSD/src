@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.46 2003/07/30 12:09:47 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.47 2003/07/30 12:10:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.46 2003/07/30 12:09:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.47 2003/07/30 12:10:57 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -79,11 +79,11 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.46 2003/07/30 12:09:47 yamt Exp $");
 LIST_HEAD(nchashhead, namecache) *nchashtbl;
 u_long	nchash;				/* size of hash table - 1 */
 long	numcache;			/* number of cache entries allocated */
-#define	NCHASH(cnp, dvp)	(((cnp)->cn_hash ^ (dvp)->v_id) & nchash)
+#define	NCHASH(cnp, dvp)	((cnp)->cn_hash & nchash)
 
 LIST_HEAD(ncvhashhead, namecache) *ncvhashtbl;
 u_long	ncvhash;			/* size of hash table - 1 */
-#define	NCVHASH(vp)		((vp)->v_id & ncvhash)
+#define	NCVHASH(vp)		(((int)(vp) >> 3) & ncvhash)
 
 TAILQ_HEAD(, namecache) nclruhead;		/* LRU chain */
 struct	nchstats nchstats;		/* cache effectiveness statistics */
@@ -158,7 +158,6 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	struct namecache *ncp;
 	struct nchashhead *ncpp;
 	struct vnode *vp;
-	u_long vpid;
 	int error;
 
 	if (!doingcache) {
@@ -176,7 +175,6 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	ncpp = &nchashtbl[NCHASH(cnp, dvp)];
 	LIST_FOREACH(ncp, ncpp, nc_hash) {
 		if (ncp->nc_dvp == dvp &&
-		    ncp->nc_dvpid == dvp->v_id &&
 		    ncp->nc_nlen == cnp->cn_namelen &&
 		    !memcmp(ncp->nc_name, cnp->cn_nameptr, (u_int)ncp->nc_nlen))
 			break;
@@ -210,13 +208,9 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 			nchstats.ncs_badhits++;
 			goto remove;
 		}
-	} else if (ncp->nc_vpid != ncp->nc_vp->v_id) {
-		nchstats.ncs_falsehits++;
-		goto remove;
 	}
 
 	vp = ncp->nc_vp;
-	vpid = vp->v_id;
 	/* Release the name cache mutex while we acquire vnode locks */
 	simple_unlock(&namecache_slock);
 
@@ -254,7 +248,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	 * Check that the lock succeeded, and that the capability number did
 	 * not change while we were waiting for the lock.
 	 */
-	if (error || vpid != vp->v_id) {
+	if (error) {
 		/* XXXSMP - updating stats without lock; do we care? */
 		if (!error) {
 			vput(vp);
@@ -340,10 +334,8 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 	simple_lock(&namecache_slock);
 	LIST_FOREACH(ncp, nvcpp, nc_vhash) {
 		if (ncp->nc_vp == vp &&
-		    ncp->nc_vpid == vp->v_id &&
 		    (dvp = ncp->nc_dvp) != NULL &&
-		    dvp != vp && 		/* avoid pesky . entries.. */
-		    dvp->v_id == ncp->nc_dvpid) {
+		    dvp != vp) { 		/* avoid pesky . entries.. */
 
 #ifdef DIAGNOSTIC
 			if (ncp->nc_nlen == 1 &&
@@ -416,9 +408,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	}
 	/* Grab the vnode we just found. */
 	ncp->nc_vp = vp;
-	if (vp)
-		ncp->nc_vpid = vp->v_id;
-	else {
+	if (vp == NULL) {
 		/*
 		 * For negative hits, save the ISWHITEOUT flag so we can
 		 * restore it later when the cache entry is used again.
@@ -430,7 +420,6 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	LIST_INSERT_HEAD(&dvp->v_dnclist, ncp, nc_dvlist);
 	if (vp)
 		LIST_INSERT_HEAD(&vp->v_nclist, ncp, nc_vlist);
-	ncp->nc_dvpid = dvp->v_id;
 	ncp->nc_nlen = cnp->cn_namelen;
 	memcpy(ncp->nc_name, cnp->cn_nameptr, (unsigned)ncp->nc_nlen);
 	TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
@@ -529,8 +518,6 @@ void
 cache_purge(struct vnode *vp)
 {
 	struct namecache *ncp, *ncnext;
-	struct nchashhead *ncpp;
-	static u_long nextvnodeid;
 
 	simple_lock(&namecache_slock);
 	for (ncp = LIST_FIRST(&vp->v_nclist); ncp != NULL; ncp = ncnext) {
@@ -543,17 +530,6 @@ cache_purge(struct vnode *vp)
 		cache_remove(ncp);
 		cache_free(ncp);
 	}
-	vp->v_id = ++nextvnodeid;
-	if (nextvnodeid != 0)
-		goto out;
-	for (ncpp = &nchashtbl[nchash]; ncpp >= nchashtbl; ncpp--) {
-		LIST_FOREACH(ncp, ncpp, nc_hash) {
-			ncp->nc_vpid = 0;
-			ncp->nc_dvpid = 0;
-		}
-	}
-	vp->v_id = ++nextvnodeid;
-out:
 	simple_unlock(&namecache_slock);
 }
 
@@ -587,7 +563,7 @@ namecache_print(struct vnode *vp, void (*pr)(const char *, ...))
 	struct namecache *ncp;
 
 	TAILQ_FOREACH(ncp, &nclruhead, nc_lru) {
-		if (ncp->nc_vp == vp && ncp->nc_vpid == vp->v_id) {
+		if (ncp->nc_vp == vp) {
 			(*pr)("name %.*s\n", ncp->nc_nlen, ncp->nc_name);
 			dvp = ncp->nc_dvp;
 		}
@@ -598,7 +574,7 @@ namecache_print(struct vnode *vp, void (*pr)(const char *, ...))
 	}
 	vp = dvp;
 	TAILQ_FOREACH(ncp, &nclruhead, nc_lru) {
-		if (ncp->nc_vp == vp && ncp->nc_vpid == vp->v_id) {
+		if (ncp->nc_vp == vp) {
 			(*pr)("parent %.*s\n", ncp->nc_nlen, ncp->nc_name);
 		}
 	}

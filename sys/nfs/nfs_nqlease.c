@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.51 2003/06/29 22:32:15 fvdl Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.52 2003/07/30 12:10:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.51 2003/06/29 22:32:15 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.52 2003/07/30 12:10:58 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1019,7 +1019,6 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 	struct nfsnode *np;
 	struct vnode *vp;
 	struct nfsreq myrep;
-	int vpid;
 #endif
 	int error = 0, sleepreturn;
 	struct nfsuid *nuidp, *nnuidp;
@@ -1096,11 +1095,9 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 		while (np != (void *)&nmp->nm_timerhead &&
 		       (nmp->nm_iflag & NFSMNT_DISMINPROG) == 0) {
 			vp = NFSTOV(np);
-			vpid = vp->v_id;
 			if (np->n_expiry < time.tv_sec) {
 			   if (vget(vp, LK_EXCLUSIVE) == 0) {
-			     nmp->nm_inprog = vp;
-			     if (vpid == vp->v_id) {
+				nmp->nm_inprog = vp;
 				CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
 				/* mark this off the list */
 				CIRCLEQ_NEXT(np, n_timer) = 0; /* XXX */
@@ -1119,9 +1116,8 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 						np->n_flag &= ~NMODIFIED;
 					}
 				}
-			      }
-			      vput(vp);
-			      nmp->nm_inprog = NULLVP;
+				vput(vp);
+				nmp->nm_inprog = NULLVP;
 			    }
 			} else if ((np->n_expiry - NQ_RENEWAL) < time.tv_sec) {
 			    if ((np->n_flag & (NQNFSWRITE | NQNFSNONCACHE))
@@ -1129,8 +1125,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 				 !LIST_EMPTY(&vp->v_dirtyblkhd) &&
 				 vget(vp, LK_EXCLUSIVE) == 0) {
 				 nmp->nm_inprog = vp;
-				 if (vpid == vp->v_id &&
-				     nqnfs_getlease(vp, ND_WRITE, cred, p)==0)
+				 if (nqnfs_getlease(vp, ND_WRITE, cred, p)==0)
 					np->n_brev = np->n_lrev;
 				 vput(vp);
 				 nmp->nm_inprog = NULLVP;

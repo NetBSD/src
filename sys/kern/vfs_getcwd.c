@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.20 2003/06/29 22:31:33 fvdl Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.21 2003/07/30 12:10:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.20 2003/06/29 22:31:33 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.21 2003/07/30 12:10:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +309,6 @@ getcwd_getcache(lvpp, uvpp, bpp, bufp)
 {
 	struct vnode *lvp, *uvp = NULL;
 	int error;
-	int vpid;
 	
 	lvp = *lvpp;
 	
@@ -327,7 +326,6 @@ getcwd_getcache(lvpp, uvpp, bpp, bufp)
 		return error;
 	}
 	uvp = *uvpp;
-	vpid = uvp->v_id;
 
 	/*
 	 * Since we're going up, we have to release the current lock
@@ -343,7 +341,7 @@ getcwd_getcache(lvpp, uvpp, bpp, bufp)
 	 * Verify that vget succeeded, and check that vnode capability
 	 * didn't change while we were waiting for the lock.
 	 */
-	if (error || (vpid != uvp->v_id)) {
+	if (error) {
 		/*
 		 * Oops, we missed.  If the vget failed, or the
 		 * capability changed, try to get our lock back; if
