@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.275 2002/03/19 11:03:05 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.276 2002/03/22 18:12:08 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -178,10 +178,6 @@ check_RELEASEDIR: .PHONY .NOTMAIN
 # <empty string>, meaning start from /, the root directory.
 DESTDIR?=
 .endif
-
-
-# Defining `SKEY' causes support for S/key authentication to be compiled in.
-SKEY=		yes
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
@@ -364,8 +360,7 @@ dependall:	.NOTMAIN realdepend .MAKE
 
 # Supported NO* options (if defined, MK* will be forced to "no",
 # regardless of user's mk.conf setting).
-.for var in CRYPTO DOC KERBEROS LINKLIB LINT MAN NLS OBJ \
-	    PIC PICINSTALL PROFILE SHARE
+.for var in CRYPTO DOC LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PROFILE SHARE
 .if defined(NO${var})
 MK${var}:=	no
 .endif
@@ -376,8 +371,8 @@ NOHTML=
 .endif
 
 # MK* options which default to "yes".
-.for var in BFD CATPAGES CRYPTO DOC GCC GDB IEEEFP INFO KERBEROS LINKLIB LINT \
-	    MAN NLS OBJ PIC PICINSTALL PROFILE SHARE
+.for var in BFD CATPAGES CRYPTO DOC GCC GDB HESIOD IEEEFP INFO KERBEROS \
+	LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PROFILE SHARE SKEY YP
 MK${var}?=	yes
 .endfor
 
@@ -419,5 +414,15 @@ MKBFD:=	no
 MKGDB:=	no
 MKGCC:=	no
 .endif
+
+# Set defaults for the USE_xxx variables.  They all default to "yes"
+# unless the corresponding MKxxx variable is set to "no".
+.for var in HESIOD KERBEROS SKEY YP
+.if (${MK${var}} == "no")
+USE_${var}:= no
+.else
+USE_${var}?= yes
+.endif
+.endfor
 
 .endif		# _BSD_OWN_MK_
