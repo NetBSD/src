@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.6.2.1 1997/07/01 17:35:12 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.6.2.2 1997/07/22 12:21:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -93,11 +93,12 @@ struct ncr53c9x_ecb {
 	TAILQ_ENTRY(ncr53c9x_ecb) chain;
 	struct scsipi_xfer *xs;	/* SCSI xfer ctrl block from above */
 	int flags;
-#define	ECB_ALLOC	0x01
-#define	ECB_NEXUS	0x02
-#define	ECB_SENSE	0x04
-#define	ECB_ABORT	0x40
-#define	ECB_RESET	0x80
+#define	ECB_ALLOC			0x01
+#define	ECB_NEXUS			0x02
+#define	ECB_SENSE			0x04
+#define	ECB_ABORT			0x40
+#define	ECB_RESET			0x80
+#define	ECB_TENTATIVE_DONE	0x100
 	int timeout;
 
 	struct {
@@ -378,3 +379,5 @@ void	ncr53c9x_attach __P((struct ncr53c9x_softc *,
 int	ncr53c9x_scsi_cmd __P((struct scsipi_xfer *));
 void	ncr53c9x_reset __P((struct ncr53c9x_softc *));
 int	ncr53c9x_intr __P((struct ncr53c9x_softc *));
+
+extern int ncr53c9x_dmaselect;

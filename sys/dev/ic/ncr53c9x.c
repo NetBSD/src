@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.11.2.1 1997/07/01 17:35:11 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.11.2.2 1997/07/22 12:21:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -739,6 +739,7 @@ ncr53c9x_done(sc, ecb)
 	 * We don't support chk sense conditions for the request sense cmd.
 	 */
 	if (xs->error == XS_NOERROR) {
+		xs->status = ecb->stat;
 		if ((ecb->flags & ECB_ABORT) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
 		} else if ((ecb->flags & ECB_SENSE) != 0) {
@@ -746,7 +747,6 @@ ncr53c9x_done(sc, ecb)
 		} else if ((ecb->stat & ST_MASK) == SCSI_CHECK) {
 			/* First, save the return values */
 			xs->resid = ecb->dleft;
-			xs->status = ecb->stat;
 			ncr53c9x_sense(sc, ecb);
 			return;
 		} else {
@@ -996,7 +996,11 @@ gotit:
 				    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun);
 				sc->sc_dleft = 0;
 			}
-			ecb->xs->resid = ecb->dleft = sc->sc_dleft;
+			ecb->dleft = (ecb->flags & ECB_TENTATIVE_DONE)
+				? 0
+				: sc->sc_dleft;
+			if ((ecb->flags & ECB_SENSE) == 0)
+				ecb->xs->resid = ecb->dleft;
 			sc->sc_state = NCR_CMDCOMPLETE;
 			break;
 
@@ -1024,9 +1028,16 @@ gotit:
 			ti->dconns++;
 			sc->sc_state = NCR_DISCONNECT;
 
-			if ((ecb->xs->sc_link->quirks & SDEV_AUTOSAVE) == 0)
-				break;
-			/*FALLTHROUGH*/
+			/*
+			 * Mark the fact that all bytes have moved. The
+			 * target may not bother to do a SAVE POINTERS
+			 * at this stage. This flag will set the residual
+			 * count to zero on MSG COMPLETE.
+			 */
+			if (sc->sc_dleft == 0)
+				ecb->flags |= ECB_TENTATIVE_DONE;
+			
+			break;
 
 		case MSG_SAVEDATAPOINTER:
 			NCR_MSGS(("save datapointer "));
@@ -1777,14 +1788,18 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 					    & NCRFIFO_FF) - 2;
 					while (i--)
 						(void) NCR_READ_REG(sc,
-						    NCR_FIFO);
+							NCR_FIFO);
 				}
 				ecb->stat = NCR_READ_REG(sc, NCR_FIFO);
 				msg = NCR_READ_REG(sc, NCR_FIFO);
 				NCR_PHASE(("<stat:(%x,%x)>", ecb->stat, msg));
 				if (msg == MSG_CMDCOMPLETE) {
-					ecb->xs->resid = ecb->dleft =
-					    sc->sc_dleft;
+					ecb->dleft =
+						(ecb->flags & ECB_TENTATIVE_DONE)
+							? 0
+							: sc->sc_dleft;
+					if ((ecb->flags & ECB_SENSE) == 0)
+						ecb->xs->resid = ecb->dleft;
 					sc->sc_state = NCR_CMDCOMPLETE;
 				} else
 					printf("%s: STATUS_PHASE: msg %d\n",
@@ -1897,6 +1912,9 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 				  1, &size);
 			sc->sc_prevphase = DATA_IN_PHASE;
 		setup_xfer:
+			/* Target returned to data phase: wipe "done" memory */
+			ecb->flags &= ~ECB_TENTATIVE_DONE;
+
 			/* Program the SCSI counter */
 			NCR_WRITE_REG(sc, NCR_TCL, size);
 			NCR_WRITE_REG(sc, NCR_TCM, size >> 8);

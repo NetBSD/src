@@ -1,4 +1,4 @@
-#	$NetBSD: files.pica,v 1.6.2.1 1997/07/01 17:35:55 bouyer Exp $
+#	$NetBSD: files.pica,v 1.6.2.2 1997/07/22 12:21:18 bouyer Exp $
 maxpartitions 8
 maxusers 2 8 64
 
@@ -83,8 +83,6 @@ file	arch/pica/pica/pica_trap.c
 
 file	dev/cons.c
 file	dev/cninit.c
-file	netinet/in_cksum.c
-file	netns/ns_cksum.c			ns
 
 # Ultrix binary compatibility (COMPAT_ULTRIX)
 include "compat/ultrix/files.ultrix"
