@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17 2000/05/29 20:00:55 ragge Exp $
+#	$NetBSD: genassym.cf,v 1.18 2000/05/31 05:10:54 thorpej Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -52,6 +52,7 @@ define	P_PRIORITY	offsetof(struct proc, p_priority)
 define	P_ADDR		offsetof(struct proc, p_addr)
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
 define	P_STAT		offsetof(struct proc, p_stat)
+define	P_CPU		offsetof(struct proc, p_cpu)
 
 define	SONPROC		SONPROC
 
