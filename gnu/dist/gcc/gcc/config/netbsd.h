@@ -76,6 +76,12 @@ Boston, MA 02111-1307, USA.  */
 #undef STANDARD_STARTFILE_PREFIX
 #define STANDARD_STARTFILE_PREFIX	"/usr/lib/"
 
+#undef TOOLDIR_BASE_PREFIX
+#define TOOLDIR_BASE_PREFIX "/usr/"
+
+#undef STANDARD_BINDIR_PREFIX
+#define STANDARD_BINDIR_PREFIX "/usr/bin"
+
 #endif /* NETBSD_NATIVE */
 
 
