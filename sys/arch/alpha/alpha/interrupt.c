@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.50 2000/07/02 04:40:33 cgd Exp $ */
+/* $NetBSD: interrupt.c,v 1.51 2000/09/04 00:31:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.50 2000/07/02 04:40:33 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.51 2000/09/04 00:31:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,11 +156,6 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		 * time would be counted as interrupt time.
 		 */
 		sc->sc_evcnt_clock.ev_count++;
-#if defined(MULTIPROCESSOR)
-		/* XXX XXX XXX */
-		if (CPU_IS_PRIMARY(ci) == 0)
-			return;
-#endif
 		uvmexp.intrs++;
 		if (platform.clockintr) {
 			/*
@@ -192,15 +187,16 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 
 	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
 		atomic_add_ulong(&sc->sc_evcnt_device.ev_count, 1);
-#if defined(MULTIPROCESSOR)
-		/* XXX XXX XXX */
-		if (CPU_IS_PRIMARY(ci) == 0)
-			return;
-#endif
 		atomic_add_ulong(&ci->ci_intrdepth, 1);
+
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+
 		uvmexp.intrs++;
 		if (platform.iointr)
 			(*platform.iointr)(framep, a1);
+
+		KERNEL_UNLOCK();
+
 		atomic_sub_ulong(&ci->ci_intrdepth, 1);
 		break;
 
@@ -448,6 +444,8 @@ softintr_dispatch()
 	struct alpha_soft_intrhand *sih;
 	u_int64_t n, i;
 
+	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+
 	while ((n = atomic_loadlatch_ulong(&ssir, 0)) != 0) {
 		for (i = 0; i < IPL_NSOFT; i++) {
 			if ((n & (1 << i)) == 0)
@@ -472,6 +470,8 @@ softintr_dispatch()
 			simple_unlock(&asi->softintr_slock);
 		}
 	}
+
+	KERNEL_UNLOCK();
 }
 
 /*
