@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.127 2003/05/03 16:28:58 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.128 2003/05/21 13:50:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.127 2003/05/03 16:28:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.128 2003/05/21 13:50:55 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -126,9 +126,6 @@ extern u_int32_t nfs_prog, nfs_vers;
 
 static int nfs_mount_diskless __P((struct nfs_dlmount *, const char *,
     struct mount **, struct vnode **, struct proc *));
-
-#define TRUE	1
-#define	FALSE	0
 
 /*
  * nfs statfs call
