@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)chmod.c	8.8 (Berkeley) 4/1/94";*/
-static char *rcsid = "$Id: chmod.c,v 1.9 1994/09/20 04:07:04 mycroft Exp $";
+static char *rcsid = "$Id: chmod.c,v 1.10 1994/09/20 04:08:23 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,6 +52,7 @@ static char *rcsid = "$Id: chmod.c,v 1.9 1994/09/20 04:07:04 mycroft Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 void usage __P((void));
 
