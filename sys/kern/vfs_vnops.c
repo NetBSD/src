@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.17 1994/12/13 21:52:45 mycroft Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.18 1994/12/14 19:07:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -62,10 +62,9 @@ struct 	fileops vnops =
  * Common code for vnode open operations.
  * Check permissions, and call the VOP_OPEN or VOP_CREATE routine.
  */
-vn_open(ndp, fmode, cmode, fp)
+vn_open(ndp, fmode, cmode)
 	register struct nameidata *ndp;
 	int fmode, cmode;
-	struct file *fp;
 {
 	register struct vnode *vp;
 	register struct proc *p = ndp->ni_cnd.cn_proc;
@@ -140,7 +139,7 @@ vn_open(ndp, fmode, cmode, fp)
 		if (error = VOP_SETATTR(vp, vap, cred, p))
 			goto bad;
 	}
-	if (error = VOP_OPEN(vp, fmode, cred, p, fp))
+	if (error = VOP_OPEN(vp, fmode, cred, p))
 		goto bad;
 	if (fmode & FWRITE)
 		vp->v_writecount++;

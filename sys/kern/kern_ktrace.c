@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.14 1994/11/14 06:01:18 christos Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.15 1994/12/14 19:07:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -249,7 +249,7 @@ ktrace(curp, uap, retval)
 		 */
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, fname),
 		    curp);
-		if (error = vn_open(&nd, FREAD|FWRITE, 0, NULL)) {
+		if (error = vn_open(&nd, FREAD|FWRITE, 0)) {
 			curp->p_traceflag &= ~KTRFAC_ACTIVE;
 			return (error);
 		}

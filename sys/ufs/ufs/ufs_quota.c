@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.5 1994/12/13 10:45:35 mycroft Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.6 1994/12/14 19:03:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -372,7 +372,7 @@ quotaon(p, mp, type, fname)
 
 	vpp = &ump->um_quotas[type];
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fname, p);
-	if (error = vn_open(&nd, FREAD|FWRITE, 0, NULL))
+	if (error = vn_open(&nd, FREAD|FWRITE, 0))
 		return (error);
 	vp = nd.ni_vp;
 	VOP_UNLOCK(vp);
