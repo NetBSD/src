@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.20 2002/03/24 18:14:27 uch Exp $
+# $NetBSD: GENERIC,v 1.21 2002/04/02 05:30:39 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -26,8 +26,8 @@ maxusers	16		# estimated number of users
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_SIZE=2880	# size of memory disk, in blocks
-#options 	MEMORY_DISK_SIZE=6000
+options 	MEMORY_DISK_ROOT_SIZE=2880	# size of memory disk, in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=6000
 
 # CPU support
 options 	SH4

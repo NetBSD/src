@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.20 2002/03/24 03:37:18 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.21 2002/04/02 05:30:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -76,9 +76,9 @@ extern int physmem;
 #ifndef PMAP_STATIC_L1S
 extern int max_processes;
 #endif	/* !PMAP_STATIC_L1S */
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_SIZE)
+#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
 extern u_int memory_disc_size;		/* Memory disc size */
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_SIZE */
+#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
 
 pv_addr_t systempage;
 pv_addr_t kernelstack;
@@ -423,7 +423,7 @@ parse_mi_bootargs(args)
 			max_processes = 255;
 	}
 #endif	/* !PMAP_STATUC_L1S */
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_SIZE)
+#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
 	if (get_bootconf_option(args, "memorydisc", BOOTOPT_TYPE_INT, &integer)
 	    || get_bootconf_option(args, "memorydisk", BOOTOPT_TYPE_INT, &integer)) {
 		memory_disc_size = integer;
@@ -433,7 +433,7 @@ parse_mi_bootargs(args)
 		if (memory_disc_size > 2048*1024)
 			memory_disc_size = 2048*1024;
 	}
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_SIZE */
+#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
 
 	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &integer)
 	    || get_bootconf_option(args, "-q", BOOTOPT_TYPE_BOOLEAN, &integer))

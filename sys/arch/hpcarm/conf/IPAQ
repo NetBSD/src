@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.14 2002/03/10 19:56:41 lukem Exp $
+#	$NetBSD: IPAQ,v 1.15 2002/04/02 05:30:41 lukem Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -94,7 +94,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options
