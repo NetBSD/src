@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.231.2.3 1999/10/09 21:49:26 cgd Exp $
+#	$NetBSD: GENERIC,v 1.231.2.4 1999/10/20 23:35:15 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -440,6 +440,7 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+rl*	at pci? dev ? function ?	# Realtek 8129/8139
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
