@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2005/02/20 00:37:49 christos Exp $
+# $NetBSD: Makefile,v 1.8 2005/02/27 21:01:59 thorpej Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -34,6 +34,10 @@ SUBDIR=	pam_chroot pam_deny pam_echo pam_exec pam_ftpusers pam_group \
 LIB_ROOT_DIR=	${.CURDIR}/../..
 
 LIBDPLIBS=	util	${LIB_ROOT_DIR}/libutil
+
+.if (${MKSKEY} != "no")
+SUBDIR+= pam_skey
+.endif
 
 .if (${MKKERBEROS} != "no")
 SUBDIR+= pam_krb5 pam_ksu
