@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.10 2003/08/07 16:31:14 agc Exp $	*/
+/*	$NetBSD: if_il.c,v 1.11 2005/02/26 12:45:06 simonb Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.10 2003/08/07 16:31:14 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.11 2005/02/26 12:45:06 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -294,10 +294,10 @@ ilinit(struct ifnet *ifp)
 	s = splnet();
 	IL_WCSR(IL_CSR, ILC_RESET);
 	if (ilwait(sc, "hardware diag")) {
- 		sc->sc_if.if_flags &= ~IFF_UP;
- 		splx(s);
- 		return 0;
- 	}
+		sc->sc_if.if_flags &= ~IFF_UP;
+		splx(s);
+		return 0;
+	}
 	IL_WCSR(IL_CSR, ILC_CISA);
 	while ((IL_RCSR(IL_CSR) & IL_CDONE) == 0)
 		;
@@ -407,7 +407,7 @@ void
 ilstart(struct ifnet *ifp)
 {
 	struct il_softc *sc = ifp->if_softc;
-        int len;
+	int len;
 	struct mbuf *m;
 	short csr;
 
@@ -497,7 +497,7 @@ ilcint(void *arg)
 /*
  * Ethernet interface receiver interrupt.
  * If input error just drop packet.
- * Otherwise purge input buffered data path and examine 
+ * Otherwise purge input buffered data path and examine
  * packet to determine type.  If can't determine length
  * from type, then have to drop packet.  Othewise decapsulate
  * packet based on type and pass to type specific higher-level
@@ -508,7 +508,7 @@ ilrint(void *arg)
 {
 	struct il_softc *sc = arg;
 	struct il_rheader *il;
-    	struct mbuf *m;
+	struct mbuf *m;
 	int len, s;
 
 	sc->sc_if.if_ipackets++;
@@ -614,7 +614,7 @@ il_setaddr(u_char *physaddr, struct il_softc *sc)
 {
 	if (! (sc->sc_flags & ILF_RUNNING))
 		return;
-		
+
 	bcopy((caddr_t)physaddr, (caddr_t)is->is_addr, sizeof is->is_addr);
 	sc->sc_flags &= ~ILF_RUNNING;
 	sc->sc_flags |= ILF_SETADDR;

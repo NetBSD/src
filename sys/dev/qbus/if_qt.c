@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.5 2004/10/30 23:45:10 thorpej Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.6 2005/02/26 12:45:06 simonb Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -29,23 +29,23 @@
  */
 /*
  *
- * Modification History 
+ * Modification History
  * 23-Feb-92 -- sms
  *	Rewrite the buffer handling so that fewer than the maximum number of
  *	buffers may be used (32 receive and 12 transmit buffers consume 66+kb
  *	of main system memory in addition to the internal structures in the
  *	networking code).  A freelist of available buffers is maintained now.
- *	When I/O operations complete the associated buffer is placed on the 
- *	freelist (a single linked list for simplicity) and when an I/O is 
- *	started a buffer is pulled off the list. 
+ *	When I/O operations complete the associated buffer is placed on the
+ *	freelist (a single linked list for simplicity) and when an I/O is
+ *	started a buffer is pulled off the list.
  *
  * 20-Feb-92 -- sms
  *	It works!  Darned board couldn't handle "short" rings - those rings
  *	where only half the entries were made available to the board (the
  *	ring descriptors were the full size, merely half the entries were
  * 	flagged as belonging always to the driver).  Grrrr.  Would have thought
- *	the board could skip over those entries reserved by the driver. 
- *	Now to find a way not to have to allocated 32+12 times 1.5kb worth of 
+ *	the board could skip over those entries reserved by the driver.
+ *	Now to find a way not to have to allocated 32+12 times 1.5kb worth of
  *	buffers...
  *
  * 03-Feb-92 -- sms
@@ -69,18 +69,18 @@
  *	should change then something will have to be done (like do it "right").
  *	Darned alignment restrictions!
  *
- *	A couple of typos were corrected (missing parentheses, reversed 
+ *	A couple of typos were corrected (missing parentheses, reversed
  *	arguments to printf calls, etc).
  *
  * 13-Oct-92 -- sms@wlv.iipo.gtegsc.com
  *	Created based on the DELQA-PLUS addendum to DELQA User's Guide.
- *	This driver ('qt') is selected at system configuration time.  If the 
- *	board *	is not a DELQA-YM an error message will be printed and the 
+ *	This driver ('qt') is selected at system configuration time.  If the
+ *	board *	is not a DELQA-YM an error message will be printed and the
  *	interface will not be attached.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.5 2004/10/30 23:45:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.6 2005/02/26 12:45:06 simonb Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -130,7 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.5 2004/10/30 23:45:10 thorpej Exp $");
 #if	NRCV != 32 || NXMT != 12
 	hardware requires these sizes.
 #endif
- 
+
 /*
  * Control data structures, must be in DMA-friendly memory.
  */
@@ -144,7 +144,7 @@ struct	qt_softc {
 	struct	device sc_dev;		/* Configuration common part */
 	struct	ethercom is_ec;		/* common part - must be first  */
 	struct	evcnt sc_intrcnt;	/* Interrupt counting */
-#define	is_if	is_ec.ec_if		/* network-visible interface 	*/
+#define	is_if	is_ec.ec_if		/* network-visible interface	*/
 	u_int8_t is_addr[ETHER_ADDR_LEN]; /* hardware Ethernet address	*/
 	bus_space_tag_t	sc_iot;
 	bus_addr_t	sc_ioh;
@@ -181,12 +181,12 @@ static	void qtrint(struct qt_softc *sc);
 static	void qttint(struct qt_softc *sc);
 
 /* static	void qtrestart(struct qt_softc *sc); */
- 
+
 CFATTACH_DECL(qt, sizeof(struct qt_softc),
     qtmatch, qtattach, NULL, NULL);
 
 /*
- * Maximum packet size needs to include 4 bytes for the CRC 
+ * Maximum packet size needs to include 4 bytes for the CRC
  * on received packets.
 */
 #define MAXPACKETSIZE (ETHERMTU + sizeof (struct ether_header) + 4)
@@ -228,7 +228,7 @@ qtmatch(struct device *parent, struct cfdata *cf, void *aux)
 	memset(qi, 0, sizeof(struct qt_init));
 	qi->vector = ubasc->uh_lastiv - 4;
 	qi->options = INIT_OPTIONS_INT;
-	
+
 	QT_WCSR(CSR_IBAL, loint(ui.ui_baddr));
 	QT_WCSR(CSR_IBAH, hiint(ui.ui_baddr));
 	QT_WCSR(CSR_SRQR, 2);
@@ -262,7 +262,7 @@ qtattach(struct device *parent, struct device *self, void *aux)
 	register struct ifnet *ifp = &sc->is_if;
 	struct uba_attach_args *ua = aux;
 
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, qtintr, sc, 
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, qtintr, sc,
 	    &sc->sc_intrcnt);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
 	    sc->sc_dev.dv_xname, "intr");
@@ -292,13 +292,13 @@ qtattach(struct device *parent, struct device *self, void *aux)
 	ifp->if_init = qtinit;
 	ifp->if_stop = qtstop;
 	IFQ_SET_READY(&ifp->if_snd);
- 
+
 	printf("\n%s: delqa-plus in Turbo mode, hardware address %s\n",
 	    XNAME, ether_sprintf(sc->is_addr));
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->is_addr);
 	}
- 
+
 int
 qtturbo(sc)
 	register struct qt_softc *sc;
@@ -353,7 +353,7 @@ qtinit(struct ifnet *ifp)
 	struct	qt_rring *rp;
 	struct	qt_tring *tp;
 	register int i, error;
- 
+
 	if (ifp->if_flags & IFF_RUNNING) {
 		/* Cancel any pending I/O. */
 		qtstop(ifp, 0);
@@ -428,13 +428,13 @@ qtinit(struct ifnet *ifp)
 	sc->rindex = 0;
 	sc->nxtrcv = 0;
 	sc->nrcv = 0;
- 
+
 /*
  * Now we tell the device the address of the INIT block.  The device
  * _must_ be in the Turbo mode at this time.  The "START" command is
  * then issued to the device.  A 1 second timeout is then started.
  * When the interrupt occurs the IFF_UP|IFF_RUNNING state is entered and
- * full operations will proceed.  If the timeout expires without an interrupt 
+ * full operations will proceed.  If the timeout expires without an interrupt
  * being received an error is printed, the flags cleared and the device left
  * marked down.
 */
@@ -453,11 +453,11 @@ qtinit(struct ifnet *ifp)
 void
 qtstart(struct ifnet *ifp)
 	{
-	int 	len, nxmit;
+	int	len, nxmit;
 	register struct qt_softc *sc = ifp->if_softc;
 	register struct qt_tring *rp;
 	struct	mbuf *m = NULL;
- 
+
 	for (nxmit = sc->nxmit; nxmit < NXMT; nxmit++) {
 		IF_DEQUEUE(&sc->is_if.if_snd, m);
 		if	(m == 0)
@@ -485,11 +485,11 @@ qtstart(struct ifnet *ifp)
 		sc->nxmit = nxmit;
 	/* XXX - set OACTIVE */
 }
- 
+
 /*
- * General interrupt service routine.  Receive, transmit, device start 
+ * General interrupt service routine.  Receive, transmit, device start
  * interrupts and timeouts come here.  Check for hard device errors and print a
- * message if any errors are found.  If we are waiting for the device to 
+ * message if any errors are found.  If we are waiting for the device to
  * START then check if the device is now running.
 */
 
@@ -500,7 +500,7 @@ qtintr(void *arg)
 	struct ifnet *ifp = &sc->is_if;
 	short status;
 
- 
+
 	status = QT_RCSR(CSR_SRR);
 	if	(status < 0)
 		/* should we reset the device after a bunch of these errs? */
@@ -511,20 +511,20 @@ qtintr(void *arg)
 	qttint(sc);
 	qtstart(&sc->is_ec.ec_if);
 	}
- 
+
 /*
  * Transmit interrupt service.  Only called if there are outstanding transmit
  * requests which could have completed.  The DELQA-YM doesn't provide the
  * status bits telling the kind (receive, transmit) of interrupt.
 */
- 
+
 #define BBLMIS (TMD2_BBL|TMD2_MIS)
 
 void
 qttint(struct qt_softc *sc)
 	{
 	register struct qt_tring *rp;
- 
+
 	while (sc->nxmit > 0)
 		{
 		rp = &sc->sc_ib->qc_t[sc->xlast];
@@ -537,7 +537,7 @@ qttint(struct qt_softc *sc)
 */
 		if	(rp->tmd2 & TMD2_CER)
 			sc->is_if.if_collisions++;
-		if	((rp->tmd0 & TMD0_ERR1) || 
+		if	((rp->tmd0 & TMD0_ERR1) ||
 			 ((rp->tmd2 & TMD2_ERR2) && (rp->tmd2 & BBLMIS)))
 			{
 #ifdef QTDEBUG
@@ -553,7 +553,7 @@ qttint(struct qt_softc *sc)
 		sc->nxmit--;
 		}
 	}
- 
+
 /*
  * Receive interrupt service.  Pull packet off the interface and put into
  * a mbuf chain for processing later.
@@ -566,7 +566,7 @@ qtrint(struct qt_softc *sc)
 	struct ifnet *ifp = &sc->is_ec.ec_if;
 	struct mbuf *m;
 	int	len;
- 
+
 	while	(sc->sc_ib->qc_r[(int)sc->rindex].rmd3 & RMD3_OWN)
 		{
 		rp = &sc->sc_ib->qc_r[(int)sc->rindex];
@@ -578,7 +578,7 @@ qtrint(struct qt_softc *sc)
 			}
 		len = (rp->rmd1 & RMD1_MCNT) - 4;	/* -4 for CRC */
 		sc->is_if.if_ipackets++;
- 
+
 		if	((rp->rmd0 & RMD0_ERR3) || (rp->rmd2 & RMD2_ERR4))
 			{
 #ifdef QTDEBUG
@@ -683,7 +683,7 @@ void
 qtreset(sc)
 	register struct qt_softc *sc;
 	{
- 
+
 	qtturbo(sc);
 	qtinit(&sc->is_ec.ec_if);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.35 2005/02/04 02:10:47 perry Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.36 2005/02/26 12:45:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -55,7 +55,7 @@
  * During normal operation, resources are allocated and returned
  * to the structures here.  We watch the number of passive releases
  * on each uba, and if the number is excessive may reset the uba.
- * 
+ *
  * When uba resources are needed and not available, or if a device
  * which can tolerate no other uba activity (rk07) gets on the bus,
  * then device drivers may have to wait to get to the bus and are
@@ -94,8 +94,8 @@ struct	uba_unit {
 	int	uu_bdp;		/* for controllers that hang on to bdp's */
 	int    (*uu_ready)(struct uba_unit *);
 	void	*uu_ref;	/* Buffer this is related to */
-	short   uu_xclu;        /* want exclusive use of bdp's */
-	short   uu_keepbdp;     /* hang on to bdp's once allocated */
+	short   uu_xclu;	/* want exclusive use of bdp's */
+	short   uu_keepbdp;	/* hang on to bdp's once allocated */
 };
 
 /*
