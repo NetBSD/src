@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.20 1999/12/05 18:20:53 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.21 1999/12/16 05:35:43 mjacob Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -57,7 +57,8 @@ isp_attach(isp)
 	isp->isp_osinfo._adapter.scsipi_ioctl = ispioctl;
 
 	isp->isp_state = ISP_RUNSTATE;
-	isp->isp_osinfo._link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
+	isp->isp_osinfo._link.scsipi_scsi.channel =
+	    (IS_DUALBUS(isp))? 0 : SCSI_CHANNEL_ONLY_ONE;
 	isp->isp_osinfo._link.adapter_softc = isp;
 	isp->isp_osinfo._link.device = &isp_dev;
 	isp->isp_osinfo._link.adapter = &isp->isp_osinfo._adapter;
@@ -99,7 +100,7 @@ isp_attach(isp)
 		isp->isp_osinfo._link.scsipi_scsi.adapter_target =
 		    sdp->isp_initiator_id;
 		isp->isp_osinfo.discovered[0] = 1 << sdp->isp_initiator_id;
-		if (IS_12X0(isp)) {
+		if (IS_DUALBUS(isp)) {
 			isp->isp_osinfo._link_b = isp->isp_osinfo._link;
 			sdp++;
 			isp->isp_osinfo.discovered[1] =
@@ -118,7 +119,7 @@ isp_attach(isp)
 	if (IS_SCSI(isp)) {
 		int bus = 0;
 		(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
-		if (IS_12X0(isp)) {
+		if (IS_DUALBUS(isp)) {
 			bus++;
 			(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
 		}
@@ -164,7 +165,7 @@ isp_attach(isp)
 	 * And attach children (if any).
 	 */
 	config_found((void *)isp, &isp->isp_osinfo._link, scsiprint);
-	if (IS_12X0(isp)) {
+	if (IS_DUALBUS(isp)) {
 		config_found((void *)isp, &isp->isp_osinfo._link_b, scsiprint);
 	}
 }
@@ -196,7 +197,7 @@ ispcmd_slow(xs)
 {
 	sdparam *sdp;
 	int tgt, chan, s;
-	u_int16_t f;
+	u_int16_t flags;
 	struct ispsoftc *isp = XS_ISP(xs);
 
 	/*
@@ -204,16 +205,14 @@ ispcmd_slow(xs)
 	 */
 	tgt = XS_TGT(xs);
 	chan = XS_CHANNEL(xs);
-	sdp = isp->isp_param;
-	sdp += chan;
 	if ((xs->xs_control & XS_CTL_DISCOVERY) != 0 ||
 	    (isp->isp_osinfo.discovered[chan] & (1 << tgt)) != 0) {
 		return (ispcmd(xs));
 	}
 
-	f = DPARM_DEFAULT;
+	flags = DPARM_DEFAULT;
 	if (xs->sc_link->quirks & SDEV_NOSYNC) {
-		f ^= DPARM_SYNC;
+		flags ^= DPARM_SYNC;
 #ifdef	DEBUG
 	} else {
 		printf("%s: channel %d target %d can do SYNC xfers\n",
@@ -221,7 +220,7 @@ ispcmd_slow(xs)
 #endif
 	}
 	if (xs->sc_link->quirks & SDEV_NOWIDE) {
-		f ^= DPARM_WIDE;
+		flags ^= DPARM_WIDE;
 #ifdef	DEBUG
 	} else {
 		printf("%s: channel %d target %d can do WIDE xfers\n",
@@ -229,7 +228,7 @@ ispcmd_slow(xs)
 #endif
 	}
 	if (xs->sc_link->quirks & SDEV_NOTAG) {
-		f ^= DPARM_TQING;
+		flags ^= DPARM_TQING;
 #ifdef	DEBUG
 	} else {
 		printf("%s: channel %d target %d can do TAGGED xfers\n",
@@ -241,37 +240,12 @@ ispcmd_slow(xs)
 	 * so mark parameters to be updated for it.
 	 */
 	s = splbio();
-	sdp->isp_devparam[tgt].dev_flags = f;
+	isp->isp_osinfo.discovered[chan] |= (1 << tgt);
+	sdp = isp->isp_param;
+	sdp += chan;
+	sdp->isp_devparam[tgt].dev_flags = flags;
 	sdp->isp_devparam[tgt].dev_update = 1;
 	isp->isp_update |= (1 << chan);
-
-	/*
-	 * Now check to see whether we can get out of this checking mode now.
-	 * XXX: WE CANNOT AS YET BECAUSE THERE IS NO MECHANISM TO TELL US
-	 * XXX: WHEN WE'RE DONE DISCOVERY BECAUSE WE NEED ONE COMMAND AFTER
-	 * XXX: DISCOVERY IS DONE FOR EACH TARGET TO TELL US THAT WE'RE DONE
-	 * XXX: AND THAT DOESN'T HAPPEN HERE. AT BEST WE CAN MARK OURSELVES
-	 * XXX: DONE WITH DISCOVERY FOR THIS TARGET AND SO SAVE MAYBE 20
-	 * XXX: LINES OF C CODE.
-	 */
-	isp->isp_osinfo.discovered[chan] |= (1 << tgt);
-	/* do not bother with these lines- they'll never execute correctly */
-#if	0
-	sdp = isp->isp_param;
-	for (chan = 0; chan < (IS_12X0(isp)? 2 : 1); chan++, sdp++) {
-		f = 0xffff & ~(1 << sdp->isp_initiator_id);
-		if (isp->isp_osinfo.discovered[chan] != f) {
-			break;
-		}
-	}
-	if (chan == (IS_12X0(isp)? 2 : 1)) {
-		CFGPRINTF("%s: allowing sync/wide negotiation and "
-		    "tag usage\n", isp->isp_name);
-		isp->isp_osinfo._adapter.scsipi_cmd = ispcmd;
-		if (IS_12X0(isp))
-			isp->isp_update |= 2;
-	}
-#endif
 	splx(s);
 	return (ispcmd(xs));
 }
@@ -581,12 +555,47 @@ isp_async(isp, cmd, arg)
 		tgt = *((int *) arg);
 		bus = (tgt >> 16) & 0xffff;
 		tgt &= 0xffff;
-
+		sdp += bus;
 		flags = sdp->isp_devparam[tgt].cur_dflags;
 		period = sdp->isp_devparam[tgt].cur_period;
+
 		if ((flags & DPARM_SYNC) && period &&
 		    (sdp->isp_devparam[tgt].cur_offset) != 0) {
-			if (sdp->isp_lvdmode) {
+#if	0
+			/* CAUSES PANICS */
+			static char *m = "%s: bus %d now %s mode\n";
+			u_int16_t r, l;
+			if (bus == 1)
+				r = SXP_PINS_DIFF | SXP_BANK1_SELECT;
+			else
+				r = SXP_PINS_DIFF;
+			l = ISP_READ(isp, r) & ISP1080_MODE_MASK;
+			switch (l) {
+			case ISP1080_LVD_MODE:
+				sdp->isp_lvdmode = 1;
+				printf(m, isp->isp_name, bus, "LVD");
+				break;  
+			case ISP1080_HVD_MODE:  
+				sdp->isp_diffmode = 1;
+				printf(m, isp->isp_name, bus, "Differential");
+				break;  
+			case ISP1080_SE_MODE:   
+				sdp->isp_ultramode = 1;
+				printf(m, isp->isp_name, bus, "Single-Ended");
+				break;          
+			default:        
+				printf("%s: unknown mode on bus %d (0x%x)\n",
+				    isp->isp_name, bus, l);
+				break;  
+			}       
+#endif
+			/*
+			 * There's some ambiguity about our negotiated speed
+			 * if we haven't detected LVD mode correctly (which
+			 * seems to happen, unfortunately). If we're in LVD
+			 * mode, then different rules apply about speed.
+			 */
+			if (sdp->isp_lvdmode || period < 0xc) {
 				switch (period) {
 				case 0xa:
 					mhz = 40;

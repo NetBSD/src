@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.19 1999/12/04 02:59:29 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.20 1999/12/16 05:35:44 mjacob Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -129,8 +129,8 @@ struct isposinfo {
 #define	XS_LUN(xs)		((int) (xs)->sc_link->scsipi_scsi.lun)
 #define	XS_TGT(xs)		((int) (xs)->sc_link->scsipi_scsi.target)
 #define	XS_CHANNEL(xs)		\
-    (((xs)->sc_link == &(((struct ispsoftc *)XS_ISP(xs))->isp_osinfo._link_b))?\
-    1 : 0)
+	(((int) (xs)->sc_link->scsipi_scsi.channel == SCSI_CHANNEL_ONLY_ONE) ? \
+	    0 : (xs)->sc_link->scsipi_scsi.channel)
 #define	XS_RESID(xs)		(xs)->resid
 #define	XS_XFRLEN(xs)		(xs)->datalen
 #define	XS_CDBLEN(xs)		(xs)->cmdlen
