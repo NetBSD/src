@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.11 1997/10/18 12:27:37 lukem Exp $	*/
+/*	$NetBSD: calendar.c,v 1.12 1998/02/04 15:19:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.11 1997/10/18 12:27:37 lukem Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.12 1998/02/04 15:19:50 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -76,6 +76,8 @@ unsigned short lookahead = 1, weekend = 2;
 char *fname = "calendar", *datestr = NULL;
 struct passwd *pw;
 int doall;
+
+extern char *__progname;
 
 void	 atodays __P((char, char *, unsigned short *));
 void	 cal __P((void));
@@ -203,7 +205,7 @@ settime()
 	if (datestr) {
 		getmmdd(tp, datestr);
 	}
-	if (isleap(tp->tm_year + 1900)) {
+	if (isleap(tp->tm_year + TM_YEAR_BASE)) {
 		yrdays = DAYSPERLYEAR;
 		cumdays = daytab[1];
 	} else {
@@ -445,7 +447,6 @@ getday(s)
 void
 atodays(char ch, char *optarg, unsigned short *days)
 {
-	extern char *__progname;
 	int u;
 
 	u = atoi(optarg);
@@ -486,11 +487,15 @@ getmmdd(struct tm *tp, char *ds)
 
 	if (ok) {
 		if (ISDIG2(ds) && ISDIG2(ds + 2)) {
-			ttm.tm_year = ATOI2(ds) * 100 - 1900;
+			ttm.tm_year = ATOI2(ds) * 100 - TM_YEAR_BASE;
 			ds += 2;
 			ttm.tm_year += ATOI2(ds);
 		} else if (ISDIG2(ds)) {
 			ttm.tm_year = ATOI2(ds);
+			if (ttm.tm_year < 69)
+				ttm.tm_year += 2000 - TM_YEAR_BASE;
+			else
+				ttm.tm_year += 1900 - TM_YEAR_BASE;
 		}
 	}
 	
@@ -511,7 +516,7 @@ getmmdd(struct tm *tp, char *ds)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: calendar [-a] [-d MMDD[[YY]YY]" \
-		" [-f fname] [-l days] [-w days]\n");
+	(void)fprintf(stderr, "Usage: %s [-a] [-d MMDD[[YY]YY]" \
+		" [-f fname] [-l days] [-w days]\n", __progname);
 	exit(1);
 }
