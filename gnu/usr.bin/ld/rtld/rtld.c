@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.54 1998/02/20 09:27:19 mycroft Exp $	*/
+/*	$NetBSD: rtld.c,v 1.55 1998/03/03 00:36:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -861,7 +861,7 @@ reloc_map(smp)
 			if (RELOC_COPY_P(r) && src_map) {
 				if (p->nz_size != np->nz_size)
 					warnx("symbol %s at %#x in %s changed "
-					      "size: expected %d, actual %d\n",
+					      "size: expected %d, actual %d",
 					      sym,
 					      src_map->som_addr + np->nz_value,
 					      src_map->som_path,
