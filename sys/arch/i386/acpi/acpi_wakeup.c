@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.13 2004/08/27 03:51:34 thorpej Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.14 2005/01/26 21:46:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.13 2004/08/27 03:51:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.14 2005/01/26 21:46:38 jmcneill Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -304,6 +304,10 @@ acpi_md_sleep(int state)
 	int				ret = 0;
 	u_long				ef;
 	struct region_descriptor	*p_gdt;
+	struct proc 			*p;
+	struct pmap			*pm;
+	uint32_t			cr3;
+	paddr_t				oldphys;
 
 	if (!phys_wakeup) {
 		printf("acpi: can't sleep since wakecode is not installed.\n");
@@ -312,11 +316,23 @@ acpi_md_sleep(int state)
 
 	AcpiSetFirmwareWakingVector(phys_wakeup);
 
-	clear_reg();
-	ret_addr = 0;
-
 	ef = read_eflags();
 	disable_intr();
+
+	/* Create identity mapping */
+	if ((p = curproc) == NULL)
+		p = &proc0;
+	pm = vm_map_pmap(&p->p_vmspace->vm_map);
+	cr3 = rcr3();
+	lcr3(pm->pm_pdirpa);
+	if (!pmap_extract(pm, phys_wakeup, &oldphys))
+		oldphys = 0;
+	pmap_enter(pm, phys_wakeup, phys_wakeup,
+			VM_PROT_READ | VM_PROT_WRITE,
+			PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+	pmap_update(pm);
+
+	ret_addr = 0;
 	if (acpi_savecpu()) {
 		/* Execute Sleep */
 
@@ -409,6 +425,18 @@ acpi_md_sleep(int state)
 	}
 
 out:
+	/* Clean up identity mapping. */
+	pmap_remove(pm, phys_wakeup, phys_wakeup + PAGE_SIZE);
+	if (oldphys) {
+		pmap_enter(pm, phys_wakeup, oldphys,
+				VM_PROT_READ | VM_PROT_WRITE,
+				PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+	}
+	pmap_update(pm);
+
+	lcr3(cr3);
+
+	enable_intr();
 	write_eflags(ef);
 	AcpiUtReleaseMutex(ACPI_MTX_HARDWARE);
 
