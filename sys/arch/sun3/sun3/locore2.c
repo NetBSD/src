@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.41 1995/05/24 21:08:42 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.42 1995/06/02 16:46:22 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,6 +36,7 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/user.h>
+#include <sys/exec_aout.h>
 
 #include <vm/vm.h>
 
@@ -58,6 +59,7 @@ extern char kernel_text[];
 
 /* These are defined by the linker */
 extern char etext[], edata[], end[];
+char *esym;	/* DDB */
 
 /*
  * Globals shared with the pmap code.
@@ -251,6 +253,68 @@ int keep;	/* true: steal, false: clear */
 	}
 }
 
+#ifdef	DDB
+/*
+ * Preserve DDB symbols and strings by setting esym.
+ */
+sun3_save_symtab(kehp)
+	struct exec *kehp;	/* kernel exec header */
+{
+	int *symsz, *strsz;
+	char *endp;
+
+	/*
+	 * First, sanity-check the exec header.
+	 */
+	mon_printf("sun3_save_symtab: ");
+	if ((kehp->a_midmag & 0xFFF0) != 0x100) {
+		mon_printf("bad magic\n");
+		return;
+	}
+	if (kehp->a_text != ((etext+4) - kernel_text)) {
+		mon_printf("bad a_text\n");
+		return;
+	}
+	if (kehp->a_data != (edata - (etext+4))) {
+		mon_printf("bad a_data\n");
+		return;
+	}
+	if (kehp->a_bss != (end - edata)) {
+		mon_printf("bad a_bss\n");
+		return;
+	}
+	if (kehp->a_entry != (int)kernel_text) {
+		mon_printf("bad a_entry\n");
+		return;
+	}
+	if (kehp->a_trsize || kehp->a_drsize) {
+		mon_printf("bad a_Xrsize\n");
+		return;
+	}
+	/* The exec header looks OK... */
+
+	/* Check the symtab length word. */
+	endp = end;
+	symsz = (int*)endp;
+	if (kehp->a_syms != *symsz) {
+		mon_printf("bad a_syms\n");
+		return;
+	}
+	endp += sizeof(int);	/* past length word */
+	endp += *symsz;			/* past nlist array */
+
+	/* Check the string table length. */
+	strsz = (int*)endp;
+	if ((*strsz < 4) || (*strsz > 0x80000)) {
+		mon_printf("bad strsz\n");
+		return;
+	}
+	endp += *strsz;			/* past strings */
+	esym = endp;
+
+	mon_printf(" %d + %d\n", *symsz, *strsz);
+}
+#endif	/* DDB */
 
 /*
  * This is called just before pmap_bootstrap()
@@ -263,22 +327,24 @@ int keep;	/* true: steal, false: clear */
  * between [ KERNBASE .. virtual_avail ] and this is
  * checked in trap.c for kernel-mode MMU faults.
  */
-void sun3_vm_init()
+void sun3_vm_init(kehp)
+	struct exec *kehp;	/* kernel exec header */
 {
 	vm_offset_t va, eva, sva, pte, temp_seg;
 	vm_offset_t u_area_va;
 	unsigned int sme;
 
 	/*
-	 * XXX - Reserve DDB symbols and strings?
-	 */
-
-	/*
 	 * Determine the range of kernel virtual space available.
 	 * This is just page-aligned for now, so we can allocate
 	 * some special-purpose pages before rounding to a segment.
 	 */
-	virtual_avail = sun3_round_page(end);
+	esym = end;
+#ifdef	DDB
+	/* This will advance esym past the symbols. */
+	sun3_save_symtab(kehp);
+#endif
+	virtual_avail = sun3_round_page(esym);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
 	/*
@@ -753,7 +819,8 @@ void internal_configure()
  * to its proper address, but before the call to main().
  */
 void
-sun3_bootstrap()
+sun3_bootstrap(keh)
+	struct exec keh;	/* kernel exec header */
 {
 	int i;
 	extern int cold;
@@ -767,7 +834,7 @@ sun3_bootstrap()
 
 	sun3_verify_hardware();	/* get CPU type, etc. */
 
-	sun3_vm_init();		/* handle kernel mapping problems, etc */
+	sun3_vm_init(&keh);		/* handle kernel mapping, etc. */
 
 	pmap_bootstrap();		/* bootstrap pmap module */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.29 1995/05/30 15:32:37 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.30 1995/06/02 16:46:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -47,16 +47,6 @@
 #include <machine/trap.h>
 
 | Remember this is a fun project.  (Thanks, Adam.  I try! 8^)
-
-| Define some addresses, mostly so DDB can print useful info.
-.set	_kernbase,KERNBASE
-.globl	_kernbase
-.set	_dvma_base,DVMA_SPACE_START
-.globl	_dvma_base
-.set	_prom_start,MONSTART
-.globl	_prom_start
-.set	_prom_base,PROM_BASE
-.globl	_prom_base
 
 | This is for kvm_mkdb, and should be the address of the beginning
 | of the kernel text segment (not necessarily the same as kernbase).
@@ -111,7 +101,11 @@ L_high_code:
 | we are no longer restricted to position-independent code.
 
 | Do bootstrap stuff needed before main() gets called.
-	lea	tmpstk, sp
+| Our boot loader leaves a copy of the kernel's exec header
+| just before the start of the kernel text segment, so the
+| kernel can sanity-check the DDB symbols at [end...esym].
+| Pass the struct exec at tmpstk-32 to sun3_bootstrap().
+	lea	tmpstk-32, sp
 	jsr	_sun3_bootstrap
 
 | Now that sun3_bootstrap is done using the PROM setcxsegmap
@@ -1054,8 +1048,6 @@ Lswnofpsave:
 	pea	a0@			| push pmap
 	jbsr	_pmap_activate		| pmap_activate(pmap, pcb)
 	addql	#8,sp
-
-| XXX	lea	tmpstk,sp		| goto a tmp stack for NMI ?
 	movl	_curpcb,a1		| restore p_addr
 
 | XXX - Should do this in pmap_activeate only if context reg changed.
@@ -1420,3 +1412,15 @@ _delay2us:
 	nop ; nop
 Lrts:	rts
 
+
+| Define some addresses, mostly so DDB can print useful info.
+	.globl	_kernbase
+	.set	_kernbase,KERNBASE
+	.globl	_dvma_base
+	.set	_dvma_base,DVMA_SPACE_START
+	.globl	_prom_start
+	.set	_prom_start,MONSTART
+	.globl	_prom_base
+	.set	_prom_base,PROM_BASE
+
+|The end!
