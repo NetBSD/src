@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.66 2000/06/04 19:15:21 cgd Exp $ */
+/* $NetBSD: vmstat.c,v 1.67 2000/06/29 06:29:14 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.66 2000/06/04 19:15:21 cgd Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.67 2000/06/29 06:29:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,10 @@ __RCSID("$NetBSD: vmstat.c,v 1.66 2000/06/04 19:15:21 cgd Exp $");
 #include <sys/sysctl.h>
 #include <sys/device.h>
 #include <sys/pool.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_stat.h>
+
 #include <err.h>
 #include <fcntl.h>
 #include <time.h>
@@ -115,8 +118,6 @@ __RCSID("$NetBSD: vmstat.c,v 1.66 2000/06/04 19:15:21 cgd Exp $");
 #include <paths.h>
 #include <limits.h>
 #include "dkstats.h"
-
-#include <uvm/uvm_stat.h>
 
 struct nlist namelist[] = {
 #define	X_BOOTTIME	0
