@@ -7058,10 +7058,15 @@ elf_reloc_link_order (bfd *output_bfd,
       irel[i].r_info = 0;
       irel[i].r_addend = 0;
     }
-  if (bed->s->arch_size == 32)
-    irel[0].r_info = ELF32_R_INFO (indx, howto->type);
+#ifdef BFD64
+  if (bed->s->arch_size != 32)
+    {
+      u_int64_t indx64 = indx;
+      irel[0].r_info = ELF64_R_INFO (indx64, howto->type);
+    }
   else
-    irel[0].r_info = ELF64_R_INFO (indx, howto->type);
+#endif
+    irel[0].r_info = ELF32_R_INFO (indx, howto->type);
 
   rel_hdr = &elf_section_data (output_section)->rel_hdr;
   erel = rel_hdr->contents;
