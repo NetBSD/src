@@ -1,4 +1,4 @@
-/*	$NetBSD: tvctrl.c,v 1.5 1999/03/16 16:30:22 minoura Exp $	*/
+/*	$NetBSD: tvctrl.c,v 1.6 2003/05/17 10:38:56 isaki Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -7,12 +7,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	unsigned long num;
 	unsigned char ctl;
