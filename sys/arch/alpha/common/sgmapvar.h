@@ -1,4 +1,4 @@
-/* $NetBSD: sgmapvar.h,v 1.1.2.2 1997/06/03 23:08:33 thorpej Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.1.2.3 1997/06/04 05:46:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,10 +41,10 @@
 #include <machine/bus.h>
 
 /*
- * Bits n:13 of the DMA address are the byte offset of the PTE
- * in the SGMAP page table.
+ * Bits n:13 of the DMA address are the index of the PTE into
+ * the SGMAP page table.
  */
-#define	SGMAP_ADDR_PTEOFF_SHIFT	13
+#define	SGMAP_ADDR_PTEIDX_SHIFT	13
 
 /*
  * An Alpha SGMAP's state information.
@@ -73,7 +73,6 @@ struct alpha_sgmap_cookie {
 
 /* apdc_flags */
 #define	APDC_HAS_SGMAP		0x01	/* sgva/len are valid */
-#define	APDC_USING_SGMAP	0x02	/* map is using SGMAP */
 
 void	alpha_sgmap_init __P((bus_dma_tag_t, struct alpha_sgmap *,
 	    const char *, bus_addr_t, bus_addr_t, bus_size_t, size_t, void *));
