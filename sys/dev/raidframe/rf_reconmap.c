@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.24 2004/03/18 16:54:54 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.25 2004/03/18 17:46:22 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.24 2004/03/18 16:54:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.25 2004/03/18 17:46:22 oster Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -143,7 +143,6 @@ rf_ReconMapUpdate(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr,
 
 	RF_LOCK_MUTEX(mapPtr->mutex);
 	while(mapPtr->lock) {
-		printf("napping...\n");
 		ltsleep(&mapPtr->lock, PRIBIO, "reconupdate", 0, &mapPtr->mutex);
 	}
 	mapPtr->lock = 1;
