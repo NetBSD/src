@@ -1,4 +1,4 @@
-/*	$NetBSD: ibusvar.h,v 1.2 1998/08/29 16:15:11 mrg Exp $	*/
+/*	$NetBSD: ibusvar.h,v 1.3 1998/10/23 23:01:44 jonathan Exp $	*/
 
 #ifndef __IBUSVAR_H
 #define __IBUSVAR_H
@@ -35,9 +35,8 @@ struct ibus_dev_attach_args {
  */
 struct ibus_attach_args {
 	char	*ia_name;		/* Device name. */
-	int	ia_slot;		/* Device slot (table entry). */
+	int	ia_cookie;		/* Device slot (table entry). */
 	tc_addr_t ia_addr;		/* Device address. */
-	int	ia_cookie;		/* Device interrupt "priority" */
 };
 
 

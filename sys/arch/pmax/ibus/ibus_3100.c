@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_3100.c,v 1.1 1998/04/19 02:52:45 jonathan Exp $	*/
+/*	$NetBSD: ibus_3100.c,v 1.2 1998/10/23 23:01:45 jonathan Exp $	*/
 
 
 /*
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_3100.c,v 1.1 1998/04/19 02:52:45 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3100.c,v 1.2 1998/10/23 23:01:45 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,21 +67,12 @@ extern ibus_intr_disestablish_t	dec_3100_intr_disestablish;
 #define KV(x) ((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
 
 static struct ibus_attach_args kn01_devs[] = {
-	/* name     slot    addr			intpri  */
-	{ "pm",		0, KV(KN01_PHYS_FBUF_START),	3,  },
-	{ "dc",  	1, KV(KN01_SYS_DZ),		2,  },
-	{ "lance", 	2, KV(KN01_SYS_LANCE),		1,  },
-	{ "sii",	3, KV(KN01_SYS_SII),		0,  },
-	{ "mc146818",	4, KV(KN01_SYS_CLOCK),		16, },
-	{ "dc",  	5, KV(0x15000000),		4,  },
-	{ "dc",  	6, KV(0x15200000),		5,  },
-#ifdef notyet
-	/*
-	 * XXX Ultrix configures at 0x86400400. the first 0x400 byte are
-	 * used for NVRAM state??
-	 */
-	{ "nvram",	7, KV(0x86400000),		-1, },
-#endif
+	/* name     cookie   addr			  */
+	{ "pm",		0, KV(KN01_PHYS_FBUF_START)	},
+	{ "dc",  	1, KV(KN01_SYS_DZ)		},
+	{ "lance", 	2, KV(KN01_SYS_LANCE)		},
+	{ "sii",	3, KV(KN01_SYS_SII)		},
+	{ "mc146818",	4, KV(KN01_SYS_CLOCK)		},
 };
 
 int kn01_attached = 0;
