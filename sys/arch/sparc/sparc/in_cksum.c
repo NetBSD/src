@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.4 1996/03/14 21:09:11 christos Exp $ */
+/*	$NetBSD: in_cksum.c,v 1.5 1996/03/31 23:45:24 pk Exp $ */
 
 /*
  * Copyright (c) 1995 Matthew Green.
@@ -119,7 +119,7 @@ in_cksum(m, len)
 		if (len < mlen)
 			mlen = len;
 		len -= mlen;
-									 
+
 		/*
 		 * Ensure that we're aligned on a word boundary here so
 		 * that we can do 32 bit operations below.

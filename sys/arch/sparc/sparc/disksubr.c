@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 1996/03/14 21:09:07 christos Exp $ */
+/*	$NetBSD: disksubr.c,v 1.13 1996/03/31 23:45:20 pk Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -60,7 +60,7 @@ static	int disklabel_bsd_to_sun __P((struct disklabel *, char *));
 
 extern struct device *bootdv;
 
-/* 
+/*
  * find the boot device (if it was a disk).   we must check to see if
  * unit info in saved bootpath structure matches unit info in our softc.
  * note that knowing the device name (e.g. "xd0") is not useful... we
@@ -83,14 +83,14 @@ dk_establish(dk, dev)
 	/*
 	 * scsi: sd,cd
 	 */
-	if (strncmp("sd", dev->dv_xname, 2) == 0 || 
+	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
 	    strncmp("cd", dev->dv_xname, 2) == 0) {
 		sbsc = (struct scsibus_softc *)dev->dv_parent;
 		targ = lun = 0;
 
 #if defined(SUN4)
 		if (cputyp == CPU_SUN4) {
-			if (dev->dv_xname[0] == 's' && bp->val[0] == 0) { 
+			if (dev->dv_xname[0] == 's' && bp->val[0] == 0) {
 				/* disk unit 0 is magic */
 				if (sbsc->sc_link[0][0] == NULL) {
 					targ = 3; /* remap to 3 */
@@ -125,10 +125,10 @@ dk_establish(dk, dev)
 	return -1;
 }
 
-/* 
+/*
  * Attempt to read a disk label from a device
  * using the indicated stategy routine.
- * The label must be partly set up before this: 
+ * The label must be partly set up before this:
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines
  * must be filled in before calling us.
@@ -139,7 +139,7 @@ dk_establish(dk, dev)
  */
 char *
 readdisklabel(dev, strat, lp, clp)
-	dev_t dev; 
+	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
@@ -166,7 +166,7 @@ readdisklabel(dev, strat, lp, clp)
 	bp->b_cylin = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	(*strat)(bp); 
+	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
 	error = biowait(bp);
@@ -216,7 +216,7 @@ setdisklabel(olp, nlp, openmask, clp)
 		return(EINVAL);
 
 	/* special case to allow disklabel to be invalidated */
-	if (nlp->d_magic == 0xffffffff) { 
+	if (nlp->d_magic == 0xffffffff) {
 		*olp = *nlp;
 		return (0);
 	}
@@ -236,8 +236,8 @@ setdisklabel(olp, nlp, openmask, clp)
 			return (EBUSY);
 	}
 
-	*olp = *nlp;    
-	return (0);     
+	*olp = *nlp;
+	return (0);
 }
 
 /*
@@ -283,7 +283,7 @@ writedisklabel(dev, strat, lp, clp)
 	return (error);
 }
 
-/* 
+/*
  * Determine the size of the transfer, and make sure it is
  * within the boundaries of the partition. Adjust transfer
  * if needed, and signal errors or early completion.
@@ -302,14 +302,14 @@ bounds_check_with_label(bp, lp, wlabel)
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
 	/* overwriting disk label ? */
-	/* XXX should also protect bootstrap in first 8K */ 
+	/* XXX should also protect bootstrap in first 8K */
 	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
 
-	/* beyond partition? */ 
+	/* beyond partition? */
 	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
 		/* if exactly at end of disk, return an EOF */
 		if (bp->b_blkno == maxsz) {
@@ -323,7 +323,7 @@ bounds_check_with_label(bp, lp, wlabel)
 			goto bad;
 		}
 		bp->b_bcount = sz << DEV_BSHIFT;
-	}               
+	}
 
 	/* calculate cylinder for disksort to order transfers with */
 	bp->b_resid = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;

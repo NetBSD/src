@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.16 1996/03/26 19:09:31 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.17 1996/03/31 23:45:39 pk Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -492,7 +492,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	 */
 	fp = (struct svr4_sigframe *) ((int) (fp - 1) & ~7);
 
-	/* 
+	/*
 	 * Build the argument list for the signal handler.
 	 */
 	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t) tf->tf_pc);

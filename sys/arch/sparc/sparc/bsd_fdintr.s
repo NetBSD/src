@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.7 1996/02/02 20:05:35 mycroft Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.8 1996/03/31 23:45:00 pk Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -100,7 +100,7 @@ _fdchwintr:
 	!!ld	[R_fdc + FDC_REG_DOR], R_dor	! get chip DOR reg addr
 
 	! find out what we are supposed to do
-	ld	[R_fdc + FDC_ISTATE], %l7	! examine flags 
+	ld	[R_fdc + FDC_ISTATE], %l7	! examine flags
 	cmp	%l7, ISTATE_SENSEI
 	be	sensei
 	 nop
