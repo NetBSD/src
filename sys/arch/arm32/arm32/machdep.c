@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 2000/01/19 20:05:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 2000/03/06 03:15:47 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,6 +41,7 @@
  */
 
 #include "opt_compat_netbsd.h"
+#include "opt_footbridge.h"
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
 
