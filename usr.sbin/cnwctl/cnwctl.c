@@ -1,4 +1,4 @@
-/*	$NetBSD: cnwctl.c,v 1.4 1999/11/30 21:13:46 sommerfeld Exp $	*/
+/*	$NetBSD: cnwctl.c,v 1.5 1999/12/01 03:40:51 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1997 Berkeley Software Design, Inc.
@@ -163,32 +163,36 @@ main(int argc, char **argv)
 		if (ioctl(skt, SIOCGCNWDOMAIN, (caddr_t)&ifr) < 0)
 			err(1, "SIOCGCNWDOMAIN");
 		printf("%s:\n     0x%03x domain\n", interface, ifr.ifr_domain);
-		printf("%10llu rx\n", (long long)cnwis.stats.nws_rx);
+		printf("%10llu rx\n", (unsigned long long)cnwis.stats.nws_rx);
 		printf("%10llu rxoverflow\n",
-		    (long long)cnwis.stats.nws_rxoverflow);
+		    (unsigned long long)cnwis.stats.nws_rxoverflow);
 		printf("%10llu rxoverrun\n",
-		    (long long)cnwis.stats.nws_rxoverrun);
+		    (unsigned long long)cnwis.stats.nws_rxoverrun);
 		printf("%10llu rxcrcerror\n",
-		    (long long)cnwis.stats.nws_rxcrcerror);
+		    (unsigned long long)cnwis.stats.nws_rxcrcerror);
 		printf("%10llu rxframe\n",
-		    (long long)cnwis.stats.nws_rxframe);
+		    (unsigned long long)cnwis.stats.nws_rxframe);
 		printf("%10llu rxerrors\n", 
-		    (long long)cnwis.stats.nws_rxerrors);
-		printf("%10llu rxavail\n", (long long)cnwis.stats.nws_rxavail);
+		    (unsigned long long)cnwis.stats.nws_rxerrors);
+		printf("%10llu rxavail\n",
+		    (unsigned long long)cnwis.stats.nws_rxavail);
 
-		printf("%10llu tx\n", (long long)cnwis.stats.nws_tx);
-		printf("%10llu txokay\n", (long long)cnwis.stats.nws_txokay);
-		printf("%10llu txabort\n", (long long)cnwis.stats.nws_txabort);
+		printf("%10llu tx\n", (unsigned long long)cnwis.stats.nws_tx);
+		printf("%10llu txokay\n",
+		    (unsigned long long)cnwis.stats.nws_txokay);
+		printf("%10llu txabort\n",
+		    (unsigned long long)cnwis.stats.nws_txabort);
 		printf("%10llu txlostcd\n",
-		    (long long)cnwis.stats.nws_txlostcd);
+		    (unsigned long long)cnwis.stats.nws_txlostcd);
 		printf("%10llu txerrors\n",
-		    (long long)cnwis.stats.nws_txerrors);
+		    (unsigned long long)cnwis.stats.nws_txerrors);
 		printf("%10llu txretries\n",
-		    (long long)cnwis.stats.nws_txretries[0]);
+		    (unsigned long long)cnwis.stats.nws_txretries[0]);
 		for (i = 1; i < 16; ++i)
 			if (cnwis.stats.nws_txretries[i])
 				printf("%10s %10llu %dx retries\n", "",
-				    (long long)cnwis.stats.nws_txretries[i],
+				    (unsigned long long)
+				    cnwis.stats.nws_txretries[i],
 				    i);
 	}
 
@@ -244,12 +248,19 @@ main(int argc, char **argv)
 			c = ts.ts_lines - 3;
 			memset(&onwis, 0, sizeof(onwis));
 		}
-		printf("%10llu ", (long long)(cnwis.stats.nws_tx - onwis.stats.nws_tx));
-		printf("%10llu ", (long long)(cnwis.stats.nws_txokay - onwis.stats.nws_txokay));
-		printf("%10llu ", (long long)(cnwis.stats.nws_txerrors - onwis.stats.nws_txerrors));
-		printf("%10llu ", (long long)(cnwis.stats.nws_txretries[0] - onwis.stats.nws_txretries[0]));
-		printf("%10llu ", (long long)(cnwis.stats.nws_rx - onwis.stats.nws_rx));
-		printf("%10llu\n", (long long)(cnwis.stats.nws_rxerrors - onwis.stats.nws_rxerrors));
+		printf("%10llu ", (unsigned long long)
+		    (cnwis.stats.nws_tx - onwis.stats.nws_tx));
+		printf("%10llu ", (unsigned long long)
+		    (cnwis.stats.nws_txokay - onwis.stats.nws_txokay));
+		printf("%10llu ", (unsigned long long)
+		    (cnwis.stats.nws_txerrors - onwis.stats.nws_txerrors));
+		printf("%10llu ", (unsigned long long)
+		    (cnwis.stats.nws_txretries[0] -
+			onwis.stats.nws_txretries[0]));
+		printf("%10llu ", (unsigned long long)
+		    (cnwis.stats.nws_rx - onwis.stats.nws_rx));
+		printf("%10llu\n", (unsigned long long)
+		    (cnwis.stats.nws_rxerrors - onwis.stats.nws_rxerrors));
 		fflush(stdout);
 		sleep (rate);
 		onwis = cnwis;
