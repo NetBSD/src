@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.5 2002/02/28 04:07:21 nathanw Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.6 2002/04/11 07:00:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -767,7 +767,7 @@ ENTRY(switch_lwp_exit)
 
 	ldr	r0, Lcpufuncs
 	add	lr, pc, #Lsle_cache_purged - . - 8
-	ldr	pc, [r0, #CF_CACHE_PURGE_ID]
+	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
 Lsle_cache_purged:
 	ldmfd	sp!, {r0-r3}
