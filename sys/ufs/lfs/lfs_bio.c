@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.41 2002/02/11 02:47:29 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.42 2002/05/12 23:06:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.41 2002/02/11 02:47:29 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.42 2002/05/12 23:06:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.41 2002/02/11 02:47:29 perseant Exp $"
  * No write cost accounting is done.
  * This is almost certainly wrong for synchronous operations and NFS.
  */
-int	lfs_allclean_wakeup;		/* Cleaner wakeup address. */
 int	locked_queue_count   = 0;	/* XXX Count of locked-down buffers. */
 long	locked_queue_bytes   = 0L;	/* XXX Total size of locked buffers. */
 int	lfs_writing          = 0;	/* Set if already kicked off a writer

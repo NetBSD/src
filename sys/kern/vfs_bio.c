@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.80 2002/03/16 23:49:59 chs Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.81 2002/05/12 23:06:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -48,8 +48,10 @@
  *		UNIX Operating System (Addison Welley, 1989)
  */
 
+#include "opt_softdep.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.80 2002/03/16 23:49:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.81 2002/05/12 23:06:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +79,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.80 2002/03/16 23:49:59 chs Exp $");
 	(&bufhashtbl[(((long)(dvp) >> 8) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
+#ifndef SOFTDEP
 struct bio_ops bioops;	/* I/O operation notification */
+#endif
 
 /*
  * Insq/Remq for the buffer hash lists.

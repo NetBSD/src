@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.38 2001/12/18 10:57:23 fvdl Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.39 2002/05/12 23:06:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.38 2001/12/18 10:57:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.39 2002/05/12 23:06:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.38 2001/12/18 10:57:23 fvdl Exp $")
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
 
-struct	nchstats nchstats;
 #ifdef DIAGNOSTIC
 int	dirchk = 1;
 #else
