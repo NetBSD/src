@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.13 2001/09/06 02:16:02 lukem Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.14 2001/10/29 11:26:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -43,6 +43,7 @@
 #include <ufs/ffs/ffs_extern.h>
 
 #if !defined(_KERNEL)
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,19 +67,32 @@ ffs_sb_swap(struct fs *o, struct fs *n)
 	}
 	postbloff = ufs_rw32(o->fs_postbloff, needswap);
 	postblfmt = ufs_rw32(o->fs_postblformat, needswap);
+		/* compute these before swapping, in case o == n */
+	o16 = (postblfmt == FS_42POSTBLFMT) ? o->fs_opostbl[0] :
+	    (int16_t *)((u_int8_t *)o + postbloff);
+	n16 = (postblfmt == FS_42POSTBLFMT) ? n->fs_opostbl[0] :
+	    (int16_t *)((u_int8_t *)n + postbloff);
+	len = postblfmt == FS_42POSTBLFMT ?
+	    sizeof(o->fs_opostbl) / sizeof(o->fs_opostbl[0][0]) :
+	    ufs_rw32(o->fs_cpc, needswap) * ufs_rw32(o->fs_nrpos, needswap);
 
 	/*
-	 * In order to avoid a lot of lines, as the first 52 fields of
-	 * the superblock are u_int32_t, we loop here to convert it.
+	 * In order to avoid a lot of lines, as the first N fields (52)
+	 * of the superblock up to fs_fmod are u_int32_t, we just loop
+	 * here to convert them.
 	 */
 	o32 = (u_int32_t *)o;
 	n32 = (u_int32_t *)n;
-	for (i = 0; i < 52; i++)
+	for (i = 0; i < offsetof(struct fs, fs_fmod) / sizeof(u_int32_t); i++)
 		n32[i] = bswap32(o32[i]);
 
+			/* fs_cgrotor is now unused */
 	n->fs_cpc = bswap32(o->fs_cpc);
+			/* fs_opostbl - may be done below */
+			/* fs_snapinum[20] - ignore for now */
 	n->fs_avgfilesize = bswap32(o->fs_avgfilesize);
 	n->fs_avgfpdir = bswap32(o->fs_avgfpdir);
+			/* fs_sparecon[28] - ignore for now */
 	n->fs_contigsumsize = bswap32(o->fs_contigsumsize);
 	n->fs_maxsymlinklen = bswap32(o->fs_maxsymlinklen);
 	n->fs_inodefmt = bswap32(o->fs_inodefmt);
@@ -91,14 +105,7 @@ ffs_sb_swap(struct fs *o, struct fs *n)
 	n->fs_postbloff = bswap32(o->fs_postbloff);
 	n->fs_rotbloff = bswap32(o->fs_rotbloff);
 	n->fs_magic = bswap32(o->fs_magic);
-	/* byteswap the postbl */
-	o16 = (postblfmt == FS_42POSTBLFMT) ? o->fs_opostbl[0] :
-	    (int16_t *)((u_int8_t *)o + postbloff);
-	n16 = (postblfmt == FS_42POSTBLFMT) ? n->fs_opostbl[0] :
-	    (int16_t *)((u_int8_t *)n + postbloff);
-	len = postblfmt == FS_42POSTBLFMT ?
-	    128 /* fs_opostbl[16][8] */ :
-	    ufs_rw32(o->fs_cpc, needswap) * ufs_rw32(o->fs_nrpos, needswap);
+			/* byteswap the postbl */
 	for (i = 0; i < len; i++)
 		n16[i] = bswap16(o16[i]);
 }
