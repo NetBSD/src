@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.S,v 1.1 2002/01/14 23:14:32 bjh21 Exp $	*/
+/*	$NetBSD: linux_sigcode.S,v 1.2 2002/01/17 22:50:38 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -33,9 +33,8 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: linux_sigcode.S,v 1.1 2002/01/14 23:14:32 bjh21 Exp $")
+RCSID("$NetBSD: linux_sigcode.S,v 1.2 2002/01/17 22:50:38 bjh21 Exp $")
 
-#include "assym.h"
 #include <compat/linux/linux_syscall.h>
 
 /*
@@ -52,10 +51,9 @@ ENTRY_NP(linux_sigcode)
 	mov	pc, r3				/* Call the handler */
 
 /*
- * Call sig_return with address of the signal context
- * Note: Don't use SIG_SCP as this make have been trashed by the program
+ * Call sigreturn.
+ * Linux sigreturn finds the context from our stack pointer.
  */
-	add	r0, sp, #SIGF_SC
 	swi	LINUX_SYS_sigreturn
 
 /* Well if that failed we better exit quick ! */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.1 2002/01/14 23:14:38 bjh21 Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.2 2002/01/17 22:50:38 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 struct linux_sigcontext {
 	u_int32_t	sc_trapno;
 	u_int32_t	sc_error_code;
-	u_int32_t	sc_mask;
+	linux_old_sigset_t	sc_mask;
 	u_int32_t	sc_r0;
 	u_int32_t	sc_r1;
 	u_int32_t	sc_r2;
@@ -71,9 +71,8 @@ struct linux_sigcontext {
  */
 
 struct linux_sigframe {
-	int	sf_sig;
 	struct	linux_sigcontext sf_sc;
-	sig_t	sf_handler;
+	unsigned long	sf_extramask[LINUX__NSIG_WORDS - 1];
 };
 
 #ifdef _KERNEL
