@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1999/04/01 00:17:50 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 1999/04/08 04:17:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -464,9 +464,8 @@ setregs(p, pack, stack)
 /*
  * Info for CTL_HW
  */
-
-/* Non-standard name here to distinguish Sun3 from Sun3X. */
-char	machine[16] = "sun3x";	/* Not same as MACHINE! */
+char	machine[16] = MACHINE;		/* from <machine/param.h> */
+char	kernel_arch[16] = "sun3x";	/* XXX needs a sysctl node */
 char	cpu_model[120];
 
 /*
@@ -508,7 +507,8 @@ identifycpu()
 	}
 
 	/* Other stuff? (VAC, mc6888x version, etc.) */
-	sprintf(cpu_model, "Sun-3X (3/%s)", cpu_string);
+	/* Note: miniroot cares about the kernel_arch part. */
+	sprintf(cpu_model, "%s %s", kernel_arch, cpu_string);
 
 	printf("Model: %s\n", cpu_model);
 }
@@ -788,7 +788,7 @@ dumpsys()
 	kseg_p->c_size = sizeof(*chdr_p);
 
 	/* Fill in cpu_kcore_hdr_t part. */
-	strncpy(chdr_p->name, "sun3x", sizeof(chdr_p->name));
+	strncpy(chdr_p->name, kernel_arch, sizeof(chdr_p->name));
 	chdr_p->page_size = NBPG;
 	chdr_p->kernbase = KERNBASE;
 
