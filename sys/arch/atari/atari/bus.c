@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.32 2002/06/02 14:44:36 drochner Exp $	*/
+/*	$NetBSD: bus.c,v 1.33 2003/04/01 23:47:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ int	flags;
 	pt_entry_t	pg_proto;
 	vaddr_t		va, rva;
 
-	if (extent_alloc(bootm_ex, size, NBPG, 0, EX_NOWAIT, &rva)) {
+	if (extent_alloc(bootm_ex, size, PAGE_SIZE, 0, EX_NOWAIT, &rva)) {
 		printf("bootm_alloc fails! Not enough fixed extents?\n");
 		printf("Requested extent: pa=%lx, size=%lx\n",
 						(u_long)pa, size);
@@ -122,15 +122,15 @@ int	flags;
 		pg_proto |= PG_CI;
 	while(pg < epg) {
 		*pg++     = pg_proto;
-		pg_proto += NBPG;
+		pg_proto += PAGE_SIZE;
 #if defined(M68040) || defined(M68060)
 		if (mmutype == MMU_68040) {
 			DCFP(pa);
-			pa += NBPG;
+			pa += PAGE_SIZE;
 		}
 #endif
 		TBIS(va);
-		va += NBPG;
+		va += PAGE_SIZE;
 	}
 	return rva;
 }
@@ -266,7 +266,7 @@ bus_space_handle_t	*bshp;
 
 	*bshp = (caddr_t)(va + (bpa & PGOFSET));
 
-	for(; pa < endpa; pa += NBPG, va += NBPG) {
+	for(; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		u_int	*ptep, npte;
 
 		pmap_enter(pmap_kernel(), (vaddr_t)va, pa,
@@ -607,7 +607,7 @@ _bus_dmamap_sync(t, map, off, len, ops)
 	pa_off = t->_displacement;
 
 	/* Flush granularity */
-	inc = (len > 1024) ? NBPG : 16;
+	inc = (len > 1024) ? PAGE_SIZE : 16;
 
 	for (i = 0; i < map->dm_nsegs && len > 0; i++) {
 		if (map->dm_segs[i].ds_len <= off) {
@@ -632,7 +632,7 @@ _bus_dmamap_sync(t, map, off, len, ops)
 			pa &= ~PGOFSET;
 			while (pa < end_pa) {
 				DCFP(pa);
-				pa += NBPG;
+				pa += PAGE_SIZE;
 			}
 		}
 	}
@@ -721,7 +721,7 @@ bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
-		    addr += NBPG, va += NBPG, size -= NBPG) {
+		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr - offset,
@@ -840,7 +840,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
+		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
 

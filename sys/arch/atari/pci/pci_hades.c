@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.3 2002/09/27 15:35:54 provos Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.4 2003/04/01 23:47:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -36,6 +36,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
@@ -61,7 +63,7 @@ pci_bus_maxdevs(pc, busno)
 static int pci_config_offset __P((pcitag_t));
 
 /*
- * Atari_init.c maps the config areas NBPG bytes apart....
+ * Atari_init.c maps the config areas PAGE_SIZE bytes apart....
  */
 static int pci_config_offset(tag)
 pcitag_t	tag;
@@ -69,7 +71,7 @@ pcitag_t	tag;
 	int	device;
 
 	device = (tag >> 11) & 0x1f;
-	return(device * NBPG);
+	return(device * PAGE_SIZE);
 }
 
 pcireg_t
