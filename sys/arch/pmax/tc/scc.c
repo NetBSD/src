@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.53 1999/11/29 15:02:39 ad Exp $	*/
+/*	$NetBSD: scc.c,v 1.54 1999/12/08 01:29:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.53 1999/11/29 15:02:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.54 1999/12/08 01:29:11 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.53 1999/11/29 15:02:39 ad Exp $");
 
 #ifdef pmax
 #include <mips/cpuregs.h>	/* phys to uncached */
+#include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/maxine.h>
 #include <pmax/pmax/asic.h>
@@ -135,11 +136,6 @@ extern void ttrstrt	__P((void *));
 
 #ifdef alpha
 #define	SCCDEV		15			/* XXX */
-#endif
-
-#ifdef pmax
-#define SCCDEV		17			/* XXX */
-#define RCONSDEV	85			/* XXXXXX */
 #endif
 
 /*
