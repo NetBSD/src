@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.13 2001/11/27 04:10:23 itojun Exp $	*/
+/*	$NetBSD: packet.c,v 1.14 2001/12/06 03:54:05 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: packet.c,v 1.72 2001/11/10 13:37:20 markus Exp $");
+RCSID("$OpenBSD: packet.c,v 1.74 2001/12/05 10:06:12 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -901,7 +901,7 @@ packet_read_poll(int *payload_len_ptr)
 			type = packet_read_poll2(payload_len_ptr);
 			if (type)
 				DBG(debug("received packet type %d", type));
-			switch(type) {
+			switch (type) {
 			case SSH2_MSG_IGNORE:
 				break;
 			case SSH2_MSG_DEBUG:
@@ -926,7 +926,7 @@ packet_read_poll(int *payload_len_ptr)
 			}
 		} else {
 			type = packet_read_poll1(payload_len_ptr);
-			switch(type) {
+			switch (type) {
 			case SSH_MSG_IGNORE:
 				break;
 			case SSH_MSG_DEBUG:

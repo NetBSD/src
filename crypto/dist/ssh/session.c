@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.20 2001/11/07 06:26:48 itojun Exp $	*/
+/*	$NetBSD: session.c,v 1.21 2001/12/06 03:54:05 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -34,7 +34,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.108 2001/10/11 13:45:21 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.110 2001/12/01 21:41:48 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -76,8 +76,10 @@ struct Session {
 	int	row, col, xpixel, ypixel;
 	char	tty[TTYSZ];
 	/* X11 */
+	int	display_number;
 	char	*display;
 	int	screen;
+	char	*auth_display;
 	char	*auth_proto;
 	char	*auth_data;
 	int	single_connection;
@@ -891,18 +893,21 @@ do_child(Session *s, const char *command)
 		child_set_env(&env, &envsize, "TZ", getenv("TZ"));
 
 	/* Set custom environment options from RSA authentication. */
-	while (custom_environment) {
-		struct envstring *ce = custom_environment;
-		char *s = ce->s;
-		int i;
-		for (i = 0; s[i] != '=' && s[i]; i++);
-		if (s[i] == '=') {
-			s[i] = 0;
-			child_set_env(&env, &envsize, s, s + i + 1);
+	if (!options.use_login) {
+		while (custom_environment) {
+			struct envstring *ce = custom_environment;
+			char *s = ce->s;
+			int i;
+			for (i = 0; s[i] != '=' && s[i]; i++)
+				;
+			if (s[i] == '=') {
+				s[i] = 0;
+				child_set_env(&env, &envsize, s, s + i + 1);
+			}
+			custom_environment = ce->next;
+			xfree(ce->s);
+			xfree(ce);
 		}
-		custom_environment = ce->next;
-		xfree(ce->s);
-		xfree(ce);
 	}
 
 	snprintf(buf, sizeof buf, "%.50s %d %d",
@@ -1046,33 +1051,20 @@ do_child(Session *s, const char *command)
 				    _PATH_SSH_SYSTEM_RC);
 		} else if (do_xauth && options.xauth_location != NULL) {
 			/* Add authority data to .Xauthority if appropriate. */
-			char *screen = strchr(s->display, ':');
 
 			if (debug_flag) {
 				fprintf(stderr,
 				    "Running %.100s add "
 				    "%.100s %.100s %.100s\n",
-				    options.xauth_location, s->display,
+				    options.xauth_location, s->auth_display,
 				    s->auth_proto, s->auth_data);
-				if (screen != NULL)
-					fprintf(stderr,
-					    "Adding %.*s/unix%s %s %s\n",
-					    (int)(screen - s->display),
-					    s->display, screen,
-					    s->auth_proto, s->auth_data);
 			}
 			snprintf(cmd, sizeof cmd, "%s -q -",
 			    options.xauth_location);
 			f = popen(cmd, "w");
 			if (f) {
-				fprintf(f, "add %s %s %s\n", s->display,
+				fprintf(f, "add %s %s %s\n", s->auth_display,
 				    s->auth_proto, s->auth_data);
-				if (screen != NULL)
-					fprintf(f, "add %.*s/unix%s %s %s\n",
-					    (int)(screen - s->display),
-					    s->display, screen,
-					    s->auth_proto,
-					    s->auth_data);
 				pclose(f);
 			} else {
 				fprintf(stderr, "Could not run %s\n",
@@ -1565,6 +1557,8 @@ session_close(Session *s)
 		xfree(s->term);
 	if (s->display)
 		xfree(s->display);
+	if (s->auth_display)
+		xfree(s->auth_display);
 	if (s->auth_data)
 		xfree(s->auth_data);
 	if (s->auth_proto)
@@ -1660,6 +1654,8 @@ int
 session_setup_x11fwd(Session *s)
 {
 	struct stat st;
+	char display[512], auth_display[512];
+	char hostname[MAXHOSTNAMELEN];
 
 	if (no_x11_forwarding_flag) {
 		packet_send_debug("X11 forwarding disabled in user configuration file.");
@@ -1683,11 +1679,35 @@ session_setup_x11fwd(Session *s)
 		debug("X11 display already set.");
 		return 0;
 	}
-	s->display = x11_create_display_inet(s->screen, options.x11_display_offset);
-	if (s->display == NULL) {
+	s->display_number = x11_create_display_inet(options.x11_display_offset,
+	    options.gateway_ports);
+	if (s->display_number == -1) {
 		debug("x11_create_display_inet failed.");
 		return 0;
 	}
+
+	/* Set up a suitable value for the DISPLAY variable. */
+	if (gethostname(hostname, sizeof(hostname)) < 0)
+		fatal("gethostname: %.100s", strerror(errno));
+	/*
+	 * auth_display must be used as the displayname when the
+	 * authorization entry is added with xauth(1).  This will be
+	 * different than the DISPLAY string for localhost displays.
+	 */
+	if (!options.gateway_ports) {
+		snprintf(display, sizeof display, "localhost:%d.%d",
+		    s->display_number, s->screen);
+		snprintf(auth_display, sizeof auth_display, "%.400s/unix:%d.%d",
+		    hostname, s->display_number, s->screen);
+		s->display = xstrdup(display);
+		s->auth_display = xstrdup(auth_display);
+	} else {
+		snprintf(display, sizeof display, "%.400s:%d.%d", hostname,
+		    s->display_number, s->screen);
+		s->display = xstrdup(display);
+		s->auth_display = xstrdup(display);
+	}
+
 	return 1;
 }
 

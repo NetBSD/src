@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-rsa.c,v 1.7 2001/11/27 04:10:25 itojun Exp $	*/
+/*	$NetBSD: ssh-rsa.c,v 1.8 2001/12/06 03:54:06 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-rsa.c,v 1.13 2001/11/10 13:22:42 markus Exp $");
+RCSID("$OpenBSD: ssh-rsa.c,v 1.14 2001/12/05 10:06:12 deraadt Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -151,7 +151,7 @@ ssh_rsa_verify(
 	sigblob = buffer_get_string(&b, &len);
 	rlen = buffer_len(&b);
 	buffer_free(&b);
-	if(rlen != 0) {
+	if (rlen != 0) {
 		error("ssh_rsa_verify: remaining bytes in signature %d", rlen);
 		xfree(sigblob);
 		return -1;
