@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.209 2004/05/17 10:37:07 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.210 2004/05/17 10:40:21 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2519,4 +2519,12 @@ usr.bin/du/du.c					1.24
 	flag set.  Useful when used in conjunction with "dump -h" to size
 	dumps.
 	[simonb, ticket #347]
+
+lib/libc/time/strftime.c			1.16
+
+	Don't use tm_gmtoff for %z: a strictly conforming ISO C application
+	won't initialize it.  However, instead of using what is suggested in
+	this code path, attempt get it right for DST as well. Addresses
+	PR standards/21722 from Richard Earnshaw.
+	[kleink, ticket #349]
 
