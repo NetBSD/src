@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.10 1999/04/09 17:50:15 cgd Exp $ */
+/* $NetBSD: common.h,v 1.11 1999/08/18 20:00:27 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,6 +36,7 @@ void		OSFpal __P((void));
 void		init_prom_calls __P((void));
 void		halt __P((void));
 u_int64_t	prom_dispatch __P((int, ...));
+void		putulong __P((unsigned long));
 void		putstr __P((const char *));
 void		switch_palcode __P((void));
 
