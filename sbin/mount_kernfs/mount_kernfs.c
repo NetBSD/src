@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 1990, 1992 Jan-Simon Pendry
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry.
@@ -15,8 +16,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,70 +34,55 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: mount_kernfs.c,v 1.3 1993/08/24 13:16:07 pk Exp $
+ *	from: @(#)mount_kernfs.c	8.1 (Berkeley) 6/5/93
+ *	$Id: mount_kernfs.c,v 1.4 1994/01/12 19:11:10 cgd Exp $
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/mount.h>
 
-main(c, v)
-int c;
-char *v[];
+#include <errno.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void usage __P((void));
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
-	int ch;
-	int usage = 0;
-	int mntflags = 0;
-	char *dummy;
-	char *mountpt;
-	int rc;
-	char *pname;
+	int ch, mntflags;
 
-	pname = strrchr(v[0], '/');
-	if (pname == NULL)
-		pname = v[0];
-	else
-		pname++;
+	mntflags = 0;
+	while ((ch = getopt(argc, argv, "F:")) != EOF)
+		switch(ch) {
+		case 'F':
+			mntflags = atoi(optarg);
+			break;
+		case '?':
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
 
-	/*
-	 * Crack -F option
-	 */
-	while ((ch = getopt(c, v, "F:")) != EOF)
-	switch (ch) {
-	case 'F':
-		mntflags = atoi(optarg);
-		break;
-	default:
-	case '?':
-		usage++;
-		break;
-	}
+	if (argc != 2)
+		usage();
 
-	/*
-	 * Need two more arguments
-	 */
-	if (optind != (c - 2))
-		usage++;
-
-	if (usage) {
-		fputs("usage: mount_kernfs [ fsoptions ] kern mount-point\n", stderr);
-		exit(1);
-	}
-
-	/*
-	 * Get target and mount point
-	 */
-	dummy = v[optind];
-	mountpt = v[optind+1];
-
-	rc = mount(MOUNT_KERNFS, mountpt, mntflags, (caddr_t) 0);
-	if (rc < 0) {
-		perror(pname);
+	if (mount(MOUNT_KERNFS, argv[1], mntflags, NULL)) {
+		(void)fprintf(stderr, "mount_kernfs: %s\n", strerror(errno));
 		exit(1);
 	}
 	exit(0);
+}
+
+void
+usage()
+{
+	(void)fprintf(stderr,
+	    "usage: mount_kernfs [ -F fsoptions ] /kern mount_point\n");
+	exit(1);
 }
