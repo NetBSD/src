@@ -1,9 +1,8 @@
-/*	$NetBSD: time.h,v 1.14 1997/11/02 18:31:38 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.15 1998/02/02 21:08:05 perry Exp $	*/
 
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
- *
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -38,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)time.h	5.12 (Berkeley) 3/9/91
+ *	@(#)time.h	8.3 (Berkeley) 1/21/94
  */
 
 #ifndef _TIME_H_
@@ -90,6 +89,8 @@ struct tm {
 	long	tm_gmtoff;	/* offset from CUT in seconds */
 	char	*tm_zone;	/* timezone abbreviation */
 };
+
+#include <machine/limits.h>	/* Include file containing CLK_TCK. */
 
 #include <sys/cdefs.h>
 

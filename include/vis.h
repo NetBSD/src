@@ -1,8 +1,8 @@
-/*	$NetBSD: vis.h,v 1.8 1997/11/04 23:36:25 thorpej Exp $	*/
+/*	$NetBSD: vis.h,v 1.9 1998/02/02 21:08:19 perry Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vis.h	5.9 (Berkeley) 4/3/91
+ *	@(#)vis.h	8.1 (Berkeley) 6/2/93
  */
 
 #ifndef _VIS_H_
