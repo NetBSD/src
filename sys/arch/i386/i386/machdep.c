@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.120 1994/09/07 20:32:45 mycroft Exp $
+ *	$Id: machdep.c,v 1.121 1994/10/06 03:36:44 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -386,6 +386,18 @@ identifycpu()
 #endif
 	default:
 		break;
+	}
+
+	if (cpu == CPU_486DLC) {
+#ifndef CYRIX_CACHE_WORKS
+		printf("WARNING: CYRIX 486DLC CACHE UNCHANGED.\n");
+#else
+#ifndef CYRIX_CACHE_REALLY_WORKS
+		printf("WARNING: CYRIX 486DLC CACHE ENABLED IN HOLD-FLUSH MODE.\n");
+#else
+		printf("WARNING: CYRIX 486DLC CACHE ENABLED.\n");
+#endif
+#endif
 	}
 }
 

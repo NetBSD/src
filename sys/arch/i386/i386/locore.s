@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.83 1994/09/09 03:16:03 mycroft Exp $
+ *	$Id: locore.s,v 1.84 1994/10/06 03:36:40 mycroft Exp $
  */
 
 /*
@@ -243,24 +243,35 @@ is486:	movl	$CPU_486,_cpu-KERNBASE
 	movl	$0x69727943,_cpu_vendor-KERNBASE	# store vendor string
 	movw	$0x0078,_cpu_vendor-KERNBASE+4
 
-#ifndef notdef
+#ifndef CYRIX_CACHE_WORKS
 	/* Disable caching of the ISA hole only. */
 	invd
 	movb	$CCR0,%al		# Configuration Register index (CCR0)
 	outb	%al,$0x22
 	inb	$0x23,%al
-	orb	$CCR0_NC1,%al
+	orb	$(CCR0_NC1|CCR0_BARB),%al
+	movb	%al,%ah
+	movb	$CCR0,%al
+	outb	%al,$0x22
+	movb	%ah,%al
 	outb	%al,$0x23
 	invd
-#else
+#else /* CYRIX_CACHE_WORKS */
 	/* Set cache parameters */
 	invd				# Start with guaranteed clean cache
-#ifdef CYRIX_CACHE_WORKS
 	movb	$CCR0,%al		# Configuration Register index (CCR0)
 	outb	%al,$0x22
 	inb	$0x23,%al
 	andb	$~CCR0_NC0,%al
+#ifndef CYRIX_CACHE_REALLY_WORKS
+	orb	$(CCR0_NC1|CCR0_BARB),%al
+#else
 	orb	$CCR0_NC1,%al
+#endif
+	movb	%al,%ah
+	movb	$CCR0,%al
+	outb	%al,$0x22
+	movb	%ah,%al
 	outb	%al,$0x23
 	/* clear non-cacheable region 1	*/
 	movb	$(NCR1+2),%al
@@ -286,14 +297,8 @@ is486:	movl	$CPU_486,_cpu-KERNBASE
 	movl	%cr0,%eax
 	andl	$~(CR0_CD|CR0_NW),%eax
 	movl	%eax,%cr0
-#else
-	/* disable caching in CR0 */
-	movl	%cr0,%eax
-	orl	$CR0_CD,%eax
-	movl	%eax,%cr0
-#endif
 	invd
-#endif /* notdef */
+#endif /* CYRIX_CACHE_WORKS */
 
 	jmp	2f
 
@@ -569,21 +574,6 @@ reloc_gdt:
 	movl	%eax,%cr0
 1:
 #endif
-
-#ifdef notdef
-	cmp	$CPU_486DLC,_cpu
-	jne	1f
-	pushl	$2f
-	call	_printf
-	addl	$4,%esp
-	jmp	1f
-#ifdef CYRIX_CACHE_WORKS
-2:	.asciz	"WARNING: CYRIX 486DLC CACHE ENABLED.\n"
-#else
-2:	.asciz	"WARNING: CYRIX 486DLC CACHE DISABLED BY DEFAULT.\n"
-#endif
-1:
-#endif /* notdef */
 
 	INTRFASTEXIT
 	/* NOTREACHED */
