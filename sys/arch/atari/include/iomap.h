@@ -1,4 +1,4 @@
-/*	$NetBSD: iomap.h,v 1.4 1998/09/02 15:01:55 leo Exp $	*/
+/*	$NetBSD: iomap.h,v 1.5 1998/12/20 14:33:07 thomas Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -55,10 +55,11 @@ vaddr_t	pci_mem_addr;		/* KVA base of PCI mem-space		*/
 #define	PCI_CONFM_PHYS	(0x00080000L)
 #define	PCI_IO_PHYS	(0xB0000000L)
 #define	PCI_MEM_PHYS	(0x80000000L)
+#define PCI_VGA_PHYS	(0x800a0000L)
 
 #define PCI_CONF_SIZE	(4 * NBPG)
 #define PCI_IO_SIZE	(NBPG)
-#define PCI_MEM_SIZE	(32 * 1024)
+#define PCI_VGA_SIZE	(32 * 1024)
 
 #define	AD_RAM		(0x000000L)	/* main memory			*/
 #define	AD_CART		(0xFA0000L)	/* expansion cartridge		*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.11 1998/01/21 09:07:46 leo Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.12 1998/12/20 14:32:53 thomas Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -594,8 +594,13 @@ u_char	depth;
 	bm->rows          = height;
 	bm->depth         = depth;
 	bm->phys_mappable = (depth * width * height) / NBBY;
-	bm->regs = bm->hw_regs = NULL;
-	bm->reg_size = 0;
+	bm->regs          = NULL;
+	bm->hw_regs       = NULL;
+	bm->reg_size      = 0;
+	bm->vga_address   = NULL;
+	bm->vga_mappable  = 0;
+	bm->lin_base      = 0;
+	bm->vga_base      = 0;
 
 	bzero(bm->plane, bm_size);
 	return (bm);
