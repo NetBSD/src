@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.63 2001/11/18 17:22:43 tsutsui Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.64 2001/11/19 22:50:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -448,6 +448,7 @@ struct scsipi_periph {
 #define PQUIRK_NO_FLEX_PAGE	0x00020000	/* does not support flex geom
 						   page */
 #define PQUIRK_NOBIGMODESENSE	0x00040000	/* has no big mode-sense op */
+#define PQUIRK_CAP_SYNC		0x00080000	/* SCSI1 device with sync op */
 
 
 /*
