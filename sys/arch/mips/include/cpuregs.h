@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.30 2000/03/25 06:33:50 nisimura Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.31 2000/05/21 04:03:35 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -607,27 +607,28 @@
 #define MIPS_R2000	0x01	/* MIPS R2000 			ISA I	*/
 #define MIPS_R3000	0x02	/* MIPS R3000 			ISA I	*/
 #define MIPS_R6000	0x03	/* MIPS R6000 			ISA II	*/
-#define MIPS_R4000	0x04	/* MIPS R4000/4400 		ISA III */
-#define MIPS_R3LSI	0x05	/* LSI Logic R3000 derivate	ISA I	*/
+#define MIPS_R4000	0x04	/* MIPS R4000/R4400 		ISA III */
+#define MIPS_R3LSI	0x05	/* LSI Logic R3000 derivative	ISA I	*/
 #define MIPS_R6000A	0x06	/* MIPS R6000A 			ISA II	*/
 #define MIPS_R3IDT	0x07	/* IDT R3041 or RC36100 	ISA I	*/
 #define MIPS_R10000	0x09	/* MIPS R10000/T5 		ISA IV	*/
 #define MIPS_R4200	0x0a	/* NEC VR4200 			ISA III */
 #define MIPS_R4300	0x0b	/* NEC VR4300 			ISA III */
 #define MIPS_R4100	0x0c	/* NEC VR4100 			ISA III */
+#define MIPS_R12000	0x0e	/* MIPS R12000			ISA IV	*/
 #define MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV	*/
 #define MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
 #define MIPS_R4700	0x21	/* QED R4700 Orion		ISA III */
-#define MIPS_R4650	0x22	/* !ID crash! QED R4650 	ISA III */
-#define MIPS_TX3900	0x22	/* !ID crash! Toshiba R3000	ISA I	*/
+#define MIPS_R3SONY	0x21	/* Sony R3000 based 		ISA I	*/
+#define MIPS_R4650	0x22	/* QED R4650 			ISA III */
+#define MIPS_TX3900	0x22	/* Toshiba R3000		ISA I	*/
 #define MIPS_R5000	0x23	/* MIPS R5000 			ISA IV	*/
+#define MIPS_R3NKK	0x23	/* NKK R3000 based 		ISA I	*/
 #define MIPS_RC32364	0x26	/* IDT RC32364 			ISA II	*/
 #define MIPS_RM7000	0x27	/* QED RM7000			ISA IV  */
-#define MIPS_RM5230	0x28	/* QED RM5200s 			ISA IV	*/
+#define MIPS_RM5200	0x28	/* QED RM5200s 			ISA IV	*/
 #define MIPS_RC64470	0x30	/* IDT RC64474/RC64475 		ISA III */
 #define MIPS_R5400	0x54	/* NEC VR5400 			ISA IV	*/
-#define MIPS_R3SONY	0x21	/* ? Sony R3000 based 		ISA I	*/
-#define MIPS_R3NKK	0x23	/* ? NKK R3000 based 		ISA I	*/
 
 /*
  * FPU processor revision ID
@@ -641,8 +642,8 @@
 #define MIPS_R31LSI	0x06	/* LSI Logic derivate		ISA I	*/
 #define MIPS_R10010	0x09	/* MIPS R10000/T5 FPU		ISA IV	*/
 #define MIPS_R4210	0x0a	/* NEC VR4210 FPC		ISA III */
+#define MIPS_R3TOSH	0x22	/* Toshiba R3000 based FPU	ISA I	*/
 #define MIPS_R5010	0x23	/* MIPS R5000 FPU		ISA IV	*/
-#define MIPS_R3TOSH	0x22	/* ? Toshiba R3000 based FPU	ISA I	*/
 
 #ifdef ENABLE_MIPS_TX3900
 #include <mips/r3900regs.h>
