@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_pci.c,v 1.5 1998/09/26 15:52:55 dante Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.6 1999/02/25 20:20:30 dante Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,8 +81,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/ic/adv.h>
 #include <dev/ic/advlib.h>
+#include <dev/ic/adv.h>
 
 /******************************************************************************/
 
