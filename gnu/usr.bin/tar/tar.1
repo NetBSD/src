@@ -3,7 +3,7 @@
 .\"
 .\"	Written by John F. Woods <jfw@jfwhome.funhouse.com>
 .\"
-.\"	$Id: tar.1,v 1.3 1994/08/17 06:30:31 deraadt Exp $
+.\"	$Id: tar.1,v 1.4 1994/11/02 07:06:37 deraadt Exp $
 .\"
 .Dd 6 August 1994
 .Os NetBSD
@@ -100,7 +100,7 @@ quarter-inch tapes.
 .It Fl -get
 Extract files from an archive.  The owner, modification time, and file
 permissions are restored, if possible.  If no
-.Ar filename
+.Ar file
 arguments are given, extract all the files in the archive.  If a
 .Ar filename
 argument matches the name of a directory on the tape, that directory and
@@ -141,7 +141,7 @@ for extraction.
 .It Fl -checkpoint
 Print directory names while reading the archive.
 .It Fl f Ar [hostname:]file
-.It Fl -filename  Ar [hostname:]file
+.It Fl -file  Ar [hostname:]file
 Read or write the specified
 .Ar file
 (default is /dev/rst0).  If a
