@@ -32,7 +32,7 @@
  */
 
 /* $KTH-KRB: krb_locl.h,v 1.54 2002/09/09 18:42:38 joda Exp $
-   $NetBSD: krb_locl.h,v 1.4 2002/09/12 12:33:15 joda Exp $ */
+   $NetBSD: krb_locl.h,v 1.5 2002/09/20 21:34:33 mycroft Exp $ */
 
 #ifndef __krb_locl_h
 #define __krb_locl_h
@@ -86,6 +86,9 @@
 #endif
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
 #endif
 
 #ifdef HAVE_SYS_SOCKET_H

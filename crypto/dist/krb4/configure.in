@@ -8,7 +8,7 @@ dnl
 
 dnl Process this file with autoconf to produce a configure script.
 dnl
-AC_REVISION($Revision: 1.1.1.4 $)
+AC_REVISION($Revision: 1.2 $)
 AC_PREREQ(2.53)
 AC_INIT(KTH-KRB, 1.2, kth-krb-bugs@pdc.kth.se, krb4)
 AC_CONFIG_SRCDIR([kuser/kinit.c])
@@ -315,6 +315,7 @@ AC_CHECK_HEADERS([arpa/ftp.h			\
 	sys/locking.h				\
 	sys/mman.h				\
 	sys/param.h				\
+	sys/poll.h				\
 	sys/proc.h				\
 	sys/pty.h				\
 	sys/ptyio.h				\
@@ -518,6 +519,7 @@ AC_CHECK_FUNCS([				\
 	mktime					\
 	on_exit					\
 	parsetos				\
+	poll					\
 	ptsname					\
 	rand					\
 	random					\
