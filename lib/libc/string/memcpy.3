@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)memcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: memcpy.3,v 1.5 1998/02/05 18:50:35 perry Exp $
+.\"	$NetBSD: memcpy.3,v 1.6 2001/03/22 07:37:04 kleink Exp $
 .\"
 .Dd June 4, 1993
 .Dt MEMCPY 3
@@ -47,7 +47,7 @@
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft void *
-.Fn memcpy "void *dst" "const void *src" "size_t len"
+.Fn memcpy "void * restrict dst" "const void * restrict src" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn memcpy
@@ -74,7 +74,7 @@ The
 .Fn memcpy
 function
 conforms to
-.St -ansiC .
+.St -isoC99 .
 .Sh BUGS
 In this implementation
 .Fn memcpy

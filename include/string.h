@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.22 2000/01/10 16:58:38 kleink Exp $	*/
+/*	$NetBSD: string.h,v 1.23 2001/03/22 07:37:04 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -52,31 +52,31 @@ typedef	_BSD_SIZE_T_	size_t;
 __BEGIN_DECLS
 void	*memchr __P((const void *, int, size_t));
 int	 memcmp __P((const void *, const void *, size_t));
-void	*memcpy __P((void *, const void *, size_t));
+void	*memcpy __P((void * __restrict, const void * __restrict, size_t));
 void	*memmove __P((void *, const void *, size_t));
 void	*memset __P((void *, int, size_t));
-char	*strcat __P((char *, const char *));
+char	*strcat __P((char * __restrict, const char * __restrict));
 char	*strchr __P((const char *, int));
 int	 strcmp __P((const char *, const char *));
 int	 strcoll __P((const char *, const char *));
-char	*strcpy __P((char *, const char *));
+char	*strcpy __P((char * __restrict, const char * __restrict));
 size_t	 strcspn __P((const char *, const char *));
 __aconst char *strerror __P((int));
 size_t	 strlen __P((const char *));
-char	*strncat __P((char *, const char *, size_t));
+char	*strncat __P((char * __restrict, const char * __restrict, size_t));
 int	 strncmp __P((const char *, const char *, size_t));
-char	*strncpy __P((char *, const char *, size_t));
+char	*strncpy __P((char * __restrict, const char * __restrict, size_t));
 char	*strpbrk __P((const char *, const char *));
 char	*strrchr __P((const char *, int));
 size_t	 strspn __P((const char *, const char *));
 char	*strstr __P((const char *, const char *));
-char	*strtok __P((char *, const char *));
+char	*strtok __P((char * __restrict, const char * __restrict));
 #if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
      !defined(_XOPEN_SOURCE)) || defined(_REENTRANT) || \
     (_POSIX_C_SOURCE - 0 >= 199506L) || (_XOPEN_SOURCE - 0 >= 500)
 char	*strtok_r __P((char *, const char *, char **));
 #endif /* !defined(_ANSI_SOURCE) || defined(_REENTRANT) || ... */
-size_t	 strxfrm __P((char *, const char *, size_t));
+size_t	 strxfrm __P((char * __restrict, const char * __restrict, size_t));
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
     defined(_XOPEN_SOURCE)

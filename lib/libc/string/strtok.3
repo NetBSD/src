@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strtok.3	8.2 (Berkeley) 2/3/94
-.\"	$NetBSD: strtok.3,v 1.12 2000/10/11 18:26:04 phil Exp $
+.\"	$NetBSD: strtok.3,v 1.13 2001/03/22 07:37:04 kleink Exp $
 .\"
 .Dd February 3, 1994
 .Dt STRTOK 3
@@ -47,7 +47,7 @@
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft char *
-.Fn strtok "char *str" "const char *sep"
+.Fn strtok "char * restrict str" "const char * restrict sep"
 .Ft char *
 .Fn strtok_r "char *str" "const char *sep" "char **lasts"
 .Sh DESCRIPTION
