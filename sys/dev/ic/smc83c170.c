@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.6 1998/07/23 17:37:38 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.7 1998/08/08 23:51:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -515,7 +515,7 @@ epic_ioctl(ifp, cmd, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -875,7 +875,7 @@ epic_reset(sc)
 }
 
 /*
- * Initialize the interface.  Must be called at splimp().
+ * Initialize the interface.  Must be called at splnet().
  */
 void
 epic_init(sc)
@@ -1073,7 +1073,7 @@ epic_stop(sc)
 		}
 		if (epic_add_rxbuf(sc, i) != 0) {
 			/*
-			 * This "can't happen" - we're at splimp()
+			 * This "can't happen" - we're at splnet()
 			 * and we just freed the buffer we need
 			 * above.
 			 */

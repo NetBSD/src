@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.19 1998/07/05 06:49:04 jonathan Exp $ */
+/* $NetBSD: if_ea.c,v 1.20 1998/08/08 23:58:39 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -542,7 +542,7 @@ ea_reinit(sc)
 
 /* Stop and reinitialise the interface */
 
-	s = splimp();
+	s = splnet();
 	ea_stop(sc);
 	ea_init(sc);
 	(void)splx(s);
@@ -854,7 +854,7 @@ ea_init(sc)
 
 	dprintf(("ea_init()\n"));
 
-	s = splimp();
+	s = splnet();
 
 /* Grab an irq */
 
@@ -931,7 +931,7 @@ ea_init(sc)
 
 /*
  * Start output on interface. Get datagrams from the queue and output them,
- * giving the receiver a chance between datagrams. Call only from splimp or
+ * giving the receiver a chance between datagrams. Call only from splnet or
  * interrupt level!
  */
 
@@ -942,7 +942,7 @@ ea_start(ifp)
 	struct ea_softc *sc = ifp->if_softc;
 	int s;
 
-	s = splimp();
+	s = splnet();
 #ifdef EA_TX_DEBUG
 	dprintf(("ea_start()...\n"));
 #endif
@@ -966,7 +966,7 @@ ea_start(ifp)
 /*
  * Transfer a packet to the interface buffer and start transmission
  *
- * Called at splimp()
+ * Called at splnet()
  */
  
 void
@@ -1154,7 +1154,7 @@ eaintr(arg)
 
 			/* Tx next packet */
 
-			s = splimp();
+			s = splnet();
 			eatxpacket(sc);
 			(void)splx(s);
 		}
@@ -1444,7 +1444,7 @@ ea_ioctl(ifp, cmd, data)
 /*	struct ifreq *ifr = (struct ifreq *)data;*/
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 

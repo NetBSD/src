@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.18 1998/07/05 06:49:12 jonathan Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.19 1998/08/08 23:51:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -412,7 +412,7 @@ pdq_ifioctl(
     pdq_softc_t *sc = PDQ_OS_IFP_TO_SOFTC(ifp);
     int s, error = 0;
 
-    s = splimp();
+    s = splnet();
 
     switch (cmd) {
 	case SIOCSIFADDR: {
