@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.29 1997/02/24 23:19:02 fvdl Exp $	*/
+/*	$NetBSD: param.h,v 1.30 1997/03/15 22:01:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #define	MACHINE		"hp300"
 #define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
-#define	MID_MACHINE	MID_M68K4K
+#define	MID_MACHINE	MID_M68K
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
