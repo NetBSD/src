@@ -1,4 +1,4 @@
-.\"	$NetBSD: connect.2,v 1.8 1995/10/12 15:40:48 jtc Exp $
+.\"	$NetBSD: connect.2,v 1.9 1998/04/28 06:00:53 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -118,8 +118,12 @@ and a previous connection attempt
 has not yet been completed.
 .El
 .Pp
-The following errors are specific to connecting names in the UNIX domain.
-These errors may not apply in future versions of the UNIX IPC domain.
+The following errors are specific to connecting names in the
+.Ux
+domain.
+These errors may not apply in future versions of the 
+.Ux
+IPC domain.
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.

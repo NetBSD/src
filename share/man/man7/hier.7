@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.15 1998/04/28 04:36:26 fair Exp $
+.\"	$NetBSD: hier.7,v 1.16 1998/04/28 06:00:56 fair Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -79,7 +79,8 @@ kernel logging device; see
 kernel virtual memory device; see
 .Xr mem 4
 .It Sy log
-UNIX domain datagram log socket; see
+.Ux
+domain datagram log socket; see
 .Xr syslogd 8
 .It Sy mem
 kernel physical memory device; see
@@ -649,17 +650,28 @@ support for Linux binaries; see
 .It Sy m68k4k/
 support for 4Kb page 68000 binaries
 .It Sy osf1/
-support for Digital UNIX (formerly OSF/1) binaries
+support for
+.Tn Digital
+.Ux
+.Po
+formerly
+.Tn OSF/1
+.Pc
+binaries
 .It Sy ossaudio/
 support for OSS audio
 .It Sy sunos/
-support for SunOS 4.x binaries; see
+support for
+.Tn SunOS 4.x
+binaries; see
 .Xr compat_sunos 8
 .It Sy svr4/
 support for System V Release 4 binaries; see
 .Xr compat_svr4 8
 .It Sy ultrix/
-support for Ultrix binaries
+support for
+.Tn Ultrix
+binaries
 .El
 .Pp
 .It Sy conf/
@@ -750,16 +762,19 @@ union file system; see
 .El
 .Pp
 .It Sy msdosfs/
-MS-DOS file system; see
+.Tn MS-DOS
+file system; see
 .Xr mount_msdos 8
 .It Sy net/
 miscellaneous networking support
 .It Sy netccitt/
-CCITT networking support
+CCITT
+networking support
 .It Sy netinet/
 TCP/IP networking support
 .It Sy netiso/
-ISO networking support
+ISO
+networking support
 .It Sy netnatm/
 ATM networking support
 .It Sy netns/
@@ -781,7 +796,9 @@ the log-structured file system
 .It Sy mfs/
 the in-memory file system
 .It Sy ufs/
-shared UNIX file system support
+shared
+.Ux
+file system support
 .El
 .It Sy vm/
 virtual memory support

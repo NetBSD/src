@@ -1,4 +1,4 @@
-.\"	$NetBSD: tn3270.1,v 1.5 1997/11/01 06:25:29 mycroft Exp $
+.\"	$NetBSD: tn3270.1,v 1.6 1998/04/28 06:00:57 fair Exp $
 .\"
 .\" Copyright (c) 1986, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tn3270.1	4.6 (Berkeley) 7/27/91
-.\"	$NetBSD: tn3270.1,v 1.5 1997/11/01 06:25:29 mycroft Exp $
+.\"	$NetBSD: tn3270.1,v 1.6 1998/04/28 06:00:57 fair Exp $
 .\"
 .Dd July 27, 1991
 .Dt TN3270 1
@@ -51,7 +51,7 @@
 .Nm Tn3270
 permits a full-screen, full-duplex connection
 from a
-.Tn UNIX
+.Ux
 machine
 to an
 .Tn IBM
@@ -92,7 +92,7 @@ the default is for output
 to be directed to the standard error file.
 .It Fl t Ar commandname
 Specify a
-.Tn UNIX
+.Ux
 command to process
 .Tn IBM
 4994 style transparent mode
@@ -153,7 +153,7 @@ the following table describes the emulation:
 .Ed
 .Pp
 Emulation of the 3270 terminal is done in the
-.Tn UNIX
+.Ux
 process.
 This emulation involves mapping
 3270-style commands from the host
@@ -233,7 +233,7 @@ plus one additional command:
 .Bl -tag -width Ar
 .It Ic transcom
 Specify
-.Tn UNIX
+.Ux
 command for
 .Tn IBM
 4994 style transparent mode processing.

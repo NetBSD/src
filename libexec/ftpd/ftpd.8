@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.22 1998/02/13 17:15:56 cjs Exp $
+.\"	$NetBSD: ftpd.8,v 1.23 1998/04/28 06:00:54 fair Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -154,10 +154,8 @@ The case of the requests is ignored.
 .El
 .Pp
 The following non-standard or
-.Tn UNIX
-specific commands are supported
-by the
-SITE request.
+.Ux
+specific commands are supported by the SITE request.
 .Pp
 .Bl -column Request -offset indent
 .It Sy Request Ta Sy Description
@@ -168,8 +166,7 @@ SITE request.
 .El
 .Pp
 The remaining ftp requests specified in Internet RFC 959
-are
-recognized, but not implemented.
+are recognized, but not implemented.
 MDTM and SIZE are not specified in RFC 959, but will appear in the
 next updated FTP RFC.
 .Pp
@@ -557,12 +554,12 @@ If it exists, displayed and access is refused.
 .Xr getusershell 3 ,
 .Xr syslogd 8
 .Sh BUGS
-The server must run as the super-user
-to create sockets with privileged port numbers.  It maintains
-an effective user id of the logged in user, reverting to
-the super-user only when binding addresses to sockets.  The
-possible security holes have been extensively
-scrutinized, but are possibly incomplete.
+The server must run as the super-user to create sockets with
+privileged port numbers.
+It maintains an effective user id of the logged in user, reverting
+to the super-user only when binding addresses to sockets.
+The possible security holes have been extensively scrutinized, but
+are possibly incomplete.
 .Pp
 .Cm RFC-959
 provides no restrictions on the PORT command, and this can lead
@@ -573,7 +570,8 @@ can be fooled into connecting to any service on any host.  With the
 .Pa /etc/ftpd.conf ,
 PORT commands with different host addresses, or TCP ports lower than
 .Dv IPPORT_RESERVED
-will be rejected.  Use of this option is
+will be rejected.
+Use of this option is
 .Em strongly
 recommended.
 .Pp
