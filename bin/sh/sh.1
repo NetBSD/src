@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.33 1999/11/16 22:03:25 hubertf Exp $
+.\"	$NetBSD: sh.1,v 1.34 2000/07/17 21:18:47 jhawk Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1329,11 +1329,18 @@ doesn't do anything.
 .Ar signal...
 .Xc
 Cause the shell to parse and execute action when any of the specified
-signals are received. The signals are specified by signal number. Action
+signals are received. The signals are specified by signal number. If
+.Ar signal
+is
+.Li 0 ,
+the action is executed when the shell exits.
+.Ar action
 may be null or omitted; the former causes the specified signal to be
 ignored and the latter causes the default action to be taken. When the
 shell forks off a subshell, it resets trapped (but not ignored) signals to
-the default action. The trap command has no effect on signals that were
+the default action. The
+.Ic trap
+command has no effect on signals that were
 ignored on entry to the shell.
 .It type Op Ar name ...
 Interpret each name as a command and print the resolution of the command
