@@ -1,4 +1,4 @@
-#	$NetBSD: rc.local,v 1.29 2000/10/07 00:22:44 hubertf Exp $
+#	$NetBSD: rc.local,v 1.30 2002/07/23 10:48:01 wennmach Exp $
 #	originally from: @(#)rc.local	8.3 (Berkeley) 4/28/94
 #
 # This file is (nearly) the last thing invoked by /etc/rc during a
@@ -10,7 +10,7 @@
 # An alternative option is to create site-specific /etc/rc.d scripts.
 #
 
-echo -n 'starting local daemons:'
+echo -n 'Starting local daemons:'
 
 # Add your local daemons here.
 #
