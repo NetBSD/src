@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.1.2.2 1997/08/23 01:57:49 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.1.2.3 1997/09/29 21:17:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -105,6 +105,9 @@ struct cfattach sm_pcmcia_ca = {
 	sizeof(struct sm_pcmcia_softc), sm_pcmcia_match, sm_pcmcia_attach
 };
 
+int	sm_pcmcia_enable __P((struct smc91cxx_softc *));
+void	sm_pcmcia_disable __P((struct smc91cxx_softc *));
+
 int
 sm_pcmcia_match(parent, match, aux)
 	struct device *parent;
@@ -161,6 +164,9 @@ sm_pcmcia_attach(parent, self, aux)
 
 	sc->sc_bst = psc->sc_pcioh.iot;
 	sc->sc_bsh = psc->sc_pcioh.ioh;
+
+	sc->sc_enable = sm_pcmcia_enable;
+	sc->sc_disable = sm_pcmcia_disable;
 
 	if (pcmcia_io_map(pa->pf, (cfe->flags & PCMCIA_CFE_IO16) ?
 	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8, 0, cfe->iospace[0].length,
@@ -239,4 +245,24 @@ sm_pcmcia_attach(parent, self, aux)
 	if (psc->sc_ih == NULL)
 		printf("%s: couldn't establish interrupt handler\n",
 		    sc->sc_dev.dv_xname);
+
+	pcmcia_function_disable(pa->pf);
+}
+
+int
+sm_pcmcia_enable(sc)
+	struct smc91cxx_softc *sc;
+{
+	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
+
+	return (pcmcia_function_enable(psc->sc_pf));
+}
+
+void
+sm_pcmcia_disable(sc)
+	struct smc91cxx_softc *sc;
+{
+	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
+
+	pcmcia_function_disable(psc->sc_pf);
 }
