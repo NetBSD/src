@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.h,v 1.8 1998/12/28 13:48:24 hannken Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.h,v 1.9 1998/12/28 16:41:11 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define KC(n)		KS_KEYCODE(v)
+#define KC(n)		KS_KEYCODE(n)
 
 static const keysym_t pckbd_keydesc_us[] = {
 /*  pos      command		normal		shifted */
