@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.37 2001/06/23 02:45:54 dmcmahill Exp $
+	$NetBSD: syscalls.master,v 1.38 2001/06/28 01:48:22 dmcmahill Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -159,7 +159,7 @@
 			    struct osf1_itimerval *oitv); }
 84	UNIMPL		old wait
 85	UNIMPL		table
-86	UNIMPL		getitimer
+86	STD		{ int osf1_sys_getitimer(u_int which, struct osf1_itimerval *itv); }
 87	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
 			    u_int len); }
 88	NOARGS		{ int compat_43_sys_sethostname(const char *hostname, \
