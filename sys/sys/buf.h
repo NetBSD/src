@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.24 1996/02/18 11:55:45 fvdl Exp $	*/
+/*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -121,6 +121,7 @@ struct buf {
 #define	B_WRITE		0x00000000	/* Write buffer (pseudo flag). */
 #define	B_WRITEINPROG	0x01000000	/* Write in progress. */
 #define	B_XXX		0x02000000	/* Debugging flag. */
+#define	B_VFLUSH	0x04000000	/* Buffer is being synced. */
 
 /*
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr

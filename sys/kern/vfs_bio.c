@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.49 1996/10/15 23:06:27 cgd Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.50 1997/04/09 21:12:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -432,6 +432,20 @@ brelse(bp)
 	if (ISSET(bp->b_flags, (B_NOCACHE|B_ERROR)))
 		SET(bp->b_flags, B_INVAL);
 
+	if (ISSET(bp->b_flags, B_VFLUSH)) {
+		/*
+		 * This is a delayed write buffer that was just flushed to
+		 * disk.  It is still on the LRU queue.  If it's become
+		 * invalid, then we need to move it to a different queue;
+		 * otherwise leave it in its current position.
+		 */
+		CLR(bp->b_flags, B_VFLUSH);
+		if (!ISSET(bp->b_flags, B_ERROR|B_INVAL|B_LOCKED|B_AGE))
+			goto already_queued;
+		else
+			bremfree(bp);
+	}
+
 	if ((bp->b_bufsize <= 0) || ISSET(bp->b_flags, B_INVAL)) {
 		/*
 		 * If it's invalid or empty, dissociate it from its vnode
@@ -464,6 +478,7 @@ brelse(bp)
 		binstailfree(bp, bufq);
 	}
 
+already_queued:
 	/* Unlock the buffer. */
 	CLR(bp->b_flags, (B_AGE | B_ASYNC | B_BUSY | B_NOCACHE));
 
@@ -698,13 +713,30 @@ start:
 		return (0);
 	}
 
+	if (ISSET(bp->b_flags, B_VFLUSH)) {
+		/*
+		 * This is a delayed write buffer being flushed to disk.  Make
+		 * sure it gets aged out of the queue when it's finished, and
+		 * leave it off the LRU queue.
+		 */
+		CLR(bp->b_flags, B_VFLUSH);
+		SET(bp->b_flags, B_AGE);
+		splx(s);
+		goto start;
+	}
+
 	/* Buffer is no longer on free lists. */
 	SET(bp->b_flags, B_BUSY);
 
 	/* If buffer was a delayed write, start it, and go back to the top. */
 	if (ISSET(bp->b_flags, B_DELWRI)) {
 		splx(s);
-		bawrite (bp);
+		/*
+		 * This buffer has gone through the LRU, so make sure it gets
+		 * reused ASAP.
+		 */
+		SET(bp->b_flags, B_AGE);
+		bawrite(bp);
 		goto start;
 	}
 
