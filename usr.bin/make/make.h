@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)make.h	5.13 (Berkeley) 3/1/91
- *	$Id: make.h,v 1.3 1994/03/05 00:35:00 cgd Exp $
+ *	$Id: make.h,v 1.4 1994/04/17 03:09:51 glass Exp $
  */
 
 /*-
@@ -51,7 +51,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
+#endif
 #if __STDC__
 #include <stdlib.h>
 #include <unistd.h>
