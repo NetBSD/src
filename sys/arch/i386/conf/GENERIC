@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.476 2002/03/28 21:13:20 ichiro Exp $
+# $NetBSD: GENERIC,v 1.477 2002/03/29 01:31:28 itojun Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.476 $"
+#ident 		"GENERIC-$Revision: 1.477 $"
 
 maxusers	32		# estimated number of users
 
@@ -721,7 +721,7 @@ qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
-urlphy*	at mii? phy ?			# Realtek RTL8150L internal PHYs
+#urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 
