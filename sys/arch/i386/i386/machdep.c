@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155 1995/05/01 09:08:27 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.156 1995/05/01 13:02:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -123,8 +123,6 @@ vm_map_t buffer_map;
 extern	vm_offset_t avail_start, avail_end;
 static	vm_offset_t hole_start, hole_end;
 static	vm_offset_t avail_next;
-
-int	_gsel_tss;
 
 caddr_t allocsys __P((caddr_t));
 void dumpsys __P((void));
@@ -837,7 +835,7 @@ union descriptor gdt[NGDT];
 union descriptor ldt[NLDT];
 struct gate_descriptor idt[NIDT];
 
-int _default_ldt, currentldt;
+int currentldt;
 
 struct	i386tss	tss;
 
@@ -1120,10 +1118,8 @@ init386(first_avail)
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
 
-	_gsel_tss = GSEL(GPROC0_SEL, SEL_KPL);
-	ltr(_gsel_tss);
-	_default_ldt = GSEL(GLDT_SEL, SEL_KPL);
-	lldt(currentldt = _default_ldt);
+	ltr(GSEL(GPROC0_SEL, SEL_KPL));
+	lldt(currentldt = GSEL(GLDT_SEL, SEL_KPL));
 }
 
 struct queue {

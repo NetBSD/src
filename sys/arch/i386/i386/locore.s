@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.128 1995/05/01 08:53:13 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.129 1995/05/01 13:02:24 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -1626,7 +1626,7 @@ switch_exited:
 #ifdef USER_LDT
 	cmpl	$0,PCB_USERLDT(%esi)
 	jnz	1f
-	movl	__default_ldt,%ecx
+	movl	$GSEL(GLDT_SEL, SEL_KPL),%ecx
 	cmpl	_currentldt,%ecx
 	je	2f
 	lldt	%ecx
