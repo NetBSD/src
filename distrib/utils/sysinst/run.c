@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.10 1999/03/11 16:48:27 marc Exp $	*/
+/*	$NetBSD: run.c,v 1.11 1999/03/22 09:02:47 ross Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -260,6 +260,7 @@ launch_subwin(actionwin, args, win, display)
 {
 	int xcor,ycor;
 	int n, i, j;
+	int selectfailed;
 	int status, master, slave;
 	fd_set active_fd_set, read_fd_set;
 	int dataflow[2];
@@ -290,7 +291,7 @@ launch_subwin(actionwin, args, win, display)
 	case -1:
 		return -1;
 		break;
-	case 0: {
+	case 0:
 		(void)close(STDIN_FILENO);
 		subchild = fork();
 		if (subchild == 0) {
@@ -321,9 +322,9 @@ launch_subwin(actionwin, args, win, display)
 		execvp(argzero, origargs);
 		/* the parent will see this as the output from the
 		   child */
-		perror("execvp");
+		warn("execvp %s", argzero);
 		_exit(EXIT_FAILURE);
-	} break; /* end of child */
+		break; /* end of child */
 	default: break;
 	}
 	close(dataflow[1]);
@@ -332,15 +333,20 @@ launch_subwin(actionwin, args, win, display)
 	FD_SET(STDIN_FILENO, &active_fd_set);
 
 	pid = wait4(child, &status, WNOHANG, 0);
-	for (;;) {
+	for (selectfailed = 0;;) {
+		if (selectfailed) {
+			char *msg = "select(2) failed but no child died?";
+			if(logging)
+				(void)fprintf(log, msg);
+			errx(1, msg);
+		}
 		read_fd_set = active_fd_set;
 		if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL) < 0) {
 			perror("select");
 			if (logging)
 				(void)fprintf(log, "select failure: %s\n", strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-		for (i = 0; i < FD_SETSIZE; ++i)
+			++selectfailed;
+		} else for (i = 0; i < FD_SETSIZE; ++i) {
 			if (FD_ISSET (i, &read_fd_set)) {
 				n = read(i, ibuf, MAXBUF);
 				if (i == STDIN_FILENO)
@@ -377,6 +383,7 @@ launch_subwin(actionwin, args, win, display)
 					}
 				}
 			}
+		}
 		pid = wait4(child, &status, WNOHANG, 0);
  		if (pid == child && (WIFEXITED(status) || WIFSIGNALED(status)))
 			break;
