@@ -1,4 +1,4 @@
-/* $NetBSD: zutil.h,v 1.10 2002/03/12 00:42:24 fvdl Exp $ */
+/* $NetBSD: zutil.h,v 1.11 2004/06/30 15:44:55 christos Exp $ */
 
 /* zutil.h -- internal interface and configuration of the compression library
  * Copyright (C) 1995-2002 Jean-loup Gailly.
@@ -10,7 +10,7 @@
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zutil.h,v 1.10 2002/03/12 00:42:24 fvdl Exp $ */
+/* @(#) $Id: zutil.h,v 1.11 2004/06/30 15:44:55 christos Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -225,5 +225,31 @@ void   zcfree  __P((voidpf opaque, voidpf ptr));
            (*((strm)->zalloc))((strm)->opaque, (items), (size))
 #define ZFREE(strm, addr)  (*((strm)->zfree))((strm)->opaque, (voidpf)(addr))
 #define TRY_FREE(s, p) {if (p) ZFREE(s, p);}
+
+#ifndef _ZLIB_NO_ERRMSG
+
+#define _ZERR_INV_BLOCK		0
+#define _ZERR_INV_BLOCK_LEN	1
+#define _ZERR_TOO_MANY		2
+#define _ZERR_INV_REPEAT	3
+#define _ZERR_INV_LITERAL	4
+#define _ZERR_INV_DISTANCE	5
+#define _ZERR_OVERSUB_DBIT	6
+#define _ZERR_INCOMPLETE_DBIT	7
+#define _ZERR_OVERSUB_LIT	8
+#define _ZERR_INCOMPLETE_LIT	9
+#define _ZERR_OVERSUB_DIST	10
+#define _ZERR_INCOMPLETE_DIST	11
+#define _ZERR_EMPTY_DIST	12
+#define _ZERR_MAX_ERRORS	13
+
+extern char *zerror __P((int));
+#define _ZERROR(a) zerror(a)
+
+#else
+
+#define _ZERROR(a)	NULL
+
+#endif
 
 #endif /* _Z_UTIL_H */
