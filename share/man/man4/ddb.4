@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.45 2000/05/22 11:46:07 jhawk Exp $
+.\"	$NetBSD: ddb.4,v 1.46 2000/05/22 14:49:11 jhawk Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -586,6 +586,42 @@ is machine dependent.
 If not supported, incorrect information will be displayed.
 .It Ic "show watches"
 Display all watchpoints.
+.It Xo
+.Ic sifting Ns Op Cm /F
+.Ar string
+.Xc
+Search the symbol tables for all symbols of which
+.Ar string
+is a substring, and display them. If
+.Cm /F
+is specified, a character is displayed immediately after each symbol
+name indicating the type of symbol.
+.Pp
+For
+.Ns Xr a.out 5 -format
+symbol tables, 
+absolute symbols display
+.Sy @ ,
+text segment symbols display
+.Sy * ,
+data segment symbols display
+.Sy + ,
+.Tn BSS
+segment symbols display
+.Sy - ,
+and filename symbols display
+.Sy / .
+For
+.Tn ELF Ns -format
+symbol tables,
+object symbols display
+.Sy + ,
+function symbols display
+.Sy * ,
+section symbols display
+.Sy & ,
+and file symbols display
+.Sy / .
 .It Xo
 .Ic step Ns Op Cm /p
 .Op Cm , Ns Ar count
