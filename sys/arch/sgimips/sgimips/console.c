@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.11 2003/10/05 15:38:08 tsutsui Exp $	*/
+/*	$NetBSD: console.c,v 1.12 2003/10/17 18:15:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.11 2003/10/05 15:38:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.12 2003/10/17 18:15:52 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_machtypes.h"
@@ -97,6 +97,7 @@ consinit()
 		if (strlen(consdev) == 9 &&
 		    strncmp(consdev, "serial", 6) == 0 &&
 		    (consdev[7] == '0' || consdev[7] == '1')) {
+			delay(10000);
 			/* XXX: hardcoded MACE iotag */
 			if (comcnattach(3, MIPS_PHYS_TO_KSEG1(MACE_BASE +
 			    ((consdev[7] == '0') ?
