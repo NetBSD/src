@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.75 2002/04/12 05:08:53 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.76 2002/04/23 00:15:45 bjh21 Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -90,8 +90,11 @@ STRIP?=		strip
 	${COMPILE.m} ${.IMPSRC}
 
 # Host-compiled C objects
+# The intermediate step is necessary for Sun CC, which objects to calling
+# object files anything but *.o
 .c.lo:
-	${HOST_COMPILE.c} -o ${.TARGET} ${.IMPSRC}
+	${HOST_COMPILE.c} -o ${.TARGET}.o ${.IMPSRC}
+	mv ${.TARGET}.o ${.TARGET}
 
 # Lex
 LPREFIX?=	yy
