@@ -5,7 +5,7 @@ adv			compiles
 adw			compiles
 aha			compiles
 ahb			compiles
-ahc			brocken
+ahc			broken
 aic			compiles
 asc
 bha			compiles
@@ -15,7 +15,7 @@ iopsp			compiles
 isp			compiles
 mb89352
 nca			compiles
-ncr			brocken (garbage-collect ?)
+ncr			broken (garbage-collect ?)
 ncr5380sbc		compiles
 ncr53c9x		compiles
 pcscp
@@ -62,7 +62,7 @@ hpcmips
 
 hpcsh
 
-i386		compiles, exept ahc
+i386		compiles, except ahc
 
 luna68k
 
