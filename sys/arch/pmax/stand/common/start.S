@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.15 1999/11/27 03:10:07 simonb Exp $	*/
+/*	$NetBSD: start.S,v 1.16 1999/11/27 06:49:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,30 +95,7 @@
 #include <mips/cpuregs.h>
 #include <machine/dec_prom.h>
 
-#ifdef BOOTRZ
-/*
- * Boot block that starts in sector 0
- */
-
-Dec_Diskboot:
-	.word	0, 0			/* pad */
-	.word	0x0002757a		/* DEC_BOOT_MAGIC */
-	.word	0			/* mode = single sequence of blocks */
-	.word	Dec_Diskboot		/* loadAddr */
-	.word	start			/* execAddr */
-	.word	16, 0			/* map[0] numBlocks, startBlock */
-	.word	0,0, 0,0, 0,0, 0,0	/* pad to 64 bytes (start of label) */
-
-Label_goes_here:
-	.word	0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0	/* 276 bytes for ... */
-	.word	0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0	/* ... BSD label */
-	.word	0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0
-	.word	0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0
-	.word	0,0, 0,0, 0
-#endif
-
 	.extern callv, 4
-
 
 	.globl	start
 start:
@@ -148,6 +125,7 @@ start:
 	nop
 
 LEAF(prom_restart)
+XLEAF(_rtt)
 	lw	v0, _C_LABEL (callv)
 	lw	v0, 0x9C(v0)			/* halt */
 	move	a0, zero			/* Don't print anything. */
@@ -177,6 +155,12 @@ END(prom_lseek)
 
 LEAF(prom_read)
 	li	v0, DEC_PROM_READ
+	j	v0
+	nop
+END(prom_read)
+
+LEAF(prom_write)
+	li	v0, DEC_PROM_WRITE
 	j	v0
 	nop
 END(prom_read)
