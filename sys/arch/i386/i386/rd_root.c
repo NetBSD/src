@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_root.c,v 1.4 1996/10/13 03:19:51 christos Exp $	*/
+/*	$NetBSD: rd_root.c,v 1.5 1996/10/21 01:49:22 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -29,6 +29,7 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/systm.h>
 
 #include <dev/ramdisk.h>
 
