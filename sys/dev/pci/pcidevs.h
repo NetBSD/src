@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.583 2003/10/18 01:33:16 lukem Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.584 2003/10/18 18:53:09 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.585 2003/10/18 01:32:30 lukem Exp 
+ *	NetBSD: pcidevs,v 1.586 2003/10/18 18:51:29 matt Exp 
  */
 
 /*
@@ -1865,6 +1865,7 @@
 #define	PCI_PRODUCT_PHILIPS_SAA7133HL	0x7133		/* SAA7133HL PCI A/V broadcast decoder */
 #define	PCI_PRODUCT_PHILIPS_SAA7134HL	0x7134		/* SAA7134HL PCI A/V broadcast decoder */
 #define	PCI_PRODUCT_PHILIPS_SAA7135HL	0x7135		/* SAA7135HL PCI A/V broadcast decoder */
+#define	PCI_PRODUCT_PHILIPS_SAA7146AH	0x7146		/* SAA7146AH PCI Multimedia bridge */
 
 /* NCR/Symbios Logic products */
 #define	PCI_PRODUCT_SYMBIOS_810	0x0001		/* 53c810 */
