@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.2 1999/03/16 16:30:18 minoura Exp $	*/
+/*	$NetBSD: intio.c,v 1.3 1999/03/18 12:31:58 minoura Exp $	*/
 
 /*
  *
@@ -188,7 +188,7 @@ intio_attach(parent, self, aux)
 		return;
 	}
 
-	printf (" mapped at %08p\n", intiobase);
+	printf (" mapped at %8p\n", intiobase);
 
 	sc->sc_map = extent_create("intiomap",
 				  PHYS_INTIODEV,
@@ -434,7 +434,8 @@ intio_intr (frame)
 /*
  * Intio I/O controler interrupt
  */
-static intio_ivec = 0;
+static u_int8_t intio_ivec = 0;
+
 void
 intio_set_ivec (vec)
 	int vec;
