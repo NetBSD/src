@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.75 2004/01/17 11:47:30 dsl Exp $
+#	$NetBSD: Makefile,v 1.76 2004/01/17 15:40:09 dsl Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -10,7 +10,7 @@ SHSRCS=	alias.c cd.c echo.c error.c eval.c exec.c expand.c \
 	mystring.c options.c parser.c redir.c show.c trap.c output.c var.c \
 	test.c printf.c kill.c
 GENSRCS=arith.c arith_lex.c builtins.c init.c nodes.c syntax.c
-GENHDRS=arith.h builtins.h nodes.h syntax.h token.h
+GENHDRS=arith.h builtins.h nodes.h token.h
 SRCS=	${SHSRCS} ${GENSRCS}
 
 DPSRCS+=${GENHDRS}
@@ -70,12 +70,9 @@ nodes.c: mknodes.sh nodetypes nodes.c.pat
 	${HOST_SH} ${.ALLSRC} ${.OBJDIR}
 	[ -f nodes.h ]
 
-syntax.h: syntax.c
-
 syntax.c: mksyntax
 	${_MKTARGET_CREATE}
 	./${.ALLSRC}
-	[ -f syntax.h ]
 
 .if ${USETOOLS} == "yes"
 COMPATOBJDIR!=	cd ${NETBSDSRCDIR}/tools/compat && ${PRINTOBJDIR}
