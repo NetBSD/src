@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.21 2001/12/01 09:42:39 enami Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.22 2001/12/03 01:47:13 augustss Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.21 2001/12/01 09:42:39 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.22 2001/12/03 01:47:13 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +79,7 @@ int	uscannerdebug = 0;
 #endif
 
 /* Table of scanners that may work with this driver. */
-static const struct scanner_id {
-	uint16_t	vendor;
-	uint16_t	product;
-} scanner_ids [] = {
+static const struct usb_devno uscanner_devs[] = {
 	/* Acer Peripherals */
 	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_320U },
 	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_640U },
@@ -105,6 +102,7 @@ static const struct scanner_id {
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_S20 },
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_5200C },
 #if 0
+	/* Handled by usscanner */
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_5300C },
 #endif
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_6200C },
@@ -114,6 +112,7 @@ static const struct scanner_id {
 	{ USB_VENDOR_AVISION, USB_PRODUCT_AVISION_1200U },
 
 #if 0
+	/* XXX Should be handled by usscanner */
 	/* Microtek */
 	{ USB_VENDOR_SCANLOGIC, USB_PRODUCT_SCANLOGIC_336CX },
 	{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_X6U },
@@ -175,8 +174,8 @@ static const struct scanner_id {
 	/* Canon */
 	{ USB_VENDOR_CANON, USB_PRODUCT_CANON_N656U },
 
-	{ 0, 0 }
 };
+#define uscanner_lookup(v, p) usb_lookup(uscanner_devs, v, p)
 
 #define	USCANNER_BUFFERSIZE	1024
 
@@ -246,19 +245,12 @@ USB_DECLARE_DRIVER(uscanner);
 USB_MATCH(uscanner)
 {
 	USB_MATCH_START(uscanner, uaa);
-	int i;
 
 	if (uaa->iface != NULL)
 		return UMATCH_NONE;
 
-	for (i = 0; scanner_ids[i].vendor != 0; i++) {
-		if (scanner_ids[i].vendor == uaa->vendor &&
-		    scanner_ids[i].product == uaa->product) {
-			return (UMATCH_VENDOR_PRODUCT);
-		}
-	}
-
-	return (UMATCH_NONE);
+	return (uscanner_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 USB_ATTACH(uscanner)

@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.3 2001/11/13 06:24:56 lukem Exp $	*/
+/*	$NetBSD: umct.c,v 1.4 2001/12/03 01:47:12 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.3 2001/11/13 06:24:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.4 2001/12/03 01:47:12 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,37 +142,27 @@ struct	ucom_methods umct_methods = {
 	NULL,
 };
 
-static const struct umct_product {
-	uint16_t	vendor;
-	uint16_t	product;
-} umct_products [] = {
+static const struct usb_devno umct_devs[] = {
 	/* MCT USB-232 Interface Products */
 	{ USB_VENDOR_MCT, USB_PRODUCT_MCT_USB232 },
 	/* Sitecom USB-232 Products */
 	{ USB_VENDOR_MCT, USB_PRODUCT_MCT_SITECOM_USB232 },
 	/* D-Link DU-H3SP USB BAY Hub Products */
 	{ USB_VENDOR_MCT, USB_PRODUCT_MCT_DU_H3SP_USB232 },
-
-	{ 0, 0 }
 };
+#define umct_lookup(v, p) usb_lookup(umct_devs, v, p)
 
 USB_DECLARE_DRIVER(umct);
 
 USB_MATCH(umct)
 {
 	USB_MATCH_START(umct, uaa);
-	int i;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	for (i = 0; umct_products[i].vendor != 0; i++) {
-		if (umct_products[i].vendor == uaa->vendor &&
- 		    umct_products[i].product == uaa->product) {
-			return (UMATCH_VENDOR_PRODUCT);
-		}
-	}
-	return (UMATCH_NONE);
+	return (umct_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 USB_ATTACH(umct)
