@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.52 2002/10/04 18:53:49 elric Exp $
+#	$NetBSD: MAKEDEV,v 1.53 2002/10/21 04:15:03 lukem Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -125,7 +125,7 @@ std)
 	mknod kmem		c 3 1	; chmod 640 kmem ; chgrp kmem kmem
 	mknod mem		c 3 0	; chmod 640 mem ; chgrp kmem mem
 	mknod null		c 3 2	; chmod 666 null
-	mknod zero              c 3 12  ; chmod 666 zero
+	mknod zero		c 3 12	; chmod 666 zero
 	mknod leds		c 3 13	; chmod 666 leds
 	mknod klog		c 33 0	; chmod 600 klog
 	if $nofdesc; then
@@ -327,7 +327,7 @@ ch*|uk*)
 	uk*) name=uk;   unit=${i#uk};   chr=65;;
 	esac
 	rm -f $name$unit
-	mknod $name$unit        c $chr $unit
+	mknod $name$unit	c $chr $unit
 	chgrp operator $name$unit
 	chmod 640 $name$unit
 	;;
@@ -412,9 +412,9 @@ dhu*|dh*|dmf*|dmz*|vt*)
 	esac
 	i=0
 	while [ $i -lt $count ]; do
-	  `printf "mknod tty%s%x c %d %d\n" \
-	     $ch $i $major $(($unit * $count + $i))`
-	  i=$(($i + 1))
+		`printf "mknod tty%s%x c %d %d\n" \
+		     $ch $i $major $(($unit * $count + $i))`
+		i=$(($i + 1))
 	done
 
 	;;
@@ -461,7 +461,6 @@ opty)
 	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
-		
 pty*)
 	class=${i#pty}
 	name=`echo pqrstuvwxyzPQRST | dd bs=1 count=1 skip=$class 2>/dev/null`
@@ -470,9 +469,9 @@ pty*)
 		continue;;
 	S|T)	echo "$0: $i: pty unit conflicts with dhu11 device."
 		continue;;
-	?)      ;;
-	*)      echo "$0: $i: pty unit must be between 0 and 15"
-	        continue ;;
+	?)	;;
+	*)	echo "$0: $i: pty unit must be between 0 and 15"
+		continue ;;
 	esac
 	rm -f tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	jn=0

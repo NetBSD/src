@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.55 2002/10/04 18:53:42 elric Exp $
+#	$NetBSD: MAKEDEV,v 1.56 2002/10/21 04:14:59 lukem Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -190,12 +190,12 @@ md*)
 
 ccd*|cgd*|cd*|raid*|sd*|vnd*)
 	case $i in
-	ccd*)   name=ccd;       unit=${i#ccd};  blk=24; chr=87;;
-	cgd*)   name=cgd;       unit=${i#cgd};  blk=33; chr=104;;
-	cd*)    name=cd;        unit=${i#cd};   blk=25; chr=47;;
-	raid*)  name=raid;      unit=${i#raid}; blk=32; chr=96;;
-	sd*)    name=sd;        unit=${i#sd};   blk=19; chr=9;;
-	vnd*)   name=vnd;       unit=${i#vnd};  blk=2;  chr=11;;
+	ccd*)	name=ccd;	unit=${i#ccd};	blk=24;	chr=87;;
+	cgd*)	name=cgd;	unit=${i#cgd};	blk=33;	chr=104;;
+	cd*)	name=cd;	unit=${i#cd};	blk=25;	chr=47;;
+	raid*)	name=raid;	unit=${i#raid};	blk=32;	chr=96;;
+	sd*)	name=sd;	unit=${i#sd};	blk=19;	chr=9;;
+	vnd*)	name=vnd;	unit=${i#vnd};	blk=2;	chr=11;;
 	esac
 	case $unit in
 	[0-9]|1[0-5])
@@ -227,8 +227,8 @@ ccd*|cgd*|cd*|raid*|sd*|vnd*)
 
 # Serial devices: dc*, scc*.
 #
-#     Create dc* devices as /dev/ttyD[0-3],
-#     for compatibility with NetBSD's vax  dc/dz driver.
+#	Create dc* devices as /dev/ttyD[0-3],
+#	for compatibility with NetBSD's vax  dc/dz driver.
 dc*|dz*)
 	case $i in
 	dc*)		name=dc;	unit=${i#dc};	chr=16;;
@@ -307,16 +307,15 @@ opty)
 	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
-		
 pty*)
 	class=${i#pty}
 	name=`echo pqrstuvwxyzPQRST | dd bs=1 count=1 skip=$class 2>/dev/null`
 	case $name in
 	v)	echo "$0: $i: pty unit conflicts with console ttyv0 device."
-		continue;;
-	?)      ;;
-	*)      echo "$0: $i: pty unit must be between 0 and 15"
-	        continue ;;
+		continue ;;
+	?)	;;
+	*)	echo "$0: $i: pty unit must be between 0 and 15"
+		continue ;;
 	esac
 	rm -f tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	jn=0
