@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.75 2000/07/14 07:21:22 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.76 2000/08/08 23:42:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1565,7 +1565,7 @@ fill_kproc2(p, ki)
 		ki->p_eflag |= EPROC_SLEADER;
 
 	/* XXX Is this double check necessary? */
-	if (P_ZOMBIE(p) || p->p_addr == NULL) {
+	if ((p->p_flag & P_INMEM) == 0 || P_ZOMBIE(p)) {
 		ki->p_uvalid = 0;
 	} else {
 		ki->p_uvalid = 1;
