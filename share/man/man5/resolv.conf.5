@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolv.conf.5,v 1.13 1999/12/28 02:40:38 mjl Exp $
+.\"	$NetBSD: resolv.conf.5,v 1.14 2000/01/03 11:56:06 itojun Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -135,9 +135,11 @@ enable debugging information, by setting RES_DEBUG in _res.options
 (see
 .Xr resolver 3 ).
 .It Sy inet6
-enable support for IPv6 addresses, by setting RES_USE_INET6 in
+enable support for IPv6-only applications, by setting RES_USE_INET6 in
 _res.options (see
 .Xr resolver 3 ).
+The option is meaningful with certain kernel configuration only and
+use of this options is discourated.
 .It Sy ndots:n
 sets a threshold for the number of dots which
 must appear in a name given to res_query (see
