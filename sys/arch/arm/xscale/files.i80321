@@ -1,4 +1,4 @@
-#	$NetBSD: files.i80321,v 1.4 2002/07/29 17:37:14 thorpej Exp $
+#	$NetBSD: files.i80321,v 1.5 2002/07/29 18:40:04 thorpej Exp $
 #
 # Configuration info for Intel i80321 XScale I/O Processor support
 #
@@ -14,5 +14,9 @@ file	arch/arm/xscale/i80321.c		iopxs
 file	arch/arm/xscale/i80321_pci.c		iopxs
 file	arch/arm/xscale/i80321_pci_dma.c	iopxs
 file	arch/arm/xscale/i80321_space.c		iopxs
-
 file	arch/arm/xscale/i80321_local_dma.c	iopxs
+
+# Watchdog timer
+device	iopwdog: sysmon_wdog
+attach	iopwdog at iopxs
+file	arch/arm/xscale/i80321_wdog.c		iopwdog
