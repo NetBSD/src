@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.38 2001/11/27 18:00:55 augustss Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.39 2001/11/27 18:05:30 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.38 2001/11/27 18:00:55 augustss Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.39 2001/11/27 18:05:30 augustss Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -812,7 +812,7 @@ cvt(value, ndigits, flags, sign, decpt, ch, length)
 		mode = 2;		/* ndigits significant digits */
 	}
 
-	if (copysign(1.0, value) < 0) {	/* Use copysign to handle -0.0 */
+	if (value < 0) {
 		value = -value;
 		*sign = '-';
 	} else
