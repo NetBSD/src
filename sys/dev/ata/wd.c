@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.175.2.5 1998/06/10 11:14:34 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.175.2.6 1998/06/13 14:26:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -161,7 +161,7 @@ struct wd_softc {
 #define sc_multi sc_wdc_bio.multi
 #define sc_badsect sc_wdc_bio.badsect
 
-int	wdprobe	__P((struct device *, struct cfdata *, void *));
+int	wdprobe		__P((struct device *, struct cfdata *, void *));
 void	wdattach	__P((struct device *, struct device *, void *));
 int	wdprint	__P((void *, char *));
 
