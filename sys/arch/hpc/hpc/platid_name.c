@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.7 2001/04/20 10:15:03 sato Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.8 2001/05/05 05:45:30 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -246,6 +246,20 @@ struct platid_name platid_name_table[] = {
 	 TEXT("Fujitsu INTERTOP IT300") },
 	{ &platid_mask_MACH_FUJITSU_INTERTOP_IT310,
 	 TEXT("Fujitsu INTERTOP IT310") },
+	{ &platid_mask_MACH_FUJITSU_PENCENTRA,
+	 TEXT("Fujitsu PenCentra") },
+	{ &platid_mask_MACH_FUJITSU_PENCENTRA_130,
+	 TEXT("Fujitsu PenCentra 130") },
+	{ &platid_mask_MACH_FUJITSU_PENCENTRA_130TM,
+	 TEXT("Fujitsu PenCentra 130TM") },
+	{ &platid_mask_MACH_FUJITSU_PENCENTRA_130RF,
+	 TEXT("Fujitsu PenCentra 130RF") },
+	{ &platid_mask_MACH_FUJITSU_PENCENTRA_200,
+	 TEXT("Fujitsu PenCentra 200") },
+	{ &platid_mask_MACH_FUJITSU_PENCENTRA_200CTM,
+	 TEXT("Fujitsu PenCentra 200CTM") },
+	{ &platid_mask_MACH_FUJITSU_PENCENTRA_200CRF,
+	 TEXT("Fujitsu PenCentra 200CRF") },
 #endif /* hpcmips */
 #ifdef hpcmips
 	{ &platid_mask_MACH_PHILIPS,
