@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.13 1999/11/19 18:22:43 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.14 1999/12/07 18:24:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -273,6 +273,7 @@ struct tulip_desc {
 #define	TULIP_ROM_CHIPn_DEVICE_NUMBER(n)	(26 + ((n) * 3))/* B */
 #define	TULIP_ROM_CHIPn_INFO_LEAF_OFFSET(n)	(27 + ((n) * 3))/* W */
 #define	TULIP_ROM_CRC32_CHECKSUM		126		/* W */
+#define	TULIP_ROM_CRC32_CHECKSUM1		94		/* W */
 
 #define	TULIP_ROM_IL_SELECT_CONN_TYPE		0		/* W */
 #define	TULIP_ROM_IL_MEDIA_COUNT		2		/* B */
