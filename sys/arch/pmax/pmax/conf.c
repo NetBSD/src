@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 1995/04/10 07:29:42 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 1995/04/11 10:14:52 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,6 +120,8 @@ cdev_decl(xcfb);
 cdev_decl(dtop);
 #include "dc.h"
 cdev_decl(dc);
+#include "rcons.h"
+cdev_decl(rcons);
 #include "scc.h"
 cdev_decl(scc);
 #include "mfb.h"
@@ -215,6 +217,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),		/* 82: so-called multimedia video out */
 	cdev_notdef(),		/* 83: fd */
 	cdev_notdef(),		/* 84: DTi */
+	cdev_tty_init(NRCONS,rcons),	/* 85: raster console pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
