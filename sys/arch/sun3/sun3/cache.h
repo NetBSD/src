@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.3.4.1 1998/01/25 23:54:11 gwr Exp $	*/
+/*	$NetBSD: cache.h,v 1.3.4.2 1998/01/27 19:28:24 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,14 +37,32 @@
  */
 
 /*
- * All sun3 cache implementations are write-back.
- * Flushes must be done before removing translations
- * from the MMU because the cache uses the MMU.
+ * Internal definitions unique to sun3/68k cache support.
  */
 
-extern int cache_size;
+/* fields in the 68020 cache control register */
+#define	IC_ENABLE	0x0001	/* enable instruction cache */
+#define	IC_FREEZE	0x0002	/* freeze instruction cache */
+#define	IC_CE		0x0004	/* clear instruction cache entry */
+#define	IC_CLR		0x0008	/* clear entire instruction cache */
 
-void cache_flush_page(vm_offset_t pgva);
-void cache_flush_segment(vm_offset_t sgva);
-void cache_flush_context(void);
+#ifdef	_SUN3_
+#define IC_CLEAR (IC_CLR|IC_ENABLE)
+#endif	/* SUN3 */
 
+#ifdef	_SUN3X_
+/* additional fields in the 68030 cache control register */
+#define	IC_BE		0x0010	/* instruction burst enable */
+#define	DC_ENABLE	0x0100	/* data cache enable */
+#define	DC_FREEZE	0x0200	/* data cache freeze */
+#define	DC_CE		0x0400	/* clear data cache entry */
+#define	DC_CLR		0x0800	/* clear entire data cache */
+#define	DC_BE		0x1000	/* data burst enable */
+#define	DC_WA		0x2000	/* write allocate */
+
+#define	CACHE_ON	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
+#define	CACHE_OFF	(DC_CLR|IC_CLR)
+#define	CACHE_CLR	(CACHE_ON)
+#define	IC_CLEAR	(DC_WA|DC_BE|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
+#define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
+#endif	/* SUN3X */
