@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.40 1998/01/21 22:54:56 thorpej Exp $
+.\"	$NetBSD: options.4,v 1.41 1998/02/06 06:06:48 perry Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -126,7 +126,9 @@ SIOC[GS]IF{ADDR,DSTADDR,BRDADDR,NETMASK} interface ioctls, including
 binary compatibility with code written before the introduction of the
 sa_len field in sockaddrs.
 It also enables
-support for some older pre BSD 4.4 socket calls.
+support for some older pre 
+.Bx 4.4
+socket calls.
 .It Cd options COMPAT_SVR4
 On those architectures that support it, this enables binary
 compatibility with
@@ -150,7 +152,8 @@ applications built for the same architecture.  This currently is limited
 to the pmax.  The functionality of this option is unknown.
 .It Cd options COMPAT_FREEBSD
 On those architectures that support it, this enables binary
-compatibility with FreeBSD
+compatibility with
+.Fx
 applications built for the same architecture.  This is obviously limited
 to the i386.
 .It Cd options COMPAT_HPUX
@@ -170,7 +173,9 @@ applications built for the same architecture.  This is currently
 limited to the alpha, and may not even work.
 .It Cd options COMPAT_NOMID
 Enable compatibility with a.out executables that lack a machine id.
-This includes NetBSD 0.8's ZMAGIC format, and 386BSD and BSDI's
+This includes 
+.Nx 0.8 Ns 's
+ZMAGIC format, and 386BSD and BSDI's
 QMAGIC, NMAGIC, and OMAGIC a.out formats.
 .El
 .Ss Debugging Options
@@ -755,7 +760,9 @@ for details.
 This option is currently required.
 .It Cd options MCLSHIFT=value
 This option is the base-2 logarithm of the size of mbuf clusters.
-The BSD networking stack keeps network packets in a linked
+The
+.Bx
+networking stack keeps network packets in a linked
 list, or chain, of kernel buffer objects called mbufs.  The system
 provides larger mbuf clusters as an optimization for large packets,
 instead of using long chains for large packets.
@@ -803,11 +810,17 @@ is a desire to allow daemons without privileges to bind those ports,
 e.g. on firewalls. The security tradeoffs in doing this are subtle.
 This option should only be used by experts.
 .It Cd options TCP_COMPAT_42
-TCP bug compatibility with 4.2BSD.  In 4.2BSD, TCP sequence numbers
+TCP bug compatibility with
+.Bx 4.2 .
+In
+.Bx 4.2 ,
+TCP sequence numbers
 were 32-bit signed values.  Modern implementations of TCP use unsigned
 values.  This option clamps the initial sequence number to start in
 the range 2^31 rather than the full unsigned range of 2^32.  Also,
-under 4.2BSD, keepalive packets must contain at least one byte or else
+under 
+.Bx 4.2 ,
+keepalive packets must contain at least one byte or else
 the remote end would not respond.
 .It Cd options PFIL_HOOKS
 This option turns on the packet filter interface hooks.  See
@@ -934,8 +947,12 @@ when you boot via the bootblocks and don't have a DraCo.
 .It Cd options DISKLABEL_AHDI
 Include support for AHDI (native Atari) disklabels.
 .It Cd options DISKLABEL_NBDA
-Include support for NetBSD-atari labels. If you don't set this option, it
-will be set automatically. NetBSD/atari will not work without it.
+Include support for 
+.Nx Ns Tn /atari
+labels. If you don't set this option, it
+will be set automatically. 
+.Nx Ns Tn /atari
+will not work without it.
 .It Cd options FALCON_SCSI
 Include support for the 5380-SCSI configuration as found on the Falcon.
 .It Cd options RELOC_KERNEL

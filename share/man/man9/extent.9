@@ -1,4 +1,4 @@
-.\"	$NetBSD: extent.9,v 1.8 1997/11/24 06:29:23 lukem Exp $
+.\"	$NetBSD: extent.9,v 1.9 1998/02/06 06:16:22 perry Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,9 @@
 .Ft void
 .Fn extent_print "struct extent *ex"
 .Sh DESCRIPTION
-The NetBSD extent manager provides management of areas of memory or
+The
+.Nx
+extent manager provides management of areas of memory or
 other number spaces (such as I/O ports).  An opaque structure
 called an
 .Nm extent map
@@ -306,7 +308,9 @@ func()
 }
 .Ed
 .Sh CODE REFERENCES
-This section describes places within the NetBSD source tree where
+This section describes places within the
+.Nx
+source tree where
 actual code implementing or using the extent manager can be found.
 All pathnames are relative to
 .Nm /usr/src .
@@ -320,7 +324,9 @@ The i386 bus management code uses the extent manager for managing I/O
 ports and I/O memory.  This code is in the file
 .Nm sys/arch/i386/i386/machdep.c .
 .Sh AUTHOR
-The NetBSD extent manager was architected and implemented by Jason
+The
+.Nx
+extent manager was architected and implemented by Jason
 R. Thorpe <thorpej@NetBSD.ORG>.  Matthias Drochner
 <drochner@zelux6.zel.kfa-juelich.de> contributed to the initial
 testing and optimization of the implementation.  Chris Demetriou
@@ -328,5 +334,7 @@ testing and optimization of the implementation.  Chris Demetriou
 .Sh SEE ALSO
 .Xr malloc 9 .
 .Sh HISTORY
-The NetBSD extent manager appeared in
+The
+.Nx
+extent manager appeared in
 .Nx 1.3 .

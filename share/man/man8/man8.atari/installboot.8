@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.2 1996/06/20 19:41:01 leo Exp $
+.\"	$NetBSD: installboot.8,v 1.3 1998/02/06 06:14:56 perry Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
 .\" All rights reserved.
@@ -80,7 +80,7 @@ label, a\ special first-stage boot program is provided in
 .Pa /usr/mdec/xxboot.ahdi .
 Together with the general second-stage boot program, it is installed
 in the AHDI partition where the
-.Tn NetBSD
+.Nx
 disk label lives. Furthermore,
 the AHDI specifications require an additional bootstrap, which is
 written into the AHDI root sector
@@ -128,10 +128,10 @@ has to create a\ fictitious label, that is not used by the kernel.
 Except for installation of the bootcode on floppy,
 .Nm
 automatically sets the boot preference in NVRAM to
-.Tn NetBSD.
+.Nx .
 .Sh BUGS
 There is currently no easy way to change the NVRAM preference from within
-.Tn NetBSD.
+.Nx .
 .Sh "SEE ALSO"
 .Xr disklabel 8
 .Sh HISTORY

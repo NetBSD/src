@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_msdos.8,v 1.12 1997/10/17 11:30:09 ws Exp $
+.\"	$NetBSD: mount_msdos.8,v 1.13 1998/02/06 05:57:00 perry Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .Dd April 7, 1994
 .Dt MOUNT_MSDOS 8
-.Os NetBSD 0.9a
+.Os NetBSD 1.0
 .Sh NAME
 .Nm mount_msdos
 .Nd mount an MS-DOS file system
@@ -149,9 +149,12 @@ on empty DOS filesystems use
 .Sh HISTORY
 The
 .Nm
-utility first appeared in NetBSD 0.9.
+utility first appeared in
+.Nx 0.9.
 Its predecessor, the
 .Nm mount_pcfs
-utility appeared in NetBSD 0.8, and was abandoned in favor
+utility appeared in
+.Nx 0.8 ,
+and was abandoned in favor
 of the more aptly-named
-.Nm "" .
+.Nm Ns .
