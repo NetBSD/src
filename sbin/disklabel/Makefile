@@ -1,7 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 3/17/94
-#	$Id: Makefile,v 1.12 1994/12/22 10:43:53 cgd Exp $
-
-.include <bsd.own.mk>
+#	$Id: Makefile,v 1.13 1994/12/22 11:14:51 cgd Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c
