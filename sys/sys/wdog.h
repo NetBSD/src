@@ -1,4 +1,4 @@
-/*	$NetBSD: wdog.h,v 1.1 2000/11/04 18:33:33 thorpej Exp $	*/
+/*	$NetBSD: wdog.h,v 1.2 2005/01/09 22:55:35 smb Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -93,6 +93,7 @@ struct wdog_conf {
 #define	WDOG_MODE_DISARMED	0	/* watchdog is disarmed */
 #define	WDOG_MODE_KTICKLE	1	/* kernel tickles watchdog */
 #define	WDOG_MODE_UTICKLE	2	/* user tickles watchdog */
+#define	WDOG_MODE_ETICKLE	3	/* external program tickles watchdog */
 
 #define	WDOG_MODE_MASK		0x03
 

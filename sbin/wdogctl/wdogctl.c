@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.10 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.11 2005/01/09 22:51:32 smb Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wdogctl.c,v 1.10 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: wdogctl.c,v 1.11 2005/01/09 22:51:32 smb Exp $");
 #endif
 
 
@@ -59,47 +59,74 @@ __RCSID("$NetBSD: wdogctl.c,v 1.10 2004/01/05 23:23:34 jmmv Exp $");
 int	main(int, char *[]);
 void	enable_kernel(const char *, u_int);
 void	enable_user(const char *, u_int);
+void	enable_ext(const char *, u_int);
+void	tickle_ext(void);
 void	disable(void);
+void	prep_wmode(struct wdog_mode *, int,  const char *, u_int);
 void	list_timers(void);
 void	usage(void);
 
 int	Aflag;
 
+/* Caution -- ordered list; entries >= CMD_EXT_TICKLE set timers */
+enum	cmd {
+	CMD_NONE,	/* No verb given */
+	CMD_DISABLE,
+	CMD_DOTICKLE,
+	CMD_EXT_TICKLE,
+	CMD_KERN_TICKLE,
+	CMD_USER_TICKLE
+};
+
 int
 main(int argc, char *argv[])
 {
-	int cmds = 0, kflag = 0, uflag = 0, dflag = 0, ch;
+	enum cmd command = CMD_NONE;
+	int period_flag = 0;
+	int ch;
 	u_int period = WDOG_PERIOD_DEFAULT;
 
-	while ((ch = getopt(argc, argv, "Adkp:u")) != -1) {
+	while ((ch = getopt(argc, argv, "Adekp:ut")) != -1) {
 		switch (ch) {
 		case 'A':
-			if (cmds == 0 || dflag)
-				usage();
 			Aflag = 1;
 			break;
 
 		case 'd':
-			dflag = 1;
-			cmds++;
+			if (command != CMD_NONE)
+				usage();
+			command = CMD_DISABLE;
+			break;
+
+		case 'e':
+			if (command != CMD_NONE)
+				usage();
+			command = CMD_EXT_TICKLE;
 			break;
 
 		case 'k':
-			kflag = 1;
-			cmds++;
+			if (command != CMD_NONE)
+				usage();
+			command = CMD_KERN_TICKLE;
+			break;
+
+		case 't':
+			if (command != CMD_NONE)
+				usage();
+			command = CMD_DOTICKLE;
 			break;
 
 		case 'p':
-			if (cmds == 0 || dflag)
-				usage();
+			period_flag = 1;
 			period = atoi(optarg);
 			if (period == -1)
 				usage();
 			break;
 
 		case 'u':
-			uflag = 1;
-			cmds++;
+			if (command != CMD_NONE)
+				usage();
+			command = CMD_USER_TICKLE;
 			break;
 
 		default:
@@ -110,25 +137,51 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (cmds > 1)
-		usage();
-
-	if (kflag) {
-		if (argc != 1)
+	if (command < CMD_EXT_TICKLE) {
+		if (Aflag || period_flag)
 			usage();
-		enable_kernel(argv[0], period);
-	} else if (uflag) {
-		if (argc != 1)
-			usage();
-		enable_user(argv[0], period);
-	} else if (dflag) {
 		if (argc != 0)
 			usage();
-		disable();
-	} else
-		list_timers();
+	}
+	else {
+		if (argc != 1)
+			usage();
+	}
 
+	switch (command) {
+		case CMD_NONE:
+			list_timers();
+			break;
+		case CMD_DISABLE:
+			disable();
+			break;
+		case CMD_DOTICKLE:
+			tickle_ext();
+			break;
+		case CMD_EXT_TICKLE:
+			enable_ext(argv[0], period);
+			break;
+		case CMD_KERN_TICKLE:
+			enable_kernel(argv[0], period);
+			break;
+		case CMD_USER_TICKLE:
+			enable_user(argv[0], period);
+			break;
+	}
 	exit(0);
+}
+
+void
+prep_wmode(struct wdog_mode *wp, int mode,  const char *name, u_int period)
+{
+	if (strlen(name) >= WDOG_NAMESIZE)
+		errx(1, "invalid watchdog timer name: %s", name);
+
+	strlcpy(wp->wm_name, name, sizeof(wp->wm_name));
+	wp->wm_mode = mode;
+	wp->wm_period = period;
+	if (Aflag)
+		wp->wm_mode |= WDOG_FEATURE_ALARM;
 }
 
 void
@@ -137,14 +190,7 @@ enable_kernel(const char *name, u_int period)
 	struct wdog_mode wm;
 	int fd;
 
-	if (strlen(name) >= WDOG_NAMESIZE)
-		errx(1, "invalid watchdog timer name: %s", name);
-	strlcpy(wm.wm_name, name, sizeof(wm.wm_name));
-	wm.wm_mode = WDOG_MODE_KTICKLE;
-	wm.wm_period = period;
-
-	if (Aflag)
-		wm.wm_mode |= WDOG_FEATURE_ALARM;
+	prep_wmode(&wm, WDOG_MODE_KTICKLE, name, period);
 
 	fd = open(_PATH_WATCHDOG, O_RDWR, 0644);
 	if (fd == -1)
@@ -155,6 +201,26 @@ enable_kernel(const char *name, u_int period)
 }
 
 void
+enable_ext(const char *name, u_int period)
+{
+	struct wdog_mode wm;  
+	int fd;
+
+	prep_wmode(&wm, WDOG_MODE_ETICKLE, name, period);
+
+	fd = open(_PATH_WATCHDOG, O_RDWR, 0644);
+	if (fd == -1)
+		err(1, "open %s", _PATH_WATCHDOG);
+	if (ioctl(fd, WDOGIOC_SMODE, &wm) == -1) {
+		err(1, "WDOGIOC_SMODE");
+	}
+	if (ioctl(fd, WDOGIOC_TICKLE) == -1)
+		syslog(LOG_EMERG, "unable to tickle watchdog timer %s: %m",
+		    wm.wm_name);
+	return;
+}
+
+void
 enable_user(const char *name, u_int period)
 {
 	struct wdog_mode wm;  
@@ -162,14 +228,7 @@ enable_user(const char *name, u_int period)
 	pid_t tickler;
 	int fd, rv;
 
-	if (strlen(name) >= WDOG_NAMESIZE)
-		errx(1, "invalid watchdog timer name: %s", name);
-	strlcpy(wm.wm_name, name, sizeof(wm.wm_name));
-	wm.wm_mode = WDOG_MODE_UTICKLE;
-	wm.wm_period = period;
-
-	if (Aflag)
-		wm.wm_mode |= WDOG_FEATURE_ALARM;
+	prep_wmode(&wm, WDOG_MODE_UTICKLE, name, period);
 
 	fd = open(_PATH_WATCHDOG, O_RDWR, 0644);
 	if (fd == -1)
@@ -241,6 +300,18 @@ enable_user(const char *name, u_int period)
 			    wm.wm_name);
 	}
 	/* NOTREACHED */
+}
+
+void
+tickle_ext()
+{
+	int fd;
+
+	fd = open(_PATH_WATCHDOG, O_RDWR, 0644);
+	if (fd == -1)
+		err(1, "open %s", _PATH_WATCHDOG);
+	if (ioctl(fd, WDOGIOC_TICKLE) == -1)
+		fprintf(stderr, "Cannot tickle timer\n");
 }
 
 void
@@ -332,12 +403,19 @@ list_timers(void)
 
 		printf("\t%s, %u second period", cp, wm.wm_period);
 		if (wm.wm_mode != WDOG_MODE_DISARMED) {
-			printf(" [armed, %s tickle",
-			    wm.wm_mode == WDOG_MODE_KTICKLE ?
-			    "kernel" : "user");
-			if (wm.wm_mode == WDOG_MODE_UTICKLE &&
-			    tickler != (pid_t) -1)
-				printf(", pid %d", tickler);
+			switch(wm.wm_mode) {
+				case WDOG_MODE_KTICKLE:
+					printf(" [armed, kernel tickle");
+					break;
+				case WDOG_MODE_UTICKLE:
+					printf(" [armed, user tickle");
+					if (tickler != (pid_t) -1)
+						printf(", pid %d", tickler);
+					break;
+				case WDOG_MODE_ETICKLE:
+					printf(" [armed, external tickle");
+					break;
+			}
 			printf("]");
 		}
 		printf("\n");
@@ -350,10 +428,13 @@ void
 usage(void)
 {
 	fprintf(stderr, "usage: %s\n", getprogname());
+	fprintf(stderr, "       %s -e [-A] [-p seconds] timer\n",
+	    getprogname());
 	fprintf(stderr, "       %s -k [-A] [-p seconds] timer\n",
 	    getprogname());
 	fprintf(stderr, "       %s -u [-A] [-p seconds] timer\n",
 	    getprogname());
+	fprintf(stderr, "       %s -t\n", getprogname());
 	fprintf(stderr, "       %s -d\n", getprogname());
 
 	exit(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.9 2003/10/30 01:58:18 simonb Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.10 2005/01/09 22:51:32 smb Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.9 2003/10/30 01:58:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.10 2005/01/09 22:51:32 smb Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -382,6 +382,7 @@ sysmon_wdog_setmode(struct sysmon_wdog *smw, int mode, u_int period)
 
 	case WDOG_MODE_KTICKLE:
 	case WDOG_MODE_UTICKLE:
+	case WDOG_MODE_ETICKLE:
 		if (sysmon_armed_wdog != NULL) {
 			error = EBUSY;
 			goto out;
