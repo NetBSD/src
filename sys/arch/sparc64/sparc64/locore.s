@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.79 2000/07/19 03:24:07 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.80 2000/07/19 04:36:42 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -55,6 +55,7 @@
  */
 #define	DIAGNOSTIC
 
+#undef	INTR_INTERLOCK		/* Use IH_PEND field to interlock interrupts */
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
 #define	TRAPTRACE		/* Keep history of all traps (unsafe) */
@@ -3975,11 +3976,13 @@ interrupt_vector:
 	brz,pn	%g5, 3f			! NULL means it isn't registered yet.  Skip it.
 	 nop
 setup_sparcintr:
+#ifdef	INTR_INTERLOCK
 	add	%g5, IH_PEND, %g6
 	DLFLUSH(%g6, %g7)
 	ldstub	[%g5+IH_PEND], %g6	! Read pending flag
 	DLFLUSH2(%g7)
 	brnz,pn	%g6, ret_from_intr_vector ! Skip it if it's running
+#endif
 	 add	%g5, IH_PIL, %g6
 	DLFLUSH(%g6, %g7)
 	ldub	[%g5+IH_PIL], %g6	! Read interrupt mask
@@ -10484,7 +10487,9 @@ ENTRY(send_softint)
 	 set	intrpending, %o3
 	ldstub	[%o2 + IH_PEND], %o5
 	mov	8, %o4			! Number of slots to search
+#ifdef INTR_INTERLOCK
 	brnz	%o5, 1f
+#endif
 	 sll	%o1, PTRSHFT+3, %o5	! Find start of table for this IPL
 	add	%o3, %o5, %o3
 2:
