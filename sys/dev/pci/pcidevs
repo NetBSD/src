@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.107 1999/02/19 19:11:33 thorpej Exp $
+$NetBSD: pcidevs,v 1.108 1999/03/09 11:48:03 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -487,6 +487,7 @@ vendor 3DFX		0x121a	3Dfx Interactive
 vendor ARIEL		0x1220	Ariel
 vendor AZTECH		0x122d	Aztech
 vendor 3DO		0x1239	The 3D0 Company
+vendor AVM		0x1244	AVM
 vendor STALLION		0x124d	Stallion Technologies
 vendor LINEARSYS	0x1254	Linear Systems
 vendor ASIX		0x125b	ASIX Electronics
@@ -649,6 +650,9 @@ product AVANCE AVG2302	0x2302	AVG2302
 product AVANCE2 ALG2301	0x2301	ALG2301
 product AVANCE2 ALG2302	0x2302	ALG2302
 
+/* AVM products */
+product AVM FRITZ_CARD		0x0a00	Fritz! Card ISDN Interface
+
 /* Bit3 products */
 product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
 product BIT3 PCIVME2706		0x0300	PCI-VME Interface Mod. 2706
@@ -768,6 +772,9 @@ product DPT SC_RAID	0xa400	SmartCache/Raid
 
 /* Dolphin products */
 product DOLPHIN PCISCI	0x0658	PCI-SCI Bridge
+
+/* ELSA products */
+product ELSA	QS1PCI	0x1000	QuickStep 1000 ISDN card
 
 /* Emulex products */
 product EMULEX LPPFC	0x10df	\"Light Pulse\" FibreChannel adapter
