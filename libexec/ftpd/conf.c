@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29 2000/01/13 00:04:31 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.30 2000/05/20 02:20:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.29 2000/01/13 00:04:31 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.30 2000/05/20 02:20:18 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,15 +67,15 @@ __RCSID("$NetBSD: conf.c,v 1.29 2000/01/13 00:04:31 lukem Exp $");
 #include "extern.h"
 #include "pathnames.h"
 
-static char *strend __P((const char *, char *));
-static int filetypematch __P((char *, int));
+static char *strend(const char *, char *);
+static int filetypematch(char *, int);
 
 
 /*
  * Initialise curclass to an `empty' state
  */
 void
-init_curclass()
+init_curclass(void)
 {
 	struct ftpconv	*conv, *cnext;
 
@@ -115,8 +115,7 @@ init_curclass()
  * define curclass to contain the appropriate settings.
  */
 void
-parse_conf(findclass)
-	char *findclass;
+parse_conf(const char *findclass)
 {
 	FILE		*f;
 	char		*buf, *p;
@@ -459,8 +458,7 @@ parse_conf(findclass)
  * responses with the prefix `code' + "-".
  */
 void
-show_chdir_messages(code)
-	int	code;
+show_chdir_messages(int code)
 {
 	static StringList *slist = NULL;
 
@@ -527,9 +525,7 @@ show_chdir_messages(code)
 }
 
 int
-format_file(file, code)
-	const char *file;
-	int code;
+format_file(const char *file, int code)
 {
 	FILE   *f;
 	char   *buf, *p, *cwd;
@@ -637,9 +633,7 @@ format_file(file, code)
  * not including) s2, otherwise returns NULL.
  */
 static char *
-strend(s1, s2)
-	const char *s1;
-	char *s2;
+strend(const char *s1, char *s2)
 {
 	static	char buf[MAXPATHLEN];
 
@@ -663,9 +657,7 @@ strend(s1, s2)
 }
 
 static int
-filetypematch(types, mode)
-	char	*types;
-	int	mode;
+filetypematch(char *types, int mode)
 {
 	for ( ; types[0] != '\0'; types++)
 		switch (*types) {
@@ -691,8 +683,7 @@ filetypematch(types, mode)
  * multi-threaded ftpd, and that's not likely for a while...
  */
 char **
-do_conversion(fname)
-	const char *fname;
+do_conversion(const char *fname)
 {
 	struct ftpconv	*cp;
 	struct stat	 st;
@@ -765,8 +756,7 @@ do_conversion(fname)
  * (`b', `k', `m', `g'). Returns the number for success, -1 otherwise.
  */
 int
-strsuftoi(arg)
-	const char *arg;
+strsuftoi(const char *arg)
 {
 	char *cp;
 	long val;
@@ -810,7 +800,7 @@ strsuftoi(arg)
  * if possible.
  */ 
 void
-count_users()
+count_users(void)
 {
 	char	fn[MAXPATHLEN];
 	int	fd, i, last;
