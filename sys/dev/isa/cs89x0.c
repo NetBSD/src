@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.1 1998/07/27 01:08:51 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.2 1998/08/07 05:55:14 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -982,6 +982,9 @@ cs_init(sc)
 		sc->sc_ethercom.ec_if.if_flags |= (IFF_UP | IFF_RUNNING);
 		sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 		sc->sc_ethercom.ec_if.if_timer = 0;
+
+		/* Assume we have carrier until we are told otherwise. */
+		sc->sc_carrier = 1;
 	} else {
 		printf("%s: unable to reset chip\n", sc->sc_dev.dv_xname);
 	}
@@ -1242,7 +1245,12 @@ cs_mediastatus(ifp, ifmr)
 	 */
 	ifmr->ifm_active = sc->sc_media.ifm_cur->ifm_media;
 
-	/* XXX Carrier status */
+	if (ifp->if_flags & IFF_UP) {
+		/* Interface up, status is valid. */
+		ifmr->ifm_status = IFM_AVALID |
+		    (sc->sc_carrier ? IFM_ACTIVE : 0);
+	}
+		else ifmr->ifm_status = 0;
 }
 
 int 
@@ -1401,6 +1409,10 @@ cs_transmit_event(sc, txEvent)
 		/* Increment the output error count */
 		ifp->if_oerrors++;
 
+		/* Note carrier loss. */
+		if (txEvent & TX_EVENT_LOSS_CRS)
+			sc->sc_carrier = 0;
+
 		/* If debugging is enabled then log error messages */
 		if (ifp->if_flags & IFF_DEBUG) {
 			if (txEvent & TX_EVENT_LOSS_CRS) {
@@ -1424,11 +1436,13 @@ cs_transmit_event(sc, txEvent)
 			}
 		}
 	}
-#ifdef SHARK
 	else {
+		/* Transmission successful, carrier is up. */
+		sc->sc_carrier = 1;
+#ifdef SHARK
 		ledNetActive();
-	}
 #endif
+	}
 
 	/* Add the number of collisions for this frame */
 	if (txEvent & TX_EVENT_16_COLL) {
@@ -1581,6 +1595,9 @@ cs_process_receive(sc)
 #endif
 
 	ifp = &sc->sc_ethercom.ec_if;
+
+	/* Received a packet; carrier is up. */
+	sc->sc_carrier = 1;
 
 	/* Initialize the frame offset */
 	frameOffset = PKTPG_RX_LENGTH;
