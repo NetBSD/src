@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.21 2001/05/01 14:42:56 he Exp $
+.\"	$NetBSD: main,v 1.61.2.22 2001/05/01 16:37:44 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -186,7 +186,7 @@ of the source tree.
 The following are highlights only:
 .Bl -bullet
 .It
-A driver for the Aironet/Cisco wireless PCMCIA cards was added;
+A driver for the Aironet/Cisco wireless PCMCIA cards has been added;
 see
 .Xr an 4 .
 .It
@@ -216,10 +216,13 @@ The
 file system has again been substantially updated, but is still
 experimental.
 .It
-The
+Ultra/66 support has been added for capable VIA chipsets, and
+Ultra/100 support has been added for the HPT370, Promise and Intel
+ICH2 controllers in the
 .Xr pciide 4
-driver has added support for Ultra/100 on HPT370, Promise and Intel ICH2
-controllers, and support for some new controllers was also added.
+driver.
+Support for Intel 82801BAM controllers has also been added, and
+handling of Ali controllers has been improved.
 .It
 OpenSSH has been updated to deal with a security issue (SA2001-003).
 .It
@@ -236,7 +239,8 @@ driver has been fixed to properly support the dp83815, as found in
 current Netgear FA311 10/100 cards.
 .It
 .Xr ftpd 8
-has been updated to deal with a security issue (SA2000-018).
+has been updated to deal with two security issues (SA2000-018 and
+SA2001-005).
 .It
 .Xr ntpd 8
 has been updated to deal with a security issue (SA2001-004).
