@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.8 1998/05/11 19:58:18 thorpej Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.9 1998/07/05 04:37:43 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,6 +67,8 @@ SOFTWARE.
  * ISO protocol family includes TP, CLTP, CLNP, 8208
  * TP and CLNP are implemented here.
  */
+
+#include "opt_iso.h"
 
 #ifdef	ISO
 #include <sys/param.h>

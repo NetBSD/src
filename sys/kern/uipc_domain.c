@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.21 1998/07/05 02:12:33 jonathan Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.22 1998/07/05 04:37:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,6 +38,7 @@
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_ccitt.h"
+#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.214 1998/07/05 03:14:41 jonathan Exp $
+#	$NetBSD: files,v 1.215 1998/07/05 04:37:41 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -39,10 +39,11 @@ defopt	COMPAT_ULTRIX
 # networking protocols
 defopt	INET
 defopt	opt_atalk.h	NETATALK
+defopt	opt_iso.h	ISO TPIP	# ISO network stack
 defopt	EON				# ISO clnp over IP
 defopt	CCITT				# 
-defopt	HDLC				# ccitt over HDLC
-defopt	LLC				# LLC2 and IEEE LLC encapsulations
+defopt	HDLC				# CCITT over HDLC
+defopt	LLC				# CCITT over LLC2 (also IEEE LLC?)
 
 # networking options
 defopt	GATEWAY
