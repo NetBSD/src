@@ -1,3 +1,4 @@
+./dev/vga
 ./sbin/fdisk
 ./usr/bin/cursor
 ./usr/bin/fdformat
@@ -52,6 +53,8 @@
 ./usr/sbin/bad144
 ./usr/sbin/ispcvt
 ./usr/sbin/zzz
+./usr/share/pcvt
+./usr/share/pcvt/fonts
 ./usr/share/pcvt/fonts/vt220h.808
 ./usr/share/pcvt/fonts/vt220h.810
 ./usr/share/pcvt/fonts/vt220h.814
