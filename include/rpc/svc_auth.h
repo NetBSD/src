@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth.h,v 1.7 1998/02/11 23:01:28 lukem Exp $	*/
+/*	$NetBSD: svc_auth.h,v 1.7.8.1 2000/06/23 15:46:05 minoura Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -46,6 +46,9 @@
  */
 __BEGIN_DECLS
 extern enum auth_stat _authenticate __P((struct svc_req *, struct rpc_msg *));
+extern int svc_auth_reg __P((int, enum auth_stat (*) __P((struct svc_req *,
+							  struct rpc_msg *))));
+
 __END_DECLS
 
 #endif /* !_RPC_SVC_AUTH_H_ */

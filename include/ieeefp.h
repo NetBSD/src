@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.4 1998/01/09 08:03:43 perry Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.4.8.1 2000/06/23 15:45:57 minoura Exp $	*/
 
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
@@ -11,11 +11,11 @@
 #include <sys/cdefs.h>
 #include <machine/ieeefp.h>
 
-extern fp_rnd    fpgetround __P((void));
-extern fp_rnd    fpsetround __P((fp_rnd));
-extern fp_except fpgetmask __P((void));
-extern fp_except fpsetmask __P((fp_except));
-extern fp_except fpgetsticky __P((void));
-extern fp_except fpsetsticky __P((fp_except));
+fp_rnd    fpgetround __P((void));
+fp_rnd    fpsetround __P((fp_rnd));
+fp_except fpgetmask __P((void));
+fp_except fpsetmask __P((fp_except));
+fp_except fpgetsticky __P((void));
+fp_except fpsetsticky __P((fp_except));
 
 #endif /* _IEEEFP_H_ */

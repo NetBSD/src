@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.12 2000/02/11 00:07:14 thorpej Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.12.2.1 2000/06/23 15:45:57 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,14 +54,14 @@ typedef struct _dl_info {
  * User interface to the run-time linker.
  */
 __BEGIN_DECLS
-extern void	*dlopen __P((const char *, int));
-extern int	dlclose __P((void *));
-extern void	*dlsym __P((void *, const char *));
+void	*dlopen __P((const char *, int));
+int	dlclose __P((void *));
+void	*dlsym __P((void *, const char *));
 #if !defined(_XOPEN_SOURCE)
-extern int	dladdr __P((const void *, Dl_info *));
-extern int	dlctl __P((void *, int, void *));
+int	dladdr __P((const void *, Dl_info *));
+int	dlctl __P((void *, int, void *));
 #endif
-extern __aconst char *dlerror __P((void));
+__aconst char *dlerror __P((void));
 __END_DECLS
 
 /* Values for dlopen `mode'. */
