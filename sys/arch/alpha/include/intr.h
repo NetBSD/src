@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.13 1998/07/07 22:24:40 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.14 1998/07/18 21:27:26 is Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -70,6 +70,8 @@ _splraise(s)
 #define splclock()              _splraise(ALPHA_PSL_IPL_CLOCK)
 #define splstatclock()          _splraise(ALPHA_PSL_IPL_CLOCK)
 #define splhigh()               _splraise(ALPHA_PSL_IPL_HIGH)
+
+#define spllpt()		spltty()
 
 /*
  * simulated software interrupt register

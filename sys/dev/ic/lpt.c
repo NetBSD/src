@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.49 1998/02/02 22:55:03 cgd Exp $	*/
+/*	$NetBSD: lpt.c,v 1.50 1998/07/18 21:27:25 is Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -227,7 +227,7 @@ lptwakeup(arg)
 	struct lpt_softc *sc = arg;
 	int s;
 
-	s = spltty();
+	s = spllpt();
 	lptintr(sc);
 	splx(s);
 
@@ -315,7 +315,7 @@ lptpushbytes(sc)
 			if ((sc->sc_state & LPT_OBUSY) == 0) {
 				LPRINTF(("%s: write %u\n", sc->sc_dev.dv_xname,
 				    sc->sc_count));
-				s = spltty();
+				s = spllpt();
 				(void) lptintr(sc);
 				splx(s);
 			}

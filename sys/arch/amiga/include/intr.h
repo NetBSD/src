@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 1998/04/16 21:28:00 is Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 1998/07/18 21:27:27 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis.
@@ -52,5 +52,7 @@
 #undef splaudio
 #define splaudio spl6
 #endif
+
+#define spllpt()	spl6()
 
 #endif

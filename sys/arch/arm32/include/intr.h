@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.1 1997/10/14 09:20:19 mark Exp $	*/
+/* 	$NetBSD: intr.h,v 1.2 1998/07/18 21:27:26 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -55,5 +55,7 @@
 #define	IST_LEVEL	3	/* level-triggered */
 
 #include <machine/irqhandler.h>
+
+#define spllpt() spltty()
 
 #endif	/* _ARM32_INTR_H */

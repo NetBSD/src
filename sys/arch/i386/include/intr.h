@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 1997/03/21 04:34:18 mycroft Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 1998/07/18 21:27:27 is Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -123,6 +123,8 @@ spllower(ncpl)
 #define	splclock()	splraise(imask[IPL_CLOCK])
 #define	splstatclock()	splclock()
 #define	splserial()	splraise(imask[IPL_SERIAL])
+
+#define spllpt()	spltty()
 
 /*
  * Software interrupt masks

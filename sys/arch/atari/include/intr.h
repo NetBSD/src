@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 1998/05/25 10:42:21 leo Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 1998/07/18 21:27:26 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -101,6 +101,8 @@
 #define splnet()	_splraise(PSL_S|PSL_IPL3)
 #define spltty()	_splraise(PSL_S|PSL_IPL4)
 #define splimp()	_splraise(PSL_S|PSL_IPL4)
+
+#define spllpt()	spltty()
 
 #define splclock()	spl6()
 #define splstatclock()	spl6()
