@@ -1,7 +1,7 @@
 #
 #	SCSITEST -- Generic ISA machine -- scsi test kernel
 #
-#	$Id: BTTEST,v 1.15 1993/08/30 07:07:56 deraadt Exp $
+#	$Id: BTTEST,v 1.16 1993/09/13 14:22:46 brezak Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -17,6 +17,7 @@ options		SCSI
 options		DDB
 options		"MATH_EMULATE"
 options		"COMPAT_NOMID"
+options		"MACHINE_NONCONTIG"
 
 config		netbsd	root on sd0 swap on sd0
 

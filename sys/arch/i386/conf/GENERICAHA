@@ -1,7 +1,7 @@
 #
 # GENERICAHA -- Generic machine w/aha driver -- distribution floppy
 #
-#	$Id: GENERICAHA,v 1.27 1993/09/01 02:31:10 mycroft Exp $
+#	$Id: GENERICAHA,v 1.28 1993/09/13 14:22:48 brezak Exp $
 #
 
 machine		"i386"
@@ -20,6 +20,7 @@ options		KERNFS
 options		SCSI
 options		"MATH_EMULATE"
 options		"COMPAT_NOMID"
+options		"MACHINE_NONCONTIG"
 
 config		netbsd	root on wd0 swap on wd0 and sd0
 

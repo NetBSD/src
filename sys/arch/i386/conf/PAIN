@@ -1,7 +1,7 @@
 #
 # PAIN -- kernel for another of cgd's 486/50 EISA boxes...
 #
-#	$Id: PAIN,v 1.13 1993/08/30 07:08:00 deraadt Exp $
+#	$Id: PAIN,v 1.14 1993/09/13 14:22:51 brezak Exp $
 #
 machine         "i386"
 cpu             "I486_CPU"
@@ -22,6 +22,7 @@ options		KTRACE
 options		ACCOUNTING
 options		SCSI
 options		"COMPAT_NOMID"
+options		"MACHINE_NONCONTIG"
 
 options		DDB
 options		"SYMTAB_SPACE=70000"
