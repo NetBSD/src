@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.2 2003/09/08 19:17:29 thorpej Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.3 2003/10/15 02:18:52 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -707,17 +707,13 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 int
 sk_init_tx_ring(struct sk_if_softc *sc_if)
 {
-	struct sk_softc		*sc = sc_if->sk_softc;
 	struct sk_chain_data	*cd = &sc_if->sk_cdata;
 	struct sk_ring_data	*rd = sc_if->sk_rdata;
-	bus_dmamap_t		dmamap;
-	struct sk_txmap_entry	*entry;
 	int			i;
 
 	bzero((char *)sc_if->sk_rdata->sk_tx_ring,
 	    sizeof(struct sk_tx_desc) * SK_TX_RING_CNT);
 
-	SLIST_INIT(&sc_if->sk_txmap_listhead);
 	for (i = 0; i < SK_TX_RING_CNT; i++) {
 		cd->sk_tx_chain[i].sk_desc = &rd->sk_tx_ring[i];
 		if (i == (SK_TX_RING_CNT - 1)) {
@@ -727,23 +723,14 @@ sk_init_tx_ring(struct sk_if_softc *sc_if)
 			cd->sk_tx_chain[i].sk_next = &cd->sk_tx_chain[i + 1];
 			rd->sk_tx_ring[i].sk_next = SK_TX_RING_ADDR(sc_if,i+1);
 		}
-
-		if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, SK_NTXSEG,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT, &dmamap))
-			return (ENOBUFS);
-
-		entry = malloc(sizeof(*entry), M_DEVBUF, M_NOWAIT);
-		if (!entry) {
-			bus_dmamap_destroy(sc->sc_dmatag, dmamap);
-			return (ENOBUFS);
-		}
-		entry->dmamap = dmamap;
-		SLIST_INSERT_HEAD(&sc_if->sk_txmap_listhead, entry, link);
 	}
 
 	sc_if->sk_cdata.sk_tx_prod = 0;
 	sc_if->sk_cdata.sk_tx_cons = 0;
 	sc_if->sk_cdata.sk_tx_cnt = 0;
+
+	SK_CDTXSYNC(sc_if, 0, SK_TX_RING_CNT,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	return (0);
 }
@@ -810,6 +797,8 @@ sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 	c->sk_mbuf = m_new;
 	r->sk_data_lo = dmamap->dm_segs[0].ds_addr;
 	r->sk_ctl = dmamap->dm_segs[0].ds_len | SK_RXSTAT;
+
+	SK_CDRXSYNC(sc_if, i, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	return(0);
 }
@@ -1027,9 +1016,11 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	struct sk_if_softc *sc_if = (struct sk_if_softc *) self;
 	struct sk_softc *sc = (struct sk_softc *)parent;
 	struct skc_attach_args *sa = aux;
+	struct sk_txmap_entry	*entry;
 	struct ifnet *ifp;
-	caddr_t kva;
 	bus_dma_segment_t seg;
+	bus_dmamap_t dmamap;
+	caddr_t kva;
 	int i, rseg;
 
 	sc_if->sk_port = sa->skc_port;
@@ -1057,7 +1048,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 			sk_win_read_1(sc, SK_MAC0_0 + (sa->skc_port * 8) + i);
 
 
-	printf(": Ethernet address %s\n",
+	aprint_normal(": Ethernet address %s\n",
 	    ether_sprintf(sc_if->sk_enaddr));
 
 	/*
@@ -1111,7 +1102,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		sc_if->sk_phyaddr = SK_PHYADDR_MARV;
 		break;
 	default:
-		printf("%s: unsupported PHY type: %d\n",
+		aprint_error("%s: unsupported PHY type: %d\n",
 		    sc->sk_dev.dv_xname, sc_if->sk_phytype);
 		return;
 	}
@@ -1119,12 +1110,13 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	/* Allocate the descriptor queues. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct sk_ring_data),
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't alloc rx buffers\n", sc->sk_dev.dv_xname);
+		aprint_error("%s: can't alloc rx buffers\n",
+		    sc->sk_dev.dv_xname);
 		goto fail;
 	}
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
 	    sizeof(struct sk_ring_data), &kva, BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%lu bytes)\n",
+		aprint_error("%s: can't map dma buffers (%lu bytes)\n",
 		       sc_if->sk_dev.dv_xname,
 		       (u_long) sizeof(struct sk_ring_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
@@ -1133,7 +1125,8 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct sk_ring_data), 1,
 	    sizeof(struct sk_ring_data), 0, BUS_DMA_NOWAIT,
             &sc_if->sk_ring_map)) {
-		printf("%s: can't create dma map\n", sc_if->sk_dev.dv_xname);
+		aprint_error("%s: can't create dma map\n",
+		    sc_if->sk_dev.dv_xname);
 		bus_dmamem_unmap(sc->sc_dmatag, kva,
 		    sizeof(struct sk_ring_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
@@ -1141,13 +1134,50 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (bus_dmamap_load(sc->sc_dmatag, sc_if->sk_ring_map, kva,
 	    sizeof(struct sk_ring_data), NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load dma map\n", sc_if->sk_dev.dv_xname);
+		aprint_error("%s: can't load dma map\n",
+		    sc_if->sk_dev.dv_xname);
 		bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
 		bus_dmamem_unmap(sc->sc_dmatag, kva,
 		    sizeof(struct sk_ring_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
 		goto fail;
 	}
+
+	for (i = 0; i < SK_RX_RING_CNT; i++)
+		sc_if->sk_cdata.sk_rx_chain[i].sk_mbuf = NULL;
+
+	SLIST_INIT(&sc_if->sk_txmap_listhead);
+	for (i = 0; i < SK_TX_RING_CNT; i++) {
+		sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf = NULL;
+
+		if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, SK_NTXSEG,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT, &dmamap)) {
+			aprint_error("%s: Can't create TX dmamap\n",
+				sc_if->sk_dev.dv_xname);
+			bus_dmamap_unload(sc->sc_dmatag, sc_if->sk_ring_map);
+			bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
+			bus_dmamem_unmap(sc->sc_dmatag, kva,
+			    sizeof(struct sk_ring_data));
+			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+			goto fail;
+		}
+
+		entry = malloc(sizeof(*entry), M_DEVBUF, M_NOWAIT);
+		if (!entry) {
+			aprint_error("%s: Can't alloc txmap entry\n",
+				sc_if->sk_dev.dv_xname);
+			bus_dmamap_destroy(sc->sc_dmatag, dmamap);
+			bus_dmamap_unload(sc->sc_dmatag, sc_if->sk_ring_map);
+			bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
+			bus_dmamem_unmap(sc->sc_dmatag, kva,
+			    sizeof(struct sk_ring_data));
+			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+			goto fail;
+		}
+		entry->dmamap = dmamap;
+		SLIST_INSERT_HEAD(&sc_if->sk_txmap_listhead, entry, link);
+	}
+
         sc_if->sk_rdata = (struct sk_ring_data *)kva;
 	bzero(sc_if->sk_rdata, sizeof(struct sk_ring_data));
 
@@ -1241,10 +1271,11 @@ skcprint(void *aux, const char *pnp)
 	struct skc_attach_args *sa = aux;
 
 	if (pnp)
-		printf("sk port %c at %s",
+		aprint_normal("sk port %c at %s",
 		    (sa->skc_port == SK_PORT_A) ? 'A' : 'B', pnp);
 	else
-		printf(" port %c", (sa->skc_port == SK_PORT_A) ? 'A' : 'B');
+		aprint_normal(" port %c",
+		    (sa->skc_port == SK_PORT_A) ? 'A' : 'B');
 	return (UNCONF);
 }
 
@@ -1287,7 +1318,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			irq = pci_conf_read(pc, pa->pa_tag, SK_PCI_INTLINE);
 
 			/* Reset the power state. */
-			printf("%s chip is in D%d power mode "
+			aprint_normal("%s chip is in D%d power mode "
 			    "-- setting to D0\n", sc->sk_dev.dv_xname,
 			    command & SK_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
@@ -1320,13 +1351,13 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sk_type = SK_YUKON;
 		break;
 	default:
-		printf(": unknown device!\n");
+		aprint_error(": unknown device!\n");
 		goto fail;
 	}
 
 #ifdef SK_USEIOSPACE
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf(": failed to enable I/O ports!\n");
+		aprint_error(": failed to enable I/O ports!\n");
 		goto fail;
 	}
 	/*
@@ -1334,12 +1365,12 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (pci_mapreg_map(pa, SK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
 			   &iobase, &iosize)) {
-		printf(": can't find i/o space\n");
+		aprint_error(": can't find i/o space\n");
 		goto fail;
 	}
 #else
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping!\n");
+		aprint_error(": failed to enable memory mapping!\n");
 		goto fail;
 	}
 	memtype = pci_mapreg_type(pc, pa->pa_tag, SK_PCI_LOMEM);
@@ -1351,7 +1382,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 				   &iobase, &iosize) == 0)
                         break;
         default:
-                printf("%s: can't find mem space\n",
+                aprint_error("%s: can't find mem space\n",
 		       sc->sk_dev.dv_xname);
                 return;
 	}
@@ -1364,19 +1395,19 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt\n");
+		aprint_error(": couldn't map interrupt\n");
 		goto fail;
 	}
 
 	intrstr = pci_intr_string(pc, ih);
 	sc->sk_intrhand = pci_intr_establish(pc, ih, IPL_NET, sk_intr, sc);
 	if (sc->sk_intrhand == NULL) {
-		printf(": couldn't establish interrupt");
+		aprint_error(": couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
+			aprint_normal(" at %s", intrstr);
 		goto fail;
 	}
-	printf(": %s\n", intrstr);
+	aprint_normal(": %s\n", intrstr);
 
 	/* Reset the adapter. */
 	sk_reset(sc);
@@ -1405,7 +1436,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			sc->sk_rboff = SK_RBOFF_0;
 			break;
 		default:
-			printf("%s: unknown ram size: %d\n",
+			aprint_error("%s: unknown ram size: %d\n",
 			       sc->sk_dev.dv_xname, val);
 			goto fail;
 			break;
@@ -1438,13 +1469,13 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sk_pmd = IFM_1000_T;
 		break;
 	default:
-		printf("%s: unknown media type: 0x%x\n",
+		aprint_error("%s: unknown media type: 0x%x\n",
 		    sc->sk_dev.dv_xname, sk_win_read_1(sc, SK_PMDTYPE));
 		goto fail;
 	}
 
 	/* Announce the product name. */
-	printf("%s: %s\n", sc->sk_dev.dv_xname, sc->sk_vpd_prodname);
+	aprint_normal("%s: %s\n", sc->sk_dev.dv_xname, sc->sk_vpd_prodname);
 
 	skca.skc_port = SK_PORT_A;
 	(void)config_found(&sc->sk_dev, &skca, skcprint);
@@ -1500,6 +1531,10 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 
 	DPRINTFN(3, ("sk_encap: dm_nsegs=%d\n", txmap->dm_nsegs));
 
+	/* Sync the DMA map. */
+	bus_dmamap_sync(sc->sc_dmatag, txmap, 0, txmap->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+
 	for (i = 0; i < txmap->dm_nsegs; i++) {
 		if ((SK_TX_RING_CNT - (sc_if->sk_cdata.sk_tx_cnt + cnt)) < 2) {
 			DPRINTFN(1, ("sk_encap: too few descriptors free\n"));
@@ -1523,7 +1558,16 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	sc_if->sk_cdata.sk_tx_map[cur] = entry;
 	sc_if->sk_rdata->sk_tx_ring[cur].sk_ctl |=
 		SK_TXCTL_LASTFRAG|SK_TXCTL_EOF_INTR;
+
+	/* Sync descriptors before handing to chip */
+	SK_CDTXSYNC(sc_if, *txidx, txmap->dm_nsegs,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
 	sc_if->sk_rdata->sk_tx_ring[*txidx].sk_ctl |= SK_TXCTL_OWN;
+
+	/* Sync first descriptor to hand it off */
+	SK_CDTXSYNC(sc_if, *txidx, 1, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
 	sc_if->sk_cdata.sk_tx_cnt += cnt;
 
 #ifdef SK_DEBUG
@@ -1553,9 +1597,11 @@ sk_start(struct ifnet *ifp)
         u_int32_t		idx = sc_if->sk_cdata.sk_tx_prod;
 	int			pkts = 0;
 
-	DPRINTFN(3, ("sk_start\n"));
+	DPRINTFN(3, ("sk_start (idx %d, tx_chain[idx] %p)\n", idx,
+		sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf));
 
 	while(sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf == NULL) {
+
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
@@ -1635,21 +1681,36 @@ sk_rxeof(struct sk_if_softc *sc_if)
 	u_int32_t		rxstat;
 	bus_dmamap_t		dmamap;
 
-	DPRINTFN(3, ("sk_rxeof\n"));
-
 	i = sc_if->sk_cdata.sk_rx_prod;
 
-	while(!(sc_if->sk_rdata->sk_rx_ring[i].sk_ctl & SK_RXCTL_OWN)) {
+	DPRINTFN(3, ("sk_rxeof %d\n", i));
+
+	for (;;) {
 		cur = i;
+
+		/* Sync the descriptor */
+		SK_CDRXSYNC(sc_if, cur,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+		if (sc_if->sk_rdata->sk_rx_ring[cur].sk_ctl & SK_RXCTL_OWN) {
+			/* Invalidate the descriptor -- it's not ready yet */
+			SK_CDRXSYNC(sc_if, cur, BUS_DMASYNC_PREREAD);
+			sc_if->sk_cdata.sk_rx_prod = i;
+			break;
+		}
+
 		cur_rx = &sc_if->sk_cdata.sk_rx_chain[cur];
 		cur_desc = &sc_if->sk_rdata->sk_rx_ring[cur];
+		dmamap = sc_if->sk_cdata.sk_rx_map[cur];
+
+		bus_dmamap_sync(sc_if->sk_softc->sc_dmatag, dmamap, 0,
+		    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 		rxstat = cur_desc->sk_xmac_rxstat;
 		m = cur_rx->sk_mbuf;
 		cur_rx->sk_mbuf = NULL;
 		total_len = SK_RXBYTES(cur_desc->sk_ctl);
 
-		dmamap = sc_if->sk_cdata.sk_rx_map[cur];
 		sc_if->sk_cdata.sk_rx_map[cur] = 0;
 
 		SK_INC(i, SK_RX_RING_CNT);
@@ -1695,8 +1756,6 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		/* pass it on. */
 		(*ifp->if_input)(ifp, m);
 	}
-
-	sc_if->sk_cdata.sk_rx_prod = i;
 }
 
 void
@@ -1705,7 +1764,7 @@ sk_txeof(struct sk_if_softc *sc_if)
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct sk_tx_desc	*cur_tx = NULL;
 	struct ifnet		*ifp = &sc_if->sk_ethercom.ec_if;
-	u_int32_t		idx;
+	u_int32_t		idx, nsegs;
 	struct sk_txmap_entry	*entry;
 
 	DPRINTFN(3, ("sk_txeof\n"));
@@ -1716,20 +1775,29 @@ sk_txeof(struct sk_if_softc *sc_if)
 	 */
 	idx = sc_if->sk_cdata.sk_tx_cons;
 	while(idx != sc_if->sk_cdata.sk_tx_prod) {
+		entry = sc_if->sk_cdata.sk_tx_map[idx];
+		if (!entry)
+			break;
+
+		nsegs = entry->dmamap->dm_nsegs;
+		SK_CDTXSYNC(sc_if, idx, nsegs,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
 		cur_tx = &sc_if->sk_rdata->sk_tx_ring[idx];
 #ifdef SK_DEBUG
 		if (skdebug >= 3)
 			sk_dump_txdesc(cur_tx, idx);
 #endif
-		if (cur_tx->sk_ctl & SK_TXCTL_OWN)
+		if (cur_tx->sk_ctl & SK_TXCTL_OWN) {
+			SK_CDTXSYNC(sc_if, idx, nsegs, BUS_DMASYNC_PREREAD);
 			break;
+		}
 		if (cur_tx->sk_ctl & SK_TXCTL_LASTFRAG)
 			ifp->if_opackets++;
 		if (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf != NULL) {
 			m_freem(sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf);
 			sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf = NULL;
 
-			entry = sc_if->sk_cdata.sk_tx_map[idx];
 			bus_dmamap_sync(sc->sc_dmatag, entry->dmamap, 0,
 			    entry->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
@@ -2459,7 +2527,6 @@ sk_stop(struct ifnet *ifp, int disable)
 	SK_XM_WRITE_2(sc_if, XM_IMR, 0xFFFF);
 
 	/* Free RX and TX mbufs still in the queues. */
-	if ( disable ) {
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
 		if (sc_if->sk_cdata.sk_rx_chain[i].sk_mbuf != NULL) {
 			m_freem(sc_if->sk_cdata.sk_rx_chain[i].sk_mbuf);
@@ -2472,7 +2539,6 @@ sk_stop(struct ifnet *ifp, int disable)
 			m_freem(sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf);
 			sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf = NULL;
 		}
-	}
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
