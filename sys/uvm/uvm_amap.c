@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.34 2001/09/15 20:36:44 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.35 2001/09/19 03:41:46 chs Exp $	*/
 
 /*
  *
@@ -248,7 +248,7 @@ amap_alloc(sz, padsz, waitf)
 /*
  * amap_free: free an amap
  *
- * => the amap must be locked (mainly for simplelock accounting)
+ * => the amap must be unlocked
  * => the amap should have a zero reference count and be empty
  */
 void
@@ -258,7 +258,7 @@ amap_free(amap)
 	UVMHIST_FUNC("amap_free"); UVMHIST_CALLED(maphist);
 
 	KASSERT(amap->am_ref == 0 && amap->am_nused == 0);
-	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+	LOCK_ASSERT(!simple_lock_held(&amap->am_l));
 	free(amap->am_slots, M_UVMAMAP);
 	free(amap->am_bckptr, M_UVMAMAP);
 	free(amap->am_anon, M_UVMAMAP);
@@ -266,7 +266,6 @@ amap_free(amap)
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
 		free(amap->am_ppref, M_UVMAMAP);
 #endif
-	amap_unlock(amap);	/* mainly for lock debugging */
 	pool_put(&uvm_amap_pool, amap);
 	UVMHIST_LOG(maphist,"<- done, freed amap = 0x%x", amap, 0, 0, 0);
 }
@@ -500,7 +499,7 @@ amap_wipeout(amap)
 	UVMHIST_FUNC("amap_wipeout"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(amap=0x%x)", amap, 0,0,0);
 
-	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+	amap_unlock(amap);
 	for (lcv = 0 ; lcv < amap->am_nused ; lcv++) {
 		int refs;
 
@@ -523,6 +522,20 @@ amap_wipeout(amap)
 
 			uvm_anfree(anon);
 		}
+
+		/*
+		 * XXX
+		 * releasing the swap space held by an N anons is an O(N^2)
+		 * operation because of the implementation of extents.
+		 * if there are many anons, tearing down an exiting process'
+		 * address space can take many seconds, which causes very
+		 * annoying pauses.  we yield here to give other processes
+		 * a chance to run.  this should be removed once the performance
+		 * of swap space management is improved.
+		 */
+
+		if (curproc->p_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+			preempt(NULL);
 	}
 
 	/*
@@ -644,6 +657,7 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 	if (srcamap->am_ref == 1) {		/* take it over? */
 		entry->etype &= ~UVM_ET_NEEDSCOPY;
 		amap->am_ref--;		/* drop final reference to map */
+		amap_unlock(amap);
 		amap_free(amap);	/* dispose of new (unused) amap */
 		amap_unlock(srcamap);
 		return;
