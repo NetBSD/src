@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.84 2002/07/20 08:36:24 grant Exp $	*/
+/*	$NetBSD: rtld.c,v 1.85 2002/08/08 13:24:14 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -946,7 +946,7 @@ reloc_map(smp)
 				LD_TEXTSZ(smp->som_dynamic),
 				PROT_READ|PROT_EXEC) == -1) {
 
-			err(1, "Cannot disable writes to %s:%s\n",
+			err(1, "Cannot disable writes to %s:%s",
 						main_progname, smp->som_path);
 		}
 		smp->som_write = 0;
