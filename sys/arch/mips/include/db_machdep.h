@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.13 2002/02/15 07:32:34 simonb Exp $ */
+/* $NetBSD: db_machdep.h,v 1.14 2002/03/05 14:12:29 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -73,15 +73,15 @@ extern db_regs_t	ddb_regs;	/* register state */
 /*
  * Interface to  disassembly (shared with mdb)
  */
-db_addr_t  db_disasm_insn __P((int insn, db_addr_t loc,  boolean_t altfmt));
+db_addr_t  db_disasm_insn(int insn, db_addr_t loc,  boolean_t altfmt);
 
 
 /*
  * Entrypoints to DDB for kernel, keyboard drivers, init hook
  */
-void 	kdb_kbd_trap __P((db_regs_t *));
-void 	db_set_ddb_regs __P((int type, mips_reg_t *));
-int 	kdb_trap __P((int type, mips_reg_t *));
+void 	kdb_kbd_trap(db_regs_t *);
+void 	db_set_ddb_regs(int type, mips_reg_t *);
+int 	kdb_trap(int type, mips_reg_t *);
 
 
 /*
@@ -98,14 +98,14 @@ typedef	mips_reg_t	kgdb_reg_t;
 
 #define inst_trap_return(ins)	((ins)&0)
 
-boolean_t inst_branch __P((int inst));
-boolean_t inst_call __P((int inst));
-boolean_t inst_return __P((int inst));
-boolean_t inst_load __P((int inst));
-boolean_t inst_store __P((int inst));
-boolean_t inst_unconditional_flow_transfer __P((int inst));
-db_addr_t branch_taken __P((int inst, db_addr_t pc, db_regs_t *regs));
-db_addr_t next_instr_address __P((db_addr_t pc, boolean_t bd));
+boolean_t inst_branch(int inst);
+boolean_t inst_call(int inst);
+boolean_t inst_return(int inst);
+boolean_t inst_load(int inst);
+boolean_t inst_store(int inst);
+boolean_t inst_unconditional_flow_transfer(int inst);
+db_addr_t branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
+db_addr_t next_instr_address(db_addr_t pc, boolean_t bd);
 
 /*
  * We have machine-dependent commands.
