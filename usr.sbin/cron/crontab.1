@@ -1,4 +1,4 @@
-.\"	$NetBSD: crontab.1,v 1.5 2000/11/28 14:06:13 sommerfeld Exp $
+.\"	$NetBSD: crontab.1,v 1.6 2002/01/19 03:09:06 wiz Exp $
 .\"
 .\"/* Copyright 1988,1990,1993 by Paul Vixie
 .\" * All rights reserved
@@ -62,11 +62,11 @@ tweaked.  If this option is not given,
 .I crontab
 examines "your" crontab, i.e., the crontab of the person executing the
 command.  Note that
-.IR su (8)
+.IR su (1)
 can confuse
 .I crontab
 and that if you are running inside of
-.IR su (8)
+.IR su (1)
 you should always use the
 .I -u
 option for safety's sake.
