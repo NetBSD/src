@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.24 1998/03/07 03:15:43 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.25 1998/03/12 01:24:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,13 +97,11 @@ extern vm_offset_t       vtophys(vm_offset_t);
 struct pmap {
 	LIST_ENTRY(pmap)	pm_list;	/* list of all pmaps */
 	pt_entry_t		*pm_lev1map;	/* level 1 map */
-	pt_entry_t		*pm_ptab;	/* KVA of page table */
-	pt_entry_t		*pm_stab;	/* KVA of segment table */
-	short			pm_sref;	/* segment table ref count */
-	short			pm_count;	/* pmap reference count */
+	int			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	long			pm_ptpages;	/* more stats: PT pages */
+	long			pm_nlev2;	/* level 2 pt page count */
+	long			pm_nlev3;	/* level 3 pt page count */
 };
 
 typedef struct pmap	*pmap_t;
@@ -127,8 +125,6 @@ typedef struct pv_entry {
 	LIST_ENTRY(pv_entry) pv_list;	/* pv_entry list */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
 	vm_offset_t	pv_va;		/* virtual address for mapping */
-	pt_entry_t	*pv_ptpte;	/* non-zero if VA maps a PT page */
-	struct pmap	*pv_ptpmap;	/* if pv_ptpte, pmap for PT page */
 } *pv_entry_t;
 
 /*
@@ -137,12 +133,13 @@ typedef struct pv_entry {
 struct pv_head {
 	LIST_HEAD(, pv_entry) pvh_list;		/* pv_entry list */
 	int pvh_attrs;				/* page attributes */
+	int pvh_ptref;				/* ref count if PT page */
 };
 
 /* pvh_attrs */
 #define	PMAP_ATTR_MOD		0x01		/* modified */
 #define	PMAP_ATTR_REF		0x02		/* referenced */
-#define	PMAP_ATTR_PTPAGE	0x04		/* maps a PT page */
+#define	PMAP_ATTR_PTPAGE	0x04		/* is a page table page */
 
 struct pv_page_info {
 	TAILQ_ENTRY(pv_page) pgi_list;
@@ -186,16 +183,6 @@ void	pmap_emulate_reference __P((struct proc *p, vm_offset_t v,
 int	pmap_uses_prom_console __P((void));
 #endif
 
-#define	pmap_l1pte(pmap, v)						\
-	(&(pmap)->pm_lev1map[l1pte_index((vm_offset_t)(v))])
-
-#define	pmap_l2pte(pmap, v)						\
-	(&(pmap)->pm_stab[l2pte_index((vm_offset_t)(v))])
-
-#define	pmap_l3pte(pmap, v)						\
-	(&(pmap)->pm_ptab[NPTEPG * l2pte_index((vm_offset_t)(v)) +	\
-	    l3pte_index((vm_offset_t)(v))])
-
 #define	pmap_pte_pa(pte)	(PG_PFNUM(*(pte)) << PGSHIFT)
 #define	pmap_pte_prot(pte)	(*(pte) & PG_PROT)
 #define	pmap_pte_w(pte)		(*(pte) & PG_WIRED)
@@ -218,6 +205,47 @@ do {									\
 } while (0)
 
 #define	pmap_pte_prot_chg(pte, np) ((np) ^ pmap_pte_prot(pte))
+
+static __inline pt_entry_t *pmap_l2pte __P((pmap_t, vm_offset_t));
+static __inline pt_entry_t *pmap_l3pte __P((pmap_t, vm_offset_t));
+
+#define	pmap_l1pte(pmap, v)						\
+	(&(pmap)->pm_lev1map[l1pte_index((vm_offset_t)(v))])
+
+static __inline pt_entry_t *
+pmap_l2pte(pmap, v)
+	pmap_t pmap;
+	vm_offset_t v;
+{
+	pt_entry_t *l1pte, *lev2map;
+
+	l1pte = pmap_l1pte(pmap, v);
+	if (pmap_pte_v(l1pte) == 0)
+		return (NULL);
+
+	lev2map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l1pte));
+	return (&lev2map[l2pte_index(v)]);
+}
+
+static __inline pt_entry_t *
+pmap_l3pte(pmap, v)
+	pmap_t pmap;
+	vm_offset_t v;
+{
+	pt_entry_t *l1pte, *lev2map, *l2pte, *lev3map;
+
+	l1pte = pmap_l1pte(pmap, v);
+	if (pmap_pte_v(l1pte) == 0)
+		return (NULL);
+
+	lev2map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l1pte));
+	l2pte = &lev2map[l2pte_index(v)];
+	if (pmap_pte_v(l2pte) == 0)
+		return (NULL);
+
+	lev3map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l2pte));
+	return (&lev3map[l3pte_index(v)]);
+}
 
 #endif /* _KERNEL */
 
