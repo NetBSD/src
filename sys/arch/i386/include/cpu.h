@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 1997/02/04 04:57:10 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40 1997/09/20 12:40:25 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -187,7 +187,8 @@ void	child_return __P((struct proc *, struct trapframe));
 #define	CPU_BIOSBASEMEM		2	/* int: bios-reported base mem (K) */
 #define	CPU_BIOSEXTMEM		3	/* int: bios-reported ext. mem (K) */
 #define	CPU_NKPDE		4	/* int: number of kernel PDEs */
-#define	CPU_MAXID		5	/* number of valid machdep ids */
+#define	CPU_BOOTED_KERNEL	5	/* string: booted kernel name */
+#define	CPU_MAXID		6	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -195,6 +196,7 @@ void	child_return __P((struct proc *, struct trapframe));
 	{ "biosbasemem", CTLTYPE_INT }, \
 	{ "biosextmem", CTLTYPE_INT }, \
 	{ "nkpde", CTLTYPE_INT }, \
+	{ "booted_kernel", CTLTYPE_STRING }, \
 }
 
 #endif /* !_I386_CPU_H_ */
