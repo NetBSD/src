@@ -1,4 +1,4 @@
-/*	$NetBSD: termout.c,v 1.8 1998/03/04 13:16:09 christos Exp $	*/
+/*	$NetBSD: termout.c,v 1.9 1998/11/06 22:14:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termout.c	4.3 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: termout.c,v 1.8 1998/03/04 13:16:09 christos Exp $");
+__RCSID("$NetBSD: termout.c,v 1.9 1998/11/06 22:14:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: termout.c,v 1.8 1998/03/04 13:16:09 christos Exp $");
 #ifdef __NetBSD__
 #include <termcap.h>
 #else
-extern char *tgetstr();
+extern char *tgetstr __P((char *, char **));
 #endif
 #endif
 #endif
@@ -67,6 +67,9 @@ extern char *tgetstr();
 #define nl()	 (_tty.sg_flags |= CRMOD,_pfast = _rawmode,stty(_tty_ch, &_tty))
 #define nonl()	 (_tty.sg_flags &= ~CRMOD, _pfast = TRUE, stty(_tty_ch, &_tty))
 #endif	/* defined(ultrix) */
+#if	defined(__SVR4) || defined(__svr4__)
+char *SE, *SO, *VB;
+#endif
 
 #include "../general/general.h"
 
@@ -676,7 +679,7 @@ InitTerminal()
 	char *lotsofspace = KSEbuffer;
 #endif	/* defined(unix) */
 
-	if (initscr() == ERR) {	/* Initialize curses to get line size */
+	if (initscr() == NULL) {	/* Initialize curses to get line size */
 	    ExitString("InitTerminal:  Error initializing curses", 1);
 	    /*NOTREACHED*/
 	}
