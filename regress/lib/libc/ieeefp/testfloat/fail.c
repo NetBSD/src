@@ -1,3 +1,4 @@
+/* $NetBSD: fail.c,v 1.2 2001/03/13 06:45:24 ross Exp $ */
 
 /*
 ===============================================================================
@@ -29,7 +30,7 @@ this code that are retained.
 #include "milieu.h"
 #include "fail.h"
 
-char *fail_programName = "";
+const char *fail_programName = "";
 
 void fail( const char *message, ... )
 {

@@ -1,3 +1,4 @@
+/* $NetBSD: testCases.c,v 1.2 2001/03/13 06:45:24 ross Exp $ */
 
 /*
 ===============================================================================
@@ -23,11 +24,13 @@ this code that are retained.
 ===============================================================================
 */
 
+#include <stdlib.h>
+
 #include "milieu.h"
 #include "fail.h"
-#include "random.h"
 #include "softfloat.h"
 #include "testCases.h"
+#include "random.h"
 
 typedef struct {
     int16 expNum, term1Num, term2Num;
@@ -1136,7 +1139,8 @@ static float32 float32Random( void )
      case 7:
         return float32RandomQInfPInf();
     }
-
+    abort();
+    return 0;
 }
 
 #ifdef BITS64
@@ -1711,7 +1715,8 @@ static float64 float64Random( void )
      case 7:
         return float64RandomQInfPInf();
     }
-
+    abort();
+    return 0;
 }
 
 #ifdef FLOATX80
@@ -2265,8 +2270,8 @@ static floatx80 floatx80RandomQInfP3( void )
         & LIT64( 0x7FFFFFFFFFFFFFFF );
     weightMaskNum = randomUint8() % floatx80NumQInfWeightMasks;
     z.high =
-          randomUint16() & floatx80QInfWeightMasks[ weightMaskNum ]
-        + floatx80QInfWeightOffsets[ weightMaskNum ];
+          randomUint16() & (floatx80QInfWeightMasks[ weightMaskNum ]
+        + floatx80QInfWeightOffsets[ weightMaskNum ]);
     if ( z.high ) z.low |= LIT64( 0x8000000000000000 );
     z.high |= ( (uint16) ( randomUint8() & 1 ) )<<15;
     return z;
@@ -2281,8 +2286,8 @@ static floatx80 floatx80RandomQInfPInf( void )
     z.low = randomUint64() & LIT64( 0x7FFFFFFFFFFFFFFF );
     weightMaskNum = randomUint8() % floatx80NumQInfWeightMasks;
     z.high =
-          randomUint16() & floatx80QInfWeightMasks[ weightMaskNum ]
-        + floatx80QInfWeightOffsets[ weightMaskNum ];
+          randomUint16() & (floatx80QInfWeightMasks[ weightMaskNum ]
+        + floatx80QInfWeightOffsets[ weightMaskNum ]);
     if ( z.high ) z.low |= LIT64( 0x8000000000000000 );
     z.high |= ( (uint16) ( randomUint8() & 1 ) )<<15;
     return z;
@@ -2304,9 +2309,9 @@ static floatx80 floatx80Random( void )
      case 6:
         return floatx80RandomQInfP3();
      case 7:
-        return floatx80RandomQInfPInf();
+	break;
     }
-
+    return floatx80RandomQInfPInf();
 }
 
 #endif
