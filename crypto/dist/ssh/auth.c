@@ -1,5 +1,6 @@
+/*	$NetBSD: auth.c,v 1.1.1.1.2.3 2001/12/10 23:52:39 he Exp $	*/
 /*
- * Copyright (c) 2000 Markus Friedl. All rights reserved.
+ * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,7 +24,9 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.17 2001/02/12 16:16:23 markus Exp $");
+RCSID("$OpenBSD: auth.c,v 1.30 2001/11/17 19:14:34 stevesk Exp $");
+
+#include <libgen.h>
 
 #include "xmalloc.h"
 #include "match.h"
@@ -33,6 +36,10 @@ RCSID("$OpenBSD: auth.c,v 1.17 2001/02/12 16:16:23 markus Exp $");
 #include "auth.h"
 #include "auth-options.h"
 #include "canohost.h"
+#include "buffer.h"
+#include "bufaux.h"
+#include "uidswap.h"
+#include "tildexpand.h"
 
 #ifdef HAVE_LOGIN_CAP
 #include <login_cap.h>
@@ -54,12 +61,12 @@ int
 allowed_user(struct passwd * pw)
 {
 	struct stat st;
+	const char *hostname = NULL, *ipaddr = NULL;
 	char *shell;
 	int i;
 #ifdef HAVE_LOGIN_CAP
 	int match_name, match_ip;
 	login_cap_t *lc;
-	const char *hostname, *ipaddr;
 	char *cap_hlist, *hp;
 #endif
 
@@ -139,6 +146,23 @@ allowed_user(struct passwd * pw)
 #endif
 
 	/*
+	 * password/account expiration.
+	 */
+	if (pw->pw_change || pw->pw_expire) {
+		struct timeval tv;
+
+		(void)gettimeofday(&tv, (struct timezone *)NULL);
+		if (pw->pw_expire) {
+			if (tv.tv_sec >= pw->pw_expire)
+				return 0;	/* expired */
+		}
+		if (pw->pw_change) {
+			if (tv.tv_sec >= pw->pw_change)
+				return 0;	/* expired */
+		}
+	}
+
+	/*
 	 * Get the shell from the password data.  An empty shell field is
 	 * legal, and means /bin/sh.
 	 */
@@ -160,16 +184,23 @@ allowed_user(struct passwd * pw)
 	 * XXX logins, too.
 	 */
 
+	if (options.num_deny_users > 0 || options.num_allow_users > 0) {
+		hostname = get_canonical_hostname(options.reverse_mapping_check);
+		ipaddr = get_remote_ipaddr();
+	}
+
 	/* Return false if user is listed in DenyUsers */
 	if (options.num_deny_users > 0) {
 		for (i = 0; i < options.num_deny_users; i++)
-			if (match_pattern(pw->pw_name, options.deny_users[i]))
+			if (match_user(pw->pw_name, hostname, ipaddr,
+			    options.deny_users[i]))
 				return 0;
 	}
 	/* Return false if AllowUsers isn't empty and user isn't listed there */
 	if (options.num_allow_users > 0) {
 		for (i = 0; i < options.num_allow_users; i++)
-			if (match_pattern(pw->pw_name, options.allow_users[i]))
+			if (match_user(pw->pw_name, hostname, ipaddr,
+			    options.allow_users[i]))
 				break;
 		/* i < options.num_allow_users iff we break for loop */
 		if (i >= options.num_allow_users)
@@ -211,21 +242,6 @@ authctxt_new(void)
 	return authctxt;
 }
 
-struct passwd *
-pwcopy(struct passwd *pw)
-{
-	struct passwd *copy = xmalloc(sizeof(*copy));
-	memset(copy, 0, sizeof(*copy));
-	copy->pw_name = xstrdup(pw->pw_name);
-	copy->pw_passwd = xstrdup(pw->pw_passwd);
-	copy->pw_uid = pw->pw_uid;
-	copy->pw_gid = pw->pw_gid;
-	copy->pw_class = xstrdup(pw->pw_class);
-	copy->pw_dir = xstrdup(pw->pw_dir);
-	copy->pw_shell = xstrdup(pw->pw_shell);
-	return copy;
-}
-
 void
 auth_log(Authctxt *authctxt, int authenticated, char *method, char *info)
 {
@@ -248,7 +264,7 @@ auth_log(Authctxt *authctxt, int authenticated, char *method, char *info)
 	    authmsg,
 	    method,
 	    authctxt->valid ? "" : "illegal user ",
-	    authctxt->valid && authctxt->pw->pw_uid == 0 ? "ROOT" : authctxt->user,
+	    authctxt->user,
 	    get_remote_ipaddr(),
 	    get_remote_port(),
 	    info);
@@ -276,5 +292,186 @@ auth_root_allowed(char *method)
 		break;
 	}
 	log("ROOT LOGIN REFUSED FROM %.200s", get_remote_ipaddr());
+	return 0;
+}
+
+
+/*
+ * Given a template and a passwd structure, build a filename
+ * by substituting % tokenised options. Currently, %% becomes '%',
+ * %h becomes the home directory and %u the username.
+ *
+ * This returns a buffer allocated by xmalloc.
+ */
+char *
+expand_filename(const char *filename, struct passwd *pw)
+{
+	Buffer buffer;
+	char *file;
+	const char *cp;
+
+	/*
+	 * Build the filename string in the buffer by making the appropriate
+	 * substitutions to the given file name.
+	 */
+	buffer_init(&buffer);
+	for (cp = filename; *cp; cp++) {
+		if (cp[0] == '%' && cp[1] == '%') {
+			buffer_append(&buffer, "%", 1);
+			cp++;
+			continue;
+		}
+		if (cp[0] == '%' && cp[1] == 'h') {
+			buffer_append(&buffer, pw->pw_dir, strlen(pw->pw_dir));
+			cp++;
+			continue;
+		}
+		if (cp[0] == '%' && cp[1] == 'u') {
+			buffer_append(&buffer, pw->pw_name,
+			     strlen(pw->pw_name));
+			cp++;
+			continue;
+		}
+		buffer_append(&buffer, cp, 1);
+	}
+	buffer_append(&buffer, "\0", 1);
+
+	/*
+	 * Ensure that filename starts anchored. If not, be backward
+	 * compatible and prepend the '%h/'
+	 */
+	file = xmalloc(MAXPATHLEN);
+	cp = buffer_ptr(&buffer);
+	if (*cp != '/')
+		snprintf(file, MAXPATHLEN, "%s/%s", pw->pw_dir, cp);
+	else
+		strlcpy(file, cp, MAXPATHLEN);
+
+	buffer_free(&buffer);
+	return file;
+}
+
+char *
+authorized_keys_file(struct passwd *pw)
+{
+	return expand_filename(options.authorized_keys_file, pw);
+}
+
+char *
+authorized_keys_file2(struct passwd *pw)
+{
+	return expand_filename(options.authorized_keys_file2, pw);
+}
+
+/* return ok if key exists in sysfile or userfile */
+HostStatus
+check_key_in_hostfiles(struct passwd *pw, Key *key, const char *host,
+    const char *sysfile, const char *userfile)
+{
+	Key *found;
+	char *user_hostfile;
+	struct stat st;
+	HostStatus host_status;
+
+	/* Check if we know the host and its host key. */
+	found = key_new(key->type);
+	host_status = check_host_in_hostfile(sysfile, host, key, found, NULL);
+
+	if (host_status != HOST_OK && userfile != NULL) {
+		user_hostfile = tilde_expand_filename(userfile, pw->pw_uid);
+		if (options.strict_modes &&
+		    (stat(user_hostfile, &st) == 0) &&
+		    ((st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
+		     (st.st_mode & 022) != 0)) {
+			log("Authentication refused for %.100s: "
+			    "bad owner or modes for %.200s",
+			    pw->pw_name, user_hostfile);
+		} else {
+			temporarily_use_uid(pw);
+			host_status = check_host_in_hostfile(user_hostfile,
+			    host, key, found, NULL);
+			restore_uid();
+		}
+		xfree(user_hostfile);
+	}
+	key_free(found);
+
+	debug2("check_key_in_hostfiles: key %s for %s", host_status == HOST_OK ?
+	    "ok" : "not found", host);
+	return host_status;
+}
+
+
+/*
+ * Check a given file for security. This is defined as all components
+ * of the path to the file must either be owned by either the owner of
+ * of the file or root and no directories must be group or world writable.
+ *
+ * XXX Should any specific check be done for sym links ?
+ *
+ * Takes an open file descriptor, the file name, a uid and and
+ * error buffer plus max size as arguments.
+ *
+ * Returns 0 on success and -1 on failure
+ */
+int
+secure_filename(FILE *f, const char *file, struct passwd *pw,
+    char *err, size_t errlen)
+{
+	uid_t uid = pw->pw_uid;
+	char buf[MAXPATHLEN], homedir[MAXPATHLEN];
+	char *cp;
+	struct stat st;
+
+	if (realpath(file, buf) == NULL) {
+		snprintf(err, errlen, "realpath %s failed: %s", file,
+		    strerror(errno));
+		return -1;
+	}
+	if (realpath(pw->pw_dir, homedir) == NULL) {
+		snprintf(err, errlen, "realpath %s failed: %s", pw->pw_dir,
+		    strerror(errno));
+		return -1;
+	}
+
+	/* check the open file to avoid races */
+	if (fstat(fileno(f), &st) < 0 ||
+	    (st.st_uid != 0 && st.st_uid != uid) ||
+	    (st.st_mode & 022) != 0) {
+		snprintf(err, errlen, "bad ownership or modes for file %s",
+		    buf);
+		return -1;
+	}
+
+	/* for each component of the canonical path, walking upwards */
+	for (;;) {
+		if ((cp = dirname(buf)) == NULL) {
+			snprintf(err, errlen, "dirname() failed");
+			return -1;
+		}
+		strlcpy(buf, cp, sizeof(buf));
+
+		debug3("secure_filename: checking '%s'", buf);
+		if (stat(buf, &st) < 0 ||
+		    (st.st_uid != 0 && st.st_uid != uid) ||
+		    (st.st_mode & 022) != 0) {
+			snprintf(err, errlen, 
+			    "bad ownership or modes for directory %s", buf);
+			return -1;
+		}
+
+		/* If are passed the homedir then we can stop */
+		if (strcmp(homedir, buf) == 0) {
+			debug3("secure_filename: terminating check at '%s'",
+			    buf);
+			break;
+		}
+		/*
+		 * dirname should always complete with a "/" path,
+		 * but we can be paranoid and check for "." too
+		 */
+		if ((strcmp("/", buf) == 0) || (strcmp(".", buf) == 0))
+			break;
+	}
 	return 0;
 }
