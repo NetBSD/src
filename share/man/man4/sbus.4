@@ -1,4 +1,4 @@
-.\"	$NetBSD: sbus.4,v 1.1 2001/05/27 20:26:21 pk Exp $
+.\"	$NetBSD: sbus.4,v 1.2 2001/05/27 20:58:06 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,6 @@
 .Nm SBus
 .Nd introduction to machine-independent SBus bus support and drivers
 .Sh SYNOPSIS
-.Pp
 .Cd "sbus* at mainbus?"
 .Cd "sbus* at iommu?"
 .Cd "sbus* at xbox?"
@@ -61,13 +60,12 @@ workstations and small to medium server class systems. It supports both
 on-board peripherals and extension boards. The
 .Nm
 specifications define the bus protocol as well as the electrical and
-mechanical properties of the extension slots. 
+mechanical properties of the extension slots.
 .Sh SUPPORTED DEVICES
 .Nx
 includes machine-independent
 .Nm
 drivers, sorted by device type and driver name:
-.Pp
 .Ss SCSI interfaces
 .Bl -tag -width xxxxxxxx -offset indent
 .It esp
@@ -79,7 +77,6 @@ Qlogic
 .Tn SCSI
 interfaces.
 .El
-.Pp
 .Ss Network interfaces
 .Bl -tag -width xxxxxxxx -offset indent
 .It le
@@ -101,16 +98,15 @@ board.
 Quad Ethernet Controller
 board.
 .El
-.Pp
 .Ss Bridges
-.Bl -tag -width xxxxx -offset indent
+.Bl -tag -width xxxxxxxx -offset indent
 .It xbox
 an
 .Nm Sbus
 expansion box.
 .El
 .Ss Graphics devices
-.Bl -tag -width xxxxxxx -offset indent
+.Bl -tag -width xxxxxxxx -offset indent
 .It bwtwo
 framebuffer device.
 .It cgthree
@@ -120,7 +116,6 @@ framebuffer device.
 .It tcx
 framebuffer device.
 .El
-.Pp
 .Sh SEE ALSO
 .Xr intro 4
 .Sh HISTORY
