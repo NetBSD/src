@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.36 2001/09/19 16:32:05 thorpej Exp $
+# $NetBSD: md.alpha,v 1.37 2002/01/14 01:33:40 thorpej Exp $
 ./usr/include/alpha	comp-c-include
 ./usr/include/alpha/_G_config.h	comp-c-include
 ./usr/include/alpha/alpha_cpu.h	comp-c-include
@@ -58,6 +58,7 @@
 ./usr/include/alpha/vmparam.h	comp-c-include
 ./usr/include/alpha/vuid_event.h	comp-c-include
 ./usr/include/alpha/z8530var.h	comp-c-include
+./usr/lib/crtfm.o		comp-c-lib
 ./usr/lib/libalpha.a		comp-c-lib
 ./usr/lib/libalpha.so		comp-c-lib
 ./usr/lib/libalpha_p.a		comp-c-proflib
