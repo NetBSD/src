@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 1996/10/21 05:42:27 scottr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 1997/02/02 08:20:38 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1451,7 +1451,7 @@ pmap_zero_page(phys)
 #endif
 	kva = (vm_offset_t) CADDR1;
 	pmap_enter(pmap_kernel(), kva, phys, VM_PROT_READ|VM_PROT_WRITE, TRUE);
-	bzero((caddr_t)kva, NBPG);
+	zeropage((caddr_t)kva);
 	pmap_remove_mapping(pmap_kernel(), kva, PT_ENTRY_NULL,
 			    PRM_TFLUSH|PRM_CFLUSH);
 }
@@ -1480,7 +1480,7 @@ void copypage __P((caddr_t, caddr_t));
 	pmap_enter(pmap_kernel(), dkva, dst, VM_PROT_READ|VM_PROT_WRITE, TRUE);
 	copypage((caddr_t)skva, (caddr_t)dkva);
 	/* CADDR1 and CADDR2 are virtually contiguous */
-	pmap_remove(pmap_kernel(), skva, skva+2*NBPG);
+	pmap_remove(pmap_kernel(), skva, skva + (2 * NBPG));
 }
 
 
