@@ -1,4 +1,4 @@
-#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.19 2000/01/25 01:10:50 mycroft Exp $
+#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.20 2000/01/25 08:32:02 augustss Exp $
 #	From: GENERIC,v 1.260 1999/09/28 18:07:29 thorpej Exp
 #
 #	GENERIC -- everything that's currently supported
@@ -548,6 +548,7 @@ ate0	at isa? port 0x2a0 irq ?		# AT1700
 
 # USB Modem
 #umodem*	at uhub? port ? configuration ?
+#ucom*	at umodem?
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?

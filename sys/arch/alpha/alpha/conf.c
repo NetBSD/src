@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.42 2000/01/20 17:15:20 mjacob Exp $ */
+/* $NetBSD: conf.c,v 1.43 2000/01/25 08:31:56 augustss Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.42 2000/01/20 17:15:20 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.43 2000/01/25 08:31:56 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,8 +192,8 @@ cdev_decl(uhid);
 cdev_decl(ugen);
 #include "ulpt.h"
 cdev_decl(ulpt);
-#include "umodem.h"
-cdev_decl(umodem);
+#include "ucom.h"
+cdev_decl(ucom);
 
 #ifdef __I4B_IS_INTEGRATED
 /* open, close, ioctl */
@@ -320,7 +320,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 55 */
 #endif
 	cdev_mouse_init(NWSMUX, wsmux),	/* 56: ws multiplexor */
-	cdev_tty_init(NUMODEM, umodem),	/* 57: USB modem */
+	cdev_tty_init(NUCOM, ucom),	/* 57: USB tty */
 	cdev_ses_init(NSES,ses),	/* 58: SCSI SES/SAF-TE */
 	
 };

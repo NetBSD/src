@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1999/10/15 12:24:37 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.17 2000/01/25 08:32:04 augustss Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -141,8 +141,8 @@ cdev_decl(uhid);
 cdev_decl(ugen);
 #include "ulpt.h"
 cdev_decl(ulpt);
-#include "umodem.h"
-cdev_decl(umodem);
+#include "ucom.h"
+cdev_decl(ucom);
 
 #include "com.h"
 cdev_decl(com);
@@ -192,7 +192,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lpt_init(NULPT,ulpt),	/* 41: USB printer */
 	cdev_ugen_init(NUGEN,ugen),	/* 42: USB generic driver */
 	cdev_mouse_init(NWSMUX,wsmux),  /* 43: ws multiplexor */
-	cdev_tty_init(NUMODEM,umodem),	/* 44: USB modem */
+	cdev_tty_init(NUMODEM,ucom),	/* 44: USB tty */
 	cdev_tty_init(NCOM,com),	/* 45: NS16x50 compatible ports */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];

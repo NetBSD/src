@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.141 2000/01/23 23:46:04 hubertf Exp $
+# $NetBSD: GENERIC,v 1.142 2000/01/25 08:31:58 augustss Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.141 $"
+#ident 		"GENERIC-$Revision: 1.142 $"
 
 maxusers 32
 
@@ -353,6 +353,7 @@ ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Modem
 umodem*	at uhub? port ? configuration ?
+ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
