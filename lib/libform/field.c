@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.21 2002/08/09 14:15:12 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.22 2003/03/09 00:57:17 lukem Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -27,6 +27,9 @@
  *
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: field.c,v 1.22 2003/03/09 00:57:17 lukem Exp $");
 
 #include <stdlib.h>
 #include <strings.h>

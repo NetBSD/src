@@ -1,4 +1,4 @@
-/*	$NetBSD: form.c,v 1.13 2002/08/02 14:10:25 blymn Exp $	*/
+/*	$NetBSD: form.c,v 1.14 2003/03/09 00:57:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -28,6 +28,9 @@
  *
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: form.c,v 1.14 2003/03/09 00:57:18 lukem Exp $");
 
 #include <stdlib.h>
 #include <strings.h>
