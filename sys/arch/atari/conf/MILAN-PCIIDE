@@ -1,11 +1,11 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.26 2003/10/08 11:05:52 bouyer Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.27 2003/10/08 11:53:10 bouyer Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: MILAN.in,v 1.12 2003/10/08 11:05:27 bouyer Exp $
+#		NetBSD: MILAN.in,v 1.13 2003/10/08 11:52:50 bouyer Exp $
 #		NetBSD: GENERIC.in,v 1.33 2003/09/22 14:11:16 cl Exp $
 
 #This configuration file is for a generic Milan
@@ -277,8 +277,30 @@ fdisa0 		at fdcisa0 drive 0
 #- If _all_ of your disks are byteswapped, use the  MILAN-PCIIDE version
 #The is no way to mix things!
 
-pciide* 	at pci? dev ? function ? flags 0x0000	# 2 PCIIDE channels
+pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide*	at pci? dev ? function ?	# Acard IDE controllers
+aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
+cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+optiide* 	at pci? dev ? function ?	# Opti IDE controllers
+piixide* 	at pci? dev ? function ?	# Intel IDE controllers
+pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+siside* 	at pci? dev ? function ?	# SiS IDE controllers
+slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
+viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 atabus* 	at pciide? channel ?
+atabus* 	at acardide? channel ?
+atabus* 	at aceride? channel ?
+atabus* 	at cmdide? channel ?
+atabus* 	at cypide? channel ?
+atabus* 	at hptide? channel ?
+atabus* 	at optiide? channel ?
+atabus* 	at piixide? channel ?
+atabus* 	at pdcide? channel ?
+atabus* 	at siside? channel ?
+atabus* 	at slide? channel ?
+atabus* 	at viaide? channel ?
 
 #The Milan uses wscons
 #XXX without the __HAVE_NWSCONS option, the keyboard won't work...
