@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)funopen.c	5.2 (Berkeley) 2/5/91";*/
-static char *rcsid = "$Id: funopen.c,v 1.1 1994/02/07 22:06:02 proven Exp $";
+static char *rcsid = "$Id: funopen.c,v 1.2 1997/10/08 04:13:27 christos Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <pthread.h>
@@ -47,13 +47,10 @@ static char *rcsid = "$Id: funopen.c,v 1.1 1994/02/07 22:06:02 proven Exp $";
 FILE *
 funopen(cookie, readfn, writefn, seekfn, closefn)
 	const void *cookie;
-	int (*readfn)(), (*writefn)();
-#if __STDC__
-	fpos_t (*seekfn)(void *cookie, fpos_t off, int whence);
-#else
-	fpos_t (*seekfn)();
-#endif
-	int (*closefn)();
+	int (*readfn) __P((void *, char *, int));
+	int (*writefn) __P((void *, const char *, int));
+	fpos_t (*seekfn) __P((void *, fpos_t, int));
+	int (*closefn) __P((void *));
 {
 	struct fd_ops *fd_ops;
 	char *flags;
@@ -77,17 +74,17 @@ funopen(cookie, readfn, writefn, seekfn, closefn)
 		if ((!(fd = fd_allocate())) < OK) {
 
 			/* Set functions */
-			fd_ops->seek = seekfn;
-			fd_ops->read = readfn;
-			fd_ops->write = writefn;
-			fd_ops->close = closefn;
+			fd_ops->seek = (off_t (*) __P((union fd_data, int, off_t, int)))seekfn;
+			fd_ops->read =  (ssize_t (*) __P((union fd_data, int, void *, size_t)))readfn;
+			fd_ops->write =  (ssize_t (*) __P((union fd_data, int, const void *, size_t)))writefn;
+			fd_ops->close =  (int (*) __P((union fd_data, int)))closefn;
 
 			/* Alloc space for funtion pointer table */
 			fd_table[fd]->type = FD_HALF_DUPLEX;
 			fd_table[fd]->ops = fd_ops;
 	
 			/* Save the cookie, it's important */
-			fd_table[fd]->fd.ptr = cookie;
+			fd_table[fd]->fd.ptr = (void *) cookie;
 
 			if (fp = fdopen(fd, flags))
 				return(fp);
