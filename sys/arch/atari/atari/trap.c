@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.42 1999/03/26 23:41:28 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.42.2.1 1999/11/21 15:37:19 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -375,14 +375,6 @@ trap(type, code, v, frame)
 		sticks = p->p_sticks;
 		p->p_md.md_regs = frame.f_regs;
 	}
-
-#ifdef DDB
-	if (type == T_TRACE || type == T_BREAKPOINT) {
-		if (kdb_trap(type, (db_regs_t *)&frame))
-			return;
-	}
-#endif
-
 	switch (type) {
 #ifdef DEBUG
 	dopanic:
@@ -516,14 +508,15 @@ trap(type, code, v, frame)
 	 * NetBSD and HP-UX traps get mapped by locore.s into T_TRACE.
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
+	 *
+	 * XXX: We should never get kernel-mode T_TRAP15
+	 * XXX: because locore.s now gives them special treatment.
 	 */
-	case T_TRACE:
 	case T_TRAP15:
 		frame.f_sr &= ~PSL_T;
-		i = SIGTRAP;
-		break;
+		return;
+
 	case T_TRACE|T_USER:
-	case T_TRAP15|T_USER:
 #ifdef COMPAT_SUNOS
 		/*
 		 * SunOS uses Trap #2 for a "CPU cache flush".
@@ -535,6 +528,9 @@ trap(type, code, v, frame)
 			return;
 		}
 #endif
+		/* FALLTHROUGH */
+	case T_TRACE:		/* tracing a trap instruction */
+	case T_TRAP15|T_USER:
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
