@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.5 2001/02/03 12:33:17 blymn Exp $	*/
+/*	$NetBSD: driver.c,v 1.6 2001/02/05 23:59:52 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -94,7 +94,6 @@ int
 form_driver(FORM *form, int c)
 {
 	FIELD *fieldp;
-	FORM_STR buf;
 	int update_page, update_field, old_field, old_page, status;
 	unsigned int pos;
 	
@@ -118,44 +117,48 @@ form_driver(FORM *form, int c)
 	
 	if (c < REQ_MIN_REQUEST) {
 		if (isprint(c)) {
-		  next_field:
-			buf = fieldp->buffers[0];
-			
-			pos = fieldp->start_char + fieldp->cursor_xpos
-				+ fieldp->hscroll;
+			do {
+				pos = fieldp->start_char + fieldp->cursor_xpos
+					+ fieldp->hscroll;
 
-			  /* check if we are allowed to edit this field */
-			if ((fieldp->opts & O_EDIT) != O_EDIT)
-				return E_REQUEST_DENIED;
-			
-			  /*
-			   * Need to check here if we want to autoskip.
-			   * we call the form driver recursively to pos
-			   * us on the next field and then we loop back to
-			   * ensure the next field selected can have data
-			   * added to it
-			   */
-			if ((((fieldp->opts & O_STATIC) == O_STATIC) &&
-			     (buf.length >= fieldp->cols)) ||
-			    (((fieldp->opts & O_STATIC) != O_STATIC) &&
-			     ((fieldp->max > 0) &&
-			      (buf.length >= fieldp->max)))) {
-				if ((fieldp->opts & O_AUTOSKIP) != O_AUTOSKIP)
+				  /* check if we are allowed to edit this field */
+				if ((fieldp->opts & O_EDIT) != O_EDIT)
 					return E_REQUEST_DENIED;
-				status = form_driver(form, REQ_NEXT_FIELD);
-				if (status != E_OK)
-					return status;
-				old_field = form->cur_field;
-				fieldp = form->fields[form->cur_field];
-				goto next_field;
-			}
-			
 				
-			if (fieldp->start_char > 0)
-  				pos--;
+				if (fieldp->start_char > 0)
+					pos--;
 
-			update_field = _formi_add_char(fieldp, pos, c);
-		
+				if ((status =
+				     (_formi_add_char(fieldp, pos, c)))
+				    == E_REQUEST_DENIED) {
+			
+					  /*
+					   * Need to check here if we
+					   * want to autoskip.  we
+					   * call the form driver
+					   * recursively to pos us on
+					   * the next field and then
+					   * we loop back to ensure
+					   * the next field selected
+					   * can have data added to it
+					   */
+					if ((fieldp->opts & O_AUTOSKIP)
+					    != O_AUTOSKIP)
+						return E_REQUEST_DENIED;
+					status = form_driver(form,
+							     REQ_NEXT_FIELD);
+					if (status != E_OK)
+						return status;
+					old_field = form->cur_field;
+					fieldp = form->fields[form->cur_field];
+				} else if (status == E_INVALID_FIELD)
+					  /* char failed validation, just
+					   * return the status.
+					   */
+					return status;
+			}
+			while (status != E_OK);
+			update_field = (status == E_OK);
 		} else
 			return E_REQUEST_DENIED;
 	} else {
