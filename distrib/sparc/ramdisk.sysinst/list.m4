@@ -1,4 +1,4 @@
-#	$NetBSD: list.m4,v 1.5 2000/03/15 12:19:16 soren Exp $
+#	$NetBSD: list.m4,v 1.6 2000/08/22 14:11:46 abs Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -24,19 +24,17 @@ LINK	ramdiskbin			bin/test
 LINK	ramdiskbin			bin/[
 LINK	ramdiskbin			sbin/cd9660
 LINK	ramdiskbin			sbin/disklabel
+LINK	ramdiskbin			sbin/dmesg
 LINK	ramdiskbin			sbin/ffs
 LINK	ramdiskbin			sbin/fsck
 LINK	ramdiskbin			sbin/fsck_ffs
 LINK	ramdiskbin			sbin/halt
 LINK	ramdiskbin			sbin/ifconfig
 LINK	ramdiskbin			sbin/init
-LINK	ramdiskbin			sbin/kernfs
 LINK	ramdiskbin			sbin/mknod
 LINK	ramdiskbin			sbin/mount
 LINK	ramdiskbin			sbin/mount_cd9660
-LINK	ramdiskbin			sbin/mount_ext2fs
 LINK	ramdiskbin			sbin/mount_ffs
-LINK	ramdiskbin			sbin/mount_kernfs
 LINK	ramdiskbin			sbin/mount_msdos
 LINK	ramdiskbin			sbin/mount_nfs
 LINK	ramdiskbin			sbin/msdos
@@ -53,6 +51,8 @@ LINK	ramdiskbin			sbin/swapctl
 LINK	ramdiskbin			sbin/umount
 ifelse(MACHINE,i386,	LINK	ramdiskbin	sbin/fdisk)
 ifelse(MACHINE,i386,	LINK	ramdiskbin	sbin/mbrlabel)
+ifelse(MACHINE,i386,	LINK	ramdiskbin	sbin/mount_ext2fs)
+ifelse(MACHINE,sparc,	LINK	ramdiskbin	sbin/sysctl)
 SYMLINK	/bin/cat		usr/bin/chgrp
 SYMLINK	/bin/cat		usr/bin/ftp
 SYMLINK	/bin/cat		usr/bin/gunzip
@@ -68,14 +68,14 @@ SYMLINK	/bin/cat		usr/sbin/chown
 SYMLINK	/bin/cat		usr/sbin/chroot
 ifelse(MACHINE,i386,	SYMLINK	/bin/cat	usr/sbin/bad144)
 ifelse(MACHINE,sparc,	SYMLINK	/bin/cat	usr/bin/getopt)
-ifelse(MACHINE,sparc,	SYMLINK	/bin/cat	sbin/sysctl)
 SPECIAL	/bin/rm ramdiskbin
 
 # various files that we need in /etc for the install
 COPY	SRCROOT/etc/group		etc/group
 COPY	SRCROOT/etc/master.passwd	etc/master.passwd
-COPY	SRCROOT/etc/protocols	etc/protocols
-COPY	SRCROOT/etc/services	etc/services
+COPYSTRIPCOMMENTS	SRCROOT/etc/netconfig	etc/netconfig
+COPYSTRIPCOMMENTS	SRCROOT/etc/protocols	etc/protocols
+COPYSTRIPCOMMENTS	SRCROOT/etc/services	etc/services
 
 SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
 SPECIAL /bin/rm etc/spwd.db
@@ -96,9 +96,6 @@ ifelse(MACHINE,i386,  COPY ${DESTDIR}/usr/mdec/mbr_bootsel	usr/mdec/mbr_bootsel)
 
 # and the common installation tools
 COPY	termcap.mini		usr/share/misc/termcap
-
-# the disktab explanation file
-COPY	disktab.preinstall		etc/disktab.preinstall
 
 #the lists of obsolete files used by sysinst
 COPY dist/base_obsolete dist/base_obsolete
