@@ -151,6 +151,17 @@
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) (KERNEL_SR << ADDR_SR_SHFT))
 #define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + 2*SEGMENT_LENGTH)
 
+/*
+ * The address to which unspecified mapping requests default
+ * Put the stack in it's own segment and start mmaping at the
+ * top of the next lower segment.
+ */
+#define	__HAVE_TOPDOWN_VM
+#ifdef USE_TOPDOWN_VM
+#define	VM_DEFAULT_ADDRESS(da, sz) \
+	(((VM_MAXUSER_ADDRESS - MAXSSIZ) & SEGMENT_MASK) - round_page(sz))
+#endif
+
 #ifndef VM_PHYSSEG_MAX
 #define	VM_PHYSSEG_MAX		16
 #endif
