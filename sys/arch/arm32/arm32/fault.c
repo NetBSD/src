@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.13 1997/02/04 07:12:31 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.14 1997/07/31 00:16:12 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -332,6 +332,15 @@ copyfault:
 			printf("ok we have a page permission fault - addr=V%08x ",
 			    (u_int)va);
 
+		if ((fault_code & FAULT_USER) && va >= VM_MAXUSER_ADDRESS) {
+			printf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
+			    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
+			    fault_pc);
+			postmortem(frame);
+			trapsignal(p, SIGSEGV, TRAP_CODE);
+			break;
+		}
+
 /*
  * It is only a kernel address space fault iff:
  *	1. (fault_code & FAULT_USER) == 0  and
@@ -454,6 +463,15 @@ copyfault:
 		if (pmap_debug_level >= 0)
 			printf("ok we have a page fault - addr=V%08x ", (u_int)va);
           
+		if ((fault_code & FAULT_USER) && va >= VM_MAXUSER_ADDRESS) {
+			printf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
+			    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
+			    fault_pc);
+			postmortem(frame);
+			trapsignal(p, SIGSEGV, TRAP_CODE);
+			break;
+		}
+
 /*
  * It is only a kernel address space fault iff:
  *	1. (fault_code & FAULT_USER) == 0  and
