@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2003/07/15 01:29:22 lukem Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 2003/09/12 14:59:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2003/07/15 01:29:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2003/09/12 14:59:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,16 +71,16 @@ mainbus_attach(parent, self, aux)
 	 */
 
 	printf("\n");
-	
+
 	config_search(mainbus_search, self, ma);
 }
 
 static int
 mainbus_search(parent, cf, aux)
 	struct device *parent;
-	struct cfdata *cf; 
+	struct cfdata *cf;
 	void *aux;
-{ 
+{
 	struct mainbus_attach_args *ma = aux;
 
 	do {

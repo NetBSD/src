@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.2 2003/07/15 01:29:23 lukem Exp $ */
+/* $NetBSD: panel.c,v 1.3 2003/09/12 14:59:14 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.2 2003/07/15 01:29:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.3 2003/09/12 14:59:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ panelread(dev, uio, flag)
 	int error;
 	u_int8_t b;
 	struct panel_softc *sc = device_lookup(&panel_cd, minor(dev));
- 
+
 	if (uio->uio_resid < sizeof(b))
 		return EIO;
 

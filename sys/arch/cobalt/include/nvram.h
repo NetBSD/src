@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.h,v 1.1 2000/03/19 23:07:47 soren Exp $	*/
+/*	$NetBSD: nvram.h,v 1.2 2003/09/12 14:59:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -36,7 +36,7 @@
 /*
  * Board revision
  */
-        
+
 #define VIA_BOARD		0x94
 
 #define BOARD_MASK		0xf0

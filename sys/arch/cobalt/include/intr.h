@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.13 2003/09/12 14:59:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -42,9 +42,9 @@
 #define IST_LEVEL	3	/* level-triggered */
 
 /* Soft interrupt masks. */
-#define SIR_CLOCK	31 
-#define SIR_NET		30 
-#define SIR_CLOCKMASK	((1 << SIR_CLOCK)) 
+#define SIR_CLOCK	31
+#define SIR_NET		30
+#define SIR_CLOCKMASK	((1 << SIR_CLOCK))
 #define SIR_NETMASK	((1 << SIR_NET) | SIR_CLOCKMASK)
 #define SIR_ALLMASK	(SIR_CLOCKMASK | SIR_NETMASK)
 
@@ -54,7 +54,7 @@
 #include <mips/cpuregs.h>
 
 extern int		_splraise(int);
-extern int		_spllower(int);      
+extern int		_spllower(int);
 extern int		_splset(int);
 extern int		_splget(void);
 extern void		_splnone(void);
@@ -89,7 +89,7 @@ extern void		_clrsoftintr(int);
 
 extern unsigned int	intrcnt[];
 #define SOFTCLOCK_INTR	0
-#define SOFTNET_INTR	1  
+#define SOFTNET_INTR	1
 
 #endif /* !_LOCORE */
 #endif /* _LOCORE */

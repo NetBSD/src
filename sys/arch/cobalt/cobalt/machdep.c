@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2003/07/15 01:29:22 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2003/09/12 14:59:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2003/07/15 01:29:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2003/09/12 14:59:12 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2003/07/15 01:29:22 lukem Exp $");
 /* For sysctl. */
 extern char cpu_model[];
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
@@ -131,7 +131,7 @@ mach_init(memsize)
 	unsigned int memsize;
 {
 	caddr_t kernend, v;
-        u_long first, last;
+	u_long first, last;
 	vsize_t size;
 	extern char edata[], end[];
 
@@ -187,9 +187,9 @@ mach_init(memsize)
 		Debugger();
 #endif
 #ifdef KGDB
-        if (boothowto & RB_KDB)
-                kgdb_connect(0);
-#endif    
+	if (boothowto & RB_KDB)
+		kgdb_connect(0);
+#endif
 
 	strcpy(cpu_model, "Cobalt Microserver");
 
@@ -217,7 +217,7 @@ mach_init(memsize)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
+	v = (caddr_t)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
@@ -229,7 +229,7 @@ mach_init(memsize)
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(size); 
+	v = (caddr_t)uvm_pageboot_alloc(size);
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
 }
@@ -451,7 +451,7 @@ cpu_intr_disestablish(cookie)
 {
 	struct cobalt_intr *p = cookie;
 
-        if (p->cookie_type == COBALT_COOKIE_TYPE_CPU) {
+	if (p->cookie_type == COBALT_COOKIE_TYPE_CPU) {
 		p->func = NULL;
 		p->arg = NULL;
 	}
@@ -550,7 +550,7 @@ decode_bootstring(void)
 			} else
 			if(0 == memcmp("root=", work, 5)) {
 				root_bstr = (equ +1);
-			} 
+			}
 		} else
 
 		/* else it a single value, switch and process */
