@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_fault.c	7.6 (Berkeley) 5/7/91
- *	$Id: vm_fault.c,v 1.7 1993/07/28 02:23:33 cgd Exp $
+ *	$Id: vm_fault.c,v 1.8 1993/11/10 08:22:11 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -262,9 +262,6 @@ thread_wakeup(&vm_pages_needed); /* XXX! */
 #endif
 			}
 
-			if (m->absent)
-				panic("vm_fault: absent");
-
 			/*
 			 *	If the desired access to this page has
 			 *	been locked out, request that it be unlocked.
@@ -324,7 +321,6 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 			 *	Mark page busy for other threads.
 			 */
 			m->busy = TRUE;
-			m->absent = FALSE;
 			break;
 		}
 
@@ -450,7 +446,6 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 			vm_page_zero_fill(m);
 			vm_stat.zero_fill_count++;
 			m->fake = FALSE;
-			m->absent = FALSE;
 			break;
 		}
 		else {
@@ -463,8 +458,8 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 		}
 	}
 
-	if (m->absent || m->active || m->inactive || !m->busy)
-		panic("vm_fault: absent or active or inactive or not busy after main loop");
+	if (m->active || m->inactive || !m->busy)
+		panic("vm_fault: active or inactive or not busy after main loop");
 
 	/*
 	 *	PAGE HAS BEEN FOUND.
@@ -512,7 +507,6 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 
 			vm_page_copy(m, first_m);
 			first_m->fake = FALSE;
-			first_m->absent = FALSE;
 
 			/*
 			 *	If another map is truly sharing this
@@ -731,7 +725,6 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 				 */
 				vm_page_copy(m, copy_m);
 				copy_m->fake = FALSE;
-				copy_m->absent = FALSE;
 
 				/*
 				 * Things to remember:

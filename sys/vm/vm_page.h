@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_page.h,v 1.5 1993/08/27 23:46:43 brezak Exp $
+ *	$Id: vm_page.h,v 1.6 1993/11/10 08:22:18 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -125,7 +125,6 @@ struct vm_page {
 			copy_on_write:1,/* page must be copied before being
 					   changed (O) */
 			fictitious:1,	/* physical page doesn't exist (O) */
-			absent:1,	/* virtual page doesn't exist (O) */
 			fake:1,		/* page is a placeholder for page-in
 					   (O) */
 			:0;
