@@ -77,7 +77,9 @@ parse_lsda_header (struct _Unwind_Context *context, const unsigned char *p,
 #else
 #define PERSONALITY_FUNCTION    __gcc_personality_v0
 #endif
+#if 0
 #define PERSONALITY_FUNCTION    __gcc_personality_v0
+#endif
 
 _Unwind_Reason_Code
 PERSONALITY_FUNCTION (int, _Unwind_Action, _Unwind_Exception_Class,
