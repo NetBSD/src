@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 2003/04/06 16:12:42 jmmv Exp $	*/
+/*	$NetBSD: md.h,v 1.5 2003/05/07 03:34:23 shin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -111,13 +111,3 @@ EXTERN	char *disk_names[]
  * On playstation2, that is msdos.
  */
 EXTERN	char *fdtype INIT("msdos");
-
-struct mbr_bootsel {
-	u_int8_t defkey;
-	u_int8_t flags;
-	u_int16_t timeo;
-	char nametab[4][9];
-	u_int16_t magic;
-} __attribute__((__packed__));
-
-
