@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.51.2.1 1997/10/27 19:29:17 mellon Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.51.2.2 1997/10/30 23:20:37 mellon Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -1574,6 +1574,18 @@ svr4_sys_acl(p, v, retval)
 	return svr4_sys_facl(p, v, retval);	/* XXX: for now the same */
 }
 
+
+int
+svr4_sys_auditsys(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	/*
+	 * XXX: Big brother is *not* watching.
+	 */
+	return 0;
+}
 
 int
 svr4_sys_memcntl(p, v, retval)
