@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.68 2004/08/22 21:38:21 chs Exp $	*/
+/*	$NetBSD: fil.c,v 1.69 2004/09/03 04:18:09 smb Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.68 2004/08/22 21:38:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.69 2004/09/03 04:18:09 smb Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.25 2004/06/30 11:26:08 darrenr Exp";
@@ -2007,7 +2007,7 @@ u_32_t *passp;
 	/*
 	 * Finally, if we've asked to track state for this packet, set it up.
 	 */
-	if (pass & FR_KEEPSTATE) {
+	if ((pass & FR_KEEPSTATE)  && !(fin->fin_flx & FI_OOW)) {
 		if (fr_addstate(fin, NULL, 0) != NULL) {
 			ATOMIC_INCL(frstats[out].fr_ads);
 		} else {
