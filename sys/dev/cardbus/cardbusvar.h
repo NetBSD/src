@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.23 2001/07/19 16:12:21 wiz Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.24 2001/11/06 03:18:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -248,6 +248,7 @@ struct cardbus_attach_args {
 	bus_space_tag_t ca_memt;	/* CardBus MEM space tag */
 	bus_dma_tag_t ca_dmat;		/* DMA tag */
 
+	u_int ca_bus;
 	u_int ca_device;
 	u_int ca_function;
 	cardbustag_t ca_tag;
