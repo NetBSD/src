@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.29 1999/03/22 05:02:40 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.30 1999/05/12 20:43:49 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.29 1999/03/22 05:02:40 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.30 1999/05/12 20:43:49 tron Exp $");
 #endif
 #endif
 
@@ -97,7 +97,7 @@ pkg_do(char *pkg)
 
     /* make sure dbdir actually exists! */
     if (!(isdir(dbdir) || islinktodir(dbdir))) {
-	if (! vsystem("/bin/mkdir -p -m 755 %s", dbdir)) {
+	if (vsystem("/bin/mkdir -p -m 755 %s", dbdir)) {
 	    errx(1, "Database-dir %s cannot be generated, aborting.",
 		 dbdir); 
 	}
@@ -186,7 +186,7 @@ pkg_do(char *pkg)
 		    if (!(isdir(p->name) || islinktodir(p->name)) && !Fake) {
 			if (Verbose)
 			    printf("Desired prefix of %s does not exist, creating.\n", p->name);
-			vsystem("mkdir -p %s", p->name);
+			(void)vsystem("mkdir -p %s", p->name);
 		    }
 		    if (chdir(p->name) == -1) {
 			warn("unable to change directory to `%s'", p->name);
