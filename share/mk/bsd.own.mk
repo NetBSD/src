@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.70 1998/05/25 23:40:22 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.71 1998/05/29 10:15:17 agc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -102,11 +102,6 @@ NOPIC=
 OBJECT_FMT?=ELF
 .else
 OBJECT_FMT?=a.out
-.endif
-
-# these systems use UVM by default
-.if (${MACHINE_ARCH} == "sparc")
-UVM=yes
 .endif
 
 # No lint, for now.
