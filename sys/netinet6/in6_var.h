@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.25 2002/05/23 06:35:18 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.26 2002/05/29 02:58:31 itojun Exp $	*/
 /*	$KAME: in6_var.h,v 1.53 2001/02/10 02:44:27 itojun Exp $	*/
 
 /*
@@ -88,6 +88,17 @@ struct in6_addrlifetime {
 	time_t ia6t_preferred;	/* preferred lifetime expiration time */
 	u_int32_t ia6t_vltime;	/* valid lifetime */
 	u_int32_t ia6t_pltime;	/* prefix lifetime */
+};
+
+#if 0
+struct nd_ifinfo;
+#endif
+struct in6_ifextra {
+	struct in6_ifstat *in6_ifstat;
+	struct icmp6_ifstat *icmp6_ifstat;
+#if 0
+	struct nd_ifinfo *nd_ifinfo;
+#endif
 };
 
 struct	in6_ifaddr {
@@ -435,11 +446,8 @@ extern struct icmp6_ifstat **icmp6_ifstat;
 extern size_t icmp6_ifstatmax;
 #define in6_ifstat_inc(ifp, tag) \
 do {								\
-	if ((ifp) && (ifp)->if_index <= if_index		\
-	 && (ifp)->if_index < in6_ifstatmax			\
-	 && in6_ifstat && in6_ifstat[(ifp)->if_index]) {	\
-		in6_ifstat[(ifp)->if_index]->tag++;		\
-	}							\
+	if (ifp)						\
+		((struct in6_ifextra *)((ifp)->if_afdata[AF_INET6]))->in6_ifstat->tag++; \
 } while (0)
 
 extern struct ifqueue ip6intrq;		/* IP6 packet input queue */
@@ -572,6 +580,8 @@ int	in6if_do_dad __P((struct ifnet *));
 void	in6_purgeif __P((struct ifnet *));
 void	in6_savemkludge __P((struct in6_ifaddr *));
 void	in6_setmaxmtu   __P((void));
+void	*in6_domifattach __P((struct ifnet *));
+void	in6_domifdetach __P((struct ifnet *, void *));
 void	in6_restoremkludge __P((struct in6_ifaddr *, struct ifnet *));
 void	in6_createmkludge __P((struct ifnet *));
 void	in6_purgemkludge __P((struct ifnet *));
