@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.46 2004/08/10 18:43:49 mycroft Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.47 2004/08/10 19:08:37 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.46 2004/08/10 18:43:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.47 2004/08/10 19:08:37 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,19 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.46 2004/08/10 18:43:49 mycroft Exp 
 
 #include <dev/isa/isareg.h>
 
-struct com_dev {
-	char	*cis1_info[4];
-};
-
-/* Devices that we need to match by CIS strings */
-static struct com_dev com_devs[] = {
-	{ PCMCIA_CIS_MEGAHERTZ_XJ2288 },
-};
-
-
-static int com_devs_size = sizeof(com_devs) / sizeof(com_devs[0]);
-static struct com_dev *com_dev_match __P((struct pcmcia_card *));
-
 int com_pcmcia_match __P((struct device *, struct cfdata *, void *));
 int com_pcmcia_validate_config __P((struct pcmcia_config_entry *));
 void com_pcmcia_attach __P((struct device *, struct device *, void *));
@@ -130,26 +117,12 @@ struct com_pcmcia_softc {
 CFATTACH_DECL(com_pcmcia, sizeof(struct com_pcmcia_softc),
     com_pcmcia_match, com_pcmcia_attach, com_pcmcia_detach, com_activate);
 
-/* Look for pcmcia cards with particular CIS strings */
-static struct com_dev *
-com_dev_match(card)
-	struct pcmcia_card *card;
-{
-	int i, j;
-
-	for (i = 0; i < com_devs_size; i++) {
-		for (j = 0; j < 4; j++)
-			if (com_devs[i].cis1_info[j] &&
-			    strcmp(com_devs[i].cis1_info[j],
-			    card->cis1_info[j]) != 0)
-				break;
-		if (j == 4)
-			return &com_devs[i];
-	}
-
-	return NULL;
-}
-
+static const struct pcmcia_product com_pcmcia_products[] = {
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  PCMCIA_CIS_MEGAHERTZ_XJ2288 },
+};
+static const size_t com_pcmcia_nproducts =
+    sizeof(com_pcmcia_products) / sizeof(com_pcmcia_products[0]);
 
 int
 com_pcmcia_match(parent, match, aux)
@@ -188,7 +161,8 @@ com_pcmcia_match(parent, match, aux)
 		return 1;
 
 	/* 3. Is this a card we know about? */
-	if (com_dev_match(pa->card) != NULL)
+	if (pcmcia_product_lookup(pa, com_pcmcia_products, com_pcmcia_nproducts,
+	    sizeof(com_pcmcia_products[0]), NULL))
 		return 1;
 
 	return 0;
