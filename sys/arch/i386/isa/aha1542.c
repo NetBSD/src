@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.14.2.2 1993/11/24 09:45:42 mycroft Exp $
+ *	$Id: aha1542.c,v 1.14.2.3 1993/11/24 23:06:29 mycroft Exp $
  */
 
 /*
@@ -1032,8 +1032,8 @@ ahaminphys(bp)
 
 /*      aha seems to explode with 17 segs (64k may require 17 segs) */
 /*      on old boards so use a max of 16 segs if you have problems here */
-	if (bp->b_bcount > ((AHA_NSEG - 1) >> PGSHIFT))
-		bp->b_bcount = ((AHA_NSEG - 1) >> PGSHIFT);
+	if (bp->b_bcount > ((AHA_NSEG - 1) << PGSHIFT))
+		bp->b_bcount = ((AHA_NSEG - 1) << PGSHIFT);
 }
 
 /*
@@ -1235,12 +1235,10 @@ aha_poll(aha, xs, ccb)
 		 * have got an interrupt?
 		 */
 		stat = inb(AHA_INTR_PORT);
-		if (stat & AHA_ANY_INTR) {
+		if (stat & AHA_ANY_INTR)
 			ahaintr(aha);
-		}
-		if (xs->flags & ITSDONE) {
+		if (xs->flags & ITSDONE)
 			break;
-		}
 		delay(1000);	/* only happens in boot so ok */
 		count--;
 	}
