@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.22 2002/08/07 05:14:54 briggs Exp $
+#	$NetBSD: Makefile,v 1.23 2002/11/26 23:30:11 lukem Exp $
 
-KDIR=	/sys/arch/arc/include
 INCSDIR= /usr/include/arc
 
 # Header files which are needed from userland.

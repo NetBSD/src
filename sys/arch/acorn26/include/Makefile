@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2002/08/07 05:14:47 briggs Exp $
+#	$NetBSD: Makefile,v 1.3 2002/11/26 23:30:09 lukem Exp $
 
-KDIR=	/sys/arch/acorn26/include
 INCSDIR= /usr/include/acorn26
 
 INCS=	ansi.h aout_machdep.h asm.h \

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 2002/08/07 05:16:06 briggs Exp $
+#	$NetBSD: Makefile,v 1.4 2002/11/26 23:30:28 lukem Exp $
 
-KDIR=	/sys/arch/shark/include
 INCSDIR= /usr/include/shark
 
 INCS=	ansi.h aout_machdep.h asm.h \
