@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.48 2001/04/23 06:52:22 simonb Exp $	*/
+/*	$NetBSD: su.c,v 1.49 2002/06/11 06:06:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.48 2001/04/23 06:52:22 simonb Exp $");
+__RCSID("$NetBSD: su.c,v 1.49 2002/06/11 06:06:20 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -643,7 +643,7 @@ kerberos(username, user, uid)
 
 		if ((kerno = krb_rd_req(&ticket, "rcmd", savehost, faddr,
 		    &authdata, "")) != KSUCCESS) {
-			warnx("kerberos: unable to verify rcmd ticket: %s\n",
+			warnx("kerberos: unable to verify rcmd ticket: %s",
 			    krb_err_txt[kerno]);
 			syslog(LOG_WARNING,
 			    "failed su: %s to %s%s: %s", username,

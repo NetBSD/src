@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.30 2001/10/02 03:03:02 atatat Exp $	*/
+/*	$NetBSD: process.c,v 1.31 2002/06/11 06:06:20 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: process.c,v 1.30 2001/10/02 03:03:02 atatat Exp $");
+__RCSID("$NetBSD: process.c,v 1.31 2002/06/11 06:06:20 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,10 +232,10 @@ redirect:
 				if (cp->u.fd == -1 && (cp->u.fd = open(cp->t,
 				    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
 				    DEFFILEMODE)) == -1)
-					err(FATAL, "%s: %s\n",
+					err(FATAL, "%s: %s",
 					    cp->t, strerror(errno));
 				if (write(cp->u.fd, ps, psl) != psl)
-					err(FATAL, "%s: %s\n",
+					err(FATAL, "%s: %s",
 					    cp->t, strerror(errno));
 				break;
 			case 'x':
@@ -419,9 +419,9 @@ substitute(cp)
 	if (cp->u.s->wfile && !pd) {
 		if (cp->u.s->wfd == -1 && (cp->u.s->wfd = open(cp->u.s->wfile,
 		    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC, DEFFILEMODE)) == -1)
-			err(FATAL, "%s: %s\n", cp->u.s->wfile, strerror(errno));
+			err(FATAL, "%s: %s", cp->u.s->wfile, strerror(errno));
 		if (write(cp->u.s->wfd, ps, psl) != psl)
-			err(FATAL, "%s: %s\n", cp->u.s->wfile, strerror(errno));
+			err(FATAL, "%s: %s", cp->u.s->wfile, strerror(errno));
 	}
 	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.22 2002/02/26 02:37:30 wiz Exp $	*/
+/*	$NetBSD: compile.c,v 1.23 2002/06/11 06:06:20 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.22 2002/02/26 02:37:30 wiz Exp $");
+__RCSID("$NetBSD: compile.c,v 1.23 2002/06/11 06:06:20 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -282,7 +282,7 @@ nonsel:		/* Now parse the command */
 			else if ((cmd->u.fd = open(p, 
 			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
 			    DEFFILEMODE)) == -1)
-				err(FATAL, "%s: %s\n", p, strerror(errno));
+				err(FATAL, "%s: %s", p, strerror(errno));
 			break;
 		case RFILE:			/* r */
 			p++;
@@ -573,7 +573,7 @@ compile_flags(p, s)
 			if (!aflag && (s->wfd = open(wfile,
 			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
 			    DEFFILEMODE)) == -1)
-				err(FATAL, "%s: %s\n", wfile, strerror(errno));
+				err(FATAL, "%s: %s", wfile, strerror(errno));
 			return (p);
 		default:
 			err(COMPILE,
