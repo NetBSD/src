@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.92 2005/03/29 15:57:17 he Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.93 2005/03/29 18:18:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.92 2005/03/29 15:57:17 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.93 2005/03/29 18:18:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -945,9 +945,6 @@ chgproccnt(uid_t uid, int diff)
 int
 chgsbsize(uid_t uid, u_long *hiwat, u_long to, rlim_t max)
 {
-	*hiwat = to;
-	return 1;
-#if 0
 	struct uidinfo *uip;
 	rlim_t nsb;
 
@@ -959,5 +956,4 @@ chgsbsize(uid_t uid, u_long *hiwat, u_long to, rlim_t max)
 	uip->ui_sbsize = nsb;
 	KASSERT(uip->ui_sbsize >= 0);
 	return 1;
-#endif /* 0 */
 }
