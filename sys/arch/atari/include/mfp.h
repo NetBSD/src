@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.h,v 1.2 1995/03/26 07:24:37 leo Exp $	*/
+/*	$NetBSD: mfp.h,v 1.3 1997/07/15 08:26:08 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -73,14 +73,16 @@ struct mfp {
 #define	IO_PBSY		0x01	/* Parallel Busy			*/
 #define	IO_SDCD		0x02	/* Serial Data Carrier Detect		*/
 #define	IO_SCTS		0x04	/* Serial Clear To Send			*/
-/*		0x08		*//* reserved				*/
+#define	IO_ISA1		0x08	/* ISA slot1 [ Hades only ]		*/
 #define	IO_AINT		0x10	/* ACIA interrupt (KB or MIDI)		*/
 #define	IO_DINT		0x20	/* DMA interrupt (FDC or HDC)		*/
 #define	IO_SRI		0x40	/* Serial Ring Indicator		*/
 #define	IO_MONO		0x80	/* Monochrome Monitor Detect		*/
+#define	IO_ISA2		0x80	/*  ISA slot2 [ Hades only ]		*/
 
 /* names of interrupts in register A: MFP1 */
 #define	IA_MONO		0x80	/* IO_MONO				*/
+#define	IA_ISA2		0x80	/* IO_ISA2				*/
 #define	IA_SRI		0x40	/* IO_SRI				*/
 #define	IA_TIMA		0x20	/* Timer A				*/
 #define	IA_RRDY		0x10	/* Serial Receiver Ready(=Full)		*/
@@ -104,7 +106,7 @@ struct mfp {
 #define	IB_AINT		0x40	/* IO_AINT: from kbd or midi		*/
 #define	IB_TIMC		0x20	/* Timer C				*/
 #define	IB_TIMD		0x10	/* Timer D				*/
-/*			0x08	*//* reserved				*/
+#define	IB_ISA1		0x08	/* ISA1 interrupt [ Hades only ]	*/
 #define	IB_SCTS		0x04	/* IO_SCTS				*/
 #define	IB_SDCD		0x02	/* IO_SDCD				*/
 #define	IB_PBSY		0x01	/* IO_PBSY				*/
