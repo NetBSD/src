@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 1997/06/16 09:19:25 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.82 1997/06/16 09:50:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -279,9 +279,6 @@ struct	proc nullproc;		/* for use by switch_exit() */
  */
 extern void mips1_vector_init __P((void));
 extern void mips3_vector_init __P((void));
-
-extern void mips3_SetWIRED __P((int));
-extern void MachHitFlushDCache __P((vm_offset_t, int));
 
 extern void savefpregs __P((struct proc *));
 

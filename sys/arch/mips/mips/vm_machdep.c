@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.17 1997/06/16 00:16:12 jonathan Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.18 1997/06/16 09:50:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,10 +64,6 @@ extern struct proc *fpcurproc;			/* trap.c */
 
 extern void savefpregs __P((struct proc *));
 extern void switch_exit __P((struct proc *));
-#ifdef MIPS3
-extern void mips3_HitFlushDCache __P((vm_offset_t, int));
-extern void MachHitFlushDCache __P((caddr_t, int));
-#endif
 
 extern vm_offset_t kvtophys __P((vm_offset_t kva));	/* XXX */
 
