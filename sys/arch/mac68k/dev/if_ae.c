@@ -19,7 +19,7 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.9 1994/02/27 03:40:26 briggs Exp $
+ * $Id: if_ae.c,v 1.10 1994/03/01 15:24:25 briggs Exp $
  */
  
 #include "ae.h"
@@ -210,9 +210,9 @@ ae_probe(parent, cf, aux)
 
 	      case AE_VENDOR_DAYNA:
 		printf("We think we are a Dayna card, but ");
-		sc->nic_addr = nu->addr + AE_NIC_OFFSET;
-		sc->rom_addr = nu->addr + AE_ROM_OFFSET;
-		sc->smem_start = nu->addr + AE_DATA_OFFSET;
+		sc->nic_addr = nu->addr + DP_NIC_OFFSET;
+		sc->rom_addr = nu->addr + DP_ROM_OFFSET;
+		sc->smem_start = nu->addr + DP_DATA_OFFSET;
 		memsize = 8192;
 
 		/* Get station address from on-board ROM */
