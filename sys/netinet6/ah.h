@@ -1,5 +1,5 @@
-/*	$NetBSD: ah.h,v 1.14 2000/10/18 21:14:14 itojun Exp $	*/
-/*	$KAME: ah.h,v 1.12 2000/07/20 17:41:01 itojun Exp $	*/
+/*	$NetBSD: ah.h,v 1.15 2000/10/19 00:40:44 itojun Exp $	*/
+/*	$KAME: ah.h,v 1.13 2000/10/18 21:28:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
