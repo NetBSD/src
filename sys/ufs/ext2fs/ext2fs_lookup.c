@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.1 1997/06/11 09:33:59 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.2 1997/08/04 09:11:00 bouyer Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -139,7 +139,7 @@ ext2fs_readdir(v)
 	} */ *ap = v;
 	register struct uio *uio = ap->a_uio;
 	int error;
-	size_t count, readcnt, lost;
+	size_t e2fs_count, readcnt;
 	struct m_ext2fs *fs = VTOI(ap->a_vp)->i_e2fs;
 
 	struct ext2fs_direct *dp;
@@ -151,27 +151,25 @@ ext2fs_readdir(v)
 	u_long *cookies = ap->a_cookies;
 	int ncookies = ap->a_ncookies;
 
-	count = uio->uio_resid;
+	e2fs_count = uio->uio_resid;
 	/* Make sure we don't return partial entries. */
-	count -= (uio->uio_offset + count) & (fs->e2fs_bsize -1);
-	if (count <= 0)
+	e2fs_count -= (uio->uio_offset + e2fs_count) & (fs->e2fs_bsize -1);
+	if (e2fs_count <= 0)
 		return (EINVAL);
-	lost = uio->uio_resid - count;
-	uio->uio_resid = count;
-	uio->uio_iov->iov_len = count;
 
 	auio = *uio;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_segflg = UIO_SYSSPACE;
-	aiov.iov_len = count;
-	MALLOC(dirbuf, caddr_t, count, M_TEMP, M_WAITOK);
-	bzero(dirbuf, count);
+	aiov.iov_len = e2fs_count;
+	auio.uio_resid = e2fs_count;
+	MALLOC(dirbuf, caddr_t, e2fs_count, M_TEMP, M_WAITOK);
+	bzero(dirbuf, e2fs_count);
 	aiov.iov_base = dirbuf;
 
 	error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
 	if (error == 0) {
-		readcnt = count - auio.uio_resid;
+		readcnt = e2fs_count - auio.uio_resid;
 		for (dp = (struct ext2fs_direct *)dirbuf; 
 			(char *)dp < (char *)dirbuf + readcnt; ) {
 			if (dp->e2d_reclen <= 0) {
@@ -200,7 +198,6 @@ ext2fs_readdir(v)
 	}
 	FREE(dirbuf, M_TEMP);
 	*ap->a_eofflag = VTOI(ap->a_vp)->i_e2fs_size <= uio->uio_offset;
-	uio->uio_resid += lost;
 	return (error);
 }
 
