@@ -1,7 +1,8 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.1 2001/02/19 14:09:03 reinoud Exp $
+REM $NetBSD: BtNetBSD,v 1.2 2001/02/19 15:54:16 bjh21 Exp $
 REM
-REM Copyright (c) 2000,2001 Reinoud Zandijk
+REM Copyright (c) 1998, 1999, 2000 Ben Harris
+REM Copyright (c) 2000, 2001 Reinoud Zandijk
 REM All rights reserved.
 REM
 REM Redistribution and use in source and binary forms, with or without
