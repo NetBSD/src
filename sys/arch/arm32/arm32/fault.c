@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.47 2000/12/12 05:21:02 mycroft Exp $	*/
+/*	$NetBSD: fault.c,v 1.48 2000/12/12 19:41:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -161,6 +161,11 @@ data_abort_handler(frame)
 	 */
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
+
+#ifdef DEBUG
+	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
+		panic("data_abort_handler: not in SVC32 mode");
+#endif
 
 	/* Update vmmeter statistics */
 	uvmexp.traps++;
@@ -486,12 +491,10 @@ prefetch_abort_handler(frame)
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
 
-#ifdef DIAGNOSTIC
-	/* Paranoia: We should always be in SVC32 mode at this point */
-	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE) {
-		panic("Fault handler not in SVC mode\n");
-	}
-#endif	/* DIAGNOSTIC */
+#ifdef DEBUG
+	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
+		panic("prefetch_abort_handler: not in SVC32 mode");
+#endif
 
 	/* Update vmmeter statistics */
 	uvmexp.traps++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.36 2000/12/12 18:26:43 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37 2000/12/12 19:41:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ syscall(frame, code)
 
 #ifdef DEBUG
 	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
-		panic("syscall: Not in SVC32 mode\n");
+		panic("syscall: not in SVC32 mode");
 #endif	/* DEBUG */
 
 	uvmexp.syscalls++;
