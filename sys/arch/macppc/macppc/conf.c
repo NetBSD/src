@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 1998/12/29 04:43:24 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 1999/07/29 19:14:37 augustss Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -130,6 +130,8 @@ cdev_decl(wsdisplay);
 cdev_decl(wskbd);
 #include "wsmouse.h"
 cdev_decl(wsmouse);
+#include "wsmux.h"
+cdev_decl(wsmux);
 
 #include "usb.h"
 cdev_decl(usb);
@@ -184,6 +186,7 @@ struct cdevsw cdevsw[] = {
 	cdev_usbdev_init(NUHID,uhid),	/* 40: USB generic HID */
 	cdev_lpt_init(NULPT,ulpt),	/* 41: USB printer */
 	cdev_ugen_init(NUGEN,ugen),	/* 42: USB generic driver */
+	cdev_mouse_init(NWSMUX,wsmux),  /* 43: ws multiplexor */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -261,6 +264,7 @@ static int chrtoblktbl[] = {
 	/* 40 */	NODEV,
 	/* 41 */	NODEV,
 	/* 42 */	NODEV,
+	/* 43 */	NODEV,
 };
 
 /*
