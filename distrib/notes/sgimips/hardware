@@ -1,11 +1,11 @@
-.\"	$NetBSD: hardware,v 1.2 2002/05/23 05:44:50 pooka Exp $
+.\"	$NetBSD: hardware,v 1.3 2002/07/15 12:48:01 rafal Exp $
 .
 .Nx*M
 is aimed to run on MIPS-based computers manufactured by SGI.
 .Ss2 Supported machines
 .(bullet -offset indent
 .Tn SGI
-IP22 R4000/R4400/R4600 \- Challenge S, Indigo 2 and Indy
+IP22 R4000/R4400/R4600 \- Challenge M, Challenge S, Indigo 2 and Indy
 .It
 IP22 R5000 \- Indy
 .bullet)
@@ -40,6 +40,7 @@ IP35 R12000A - Origin 3000 / Onyx 3000
 Serial ports
 .(bullet -compact
 On-board Zilog Z8530 Dual Uart
+.Pq Em ttyz ,
 .bullet)
 .It
 Ethernet
@@ -52,15 +53,19 @@ SCSI
 .(bullet -compact
 On-board
 .Tn Western Digital
-.Em wdsc
-WD33C93 SCSI controller
+WD33C93 SCSI controller(s)
+.Pq Em wdsc ,
 .bullet)
 .bullet)
 .Ss2 Unsupported devices
 .(bullet -offset indent
+Keyboard and mouse devices
+.It
 Graphics adapters
 .It
 Audio hardware
 .It
 Video hardware
+.It
+Parallel ports
 .bullet)

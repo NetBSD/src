@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.47 2002/07/11 04:52:49 scottr Exp $
+.\"	$NetBSD: sysinst,v 1.48 2002/07/15 12:47:59 rafal Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1114,6 +1114,9 @@ the disklabel to add this once you have installed
 .el .ie r_macppc \{\
 .ds usrpart g
 .\}
+.el .ie r_sgimips \{\
+.ds usrpart e
+.\}
 .el \{\
 .ds usrpart d
 .\}
@@ -1131,7 +1134,13 @@ The
 portion of the disk.
 .It Li d
 .\}
-The entire disk.
+.ie r_sgimips \{\
+The
+.Nx
+portion of the disk.
+.It Li d
+The SGI volume header (boot partition)
+.\}
 .ie r_macppc \{\
 .It Li d-h
 .\}
