@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.61 2003/05/15 05:25:24 lukem Exp $
+# $NetBSD: postinstall,v 1.62 2003/10/26 21:57:11 jdolecek Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -603,11 +603,20 @@ do_makedev()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_makedev   fix|check"
 
-	find_file_in_dirlist MAKEDEV "MAKEDEV" \
-	    ${SRC_DIR}/etc/etc.${MACHINE} ${SRC_DIR}/dev \
-	    || return 1
+	# for MAKEDEV.awk, it only matters if MACHINE_ARCH is 'arm' or not
+	if [ "${MACHINE_ARCH}" = "armeb" -o "${MACHINE_ARCH}" = "armel" \
+	    -o "${MACHINE_ARCH}" = "arm" ]; then
+		maarch="arm"
+	else
+		maarch="X"
+	fi
 
-	compare_dir $1 ${dir} ${DEST_DIR}/dev 555 MAKEDEV || return 1
+	# generate MAKEDEV to scratchdir
+	MACHINE=${MACHINE} MACHINE_ARCH=${maarch} \
+		awk -v ETCDIR="${SRC_DIR}/etc" -f ${SRC_DIR}/etc/MAKEDEV.awk \
+		${SRC_DIR}/etc/MAKEDEV.tmpl > ${SCRATCHDIR}/MAKEDEV
+
+	compare_dir $1 ${SCRATCHDIR} ${DEST_DIR}/dev 555 MAKEDEV || return 1
 }
 
 #
@@ -869,6 +878,7 @@ Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m machine] operation [item [...]]
 	-s srcdir	Source directory to compare from.  [${SRC_DIR:-/}]
 	-d destdir	Destination directory to check.    [${DEST_DIR:-/}]
 	-m machine	Machine architecture.              [${MACHINE}]
+	-a arch		Machine architecture.              [${MACHINE_ARCH}]
 
 	Operation may be one of:
 		help	display this help
@@ -903,6 +913,8 @@ main()
 		DEST_DIR=${OPTARG} ;;
 	m)
 		MACHINE=${OPTARG} ;;
+	a)
+		MACHINE_ARCH=${OPTARG} ;;
 	*)
 		usage ;;
 	esac
@@ -913,6 +925,7 @@ main()
 	[ -d "${SRC_DIR}" ]	|| err 1 "${SRC_DIR} is not a directory"
 	[ -d "${DEST_DIR}" ]	|| err 1 "${DEST_DIR} is not a directory"
 	[ -n "${MACHINE}" ]	|| err 1 "\${MACHINE} is not defined"
+	[ -n "${MACHINE_ARCH}" ] || err 1 "\${MACHINE_ARCH} is not defined"
 
 		# If directories are /, clear them, so various messages
 		# don't have leading "//".   However, this requires
@@ -1012,6 +1025,7 @@ PROGNAME=${0##*/}
 SRC_DIR="/usr/src"
 DEST_DIR="/"
 : ${MACHINE:=$( uname -m )}	# assume native build if $MACHINE is not set
+: ${MACHINE_ARCH:=$( uname -p )}# assume native build if not set
 
 NOT_FIXED=" [NOT FIXED]"
 SCRATCHDIR=$( mkdtemp ) || err 1 "Can't create scratch directory"
