@@ -1,4 +1,4 @@
-/*	$NetBSD: excludes.c,v 1.9 2002/04/09 02:35:31 thorpej Exp $	*/
+/*	$NetBSD: excludes.c,v 1.10 2002/04/09 19:17:11 bjh21 Exp $	*/
 
 /*
  * Copyright 2000 Massachusetts Institute of Technology
@@ -30,7 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: excludes.c,v 1.9 2002/04/09 02:35:31 thorpej Exp $");
+
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: excludes.c,v 1.10 2002/04/09 19:17:11 bjh21 Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>
