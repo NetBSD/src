@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 1997/06/15 11:23:52 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25.8.1 1997/11/09 20:21:07 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)autoconf.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.8.1 1997/11/09 20:21:07 mellon Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -106,6 +109,17 @@ struct devnametobdevmaj pmax_nam2blk[] = {
 #endif
 	{ NULL,		0 },
 };
+
+
+/*
+ * The following is used by the NFS code to select boot method.
+ * 0 -> RARP/SunRPC bootparamd,  1 -> bootp/dhcp.
+ *
+ * The pmax proms need bootp anyway, so just use bootp.
+ */
+extern int nfs_boot_rfc951;
+int nfs_boot_rfc951 = 1;
+
 
 /*
  * Determine mass storage and memory configuration for a machine.
