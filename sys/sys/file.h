@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.25 2001/04/09 10:22:02 jdolecek Exp $	*/
+/*	$NetBSD: file.h,v 1.26 2001/04/30 01:13:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@ struct file {
 do {									\
 	if ((fp)->f_usecount < 0)					\
 		panic(str);						\
-} while (0)
+} while (/* CONSTCOND */ 0)
 #else
 #define	FILE_USE_CHECK(fp, str)		/* nothing */
 #endif
@@ -102,7 +102,7 @@ do {									\
 do {									\
 	(fp)->f_usecount++;						\
 	FILE_USE_CHECK((fp), "f_usecount overflow");			\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	FILE_UNUSE(fp, p)						\
 do {									\
@@ -113,7 +113,7 @@ do {									\
 		(fp)->f_usecount--;					\
 		FILE_USE_CHECK((fp), "f_usecount underflow");		\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * Flags for fo_read and fo_write.

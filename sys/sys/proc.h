@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.125 2001/04/23 19:21:05 simonb Exp $	*/
+/*	$NetBSD: proc.h,v 1.126 2001/04/30 01:13:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -334,13 +334,13 @@ struct proclist_desc {
 do {									\
 	if (--(s)->s_count == 0)					\
 		FREE(s, M_SESSION);					\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	PHOLD(p)							\
 do {									\
 	if ((p)->p_holdcnt++ == 0 && ((p)->p_flag & P_INMEM) == 0)	\
 		uvm_swapin(p);						\
-} while (0)
+} while (/* CONSTCOND */ 0)
 #define	PRELE(p)	(--(p)->p_holdcnt)
 
 /*
