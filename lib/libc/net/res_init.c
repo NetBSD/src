@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.33 2000/06/18 21:41:23 itojun Exp $	*/
+/*	$NetBSD: res_init.c,v 1.34 2000/07/06 03:00:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.33 2000/06/18 21:41:23 itojun Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.34 2000/07/06 03:00:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -193,7 +193,8 @@ res_init()
 	_res.nsaddr.sin_len = sizeof(struct sockaddr_in);
 #ifdef INET6
 	if (sizeof(_res_ext.nsaddr) >= _res.nsaddr.sin_len)
-		memcpy(&_res_ext.nsaddr, &_res.nsaddr, _res.nsaddr.sin_len);
+		memcpy(&_res_ext.nsaddr, &_res.nsaddr,
+		    (size_t)_res.nsaddr.sin_len);
 #endif
 	_res.nscount = 1;
 	_res.ndots = 1;
@@ -410,7 +411,8 @@ res_init()
 			else if (inet_pton(AF_INET6, net, &a6) == 1) {
 			    _res_ext.sort_list[nsort].af = AF_INET6;
 			    _res_ext.sort_list[nsort].addr.in6a = a6;
-			    u = (u_char *)&_res_ext.sort_list[nsort].mask.in6a;
+			    u = (u_char *)(void *)
+				&_res_ext.sort_list[nsort].mask.in6a;
 			    *cp++ = n;
 			    net = cp;
 			    while (*cp && *cp != ';' &&
