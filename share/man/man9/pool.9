@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.12 1999/03/16 00:40:47 garbled Exp $
+.\"	$NetBSD: pool.9,v 1.12.2.1 1999/04/15 16:07:30 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,10 @@
 .Nm pool_destroy ,
 .Nm pool_get ,
 .Nm pool_put ,
-.Nm pool_prime
+.Nm pool_prime ,
+.Nm pool_sethiwat ,
+.Nm pool_setlowat
+.\".Nm POOL_STORAGE_SIZE
 .Nd resource-pool manager
 .Sh SYNOPSIS
 .Fd #include <sys/pool.h>
@@ -65,7 +68,9 @@
 .Fn pool_put "struct pool *pp" "void *item"
 .Ft int
 .Fn pool_prime "struct pool *pp" "int nitems" "caddr_t storage"
+.Ft void
 .Fn pool_sethiwat "struct pool *pp" "int n"
+.Ft void
 .Fn pool_setlowat "struct pool *pp" "int n"
 .Fn POOL_STORAGE_SIZE "size" "nitems"
 .Sh DESCRIPTION
