@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.1 2003/02/03 17:10:10 matt Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.2 2003/02/13 15:02:49 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -80,10 +80,10 @@ ENTRY_NOPROFILE(ofwinit)
         mfsprg  0,3
        	stw	0,4(9)
 
-	lis	0,OF_buffer@ha
-	addi	0,0,OF_buffer@l
+	lis	8,OF_buffer@ha
+	addi	8,8,OF_buffer@l
 	lis	9,_C_LABEL(OF_buf)@ha
-	stw	0,_C_LABEL(OF_buf)@l(9)
+	stw	8,_C_LABEL(OF_buf)@l(9)
 
 	blr
 
