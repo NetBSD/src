@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.29 2001/09/29 21:15:11 jdolecek Exp $	*/
+/*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.29 2001/09/29 21:15:11 jdolecek Exp $");
+__RCSID("$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -193,7 +193,7 @@ loadbuf(void *buf, size_t len)
 		n = MIN(len, MODIOBUF);
 		ldbuf.cnt = n;
 		ldbuf.data = p;
-		if(ioctl(devfd, LMLOADBUF, &ldbuf) == -1)
+		if (ioctl(devfd, LMLOADBUF, &ldbuf) == -1)
 			err(11, "error loading buffer");
 		len -= n;
 		p += n;
@@ -214,6 +214,29 @@ loadspace(size_t len)
 	}
 }
 
+/* 
+ * Transfer symbol table to kernel memory in chunks 
+ * of MODIOBUF size at a time.
+ */
+void
+loadsym(void *buf, size_t len)
+{
+	struct lmc_loadbuf ldbuf;
+	size_t n;
+	char *p = buf;
+	
+	while(len) {
+		n = MIN(len, MODIOBUF);
+		ldbuf.cnt = n;
+		ldbuf.data = p;
+		if(ioctl(devfd, LMLOADSYMS, &ldbuf) == -1)
+			err(11, "error loading buffer");
+		len -= n;
+		p += n;
+	}
+}
+
+/* Transfer some empty space. */
 int
 main(int argc, char **argv)
 {
