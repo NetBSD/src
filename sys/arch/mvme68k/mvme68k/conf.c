@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 1996/12/28 23:23:49 pk Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 1997/06/01 09:18:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -130,6 +130,8 @@ cdev_decl(lpt);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*)))enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev, 0}
 
+#include "ipfilter.h" 
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -139,7 +141,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
-	cdev_notdef(),			/* 7 */
+	cdev_ipf_init(NIPFILTER,ipl),	/* 7: ip-filter device */
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	cdev_notdef(),			/* 9 */
 	cdev_notdef(),			/* 10 */
