@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.43 2000/02/29 06:32:31 simonb Exp $
+#	$NetBSD: GENERIC,v 1.44 2000/03/27 15:53:04 minoura Exp $
 
 #
 #	GENERIC
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"GENERIC-$Revision: 1.43 $"
+#ident 		"GENERIC-$Revision: 1.44 $"
 
 maxusers	32
 
@@ -234,7 +234,7 @@ st*	at scsibus? target ? lun ?	# SCSI tapes
 ch*	at scsibus? target ? lun ?	# SCSI changer devices
 #uk*	at scsibus? target ? lun ?	# SCSI unknown devices
 
-## Serial ports
+## Ports
 zsc0	at intio0 addr 0xe98000 intr 112
 zstty0	at zsc0 channel 0		# built-in RS-232C
 ms0	at zsc0 channel 1		# standard mouse
@@ -244,14 +244,13 @@ ms0	at zsc0 channel 1		# standard mouse
 #zsc2	at intio0 addr 0xeafc10 intr 114
 #zstty4	at zsc2 channel 0
 #zstty5	at zsc2 channel 1
+par0	at intio0 addr 0xe8c000 	# Builtin printer port
 
 pseudo-device	sram			# battery-backuped static RAM
 pseudo-device	bell			# OPM bell
 
 xcom0	at mainbus0			# NS16550 fast serial
 xcom1	at mainbus0
-
-par0	at mainbus0			# Builtin printer port
 
 ## Audio device; broken
 #okiadpcm0 at intio0 addr 0xe92000 intr 106 errintr 107 dma 3
