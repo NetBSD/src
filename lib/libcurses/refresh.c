@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.11 1999/04/13 14:08:18 mrg Exp $	*/
+/*	$NetBSD: refresh.c,v 1.12 1999/06/23 03:27:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.11 1999/04/13 14:08:18 mrg Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.12 1999/06/23 03:27:34 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -84,7 +84,7 @@ wrefresh(win)
 		for (wy = 0; wy < win->maxy; wy++) {
 			wlp = win->lines[wy];
 			if (wlp->flags & __ISDIRTY)
-				wlp->hash = __hash((char *) wlp->line,
+				wlp->hash = __hash((char *)(void *)wlp->line,
 				    (int) (win->maxx * __LDATASIZE));
 		}
 
@@ -328,7 +328,9 @@ makech(win, wy)
 				if ((clsp - nlsp >= strlen(CE)
 				    && clsp < win->maxx * __LDATASIZE) ||
 				    wy == win->maxy - 1) {
-					if (curscr->flags & __WSTANDOUT) {
+					if ((curscr->flags & __WSTANDOUT) &&
+					    SE != NULL && UE != NULL &&
+					    ME != NULL) {
 						tputs(SE, 0, __cputchar);
 						curscr->flags &= ~__WSTANDOUT;
 						if (*SE == *UE) {
@@ -340,7 +342,8 @@ makech(win, wy)
 						    ~__WATTRIBUTES;
 						}
 					}
-					if (curscr->flags & __WUNDERSCORE) {
+					if ((curscr->flags & __WUNDERSCORE) &&
+					    UE != NULL && ME != NULL) {
 						tputs(UE, 0, __cputchar);
 						curscr->flags &= ~__WUNDERSCORE;
 						if (*UE == *ME) {
@@ -348,7 +351,8 @@ makech(win, wy)
 						    ~__WATTRIBUTES;
 						}
 					}
-					if (curscr->flags & __WATTRIBUTES) {
+					if ((curscr->flags & __WATTRIBUTES) &&
+					    UE != NULL) {
 						tputs(UE, 0, __cputchar);
 						curscr->flags &= ~__WATTRIBUTES;
 					}
@@ -386,7 +390,7 @@ makech(win, wy)
 			    curscr->flags & __WREVERSE) ||
 			    (!(nsp->attr & __BOLD) &&
 			    curscr->flags & __WBOLD)) {
-				if (ME != NULL) {
+				if (ME != NULL && SE != NULL && UE != NULL) {
 					tputs(ME, 0, __cputchar);
 					curscr->flags &= ~__WATTRIBUTES;
 					if (*ME == *SE) {
@@ -405,8 +409,8 @@ makech(win, wy)
 			 * and standout.
 			 */
 			if (!(nsp->attr & __UNDERSCORE) &&
-			    curscr->flags & __WUNDERSCORE &&
-			    UE != NULL) {
+			    (curscr->flags & __WUNDERSCORE) &&
+			    UE != NULL && ME != NULL && SE != NULL) {
 				tputs(UE, 0, __cputchar);
 				curscr->flags &= ~__WUNDERSCORE;
 				if (*UE == *ME) {
@@ -433,8 +437,8 @@ makech(win, wy)
 					curscr->flags |= __WSTANDOUT;
 				}
 			} else {
-				if (curscr->flags & __WSTANDOUT &&
-				    SE != NULL) {
+				if ((curscr->flags & __WSTANDOUT) &&
+				    SE != NULL && ME != NULL && UE != NULL) {
 					tputs(SE, 0, __cputchar);
 					curscr->flags &= ~__WSTANDOUT;
 					if (*SE == *ME) {
@@ -613,15 +617,15 @@ static void
 domvcur(oy, ox, ny, nx)
 	int	oy, ox, ny, nx;
 {
-	if (curscr->flags & __WSTANDOUT && !MS) {
+	if (curscr->flags & __WSTANDOUT && !MS && SE) {
 		tputs(SE, 0, __cputchar);
 		curscr->flags &= ~__WSTANDOUT;
 	}
-	if (curscr->flags & __WUNDERSCORE && !MS) {
+	if (curscr->flags & __WUNDERSCORE && !MS && UE) {
 		tputs(UE, 0, __cputchar);
 		curscr->flags &= ~__WUNDERSCORE;
 	}
-	if (curscr->flags & __WATTRIBUTES && !MS) {
+	if (curscr->flags & __WATTRIBUTES && !MS && ME) {
 		tputs(ME, 0, __cputchar);
 		curscr->flags &= ~__WATTRIBUTES;
 	}
@@ -764,7 +768,8 @@ done:
 		buf[i].ch = ' ';
 		buf[i].attr = 0;
 	}
-	blank_hash = __hash((char *) buf, (int) (win->maxx * __LDATASIZE));
+	blank_hash = __hash((char *)(void *)buf,
+	    (int) (win->maxx * __LDATASIZE));
 
 	/*
 	 * Perform the rotation to maintain the consistency of curscr.
