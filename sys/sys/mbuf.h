@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.59 2001/07/26 17:24:59 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.60 2001/07/26 19:05:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -253,7 +253,8 @@ struct mbuf {
  * are guaranteed to return successfully.
  */
 #define	MGET(m, how, type) do { \
-	MBUFLOCK((m) = pool_get(&mbpool, (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);); \
+	MBUFLOCK((m) = pool_cache_get(&mbpool_cache, \
+	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);); \
 	if (m) { \
 		MBUFLOCK(mbstat.m_mtypes[type]++;); \
 		(m)->m_type = (type); \
@@ -266,7 +267,8 @@ struct mbuf {
 } while (/* CONSTCOND */ 0)
 
 #define	MGETHDR(m, how, type) do { \
-	MBUFLOCK((m) = pool_get(&mbpool, (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);); \
+	MBUFLOCK((m) = pool_cache_get(&mbpool_cache, \
+	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);); \
 	if (m) { \
 		MBUFLOCK(mbstat.m_mtypes[type]++;); \
 		(m)->m_type = (type); \
@@ -340,12 +342,12 @@ struct mbuf {
 #define	MCLGET(m, how) do { \
 	MBUFLOCK( \
 		(m)->m_ext.ext_buf = \
-		    pool_get(&mclpool, (how) == M_WAIT ? \
+		    pool_cache_get(&mclpool_cache, (how) == M_WAIT ? \
 			(PR_WAITOK|PR_LIMITFAIL) : 0); \
 		if ((m)->m_ext.ext_buf == NULL) { \
 			m_reclaim((how)); \
 			(m)->m_ext.ext_buf = \
-			    pool_get(&mclpool, \
+			    pool_cache_get(&mclpool_cache, \
 			     (how) == M_WAIT ? PR_WAITOK : 0); \
 		} \
 	); \
@@ -389,7 +391,7 @@ struct mbuf {
 	if (MCLISREFERENCED(m)) { \
 		_MCLDEREFERENCE(m); \
 	} else if ((m)->m_flags & M_CLUSTER) { \
-		pool_put(&mclpool, (m)->m_ext.ext_buf); \
+		pool_cache_put(&mclpool_cache, (m)->m_ext.ext_buf); \
 	} else if ((m)->m_ext.ext_free) { \
 		(*((m)->m_ext.ext_free))((m)->m_ext.ext_buf, \
 		    (m)->m_ext.ext_size, (m)->m_ext.ext_arg); \
@@ -436,7 +438,7 @@ do {									\
 			_MEXTREMOVE((m)); \
 		} \
 		(n) = (m)->m_next; \
-		pool_put(&mbpool, (m)); \
+		pool_cache_put(&mbpool_cache, (m)); \
 	)
 
 /*
@@ -596,6 +598,8 @@ extern const int mclbytes;		/* mbuf cluster size */
 extern const int mbtypes[];		/* XXX */
 extern struct pool mbpool;
 extern struct pool mclpool;
+extern struct pool_cache mbpool_cache;
+extern struct pool_cache mclpool_cache;
 
 struct	mbuf *m_copym __P((struct mbuf *, int, int, int));
 struct	mbuf *m_copypacket __P((struct mbuf *, int));
