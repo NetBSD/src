@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.4 1999/10/27 10:04:41 haya Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.5 1999/10/27 14:09:52 joda Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -157,6 +157,7 @@ typedef u_int16_t cardbus_product_id_t;
 #define CARDBUS_BASE4_REG  0x20
 #define CARDBUS_BASE5_REG  0x24
 #define CARDBUS_CIS_REG    0x28
+#define CARDBUS_ROM_REG	   0x30
 #  define CARDBUS_CIS_ASIMASK 0x07
 #    define CARDBUS_CIS_ASI(x) (CARDBUS_CIS_ASIMASK & (x))
 #  define CARDBUS_CIS_ASI_TUPLE 0x00
@@ -406,7 +407,7 @@ int cardbus_function_disable __P((cardbus_devfunc_t));
 
 #define Cardbus_conf_read(ct, tag, offs) (*(ct)->ct_cf->cardbus_conf_read)((ct)->ct_cf, (tag), (offs))
 #define cardbus_conf_read(cc, cf, tag, offs) ((cf)->cardbus_conf_read)((cc), (tag), (offs))
-#define Cardbus_conf_write(ct, tag, offs, val) (*(cc)->ct_cf->cardbus_conf_write)((ct)->ct_cf, (tag), (offs), (val))
+#define Cardbus_conf_write(ct, tag, offs, val) (*(ct)->ct_cf->cardbus_conf_write)((ct)->ct_cf, (tag), (offs), (val))
 #define cardbus_conf_write(cc, cf, tag, offs, val) ((cf)->cardbus_conf_write)((cc), (tag), (offs), (val))
 
 #endif /* SYS_DEV_CARDBUS_CARDBUSVAR_H */
