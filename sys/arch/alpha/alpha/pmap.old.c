@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.21 1997/09/03 00:58:14 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.22 1997/09/03 19:07:32 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.21 1997/09/03 00:58:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.22 1997/09/03 19:07:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,8 +256,13 @@ vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 vm_offset_t	vm_first_phys;	/* PA of first managed page */
 vm_offset_t	vm_last_phys;	/* PA just past last managed page */
+int		pv_table_npages;
+
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
+struct pv_entry	*pv_table;
 char		*pmap_attributes; /* reference and modify bits */
+TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
+int		pv_nfree;
 
 /*
  * Internal routines
@@ -270,6 +275,10 @@ void pmap_enter_ptpage	__P((pmap_t, vm_offset_t));
 void pmap_pvdump	__P((vm_offset_t));
 void pmap_check_wiring	__P((char *, vm_offset_t));
 #endif
+
+struct pv_entry *pmap_alloc_pv __P((void));
+void	pmap_free_pv __P((struct pv_entry *));
+void	pmap_collect_pv __P((void));
 
 #define PAGE_IS_MANAGED(pa)	((pa) >= vm_first_phys && (pa) < vm_last_phys)
 
@@ -379,8 +388,9 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 * phys_start and phys_end but its better to use kseg0 addresses
 	 * rather than kernel virtual addresses mapped through the TLB.
 	 */
-	i = 1 + lastusablepage - alpha_btop(ALPHA_K0SEG_TO_PHYS(firstaddr));
-	valloc(pv_table, struct pv_entry, i);
+	pv_table_npages = 1 + lastusablepage -
+	    alpha_btop(ALPHA_K0SEG_TO_PHYS(firstaddr));
+	valloc(pv_table, struct pv_entry, pv_table_npages);
 
 	/*
 	 * Clear allocated memory.
@@ -548,7 +558,13 @@ pmap_init(phys_start, phys_end)
 	 */
 	s = maxproc * ALPHA_MAX_PTSIZE;			/* XXX limit it */
 	pt_map = kmem_suballoc(kernel_map, &addr, &addr2, s, TRUE);
-	
+
+	/*
+	 * The pv_table has already been allocated.  Initialize
+	 * the pv_page free list.
+	 */
+	TAILQ_INIT(&pv_page_freelist);
+
 	/*
 	 * Now it is safe to enable pv_table recording.
 	 */
@@ -1088,8 +1104,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 				if (pmap == npv->pv_pmap && va == npv->pv_va)
 					panic("pmap_enter: already in pv_tab");
 #endif
-			npv = (pv_entry_t)
-				malloc(sizeof *npv, M_VMPVENT, M_NOWAIT);
+			npv = pmap_alloc_pv();
 			npv->pv_va = va;
 			npv->pv_pmap = pmap;
 			npv->pv_next = pv->pv_next;
@@ -1406,6 +1421,11 @@ ok:
 #endif
 	}
 	splx(s);
+
+#ifdef notyet
+	/* Go compact and garbage-collect the pv_table. */
+	pmap_collect_pv();
+#endif
 }
 
 /*
@@ -1800,7 +1820,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		if (npv) {
 			npv->pv_flags = pv->pv_flags;
 			*pv = *npv;
-			free((caddr_t)npv, M_VMPVENT);
+			pmap_free_pv(npv);
 		} else
 			pv->pv_pmap = NULL;
 #ifdef PMAPSTATS
@@ -1822,7 +1842,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		ste = npv->pv_ptpte;
 		ptpmap = npv->pv_ptpmap;
 		pv->pv_next = npv->pv_next;
-		free((caddr_t)npv, M_VMPVENT);
+		pmap_free_pv(npv);
 		pv = pa_to_pvh(pa);
 	}
 	/*
@@ -2319,4 +2339,120 @@ vtophys(vaddr)
 #endif
 
 	return (paddr);
+}
+
+/******************** pv_entry management ********************/
+
+struct pv_entry *
+pmap_alloc_pv()
+{
+	struct pv_page *pvp;
+	struct pv_entry *pv;
+	int i;
+
+	if (pv_nfree == 0) {
+		pvp = (struct pv_page *)kmem_alloc(kernel_map, NBPG);
+		if (pvp == 0)
+			panic("pmap_alloc_pv: kmem_alloc() failed");
+		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
+		for (i = NPVPPG - 2; i; i--, pv++)
+			pv->pv_next = pv + 1;
+		pv->pv_next = 0;
+		pv_nfree += pvp->pvp_pgi.pgi_nfree = NPVPPG - 1;
+		TAILQ_INSERT_HEAD(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+		pv = &pvp->pvp_pv[0];
+	} else {
+		--pv_nfree;
+		pvp = pv_page_freelist.tqh_first;
+		if (--pvp->pvp_pgi.pgi_nfree == 0) {
+			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+		}
+		pv = pvp->pvp_pgi.pgi_freelist;
+#ifdef DIAGNOSTIC
+		if (pv == 0)
+			panic("pmap_alloc_pv: pgi_nfree inconsistent");
+#endif
+		pvp->pvp_pgi.pgi_freelist = pv->pv_next;
+	}
+	return pv;
+}
+
+void
+pmap_free_pv(pv)
+	struct pv_entry *pv;
+{
+	register struct pv_page *pvp;
+
+	pvp = (struct pv_page *) trunc_page(pv);
+	switch (++pvp->pvp_pgi.pgi_nfree) {
+	case 1:
+		TAILQ_INSERT_TAIL(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+	default:
+		pv->pv_next = pvp->pvp_pgi.pgi_freelist;
+		pvp->pvp_pgi.pgi_freelist = pv;
+		++pv_nfree;
+		break;
+	case NPVPPG:
+		pv_nfree -= NPVPPG - 1;
+		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+		break;
+	}
+}
+
+void
+pmap_collect_pv()
+{
+	struct pv_page_list pv_page_collectlist;
+	struct pv_page *pvp, *npvp;
+	struct pv_entry *ph, *ppv, *pv, *npv;
+	int s;
+
+	TAILQ_INIT(&pv_page_collectlist);
+
+	for (pvp = pv_page_freelist.tqh_first; pvp; pvp = npvp) {
+		if (pv_nfree < NPVPPG)
+			break;
+		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
+		if (pvp->pvp_pgi.pgi_nfree > NPVPPG / 3) {
+			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+			TAILQ_INSERT_TAIL(&pv_page_collectlist, pvp, pvp_pgi.pgi_list);
+			pv_nfree -= pvp->pvp_pgi.pgi_nfree;
+			pvp->pvp_pgi.pgi_nfree = -1;
+		}
+	}
+
+	if (pv_page_collectlist.tqh_first == 0)
+		return;
+
+	for (ph = &pv_table[pv_table_npages - 1]; ph >= &pv_table[0]; ph--) {
+		if (ph->pv_pmap == 0)
+			continue;
+		s = splimp();
+		for (ppv = ph; (pv = ppv->pv_next) != 0; ) {
+			pvp = (struct pv_page *) trunc_page(pv);
+			if (pvp->pvp_pgi.pgi_nfree == -1) {
+				pvp = pv_page_freelist.tqh_first;
+				if (--pvp->pvp_pgi.pgi_nfree == 0) {
+					TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+				}
+				npv = pvp->pvp_pgi.pgi_freelist;
+#ifdef DIAGNOSTIC
+				if (npv == 0)
+					panic("pmap_collect_pv: pgi_nfree inconsistent");
+#endif
+				pvp->pvp_pgi.pgi_freelist = npv->pv_next;
+				*npv = *pv;
+				ppv->pv_next = npv;
+				ppv = npv;
+			} else
+				ppv = pv;
+		}
+		splx(s);
+	}
+
+	for (pvp = pv_page_collectlist.tqh_first; pvp; pvp = npvp) {
+		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
+		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+	}
 }
