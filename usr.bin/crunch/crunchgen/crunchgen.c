@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.30 2002/01/25 12:05:00 ragge Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.31 2002/01/31 19:24:47 tv Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -32,8 +32,12 @@
  * from specs given in a .conf file.  
  */
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.30 2002/01/25 12:05:00 ragge Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: crunchgen.c,v 1.31 2002/01/31 19:24:47 tv Exp $");
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <stdlib.h>
