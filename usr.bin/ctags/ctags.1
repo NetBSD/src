@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctags.1,v 1.11 2002/02/08 01:36:22 ross Exp $
+.\"	$NetBSD: ctags.1,v 1.12 2002/09/30 09:45:23 grant Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -95,16 +95,19 @@ update the specified files in the
 .Ar tags
 file, that is, all
 references to them are deleted, and the new values are appended to the
-file.  (Beware: this option is implemented in a way which is rather
+file.
+(Beware: this option is implemented in a way which is rather
 slow; it is usually faster to simply rebuild the
 .Ar tags
 file.)
 .It Fl v
 An index of the form expected by
 .Xr vgrind 1
-is produced on the standard output.  This listing
+is produced on the standard output.
+This listing
 contains the object name, file name, and page number (assuming 64
-line pages).  Since the output will be sorted into lexicographic order,
+line pages).
+Since the output will be sorted into lexicographic order,
 it may be desired to run the output through
 .Xr sort 1 .
 Sample use:
@@ -118,7 +121,8 @@ suppress warning diagnostics.
 .Nm
 produces a list of object
 names, the line number and file name on which each is defined, as well
-as the text of that line and prints this on the standard output.  This
+as the text of that line and prints this on the standard output.
+This
 is a simple index which can be printed out as an off-line readable
 function index.
 .El
@@ -137,21 +141,28 @@ source files.
 Files whose names end in
 .Sq \&.l
 are assumed to be lisp files if their
-first non-blank character is `;', `(', or `[',
+first non-blank character is
+.Sq ; ,
+.Sq \&( ,
+or
+.Sq \&[ ,
 otherwise, they are
-treated as lex files.  Other files are first examined to see if they
+treated as lex files.
+Other files are first examined to see if they
 contain any Pascal or Fortran routine definitions, and, if not, are
 searched for C style definitions.
 .Pp
 The tag
 .Li main
-is treated specially in C programs.  The tag formed
+is treated specially in C programs.
+The tag formed
 is created by prepending
 .Ar M
 to the name of the file, with the
 trailing
 .Sq \&.c
-and any leading pathname components removed.  This
+and any leading pathname components removed.
+This
 makes use of
 .Nm
 practical in directories with more than one
@@ -189,7 +200,8 @@ and
 .Em procedures
 for
 .Tn FORTRAN
-and Pascal is done in a very simpleminded way.  No attempt
+and Pascal is done in a very simpleminded way.
+No attempt
 is made to deal with block structure; if you have two Pascal procedures
 in different blocks with the same name you lose.
 .Nm
@@ -202,7 +214,8 @@ functions is a hack.
 .Pp
 .Nm
 relies on the input being well formed, and any syntactical
-errors will completely confuse it.  It also finds some legal syntax
+errors will completely confuse it.
+It also finds some legal syntax
 confusing; for example, since it doesn't understand
 .Li #ifdef Ns 's
 (incidentally, that's a feature, not a bug), any code with unbalanced
@@ -211,6 +224,7 @@ braces inside
 will cause it to become somewhat disoriented.
 In a similar fashion, multiple line changes within a definition will
 cause it to enter the last line of the object, rather than the first, as
-the searching pattern.  The last line of multiple line
+the searching pattern.
+The last line of multiple line
 .Li typedef Ns 's
 will similarly be noted.
