@@ -1,8 +1,8 @@
-/* $NetBSD: pm.c,v 1.1.2.2 1998/10/20 02:46:42 nisimura Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.3 1998/10/30 08:33:36 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.2 1998/10/20 02:46:42 nisimura Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.3 1998/10/30 08:33:36 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -23,6 +23,12 @@ __KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.2 1998/10/20 02:46:42 nisimura Exp $");
 #include <machine/autoconf.h>
 
 #include <pmax/ibus/ibusvar.h>
+
+#include "opt_uvm.h"
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#define useracc uvm_useracc
+#endif
 
 extern void kn01_wbflush __P((void));
 
@@ -47,19 +53,6 @@ struct pccreg {
 #undef	_WORD_
 };
 
-struct bt478reg {
-#define	_BYTE_(_y_)	u_int8_t _y_; unsigned : 24
-	_BYTE_(bt_mapWA);	/* address register (color map write) */
-	_BYTE_(bt_map);		/* color map */
-	_BYTE_(bt_mask);	/* pixel read mask */
-	_BYTE_(bt_mapRA);	/* address register (color map read) */
-	_BYTE_(bt_overWA);	/* address register (overlay map write) */
-	_BYTE_(bt_over);	/* overlay map */
-	unsigned : 32;		/* unused */
-	_BYTE_(bt_overRA);	/* address register (overlay map read) */
-#undef	_BYTE_
-};
-
 #define	PCC_ENPA	0000001
 #define	PCC_FOPA	0000002
 #define	PCC_ENPB	0000004
@@ -76,6 +69,19 @@ struct bt478reg {
 #define	PCC_VBHI	0020000
 #define	PCC_HSHI	0040000
 #define	PCC_TEST	0100000
+
+struct bt478reg {
+#define	_BYTE_(_y_)	u_int8_t _y_; unsigned : 24
+	_BYTE_(bt_mapWA);	/* address register (color map write) */
+	_BYTE_(bt_map);		/* color map */
+	_BYTE_(bt_mask);	/* pixel read mask */
+	_BYTE_(bt_mapRA);	/* address register (color map read) */
+	_BYTE_(bt_overWA);	/* address register (overlay map write) */
+	_BYTE_(bt_over);	/* overlay map */
+	unsigned : 32;		/* unused */
+	_BYTE_(bt_overRA);	/* address register (overlay map read) */
+#undef	_BYTE_
+};
 
 struct fb_devconfig {
 	vaddr_t dc_vaddr;		/* memory space virtual base address */
@@ -195,6 +201,8 @@ void pcc_show_cursor __P((struct pm_softc *, int));
 #define	KN01_SYS_PCC	0x11100000
 #define	KN01_SYS_BT478	0x11200000
 #define	KN01_SYS_PMASK	0x10000000
+#define	KN01_SYS_CSR	0x1e000000
+#define	KN01_CSR_MONO	    0x0800
 
 int
 pmmatch(parent, match, aux)
@@ -218,18 +226,19 @@ pm_getdevconfig(dense_addr, dc)
 {
 	struct raster *rap;
 	struct rcons *rcp;
+	u_int16_t *p = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
 	int i;
-
-	dc->dc_vaddr = dense_addr;
-	dc->dc_paddr = MIPS_KSEG1_TO_PHYS(dc->dc_vaddr);
-	dc->dc_size = 0x100000;
 
 	dc->dc_wid = 1024;
 	dc->dc_ht = 864;
-	dc->dc_depth = 8;
-	dc->dc_rowbytes = 1024;
-	dc->dc_videobase = dc->dc_vaddr;
+	dc->dc_depth = (*p & KN01_CSR_MONO) ? 1 : 8;
+	dc->dc_rowbytes = (dc->dc_depth == 8) ? 1024 : 1024 / 8;
+	dc->dc_videobase = dense_addr;
 	dc->dc_blanked = 0;
+
+	dc->dc_vaddr = dense_addr;
+	dc->dc_paddr = MIPS_KSEG1_TO_PHYS(dc->dc_vaddr);
+	dc->dc_size = (dc->dc_depth == 8) ? 0x100000 : 0x40000;
 
 	/* initialize colormap and cursor resource */
 	pminit(dc);
@@ -315,7 +324,8 @@ pmioctl(v, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_PM_COLOR;
+		*(u_int *)data = (dc->dc_depth == 8)
+			? WSDISPLAY_TYPE_PM_COLOR : WSDISPLAY_TYPE_PM_MONO;
 		return (0);
 
 	case WSDISPLAYIO_GINFO:
@@ -480,7 +490,6 @@ pminit(dc)
 		vdac->bt_map = 0xff;	kn01_wbflush();
 		vdac->bt_map = 0xff;	kn01_wbflush();
 	}
-
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.13.10.1 1998/10/15 03:25:08 nisimura Exp $	*/
+/*	$NetBSD: asm.h,v 1.13.10.2 1998/10/30 08:33:37 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,7 +105,6 @@
 	subu	sp,sp,8;	\
 	.set at
 
-
 #ifdef GPROF
 # if defined(_KERNEL) || defined(_LOCORE)
 #  define MCOUNT _KERN_MCOUNT
@@ -124,6 +123,13 @@
 # else
 #  define _C_LABEL(x)	_/**/x
 # endif
+#endif
+
+#ifdef USE_AENT
+#define AENT(x)				\
+	.aent	x, 0
+#else
+#define AENT(x)
 #endif
 
 /*
@@ -151,22 +157,16 @@ _C_LABEL(x): ;				\
 	.frame	sp, 0, ra
 
 /*
- * ALIAS
- *	Global alias for a function, or alternate entry point
+ * XLEAF
+ *	declare alternate entry to leaf routine
  */
-#define	ALIAS(x)			\
+#define XLEAF(x)			\
 	.globl	_C_LABEL(x);		\
+	.aent	_C_LABEL(x),0;		\
 _C_LABEL(x):
 
-#ifdef USE_AENT
-#define AENT(x)				\
-	.aent	x, 0
-#else
-#define AENT(x)
-#endif
-
 /*
- * NESTED(x)
+ * NESTED
  *	A function calls other functions and needs
  *	therefore stack space to save/restore registers.
  */
@@ -188,11 +188,41 @@ _C_LABEL(x): ;				\
 	.frame	sp, fsize, retpc
 
 /*
- * END(x)
+ * XNESTED
+ *	declare alternate entry point to nested routine.
+ */
+#define XNESTED(x)			\
+	.globl	_C_LABEL(x);		\
+	.aent	_C_LABEL(x),0;		\
+_C_LABEL(x):
+
+/*
+ * END
  *	Mark end of a procedure.
  */
 #define END(x) \
 	.end _C_LABEL(x)
+
+/*
+ * IMPORT -- import external symbol
+ */
+#define IMPORT(sym, size)		\
+	.extern sym,size
+
+/*
+ * EXPORT -- export definition of symbol
+ */
+#define EXPORT(x)			\
+	.globl	_C_LABEL(x);		\
+_C_LABEL(x):
+
+/*
+ * ALIAS
+ *	Global alias for a function, or alternate entry point
+ */
+#define	ALIAS(x)			\
+	.globl	_C_LABEL(x);		\
+_C_LABEL(x):
 
 /*
  * Macros to panic and printf from assembly language.
@@ -215,5 +245,32 @@ _C_LABEL(x): ;				\
 #define ASMSTR(str)			\
 	.asciiz str;			\
 	.align	3
+
+/*
+ * XXX retain dialects XXX
+ */
+#define ALEAF(x)			\
+	.globl _C_LABEL(x);		\
+	AENT (_C_LABEL(x))		\
+_C_LABEL(x):
+
+#define NLEAF(x)			\
+	.globl _C_LABEL(x); 		\
+	.ent _C_LABEL(x), 0;		\
+_C_LABEL(x): ; \
+	.frame sp, 0, ra
+
+#define NON_LEAF(x, fsize, retpc)	\
+	.globl _C_LABEL(x);		\
+	.ent _C_LABEL(x), 0;		\
+_C_LABEL(x): ;				\
+	.frame sp, fsize, retpc;	\
+	MCOUNT
+
+#define NNON_LEAF(x, fsize, retpc)	\
+	.globl _C_LABEL(x);		\
+	.ent _C_LABEL(x), 0;		\
+_C_LABEL(x): ;				\
+	.frame sp, fsize, retpc
 
 #endif /* _MIPS_ASM_H */

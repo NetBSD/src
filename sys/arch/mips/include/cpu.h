@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25.2.1 1998/10/15 03:25:08 nisimura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25.2.2 1998/10/30 08:33:37 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -165,6 +165,8 @@ extern u_int32_t mips3_timer_delta;
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
 
+#ifdef _KERNEL
+
 /*
  * Misc prototypes.
  */
@@ -182,11 +184,14 @@ void	mips_init_msgbuf __P((void));
 void	mips_init_proc0 __P((caddr_t));
 
 /* locore.S */
-extern void savefpregs __P((struct proc *));
-extern void switchfpregs __P((struct proc *, struct proc *));
+void	savefpregs __P((struct proc *));
+void	switchfpregs __P((struct proc *, struct proc *));
+int	badaddr __P((void *, size_t));
 
 /* mips_machdep.c */
-extern void cpu_identify __P((void));
-extern void mips_vector_init __P((void));
+void	cpu_identify __P((void));
+void	mips_vector_init __P((void));
+
+#endif /* _KERNEL */
 
 #endif /* _CPU_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuarch.h,v 1.1.2.1 1998/10/15 03:25:08 nisimura Exp $	*/
+/*	$NetBSD: cpuarch.h,v 1.1.2.2 1998/10/30 08:33:37 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -391,6 +391,8 @@
 #define MIPS_COP_0_EXC_PC	$14
 #define MIPS_COP_0_PRID		$15
 
+#define	MIPS_COP_O_STATUS_REG	$12	/* XXX retain compatibility XXX */
+#define	MIPS_COP_O_CAUSE_REG	$13	/* XXX retain compatibility XXX */
 
 /* ISA-I */
 #define MIPS_COP_0_TLB_LOW	$2
