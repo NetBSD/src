@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.16 1997/04/07 06:09:11 cgd Exp $ */
+/* $NetBSD: tga.c,v 1.17 1997/04/07 23:40:47 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,7 +27,10 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.17 1997/04/07 23:40:47 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

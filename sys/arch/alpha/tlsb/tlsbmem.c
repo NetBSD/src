@@ -1,4 +1,4 @@
-/* $NetBSD: tlsbmem.c,v 1.3 1997/04/06 20:09:17 cgd Exp $ */
+/* $NetBSD: tlsbmem.c,v 1.4 1997/04/07 23:41:10 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -35,7 +35,10 @@
  * AlphaServer 8200 and 8400 systems.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: tlsbmem.c,v 1.4 1997/04/07 23:41:10 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
