@@ -34,8 +34,8 @@ static char *copyright[] = {
 };
 
 #include "telnet_locl.h"
-__RCSID("$Heimdal: main.c,v 1.38 2002/08/28 21:05:22 joda Exp $"
-        "$NetBSD: main.c,v 1.2 2003/08/07 09:15:27 agc Exp $");
+__RCSID("$Heimdal: main.c,v 1.38.6.1 2004/03/22 18:16:35 lha Exp $"
+        "$NetBSD: main.c,v 1.3 2004/04/02 14:59:46 lha Exp $");
 
 #if KRB5
 #define FORWARD
@@ -156,6 +156,8 @@ main(int argc, char **argv)
 {
 	int ch;
 	char *user;
+
+	setprogname(argv[0]);
 
 #ifdef KRB5
 	krb5_init();

@@ -33,8 +33,8 @@
 
 #include "kdc_locl.h"
 
-__RCSID("$Heimdal: kaserver.c,v 1.21 2002/10/21 12:59:41 joda Exp $"
-        "$NetBSD: kaserver.c,v 1.4 2003/05/15 21:36:36 lha Exp $");
+__RCSID("$Heimdal: kaserver.c,v 1.21.2.1 2003/10/06 21:02:35 lha Exp $"
+        "$NetBSD: kaserver.c,v 1.5 2004/04/02 14:59:47 lha Exp $");
 
 
 #include <rx.h>
@@ -403,6 +403,10 @@ do_authenticate (struct rx_header *hdr,
 
     unparse_auth_args (sp, &name, &instance, &start_time, &end_time,
 		       &request, &max_seq_len);
+    if (request.length < 8) {
+	make_error_reply (hdr, KABADREQUEST, reply);
+	goto out;
+    }
 
     snprintf (client_name, sizeof(client_name), "%s.%s@%s",
 	      name, instance, v4_realm);
@@ -601,6 +605,11 @@ do_getticket (struct rx_header *hdr,
 
     unparse_getticket_args (sp, &kvno, &auth_domain, &aticket,
 			    &name, &instance, &times, &max_seq_len);
+    if (times.length < 8) {
+	make_error_reply (hdr, KABADREQUEST, reply);
+	goto out;
+	
+    }
 
     snprintf (server_name, sizeof(server_name),
 	      "%s.%s@%s", name, instance, v4_realm);

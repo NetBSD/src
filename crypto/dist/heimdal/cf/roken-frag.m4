@@ -1,11 +1,11 @@
-dnl $Heimdal: roken-frag.m4,v 1.45 2002/12/18 17:34:25 joda Exp $
-dnl $NetBSD: roken-frag.m4,v 1.6 2003/05/15 20:44:10 lha Exp $
+dnl $Heimdal: roken-frag.m4,v 1.45.2.1 2004/04/01 07:27:35 joda Exp $
+dnl $NetBSD: roken-frag.m4,v 1.7 2004/04/02 14:59:47 lha Exp $
 dnl
 dnl some code to get roken working
 dnl
 dnl rk_ROKEN(subdir)
 dnl
-AC_DEFUN(rk_ROKEN, [
+AC_DEFUN([rk_ROKEN], [
 
 AC_REQUIRE([rk_CONFIG_HEADER])
 

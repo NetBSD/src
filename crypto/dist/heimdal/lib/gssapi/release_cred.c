@@ -33,8 +33,8 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: release_cred.c,v 1.8 2003/03/16 17:52:19 lha Exp $"
-        "$NetBSD: release_cred.c,v 1.6 2003/05/15 21:36:44 lha Exp $");
+__RCSID("$Heimdal: release_cred.c,v 1.8.2.1 2003/10/07 01:08:21 lha Exp $"
+        "$NetBSD: release_cred.c,v 1.7 2004/04/02 14:59:48 lha Exp $");
 
 OM_uint32 gss_release_cred
            (OM_uint32 * minor_status,
@@ -53,8 +53,14 @@ OM_uint32 gss_release_cred
         krb5_free_principal(gssapi_krb5_context, (*cred_handle)->principal);
     if ((*cred_handle)->keytab != NULL)
 	krb5_kt_close(gssapi_krb5_context, (*cred_handle)->keytab);
-    if ((*cred_handle)->ccache != NULL)
-	krb5_cc_close(gssapi_krb5_context, (*cred_handle)->ccache);
+    if ((*cred_handle)->ccache != NULL) {
+	const krb5_cc_ops *ops;
+	ops = krb5_cc_get_ops(gssapi_krb5_context, (*cred_handle)->ccache);
+	if (ops == &krb5_mcc_ops)
+	    krb5_cc_destroy(gssapi_krb5_context, (*cred_handle)->ccache);
+	else 
+	    krb5_cc_close(gssapi_krb5_context, (*cred_handle)->ccache);
+    }
     gss_release_oid_set(NULL, &(*cred_handle)->mechanisms);
     free(*cred_handle);
     *cred_handle = GSS_C_NO_CREDENTIAL;

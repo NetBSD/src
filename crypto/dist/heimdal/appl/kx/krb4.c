@@ -33,8 +33,8 @@
 
 #include "kx.h"
 
-__RCSID("$Heimdal: krb4.c,v 1.11 2003/04/16 16:45:41 joda Exp $"
-        "$NetBSD: krb4.c,v 1.5 2003/05/15 21:36:32 lha Exp $");
+__RCSID("$Heimdal: krb4.c,v 1.11.2.1 2004/02/18 19:22:30 lha Exp $"
+        "$NetBSD: krb4.c,v 1.6 2004/04/02 14:59:46 lha Exp $");
 
 #ifdef KRB4
 
@@ -73,8 +73,7 @@ krb4_authenticate (kx_context *kc, int s)
     const char *host = kc->host;
 
     if (kc->thisaddr->sa_family != AF_INET) {
-	warnx ("%s: used Kerberos v4 authentiocation on on non-IP4 address", 
-	       host);
+	warnx ("%s: used Kerberos v4 authentiocation on non-IP4 address", host);
 	return -1;
     }
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2003/05/26 09:22:30 lha Exp $
+# $NetBSD: Makefile,v 1.13 2004/04/02 14:59:48 lha Exp $
 
 NOLINT=		# defined
 
@@ -11,12 +11,13 @@ WARNS?=		1
 
 LIB=		gssapi
 
-SRCS	 =		\
+SRCS	 =			\
 	8003.c			\
 	accept_sec_context.c	\
 	acquire_cred.c		\
 	add_cred.c		\
 	add_oid_set_member.c	\
+	arcfour.c		\
 	canonicalize_name.c	\
 	compare_name.c		\
 	compat.c		\

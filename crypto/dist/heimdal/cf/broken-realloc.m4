@@ -1,10 +1,10 @@
 dnl
-dnl $Heimdal: broken-realloc.m4,v 1.1 2000/07/15 18:05:36 joda Exp $
-dnl $NetBSD: broken-realloc.m4,v 1.2 2002/09/12 13:18:55 joda Exp $
+dnl $Heimdal: broken-realloc.m4,v 1.1.12.1 2004/04/01 07:27:32 joda Exp $
+dnl $NetBSD: broken-realloc.m4,v 1.3 2004/04/02 14:59:47 lha Exp $
 dnl
 dnl Test for realloc that doesn't handle NULL as first parameter
 dnl
-AC_DEFUN(rk_BROKEN_REALLOC, [
+AC_DEFUN([rk_BROKEN_REALLOC], [
 AC_CACHE_CHECK(if realloc if broken, ac_cv_func_realloc_broken, [
 ac_cv_func_realloc_broken=no
 AC_TRY_RUN([
