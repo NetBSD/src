@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28 2002/04/28 17:10:34 uch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29 2002/05/07 04:01:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -94,7 +94,7 @@ struct clockframe {
 #define	CLKF_USERMODE(cf)	(!KERNELMODE((cf)->ssr))
 #define	CLKF_BASEPRI(cf)	(((cf)->ssr & 0xf0) == 0)
 #define	CLKF_PC(cf)		((cf)->spc)
-#define	CLKF_INTR(cf)		((cf)->ssp < 0)
+#define	CLKF_INTR(cf)		0	/* XXX */
 
 /*
  * This is used during profiling to integrate system time.  It can safely
