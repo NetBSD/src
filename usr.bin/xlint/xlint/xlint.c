@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.26 2002/01/22 01:14:03 thorpej Exp $ */
+/* $NetBSD: xlint.c,v 1.27 2002/01/31 19:09:33 tv Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -33,8 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.26 2002/01/22 01:14:03 thorpej Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: xlint.c,v 1.27 2002/01/31 19:09:33 tv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -132,7 +132,7 @@ static	void	terminate(int) __attribute__((__noreturn__));
 static	const	char *lbasename(const char *, int);
 static	void	appdef(char ***, const char *);
 static	void	usage(void);
-static	void	fname(const char *, int);
+static	void	fname(const char *);
 static	void	runchild(const char *, char *const *, const char *, int);
 static	void	findlibs(char *const *);
 static	int	rdok(const char *);
@@ -303,6 +303,8 @@ main(int argc, char *argv[])
 	char	flgbuf[3], *tmp, *s;
 	size_t	len;
 
+	setprogname(argv[0]);
+
 	if ((tmp = getenv("TMPDIR")) == NULL || (len = strlen(tmp)) == 0) {
 		tmpdir = xstrdup(_PATH_TMP);
 	} else {
@@ -357,11 +359,7 @@ main(int argc, char *argv[])
 	(void)signal(SIGQUIT, terminate);
 	(void)signal(SIGTERM, terminate);
 
-	while (argc > optind) {
-
-
-		c = getopt(argc, argv, "abcd:eghil:no:prstuvwxzB:C:D:FHI:L:U:VX:");
-
+	while ((c = getopt(argc, argv, "abcd:eghil:no:prstuvwxzB:C:D:FHI:L:U:VX:")) != -1) {
 		switch (c) {
 
 		case 'a':
@@ -497,21 +495,56 @@ main(int argc, char *argv[])
 			Vflag = 1;
 			break;
 
-		case -1:
-			/* filename */
-			fname(argv[optind], argc == optind+1);
-			first = 0;
-			optind++;
-			break;
-
 		default:
 			usage();
 			/* NOTREACHED */
 		}
-
 	}
 	argc -= optind;
 	argv += optind;
+
+	/*
+	 * To avoid modifying getopt(3)'s state engine midstream, we
+	 * explicitly accept just a few options after the first source file.
+	 *
+	 * In particular, only -l<lib> and -L<libdir> (and these with a space
+	 * after -l or -L) are allowed.
+	 */
+	while (argc > 0) {
+		const char *arg = argv[0];
+
+		if (arg[0] == '-') {
+			char ***list;
+
+			/* option */
+			switch (arg[1]) {
+			case 'l':
+				list = &libs;
+				break;
+
+			case 'L':
+				list = &libsrchpath;
+				break;
+
+			default:
+				usage();
+				/* NOTREACHED */
+			}
+			if (arg[2])
+				appcstrg(list, arg + 2);
+			else if (argc > 1) {
+				argc--;
+				appcstrg(list, *++argv);
+			} else
+				usage();
+		} else {
+			/* filename */
+			fname(arg);
+			first = 0;
+		}
+		argc--;
+		argv++;
+	}
 
 	if (first)
 		usage();
@@ -545,7 +578,7 @@ main(int argc, char *argv[])
  * and pass it through lint1 if it is a C source.
  */
 static void
-fname(const char *name, int last)
+fname(const char *name)
 {
 	const	char *bn, *suff;
 	char	**args, *ofn, *path;
@@ -570,7 +603,7 @@ fname(const char *name, int last)
 		return;
 	}
 
-	if (!iflag || !first || !last)
+	if (!iflag || !first)
 		(void)printf("%s:\n",
 		    is_stdin ? "{standard input}" : Fflag ? name : bn);
 
