@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.13 2002/11/23 15:18:12 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.14 2002/11/24 13:19:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -313,7 +313,7 @@ syscall_return:
 #ifdef DDB
 	int	$3
 #endif /* DDB */
-	movl	%ebx,_C_LABEL(cpl)(%rip)
+	movl	$0,_C_LABEL(cpl)(%rip)
 	jmp	1b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
 #endif
@@ -352,9 +352,6 @@ osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
 	movq	_C_LABEL(curproc)(%rip),%rdx	# get pointer to curproc
-#ifdef DIAGNOSTIC
-	movl	_C_LABEL(cpl)(%rip),%ebx
-#endif /* DIAGNOSTIC */
 	testl	$P_32,P_FLAG(%rdx)
 	je	1f		# not a 32bit process, go away please
 	movq	%rsp,P_MD_REGS(%rdx)	# save pointer to frame
@@ -373,7 +370,7 @@ _C_LABEL(osyscall_return):
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
 #else /* DIAGNOSTIC */
-1:	cmpl	_C_LABEL(cpl)(%rip),%ebx
+1:	cmpl	$0,_C_LABEL(cpl)(%rip)
 	jne	3f
 	INTRFASTEXIT
 3:	sti
@@ -383,7 +380,7 @@ _C_LABEL(osyscall_return):
 #ifdef DDB
 	int	$3
 #endif /* DDB */
-	movl	%ebx,_C_LABEL(cpl)(%rip)
+	movl	$0,_C_LABEL(cpl)(%rip)
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 #endif /* DIAGNOSTIC */
