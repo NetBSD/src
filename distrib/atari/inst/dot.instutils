@@ -1,5 +1,5 @@
 #
-#	$NetBSD: dot.instutils,v 1.1.1.1 1995/04/17 19:08:51 leo Exp $
+#	$NetBSD: dot.instutils,v 1.2 1995/05/10 13:41:08 leo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -61,7 +61,7 @@ Configure()
 	fi
 
 	echo	""
-	if [ -e /mnt/sendmail.cf ]; then
+	if [ -e ${ETC}/sendmail.cf ]; then
 		echo	"WARNING: A default sendmail.cf exists, and probably"
 		echo	"needs to be tuned and/or replaced, to work properly at"
 		echo	"your site!"
