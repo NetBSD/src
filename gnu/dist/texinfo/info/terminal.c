@@ -1,5 +1,5 @@
 /* terminal.c -- How to handle the physical terminal for Info.
-   $Id: terminal.c,v 1.2 1999/02/11 04:13:16 tv Exp $
+   $Id: terminal.c,v 1.3 1999/02/11 05:09:20 tv Exp $
 
    Copyright (C) 1988, 89, 90, 91, 92, 93, 96, 97, 98
    Free Software Foundation, Inc.
@@ -31,14 +31,12 @@
 #ifdef HAVE_NCURSES_TERMCAP_H
 #include <ncurses/termcap.h>
 #else
-#ifdef HAVE_TERMCAP_H
+#if defined(HAVE_TERMCAP_H) && !defined(__NetBSD__)
 #include <termcap.h>
 #else
 /* On Solaris2, sys/types.h #includes sys/reg.h, which #defines PC.
    Unfortunately, PC is a global variable used by the termcap library. */
-#ifndef __NetBSD__
 #undef PC
-#endif
 
 /* Termcap requires these variables, whether we access them or not. */
 char *BC, *UP;
