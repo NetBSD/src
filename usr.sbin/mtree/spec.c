@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.58 2004/12/01 10:07:56 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.59 2004/12/01 23:27:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.58 2004/12/01 10:07:56 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.59 2004/12/01 23:27:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -462,8 +462,13 @@ replacenode(NODE *cur, NODE *new)
 	REPLACE(st_size);
 	REPLACE(st_mtimespec);
 	REPLACESTR(slink);
-	if (strunvis(cur->slink, new->slink) == -1)
-		mtree_err("strunvis failed on `%s'", new->slink);
+	if (cur->slink != NULL) {
+		if ((cur->slink = strdup(new->slink)) == NULL)
+			mtree_err("memory allocation error");
+		if (strunvis(cur->slink, new->slink) == -1)
+			mtree_err("strunvis failed on `%s'", new->slink);
+		free(new->slink);
+	}
 	REPLACE(st_uid);
 	REPLACE(st_gid);
 	REPLACE(st_mode);
