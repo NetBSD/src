@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.31 1998/05/14 00:04:58 kml Exp $	*/
+/*	$NetBSD: if.h,v 1.32 1998/05/22 17:47:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -136,6 +136,8 @@ struct ifnet {				/* and the entries */
 	int	(*if_reset)		/* XXX bus reset routine */
 		__P((struct ifnet *));
 	void	(*if_watchdog)		/* timer routine */
+		__P((struct ifnet *));
+	void	(*if_drain)		/* routine to release resources */
 		__P((struct ifnet *));
 	struct	ifqueue {
 		struct	mbuf *ifq_head;
