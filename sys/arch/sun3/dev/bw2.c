@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.12.2.1 1998/01/27 19:16:35 gwr Exp $	*/
+/*	$NetBSD: bw2.c,v 1.12.2.2 1998/01/27 20:59:56 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -154,7 +154,9 @@ bw2attach(parent, self, args)
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
+#ifdef	_SUN3_
 	int tmp;
+#endif	/* SUN3 */
 
 	sc->sc_phys = ca->ca_paddr;
 
@@ -176,7 +178,7 @@ bw2attach(parent, self, args)
 		 * Only the model 60 can have hi-res.
 		 * XXX - Use PROM screen size values?
 		 */
-	    tmp = bus_peek(BUS_OBMEM, BW2_CR_PADDR, 1);
+		tmp = bus_peek(BUS_OBMEM, BW2_CR_PADDR, 1);
 		if ((tmp != -1) && (tmp & 0x80) == 0)
 			goto high_res;
 		break;
