@@ -1,4 +1,4 @@
-/*	$NetBSD: abs.S,v 1.4 1999/10/25 23:48:14 thorpej Exp $	*/
+/*	$NetBSD: abs.S,v 1.5 2000/12/11 16:17:19 is Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,9 +43,14 @@
 #if 0
 	RCSID("from: @(#)abs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: abs.S,v 1.4 1999/10/25 23:48:14 thorpej Exp $")
+	RCSID("$NetBSD: abs.S,v 1.5 2000/12/11 16:17:19 is Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+/* labs - long int absolute value */
+
+ENTRY_NOPROFILE(labs)
+/* fall through to: */
 
 /* abs - int absolute value */
 
