@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.19 1996/10/13 04:10:58 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.20 1996/12/20 12:49:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -127,7 +127,7 @@ static void	repeat_handler __P((void *));
 void iteputchar __P((int c, struct ite_softc *ip));
 void ite_putstr __P((const u_char * s, int len, dev_t dev));
 void iteattach __P((struct device *, struct device *, void *));
-int  itematch __P((struct device *, void *, void *));
+int  itematch __P((struct device *, struct cfdata *, void *));
 
 /*
  * Console specific types.
@@ -146,11 +146,11 @@ struct cfdriver ite_cd = {
 };
 
 int
-itematch(pdp, match, auxp)
-	struct device *pdp;
-	void *match, *auxp;
+itematch(pdp, cfp, auxp)
+	struct device	*pdp;
+	struct cfdata	*cfp;
+	void		*auxp;
 {
-	struct cfdata	 *cdp = match;
 	struct grf_softc *gp  = auxp;
 	dev_t		 itedev;
 	int		 maj;
@@ -159,7 +159,7 @@ itematch(pdp, match, auxp)
 	 * all that our mask allows (more than enough no one 
 	 * has > 32 monitors for text consoles on one machine)
 	 */
-	if (cdp->cf_unit >= sizeof(ite_confunits) * NBBY)
+	if (cfp->cf_unit >= sizeof(ite_confunits) * NBBY)
 		return(0);
 	/*
 	 * XXX
@@ -170,7 +170,7 @@ itematch(pdp, match, auxp)
 	for(maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == iteopen)
 			break;
-	itedev = makedev(maj, cdp->cf_unit);
+	itedev = makedev(maj, cfp->cf_unit);
 
 	/*
 	 * Try to make sure that a single ite will not be attached to

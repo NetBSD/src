@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.24 1996/11/10 21:52:37 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.25 1996/12/20 12:49:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -188,7 +188,7 @@ static u_long zs_freqs_generic[] = {
 static u_long *zs_frequencies;
 
 /* Definition of the driver for autoconfig. */
-static int	zsmatch __P((struct device *, void *, void *));
+static int	zsmatch __P((struct device *, struct cfdata *, void *));
 static void	zsattach __P((struct device *, struct device *, void *));
 
 struct cfattach zs_ca = {
@@ -230,12 +230,11 @@ static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
 static int zsshortcuts;	/* number of "shortcut" software interrupts */
 
 static int
-zsmatch(pdp, match, auxp)
+zsmatch(pdp, cfp, auxp)
 struct device	*pdp;
-void		*match, *auxp;
+struct cfdata	*cfp;
+void		*auxp;
 {
-	struct cfdata *cfp = match;
-
 	if(strcmp("zs", auxp) || cfp->cf_unit != 0)
 		return(0);
 	return(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.8 1996/11/08 14:17:08 leo Exp $	*/
+/*	$NetBSD: md_root.c,v 1.9 1996/12/20 12:49:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
