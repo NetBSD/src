@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2002/06/25 01:24:50 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2002/07/04 10:46:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -141,6 +141,8 @@
 char machine[] = "x86_64";		/* cpu "architecture" */
 char machine_arch[] = "x86_64";		/* machine == machine_arch */
 
+char x86_64_doubleflt_stack[NBPG];
+
 u_int cpu_serial[3];
 char cpu_model[] = "Hammer x86-64";
 
@@ -196,7 +198,7 @@ int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
-void	init_x86_64 __P((vaddr_t));
+void	init_x86_64 __P((paddr_t));
 
 /*
  * Machine-dependent startup code
@@ -358,6 +360,7 @@ x86_64_proc0_tss_ldt_init()
 	    GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_rsp0 = (u_int64_t)proc0.p_addr + USPACE - 16;
+	pcb->pcb_tss.tss_ist[0] = (u_int64_t)&x86_64_doubleflt_stack[NBPG - 8];
 	tss_alloc(&proc0);
 
 	ltr(proc0.p_md.md_tss_sel);
@@ -1121,14 +1124,14 @@ extern vector *IDTVEC(exceptions)[];
 
 void
 init_x86_64(first_avail)
-	vaddr_t first_avail;
+	paddr_t first_avail;
 {
 	extern void consinit __P((void));
 	extern struct extent *iomem_ex;
 	struct btinfo_memmap *bim;
 	struct region_descriptor region;
 	struct mem_segment_descriptor *ldt_segp;
-	int x, first16q;
+	int x, first16q, ist;
 	u_int64_t seg_start, seg_end;
 	u_int64_t seg_start1, seg_end1;
 
@@ -1474,10 +1477,16 @@ init_x86_64(first_avail)
 
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
-	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
+#if 0
+	pmap_kenter(pmap_kernel(), idt_vaddr, idt_paddr,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
 	pmap_enter(pmap_kernel(), idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
+#else
+	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
+	    VM_PROT_READ|VM_PROT_WRITE);
+#endif
 
 	idt = (struct gate_descriptor *)idt_vaddr;
 	gdtstore = (char *)(idt + NIDT);
@@ -1540,9 +1549,11 @@ init_x86_64(first_avail)
 	    sizeof (struct gate_descriptor));
 
 	/* exceptions */
-	for (x = 0; x < 32; x++)
-		setgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
+	for (x = 0; x < 32; x++) {
+		ist = (x == 8) ? 1 : 0;
+		setgate(&idt[x], IDTVEC(exceptions)[x], ist, SDT_SYS386TGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL);
+	}
 
 	/* new-style interrupt gate for syscalls */
 	setgate(&idt[128], &IDTVEC(osyscall), 0, SDT_SYS386TGT, SEL_UPL);
