@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.23 1995/10/10 01:29:15 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.24 1995/11/10 19:34:54 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -152,6 +152,7 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+ep*	at pci? bus ? dev ?			# 3C590 ethernet cards
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN, 3C507, and Etherexpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 de*	at pci? bus ? dev ?
