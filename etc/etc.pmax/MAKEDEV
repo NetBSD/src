@@ -1,11 +1,13 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.24 1998/11/13 04:49:03 oster Exp $
+#	$NetBSD: MAKEDEV,v 1.25 1998/11/17 19:02:46 jonathan Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
 # Device "make" file.  Valid arguments:
+#	all	all known devices, including local devices.
+#	minimal	A minimal set of devices for install disks, etc.
 #	std	standard devices
 #	local	configuration specific devices
 # Tapes:
@@ -64,6 +66,13 @@ all)
 #	sh $0 audio pm0 cfb0 xcfb0 mfb0 sfb0
 #	sh $0 cd0 			 # no MI scsi yet
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
+	;;
+
+minimal)
+	sh $0 std
+	sh $0 rz0 rz1 rz2 rz3 rz4 rz5 rz6 rz7 tz0 tz1
+	sh $0 rz8 rz9 rz10 rz11 rz12 rz13 rz14 tz2 tz3
+	sh $0 dz0  zs0
 	;;
 
 std)
@@ -174,7 +183,8 @@ rz*|vnd*|ccd*|raid*)
 #     for compatibility with NetBSD's vax  dc/dz driver.
 dc*|dz*)
 	case $i in
-	dc*|dz*)	name=dc;	unit=${i#dc};	chr=16;;
+	dc*)		name=dc;	unit=${i#dc};	chr=16;;
+	dz*)		name=dz;	unit=${i#dz};	chr=16;;
 	esac
 	case $unit in
 	0)
