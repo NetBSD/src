@@ -1,4 +1,4 @@
-/*	$NetBSD: oldmon.h,v 1.11 1996/03/31 22:21:38 pk Exp $ */
+/*	$NetBSD: oldmon.h,v 1.12 1999/02/14 12:26:16 pk Exp $ */
 
 /*
  * Copyright (C) 1985 Regents of the University of California
@@ -193,7 +193,8 @@ struct om_vector {
 					/* Quickly write string to FB */
 
 	/* Reboot interface routine -- resets and reboots system. */
-	void	(*reBoot) __P((char *));	/* e.g. reBoot("xy()vmunix") */
+	void	(*reBoot) __P((char *))	/* e.g. reBoot("xy()vmunix") */
+					__attribute__((__noreturn__));
 
 	/* Line input and parsing */
 	u_char	*lineBuf;		/* The line input buffer */
@@ -233,8 +234,8 @@ struct om_vector {
 	long	*resetMap;		/* pgmap entry for resetaddr */
 					/* Really struct pgmapent *  */
 
-	__dead void (*exitToMon)
-	    __P((void)) __attribute__((noreturn));/* Exit from user program */
+	__dead void (*exitToMon) __P((void))	/* Exit from user program */
+				__attribute__((noreturn));
 	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
 	void	(*setcxsegmap)		/* Set seg in any context */
 		    __P((int, caddr_t, int));
@@ -258,7 +259,6 @@ struct om_vector {
 
 #define mon_setcxsegmap(context, va, sme) \
     romVectorPtr->setcxsegmap(context, va, sme)
-#define romp (romVectorPtr)
 
 /*
  * OLDMON_STARTVADDR and OLDMON_ENDVADDR denote the range of the damn monitor.

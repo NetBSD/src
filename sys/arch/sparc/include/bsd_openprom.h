@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.14 1998/09/26 19:08:09 pk Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.15 1999/02/14 12:26:16 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -194,6 +194,7 @@ struct openprom_addr {
 struct promvec {
 	/* Version numbers. */
 	u_int	pv_magic;		/* Magic number */
+#define OBP_MAGIC	0x10010407
 	u_int	pv_romvec_vers;		/* interface version (0, 2) */
 	u_int	pv_plugin_vers;		/* ??? */
 	u_int	pv_printrev;		/* PROM rev # (* 10, e.g 1.9 = 19) */
@@ -231,7 +232,7 @@ struct promvec {
 	void	(*pv_putstr) __P((char *str, int len));
 
 	/* Miscellany. */
-	void	(*pv_reboot) __P((char *bootstr));
+	void	(*pv_reboot) __P((char *bootstr)) __attribute__((noreturn));
 	void	(*pv_printf) __P((const char *fmt, ...));
 	void	(*pv_abort) __P((void));	/* L1-A abort */
 	int	*pv_ticks;		/* Ticks since last reset */
@@ -274,12 +275,12 @@ struct promvec {
 	 * The following are V3 ROM functions to handle MP machines in the
 	 * Sun4m series. They have undefined results when run on a uniprocessor!
 	 */
-	int	(*pv_v3cpustart) __P((u_int module,
+	int	(*pv_v3cpustart) __P((int module,
 				      struct openprom_addr *ctxtbl,
 				      int context, caddr_t pc));
-	int 	(*pv_v3cpustop) __P((u_int module));
-	int	(*pv_v3cpuidle) __P((u_int module));
-	int 	(*pv_v3cpuresume) __P((u_int module));
+	int 	(*pv_v3cpustop) __P((int module));
+	int	(*pv_v3cpuidle) __P((int module));
+	int 	(*pv_v3cpuresume) __P((int module));
 };
 
 /*
@@ -319,43 +320,13 @@ struct nodeops {
 	 * proplen first to make sure it fits.  Kind of a pain, but no
 	 * doubt more convenient for the PROM coder.
 	 */
-	int	(*no_proplen) __P((int node, caddr_t name));
-	int	(*no_getprop) __P((int node, caddr_t name, caddr_t val));
-	int	(*no_setprop) __P((int node, caddr_t name, caddr_t val,
+	int	(*no_proplen) __P((int node, char *name));
+	int	(*no_getprop) __P((int node, char *name, void *val));
+	int	(*no_setprop) __P((int node, char *name, void *val,
 				   int len));
-	caddr_t	(*no_nextprop) __P((int node, caddr_t name));
+	char	*(*no_nextprop) __P((int node, char *name));
 };
 
-void	romhalt __P((void))	__attribute__((__noreturn__));
-void	romboot __P((char *))	__attribute__((__noreturn__));
-void	rominterpret __P((char *));
-void	callrom __P((void));
-void	rom_cpustart __P((int, struct openprom_addr *, int, caddr_t));
-void	rom_cpustop __P((int));
-void	rom_cpuidle __P((int));
-void	rom_cpuresume __P((int));
-
-int	findroot __P((void));
-int	findnode __P((int, const char *));
-int	opennode __P((char *));
-int	firstchild __P((int));
-int	nextsibling __P((int));
-
-/*
- * The various getprop* functions obtain `properties' from the ROMs.
- * getprop() obtains a property as a byte-sequence, and returns its
- * length; the others convert or make some other guarantee.
- */
-int	getproplen __P((int node, char *name));
-int	getprop __P((int, char *, int, int *, void **));
-int	getpropint __P((int node, char *name, int deflt));
-char	*getpropstring __P((int node, char *name));
-char	*getpropstringA __P((int, char *, char *));
-int	search_prom __P((int, char *));
-int	node_has_property __P((int, const char *));
-
-
-extern struct promvec *promvec;
 /* Frequently used options node */
 extern int optionsnode;
 
