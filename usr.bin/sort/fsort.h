@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.h,v 1.4 2000/10/16 21:53:19 jdolecek Exp $	*/
+/*	$NetBSD: fsort.h,v 1.5 2001/01/18 21:03:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -44,7 +44,7 @@
 #define BUFFEND (EOF-2)
 #define BUFFSMALL (EOF-3)	/* buffer is too small to hold line */
 #define MAXFCT 1000
-#define DEFLLEN ((1 << min(POW-4, 16)) - 14)
+#define DEFLLEN (1 << min(POW-4, 16))
 
 extern const u_char **keylist;
 extern u_char *buffer, *linebuf;
