@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.67 1999/03/02 13:40:05 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.68 1999/03/05 08:30:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -970,6 +970,7 @@ consinit()
 setup_output:
 		if ((node = prom_instance_to_package(prom_stdout())) == 0) {
 			printf("consinit: cannot convert stdout ihandle\n");
+			outSink = -1;
 			goto setup_console;
 		}
 		devtype = getpropstring(node, "device_type");
@@ -984,6 +985,10 @@ setup_output:
 			outSink = -1;
 		}
 		break;
+
+	default:
+		inSource = -1;
+		outSink = -1;
 	}
 
 setup_console:
