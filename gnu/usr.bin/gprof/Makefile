@@ -1,28 +1,20 @@
-#	$NetBSD: Makefile,v 1.3 1998/10/19 04:15:10 ross Exp $
-
-# Override this to build a cross profiler.
-TARGET_ARCH?=${MACHINE_ARCH}
+#	$NetBSD: Makefile,v 1.4 1999/02/03 00:15:09 tv Exp $
 
 TOP=	${.CURDIR}/../..
 dist=	${TOP}/dist
 srcdir=	${dist}/gprof
 
 PROG=	gprof
-SRCS=	${TARGET_ARCH}.c basic_blocks.c call_graph.c \
-	cg_arcs.c cg_dfn.c cg_print.c core.c \
+SRCS=	basic_blocks.c call_graph.c cg_arcs.c cg_dfn.c cg_print.c core.c \
 	gmon_io.c gprof.c hertz.c hist.c source.c search_list.c symtab.c \
-	sym_ids.c utils.c
-
-SRCS+=	flat_bl.c bsd_callg_bl.c fsf_callg_bl.c
+	sym_ids.c utils.c flat_bl.c bsd_callg_bl.c fsf_callg_bl.c i386.c \
+	alpha.c vax.c tahoe.c sparc.c
 
 .PATH:	${srcdir}
 
-CPPFLAGS+= -I${TOP}/lib/bfd
-CPPFLAGS+= -I${dist}/bfd
-CPPFLAGS+= -I${dist}/include
+CPPFLAGS+= -I${TOP}/lib/bfd -I${dist}/bfd -I${dist}/include -I${.CURDIR}
 CPPFLAGS+= -I${DESTDIR}/usr/include/bfd
-CPPFLAGS+= -DBSD44_FORMAT=1 -DTARGET_${TARGET_ARCH}
-CPPFLAGS+= -DMACHINE_H=\"${TARGET_ARCH}.h\"
+CPPFLAGS+= -DHAVE_CONFIG_H
 
 DPADD=	${LIBBFD}
 LDADD=	-lbfd
