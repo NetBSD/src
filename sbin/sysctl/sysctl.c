@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.86 2004/03/26 23:55:45 he Exp $ */
+/*	$NetBSD: sysctl.c,v 1.86.2.1 2004/04/07 05:04:46 jmc Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.86 2004/03/26 23:55:45 he Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.86.2.1 2004/04/07 05:04:46 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -1404,12 +1404,12 @@ usage(void)
 		      "\t%s %s\n"
 		      "\t%s %s\n"
 		      "\t%s %s\n",
-		      progname, "[-ne] [-x[x]|-r] variable ...",
+		      progname, "[-dne] [-x[x]|-r] variable ...",
 		      progname, "[-ne] [-q] -w variable=value ...",
-		      progname, "[-ne] -a",
-		      progname, "[-ne] -A",
+		      progname, "[-dne] -a",
+		      progname, "[-dne] -A",
 		      progname, "[-ne] -M",
-		      progname, "[-ne] [-q] -f file");
+		      progname, "[-dne] [-q] -f file");
 	exit(1);
 }
 
