@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2003/10/26 07:25:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 2003/11/12 02:44:22 christos Exp $
 #
 
 WARNS=	2
@@ -73,7 +73,7 @@ _context_u.po: _context_u.o
 	cp _context_u.o _context_u.po
 
 MAN+=	pthread.3 \
-	pthread_attr.3 \
+	pthread_attr.3 pthread_attr_setcreatesuspend_np.3 \
 	pthread_barrier_destroy.3 pthread_barrier_init.3 \
 	pthread_barrier_wait.3 pthread_barrierattr.3 \
 	pthread_cancel.3 pthread_cleanup_push.3 \
@@ -90,7 +90,7 @@ MAN+=	pthread.3 \
 	pthread_schedparam.3 pthread_self.3 \
 	pthread_setspecific.3 pthread_sigmask.3 pthread_spin_destroy.3 \
 	pthread_spin_init.3 pthread_spin_lock.3 pthread_spin_unlock.3 \
-	pthread_testcancel.3
+	pthread_suspend_np.3 pthread_testcancel.3
 
 MLINKS+=	pthread_attr.3 pthread_attr_init.3
 MLINKS+=	pthread_attr.3 pthread_attr_destroy.3
@@ -116,6 +116,7 @@ MLINKS+=	pthread_rwlockattr.3 pthread_rwlockattr_init.3
 MLINKS+=	pthread_rwlockattr.3 pthread_rwlockattr_destroy.3
 MLINKS+=	pthread_schedparam.3 pthread_setschedparam.3
 MLINKS+=	pthread_schedparam.3 pthread_getschedparam.3
+MLINKS+=	pthread_suspend_np.3 pthread_resume_np.3
 MLINKS+=	pthread_testcancel.3 pthread_setcancelstate.3
 MLINKS+=	pthread_testcancel.3 pthread_setcanceltype.3
 
