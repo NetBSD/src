@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fsi_data.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: fsi_data.h,v 1.2 1994/06/13 19:49:30 mycroft Exp $
- *
+ *	from: @(#)fsi_data.h	8.1 (Berkeley) 6/6/93
+ *	$Id: fsi_data.h,v 1.3 1994/06/13 20:50:09 mycroft Exp $
  */
 
 typedef struct auto_tree auto_tree;

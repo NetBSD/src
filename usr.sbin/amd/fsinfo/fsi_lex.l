@@ -36,10 +36,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fsi_lex.l	8.2 (Berkeley) 2/17/94
- *
- * $Id: fsi_lex.l,v 1.2 1994/06/13 19:49:33 mycroft Exp $
- *
+ *	from: @(#)fsi_lex.l	8.2 (Berkeley) 2/17/94
+ *	$Id: fsi_lex.l,v 1.3 1994/06/13 20:50:15 mycroft Exp $
  */
 
 /*
