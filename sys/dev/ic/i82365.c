@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.50 2000/02/25 04:24:37 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.51 2000/02/25 05:26:17 mycroft Exp $	*/
 
 #define	PCICDEBUG
 
@@ -347,8 +347,7 @@ pcic_attach_sockets_finish(sc)
 	int i;
 
 	for (i = 0; i < PCIC_NSLOTS; i++)
-		if ((sc->handle[i].flags & PCIC_FLAG_SOCKETP) &&
-		    sc->handle[i].pcmcia != NULL)
+		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
 			pcic_attach_socket_finish(&sc->handle[i]);
 }
 
@@ -365,6 +364,10 @@ pcic_attach_socket_finish(h)
 
 	DPRINTF(("%s: attach finish socket %ld\n", h->ph_parent->dv_xname,
 	    (long) (h - &sc->handle[0])));
+
+	/* zero out the address windows */
+	pcic_write(h, PCIC_ADDRWIN_ENABLE, 0);
+
 	/*
 	 * Set up a powerhook to ensure it continues to interrupt on
 	 * card detect even after suspend.
