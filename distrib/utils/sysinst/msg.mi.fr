@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.31 2000/01/04 08:33:52 itojun Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.32 2000/01/15 15:55:20 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -438,7 +438,7 @@ message localdir
 {Entrez le répertoire local (déjà monté) ou se trouve la distribution.
 Rapellez vous que ce répertoire doit contenir les fichiers .tgz.
 
-Répertoie:	%s
+Répertoire:	%s
 }
 
 message filesys
@@ -485,7 +485,7 @@ message net_host
 {Votre nom de machine}
 
 message net_ip6autoconf
-{IPv6 autoconfig}
+{IPv6 autoconfiguration}
 
 message net_ip
 {Votre numéro IPv4}
@@ -508,15 +508,15 @@ message net_media
 message netok
 {Vous avez spécifié les valeurs suivantes. Sont elles exactes?
 
-Domaine (DNS):			%s 
-Nom de machine:			%s 
-Adresse IP:			%s 
-Masque de réseau (Netmask):	%s 
-Adresse du serveur de noms:	%s 
-Adresse de la paserelle:	%s 
-Type de réseau (media):	%s 
-IPv6 autoconf:			%s 
-IPv6 nameserver:		%s 
+Domaine (DNS):			 %s 
+Nom de machine:			 %s 
+Adresse IP:			 %s 
+Masque de réseau (Netmask):	 %s 
+Adresse du serveur de noms:	 %s 
+Adresse de la paserelle:	 %s 
+Type de réseau (media):		 %s 
+Autoconfiguration IPv6:		 %s 
+Adresse du serveur de noms IPv6: %s 
 }
 
 message netagain
@@ -624,7 +624,7 @@ message createfstab
 }
 
 message noetcfstab
-{A l'aide! Il n'y a pas de /etc/fstab sur le disque cible %s.
+{A l'aide! Il n'y a pas de fichier /etc/fstab sur le disque cible %s.
 Arrêt de la mise à jour.
 }
 
