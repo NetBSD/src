@@ -35,7 +35,7 @@
  *
  *	@(#)autoconf.c	7.1 (Berkeley) 5/9/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/autoconf.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/autoconf.c,v 1.2 1993/03/29 22:30:55 cgd Exp $";
 
 /*
  * Setup the system to run on the current machine.
@@ -165,6 +165,13 @@ setroot()
 	 */
 	if (rootdev == orootdev)
 		return;
+	if (devname[majdev][0] == 'f' && devname[majdev][1] == 'd') {
+		printf("");
+		printf("* insert the floppy you want to have mounted as\n");
+		printf("* root, and hit any key to continue booting:\n");
+		cngetc();
+		printf("");
+	}
 	printf("changing root device to %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
 		mindev >> PARTITIONSHIFT, part + 'a');
