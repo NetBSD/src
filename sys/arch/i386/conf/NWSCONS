@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.17 1998/12/17 00:07:08 tron Exp $
+#	$NetBSD: NWSCONS,v 1.18 1998/12/23 09:46:07 tron Exp $
 #
 #	like GENERIC, with new console drivers
 #
@@ -196,6 +196,9 @@ pcmcia*	at pcic? controller ? socket ?
 # ISA PCMCIA controllers
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
 pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
+
+# PCI PCMCIA controllers
+pcic0	at pci? dev? function ?
 
 # ISA Plug-and-Play bus support
 isapnp0	at isa?
