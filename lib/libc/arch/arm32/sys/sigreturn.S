@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.4 1997/10/06 00:07:20 mark Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.5 1998/09/29 20:23:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,5 +41,4 @@
  * We must preserve the state of the registers as the user has set them up.
  */
 
-SYSCALL(sigreturn)
-	mov	r15, r14
+PSEUDO(sigreturn,compat_13_sigreturn13)
