@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 1997/06/23 02:56:52 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.10.8.1 1997/11/15 00:56:40 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -985,10 +985,13 @@ interrupt(statusReg, causeReg, pc, what, args)
 		cnt.v_soft++;
 		intrcnt[1]++;
 #ifdef INET
+#include "arp.h"
+#if NARP > 0
 		if (netisr & (1 << NETISR_ARP)) {
 			netisr &= ~(1 << NETISR_ARP);
 			arpintr();
 		}
+#endif
 		if (netisr & (1 << NETISR_IP)) {
 			netisr &= ~(1 << NETISR_IP);
 			ipintr();
