@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.48.4.1 2000/07/30 20:38:57 jdolecek Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.48.4.2 2000/10/30 22:01:12 tv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -188,7 +188,6 @@ spec_open(v)
 			if (securelevel >= 1) {
 				if ((bdev = chrtoblk(dev)) != (dev_t)NODEV &&
 				    vfinddev(bdev, VBLK, &bvp) &&
-				    bvp->v_usecount > 0 &&
 				    (error = vfs_mountedon(bvp)))
 					return (error);
 				if (iskmemdev(dev))
