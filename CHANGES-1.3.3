@@ -842,6 +842,9 @@ distrib/utils/sysinst/net.c			1.35 (patch)
   avoid passing explicit media flags onto ifconfig.  (jonathan)
 
 usr.bin/Makefile				1.90 (patch)
+usr.bin/elfstrip/Makefile			1.7 (deleted)
+usr.bin/elfstrip/elfstrip.1			1.4 (deleted)
+usr.bin/elfstrip/elfstrip.c			1.6 (deleted)
 
   Remove elfstrip - not used now that we have an ELF-aware
   strip.  (simonb) 
@@ -968,3 +971,73 @@ sys/dev/isa/isadma.c				patch
   Fix many real and potential security problems with character device
   driver mmap routines that did not properly bounds check offsets.
   See NetBSD security advisory NetBSD-SA1998-005 for details.  (mrg)
+
+sys/arch/sparc/sparc/autoconf.c			patch
+
+  Fix a problem that prevented the system from working properly on
+  Sparc Voyager portable systems.  (pk)
+
+usr.bin/ftp/Makefile				1.17
+usr.bin/ftp/extern.h				1.26
+usr.bin/ftp/fetch.c				1.37-1.40
+usr.bin/ftp/util.c				1.36
+
+  Fix various bugs in time conversion, e.g. HTTP time (UTC) was treated
+  as if it were local time (PR#6448).  Also send an "Accept: */*" for
+  HTTP for servers that require that.  (itohy)
+
+sys/arch/i386/stand/lib/crt/bootsect/start_bootsect.S
+						1.5
+
+  Allow installation of NetBSD on the whole disk even on systems where
+  the BIOS tries to determine the disk geometry from the mbr.  With the
+  previous version, the BIOS would get into an endless loop during the
+  disk detection (long before actually trying to boot).  (ws)
+
+src/sys/arch/mac68k/mac68k/locore.s		patch
+src/sys/arch/mac68k/mac68k/machdep.c		patch
+src/sys/arch/mac68k/mac68k/pmap_bootstrap.c	patch
+
+  Rewrite doboot() so that it turns off the MMU, rather than relying
+  on the ROM space being mapped where it would like to be.  (scottr)
+
+sys/arch/mac68k/mac68k/machdep.c		patch
+
+  Set boot-time flags based on the BOOTHOWTO variable passed in by
+  the boot blocks.  (scottr)
+
+sys/arch/mac68k/include/cpu.h			1.55
+sys/arch/mac68k/mac68k/machdep.c		patch
+
+  Fix support for on-board video on several LC, PowerBook, and Quadra AV
+  models.  (scottr)
+
+sys/arch/mac68k/mac68k/mem.c			1.16
+
+  Allow access only to physical RAM via /dev/mem.  (scottr)
+
+sys/arch/mac68k/mac68k/machdep.c		1.206
+sys/arch/mac68k/mac68k/macrom.c			1.40
+
+  Fix compile errors: #if DDB -> #ifdef DDB.  (scottr)
+
+sys/arch/mac68k/mac68k/machdep.c		1.215
+
+  Handle the case where a TTx register hit is returned from ptest040().
+  Corrects problems with Quadra 700 on-board video.  (scottr)
+
+sys/arch/mac68k/mac68k/macrom.c			1.41
+
+  Don't add IOBase to sccA; the latter is an address, not an
+  offset.  (scottr)
+
+sys/arch/mac68k/mac68k/macrom.c			1.42
+
+  Simplify asm constraints to work around a compiler problem.
+  Fixes PR#5496.  (scottr)
+
+sys/arch/mac68k/mac68k/pmap_bootstrap.c		1.46
+
+  Correctly handle non-page-aligned framebuffer addresses.  Fixes
+  display alignment on systems with on-board DAFB controllers and
+  some NuBus video cards.  Fixes PR#5702.  (scottr)
