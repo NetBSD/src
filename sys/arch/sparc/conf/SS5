@@ -1,4 +1,4 @@
-#	$NetBSD: SS5,v 1.7 1994/11/30 19:44:53 deraadt Exp $
+#	$NetBSD: SS5,v 1.8 1994/12/05 09:17:34 deraadt Exp $
 
 # Kernel for Theo's (mythical) SS5. NOTE: NetBSD 1.0 DOES NOT SUPPORT
 # sun4m MACHINES -- THIS IS UNDER DEVELOPMENT AND INCOMPLETE
@@ -19,6 +19,7 @@ options		KTRACE			# system call tracing support
 #options	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
 options		RCONSOLE		# fast rasterop console
 options	SYSVMSG,SYSVSEM,SYSVSHM
+options		"COMPAT_09", "COMPAT_10"
 
 # Filesystem options
 options		FFS
