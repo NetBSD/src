@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.11 2003/02/02 20:43:22 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.12 2003/03/11 10:40:16 hannken Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -200,7 +200,9 @@ cpu_probe_cache()
 		curcpu()->ci_ci.icache_line_size = 16;
 		break;
 	case PVR_403:
+		curcpu()->ci_ci.dcache_size = 8192;
 		curcpu()->ci_ci.dcache_line_size = 16;
+		curcpu()->ci_ci.icache_size = 16384;
 		curcpu()->ci_ci.icache_line_size = 16;
 		break;
 	case PVR_405GP:

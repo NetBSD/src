@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.1 2003/02/05 13:57:59 nakayama Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.2 2003/03/11 10:40:17 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -59,7 +59,11 @@ cpu_counter32(void)
 	    "add	%1,%2,%0	\n"
 	    "b		2f		\n"
 	    "1:				\n"
+#ifdef PPC_IBM403
+	    "mftblo	%1		\n"
+#else
 	    "mftb	%1		\n"
+#endif
 	    "2:				\n"
 	    : "=r"(scratch), "=r"(rv), "=r"(rtcu)
 	    : "n"(MPC601), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R));
