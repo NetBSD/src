@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 1996/10/21 00:31:18 scottr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37 1996/10/23 13:35:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,6 +70,7 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
+#include "ether.h"
 
 struct device	*booted_device;
 int		booted_partition;
@@ -244,10 +245,10 @@ setroot(void)
 	struct device *bootdv, *rootdv, *swapdv;
 	int bootpartition;
 #if defined(NFSCLIENT)
-#if NETHER
+#if NETHER > 0
 	extern char *nfsbootdevname;
-	extern int nfs_mountroot __P((void *));
 #endif
+	extern int nfs_mountroot __P((void *));
 #endif
 #if defined(FFS)
 	extern int ffs_mountroot __P((void *));
@@ -385,7 +386,7 @@ gotswap:
 #if defined(NFSCLIENT)
 	case DV_IFNET:
 		mountroot = nfs_mountroot;
-#if NETHER
+#if NETHER > 0
 		nfsbootdevname = rootdv->dv_xname;
 #endif
 		return;
