@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55.2.1 1999/04/16 16:19:54 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55.2.2 2000/04/26 22:14:39 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55.2.1 1999/04/16 16:19:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55.2.2 2000/04/26 22:14:39 he Exp $");
 
 /*
  *	Manages physical address maps.
@@ -360,7 +360,7 @@ pmap_steal_memory(size, vstartp, vendp)
 	npgs = atop(size);
 
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-		if (vm_physmem[bank].pgs)
+		if (uvm.page_init_done == TRUE)
 			panic("pmap_steal_memory: called _after_ bootstrap");
 
 		if (vm_physmem[bank].avail_start != vm_physmem[bank].start ||
