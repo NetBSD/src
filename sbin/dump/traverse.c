@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.33 2001/11/01 08:03:03 lukem Exp $	*/
+/*	$NetBSD: traverse.c,v 1.34 2001/12/23 12:54:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,25 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.33 2001/11/01 08:03:03 lukem Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.34 2001/12/23 12:54:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#ifdef sunos
-#include <sys/vnode.h>
-
-#include <ufs/fs.h>
-#include <ufs/fsdir.h>
-#include <ufs/inode.h>
-#else
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
-#endif
 
 #include <protocols/dumprestore.h>
 
