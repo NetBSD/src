@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.15 1998/05/08 19:09:19 kleink Exp $	*/
+/*	$NetBSD: uio.h,v 1.16 1998/06/30 19:48:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -73,6 +73,10 @@ struct uio {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
+#if !defined(_XOPEN_SOURCE)
+ssize_t preadv __P((int, const struct iovec *, int, off_t));
+ssize_t pwritev __P((int, const struct iovec *, int, off_t));
+#endif /* ! _XOPEN_SOURCE */
 ssize_t	readv __P((int, const struct iovec *, int));
 ssize_t	writev __P((int, const struct iovec *, int));
 __END_DECLS
