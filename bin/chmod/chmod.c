@@ -1,4 +1,4 @@
-/*	$NetBSD: chmod.c,v 1.24 2000/09/06 13:37:14 enami Exp $	*/
+/*	$NetBSD: chmod.c,v 1.25 2000/10/10 14:41:59 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.24 2000/09/06 13:37:14 enami Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.25 2000/10/10 14:41:59 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,7 @@ done:	argv += optind;
 		errx(1, "invalid file mode: %s", mode);
 
 	if ((ftsp = fts_open(++argv, fts_options, 0)) == NULL)
-		err(1, "%s", argv[0]);
+		err(1, "fts_open");
 	for (rval = 0; (p = fts_read(ftsp)) != NULL;) {
 		switch (p->fts_info) {
 		case FTS_D:
