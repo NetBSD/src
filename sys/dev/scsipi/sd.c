@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.132 1998/08/15 01:10:54 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.133 1998/08/15 01:32:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -973,7 +973,7 @@ sd_interpret_sense(xs)
 				printf("%s: respinning up disk\n",
 				    sd->sc_dev.dv_xname);
 				retval = scsipi_start(sd->sc_link, SSS_START,
-				    SCSI_URGENT | SCSI_NOSLEEP | SCSI_POLL);
+				    SCSI_URGENT | SCSI_NOSLEEP);
 				if (retval != 0) {
 					printf("%s: respin of disk failed-%d\n",
 					    sd->sc_dev.dv_xname, retval);
