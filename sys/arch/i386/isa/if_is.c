@@ -96,8 +96,8 @@ struct	mbuf *isget();
  */
 struct	is_softc {
 	struct	arpcom ns_ac;		/* Ethernet common part */
-#define	ns_if	ns_ac.ac_if		/* network-visible interface */
-#define	ns_addr	ns_ac.ac_enaddr		/* hardware Ethernet address */
+#define	ns_if	        ns_ac.ac_if		/* network-visible interface */
+#define	ns_addrp	ns_ac.ac_enaddr		/* hardware Ethernet address */
 	int	last_rd;
 	int	last_td;
 	int	no_td;
@@ -146,7 +146,7 @@ isprobe(dvp)
 	iswrcsr(3, 0);
 
 	/* Extract board address */
-	for(i=0; i < 6; i++)  ns->ns_addr[i] = inb(isc+(i*2));
+	for(i=0; i < 6; i++)  ns->ns_addrp[i] = inb(isc+(i*2));
 
 	splx(s);
 	return (1);
@@ -193,7 +193,7 @@ isattach(dvp)
 	ifp->if_watchdog = 0;
 	if_attach(ifp);
 
-	printf("is%d: ethernet address %s\n", unit, ether_sprintf(is->ns_addr));
+	printf("is%d: ethernet address %s\n", unit, ether_sprintf(is->ns_addrp));
 }
 
 
@@ -667,7 +667,7 @@ isioctl(ifp, cmd, data)
 			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 
 			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)(ns->ns_addr);
+				ina->x_host = *(union ns_host *)(ns->ns_addrp);
 			else {
 				/* 
 				 * The manual says we can't change the address 
@@ -676,7 +676,7 @@ isioctl(ifp, cmd, data)
 				 */
 				ifp->if_flags &= ~IFF_RUNNING; 
 				bcopy((caddr_t)ina->x_host.c_host,
-				    (caddr_t)ns->ns_addr, sizeof(ns->ns_addr));
+				    (caddr_t)ns->ns_addrp, sizeof(ns->ns_addrp));
 			}
 			isinit(ifp->if_unit); /* does ne_setaddr() */
 			break;
