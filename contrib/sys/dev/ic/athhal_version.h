@@ -34,6 +34,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: version.h,v 1.8 2003/08/01 03:11:38 sam Exp $
+ * $Id: version.h,v 1.27 2003/12/07 02:20:39 sam Exp $
  */
-#define	ATH_HAL_VERSION	"0.9.5.2"
+#define	ATH_HAL_VERSION	"0.9.6.3"
