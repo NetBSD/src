@@ -1,0 +1,51 @@
+#	$NetBSD: majors.pmppc,v 1.1.2.1 2002/05/31 01:10:56 gehenna Exp $
+#
+# Device majors for pmppc
+#
+
+device-major	cons		char 0
+device-major	ctty		char 1
+device-major	mem		char 2
+
+device-major	swap		char 4   block 1
+device-major	pts		char 5			pty
+device-major	ptc		char 6			pty
+device-major	log		char 7
+device-major	com		char 8			com
+
+device-major	sd		char 13  block 4	sd
+device-major	st		char 14  block 5	st
+device-major	cd		char 15  block 6	cd
+
+device-major	ch		char 17			ch
+device-major	ccd		char 18  block 16	ccd
+device-major	ss		char 19			ss
+device-major	uk		char 20			uk
+
+device-major	filedesc	char 22
+device-major	bpf		char 23			bpfilter
+device-major	md		char 24  block 17	md
+
+device-major	lkm		char 28			lkm
+
+device-major	cy		char 38			cy
+
+device-major	tun		char 40			tun
+device-major	vnd		char 41  block 14	vnd
+device-major	audio		char 42			audio
+device-major	svr4_net	char 43			compat_svr4
+device-major	ipl		char 44			ipfilter
+
+device-major	rnd		char 46			rnd
+device-major	wsdisplay	char 47			wsdisplay
+device-major	wskbd		char 48			wskbd
+device-major	wsmouse		char 49			wsmouse
+device-major	scsibus		char 50			scsibus
+device-major	raid		char 51  block 18	raid
+device-major	wsmux		char 52			wsmux
+device-major	isdn		char 53			isdn
+device-major	isdnctl		char 54			isdnctl
+device-major	isdnbchan	char 55			isdnbchan
+device-major	isdntrc		char 56			isdntrc
+device-major	isdntel		char 57			isdntel
+device-major	clockctl	char 58			clockctl

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmppc,v 1.2.2.2 2002/05/30 15:34:34 gehenna Exp $
+#	$NetBSD: files.pmppc,v 1.2.2.3 2002/05/31 01:10:54 gehenna Exp $
 #
 #
 maxpartitions 16
@@ -86,3 +86,4 @@ file	arch/pmppc/pci/pchb.c			pchb
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"
 
+include "arch/pmppc/conf/majors.pmppc"
