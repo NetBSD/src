@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.52 1997/10/16 23:29:29 christos Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.53 1997/10/20 22:05:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -273,12 +273,12 @@ sys_mmap(p, v, retval)
 }
 
 int
-sys_msync(p, v, retval)
+sys___msync13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys_msync_args /* {
+	struct sys___msync13_args /* {
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;

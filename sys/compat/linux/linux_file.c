@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.20 1997/10/19 18:35:19 mycroft Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.21 1997/10/20 22:05:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -474,7 +474,7 @@ linux_sys_fstat(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(linux_stat *) sp;
 	} */ *uap = v;
-	struct sys_fstat_args fsa;
+	struct sys___fstat13_args fsa;
 	struct linux_stat tmplst;
 	struct stat *st,tmpst;
 	caddr_t sg;
@@ -487,7 +487,7 @@ linux_sys_fstat(p, v, retval)
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
 
-	if ((error = sys_fstat(p, &fsa, retval)))
+	if ((error = sys___fstat13(p, &fsa, retval)))
 		return error;
 
 	if ((error = copyin(st, &tmpst, sizeof tmpst)))
@@ -508,7 +508,7 @@ linux_stat1(p, v, retval, dolstat)
 	register_t *retval;
 	int dolstat;
 {
-	struct sys_stat_args sa;
+	struct sys___stat13_args sa;
 	struct linux_stat tmplst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -523,8 +523,8 @@ linux_stat1(p, v, retval, dolstat)
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
 
-	if ((error = (dolstat ? sys_lstat(p, &sa, retval) :
-				sys_stat(p, &sa, retval))))
+	if ((error = (dolstat ? sys___lstat13(p, &sa, retval) :
+				sys___stat13(p, &sa, retval))))
 		return error;
 
 	if ((error = copyin(st, &tmpst, sizeof tmpst)))
@@ -631,24 +631,19 @@ linux_sys_mknod(p, v, retval)
 		syscallarg(int) dev;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
-	struct sys_mkfifo_args mfa;
-	struct sys_mknod_args mna;
+	struct sys_mkfifo_args bma;
 
 	LINUX_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
 	/*
 	 * BSD handles FIFOs seperately
 	 */
-	if (S_ISFIFO(SCARG(uap, mode))) {
-		SCARG(&mfa, path) = SCARG(uap, path);
-		SCARG(&mfa, mode) = SCARG(uap, mode);
-		return (sys_mkfifo(p, &mfa, retval));
-	} else {
-		SCARG(&mna, path) = SCARG(uap, path);
-		SCARG(&mna, mode) = SCARG(uap, mode);
-		SCARG(&mna, dev) = SCARG(uap, dev);
-		return (sys_mknod(p, &mna, retval));
-	}
+	if (SCARG(uap, mode) & S_IFIFO) {
+		SCARG(&bma, path) = SCARG(uap, path);
+		SCARG(&bma, mode) = SCARG(uap, mode);
+		return sys_mkfifo(p, uap, retval);
+	} else
+		return sys_mknod(p, uap, retval);
 }
 
 int
