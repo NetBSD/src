@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 1995/02/01 12:37:50 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.22 1995/02/16 20:39:17 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -398,10 +398,8 @@ configure()
 	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M) {
 		node = findroot();
 		cp = getpropstring(node, "device_type");
-		if (strcmp(cp, "cpu") != 0) {
-			printf("PROM root device type = %s\n", cp);
-			panic("need CPU as root");
-		}
+		if (strcmp(cp, "cpu") != 0)
+			panic("PROM root device type = %s (need CPU)\n", cp);
 		*promvec->pv_synchook = sync_crash;
 	}
 #endif
@@ -511,8 +509,8 @@ romprop(rp, cp, node)
 
 	bzero(u.regbuf, sizeof u);
 	len = getprop(node, "reg", (void *)u.regbuf, sizeof u.regbuf);
-	if (len < sizeof(struct rom_reg)) {
-		printf("%s \"reg\" %s = %d (need >= %d)\n",
+	if (len % sizeof(struct rom_reg)) {
+		printf("%s \"reg\" %s = %d (need multiple of %d)\n",
 			cp, pl, len, sizeof(struct rom_reg));
 		return (0);
 	}
@@ -522,11 +520,7 @@ romprop(rp, cp, node)
 	rp->ra_node = node;
 	rp->ra_name = cp;
 	rp->ra_nreg = len / sizeof(struct rom_reg);
-/*	bcopy(u.rr, rp->ra_reg, rp->ra_nreg * sizeof(struct rom_reg));*/
-	{ int i;
-	for (i = 0; i < rp->ra_nreg; i++)
-		rp->ra_reg[i] = u.rr[i];
-	}
+	bcopy(u.rr, rp->ra_reg, rp->ra_nreg * sizeof(struct rom_reg));
 
 	rp->ra_vaddr = (caddr_t)getpropint(node, "address", 0);
 	len = getprop(node, "intr", (void *)&rp->ra_intr, sizeof rp->ra_intr);
@@ -591,6 +585,7 @@ mainbus_attach(parent, dev, aux)
 		"memory-error",	/* as early as convenient, in case of error */
 		"eeprom",
 		"counter-timer",
+		"auxiliary-io",
 		"",
 
 		/* ignore these (end with NULL) */
