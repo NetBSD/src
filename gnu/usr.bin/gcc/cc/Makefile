@@ -1,5 +1,5 @@
 #	from: @(#)Makefile    6.2 (Berkeley) 3/25/91
-#	$NetBSD: Makefile,v 1.3 1997/06/23 13:25:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/25 10:10:59 lukem Exp $
 
 .if	(${MACHINE_ARCH} == "i386") || \
 	(${MACHINE_ARCH} == "m68k") || \
@@ -11,7 +11,7 @@
 PROG=           gcc
 SRCS=	gcc.c obstack.c version.c 
 BINDIR=		/usr/bin
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
+CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/$(MACHINE_ARCH) \
 	-DMD_EXEC_PREFIX=\"/usr/libexec/\" \
 	-DMD_STARTFILE_PREFIX=\"/usr/lib/\"

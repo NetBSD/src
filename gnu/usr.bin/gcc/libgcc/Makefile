@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 1996/11/11 01:06:54 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/25 10:11:10 lukem Exp $
 
 LIB=	gcc
 NOPROFILE=
 NOPIC=
 
-CFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
+CPPFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/${MACHINE_ARCH}
 
 #LIB1OBJS= _mulsi3.o _udivsi3.o _divsi3.o _umodsi3.o _modsi3.o _lshrsi3.o \
