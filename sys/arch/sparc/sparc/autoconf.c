@@ -42,7 +42,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.15 1994/10/15 05:53:23 deraadt Exp $
+ * $Id: autoconf.c,v 1.16 1994/10/20 04:40:58 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -102,11 +102,13 @@ matchbyname(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 
+#if defined(SUN4)
 	if (cputyp==CPU_SUN4) {
 		printf("WARNING: matchbyname not valid on sun4!");
 		printf("%s\n", cf->cf_driver->cd_name);
 		return (0);
 	}
+#endif
 	return (strcmp(cf->cf_driver->cd_name, ca->ca_ra.ra_name) == 0);
 }
 
@@ -163,7 +165,7 @@ bootstrap()
 	extern int kgdb_debug_panic;
 #endif
 
-#ifdef SUN4
+#if defined(SUN4)
 	extern void oldmon_w_cmd();
 
 	if (cputyp == CPU_SUN4) {
@@ -863,10 +865,13 @@ getprop(node, name, buf, bufsiz)
 	register struct nodeops *no;
 	register int len;
 
+#if defined(SUN4)
 	if (cputyp==CPU_SUN4) {
 		printf("WARNING: getprop not valid on sun4! %s\n", name);
 		return (0);
 	}
+#endif
+#if defined(SUN4C) || defined(SUN4M)
 	no = promvec->pv_nodeops;
 	len = no->no_proplen(node, name);
 	if (len > bufsiz) {
@@ -880,6 +885,7 @@ getprop(node, name, buf, bufsiz)
 	}
 	no->no_getprop(node, name, buf);
 	return (len);
+#endif
 }
 
 /*
