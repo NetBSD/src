@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.73 2003/05/07 10:20:22 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.74 2003/05/07 11:36:10 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,23 +65,23 @@ struct biosdisk_info *biosdisk = NULL;
 int netbsd_mbr_installed = 0;
 int netbsd_bootsel_installed = 0;
 
-static int md_read_bootcode (const char *, mbr_sector_t *);
-static int count_mbr_parts (struct mbr_partition *);
-static int mbr_part_above_chs (struct mbr_partition *);
-static int mbr_partstart_above_chs (struct mbr_partition *);
-static void configure_bootsel (void);
-static void md_upgrade_mbrtype (void);
-static char *get_bootmodel (void);
-
 struct mbr_bootsel *mbs;
 int defbootselpart, defbootseldisk;
 
-
 /* prototypes */
+
+static int md_read_bootcode(const char *, mbr_sector_t *);
+static int count_mbr_parts(struct mbr_partition *);
+static int mbr_part_above_chs(struct mbr_partition *);
+static int mbr_partstart_above_chs(struct mbr_partition *);
+static void configure_bootsel(void);
+static void md_upgrade_mbrtype(void);
+static char *get_bootmodel(void);
+
 
 
 int
-md_get_info()
+md_get_info(void)
 {
 	read_mbr(diskdev, &mbr, sizeof mbr);
 	if (!valid_mbr(&mbr)) {
@@ -141,9 +141,7 @@ edit:
  * The existing partition table and bootselect configuration is kept.
  */
 static int
-md_read_bootcode(path, mbr)
-	const char *path;
-	mbr_sector_t *mbr;
+md_read_bootcode(const char *path, mbr_sector_t *mbr)
 {
 	int fd, cc;
 	struct stat st;
@@ -175,7 +173,7 @@ md_read_bootcode(path, mbr)
 }
 
 int
-md_pre_disklabel()
+md_pre_disklabel(void)
 {
 	msg_display(MSG_dofdisk);
 
@@ -446,7 +444,7 @@ md_update(void)
 }
 
 void
-md_upgrade_mbrtype()
+md_upgrade_mbrtype(void)
 {
 	struct mbr_partition *mbrp;
 	int i, netbsdpart = -1, oldbsdpart = -1, oldbsdcount = 0;
@@ -605,22 +603,20 @@ count_mbr_parts(pt)
 }
 
 static int
-mbr_part_above_chs(pt)
-	struct mbr_partition *pt;
+mbr_part_above_chs(mbr_partition_t *pt)
 {
 	return ((pt[bsdpart].mbrp_start + pt[bsdpart].mbrp_size) >=
 		bcyl * bhead * bsec);
 }
 
 static int
-mbr_partstart_above_chs(pt)
-	struct mbr_partition *pt;
+mbr_partstart_above_chs(mbr_partition_t *pt)
 {
 	return (pt[bsdpart].mbrp_start >= bcyl * bhead * bsec);
 }
 
 static void
-configure_bootsel()
+configure_bootsel(void)
 {
 	struct mbr_partition *parts = &mbr.mbr_parts[0];
 	int i;
@@ -650,9 +646,7 @@ configure_bootsel()
 
 void
 /*ARGSUSED*/
-disp_bootsel(part, mbsp)
-	struct mbr_partition *part;
-	struct mbr_bootsel *mbsp;
+disp_bootsel(mbr_partition_t *part, mbr_bootsel_t *mbsp)
 {
 	int i;
 
@@ -665,7 +659,7 @@ disp_bootsel(part, mbsp)
 }
 
 char *
-get_bootmodel()
+get_bootmodel(void)
 {
 #if defined(__i386__)
 	struct utsname ut;
@@ -693,13 +687,13 @@ get_bootmodel()
 }
 
 void
-md_init()
+md_init(void)
 {
 }
 
 #ifdef notdef
 void
-md_set_sizemultname()
+md_set_sizemultname(void)
 {
 
 	set_sizemultname_meg();
@@ -707,7 +701,7 @@ md_set_sizemultname()
 #endif
 
 void
-md_set_no_x()
+md_set_no_x(void)
 {
 
 	toggle_getit (8);
