@@ -6870,7 +6870,8 @@ do_undef (buf, limit, op, keyword)
   SKIP_WHITE_SPACE (buf);
   sym_length = check_macro_name (buf, "macro");
 
-  while ((hp = lookup (buf, sym_length, -1)) != NULL) {
+  /* pass -2 to indicate that we are going to undefine */
+  while ((hp = lookup (buf, sym_length, -2)) != NULL) {
     /* If we are generating additional info for debugging (with -g) we
        need to pass through all effective #undef directives.  */
     if (debug_output && op)
@@ -9460,6 +9461,8 @@ install (name, len, type, value, hash)
  *
  * If HASH is >= 0, it is the precomputed hash code.
  * Otherwise, compute the hash code.
+ * If HASH == -1, it is normal lookups.  Else, if HASH is -2, it is
+ * lookups for undef.
  */
 
 HASHNODE *
@@ -9470,7 +9473,7 @@ lookup (name, len, hash)
 {
   register U_CHAR *bp;
   register HASHNODE *bucket;
-  int hashsave = hash;
+  int islookup = (hash == -1);
   static int warned_unix = 0;
 
   if (len < 0) {
@@ -9488,7 +9491,7 @@ lookup (name, len, hash)
     bucket = bucket->next;
   }
   /* Lookups pass no hashcode.  #define passes one.  Look for no hashcode. */
-  if ((hashsave < 0) && !strncmp(name, "unix", len) && !warned_unix) {
+  if (islookup && !strncmp(name, "unix", len) && !warned_unix) {
     warned_unix++;
     warning("deprecated symbol \"unix\" is no longer predefined");
   }
