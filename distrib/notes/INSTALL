@@ -45,7 +45,7 @@ into the NetBSD _VER release. Some of the significant changes include:
 
 	APM support has been added to NetBSD/i386.
 
-	An initial cut of multiplatform PCMCIA support has been added.
+	An initial cut of multi-platform PCMCIA support has been added.
 
 	Support for ATAPI devices (initially just ATAPI CD-ROM drives)
 	has been added.
@@ -146,75 +146,6 @@ In the near future, we hope to integrate a fully rewritten Virtual
 Memory subsystem, kernel threads, and SMP support.
 
 #include "whatis"
-
-
-Compatibility Issues:
-------------- ------
-
-As with any system which has functionality added and products
-modified to fit within the goals of portability, standards
-adherence, and uniformity, there have been some changes which
-affects compatibility with existing NetBSD products.
-
-The following products may need the suggested work-around to
-work in NetBSD _VER:
-
-* Swap configuration
-
-  Description:
-	Swap partition configuration is now entirely in the domain
-	of the user and as such all swap partitions need to be added
-	to /etc/fstab.  Common symptoms of upgrades missing this
-	vital step include machine death during builds, and such.
-
-  Fix:
-	The most common position for a swap partition is the `b'
-	partition of the drive the root file system is on.  For
-	diskless systems, check the new swapctl(8) manual for more
-	detail on how this is done.  Example fstab entries:
-	/dev/sd0b	none	swap	sw,priority=0
-	/dev/sd1b	none	swap	sw,priority=5
-
-* NFS daemons
-
-  Description:
-	Due to changes in the NFS subsystem, the old NFS daemon
-	binaries (nfsd and nfsiod) from previous releases will not
-	work correctly. Also, the location of these binaries has
-	changed from the /sbin to the /usr/sbin directory. This
-	will cause the old binaries to still be around after an
-	upgrade, and they will be run by the startup scripts
-	instead of the new ones.
-  Fix:
-	Remove the old NFS daemon binaries (/sbin/nfsiod and
-	/sbin/nfsd) after your upgrade has finished.
-
-
-* AMANDA, The Advanced Maryland Automatic Network Disk Archiver,
-  from http://www.amanda.org
-
-  Description:
-	Due to a change in the output of dump(8) to ensure
-	consistency in the messages, AMANDA's dump output
-	parser breaks.
-
-	Error messages such as the following may be an
-	indication that this problem is present:
-
-		FAILURE AND STRANGE DUMP SUMMARY:
-		  hostname      wd0e lev 1 FAILED [no backup size line]
-	  
-  Versions affected:
-	2.3.0.4, and most likely earlier versions
-
-  Workaround/Fix:
-	One of:
-	* Apply the patch found at:
-	    ftp://ftp.netbsd.org/pub/NetBSD/misc/patches/amanda-pre-2.4.patch
-	* Upgrade to AMANDA 2.4.0 or newer. The side effect of this is
-	  that the network protocol is incompatible with earlier
-	  versions.
-
 
 
 The Future of NetBSD:
@@ -400,6 +331,92 @@ Upgrading a previously-installed NetBSD System:
 #include "upgrade"
 
 
+Compatibility Issues With Previous NetBSD Releases:
+------------- ------ ---- -------- ------ --------
+
+Users upgrading from previous versions of NetBSD may wish to bear the
+following problems and compatibility issues in mind when upgrading to
+NetBSD _VER:
+
+* Swap configuration
+
+  Description:
+	All swap partitions are now configured by the swapctl(8)
+	program. The kernel no longer configures a "default" swap
+	partition. Because of this, all swap partitions (even the old
+	"default") must be listed in /etc/fstab.
+
+	Many users of previous releases relied on the kernel
+	configuring a "default" swap partition and did not list any
+	swap space in /etc/fstab at all -- such users will now have no
+	swap space configured unless they list swap partitions in
+	/etc/fstab!
+
+	Common symptoms of of this problem include machine crashes
+	during builds, and similar memory intensive activities.
+
+  Fix:
+	The most common position for a swap partition is the `b'
+	partition of the drive the root file system is on.  For
+	diskless systems, check the new swapctl(8) manual for more
+	detail on how this is done.  Example fstab entries:
+
+		/dev/sd0b	none	swap	sw,priority=0
+		/dev/sd1b	none	swap	sw,priority=5
+
+* NFS daemons and other programs in /sbin moved
+
+  Description:
+	The NFS daemons (nfsd, nfsiod, mountd) have been moved from
+	the /sbin to the /usr/sbin directory. When new binaries are
+	loaded over old ones during upgrade, most programs get
+	overlaid and replaced, but unless these binaries are
+	explicitly removed they will not disappear. The installation
+	subsystems on some NetBSD architectures will not properly
+	remove these binaries.
+
+	Due to changes in the NFS subsystem, the old NFS daemon
+	binaries will not work correctly, and will cause serious
+	problems. Unfortunately, the default startup script (/etc/rc)
+	will run the old binaries in /sbin if they are present instead
+	of the new ones in /usr/sbin.
+
+	Some other programs (dumpfs, dumplfs and quotacheck) have also
+	been moved from /sbin to /usr/sbin, and old versions may be
+	left behind by accident. They, too, may cause difficulties.
+
+  Fix:
+	Remove the old daemon binaries (/sbin/nfsiod, /sbin/nfsd,
+	/sbin/mountd, etc.) after your upgrade has finished. You may
+	wish to do an "ls -lt /sbin | more" to help determine which
+	binaries were not replaced/removed during your upgrade.
+
+* AMANDA, The Advanced Maryland Automatic Network Disk Archiver,
+  from http://www.amanda.org
+
+  Description:
+	Due to a change in the output of dump(8) to ensure
+	consistency in the messages, AMANDA's dump output
+	parser breaks.
+
+	Error messages such as the following may be an
+	indication that this problem is present:
+
+		FAILURE AND STRANGE DUMP SUMMARY:
+		  hostname      wd0e lev 1 FAILED [no backup size line]
+	  
+  Versions affected:
+	2.3.0.4, and most likely earlier versions
+
+  Workaround/Fix:
+	One of:
+	* Apply the patch found at:
+	    ftp://ftp.netbsd.org/pub/NetBSD/misc/patches/amanda-pre-2.4.patch
+	* Upgrade to AMANDA 2.4.0 or newer. The side effect of this is
+	  that the network protocol is incompatible with earlier
+	  versions.
+
+
 Using online NetBSD documentation
 ----- ------ ------ -------------
 
@@ -443,8 +460,6 @@ related man pages will be displayed.
 
 Administrivia:
 -------------
-
-Registration?  What's that?
 
 If you've got something to say, do so!  We'd like your input.
 There are various mailing lists available via the mailing list
@@ -565,7 +580,6 @@ Frank van der Linden	<fvdl@NetBSD.ORG>		(i386)
 Leo Weppelman		<leo@NetBSD.ORG>		(atari)
 
 The NetBSD _VER Release Engineering team:
-
 Ted Lemon		<mellon@NetBSD.ORG>
 Perry Metzger		<perry@NetBSD.ORG>
 Jason Thorpe		<thorpej@NetBSD.ORG>
@@ -636,6 +650,21 @@ Todd Vierling		<tv@NetBSD.ORG>
 Paul Vixie		<vixie@NetBSD.ORG>
 Colin Wood		<ender@NetBSD.ORG>
 Steve Woodford		<scw@NetBSD.ORG>
+
+
+Dedication:
+----------
+
+   The Release Engineering team would like to dedicate the NetBSD 1.3
+   release to the memory of the late Koji Imada, who was killed in a
+   motorcycle accident in August, 1997 at the age of 28.  A doctoral
+   student in Mathematics and Computer Science at Nagoya University,
+   he was a user of NetBSD and a contributor to the project since
+   1993. Well remembered by his friends, he was also known as a
+   connoisseur of gins, teas, and the motorcycles he loved to
+   ride. His death came as a shock, and he will be greatly missed by
+   all of us. May he rest in peace.
+
 
 Legal Mumbo-jumbo:
 ----- ----- -----
