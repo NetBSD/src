@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.105 2002/01/06 21:29:20 deberg Exp $
+#       $NetBSD: Makefile,v 1.106 2002/01/07 00:59:43 deberg Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -172,6 +172,7 @@ MLINKS+=lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
 	lock.9 lockstatus.9 lock.9 lockmgr_printinfo.9 \
 	lock.9 spinlockinit.9 lock.9 spinlockmgr.9
 MLINKS+=malloc.9 free.9 malloc.9 malloc_roundup.9
+MLINKS+=malloc.9 MALLOC.9 malloc.9 FREE.9
 MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 m_copym.9 mbuf.9 m_copypacket.9 mbuf.9 m_copydata.9 \
 	mbuf.9 m_copyback.9 mbuf.9 m_cat.9 mbuf.9 m_dup.9 mbuf.9 m_prepend.9 \
