@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.61 2001/10/14 19:03:44 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.62 2001/10/14 20:31:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -310,6 +310,7 @@ struct scsipi_channel {
 #define	SCSIPI_CHANT_SHUTDOWN	0x01	/* channel is shutting down */
 #define	SCSIPI_CHANT_CALLBACK	0x02	/* has to call chan_callback() */
 #define	SCSIPI_CHANT_KICK	0x04	/* need to run queues */
+#define	SCSIPI_CHANT_GROWRES	0x08	/* call ADAPTER_REQ_GROW_RESOURCES */
 
 #define	SCSIPI_CHAN_MAX_PERIPH(chan)					\
 	(((chan)->chan_flags & SCSIPI_CHAN_OPENINGS) ?			\
