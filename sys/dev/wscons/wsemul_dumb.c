@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_dumb.c,v 1.5 1998/06/20 21:52:50 drochner Exp $ */
+/* $NetBSD: wsemul_dumb.c,v 1.6 1999/01/17 15:44:57 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsemul_dumb.c,v 1.5 1998/06/20 21:52:50 drochner Exp $";
+    "$NetBSD: wsemul_dumb.c,v 1.6 1999/01/17 15:44:57 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ void	wsemul_dumb_output __P((void *cookie, const u_char *data, u_int count,
 				int));
 int	wsemul_dumb_translate __P((void *cookie, keysym_t, char **));
 void	wsemul_dumb_detach __P((void *cookie, u_int *crowp, u_int *ccolp));
+void	wsemul_dumb_resetop __P((void *, enum wsemul_resetops));
 
 const struct wsemul_ops wsemul_dumb_ops = {
 	"dumb",
@@ -62,6 +63,7 @@ const struct wsemul_ops wsemul_dumb_ops = {
 	wsemul_dumb_output,
 	wsemul_dumb_translate,
 	wsemul_dumb_detach,
+	wsemul_dumb_resetop
 };
 
 struct wsemul_dumb_emuldata {
@@ -229,4 +231,23 @@ wsemul_dumb_detach(cookie, crowp, ccolp)
 	*ccolp = edp->ccol;
 	if (edp != &wsemul_dumb_console_emuldata)
 		free(edp, M_DEVBUF);
+}
+
+void
+wsemul_dumb_resetop(cookie, op)
+	void *cookie;
+	enum wsemul_resetops op;
+{
+	struct wsemul_dumb_emuldata *edp = cookie;
+
+	switch (op) {
+	case WSEMUL_CLEARSCREEN:
+		(*edp->emulops->eraserows)(edp->emulcookie, 0, edp->nrows,
+					   edp->defattr);
+		edp->ccol = edp->crow = 0;
+		(*edp->emulops->cursor)(edp->emulcookie, 1, 0, 0);
+		break;
+	default:
+		break;
+	}
 }

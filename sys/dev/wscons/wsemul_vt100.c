@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.9 1999/01/13 15:38:30 drochner Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.10 1999/01/17 15:44:57 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -268,6 +268,14 @@ wsemul_vt100_resetop(cookie, op)
 		break;
 	case WSEMUL_SYNCFONT:
 		vt100_initchartables(edp);
+		break;
+	case WSEMUL_CLEARSCREEN:
+		wsemul_vt100_ed(edp, 2);
+		edp->ccol = edp->crow = 0;
+		(*edp->emulops->cursor)(edp->emulcookie,
+					edp->flags & VTFL_CURSORON, 0, 0);
+		break;
+	default:
 		break;
 	}
 }
