@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.20 2002/08/11 10:47:24 lukem Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.21 2002/09/01 23:04:47 thorpej Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -140,7 +140,7 @@ ${_cfile:T:R}.o: ${_cfile}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${LIBCOMPAT} ${LIBKERN}
-SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ}
+SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ} .gdbinit
 SYSTEM_LD_HEAD?=	@rm -f $@
 SYSTEM_LD?=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
@@ -314,6 +314,21 @@ ID: Makefile depend
 	`sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' .depend | tr ' ' '\n' \
 	| sort -u`
 
+.endif
+
+.include "${S}/gdbscripts/Makefile.inc"
+
+EXTRA_CLEAN+= .gdbinit
+.gdbinit: Makefile ${S}/gdbscripts/Makefile.inc
+	@echo building GDB initialization file
+	rm -f .gdbinit
+.for __gdbinit in ${SYS_GDBINIT}
+	echo "source ${S}/gdbscripts/${__gdbinit}" >> .gdbinit
+.endfor
+.if defined(GDBINIT) && !empty(GDBINIT)
+.for __gdbinit in ${GDBINIT}
+	echo "source ${__gdbinit}" >> .gdbinit
+.endfor
 .endif
 
 ##
