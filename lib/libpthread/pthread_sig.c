@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.7 2001/12/30 02:19:59 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.8 2002/02/19 23:59:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,10 +56,9 @@ static sigset_t	pt_process_sigmask;
 static sigset_t	pt_process_siglist;
 
 
-static void	pthread__signal_tramp(int sig, int code, struct 
-    sigaction *act, ucontext_t *uc);
-
-
+static void 
+pthread__signal_tramp(int, int, struct sigaction *, ucontext_t *, int, 
+    struct pthread_queue_t *, pthread_spin_t *);
 
 int
 pthread_kill(pthread_t thread, int sig)
@@ -169,6 +168,9 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
  * willing thread, if t is null.
  */
 
+extern pthread_spin_t runqueue_lock;
+extern struct pthread_queue_t runqueue;
+
 void
 pthread__signal(pthread_t t, int sig, int code)
 {
@@ -177,17 +179,20 @@ pthread__signal(pthread_t t, int sig, int code)
 	extern struct pthread_queue_t allqueue;
 	ucontext_t *uc;
 
+	self = pthread__self();
 	if (t)
 		target = t;
 	else {
-		/* Pick a thread that doesn't have the signal blocked. */
-		self = pthread__self();
+		/* Pick a thread that doesn't have the signal blocked
+		 * and can be reasonably forced to run. 
+		 */
+	findtarget:
 		okay = good = NULL;
 		pthread_spinlock(self, &allqueue_lock);
 		PTQ_FOREACH(target, &allqueue, pt_allq) {
 			if (!sigismember(&target->pt_sigmask, sig)) {
 				okay = target;
-				if (target->pt_state == PT_STATE_RUNNABLE) {
+				if (target->pt_state != PT_STATE_BLOCKED_SYS) {
 					good = target;
 					break;
 				}
@@ -216,71 +221,121 @@ pthread__signal(pthread_t t, int sig, int code)
 	/* We now have a signal and a victim. */
 	pthread_spinlock(self, &target->pt_siglock);
 	/* Check if the victim will still accept the signal. */
-	if (sigismember(&target->pt_sigmask, sig)) {
-		/* If this wasn't a targeted kill, then perhaps we need to find
+	if (sigismember(&target->pt_sigmask, sig) && !t) {
+		/* Eit! We lost a race.
+		 * If this wasn't a targeted kill, then we need to find
 		 * some other thread that has the signal unblocked. 
-		 * Need to check the spec.
 		 */
-		/* XXX this loses the code! */
-		sigaddset(&target->pt_siglist, sig);
-		/* XXX unblock the signal! */
+		pthread_spinunlock(self, &target->pt_siglock);
+		goto findtarget;
 
-	} else {
+	} 
 
-		/* Ensure the victim is not running.
-		 * In a MP world, it could be on another processor somewhere.
-		 * This is where sa_preempt() comes in handy.
-		 */
-
-		/* XXX
-		 * remove from runqueue? 
-		 * mark as "in signal adjustment"?
-		 * lock?
-		 */
-
-		/* Victim is now not running, and its state is saved
-		 * on the stack. 
-		 */
-
-		/* Note that we are blatantly ignoring SIGALTSTACK. */
-		uc = (ucontext_t *)((char *)target->pt_uc - 
-		   STACKSPACE - sizeof(ucontext_t));
-
-		/* XXX another system call for getcontext here, due to
-		 * the disagreements about argument registers
-		 * between _getcontext_u() and makecontext().
-		 */
-		getcontext(uc);
-		uc->uc_stack.ss_sp = uc;
-		uc->uc_stack.ss_size = 0;
-		makecontext(uc, pthread__signal_tramp, 4, 
-		  sig, code, &pt_sigacts[sig], target->pt_uc);
-		target->pt_uc = uc;
-	}
+	/* Prevent anyone else from considering this thread for handling
+	 * more instances of this signal.
+	 */
+	sigaddset(&target->pt_sigmask, sig);
 	pthread_spinunlock(self, &target->pt_siglock);
+	/* Ensure the victim is not running.
+	 * In a MP world, it could be on another processor somewhere.
+	 */
+
+	/* Locking the state lock blocks out cancellation and any other
+	 * attempts to set this thread up to take a signal.
+	 */
+	pthread_spinlock(self, &target->pt_statelock);
+	switch (target->pt_state) {
+	case PT_STATE_RUNNABLE:
+		pthread_spinlock(self, &runqueue_lock);
+		PTQ_REMOVE(&runqueue, target, pt_runq);
+		pthread_spinunlock(self, &runqueue_lock);
+		break;
+	case PT_STATE_BLOCKED_QUEUE:
+		pthread_spinlock(self, target->pt_sleeplock);
+		PTQ_REMOVE(target->pt_sleepq, target, pt_sleep);
+		pthread_spinunlock(self, target->pt_sleeplock);
+		break;
+	case PT_STATE_BLOCKED_SYS:
+		/* Huh. The target is not on a queue at all, and 
+		 * won't run again for a while. Suck.
+		 */
+		break;
+	default:
+		;
+	}
+	
+	/* XXX We are blatantly ignoring SIGALTSTACK. */
+	uc = (ucontext_t *)((char *)target->pt_uc - 
+	    STACKSPACE - sizeof(ucontext_t));
+	
+	/* XXX another system call for getcontext here, due to the
+	 * disagreements about argument registers between
+	 * _getcontext_u() and makecontext().  
+	 */
+	getcontext(uc);
+	uc->uc_stack.ss_sp = uc;
+	uc->uc_stack.ss_size = 0;
+	makecontext(uc, pthread__signal_tramp, 7, 
+	    sig, code, &pt_sigacts[sig], target->pt_uc, 
+	    target->pt_state, target->pt_sleepq, target->pt_sleeplock);
+	target->pt_uc = uc;
+
+	pthread__sched(self, target);
+	pthread_spinunlock(self, &target->pt_statelock);
 }
 
 
 static void 
 pthread__signal_tramp(int sig, int code, struct sigaction *act, 
-	ucontext_t *uc)
+    ucontext_t *uc, int oldstate, struct pthread_queue_t *oldsleepq,
+    pthread_spin_t *oldsleeplock)
 {
 	sigset_t set;
 	void (*handler)(int, int, struct sigcontext *);
 	struct sigcontext xxxsc;
+	pthread_t self, next;
 
+	self = pthread__self();
 	handler = (void (*)(int, int, struct sigcontext *)) act->sa_handler;
 
 	sigemptyset(&set);
 	sigaddset(&set, sig);
 
-	pthread_sigmask(SIG_BLOCK, &set, NULL);
 	/* XXX we don't support real sigcontext or siginfo here yet.
 	 * Ironically, siginfo is actually easier to deal with.
 	 */
        	handler(sig, code, &xxxsc);
+
+	/* We've finished the handler, so this thread can unblock the signal.
+	 */
        	pthread_sigmask(SIG_UNBLOCK, &set, NULL);
 
+	/* Go back to whatever queue we were found on. When we are continued,
+	 * the first thing we do will be to jump back to the previous context.
+	 */
+	next = pthread__next(self);
+	pthread_spinlock(self, &self->pt_statelock);
+	if (oldstate == PT_STATE_RUNNABLE) {
+		pthread_spinlock(self, &runqueue_lock);
+		pthread_spinunlock(self, &self->pt_statelock);
+		PTQ_INSERT_TAIL(&runqueue, self, pt_runq);
+		pthread__locked_switch(self, next, &runqueue_lock);
+	} else if (oldstate == PT_STATE_BLOCKED_QUEUE) {
+		pthread_spinlock(self, oldsleeplock);
+		self->pt_state = PT_STATE_BLOCKED_QUEUE;
+		self->pt_sleepq = oldsleepq;
+		self->pt_sleeplock = oldsleeplock;
+		pthread_spinunlock(self, &self->pt_statelock);
+		PTQ_INSERT_TAIL(oldsleepq, self, pt_sleep);
+		pthread__locked_switch(self, next, oldsleeplock);
+	} else if (oldstate == PT_STATE_BLOCKED_SYS) {
+		/* We weren't really doing anything before. Just go to
+		 * the next thread. 
+		 */
+		self->pt_state = PT_STATE_BLOCKED_SYS;
+		pthread_spinunlock(self, &self->pt_statelock);
+		pthread__switch(self, next);
+	}
 	/* Jump back to what we were doing before we were interrupted
 	 * by a signal.
 	 */
