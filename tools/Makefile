@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2001/11/22 00:13:10 jmc Exp $
+#	$NetBSD: Makefile,v 1.19 2001/11/22 19:09:42 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ SUBDIR=	mkdep .WAIT \
 
 .if ${MKTOOLS:Uyes} == "no" || ${USETOOLS} != "yes"
 realall install: _warn
-.if ${MKTOOLS} == "no"
+.if ${MKTOOLS:Uyes} == "no"
 _warn:
 	@echo '*** WARNING: "MKTOOLS" is set to "no"; this will prevent building and'
 	@echo '*** updating your host toolchain.  This should be used only as a'
