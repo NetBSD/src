@@ -1,9 +1,11 @@
+/*	$NetBSD: protos.h,v 1.1.1.2 2003/10/06 15:46:24 wiz Exp $	*/
+
 /*
  * protos.h -- function prototypes for when the headers don't have them.
  */
 
 /* 
- * Copyright (C) 1991 - 96 the Free Software Foundation, Inc.
+ * Copyright (C) 1991 - 2002 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Programming Language.
@@ -102,7 +104,6 @@ extern double strtod P((const char *, char **));
 extern int fstat P((int, struct stat *));
 extern int stat P((const char *, struct stat *));
 extern off_t lseek P((int, off_t, int));
-extern int fseek P((FILE *, long, int));
 extern int close P((int));
 extern int creat P((const char *, mode_t));
 extern int open P((const char *, int, ...));

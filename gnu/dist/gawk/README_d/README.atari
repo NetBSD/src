@@ -1,3 +1,8 @@
+Sun May  2 18:40:46 IDT 1999
+
+See the README.1st file in the atari directory.
+
+--------------------------------------------------------
 Gawk on the Atari has been compiled and tested using gcc, both
 with and without -mshort flag.  Other compilers can be used but if
 sizeof(pointer) != sizeof(int) this code will not compile correctly

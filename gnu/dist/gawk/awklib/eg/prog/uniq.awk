@@ -1,5 +1,8 @@
 # uniq.awk --- do uniq in awk
-# Arnold Robbins, arnold@gnu.ai.mit.edu, Public Domain
+#
+# Requires getopt and join library functions
+#
+# Arnold Robbins, arnold@gnu.org, Public Domain
 # May 1993
 
 function usage(    e)
@@ -15,7 +18,7 @@ function usage(    e)
 # -n    skip n fields
 # +n    skip n characters, skip fields first
 
-BEGIN    \
+BEGIN   \
 {
     count = 1
     outputfile = "/dev/stdout"
@@ -81,7 +84,7 @@ NR == 1 {
     last = $0
     next
 }
-    
+
 {
     equal = are_equal()
 

@@ -1,4 +1,9 @@
-char *version_string = "@(#)GNU Awk 3.0";
+/*	$NetBSD: version.c,v 1.1.1.2 2003/10/06 15:46:50 wiz Exp $	*/
+
+#if ! defined(__STDC__) || __STDC__ < 1
+#define const
+#endif
+const char *version_string = "@(#)GNU Awk 3.1";
 
 /* 1.02		fixed /= += *= etc to return the new Left Hand Side instead
 		of the Right Hand Side */
@@ -48,3 +53,6 @@ char *version_string = "@(#)GNU Awk 3.0";
 /* 3.0		RS as regexp, RT variable, FS = "", fflush builtin, posix
 		regexps, IGNORECASE applies to all comparison, autoconf, source
 		code cleanup. See the NEWS file. */
+
+/* 3.1		PROCINFO array, LINT variable, mktime builtin, BINMODE variable,
+		|&, tcp/ip, i18n stuff.  Automake.  See NEWS. */

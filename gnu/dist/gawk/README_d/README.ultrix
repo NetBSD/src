@@ -25,3 +25,22 @@ Date: Sun Sep  8 07:05:07 EDT 1996
 On Decstations using Ultrix 4.3, the tweakfld test case will fail. It
 appears that routines in the math library return very small but non-zero
 numbers in cases where most other systems return zero.
+
+From: Juergen Kahrs <jkahrs@castor.atlas.de>
+Date: Wed Jan 17 13:15:34 MET 2001
+
+On Ultrix 4.3, configure like this:
+
+  ./configure --disable-nls
+
+In custom.h, we defined HAVE_MKTIME in order to avoid a linker error.
+If you compile with
+
+  make check
+
+every test will pass, except for the badargs test:
+
+  *** Error code 1 (ignored)
+
+This shouldnt cause problems.
+

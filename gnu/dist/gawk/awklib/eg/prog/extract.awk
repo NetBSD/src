@@ -1,7 +1,9 @@
 # extract.awk --- extract files and run programs
 #                 from texinfo files
-# Arnold Robbins, arnold@gnu.ai.mit.edu, Public Domain
+#
+# Arnold Robbins, arnold@gnu.org, Public Domain
 # May 1993
+# Revised September 2000
 
 BEGIN    { IGNORECASE = 1 }
 
@@ -42,6 +44,8 @@ BEGIN    { IGNORECASE = 1 }
             break
         else if (line ~ /^@(end[ \t]+)?group/)
             continue
+        else if (line ~ /^@c(omment+)?[ \t]+/)
+            continue
         if (index(line, "@") == 0) {
             print line > curfile
             continue
@@ -59,9 +63,8 @@ BEGIN    { IGNORECASE = 1 }
         print join(a, 1, n, SUBSEP) > curfile
     }
 }
-function unexpected_eof()
-{
-    printf("%s:%d: unexpected EOF or error\n", \
+function unexpected_eof() {
+    printf("%s:%d: unexpected EOF or error\n",
         FILENAME, FNR) > "/dev/stderr"
     exit 1
 }
