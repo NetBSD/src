@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.96 2002/08/19 18:58:50 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.97 2002/08/20 03:32:08 kristerw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.96 2002/08/19 18:58:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.97 2002/08/20 03:32:08 kristerw Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -481,7 +481,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	eh = mtod(m, struct ether_header *);
 	/* Note: etype is already in network byte order. */
 #ifdef __NO_STRICT_ALIGNMENT
-	eh->ether_type = type;
+	eh->ether_type = etype;
 #else
 	{
 		uint8_t *dstp = (uint8_t *) &eh->ether_type;
