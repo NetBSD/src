@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbget - ACPI Table get* routines
- *              $Revision: 1.1.1.7 $
+ *              $Revision: 1.1.1.8 $
  *
  *****************************************************************************/
 
@@ -546,6 +546,7 @@ AcpiTbGetTablePtr (
     {
         /* Get the first */
 
+        *TablePtrLoc = NULL;
         if (AcpiGbl_TableLists[TableType].Next)
         {
             *TablePtrLoc = AcpiGbl_TableLists[TableType].Next->Pointer;

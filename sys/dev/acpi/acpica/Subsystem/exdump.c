@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exdump - Interpreter debug output routines
- *              $Revision: 1.1.1.7 $
+ *              $Revision: 1.1.1.8 $
  *
  *****************************************************************************/
 
@@ -737,7 +737,7 @@ AcpiExDumpObjectDescriptor (
 
     case ACPI_TYPE_DEVICE:
 
-        AcpiExOutPointer ("AddressSpace",   ObjDesc->Device.AddressSpace);
+        AcpiExOutPointer ("Handler",        ObjDesc->Device.Handler);
         AcpiExOutPointer ("SystemNotify",   ObjDesc->Device.SystemNotify);
         AcpiExOutPointer ("DeviceNotify",   ObjDesc->Device.DeviceNotify);
         break;
@@ -775,7 +775,7 @@ AcpiExDumpObjectDescriptor (
         AcpiExOutInteger ("Flags",           ObjDesc->Region.Flags);
         AcpiExOutAddress ("Address",         ObjDesc->Region.Address);
         AcpiExOutInteger ("Length",          ObjDesc->Region.Length);
-        AcpiExOutPointer ("AddressSpace",    ObjDesc->Region.AddressSpace);
+        AcpiExOutPointer ("Handler",         ObjDesc->Region.Handler);
         AcpiExOutPointer ("Next",            ObjDesc->Region.Next);
         break;
 
@@ -796,7 +796,7 @@ AcpiExDumpObjectDescriptor (
         AcpiExOutAddress ("Address",         (ACPI_PHYSICAL_ADDRESS) ObjDesc->Processor.Address);
         AcpiExOutPointer ("SystemNotify",    ObjDesc->Processor.SystemNotify);
         AcpiExOutPointer ("DeviceNotify",    ObjDesc->Processor.DeviceNotify);
-        AcpiExOutPointer ("AddressSpace",    ObjDesc->Processor.AddressSpace);
+        AcpiExOutPointer ("Handler",         ObjDesc->Processor.Handler);
         break;
 
 
@@ -804,7 +804,7 @@ AcpiExDumpObjectDescriptor (
 
         AcpiExOutPointer ("SystemNotify",    ObjDesc->ThermalZone.SystemNotify);
         AcpiExOutPointer ("DeviceNotify",    ObjDesc->ThermalZone.DeviceNotify);
-        AcpiExOutPointer ("AddressSpace",    ObjDesc->ThermalZone.AddressSpace);
+        AcpiExOutPointer ("Handler",         ObjDesc->ThermalZone.Handler);
         break;
 
 

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dswload - Dispatcher namespace load callbacks
- *              $Revision: 1.1.1.7 $
+ *              $Revision: 1.1.1.8 $
  *
  *****************************************************************************/
 
@@ -246,7 +246,7 @@ AcpiDsLoad1BeginOp (
     ObjectType = WalkState->OpInfo->ObjectType;
 
     ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
-        "State=%p Op=%p [%s] ", WalkState, Op, AcpiUtGetTypeName (ObjectType)));
+        "State=%p Op=%p [%s]\n", WalkState, Op, AcpiUtGetTypeName (ObjectType)));
 
     switch (WalkState->Opcode)
     {
@@ -344,11 +344,13 @@ AcpiDsLoad1BeginOp (
             (!(WalkState->ParseFlags & ACPI_PARSE_DEFERRED_OP)))
         {
             Flags |= ACPI_NS_ERROR_IF_FOUND;
-            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DISPATCH, "Cannot already exist\n"));
+            ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "[%s] Cannot already exist\n",
+                    AcpiUtGetTypeName (ObjectType)));
         }
         else
         {
-            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DISPATCH, "Both Find or Create allowed\n"));
+            ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "[%s] Both Find or Create allowed\n",
+                    AcpiUtGetTypeName (ObjectType)));
         }
 
         /*

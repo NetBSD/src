@@ -2,7 +2,7 @@
  *
  * Module Name: nseval - Object evaluation interfaces -- includes control
  *                       method lookup and execution.
- *              $Revision: 1.1.1.6 $
+ *              $Revision: 1.1.1.7 $
  *
  ******************************************************************************/
 
@@ -188,7 +188,7 @@ AcpiNsEvaluateRelative (
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
     if (ACPI_FAILURE (Status))
     {
-        return_ACPI_STATUS (Status);
+        goto Cleanup;
     }
 
     PrefixNode = AcpiNsMapHandleToNode (Handle);
@@ -279,7 +279,7 @@ AcpiNsEvaluateByName (
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
     if (ACPI_FAILURE (Status))
     {
-        return_ACPI_STATUS (Status);
+        goto Cleanup;
     }
 
     /* Lookup the name in the namespace */

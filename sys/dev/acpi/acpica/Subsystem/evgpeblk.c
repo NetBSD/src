@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evgpeblk - GPE block creation and initialization.
- *              $Revision: 1.1.1.3 $
+ *              $Revision: 1.1.1.4 $
  *
  *****************************************************************************/
 
@@ -577,7 +577,7 @@ UnlockAndExit:
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Install new GPE block with mutex support
+ * DESCRIPTION: Remove a GPE block
  *
  ******************************************************************************/
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utdelete - object deletion and reference count utilities
- *              $Revision: 1.1.1.7 $
+ *              $Revision: 1.1.1.8 $
  *
  ******************************************************************************/
 
@@ -219,7 +219,7 @@ AcpiUtDeleteInternalObj (
 
         /* Walk the handler list for this device */
 
-        HandlerDesc = Object->Device.AddressSpace;
+        HandlerDesc = Object->Device.Handler;
         while (HandlerDesc)
         {
             NextDesc = HandlerDesc->AddressSpace.Next;
@@ -275,7 +275,7 @@ AcpiUtDeleteInternalObj (
              * default handlers -- and therefore, we created the context object
              * locally, it was not created by an external caller.
              */
-            HandlerDesc = Object->Region.AddressSpace;
+            HandlerDesc = Object->Region.Handler;
             if (HandlerDesc)
             {
                 if (HandlerDesc->AddressSpace.Hflags & ACPI_ADDR_HANDLER_DEFAULT_INSTALLED)
