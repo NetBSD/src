@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.33 2003/10/28 00:26:17 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.34 2003/11/02 16:04:31 perry Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -489,9 +489,17 @@ Modify the command line to change the default from "netbsd -ASn2" to
 .Dl Ic installboot -m amiga -o command="netbsd -S" /dev/rsd0a /usr/mdec/bootxx_ffs
 .
 .Ss NetBSD/i386
-Create a bootable floppy disk with UFS file system for a small custom
-kernel (note: bigger kernels needing multiple disks are handled with
-the ustarfs file system):
+This example demonstrates installing new boot blocks on an existing
+mounted root file system on
+.Sq wd0 ,
+setting the timeout to five seconds:
+.Dl Ic cp /usr/mdec/boot /boot
+.Dl Ic installboot -v -o timeout=5 /dev/rwd0a /usr/mdec/bootxx_ffsv1
+.
+.Pp
+This example shows how to create a bootable floppy disk with an FFSv1
+file system for a small custom kernel (note: bigger kernels needing
+multiple disks are handled with the ustarfs file system):
 .Dl Ic newfs -s 1440k /dev/rfd0a
 Ignore the warnings this spews (it can not write a disklabel, which is no
 problem for a floppy disk)
@@ -499,7 +507,7 @@ problem for a floppy disk)
 .Dl Ic cp /usr/mdec/boot /mnt/boot
 .Dl Ic gzip -9 \*[Lt] sys/arch/i386/compile/mykernel/netbsd \*[Gt] /mnt/netbsd.gz
 .Dl Ic umount /mnt
-.Dl Ic installboot -v /dev/rfd0a /usr/mdec/bootxx_ufs
+.Dl Ic installboot -v /dev/rfd0a /usr/mdec/bootxx_ffsv1
 .
 .Ss NetBSD/next68k
 Install the bootstrap on to disk
