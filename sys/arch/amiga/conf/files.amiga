@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.75 1998/08/10 18:53:31 is Exp $
+#	$NetBSD: files.amiga,v 1.76 1998/09/02 22:32:08 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -153,9 +153,8 @@ attach	ed at zbus with ed_zbus
 file	arch/amiga/dev/if_ed.c		ed_zbus needs-flag
 
 # C=/Ameristar A2060 / 560
-device	bah: ifnet, arc, arp
 attach	bah at zbus with bah_zbus
-file	arch/amiga/dev/if_bah.c		bah_zbus needs-flag
+file	arch/amiga/dev/if_bah_zbus.c	bah_zbus
 
 # CEI A4066 EthernetPLUS
 device	es: ifnet, ether, arp
