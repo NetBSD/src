@@ -1,6 +1,6 @@
-.\"	$NetBSD: pciide.4,v 1.53 2003/10/08 11:20:09 bouyer Exp $
+.\"	$NetBSD: pciide.4,v 1.54 2003/10/08 12:02:40 bouyer Exp $
 .\"
-.\" Copyright (c) 1998 Manuel Bouyer.
+.\" Copyright (c) 1998,2003 Manuel Bouyer.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -36,10 +36,6 @@
 .Sh SYNOPSIS
 .Cd "pciide* at pci? dev ? function ? flags 0x0000"
 .Cd "pciide* at pnpbios? index ?"
-.Cd "options PCIIDE_CMD064x_DISABLE"
-.Cd "options PCIIDE_AMD756_ENABLEDMA"
-.Cd "options PCIIDE_CMD0646U_ENABLEUDMA"
-.Cd "options PCIIDE_I31244_ENABLEDMA"
 .Sh DESCRIPTION
 The
 .Nm
@@ -48,46 +44,62 @@ driver supports the PCI IDE controllers as specified in the
 interface with the hardware for the
 .Ic ata
 driver.
-This driver include specific, enhanced support for the CMD Tech
-PCI0640 controller, and IDE DMA/Ultra-DMA support for the following
-controllers:
+Please use the chip-specific drivers for the following controllers for
+enhanced and DMA support:
 .Bl -dash -compact -offset indent
 .It
-Acard ATP850 (Ultra/33) and ATP860 (Ultra/66) IDE Controllers
+Acard ATP850 (Ultra/33) and ATP860 (Ultra/66) IDE Controllers:
+.Xr acardide 4
 .It
-Acer labs M5229 IDE Controller
+Acer labs M5229 IDE Controller:
+.Xr aceride 4
 .It
-Advanced Micro Devices AMD-756, 766, and 768 IDE Controllers
+Advanced Micro Devices AMD-756, 766, and 768 IDE Controllers:
+.Xr viaide 4
 .It
-CMD Tech PCI0643, PCI0646, PCI0648, and PCI0649 IDE Controllers
+CMD Tech PCI0643, PCI0646, PCI0648, and PCI0649 IDE Controllers:
+.Xr cmdide 4
 .It
-Contaq Microsystems/Cypress CY82C693 IDE Controller
+Contaq Microsystems/Cypress CY82C693 IDE Controller:
+.Xr cypide 4
 .It
 HighPoint HPT366 Ultra/66, HPT370 Ultra/100, HPT372, and HPT374 Ultra/133
-IDE controller
+IDE controller:
+.Xr hptide 4
 .It
-Intel PIIX, PIIX3, and PIIX4 IDE Controllers
+Intel PIIX, PIIX3, and PIIX4 IDE Controllers:
+.Xr piixide 4
 .It
-Intel i31244 Serial ATA controller
+Intel i31244 Serial ATA controller:
+.Xr piixide 4
 .It
-Intel 82801 (ICH/ICH0/ICH2/ICH3/ICH4/ICH5) IDE Controllers
+Intel 82801 (ICH/ICH0/ICH2/ICH3/ICH4/ICH5) IDE Controllers:
+.Xr piixide 4
 .It
-OPTi 82c621 (plus a few of its derivatives) IDE Controllers
+NVIDIA nForce/nForce2 IDE Controllers:
+.Xr viaide 4
+.It
+OPTi 82c621 (plus a few of its derivatives) IDE Controllers:
+.Xr optiide 4
 .It
 Promise PDC20246 (Ultra/33), PDC20262 (Ultra/66), PDC20265/PDC20267 (Ultra100),
 PDC20268 (Ultra/100TX2 and Ultra/100TX2v2), Ultra/133, Ultra/133TX2 and
-Ultra/133TX2v2 PCI IDE controllers
+Ultra/133TX2v2 PCI IDE controllers:
+.Xr pdcide 4
 .It
-Silicon Image 0680 IDE controller
+Silicon Image 0680 IDE controller:
+.Xr cmdide 4
 .It
-Silicon Image SATALink 3112 Serial ATA controller
+Silicon Image SATALink 3112 Serial ATA controller:
+.Xr cmdide 4
 .It
-Silicon Integrated System 5597/5598 IDE controller
+Silicon Integrated System 5597/5598 IDE controller:
+.Xr siside 4
 .It
 VIA Technologies VT82C586, VT82C586A, VT82C596A, VT82C686A, VT8233A,
-and VT8235 IDE Controllers
+and VT8235 IDE Controllers:
+.Xr viaide 4
 .El
-Some of these controllers are only available in multifunction PCI chips.
 .Pp
 The 0x0001 flag forces the
 .Nm
@@ -106,44 +118,18 @@ problems where the IDE controller is wired up to the system incorrectly.
 .Xr intro 4 ,
 .Xr pci 4 ,
 .Xr pnpbios 4 ,
-.Xr scsi 4 ,
 .Xr ata 4 ,
 .Xr atapi 4 ,
 .Xr wd 4 ,
+.Xr acardide 4 ,
+.Xr aceride 4 ,
+.Xr cmdide 4 ,
+.Xr cypide 4 ,
+.Xr hptide 4 ,
+.Xr optiide 4 ,
+.Xr pdcide 4 ,
+.Xr piixide 4 ,
+.Xr siside 4 ,
+.Xr slide 4 ,
+.Xr viaide 4 ,
 .Xr wdc 4
-.Sh BUGS
-There's no way to reliably know if a PCI064x controller is enabled or not.
-If the driver finds a PCI064x, it will assume it is enabled unless the
-PCIIDE_CMD064x_DISABLE option is specified in the kernel config file.
-This will be a problem only if the controller has been disabled in the BIOS
-and another controller has been installed and uses the ISA legacy I/O ports
-and interrupts.
-.Pp
-The PCI0646U controller is known to be buggy with Ultra-DMA transfers, so
-Ultra-DMA is disabled by default for this controller.
-To enable Ultra-DMA, use the PCIIDE_CMD0646U_ENABLEUDMA option.
-Ultra-DMA can eventually be disabled on a per-drive basis with config
-flags, see
-.Xr wd 4 .
-.Pp
-The AMD756 chip revision D2 has a bug affecting DMA (but not Ultra-DMA)
-modes.
-The workaround documented by AMD is to not use DMA on any drive which
-does not support Ultra-DMA modes.
-This does not appear to be necessary on all drives, the
-PCIIDE_AMD756_ENABLEDMA option can be used to force multiword DMA
-on the buggy revisions.
-Multiword DMA can eventually be disabled on a
-per-drive basis with config flags, see
-.Xr wd 4 .
-The bug, if triggered, will cause a total system hang.
-.Pp
-The Intel i31244 Serial ATA controller revision 0 has a bug affecting
-DMA data transfers.
-The PCIIDE_I31244_ENABLEDMA option can be used to force DMA on the
-buggy revisions.
-.Pp
-The timings used for the PIO and DMA modes for controllers listed above
-are for a PCI bus running at 30 or 33 MHz (except the OPTi controller,
-which supports both 25 and 33 MHz PCI bus timings).
-This driver may not work properly on overclocked systems.
