@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.6 2000/10/13 18:16:36 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.7 2000/10/24 14:53:59 augustss Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -258,7 +258,7 @@ USB_ATTACH(uscanner)
 
 	sc->sc_udev = uaa->device;
 
-	err = usbd_set_config_no(uaa->device, 1, 0); /* XXX */
+	err = usbd_set_config_no(uaa->device, 1, 1); /* XXX */
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->sc_dev));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.30 2000/10/01 23:32:45 thorpej Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.31 2000/10/24 14:53:59 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -484,7 +484,7 @@ kue_reset(struct kue_softc *sc)
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->kue_dev), __FUNCTION__));
 
-	err = usbd_set_config_no(sc->kue_udev, KUE_CONFIG_NO, 0);
+	err = usbd_set_config_no(sc->kue_udev, KUE_CONFIG_NO, 1);
 	if (err)
 		printf("%s: reset failed\n", USBDEVNAME(sc->kue_dev));
 
@@ -539,7 +539,7 @@ USB_ATTACH(kue)
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->kue_dev), devinfo);
 
-	err = usbd_set_config_no(dev, KUE_CONFIG_NO, 0);
+	err = usbd_set_config_no(dev, KUE_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->kue_dev));

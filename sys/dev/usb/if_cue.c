@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.24 2000/10/01 23:32:45 thorpej Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.25 2000/10/24 14:53:59 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -599,7 +599,7 @@ USB_ATTACH(cue)
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->cue_dev), devinfo);
 
-	err = usbd_set_config_no(dev, CUE_CONFIG_NO, 0);
+	err = usbd_set_config_no(dev, CUE_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->cue_dev));

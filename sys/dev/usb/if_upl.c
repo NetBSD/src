@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.8 2000/10/01 11:35:29 itojun Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.9 2000/10/24 14:53:59 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -248,7 +248,7 @@ USB_ATTACH(upl)
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
-	err = usbd_set_config_no(dev, UPL_CONFIG_NO, 0);
+	err = usbd_set_config_no(dev, UPL_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->sc_dev));
