@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.39 1999/06/20 00:50:08 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.40 1999/08/04 19:11:01 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -53,7 +53,7 @@
 
 #include <vax/vax/gencons.h>
 
-#include <vax/bi/bireg.h>
+#include <dev/bi/bireg.h>
 
 #include "locators.h"
 
