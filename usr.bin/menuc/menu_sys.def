@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.48 2003/10/18 18:26:53 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.49 2003/11/20 13:03:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -188,10 +188,17 @@ init_menu(menudesc *m)
 
 	/* Calculate w? */
 	if (m->w == 0) {
-		if (m->mopt & (MC_SCROLL | MC_ALWAYS_SCROLL))
-			wmax = MAX(wmax,strlen(scrolltext));
-		for (i = 0; i < m->numopts; i++)
-			wmax = MAX(wmax, strlen(MSG_XLAT(m->opts[i].opt_name)) + 3);
+		int l;
+		if (m->mopt & (MC_SCROLL | MC_ALWAYS_SCROLL)) {
+			l = strlen(scrolltext);
+			wmax = MAX(wmax, l);
+		}
+		for (i = 0; i < m->numopts; i++) {
+			l = strlen(MSG_XLAT(m->opts[i].opt_name));
+			if (!(m->mopt & MC_NOSHORTCUT))
+				l += 3;
+			wmax = MAX(wmax, l);
+		}
 		m->w = wmax;
 	}
 
@@ -206,7 +213,7 @@ init_menu(menudesc *m)
 	if (m->x == -1)
 		m->x = (max_cols - (m->w + wadd)) / 2;	/* center */
 	else if (m->x + m->w + wadd > max_cols)
-		m->x = max_cols - (m->w + wadd);
+		m->x = max_cols - (m->w + wadd);	/* right align */
 
 	/* Get the windows. */
 	m->mw = newwin(m->h + hadd, m->w + wadd, m->y, m->x);
