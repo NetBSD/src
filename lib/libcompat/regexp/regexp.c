@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: regexp.c,v 1.12 1999/09/16 09:57:06 lukem Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.13 2000/07/11 06:07:25 itohy Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -924,16 +924,17 @@ char *prog;
 			break;
 		case WORDA:
 			/* Must be looking at a letter, digit, or _ */
-			if ((!isalnum(*reginput)) && *reginput != '_')
+			if ((!isalnum(UCHARAT(reginput))) && *reginput != '_')
 				return(0);
 			/* Prev must be BOL or nonword */
 			if (reginput > regbol &&
-			    (isalnum(reginput[-1]) || reginput[-1] == '_'))
+			    (isalnum(UCHARAT(reginput - 1))
+			     || reginput[-1] == '_'))
 				return(0);
 			break;
 		case WORDZ:
 			/* Must be looking at non letter, digit, or _ */
-			if (isalnum(*reginput) || *reginput == '_')
+			if (isalnum(UCHARAT(reginput)) || *reginput == '_')
 				return(0);
 			/* We don't care what the previous char was */
 			break;
