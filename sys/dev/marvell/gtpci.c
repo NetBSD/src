@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.5 2003/03/18 19:32:46 matt Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.6 2003/04/01 19:11:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -59,6 +59,8 @@
 #include <dev/marvell/gtpcivar.h>
 #include <dev/marvell/gtvar.h>
 
+#define DEBUG
+
 static int	gtpci_error_intr(void *);
 
 static void	gtpci_bus_init(struct gtpci_chipset *);
@@ -93,8 +95,6 @@ CFATTACH_DECL(gtpci, sizeof(struct gtpci_softc),
 
 extern struct cfdriver gtpci_cd;
 
-static int gtpci_busmask;
-
 const struct pci_chipset_functions gtpci_functions = {
 	gtpci_bus_attach_hook,
 	gtpci_bus_maxdevs,
@@ -113,6 +113,84 @@ const struct pci_chipset_functions gtpci_functions = {
 	gtpci_intr_evcnt,
 	gtpci_intr_establish,
 	gtpci_intr_disestablish
+};
+
+static const int pci_irqs[2][3] = {
+    { IRQ_PCI0_0, IRQ_PCI0_1, IRQ_PCI0_2 },
+    { IRQ_PCI1_0, IRQ_PCI1_1, IRQ_PCI1_2 },
+};
+
+static const struct pci_init {
+	int bar_regno;
+	u_int32_t bar_enable;
+ 	bus_addr_t low_decode;
+	bus_addr_t high_decode;
+	bus_addr_t barsize;
+	bus_addr_t accctl_high;
+	bus_addr_t accctl_low;
+	bus_addr_t accctl_top;
+} pci_initinfo[2][4] = {
+    	{
+		{
+			0x10,			PCI_BARE_SCS0En,
+			GT_SCS0_Low_Decode,	GT_SCS0_High_Decode,
+			PCI_SCS0_BAR_SIZE(0),
+			PCI_ACCESS_CONTROL_BASE_HIGH(0, 0),
+			PCI_ACCESS_CONTROL_BASE_LOW(0, 0),
+			PCI_ACCESS_CONTROL_TOP(0, 0),
+		}, {
+			0x14,			PCI_BARE_SCS1En,
+			GT_SCS1_Low_Decode,	GT_SCS1_High_Decode,
+			PCI_SCS1_BAR_SIZE(0),
+			PCI_ACCESS_CONTROL_BASE_HIGH(0, 1),
+			PCI_ACCESS_CONTROL_BASE_LOW(0, 1),
+			PCI_ACCESS_CONTROL_TOP(0, 1),
+		}, {
+			0x18,			PCI_BARE_SCS2En,
+			GT_SCS2_Low_Decode,	GT_SCS2_High_Decode,
+			PCI_SCS2_BAR_SIZE(0),
+			PCI_ACCESS_CONTROL_BASE_HIGH(0, 2),
+			PCI_ACCESS_CONTROL_BASE_LOW(0, 2),
+			PCI_ACCESS_CONTROL_TOP(0, 2),
+		}, {
+			0x1c,			PCI_BARE_SCS3En,
+			GT_SCS3_Low_Decode,	GT_SCS3_High_Decode,
+			PCI_SCS3_BAR_SIZE(0),
+			PCI_ACCESS_CONTROL_BASE_HIGH(0, 3),
+			PCI_ACCESS_CONTROL_BASE_LOW(0, 3),
+			PCI_ACCESS_CONTROL_TOP(0, 3),
+		},
+	}, {
+		{
+			0x10,			PCI_BARE_SCS0En,
+			GT_SCS0_Low_Decode,	GT_SCS0_High_Decode,
+			PCI_SCS0_BAR_SIZE(1),
+			PCI_ACCESS_CONTROL_BASE_HIGH(1, 0),
+			PCI_ACCESS_CONTROL_BASE_LOW(1, 0),
+			PCI_ACCESS_CONTROL_TOP(1, 0),
+		}, {
+			0x14,			PCI_BARE_SCS1En,
+			GT_SCS1_Low_Decode,	GT_SCS1_High_Decode,
+			PCI_SCS1_BAR_SIZE(1),
+			PCI_ACCESS_CONTROL_BASE_HIGH(1, 1),
+			PCI_ACCESS_CONTROL_BASE_LOW(1, 1),
+			PCI_ACCESS_CONTROL_TOP(1, 1),
+		}, {
+			0x18,			PCI_BARE_SCS2En,
+			GT_SCS2_Low_Decode,	GT_SCS2_High_Decode,
+			PCI_SCS2_BAR_SIZE(1),
+			PCI_ACCESS_CONTROL_BASE_HIGH(1, 2),
+			PCI_ACCESS_CONTROL_BASE_LOW(1, 2),
+			PCI_ACCESS_CONTROL_TOP(1, 2),
+		}, {
+			0x1c,			PCI_BARE_SCS3En,
+			GT_SCS3_Low_Decode,	GT_SCS3_High_Decode,
+			PCI_SCS3_BAR_SIZE(1),
+			PCI_ACCESS_CONTROL_BASE_HIGH(1, 3),
+			PCI_ACCESS_CONTROL_BASE_LOW(1, 3),
+			PCI_ACCESS_CONTROL_TOP(1, 3),
+		},
+	}
 };
 
 int
@@ -161,6 +239,14 @@ gtpci_attach(struct device *parent, struct device *self, void *aux)
 	gtpc->gtpc_gt_memt = ga->ga_memt;
 	gtpc->gtpc_gt_memh = ga->ga_memh;
 
+	/*
+	 * Let's find out where we are located.
+	 */
+	data = gtpci_read(gtpc, PCI_P2P_CONFIGURATION(gtpc->gtpc_busno));
+	gtpc->gtpc_self = gtpci_make_tag(&gtpc->gtpc_pc,
+		PCI_P2PCFG_BusNum_GET(data), PCI_P2PCFG_DevNum_GET(data), 0);
+
+
 	switch (busno) {
 	case 0:
 		gtpc->gtpc_io_bs = gt->gt_pci0_iot;
@@ -184,6 +270,34 @@ gtpci_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal("\n");
 
+	/*
+	 * clear any pre-existing error interrupt(s)
+	 * clear latched pci error registers
+	 * establish ISRs for PCI errors
+	 * enable PCI error interrupts
+	 */
+	gtpci_write(gtpc, PCI_ERROR_CAUSE(gtpc->gtpc_busno), 0);
+	(void)gtpci_read(gtpc, PCI_ERROR_DATA_LOW(gtpc->gtpc_busno));
+	(void)gtpci_read(gtpc, PCI_ERROR_DATA_HIGH(gtpc->gtpc_busno));
+	(void)gtpci_read(gtpc, PCI_ERROR_COMMAND(gtpc->gtpc_busno));
+	(void)gtpci_read(gtpc, PCI_ERROR_ADDRESS_HIGH(gtpc->gtpc_busno));
+	(void)gtpci_read(gtpc, PCI_ERROR_ADDRESS_LOW(gtpc->gtpc_busno));
+	intr_establish(pci_irqs[gtpc->gtpc_busno][0], IST_LEVEL, IPL_GTERR,
+	    gtpci_error_intr, pc);
+	intr_establish(pci_irqs[gtpc->gtpc_busno][1], IST_LEVEL, IPL_GTERR,
+	    gtpci_error_intr, pc);
+	intr_establish(pci_irqs[gtpc->gtpc_busno][2], IST_LEVEL, IPL_GTERR,
+	    gtpci_error_intr, pc);
+	aprint_normal("%s: %s%d error interrupts at irqs %s, %s, %s\n", 
+	    pc->pc_parent->dv_xname, "pci", busno,
+	    intr_string(pci_irqs[gtpc->gtpc_busno][0]),
+	    intr_string(pci_irqs[gtpc->gtpc_busno][1]),
+	    intr_string(pci_irqs[gtpc->gtpc_busno][2]));
+	gtpci_write(gtpc, PCI_ERROR_MASK(gtpc->gtpc_busno), PCI_SERRMSK_ALL_ERRS);
+
+	/*
+	 * Fill in the pci_bus_attach_args
+	 */
 	pba.pba_pc = pc;
 	pba.pba_bus = 0;
 	pba.pba_busname = "pci";
@@ -204,157 +318,106 @@ gtpci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_flags |= PCI_FLAGS_MWI_OKAY;
 
 	gt_watchdog_service();
-
+	/*
+	 * Configure the pci bus.
+	 */
 	config_found(self, &pba, gtpci_cfprint);
 
 	gt_watchdog_service();
 
-	/*
-	 * clear any pre-existing error interrupt(s)
-	 * clear latched pci error registers
-	 * establish ISRs for PCI errors
-	 * enable PCI error interrupts
-	 */
-	gtpci_write(gtpc, PCI_ERROR_CAUSE(gtpc->gtpc_busno), 0);
-	(void)gtpci_read(gtpc, PCI_ERROR_DATA_LOW(gtpc->gtpc_busno));
-	(void)gtpci_read(gtpc, PCI_ERROR_DATA_HIGH(gtpc->gtpc_busno));
-	(void)gtpci_read(gtpc, PCI_ERROR_COMMAND(gtpc->gtpc_busno));
-	(void)gtpci_read(gtpc, PCI_ERROR_ADDRESS_HIGH(gtpc->gtpc_busno));
-	(void)gtpci_read(gtpc, PCI_ERROR_ADDRESS_LOW(gtpc->gtpc_busno));
-	if (gtpc->gtpc_busno == 0) {
-		intr_establish(IRQ_PCI0_0, IST_LEVEL, IPL_GTERR,
-			gtpci_error_intr, pc);
-		intr_establish(IRQ_PCI0_1, IST_LEVEL, IPL_GTERR,
-			gtpci_error_intr, pc);
-		intr_establish(IRQ_PCI0_2, IST_LEVEL, IPL_GTERR,
-			gtpci_error_intr, pc);
-		aprint_normal("%s: %s%d error interrupts at irqs %d, %d, %d\n", 
-			pc->pc_parent->dv_xname, "pci", busno,
-			IRQ_PCI0_0, IRQ_PCI0_1, IRQ_PCI0_2);
-			
-	} else {
-		intr_establish(IRQ_PCI1_0, IST_LEVEL, IPL_GTERR,
-			gtpci_error_intr, pc);
-		intr_establish(IRQ_PCI1_1, IST_LEVEL, IPL_GTERR,
-			gtpci_error_intr, pc);
-		intr_establish(IRQ_PCI1_2, IST_LEVEL, IPL_GTERR,
-			gtpci_error_intr, pc);
-		aprint_normal("%s: %s%d error interrupts at irqs %d, %d, %d\n", 
-			pc->pc_parent->dv_xname, "pci", busno,
-			IRQ_PCI1_0, IRQ_PCI1_1, IRQ_PCI1_2);
-	}
-	gtpci_write(gtpc, PCI_ERROR_MASK(gtpc->gtpc_busno), PCI_SERRMSK_ALL_ERRS);
-
-	gtpci_busmask |= (1 << busno);
 }
 
 void
 gtpci_bus_init(struct gtpci_chipset *gtpc)
 {
-	pci_chipset_tag_t pc = &gtpc->gtpc_pc;
-	pcitag_t tag;
-	pcireg_t pcidata;
+	const struct pci_init *pi;
 	uint32_t data, datal, datah;
-
-	/*
-	 * We only about bus 0 device 0 function 0.
-	 */
-	tag = gtpci_make_tag(pc, 0, 0, 0);
+	pcireg_t pcidata;
+	int i;
 
 	/*
 	 * disable all BARs to start.
 	 */
 	gtpci_write(gtpc, PCI_BASE_ADDR_REGISTERS_ENABLE(gtpc->gtpc_busno),
 	    0xffffffff);
-	pcidata = gtpci_conf_read(pc, tag, 0x20) & 0xfff;
 
 	/*
 	 * Enable internal arbiter
 	 */
         data = gtpci_read(gtpc, PCI_ARBITER_CONTROL(gtpc->gtpc_busno));
-        data |= 0x80000000;
+        data |= PCI_ARBCTL_EN;
         gtpci_write(gtpc, PCI_ARBITER_CONTROL(gtpc->gtpc_busno), data);
 
 	/*
 	 * Make the GT reflects reality.
-	 */
-	gtpci_conf_write(pc, tag, 0x20,
-	    GT_LowAddr_GET(gtpci_read(gtpc, GT_Internal_Decode)) | pcidata);
-
-	/*
 	 * We always enable internal memory.
 	 */
+	pcidata = gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self, 0x20) & 0xfff;
+	gtpci_conf_write(&gtpc->gtpc_pc, gtpc->gtpc_self, 0x20,
+	    GT_LowAddr_GET(gtpci_read(gtpc, GT_Internal_Decode)) | pcidata);
 	data = PCI_BARE_IntMemEn;
+
+	for (pi = pci_initinfo[gtpc->gtpc_busno], i = 0; i < 4; i++, pi++)
+		gtpci_write(gtpc, pi->barsize, 0);
+
+	/*
+	 * Enable bus master access (needed for config access).
+	 */
+	pcidata = gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self,
+	    PCI_COMMAND_STATUS_REG);
+	pcidata |= PCI_COMMAND_MASTER_ENABLE;
+	gtpci_conf_write(&gtpc->gtpc_pc, gtpc->gtpc_self,
+	    PCI_COMMAND_STATUS_REG, pcidata);
 
 	/*
 	 * Map each SCS BAR to correspond to each SDRAM decode register.
 	 */
-	datal = GT_LowAddr_GET(gtpci_read(gtpc, GT_SCS0_Low_Decode));
-	datah = GT_HighAddr_GET(gtpci_read(gtpc, GT_SCS0_High_Decode)) + 1;
-	pcidata = gtpci_conf_read(pc, tag, 0x10) & 0xfff;
-	if (datal < datah) {
-		pcidata |= datal;
-		datah -= datal;
-		data |= PCI_BARE_SCS0En;
-	} else {
-		datah = 0;
+	for (pi = pci_initinfo[gtpc->gtpc_busno], i = 0; i < 4; i++, pi++) {
+		datal = gtpci_read(gtpc, pi->low_decode);
+		datah = gtpci_read(gtpc, pi->high_decode);
+		pcidata = gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self,
+		    pi->bar_regno);
+		gtpci_write(gtpc, pi->accctl_high, 0);
+		if (datal < datah) {
+			datal &= 0xfff;
+			pcidata &= 0xfff;
+			pcidata |= datal << 20;
+			data |= pi->bar_enable;
+			datah -= datal;
+			datal |= PCI_ACCCTLBASEL_PrefetchEn|
+			    PCI_ACCCTLBASEL_RdPrefetch|
+			    PCI_ACCCTLBASEL_RdLinePrefetch|
+			    PCI_ACCCTLBASEL_RdMulPrefetch|
+			    PCI_ACCCTLBASEL_WBurst_8_QW|
+			    PCI_ACCCTLBASEL_PCISwap_NoSwap;
+			gtpci_write(gtpc, pi->accctl_low, datal);
+		} else {
+			pcidata &= 0xfff;
+			datal = 0xfff|PCI_ACCCTLBASEL_PCISwap_NoSwap;
+			datah = 0;
+		}
+		gtpci_write(gtpc, pi->barsize,
+		    datah ? ((datah << 20) | 0xff000) : 0);
+		gtpci_conf_write(&gtpc->gtpc_pc, gtpc->gtpc_self,
+		    pi->bar_regno, pcidata);
+		gtpci_write(gtpc, pi->accctl_low, datal);
+		gtpci_write(gtpc, pi->accctl_top, datah);
 	}
-	gtpci_conf_write(pc, tag, 0x10, pcidata);
-	gtpci_write(gtpc, PCI_SCS0_BAR_SIZE(gtpc->gtpc_busno), datah);
-
-	datal = GT_LowAddr_GET(gtpci_read(gtpc, GT_SCS1_Low_Decode));
-	datah = GT_HighAddr_GET(gtpci_read(gtpc, GT_SCS1_High_Decode)) + 1;
-	pcidata = gtpci_conf_read(pc, tag, 0x14) & 0xfff;
-	if (datal < datah) {
-		pcidata |= datal;
-		datah -= datal;
-		data |= PCI_BARE_SCS1En;
-	} else {
-		datah = 0;
-	}
-	gtpci_conf_write(pc, tag, 0x14, pcidata);
-	gtpci_write(gtpc, PCI_SCS1_BAR_SIZE(gtpc->gtpc_busno), datah);
-
-	datal = GT_LowAddr_GET(gtpci_read(gtpc, GT_SCS2_Low_Decode));
-	datah = GT_HighAddr_GET(gtpci_read(gtpc, GT_SCS2_High_Decode)) + 1;
-	pcidata = gtpci_conf_read(pc, tag, 0x18) & 0xfff;
-	if (datal < datah) {
-		pcidata |= datal;
-		datah -= datal;
-		data |= PCI_BARE_SCS2En;
-	} else {
-		datah = 0;
-	}
-	gtpci_conf_write(pc, tag, 0x18, pcidata);
-	gtpci_write(gtpc, PCI_SCS2_BAR_SIZE(gtpc->gtpc_busno), datah);
-
-	datal = GT_LowAddr_GET(gtpci_read(gtpc, GT_SCS3_Low_Decode));
-	datah = GT_HighAddr_GET(gtpci_read(gtpc, GT_SCS3_High_Decode)) + 1;
-	pcidata = gtpci_conf_read(pc, tag, 0x1c) & 0xfff;
-	if (datal < datah) {
-		pcidata |= datal;
-		datah -= datal;
-		data |= PCI_BARE_SCS3En;
-	} else {
-		datah = 0;
-	}
-	gtpci_conf_write(pc, tag, 0x1c, pcidata);
-	gtpci_write(gtpc, PCI_SCS3_BAR_SIZE(gtpc->gtpc_busno), datah);
 
 	/*
 	 * Now re-enable those BARs that are real.
 	 */
 	gtpci_write(gtpc, PCI_BASE_ADDR_REGISTERS_ENABLE(gtpc->gtpc_busno),
-	    data);
+	    ~data);
 
 	/*
-	 * Enable I/O, memory, and bus master access.
+	 * Enable I/O and memory (bus master is already enabled) access.
 	 */
-	pcidata = gtpci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	pcidata |= PCI_COMMAND_IO_ENABLE;
-	pcidata |= PCI_COMMAND_MEM_ENABLE;
-	pcidata |= PCI_COMMAND_MASTER_ENABLE;
-	gtpci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, pcidata);
+	pcidata = gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self,
+	    PCI_COMMAND_STATUS_REG);
+	pcidata |= PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE;
+	gtpci_conf_write(&gtpc->gtpc_pc, gtpc->gtpc_self,
+	    PCI_COMMAND_STATUS_REG, pcidata);
 }
 
 void
@@ -363,8 +426,10 @@ gtpci_bus_attach_hook(struct device *parent, struct device *self,
 {
 	struct gtpci_chipset *gtpc = (struct gtpci_chipset *) pba->pba_pc;
 	uint32_t data;
-#ifdef DEBUG
+#if defined(DEBUG)
 	pcitag_t tag;
+	int bus, dev;
+	int i;
 #endif
 
 	if (gtpc->gtpc_pc.pc_parent != parent)
@@ -392,134 +457,10 @@ gtpci_bus_attach_hook(struct device *parent, struct device *self,
 
 	gtpci_bus_init(gtpc);
 	gtpci_bus_configure(gtpc);
-	
-#if defined(DEBUG)
-	tag = gtpci_make_tag(pc, 0, 0, 0);
-	data = gtpci_read(gtpc, PCI_BASE_ADDR_REGISTERS_ENABLE(gtpc->gtpc_busno));
-	aprint_normal("\n%s: BARs enabled: %#x", self->dv_xname, data);
 
-	aprint_normal("\n%s: 0:0:0\n", self->dv_xname);
-	aprint_normal("   %sSCS0=%#010x",
-		(data & 1) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x10));
-	aprint_normal("/%#010x", gtpci_read(gtpc,
-		PCI_SCS0_BAR_SIZE(gtpc->gtpc_busno))+0x1000);
-	aprint_normal("  remap %#010x\n",
-		gtpci_read(gtpc, PCI_SCS0_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
-
-	aprint_normal("   %sSCS1=%#010x",
-		(data & 2) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x14));
-	aprint_normal("/%#010x",
-		gtpci_read(gtpc, PCI_SCS1_BAR_SIZE(gtpc->gtpc_busno))+0x1000);
-	aprint_normal("  remap %#010x\n",
-		gtpci_read(gtpc, PCI_SCS1_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
-
-	aprint_normal("   %sSCS2=%#010x",
-		(data & 4) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x18));
-	aprint_normal("/%#010x",
-		gtpci_read(gtpc, PCI_SCS2_BAR_SIZE(gtpc->gtpc_busno))+0x1000);
-	aprint_normal("  remap %#010x\n",
-		gtpci_read(gtpc, PCI_SCS2_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
-
-	aprint_normal("   %sSCS3=%#010x",
-		(data & 8) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x1c));
-	aprint_normal("/%#010x",
-		gtpci_read(gtpc, PCI_SCS3_BAR_SIZE(gtpc->gtpc_busno))+0x1000);
-	aprint_normal("  remap %#010x\n",
-		gtpci_read(gtpc, PCI_SCS3_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
-
-	aprint_normal("   %sIMem=%#010x",
-		(data & PCI_BARE_IntMemEn) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x20));
-	aprint_normal("\n");
-	aprint_normal("    %sIIO=%#010x",
-		(data & PCI_BARE_IntIOEn) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x24));
-	aprint_normal("\n");
-	tag = gtpci_make_tag(pc, 0, 0, 1);
-	aprint_normal("    %sCS0=%#010x",
-		(data & PCI_BARE_CS0En) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x10));
-	aprint_normal("/%#010x",
-		gtpci_read(gtpc, PCI_CS0_BAR_SIZE(gtpc->gtpc_busno))+0x1000);
-	aprint_normal("  remap %#010x\n",
-		gtpci_read(gtpc, PCI_CS0_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
-
-	aprint_normal("    %sCS1=%#010x",
-		(data & PCI_BARE_CS1En) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x14));
-	aprint_normal("/%#010x",
-		gtpci_read(gtpc, PCI_CS1_BAR_SIZE(gtpc->gtpc_busno))+0x1000);
-	aprint_normal("  remap %#010x\n",
-		gtpci_read(gtpc, PCI_CS1_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
-
-	aprint_normal("    %sCS2=%#010x",
-		(data & PCI_BARE_CS2En) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x18));
-	aprint_normal("/%#010x",
-		gtpci_read(gtpc, PCI_CS2_BAR_SIZE(gtpc->gtpc_busno))+0x1000);
-	aprint_normal("  remap %#010x\n",
-		gtpci_read(gtpc, PCI_CS2_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
-
-	aprint_normal("    %sCS3=%#010x",
-		(data & PCI_BARE_CS3En) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x1c));
-	aprint_normal("/%#010x",
-		gtpci_read(gtpc, PCI_CS3_BAR_SIZE(gtpc->gtpc_busno))+0x1000);
-	aprint_normal("  remap %#010x\n",
-		gtpci_read(gtpc, PCI_CS3_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
-
-	aprint_normal(" %sBootCS=%#010x",
-		(data & PCI_BARE_BootCSEn) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x20));
-	aprint_normal("/%#010x",
-		gtpci_read(gtpc, PCI_BOOTCS_BAR_SIZE(gtpc->gtpc_busno))+0x1000);
-	aprint_normal("  remap %#010x\n",
-		gtpci_read(gtpc, PCI_BOOTCS_ADDR_REMAP(gtpc->gtpc_busno)));
-
-	tag = gtpci_make_tag(pc, 0, 0, 2);
-	aprint_normal("  %sP2PM0=%#010x",
-		(data & PCI_BARE_P2PMem0En) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x10));
-	aprint_normal("/%#010x",
-		gtpci_read(gtpc, PCI_P2P_MEM0_BAR_SIZE(gtpc->gtpc_busno))+0x1000);
-	aprint_normal("  remap %#010x.%#010x\n",
-		gtpci_read(gtpc, PCI_P2P_MEM0_BASE_ADDR_REMAP_HIGH(gtpc->gtpc_busno)),
-		gtpci_read(gtpc, PCI_P2P_MEM0_BASE_ADDR_REMAP_LOW(gtpc->gtpc_busno)));
-
-	aprint_normal("  %sP2PM1=%#010x",
-		(data & PCI_BARE_P2PMem1En) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x14));
-	aprint_normal("/%#010x",
-		gtpci_read(gtpc, PCI_P2P_MEM1_BAR_SIZE(gtpc->gtpc_busno))+0x1000);
-	aprint_normal("  remap %#010x.%#010x\n",
-		gtpci_read(gtpc, PCI_P2P_MEM1_BASE_ADDR_REMAP_HIGH(gtpc->gtpc_busno)),
-		gtpci_read(gtpc, PCI_P2P_MEM1_BASE_ADDR_REMAP_LOW(gtpc->gtpc_busno)));
-
-	aprint_normal("  %sP2PIO=%#010x",
-		(data & PCI_BARE_P2PIOEn) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x18));
-	aprint_normal("/%#010x",
-		gtpci_read(gtpc, PCI_P2P_IO_BAR_SIZE(gtpc->gtpc_busno))+0x1000);
-	aprint_normal("  remap %#010x\n",
-		gtpci_read(gtpc, PCI_P2P_IO_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
-
-	aprint_normal("    %sCPU=%#010x",
-		(data & PCI_BARE_CPUEn) ? "-" : "+",
-		gtpci_conf_read(pc, tag, 0x1c));
-	aprint_normal("/%#010x",
-		gtpci_read(gtpc, PCI_CPU_BAR_SIZE(gtpc->gtpc_busno))+0x1000);
-	aprint_normal("  remap %#010x\n",
-		gtpci_read(gtpc, PCI_CPU_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
-#endif
 	data = gtpci_read(gtpc, PCI_COMMAND(gtpc->gtpc_busno));
 	if (data & (PCI_CMD_MSwapEn|PCI_CMD_SSwapEn)) {
-
 		aprint_normal("\n%s: ", self->dv_xname);
-
 		if (data & PCI_CMD_MSwapEn) {
 			switch (data & (PCI_CMD_MWordSwap|PCI_CMD_MByteSwap)) {
 			case PCI_CMD_MWordSwap:
@@ -547,32 +488,147 @@ gtpci_bus_attach_hook(struct device *parent, struct device *self,
 		}
 	}
 
-#if DEBUG
+#if defined(DEBUG)
+	if (gtpci_debug == 0)
+		return;
+	
+	data = gtpci_read(gtpc, PCI_BASE_ADDR_REGISTERS_ENABLE(gtpc->gtpc_busno));
+	aprint_normal("\n%s: BARs enabled: %#x", self->dv_xname, data);
+
+	aprint_normal("\n%s: 0:0:0\n", self->dv_xname);
+	aprint_normal("   %sSCS0=%#010x",
+		(data & 1) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self, 0x10));
+	aprint_normal("/%#010x", gtpci_read(gtpc,
+		PCI_SCS0_BAR_SIZE(gtpc->gtpc_busno)));
+	aprint_normal("  remap %#010x\n",
+		gtpci_read(gtpc, PCI_SCS0_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
+
+	aprint_normal("   %sSCS1=%#010x",
+		(data & 2) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self, 0x14));
+	aprint_normal("/%#010x",
+		gtpci_read(gtpc, PCI_SCS1_BAR_SIZE(gtpc->gtpc_busno)));
+	aprint_normal("  remap %#010x\n",
+		gtpci_read(gtpc, PCI_SCS1_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
+
+	aprint_normal("   %sSCS2=%#010x",
+		(data & 4) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self, 0x18));
+	aprint_normal("/%#010x",
+		gtpci_read(gtpc, PCI_SCS2_BAR_SIZE(gtpc->gtpc_busno)));
+	aprint_normal("  remap %#010x\n",
+		gtpci_read(gtpc, PCI_SCS2_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
+
+	aprint_normal("   %sSCS3=%#010x",
+		(data & 8) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self, 0x1c));
+	aprint_normal("/%#010x",
+		gtpci_read(gtpc, PCI_SCS3_BAR_SIZE(gtpc->gtpc_busno)));
+	aprint_normal("  remap %#010x\n",
+		gtpci_read(gtpc, PCI_SCS3_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
+
+	aprint_normal("   %sIMem=%#010x",
+		(data & PCI_BARE_IntMemEn) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self, 0x20));
+	aprint_normal("\n");
+	aprint_normal("    %sIIO=%#010x",
+		(data & PCI_BARE_IntIOEn) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self, 0x24));
+	aprint_normal("\n");
+
+	gtpci_decompose_tag(&gtpc->gtpc_pc, gtpc->gtpc_self, &bus, &dev, NULL);
+	tag = gtpci_make_tag(&gtpc->gtpc_pc, bus, dev, 1);
+	aprint_normal("    %sCS0=%#010x",
+		(data & PCI_BARE_CS0En) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, tag, 0x10));
+	aprint_normal("/%#010x",
+		gtpci_read(gtpc, PCI_CS0_BAR_SIZE(gtpc->gtpc_busno)));
+	aprint_normal("  remap %#010x\n",
+		gtpci_read(gtpc, PCI_CS0_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
+
+	aprint_normal("    %sCS1=%#010x",
+		(data & PCI_BARE_CS1En) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, tag, 0x14));
+	aprint_normal("/%#010x",
+		gtpci_read(gtpc, PCI_CS1_BAR_SIZE(gtpc->gtpc_busno)));
+	aprint_normal("  remap %#010x\n",
+		gtpci_read(gtpc, PCI_CS1_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
+
+	aprint_normal("    %sCS2=%#010x",
+		(data & PCI_BARE_CS2En) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, tag, 0x18));
+	aprint_normal("/%#010x",
+		gtpci_read(gtpc, PCI_CS2_BAR_SIZE(gtpc->gtpc_busno)));
+	aprint_normal("  remap %#010x\n",
+		gtpci_read(gtpc, PCI_CS2_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
+
+	aprint_normal("    %sCS3=%#010x",
+		(data & PCI_BARE_CS3En) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, tag, 0x1c));
+	aprint_normal("/%#010x",
+		gtpci_read(gtpc, PCI_CS3_BAR_SIZE(gtpc->gtpc_busno)));
+	aprint_normal("  remap %#010x\n",
+		gtpci_read(gtpc, PCI_CS3_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
+
+	aprint_normal(" %sBootCS=%#010x",
+		(data & PCI_BARE_BootCSEn) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, tag, 0x20));
+	aprint_normal("/%#010x",
+		gtpci_read(gtpc, PCI_BOOTCS_BAR_SIZE(gtpc->gtpc_busno)));
+	aprint_normal("  remap %#010x\n",
+		gtpci_read(gtpc, PCI_BOOTCS_ADDR_REMAP(gtpc->gtpc_busno)));
+
+	tag = gtpci_make_tag(&gtpc->gtpc_pc, bus, tag, 2);
+	aprint_normal("  %sP2PM0=%#010x",
+		(data & PCI_BARE_P2PMem0En) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, tag, 0x10));
+	aprint_normal("/%#010x",
+		gtpci_read(gtpc, PCI_P2P_MEM0_BAR_SIZE(gtpc->gtpc_busno)));
+	aprint_normal("  remap %#010x.%#010x\n",
+		gtpci_read(gtpc, PCI_P2P_MEM0_BASE_ADDR_REMAP_HIGH(gtpc->gtpc_busno)),
+		gtpci_read(gtpc, PCI_P2P_MEM0_BASE_ADDR_REMAP_LOW(gtpc->gtpc_busno)));
+
+	aprint_normal("  %sP2PM1=%#010x",
+		(data & PCI_BARE_P2PMem1En) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, tag, 0x14));
+	aprint_normal("/%#010x",
+		gtpci_read(gtpc, PCI_P2P_MEM1_BAR_SIZE(gtpc->gtpc_busno)));
+	aprint_normal("  remap %#010x.%#010x\n",
+		gtpci_read(gtpc, PCI_P2P_MEM1_BASE_ADDR_REMAP_HIGH(gtpc->gtpc_busno)),
+		gtpci_read(gtpc, PCI_P2P_MEM1_BASE_ADDR_REMAP_LOW(gtpc->gtpc_busno)));
+
+	aprint_normal("  %sP2PIO=%#010x",
+		(data & PCI_BARE_P2PIOEn) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, tag, 0x18));
+	aprint_normal("/%#010x",
+		gtpci_read(gtpc, PCI_P2P_IO_BAR_SIZE(gtpc->gtpc_busno)));
+	aprint_normal("  remap %#010x\n",
+		gtpci_read(gtpc, PCI_P2P_IO_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
+
+	aprint_normal("    %sCPU=%#010x",
+		(data & PCI_BARE_CPUEn) ? "-" : "+",
+		gtpci_conf_read(&gtpc->gtpc_pc, tag, 0x1c));
+	aprint_normal("/%#010x",
+		gtpci_read(gtpc, PCI_CPU_BAR_SIZE(gtpc->gtpc_busno)));
+	aprint_normal("  remap %#010x\n",
+		gtpci_read(gtpc, PCI_CPU_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
+
 	for (i = 0; i < 8; i++) {
 		aprint_normal("\n%s: Access Control %d: ", self->dv_xname, i);
-		aprint_normal("base(hi=%#x,lo=%#x)=0x%08x.%03xxxxxx",
-			PCI_ACCESS_CONTROL_BASE_HIGH(gtpc->gtpc_busno, i),
-			PCI_ACCESS_CONTROL_BASE_LOW(gtpc->gtpc_busno, i),
-			gtpci_read(gtpc,
-				PCI_ACCESS_CONTROL_BASE_HIGH(gtpc->gtpc_busno, i)),
-			gtpci_read(gtpc,
-				PCI_ACCESS_CONTROL_BASE_LOW(gtpc->gtpc_busno, i)) & 0xfff);
-		aprint_normal(" cfg=%#x",
-			gtpci_read(gtpc,
-				PCI_ACCESS_CONTROL_BASE_LOW(gtpc->gtpc_busno, i)) & ~0xfff);
-		aprint_normal(" top(%#x)=%#x",
-			PCI_ACCESS_CONTROL_TOP(gtpc->gtpc_busno, i),
-			gtpci_read(gtpc,
-				PCI_ACCESS_CONTROL_TOP(gtpc->gtpc_busno, i)));
+		data = gtpci_read(gtpc,
+		    PCI_ACCESS_CONTROL_BASE_HIGH(gtpc->gtpc_busno, i));
+		if (data)
+			aprint_normal("base=0x%08x.", data);
+		else
+			aprint_normal("base=0x");
+		data = gtpci_read(gtpc,
+			PCI_ACCESS_CONTROL_BASE_LOW(gtpc->gtpc_busno, i));
+		printf("%08x cfg=0x%08x", data << 20, data & ~0xfff);
+		aprint_normal(" top=0x%03x00000",
+		    gtpci_read(gtpc,
+			PCI_ACCESS_CONTROL_TOP(gtpc->gtpc_busno, i)));
 	}
-#endif
-
-#if 0
-	gtpci_write(gtpc, PCI_ACCESS_CONTROL_BASE_HIGH(gtpc->gtpc_busno, 0), 0);
-	gtpci_write(gtpc, PCI_ACCESS_CONTROL_BASE_LOW(gtpc->gtpc_busno, 0),
-		0x01001000);
-	gtpci_write(gtpc, PCI_ACCESS_CONTROL_TOP(gtpc->gtpc_busno, 0),
-		0x00000020);
 #endif
 }
 
@@ -589,11 +645,11 @@ gtpci_error_intr(void *arg)
 
 	cause = gtpci_read(gtpc, PCI_ERROR_CAUSE(gtpc->gtpc_busno));
 	errmask = gtpci_read(gtpc, PCI_ERROR_MASK(gtpc->gtpc_busno));
-	cause &= (errmask | (0x1f << 27));
+	cause &= errmask | 0xf8000000;
 	gtpci_write(gtpc, PCI_ERROR_CAUSE(gtpc->gtpc_busno), ~cause);
 	printf("%s: pci%d error: cause=%#x mask=%#x",
 		pc->pc_parent->dv_xname, gtpc->gtpc_busno, cause, errmask);
-	if ((cause & ~(0x1f << 27)) == 0) {
+	if ((cause & 0xf8000000) == 0) {
 		printf(" ?\n");
 		return 0;
 	}
@@ -613,13 +669,20 @@ gtpci_error_intr(void *arg)
 	cmd = gtpci_read(gtpc, PCI_ERROR_COMMAND(gtpc->gtpc_busno));
 	ahi = gtpci_read(gtpc, PCI_ERROR_ADDRESS_HIGH(gtpc->gtpc_busno));
 	alo = gtpci_read(gtpc, PCI_ERROR_ADDRESS_LOW(gtpc->gtpc_busno));
-	printf("\n%s: pci%d error: %s cmd %#x data %#x.%#x address=%#x.%#x\n",
+	printf("\n%s: pci%d error: %s cmd=%#x",
 		pc->pc_parent->dv_xname, gtpc->gtpc_busno,
-		gtpci_error_strings[PCI_IC_SEL_GET(cause)],
-		cmd, dhi, dlo, ahi, alo);
+		gtpci_error_strings[PCI_IC_SEL_GET(cause)], cmd);
+	if (dhi == 0)
+		printf(" data=%08x", dlo);
+	else
+		printf(" data=%08x.%08x", dhi, dlo);
+	if (ahi == 0)
+		printf(" address=%08x\n", alo);
+	else
+		printf(" address=%08x.%08x\n", ahi, alo);
 
 #if defined(DEBUG) && defined(DDB)
-	if (gtpci_debug > 0)
+	if (gtpci_debug > 1)
 		Debugger();
 #endif
 	return 1;
@@ -695,7 +758,7 @@ gtpci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int regno)
 {
 	struct gtpci_chipset *gtpc = (struct gtpci_chipset *)pc;
 #ifdef DIAGNOSTIC
-	if ((regno & 3) || ((regno + 3) & ~0xff))
+	if ((regno & 3) || (regno & ~0xff))
 		panic("gtpci_conf_read: bad regno %#x\n", regno);
 #endif
 	gtpci_write(gtpc, gtpc->gtpc_cfgaddr, (int) tag | regno);
@@ -707,7 +770,7 @@ gtpci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int regno, pcireg_t data)
 {
 	struct gtpci_chipset *gtpc = (struct gtpci_chipset *)pc;
 #ifdef DIAGNOSTIC
-	if ((regno & 3) || ((regno + 3) & ~0xff))
+	if ((regno & 3) || (regno & ~0xff))
 		panic("gtpci_conf_write: bad regno %#x\n", regno);
 #endif
 	gtpci_write(gtpc, gtpc->gtpc_cfgaddr, (int) tag | regno);
