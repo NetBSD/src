@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.15 2002/11/01 11:46:13 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.16 2002/11/01 13:32:27 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -560,4 +560,34 @@ usr.sbin/greconfig/greconfig.c			1.7
 	Avoid a NULL pointer access if passed bogus parameters.
 	Unify exit codes to EXIST_SUCCESS/EXIT_FAILURE.
 	[martin, ticket #225]
+
+Makefile					1.176
+
+	In afterinstall, only run postinstall check if DESTDIR != /
+	(or equivalents). Fixes [misc/17275] from
+	Gregory McGarry <g.mcgarry@ieee.org>
+	[lukem, ticket #319]
+
+sys/netinet/ip_output.c				1.98-1.99
+
+	Do not consult routing table under the following condition:
+	- the destination is IPv4 multicast or 255.255.255.255, and
+	- outgoing interface is specified via socket option
+
+	This simplifies operation of routed
+	(no longer require 224.0.0.0/4 to be set up)
+	[itojun, ticket #356]
+
+sys/dev/pci/pcidevs				1.466
+
+	Add Promise Ultra133TX2 and Ultra133TX2v2 PCI ID.
+	[bouyer, ticket #724]
+
+distrib/notes/i386/hardware			1.109
+share/man/man4/pciide.4				1.41
+sys/dev/pci/pciide.c				1.165
+
+	Add support for Promise Ultra133TX2 and Ultra133TX2v2, from FreeBSD
+	and stephen@degler.net in kern/17509.
+	[bouyer, ticket #724]
 
