@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.19 2004/09/30 02:17:53 enami Exp $	*/
+/*	$NetBSD: scm.c,v 1.20 2004/11/16 06:00:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -571,11 +571,7 @@ samehost(void)
 {				/* is remote host same as local host? */
 	struct ifaddrs *ifap, *ifa;
 	char h1[NI_MAXHOST], h2[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST;
-#endif
 
 	if (getnameinfo((struct sockaddr *) &remoteaddr,
 #ifdef BSD4_4
@@ -611,11 +607,7 @@ int
 matchhost(char *name)
 {				/* is this name of remote host? */
 	char h1[NI_MAXHOST], h2[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST;
-#endif
 	struct addrinfo hints, *res0, *res;
 
 	if (getnameinfo((struct sockaddr *) & remoteaddr,
