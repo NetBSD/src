@@ -1,5 +1,5 @@
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
-#	$Id: rc,v 1.52 1995/09/02 17:30:43 thorpej Exp $
+#	$Id: rc,v 1.53 1995/09/16 15:29:20 jtc Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -190,7 +190,7 @@ elif [ "X${routed_flags}" != X"NO" ]; then
 	echo -n ' routed';		routed $routed_flags
 fi
 
-# $name_server is imported from /etc/netstart;
+# $name_flags is imported from /etc/netstart;
 # if $named_flags != NO, named is run.
 if [ "X${named_flags}" != X"NO" ]; then
 	echo -n ' named';		named $named_flags
