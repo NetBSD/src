@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.89 2001/06/02 16:17:08 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.90 2001/06/07 13:26:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1305,7 +1305,7 @@ ifioctl(so, cmd, data, p)
 	default:
 		if (so->so_proto == 0)
 			return (EOPNOTSUPP);
-#if !defined(COMPAT_43) && !defined(COMPAT_LINUX) && !defined(COMPAT_SVR4)
+#if !defined(COMPAT_43) && !defined(COMPAT_LINUX) && !defined(COMPAT_SVR4) && !defined(LKM)
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
 		    (struct mbuf *)ifp, p));
