@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.18 2003/01/31 21:57:27 tsutsui Exp $ */
+/* $NetBSD: vgavar.h,v 1.19 2003/02/09 10:29:36 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -193,7 +193,7 @@ int	vga_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
 
 #ifndef VGA_RASTERCONSOLE
 struct wsscreen_descr;
-void 	vga_loadchars(struct vga_handle *, int, int, int, int, char *);
+void 	vga_loadchars(struct vga_handle *, int, int, int, int, const char *);
 void 	vga_readoutchars(struct vga_handle *, int, int, int, int, char *);
 #ifdef VGA_CONSOLE_ATI_BROKEN_FONTSEL
 void 	vga_copyfont01(struct vga_handle *);
