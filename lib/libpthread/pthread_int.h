@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.25 2002/05/20 19:21:19 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.26 2002/07/16 13:26:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,6 +55,14 @@ struct pt_clean_t {
 	PTQ_ENTRY(pt_clean_t)	ptc_next;
 	void	(*ptc_cleanup)(void *);
 	void	*ptc_arg;
+};
+
+struct pt_alarm_t {
+	PTQ_ENTRY(pt_alarm_t)	pta_next;
+	const struct timespec	*pta_time;
+	void	(*pta_func)(void *);
+	void	*pta_arg;
+	int	pta_fired;
 };
 
 struct	pthread_st {
@@ -216,9 +224,9 @@ void	pthread__sa_recycle(pthread_t old, pthread_t new);
 
 /* Alarm code */
 void	pthread__alarm_init(void);
-void	*pthread__alarm_add(pthread_t, const struct timespec *,
-    void (*)(void *), void *);
-void	pthread__alarm_del(pthread_t, void *);
+void	pthread__alarm_add(pthread_t, struct pt_alarm_t *,
+    const struct timespec *, void (*)(void *), void *);
+void	pthread__alarm_del(pthread_t, struct pt_alarm_t *);
 int	pthread__alarm_fired(void *);
 void	pthread__alarm_process(pthread_t self, void *arg);
 

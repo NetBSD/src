@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.1.2.4 2002/05/20 17:44:28 nathanw Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.1.2.5 2002/07/16 13:26:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,15 +44,6 @@
 #include "pthread.h"
 #include "pthread_int.h"
 
-
-struct pt_alarm_t {
-	PTQ_ENTRY(pt_alarm_t)	pta_next;
-	const struct timespec	*pta_time;
-	void	(*pta_func)(void *);
-	void	*pta_arg;
-	int	pta_fired;
-};
-
 timer_t pthread_alarmtimer;
 PTQ_HEAD(, pt_alarm_t) pthread_alarmqueue = PTQ_HEAD_INITIALIZER;
 pthread_spin_t pthread_alarmqlock;
@@ -80,15 +71,14 @@ pthread__alarm_init(void)
 
 }
 
-void *
-pthread__alarm_add(pthread_t self, const struct timespec *ts, 
-    void (*func)(void *), void *arg)
+void
+pthread__alarm_add(pthread_t self, struct pt_alarm_t *alarm, 
+    const struct timespec *ts, void (*func)(void *), void *arg)
 {
-	struct pt_alarm_t *alarm, *iterator, *prev;
+	struct pt_alarm_t *iterator, *prev;
 	struct itimerspec it;
 	int retval;
 
-	alarm = malloc(sizeof(struct pt_alarm_t));
 	alarm->pta_time = ts;
 	alarm->pta_func = func;
 	alarm->pta_arg = arg;
@@ -122,17 +112,14 @@ pthread__alarm_add(pthread_t self, const struct timespec *ts,
 	}
 	pthread_spinunlock(self, &pthread_alarmqlock);
 
-	return alarm;
 }
 
 void
-pthread__alarm_del(pthread_t self, void *arg)
+pthread__alarm_del(pthread_t self, struct pt_alarm_t *alarm)
 {
-	struct pt_alarm_t *alarm, *next;
+	struct pt_alarm_t *next;
 	struct itimerspec it;
 	int retval;
-
-	alarm = arg;
 
 	pthread_spinlock(self, &pthread_alarmqlock);
 	if (alarm->pta_fired == 0) {
@@ -156,8 +143,6 @@ pthread__alarm_del(pthread_t self, void *arg)
 		}
 	}
 	pthread_spinunlock(self, &pthread_alarmqlock);
-
-	free(alarm);
 }
 
 int
