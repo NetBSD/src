@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.1 2002/02/10 01:57:03 thorpej Exp $
+#	$NetBSD: files.shark,v 1.2 2002/02/12 00:50:12 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -78,7 +78,7 @@ attach	ofrom at ofbus
 file	arch/shark/ofw/ofrom.c			ofrom	needs-flag
 
 # Memory disk driver
-file	arch/shark/dev/md_hooks.c		md & memory_disk_hooks
+file	dev/md_root.c				md & memory_disk_hooks
 major	{md = 18}
 
 # RAIDframe
