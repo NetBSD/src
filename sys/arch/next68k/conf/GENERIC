@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14 1999/03/27 02:59:41 dbj Exp $
+# $NetBSD: GENERIC,v 1.14.2.1 2000/06/03 14:45:37 he Exp $
 #
 # GENERIC next68k
 #
@@ -71,7 +71,7 @@ file-system 	NULLFS		# loopback file system
 file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
-file-system 	UNION		# union file system
+#file-system 	UNION		# union file system
 
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
