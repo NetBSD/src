@@ -1,4 +1,4 @@
-.\"	$NetBSD: guspnp.4,v 1.6 1999/12/15 22:07:32 abs Exp $
+.\"	$NetBSD: guspnp.4,v 1.7 1999/12/20 12:44:04 abs Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,6 +67,16 @@ logical devices are ATAPI CD-ROM device, PnP Joystick device, Legacy
 soundcard emulation device (Soundblaster) and MIDI serial device. Support
 for atleast ATAPI CD-ROM and Joystick is being worked on.
 This version of the driver will use 1 IRQ and 2 DRQs.
+.Sh HARDWARE
+Cards supported by the 
+.Nm
+driver include:
+.Pp
+.Bl -item -offset indent
+.It
+.Tn Gravis
+Ultrasound PNP, and compatibles
+.El
 .Sh BUGS
 Sometimes you can cause a hiss on either left or right channel, or both.
 You can usually make it disappear by playing random data, however this
