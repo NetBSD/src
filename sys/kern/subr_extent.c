@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.20 1998/09/12 17:20:02 christos Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.21 1999/01/22 07:57:59 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -191,6 +191,8 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 
 /*
  * Destroy an extent map.
+ * Since we're freeing the data, there can't be any references
+ * so we don't need any locking.
  */
 void
 extent_destroy(ex)
@@ -203,8 +205,6 @@ extent_destroy(ex)
 	if (ex == NULL)
 		panic("extent_destroy: NULL extent");
 #endif
-
-	simple_lock(&ex->ex_slock);
 
 	/* Free all region descriptors in extent. */
 	for (rp = ex->ex_regions.lh_first; rp != NULL; ) {
