@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.5 2001/11/15 23:25:09 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.6 2001/11/16 01:57:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.5 2001/11/15 23:25:09 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.6 2001/11/16 01:57:08 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.5 2001/11/15 23:25:09 augustss Exp $");
 #ifdef EHCI_DEBUG
 #define DPRINTF(x)	if (ehcidebug) printf x
 #define DPRINTFN(n,x)	if (ehcidebug>(n)) printf x
-int ehcidebug = 5;
+int ehcidebug = 0;
 #define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
 #else
 #define DPRINTF(x)
@@ -135,9 +135,15 @@ Static void		ehci_device_clear_toggle(usbd_pipe_handle pipe);
 Static void		ehci_noop(usbd_pipe_handle pipe);
 
 Static int		ehci_str(usb_string_descriptor_t *, int, char *);
+Static void		ehci_pcd(ehci_softc_t *, usbd_xfer_handle);
+Static void		ehci_pcd_able(ehci_softc_t *, int);
+Static void		ehci_pcd_enable(void *);
+Static void		ehci_disown(ehci_softc_t *, int, int);
 
 #ifdef EHCI_DEBUG
 Static void		ehci_dumpregs(ehci_softc_t *);
+Static void		ehci_dump(void);
+Static ehci_softc_t 	*theehci;
 #endif
 
 #define EHCI_INTR_ENDPT 1
@@ -214,6 +220,9 @@ ehci_init(ehci_softc_t *sc)
 	usbd_status err;
 
 	DPRINTF(("ehci_init: start\n"));
+#ifdef EHCI_DEBUG
+	theehci = sc;
+#endif
 
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
 
@@ -223,6 +232,7 @@ ehci_init(ehci_softc_t *sc)
 
 	sparams = EREAD4(sc, EHCI_HCSPARAMS);
 	DPRINTF(("ehci_init: sparams=0x%x\n", sparams));
+	sc->sc_npcomp = EHCI_HCS_N_PCC(sparams);
 	if (EHCI_HCS_N_CC(sparams) != sc->sc_ncomp) {
 		printf("%s: wrong number of companions (%d != %d)\n",
 		       USBDEVNAME(sc->sc_bus.bdev),
@@ -273,6 +283,8 @@ ehci_init(ehci_softc_t *sc)
 		return (err);
 	DPRINTF(("%s: flsize=%d\n", USBDEVNAME(sc->sc_bus.bdev),sc->sc_flsize));
 
+	usb_callout_init(sc->sc_tmo_pcd);
+
 	/* Set up the bus struct. */
 	sc->sc_bus.methods = &ehci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ehci_pipe);
@@ -280,13 +292,159 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_powerhook = powerhook_establish(ehci_power, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(ehci_shutdown, sc);
 
+	sc->sc_eintrs = EHCI_NORMAL_INTRS;
+
+	/* Enable interrupts */
+	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
+
+	/* Turn on controller */
+	EOWRITE4(sc, EHCI_USBCMD,
+		 EHCI_CMD_ITC_8 | /* 8 microframes */
+		 (EOREAD4(sc, EHCI_USBCMD) & EHCI_CMD_FLS_M) |
+		 /* EHCI_CMD_ASE | */
+		 /* EHCI_CMD_PSE | */
+		 EHCI_CMD_RS);
+
+	/* Take over port ownership */
+	EOWRITE4(sc, EHCI_CONFIGFLAG, EHCI_CONF_CF);
+
 	return (USBD_NORMAL_COMPLETION);
 }
+
+Static int ehci_intr1(ehci_softc_t *);
 
 int
 ehci_intr(void *v)
 {
-	return (0);
+	ehci_softc_t *sc = v;
+
+	/* If we get an interrupt while polling, then just ignore it. */
+	if (sc->sc_bus.use_polling) {
+#ifdef DIAGNOSTIC
+		printf("ehci_intr: ignored interrupt while polling\n");
+#endif
+		return (0);
+	}
+
+	return (ehci_intr1(sc)); 
+}
+
+Static int
+ehci_intr1(ehci_softc_t *sc)
+{
+	u_int32_t intrs, eintrs;
+
+	DPRINTFN(20,("ehci_intr1: enter\n"));
+
+	/* In case the interrupt occurs before initialization has completed. */
+	if (sc == NULL) {
+#ifdef DIAGNOSTIC
+		printf("ehci_intr: sc == NULL\n");
+#endif
+		return (0);
+	}
+
+	intrs = EHCI_STS_INTRS(EOREAD4(sc, EHCI_USBSTS));
+
+	if (!intrs)
+		return (0);
+
+	EOWRITE4(sc, EHCI_USBSTS, intrs); /* Acknowledge */
+	eintrs = intrs & sc->sc_eintrs;
+	DPRINTFN(7, ("ehci_intr: sc=%p intrs=0x%x(0x%x) eintrs=0x%x\n", 
+		     sc, (u_int)intrs, EOREAD4(sc, EHCI_USBSTS),
+		     (u_int)eintrs));
+	if (!eintrs)
+		return (0);
+
+	sc->sc_bus.intr_context++;
+	sc->sc_bus.no_intrs++;
+	if (eintrs & EHCI_STS_INT) {
+		DPRINTF(("ehci_intr1: something is done\n"));
+		eintrs &= ~EHCI_STS_INT;
+	}
+	if (eintrs & EHCI_STS_ERRINT) {
+		DPRINTF(("ehci_intr1: some error\n"));
+		eintrs &= ~EHCI_STS_HSE;
+	}
+	if (eintrs & EHCI_STS_HSE) {
+		printf("%s: unrecoverable error, controller halted\n",
+		       USBDEVNAME(sc->sc_bus.bdev));
+		/* XXX what else */
+	}
+	if (eintrs & EHCI_STS_PCD) {
+		ehci_pcd(sc, sc->sc_intrxfer);
+		/* 
+		 * Disable PCD interrupt for now, because it will be
+		 * on until the port has been reset.
+		 */
+		ehci_pcd_able(sc, 0);
+		/* Do not allow RHSC interrupts > 1 per second */
+                usb_callout(sc->sc_tmo_pcd, hz, ehci_pcd_enable, sc);
+		eintrs &= ~EHCI_STS_PCD;
+	}
+
+	sc->sc_bus.intr_context--;
+
+	if (eintrs != 0) {
+		/* Block unprocessed interrupts. */
+		sc->sc_eintrs &= ~eintrs;
+		EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
+		printf("%s: blocking intrs 0x%x\n",
+		       USBDEVNAME(sc->sc_bus.bdev), eintrs);
+	}
+
+	return (1);
+}
+
+void
+ehci_pcd_able(ehci_softc_t *sc, int on)
+{
+	DPRINTFN(4, ("ehci_pcd_able: on=%d\n", on));
+	if (on)
+		sc->sc_eintrs |= EHCI_STS_PCD;
+	else
+		sc->sc_eintrs &= ~EHCI_STS_PCD;
+	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
+}
+
+void
+ehci_pcd_enable(void *v_sc)
+{
+	ehci_softc_t *sc = v_sc;
+
+	ehci_pcd_able(sc, 1);
+}
+
+void
+ehci_pcd(ehci_softc_t *sc, usbd_xfer_handle xfer)
+{
+	usbd_pipe_handle pipe;
+	struct ehci_pipe *opipe;
+	u_char *p;
+	int i, m;
+
+	if (xfer == NULL) {
+		/* Just ignore the change. */
+		return;
+	}
+
+	pipe = xfer->pipe;
+	opipe = (struct ehci_pipe *)pipe;
+
+	p = KERNADDR(&xfer->dmabuf);
+	m = min(sc->sc_noport, xfer->length * 8 - 1);
+	memset(p, 0, xfer->length);
+	for (i = 1; i <= m; i++) {
+		/* Pick out CHANGE bits from the status reg. */
+		if (EOREAD4(sc, EHCI_PORTSC(i)) & EHCI_PS_CLEAR)
+			p[i/8] |= 1 << (i%8);
+	}
+	DPRINTF(("ehci_pcd: change=0x%02x\n", *p));
+	xfer->actlen = xfer->length;
+	xfer->status = USBD_NORMAL_COMPLETION;
+
+	usb_transfer_complete(xfer);
 }
 
 void
@@ -298,21 +456,19 @@ ehci_softintr(void *v)
 void
 ehci_poll(struct usbd_bus *bus)
 {
-#if 0
 	ehci_softc_t *sc = (ehci_softc_t *)bus;
 #ifdef EHCI_DEBUG
 	static int last;
 	int new;
-	new = OREAD4(sc, EHCI_INTERRUPT_STATUS);
+	new = EHCI_STS_INTRS(EOREAD4(sc, EHCI_USBSTS));
 	if (new != last) {
 		DPRINTFN(10,("ehci_poll: intrs=0x%04x\n", new));
 		last = new;
 	}
 #endif
 
-	if (OREAD4(sc, EHCI_INTERRUPT_STATUS) & sc->sc_eintrs)
+	if (EOREAD4(sc, EHCI_USBSTS) & sc->sc_eintrs)
 		ehci_intr1(sc);
-#endif
 }
 
 int
@@ -325,6 +481,8 @@ ehci_detach(struct ehci_softc *sc, int flags)
 	
 	if (rv != 0)
 		return (rv);
+
+	usb_uncallout(sc->sc_tmo_pcd, ehci_pcd_enable, sc);
 
 	if (sc->sc_powerhook != NULL)
 		powerhook_disestablish(sc->sc_powerhook);
@@ -506,7 +664,20 @@ ehci_noop(usbd_pipe_handle pipe)
 void
 ehci_dumpregs(ehci_softc_t *sc)
 {
-	// OOO
+	int i;
+	printf("cmd=0x%08x, sts=0x%08x, ien=0x%08x\n",
+	       EOREAD4(sc, EHCI_USBCMD),
+	       EOREAD4(sc, EHCI_USBSTS),
+	       EOREAD4(sc, EHCI_USBINTR));
+	for (i = 1; i <= sc->sc_noport; i++)
+		printf("port %d status=0x%08x\n", i, 
+		       EOREAD4(sc, EHCI_PORTSC(i)));
+}
+
+void
+ehci_dump()
+{
+	ehci_dumpregs(theehci);
 }
 #endif
 
@@ -906,7 +1077,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			EOWRITE4(sc, port, v | EHCI_PS_OCC);
 			break;
 		case UHF_C_PORT_RESET:
-			/* how? */
+			sc->sc_isreset = 0;
 			break;
 		default:
 			err = USBD_IOERROR;
@@ -921,7 +1092,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_C_PORT_RESET:
 			/* Enable RHSC interrupt if condition is cleared. */
 			if ((OREAD4(sc, port) >> 16) == 0)
-				ehci_rhsc_able(sc, 1);
+				ehci_pcd_able(sc, 1);
 			break;
 		default:
 			break;
@@ -980,6 +1151,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		if (v & EHCI_PS_CSC)	i |= UPS_C_CONNECT_STATUS;
 		if (v & EHCI_PS_PEC)	i |= UPS_C_PORT_ENABLED;
 		if (v & EHCI_PS_OCC)	i |= UPS_C_OVERCURRENT_INDICATOR;
+		if (sc->sc_isreset)	i |= UPS_C_PORT_RESET;
 		USETW(ps.wPortChange, i);
 		l = min(len, sizeof ps);
 		memcpy(buf, &ps, l);
@@ -1007,14 +1179,26 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_PORT_RESET:
 			DPRINTFN(5,("ehci_root_ctrl_transfer: reset port %d\n",
 				    index));
+			if (EHCI_PS_IS_LOWSPEED(v)) {
+				/* Low speed device, give up ownership. */
+				ehci_disown(sc, index, 1);
+				break;
+			}
 			EOWRITE4(sc, port, v | EHCI_PS_PR);
 			for (i = 0; i < 10; i++) {
 				usb_delay_ms(&sc->sc_bus, 10); /* XXX */
-				if ((EOREAD4(sc, port) & EHCI_PS_PR) == 0)
+				v = EOREAD4(sc, port);
+				if ((v & EHCI_PS_PR) == 0)
 					break;
 			}
-			DPRINTFN(8,("ehci port %d reset, status = 0x%04x\n",
-				    index, EOREAD4(sc, port)));
+			if ((v & EHCI_PS_PE) == 0) {
+				/* Not a high speed device, give up ownership.*/
+				ehci_disown(sc, index, 0);
+				break;
+			}
+			sc->sc_isreset = 1;
+			DPRINTF(("ehci port %d reset, status = 0x%04x\n",
+				 index, v));
 			break;
 		case UHF_PORT_POWER:
 			DPRINTFN(2,("ehci_root_ctrl_transfer: set port power "
@@ -1038,6 +1222,34 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 	usb_transfer_complete(xfer);
 	splx(s);
 	return (USBD_IN_PROGRESS);
+}
+
+void
+ehci_disown(ehci_softc_t *sc, int index, int lowspeed)
+{
+	int i, port;
+	u_int32_t v;
+
+	DPRINTF(("ehci_disown: index=%d lowspeed=%d\n", index, lowspeed));
+#ifdef DIAGNOSTIC
+	if (sc->sc_npcomp != 0) {
+		i = (index-1) / sc->sc_npcomp;
+		if (i >= sc->sc_ncomp)
+			printf("%s: strange port\n",
+			       USBDEVNAME(sc->sc_bus.bdev));
+		else
+			printf("%s: handing over %s speed device on "
+			       "port %d to %s\n",
+			       USBDEVNAME(sc->sc_bus.bdev),
+			       lowspeed ? "low" : "full",
+			       index, USBDEVNAME(sc->sc_comps[i]->bdev));
+	} else {
+		printf("%s: npcomp == 0\n", USBDEVNAME(sc->sc_bus.bdev));
+	}
+#endif
+	port = EHCI_PORTSC(index);
+	v = EOREAD4(sc, port) &~ EHCI_PS_CLEAR;
+	EOWRITE4(sc, port, v | EHCI_PS_PO);
 }
 
 /* Abort a root control request. */
