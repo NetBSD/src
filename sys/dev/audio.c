@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.150 2002/03/15 14:35:32 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.151 2002/03/15 14:55:03 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.150 2002/03/15 14:35:32 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.151 2002/03/15 14:55:03 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1277,14 +1277,14 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 					       ": cc=%d factor=%d\n", cc,
 					       params->factor);
 #endif
-				params->sw_code(sc->hw_hdl, sc->sc_rconvbuffer,
-						cc);
 				cc /= params->factor;
 #ifdef DIAGNOSTIC
 				if (cc == 0)
 					printf("audio_read: cc=0 factor=%d\n",
 					       params->factor);
 #endif
+				params->sw_code(sc->hw_hdl, sc->sc_rconvbuffer,
+						cc);
 				sc->sc_rconvbuffer_end = cc;
 			}
 			sc->sc_rconvbuffer_begin = 0;
