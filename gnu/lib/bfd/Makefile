@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1998/07/27 01:03:48 tv Exp $
+#	$NetBSD: Makefile,v 1.13 1998/07/29 11:05:26 tron Exp $
 
 LIB=	bfd
 
@@ -54,6 +54,8 @@ SRCS = $(BFD_SRCS) $(OPCODE_SRCS) $(IBERTY_SRCS)
 
 CC_o=	$(CC) $(CFLAGS) $(CPPFLAGS)
 CC_so=	$(CC) $(CFLAGS) $(CPPFLAGS) $(CPICFLAGS)
+
+beforedepend ${LIB}: elf32-target.h elf64-target.h
 
 # Add $(ARCH_DEFS) when compiling these...
 archures.o: $(dist)/bfd/archures.c
