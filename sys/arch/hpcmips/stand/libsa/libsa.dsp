@@ -80,19 +80,47 @@ LIB32=link.exe -lib
 # Name "libsa - Win32 (WCE MIPS) Debug"
 # Begin Source File
 
+SOURCE=.\../../../../lib/libsa/bcopy.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\../../../../lib/libsa/bzero.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\../../../../lib/libsa/close.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\../../../../lib/libsa/dkcksum.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\../../../../lib/libsa/lseek.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\../../../../lib/libsa/open.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\../../../../lib/libsa/read.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\../../../../lib/libsa/subr_prf.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\../../../../lib/libsa/twiddle.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\../../../../lib/libsa/ufs.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\alloc.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\bcopy.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\bzero.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\close.c
 # End Source File
 # Begin Source File
 
@@ -100,35 +128,7 @@ SOURCE=.\devopen.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\dkcksum.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\lseek.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\open.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\printf.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\read.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\subr_prf.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\twiddle.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\ufs.c
 # End Source File
 # Begin Source File
 
