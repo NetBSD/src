@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.13 2004/02/29 04:03:50 oster Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.14 2004/03/05 02:53:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.13 2004/02/29 04:03:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.14 2004/03/05 02:53:58 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include <sys/pool.h>
@@ -48,8 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.13 2004/02/29 04:03:50 oster Exp $
 
 static struct pool rf_callback_pool;
 #define RF_MAX_FREE_CALLBACK 64
-#define RF_CALLBACK_INC       4
-#define RF_CALLBACK_INITIAL  32
+#define RF_MIN_FREE_CALLBACK 32
 
 static void rf_ShutdownCallback(void *);
 static void 
@@ -66,7 +65,8 @@ rf_ConfigureCallback(listp)
 	pool_init(&rf_callback_pool, sizeof(RF_CallbackDesc_t), 0, 0, 0,
 		  "rf_callbackpl", NULL);
 	pool_sethiwat(&rf_callback_pool, RF_MAX_FREE_CALLBACK);
-	pool_prime(&rf_callback_pool, RF_CALLBACK_INITIAL);
+	pool_prime(&rf_callback_pool, RF_MIN_FREE_CALLBACK);
+	pool_setlowat(&rf_callback_pool, RF_MIN_FREE_CALLBACK);
 
 	rf_ShutdownCreate(listp, rf_ShutdownCallback, NULL);
 

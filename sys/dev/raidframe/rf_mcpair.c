@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.15 2004/03/04 03:02:01 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.16 2004/03/05 02:53:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.15 2004/03/04 03:02:01 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.16 2004/03/05 02:53:58 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -48,8 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.15 2004/03/04 03:02:01 oster Exp $")
 
 static struct pool rf_mcpair_pool;
 #define RF_MAX_FREE_MCPAIR 128
-#define RF_MCPAIR_INC       16
-#define RF_MCPAIR_INITIAL   24
+#define RF_MIN_FREE_MCPAIR  24
 
 static void rf_ShutdownMCPair(void *);
 
@@ -66,7 +65,8 @@ rf_ConfigureMCPair(RF_ShutdownList_t **listp)
 	pool_init(&rf_mcpair_pool, sizeof(RF_MCPair_t), 0, 0, 0,
 		  "rf_mcpair_pl", NULL);
 	pool_sethiwat(&rf_mcpair_pool, RF_MAX_FREE_MCPAIR);
-	pool_prime(&rf_mcpair_pool, RF_MCPAIR_INITIAL);
+	pool_prime(&rf_mcpair_pool, RF_MIN_FREE_MCPAIR);
+	pool_setlowat(&rf_mcpair_pool, RF_MIN_FREE_MCPAIR);
 
 	rf_ShutdownCreate(listp, rf_ShutdownMCPair, NULL);
 

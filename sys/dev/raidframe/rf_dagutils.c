@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.29 2004/02/29 04:03:50 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.30 2004/03/05 02:53:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.29 2004/02/29 04:03:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.30 2004/03/05 02:53:55 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -169,16 +169,15 @@ rf_FreeDAG(RF_DagHeader_t *dag_h)
 
 static struct pool rf_dagh_pool;
 #define RF_MAX_FREE_DAGH 128
-#define RF_DAGH_INC       16
-#define RF_DAGH_INITIAL   32
+#define RF_MIN_FREE_DAGH  32
 
 static struct pool rf_daglist_pool;
 #define RF_MAX_FREE_DAGLIST 128
-#define RF_DAGLIST_INITIAL   32
+#define RF_MIN_FREE_DAGLIST  32
 
 static struct pool rf_funclist_pool;
 #define RF_MAX_FREE_FUNCLIST 128
-#define RF_FUNCLIST_INITIAL   32
+#define RF_MIN_FREE_FUNCLIST  32
 
 static void rf_ShutdownDAGs(void *);
 static void 
@@ -196,17 +195,20 @@ rf_ConfigureDAGs(RF_ShutdownList_t **listp)
 	pool_init(&rf_dagh_pool, sizeof(RF_DagHeader_t), 0, 0, 0,
 		  "rf_dagh_pl", NULL);
 	pool_sethiwat(&rf_dagh_pool, RF_MAX_FREE_DAGH);
-	pool_prime(&rf_dagh_pool, RF_DAGH_INITIAL);
+	pool_prime(&rf_dagh_pool, RF_MIN_FREE_DAGH);
+	pool_setlowat(&rf_dagh_pool, RF_MIN_FREE_DAGH);
 
 	pool_init(&rf_daglist_pool, sizeof(RF_DagList_t), 0, 0, 0,
 		  "rf_daglist_pl", NULL);
 	pool_sethiwat(&rf_daglist_pool, RF_MAX_FREE_DAGLIST);
-	pool_prime(&rf_daglist_pool, RF_DAGLIST_INITIAL);
-	
+	pool_prime(&rf_daglist_pool, RF_MIN_FREE_DAGLIST);
+	pool_setlowat(&rf_daglist_pool, RF_MIN_FREE_DAGLIST);
+
 	pool_init(&rf_funclist_pool, sizeof(RF_FuncList_t), 0, 0, 0,
 		  "rf_funcist_pl", NULL);
 	pool_sethiwat(&rf_funclist_pool, RF_MAX_FREE_FUNCLIST);
-	pool_prime(&rf_funclist_pool, RF_FUNCLIST_INITIAL);
+	pool_prime(&rf_funclist_pool, RF_MIN_FREE_FUNCLIST);
+	pool_setlowat(&rf_funclist_pool, RF_MIN_FREE_FUNCLIST);
 
 	rf_ShutdownCreate(listp, rf_ShutdownDAGs, NULL);
 

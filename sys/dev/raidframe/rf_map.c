@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.29 2004/02/29 04:03:50 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.30 2004/03/05 02:53:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.29 2004/02/29 04:03:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.30 2004/03/05 02:53:56 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -311,21 +311,18 @@ rf_MarkFailuresInASMList(RF_Raid_t *raidPtr,
 
 static struct pool rf_asmhdr_pool;
 #define RF_MAX_FREE_ASMHDR 128
-#define RF_ASMHDR_INC       16
-#define RF_ASMHDR_INITIAL   32
+#define RF_MIN_FREE_ASMHDR  32
 
 static struct pool rf_asm_pool;
 #define RF_MAX_FREE_ASM 192
-#define RF_ASM_INC       24
-#define RF_ASM_INITIAL   64
+#define RF_MIN_FREE_ASM  64
 
 static struct pool rf_pda_pool;   /* may need to be visible for
 				     rf_dagdegrd.c and rf_dagdegwr.c, 
 				     if they can be convinced to free
 				     the space easily */ 
 #define RF_MAX_FREE_PDA 192
-#define RF_PDA_INC       24
-#define RF_PDA_INITIAL   64
+#define RF_MIN_FREE_PDA  64
 
 /* called at shutdown time.  So far, all that is necessary is to
    release all the free lists */
@@ -345,17 +342,20 @@ rf_ConfigureMapModule(RF_ShutdownList_t **listp)
 	pool_init(&rf_asmhdr_pool, sizeof(RF_AccessStripeMapHeader_t),
 		  0, 0, 0, "rf_asmhdr_pl", NULL);
 	pool_sethiwat(&rf_asmhdr_pool, RF_MAX_FREE_ASMHDR);
-	pool_prime(&rf_asmhdr_pool, RF_ASMHDR_INITIAL);
+	pool_prime(&rf_asmhdr_pool, RF_MIN_FREE_ASMHDR);
+	pool_setlowat(&rf_asmhdr_pool, RF_MIN_FREE_ASMHDR);
 
 	pool_init(&rf_asm_pool, sizeof(RF_AccessStripeMap_t),
 		  0, 0, 0, "rf_asm_pl", NULL);	
 	pool_sethiwat(&rf_asm_pool, RF_MAX_FREE_ASM);
-	pool_prime(&rf_asm_pool, RF_ASM_INITIAL);
+	pool_prime(&rf_asm_pool, RF_MIN_FREE_ASM);
+	pool_setlowat(&rf_asm_pool, RF_MIN_FREE_ASM);
 
 	pool_init(&rf_pda_pool, sizeof(RF_PhysDiskAddr_t),
 		  0, 0, 0, "rf_pda_pl", NULL);
 	pool_sethiwat(&rf_pda_pool, RF_MAX_FREE_PDA);
-	pool_prime(&rf_pda_pool, RF_PDA_INITIAL);
+	pool_prime(&rf_pda_pool, RF_MIN_FREE_PDA);
+	pool_setlowat(&rf_pda_pool, RF_MIN_FREE_PDA);
 
 	rf_ShutdownCreate(listp, rf_ShutdownMapModule, NULL);
 

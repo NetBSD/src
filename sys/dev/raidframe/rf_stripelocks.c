@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.23 2004/02/29 04:03:50 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.24 2004/03/05 02:53:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.23 2004/02/29 04:03:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.24 2004/03/05 02:53:58 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -152,8 +152,7 @@ static void PrintLockedStripes(RF_LockTableEntry_t * lockTable);
 
 static struct pool rf_stripelock_pool;
 #define RF_MAX_FREE_STRIPELOCK 128
-#define RF_STRIPELOCK_INC        8
-#define RF_STRIPELOCK_INITIAL   32
+#define RF_MIN_FREE_STRIPELOCK  32
 
 static void rf_ShutdownStripeLocks(RF_LockTableEntry_t * lockTable);
 static void rf_ShutdownStripeLockFreeList(void *);
@@ -173,7 +172,8 @@ rf_ConfigureStripeLockFreeList(RF_ShutdownList_t **listp)
 	pool_init(&rf_stripelock_pool, sizeof(RF_StripeLockDesc_t),
 		  0, 0, 0, "rf_stripelock_pl", NULL);
 	pool_sethiwat(&rf_stripelock_pool, RF_MAX_FREE_STRIPELOCK);
-	pool_prime(&rf_stripelock_pool, RF_STRIPELOCK_INITIAL);
+	pool_prime(&rf_stripelock_pool, RF_MIN_FREE_STRIPELOCK);
+	pool_setlowat(&rf_stripelock_pool, RF_MIN_FREE_STRIPELOCK);
 
 	rf_ShutdownCreate(listp, rf_ShutdownStripeLockFreeList, NULL);
 
