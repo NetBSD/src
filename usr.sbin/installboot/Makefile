@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.13 2002/04/22 21:11:45 fredette Exp $
+#	$NetBSD: Makefile,v 1.14 2002/04/22 23:23:05 bjh21 Exp $
 #
+
+.include <bsd.own.mk>
 
 PROG=	installboot
 SRCS=	installboot.c sum.c machines.c fstypes.c \
