@@ -1,5 +1,5 @@
-.\"	$NetBSD: inet6.4,v 1.12 2000/06/14 15:59:50 itojun Exp $
-.\"	$KAME: inet6.4,v 1.12 2000/06/14 15:52:25 itojun Exp $
+.\"	$NetBSD: inet6.4,v 1.13 2000/06/14 16:29:32 itojun Exp $
+.\"	$KAME: inet6.4,v 1.13 2000/06/14 16:28:16 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -335,6 +335,11 @@ Implemented behavior is very different across kernel to kernel.
 Therefore, it is unwise to rely too much upon the behavior of
 .Dv AF_INET6
 wildcard bind socket.
+It is recommended to listen to two sockets, one for
+.Dv AF_INET
+and another for
+.Dv AF_INET6 ,
+when you would like to accept both IPv4 and IPv6 traffic.
 .Pp
 It should also be noted that
 malicious parties can take advantage of the complexity presented above,
@@ -352,8 +357,9 @@ Because of the above, by default,
 does not route IPv4 traffic to
 .Dv AF_INET6
 socket.
-The behavior can be configurable in per-socket or per-system
-manner.
+Listen to two sockets if you want to accept both IPv4 and IPv6 traffic.
+IPv4 traffic may be routed with certain
+per-socket/per-node configuration, however, it is not recommended to do so.
 Consult
 .Xr ip6 4
 for details.
