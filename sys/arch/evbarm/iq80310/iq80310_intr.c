@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.16 2002/08/14 19:48:04 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.17 2002/08/17 16:42:23 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -57,37 +57,17 @@
 #include <evbarm/iq80310/iq80310var.h>
 #include <evbarm/iq80310/obiovar.h>
 
-#if defined(IOP310_TEAMASA_NPWR)
-/*
- * We have 5 interrupt source bits -- all in XINT3.  All interrupts
- * can be masked in the CPLD.
- */
-#define	IRQ_BITS		0x1f
-#define	IRQ_BITS_ALWAYS_ON	0x00
-#else /* Default to stock IQ80310 */
-/*
- * We have 8 interrupt source bits -- 5 in the XINT3 register, and 3
- * in the XINT0 register (the upper 3).  Note that the XINT0 IRQs
- * (SPCI INTA, INTB, and INTC) are always enabled, since they can not
- * be masked out in the CPLD (it provides only status, not masking,
- * for those interrupts).
- */
-#define	IRQ_BITS		0xff
-#define	IRQ_BITS_ALWAYS_ON	0xe0
-#define	IRQ_READ_XINT0		1	/* XXX only if board rev >= F */
-#endif /* list of IQ80310-based designs */
-
 /* Interrupt handler queues. */
 struct intrq intrq[NIRQ];
 
 /* Interrupts to mask at each level. */
-static int imask[NIPL];
+int iq80310_imask[NIPL];
 
 /* Current interrupt priority level. */
 __volatile int current_spl_level;  
 
 /* Interrupts pending. */
-static __volatile int ipending;
+__volatile int iq80310_ipending;
 
 /* Software copy of the IRQs we have enabled. */
 uint32_t intr_enabled;
@@ -182,76 +162,76 @@ iq80310_intr_calculate_masks(void)
 			if (intrq[irq].iq_levels & (1U << ipl))
 				irqs |= (1U << irq);
 		}
-		imask[ipl] = irqs;
+		iq80310_imask[ipl] = irqs;
 	}
 
-	imask[IPL_NONE] = 0;
+	iq80310_imask[IPL_NONE] = 0;
 
 	/*
 	 * Initialize the soft interrupt masks to block themselves.
 	 */
-	imask[IPL_SOFT] = SI_TO_IRQBIT(SI_SOFT);
-	imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTCLOCK);
-	imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTNET);
-	imask[IPL_SOFTSERIAL] = SI_TO_IRQBIT(SI_SOFTSERIAL);
+	iq80310_imask[IPL_SOFT] = SI_TO_IRQBIT(SI_SOFT);
+	iq80310_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTCLOCK);
+	iq80310_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTNET);
+	iq80310_imask[IPL_SOFTSERIAL] = SI_TO_IRQBIT(SI_SOFTSERIAL);
 
 	/*
 	 * splsoftclock() is the only interface that users of the
 	 * generic software interrupt facility have to block their
 	 * soft intrs, so splsoftclock() must also block IPL_SOFT.
 	 */
-	imask[IPL_SOFTCLOCK] |= imask[IPL_SOFT];
+	iq80310_imask[IPL_SOFTCLOCK] |= iq80310_imask[IPL_SOFT];
 
 	/*
 	 * splsoftnet() must also block splsoftclock(), since we don't
 	 * want timer-driven network events to occur while we're
 	 * processing incoming packets.
 	 */
-	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
+	iq80310_imask[IPL_SOFTNET] |= iq80310_imask[IPL_SOFTCLOCK];
 
 	/*
 	 * Enforce a heirarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-	imask[IPL_BIO] |= imask[IPL_SOFTNET];
-	imask[IPL_NET] |= imask[IPL_BIO];
-	imask[IPL_SOFTSERIAL] |= imask[IPL_NET];
-	imask[IPL_TTY] |= imask[IPL_SOFTSERIAL];
+	iq80310_imask[IPL_BIO] |= iq80310_imask[IPL_SOFTNET];
+	iq80310_imask[IPL_NET] |= iq80310_imask[IPL_BIO];
+	iq80310_imask[IPL_SOFTSERIAL] |= iq80310_imask[IPL_NET];
+	iq80310_imask[IPL_TTY] |= iq80310_imask[IPL_SOFTSERIAL];
 
 	/*
 	 * splvm() blocks all interrupts that use the kernel memory
 	 * allocation facilities.
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY];
+	iq80310_imask[IPL_IMP] |= iq80310_imask[IPL_TTY];
 
 	/*
 	 * Audio devices are not allowed to perform memory allocation
 	 * in their interrupt routines, and they have fairly "real-time"
 	 * requirements, so give them a high interrupt priority.
 	 */
-	imask[IPL_AUDIO] |= imask[IPL_IMP];
+	iq80310_imask[IPL_AUDIO] |= iq80310_imask[IPL_IMP];
 
 	/*
 	 * splclock() must block anything that uses the scheduler.
 	 */
-	imask[IPL_CLOCK] |= imask[IPL_AUDIO];
+	iq80310_imask[IPL_CLOCK] |= iq80310_imask[IPL_AUDIO];
 
 	/*
 	 * No separate statclock on the IQ80310.
 	 */
-	imask[IPL_STATCLOCK] |= imask[IPL_CLOCK];
+	iq80310_imask[IPL_STATCLOCK] |= iq80310_imask[IPL_CLOCK];
 
 	/*
 	 * splhigh() must block "everything".
 	 */
-	imask[IPL_HIGH] |= imask[IPL_STATCLOCK];
+	iq80310_imask[IPL_HIGH] |= iq80310_imask[IPL_STATCLOCK];
 
 	/*
 	 * XXX We need serial drivers to run at the absolute highest priority
 	 * in order to avoid overruns, so serial > high.
 	 */
-	imask[IPL_SERIAL] |= imask[IPL_HIGH];
+	iq80310_imask[IPL_SERIAL] |= iq80310_imask[IPL_HIGH];
 
 	/*
 	 * Now compute which IRQs must be blocked when servicing any
@@ -264,12 +244,12 @@ iq80310_intr_calculate_masks(void)
 			iq80310_enable_irq(irq);
 		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
 		     ih = TAILQ_NEXT(ih, ih_list))
-			irqs |= imask[ih->ih_ipl];
+			irqs |= iq80310_imask[ih->ih_ipl];
 		iq->iq_mask = irqs;
 	}
 }
 
-static void
+void
 iq80310_do_soft(void)
 {
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
@@ -283,9 +263,9 @@ iq80310_do_soft(void)
 	oldirqstate = disable_interrupts(I32_bit);
 
 #define	DO_SOFTINT(si)							\
-	if ((ipending & ~new) & SI_TO_IRQBIT(si)) {			\
-		ipending &= ~SI_TO_IRQBIT(si);				\
-		current_spl_level |= imask[si_to_ipl[(si)]];		\
+	if ((iq80310_ipending & ~new) & SI_TO_IRQBIT(si)) {		\
+		iq80310_ipending &= ~SI_TO_IRQBIT(si);			\
+		current_spl_level |= iq80310_imask[si_to_ipl[(si)]];	\
 		restore_interrupts(oldirqstate);			\
 		softintr_dispatch(si);					\
 		oldirqstate = disable_interrupts(I32_bit);		\
@@ -302,13 +282,14 @@ iq80310_do_soft(void)
 	restore_interrupts(oldirqstate);
 }
 
+#if defined(EVBARM_SPL_NOINLINE)
 int
 _splraise(int ipl)
 {
 	int old;
 
 	old = current_spl_level;
-	current_spl_level |= imask[ipl];
+	current_spl_level |= iq80310_imask[ipl];
 
 	return (old);
 }
@@ -322,7 +303,7 @@ splx(int new)
 	current_spl_level = new;
 
 	/* If there are software interrupts to process, do it. */
-	if ((ipending & ~IRQ_BITS) & ~new)
+	if ((iq80310_ipending & ~IRQ_BITS) & ~new)
 		iq80310_do_soft();
 
 	/*
@@ -335,7 +316,7 @@ splx(int new)
 	 * XXX be unblocked, because we currently lose if we
 	 * XXX get nested interrupts, and I don't know why yet.
 	 */
-	if ((new & IRQ_BITS) == 0 && (ipending & IRQ_BITS))
+	if ((new & IRQ_BITS) == 0 && (iq80310_ipending & IRQ_BITS))
 		i80200_intr_enable(INTCTL_IM | INTCTL_PM);
 }
 
@@ -344,9 +325,33 @@ _spllower(int ipl)
 {
 	int old = current_spl_level;
 
-	splx(imask[ipl]);
+	iq80310_splx(iq80310_imask[ipl]);
 	return (old);
 }
+
+#else
+
+#undef _splraise
+int
+_splraise(int ipl)
+{
+	return iq80310_splraise(ipl);
+}
+
+#undef splx
+__inline void
+splx(int new)
+{
+	return iq80310_splx(new);
+}
+
+#undef _spllower
+int
+_spllower(int ipl)
+{
+	return iq80310_spllower(ipl);
+}
+#endif
 
 void
 _setsoftintr(int si)
@@ -354,11 +359,11 @@ _setsoftintr(int si)
 	int oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
-	ipending |= SI_TO_IRQBIT(si);
+	iq80310_ipending |= SI_TO_IRQBIT(si);
 	restore_interrupts(oldirqstate);
 
 	/* Process unmasked pending soft interrupts. */
-	if ((ipending & ~IRQ_BITS) & ~current_spl_level)
+	if ((iq80310_ipending & ~IRQ_BITS) & ~current_spl_level)
 		iq80310_do_soft();
 }
 
@@ -473,11 +478,11 @@ iq80310_intr_dispatch(struct clockframe *frame)
 			 * the next one.  Note: external IRQs are already
 			 * disabled.
 			 */
-			ipending |= ibit;
+			iq80310_ipending |= ibit;
 			continue;
 		}
 
-		ipending &= ~ibit;
+		iq80310_ipending &= ~ibit;
 		rv = 0;
 
 		iq = &intrq[irq];
@@ -505,7 +510,7 @@ iq80310_intr_dispatch(struct clockframe *frame)
 #endif
 
 	/* Check for pendings soft intrs. */
-	if ((ipending & ~IRQ_BITS) & ~current_spl_level) {
+	if ((iq80310_ipending & ~IRQ_BITS) & ~current_spl_level) {
 		oldirqstate = enable_interrupts(I32_bit);
 		iq80310_do_soft();
 		restore_interrupts(oldirqstate);
@@ -515,6 +520,6 @@ iq80310_intr_dispatch(struct clockframe *frame)
 	 * If no hardware interrupts are masked, re-enable external
 	 * interrupts.
 	 */
-	if ((ipending & IRQ_BITS) == 0)
+	if ((iq80310_ipending & IRQ_BITS) == 0)
 		i80200_intr_enable(INTCTL_IM | INTCTL_PM);
 }
