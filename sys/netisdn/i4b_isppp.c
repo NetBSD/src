@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.12 2002/03/16 16:56:04 martin Exp $
+ *	$Id: i4b_isppp.c,v 1.13 2002/03/17 09:46:00 martin Exp $
  *
  * $FreeBSD$
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.12 2002/03/16 16:56:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.13 2002/03/17 09:46:00 martin Exp $");
 
 #ifndef __NetBSD__
 #define USE_ISPPP
@@ -201,7 +201,7 @@ static void	i4bisppp_tlf(struct sppp *sp);
 static void	i4bisppp_state_changed(struct sppp *sp, int new_state);
 static void	i4bisppp_negotiation_complete(struct sppp *sp);
 static void	i4bisppp_watchdog(struct ifnet *ifp);
-time_t   	i4bisppp_idletime(int unit);
+time_t   	i4bisppp_idletime(void *softc);
 
 /* initialized by L4 */
 
@@ -417,8 +417,9 @@ i4bisppp_start(struct ifnet *ifp)
 			sc->sc_sp.pp_if.if_opackets++;
 		}
 	}
-	isdn_linktab[unit]->bch_tx_start(isdn_linktab[unit]->l1token,
-					 isdn_linktab[unit]->channel);
+	isdn_linktab[unit]->bchannel_driver->
+	    bch_tx_start(isdn_linktab[unit]->l1token, 
+	    isdn_linktab[unit]->channel);
 }
 
 #ifdef I4BISPPPACCT
@@ -432,7 +433,7 @@ i4bisppp_watchdog(struct ifnet *ifp)
 	int unit = IFP2UNIT(ifp);
 	bchan_statistics_t bs;
 	
-	(*isdn_linktab[unit]->bch_stat)
+	(*isdn_linktab[unit]->bchannel_driver->bch_stat)
 		(isdn_linktab[unit]->l1token, isdn_linktab[unit]->channel, &bs);
 
 	sc->sc_ioutb += bs.outbytes;
@@ -532,9 +533,9 @@ i4bisppp_negotiation_complete(struct sppp *sp)
  *	this routine is called from L4 handler at connect time
  *---------------------------------------------------------------------------*/
 static void
-i4bisppp_connect(int unit, void *cdp)
+i4bisppp_connect(void *softc, void *cdp)
 {
-	struct i4bisppp_softc *sc = &i4bisppp_softc[unit];
+	struct i4bisppp_softc *sc = softc;
 	struct sppp *sp = &sc->sc_sp;
 	int s = splnet();
 
@@ -566,10 +567,10 @@ i4bisppp_connect(int unit, void *cdp)
  *	this routine is called from L4 handler at disconnect time
  *---------------------------------------------------------------------------*/
 static void
-i4bisppp_disconnect(int unit, void *cdp)
+i4bisppp_disconnect(void *softc, void *cdp)
 {
 	call_desc_t *cd = (call_desc_t *)cdp;
-	struct i4bisppp_softc *sc = &i4bisppp_softc[unit];
+	struct i4bisppp_softc *sc = softc;
 	struct sppp *sp = &sc->sc_sp;
 
 	int s = splnet();
@@ -577,7 +578,8 @@ i4bisppp_disconnect(int unit, void *cdp)
 	/* new stuff to check that the active channel is being closed */
 	if (cd != sc->sc_cdp)
 	{
-		NDBGL4(L4_ISPDBG, "ippp%d, channel%d not active!", unit, cd->channelid);
+		NDBGL4(L4_ISPDBG, "%s: channel%d not active!", sp->pp_if.if_xname,
+		    cd->channelid);
 		splx(s);
 		return;
 	}
@@ -586,7 +588,7 @@ i4bisppp_disconnect(int unit, void *cdp)
 	sc->sc_sp.pp_if.if_timer = 0;
 #endif
 
-	i4b_l4_accounting(BDRV_ISPPP, unit, ACCT_FINAL,
+	i4b_l4_accounting(BDRV_ISPPP, sc->sc_unit, ACCT_FINAL,
 		 sc->sc_ioutb, sc->sc_iinb, 0, 0, sc->sc_outb, sc->sc_inb);
 	
 	if (sc->sc_state == ST_CONNECTED)
@@ -608,17 +610,17 @@ i4bisppp_disconnect(int unit, void *cdp)
  *	in case of dial problems
  *---------------------------------------------------------------------------*/
 static void
-i4bisppp_dialresponse(int unit, int status, cause_t cause)
+i4bisppp_dialresponse(void *softc, int status, cause_t cause)
 {
-	struct i4bisppp_softc *sc = &i4bisppp_softc[unit];
+	struct i4bisppp_softc *sc = softc;
 
-	NDBGL4(L4_ISPDBG, "ippp%d: status=%d, cause=%d", unit, status, cause);
+	NDBGL4(L4_ISPDBG, "%s: status=%d, cause=%d", sc->sc_sp.pp_if.if_xname, status, cause);
 
 	if(status != DSTAT_NONE)
 	{
 		struct mbuf *m;
 		
-		NDBGL4(L4_ISPDBG, "ippp%d: clearing queues", unit);
+		NDBGL4(L4_ISPDBG, "%s: clearing queues", sc->sc_sp.pp_if.if_xname);
 
 #ifndef USE_ISPPP
 		if(!(sppp_isempty(&sc->sc_sp.pp_if)))
@@ -640,7 +642,7 @@ i4bisppp_dialresponse(int unit, int status, cause_t cause)
  *	interface up/down
  *---------------------------------------------------------------------------*/
 static void
-i4bisppp_updown(int unit, int updown)
+i4bisppp_updown(void *softc, int updown)
 {
 	/* could probably do something useful here */
 }
@@ -651,11 +653,11 @@ i4bisppp_updown(int unit, int updown)
  *	the rx queue.
  *---------------------------------------------------------------------------*/
 static void
-i4bisppp_rx_data_rdy(int unit)
+i4bisppp_rx_data_rdy(void *softc)
 {
-	struct i4bisppp_softc *sc = &i4bisppp_softc[unit];
+	struct i4bisppp_softc *sc = softc;
 	struct mbuf *m;
-	int s;
+	int s, unit = sc->sc_unit;
 	
 	if((m = *isdn_linktab[unit]->rx_mbuf) == NULL)
 		return;
@@ -704,9 +706,10 @@ i4bisppp_rx_data_rdy(int unit)
  *	further frame (mbuf) in the tx queue.
  *---------------------------------------------------------------------------*/
 static void
-i4bisppp_tx_queue_empty(int unit)
+i4bisppp_tx_queue_empty(void *softc)
 {
-	i4bisppp_start(&i4bisppp_softc[unit].sc_sp.pp_if);
+	struct sppp *sp = &((struct i4bisppp_softc *)softc)->sc_sp;
+	i4bisppp_start(&sp->pp_if);
 }
 
 /*---------------------------------------------------------------------------*
@@ -718,10 +721,9 @@ i4bisppp_tx_queue_empty(int unit)
  *	That way the code in i4b_l4.c needs only minimal changes.
  *---------------------------------------------------------------------------*/
 time_t
-i4bisppp_idletime(int unit)
+i4bisppp_idletime(void *softc)
 {
-	struct sppp *sp;
-	sp = (struct sppp *) &i4bisppp_softc[unit];
+	struct sppp *sp = &((struct i4bisppp_softc *)softc)->sc_sp;
 
 #ifdef __NetBSD__
        return sp->pp_last_activity;
@@ -737,9 +739,10 @@ i4bisppp_idletime(int unit)
  *	be used to implement an activity timeout mechanism.
  *---------------------------------------------------------------------------*/
 static void
-i4bisppp_activity(int unit, int rxtx)
+i4bisppp_activity(void *softc, int rxtx)
 {
-	i4bisppp_softc[unit].sc_cdp->last_active_time = SECOND;
+	struct i4bisppp_softc *sc = softc;
+	sc->sc_cdp->last_active_time = SECOND;
 }
 
 /*---------------------------------------------------------------------------*
@@ -760,20 +763,25 @@ i4bisppp_set_linktab(int unit, isdn_link_t *ilt)
 	isdn_linktab[unit] = ilt;
 }
 
+static const struct isdn_l4_driver_functions
+ippp_l4_functions = {
+	i4bisppp_rx_data_rdy,
+	i4bisppp_tx_queue_empty,
+	i4bisppp_activity,
+	i4bisppp_connect,
+	i4bisppp_disconnect,
+	i4bisppp_dialresponse,
+	i4bisppp_updown
+};
+
 /*---------------------------------------------------------------------------*
  *	initialize this drivers linktab
  *---------------------------------------------------------------------------*/
 static void
 i4bisppp_init_linktab(int unit)
 {
-	i4bisppp_drvr_linktab[unit].unit = unit;
-	i4bisppp_drvr_linktab[unit].bch_rx_data_ready = i4bisppp_rx_data_rdy;
-	i4bisppp_drvr_linktab[unit].bch_tx_queue_empty = i4bisppp_tx_queue_empty;
-	i4bisppp_drvr_linktab[unit].bch_activity = i4bisppp_activity;
-	i4bisppp_drvr_linktab[unit].line_connected = i4bisppp_connect;
-	i4bisppp_drvr_linktab[unit].line_disconnected = i4bisppp_disconnect;
-	i4bisppp_drvr_linktab[unit].dial_response = i4bisppp_dialresponse;	
-	i4bisppp_drvr_linktab[unit].updown_ind = i4bisppp_updown;	
+	i4bisppp_drvr_linktab[unit].l4_driver_softc = &i4bisppp_softc[unit];
+	i4bisppp_drvr_linktab[unit].l4_driver = &ippp_l4_functions;
 }
 
 /*===========================================================================*/

@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.9 2002/03/16 16:56:03 martin Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.10 2002/03/17 09:46:00 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.9 2002/03/16 16:56:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.10 2002/03/17 09:46:00 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -577,7 +577,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 
 			if(dlt != NULL)		
-				(*dlt->dial_response)(mdrsp->driver_unit, mdrsp->stat, mdrsp->cause);
+				(*dlt->l4_driver->dial_response)(dlt->l4_driver_softc, mdrsp->stat, mdrsp->cause);
 			break;
 		}
 		
@@ -670,7 +670,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			{
 				drvr_link_t *dlt;
 				dlt = ipr_ret_linktab(mui->driver_unit);
-				(*dlt->updown_ind)(mui->driver_unit, mui->updown);
+				(*dlt->l4_driver->updown_ind)(dlt->l4_driver_softc, mui->updown);
 			}
 #endif
 			break;

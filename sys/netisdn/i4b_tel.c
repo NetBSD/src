@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.7 2002/03/16 16:56:05 martin Exp $
+ *	$Id: i4b_tel.c,v 1.8 2002/03/17 09:46:02 martin Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.7 2002/03/16 16:56:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.8 2002/03/17 09:46:02 martin Exp $");
 
 #include "isdntel.h"
 
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.7 2002/03/16 16:56:05 martin Exp $");
 
 #define NOFUNCS		2	/* number of device classes	*/
 
-typedef struct {
+typedef struct tel_softc {
 
 	/* used only in func = FUNCTEL */
 
@@ -124,6 +124,9 @@ typedef struct {
 	u_char			*rcvttab;	/* conversion table on read */
 	u_char			*wcvttab;	/* conversion table on write */
 	call_desc_t		*cdp;		/* call descriptor pointer */
+
+	/* link from FUNCTEL to FUNCDIAL */
+	struct tel_softc * dialer;
 
 	/* used only in func = FUNCDIAL */
 
@@ -157,11 +160,11 @@ static tel_sc_t tel_sc[NISDNTEL][NOFUNCS];
 	
 /* forward decl */
 
-static void tel_rx_data_rdy(int unit);
-static void tel_tx_queue_empty(int unit);
+static void tel_rx_data_rdy(void *softc);
+static void tel_tx_queue_empty(void *softc);
 static void tel_init_linktab(int unit);
-static void tel_connect(int unit, void *cdp);
-static void tel_disconnect(int unit, void *cdp);
+static void tel_connect(void *softc, void *cdp);
+static void tel_disconnect(void *softc, void *cdp);
 static void tel_tone(tel_sc_t *sc);
 
 /* audio format conversion tables */
@@ -315,6 +318,11 @@ isdntelattach()
 			tel_sc[i][j].rcvttab = 0;
 			tel_sc[i][j].wcvttab = 0;
 			tel_sc[i][j].result = 0;
+
+			if (j == FUNCTEL) 
+				tel_sc[i][FUNCTEL].dialer = &tel_sc[i][FUNCDIAL];
+			else
+				tel_sc[i][j].dialer = NULL;
 
 #if defined(__FreeBSD__)
 #if __FreeBSD__ == 3
@@ -743,7 +751,7 @@ isdntelwrite(dev_t dev, struct uio * uio, int ioflag)
 				IF_ENQUEUE(sc->isdn_linktab->tx_queue, m);
 			}
 	
-			(*sc->isdn_linktab->bch_tx_start)(sc->isdn_linktab->l1token, sc->isdn_linktab->channel);
+			(*sc->isdn_linktab->bchannel_driver->bch_tx_start)(sc->isdn_linktab->l1token, sc->isdn_linktab->channel);
 		}
 	
 		splx(s);
@@ -820,7 +828,7 @@ tel_tone(tel_sc_t *sc)
 		m->m_len++;
 	}
 	IF_ENQUEUE(sc->isdn_linktab->tx_queue, m);
-	(*sc->isdn_linktab->bch_tx_start)(sc->isdn_linktab->l1token, sc->isdn_linktab->channel);
+	(*sc->isdn_linktab->bchannel_driver->bch_tx_start)(sc->isdn_linktab->l1token, sc->isdn_linktab->channel);
 }
 
 
@@ -992,9 +1000,9 @@ i4btelsel(dev_t dev, int rw, struct proc *p)
 *	this routine is called from L4 handler at connect time
  *---------------------------------------------------------------------------*/
 static void
-tel_connect(int unit, void *cdp)
+tel_connect(void *softc, void *cdp)
 {
-	tel_sc_t *sc = &tel_sc[unit][FUNCTEL];
+	tel_sc_t *sc = softc;
 
 	/* audio device */
 	
@@ -1004,7 +1012,7 @@ tel_connect(int unit, void *cdp)
 
 	/* dialer device */
 	
-	sc = &tel_sc[unit][FUNCDIAL];
+	sc = sc->dialer;
 
 	if(sc->devstate == ST_ISOPEN)
 	{
@@ -1023,11 +1031,9 @@ tel_connect(int unit, void *cdp)
  *	this routine is called from L4 handler at disconnect time
  *---------------------------------------------------------------------------*/
 static void
-tel_disconnect(int unit, void *cdp)
+tel_disconnect(void *softc, void *cdp)
 {
-/*	call_desc_t *cd = (call_desc_t *)cdp; */
-
-	tel_sc_t *sc = &tel_sc[unit][FUNCTEL];
+	tel_sc_t *sc = softc;
 	
 	/* audio device */
 	
@@ -1047,7 +1053,7 @@ tel_disconnect(int unit, void *cdp)
 
 	/* dialer device */
 	
-	sc = &tel_sc[unit][FUNCDIAL];
+	sc = sc->dialer;
 
 	if(sc->devstate & ST_ISOPEN)
 	{
@@ -1071,11 +1077,11 @@ tel_disconnect(int unit, void *cdp)
  *	feedback from daemon in case of dial problems
  *---------------------------------------------------------------------------*/
 static void
-tel_dialresponse(int unit, int status, cause_t cause)
+tel_dialresponse(void *softc, int status, cause_t cause)
 {	
-	tel_sc_t *sc = &tel_sc[unit][FUNCDIAL];
+	tel_sc_t *sc = ((struct tel_softc*)softc)->dialer;
 
-	NDBGL4(L4_TELDBG, "i4btel%d,  status=%d, cause=0x%4x", unit, status, cause);
+	NDBGL4(L4_TELDBG, "status=%d, cause=0x%4x", status, cause);
 
 	if((sc->devstate == ST_ISOPEN) && status)
 	{	
@@ -1094,7 +1100,7 @@ tel_dialresponse(int unit, int status, cause_t cause)
  *	interface up/down
  *---------------------------------------------------------------------------*/
 static void
-tel_updown(int unit, int updown)
+tel_updown(void *softc, int updown)
 {
 }
 	
@@ -1104,9 +1110,9 @@ tel_updown(int unit, int updown)
  *	the rx queue.
  *---------------------------------------------------------------------------*/
 static void
-tel_rx_data_rdy(int unit)
+tel_rx_data_rdy(void *softc)
 {
-	tel_sc_t *sc = &tel_sc[unit][FUNCTEL];
+	tel_sc_t *sc = softc;
 	
 	if(sc->devstate & ST_RDWAITDATA)
 	{
@@ -1122,9 +1128,9 @@ tel_rx_data_rdy(int unit)
  *	further frame (mbuf) in the tx queue.
  *---------------------------------------------------------------------------*/
 static void
-tel_tx_queue_empty(int unit)
+tel_tx_queue_empty(void *softc)
 {
-	tel_sc_t *sc = &tel_sc[unit][FUNCTEL];
+	tel_sc_t *sc = softc;
 
 	if(sc->devstate & ST_WRWAITEMPTY)
 	{
@@ -1143,10 +1149,12 @@ tel_tx_queue_empty(int unit)
  *	each time a packet is received or transmitted.
  *---------------------------------------------------------------------------*/
 static void
-tel_activity(int unit, int rxtx)
+tel_activity(void *softc, int rxtx)
 {
-	if(tel_sc[unit][FUNCTEL].cdp)
-		tel_sc[unit][FUNCTEL].cdp->last_active_time = SECOND;
+	struct tel_softc *sc = softc;
+
+	if(sc->cdp)
+		sc->cdp->last_active_time = SECOND;
 }
 
 /*---------------------------------------------------------------------------*
@@ -1171,6 +1179,17 @@ tel_set_linktab(int unit, isdn_link_t *ilt)
 	sc->isdn_linktab = ilt;
 }
 
+static const struct isdn_l4_driver_functions
+tel_driver = {
+	tel_rx_data_rdy,
+	tel_tx_queue_empty,
+	tel_activity,
+	tel_connect,
+	tel_disconnect,
+	tel_dialresponse,
+	tel_updown
+};
+
 /*---------------------------------------------------------------------------*
  *	initialize this drivers linktab
  *---------------------------------------------------------------------------*/
@@ -1179,14 +1198,8 @@ tel_init_linktab(int unit)
 {
 	tel_sc_t *sc = &tel_sc[unit][FUNCTEL];
 	
-	sc->drvr_linktab.unit = unit;
-	sc->drvr_linktab.bch_rx_data_ready = tel_rx_data_rdy;
-	sc->drvr_linktab.bch_tx_queue_empty = tel_tx_queue_empty;
-	sc->drvr_linktab.bch_activity = tel_activity;	
-	sc->drvr_linktab.line_connected = tel_connect;
-	sc->drvr_linktab.line_disconnected = tel_disconnect;
-	sc->drvr_linktab.dial_response = tel_dialresponse;
-	sc->drvr_linktab.updown_ind = tel_updown;	
+	sc->drvr_linktab.l4_driver_softc = sc;
+	sc->drvr_linktab.l4_driver = &tel_driver;
 }
 
 /*===========================================================================*

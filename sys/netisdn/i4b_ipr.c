@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.8 2002/03/16 16:56:03 martin Exp $
+ *	$Id: i4b_ipr.c,v 1.9 2002/03/17 09:46:00 martin Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.8 2002/03/16 16:56:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.9 2002/03/17 09:46:00 martin Exp $");
 
 #include "irip.h"
 
@@ -261,7 +261,7 @@ static int iprwatchdog(int unit);
 static void iprwatchdog(struct ifnet *ifp);
 #endif
 static void ipr_init_linktab(int unit);
-static void ipr_tx_queue_empty(int unit);
+static void ipr_tx_queue_empty(void *);
 static int iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst, struct rtentry *rtp);
 static void iripclearqueues(struct ipr_softc *sc);
 
@@ -532,7 +532,7 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	
 	NDBGL4(L4_IPRDBG, "irip%d: added packet to send queue!", unit);
 
-	ipr_tx_queue_empty(unit);
+	ipr_tx_queue_empty(sc);
 
 	splx(s);
 
@@ -706,7 +706,7 @@ iprwatchdog(struct ifnet *ifp)
 	
 	/* get # of bytes in and out from the HSCX driver */ 
 	
-	(*isdn_linktab[unit]->bch_stat)
+	(*isdn_linktab[unit]->bchannel_driver->bch_stat)
 		(isdn_linktab[unit]->l1token, isdn_linktab[unit]->channel, &bs);
 
 	sc->sc_ioutb += bs.outbytes;
@@ -750,7 +750,7 @@ i4bipr_connect_startio(struct ipr_softc *sc)
 	if(sc->sc_state == ST_CONNECTED_W)
 	{
 		sc->sc_state = ST_CONNECTED_A;
-		ipr_tx_queue_empty(THE_UNIT);
+		ipr_tx_queue_empty(sc);
 	}
 
 	splx(s);
@@ -760,16 +760,16 @@ i4bipr_connect_startio(struct ipr_softc *sc)
  *	this routine is called from L4 handler at connect time
  *---------------------------------------------------------------------------*/
 static void
-ipr_connect(int unit, void *cdp)
+ipr_connect(void *softc, void *cdp)
 {
-	struct ipr_softc *sc = &ipr_softc[unit];
+	struct ipr_softc *sc = softc;
 	int s;
 
 	sc->sc_cdp = (call_desc_t *)cdp;
 
 	s = splnet();
 
-	NDBGL4(L4_DIALST, "irip%d: setting dial state to ST_CONNECTED", unit);
+	NDBGL4(L4_DIALST, "%s: setting dial state to ST_CONNECTED", sc->sc_if.if_xname);
 
 	sc->sc_if.if_flags |= IFF_RUNNING;
 	sc->sc_state = ST_CONNECTED_W;
@@ -818,7 +818,7 @@ ipr_connect(int unit, void *cdp)
 	else
 	{
 		sc->sc_state = ST_CONNECTED_A;
-		ipr_tx_queue_empty(unit);
+		ipr_tx_queue_empty(sc);
 	}
 
 	splx(s);
@@ -831,17 +831,17 @@ ipr_connect(int unit, void *cdp)
  *	this routine is called from L4 handler at disconnect time
  *---------------------------------------------------------------------------*/
 static void
-ipr_disconnect(int unit, void *cdp)
+ipr_disconnect(void *softc, void *cdp)
 {
 	call_desc_t *cd = (call_desc_t *)cdp;
-	struct ipr_softc *sc = &ipr_softc[unit];
+	struct ipr_softc *sc = softc;
 
 	/* new stuff to check that the active channel is being closed */
 
 	if (cd != sc->sc_cdp)
 	{
-		NDBGL4(L4_IPRDBG, "irip%d: channel %d not active",
-				cd->driver_unit, cd->channelid);
+		NDBGL4(L4_IPRDBG, "%s: channel %d not active",
+				sc->sc_if.if_xname, cd->channelid);
 		return;
 	}
 
@@ -872,17 +872,17 @@ ipr_disconnect(int unit, void *cdp)
  *	in case of dial problems
  *---------------------------------------------------------------------------*/
 static void
-ipr_dialresponse(int unit, int status, cause_t cause)
+ipr_dialresponse(void *softc, int status, cause_t cause)
 {
-	struct ipr_softc *sc = &ipr_softc[unit];
+	struct ipr_softc *sc = softc;
 	sc->sc_dialresp = status;
 
-	NDBGL4(L4_IPRDBG, "irip%d: last=%d, this=%d",
-		unit, sc->sc_lastdialresp, sc->sc_dialresp);
+	NDBGL4(L4_IPRDBG, "%s: last=%d, this=%d",
+		sc->sc_if.if_xname, sc->sc_lastdialresp, sc->sc_dialresp);
 
 	if(status != DSTAT_NONE)
 	{
-		NDBGL4(L4_IPRDBG, "irip%d: clearing queues", unit);
+		NDBGL4(L4_IPRDBG, "%s: clearing queues", sc->sc_if.if_xname);
 		iripclearqueues(sc);
 	}
 }
@@ -891,9 +891,9 @@ ipr_dialresponse(int unit, int status, cause_t cause)
  *	interface soft up/down
  *---------------------------------------------------------------------------*/
 static void
-ipr_updown(int unit, int updown)
+ipr_updown(void *softc, int updown)
 {
-	struct ipr_softc *sc = &ipr_softc[unit];
+	struct ipr_softc *sc = softc;
 	sc->sc_updown = updown;
 }
 	
@@ -904,9 +904,9 @@ ipr_updown(int unit, int updown)
  *	appropriate protection level! Keep it short !
  *---------------------------------------------------------------------------*/
 static void
-ipr_rx_data_rdy(int unit)
+ipr_rx_data_rdy(void *softc)
 {
-	register struct ipr_softc *sc = &ipr_softc[unit];
+	register struct ipr_softc *sc = softc;
 	register struct mbuf *m;
 #ifdef IPR_VJ
 #ifdef IPR_VJ_USEBUFFER
@@ -915,7 +915,7 @@ ipr_rx_data_rdy(int unit)
 	int len, c;
 #endif
 	
-	if((m = *isdn_linktab[unit]->rx_mbuf) == NULL)
+	if((m = *isdn_linktab[sc->sc_unit]->rx_mbuf) == NULL)
 		return;
 
 	m->m_pkthdr.rcvif = &sc->sc_if;
@@ -1074,7 +1074,7 @@ error:
 
 	if(IF_QFULL(&ipintrq))
 	{
-		NDBGL4(L4_IPRDBG, "irip%d: ipintrq full!", unit);
+		NDBGL4(L4_IPRDBG, "%s: ipintrq full!", sc->sc_if.if_xname);
 
 		IF_DROP(&ipintrq);
 		sc->sc_if.if_ierrors++;
@@ -1094,9 +1094,9 @@ error:
  *	further frame (mbuf) in the tx queue.
  *---------------------------------------------------------------------------*/
 static void
-ipr_tx_queue_empty(int unit)
+ipr_tx_queue_empty(void *softc)
 {
-	register struct ipr_softc *sc = &ipr_softc[unit];
+	register struct ipr_softc *sc = softc;
 	register struct mbuf *m;
 #ifdef	IPR_VJ	
 	struct ip *ip;	
@@ -1155,14 +1155,14 @@ ipr_tx_queue_empty(int unit)
 #endif
 		x = 1;
 
-		if(IF_QFULL(isdn_linktab[unit]->tx_queue))
+		if(IF_QFULL(isdn_linktab[sc->sc_unit]->tx_queue))
 		{
-			NDBGL4(L4_IPRDBG, "irip%d: tx queue full!", unit);
+			NDBGL4(L4_IPRDBG, "%s: tx queue full!", sc->sc_if.if_xname);
 			m_freem(m);
 		}
 		else
 		{
-			IF_ENQUEUE(isdn_linktab[unit]->tx_queue, m);
+			IF_ENQUEUE(isdn_linktab[sc->sc_unit]->tx_queue, m);
 
 			sc->sc_if.if_obytes += m->m_pkthdr.len;
 
@@ -1171,7 +1171,7 @@ ipr_tx_queue_empty(int unit)
 	}
 
 	if(x)
-		(*isdn_linktab[unit]->bch_tx_start)(isdn_linktab[unit]->l1token, isdn_linktab[unit]->channel);
+		(*isdn_linktab[sc->sc_unit]->bchannel_driver->bch_tx_start)(isdn_linktab[sc->sc_unit]->l1token, isdn_linktab[sc->sc_unit]->channel);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1180,9 +1180,10 @@ ipr_tx_queue_empty(int unit)
  *	be used to implement an activity timeout mechanism.
  *---------------------------------------------------------------------------*/
 static void
-ipr_activity(int unit, int rxtx)
+ipr_activity(void *softc, int rxtx)
 {
-	ipr_softc[unit].sc_cdp->last_active_time = SECOND;
+	struct ipr_softc *sc = softc;
+	sc->sc_cdp->last_active_time = SECOND;
 }
 
 /*---------------------------------------------------------------------------*
@@ -1203,20 +1204,25 @@ ipr_set_linktab(int unit, isdn_link_t *ilt)
 	isdn_linktab[unit] = ilt;
 }
 
+static const struct isdn_l4_driver_functions
+ipr_l4_functions = {
+	ipr_rx_data_rdy,
+	ipr_tx_queue_empty,
+	ipr_activity,
+	ipr_connect,
+	ipr_disconnect,
+	ipr_dialresponse,
+	ipr_updown
+};
+
 /*---------------------------------------------------------------------------*
  *	initialize this drivers linktab
  *---------------------------------------------------------------------------*/
 static void
 ipr_init_linktab(int unit)
 {
-	ipr_drvr_linktab[unit].unit = unit;
-	ipr_drvr_linktab[unit].bch_rx_data_ready = ipr_rx_data_rdy;
-	ipr_drvr_linktab[unit].bch_tx_queue_empty = ipr_tx_queue_empty;
-	ipr_drvr_linktab[unit].bch_activity = ipr_activity;
-	ipr_drvr_linktab[unit].line_connected = ipr_connect;
-	ipr_drvr_linktab[unit].line_disconnected = ipr_disconnect;
-	ipr_drvr_linktab[unit].dial_response = ipr_dialresponse;
-	ipr_drvr_linktab[unit].updown_ind = ipr_updown;	
+	ipr_drvr_linktab[unit].l4_driver_softc = &ipr_softc[unit];
+	ipr_drvr_linktab[unit].l4_driver = &ipr_l4_functions;
 }
 
 /*===========================================================================*/

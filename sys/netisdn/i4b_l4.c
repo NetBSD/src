@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.8 2002/03/16 16:56:04 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.9 2002/03/17 09:46:01 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.8 2002/03/16 16:56:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.9 2002/03/17 09:46:01 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -127,7 +127,7 @@ i4b_l4_pdeact(int controller, int numactive)
 			
 			if(cd->dlt != NULL)
 			{
-				(*cd->dlt->line_disconnected)(cd->driver_unit, (void *)cd);
+				(*cd->dlt->l4_driver->line_disconnected)(cd->dlt->l4_driver_softc, (void *)cd);
 				i4b_unlink_bchandrvr(cd);
 			}
 		
@@ -399,7 +399,7 @@ i4b_l4_connect_active_ind(call_desc_t *cd)
 	
 	i4b_link_bchandrvr(cd);
 
-	(*cd->dlt->line_connected)(cd->driver_unit, (void *)cd);
+	(*cd->dlt->l4_driver->line_connected)(cd->dlt->l4_driver_softc, (void *)cd);
 
 	i4b_l4_setup_timeout(cd);
 	
@@ -434,7 +434,7 @@ i4b_l4_disconnect_ind(call_desc_t *cd)
 
 	if(cd->dlt != NULL)
 	{
-		(*cd->dlt->line_disconnected)(cd->driver_unit, (void *)cd);
+		(*cd->dlt->l4_driver->line_disconnected)(cd->dlt->l4_driver_softc, (void *)cd);
 		i4b_unlink_bchandrvr(cd);
 	}
 
@@ -703,7 +703,7 @@ i4b_link_bchandrvr(call_desc_t *cd)
 
 	/* activate B channel */
 		
-	(*cd->ilt->bch_config)(cd->ilt->l1token, cd->ilt->channel, cd->bprot, 1);
+	(*cd->ilt->bchannel_driver->bch_config)(cd->ilt->l1token, cd->ilt->channel, cd->bprot, 1);
 
 	return(0);
 }
@@ -730,7 +730,7 @@ i4b_unlink_bchandrvr(call_desc_t *cd)
 	
 	/* deactivate B channel */
 		
-	(*cd->ilt->bch_config)(cd->ilt->l1token, cd->ilt->channel, cd->bprot, 0);
+	(*cd->ilt->bchannel_driver->bch_config)(cd->ilt->l1token, cd->ilt->channel, cd->bprot, 0);
 } 
 
 /*---------------------------------------------------------------------------

@@ -27,7 +27,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.2 2001/03/24 12:40:32 martin Exp $
+ *	$Id: i4b_l3l4.h,v 1.3 2002/03/17 09:46:01 martin Exp $
  *
  * $FreeBSD$
  *
@@ -55,6 +55,31 @@ typedef struct bchan_statistics {
 	int inbytes;
 } bchan_statistics_t;
 
+/*
+ * Set of functions layer 4 drivers calls to manipulate the B channel
+ * they are using.
+ */
+struct isdn_l4_bchannel_functions {
+	void (*bch_config)(void*, int channel, int bprot, int updown);
+	void (*bch_tx_start)(void*, int channel);
+	void (*bch_stat)(void*, int channel, bchan_statistics_t *bsp);	
+};
+
+/*
+ * Functions the B channel driver calls in the layer 4 driver.
+ */
+struct isdn_l4_driver_functions {
+	void (*bch_rx_data_ready)(void *softc);
+	void (*bch_tx_queue_empty)(void *softc);
+	void (*bch_activity)(void *softc, int rxtx);
+#define ACT_RX 0
+#define ACT_TX 1
+	void (*line_connected)(void *softc, void *cde);
+	void (*line_disconnected)(void *softc, void *cde);
+	void (*dial_response)(void *softc, int stat, cause_t cause);
+	void (*updown_ind)(void *softc, int updown);		
+};
+
 /*---------------------------------------------------------------------------*
  * table of things the driver needs to know about the b channel
  * it is connected to for data transfer
@@ -62,9 +87,7 @@ typedef struct bchan_statistics {
 typedef struct i4b_isdn_bchan_linktab {
 	void* l1token;
 	int channel;
-	void (*bch_config)(void*, int channel, int bprot, int updown);
-	void (*bch_tx_start)(void*, int channel);
-	void (*bch_stat)(void*, int channel, bchan_statistics_t *bsp);	
+	const struct isdn_l4_bchannel_functions *bchannel_driver;
 	struct ifqueue *tx_queue;
 	struct ifqueue *rx_queue;	/* data xfer for NON-HDLC traffic   */
 	struct mbuf **rx_mbuf;		/* data xfer for HDLC based traffic */
@@ -75,16 +98,8 @@ typedef struct i4b_isdn_bchan_linktab {
  * the driver it is connected to for data transfer
  *---------------------------------------------------------------------------*/
 typedef struct i4b_driver_bchan_linktab {
-	int unit;
-	void (*bch_rx_data_ready)(int);
-	void (*bch_tx_queue_empty)(int);
-	void (*bch_activity)(int, int rxtx);
-#define ACT_RX 0
-#define ACT_TX 1
-	void (*line_connected)(int, void *cde);
-	void (*line_disconnected)(int, void *cde);
-	void (*dial_response)(int, int stat, cause_t cause);
-	void (*updown_ind)(int, int updown);		
+	void *l4_driver_softc;
+	const struct isdn_l4_driver_functions *l4_driver;
 } drvr_link_t;
 
 /* global linktab functions for controller types (aka hardware drivers) */
