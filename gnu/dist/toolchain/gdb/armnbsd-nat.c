@@ -59,44 +59,97 @@ supply_struct_reg (struct reg *reg)
   arm_apcs_32 = (read_register (PS_REGNUM) & PSR_MODE_32) != 0;
 }
 
+static void
+unsupply_struct_reg (struct reg *reg)
+{
+  int i;
+
+  for (i = 0; i < 13; i++)
+    read_register_gen (A1_REGNUM + i, (char *)&reg->r[i]);
+  read_register_gen (SP_REGNUM, (char *)&reg->r_sp);
+  read_register_gen (LR_REGNUM, (char *)&reg->r_lr);
+  read_register_gen (PS_REGNUM, (char *)&reg->r_cpsr);
+  if ((reg->r_cpsr & PSR_MODE_32))
+    read_register_gen (PC_REGNUM, (char *)&reg->r_pc);
+  else
+    arm_read_26bit_r15 ((char *)&reg->r_pc);
+}
+
+static void
+supply_struct_fpreg (struct fpreg *freg)
+{
+  int i;
+
+  for (i = 0; i < 8; i++)
+    supply_register (F0_REGNUM + i, (char *)&freg->fpr[i]);
+  supply_register (FPS_REGNUM, (char *)&freg->fpr_fpsr);
+}
+
+static void
+unsupply_struct_fpreg (struct fpreg *freg)
+{
+  memcpy (&freg->fpr[0], &registers[REGISTER_BYTE (F0_REGNUM)], sizeof (freg->fpr));
+  memcpy (&freg->fpr_fpsr, &registers[REGISTER_BYTE (FPS_REGNUM)], sizeof (freg->fpr_fpsr));
+}
+
+void
+nbsd_reg_to_internal (regs)
+     char *regs;
+{
+  supply_struct_reg ((struct reg *)regs);
+}
+
+void
+nbsd_fpreg_to_internal (fregs)
+     char *fregs;
+{
+  supply_struct_fpreg ((struct fpreg *)fregs);
+}
+
+void
+nbsd_internal_to_reg (regs)
+     char *regs;
+{
+  unsupply_struct_reg ((struct reg *)regs);
+}
+
+void
+nbsd_internal_to_fpreg (fregs)
+     char *fregs;
+{
+  unsupply_struct_fpreg ((struct fpreg *)fregs);
+}
 
 void
 fetch_inferior_registers (int regno)
 {
   struct reg inferior_registers;
   struct fpreg inferior_fpregisters;
-  int i;
 
   /* Integer registers */
-  ptrace (PT_GETREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+  ptrace (PT_GETREGS, GET_PROCESS(inferior_pid),
+	  (PTRACE_ARG3_TYPE) &inferior_registers, GET_LWP(inferior_pid));
   supply_struct_reg (&inferior_registers);
 
   /* FPA registers */
-  ptrace (PT_GETFPREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inferior_fpregisters,
-	  0);
-  for (i = 0; i < 8; i++)
-    supply_register (F0_REGNUM + i, (char *)&inferior_fpregisters.fpr[i]);
-  supply_register (FPS_REGNUM, (char *)&inferior_fpregisters.fpr_fpsr);
+  ptrace (PT_GETFPREGS, GET_PROCESS(inferior_pid),
+	  (PTRACE_ARG3_TYPE) &inferior_fpregisters, GET_LWP(inferior_pid));
+  supply_struct_fpreg(&inferior_fpregisters);
 }
 
 void
 store_inferior_registers (int regno)
 {
   struct reg inferior_registers;
-  int i;
+  struct fpreg inferior_fpregisters;
 
-  for (i = 0; i < 13; i++)
-    read_register_gen (A1_REGNUM + i, (char *)&inferior_registers.r[i]);
-  read_register_gen (SP_REGNUM, (char *)&inferior_registers.r_sp);
-  read_register_gen (LR_REGNUM, (char *)&inferior_registers.r_lr);
-  if ((inferior_registers.r_cpsr & PSR_MODE_32))
-    read_register_gen (PC_REGNUM, (char *)&inferior_registers.r_pc);
-  else
-    arm_read_26bit_r15 ((char *)&inferior_registers.r_pc);
-  read_register_gen (PS_REGNUM, (char *)&inferior_registers.r_cpsr);
-  ptrace (PT_SETREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+  unsupply_struct_reg (&inferior_registers);
+  ptrace (PT_SETREGS, GET_PROCESS(inferior_pid),
+	  (PTRACE_ARG3_TYPE) &inferior_registers, GET_LWP(inferior_pid));
 
-  /* XXX Set FP regs. */
+  unsupply_struct_fpreg (&inferior_fpregisters);
+  ptrace (PT_SETFPREGS, GET_PROCESS(inferior_pid),
+	  (PTRACE_ARG3_TYPE) &inferior_registers, GET_LWP(inferior_pid));
 }
 
 struct md_core

@@ -59,8 +59,8 @@ struct xmmctx
   {
     unsigned short control;
     unsigned short status;
-    unsigned char tag;        /* abridged */
     unsigned char r0;
+    unsigned char tag;        /* abridged */
     unsigned short opcode;
     unsigned long eip;
     unsigned short code_seg;
@@ -106,6 +106,28 @@ supply_regs (regs)
 }
 
 static void
+unsupply_regs (regs)
+     struct reg *regs;
+{
+  RS ( 0, regs->r_eax);
+  RS ( 1, regs->r_ecx);
+  RS ( 2, regs->r_edx);
+  RS ( 3, regs->r_ebx);
+  RS ( 4, regs->r_esp);
+  RS ( 5, regs->r_ebp);
+  RS ( 6, regs->r_esi);
+  RS ( 7, regs->r_edi);
+  RS ( 8, regs->r_eip);
+  RS ( 9, regs->r_eflags);
+  RS (10, regs->r_cs);
+  RS (11, regs->r_ss);
+  RS (12, regs->r_ds);
+  RS (13, regs->r_es);
+  RS (14, regs->r_fs);
+  RS (15, regs->r_gs);
+}
+
+static void
 supply_387regs (s87)
      struct env387 *s87;
 {
@@ -124,6 +146,27 @@ supply_387regs (s87)
   RF (FDS_REGNUM,     s87->operand_seg);
   RF (FDOFF_REGNUM,   s87->operand);
   RF (FOP_REGNUM,     s87->opcode);
+}
+
+static void
+unsupply_387regs(s87)
+     struct env387 *s87;
+{
+  int i;
+
+  for (i = 0; i < 8; i++)
+    {
+      RF (FP0_REGNUM + i, s87->regs[i]);
+    }
+
+  RS (FCTRL_REGNUM,   s87->control);
+  RS (FSTAT_REGNUM,   s87->status);
+  RS (FTAG_REGNUM,    s87->tag);
+  RS (FCS_REGNUM,     s87->code_seg);
+  RS (FCOFF_REGNUM,   s87->eip);
+  RS (FDS_REGNUM,     s87->operand_seg);
+  RS (FDOFF_REGNUM,   s87->operand);
+  RS (FOP_REGNUM,     s87->opcode);
 }
 
 #ifdef PT_GETXMMREGS
@@ -209,7 +252,73 @@ supply_xmmregs (sxmm)
 
   RF (MXCSR_REGNUM,   sxmm->mxcsr);
 }
+
+static void
+unsupply_xmmregs (sxmm)
+     struct xmmctx *sxmm;
+{
+  unsigned short tag;
+  int i;
+
+  for (i = 0; i < 8; i++)
+    {
+      RS (FP0_REGNUM + i,  sxmm->fpregs[i].fp_bytes);
+      RS (XMM0_REGNUM + i, sxmm->sseregs[i].sse_bytes);
+    }
+
+  /* Note: even though there's no padding after the 16-bit
+     registers, because we copy only as much as the destination
+     will hold *and* we're little-endian, this all works out
+     fine.  */
+
+  RS (FCTRL_REGNUM,   sxmm->control);
+  RS (FSTAT_REGNUM,   sxmm->status);
+  RS (FCS_REGNUM,     sxmm->code_seg);
+  RS (FCOFF_REGNUM,   sxmm->eip);
+  RS (FDS_REGNUM,     sxmm->operand_seg);
+  RS (FDOFF_REGNUM,   sxmm->operand);
+
+  /* GDB has provided as the "tag" info in i387 format, but the
+     kernel expects it to be in XMM format; convert it.  */
+  RS (FTAG_REGNUM,    tag);
+  for (sxmm->tag = 0, i = 0; i < 8; i++)
+    {
+      if (((tag >> (i * 2)) & 3) != 3)
+	{
+	  sxmm->tag |= (1U << i);
+	}
+    }
+  
+  RS (MXCSR_REGNUM,   sxmm->mxcsr);
+}
 #endif
+
+void
+nbsd_reg_to_internal(regs)
+     char *regs;
+{
+  supply_regs(regs);
+}
+void
+nbsd_fpreg_to_internal(fregs)
+     char *fregs;
+{
+  supply_387regs(fregs);
+}
+
+void
+nbsd_internal_to_reg(regs)
+     char *regs;
+{
+  unsupply_regs(regs);
+}
+
+void
+nbsd_internal_to_fpreg(regs)
+     char *regs;
+{
+  unsupply_387regs(regs);
+}
 
 void
 fetch_inferior_registers (regno)
@@ -221,25 +330,25 @@ fetch_inferior_registers (regno)
   struct xmmctx inferior_xmmregisters;
 #endif
 
-  ptrace (PT_GETREGS, inferior_pid,
-          (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+  ptrace (PT_GETREGS, GET_PROCESS(inferior_pid),
+          (PTRACE_ARG3_TYPE) &inferior_registers, GET_LWP(inferior_pid));
 
 #ifdef PT_GETXMMREGS
   if (have_ptrace_xmmregs != 0 &&
-      ptrace(PT_GETXMMREGS, inferior_pid,
-             (PTRACE_ARG3_TYPE) &inferior_xmmregisters, 0) == 0)
+      ptrace(PT_GETXMMREGS, GET_PROCESS(inferior_pid),
+             (PTRACE_ARG3_TYPE) &inferior_xmmregisters, GET_LWP(inferior_pid)) == 0)
     {
       have_ptrace_xmmregs = 1;
     }
   else
     {
-      ptrace (PT_GETFPREGS, inferior_pid,
-              (PTRACE_ARG3_TYPE) &inferior_fpregisters, 0);
+      ptrace (PT_GETFPREGS, GET_PROCESS(inferior_pid),
+              (PTRACE_ARG3_TYPE) &inferior_fpregisters, GET_LWP(inferior_pid));
       have_ptrace_xmmregs = 0;
     }
 #else
-    ptrace (PT_GETFPREGS, inferior_pid,
-            (PTRACE_ARG3_TYPE) &inferior_fpregisters, 0);
+    ptrace (PT_GETFPREGS, GET_PROCESS(inferior_pid),
+            (PTRACE_ARG3_TYPE) &inferior_fpregisters, GET_LWP(inferior_pid));
 #endif
 
   supply_regs (&inferior_registers);
@@ -267,92 +376,26 @@ store_inferior_registers (regno)
 #ifdef PT_GETXMMREGS
   struct xmmctx inferior_xmmregisters;
 #endif
-  int i;
 
-  RS ( 0, inferior_registers.r_eax);
-  RS ( 1, inferior_registers.r_ecx);
-  RS ( 2, inferior_registers.r_edx);
-  RS ( 3, inferior_registers.r_ebx);
-  RS ( 4, inferior_registers.r_esp);
-  RS ( 5, inferior_registers.r_ebp);
-  RS ( 6, inferior_registers.r_esi);
-  RS ( 7, inferior_registers.r_edi);
-  RS ( 8, inferior_registers.r_eip);
-  RS ( 9, inferior_registers.r_eflags);
-  RS (10, inferior_registers.r_cs);
-  RS (11, inferior_registers.r_ss);
-  RS (12, inferior_registers.r_ds);
-  RS (13, inferior_registers.r_es);
-  RS (14, inferior_registers.r_fs);
-  RS (15, inferior_registers.r_gs);
+  unsupply_regs(&inferior_registers);
 
 #ifdef PT_GETXMMREGS
   if (have_ptrace_xmmregs != 0)
-    {
-      unsigned short tag;
-
-      for (i = 0; i < 8; i++)
-        {
-          RS (FP0_REGNUM + i,  inferior_xmmregisters.fpregs[i].fp_bytes);
-          RS (XMM0_REGNUM + i, inferior_xmmregisters.sseregs[i].sse_bytes);
-        }
-
-      /* Note: even though there's no padding after the 16-bit
-	 registers, because we copy only as much as the destination
-	 will hold *and* we're little-endian, this all works out
-	 fine.  */
-
-      RS (FCTRL_REGNUM,   inferior_xmmregisters.control);
-      RS (FSTAT_REGNUM,   inferior_xmmregisters.status);
-      RS (FCS_REGNUM,     inferior_xmmregisters.code_seg);
-      RS (FCOFF_REGNUM,   inferior_xmmregisters.eip);
-      RS (FDS_REGNUM,     inferior_xmmregisters.operand_seg);
-      RS (FDOFF_REGNUM,   inferior_xmmregisters.operand);
-      RS (FOP_REGNUM,     inferior_xmmregisters.opcode);
-
-      /* GDB has provided as the "tag" info in i387 format, but the
-         kernel expects it to be in XMM format; convert it.  */
-      RS (FTAG_REGNUM,    tag);
-      for (inferior_xmmregisters.tag = 0, i = 0; i < 8; i++)
-        {
-          if (((tag >> (i * 2)) & 3) != 3)
-            {
-              inferior_xmmregisters.tag |= (1U << i);
-            }
-        }
-
-       RS (MXCSR_REGNUM,   inferior_xmmregisters.mxcsr);
-    }
+      unsupply_xmmregs(&inferior_xmmregisters);
   else
-    {
 #endif
-      for (i = 0; i < 8; i++)
-        {
-          RS (FP0_REGNUM + i, inferior_fpregisters.regs[i]);
-        }
+      unsupply_387regs(&inferior_fpregisters);
 
-      RS (FCTRL_REGNUM,   inferior_fpregisters.control);
-      RS (FSTAT_REGNUM,   inferior_fpregisters.status);
-      RS (FTAG_REGNUM,    inferior_fpregisters.tag);
-      RS (FCS_REGNUM,     inferior_fpregisters.code_seg);
-      RS (FCOFF_REGNUM,   inferior_fpregisters.eip);
-      RS (FDS_REGNUM,     inferior_fpregisters.operand_seg);
-      RS (FDOFF_REGNUM,   inferior_fpregisters.operand);
-      RS (FOP_REGNUM,     inferior_fpregisters.opcode);
-#ifdef PT_GETXMMREGS
-    }
-#endif
-
-  ptrace (PT_SETREGS, inferior_pid,
-          (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+  ptrace (PT_SETREGS, GET_PROCESS(inferior_pid),
+          (PTRACE_ARG3_TYPE) &inferior_registers, GET_LWP(inferior_pid));
 #ifdef PT_GETXMMREGS
   if (have_ptrace_xmmregs != 0)
-    ptrace (PT_SETXMMREGS, inferior_pid,
-            (PTRACE_ARG3_TYPE) &inferior_xmmregisters, 0);
+    ptrace (PT_SETXMMREGS, GET_PROCESS(inferior_pid),
+            (PTRACE_ARG3_TYPE) &inferior_xmmregisters, GET_LWP(inferior_pid));
   else
 #endif
-    ptrace (PT_SETFPREGS, inferior_pid,
-            (PTRACE_ARG3_TYPE) &inferior_fpregisters, 0);
+    ptrace (PT_SETFPREGS, GET_PROCESS(inferior_pid),
+            (PTRACE_ARG3_TYPE) &inferior_fpregisters, GET_LWP(inferior_pid));
 }
 
 struct md_core
