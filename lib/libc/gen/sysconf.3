@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.30 2004/04/23 02:58:27 simonb Exp $
+.\"	$NetBSD: sysconf.3,v 1.31 2004/11/10 04:21:25 lukem Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysconf.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd July 9, 2003
+.Dd November 10, 2004
 .Dt SYSCONF 3
 .Os
 .Sh NAME
@@ -244,6 +244,20 @@ otherwise \-1.
 .It Li _SC_2_UPE
 Return 1 if the system supports the User Portability Utilities Option,
 otherwise \-1.
+.It Li _SC_GETGR_R_SIZE_MAX
+The minimum size of the
+.Fa buffer
+passed to
+.Xr getgrgid_r 3
+and
+.Xr getgrnam_r 3 .
+.It Li _SC_GETPW_R_SIZE_MAX
+The minimum size of the
+.Fa buffer
+passed to
+.Xr getpwnam_r 3
+and
+.Xr getpwuid_r 3 .
 .El
 .Sh RETURN VALUES
 If the call to
