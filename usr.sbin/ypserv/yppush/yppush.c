@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.9 1997/11/18 22:58:00 thorpej Exp $	*/
+/*	$NetBSD: yppush.c,v 1.10 1999/01/11 22:40:01 kleink Exp $	*/
 
 /*
  *
@@ -37,7 +37,6 @@
  * yppush.c.   i have restructured and cleaned up the entire file.
  */
 #include <sys/types.h>
-#include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -45,6 +44,7 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>

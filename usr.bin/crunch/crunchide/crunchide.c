@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchide.c,v 1.8 1997/11/01 06:51:45 lukem Exp $	*/
+/*	$NetBSD: crunchide.c,v 1.9 1999/01/11 22:40:00 kleink Exp $	*/
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 University of Maryland
@@ -60,7 +60,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchide.c,v 1.8 1997/11/01 06:51:45 lukem Exp $");
+__RCSID("$NetBSD: crunchide.c,v 1.9 1999/01/11 22:40:00 kleink Exp $");
 #endif
 
 #include <unistd.h>
@@ -68,10 +68,10 @@ __RCSID("$NetBSD: crunchide.c,v 1.8 1997/11/01 06:51:45 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <a.out.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/errno.h>
 
 #include "extern.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.9 1998/07/14 01:39:59 nathanw Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.10 1999/01/11 22:40:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.9 1998/07/14 01:39:59 nathanw Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.10 1999/01/11 22:40:01 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,11 +51,11 @@ __RCSID("$NetBSD: ktrace.c,v 1.9 1998/07/14 01:39:59 nathanw Exp $");
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
-#include <sys/errno.h>
 #include <sys/uio.h>
 #include <sys/ktrace.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.26 1998/08/10 02:57:23 perry Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.27 1999/01/11 22:40:00 kleink Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.26 1998/08/10 02:57:23 perry Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.27 1999/01/11 22:40:00 kleink Exp $");
 #endif
 #endif
 
@@ -46,9 +46,9 @@ __RCSID("$NetBSD: rstat_proc.c,v 1.26 1998/08/10 02:57:23 perry Exp $");
  */
 
 #include <sys/param.h>
-#include <sys/errno.h>
 #include <sys/socket.h>
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -138,7 +138,6 @@ int havedisk __P((void));
 void rstat_service __P((struct svc_req *, SVCXPRT *));
 
 static int stat_is_init = 0;
-extern int errno;
 
 #ifndef FSCALE
 #define FSCALE (1 << 8)

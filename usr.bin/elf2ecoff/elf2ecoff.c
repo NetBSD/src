@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.11 1998/11/27 05:09:50 simonb Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.12 1999/01/11 22:40:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -39,6 +39,7 @@
 
 #include <sys/types.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/exec.h>
@@ -46,7 +47,6 @@
 #include <sys/exec_aout.h>
 #include <stdio.h>
 #include <sys/exec_ecoff.h>
-#include <sys/errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -110,7 +110,6 @@ write_ecoff_symhdr(int outfile, struct ecoff_exechdr * ep,
 
 void    pad16(int fd, int size, const char *msg);
 
-extern int errno;
 int    *symTypeTable;
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.30 1998/10/06 15:50:30 fvdl Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.31 1999/01/11 22:40:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.30 1998/10/06 15:50:30 fvdl Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.31 1999/01/11 22:40:01 kleink Exp $");
 #endif
 
 
@@ -40,7 +40,6 @@ __RCSID("$NetBSD: rarpd.c,v 1.30 1998/10/06 15:50:30 fvdl Exp $");
  */
 
 #include <sys/types.h>
-#include <sys/errno.h>
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -62,6 +61,7 @@ __RCSID("$NetBSD: rarpd.c,v 1.30 1998/10/06 15:50:30 fvdl Exp $");
 
 #include <arpa/inet.h>
 
+#include <errno.h>
 #include <dirent.h>
 #include <netdb.h>
 #include <stdio.h>

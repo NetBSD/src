@@ -1,4 +1,4 @@
-/*	$NetBSD: supcdefs.h,v 1.5 1997/06/17 18:56:44 christos Exp $	*/
+/*	$NetBSD: supcdefs.h,v 1.6 1999/01/11 22:40:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -55,6 +55,7 @@
  **********************************************************************
  */
 
+#include <errno.h>
 #include <libc.h>
 #include <netdb.h>
 #include <signal.h>
@@ -68,7 +69,6 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/file.h>
-#include <sys/errno.h>
 #if	MACH			/* used by resource pausing code only */
 #include <sys/ioctl.h>
 #include <sys/resource.h>
