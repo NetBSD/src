@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.21 1996/10/24 04:35:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -268,6 +268,7 @@ sys_setitimer(p, v, retval)
 		syscallarg(struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
 	} */ *uap = v;
+	struct sys_getitimer_args getargs;
 	struct itimerval aitv;
 	register struct itimerval *itvp;
 	int s, error;
@@ -278,9 +279,12 @@ sys_setitimer(p, v, retval)
 	if (itvp && (error = copyin((caddr_t)itvp, (caddr_t)&aitv,
 	    sizeof(struct itimerval))))
 		return (error);
-	if ((SCARG(uap, itv) = SCARG(uap, oitv)) &&
-	    (error = sys_getitimer(p, uap, retval)))
-		return (error);
+	if (SCARG(uap, oitv) != NULL) {
+		SCARG(&getargs, which) = SCARG(uap, which);
+		SCARG(&getargs, itv) = SCARG(uap, oitv);
+	    	if ((error = sys_getitimer(p, &getargs, retval)) != 0)
+			return (error);
+	}
 	if (itvp == 0)
 		return (0);
 	if (itimerfix(&aitv.it_value) || itimerfix(&aitv.it_interval))
