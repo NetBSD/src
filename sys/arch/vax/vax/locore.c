@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.30 1998/08/10 14:31:07 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.31 1998/11/29 15:12:23 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -52,8 +52,9 @@
 void	start __P((void));
 void	main __P((void));
 
-extern vm_offset_t avail_end;
-u_int	proc0paddr, esym;
+extern	paddr_t avail_end;
+paddr_t	esym;
+u_int	proc0paddr;
 
 /* 
  * We set up some information about the machine we're
@@ -106,7 +107,6 @@ start()
 		vax_bustype = VAX_SBIBUS | VAX_CPUBUS;
 		vax_boardtype = VAX_BTYP_780;
 		dep_call = &ka780_calls;
-		avail_end = 0;
 		break;
 #endif
 #if VAX750
@@ -125,7 +125,6 @@ start()
 		strcpy(cpu_model,"VAX 8600");
 		if (vax_cpudata & 0x100)
 			cpu_model[6] = '5';
-		avail_end = 0;
 		break;
 #endif
 #if VAX630 || VAX650 || VAX410 || VAX43 || VAX46
@@ -248,6 +247,19 @@ start()
 		/* CPU not supported, just give up */
 		asm("halt");
 	}
+
+        /*
+         * Machines older than MicroVAX II have their boot blocks
+         * loaded directly or the boot program loaded from console
+         * media, so we need to figure out their memory size.
+         * This is not easily done on MicroVAXen, so we get it from
+         * VMB instead.
+         */
+        if (avail_end == 0)
+                while (badaddr((caddr_t)avail_end, 4) == 0)
+                        avail_end += NBPG * 128;
+
+        avail_end = TRUNC_PAGE(avail_end); /* be sure */
 
 	proc0.p_addr = (void *)proc0paddr; /* XXX */
 
