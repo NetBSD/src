@@ -1,4 +1,4 @@
-/*	$NetBSD: __cmsg_alignbytes.c,v 1.4 2003/03/21 03:07:40 ross Exp $	*/
+/*	$NetBSD: __cmsg_alignbytes.c,v 1.5 2004/01/29 08:25:28 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __cmsg_alignbytes.c,v 1.4 2003/03/21 03:07:40 ross Exp $");
+__RCSID("$NetBSD: __cmsg_alignbytes.c,v 1.5 2004/01/29 08:25:28 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -64,7 +64,7 @@ __cmsg_alignbytes()
 	mib[1] = HW_ALIGNBYTES;
 	len = sizeof(alignbytes);
 	ret = sysctl(mib, (u_int) (sizeof(mib) / sizeof(mib[0])),
-		    (void *)&alignbytes, &len, NULL, (size_t)0);
+	    (void *)&alignbytes, &len, NULL, (size_t)0);
 	if (ret >= 0 && alignbytes >= 0)
 		return alignbytes;
 #endif
