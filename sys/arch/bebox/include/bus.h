@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13 1998/06/03 06:47:41 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.14 1998/06/09 05:53:30 sakamoto Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -111,6 +111,13 @@
  */
 #define	BEBOX_BUS_SPACE_IO	0x80000000	/* i/o space */
 #define BEBOX_BUS_SPACE_MEM	0xC0000000	/* mem space */
+
+/*
+ * Address conversion as seen from a PCI master.
+ */
+#define MPC105_DIRECT_MAPPED_SPACE	0x80000000
+#define PHYS_TO_PCI_MEM(x)	((x) | MPC105_DIRECT_MAPPED_SPACE)
+#define PCI_MEM_TO_PHYS(x)	((x) & ~MPC105_DIRECT_MAPPED_SPACE)
 
 /*
  * Bus access types.
