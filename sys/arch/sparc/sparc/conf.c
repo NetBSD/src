@@ -42,7 +42,7 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: conf.c,v 1.15 93/05/05 09:43:29 torek Exp  (LBL)
- * $Id: conf.c,v 1.11 1994/05/12 08:22:03 deraadt Exp $
+ * $Id: conf.c,v 1.12 1994/05/21 08:44:26 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -449,6 +449,13 @@ iskmemdev(dev)
 
 	return (major(dev) == 3 && minor(dev) < 2);
 }
+
+iszerodev(dev)
+	dev_t dev;
+{
+	return (major(dev) == 3 && minor(dev) == 12);
+}
+
 
 /*
  * Routine to determine if a device is a disk.
