@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.12 1998/04/13 12:10:27 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.13 1998/05/22 09:26:33 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -80,10 +80,6 @@ struct	cpu_dep	ka650_calls = {
 	generic_clkread,
 	generic_clkwrite,
 	4,      /* ~VUPS */
-	0,      /* Used by vaxstation */
-	0,      /* Used by vaxstation */
-	0,      /* Used by vaxstation */
-	0,
 	ka650_halt,
 	ka650_reboot,
 };

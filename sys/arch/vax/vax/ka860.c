@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.9 1998/04/13 12:10:27 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.10 1998/05/22 09:26:33 ragge Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -74,10 +74,6 @@ struct	cpu_dep	ka860_calls = {
 	generic_clkread,
 	generic_clkwrite,
 	6,      /* ~VUPS */
-	0,      /* Used by vaxstation */
-	0,      /* Used by vaxstation */
-	0,      /* Used by vaxstation */
-	0, 	/* Used by vaxstation */
 	0,	/* Halt call, nothing special */
 	ka86_reboot,
 	ka86_clrf,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.5 1997/04/18 18:53:38 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.6 1998/05/22 09:26:33 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -47,6 +48,7 @@
 #include <machine/pmap.h>
 #include <machine/nexus.h>
 #include <machine/uvax.h>
+#include <machine/vsbus.h>
 #include <machine/ka43.h>
 #include <machine/clock.h>
 
@@ -56,33 +58,13 @@ void	ka43_steal_pages __P((void));
 int	ka43_mchk __P((caddr_t));
 void	ka43_memerr __P((void));
 
-int	ka43_clear_errors __P((void));
+void	ka43_clear_errors __P((void));
 
 int	ka43_cache_init __P((void));	/* "int mapen" as argument? */
 int	ka43_cache_reset __P((void));
 int	ka43_cache_enable __P((void));
 int	ka43_cache_disable __P((void));
 int	ka43_cache_invalidate __P((void));
-
-static struct uc_map ka43_map[] = {
-	{ KA43_CFGTST,		KA43_CFGTST,	4,		0 },
-	{ KA43_ROM_BASE,	KA43_ROM_END,	KA43_ROM_SIZE,	0 },
-	{ KA43_CPU_BASE,	KA43_CPU_END,	KA43_CPU_SIZE,	0 },
-	{ KA43_CT2_BASE,	KA43_CT2_END,	KA43_CT2_SIZE,	0 },
-	{ KA43_CH2_CREG,	KA43_CH2_CREG,	4,		0 },
-	{ KA43_NWA_BASE,	KA43_NWA_END,	KA43_NWA_SIZE,	0 },
-	{ KA43_SER_BASE,	KA43_SER_END,	KA43_SER_SIZE,	0 },
-	{ KA43_WAT_BASE,	KA43_WAT_END,	KA43_WAT_SIZE,	0 },
-	{ KA43_SCS_BASE,	KA43_SCS_END,	KA43_SCS_SIZE,	0 },
-	{ KA43_LAN_BASE,	KA43_LAN_END,	KA43_LAN_SIZE,	0 },
-	{ KA43_CUR_BASE,	KA43_CUR_END,	KA43_CUR_SIZE,	0 },
-	{ KA43_DMA_BASE,	KA43_DMA_END,	KA43_DMA_SIZE,	0 },
-	{ KA43_VME_BASE,	KA43_VME_END,	KA43_VME_SIZE,	0 },
-	/*
-	 * there's more to come, eg. framebuffers (GPX/SPX)
-	 */
-	{0, 0, 0, 0},
-};
 
 struct	cpu_dep ka43_calls = {
 	ka43_steal_pages,
@@ -93,10 +75,6 @@ struct	cpu_dep ka43_calls = {
 	chip_clkread,
 	chip_clkwrite,
 	7,	/* 7.6 VUP */
-	(void*)KA43_INTREQ,
-	(void*)KA43_INTCLR,
-	(void*)KA43_INTMSK,
-	ka43_map,
 };
 
 /*
@@ -206,7 +184,7 @@ ka43_cache_init()
 	return (ka43_cache_reset());
 }
 
-int
+void
 ka43_clear_errors()
 {
 	int val = *ka43_creg;
@@ -229,8 +207,6 @@ ka43_cache_reset()
 
 	printf("primary cache status: %b\n", mfpr(PR_PCSTS), KA43_PCSTS_BITS);
 	printf("secondary cache status: %b\n", *ka43_creg, KA43_SESR_BITS);
-	printf("cpu status: parctl=0x%x, hltcod=0x%x\n", 
-	       ka43_cpu->parctl, ka43_cpu->hltcod);
 
 	return (0);
 }
@@ -238,7 +214,7 @@ ka43_cache_reset()
 int
 ka43_cache_disable()
 {
-	int i, val;
+	int val;
 
 	/*
 	 * first disable primary cache and clear error flags
@@ -345,19 +321,14 @@ ka43_conf(parent, self, aux)
  * is setup in the xxx_steal_pages() routine. We decrease highest
  * available address by 64K and use this area as communication buffer.
  */
-u_long le_iomem;		/* base addr of RAM -- CPU's view */
-u_long le_ioaddr;		/* base addr of RAM -- LANCE's view */
 
 void
 ka43_steal_pages()
 {
-	extern	vm_offset_t avail_start, virtual_avail, avail_end;
+	extern	vm_offset_t avail_start, virtual_avail;
         extern  short *clk_page;
         extern  int clk_adrshift, clk_tweak;
 	int	junk, val;
-	int	i;
-
-	printf ("ka43_steal_pages: avail_end=0x%x\n", avail_end);
 
 	/* 
 	 * SCB is already copied/initialized at addr avail_start
@@ -373,30 +344,32 @@ ka43_steal_pages()
         pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA43_WAT_BASE,
             (vm_offset_t)KA43_WAT_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
-#if 0
-	/*
-	 * At top of physical memory there are some console-prom and/or
-	 * restart-specific data. Make this area unavailable.
-	 */
-	avail_end -= 64 * NBPG;		/* scratch RAM ??? */
-	avail_end = 0x00FC0000;		/* XXX: for now from ">>> show mem" */
+	/* LANCE CSR */
+	MAPVIRT(lance_csr, 1);
+	pmap_map((vm_offset_t)lance_csr, (vm_offset_t)NI_BASE,
+	    (vm_offset_t)NI_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
-This is no longer neccessary since the memsize in RPB does not include
-these unavailable pages. Only valid/available pages are counted in RPB.
+	MAPVIRT(vs_cpu, 1);
+	pmap_map((vm_offset_t)vs_cpu, (vm_offset_t)VS_REGS,
+	    (vm_offset_t)VS_REGS + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
-#endif
+	MAPVIRT(dz_regs, 2);
+	pmap_map((vm_offset_t)dz_regs, (vm_offset_t)DZ_CSR,
+	    (vm_offset_t)DZ_CSR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
-	/*
-	 * If we need to map physical areas also, we can decrease avail_end
-	 * (the highest available memory-address), copy the stuff into the
-	 * gap between and use pmap_map to map it. This is done for LANCE's
-	 * 64K communication area.
-	 *
-	 * Don't use the MAPPHYS macro here, since this uses and changes(!)
-	 * the value of avail_start. Use MAPVIRT even if it's name misleads.
-	 */
-	avail_end -= (64 * 1024);	/* reserve 64K */
-	avail_end &= ~0xffff;		/* force proper (quad?) alignment */
+	MAPVIRT(lance_addr, 1);
+	pmap_map((vm_offset_t)lance_addr, (vm_offset_t)NI_ADDR,
+	    (vm_offset_t)NI_ADDR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+
+	/* 2nd level CCR */
+	MAPVIRT(ka43_creg, 1);
+	pmap_map((vm_offset_t)ka43_creg, (vm_offset_t)KA43_CH2_CREG,
+	    (vm_offset_t)KA43_CH2_CREG + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+
+	/* 2nd level CTA */
+	MAPVIRT(ka43_ctag, 1);
+	pmap_map((vm_offset_t)ka43_ctag, (vm_offset_t)KA43_CT2_BASE,
+	    (vm_offset_t)KA43_CT2_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
 	 * Oh holy shit! It took me over one year(!) to find out that
@@ -407,10 +380,10 @@ these unavailable pages. Only valid/available pages are counted in RPB.
 	 * Many thanks to Matt Thomas, without his help it could have
 	 * been some more years...  ;-)
 	 */
-	le_ioaddr = avail_end | KA43_DIAGMEM;	/* ioaddr in diag-mem!!! */
-	MAPVIRT(le_iomem, (64 * 1024)/NBPG);
-	pmap_map((vm_offset_t)le_iomem, le_ioaddr, le_ioaddr + 0xffff,
-		 VM_PROT_READ|VM_PROT_WRITE);
+#define	LEMEM (((int)le_iomem & ~KERNBASE)|KA43_DIAGMEM)
+	MAPPHYS(le_iomem, (NI_IOSIZE/NBPG), VM_PROT_READ|VM_PROT_WRITE);
+	pmap_map((vm_offset_t)le_iomem, LEMEM, LEMEM + NI_IOSIZE,
+	    VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
 	 * if LANCE\'s io-buffer is above 16 MB, then the appropriate flag
@@ -420,15 +393,9 @@ these unavailable pages. Only valid/available pages are counted in RPB.
 	 * by the RIGEL chip itself!?!
 	 */
 	val = ka43_cpu->parctl & 0x03;	/* read the old value */
-	if (le_ioaddr & (1 << 24))	/* if RAM above 16 MB */
+	if (((int)le_iomem & ~KERNBASE))/* if RAM above 16 MB */
 		val |= KA43_PCTL_DMA;	/* set LANCE DMA flag */
 	ka43_cpu->parctl = val;		/* and write new value */
-	le_ioaddr &= 0xffffff;		/* Lance uses 24-bit addresses */
-
-	/*
-	 * now map in anything listed in ka43_map...
-	 */
-	uvax_fillmap();
 
 	/*
 	 * Clear restart and boot in progress flags in the CPMBX. 
@@ -448,7 +415,5 @@ these unavailable pages. Only valid/available pages are counted in RPB.
 	 * MM is not yet enabled, thus we still used the physical addresses,
 	 * but before leaving this routine, we need to reset them to virtual.
 	 */
-	ka43_cpu    = (void*)uvax_phys2virt(KA43_CPU_BASE);
-	ka43_creg   = (void*)uvax_phys2virt(KA43_CH2_CREG);
-	ka43_ctag   = (void*)uvax_phys2virt(KA43_CT2_BASE);
+	ka43_cpu = (void *)vs_cpu;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.9 1998/04/13 12:10:27 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.10 1998/05/22 09:26:33 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -76,10 +76,6 @@ struct	cpu_dep ka630_calls = {
 	chip_clkread,
 	chip_clkwrite,
 	1,      /* ~VUPS */
-	0,      /* Used by vaxstation */
-	0,      /* Used by vaxstation */
-	0,      /* Used by vaxstation */
-	0,
 	ka630_halt,
 	ka630_reboot,
 	ka630_clrf,
