@@ -38,7 +38,7 @@
  * from: Utah $Hdr: swap_pager.c 1.4 91/04/30$
  *
  *	from: @(#)swap_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: swap_pager.c,v 1.18 1994/04/15 18:02:02 cgd Exp $
+ *	$Id: swap_pager.c,v 1.19 1994/04/29 03:56:26 cgd Exp $
  */
 
 /*
@@ -750,15 +750,13 @@ swap_pager_clean(m, rw)
 				tspc = spc;
 			}
 		}
+		splx(s);
 
 		/*
 		 * No operations done, thats all we can do for now.
 		 */
-		if (spc == NULL) {
-			splx(s);
+		if (spc == NULL)
 			break;
-		}
-		splx(s);
 
 		/*
 		 * The desired page was found to be busy earlier in
