@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.2 1995/03/08 15:17:49 fvdl Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.3 1995/03/10 22:55:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -53,7 +53,7 @@
 #include <compat/linux/linux_signal.h>
 
 /*
- * Most of the stuff in this file is taken from Christos' SVR4 emul
+ * Most of ths stuff in this file is taken from Christos' SVR4 emul
  * code. The things that need to be done are largely the same, so
  * re-inventing the wheel doesn't make much sense.
  */
@@ -497,6 +497,8 @@ int
 linux_sigsuspend(p, uap, retval)
 	struct proc *p;
 	struct linux_sigsuspend_args /* {
+		syscallarg(caddr_t) restart;
+		syscallarg(int) oldmask;
 		syscallarg(int) mask;
 	} */ *uap;
 	register_t *retval;
@@ -505,6 +507,22 @@ linux_sigsuspend(p, uap, retval)
 
 	linux_to_bsd_sigset(&SCARG(uap, mask), &SCARG(&ssa, mask));
 	return sigsuspend(p, &ssa, retval);
+}
+
+/*
+ * The deprecated pause(2), which is really just an instance
+ * of sigsuspend(2).
+ */
+int
+linux_pause(p, uap, retval)
+	struct proc *p;
+	void *uap;	
+	register_t *retval;
+{	
+	struct sigsuspend_args bsa;
+
+	SCARG(&bsa, mask) = p->p_sigmask;
+	return sigsuspend(p, &bsa, retval);
 }
 
 /*
