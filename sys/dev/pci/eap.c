@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.56 2002/11/11 22:17:47 pooka Exp $	*/
+/*	$NetBSD: eap.c,v 1.57 2002/11/14 04:43:23 gson Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.56 2002/11/11 22:17:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.57 2002/11/14 04:43:23 gson Exp $");
 
 #include "midi.h"
 
@@ -658,25 +658,25 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 		ctl.un.mask = 1 << EAP_VOICE_VOL | 1 << EAP_FM_VOL | 
 			1 << EAP_CD_VOL | 1 << EAP_LINE_VOL | 1 << EAP_AUX_VOL |
 			1 << EAP_MIC_VOL;
-		eap_hw_if->set_port(sc, &ctl);
+		eap_hw_if->set_port(&sc->sc_ei[EAP_I1], &ctl);
 
 		ctl.type = AUDIO_MIXER_VALUE;
 		ctl.un.value.num_channels = 1;
 		for (ctl.dev = EAP_MASTER_VOL; ctl.dev < EAP_MIC_VOL; 
 		     ctl.dev++) {
 			ctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = VOL_0DB;
-			eap_hw_if->set_port(sc, &ctl);
+			eap_hw_if->set_port(&sc->sc_ei[EAP_I1], &ctl);
 		}
 		ctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = 0;
-		eap_hw_if->set_port(sc, &ctl);
+		eap_hw_if->set_port(&sc->sc_ei[EAP_I1], &ctl);
 		ctl.dev = EAP_MIC_PREAMP;
 		ctl.type = AUDIO_MIXER_ENUM;
 		ctl.un.ord = 0;
-		eap_hw_if->set_port(sc, &ctl);
+		eap_hw_if->set_port(&sc->sc_ei[EAP_I1], &ctl);
 		ctl.dev = EAP_RECORD_SOURCE;
 		ctl.type = AUDIO_MIXER_SET;
 		ctl.un.mask = 1 << EAP_MIC_VOL;
-		eap_hw_if->set_port(sc, &ctl);
+		eap_hw_if->set_port(&sc->sc_ei[EAP_I1], &ctl);
 	} else {
 		/* clean slate */
 
