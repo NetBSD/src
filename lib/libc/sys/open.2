@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)open.2	6.7 (Berkeley) 5/27/91
-.\"	$Id: open.2,v 1.4 1993/12/01 18:51:26 jtc Exp $
+.\"	$Id: open.2,v 1.5 1993/12/15 17:36:59 jtc Exp $
 .\"
 .Dd May 27, 1991
 .Dt OPEN 2
@@ -39,7 +39,7 @@
 .Nm open
 .Nd open or create a file for reading or writing
 .Sh SYNOPSIS
-.Fd #include <sys/file.h>
+.Fd #include <fcntl.h>
 .Ft int
 .Fn open "const char *path" "int flags" "mode_t mode"
 .Sh DESCRIPTION
