@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89 2001/02/26 21:09:57 lukem Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.90 2001/03/05 20:38:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -356,6 +356,8 @@ reaper(void *arg)
 {
 	struct proc *p;
 
+	KERNEL_PROC_UNLOCK(curproc);
+
 	for (;;) {
 		simple_lock(&deadproc_slock);
 		p = LIST_FIRST(&deadproc);
@@ -369,6 +371,7 @@ reaper(void *arg)
 		/* Remove us from the deadproc list. */
 		LIST_REMOVE(p, p_hash);
 		simple_unlock(&deadproc_slock);
+		KERNEL_PROC_LOCK(curproc);
 
 		/*
 		 * Give machine-dependent code a chance to free any
@@ -391,6 +394,7 @@ reaper(void *arg)
 		/* Wake up the parent so it can get exit status. */
 		if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
 			psignal(p->p_pptr, P_EXITSIG(p));
+		KERNEL_PROC_UNLOCK(curproc);
 		wakeup((caddr_t)p->p_pptr);
 	}
 }
