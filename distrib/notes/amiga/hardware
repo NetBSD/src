@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.40 2001/03/11 21:44:31 is Exp $
+.\"	$NetBSD: hardware,v 1.41 2001/07/24 16:36:17 nra Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -69,7 +69,7 @@ A4000/A1200 IDE controller, including ATAPI devices
 SCSI host adapters
 .(bullet -compact
 33c93 based boards: A2091, A3000 builtin, A3000 builtin modified for Apollo
-accellerator board, and GVP series II.
+accelerator board, and GVP series II.
 .It
 53c80 based boards: 12 Gauge, IVS, Wordsync/Bytesync and Emplant
 The Emplant SCSI adapter has been reported by a party to
