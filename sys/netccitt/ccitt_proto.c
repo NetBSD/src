@@ -1,4 +1,4 @@
-/*	$NetBSD: ccitt_proto.c,v 1.9 1998/09/13 16:21:16 christos Exp $	*/
+/*	$NetBSD: ccitt_proto.c,v 1.10 1999/01/14 01:21:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -95,6 +95,6 @@ struct protosw ccittsw[] = {
 };
 
 struct domain ccittdomain =
-	{ AF_CCITT, "ccitt", 0, 0, 0, ccittsw,
+	{ PF_CCITT, "ccitt", 0, 0, 0, ccittsw,
 		&ccittsw[sizeof(ccittsw)/sizeof(ccittsw[0])], 0,
 		rn_inithead, 32, sizeof (struct sockaddr_x25) };
