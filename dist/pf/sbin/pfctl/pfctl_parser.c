@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_parser.c,v 1.2 2004/06/22 15:16:30 itojun Exp $	*/
+/*	$NetBSD: pfctl_parser.c,v 1.3 2004/06/24 11:05:10 hannken Exp $	*/
 /*	$OpenBSD: pfctl_parser.c,v 1.194.2.1 2004/05/05 04:00:50 brad Exp $ */
 
 /*
@@ -593,7 +593,7 @@ print_status(struct pf_status *s, int opts)
 		    s->src_nodes, "");
 		for (i = 0; i < SCNT_MAX; i++) {
 			printf("  %-25s %14lld ", pf_scounters[i],
-				    s->scounters[i]);
+				    (unsigned long long)s->scounters[i]);
 			if (runtime > 0)
 				printf("%14.1f/s\n",
 				    (double)s->scounters[i] / (double)runtime);
