@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.53 1998/09/02 19:17:15 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.54 1998/09/30 20:17:29 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -173,7 +173,7 @@ ENTRY_NOPROFILE(sigcode)
 	addr	SIGF_SC(sp),tos		/* scp (the call may have clobbered */
 					/* the copy at SIGF_SCP(sp)). */
 	movqd	0,tos			/* Push a fake return address. */
-	movd	SYS_sigreturn,r0
+	movd	SYS___sigreturn14,r0
 	svc
 	movd	0,0			/* Illegal instruction. */
 GLOBAL(esigcode)
