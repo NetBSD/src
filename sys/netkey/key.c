@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.106 2003/11/11 21:41:11 drochner Exp $	*/
+/*	$NetBSD: key.c,v 1.107 2003/11/27 18:26:46 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.106 2003/11/11 21:41:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.107 2003/11/27 18:26:46 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2619,6 +2619,7 @@ key_spdexpire(sp)
 	mtod(result, struct sadb_msg *)->sadb_msg_len =
 	    PFKEY_UNIT64(result->m_pkthdr.len);
 
+	splx(s);
 	return key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
 
  fail:
