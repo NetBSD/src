@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.37 2002/09/20 06:02:25 mycroft Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.38 2002/09/20 19:48:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.37 2002/09/20 06:02:25 mycroft Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.38 2002/09/20 19:48:58 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -599,7 +599,7 @@ main(argc, argv)
 		set[0].events = POLLIN;
 		connect_type_cnt++;
 	} else
-		set[0].events = 0;
+		set[0].fd = -1;
 
 	if (tcpflag && ip6flag) {
 		if ((tcp6sock = socket(ai_tcp6->ai_family, ai_tcp6->ai_socktype,
@@ -633,7 +633,7 @@ main(argc, argv)
 		set[1].events = POLLIN;
 		connect_type_cnt++;
 	} else
-		set[1].events = 0;
+		set[1].fd = -1;
 
 #ifdef notyet
 	/* Now set up the master server socket waiting for tp4 connections. */
@@ -674,7 +674,7 @@ main(argc, argv)
 		set[2].events = POLLIN;
 		connect_type_cnt++;
 	} else
-		set[2].events = 0;
+		set[2].fd = -1;
 
 	/* Now set up the master server socket waiting for tpip connections. */
 	if (tpipflag) {
@@ -712,10 +712,10 @@ main(argc, argv)
 		set[3].events = POLLIN;
 		connect_type_cnt++;
 	} else
-		set[3].events = 0;
+		set[3].fd = -1;
 #else
-	set[2].events = 0;
-	set[3].events = 0;
+	set[2].fd = -1;
+	set[3].fd = -1;
 #endif /* notyet */
 
 	if (connect_type_cnt == 0)
@@ -734,6 +734,7 @@ main(argc, argv)
 				exit(1);
 			}
 		}
+
 		if (set[0].revents & POLLIN) {
 			len = sizeof(inetpeer);
 			if ((msgsock = accept(tcpsock,
@@ -789,6 +790,7 @@ main(argc, argv)
 			nfssvc(NFSSVC_ADDSOCK, &nfsdargs);
 			(void)close(msgsock);
 		}
+
 		if (set[3].revents & POLLIN) {
 			len = sizeof(inetpeer);
 			if ((msgsock = accept(tpipsock,
