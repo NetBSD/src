@@ -1,15 +1,15 @@
-$NetBSD: README.files,v 1.3 1995/12/21 02:40:49 cgd Exp $
+$NetBSD: README.files,v 1.4 1996/04/25 13:09:31 cgd Exp $
 
 README.files			This list.
 
-Snapshots are organized by release, numbered by year, month, and date, in
-directories with names of the form "YYMMDD".
+Snapshots are organized by release.  Releases are numbered by year, month,
+and day, in directories with names of the form "YYMMDD".
 
 In each directory:
 
 README_FIRST			Important last-minute notes about the snapshot.
-README				Installation notes; probably incomplete.
-STATUS				Status of NetBSD/Alpha.
+README				Installation notes; incomplete.
+STATUS				Status of NetBSD/Alpha, supported hardware list.
 TODO.users			Things that I think users could do to help out.
 
 bin/				Directory with binaries for this snapshot.
@@ -29,8 +29,8 @@ src/				Directory with sources for this snapshot.
 	X11R6-XF86-3.1.2-diffs.gz
 				Diffs from XFree86 3.1.2 used to make the
 				X11 binaries in the distribution.
+				X11 sources should be placed in
+				/usr/alphasrc/xc.
 	cygnus.tar.gz		Toolchain (gcc, gas, ld, etc.) sources
 				used to build the compiler toolchain.
-	sys.tar.gz		Kernel sources.
-	userland-diffs.gz	Diffs from the NetBSD-current user-land
-				sources used to build the distribution.
+				Should be untarred into /usr/alphasrc/cygnus.
