@@ -1,5 +1,5 @@
-.\" $NetBSD: amidisplaycc.4,v 1.5 2002/01/15 01:12:34 wiz Exp $
-.Dd September 3, 2000
+.\" $NetBSD: amidisplaycc.4,v 1.6 2002/03/13 19:46:01 jandberg Exp $
+.Dd February 4, 2002
 .Dt AMIDISPLAYCC 4 amiga
 .Sh NAME
 .Nm amidisplaycc
@@ -28,42 +28,30 @@ What it does support is hilite (bold), underline, reverse and
 foreground/background colors.
 .Pp
 The number of virtual screens is limited only by
-the available chip memory. Each virtual screen can have a
-different display mode. The available display modes are listed
-below. Other modes can easily be added to the kernel. The default
-mode is 640x400x1.
+the available chip memory. 
+Each virtual screen can have a different display mode.
+A display mode defines the following things: height and width
+in pixels, number of colors, and the size of the font. 
+The predefined modes are listed below.
 .Bl -bullet -offset indent -compact
 .It
-640x200x1
+80x50 - display size 640x400 with 8 colors, font size 8x8
 .It
-640x200x2
+80x40 - display size 640x400 with 8 colors, font size 8x10
 .It
-640x200x3
+80x25 - display size 640x400 with 8 colors, font size 8x16
 .It
-640x200x4
-.It
-640x400x1
-.It
-640x400x2
-.It
-640x400x3
-.It
-640x400x4
-.It
-640x480x1
-.It
-640x480x2
-.It
-640x480x3
-.It
-640x480x4
+80x24 - display size 640x384 with 8 colors, font size 8x16
 .El
 .Pp
-Palette is the default palette compiled in the kernel, and currently
-cannot be changed runtime.
-.Pp
-Also, the font is the 8x8 font compiled into the kernel, and cannot
-be changed runtime.
+Fonts of width 8 are supported. Fonts can be compiled into the kernel
+by specifying "options FONT_[fontname]" in the configuration file,
+or loaded with the
+.Xr wsfontload 8
+utility runtime. 
 .Sh SEE ALSO
 .Xr wscons 4 ,
-.Xr wsdisplay 4
+.Xr wsdisplay 4 ,
+.Xr wsfont 4 ,
+.Xr wsfontload 8
+
