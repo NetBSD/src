@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-server.c,v 1.17 2002/10/01 14:07:40 itojun Exp $	*/
+/*	$NetBSD: sftp-server.c,v 1.18 2002/12/06 03:39:11 thorpej Exp $	*/
 /*
  * Copyright (c) 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -435,7 +435,7 @@ process_read(void)
 	    (unsigned long long)off, len);
 	if (len > sizeof buf) {
 		len = sizeof buf;
-		log("read change len %d", len);
+		logit("read change len %d", len);
 	}
 	fd = handle_to_fd(handle);
 	if (fd >= 0) {
@@ -488,7 +488,7 @@ process_write(void)
 			} else if (ret == len) {
 				status = SSH2_FX_OK;
 			} else {
-				log("nothing at all written");
+				logit("nothing at all written");
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.c,v 1.9 2002/10/01 14:07:31 itojun Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.10 2002/12/06 03:39:09 thorpej Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -78,10 +78,10 @@ hostfile_check_key(int bits, Key *key, const char *host, const char *filename, i
 	if (key == NULL || key->type != KEY_RSA1 || key->rsa == NULL)
 		return 1;
 	if (bits != BN_num_bits(key->rsa->n)) {
-		log("Warning: %s, line %d: keysize mismatch for host %s: "
+		logit("Warning: %s, line %d: keysize mismatch for host %s: "
 		    "actual %d vs. announced %d.",
 		    filename, linenum, host, BN_num_bits(key->rsa->n), bits);
-		log("Warning: replace %d with %d in %s, line %d.",
+		logit("Warning: replace %d with %d in %s, line %d.",
 		    bits, BN_num_bits(key->rsa->n), filename, linenum);
 	}
 	return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshlogin.c,v 1.7 2002/10/01 14:07:48 itojun Exp $	*/
+/*	$NetBSD: sshlogin.c,v 1.8 2002/12/06 03:39:13 thorpej Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -149,7 +149,7 @@ record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
 		if (fd >= 0) {
 			lseek(fd, (off_t) ((long) uid * sizeof(ll)), SEEK_SET);
 			if (write(fd, &ll, sizeof(ll)) != sizeof(ll))
-				log("Could not write %.100s: %.100s",
+				logit("Could not write %.100s: %.100s",
 				    _PATH_LASTLOG, strerror(errno));
 			close(fd);
 		}
@@ -175,17 +175,17 @@ record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
 		/* XXX: It would be better if we had sockaddr_storage here */
 		memcpy(&ux.ut_ss, addr, sizeof(*addr));
 		if (pututxline(&ux) == NULL)
-			log("could not add utmpx line: %.100s",
+			logit("could not add utmpx line: %.100s",
 			    strerror(errno));
 	} else {
 		if ((uxp = getutxline(&ux)) == NULL)
-			log("could not find utmpx line for %.100s",
+			logit("could not find utmpx line for %.100s",
 			    ttyname);
 		uxp->ut_type = DEAD_PROCESS;
 		uxp->ut_tv = tv;
 		/* XXX: we don't record exit info yet */
 		if (pututxline(&ux) == NULL)
-			log("could not replace utmpx line: %.100s",
+			logit("could not replace utmpx line: %.100s",
 			    strerror(errno));
 	}
 	endutxent();
