@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.312 2000/03/16 15:05:18 ad Exp $
+#	$NetBSD: GENERIC,v 1.313 2000/03/19 22:32:59 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.312 $"
+#ident 		"GENERIC-$Revision: 1.313 $"
 
 maxusers	32		# estimated number of users
 
@@ -366,6 +366,7 @@ uha*	at eisa? slot ?			# UltraStor 24f SCSI
 
 # PCMCIA SCSI controllers
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
+esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
 
 # ISA Plug-and-Play SCSI controllers
 aha*	at isapnp? 			# Adaptec AHA-154[02
