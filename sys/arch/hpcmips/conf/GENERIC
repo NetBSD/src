@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110 2002/03/10 10:13:31 takemura Exp $
+# $NetBSD: GENERIC,v 1.111 2002/03/22 09:18:08 takemura Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
-#ident 		"GENERIC-$Revision: 1.110 $"
+#ident 		"GENERIC-$Revision: 1.111 $"
 
 maxusers	16
 
@@ -319,6 +319,10 @@ vrc4172gpio0 at vrgiu? platform FUJITSU_PENCENTRA_130 addr 0x15001080 size 0x4a 
 vrisab5	at vrc4172gpio0 isaportoffset 0x1000000
 isa5	at vrisab5
 pcic0	at isa5 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
+vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform FUJITSU_PENCENTRA_130
+pci*	at vrc4172pci?
+hpcioman5 at vrc4172gpio0 platform FUJITSU_PENCENTRA_130
+hpcin*	at hpcioman5 evtype PCIINTR id PCIINTR_00_00_01 port 7 level 0 connect 1
 
 #
 # SigmarionII
