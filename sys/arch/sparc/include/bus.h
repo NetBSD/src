@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.19 2000/05/23 11:39:57 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.20 2000/06/21 13:41:23 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -642,7 +642,7 @@ bus_space_read_region_2(t, h, o, a, c)
 	u_int16_t		*a;
 {
 	for (; c; a++, c--, o+=2)
-		*a = bus_space_read_1(t, h, o);
+		*a = bus_space_read_2(t, h, o);
 }
 extern __inline__ void
 bus_space_read_region_4(t, h, o, a, c)
@@ -652,7 +652,7 @@ bus_space_read_region_4(t, h, o, a, c)
 	u_int32_t		*a;
 {
 	for (; c; a++, c--, o+=4)
-		*a = bus_space_read_1(t, h, o);
+		*a = bus_space_read_4(t, h, o);
 }
 extern __inline__ void
 bus_space_read_region_8(t, h, o, a, c)
@@ -662,7 +662,7 @@ bus_space_read_region_8(t, h, o, a, c)
 	u_int64_t		*a;
 {
 	for (; c; a++, c--, o+=8)
-		*a = bus_space_read_1(t, h, o);
+		*a = bus_space_read_8(t, h, o);
 }
 
 /*
