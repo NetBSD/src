@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.89 2004/09/17 23:30:22 mycroft Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.90 2004/09/17 23:43:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -624,9 +624,8 @@ struct scsi_quirk_inquiry_pattern {
 
 #ifdef _KERNEL
 void	scsipi_init(void);
-int	scsipi_command(struct scsipi_periph *, struct scsipi_xfer *,
-	    struct scsipi_generic *, int, u_char *, int,
-	    int, int, struct buf *, int);
+int	scsipi_command(struct scsipi_periph *, struct scsipi_generic *, int,
+	    u_char *, int, int, int, struct buf *, int);
 void	scsipi_create_completion_thread(void *);
 caddr_t	scsipi_inqmatch(struct scsipi_inquiry_pattern *, caddr_t,
 	    int, int, int *);
