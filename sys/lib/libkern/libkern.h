@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.27 1999/09/10 14:05:40 tron Exp $	*/
+/*	$NetBSD: libkern.h,v 1.28 1999/11/29 23:12:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -154,6 +154,10 @@ void	 __assert __P((const char *, const char *, int, const char *))
 int	 bcmp __P((const void *, const void *, size_t));
 void	 bzero __P((void *, size_t));
 int	 ffs __P((int));
+u_int32_t
+	 inet_addr __P((const char *));
+char	*intoa __P((u_int32_t));
+#define inet_ntoa(a) intoa((a).s_addr)
 void	*memchr __P((const void *, int, size_t));
 int	 memcmp __P((const void *, const void *, size_t));
 void	*memcpy __P((void *, const void *, size_t));
@@ -168,10 +172,8 @@ char	*strchr __P((const char *, int));
 int	 strcmp __P((const char *, const char *));
 char	*strcpy __P((char *, const char *));
 size_t	 strlen __P((const char *));
+int	 strncasecmp __P((const char *, const char *, size_t));
 int	 strncmp __P((const char *, const char *, size_t));
 char	*strncpy __P((char *, const char *, size_t));
 char	*strrchr __P((const char *, int));
-int	 strncasecmp __P((const char *, const char *, size_t));
-u_int32_t inet_addr __P((const char *));
-char *intoa __P((u_int32_t));
-#define inet_ntoa(a) intoa((a).s_addr)
+u_long	 strtoul __P((const char *, char **, int));
