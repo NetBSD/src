@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.522 2003/04/05 16:43:47 lha Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.523 2003/04/11 02:50:07 explorer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.519 2003/04/05 16:41:42 lha Exp 
+ *	NetBSD: pcidevs,v 1.520 2003/04/11 02:49:40 explorer Exp 
  */
 
 /*
@@ -1898,6 +1898,7 @@
 #define	PCI_PRODUCT_PROMISE_ULTRA66_0	0x0d38		/* Ultra66/ATA Bus Master IDE Accelerator */
 #define	PCI_PRODUCT_PROMISE_MBULTRA133	0x1275		/* Ultra133/ATA Bus Master IDE Accelerator (MB) */
 #define	PCI_PRODUCT_PROMISE_SATA150TX2PLUS	0x3376		/* Serial ATA/150 TX2plus Bus Master IDE Accelerator */
+#define	PCI_PRODUCT_PROMISE_SATA150TX4	0x3318		/* Serial ATA/150 TX4 Controller */
 #define	PCI_PRODUCT_PROMISE_ULTRA100	0x4d30		/* Ultra100/ATA Bus Master IDE Accelerator */
 #define	PCI_PRODUCT_PROMISE_ULTRA33	0x4d33		/* Ultra33/ATA Bus Master IDE Accelerator */
 #define	PCI_PRODUCT_PROMISE_ULTRA66	0x4d38		/* Ultra66/ATA Bus Master IDE Accelerator */
