@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 1999/03/31 07:23:27 simonb Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 1999/04/11 04:25:47 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -78,17 +78,20 @@
 #define PMAX_BOOT_ECOFF
 #define PMAX_BOOT_ELF
 
+#include <stand.h>
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <stand.h>
 #include <machine/dec_prom.h>
+#include <lib/libkern/libkern.h>
 
+#include "common.h"
 #include "bootinfo.h"
-#include "byteswap.h"
 #include "loadfile.h"
 
 extern	char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
+
+int main __P((int, char **));
 
 /*
  * This gets arguments from the PROM, calls other routines to open
@@ -103,7 +106,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register char *cp;
+	char *cp;
 	int entry;
 	u_long marks[MARK_MAX];
 	struct btinfo_symtab bi_syms;
@@ -127,7 +130,8 @@ main(argc, argv)
 
 	marks[MARK_START] = 0;
 	if (loadfile(cp, marks, LOAD_ALL) == -1)
-		return 0;
+		goto fail;
+
 	entry = marks[MARK_ENTRY];
 	bi_syms.nsym = marks[MARK_NSYM];
 	bi_syms.ssym = marks[MARK_SYM];
@@ -141,4 +145,8 @@ main(argc, argv)
 	else
 		startprog(entry, entry, argc, argv, DEC_PROM_MAGIC,
 		    callv, BOOTINFO_MAGIC, BOOTINFO_ADDR);
+
+fail:
+	(void)printf("Boot failed!  Halting...\n");
+	return (0);
 }
