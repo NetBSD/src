@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.19 1999/01/08 11:19:57 augustss Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.20 1999/01/25 01:09:13 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.19 1999/01/08 11:18:38 augustss Exp 
+ *	NetBSD: usbdevs,v 1.20 1999/01/25 01:02:59 augustss Exp 
  */
 
 /*
@@ -154,6 +154,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    "U.S.Robotics 56000 Voice USB Modem",
 	},
 	{
+	    USB_VENDOR_KONICA, USB_PRODUCT_KONICA_CAMERA,
+	    0,
+	    "Konica Corporation",
+	    "Digital Color Camera",
+	},
+	{
 	    USB_VENDOR_SHUTTLE, USB_PRODUCT_SHUTTLE_EUSB,
 	    0,
 	    "Shuttle Technology",
@@ -224,6 +230,18 @@ struct usb_knowndev usb_knowndevs[] = {
 	    0,
 	    "ADS Technologies",
 	    "Ethernet adapter",
+	},
+	{
+	    USB_VENDOR_ENTREGA, USB_PRODUCT_ENTREGA_CENTRONICS,
+	    0,
+	    "Entrega",
+	    "Centronics connector",
+	},
+	{
+	    USB_VENDOR_ENTREGA, USB_PRODUCT_ENTREGA_SERIAL,
+	    0,
+	    "Entrega",
+	    "DB25 Serial connector",
 	},
 	{
 	    USB_VENDOR_PLX, USB_PRODUCT_PLX_TESTBOARD,
@@ -334,6 +352,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    USB_VENDOR_KONICA, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "Konica Corporation",
+	    NULL,
+	},
+	{
 	    USB_VENDOR_SHUTTLE, 0,
 	    USB_KNOWNDEV_NOPROD,
 	    "Shuttle Technology",
@@ -403,6 +427,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    USB_VENDOR_PLX, 0,
 	    USB_KNOWNDEV_NOPROD,
 	    "PLX",
+	    NULL,
+	},
+	{
+	    USB_VENDOR_ENTREGA, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "Entrega",
 	    NULL,
 	},
 	{
