@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 1998/07/17 19:12:48 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 1998/08/04 19:02:19 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -1487,173 +1487,145 @@ pmap_deactivate(p)
 
 
 /*
- * void pmap_zero_page(vm_offset_t phys)
+ * pmap_clean_page()
  *
- * zero fill the specific physical page. To do this the page must be
- * mapped into the virtual memory. Then bzero can be used to zero it.
+ * This is a local function used to work out the best strategy to clean
+ * a single page referenced by its entry in the PV table. It's used by
+ * pmap_copy_page, pmap_zero page and maybe some others later on.
+ *
+ * Its policy is effectively:
+ *  o If there are no mappings, we don't bother doing anything with the cache.
+ *  o If there is one mapping, we clean just that page.
+ *  o If there are multiple mappings, we clean the entire cache.
+ *
+ * So that some functions can be further optimised, it returns 0 if it didn't
+ * clean the entire cache, or 1 if it did.
+ *
+ * XXX One bug in this routine is that if the pv_entry has a single page
+ * mapped at 0x00000000 a whole cache clean will be performed rather than
+ * just the 1 page. Since this should not occur in everyday use and if it does
+ * it will just result in not the most efficient clean for the page.
  */
- 
+static int
+pmap_clean_page(pv)
+	struct pv_entry *pv;
+{
+	int s;
+	int cache_needs_cleaning = 0;
+	vm_offset_t page_to_clean = 0;
+
+	if (!pv)
+		return 0;
+
+	/* Go to splimp() so we get exclusive lock for a mo */
+	s = splimp();
+	if (pv->pv_pmap) {
+		cache_needs_cleaning = 1;
+		if (!pv->pv_next)
+			page_to_clean = pv->pv_va;
+	}
+	splx(s);
+
+	/* Do cache ops outside the splimp. */
+	if (page_to_clean)
+		cpu_cache_purgeID_rng(page_to_clean, NBPG);
+	else {
+		if (cache_needs_cleaning) {
+			cpu_cache_purgeID();
+			return 1;
+		}
+	}
+	return 0;
+}
+
+/*
+ * pmap_find_pv()
+ *
+ * This is a local function that finds a PV entry for a given physical page.
+ * This is a common op, and this function removes loads of ifdefs in the code.
+ */
+static __inline struct pv_entry *
+pmap_find_pv(phys)
+	vm_offset_t phys;
+{
+	struct pv_entry *pv = 0;
+
+	if (pmap_initialized) {
+#if defined(MACHINE_NEW_NONCONTIG)
+		int bank, off;
+
+		if ((bank = vm_physseg_find(atop(phys), &off)) == -1)
+			panic("pmap_find_pv: not a real page, phys=%lx\n",
+			    phys);
+		pv = &vm_physmem[bank].pmseg.pvent[off];
+#else
+		pv = &pv_table[pmap_page_index(phys)];
+#endif
+	}
+	return pv;
+}
+
+/*
+ * pmap_zero_page()
+ * 
+ * Zero a given physical page by mapping it at a page hook point.
+ * In doing the zero page op, the page we zero is mapped cachable, as with
+ * StrongARM accesses to non-cached pages are non-burst making writing
+ * _any_ bulk data very slow.
+ */
 void
 pmap_zero_page(phys)
 	vm_offset_t phys;
 {
-	int s;
 	struct pv_entry *pv;
-	vm_offset_t addr = 0;
-#if defined(MACHINE_NEW_NONCONTIG)
-	int bank, off;
-#else
-	int pind;
-#endif
 
-	PDEBUG(0, printf("pmap_zero_page(pa=%lx)", phys));
+	/* Get an entry for this page, and clean it it. */
+	pv = pmap_find_pv(phys);
+	pmap_clean_page(pv);
 
-	if (pmap_initialized) {
-#if defined(MACHINE_NEW_NONCONTIG)
-		if ((bank = vm_physseg_find(atop(phys), &off)) == -1)
-			panic("pmap_zero_page: not a real page, phys=%lx\n",
-			    phys);
-		pv = &vm_physmem[bank].pmseg.pvent[off];
-#else
-		pind = pmap_page_index(phys);
-#ifdef DIAGNOSTIC
-		if (pind == -1)
-			panic("pmap_zero_page: pind=-1 phys=%lx\n", phys);
-#endif	/* DIAGNOSTIC */
-		pv = &pv_table[pind];
-#endif
-	} else
-		pv = NULL;
-	s = splimp();
-	if (pv) {
-		if (pv) {
-			if (pv->pv_pmap) {
-				if (pv->pv_next)
-					pv = NULL;
-				else
-					addr = pv->pv_va;
-			} else
-				addr = 0;
-		}
-	}
-	(void)splx(s);
-	if (pv == NULL)
-		cpu_cache_purgeID();	/* Page may have dirty cache entries */
-	else if (addr)
-		cpu_cache_purgeID_rng(addr, NBPG);	/* Clean the page */
-
-	/* Hook the physical page into the memory at our special hook point */
+	/*
+	 * Hook in the page, zero it, and purge the cache for that
+	 * zeroed page. Invalidate the TLB as needed.
+	 */
 	*page_hook0.pte = L2_PTE(phys & PG_FRAME, AP_KRW);
-
-	/* Flush the tlb - eventually this can be a purge tlb */
 	cpu_tlb_flushD_SE(page_hook0.va);
-
-	/* Zero the memory */
 	bzero_page(page_hook0.va);
-
 	cpu_cache_purgeD_rng(page_hook0.va, NBPG);
-	drain_writebuf();
 }
 
-
 /*
- * void pmap_copy_page(vm_offset_t src, vm_offset_t dest)
+ * pmap_copy_page()
  *
- * pmap_copy_page copies the specified page by mapping it into virtual
- * memory and using bcopy to copy its contents.
+ * Copy one physical page into another, by mapping the pages into
+ * hook points. The same comment regarding cachability as in
+ * pmap_zero_page also applies here.
  */
- 
 void
 pmap_copy_page(src, dest)
 	vm_offset_t src;
 	vm_offset_t dest;
 {
-	int s;
-	struct pv_entry *spv, *dpv;
-	vm_offset_t saddr = 0;
-	vm_offset_t daddr = 0;
-#if defined(MACHINE_NEW_NONCONTIG)
-	int bank, off;
-#else
-	int pind;
-#endif
+	struct pv_entry *src_pv, *dest_pv;
+	
+	/* Get PV entries for the pages, and clean them if needed. */
+	src_pv = pmap_find_pv(src);
+	dest_pv = pmap_find_pv(dest);
+	if (!pmap_clean_page(src_pv))
+		pmap_clean_page(dest_pv);
 
-	PDEBUG(-1, printf("pmap_copy_pag(src=P%lx, dest=P%lx)\n",
-	    src, dest));
-
-	cpu_cache_cleanD();	/* Page may have dirty cache entries */
-
-	if (pmap_initialized) {
-#if defined(MACHINE_NEW_NONCONTIG)
-		if ((bank = vm_physseg_find(atop(src), &off)) == -1)
-			panic("pmap_zero_page: not a real page, src=%lx\n",
-			    src);
-		spv = &vm_physmem[bank].pmseg.pvent[off];
-		if ((bank = vm_physseg_find(atop(dest), &off)) == -1)
-			panic("pmap_zero_page: not a real page, src=%lx\n",
-			    dest);
-		dpv = &vm_physmem[bank].pmseg.pvent[off];
-#else
-		pind = pmap_page_index(src);
-#ifdef DIAGNOSTIC
-		if (pind == -1)
-			panic("pmap_zero_page: pind=-1 phys=%lx\n", src);
-#endif	/* DIAGNOSTIC */
-		spv = &pv_table[pind];
-		pind = pmap_page_index(dest);
-#ifdef DIAGNOSTIC
-		if (pind == -1)
-			panic("pmap_zero_page: pind=-1 phys=%lx\n", dest);
-#endif	/* DIAGNOSTIC */
-		dpv = &pv_table[pind];
-#endif
-	} else {
-		spv = dpv = NULL;
-	}
-
-	s = splimp();
-	if (spv) {
-		if (spv->pv_pmap) {
-			if (spv->pv_next)
-				spv = NULL;
-			else
-				saddr = spv->pv_va;
-		} else
-			saddr = 0;
-	}
-	if (dpv) {
-		if (dpv->pv_pmap) {
-			if (dpv->pv_next)
-				dpv = NULL;
-			else
-				daddr = dpv->pv_va;
-		} else
-			daddr = 0;
-	}
-	(void)splx(s);
-	if (spv == NULL || dpv == NULL)
-		cpu_cache_purgeID();	/* Page may have dirty cache entries */
-	else if (saddr)
-		cpu_cache_purgeID_rng(saddr, NBPG);	/* Clean the page */
-	else if (daddr)
-		cpu_cache_purgeID_rng(daddr, NBPG);	/* Clean the page */
-
-	/* Hook the physical page into the memory at our special hook point */
+	/*
+	 * Map the pages into the page hook points, copy them, and purge
+	 * the cache for the appropriate page. Invalidate the TLB
+	 * as required.
+	 */
 	*page_hook0.pte = L2_PTE(src & PG_FRAME, AP_KRW);
 	*page_hook1.pte = L2_PTE(dest & PG_FRAME, AP_KRW);
-
-	/* Flush the tlb - eventually this can be a purge tlb */
 	cpu_tlb_flushD_SE(page_hook0.va);
 	cpu_tlb_flushD_SE(page_hook1.va);
-
-	/* Copy the memory */
 	bcopy_page(page_hook0.va, page_hook1.va);
-
 	cpu_cache_purgeD_rng(page_hook0.va, NBPG);
 	cpu_cache_purgeD_rng(page_hook1.va, NBPG);
-	drain_writebuf();
 }
-
 
 /*
  * int pmap_next_phys_page(vm_offset_t *addr)
@@ -1793,109 +1765,183 @@ pmap_page_index(pa)
 }
 #endif	/* !MACHINE_NEW_NONCONTIG */
 
+/*
+ * pmap_remove()
+ *
+ * pmap_remove is responsible for nuking a number of mappings for a range
+ * of virtual address space in the current pmap. To do this efficiently
+ * is interesting, because in a number of cases a wide virtual address
+ * range may be supplied that contains few actual mappings. So, the
+ * optimisations are:
+ *  1. Try and skip over hunks of address space for which an L1 entry
+ *     does not exist.
+ *  2. Build up a list of pages we've hit, up to a maximum, so we can
+ *     maybe do just a partial cache clean. This path of execution is
+ *     complicated by the fact that the cache must be flushed _before_
+ *     the PTE is nuked, being a VAC :-)
+ *  3. Maybe later fast-case a single page, but I don't think this is
+ *     going to make _that_ much difference overall.
+ */
+
+#define PMAP_REMOVE_CLEAN_LIST_SIZE	3
+
 void
 pmap_remove(pmap, sva, eva)
-	struct pmap *pmap;
+	pmap_t pmap;
 	vm_offset_t sva;
 	vm_offset_t eva;
 {
-	pt_entry_t *pte = NULL;
+	int cleanlist_idx = 0;
+	struct pagelist {
+		vm_offset_t va;
+		pt_entry_t *pte;
+	} cleanlist[PMAP_REMOVE_CLEAN_LIST_SIZE];
+	pt_entry_t *pte = 0;
 	vm_offset_t pa;
-#if defined(MACHINE_NEW_NONCONTIG)
-	int bank, off;
-#else
-	int pind;
-#endif
-	int flush = 0;
+	int pmap_active;
 
-	/*
-	 * Make sure pmap is valid. -dct
-	 */
-	if (pmap == NULL)
+	/* Exit quick if there is no pmap */
+	if (!pmap)
 		return;
 
-	cpu_cache_cleanID_rng(sva, (eva - sva));
-
-	PDEBUG(0, printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n",
-	    pmap, sva, eva));
+	PDEBUG(0, printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n", pmap, sva, eva));
 
 	sva &= PG_FRAME;
 	eva &= PG_FRAME;
 
-	/*
-	 * We need to acquire a pointer to a page table page before entering
-	 * the following loop.
-	 */
-
+	/* Get a page table pointer */
 	while (sva < eva) {
 		pte = pmap_pte(pmap, sva);
-		if (pte) break;
+		if (pte)
+			break;
 		sva = (sva & PD_MASK) + NBPD;
 	}
 
+	/* Note if the pmap is active thus require cache and tlb cleans */
+	if ((curproc && curproc->p_vmspace->vm_map.pmap == pmap)
+	    || (pmap == kernel_pmap))
+		pmap_active = 1;
+	else
+		pmap_active = 0;
+
+	/* Now loop along */
 	while (sva < eva) {
-		/* only check once in a while */
-		if ((sva & PT_MASK) == 0) {
+		/* Check if we can move to the next PDE (l1 chunk) */
+		if (!(sva & PT_MASK))
 			if (!pmap_pde_v(pmap_pde(pmap, sva))) {
-				/* We can race ahead here, to the next pde. */
-				 sva += NBPD;
-				 pte += arm_byte_to_page(NBPD);
-				 continue;
-			 }
-		}
+				sva += NBPD;
+				pte += arm_byte_to_page(NBPD);
+				continue;
+			}
 
-		if (!pmap_pte_v(pte))
-			goto next;
-
-		flush = 1;
-
-		/*
-		 * Update statistics
-		 */
-		pmap->pm_stats.resident_count--;
-
-		pa = pmap_pte_pa(pte);
-
-		/*
-		 * Invalidate the PTEs.
-		 * XXX: should cluster them up and invalidate as many
-		 * as possible at once.
-		 */
-
-		PDEBUG(10, printf("remove: inv pte at %p(%x) ", pte, *pte));
-
+		/* We've found a valid PTE, so this page of PTEs has to go. */
+		if (pmap_pte_v(pte)) {
 #if defined(MACHINE_NEW_NONCONTIG)
-		if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
-			int flags;
-
-			flags = pmap_remove_pv(pmap, sva,
-			    &vm_physmem[bank].pmseg.pvent[off]);
-			vm_physmem[bank].pmseg.attrs[off] |= flags & (PT_M | PT_H);
-			if (flags & PT_W)
-				pmap->pm_stats.wired_count--;
-
-		}
+			int bank, off;
 #else
-		if ((pind = pmap_page_index(pa)) != -1) {
-			int flags;
-
-			flags = pmap_remove_pv(pmap, sva, &pv_table[pind]);
-			if (flags & PT_W)
-				pmap->pm_stats.wired_count--;
-			pmap_attributes[pind] |= flags & (PT_M | PT_H);
-		}
+			int pind;
 #endif
+			/* Update statistics */
+			pmap->pm_stats.resident_count--;
 
-		*pte = 0;
-next:
+			/*
+			 * Add this page to our cache remove list, if we can.
+			 * If, however the cache remove list is totally full,
+			 * then do a complete cache invalidation taking note
+			 * to backtrack the PTE table beforehand, and ignore
+			 * the lists in future because there's no longer any
+			 * point in bothering with them (we've paid the
+			 * penalty, so will carry on unhindered). Otherwise,
+			 * when we fall out, we just clean the list.
+			 */
+			if (pte) {
+				PDEBUG(10, printf("remove: inv pte at %p(%x) ", pte, *pte));
+				pa = pmap_pte_pa(pte);
+
+				if (cleanlist_idx < PMAP_REMOVE_CLEAN_LIST_SIZE) {
+					/* Add to the clean list. */
+					cleanlist[cleanlist_idx].pte = pte;
+					cleanlist[cleanlist_idx].va = sva;
+					cleanlist_idx++;
+				} else if (cleanlist_idx == PMAP_REMOVE_CLEAN_LIST_SIZE) {
+					int cnt;
+
+					/* Nuke everything if needed. */
+					if (pmap_active) {
+						cpu_cache_purgeID();
+						cpu_tlb_flushID();
+					}
+
+					/*
+					 * Roll back the previous PTE list,
+					 * and zero out the current PTE.
+					 */
+					for (cnt = 0; cnt < PMAP_REMOVE_CLEAN_LIST_SIZE; cnt++)
+						*cleanlist[cnt].pte = 0;
+					*pte = 0;
+					cleanlist_idx++;
+				} else {
+					/*
+					 * We've already nuked the cache and
+					 * TLB, so just carry on regardless,
+					 * and we won't need to do it again
+					 */
+					*pte = 0;
+				}
+
+				/*
+				 * Update flags. In a number of circumstances,
+				 * we could cluster a lot of these and do a
+				 * number of sequential pages in one go.
+				 */
+#if defined(MACHINE_NEW_NONCONTIG)
+				if ((bank = vm_physseg_find(atop(pa), &off))
+				    != -1) {
+					int flags;
+
+					flags = pmap_remove_pv(pmap, sva,
+				    	    &vm_physmem[bank].pmseg.pvent[off]);
+					vm_physmem[bank].pmseg.attrs[off]
+					    |= flags & (PT_M | PT_H);
+					if (flags & PT_W)
+						pmap->pm_stats.wired_count--;
+
+				}
+#else
+				if ((pind = pmap_page_index(pa)) != -1) {
+					int flags;
+
+					flags = pmap_remove_pv(pmap, sva,
+					    &pv_table[pind]);
+					pmap_attributes[pind]
+					    |= flags & (PT_M | PT_H);
+					if (flags & PT_W)
+						pmap->pm_stats.wired_count--;
+				}
+#endif
+			}
+		}
 		sva += NBPG;
 		pte++;
 	}
 
-	if (flush)
-		cpu_tlb_flushID();
-}
+	/*
+	 * Now, if we've fallen through down to here, chances are that there
+	 * are less than PMAP_REMOVE_CLEAN_LIST_SIZE mappings left.
+	 */
+	if (cleanlist_idx <= PMAP_REMOVE_CLEAN_LIST_SIZE) {
+		u_int cnt;
 
+		for (cnt = 0; cnt < cleanlist_idx; cnt++) {
+			if (pmap_active) {
+				cpu_cache_purgeID_rng(cleanlist[cnt].va, NBPG);
+				*cleanlist[cnt].pte = 0;
+				cpu_tlb_flushID_SE(cleanlist[cnt].va);
+			} else
+				*cleanlist[cnt].pte = 0;
+		}
+	}
+}
 
 /*
  * Routine:	pmap_remove_all
