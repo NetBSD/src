@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.3 1999/03/26 22:50:22 mhitch Exp $	*/
+/*	$NetBSD: cbiiisc.c,v 1.4 1999/06/06 19:58:31 is Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -117,7 +117,7 @@ cbiiiscattach(pdp, dp, auxp)
 
 	sc = (struct siop_softc *)dp;
 	sc->sc_siopp = rp = ztwomap(0xf40000);
-	siopng_dump_registers(sc);
+	/* siopng_dump_registers(sc); */
 
 	/*
 	 * CTEST7 = 00
