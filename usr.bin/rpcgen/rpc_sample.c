@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_sample.c,v 1.3 1997/10/09 15:13:21 mycroft Exp $	*/
+/*	$NetBSD: rpc_sample.c,v 1.4 1997/10/11 21:01:46 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -29,27 +29,30 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)rpc_sample.c  1.1  90/08/30  (C) 1987 SMI";
-
+#else
+__RCSID("$NetBSD: rpc_sample.c,v 1.4 1997/10/11 21:01:46 christos Exp $");
+#endif
 #endif
 
 /*
  * rpc_sample.c, Sample client-server code outputter for the RPC protocol compiler
  */
 
-#include <sys/cdefs.h>
 #include <stdio.h>
 #include <string.h>
+#include "rpc_scan.h"
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
 static char RQSTP[] = "rqstp";
 
-void printarglist();
-static write_sample_client __P((char *, version_list *));
-static write_sample_server __P((definition *));
-static return_type __P((proc_list *));
+static void write_sample_client __P((char *, version_list *));
+static void write_sample_server __P((definition *));
+static void return_type __P((proc_list *));
 
 void
 write_sample_svc(def)
@@ -80,7 +83,7 @@ write_sample_clnt(def)
 }
 
 
-static
+static void
 write_sample_client(program_name, vp )
      char* program_name;
      version_list *vp;
@@ -163,7 +166,7 @@ write_sample_client(program_name, vp )
   f_print(fout, "}\n");
 }
 
-static
+static void
 write_sample_server(def)
 	definition *def;
 {
@@ -190,7 +193,7 @@ write_sample_server(def)
 			  return_type(proc);
 			else
 			  f_print(fout, "char*" );  /* cannot have void type */
-			f_print(fout, " result;\n", proc->res_type);
+			f_print(fout, " result;\n");
 			f_print(fout, 
 				"\n\t/*\n\t * insert server code here\n\t */\n\n");
 			if( !streq( proc->res_type, "void") )
@@ -205,13 +208,14 @@ write_sample_server(def)
 	}
 }
 
-static 
+static void
 return_type(plist)
 	proc_list *plist;
 {
 	ptype( plist->res_prefix, plist->res_type, 1 );
 }
 
+void
 add_sample_msg()
 {
 	f_print(fout, "/*\n");

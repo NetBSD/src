@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_hout.c,v 1.5 1997/10/09 15:13:19 mycroft Exp $	*/
+/*	$NetBSD: rpc_hout.c,v 1.6 1997/10/11 21:01:34 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -29,31 +29,37 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)rpc_hout.c 1.12 89/02/22 (C) 1987 SMI";
+#else
+__RCSID("$NetBSD: rpc_hout.c,v 1.6 1997/10/11 21:01:34 christos Exp $");
+#endif
 #endif
 
 /*
  * rpc_hout.c, Header file outputter for the RPC protocol compiler 
  */
-#include <sys/cdefs.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <err.h>
+#include "rpc_scan.h"
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static pconstdef __P((definition *));
-static pargdef __P((definition *));
-static pstructdef __P((definition *));
-static puniondef __P((definition *));
-static pprogramdef __P((definition *));
-static penumdef __P((definition *));
-static ptypedef __P((definition *));
-static pdefine __P((char *, char *));
-static puldefine __P((char *, char *));
-static define_printed __P((proc_list *, version_list *));
-static undefined2 __P((char *, char *));
-static parglist __P((proc_list *, char *));
+static void pconstdef __P((definition *));
+static void pargdef __P((definition *));
+static void pstructdef __P((definition *));
+static void puniondef __P((definition *));
+static void pdefine __P((char *, char *));
+static void puldefine __P((char *, char *));
+static int define_printed __P((proc_list *, version_list *));
+static void pprogramdef __P((definition *));
+static void parglist __P((proc_list *, char *));
+static void penumdef __P((definition *));
+static void ptypedef __P((definition *));
+static int undefined2 __P((char *, char *));
 
 /*
  * Print the C-version of an xdr definition 
@@ -107,9 +113,16 @@ print_funcdef(def)
 		f_print(fout, "\n");
 		pprogramdef(def);
 		break;
+	case DEF_CONST:
+	case DEF_TYPEDEF:
+	case DEF_ENUM:
+	case DEF_UNION:
+	case DEF_STRUCT:
+		break;
 	      }
 }
 
+void
 pxdrfuncdecl( name, pointerp )
 char* name;
 int pointerp;
@@ -129,7 +142,7 @@ int pointerp;
 }
 
 
-static
+static void
 pconstdef(def)
 	definition *def;
 {
@@ -139,7 +152,7 @@ pconstdef(def)
 /* print out the definitions for the arguments of functions in the 
    header file 
 */
-static 
+static  void
 pargdef(def)
 	definition *def;
 {
@@ -172,7 +185,7 @@ pargdef(def)
 }
 
 
-static 
+static  void
 pstructdef(def)
 	definition *def;
 {
@@ -187,7 +200,7 @@ pstructdef(def)
 	f_print(fout, "typedef struct %s %s;\n", name, name);
 }
 
-static
+static void
 puniondef(def)
 	definition *def;
 {
@@ -216,7 +229,7 @@ puniondef(def)
 	f_print(fout, "typedef struct %s %s;\n", name, name);
 }
 
-static
+static void
 pdefine(name, num)
 	char *name;
 	char *num;
@@ -224,7 +237,7 @@ pdefine(name, num)
 	f_print(fout, "#define %s %s\n", name, num);
 }
 
-static
+static void
 puldefine(name, num)
 	char *name;
 	char *num;
@@ -232,7 +245,7 @@ puldefine(name, num)
 	f_print(fout, "#define %s ((u_long)%s)\n", name, num);
 }
 
-static
+static int
 define_printed(stop, start)
 	proc_list *stop;
 	version_list *start;
@@ -249,11 +262,12 @@ define_printed(stop, start)
 			}
 		}
 	}
-	abort();
+	errx(1, "Internal error %s, %d: procedure not found\n",
+	    __FILE__, __LINE__);
 	/* NOTREACHED */
 }
 
-static
+static void
 pprogramdef(def)
 	definition *def;
 {
@@ -308,6 +322,7 @@ pprogramdef(def)
 	}
 }
 
+void
 pprocdef(proc, vp, addargtype, server_p,mode)
 	proc_list *proc;
 	version_list *vp;
@@ -334,7 +349,7 @@ pprocdef(proc, vp, addargtype, server_p,mode)
 
 
 /* print out argument list of procedure */
-static 
+static void
 parglist(proc, addargtype)
 	proc_list *proc;
 	char* addargtype;
@@ -359,7 +374,7 @@ parglist(proc, addargtype)
 	f_print(fout, "%s);\n", addargtype);
 }
 
-static
+static void
 penumdef(def)
 	definition *def;
 {
@@ -388,7 +403,7 @@ penumdef(def)
 	f_print(fout, "typedef enum %s %s;\n", name, name);
 }
 
-static
+static void
 ptypedef(def)
 	definition *def;
 {
@@ -435,6 +450,7 @@ ptypedef(def)
 	}
 }
 
+void
 pdeclaration(name, dec, tab, separator)
 	char *name;
 	declaration *dec;
@@ -492,7 +508,7 @@ pdeclaration(name, dec, tab, separator)
 	f_print(fout, separator );
 }
 
-static
+static int
 undefined2(type, stop)
 	char *type;
 	char *stop;
