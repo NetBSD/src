@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.11 2001/03/20 13:01:48 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -823,9 +823,9 @@ iop_shutdown(void *junk)
 		if ((sc->sc_flags & IOP_ONLINE) == 0)
 			continue;
 		iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_SYS_QUIESCE, IOP_ICTX,
-		    0, 30000);
+		    0, 5000);
 		iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_IOP_CLEAR, IOP_ICTX,
-		    0, 30000);
+		    0, 1000);
 	}
 
 	/* Wait.  Some boards could still be flushing, stupidly enough. */
