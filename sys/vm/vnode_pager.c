@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.30 1997/02/26 02:26:19 tls Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.31 1997/02/27 17:49:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -484,7 +484,9 @@ vnode_pager_sync(mp)
 		vp = ((vn_pager_t)pager->pg_data)->vnp_vp;
 		if (mp == (struct mount *)0 || vp->v_mount == mp) {
 			object = vm_object_lookup(pager);
-			TAILQ_INSERT_TAIL(&object_list, object, cached_list);
+			if (object != NULL)
+				TAILQ_INSERT_TAIL(&object_list, object,
+				    cached_list);
 		}
 	}
 	simple_unlock(&vnode_pager_list_lock);
