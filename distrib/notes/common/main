@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.225 2003/04/14 15:24:43 rtr Exp $
+.\"	$NetBSD: main,v 1.226 2003/05/14 14:06:06 martin Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1638,7 +1638,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Ross Harvey Ta Mt ross@netbsd.org Ta Sy alpha
 .It Ta "Jun-ichiro itojun Hagino" Ta Mt itojun@netbsd.org Ta Sy sh3
 .It Ta Ben Harris Ta Mt bjh21@netbsd.org Ta Sy acorn26
-.It Ta Eduardo Horvath Ta Mt eeh@netbsd.org Ta Sy sparc64
+.It Ta Martin Husemann Ta Mt martin@netbsd.org Ta Sy sparc64
 .It Ta Darrin Jewell Ta Mt dbj@netbsd.org Ta Sy next68k
 .It Ta S\(/oren J\(/orvang Ta Mt soren@netbsd.org Ta Sy cobalt
 .It Ta S\(/oren J\(/orvang Ta Mt soren@netbsd.org Ta Sy sgimips
@@ -1651,6 +1651,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Tohru Nishimura Ta Mt nisimura@netbsd.org Ta Sy luna68k
 .It Ta NONAKA Kimihiro Ta Mt nonaka@netbsd.org Ta Sy prep
 .It Ta Scott Reynolds Ta Mt scottr@netbsd.org Ta Sy mac68k
+.It Ta Andrey Petrov Ta Mt petrov@netbsd.org Ta Sy sparc64
 .It Ta Kazuki Sakamoto Ta Mt sakamoto@netbsd.org Ta Sy bebox
 .It Ta Noriyuki Soda Ta Mt soda@netbsd.org Ta Sy arc
 .It Ta Wolfgang Solfrank Ta Mt ws@netbsd.org Ta Sy ofppc
