@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mv.c	5.11 (Berkeley) 4/3/91";*/
-static char rcsid[] = "$Id: mv.c,v 1.4 1993/08/01 18:59:17 mycroft Exp $";
+static char rcsid[] = "$Id: mv.c,v 1.5 1993/09/22 00:34:27 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,21 +71,21 @@ main(argc, argv)
 	int ch;
 	char path[MAXPATHLEN + 1];
 
-	while (((ch = getopt(argc, argv, "-if")) != EOF))
+	while (((ch = getopt(argc, argv, "if")) != -1))
 		switch((char)ch) {
 		case 'i':
+			fflg = 0;
 			iflg = 1;
 			break;
 		case 'f':
+			iflg = 0;
 			fflg = 1;
 			break;
-		case '-':		/* undocumented; for compatibility */
-			goto endarg;
 		case '?':
 		default:
 			usage();
 		}
-endarg:	argc -= optind;
+	argc -= optind;
 	argv += optind;
 
 	if (argc < 2)
@@ -254,7 +254,8 @@ error(s)
 
 usage()
 {
-	(void)fprintf(stderr,
-"usage: mv [-if] src target;\n   or: mv [-if] src1 ... srcN directory\n");
+	(void)fprintf(stderr, 
+		"usage: mv [-fi] source_file target_file\n"
+		"       mv [-fi] source_file ... target_dir\n");
 	exit(1);
 }
