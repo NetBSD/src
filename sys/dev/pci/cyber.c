@@ -1,4 +1,4 @@
-/*	$NetBSD: cyber.c,v 1.1 2004/02/03 19:51:39 fredb Exp $	*/
+/*	$NetBSD: cyber.c,v 1.2 2004/02/04 01:58:44 fredb Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Store one "Usr" register on an SIIG Cyberserial multiport PCI card. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cyber.c,v 1.1 2004/02/03 19:51:39 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cyber.c,v 1.2 2004/02/04 01:58:44 fredb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,7 +54,7 @@ void
 write_siig10x_usrreg(pci_chipset_tag_t pc, pcitag_t tag, int usrregno,
     int high_speed)
 {
-	volatile pcireg_t curregs, newregs;
+	pcireg_t curregs, newregs;
 
 	newregs = curregs = pci_conf_read(pc, tag, SIIG10x_USR_BASE);
 
@@ -95,7 +95,7 @@ void
 write_siig20x_usrreg(pci_chipset_tag_t pc, pcitag_t tag, int usrregno,
     int high_speed)
 {
-	volatile pcireg_t curreg, newreg;
+	pcireg_t curreg, newreg;
 	int offset;
 
 	switch (usrregno) {
