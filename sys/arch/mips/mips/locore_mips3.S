@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.36 2000/06/20 02:57:17 soren Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.37 2000/06/21 19:39:32 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2467,7 +2467,7 @@ LEAF(mips3_write_config)
 	nop
 	j	ra
 	nop
-END(mips3_read_config)
+END(mips3_write_config)
 
 /*----------------------------------------------------------------------------
  *
