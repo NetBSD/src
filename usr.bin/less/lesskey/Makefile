@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/05/08 21:11:42 gwr Exp $
-
-.include "../../Makefile.inc"
+#	$NetBSD: Makefile,v 1.4 1997/10/19 03:52:31 lukem Exp $
 
 PROG=	lesskey
 SRCS=	lesskey.c version.c
