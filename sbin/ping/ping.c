@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.27 1997/03/19 12:44:08 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.28 1997/03/24 03:34:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: ping.c,v 1.27 1997/03/19 12:44:08 christos Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.28 1997/03/24 03:34:26 christos Exp $";
 #endif
 
 #include <stdio.h>
@@ -247,10 +247,6 @@ main(int argc, char *argv[])
 			options |= SO_DEBUG;
 			break;
 		case 'f':
-#ifndef sgi
-			if (getuid())
-				errx(1, "Must be superuser to flood ping");
-#endif
 			pingflags |= F_FLOOD;
 			break;
 		case 'i':		/* wait between sending packets */
@@ -340,6 +336,10 @@ main(int argc, char *argv[])
 
 	if (interval == 0)
 		interval = (pingflags & F_FLOOD) ? FLOOD_INTVL : 1.0;
+#ifndef sgi
+	if (interval < 1.0 && getuid())
+		errx(1, "Must be superuser to use < 1 sec ping interval");
+#endif
 	sec_to_timeval(interval, &interval_tv);
 
 	if (npackets != 0) {
