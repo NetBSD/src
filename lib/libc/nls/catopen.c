@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.7 1996/06/20 14:54:38 jtc Exp $	*/
+/*	$NetBSD: catopen.c,v 1.8 1996/06/20 18:47:08 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ _catopen(name, oflag)
 	char *nlspath;
 	char *lang;
 	char *s, *t;
+	const char *u;
 	nl_catd catd;
 		
 	if (name == NULL || *name == '\0')
@@ -84,26 +85,31 @@ _catopen(name, oflag)
 	do {
 		while (*s && *s != ':') {
 			if (*s == '%') {
-				switch (*(s+1)) {
+				switch (*(++s)) {
 				case 'L':	/* locale */
-					strcpy(t, lang);
-					t += strlen(lang);
-					s += 2;
+					u = lang;
+					while (*u && t < tmppath + PATH_MAX)
+						*t++ = *u++;
+					s++;
 					break;
 				case 'N':	/* name */
-					strcpy(t, name);
-					t += strlen(name);
-					s += 2;
+					u = name;
+					while (*u && t < tmppath + PATH_MAX)
+						*t++ = *u++;
+					s++;
 					break;
 				case 'l':	/* lang */
 				case 't':	/* territory */
 				case 'c':	/* codeset */
+					s++;
 					break;
 				default:
-					*t++ = *s++;
+					if (t < tmppath + PATH_MAX)
+						*t++ = *s++;
 				}
 			} else {
-				*t++ = *s++;
+				if (t < tmppath + PATH_MAX)
+					*t++ = *s++;
 			}
 		}
 
