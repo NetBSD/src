@@ -5043,7 +5043,6 @@ for machine in $build $host $target; do
 		use_collect2=yes
 		;;
 	ns32k-*-netbsd*)
-		xm_file="${xm_file} ns32k/xm-netbsd.h"
 		;;
         pdp11-*-bsd)
 		tm_file="${tm_file} pdp11/2bsd.h"
