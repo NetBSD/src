@@ -30,6 +30,7 @@
 #define	SVR4_SYS_getuid	24
 #define	SVR4_SYS_alarm	27
 #define	SVR4_SYS_fstat	28
+#define	SVR4_SYS_utime	30
 #define	SVR4_SYS_access	33
 #define	SVR4_SYS_sync	36
 #define	SVR4_SYS_kill	37
@@ -106,6 +107,7 @@
 #define	SVR4_SYS_systeminfo	139
 #define	SVR4_SYS_seteuid	141
 #define	SVR4_SYS_fchroot	153
+#define	SVR4_SYS_utimes	154
 #define	SVR4_SYS_vhangup	155
 #define	SVR4_SYS_gettimeofday	156
 #define	SVR4_SYS_getitimer	157
