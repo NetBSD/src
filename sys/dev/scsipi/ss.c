@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.2 1996/02/18 20:38:44 mycroft Exp $	*/
+/*	$NetBSD: ss.c,v 1.3 1996/02/18 20:41:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -431,7 +431,8 @@ ssioctl(dev, cmd, addr, flag, p)
 	case SCIOCGET:
 		if (ss->special->get_params) {
 			/* call special handler */
-			if ((error = (ss->special->get_params)(ss)) > 0)
+			error = (ss->special->get_params)(ss);
+			if (error)
 				return (error);
 		} else {
 			/* XXX add code for SCSI2 scanner, if any */
@@ -444,7 +445,8 @@ ssioctl(dev, cmd, addr, flag, p)
 
 		if (ss->special->set_params) {
 			/* call special handler */
-			if ((error = (ss->special->set_params)(ss, sio)) > 0)
+			error = (ss->special->set_params)(ss, sio);
+			if (error)
 				return (error);
 		} else {
 			/* XXX add code for SCSI2 scanner, if any */
@@ -454,7 +456,8 @@ ssioctl(dev, cmd, addr, flag, p)
 	case SCIOCRESTART:
 		if (ss->special->rewind_scanner ) {
 			/* call special handler */
-			if ((error = (ss->special->rewind_scanner)(ss)) > 0)
+			error = (ss->special->rewind_scanner)(ss);
+			if (error)
 				return (error);
 		} else
 			/* XXX add code for SCSI2 scanner, if any */
