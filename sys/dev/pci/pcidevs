@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.73 1998/07/27 21:34:11 tron Exp $
+$NetBSD: pcidevs,v 1.74 1998/07/27 22:58:07 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -619,8 +619,8 @@ product AVANCE2 ALG2302	0x2302	ALG2302
 product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
 
 /* Brooktree products */
-product	BROOKTREE BT848		0x0350	Brooktree Bt848 Video Capture
-product	BROOKTREE BT849		0x0351	Brooktree Bt848 Video Capture
+product	BROOKTREE BT848		0x0350	Bt848 Video Capture
+product	BROOKTREE BT849		0x0351	Bt848 Video Capture
 
 /* BusLogic products */
 product BUSLOGIC MULTIMASTER_NC	0x0140	MultiMaster NC
