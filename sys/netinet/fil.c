@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.69 2004/09/03 04:18:09 smb Exp $	*/
+/*	$NetBSD: fil.c,v 1.70 2004/09/06 09:55:13 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.69 2004/09/03 04:18:09 smb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.70 2004/09/06 09:55:13 darrenr Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.25 2004/06/30 11:26:08 darrenr Exp";
@@ -1767,6 +1767,15 @@ u_32_t pass;
 		passt = fr->fr_flags;
 
 		/*
+		 * Allowing a rule with the "keep state" flag set to match
+		 * packets that have been tagged "out of window" by the TCP
+		 * state tracking is foolish as the attempt to add a new
+		 * state entry to the table will fail.
+		 */
+		if ((passt & FR_KEEPSTATE) && (fin->fin_flx & FI_OOW))
+			continue;
+
+		/*
 		 * If the rule is a "call now" rule, then call the function
 		 * in the rule, if it exists and use the results from that.
 		 * If the function pointer is bad, just make like we ignore
@@ -2007,7 +2016,7 @@ u_32_t *passp;
 	/*
 	 * Finally, if we've asked to track state for this packet, set it up.
 	 */
-	if ((pass & FR_KEEPSTATE)  && !(fin->fin_flx & FI_OOW)) {
+	if (pass & FR_KEEPSTATE) {
 		if (fr_addstate(fin, NULL, 0) != NULL) {
 			ATOMIC_INCL(frstats[out].fr_ads);
 		} else {
@@ -3997,6 +4006,14 @@ caddr_t data;
 	else {
 		return EINVAL;
 	}
+
+	/*
+	 * Allowing a rule with both "keep state" and "with oow" is
+	 * pointless because adding a state entry to the table will
+	 * fail with the out of window (oow) flag set.
+	 */
+	if ((fp->fr_flags & FR_KEEPSTATE) && (fp->fr_flx & FI_OOW))
+		return EINVAL;
 
 	/*
 	 * If the rule is being loaded from user space, i.e. we had to copy it
