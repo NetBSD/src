@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2001/12/28 05:44:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.44 2002/01/04 19:08:04 tv Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -25,6 +25,8 @@ PROG=	ld.elf_so
 .include "$M/Makefile.inc"
 .endif
 
+CLIBOBJ!=	cd ${.CURDIR}/../../lib/libc && ${PRINTOBJDIR}
+
 SRCS+=	rtld.c reloc.c symbol.c malloc.c xmalloc.c xprintf.c debug.c \
 	map_object.c load.c search.c headers.c paths.c
 
@@ -42,7 +44,7 @@ CPPFLAGS+= -D_RTLD_SOURCE
 CPPFLAGS+= -DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"
 .endif
 
-LDADD+=	-non_shared -L${DESTDIR}${LIBDIR} -lc_pic
+LDADD+=	-L${CLIBOBJ} -L${DESTDIR}${LIBDIR} -non_shared -lc_pic
 DPADD+=	${LIBC_PIC}
 
 STRIPFLAG=
