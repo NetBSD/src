@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.729 2004/10/22 13:24:19 augustss Exp $
+# $NetBSD: mi,v 1.730 2004/10/23 13:53:06 augustss Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -655,6 +655,7 @@
 ./usr/share/man/cat4/autri.0			man-sys-catman		.cat
 ./usr/share/man/cat4/auvia.0			man-sys-catman		.cat
 ./usr/share/man/cat4/awi.0			man-sys-catman		.cat
+./usr/share/man/cat4/axe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/az.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bba.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bce.0			man-sys-catman		.cat
@@ -1239,7 +1240,6 @@
 ./usr/share/man/cat4/twe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/txp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uaudio.0			man-sys-catman		.cat
-./usr/share/man/cat4/uax.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ubsa.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ubsec.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ucom.0			man-sys-catman		.cat
@@ -2803,6 +2803,7 @@
 ./usr/share/man/man4/autri.4			man-sys-man		.man
 ./usr/share/man/man4/auvia.4			man-sys-man		.man
 ./usr/share/man/man4/awi.4			man-sys-man		.man
+./usr/share/man/man4/axe.4			man-sys-man		.man
 ./usr/share/man/man4/az.4			man-sys-man		.man
 ./usr/share/man/man4/bba.4			man-sys-man		.man
 ./usr/share/man/man4/bce.4			man-sys-man		.man
@@ -3389,7 +3390,6 @@
 ./usr/share/man/man4/twe.4			man-sys-man		.man
 ./usr/share/man/man4/txp.4			man-sys-man		.man
 ./usr/share/man/man4/uaudio.4			man-sys-man		.man
-./usr/share/man/man4/uax.4			man-sys-man		.man
 ./usr/share/man/man4/ubsa.4			man-sys-man		.man
 ./usr/share/man/man4/ubsec.4			man-sys-man		.man
 ./usr/share/man/man4/ucom.4			man-sys-man		.man
