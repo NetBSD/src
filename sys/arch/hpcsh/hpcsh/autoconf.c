@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2001/02/07 15:29:21 uch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2001/02/24 20:17:45 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,8 +65,7 @@
 #include <machine/bus.h>
 
 #include <machine/config_hook.h>
-
-void makebootdev (const char *);
+#include <machine/autoconf.h>
 
 static struct device *booted_device;
 static int booted_partition;
