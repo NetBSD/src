@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.37 2003/10/13 08:07:21 dyoung Exp $	*/
+/*	$NetBSD: wivar.h,v 1.38 2003/10/16 10:38:08 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,8 +70,6 @@ struct wi_softc	{
 	u_int16_t		sc_portnum;
 
 	/* RSSI interpretation */
-	u_int16_t		sc_min_rssi;	/* clamp sc_min_rssi < RSSI */
-	u_int16_t		sc_max_rssi;	/* clamp RSSI < sc_max_rssi */
 	u_int16_t		sc_dbm_offset;	/* dBm ~ RSSI - sc_dbm_offset */
 	u_int16_t		sc_max_datalen;
 	u_int16_t		sc_frag_thresh;
@@ -113,16 +111,11 @@ struct wi_softc	{
 /* maximum consecutive false change-of-BSSID indications */
 #define	WI_MAX_FALSE_SYNS		10	
 
-#define	WI_PRISM_MIN_RSSI	0x1b
-#define	WI_PRISM_MAX_RSSI	0x9a
-#define	WI_PRISM_DBM_OFFSET	100 /* XXX */
+#define	WI_PRISM_DBM_OFFSET	100	/* XXX */
 
-#define	WI_LUCENT_MIN_RSSI	47
-#define	WI_LUCENT_MAX_RSSI	138
 #define	WI_LUCENT_DBM_OFFSET	149
 
-#define	WI_RSSI_TO_DBM(sc, rssi) (MIN((sc)->sc_max_rssi, \
-    MAX((sc)->sc_min_rssi, (rssi))) - (sc)->sc_dbm_offset)
+#define	WI_RSSI_TO_DBM(sc, rssi) ((rssi) - (sc)->sc_dbm_offset)
 
 #define	WI_SCAN_INQWAIT			3	/* wait sec before inquire */
 #define	WI_SCAN_WAIT			5	/* maximum scan wait */
