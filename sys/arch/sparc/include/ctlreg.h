@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.18 1998/09/20 19:29:10 pk Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.19 1999/01/19 23:04:02 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -371,3 +371,15 @@
 /* [4m] TLB Replacement Control Register bits */
 #define TLBC_DISABLE	0x00000020	/* Disable replacement counter */
 #define TLBC_RCNTMASK	0x0000001f	/* Replacement counter (0-31) */
+
+
+/*
+ * The Ross Hypersparc has an Instruction Cache Control Register (ICCR)
+ * It contains an enable bit for the on-chip instruction cache and a bit
+ * that controls whether a FLUSH instruction causes an Unimplemented
+ * Flush Trap or just flushes the appropriate instruction cache line.
+ * The ICCR register is implemented as Ancillary State register number 31.
+ */
+#define HYPERSPARC_ICCR_ICE	1	/* Instruction cache enable */
+#define HYPERSPARC_ICCR_FTD	2	/* Unimpl. flush trap disable */
+#define HYPERSPARC_ASRNUM_ICCR	31	/* ICCR == ASR#31 */
