@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.51 2001/03/30 17:45:00 mycroft Exp $	*/
+/*	$NetBSD: expand.c,v 1.52 2001/09/19 06:38:19 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.51 2001/03/30 17:45:00 mycroft Exp $");
+__RCSID("$NetBSD: expand.c,v 1.52 2001/09/19 06:38:19 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -373,7 +373,10 @@ expari(flag)
 	 * have to rescan starting from the beginning since CTLESC
 	 * characters have to be processed left to right.
 	 */
-	CHECKSTRSPACE(8, expdest);
+#if INT_MAX / 1000000000 >= 10 || INT_MIN / 1000000000 <= -10
+#error "integers with more than 10 digits are not supported"
+#endif
+	CHECKSTRSPACE(12 - 2, expdest);
 	USTPUTC('\0', expdest);
 	start = stackblock();
 	p = expdest - 1;
@@ -395,7 +398,7 @@ expari(flag)
 	if (quotes)
 		rmescapes(p+2);
 	result = arith(p+2);
-	fmtstr(p, 10, "%d", result);
+	fmtstr(p, 12, "%d", result);
 
 	while (*p++)
 		;
