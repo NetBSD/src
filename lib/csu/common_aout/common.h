@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.2 1995/06/05 00:13:05 pk Exp $	*/
+/*	$NetBSD: common.h,v 1.3 1995/06/15 21:41:48 pk Exp $	*/
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
  * All rights reserved.
@@ -55,6 +55,8 @@
 extern struct _dynamic	_DYNAMIC;
 static void		__load_rtld __P((struct _dynamic *));
 extern int		__syscall __P((int, ...));
+int			_callmain __P((void));
+static char		*_strrchr __P((char *, char));
 #ifdef DEBUG
 static char		*_getenv __P((char *));
 static int		_strncmp __P((char *, char *, int));
@@ -92,8 +94,6 @@ static int		_strncmp __P((char *, char *, int));
 
 #endif /* DYNAMIC */
 
-static char		*_strrchr __P((char *, char));
-int			_callmain __P((void));
 extern int		main __P((int, char **, char **));
 #ifdef MCRT0
 extern void		monstartup __P((u_long, u_long));
@@ -104,6 +104,9 @@ char			**environ;
 int			errno;
 static char		empty[1];
 char			*__progname = empty;
+#ifndef DYNAMIC
+#define _strrchr	strrchr
+#endif
 
 extern unsigned char	etext;
 extern unsigned char	eprol asm ("eprol");
