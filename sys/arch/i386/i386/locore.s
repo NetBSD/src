@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.16 1993/10/15 13:11:24 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.17 1993/10/15 13:25:44 mycroft Exp $
  */
 
 
@@ -339,7 +339,6 @@ start:	movw	$0x1234,0x472	# warm boot
 
 	/* load base of page directory and enable mapping */
 	movl	%esi,%eax		# phys address of ptd in proc 0
- 	orl	$(I386_CR3PAT),%eax
 	movl	%eax,%cr3		# load ptd addr into mmu
 	movl	%cr0,%eax		# get control word
 	orl	$(CR0_PE|CR0_PG),%eax	# enable paging
