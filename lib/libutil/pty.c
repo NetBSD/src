@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.17 2001/05/10 01:57:47 lukem Exp $	*/
+/*	$NetBSD: pty.c,v 1.18 2002/02/02 05:48:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.17 2001/05/10 01:57:47 lukem Exp $");
+__RCSID("$NetBSD: pty.c,v 1.18 2002/02/02 05:48:31 tls Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,7 +67,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 {
 	static char line[] = "/dev/XtyXX";
 	const char *cp1, *cp2;
-	int master, slave;
+	int master, slave, tries = 0;
 	gid_t ttygid;
 	struct group *gr;
 
@@ -83,13 +83,18 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 		ttygid = (gid_t) -1;
 
 	for (cp1 = TTY_LETTERS; *cp1; cp1++) {
+		tries = 0;
+try:
 		line[8] = *cp1;
-		for (cp2 = "0123456789abcdef"; *cp2; cp2++) {
+		for (cp2 = !tries ?
+		     "ghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" :
+		     "0123456789abcdef" ; *cp2; cp2++) {
 			line[5] = 'p';
 			line[9] = *cp2;
 			if ((master = open(line, O_RDWR, 0)) == -1) {
-				if (errno == ENOENT)
-					return (-1);	/* out of ptys */
+				if ((errno == ENOENT) && tries) {
+					return (-1); 	/* out of ptys */
+				}
 			} else {
 				line[5] = 't';
 				(void) chown(line, getuid(), ttygid);
@@ -109,6 +114,10 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 					return (0);
 				}
 				(void) close(master);
+			}
+			if(!tries) {
+				tries++;
+				goto try;
 			}
 		}
 	}
