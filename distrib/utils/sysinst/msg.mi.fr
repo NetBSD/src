@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.28 1999/07/04 22:31:37 cgd Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.29 1999/07/05 12:08:09 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -702,10 +702,9 @@ message cur_distsets
 
 }
 
-/* XXX TRANSLATE */
 message cur_distsets_header
-{Distribution set   Use?
------------------- ----
+{  Composant        Installe?
+------------------ ---------
 }
 
 message cur_distsets_row
