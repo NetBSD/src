@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.47 2002/04/09 21:11:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.48 2002/04/09 21:23:16 thorpej Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -333,8 +333,8 @@ extern pt_entry_t		pte_l2_s_proto;
 #define	L2_S_PROT_W_generic	(L2_AP(AP_W))
 #define	L2_S_PROT_MASK_generic	(L2_S_PROT_U|L2_S_PROT_W)
 
-#define	L2_S_PROT_U_xscale	(L2_AP(AP_U))
-#define	L2_S_PROT_W_xscale	(L2_AP(AP_W))
+#define	L2_S_PROT_U_xscale	(L2_AP0(AP_U))
+#define	L2_S_PROT_W_xscale	(L2_AP0(AP_W))
 #define	L2_S_PROT_MASK_xscale	(L2_S_PROT_U|L2_S_PROT_W)
 
 #define	L2_CACHE_MASK_generic	(L2_B|L2_C)
@@ -350,7 +350,7 @@ extern pt_entry_t		pte_l2_s_proto;
 #define	L2_L_PROTO		(L2_TYPE_L)
 
 #define	L2_S_PROTO_generic	(L2_TYPE_S)
-#define	L2_S_PROTO_xscale	(L2_TYPE_S)
+#define	L2_S_PROTO_xscale	(L2_TYPE_XSCALE_XS)
 
 /*
  * User-visible names for the ones that vary with MMU class.
