@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.10 2002/09/21 01:07:37 oster Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.11 2002/09/23 02:40:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.10 2002/09/21 01:07:37 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.11 2002/09/23 02:40:08 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -287,7 +287,6 @@ rf_ConfigureDeclustered(
 	 * problems */
 
 	layoutPtr->dataSectorsPerStripe = (k - 1) * layoutPtr->sectorsPerStripeUnit;
-	layoutPtr->bytesPerStripeUnit = layoutPtr->sectorsPerStripeUnit << raidPtr->logBytesPerSector;
 	layoutPtr->numDataCol = k - 1;
 	layoutPtr->numParityCol = 1;
 
