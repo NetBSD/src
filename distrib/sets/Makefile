@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/06/20 06:00:27 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2001/11/24 02:54:50 thorpej Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -31,13 +31,34 @@ check_releasedir: .PHONY
 	@true
 .endif
 
+print_machine: .PHONY
+	@echo ${MACHINE}
+
+print_machine_arch: .PHONY
+	@echo ${MACHINE_ARCH}
+
+print_machine_cpu: .PHONY
+	@echo ${MACHINE_CPU}
+
+print_object_fmt: .PHONY
+	@echo ${OBJECT_FMT}
+
+print_use_new_toolchain: .PHONY
+	@echo "${USE_NEW_TOOLCHAIN:Dyes}"
+
+# This target has debugging value only, really.
+makeflist: .PHONY check_destdir
+	DESTDIR=${DESTDIR} MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH} \
+	    MAKE=${MAKE} sh ${.CURDIR}/makeflist
+
 #
 # SET BUILDING TARGETS
 #
 
 .PRECIOUS: checkflist
 checkflist: check_destdir
-	DESTDIR=${DESTDIR} sh ${.CURDIR}/checkflist
+	DESTDIR=${DESTDIR} MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH} \
+	    MAKE=${MAKE} sh ${.CURDIR}/checkflist
 
 .PRECIOUS: maketars
 maketars: check_destdir check_releasedir
