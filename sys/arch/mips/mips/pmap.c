@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72 1999/10/18 17:17:09 soren Exp $	*/
+/*	$NetBSD: pmap.c,v 1.73 1999/11/04 17:20:57 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 1999/10/18 17:17:09 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 1999/11/04 17:20:57 mhitch Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1888,8 +1888,8 @@ pmap_enter_pv(pmap, va, pa, npte)
 		pv->pv_pmap = pmap;
 		pv->pv_next = NULL;
 	} else {
-#ifdef MIPS3
-		if (CPUISMIPS3) {
+#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
+		if (CPUISMIPS3 && !mips_L2CachePresent) {
 			if (!(pv->pv_flags & PV_UNCACHED)) {
 			/*
 			 * There is at least one other VA mapping this page.
