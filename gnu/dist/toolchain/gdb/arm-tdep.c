@@ -1424,9 +1424,8 @@ arm_float_info (void)
 void
 convert_from_extended (void *ptr, void *dbl)
 {
-  __asm__ ("
-	   ldfe f0,[%0]
-	   stfd f0,[%1] "
+  __asm__ ("ldfe f0,[%0] \n"
+	   "stfd f0,[%1] "
 :				/* no output */
 :	   "r" (ptr), "r" (dbl));
 }
@@ -1434,9 +1433,8 @@ convert_from_extended (void *ptr, void *dbl)
 void
 convert_to_extended (void *dbl, void *ptr)
 {
-  __asm__ ("
-	   ldfd f0,[%0]
-	   stfe f0,[%1] "
+  __asm__ ("ldfd f0,[%0] \n"
+	   "stfe f0,[%1] "
 :				/* no output */
 :	   "r" (dbl), "r" (ptr));
 }
