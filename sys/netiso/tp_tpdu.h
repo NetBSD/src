@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_tpdu.h,v 1.6 1994/06/29 06:40:41 cgd Exp $	*/
+/*	$NetBSD: tp_tpdu.h,v 1.7 1994/07/21 07:10:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,21 +69,7 @@ SOFTWARE.
 #ifndef _NETISO_TP_TPDU_H_
 #define _NETISO_TP_TPDU_H_
 
-#ifndef BYTE_ORDER
-/*
- * Definitions for byte order,
- * according to byte significance from low address to high.
- */
-#define	LITTLE_ENDIAN	1234	/* least-significant byte first (vax) */
-#define	BIG_ENDIAN	4321	/* most-significant byte first (IBM, net) */
-#define	PDP_ENDIAN	3412	/* LSB first in word, MSW first in long (pdp) */
-
-#ifdef vax
-#define	BYTE_ORDER	LITTLE_ENDIAN
-#else
-#define	BYTE_ORDER	BIG_ENDIAN	/* mc68000, tahoe, most others */
-#endif
-#endif /* BYTE_ORDER */
+#include <machine/endian.h>	/* for BYTE_ORDER */
 
 /* This much of a tpdu is the same for all types of tpdus  (except
  * DT tpdus in class 0; their exceptions are handled by the data
