@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.24 1997/04/08 22:04:16 gwr Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.25 1997/04/25 01:46:53 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -21,10 +21,6 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-# Simplify cross-build...
-MACHINE_ARCH=m68k
-MACHINE=mvme68k
-
 CC?=	cc
 LD?=	ld
 MKDEP?=	mkdep
@@ -40,15 +36,17 @@ MVME68K=$S/arch/mvme68k
 # Override CPP defaults entirely, so cross-compilation works.
 # Keep -nostdinc before all -I flags, similar for -undef ...
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
-XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000
-DEFINES=	-D_KERNEL -Dmc68020 -Dmvme68k
-CPPFLAGS=	${INCLUDES} ${XDEFS} ${DEFINES} ${IDENT} ${PARAM}
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
+		-Dmc68020 -Dmvme68k -DFPCOPROC
 CWARNFLAGS=	-Werror
-CFLAGS= 	${DEBUG} ${COPTS} -msoft-float ${CWARNFLAGS}
-APPFLAGS=	-P -traditional ${CPPFLAGS} -D_LOCORE
-AFLAGS=
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 8000 -e start
 STRIPFLAGS=	-d
+
+HOSTED_CC=	${CC}
+HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
+HOSTED_CFLAGS=	${CFLAGS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -69,16 +67,13 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 ### for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 
-# compile rules: rules are named NORMAL_${SUFFIX} where SUFFIX is
-# the file suffix, capitalized (e.g. C for a .c file).
+# compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
+# HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
-# Please do not assume the compiler does "-x ..." (gcc-only).
-# This needs an intermediate file.  The original file is always
-# safe in some far away directory, so just use the base name.
-NORMAL_S=	${CPP} ${APPFLAGS} $< > $*.s ;\
-		${AS} ${AFLAGS} -o $@ $*.s ; rm $*.s
+HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
@@ -157,19 +152,11 @@ SRCS=	${MVME68K}/mvme68k/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-
-# XXX - see below
-#	${MKDEP} -a ${APPFLAGS} ${MVME68K}/mvme68k/locore.s
-#	${MKDEP} -a ${APPFLAGS} ${SFILES}
-#
-# For cross-compilation, the "gcc -M" mkdep script is convenient,
-# but that does not correctly make rules from *.s files.  The
-# easiest work-around is to just list those dependencies here.
-locore.o:   assym.h m68k/asm.h m68k/trap.h
-copy.o:     assym.h m68k/asm.h $S/sys/errno.h
-bcopy.o:    assym.h m68k/asm.h
-copypage.o: assym.h m68k/asm.h
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MVME68K}/mvme68k/locore.s
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	-if test -n "${SFILES}"; then \
+		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
+	fi
 
 
 # depend on root or device configuration
