@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134.2.5 2000/08/23 18:27:59 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.134.2.6 2000/08/24 11:26:12 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -846,8 +846,11 @@ syscall(frame)
 	KERNEL_PROC_UNLOCK(p);
 	userret(p, frame.tf_eip, sticks);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p, code, error, rval[0]);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif /* KTRACE */
 }
 
