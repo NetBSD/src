@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.31 2002/05/09 02:19:42 simonb Exp $	*/
+/* $NetBSD: cat.c,v 1.31.2.1 2002/06/11 15:45:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.31 2002/05/09 02:19:42 simonb Exp $");
+__RCSID("$NetBSD: cat.c,v 1.31.2.1 2002/06/11 15:45:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: cat.c,v 1.31 2002/05/09 02:19:42 simonb Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int bflag, eflag, fflag, nflag, sflag, tflag, vflag;
+int bflag, eflag, fflag, lflag, nflag, sflag, tflag, vflag;
 int rval;
 const char *filename;
 
@@ -78,11 +78,12 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
+	struct flock stdout_lock;
 
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "befnstuv")) != -1)
+	while ((ch = getopt(argc, argv, "beflnstuv")) != -1)
 		switch (ch) {
 		case 'b':
 			bflag = nflag = 1;	/* -b implies -n */
@@ -92,6 +93,9 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			fflag = 1;
+			break;
+		case 'l':
+			lflag = 1;
 			break;
 		case 'n':
 			nflag = 1;
@@ -111,11 +115,20 @@ main(int argc, char *argv[])
 		default:
 		case '?':
 			(void)fprintf(stderr,
-			    "usage: cat [-befnstuv] [-] [file ...]\n");
+			    "usage: cat [-beflnstuv] [-] [file ...]\n");
 			exit(1);
 			/* NOTREACHED */
 		}
 	argv += optind;
+
+	if (lflag) {
+		stdout_lock.l_len = 0;
+		stdout_lock.l_start = 0;
+		stdout_lock.l_type = F_WRLCK;
+		stdout_lock.l_whence = SEEK_SET;
+		if (fcntl(STDOUT_FILENO, F_SETLKW, &stdout_lock) == -1)
+			err(EXIT_FAILURE, "stdout");
+	}
 
 	if (bflag || eflag || nflag || sflag || tflag || vflag)
 		cook_args(argv);
