@@ -18,6 +18,6 @@ extern unsigned short _rand48_seed[3];
 long
 mrand48(void)
 {
-	_dorand48(_rand48_seed);
+	__dorand48(_rand48_seed);
 	return ((long) _rand48_seed[2] << 16) + (long) _rand48_seed[1];
 }

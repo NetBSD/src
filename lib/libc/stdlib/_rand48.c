@@ -26,7 +26,7 @@ unsigned short _rand48_mult[3] = {
 unsigned short _rand48_add = RAND48_ADD;
 
 void
-_dorand48(unsigned short xseed[3])
+__dorand48(unsigned short xseed[3])
 {
 	unsigned long accu;
 	unsigned short temp[2];
