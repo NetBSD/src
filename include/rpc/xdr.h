@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.17.2.2 2000/07/18 19:12:06 matt Exp $	*/
+/*	$NetBSD: xdr.h,v 1.17.2.3 2003/03/27 08:23:08 msaitoh Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -120,7 +120,7 @@ typedef struct __rpc_xdr {
 	char *	 	x_public;	/* users' data */
 	void *		x_private;	/* pointer to private data */
 	char * 		x_base;		/* private used for position info */
-	int		x_handy;	/* extra private word */
+	u_int		x_handy;	/* extra private word */
 } XDR;
 
 /*
