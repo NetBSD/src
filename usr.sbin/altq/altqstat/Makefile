@@ -1,28 +1,13 @@
-PREFIX?=	/usr/local
-SYS_INCLUDES?=	-I/usr/src/sys-altq
+#	$NetBSD: Makefile,v 1.2 2000/12/16 18:57:35 thorpej Exp $
 
-PROG=		altqstat
-OBJS= 		altqstat.o quip_client.o qdisc_conf.o \
-		qdisc_cbq.o qdisc_hfsc.o qdisc_cdnr.o \
-		qdisc_wfq.o qdisc_fifoq.o \
-		qdisc_red.o qdisc_rio.o qdisc_blue.o qdisc_priq.o
-MAN1=		altqstat.1
+PROG=	altqstat
+SRCS=	altqstat.c quip_client.c qdisc_conf.c qdisc_cbq.c qdisc_hfsc.c \
+	qdisc_cdnr.c qdisc_wfq.c qdisc_fifoq.c qdisc_red.c qdisc_rio.c \
+	qdisc_blue.c qdisc_priq.c
 
-CFLAGS=		-g -Wall
-CFLAGS+=	-W -Wpointer-arith -Wcast-qual -Wmissing-prototypes -ansi
-DEFINES=	-DALTQ $(SYS_DEFINES)
-INCLUDES=	-I. -I../libaltq $(SYS_INCLUDES)
+CPPFLAGS+= -DALTQ -I${.CURDIR}/../libaltq
 
-all: $(PROG)
+DPADD+=	${LIBCURSES}
+LDADD+=	-lcurses
 
-install: $(PROG)
-	$(INSTALL) $(COPY) -m 0755 $(PROG) $(PREFIX)/bin
-	$(INSTALL) $(COPY) -m 0644 $(MAN1) $(PREFIX)/man/man1
-
-altqstat: $(OBJS)
-	$(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ $(OBJS) $(SYS_LIBS) -lcurses
-
-.c.o: 
-	$(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -c $*.c
-
-clean:;		-rm -f $(PROG) *.a *.o core *.core *.bak ,* *~ "#"*
+.include <bsd.prog.mk>
