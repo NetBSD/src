@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.28 1996/10/13 03:14:13 christos Exp $	*/
+/*	$NetBSD: hil.c,v 1.29 1996/10/14 07:09:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,6 +111,10 @@ hilsoftinit(unit, hilbase)
   	register struct hil_softc *hilp = &hil_softc[unit];
 	register int i;
 
+	/* XXX ITE interface */
+	extern char *us_keymap, *us_shiftmap, *us_ctrlmap,
+		    *us_ctrlshiftmap, **us_stringmap;
+
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
 		printf("hilsoftinit(%d, %x)\n", unit, hilbase);
@@ -125,7 +129,6 @@ hilsoftinit(unit, hilbase)
 	hilp->hl_cmdbp = hilp->hl_cmdbuf;
 	hilp->hl_pollbp = hilp->hl_pollbuf;
 	hilp->hl_kbddev = 0;
-	hilp->hl_kbdlang = KBD_DEFAULT;
 	hilp->hl_kbdflags = 0;
 	/*
 	 * Clear all queues and device associations with queues
@@ -138,6 +141,18 @@ hilsoftinit(unit, hilbase)
 	for (i = 0; i < NHILD; i++)
 		hilp->hl_device[i].hd_qmask = 0;
 	hilp->hl_device[HILLOOPDEV].hd_flags = (HIL_ALIVE|HIL_PSEUDO);
+
+	/*
+	 * Set up default keyboard language.  We always default
+	 * to US ASCII - it seems to work OK for non-recognized
+	 * keyboards.
+	 */
+	hilp->hl_kbdlang = KBD_DEFAULT;
+	kbd_keymap = us_keymap;			/* XXX */
+	kbd_shiftmap = us_shiftmap;		/* XXX */
+	kbd_ctrlmap = us_ctrlmap;		/* XXX */
+	kbd_ctrlshiftmap = us_ctrlshiftmap;	/* XXX */
+	kbd_stringmap = us_stringmap;		/* XXX */
 }
 
 hilinit(unit, hilbase)
@@ -1387,7 +1402,7 @@ hilconfig(hilp)
 	if (hilp->hl_kbdlang != KBD_SPECIAL) {
 		struct kbdmap *km;
 
-		for (km = kbd_map; km->kbd_code; km++)
+		for (km = kbd_map; km->kbd_code; km++) {
 			if (km->kbd_code == db) {
 				hilp->hl_kbdlang = db;
 				/* XXX */
@@ -1396,7 +1411,14 @@ hilconfig(hilp)
 				kbd_ctrlmap = km->kbd_ctrlmap;
 				kbd_ctrlshiftmap = km->kbd_ctrlshiftmap;
 				kbd_stringmap = km->kbd_stringmap;
+				break;
 			}
+		}
+		if (km->kbd_code == 0) {
+		    printf(
+		     "hilconfig: unknown keyboard type 0x%x, using default\n",
+		     db);
+		}
 	}
 	splx(s);
 }
