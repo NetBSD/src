@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.64 2004/11/19 13:17:06 christos Exp $	*/
+/*	$NetBSD: w.c,v 1.65 2004/12/22 17:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.64 2004/11/19 13:17:06 christos Exp $");
+__RCSID("$NetBSD: w.c,v 1.65 2004/12/22 17:16:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,11 +96,13 @@ int		ttywidth;	/* width of tty */
 int		argwidth;	/* width of tty left to print process args */
 int		header = 1;	/* true if -h flag: don't print heading */
 int		nflag;		/* true if -n flag: don't convert addrs */
+int		wflag;		/* true if -w flag: wide printout */
 int		sortidle;	/* sort bu idle time */
 char	       *sel_user;	/* login of particular user selected */
 char		domain[MAXHOSTNAMELEN + 1];
 int maxname = 8, maxline = 3, maxhost = 16;
 
+#define HOSTWIDTH 35
 /*
  * One of these per active utmp entry.
  */
@@ -137,6 +139,7 @@ main(int argc, char **argv)
 	int ch, i, nentries, nusers, wcmd;
 	char *memf, *nlistf, *p, *x;
 	time_t then;
+	int hostwidth;
 #ifdef SUPPORT_UTMP
 	struct utmp *ut;
 #endif
@@ -155,7 +158,7 @@ main(int argc, char **argv)
 		p = "";
 	} else {
 		wcmd = 1;
-		p = "hiflM:N:nsuw";
+		p = "hiM:N:nw";
 	}
 
 	memf = nlistf = NULL;
@@ -177,9 +180,9 @@ main(int argc, char **argv)
 		case 'n':
 			nflag = 1;
 			break;
-		case 'f': case 'l': case 's': case 'u': case 'w':
-			warnx("[-flsuw] no longer supported");
-			/* FALLTHROUGH */
+		case 'w':
+			wflag = 1;
+			break;
 		case '?':
 		default:
 			usage(wcmd);
@@ -311,8 +314,13 @@ main(int argc, char **argv)
 		}
 	}
 
+	if (wflag || maxhost < HOSTWIDTH)
+		hostwidth = maxhost;
+	else
+		hostwidth = HOSTWIDTH;
+
 	argwidth = printf("%-*s TTY     %-*s %*s  IDLE WHAT\n",
-	    maxname, "USER", maxhost, "FROM",
+	    maxname, "USER", hostwidth, "FROM",
 	    7 /* "dddhhXm" */, "LOGIN@");
 	argwidth -= sizeof("WHAT\n") - 1 /* NUL */;
 
@@ -411,7 +419,7 @@ main(int argc, char **argv)
 		}
 		(void)printf("%-*s %-7.7s %-*.*s ",
 		    maxname, kp->p_login, ep->line,
-		    maxhost, maxhost, *p ? p : "-");
+		    hostwidth, hostwidth, *p ? p : "-");
 		then = (time_t)ep->tv.tv_sec;
 		pr_attime(&then, &now);
 		pr_idle(ep->idle);
