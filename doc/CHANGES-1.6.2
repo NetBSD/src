@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.215 2003/10/22 06:23:06 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.216 2003/10/25 03:33:42 cyber Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2647,4 +2647,36 @@ sys/arch/sparc/sparc/machdep.c			patch
 	available for user space VM which speeds up things considerably, since
 	a reasonable PMEG working set can be maintained. "
 	[pk, ticket #1535]
+
+include/util.h					1.27
+
+	add prototypes for disklabel_dkcksum() and disklabel_scan().
+	[jmc, ticket #1461]
+
+lib/libutil/Makefile				1.40
+lib/libutil/disklabel_dkcksum.3			1.1
+lib/libutil/disklabel_dkcksum.c			1.1
+lib/libutil/disklabel_scan.3			1.1
+lib/libutil/disklabel_scan.c			1.1
+lib/libutil/util.3				1.11
+
+	Added two functions disklabel_dkcksum() and disklabel_scan() to libutil
+	so that they can be shared by disklabel(8) and cgdconfig(8).
+	[jmc, ticket #1461]
+
+lib/libutil/disklabel_dkcksum.3			1.2
+lib/libutil/disklabel_scan.3			1.2
+
+	Spell out month name in .Dd. Use .Fn instead of .Fo/.Fc and .Fa's.
+	[jmc, ticket #1461]
+
+distrib/sets/lists/comp/mi			1.491
+
+	Add the man pages for disklabel_dkcksum.3 and disklabel_scan.3.
+	[jmc, ticket #1461]
+
+distrib/sets/lists/base/shl.mi			diff
+lib/libutil/shlib_version			diff
+	Adjust versions.
+	[jmc, ticket #1461]
 
