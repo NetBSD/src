@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.14 2001/06/26 02:11:55 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.15 2001/06/26 02:28:47 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,34 +103,34 @@ digits when calling
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tapes, see
-.Xr s\&t 4
+.Xr \&st 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar fd#
 Floppy disks, see
-.Xr f\&dc 4
+.Xr \&fdc 4
 . It Ar wd#
 IDE disks, see
-.Xr w\&d 4
+.Xr \&wd 4
 . It Ar sd#
 SCSI disks, includes flopticals, see
-.Xr s\&d 4
+.Xr \&sd 4
 . It Ar cd#
 SCSI cdrom discs, see
-.Xr c\&d 4
+.Xr \&cd 4
 . It Ar vnd#
 ``file'' pseudo-disks, see
-.Xr v\&nd 4
+.Xr \&vnd 4
 . It Ar ccd#
 Concatenated disk driver, see
-.Xr c\&cd 4
+.Xr \&ccd 4
 . It Ar raid#
 RAIDframe disk driver, see
-.Xr r\&aid 4
+.Xr \&raid 4
 . It Ar md#
 Memory pseudo-disk devices, see
-.Xr m\&d 4
+.Xr \&md 4
 . El
 .It Console ports:
 . Bl -tag -width 0123456789 -compact
@@ -148,7 +148,7 @@ Amiga mice
 . Bl -tag -width 0123456789 -compact
 . It Ar tty00
 Standard serial port, see
-.Xr t\&ty 4
+.Xr \&tty 4
 . It Ar ttyA#
 Mfc serial ports
 . It Ar ttyB#
@@ -160,7 +160,7 @@ Com style serial ports (DraCo, HyperCom) On the DraCo, units 0 and 1 are the bui
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr p\&ty 4
+.Xr \&pty 4
 . El
 .It Printers:
 . Bl -tag -width 0123456789 -compact
@@ -190,38 +190,38 @@ Custom chip (grf0), Retina Z2/Z3 (grf1/grf2), Cirrus boards (grf3), A2410 (grf4)
 Amiga keyboard
 . It Ar wskbd#
 Wscons keyboard events, see
-.Xr w\&skbd 4
+.Xr \&wskbd 4
 . It Ar view#
 Generic interface to graphic displays
 . It Ar lkm
 Loadable kernel modules interface, see
-.Xr l\&km 4
+.Xr \&lkm 4
 . It Ar ipl
 IP filter
 . It Ar random
 Random number generator
 . It Ar bpf#
 Berkeley Packet Filter, see
-.Xr b\&pf 4
+.Xr \&bpf 4
 . It Ar tun#
 Network tunnel driver, see
-.Xr t\&un 4
+.Xr \&tun 4
 . It Ar scsibus#
 SCSI busses, see
-.Xr s\&csictl 8 ,
-.Xr s\&csi 4
+.Xr \&scsictl 8 ,
+.Xr \&scsi 4
 . It Ar ss#
 SCSI scanner, see
-.Xr s\&s 4
+.Xr \&ss 4
 . It Ar uk#
 SCSI unknown, see
-.Xr u\&k 4
+.Xr \&uk 4
 . It Ar ch#
 SCSI changer, see
-.Xr c\&h 4
+.Xr \&ch 4
 . It Ar audio#
 One unit of the audio device. On Amiga machines, Unit 0 is custom chip audio, if configured, see
-.Xr a\&udio 4
+.Xr \&audio 4
 . El
 .El
 .Sh FILES

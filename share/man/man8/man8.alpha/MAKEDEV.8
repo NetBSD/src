@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.11 2001/06/26 02:11:54 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.12 2001/06/26 02:28:47 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -107,34 +107,34 @@ digits when calling
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tape, see
-.Xr s\&t 4
+.Xr \&st 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar ccd#
 Concatenated disk driver, see
-.Xr c\&cd 4
+.Xr \&ccd 4
 . It Ar cd#
 SCSI CD-ROM, see
-.Xr c\&d 4
+.Xr \&cd 4
 . It Ar ld#
 Logical disk devices (e.g. hardware RAID), see
-.Xr l\&d 4
+.Xr \&ld 4
 . It Ar md#
 Memory pseudo-disk devices, see
-.Xr m\&d 4
+.Xr \&md 4
 . It Ar raid#
 RAIDframe disk driver, see
-.Xr r\&aid 4
+.Xr \&raid 4
 . It Ar sd#
 ATAPI and SCSI disks, see
-.Xr s\&d 4
+.Xr \&sd 4
 . It Ar vnd#
 File pseudo-disks, see
-.Xr v\&nd 4
+.Xr \&vnd 4
 . It Ar wd#
 IDE disks, see
-.Xr w\&d 4
+.Xr \&wd 4
 . It Ar fd#
 PC-style floppy disks
 . El
@@ -155,7 +155,7 @@ Cyclom-Y multiport serial boards. Each ``unit'' makes 32 ports.
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr p\&ty 4
+.Xr \&pty 4
 . El
 .It Printers:
 . Bl -tag -width 0123456789 -compact
@@ -168,22 +168,22 @@ Polled PC parallel port driver (``lpt'') units
 . Bl -tag -width 0123456789 -compact
 . It Ar usb#
 Bus control devices used by usbd for attach/detach, see
-.Xr u\&sb 4
+.Xr \&usb 4
 . It Ar uhid#
 Generic HID devices, see
-.Xr u\&hid 4
+.Xr \&uhid 4
 . It Ar ulpt#
 Printer devices, see
-.Xr u\&lpt 4
+.Xr \&ulpt 4
 . It Ar ugen#
 Generic devices, see
-.Xr u\&gen 4
+.Xr \&ugen 4
 . It Ar urio#
 Diamond Rio 500, see
-.Xr u\&rio 4
+.Xr \&urio 4
 . It Ar uscanner#
 Scanners, see
-.Xr u\&scanner 4
+.Xr \&uscanner 4
 . It Ar ttyU#
 Modem
 . El
@@ -204,13 +204,13 @@ Trace device
 . Bl -tag -width 0123456789 -compact
 . It Ar audio#
 Audio devices, see
-.Xr a\&udio 4
+.Xr \&audio 4
 . It Ar bpf#
 Berkeley packet filter devices, see
-.Xr b\&pf 4
+.Xr \&bpf 4
 . It Ar ch#
 SCSI media changer, see
-.Xr c\&h 4
+.Xr \&ch 4
 . It Ar fd
 File descriptors (/dev/fd/*)
 . It Ar ipl
@@ -219,7 +219,7 @@ IP filter
 Keyboard (provides events, for X11)
 . It Ar lkm
 Loadable kernel modules interface, see
-.Xr l\&km 4
+.Xr \&lkm 4
 . It Ar mouse
 Mouse (provides events, for X11)
 . It Ar random
@@ -228,26 +228,26 @@ Random number generator
 PlanetConnect satellite receiver driver
 . It Ar scsibus#
 SCSI busses, see
-.Xr s\&csictl 8 ,
-.Xr s\&csi 8
+.Xr \&scsictl 8 ,
+.Xr \&scsi 8
 . It Ar ses#
 SES/SAF-TE SCSI Devices, see
-.Xr s\&es 4
+.Xr \&ses 4
 . It Ar speaker
 PC speaker (IBM BASIC playstring emulation), see
-.Xr s\&peaker 4
+.Xr \&speaker 4
 . It Ar ss#
 SCSI scanner, see
-.Xr s\&s 4
+.Xr \&ss 4
 . It Ar tun#
 Network tunnel driver, see
-.Xr t\&un 4
+.Xr \&tun 4
 . It Ar uk#
 SCSI unknown, see
-.Xr u\&k 4
+.Xr \&uk 4
 . It Ar mlx#
 Mylex DAC960 control interface, see
-.Xr m\&lx 4
+.Xr \&mlx 4
 . It Ar altq
 ALTQ control device
 . El

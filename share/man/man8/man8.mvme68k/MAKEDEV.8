@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.6 2001/06/26 02:11:58 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.7 2001/06/26 02:28:50 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,46 +97,46 @@ digits when calling
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tapes, see
-.Xr s\&t 4
+.Xr \&st 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar sd#
 SCSI disks, see
-.Xr s\&d 4
+.Xr \&sd 4
 . It Ar cd#
 SCSI CD-ROM, see
-.Xr c\&d 4
+.Xr \&cd 4
 . It Ar vnd#
 ``file'' pseudo-disks, see
-.Xr v\&nd 4
+.Xr \&vnd 4
 . It Ar md#
 Memory pseudo-disk devices, see
-.Xr m\&d 4
+.Xr \&md 4
 . It Ar ccd#
 Contatenated disk devices, see
-.Xr c\&cd 4
+.Xr \&ccd 4
 . It Ar raid#
 RAIDframe disk devices, see
-.Xr r\&aid 4
+.Xr \&raid 4
 . El
 .It Serial ports:
 . Bl -tag -width 0123456789 -compact
 . It Ar tty#
 Onboard serial ports. On the mvme147 these are: ttyZ1, ttyZ2 and ttyZ3. On the mvme167, and '177: ttyC1, ttyC2 and ttyC3. Note that tty[CZ]0 is grabbed by the console device so is not created by default, see
-.Xr t\&ty 4
+.Xr \&tty 4
 . El
 .It Pseudo terminals:
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr p\&ty 4
+.Xr \&pty 4
 . El
 .It Printers:
 . Bl -tag -width 0123456789 -compact
 . It Ar lpt#
 Stock lp, see
-.Xr l\&pt 4
+.Xr \&lpt 4
 . It Ar lpa#
 Interruptless lp
 . El
@@ -146,26 +146,26 @@ Interruptless lp
 File descriptors
 . It Ar bpf#
 Packet filter, see
-.Xr b\&pf 4
+.Xr \&bpf 4
 . It Ar lkm
 Loadable kernel modules interface, see
-.Xr l\&km 4
+.Xr \&lkm 4
 . It Ar tun#
 Network tunnel driver, see
-.Xr t\&un 4
+.Xr \&tun 4
 . It Ar scsibus#
 SCSI busses, see
-.Xr s\&csictl 8 ,
-.Xr s\&csi 4
+.Xr \&scsictl 8 ,
+.Xr \&scsi 4
 . It Ar ss#
 SCSI scanner, see
-.Xr s\&s 4
+.Xr \&ss 4
 . It Ar uk#
 SCSI unknown, see
-.Xr u\&k 4
+.Xr \&uk 4
 . It Ar ch#
 SCSI changer, see
-.Xr c\&h 4
+.Xr \&ch 4
 . It Ar ipl
 IP Filter device
 . It Ar random

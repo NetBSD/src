@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.2 2001/06/26 02:12:00 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.3 2001/06/26 02:28:52 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -101,33 +101,33 @@ digits when calling
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tapes, see
-.Xr s\&t 4
+.Xr \&st 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar wd#
 ``winchester'' disk drives (ST506,IDE,ESDI,RLL,...), see
-.Xr w\&d 4
+.Xr \&wd 4
 . It Ar fd#
 ``floppy'' disk drives (3 1/2``, 5 1/4'')
 . It Ar sd#
 SCSI disks, see
-.Xr s\&d 4
+.Xr \&sd 4
 . It Ar cd#
 SCSI CD-ROM, see
-.Xr c\&d 4
+.Xr \&cd 4
 . It Ar vnd#
 ``file'' pseudo-disks, see
-.Xr v\&nd 4
+.Xr \&vnd 4
 . It Ar md#
 Memory pseudo-disk devices, see
-.Xr m\&d 4
+.Xr \&md 4
 . It Ar ccd#
 Contatenated disk devices, see
-.Xr c\&cd 4
+.Xr \&ccd 4
 . It Ar raid#
 RAIDframe disk devices, see
-.Xr r\&aid 4
+.Xr \&raid 4
 . El
 .It Console ports:
 . Bl -tag -width 0123456789 -compact
@@ -138,25 +138,25 @@ Wscons
 . Bl -tag -width 0123456789 -compact
 . It Ar pms#
 PS/2 mouse, see
-.Xr p\&ms 4
+.Xr \&pms 4
 . It Ar wsmouse#
 Wscons mouse events, see
-.Xr w\&smouse 4
+.Xr \&wsmouse 4
 . El
 .It Keyboard devices:
 . Bl -tag -width 0123456789 -compact
 . It Ar wskbd#
 Wscons keyboard events, see
-.Xr w\&skbd 4
+.Xr \&wskbd 4
 . El
 .It Terminal ports:
 . Bl -tag -width 0123456789 -compact
 . It Ar com#
 Standard PC COM ports, see
-.Xr c\&om 4
+.Xr \&com 4
 . It Ar tty#
 Alias for PC COM ports, this is what the system really wants, see
-.Xr t\&ty 4
+.Xr \&tty 4
 . It Ar ttyCY#
 Cyclom-Y multiport serial boards. Each ``unit'' makes 32 ports.
 . El
@@ -164,7 +164,7 @@ Cyclom-Y multiport serial boards. Each ``unit'' makes 32 ports.
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr p\&ty 4
+.Xr \&pty 4
 . El
 .It Printers:
 . Bl -tag -width 0123456789 -compact
@@ -192,30 +192,30 @@ Trace device
 File descriptors
 . It Ar bpf#
 Packet filter, see
-.Xr b\&pf 4
+.Xr \&bpf 4
 . It Ar ipl
 Ip filter
 . It Ar random
 Random number generator
 . It Ar lkm
 Loadable kernel modules interface, see
-.Xr l\&km 4
+.Xr \&lkm 4
 . It Ar tun#
 Network tunnel driver, see
-.Xr t\&un 4
+.Xr \&tun 4
 . It Ar satlink#
 PlanetConnect satellite receiver driver
 . It Ar scsibus#
 SCSI busses
 . It Ar ss#
 SCSI scanner, see
-.Xr s\&s 4
+.Xr \&ss 4
 . It Ar uk#
 SCSI unknown, see
-.Xr u\&k 4
+.Xr \&uk 4
 . It Ar ch#
 SCSI changer, see
-.Xr c\&h 4
+.Xr \&ch 4
 . It Ar cfs#
 Coda file system device
 . El
