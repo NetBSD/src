@@ -1,4 +1,4 @@
-.\"	$NetBSD: tftpd.8,v 1.4 1997/10/07 09:46:46 mrg Exp $
+.\"	$NetBSD: tftpd.8,v 1.5 1997/10/20 02:57:18 enami Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tftpd.8	8.1 (Berkeley) 6/4/93
-  .\"
+.\"
 .Dd June 4, 1993
 .Dt TFTPD 8
 .Os BSD 4.2
@@ -42,13 +42,13 @@
 .Tn DARPA
 Internet Trivial File Transfer Protocol server
 .Sh SYNOPSIS
-.Nm tftpd
+.Nm
 .Op Fl s Ar directory
 .Op Fl l
 .Op Fl n
 .Op Ar directory ...
 .Sh DESCRIPTION
-.Nm Tftpd
+.Nm
 is a server which supports the
 .Tn DARPA
 Trivial File Transfer
@@ -67,8 +67,8 @@ The server is normally started by
 The use of
 .Xr tftp 1
 does not require an account or password on the remote system.
-Due to the lack of authentication information, 
-.Nm tftpd
+Due to the lack of authentication information,
+.Nm
 will allow only publicly readable files to be
 accessed.
 Files containing the string ``/\|\fB.\|.\fP\|/'' are not allowed.
@@ -82,13 +82,13 @@ should be considered before enabling tftp service.
 The server should have the user ID with the lowest possible privilege.
 .Pp
 Access to files may be restricted by invoking
-.Nm tftpd
+.Nm
 with a list of directories by including up to 20 pathnames
 as server program arguments in
 .Pa /etc/inetd.conf .
 In this case access is restricted to files whose
 names are prefixed by the one of the given directories.
-The given directories are also treated as a search path for 
+The given directories are also treated as a search path for
 relative filename requests.
 .Pp
 The options are:
