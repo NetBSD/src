@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)var.c	5.7 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: var.c,v 1.3 1994/01/13 17:18:30 cgd Exp $";
+static char rcsid[] = "$Id: var.c,v 1.4 1994/01/13 21:02:09 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -82,10 +82,11 @@ static char rcsid[] = "$Id: var.c,v 1.3 1994/01/13 17:18:30 cgd Exp $";
  * XXX: There's a lot of duplication in these functions.
  */
 
+#include    <stdio.h>
+#include    <stdlib.h>
 #include    <ctype.h>
 #include    "make.h"
 #include    "buf.h"
-extern char *getenv();
 
 /*
  * This is a harmless return value for Var_Parse that can be used by Var_Subst

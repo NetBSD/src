@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)buf.c	5.5 (Berkeley) 12/28/90";*/
-static char rcsid[] = "$Id: buf.c,v 1.2 1993/08/01 18:11:55 mycroft Exp $";
+static char rcsid[] = "$Id: buf.c,v 1.3 1994/01/13 21:01:42 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -46,6 +46,8 @@ static char rcsid[] = "$Id: buf.c,v 1.2 1993/08/01 18:11:55 mycroft Exp $";
  *	Functions for automatically-expanded buffers.
  */
 
+#include    <stdlib.h>
+#include    <string.h>
 #include    "sprite.h"
 #include    "buf.h"
 

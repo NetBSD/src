@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hash.c	5.5 (Berkeley) 12/28/90";*/
-static char rcsid[] = "$Id: hash.c,v 1.2 1993/08/01 18:11:50 mycroft Exp $";
+static char rcsid[] = "$Id: hash.c,v 1.3 1994/01/13 21:01:49 jtc Exp $";
 #endif /* not lint */
 
 /* hash.c --
@@ -49,6 +49,9 @@ static char rcsid[] = "$Id: hash.c,v 1.2 1993/08/01 18:11:50 mycroft Exp $";
  * 	information increases.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "sprite.h"
 #include "hash.h"
 

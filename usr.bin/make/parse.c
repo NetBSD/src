@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.c	5.18 (Berkeley) 2/19/91";*/
-static char rcsid[] = "$Id: parse.c,v 1.3 1993/12/17 23:52:04 jtc Exp $";
+static char rcsid[] = "$Id: parse.c,v 1.4 1994/01/13 21:01:59 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -82,8 +82,11 @@ static char rcsid[] = "$Id: parse.c,v 1.3 1993/12/17 23:52:04 jtc Exp $";
  */
 
 #include <varargs.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
 #include "make.h"
 #include "buf.h"
 #include "pathnames.h"

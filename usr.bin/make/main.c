@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.25 (Berkeley) 4/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.11 1993/12/22 00:25:57 pk Exp $";
+static char rcsid[] = "$Id: main.c,v 1.12 1994/01/13 21:01:55 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -80,7 +80,9 @@ static char rcsid[] = "$Id: main.c,v 1.11 1993/12/22 00:25:57 pk Exp $";
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <varargs.h>
+#include <unistd.h>
 #include "make.h"
 #include "pathnames.h"
 
@@ -779,7 +781,7 @@ char *
 emalloc(len)
 	u_int len;
 {
-	char *p, *malloc();
+	char *p;
 
 	if (!(p = malloc(len)))
 		enomem();
