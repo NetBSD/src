@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.6 2003/03/15 07:21:02 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.7 2003/03/29 18:09:59 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -435,6 +435,7 @@ oea_batinit(paddr_t pa, ...)
 	struct mem_region *allmem, *availmem, *mp;
 	int i;
 	unsigned int cpuvers;
+	register_t msr = mfmsr();
 	va_list ap;
 
 	cpuvers = mfpvr() >> 16;
@@ -451,20 +452,22 @@ oea_batinit(paddr_t pa, ...)
 	 * protection keys, it does _not_ distinguish distinguish between  
 	 * validity in supervisor/user mode.
 	 */
-	if (cpuvers == MPC601) {
-		__asm __volatile ("mtibatl 0,%0" :: "r"(0));
-		__asm __volatile ("mtibatl 1,%0" :: "r"(0));
-		__asm __volatile ("mtibatl 2,%0" :: "r"(0));
-		__asm __volatile ("mtibatl 3,%0" :: "r"(0));
-	} else {
-		__asm __volatile ("mtibatu 0,%0" :: "r"(0));
-		__asm __volatile ("mtibatu 1,%0" :: "r"(0));
-		__asm __volatile ("mtibatu 2,%0" :: "r"(0));
-		__asm __volatile ("mtibatu 3,%0" :: "r"(0));
-		__asm __volatile ("mtdbatu 0,%0" :: "r"(0));
-		__asm __volatile ("mtdbatu 1,%0" :: "r"(0));
-		__asm __volatile ("mtdbatu 2,%0" :: "r"(0));
-		__asm __volatile ("mtdbatu 3,%0" :: "r"(0));
+	if ((msr & (PSL_IR|PSL_DR)) == 0) {
+		if (cpuvers == MPC601) {
+			__asm __volatile ("mtibatl 0,%0" :: "r"(0));
+			__asm __volatile ("mtibatl 1,%0" :: "r"(0));
+			__asm __volatile ("mtibatl 2,%0" :: "r"(0));
+			__asm __volatile ("mtibatl 3,%0" :: "r"(0));
+		} else {
+			__asm __volatile ("mtibatu 0,%0" :: "r"(0));
+			__asm __volatile ("mtibatu 1,%0" :: "r"(0));
+			__asm __volatile ("mtibatu 2,%0" :: "r"(0));
+			__asm __volatile ("mtibatu 3,%0" :: "r"(0));
+			__asm __volatile ("mtdbatu 0,%0" :: "r"(0));
+			__asm __volatile ("mtdbatu 1,%0" :: "r"(0));
+			__asm __volatile ("mtdbatu 2,%0" :: "r"(0));
+			__asm __volatile ("mtdbatu 3,%0" :: "r"(0));
+		}
 	}
 
 	/*
