@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.15.4.3 1999/07/02 00:30:19 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.15.4.4 1999/07/04 01:57:20 chs Exp $	*/
 
 /*
  *
@@ -110,7 +110,7 @@ struct uvm {
 	simple_lock_data_t kentry_lock;
 
 	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
-	struct uvm_aiohead aio_done;	/* done async i/o reqs */
+	TAILQ_HEAD(, buf) aio_done;		/* done async i/o reqs */
 
 	/* pager VM area bounds */
 	vaddr_t pager_sva;		/* start of pager VA area */
