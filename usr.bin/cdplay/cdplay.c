@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.25 2003/07/14 09:18:22 itojun Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.26 2003/07/14 11:55:56 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.25 2003/07/14 09:18:22 itojun Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.26 2003/07/14 11:55:56 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -211,7 +211,7 @@ main(int argc, char **argv)
 			if (p > buf)
 				*p++ = ' ';
 
-			strcpy(p, *argv);
+			strlcpy(p, *argv, sizeof(buf) - (p - buf));
 			p += len;
 		}
 		*p = '\0';
