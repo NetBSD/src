@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.1 (Berkeley) 5/11/90
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	primes
 SRCS=	pattern.c pr_tbl.c primes.c
