@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.8 1997/10/09 12:01:32 lukem Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.9 1997/10/13 16:11:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,12 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tgoto.c,v 1.8 1997/10/09 12:01:32 lukem Exp $");
+__RCSID("$NetBSD: tgoto.c,v 1.9 1997/10/13 16:11:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <string.h>
-#include <curses.h>
+#include <termcap.h>
 
 #define	CTRL(c)	((c) & 037)
 
@@ -84,10 +84,10 @@ tgoto(CM, destcol, destline)
 	static char result[MAXRETURNSIZE];
 	static char added[10];
 	char *cp = CM;
-	register char *dp = result;
-	register int c;
+	char *dp = result;
+	int c;
 	int oncol = 0;
-	register int which = destline;
+	int which = destline;
 
 	if (cp == 0) {
 toohard:
