@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.28 2004/08/19 20:58:23 christos Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.29 2004/08/20 00:37:07 enami Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.28 2004/08/19 20:58:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.29 2004/08/20 00:37:07 enami Exp $");
 
 #include "opt_inet.h"
 
@@ -183,6 +183,7 @@ faithoutput(ifp, m, dst, rt)
 
 	if (ifp->if_bpf)
 		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
+#endif
 
 	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
 		m_freem(m);
