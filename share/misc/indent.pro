@@ -4,7 +4,7 @@
 -ci4
 -cli0
 -d0
--di8
+-di0
 -i8
 -ip
 -l79
