@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.1 2001/06/01 02:51:03 toshii Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.2 2001/06/16 12:53:05 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: sed_saip.c,v 1.1 2001/06/01 02:51:03 toshii Exp $";
+    "$NetBSD: sed_saip.c,v 1.2 2001/06/16 12:53:05 toshii Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ sed1356_init(struct hpcfb_fbconf *fb)
 	case BIFB_D16_0000:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 		fb->hf_swap_flags = HPCFB_SWAP_BYTE;
 #endif
 		fb->hf_pack_width = 16;
