@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43 2001/04/22 00:34:03 thorpej Exp $	   */
+/*	$NetBSD: pmap.h,v 1.44 2001/04/22 23:19:31 thorpej Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -153,7 +153,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 /* Routines that are best to define as macros */
 #define pmap_phys_address(phys)		((u_int)(phys) << PGSHIFT)
 #define pmap_copy(a,b,c,d,e)		/* Dont do anything */
-#define pmap_update(pmap)		/* nothing (yet) */
+#define pmap_update()			/* nothing (yet) */
 #define pmap_collect(pmap)		/* No need so far */
 #define pmap_remove(pmap, start, slut)	pmap_protect(pmap, start, slut, 0)
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)

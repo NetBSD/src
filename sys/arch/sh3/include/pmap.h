@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 2001/04/22 17:37:55 uch Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 2001/04/22 23:19:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -369,7 +369,7 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-#define	pmap_update(pmap)		/* nothing (yet) */
+#define	pmap_update()			/* nothing (yet) */
 
 #define	pmap_is_referenced(pg)		pmap_test_attrs(pg, PGA_REFERENCED)
 #define	pmap_is_modified(pg)		pmap_test_attrs(pg, PGA_MODIFIED)
