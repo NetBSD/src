@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/09/02 22:55:58 wiz Exp $
+#	$NetBSD: Makefile,v 1.10 2001/09/02 23:00:30 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,9 @@ FILES+=		${F}
 FILESDIR_${F}=  /usr/share/locale/${F:.gmo=}/LC_MESSAGES
 FILESNAME_${F}= texinfo.mo
 .endfor
+# XXX: Do we want to install the following files too?
+#FILES+= 	txi-cs.tex txi-de.tex txi-en.tex txi-es.tex txi-nl.tex \
+#		txi-no.tex txi-pt.tex
 .endif
 
 MAN=		info.5 texinfo.5
