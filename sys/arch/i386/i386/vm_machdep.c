@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45 1995/05/01 08:06:53 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.46 1995/05/01 13:02:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -157,7 +157,7 @@ void
 cpu_exit(p)
 	register struct proc *p;
 {
-	extern int _default_ldt, currentldt;
+	extern int currentldt;
 	struct vmspace *vm;
 
 	/* If we were using the FPU, forget about it. */
@@ -166,7 +166,7 @@ cpu_exit(p)
 
 #ifdef USER_LDT
 	if (p->p_addr->u_pcb.pcb_ldt) {
-		lldt(currentldt = _default_ldt);	/* XXX necessary? */
+		lldt(currentldt = GSEL(GLDT_SEL, SEL_KPL));
 		kmem_free(kernel_map, (vm_offset_t)p->p_addr->u_pcb.pcb_ldt,
 		    (p->p_addr->u_pcb.pcb_ldt_len * sizeof(union descriptor)));
 	}
