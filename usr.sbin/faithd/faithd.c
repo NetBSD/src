@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.30 2003/09/02 22:57:29 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.31 2003/10/16 05:25:51 itojun Exp $	*/
 /*	$KAME: faithd.c,v 1.62 2003/08/19 21:20:33 itojun Exp $	*/
 
 /*
@@ -367,7 +367,7 @@ again:
 	}
 #endif
 
-	error = poll(pfd, sizeof(pfd)/sizeof(pfd[0]), 0);
+	error = poll(pfd, sizeof(pfd)/sizeof(pfd[0]), INFTIM);
 	if (error < 0) {
 		if (errno == EINTR)
 			goto again;
