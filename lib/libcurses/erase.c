@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.12 2000/04/11 13:57:09 blymn Exp $	*/
+/*	$NetBSD: erase.c,v 1.13 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,20 +38,33 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.12 2000/04/11 13:57:09 blymn Exp $");
+__RCSID("$NetBSD: erase.c,v 1.13 2000/04/15 13:17:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
 
+#ifndef _CURSES_USE_MACROS
+
+/*
+ * erase --
+ *	Erases everything on stdscr.
+ */
+int
+erase(void)
+{
+	return werase(stdscr);
+}
+
+#endif
+
 /*
  * werase --
  *	Erases everything on the window.
  */
 int
-werase(win)
-	WINDOW *win;
+werase(WINDOW *win)
 {
 
 	int     minx, y;

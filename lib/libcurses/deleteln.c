@@ -1,4 +1,4 @@
-/*	$NetBSD: deleteln.c,v 1.12 2000/04/11 13:57:09 blymn Exp $	*/
+/*	$NetBSD: deleteln.c,v 1.13 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,19 +38,32 @@
 #if 0
 static char sccsid[] = "@(#)deleteln.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: deleteln.c,v 1.12 2000/04/11 13:57:09 blymn Exp $");
+__RCSID("$NetBSD: deleteln.c,v 1.13 2000/04/15 13:17:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
+#include "curses_private.h"
+
+#ifndef _CURSES_USE_MACROS
+/*
+ * deleteln --
+ *	Delete a line from stdscr.  It leaves (cury, curx) unchanged.
+ */
+int
+deleteln(void)
+{
+	return(winsdelln(stdscr, -1));
+}
+
+#endif
 
 /*
  * wdeleteln --
  *	Delete a line from the screen.  It leaves (cury, curx) unchanged.
  */
 int
-wdeleteln(win)
-	WINDOW *win;
+wdeleteln(WINDOW *win)
 {
 	return(winsdelln(win, -1));
 }

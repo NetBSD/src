@@ -1,4 +1,4 @@
-/*	$NetBSD: cur_hash.c,v 1.8 2000/04/13 00:01:46 simonb Exp $	*/
+/*	$NetBSD: cur_hash.c,v 1.9 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cur_hash.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: cur_hash.c,v 1.8 2000/04/13 00:01:46 simonb Exp $");
+__RCSID("$NetBSD: cur_hash.c,v 1.9 2000/04/15 13:17:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -51,9 +51,7 @@ __RCSID("$NetBSD: cur_hash.c,v 1.8 2000/04/13 00:01:46 simonb Exp $");
  * __hash() is "hashpjw" from the Dragon Book, Aho, Sethi & Ullman, p.436.
  */
 u_int
-__hash(s, len)
-	char   *s;
-	int     len;
+__hash(char *s, int len)
 {
 	u_int   h, g, i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.11 2000/04/11 13:57:08 blymn Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.12 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,20 +38,33 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.11 2000/04/11 13:57:08 blymn Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.12 2000/04/15 13:17:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
 
+#ifndef _CURSES_USE_MACROS
+
+/*
+ * clrtoeol --
+ *	Clear up to the end of line.
+ */
+int
+clrtoeol(void)
+{
+	return wclrtoeol(stdscr);
+}
+
+#endif
+	
 /*
  * wclrtoeol --
  *	Clear up to the end of line.
  */
 int
-wclrtoeol(win)
-	WINDOW *win;
+wclrtoeol(WINDOW *win)
 {
 	int     minx, x, y;
 	__LDATA *end, *maxx, *sp;

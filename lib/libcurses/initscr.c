@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.14 2000/04/14 17:35:14 jdc Exp $	*/
+/*	$NetBSD: initscr.c,v 1.15 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.14 2000/04/14 17:35:14 jdc Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.15 2000/04/15 13:17:04 blymn Exp $");
 #endif
 #endif	/* not lint */
 
@@ -56,7 +56,7 @@ struct __winlist	*__winlistp;
  *	Initialize the current and standard screen.
  */
 WINDOW *
-initscr()
+initscr(void)
 {
 	char *sp;
 

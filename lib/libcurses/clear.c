@@ -1,4 +1,4 @@
-/*	$NetBSD: clear.c,v 1.10 2000/04/11 13:57:08 blymn Exp $	*/
+/*	$NetBSD: clear.c,v 1.11 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,20 +38,33 @@
 #if 0
 static char sccsid[] = "@(#)clear.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clear.c,v 1.10 2000/04/11 13:57:08 blymn Exp $");
+__RCSID("$NetBSD: clear.c,v 1.11 2000/04/15 13:17:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
 
+#ifndef _CURSES_USE_MACROS
+
+/*
+ * clear --
+ *	Clear stdscr
+ */
+int
+clear(void)
+{
+	return wclear(stdscr);
+}
+
+#endif
+
 /*
  * wclear --
  *	Clear the window.
  */
 int
-wclear(win)
-	WINDOW *win;
+wclear(WINDOW *win)
 {
 	if (werase(win) == OK) {
 		win->flags |= __CLEAROK;
