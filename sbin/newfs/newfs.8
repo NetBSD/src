@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.20 1998/04/29 09:49:13 fair Exp $
+.\"	$NetBSD: newfs.8,v 1.21 1998/05/07 03:40:48 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd May 3, 1995
+.Dd May 6, 1998
 .Dt NEWFS 8
 .Os BSD 4.2
 .Sh NAME
@@ -283,14 +283,21 @@ See the
 .Xr mount 8
 man page for possible options and their meanings.
 .El
+.Pp
+If the file system will be exported over NFS, the
+.Xr fsirand 8
+utility should be run after
+.Nm
+to improve security.
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr fs 5 ,
 .Xr dumpfs 8 ,
 .Xr disklabel 8 ,
 .Xr diskpart 8 ,
-.Xr fsck_ffs 8 ,
 .Xr format 8 ,
+.Xr fsck_ffs 8 ,
+.Xr fsirand 8 ,
 .Xr mount 8 ,
 .Xr tunefs 8
 .Rs
