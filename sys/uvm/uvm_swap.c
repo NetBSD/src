@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.81 2003/08/11 16:33:30 pk Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.82 2003/08/28 13:12:20 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.81 2003/08/11 16:33:30 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.82 2003/08/28 13:12:20 pk Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1051,6 +1051,7 @@ swap_off(p, sdp)
 
 	simple_lock(&uvm.swap_data_lock);
 	uvmexp.swpages -= npages;
+	uvmexp.swpginuse -= sdp->swd_npgbad;
 
 	if (swaplist_find(sdp->swd_vp, 1) == NULL)
 		panic("swap_off: swapdev not in list");
@@ -1553,6 +1554,7 @@ uvm_swap_markbad(startslot, nslots)
 
 	simple_lock(&uvm.swap_data_lock);
 	sdp = swapdrum_getsdp(startslot);
+	KASSERT(sdp != NULL);
 
 	/*
 	 * we just keep track of how many pages have been marked bad
@@ -1561,6 +1563,8 @@ uvm_swap_markbad(startslot, nslots)
 	 * one swap device.
 	 */
 
+	KASSERT(uvmexp.swpgonly >= nslots);
+	uvmexp.swpgonly -= nslots;
 	sdp->swd_npgbad += nslots;
 	UVMHIST_LOG(pdhist, "now %d bad", sdp->swd_npgbad, 0,0,0);
 	simple_unlock(&uvm.swap_data_lock);
