@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.18 2003/03/24 13:50:10 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.19 2003/04/07 12:04:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.18 2003/03/24 13:50:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.19 2003/04/07 12:04:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,8 +219,10 @@ smbfs_open(v)
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 	struct smb_cred scred;
+#if 0
 	struct vattr vattr;
-	int mode = ap->a_mode;
+#endif
+	u_int32_t sv_caps = SMB_CAPS(SSTOVC(np->n_mount->sm_share));
 	int error, accmode;
 
 	SMBVDEBUG("%.*s,%d\n", (int) np->n_nmlen, np->n_name, np->n_opencount);
@@ -228,10 +230,11 @@ smbfs_open(v)
 		SMBFSERR("open eacces vtype=%d\n", vp->v_type);
 		return EACCES;
 	}
-	if (vp->v_type == VDIR) {
+	if (vp->v_type == VDIR && (sv_caps & SMB_CAP_NT_SMBS) == 0) {
 		np->n_opencount++;
 		return 0;
 	}
+#if 0
 	if (np->n_flag & NMODIFIED) {
 		if ((error = smbfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 1)) == EINTR)
 			return error;
@@ -251,23 +254,28 @@ smbfs_open(v)
 			np->n_mtime.tv_sec = vattr.va_mtime.tv_sec;
 		}
 	}
+#endif
 	if (np->n_opencount) {
 		np->n_opencount++;
 		return 0;
 	}
-	accmode = SMB_AM_OPENREAD;
-	if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
-		accmode = SMB_AM_OPENRW;
 	smb_makescred(&scred, ap->a_p, ap->a_cred);
-	error = smbfs_smb_open(np, accmode, &scred);
-	if (error) {
-		if (mode & FWRITE)
-			return EACCES;
-		error = smbfs_smb_open(np, SMB_AM_OPENREAD, &scred);
+	if (vp->v_type == VDIR)
+		error = smbfs_smb_ntcreatex(np, SMB_AM_OPENREAD, &scred);
+	else {
+		accmode = SMB_AM_OPENREAD;
+		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
+			accmode = SMB_AM_OPENRW;
+		error = smbfs_smb_open(np, accmode, &scred);
+		if (error) {
+			if (ap->a_mode & FWRITE)
+				return EACCES;
+		
+			error = smbfs_smb_open(np, SMB_AM_OPENREAD, &scred);
+		}
 	}
-	if (!error) {
+	if (!error)
 		np->n_opencount++;
-	}
 	smbfs_attr_cacheremove(vp);
 	return error;
 }
@@ -296,13 +304,19 @@ smbfs_closel(struct vop_close_args *ap)
 	}
 	np->n_opencount--;
 	if (vp->v_type == VDIR) {
+		struct smb_share *ssp = np->n_mount->sm_share;
+
 		if (np->n_opencount)
 			return 0;
 		if (np->n_dirseq) {
 			smbfs_findclose(np->n_dirseq, &scred);
 			np->n_dirseq = NULL;
 		}
-		error = 0;
+		if ((SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_NT_SMBS) == 0) {
+			error = smbfs_smb_close(ssp, np->n_fid,
+				&np->n_mtime, &scred);
+		} else
+			error = 0;
 	} else {
 		error = smbfs_vinvalbuf(vp, V_SAVE, ap->a_cred, p, 1);
 		if (np->n_opencount)
@@ -469,7 +483,7 @@ smbfs_setattr(v)
 					np->n_mtime = *mtime;
 				VOP_CLOSE(vp, FWRITE, ap->a_cred, ap->a_p);
 				}
-			} else if ((vcp->vc_sopt.sv_caps & SMB_CAP_NT_SMBS)) {
+			} else if (SMB_CAPS(vcp) & SMB_CAP_NT_SMBS) {
 				error = smbfs_smb_setptime2(np, mtime, atime, 0, &scred);
 /*				error = smbfs_smb_setpattrNT(np, 0, mtime, atime, &scred);*/
 			} else if (SMB_DIALECT(vcp) >= SMB_DIALECT_LANMAN2_0) {
@@ -478,7 +492,7 @@ smbfs_setattr(v)
 				error = smbfs_smb_setpattr(np, 0, mtime, &scred);
 			}
 		} else {
-			if (vcp->vc_sopt.sv_caps & SMB_CAP_NT_SMBS) {
+			if (SMB_CAPS(vcp) & SMB_CAP_NT_SMBS) {
 				error = smbfs_smb_setfattrNT(np, 0, mtime, atime, &scred);
 			} else if (SMB_DIALECT(vcp) >= SMB_DIALECT_LANMAN1_0) {
 				error = smbfs_smb_setftime(np, mtime, atime, &scred);

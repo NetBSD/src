@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.14 2003/03/23 16:55:54 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.15 2003/04/07 12:04:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.14 2003/03/23 16:55:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.15 2003/04/07 12:04:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,9 +464,9 @@ smbfs_smb_setfattrNT(struct smbnode *np, u_int16_t attr, struct timespec *mtime,
 	svtz = SSTOVC(ssp)->vc_sopt.sv_tz;
 	mbp = &t2p->t2_tparam;
 	mb_init(mbp);
-	mb_put_mem(mbp, (caddr_t)&np->n_fid, 2, MB_MSYSTEM);
-	mb_put_uint16le(mbp, SMB_SET_FILE_BASIC_INFO);
-	mb_put_uint32le(mbp, 0);
+	mb_put_mem(mbp, (caddr_t)&np->n_fid, 2, MB_MSYSTEM); 	/* FID */
+	mb_put_uint16le(mbp, SMB_SET_FILE_BASIC_INFO);		/* info level */
+	mb_put_uint32le(mbp, 0);				/* reserved */
 	mbp = &t2p->t2_tdata;
 	mb_init(mbp);
 	mb_put_int64le(mbp, 0);		/* creation time */
@@ -1282,4 +1282,267 @@ smbfs_smb_lookup(struct smbnode *dnp, const char *name, int nmlen,
 	}
 	smbfs_findclose(ctx, scred);
 	return error;
+}
+
+/*
+ * This call is used to fetch FID for directories. For normal files,
+ * SMB_COM_OPEN is used.
+ */
+int
+smbfs_smb_ntcreatex(struct smbnode *np, int accmode, struct smb_cred *scred)
+{
+	struct smb_rq rq, *rqp = &rq;
+	struct smb_share *ssp = np->n_mount->sm_share;
+	struct mbchain *mbp;
+	struct mdchain *mdp;
+	int error;
+	u_int8_t wc;
+	u_int8_t *nmlen;
+	u_int16_t flen;
+
+	KASSERT(SMBTOV(np)->v_type == VDIR);
+
+	error = smb_rq_init(rqp, SSTOCP(ssp), SMB_COM_NT_CREATE_ANDX, scred);
+	if (error)
+		return error;
+	smb_rq_getrequest(rqp, &mbp);
+	smb_rq_wstart(rqp);
+	mb_put_uint8(mbp, 0xff);	/* Secondary command; 0xFF = None */
+	mb_put_uint8(mbp, 0);		/* Reserved (must be 0) */
+	mb_put_uint16le(mbp, 0);	/* Off to next cmd WordCount */
+	mb_put_uint8(mbp, 0);		/* Reserved (must be 0) */
+	nmlen = mb_reserve(mbp, sizeof(u_int16_t));
+					/* Length of Name[] in bytes */
+	mb_put_uint32le(mbp, SMB_FL_CANONICAL_PATHNAMES);
+					/* Flags - Create bit set */
+	mb_put_uint32le(mbp, 0);	/* If nonzero, open relative to this */
+	mb_put_uint32le(mbp, NT_FILE_LIST_DIRECTORY);	/* Access mask */
+	mb_put_uint32le(mbp, 0);	/* Low 32bit */
+	mb_put_uint32le(mbp, 0);	/* Hi 32bit */
+					/* Initial allocation size */
+	mb_put_uint32le(mbp, 0);	/* File attributes */
+	mb_put_uint32le(mbp, NT_FILE_SHARE_READ|NT_FILE_SHARE_WRITE);
+					/* Type of share access */
+	mb_put_uint32le(mbp, NT_OPEN_EXISTING);
+					/* Create disposition - just open */
+	mb_put_uint32le(mbp, NT_FILE_DIRECTORY_FILE);
+					/* Options to use if creating a file */
+	mb_put_uint32le(mbp, 0);	/* Security QOS information */
+	mb_put_uint8(mbp, 0);		/* Security tracking mode flags */
+	smb_rq_wend(rqp);
+	smb_rq_bstart(rqp);
+	smb_rq_bend(rqp);
+	mbp->mb_count = 0;
+
+	error = smbfs_fullpath(mbp, SSTOVC(ssp), np, NULL, 0);
+	if (error)
+		return error;
+
+	/* Windows XP seems to include the final zero. Better do that too. */
+	mb_put_uint8(mbp, 0);
+
+	flen = mbp->mb_count;
+	SMBRQ_PUTLE16(nmlen, flen);
+
+	error = smb_rq_simple(rqp);
+	if (error)
+		goto bad;
+
+	smb_rq_getreply(rqp, &mdp);
+	md_get_uint8(mdp, &wc);		/* WordCount - check? */
+	md_get_uint8(mdp, NULL);	/* AndXCommand */
+	md_get_uint8(mdp, NULL);	/* Reserved - must be zero */
+	md_get_uint16(mdp, NULL);	/* Offset to next cmd WordCount */
+	md_get_uint8(mdp, NULL);	/* Oplock level granted */
+	md_get_uint16(mdp, &np->n_fid);	/* FID */
+	/* ignore rest */
+	
+bad:
+	smb_rq_done(rqp);
+	return (error);
+}
+
+/*
+ * Setup a request for NT DIRECTORY CHANGE NOTIFY.
+ */
+int
+smbfs_smb_nt_dirnotify_setup(struct smbnode *dnp, struct smb_rq **rqpp, struct smb_cred *scred, void (*notifyhook)(void *), void *notifyarg)
+{
+	struct smb_rq *rqp;
+	struct smb_share *ssp = dnp->n_mount->sm_share;
+	struct mbchain *mbp;
+	int error;
+
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_NT_TRANSACT, scred, &rqp);
+	if (error)
+		return error;
+	smb_rq_getrequest(rqp, &mbp);
+	smb_rq_wstart(rqp);
+	mb_put_uint8(mbp, 0xff);	/* Max setup words to return */
+	mb_put_uint16le(mbp, 0);	/* Flags (according to Samba) */
+	mb_put_uint32le(mbp, 0);	/* Total parameter bytes being sent*/
+	mb_put_uint32le(mbp, 0);	/* Total data bytes being sent */
+	mb_put_uint32le(mbp, 10*1024); /* Max parameter bytes to return */
+	mb_put_uint32le(mbp, 0);	/* Max data bytes to return */
+	mb_put_uint32le(mbp, 0);	/* Parameter bytes sent this buffer */
+	mb_put_uint32le(mbp, 0);	/* Offset (from h. start) to Param */
+	mb_put_uint32le(mbp, 0);	/* Data bytes sent this buffer */
+	mb_put_uint32le(mbp, 0);	/* Offset (from h. start) to Data */
+	mb_put_uint8(mbp, 4);		/* Count of setup words */
+	mb_put_uint16le(mbp, SMB_NTTRANS_NOTIFY_CHANGE); /* Trans func code */
+
+	/* NT TRANSACT NOTIFY CHANGE: Request Change Notification */
+	mb_put_uint32le(mbp,
+		FILE_NOTIFY_CHANGE_NAME|FILE_NOTIFY_CHANGE_ATTRIBUTES|
+		FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE|
+		FILE_NOTIFY_CHANGE_CREATION);	/* CompletionFilter */
+	mb_put_mem(mbp, (caddr_t)&dnp->n_fid, 2, MB_MSYSTEM);	/* FID */
+	mb_put_uint8(mbp, 0);		/* WatchTree - Watch all subdirs too */
+	mb_put_uint8(mbp, 0);		/* Reserved - must be zero */
+	smb_rq_wend(rqp);
+	smb_rq_bstart(rqp);
+	smb_rq_bend(rqp);
+
+	/* No timeout */
+	rqp->sr_timo = -1;
+	smb_rq_setcallback(rqp, notifyhook, notifyarg);
+
+	error = smb_rq_enqueue(rqp);
+	if (!error)
+		*rqpp = rqp;
+	else
+		smb_rq_done(rqp);
+
+	return (error);
+}
+
+int
+smbfs_smb_nt_dirnotify_fetch(struct smb_rq *rqp, int *hint)
+{
+	int error;
+	struct mdchain *mdp;
+	u_int8_t sc;
+	u_int32_t nextentry;
+
+	error = smb_rq_reply(rqp);
+	if (error) {
+		/*
+		 * If we get EMSGSIZE, there is already too many notifications
+		 * available for the directory, and the internal buffer
+		 * overflew. Just flag any possible relevant change.
+		 */
+		if (error == EMSGSIZE) {
+			*hint = NOTE_ATTRIB | NOTE_WRITE;
+			error = 0;
+		}
+		
+		goto bad;
+	}
+
+	smb_rq_getreply(rqp, &mdp);
+
+	/* Parse reply */
+	error = md_get_mem(mdp, NULL, 4 + (8*4), MB_MZERO);	/* skip */
+	if (error)
+		goto bad;
+
+	md_get_uint8(mdp, &sc);			/* SetupCount */
+	if (sc > 0)
+		md_get_mem(mdp, NULL, sc * sizeof(u_int16_t), MB_MZERO);
+	md_get_uint16(mdp, NULL);		/* ByteCount */
+	md_get_mem(mdp, NULL, 1 + (sc % 2) * 2, MB_MZERO);	/* Pad */
+
+	/*
+	 * The notify data are blocks of
+	 *   ULONG nextentry - offset of next entry from start of this one
+	 *   ULONG action - type of notification
+	 *   ULONG filenamelen - length of filename in bytes
+	 *   WCHAR filename[filenamelen/2] - Unicode filename
+	 * nexentry == 0 means last notification, filename is in 16bit LE
+	 * unicode
+	 */
+	*hint = 0;
+	do {
+		u_int32_t action;
+#if 0
+		u_int32_t fnlen;
+		u_int16_t fnc;
+#endif
+
+		md_get_uint32le(mdp, &nextentry);
+		md_get_uint32le(mdp, &action);
+		if (nextentry)
+			md_get_mem(mdp, NULL, nextentry - 2 * 4, MB_MZERO);
+#if 0
+		md_get_uint32le(mdp, &fnlen);
+		
+		printf("notify: next %u act %u fnlen %u fname '",
+			nextentry, action, fnlen);
+		for(; fnlen > 0; fnlen -= 2) {
+			md_get_uint16le(mdp, &fnc);
+			printf("%c", fnc&0xff);
+		}
+		printf("'\n");
+#endif
+
+		switch(action) {
+		case FILE_ACTION_ADDED:
+		case FILE_ACTION_REMOVED:
+		case FILE_ACTION_RENAMED_OLD_NAME:
+		case FILE_ACTION_RENAMED_NEW_NAME:
+			*hint |= NOTE_ATTRIB | NOTE_WRITE;
+			break;
+
+		case FILE_ACTION_MODIFIED:
+			*hint |= NOTE_ATTRIB;
+			break;
+		}
+	} while(nextentry > 0);
+
+bad:
+	smb_rq_done(rqp);
+	return error;
+}
+
+/*
+ * Cancel previous SMB, with message ID mid. No reply is generated
+ * to this one (only the previous message returns with error).
+ */
+int
+smbfs_smb_ntcancel(struct smb_connobj *layer, u_int16_t mid, struct smb_cred *scred)
+{
+	struct smb_rq *rqp;
+	struct mbchain *mbp;
+	struct mbuf *m;
+	u_int8_t *mp;
+	int error;
+
+	error = smb_rq_alloc(layer, SMB_COM_NT_CANCEL, scred, &rqp);
+	if (error)
+		return (error);
+	rqp->sr_flags |= SMBR_NOWAIT;	/* do not wait for reply */
+	smb_rq_getrequest(rqp, &mbp);
+
+	/*
+	 * This is nonstandard. We need to rewrite the just written
+	 * mid to different one. Access underlying mbuf directly.
+	 * We assume mid is the last thing written smb_rq_init()
+	 * to request buffer.
+	 */
+	m = mbp->mb_cur;
+	mp = mtod(m, u_int8_t *) + m->m_len - 2;
+	SMBRQ_PUTLE16(mp, mid);
+	rqp->sr_mid = mid;
+
+	smb_rq_wstart(rqp);
+	smb_rq_wend(rqp);
+	smb_rq_bstart(rqp);
+	smb_rq_bend(rqp);
+
+	error = (smb_rq_simple(rqp));
+
+	/* Discard, there is no real reply */
+	smb_rq_done(rqp);
+
+	return (error);
 }

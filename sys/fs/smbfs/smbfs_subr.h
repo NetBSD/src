@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.h,v 1.8 2003/04/02 16:26:53 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_subr.h,v 1.9 2003/04/07 12:04:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -165,6 +165,10 @@ int  smbfs_smb_move(struct smbnode *src, struct smbnode *tdnp,
 int  smbfs_smb_mkdir(struct smbnode *dnp, const char *name, int len,
 	struct smb_cred *scred);
 int  smbfs_smb_rmdir(struct smbnode *np, struct smb_cred *scred);
+int  smbfs_smb_ntcreatex(struct smbnode *, int accmode, struct smb_cred *);
+int  smbfs_smb_nt_dirnotify_setup(struct smbnode *, struct smb_rq **, struct smb_cred *, void (*)(void *), void *);
+int  smbfs_smb_nt_dirnotify_fetch(struct smb_rq *, int *);
+int  smbfs_smb_ntcancel(struct smb_connobj *, u_int16_t, struct smb_cred *);
 int  smbfs_findopen(struct smbnode *dnp, const char *wildcard, int wclen,
 	int attr, struct smb_cred *scred, struct smbfs_fctx **ctxpp);
 int  smbfs_findnext(struct smbfs_fctx *ctx, int limit, struct smb_cred *scred);
