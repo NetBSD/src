@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.12 2004/06/29 16:02:59 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.13 2004/08/14 16:06:37 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -180,16 +180,16 @@ Eine volle Installation benötigt mindestens %d Megabytes - ohne X Sets
 (grafische Oberfläche) - und %d Megabytes wenn Sie X ebenfalls installieren.
 }
 
-message sizechoice
-{Sie haben manuelle Partitionierung gewählt.
-Zunächst müssen Sie eine Grösseneinheit auswählen. Wählen Sie Megabytes, so
-werden effektive Partitionsgrössen festgesetzt, die nahe Ihrer Grössenangabe
-liegen - ausgerichtet nach Zylindergrenzen. Bei modernen ZBR Disks variieren
-die Zylindergrössen durchgehend, so dass kein grosser Verlass auf die
-genauen Grenzen der Zylinder besteht. Bei älteren Disks dagegen ist es am
-effizientesten sich Partitionsgrössen auszusuchen, die exakt ein Vielfaches
-der aktuellen Zylindergrösse ausmachen.
-}
+message Choose_your_size_specifier
+{Wählen Sie Megabytes, so werden effektive Partitionsgrössen
+festgesetzt, die nahe Ihrer Grössenangabe liegen - ausgerichtet
+nach Zylindergrenzen. Bei modernen ZBR Disks variieren die
+Zylindergrössen durchgehend, so dass kein grosser Verlass auf die
+genauen Grenzen der Zylinder besteht. Bei älteren Disks dagegen ist
+es am effizientesten sich Partitionsgrössen auszusuchen, die exakt
+ein Vielfaches der aktuellen Zylindergrösse ausmachen.
+
+Wählen Sie ihre Einheit}
 
 message defaultunit
 {Solange Sie nicht 'M' (Megabytes), 'G' (Gigabytes), 'c' (Zylinder) oder
@@ -1023,7 +1023,6 @@ message Hit_enter_to_continue {Drücken Sie die Eingabetaste um fortzufahren.}
 message Choose_your_installation {Wählen Sie ihre Installation}
 message Set_Sizes {Grössen der NetBSD Partitionen setzen}
 message Use_Existing {Bereits bestehende Partitionsgrössen beibehalten}
-message Choose_your_size_specifier {Wählen Sie ihre Einheit}
 message Megabytes {Megabytes}
 message Cylinders {Zylinder}
 message Sectors {Sektoren}

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.17 2004/06/05 21:18:59 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.18 2004/08/14 16:06:37 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -184,11 +184,11 @@ menu ok, no shortcut, y=-10;
 	display action { menu->title = arg; };
 	option MSG_Hit_enter_to_continue, exit;
 
-menu layout, y=-1, title  MSG_Choose_your_installation;
+menu layout, sub menu, y=-1, title  MSG_Choose_your_installation;
 	option MSG_Set_Sizes, 	  exit, action { layoutkind = 1; };
 	option MSG_Use_Existing,  exit, action { layoutkind = 4; };
 
-menu sizechoice, title  MSG_Choose_your_size_specifier;
+menu sizechoice, sub menu, y=0, title MSG_Choose_your_size_specifier;
 	display action {
 		if (sizemult == current_cylsize)
 			menu->cursel = 1;

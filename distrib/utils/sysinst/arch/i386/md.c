@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.105 2004/07/17 19:37:00 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.106 2004/08/14 16:06:40 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -603,13 +603,6 @@ md_init(void)
 
 	/* Default to install same type of kernel as we are running */
 	sets_selected = (sets_selected & ~SET_KERNEL) | get_bootmodel();
-}
-
-void
-md_set_sizemultname(void)
-{
-
-	set_sizemultname_meg();
 }
 
 static char *

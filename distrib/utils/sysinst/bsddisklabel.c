@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.30 2004/07/17 10:55:03 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.31 2004/08/14 16:06:36 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -548,7 +548,9 @@ make_bsd_partitions(void)
 
 	process_menu(MENU_layout, NULL);
 
-	md_set_sizemultname();
+	/* Set so we use the 'real' geometry for rounding, input in MB */
+	current_cylsize = dlcylsize;
+	set_sizemultname_meg();
 
 	/* Build standard partitions */
 	memset(&bsdlabel, 0, sizeof bsdlabel);

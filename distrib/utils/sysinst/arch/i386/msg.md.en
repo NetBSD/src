@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.47 2004/06/12 19:18:24 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.48 2004/08/14 16:06:41 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -163,15 +163,10 @@ message updatembr
 {Do you want to update the bootcode in the Master Boot Record to
 the latest version of the NetBSD bootcode?}
 
-message set_kernel_1
-{Kernel (GENERIC)}
-message set_kernel_2
-{Kernel (GENERIC.MP)}
-message set_kernel_3
-{Kernel (GENERIC_TINY)}
-message set_kernel_4
-{Kernel (GENERIC_LAPTOP)}
-message set_kernel_5
-{Kernel (GENERIC_DIAGNOSTIC)}
-message set_kernel_6
-{Kernel (GENERIC_PS2TINY)}
+message set_kernel_1	{Kernel (GENERIC)}
+message set_kernel_2	{Kernel (GENERIC.MP)}
+message set_kernel_3	{Kernel (GENERIC.MPACPI)}
+message set_kernel_4	{Kernel (GENERIC_TINY)}
+message set_kernel_5	{Kernel (GENERIC_LAPTOP)}
+message set_kernel_6	{Kernel (GENERIC_DIAGNOSTIC)}
+message set_kernel_7	{Kernel (GENERIC_PS2TINY)}

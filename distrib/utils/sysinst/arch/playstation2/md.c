@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.17 2004/07/17 19:37:00 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.18 2004/08/14 16:06:42 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -156,13 +156,6 @@ void
 md_init()
 {
 	/* Nothing to do */
-}
-
-void
-md_set_sizemultname()
-{
-
-	set_sizemultname_meg();
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.79 2004/07/17 11:28:16 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.80 2004/08/14 16:06:37 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -175,11 +175,8 @@ L'installation standard requière au moins %d Mo.
 L'installation standard avec X requière au moins %d Mo.
 }
 
-message sizechoice
-{Vous avez choisi de définir vous même vos partitions
-(pour le disklabel BSD ou, pour certains portages, le MBR).
-Vous devez spécifier l'unité que vous voulez utiliser.
-Si vous choisissez par "Mega-octets", la taille sera proche de votre
+message Choose_your_size_specifier
+{Si vous choisissez par "Mega-octets", la taille sera proche de votre
 choix tout en conservant un nombre entier de cylindres.
 Si vous choisissez par "Secteurs", vous pourrez choisir précisément
 les tailles.
@@ -187,7 +184,8 @@ Sur les disques modernes, la taille réelle des cylindres est variable
 et il y a peu d'intéret à aligner les partitions sur les cylindres.
 Pour les disques plus ancien, il est plus efficace de choisir des tailles
 de partitions multiples de la taille d'un cylindre.
-}
+
+Choisissez votre unité d'espace disque}
 
 message defaultunit
 {Tailles et décalages ("offsets") sont en %s, sauf si vous spécifiez une unitée ('M' pour
@@ -1006,7 +1004,6 @@ message Hit_enter_to_continue {Presser entrée pour continuer}
 message Choose_your_installation {Choisissez votre type d'installation}
 message Set_Sizes {Specifier les tailles de partitions NetBSD}
 message Use_Existing {Utiliser les partitions existantes}
-message Choose_your_size_specifier {Choisissez votre unité d'espace disque}
 message Megabytes {Megaoctets}
 message Cylinders {Cylindres}
 message Sectors {Secteurs}

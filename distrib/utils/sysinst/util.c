@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.126 2004/07/17 11:28:16 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.127 2004/08/14 16:06:39 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -193,24 +193,11 @@ get_ramsize(void)
 }
 
 void
-ask_sizemult(int cylsize)
-{
-
-	current_cylsize = cylsize;	/* XXX */
-
-	msg_display(MSG_sizechoice);
-	process_menu(MENU_sizechoice, NULL);
-}
-
-void
 run_makedev(void)
 {
 	char *owd;
 
-	wclear(stdscr);
-	wrefresh(stdscr);
-	msg_display(MSG_makedev);
-	sleep (1);
+	msg_display_add(MSG_makedev);
 
 	owd = getcwd(NULL, 0);
 
@@ -563,7 +550,7 @@ set_sublist(menudesc *menu, void *arg)
 	}
 
 	menu_no = new_menu(NULL, me, sets, 20, 10, 0, 44,
-		MC_SCROLL | MC_DFLTEXIT,
+		MC_SUBMENU | MC_SCROLL | MC_DFLTEXIT,
 		set_selected_sets, NULL, NULL, NULL, MSG_install_selected_sets);
 
 	if (menu_no == -1)
@@ -740,7 +727,8 @@ extract_dist(int update, int verbose)
 
 	if (tarstats.nerror == 0 && tarstats.nsuccess == tarstats.nselected) {
 		msg_display(MSG_endtarok);
-		process_menu(MENU_ok, NULL);
+		/* Give user a chance to see the success message */
+		sleep(1);
 		return 0;
 	}
 	/* We encountered errors. Let the user know. */
@@ -748,6 +736,7 @@ extract_dist(int update, int verbose)
 	    tarstats.nselected, tarstats.nnotfound, tarstats.nskipped,
 	    tarstats.nfound, tarstats.nsuccess, tarstats.nerror);
 	process_menu(MENU_ok, NULL);
+	msg_clear();
 	return extracted == 0;
 }
 
@@ -793,7 +782,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 		goto again;
 
 	/* Configure the system */
-	if (sets_installed & SET_ETC)
+	if (sets_installed & SET_BASE)
 		run_makedev();
 
 	/* Save keybard type */

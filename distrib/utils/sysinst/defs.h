@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.118 2004/07/17 10:55:03 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.119 2004/08/14 16:06:36 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -272,7 +272,6 @@ int	md_pre_disklabel(void);
 int	md_pre_update(void);
 int	md_update(void);
 void	md_init(void);
-void	md_set_sizemultname(void);
 void	md_set_no_x(void);
 
 /* from main.c */

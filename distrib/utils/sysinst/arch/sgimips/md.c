@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.15 2004/06/06 06:07:01 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.16 2004/08/14 16:06:42 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -198,11 +198,4 @@ md_init()
                 sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_2;
         else
                 sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_1;
-}
-
-void
-md_set_sizemultname()
-{
-
-	set_sizemultname_meg();
 }
