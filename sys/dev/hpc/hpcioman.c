@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcioman.c,v 1.7 2002/09/27 20:37:58 thorpej Exp $ */
+/*	$NetBSD: hpcioman.c,v 1.8 2002/09/30 21:09:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.7 2002/09/27 20:37:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.8 2002/09/30 21:09:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,8 @@ struct hpcioman_softc {
 	struct device sc_dev;
 };
 
-const struct cfattach hpcioman_ca = {
-	sizeof(struct hpcioman_softc), hpcioman_match, hpcioman_attach
-};
+CFATTACH_DECL(hpcioman, sizeof(struct hpcioman_softc),
+    hpcioman_match, hpcioman_attach, NULL, NULL)
 
 int
 hpcioman_match(struct device *parent, struct cfdata *cf, void *aux)

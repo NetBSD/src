@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.9 2002/09/27 20:38:01 thorpej Exp $	*/
+/*	$NetBSD: iopl.c,v 1.10 2002/09/30 21:11:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.9 2002/09/27 20:38:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.10 2002/09/30 21:11:45 thorpej Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -130,9 +130,8 @@ static int	iopl_ioctl(struct ifnet *, u_long, caddr_t);
 static void	iopl_start(struct ifnet *);
 static void	iopl_stop(struct ifnet *, int);
 
-const struct cfattach iopl_ca = {
-	sizeof(struct iopl_softc), iopl_match, iopl_attach,
-};
+CFATTACH_DECL(iopl, sizeof(struct iopl_softc),
+    iopl_match, iopl_attach, NULL, NULL)
 
 #ifdef I2OVERBOSE
 static const char * const iopl_errors[] = {
