@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.10 1999/03/29 07:22:02 nisimura Exp $ */
+/* $NetBSD: mfb.c,v 1.11 1999/05/07 08:00:31 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.10 1999/03/29 07:22:02 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.11 1999/05/07 08:00:31 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,10 +132,11 @@ struct fb_devconfig {
 	int	    dc_blanked;		/* currently has video disabled */
 };
 
-struct hwcursor {
+struct hwcursor64 {
 	struct wsdisplay_curpos cc_pos;
 	struct wsdisplay_curpos cc_hot;
 	struct wsdisplay_curpos cc_size;
+	struct wsdisplay_curpos cc_magic;
 #define	CURSOR_MAX_SIZE	64
 	u_int8_t cc_color[6];
 	u_int64_t cc_image[64 + 64];
@@ -144,7 +145,7 @@ struct hwcursor {
 struct mfb_softc {
 	struct device sc_dev;
 	struct fb_devconfig *sc_dc;	/* device configuration */
-	struct hwcursor sc_cursor;	/* software copy of cursor */
+	struct hwcursor64 sc_cursor;	/* software copy of cursor */
 	int sc_curenb;			/* cursor sprite enabled */
 	int sc_changed;			/* need update of colormap */
 #define	DATA_ENB_CHANGED	0x01	/* cursor enable changed */
@@ -153,10 +154,10 @@ struct mfb_softc {
 #define	DATA_CMAP_CHANGED	0x08	/* colormap changed */
 #define	DATA_ALL_CHANGED	0x0f
 	int nscreens;
-	short magic_x, magic_y;		/* MX cursor location offset */
+};
+
 #define	MX_MAGIC_X 360
 #define	MX_MAGIC_Y 36
-};
 
 #define	MX_FB_OFFSET	0x200000
 #define	MX_FB_SIZE	 0x40000
@@ -365,8 +366,9 @@ mfbattach(parent, self, aux)
 	}
 	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_depth);
-	sc->magic_x = MX_MAGIC_X;
-	sc->magic_y = MX_MAGIC_Y;
+
+	sc->sc_cursor.cc_magic.x = MX_MAGIC_X;
+	sc->sc_cursor.cc_magic.y = MX_MAGIC_Y;
 
         tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, mfbintr, sc);
 
@@ -711,7 +713,9 @@ bt431_set_curpos(sc)
 
 	x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
 	y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
-	x += sc->magic_x; y += sc->magic_y; /* magic offset of MX coordinate */
+
+	x += sc->sc_cursor.cc_magic.x;
+	y += sc->sc_cursor.cc_magic.y;
 
 	s = spltty();
 

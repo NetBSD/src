@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.10 1999/04/30 09:43:23 nisimura Exp $ */
+/* $NetBSD: xcfb.c,v 1.11 1999/05/07 08:00:31 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.10 1999/04/30 09:43:23 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.11 1999/05/07 08:00:31 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,17 +71,18 @@ struct fb_devconfig {
 	int	   dc_blanked;		/* currently has video disabled */
 };
 
-struct hwcmap {
+struct hwcmap256 {
 #define	CMAP_SIZE	256	/* 256 R/G/B entries */
 	u_int8_t r[CMAP_SIZE];
 	u_int8_t g[CMAP_SIZE];
 	u_int8_t b[CMAP_SIZE];
 };
 
-struct hwcursor {
+struct hwcursor64 {
 	struct wsdisplay_curpos cc_pos;
 	struct wsdisplay_curpos cc_hot;
 	struct wsdisplay_curpos cc_size;
+	struct wsdisplay_curpos cc_magic;	/* not used by PMAG-DV */
 #define	CURSOR_MAX_SIZE	64
 	u_int8_t cc_color[6];
 	u_int64_t cc_image[64 + 64];
@@ -97,8 +98,8 @@ struct hwcursor {
 struct xcfb_softc {
 	struct device sc_dev;
 	struct fb_devconfig *sc_dc;	/* device configuration */
-	struct hwcmap sc_cmap;		/* software copy of colormap */
-	struct hwcursor sc_cursor;	/* software copy of cursor */
+	struct hwcmap256 sc_cmap;	/* software copy of colormap */
+	struct hwcursor64 sc_cursor;	/* software copy of cursor */
 	/* XXX MAXINE can take PMAG-DV virtical retrace interrupt XXX */
 	int nscreens;
 	/* cursor coordiate is located at upper-left corner */
@@ -171,7 +172,7 @@ static int  get_cmap __P((struct xcfb_softc *, struct wsdisplay_cmap *));
 static int  set_cursor __P((struct xcfb_softc *, struct wsdisplay_cursor *));
 static int  get_cursor __P((struct xcfb_softc *, struct wsdisplay_cursor *));
 static void set_curpos __P((struct xcfb_softc *, struct wsdisplay_curpos *));
-void ims332_loadcmap __P((struct hwcmap *));
+void ims332_loadcmap __P((struct hwcmap256 *));
 void ims332_set_cursor __P((struct xcfb_softc *));
 void ims332_set_curpos __P((struct xcfb_softc *));
 void ims332_load_curcmap __P((struct xcfb_softc *));
@@ -291,7 +292,7 @@ xcfbattach(parent, self, aux)
 	struct xcfb_softc *sc = (struct xcfb_softc *)self;
 	struct tc_attach_args *ta = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	struct hwcmap *cm;
+	struct hwcmap256 *cm;
 	int console;
 
 	console = (ta->ta_addr == xcfb_consaddr);
@@ -308,7 +309,7 @@ xcfbattach(parent, self, aux)
 	    sc->sc_dc->dc_depth);
 
 	cm = &sc->sc_cmap;
-	memset(cm, 255, sizeof(struct hwcmap));		/* XXX */
+	memset(cm, 255, sizeof(struct hwcmap256));	/* XXX */
 	cm->r[0] = cm->g[0] = cm->b[0] = 0;		/* XXX */
 
 	sc->sc_csr = IMS332_BPP_8 | IMS332_CSR_A_VTG_ENABLE;
@@ -672,7 +673,7 @@ set_curpos(sc, curpos)
 
 void
 ims332_loadcmap(cm)
-	struct hwcmap *cm;
+	struct hwcmap256 *cm;
 {
 	int i;
 	u_int32_t rgb;
