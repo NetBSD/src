@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.4 2001/06/16 13:58:18 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.5 2001/06/20 22:14:34 chris Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -25,7 +25,6 @@ makeoptions	COPTS="-Os -march=armv4 -mtune=strongarm" # optimise for space
 
 # Architecture options
 options 	FOOTBRIDGE	# We have DC21285 'Footbridge' core logic
-options 	EBSA285		# We are an EBSA285
 
 # FPA options
 

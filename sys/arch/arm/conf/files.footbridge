@@ -1,4 +1,4 @@
-#	$NetBSD: files.footbridge,v 1.4 2001/06/12 17:10:25 matt Exp $
+#	$NetBSD: files.footbridge,v 1.5 2001/06/20 22:14:35 chris Exp $
 #
 # Shared footbridge files information
 
@@ -23,7 +23,3 @@ attach	fcom at footbridge
 file	arch/arm/footbridge/footbridge_com.c		fcom needs-flag
 file	arch/arm/footbridge/footbridge_com_io.c	fcom
 file	arch/arm/footbridge/footbridge_com_io_asm.S	fcom
-
-# EBSA285/CATS class board
-# DC21285 based board with cyclone firmware
-file	arch/arm/footbridge/ebsa285_machdep.c		footbridge & ebsa285

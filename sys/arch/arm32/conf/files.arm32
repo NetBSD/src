@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.117 2001/06/18 22:26:15 bjh21 Exp $
+#	$NetBSD: files.arm32,v 1.118 2001/06/20 22:14:32 chris Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -19,7 +19,6 @@ defopt	XSERVER
 defopt	COMPAT_OLD_BOOTLOADER
 
 # Architectures and core logic
-defopt	EBSA285
 defopt	NETWINDER
 
 define todservice {}
