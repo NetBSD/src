@@ -1,4 +1,4 @@
-#	$NetBSD: std.malta,v 1.1 2002/03/07 14:43:57 simonb Exp $
+# $NetBSD: std.malta.common,v 1.1 2002/03/23 14:51:29 simonb Exp $
 
 machine evbmips mips
 
@@ -11,7 +11,6 @@ options	EXEC_ELF32	# exec ELF32 binaries
 options	EXEC_SCRIPT	# exec #! scripts
 
 makeoptions	DEFTEXTADDR="0x80100000"
-makeoptions	ENDIAN="-EL"
 makeoptions	BOARDTYPE="malta"
 
-include 	"arch/evbmips/conf/files.malta"
+include "arch/evbmips/conf/files.malta"
