@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.1 1999/09/27 23:41:47 ad Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.2 1999/09/29 17:33:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -232,47 +232,47 @@ struct eata_sg {
  * with the structure FreeBSD uses. [ad]
  */
 struct eata_cfg {
-        u_int8_t  dc_devtype;
-        u_int8_t  dc_pagecode;
-        u_int8_t  dc_reserved0;
-        u_int8_t  dc_cfglen;		/* Length in bytes after this field */
-        u_int8_t  dc_eatasig[4];	/* EATA signature  */
-        u_int8_t  dc_eataversion;	/* EATA version number */
-	u_int8_t  dc_overlapcmds : 1;	/* Overlapped cmds supported */
-	u_int8_t  dc_targetmode : 1;	/* Target mode supported */
-	u_int8_t  dc_trunnotrec : 1;	/* Truncate cmd not supported */
-	u_int8_t  dc_moresupported:1;	/* More cmd supported */
-	u_int8_t  dc_dmasupported : 1;	/* DMA mode supported */
-	u_int8_t  dc_dmanumvalid : 1;	/* DMA channel field is valid */
-	u_int8_t  dc_atadev : 1;	/* This is an ATA device */
-	u_int8_t  dc_hbavalid : 1;	/* HBA field is valid */
-        u_int8_t  dc_padlength[2];	/* Pad bytes for PIO cmds */
-        u_int8_t  dc_hba[4];		/* Host adapter SCSI IDs */
-        u_int8_t  dc_cplen[4];		/* Command packet length */
-        u_int8_t  dc_splen[4];		/* Status packet length */
-        u_int8_t  dc_queuedepth[2];	/* Controller queue depth */
-        u_int8_t  dc_reserved1[2];
-        u_int8_t  dc_sglen[2];		/* Maximum scatter gather list size */
-        u_int8_t  dc_irqnum : 4;	/* IRQ number */
-        u_int8_t  dc_irqtrigger : 1;	/* IRQ trigger: 0 = edge, 1 = level */
-        u_int8_t  dc_secondary : 1;	/* Controller not at address 0x170 */
-        u_int8_t  dc_dmanum : 2; 	/* DMA channel index for ISA */
-        u_int8_t  dc_irq;		/* IRQ address */
-	u_int8_t  dc_iodisable : 1;	/* ISA I/O address disabled */
-	u_int8_t  dc_forceaddr : 1;	/* PCI forced to an EISA/ISA addr */
-	u_int8_t  dc_sg64k : 1;		/* 64K of SG space */
-	u_int8_t  dc_sgunaligned : 1;	/* Can do unaligned SG, otherwise 4 */
-	u_int8_t  dc_reserved2 : 4;	/* Reserved */
-        u_int8_t  dc_maxtarget : 5;	/* Maximun SCSI target ID supported */
-        u_int8_t  dc_maxchannel : 3;	/* Maximun channel number supported */
-        u_int8_t  dc_maxlun;		/* Maximum LUN supported */
-	u_int8_t  dc_reserved3 : 3;	/* Reserved field */
-	u_int8_t  dc_autoterm : 1;	/* Support auto term (low byte) */
-	u_int8_t  dc_pcim1 : 1;		/* PCI M1 chipset */
-	u_int8_t  dc_bogusraidid : 1;	/* Raid ID may be questionable  */
-	u_int8_t  dc_pci : 1;		/* PCI adapter */
-	u_int8_t  dc_eisa : 1;		/* EISA adapter */
-        u_int8_t  dc_raidnum;		/* RAID host adapter humber */
+        u_int8_t  ec_devtype;
+        u_int8_t  ec_pagecode;
+        u_int8_t  ec_reserved0;
+        u_int8_t  ec_cfglen;		/* Length in bytes after this field */
+        u_int8_t  ec_eatasig[4];	/* EATA signature  */
+        u_int8_t  ec_eataversion;	/* EATA version number */
+	u_int8_t  ec_overlapcmds : 1;	/* Overlapped cmds supported */
+	u_int8_t  ec_targetmode : 1;	/* Target mode supported */
+	u_int8_t  ec_trunnotrec : 1;	/* Truncate cmd not supported */
+	u_int8_t  ec_moresupported:1;	/* More cmd supported */
+	u_int8_t  ec_dmasupported : 1;	/* DMA mode supported */
+	u_int8_t  ec_dmanumvalid : 1;	/* DMA channel field is valid */
+	u_int8_t  ec_atadev : 1;	/* This is an ATA device */
+	u_int8_t  ec_hbavalid : 1;	/* HBA field is valid */
+        u_int8_t  ec_padlength[2];	/* Pad bytes for PIO cmds */
+        u_int8_t  ec_hba[4];		/* Host adapter SCSI IDs */
+        u_int8_t  ec_cplen[4];		/* Command packet length */
+        u_int8_t  ec_splen[4];		/* Status packet length */
+        u_int8_t  ec_queuedepth[2];	/* Controller queue depth */
+        u_int8_t  ec_reserved1[2];
+        u_int8_t  ec_sglen[2];		/* Maximum scatter gather list size */
+        u_int8_t  ec_irqnum : 4;	/* IRQ number */
+        u_int8_t  ec_irqtrigger : 1;	/* IRQ trigger: 0 = edge, 1 = level */
+        u_int8_t  ec_secondary : 1;	/* Controller not at address 0x170 */
+        u_int8_t  ec_dmanum : 2; 	/* DMA channel index for ISA */
+        u_int8_t  ec_irq;		/* IRQ address */
+	u_int8_t  ec_iodisable : 1;	/* ISA I/O address disabled */
+	u_int8_t  ec_forceaddr : 1;	/* PCI forced to an EISA/ISA addr */
+	u_int8_t  ec_sg64k : 1;		/* 64K of SG space */
+	u_int8_t  ec_sgunaligned : 1;	/* Can do unaligned SG, otherwise 4 */
+	u_int8_t  ec_reserved2 : 4;	/* Reserved */
+        u_int8_t  ec_maxtarget : 5;	/* Maximun SCSI target ID supported */
+        u_int8_t  ec_maxchannel : 3;	/* Maximun channel number supported */
+        u_int8_t  ec_maxlun;		/* Maximum LUN supported */
+	u_int8_t  ec_reserved3 : 3;	/* Reserved field */
+	u_int8_t  ec_autoterm : 1;	/* Support auto term (low byte) */
+	u_int8_t  ec_pcim1 : 1;		/* PCI M1 chipset */
+	u_int8_t  ec_bogusraidid : 1;	/* Raid ID may be questionable  */
+	u_int8_t  ec_pci : 1;		/* PCI adapter */
+	u_int8_t  ec_eisa : 1;		/* EISA adapter */
+        u_int8_t  ec_raidnum;		/* RAID host adapter humber */
 };
 
 /*
