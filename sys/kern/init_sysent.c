@@ -402,8 +402,8 @@ struct sysent sysent[] = {
 	0, nosys,			/* 160 = nosys */
 	0, nosys,			/* 161 = nosys */
 #endif
-	2, getdomainname,		/* 162 = getdomainname */
-	2, setdomainname,		/* 163 = setdomainname */
+	2, getdomainname,			/* 162 = getdomainname */
+	2, setdomainname,			/* 163 = setdomainname */
 	0, nosys,			/* 164 = nosys */
 	0, nosys,			/* 165 = nosys */
 	0, nosys,			/* 166 = nosys */
