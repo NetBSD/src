@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.62 1998/10/08 01:19:26 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.63 1998/12/18 21:38:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -429,7 +429,10 @@ tcp_close(tp)
 	}
 #endif /* RTV_RTT */
 	/* free the reassembly queue, if any */
+	TCP_REASS_LOCK(tp);
 	(void) tcp_freeq(tp);
+	TCP_REASS_UNLOCK(tp);
+
 	TCP_CLEAR_DELACK(tp);
 
 	if (tp->t_template)
@@ -451,6 +454,8 @@ tcp_freeq(tp)
 #ifdef TCPREASS_DEBUG
 	int i = 0;
 #endif
+
+	TCP_REASS_LOCK_CHECK(tp);
 
 	while ((qe = tp->segq.lh_first) != NULL) {
 #ifdef TCPREASS_DEBUG
@@ -484,8 +489,16 @@ tcp_drain()
 	for (; inp != (struct inpcb *)&tcbtable.inpt_queue;
 	    inp = inp->inp_queue.cqe_next) {
 		if ((tp = intotcpcb(inp)) != NULL) {
+			/*
+			 * We may be called from a device's interrupt
+			 * context.  If the tcpcb is already busy,
+			 * just bail out now.
+			 */
+			if (tcp_reass_lock_try(tp) == 0)
+				continue;
 			if (tcp_freeq(tp))
 				tcpstat.tcps_connsdrained++;
+			TCP_REASS_UNLOCK(tp);
 		}
 	}
 }
