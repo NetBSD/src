@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.6 1999/11/05 18:59:12 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.7 2000/01/18 00:02:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.6 1999/11/05 18:59:12 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.7 2000/01/18 00:02:29 perseant Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#define FSTYPENAMES
 #include <sys/disklabel.h>
 #include <sys/time.h>
 #include <sys/mount.h>
@@ -228,12 +229,21 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 
 	lfsp = &lfs_default;
 
+	/* If partition is not an LFS partition, warn that that is the case */
+	if(partp->p_fstype != FS_BSDLFS) {
+		fatal("partition label indicated fs type \"%s\", expected \"%s\"",
+		      fstypenames[partp->p_fstype], fstypenames[FS_BSDLFS]);
+	}
+
 	if (!(bsize = block_size))
-		bsize = DFL_LFSBLOCK;
+		if (!(bsize = partp->p_fsize * partp->p_frag))
+			bsize = DFL_LFSBLOCK;
 	if (!(fsize = frag_size))
-		fsize = DFL_LFSFRAG;
+		if (!(fsize = partp->p_frag))
+			fsize = DFL_LFSFRAG;
 	if (!(ssize = seg_size))
-		ssize = DFL_LFSSEG;
+		if (!(ssize = (partp->p_fsize * partp->p_frag) << partp->p_sgs))
+			ssize = DFL_LFSSEG;
 
 	/* Sanity check: fsize<=bsize<ssize */
 	if (fsize > bsize) {
@@ -242,8 +252,14 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 			fatal("fragment size must be <= block size %d", bsize);
 		fsize = bsize;
 	}
-	if (bsize >= ssize)
-		fatal("block size must be < segment size");
+	if (bsize >= ssize) {
+		/* Only fatal if ssize was explicitly set */
+		if(seg_size)
+			fatal("block size must be < segment size");
+		warnx("%s: disklabel segment size (%d) too small, using default (%d)",
+		      progname, ssize, DFL_LFSSEG);
+		ssize = DFL_LFSSEG;
+	}
 
     tryagain:
 	/* Modify parts of superblock overridden by command line arguments */
