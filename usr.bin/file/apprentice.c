@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.31 2002/06/14 19:05:18 wiz Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.32 2002/07/09 14:59:52 pooka Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -28,14 +28,12 @@
  */
 
 #include "file.h"
-#include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <string.h>
 #include <ctype.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -47,9 +45,9 @@
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
-FILE_RCSID("@(#)Id: apprentice.c,v 1.46 2002/05/16 18:45:56 christos Exp ")
+FILE_RCSID("@(#)Id: apprentice.c,v 1.49 2002/07/03 19:00:41 christos Exp ")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.31 2002/06/14 19:05:18 wiz Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.32 2002/07/09 14:59:52 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -915,7 +913,7 @@ eatsize(char **p)
  */
 static int
 apprentice_map(struct magic **magicp, uint32_t *nmagicp, const char *fn,
-	       int action)
+    int action)
 {
 	int fd;
 	struct stat st;
@@ -923,6 +921,7 @@ apprentice_map(struct magic **magicp, uint32_t *nmagicp, const char *fn,
 	uint32_t version;
 	int needsbyteswap;
 	char *dbname = mkdbname(fn);
+	void *mm;
 
 	if (dbname == NULL)
 		return -1;
@@ -937,24 +936,25 @@ apprentice_map(struct magic **magicp, uint32_t *nmagicp, const char *fn,
 	}
 
 #ifdef QUICK
-	if ((*magicp = mmap(0, (size_t)st.st_size, PROT_READ|PROT_WRITE,
+	if ((mm = mmap(0, (size_t)st.st_size, PROT_READ|PROT_WRITE,
 	    MAP_PRIVATE|MAP_FILE, fd, (off_t)0)) == MAP_FAILED) {
 		(void)fprintf(stderr, "%s: Cannot map `%s' (%s)\n",
 		    progname, dbname, strerror(errno));
 		goto error;
 	}
 #else
-	if ((*magicp = malloc((size_t)st.st_size)) == NULL) {
+	if ((mm = malloc((size_t)st.st_size)) == NULL) {
 		(void) fprintf(stderr, "%s: Out of memory (%s).\n", progname,
 		     strerror(errno));
 		goto error;
 	}
-	if (read(fd, *magicp, (size_t)st.st_size) != (size_t)st.st_size) {
+	if (read(fd, mm, (size_t)st.st_size) != (size_t)st.st_size) {
 		(void) fprintf(stderr, "%s: Read failed (%s).\n", progname,
 		    strerror(errno));
 		goto error;
 	}
 #endif
+	*magicp = mm;
 	(void)close(fd);
 	fd = -1;
 	ptr = (uint32_t *) *magicp;
@@ -986,11 +986,11 @@ apprentice_map(struct magic **magicp, uint32_t *nmagicp, const char *fn,
 error:
 	if (fd != -1)
 		(void)close(fd);
-	if (*magicp) {
+	if (mm) {
 #ifdef QUICK
-		(void)munmap(*magicp, (size_t)st.st_size);
+		(void)munmap(mm, (size_t)st.st_size);
 #else
-		free(*magicp);
+		free(mm);
 #endif
 	} else {
 		*magicp = NULL;
@@ -1003,8 +1003,8 @@ error:
  * handle an mmaped file.
  */
 static int
-apprentice_compile(struct magic **magicp, uint32_t *nmagicp,
-		   const char *fn, int action)
+apprentice_compile(struct magic **magicp, uint32_t *nmagicp, const char *fn,
+    int action)
 {
 	int fd;
 	char *dbname = mkdbname(fn);

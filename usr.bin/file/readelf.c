@@ -1,26 +1,23 @@
-/*	$NetBSD: readelf.c,v 1.15 2002/06/14 19:05:19 wiz Exp $	*/
+/*	$NetBSD: readelf.c,v 1.16 2002/07/09 14:59:55 pooka Exp $	*/
 
 #include "file.h"
 
 #ifdef BUILTIN_ELF
-#include <sys/types.h>
 #include <string.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include <errno.h>
 
 #include "readelf.h"
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: readelf.c,v 1.20 2002/05/16 18:57:11 christos Exp ")
+FILE_RCSID("@(#)Id: readelf.c,v 1.22 2002/07/03 18:26:38 christos Exp ")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.15 2002/06/14 19:05:19 wiz Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.16 2002/07/09 14:59:55 pooka Exp $");
 #endif
 #endif
 
