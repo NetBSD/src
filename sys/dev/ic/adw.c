@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.13 2000/02/03 20:29:15 dante Exp $	 */
+/* $NetBSD: adw.c,v 1.14 2000/02/12 19:19:42 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -82,7 +82,7 @@ static ADW_CCB *adw_get_ccb __P((ADW_SOFTC *, int));
 static int adw_queue_ccb __P((ADW_SOFTC *, ADW_CCB *, int));
 
 static int adw_scsi_cmd __P((struct scsipi_xfer *));
-static int adw_build_req __P((struct scsipi_xfer *, ADW_CCB *));
+static int adw_build_req __P((struct scsipi_xfer *, ADW_CCB *, int));
 static void adw_build_sglist __P((ADW_CCB *, ADW_SCSI_REQ_Q *, ADW_SG_BLOCK *));
 static void adwminphys __P((struct buf *));
 static void adw_isr_callback __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
@@ -694,7 +694,8 @@ adw_scsi_cmd(xs)
 	struct scsipi_link *sc_link = xs->sc_link;
 	ADW_SOFTC      *sc = sc_link->adapter_softc;
 	ADW_CCB        *ccb;
-	int             s, fromqueue = 1, dontqueue = 0, retry = 0;
+	int             s, fromqueue = 1, dontqueue = 0, nowait = 0, retry = 0;
+	int		flags;
 
 	s = splbio();		/* protect the queue */
 
@@ -705,6 +706,7 @@ adw_scsi_cmd(xs)
 	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
 		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
 		fromqueue = 1;
+		nowait = 1;
 	} else {
 
 		/* Polled requests can't be queued for later. */
@@ -740,7 +742,10 @@ adw_scsi_cmd(xs)
          * then we can't allow it to sleep
          */
 
-	if ((ccb = adw_get_ccb(sc, xs->xs_control)) == NULL) {
+	flags = xs->xs_control;
+	if (nowait)
+		flags |= XS_CTL_NOSLEEP;
+	if ((ccb = adw_get_ccb(sc, flags)) == NULL) {
 		/*
                  * If we can't queue, we lose.
                  */
@@ -765,7 +770,7 @@ adw_scsi_cmd(xs)
 	ccb->xs = xs;
 	ccb->timeout = xs->timeout;
 
-	if (adw_build_req(xs, ccb)) {
+	if (adw_build_req(xs, ccb, flags)) {
 retryagain:
 		s = splbio();
 		retry = adw_queue_ccb(sc, ccb, retry);
@@ -804,9 +809,10 @@ retryagain:
  * Build a request structure for the Wide Boards.
  */
 static int
-adw_build_req(xs, ccb)
+adw_build_req(xs, ccb, flags)
 	struct scsipi_xfer *xs;
 	ADW_CCB        *ccb;
+	int		flags;
 {
 	struct scsipi_link *sc_link = xs->sc_link;
 	ADW_SOFTC      *sc = sc_link->adapter_softc;
@@ -853,14 +859,14 @@ adw_build_req(xs, ccb)
 		if (xs->xs_control & SCSI_DATA_UIO) {
 			error = bus_dmamap_load_uio(dmat,
 				ccb->dmamap_xfer, (struct uio *) xs->data,
-				(xs->xs_control & XS_CTL_NOSLEEP) ?
+				(flags & XS_CTL_NOSLEEP) ?
 				BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 		} else
 #endif		/* TFS */
 		{
 			error = bus_dmamap_load(dmat,
 			      ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
-				(xs->xs_control & XS_CTL_NOSLEEP) ?
+				(flags & XS_CTL_NOSLEEP) ?
 				BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 		}
 
