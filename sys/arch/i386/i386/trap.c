@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.94 1996/05/03 19:42:31 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -523,6 +523,7 @@ syscall(frame)
 	cnt.v_syscall++;
 	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
 		panic("syscall");
+	p = curproc;
 	sticks = p->p_sticks;
 	p->p_md.md_regs = &frame;
 	opc = frame.tf_eip;
