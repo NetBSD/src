@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.19 2000/04/02 20:39:18 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.20 2000/04/10 02:20:06 chs Exp $	*/
 
 /*
  *
@@ -116,17 +116,6 @@ struct uvm {
 	struct uvm_object *kernel_object;
 };
 
-extern struct uvm uvm;
-
-/*
- * historys
- */
-
-#ifdef _KERNEL
-UVMHIST_DECL(maphist);
-UVMHIST_DECL(pdhist);
-#endif /* _KERNEL */
-
 /*
  * vm_map_entry etype bits:
  */
@@ -146,6 +135,15 @@ UVMHIST_DECL(pdhist);
  */
 
 #ifdef _KERNEL
+
+extern struct uvm uvm;
+
+/*
+ * historys
+ */
+
+UVMHIST_DECL(maphist);
+UVMHIST_DECL(pdhist);
 
 /*
  * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... front end for the 
