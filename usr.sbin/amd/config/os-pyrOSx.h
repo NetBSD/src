@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)os-pyrOSx.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: os-pyrOSx.h,v 1.2 1994/06/13 19:49:04 mycroft Exp $
+ *	from: @(#)os-pyrOSx.h	8.1 (Berkeley) 6/6/93
+ *	$Id: os-pyrOSx.h,v 1.3 1994/06/13 20:49:35 mycroft Exp $
  *
  * Pyramid OSx definitions for Amd (automounter)
  *		from Stefan Petri <petri@tubsibr.UUCP>

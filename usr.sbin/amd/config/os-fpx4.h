@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)os-fpx4.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: os-fpx4.h,v 1.2 1994/06/13 19:48:55 mycroft Exp $
+ *	from: @(#)os-fpx4.h	8.1 (Berkeley) 6/6/93
+ *	$Id: os-fpx4.h,v 1.3 1994/06/13 20:49:27 mycroft Exp $
  *
  * Celerity FPX 4.1/2 definitions for Amd (automounter)
  *      from Stephen Pope <scp@grizzly.acl.lanl.gov>

@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mtab_bsd.c	8.1 (Berkeley) 6/6/93
- *
- * $Id: mtab_bsd.c,v 1.4 1994/06/13 20:17:59 mycroft Exp $
+ *	from: @(#)mtab_bsd.c	8.1 (Berkeley) 6/6/93
+ *	$Id: mtab_bsd.c,v 1.5 1994/06/13 20:49:10 mycroft Exp $
  *
  */
 

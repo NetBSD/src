@@ -34,12 +34,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: map.c,v 1.2 1994/06/13 19:47:41 mycroft Exp $
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/6/93";
+/*static char sccsid[] = "from: @(#)map.c	8.1 (Berkeley) 6/6/93";*/
+static char *rcsid = "$Id: map.c,v 1.3 1994/06/13 20:47:32 mycroft Exp $";
 #endif /* not lint */
 
 #include "am.h"

@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)util.c	8.1 (Berkeley) 6/6/93
- *
- * $Id: util.c,v 1.2 1994/06/13 19:48:06 mycroft Exp $
- *
+ *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
+ *	$Id: util.c,v 1.3 1994/06/13 20:48:09 mycroft Exp $
  */
 
 /*
