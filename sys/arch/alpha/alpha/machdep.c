@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.97 1998/01/24 16:46:23 mycroft Exp $ */
+/* $NetBSD: machdep.c,v 1.98 1998/01/31 02:20:44 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 1998/01/24 16:46:23 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 1998/01/31 02:20:44 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -645,8 +645,6 @@ allocsys(v)
 
 #define valloc(name, type, num) \
 	    (name) = (type *)v; v = (caddr_t)ALIGN((name)+(num))
-#define valloclim(name, type, num, lim) \
-	    (name) = (type *)v; v = (caddr_t)ALIGN((lim) = ((name)+(num)))
 #ifdef REAL_CLISTS
 	valloc(cfree, struct cblock, nclist);
 #endif
@@ -688,6 +686,7 @@ allocsys(v)
 	valloc(swbuf, struct buf, nswbuf);
 	valloc(buf, struct buf, nbuf);
 	return (v);
+#undef valloc
 }
 
 void
