@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.15 2001/01/22 07:51:02 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.16 2001/02/11 05:24:21 itojun Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -34,9 +34,7 @@
  * in6_gif.c
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,15 +42,9 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <sys/ioctl.h>
-#endif
 #include <sys/queue.h>
 #include <sys/syslog.h>
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <sys/malloc.h>
-#endif
 
 #include <net/if.h>
 #include <net/route.h>
@@ -348,11 +340,7 @@ gif_encapcheck6(m, off, proto, arg)
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_addr = ip6.ip6_src;
 		/* XXX scopeid */
-#ifdef __FreeBSD__
-		rt = rtalloc1((struct sockaddr *)&sin6, 0, 0UL);
-#else
 		rt = rtalloc1((struct sockaddr *)&sin6, 0);
-#endif
 		if (!rt || rt->rt_ifp != m->m_pkthdr.rcvif) {
 #if 0
 			log(LOG_WARNING, "%s: packet from %s dropped "
