@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.14 2002/12/10 05:14:33 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15 2003/04/02 02:39:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,14 @@
 #ifndef _SH3_VMPARAM_H_
 #define	_SH3_VMPARAM_H_
 #include <sys/queue.h>
+
+/*
+ * We use 4K pages on the sh3/sh4.  Override the PAGE_* definitions
+ * to be compile-time constants.
+ */
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /* Virtual address map. */
 #define	VM_MIN_ADDRESS		((vaddr_t)0)
