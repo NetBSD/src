@@ -1,4 +1,4 @@
-/*	$NetBSD: fold.c,v 1.9 1999/02/07 12:14:32 frueauf Exp $	*/
+/*	$NetBSD: fold.c,v 1.10 2000/09/08 12:55:36 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fold.c,v 1.9 1999/02/07 12:14:32 frueauf Exp $");
+__RCSID("$NetBSD: fold.c,v 1.10 2000/09/08 12:55:36 mjl Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: fold.c,v 1.9 1999/02/07 12:14:32 frueauf Exp $");
 	int	main __P((int, char **));
 static	void	fold __P((int));
 static	int	new_column_position __P((int, int));
+static	void	usage(void);
 
 int count_bytes = 0;
 int split_words = 0;
@@ -83,11 +84,8 @@ main(argc, argv)
 			split_words = 1;
 			break;
 		case 'w':
-			if ((width = atoi(optarg)) <= 0) {
-				(void)fprintf(stderr,
-				    "fold: illegal width value.\n");
-				exit(1);
-			}
+			if ((width = atoi(optarg)) <= 0)
+				errx(1, "illegal width value");
 			break;
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -100,9 +98,7 @@ main(argc, argv)
 			}
 			break;
 		default:
-			(void)fprintf(stderr,
-			    "usage: fold [-bs] [-w width] [file ...]\n");
-			exit(1);
+			usage();
 		}
 	argv += optind;
 	argc -= optind;
@@ -230,3 +226,11 @@ new_column_position (col, ch)
 
 	return col;
 }
+
+static void usage(void)
+	{
+	(void)fprintf(stderr,
+		    "usage: fold [-bs] [-w width] [file ...]\n");
+	exit(1);
+	}
+
