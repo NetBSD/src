@@ -1,0 +1,50 @@
+#
+# Device majors for walnut
+#
+
+device-major	cons		char 0
+device-major	ctty		char 1
+device-major	mem		char 2
+device-major	pts		char 3			pty
+device-major	ptc		char 4			pty
+device-major	log		char 5
+device-major	swap		char 6   block 1
+
+device-major	bpf		char 10			bpfilter
+device-major	tun		char 11			tun
+
+device-major	sd		char 13  block 4	sd
+device-major	st		char 14  block 5	st
+device-major	cd		char 15  block 6	cd
+device-major	ch		char 16			ch
+device-major	ss		char 17			ss
+device-major	uk		char 18			uk
+
+device-major	ipl		char 21			ipfilter
+
+device-major	rnd		char 24			rnd
+device-major	vnd		char 25  block 2	vnd
+device-major	ccd		char 26  block 3	ccd
+device-major	md		char 27  block 9	md
+
+device-major	wd		char 30  block 10	wd
+device-major	lkm		char 31			lkm
+device-major	filedesc	char 32
+
+device-major	scsibus		char 34			scsibus
+
+device-major	raid		char 38  block 12	raid
+
+device-major	com		char 45			com
+device-major	cz		char 46			cz
+device-major	cy		char 47			cy
+device-major	audio		char 48			audio
+device-major	midi		char 49			midi
+device-major	sequencer	char 50			sequencer
+
+device-major	isdn		char 54			isdn
+device-major	isdnctl		char 55			isdnctl
+device-major	isdnbchan	char 56			isdnbchan
+device-major	isdntrc		char 57			isdntrc
+device-major	isdntel		char 58			isdntel
+device-major	clockctl	char 59			clockctl

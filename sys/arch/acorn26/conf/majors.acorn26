@@ -1,0 +1,32 @@
+#
+# Device majors for acorn26
+#
+
+device-major	cons		char 0
+device-major	ctty		char 1
+device-major	mem		char 2
+device-major	swap		char 3   block 0
+device-major	pts		char 4			pty
+device-major	ptc		char 5			pty
+device-major	log		char 6
+device-major	filedesc	char 7
+device-major	md		char 8   block 1	md
+device-major	vnd		char 9   block 2	vnd
+device-major	ccd		char 10  block 3	ccd
+device-major	wskbd		char 11			wskbd
+device-major	wsmouse		char 12			wsmouse
+device-major	wsmux		char 13			wsmux
+device-major	wsdisplay	char 14			wsdisplay
+device-major	wd		char 15  block 4	wd
+device-major	sd		char 16  block 5	sd
+device-major	cd		char 17  block 6	cd
+device-major	bpf		char 18			bpfilter
+device-major	tun		char 19			tun
+device-major	com		char 20			com
+device-major	lpt		char 21			lpt
+device-major	arcpp		char 22			arcpp
+device-major	ipl		char 23			ipfilter
+device-major	rnd		char 24			rnd
+device-major	vcoda		char 25			vcoda
+device-major	raid		char 26  block 7	raid
+device-major	clockctl	char 27			clockctl

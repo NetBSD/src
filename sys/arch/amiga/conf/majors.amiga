@@ -1,0 +1,52 @@
+#
+# Device majors for amiga
+#
+
+device-major	cons		char 0
+device-major	ctty		char 1
+device-major	mem		char 2
+device-major	swap		char 3   block 3
+device-major	pts		char 4			pty
+device-major	ptc		char 5			pty
+device-major	log		char 6
+device-major	ccd		char 7   block 8	ccd
+device-major	sd		char 8   block 4	sd
+device-major	cd		char 9   block 7	cd
+device-major	grf		char 10			grf
+device-major	par		char 11			par
+device-major	ser		char 12			ser
+device-major	ite		char 13			ite
+device-major	kbd		char 14			kbd
+device-major	ms		char 15			ms
+device-major	view		char 16			view
+device-major	mfcs		char 17			mfcs
+device-major	fd		char 18  block 2	fd
+device-major	vnd		char 19  block 6	vnd
+device-major	st		char 20  block 5	st
+device-major	filedesc	char 21
+device-major	bpf		char 22			bpfilter
+device-major	tun		char 23			tun
+device-major	lkm		char 24			lkm
+
+device-major	msc		char 31			msc
+device-major	com		char 32			com
+device-major	lpt		char 33			lpt
+
+device-major	ss		char 37			ss
+device-major	ch		char 38			ch
+device-major	uk		char 39			uk
+device-major	ipl		char 40			ipfilter
+device-major	audio		char 41			audio
+device-major	rnd		char 42			rnd
+device-major	md		char 43  block 15	md
+device-major	scsibus		char 44			scsibus
+device-major	isdn		char 45			isdn
+device-major	isdnctl		char 46			isdnctl
+device-major	isdnbchan	char 47			isdnbchan
+device-major	isdntrc		char 48			isdntrc
+device-major	isdntel		char 49			isdntel
+device-major	raid		char 50  block 16	raid
+device-major	svr4_net	char 51			compat_svr4
+device-major	wd		char 52  block 17	wd
+device-major	wsdisplay	char 53			wsdisplay
+device-major	wskbd		char 54			wskbd

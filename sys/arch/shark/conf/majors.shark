@@ -1,0 +1,56 @@
+#
+# Device majors for shark
+#
+
+device-major	mem		char 0
+device-major	swap		char 1   block 1
+device-major	cons		char 2
+device-major	ctty		char 3
+device-major	pc		char 4			pc
+device-major	ofcons		char 4			!pc & ofwgencfg
+device-major	log		char 5
+device-major	ptc		char 6			pty
+device-major	pts		char 7			pty
+device-major	lpt		char 8			lpt
+
+device-major	com		char 12			com
+
+device-major	wd		char 16  block 16	wd
+
+device-major	md		char 18  block 18	md
+device-major	vnd		char 19  block 19	vnd
+
+device-major	ccd		char 21  block 21	ccd
+
+device-major	sd		char 24  block 24	sd
+device-major	st		char 25  block 25	st
+device-major	cd		char 26  block 26	cd
+
+device-major	uk		char 28			uk
+
+device-major	bpf		char 32			bpfilter
+device-major	tun		char 33			tun
+device-major	filedesc	char 34
+device-major	lkm		char 35			lkm
+device-major	audio		char 36			audio
+
+device-major	opms		char 40			opms
+
+device-major	ipl		char 46			ipfilter
+
+device-major	ofrom		char 49			ofrom
+device-major	scr		char 50			scr
+
+device-major	rnd		char 52			rnd
+device-major	prof		char 53			profiler
+
+device-major	joy		char 56			joy
+device-major	midi		char 57			midi
+device-major	sequencer	char 58			sequencer
+device-major	vcoda		char 59			vcoda
+
+device-major	raid		char 71  block 71	raid
+
+device-major	openfirm	char 77			ofwgencfg
+
+device-major	clockctl	char 84			clockctl

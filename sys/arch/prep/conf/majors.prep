@@ -1,0 +1,62 @@
+#
+# Device majors for prep
+#
+
+device-major	cons		char 0
+device-major	ctty		char 1
+device-major	mem		char 2
+device-major	wd		char 3   block 0	wd
+device-major	swap		char 4   block 1
+device-major	pts		char 5			pty
+device-major	ptc		char 6			pty
+device-major	log		char 7
+device-major	com		char 8			com
+device-major	fd		char 9   block 2	fdc
+device-major	wt		char 10  block 3	wt
+device-major	scd		char 11  block 15	scd
+device-major	pc		char 12			pc
+device-major	sd		char 13  block 4	sd
+device-major	st		char 14  block 5	st
+device-major	cd		char 15  block 6	cd
+device-major	lpt		char 16			lpt
+device-major	ch		char 17			ch
+device-major	ccd		char 18  block 16	ccd
+device-major	ss		char 19			ss
+device-major	uk		char 20			uk
+
+device-major	filedesc	char 22
+device-major	bpf		char 23			bpfilter
+device-major	md		char 24  block 17	md
+
+device-major	joy		char 26			joy
+device-major	spkr		char 27			spkr
+device-major	lkm		char 28			prep
+
+device-major	cy		char 38			cy
+device-major	mcd		char 39  block 7	mcd
+device-major	tun		char 40			tun
+device-major	vnd		char 41  block 14	vnd
+device-major	audio		char 42			audio
+
+device-major	ipl		char 44			ipfilter
+device-major	satlink		char 45			satlink
+device-major	rnd		char 46			rnd
+device-major	wsdisplay	char 47			wsdisplay
+device-major	wskbd		char 48			wskbd
+device-major	wsmouse		char 49			wsmouse
+
+device-major	midi		char 58			midi
+device-major	sequencer	char 59			sequencer
+device-major	vcoda		char 60			vcoda
+device-major	scsibus		char 61			scsibus
+device-major	raid		char 62  block 18	raid
+
+device-major	wsmux		char 65			wsmux
+device-major	isdn		char 66			isdn
+device-major	isdnctl		char 67			isdnctl
+device-major	isdnbchan	char 68			isdnbchan
+device-major	isdntrc		char 69			isdntrc
+device-major	isdntel		char 70			isdntel
+device-major	wsfont		char 71			wsfont
+device-major	pci		char 72			pci
+device-major	clockctl	char 73			clockctl
