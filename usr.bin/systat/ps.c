@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.24 2003/05/17 21:03:21 itojun Exp $  */
+/*      $NetBSD: ps.c,v 1.25 2004/01/11 19:15:50 jdolecek Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.24 2003/05/17 21:03:21 itojun Exp $");
+__RCSID("$NetBSD: ps.c,v 1.25 2004/01/11 19:15:50 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -338,7 +338,7 @@ time2str(struct kinfo_proc2 *kp)
 	static char timestr[10];
 
 	/* XXX - I don't like this. */
-	if (kp->p_stat == SZOMB || kp->p_stat == SDEAD) {
+	if (kp->p_stat == SZOMB) {
 	        secs = 0;
 	        psecs = 0;
 	} else {
