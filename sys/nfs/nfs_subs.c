@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_subs.c	8.3 (Berkeley) 1/4/94
- *	$Id: nfs_subs.c,v 1.12 1994/06/08 11:37:00 mycroft Exp $
+ *	$Id: nfs_subs.c,v 1.13 1994/06/13 16:00:41 mycroft Exp $
  */
 
 /*
@@ -606,10 +606,11 @@ nfs_init()
 		nfs_iodwant[i] = (struct proc *)0;
 	TAILQ_INIT(&nfs_bufq);
 	nfs_nhinit();			/* Init the nfsnode table */
-#endif
+#endif /* NFSCLIENT */
 #ifdef NFSSERVER
 	nfsrv_init(0);			/* Init server data structures */
 	nfsrv_initcache();		/* Init the server request cache */
+#endif /* NFSSERVER */
 
 	/*
 	 * Initialize the nqnfs server stuff.
@@ -624,7 +625,6 @@ nfs_init()
 		nqthead.th_head[1] = &nqthead;
 		nqfhead = hashinit(NQLCHSZ, M_NQLEASE, &nqfheadhash);
 	}
-#endif
 
 	/*
 	 * Initialize reply list and start timer
