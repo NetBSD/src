@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.39 2004/01/02 06:57:46 dbj Exp $	*/
+/*	$NetBSD: fs.h,v 1.40 2004/01/03 19:18:17 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -318,9 +318,24 @@ struct fs {
 #define fs_old_postbloff	fs_spare5[0]
 #define fs_old_rotbloff		fs_spare5[1]
 #define fs_old_postbl_start	fs_maxbsize
+#define fs_old_headswitch	fs_id[0]
+#define fs_old_trkseek	fs_id[1]
+#define fs_old_csmask	fs_spare1[0]
+#define fs_old_csshift	fs_spare1[1]
 
 #define FS_42POSTBLFMT		-1	/* 4.2BSD rotational table format */
 #define FS_DYNAMICPOSTBLFMT	1	/* dynamic rotational table format */
+
+#define	old_fs_postbl(fs_, cylno, opostblsave) \
+    ((((fs_)->fs_old_postblformat == FS_42POSTBLFMT) || \
+     ((fs_)->fs_old_postbloff == offsetof(struct fs, fs_old_postbl_start))) \
+    ? ((int16_t *)(opostblsave) + (cylno) * (fs_)->fs_old_nrpos) \
+    : ((int16_t *)((uint8_t *)(fs_) + \
+	(fs_)->fs_old_postbloff) + (cylno) * (fs_)->fs_old_nrpos))
+#define	old_fs_rotbl(fs) \
+    (((fs)->fs_old_postblformat == FS_42POSTBLFMT) \
+    ? ((uint8_t *)(&(fs)->fs_magic+1)) \
+    : ((uint8_t *)((uint8_t *)(fs) + (fs)->fs_old_rotbloff)))
 
 /*
  * File system identification
@@ -455,6 +470,25 @@ struct ocg {
 /*
  * Macros for access to cylinder group array structures.
  */
+#define old_cg_blktot_old(cgp, ns) \
+    (((struct ocg *)(cgp))->cg_btot)
+#define old_cg_blks_old(fs, cgp, cylno, ns) \
+    (((struct ocg *)(cgp))->cg_b[cylno])
+
+#define old_cg_blktot_new(cgp, ns) \
+    ((int32_t *)((u_int8_t *)(cgp) + \
+	ufs_rw32((cgp)->cg_old_btotoff, (ns))))
+#define old_cg_blks_new(fs, cgp, cylno, ns) \
+    ((int16_t *)((u_int8_t *)(cgp) + \
+	ufs_rw32((cgp)->cg_old_boff, (ns))) + (cylno) * (fs)->fs_old_nrpos)
+
+#define old_cg_blktot(cgp, ns) \
+    ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) ? \
+      old_cg_blktot_old(cgp, ns) : old_cg_blktot_new(cgp, ns))
+#define old_cg_blks(fs, cgp, cylno, ns) \
+    ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) ? \
+      old_cg_blks_old(fs, cgp, cylno, ns) : old_cg_blks_new(fs, cgp, cylno, ns))
+
 #define	cg_inosused_new(cgp, ns) \
     ((u_int8_t *)((u_int8_t *)(cgp) + \
 	ufs_rw32((cgp)->cg_iusedoff, (ns))))
@@ -535,6 +569,13 @@ struct ocg {
  */
 #define	blkmap(fs, map, loc) \
     (((map)[(loc) / NBBY] >> ((loc) % NBBY)) & (0xff >> (NBBY - (fs)->fs_frag)))
+#define	old_cbtocylno(fs, bno) \
+    (fsbtodb(fs, bno) / (fs)->fs_old_spc)
+#define	old_cbtorpos(fs, bno) \
+    ((fs)->fs_old_nrpos <= 1 ? 0 : \
+     (fsbtodb(fs, bno) % (fs)->fs_old_spc / (fs)->fs_old_nsect * (fs)->fs_old_trackskew + \
+      fsbtodb(fs, bno) % (fs)->fs_old_spc % (fs)->fs_old_nsect * (fs)->fs_old_interleave) % \
+     (fs)->fs_old_nsect * (fs)->fs_old_nrpos / (fs)->fs_old_npsect)
 
 /*
  * The following macros optimize certain frequently calculated
