@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.10 1994/12/03 14:16:58 briggs Exp $	*/
+/*	$NetBSD: scsi.c,v 1.11 1995/01/15 06:27:54 briggs Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -136,16 +136,11 @@ static int	scsi_group0(int adapter, int id, int lun,
 			    int opcode, int addr, int len,
 			    int flags, caddr_t databuf, int datalen);
 
-static char scsi_name[] = "ncrscsi";
-
 struct scsi_adapter	ncr5380_switch = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
 	ncr5380_minphys,		/* scsi_minphys()	*/
 	0,				/* open_target_lu()	*/
 	0,				/* close_target_lu()	*/
-	ncr5380_adapter_info,		/* adapter_info()	*/
-	scsi_name,			/* name			*/
-	{0, 0}				/* spare[3]		*/
 };
 
 /* This is copied from julian's bt driver */
@@ -155,9 +150,6 @@ struct scsi_device ncr5380_dev = {
 	NULL,		/* have a queue, served by this (?) */
 	NULL,		/* have no async handler.	    */
 	NULL,		/* Use default "done" routine.	    */
-	"ncr5380",
-	0,
-	0, 0
 };
 
 extern int	matchbyname();
@@ -242,7 +234,7 @@ register volatile sci_padded_regmap_t	*regs = ncr;
 	ncr5380data[unit] = ncr5380 = (struct ncr5380_data *) dev;
 
 	ncr5380->sc_link.scsibus = unit;
-	ncr5380->sc_link.adapter_targ = 7;
+	ncr5380->sc_link.adapter_target = 7;
 	ncr5380->sc_link.adapter = &ncr5380_switch;
 	ncr5380->sc_link.device = &ncr5380_dev;
 
@@ -294,7 +286,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 		} else {
 			ncr5380_reset_target(xs->sc_link->scsibus, xs->sc_link->target);
 			if (ncr5380_poll(xs->sc_link->scsibus, xs->timeout)) {
-				return (HAD_ERROR);
+				return (COMPLETE); /* ERROR */
 			}
 			return (COMPLETE);
 		}
@@ -318,7 +310,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	switch(r) {
 		case COMPLETE: case SUCCESSFULLY_QUEUED:
 			r = SUCCESSFULLY_QUEUED;
-			if (xs->flags&SCSI_NOMASK)
+			if (xs->flags & SCSI_POLL)
 				r = COMPLETE;
 			break;
 		default:
@@ -434,6 +426,7 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 	sense = scsi_gen( xs->sc_link->scsibus, xs->sc_link->target,
 			  xs->sc_link->lun, xs->cmd, xs->cmdlen,
 			  xs->data, xs->datalen );
+	xs->resid=0;
 	splx(s);
 	if (sense) {
 		switch (sense) {
@@ -449,13 +442,13 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 					    sizeof(struct scsi_sense_data));
 				splx(s);
 				xs->error = XS_SENSE;
-				return HAD_ERROR;
+				return COMPLETE;
 			case 0x08:	/* Busy */
 				xs->error = XS_BUSY;
-				return HAD_ERROR;
+				return TRY_AGAIN_LATER;
 			default:
 				xs->error = XS_DRIVER_STUFFUP;
-				return HAD_ERROR;
+				return COMPLETE;
 		}
 	}
 	xs->error = XS_NOERROR;
