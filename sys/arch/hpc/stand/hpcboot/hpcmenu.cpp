@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.8 2001/05/17 01:50:35 enami Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.9 2002/03/25 17:23:19 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <machine/bootinfo.h>
 #include <framebuffer.h>
 #include <console.h>
+#include <string.h>
 
 HpcMenuInterface *HpcMenuInterface::_instance = 0;
 
@@ -129,6 +130,7 @@ HpcMenuInterface::_set_default_pref()
 	_pref.boot_single_user	= FALSE;
 	_pref.boot_ask_for_name	= FALSE;
 	_pref.boot_debugger	= FALSE;
+	wsprintf(_pref.boot_extra, TEXT(""));
 	_pref.auto_boot		= 0;
 	_pref.reverse_video	= FALSE;
 	_pref.pause_before_boot	= TRUE;
@@ -197,7 +199,7 @@ HpcMenuInterface::save()
 
 // arguments for kernel.
 int
-HpcMenuInterface::setup_kernel_args(vaddr_t v, paddr_t p)
+HpcMenuInterface::setup_kernel_args(vaddr_t v, paddr_t p, size_t sz)
 {
 	int argc = 0;
 	kaddr_t *argv = reinterpret_cast <kaddr_t *>(v);
@@ -206,6 +208,7 @@ HpcMenuInterface::setup_kernel_args(vaddr_t v, paddr_t p)
 	paddr_t locp = p + sizeof(char **) * MAX_KERNEL_ARGS;
 	size_t len;
 	TCHAR *w;
+	char *ptr;
 
 #define SETOPT(c)							\
 __BEGIN_MACRO								\
@@ -215,7 +218,7 @@ __BEGIN_MACRO								\
 	locp += 2;							\
 __END_MACRO
 	// 1st arg is kernel name.
-//	DPRINTF_SETUP();  if you want to use debug print, enable this line.
+//	DPRINTF_SETUP();  //if you want to use debug print, enable this line.
 
 	w = _pref.kernel_user_file;
 	argv[argc++] = ptokv(locp);
@@ -263,6 +266,44 @@ __END_MACRO
 		loc += 6;
 		locp += 6;
 		break;
+	}
+
+	// Extra kernel options. (Option tab window)
+	w = _pref.boot_extra;
+	len = WideCharToMultiByte(CP_ACP, 0, w, wcslen(w), 0, 0, 0, 0);
+
+	if ((ptr = (char *)malloc(len)) == NULL) {
+		MessageBox(_root->_window,
+		    L"Couldn't allocate memory for extra kernel options.",
+		    TEXT("WARNING"), 0);
+
+		return argc;  
+	}
+	WideCharToMultiByte(CP_ACP, 0, w, len, ptr, len, 0, 0); 
+	ptr[len]='\0';
+
+	while (*ptr == ' ' || *ptr == '\t')
+		ptr++;
+	while (*ptr != '\0') {
+		len = strcspn(ptr, " \t");
+		if (len == 0)
+			len = strlen(ptr);
+
+		if (argc == MAX_KERNEL_ARGS || locp + len + 1 > p + sz) {
+			MessageBox(_root->_window,
+			    L"Too many extra kernel options.",
+			    TEXT("WARNING"), 0);
+			break;
+		}
+		argv[argc++] = ptokv(locp);
+		strncpy(loc, ptr, len);
+		loc[len] = '\0';
+		loc += len + 1;
+		locp += len + 1;
+	
+		ptr += len;
+		while (*ptr == ' ' || *ptr == '\t')
+			ptr++;
 	}
 
 	return argc;

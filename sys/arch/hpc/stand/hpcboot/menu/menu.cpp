@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.cpp,v 1.4 2001/05/21 15:55:04 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.cpp,v 1.5 2002/03/25 17:23:19 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -268,6 +268,7 @@ OptionTabWindow::init(HWND w)
 	SET_CHECK(PAUSE,	pref.pause_before_boot);
 	SET_CHECK(DEBUG,	pref.load_debug_info);
 	SET_CHECK(SAFETY,	pref.safety_message);
+	Edit_SetText(GetDlgItem(w, IDC_OPT_EXTKOPT), pref.boot_extra);
 }
 
 void
@@ -289,6 +290,7 @@ OptionTabWindow::command(int id, int msg)
 void
 OptionTabWindow::get()
 {
+	HWND w;
 	struct HpcMenuInterface::HpcMenuPreferences &pref = HPC_PREFERENCE;
 	if (IS_CHECKED(AUTO)) {
 		TCHAR tmp[32];
@@ -300,6 +302,9 @@ OptionTabWindow::get()
 	pref.pause_before_boot	= IS_CHECKED(PAUSE);
 	pref.load_debug_info	= IS_CHECKED(DEBUG);
 	pref.safety_message	= IS_CHECKED(SAFETY);
+
+	w = GetDlgItem(_window, IDC_OPT_EXTKOPT);
+	Edit_GetText(w, pref.boot_extra, MAX_BOOT_STR);
 }
 #undef IS_CHECKED
 #undef SET_CHECK
