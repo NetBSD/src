@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.2 2002/02/08 01:41:48 briggs Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.3 2002/02/08 03:43:41 thorpej Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -109,7 +109,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 #
 # The Npwr's RedBoot firmware uses 19200, and there is only one
 # serial port.
-options 	CONSPEED=19200		# Console speed
+#options 	CONSPEED=19200		# Console speed
 #options 	CONUNIT=1		# Console unit (0=J9, 1=J10)
 
 # Miscellaneous kernel options
@@ -157,8 +157,7 @@ pci*		at iopxs? bus ?
 #
 
 # PCI network devices
-wm0		at pci? dev 1 function ?	# on-board i82544GC #1
-wm1		at pci? dev 2 function ?	# on-board i82544GC #2
+wm*		at pci? dev ? function ?
 
 # MII/PHY support
 makphy*		at mii? phy ?			# Marvell "Alaska" Gig-E PHY
@@ -169,7 +168,7 @@ ukphy*		at mii? phy ?			# Generic IEEE 802.3u PHYs
 #
 
 # PCI SCSI controllers
-siop0		at pci? dev 0 function ?	# on-board LSI 53c1010
+siop0		at pci? dev ? function ?	# on-board LSI 53c1010
 scsibus*	at scsi?
 
 # SCSI device support
@@ -183,8 +182,8 @@ uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
-pseudo-device	raid		4	# RAIDframe devices
-pseudo-device	ccd		4	# Concatenated disk devices
+#pseudo-device	raid		4	# RAIDframe devices
+#pseudo-device	ccd		4	# Concatenated disk devices
 
 # network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter
