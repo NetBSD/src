@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.4 2002/03/26 08:02:05 kanaoka Exp $	*/
+/*	$NetBSD: pxe.c,v 1.5 2003/03/11 18:29:00 drochner Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -182,7 +182,7 @@ readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 	uh->uh_sport = ur->s_port;
 	uh->uh_dport = d->myport;
 
-	return (len);
+	return (ur->buffer_size);
 }
 
 /*****************************************************************************
