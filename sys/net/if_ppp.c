@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.78 2002/07/01 22:09:31 itojun Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.79 2002/09/25 16:10:15 darrenr Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.78 2002/07/01 22:09:31 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.79 2002/09/25 16:10:15 darrenr Exp $");
 
 #include "ppp.h"
 
@@ -872,10 +872,8 @@ pppoutput(ifp, m0, dst, rtp)
     *cp++ = protocol >> 8;
     *cp++ = protocol & 0xff;
     m0->m_len += PPP_HDRLEN;
-
-    len = 0;
-    for (m = m0; m != 0; m = m->m_next)
-	len += m->m_len;
+    m0->m_pkthdr.len += PPP_HDRLEN;
+    len = m0->m_pkthdr.len;
 
     if (sc->sc_flags & SC_LOG_OUTPKT) {
 	printf("%s output: ", ifp->if_xname);
@@ -1144,9 +1142,7 @@ ppp_dequeue(sc)
 	struct mbuf *mcomp = NULL;
 	int slen, clen;
 
-	slen = 0;
-	for (mp = m; mp != NULL; mp = mp->m_next)
-	    slen += mp->m_len;
+	slen = m->m_pkthdr.len;
 	clen = (*sc->sc_xcomp->compress)
 	    (sc->sc_xc_state, &mcomp, m, slen, sc->sc_if.if_mtu + PPP_HDRLEN);
 	if (mcomp != NULL) {
@@ -1173,6 +1169,7 @@ ppp_dequeue(sc)
 	/* can compress address/control */
 	m->m_data += 2;
 	m->m_len -= 2;
+	m->m_pkthdr.len -= 2;
     }
     if (sc->sc_flags & SC_COMP_PROT && protocol < 0xFF) {
 	/* can compress protocol */
@@ -1180,8 +1177,9 @@ ppp_dequeue(sc)
 	    cp[2] = cp[1];	/* move address/control up */
 	    cp[1] = cp[0];
 	}
-	++m->m_data;
-	--m->m_len;
+	m->m_data++;
+	m->m_len--;
+	m->m_pkthdr.len--;
     }
 
     return m;
@@ -1397,9 +1395,7 @@ ppp_inproc(sc, m)
     sc->sc_stats.ppp_ipackets++;
 
     if (sc->sc_flags & SC_LOG_INPKT) {
-	ilen = 0;
-	for (mp = m; mp != NULL; mp = mp->m_next)
-	    ilen += mp->m_len;
+	ilen = m->m_pkthdr.len;
 	printf("%s: got %d bytes\n", ifp->if_xname, ilen);
 	pppdumpm(m);
     }
@@ -1462,9 +1458,7 @@ ppp_inproc(sc, m)
     }
 #endif
 
-    ilen = 0;
-    for (mp = m; mp != NULL; mp = mp->m_next)
-	ilen += mp->m_len;
+    ilen = m->m_pkthdr.len;
 
 #ifdef VJC
     if (sc->sc_flags & SC_VJ_RESET) {
@@ -1502,7 +1496,7 @@ ppp_inproc(sc, m)
 	if (mp == NULL)
 	    goto bad;
 	mp->m_len = 0;
-	mp->m_next = NULL;
+	mp->m_pkthdr.len = 0;
 	if (hlen + PPP_HDRLEN > MHLEN) {
 	    MCLGET(mp, M_DONTWAIT);
 	    if (M_TRAILINGSPACE(mp) < hlen + PPP_HDRLEN) {
@@ -1518,6 +1512,7 @@ ppp_inproc(sc, m)
 	proto = PPP_IP;
 	bcopy(iphdr, cp + PPP_HDRLEN, hlen);
 	mp->m_len = hlen + PPP_HDRLEN;
+	mp->m_pkthdr.len = mp->m_len;
 
 	/*
 	 * Trim the PPP and VJ headers off the old mbuf
@@ -1525,9 +1520,11 @@ ppp_inproc(sc, m)
 	 */
 	m->m_data += PPP_HDRLEN + xlen;
 	m->m_len -= PPP_HDRLEN + xlen;
+	m->m_pkthdr.len -= PPP_HDRLEN + xlen;
 	if (m->m_len <= M_TRAILINGSPACE(mp)) {
 	    bcopy(mtod(m, u_char *), mtod(mp, u_char *) + mp->m_len, m->m_len);
 	    mp->m_len += m->m_len;
+	    mp->m_pkthdr.len += m->m_len;
 	    MFREE(m, mp->m_next);
 	} else
 	    mp->m_next = m;
