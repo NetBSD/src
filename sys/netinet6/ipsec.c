@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.c,v 1.22 2000/06/12 10:40:46 itojun Exp $	*/
-/*	$KAME: ipsec.c,v 1.65 2000/06/03 15:51:28 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.23 2000/06/15 05:01:07 itojun Exp $	*/
+/*	$KAME: ipsec.c,v 1.66 2000/06/15 04:08:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,6 @@ int ipsec_debug = 0;
 #endif
 
 struct ipsecstat ipsecstat;
-int ip4_inbound_call_ike = 0;
 int ip4_ah_cleartos = 1;
 int ip4_ah_offsetmask = 0;	/* maybe IP_DF? */
 int ip4_ipsec_dfbit = 0;	/* DF bit on encap. 0: clear 1: set 2: copy */
@@ -112,7 +111,6 @@ int ip4_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 
 #ifdef INET6
 struct ipsecstat ipsec6stat;
-int ip6_inbound_call_ike = 0;
 int ip6_esp_trans_deflev = IPSEC_LEVEL_USE;
 int ip6_esp_net_deflev = IPSEC_LEVEL_USE;
 int ip6_ah_trans_deflev = IPSEC_LEVEL_USE;
@@ -3352,9 +3350,6 @@ ipsec_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPSECCTL_DEF_AH_NETLEV:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip4_ah_net_deflev);
-	case IPSECCTL_INBOUND_CALL_IKE:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip4_inbound_call_ike);
 	case IPSECCTL_AH_CLEARTOS:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip4_ah_cleartos);
@@ -3446,9 +3441,6 @@ ipsec6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPSECCTL_DEF_AH_NETLEV:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip6_ah_net_deflev);
-	case IPSECCTL_INBOUND_CALL_IKE:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_inbound_call_ike);
 	case IPSECCTL_ECN:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_ipsec_ecn);
 	case IPSECCTL_DEBUG:
