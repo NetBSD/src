@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.17 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.17.2.1 2005/03/21 21:25:37 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,9 +57,9 @@ typedef struct _dl_info {
 __BEGIN_DECLS
 void	*dlopen(const char *, int);
 int	dlclose(void *);
-void	*dlsym(void *, const char *);
+void	*dlsym(void * __restrict, const char * __restrict);
 #if defined(_NETBSD_SOURCE)
-int	dladdr(const void *, Dl_info *);
+int	dladdr(const void * __restrict, Dl_info * __restrict);
 int	dlctl(void *, int, void *);
 #endif
 __aconst char *dlerror(void);
