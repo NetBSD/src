@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.39 1998/11/26 02:25:20 mycroft Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.40 1998/12/18 13:18:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,6 +36,16 @@
  */
 
 #include "opt_ktrace.h"
+#include "opt_compat_freebsd.h"
+#include "opt_compat_linux.h"
+#include "opt_compat_sunos.h"
+#include "opt_compat_hpux.h"
+#include "opt_compat_ultrix.h"
+#include "opt_compat_43.h"
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
+    defined(COMPAT_HPUX) || defined(COMPAT_FREEBSD) || defined(COMPAT_ULTRIX)
+#define COMPAT_OLDSOCK /* used by <sys/socket.h> */
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32_netbsd.c,v 1.6 1998/10/01 14:27:57 eeh Exp $	*/
+/*	$NetBSD: sparc32_netbsd.c,v 1.7 1998/12/18 13:18:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -30,6 +30,15 @@
 
 #include "opt_ktrace.h"
 #include "opt_ntp.h"
+#include "opt_compat_freebsd.h"
+#include "opt_compat_linux.h"
+#include "opt_compat_sunos.h"
+#include "opt_compat_43.h"
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
+    defined(COMPAT_FREEBSD)
+#define COMPAT_OLDSOCK /* used by <sys/socket.h> */
+#endif
+
 #include "fs_lfs.h"
 #include "fs_nfs.h"
 
