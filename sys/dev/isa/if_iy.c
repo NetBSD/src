@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.17 1997/11/30 15:31:26 drochner Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.18 1997/12/02 09:34:06 bouyer Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -74,6 +74,10 @@
 #include <netns/ns_if.h>
 #endif
 
+#if defined(SIOCSIFMEDIA)
+#include <net/if_media.h>
+#endif
+
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
@@ -98,6 +102,9 @@ struct iy_softc {
 	bus_space_handle_t sc_ioh;
 
 	struct ethercom sc_ethercom;
+
+	struct ifmedia iy_ifmedia;
+	int iy_media;
 
 	int mappedirq;
 
@@ -152,6 +159,9 @@ void print_rbd __P((volatile struct iy_recv_buf_desc *));
 int in_ifrint = 0;
 int in_iftint = 0;
 #endif
+
+int iy_mediachange __P((struct ifnet *));
+void iy_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 #ifdef __BROKEN_INDIRECT_CONFIG
 int iyprobe __P((struct device *, void *, void *));
@@ -257,7 +267,7 @@ iyprobe(parent, match, aux)
 	bus_space_write_1(iot, ioh, COMMAND_REG, RESET_CMD);
 	delay(200);
 	
-       	ia->ia_iosize = 16;
+	ia->ia_iosize = 16;
 
 	bus_space_unmap(iot, ioh, 16);
 	return 1;		/* found */
@@ -330,6 +340,12 @@ iyattach(parent, self, aux)
         myaddr[5] = eaddr[EEPPEther2] & 0xFF;
         myaddr[4] = eaddr[EEPPEther2] >> 8;
 	
+	ifmedia_init(&sc->iy_ifmedia, 0, iy_mediachange, iy_mediastatus);
+	ifmedia_add(&sc->iy_ifmedia, IFM_ETHER | IFM_10_2, 0, NULL);
+	ifmedia_add(&sc->iy_ifmedia, IFM_ETHER | IFM_10_5, 0, NULL);
+	ifmedia_add(&sc->iy_ifmedia, IFM_ETHER | IFM_10_T, 0, NULL);
+	ifmedia_add(&sc->iy_ifmedia, IFM_ETHER | IFM_AUTO, 0, NULL);
+	ifmedia_set(&sc->iy_ifmedia, IFM_ETHER | IFM_AUTO);
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
@@ -464,22 +480,31 @@ struct iy_softc *sc;
 #endif
 	temp = (temp & TEST_MODE_MASK);
  
-	switch(ifp->if_flags & (IFF_LINK0 | IFF_LINK1)) {
-	case IFF_LINK0:
+	switch(IFM_SUBTYPE(sc->iy_ifmedia.ifm_media)) {
+	case IFM_10_5:
 		temp &= ~ (BNC_BIT | TPE_BIT);
 		break;
 
-	case IFF_LINK1:
+	case IFM_10_2:
 		temp = (temp & ~TPE_BIT) | BNC_BIT;
 		break;
  
-	case IFF_LINK0|IFF_LINK1:
+	case IFM_10_T:
 		temp = (temp & ~BNC_BIT) | TPE_BIT;
 		break;
 	default:
 		/* nothing; leave as it is */
 	}
-
+	switch (temp & (BNC_BIT | TPE_BIT)) {
+	case BNC_BIT:
+		sc->iy_media = IFM_ETHER | IFM_10_2;
+		break;
+	case TPE_BIT:
+		sc->iy_media = IFM_ETHER | IFM_10_T;
+		break;
+	default:
+		sc->iy_media = IFM_ETHER | IFM_10_5;
+	}
 
 	bus_space_write_1(iot, ioh, MEDIA_SELECT, temp);
 #ifdef IYDEBUG
@@ -1272,11 +1297,47 @@ iyioctl(ifp, cmd, data)
 		}
 		break;
 #endif
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->iy_ifmedia, cmd);
+		break;
 	default:
 		error = EINVAL;
 	}
 	splx(s);
 	return error;
+}
+
+int
+iy_mediachange(ifp)
+	struct ifnet *ifp;
+{
+	struct iy_softc *sc = ifp->if_softc;
+
+	if (IFM_TYPE(sc->iy_ifmedia.ifm_media) != IFM_ETHER)
+	    return EINVAL;
+	switch(IFM_SUBTYPE(sc->iy_ifmedia.ifm_media)) {
+	case IFM_10_5:
+	case IFM_10_2:
+	case IFM_10_T:
+	case IFM_AUTO:
+	    iystop(sc);
+	    iyinit(sc);
+	    return 0;
+	default:
+	    return EINVAL;
+	}
+}
+
+void
+iy_mediastatus(ifp, ifmr)
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
+{
+	struct iy_softc *sc = ifp->if_softc;
+
+	ifmr->ifm_active = sc->iy_media;
+	ifmr->ifm_status = IFM_AVALID | IFM_ACTIVE;
 }
 
 #if 0

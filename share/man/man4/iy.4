@@ -1,4 +1,4 @@
-.\"	$NetBSD: iy.4,v 1.5 1997/03/08 14:03:49 mouse Exp $
+.\"	$NetBSD: iy.4,v 1.6 1997/12/02 09:34:03 bouyer Exp $
 .\"
 .\" Copyright (c) 1994 Herb Peyerl
 .\" All rights reserved.
@@ -43,10 +43,11 @@ The
 device driver supports the Etherepress PRO/10 card, and might support
 other ISA cards using the same chip.
 
-Various models of these cards come with a different assortment of
-connectors:
+.Sh MEDIA SELECTION
+The different models of the supported boards come with some subset of RJ-45,
+BNC and AUI connectors.   Supported media include:
 .Pp
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.Bl -tag -width xxxxxxxxxx -offset indent
 .It AUI/DIX
 Standard 15 pin connector
 .It 10Base2
@@ -57,21 +58,9 @@ UTP, also known as twisted pair
 .Pp
 The default port to use is the port the card autodetects at 
 .Xr ifconfig up
-time. To choose an alternative port,
-use the following flag combinations with
+time. To choose an alternative port, an explicit medium can be specified to
 .Xr ifconfig 8
-or in your /etc/hostname.iy? file.
-.Pp
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
-.It -link0 -link1
-Use the autodetected port (default).
-.It -link0 \ link1
-Use the BNC port.
-.It \ link0 -link1
-Use the AUI port.
-.It \ link0 \ link1
-Use the UTP port.
-.El
+or in your ifconfig.iy? file.
 .Pp
 .Sh NOTES
 The Etherexpress PRO card has no jumpers to set the address.
