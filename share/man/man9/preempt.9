@@ -1,4 +1,4 @@
-.\"     $NetBSD: preempt.9,v 1.1 2002/09/22 06:26:35 gmcgarry Exp $
+.\"     $NetBSD: preempt.9,v 1.2 2002/09/27 08:38:59 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -49,11 +49,13 @@
 The
 .Fn preempt
 function puts the current process back on the system run queue
-and performs an involuntary context switch.  If the specified process
-arguement
+and performs an involuntary context switch.
+If the specified process argument
 .Fa p
-is not NULL then a context switch is done to that process.  Otherwise,
-the normal process selection criteria inside
+is not
+.Dv NULL
+then a context switch is done to that process.
+Otherwise, the normal process selection criteria inside
 .Xr mi_switch 9
 is used to select the new process.
 .Pp
@@ -61,6 +63,6 @@ The
 .Fn preempt
 function must not be called with the scheduler lock held.
 .Sh SEE ALSO
-.Xr setrunqueue 9 ,
 .Xr mi_switch 9 ,
+.Xr setrunqueue 9 ,
 .Xr userret 9
