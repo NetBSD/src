@@ -1,4 +1,4 @@
-# $NetBSD: md.mmeye,v 1.14 2002/05/03 12:11:44 wiz Exp $
+# $NetBSD: md.mmeye,v 1.15 2002/05/09 18:15:13 uch Exp $
 ./usr/include/mmeye	comp-c-include
 ./usr/include/mmeye/_G_config.h	comp-c-include
 ./usr/include/mmeye/ansi.h	comp-c-include
@@ -42,7 +42,6 @@
 ./usr/include/mmeye/setjmp.h	comp-c-include
 ./usr/include/mmeye/signal.h	comp-c-include
 ./usr/include/mmeye/stdarg.h	comp-c-include
-./usr/include/mmeye/trap.h	comp-c-include
 ./usr/include/mmeye/types.h	comp-c-include
 ./usr/include/mmeye/varargs.h	comp-c-include
 ./usr/include/mmeye/vmparam.h	comp-c-include
