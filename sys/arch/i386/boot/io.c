@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.13 1995/01/18 01:54:25 mycroft Exp $	*/
+/*	$NetBSD: io.c,v 1.14 1995/01/18 02:54:26 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -81,31 +81,33 @@ printf(format, data)
 		}
 		c = *format++;
 		if (c == 'd') {
-			int num = *dataptr++;
+			int num = *dataptr++, dig;
 			char buf[10], *ptr = buf;
 			if (num < 0) {
 				num = -num;
 				putchar('-');
 			}
-			do
-				*ptr++ = '0' + num % 10;
-			while (num /= 10);
+			do {
+				dig = num % 10;
+				*ptr++ = '0' + dig;
+			} while (num /= 10);
 			do
 				putchar(*--ptr);
 			while (ptr != buf);
 		} else if (c == 'x') {
 			unsigned int num = (unsigned int)*dataptr++, dig;
 			char buf[8], *ptr = buf;
-			do
-				*ptr++ = (dig = (num & 0xf)) > 9?
-					'a' + dig - 10 :
-					'0' + dig;
-			while (num >>= 4);
+			do {
+				dig = num & 0xf;
+				*ptr++ = dig > 9 ?
+					 'a' + dig - 10 :
+					 '0' + dig;
+			} while (num >>= 4);
 			do
 				putchar(*--ptr);
 			while (ptr != buf);
 		} else if (c == 'c') {
-			putchar((*dataptr++) & 0xff);
+			putchar((char)*dataptr++);
 		} else if (c == 's') {
 			char *ptr = (char *)*dataptr++;
 			while (c = *ptr++)
@@ -115,6 +117,7 @@ printf(format, data)
 }
 
 putchar(c)
+	int c;
 {
 	if (c == '\n')
 		putc('\r');

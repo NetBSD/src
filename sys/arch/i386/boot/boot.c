@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.24 1995/01/16 02:21:15 mycroft Exp $	*/
+/*	$NetBSD: boot.c,v 1.25 1995/01/18 02:54:23 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -76,14 +76,15 @@ int drive;
 	int loadflags, currname = 0;
 	char *t;
 		
-	printf("\n>> NetBSD BOOT @ 0x%x: %d/%d k [%s]\n",
+	printf("\n"
+	       ">> NetBSD BOOT @ 0x%x: %d/%d k [%s]\n"
+	       "use hd(1,a)/netbsd to boot sd0 when wd0 is also installed\n",
 		ouraddr,
 		argv[7] = memsize(0),
 		argv[8] = memsize(1),
 		version);
-	printf("use hd(1,a)/netbsd to boot sd0 when wd0 is also installed\n");
 	gateA20();
-    loadstart:
+loadstart:
 	/***************************************************************\
 	* As a default set it to the first partition of the first	*
 	* floppy or hard drive						*
@@ -214,7 +215,7 @@ loadprog(howto)
 		addr += i;
 	}
 
-	printf("]");
+	putchar(']');
 
 	/********************************************************/
 	/* and that many bytes of (debug symbols?)		*/
@@ -306,6 +307,6 @@ getbootdev(howto)
 			}
 		}
 	} else
-		printf("\n");
+		putchar('\n');
 }
 
