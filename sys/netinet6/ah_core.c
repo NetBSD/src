@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.10 1999/08/26 11:11:51 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.11 1999/09/17 12:26:04 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -862,7 +862,6 @@ ah4_calccksum(m0, ahdat, algo, sa)
 	int hdrtype;
 	u_char *p;
 	size_t advancewidth;
-	int s;
 	struct ah_algorithm_state algos;
 	int tlen;
 	u_char sumbuf[AH_MAXSUMSIZE];
@@ -874,11 +873,6 @@ ah4_calccksum(m0, ahdat, algo, sa)
 
 	p = mtod(m, u_char *);
 
-#ifdef __NetBSD__
-	s = splsoftnet();	/*XXX crypt algorithms need splsoftnet() */
-#else
-	s = splnet();	/*XXX crypt algorithms need splsoftnet() */
-#endif
 	(algo->init)(&algos, sa);
 
 	advancewidth = 0;	/*safety*/
@@ -1059,7 +1053,6 @@ again:
 	(algo->result)(&algos, &sumbuf[0]);
 	bcopy(&sumbuf[0], ahdat, (*algo->sumsiz)(sa));
 
-	splx(s);
 	return error;
 }
 
@@ -1079,7 +1072,6 @@ ah6_calccksum(m0, ahdat, algo, sa)
 	int hdrtype;
 	u_char *p;
 	size_t advancewidth;
-	int s;
 	struct ah_algorithm_state algos;
 	int tlen;
 	int error = 0;
@@ -1092,11 +1084,6 @@ ah6_calccksum(m0, ahdat, algo, sa)
 
 	p = mtod(m, u_char *);
 
-#ifdef __NetBSD__
-	s = splsoftnet();	/*XXX crypt algorithms need splsoftnet() */
-#else
-	s = splnet();	/*XXX crypt algorithms need splsoftnet() */
-#endif
 	(algo->init)(&algos, sa);
 
 	advancewidth = 0;	/*safety*/
@@ -1337,11 +1324,9 @@ again:
 	(algo->result)(&algos, &sumbuf[0]);
 	bcopy(&sumbuf[0], ahdat, (*algo->sumsiz)(sa));
 
-	splx(s);
 	return(0);
 
   bad:
-	splx(s);
 	return(error);
 }
 #endif
