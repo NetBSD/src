@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: subr.c,v 1.4 1995/03/21 14:20:23 mycroft Exp $";
+static char *rcsid = "$Id: subr.c,v 1.5 1995/07/19 15:14:08 christos Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,6 +56,9 @@ getpoints(s)
 		switch(*s) {
 		case 'c':
 			facs |= KTRFAC_SYSCALL | KTRFAC_SYSRET;
+			break;
+		case 'e':
+			facs |= KTRFAC_EMUL;
 			break;
 		case 'n':
 			facs |= KTRFAC_NAMEI;
