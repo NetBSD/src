@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.65 2002/01/01 07:55:26 mrg Exp $
+#	$NetBSD: MAKEDEV,v 1.66 2002/01/08 02:46:16 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -62,10 +62,10 @@
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # ISDN devices:
-#	i4b	comunication between userland isdnd and kernel
+#	i4b	communication between userland isdnd and kernel
 #	i4bctl	control device
 #	i4brbch* raw b-channel access
-#	i4btel*	telephonie device
+#	i4btel*	telephony device
 #	i4btrc*	trace device
 # Special purpose devices:
 #	audio*	Audio devices.
