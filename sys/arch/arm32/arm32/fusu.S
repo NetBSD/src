@@ -1,4 +1,4 @@
-/* $NetBSD: fusu.S,v 1.2 1996/10/15 01:17:59 mark Exp $ */
+/* $NetBSD: fusu.S,v 1.2.6.1 1997/03/11 21:53:10 is Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -108,6 +108,12 @@ Lvm_maxkern_address:
 	.global	_fuword
 
 _fuword:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -139,6 +145,12 @@ _fuword:
 	.global	_fusword
 
 _fusword:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -174,6 +186,12 @@ _fusword:
 	.global	_fuswintr
 
 _fuswintr:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -208,6 +226,12 @@ _fuswintr:
 	.global	_fubyte
 
 _fubyte:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -287,6 +311,12 @@ fusupcbfaulttext:
 	.global	_suword
 
 _suword:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -320,6 +350,12 @@ _suword:
 	.global	_suswintr
 
 _suswintr:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -354,6 +390,12 @@ _suswintr:
 	.global	_susword
 
 _susword:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -388,6 +430,12 @@ _susword:
 	.global	_subyte
 
 _subyte:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault

@@ -1,7 +1,7 @@
-/* $NetBSD: sys_machdep.c,v 1.5 1996/10/15 01:12:02 mark Exp $ */
+/*	$NetBSD: sys_machdep.c,v 1.5.4.1 1997/03/11 21:53:14 is Exp $	*/
 
 /*
- * Copyright (c) 1995 Mark Brinicombe.
+ * Copyright (c) 1995-1997 Mark Brinicombe.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,24 @@
 
 #include <machine/sysarch.h>
 
+static int
+arm32_sync_icache(p, args, retval)
+	struct proc *p;
+	char *args;
+	register_t *retval;
+{
+	struct arm32_sync_icache_args ua;
+	int error;
+
+	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
+		return (error);
+
+	cpu_cache_syncI_rng(ua.addr, ua.len);
+
+	*retval = 0;
+	return(0);
+}
+
 int
 sys_sysarch(p, v, retval)
 	struct proc *p;
@@ -71,7 +89,7 @@ sys_sysarch(p, v, retval)
 
 	switch(SCARG(uap, op)) {
 	case ARM32_SYNC_ICACHE : 
-		sync_icache();	/* Make sure the icache is in sync */
+		error = arm32_sync_icache(p, SCARG(uap, parms), retval);
 		break;
 
 	default:

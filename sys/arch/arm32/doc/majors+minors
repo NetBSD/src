@@ -1,4 +1,4 @@
-/* $NetBSD: majors+minors,v 1.8 1997/01/12 20:39:51 mark Exp $ */
+/* $NetBSD: majors+minors,v 1.8.6.1 1997/03/11 21:53:21 is Exp $ */
 
 /*
  * Copyright (c) 1994,1996 Mark Brinicombe.
@@ -251,3 +251,8 @@ same device driver even if the driver does not require both.
 		   (unit = minor)
 46 B	- reserved
 46 C	- ip-filter
+47	- reserved
+48 B	- reserved
+48 C	- S/PDIF
+49 B	- reserved
+49 C	- reserved (generic midi device)

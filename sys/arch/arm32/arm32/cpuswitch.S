@@ -1,7 +1,7 @@
-/*	$NetBSD: cpuswitch.S,v 1.14 1997/02/04 07:12:30 mark Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.14.2.1 1997/03/11 21:53:09 is Exp $	*/
 
 /*
- * Copyright (c) 1994-1996 Mark Brinicombe.
+ * Copyright (c) 1994-1997 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -46,25 +46,12 @@
 #include "assym.h"
 #include <machine/param.h>
 #include <machine/cpu.h>
+#include <machine/frame.h>
 #include <machine/iomd.h>
 
 sp	.req	r13
 lr	.req	r14
 pc	.req	r15
-
-/*
- * PULLFRAME - macro to pull a trap frame from the stack in the current mode
- * Since the current mode is used, the SVC R14 field is ignored.
- */
-
-#define PULLFRAME \
-        ldr     r0, [sp], #0x0004;      /* Get the SPSR from stack */ \
-        msr     spsr_all, r0; \
-	add	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
-        ldmdb   sp, {r0-r14}^;		/* Restore the registers (user mode) */ \
-        mov     r0, r0;                 /* NOP for previous instruction */ \
- 	add	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
- 	ldr	lr, [sp], #0x0004;	/* Pull the return address */
 
 #undef IRQdisable
 #undef IRQenable
@@ -269,23 +256,19 @@ Lcpufuncs:
 	.global	_idle
 _idle:
 idle:
-
 /* Enable interrupts */
 
 	IRQenable
 
-/*
- * The RC7500 doesn't support this yet!
- */
+	/* XXX - r1 needs to be preserved for cpu_switch */
 
-#if defined(CPU_ARM7500) && !defined(RC7500)
-/* ARM7500 has a suspend mode so use it */
+	mov	r7, r1
+	ldr	r0, Lcpufuncs
+	add	lr, pc, #Lidl_slept - . - 8
+	ldr	pc, [r0, #CF_SLEEP]
 
-	mov	r7, #(IOMD_BASE)
-	orr	r7, r7, #(IOMD_SUSPEND - IOMD_BASE)
-	mov	r3, #0x00000001		/* Keep external clocks running */
-	strb	r3, [r7]
-#endif
+Lidl_slept:
+	mov	r1, r7
 
 /* Disable interrupts while we check for an active queue */
 
@@ -810,3 +793,4 @@ trampoline_return:
 
 	movs	pc, lr			/* Exit */
 
+/* End of cpuswitch.S */

@@ -199,6 +199,12 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 #kie*	at podulebus? slot ? offset ?
 
+icside*	at podulebus?			# ICS IDE card
+wdc*	at icside?
+
+rapide*	at podulebus?			# Yellowstone RapIDE card
+wdc*	at rapide?
+
 ea*	at podulebus?			# Ether3 podules
 eb0	at podulebus?			# EtherB network slot cards
 eh0	at podulebus?			# EtherH network slot cards
