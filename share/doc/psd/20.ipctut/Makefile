@@ -8,6 +8,6 @@ EXTRA=	dgramread.c dgramsend.c fig2.pic fig3.pic fig8.pic pipe.c \
 	udgramread.c udgramsend.c ustreamread.c ustreamwrite.c
 
 paper.ps: ${SRCS} ${EXTRA}
-	${SOELIM} ${SRCS} | ${PIC} | ${TBL} | ${ROFF} > ${.TARGET}
+	${SOELIM} -I${.CURDIR} ${.ALLSRC:M*.me} | ${PIC} | ${TBL} | ${ROFF} > ${.TARGET}
 
 .include <bsd.doc.mk>
