@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2004/06/22 14:04:04 itojun Exp $
+#	$NetBSD: Makefile,v 1.16 2004/06/22 14:29:45 itojun Exp $
 
 INCSDIR= /usr/include/net
 
@@ -12,4 +12,4 @@ INCS=	bpf.h bpfdesc.h dlt.h ethertypes.h if.h if_arc.h if_arp.h \
 
 .include <bsd.kinc.mk>
 
-.PATH: ${NETBSDSRCDIR}/dist/pf/sys/net
+.PATH: ${NETBSDSRCDIR}/sys/dist/pf/net
