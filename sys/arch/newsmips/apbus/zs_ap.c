@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.4 2000/03/06 21:36:10 thorpej Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.5 2000/10/12 03:13:47 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ static u_char zs_init_reg[16] = {
 
 static struct zschan * zs_get_chan_addr __P((int, int));
 static void zs_ap_delay __P((void));
-static void zshard_ap __P((void *));
+static int zshard_ap __P((void *));
 static int zs_getc __P((void *));
 static void zs_putc __P((void *, int));
 int zshard __P((void *));
@@ -351,11 +351,12 @@ zs_ap_attach(parent, self, aux)
  * Our ZS chips all share a common, autovectored interrupt,
  * so we have to look at all of them on each interrupt.
  */
-static void
+static int
 zshard_ap(arg)
 	void *arg;
 {
 	zshard(arg);
+	return 1;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.5 2000/10/01 23:32:41 thorpej Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.6 2000/10/12 03:13:47 onoe Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -845,16 +845,18 @@ initialise_rra(sc)
 	wbflush();
 }
 
-void
+int
 snintr(arg)
 	void	*arg;
 {
 	struct sn_softc *sc = (struct sn_softc *)arg;
+	int handled = 0;
 	int	isr;
 
 	while ((isr = (NIC_GET(sc, SNR_ISR) & ISR_ALL)) != 0) {
 		/* scrub the interrupts that we are going to service */
 		NIC_PUT(sc, SNR_ISR, isr);
+		handled = 1;
 		wbflush();
 
 		if (isr & (ISR_BR | ISR_LCD | ISR_TC))
@@ -903,7 +905,7 @@ snintr(arg)
 		}
 		snstart(&sc->sc_if);
 	}
-	return;
+	return handled;
 }
 
 /*
