@@ -6,17 +6,14 @@
 #
 MAN5=	termcap.0
 
-all: termcap ${MAN5}
+all: termcap
 
 termcap: reorder termcap.src
 #	ex - ${.CURDIR}/termcap.src < ${.CURDIR}/reorder > /dev/null
 	-ex - ${.CURDIR}/termcap.src < ${.CURDIR}/reorder > /dev/null
 
-clean:
+clean cleandir:
 	rm -f termcap
-
-cleandir: clean
-	rm -f ${MAN5}
 
 beforeinstall:
 	@if [ ! -d ${DESTDIR}${BINDIR}/misc ]; then \
