@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.14 2004/09/14 16:51:58 jdolecek Exp $
+#	$NetBSD: files.xen,v 1.14.4.1 2004/12/13 17:52:20 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -51,7 +51,8 @@ file	arch/xen/i386/xen_machdep.c
 file	arch/xen/xen/xen_debug.c
 
 file	arch/xen/xen/clock.c
-file	arch/xen/xen/events.c
+file	arch/xen/xen/evtchn.c
+file	arch/xen/xen/ctrl_if.c
 
 file	dev/cons.c
 
@@ -81,6 +82,9 @@ file	crypto/blowfish/arch/i386/bf_cbc.S	blowfish & !i386_cpu
 # Memory Disk for install floppy
 file	dev/md_root.c			memory_disk_hooks
 
+#
+define  mainbus { [apid = -1] }
+
 file	arch/x86/x86/bus_dma.c
 file	arch/xen/x86/bus_space.c
 file	arch/x86/x86/cacheinfo.c
@@ -92,26 +96,17 @@ file	arch/x86/x86/softintr.c
 
 include	"arch/xen/conf/files.compat"
 
-# i386 specific mainbus attributes
-define cpubus { [apid = -1] }
-define apmbus {}
-define pnpbiosbus {}
-define vesabiosbus {}
-define hypervisorbus {}
-
 #
 # System bus types
 #
 
-device	mainbus: isabus, eisabus, mcabus, pcibus, acpibus,
-	cpubus, apmbus, pnpbiosbus, vesabiosbus,
-	hypervisorbus
+device	mainbus: mainbus
 attach	mainbus at root
 file	arch/xen/i386/mainbus.c		mainbus
 
 # Xen hypervisor
 device	hypervisor { }
-attach	hypervisor at hypervisorbus
+attach	hypervisor at mainbus
 file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
 
 # Numeric Processing Extension; Math Co-processor
@@ -133,8 +128,9 @@ include	"dev/pckbport/files.pckbport"
 
 # CPUS
 
+define cpu { [apid = -1] }
 device cpu
-attach cpu at cpubus
+attach cpu at mainbus
 file	arch/xen/i386/cpu.c		cpu
 
 #
@@ -187,6 +183,9 @@ include	"compat/freebsd/files.freebsd"
 file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 file	arch/i386/i386/freebsd_sigcode.S	compat_freebsd
 file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
+
+# a.out binary compatibility (COMPAT_AOUT)
+include	"compat/aout/files.aout"
 
 # Win32 binary compatibility (COMPAT_PECOFF)
 include	"compat/pecoff/files.pecoff"

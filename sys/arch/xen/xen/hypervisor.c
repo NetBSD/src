@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.8 2004/12/10 18:54:08 christos Exp $ */
+/* $NetBSD: hypervisor.c,v 1.8.2.1 2004/12/13 17:52:21 bouyer Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.8 2004/12/10 18:54:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.8.2.1 2004/12/13 17:52:21 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.8 2004/12/10 18:54:08 christos Exp 
 
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
-#include <machine/events.h>
+#include <machine/evtchn.h>
 
 #ifdef DOM0OPS
 #include <sys/dirent.h>
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.8 2004/12/10 18:54:08 christos Exp 
 #if NXBD > 0
 #include <sys/buf.h>
 #include <sys/disk.h>
-#include <sys/bufq.h>
 #include <dev/dkvar.h>
 #include <machine/xbdvar.h>
 #endif
@@ -134,6 +133,18 @@ hypervisor_match(parent, match, aux)
 	return 0;
 }
 
+static void
+scan_finish(struct device *parent)
+{
+
+#if NXENNET > 0
+	xennet_scan_finish(parent);
+#endif
+#if NXBD > 0
+	xbd_scan_finish(parent);
+#endif
+}
+
 /*
  * Attach the hypervisor.
  */
@@ -184,6 +195,9 @@ hypervisor_attach(parent, self, aux)
 		xenvfr_init();
 	}
 #endif
+#if NXENNET > 0 || NXBD > 0
+	config_interrupts(self, scan_finish);
+#endif
 }
 
 int
@@ -196,6 +210,16 @@ hypervisor_print(aux, parent)
 	if (parent)
 		aprint_normal("%s at %s", hac->hac_device, parent);
 	return (UNCONF);
+}
+
+void
+hypervisor_notify_via_evtchn(unsigned int port)
+{
+	evtchn_op_t op;
+
+	op.cmd = EVTCHNOP_send;
+	op.u.send.local_port = port;
+	(void)HYPERVISOR_event_channel_op(&op);
 }
 
 #ifdef DOM0OPS

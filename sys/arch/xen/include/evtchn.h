@@ -1,4 +1,4 @@
-/* $NetBSD: xbdvar.h,v 1.6.4.1 2004/12/13 17:52:21 bouyer Exp $ */
+/*	$NetBSD: evtchn.h,v 1.1.2.1 2004/12/13 17:52:21 bouyer Exp $	*/
 
 /*
  *
@@ -31,30 +31,23 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _XEN_EVENTS_H_
+#define _XEN_EVENTS_H_
 
-#ifndef _XEN_XBDVAR_H_
-#define _XEN_XBDVAR_H_
+#define	NR_IRQS		32
 
-struct xbd_softc {
-	struct device		sc_dev;		/* base device glue */
-	struct dk_softc		sc_dksc;	/* generic disk interface */
-	unsigned long		sc_xd_device;	/* cookie identifying device */
-	struct dk_intf		*sc_di;		/* pseudo-disk interface */
-	struct simplelock	sc_slock;	/* our lock */
-	int			sc_shutdown;	/* about to be removed */
-#if NRND > 0
-	rndsource_element_t	sc_rnd_source;
-#endif
-};
+extern int evtchn_to_irq[];
 
-struct xbd_attach_args {
-	const char 		*xa_device;
-	vdisk_t			*xa_xd;
-	struct dk_intf		*xa_dkintf;
-	struct sysctlnode	*xa_diskcookies;
-};
+/* typedef unsigned int (*ev_handler_t)(int, struct pt_regs *); */
+typedef int (*ev_handler_t)(void *);
 
-int xbd_scan(struct device *, struct xbd_attach_args *, cfprint_t);
-void xbd_scan_finish(struct device *);
+void events_default_setup(void);
+void init_events(void);
+unsigned int do_event(int, struct intrframe *);
+int event_set_handler(int, ev_handler_t, void *, int);
 
-#endif /* _XEN_XBDVAR_H_ */
+int bind_virq_to_irq(int);
+void unbind_virq_from_irq(int);
+int bind_evtchn_to_irq(int);
+
+#endif /*  _XEN_EVENTS_H_ */
