@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.9 1997/08/25 19:32:01 kleink Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.10 1997/10/19 23:36:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.9 1997/08/25 19:32:01 kleink Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.10 1997/10/19 23:36:34 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -265,7 +265,7 @@ fetchkre()
 void
 labelkre()
 {
-	register int i, j;
+	int i, j;
 
 	clear();
 	mvprintw(STATROW, STATCOL + 4, "users    Load");
@@ -524,7 +524,7 @@ cmdkre(cmd, args)
 static int
 ucount()
 {
-	register int nusers = 0;
+	int nusers = 0;
 
 	if (ut < 0)
 		return (0);
@@ -541,7 +541,7 @@ cputime(indx)
 	int indx;
 {
 	double t;
-	register int i;
+	int i;
 
 	t = 0;
 	for (i = 0; i < CPUSTATES; i++)
@@ -613,7 +613,7 @@ getinfo(s, st)
 	mib[1] = VM_METER;
 	if (sysctl(mib, 2, &s->Total, &size, NULL, 0) < 0) {
 		error("Can't get kernel info: %s\n", strerror(errno));
-		bzero(&s->Total, sizeof(s->Total));
+		memset(&s->Total, 0, sizeof(s->Total));
 	}
 }
 
@@ -629,13 +629,13 @@ allocinfo(s)
 
 static void
 copyinfo(from, to)
-	register struct Info *from, *to;
+	struct Info *from, *to;
 {
 	long *intrcnt;
 
 	intrcnt = to->intrcnt;
 	*to = *from;
-	bcopy(from->intrcnt, to->intrcnt = intrcnt, nintr * sizeof (int));
+	memmove(to->intrcnt = intrcnt, from->intrcnt, nintr * sizeof (int));
 }
 
 static void

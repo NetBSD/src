@@ -1,4 +1,4 @@
-/*	$NetBSD: mbufs.c,v 1.4 1997/07/21 07:05:04 mrg Exp $	*/
+/*	$NetBSD: mbufs.c,v 1.5 1997/10/19 23:36:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: mbufs.c,v 1.4 1997/07/21 07:05:04 mrg Exp $");
+__RCSID("$NetBSD: mbufs.c,v 1.5 1997/10/19 23:36:27 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,7 +101,7 @@ labelmbufs()
 void
 showmbufs()
 {
-	register int i, j, max, index;
+	int i, j, max, index;
 	char buf[10];
 
 	if (mb == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.5 1997/07/21 07:05:05 mrg Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.6 1997/10/19 23:36:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.5 1997/07/21 07:05:05 mrg Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.6 1997/10/19 23:36:28 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -128,12 +128,12 @@ changeitems(args, onoff)
 	char *args;
 	int onoff;
 {
-	register char *cp;
+	char *cp;
 	struct servent *sp;
 	struct hostent *hp;
 	struct in_addr in;
 
-	cp = index(args, '\n');
+	cp = strchr(args, '\n');
 	if (cp)
 		*cp = '\0';
 	for (;;args = cp) {
@@ -199,7 +199,7 @@ selectport(port, onoff)
 	long port;
 	int onoff;
 {
-	register struct pitem *p;
+	struct pitem *p;
 
 	if (port == -1) {
 		if (ports == 0)
@@ -225,9 +225,9 @@ selectport(port, onoff)
 
 int
 checkport(inp)
-	register struct inpcb *inp;
+	struct inpcb *inp;
 {
-	register struct pitem *p;
+	struct pitem *p;
 
 	if (ports)
 	for (p = ports; p < ports+nports; p++)
@@ -239,7 +239,7 @@ checkport(inp)
 static void
 showports()
 {
-	register struct pitem *p;
+	struct pitem *p;
 	struct servent *sp;
 
 	for (p = ports; p < ports+nports; p++) {
@@ -259,7 +259,7 @@ selecthost(in, onoff)
 	struct in_addr *in;
 	int onoff;
 {
-	register struct hitem *p;
+	struct hitem *p;
 
 	if (in == 0) {
 		if (hosts == 0)
@@ -285,9 +285,9 @@ selecthost(in, onoff)
 
 int
 checkhost(inp)
-	register struct inpcb *inp;
+	struct inpcb *inp;
 {
-	register struct hitem *p;
+	struct hitem *p;
 
 	if (hosts)
 	for (p = hosts; p < hosts+nhosts; p++)
@@ -300,7 +300,7 @@ checkhost(inp)
 static void
 showhosts()
 {
-	register struct hitem *p;
+	struct hitem *p;
 	struct hostent *hp;
 
 	for (p = hosts; p < hosts+nhosts; p++) {

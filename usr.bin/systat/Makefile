@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1997/07/21 07:03:52 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 1997/10/19 23:36:20 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	systat
@@ -12,6 +12,5 @@ DPADD=	${LIBCURSES} ${LIBTERMCAP} ${LIBM} ${LIBKVM}
 LDADD=	-lcurses -ltermcap -lm -lkvm
 BINGRP=	kmem
 BINMODE=2555
-WARNS?=	1
 
 .include <bsd.prog.mk>
