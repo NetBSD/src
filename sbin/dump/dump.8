@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)dump.8	8.1 (Berkeley) 6/16/93
-.\"	$Id: dump.8,v 1.10 1995/02/20 22:35:56 mycroft Exp $
+.\"	$Id: dump.8,v 1.11 1995/02/21 00:27:29 mycroft Exp $
 .\"
 .Dd June 16, 1993
 .Dt DUMP 8
@@ -171,9 +171,9 @@ This option is useful for automated dump scripts that wish to
 dump over a specific period of time.
 The
 .Fl T
-option is mutually exclusive from the
+flag is mutually exclusive from the
 .Fl u
-option.
+flag.
 .It Fl u
 Update the file
 .Pa /etc/dumpdates
@@ -201,7 +201,7 @@ and
 .Pa /etc/fstab .
 The
 .Fl W
-option causes
+flag causes
 .Nm dump
 to print out, for each file system in
 .Pa /etc/dumpdates
@@ -209,7 +209,7 @@ the most recent dump date and level,
 and highlights those file systems that should be dumped.
 If the
 .Fl W
-option is set, all other options are ignored, and
+flag is set, all other options are ignored, and
 .Nm dump
 exits immediately.
 .It Fl w
@@ -225,10 +225,10 @@ tape open error or
 disk read error (if there are more than a threshold of 32).
 In addition to alerting all operators implied by the
 .Fl n
-key,
+flag,
 .Nm dump
 interacts with the operator on
-.Em dump's
+.Nm dump Ns 's
 control terminal at times when
 .Nm dump
 can no longer proceed,
@@ -334,7 +334,7 @@ with the
 .Fl W
 or
 .Fl w
-options does not report filesystems that have never been recorded
+flags does not report filesystems that have never been recorded
 in
 .Pa /etc/dumpdates ,
 even if listed in
