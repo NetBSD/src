@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.4 2002/08/12 02:06:23 simonb Exp $ */
+/* $NetBSD: autoconf.c,v 1.5 2002/08/23 11:40:08 scw Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,6 +38,8 @@
 
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
+#include <machine/dcr.h>
+
 struct device *booted_device;
 int booted_partition;
 
@@ -58,6 +60,9 @@ cpu_configure(void)
 
 	intr_init();
 	calc_delayconst();
+
+	/* Make sure that timers run at CPU frequency */
+	mtdcr(DCR_CPC0_CR1, mfdcr(DCR_CPC0_CR1) & ~CPC0_CR1_CETE);
 
 	if (config_rootfound("plb", &local_plb_devs) == NULL)
 		panic("configure: plb not configured");
