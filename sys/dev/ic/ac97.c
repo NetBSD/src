@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.33 2002/10/14 08:48:15 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.34 2002/10/16 16:38:25 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.33 2002/10/14 08:48:15 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.34 2002/10/16 16:38:25 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,14 +345,18 @@ static const struct ac97_codecid {
 } ac97codecid[] = {
 	{ AC97_CODEC_ID('A', 'D', 'S', 3),
 	  0xffffffff,			"Analog Devices AD1819B" },
-	{ AC97_CODEC_ID('A', 'D', 'S', 64),
+	{ AC97_CODEC_ID('A', 'D', 'S', 0x40),
 	  0xffffffff,			"Analog Devices AD1881" },
-	{ AC97_CODEC_ID('A', 'D', 'S', 72),
+	{ AC97_CODEC_ID('A', 'D', 'S', 0x48),
 	  0xffffffff,			"Analog Devices AD1881A" },
-	{ AC97_CODEC_ID('A', 'D', 'S', 96),
+	{ AC97_CODEC_ID('A', 'D', 'S', 0x60),
 	  0xffffffff,			"Analog Devices AD1885" },
-	{ AC97_CODEC_ID('A', 'D', 'S', 99),
+	{ AC97_CODEC_ID('A', 'D', 'S', 0x61),
+	  0xffffffff,			"Analog Devices AD1886" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 0x63),
 	  0xffffffff,			"Analog Devices AD1886A" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 0x72),
+	  0xffffffff,			"Analog Devices AD1981A" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0),
 	  AC97_VENDOR_ID_MASK,		"Analog Devices unknown" },
 
@@ -382,8 +386,12 @@ static const struct ac97_codecid {
 	 * Realtek & Avance Logic
 	 *	http://www.realtek.com.tw/downloads/downloads1-3.aspx?lineid=5&famid=All&series=All&Spec=True
 	 */
+	{ AC97_CODEC_ID('A', 'L', 'C', 0x00),
+	  0xfffffff0,			"Realtek RL5306"	},
+	{ AC97_CODEC_ID('A', 'L', 'C', 0x10),
+	  0xfffffff0,			"Realtek RL5382"	},
 	{ AC97_CODEC_ID('A', 'L', 'C', 0x20),
-	  0xffffffff,			"Realtek RL5383/RL5522/ALC100"	},
+	  0xfffffff0,			"Realtek RL5383/RL5522/ALC100"	},
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x10),
 	  0xffffffff,			"Avance Logic ALC200/ALC201"	},
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x20),
@@ -441,6 +449,20 @@ static const struct ac97_codecid {
 	{ 0x45838308, 0xffffffff,	"ESS Technology ES1921", },
 	{ 0x45838300, AC97_VENDOR_ID_MASK, "ESS Technology unknown", },
 
+	{ AC97_CODEC_ID('H', 'R', 'S', 0),
+	  0xffffffff,			"Intersil HMP9701",	},
+	{ AC97_CODEC_ID('H', 'R', 'S', 0),
+	  AC97_VENDOR_ID_MASK,		"Intersil unknown",	},
+
+	{ AC97_CODEC_ID('I', 'C', 'E', 0x01),
+	  0xffffffff,			"ICEnsemble ICE1230",	},
+	{ AC97_CODEC_ID('I', 'C', 'E', 0x11),
+	  0xffffffff,			"ICEnsemble ICE1232",	},
+	{ AC97_CODEC_ID('I', 'C', 'E', 0),
+	  AC97_VENDOR_ID_MASK,		"ICEnsemble unknown",	},
+
+	{ AC97_CODEC_ID('N', 'S', 'C', 0),
+	  0xffffffff,			"National Semiconductor LM454[03568]", },
 	{ AC97_CODEC_ID('N', 'S', 'C', 49),
 	  0xffffffff,			"National Semiconductor LM4549", },
 	{ AC97_CODEC_ID('N', 'S', 'C', 0),
@@ -466,13 +488,49 @@ static const struct ac97_codecid {
 	{ AC97_CODEC_ID('T', 'R', 'A', 0),
 	  AC97_VENDOR_ID_MASK,		"TriTech unknown",	},
 
+	{ AC97_CODEC_ID('T', 'X', 'N', 0x20),
+	  0xffffffff,			"Texas Instruments TLC320AD9xC", },
+	{ AC97_CODEC_ID('T', 'X', 'N', 0),
+	  AC97_VENDOR_ID_MASK,		"Texas Instruments unknown", },
+
+	/*
+	 * VIA
+	 * No datasheets are available.
+	 * http://www.viatech.com/en/multimedia/audio.jsp
+	 *
+	 * What about VT1616?
+	 */
+	{ AC97_CODEC_ID('V', 'I', 'A', 0x43),
+	  0xffffffff,			"VIA Technologies VT1611A", },
+	{ AC97_CODEC_ID('V', 'I', 'A', 0x61),
+	  0xffffffff,			"VIA Technologies VT1612A", },
+	{ AC97_CODEC_ID('V', 'I', 'A', 0),
+	  AC97_VENDOR_ID_MASK,		"VIA Technologies unknown", },
+
+	{ AC97_CODEC_ID('W', 'E', 'C', 1),
+	  0xffffffff,			"Winbond W83971D",	},
+	{ AC97_CODEC_ID('W', 'E', 'C', 0),
+	  AC97_VENDOR_ID_MASK,		"Winbond unknown",	},
+
 	/*
 	 * http://www.wolfsonmicro.com/product_list.asp?cid=64
+	 *	http://www.wolfsonmicro.com/download.asp/did.56/WM9701A.pdf - 00
+	 *	http://www.wolfsonmicro.com/download.asp/did.57/WM9703.pdf  - 03
+	 *	http://www.wolfsonmicro.com/download.asp/did.58/WM9704M.pdf - 04
+	 *	http://www.wolfsonmicro.com/download.asp/did.59/WM9704Q.pdf - 04
+	 *	http://www.wolfsonmicro.com/download.asp/did.184/WM9705_Rev34.pdf - 05
+	 *	http://www.wolfsonmicro.com/download.asp/did.60/WM9707.pdf  - 03
+	 *	http://www.wolfsonmicro.com/download.asp/did.136/WM9708.pdf - 03
+	 *	http://www.wolfsonmicro.com/download.asp/did.243/WM9710.pdf - 05
 	 */
 	{ AC97_CODEC_ID('W', 'M', 'L', 0),
-	  0xffffffff,			"Wolfson WM9704",	},
+	  0xffffffff,			"Wolfson WM9701A",	},
 	{ AC97_CODEC_ID('W', 'M', 'L', 3),
-	  0xffffffff,			"Wolfson WM9707",	},
+	  0xffffffff,			"Wolfson WM9703/WM9707/WM9708",	},
+	{ AC97_CODEC_ID('W', 'M', 'L', 4),
+	  0xffffffff,			"Wolfson WM9704",	},
+	{ AC97_CODEC_ID('W', 'M', 'L', 5),
+	  0xffffffff,			"Wolfson WM9705/WM9710", },
 	{ AC97_CODEC_ID('W', 'M', 'L', 0),
 	  AC97_VENDOR_ID_MASK,		"Wolfson unknown",	},
 
@@ -498,6 +556,7 @@ static const struct ac97_codecid {
 	{ 0x83847608, 0xffffffff,	"SigmaTel STAC9708",	},
 	{ 0x83847609, 0xffffffff,	"SigmaTel STAC9721/23",	},
 	{ 0x83847644, 0xffffffff,	"SigmaTel STAC9744/45",	},
+	{ 0x83847656, 0xffffffff,	"SigmaTel STAC9756/57",	},
 	{ 0x83847684, 0xffffffff,	"SigmaTel STAC9783/84",	},
 	{ 0x83847600, AC97_VENDOR_ID_MASK, "SigmaTel unknown",	},
 
