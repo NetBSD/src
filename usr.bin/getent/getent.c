@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.3 2004/11/26 05:07:12 lukem Exp $	*/
+/*	$NetBSD: getent.c,v 1.4 2004/11/29 04:13:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.3 2004/11/26 05:07:12 lukem Exp $");
+__RCSID("$NetBSD: getent.c,v 1.4 2004/11/29 04:13:15 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -67,6 +67,7 @@ static int	hosts(int, char *[]);
 static int	networks(int, char *[]);
 static int	passwd(int, char *[]);
 static int	protocols(int, char *[]);
+static int	services(int, char *[]);
 static int	shells(int, char *[]);
 
 enum {
@@ -88,6 +89,7 @@ main(int argc, char *argv[])
 		{	"networks",	networks,	},
 		{	"passwd",	passwd,		},
 		{	"protocols",	protocols,	},
+		{	"services",	services,	},
 		{	"shells",	shells,		},
 
 		{	NULL,		NULL,		},
@@ -409,6 +411,61 @@ protocols(int argc, char *argv[])
 		}
 	}
 	endprotoent();
+	return rv;
+}
+
+
+		/*
+		 * services
+		 */
+
+static void
+servicesprint(const struct servent *se)
+{
+	int		i;
+
+	assert(se != NULL);
+	printf("%s\t%d/%s", se->s_name, ntohs(se->s_port), se->s_proto);
+	for (i = 0; se->s_aliases[i] != NULL; i++) {
+		printf(" %s", se->s_aliases[i]);
+	}
+	printf("\n");
+}
+
+static int
+services(int argc, char *argv[])
+{
+	struct servent	*se;
+	unsigned long	id;
+	char		*proto;
+	int		i, rv;
+
+	assert(argc > 1);
+	assert(argv != NULL);
+
+	setservent(1);
+	rv = RV_OK;
+	if (argc == 2) {
+		while ((se = getservent()) != NULL)
+			servicesprint(se);
+	} else {
+		for (i = 2; i < argc; i++) {
+			proto = strchr(argv[i], '/');
+			if (proto != NULL)
+				*proto++ = '\0';
+			if (parsenum(argv[i], &id))
+				se = getservbyport((int)id, proto);
+			else
+				se = getservbyname(argv[i], proto);
+			if (se != NULL)
+				servicesprint(se);
+			else {
+				rv = RV_NOTFOUND;
+				break;
+			}
+		}
+	}
+	endservent();
 	return rv;
 }
 
