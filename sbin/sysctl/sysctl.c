@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.35 2000/05/29 11:59:01 simonb Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.36 2000/05/29 21:42:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.35 2000/05/29 11:59:01 simonb Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.36 2000/05/29 21:42:12 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -586,9 +586,12 @@ parse(string, flags)
 
 		if (!nflag)
 			printf("%s: ", string);
-		printf("user = %lld, nice = %lld, sys = %lld, intr = %lld, "
-		    "idle = %lld\n", cp_time[0], cp_time[1], cp_time[2],
-		    cp_time[3], cp_time[4]);
+		printf("user = %llu, nice = %llu, sys = %llu, intr = %llu, "
+		    "idle = %llu\n", (unsigned long long) cp_time[0],
+		    (unsigned long long) cp_time[1],
+		    (unsigned long long) cp_time[2],
+		    (unsigned long long) cp_time[3],
+		    (unsigned long long) cp_time[4]);
 		return;
 	}
 		
