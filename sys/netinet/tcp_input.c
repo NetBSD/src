@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.198 2004/04/25 00:08:54 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.199 2004/04/25 03:29:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.198 2004/04/25 00:08:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.199 2004/04/25 03:29:11 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3436,8 +3436,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	return (so);
 
 resetandabort:
-	(void) tcp_respond(NULL, m, m, th,
-			   th->th_seq + tlen, (tcp_seq)0, TH_RST|TH_ACK);
+	(void)tcp_respond(NULL, m, m, th, (tcp_seq)0, th->th_ack, TH_RST);
 abort:
 	if (so != NULL)
 		(void) soabort(so);
