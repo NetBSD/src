@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.9 2000/03/23 07:01:30 thorpej Exp $	*/
+/*	$NetBSD: hme.c,v 1.10 2000/04/05 05:54:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -205,6 +205,7 @@ hme_config(sc)
 				      &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			sc->sc_dev.dv_xname, error);
+		return;
 	}
 	sc->sc_rb.rb_dmabase = seg.ds_addr;
 
