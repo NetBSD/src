@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 2000/01/19 02:52:22 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91 2000/01/19 20:05:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,7 +60,6 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/clist.h>
-#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -289,12 +288,6 @@ cpu_startup()
 	if (uvm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
 	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != KERN_SUCCESS)
 		panic("can't protect kernel text");
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
