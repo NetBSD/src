@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.32 2000/05/26 19:11:24 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.33 2000/05/27 00:55:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -573,9 +573,9 @@ fxp_autosize_eeprom(sc)
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 			    reg | FXP_EEPROM_EESK);
-		DELAY(1);
+		DELAY(4);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-		DELAY(1);
+		DELAY(4);
 	}
 	/*
 	 * Shift in address, wait for the dummy zero following a correct
@@ -585,15 +585,15 @@ fxp_autosize_eeprom(sc)
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 		    FXP_EEPROM_EECS | FXP_EEPROM_EESK);
-		DELAY(1);
+		DELAY(4);
 		if((CSR_READ_2(sc, FXP_CSR_EEPROMCONTROL) & 
 		    FXP_EEPROM_EEDO) == 0)
 			break;
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
-		DELAY(1);
+		DELAY(4);
 	}
 	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
-	DELAY(1);
+	DELAY(4);
 	if(x != 6 && x != 8) {
 #ifdef DEBUG
 		printf("%s: strange EEPROM size (%d)\n", 
@@ -634,9 +634,9 @@ fxp_read_eeprom(sc, data, offset, words)
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 			    reg | FXP_EEPROM_EESK);
-			DELAY(1);
+			DELAY(4);
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-			DELAY(1);
+			DELAY(4);
 		}
 		/*
 		 * Shift in address.
@@ -650,9 +650,9 @@ fxp_read_eeprom(sc, data, offset, words)
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 			    reg | FXP_EEPROM_EESK);
-			DELAY(1);
+			DELAY(4);
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-			DELAY(1);
+			DELAY(4);
 		}
 		reg = FXP_EEPROM_EECS;
 		data[i] = 0;
@@ -662,15 +662,15 @@ fxp_read_eeprom(sc, data, offset, words)
 		for (x = 16; x > 0; x--) {
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 			    reg | FXP_EEPROM_EESK);
-			DELAY(1);
+			DELAY(4);
 			if (CSR_READ_2(sc, FXP_CSR_EEPROMCONTROL) &
 			    FXP_EEPROM_EEDO)
 				data[i] |= (1 << (x - 1));
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-			DELAY(1);
+			DELAY(4);
 		}
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
-		DELAY(1);
+		DELAY(4);
 	}
 }
 
