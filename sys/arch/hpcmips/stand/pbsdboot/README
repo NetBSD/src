@@ -33,3 +33,20 @@
 
   VC++ 6.0 and toolkit 6.0 may works. But I've never tried.
 
+3. About version string
+
+  If you modify this program and update pbsdboot.uu, change version string
+  which is coded in main.c appropriately.
+
+  The version string is in format:
+
+    Version A.B.C YYYY.MM.DD
+
+  in where:
+
+    A: Don't change this.
+    B: Increment this number if you change program's behavior, fix some bugs
+       or add new features.
+    C: Increment this number if you change/add some parameters, constants or
+       windows' resources
+    YYYY.MM.DD: date
