@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.88 2002/11/24 18:13:30 fvdl Exp $	 */
+/*	$NetBSD: rtld.c,v 1.89 2002/12/05 04:56:57 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -141,6 +141,7 @@ _rtld_init(mapbase, relocbase)
 {
 	/* Conjure up an Obj_Entry structure for the dynamic linker. */
 	_rtld_objself.path = _rtld_path;
+	_rtld_objself.pathlen = strlen(_rtld_path);
 	_rtld_objself.rtld = true;
 	_rtld_objself.mapbase = mapbase;
 	_rtld_objself.relocbase = relocbase;
@@ -360,6 +361,7 @@ _rtld(sp, relocbase)
 		_rtld_objmain = _rtld_digest_phdr(phdr, phnum, entry);
 		_rtld_objmain->path = xstrdup(argv[0] ? argv[0] :
 		    "main program");
+		_rtld_objmain->pathlen = strlen(_rtld_objmain->path);
 	}
 
 	_rtld_objmain->mainprog = true;

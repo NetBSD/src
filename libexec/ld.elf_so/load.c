@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.24 2002/10/05 11:59:04 mycroft Exp $	 */
+/*	$NetBSD: load.c,v 1.25 2002/12/05 04:56:56 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -105,10 +105,11 @@ _rtld_load_object(filepath, mode)
 	Obj_Entry *obj;
 	int fd = -1;
 	struct stat sb;
+	size_t pathlen = strlen(filepath);
 
-        for (obj = _rtld_objlist->next; obj != NULL; obj = obj->next)
-                if (!strcmp(obj->path, filepath))
-                        break;
+	for (obj = _rtld_objlist->next; obj != NULL; obj = obj->next)
+		if (pathlen == obj->pathlen && !strcmp(obj->path, filepath)) 
+			break;
 
 	/*
 	 * If we didn't find a match by pathname, open the file and check

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.64 2002/11/14 20:11:48 nathanw Exp $	 */
+/*	$NetBSD: rtld.h,v 1.65 2002/12/05 04:56:57 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -135,7 +135,7 @@ typedef struct Struct_Obj_Entry {
 	Elf_Dyn        *dynamic;	/* Dynamic section */
 	caddr_t         entry;		/* Entry point */
 	const Elf_Phdr *__junk001;
-	size_t          __junk002;
+	size_t		pathlen;	/* Pathname length */
 
 	/* Items from the dynamic section. */
 	Elf_Addr       *pltgot;		/* PLTGOT table */
