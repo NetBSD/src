@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.20 2002/04/22 20:31:49 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.21 2002/04/23 10:38:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.20 2002/04/22 20:31:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.21 2002/04/23 10:38:37 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,11 +120,11 @@ siop_common_reset(sc)
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST5,
 		    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST5) |
 		    CTEST5_DFS);
-#ifdef SIOP_SYMLED
-	/* Set GPIO0 as output if software LED control is required */
-	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_GPCNTL,
-	    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_GPCNTL) & 0xfe);
-#endif
+	if (sc->features & SF_CHIP_LED0) {
+		/* Set GPIO0 as output if software LED control is required */
+		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_GPCNTL,
+		    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_GPCNTL) & 0xfe);
+	}
 		
 	sc->sc_reset(sc);
 }
