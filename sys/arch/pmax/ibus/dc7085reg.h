@@ -1,4 +1,7 @@
-/*	$NetBSD: dc7085reg.h,v 1.1.2.1 1998/10/21 11:24:33 nisimura Exp $ */
+/* $NetBSD: dc7085reg.h,v 1.1.2.2 1999/04/17 13:45:53 nisimura Exp $ */
+
+#ifndef _DC7085REG_H
+#define _DC7085REG_H
 
 /*
  * DC7085 gate array, DZ-11 clone, which provides quad asynchronous serial
@@ -128,3 +131,5 @@
 #define SER_ODDPAR	000200
 #define SER_SPEED	006000
 #define SER_RXENAB	010000
+
+#endif
