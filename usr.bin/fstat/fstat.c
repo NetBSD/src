@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.22 1997/10/18 14:49:52 lukem Exp $	*/
+/*	$NetBSD: fstat.c,v 1.23 1997/10/18 15:28:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-static char *rcsid = "$NetBSD: fstat.c,v 1.22 1997/10/18 14:49:52 lukem Exp $";
+__RCSID("$NetBSD: fstat.c,v 1.23 1997/10/18 15:28:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,7 @@ static char *rcsid = "$NetBSD: fstat.c,v 1.22 1997/10/18 14:49:52 lukem Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define	TEXT	-1
 #define	CDIR	-2
@@ -147,17 +148,24 @@ int maxfiles;
 
 kvm_t *kd;
 
-int ufs_filestat(), ext2fs_filestat(), nfs_filestat();
-void dofiles(), getinetproto(), socktrans();
-void usage(), vtrans();
+void	dofiles __P((struct kinfo_proc *));
+int	ext2fs_filestat __P((struct vnode *, struct filestat *));
+int	getfname __P((char *));
+void	getinetproto __P((int));
+char   *getmnton __P((struct mount *));
+int	main __P((int, char **));
+int	nfs_filestat __P((struct vnode *, struct filestat *));
+void	socktrans __P((struct socket *, int));
+int	ufs_filestat __P((struct vnode *, struct filestat *));
+void	usage __P((void));
+void	vtrans __P((struct vnode *, int, int));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
-	extern int optind;
-	register struct passwd *passwd;
+	struct passwd *passwd;
 	struct kinfo_proc *p, *plast;
 	int arg, ch, what;
 	char *memf, *nlistf;
@@ -298,14 +306,12 @@ void
 dofiles(kp)
 	struct kinfo_proc *kp;
 {
-	int i, last;
+	int i;
 	struct file file;
 	struct filedesc0 filed0;
 #define	filed	filed0.fd_fd
 	struct proc *p = &kp->kp_proc;
 	struct eproc *ep = &kp->kp_eproc;
-
-	extern char *user_from_uid();
 
 	Uname = user_from_uid(ep->e_ucred.cr_uid, 0);
 	Pid = p->p_pid;
@@ -314,14 +320,14 @@ dofiles(kp)
 	if (p->p_fd == NULL)
 		return;
 	if (!KVM_READ(p->p_fd, &filed0, sizeof (filed0))) {
-		dprintf(stderr, "can't read filedesc at %x for pid %d\n",
-			p->p_fd, Pid);
+		dprintf(stderr, "can't read filedesc at %lx for pid %d\n",
+			(long)p->p_fd, Pid);
 		return;
 	}
 	if (filed.fd_nfiles < 0 || filed.fd_lastfile >= filed.fd_nfiles ||
 	    filed.fd_freefile > filed.fd_lastfile + 1) {
-		dprintf(stderr, "filedesc corrupted at %x for pid %d\n",
-			p->p_fd, Pid);
+		dprintf(stderr, "filedesc corrupted at %lx for pid %d\n",
+			(long)p->p_fd, Pid);
 		return;
 	}
 	/*
@@ -347,18 +353,20 @@ dofiles(kp)
 		if (!KVM_READ(filed.fd_ofiles, ofiles,
 		    (filed.fd_lastfile+1) * FPSIZE)) {
 			dprintf(stderr,
-			    "can't read file structures at %x for pid %d\n",
-			    filed.fd_ofiles, Pid);
+			    "can't read file structures at %lx for pid %d\n",
+			    (long)filed.fd_ofiles, Pid);
 			return;
 		}
 	} else
-		bcopy(filed0.fd_dfiles, ofiles, (filed.fd_lastfile+1) * FPSIZE);
+		memmove(ofiles, filed0.fd_dfiles,
+		    (filed.fd_lastfile+1) * FPSIZE);
 	for (i = 0; i <= filed.fd_lastfile; i++) {
 		if (ofiles[i] == NULL)
 			continue;
 		if (!KVM_READ(ofiles[i], &file, sizeof (struct file))) {
-			dprintf(stderr, "can't read file %d at %x for pid %d\n",
-				i, ofiles[i], Pid);
+			dprintf(stderr,
+			    "can't read file %d at %lx for pid %d\n",
+			    i, (long)ofiles[i], Pid);
 			continue;
 		}
 		if (file.f_type == DTYPE_VNODE)
@@ -384,12 +392,12 @@ vtrans(vp, i, flag)
 	struct vnode vn;
 	struct filestat fst;
 	char mode[15];
-	char *badtype = NULL, *filename, *getmnton();
+	char *badtype = NULL, *filename;
 
 	filename = badtype = NULL;
 	if (!KVM_READ(vp, &vn, sizeof (struct vnode))) {
-		dprintf(stderr, "can't read vnode at %x for pid %d\n",
-			vp, Pid);
+		dprintf(stderr, "can't read vnode at %lx for pid %d\n",
+			(long)vp, Pid);
 		return;
 	}
 	if (vn.v_type == VNON || vn.v_tag == VT_NON)
@@ -423,7 +431,7 @@ vtrans(vp, i, flag)
 	}
 	if (checkfile) {
 		int fsmatch = 0;
-		register DEVS *d;
+		DEVS *d;
 
 		if (badtype)
 			return;
@@ -451,7 +459,7 @@ vtrans(vp, i, flag)
 		(void)snprintf(mode, sizeof mode, "%o", fst.mode);
 	else
 		strmode(fst.mode, mode);
-	(void)printf(" %6d %10s", fst.fileid, mode);
+	(void)printf(" %6ld %10s", (long)fst.fileid, mode);
 	switch (vn.v_type) {
 	case VBLK:
 	case VCHR: {
@@ -465,7 +473,7 @@ vtrans(vp, i, flag)
 		break;
 	}
 	default:
-		printf(" %6d", fst.size);
+		printf(" %6ld", (long)fst.size);
 	}
 	putchar(' ');
 	if (flag & FREAD)
@@ -485,8 +493,8 @@ ufs_filestat(vp, fsp)
 	struct inode inode;
 
 	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
-		dprintf(stderr, "can't read inode at %x for pid %d\n",
-			VTOI(vp), Pid);
+		dprintf(stderr, "can't read inode at %lx for pid %d\n",
+			(long)VTOI(vp), Pid);
 		return 0;
 	}
 	fsp->fsid = inode.i_dev & 0xffff;
@@ -506,8 +514,8 @@ ext2fs_filestat(vp, fsp)
 	struct inode inode;
 
 	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
-		dprintf(stderr, "can't read inode at %x for pid %d\n",
-		VTOI(vp), Pid);
+		dprintf(stderr, "can't read inode at %lx for pid %d\n",
+		    (long)VTOI(vp), Pid);
 		return 0;
 	}
 	fsp->fsid = inode.i_dev & 0xffff;
@@ -524,11 +532,11 @@ nfs_filestat(vp, fsp)
 	struct filestat *fsp;
 {
 	struct nfsnode nfsnode;
-	register mode_t mode;
+	mode_t mode;
 
 	if (!KVM_READ(VTONFS(vp), &nfsnode, sizeof (nfsnode))) {
-		dprintf(stderr, "can't read nfsnode at %x for pid %d\n",
-			VTONFS(vp), Pid);
+		dprintf(stderr, "can't read nfsnode at %lx for pid %d\n",
+			(long)VTONFS(vp), Pid);
 		return 0;
 	}
 	fsp->fsid = nfsnode.n_vattr.va_fsid;
@@ -558,6 +566,8 @@ nfs_filestat(vp, fsp)
 	case VFIFO:
 		mode |= S_IFIFO;
 		break;
+	default:
+		break;
 	};
 	fsp->mode = mode;
 
@@ -575,13 +585,13 @@ getmnton(m)
 		struct mount *m;
 		char mntonname[MNAMELEN];
 	} *mhead = NULL;
-	register struct mtab *mt;
+	struct mtab *mt;
 
 	for (mt = mhead; mt != NULL; mt = mt->next)
 		if (m == mt->m)
 			return (mt->mntonname);
 	if (!KVM_READ(m, &mount, sizeof(struct mount))) {
-		fprintf(stderr, "can't read mount table at %x\n", m);
+		fprintf(stderr, "can't read mount table at %lx\n", (long)m);
 		return (NULL);
 	}
 	if ((mt = malloc(sizeof (struct mtab))) == NULL) {
@@ -589,7 +599,7 @@ getmnton(m)
 		exit(1);
 	}
 	mt->m = m;
-	bcopy(&mount.mnt_stat.f_mntonname[0], &mt->mntonname[0], MNAMELEN);
+	memmove(&mt->mntonname[0], &mount.mnt_stat.f_mntonname[0], MNAMELEN);
 	mt->next = mhead;
 	mhead = mt;
 	return (mt->mntonname);
@@ -621,26 +631,27 @@ socktrans(sock, i)
 
 	/* fill in socket */
 	if (!KVM_READ(sock, &so, sizeof(struct socket))) {
-		dprintf(stderr, "can't read sock at %x\n", sock);
+		dprintf(stderr, "can't read sock at %lx\n", (long)sock);
 		goto bad;
 	}
 
 	/* fill in protosw entry */
 	if (!KVM_READ(so.so_proto, &proto, sizeof(struct protosw))) {
-		dprintf(stderr, "can't read protosw at %x", so.so_proto);
+		dprintf(stderr, "can't read protosw at %lx", (long)so.so_proto);
 		goto bad;
 	}
 
 	/* fill in domain */
 	if (!KVM_READ(proto.pr_domain, &dom, sizeof(struct domain))) {
-		dprintf(stderr, "can't read domain at %x\n", proto.pr_domain);
+		dprintf(stderr, "can't read domain at %lx\n",
+		    (long)proto.pr_domain);
 		goto bad;
 	}
 
 	if ((len = kvm_read(kd, (u_long)dom.dom_name, dname,
 	    sizeof(dname) - 1)) < 0) {
-		dprintf(stderr, "can't read domain name at %x\n",
-			dom.dom_name);
+		dprintf(stderr, "can't read domain name at %lx\n",
+			(long)dom.dom_name);
 		dname[0] = '\0';
 	}
 	else
@@ -671,8 +682,8 @@ socktrans(sock, i)
 				    (char *)&inpcb, sizeof(struct inpcb))
 				    != sizeof(struct inpcb)) {
 					dprintf(stderr, 
-					    "can't read inpcb at %x\n",
-					    so.so_pcb);
+					    "can't read inpcb at %lx\n",
+					    (long)so.so_pcb);
 					goto bad;
 				}
 				printf(" %lx", (long)inpcb.inp_ppcb);
@@ -687,8 +698,8 @@ socktrans(sock, i)
 			printf(" %lx", (long)so.so_pcb);
 			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&unpcb,
 			    sizeof(struct unpcb)) != sizeof(struct unpcb)){
-				dprintf(stderr, "can't read unpcb at %x\n",
-				    so.so_pcb);
+				dprintf(stderr, "can't read unpcb at %lx\n",
+				    (long)so.so_pcb);
 				goto bad;
 			}
 			if (unpcb.unp_conn) {
@@ -752,6 +763,7 @@ getinetproto(number)
 	printf(" %s", cp);
 }
 
+int
 getfname(filename)
 	char *filename;
 {
