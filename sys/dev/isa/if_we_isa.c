@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.6 2002/09/27 20:38:37 thorpej Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.7 2002/10/02 02:09:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.6 2002/09/27 20:38:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.7 2002/10/02 02:09:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,9 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.6 2002/09/27 20:38:37 thorpej Exp $"
 int	we_isa_probe __P((struct device *, struct cfdata *, void *));
 void	we_isa_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach we_isa_ca = {
-	sizeof(struct we_softc), we_isa_probe, we_isa_attach
-};
+CFATTACH_DECL(we_isa, sizeof(struct we_isa_softc),
+	we_isa_probe, we_isa_attach, NULL, NULL);
 
 extern struct cfdriver we_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.18 2002/09/27 20:38:18 thorpej Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.19 2002/10/02 02:09:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.18 2002/09/27 20:38:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.19 2002/10/02 02:09:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +106,8 @@ int com_isa_probe __P((struct device *, struct cfdata *, void *));
 void com_isa_attach __P((struct device *, struct device *, void *));
 void com_isa_cleanup __P((void *));
 
-const struct cfattach com_isa_ca = {
-	sizeof(struct com_isa_softc), com_isa_probe, com_isa_attach
-};
+CFATTACH_DECL(com_isa, sizeof(struct com_isa_softc),
+	com_isa_probe, com_isa_attach, NULL, NULL);
 
 int
 com_isa_probe(parent, match, aux)

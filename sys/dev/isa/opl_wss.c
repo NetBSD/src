@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_wss.c,v 1.3 2002/09/27 20:38:45 thorpej Exp $	*/
+/*	$NetBSD: opl_wss.c,v 1.4 2002/10/02 02:09:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_wss.c,v 1.3 2002/09/27 20:38:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_wss.c,v 1.4 2002/10/02 02:09:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: opl_wss.c,v 1.3 2002/09/27 20:38:45 thorpej Exp $");
 int	opl_wss_match __P((struct device *, struct cfdata *, void *));
 void	opl_wss_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach opl_wss_ca = {
-	sizeof (struct opl_softc), opl_wss_match, opl_wss_attach
-};
+CFATTACH_DECL(opl_wss, sizeof(struct opl_wss_softc),
+	opl_wss_match, opl_wss_attach, NULL, NULL);
 
 int
 opl_wss_match(parent, match, aux)
