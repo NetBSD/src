@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccdconfig.8,v 1.8 1997/10/10 16:17:36 lukem Exp $
+.\"	$NetBSD: ccdconfig.8,v 1.9 1997/10/11 02:34:02 enami Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,20 +48,20 @@
 .Op Ar flags
 .Ar dev
 .Op Ar ...
-.Nm ccdconfig
+.Nm ""
 .Fl C
 .Op Fl v
 .Op Fl f Ar config_file
-.Nm ccdconfig
+.Nm ""
 .Fl u
 .Op Fl v
 .Ar ccd
 .Op Ar ...
-.Nm ccdconfig
+.Nm ""
 .Fl U
 .Op Fl v
 .Op Fl f Ar config_file
-.Nm ccdconfig
+.Nm ""
 .Fl g
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -69,7 +69,7 @@
 .Ar ccd Oo ...
 .Oc
 .Oc
-.Nm ccdconfig
+.Nm ""
 .Fl s
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -162,7 +162,7 @@ interleave factor of 32 blocks.
 /etc/ccd.conf - default ccd configuration file.
 .Sh SEE ALSO
 .Xr ccd 4 ,
-.Xr rc 8 .
+.Xr rc 8
 .Sh HISTORY
 The
 .Nm
