@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.9 1996/05/15 21:36:45 jtc Exp $	*/
+/*	$NetBSD: pwd.h,v 1.10 1997/06/27 16:20:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -69,6 +69,7 @@
 #define _PASSWORD_NOCHG		0x04	/* flag for no specified change. */
 #define _PASSWORD_NOEXP		0x08	/* flag for no specified expire. */
 
+#define _PASSWORD_WARNDAYS	14	/* days to warn about expiry */
 #endif
 
 struct passwd {
