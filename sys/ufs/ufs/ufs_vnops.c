@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.66 2000/05/13 23:43:16 perseant Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.67 2000/05/30 15:22:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1130,6 +1130,7 @@ abortit:
 		}
 		error = ufs_dirremove(fdvp, xp, fcnp->cn_flags, 0);
 		xp->i_flag &= ~IN_RENAME;
+		xp->i_flag |= IN_CHANGE;
 	}
 	if (dp)
 		vput(fdvp);
