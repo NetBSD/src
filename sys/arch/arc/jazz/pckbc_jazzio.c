@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jazzio.c,v 1.8 2003/01/19 10:06:15 tsutsui Exp $ */
+/* $NetBSD: pckbc_jazzio.c,v 1.9 2003/07/15 00:04:50 lukem Exp $ */
 /* NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp  */
 
 /*
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.9 2003/07/15 00:04:50 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

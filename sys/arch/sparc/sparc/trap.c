@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.136 2003/06/29 22:28:58 fvdl Exp $ */
+/*	$NetBSD: trap.c,v 1.137 2003/07/15 00:05:10 lukem Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -47,6 +47,9 @@
  *
  *	@(#)trap.c	8.4 (Berkeley) 9/23/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137 2003/07/15 00:05:10 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_jazzio.c,v 1.4 2002/12/28 16:25:39 tsutsui Exp $	*/
+/*	$NetBSD: lpt_jazzio.c,v 1.5 2003/07/15 00:04:49 lukem Exp $	*/
 /*	$OpenBSD: lpt_lbus.c,v 1.3 1997/04/10 16:29:17 pefo Exp $	*/
 
 /*
@@ -53,6 +53,9 @@
 /*
  * Device Driver for AT parallel printer port
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt_jazzio.c,v 1.5 2003/07/15 00:04:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

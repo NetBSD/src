@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.13 2003/05/03 18:10:59 wiz Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.14 2003/07/15 00:04:54 lukem Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -32,6 +32,9 @@
  * EBus support for PCI based SPARC systems (ms-IIep, Ultra).
  * EBus is documented in PCIO manual (Sun Part#: 802-7837-01).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.14 2003/07/15 00:04:54 lukem Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG

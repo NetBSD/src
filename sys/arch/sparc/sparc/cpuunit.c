@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuunit.c,v 1.7 2003/01/01 02:20:48 thorpej Exp $	*/
+/*	$NetBSD: cpuunit.c,v 1.8 2003/07/15 00:05:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Autoconfiguration support for Sun4d "cpu units".
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.8 2003/07/15 00:05:03 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

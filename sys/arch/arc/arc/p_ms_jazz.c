@@ -1,4 +1,4 @@
-/*	$NetBSD: p_ms_jazz.c,v 1.4 2003/05/04 10:01:19 tsutsui Exp $	*/
+/*	$NetBSD: p_ms_jazz.c,v 1.5 2003/07/15 00:04:43 lukem Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 
 /*
@@ -28,6 +28,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: p_ms_jazz.c,v 1.5 2003/07/15 00:04:43 lukem Exp $");
 
 #include <sys/param.h>
 

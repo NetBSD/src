@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.76 2003/06/29 22:28:59 fvdl Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.77 2003/07/15 00:05:10 lukem Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -47,6 +47,9 @@
  *
  *	@(#)vm_machdep.c	8.2 (Berkeley) 9/23/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.77 2003/07/15 00:05:10 lukem Exp $");
 
 #include "opt_multiprocessor.h"
 

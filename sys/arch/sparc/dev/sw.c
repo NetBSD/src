@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.12 2003/05/03 18:11:00 wiz Exp $	*/
+/*	$NetBSD: sw.c,v 1.13 2003/07/15 00:04:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,6 +90,9 @@
  *	Jason R. Thorpe <thorpej@NetBSD.ORG>
  *	December 8, 1995
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.13 2003/07/15 00:04:56 lukem Exp $");
 
 #include "opt_ddb.h"
 
