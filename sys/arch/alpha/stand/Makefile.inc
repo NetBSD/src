@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1997/01/16 07:50:34 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1997/01/24 01:46:46 cgd Exp $
 
 .include <bsd.own.mk>			# for ELF_TOOLCHAIN definition
 
@@ -19,4 +19,3 @@ CPPFLAGS+=		-DHEAP_LIMIT="0x${HEAP_LIMIT}"
 .if !defined(ELF_TOOLCHAIN)
 CPPFLAGS+=	-DECOFF_COMPAT
 .endif
-
