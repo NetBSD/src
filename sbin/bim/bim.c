@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.6 1997/10/01 02:25:55 enami Exp $	*/
+/*	$NetBSD: bim.c,v 1.7 1997/11/16 07:35:52 phil Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bim.c,v 1.6 1997/10/01 02:25:55 enami Exp $");
+__RCSID("$NetBSD: bim.c,v 1.7 1997/11/16 07:35:52 phil Exp $");
 #endif /* not lint */
 
 /*
@@ -240,7 +240,7 @@ display_image(num, args, syntax)
 	printf("  (image address and size in sectors.)\n");
 	printf("Image  address   size  load addr  run addr   name\n");
 	for (count = 0; count < im_table->ii_boot_used; count++) {
-		printf("%5d %8lx %6lx  %9lx %9lx   %s\n", count,
+		printf("%5d %8ld %6ld  %#9lx %#9lx   %s\n", count,
 		    im_table->ii_images[count].boot_address / secsize,
 		    im_table->ii_images[count].boot_size / secsize,
 		    im_table->ii_images[count].boot_load_adr,
