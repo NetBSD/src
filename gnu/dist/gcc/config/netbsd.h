@@ -255,7 +255,7 @@ do {									 \
   %{!shared: \
     -dc -dp \
     %{!nostdlib:%{!r*:%{!e*:-e __start}}} \
-    %{!static:
+    %{!static: \
       %{rdynamic:-export-dynamic} \
       %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
     %{static:-static}}"
