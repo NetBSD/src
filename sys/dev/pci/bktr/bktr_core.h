@@ -1,6 +1,6 @@
-/*	$NetBSD: bktr_core.h,v 1.2 2000/05/21 15:43:57 wiz Exp $	*/
+/*	$NetBSD: bktr_core.h,v 1.3 2000/07/01 01:39:01 wiz Exp $	*/
 
-/* FreeBSD: src/sys/dev/bktr/bktr_core.h,v 1.2 1999/10/28 13:58:16 roger Exp */
+/* FreeBSD: src/sys/dev/bktr/bktr_core.h,v 1.4 2000/06/26 09:41:32 roger Exp */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -71,7 +71,7 @@ void            msp_dpl_write( bktr_ptr_t bktr, int i2c_addr, unsigned char dev,
 
 
 /* device name for printf */
-char *bktr_name(bktr_ptr_t bktr);
+const char *bktr_name(bktr_ptr_t bktr);
 
 /* Prototypes for attatch and interrupt functions */
 void	common_bktr_attach( bktr_ptr_t bktr, int unit,
