@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.37 (Berkeley) 7/20/92";*/
-static char rcsid[] = "$Id: print.c,v 1.9 1994/03/27 09:29:04 cgd Exp $";
+static char rcsid[] = "$Id: print.c,v 1.10 1994/04/04 19:29:43 chopps Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -96,12 +96,8 @@ printlong(dp)
 		if (f_inode)
 			(void)printf("%*lu ", dp->s_inode, sp->st_ino);
 		if (f_size)
-#ifdef notyet
-			(void)printf("%*qd ",
-#else
-			(void)printf("%*ld ",
-#endif
-			    dp->s_block, howmany(sp->st_blocks, blocksize));
+			(void)printf("%*qd ", dp->s_block,
+			    howmany(sp->st_blocks, blocksize));
 		(void)strmode(sp->st_mode, buf);
 		np = p->fts_pointer;
 		(void)printf("%s %*u %-*s  %-*s  ", buf, dp->s_nlink,
@@ -216,12 +212,8 @@ printaname(p, inodefield, sizefield)
 	if (f_inode)
 		chcnt += printf("%*lu ", inodefield, sp->st_ino);
 	if (f_size)
-#ifdef notyet
-		chcnt += printf("%*qd ",
-#else
-		chcnt += printf("%*ld ",
-#endif
-		    sizefield, howmany(sp->st_blocks, blocksize));
+		chcnt += printf("%*qd ", sizefield, 
+		    howmany(sp->st_blocks, blocksize));
 	chcnt += printf("%s", p->fts_name);
 	if (f_type)
 		chcnt += printtype(sp->st_mode);
