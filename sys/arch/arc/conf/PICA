@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.32 2002/04/12 08:10:52 gmcgarry Exp $
+#	$NetBSD: PICA,v 1.33 2002/04/15 14:47:04 tsutsui Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -178,8 +178,6 @@ pckbd*		at pckbc?	# PC keyboard (kbd port)
 wskbd*		at pckbd?
 pms*		at pckbc?	# PS/2-style mouse (aux port)
 wsmouse*	at pms?
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse (aux port)
-#wsmouse*	at pmsi?
 
 #### Pseudo devices
 
