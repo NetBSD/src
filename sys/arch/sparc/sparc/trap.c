@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.137 2003/07/15 00:05:10 lukem Exp $ */
+/*	$NetBSD: trap.c,v 1.138 2003/08/12 15:34:32 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137 2003/07/15 00:05:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.138 2003/08/12 15:34:32 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -904,6 +904,13 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
+			rv = mmu_pagein(pmap_kernel(), va, atype);
+			if (rv < 0) {
+				rv = EACCES;
+				goto kfault;
+			}
+			if (rv > 0)
+				return;
 			rv = uvm_fault(kernel_map, va, 0, atype);
 			if (rv == 0)
 				return;
@@ -918,8 +925,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	 * that got bumped out via LRU replacement.
 	 */
 	vm = p->p_vmspace;
-	rv = mmu_pagein(vm->vm_map.pmap, va,
-			ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ);
+	rv = mmu_pagein(vm->vm_map.pmap, va, atype);
 	if (rv < 0) {
 		rv = EACCES;
 		goto fault;
