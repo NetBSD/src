@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 2002/07/25 10:44:25 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.117 2002/08/25 20:21:44 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -160,7 +160,7 @@ calc_kvmsize(vsize_t usrptsize)
 {
 	extern int bufcache;
 	vsize_t kvmsize;
-	int n, s, bp, bc;
+	u_int n, s, bp, bc;
 
 	/* All physical memory */
 	kvmsize = avail_end;
@@ -180,7 +180,7 @@ calc_kvmsize(vsize_t usrptsize)
 
 	/* allocated buffer space etc... This is a hack */
 	n = nbuf; s = nswbuf; bp = bufpages; bc = bufcache;
-	kvmsize += (int)allocsys(NULL, NULL);
+	kvmsize += (u_int)allocsys(NULL, NULL);
 	/* Buffer space */
 	kvmsize += (MAXBSIZE * nbuf);
 	nbuf = n; nswbuf = s; bufpages = bp; bufcache = bc;
