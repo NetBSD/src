@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 1999/11/24 12:20:14 kleink Exp $
+#	$NetBSD: Makefile,v 1.4 1999/12/16 12:08:06 blymn Exp $
 #
 
-CPPFLAGS+=-I${.CURDIR} -D__LIBMENU_EXPOSE_PRIVATES__
+CPPFLAGS+=-I${.CURDIR}
 LIB=	menu
 SRCS=	menu.c item.c userptr.c internals.c driver.c post.c attributes.c
 MAN=	menu_attributes.3 menu_item_name.3 menu_items.3 menu_userptr.3 \

@@ -1,7 +1,7 @@
-/*      $NetBSD: menu.c,v 1.3 1999/11/30 15:58:16 kleink Exp $	*/
+/*      $Id: menu.c,v 1.4 1999/12/16 12:08:07 blymn Exp $ */
 
 /*-
- * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
+ * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -91,7 +91,7 @@ set_menu_mark(m, mark)
 	menu->mark.length = strlen(mark);
 
 	  /* max item size may have changed - recalculate. */
-	__menui_max_item_size(menu);
+	_menui_max_item_size(menu);
         return E_OK;
 }
 
@@ -129,7 +129,7 @@ set_menu_unmark(m, mark)
         strcpy(menu->unmark.string, mark);
 	menu->unmark.length = strlen(mark);
 	  /* max item size may have changed - recalculate. */
-	__menui_max_item_size(menu);
+	_menui_max_item_size(menu);
         return E_OK;
 }
 
@@ -218,7 +218,7 @@ set_menu_format(param_menu, rows, cols)
 
 	if (menu->items != NULL)
 		  /* recalculate the item neighbours */
-		return __menui_stitch_items(menu);
+		return _menui_stitch_items(menu);
 
 	return E_OK;
 }
@@ -244,7 +244,7 @@ menu_format(param_menu, rows, cols)
 int
 set_menu_init(menu, func)
         MENU *menu;
-	_menui_menu_hook func;
+	Menu_Hook func;
 {
 	if (menu == NULL)
 		_menui_default_menu.menu_init = func;
@@ -256,7 +256,7 @@ set_menu_init(menu, func)
 /*
  * Return the pointer to the menu init function.
  */
-_menui_menu_hook
+Menu_Hook
 menu_init(MENU *menu)
 {
 	if (menu == NULL)
@@ -271,7 +271,7 @@ menu_init(MENU *menu)
 int
 set_menu_term(menu, func)
         MENU *menu;
-	_menui_menu_hook func;
+	Menu_Hook func;
 {
 	if (menu == NULL)
 		_menui_default_menu.menu_term = func;
@@ -283,7 +283,7 @@ set_menu_term(menu, func)
 /*
  * Return the user defined menu termination function pointer.
  */
-_menui_menu_hook
+Menu_Hook
 menu_term(menu)
         MENU *menu;
 {
@@ -321,7 +321,7 @@ set_menu_opts(param_menu, opts)
 
  	if ((menu->opts & O_ROWMAJOR) != (old_opts &  O_ROWMAJOR))
 		  /* changed menu layout - need to recalc neighbours */
-		__menui_stitch_items(menu);
+		_menui_stitch_items(menu);
 	
         return E_OK;
 }
@@ -342,7 +342,7 @@ menu_opts_on(param_menu, opts)
 	if ((menu->items != NULL) &&
 	    (menu->opts & O_ROWMAJOR) != (old_opts &  O_ROWMAJOR))
 		  /* changed menu layout - need to recalc neighbours */
-		__menui_stitch_items(menu);
+		_menui_stitch_items(menu);
 	
         return E_OK;
 }
@@ -363,7 +363,7 @@ menu_opts_off(param_menu, opts)
 	if ((menu->items != NULL ) &&
 	    (menu->opts & O_ROWMAJOR) != (old_opts &  O_ROWMAJOR))
 		  /* changed menu layout - need to recalc neighbours */
-		__menui_stitch_items(menu);
+		_menui_stitch_items(menu);
 	
         return E_OK;
 }
@@ -405,7 +405,7 @@ set_menu_pattern(param_menu, pat)
 	menu->plen = strlen(pat);
 	
           /* search item list for pat here */
-	return __menui_match_items(menu, MATCH_FORWARD, &menu->cur_item);
+	return _menui_match_items(menu, MATCH_FORWARD, &menu->cur_item);
 }
 
 /*
@@ -485,7 +485,7 @@ scale_menu(param_menu, rows, cols)
 		return E_BAD_ARGUMENT;
 
 	  /* calculate the max item size */
-	__menui_max_item_size(menu);
+	_menui_max_item_size(menu);
 
 	*rows = menu->rows;
 	*cols = menu->cols * menu->max_item_width;
@@ -547,7 +547,7 @@ set_menu_items(param_menu, items)
 		menu->match_len = 0;
 	}
 	
-	__menui_stitch_items(menu); /* recalculate the item neighbours */
+	_menui_stitch_items(menu); /* recalculate the item neighbours */
 	
 	return E_OK;
 }
