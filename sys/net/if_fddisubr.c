@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.41 2001/07/24 06:29:13 matt Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.42 2001/10/17 08:23:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -286,15 +286,10 @@ fddi_output(ifp, m0, dst, rt0)
 #endif
 #ifdef INET6
 	case AF_INET6:
-#ifdef OLDIP6OUTPUT
-		if (!nd6_resolve(ifp, rt, m, dst, edst))
-			return (0);	/* if not yet resolved */
-#else
 		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst)){
 			/* something bad happened */
 			return(0);
 		}
-#endif /* OLDIP6OUTPUT */
 		etype = htons(ETHERTYPE_IPV6);
 		break;
 #endif
