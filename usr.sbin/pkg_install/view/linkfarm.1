@@ -1,4 +1,4 @@
-.\"	$NetBSD: linkfarm.1,v 1.1.2.2 2003/07/14 22:54:51 jlam Exp $
+.\"	$NetBSD: linkfarm.1,v 1.1.2.3 2003/07/29 06:57:34 jlam Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -117,7 +117,7 @@ and
 .Ar stowdir
 directories.
 .It Ev PLIST_IGNORE_FILES
-This can be used to specify shell glob patterns to match the files in
+This can be used to specify files in
 .Ar package
 that should ignored when creating and deleting symbolic links in
 .Ar target .
@@ -125,7 +125,7 @@ that should ignored when creating and deleting symbolic links in
 is a space-separated list of shell glob patterns that match files relative
 to the
 .Ar package
-directory.
+directory, and it defaults to "info/dir *[~#] *.OLD *.orig *,v".
 .El
 .Sh SEE ALSO
 .Xr pkg_views 1 ,
