@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.62 2001/04/24 20:03:20 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.63 2001/05/27 13:53:24 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62 2001/04/24 20:03:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.63 2001/05/27 13:53:24 sommerfeld Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -544,7 +544,8 @@ cpu_hatch(ci)
 	printf("%s: CPU %lu running\n",
 	    ci->ci_softc->sc_dev.dv_xname, cpu_number());
 	atomic_setbits_ulong(&cpus_running, cpumask);
-	
+
+	microset(ci, NULL);
 	/* Initialize our base "runtime". */
 	microtime(&ci->ci_schedstate.spc_runtime);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.56 2001/04/28 06:10:50 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.57 2001/05/27 13:53:25 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -279,6 +279,8 @@ struct proc;
 struct reg;
 struct rpb;
 struct trapframe;
+
+extern struct timeval microset_time;
 
 int	badaddr(void *, size_t);
 void	microset(struct cpu_info *, struct trapframe *);

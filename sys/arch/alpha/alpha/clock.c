@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.30 2001/04/28 06:10:49 thorpej Exp $ */
+/* $NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2001/04/28 06:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -223,6 +223,8 @@ inittodr(base)
 #ifdef DEBUG
 	printf("=>%ld (%d)\n", time.tv_sec, base);
 #endif
+	microset_time = time;
+	microset(curcpu(), NULL);
 
 	if (!badbase) {
 		/*
@@ -258,6 +260,12 @@ resettodr()
 	if (!clockinitted)
 		return;
 
+	microset_time = time;
+#if defined(MULTIPROCESSOR)
+	alpha_multicast_ipi(cpus_running, ALPHA_IPI_MICROSET);
+#endif	
+	microset(curcpu(), NULL);
+	
 	clock_secs_to_ymdhms(time.tv_sec, &dt);
 
 	/* rt clock wants 2 digits */
