@@ -1,7 +1,7 @@
-/*	$NetBSD: lock.h,v 1.1 1999/05/30 18:57:27 eeh Exp $ */
+/*	$NetBSD: lock.h,v 1.2 1999/07/27 21:45:41 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -47,13 +47,13 @@
 
 #include <sparc64/sparc64/asm.h>
 
-static void	simple_lock_init __P((__volatile struct simplelock *));
-static void	simple_lock __P((__volatile struct simplelock *));
-static int	simple_lock_try __P((__volatile struct simplelock *));
-static void	simple_unlock __P((__volatile struct simplelock *));
+static void	cpu_simple_lock_init __P((__volatile struct simplelock *));
+static void	cpu_simple_lock __P((__volatile struct simplelock *));
+static int	cpu_simple_lock_try __P((__volatile struct simplelock *));
+static void	cpu_simple_unlock __P((__volatile struct simplelock *));
 
 static __inline__ void
-simple_lock_init (alp)
+cpu_simple_lock_init (alp)
 	__volatile struct simplelock *alp;
 {
 
@@ -61,7 +61,7 @@ simple_lock_init (alp)
 }
 
 static __inline__ void
-simple_lock (alp)
+cpu_simple_lock (alp)
 	__volatile struct simplelock *alp;
 {
 
@@ -79,7 +79,7 @@ simple_lock (alp)
 }
 
 static __inline__ int
-simple_lock_try (alp)
+cpu_simple_lock_try (alp)
 	__volatile struct simplelock *alp;
 {
 
@@ -87,17 +87,12 @@ simple_lock_try (alp)
 }
 
 static __inline__ void
-simple_unlock (alp)
+cpu_simple_unlock (alp)
 	__volatile struct simplelock *alp;
 {
 
 	alp->lock_data = 0;
 }
-
-#if defined(LOCKDEBUG)
-#define simple_lock_dump()
-#define simple_lock_freecheck(start, end)
-#endif /* LOCKDEBUG */
 
 #endif /* _KERNEL */
 
