@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.64 2004/06/06 01:42:20 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.65 2004/08/13 17:11:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.64 2004/06/06 01:42:20 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.65 2004/08/13 17:11:49 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -654,7 +654,6 @@ single_user(void)
 #endif /* ALTSHELL */
 		(void)execv(INIT_BSHELL, argv);
 		emergency("can't exec %s for single user: %m", INIT_BSHELL);
-		(void)sleep(STALL_TIMEOUT);
 		_exit(1);
 	}
 
