@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.16 1999/02/12 10:56:18 drochner Exp $	*/
+/*	$NetBSD: bootp.c,v 1.17 1999/11/11 20:23:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -42,12 +42,6 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-
-#ifdef _STANDALONE
-#include <lib/libkern/libkern.h>
-#else
-#include <string.h>
-#endif
 
 #include "stand.h"
 #include "net.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.3 1999/08/19 00:19:16 simonb Exp $ */
+/* $NetBSD: lfs.c,v 1.4 1999/11/11 20:23:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -77,17 +77,6 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/lfs/lfs.h>
-#ifdef _STANDALONE
-#include <lib/libkern/libkern.h>
-#else
-#include <string.h>
-inline u_int
-max(a, b)
-        u_int a, b;
-{
-        return (a > b ? a : b);
-}
-#endif
 
 #include "stand.h"
 #include "lfs.h"

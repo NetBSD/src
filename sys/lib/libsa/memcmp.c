@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.4 1997/10/05 18:41:52 thorpej Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.5 1999/11/11 20:23:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,11 +37,6 @@
  */
 
 #include <sys/types.h>
-#ifdef _STANDALONE
-#include <lib/libkern/libkern.h>
-#else
-#include <string.h>
-#endif
 #include "stand.h"
 
 /*
