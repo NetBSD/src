@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.21.4.1 1998/10/15 00:51:08 nisimura Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.21.4.2 1999/03/15 03:58:28 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,9 +14,9 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21.4.1 1998/10/15 00:51:08 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21.4.2 1999/03/15 03:58:28 nisimura Exp $");
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <dev/cons.h>
@@ -30,68 +30,20 @@ __KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21.4.1 1998/10/15 00:51:08 nisimura Ex
 #include <dev/tc/tcvar.h>
 #include <pmax/pmax/pmaxtype.h>
 
-#ifndef NULL
-#define NULL 0
-#endif
-
 /*
  * Which system models were configured?
  */
 #include "opt_dec_3max.h"
 #include "opt_dec_3min.h"
-#include "opt_dec_3maxplus.h"
 #include "opt_dec_maxine.h"
-
-/*
- * Local forward declarations 
- */
-static struct tcbus_attach_args *cpu_tcdesc __P((int systype));
+#include "opt_dec_3maxplus.h"
 
 bus_dma_tag_t tc_ds_get_dma_tag __P((int));
 
-/*
- * Map from systype code to a tcbus_attach_args struct.
- * XXX make table-driven.
- */
-static struct tcbus_attach_args *
-cpu_tcdesc(cpu)
-	int cpu;
-{
-	switch (cpu) {
-#ifdef DEC_3MAXPLUS
-	case DS_3MAXPLUS: {
-		extern struct tcbus_attach_args kn03_tc_desc[];
-		return &kn03_tc_desc[0];
-	}
-#endif /* DEC_3MAXPLUS */
-
-#ifdef DEC_3MAX
-	case DS_3MAX: {
-		extern struct tcbus_attach_args kn02_tc_desc[];
-		return &kn02_tc_desc[0];
-	}
-#endif /* DEC_3MAX */
-
-#ifdef DEC_3MIN
-	case DS_3MIN: {
-		extern struct tcbus_attach_args kmin_tc_desc[];
-		return &kmin_tc_desc[0];
-	}
-#endif /* DEC_3MIN */
-
-#ifdef DEC_MAXINE
-	case DS_MAXINE: {
-		extern struct tcbus_attach_args xine_tc_desc[];
-		return xine_tc_desc;
-	}
-#endif /* DEC_MAXINE */
-	}
-
-#ifdef DIAGNOSTIC
-	return NULL;
-#endif /*DIAGNOSTIC*/
-	panic("cpu_tc: system type 0x%x, no TURBOchannel configured\n", cpu);
-}
+extern struct tcbus_attach_args kn02_tc_desc[];
+extern struct tcbus_attach_args kmin_tc_desc[];
+extern struct tcbus_attach_args xine_tc_desc[];
+extern struct tcbus_attach_args kn03_tc_desc[];
 
 /*
  * We have a TURBOchannel bus.  Configure it.
@@ -103,31 +55,45 @@ config_tcbus(parent, cpu, printfn)
 	int printfn __P((void *, const char *));
 
 {
-	struct tcbus_attach_args tcb;
+	struct tcbus_attach_args tba;
 	struct tcbus_attach_args *tcbus;
 
-	if ((tcbus = cpu_tcdesc(cpu)) == NULL) {
-		printf("config_tcbus: no TURBOchannel configured for system type %d\n", cpu);
-		return;
+	switch (cpu /* systype */) {
+#ifdef DEC_3MAX
+	case DS_3MAX:
+		tcbus = &kn02_tc_desc[0]; break;
+#endif
+#ifdef DEC_3MIN
+	case DS_3MIN:
+		tcbus = &kmin_tc_desc[0]; break;
+#endif
+#ifdef DEC_MAXINE
+	case DS_MAXINE:
+		tcbus = &xine_tc_desc[0]; break;
+#endif
+#ifdef DEC_3MAXPLUS
+	case DS_3MAXPLUS:
+		tcbus = &kn03_tc_desc[0]; break;
+#endif
+	default:
+		panic("config_tcbus: no TURBOchannel configured for systype %d",
+		systype);
 	}
 
-	/*
-	 * Set up important CPU/chipset information.
-	 */
-	tcb.tba_busname = tcbus->tba_busname;
-	tcb.tba_memt = 0;			/* XXX ignored for now */
+	tba.tba_busname = "tc";
+	tba.tba_memt = 0;
 
-	tcb.tba_speed = tcbus->tba_speed;
-	tcb.tba_nslots = tcbus->tba_nslots;
-	tcb.tba_slots = tcbus->tba_slots;
+	tba.tba_speed = tcbus->tba_speed;
+	tba.tba_nslots = tcbus->tba_nslots;
+	tba.tba_slots = tcbus->tba_slots;
 
-	tcb.tba_nbuiltins = tcbus->tba_nbuiltins;
-	tcb.tba_builtins = tcbus->tba_builtins;
-	tcb.tba_intr_establish = tcbus->tba_intr_establish;
-	tcb.tba_intr_disestablish = tcbus->tba_intr_disestablish;
-	tcb.tba_get_dma_tag = tc_ds_get_dma_tag;
+	tba.tba_nbuiltins = tcbus->tba_nbuiltins;
+	tba.tba_builtins = tcbus->tba_builtins;
+	tba.tba_intr_establish = tcbus->tba_intr_establish;
+	tba.tba_intr_disestablish = tcbus->tba_intr_disestablish;
+	tba.tba_get_dma_tag = tc_ds_get_dma_tag;
 
-	config_found(parent, (struct confargs*)&tcb, printfn);
+	config_found(parent, &tba, printfn);
 }
 
 /*
