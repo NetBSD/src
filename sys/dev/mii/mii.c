@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.21 2000/07/04 03:28:59 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.22 2001/03/24 20:44:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -39,8 +39,7 @@
 
 /*
  * MII bus layer, glues MII-capable network interface drivers to sharable
- * PHY drivers.  This exports an interface compatible with BSD/OS 3.0's,
- * plus some NetBSD extensions.
+ * PHY drivers.
  */
 
 #include <sys/param.h>
