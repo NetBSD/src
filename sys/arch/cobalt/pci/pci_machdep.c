@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16 2004/08/28 13:33:31 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.16.10.1 2005/03/27 17:48:37 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16 2004/08/28 13:33:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.10.1 2005/03/27 17:48:37 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16 2004/08/28 13:33:31 tsutsui Exp
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/extent.h>
 
 #define _COBALT_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -42,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16 2004/08/28 13:33:31 tsutsui Exp
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/pciconf.h>
 
 #include <cobalt/dev/gtreg.h>
 
@@ -223,4 +225,29 @@ pci_intr_disestablish(pc, cookie)
 	/* Try both, only the valid one will disestablish. */
 	cpu_intr_disestablish(cookie);
 	icu_intr_disestablish(cookie);
+}
+
+void
+pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin, int swiz,
+    int *iline)
+{
+
+	/* not yet... */
+}
+
+int
+pci_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func, pcireg_t id)
+{
+
+	/* Don't configure the bridge and PCI probe. */ 
+	if (PCI_VENDOR(id) == PCI_VENDOR_GALILEO &&
+	    PCI_PRODUCT(id) == PCI_PRODUCT_GALILEO_GT64011)
+	        return 0;
+
+	/* Don't configure device 9 */
+	if (dev == 9)
+		return 0;
+
+	return PCI_CONF_ALL & ~(PCI_CONF_MAP_ROM |
+	    PCI_COMMAND_SERR_ENABLE | PCI_COMMAND_PARITY_ENABLE);
 }
