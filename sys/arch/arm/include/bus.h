@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10 2003/06/15 23:08:56 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.11 2003/07/28 17:35:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -699,6 +699,11 @@ struct arm32_bus_dma_tag {
 	 */
 	struct arm32_dma_range *_ranges;
 	int _nranges;
+
+	/*
+	 * Opaque cookie for use by back-end.
+	 */
+	void *_cookie;
 
 	/*
 	 * DMA mapping methods.
