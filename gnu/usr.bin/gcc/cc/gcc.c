@@ -1573,6 +1573,7 @@ choose_temp_base ()
   base = choose_temp_base_try (getenv ("TMP"), base);
   base = choose_temp_base_try (getenv ("TEMP"), base);
 
+#ifndef __NetBSD__
 #ifdef P_tmpdir
   base = choose_temp_base_try (P_tmpdir, base);
 #endif
@@ -1580,6 +1581,7 @@ choose_temp_base ()
   base = choose_temp_base_try (concat4 (dir_separator_str, "usr", 
                                         dir_separator_str, "tmp"), 
                                 base);
+#endif
   base = choose_temp_base_try (concat (dir_separator_str, "tmp"), base);
  
   /* If all else fails, use the current directory! */  
