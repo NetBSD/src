@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.238 2003/12/14 01:32:01 thorpej Exp $
+# $NetBSD: GENERIC,v 1.239 2004/01/14 22:29:03 jonathan Exp $
 #
 # GENERIC machine description file
 #
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.238 $"
+#ident 		"GENERIC-$Revision: 1.239 $"
 
 maxusers 32
 
@@ -267,6 +267,11 @@ pci*	at	ttwopci?
 agp*	at	irongate?
 
 # PCI devices
+
+# PCI cryptographic devices
+hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
+ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
+
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI
 adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 #options 	SCSI_ADW_WDTR_DISABLE		# 	disable WDTR
@@ -560,6 +565,8 @@ wskbd*		at	lkkbd? console ?
 wsmouse*	at	vsms?
 wskbd*		at	pckbd?
 wsmouse*	at	pms?
+
+pseudo-device 	crypto			# opencrypto framework
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
