@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.61 1995/06/29 17:43:13 cgd Exp $
+#	$NetBSD: bsd.lib.mk,v 1.62 1995/09/25 00:53:09 christos Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -20,55 +20,67 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 .SUFFIXES: .out .o .po .so .S .s .c .cc .C .f .y .l .ln .m4
 
 .c.o:
-	${COMPILE.c} ${.IMPSRC} 
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo "${COMPILE.c} ${.IMPSRC}"
+	@${COMPILE.c} ${.IMPSRC}  -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 .c.po:
-	${COMPILE.c} -p ${.IMPSRC} -o ${.TARGET}
-	@${LD} -X -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo "${COMPILE.c} -p ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.c} -p ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 .c.so:
-	${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo "${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 .c.ln:
 	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
 .cc.o .C.o:
-	${COMPILE.cc} ${.IMPSRC} 
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo "${COMPILE.cc} ${.IMPSRC}"
+	@${COMPILE.cc} ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET} -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 .cc.po .C.po:
-	${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}
-	@${LD} -X -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo "${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 .cc.so .C.so:
-	${COMPILE.cc} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo "${COMPILE.cc} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.cc} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 .S.o .s.o:
-	${CPP} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
-	    ${AS} -o ${.TARGET}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo "${CPP} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+		${AS} -o ${.TARGET}"
+	@${CPP} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	    ${AS} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 .S.po .s.po:
-	${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
-	    ${AS} -o ${.TARGET}
-	@${LD} -X -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo "${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	    ${AS} -o ${.TARGET}"
+	@${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	    ${AS} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 .S.so .s.so:
-	${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
-	    ${AS} -k -o ${.TARGET}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo "${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	    ${AS} -k -o ${.TARGET}"
+	@${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	    ${AS} -k -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 .if !defined(PICFLAG)
 PICFLAG=-fpic
