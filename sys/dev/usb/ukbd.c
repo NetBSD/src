@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.30 1999/05/09 15:10:30 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.31 1999/05/13 23:34:38 thorpej Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/hid.h>
+#include <dev/usb/ukbdvar.h>
 
 #if defined(__NetBSD__)
 #include <dev/wscons/wsconsio.h>
@@ -213,6 +214,8 @@ struct ukbd_softc {
 #define	UKBD_CHUNK	128	/* chunk size for read */
 #define	UKBD_BSIZE	1020	/* buffer size */
 
+int	ukbd_is_console;
+
 void	ukbd_cngetc __P((void *, u_int *, int *));
 void	ukbd_cnpollc __P((void *, int));
 
@@ -231,16 +234,12 @@ void	ukbd_set_leds __P((void *, int));
 
 #if defined(__NetBSD__)
 int	ukbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	ukbd_cnattach __P((void *v));
 void	ukbd_rawrepeat __P((void *v));
 
 const struct wskbd_accessops ukbd_accessops = {
 	ukbd_enable,
 	ukbd_set_leds,
 	ukbd_ioctl,
-#if defined(CNATTACH)
-	ukbd_cnattach,
-#endif
 };
 
 extern const struct wscons_keydesc ukbd_keydesctab[];
@@ -334,18 +333,19 @@ USB_ATTACH(ukbd)
 	/*
 	 * Remember if we're the console keyboard.
 	 *
-	 * XXX This always picks the first keyboard on the bus, but
-	 * what else can we really do?
+	 * XXX This always picks the first keyboard on the
+	 * first USB bus, but what else can we really do?
 	 */
-	sc->sc_console_keyboard = uaa->device->bus->has_console;
-	if (sc->sc_console_keyboard) {
+	if ((sc->sc_console_keyboard = ukbd_is_console) != 0) {
 		/* Don't let any other keyboard have it. */
-		uaa->device->bus->has_console = 0;
+		ukbd_is_console = 0;
 	}
 
 #if defined(__NetBSD__)
-	if (sc->sc_console_keyboard)
-		ukbd_cnattach(sc);
+	if (sc->sc_console_keyboard) {
+		DPRINTF(("ukbd_attach: console keyboard\n", sc));
+		wskbd_cnattach(&ukbd_consops, sc, &ukbd_keymapdata);
+	}
 
 	a.console = sc->sc_console_keyboard;
 
@@ -412,9 +412,13 @@ ukbd_disco(p)
 	if (sc->sc_console_keyboard) {
 		/*
 		 * XXX Should probably disconnect our consops,
-		 * XXX and set has_console in the bus handle back
-		 * XXX to 1.
+		 * XXX and either notify some other keyboard that
+		 * XXX it can now be the console, or if there aren't
+		 * XXX any more USB keyboards, set ukbd_is_console
+		 * XXX back to 1 so that the next USB keyboard attached
+		 * XXX to the system will get it.
 		 */
+		panic("ukbd_disco: console keyboard");
 	}
 }
 
@@ -709,13 +713,15 @@ ukbd_cnpollc(v, on)
 }
 
 int
-ukbd_cnattach(v)
-	void *v;
+ukbd_cnattach()
 {
-	struct ukbd_softc *sc = v;
 
-	DPRINTF(("ukbd_cnattach: sc=%p\n", sc));
-	wskbd_cnattach(&ukbd_consops, sc, &ukbd_keymapdata);
+	/*
+	 * XXX USB requires too many parts of the kernel to be running
+	 * XXX in order to work, so we can't do much for the console
+	 * XXX keyboard until autconfiguration has run its course.
+	 */
+	ukbd_is_console = 1;
 	return (0);
 }
 
