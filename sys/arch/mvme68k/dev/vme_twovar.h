@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_twovar.h,v 1.8 2000/11/24 09:27:43 scw Exp $ */
+/*	$NetBSD: vme_twovar.h,v 1.9 2001/07/06 19:00:13 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,8 +54,16 @@ struct vmetwo_softc {
 	struct mvmebus_softc	sc_mvmebus;
 	bus_space_handle_t	sc_lcrh;
 	bus_space_handle_t	sc_gcrh;
+#if NVMETWO > 0
 	struct mvmebus_range	sc_master[VME2_NMASTERS];
 	struct mvmebus_range	sc_slave[VME2_NSLAVES];
+#endif
 };
+
+int	vmetwo_probe(bus_space_tag_t, bus_addr_t);
+void	vmetwo_intr_init(struct vmetwo_softc *);
+void	vmetwo_intr_establish(void *, int, int, int, int,
+	    int (*)(void *), void *, struct evcnt *);
+void	vmetwo_intr_disestablish(void *, int, int, int, struct evcnt *);
 
 #endif /* _MVME68K_VME_TWOVAR_H */

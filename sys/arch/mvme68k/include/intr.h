@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2001/04/13 23:30:01 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2001/07/06 19:00:14 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,8 +71,7 @@
 }
 
 #ifdef _KERNEL
-/* spl0 requires checking for software interrupts */
-
+#define spl0()			_spl0()
 #define spllowersoftclock()	spl1()
 #define splsoft()		splraise1()
 #define splsoftclock()		splsoft()
@@ -91,41 +90,12 @@
 
 #ifndef _LOCORE
 
-/*
- * Simulated software interrupt register
- * This is cleared to zero to indicate a soft interrupt is pending
- * (Yes, it's a bit bizarre, but it allows the use of the m68k's `tas'
- * instruction so we can avoid masking interrupts elsewhere.)
- */
-extern volatile unsigned char ssir;
-
-extern void mvme68k_dossir(void);
-
 static __inline void
 splx(int sr)
 {
 
-	if ((u_int16_t)sr < (u_int16_t)(PSL_IPL1|PSL_S) && ssir == 0)
-		mvme68k_dossir();
-	else
-		__asm __volatile("movw %0,%%sr" : : "di" (sr));
+	__asm __volatile("movw %0,%%sr" : : "di" (sr));
 }
-
-static __inline int
-spl0(void)
-{
-	int sr;
-
-	__asm __volatile("movw %%sr,%0" : "=d" (sr));
-
-	if (ssir == 0)
-		mvme68k_dossir();
-	else
-		__asm __volatile("movw %0,%%sr" : : "i" (PSL_LOWIPL));
-
-	return sr;
-}
-
 
 #define setsoft(x)		x = 0
 
@@ -147,13 +117,14 @@ void	*softintr_establish(int, void (*)(void *), void *);
 void	softintr_disestablish(void *);
 void	softintr_init(void);
 void	softintr_dispatch(void);
+extern void (*_softintr_chipset_assert)(void);
 
 #define softintr_schedule(arg)						\
 		do {							\
 			struct mvme68k_soft_intrhand *__sih = (arg);	\
 			__sih->sih_pending = 1;				\
 			setsoft(__sih->sih_intrhead->msi_ssir);		\
-			setsoft(ssir);					\
+			_softintr_chipset_assert();			\
 		} while (0)
 
 /* XXX For legacy software interrupts */
