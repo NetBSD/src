@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.67 2001/07/27 21:19:09 thorpej Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.68 2001/10/04 19:03:59 eeh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -176,7 +176,8 @@ struct ctlname {
 #define	KERN_PIPE		56	/* node: pipe limits */
 #define	KERN_MAXPHYS		57	/* int: kernel value of MAXPHYS */
 #define	KERN_SBMAX		58	/* int: max socket buffer size */
-#define	KERN_MAXID		59	/* number of valid kern ids */
+#define	KERN_DB			59	/* node: kernel database */
+#define	KERN_MAXID		60	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -238,6 +239,7 @@ struct ctlname {
 	{ "pipe", CTLTYPE_NODE }, \
 	{ "maxphys", CTLTYPE_INT }, \
 	{ "sbmax", CTLTYPE_INT }, \
+	{ "db", CLTYPE_NODE }, \
 }
 
 /*
