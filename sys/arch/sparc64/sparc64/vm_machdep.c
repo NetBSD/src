@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.50 2003/07/15 03:36:11 lukem Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.51 2003/11/09 16:41:53 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.50 2003/07/15 03:36:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.51 2003/11/09 16:41:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 #else
 	opcb->lastcall = NULL;
 #endif
-	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
+	memcpy(npcb, opcb, sizeof(struct pcb));
        	if (l1->l_md.md_fpstate) {
 		if (l1 == fplwp) {
 			savefpstate(l1->l_md.md_fpstate);
@@ -254,7 +254,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 		}
 		l2->l_md.md_fpstate = malloc(sizeof(struct fpstate64),
 		    M_SUBPROC, M_WAITOK);
-		bcopy(l1->l_md.md_fpstate, l2->l_md.md_fpstate,
+		memcpy(l2->l_md.md_fpstate, l1->l_md.md_fpstate,
 		    sizeof(struct fpstate64));
 	} else
 		l2->l_md.md_fpstate = NULL;
@@ -448,7 +448,7 @@ cpu_coredump(l, vp, cred, chdr)
 		}
 		md_core.md_fpstate = *l->l_md.md_fpstate;
 	} else
-		bzero((caddr_t)&md_core.md_fpstate, 
+		memset(&md_core.md_fpstate, 0,
 		      sizeof(md_core.md_fpstate));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
