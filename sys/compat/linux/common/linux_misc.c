@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.109.4.1 2002/06/21 05:25:39 lukem Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.109.4.2 2002/12/12 21:29:13 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.109.4.1 2002/06/21 05:25:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.109.4.2 2002/12/12 21:29:13 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -600,19 +600,22 @@ linux_sys_times(p, v, retval)
 		syscallarg(struct times *) tms;
 	} */ *uap = v;
 	struct timeval t;
-	struct linux_tms ltms;
-	struct rusage ru;
 	int error, s;
 
-	calcru(p, &ru.ru_utime, &ru.ru_stime, NULL);
-	ltms.ltms_utime = CONVTCK(ru.ru_utime);
-	ltms.ltms_stime = CONVTCK(ru.ru_stime);
+	if (SCARG(uap, tms)) {
+		struct linux_tms ltms;
+		struct rusage ru;
 
-	ltms.ltms_cutime = CONVTCK(p->p_stats->p_cru.ru_utime);
-	ltms.ltms_cstime = CONVTCK(p->p_stats->p_cru.ru_stime);
+		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL);
+		ltms.ltms_utime = CONVTCK(ru.ru_utime);
+		ltms.ltms_stime = CONVTCK(ru.ru_stime);
 
-	if ((error = copyout(&ltms, SCARG(uap, tms), sizeof ltms)))
-		return error;
+		ltms.ltms_cutime = CONVTCK(p->p_stats->p_cru.ru_utime);
+		ltms.ltms_cstime = CONVTCK(p->p_stats->p_cru.ru_stime);
+
+		if ((error = copyout(&ltms, SCARG(uap, tms), sizeof ltms)))
+			return error;
+	}
 
 	s = splclock();
 	timersub(&time, &boottime, &t);
