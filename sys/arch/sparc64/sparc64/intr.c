@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.12 1999/02/17 03:23:28 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.13 1999/02/17 03:54:46 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -250,7 +250,8 @@ intr_establish(level, ih)
 	 */
 	ih->ih_pil = level; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
-	for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next);
+	for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next)
+		;
 	*p = ih;
 	/*
 	 * Store in fast lookup table
