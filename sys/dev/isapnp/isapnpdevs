@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.51 2002/11/19 15:06:05 christos Exp $
+$NetBSD: isapnpdevs,v 1.52 2003/03/05 13:08:27 itohy Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -127,6 +127,7 @@ devlogic	ep	TCM5098		0	3Com 3c509B-8
  */
 devlogic	ess	ESS1868		0	ESS1868
 devlogic	ess	ESS1869		0	ESS1869
+devlogic	ess	ESS1878		0	ESS1878
 
 /*
  * fmv
@@ -144,6 +145,7 @@ devlogic	joy	CSCA801		0	Terratec EWS64XL
 devlogic	joy	CTL7001		0	Creative Awe64
 devlogic	joy	CTL7002		0	Creative Vibra16CL
 devlogic	joy	ESS0001		0	ESS1868
+devlogic	joy	ESS0005		0	ESS1878
 devlogic	joy	OPT0001		0	OPTi Audio 16
 devlogic	joy	PNPB02F		0	XXX broken GUS PnP
 devlogic	joy	ASB16FD		0	AdLib NSC 16 PNP
