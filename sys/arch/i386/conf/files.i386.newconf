@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.29 1994/11/04 01:08:12 mycroft Exp $
+#	$NetBSD: files.i386.newconf,v 1.30 1994/11/04 07:26:49 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -56,7 +56,7 @@ file	scsi/uk.c			uk needs-flag
 # Generic audio driver
 #
 define	audio
-file	arch/i386/isa/bsd_audio.c	audio
+file	arch/i386/isa/bsd_audio.c	audio needs-flag
 
 #
 # Bus types
