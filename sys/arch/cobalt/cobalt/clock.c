@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2000/03/31 14:51:49 soren Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2000/04/28 19:58:04 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -43,6 +43,8 @@ void	setstatclockrate(int);
 void
 cpu_initclocks()
 {
+	inittodr(0);
+
 	return;
 }
 
