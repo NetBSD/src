@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2002/03/17 17:55:22 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2002/03/24 18:21:10 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -99,6 +99,9 @@
 #endif
 
 #include <sh3/cpu.h>
+#include <sh3/exception.h>
+#include <machine/intr.h>
+
 #include <dev/cons.h>
 
 /* the following is used externally (sysctl_hw) */
@@ -182,8 +185,9 @@ void
 cpu_startup()
 {
 
+	strcpy(cpu_model, "SEGA Dreamcast\n");
+
 	sh_startup();
-	printf("%s\n", cpu_model);
 }
 
 int
@@ -199,6 +203,7 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
 		    sizeof cn_tab->cn_dev));
 	default:
+		break;
 	}
 
 	return (EOPNOTSUPP);
@@ -249,3 +254,32 @@ haltsys:
 	/*NOTREACHED*/
 }
 
+void
+intc_intr(int ssr, int spc, int ssp)
+{
+	struct intc_intrhand *ih;
+	int s, evtcode;
+
+	evtcode = _reg_read_4(SH4_INTEVT);
+
+	ih = EVTCODE_IH(evtcode);
+	KDASSERT(ih->ih_func);
+	/* 
+	 * On entry, all interrrupts are disabled, and exception is enabled.
+	 * Enable higher level interrupt here.
+	 */
+	s = _cpu_intr_resume(ih->ih_level);
+
+	if (evtcode == SH_INTEVT_TMU0_TUNI0) {	/* hardclock */
+		struct clockframe cf;
+		cf.spc = spc;
+		cf.ssr = ssr;
+		cf.ssp = ssp;
+		(*ih->ih_func)(&cf);
+	} else {
+		(*ih->ih_func)(ih->ih_arg);
+	}
+
+	/* Return to old interrupt level. */
+	_cpu_intr_resume(ssr & 0xf0);
+}

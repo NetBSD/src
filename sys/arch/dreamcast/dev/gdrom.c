@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.6 2001/12/04 15:27:37 atatat Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.7 2002/03/24 18:21:23 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -36,10 +36,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/conf.h>
 
 #include <sys/buf.h>
 #include <sys/ioctl.h>
@@ -49,11 +46,6 @@
 #include <sys/cdio.h>
 #include <sys/proc.h>
 
-#include <machine/conf.h>
-#include <machine/cpu.h>
-#include <machine/bus.h>
-
-#include <machine/shbvar.h>
 #include <machine/sysasicvar.h>
 
 int	gdrommatch __P((struct device *, struct cfdata *, void *));
@@ -380,13 +372,12 @@ gdrommatch(pdp, cfp, auxp)
 	void *auxp;
 {
 	static int gdrom_matched = 0;
-  	struct shb_attach_args *sa = auxp;
 
 	/* Allow only once instance. */
 	if (strcmp("gdrom", cfp->cf_driver->cd_name) || gdrom_matched)
 		return(0);
 	gdrom_matched = 1;
-	sa->ia_iosize = 0 /* 0x100 */;
+
 	return(1);
 }
 
@@ -401,7 +392,7 @@ gdromattach(pdp, dp, auxp)
 
 	BUFQ_INIT(&sc->bufq);
 
-	printf("\n");
+	printf(": SH4 IRL 9\n");
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -421,7 +412,7 @@ gdromattach(pdp, dp, auxp)
 	    x = ((volatile u_int32_t *)0xa0000000)[p];
 	}
 
-	sysasic_intr_establish(9, SYSASIC_EVENT_GDROM, 0, gdrom_intr, sc);
+	sysasic_intr_establish(SYSASIC_EVENT_GDROM, gdrom_intr, sc);
 }
 
 int
