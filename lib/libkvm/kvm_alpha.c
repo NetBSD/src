@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_alpha.c,v 1.7 1997/10/10 08:45:32 mrg Exp $	*/
+/*	$NetBSD: kvm_alpha.c,v 1.8 1997/11/02 08:35:08 ross Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -135,8 +135,7 @@ _kvm_kvatop(kd, va, pa)
 			_kvm_err(kd, 0, "invalid translation (invalid L3 PTE)");
 			goto lose;
 		}
-		*pa = ALPHA_PTE_TO_PFN(pte) * cpu_kh->page_size + page_off + 
-		    vatopte(va) * sizeof(alpha_pt_entry_t);
+		*pa = ALPHA_PTE_TO_PFN(pte) * cpu_kh->page_size + page_off;
 		rv = cpu_kh->page_size - page_off;
 	} else {
 		/*
