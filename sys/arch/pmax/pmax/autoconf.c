@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 1997/05/25 06:10:46 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 1997/05/25 08:17:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,7 @@
 #include <sys/device.h>
 
 #include <machine/cpu.h>
+#include <machine/autoconf.h>
 #include <pmax/dev/device.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/turbochannel.h>
