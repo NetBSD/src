@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: mem.c 1.13 89/10/08
  *	from: @(#)mem.c 7.2 (Berkeley) 5/9/91
- *	$Id: mem.c,v 1.14 1994/04/25 05:15:07 mycroft Exp $
+ *	$Id: mem.c,v 1.15 1994/04/25 05:17:25 mycroft Exp $
  */
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/fcntl.h>
 
 #include <machine/cpu.h>
 
