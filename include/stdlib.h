@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.45 2000/03/06 18:32:23 kleink Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.45.2.1 2000/05/28 22:41:02 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -95,7 +95,7 @@ typedef struct {
 
 #define	RAND_MAX	0x7fffffff
 
-#if 0	/* no wide char stuff (yet) */
+#if 1	/* no wide char stuff (yet) */
 extern int __mb_cur_max;
 #define	MB_CUR_MAX	__mb_cur_max
 #else
@@ -131,7 +131,6 @@ unsigned long
 	 strtoul __P((const char *, char **, int));
 int	 system __P((const char *));
 
-/* These are currently just stubs. */
 int	 mblen __P((const char *, size_t));
 size_t	 mbstowcs __P((wchar_t *, const char *, size_t));
 int	 wctomb __P((char *, wchar_t));

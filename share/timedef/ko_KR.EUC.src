@@ -1,0 +1,14 @@
+# Generated from FreeBSD src/share/timedef/data/ko_KR.EUC.src.
+
+abmon	  1;  2;  3;  4;  5;  6;  7;  8;  9; 10; 11; 12
+mon	1월;2월;3월;4월;5월;6월;7월;8월;9월;10월;11월;12월
+
+abday	일 ;월 ;화 ;수 ;목 ;금 ;토 
+day	일요일;월요일;화요일;수요일;목요일;금요일;토요일
+
+t_fmt	%H시 %M분 %S초
+d_fmt	%y/%m/%d
+d_t_fmt	%a %b %e %H:%M:%S %Y
+am_pm	AM;PM
+
+X_date_fmt	%Y년 %b월 %e일 %a요일 %X %Z

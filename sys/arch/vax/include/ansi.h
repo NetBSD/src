@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.7 1998/04/27 17:39:11 kleink Exp $	*/
+/*	$NetBSD: ansi.h,v 1.7.22.1 2000/05/28 22:41:00 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,5 +64,25 @@
 #define	_BSD_INTPTR_T_		int		/* intptr_t */
 #define	_BSD_UINTPTR_T_		unsigned int	/* uintptr_t */
 
+
+/*
+ * Types for the Multibyte Support Extension.
+ */
+#define	_BSD_WCHAR_T_	int			/* wchar_t */
+#define _BSD_WINT_T_	int			/* wint_t */
+/*
+ * mbstate_t is opaque object.
+ * Real mbstate_t is defined in other position, and depend on
+ * each of wc/mb encoding schemes.
+ */
+typedef union {
+	char __funyu[32];
+#ifdef __GNUC__
+	long long __align;
+#else
+	long __align;
+#endif
+} __mbstate_t;
+#define _BSD_MBSTATE_T_		__mbstate_t	/* mbstate_t */
 
 #endif  /* _ANSI_H_ */

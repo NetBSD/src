@@ -1,0 +1,14 @@
+# Generated from FreeBSD src/share/timedef/data/hr_HR.ISO_8859-2.src.
+
+abmon	Sij;Vel;O¾u;Tra;Svi;Lip;Srp;Kol;Ruj;Lis;Stu;Pro
+mon	Sijeèanj;Veljaèa;O¾ujak;Travanj;Svibanj;Lipanj;Srpanj;Kolovoz;Rujan;Listopad;Studeni;Prosinac
+
+abday	Ne ;Po ;Ut ;Sr ;Èe ;Pe ;Su 
+day	Nedjelja;Ponedjeljak;Utorak;Srijeda;Èetvrtak;Petak;Subota
+
+t_fmt	%H:%M:%S
+d_fmt	%d.%m.%y
+d_t_fmt	%a %e %b %X %Y
+am_pm	am;pm
+
+X_date_fmt	%a %e %b %Y %X %Z

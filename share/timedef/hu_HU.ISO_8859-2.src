@@ -1,0 +1,14 @@
+# Generated from FreeBSD src/share/timedef/data/hu_HU.ISO_8859-2.src.
+
+abmon	Jan;Feb;Már;Ápr;Máj;Jún;Júl;Aug;Sze;Okt;Nov;Dec
+mon	Január;Február;Március;Április;Május;Június;Július;Augusztus;Szeptember;Október;November;December
+
+abday	Vas;Hét;Ked;Sze;Csü;Pén;Szo
+day	Vasárnap;Hétfõ;Kedd;Szerda;Csütörtök;Péntek;Szombat
+
+t_fmt	%H:%M:%S
+d_fmt	%Y/%m/%d
+d_t_fmt	%a %b %e %X %Y
+am_pm	de;du
+
+X_date_fmt	%Y %b %e %a %X %Z

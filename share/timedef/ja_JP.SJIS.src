@@ -1,0 +1,15 @@
+# Based on FreeBSD src/share/timedef/data/ja_JP.EUC.src.
+
+abmon	  1;  2;  3;  4;  5;  6;  7;  8;  9; 10; 11; 12
+mon	1Œ;2Œ;3Œ;4Œ;5Œ;6Œ;7Œ;8Œ;9Œ;10Œ;11Œ;12Œ
+
+abday	(“ú);(Œ);(‰Î);(…);(–Ø);(‹à);(“y)
+day	“ú—j“ú;Œ—j“ú;‰Î—j“ú;…—j“ú;–Ø—j“ú;‹à—j“ú;“y—j“ú
+
+t_fmt	%H%M•ª%S•b
+d_fmt	%Y”N%B%e“ú
+d_t_fmt	%Y”N%B%e“ú%A %H%M•ª%S•b
+am_pm	AM;PM
+t_fmt_ampm %p%I%M•ª%S•b
+
+X_date_fmt	%Y”N%B%e“ú %A %X %Z

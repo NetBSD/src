@@ -1,0 +1,6 @@
+# ASCII
+#
+# $Id: lt_LN.ASCII.src,v 1.1.2.1 2000/05/28 22:41:15 minoura Exp $
+#
+order \
+	\x00;...;\xff

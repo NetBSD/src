@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.1 2000/05/09 21:56:00 bjh21 Exp $	*/
+/*	$NetBSD: limits.h,v 1.1.2.1 2000/05/28 22:40:56 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #define	_ARM32_LIMITS_H_
 
 #define	CHAR_BIT	8		/* number of bits in a char */
-#define	MB_LEN_MAX	1		/* no multibyte characters */
+#define	MB_LEN_MAX	32		/* no multibyte characters */
 
 #define SCHAR_MIN	(-0x7f-1)	/* max value for a signed char */
 #define	SCHAR_MAX	0x7f		/* min value for a signed char */

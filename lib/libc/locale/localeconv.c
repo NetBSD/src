@@ -1,4 +1,4 @@
-/*	$NetBSD: localeconv.c,v 1.9 1998/11/13 15:49:03 christos Exp $	*/
+/*	$NetBSD: localeconv.c,v 1.9.8.1 2000/05/28 22:41:04 minoura Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -7,7 +7,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeconv.c,v 1.9 1998/11/13 15:49:03 christos Exp $");
+#ifndef __RCSID
+#define __RCSID(a)
+#endif
+__RCSID("$NetBSD: localeconv.c,v 1.9.8.1 2000/05/28 22:41:04 minoura Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>

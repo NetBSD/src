@@ -1,0 +1,14 @@
+# Generated from FreeBSD src/share/timedef/data/en_US.ISO_8859-1.src.
+
+abmon	Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec
+mon	January;February;March;April;May;June;July;August;September;October;November;December
+
+abday	Sun;Mon;Tue;Wed;Thu;Fri;Sat
+day	Sunday;Monday;Tuesday;Wednesday;Thursday;Friday;Saturday
+
+t_fmt	%H:%M:%S
+d_fmt	%m/%d/%y
+d_t_fmt	%a %b %e %X %Y
+am_pm	AM;PM
+
+X_date_fmt	%a %e %b %X %Z %Y

@@ -1,8 +1,0 @@
-#!/bin/sh
-
-# Dummy UUCP rmail command for postfix/qmail systems
-
-SENDMAIL="/usr/sbin/sendmail"
-IFS=" " read junk from junk
-
-exec $SENDMAIL -f "$from" -- "$@"

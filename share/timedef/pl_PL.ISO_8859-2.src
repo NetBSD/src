@@ -1,0 +1,14 @@
+# Generated from FreeBSD src/share/timedef/data/pl_PL.ISO_8859-2.src.
+
+abmon	Sty;Lut;Mar;Kwi;Maj;Cze;Lip;Sie;Wrz;Paz;Lis;Gru
+mon	Styczeñ;Luty;Marzec;Kwiecieñ;Maj;Czerwiec;Lipiec;Sierpieñ;Wrzesieñ;Pa¼dziernik;Listopad;Grudzieñ
+
+abday	Ndz;Pon;Wto;¦ro;Czw;Pi±;Sob
+day	Niedziela;Poniedzia³ek;Wtorek;¦roda;Czwartek;Pi±tek;Sobota
+
+t_fmt	%H:%M:%S
+d_fmt	%y.%m.%d
+d_t_fmt	%a %e %b %X %Y
+am_pm	;
+
+X_date_fmt	%a %e %b %X %Y %Z

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.17 1998/05/10 16:57:51 kleink Exp $	*/
+/*	$NetBSD: ctype.h,v 1.17.8.1 2000/05/28 22:41:01 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -43,7 +43,9 @@
 #ifndef _CTYPE_H_
 #define _CTYPE_H_
 
+#ifdef __NetBSD__
 #include <sys/featuretest.h>
+#endif
 
 #include <sys/cdefs.h>
 
@@ -56,7 +58,11 @@
 #define	_X	0x40
 #define	_B	0x80
 
+#ifdef __OpenBSD__
+extern const char		*_ctype_;
+#else
 extern const unsigned char	*_ctype_;
+#endif
 extern const short	*_tolower_tab_;
 extern const short	*_toupper_tab_;
 
@@ -90,19 +96,19 @@ extern int	isblank __P ((int));
 #endif
 __END_DECLS
 
-#define	isdigit(c)	((int)((_ctype_ + 1)[(int)(c)] & _N))
-#define	islower(c)	((int)((_ctype_ + 1)[(int)(c)] & _L))
-#define	isspace(c)	((int)((_ctype_ + 1)[(int)(c)] & _S))
-#define	ispunct(c)	((int)((_ctype_ + 1)[(int)(c)] & _P))
-#define	isupper(c)	((int)((_ctype_ + 1)[(int)(c)] & _U))
-#define	isalpha(c)	((int)((_ctype_ + 1)[(int)(c)] & (_U|_L)))
-#define	isxdigit(c)	((int)((_ctype_ + 1)[(int)(c)] & (_N|_X)))
-#define	isalnum(c)	((int)((_ctype_ + 1)[(int)(c)] & (_U|_L|_N)))
-#define	isprint(c)	((int)((_ctype_ + 1)[(int)(c)] & (_P|_U|_L|_N|_B)))
-#define	isgraph(c)	((int)((_ctype_ + 1)[(int)(c)] & (_P|_U|_L|_N)))
-#define	iscntrl(c)	((int)((_ctype_ + 1)[(int)(c)] & _C))
-#define	tolower(c)	((int)((_tolower_tab_ + 1)[(int)(c)]))
-#define	toupper(c)	((int)((_toupper_tab_ + 1)[(int)(c)]))
+#define	isdigit(c)	((int)((_ctype_ + 1)[(int)(c)&0xff] & _N))
+#define	islower(c)	((int)((_ctype_ + 1)[(int)(c)&0xff] & _L))
+#define	isspace(c)	((int)((_ctype_ + 1)[(int)(c)&0xff] & _S))
+#define	ispunct(c)	((int)((_ctype_ + 1)[(int)(c)&0xff] & _P))
+#define	isupper(c)	((int)((_ctype_ + 1)[(int)(c)&0xff] & _U))
+#define	isalpha(c)	((int)((_ctype_ + 1)[(int)(c)&0xff] & (_U|_L)))
+#define	isxdigit(c)	((int)((_ctype_ + 1)[(int)(c)&0xff] & (_N|_X)))
+#define	isalnum(c)	((int)((_ctype_ + 1)[(int)(c)&0xff] & (_U|_L|_N)))
+#define	isprint(c)	((int)((_ctype_ + 1)[(int)(c)&0xff] & (_P|_U|_L|_N|_B)))
+#define	isgraph(c)	((int)((_ctype_ + 1)[(int)(c)&0xff] & (_P|_U|_L|_N)))
+#define	iscntrl(c)	((int)((_ctype_ + 1)[(int)(c)&0xff] & _C))
+#define	tolower(c)	((int)((_tolower_tab_ + 1)[(int)(c)&0xff]))
+#define	toupper(c)	((int)((_toupper_tab_ + 1)[(int)(c)&0xff]))
 
 #if !defined(_ANSI_SOURCE) && !defined (_POSIX_C_SOURCE) || \
     defined(_XOPEN_SOURCE)
@@ -115,7 +121,7 @@ __END_DECLS
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
 #if notyet
-#define isblank(c)	((int)((_ctype_ + 1)[(int)(c)] & _B))
+#define isblank(c)	((int)((_ctype_ + 1)[(int)(c)&0xff] & _B))
 #endif
 #endif
 
@@ -125,7 +131,11 @@ __END_DECLS
 #define _CTYPE_ID	 	"BSDCTYPE"
 #define _CTYPE_REV		2
 
+#ifdef __OpenBSD__
+extern const char _C_ctype_[];
+#else
 extern const u_int8_t _C_ctype_[];
+#endif
 extern const int16_t _C_toupper_[];
 extern const int16_t _C_tolower_[];
 #endif
