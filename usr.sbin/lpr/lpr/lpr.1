@@ -1,4 +1,4 @@
-.\"	$NetBSD: lpr.1,v 1.6 1997/10/05 15:12:19 mrg Exp $
+.\"	$NetBSD: lpr.1,v 1.7 1999/03/07 11:58:24 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,17 +40,35 @@
 .Nm lpr
 .Nd off line print
 .Sh SYNOPSIS
-.Nm
-.Op Fl P Ns Ar printer
-.Op Fl \&# Ns Ar num
-.Op Fl C Ar class
-.Op Fl J Ar job
-.Op Fl T Ar title
-.Op Fl U Ar user
-.Op Fl i Ar numcols
-.Op Fl 1234 Ar font
-.Op Fl w Ns Ar num
+.Nm ""
 .Op Fl cdfghlnmprstv
+.Bk -words
+.Op Fl P Ar printer
+.Ek
+.Bk -words
+.Op Fl \&# Ar num
+.Ek
+.Bk -words
+.Op Fl C Ar class
+.Ek
+.Bk -words
+.Op Fl J Ar job
+.Ek
+.Bk -words
+.Op Fl T Ar title
+.Ek
+.Bk -words
+.Op Fl U Ar user
+.Ek
+.Bk -words
+.Op Fl i Ar numcols
+.Ek
+.Bk -words
+.Op Fl 1234 Ar font
+.Ek
+.Bk -words
+.Op Fl w Ar num
+.Ek
 .Op Ar name ...
 .Sh DESCRIPTION
 .Nm

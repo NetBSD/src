@@ -1,4 +1,4 @@
-.\"	$NetBSD: named.8,v 1.1.1.1 1998/10/05 18:01:59 tron Exp $
+.\"	$NetBSD: named.8,v 1.2 1999/03/07 11:58:25 mycroft Exp $
 .\"
 .\" ++Copyright++ 1985, 1996
 .\" -
@@ -62,19 +62,31 @@
 .Nm named 
 .Nd Internet domain name server (DNS)
 .Sh SYNOPSIS
-.Nm NAMED
+.Nm ""
+.Bk -words
 .Op Fl d Ar debuglevel
+.Ek
+.Bk -words
 .Op Fl p Ar port# 
+.Ek
 .Oo Fl Po 
 .Cm b Ns \&| Ns Cm c
 .Pc
 .Ar config_file
 .Oc
-.Op Fl f q r
+.Op Fl fqr
+.Bk -words
 .Op Fl u Ar user_name
+.Ek
+.Bk -words
 .Op Fl g Ar group_name
+.Ek
+.Bk -words
 .Op Fl t Ar directory
+.Ek
+.Bk -words
 .Op Fl w Ar directory
+.Ek
 .Op Ar config_file
 .Sh DESCRIPTION
 .Ic Named

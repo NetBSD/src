@@ -1,4 +1,4 @@
-.\"	$NetBSD: lp.1,v 1.4 1998/07/07 17:05:28 mrg Exp $
+.\"	$NetBSD: lp.1,v 1.5 1999/03/07 11:58:22 mycroft Exp $
 .\"
 .\" Copyright (c) 1995 Joerg Wunsch
 .\"
@@ -41,12 +41,18 @@
 .Nm lp
 .Nd front-end to the print spooler
 .Sh SYNOPSIS
-.Nm lp
+.Nm ""
 .Op Fl cs
+.Bk -words
 .Op Fl o Ar option
+.Ek
+.Bk -words
 .Op Fl d Ar printer
+.Ek
+.Bk -words
 .Op Fl n Ar num
-.Op Ar name ...
+.Ek
+.Op Ar
 .Sh DESCRIPTION
 .Nm Lp
 is a front-end to the print spooler as required by the

@@ -1,4 +1,4 @@
-.\"	$NetBSD: apm.8,v 1.9 1999/01/15 00:29:02 augustss Exp $
+.\"	$NetBSD: apm.8,v 1.10 1999/03/07 11:58:24 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,21 +42,16 @@
 .Nm zzz
 .Nd Advanced Power Management control program
 .Sh SYNOPSIS
-.Nm zzz
-.Op Fl S
-.Op Fl z
-.Op Fl f Ar sockname
-.Br
 .Nm ""
-.Op Fl z
-.Op Fl S
-.Op Fl s
-.Op Fl d
-.Op Fl l
-.Op Fl b
-.Op Fl a
-.Op Fl v
+.Op Fl abdlsSvz
+.Bk -words
 .Op Fl f Ar sockname
+.Ek
+.Nm zzz
+.Op Fl Sz
+.Bk -words
+.Op Fl f Ar sockname
+.Ek
 .Sh DESCRIPTION
 .Nm
 communicates with the Advanced Power Management daemon,
