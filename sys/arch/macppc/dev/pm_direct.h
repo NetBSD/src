@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.h,v 1.8 2005/02/01 02:22:31 briggs Exp $	*/
+/*	$NetBSD: pm_direct.h,v 1.9 2005/02/01 02:46:00 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -46,6 +46,7 @@ typedef	struct	{
 }	PMData;
 
 int pmgrop __P((PMData *));
+void pm_init __P((void));
 void pm_adb_restart __P((void));
 void pm_adb_poweroff __P((void));
 void pm_read_date_time __P((u_long *));
