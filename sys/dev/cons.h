@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.19 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: cons.h,v 1.20 2003/03/06 00:38:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,6 +58,10 @@ struct consdev {
 		    __P((dev_t, int));
 	void	(*cn_bell)	/* ring bell */
 		    __P((dev_t, u_int, u_int, u_int));
+	void	(*cn_halt)	/* stop device */
+		    __P((dev_t));
+	void	(*cn_flush)	/* flush output */
+		    __P((dev_t));
 	dev_t	cn_dev;		/* major/minor of device */
 	int	cn_pri;		/* pecking order; the higher the better */
 };
@@ -79,6 +83,8 @@ int	cngetsn __P((char *, int));
 void	cnputc __P((int));
 void	cnpollc __P((int));
 void	cnbell __P((u_int, u_int, u_int));
+void	cnflush __P((void));
+void	cnhalt __P((void));
 void	cnrint __P((void));
 void	nullcnpollc __P((dev_t, int));
 
@@ -89,13 +95,16 @@ void	nullcnpollc __P((dev_t, int));
 #define	dev_type_cnputc(n)	void n __P((dev_t, int))
 #define	dev_type_cnpollc(n)	void n __P((dev_t, int))
 #define	dev_type_cnbell(n)	void n __P((dev_t, u_int, u_int, u_int));
+#define	dev_type_cnhalt(n)	void n __P((dev_t))
+#define	dev_type_cnflush(n)	void n __P((dev_t))
 
 #define	dev_decl(n,t)		__CONCAT(dev_type_,t)(__CONCAT(n,t))
 #define	dev_init(n,t)		__CONCAT(n,t)
 
 #define	cons_decl(n) \
 	dev_decl(n,cnprobe); dev_decl(n,cninit); dev_decl(n,cngetc); \
-	dev_decl(n,cnputc); dev_decl(n,cnpollc); dev_decl(n,cnbell);
+	dev_decl(n,cnputc); dev_decl(n,cnpollc); dev_decl(n,cnbell); \
+	dev_decl(n,cnflush); dev_decl(n,cnhalt);
 
 #define	cons_init(n) { \
 	dev_init(n,cnprobe), dev_init(n,cninit), dev_init(n,cngetc), \
@@ -104,6 +113,11 @@ void	nullcnpollc __P((dev_t, int));
 #define	cons_init_bell(n) { \
 	dev_init(n,cnprobe), dev_init(n,cninit), dev_init(n,cngetc), \
 	dev_init(n,cnputc), dev_init(n,cnpollc), dev_init(n,cnbell) }
+
+#define	cons_init_halt(n) { \
+	dev_init(n,cnprobe), dev_init(n,cninit), dev_init(n,cngetc), \
+	dev_init(n,cnputc), dev_init(n,cnpollc), 0,	             \
+	dev_init(n,cnhalt) }
 
 #endif
 
