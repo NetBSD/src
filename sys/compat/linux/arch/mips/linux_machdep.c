@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.9 2001/11/20 21:50:13 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.10 2002/02/15 16:48:01 christos Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.9 2001/11/20 21:50:13 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.10 2002/02/15 16:48:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,8 +315,9 @@ linux_sys_modify_ldt(p, v, retval)
  * major device numbers remapping
  */
 dev_t
-linux_fakedev(dev)
+linux_fakedev(dev, raw)
 	dev_t dev;
+	int raw;
 {
   /* XXX write me */
   return dev;
