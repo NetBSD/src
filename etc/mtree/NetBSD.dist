@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.61 1998/01/03 06:00:33 perry Exp $
+#	$NetBSD: NetBSD.dist,v 1.62 1998/01/10 00:06:24 perry Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1894,11 +1894,6 @@ mqueue
 # ./var/spool/output
 output
 # ./var/spool/output
-..
-
-# ./var/spool/secretmail
-secretmail
-# ./var/spool/secretmail
 ..
 
 # ./var/spool/sockets
