@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.116 2000/06/15 13:08:25 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.117 2000/07/07 15:13:23 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.116 2000/06/15 13:08:25 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.117 2000/07/07 15:13:23 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -728,7 +728,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		hints.ai_protocol = 0;
 		error = getaddrinfo(host, port, &hints, &res0);
 		if (error) {
-			warnx(gai_strerror(error));
+			warnx("%s", gai_strerror(error));
 			goto cleanup_fetch_url;
 		}
 		if (res0->ai_canonname)

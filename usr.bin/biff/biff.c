@@ -1,4 +1,4 @@
-/*	$NetBSD: biff.c,v 1.6 1998/07/28 19:26:09 mycroft Exp $	*/
+/*	$NetBSD: biff.c,v 1.7 2000/07/07 15:13:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)biff.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: biff.c,v 1.6 1998/07/28 19:26:09 mycroft Exp $");
+__RCSID("$NetBSD: biff.c,v 1.7 2000/07/07 15:13:21 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,11 +93,11 @@ main(argc, argv)
 	switch(argv[0][0]) {
 	case 'n':
 		if (chmod(name, sb.st_mode & ~0100) < 0)
-			err(2, name);
+			err(2, "%s", name);
 		break;
 	case 'y':
 		if (chmod(name, sb.st_mode | 0100) < 0)
-			err(2, name);
+			err(2, "%s", name);
 		break;
 	default:
 		usage();

@@ -1,4 +1,4 @@
-/*	$NetBSD: revnetgroup.c,v 1.7 1999/07/25 09:01:05 lukem Exp $ */
+/*	$NetBSD: revnetgroup.c,v 1.8 2000/07/07 15:11:48 itojun Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: revnetgroup.c,v 1.7 1999/07/25 09:01:05 lukem Exp $");
+__RCSID("$NetBSD: revnetgroup.c,v 1.8 2000/07/07 15:11:48 itojun Exp $");
 #endif
 
 #include <ctype.h>
@@ -129,7 +129,7 @@ main(argc, argv)
 
 	if (strcmp(netgroup, "-")) {
 		if ((fp = fopen(netgroup, "r")) == NULL) {
-			err(1,netgroup);
+			err(1, "%s", netgroup);
 		}
 	} else {
 		fp = stdin;
