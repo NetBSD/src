@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.8 1998/11/03 14:47:03 christos Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.9 1998/11/05 12:52:56 frueauf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.8 1998/11/03 14:47:03 christos Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.9 1998/11/05 12:52:56 frueauf Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -694,7 +694,7 @@ fts_build(sp, type)
 #if defined(__svr4) || defined(__SVR4)
 		len = strlen(dp->d_name);
 #else
-		len = dp->dp_namlen;
+		len = dp->d_namlen;
 #endif
 		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
 			continue;
