@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.5 2004/01/22 14:22:20 jdolecek Exp $ */
+/* $NetBSD: atppc.c,v 1.6 2004/01/22 14:28:57 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -149,6 +149,9 @@ atppc_sc_attach(struct atppc_softc * lsc)
 {
 	/* Adapter used to configure ppbus device */
 	struct parport_adapter sc_parport_adapter;
+#ifdef ATPPC_DEBUG
+	struct device * dev = (struct device *) lsc;
+#endif
 #ifdef ATPPC_VERBOSE
 	char buf[64];
 #endif
