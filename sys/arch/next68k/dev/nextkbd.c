@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbd.c,v 1.2 1999/03/24 23:15:52 dbj Exp $ */
+/* $NetBSD: nextkbd.c,v 1.3 1999/03/26 04:17:46 dbj Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -105,7 +105,7 @@ const struct wskbd_mapdata nextkbd_keymapdata = {
 	KB_US,
 };
 
-static int nextkbd_poll_data __P((bus_space_tag_t, bus_space_handle_t));
+static int nextkbd_read_data __P((struct nextkbd_internal *));
 static int nextkbd_decode __P((struct nextkbd_internal *, int, u_int *, int *));
 
 static struct nextkbd_internal nextkbd_consdata;
@@ -184,9 +184,7 @@ nextkbd_enable(v, on)
 	int on;
 {
 	/* XXX not sure if this should do anything */
-#if 0
-	printf("nextkbd_enable %d\n", on);
-#endif
+	/* printf("nextkbd_enable %d\n", on); */
 	return 0;
 }
 
@@ -230,9 +228,7 @@ nextkbdhard(arg)
 	void *arg;
 {
 	register struct nextkbd_softc *sc = arg;
-	struct mon_regs stat;
-	unsigned char device;
-	int type, key;
+	int type, key, val;
 
 	if (!INTR_OCCURRED(NEXT_I_KYBD_MOUSE)) return 0;
 
@@ -251,23 +247,10 @@ nextkbdhard(arg)
 #define KD_VALID				0x8000 /* only set for scancode keys ? */
 #define KD_MODS					0x4f00
 
-	bus_space_read_region_4(sc->id->iot, sc->id->ioh, 0, &stat, 3);
-	if (stat.mon_csr & CSR_INT) {
-                if (stat.mon_csr & CSR_DATA) {
-                        stat.mon_csr &= ~CSR_INT;
-			sc->id->num_ints++;
-			bus_space_write_4(sc->id->iot, sc->id->ioh, 0, stat.mon_csr);
-			device = stat.mon_data >> 28;
-			if (device != 1) return(1); /* XXX: mouse */
-			if (nextkbd_decode(sc->id, stat.mon_data & 0xffff, &type, &key)) {
-				wskbd_input(sc->sc_wskbddev, type, key);
-			}
-		} else {
-                        printf("nextkbd: int but no data\n");
-                        return(1);
-                }
+	val = nextkbd_read_data(sc->id);
+	if ((val != -1) && nextkbd_decode(sc->id, val, &type, &key)) {
+		wskbd_input(sc->sc_wskbddev, type, key);
 	}
-
 	return(1);
 }
 
@@ -293,7 +276,6 @@ nextkbd_cnattach(bst)
 	return (0);
 }
 
-/* ARGSUSED */
 void
 nextkbd_cngetc(v, type, data)
 	void *v;
@@ -303,12 +285,12 @@ nextkbd_cngetc(v, type, data)
 	struct nextkbd_internal *t = v;
 	int val;
 
-	/* printf("cngetc: data at %08x (%08x)\n", t, v); */
 	for (;;) {
-		val = nextkbd_poll_data(t->iot, t->ioh);
-		/* printf("%08x\n", val); */
-		if ((val != -1) && nextkbd_decode(t, val, type, data))
-			return;
+		if (INTR_OCCURRED(NEXT_I_KYBD_MOUSE)) {
+			val = nextkbd_read_data(t);
+			if ((val != -1) && nextkbd_decode(t, val, type, data))
+				return;
+		}
 	}
 }
 
@@ -319,7 +301,6 @@ nextkbd_cnpollc(v, on)
 {
 	struct nextkbd_internal *t = v;
 
-	printf("cnpollc %d\n", on);
 	t->polling = on;
 	if (on) {
 		INTR_DISABLE(NEXT_I_KYBD_MOUSE);
@@ -330,26 +311,20 @@ nextkbd_cnpollc(v, on)
 }
 
 static int
-nextkbd_poll_data(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+nextkbd_read_data(struct nextkbd_internal *id)
 {
-	int i;
+	unsigned char device;
 	struct mon_regs stat;
 				
-	/* printf("cnstart\n"); */
-	for (i=100000; i; i--) {
-		bus_space_read_region_4(iot, ioh, 0, &stat, 3);
-                stat.mon_csr &= ~CSR_INT;
-                if ( (stat.mon_csr & CSR_DATA) ) {
-			if ( (stat.mon_data >> 28) == 1) {
-                          /* printf("cnkey %08x %08x\n", stat.mon_csr, stat.mon_data); */
-				bus_space_write_4(iot, ioh, 0, stat.mon_csr);
-				return (stat.mon_data & 0xffff);
-			}
-		}
+	bus_space_read_region_4(id->iot, id->ioh, 0, &stat, 3);
+	if ((stat.mon_csr & CSR_INT) && (stat.mon_csr & CSR_DATA)) {
+		stat.mon_csr &= ~CSR_INT;
+		id->num_ints++;
+		bus_space_write_4(id->iot, id->ioh, 0, stat.mon_csr);
+		device = stat.mon_data >> 28;
+		if (device != 1) return (-1); /* XXX: mouse */
+		return (stat.mon_data & 0xffff);
 	}
-	/* printf("cnend %08x %08x\n", stat.mon_csr, stat.mon_data); */
 	return (-1);
 }
 
