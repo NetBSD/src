@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.buildboot,v 1.3 2003/10/12 18:56:44 he Exp $
+#	$NetBSD: Makefile.buildboot,v 1.4 2003/10/21 12:43:19 itohy Exp $
 
 MACHINE_ARCH=hppa
 MACHINE=hp700
-RELOC=	700000
+RELOC=	720000
 HEAP_LIMIT=0x7c0000
 #DEBUGFLAGS=-DDEBUG
 #DEBUGFLAGS+=-DDEBUGBUG
