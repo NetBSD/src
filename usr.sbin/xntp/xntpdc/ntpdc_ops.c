@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc_ops.c,v 1.5 1998/08/12 14:11:56 christos Exp $	*/
+/*	$NetBSD: ntpdc_ops.c,v 1.6 1998/08/12 14:25:09 christos Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by xntpdc
@@ -31,7 +31,6 @@ static	void	dmpeers		P((struct parse *, FILE *));
 static	void	dopeers		P((struct parse *, FILE *, int));
 static	char   *refid_string	P((u_int32, int));
 static	void	printpeer	P((struct info_peer *, FILE *));
-static	char*	refid_string	P((u_int32, int));
 static	void	showpeer	P((struct parse *, FILE *));
 static	void	peerstats	P((struct parse *, FILE *));
 static	void	loopinfo	P((struct parse *, FILE *));
@@ -143,7 +142,7 @@ struct xcmd opcmds[] = {
 		"ntpport|ignore|noserve|notrust|noquery|nomodify|nopeer",
 		"..." },
 			"create restrict entry/add flags to entry" },
-	{ "unrestrict", unrestrict_addr,{ ADD, ADD, NTP_STR, OPT|NTP_STR },
+	{ "unrestrict", unrestrict,	{ ADD, ADD, NTP_STR, OPT|NTP_STR },
 		{ "address", "mask",
 		"ntpport|ignore|noserve|notrust|noquery|nomodify|nopeer",
 		"..." },
@@ -1386,7 +1385,7 @@ new_restrict(pcmd, fp)
  * unrestrict - remove restriction flags from existing entry
  */
 static void
-unrestrict_addr(pcmd, fp)
+unrestrict(pcmd, fp)
 	struct parse *pcmd;
 	FILE *fp;
 {
