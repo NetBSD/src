@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.10 1999/10/23 23:14:13 ad Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.11 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.10 1999/10/23 23:14:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.11 2000/04/12 14:22:29 pk Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,7 @@ rasops1_init(ri)
 		ri->ri_ops.putchar = rasops1_putchar;
 		break;
 	}
-		
+
 	if ((ri->ri_font->fontwidth & 7) != 0) {
 		ri->ri_ops.erasecols = rasops1_erasecols;
 		ri->ri_ops.copycols = rasops1_copycols;
@@ -104,11 +104,11 @@ rasops1_putchar(cookie, row, col, uc, attr)
 	struct rasops_info *ri;
 	int32_t *rp;
 	u_char *fr;
-	
+
 	ri = (struct rasops_info *)cookie;
 
-#ifdef RASOPS_CLIPPING	
-	/* Catches 'row < 0' case too */ 
+#ifdef RASOPS_CLIPPING
+	/* Catches 'row < 0' case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
 
@@ -122,7 +122,7 @@ rasops1_putchar(cookie, row, col, uc, attr)
 	width = ri->ri_font->fontwidth;
 	col = col & 31;
 	rs = ri->ri_stride;
-	
+
 	bg = (attr & 0x000f0000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
 	fg = (attr & 0x0f000000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
 
@@ -136,15 +136,15 @@ rasops1_putchar(cookie, row, col, uc, attr)
 		fr = (u_char *)ri->ri_font->data + uc * ri->ri_fontscale;
 		fs = ri->ri_font->stride;
 	}
-	
+
 	/* Single word, one mask */
 	if ((col + width) <= 32) {
 		rmask = rasops_pmask[col][width];
 		lmask = ~rmask;
-		
+
 		if (uc == (u_int)-1) {
 			bg &= rmask;
-			
+
 			while (height--) {
 				*rp = (*rp & lmask) | bg;
 				DELTA(rp, rs, int32_t *);
@@ -153,7 +153,7 @@ rasops1_putchar(cookie, row, col, uc, attr)
 			/* NOT fontbits if bg is white */
 			if (bg) {
 				while (height--) {
-					fb = ~(fr[3] | (fr[2] << 8) | 
+					fb = ~(fr[3] | (fr[2] << 8) |
 					    (fr[1] << 16) | (fr[0] << 24));
 					*rp = (*rp & lmask)
 					    | (MBE(fb >> col) & rmask);
@@ -163,17 +163,17 @@ rasops1_putchar(cookie, row, col, uc, attr)
 				}
 			} else {
 				while (height--) {
-					fb = (fr[3] | (fr[2] << 8) | 
+					fb = (fr[3] | (fr[2] << 8) |
 					    (fr[1] << 16) | (fr[0] << 24));
 					*rp = (*rp & lmask)
 					    | (MBE(fb >> col) & rmask);
-					    
+
 					fr += fs;
 					DELTA(rp, rs, int32_t *);
 				}
 			}
 		}
-		
+
 		/* Do underline */
 		if ((attr & 1) != 0) {
 			DELTA(rp, -(ri->ri_stride << 1), int32_t *);
@@ -182,11 +182,11 @@ rasops1_putchar(cookie, row, col, uc, attr)
 	} else {
 		lmask = ~rasops_lmask[col];
 		rmask = ~rasops_rmask[(col + width) & 31];
-		
+
 		if (uc == (u_int)-1) {
 			width = bg & ~rmask;
 			bg = bg & ~lmask;
-			
+
 			while (height--) {
 				rp[0] = (rp[0] & lmask) | bg;
 				rp[1] = (rp[1] & rmask) | width;
@@ -194,13 +194,13 @@ rasops1_putchar(cookie, row, col, uc, attr)
 			}
 		} else {
 			width = 32 - col;
-	
+
 			/* NOT fontbits if bg is white */
 			if (bg) {
 				while (height--) {
-					fb = ~(fr[3] | (fr[2] << 8) | 
+					fb = ~(fr[3] | (fr[2] << 8) |
 					    (fr[1] << 16) | (fr[0] << 24));
-					
+
 					rp[0] = (rp[0] & lmask)
 					    | MBE((u_int)fb >> col);
 
@@ -212,7 +212,7 @@ rasops1_putchar(cookie, row, col, uc, attr)
 				}
 			} else {
 				while (height--) {
-					fb = (fr[3] | (fr[2] << 8) | 
+					fb = (fr[3] | (fr[2] << 8) |
 					    (fr[1] << 16) | (fr[0] << 24));
 
 					rp[0] = (rp[0] & lmask)
@@ -220,7 +220,7 @@ rasops1_putchar(cookie, row, col, uc, attr)
 
 					rp[1] = (rp[1] & rmask)
 					    | (MBE(fb << width) & ~rmask);
-					    
+
 					fr += fs;
 					DELTA(rp, rs, int32_t *);
 				}
@@ -250,11 +250,11 @@ rasops1_putchar8(cookie, row, col, uc, attr)
 	int height, fs, rs, bg, fg;
 	struct rasops_info *ri;
 	u_char *fr, *rp;
-	
+
 	ri = (struct rasops_info *)cookie;
 
-#ifdef RASOPS_CLIPPING	
-	/* Catches 'row < 0' case too */ 
+#ifdef RASOPS_CLIPPING
+	/* Catches 'row < 0' case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
 
@@ -265,10 +265,10 @@ rasops1_putchar8(cookie, row, col, uc, attr)
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
 	rs = ri->ri_stride;
-	
+
 	bg = (attr & 0x000f0000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
 	fg = (attr & 0x0f000000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
-	
+
 	/* If fg and bg match this becomes a space character */
 	if (fg == bg || uc == ' ') {
 		while (height--) {
@@ -279,7 +279,7 @@ rasops1_putchar8(cookie, row, col, uc, attr)
 		uc -= ri->ri_font->firstchar;
 		fr = (u_char *)ri->ri_font->data + uc * ri->ri_fontscale;
 		fs = ri->ri_font->stride;
-		
+
 		/* NOT fontbits if bg is white */
 		if (bg) {
 			while (height--) {
@@ -315,11 +315,11 @@ rasops1_putchar16(cookie, row, col, uc, attr)
 	int height, fs, rs, bg, fg;
 	struct rasops_info *ri;
 	u_char *fr, *rp;
-	
+
 	ri = (struct rasops_info *)cookie;
 
-#ifdef RASOPS_CLIPPING	
-	/* Catches 'row < 0' case too */ 
+#ifdef RASOPS_CLIPPING
+	/* Catches 'row < 0' case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
 
@@ -330,7 +330,7 @@ rasops1_putchar16(cookie, row, col, uc, attr)
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
 	rs = ri->ri_stride;
-	
+
 	bg = (attr & 0x000f0000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
 	fg = (attr & 0x0f000000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
 
@@ -344,7 +344,7 @@ rasops1_putchar16(cookie, row, col, uc, attr)
 		uc -= ri->ri_font->firstchar;
 		fr = (u_char *)ri->ri_font->data + uc * ri->ri_fontscale;
 		fs = ri->ri_font->stride;
-		
+
 		/* NOT fontbits if bg is white */
 		if (bg) {
 			while (height--) {

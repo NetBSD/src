@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.4 1999/10/23 23:14:14 ad Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.5 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.4 1999/10/23 23:14:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.5 2000/04/12 14:22:29 pk Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,8 +62,8 @@ static void	rasops2_putchar16 __P((void *, int, int col, u_int, long));
 static void	rasops2_makestamp __P((struct rasops_info *, long));
 #endif
 
-/* 
- * 4x1 stamp for optimized character blitting 
+/*
+ * 4x1 stamp for optimized character blitting
  */
 static int8_t	stamp[16];
 static long	stamp_attr;
@@ -94,7 +94,7 @@ rasops2_init(ri)
 		ri->ri_ops.putchar = rasops2_putchar;
 		break;
 	}
-		
+
 	if ((ri->ri_font->fontwidth & 3) != 0) {
 		ri->ri_ops.erasecols = rasops2_erasecols;
 		ri->ri_ops.copycols = rasops2_copycols;
@@ -117,11 +117,11 @@ rasops2_putchar(cookie, row, col, uc, attr)
 	struct rasops_info *ri;
 	int32_t *rp;
 	u_char *fr;
-	
+
 	ri = (struct rasops_info *)cookie;
 
-#ifdef RASOPS_CLIPPING	
-	/* Catches 'row < 0' case too */ 
+#ifdef RASOPS_CLIPPING
+	/* Catches 'row < 0' case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
 
@@ -135,9 +135,9 @@ rasops2_putchar(cookie, row, col, uc, attr)
 	rp = (int32_t *)(ri->ri_bits + row * ri->ri_yscale + ((col >> 3) & ~3));
 	col = col & 31;
 	rs = ri->ri_stride;
-	
-	bg = ri->ri_devcmap[(attr >> 16) & 15];
-	fg = ri->ri_devcmap[(attr >> 24) & 15];
+
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
 
 	/* If fg and bg match this becomes a space character */
 	if (fg == bg || uc == ' ') {
@@ -149,15 +149,15 @@ rasops2_putchar(cookie, row, col, uc, attr)
 		fr = (u_char *)ri->ri_font->data + uc * ri->ri_fontscale;
 		fs = ri->ri_font->stride;
 	}
-	
+
 	/* Single word, one mask */
 	if ((col + width) <= 32) {
 		rmask = rasops_pmask[col][width];
 		lmask = ~rmask;
-		
+
 		if (uc == (u_int)-1) {
 			bg &= rmask;
-			
+
 			while (height--) {
 				*rp = (*rp & lmask) | bg;
 				DELTA(rp, rs, int32_t *);
@@ -170,7 +170,7 @@ rasops2_putchar(cookie, row, col, uc, attr)
 				/* put word */
 			}
 		}
-		
+
 		/* Do underline */
 		if (attr & 1) {
 			DELTA(rp, -(ri->ri_stride << 1), int32_t *);
@@ -179,11 +179,11 @@ rasops2_putchar(cookie, row, col, uc, attr)
 	} else {
 		lmask = ~rasops_lmask[col];
 		rmask = ~rasops_rmask[(col + width) & 31];
-		
+
 		if (uc == (u_int)-1) {
 			bg = bg & ~lmask;
 			width = bg & ~rmask;
-			
+
 			while (height--) {
 				rp[0] = (rp[0] & lmask) | bg;
 				rp[1] = (rp[1] & rmask) | width;
@@ -191,12 +191,12 @@ rasops2_putchar(cookie, row, col, uc, attr)
 			}
 		} else {
 			width = 32 - col;
-	
+
 			/* NOT fontbits if bg is white */
 			while (height--) {
-				fb = ~(fr[3] | (fr[2] << 8) | 
+				fb = ~(fr[3] | (fr[2] << 8) |
 				    (fr[1] << 16) | (fr[0] << 24));
-					
+
 				rp[0] = (rp[0] & lmask)
 				    | MBE((u_int)fb >> col);
 
@@ -242,11 +242,11 @@ rasops2_makestamp(ri, attr)
 	long attr;
 {
 	int i, fg, bg;
-	
-	fg = ri->ri_devcmap[(attr >> 24) & 15] & 3;
-	bg = ri->ri_devcmap[(attr >> 16) & 15] & 3;
+
+	fg = ri->ri_devcmap[(attr >> 24) & 0xf] & 3;
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf] & 3;
 	stamp_attr = attr;
-	
+
 	for (i = 0; i < 16; i++) {
 		stamp[i] = (i & 1 ? fg : bg);
 		stamp[i] |= (i & 2 ? fg : bg) << 2;
@@ -268,7 +268,7 @@ rasops2_putchar8(cookie, row, col, uc, attr)
 	struct rasops_info *ri;
 	int height, fs, rs;
 	u_char *fr, *rp;
-	
+
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
 		stamp_mutex--;
@@ -278,8 +278,8 @@ rasops2_putchar8(cookie, row, col, uc, attr)
 
 	ri = (struct rasops_info *)cookie;
 
-#ifdef RASOPS_CLIPPING	
-	/* Catches 'row < 0' case too */ 
+#ifdef RASOPS_CLIPPING
+	/* Catches 'row < 0' case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows) {
 		stamp_mutex--;
 		return;
@@ -294,24 +294,25 @@ rasops2_putchar8(cookie, row, col, uc, attr)
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
 	rs = ri->ri_stride;
-	
+
 	/* Recompute stamp? */
 	if (attr != stamp_attr)
 		rasops2_makestamp(ri, attr);
-	
+
 	if (uc == ' ') {
+		int8_t c = stamp[0];
 		while (height--) {
-			*(int16_t *)rp = stamp[0];
+			*(int16_t *)rp = c;
 			rp += rs;
 		}
 	} else {
 		uc -= ri->ri_font->firstchar;
 		fr = (u_char *)ri->ri_font->data + uc * ri->ri_fontscale;
 		fs = ri->ri_font->stride;
-		
+
 		while (height--) {
-			rp[0] = stamp[(*fr >> 4) & 15];
-			rp[1] = stamp[*fr & 15];
+			rp[0] = stamp[(*fr >> 4) & 0xf];
+			rp[1] = stamp[*fr & 0xf];
 			fr += fs;
 			rp += rs;
 		}
@@ -320,7 +321,7 @@ rasops2_putchar8(cookie, row, col, uc, attr)
 	/* Do underline */
 	if ((attr & 1) != 0)
 		*(int16_t *)(rp - (ri->ri_stride << 1)) = stamp[15];
-		
+
 	stamp_mutex--;
 }
 
@@ -337,7 +338,7 @@ rasops2_putchar12(cookie, row, col, uc, attr)
 	struct rasops_info *ri;
 	int height, fs, rs;
 	u_char *fr, *rp;
-	
+
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
 		stamp_mutex--;
@@ -347,8 +348,8 @@ rasops2_putchar12(cookie, row, col, uc, attr)
 
 	ri = (struct rasops_info *)cookie;
 
-#ifdef RASOPS_CLIPPING	
-	/* Catches 'row < 0' case too */ 
+#ifdef RASOPS_CLIPPING
+	/* Catches 'row < 0' case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows) {
 		stamp_mutex--;
 		return;
@@ -363,27 +364,26 @@ rasops2_putchar12(cookie, row, col, uc, attr)
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
 	rs = ri->ri_stride;
-	
+
 	/* Recompute stamp? */
 	if (attr != stamp_attr)
 		rasops2_makestamp(ri, attr);
-	
+
 	if (uc == ' ') {
+		int8_t c = stamp[0];
 		while (height--) {
-			rp[0] = stamp[0];
-			rp[1] = stamp[0];
-			rp[2] = stamp[0];
+			rp[0] = rp[1] = rp[2] = c;
 			rp += rs;
 		}
 	} else {
 		uc -= ri->ri_font->firstchar;
 		fr = (u_char *)ri->ri_font->data + uc * ri->ri_fontscale;
 		fs = ri->ri_font->stride;
-		
+
 		while (height--) {
-			rp[0] = stamp[(fr[0] >> 4) & 15];
-			rp[1] = stamp[fr[0] & 15];
-			rp[2] = stamp[(fr[1] >> 4) & 15];
+			rp[0] = stamp[(fr[0] >> 4) & 0xf];
+			rp[1] = stamp[fr[0] & 0xf];
+			rp[2] = stamp[(fr[1] >> 4) & 0xf];
 			fr += fs;
 			rp += rs;
 		}
@@ -392,11 +392,9 @@ rasops2_putchar12(cookie, row, col, uc, attr)
 	/* Do underline */
 	if ((attr & 1) != 0) {
 		rp -= ri->ri_stride << 1;
-		rp[0] = stamp[15];
-		rp[1] = stamp[15];
-		rp[2] = stamp[15];
+		rp[0] = rp[1] = rp[2] = stamp[15];
 	}
-	
+
 	stamp_mutex--;
 }
 
@@ -413,7 +411,7 @@ rasops2_putchar16(cookie, row, col, uc, attr)
 	struct rasops_info *ri;
 	int height, fs, rs;
 	u_char *fr, *rp;
-	
+
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
 		stamp_mutex--;
@@ -423,8 +421,8 @@ rasops2_putchar16(cookie, row, col, uc, attr)
 
 	ri = (struct rasops_info *)cookie;
 
-#ifdef RASOPS_CLIPPING	
-	/* Catches 'row < 0' case too */ 
+#ifdef RASOPS_CLIPPING
+	/* Catches 'row < 0' case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows) {
 		stamp_mutex--;
 		return;
@@ -439,26 +437,27 @@ rasops2_putchar16(cookie, row, col, uc, attr)
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
 	rs = ri->ri_stride;
-	
+
 	/* Recompute stamp? */
 	if (attr != stamp_attr)
 		rasops2_makestamp(ri, attr);
-	
+
 	if (uc == ' ') {
+		int8_t c = stamp[0];
 		while (height--) {
-			*(int32_t *)rp = stamp[0];
+			*(int32_t *)rp = c;
 			rp += rs;
 		}
 	} else {
 		uc -= ri->ri_font->firstchar;
 		fr = (u_char *)ri->ri_font->data + uc * ri->ri_fontscale;
 		fs = ri->ri_font->stride;
-		
+
 		while (height--) {
-			rp[0] = stamp[(fr[0] >> 4) & 15];
-			rp[1] = stamp[fr[0] & 15];
-			rp[2] = stamp[(fr[1] >> 4) & 15];
-			rp[3] = stamp[fr[1] & 15];
+			rp[0] = stamp[(fr[0] >> 4) & 0xf];
+			rp[1] = stamp[fr[0] & 0xf];
+			rp[2] = stamp[(fr[1] >> 4) & 0xf];
+			rp[3] = stamp[fr[1] & 0xf];
 			fr += fs;
 			rp += rs;
 		}
@@ -467,7 +466,7 @@ rasops2_putchar16(cookie, row, col, uc, attr)
 	/* Do underline */
 	if ((attr & 1) != 0)
 		*(int32_t *)(rp - (ri->ri_stride << 1)) = stamp[15];
-		
+
 	stamp_mutex--;
 }
 #endif	/* !RASOPS_SMALL */
