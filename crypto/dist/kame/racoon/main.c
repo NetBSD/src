@@ -1,4 +1,4 @@
-/*	$KAME: main.c,v 1.44 2002/03/05 15:34:59 sakane Exp $	*/
+/*	$KAME: main.c,v 1.48 2002/11/20 02:06:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -60,7 +60,7 @@
 #include "plog.h"
 #include "debug.h"
 
-#include "cfparse.h"
+#include "cfparse_proto.h"
 #include "isakmp_var.h"
 #include "remoteconf.h"
 #include "localconf.h"
@@ -68,8 +68,10 @@
 #include "oakley.h"
 #include "pfkey.h"
 #include "crypto_openssl.h"
-#include "random.h"
 #include "backupsa.h"
+#ifndef HAVE_ARC4RANDOM
+#include "arc4random.h"
+#endif
 
 int f_foreground = 0;	/* force running in foreground. */
 int f_local = 0;	/* local test mode.  behave like a wall. */
@@ -91,7 +93,9 @@ static void parse __P((int, char **));
 static void restore_params __P((void));
 static void save_params __P((void));
 static void saverestore_params __P((int));
+#if 0
 static void cleanup_pidfile __P((void));
+#endif
 
 void
 usage()
@@ -162,7 +166,7 @@ main(ac, av)
 	parse(ac, av);
 
 	ploginit();
-	random_init();
+	(void)arc4random();	/* XXX test if random number is available */
 
 #ifdef RACOON_PKG_VERSION
 	plog(LLV_INFO, LOCATION, NULL, "%s\n", version0);
@@ -234,10 +238,12 @@ main(ac, av)
 				"cannot open %s", pid_file);
 		}
 		if (!f_local) {
+#if 0
 			if (atexit(cleanup_pidfile) < 0) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"cannot register pidfile cleanup");
 			}
+#endif
 		}
 	}
 
@@ -246,6 +252,7 @@ main(ac, av)
 	exit(0);
 }
 
+#if 0
 static void
 cleanup_pidfile()
 {
@@ -258,6 +265,7 @@ cleanup_pidfile()
 		(void) unlink(pid_file);
 	}
 }
+#endif
 
 static void
 parse(ac, av)

@@ -1,4 +1,4 @@
-/*	$KAME: cfparse.y,v 1.112 2002/02/21 14:47:38 sakane Exp $	*/
+/*	$KAME: cfparse.y,v 1.113 2002/09/27 05:55:52 itojun Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -27,8 +27,8 @@
 #include "str2val.h"
 #include "debug.h"
 
-#include "cfparse.h"
-#include "cftoken.h"
+#include "cfparse_proto.h"
+#include "cftoken_proto.h"
 #include "algorithm.h"
 #include "localconf.h"
 #include "policy.h"

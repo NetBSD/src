@@ -1,4 +1,4 @@
-/*	$KAME: logger.c,v 1.8 2001/04/03 15:51:56 thorpej Exp $	*/
+/*	$KAME: logger.c,v 1.9 2002/09/03 14:37:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

@@ -1,4 +1,4 @@
-/*	$KAME: crypto_openssl.c,v 1.71 2002/04/25 09:48:32 sakane Exp $	*/
+/*	$KAME: crypto_openssl.c,v 1.72 2002/06/10 09:36:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -463,7 +463,7 @@ eay_get_x509subjectaltname(cert, altname, type, pos)
 			sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
 			goto end;
 		}
-		strcpy(*altname, cval->value);
+		strlcpy(*altname, cval->value, len);
 
 		/* set type of the name */
 		eay_setgentype(cval->name, type);

@@ -1,4 +1,4 @@
-# $KAME: racoon.conf.sample,v 1.27 2001/09/05 22:46:39 sakane Exp $
+# $KAME: racoon.conf.sample,v 1.28 2002/10/18 14:33:28 itojun Exp $
 
 # "path" affects "include" directive.  "path" must be specified before any
 # "include" directive with relative file path.

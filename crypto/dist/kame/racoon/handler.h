@@ -1,4 +1,4 @@
-/*	$KAME: handler.h,v 1.43 2001/12/13 17:13:02 sakane Exp $	*/
+/*	$KAME: handler.h,v 1.44 2002/07/10 23:22:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

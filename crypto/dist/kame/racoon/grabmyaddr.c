@@ -1,4 +1,4 @@
-/*	$KAME: grabmyaddr.c,v 1.30 2002/04/15 08:13:00 sakane Exp $	*/
+/*	$KAME: grabmyaddr.c,v 1.34 2002/06/11 15:26:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -144,7 +144,7 @@ grab_myaddrs()
 #endif
 #endif
 
-	char _addr1_[NI_MAXHOST];
+	char addr1[NI_MAXHOST];
 
 	if (getifaddrs(&ifa0)) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -196,13 +196,13 @@ grab_myaddrs()
 #endif
 #endif
 		if (getnameinfo(p->addr, p->addr->sa_len,
-				_addr1_, sizeof(_addr1_),
+				addr1, sizeof(addr1),
 				NULL, 0,
 				NI_NUMERICHOST | niflags))
-		strcpy(_addr1_, "(invalid)");
+		strlcpy(addr1, "(invalid)", sizeof(addr1));
 		plog(LLV_DEBUG, LOCATION, NULL,
 			"my interface: %s (%s)\n",
-			_addr1_, ifap->ifa_name);
+			addr1, ifap->ifa_name);
 		q = find_myaddr(old, p);
 		if (q)
 			p->sock = q->sock;
@@ -230,7 +230,7 @@ grab_myaddrs()
 #endif
 #endif
 
-	char _addr1_[NI_MAXHOST];
+	char addr1[NI_MAXHOST];
 
 	maxif = if_maxindex() + 1;
 	len = maxif * sizeof(struct sockaddr_storage) * 4; /* guess guess */
@@ -309,13 +309,13 @@ grab_myaddrs()
 #endif
 #endif
 			if (getnameinfo(p->addr, p->addr->sa_len,
-					_addr1_, sizeof(_addr1_),
+					addr1, sizeof(addr1),
 					NULL, 0,
 					NI_NUMERICHOST | niflags))
-			strcpy(_addr1_, "(invalid)");
+			strlcpy(addr1, "(invalid)", sizeof(addr1));
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"my interface: %s (%s)\n",
-				_addr1_, ifr->ifr_name);
+				addr1, ifr->ifr_name);
 			q = find_myaddr(old, p);
 			if (q)
 				p->sock = q->sock;
@@ -422,7 +422,7 @@ update_myaddrs()
 		plog(LLV_ERROR, LOCATION, NULL,
 			"routing socket version mismatch\n");
 		close(lcconf->rtsock);
-		lcconf->rtsock = 0;
+		lcconf->rtsock = -1;
 		return 0;
 	}
 	switch (rtm->rtm_type) {

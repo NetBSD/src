@@ -1,4 +1,4 @@
-/*	$KAME: ipsec_doi.c,v 1.156 2002/04/15 08:13:00 sakane Exp $	*/
+/*	$KAME: ipsec_doi.c,v 1.158 2002/09/27 05:55:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,7 +64,7 @@
 #include "plog.h"
 #include "debug.h"
 
-#include "cfparse.h"
+#include "cfparse_proto.h"
 #include "isakmp_var.h"
 #include "isakmp.h"
 #include "ipsec_doi.h"
@@ -3325,6 +3325,11 @@ ipsecdoi_setid2(iph2)
 		vchar_t *ident;
 
 		id_b.type = idtype2doi(iph2->sainfo->idvtype);
+		if (id_b.type == 255) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to convert ID type to DOI.\n");
+			return -1;
+		}
 		id_b.proto_id = 0;
 		id_b.port = 0;
 
@@ -3860,14 +3865,14 @@ static int rm_idtype2doi[] = {
 	IPSECDOI_ID_FQDN,
 	IPSECDOI_ID_USER_FQDN,
 	IPSECDOI_ID_KEY_ID,
-	-1,	/* it's type of "address"
+	255,	/* it's type of "address"
 		 * it expands into 4 types by another function. */
 	IPSECDOI_ID_DER_ASN1_DN,
 };
 
 /*
  * convert idtype to DOI value.
- * OUT	-1   : NG
+ * OUT	255  : NG
  *	other: converted.
  */
 int
@@ -3876,7 +3881,7 @@ idtype2doi(idtype)
 {
 	if (ARRAYLEN(rm_idtype2doi) > idtype)
 		return rm_idtype2doi[idtype];
-	return -1;
+	return 255;
 }
 
 int
