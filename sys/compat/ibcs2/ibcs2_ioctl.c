@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.15 1998/08/09 20:37:53 perry Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.16 1999/01/13 23:41:29 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -453,6 +453,20 @@ ibcs2_sys_ioctl(p, v, retval)
 	case IBCS2_TCSBRK:
 		DPRINTF(("ibcs2_ioctl(%d): TCSBRK ", p->p_pid));
 		return ENOSYS;
+	    {
+		int t;
+		t = (int) SCARG(uap, data);
+		t = (t ? t : 1) * hz * 4;
+		t /= 10;
+		if (error = (*ctl)(fp, TIOCSBRK, (caddr_t)0, p))
+			return error;
+		error = tsleep((caddr_t)&t, PZERO | PCATCH, "ibcs2_tcsbrk", t);
+		if (error == EINTR || error == ERESTART) {
+			(*ctl)(fp, TIOCCBRK, (caddr_t)0, p);
+			return EINTR;
+		} else
+			return (*ctl)(fp, TIOCCBRK, (caddr_t)0, p);
+	    }
 
 	case IBCS2_TCXONC:
 	    {
