@@ -860,6 +860,36 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 #define MIN_G_FLOAT .556268464626800e-308
 */
 
+/* Optionally define this if you have added predicates to
+   `MACHINE.c'.  This macro is called within an initializer of an
+   array of structures.  The first field in the structure is the
+   name of a predicate and the second field is an array of rtl
+   codes.  For each predicate, list all rtl codes that can be in
+   expressions matched by the predicate.  The list should have a
+   trailing comma.  Here is an example of two entries in the list
+   for a typical RISC machine:
+
+   #define PREDICATE_CODES \
+     {"gen_reg_rtx_operand", {SUBREG, REG}},  \
+     {"reg_or_short_cint_operand", {SUBREG, REG, CONST_INT}},
+
+   Defining this macro does not affect the generated code (however,
+   incorrect definitions that omit an rtl code that may be matched
+   by the predicate can cause the compiler to malfunction). 
+   Instead, it allows the table built by `genrecog' to be more
+   compact and efficient, thus speeding up the compiler.  The most
+   important predicates to include in the list specified by this
+   macro are thoses used in the most insn patterns.  */
+
+#define PREDICATE_CODES							\
+  {"vax_symbolic_operand",	{ SYMBOL_REF, LABEL_REF, CONST, PLUS }},\
+  {"vax_lvalue_operand",	{ REG, SUBREG, MEM, CONCAT, PARALLEL,	\
+				  STRICT_LOW_PART }},			\
+  {"vax_nonsymbolic_operand",	{ CONST_INT, CONST_DOUBLE, SUBREG, REG,	\
+				  MEM }},				\
+  {"vax_general_operand",	{ CONST_INT, CONST_DOUBLE, SUBREG, REG,	\
+				  MEM, SYMBOL_REF, LABEL_REF, CONST, PLUS }},
+
 /* Tell final.c how to eliminate redundant test instructions.  */
 
 /* Here we define machine-dependent flags and fields in cc_status
