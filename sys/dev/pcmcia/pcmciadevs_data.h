@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.136 2001/09/17 07:45:00 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.137 2001/09/17 09:15:13 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.136 2001/09/17 07:44:33 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.137 2001/09/17 09:07:53 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -1101,6 +1101,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "CNet",
 	    "CNet CN40BC NE2000 Compatible"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_GEMTEK_WLAN,
+	    PCMCIA_CIS_GEMTEK_WLAN,
+	    0,
+	    "",
+	    "GEMTEK Prism2_5 WaveLAN Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
