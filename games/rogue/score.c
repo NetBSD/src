@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)score.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: score.c,v 1.2 1993/08/01 18:52:13 mycroft Exp $";
+static char rcsid[] = "$Id: score.c,v 1.3 1993/09/23 22:28:42 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -207,7 +207,7 @@ short other;
 
 	md_lock(1);
 
-	if ((fp = fopen(_PATH_SCOREFILE, "a+")) == NULL) {
+	if ((fp = fopen(_PATH_SCOREFILE, "r+")) == NULL) {
 		message("cannot read/write/create score file", 0);
 		sf_error();
 	}
