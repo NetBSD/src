@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.1 1998/04/19 01:27:03 jonathan Exp $	*/
+/*	$NetBSD: dec_5100.c,v 1.2 1998/04/27 06:10:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -301,6 +301,7 @@ dec_5100_memintr()
 	register volatile u_int icsr;
 	register volatile u_int *icsr_addr = 
 		(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	extern int cold;
 
 	/* read icsr and clear error  */
 	icsr = *icsr_addr;
