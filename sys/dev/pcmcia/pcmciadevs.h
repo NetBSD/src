@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.141 2001/10/14 18:09:42 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.142 2001/10/20 15:29:04 mjl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.141 2001/10/14 18:09:22 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.142 2001/10/20 15:28:45 mjl Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -589,6 +589,10 @@
 #define	PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCA_11	{ "corega K.K.", "Wireless LAN PCCA-11", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCA_11	-1
 #define	PCMCIA_STR_COREGA_WIRELESS_LAN_PCCA_11	"Corega Wireless LAN PCCA-11"
+#define	PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCB_11	{ "corega_K.K.", "Wireless_LAN_PCCB-11", NULL, NULL }
+#define	PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCB_11	-1
+#define	PCMCIA_STR_COREGA_WIRELESS_LAN_PCCB_11	"Corega Wireless LAN PCCB-11"
+
 #define	PCMCIA_CIS_DIGITAL_DEPCMXX	{ "DIGITAL", "DEPCM-XX", NULL, NULL }
 #define	PCMCIA_PRODUCT_DIGITAL_DEPCMXX	-1
 #define	PCMCIA_STR_DIGITAL_DEPCMXX	"DEC DEPCM-BA"
