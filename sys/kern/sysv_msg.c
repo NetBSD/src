@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.24 1998/10/21 22:24:28 tron Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.25 1999/04/21 02:31:50 mrg Exp $	*/
 
 /*
  * Implementation of SVID messages
@@ -847,10 +847,10 @@ sys_msgrcv(p, v, retval)
 	for (len = 0; len < msgsz; len += msginfo.msgssz) {
 		size_t tlen;
 
-		if (msgsz > msginfo.msgssz)
+		if (msgsz - len > msginfo.msgssz)
 			tlen = msginfo.msgssz;
 		else
-			tlen = msgsz;
+			tlen = msgsz - len;
 		if (next <= -1)
 			panic("next too low #3");
 		if (next >= msginfo.msgseg)
