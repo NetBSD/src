@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.105 1999/06/26 03:15:54 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.106 1999/07/08 18:05:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 1999/06/26 03:15:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 1999/07/08 18:05:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2067,21 +2067,21 @@ pmap_unwire(pmap, va)
  *	Extract the physical address associated with the given
  *	pmap/virtual address pair.
  */
-paddr_t
-pmap_extract(pmap, va)
+boolean_t
+pmap_extract(pmap, va, pap)
 	pmap_t	pmap;
 	vaddr_t va;
+	paddr_t *pap;
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
-	paddr_t pa;
 	int ps;
+	paddr_t pa;
+	boolean_t rv = FALSE;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_extract(%p, %lx) -> ", pmap, va);
 #endif
-	pa = 0;
-
 	PMAP_LOCK(pmap, ps);
 
 	l1pte = pmap_l1pte(pmap, va);
@@ -2097,14 +2097,21 @@ pmap_extract(pmap, va)
 		goto out;
 
 	pa = pmap_pte_pa(l3pte) | (va & PGOFSET);
+	if (pap != NULL)
+		*pap = pa;
+	rv = TRUE;
 
  out:
 	PMAP_UNLOCK(pmap, ps);
 #ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("0x%lx\n", pa);
+	if (pmapdebug & PDB_FOLLOW) {
+		if (rv)
+			printf("0x%lx\n", pa);
+		else
+			printf("failed\n");
+	}
 #endif
-	return (pa);
+	return (rv);
 }
 
 /*

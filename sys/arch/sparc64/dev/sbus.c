@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.19 1999/06/20 00:51:30 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.20 1999/07/08 18:09:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -319,12 +319,6 @@ sbus_attach(parent, self, aux)
 	sc->sc_is.is_bustag = sc->sc_bustag;
 	sc->sc_is.is_iommu = &sc->sc_sysio->sys_iommu;
 	sc->sc_is.is_sb = &sc->sc_sysio->sys_strbuf;
-
-#ifdef DEBUG
-	if (sbusdebug & SDB_DVMA)
-		printf("sysio base %p phys %p\n", 
-		       (long)sc->sc_sysio, (long)pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_sysio));
-#endif
 
 	/* XXX should have instance number */
 	iommu_init("SBus dvma", &sc->sc_is, 0);
@@ -866,7 +860,7 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * Get the physical address for this page.
 		 */
-		if ((curaddr = (bus_addr_t)pmap_extract(pmap, (vaddr_t)vaddr)) == NULL) {
+		if (pmap_extract(pmap, (vaddr_t)vaddr, &curaddr) == FALSE) {
 			bus_dmamap_unload(t, map);
 			return (-1);
 		}

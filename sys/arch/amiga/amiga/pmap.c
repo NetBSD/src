@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.68 1999/06/19 19:44:09 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69 1999/07/08 18:05:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -561,7 +561,7 @@ pmap_init()
 	if (addr == 0)
 		panic("pmap_init: can't allocate data structures");
 	Segtabzero = (u_int *) addr;
-	Segtabzeropa = (u_int *) pmap_extract(pmap_kernel(), addr);
+	(void) pmap_extract(pmap_kernel(), addr, (paddr_t *)&Segtabzero);
 	addr += AMIGA_STSIZE;
 
 	pv_table = (pv_entry_t) addr;
@@ -637,7 +637,8 @@ pmap_init()
 		(--kpt_pages)->kpt_next = kpt_free_list;
 		kpt_free_list = kpt_pages;
 		kpt_pages->kpt_va = addr2;
-		kpt_pages->kpt_pa = pmap_extract(pmap_kernel(), addr2);
+		(void) pmap_extract(pmap_kernel(), addr2,
+		    (paddr_t *)&kpt_pages->kpt_pa);
 	} while (addr != addr2);
 
 #ifdef DEBUG
@@ -1462,27 +1463,38 @@ pmap_unwire(pmap, va)
  *		with the given map/virtual_address pair.
  */
 
-paddr_t
-pmap_extract(pmap, va)
+boolean_t
+pmap_extract(pmap, va, pap)
 	pmap_t	pmap;
 	vaddr_t va;
+	paddr_t *pap;
 {
+	boolean_t rv = FALSE;
 	paddr_t pa;
+	u_int pte;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_extract(%p, %lx) -> ", pmap, va);
 #endif
-	pa = 0;
-	if (pmap && pmap_ste_v(pmap, va))
-		pa = *(int *)pmap_pte(pmap, va);
-	if (pa)
-		pa = (pa & PG_FRAME) | (va & ~PG_FRAME);
+	if (pmap && pmap_ste_v(pmap, va)) {
+		pte = *(u_int *)pmap_pte(pmap, va);
+		if (pte) {
+			pa = (pte & PG_FRAME) | (va & ~PG_FRAME);
+			if (pap != NULL)
+				*pap = pa;
+			rv = TRUE;
+		}
+	}
 #ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("%lx\n", pa);
+	if (pmapdebug & PDB_FOLLOW) {
+		if (rv)
+			printf("%lx\n", pa);
+		else
+			printf("failed\n");
+	}
 #endif
-	return(pa);
+	return (rv);
 }
 
 /*
@@ -1635,7 +1647,7 @@ ok:
 		 * We call pmap_remove to take care of invalidating ST
 		 * and Sysptmap entries.
 		 */
-		kpa = pmap_extract(pmap, pv->pv_va);
+		(void) pmap_extract(pmap, pv->pv_va, (paddr_t *)&kpa);
 		pmap_remove_mapping(pmap, pv->pv_va, PT_ENTRY_NULL,
 				PRM_TFLUSH|PRM_CFLUSH);
 		/*
@@ -2365,8 +2377,8 @@ pmap_enter_ptpage(pmap, va)
 		/* XXX Atari uses kernel_map here: */
 		pmap->pm_stab = (st_entry_t *)
 			uvm_km_zalloc(kernel_map, AMIGA_STSIZE);
-		pmap->pm_stpa = (u_int *) pmap_extract(
-		    pmap_kernel(), (vaddr_t)pmap->pm_stab);
+		(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_stab,
+		    (paddr_t *)&pmap->pm_stpa);
 #if defined(M68040) || defined(M68060)
 		if (mmutype == MMU_68040) {
 #if defined(M68060)

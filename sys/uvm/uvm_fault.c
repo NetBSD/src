@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.39 1999/06/17 19:23:21 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.40 1999/07/08 18:11:03 thorpej Exp $	*/
 
 /*
  *
@@ -804,11 +804,10 @@ ReFault:
 		/*
 		 * dont play with VAs that are already mapped
 		 * except for center)
-		 * XXX: return value of pmap_extract disallows PA 0
 		 */
 		if (lcv != centeridx) {
-			pa = pmap_extract(ufi.orig_map->pmap, currva);
-			if (pa != NULL) {
+			if (pmap_extract(ufi.orig_map->pmap, currva, &pa) ==
+			    TRUE) {
 				pages[lcv] = PGO_DONTCARE;
 				continue;
 			}
@@ -1801,13 +1800,9 @@ uvm_fault_unwire_locked(map, start, end)
 		panic("uvm_fault_unwire_locked: address not in map");
 
 	for (va = start; va < end ; va += PAGE_SIZE) {
-		pa = pmap_extract(pmap, va);
-
-		/* XXX: assumes PA 0 cannot be in map */
-		if (pa == (paddr_t) 0) {
+		if (pmap_extract(pmap, va, &pa) == FALSE)
 			panic("uvm_fault_unwire_locked: unwiring "
 			    "non-wired memory");
-		}
 
 		/*
 		 * make sure the current entry is for the address we're

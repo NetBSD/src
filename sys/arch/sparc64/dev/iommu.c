@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.2 1999/06/20 00:51:29 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.3 1999/07/08 18:08:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,7 +150,8 @@ iommu_init(name, is, tsbsize)
 	is->is_dvmabase = IOTSB_VSTART(is->is_tsbsize) + NBPG;
 	is->is_tsbsize = tsbsize;
 	is->is_tsb = malloc(NBPG, M_DMAMAP, M_WAITOK);	/* XXX */
-	is->is_ptsb = pmap_extract(pmap_kernel(), (vaddr_t)is->is_tsb);
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)is->is_tsb,
+	    (paddr_t *)&is->is_ptsb);
 
 #ifdef DEBUG
 	if (iommudebug & IDB_DVMA)
@@ -172,7 +173,8 @@ iommu_init(name, is, tsbsize)
 	/*
 	 * Initialize streaming buffer.
 	 */
-	is->is_flushpa = pmap_extract(pmap_kernel(), (vaddr_t)&is->is_flush);
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)&is->is_flush,
+	    (paddr_t *)&is->is_flushpa);
 
 	/*
 	 * now actually start up the IOMMU

@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.23 1999/03/24 05:50:57 mrg Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.24 1999/07/08 18:05:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -531,7 +531,7 @@ lmcaudio_rate(rate)
 	return(0);
 }
 
-#define PHYS(x) (pmap_extract( kernel_pmap, ((x)&PG_FRAME) ))
+#define PHYS(x, y) pmap_extract(kernel_pmap, ((x)&PG_FRAME), (paddr_t *)(y))
 
 /*
  * Program the next buffer to be used
@@ -547,6 +547,7 @@ lmcaudio_dma_program(cur, end, intr, arg)
 {
 	int size = end - cur;
 	u_int stopflag = 0;
+	paddr_t pa;
 
 	if (ag.drain) {
 		ag.drain++;
@@ -559,10 +560,12 @@ lmcaudio_dma_program(cur, end, intr, arg)
 		IOMD_WRITE_WORD(IOMD_SD0CR, 0x90);	/* Reset State Machine */
 		IOMD_WRITE_WORD(IOMD_SD0CR, 0x30);	/* Reset State Machine */
 
-		IOMD_WRITE_WORD(IOMD_SD0CURA, PHYS(cur));
-		IOMD_WRITE_WORD(IOMD_SD0ENDA, (PHYS(cur) + size - 16)|stopflag);
-		IOMD_WRITE_WORD(IOMD_SD0CURB, PHYS(cur));
-		IOMD_WRITE_WORD(IOMD_SD0ENDB, (PHYS(cur) + size - 16)|stopflag);
+		PHYS(cur, &pa);
+
+		IOMD_WRITE_WORD(IOMD_SD0CURA, pa);
+		IOMD_WRITE_WORD(IOMD_SD0ENDA, (pa + size - 16)|stopflag);
+		IOMD_WRITE_WORD(IOMD_SD0CURB, pa);
+		IOMD_WRITE_WORD(IOMD_SD0ENDB, (pa + size - 16)|stopflag);
 
 		ag.in_progress = 1;
 
@@ -590,7 +593,7 @@ lmcaudio_dma_program(cur, end, intr, arg)
 		} else {
 			/* We're OK to schedule it now */
 			ag.buffer = (++ag.buffer) & 1;
-			ag.next_cur = PHYS(cur);
+			PHYS(cur, &ag.next_cur);
 			ag.next_end = (ag.next_cur + size - 16) | stopflag;
 			ag.next_intr = intr;
 			ag.next_arg = arg;
@@ -602,6 +605,8 @@ lmcaudio_dma_program(cur, end, intr, arg)
 void
 lmcaudio_shutdown()
 {
+	paddr_t pa;
+
 	/* Shut down the channel */
 	ag.intr = NULL;
 	ag.in_progress = 0;
@@ -611,8 +616,11 @@ lmcaudio_shutdown()
 #endif
 
 	memset((char *)ag.silence, 0, NBPG);
-	IOMD_WRITE_WORD(IOMD_SD0CURA, PHYS(ag.silence));
-	IOMD_WRITE_WORD(IOMD_SD0ENDA, (PHYS(ag.silence) + NBPG - 16) | 0x80000000);
+
+	PHYS(ag.silence, &pa);
+
+	IOMD_WRITE_WORD(IOMD_SD0CURA, pa);
+	IOMD_WRITE_WORD(IOMD_SD0ENDA, (pa + NBPG - 16) | 0x80000000);
 	disable_irq(sdma_channel);
 	IOMD_WRITE_WORD(IOMD_SD0CR, 0x90);	/* Reset State Machine */
 }

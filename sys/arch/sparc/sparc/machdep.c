@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.151 1999/05/26 19:16:34 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.152 1999/07/08 18:08:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1339,10 +1339,11 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 		pmap = pmap_kernel();
 
 	for (; buflen > 0; ) {
+		paddr_t pa;
 		/*
 		 * Get the physical address for this page.
 		 */
-		paddr_t pa = (bus_addr_t)pmap_extract(pmap, (vaddr_t)vaddr);
+		(void) pmap_extract(pmap, (vaddr_t)vaddr, &pa);
 
 		/*
 		 * Compute the segment size, and adjust counts.
