@@ -25,6 +25,7 @@
 ./bin/pax
 ./bin/ps
 ./bin/pwd
+./bin/rcmd
 ./bin/rcp
 ./bin/rm
 ./bin/rmail
