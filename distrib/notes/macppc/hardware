@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.24.2.5 2002/07/09 14:32:17 lukem Exp $
+.\"$NetBSD: hardware,v 1.24.2.6 2002/07/21 06:25:20 lukem Exp $
 .
 Currently,
 .Nx*M
@@ -127,6 +127,8 @@ Apple PowerMacintosh G3 (Blue and White)
 .It
 Apple PowerMacintosh (G4 (PCI), G4 (AGP), G4 (Gigabit Ethernet), G4
 (Digital Audio), G4 (Quicksilver), G4 (Quicksilver 2002), and G4 Cube)
+.It
+Apple Xserve
 .bullet)
 .(Note
 Some iMac (Bondi Blue) and PowerMacintosh G3 (Blue and
