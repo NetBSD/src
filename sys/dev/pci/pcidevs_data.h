@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.562 2003/08/14 23:39:47 itojun Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.563 2003/08/17 15:48:43 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.564 2003/08/14 23:39:22 itojun Exp 
+ *	NetBSD: pcidevs,v 1.565 2003/08/17 15:47:11 bouyer Exp 
  */
 
 /*
@@ -56,6 +56,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c556 V.90 MiniPCI Modem",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C940,
+	    0,
+	    "3Com",
+	    "3c940 Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C450TX,
@@ -8962,10 +8968,22 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "VT8653 (Apollo Pro 266T) CPU-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_EHCI,
+	    0,
+	    "VIA Technologies",
+	    "VT8237 EHCI USB Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233A,
 	    0,
 	    "VIA Technologies",
 	    "VT8233A PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_RAID,
+	    0,
+	    "VIA Technologies",
+	    "VT8237 Integrated RAID Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235,
@@ -8978,6 +8996,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT8377 Apollo KT400 CPU to PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237,
+	    0,
+	    "VIA Technologies",
+	    "VT8237 (Apollo KT600) PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
@@ -9044,6 +9068,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT8377 CPU-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377CEAGP,
+	    0,
+	    "VIA Technologies",
+	    "VT8377CE CPU-AGP Bridge (KT600)",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0,
