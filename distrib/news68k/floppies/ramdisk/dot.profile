@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.5 2000/06/14 22:52:46 cgd Exp $
+# $NetBSD: dot.profile,v 1.6 2000/09/13 13:50:16 tsutsui Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -51,9 +51,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# mount root read-write
 	mount -u /dev/md0a /
-
-	# mount the kern_fs so that we can examine the dmesg state
-	mount -t kernfs kern /kern
 
 	# get the terminal type
 	_forceloop=""
