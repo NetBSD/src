@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.121 2001/11/13 18:57:47 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.122 2001/11/13 19:16:41 tv Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -16,7 +16,7 @@ _LSRC=	Lint_Ovfork.c Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
 	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
 
 LSRCS+=	${_LSRC}
-DPSRCS+=${_LSRC}
+DPSRCS+=${_LSRC:MLintSys*.c}
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
@@ -86,8 +86,6 @@ ${NOERR}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 
 ${PSEUDONOERR}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 	printf '#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' >${.TARGET}
-
-DPSRCS+=	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
 
 LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
