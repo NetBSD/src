@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.5 2000/11/25 19:18:46 scw Exp $
+#	$NetBSD: RAMDISK,v 1.6 2000/11/25 19:21:50 scw Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -31,6 +31,7 @@ options 	M060SP
 file-system 	FFS
 file-system 	NFS	
 file-system 	KERNFS
+file-system 	CD9660
 
 # Networking options
 options 	INET
@@ -84,3 +85,4 @@ scsibus*	at wdsc?
 scsibus*	at ncrsc?
 sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?
+cd*		at scsibus? target ? lun ?
