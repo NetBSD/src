@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.12 1994/10/27 04:16:14 cgd Exp $	*/
+/*	$NetBSD: pcb.h,v 1.13 1994/11/05 03:19:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,6 +61,7 @@ struct pcb {
 #endif
         caddr_t	pcb_ldt;		/* per process (user) LDT */
         int	pcb_ldt_len;		/*      number of LDT entries */
+	struct	segment_descriptor pcb_ldt_desc;
 	struct	save87	pcb_savefpu;	/* floating point state for 287/387 */
 	struct	emcsts	pcb_saveemc;	/* Cyrix EMC state */
 /*

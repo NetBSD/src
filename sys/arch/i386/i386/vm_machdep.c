@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37 1994/11/01 06:49:19 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.38 1994/11/05 03:17:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -86,13 +86,18 @@ cpu_fork(p1, p2)
 	p2->p_md.md_regs = p1->p_md.md_regs;
 	p2->p_md.ibcs_sigflags = p1->p_md.ibcs_sigflags;
 
-	if (p1->p_addr->u_pcb.pcb_ldt) {
-		size_t len =
-		    p1->p_addr->u_pcb.pcb_ldt_len * sizeof(union descriptor);
-		union descriptor *new_ldt =
-		    (union descriptor *)kmem_alloc(kernel_map, len);
-		bcopy(p1->p_addr->u_pcb.pcb_ldt, new_ldt, len);
-		p2->p_addr->u_pcb.pcb_ldt = (caddr_t)new_ldt;
+	if (up->u_pcb.pcb_ldt) {
+		struct pcb *pcb = &up->u_pcb;
+		size_t len;
+		union descriptor *new_ldt;
+
+		len = pcb->pcb_ldt_len * sizeof(union descriptor);
+		new_ldt = (union descriptor *)kmem_alloc(kernel_map, len);
+		bcopy(pcb->pcb_ldt, new_ldt, len);
+		pcb->pcb_ldt = (caddr_t)new_ldt;
+		gdt_segs[GUSERLDT_SEL].ssd_base = (unsigned)new_ldt;
+		gdt_segs[GUSERLDT_SEL].ssd_limit = len - 1;
+		ssdtosd(gdt_segs + GUSERLDT_SEL, &pcb->pcb_ldt_desc);
 	}
 
 	/*
