@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1997/05/25 12:05:19 darrenr Exp $
+#	$NetBSD: Makefile,v 1.9 1997/07/05 05:43:58 darrenr Exp $
 
 PROG=	ipnat
 SRCS=	kmem.c ipnat.c

@@ -1,7 +1,8 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.3 1997/05/28 00:17:19 thorpej Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.4 1997/07/05 05:38:19 darrenr Exp $	*/
 
 /*
- * Simple FTP transparent proxy for in-kernel.
+ * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
+ * code.
  */
 
 #define	isdigit(x)	((x) >= '0' && (x) <= '9')
@@ -10,6 +11,15 @@
 
 #define	IPF_MINPORTLEN	18
 #define	IPF_MAXPORTLEN	30
+
+
+int ippr_ftp_init __P((fr_info_t *, ip_t *, tcphdr_t *,
+		       ap_session_t *, nat_t *));
+int ippr_ftp_in __P((fr_info_t *, ip_t *, tcphdr_t *,
+		       ap_session_t *, nat_t *));
+int ippr_ftp_out __P((fr_info_t *, ip_t *, tcphdr_t *,
+		       ap_session_t *, nat_t *));
+u_short ipf_ftp_atoi __P((char **));
 
 
 int ippr_ftp_init __P((fr_info_t *, ip_t *, tcphdr_t *, ap_session_t *,
