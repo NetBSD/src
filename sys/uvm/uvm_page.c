@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.56 2001/05/01 02:19:20 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.57 2001/05/01 13:42:34 enami Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -225,7 +225,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 		for (color = 0; color < VM_PGCOLOR_BUCKETS; color++) {
 			for (i = 0; i < PGFL_NQUEUES; i++) {
 				TAILQ_INIT(&uvm.page_free[lcv].pgfl_buckets[
-				color].pgfl_queues[i]);
+				    color].pgfl_queues[i]);
 			}
 		}
 	}
