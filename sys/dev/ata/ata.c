@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.1.2.3 1998/08/13 14:27:47 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.1.2.4 1998/09/20 13:16:15 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -120,7 +120,7 @@ ata_get_params(drvp, flags, prms)
 			*p = ntohs(*p);
 		}
 #endif
-		return 0;
+		return CMD_OK;
 	}
 }
 

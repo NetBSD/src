@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.1.2.2 1998/08/13 14:27:48 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.1.2.3 1998/09/20 13:16:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -45,6 +45,7 @@ struct ata_drive_datas {
 #define DRIVE_CAP32 0x04
 #define DRIVE_DMA   0x08
 #define DRIVE_UDMA  0x10
+#define DRIVE_OLD   0x20
     /*
      * Current setting of drive's PIO, DMA and UDMA modes.
      * Is initialised by the disks drivers at attach time, and may be

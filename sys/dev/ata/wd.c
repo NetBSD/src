@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.175.2.9 1998/09/11 16:23:12 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.175.2.10 1998/09/20 13:16:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -214,7 +214,6 @@ wdprobe(parent, match, aux)
 	if (match->cf_loc[ATACF_DRIVE] != ATACF_DRIVE_DEFAULT &&
 	    match->cf_loc[ATACF_DRIVE] != aa_link->aa_drv_data->drive)
 		return 0;
-
 	return 1;
 }
 
@@ -236,7 +235,10 @@ wdattach(parent, self, aux)
 	wd->drvp->drv_softc = wd;
 
 	/* read our drive info */
-	wd_get_params(wd, AT_POLL, &wd->sc_params);
+	if (wd_get_params(wd, AT_POLL, &wd->sc_params) != 0) {
+		printf("%s: IDENTIFY failed\n", wd->sc_dev.dv_xname);
+		return;
+	}
 
 	for (blank = 0, p = wd->sc_params.atap_model, q = buf, i = 0;
 	    i < sizeof(wd->sc_params.atap_model); i++) {
@@ -1146,6 +1148,8 @@ wd_get_params(wd, flags, params)
 	case CMD_AGAIN:
 		return 1;
 	case CMD_ERR:
+		if ((wd->drvp->drive_flags & DRIVE_OLD) == 0)
+			return 1;
 		/*
 		 * We `know' there's a drive here; just assume it's old.
 		 * This geometry is only used to read the MBR and print a

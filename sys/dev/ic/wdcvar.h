@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.2.2.8 1998/09/11 16:23:13 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.2.2.9 1998/09/20 13:16:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,6 +99,9 @@ struct wdc_softc { /* Per controller state */
 	                int));
 	void           (*dma_start) __P((void *, int, int, int));
 	int            (*dma_finish) __P((void *, int, int, int));
+/* flags passed to DMA functions */
+#define WDC_DMA_READ 0x01
+#define WDC_DMA_POLL 0x02
 
 	/* if WDC_CAPABILITY_HWLOCK set in 'cap' */
 	int            (*claim_hw) __P((void *, int));
@@ -137,7 +140,7 @@ struct wdc_xfer {
  * or bus-specific backends.
  */
 
-int   wdcprobe __P((const struct channel_softc *));
+int   wdcprobe __P((struct channel_softc *));
 void  wdcattach __P((struct channel_softc *));
 int   wdcintr __P((void *));
 void  wdc_exec_xfer __P((struct channel_softc *, struct wdc_xfer *));
@@ -171,4 +174,4 @@ void  wdctimeout	__P((void *arg));
 #define WDC_RESET_WAIT 31000
 
 void wdc_atapibus_attach __P((struct channel_softc *));
-void wdc_ata_attach __P((struct channel_softc *));
+int   atapi_print       __P((void *, const char *));
