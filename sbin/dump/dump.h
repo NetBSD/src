@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.29 2001/10/15 13:25:34 blymn Exp $	*/
+/*	$NetBSD: dump.h,v 1.30 2001/12/14 14:43:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -98,6 +98,7 @@ char	lastlevel;	/* dump level of previous dump */
 char	level;		/* dump level of this dump */
 int	uflag;		/* update flag */
 int	eflag;		/* eject flag */
+int	lflag;		/* autoload flag */
 int	diskfd;		/* disk file descriptor */
 int	tapefd;		/* tape file descriptor */
 int	pipeout;	/* true => output to standard output */
@@ -211,8 +212,9 @@ char	*xstrdup(const char *);
 #if defined(RDUMP) || defined(RRESTORE)
 void	rmtclose(void);
 int	rmthost(char *);
-int	rmtopen(char *, int);
+int	rmtopen(char *, int, int);
 int	rmtwrite(char *, int);
+int	rmtioctl(int, int);
 #endif /* RDUMP || RRESTORE */
 
 void	interrupt(int);	/* in case operator bangs on console */
