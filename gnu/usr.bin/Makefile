@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 1998/08/16 17:16:01 tv Exp $
+#	$NetBSD: Makefile,v 1.50 1998/08/27 17:52:58 tv Exp $
 
 # XXX Temporary for USE_EGCS
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 SUBDIR+=	bc binutils cpio dc diff diff3 gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar
 
-.if (${MACHINE_ARCH} == "arm32")
+.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "arm32")
 SUBDIR+=	gas.new
 .else
 SUBDIR+=	gas
@@ -15,7 +15,7 @@ SUBDIR+=	gas
 SUBDIR+=	gdb ld
 
 .ifdef USE_EGCS
-#SUBDIR+=	egcs			- currently in flux
+SUBDIR+=	egcs
 .else
 SUBDIR+=	gcc
 .endif
