@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.12 2002/03/31 22:22:46 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.13 2002/04/08 13:27:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.12 2002/03/31 22:22:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.13 2002/04/08 13:27:37 christos Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -399,10 +399,10 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, p)
 	 * XXX -erh
 	 */
 	bzero(&kf.sf_info, sizeof(struct linux_siginfo));
-	kf.sf_info.si_signo = sig;
-	kf.sf_info.si_code = LINUX_SI_USER;
-	kf.sf_info.si_pid = p->p_pid;
-	kf.sf_info.si_uid = p->p_ucred->cr_uid;	/* Use real uid here? */
+	kf.sf_info.lsi_signo = sig;
+	kf.sf_info.lsi_code = LINUX_SI_USER;
+	kf.sf_info.lsi_pid = p->p_pid;
+	kf.sf_info.lsi_uid = p->p_ucred->cr_uid;	/* Use real uid here? */
 
 	/* Build the signal context to be used by sigreturn. */
 	native_to_linux_sigset(&kf.sf_uc.uc_sigmask, mask);
