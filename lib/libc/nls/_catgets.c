@@ -1,4 +1,4 @@
-/*	$NetBSD: _catgets.c,v 1.3 1997/07/13 19:58:34 christos Exp $	*/
+/*	$NetBSD: _catgets.c,v 1.4 1997/07/17 18:30:11 thorpej Exp $	*/
 
 /*
  * Written by J.T. Conklin, 10/05/94
@@ -12,6 +12,7 @@ __indr_reference(_catgets,catgets);
 #else
 
 #include <nl_types.h>
+char	*_catgets __P((nl_catd, int, int, const char *));	/* XXX */
 
 char *
 catgets(catd, set_id, msg_id, s)

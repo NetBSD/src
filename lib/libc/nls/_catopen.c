@@ -1,4 +1,4 @@
-/*	$NetBSD: _catopen.c,v 1.2 1997/07/13 19:58:35 christos Exp $	*/
+/*	$NetBSD: _catopen.c,v 1.3 1997/07/17 18:30:12 thorpej Exp $	*/
 
 /*
  * Written by J.T. Conklin, 10/05/94
@@ -12,6 +12,7 @@ __indr_reference(_catopen,catopen);
 #else
 
 #include <nl_types.h>
+nl_catd	_catopen __P((__const char *, int));	/* XXX */
 
 nl_catd
 catopen(name, oflag)
