@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.14 1999/09/01 21:03:02 fvdl Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.15 1999/10/15 06:07:26 haya Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -209,6 +209,11 @@ ex_config(sc)
 
 	printf("%s: MAC address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(macaddr));
+
+	if (sc->intr_ack) { /* 3C575BTX specific */
+	    GO_WINDOW(2);
+	    bus_space_write_2(sc->sc_iot, ioh, 12, 0x10|bus_space_read_2(sc->sc_iot, ioh, 12));
+	}
 
 	attach_stage = 0;
 
@@ -630,7 +635,8 @@ ex_init(sc)
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_INTR_MASK | S_MASK);
 
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, ACK_INTR | 0xff);
-
+	if (sc->intr_ack)
+	    (* sc->intr_ack)(sc);
 	ex_set_media(sc);
 	ex_set_mc(sc);
 
@@ -1082,6 +1088,9 @@ ex_intr(arg)
 	int ret = 0;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
+	if (sc->enabled == 0) {
+	  return ret;
+	}
 	for (;;) {
 		stat = bus_space_read_2(iot, ioh, ELINK_STATUS);
 		if (!(stat & S_MASK))
@@ -1091,6 +1100,8 @@ ex_intr(arg)
 		 */
 		bus_space_write_2(iot, ioh, ELINK_COMMAND, ACK_INTR |
 				      (stat & S_MASK));
+		if (sc->intr_ack)
+		    (*sc->intr_ack)(sc);
 		ret = 1;
 		if (stat & S_HOST_ERROR) {
 			printf("%s: adapter failure (%x)\n",
