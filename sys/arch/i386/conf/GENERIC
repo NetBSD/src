@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.177 1998/08/18 17:03:42 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.178 1998/08/26 13:37:49 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -457,6 +457,8 @@ sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
 # OPL[23] FM syntheziers
+#opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at ess?
 opl*	at sb?
 
 # USB Audio devices
