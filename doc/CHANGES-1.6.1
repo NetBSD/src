@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.30 2002/11/11 23:49:50 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.31 2002/11/12 14:49:10 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1036,3 +1036,10 @@ distrib/sets/lists/etc/mi			1.102
 
 	Add a wdogctl startup/shutdown script.
 	[thorpej, ticket #584]
+
+sys/netinet/ip_input.c				1.160
+
+	Always create pmtud timeout queue, as ip_mtudisc can be tweaked via
+	sysctl at runtime.  From lha@stacken.kth.se
+	[itojun, ticket #977]
+
