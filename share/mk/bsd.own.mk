@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.333 2003/05/08 20:39:00 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.334 2003/05/18 08:09:25 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -160,6 +160,7 @@ COMPILE_ET=	${TOOLDIR}/bin/${_TOOL_PREFIX}compile_et
 CONFIG=		${TOOLDIR}/bin/${_TOOL_PREFIX}config
 CRUNCHGEN=	MAKE=${.MAKE:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}crunchgen
 CTAGS=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctags
+TOOL_DB=	${TOOLDIR}/bin/${_TOOL_PREFIX}db
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
 ELF2ECOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}mips-elf2ecoff
 EQN=		${TOOLDIR}/bin/${_TOOL_PREFIX}eqn
