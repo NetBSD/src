@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.54 1998/04/21 16:36:37 fvdl Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.55 1998/08/03 14:20:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -390,6 +390,9 @@ procfs_pathconf(v)
 		return (0);
 	case _PC_VDISABLE:
 		*ap->a_retval = _POSIX_VDISABLE;
+		return (0);
+	case _PC_SYNC_IO:
+		*ap->a_retval = 1;
 		return (0);
 	default:
 		return (EINVAL);

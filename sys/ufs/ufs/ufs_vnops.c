@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.44 1998/07/28 18:23:56 thorpej Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.45 1998/08/03 14:19:58 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1877,6 +1877,9 @@ ufs_pathconf(v)
 		*ap->a_retval = 1;
 		return (0);
 	case _PC_NO_TRUNC:
+		*ap->a_retval = 1;
+		return (0);
+	case _PC_SYNC_IO:
 		*ap->a_retval = 1;
 		return (0);
 	default:

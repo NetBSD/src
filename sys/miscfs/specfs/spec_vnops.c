@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.40 1998/06/05 19:53:00 kleink Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.41 1998/08/03 14:20:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -652,6 +652,9 @@ spec_pathconf(v)
 		return (0);
 	case _PC_VDISABLE:
 		*ap->a_retval = _POSIX_VDISABLE;
+		return (0);
+	case _PC_SYNC_IO:
+		*ap->a_retval = 1;
 		return (0);
 	default:
 		return (EINVAL);

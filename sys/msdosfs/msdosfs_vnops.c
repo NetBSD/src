@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.72 1998/08/02 18:57:23 kleink Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.73 1998/08/03 14:19:58 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1921,6 +1921,9 @@ msdosfs_pathconf(v)
 		return (0);
 	case _PC_NO_TRUNC:
 		*ap->a_retval = 0;
+		return (0);
+	case _PC_SYNC_IO:
+		*ap->a_retval = 1;
 		return (0);
 	default:
 		return (EINVAL);

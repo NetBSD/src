@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.47 1998/06/25 22:21:13 thorpej Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.48 1998/08/03 14:19:58 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -882,6 +882,9 @@ cd9660_pathconf(v)
 		*ap->a_retval = 1;
 		return (0);
 	case _PC_NO_TRUNC:
+		*ap->a_retval = 1;
+		return (0);
+	case _PC_SYNC_IO:
 		*ap->a_retval = 1;
 		return (0);
 	default:
