@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.158 2004/01/17 04:01:14 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.159 2004/03/08 03:31:26 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.158 2004/01/17 04:01:14 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.159 2004/03/08 03:31:26 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -500,32 +500,40 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 		 */
 		tn = name[ni];
 		alias = 0;
-		for (si = 0; si < pnode->sysctl_clen; si++) {
-			if (node[si].sysctl_num == tn ||
-			    (tn >= 0 &&
-			     node[si].sysctl_flags & SYSCTL_ANYNUMBER)) {
+
+		si = 0;
+		/*
+		 * Note: ANYNUMBER only matches positive integers.
+		 * Since ANYNUMBER is only permitted on single-node
+		 * sub-trees (eg proc), check before the loop and skip
+		 * it if we can.
+		 */
+		if ((node[si].sysctl_flags & SYSCTL_ANYNUMBER) && (tn >= 0))
+			goto foundit;
+		for (; si < pnode->sysctl_clen; si++) {
+			if (node[si].sysctl_num == tn) {
 				if (node[si].sysctl_flags & SYSCTL_ALIAS) {
 					if (alias++ == 4)
-						si = pnode->sysctl_clen - 1;
+						break;
 					else {
 						tn = node[si].sysctl_alias;
 						si = -1;
 					}
 				}
 				else
-					break;
+					goto foundit;
 			}
 		}
 		/*
 		 * if we ran off the end, it obviously doesn't exist
 		 */
-		if (si == pnode->sysctl_clen) {
-			error = ENOENT;
-			break;
-		}
+		error = ENOENT;
+		break;
+
 		/*
 		 * so far so good, move on down the line
 		 */
+	  foundit:
 		pnode = &node[si];
 		if (SYSCTL_TYPE(pnode->sysctl_flags) == CTLTYPE_NODE)
 			node = node[si].sysctl_child;
