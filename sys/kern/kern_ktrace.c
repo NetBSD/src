@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.15 1994/12/14 19:07:08 mycroft Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.16 1995/03/09 08:55:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -68,7 +68,10 @@ ktrgetheader(type)
 
 ktrsyscall(vp, code, narg, argsize, args)
 	struct vnode *vp;
-	int code, narg, argsize, args[];
+	register_t code;
+	int narg;
+	size_t argsize;
+	register_t args[];
 {
 	struct	ktr_header *kth;
 	struct	ktr_syscall *ktp;
@@ -94,7 +97,9 @@ ktrsyscall(vp, code, narg, argsize, args)
 
 ktrsysret(vp, code, error, retval)
 	struct vnode *vp;
-	int code, error, retval;
+	register_t code;
+	int error;
+	register_t retval;
 {
 	struct ktr_header *kth;
 	struct ktr_sysret ktp;
