@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.128 2000/11/27 22:29:26 jdolecek Exp $
+# $NetBSD: files.alpha,v 1.129 2000/12/13 03:16:38 mycroft Exp $
 #
 # alpha-specific configuration info
 
@@ -478,6 +478,7 @@ file	arch/alpha/alpha/process_machdep.c
 file	arch/alpha/alpha/prom.c
 file	arch/alpha/alpha/support.c
 file	arch/alpha/alpha/sys_machdep.c
+file	arch/alpha/alpha/syscall.c
 file	arch/alpha/alpha/trap.c
 file	arch/alpha/alpha/vm_machdep.c
 file	arch/alpha/alpha/disksubr.c
@@ -523,6 +524,7 @@ file	arch/alpha/alpha/compat_13_machdep.c	compat_13
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"
 file	arch/alpha/alpha/osf1_locore.s		compat_osf1
+file	arch/alpha/alpha/osf1_syscall.c		compat_osf1
 
 # Linux Binary Compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
