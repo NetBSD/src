@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.4 2002/10/02 05:47:10 thorpej Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.5 2002/12/28 20:06:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.4 2002/10/02 05:47:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.5 2002/12/28 20:06:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.4 2002/10/02 05:47:10 thorpej Exp $"
 #include <sys/callout.h>
 
 #include <machine/bus.h>
-
-void	*isa_intr_establish(void *ic, int irq, int type,
-	    int level, int (*ih_fun)(void *), void *ih_arg);
 
 #include <dev/ic/spicvar.h>
 
