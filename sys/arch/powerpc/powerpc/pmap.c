@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 2001/07/22 13:08:09 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47 2001/10/13 18:28:10 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1215,14 +1215,14 @@ ptemodify(pg, mask, val)
 	if (attr == NULL)
 		return FALSE;
 
+	rv = *attr & (mask >> ATTRSHFT);
 	*attr &= ~mask >> ATTRSHFT;
 	*attr |= val >> ATTRSHFT;
 
 	pv = pa_to_pv(pa);
 	if (pv->pv_idx < 0)
-		return FALSE;
+		return rv != 0;
 
-	rv = FALSE;
 	s = splvm();
 	for (; pv; pv = pv->pv_next) {
 		for (ptp = ptable + pv->pv_idx * 8, i = 8; --i >= 0; ptp++)
