@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.32 2001/10/09 04:50:01 lukem Exp $	*/
+/*	$NetBSD: create.c,v 1.33 2001/10/18 04:37:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.32 2001/10/09 04:50:01 lukem Exp $");
+__RCSID("$NetBSD: create.c,v 1.33 2001/10/18 04:37:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,15 +84,15 @@ cwalk(void)
 {
 	FTS *t;
 	FTSENT *p;
-	time_t clock;
+	time_t clocktime;
 	char *argv[2], host[MAXHOSTNAMELEN + 1];
 
-	(void)time(&clock);
+	(void)time(&clocktime);
 	(void)gethostname(host, sizeof(host));
 	host[sizeof(host) - 1] = '\0';
 	(void)printf(
 	    "#\t   user: %s\n#\tmachine: %s\n#\t   tree: %s\n#\t   date: %s",
-	    getlogin(), host, fullpath, ctime(&clock));
+	    getlogin(), host, fullpath, ctime(&clocktime));
 
 	argv[0] = ".";
 	argv[1] = NULL;
