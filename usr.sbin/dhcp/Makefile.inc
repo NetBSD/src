@@ -39,3 +39,5 @@ COBJDIR= ${.CURDIR}/../common
 CFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
 LDADD=  ${COBJDIR}/libdhcp.a          
 DPADD=  ${COBJDIR}/libdhcp.a          
+
+.include "${.CURDIR}/../../Makefile.inc"
