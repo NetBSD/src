@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)config.c	8.5 (Berkeley) 11/26/93";
+static char sccsid[] = "@(#)config.c	8.7 (Berkeley) 1/3/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,6 +77,8 @@ config(fname)
 		err(1, "%s", fname);
 	TAILQ_INIT(&head);
 	for (lcnt = 1; (p = fgetln(cfp, &len)) != NULL; ++lcnt) {
+		if (len == 1)			/* Skip empty lines. */
+			continue;
 		if (p[len - 1] != '\n') {	/* Skip corrupted lines. */
 			warnx("%s: line %d corrupted", fname, lcnt);
 			continue;
