@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.7 1998/08/07 16:16:36 minoura Exp $	*/
+/*	$NetBSD: par.c,v 1.8 1999/05/05 14:31:16 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -148,8 +148,6 @@ paropen(dev, flags, mode, p)
 {
 	register int unit = UNIT(dev);
 	register struct par_softc *sc = par_cd.cd_devs[unit];
-	int s;
-	char mask;
 	
 	if (unit >= NPAR || !(sc->sc_flags & PARF_ALIVE))
 		return(ENXIO);
@@ -226,7 +224,7 @@ parwrite(dev, uio, flag)
 	
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parwrite(%x, %x)\n", dev, uio);
+		printf("parwrite(%x, %p)\n", dev, uio);
 #endif
 	return (parrw(dev, uio));
 }
@@ -240,7 +238,7 @@ parrw(dev, uio)
 	register struct par_softc *sc = par_cd.cd_devs[unit];
 	register int s, len, cnt;
 	register char *cp;
-	int error = 0, gotdata = 0;
+	int error = 0;
 	int buflen;
 	char *buf;
 	
@@ -312,7 +310,7 @@ parrw(dev, uio)
 		if (sc->sc_delay > 0) {
 			sc->sc_flags |= PARF_DELAY;
 			timeout(parstart, (void *) unit, sc->sc_delay);
-			error = tsleep(sc, PCATCH|PZERO-1, "par-cdelay", 0);
+			error = tsleep(sc, PCATCH|(PZERO-1), "par-cdelay", 0);
 			if (error) {
 				splx(s);
 				break;
@@ -489,7 +487,7 @@ parsendch(ch)
 			/* it's quite important that a parallel putc can be
 			   interrupted, given the possibility to lock a printer
 			   in an offline condition.. */
-			if (error = tsleep (parintr, PCATCH|PZERO-1, "parsendch", 0)) {
+			if ((error = tsleep (parintr, PCATCH|(PZERO-1), "parsendch", 0))) {
 #ifdef DEBUG
 				if (pardebug & PDB_INTERRUPT)
 					printf ("parsendch interrupted, error = %d\n", error);
@@ -529,7 +527,7 @@ parsend(buf, len)
 	int err, orig_len = len;
 	
 	for (; len; len--, buf++)
-		if (err = parsendch (*buf))
+		if ((err = parsendch (*buf)))
 			return err < 0 ? -EINTR : -err;
 	
 	/* either all or nothing.. */
