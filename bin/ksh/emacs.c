@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.4 1998/03/29 04:39:03 mrg Exp $	*/
+/*	$NetBSD: emacs.c,v 1.5 1998/11/04 18:27:21 christos Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -51,7 +51,7 @@ struct x_defbindings {
 
 /* Separator for completion */
 #define	is_cfs(c)	(c == ' ' || c == '\t' || c == '"' || c == '\'')
-#define	is_mfs(c)	(!(isalnum(c) || c == '_' || c == '$'))  /* Separator for motion */
+#define	is_mfs(c)	(!(isalnum((unsigned char)c) || c == '_' || c == '$'))  /* Separator for motion */
 
 #ifdef OS2
   /* Deal with 8 bit chars & an extra prefix for function key (these two
@@ -2119,10 +2119,10 @@ x_fold_case(c)
 		 */
 		if (cp != xep) {
 			if (c == 'L') {		/* lowercase */
-				if (isupper(*cp))
+				if (isupper((unsigned char)*cp))
 					*cp = tolower(*cp);
 			} else {		/* uppercase, capitialize */
-				if (islower(*cp))
+				if (islower((unsigned char)*cp))
 					*cp = toupper(*cp);
 			}
 			cp++;
@@ -2130,12 +2130,12 @@ x_fold_case(c)
 		/*
 		 * now for the rest of the word
 		 */
-		while (cp != xep && !is_mfs(*cp)) {
+		while (cp != xep && !is_mfs((unsigned char)*cp)) {
 			if (c == 'U') {		/* uppercase */
-				if (islower(*cp))
+				if (islower((unsigned char)*cp))
 					*cp = toupper(*cp);
 			} else {		/* lowercase, capitialize */
-				if (isupper(*cp))
+				if (isupper((unsigned char)*cp))
 					*cp = tolower(*cp);
 			}
 			cp++;
