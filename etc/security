@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.37 1999/03/17 19:11:05 wrstuden Exp $
+#	$NetBSD: security,v 1.38 1999/04/23 08:20:28 kleink Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -134,11 +134,11 @@ if [ -s $CUR ] ; then
 	else
 		cp -p $CUR $BACK
 		cp -p $MP $CUR
-		chown root.wheel $CUR
+		chown root:wheel $CUR
 	fi
 else
 	cp -p $MP $CUR
-	chown root.wheel $CUR
+	chown root:wheel $CUR
 fi
 
 # Check the group file syntax.
@@ -598,7 +598,7 @@ fi
 # Create the mtree tree specifications using:
 #
 #	mtree -cx -pDIR -kcksum,gid,mode,nlink,size,link,time,uid > DIR.secure
-#	chown root.wheel DIR.secure
+#	chown root:wheel DIR.secure
 #	chmod 600 DIR.secure
 #
 # Note, this is not complete protection against Trojan horsed binaries, as
@@ -672,13 +672,13 @@ if [ -n "$CHANGELIST" ]; then
 					cat $OUTPUT
 					mv -f $CUR $BACK
 					cp -p $file $CUR
-					chown root.wheel $CUR
+					chown root:wheel $CUR
 				fi
 			else
 		printf "\n======\n%s added\n======\n" $file
 				diff /dev/null $file
 				cp -p $file $CUR
-				chown root.wheel $CUR
+				chown root:wheel $CUR
 			fi
 		else
 			if [ -f $CUR ]; then
