@@ -56,8 +56,8 @@ static char sccsid[] = "@(#)fstat.c	8.1 (Berkeley) 6/6/93";
 #include <sys/filedesc.h>
 #define	KERNEL
 #include <sys/file.h>
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/inode.h>
+#include <ufs/quota.h>
+#include <ufs/inode.h>
 #undef KERNEL
 #define NFS
 #include <sys/mount.h>
@@ -464,6 +464,7 @@ ufs_filestat(vp, fsp)
 	struct vnode *vp;
 	struct filestat *fsp;
 {
+#ifdef notyet
 	struct inode inode;
 
 	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
@@ -476,6 +477,16 @@ ufs_filestat(vp, fsp)
 	fsp->mode = (mode_t)inode.i_mode;
 	fsp->size = (u_long)inode.i_size;
 	fsp->rdev = inode.i_rdev;
+#else
+	struct inode *inode;
+
+	inode = VTOI(vp);
+	fsp->fsid = inode->i_dev & 0xffff;
+	fsp->fileid = (long)inode->i_number;
+	fsp->mode = (mode_t)inode->i_mode;
+	fsp->size = (u_long)inode->i_size;
+	fsp->rdev = inode->i_rdev;
+#endif
 
 	return 1;
 }
@@ -485,6 +496,7 @@ nfs_filestat(vp, fsp)
 	struct vnode *vp;
 	struct filestat *fsp;
 {
+#ifdef notyet
 	struct nfsnode nfsnode;
 	register mode_t mode;
 
@@ -524,6 +536,9 @@ nfs_filestat(vp, fsp)
 	fsp->mode = mode;
 
 	return 1;
+#else
+	return 0;
+#endif
 }
 
 
