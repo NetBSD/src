@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.82 1997/04/23 20:18:16 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.83 1997/05/08 10:19:13 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -121,7 +121,7 @@ check_exec(p, epp)
 		goto bad1;
 	}
 	if ((vp->v_mount->mnt_flag & MNT_NOSUID) || (p->p_flag & P_TRACED))
-		epp->ep_vap->va_mode &= ~(VSUID | VSGID);
+		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
 	/* check access.  for root we have to see if any exec bit on */
 	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
@@ -443,8 +443,8 @@ sys_execve(p, v, retval)
 	 * deal with set[ug]id.
 	 * MNT_NOEXEC and P_TRACED have already been used to disable s[ug]id.
 	 */
-	if (((attr.va_mode & VSUID) != 0 && p->p_ucred->cr_uid != attr.va_uid)
-	 || ((attr.va_mode & VSGID) != 0 && p->p_ucred->cr_gid != attr.va_gid)){
+	if (((attr.va_mode & S_ISUID) != 0 && p->p_ucred->cr_uid != attr.va_uid)
+	 || ((attr.va_mode & S_ISGID) != 0 && p->p_ucred->cr_gid != attr.va_gid)){
 		p->p_ucred = crcopy(cred);
 #ifdef KTRACE
 		/*
@@ -457,9 +457,9 @@ sys_execve(p, v, retval)
 			p->p_traceflag = 0;
 		}
 #endif
-		if (attr.va_mode & VSUID)
+		if (attr.va_mode & S_ISUID)
 			p->p_ucred->cr_uid = attr.va_uid;
-		if (attr.va_mode & VSGID)
+		if (attr.va_mode & S_ISGID)
 			p->p_ucred->cr_gid = attr.va_gid;
 		p->p_flag |= P_SUGID;
 	} else
