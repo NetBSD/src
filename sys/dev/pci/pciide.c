@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.197 2003/09/15 20:15:44 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.198 2003/09/15 20:24:42 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.197 2003/09/15 20:15:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.198 2003/09/15 20:24:42 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -336,6 +336,11 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_31244,
 	  0,
 	  "Intel 31244 Serial ATA Controller",
+	  artisea_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801EB_SATA,
+	  0,
+	  "Intel 82801EB Serial ATA Controller",
 	  artisea_chip_map,
 	},
 	{ 0,
@@ -5538,10 +5543,11 @@ artisea_chip_map(sc, pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_normal("%s: bus-master DMA support resent",
+	aprint_normal("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 #ifndef PCIIDE_I31244_ENABLEDMA
-	if (PCI_REVISION(pa->pa_class) == 0) {
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_31244 &&
+	    PCI_REVISION(pa->pa_class) == 0) {
 		aprint_normal(" but disabled due to rev. 0");
 		sc->sc_dma_ok = 0;
 	} else
