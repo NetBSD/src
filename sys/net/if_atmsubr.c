@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.13 1998/03/24 18:48:59 bouyer Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.14 1998/04/15 13:01:51 bouyer Exp $       */
 
 /*
  *
@@ -144,7 +144,7 @@ atm_output(ifp, m0, dst, rt0)
 				/* XXX: put ATMARP stuff here */
 				/* XXX: watch who frees m on failure */
 			}
-			etype = htons(ETHERTYPE_IP);
+			etype = ETHERTYPE_IP;
 			break;
 #endif
 
@@ -259,7 +259,7 @@ atm_input(ifp, ah, m, rxhand)
 	      m_freem(m);
               return;
 	    }
-	    etype = ntohs(ATM_LLC_TYPE(alc));
+	    etype = ATM_LLC_TYPE(alc);
 	    m_adj(m, sizeof(*alc));
 	  }
 
