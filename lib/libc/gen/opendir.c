@@ -36,11 +36,13 @@ static char sccsid[] = "@(#)opendir.c	8.2 (Berkeley) 2/12/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
-
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 
 /*
  * open a directory.
@@ -49,11 +51,17 @@ DIR *
 opendir(name)
 	const char *name;
 {
+        struct stat statb;
 	register DIR *dirp;
 	register int fd;
 
 	if ((fd = open(name, 0)) == -1)
 		return NULL;
+	if (fstat(fd, &statb) || !S_ISDIR(statb.st_mode)) {
+		errno = ENOTDIR;
+		close (fd);
+		return NULL;
+	}
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 ||
 	    (dirp = (DIR *)malloc(sizeof(DIR))) == NULL) {
 		close (fd);
