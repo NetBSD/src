@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310var.h,v 1.6 2002/10/03 20:11:42 thorpej Exp $	*/
+/*	$NetBSD: iq80310var.h,v 1.7 2002/10/08 17:39:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@ struct intrq {
  */
 #define	XINT3_IRQ(x)	(x)
 #define	IRQ_IS_XINT3(x)	((x) >= 0 && (x) <= 4)
-#deifne	IRQ_XINT3(x)	(x)
+#define	IRQ_XINT3(x)	(x)
 
 #define	XINT0_IRQ(x)	((x) + 5)
 #define	IRQ_IS_XINT0(x)	((x) >= 5 && (x) <= 7)
