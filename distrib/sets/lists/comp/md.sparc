@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.44 2001/02/17 11:40:59 ragge Exp $
+# $NetBSD: md.sparc,v 1.45 2001/04/14 12:40:11 kleink Exp $
 ./usr/include/sparc	comp-c-include
 ./usr/include/sparc/_G_config.h	comp-c-include
 ./usr/include/sparc/ansi.h	comp-c-include
@@ -24,6 +24,7 @@
 ./usr/include/sparc/idprom.h	comp-c-include
 ./usr/include/sparc/ieee.h	comp-c-include
 ./usr/include/sparc/ieeefp.h	comp-c-include
+./usr/include/sparc/int_mwgwtypes.h	comp-c-include
 ./usr/include/sparc/int_types.h	comp-c-include
 ./usr/include/sparc/kbd.h	comp-c-include
 ./usr/include/sparc/kbio.h	comp-c-include
