@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.2.3 1997/01/31 17:14:41 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.2.4 1997/02/01 02:05:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -772,7 +772,9 @@ haltsys:
 
 #ifdef BOOTKEY
 	printf("hit any key to %s...\n", howto & RB_HALT ? "halt" : "reboot");
+	cnpollc(1);			/* unnecessary?  safe, in any case. */
 	cngetc();
+	cnpollc(0);			/* unnecessary?  safe, in any case. */
 	printf("\n");
 #endif
 
