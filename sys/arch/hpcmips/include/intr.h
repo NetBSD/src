@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2001/09/15 19:51:39 uch Exp $	*/
+/*	$NetBSD: intr.h,v 1.14 2001/09/16 15:45:44 uch Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -121,7 +121,6 @@ extern u_long intrcnt[];
 #define	SOFTCLOCK_INTR	0
 #define	SOFTNET_INTR	1
 #define	HARDCLOCK	8
-#define	STRAY_INTR	16
 
 /*
  * software simulated interrupt

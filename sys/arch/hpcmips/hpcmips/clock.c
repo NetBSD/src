@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.13 2001/09/15 14:08:15 uch Exp $ */
+/*	$NetBSD: clock.c,v 1.14 2001/09/16 15:45:42 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -74,8 +74,7 @@
 #include "opt_tx39xx.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2001/09/15 14:08:15 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2001/09/16 15:45:42 uch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,4 +284,42 @@ resettodr()
 #endif
 
 	(*clockfns->cf_set)(clockdev, &ct);
+}
+
+/*
+ * Return the best possible estimate of the time in the timeval to
+ * which tvp points.  We guarantee that the time will be greater than
+ * the value obtained by a previous call.
+ */
+void
+microtime(struct timeval *tvp)
+{
+	int s = splclock();
+	static struct timeval lasttime;
+
+	*tvp = time;
+
+	if (tvp->tv_usec >= 1000000) {
+		tvp->tv_usec -= 1000000;
+		tvp->tv_sec++;
+	}
+
+	if (tvp->tv_sec == lasttime.tv_sec &&
+	    tvp->tv_usec <= lasttime.tv_usec &&
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
+		tvp->tv_sec++;
+		tvp->tv_usec -= 1000000;
+	}
+	lasttime = *tvp;
+	splx(s);
+}
+
+/*
+ * Wait "n" microseconds.
+ */
+void
+delay(int n)
+{
+
+        DELAY(n);
 }

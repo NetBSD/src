@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.12 2001/09/15 14:08:15 uch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.13 2001/09/16 15:45:44 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -45,24 +45,19 @@
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
-struct mainbus_softc {
-	struct	device sc_dv;
-};
-
 /* Definition of the mainbus driver. */
 static int	mbmatch(struct device *, struct cfdata *, void *);
 static void	mbattach(struct device *, struct device *, void *);
 static int	mbprint(void *, const char *);
-bus_space_tag_t mb_bus_space_init(void);
 
 bus_space_tag_t	mb_bus_space_init(void);
 
 struct cfattach mainbus_ca = {
-	sizeof(struct mainbus_softc), mbmatch, mbattach
+	sizeof(struct device), mbmatch, mbattach
 };
 
-/* There can be only one. */
-static int mainbus_found;
+bus_space_tag_t system_bus_iot; /* Serial console requires this */
+static int mainbus_found;	/* There can be only one. */
 
 static int
 mbmatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -73,9 +68,6 @@ mbmatch(struct device *parent, struct cfdata *cf, void *aux)
 
 	return (1);
 }
-
-int ncpus = 0;	/* only support uniprocessors, for now */
-bus_space_tag_t system_bus_iot; /* Serial console requires this */
 
 bus_space_tag_t
 mb_bus_space_init()
@@ -109,7 +101,6 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	/* Attach CPU */
 	ma.ma_name = "cpu";
 	config_found(mb, &ma, mbprint);
-
 
 #if defined TX39XX && defined VR41XX
 /* XXX: currently, the case defined TX39XX && defined VR41XX don't work */

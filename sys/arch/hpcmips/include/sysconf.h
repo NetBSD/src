@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.8 2001/09/15 15:04:45 uch Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.9 2001/09/16 15:45:45 uch Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -48,52 +48,30 @@
 #ifndef	_HPCMIPS_SYSCONF_H_
 #define	_HPCMIPS_SYSCONF_H_
 
-
 #ifdef _KERNEL
 /*
  * Platform Specific Information and Function Hooks.
  *
  * The tags family and model information are strings describing the platform.
- * 
- * The tag iobus describes the primary iobus for the platform- primarily
- * to give a hint as to where to start configuring. The likely choices
- * are one of tcasic, lca, apecs, cia, or tlsb.
  *
  */
 extern struct platform {
 	/*
-	 * Platform Information.
-	 */
-	const char	*iobus;		/* Primary iobus name */
-
-	/*
 	 * Platform Specific Function Hooks
+	 *	cpu_idle	-	CPU dependend idle routine.
 	 *	cons_init 	-	console initialization
-	 *	device_register	-	boot configuration aid
 	 *	iointr		-	I/O interrupt handler
-	 *	clockintr	-	Clock Interrupt Handler
 	 *	fb_init         -       frame buffer initialization
 	 *      mem_init        -       Count available memory
-#ifdef notyet
-	 *	mcheck_handler	-	Platform Specific Machine Check Handler
-#endif
 	 *	reboot		-	reboot or powerdown
 	 */
-	void	(*os_init)(void);
-	void	(*bus_reset)(void);
+	void	(*cpu_idle)(void);
 	void	(*cons_init)(void);
-	void	(*device_register)(struct device *, void *);
 	int	(*iointr)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-	void	(*clockintr)(void *);
 	void	(*fb_init)(caddr_t*);
 	void	(*mem_init)(paddr_t);
-#ifdef notyet
-	void	(*mcheck_handler)(unsigned long, struct trapframe *,
-		unsigned long, unsigned long);
-#endif
 	void	(*reboot)(int, char *);
 } platform;
 
-extern struct platform unimpl_platform;
 #endif /* _KERNEL */
 #endif /* !_HPCMIPS_SYSCONF_H_ */
