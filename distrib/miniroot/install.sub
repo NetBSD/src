@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.35.4.2 2000/10/30 23:34:48 tv Exp $
+#	$NetBSD: install.sub,v 1.35.4.3 2000/11/15 18:41:53 tv Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -312,16 +312,12 @@ addifconfig() {
 	# $2 - interface symbolic name
 	# $3 - interface IP address
 	# $4 - interface netmask
-	# $5 - (optional) interface link-layer medium
+	# $5 - (optional) interface link-layer medium, preceded by "media ", else ""
 	# $6 - (optional) interface link-layer directives
 	local _m
 
-	_m=""
-	if [ "$5" != "" ]; then
-		_m="media $5"
-	fi
 	# Create a ifconfig.* file for the interface.
-	echo "inet $2 netmask $4 $_m $6" > /tmp/ifconfig.$1
+	echo "inet $2 netmask $4 $5 $6" > /tmp/ifconfig.$1
 
 	addhostent $3 $2
 }
@@ -478,7 +474,7 @@ configure_ifs() {
 			    "${_interface_symname}" \
 			    "${_interface_ip}" \
 			    "${_interface_mask}" \
-			    "${_interface_mediumtype}" \
+			    "${_m}" \
 			    "${_interface_extra}"
 			return 0
 		fi
@@ -490,7 +486,7 @@ configure_ifs() {
 		    "${_interface_symname}" \
 		    "${_interface_ip}" \
 		    "${_interface_mask}" \
-		    "${_interface_mediumtype}" \
+		    "${_m}" \
 		    "${_interface_extra}"
 	fi
 	return 1
