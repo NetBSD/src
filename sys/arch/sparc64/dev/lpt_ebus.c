@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.7 2001/10/22 07:06:20 mrg Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.8 2002/03/01 11:51:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -92,7 +92,7 @@ lpt_ebus_attach(parent, self, aux)
 	if (ea->ea_nvaddrs)
 		sc->sc_ioh = (bus_space_handle_t)ea->ea_vaddrs[0];
 	else if (ebus_bus_map(sc->sc_iot, 0,
-			      EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+			      EBUS_ADDR_FROM_REG(&ea->ea_regs[0]),
 			      ea->ea_regs[0].size,
 			      BUS_SPACE_MAP_LINEAR,
 			      0, &sc->sc_ioh) != 0) {
