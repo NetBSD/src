@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.36 2000/10/18 16:49:13 bouyer Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.37 2000/11/08 15:20:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1280,7 +1280,8 @@ epic_set_mchash(sc)
 			goto allmulti;
 		}
 
-		hash = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x3f;
+		hash = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+		hash >>= 26;
 
 		/* Set the corresponding bit in the hash table. */
 		mchash[hash >> 4] |= 1 << (hash & 0xf);
