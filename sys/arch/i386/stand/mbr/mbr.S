@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.5 2004/03/22 07:11:00 lukem Exp $	*/
+/*	$NetBSD: mbr.S,v 1.6 2004/04/23 06:21:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -551,11 +551,7 @@ nametab:
 
 /* mbr_bootsel_magic */
 	. = start + MBR_BS_MAGIC_OFFSET
-#ifdef BOOTSEL
 	.word	MBR_BS_MAGIC
-#else
-	.word	0
-#endif
 
 /*
  * MBR partition table
