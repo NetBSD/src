@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.4 1996/10/10 23:55:11 christos Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.5 1996/10/13 03:06:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -115,7 +115,7 @@ db_write_text(dst, ch)
 	}
 
 #if 0
-kprintf("db_write_text: %x: %x = %x (%x:%x)\n", dst, *dst, ch, pte, *pte);
+printf("db_write_text: %x: %x = %x (%x:%x)\n", dst, *dst, ch, pte, *pte);
 #endif
 	*pte &= ~PG_RO;
 	TBIS((vm_offset_t)dst);

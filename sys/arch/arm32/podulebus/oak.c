@@ -1,4 +1,4 @@
-/* $NetBSD: oak.c,v 1.7 1996/10/11 00:07:44 christos Exp $ */
+/* $NetBSD: oak.c,v 1.8 1996/10/13 03:06:47 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson 1996.
@@ -146,7 +146,7 @@ oakattach(parent, self, aux)
 	podules[sc->sc_podule_number].attached = 1;
 	sc->sc_base = sc->sc_podule->mod_base;
 
-	kprintf(" 16-bit");
+	printf(" 16-bit");
 
 	ncr_sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr_sc->sc_link.adapter_softc = sc;
@@ -164,11 +164,11 @@ oakattach(parent, self, aux)
 	ncr_sc->sci_r7 = (volatile u_char *)sc->sc_base + 0x1c;
 
 #ifdef USE_OWN_PIO_ROUTINES
- 	kprintf ( ", my pio" );
+ 	printf ( ", my pio" );
 	ncr_sc->sc_pio_out = oak_pio_out;
 	ncr_sc->sc_pio_in  = oak_pio_in;
 #else
-	kprintf ( ", normal pio" );
+	printf ( ", normal pio" );
 	ncr_sc->sc_pio_out = ncr5380_pio_out;
 	ncr_sc->sc_pio_in  = ncr5380_pio_in;
 #endif
@@ -181,7 +181,7 @@ oakattach(parent, self, aux)
 	ncr_sc->sc_dma_eop  = NULL;
 	ncr_sc->sc_dma_stop  = NULL;
 
-	kprintf(", polling");
+	printf(", polling");
 	ncr_sc->sc_intr_on   = NULL;
 	ncr_sc->sc_intr_off  = NULL;
 
@@ -190,7 +190,7 @@ oakattach(parent, self, aux)
 	ncr5380_init(ncr_sc);
 	ncr5380_reset_scsibus(ncr_sc);
 
-	kprintf(" UNDER DEVELOPMENT\n");
+	printf(" UNDER DEVELOPMENT\n");
 
 	config_found(self, &(ncr_sc->sc_link), scsiprint);
 }
@@ -201,7 +201,7 @@ oakminphys(bp)
 	struct buf *bp;
 {
 	if (bp->b_bcount > MAX_DMA_LEN) {
-		kprintf("oak: DEBUG reducing dma length\n");
+		printf("oak: DEBUG reducing dma length\n");
 		bp->b_bcount = MAX_DMA_LEN;
 	}
 	return (minphys(bp));
@@ -270,7 +270,7 @@ oak_pio_out(sc, phase, count, data)
 	register int		resid;
 	register int		error;
 
-	kprintf("oak: pio_out %d %d\n", phase, count);
+	printf("oak: pio_out %d %d\n", phase, count);
 
 	icmd = *(sc->sci_icmd) & SCI_ICMD_RMASK;
 
@@ -329,7 +329,7 @@ oak_pio_in(sc, phase, count, data)
 	register int		resid;
 	register int		error;
 
-	kprintf("oak: pio_in %d %d\n", phase, count);
+	printf("oak: pio_in %d %d\n", phase, count);
 
 	icmd = *(sc->sci_icmd) & SCI_ICMD_RMASK;
 

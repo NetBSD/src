@@ -1,4 +1,4 @@
-/* $NetBSD: beep.c,v 1.5 1996/10/11 00:07:12 christos Exp $ */
+/* $NetBSD: beep.c,v 1.6 1996/10/13 03:06:10 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -115,7 +115,7 @@ beepprobe(parent, match, aux)
 		return(1);
 		break;
 	default:
-		kprintf("beep: Unknown IOMD id=%04x", id);
+		printf("beep: Unknown IOMD id=%04x", id);
 		break;
 	}
 	return(0);
@@ -173,11 +173,11 @@ beepattach(parent, self, aux)
 	disable_irq(IRQ_DMASCH0);
 
 /*
-	kprintf(" [ buf0=%08x:%08x->%08x buf1=%08x:%08x->%08x ]",
+	printf(" [ buf0=%08x:%08x->%08x buf1=%08x:%08x->%08x ]",
 	    (u_int)sc->sc_buffer0, sc->sc_sound_cur0, sc->sc_sound_end0,
 	    (u_int)sc->sc_buffer1, sc->sc_sound_cur1, sc->sc_sound_end1);
 */
-	kprintf("\n");
+	printf("\n");
 
 /* Set sample rate to 32us */
 
@@ -258,14 +258,14 @@ beep_generate(void)
 /*	int status;*/
 
 	if (sc->sc_count > 0) {
-/*		kprintf("beep: active\n");*/
+/*		printf("beep: active\n");*/
 		return;
 	}
-/*	kprintf("beep: generate ");*/
+/*	printf("beep: generate ");*/
 	++sc->sc_count;
     
 /*	status = ReadByte(IOMD_SD0ST);
-	kprintf("st=%02x\n", status);*/
+	printf("st=%02x\n", status);*/
 	WriteByte(IOMD_SD0CR, 0x90);
 	WriteByte(IOMD_SD0CR, 0x30);
 	beepdma(sc, 0);
@@ -299,8 +299,8 @@ beepioctl(dev, cmd, data, flag, p)
 		break;
 
 	case BEEP_SET:
-		kprintf("set %08x\n", (u_int)data);
-		kprintf("set %08x %08x\n", (u_int)wave->addr, wave->size);
+		printf("set %08x\n", (u_int)data);
+		printf("set %08x %08x\n", (u_int)wave->addr, wave->size);
 		if (wave->size < 16 || wave->size > NBPG)
 			return(ENXIO);
 		copyin(wave->addr, (char *)sc->sc_buffer0, wave->size);
@@ -321,7 +321,7 @@ int
 beepintr(sc)
 	struct beep_softc *sc;
 {
-/*	kprintf("beepintr: %02x,%02x,%02x,%d\n", ReadByte(IOMD_DMARQ),
+/*	printf("beepintr: %02x,%02x,%02x,%d\n", ReadByte(IOMD_DMARQ),
 	    ReadByte(IOMD_SD0CR), ReadByte(IOMD_SD0ST), sc->sc_count);*/
 	WriteByte(IOMD_DMARQ, 0x10);
 	--sc->sc_count;
@@ -329,7 +329,7 @@ beepintr(sc)
 		WriteWord(IOMD_SD0CURB, sc->sc_sound_cur1);
 		WriteWord(IOMD_SD0ENDB, sc->sc_sound_end1 | (1 << 30));
 		disable_irq(IRQ_DMASCH0);
-/*		kprintf("stop:st=%02x\n", ReadByte(IOMD_SD0ST));*/
+/*		printf("stop:st=%02x\n", ReadByte(IOMD_SD0ST));*/
 		return(1);
 	}
 
@@ -344,9 +344,9 @@ beepdma(sc, buf)
 	int buf;
 {
 	int status;
-/*	kprintf("beep:dma %d", buf);    */
+/*	printf("beep:dma %d", buf);    */
 	status = ReadByte(IOMD_SD0ST);
-/*	kprintf("st=%02x\n", status);*/
+/*	printf("st=%02x\n", status);*/
 
 	if (buf == 0) {
 		WriteWord(IOMD_SD0CURA, sc->sc_sound_cur0);
@@ -361,7 +361,7 @@ beepdma(sc, buf)
 	}
 
 /*	status = ReadByte(IOMD_SD0ST);
-	kprintf("st=%02x\n", status);*/
+	printf("st=%02x\n", status);*/
 
 	enable_irq(IRQ_DMASCH0);
 }

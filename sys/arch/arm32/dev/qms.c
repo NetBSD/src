@@ -1,4 +1,4 @@
-/* $NetBSD: qms.c,v 1.8 1996/10/11 00:07:27 christos Exp $ */
+/* $NetBSD: qms.c,v 1.9 1996/10/13 03:06:28 christos Exp $ */
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -119,7 +119,7 @@ quadmouseprobe(parent, match, aux)
 		return(1);
 		break;
 	default:
-		kprintf("quadmouse: Unknown IOMD id=%04x", id);
+		printf("quadmouse: Unknown IOMD id=%04x", id);
 		break;
 	}
 
@@ -172,7 +172,7 @@ quadmouseattach(parent, self, aux)
 	WriteWord(IOMD_MOUSEX, sc->origx);
 	WriteWord(IOMD_MOUSEY, sc->origy);
     
-	kprintf("\n");
+	printf("\n");
 }
 
 

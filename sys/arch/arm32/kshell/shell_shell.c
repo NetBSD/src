@@ -1,4 +1,4 @@
-/* $NetBSD: shell_shell.c,v 1.8 1996/10/11 00:07:10 christos Exp $ */
+/* $NetBSD: shell_shell.c,v 1.9 1996/10/13 03:06:08 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -146,7 +146,7 @@ shell_poke(argc, argv)
 	u_int data;
 
 	if (argc < 3) {
-		kprintf("Syntax: poke[bw] <addr> <data>\n\r");
+		printf("Syntax: poke[bw] <addr> <data>\n\r");
 		return;
 	}
 
@@ -173,7 +173,7 @@ shell_peek(argc, argv)
 	u_int data;
 
 	if (argc < 2) {
-		kprintf("Syntax: peek[bw] <addr>\n\r");
+		printf("Syntax: peek[bw] <addr>\n\r");
 		return;
 	}
 
@@ -186,7 +186,7 @@ shell_peek(argc, argv)
 	else
 		data = ReadWord(addr);
 
-	kprintf("%08x : %08x\n\r", addr, data);
+	printf("%08x : %08x\n\r", addr, data);
 }
 
 
@@ -201,7 +201,7 @@ shell_dumpb(argc, argv)
 	int count;
 
 	if (argc < 2) {
-		kprintf("Syntax: dumpb <addr> [<bytes>]\n\r");
+		printf("Syntax: dumpb <addr> [<bytes>]\n\r");
 		return;
 	}
 
@@ -229,7 +229,7 @@ shell_dumpw(argc, argv)
 	int count;
 
 	if (argc < 2) {
-		kprintf("Syntax: dumpw <addr> [<bytes>]\n\r");
+		printf("Syntax: dumpw <addr> [<bytes>]\n\r");
 		return;
 	}
 
@@ -256,7 +256,7 @@ shell_vmmap(argc, argv)
 	u_char *addr;
 
 	if (argc < 2) {
-		kprintf("Syntax: vmmap <map addr>\n\r");
+		printf("Syntax: vmmap <map addr>\n\r");
 		return;
 	}
 
@@ -278,7 +278,7 @@ shell_pmap(argc, argv)
 	u_char *addr;
 
 	if (argc < 2) {
-		kprintf("Syntax: pmap <pmap addr>\n\r");
+		printf("Syntax: pmap <pmap addr>\n\r");
 		return;
 	}
 
@@ -309,7 +309,7 @@ shell_devices(argc, argv)
 	int loop;
 	char *state;
 
-	kprintf(" driver  unit state     name\n");
+	printf(" driver  unit state     name\n");
 	for (cf = cfdata; cf->cf_driver; ++cf) {
 		cd = cf->cf_driver;
 		if (cf->cf_fstate & FSTATE_FOUND)
@@ -317,18 +317,18 @@ shell_devices(argc, argv)
 		else
 			state = "NOT FOUND";
 
-		kprintf("%08x  %2d  %s %s\n", (u_int)cd, (u_int)cf->cf_unit,
+		printf("%08x  %2d  %s %s\n", (u_int)cd, (u_int)cf->cf_unit,
 		    state, cd->cd_name);
 
 		if (cf->cf_fstate & FSTATE_FOUND) {
 			for (loop = 0; loop < cd->cd_ndevs; ++loop) {
 				dv = (struct device *)cd->cd_devs[loop];
 				if (dv != 0)
-					kprintf("                        %s (%08x)\n",
+					printf("                        %s (%08x)\n",
 					    dv->dv_xname, (u_int) dv);
 			}
 		}
-		kprintf("\n");
+		printf("\n");
 	} 
 }
 
@@ -338,7 +338,7 @@ shell_reboot(argc, argv)
 	int argc;
 	char *argv[];	
 {
-	kprintf("Running shutdown hooks ...\n");
+	printf("Running shutdown hooks ...\n");
 	doshutdownhooks();
 
 	IRQdisable;
@@ -373,37 +373,37 @@ shell_vmstat(argc, argv)
 	struct vmmeter sum;
     
 	sum = cnt;
-	(void)kprintf("%9u cpu context switches\n", sum.v_swtch);
-	(void)kprintf("%9u device interrupts\n", sum.v_intr);
-	(void)kprintf("%9u software interrupts\n", sum.v_soft);
-	(void)kprintf("%9u traps\n", sum.v_trap);
-	(void)kprintf("%9u system calls\n", sum.v_syscall);
-	(void)kprintf("%9u total faults taken\n", sum.v_faults);
-	(void)kprintf("%9u swap ins\n", sum.v_swpin);
-	(void)kprintf("%9u swap outs\n", sum.v_swpout);
-	(void)kprintf("%9u pages swapped in\n", sum.v_pswpin / CLSIZE);
-	(void)kprintf("%9u pages swapped out\n", sum.v_pswpout / CLSIZE);
-	(void)kprintf("%9u page ins\n", sum.v_pageins);
-	(void)kprintf("%9u page outs\n", sum.v_pageouts);
-	(void)kprintf("%9u pages paged in\n", sum.v_pgpgin);
-	(void)kprintf("%9u pages paged out\n", sum.v_pgpgout);
-	(void)kprintf("%9u pages reactivated\n", sum.v_reactivated);
-	(void)kprintf("%9u intransit blocking page faults\n", sum.v_intrans);
-	(void)kprintf("%9u zero fill pages created\n", sum.v_nzfod / CLSIZE);
-	(void)kprintf("%9u zero fill page faults\n", sum.v_zfod / CLSIZE);
-	(void)kprintf("%9u pages examined by the clock daemon\n", sum.v_scan);
-	(void)kprintf("%9u revolutions of the clock hand\n", sum.v_rev);
-	(void)kprintf("%9u VM object cache lookups\n", sum.v_lookups);
-	(void)kprintf("%9u VM object hits\n", sum.v_hits);
-	(void)kprintf("%9u total VM faults taken\n", sum.v_vm_faults);
-	(void)kprintf("%9u copy-on-write faults\n", sum.v_cow_faults);
-	(void)kprintf("%9u pages freed by daemon\n", sum.v_dfree);
-	(void)kprintf("%9u pages freed by exiting processes\n", sum.v_pfree);
-	(void)kprintf("%9u pages free\n", sum.v_free_count);
-	(void)kprintf("%9u pages wired down\n", sum.v_wire_count);
-	(void)kprintf("%9u pages active\n", sum.v_active_count);
-	(void)kprintf("%9u pages inactive\n", sum.v_inactive_count);
-	(void)kprintf("%9u bytes per page\n", sum.v_page_size);
+	(void)printf("%9u cpu context switches\n", sum.v_swtch);
+	(void)printf("%9u device interrupts\n", sum.v_intr);
+	(void)printf("%9u software interrupts\n", sum.v_soft);
+	(void)printf("%9u traps\n", sum.v_trap);
+	(void)printf("%9u system calls\n", sum.v_syscall);
+	(void)printf("%9u total faults taken\n", sum.v_faults);
+	(void)printf("%9u swap ins\n", sum.v_swpin);
+	(void)printf("%9u swap outs\n", sum.v_swpout);
+	(void)printf("%9u pages swapped in\n", sum.v_pswpin / CLSIZE);
+	(void)printf("%9u pages swapped out\n", sum.v_pswpout / CLSIZE);
+	(void)printf("%9u page ins\n", sum.v_pageins);
+	(void)printf("%9u page outs\n", sum.v_pageouts);
+	(void)printf("%9u pages paged in\n", sum.v_pgpgin);
+	(void)printf("%9u pages paged out\n", sum.v_pgpgout);
+	(void)printf("%9u pages reactivated\n", sum.v_reactivated);
+	(void)printf("%9u intransit blocking page faults\n", sum.v_intrans);
+	(void)printf("%9u zero fill pages created\n", sum.v_nzfod / CLSIZE);
+	(void)printf("%9u zero fill page faults\n", sum.v_zfod / CLSIZE);
+	(void)printf("%9u pages examined by the clock daemon\n", sum.v_scan);
+	(void)printf("%9u revolutions of the clock hand\n", sum.v_rev);
+	(void)printf("%9u VM object cache lookups\n", sum.v_lookups);
+	(void)printf("%9u VM object hits\n", sum.v_hits);
+	(void)printf("%9u total VM faults taken\n", sum.v_vm_faults);
+	(void)printf("%9u copy-on-write faults\n", sum.v_cow_faults);
+	(void)printf("%9u pages freed by daemon\n", sum.v_dfree);
+	(void)printf("%9u pages freed by exiting processes\n", sum.v_pfree);
+	(void)printf("%9u pages free\n", sum.v_free_count);
+	(void)printf("%9u pages wired down\n", sum.v_wire_count);
+	(void)printf("%9u pages active\n", sum.v_active_count);
+	(void)printf("%9u pages inactive\n", sum.v_inactive_count);
+	(void)printf("%9u bytes per page\n", sum.v_page_size);
 }
 
 
@@ -417,7 +417,7 @@ shell_pextract(argc, argv)
 	int pind;
 
 	if (argc < 2) {
-		kprintf("Syntax: pextract <addr>\n\r");
+		printf("Syntax: pextract <addr>\n\r");
 		return;
 	}
 
@@ -428,7 +428,7 @@ shell_pextract(argc, argv)
 	pa = pmap_extract(kernel_pmap, (vm_offset_t)addr);
 	pind = pmap_page_index(pa);
 
-	kprintf("va=%08x pa=%08x pind=%d\n", (u_int)addr, (u_int)pa, pind);
+	printf("va=%08x pa=%08x pind=%d\n", (u_int)addr, (u_int)pa, pind);
 }
 
 
@@ -440,7 +440,7 @@ shell_vnode(argc, argv)
 	struct vnode *vp;
 
 	if (argc < 2) {
-		kprintf("Syntax: vnode <vp>\n\r");
+		printf("Syntax: vnode <vp>\n\r");
 		return;
 	}
 
@@ -448,12 +448,12 @@ shell_vnode(argc, argv)
 
 	vp = (struct vnode *)readhex(argv[1]);
 
-	kprintf("vp = %08x\n", (u_int)vp);
-	kprintf("vp->v_type = %d\n", vp->v_type);
-	kprintf("vp->v_flag = %ld\n", vp->v_flag);
-	kprintf("vp->v_usecount = %d\n", vp->v_usecount);
-	kprintf("vp->v_writecount = %d\n", vp->v_writecount);
-	kprintf("vp->v_numoutput = %ld\n", vp->v_numoutput);
+	printf("vp = %08x\n", (u_int)vp);
+	printf("vp->v_type = %d\n", vp->v_type);
+	printf("vp->v_flag = %ld\n", vp->v_flag);
+	printf("vp->v_usecount = %d\n", vp->v_usecount);
+	printf("vp->v_writecount = %d\n", vp->v_writecount);
+	printf("vp->v_numoutput = %ld\n", vp->v_numoutput);
 
 	vprint("vnode:", vp);
 }
@@ -467,7 +467,7 @@ shell_buf(argc, argv)
 	struct buf *bp;
 
 	if (argc < 2) {
-		kprintf("Syntax: buf <bp>\n\r");
+		printf("Syntax: buf <bp>\n\r");
 		return;
 	}
 
@@ -475,20 +475,20 @@ shell_buf(argc, argv)
 
 	bp = (struct buf *)readhex(argv[1]);
 
-	kprintf("buf pointer=%08x\n", (u_int)bp);
+	printf("buf pointer=%08x\n", (u_int)bp);
 	if (bp->b_proc)
-		kprintf("proc=%08x pid=%d\n", (u_int)bp->b_proc, bp->b_proc->p_pid);
+		printf("proc=%08x pid=%d\n", (u_int)bp->b_proc, bp->b_proc->p_pid);
 	
-	kprintf("flags=%08x\n", (u_int)bp->b_proc);
-	kprintf("b_error=%d\n", bp->b_error);
-	kprintf("b_bufsize=%08x\n", (u_int)bp->b_bufsize);
-	kprintf("b_bcount=%08x\n", (u_int)bp->b_bcount);
-	kprintf("b_resid=%d\n", (int)bp->b_resid);
-	kprintf("b_bdev=%04x\n", bp->b_dev);
-	kprintf("b_baddr=%08x\n", (u_int)bp->b_un.b_addr);
-	kprintf("b_lblkno=%08x\n", (u_int)bp->b_lblkno);
-	kprintf("b_blkno=%08x\n", bp->b_blkno);
-	kprintf("b_vp=%08x\n", (u_int)bp->b_vp);
+	printf("flags=%08x\n", (u_int)bp->b_proc);
+	printf("b_error=%d\n", bp->b_error);
+	printf("b_bufsize=%08x\n", (u_int)bp->b_bufsize);
+	printf("b_bcount=%08x\n", (u_int)bp->b_bcount);
+	printf("b_resid=%d\n", (int)bp->b_resid);
+	printf("b_bdev=%04x\n", bp->b_dev);
+	printf("b_baddr=%08x\n", (u_int)bp->b_un.b_addr);
+	printf("b_lblkno=%08x\n", (u_int)bp->b_lblkno);
+	printf("b_blkno=%08x\n", bp->b_blkno);
+	printf("b_vp=%08x\n", (u_int)bp->b_vp);
 }
 
 
@@ -511,7 +511,7 @@ shell_vndbuf(argc, argv)
 	struct vnode *vp;
 
 	if (argc < 2) {
-		kprintf("Syntax: vndbuf <vp>\n\r");
+		printf("Syntax: vndbuf <vp>\n\r");
 		return;
 	}
 
@@ -531,7 +531,7 @@ shell_vncbuf(argc, argv)
 	struct vnode *vp;
 
 	if (argc < 2) {
-		kprintf("Syntax: vndbuf <vp>\n\r");
+		printf("Syntax: vndbuf <vp>\n\r");
 		return;
 	}
 
@@ -555,13 +555,13 @@ shell()
 	int args;
 	char *argv[20];
 
-	kprintf("\nRiscBSD debug/monitor shell\n");
-	kprintf("CTRL-D, exit or reboot to terminate\n\n");
+	printf("\nRiscBSD debug/monitor shell\n");
+	printf("CTRL-D, exit or reboot to terminate\n\n");
 
 	do {
 /* print prompt */
 
-		kprintf("kshell> ");
+		printf("kshell> ");
 
 /* Read line from keyboard */
 
@@ -688,39 +688,39 @@ shell()
 #endif
 		else if (strcmp(argv[0], "help") == 0
 		    || strcmp(argv[0], "?") == 0) {
-			kprintf("peekb <hexaddr>\r\n");
-			kprintf("pokeb <hexaddr> <data>\r\n");
-			kprintf("peekw <hexaddr>\r\n");
-			kprintf("pokew <hexaddr <data>\r\n");
-			kprintf("dis <hexaddr>\r\n");
-			kprintf("dumpb <hexaddr> [length]\r\n");
-			kprintf("dumpw <hexaddr> [length]\r\n");
-			kprintf("dump <hexaddr> [length]\r\n");
-			kprintf("reboot\r\n");
-			kprintf("qs\r\n");
-			kprintf("ps [m]\r\n");
-			kprintf("vmstat\n");
-			kprintf("listfs\n");
-			kprintf("devices\n");
-			kprintf("callouts\n");
-			kprintf("prompt\r\n");
-			kprintf("vmmap <vmmap addr>\r\n");
-			kprintf("pmap <pmap addr>\r\n");
-			kprintf("pdstat\r\n");
-			kprintf("flush\r\n");
-			kprintf("exit\r\n");
-			kprintf("forceboot\r\n");
-			kprintf("dumppvs\r\n");
-			kprintf("pextract <phys addr>\r\n");
-			kprintf("vnode <vp>\r\n");
-			kprintf("buf <bp>\r\n");
+			printf("peekb <hexaddr>\r\n");
+			printf("pokeb <hexaddr> <data>\r\n");
+			printf("peekw <hexaddr>\r\n");
+			printf("pokew <hexaddr <data>\r\n");
+			printf("dis <hexaddr>\r\n");
+			printf("dumpb <hexaddr> [length]\r\n");
+			printf("dumpw <hexaddr> [length]\r\n");
+			printf("dump <hexaddr> [length]\r\n");
+			printf("reboot\r\n");
+			printf("qs\r\n");
+			printf("ps [m]\r\n");
+			printf("vmstat\n");
+			printf("listfs\n");
+			printf("devices\n");
+			printf("callouts\n");
+			printf("prompt\r\n");
+			printf("vmmap <vmmap addr>\r\n");
+			printf("pmap <pmap addr>\r\n");
+			printf("pdstat\r\n");
+			printf("flush\r\n");
+			printf("exit\r\n");
+			printf("forceboot\r\n");
+			printf("dumppvs\r\n");
+			printf("pextract <phys addr>\r\n");
+			printf("vnode <vp>\r\n");
+			printf("buf <bp>\r\n");
 #if NASC > 0
-			kprintf("ascdump\r\n");
+			printf("ascdump\r\n");
 #endif
 #ifdef XXX1
-			kprintf("vndbuf\r\n");
-			kprintf("vncbuf\r\n");
-			kprintf("bufstats\r\n");
+			printf("vndbuf\r\n");
+			printf("vncbuf\r\n");
+			printf("bufstats\r\n");
 #endif
 		}
 	} while (!quit);

@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.17 1996/10/10 23:55:27 christos Exp $	*/
+/*	$NetBSD: afsc.c,v 1.18 1996/10/13 03:06:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -135,7 +135,7 @@ afscattach(pdp, dp, auxp)
 	struct zbus_args *zap;
 	siop_regmap_p rp;
 
-	kprintf("\n");
+	printf("\n");
 
 	zap = auxp;
 
