@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.47 2000/09/07 20:31:02 jeffs Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.48 2000/09/08 07:24:42 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1220,16 +1220,20 @@ LEAF_NOPROFILE(mips3_TLBMissException)
 	eret
 
 outofworld:
-	/* Ensure we have a valid sp so panic has a chance */
-	la	a0, 9f				# string
-	la	t0,_C_LABEL(panic)
+	/* eret to panic so shutdown can use K2.  Try to ensure valid $sp. */
+	la	a0,_C_LABEL(panic)
 	dmfc0	a2, MIPS_COP_0_EXC_PC
 	move	a1, sp
 	sll	k0, k0, PGSHIFT
-	dmtc0	t0, MIPS_COP_0_EXC_PC		# return to panic
+	dmtc0	a0, MIPS_COP_0_EXC_PC		# return to panic
 	li	k1, VM_MIN_KERNEL_ADDRESS
 	addu	a3, k0, k1
+#if defined(DDB)
+	bltz	sp, 1f				# for ddb try to keep frame
+	nop
+#endif
 	la	sp, start			# set sp to a valid place
+1:	la	a0, 9f				# string
 	eret
 
 	MSG("TLB out of universe: ksp %p epc %p vaddr %p")
