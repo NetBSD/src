@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2002/04/12 09:31:01 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2002/05/02 15:09:42 lukem Exp $
 #
 #	etc.cats/Makefile.inc -- cats-specific etc Makefile targets
 #
@@ -8,7 +8,7 @@ KERNEL_SUFFIXES=	aout
 
 BUILD_KERNELS=		INSTALL
 
-INSTALLATION_DIRS+=	installation/kernel \
+INSTALLATION_DIRS+=	installation/kernel	\
 			installation/misc
 
 # Build the release notes and boot floppies and install them

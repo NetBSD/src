@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile.inc,v 1.5 2002/03/31 16:07:54 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/05/02 15:09:41 lukem Exp $
 #
 #	etc.acorn32/Makefile.inc -- acorn32-specific etc Makefile targets
 #
 
-KERNEL_SETS=	GENERIC NC NC_WSCONS RPC_WSCONS
-BUILD_KERNELS=	INSTALL
+KERNEL_SETS=		GENERIC NC NC_WSCONS RPC_WSCONS
 
-INSTALLATION_DIRS+=	installation/kernel \
+BUILD_KERNELS=		INSTALL
+
+INSTALLATION_DIRS+=	installation/kernel	\
 			installation/misc
 
 # Build the release notes and boot floppies and install them
