@@ -1,4 +1,5 @@
-/* $NetBSD: nextdisplay.c,v 1.1 1999/01/28 11:46:23 dbj Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.2 1999/03/24 23:15:52 dbj Exp $ */
+
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -29,7 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
 #include <sys/param.h>
@@ -40,6 +40,8 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+
+#include <next68k/next68k/nextrom.h>
 
 #include <next68k/dev/nextdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -69,19 +71,35 @@ const struct wsdisplay_emulops nextdisplay_mono_emulops = {
 };
 
 struct wsscreen_descr nextdisplay_mono = {
-	"std",
+	"mono",
 	0, 0, /* will be filled in -- XXX shouldn't, it's global */
 	&nextdisplay_mono_emulops,
 	0, 0
+};
+
+struct wsscreen_descr nextdisplay_color = {
+        "color",
+        0, 0, /* again, filled in */
+        &nextdisplay_mono_emulops,
+        0, 0
 };
 
 const struct wsscreen_descr *_nextdisplay_scrlist_mono[] = {
 	&nextdisplay_mono,
 };
 
+const struct wsscreen_descr *_nextdisplay_scrlist_color[] = {
+        &nextdisplay_color,
+};
+
 const struct wsscreen_list nextdisplay_screenlist_mono = {
 	sizeof(_nextdisplay_scrlist_mono) / sizeof(struct wsscreen_descr *),
 	_nextdisplay_scrlist_mono
+};
+
+const struct wsscreen_list nextdisplay_screenlist_color = {
+	sizeof(_nextdisplay_scrlist_color) / sizeof(struct wsscreen_descr *),
+	_nextdisplay_scrlist_color
 };
 
 static int	nextdisplay_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
@@ -101,7 +119,7 @@ const struct wsdisplay_accessops nextdisplay_accessops = {
 	nextdisplay_load_font
 };
 
-void nextdisplay_init(struct nextdisplay_config *, paddr_t);
+void nextdisplay_init(struct nextdisplay_config *, int);
 
 paddr_t nextdisplay_consaddr;
 static int nextdisplay_is_console __P((paddr_t addr));
@@ -121,27 +139,37 @@ nextdisplay_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return (1);
+	if ((rom_machine_type == NeXT_WARP9)
+	    || (rom_machine_type == NeXT_X15))
+		return (1);
+	else 
+		return (0);
 }
 
 void
-nextdisplay_init(dc, addr)
+nextdisplay_init(dc, color)
 	struct nextdisplay_config *dc;
-	paddr_t addr;
+	int color;
 {
 	struct raster *rap;
 	struct rcons *rcp;
+	paddr_t addr;
 	int i;
 
 	/* printf("in nextdisplay_init\n"); */
 
-	dc->dc_vaddr = addr;
-	dc->dc_paddr = VIDEOP(addr);
-	dc->dc_size = NEXT_P_VIDEOSIZE;
+	if (color) 
+		addr = (paddr_t)colorbase;
+	else
+		addr = (paddr_t)monobase;
 
-	dc->dc_wid = 1152;
-	dc->dc_ht = 832;
-	dc->dc_depth = 2;
+	dc->dc_vaddr = addr;
+	dc->dc_paddr = color ? COLORP(addr) : MONOP(addr);
+	dc->dc_size = color ? NEXT_P_C16_VIDEOSIZE : NEXT_P_VIDEOSIZE;
+
+	dc->dc_wid = 1152; /* XXX color */
+	dc->dc_ht = 832; /* XXX color */
+	dc->dc_depth = color ? 8 : 2; 
 	dc->dc_rowbytes = dc->dc_wid * dc->dc_depth / 8;
 
 	dc->dc_videobase = dc->dc_vaddr;
@@ -149,8 +177,8 @@ nextdisplay_init(dc, addr)
 #if 0
 	printf("intiobase at: %08x\n", intiobase);
 	printf("intiolimit at: %08x\n", intiolimit);
-	printf("videobase at: %08x\n", videobase);
-	printf("videolimit at: %08x\n", videolimit);
+	printf("videobase at: %08x\n", color ? colorbase : monobase);
+	printf("videolimit at: %08x\n", color ? colorlimit : monolimit);
 
 	printf("virtual fb at: %08x\n", dc->dc_vaddr);
 	printf("physical fb at: %08x\n", dc->dc_paddr);
@@ -165,12 +193,12 @@ nextdisplay_init(dc, addr)
 
 	/* clear the screen */
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
-		*(u_int32_t *)(dc->dc_videobase + i) = 0x00000000;
+		*(u_int32_t *)(dc->dc_videobase + i) = 0xffffffff;
 
 	rap = &dc->dc_raster;
 	rap->width = dc->dc_wid;
 	rap->height = dc->dc_ht;
-	rap->depth = 2;
+	rap->depth = color ? 8 : 2;
 	rap->linelongs = dc->dc_rowbytes / sizeof(u_int32_t);
 	rap->pixels = (u_int32_t *)dc->dc_videobase;
 
@@ -182,8 +210,13 @@ nextdisplay_init(dc, addr)
 	rcp->rc_ccolp = &rcp->rc_ccol;
 	rcons_init(rcp, 34, 80);
 
-	nextdisplay_mono.nrows = dc->dc_rcons.rc_maxrow;
-	nextdisplay_mono.ncols = dc->dc_rcons.rc_maxcol;
+	if (color) {
+		nextdisplay_color.nrows = dc->dc_rcons.rc_maxrow; 
+		nextdisplay_color.ncols = dc->dc_rcons.rc_maxcol; 
+	} else {
+		nextdisplay_mono.nrows = dc->dc_rcons.rc_maxrow; 
+		nextdisplay_mono.ncols = dc->dc_rcons.rc_maxcol; 
+	}
 }
 
 void
@@ -195,28 +228,41 @@ nextdisplay_attach(parent, self, aux)
 	struct nextdisplay_softc *sc;
 	struct wsemuldisplaydev_attach_args waa;
 	int isconsole;
+	int iscolor;
+	paddr_t addr;
 
 	sc = (struct nextdisplay_softc *)self;
 
-	printf("\n");
+	if (rom_machine_type == NeXT_WARP9C) {
+		iscolor = 1;
+		addr = (paddr_t)colorbase;
+	} else {
+		iscolor = 0;
+		addr = (paddr_t)monobase;
+	}
 
-	isconsole = nextdisplay_is_console(videobase);
+	isconsole = nextdisplay_is_console(addr);
 				
-	if( isconsole ) {
+	if (isconsole) {
 		sc->sc_dc = &nextdisplay_console_dc;
 		sc->nscreens = 1;
 	} else {
 		sc->sc_dc = (struct nextdisplay_config *)
 				malloc(sizeof(struct nextdisplay_config), M_DEVBUF, M_WAITOK);
-		nextdisplay_init(sc->sc_dc, videobase);
+		nextdisplay_init(sc->sc_dc, iscolor);
 	}
+
+	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
+	       sc->sc_dc->dc_depth);
 
 	/* initialize the raster */
 	waa.console = isconsole;
-	waa.scrdata = &nextdisplay_screenlist_mono;
+	waa.scrdata = iscolor ? &nextdisplay_screenlist_color : &nextdisplay_screenlist_mono;
 	waa.accessops = &nextdisplay_accessops;
 	waa.accesscookie = sc;
-
+#if 0
+	printf("nextdisplay: access cookie is %p\n", sc);
+#endif
 	config_found(self, &waa, wsemuldisplaydevprint);
 }
 
@@ -256,8 +302,8 @@ nextdisplay_ioctl(v, cmd, data, flag, p)
 		printf("nextdisplay_ioctl: listed but unsupported ioctl\n");
 		return ENOTTY;
 	}
-	printf("nextdisplay_ioctl: unsupported ioctl\n");
-	return -1;
+
+	return ENOTTY;
 }
 
 static int
@@ -268,6 +314,7 @@ nextdisplay_mmap(v, offset, prot)
 {
 
 	/* XXX */
+	printf("nextdisplay_mmap: failed\n");
 	return -1;
 }
 
@@ -282,15 +329,20 @@ nextdisplay_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 	struct nextdisplay_softc *sc = v;
 	long defattr;
 
+	/* only allow one screen */
 	if (sc->nscreens > 0)
 		return (ENOMEM);
 
 	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
+	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 
+			 WSATTR_REVERSE, &defattr);
 	*defattrp = defattr;
 	sc->nscreens++;
+#if 0
+	printf("nextdisplay: allocating screen\n");
+#endif
 	return (0);
 }
 
@@ -302,7 +354,7 @@ nextdisplay_free_screen(v, cookie)
 	struct nextdisplay_softc *sc = v;
 
 	if (sc->sc_dc == &nextdisplay_console_dc)
-		panic("cfb_free_screen: console");
+		panic("nextdisplay_free_screen: console");
 
 	sc->nscreens--;
 }
@@ -324,21 +376,28 @@ nextdisplay_load_font(v, cookie, font)
 }
 
 int
-nextdisplay_cnattach(addr)
-	paddr_t addr;
+nextdisplay_cnattach(void)
 {
 	struct nextdisplay_config *dc = &nextdisplay_console_dc;
 	long defattr;
+	int iscolor;
+
+	if (rom_machine_type == NeXT_WARP9C) {
+		iscolor = 1;
+		nextdisplay_consaddr = (paddr_t)colorbase;
+	} else {
+		iscolor = 0;
+		nextdisplay_consaddr = (paddr_t)monobase;
+	}
 
 	/* set up the display */
-	nextdisplay_init(&nextdisplay_console_dc, addr);
+	nextdisplay_init(&nextdisplay_console_dc, iscolor);
 
-	rcons_alloc_attr(&dc->dc_rcons, 0, 0, 0, &defattr);
+	rcons_alloc_attr(&dc->dc_rcons, 0, 0, WSATTR_REVERSE, &defattr);
 
-	wsdisplay_cnattach(&nextdisplay_mono, &dc->dc_rcons,
-			0, 0, defattr);
+	wsdisplay_cnattach(iscolor ? &nextdisplay_color : &nextdisplay_mono,
+			   &dc->dc_rcons, 0, 0, defattr);
 
-	nextdisplay_consaddr = addr;
 	dc->isconsole = 1;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.h,v 1.5 1999/01/31 18:12:14 dbj Exp $	*/
+/*	$NetBSD: nextrom.h,v 1.6 1999/03/24 23:15:59 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -247,6 +247,7 @@ extern u_char rom_boot_arg[];
 extern u_char rom_boot_info[];
 extern u_char rom_boot_file[];
 extern u_char rom_bootfile[];
+extern char rom_machine_type;
 
 extern u_int  monbootflag;
 
