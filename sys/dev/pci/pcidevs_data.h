@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.400 2002/01/30 01:53:00 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.401 2002/02/02 11:30:05 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.397 2002/01/30 01:52:32 tron Exp 
+ *	NetBSD: pcidevs,v 1.398 2002/02/02 11:28:46 tsutsui Exp 
  */
 
 /*
@@ -2672,6 +2672,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Hi/Fn",
 	    "7951",
+	},
+	{
+	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_HB1,
+	    0,
+	    "HiNT",
+	    "HB1 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE,
@@ -10015,6 +10021,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_FZJZEL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "FZ Juelich / ZEL",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_HINT, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "HiNT",
 	    NULL,
 	},
 	{
