@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.194 2000/03/06 02:31:19 mark Exp $
+$NetBSD: pcidevs,v 1.195 2000/03/09 09:50:49 jdolecek Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -516,6 +516,7 @@ vendor ADMTEK		0x1317	ADMtek
 vendor FORTEMEDIA	0x1319	Forte Media
 vendor DOMEX		0x134a	Domex
 vendor LMC		0x1376	LAN Media Corporation
+vendor CONEXANT		0x14f1	Conexant Systems
 vendor NETGEAR		0x1385	Netgear
 vendor SUNDANCETI	0x13f0	Sundance Technology
 vendor CMEDIA		0x13f6	C-Media Electronics Inc
@@ -839,6 +840,9 @@ product COMPAQ NF3P		0xf130	NetFlex 3/P
 product COMPEX NE2KETHER	0x1401	Ethernet
 product COMPEX RL100ATX		0x2011	RL100-ATX 10/100 Ethernet
 product COMPEX RL100TX		0x9881	RL100-TX 10/100 Ethernet
+
+/* Conexant Systems products  */
+product CONEXANT SOFTK56	0x2443	SoftK56 PCI Software Modem
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
@@ -1286,6 +1290,8 @@ product SOLIDUM CLASS802	0x8023 SNP8023: Classifier Engine
   
 /* Sony products */
 product	SONY	CXD1947A	0x8009	CXD1947A FireWire Host Controller
+product SONY	CXD32222	0x8039  CXD3222 OHCI i.LINK(IEEE 1394) PCI controller
+product SONY	MEMSTICK	0x808a	Memory Stick I/F Controller
 
 /* Sun Microsystems products */
 product SUN EBUS	0x1000	SPARC Ebus
