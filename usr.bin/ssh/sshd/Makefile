@@ -1,22 +1,23 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2001/02/26 20:55:42 he Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2001/12/10 23:54:20 he Exp $
 
 .include <bsd.own.mk>
 
 PROG=	sshd
-MAN=	sshd.8
+MAN=	sshd.8 moduli.5
 
 BINDIR=	/usr/sbin
 
 SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
-	pty.c log-server.c login.c servconf.c serverloop.c \
-	auth.c auth1.c auth2.c auth-options.c session.c dh.c \
-	auth-chall.c auth2-chall.c groupaccess.c
+	sshpty.c sshlogin.c servconf.c serverloop.c \
+	auth.c auth1.c auth2.c auth-options.c session.c \
+	auth-chall.c auth2-chall.c groupaccess.c \
+	auth-skey.c auth-bsdauth.c
 
 .if (${MKKERBEROS} != "no")
-# XXX needs krb5
-#CPPFLAGS+=-DAFS
-#LDADD+=	-lkafs
-#DPADD+=	${LIBKAFS}
+CPPFLAGS+=-DKRB5 -DAFS -I${DESTDIR}/usr/include/krb5
+SRCS+=	auth-krb5.c
+LDADD+=	-lkrb5 -lkafs -lasn1
+DPADD+=	${LIBKRB5} ${LIBKAFS} ${LIBASN1}
 
 CPPFLAGS+=-DKRB4 -I${DESTDIR}/usr/include/kerberosIV
 SRCS+=	auth-krb4.c
@@ -26,8 +27,8 @@ DPADD+=	${LIBKRB} ${LIBCOM_ERR} ${LIBROKEN}
 
 .include <bsd.prog.mk>
 
-LDADD+=	-lcrypto -lutil -lz
-DPADD+=	${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
+LDADD+=	-lcrypt -lcrypto -lutil -lz
+DPADD+=	${LIBCRYPT} ${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
 
 CPPFLAGS+=-DLIBWRAP
 LDADD+=	-lwrap
