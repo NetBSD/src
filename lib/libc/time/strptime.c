@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.17 1998/11/15 17:11:06 christos Exp $	*/
+/*	$NetBSD: strptime.c,v 1.17.2.1 1999/04/29 14:39:43 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.17 1998/11/15 17:11:06 christos Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.17.2.1 1999/04/29 14:39:43 perry Exp $");
 #endif
 
 #include "namespace.h"
@@ -130,7 +130,7 @@ literal:
 			if (!(bp = strptime(bp, "%m/%d/%y", tm)))
 				return (0);
 			break;
-	
+
 		case 'R':	/* The time as "%H:%M". */
 			LEGAL_ALT(0);
 			if (!(bp = strptime(bp, "%H:%M", tm)))
@@ -321,7 +321,7 @@ literal:
 
 		case 'Y':	/* The year. */
 			LEGAL_ALT(ALT_E);
-			if (!(conv_num(&bp, &i, 0, INT_MAX)))
+			if (!(conv_num(&bp, &i, 0, 9999)))
 				return (0);
 
 			tm->tm_year = i - TM_YEAR_BASE;
@@ -372,18 +372,23 @@ conv_num(buf, dest, llim, ulim)
 	int *dest;
 	int llim, ulim;
 {
-	*dest = 0;
+	int result = 0;
+
+	/* The limit also determines the number of valid digits. */
+	int rulim = ulim;
 
 	if (**buf < '0' || **buf > '9')
 		return (0);
 
 	do {
-		*dest *= 10;
-		*dest += *(*buf)++ - '0';
-	} while ((*dest * 10 <= ulim) && **buf >= '0' && **buf <= '9');
+		result *= 10;
+		result += *(*buf)++ - '0';
+		rulim /= 10;
+	} while ((result * 10 <= ulim) && rulim && **buf >= '0' && **buf <= '9');
 
-	if (*dest < llim || *dest > ulim)
+	if (result < llim || result > ulim)
 		return (0);
 
+	*dest = result;
 	return (1);
 }
