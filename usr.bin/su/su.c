@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.16 1997/03/04 00:21:13 explorer Exp $	*/
+/*	$NetBSD: su.c,v 1.17 1997/06/27 17:01:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,23 +43,25 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-static char rcsid[] = "$NetBSD: su.c,v 1.16 1997/03/04 00:21:13 explorer Exp $";
+static char rcsid[] = "$NetBSD: su.c,v 1.17 1997/06/27 17:01:55 lukem Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <syslog.h>
-#include <stdio.h>
 #include <err.h>
 #include <errno.h>
-#include <stdlib.h>
-#include <pwd.h>
 #include <grp.h>
-#include <string.h>
-#include <unistd.h>
 #include <paths.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <skey.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <tzfile.h>
+#include <unistd.h>
 
 #ifdef KERBEROS
 #include <kerberosIV/des.h>
@@ -92,8 +94,9 @@ main(argc, argv)
 	extern char *__progname;
 	extern char **environ;
 	struct passwd *pwd;
-	char *p, **g;
+	char *p;
 	struct group *gr;
+	struct timeval tp;
 	uid_t ruid;
 	int asme, ch, asthem, fastlogin, prio;
 	enum { UNSET, YES, NO } iscsh = UNSET;
@@ -101,6 +104,7 @@ main(argc, argv)
 	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
 
 	asme = asthem = fastlogin = 0;
+	shell = NULL;
 	while ((ch = getopt(argc, argv, ARGSTR)) != EOF)
 		switch((char)ch) {
 #ifdef KERBEROS
@@ -168,18 +172,21 @@ main(argc, argv)
 	    if (!use_kerberos || kerberos(username, user, pwd->pw_uid))
 #endif
 	    {
-		/* only allow those in group zero to su to root, if group
-		 * zero has any members. */
+		/* only allow those in group zero to su to root,
+		   but only if that group has any members. */
 		if (pwd->pw_uid == 0 && (gr = getgrgid((gid_t)0)) &&
 		    *gr->gr_mem) {
-			for (g = gr->gr_mem;; ++g) {
-				if (!*g)
-					errx(1, 
+			gid_t groups[NGROUPS];
+			int ngroups;
+
+			ngroups = getgroups(NGROUPS, groups);
+			while (--ngroups >= 0)
+				if (groups[ngroups] == gr->gr_gid)
+					break;
+			if (ngroups < 0)
+				errx(1, 
 			    "you are not in the correct group to su %s.",
 					    user);
-				if (!strcmp(username, *g))
-					break;
-			}
 		}
 		/* if target requires a password, verify it */
 		if (*pwd->pw_passwd) {
@@ -220,7 +227,7 @@ badlogin:
 		iscsh = NO;
 	}
 
-	if (p = strrchr(shell, '/'))
+	if ((p = strrchr(shell, '/')) != NULL)
 		avshell = p+1;
 	else
 		avshell = shell;
@@ -273,6 +280,29 @@ badlogin:
 	}
 	*np = avshell;
 
+	if (pwd->pw_change || pwd->pw_expire)
+		(void)gettimeofday(&tp, (struct timezone *)NULL);
+	if (pwd->pw_change)
+		if (tp.tv_sec >= pwd->pw_change) {
+			(void)printf("%s -- %s's password has expired.\n",
+				     (ruid ? "Sorry" : "Note"), user);
+			if (ruid != 0)
+				exit(1);
+		} else if (pwd->pw_change - tp.tv_sec <
+		    _PASSWORD_WARNDAYS * SECSPERDAY)
+			(void)printf("Warning: %s's password expires on %s",
+				     user, ctime(&pwd->pw_change));
+	if (pwd->pw_expire)
+		if (tp.tv_sec >= pwd->pw_expire) {
+			(void)printf("%s -- %s's account has expired.\n",
+				     (ruid ? "Sorry" : "Note"), user);
+			if (ruid != 0)
+				exit(1);
+		} else if (pwd->pw_expire - tp.tv_sec <
+		    _PASSWORD_WARNDAYS * SECSPERDAY)
+			(void)printf("Warning: %s's account expires on %s",
+				     user, ctime(&pwd->pw_expire));
+  
 	if (ruid != 0)
 		syslog(LOG_NOTICE|LOG_AUTH, "%s to %s%s",
 		    username, user, ontty());
@@ -303,7 +333,7 @@ ontty()
 	static char buf[MAXPATHLEN + 4];
 
 	buf[0] = 0;
-	if (p = ttyname(STDERR_FILENO))
+	if ((p = ttyname(STDERR_FILENO)) != NULL)
 		(void)snprintf(buf, sizeof buf, " on %s", p);
 	return (buf);
 }
@@ -356,7 +386,7 @@ kerberos(username, user, uid)
 	 */
 	kerno = krb_get_pw_in_tkt((uid == 0 ? username : user),
 		(uid == 0 ? "root" : ""), lrealm,
-	    	"krbtgt", lrealm, DEFAULT_TKT_LIFE, 0);
+		"krbtgt", lrealm, DEFAULT_TKT_LIFE, 0);
 
 	if (kerno != KSUCCESS) {
 		if (kerno == KDC_PR_UNKNOWN) {

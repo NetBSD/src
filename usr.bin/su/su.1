@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.11 1997/03/08 14:21:16 mouse Exp $
+.\"	$NetBSD: su.1,v 1.12 1997/06/27 17:01:53 lukem Exp $
 .\"
 .Dd April 18, 1994
 .Dt SU 1
@@ -191,11 +191,5 @@ A
 command appeared in
 .At v7 .
 .Sh BUGS
-Being a member of group 0 as set in
-.Pa /etc/passwd
-is not enough; the login ID must be listed in the group 0 line of
-.Pa /etc/group
-to be allowed to su to root.
-.Pp
 There should be a way of setting policy so that users can su to root
 without being a member of group 0, if the sysadmin wishes.
