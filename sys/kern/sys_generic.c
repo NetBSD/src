@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.53 2001/02/26 22:28:23 lukem Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.54 2001/02/27 04:44:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -864,6 +864,7 @@ pollscan(struct proc *p, struct pollfd *fds, int nfd, register_t *retval)
 	struct file	*fp;
 
 	fdp = p->p_fd;
+	n = 0;
 	for (i = 0; i < nfd; i++, fds++) {
 		if ((u_int)fds->fd >= fdp->fd_nfiles) {
 			fds->revents = POLLNVAL;
