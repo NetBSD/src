@@ -1,4 +1,4 @@
-/* $NetBSD: irongatereg.h,v 1.1 2000/06/01 20:30:31 thorpej Exp $ */
+/* $NetBSD: irongatereg.h,v 1.2 2000/06/26 02:42:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,6 +62,13 @@
  * PCI I/O:				0001.fc00.0000
  * AMD 751 (also in PCI config space):	0001.fe00.0000
  */
+
+/*
+ * This hack allows us to map the I/O address space without using
+ * the KSEG sign extension hack.
+ */
+#define	IRONGATE_PHYSADDR(x)						\
+	(((x) & ~0x0100##0000##0000) | 0x0800##0000##0000)
 
 #define	IRONGATE_KSEG_BIAS	0x0100##0000##0000UL
 
