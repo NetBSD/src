@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.35 2002/01/24 07:45:33 lukem Exp $	*/
+/*	$NetBSD: options.c,v 1.36 2002/01/26 02:22:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.35 2002/01/24 07:45:33 lukem Exp $");
+__RCSID("$NetBSD: options.c,v 1.36 2002/01/26 02:22:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -479,8 +479,12 @@ pax_options(int argc, char **argv)
 			/*
 			 * Use alternative directory for user db lookups.
 			 */
-			if (!setup_getid(optarg))
+			if (!setup_getid(optarg)) {
+				tty_warn(1,
+			    "Unable to use user and group databases in `%s'",
+				    optarg);
 				pax_usage();
+			}
 			break;
 		case 'O':
 			/*
