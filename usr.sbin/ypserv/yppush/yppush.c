@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.15 2001/01/11 00:16:11 lukem Exp $	*/
+/*	$NetBSD: yppush.c,v 1.16 2001/01/11 01:54:08 lukem Exp $	*/
 
 /*
  *
@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include <rpc/rpc.h>
