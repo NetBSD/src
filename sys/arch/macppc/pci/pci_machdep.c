@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.8 1999/03/15 03:03:10 tsubai Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9 1999/05/05 04:32:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -88,6 +88,8 @@ pci_attach_hook(parent, self, pba)
 	struct device *parent, *self;
 	struct pcibus_attach_args *pba;
 {
+
+	/* Nothing to do. */
 }
 
 int
@@ -113,6 +115,7 @@ pci_make_tag(pc, bus, device, function)
 	if (bus >= 256 || device >= 32 || function >= 8)
 		panic("pci_make_tag: bad request");
 
+	/* XXX magic number */
 	tag = 0x80000000 | (bus << 16) | (device << 11) | (function << 8);
 
 	return tag;
@@ -124,14 +127,13 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 	pcitag_t tag;
 	int *bp, *dp, *fp;
 {
+
 	if (bp != NULL)
 		*bp = (tag >> 16) & 0xff;
 	if (dp != NULL)
 		*dp = (tag >> 11) & 0x1f;
 	if (fp != NULL)
-		*fp = (tag >> 8) & 0x7;
-
-	return;
+		*fp = (tag >> 8) & 0x07;
 }
 
 pcireg_t
@@ -142,6 +144,9 @@ pci_conf_read(pc, tag, reg)
 {
 	pcireg_t data;
 	struct pci_bridge *r;
+	int bus, dev, func, s;
+
+	s = splhigh();
 
 	if (pc == PCI_CHIPSET_MPC106) {
 		r = &pci_bridges[0];
@@ -152,8 +157,6 @@ pci_conf_read(pc, tag, reg)
 			data = in32rb(r->data);
 		out32rb(r->addr, 0);
 	} else {
-		int bus, dev, func;
-
 		pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
 		r = &pci_bridges[pc];
@@ -184,6 +187,8 @@ pci_conf_read(pc, tag, reg)
 		DELAY(10);
 	}
 
+	splx(s);
+
 	return data;
 }
 
@@ -194,7 +199,10 @@ pci_conf_write(pc, tag, reg, data)
 	int reg;
 	pcireg_t data;
 {
-	struct pci_bridge *r = &pci_bridges[pc];
+	struct pci_bridge *r;
+	int bus, dev, func, s;
+
+	s = splhigh();
 
 	if (pc == PCI_CHIPSET_MPC106) {
 		r = &pci_bridges[0];
@@ -203,10 +211,9 @@ pci_conf_write(pc, tag, reg, data)
 		out32rb(r->data, data);
 		out32rb(r->addr, 0);
 	} else {
-		int bus, dev, func;
+		r = &pci_bridges[pc];
 
 		pci_decompose_tag(pc, tag, &bus, &dev, &func);
-		r = &pci_bridges[pc];
 
 		if (func > 7)
 			panic("pci_conf_write: func > 7");
@@ -223,6 +230,8 @@ pci_conf_write(pc, tag, reg, data)
 		out32rb(r->addr, 0);
 		DELAY(10);
 	}
+
+	splx(s);
 }
 
 int
