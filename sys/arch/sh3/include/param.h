@@ -1,6 +1,7 @@
-/*	$NetBSD: param.h,v 1.8 2002/03/10 07:45:32 uch Exp $	*/
+/*	$NetBSD: param.h,v 1.9 2002/03/17 14:02:04 uch Exp $	*/
 
 /*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -74,8 +75,15 @@
 /*
  * u-space.
  */
-#define	UPAGES		4		/* pages of u-area */
+#define	UPAGES		3		/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
+#if UPAGES == 1
+#error "too small u-area"
+#elif UPAGES == 2
+#define	P1_STACK	/* kernel stack is P1-area */
+#else
+#undef	P1_STACK	/* kernel stack is P3-area */
+#endif
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */

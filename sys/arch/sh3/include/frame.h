@@ -1,6 +1,7 @@
-/*	$NetBSD: frame.h,v 1.3 2002/02/24 18:19:42 uch Exp $	*/
+/*	$NetBSD: frame.h,v 1.4 2002/03/17 14:02:04 uch Exp $	*/
 
 /*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -61,7 +62,6 @@ struct trapframe {
 	int	tf_macl;
 	int	tf_mach;
 	int	tf_pr;
-	int	tf_r14;
 	int	tf_r13;
 	int	tf_r12;
 	int	tf_r11;
@@ -77,6 +77,7 @@ struct trapframe {
 	int	tf_r1;
 	int	tf_r0;
 	int	tf_r15;
+	int	tf_r14;
 };
 
 /*
@@ -84,6 +85,7 @@ struct trapframe {
  */
 struct switchframe {
 	int	sf_ppl;
+	int	sf_r15;
 	int	sf_r14;
 	int	sf_r13;
 	int	sf_r12;
@@ -92,6 +94,7 @@ struct switchframe {
 	int	sf_r9;
 	int	sf_r8;
 	int	sf_pr;
+	int	sf_r6_bank;
 };
 
 /*

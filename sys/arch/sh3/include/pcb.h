@@ -1,6 +1,7 @@
-/*	$NetBSD: pcb.h,v 1.3 2002/03/03 14:31:24 uch Exp $	*/
+/*	$NetBSD: pcb.h,v 1.4 2002/03/17 14:02:04 uch Exp $	*/
 
 /*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -47,40 +48,12 @@
 #ifndef _SH3_PCB_H_
 #define _SH3_PCB_H_
 
-#include <sys/signal.h>
-#include <machine/psl.h>
+#include <sh3/frame.h>
 
 struct pcb {
-	int	r0;
-	int	r1;
-	int	r2;
-	int	r3;
-	int	r4;
-	int	r5;
-	int	r6;
-	int	r7;
-	int	r8;
-	int	r9;
-	int	r10;
-	int	r11;
-	int	r12;
-	int	r13;
-	int	r14;
-	int	r15;
-	int	sr;
-	int	ssr;
-	int	gbr;
-	int	mach;
-	int	macl;
-	int	pr;
-	int	vbr;
-	int	pc;
-	int	spc;
-	int	pcb_tss_sel;
-/*
- * Software pcb (extension)
- */
-	int	kr15;		/* stack pointer in kernel mode */
+	struct switchframe pcb_sf;
+	vaddr_t pcb_sp;		/* kernel stack top */
+	vaddr_t pcb_fp;		/* frame top */
 	int	pageDirReg;	/* Page Directory of this process */
 	int	pcb_flags;
 	caddr_t	pcb_onfault;	/* copyin/out fault recovery */
@@ -97,7 +70,7 @@ struct md_coredump {
 };
 
 #ifdef _KERNEL
-struct pcb *curpcb;		/* our current running pcb */
+extern struct pcb *curpcb;		/* our current running pcb */
 #endif
 
 #endif /* _SH3_PCB_H_ */
