@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.77 1995/08/12 22:58:01 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.78 1995/09/26 19:27:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -65,12 +65,6 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
-
-#ifdef	DDB
-int     Debugger();
-#else	/* DDB */
-#define Debugger()
-#endif	/* DDB */
 
 #define	SDOUTSTANDING	2
 #define	SDRETRIES	4

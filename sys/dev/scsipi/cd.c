@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.74 1995/08/12 21:36:46 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.75 1995/09/26 19:26:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -67,12 +67,6 @@
 #include <scsi/scsi_cd.h>
 #include <scsi/scsi_disk.h>	/* rw_big and start_stop come from there */
 #include <scsi/scsiconf.h>
-
-#ifdef	DDB
-int	Debugger();
-#else	/* DDB */
-#define Debugger()
-#endif	/* DDB */
 
 #define	CDOUTSTANDING	2
 #define	CDRETRIES	1

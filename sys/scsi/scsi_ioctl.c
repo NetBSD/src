@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ioctl.c,v 1.18 1995/01/30 15:54:42 mycroft Exp $	*/
+/*	$NetBSD: scsi_ioctl.c,v 1.19 1995/09/26 19:26:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -39,6 +39,7 @@
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>

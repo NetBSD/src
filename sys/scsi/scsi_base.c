@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.29 1995/05/03 19:38:57 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.30 1995/09/26 19:26:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -35,6 +35,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
@@ -45,12 +46,6 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
-
-#ifdef DDB
-int     Debugger();
-#else	/* DDB */
-#define Debugger()
-#endif	/* DDB */
 
 void scsi_error __P((struct scsi_xfer *, int));
 
