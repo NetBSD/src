@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.13 2002/07/29 03:06:56 augustss Exp $	*/
+/*	$NetBSD: acpi.c,v 1.14 2002/07/29 03:10:16 augustss Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.13 2002/07/29 03:06:56 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.14 2002/07/29 03:10:16 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,7 +474,7 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 			if ((ad->ad_devinfo.Valid & ACPI_VALID_HID) == 0)
 				goto out;
 
-#ifdef ACPI_DEBUG
+#ifdef ACPI_EXTRA_DEBUG
 			printf("%s: HID %s found in scope %s level %d\n",
 			    sc->sc_dev.dv_xname, ad->ad_devinfo.HardwareId,
 			    as->as_name, ad->ad_level);
