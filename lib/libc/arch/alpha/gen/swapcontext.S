@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.1.2.2 2001/12/17 22:10:03 nathanw Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.1.2.3 2002/11/05 19:08:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ NESTED(swapcontext, 2, 24, ra, IM_RA|IM_A0|IM_A1, 0)
 	ldq	t0, (24-16)(sp)
 	bne	v0, Lerr
 	ldq	t1, (24- 8)(sp)
+	stq	t1, (56 + 26 * 8)(t0)	/* Adjust saved RA */
 	stq	t1, (56 + 32 * 8)(t0)	/* Adjust saved PC */
 	lda	t1, 24(sp)
 	stq	t1, (56 + 30 * 8)(t0)	/* Adjust saved SP */
