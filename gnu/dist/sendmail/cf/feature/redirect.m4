@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: redirect.m4,v 8.15 1999/08/06 01:47:36 gshapiro Exp')
+VERSIONID(`$NetBSD: redirect.m4,v 1.1.1.4 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 LOCAL_RULE_0

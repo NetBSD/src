@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: accept_unqualified_senders.m4,v 8.6 1999/02/07 07:26:07 gshapiro Exp')
+VERSIONID(`$NetBSD: accept_unqualified_senders.m4,v 1.1.1.4 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 define(`_ACCEPT_UNQUALIFIED_SENDERS_', 1)

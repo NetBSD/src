@@ -1,3 +1,9 @@
+/* $NetBSD: shmticklib.c,v 1.1.1.5 2003/06/01 14:01:30 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: shmticklib.c,v 1.1.1.5 2003/06/01 14:01:30 atatat Exp $");
+#endif
+
 /*
  * Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

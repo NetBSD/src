@@ -1,3 +1,9 @@
+/* $NetBSD: mail.local.c,v 1.1.1.10 2003/06/01 14:01:17 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: mail.local.c,v 1.1.1.10 2003/06/01 14:01:17 atatat Exp $");
+#endif
+
 /*
  * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -18,7 +24,7 @@ SM_IDSTR(copyright,
      Copyright (c) 1990, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n")
 
-SM_IDSTR(id, "@(#)Id: mail.local.c,v 8.239.2.4 2003/01/15 19:17:15 ca Exp")
+SM_IDSTR(id, "@(#)Id: mail.local.c,v 8.239.2.5 2003/03/15 23:43:20 gshapiro Exp")
 
 #include <stdlib.h>
 #include <sm/errstring.h>
@@ -1135,7 +1141,7 @@ tryagain:
 		goto err1;
 	}
 
-	/* Get the starting offset of the new message for biff. */
+	/* Get the starting offset of the new message */
 	curoff = lseek(mbfd, (off_t) 0, SEEK_END);
 	(void) sm_snprintf(biffmsg, sizeof(biffmsg), "%s@%lld\n",
 			   name, (LONGLONG_T) curoff);

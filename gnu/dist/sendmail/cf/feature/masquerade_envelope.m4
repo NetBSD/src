@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: masquerade_envelope.m4,v 8.9 1999/02/07 07:26:10 gshapiro Exp')
+VERSIONID(`$NetBSD: masquerade_envelope.m4,v 1.1.1.4 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 define(`_MASQUERADE_ENVELOPE_', 1)

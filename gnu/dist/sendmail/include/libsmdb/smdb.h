@@ -1,3 +1,4 @@
+/* $NetBSD: smdb.h,v 1.1.1.7 2003/06/01 14:01:33 atatat Exp $ */
 /*
  * Copyright (c) 1999-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

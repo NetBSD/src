@@ -4,6 +4,7 @@
 ##       All rights reserved.
 ##
 ## Id: link_hash.sh,v 1.2 2000/04/25 00:12:28 ca Exp
+## $NetBSD: link_hash.sh,v 1.1.1.3 2003/06/01 14:01:45 atatat Exp $
 ##
 #
 # ln a certificate to its hash

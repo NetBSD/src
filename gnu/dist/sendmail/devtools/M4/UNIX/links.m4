@@ -11,6 +11,7 @@ divert(-1)
 #  Definitions for Makefile construction for sendmail
 #
 #	Id: links.m4,v 8.5 1999/07/25 03:53:08 gshapiro Exp
+#	$NetBSD: links.m4,v 1.1.1.3 2003/06/01 14:01:14 atatat Exp $
 #
 divert(0)dnl
 define(`bldMAKE_SOURCE_LINK',

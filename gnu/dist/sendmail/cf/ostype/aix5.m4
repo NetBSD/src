@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: aix5.m4,v 1.1 2000/12/08 21:53:36 ca Exp')
+VERSIONID(`$NetBSD: aix5.m4,v 1.1.1.3 2003/06/01 14:01:44 atatat Exp $')
 ifdef(`LOCAL_MAILER_PATH',, `define(`LOCAL_MAILER_PATH', /bin/bellmail)')dnl
 ifdef(`LOCAL_MAILER_ARGS',, `define(`LOCAL_MAILER_ARGS', mail -F $g $u)')dnl
 _DEFIFNOT(`LOCAL_MAILER_FLAGS', `mn9')dnl

@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: use_cw_file.m4,v 8.11 2001/08/26 20:58:57 gshapiro Exp')
+VERSIONID(`$NetBSD: use_cw_file.m4,v 1.1.1.5 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 # if defined, the sendmail.cf will read the /etc/mail/local-host-names file

@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: ldap_routing.m4,v 8.10 2002/03/27 22:17:43 ca Exp')
+VERSIONID(`$NetBSD: ldap_routing.m4,v 1.1.1.5 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 # Check first two arguments.  If they aren't set, may need to warn in proto.m4

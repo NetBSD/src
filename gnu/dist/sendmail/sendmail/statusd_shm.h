@@ -1,3 +1,4 @@
+/* $NetBSD: statusd_shm.h,v 1.1.1.4 2003/06/01 14:01:31 atatat Exp $ */
 /*
  * Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

@@ -1,3 +1,9 @@
+/* $NetBSD: t_exclopen.c,v 1.1.1.5 2003/06/01 14:01:32 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: t_exclopen.c,v 1.1.1.5 2003/06/01 14:01:32 atatat Exp $");
+#endif
+
 /*
  * Copyright (c) 1999 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

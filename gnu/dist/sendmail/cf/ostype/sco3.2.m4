@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: sco3.2.m4,v 8.16 1999/04/24 05:37:43 gshapiro Exp')
+VERSIONID(`$NetBSD: sco3.2.m4,v 1.1.1.4 2003/06/01 14:01:44 atatat Exp $')
 ifdef(`QUEUE_DIR',, `define(`QUEUE_DIR', /usr/spool/mqueue)')dnl
 ifdef(`UUCP_MAILER_PATH',, `define(`UUCP_MAILER_PATH', /usr/bin/uux)')dnl
 ifdef(`LOCAL_MAILER_PATH',, `define(`LOCAL_MAILER_PATH', /usr/bin/lmail)')dnl

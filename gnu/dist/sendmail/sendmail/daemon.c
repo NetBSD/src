@@ -1,3 +1,9 @@
+/* $NetBSD: daemon.c,v 1.1.1.10 2003/06/01 14:01:21 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: daemon.c,v 1.1.1.10 2003/06/01 14:01:21 atatat Exp $");
+#endif
+
 /*
  * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

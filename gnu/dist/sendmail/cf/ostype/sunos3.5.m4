@@ -14,5 +14,6 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: sunos3.5.m4,v 8.10 1999/02/07 07:26:23 gshapiro Exp')
+VERSIONID(`$NetBSD: sunos3.5.m4,v 1.1.1.4 2003/06/01 14:01:44 atatat Exp $')
 
 define(`confEBINDIR', `/usr/lib')dnl

@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: notsticky.m4,v 8.11 1999/02/07 07:26:11 gshapiro Exp')
+VERSIONID(`$NetBSD: notsticky.m4,v 1.1.1.4 2003/06/01 14:01:43 atatat Exp $')
 #
 #  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
 #  the old default behaviour.

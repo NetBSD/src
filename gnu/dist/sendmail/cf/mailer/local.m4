@@ -33,6 +33,7 @@ POPDIVERT
 ##################################################
 
 VERSIONID(`Id: local.m4,v 8.58 2000/10/26 01:58:29 ca Exp')
+VERSIONID(`$NetBSD: local.m4,v 1.1.1.7 2003/06/01 14:01:44 atatat Exp $')
 
 #
 #  Envelope sender rewriting

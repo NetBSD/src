@@ -9,6 +9,7 @@
 #
 #
 #       Id: find_m4.sh,v 8.13 2001/01/23 01:47:45 gshapiro Exp
+#       $NetBSD: find_m4.sh,v 1.1.1.7 2003/06/01 14:01:14 atatat Exp $
 #
 
 # Try to find a working M4 program.

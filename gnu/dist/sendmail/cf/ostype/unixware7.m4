@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: unixware7.m4,v 8.8 2000/02/26 01:32:04 gshapiro Exp')
+VERSIONID(`$NetBSD: unixware7.m4,v 1.1.1.4 2003/06/01 14:01:45 atatat Exp $')
 ifdef(`QUEUE_DIR',, `define(`QUEUE_DIR', /var/spool/mqueue)')dnl
 define(`confEBINDIR', `/usr/lib')dnl
 define(`confTIME_ZONE', `USE_TZ')dnl

@@ -25,6 +25,7 @@ POPDIVERT
 #####################################
 
 VERSIONID(`Id: uucp.m4,v 8.44 2001/08/24 19:49:08 ca Exp')
+VERSIONID(`$NetBSD: uucp.m4,v 1.1.1.5 2003/06/01 14:01:44 atatat Exp $')
 
 #
 #  envelope and header sender rewriting

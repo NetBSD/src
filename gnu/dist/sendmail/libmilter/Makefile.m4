@@ -1,4 +1,5 @@
 dnl Id: Makefile.m4,v 8.30.2.1 2002/06/21 21:58:28 ca Exp
+dnl $NetBSD: Makefile.m4,v 1.1.1.5 2003/06/01 14:01:47 atatat Exp $
 include(confBUILDTOOLSDIR`/M4/switch.m4')
 
 dnl only required for compilation of EXTRAS

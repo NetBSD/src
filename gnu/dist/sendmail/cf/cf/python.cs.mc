@@ -25,6 +25,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: python.cs.mc,v 8.12 1999/02/07 07:26:04 gshapiro Exp')
+VERSIONID(`$NetBSD: python.cs.mc,v 1.1.1.4 2003/06/01 14:01:43 atatat Exp $')
 OSTYPE(bsd4.4)dnl
 DOMAIN(CS.Berkeley.EDU)dnl
 define(`LOCAL_RELAY', vangogh.CS.Berkeley.EDU)dnl

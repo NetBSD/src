@@ -28,6 +28,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: cyrusproto.mc,v 8.7 1999/09/07 14:57:10 ca Exp')
+VERSIONID(`$NetBSD: cyrusproto.mc,v 1.1.1.4 2003/06/01 14:01:40 atatat Exp $')
 define(`confBIND_OPTS',`-DNSRCH -DEFNAMES')
 define(`confLOCAL_MAILER', `cyrus')
 FEATURE(`nocanonify')

@@ -24,6 +24,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: cs-sunos4.1.mc,v 8.13 1999/02/07 07:26:01 gshapiro Exp')
+VERSIONID(`$NetBSD: cs-sunos4.1.mc,v 1.1.1.4 2003/06/01 14:01:40 atatat Exp $')
 OSTYPE(sunos4.1)dnl
 DOMAIN(CS.Berkeley.EDU)dnl
 MAILER(local)dnl

@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: osf1.m4,v 8.16 1999/10/11 18:45:43 gshapiro Exp')
+VERSIONID(`$NetBSD: osf1.m4,v 1.1.1.4 2003/06/01 14:01:44 atatat Exp $')
 ifdef(`STATUS_FILE',, `define(`STATUS_FILE', `/usr/adm/sendmail/sendmail.st')')dnl
 define(`confDEF_USER_ID', `daemon')
 define(`confEBINDIR', `/usr/lbin')dnl

@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: always_add_domain.m4,v 8.11 2000/09/12 22:00:53 ca Exp')
+VERSIONID(`$NetBSD: always_add_domain.m4,v 1.1.1.5 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 ifdef(`_MAILER_local_',

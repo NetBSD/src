@@ -30,6 +30,7 @@ POPDIVERT
 #####################################
 
 VERSIONID(`Id: smtp.m4,v 8.64 2001/04/03 01:52:54 gshapiro Exp')
+VERSIONID(`$NetBSD: smtp.m4,v 1.1.1.7 2003/06/01 14:01:44 atatat Exp $')
 
 #
 #  common sender and masquerading recipient rewriting

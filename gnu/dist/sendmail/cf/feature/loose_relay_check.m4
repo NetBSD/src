@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: loose_relay_check.m4,v 8.6 1999/02/07 07:26:10 gshapiro Exp')
+VERSIONID(`$NetBSD: loose_relay_check.m4,v 1.1.1.4 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 define(`_LOOSE_RELAY_CHECK_', 1)

@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: blacklist_recipients.m4,v 8.13 1999/04/02 02:25:13 gshapiro Exp')
+VERSIONID(`$NetBSD: blacklist_recipients.m4,v 1.1.1.4 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 ifdef(`_ACCESS_TABLE_',

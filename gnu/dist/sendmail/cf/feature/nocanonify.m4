@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: nocanonify.m4,v 8.12 1999/08/28 00:42:01 ca Exp')
+VERSIONID(`$NetBSD: nocanonify.m4,v 1.1.1.4 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 define(`_NO_CANONIFY_', 1)

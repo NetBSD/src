@@ -1,3 +1,9 @@
+/* $NetBSD: macro.c,v 1.1.1.8 2003/06/01 14:01:23 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: macro.c,v 1.1.1.8 2003/06/01 14:01:23 atatat Exp $");
+#endif
+
 /*
  * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

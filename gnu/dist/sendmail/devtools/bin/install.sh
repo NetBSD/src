@@ -9,6 +9,7 @@
 #
 #
 #	Id: install.sh,v 8.14 2001/03/16 23:37:31 gshapiro Exp
+#	$NetBSD: install.sh,v 1.1.1.5 2003/06/01 14:01:14 atatat Exp $
 
 # Set default program
 program=mv

@@ -14,6 +14,7 @@ ifdef(`DNSBL_MAP', `', `define(`DNSBL_MAP', `host')')
 divert(0)
 ifdef(`_DNSBL_R_',`dnl',`dnl
 VERSIONID(`Id: dnsbl.m4,v 8.28 2002/05/19 21:22:40 gshapiro Exp')
+VERSIONID(`$NetBSD: dnsbl.m4,v 1.1.1.5 2003/06/01 14:01:43 atatat Exp $')
 define(`_DNSBL_R_',`')
 LOCAL_CONFIG
 # map for DNS based blacklist lookups

@@ -14,5 +14,6 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: bsdi2.0.m4,v 8.10 1999/11/19 05:18:14 gshapiro Exp')
+VERSIONID(`$NetBSD: bsdi2.0.m4,v 1.1.1.4 2003/06/01 14:01:44 atatat Exp $')
 errprint(`NOTE: OSTYPE(bsdi2.0) is deprecated.  Use OSTYPE(bsdi) instead.')
 include(_CF_DIR_`'ostype/bsdi.m4)dnl

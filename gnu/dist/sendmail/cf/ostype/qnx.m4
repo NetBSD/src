@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: qnx.m4,v 8.13 1999/04/24 05:37:43 gshapiro Exp')
+VERSIONID(`$NetBSD: qnx.m4,v 1.1.1.4 2003/06/01 14:01:44 atatat Exp $')
 define(`QUEUE_DIR', /usr/spool/mqueue)dnl
 define(`LOCAL_MAILER_ARGS', `mail $u')dnl
 _DEFIFNOT(`LOCAL_MAILER_FLAGS', `Sh')dnl

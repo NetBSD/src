@@ -11,6 +11,7 @@ divert(-1)
 #  Definitions for Makefile construction for sendmail
 #
 #	Id: manpage.m4,v 8.14 2001/06/27 21:46:38 gshapiro Exp
+#	$NetBSD: manpage.m4,v 1.1.1.6 2003/06/01 14:01:14 atatat Exp $
 #
 divert(0)dnl
 

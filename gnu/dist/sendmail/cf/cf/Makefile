@@ -2,6 +2,7 @@
 #  Makefile for configuration files.
 #
 #	Id: Makefile,v 8.56 2001/12/13 23:56:37 gshapiro Exp
+#	$NetBSD: Makefile,v 1.1.1.8 2003/06/01 14:01:40 atatat Exp $
 #
 
 #

@@ -21,6 +21,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: generic-linux.mc,v 8.1 1999/09/24 22:48:05 gshapiro Exp')
+VERSIONID(`$NetBSD: generic-linux.mc,v 1.1.1.3 2003/06/01 14:01:41 atatat Exp $')
 OSTYPE(linux)dnl
 DOMAIN(generic)dnl
 MAILER(local)dnl

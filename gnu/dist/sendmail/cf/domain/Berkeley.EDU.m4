@@ -13,6 +13,7 @@ divert(-1)
 #
 divert(0)
 VERSIONID(`Id: Berkeley.EDU.m4,v 8.17 1999/02/07 07:26:06 gshapiro Exp')
+VERSIONID(`$NetBSD: Berkeley.EDU.m4,v 1.1.1.4 2003/06/01 14:01:43 atatat Exp $')
 DOMAIN(berkeley-only)dnl
 define(`BITNET_RELAY', `bitnet-relay.Berkeley.EDU')dnl
 define(`UUCP_RELAY', `uucp-relay.Berkeley.EDU')dnl

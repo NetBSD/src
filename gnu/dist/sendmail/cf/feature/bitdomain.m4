@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: bitdomain.m4,v 8.28 2001/03/16 00:51:25 gshapiro Exp')
+VERSIONID(`$NetBSD: bitdomain.m4,v 1.1.1.5 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 define(`_BITDOMAIN_TABLE_', `')

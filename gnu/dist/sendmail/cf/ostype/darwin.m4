@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: darwin.m4,v 8.3 2002/03/05 01:55:40 ca Exp')
+VERSIONID(`$NetBSD: darwin.m4,v 1.1.1.3 2003/06/01 14:01:44 atatat Exp $')
 ifdef(`STATUS_FILE',, `define(`STATUS_FILE', `/var/log/sendmail.st')')dnl
 dnl turn on S flag for local mailer
 MODIFY_MAILER_FLAGS(`LOCAL', `+S')dnl

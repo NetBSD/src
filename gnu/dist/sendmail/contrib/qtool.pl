@@ -4,6 +4,7 @@
 ##	All rights reserved.
 ##
 ## Id: qtool.pl,v 8.27 2002/01/29 21:55:49 ca Exp
+## $NetBSD: qtool.pl,v 1.1.1.7 2003/06/01 14:01:47 atatat Exp $
 ##
 use strict;
 use File::Basename;

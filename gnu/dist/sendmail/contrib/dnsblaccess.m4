@@ -60,6 +60,7 @@ dnl ##	processed as if the HACK line were not present.
 
 divert(0)
 VERSIONID(`Id: dnsblaccess.m4,v 1.5 2002/05/19 21:30:06 gshapiro Exp')
+VERSIONID(`$NetBSD: dnsblaccess.m4,v 1.1.1.2 2003/06/01 14:01:45 atatat Exp $')
 ifdef(`_ACCESS_TABLE_', `dnl',
 	`errprint(`*** ERROR: dnsblaccess requires FEATURE(`access_db')
 ')')

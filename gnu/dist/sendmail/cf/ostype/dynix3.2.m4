@@ -14,5 +14,6 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: dynix3.2.m4,v 8.14 1999/04/24 05:37:41 gshapiro Exp')
+VERSIONID(`$NetBSD: dynix3.2.m4,v 1.1.1.4 2003/06/01 14:01:44 atatat Exp $')
 ifdef(`QUEUE_DIR',, `define(`QUEUE_DIR', /usr/spool/mqueue)')dnl
 define(`confEBINDIR', `/usr/lib')dnl

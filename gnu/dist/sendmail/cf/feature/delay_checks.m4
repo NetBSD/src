@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: delay_checks.m4,v 8.8 2000/12/05 18:50:45 ca Exp')
+VERSIONID(`$NetBSD: delay_checks.m4,v 1.1.1.4 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 define(`_DELAY_CHECKS_', 1)

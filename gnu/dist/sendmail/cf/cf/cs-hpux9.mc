@@ -24,6 +24,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: cs-hpux9.mc,v 8.14 1999/02/07 07:26:00 gshapiro Exp')
+VERSIONID(`$NetBSD: cs-hpux9.mc,v 1.1.1.4 2003/06/01 14:01:40 atatat Exp $')
 OSTYPE(hpux9)dnl
 DOMAIN(CS.Berkeley.EDU)dnl
 define(`MAIL_HUB', mailspool.CS.Berkeley.EDU)dnl

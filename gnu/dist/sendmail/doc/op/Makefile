@@ -1,4 +1,5 @@
 #	Id: Makefile,v 8.14 2002/01/07 22:24:36 gshapiro Exp
+#	$NetBSD: Makefile,v 1.1.1.7 2003/06/01 14:01:15 atatat Exp $
 
 DIR=		smm/08.sendmailop
 SRCS=		op.me

@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: smrsh.m4,v 8.14 1999/11/18 05:06:23 ca Exp')
+VERSIONID(`$NetBSD: smrsh.m4,v 1.1.1.4 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 ifdef(`_MAILER_local_',

@@ -1,3 +1,9 @@
+/* $NetBSD: listener.c,v 1.1.1.9 2003/06/01 14:01:47 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: listener.c,v 1.1.1.9 2003/06/01 14:01:47 atatat Exp $");
+#endif
+
 /*
  *  Copyright (c) 1999-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: sinix.m4,v 8.13 1999/04/24 05:37:43 gshapiro Exp')
+VERSIONID(`$NetBSD: sinix.m4,v 1.1.1.4 2003/06/01 14:01:44 atatat Exp $')
 ifdef(`QUEUE_DIR',, `define(`QUEUE_DIR', /var/spool/mqueue)')dnl
 define(`LOCAL_MAILER_PATH', `/bin/mail.local')dnl
 ifdef(`STATUS_FILE',, `define(`STATUS_FILE', `/var/sendmail.st')')dnl

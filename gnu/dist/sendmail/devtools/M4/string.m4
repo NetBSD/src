@@ -11,6 +11,7 @@ divert(-1)
 #  Definitions for Makefile construction for sendmail
 #
 #	Id: string.m4,v 8.2 1999/05/13 16:16:33 gshapiro Exp
+#	$NetBSD: string.m4,v 1.1.1.3 2003/06/01 14:01:14 atatat Exp $
 #
 divert(0)dnl
 define(`bldRINDEX',

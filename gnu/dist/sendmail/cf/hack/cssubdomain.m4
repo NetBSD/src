@@ -13,6 +13,7 @@ divert(-1)
 #
 divert(0)
 VERSIONID(`Id: cssubdomain.m4,v 8.9 1999/02/07 07:26:14 gshapiro Exp')
+VERSIONID(`$NetBSD: cssubdomain.m4,v 1.1.1.4 2003/06/01 14:01:43 atatat Exp $')
 
 divert(2)
 # find possible (old & new) versions of our name via short circuit hack
