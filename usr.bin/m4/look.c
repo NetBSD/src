@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Ozan Yigit.
+ * Ozan Yigit at York University.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)look.c	5.3 (Berkeley) 2/26/91";
+static char sccsid[] = "@(#)look.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 /*
@@ -44,66 +44,74 @@ static char sccsid[] = "@(#)look.c	5.3 (Berkeley) 2/26/91";
  * by: oz
  */
 
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "mdef.h"
-#include "extr.h"
+#include "stdd.h"
+#include "extern.h"
 
-/*
- *  hash - compute hash value using the proverbial
- *	   hashing function. Taken from K&R.
- */
-hash (name)
+int
+hash(name)
 register char *name;
 {
-	register int h = 0;
+	register unsigned long h = 0;
 	while (*name)
-		h += *name++;
+		h = (h << 5) + h + *name++;
 	return (h % HASHSIZE);
 }
 
 /*
- * lookup - find name in the hash table
- *
+ * find name in the hash table
  */
-ndptr lookup(name)
+ndptr 
+lookup(name)
 char *name;
 {
 	register ndptr p;
 
 	for (p = hashtab[hash(name)]; p != nil; p = p->nxtptr)
-		if (strcmp(name, p->name) == 0)
+		if (STREQ(name, p->name))
 			break;
 	return (p);
 }
 
 /*
- * addent - hash and create an entry in the hash
- *	    table. The new entry is added in front
- *	    of a hash bucket.
+ * hash and create an entry in the hash table.
+ * The new entry is added in front of a hash bucket.
  */
-ndptr addent(name)
+ndptr 
+addent(name)
 char *name;
 {
 	register int h;
 	ndptr p;
 
 	h = hash(name);
-	if ((p = (ndptr) malloc(sizeof(struct ndblock))) != NULL) {
-		p->nxtptr = hashtab[h];
-		hashtab[h] = p;
-		p->name = strdup(name);
-	}
-	else
-		error("m4: no more memory.");
+	p = (ndptr) xalloc(sizeof(struct ndblock));
+	p->nxtptr = hashtab[h];
+	hashtab[h] = p;
+	p->name = xstrdup(name);
 	return p;
 }
 
+static void
+freent(p)
+ndptr p;
+{
+	if (!(p->type & STATIC)) {
+		free((char *) p->name);
+		if (p->defn != null)
+			free((char *) p->defn);
+	}
+	free((char *) p);
+}
+
 /*
- * remhash - remove an entry from the hashtable
- *
+ * remove an entry from the hashtable
  */
+void
 remhash(name, all)
 char *name;
 int all;
@@ -115,7 +123,7 @@ int all;
 	mp = hashtab[h];
 	tp = nil;
 	while (mp != nil) {
-		if (strcmp(mp->name, name) == 0) {
+		if (STREQ(mp->name, name)) {
 			mp = mp->nxtptr;
 			if (tp == nil) {
 				freent(hashtab[h]);
@@ -135,19 +143,3 @@ int all;
 		}
 	}
 }
-
-/*
- * freent - free a hashtable information block
- *
- */
-freent(p)
-ndptr p;
-{
-	if (!(p->type & STATIC)) {
-		free(p->name);
-		if (p->defn != null)
-			free(p->defn);
-	}
-	free(p);
-}
-
