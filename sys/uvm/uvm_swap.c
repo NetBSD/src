@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.18 1998/08/30 03:08:43 enami Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.19 1998/09/06 23:09:40 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -712,9 +712,8 @@ sys_swapctl(p, v, retval)
 
 		sdp->swd_pathlen = len;
 		sdp->swd_path = malloc(sdp->swd_pathlen, M_VMSWAP, M_WAITOK);
-		if ((error = copystr(userpath, sdp->swd_path,
-		    sdp->swd_pathlen, 0)))
-			break;
+		if (copystr(userpath, sdp->swd_path, sdp->swd_pathlen, 0) != 0)
+			panic("swapctl: copystr");
 		/*
 		 * we've now got a FAKE placeholder in the swap list.
 		 * now attempt to enable swap on it.  if we fail, undo
@@ -730,6 +729,7 @@ sys_swapctl(p, v, retval)
 			if (vp->v_type == VREG)
 				crfree(sdp->swd_cred);
 #endif
+			free(sdp->swd_path, M_VMSWAP);
 			free((caddr_t)sdp, M_VMSWAP);
 			break;
 		}
