@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.202 2000/03/23 15:10:56 joda Exp $
+$NetBSD: pcidevs,v 1.203 2000/03/27 16:55:43 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -900,6 +900,8 @@ product DLINK DFE550TX	0x1002	DFE-550TX 10/100 Ethernet
 
 /* Distributed Processing Technology products */
 product DPT SC_RAID	0xa400	SmartCache/SmartRAID
+product DPT RAID_I2O	0xa501	SmartRAID (I2O)
+product DPT MEMCTLR	0x1012	Memory Controller
 
 /* Dolphin products */
 product DOLPHIN PCISCI	0x0658	PCI-SCI Bridge
