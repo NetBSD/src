@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 1996/03/30 06:48:58 cgd Exp $
+#	$NetBSD: Makefile,v 1.28 1996/04/05 01:44:24 cgd Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -12,7 +12,7 @@ SUBDIR=	badsect disklabel ccdconfig dmesg fastboot ifconfig init mknod \
 SUBDIR+= mount_ados
 SUBDIR+= mount_cd9660
 SUBDIR+= mount_fdesc
-SUBDIR+= mount_ffs	newfs fsck fsdb dumpfs dump restore clri tunefs
+SUBDIR+= mount_ffs	newfs fsck_ffs fsdb dumpfs dump restore clri tunefs
 SUBDIR+= mount_kernfs
 SUBDIR+= mount_lfs	newlfs dumplfs
 # mount_mfs -> newfs

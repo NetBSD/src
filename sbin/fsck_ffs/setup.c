@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.22 1995/07/12 01:49:23 cgd Exp $	*/
+/*	$NetBSD: setup.c,v 1.23 1996/04/05 01:45:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.22 1995/07/12 01:49:23 cgd Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.23 1996/04/05 01:45:29 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,10 +135,10 @@ setup(dev)
 			printf("%s %s\n%s %s\n%s %s\n",
 				"SEARCH FOR ALTERNATE SUPER-BLOCK",
 				"FAILED. YOU MUST USE THE",
-				"-b OPTION TO FSCK TO SPECIFY THE",
+				"-b OPTION TO FSCK_FFS TO SPECIFY THE",
 				"LOCATION OF AN ALTERNATE",
 				"SUPER-BLOCK TO SUPPLY NEEDED",
-				"INFORMATION; SEE fsck(8).");
+				"INFORMATION; SEE fsck_ffs(8).");
 			return(0);
 		}
 		doskipclean = 0;
