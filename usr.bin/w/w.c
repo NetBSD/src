@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.38 2000/07/13 14:28:07 simonb Exp $	*/
+/*	$NetBSD: w.c,v 1.39 2000/07/15 22:45:14 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.38 2000/07/13 14:28:07 simonb Exp $");
+__RCSID("$NetBSD: w.c,v 1.39 2000/07/15 22:45:14 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ kvm_t	       *kd;
 time_t		now;		/* the current time of day */
 time_t		uptime;		/* time of last reboot & elapsed time since */
 int		ttywidth;	/* width of tty */
-int		argwidth;	/* width of tty */
+int		argwidth;	/* width of tty left to print process args */
 int		header = 1;	/* true if -h flag: don't print heading */
 int		nflag;		/* true if -n flag: don't convert addrs */
 int		sortidle;	/* sort bu idle time */
@@ -228,7 +228,7 @@ main(argc, argv)
 	if ((kp = kvm_getproc2(kd, KERN_PROC_ALL, 0,
 	    sizeof(struct kinfo_proc2), &nentries)) == NULL)
 		errx(1, "%s", kvm_geterr(kd));
-	lognamelen = 0;
+	lognamelen = sizeof("USER") - 1 /* NUL */;
 	for (i = 0; i < nentries; i++, kp++) {
 
 		if (kp->p_stat == SIDL || kp->p_stat == SZOMB)
@@ -249,10 +249,10 @@ main(argc, argv)
 		}
 	}
 
-	argwidth = printf("%-*sTTY %-*s %*s  IDLE WHAT\n",
+	argwidth = printf("%-*s TTY %-*s %*s  IDLE WHAT\n",
 	    lognamelen, "USER", UT_HOSTSIZE, "FROM",
 	    7 /* "dddhhXm" */, "LOGIN@");
-	argwidth -= sizeof("WHAT\n");
+	argwidth -= sizeof("WHAT\n") - 1 /* NUL */;
 
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 &&
 	     ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1 &&
@@ -317,7 +317,7 @@ main(argc, argv)
 			    (int)(ep->utmp.ut_host + UT_HOSTSIZE - x), x);
 			p = buf;
 		}
-		(void)printf("%-*s %-2.2s %-*.*s ",
+		(void)printf("%-*s %-3.3s %-*.*s ",
 		    lognamelen, ep->kp->p_login,
 		    (strncmp(ep->utmp.ut_line, "tty", 3) &&
 		    strncmp(ep->utmp.ut_line, "dty", 3)) ?
