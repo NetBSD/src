@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.43 2003/10/25 17:59:16 mycroft Exp $	*/
+/*	$NetBSD: vr.c,v 1.44 2003/10/25 18:04:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.43 2003/10/25 17:59:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.44 2003/10/25 18:04:34 mycroft Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -517,7 +517,7 @@ vr_reboot(int howto, char *bootstr)
 		splhigh();
 #endif
 		__asm(".set noreorder");
-		__asm(".word	" ___STRING(VR_OPCODE_SUSPEND)));
+		__asm(".word	" ___STRING(VR_OPCODE_SUSPEND));
 		__asm("nop");
 		__asm("nop");
 		__asm("nop");
