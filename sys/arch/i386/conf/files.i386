@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.108 1998/02/16 22:12:46 thorpej Exp $
+#	$NetBSD: files.i386,v 1.109 1998/02/22 08:21:33 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -44,7 +44,6 @@ file	arch/i386/i386/ns_cksum.c	ns
 file	arch/i386/i386/pmap.c		!pmap_new
 file	arch/i386/i386/pmap.new.c	pmap_new
 file	arch/i386/i386/process_machdep.c
-file	arch/i386/i386/random.s
 file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
