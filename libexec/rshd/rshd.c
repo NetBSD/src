@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.11 1997/10/08 01:06:53 enami Exp $	*/
+/*	$NetBSD: rshd.c,v 1.12 1998/01/08 03:30:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.11 1997/10/08 01:06:53 enami Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.12 1998/01/08 03:30:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -248,10 +248,10 @@ doit(fromp)
 			syslog(LOG_ERR, "can't get stderr port: %m");
 			exit(1);
 		}
-			if (port >= IPPORT_RESERVED) {
-				syslog(LOG_ERR, "2nd port not reserved\n");
-				exit(1);
-			}
+		if (port >= IPPORT_RESERVED) {
+			syslog(LOG_ERR, "2nd port not reserved\n");
+			exit(1);
+		}
 		fromp->sin_port = htons(port);
 		if (connect(s, (struct sockaddr *)fromp, sizeof (*fromp)) < 0) {
 			syslog(LOG_INFO, "connect second port %d: %m", port);
