@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: list.c,v 1.6 1999/08/24 18:40:10 bad Exp $";
+static char rcsid[] = "$Id: list.c,v 1.7 2000/01/22 14:04:15 hubertf Exp $";
 #endif /* not lint */
 
 /*
@@ -291,7 +291,8 @@ list_archive ()
     save_name = current_file_name;
   /* Skip to the next header on the archive */
 
-  skip_file ((long) hstat.st_size);
+  if (head->header.linkflag != LF_DIR)
+    skip_file ((long) hstat.st_size);
 
   if (f_multivol)
     save_name = 0;
