@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2002/06/10 09:09:11 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2002/07/29 14:26:21 mrg Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -18,10 +18,11 @@ MD_INSTALLATION_DIRS=	installation/miniroot	\
 INSTALLATION_DIRS+=	${MD_INSTALLATION_DIRS}
 
 # Used by 32 bit lib/csu, lib, gnu/lib & libexec/ld.elf_so
-LIBDIR=/usr/lib/sparcv7
-BINDIR=/usr/libexec/sparcv7
+LIBDIR=/usr/lib/32
+BINDIR=/usr/libexec/32
+SPARC32_ENV=MACHINE=sparc MACHINE_ARCH=sparc
 SPARC32=COPTS=-m32 LD="ld -m elf32_sparc" AS="as -32" \
-	MACHINE=sparc MACHINE_ARCH=sparc LIBDIR=${LIBDIR} BINDIR=${BINDIR} \
+	LIBDIR=${LIBDIR} BINDIR=${BINDIR} \
 	SHLIB_LDSTARTFILE=${DESTDIR}${LIBDIR}/crtbeginS.o \
 	SHLIB_LDENDFILE=${DESTDIR}${LIBDIR}/crtendS.o
 
@@ -37,35 +38,35 @@ snap_md_pre:
 	# build 32 bit csu
 .if ${MKOBJDIRS} != "no"
 	(cd ${.CURDIR}/../lib/csu && \
-	    ${MAKE} ${SPARC32} ${_M} obj)
+	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} obj)
 .endif
 	(cd ${.CURDIR}/../lib/csu && \
-	    ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
-	    ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
+	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
+	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
 	# build 32 bit libraries
 .if ${MKOBJDIRS} != "no"
 	(cd ${.CURDIR}/../lib && \
-	    ${MAKE} ${SPARC32} ${_M} obj)
+	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} obj)
 .endif
 	(cd ${.CURDIR}/../lib && \
-	    ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
-	    ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
+	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
+	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
 	# build 32 bit gnu libraries
 .if ${MKOBJDIRS} != "no"
 	(cd ${.CURDIR}/../gnu/lib && \
-	    ${MAKE} ${SPARC32} ${_M} obj)
+	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} obj)
 .endif
 	(cd ${.CURDIR}/../gnu/lib && \
-	    ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
-	    ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
+	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
+	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
 	# build 32 bit ld.elf_so
 .if ${MKOBJDIRS} != "no"
 	(cd ${.CURDIR}/../libexec/ld.elf_so && \
-	    ${MAKE} ${SPARC32} ${_M} obj)
+	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} obj)
 .endif
 	(cd ${.CURDIR}/../libexec/ld.elf_so && \
-	    ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
-	    ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
+	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
+	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
 .endif
 
 #
