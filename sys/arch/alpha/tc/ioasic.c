@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.21 1999/03/15 01:25:27 jonathan Exp $ */
+/* $NetBSD: ioasic.c,v 1.22 1999/03/17 17:50:06 ross Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.21 1999/03/15 01:25:27 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.22 1999/03/17 17:50:06 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -233,29 +233,6 @@ ioasicattach(parent, self, aux)
                 /* Tell the autoconfig machinery we've found the hardware. */
                 config_found(self, &ioasicdev, ioasicprint);
         }
-}
-
-int
-ioasicprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct ioasicdev_attach_args *d = aux;
-
-        if (pnp)
-                printf("%s at %s", d->iada_modname, pnp);
-        printf(" offset 0x%lx", (long)d->iada_offset);
-        return (UNCONF);
-}
-
-int
-ioasic_submatch(match, d)
-	struct cfdata *match;
-	struct ioasicdev_attach_args *d;
-{
-
-	return ((match->ioasiccf_offset == d->iada_offset) ||
-		(match->ioasiccf_offset == IOASIC_OFFSET_UNKNOWN));
 }
 
 void
