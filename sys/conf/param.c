@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.44 2003/12/30 12:33:23 pk Exp $	*/
+/*	$NetBSD: param.c,v 1.45 2003/12/31 12:34:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.44 2003/12/30 12:33:23 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.45 2003/12/31 12:34:22 martin Exp $");
 
 #include "opt_rtc_offset.h"
 #include "opt_sysv.h"
@@ -130,7 +130,7 @@ int	mcllowat = MCLLOWAT;
  */
 #ifdef SYSVSHM
 #ifndef	SHMMAX
-#define	SHMMAX	SHMMAXPGS	/* shminit() performs a `*= NBPG' */
+#define	SHMMAX	SHMMAXPGS	/* shminit() performs a `*= PAGE_SIZE' */
 #endif
 #ifndef	SHMMIN
 #define	SHMMIN	1
