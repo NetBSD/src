@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.168 2004/06/28 09:32:14 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.169 2004/06/28 10:17:01 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2004/06/28 09:32:14 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.169 2004/06/28 10:17:01 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1594,6 +1594,30 @@ static void	sparc_bus_free __P((bus_space_tag_t, bus_space_handle_t,
 
 vaddr_t iobase = IODEV_BASE;
 struct extent *io_space = NULL;
+
+/*
+ * Generic routine to translate an address using OpenPROM `ranges'.
+ */
+int
+bus_space_translate_address_generic(struct openprom_range *ranges, int nranges,
+    bus_addr_t *bap)
+{
+	int i, space = BUS_ADDR_IOSPACE(*bap);
+
+	for (i = 0; i < nranges; i++) {
+		struct openprom_range *rp = &ranges[i];
+
+		if (rp->or_child_space != space)
+			continue;
+
+		/* We've found the connection to the parent bus. */
+		*bap = BUS_ADDR(rp->or_parent_space,
+		    rp->or_parent_base + BUS_ADDR_PADDR(*bap));
+		return (0);
+	}
+
+	return (EINVAL);
+}
 
 int
 sparc_bus_map(t, addr, size, flags, unused, hp)
