@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.8 1999/12/04 14:23:35 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.9 1999/12/08 15:56:03 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -48,6 +48,7 @@ file	arch/hpcmips/hpcmips/platid.c
 file	arch/hpcmips/hpcmips/platid_mask.c
 file	arch/hpcmips/hpcmips/mainbus.c
 file	arch/hpcmips/hpcmips/bus_space.c
+#file	arch/hpcmips/hpcmips/bus_dma.c
 file	arch/hpcmips/hpcmips/disksubr.c	disk
 
 # Console autoconfiguration code: selects between a framebuffers
@@ -118,7 +119,7 @@ file arch/hpcmips/vr/vrkiu.c			vrkiu needs-flag
 device	pckbd: wskbddev
 attach	pckbd at pckbc
 file	dev/pckbc/pckbd.c		pckbd	needs-flag
-file	dev/pckbc/wskbdmap_mfii.c		pckbd | vrkiu | cckbd
+file	dev/pckbc/wskbdmap_mfii.c		pckbd | vrkiu | skbd
 defopt	PCKBD_LAYOUT
 
 device vrpmu
@@ -135,13 +136,13 @@ file arch/hpcmips/vr/vrdsu.c			vrdsu needs-flag
 defopt TX39_DEBUG
 defopt TX39_WATCHDOGTIMER
 defopt TX39ICUDEBUG
-defopt USE_POLL
-defopt CCKBD_POLL
+defopt TX39CLKDEBUG
 defopt TX39BIUDEBUG
 defopt TX39IODEBUG
 defopt TX39POWERDEBUG
 defopt TX39UARTDEBUG
 defopt IT8368DEBUG
+defopt USE_POLL
 
 device txsim { }
 device txcsbusif {[platform = -1]}
@@ -191,10 +192,22 @@ device it8368e: pcmciabus
 attach it8368e at txcsbus
 file arch/hpcmips/dev/it8368.c	it8368e
 
-#	Compaq C-series keyboard
-device cckbd: wskbddev
-attach cckbd at txcsbus
-file arch/hpcmips/dev/cckbd.c		cckbd		needs-flag
+device skbdif {}
+#	PHILIPS 74ALVC16241 buffer driver (keyboard)
+device p7416buf: skbdif
+attach p7416buf at txcsbus
+file arch/hpcmips/dev/p7416buf.c	p7416buf	needs-flag
+
+#	MITUBISHI M38813 keryboard controller
+device m38813c: skbdif
+attach m38813c at txcsbus
+file arch/hpcmips/dev/m38813c.c		m38813c		needs-flag
+
+#	Simple keyboard interface for wskbd
+device skbd: wskbddev
+attach skbd at skbdif
+file arch/hpcmips/dev/skbd.c		skbd
+
 
 #	TOSHIBA TC6358E(Plum2)
 device plumif {}
@@ -226,6 +239,14 @@ file arch/hpcmips/dev/plumiobus.c	plumiobus
 device plumisab: isabus
 attach plumisab at plumiobusif
 file arch/hpcmips/isa/plumisa_machdep.c	plumisab
+
+# OHCI USB controller
+#attach	ohci at plumif with plumohci
+#file	arch/hpcmips/dev/plumohci.c	plumohci
+
+#device txisab: isabus
+#attach txisab at txcsbus
+#file arch/hpcmips/isa/txisa_machdep.c	txisab
 
 #
 #	Real-time clock (not optional)
@@ -280,3 +301,5 @@ file	arch/hpcmips/vr/com_vrip.c			com_vrip
 # Memory Disk for boot tape
 file arch/hpcmips/dev/md_root.c		memory_disk_hooks
 major	{md = 6}
+
+#include "dev/usb/files.usb"
