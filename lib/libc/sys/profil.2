@@ -1,4 +1,4 @@
-.\"	$NetBSD: profil.2,v 1.5 1999/12/02 21:42:38 kleink Exp $
+.\"	$NetBSD: profil.2,v 1.6 2000/10/24 19:32:34 erh Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -107,7 +107,7 @@ returns 0.
 .It Pa /usr/lib/gcrt0.o
 profiling C run-time startup file
 .It Pa gmon.out
-conventional name for profiling output file
+conventional name for profiling output file.  This may be different if the PROFDIR environment variable is set.
 .El
 .Sh ERRORS
 The following error may be reported:
@@ -119,6 +119,7 @@ contains an invalid address.
 .El
 .Sh SEE ALSO
 .Xr gprof 1
+.Xr moncontrol 3
 .\" .Sh HISTORY
 .\" wish I knew...  probably v7.
 .Sh BUGS
