@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.16 2003/09/28 10:27:25 martin Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.17 2003/10/26 08:05:27 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.16 2003/09/28 10:27:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.17 2003/10/26 08:05:27 christos Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -468,11 +468,9 @@ svr4_32_getsiginfo(si, sig, code, addr)
  * will return to the user pc, psl.
  */
 void
-svr4_32_sendsig(sig, mask, code)
-	int sig;
-	const sigset_t *mask;
-	u_long code;
+svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
+	int sig = ksi->ksi_signo;
 	register struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	register struct trapframe64 *tf;
@@ -513,7 +511,8 @@ svr4_32_sendsig(sig, mask, code)
 	 * Build the argument list for the signal handler.
 	 */
 	svr4_32_getcontext(l, &frame.sf_uc, mask);
-	svr4_32_getsiginfo(&frame.sf_si, sig, code, (caddr_t)(u_long)tf->tf_pc);
+	svr4_32_getsiginfo(&frame.sf_si, sig, ksi->ksi_trap,
+	    (caddr_t)(u_long)tf->tf_pc);
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = frame.sf_si.si_signo;
