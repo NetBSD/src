@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 1997/01/03 22:54:35 leo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 1997/01/21 20:37:15 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -189,7 +189,7 @@ int	fpu_probe __P((void));
 /*
  * Prototypes from vm_machdep.c
  */
-int		badbaddr __P((caddr_t));
+int		badbaddr __P((caddr_t, int));
 void		consinit __P((void));
 void		cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 void		dumpconf __P((void));
