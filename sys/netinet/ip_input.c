@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.183 2003/11/17 22:34:16 jonathan Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.184 2003/11/19 18:39:34 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,8 +98,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.183 2003/11/17 22:34:16 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.184 2003/11/19 18:39:34 jonathan Exp $");
 
+#include "opt_inet.h"
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -197,6 +198,11 @@ int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
+
+#ifdef RANDOM_IP_ID
+int	ip_do_randomid = 0;
+#endif
+
 /*
  * XXX - Setting ip_checkinterface mostly implements the receive side of
  * the Strong ES model described in RFC 1122, but since the routing table
@@ -2065,6 +2071,14 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_IFQ:
 		return (sysctl_ifq(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen, &ipintrq));
+
+	case IPCTL_RANDOMID:
+#ifdef	RANDOM_IP_ID
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ip_do_randomid));
+#else
+		return (sysctl_rdint(oldp, oldlenp, newp, newlen, 0));
+#endif
 
 	default:
 		return (EOPNOTSUPP);

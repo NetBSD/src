@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.81 2003/11/17 21:34:27 jonathan Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.82 2003/11/19 18:39:34 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,8 +86,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.81 2003/11/17 21:34:27 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.82 2003/11/19 18:39:34 jonathan Exp $");
 
+#include "opt_inet.h"
 #include "opt_ipsec.h"
 
 #include <sys/param.h>
