@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccd.4,v 1.8 1997/03/06 23:41:29 mikel Exp $
+.\"	$NetBSD: ccd.4,v 1.9 1997/06/20 20:42:36 pk Exp $
 .\"
 .\" Copyright (c) 1994 Jason Downs.
 .\" Copyright (c) 1994, 1995, 1996 Jason R. Thorpe.
@@ -68,7 +68,7 @@ pseudo-device	ccd	4	# concatenated disk devices
 .Pp
 The count argument is how many
 .Nm ccds
-memory is allocated for a boot time.  In this example, no more than 4
+memory is allocated for at boot time.  In this example, no more than 4
 .Nm ccds
 may be configured.
 .Pp
@@ -85,8 +85,8 @@ other than DEV_BSIZE in order to calculate the correct interleave.
 The kernel will not allow an interleave factor less than the size
 of the largest component sector divided by DEV_BSIZE.
 .Pp
-Note that best performance is achieved if all compent disks have the same
-geometery and size.  Optimum striping cannot occur with different
+Note that best performance is achieved if all component disks have the same
+geometry and size.  Optimum striping cannot occur with different
 disk types.
 .Pp
 The
