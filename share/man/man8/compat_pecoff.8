@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_pecoff.8,v 1.6 2000/12/03 02:39:42 minoura Exp $
+.\"	$NetBSD: compat_pecoff.8,v 1.7 2001/04/04 11:21:43 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The PEACE Project.
 .\" All rights reserved.
@@ -126,7 +126,7 @@ The dynamic loader is the
 version of
 .Xr ld.so 1 .
 It reads the file header of the executable binary, and
-loads required DLLs.  
+loads required DLLs.
 .Pp
 The core DLLs implement the actual
 .Tn Win32
@@ -143,7 +143,7 @@ and
 .Pa libX11 ) .
 
 .Sh PREPARING THE PEACE DYNAMIC LOADER AND CORE DLLS
-Development snapshots of the dynamic loader can be retrieved from 
+Development snapshots of the dynamic loader can be retrieved from
 .Pa http://chiharu.haun.org/peace/dist/peace-i386-ld.so.dll-*.gz ,
 where `*' is replaced with the snapshot date.
 Simply
@@ -194,7 +194,7 @@ setenv DLLPATH /nthd/WINNT/SYSTEM32:/nthd/WINNT
 .Sh SEE ALSO
 .Xr gunzip 1 ,
 .Xr ld.so 1 ,
-.Xr execve 3 ,
+.Xr execve 2 ,
 .Xr options 4 ,
 .Xr config 8 ,
 .Xr mount_ntfs 8 ,
