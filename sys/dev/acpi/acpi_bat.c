@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.19 2003/04/26 16:38:00 yamt Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.20 2003/05/22 15:35:51 kochi Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.19 2003/04/26 16:38:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.20 2003/05/22 15:35:51 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +91,6 @@ const struct envsys_range acpibat_range_watt[] = {
 	{ 1, 0,		-1 },
 };
 
-#define	BAT_WORDS	13
-
 struct acpibat_softc {
 	struct device sc_dev;		/* base device glue */
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
@@ -102,8 +100,6 @@ struct acpibat_softc {
 	struct sysmon_envsys sc_sysmon;
 	struct envsys_basic_info sc_info[ACPIBAT_NSENSORS];
 	struct envsys_tre_data sc_data[ACPIBAT_NSENSORS];
-
-	ACPI_OBJECT sc_Ret[BAT_WORDS];	/* Return Buffer */
 
 	struct simplelock sc_lock;
 };
@@ -317,33 +313,17 @@ int
 acpibat_battery_present(struct acpibat_softc *sc)
 {
 	u_int32_t sta;
-	int s;
-	ACPI_OBJECT *p1;
+	int s, val;
 	ACPI_STATUS rv;
-	ACPI_BUFFER buf;
 
-	buf.Pointer = sc->sc_Ret;
-	buf.Length = sizeof(sc->sc_Ret);
-
-	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "_STA", NULL, &buf);
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_STA", &val);
 	if (rv != AE_OK) {
 		printf("%s: failed to evaluate _STA: %x\n",
 		       sc->sc_dev.dv_xname, rv);
 		return (-1);
 	}
-	p1 = (ACPI_OBJECT *)buf.Pointer;
 
-	if (p1->Type != ACPI_TYPE_INTEGER) {
-		printf("%s: expected INTEGER, got %d\n", sc->sc_dev.dv_xname,
-		       p1->Type);
-		return (-1);
-	}
-	if (p1->Package.Count < 1) {
-		printf("%s: expected 1 elts, got %d\n",
-		       sc->sc_dev.dv_xname, p1->Package.Count);
-		return (-1);
-	}
-	sta = p1->Integer.Value;
+	sta = (u_int32_t)val;
 
 	ABAT_LOCK(sc, s);
 	sc->sc_available = ABAT_ALV_PRESENCE;
@@ -461,11 +441,7 @@ acpibat_get_status(struct acpibat_softc *sc)
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
 
-	buf.Pointer = sc->sc_Ret;
-	buf.Length = sizeof(sc->sc_Ret);
-
-	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "_BST", NULL, &buf);
-
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_BST", &buf);
 	if (rv != AE_OK) {
 		printf("bat: failed to evaluate _BST: 0x%x\n", rv);
 		return (rv);
@@ -474,11 +450,13 @@ acpibat_get_status(struct acpibat_softc *sc)
 
 	if (p1->Type != ACPI_TYPE_PACKAGE) {
 		printf("bat: expected PACKAGE, got %d\n", p1->Type);
-		return (AE_ERROR);
+		rv = AE_ERROR;
+		goto out;
 	}
 	if (p1->Package.Count < 4) {
 		printf("bat: expected 4 elts, got %d\n", p1->Package.Count);
-		return (AE_ERROR);
+		rv = AE_ERROR;
+		goto out;
 	}
 	p2 = p1->Package.Elements;
 
@@ -502,7 +480,10 @@ acpibat_get_status(struct acpibat_softc *sc)
 	sc->sc_available = ABAT_ALV_STAT;
 	ABAT_UNLOCK(sc, s);
 
-	return (AE_OK);
+	rv = AE_OK;
+  out:
+	AcpiOsFree(buf.Pointer);
+	return (rv);
 }
 
 #define SCALE(x)	((x)/1000000), (((x)%1000000)/1000)
@@ -532,6 +513,8 @@ acpibat_print_stat(struct acpibat_softc *sc)
 {
 	const char *capstat, *chargestat;
 	int percent;
+
+	percent = 0;
 
 	if (sc->sc_data[ACPIBAT_CAPACITY].warnflags&ENVSYS_WARN_CRITUNDER)
 		capstat = "CRITICAL ";
