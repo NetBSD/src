@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.29 2001/05/27 01:36:47 chs Exp $	*/
+/*	$NetBSD: queue.h,v 1.30 2001/06/22 06:18:22 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -117,8 +117,8 @@ struct {								\
 	if (*(elm)->field.le_prev != (elm))				\
 		panic("LIST_* back %p %s:%d", (elm), __FILE__, __LINE__);
 #define QUEUEDEBUG_LIST_POSTREMOVE(elm, field)				\
-	(elm)->field.le_next = NULL;					\
-	(elm)->field.le_prev = NULL;
+	(elm)->field.le_next = (void *)1L;				\
+	(elm)->field.le_prev = (void *)1L;
 #else
 #define QUEUEDEBUG_LIST_INSERT_HEAD(head, elm, field)
 #define QUEUEDEBUG_LIST_OP(elm, field)
@@ -331,8 +331,8 @@ struct {								\
 	if (*(elm)->field.tqe_prev != (elm))				\
 		panic("TAILQ_* back %p %s:%d", (elm), __FILE__, __LINE__);
 #define QUEUEDEBUG_TAILQ_POSTREMOVE(elm, field)				\
-	(elm)->field.tqe_next = NULL;					\
-	(elm)->field.tqe_prev = NULL;
+	(elm)->field.tqe_next = (void *)1L;				\
+	(elm)->field.tqe_prev = (void *)1L;
 #else
 #define QUEUEDEBUG_TAILQ_INSERT_HEAD(head, elm, field)
 #define QUEUEDEBUG_TAILQ_INSERT_TAIL(head, elm, field)
