@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.8 2003/08/27 15:15:16 dsl Exp $	*/
+/*	$NetBSD: options.c,v 1.9 2003/08/28 01:55:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	10.51 (Berkeley) 10/14/96";
 #else
-__RCSID("$NetBSD: options.c,v 1.8 2003/08/27 15:15:16 dsl Exp $");
+__RCSID("$NetBSD: options.c,v 1.9 2003/08/28 01:55:17 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -312,7 +312,8 @@ opts_init(sp, oargs)
 
 	if (sizeof optlist / sizeof optlist[0] - 1 != O_OPTIONCOUNT) {
 		fprintf(stderr, "vi: option table size error (%d != %d)\n",
-		    sizeof optlist / sizeof optlist[0] - 1, O_OPTIONCOUNT);
+		    (int)(sizeof optlist / sizeof optlist[0] - 1),
+		    O_OPTIONCOUNT);
 		exit(1);
 	}
 
