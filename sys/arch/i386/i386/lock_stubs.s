@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.1.2.1 2002/03/17 21:28:53 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.2.2 2002/03/18 01:05:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,12 +45,14 @@
 #include "opt_cputype.h"
 
 #include <machine/asm.h>
+#include <machine/cputypes.h>
 
 #include "assym.h"
 
 NENTRY(mutex_enter)
 #if defined(I386_CPU)
-#error "I386_CPU not handled yet"
+	cmpl	$CPUCLASS_386, _C_LABEL(cpu_class)
+	jz	9f
 #endif
 	movl	_C_LABEL(curproc), %ecx		/* current thread */
 	movl	4(%esp), %edx			/* lock address */
@@ -59,10 +61,27 @@ NENTRY(mutex_enter)
 	cmpxchgl %ecx, (%edx)			/* compare-and-swap */
 	jnz	_C_LABEL(mutex_vector_enter)	/* failed; hard case */
 	ret
+#if defined(I386_CPU)
+9:	movl	_C_LABEL(curproc), %ecx		/* current thread */
+	movl	4(%esp), %edx			/* lock address */
+
+	/* BEGIN CRITICAL SECTION */
+	cli					/* ints off */
+	cmpl	$0, (%edx)			/* lock unowned? */
+	jnz	2f				/* yes, hard case */
+	movl	%ecx, (%edx)			/* acquire lock */
+	sti					/* ints on */
+	/* END CRITICAL SECTION */
+	ret
+
+2:	sti					/* ints on */
+	jmp	_C_LABEL(mutex_vector_enter)
+#endif
 
 NENTRY(mutex_tryenter)
 #if defined(I386_CPU)
-#error "I386_CPU not handled yet"
+	cmpl	$CPUCLASS_386, _C_LABEL(cpu_class)
+	jz	9f
 #endif
 	movl	_C_LABEL(curproc), %ecx		/* current thread */
 	movl	4(%esp), %edx			/* lock address */
@@ -72,6 +91,22 @@ NENTRY(mutex_tryenter)
 	jnz	_C_LABEL(mutex_vector_tryenter)	/* failed; hard case */
 	movl	$1, %eax			/* succeeded; return true */
 	ret
+#if defined(I386_CPU)
+9:	movl	_C_LABEL(curproc), %ecx		/* current thread */
+	movl	4(%esp), %edx			/* lock address */
+
+	/* BEGIN CRITICAL SECTION */
+	cli					/* ints off */
+	cmpl	$0, (%edx)			/* lock unknowned */
+	jnz	2f				/* yes, hard case */
+	movl	%ecx, (%edx)			/* acquire lock */
+	sti					/* ints on */
+	/* END CRITICAL SECTION */
+	ret
+
+2:	sti					/* ints on */
+	jmp	_C_LABEL(mutex_vector_tryenter)
+#endif
 
 /*
  * THIS IS IMPORTANT WHEN WE ADD SUPPORT FOR KERNEL PREEMPTION.
@@ -113,7 +148,8 @@ NENTRY(mutex_exit)
 
 NENTRY(_mutex_set_waiters)
 #if defined(I386_CPU)
-#error "I386_CPU not handled yet"
+	cmpl	$CPUCLASS_386, _C_LABEL(cpu_class)
+	jz	9f
 #endif  
 	movl	4(%esp), %edx			/* lock address */
 1:	movl	(%edx), %eax			/* expected contents */
@@ -125,10 +161,24 @@ NENTRY(_mutex_set_waiters)
 	cmpxchgl %ecx, (%edx)			/* compare-and-swap */
 	jnz	1b				/* failed, try again */
 2:	ret
+#if defined(I386_CPU)
+9:	movl	4(%esp), %edx			/* lock address */
+
+	/* BEGIN CRITICAL SECTION */
+	cli					/* ints off */
+	movl	(%edx), %eax			/* lock contents */
+	cmpl	$0, %eax			/* lock unowned? */
+	jz	2f				/* yup, bail */
+	orl	$MUTEX_WAITERS, (%edx)		/* set waiters bit */
+2:	sti					/* ints on */
+	/* END CRITICAL SECTION */
+	ret
+#endif
 
 NENTRY(_rwlock_cas)
 #if defined(I386_CPU)
-#error "I386_CPU not handled yet"
+	cmpl	$CPUCLASS_386, _C_LABEL(cpu_class)
+	jz	9f
 #endif
 	movl	4(%esp), %edx			/* lock address */
 	movl	8(%esp), %eax			/* expected value */
@@ -141,10 +191,30 @@ NENTRY(_rwlock_cas)
 
 1:	xorl	%eax, %eax
 	ret
+#if defined(I386_CPU)
+9:	movl	4(%esp), %edx			/* lock address */
+	movl	8(%esp), %eax			/* expected value */
+	movl	12(%esp), %ecx			/* new value */
+
+	/* BEGIN CRITICAL SECTION */
+	cli					/* ints off */
+	cmpl	%eax, (%edx)			/* value same? */
+	jnz	1f				/* nope, fail */
+	movl	%ecx, (%edx)			/* yup, set new value */
+	sti					/* ints on */
+	/* END CRITICAL SECTION */
+	movl	$1, %eax
+	ret
+
+1:	sti					/* ints on */
+	xorl	%eax, %eax
+	ret
+#endif
 
 NENTRY(_rwlock_set_waiters)
 #if defined(I386_CPU)
-#error "I386_CPU not handled yet"
+	cmpl	$CPUCLASS_386, _C_LABEL(cpu_class)
+	jz	9f
 #endif
 	movl	4(%esp), %edx			/* lock address */
 1:	movl	12(%esp), %ecx			/* set_wait value */
@@ -156,3 +226,17 @@ NENTRY(_rwlock_set_waiters)
 	cmpxchgl %ecx, (%edx)			/* compare-and-swap */
 	jnz	1b				/* failed, try again */
 2:	ret					/* succeeded */
+#if defined(I386_CPU)
+9:	movl	4(%esp), %edx			/* lock address */
+	movl	8(%esp), %ebx			/* need_wait value */
+	movl	12(%esp), %ecx			/* set_wait value */
+
+	/* BEGIN CRITICAL SECTION */
+	cli					/* ints off */
+	test	%ebx, (%edx)			/* test need_wait */
+	jz	2f				/* nope, don't need to */
+	orl	%ecx, (%edx)			/* set set_wait */
+2:	sti					/* ints on */
+	/* END CRITICAL SECTION */
+	ret
+#endif
