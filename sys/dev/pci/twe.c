@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.22 2002/05/18 20:59:20 ad Exp $	*/
+/*	$NetBSD: twe.c,v 1.23 2002/05/24 15:58:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.22 2002/05/18 20:59:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.23 2002/05/24 15:58:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t csr;
 	const char *intrstr;
 	int size, i, rv, rseg;
+	size_t max_segs, max_xfer;
 	struct twe_param *dtp, *ctp;
 	bus_dma_segment_t seg;
 	struct twe_cmd *tc;
@@ -269,13 +270,19 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
 	sc->sc_ccbs = ccb;
 	tc = (struct twe_cmd *)sc->sc_cmds;
+	max_segs = ((MAXPHYS + PAGE_SIZE - 1) / PAGE_SIZE) + 1;
+#ifdef TWE_SG_SIZE
+	if (TWE_SG_SIZE < max_segs)
+	    max_segs = TWE_SG_SIZE;
+#endif
+	max_xfer = (max_segs - 1) * PAGE_SIZE;
 
 	for (i = 0; i < TWE_MAX_QUEUECNT; i++, tc++, ccb++) {
 		ccb->ccb_cmd = tc;
 		ccb->ccb_cmdid = i;
 		ccb->ccb_flags = 0;
-		rv = bus_dmamap_create(sc->sc_dmat, TWE_MAX_XFER,
-		    TWE_MAX_SEGS, PAGE_SIZE, 0,
+		rv = bus_dmamap_create(sc->sc_dmat, max_xfer,
+		    max_segs, PAGE_SIZE, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &ccb->ccb_dmamap_xfer);
 		if (rv != 0) {
