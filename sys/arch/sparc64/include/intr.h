@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2000/06/24 04:25:08 eeh Exp $ */
+/*	$NetBSD: intr.h,v 1.5 2000/06/26 15:13:26 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 #define IPL_CLOCK	PIL_CLOCK	/* clock */
 #define IPL_SERIAL	PIL_SER	/* serial */
 #define IPL_HIGH	15	/* everything */
+
+#define	__GENERIC_SOFT_INTERRUPTS
 
 void *
 softintr_establish __P((int level, int (*fun)(void *), void *arg));
