@@ -1,4 +1,4 @@
-.\" $NetBSD: edc.4,v 1.4 2001/04/21 16:51:29 jdolecek Exp $
+.\" $NetBSD: edc.4,v 1.5 2001/04/22 19:11:32 jdolecek Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,7 +69,9 @@ This driver appeared in
 .Sh BUGS
 This driver is
 .Ud
-Treat as experimental and don't rely on it's correct operation.
+.Pp
+Buffer bouncing needed to support DMA on machines with more than
+16MB of memory is not implemented yet.
 .Sh AUTHOR
 The driver was written by
 .An Jaromir Dolecek Aq jdolecek@NetBSD.org .
