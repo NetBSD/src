@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.3 2002/01/13 19:38:25 augustss Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.4 2002/01/13 19:40:51 augustss Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.3 2002/01/13 19:38:25 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.4 2002/01/13 19:40:51 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,8 +289,7 @@ wi_pci_attach(parent, self, aux)
 	printf("%s:", sc->sc_dev.dv_xname);
 	sc->sc_ifp = &sc->sc_ethercom.ec_if;
 	if (wi_attach(sc) != 0) {
-		printf("%s: failed to attach controller\n",
-		    sc->sc_dev.dv_xname);
+		printf(" failed to attach controller\n");
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		return;
 	}
