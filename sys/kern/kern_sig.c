@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.71 1998/03/01 02:22:30 fvdl Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.72 1998/05/07 00:45:16 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -791,17 +791,8 @@ issignal(p)
 			/*
 			 * If traced, always stop, and stay
 			 * stopped until released by the debugger.
-
-			 * Note that we must clear the pending signal
-			 * before we call trace_req since that routine
-			 * might cause a fault, calling tsleep and
-			 * leading us back here again with the same signal.
-			 * Then we would be deadlocked because the tracer
-			 * would still be blocked on the ipc struct from
-			 * the initial request.
 			 */
 			p->p_xstat = signum;
-			p->p_siglist &= ~mask;
 			if ((p->p_flag & P_FSTRACE) == 0)
 				psignal(p->p_pptr, SIGCHLD);
 			do {
@@ -822,16 +813,10 @@ issignal(p)
 			 */
 			signum = p->p_xstat;
 			mask = sigmask(signum);
+			/* `p->p_siglist |= mask' is done in setrunnable(). */
 			if ((p->p_sigmask & mask) != 0)
 				continue;
-			p->p_siglist |= mask;
-			/*
-			 * If the traced bit got turned off, go back up
-			 * to the top to rescan signals.  This ensures  
-			 * that p_sig* and ps_sigact are consistent.
-			 */
-			if ((p->p_flag & P_TRACED) == 0)
-				continue;
+			p->p_siglist &= ~mask;		/* take the signal! */
 		}
 
 		prop = sigprop[signum];
