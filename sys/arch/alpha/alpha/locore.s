@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.9 1996/02/02 02:33:26 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.10 1996/02/02 20:05:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -26,8 +26,6 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-
-#define _LOCORE
 
 #include <machine/asm.h>
 #ifndef EVCNT_COUNTERS

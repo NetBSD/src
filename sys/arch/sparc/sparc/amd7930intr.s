@@ -44,9 +44,6 @@
  */
 
 #ifndef AUDIO_C_HANDLER
-#ifndef _LOCORE
-#define _LOCORE
-#endif
 #include "assym.h"
 #include <sparc/sparc/intreg.h>
 /* XXX this goes in a header file -- currently, it's hidden in locore.s */
