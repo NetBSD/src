@@ -1,4 +1,4 @@
-/* $NetBSD: mach_syscalls.c,v 1.3 2001/11/13 02:09:03 lukem Exp $ */
+/* $NetBSD: mach_syscalls.c,v 1.4 2002/11/10 09:41:45 manu Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscalls.c,v 1.3 2001/11/13 02:09:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscalls.c,v 1.4 2002/11/10 09:41:45 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -58,7 +58,7 @@ const char *const mach_syscallnames[] = {
 	"task_self_trap",			/* 28 = task_self_trap */
 	"host_self_trap",			/* 29 = host_self_trap */
 	"#30 (unimplemented)",		/* 30 = unimplemented */
-	"#31 (unimplemented)",		/* 31 = unimplemented */
+	"msg_trap",			/* 31 = msg_trap */
 	"msg_overwrite_trap",			/* 32 = msg_overwrite_trap */
 	"semaphore_signal_trap",			/* 33 = semaphore_signal_trap */
 	"semaphore_signal_all_trap",			/* 34 = semaphore_signal_all_trap */

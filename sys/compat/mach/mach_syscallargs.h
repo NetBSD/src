@@ -1,4 +1,4 @@
-/* $NetBSD: mach_syscallargs.h,v 1.3 2001/11/13 02:09:03 lukem Exp $ */
+/* $NetBSD: mach_syscallargs.h,v 1.4 2002/11/10 09:41:45 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -26,6 +26,16 @@
 			x datum;					\
 		} be;							\
 	}
+
+struct mach_sys_msg_trap_args {
+	syscallarg(mach_msg_header_t *) msg;
+	syscallarg(mach_msg_option_t) option;
+	syscallarg(mach_msg_size_t) send_size;
+	syscallarg(mach_msg_size_t) rcv_size;
+	syscallarg(mach_port_name_t) rcv_name;
+	syscallarg(mach_msg_timeout_t) timeout;
+	syscallarg(mach_port_name_t) notify;
+};
 
 struct mach_sys_msg_overwrite_trap_args {
 	syscallarg(mach_msg_header_t *) msg;
@@ -159,6 +169,7 @@ int	mach_sys_reply_port(struct proc *, void *, register_t *);
 int	mach_sys_thread_self_trap(struct proc *, void *, register_t *);
 int	mach_sys_task_self_trap(struct proc *, void *, register_t *);
 int	mach_sys_host_self_trap(struct proc *, void *, register_t *);
+int	mach_sys_msg_trap(struct proc *, void *, register_t *);
 int	mach_sys_msg_overwrite_trap(struct proc *, void *, register_t *);
 int	mach_sys_semaphore_signal_trap(struct proc *, void *, register_t *);
 int	mach_sys_semaphore_signal_all_trap(struct proc *, void *, register_t *);

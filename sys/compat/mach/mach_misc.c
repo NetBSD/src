@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.7 2002/11/10 02:18:03 manu Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.8 2002/11/10 09:41:45 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.7 2002/11/10 02:18:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.8 2002/11/10 09:41:45 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,6 +206,40 @@ mach_sys_msg_overwrite_trap(struct proc *p, void *v, register_t *r) {
 	return 0;
 }
 
+int
+mach_sys_msg_trap(struct proc *p, void *v, register_t *r) {
+	struct mach_sys_msg_trap_args *ap = v;
+	int error;
+	struct mach_subsystem_namemap *namemap;
+	*r = 0;
+
+	switch (SCARG(ap, option)) {
+	case MACH_SEND_MSG|MACH_RCV_MSG:
+		if (SCARG(ap, msg)) {
+			mach_msg_header_t mh;
+			if ((error = copyin(SCARG(ap, msg), &mh,
+			    sizeof(mh))) != 0)
+				return error;
+#ifdef DEBUG_MACH
+			mach_print_msg_header_t(&mh);
+#endif /* DEBUG_MACH */
+			for (namemap = mach_namemap; 
+			    namemap->map_id; namemap++)
+				if (namemap->map_id == mh.msgh_id)
+					break;
+			if (namemap->map_id) {
+				DPRINTF(("mach_%s()\n", namemap->map_name));
+				return (*namemap->map_handler)(SCARG(ap, msg));
+			}
+		}
+		break;
+	default:
+		uprintf("unhandled sys_msg_trap option %x\n",
+		    SCARG(ap, option));
+		break;
+	}
+	return 0;
+}
 
 int
 mach_sys_semaphore_signal_trap(struct proc *p, void *v, register_t *r) {

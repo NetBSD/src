@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.h,v 1.1 2002/11/10 02:18:03 manu Exp $ */
+/*	$NetBSD: mach_host.h,v 1.2 2002/11/10 09:41:45 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
+
+/* host_info */
 
 typedef mach_integer_t mach_host_flavor_t;
 
@@ -99,6 +101,20 @@ struct mach_host_priority_info {
 	mach_integer_t	maximum_priority;
 };
 
+/* host_page_size */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+} mach_host_page_size_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_vm_size_t rep_page_size;
+} mach_host_page_size_reply_t;
+
 int mach_host_info __P((mach_msg_header_t *));
+int mach_host_page_size __P((mach_msg_header_t *));
 
 #endif /* _MACH_HOST_H_ */

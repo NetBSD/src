@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.1 2002/11/10 02:18:03 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.2 2002/11/10 09:41:45 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,12 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.1 2002/11/10 02:18:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.2 2002/11/10 09:41:45 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_param.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_host.h>
@@ -89,3 +92,26 @@ mach_host_info(msgh)
 	return 0;
 }
 
+
+int 
+mach_host_page_size(msgh)
+	mach_msg_header_t *msgh;
+{
+	mach_host_page_size_request_t req;
+	mach_host_page_size_reply_t rep;
+	size_t msglen;
+	int error;
+
+	DPRINTF(("mach_host_page_size\n"));
+	bzero(&rep, sizeof(rep));
+	msglen = sizeof(mach_host_page_size_reply_t);
+	rep.rep_msgh.msgh_bits = 0x1200; /* XXX why? */
+	rep.rep_msgh.msgh_size = sizeof(rep);
+	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
+	rep.rep_msgh.msgh_id = 302;	/* XXX why? */
+	rep.rep_page_size = PAGE_SIZE;
+	
+	if ((error = copyout(&rep, msgh, msglen)) != 0)
+		return error;
+	return 0;
+}
