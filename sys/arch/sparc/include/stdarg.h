@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.11 1998/07/27 13:55:34 mycroft Exp $ */
+/*	$NetBSD: stdarg.h,v 1.12 1999/02/13 20:35:02 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,11 +49,6 @@
 
 #include <machine/ansi.h>
 
-#ifdef __lint__
-#define	__extension__(x)		(0)
-#define	__builtin_classify_type(t)	(0)
-#endif
-
 typedef _BSD_VA_LIST_	va_list;
 
 #define	__va_size(type) \
@@ -82,11 +77,14 @@ typedef _BSD_VA_LIST_	va_list;
  * Note: We don't declare __d with type `type', since in C++ the type might
  * have a constructor.
  */
-#if __GNUC__ == 1
-#define	__extension__
-#endif
 
-#define	__va_8byte(ap, type) \
+#ifdef __lint__
+# define va_arg(ap, type) (0)
+#else /* !__lint__ */
+# if __GNUC__ == 1 && !defined(__extension__)
+#  define __extension__
+# endif
+# define __va_8byte(ap, type) \
 	__extension__ ({						\
 		union { char __d[sizeof(type)]; int __i[2]; } __va_u;	\
 		__va_u.__i[0] = ((int *)(void *)(ap))[0];		\
@@ -94,17 +92,18 @@ typedef _BSD_VA_LIST_	va_list;
 		(ap) += 8; *(type *)(va_list)__va_u.__d;		\
 	})
 
-#define	__va_arg(ap, type) \
+# define __va_arg(ap, type) \
 	(*(type *)((ap) += __va_size(type),			\
 		   (ap) - (sizeof(type) < sizeof(long) &&	\
 			   sizeof(type) != __va_size(type) ?	\
 			   sizeof(type) : __va_size(type))))
 
-#define	__RECORD_TYPE_CLASS	12
-#define va_arg(ap, type) \
+# define __RECORD_TYPE_CLASS	12
+# define va_arg(ap, type) \
 	(__builtin_classify_type(*(type *)0) >= __RECORD_TYPE_CLASS ?	\
 	 *__va_arg(ap, type *) : __va_size(type) == 8 ?			\
 	 __va_8byte(ap, type) : __va_arg(ap, type))
+#endif /* __lint__ */
 
 #define va_end(ap)	
 
