@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.c,v 1.4 1997/10/20 03:01:26 lukem Exp $	*/
+/*	$NetBSD: regexp.c,v 1.5 1998/12/19 23:41:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)regexp.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: regexp.c,v 1.4 1997/10/20 03:01:26 lukem Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.5 1998/12/19 23:41:53 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -58,11 +58,11 @@ __RCSID("$NetBSD: regexp.c,v 1.4 1997/10/20 03:01:26 lukem Exp $");
 
 static void	expconv __P((void));
 
-boolean	 _escaped;	/* true if we are currently _escaped */
-char	*_start;	/* start of string */
+boolean	 x_escaped;	/* true if we are currently x_escaped */
+char	*x_start;	/* start of string */
 boolean	 l_onecase;	/* true if upper and lower equivalent */
 
-#define makelower(c) (isupper((c)) ? tolower((c)) : (c))
+#define makelower(c) (isupper((unsigned char)(c)) ? tolower((c)) : (c))
 
 /*  STRNCMP -	like strncmp except that we convert the
  *	 	first string to lower case before comparing
@@ -463,12 +463,12 @@ expmatch (s, re, mstring)
 			/* not optional and we still matched */
 			return (NIL);
 		    }
-		    if (!isalnum(*s1) && *s1 != '_')
+		    if (!isalnum((unsigned char)*s1) && *s1 != '_')
 			return (NIL);
 		    if (*s1 == '\\')
-			_escaped = _escaped ? FALSE : TRUE;
+			x_escaped = x_escaped ? FALSE : TRUE;
 		    else
-			_escaped = FALSE;
+			x_escaped = FALSE;
 		} while (*s1++);
 		return (NIL);
 
@@ -496,15 +496,15 @@ expmatch (s, re, mstring)
 			return (NIL);
 		    }
 		    if (*s1 == '\\')
-			_escaped = _escaped ? FALSE : TRUE;
+			x_escaped = x_escaped ? FALSE : TRUE;
 		    else
-			_escaped = FALSE;
+			x_escaped = FALSE;
 		} while (*s1++);
 		return (NIL);
 
-	    /* fail if we are currently _escaped */
+	    /* fail if we are currently x_escaped */
 	    case 'e':
-		if (_escaped)
+		if (x_escaped)
 		    return(NIL);
 		cs = MNEXT(cs); 
 		break;
@@ -514,7 +514,7 @@ expmatch (s, re, mstring)
 		ptr = s;
 		while (*s == ' ' || *s == '\t')
 		    s++;
-		if (s != ptr || s == _start) {
+		if (s != ptr || s == x_start) {
 
 		    /* match, be happy */
 		    matched = 1;
@@ -566,7 +566,7 @@ expmatch (s, re, mstring)
 
 	    /* check for start of line */
 	    case '^':
-		if (s == _start) {
+		if (s == x_start) {
 
 		    /* match, be happy */
 		    matched = 1;

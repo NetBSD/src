@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 1994/11/17 08:27:59 jtc Exp $	*/
+/*	$NetBSD: extern.h,v 1.3 1998/12/19 23:41:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,8 +38,8 @@
 
 typedef int boolean;
 
-extern boolean	 _escaped;             /* if last character was an escape */
-extern char    *_start;                /* start of the current string */
+extern boolean	 x_escaped;            /* if last character was an escape */
+extern char    *x_start;               /* start of the current string */
 extern char    *l_acmbeg;              /* string introducing a comment */
 extern char    *l_acmend;              /* string ending a comment */
 extern char    *l_blkbeg;              /* string begining of a block */
