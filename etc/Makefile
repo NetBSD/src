@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.275 2004/01/27 01:52:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.276 2004/01/27 04:19:06 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -171,9 +171,21 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
 		MKSENDMAIL MKSHARE MKSKEY MKSOFTFLOAT MKSTATICLIB \
 		MKUNPRIVED MKUPDATE MKUUCP MKX11 MKYP \
-		NBUILDJOBS \
+		NBUILDJOBS NETBSDSRCDIR \
 		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
-		RELEASEDIR TOOLCHAIN_MISSING TOOLDIR USETOOLS
+		OBJMACHINE \
+		RELEASEDIR TOOLCHAIN_MISSING TOOLDIR \
+		USETOOLS USR_OBJMACHINE \
+		X11SRCDIR
+
+params: .PHONY
+.for var in ${RELEASEVARS}
+.if defined(${var})
+	@printf "%20s = '%-s'\n" ${var} ${${var}:Q}
+.else
+	@printf "%20s = (undefined)\n" ${var}
+.endif
+.endfor
 
 CLEANFILES+=	etc-release
 etc-release: .EXEC
@@ -184,14 +196,8 @@ etc-release: .EXEC
 		cat ${NETBSDSRCDIR}/sys/conf/copyright; \
 		echo ; \
 		echo "Build settings:"; \
-	) >${.TARGET}
-.for var in ${RELEASEVARS}
-.if defined(${var})
-	@printf "%20s = '%-s'\n" ${var} ${${var}:Q} >> ${.TARGET}
-.else
-	@printf "%20s = (undefined)\n" ${var} >> ${.TARGET}
-.endif
-.endfor
+		${MAKE} params; \
+	) >${.OBJDIR}/${.TARGET}
 
 install-etc-release: .PHONY etc-release
 	${_MKMSG_INSTALL} etc/release
