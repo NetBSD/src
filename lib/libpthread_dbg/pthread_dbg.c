@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.1.2.8 2002/12/06 20:58:10 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.1.2.9 2002/12/10 15:33:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -543,13 +543,13 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 			info->sync_data.rwlock.locked = 1;
 	
 		if ((val = READ(s->proc, 
-		    s->addr + offsetof(struct pthread_rwlock_st, ptr_writer)
+		    s->addr + offsetof(struct pthread_rwlock_st, ptr_writer),
 		    &taddr, sizeof(pthread_t))) != 0)
 			return val;
 		if (taddr != 0) {
 			info->sync_data.rwlock.locked = 1;
 			td__getthread(s->proc, (caddr_t)taddr, 
-			    &info->sync_data.rwlock.writer);
+			    &info->sync_data.rwlock.writeowner);
 		}
 	default:
 		return (0);
