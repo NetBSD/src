@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.46 1999/10/15 20:39:52 jdolecek Exp $	*/
+/*	$NetBSD: print.c,v 1.47 1999/12/03 02:16:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.46 1999/10/15 20:39:52 jdolecek Exp $");
+__RCSID("$NetBSD: print.c,v 1.47 1999/12/03 02:16:41 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,7 +156,8 @@ command(ki, ve)
 			left = v->width;
 	} else
 		left = -1;
-	if (needenv && kd) {
+	if (needenv && (myuid == 0 || KI_EPROC(ki)->e_ucred.cr_uid == myuid) &&
+	    kd) {
 		argv = kvm_getenvv(kd, ki->ki_p, termwidth);
 		if ((p = argv) != NULL) {
 			while (*p) {
