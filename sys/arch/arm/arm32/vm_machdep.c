@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 2002/08/07 05:14:58 briggs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19 2002/08/09 23:44:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -131,6 +131,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #if defined(PERFCTRS)
 	if (PMC_ENABLED(p1))
 		pmc_md_fork(p1, p2);
+	else {
+		p2->p_md.pmc_enabled = 0;
+		p2->p_md.pmc_state = NULL;
+	}
 #endif
 
 	/* Copy the pcb */
