@@ -1,4 +1,4 @@
-.\" $NetBSD: mixerctl.1,v 1.4 1997/10/19 05:09:35 lukem Exp $
+.\" $NetBSD: mixerctl.1,v 1.5 1998/04/27 16:52:03 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -89,6 +89,10 @@ are shown in {}.
 .It Pa /dev/mixer
 mixer audio device
 .El
+.Sh ENVIRONMENT
+.Bl -tag -width MIXERUNIT
+.It Pa MIXERUNIT
+the mixer device to use.
 .Sh SEE ALSO
 .Xr audioctl 1 ,
 .Xr audio 4 ,
