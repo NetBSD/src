@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.6 1997/10/08 13:45:21 lukem Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.7 1997/10/15 05:01:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -30,6 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: ypserv.c,v 1.7 1997/10/15 05:01:24 lukem Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -415,4 +420,27 @@ usage()
 
 	fprintf(stderr, "usage: %s [-a aclfile] [-d] [-x]\n", __progname);
 	exit(1);
+}
+
+
+/*
+ * _yp_invalid_map: check if given map name isn't legal.
+ * returns non-zero if invalid
+ *
+ * XXX: this probably should be in libc/yp/yplib.c
+ */
+int
+_yp_invalid_map(map)
+	const char *map;
+{
+	if (map == NULL || *map == '\0')
+		return 1;
+
+	if (strlen(map) > YPMAXMAP)
+		return 1;
+
+	if (strchr(map, '/') != NULL)
+		return 1;
+
+	return 0;
 }
