@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.11.4.4 2002/01/10 19:55:41 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.11.4.5 2002/10/02 22:02:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.11.4.4 2002/01/10 19:55:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.11.4.5 2002/10/02 22:02:26 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,7 +431,7 @@ satlinkpoll(dev, events, p)
 static void
 filt_satlinkrdetach(struct knote *kn)
 {
-	struct satlink_softc *sc = (void *) kn->kn_hook;
+	struct satlink_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splsoftclock();
@@ -442,7 +442,7 @@ filt_satlinkrdetach(struct knote *kn)
 static int
 filt_satlinkread(struct knote *kn, long hint)
 {
-	struct satlink_softc *sc = (void *) kn->kn_hook;
+	struct satlink_softc *sc = kn->kn_hook;
 
 	if (sc->sc_uptr == sc->sc_sptr)
 		return (0);
@@ -483,7 +483,7 @@ satlinkkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = splsoftclock();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.7.2.3 2002/02/11 20:10:14 jdolecek Exp $	*/
+/*	$NetBSD: event.c,v 1.7.2.4 2002/10/02 22:02:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.7.2.3 2002/02/11 20:10:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.7.2.4 2002/10/02 22:02:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -179,7 +179,7 @@ ev_poll(ev, events, p)
 static void
 filt_evrdetach(struct knote *kn)
 {
-	struct evvar *ev = (void *) kn->kn_hook;
+	struct evvar *ev = kn->kn_hook;
 	int s;
 
 	s = splev();
@@ -190,7 +190,7 @@ filt_evrdetach(struct knote *kn)
 static int
 filt_evread(struct knote *kn, long hint)
 {               
-	struct evvar *ev = (void *) kn->kn_hook;
+	struct evvar *ev = kn->kn_hook;
 
 	if (ev->ev_get == ev->ev_put)
 		return (0);
@@ -225,7 +225,7 @@ ev_kqfilter(struct evvar *ev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) ev;
+	kn->kn_hook = ev;
 
 	s = splev();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.1.8.3 2002/09/06 08:32:44 jdolecek Exp $	*/
+/*	$NetBSD: opms.c,v 1.1.8.4 2002/10/02 22:02:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: opms.c,v 1.1.8.3 2002/09/06 08:32:44 jdolecek Exp $");
+__RCSID("$NetBSD: opms.c,v 1.1.8.4 2002/10/02 22:02:22 jdolecek Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -649,7 +649,7 @@ opmspoll(dev, events, p)
 static void
 filt_opmsrdetach(struct knote *kn)
 {
-	struct opms_softc *sc = (void *) kn->kn_hook;
+	struct opms_softc *sc = kn->kn_hook;
 	int s;
 
 	s = spltty();
@@ -660,7 +660,7 @@ filt_opmsrdetach(struct knote *kn)
 static int
 filt_opmsread(struct knote *kn, long hint)
 {
-	struct opms_softc *sc = (void *) kn->kn_hook;
+	struct opms_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->sc_q.c_cc;
 	return (kn->kn_data > 0);
@@ -686,7 +686,7 @@ opmskqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = spltty();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

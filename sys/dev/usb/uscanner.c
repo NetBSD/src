@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.15.2.5 2002/09/06 08:47:21 jdolecek Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.15.2.6 2002/10/02 22:02:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.15.2.5 2002/09/06 08:47:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.15.2.6 2002/10/02 22:02:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -693,7 +693,7 @@ uscannerpoll(dev_t dev, int events, usb_proc_ptr p)
 static void
 filt_uscannerdetach(struct knote *kn)
 {
-	struct uscanner_softc *sc = (void *) kn->kn_hook;
+	struct uscanner_softc *sc = kn->kn_hook;
 
 	SLIST_REMOVE(&sc->sc_selq.si_klist, kn, knote, kn_selnext);
 }
@@ -728,7 +728,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 

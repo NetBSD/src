@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.1.2.4 2002/09/06 08:47:23 jdolecek Exp $	*/
+/*	$NetBSD: ustir.c,v 1.1.2.5 2002/10/02 22:02:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.1.2.4 2002/09/06 08:47:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.1.2.5 2002/10/02 22:02:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1179,7 +1179,7 @@ ustir_poll(void *h, int events, usb_proc_ptr p)
 static void
 filt_ustirrdetach(struct knote *kn)
 {
-	struct ustir_softc *sc = (void *) kn->kn_hook;
+	struct ustir_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splusb();
@@ -1190,7 +1190,7 @@ filt_ustirrdetach(struct knote *kn)
 static int
 filt_ustirread(struct knote *kn, long hint)
 {
-	struct ustir_softc *sc = (void *) kn->kn_hook;
+	struct ustir_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->sc_ur_framelen;
 	return (kn->kn_data > 0);
@@ -1199,7 +1199,7 @@ filt_ustirread(struct knote *kn, long hint)
 static void
 filt_ustirwdetach(struct knote *kn)
 {
-	struct ustir_softc *sc = (void *) kn->kn_hook;
+	struct ustir_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splusb();
@@ -1210,7 +1210,7 @@ filt_ustirwdetach(struct knote *kn)
 static int
 filt_ustirwrite(struct knote *kn, long hint)
 {
-	struct ustir_softc *sc = (void *) kn->kn_hook;
+	struct ustir_softc *sc = kn->kn_hook;
 
 	kn->kn_data = 0;
 	return (sc->sc_direction != udir_input);
@@ -1241,7 +1241,7 @@ ustir_kqfilter(void *h, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = splusb();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.9.4.3 2002/09/06 08:46:58 jdolecek Exp $	*/
+/*	$NetBSD: uirda.c,v 1.9.4.4 2002/10/02 22:02:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.9.4.3 2002/09/06 08:46:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.9.4.4 2002/10/02 22:02:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -685,7 +685,7 @@ uirda_poll(void *h, int events, usb_proc_ptr p)
 static void
 filt_uirdardetach(struct knote *kn)
 {
-	struct uirda_softc *sc = (void *) kn->kn_hook;
+	struct uirda_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splusb();
@@ -696,7 +696,7 @@ filt_uirdardetach(struct knote *kn)
 static int
 filt_uirdaread(struct knote *kn, long hint)
 {
-	struct uirda_softc *sc = (void *) kn->kn_hook;
+	struct uirda_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->sc_rd_count;
 	return (kn->kn_data > 0);
@@ -705,7 +705,7 @@ filt_uirdaread(struct knote *kn, long hint)
 static void
 filt_uirdawdetach(struct knote *kn)
 {
-	struct uirda_softc *sc = (void *) kn->kn_hook;
+	struct uirda_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splusb();
@@ -721,7 +721,7 @@ static const struct filterops uirdawrite_filtops =
 int
 uirda_kqfilter(void *h, struct knote *kn)
 {
-	struct uirda_softc *sc = (void *) kn->kn_hook;
+	struct uirda_softc *sc = kn->kn_hook;
 	struct klist *klist;
 	int s;
 
@@ -738,7 +738,7 @@ uirda_kqfilter(void *h, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = splusb();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

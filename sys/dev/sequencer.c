@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.15.8.4 2002/02/11 20:09:37 jdolecek Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.15.8.5 2002/10/02 22:02:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.15.8.4 2002/02/11 20:09:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.15.8.5 2002/10/02 22:02:29 jdolecek Exp $");
 
 #include "sequencer.h"
 
@@ -663,7 +663,7 @@ sequencerpoll(dev, events, p)
 static void
 filt_sequencerrdetach(struct knote *kn)
 {
-	struct sequencer_softc *sc = (void *) kn->kn_hook;
+	struct sequencer_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splaudio();
@@ -674,7 +674,7 @@ filt_sequencerrdetach(struct knote *kn)
 static int
 filt_sequencerread(struct knote *kn, long hint)
 {
-	struct sequencer_softc *sc = (void *) kn->kn_hook;
+	struct sequencer_softc *sc = kn->kn_hook;
 
 	/* XXXLUKEM (thorpej): make sure this is correct */
 
@@ -690,7 +690,7 @@ static const struct filterops sequencerread_filtops =
 static void
 filt_sequencerwdetach(struct knote *kn)
 {
-	struct sequencer_softc *sc = (void *) kn->kn_hook;
+	struct sequencer_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splaudio();
@@ -701,7 +701,7 @@ filt_sequencerwdetach(struct knote *kn)
 static int
 filt_sequencerwrite(struct knote *kn, long hint)
 {
-	struct sequencer_softc *sc = (void *) kn->kn_hook;
+	struct sequencer_softc *sc = kn->kn_hook;
 
 	/* XXXLUKEM (thorpej): make sure this is correct */
 
@@ -736,7 +736,7 @@ sequencerkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = splaudio();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

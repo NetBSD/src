@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.12.4.4 2002/06/18 17:13:38 jdolecek Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.12.4.5 2002/10/02 22:02:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1206,7 +1206,7 @@ tctrlpoll(dev, events, p)
 static void
 filt_tctrlrdetach(struct knote *kn)
 {
-	struct tctrl_softc *sc = (void *) kn->kn_hook;
+	struct tctrl_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splts102();
@@ -1217,7 +1217,7 @@ filt_tctrlrdetach(struct knote *kn)
 static int
 filt_tctrlread(struct knote *kn, long hint)
 {
-	struct tctrl_softc *sc = (void *) kn->kn_hook;
+	struct tctrl_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->sc_event_count;
 	return (kn->kn_data > 0);
@@ -1243,7 +1243,7 @@ tctrlkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = splts102();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.46.2.5 2002/06/23 17:48:45 jdolecek Exp $	*/
+/*	$NetBSD: ch.c,v 1.46.2.6 2002/10/02 22:02:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.46.2.5 2002/06/23 17:48:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.46.2.6 2002/10/02 22:02:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,7 +472,7 @@ chpoll(dev, events, p)
 static void
 filt_chdetach(struct knote *kn)
 {
-	struct ch_softc *sc = (void *) kn->kn_hook;
+	struct ch_softc *sc = kn->kn_hook;
 
 	SLIST_REMOVE(&sc->sc_selq.si_klist, kn, knote, kn_selnext);
 }
@@ -480,7 +480,7 @@ filt_chdetach(struct knote *kn)
 static int
 filt_chread(struct knote *kn, long hint)
 {
-	struct ch_softc *sc = (void *) kn->kn_hook;
+	struct ch_softc *sc = kn->kn_hook;
 
 	if (sc->sc_events == 0)
 		return (0);
@@ -515,7 +515,7 @@ chkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 

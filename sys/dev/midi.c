@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.21.4.4 2002/06/23 17:45:00 jdolecek Exp $	*/
+/*	$NetBSD: midi.c,v 1.21.4.5 2002/10/02 22:02:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.21.4.4 2002/06/23 17:45:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.21.4.5 2002/10/02 22:02:29 jdolecek Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -765,7 +765,7 @@ midipoll(dev_t dev, int events, struct proc *p)
 static void
 filt_midirdetach(struct knote *kn)
 {
-	struct midi_softc *sc = (void *) kn->kn_hook;
+	struct midi_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splaudio();
@@ -776,7 +776,7 @@ filt_midirdetach(struct knote *kn)
 static int
 filt_midiread(struct knote *kn, long hint)
 {
-	struct midi_softc *sc = (void *) kn->kn_hook;
+	struct midi_softc *sc = kn->kn_hook;
 
 	/* XXXLUKEM (thorpej): please make sure this is correct. */
 
@@ -790,7 +790,7 @@ static const struct filterops midiread_filtops =
 static void
 filt_midiwdetach(struct knote *kn)
 {
-	struct midi_softc *sc = (void *) kn->kn_hook;
+	struct midi_softc *sc = kn->kn_hook;
 	int s;
 
 	s = splaudio();
@@ -801,7 +801,7 @@ filt_midiwdetach(struct knote *kn)
 static int
 filt_midiwrite(struct knote *kn, long hint)
 {
-	struct midi_softc *sc = (void *) kn->kn_hook;
+	struct midi_softc *sc = kn->kn_hook;
 
 	/* XXXLUKEM (thorpej): please make sure this is correct. */
 
@@ -835,7 +835,7 @@ midikqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = splaudio();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

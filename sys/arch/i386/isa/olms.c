@@ -1,4 +1,4 @@
-/*	$NetBSD: olms.c,v 1.1.24.2 2002/01/10 19:44:59 thorpej Exp $	*/
+/*	$NetBSD: olms.c,v 1.1.24.3 2002/10/02 22:02:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: olms.c,v 1.1.24.2 2002/01/10 19:44:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: olms.c,v 1.1.24.3 2002/10/02 22:02:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -406,7 +406,7 @@ lmspoll(dev, events, p)
 static void
 filt_lmsrdetach(struct knote *kn)
 {
-	struct olms_softc *sc = (void *) kn->kn_hook;
+	struct olms_softc *sc = kn->kn_hook;
 	int s;
 
 	s = spltty();
@@ -417,7 +417,7 @@ filt_lmsrdetach(struct knote *kn)
 static int
 filt_lmsread(struct knote *kn, long hint)
 {
-	struct olms_softc *sc = (void *) kn->kn_hook;
+	struct olms_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->sc_q.c_cc;
 	return (kn->kn_data > 0);
@@ -443,7 +443,7 @@ lmskqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = spltty();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

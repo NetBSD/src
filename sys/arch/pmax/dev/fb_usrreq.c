@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_usrreq.c,v 1.22.2.1 2001/09/09 06:07:25 thorpej Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.22.2.2 2002/10/02 22:02:25 jdolecek Exp $	*/
 
 /*ARGSUSED*/
 int
@@ -257,7 +257,7 @@ fbpoll(dev, events, p)
 static void
 filt_fbrdetach(struct knote *kn)
 {
-	struct fbinfo *fi = (void *) kn->kn_hook;
+	struct fbinfo *fi = kn->kn_hook;
 	int s;
 
 	s = spltty();
@@ -268,7 +268,7 @@ filt_fbrdetach(struct knote *kn)
 static int
 filt_fbread(struct knote *kn, long hint)
 {
-	struct fbinfo *fi = (void *) kn->kn_hook;
+	struct fbinfo *fi = kn->kn_hook;
 
 	if (fi->fi_fbu->scrInfo.qe.eHead == fi->fi_fbu->scrInfo.qe.eTail)
 		return (0);
@@ -297,7 +297,7 @@ fbkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) fi;
+	kn->kn_hook = fi;
 
 	s = spltty();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.45.4.5 2002/09/06 08:46:52 jdolecek Exp $	*/
+/*	$NetBSD: ugen.c,v 1.45.4.6 2002/10/02 22:02:28 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.45.4.5 2002/09/06 08:46:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.45.4.6 2002/10/02 22:02:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1344,7 +1344,7 @@ ugenpoll(dev_t dev, int events, usb_proc_ptr p)
 static void
 filt_ugenrdetach(struct knote *kn)
 {
-	struct ugen_endpoint *sce = (void *) kn->kn_hook;
+	struct ugen_endpoint *sce = kn->kn_hook;
 	int s;
 
 	s = splusb();
@@ -1355,7 +1355,7 @@ filt_ugenrdetach(struct knote *kn)
 static int
 filt_ugenread_intr(struct knote *kn, long hint)
 {
-	struct ugen_endpoint *sce = (void *) kn->kn_hook;
+	struct ugen_endpoint *sce = kn->kn_hook;
 
 	kn->kn_data = sce->q.c_cc;
 	return (kn->kn_data > 0);
@@ -1364,7 +1364,7 @@ filt_ugenread_intr(struct knote *kn, long hint)
 static int
 filt_ugenread_isoc(struct knote *kn, long hint)
 {
-	struct ugen_endpoint *sce = (void *) kn->kn_hook;
+	struct ugen_endpoint *sce = kn->kn_hook;
 
 	if (sce->cur == sce->fill)
 		return (0);
@@ -1453,7 +1453,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sce;
+	kn->kn_hook = sce;
 
 	s = splusb();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

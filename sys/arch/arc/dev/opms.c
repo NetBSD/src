@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.1.4.3 2002/06/16 20:11:33 jdolecek Exp $	*/
+/*	$NetBSD: opms.c,v 1.1.4.4 2002/10/02 22:02:22 jdolecek Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -423,7 +423,7 @@ opmspoll(dev, events, p)
 static void
 filt_opmsrdetach(struct knote *kn)
 {
-	struct opms_softc *sc = (void *) kn->kn_hook;
+	struct opms_softc *sc = kn->kn_hook;
 	int s;  
 
 	s = spltty();
@@ -434,7 +434,7 @@ filt_opmsrdetach(struct knote *kn)
 static int
 filt_opmsread(struct knote *kn, long hint)
 {
-	struct opms_softc *sc = (void *) kn->kn_hook;
+	struct opms_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->sc_q.c_cc;
 	return (kn->kn_data > 0);
@@ -460,7 +460,7 @@ opmskqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) sc;
+	kn->kn_hook = sc;
 
 	s = spltty();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

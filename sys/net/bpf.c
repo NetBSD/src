@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.61.2.5 2002/09/06 08:48:46 jdolecek Exp $	*/
+/*	$NetBSD: bpf.c,v 1.61.2.6 2002/10/02 22:02:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.61.2.5 2002/09/06 08:48:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.61.2.6 2002/10/02 22:02:30 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -1050,7 +1050,7 @@ bpfpoll(dev, events, p)
 static void
 filt_bpfrdetach(struct knote *kn)
 {
-	struct bpf_d *d = (void *) kn->kn_hook;
+	struct bpf_d *d = kn->kn_hook;
 	int s;
 
 	s = splnet();
@@ -1061,7 +1061,7 @@ filt_bpfrdetach(struct knote *kn)
 static int
 filt_bpfread(struct knote *kn, long hint)
 {
-	struct bpf_d *d = (void *) kn->kn_hook;
+	struct bpf_d *d = kn->kn_hook;
 
 	kn->kn_data = d->bd_hlen;
 	if (d->bd_immediate)
@@ -1091,7 +1091,7 @@ bpfkqfilter(dev, kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) d;
+	kn->kn_hook = d;
 
 	s = splnet();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

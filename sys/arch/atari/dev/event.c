@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.5.42.2 2001/09/12 17:43:57 thorpej Exp $	*/
+/*	$NetBSD: event.c,v 1.5.42.3 2002/10/02 22:02:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -170,7 +170,7 @@ ev_poll(ev, events, p)
 static void
 filt_evrdetach(struct knote *kn)
 {
-	struct evvar *ev = (void *) kn->kn_hook;
+	struct evvar *ev = kn->kn_hook;
 	int s;
 
 	s = splev();
@@ -181,7 +181,7 @@ filt_evrdetach(struct knote *kn)
 static int
 filt_evread(struct knote *kn, long hint)
 {
-	struct evvar *ev = (void *) kn->kn_hook;
+	struct evvar *ev = kn->kn_hook;
 
 	if (ev->ev_get == ev->ev_put)
 		return (0);
@@ -216,7 +216,7 @@ ev_kqfilter(struct evvar *ev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) ev;
+	kn->kn_hook = ev;
 
 	s = splev();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

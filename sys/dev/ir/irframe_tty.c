@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.19.4.3 2002/06/23 17:47:02 jdolecek Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.19.4.4 2002/10/02 22:02:26 jdolecek Exp $	*/
 
 /*
  * TODO
@@ -667,7 +667,7 @@ irframet_poll(void *h, int events, struct proc *p)
 static void
 filt_irframetrdetach(struct knote *kn)
 {
-	struct tty *tp = (void *) kn->kn_hook;
+	struct tty *tp = kn->kn_hook;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int s;
 
@@ -679,7 +679,7 @@ filt_irframetrdetach(struct knote *kn)
 static int
 filt_irframetread(struct knote *kn, long hint)
 {
-	struct tty *tp = (void *) kn->kn_hook;
+	struct tty *tp = kn->kn_hook;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 
 	kn->kn_data = sc->sc_nframes;
@@ -689,7 +689,7 @@ filt_irframetread(struct knote *kn, long hint)
 static void
 filt_irframetwdetach(struct knote *kn)
 {
-	struct tty *tp = (void *) kn->kn_hook;
+	struct tty *tp = kn->kn_hook;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int s;
 
@@ -701,7 +701,7 @@ filt_irframetwdetach(struct knote *kn)
 static int
 filt_irframetwrite(struct knote *kn, long hint)
 {
-	struct tty *tp = (void *) kn->kn_hook;
+	struct tty *tp = kn->kn_hook;
 
 	/* XXX double-check this */
 
@@ -740,7 +740,7 @@ irframet_kqfilter(void *h, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) tp;
+	kn->kn_hook = tp;
 
 	s = splir();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
