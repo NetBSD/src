@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.61 2001/04/24 04:31:17 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.62 2001/04/25 14:59:44 thorpej Exp $	*/
 
 /*
  *
@@ -1649,6 +1649,9 @@ Case2:
 			 */
 			if ((amap_flags(amap) & AMAP_SHARED) != 0) {
 				pmap_page_protect(uobjpage, VM_PROT_NONE);
+				/*
+				 * XXX: PAGE MIGHT BE WIRED!
+				 */
 			}
 			
 			/*
