@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.37 1999/03/16 13:37:23 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.38 1999/03/16 14:17:00 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -1273,14 +1273,12 @@ ess_audio1_trigger_output(addr, start, end, blksize, intr, arg, param)
 		     (char *)end - (char *)start, NULL,
 	    DMAMODE_WRITE | DMAMODE_LOOPDEMAND, BUS_DMA_NOWAIT);
 
-	if (IS16BITDRQ(sc->sc_audio1.drq))
-		blksize >>= 1;	/* use word count for 16 bit DMA */
 	/* Program transfer count registers with 2's complement of count. */
 	blksize = -blksize;
 	ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTLO, blksize);
 	ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTHI, blksize >> 8);
 
-	/* Use 4 bytes per input DMA. */
+	/* Use 4 bytes per output DMA. */
 	ess_set_xreg_bits(sc, ESS_XCMD_DEMAND_CTRL,
 	    ESS_DEMAND_CTRL_DEMAND_4);
 
@@ -1442,8 +1440,6 @@ ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
 		     (char *)end - (char *)start, NULL,
 	    DMAMODE_READ | DMAMODE_LOOPDEMAND, BUS_DMA_NOWAIT);
 
-	if (IS16BITDRQ(sc->sc_audio1.drq))
-		blksize >>= 1;	/* use word count for 16 bit DMA */
 	/* Program transfer count registers with 2's complement of count. */
 	blksize = -blksize;
 	ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTLO, blksize);
