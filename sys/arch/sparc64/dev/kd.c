@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.29 2003/08/25 17:50:27 uwe Exp $	*/
+/*	$NetBSD: kd.c,v 1.30 2003/08/25 19:03:41 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.29 2003/08/25 17:50:27 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.30 2003/08/25 19:03:41 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.29 2003/08/25 17:50:27 uwe Exp $");
 
 #ifdef RASTERCONSOLE
 #include <dev/sun/fbio.h>
-#include <machine/fbvar.h>
+#include <dev/sun/fbvar.h>
 #endif
 
 
