@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.60 2002/08/23 03:17:19 lukem Exp $	*/
+/*	$NetBSD: mount.c,v 1.61 2002/09/21 18:43:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.60 2002/08/23 03:17:19 lukem Exp $");
+__RCSID("$NetBSD: mount.c,v 1.61 2002/09/21 18:43:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,10 +76,11 @@ static const char *
 		getfslab __P((const char *str));
 static struct statfs *
 		getmntpt __P((const char *));
+static int 	getmntargs __P((struct statfs *, char *, size_t));
 static int	hasopt __P((const char *, const char *));
 static void	mangle __P((char *, int *, const char ***, int *));
 static int	mountfs __P((const char *, const char *, const char *,
-		    int, const char *, const char *, int));
+		    int, const char *, const char *, int, char *, size_t));
 static void	prmount __P((struct statfs *));
 static void	usage __P((void));
 
@@ -154,7 +155,7 @@ main(argc, argv)
 			init_flags |= MNT_UPDATE;
 			break;
 		case 'v':
-			verbose = 1;
+			verbose++;
 			break;
 		case 'w':
 			init_flags &= ~MNT_RDONLY;
@@ -184,7 +185,7 @@ main(argc, argv)
 					continue;
 				if (mountfs(fs->fs_vfstype, fs->fs_spec,
 				    fs->fs_file, init_flags, options,
-				    fs->fs_mntops, !forceall))
+				    fs->fs_mntops, !forceall, NULL, 0))
 					rval = 1;
 			}
 		else {
@@ -234,7 +235,7 @@ main(argc, argv)
 			mountopts   = fs->fs_mntops;
 		}
 		rval = mountfs(fstypename, mntfromname,
-		    mntonname, init_flags, options, mountopts, 0);
+		    mntonname, init_flags, options, mountopts, 0, NULL, 0);
 		break;
 	case 2:
 		/*
@@ -252,7 +253,7 @@ main(argc, argv)
 			}
 		}
 		rval = mountfs(vfstype,
-		    argv[0], argv[1], init_flags, options, NULL, 0);
+		    argv[0], argv[1], init_flags, options, NULL, 0, NULL, 0);
 		break;
 	default:
 		usage();
@@ -303,9 +304,11 @@ hasopt(mntopts, option)
 }
 
 static int
-mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
+mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted, buf, buflen)
 	const char *vfstype, *spec, *name, *options, *mntopts;
 	int flags, skipmounted;
+	char *buf;
+	size_t buflen;
 {
 	/* List of directories containing mount_xxx subcommands. */
 	static const char *edirs[] = {
@@ -319,6 +322,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	const char **argv, **edir;
 	struct statfs *sfp, sf;
 	pid_t pid;
+	int pfd[2];
 	int argc, numfs, i, status, maxargc;
 	char *optbuf, execname[MAXPATHLEN + 1], execbase[MAXPATHLEN],
 	    mntpath[MAXPATHLEN];
@@ -395,11 +399,16 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	argv[argc++] = name;
 	argv[argc] = NULL;
 
-	if (verbose) {
+	if (verbose && buf == NULL) {
 		(void)printf("exec:");
 		for (i = 0; i < argc; i++)
 			(void)printf(" %s", argv[i]);
 		(void)printf("\n");
+	}
+
+	if (buf) {
+		if (pipe(pfd) == -1)
+			warn("Cannot create pipe");
 	}
 
 	switch (pid = vfork()) {
@@ -412,6 +421,13 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	case 0:					/* Child. */
 		if (debug)
 			_exit(0);
+
+		if (buf) {
+			(void)close(pfd[0]);
+			(void)close(STDOUT_FILENO);
+			if (dup2(pfd[1], STDOUT_FILENO) == -1)
+				warn("Cannot open fd to mount program");
+		}
 
 		/* Go find an executable. */
 		edir = edirs;
@@ -432,6 +448,31 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		if (optbuf)
 			free(optbuf);
 
+		if (buf || strstr(options, "getargs") != NULL) {
+			char tbuf[1024], *ptr;
+			int nread;
+			if (buf == NULL) {
+				ptr = tbuf;
+				buflen = sizeof(tbuf) - 1;
+			} else {
+				ptr = buf;
+				buflen--;
+			}
+			(void)close(pfd[1]);
+			(void)signal(SIGPIPE, SIG_IGN);
+			while ((nread = read(pfd[0], ptr, buflen)) > 0) {
+				buflen -= nread;
+				ptr += nread;
+			}
+			*ptr = '\0';
+			if (buflen == 0) {
+				while (read(pfd[0], &nread, sizeof(nread)) > 0)
+					continue;
+			}
+			if (buf == NULL)
+			    (void)fprintf(stdout, "%s", tbuf);
+		}
+
 		if (waitpid(pid, &status, 0) < 0) {
 			warn("waitpid");
 			return (1);
@@ -445,12 +486,14 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 			return (1);
 		}
 
-		if (verbose) {
-			if (statfs(name, &sf) < 0) {
-				warn("statfs %s", name);
-				return (1);
+		if (buf == NULL) {
+			if (verbose) {
+				if (statfs(name, &sf) < 0) {
+					warn("statfs %s", name);
+					return (1);
+				}
+				prmount(&sf);
 			}
-			prmount(&sf);
 		}
 		break;
 	}
@@ -489,11 +532,36 @@ prmount(sfp)
 		else
 			(void)printf("%d", sfp->f_owner);
 	}
-	if (verbose)
-		(void)printf("%swrites: sync %ld async %ld)\n",
+	if (verbose) {
+		(void)printf("%swrites: sync %ld async %ld",
 		    !f++ ? " (" : ", ", sfp->f_syncwrites, sfp->f_asyncwrites);
-	else
+		if (verbose > 1) {
+			char buf[2048];
+			if (getmntargs(sfp, buf, sizeof(buf)))
+				printf(", [%s: %s])\n", sfp->f_fstypename, buf);
+			else
+				printf(")\n");
+		}
+	} else
 		(void)printf("%s", f ? ")\n" : "\n");
+}
+
+static int
+getmntargs(sfs, buf, buflen)
+	struct statfs *sfs;
+	char *buf;
+	size_t buflen;
+{
+	if (mountfs(sfs->f_fstypename, sfs->f_mntfromname, sfs->f_mntonname, 0,
+	    "getargs", NULL, 0, buf, buflen))
+		return 0;
+	else {
+		if (*buf == '\0')
+			return 0;
+		if ((buf = strchr(buf, '\n')) != NULL)
+			*buf = '\0';
+		return 1;
+	}
 }
 
 static struct statfs *

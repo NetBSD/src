@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.59 2002/08/08 13:24:13 soren Exp $	*/
+/*	$NetBSD: newfs.c,v 1.60 2002/09/21 18:43:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.59 2002/08/08 13:24:13 soren Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.60 2002/09/21 18:43:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_ASYNC,
 	MOPT_UPDATE,
+	MOPT_GETARGS,
 	MOPT_NOATIME,
 	{ NULL },
 };
@@ -432,6 +433,8 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+	if (mntflags & MNT_GETARGS)
+		goto doit;
 
 	if (argc != 2 && (mfs || argc != 1))
 		usage();
@@ -728,8 +731,14 @@ main(int argc, char *argv[])
 			args.export.ex_flags = 0;
 		args.base = membase;
 		args.size = fssize * sectorsize;
-		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0)
+doit:
+		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0) {
+			if (mntflags & MNT_GETARGS)
+				err(1, "mount `%s' failed", argv[1]);
 			exit(errno); /* parent prints message */
+		}
+		if (mntflags & MNT_GETARGS)
+			printf("base=%p, size=%ld\n", args.base, args.size);
 	}
 #endif
 	exit(0);

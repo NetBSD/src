@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.33 2002/06/16 02:27:31 wrstuden Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.34 2002/09/21 18:43:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.33 2002/06/16 02:27:31 wrstuden Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.34 2002/09/21 18:43:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,7 @@ __RCSID("$NetBSD: mount_nfs.c,v 1.33 2002/06/16 02:27:31 wrstuden Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "mntopts.h"
 
@@ -111,6 +112,7 @@ static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_FORCE,
 	MOPT_UPDATE,
+	MOPT_GETARGS,
 	{ "bg", 0, ALTF_BG, 1 },
 	{ "conn", 0, ALTF_CONN, 1 },
 	{ "dumbtimer", 0, ALTF_DUMBTIMR, 1 },
@@ -185,6 +187,7 @@ static struct timeval ktv;
 static NFSKERBKEYSCHED_T kerb_keysched;
 #endif
 
+static void	shownfsargs __P((const struct nfs_args *));
 static int	getnfsargs __P((char *, struct nfs_args *));
 #ifdef ISO
 static struct	iso_addr *iso_addr __P((const char *));
@@ -446,8 +449,10 @@ mount_nfs(argc, argv)
 		err(1,"strdup");
 	}
 
-	if (!getnfsargs(spec, nfsargsp))
-		exit(1);
+	if ((mntflags & MNT_GETARGS) == 0) {
+		if (!getnfsargs(spec, nfsargsp))
+			exit(1);
+	}
 	if ((retval = mount(MOUNT_NFS, name, mntflags, nfsargsp))) {
 		/* Did we just default to v3 on a v2-only kernel?
 		 * If so, default to v2 & try again */
@@ -458,6 +463,11 @@ mount_nfs(argc, argv)
 	}
 	if (retval)
 		err(1, "%s on %s", ospec, name);
+	if (mntflags & MNT_GETARGS) {
+		shownfsargs(nfsargsp);
+		return 0;
+	}
+		
 	if (nfsargsp->flags & (NFSMNT_NQNFS | NFSMNT_KERB)) {
 		if ((opflags & ISBGRND) == 0) {
 			if ((i = fork()) != 0) {
@@ -557,6 +567,34 @@ mount_nfs(argc, argv)
 		}
 	}
 	exit(0);
+}
+
+static void
+shownfsargs(nfsargsp)
+	const struct nfs_args *nfsargsp;
+{
+	char fbuf[2048];
+
+	(void)snprintb(fbuf, sizeof(fbuf), NFSMNT_BITS, nfsargsp->flags);
+	printf("version=%d, addrlen=%d, sotype=%d, proto=%d, fhsize=%d, "
+	    "flags=%s, wsize=%d, rsize=%d, readdirsize=%d, timeo=%d, "
+	    "retrans=%d, maxgrouplist=%d, readahead=%d, leaseterm=%d, "
+	    "deadthresh=%d\n",
+	    nfsargsp->version,
+	    nfsargsp->addrlen,
+	    nfsargsp->sotype,
+	    nfsargsp->proto,
+	    nfsargsp->fhsize,
+	    fbuf,
+	    nfsargsp->wsize,
+	    nfsargsp->rsize,
+	    nfsargsp->readdirsize,
+	    nfsargsp->timeo,
+	    nfsargsp->retrans,
+	    nfsargsp->maxgrouplist,
+	    nfsargsp->readahead,
+	    nfsargsp->leaseterm,
+	    nfsargsp->deadthresh);
 }
 
 static int
