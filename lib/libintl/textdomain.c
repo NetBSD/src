@@ -1,4 +1,4 @@
-/*	$NetBSD: textdomain.c,v 1.1.1.1 2000/10/31 10:45:04 itojun Exp $	*/
+/*	$NetBSD: textdomain.c,v 1.2 2000/10/31 15:23:04 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: textdomain.c,v 1.1.1.1 2000/10/31 10:45:04 itojun Exp $");
+__RCSID("$NetBSD: textdomain.c,v 1.2 2000/10/31 15:23:04 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: textdomain.c,v 1.1.1.1 2000/10/31 10:45:04 itojun Exp $");
 static char dpath[PATH_MAX];
 static char dname[PATH_MAX];	/*XXX*/
 const char *__domainpath = _PATH_TEXTDOMAIN;
-const char *__domainname;
+const char *__domainname = DEFAULT_DOMAINNAME;
 
 /*
  * set the default domainname for dcngettext() and friends.
@@ -53,6 +53,16 @@ textdomain(domainname)
 	const char *domainname;
 {
 
+	/* NULL pointer gives the current setting */
+	if (!domainname) {
+		/* LINTED const cast */
+		return (char *)__domainname;
+	}
+
+	/* empty string sets the value back to the default */
+	if (!*domainname)
+		return bindtextdomain(DEFAULT_DOMAINNAME, _PATH_TEXTDOMAIN);
+
 	return bindtextdomain(domainname, _PATH_TEXTDOMAIN);
 }
 
@@ -61,6 +71,10 @@ bindtextdomain(domainname, dirname)
 	const char *domainname;
 	const char *dirname;
 {
+
+	/* NULL pointer or empty string returns NULL with no operation */
+	if (!domainname || !*domainname)
+		return NULL;
 
 	if (strlen(dirname) + 1 > sizeof(dpath))
 		return NULL;
