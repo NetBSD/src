@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.13 1999/04/03 14:50:21 msaitoh Exp $
+.\"	$NetBSD: pool.9,v 1.14 1999/08/05 04:00:04 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -187,10 +187,11 @@ allocates an item from the pool and returns a pointer to it.
 .It Fa pp
 The handle identifying the pool resource instance.
 .It Fa flags
-One of
-.Dv PR_URGENT
+One or more of of
+.Dv PR_URGENT ,
+.Dv PR_WAITOK
 or
-.Dv PR_WAITOK ,
+.Dv PR_LIMITFAIL ,
 that define behaviour in case the pooled resources are depleted.
 If no resources are available and
 .Dv PR_WAITOK
@@ -211,6 +212,17 @@ the system will panic
 .\".Dv PR_MALLOCOK
 .\"is specified on a pool handle that was created using client-provided
 .\"storage.
+.\" a bunch of other flags aren't documented.
+If both
+.Dv PR_LIMITFAIL 
+and
+.Dv PR_WAITOK
+is specified, and the pool has reached its hard limit, 
+.Fn pool_get 
+will return 
+.Dv NULL
+without waiting, allowing the caller to do its own garbage collection;
+however, it will still wait if the pool is not yet at its hard limit.
 .El
 .Ss RETURNING ITEMS TO A POOL
 .Fn pool_put

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.45 1999/07/01 08:13:00 itojun Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.46 1999/08/05 04:00:03 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ struct mbuf {
  * are guaranteed to return successfully.
  */
 #define	MGET(m, how, type) do { \
-	MBUFLOCK((m) = pool_get(&mbpool, (how) == M_WAIT ? PR_WAITOK : 0);); \
+	MBUFLOCK((m) = pool_get(&mbpool, (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);); \
 	if (m) { \
 		MBUFLOCK(mbstat.m_mtypes[type]++;); \
 		(m)->m_type = (type); \
@@ -242,7 +242,7 @@ struct mbuf {
 } while (0)
 
 #define	MGETHDR(m, how, type) do { \
-	MBUFLOCK((m) = pool_get(&mbpool, (how) == M_WAIT ? PR_WAITOK : 0);); \
+	MBUFLOCK((m) = pool_get(&mbpool, (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);); \
 	if (m) { \
 		MBUFLOCK(mbstat.m_mtypes[type]++;); \
 		(m)->m_type = (type); \
@@ -313,7 +313,8 @@ struct mbuf {
 #define	MCLGET(m, how) do { \
 	MBUFLOCK( \
 		(m)->m_ext.ext_buf = \
-		    pool_get(&mclpool, (how) == M_WAIT ? PR_WAITOK : 0); \
+		    pool_get(&mclpool, (how) == M_WAIT ? \
+			(PR_WAITOK|PR_LIMITFAIL) : 0); \
 		if ((m)->m_ext.ext_buf == NULL) { \
 			m_reclaim((how)); \
 			(m)->m_ext.ext_buf = \

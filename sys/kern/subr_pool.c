@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.28 1999/07/27 21:31:17 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.29 1999/08/05 04:00:04 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -607,7 +607,7 @@ _pool_get(pp, flags, file, line)
 	}
 #endif
 	if (pp->pr_nout == pp->pr_hardlimit) {
-		if (flags & PR_WAITOK) {
+		if ((flags & PR_WAITOK) && !(flags & PR_LIMITFAIL)) {
 			/*
 			 * XXX: A warning isn't logged in this case.  Should
 			 * it be?
