@@ -1,4 +1,4 @@
-/*	$Id: vector.s,v 1.11 1993/12/17 00:11:49 mycroft Exp $ */
+/*	$Id: vector.s,v 1.12 1993/12/19 06:58:41 mycroft Exp $ */
 
 #include "i386/isa/icu.h"
 #include "i386/isa/isa.h"
@@ -102,12 +102,7 @@
 #define	INTR(unit, irq_num, id_num, mask, handler, icu, enable_icus, reg, stray) \
 	pushl	$0 ;		/* dummy error code */ \
 	pushl	$T_ASTFLT ; \
-	pushal ; \
-	pushl	%ds ; 		/* save our data and extra segments ... */ \
-	pushl	%es ; \
-	movl	$KDSEL,%eax ;	/* ... and reload with kernel's own ... */ \
-	movl	%ax,%ds ; 	/* ... early in case SHOW_A_LOT is on */ \
-	movl	%ax,%es ; \
+	INTRENTRY ; \
 	SHOW_CLI ;		/* interrupt did an implicit cli */ \
 	movb	_imen + IRQ_BYTE(irq_num),%al ; \
 	orb	$IRQ_BIT(irq_num),%al ; \
@@ -137,7 +132,7 @@
 	SHOW_IMEN ; \
 	FASTER_NOP ; \
 	outb	%al,$icu+1 ; \
-	jmp	doreti ; \
+	INTREXIT ; \
 ; \
 	ALIGN_TEXT ; \
 2: ; \
@@ -147,11 +142,7 @@
 	movl	%eax,Vresume + (irq_num) * 4 ;	\
 	orb	$IRQ_BIT(irq_num),_ipending + IRQ_BYTE(irq_num) ; \
 	SHOW_IPENDING ; \
-	popl	%es ; \
-	popl	%ds ; \
-	popal ; \
-	addl	$4+4,%esp ; \
-	iret
+	INTRFASTEXIT
 
 /*
  * vector.h has defined a macro 'BUILD_VECTORS' containing a big list of info
