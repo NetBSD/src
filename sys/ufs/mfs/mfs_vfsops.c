@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.27 2000/05/16 17:20:23 thorpej Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.28 2000/05/19 20:42:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -157,10 +157,8 @@ mfs_mountroot()
 	mfsp->mfs_size = mfs_rootsize;
 	mfsp->mfs_vnode = rootvp;
 	mfsp->mfs_proc = NULL;		/* indicate kernel space */
-	mfsp->mfs_alive = 1;
 	BUFQ_INIT(&mfsp->mfs_buflist);
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
-		mfsp->mfs_alive = 0;
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
@@ -263,9 +261,8 @@ mfs_mount(mp, path, data, ndp, p)
 	mfsp->mfs_vnode = devvp;
 	mfsp->mfs_proc = p;
 	BUFQ_INIT(&mfsp->mfs_buflist);
-	mfsp->mfs_alive = 1;
 	if ((error = ffs_mountfs(devvp, mp, p)) != 0) {
-		mfsp->mfs_alive = 0;
+		BUFQ_FIRST(&mfsp->mfs_buflist) = (struct buf *) -1;
 		vrele(devvp);
 		return (error);
 	}
@@ -286,8 +283,9 @@ int	mfs_pri = PWAIT | PCATCH;		/* XXX prob. temp */
  * Used to grab the process and keep it in the kernel to service
  * memory filesystem I/O requests.
  *
- * What we actually do is just wait until we're told to go away.
- * mfs_strategy() does I/O directly to the process's address space.
+ * Loop servicing I/O requests.
+ * Copy the requested data into or out of the memory filesystem
+ * address space.
  */
 /* ARGSUSED */
 int
@@ -298,9 +296,12 @@ mfs_start(mp, flags, p)
 {
 	struct vnode *vp = VFSTOUFS(mp)->um_devvp;
 	struct mfsnode *mfsp = VTOMFS(vp);
+	struct buf *bp;
+	caddr_t base;
 	int sleepreturn = 0;
 
-	while (mfsp->mfs_alive) {
+	base = mfsp->mfs_baseoff;
+	while (BUFQ_FIRST(&mfsp->mfs_buflist) != (struct buf *) -1) {
 		/*
 		 * If a non-ignored signal is received, try to unmount.
 		 * If that fails, or the filesystem is already in the
@@ -315,8 +316,13 @@ mfs_start(mp, flags, p)
 			sleepreturn = 0;
 			continue;
 		}
-		sleepreturn = tsleep((void *)&mfsp->mfs_alive, mfs_pri,
-		    "mfsidl", 0);
+
+		while ((bp = BUFQ_FIRST(&mfsp->mfs_buflist)) != NULL) {
+			BUFQ_REMOVE(&mfsp->mfs_buflist, bp);
+			mfs_doio(bp, base);
+			wakeup((caddr_t)bp);
+		}
+		sleepreturn = tsleep(vp, mfs_pri, "mfsidl", 0);
 	}
 	return (sleepreturn);
 }

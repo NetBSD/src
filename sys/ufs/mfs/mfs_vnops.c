@@ -1,40 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.22 2000/05/16 17:20:23 thorpej Exp $	*/
-
-/*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of Zembu Labs, Inc.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+/*	$NetBSD: mfs_vnops.c,v 1.23 2000/05/19 20:42:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -80,13 +44,11 @@
 #include <sys/map.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
-#include <sys/uio.h>
-
-#include <vm/vm.h>
-#include <uvm/uvm_extern.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
+
+#include <machine/vmparam.h>
 
 #include <ufs/mfs/mfsnode.h>
 #include <ufs/mfs/mfs_extern.h>
@@ -182,101 +144,50 @@ mfs_strategy(v)
 	struct buf *bp = ap->a_bp;
 	struct mfsnode *mfsp;
 	struct vnode *vp;
-	struct proc *p;
-	struct uio auio;
-	struct iovec aiov;
-	caddr_t base;
+	struct proc *p = curproc;		/* XXX */
 
 	if (!vfinddev(bp->b_dev, VBLK, &vp) || vp->v_usecount == 0)
 		panic("mfs_strategy: bad dev");
-
 	mfsp = VTOMFS(vp);
-	p = mfsp->mfs_proc;
-
-	bp->b_error = 0;
-
-	base = mfsp->mfs_baseoff + (bp->b_blkno << DEV_BSHIFT);
-
-	/*
-	 * We have to preserve order, so what we do here is put
-	 * ourselves on the end of the queue and then wait for
-	 * our buffer to bubble to the front.  This is necessary
-	 * in case we sleep faulting in the pages for the I/O
-	 * and another process comes in to do I/O while we're
-	 * sleeping.
-	 *
-	 * The fact that our buffer is still at the front of
-	 * the queue while we process the I/O serves as a
-	 * mutex.
-	 */
-	BUFQ_INSERT_TAIL(&mfsp->mfs_buflist, bp);
-	while (BUFQ_FIRST(&mfsp->mfs_buflist) != bp)
-		(void) tsleep(&mfsp->mfs_buflist, PRIBIO,
-		    "mfsio", 0);
-
+	/* check for mini-root access */
 	if (mfsp->mfs_proc == NULL) {
-		/*
-		 * Access to kernel-space miniroot.
-		 */
+		caddr_t base;
+
+		base = mfsp->mfs_baseoff + (bp->b_blkno << DEV_BSHIFT);
 		if (bp->b_flags & B_READ)
 			memcpy(bp->b_data, base, bp->b_bcount);
 		else
 			memcpy(base, bp->b_data, bp->b_bcount);
-	} else if (mfsp->mfs_proc == curproc) {
-		/*
-		 * The MFS server process is doing the I/O itself
-		 * (possibly unmounting the file system).  Do the
-		 * I/O to the address space directly.
-		 */
-		if (bp->b_flags & B_READ)
-			bp->b_error = copyin(base, bp->b_data, bp->b_bcount);
-		else
-			bp->b_error = copyout(bp->b_data, base, bp->b_bcount);
+		biodone(bp);
+	} else if (mfsp->mfs_proc == p) {
+		mfs_doio(bp, mfsp->mfs_baseoff);
 	} else {
-		aiov.iov_base = bp->b_data;
-		aiov.iov_len = bp->b_bcount;
-
-		auio.uio_iov = &aiov;
-		auio.uio_iovcnt = 1;
-		auio.uio_offset = (vaddr_t)base;
-		auio.uio_resid = bp->b_bcount;
-		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_rw = (bp->b_flags & B_READ) ? UIO_READ : UIO_WRITE;
-		auio.uio_procp = p;
-
-		/* XXXCDC: how should locking work here? */
-		if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) {
-			bp->b_error = EFAULT;
-			goto out;
-		}
-
-		/*
-		 * XXX I don't think PHOLD()/PRELE() is really necessary,
-		 * XXX here.  --thorpej
-		 */
-
-		PHOLD(p);			/* XXX */
-		p->p_vmspace->vm_refcnt++;	/* XXX */
-		bp->b_error = uvm_io(&p->p_vmspace->vm_map, &auio);
-		PRELE(p);			/* XXX */
-		p->p_vmspace->vm_refcnt--;	/* XXX */
+		BUFQ_INSERT_TAIL(&mfsp->mfs_buflist, bp);
+		wakeup((caddr_t)vp);
 	}
- out:
-	if (bp->b_error != 0)
+	return (0);
+}
+
+/*
+ * Memory file system I/O.
+ *
+ * Trivial on the HP since buffer has already been mapping into KVA space.
+ */
+void
+mfs_doio(bp, base)
+	struct buf *bp;
+	caddr_t base;
+{
+	base += (bp->b_blkno << DEV_BSHIFT);
+	if (bp->b_flags & B_READ)
+		bp->b_error = copyin(base, bp->b_data, bp->b_bcount);
+	else
+		bp->b_error = copyout(bp->b_data, base, bp->b_bcount);
+	if (bp->b_error)
 		bp->b_flags |= B_ERROR;
 	else
 		bp->b_resid = 0;
-
-	/*
-	 * Pull our buffer off the front of the queue, thereby releasing
-	 * the mutex, and awaken any threads waiting to do I/O.
-	 */
-	BUFQ_REMOVE(&mfsp->mfs_buflist, bp);
-	if (BUFQ_FIRST(&mfsp->mfs_buflist) != NULL)
-		wakeup(&mfsp->mfs_buflist);
-
 	biodone(bp);
-	return (0);
 }
 
 /*
@@ -319,8 +230,17 @@ mfs_close(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mfsnode *mfsp = VTOMFS(vp);
+	struct buf *bp;
 	int error;
 
+	/*
+	 * Finish any pending I/O requests.
+	 */
+	while ((bp = BUFQ_FIRST(&mfsp->mfs_buflist)) != NULL) {
+		BUFQ_REMOVE(&mfsp->mfs_buflist, bp);
+		mfs_doio(bp, mfsp->mfs_baseoff);
+		wakeup((caddr_t)bp);
+	}
 	/*
 	 * On last close of a memory filesystem
 	 * we must invalidate any in core blocks, so that
@@ -339,8 +259,8 @@ mfs_close(v)
 	/*
 	 * Send a request to the filesystem server to exit.
 	 */
-	mfsp->mfs_alive = 0;
-	wakeup((void *)&mfsp->mfs_alive);
+	BUFQ_FIRST(&mfsp->mfs_buflist) = (struct buf *) -1;
+	wakeup((caddr_t)vp);
 	return (0);
 }
 
@@ -359,7 +279,8 @@ mfs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 	struct mfsnode *mfsp = VTOMFS(vp);
 
-	if (BUFQ_FIRST(&mfsp->mfs_buflist) != NULL)
+	if (BUFQ_FIRST(&mfsp->mfs_buflist) != NULL &&
+	    BUFQ_FIRST(&mfsp->mfs_buflist) != (struct buf *) -1)
 		panic("mfs_inactive: not inactive (mfs_buflist %p)",
 			BUFQ_FIRST(&mfsp->mfs_buflist));
 	VOP_UNLOCK(vp, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.10 2000/05/16 17:20:23 thorpej Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.11 2000/05/19 20:42:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,6 +62,7 @@ void	mfs_done	__P((void));
 /* mfs_vnops.c */
 int	mfs_open	__P((void *));
 int	mfs_strategy	__P((void *));
+void	mfs_doio	__P((struct buf *, caddr_t));
 int	mfs_bmap	__P((void *));
 int	mfs_close	__P((void *));
 int	mfs_inactive	__P((void *));
