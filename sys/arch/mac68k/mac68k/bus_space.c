@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.25 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.25.4.1 2005/02/11 14:02:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.25 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.25.4.1 2005/02/11 14:02:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 		panic("bus_mem_add_mapping: overflow");
 #endif
 
-	va = uvm_km_valloc(kernel_map, endpa - pa);
+	va = uvm_km_alloc(kernel_map, endpa - pa, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -243,7 +243,8 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t h, bus_size_t size)
 	/*
 	 * Free the kernel virtual mapping.
 	 */
-	uvm_km_free(kernel_map, va, endva - va);
+	pmap_kremove(va, endva - va);
+	uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 
 	if (extent_free(iomem_ex, bpa, size,
 	    EX_NOWAIT | (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
