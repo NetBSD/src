@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.10 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.4 1994/12/22 09:35:56 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1995/04/22 10:08:46 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	robots
 CFLAGS+=-DMAX_PER_UID=5

@@ -1,6 +1,8 @@
+/*	$NetBSD: move_robs.c,v 1.3 1995/04/22 10:08:59 cgd Exp $	*/
+
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)move_robs.c	5.5 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: move_robs.c,v 1.2 1993/08/01 18:52:43 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)move_robs.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: move_robs.c,v 1.3 1995/04/22 10:08:59 cgd Exp $";
+#endif
 #endif /* not lint */
 
 # include	"robots.h"
