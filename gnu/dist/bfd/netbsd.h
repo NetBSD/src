@@ -35,7 +35,7 @@ USA.  */
 #define N_PIC(exec) ((exec).a_info & 0x40000000)
 
 /* Determine if this is a shared library using the flags. */
-#define N_SHARED_LIB(x) 	(N_DYNAMIC(x))
+#define N_SHARED_LIB(x) 	(N_DYNAMIC(x) && N_PIC(x))
 
 /* We have 6 bits of flags and 10 bits of machine ID.  */
 #define N_MACHTYPE(exec) \
@@ -55,6 +55,7 @@ USA.  */
 	 ((exec).a_info & 0x03ffffff) | ((flags & 0x03f) << 26))
 
 #define BIND_WEAK       2
+#define EXTERNAL_NZLIST_SIZE 16
 
 #include "bfd.h"
 #include "sysdep.h"
@@ -78,9 +79,14 @@ static boolean MY(write_object_contents) PARAMS ((bfd *abfd));
 	_bfd_archive_bsd44_construct_extended_name_table
 #define MY_translate_from_native_sym_flags netbsd_translate_from_native_sym_flags
 #define MY_translate_to_native_sym_flags netbsd_translate_to_native_sym_flags
+#define MY_get_dynamic_symtab_upper_bound netbsd_get_dynamic_symtab_upper_bound
+#define MY_canonicalize_dynamic_symtab netbsd_canonicalize_dynamic_symtab
 
 static boolean netbsd_translate_from_native_sym_flags PARAMS ((bfd *, aout_symbol_type *));
 static boolean netbsd_translate_to_native_sym_flags PARAMS ((bfd *, asymbol *, struct external_nlist *));
+static long netbsd_get_dynamic_symtab_upper_bound PARAMS ((bfd *));
+static long netbsd_canonicalize_dynamic_symtab PARAMS ((bfd *, asymbol **));
+static boolean netbsd_slurp_dynamic_symtab PARAMS ((bfd *));
 
 #define SET_ARCH_MACH(ABFD, EXEC) \
   bfd_default_set_arch_mach(abfd, DEFAULT_ARCH, 0); \
@@ -428,6 +434,358 @@ netbsd_translate_to_native_sym_flags (abfd, cache_ptr, sym_pointer)
     }
 
   PUT_WORD(abfd, value, sym_pointer->e_value);
+
+  return true;
+}
+
+/* NetBSD shared library support.  We store a pointer to this structure
+   in obj_aout_dynamic_info (abfd).  */
+
+struct netbsd_dynamic_info
+{
+  /* Whether we found any dynamic information.  */
+  boolean valid;
+  /* Dynamic information.  */
+  struct internal_section_dispatch_table dyninfo;
+  /* Number of dynamic symbols.  */
+  unsigned long dynsym_count;
+  /* Read in nlists for dynamic symbols.  */
+  struct external_nlist *dynsym;
+  /* asymbol structures for dynamic symbols.  */
+  aout_symbol_type *canonical_dynsym;
+  /* Read in dynamic string table.  */
+  char *dynstr;
+  /* Number of dynamic relocs.  */
+  unsigned long dynrel_count;
+  /* Read in dynamic relocs.  This may be reloc_std_external or
+     reloc_ext_external.  */
+  PTR dynrel;
+  /* arelent structures for dynamic relocs.  */
+  arelent *canonical_dynrel;
+};
+
+struct external_nzlist {
+  bfd_byte e_strx[BYTES_IN_WORD];	/* index into string table of name */
+  bfd_byte e_type[1];			/* type of symbol */
+  bfd_byte e_other[1];			/* misc info */
+  bfd_byte e_desc[2];			/* description field */
+  bfd_byte e_value[BYTES_IN_WORD];	/* value of symbol */
+  bfd_byte e_size[4];
+};
+
+static boolean netbsd_translate_symbol_table PARAMS ((bfd *, aout_symbol_type *, struct external_nzlist *, bfd_size_type, char *, bfd_size_type, boolean));
+
+/* Read in the basic dynamic information.  This locates the __DYNAMIC
+   structure and uses it to find the dynamic_link structure.  It
+   creates and saves a sunos_dynamic_info structure.  If it can't find
+   __DYNAMIC, it sets the valid field of the sunos_dynamic_info
+   structure to false to avoid doing this work again.  */
+
+static boolean
+netbsd_read_dynamic_info (abfd)
+     bfd *abfd;
+{
+  struct netbsd_dynamic_info *info;
+  asection *dynsec;
+  bfd_vma dynoff;
+  struct external_netbsd_dynamic dyninfo;
+  unsigned long dynver;
+  struct external_netbsd_dynamic_link linkinfo;
+
+  if (obj_aout_dynamic_info (abfd) != (PTR) NULL)
+    return true;
+
+  if ((abfd->flags & DYNAMIC) == 0)
+    {
+      bfd_set_error (bfd_error_invalid_operation);
+      return false;
+    }
+
+  info = ((struct netbsd_dynamic_info *)
+	  bfd_zalloc (abfd, sizeof (struct netbsd_dynamic_info)));
+  if (!info)
+    return false;
+  info->valid = false;
+  info->dynsym = NULL;
+  info->dynstr = NULL;
+  info->canonical_dynsym = NULL;
+  info->dynrel = NULL;
+  info->canonical_dynrel = NULL;
+  obj_aout_dynamic_info (abfd) = (PTR) info;
+
+  /* This code used to look for the __DYNAMIC symbol to locate the dynamic
+     linking information.
+     However this inhibits recovering the dynamic symbols from a
+     stripped object file, so blindly assume that the dynamic linking
+     information is located at the start of the data section.
+     We could verify this assumption later by looking through the dynamic
+     symbols for the __DYNAMIC symbol.  */
+  if ((abfd->flags & DYNAMIC) == 0)
+    return true;
+  if (! bfd_get_section_contents (abfd, obj_datasec (abfd), (PTR) &dyninfo,
+				  (file_ptr) 0, sizeof dyninfo))
+    return true;
+
+  dynver = GET_WORD (abfd, dyninfo.d_version);
+  if (dynver != 8)
+    return true;
+
+  dynoff = GET_WORD (abfd, dyninfo.d_un);
+
+  /* dynoff is a virtual address.  It is probably always in the .data
+     section, but this code should work even if it moves.  */
+  if (dynoff < bfd_get_section_vma (abfd, obj_datasec (abfd)))
+    dynsec = obj_textsec (abfd);
+  else
+    dynsec = obj_datasec (abfd);
+  dynoff -= bfd_get_section_vma (abfd, dynsec);
+
+  if (dynoff > bfd_section_size (abfd, dynsec))
+    return true;
+
+  /* This executable appears to be dynamically linked in a way that we
+     can understand.  */
+  if (! bfd_get_section_contents (abfd, dynsec, (PTR) &linkinfo, dynoff,
+				  (bfd_size_type) sizeof linkinfo))
+    return true;
+
+  /* Swap in the dynamic link information.  */
+  info->dyninfo.sdt_loaded = GET_WORD (abfd, linkinfo.sdt_loaded);
+  info->dyninfo.sdt_sods = GET_WORD (abfd, linkinfo.sdt_sods);
+  info->dyninfo.sdt_paths = GET_WORD (abfd, linkinfo.sdt_paths);
+  info->dyninfo.sdt_got = GET_WORD (abfd, linkinfo.sdt_got);
+  info->dyninfo.sdt_plt = GET_WORD (abfd, linkinfo.sdt_plt);
+  info->dyninfo.sdt_rel = GET_WORD (abfd, linkinfo.sdt_rel);
+  info->dyninfo.sdt_hash = GET_WORD (abfd, linkinfo.sdt_hash);
+  info->dyninfo.sdt_nzlist = GET_WORD (abfd, linkinfo.sdt_nzlist);
+  info->dyninfo.sdt_filler2 = GET_WORD (abfd, linkinfo.sdt_filler2);
+  info->dyninfo.sdt_buckets = GET_WORD (abfd, linkinfo.sdt_buckets);
+  info->dyninfo.sdt_strings = GET_WORD (abfd, linkinfo.sdt_strings);
+  info->dyninfo.sdt_str_sz = GET_WORD (abfd, linkinfo.sdt_str_sz);
+  info->dyninfo.sdt_text_sz = GET_WORD (abfd, linkinfo.sdt_text_sz);
+  info->dyninfo.sdt_plt_sz = GET_WORD (abfd, linkinfo.sdt_plt_sz);
+
+  /* Transform values into file offsets. */
+  {
+    struct internal_exec *execp = exec_hdr (abfd);
+    unsigned long text_addr;
+
+    text_addr = N_TXTADDR(*execp) - N_TXTOFF(*execp);
+
+    info->dyninfo.sdt_sods -= text_addr;
+    info->dyninfo.sdt_paths -= text_addr;
+    info->dyninfo.sdt_got -= text_addr;
+    info->dyninfo.sdt_plt -= text_addr;
+    info->dyninfo.sdt_rel -= text_addr;
+    info->dyninfo.sdt_hash -= text_addr;
+    info->dyninfo.sdt_nzlist -= text_addr;
+    info->dyninfo.sdt_strings -= text_addr;
+  }
+
+  /* The only way to get the size of the symbol information appears to
+     be to determine the distance between it and the string table.  */
+  info->dynsym_count = ((info->dyninfo.sdt_strings - info->dyninfo.sdt_nzlist)
+			/ EXTERNAL_NZLIST_SIZE);
+  BFD_ASSERT (info->dynsym_count * EXTERNAL_NZLIST_SIZE
+	      == (unsigned long) (info->dyninfo.sdt_strings
+				  - info->dyninfo.sdt_nzlist));
+
+  /* Similarly, the relocs end at the hash table.  */
+  info->dynrel_count = ((info->dyninfo.sdt_hash - info->dyninfo.sdt_rel)
+			/ obj_reloc_entry_size (abfd));
+  BFD_ASSERT (info->dynrel_count * obj_reloc_entry_size (abfd)
+	      == (unsigned long) (info->dyninfo.sdt_hash
+				  - info->dyninfo.sdt_rel));
+  info->valid = true;
+
+  return true;
+}
+
+/* Return the amount of memory required for the dynamic symbols.  */
+
+static long
+netbsd_get_dynamic_symtab_upper_bound (abfd)
+     bfd *abfd;
+{
+  struct netbsd_dynamic_info *info;
+
+  if (! netbsd_read_dynamic_info (abfd))
+    return -1;
+
+  info = (struct netbsd_dynamic_info *) obj_aout_dynamic_info (abfd);
+  if (! info->valid)
+    {
+      bfd_set_error (bfd_error_no_symbols);
+      return -1;
+    }
+
+  return (info->dynsym_count + 1) * sizeof (asymbol *);
+}
+
+/* Read in the dynamic symbols.  */
+
+static long
+netbsd_canonicalize_dynamic_symtab (abfd, storage)
+     bfd *abfd;
+     asymbol **storage;
+{
+  struct netbsd_dynamic_info *info;
+  unsigned long i;
+
+  if (! netbsd_slurp_dynamic_symtab (abfd))
+    return -1;
+
+  info = (struct netbsd_dynamic_info *) obj_aout_dynamic_info (abfd);
+
+  /* Get the asymbol structures corresponding to the dynamic nlist
+     structures.  */
+  if (info->canonical_dynsym == (aout_symbol_type *) NULL)
+    {
+      info->canonical_dynsym = ((aout_symbol_type *)
+				bfd_alloc (abfd,
+					   (info->dynsym_count
+					    * sizeof (aout_symbol_type))));
+      if (info->canonical_dynsym == NULL && info->dynsym_count != 0)
+	return -1;
+
+      if (! netbsd_translate_symbol_table (abfd, info->canonical_dynsym,
+					   (struct external_nzlist *)info->dynsym,
+					   info->dynsym_count,
+					   info->dynstr,
+					   info->dyninfo.sdt_str_sz,
+					   true))
+	{
+	  if (info->canonical_dynsym != NULL)
+	    {
+	      bfd_release (abfd, info->canonical_dynsym);
+	      info->canonical_dynsym = NULL;
+	    }
+	  return -1;
+	}
+    }
+
+  /* Return pointers to the dynamic asymbol structures.  */
+  for (i = 0; i < info->dynsym_count; i++)
+    *storage++ = (asymbol *) (info->canonical_dynsym + i);
+  *storage = NULL;
+
+  return info->dynsym_count;
+}
+
+/* Read the external dynamic symbols.  */
+
+static boolean
+netbsd_slurp_dynamic_symtab (abfd)
+     bfd *abfd;
+{
+  struct netbsd_dynamic_info *info;
+
+  /* Get the general dynamic information.  */
+  if (obj_aout_dynamic_info (abfd) == NULL)
+    {
+      if (! netbsd_read_dynamic_info (abfd))
+	  return false;
+    }
+
+  info = (struct netbsd_dynamic_info *) obj_aout_dynamic_info (abfd);
+  if (! info->valid)
+    {
+      bfd_set_error (bfd_error_no_symbols);
+      return false;
+    }
+
+  /* Get the dynamic nlist structures.  */
+  if (info->dynsym == (struct external_nlist *) NULL)
+    {
+      info->dynsym = ((struct external_nlist *)
+		      bfd_alloc (abfd,
+				 (info->dynsym_count
+				  * EXTERNAL_NZLIST_SIZE)));
+      if (info->dynsym == NULL && info->dynsym_count != 0)
+	return false;
+
+      if (bfd_seek (abfd, info->dyninfo.sdt_nzlist, SEEK_SET) != 0
+	  || (bfd_read ((PTR) info->dynsym, info->dynsym_count,
+			EXTERNAL_NZLIST_SIZE, abfd)
+	      != info->dynsym_count * EXTERNAL_NZLIST_SIZE))
+	{
+	  if (info->dynsym != NULL)
+	    {
+	      bfd_release (abfd, info->dynsym);
+	      info->dynsym = NULL;
+	    }
+	  return false;
+	}
+    }  
+  
+  /* Get the dynamic strings.  */
+  if (info->dynstr == (char *) NULL)
+    {
+      info->dynstr = (char *) bfd_alloc (abfd, info->dyninfo.sdt_str_sz);
+      if (info->dynstr == NULL && info->dyninfo.sdt_str_sz != 0)
+	return false;
+
+      if (bfd_seek (abfd, info->dyninfo.sdt_strings, SEEK_SET) != 0
+	  || (bfd_read ((PTR) info->dynstr, 1, info->dyninfo.sdt_str_sz,
+			abfd)
+	      != info->dyninfo.sdt_str_sz))
+	{
+	  if (info->dynstr != NULL)
+	    {
+	      bfd_release (abfd, info->dynstr);
+	      info->dynstr = NULL;
+	    }
+	  return false;
+	}
+    }
+
+  return true;
+}
+
+static boolean
+netbsd_translate_symbol_table (abfd, in, ext, count, str, strsize, dynamic)
+     bfd *abfd;
+     aout_symbol_type *in;
+     struct external_nzlist *ext;
+     bfd_size_type count;
+     char *str;
+     bfd_size_type strsize;
+     boolean dynamic;
+{
+  struct external_nzlist *ext_end;
+
+  ext_end = ext + count;
+  for (; ext < ext_end; ext++, in++)
+    {
+      bfd_vma x;
+
+      x = GET_WORD (abfd, ext->e_strx);
+
+      in->symbol.the_bfd = abfd;
+
+      /* For the normal symbols, the zero index points at the number
+	 of bytes in the string table but is to be interpreted as the
+	 null string.  For the dynamic symbols, the number of bytes in
+	 the string table is stored in the __DYNAMIC structure and the
+	 zero index points at an actual string.  */
+      if (x == 0 && ! dynamic)
+	in->symbol.name = "";
+      else if (x < strsize)
+	in->symbol.name = str + x;
+      else
+	return false;
+
+      in->symbol.value = GET_SWORD (abfd,  ext->e_value);
+      in->desc = bfd_h_get_16 (abfd, ext->e_desc);
+      in->other = bfd_h_get_8 (abfd, ext->e_other);
+      in->type = bfd_h_get_8 (abfd,  ext->e_type);
+      in->symbol.udata.p = NULL;
+      if (! netbsd_translate_from_native_sym_flags (abfd, in))
+	return false;
+
+      if (dynamic)
+	in->symbol.flags |= BSF_DYNAMIC;
+    }
 
   return true;
 }
