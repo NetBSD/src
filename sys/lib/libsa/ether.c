@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.8 1996/10/13 02:29:00 christos Exp $	*/
+/*	$NetBSD: ether.c,v 1.9 1997/03/15 18:12:15 is Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -46,10 +46,10 @@
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 
+#include "if_ether.h"
 #include "stand.h"
 #include "net.h"
 #include "netif.h"

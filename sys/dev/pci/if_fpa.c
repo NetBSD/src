@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.16 1996/12/05 01:25:26 cgd Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.17 1997/03/15 18:11:59 is Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -51,7 +51,9 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
+#if !defined(__NetBSD__)
 #include <net/route.h>
+#endif
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -59,9 +61,17 @@
 #include <net/bpfdesc.h>
 #endif
 
+#if defined(__NetBSD__)
+#include <net/if_ether.h>
+#endif
+
 #ifdef INET
 #include <netinet/in.h>
+#if defined(__NetBSD__)
+#include <netinet/if_inarp.h>
+#else
 #include <netinet/if_ether.h>
+#endif
 #endif
 #if defined(__FreeBSD__)
 #include <netinet/if_fddi.h>
@@ -207,7 +217,6 @@ pdq_pci_attach(
 	free((void *) sc, M_DEVBUF);
 	return;
     }
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
     pdqs_pci[unit] = sc;
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
     pci_map_int(config_id, pdq_pci_ifintr, (void*) sc, &net_imask);
@@ -334,7 +343,8 @@ pdq_pci_attach(
 	return;
     }
 
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes,
+	LLADDR(ifp->if_sadl), 6);
 
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
 
@@ -438,7 +448,8 @@ pdq_pci_attach(
 	return;
     }
 
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes,
+	LLADDR(sc->sc_if.if_sadl), 6);
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
 
     if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,

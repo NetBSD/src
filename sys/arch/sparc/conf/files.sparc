@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.37 1997/03/15 02:36:00 christos Exp $
+#	$NetBSD: files.sparc,v 1.38 1997/03/15 18:10:34 is Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -137,7 +137,7 @@ file	arch/sparc/dev/bt_subr.c	bt_dac
 attach le at sbus, ledma, lebuffer, obio
 file	arch/sparc/dev/if_le.c		le
 
-device ie: ifnet, ether
+device ie: ifnet, ether, arp
 attach ie at obio, vmes, vmel
 file	arch/sparc/dev/if_ie.c		ie
 

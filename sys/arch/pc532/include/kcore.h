@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.1 1997/02/08 09:33:03 matthias Exp $	*/
+/*	$NetBSD: kcore.h,v 1.2 1997/03/15 18:10:21 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthias Pfaller.

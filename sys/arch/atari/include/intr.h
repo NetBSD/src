@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 1997/02/26 12:18:50 leo Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 1997/03/15 18:09:46 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

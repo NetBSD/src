@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.10 1997/03/11 23:19:51 chuck Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.11 1997/03/15 18:12:24 is Exp $       */
 
 /*
  *
@@ -55,10 +55,11 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/if_atm.h>
+#include <net/if_ethertypes.h> /* XXX: for ETHERTYPE_* */
 
 #include <netinet/in.h>
 #include <netinet/if_atm.h>
-#include <netinet/if_ether.h> /* XXX: for ETHERTYPE_* */
+
 #ifdef INET
 #include <netinet/in_var.h>
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.2 1997/02/27 13:59:34 briggs Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.3 1997/03/15 18:11:33 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.

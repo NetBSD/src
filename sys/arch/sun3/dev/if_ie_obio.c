@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.8 1997/01/27 19:40:48 gwr Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.9 1997/03/15 18:10:51 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,13 +46,14 @@
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <machine/autoconf.h>

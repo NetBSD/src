@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.1 1997/03/01 20:18:59 scottr Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.2 1997/03/15 18:10:01 is Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.

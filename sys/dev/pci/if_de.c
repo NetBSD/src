@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.33 1997/03/06 22:32:20 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.34 1997/03/15 18:11:55 is Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -57,8 +57,15 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
+
+#if defined(__NetBSD__)
+#include <net/if_ether.h>
+#endif
+
+#if !defined(__NetBSD__)
 #include <net/route.h>
 #include <net/netisr.h>
+#endif
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -71,7 +78,11 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+#if defined(__NetBSD__)
+#include <netinet/if_inarp.h>
+#else
 #include <netinet/if_ether.h>
+#endif
 #endif
 
 #ifdef NS
@@ -2634,7 +2645,7 @@ tulip_addr_filter(
     sc->tulip_flags |= TULIP_WANTSETUP;
     sc->tulip_cmdmode &= ~TULIP_CMD_RXRUN;
     sc->tulip_intrmask &= ~TULIP_STS_RXSTOPPED;
-    if (sc->tulip_ac.ac_multicnt > 14) {
+    if (TULIP_MULTICAST_CNT > 14) {
 	unsigned hash;
 	/*
 	 * If we have more than 14 multicasts, we have
@@ -2645,21 +2656,21 @@ tulip_addr_filter(
 	bzero(sc->tulip_setupdata, sizeof(sc->tulip_setupdata));
 	hash = tulip_mchash(etherbroadcastaddr);
 	sp[hash >> 4] |= 1 << (hash & 0xF);
-	ETHER_FIRST_MULTI(step, &sc->tulip_ac, enm);
+	ETHER_FIRST_MULTI(step, &TULIP_ETHERCOM, enm);
 	while (enm != NULL) {
 	    hash = tulip_mchash(enm->enm_addrlo);
 	    sp[hash >> 4] |= 1 << (hash & 0xF);
 	    ETHER_NEXT_MULTI(step, enm);
 	}
 	sc->tulip_flags |= TULIP_WANTHASH;
-	sp[39] = ((u_int16_t *) sc->tulip_ac.ac_enaddr)[0]; 
-	sp[40] = ((u_int16_t *) sc->tulip_ac.ac_enaddr)[1]; 
-	sp[41] = ((u_int16_t *) sc->tulip_ac.ac_enaddr)[2];
+	sp[39] = ((u_int16_t *) sc->tulip_hwaddr)[0]; 
+	sp[40] = ((u_int16_t *) sc->tulip_hwaddr)[1]; 
+	sp[41] = ((u_int16_t *) sc->tulip_hwaddr)[2];
     } else {
 	/*
 	 * Else can get perfect filtering for 16 addresses.
 	 */
-	ETHER_FIRST_MULTI(step, &sc->tulip_ac, enm);
+	ETHER_FIRST_MULTI(step, &TULIP_ETHERCOM, enm);
 	for (; enm != NULL; i++) {
 	    *sp++ = ((u_int16_t *) enm->enm_addrlo)[0]; 
 	    *sp++ = ((u_int16_t *) enm->enm_addrlo)[1]; 
@@ -2677,9 +2688,9 @@ tulip_addr_filter(
 	 * Pad the rest with our hardware address
 	 */
 	for (; i < 16; i++) {
-	    *sp++ = ((u_int16_t *) sc->tulip_ac.ac_enaddr)[0]; 
-	    *sp++ = ((u_int16_t *) sc->tulip_ac.ac_enaddr)[1]; 
-	    *sp++ = ((u_int16_t *) sc->tulip_ac.ac_enaddr)[2];
+	    *sp++ = ((u_int16_t *) sc->tulip_hwaddr)[0]; 
+	    *sp++ = ((u_int16_t *) sc->tulip_hwaddr)[1]; 
+	    *sp++ = ((u_int16_t *) sc->tulip_hwaddr)[2];
 	}
     }
 }
@@ -2935,7 +2946,7 @@ tulip_rx_intr(
 #endif
 	    if ((sc->tulip_if.if_flags & IFF_PROMISC)
 		    && (eh.ether_dhost[0] & 1) == 0
-		    && !TULIP_ADDREQUAL(eh.ether_dhost, sc->tulip_ac.ac_enaddr))
+		    && !TULIP_ADDREQUAL(eh.ether_dhost, sc->tulip_hwaddr))
 		    goto next;
 	    accept = 1;
 	    sc->tulip_flags |= TULIP_RXACT;
@@ -3454,7 +3465,7 @@ tulip_ifioctl(
 #ifdef INET
 		case AF_INET: {
 		    tulip_init(sc);
-		    arp_ifinit(&sc->tulip_ac, ifa);
+		    arp_ifinit(TULIP_ARPINITPAR, ifa);
 		    break;
 		}
 #endif /* INET */
@@ -3468,12 +3479,17 @@ tulip_ifioctl(
 		case AF_NS: {
 		    struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 		    if (ns_nullhost(*ina)) {
-			ina->x_host = *(union ns_host *)(sc->tulip_ac.ac_enaddr);
+			ina->x_host = *(union ns_host *)(sc->tulip_hwaddr);
 		    } else {
 			ifp->if_flags &= ~IFF_RUNNING;
 			bcopy((caddr_t)ina->x_host.c_host,
-			      (caddr_t)sc->tulip_ac.ac_enaddr,
-			      sizeof sc->tulip_ac.ac_enaddr);
+			      (caddr_t)sc->tulip_hwaddr,
+			      ETHER_ADDR_LEN);
+#if defined(__NetBSD__)
+			bcopy((caddr_t)ina->x_host.c_host,
+			      LLADDR(ifp->if_sadl),
+			      ETHER_ADDR_LEN);
+#endif
 		    }
 		    tulip_init(sc);
 		    break;
@@ -3488,9 +3504,9 @@ tulip_ifioctl(
 	    break;
 	}
 	case SIOCGIFADDR: {
-	    bcopy((caddr_t) sc->tulip_ac.ac_enaddr,
+	    bcopy((caddr_t) sc->tulip_hwaddr,
 		  (caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		  6);
+		  ETHER_ADDR_LEN);
 	    break;
 	}
 
@@ -3523,9 +3539,9 @@ tulip_ifioctl(
 	     * Update multicast listeners
 	     */
 	    if (cmd == SIOCADDMULTI)
-		error = ether_addmulti(ifr, &sc->tulip_ac);
+		error = ether_addmulti(ifr, &TULIP_ETHERCOM);
 	    else
-		error = ether_delmulti(ifr, &sc->tulip_ac);
+		error = ether_delmulti(ifr, &TULIP_ETHERCOM);
 
 	    if (error == ENETRESET) {
 		tulip_addr_filter(sc);		/* reset multicast filtering */
@@ -3961,7 +3977,9 @@ tulip_attach(
     ether_attach(ifp);
 #else
     if_attach(ifp);
-#if defined(__NetBSD__) || (defined(__FreeBSD__) && BSD >= 199506)
+#if defined(__NetBSD__)
+    ether_ifattach(ifp, sc->tulip_hwaddr);
+#elif (defined(__FreeBSD__) && BSD >= 199506)
     ether_ifattach(ifp);
 #endif
 #endif /* __bsdi__ */

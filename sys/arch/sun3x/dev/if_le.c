@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.4 1997/01/27 22:14:19 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.5 1997/03/15 18:11:06 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,10 +46,11 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <machine/autoconf.h>
@@ -153,7 +154,7 @@ le_attach(parent, self, aux)
 	sc->sc_mem = dvma_mapin(lesc->sc_kmem, LE_MEMSIZE, 0);
 	sc->sc_addr = dvma_kvtopa(sc->sc_mem, ca->ca_bustype);
 
-	idprom_etheraddr(sc->sc_arpcom.ac_enaddr);
+	idprom_etheraddr(sc->sc_enaddr);
 
 	sc->sc_copytodesc = am7990_copytobuf_contig;
 	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;

@@ -37,9 +37,10 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 
 #include <ipkdb/ipkdb.h>
 #include <machine/ipkdb.h>
@@ -124,7 +125,7 @@ static int
 ipkdbread(kip)
 	struct ipkdb_if *kip;
 {
-	struct ifnet *ifp = &kip->arp->ac_if;
+	struct ifnet *ifp = &kip->arp->ec_if;
 	struct ether_header *eh;
 	struct mbuf *m, **mp, *head = 0;
 	int l, len;
@@ -177,8 +178,8 @@ ipkdbread(kip)
 	 * Check if there's a bp filter listening on this interface.
 	 * If so, hand off the raw packet to bpf.
 	 */
-	if (kip->arp->ac_if.if_bpf)
-		bpf_mtap(kip->arp->ac_if.if_bpf, head);
+	if (kip->arp->ec_if.if_bpf)
+		bpf_mtap(kip->arp->ec_if.if_bpf, head);
 
 	/*
 	 * Note that the interface cannot be in promiscuous mode if
@@ -233,7 +234,7 @@ ipkdbrint(kip, ifp)
 	struct ipkdb_if *kip;
 	struct ifnet *ifp;
 {
-	if (kip && kip->arp && ifp == &kip->arp->ac_if)
+	if (kip && kip->arp && ifp == &kip->arp->ec_if)
 		while (kip->gotlen > 0)
 			ipkdbread(kip);
 }
@@ -272,7 +273,7 @@ ipkdbinet(kip)
 	struct ifaddr *ap;
 
 	if (kip->arp) {
-		for (ap = kip->arp->ac_if.if_addrlist.tqh_first; ap; ap = ap->ifa_list.tqe_next) {
+		for (ap = kip->arp->ec_if.if_addrlist.tqh_first; ap; ap = ap->ifa_list.tqe_next) {
 			if (ap->ifa_addr->sa_family == AF_INET) {
 				ipkdbcopy(&((struct sockaddr_in *)ap->ifa_addr)->sin_addr,
 					 kip->myinetaddr, sizeof kip->myinetaddr);

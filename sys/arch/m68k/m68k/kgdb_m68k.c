@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_m68k.c,v 1.1 1997/02/12 00:58:01 gwr Exp $	*/
+/*	$NetBSD: kgdb_m68k.c,v 1.2 1997/03/15 18:09:53 is Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

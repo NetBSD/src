@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xreg.h,v 1.1 1997/02/27 01:12:08 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9xreg.h,v 1.2 1997/03/15 18:11:32 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.

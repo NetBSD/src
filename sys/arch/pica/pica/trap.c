@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7 1996/10/13 08:15:40 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.8 1997/03/15 18:10:27 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,7 +84,7 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #include <netinet/ip_var.h>
 
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.28 1997/03/01 09:50:30 matthias Exp $
+#	$NetBSD: files.pc532,v 1.29 1997/03/15 18:10:15 is Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -27,7 +27,7 @@ device	scn: tty
 attach	scn at mainbus
 file	arch/pc532/dev/scn.c		scn needs-flag
 
-device	lpt: ether, ifnet
+device	lpt: ether, ifnet, arp
 attach	lpt at mainbus
 file	arch/pc532/dev/lpt.c		lpt needs-count
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.12 1996/12/23 09:10:13 veego Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.13 1997/03/15 18:09:21 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Bernd Ernesti and Klaus Burkert. All rights reserved.
@@ -72,15 +72,14 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
-#include <net/route.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -122,7 +121,7 @@
 struct	ae_softc {
 	struct	device sc_dev;
 	struct	isr sc_isr;
-	struct	arpcom sc_arpcom;	/* common Ethernet structures */
+	struct	ethercom sc_ethercom;	/* common Ethernet structures */
 	void	*sc_base;	/* base address of board */
 	struct	aereg1 *sc_r1;	/* LANCE registers */
 	struct	aereg2 *sc_r2;	/* dual-port RAM */
@@ -153,7 +152,7 @@ static	void wzero __P((char *, int));
 int	aeput __P((char *, struct mbuf *));
 struct	mbuf *aeget __P((struct ae_softc *, u_char *, int));
 int	aeioctl __P((struct ifnet *, u_long, caddr_t));
-void	aesetladrf __P((struct arpcom *, u_int16_t *));
+void	aesetladrf __P((struct ethercom *, u_int16_t *));
 
 struct cfattach ae_ca = {
 	sizeof(struct ae_softc), aematch, aeattach
@@ -193,9 +192,10 @@ aeattach(parent, self, aux)
 	register struct aereg2 *aer2;
 	struct zbus_args *zap;
 	struct ae_softc *sc = (void *)self;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	unsigned long ser;
 	int s = splhigh ();
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	zap =(struct zbus_args *)aux;
 
@@ -217,16 +217,16 @@ aeattach(parent, self, aux)
 	 * Manufacturer decides the 3 first bytes, i.e. ethernet vendor ID.
 	 */
 
-	sc->sc_arpcom.ac_enaddr[0] = 0x00;
-	sc->sc_arpcom.ac_enaddr[1] = 0x60;
-	sc->sc_arpcom.ac_enaddr[2] = 0x30;
+	myaddr[0] = 0x00;
+	myaddr[1] = 0x60;
+	myaddr[2] = 0x30;
 
-	sc->sc_arpcom.ac_enaddr[3] = (ser >> 16) & 0xff;
-	sc->sc_arpcom.ac_enaddr[4] = (ser >> 8) & 0xff;
-	sc->sc_arpcom.ac_enaddr[5] = ser & 0xff;
+	myaddr[3] = (ser >> 16) & 0xff;
+	myaddr[4] = (ser >> 8) & 0xff;
+	myaddr[5] = ser & 0xff;
 
 	printf("%s: hardware address %s 32K", sc->sc_dev.dv_xname,
-		ether_sprintf(sc->sc_arpcom.ac_enaddr));
+		ether_sprintf(myaddr));
 
 	aestop(sc);
 	delay(100);
@@ -247,7 +247,7 @@ aeattach(parent, self, aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -267,7 +267,7 @@ aewatchdog(ifp)
 	struct ae_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++ifp->if_oerrors;
 
 	aereset(sc);
 }
@@ -289,7 +289,7 @@ aememinit(sc)
 	register struct ae_softc *sc;
 {        
 #if NBPFILTER > 0
-	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 #endif
 	/*
 	 * This structure is referenced from the CARD's/PCnet-ISA's point
@@ -311,12 +311,12 @@ aememinit(sc)
 		aer2->aer2_mode = AE_MODE;
 	/* you know: no BYTE access.... */
 	aer2->aer2_padr[0] =
-		(sc->sc_arpcom.ac_enaddr[0] << 8) | sc->sc_arpcom.ac_enaddr[1];
+		(LLADDR(ifp->if_sadl)[0] << 8) | LLADDR(ifp->if_sadl)[1];
 	aer2->aer2_padr[1] =
-		(sc->sc_arpcom.ac_enaddr[2] << 8) | sc->sc_arpcom.ac_enaddr[3];
+		(LLADDR(ifp->if_sadl)[2] << 8) | LLADDR(ifp->if_sadl)[3];
 	aer2->aer2_padr[2] =
-		(sc->sc_arpcom.ac_enaddr[4] << 8) | sc->sc_arpcom.ac_enaddr[5];
-	aesetladrf(&sc->sc_arpcom, aer2->aer2_ladrf);
+		(LLADDR(ifp->if_sadl)[4] << 8) | LLADDR(ifp->if_sadl)[5];
+	aesetladrf(&sc->sc_ethercom, aer2->aer2_ladrf);
 
 	sc->sc_no_td = sc->sc_tmd = sc->sc_rmd = 0;
 
@@ -360,7 +360,7 @@ aeinit(sc)
 	struct ae_softc *sc;
 {
 	register struct aereg1 *aer1 = sc->sc_r1;
-	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	register struct aereg2 *aemem = (struct aereg2 *) 0x8000;
 
 	register int timo = 0;
@@ -508,7 +508,7 @@ aeintr(arg)
 {
 	register struct ae_softc *sc = arg;
 	register struct aereg1 *aer1;
-	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	register u_int16_t stat;
 
 	/* if not even initialized, don't do anything further.. */
@@ -581,7 +581,7 @@ aetint(sc)
 {
 	register int bix = (sc->sc_tmd - sc->sc_no_td + AETBUF) % AETBUF;
 	struct aetmd *tmd = &sc->sc_r2->aer2_tmd[bix];
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	if (tmd->tmd1 & AE_OWN) {
 #ifdef AEDEBUG
@@ -645,7 +645,7 @@ void
 aerint(sc)
 	struct ae_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	register int bix = sc->sc_rmd;
 	register struct aermd *rmd = &sc->sc_r2->aer2_rmd[bix];
 
@@ -706,7 +706,7 @@ aeread(sc, buf, len)
 	u_char *buf;
 	int len;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
     	struct mbuf *m;
 	struct ether_header *eh;
 
@@ -745,7 +745,7 @@ aeread(sc, buf, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			sizeof(eh->ether_dhost)) != 0) {
 			    m_freem(m);
 			    return;
@@ -921,7 +921,7 @@ aeget(sc, buffer, totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
+	m->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
@@ -978,7 +978,7 @@ aeioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			aeinit(sc);	
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -988,11 +988,10 @@ aeioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				wcopyto(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 			aeinit(sc); /* does ae_setaddr() */
 			break;
 		    }
@@ -1041,8 +1040,8 @@ aeioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom):
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ethercom):
+		    ether_delmulti(ifr, &sc->sc_ethercom);
 
 		if (error == ENETRESET) {
 			/*
@@ -1067,10 +1066,10 @@ aeioctl(ifp, cmd, data)
  */
 void 
 aesetladrf(ac, af)
-	struct arpcom *ac;
+	struct ethercom *ac;
 	u_int16_t *af;
 {
-	struct ifnet *ifp = &ac->ac_if; 
+	struct ifnet *ifp = &ac->ec_if; 
 	struct ether_multi *enm;
 	register u_char *cp, c;
 	register u_int32_t crc;

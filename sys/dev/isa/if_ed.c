@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.106 1996/11/17 04:11:18 mikel Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.107 1997/03/15 18:11:39 is Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -31,14 +31,15 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
+
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -67,7 +68,7 @@ struct ed_softc {
 	struct	device sc_dev;
 	void *sc_ih;
 
-	struct	arpcom sc_arpcom;	/* ethernet common */
+	struct	ethercom sc_ethercom;	/* ethernet common */
 
 	char	*type_str;	/* pointer to type string */
 	u_char	vendor;		/* interface vendor */
@@ -112,6 +113,8 @@ struct ed_softc {
 	u_char	rec_page_start;	/* first page of RX ring-buffer */
 	u_char	rec_page_stop;	/* last page of RX ring-buffer */
 	u_char	next_packet;	/* pointer to next unread RX packet */
+
+	u_int8_t sc_enaddr[6];
 };
 
 int edprobe __P((struct device *, void *, void *));
@@ -138,7 +141,7 @@ void ed_shared_readmem __P((struct ed_softc *, int, caddr_t, int));
 
 #define inline	/* XXX for debugging porpoises */
 
-void ed_getmcaf __P((struct arpcom *, u_long *));
+void ed_getmcaf __P((struct ethercom *, u_long *));
 void edread __P((struct ed_softc *, int, int));
 struct mbuf *edget __P((struct ed_softc *, int, int));
 static inline void ed_rint __P((struct ed_softc *));
@@ -529,7 +532,7 @@ ed_find_WD80x3(sc, cf, ia)
 
 	/* Get station address from on-board ROM. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		sc->sc_arpcom.ac_enaddr[i] =
+		sc->sc_enaddr[i] =
 		    bus_space_read_1(iot, ioh, asicbase + ED_WD_PROM + i);
 
 	/*
@@ -809,7 +812,7 @@ ed_find_3Com(sc, cf, ia)
 	    ED_3COM_CR_EALO | ED_3COM_CR_XSEL);
 
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		sc->sc_arpcom.ac_enaddr[i] = NIC_GET(iot, ioh, nicbase, i);
+		sc->sc_enaddr[i] = NIC_GET(iot, ioh, nicbase, i);
 
 	/*
 	 * Unmap PROM - select NIC registers.  The proper setting of the
@@ -1206,10 +1209,10 @@ ed_find_Novell(sc, cf, ia)
 
 	ed_pio_readmem(sc, 0, romdata, 16);
 	for (n = 0; n < ETHER_ADDR_LEN; n++)
-		sc->sc_arpcom.ac_enaddr[n] = romdata[n*(sc->isa16bit+1)];
+		sc->sc_enaddr[n] = romdata[n*(sc->isa16bit+1)];
 
 #ifdef GWETHER
-	if (sc->arpcom.ac_enaddr[2] == 0x86)
+	if (sc->sc_enaddr[2] == 0x86)
 		sc->type_str = "Gateway AT";
 #endif /* GWETHER */
 
@@ -1245,7 +1248,7 @@ edattach(parent, self, aux)
 	struct ed_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int asicbase;
 
 	/*
@@ -1290,11 +1293,11 @@ edattach(parent, self, aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, sc->sc_enaddr);
 
 	/* Print additional info when attached. */
 	printf("\n%s: address %s, ", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	    ether_sprintf(sc->sc_enaddr));
 
 	if (sc->type_str)
 		printf("type %s ", sc->type_str);
@@ -1376,7 +1379,7 @@ edwatchdog(ifp)
 	struct ed_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++sc->sc_ethercom.ec_if.if_oerrors;
 
 	edreset(sc);
 }
@@ -1390,7 +1393,7 @@ edinit(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int nicbase = sc->nic_base, asicbase = sc->asic_base;
 	int i;
 	u_long mcaf[2];
@@ -1466,10 +1469,10 @@ edinit(sc)
 	/* Copy out our station address. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
 		NIC_PUT(iot, ioh, nicbase, ED_P1_PAR0 + i,
-		    sc->sc_arpcom.ac_enaddr[i]);
+		    LLADDR(ifp->if_sadl)[i]);
 
 	/* Set multicast filter on chip. */
-	ed_getmcaf(&sc->sc_arpcom, mcaf);
+	ed_getmcaf(&sc->sc_ethercom, mcaf);
 	for (i = 0; i < 8; i++)
 		NIC_PUT(iot, ioh, nicbase, ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
 
@@ -1543,7 +1546,7 @@ ed_xmit(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int nicbase = sc->nic_base;
 	u_short len;
 
@@ -1798,7 +1801,7 @@ loop:
 			log(LOG_ERR,
 			    "%s: NIC memory corrupt - invalid packet length %d\n",
 			    sc->sc_dev.dv_xname, len);
-			++sc->sc_arpcom.ac_if.if_ierrors;
+			++sc->sc_ethercom.ec_if.if_ierrors;
 			edreset(sc);
 			return;
 		}
@@ -1827,7 +1830,7 @@ edintr(arg)
 	struct ed_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int nicbase = sc->nic_base, asicbase = sc->asic_base;
 	u_char isr;
 
@@ -2054,7 +2057,7 @@ edioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			edinit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -2065,11 +2068,11 @@ edioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
+			else {
+				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				    ETHER_ADDR_LEN);
+			}
 			/* Set new address. */
 			edinit(sc);
 			break;
@@ -2111,8 +2114,8 @@ edioctl(ifp, cmd, data)
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ethercom) :
+		    ether_delmulti(ifr, &sc->sc_ethercom);
 
 		if (error == ENETRESET) {
 			/*
@@ -2143,7 +2146,7 @@ edread(sc, buf, len)
 	struct ed_softc *sc;
 	int buf, len;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 
@@ -2174,7 +2177,7 @@ edread(sc, buf, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return;
@@ -2452,7 +2455,7 @@ edget(sc, src, total_len)
 	int src;
 	u_short total_len;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *top, **mp, *m;
 	int len;
 
@@ -2494,11 +2497,11 @@ edget(sc, src, total_len)
  * need to listen to.
  */
 void
-ed_getmcaf(ac, af)
-	struct arpcom *ac;
+ed_getmcaf(ec, af)
+	struct ethercom *ec;
 	u_long *af;
 {
-	struct ifnet *ifp = &ac->ac_if;
+	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	register u_char *cp, c;
 	register u_long crc;
@@ -2520,7 +2523,7 @@ ed_getmcaf(ac, af)
 	}
 
 	af[0] = af[1] = 0;
-	ETHER_FIRST_MULTI(step, ac, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo)) != 0) {

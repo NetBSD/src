@@ -1,4 +1,4 @@
-/*	$NetBSD: setnetbootinfo.c,v 1.2 1997/01/24 01:53:06 cgd Exp $	*/
+/*	$NetBSD: setnetbootinfo.c,v 1.3 1997/03/15 18:09:15 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -40,7 +40,7 @@
 #include <sys/socket.h>						/* XXX */
 #include <net/if.h>						/* XXX */
 #include <netinet/in.h>						/* XXX */
-#include <netinet/if_ether.h>
+#include <sys/lib/libsa/if_ether.h>
 
 #include "stand/common/bbinfo.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aereg.h,v 1.14 1997/02/24 07:34:20 scottr Exp $	*/
+/*	$NetBSD: if_aereg.h,v 1.15 1997/03/15 18:09:59 is Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.11 1996/10/25 21:33:37 cgd Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.12 1997/03/15 18:11:35 is Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -203,8 +203,13 @@ typedef struct {
 #elif defined(__FreeBSD__)
     struct kern_devconf *sc_kdc;	/* freebsd cruft */
 #endif
+#if defined(__NetBSD__)
+    struct ethercom sc_ec;
+#define	sc_if		sc_ec.ec_if
+#else
     struct arpcom sc_ac;
 #define	sc_if		sc_ac.ac_if
+#endif
     pdq_t *sc_pdq;
 #if !defined(__NetBSD__)
     pdq_bus_ioport_t sc_iobase;

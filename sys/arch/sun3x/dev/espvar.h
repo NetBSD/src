@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.1.1.1 1997/02/24 01:45:14 jeremy Exp $	*/
+/*	$NetBSD: espvar.h,v 1.2 1997/03/15 18:11:05 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.

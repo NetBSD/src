@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.7 1997/02/20 17:53:50 is Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.8 1997/03/15 18:11:34 is Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -52,7 +52,15 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
+
+#if !defined(__NetBSD__)
 #include <net/route.h>
+#endif
+
+#if defined(__NetBSD__)
+#include <net/if_ether.h>
+#endif
+
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -65,7 +73,11 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+#if defined(__NetBSD__)
+#include <netinet/if_inarp.h>
+#else
 #include <netinet/if_ether.h>
+#endif
 #endif
 #if defined(__FreeBSD__)
 #include <netinet/if_fddi.h>
@@ -158,7 +170,7 @@ ifnet_ret_t
 pdq_ifstart(
     struct ifnet *ifp)
 {
-    pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ac.ac_if));
+    pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ec.ec_if));
     struct ifqueue *ifq = &ifp->if_snd;
     struct mbuf *m;
     int tx = 0;
@@ -204,7 +216,11 @@ pdq_os_receive_pdu(
     if ((fh->fddi_fc & (FDDIFC_L|FDDIFC_F)) != FDDIFC_LLC_ASYNC ||
 	((sc->sc_if.if_flags & IFF_PROMISC) &&
 	 (fh->fddi_dhost[0] & 1) == 0 && /* !mcast and !bcast */
+#ifdef __NetBSD__
+	 bcmp(fh->fddi_dhost, LLADDR(sc->sc_ec.ec_if.if_sadl),
+#else
 	 bcmp(fh->fddi_dhost, sc->sc_ac.ac_enaddr,
+#endif
 	     sizeof(fh->fddi_dhost)) != 0)) {
 	m_freem(m);
 	return;
@@ -256,7 +272,7 @@ pdq_os_addr_fill(
     struct ether_multistep step;
     struct ether_multi *enm;
 
-    ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
+    ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
     while (enm != NULL && num_addrs > 0) {
 	((u_short *) addr->lanaddr_bytes)[0] = ((u_short *) enm->enm_addrlo)[0];
 	((u_short *) addr->lanaddr_bytes)[1] = ((u_short *) enm->enm_addrlo)[1];
@@ -273,7 +289,7 @@ pdq_ifioctl(
     ioctl_cmd_t cmd,
     caddr_t data)
 {
-    pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ac.ac_if));
+    pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ec.ec_if));
     int s, error = 0;
 
     s = splimp();
@@ -287,7 +303,7 @@ pdq_ifioctl(
 #if defined(INET)
 		case AF_INET: {
 		    pdq_ifinit(sc);
-		    arp_ifinit(&sc->sc_ac, ifa);
+		    arp_ifinit(ifp, ifa);
 		    break;
 		}
 #endif /* INET */
@@ -300,12 +316,11 @@ pdq_ifioctl(
 		case AF_NS: {
 		    struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 		    if (ns_nullhost(*ina)) {
-			ina->x_host = *(union ns_host *)(sc->sc_ac.ac_enaddr);
+			ina->x_host = *(union ns_host *)LLADDR(ifp->if_sadl);
 		    } else {
 			ifp->if_flags &= ~IFF_RUNNING;
 			bcopy((caddr_t)ina->x_host.c_host,
-			      (caddr_t)sc->sc_ac.ac_enaddr,
-			      sizeof sc->sc_ac.ac_enaddr);
+			      LLADDR(ifp->if_sadl), ifp->if_data.ifi_addrlen);
 		    }
 
 		    pdq_ifinit(sc);
@@ -332,9 +347,9 @@ pdq_ifioctl(
 	     * Update multicast listeners
 	     */
 	    if (cmd == SIOCADDMULTI)
-		error = ether_addmulti((struct ifreq *)data, &sc->sc_ac);
+		error = ether_addmulti((struct ifreq *)data, &sc->sc_ec);
 	    else
-		error = ether_delmulti((struct ifreq *)data, &sc->sc_ac);
+		error = ether_delmulti((struct ifreq *)data, &sc->sc_ec);
 
 	    if (error == ENETRESET) {
 		if (sc->sc_if.if_flags & IFF_RUNNING)
@@ -378,7 +393,7 @@ pdq_ifattach(
     ifp->if_start = pdq_ifstart;
   
     if_attach(ifp);
-    fddi_ifattach(ifp);
+    fddi_ifattach(ifp, (caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes);
 #if NBPFILTER > 0
     PDQ_BPFATTACH(sc, DLT_FDDI, sizeof(struct fddi_header));
 #endif

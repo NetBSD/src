@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.12 1997/01/06 04:48:01 mark Exp $ */
+/* $NetBSD: if_ie.c,v 1.13 1997/03/15 18:09:39 is Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -78,15 +78,14 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
-#include <net/netisr.h>
-#include <net/route.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -136,7 +135,7 @@ struct ie_softc {
 	int		sc_rom;
 	int		sc_ram;
 	int		sc_control;
-	struct arpcom	sc_arpcom;
+	struct ethercom	sc_ethercom;
 	int		promisc;
 	int		sc_irqmode;
 
@@ -317,10 +316,10 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 {
 	struct ie_softc *sc = (void *)self;
 	struct podule_attach_args *pa = (void *)aux;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i;
 	char idrom[32];
-	u_char *hwaddr = sc->sc_arpcom.ac_enaddr;
+	u_int8_t hwaddr[ETHER_ADDR_LEN];
 
 	/* Check a few things about the attach args */
 
@@ -464,13 +463,13 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	
 	/* Signed, dated then sent */
         if_attach (ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, hwaddr);
 
 	/* "Hmm," said nuts, "what if the attach fails" */
     
 	/* Write some pretty things on the annoucement line */
 	printf ( " %s using %dk card ram",
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
+	    ether_sprintf(hwaddr),
 	    ((NRXBUF*IE_RXBUF_SIZE)+(NTXBUF*IE_TXBUF_SIZE))/1024 );
 
 #if NBPFILTER > 0
@@ -635,7 +634,7 @@ ieioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 		    ieinit(sc);
-		    arp_ifinit(&sc->sc_arpcom, ifa );
+		    arp_ifinit(ifp, ifa );
 		    break;
 #endif
 		default:
@@ -714,7 +713,7 @@ iewatchdog(ifp)
 	struct ie_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++ifp->if_oerrors;
 	iereset(sc);
 }
 
@@ -871,11 +870,14 @@ int
 ieinit(sc)
 	struct ie_softc *sc;
 {
+    struct ifnet *ifp;
     struct ie_sys_ctl_block scb;
     struct ie_config_cmd cmd;
     struct ie_iasetup_cmd iasetup_cmd;
     u_long ptr = IE_IBASE + IE_SCB_OFF + sizeof scb;
     int n;
+
+    ifp = &sc->sc_ethercom.ec_if;
 
     bzero ( &scb, sizeof(scb) );
 
@@ -919,7 +921,7 @@ ieinit(sc)
     iasetup_cmd.com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
     iasetup_cmd.com.ie_cmd_link = 0xffff;
 
-    bcopy ( sc->sc_arpcom.ac_enaddr, (caddr_t) &iasetup_cmd.ie_address,
+    bcopy ( LLADDR(ifp->if_sadl), (caddr_t) &iasetup_cmd.ie_address,
 	 	sizeof (iasetup_cmd.ie_address) );
 
     if ( command_and_wait(sc, IE_CU_START, &scb, &iasetup_cmd, ptr, sizeof cmd,
@@ -945,8 +947,8 @@ ieinit(sc)
     /* meminit */
     ptr = setup_rfa(sc, ptr);
 
-    sc->sc_arpcom.ac_if.if_flags |= IFF_RUNNING;
-    sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+    ifp->if_flags |= IFF_RUNNING;
+    ifp->if_flags &= ~IFF_OACTIVE;
 
     /* Setup transmit buffers */
 
@@ -1147,7 +1149,7 @@ ieget(struct ie_softc *sc, struct ether_header *ehp, int *to_bpf )
     if ( m==0 )
 	return 0;
 
-    m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
+    m->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
     m->m_pkthdr.len = totlen;
     len = MHLEN;
     top = 0;
@@ -1270,8 +1272,11 @@ ie_read_frame(sc, num)
     int status;
     struct ie_recv_frame_desc rfd;
     struct mbuf *m=0;
+    struct ifnet *ifp;
     struct ether_header eh;
     int last;
+
+    ifp = &sc->sc_ethercom.ec_if;
 
     ie2host(sc, sc->rframes[num], &rfd, sizeof rfd );
     status = rfd.ie_fd_status;
@@ -1302,7 +1307,7 @@ ie_read_frame(sc, num)
     }
 
     if ( m==0 ) {
-	sc->sc_arpcom.ac_if.if_ierrors++;
+	ifp->if_ierrors++;
 	return;
     }
 
@@ -1312,13 +1317,13 @@ ie_read_frame(sc, num)
 */
 
 #if NBFILTER > 0
-    if ( sc->sc_arpcom.ac_if.if_bpf ) {
-	bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m );
+    if ( ifp->if_bpf ) {
+	bpf_mtap(ifp->if_bpf, m );
     };
 #endif
 
-    ether_input ( &sc->sc_arpcom.ac_if, &eh, m );
-    sc->sc_arpcom.ac_if.if_ipackets++;
+    ether_input ( ifp, &eh, m );
+    ifp->if_ipackets++;
 }
 
 void
@@ -1348,7 +1353,7 @@ ierint(sc)
 	    if ( !--times_thru ) {
 		printf ( "IERINT: Uh oh. Nuts, look at this bit!!!\n" );
     		ie2host ( sc, IE_IBASE + IE_SCB_OFF, &scb, sizeof scb );
-		sc->sc_arpcom.ac_if.if_ierrors += scb.ie_err_crc +
+		sc->sc_ethercom.ec_if.if_ierrors += scb.ie_err_crc +
 						  scb.ie_err_align +
 						  scb.ie_err_resource +
 						  scb.ie_err_overrun;
@@ -1415,7 +1420,7 @@ loop:
 
     if (status & IE_ST_RNR) {
 	printf ( "ie: receiver not ready\n" );
-	sc->sc_arpcom.ac_if.if_ierrors++;
+	sc->sc_ethercom.ec_if.if_ierrors++;
 	iereset(sc);
     }
 
@@ -1479,7 +1484,7 @@ iexmit(sc)
     command_and_wait(sc, IE_CU_START, &scb, &xc, sc->xmit_cmds[sc->xctail]
 			, sizeof xc, IE_STAT_COMPL);
 
-    sc->sc_arpcom.ac_if.if_timer = 5;
+    sc->sc_ethercom.ec_if.if_timer = 5;
 }
 /*
  * Start sending all the queued buffers.
@@ -1511,7 +1516,7 @@ iestart(ifp)
 			break;
 		}
 
-		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
+		IF_DEQUEUE(&ifp->if_snd, m);
 		if (!m)
 			break;
 
@@ -1531,8 +1536,8 @@ iestart(ifp)
 		len = max(len, ETHER_MIN_LEN);
 
 #if NBPFILTER > 0
-		if ( sc->sc_arpcom.ac_if.if_bpf )
-		    bpf_tap(sc->sc_arpcom.ac_if.if_bpf, txbuf, len);
+		if ( ifp->if_bpf )
+		    bpf_tap(ifp->if_bpf, txbuf, len);
 #endif
 
 		/* When we write directly to the card we dont need this */
@@ -1559,7 +1564,7 @@ void
 ietint(sc)
 	struct ie_softc *sc;
 {
-    struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+    struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
     int status;
 

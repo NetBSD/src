@@ -58,14 +58,15 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
+
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -167,7 +168,7 @@ struct fe_softc {
 	struct	device sc_dev;
 	void	*sc_ih;
 
-	struct	arpcom sc_arpcom;	/* ethernet common */
+	struct	ethercom sc_ethercom;	/* ethernet common */
 
 	/* Set by probe() and not modified in later phases. */
 	enum	fe_type type;	/* interface type code */
@@ -194,10 +195,9 @@ struct fe_softc {
 	/* Multicast address filter management. */
 	u_char	filter_change;	/* MARs must be changed ASAP. */
 	u_char	filter[FE_FILTER_LEN];	/* new filter value. */
-};
 
-/* Frequently accessed members in arpcom. */
-#define sc_enaddr	sc_arpcom.ac_enaddr
+	u_int8_t sc_enaddr[ETHER_ADDR_LEN];
+};
 
 /* Standard driver entry points.  These can be static. */
 int	feprobe		__P((struct device *, void *, void *));
@@ -224,7 +224,7 @@ void	fe_xmit		__P((struct fe_softc *));
 void	fe_write_mbufs	__P((struct fe_softc *, struct mbuf *));
 static inline
 void	fe_droppacket	__P((struct fe_softc *));
-void	fe_getmcaf	__P((struct arpcom *, u_char *));
+void	fe_getmcaf	__P((struct ethercom *, u_char *));
 void	fe_setmode	__P((struct fe_softc *));
 void	fe_loadmar	__P((struct fe_softc *));
 #if FE_DEBUG >= 1
@@ -994,7 +994,7 @@ feattach(parent, self, aux)
 	struct fe_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	/* Stop the 86960. */
 	fe_stop(sc);
@@ -1063,11 +1063,11 @@ feattach(parent, self, aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, sc->sc_enaddr);
 
 	/* Print additional info when attached. */
 	printf(": address %s, type %s\n",
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr), sc->typestr);
+	    ether_sprintf(sc->sc_enaddr), sc->typestr);
 #if FE_DEBUG >= 3
 	{
 		int buf, txb, bbw, sbw, ram;
@@ -1214,7 +1214,7 @@ fe_watchdog(ifp)
 #endif
 
 	/* Record how many packets are lost by this accident. */
-	sc->sc_arpcom.ac_if.if_oerrors += sc->txb_sched + sc->txb_count;
+	sc->sc_ethercom.ec_if.if_oerrors += sc->txb_sched + sc->txb_count;
 
 	fe_reset(sc);
 }
@@ -1237,7 +1237,7 @@ void
 fe_init(sc)
 	struct fe_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i;
 
 #if FE_DEBUG >= 3
@@ -1399,7 +1399,7 @@ fe_xmit(sc)
 	 * We use longer timeout for multiple packet transmission.
 	 * I'm not sure this timer value is appropriate.  FIXME.
 	 */
-	sc->sc_arpcom.ac_if.if_timer = 1 + sc->txb_count;
+	sc->sc_ethercom.ec_if.if_timer = 1 + sc->txb_count;
 
 	/* Update txb variables. */
 	sc->txb_sched = sc->txb_count;
@@ -1577,7 +1577,7 @@ fe_tint(sc, tstat)
 	struct fe_softc *sc;
 	u_char tstat;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int left;
 	int col;
 
@@ -1716,7 +1716,7 @@ fe_rint(sc, rstat)
 	struct fe_softc *sc;
 	u_char rstat;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int len;
 	u_char status;
 	int i;
@@ -1898,7 +1898,7 @@ feintr(arg)
 		if (sc->filter_change &&
 		    sc->txb_count == 0 && sc->txb_sched == 0) {
 			fe_loadmar(sc);
-			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 		}
 
 		/*
@@ -1907,8 +1907,8 @@ feintr(arg)
 		 * after handling the receiver interrupt to give the
 		 * receive operation priority.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE) == 0)
-			fe_start(&sc->sc_arpcom.ac_if);
+		if ((sc->sc_ethercom.ec_if.if_flags & IFF_OACTIVE) == 0)
+			fe_start(&sc->sc_ethercom.ec_if);
 
 		/*
 		 * Get interrupt conditions, masking unneeded flags.
@@ -1949,7 +1949,7 @@ fe_ioctl(ifp, command, data)
 #ifdef INET
 		case AF_INET:
 			fe_init(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -1959,11 +1959,13 @@ fe_ioctl(ifp, command, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				    *(union ns_host *)(sc->sc_enaddr);
+			else {
+				bcopy(ina->x_host.c_host, sc->sc_enaddr,
+				    ETHER_ADDR_LEN);
+				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				    ETHER_ADDR_LEN);
+			}
 			/* Set new address. */
 			fe_init(sc);
 			break;
@@ -2011,8 +2013,8 @@ fe_ioctl(ifp, command, data)
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
 		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ethercom) :
+		    ether_delmulti(ifr, &sc->sc_ethercom);
 
 		if (error == ENETRESET) {
 			/*
@@ -2044,7 +2046,7 @@ fe_get_packet(sc, len)
 {
 	struct ether_header *eh;
 	struct mbuf *m;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	/* Allocate a header mbuf. */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -2105,7 +2107,7 @@ fe_get_packet(sc, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-	  	    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+	  	    bcmp(eh->ether_dhost, sc->sc_enaddr,
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return (1);
@@ -2186,7 +2188,7 @@ fe_write_mbufs(sc, m)
 		log(LOG_ERR, "%s: got a %s packet (%u bytes) to send\n",
 		    sc->sc_dev.dv_xname,
 		    totlen < ETHER_HDR_SIZE ? "partial" : "big", totlen);
-		sc->sc_arpcom.ac_if.if_oerrors++;
+		sc->sc_ethercom.ec_if.if_oerrors++;
 		return;
 	}
 #endif
@@ -2270,11 +2272,11 @@ fe_write_mbufs(sc, m)
  * list of multicast addresses we need to listen to.
  */
 void
-fe_getmcaf(ac, af)
-	struct arpcom *ac;
+fe_getmcaf(ec, af)
+	struct ethercom *ec;
 	u_char *af;
 {
-	struct ifnet *ifp = &ac->ac_if;
+	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	register u_char *cp, c;
 	register u_long crc;
@@ -2293,7 +2295,7 @@ fe_getmcaf(ac, af)
 		goto allmulti;
 
 	af[0] = af[1] = af[2] = af[3] = af[4] = af[5] = af[6] = af[7] = 0x00;
-	ETHER_FIRST_MULTI(step, ac, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo)) != 0) {
@@ -2345,7 +2347,7 @@ void
 fe_setmode(sc)
 	struct fe_softc *sc;
 {
-	int flags = sc->sc_arpcom.ac_if.if_flags;
+	int flags = sc->sc_ethercom.ec_if.if_flags;
 
 	/*
 	 * If the interface is not running, we postpone the update
@@ -2392,7 +2394,7 @@ fe_setmode(sc)
 	/*
 	 * Find the new multicast filter value.
 	 */
-	fe_getmcaf(&sc->sc_arpcom, sc->filter);
+	fe_getmcaf(&sc->sc_ethercom, sc->filter);
 	sc->filter_change = 1;
 
 #if FE_DEBUG >= 3

@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.1 1997/02/23 04:00:31 mark Exp $	*/
+/*	$NetBSD: rapide.c,v 1.2 1997/03/15 18:09:40 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe

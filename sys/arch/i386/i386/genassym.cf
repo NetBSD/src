@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 1997/02/26 23:50:07 mycroft Exp $
+#	$NetBSD: genassym.cf,v 1.2 1997/03/15 18:09:51 is Exp $
 
 #
 # Copyright (c) 1995, 1997 Charles M. Hannum.  All rights reserved.

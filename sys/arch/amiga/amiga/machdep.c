@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82 1996/12/17 07:32:54 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.83 1997/03/15 18:09:18 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -113,8 +113,8 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#ifdef NETHER
-#include <netinet/if_ether.h>
+#ifdef NARP
+#include <netinet/if_inarp.h>
 #endif
 #include <netinet/ip_var.h>
 #endif 
@@ -1336,7 +1336,7 @@ static void
 netintr()
 {
 #ifdef INET
-#if NETHER > 0
+#if NARP > 0
 	if (netisr & (1 << NETISR_ARP)) {
 		netisr &= ~(1 << NETISR_ARP);
 		arpintr();

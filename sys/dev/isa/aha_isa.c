@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isa.c,v 1.1 1997/02/07 17:37:32 mycroft Exp $	*/
+/*	$NetBSD: aha_isa.c,v 1.2 1997/03/15 18:11:36 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.6 1997/03/10 17:55:15 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.7 1997/03/15 18:09:59 is Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -40,10 +40,11 @@
 #include <sys/systm.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <machine/bus.h>
@@ -114,13 +115,14 @@ ae_nubus_attach(parent, self, aux)
 {
 	struct ae_softc *sc = (struct ae_softc *) self;
 	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 	int success;
 #ifdef AE_OLD_GET_ENADDR
 	int i;
 #endif
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	bst = na->na_tag;
 	if (bus_space_map(bst, NUBUS_SLOT2PA(na->slot), NBMEMSIZE,
@@ -163,10 +165,10 @@ ae_nubus_attach(parent, self, aux)
 #ifdef AE_OLD_GET_ENADDR
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] =
+			myaddr[i] =
 			    bus_space_read_1(bst, bsh, (AE_ROM_OFFSET + i * 2));
 #else
-		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+		if (ae_nb_get_enaddr(na, myaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -190,10 +192,10 @@ ae_nubus_attach(parent, self, aux)
 #ifdef AE_OLD_GET_ENADDR
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] =
+			myaddr[i] =
 			    bus_space_read_1(bst, bsh, (DP_ROM_OFFSET + i * 2));
 #else
-		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+		if (ae_nb_get_enaddr(na, myaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -222,10 +224,10 @@ ae_nubus_attach(parent, self, aux)
 #ifdef AE_OLD_GET_ENADDR
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] =
+			myaddr[i] =
 			    bus_space_read_1(bst, bsh, (FE_ROM_OFFSET + i));
 #else
-		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+		if (ae_nb_get_enaddr(na, myaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -261,10 +263,10 @@ ae_nubus_attach(parent, self, aux)
 #ifdef AE_OLD_GET_ENADDR
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] =
+			myaddr[i] =
 			    bus_space_read_1(bst, bsh, (GC_ROM_OFFSET + i * 4));
 #else
-		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+		if (ae_nb_get_enaddr(na, myaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -290,7 +292,7 @@ ae_nubus_attach(parent, self, aux)
 			printf(": failed to map register space\n");
 			break;
 		}
-		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+		if (ae_nb_get_enaddr(na, myaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -308,7 +310,7 @@ ae_nubus_attach(parent, self, aux)
 	}
 
 	ifp->if_watchdog = ae_nb_watchdog;	/* Override watchdog */
-	if (aesetup(sc)) {
+	if (aesetup(sc, myaddr)) {
 		bus_space_unmap(bst, bsh, NBMEMSIZE);
 		return;
 	}
@@ -413,7 +415,7 @@ ae_nb_watchdog(ifp)
 #endif
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++ifp->if_oerrors;
 
 	aereset(sc);
 }

@@ -77,7 +77,7 @@ struct ipkdb_if {
 	char	gotbuf[32*1024];
 	char	*got;
 	int	gotlen;
-	struct arpcom *arp;
+	struct ethercom *arp;
 	struct cfdata *cfp;
 	char	*name;		/* to be filled by the driver */
 	int	port;		/* to be filled by the driver */
@@ -125,10 +125,10 @@ extern int ipkdbifinit __P((struct ipkdb_if *kip, int unit));
  */
 extern void ipkdbrint __P((struct ipkdb_if *kip, struct ifnet *ifp));
 extern void ipkdbgotpkt __P((struct ipkdb_if *kip, char *pkt, int len));
-extern __inline void ipkdbattach __P((struct ipkdb_if *kip, struct arpcom *arp));
+extern __inline void ipkdbattach __P((struct ipkdb_if *kip, struct ethercom *arp));
 extern __inline void ipkdbattach(kip, arp)
 	struct ipkdb_if *kip;
-	struct arpcom *arp;
+	struct ethercom *arp;
 {
 	if (!kip->arp)
 		kip->arp = arp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.25 1997/01/15 18:22:35 gwr Exp $	*/
+/*	$NetBSD: if.h,v 1.26 1997/03/15 18:12:21 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -141,6 +141,7 @@ struct ifnet {				/* and the entries */
 		int	ifq_maxlen;
 		int	ifq_drops;
 	} if_snd;			/* output queue */
+	struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -330,7 +331,7 @@ struct	ifconf {
 
 struct ifnet_head ifnet;
 
-void	ether_ifattach __P((struct ifnet *));
+void	ether_ifattach __P((struct ifnet *, u_int8_t *));
 void	ether_input __P((struct ifnet *, struct ether_header *, struct mbuf *));
 int	ether_output __P((struct ifnet *,
 	   struct mbuf *, struct sockaddr *, struct rtentry *));

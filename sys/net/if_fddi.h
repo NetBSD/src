@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddi.h,v 1.2 1995/08/19 04:35:28 cgd Exp $	*/
+/*	$NetBSD: if_fddi.h,v 1.3 1997/03/15 18:12:27 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -75,7 +75,7 @@ struct	fddi_header {
 #define	fddi_delmulti		ether_delmulti
 #define	fddi_sprintf		ether_sprintf
 
-void    fddi_ifattach __P((struct ifnet *));
+void    fddi_ifattach __P((struct ifnet *, caddr_t));
 void    fddi_input __P((struct ifnet *, struct fddi_header *, struct mbuf *));
 int     fddi_output __P((struct ifnet *,
            struct mbuf *, struct sockaddr *, struct rtentry *)); 

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.25 1997/03/09 21:12:39 leo Exp $	*/
+/*	$NetBSD: am7990.c,v 1.26 1997/03/15 18:11:25 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -52,10 +52,12 @@
 #include <sys/errno.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
@@ -96,7 +98,7 @@ integrate void am7990_read __P((struct am7990_softc *, int, int));
 
 hide void am7990_shutdown __P((void *));
 
-#define	ifp	(&sc->sc_arpcom.ac_if)
+#define	ifp	(&sc->sc_ethercom.ec_if)
 
 #ifdef	sun3	/* XXX what do we do about this?!  --thorpej */
 static inline u_int16_t ether_cmp __P((void *, void *));
@@ -162,7 +164,7 @@ am7990_config(sc)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, sc->sc_enaddr);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -193,7 +195,7 @@ am7990_config(sc)
 		panic("am7990_config: weird memory size");
 	}
 
-	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
 	printf("%s: %d receive buffers, %d transmit buffers\n",
 	    sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
 
@@ -253,12 +255,12 @@ am7990_meminit(sc)
 #endif
 		init.init_mode = LE_MODE_NORMAL;
 	init.init_padr[0] =
-	    (sc->sc_arpcom.ac_enaddr[1] << 8) | sc->sc_arpcom.ac_enaddr[0];
+	    (LLADDR(ifp->if_sadl)[1] << 8) | LLADDR(ifp->if_sadl)[0];
 	init.init_padr[1] =
-	    (sc->sc_arpcom.ac_enaddr[3] << 8) | sc->sc_arpcom.ac_enaddr[2];
+	    (LLADDR(ifp->if_sadl)[3] << 8) | LLADDR(ifp->if_sadl)[2];
 	init.init_padr[2] =
-	    (sc->sc_arpcom.ac_enaddr[5] << 8) | sc->sc_arpcom.ac_enaddr[4];
-	am7990_setladrf(&sc->sc_arpcom, init.init_ladrf);
+	    (LLADDR(ifp->if_sadl)[5] << 8) | LLADDR(ifp->if_sadl)[4];
+	am7990_setladrf(&sc->sc_ethercom, init.init_ladrf);
 
 	sc->sc_last_rd = 0;
 	sc->sc_first_td = sc->sc_last_td = sc->sc_no_td = 0;
@@ -489,7 +491,7 @@ am7990_read(sc, boff, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    ETHER_CMP(eh->ether_dhost, sc->sc_arpcom.ac_enaddr)) {
+		    ETHER_CMP(eh->ether_dhost, LLADDR(ifp->if_sadl))) {
 			m_freem(m);
 			return;
 		}
@@ -505,7 +507,7 @@ am7990_read(sc, boff, len)
 	 * destination address (garbage will usually not match).
 	 * Of course, this precludes multicast support...
 	 */
-	if (ETHER_CMP(eh->ether_dhost, sc->sc_arpcom.ac_enaddr) &&
+	if (ETHER_CMP(eh->ether_dhost, LLADDR(ifp->if_sadl)) &&
 	    ETHER_CMP(eh->ether_dhost, etherbroadcastaddr)) {
 		m_freem(m);
 		return;
@@ -866,7 +868,7 @@ am7990_ioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			am7990_init(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -876,11 +878,12 @@ am7990_ioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
+			else {
 				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				    LLADDR(ifp->if_sadl),
+				    sizeof(sc->sc_enaddr));
+			}	
 			/* Set new address. */
 			am7990_init(sc);
 			break;
@@ -937,8 +940,8 @@ am7990_ioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ethercom) :
+		    ether_delmulti(ifr, &sc->sc_ethercom);
 
 		if (error == ENETRESET) {
 			/*
@@ -1028,10 +1031,10 @@ am7990_xmit_print(sc, no)
  */
 void
 am7990_setladrf(ac, af)
-	struct arpcom *ac;
+	struct ethercom *ac;
 	u_int16_t *af;
 {
-	struct ifnet *ifp = &ac->ac_if;
+	struct ifnet *ifp = &ac->ec_if;
 	struct ether_multi *enm;
 	register u_char *cp, c;
 	register u_int32_t crc;

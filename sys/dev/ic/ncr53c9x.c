@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.2 1997/02/27 13:59:32 briggs Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.3 1997/03/15 18:11:31 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.

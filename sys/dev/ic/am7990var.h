@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.10 1997/03/09 21:12:42 leo Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.11 1997/03/15 18:11:27 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -41,7 +41,7 @@
  * Ethernet software status per device.
  *
  * Each interface is referenced by a network interface structure,
- * arpcom.ac_if, which the routing code uses to locate the interface. 
+ * ethercom.ec_if, which the routing code uses to locate the interface. 
  * This structure contains the output queue for the interface, its address, ...
  *
  * NOTE: this structure MUST be the first element in machine-dependent
@@ -52,7 +52,7 @@
  */
 struct am7990_softc {
 	struct	device sc_dev;		/* base device glue */
-	struct	arpcom sc_arpcom;	/* Ethernet common part */
+	struct	ethercom sc_ethercom;	/* Ethernet common part */
 
 	/*
 	 * Memory functions:
@@ -110,6 +110,8 @@ struct am7990_softc {
 #ifdef LEDEBUG
 	int	sc_debug;
 #endif
+	u_int8_t sc_enaddr[6];
+	u_int8_t sc_pad[2];
 };
 
 /* Export this to machine-dependent drivers. */
@@ -120,7 +122,7 @@ void am7990_init __P((struct am7990_softc *));
 int am7990_ioctl __P((struct ifnet *, u_long, caddr_t));
 void am7990_meminit __P((struct am7990_softc *));
 void am7990_reset __P((struct am7990_softc *));
-void am7990_setladrf __P((struct arpcom *, u_int16_t *));
+void am7990_setladrf __P((struct ethercom *, u_int16_t *));
 void am7990_start __P((struct ifnet *));
 void am7990_stop __P((struct am7990_softc *));
 void am7990_watchdog __P((struct ifnet *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.37 1996/06/13 21:49:43 cgd Exp $	*/
+/*	$NetBSD: if.c,v 1.38 1997/03/15 18:12:20 is Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -128,6 +128,7 @@ if_attach(ifp)
 	ifa->ifa_rtrequest = link_rtrequest;
 	TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
 	ifa->ifa_addr = (struct sockaddr *)sdl;
+	ifp->if_sadl = sdl;
 	sdl = (struct sockaddr_dl *)(socksize + (caddr_t)sdl);
 	ifa->ifa_netmask = (struct sockaddr *)sdl;
 	sdl->sdl_len = masklen;

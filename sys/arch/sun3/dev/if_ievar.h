@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ievar.h,v 1.8 1997/02/13 20:43:18 gwr Exp $	*/
+/*	$NetBSD: if_ievar.h,v 1.9 1997/03/15 18:10:53 is Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
@@ -56,9 +56,12 @@ enum ie_hardware {
 struct ie_softc {
 	struct device sc_dev;	/* device structure */
 
-	struct arpcom sc_arpcom;/* system arpcom structure */
-#define	sc_if	sc_arpcom.ac_if 		/* network-visible interface */
-#define	sc_addr	sc_arpcom.ac_enaddr		/* hardware Ethernet address */
+	struct ethercom sc_ethercom;/* system ethercom structure */
+#define	sc_if	sc_ethercom.ec_if 		/* network-visible interface */
+
+	/* XXX: This is used only during attach. */
+	u_int8_t sc_addr[ETHER_ADDR_LEN];
+	u_int8_t sc_pad1[2];
 
 	int     sc_debug;	/* See IEDEBUG */
 

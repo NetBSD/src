@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.20 1997/02/18 10:51:15 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.21 1997/03/15 18:11:29 is Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -44,17 +44,17 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <net/if_dl.h>
+#include <net/if_ether.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
+
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -143,10 +143,11 @@ epconfig(sc, chipset)
 	struct ep_softc *sc;
 	u_short chipset;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int16_t i;
+	u_int8_t myla[6];
 
 	printf("%s: ", sc->sc_dev.dv_xname);
 
@@ -169,11 +170,11 @@ epconfig(sc, chipset)
 		if (epbusyeeprom(sc))
 			return;
 		x = bus_space_read_2(iot, ioh, EP_W0_EEPROM_DATA);
-		sc->sc_arpcom.ac_enaddr[(i << 1)] = x >> 8;
-		sc->sc_arpcom.ac_enaddr[(i << 1) + 1] = x;
+		myla[(i << 1)] = x >> 8;
+		myla[(i << 1) + 1] = x;
 	}
 
-	printf("MAC address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf("MAC address %s\n", ether_sprintf(myla));
 
 	/*
 	 * Vortex-based (3c59x, eisa)? and Boomerang (3c900)cards allow
@@ -258,10 +259,10 @@ epconfig(sc, chipset)
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myla);
 
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
+	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
 		  sizeof(struct ether_header));
 #endif
 
@@ -419,7 +420,7 @@ void
 epinit(sc)
 	register struct ep_softc *sc;
 {
-	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
@@ -445,7 +446,7 @@ epinit(sc)
 	GO_WINDOW(2);
 	for (i = 0; i < 6; i++)	/* Reload the ether_addr. */
 		bus_space_write_1(iot, ioh, EP_W2_ADDR_0 + i,
-		    sc->sc_arpcom.ac_enaddr[i]);
+		    LLADDR(ifp->if_sadl)[i]);
 
 	/*
 	 * Reset the station-address receive filter.
@@ -501,7 +502,7 @@ void
 epsetfilter(sc)
 	register struct ep_softc *sc;
 {
-	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, EP_COMMAND, SET_RX_FILTER |
@@ -519,7 +520,7 @@ void
 epsetlink(sc)
 	register struct ep_softc *sc;
 {
-	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -748,26 +749,26 @@ epstatus(sc)
 	GO_WINDOW(1);
 
 	if (fifost & FIFOS_RX_UNDERRUN) {
-		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+		if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 			printf("%s: RX underrun\n", sc->sc_dev.dv_xname);
 		epreset(sc);
 		return 0;
 	}
 
 	if (fifost & FIFOS_RX_STATUS_OVERRUN) {
-		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+		if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 			printf("%s: RX Status overrun\n", sc->sc_dev.dv_xname);
 		return 1;
 	}
 
 	if (fifost & FIFOS_RX_OVERRUN) {
-		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+		if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 			printf("%s: RX overrun\n", sc->sc_dev.dv_xname);
 		return 1;
 	}
 
 	if (fifost & FIFOS_TX_OVERRUN) {
-		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+		if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 			printf("%s: TX overrun\n", sc->sc_dev.dv_xname);
 		epreset(sc);
 		return 0;
@@ -793,14 +794,14 @@ eptxstat(sc)
 		bus_space_write_1(iot, ioh, EP_W1_TX_STATUS, 0x0);
 
 		if (i & TXS_JABBER) {
-			++sc->sc_arpcom.ac_if.if_oerrors;
-			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+			++sc->sc_ethercom.ec_if.if_oerrors;
+			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 				printf("%s: jabber (%x)\n",
 				       sc->sc_dev.dv_xname, i);
 			epreset(sc);
 		} else if (i & TXS_UNDERRUN) {
-			++sc->sc_arpcom.ac_if.if_oerrors;
-			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+			++sc->sc_ethercom.ec_if.if_oerrors;
+			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 				printf("%s: fifo underrun (%x) @%d\n",
 				       sc->sc_dev.dv_xname, i,
 				       sc->tx_start_thresh);
@@ -810,9 +811,9 @@ eptxstat(sc)
 			sc->tx_succ_ok = 0;
 			epreset(sc);
 		} else if (i & TXS_MAX_COLLISION) {
-			++sc->sc_arpcom.ac_if.if_collisions;
+			++sc->sc_ethercom.ec_if.if_collisions;
 			bus_space_write_2(iot, ioh, EP_COMMAND, TX_ENABLE);
-			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 		} else
 			sc->tx_succ_ok = (sc->tx_succ_ok+1) & 127;
 	}
@@ -825,7 +826,7 @@ epintr(arg)
 	register struct ep_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int16_t status;
 	int ret = 0;
 
@@ -851,8 +852,8 @@ epintr(arg)
 		if (status & S_RX_COMPLETE)
 			epread(sc);
 		if (status & S_TX_AVAIL) {
-			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
-			epstart(&sc->sc_arpcom.ac_if);
+			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
+			epstart(&sc->sc_ethercom.ec_if);
 		}
 		if (status & S_CARD_FAILURE) {
 			printf("%s: adapter failure (%x)\n",
@@ -876,7 +877,7 @@ epread(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 	int len;
@@ -944,7 +945,7 @@ again:
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+		    bcmp(eh->ether_dhost, LLADDR(sc->sc_ethercom.ec_if.if_sadl),
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return;
@@ -1000,7 +1001,7 @@ epget(sc, totlen)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *top, **mp, *m;
 	int len, remaining;
 	int sh;
@@ -1153,7 +1154,7 @@ epioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			epinit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(&sc->sc_ethercom.ec_if, ifa);
 			break;
 #endif
 #ifdef NS
@@ -1162,12 +1163,12 @@ epioctl(ifp, cmd, data)
 			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+				ina->x_host = *(union ns_host *)
+				    LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				    LLADDR(ifp->if_sadl),
+				    ifp->if_addrlen);
 			/* Set new address. */
 			epinit(sc);
 			break;
@@ -1209,8 +1210,8 @@ epioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ethercom) :
+		    ether_delmulti(ifr, &sc->sc_ethercom);
 
 		if (error == ENETRESET) {
 			/*
@@ -1250,7 +1251,7 @@ epwatchdog(ifp)
 	struct ep_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++sc->sc_ethercom.ec_if.if_oerrors;
 
 	epreset(sc);
 }

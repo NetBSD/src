@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5 1997/03/15 16:32:17 ragge Exp $	*/
+/*	$NetBSD: if_le.c,v 1.6 1997/03/15 18:11:11 is Exp $	*/
 
 #define LEDEBUG	 1		/* debug-level: 0 or 1 */
 /* #define LE_CHIP_IS_POKEY	/* does VS2000 need this ??? */
@@ -51,10 +51,11 @@
 #include <sys/reboot.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #if INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 /*
@@ -204,12 +205,13 @@ leattach(parent, self, aux)
 	/*
 	 * Get the ethernet address out of rom
 	 */
-	for (i = 0; i < sizeof(sc->sc_am7990.sc_arpcom.ac_enaddr); i++) {
+	for (i = 0; i < sizeof(sc->sc_am7990.sc_enaddr); i++) {
 		int *eaddr = (void*)uvax_phys2virt(ca->ca_enaddr);
-		sc->sc_am7990.sc_arpcom.ac_enaddr[i] = (u_char)eaddr[i];
+		sc->sc_am7990.sc_enaddr[i] = (u_char)eaddr[i];
 	}
 
-	bcopy(self->dv_xname, sc->sc_am7990.sc_arpcom.ac_if.if_xname, IFNAMSIZ);
+	bcopy(self->dv_xname, sc->sc_am7990.sc_ethercom.ec_if.if_xname,
+	    IFNAMSIZ);
 	am7990_config(&sc->sc_am7990);
 
 #ifdef LEDEBUG
