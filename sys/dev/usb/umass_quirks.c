@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.23 2002/10/04 08:31:57 gehenna Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.24 2002/10/05 01:11:47 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,6 @@
 Static usbd_status umass_init_insystem(struct umass_softc *);
 Static usbd_status umass_init_shuttle(struct umass_softc *);
 
-Static void umass_fixup_sony(struct umass_softc *);
 Static void umass_fixup_yedata(struct umass_softc *);
 
 Static const struct umass_quirk umass_quirks[] = {
@@ -328,17 +327,6 @@ umass_init_shuttle(struct umass_softc *sc)
 	USETW(req.wLength, sizeof(status));
 
 	return (usbd_do_request(sc->sc_udev, &req, &status));
-}
-
-Static void
-umass_fixup_sony(struct umass_softc *sc)
-{
-	usb_interface_descriptor_t *id;
-
-	id = usbd_get_interface_descriptor(sc->sc_iface);
-	if (id->bInterfaceSubClass == 0xff) {
-		sc->sc_cmd = UMASS_CPROTO_RBC;
-	}
 }
 
 Static void
