@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.131 2003/07/06 07:15:55 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.132 2003/07/06 20:01:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.131 2003/07/06 07:15:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.132 2003/07/06 20:01:17 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -207,8 +207,7 @@ wi_attach(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	int i, nrate, mword, buflen;
-	u_int8_t r;
+	int i, nrate, buflen;
 	u_int16_t val;
 	u_int8_t ratebuf[2 + IEEE80211_RATE_SIZE];
 	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
@@ -370,44 +369,14 @@ wi_attach(struct wi_softc *sc)
 	sc->sc_cnfauthmode = IEEE80211_AUTH_OPEN;
 	sc->sc_roaming_mode = 1;
 
-	ifmedia_init(&sc->sc_media, 0, wi_media_change, wi_media_status);
-	printf("%s: supported rates: ", sc->sc_dev.dv_xname);
-#define	ADD(s, o)	ifmedia_add(&sc->sc_media, \
-	IFM_MAKEWORD(IFM_IEEE80211, (s), (o), 0), 0, NULL)
-	ADD(IFM_AUTO, 0);
-	if (ic->ic_flags & IEEE80211_F_HASHOSTAP)
-		ADD(IFM_AUTO, IFM_IEEE80211_HOSTAP);
-	if (ic->ic_flags & IEEE80211_F_HASIBSS)
-		ADD(IFM_AUTO, IFM_IEEE80211_ADHOC);
-	if (ic->ic_flags & IEEE80211_F_HASMONITOR)
-		ADD(IFM_AUTO, IFM_IEEE80211_MONITOR);
-	ADD(IFM_AUTO, IFM_IEEE80211_ADHOC | IFM_FLAG0);
-	for (i = 0; i < nrate; i++) {
-		r = ic->ic_sup_rates[i];
-		mword = ieee80211_rate2media(r, IEEE80211_T_DS);
-		if (mword == 0)
-			continue;
-		printf("%s%d%sMbps", (i != 0 ? " " : ""),
-		    (r & IEEE80211_RATE_VAL) / 2, ((r & 0x1) != 0 ? ".5" : ""));
-		ADD(mword, 0);
-		if (ic->ic_flags & IEEE80211_F_HASHOSTAP)
-			ADD(mword, IFM_IEEE80211_HOSTAP);
-		if (ic->ic_flags & IEEE80211_F_HASIBSS)
-			ADD(mword, IFM_IEEE80211_ADHOC);
-		if (ic->ic_flags & IEEE80211_F_HASMONITOR)
-			ADD(mword, IFM_IEEE80211_MONITOR);
-		ADD(mword, IFM_IEEE80211_ADHOC | IFM_FLAG0);
-	}
-	printf("\n");
-	ifmedia_set(&sc->sc_media, IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0));
-#undef ADD
-
 	/*
 	 * Call MI attach routines.
 	 */
-
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
+
+	ic->ic_media.ifm_status = wi_media_status;
+	ic->ic_media.ifm_change = wi_media_change;
 
 	/* Attach is successful. */
 	sc->sc_attached = 1;
@@ -431,7 +400,7 @@ wi_detach(struct wi_softc *sc)
 	wi_stop(ifp, 1);
 
 	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
+	ifmedia_delete_instance(&sc->sc_ic.ic_media, IFM_INST_ANY);
 
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
@@ -1022,7 +991,7 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		error = ifmedia_ioctl(ifp, ifr, &ic->ic_media, cmd);
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -1081,7 +1050,7 @@ wi_media_change(struct ifnet *ifp)
 	enum ieee80211_opmode newmode;
 	int i, rate, error = 0;
 
-	ime = sc->sc_media.ifm_cur;
+	ime = ic->ic_media.ifm_cur;
 	if (IFM_SUBTYPE(ime->ifm_media) == IFM_AUTO) {
 		i = -1;
 	} else {
@@ -1121,7 +1090,7 @@ wi_media_change(struct ifnet *ifp)
 		else
 			error = 0;
 	}
-	ifp->if_baudrate = ifmedia_baudrate(sc->sc_media.ifm_cur->ifm_media);
+	ifp->if_baudrate = ifmedia_baudrate(ic->ic_media.ifm_cur->ifm_media);
 
 	return error;
 }
@@ -1161,7 +1130,7 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 				rate = 22;	/* 11Mbps */
 		}
 	}
-	imr->ifm_active |= ieee80211_rate2media(rate, IEEE80211_T_DS);
+	imr->ifm_active |= ieee80211_rate2media(rate, ic->ic_phytype);
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		break;

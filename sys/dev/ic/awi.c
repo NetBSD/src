@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.52 2003/02/25 01:57:35 dyoung Exp $	*/
+/*	$NetBSD: awi.c,v 1.53 2003/07/06 20:01:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.52 2003/02/25 01:57:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.53 2003/07/06 20:01:17 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -250,16 +250,10 @@ awi_attach(struct awi_softc *sc)
 	memcpy(ic->ic_sup_rates, sc->sc_mib_phy.aSuprt_Data_Rates + 2, nrate);
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, sc->sc_mib_addr.aMAC_Address);
 
-	printf("%s: IEEE802.11 %s %dMbps (firmware %s)\n",
-	    sc->sc_dev.dv_xname,
-	    sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH ? "FH" : "DS",
-	    (ic->ic_sup_rates[nrate - 1] & IEEE80211_RATE_VAL) / 2,
-	    sc->sc_banner);
+	printf("%s: IEEE802.11 %s (firmware %s)\n", sc->sc_dev.dv_xname,
+	    (ic->ic_phytype == IEEE80211_T_FH) ? "FH" : "DS", sc->sc_banner);
 	printf("%s: 802.11 address: %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(ic->ic_myaddr));
-
-	if_attach(ifp);
-	ieee80211_ifattach(ifp);
 
 	/* probe request is handled by hardware */
 	ic->ic_send_mgmt[IEEE80211_FC0_SUBTYPE_PROBE_REQ
@@ -267,31 +261,29 @@ awi_attach(struct awi_softc *sc)
 	ic->ic_recv_mgmt[IEEE80211_FC0_SUBTYPE_PROBE_REQ
 	    >> IEEE80211_FC0_SUBTYPE_SHIFT] = NULL;
 
-	ifmedia_init(&sc->sc_media, 0, awi_media_change, awi_media_status);
-#define	ADD(s, o)	ifmedia_add(&sc->sc_media, \
+	if_attach(ifp);
+	ieee80211_ifattach(ifp);
+
+	/* Melco compatibility mode. */
+#define	ADD(s, o)	ifmedia_add(&ic->ic_media, \
 	IFM_MAKEWORD(IFM_IEEE80211, (s), (o), 0), 0, NULL)
-	ADD(IFM_AUTO, 0);				/* infra mode */
-	ADD(IFM_AUTO, IFM_FLAG0);			/* melco compat mode */
-	ADD(IFM_AUTO, IFM_IEEE80211_ADHOC);		/* IBSS mode */
-	if (sc->sc_mib_phy.IEEE_PHY_Type != AWI_PHY_TYPE_FH)
-		ADD(IFM_AUTO, IFM_IEEE80211_ADHOC | IFM_FLAG0);
-							/* lucent compat mode */
-	ADD(IFM_AUTO, IFM_IEEE80211_HOSTAP);
+	ADD(IFM_AUTO, IFM_FLAG0);
+
 	for (i = 0; i < nrate; i++) {
 		mword = ieee80211_rate2media(ic->ic_sup_rates[i],
 		    ic->ic_phytype);
 		if (mword == 0)
 			continue;
-		ADD(mword, 0);
 		ADD(mword, IFM_FLAG0);
-		ADD(mword, IFM_IEEE80211_ADHOC);
-		if (sc->sc_mib_phy.IEEE_PHY_Type != AWI_PHY_TYPE_FH)
-			ADD(mword, IFM_IEEE80211_ADHOC | IFM_FLAG0);
-		ADD(mword, IFM_IEEE80211_HOSTAP);
 	}
 #undef	ADD
+
+	/* override defaults */
+	ic->ic_media.ifm_status = awi_media_status;
+	ic->ic_media.ifm_change = awi_media_change;
+
 	awi_media_status(ifp, &imr);
-	ifmedia_set(&sc->sc_media, imr.ifm_active);
+	ifmedia_set(&ic->ic_media, imr.ifm_active);
 
 	if ((sc->sc_sdhook = shutdownhook_establish(awi_shutdown, sc)) == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
@@ -324,7 +316,6 @@ awi_detach(struct awi_softc *sc)
 		wakeup(sc);
 		(void)tsleep(sc, PWAIT, "awidet", 1);
 	}
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
 	shutdownhook_disestablish(sc->sc_sdhook);
@@ -828,7 +819,7 @@ awi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ic.ic_media, cmd);
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -871,7 +862,7 @@ awi_media_change(struct ifnet *ifp)
 	enum ieee80211_opmode newmode;
 	int i, rate, newadhoc_ap, error = 0;
 
-	ime = sc->sc_media.ifm_cur;
+	ime = ic->ic_media.ifm_cur;
 	if (IFM_SUBTYPE(ime->ifm_media) == IFM_AUTO) {
 		i = -1;
 	} else {
