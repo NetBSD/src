@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.27 2003/10/27 22:48:20 dyoung Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.28 2005/02/01 02:05:10 briggs Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.27 2003/10/27 22:48:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.28 2005/02/01 02:05:10 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
@@ -764,7 +764,7 @@ adb_intr(void)
 		adb_intr_IIsi();
 		break;
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		pm_intr();
 		break;
 
@@ -885,7 +885,7 @@ adb_pass_up(struct adbCommand *in)
 			start = 4;
 			break;
 
-		case ADB_HW_PB:
+		case ADB_HW_PMU:
 			cmd = in->data[1];
 			if (in->data[0] < 2)
 				len = 0;
@@ -1077,7 +1077,7 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
 			return -1;
 		break;
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		result = pm_adb_op((u_char *)buffer, (void *)compRout,
 		    (void *)data, (int)command);
 
@@ -1162,7 +1162,7 @@ adb_hw_setup(void)
 		}
 		break;
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		/*
 		 * XXX - really PM_VIA_CLR_INTR - should we put it in
 		 * pm_direct.h?
@@ -1243,7 +1243,7 @@ adb_reinit(void)
 	int nonewtimes;		/* times thru loop w/o any new devices */
 
 	/* Make sure we are not interrupted while building the table. */
-	if (adbHardware != ADB_HW_PB)	/* ints must be on for PB? */
+	if (adbHardware != ADB_HW_PMU)	/* ints must be on for PMU? */
 		s = splhigh();
 
 	ADBNumDevices = 0;	/* no devices yet */
@@ -1487,7 +1487,7 @@ adb_reinit(void)
 		callout_reset(&adb_cuda_tickle_ch, ADB_TICKLE_TICKS,
 		    (void *)adb_cuda_tickle, NULL);
 
-	if (adbHardware != ADB_HW_PB)	/* ints must be on for PB? */
+	if (adbHardware != ADB_HW_PMU)	/* ints must be on for PMU? */
 		splx(s);
 }
 
@@ -1520,7 +1520,7 @@ adb_cmd_result(u_char *in)
 			return 0;
 		return 1;
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		return 1;
 
 	case ADB_HW_UNKNOWN:
@@ -1559,7 +1559,7 @@ adb_cmd_extra(u_char *in)
 		/* add others later */
 		return 1;
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		return 1;
 
 	case ADB_HW_UNKNOWN:
@@ -1641,7 +1641,7 @@ adb_setup_hw_type(void)
 		adbSoftPower = 1;
 		return;
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		adbSoftPower = 1;
 		pm_setup_adb();
 		return;
@@ -1698,7 +1698,7 @@ adb_setup_hw_type(void)
 	case MACH_MACPB170:		/* PowerBook 170 */
 	case MACH_MACPB180:		/* PowerBook 180 */
 	case MACH_MACPB180C:		/* PowerBook 180c */
-		adbHardware = ADB_HW_PB;
+		adbHardware = ADB_HW_PMU;
 		pm_setup_adb();
 #ifdef ADB_DEBUG
 		if (adb_debug)
@@ -1713,7 +1713,7 @@ adb_setup_hw_type(void)
 	case MACH_MACPB280:		/* PowerBook Duo 280 */
 	case MACH_MACPB280C:		/* PowerBook Duo 280c */
 	case MACH_MACPB500:		/* PowerBook 500 series */
-		adbHardware = ADB_HW_PB;
+		adbHardware = ADB_HW_PMU;
 		pm_setup_adb();
 #ifdef ADB_DEBUG
 		if (adb_debug)
@@ -1879,7 +1879,7 @@ adb_read_date_time(unsigned long *time)
 		*time = (long)(*(long *)(output + 1));
 		return 0;
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		pm_read_date_time(time);
 		return 0;
 
@@ -1933,7 +1933,7 @@ adb_set_date_time(unsigned long time)
 
 		return 0;
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		pm_set_date_time(time);
 		return 0;
 
@@ -1971,7 +1971,7 @@ adb_poweroff(void)
 
 		return 0;
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		pm_adb_poweroff();
 
 		for (;;);		/* wait for power off */
@@ -2021,7 +2021,7 @@ adb_prog_switch_enable(void)
 
 		return 0;
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		return -1;
 
 	case ADB_HW_II:		/* II models don't do prog. switch */
@@ -2055,7 +2055,7 @@ adb_prog_switch_disable(void)
 
 		return 0;
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		return -1;
 
 	case ADB_HW_II:		/* II models don't do prog. switch */
@@ -2148,7 +2148,7 @@ adb_restart(void)
 			return;
 		while (1);		/* not return */
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		pm_adb_restart();
 		while (1);		/* not return */
 	}
