@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.10 1999/02/09 20:16:08 christos Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.11 1999/02/14 14:32:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -102,6 +102,16 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 
 	if (*ptr != '/') {
 		error = EINVAL;
+		goto bad;
+	}
+
+	/*
+	 * We provide an escape method, so that the user can
+	 * always specify the real root. If the path is prefixed
+	 * by /../ we kill the alternate search
+	 */
+	if (ptr[1] == '.' && ptr[2] == '.' && ptr[3] == '/') {
+		*pbuf = &path[3];
 		goto bad;
 	}
 
