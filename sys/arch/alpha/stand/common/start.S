@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.2 1997/04/06 08:41:02 cgd Exp $ */
+/* $NetBSD: start.S,v 1.3 1998/01/29 22:13:27 ross Exp $ */
 
 /*  
  * Mach Operating System
@@ -84,3 +84,11 @@ LEAF(cpu_number, 0)
 	call_pal PAL_VMS_mfpr_whami
 	RET
 END(cpu_number)
+/*
+ * Execute Instruction Memory Barrier operation from the Common
+ * Palcode Architecture. Establishes I-Cache coherency point.
+ */
+LEAF(alpha_pal_imb, 0)
+	imb
+	RET
+END(alpha_pal_imb);
