@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.71 2000/08/22 17:28:28 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.72 2000/08/25 02:55:49 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -264,6 +264,11 @@ again:
 	 * process runs.
 	 */
 	p2->p_cpu = p1->p_cpu;
+#else
+	/*
+	 * zero child's cpu pointer so we don't get trash.
+	 */
+	p2->p_cpu = NULL;
 #endif /* ! MULTIPROCESSOR */
 
 	/*
