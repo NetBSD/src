@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.11 1999/01/09 15:29:26 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.12 1999/01/13 16:48:58 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -48,6 +48,24 @@
 
 #include <dev/ic/pcdisplay.h>
 
+static struct vgafont {
+	char name[16];
+	int height;
+	int encoding;
+#ifdef notyet
+	int firstchar, numchars;
+#endif
+	int slot;
+} vga_builtinfont = {
+	"builtin",
+	16,
+	WSDISPLAY_FONTENC_IBM,
+#ifdef notyet
+	0, 256,
+#endif
+	0
+};
+
 struct vgascreen {
 	struct pcdisplayscreen pcs;
 
@@ -56,7 +74,7 @@ struct vgascreen {
 	struct vga_config *cfg;
 
 	/* videostate */
-	int fontset;
+	struct vgafont *fontset1, *fontset2;
 	/* font data */
 	/* palette */
 
@@ -70,29 +88,35 @@ struct vga_config {
 	LIST_HEAD(, vgascreen) screens;
 	struct vgascreen *active; /* current display */
 	const struct wsscreen_descr *currenttype;
-	int currentfontset;
+	int currentfontset1, currentfontset2;
 
 	int vc_biosmapped;
 	bus_space_tag_t vc_biostag;
 	bus_space_handle_t vc_bioshdl;
+
+	struct vgafont *vc_fonts[8];
 };
 
 static int vgaconsole, vga_console_type, vga_console_attached;
 static struct vgascreen vga_console_screen;
 static struct vga_config vga_console_vc;
 
+int vga_selectfont __P((struct vga_config *, struct vgascreen *,
+			char *, char *));
 void vga_init_screen __P((struct vga_config *, struct vgascreen *,
 			  const struct wsscreen_descr *,
 			  int, long *));
 void vga_init __P((struct vga_config *, bus_space_tag_t,
 		   bus_space_tag_t));
+static void vga_setfont __P((struct vga_config *, struct vgascreen *));
 
+static unsigned int vga_mapchar __P((void *, int));
 static int	vga_alloc_attr __P((void *, int, int, int, long *));
 void	vga_copyrows __P((void *, int, int, int));
 
 const struct wsdisplay_emulops vga_emulops = {
 	pcdisplay_cursor,
-	pcdisplay_mapchar,
+	vga_mapchar,
 	pcdisplay_putchar,
 	pcdisplay_copycols,
 	pcdisplay_erasecols,
@@ -137,9 +161,12 @@ const struct wsscreen_descr vga_stdscreen = {
 	&vga_emulops,
 	8, 16,
 	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE
-};
-
-const struct wsscreen_descr vga_50lscreen = {
+}, vga_stdscreen_bf = {
+	"80x25bf", 80, 25,
+	&vga_emulops,
+	8, 16,
+	WSSCREEN_WSCOLORS | WSSCREEN_BLINK
+}, vga_50lscreen = {
 	"80x50", 80, 50,
 	&vga_emulops,
 	8, 8,
@@ -149,11 +176,20 @@ const struct wsscreen_descr vga_50lscreen = {
 	&vga_emulops,
 	8, 8,
 	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE
+}, vga_50lscreen_bf = {
+	"80x50bf", 80, 50,
+	&vga_emulops,
+	8, 8,
+	WSSCREEN_WSCOLORS | WSSCREEN_BLINK
 };
+
+#define VGA_SCREEN_CANTWOFONTS(type) (!((type)->capabilities & WSSCREEN_HILIT))
 
 const struct wsscreen_descr *_vga_scrlist[] = {
 	&vga_stdscreen,
+	&vga_stdscreen_bf,
 	&vga_50lscreen,
+	&vga_50lscreen_bf,
 	/* XXX other formats, graphics screen? */
 }, *_vga_scrlist_mono[] = {
 	&vga_stdscreen_mono,
@@ -175,7 +211,7 @@ static int	vga_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void	vga_free_screen __P((void *, void *));
 static void	vga_show_screen __P((void *, void *));
-static int	vga_load_font __P((void *, void *, int, int, int, void *));
+static int	vga_load_font __P((void *, void *, struct wsdisplay_font *));
 
 const struct wsdisplay_accessops vga_accessops = {
 	vga_ioctl,
@@ -258,6 +294,61 @@ bad:
 	return (rv);
 }
 
+/*
+ * We want at least ASCII 32..255 be present.
+ */
+#define vga_valid_primary_font(f) \
+	(f->encoding == WSDISPLAY_FONTENC_IBM || \
+	f->encoding == WSDISPLAY_FONTENC_ISO)
+
+int
+vga_selectfont(vc, scr, name1, name2)
+	struct vga_config *vc;
+	struct vgascreen *scr;
+	char *name1, *name2;
+{
+	const struct wsscreen_descr *type = scr->pcs.type;
+	struct vgafont *f1, *f2;
+	int i;
+
+	f1 = f2 = 0;
+
+	for (i = 0; i < 8; i++) {
+		struct vgafont *f = vc->vc_fonts[i];
+		if (!f || f->height != type->fontheight)
+			continue;
+		if (!f1 &&
+		    vga_valid_primary_font(f) &&
+		    (!name1 || !strcmp(name1, f->name))) {
+			f1 = f;
+			continue;
+		}
+		if (!f2 &&
+		    VGA_SCREEN_CANTWOFONTS(type) &&
+		    (!name2 || !strcmp(name2, f->name))) {
+			f2 = f;
+			continue;
+		}
+	}
+
+	if (f1 && (!name2 || f2)) {
+#ifdef VGAFONTDEBUG
+		if (scr != &vga_console_screen || vga_console_attached) {
+			printf("vga (%s): font1=%s (slot %d)", type->name,
+			       f1->name, f1->slot);
+			if (f2)
+				printf(", font2=%s (slot %d)",
+				       f2->name, f2->slot);
+			printf("\n");
+		}
+#endif
+		scr->fontset1 = f1;
+		scr->fontset2 = f2;
+		return (0);
+	}
+	return (ENXIO);
+}
+
 void
 vga_init_screen(vc, scr, type, existing, attrp)
 	struct vga_config *vc;
@@ -316,11 +407,12 @@ vga_init_screen(vc, scr, type, existing, attrp)
 #endif
 
 	scr->pcs.mem = NULL;
-	if (type == &vga_stdscreen)	/* XXX do it better! */
-		scr->fontset = 0;
-	else
-		scr->fontset = 1;
-
+	if (vga_selectfont(vc, scr, 0, 0)) {
+		if (scr == &vga_console_screen)
+			panic("vga_init_screen: no font");
+		else
+			printf("vga_init_screen: no font\n");
+	}
 	vc->nscreens++;
 	LIST_INSERT_HEAD(&vc->screens, scr, next);
 }
@@ -332,6 +424,7 @@ vga_init(vc, iot, memt)
 {
 	struct vga_handle *vh = &vc->hdl;
 	u_int8_t mor;
+	int i;
 
         vh->vh_iot = iot;
         vh->vh_memt = memt;
@@ -367,7 +460,12 @@ vga_init(vc, iot, memt)
 	LIST_INIT(&vc->screens);
 	vc->active = NULL;
 	vc->currenttype = vh->vh_mono ? &vga_stdscreen_mono : &vga_stdscreen;
-	vc->currentfontset = 0;
+
+	vc->vc_fonts[0] = &vga_builtinfont;
+	for (i = 1; i < 7; i++)
+		vc->vc_fonts[i] = 0;
+
+	vc->currentfontset1 = vc->currentfontset2 = 0;
 }
 
 void
@@ -463,6 +561,7 @@ vga_ioctl(v, cmd, data, flag, p)
 		*(int *)data = WSDISPLAY_TYPE_UNKNOWN;
 		return 0;
 #endif
+
 	case WSDISPLAYIO_GINFO:
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
@@ -476,6 +575,7 @@ vga_ioctl(v, cmd, data, flag, p)
 		/* NONE of these operations are by the generic VGA driver. */
 		return ENOTTY;
 	}
+
 	return -1;
 }
 
@@ -549,6 +649,23 @@ vga_free_screen(v, cookie)
 		vc->active = 0;
 }
 
+static void
+vga_setfont(vc, scr)
+	struct vga_config *vc;
+	struct vgascreen *scr;
+{
+	int fontslot1, fontslot2;
+
+	fontslot1 = (scr->fontset1 ? scr->fontset1->slot : 0);
+	fontslot2 = (scr->fontset2 ? scr->fontset2->slot : fontslot1);
+	if (vc->currentfontset1 != fontslot1 ||
+	    vc->currentfontset2 != fontslot2) {
+		vga_setfontset(&vc->hdl, fontslot1, fontslot2);
+		vc->currentfontset1 = fontslot1;
+		vc->currentfontset2 = fontslot2;
+	}
+}
+
 void
 vga_show_screen(v, cookie)
 	void *v;
@@ -589,10 +706,8 @@ vga_show_screen(v, cookie)
 		vga_setscreentype(vh, type);
 		vc->currenttype = type;
 	}
-	if (vc->currentfontset != scr->fontset) {
-		vga_setfontset(vh, scr->fontset);
-		vc->currentfontset = scr->fontset;
-	}
+
+	vga_setfont(vc, scr);
 	/* XXX swich colours! */
 
 	scr->pcs.dispoffset = scr->mindispoffset;
@@ -613,20 +728,54 @@ vga_show_screen(v, cookie)
 }
 
 static int
-vga_load_font(v, cookie, first, num, stride, data)
+vga_load_font(v, cookie, data)
 	void *v;
 	void *cookie;
-	int first, num, stride;
-	void *data;
+	struct wsdisplay_font *data;
 {
+	struct vga_config *vc = v;
 	struct vgascreen *scr = cookie;
-	struct vga_config *vc = scr->cfg;
+	char *name2;
+	int res, slot;
+	struct vgafont *f;
 
-	if (stride != 1)
+	if (scr) {
+		name2 = strchr(data->name, ',');
+		if (name2)
+			*name2++ = '\0';
+		res = vga_selectfont(vc, scr, data->name, name2);
+		if (!res)
+			vga_setfont(vc, scr);
+		return (res);
+	}
+
+	if (data->fontwidth != 8 || data->stride != 1)
 		return (EINVAL); /* XXX 1 byte per line */
+	if (data->firstchar != 0 || data->numchars != 256)
+		return (EINVAL);
 
-	vga_loadchars(&vc->hdl, scr->fontset, first, num,
-		      scr->pcs.type->fontheight, data);
+	for (slot = 0; slot < 8; slot++)
+		if (!vc->vc_fonts[slot])
+			break;
+	if (slot == 8)
+		return (ENOSPC);
+
+	f = malloc(sizeof(struct vgafont), M_DEVBUF, M_WAITOK);
+	strncpy(f->name, data->name, sizeof(f->name));
+	f->height = data->fontheight;
+	f->encoding = data->encoding;
+#ifdef notyet
+	f->firstchar = data->firstchar;
+	f->numchars = data->numchars;
+#endif
+#ifdef VGAFONTDEBUG
+	printf("vga: load %s (8x%d, enc %d) font to slot %d\n", f->name,
+	       f->height, f->encoding, slot);
+#endif
+	vga_loadchars(&vc->hdl, slot, 0, 256, f->height, data->data);
+	f->slot = slot;
+	vc->vc_fonts[slot] = f;
+
 	return (0);
 }
 
@@ -706,4 +855,185 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 	} else
 		bcopy(&scr->pcs.mem[srcoff], &scr->pcs.mem[dstoff],
 		      nrows * ncols * 2);
+}
+
+#ifdef WSCONS_SUPPORT_PCVTFONTS
+
+#define NOTYET 0xffff
+static u_int16_t pcvt_unichars[0xa0] = {
+/* 0 */	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
+	NOTYET,
+	0x2409, /* SYMBOL FOR HORIZONTAL TABULATION */
+	0x240a, /* SYMBOL FOR LINE FEED */
+	0x240b, /* SYMBOL FOR VERTICAL TABULATION */
+	0x240c, /* SYMBOL FOR FORM FEED */
+	0x240d, /* SYMBOL FOR CARRIAGE RETURN */
+	NOTYET, NOTYET,
+	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
+	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
+/* 2 */	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
+	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
+	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
+	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
+/* 4 */	0x03c1, /* GREEK SMALL LETTER RHO */
+	0x03c8, /* GREEK SMALL LETTER PSI */
+	0x2202, /* PARTIAL DIFFERENTIAL */
+	0x03bb, /* GREEK SMALL LETTER LAMDA */
+	0x03b9, /* GREEK SMALL LETTER IOTA */
+	0x03b7, /* GREEK SMALL LETTER ETA */
+	0x03b5, /* GREEK SMALL LETTER EPSILON */
+	0x03c7, /* GREEK SMALL LETTER CHI */
+	0x2228, /* LOGICAL OR */
+	0x2227, /* LOGICAL AND */
+	0x222a, /* UNION */
+	0x2283, /* SUPERSET OF */
+	0x2282, /* SUBSET OF */
+	0x03a5, /* GREEK CAPITAL LETTER UPSILON */
+	0x039e, /* GREEK CAPITAL LETTER XI */
+	0x03a8, /* GREEK CAPITAL LETTER PSI */
+	0x03a0, /* GREEK CAPITAL LETTER PI */
+	0x21d2, /* RIGHTWARDS DOUBLE ARROW */
+	0x21d4, /* LEFT RIGHT DOUBLE ARROW */
+	0x039b, /* GREEK CAPITAL LETTER LAMDA */
+	0x0398, /* GREEK CAPITAL LETTER THETA */
+	0x2243, /* ASYMPTOTICALLY EQUAL TO */
+	0x2207, /* NABLA */
+	0x2206, /* INCREMENT */
+	0x221d, /* PROPORTIONAL TO */
+	0x2234, /* THEREFORE */
+	0x222b, /* INTEGRAL */
+	0x2215, /* DIVISION SLASH */
+	0x2216, /* SET MINUS */
+	NOTYET, NOTYET, NOTYET,
+/* 6 */	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
+	0x221a, /* SQUARE ROOT */
+	0x03c9, /* GREEK SMALL LETTER OMEGA */
+	0x00a5, /* YEN SIGN */
+	0x03be, /* GREEK SMALL LETTER XI */
+	0x00fd, /* LATIN SMALL LETTER Y WITH ACUTE */
+	0x00fe, /* LATIN SMALL LETTER THORN */
+	0x00f0, /* LATIN SMALL LETTER ETH */
+	0x00de, /* LATIN CAPITAL LETTER THORN */
+	0x00dd, /* LATIN CAPITAL LETTER Y WITH ACUTE */
+	0x00d7, /* MULTIPLICATION SIGN */
+	0x00d0, /* LATIN CAPITAL LETTER ETH */
+	0x00be, /* VULGAR FRACTION THREE QUARTERS */
+	0x00b8, /* CEDILLA */
+	0x00b4, /* ACUTE ACCENT */
+	0x00af, /* MACRON */
+	0x00ae, /* REGISTERED SIGN */
+	0x00ad, /* SOFT HYPHEN */
+	0x00ac, /* NOT SIGN */
+	0x00a8, /* DIAERESIS */
+	0x2260, /* NOT EQUAL TO */
+	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
+	0x03c5, /* GREEK SMALL LETTER UPSILON */
+	0x00f8, /* LATIN SMALL LETTER O WITH STROKE */
+/* 8 */	0x0153, /* LATIN SMALL LIGATURE OE */
+	0x00f5, /* LATIN SMALL LETTER O WITH TILDE !!!doc bug */
+	0x00e3, /* LATIN SMALL LETTER A WITH TILDE */
+	0x0178, /* LATIN CAPITAL LETTER Y WITH DIAERESIS */
+	0x00db, /* LATIN CAPITAL LETTER U WITH CIRCUMFLEX */
+	0x00da, /* LATIN CAPITAL LETTER U WITH ACUTE */
+	0x00d9, /* LATIN CAPITAL LETTER U WITH GRAVE */
+	0x00d8, /* LATIN CAPITAL LETTER O WITH STROKE */
+	0x0152, /* LATIN CAPITAL LIGATURE OE */
+	0x00d5, /* LATIN CAPITAL LETTER O WITH TILDE */
+	0x00d4, /* LATIN CAPITAL LETTER O WITH CIRCUMFLEX */
+	0x00d3, /* LATIN CAPITAL LETTER O WITH ACUTE */
+	0x00d2, /* LATIN CAPITAL LETTER O WITH GRAVE */
+	0x00cf, /* LATIN CAPITAL LETTER I WITH DIAERESIS */
+	0x00ce, /* LATIN CAPITAL LETTER I WITH CIRCUMFLEX */
+	0x00cd, /* LATIN CAPITAL LETTER I WITH ACUTE */
+	0x00cc, /* LATIN CAPITAL LETTER I WITH GRAVE */
+	0x00cb, /* LATIN CAPITAL LETTER E WITH DIAERESIS */
+	0x00ca, /* LATIN CAPITAL LETTER E WITH CIRCUMFLEX */
+	0x00c8, /* LATIN CAPITAL LETTER E WITH GRAVE */
+	0x00c3, /* LATIN CAPITAL LETTER A WITH TILDE */
+	0x00c2, /* LATIN CAPITAL LETTER A WITH CIRCUMFLEX */
+	0x00c1, /* LATIN CAPITAL LETTER A WITH ACUTE */
+	0x00c0, /* LATIN CAPITAL LETTER A WITH GRAVE */
+	0x00b9, /* SUPERSCRIPT ONE */
+	0x00b7, /* MIDDLE DOT */
+	0x03b6, /* GREEK SMALL LETTER ZETA */
+	0x00b3, /* SUPERSCRIPT THREE */
+	0x00a9, /* COPYRIGHT SIGN */
+	0x00a4, /* CURRENCY SIGN */
+	0x03ba, /* GREEK SMALL LETTER KAPPA */
+	NOTYET
+};
+
+static int vga_pcvt_mapchar __P((int));
+
+static int
+vga_pcvt_mapchar(uni)
+	int uni;
+{
+	int i;
+
+	for (i = 0; i < 0xa0; i++) /* 0xa0..0xff are reserved */
+		if (uni == pcvt_unichars[i])
+			return (i);
+	return (-1);
+}
+
+#endif /* WSCONS_SUPPORT_PCVTFONTS */
+
+static int _vga_mapchar __P((void *, struct vgafont *, int));
+
+static int
+_vga_mapchar(id, font, uni)
+	void *id;
+	struct vgafont *font;
+	int uni;
+{
+	int help = -1;
+
+	switch (font->encoding) {
+	case WSDISPLAY_FONTENC_ISO:
+		if (uni < 256)
+			help = uni;
+		break;
+	case WSDISPLAY_FONTENC_IBM:
+		help = pcdisplay_mapchar(id, uni);
+		if (help == 1) /* XXX "not present" */
+			help = -1;
+		break;
+#ifdef WSCONS_SUPPORT_PCVTFONTS
+	case WSDISPLAY_FONTENC_PCVT:
+		help = vga_pcvt_mapchar(uni);
+		break;
+#endif
+	}
+
+	if (help >= 0)
+		return (help); /* XXX (help - firstchar) */
+	else
+		return (-1);
+}
+
+static unsigned int
+vga_mapchar(id, uni)
+	void *id;
+	int uni;
+{
+	struct vgascreen *scr = id;
+	int res;
+
+	if (scr->fontset1) {
+		res = _vga_mapchar(id, scr->fontset1, uni);
+		if (res >= 0)
+			return (res);
+	}
+	if (scr->fontset2) {
+		KASSERT(VGA_SCREEN_CANTWOFONTS(scr->pcs.type));
+		res = _vga_mapchar(id, scr->fontset2, uni);
+		if (res >= 0)
+			return (res | 0x0800); /* attribute bit 3 */
+	}
+	/*
+	 * return something for "non-displayable"
+	 * 1 = smiley on IBM charset, might be useless on other screens
+	 */
+	return (1);
 }
