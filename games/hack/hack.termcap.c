@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: hack.termcap.c,v 1.5 1995/04/29 01:08:51 mycroft Exp $";
+static char rcsid[] = "$NetBSD: hack.termcap.c,v 1.6 1995/04/29 01:20:00 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -251,7 +251,7 @@ delay_output() {
 	else if(ospeed > 0) if(CM) {
 		/* delay by sending cm(here) an appropriate number of times */
 		register int cmlen = strlen(tgoto(CM, curx-1, cury-1));
-		register int i = (ospeed + (10 * cmlen)) / (20 * cmlen);
+		register int i = (ospeed + (100 * cmlen)) / (200 * cmlen);
 
 		while(i > 0) {
 			cmov(curx, cury);
