@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: i386b-nat.c,v 1.2 1994/05/17 14:02:02 pk Exp $
+	$Id: i386b-nat.c,v 1.3 1994/05/18 12:43:13 pk Exp $
 */
 
 #include <sys/types.h>
@@ -25,6 +25,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include <signal.h>
 #include <sys/user.h>
 #include <machine/reg.h>
+#include <machine/frame.h>
 #include <sys/ptrace.h>
 
 #include "defs.h"
@@ -299,6 +300,7 @@ struct pcb *pcb;
 {
 	int	i;
 	int	*pcb_regs = (int *)pcb;
+	int	eip;
 
         /*
          * get the register values out of the sys pcb and
@@ -313,6 +315,11 @@ struct pcb *pcb;
 	supply_register(13, &pcb_regs[18]);	/* es */
 	for (i = 14; i < 16; ++i)		/* fs, gs */
 		supply_register(i, &pcb_regs[i+8]);
+
+	/* Hmm... */
+	if (target_read_memory(pcb_regs[5+10]+4, &eip, sizeof eip, 0))
+		error("Cannot read PC.");
+	supply_register(8, &eip);	/* eip */
 
 	/* XXX 80387 registers? */
 }
