@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.51 1997/04/25 01:49:05 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.52 1997/04/28 21:49:38 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -111,7 +111,7 @@ L_high_code:
 	movl	#0,a6
 	jsr	__bootstrap		| See _startup.c
 
-| Now that __bootstrap() is done using the PROM setcxsegmap
+| Now that __bootstrap() is done using the PROM functions,
 | we can safely set the sfc/dfc to something != FC_CONTROL
 	moveq	#FC_USERD, d0		| make movs access "user data"
 	movc	d0, sfc			| space for copyin/copyout
@@ -681,10 +681,10 @@ _Idle_count:
 	.long	0
 	.text
 
-	.globl	Idle
+	.globl	__Idle			| See clock.c
 Lidle:
 	stop	#PSL_LOWIPL
-Idle:
+__Idle:
 	movw	#PSL_HIGHIPL,sr
 	addql	#1, _Idle_count
 	tstl	_whichqs
@@ -725,7 +725,7 @@ Lswchk:
 	addqb	#1,d0
 	cmpb	#32,d0
 	jne	Lswchk
-	jra	Idle
+	jra	__Idle
 Lswfnd:
 	movw	#PSL_HIGHIPL,sr		| lock out interrupts
 	movl	a0@,d1			| and check again...
@@ -929,7 +929,7 @@ ENTRY(setvbr)
 	movc d0, vbr
 	rts
 
-/* loadustp */
+/* loadustp, ptest_addr */
 
 /*
  * Set processor priority level calls.  Most are implemented with
