@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.34 2000/12/23 01:37:57 wiz Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.35 2000/12/28 08:11:52 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -98,7 +98,6 @@ void
 isp_attach(isp)
 	struct ispsoftc *isp;
 {
-	int maxluns;
 	isp->isp_osinfo._adapter.scsipi_minphys = ispminphys;
 	isp->isp_osinfo._adapter.scsipi_ioctl = ispioctl;
 	isp->isp_osinfo._adapter.scsipi_cmd = ispcmd;
@@ -110,7 +109,6 @@ isp_attach(isp)
 	isp->isp_osinfo._link.device = &isp_dev;
 	isp->isp_osinfo._link.adapter = &isp->isp_osinfo._adapter;
 	isp->isp_osinfo._link.openings = isp->isp_maxcmds;
-	isp->isp_osinfo._link.scsipi_scsi.max_lun = maxluns;
 	/*
 	 * Until the midlayer is fixed to use REPORT LUNS, limit to 8 luns.
 	 */
