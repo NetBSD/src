@@ -133,3 +133,12 @@ distrib/utils/sysinst/arch/i386/fdisk.c		patch
   anyway the first time it writes anything to the disk, and fdisk
   will be called at least once in any case, to set the active
   partition.  (ws)
+
+sys/arch/i386/i386/disksubr.c			patch
+sys/arch/i386/include/disklabel.h		patch
+
+  Recognize DOS FAT32 and Linux ext2fs partitions in the default
+  disklabel so that users get them automatically when creating a
+  new disklabel and can mount them from a disk that contains no
+  NetBSD partition.  (fvdl)
+
