@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.23 2003/05/15 14:44:57 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.24 2003/05/17 18:16:31 itojun Exp $	*/
 /*	$KAME: rtsold.c,v 1.55 2002/09/08 01:26:03 itojun Exp $	*/
 
 /*
@@ -331,7 +331,7 @@ ifconfig(char *ifname)
 	memset(ifinfo, 0, sizeof(*ifinfo));
 	ifinfo->sdl = sdl;
 
-	strncpy(ifinfo->ifname, ifname, sizeof(ifinfo->ifname));
+	strlcpy(ifinfo->ifname, ifname, sizeof(ifinfo->ifname));
 
 	/* construct a router solicitation message */
 	if (make_packet(ifinfo))

@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.58 2003/05/15 00:04:16 itojun Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.59 2003/05/17 18:13:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.58 2003/05/15 00:04:16 itojun Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.59 2003/05/17 18:13:55 itojun Exp $");
 #endif
 #endif
 
@@ -1449,9 +1449,8 @@ inetname(struct in_addr in)
 
 		first = 0;
 		rv = gethostname(domain, sizeof domain);
-		domain[sizeof(domain) - 1] = '\0';
 		if (rv == 0 && (cp = strchr(domain, '.')) != NULL) {
-			(void)strncpy(domain, cp + 1, sizeof(domain) - 1);
+			(void)strlcpy(domain, cp + 1, sizeof(domain));
 		} else
 			domain[0] = '\0';
 	}
@@ -1461,8 +1460,7 @@ inetname(struct in_addr in)
 			if ((cp = strchr(hp->h_name, '.')) != NULL &&
 			    strcmp(cp + 1, domain) == 0)
 				*cp = '\0';
-			(void)strncpy(line, hp->h_name, sizeof(line) - 1);
-			line[sizeof(line) - 1] = '\0';
+			(void)strlcpy(line, hp->h_name, sizeof(line));
 			return (line);
 		}
 	}
