@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.3 1994/09/15 03:42:46 mycroft Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.4 1994/12/15 20:00:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -191,7 +191,6 @@ umapfs_mount(mp, path, data, ndp, p)
 	(void) copyinstr(args.target, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
-	(void)umapfs_statfs(mp, &mp->mnt_stat, p);
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_mount: lower %s, alias at %s\n",
 		mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
