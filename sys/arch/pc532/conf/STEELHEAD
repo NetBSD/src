@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.5 1994/12/22 03:23:26 phil Exp $
+#	$NetBSD: STEELHEAD,v 1.6 1995/01/18 08:13:34 phil Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -50,6 +50,7 @@ options		"COMDEF_SPEED=B19200"	# default baud on the scn chips
 #options	"RAMD_SIZE=1536000"	# Size of the "boot strap ram disk"
 #options	"RAMD_ADR=0x400000"	# Adr of the "boot strap ram disk"
 options		"CONFIG_NEW"		# Use config.new stuff
+options		"DEV_RTC"		# /dev/rtc access to hardware clock
 
 config		"netbsd"	root on sd0 swap on sd0
 
@@ -65,14 +66,14 @@ sd* at scsibus? target ? lun ?			# SCSI disks
 st* at scsibus? target ? lun ?			# SCSI tapes
 #cd* at scsibus? target ? lun ?			# SCSI ???
 
-scn0 at membus? port 0
-scn1 at membus? port 1
-scn2 at membus? port 2
-scn3 at membus? port 3
-scn4 at membus? port 4
-scn5 at membus? port 5
-scn6 at membus? port 6
-scn7 at membus? port 7
+scn0 at membus?
+scn1 at membus?
+scn2 at membus?
+scn3 at membus?
+scn4 at membus?
+scn5 at membus?
+scn6 at membus?
+scn7 at membus?
 
 pseudo-device	pty 16			# pseudo-terminals
 pseudo-device	loop 1			# loopback network
