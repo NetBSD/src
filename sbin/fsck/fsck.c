@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.31 2003/10/20 12:04:38 dsl Exp $	*/
+/*	$NetBSD: fsck.c,v 1.32 2004/01/05 23:23:32 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.31 2003/10/20 12:04:38 dsl Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.32 2004/01/05 23:23:32 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -567,7 +567,7 @@ usage(void)
 	static const char common[] =
 	    "[-dfnpqvy] [-T fstype:fsoptions] [-t fstype]";
 
-	(void)fprintf(stderr, "Usage: %s %s [special|node]...\n",
+	(void)fprintf(stderr, "usage: %s %s [special|node]...\n",
 	    getprogname(), common);
 	exit(1);
 }

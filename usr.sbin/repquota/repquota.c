@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.20 2003/08/07 11:25:42 agc Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.21 2004/01/05 23:23:38 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ main(argc, argv)
 void
 usage()
 {
-	fprintf(stderr, "Usage:\n\t%s\n\t%s\n",
+	fprintf(stderr, "usage:\n\t%s\n\t%s\n",
 		"repquota [-v] [-g] [-u] -a",
 		"repquota [-v] [-g] [-u] filesys ...");
 	exit(1);

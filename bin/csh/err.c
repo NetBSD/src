@@ -1,4 +1,4 @@
-/* $NetBSD: err.c,v 1.17 2003/08/07 09:05:05 agc Exp $ */
+/* $NetBSD: err.c,v 1.18 2004/01/05 23:23:32 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: err.c,v 1.17 2003/08/07 09:05:05 agc Exp $");
+__RCSID("$NetBSD: err.c,v 1.18 2004/01/05 23:23:32 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,7 @@ static const char *errorlist[] =
 #define ERR_STRING	56
     "%s",
 #define ERR_JOBS	57
-    "Usage: jobs [ -l ]",
+    "usage: jobs [ -l ]",
 #define ERR_JOBARGS	58
     "Arguments should be jobs or process id's",
 #define ERR_JOBCUR	59
@@ -195,7 +195,7 @@ static const char *errorlist[] =
 #define ERR_BADDIR	68
     "Bad directory",
 #define ERR_DIRUS	69
-    "Usage: %s [-lvn]%s",
+    "usage: %s [-lvn]%s",
 #define ERR_HFLAG	70
     "No operand for -h flag",
 #define ERR_NOTLOGIN	71
@@ -213,7 +213,7 @@ static const char *errorlist[] =
 #define ERR_NOHOME	77
     "No $home variable set",
 #define ERR_HISTUS	78
-    "Usage: history [-rh] [# number of events]",
+    "usage: history [-rh] [# number of events]",
 #define ERR_SPDOLLT	79
     "$, ! or < not allowed with $# or $?",
 #define ERR_NEWLINE	80

@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.18 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: gencat.c,v 1.19 2004/01/05 23:23:34 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.18 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.19 2004/01/05 23:23:34 jmmv Exp $");
 #endif
 
 /***********************************************************
@@ -148,7 +148,7 @@ void	usage __P((void));
 void
 usage()
 {
-	fprintf(stderr, "Usage: %s catfile msgfile ...\n", getprogname());
+	fprintf(stderr, "usage: %s catfile msgfile ...\n", getprogname());
 	exit(1);
 }
 

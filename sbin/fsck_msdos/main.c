@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2003/10/20 12:04:38 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2004/01/05 23:23:33 jmmv Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.14 2003/10/20 12:04:38 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2004/01/05 23:23:33 jmmv Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -60,7 +60,7 @@ int main __P((int, char **));
 static void
 usage()
 {
-	errexit("Usage: fsck_msdos [-fnpy] filesystem ... \n");
+	errexit("usage: fsck_msdos [-fnpy] filesystem ... \n");
 }
 
 int

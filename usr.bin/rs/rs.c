@@ -1,4 +1,4 @@
-/*	$NetBSD: rs.c,v 1.9 2003/08/07 11:15:42 agc Exp $	*/
+/*	$NetBSD: rs.c,v 1.10 2004/01/05 23:23:36 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rs.c,v 1.9 2003/08/07 11:15:42 agc Exp $");
+__RCSID("$NetBSD: rs.c,v 1.10 2004/01/05 23:23:36 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -247,7 +247,7 @@ usage(char *msg, ...)
 	vwarnx(msg, ap);
 	va_end(ap);
 	fprintf(stderr,
-"Usage:  rs [ -[csCS][x][kKgGw][N]tTeEnyjhHm ] [ rows [ cols ] ]\n");
+"usage:  rs [ -[csCS][x][kKgGw][N]tTeEnyjhHm ] [ rows [ cols ] ]\n");
 	exit(1);
 }
 

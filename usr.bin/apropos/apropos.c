@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.22 2003/08/07 11:13:08 agc Exp $	*/
+/*	$NetBSD: apropos.c,v 1.23 2004/01/05 23:23:34 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: apropos.c,v 1.22 2003/08/07 11:13:08 agc Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.23 2004/01/05 23:23:34 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -236,7 +236,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-C file] [-M path] [-m path] keyword ...\n",
+	    "usage: %s [-C file] [-M path] [-m path] keyword ...\n",
 	    getprogname());
 	exit(1);
 }

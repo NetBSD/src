@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.14 2003/11/16 22:47:07 jmc Exp $ */
+/* $NetBSD: sunlabel.c,v 1.15 2004/01/05 23:23:39 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: sunlabel.c,v 1.14 2003/11/16 22:47:07 jmc Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.15 2004/01/05 23:23:39 jmmv Exp $");
 #endif
 
 #include <stdio.h>
@@ -292,7 +292,7 @@ static void usage(void) __attribute__((__noreturn__));
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-mnqs] disk\n", getprogname());
+	(void)fprintf(stderr, "usage: %s [-mnqs] disk\n", getprogname());
 	exit(1);
 }
 

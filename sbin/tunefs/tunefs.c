@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.28 2003/08/07 10:04:41 agc Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.29 2004/01/05 23:23:34 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.28 2003/08/07 10:04:41 agc Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.29 2004/01/05 23:23:34 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -311,7 +311,7 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "Usage: tunefs [-AFN] tuneup-options special-device\n");
+	fprintf(stderr, "usage: tunefs [-AFN] tuneup-options special-device\n");
 	fprintf(stderr, "where tuneup-options are:\n");
 	fprintf(stderr, "\t-a maximum contiguous blocks\n");
 	fprintf(stderr, "\t-d rotational delay between contiguous blocks\n");
