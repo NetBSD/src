@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.23 1997/04/14 09:09:15 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.24 1997/05/17 19:44:36 pk Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmds.c,v 1.23 1997/04/14 09:09:15 lukem Exp $";
+static char rcsid[] = "$NetBSD: cmds.c,v 1.24 1997/05/17 19:44:36 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -339,7 +339,7 @@ mput(argc, argv)
 					if (!*tp) {
 						tp = cp;
 						tp2 = tmpbuf;
-						while ((*tp2 = *tp) != NULL) {
+						while ((*tp2 = *tp) != '\0') {
 						     if (isupper(*tp2)) {
 						        *tp2 = 'a' + *tp2 - 'A';
 						     }
@@ -482,7 +482,7 @@ usage:
 		if (!*tp) {
 			tp = argv[2];
 			tp2 = tmpbuf;
-			while ((*tp2 = *tp) != NULL) {
+			while ((*tp2 = *tp) != '\0') {
 				if (isupper(*tp2)) {
 					*tp2 = 'a' + *tp2 - 'A';
 				}
@@ -582,7 +582,7 @@ mget(argc, argv)
 		if (mflag && confirm(argv[0], cp)) {
 			tp = cp;
 			if (mcase) {
-				for (tp2 = tmpbuf; (ch = *tp++) != NULL; )
+				for (tp2 = tmpbuf; (ch = *tp++) != 0; )
 					*tp2++ = isupper(ch) ? tolower(ch) : ch;
 				*tp2 = '\0';
 				tp = tmpbuf;
@@ -1869,7 +1869,7 @@ setpassive(argc, argv)
 	char *argv[];
 {
 
-	code = togglevar(argc, argv, &passivemode, 
+	code = togglevar(argc, argv, &passivemode,
 	    verbose ? "Passive mode" : NULL);
 }
 

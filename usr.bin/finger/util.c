@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.9 1997/01/09 20:19:25 tls Exp $	*/
+/*	$NetBSD: util.c,v 1.10 1997/05/17 19:42:27 pk Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$NetBSD: util.c,v 1.9 1997/01/09 20:19:25 tls Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.10 1997/05/17 19:42:27 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -193,7 +193,7 @@ enter_lastlog(pn)
 	    (long)pn->uid * sizeof(ll) ||
 	    read(fd, (char *)&ll, sizeof(ll)) != sizeof(ll)) {
 			/* as if never logged in */
-			ll.ll_line[0] = ll.ll_host[0] = NULL;
+			ll.ll_line[0] = ll.ll_host[0] = '\0';
 			ll.ll_time = 0;
 		}
 	if ((w = pn->whead) == NULL)

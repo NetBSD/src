@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.6 1997/01/09 20:19:20 tls Exp $	*/
+/*	$NetBSD: finger.c,v 1.7 1997/05/17 19:42:24 pk Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -54,7 +54,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)finger.c	5.22 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$NetBSD: finger.c,v 1.6 1997/01/09 20:19:20 tls Exp $";
+static char rcsid[] = "$NetBSD: finger.c,v 1.7 1997/05/17 19:42:24 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -167,7 +167,7 @@ loginlist()
 		(void)fprintf(stderr, "finger: can't read %s.\n", _PATH_UTMP);
 		exit(2);
 	}
-	name[UT_NAMESIZE] = NULL;
+	name[UT_NAMESIZE] = '\0';
 	while (fread((char *)&user, sizeof(user), 1, stdin) == 1) {
 		if (!user.ut_name[0])
 			continue;
