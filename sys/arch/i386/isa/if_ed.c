@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.42 1994/04/14 03:54:07 mycroft Exp $
+ *	$Id: if_ed.c,v 1.43 1994/04/24 01:29:58 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -53,7 +53,6 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isa.h>
 #include <i386/isa/isavar.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/if_edreg.h>

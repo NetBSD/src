@@ -9,7 +9,7 @@
 /*
  * 3COM Etherlink 3C501 device driver
  *
- *	$Id: if_el.c,v 1.10 1994/04/08 18:22:24 mycroft Exp $
+ *	$Id: if_el.c,v 1.11 1994/04/24 01:30:00 mycroft Exp $
  */
 
 /*
@@ -53,7 +53,6 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isa.h>
 #include <i386/isa/isavar.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/if_elreg.h>
