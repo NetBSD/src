@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.18 2003/03/19 11:34:28 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.19 2003/08/12 13:51:52 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -348,6 +348,7 @@ ENTRY(copyout)
 	add	r18, r63, r61
 #endif
 	movi	EFAULT, r60		/* Assume there was a problem */
+	cmveq	r4, r63, r60		/* But return success if len == 0 */
 	pta/u	Lcopyexit, tr1
 	bge/u	r63, r4, tr1		/* Return EFAULT if len <= 0 */
 
@@ -414,6 +415,7 @@ ENTRY(copyin)
 	add	r18, r63, r61
 #endif
 	movi	EFAULT, r60		/* Assume there was a problem */
+	cmveq	r4, r63, r60		/* But return success if len == 0 */
 	pta/u	Lcopyexit, tr1
 	bge/u	r63, r4, tr1		/* Return EFAULT if len <= 0 */
 
@@ -631,6 +633,7 @@ ENTRY(kcopy)
 	add	r18, r63, r61
 #endif
 	movi	EFAULT, r60		/* Assume there was a problem */
+	cmveq	r4, r63, r60		/* But return success if len == 0 */
 	pta/u	Lkcopyexit, tr1
 	bge/u	r63, r4, tr1		/* Return EFAULT if len <= 0 */
 
