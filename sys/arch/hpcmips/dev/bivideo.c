@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.3 2000/03/13 18:49:17 uch Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.4 2000/03/20 10:47:33 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.3 2000/03/13 18:49:17 uch Exp $";
+    "$Id: bivideo.c,v 1.4 2000/03/20 10:47:33 takemura Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <machine/bootinfo.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
+
+#include <dev/wscons/wsconsio.h>
 
 #include <arch/hpcmips/dev/hpcfbvar.h>
 #include <arch/hpcmips/dev/hpcfbio.h>
@@ -268,11 +270,52 @@ bivideo_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
+	int i;
 	struct bivideo_softc *sc = (struct bivideo_softc *)v;
 	struct hpcfb_fbconf *fbconf;
 	struct hpcfb_dspconf *dspconf;
+	struct wsdisplay_cmap *cmap;
+	static u_char compo6[6] = {   0,  51, 102, 153, 204, 255 };
 
 	switch (cmd) {
+	case WSDISPLAYIO_GETCMAP:
+		cmap = (struct wsdisplay_cmap*)data;
+
+		if (sc->sc_fbconf.hf_class != HPCFB_CLASS_INDEXCOLOR ||
+		    sc->sc_fbconf.hf_pack_width != 8 ||
+		    256 <= cmap->index ||
+		    256 < (cmap->index + cmap->count))
+			return (EINVAL);
+
+		if (!uvm_useracc(cmap->red, cmap->count, B_WRITE) ||
+		    !uvm_useracc(cmap->green, cmap->count, B_WRITE) ||
+		    !uvm_useracc(cmap->blue, cmap->count, B_WRITE))
+			return (EFAULT);
+
+		for (i = cmap->index; i < cmap->index + cmap->count; i++) {
+			if (i < 32) {
+				cmap->red[i] = i;
+				cmap->green[i] = i;
+				cmap->blue[i] = i;
+			} else
+			if (i < 32 + 6 * 6 * 6) {
+				cmap->red[i] = compo6[(i - 32) / 36];
+				cmap->green[i] = compo6[((i - 32) / 6) % 6];
+				cmap->blue[i] = compo6[(i - 32) % 6];
+			} else {
+				cmap->red[i] = 255;
+				cmap->green[i] = 255;
+				cmap->blue[i] = 255;
+			}
+		}
+		return (0);
+
+	case WSDISPLAYIO_PUTCMAP:
+		/*
+		 * This driver can't set color map.
+		 */
+		return (EINVAL);
+
 	case HPCFBIO_GCONF:
 		fbconf = (struct hpcfb_fbconf *)data;
 		if (fbconf->hf_conf_index != 0 &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: palette.c,v 1.1 2000/03/19 11:10:58 takemura Exp $	*/
+/*	$NetBSD: palette.c,v 1.2 2000/03/20 10:47:35 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -37,6 +37,8 @@
  */
 #include <pbsdboot.h>
 
+#include <arch/hpcmips/dev/hpccmapvar.h>
+
 /*
  * If Windows have no color palette, we have nothing to do here.
  */
@@ -57,8 +59,6 @@ static void palette_setup(PALETTEENTRY *pal);
 enum palette_status palette_succeeded = PAL_NOERROR;
 #endif
 
-static u_char compo6[6] = {   0,  51, 102, 153, 204, 255 };
-static u_char compo7[7] = {   0,  42,  85, 127, 170, 212, 255 };
 static HPALETTE pal = NULL;
 
 void
@@ -109,39 +109,13 @@ palette_init(HWND hWnd)
 static void
 palette_setup(PALETTEENTRY *pal)
 {
-	int i, r, g, b;
+	int i;
 
-	/*
-	 * 0 - 31, gray scale
-	 */
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < 256; i++) {
 		pal[i].peFlags = PC_EXPLICIT;
-		pal[i].peRed = i * 8;
-		pal[i].peGreen = i * 8;
-		pal[i].peBlue = i * 8;
-	}
-	/*
-	 * 32 - 247, RGB color
-	 */
-	for (r = 0; r < 6; r++) {
-		for (g = 0; g < 6; g++) {
-			for (b = 0; b < 6; b++) {
-				pal[i].peFlags = PC_EXPLICIT;
-				pal[i].peRed = compo6[r];
-				pal[i].peGreen = compo6[g];
-				pal[i].peBlue = compo6[b];
-				i++;
-			}
-		}
-	}
-	/*
-	 * 248 - 255, just white
-	 */
-	for ( ; i < 256; i++) {
-		pal[i].peFlags = PC_EXPLICIT;
-		pal[i].peRed = 255;
-		pal[i].peGreen = 255;
-		pal[i].peBlue = 255;
+		pal[i].peRed = bivideo_cmap_r[i];
+		pal[i].peGreen = bivideo_cmap_g[i];
+		pal[i].peBlue = bivideo_cmap_b[i];
 	}
 }
 #endif /* HAVE_COLOR_PALETTE */
