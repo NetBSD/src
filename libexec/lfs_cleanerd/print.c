@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.11 2002/04/26 04:34:41 perseant Exp $	*/
+/*	$NetBSD: print.c,v 1.12 2002/04/30 00:28:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.11 2002/04/26 04:34:41 perseant Exp $");
+__RCSID("$NetBSD: print.c,v 1.12 2002/04/30 00:28:58 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,10 +77,10 @@ dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, daddr_t **iaddrp, daddr
 	u_int32_t ck;
 
 	blk=0;
-	datap = (u_int32_t *)malloc((lfsp->lfs_ssize / lfsp->lfs_fsize) * sizeof(u_int32_t));
+	datap = (u_int32_t *)malloc(segtod(lfsp, 1) * sizeof(u_int32_t));
 	if(datap==NULL) {
 	        syslog(LOG_WARNING, "cannot allocate %d in dump_summary",
-		       (int)((lfsp->lfs_ssize / lfsp->lfs_fsize) * sizeof(u_int32_t)));
+		       (int)(segtod(lfsp, 1) * sizeof(u_int32_t)));
 		return(-1);
 	}
 
