@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: nsparser.y,v 1.7 2000/12/20 20:50:46 christos Exp $	*/
+/*	$NetBSD: nsparser.y,v 1.8 2002/03/19 00:04:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsparser.y,v 1.7 2000/12/20 20:50:46 christos Exp $");
+__RCSID("$NetBSD: nsparser.y,v 1.8 2002/03/19 00:04:09 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -97,6 +97,10 @@ Entry
 					/* XXX: syslog the following */
 				warn("%s line %d: error adding entry",
 				    _PATH_NS_CONF, lineno);
+		}
+	| error NL
+		{
+			yyerrok;
 		}
 	;
 
