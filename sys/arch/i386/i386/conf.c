@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.68 1995/12/09 05:53:00 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.69 1996/02/18 22:57:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -111,6 +111,13 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
 
+/* open, close, read, ioctl */
+#define cdev_ss_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
@@ -138,6 +145,8 @@ cdev_decl(scd);
 cdev_decl(pc);
 cdev_decl(sd);
 cdev_decl(st);
+#include "ss.h"
+cdev_decl(ss);
 cdev_decl(cd);
 #include "lpt.h"
 cdev_decl(lpt);
@@ -194,7 +203,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NLPT,lpt),	/* 16: parallel printer */
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
-	cdev_notdef(),			/* 19 */
+	cdev_ss_init(NSS,ss),		/* 19: SCSI scanner */
 	cdev_notdef(),			/* 20 */
 	cdev_notdef(),			/* 21 */
 	cdev_fd_init(1,fd),		/* 22: file descriptor pseudo-device */
