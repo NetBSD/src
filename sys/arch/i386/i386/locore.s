@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.14 2000/08/25 03:56:27 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.15 2000/11/18 22:52:24 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2070,7 +2070,17 @@ idle_unlock:
 	movl	$0,CPL			# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 	jmp	idle_start
+idle_zero:		
+	sti
+	call	_C_LABEL(uvm_pageidlezero)
+	cli
+	cmpl	$0,_C_LABEL(sched_whichqs)
+	jnz	idle_exit
 idle_loop:
+	/* Try to zero some pages. */
+	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO,%ecx
+	testl	%ecx,%ecx
+	jnz	idle_zero
 	sti
 	hlt
 NENTRY(mpidle)
@@ -2078,6 +2088,7 @@ idle_start:
 	cli
 	cmpl	$0,_C_LABEL(sched_whichqs)
 	jz	idle_loop
+idle_exit:	
 	movl	$IPL_HIGH,CPL
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
 	call	_C_LABEL(sched_lock_idle)
