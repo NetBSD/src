@@ -23,14 +23,14 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_output.c,v 1.5 1993/08/02 17:53:13 mycroft Exp $
+ *	$Id: db_output.c,v 1.5.2.1 1993/11/14 22:48:35 mycroft Exp $
  */
 
 /*
  * Printf and character output for debugger.
  */
 
-#include "param.h"
+#include <sys/param.h>
 #include <machine/stdarg.h>
 
 /*

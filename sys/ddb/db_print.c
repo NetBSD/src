@@ -24,11 +24,14 @@
  * rights to redistribute these changes.
  */
 /*
- * $Id: db_print.c,v 1.2 1993/05/20 03:39:25 cgd Exp $
+ * $Id: db_print.c,v 1.2.4.1 1993/11/14 22:48:37 mycroft Exp $
  *
  * HISTORY
  * $Log: db_print.c,v $
- * Revision 1.2  1993/05/20 03:39:25  cgd
+ * Revision 1.2.4.1  1993/11/14 22:48:37  mycroft
+ * Canonicalize all #includes.
+ *
+ * Revision 1.2  1993/05/20  03:39:25  cgd
  * add explicit rcs id
  *
  * Revision 1.1.1.1  1993/03/21  09:46:27  cgd
@@ -77,9 +80,8 @@
 /*
  * Miscellaneous printing.
  */
-#include "param.h"
-#include "proc.h"
-
+#include <sys/param.h>
+#include <sys/proc.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_lex.h>

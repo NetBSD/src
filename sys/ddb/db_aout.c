@@ -23,21 +23,21 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_aout.c,v 1.7 1993/08/29 12:49:13 brezak Exp $
+ *	$Id: db_aout.c,v 1.7.2.1 1993/11/14 22:48:26 mycroft Exp $
  */
 
-#include "types.h"
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
 #include <machine/db_machdep.h>		/* data types */
 #include <ddb/db_sym.h>
 
 #ifndef	DB_NO_AOUT
 
 #define _AOUT_INCLUDE_
-#include "nlist.h"
-#include "stab.h"
+#include <nlist.h>
+#include <stab.h>
 
 /*
  * An a.out symbol table as loaded into the kernel debugger:

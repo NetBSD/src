@@ -24,11 +24,14 @@
  * rights to redistribute these changes.
  */
 /*
- * $Id: db_examine.c,v 1.2 1993/05/20 03:39:12 cgd Exp $
+ * $Id: db_examine.c,v 1.2.4.1 1993/11/14 22:48:31 mycroft Exp $
  *
  * HISTORY
  * $Log: db_examine.c,v $
- * Revision 1.2  1993/05/20 03:39:12  cgd
+ * Revision 1.2.4.1  1993/11/14 22:48:31  mycroft
+ * Canonicalize all #includes.
+ *
+ * Revision 1.2  1993/05/20  03:39:12  cgd
  * add explicit rcs id
  *
  * Revision 1.1.1.1  1993/03/21  09:46:26  cgd
@@ -63,8 +66,8 @@
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
  */
-#include "param.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/proc.h>
 #include <machine/db_machdep.h>		/* type definitions */
 
 #include <ddb/db_lex.h>

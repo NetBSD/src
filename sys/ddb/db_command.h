@@ -24,11 +24,14 @@
  * rights to redistribute these changes.
  */
 /*
- * $Id: db_command.h,v 1.2 1993/05/20 03:39:11 cgd Exp $
+ * $Id: db_command.h,v 1.2.4.1 1993/11/14 22:51:34 mycroft Exp $
  *
  * HISTORY
  * $Log: db_command.h,v $
- * Revision 1.2  1993/05/20 03:39:11  cgd
+ * Revision 1.2.4.1  1993/11/14 22:51:34  mycroft
+ * Canonicalize all #includes.
+ *
+ * Revision 1.2  1993/05/20  03:39:11  cgd
  * add explicit rcs id
  *
  * Revision 1.1.1.1  1993/03/21  09:46:26  cgd
@@ -56,8 +59,8 @@
  * Command loop declarations.
  */
 
-#include "param.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/proc.h>
 #include <machine/db_machdep.h>
 
 extern void	db_command_loop();
