@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.13 1995/08/16 04:29:49 mycroft Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.14 1995/08/16 04:50:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -808,10 +808,7 @@ linux_select(p, uap, retval)
 	}
 
 	if (ls.timeout) {
-		if (!*retval) {
-			utv.tv_sec = 0;
-			utv.tv_usec = 0;
-		} else {
+		if (*retval) {
 			/*
 			 * Compute how much time was left of the timeout,
 			 * by subtracting the current time and the time
@@ -821,7 +818,10 @@ linux_select(p, uap, retval)
 			microtime(&tv1);
 			timersub(&tv1, &tv0, &tv1);
 			timersub(&utv, &tv1, &utv);
-		}
+			if (utv.tv_sec < 0)
+				timerclear(&utv);
+		} else
+			timerclear(&utv);
 		if ((error = copyout(&utv, ls.timeout, sizeof(utv))))
 			return error;
 	}
