@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.34 2001/04/17 03:42:24 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.35 2001/05/23 02:14:07 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -396,7 +396,7 @@ espattach_intio(parent, self, aux)
 	    sc->sc_dev.dv_xname, "intr");
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, NULL, NULL);
+	ncr53c9x_attach(sc);
 }
 
 /*
@@ -660,7 +660,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 #endif
 #endif
 
-	DPRINTF(("esp_dma_setup(0x%08lx,0x%08lx,0x%08lx)\n",*addr,*len,*dmasize));
+	DPRINTF(("esp_dma_setup(%p,0x%08x,0x%08x)\n",*addr,*len,*dmasize));
 
 #if 0
 #ifdef DIAGNOSTIC /* @@@ this is ok sometimes. verify that we handle it ok
@@ -678,7 +678,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 			(esc->sc_tail_dmamap->dm_mapsize != 0) ||
 			(esc->sc_dmasize != 0)) {			
 		panic("%s: map already loaded in esp_dma_setup\n"
-				"\tdatain = %d\n\tmain_mapsize=%d\n\tail_mapsize=%d\n\tdmasize = %d",
+				"\tdatain = %d\n\tmain_mapsize=%ld\n\tail_mapsize=%ld\n\tdmasize = %d",
 				sc->sc_dev.dv_xname, esc->sc_datain,
 				esc->sc_main_dmamap->dm_mapsize,
 				esc->sc_tail_dmamap->dm_mapsize,
@@ -769,17 +769,17 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 						NULL, BUS_DMA_NOWAIT);
 				if (error) {
 #ifdef ESP_DEBUG
-					printf("%s: esc->sc_main_dmamap->_dm_size = %d\n",
+					printf("%s: esc->sc_main_dmamap->_dm_size = %ld\n",
 							sc->sc_dev.dv_xname,esc->sc_main_dmamap->_dm_size);
 					printf("%s: esc->sc_main_dmamap->_dm_segcnt = %d\n",
 							sc->sc_dev.dv_xname,esc->sc_main_dmamap->_dm_segcnt);
-					printf("%s: esc->sc_main_dmamap->_dm_maxsegsz = %d\n",
+					printf("%s: esc->sc_main_dmamap->_dm_maxsegsz = %ld\n",
 							sc->sc_dev.dv_xname,esc->sc_main_dmamap->_dm_maxsegsz);
-					printf("%s: esc->sc_main_dmamap->_dm_boundary = %d\n",
+					printf("%s: esc->sc_main_dmamap->_dm_boundary = %ld\n",
 							sc->sc_dev.dv_xname,esc->sc_main_dmamap->_dm_boundary);
 					esp_dma_print(sc);
 #endif
-					panic("%s: can't load main dma map. error = %d, addr=0x%08x, size=0x%08x",
+					panic("%s: can't load main dma map. error = %d, addr=%p, size=0x%08x",
 							sc->sc_dev.dv_xname, error,esc->sc_main,esc->sc_main_size);
 				}
 #if 0
@@ -815,7 +815,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 						esc->sc_tail, esc->sc_tail_size,
 						NULL, BUS_DMA_NOWAIT);
 				if (error) {
-					panic("%s: can't load tail dma map. error = %d, addr=0x%08x, size=0x%08x",
+					panic("%s: can't load tail dma map. error = %d, addr=%p, size=0x%08x",
 							sc->sc_dev.dv_xname, error,esc->sc_tail,esc->sc_tail_size);
 				}
 #if 0
@@ -844,40 +844,40 @@ esp_dma_store(sc)
 	p += sprintf(p,"%s: sc_loaded=0x%08x\n",sc->sc_dev.dv_xname,esc->sc_loaded);
 
 	if (esc->sc_dmaaddr) {
-		p += sprintf(p,"%s: sc_dmaaddr=0x%08lx\n",sc->sc_dev.dv_xname,*esc->sc_dmaaddr);
+		p += sprintf(p,"%s: sc_dmaaddr=%p\n",sc->sc_dev.dv_xname,*esc->sc_dmaaddr);
 	} else {
 		p += sprintf(p,"%s: sc_dmaaddr=NULL\n",sc->sc_dev.dv_xname);
 	}
 	if (esc->sc_dmalen) {
-		p += sprintf(p,"%s: sc_dmalen=0x%08lx\n",sc->sc_dev.dv_xname,*esc->sc_dmalen);
+		p += sprintf(p,"%s: sc_dmalen=0x%08x\n",sc->sc_dev.dv_xname,*esc->sc_dmalen);
 	} else {
 		p += sprintf(p,"%s: sc_dmalen=NULL\n",sc->sc_dev.dv_xname);
 	}
 	p += sprintf(p,"%s: sc_dmasize=0x%08x\n",sc->sc_dev.dv_xname,esc->sc_dmasize);
 
-	p += sprintf(p,"%s: sc_begin = 0x%08x, sc_begin_size = 0x%08x\n",
+	p += sprintf(p,"%s: sc_begin = %p, sc_begin_size = 0x%08x\n",
 			sc->sc_dev.dv_xname, esc->sc_begin, esc->sc_begin_size);
-	p += sprintf(p,"%s: sc_main = 0x%08x, sc_main_size = 0x%08x\n",
+	p += sprintf(p,"%s: sc_main = %p, sc_main_size = 0x%08x\n",
 			sc->sc_dev.dv_xname, esc->sc_main, esc->sc_main_size);
 	{
 		int i;
 		bus_dmamap_t map = esc->sc_main_dmamap;
-		p += sprintf(p,"%s: sc_main_dmamap. mapsize = 0x%08x, nsegs = %d\n",
+		p += sprintf(p,"%s: sc_main_dmamap. mapsize = 0x%08lx, nsegs = %d\n",
 				sc->sc_dev.dv_xname, map->dm_mapsize, map->dm_nsegs);
 		for(i=0;i<map->dm_nsegs;i++) {
-			p += sprintf(p,"%s: map->dm_segs[%d].ds_addr = 0x%08x, len = 0x%08x\n",
+			p += sprintf(p,"%s: map->dm_segs[%d].ds_addr = 0x%08lx, len = 0x%08lx\n",
 			sc->sc_dev.dv_xname, i, map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len);
 		}
 	}
-	p += sprintf(p,"%s: sc_tail = 0x%08x, sc_tail_size = 0x%08x\n",
+	p += sprintf(p,"%s: sc_tail = %p, sc_tail_size = 0x%08x\n",
 			sc->sc_dev.dv_xname, esc->sc_tail, esc->sc_tail_size);
 	{
 		int i;
 		bus_dmamap_t map = esc->sc_tail_dmamap;
-		p += sprintf(p,"%s: sc_tail_dmamap. mapsize = 0x%08x, nsegs = %d\n",
+		p += sprintf(p,"%s: sc_tail_dmamap. mapsize = 0x%08lx, nsegs = %d\n",
 				sc->sc_dev.dv_xname, map->dm_mapsize, map->dm_nsegs);
 		for(i=0;i<map->dm_nsegs;i++) {
-			p += sprintf(p,"%s: map->dm_segs[%d].ds_addr = 0x%08x, len = 0x%08x\n",
+			p += sprintf(p,"%s: map->dm_segs[%d].ds_addr = 0x%08lx, len = 0x%08lx\n",
 			sc->sc_dev.dv_xname, i, map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len);
 		}
 	}
@@ -1222,12 +1222,12 @@ esp_dmacb_shutdown(arg)
 
 #ifdef ESP_DEBUG
 	if (esp_debug) {
-		printf("%s: dma_shutdown: addr=0x%08lx,len=0x%08lx,size=0x%08lx\n",
+		printf("%s: dma_shutdown: addr=%p,len=0x%08x,size=0x%08x\n",
 				sc->sc_dev.dv_xname,
 				*esc->sc_dmaaddr, *esc->sc_dmalen, esc->sc_dmasize);
 		if (esp_debug > 10) {
 			esp_hex_dump(*(esc->sc_dmaaddr),esc->sc_dmasize);
-			printf("%s: tail=0x%08lx,tailbuf=0x%08lx,tail_size=0x%08lx\n",
+			printf("%s: tail=%p,tailbuf=%p,tail_size=0x%08x\n",
 					sc->sc_dev.dv_xname,
 					esc->sc_tail, &(esc->sc_tailbuf[0]), esc->sc_tail_size);
 			esp_hex_dump(&(esc->sc_tailbuf[0]),sizeof(esc->sc_tailbuf));
