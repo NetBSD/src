@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.15 1999/03/19 12:56:53 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.15.2.1 2000/10/08 16:16:10 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.15 1999/03/19 12:56:53 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.15.2.1 2000/10/08 16:16:10 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ dinit(hp)
     Char *cp;
     struct directory *dp;
     char    path[MAXPATHLEN];
-    static char *emsg = "csh: Trying to start from \"%s\"\n";
+    static const char emsg[] = "csh: Trying to start from \"%s\"\n";
 
     /* Don't believe the login shell home, because it may be a symlink */
     ecp = getcwd(path, MAXPATHLEN);
@@ -238,8 +238,8 @@ printdirs()
 	    (void) fprintf(cshout, "\n");
 	    cur = len;
 	}
-	(void) fprintf(cshout, s != dp->di_name ? "~%s%c" : "%s%c",
-		vis_str(s), (dirflag & DIR_VERT) ? '\n' : ' ');
+	(void) fprintf(cshout, "%s%s%c", (s != dp->di_name)? "~" : "",
+	    vis_str(s), (dirflag & DIR_VERT) ? '\n' : ' ');
     } while ((dp = dp->di_prev) != dcwd);
     if (!(dirflag & DIR_VERT))
 	(void) fprintf(cshout, "\n");
