@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321var.h,v 1.6 2002/08/01 19:40:08 thorpej Exp $	*/
+/*	$NetBSD: i80321var.h,v 1.7 2003/02/06 03:16:49 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -170,6 +170,8 @@ void	i80321_intr_disestablish(void *);
 void	i80321_bs_init(bus_space_tag_t, void *);
 void	i80321_io_bs_init(bus_space_tag_t, void *);
 void	i80321_mem_bs_init(bus_space_tag_t, void *);
+
+void	i80321_local_dma_init(struct i80321_softc *sc);
 
 void	i80321_pci_init(pci_chipset_tag_t, void *);
 
