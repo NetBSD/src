@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.5 1998/02/10 19:48:51 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.6 1998/07/31 03:00:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -40,6 +40,7 @@
 #include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -50,8 +51,26 @@
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/scsipi_base.h>
 
-struct xs_free_list xs_free_list;
+struct pool scsipi_xfer_pool;
+
 int	sc_err1 __P((struct scsipi_xfer *, int));
+
+/*
+ * Called when a scsibus is attached to initialize global data.
+ */
+void
+scsipi_init()
+{
+	static int scsipi_init_done;
+
+	if (scsipi_init_done)
+		return;
+	scsipi_init_done = 1;
+
+	/* Initialize the scsipi_xfer pool. */
+	pool_init(&scsipi_xfer_pool, sizeof(struct scsipi_xfer), 0,
+	    0, 0, "scxspl", 0, NULL, NULL, M_DEVBUF);
+}
 
 /*
  * Get a scsipi transfer structure for the caller. Charge the structure
@@ -73,6 +92,7 @@ scsipi_get_xs(sc_link, flags)
 	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("scsipi_get_xs\n"));
+
 	s = splbio();
 	while (sc_link->openings <= 0) {
 		SC_DEBUG(sc_link, SDEV_DB3, ("sleeping\n"));
@@ -83,23 +103,19 @@ scsipi_get_xs(sc_link, flags)
 		sc_link->flags |= SDEV_WAITING;
 		(void)tsleep(sc_link, PRIBIO, "getxs", 0);
 	}
-	sc_link->openings--;
-	if ((xs = xs_free_list.lh_first) != NULL) {
-		LIST_REMOVE(xs, free_list);
-		splx(s);
-	} else {
-		splx(s);
-		SC_DEBUG(sc_link, SDEV_DB3, ("making\n"));
-		xs = malloc(sizeof(*xs), M_DEVBUF,
-		    ((flags & SCSI_NOSLEEP) != 0 ? M_NOWAIT : M_WAITOK));
-		if (xs == NULL) {
-			sc_link->sc_print_addr(sc_link);
-			printf("cannot allocate scsipi xs\n");
-			return (0);
-		}
+	SC_DEBUG(sc_link, SDEV_DB3, ("calling pool_get\n"));
+	xs = pool_get(&scsipi_xfer_pool,
+	    ((flags & SCSI_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
+	if (xs != NULL)
+		sc_link->openings--;
+	else {
+		(*sc_link->sc_print_addr)(sc_link);
+		printf("cannot allocate scsipi xs\n");
 	}
+	splx(s);
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("returning\n"));
+
 	/*
 	 * zero's out the command, as ATAPI may use longer commands
 	 * than SCSI
@@ -113,6 +129,8 @@ scsipi_get_xs(sc_link, flags)
  * Given a scsipi_xfer struct, and a device (referenced through sc_link)
  * return the struct to the free pool and credit the device with it
  * If another process is waiting for an xs, do a wakeup, let it proceed
+ *
+ * MUST BE CALLED AT splbio()!!
  */
 void
 scsipi_free_xs(xs, flags)
@@ -122,7 +140,7 @@ scsipi_free_xs(xs, flags)
 	struct scsipi_link *sc_link = xs->sc_link;
 
 	xs->flags &= ~INUSE;
-	LIST_INSERT_HEAD(&xs_free_list, xs, free_list);
+	pool_put(&scsipi_xfer_pool, xs);
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("scsipi_free_xs\n"));
 	/* if was 0 and someone waits, wake them up */
