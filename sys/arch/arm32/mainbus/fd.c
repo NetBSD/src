@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.18 1997/01/26 02:32:04 mark Exp $	*/
+/*	$NetBSD: fd.c,v 1.19 1997/07/17 01:48:35 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -84,6 +84,8 @@
 #include <machine/bus.h>
 #include <arm32/mainbus/mainbus.h>
 #include <arm32/mainbus/fdreg.h>
+
+#include "locators.h"
 
 #define NE7CMD_CONFIGURE 0x13
 
@@ -282,6 +284,7 @@ fdcprobe(parent, match, aux)
 	out_fdc(iot, ioh, 2);
 
 #ifdef NEWCONFIG
+	/* XXX no IOBASEUNK defined? */
 	if (mb->mb_iobase == IOBASEUNK || mb->mb_drq == DRQUNK)
 		return 0;
 
@@ -424,7 +427,8 @@ fdprobe(parent, match, aux)
 	bus_space_handle_t ioh = fdc->sc_ioh;
 	int n;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
+	if (cf->cf_loc[FDCCF_DRIVE] != FDCCF_DRIVE_DEFAULT &&
+	    cf->cf_loc[FDCCF_DRIVE] != drive)
 		return 0;
 	/*
 	 * XXX
@@ -434,7 +438,7 @@ fdprobe(parent, match, aux)
 
 	/* Don't need this for arm32 port but leave for the time being (it won't hurt) */
 
-	if (cf->cf_loc[0] == -1 && drive >= 2)
+	if (cf->cf_loc[FDCCF_DRIVE] == FDCCF_DRIVE_DEFAULT && drive >= 2)
 		return 0;
 
 	/* select drive and turn on motor */
