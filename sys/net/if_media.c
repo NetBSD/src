@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.21 2004/02/19 11:58:30 ragge Exp $	*/
+/*	$NetBSD: if_media.c,v 1.22 2004/04/09 20:44:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.21 2004/02/19 11:58:30 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.22 2004/04/09 20:44:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,18 +105,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.21 2004/02/19 11:58:30 ragge Exp $");
 
 #ifdef IFMEDIA_DEBUG
 int	ifmedia_debug = 0;
-static	void ifmedia_printword __P((int));
+static	void ifmedia_printword(int);
 #endif
 
 /*
  * Initialize if_media struct for a specific interface instance.
  */
 void
-ifmedia_init(ifm, dontcare_mask, change_callback, status_callback)
-	struct ifmedia *ifm;
-	int dontcare_mask;
-	ifm_change_cb_t change_callback;
-	ifm_stat_cb_t status_callback;
+ifmedia_init(struct ifmedia *ifm, int dontcare_mask,
+    ifm_change_cb_t change_callback, ifm_stat_cb_t status_callback)
 {
 
 	TAILQ_INIT(&ifm->ifm_list);
@@ -132,11 +129,7 @@ ifmedia_init(ifm, dontcare_mask, change_callback, status_callback)
  * for a specific interface instance.
  */
 void
-ifmedia_add(ifm, mword, data, aux)
-	struct ifmedia *ifm;
-	int mword;
-	int data;
-	void *aux;
+ifmedia_add(struct ifmedia *ifm, int mword, int data, void *aux)
 {
 	struct ifmedia_entry *entry;
 
@@ -167,10 +160,7 @@ ifmedia_add(ifm, mword, data, aux)
  * supported media for a specific interface instance.
  */
 void
-ifmedia_list_add(ifm, lp, count)
-	struct ifmedia *ifm;
-	struct ifmedia_entry *lp;
-	int count;
+ifmedia_list_add(struct ifmedia *ifm, struct ifmedia_entry *lp, int count)
 {
 	int i;
 
@@ -187,9 +177,7 @@ ifmedia_list_add(ifm, lp, count)
  * media-change callback.
  */
 void
-ifmedia_set(ifm, target)
-	struct ifmedia *ifm; 
-	int target;
+ifmedia_set(struct ifmedia *ifm, int target)
 {
 	struct ifmedia_entry *match;
 
@@ -238,11 +226,8 @@ ifmedia_set(ifm, target)
  * Device-independent media ioctl support function.
  */
 int
-ifmedia_ioctl(ifp, ifr, ifm, cmd)
-	struct ifnet *ifp;
-	struct ifreq *ifr;
-	struct ifmedia *ifm;
-	u_long cmd;
+ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
+    u_long cmd)
 {
 	struct ifmedia_entry *match;
 	struct ifmediareq *ifmr = (struct ifmediareq *) ifr;
@@ -256,7 +241,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 	/*
 	 * Set the current media.
 	 */
-	case  SIOCSIFMEDIA:
+	case SIOCSIFMEDIA:
 	{
 		struct ifmedia_entry *oldentry;
 		u_int oldmedia;
@@ -312,7 +297,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 	/*
 	 * Get list of available media and current media on interface.
 	 */
-	case  SIOCGIFMEDIA: 
+	case SIOCGIFMEDIA: 
 	{
 		struct ifmedia_entry *ep;
 		size_t nwords;
@@ -370,10 +355,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
  * Find media entry matching a given ifm word.
  */
 struct ifmedia_entry *
-ifmedia_match(ifm, target, mask)
-	struct ifmedia *ifm; 
-	u_int target;
-	u_int mask;
+ifmedia_match(struct ifmedia *ifm, u_int target, u_int mask)
 {
 	struct ifmedia_entry *match, *next;
 
@@ -402,9 +384,7 @@ ifmedia_match(ifm, target, mask)
  * Delete all media for a given instance.
  */
 void
-ifmedia_delete_instance(ifm, inst)
-	struct ifmedia *ifm;
-	u_int inst;
+ifmedia_delete_instance(struct ifmedia *ifm, u_int inst)
 {
 	struct ifmedia_entry *ife, *nife;
 
@@ -456,8 +436,7 @@ static const struct ifmedia_description ifm_option_descriptions[] =
  * print a media word.
  */
 static void
-ifmedia_printword(ifmw)
-	int ifmw;
+ifmedia_printword(int ifmw)
 {
 	const struct ifmedia_description *desc;
 	int seen_option = 0;
