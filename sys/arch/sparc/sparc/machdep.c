@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.4 1993/10/11 10:53:26 deraadt Exp $
+ * $Id: machdep.c,v 1.5 1993/10/13 09:01:07 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -919,26 +919,6 @@ struct sunos_aout_magic {
 	}
 #endif /* COMPAT_SUNOS */
 	return (ENOEXEC);
-}
-
-struct sysarch_args {
-	int op;
-	char *parms;
-};
-
-sysarch(p, uap, retval)
-	struct proc *p;
-	register struct sysarch_args *uap;
-	int *retval;
-{
-	int error = 0;
-
-	switch(uap->op) {
-	default:
-		error = EINVAL;
-		break;
-	}
-	return(error);
 }
 
 int
