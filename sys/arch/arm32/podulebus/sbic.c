@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.11 1998/07/04 22:18:19 jonathan Exp $ */
+/* $NetBSD: sbic.c,v 1.12 1999/02/28 10:01:08 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -2450,7 +2450,7 @@ sbicnextstate(dev, csr, asr)
 			wait = sbic_data_wait;
 			if( sbicxfstart(regs,
 					acb->sc_kv.dc_count,
-					SBIC_PHASE(csr), wait))
+					SBIC_PHASE(csr), wait)) {
 				if( SBIC_PHASE(csr) == DATA_IN_PHASE )
 					/* data in? */
 					i=sbicxfin(regs,
@@ -2461,6 +2461,7 @@ sbicnextstate(dev, csr, asr)
 						    acb->sc_kv.dc_count,
 						    acb->sc_kv.dc_addr,
 						    SBIC_PHASE(csr));
+			}
 			acb->sc_kv.dc_addr +=
 				(acb->sc_kv.dc_count - i);
 			acb->sc_kv.dc_count = i;
