@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/09/23 09:04:41 matt Exp $
+#	$NetBSD: Makefile,v 1.7 2003/09/26 06:53:30 tron Exp $
 
 PROG=		f771
 SRCS=		${G_F77_OBJS:.o=.c} main.c
@@ -10,8 +10,6 @@ HOST_CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -DUSE_HCONFIG= \
 .for f in 1t 2t fo io nq op ot
 DPSRCS+=	str-${f}.h
 .endfor
-
-.include "../Makefile.backend"
 
 fini: fini.c
 	${HOST_LINK.c} -o $@ $> ${HOSTLIBIBERTY}
@@ -31,3 +29,5 @@ main.c: ${DIST}/gcc/main.c
 	ln -s $> main.c
 
 .PATH: ${DIST}/gcc/f ${DIST}/libiberty ${G_out_file:H}
+
+.include "../Makefile.backend"
