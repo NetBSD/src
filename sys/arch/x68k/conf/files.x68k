@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.25 1999/04/19 21:23:02 kleink Exp $
+#	$NetBSD: files.x68k,v 1.26 1999/06/07 20:31:35 thorpej Exp $
 #
 # new style config file for x68k architecture
 #
@@ -42,7 +42,6 @@ file	arch/x68k/x68k/bus.c
 
 file	dev/cons.c
 file	dev/cninit.c
-major	{vnd = 6}
 
 # Emulation modules
 # 6888x emulator (FPU_EMULATE)
@@ -146,7 +145,6 @@ file	arch/x68k/dev/fd.c		fd needs-flag
 include "dev/scsipi/files.scsipi"
 major	{cd = 7}
 major	{sd = 4}
-major	{st = 5}
 
 device scsirom {}
 attach	scsirom at intio

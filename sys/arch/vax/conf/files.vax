@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.51 1999/05/24 20:10:31 ragge Exp $
+#       $NetBSD: files.vax,v 1.52 1999/06/07 20:31:35 thorpej Exp $
 #
 # new style config file for vax architecture
 #
@@ -60,7 +60,6 @@ major	{md = 23}
 # MSCP device drivers
 include "arch/vax/mscp/files.mscp"
 major	{ra = 9}
-major	{mt = 16}
 
 # KDB50 on BI
 device	kdb: mscp
@@ -138,7 +137,6 @@ major	{ry = 24}
 #
 include "../../../dev/scsipi/files.scsipi"
 major	{ sd = 20 }
-major	{ st = 21 }
 major	{ cd = 22 }
 
 # builtin NCR5380 SCSI-controller on VAXstation 

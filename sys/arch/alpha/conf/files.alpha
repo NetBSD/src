@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.101 1999/04/30 05:58:11 cgd Exp $
+# $NetBSD: files.alpha,v 1.102 1999/06/07 20:31:27 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -66,7 +66,6 @@ include "dev/mii/files.mii"
 #
 
 include "dev/scsipi/files.scsipi"
-major { st = 2 }
 major { cd = 3 }
 major { sd = 8 }
 
