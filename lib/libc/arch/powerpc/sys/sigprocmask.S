@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.2 1998/05/25 15:28:03 ws Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.3 1998/05/25 15:35:06 ws Exp $	*/
 
 #include "SYS.h"
 
@@ -23,4 +23,4 @@ ENTRY(sigprocmask)
 	li	3,0
 	blr			# in any case, return 0
 3:
-	b	cerror
+	b	_ASM_LABEL(cerror)
