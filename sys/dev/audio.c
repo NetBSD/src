@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.60 1997/08/04 09:29:51 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.61 1997/08/06 07:39:59 fair Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -154,10 +154,10 @@ audio_printsc(sc)
 	struct audio_softc *sc;
 {
 	printf("hwhandle %p hw_if %p ", sc->hw_hdl, sc->hw_if);
-	printf("open %x mode %x\n", sc->sc_open, sc->sc_mode);
-	printf("rchan %x wchan %x ", sc->sc_rchan, sc->sc_wchan);
-	printf("rring used %x pring used=%d\n", sc->sc_rr.used, sc->sc_pr.used);
-	printf("rbus %x pbus %x ", sc->sc_rbus, sc->sc_pbus);
+	printf("open 0x%x mode 0x%x\n", sc->sc_open, sc->sc_mode);
+	printf("rchan 0x%x wchan 0x%x ", sc->sc_rchan, sc->sc_wchan);
+	printf("rring used 0x%x pring used=%d\n", sc->sc_rr.used, sc->sc_pr.used);
+	printf("rbus 0x%x pbus 0x%x ", sc->sc_rbus, sc->sc_pbus);
 	printf("blksize %d", sc->sc_pr.blksize);
 	printf("hiwat %d lowat %d\n", sc->sc_pr.usedhigh, sc->sc_pr.usedlow);
 }
@@ -497,7 +497,7 @@ audio_initbufs(sc)
 {
 	struct audio_hw_if *hw = sc->hw_if;
 
-	DPRINTF(("audio_initbufs: mode=%x\n", sc->sc_mode));
+	DPRINTF(("audio_initbufs: mode=0x%x\n", sc->sc_mode));
 	audio_init_ringbuffer(&sc->sc_rr);
 	if (hw->init_input && (sc->sc_mode & AUMODE_RECORD))
 		hw->init_input(sc->hw_hdl, sc->sc_rr.start,
@@ -1282,7 +1282,7 @@ audio_ioctl(dev, cmd, addr, flag, p)
 		break;
 
 	case AUDIO_SETINFO:
-		DPRINTF(("AUDIO_SETINFO mode=%x\n", sc->sc_mode));
+		DPRINTF(("AUDIO_SETINFO mode=0x%x\n", sc->sc_mode));
 		error = audiosetinfo(sc, (struct audio_info *)addr);
 		break;
 
@@ -2134,7 +2134,7 @@ mixer_open(dev, flags, ifmt, p)
 
 	sc = audio_softc[unit];
 
-	DPRINTF(("mixer_open: dev=%x flags=0x%x sc=%p\n", dev, flags, sc));
+	DPRINTF(("mixer_open: dev=0x%x flags=0x%x sc=%p\n", dev, flags, sc));
 	if (sc->hw_if == 0)		/* Hardware has not attached to us... */
 		return (ENXIO);
 
