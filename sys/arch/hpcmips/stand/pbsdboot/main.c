@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2000/01/06 18:07:54 uch Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2000/01/08 05:25:44 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -443,7 +443,7 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
 			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.8 2000.01.03\r\n")
+			       TEXT("Version 1.8.1 2000.01.08\r\n")
 			       TEXT("\r\n")
 			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 			       TEXT("All rights reserved.\r\n")
