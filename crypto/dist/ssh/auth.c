@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.6 2001/06/23 08:08:04 itojun Exp $	*/
+/*	$NetBSD: auth.c,v 1.7 2001/06/23 19:37:38 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,9 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.21 2001/03/19 17:07:23 markus Exp $");
+RCSID("$OpenBSD: auth.c,v 1.24 2001/06/23 00:20:57 markus Exp $");
+
+#include <libgen.h>
 
 #include "xmalloc.h"
 #include "match.h"
@@ -34,6 +36,10 @@ RCSID("$OpenBSD: auth.c,v 1.21 2001/03/19 17:07:23 markus Exp $");
 #include "auth.h"
 #include "auth-options.h"
 #include "canohost.h"
+#include "buffer.h"
+#include "bufaux.h"
+#include "uidswap.h"
+#include "tildexpand.h"
 
 #ifdef HAVE_LOGIN_CAP
 #include <login_cap.h>
@@ -279,5 +285,173 @@ auth_root_allowed(char *method)
 		break;
 	}
 	log("ROOT LOGIN REFUSED FROM %.200s", get_remote_ipaddr());
+	return 0;
+}
+
+
+/*
+ * Given a template and a passwd structure, build a filename
+ * by substituting % tokenised options. Currently, %% becomes '%',
+ * %h becomes the home directory and %u the username.
+ *
+ * This returns a buffer allocated by xmalloc.
+ */
+char *
+expand_filename(const char *filename, struct passwd *pw)
+{
+	Buffer buffer;
+	char *file;
+	const char *cp;
+
+	/*
+	 * Build the filename string in the buffer by making the appropriate
+	 * substitutions to the given file name.
+	 */
+	buffer_init(&buffer);
+	for (cp = filename; *cp; cp++) {
+		if (cp[0] == '%' && cp[1] == '%') {
+			buffer_append(&buffer, "%", 1);
+			cp++;
+			continue;
+		}
+		if (cp[0] == '%' && cp[1] == 'h') {
+			buffer_append(&buffer, pw->pw_dir, strlen(pw->pw_dir));
+			cp++;
+			continue;
+		}
+		if (cp[0] == '%' && cp[1] == 'u') {
+			buffer_append(&buffer, pw->pw_name,
+			     strlen(pw->pw_name));
+			cp++;
+			continue;
+		}
+		buffer_append(&buffer, cp, 1);
+	}
+	buffer_append(&buffer, "\0", 1);
+
+	/*
+	 * Ensure that filename starts anchored. If not, be backward
+	 * compatible and prepend the '%h/'
+	 */
+	file = xmalloc(MAXPATHLEN);
+	cp = buffer_ptr(&buffer);
+	if (*cp != '/')
+		snprintf(file, MAXPATHLEN, "%s/%s", pw->pw_dir, cp);
+	else
+		strlcpy(file, cp, MAXPATHLEN);
+
+	buffer_free(&buffer);
+	return file;
+}
+
+char *
+authorized_keys_file(struct passwd *pw)
+{
+	return expand_filename(options.authorized_keys_file, pw);
+}
+
+char *
+authorized_keys_file2(struct passwd *pw)
+{
+	return expand_filename(options.authorized_keys_file2, pw);
+}
+
+/* return ok if key exists in sysfile or userfile */
+HostStatus
+check_key_in_hostfiles(struct passwd *pw, Key *key, const char *host,
+    const char *sysfile, const char *userfile)
+{
+	Key *found;
+	char *user_hostfile;
+	struct stat st;
+	int host_status;
+
+	/* Check if we know the host and its host key. */
+	found = key_new(key->type);
+	host_status = check_host_in_hostfile(sysfile, host, key, found, NULL);
+
+	if (host_status != HOST_OK && userfile != NULL) {
+		user_hostfile = tilde_expand_filename(userfile, pw->pw_uid);
+		if (options.strict_modes &&
+		    (stat(user_hostfile, &st) == 0) &&
+		    ((st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
+		     (st.st_mode & 022) != 0)) {
+			log("Authentication refused for %.100s: "
+			    "bad owner or modes for %.200s",
+			    pw->pw_name, user_hostfile);
+		} else {
+			temporarily_use_uid(pw);
+			host_status = check_host_in_hostfile(user_hostfile,
+			    host, key, found, NULL);
+			restore_uid();
+		}
+		xfree(user_hostfile);
+	}
+	key_free(found);
+
+	debug2("check_key_in_hostfiles: key %s for %s", host_status == HOST_OK ?
+	    "ok" : "not found", host);
+	return host_status;
+}
+
+
+/*
+ * Check a given file for security. This is defined as all components
+ * of the path to the file must either be owned by either the owner of
+ * of the file or root and no directories must be group or world writable.
+ *
+ * XXX Should any specific check be done for sym links ?
+ *
+ * Takes an open file descriptor, the file name, a uid and and
+ * error buffer plus max size as arguments.
+ *
+ * Returns 0 on success and -1 on failure
+ */
+int
+secure_filename(FILE *f, const char *file, uid_t uid, char *err, size_t errlen)
+{
+	char buf[MAXPATHLEN];
+	char *cp;
+	struct stat st;
+
+	if (realpath(file, buf) == NULL) {
+		snprintf(err, errlen, "realpath %s failed: %s", file,
+		    strerror(errno));
+		return -1;
+	}
+
+	/* check the open file to avoid races */
+	if (fstat(fileno(f), &st) < 0 ||
+	    (st.st_uid != 0 && st.st_uid != uid) ||
+	    (st.st_mode & 022) != 0) {
+		snprintf(err, errlen, "bad ownership or modes for file %s",
+		    buf);
+		return -1;
+	}
+
+	/* for each component of the canonical path, walking upwards */
+	for (;;) {
+		if ((cp = dirname(buf)) == NULL) {
+			snprintf(err, errlen, "dirname() failed");
+			return -1;
+		}
+		strlcpy(buf, cp, sizeof(buf));
+
+		debug3("secure_filename: checking '%s'", buf);
+		if (stat(buf, &st) < 0 ||
+		    (st.st_uid != 0 && st.st_uid != uid) ||
+		    (st.st_mode & 022) != 0) {
+			snprintf(err, errlen, 
+			    "bad ownership or modes for directory %s", buf);
+			return -1;
+		}
+
+		/*
+		 * dirname should always complete with a "/" path,
+		 * but we can be paranoid and check for "." too
+		 */
+		if ((strcmp("/", buf) == 0) || (strcmp(".", buf) == 0))
+			break;
+	}
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-rsa.c,v 1.4 2001/04/10 08:08:03 itojun Exp $	*/
+/*	$NetBSD: ssh-rsa.c,v 1.5 2001/06/23 19:37:42 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-rsa.c,v 1.8 2001/03/27 10:57:00 markus Exp $");
+RCSID("$OpenBSD: ssh-rsa.c,v 1.9 2001/06/06 23:13:54 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -104,7 +104,6 @@ ssh_rsa_sign(
 		*lenp = len;
 	if (sigp != NULL)
 		*sigp = ret;
-	debug2("ssh_rsa_sign: done");
 	return 0;
 }
 

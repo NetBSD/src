@@ -1,15 +1,14 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.9 2001/05/15 14:50:53 itojun Exp $	*/
+/*	$NetBSD: ssh-keyscan.c,v 1.10 2001/06/23 19:37:42 itojun Exp $	*/
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
  * Modification and redistribution in source and binary forms is
  * permitted provided that due credit is given to the author and the
- * OpenBSD project (for instance by leaving this copyright notice
- * intact).
+ * OpenBSD project by leaving this copyright notice intact.
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.22 2001/03/06 06:11:18 deraadt Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.24 2001/06/23 15:12:20 itojun Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -84,29 +83,7 @@ typedef struct {
 	void (*errfun) (const char *,...);
 } Linebuf;
 
-/* prototypes */
-Linebuf *Linebuf_alloc(const char *, void (*) (const char *,...));
-void Linebuf_free(Linebuf *);
-void Linebuf_restart(Linebuf *);
-int Linebuf_lineno(Linebuf *);
-char *Linebuf_getline(Linebuf *);
-int fdlim_get(int);
-int fdlim_set(int);
-char *xstrsep(char **, const char *);
-char *strnnsep(char **, char *);
-void keyprint(char *, char *, char *, int);
-int tcpconnect(char *);
-int conalloc(char *, char *);
-void confree(int);
-void contouch(int);
-int conrecycle(int);
-void congreet(int);
-void conread(int);
-void conloop(void);
-char *nexthost(int, char **);
-void usage(void);
-
-Linebuf *
+static Linebuf *
 Linebuf_alloc(const char *filename, void (*errfun) (const char *,...))
 {
 	Linebuf *lb;
@@ -140,7 +117,7 @@ Linebuf_alloc(const char *filename, void (*errfun) (const char *,...))
 	return (lb);
 }
 
-void
+static void
 Linebuf_free(Linebuf * lb)
 {
 	fclose(lb->stream);
@@ -149,24 +126,22 @@ Linebuf_free(Linebuf * lb)
 }
 
 #if 0
-void
+static void
 Linebuf_restart(Linebuf * lb)
 {
 	clearerr(lb->stream);
 	rewind(lb->stream);
 	lb->lineno = 0;
 }
-#endif
 
-#if 0
-int
+static int
 Linebuf_lineno(Linebuf * lb)
 {
 	return (lb->lineno);
 }
 #endif
 
-char *
+static char *
 Linebuf_getline(Linebuf * lb)
 {
 	int n = 0;
@@ -203,7 +178,7 @@ Linebuf_getline(Linebuf * lb)
 	}
 }
 
-int
+static int
 fdlim_get(int hard)
 {
 	struct rlimit rlfd;
@@ -216,7 +191,7 @@ fdlim_get(int hard)
 		return hard ? rlfd.rlim_max : rlfd.rlim_cur;
 }
 
-int
+static int
 fdlim_set(int lim)
 {
 	struct rlimit rlfd;
@@ -235,7 +210,7 @@ fdlim_set(int lim)
  * separators.  This is the same as the 4.4BSD strsep, but different from the
  * one in the GNU libc.
  */
-char *
+static char *
 xstrsep(char **str, const char *delim)
 {
 	char *s, *e;
@@ -257,7 +232,7 @@ xstrsep(char **str, const char *delim)
  * Get the next non-null token (like GNU strsep).  Strsep() will return a
  * null token for two adjacent separators, so we may have to loop.
  */
-char *
+static char *
 strnnsep(char **stringp, char *delim)
 {
 	char *tok;
@@ -268,7 +243,7 @@ strnnsep(char **stringp, char *delim)
 	return (tok);
 }
 
-void
+static void
 keyprint(char *host, char *output_name, char *kd, int len)
 {
 	static Key *rsa;
@@ -303,7 +278,7 @@ keyprint(char *host, char *output_name, char *kd, int len)
 	fputs("\n", stdout);
 }
 
-int
+static int
 tcpconnect(char *host)
 {
 	struct addrinfo hints, *ai, *aitop;
@@ -336,7 +311,7 @@ tcpconnect(char *host)
 	return s;
 }
 
-int
+static int
 conalloc(char *iname, char *oname)
 {
 	int s;
@@ -374,7 +349,7 @@ conalloc(char *iname, char *oname)
 	return (s);
 }
 
-void
+static void
 confree(int s)
 {
 	if (s >= maxfd || fdcon[s].c_status == CS_UNUSED)
@@ -390,7 +365,7 @@ confree(int s)
 	ncon--;
 }
 
-void
+static void
 contouch(int s)
 {
 	TAILQ_REMOVE(&tq, &fdcon[s], c_link);
@@ -399,7 +374,7 @@ contouch(int s)
 	TAILQ_INSERT_TAIL(&tq, &fdcon[s], c_link);
 }
 
-int
+static int
 conrecycle(int s)
 {
 	int ret;
@@ -415,7 +390,7 @@ conrecycle(int s)
 	return (ret);
 }
 
-void
+static void
 congreet(int s)
 {
 	char buf[80], *cp;
@@ -450,7 +425,7 @@ congreet(int s)
 	contouch(s);
 }
 
-void
+static void
 conread(int s)
 {
 	int n;
@@ -490,7 +465,7 @@ conread(int s)
 	contouch(s);
 }
 
-void
+static void
 conloop(void)
 {
 	fd_set *r, *e;
@@ -542,7 +517,7 @@ conloop(void)
 	}
 }
 
-char *
+static char *
 nexthost(int argc, char **argv)
 {
 	static Linebuf *lb;
@@ -585,7 +560,7 @@ nexthost(int argc, char **argv)
 	}
 }
 
-void
+static void
 usage(void)
 {
 	fatal("usage: %s [-t timeout] { [--] host | -f file } ...", __progname);

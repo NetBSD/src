@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.12 2001/06/18 10:26:33 lukem Exp $
+.\"	$NetBSD: sshd.8,v 1.13 2001/06/23 19:37:42 itojun Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,7 +35,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.121 2001/05/04 14:21:56 stevesk Exp $
+.\" $OpenBSD: sshd.8,v 1.132 2001/06/23 03:03:59 markus Exp $
 .Dd June 18, 2001
 .Dt SSHD 8
 .Os
@@ -177,7 +177,7 @@ configuration file.
 .Nm
 rereads its configuration file when it receives a hangup signal,
 .Dv SIGHUP ,
-by executing itself with the name it was started as, ie.
+by executing itself with the name it was started as, i.e.,
 .Pa /usr/sbin/sshd .
 .Pp
 The options are as follows:
@@ -332,6 +332,20 @@ wildcards in the patterns.
 Only user names are valid; a numerical user ID isn't recognized.
 By default login is allowed regardless of the user name.
 .Pp
+.It Cm AuthorizedKeysFile
+Specifies the file that contains the public RSA keys that can be used
+for RSA authentication in protocol version 1.
+.Cm AuthorizedKeysFile
+may contain tokens of the form %T which are substituted during connection
+set-up. The following tokens are defined; %% is replaces by a literal '%',
+%h is replaced by the home directory of the user being authenticated and
+%u is replaced by the username of that user.
+After expansion,
+.Cm AuthorizedKeysFile
+is taken to be an absolute path or one relative to the user's home
+directory.
+The default is
+.Dq .ssh/authorized_keys
 .It Cm Banner
 In some jurisdictions, sending a warning message before authentication
 may be relevant for getting legal protection.
@@ -348,17 +362,17 @@ Currently there is only support for
 authentication.
 The default is
 .Dq yes .
-.It Cm Ciphers
-Specifies the ciphers allowed for protocol version 2.
-Multiple ciphers must be comma-separated.
-The default is
-.Dq aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,arcfour.
 .It Cm CheckMail
 Specifies whether
 .Nm
 should check for new mail for interactive logins.
 The default is
 .Dq no .
+.It Cm Ciphers
+Specifies the ciphers allowed for protocol version 2.
+Multiple ciphers must be comma-separated.
+The default is
+.Dq aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,arcfour.
 .It Cm ClientAliveInterval
 Sets a timeout interval in seconds after which if no data has been received
 from the client, 
@@ -587,11 +601,7 @@ The MAC algorithm is used in protocol version 2
 for data integrity protection.
 Multiple algorithms must be comma-separated.
 The default is
-.Pp
-.Bd -literal
-  ``hmac-md5,hmac-sha1,hmac-ripemd160,hmac-ripemd160@openssh.com,
-    hmac-sha1-96,hmac-md5-96''
-.Ed
+.Dq hmac-md5,hmac-sha1,hmac-ripemd160,hmac-sha1-96,hmac-md5-96 .
 .It Cm MaxStartups
 Specifies the maximum number of concurrent unauthenticated connections to the
 .Nm
@@ -765,18 +775,18 @@ The default is AUTH.
 Specifies whether
 .Xr login 1
 is used for interactive login sessions.
+The default is
+.Dq no .
 Note that
 .Xr login 1
 is never used for remote command execution.
-The default is
-.Dq no .
-If this is enabled,
+Note also, that if this is enabled,
 .Cm X11Forwarding
-will be disabled, because it's effectively useless as
+will be disabled because
 .Xr login 1
-does not call
+does not know how to handle
 .Xr xauth 1
-to set up the cookie.
+cookies.
 .It Cm X11DisplayOffset
 Specifies the first display number available for
 .Nm sshd Ns 's
@@ -791,7 +801,7 @@ The default is
 .Dq no .
 Note that disabling X11 forwarding does not improve security in any
 way, as users can always install their own forwarders.
-Automatically disabled if
+X11 forwarding is automatically disabled if
 .Cm UseLogin
 is enabled.
 .It Cm XAuthLocation
@@ -800,6 +810,48 @@ Specifies the location of the
 program.
 The default is
 .Pa /usr/X11R6/bin/xauth .
+.El
+.Ss Time Formats
+.Pp
+.Nm
+command-line arguments and configuration file options that specify time
+may be expressed using a sequence of the form:
+.Sm off
+.Ar time Oo Ar qualifier Oc ,
+.Sm on
+where
+.Ar time
+is a positive integer value and
+.Ar qualifier
+is one of the following:
+.Pp
+.Bl -tag -width Ds -compact -offset indent
+.It Cm <none>
+seconds
+.It Cm s | Cm S
+seconds
+.It Cm m | Cm M
+minutes
+.It Cm h | Cm H
+hours
+.It Cm d | Cm D
+days
+.It Cm w | Cm W
+weeks
+.El
+.Pp
+Each member of the sequence is added together to calculate
+the total time value.
+.Pp
+Time format examples:
+.Pp
+.Bl -tag -width Ds -compact -offset indent
+.It 600
+600 seconds (10 minutes)
+.It 10m
+10 minutes
+.It 1h30m
+1 hour 30 minutes (90 minutes)
 .El
 .Sh LOGIN PROCESS
 When a user successfully logs in,
@@ -847,15 +899,13 @@ authentication protocol and cookie in standard input.
 Runs user's shell or command.
 .El
 .Sh AUTHORIZED_KEYS FILE FORMAT
-The
 .Pa $HOME/.ssh/authorized_keys
-file lists the RSA keys that are
-permitted for RSA authentication in protocol version 1.
-Similarly, the
-.Pa $HOME/.ssh/authorized_keys2
-file lists the DSA and RSA keys that are
-permitted for public key authentication (PubkeyAuthentication)
+is the default file that lists the public keys that are
+permitted for RSA authentication in protocol version 1
+and for public key authentication (PubkeyAuthentication)
 in protocol version 2.
+.Cm AuthorizedKeysFile
+may be used to specify an alternative file.
 .Pp
 Each line of the file contains one
 key (empty lines and lines starting with a
@@ -968,10 +1018,8 @@ permitopen="10.2.1.55:80",permitopen="10.2.1.56:25" 1024 33 23.\|.\|.\|2323
 .Sh SSH_KNOWN_HOSTS FILE FORMAT
 The
 .Pa /etc/ssh_known_hosts ,
-.Pa /etc/ssh_known_hosts2 ,
-.Pa $HOME/.ssh/known_hosts ,
 and
-.Pa $HOME/.ssh/known_hosts2
+.Pa $HOME/.ssh/known_hosts
 files contain host public keys for all known hosts.
 The global file should
 be prepared by the administrator (optional), and the per-user file is
@@ -1047,7 +1095,7 @@ really used for anything; they are provided for the convenience of
 the user so their contents can be copied to known hosts files.
 These files are created using
 .Xr ssh-keygen 1 .
-.It Pa /etc/primes
+.It Pa /etc/moduli
 Contains Diffie-Hellman groups used for the "Diffie-Hellman Group Exchange".
 .It Pa /var/run/sshd.pid
 Contains the process ID of the
@@ -1057,17 +1105,6 @@ concurrently for different ports, this contains the pid of the one
 started last).
 The content of this file is not sensitive; it can be world-readable.
 .It Pa $HOME/.ssh/authorized_keys
-Lists the RSA keys that can be used to log into the user's account.
-This file must be readable by root (which may on some machines imply
-it being world-readable if the user's home directory resides on an NFS
-volume).
-It is recommended that it not be accessible by others.
-The format of this file is described above.
-Users will place the contents of their
-.Pa identity.pub
-files into this file, as described in
-.Xr ssh-keygen 1 .
-.It Pa $HOME/.ssh/authorized_keys2
 Lists the public keys (RSA or DSA) that can be used to log into the user's account.
 This file must be readable by root (which may on some machines imply
 it being world-readable if the user's home directory resides on an NFS
@@ -1075,6 +1112,7 @@ volume).
 It is recommended that it not be accessible by others.
 The format of this file is described above.
 Users will place the contents of their
+.Pa identity.pub ,
 .Pa id_dsa.pub
 and/or
 .Pa id_rsa.pub
@@ -1082,7 +1120,8 @@ files into this file, as described in
 .Xr ssh-keygen 1 .
 .It Pa "/etc/ssh_known_hosts" and "$HOME/.ssh/known_hosts"
 These files are consulted when using rhosts with RSA host
-authentication to check the public key of the host.
+authentication or protocol version 2 hostbased authentication
+to check the public key of the host.
 The key must be listed in one of these files to be accepted.
 The client uses the same files
 to verify that it is connecting to the correct remote host.
@@ -1090,17 +1129,6 @@ These files should be writable only by root/the owner.
 .Pa /etc/ssh_known_hosts
 should be world-readable, and
 .Pa $HOME/.ssh/known_hosts
-can but need not be world-readable.
-.It Pa "/etc/ssh_known_hosts2" and "$HOME/.ssh/known_hosts2"
-These files are consulted when using protocol version 2 hostbased
-authentication to check the public key of the host.
-The key must be listed in one of these files to be accepted.
-The client uses the same files
-to verify that it is connecting to the correct remote host.
-These files should be writable only by root/the owner.
-.Pa /etc/ssh_known_hosts2
-should be world-readable, and
-.Pa $HOME/.ssh/known_hosts2
 can but need not be world-readable.
 .It Pa /etc/nologin
 If this file exists,
@@ -1230,15 +1258,16 @@ created OpenSSH.
 Markus Friedl contributed the support for SSH
 protocol versions 1.5 and 2.0.
 .Sh SEE ALSO
+.Xr moduli 5 ,
+.Xr rlogin 1 ,
+.Xr rsh 1 ,
 .Xr scp 1 ,
 .Xr sftp 1 ,
-.Xr sftp-server 8 ,
 .Xr ssh 1 ,
 .Xr ssh-add 1 ,
 .Xr ssh-agent 1 ,
 .Xr ssh-keygen 1 ,
-.Xr rlogin 1 ,
-.Xr rsh 1
+.Xr sftp-server 8
 .Rs
 .%A T. Ylonen
 .%A T. Kivinen
@@ -1255,7 +1284,7 @@ protocol versions 1.5 and 2.0.
 .%A N. Provos
 .%A W. A. Simpson
 .%T "Diffie-Hellman Group Exchange for the SSH Transport Layer Protocol"
-.%N draft-ietf-secsh-dh-group-exchange-00.txt
-.%D January 2001
+.%N draft-ietf-secsh-dh-group-exchange-01.txt
+.%D April 2001
 .%O work in progress material
 .Re
