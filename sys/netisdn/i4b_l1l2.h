@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l1l2.h,v 1.2 2001/03/24 12:40:31 martin Exp $ */
+/* $NetBSD: i4b_l1l2.h,v 1.3 2002/03/19 20:10:45 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -66,9 +66,6 @@ struct isdn_layer1_bri_driver {
 
 	/* Request to execute an internal command. */
 	int (*mph_command_req)(isdn_layer1token, int, void *);
-
-	/* switch on/off trace */
-	void (*n_mgmt_command)(isdn_layer1token, int cmd, void *);
 };
 
 /*

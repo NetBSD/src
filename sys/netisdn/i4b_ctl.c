@@ -27,7 +27,7 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.6 2002/03/16 16:56:03 martin Exp $
+ *	$Id: i4b_ctl.c,v 1.7 2002/03/19 20:10:45 martin Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.6 2002/03/16 16:56:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.7 2002/03/19 20:10:45 martin Exp $");
 
 #include "isdnctl.h"
 
@@ -293,7 +293,7 @@ isdnctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			l2_softc_t * scl2;
 			cst = (struct chipstat *)data;
 			scl2 = (l2_softc_t*)isdn_find_l2_by_bri(cst->driver_unit);
-			scl2->driver->n_mgmt_command(scl2->l1_token, CMR_GCST, cst);
+			scl2->driver->mph_command_req(scl2->l1_token, CMR_GCST, cst);
                         break;
                 }
 
@@ -303,7 +303,7 @@ isdnctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			l2_softc_t * scl2;
 			cst = (struct chipstat *)data;
 			scl2 = (l2_softc_t*)isdn_find_l2_by_bri(cst->driver_unit);
-			scl2->driver->n_mgmt_command(scl2->l1_token, CMR_CCST, cst);
+			scl2->driver->mph_command_req(scl2->l1_token, CMR_CCST, cst);
                         break;
                 }
 
