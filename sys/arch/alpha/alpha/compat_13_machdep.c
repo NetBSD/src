@@ -1,4 +1,4 @@
-/* $NetBSD: compat_13_machdep.c,v 1.4 1999/02/23 03:20:00 thorpej Exp $ */
+/* $NetBSD: compat_13_machdep.c,v 1.5 1999/08/10 23:35:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.4 1999/02/23 03:20:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.5 1999/08/10 23:35:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.4 1999/02/23 03:20:00 thorpe
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/alpha.h>
-
-#include <alpha/alpha/cpuvar.h>
 
 /*
  * System call to cleanup state after a signal

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.107 1999/07/28 23:23:46 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.108 1999/08/10 23:35:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 1999/07/28 23:23:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 1999/08/10 23:35:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,10 +177,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 1999/07/28 23:23:46 thorpej Exp $");
 #include <machine/cpu.h>
 #if defined(_PMAP_MAY_USE_PROM_CONSOLE) || defined(MULTIPROCESSOR)
 #include <machine/rpb.h>
-#endif
-
-#if defined(MULTIPROCESSOR)
-#include <alpha/alpha/cpuvar.h>
 #endif
 
 #ifdef DEBUG

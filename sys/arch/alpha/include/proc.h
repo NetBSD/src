@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.4 1999/02/23 03:20:04 thorpej Exp $ */
+/* $NetBSD: proc.h,v 1.5 1999/08/10 23:35:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -26,11 +26,6 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-
-#ifdef _KERNEL
-/* For `curproc' multiprocessor glue. */
-#include <alpha/alpha/cpuvar.h>
-#endif /* _KERNEL */
 
 /*
  * Machine-dependent part of the proc struct for the Alpha.

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.178 1999/08/10 18:53:03 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.179 1999/08/10 23:35:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178 1999/08/10 18:53:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 1999/08/10 23:35:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,8 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178 1999/08/10 18:53:03 thorpej Exp $"
 #include <machine/prom.h>
 #include <machine/conf.h>
 #include <machine/ieeefp.h>
-
-#include <alpha/alpha/cpuvar.h>
 
 #include <net/netisr.h>
 #include <net/if.h>

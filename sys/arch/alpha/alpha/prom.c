@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.37 1999/07/11 22:37:12 ross Exp $ */
+/* $NetBSD: prom.c,v 1.38 1999/08/10 23:35:45 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.37 1999/07/11 22:37:12 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.38 1999/08/10 23:35:45 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -38,12 +38,11 @@ __KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.37 1999/07/11 22:37:12 ross Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <machine/cpu.h>
 #include <machine/rpb.h>
 #include <machine/alpha.h>
 #define	ENABLEPROM
 #include <machine/prom.h>
-
-#include <alpha/alpha/cpuvar.h>
 
 #include <dev/cons.h>
 
