@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.140 2003/10/05 19:44:58 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.141 2003/10/13 20:50:34 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.140 2003/10/05 19:44:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141 2003/10/13 20:50:34 scw Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4731,6 +4731,10 @@ pmap_pte_init_sa1(void)
 #endif /* ARM_MMU_SA1 == 1*/
 
 #if ARM_MMU_XSCALE == 1
+#if (ARM_NMMUS > 1)
+static u_int xscale_use_minidata;
+#endif
+
 void
 pmap_pte_init_xscale(void)
 {
@@ -4804,6 +4808,10 @@ pmap_pte_init_xscale(void)
 		pte_l2_l_cache_mode = L2_C;
 		pte_l2_s_cache_mode = L2_C;
 	}
+
+#if (ARM_NMMUS > 1)
+	xscale_use_minidata = 1;
+#endif
 
 	pte_l2_s_prot_u = L2_S_PROT_U_xscale;
 	pte_l2_s_prot_w = L2_S_PROT_W_xscale;
@@ -4895,6 +4903,49 @@ xscale_setup_minidata(vaddr_t l1pt, vaddr_t va, paddr_t pa)
 		:
 		: "r" (auxctl));
 }
+
+/*
+ * Change the PTEs for the specified kernel mappings such that they
+ * will use the mini data cache instead of the main data cache.
+ */
+void
+pmap_uarea(vaddr_t va)
+{
+	struct l2_bucket *l2b;
+	pt_entry_t *ptep, *sptep, pte;
+	vaddr_t next_bucket, eva;
+
+#if (ARM_NMMUS > 1)
+	if (xscale_use_minidata == 0)
+		return;
+#endif
+
+	eva = va + USPACE;
+
+	while (va < eva) {
+		next_bucket = L2_NEXT_BUCKET(va);
+		if (next_bucket > eva)
+			next_bucket = eva;
+
+		l2b = pmap_get_l2_bucket(pmap_kernel(), va);
+		KDASSERT(l2b != NULL);
+
+		sptep = ptep = &l2b->l2b_kva[l2pte_index(va)];
+
+		while (va < next_bucket) {
+			pte = *ptep;
+			if (!l2pte_minidata(pte)) {
+				cpu_dcache_wbinv_range(va, PAGE_SIZE);
+				cpu_tlb_flushD_SE(va);
+				*ptep = pte & ~L2_B;
+			}
+			ptep++;
+			va += PAGE_SIZE;
+		}
+		PTE_SYNC_RANGE(sptep, (u_int)(ptep - sptep));
+	}
+	cpu_cpwait();
+}
 #endif /* ARM_MMU_XSCALE == 1 */
 
 #if defined(DDB)
@@ -4982,7 +5033,10 @@ pmap_dump(pmap_t pm)
 						ch = 'B'; /* No cache buff */
 						break;
 					case 0x08:
-						ch = 'C'; /* Cache No buff */
+						if (pte & 0x40)
+							ch = 'm';
+						else
+						   ch = 'C'; /* Cache No buff */
 						break;
 					case 0x0c:
 						ch = 'F'; /* Cache Buff */
