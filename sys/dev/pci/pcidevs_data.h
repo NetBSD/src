@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.208 2000/03/27 16:56:27 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.209 2000/03/30 17:35:40 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.203 2000/03/27 16:55:43 ad Exp 
+ *	NetBSD: pcidevs,v 1.204 2000/03/30 17:34:53 joda Exp 
  */
 
 /*
@@ -3700,10 +3700,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C686A (Apollo KX133) SMBus Controller",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_AUD,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_AC97,
 	    0,
 	    "VIA Technologies",
 	    "VT82C686A (Apollo KX133) AC-97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_MC97,
+	    0,
+	    "VIA Technologies",
+	    "VT82C686A (Apollo KX133) MC-97 Modem Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.210 2000/03/27 16:56:27 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.211 2000/03/30 17:35:39 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.203 2000/03/27 16:55:43 ad Exp 
+ *	NetBSD: pcidevs,v 1.204 2000/03/30 17:34:53 joda Exp 
  */
 
 /*
@@ -1438,7 +1438,8 @@
 #define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 (Apollo VP) Power Management Controller */
 #define	PCI_PRODUCT_VIATECH_VT3043	0x3043		/* VT3043 (Rhine) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_SMB	0x3057		/* VT82C686A (Apollo KX133) SMBus Controller */
-#define	PCI_PRODUCT_VIATECH_VT82C686A_AUD	0x3058		/* VT82C686A (Apollo KX133) AC-97 Audio Controller */
+#define	PCI_PRODUCT_VIATECH_VT82C686A_AC97	0x3058		/* VT82C686A (Apollo KX133) AC-97 Audio Controller */
+#define	PCI_PRODUCT_VIATECH_VT82C686A_MC97	0x3068		/* VT82C686A (Apollo KX133) MC-97 Modem Controller */
 #define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT8371_PPB	0x8391		/* VT8371 (Apollo KX133) PCI-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C597AGP	0x8597		/* VT82C597 (Apollo VP3) PCI-AGP */
