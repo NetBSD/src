@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.3 1998/07/05 06:49:08 jonathan Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.3.2.1 1998/07/30 14:03:50 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -520,7 +520,7 @@ ieattach(parent, self, aux)
 	case BUS_OBIO:
 	    {
 		volatile struct ieob *ieo;
-		vm_offset_t pa;
+		paddr_t pa;
 
 		sc->hard_type = IE_OBIO;
 		sc->reset_586 = ie_obreset;
@@ -537,8 +537,8 @@ ieattach(parent, self, aux)
 		 * XXX
 		 */
 
-		ie_map = vm_map_create(pmap_kernel(), (vm_offset_t)IEOB_ADBASE,
-			(vm_offset_t)IEOB_ADBASE + sc->sc_msize, 1);
+		ie_map = vm_map_create(pmap_kernel(), (vaddr_t)IEOB_ADBASE,
+			(vaddr_t)IEOB_ADBASE + sc->sc_msize, 1);
 		if (ie_map == NULL) panic("ie_map");
 		sc->sc_maddr = (caddr_t) kmem_alloc(ie_map, sc->sc_msize);
 		if (sc->sc_maddr == NULL) panic("ie kmem_alloc");
@@ -562,10 +562,10 @@ ieattach(parent, self, aux)
 		 * to IEOB_ADBASE to be safe.
 		 */
 
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t)sc->sc_maddr);
+		pa = pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr);
 		if (pa == 0) panic("ie pmap_extract");
 		pmap_enter(pmap_kernel(), trunc_page(IEOB_ADBASE+IE_SCP_ADDR),
-                    (vm_offset_t)pa | PMAP_NC /*| PMAP_IOC*/,
+                    (paddr_t)pa | PMAP_NC /*| PMAP_IOC*/,
                     VM_PROT_READ | VM_PROT_WRITE, 1);
 
 		sc->scp = (volatile struct ie_sys_conf_ptr *)

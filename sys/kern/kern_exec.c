@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.93 1998/07/28 18:37:47 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.93.2.1 1998/07/30 14:04:04 eeh Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -277,7 +277,7 @@ sys_execve(p, v, retval)
 	argp = (char *) kmem_alloc_wait(exec_map, NCARGS);
 #endif
 #ifdef DIAGNOSTIC
-	if (argp == (vm_offset_t) 0)
+	if (argp == (vaddr_t) 0)
 		panic("execve: argp == NULL");
 #endif
 	dp = argp;
@@ -470,9 +470,9 @@ sys_execve(p, v, retval)
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
 
 #if defined(UVM)
-	uvm_km_free_wakeup(exec_map, (vm_offset_t) argp, NCARGS);
+	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 #else
-	kmem_free_wakeup(exec_map, (vm_offset_t) argp, NCARGS);
+	kmem_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 #endif
 
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
@@ -508,9 +508,9 @@ bad:
 	vrele(pack.ep_vp);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 #if defined(UVM)
-	uvm_km_free_wakeup(exec_map, (vm_offset_t) argp, NCARGS);
+	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 #else
-	kmem_free_wakeup(exec_map, (vm_offset_t) argp, NCARGS);
+	kmem_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 #endif
 
 freehdr:
@@ -536,9 +536,9 @@ exec_abort:
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vrele(pack.ep_vp);
 #if defined(UVM)
-	uvm_km_free_wakeup(exec_map, (vm_offset_t) argp, NCARGS);
+	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 #else
-	kmem_free_wakeup(exec_map, (vm_offset_t) argp, NCARGS);
+	kmem_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 #endif
 	FREE(pack.ep_hdr, M_EXEC);
 	exit1(p, W_EXITCODE(0, SIGABRT));

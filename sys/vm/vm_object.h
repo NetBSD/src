@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.h,v 1.23 1998/03/01 02:24:01 fvdl Exp $	*/
+/*	$NetBSD: vm_object.h,v 1.23.2.1 1998/07/30 14:04:23 eeh Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -88,15 +88,15 @@ struct vm_object {
 						    don't collapse or destroy */
 	simple_lock_data_t	Lock;		/* Synchronization */
 	int			ref_count;	/* How many refs?? */
-	vm_size_t		size;		/* Object size */
+	vsize_t		size;		/* Object size */
 	int			resident_page_count;
 						/* number of resident pages */
 	struct vm_object	*copy;		/* Object that holds copies of
 						   my changed pages */
 	vm_pager_t		pager;		/* Where to get data */
-	vm_offset_t		paging_offset;	/* Offset into paging space */
+	vaddr_t		paging_offset;	/* Offset into paging space */
 	struct vm_object	*shadow;	/* My shadow */
-	vm_offset_t		shadow_offset;	/* Offset in shadow */
+	vaddr_t		shadow_offset;	/* Offset in shadow */
 	TAILQ_ENTRY(vm_object)	cached_list;	/* for persistence */
 	LIST_HEAD(, vm_object)	shadowers;	/* set of shadowers */
 	LIST_ENTRY(vm_object)	shadowers_list;	/* link to next shadower of
@@ -199,37 +199,37 @@ vm_object_t	kmem_object;
 	} while (0)
 
 #ifdef _KERNEL
-vm_object_t	 vm_object_allocate __P((vm_size_t));
+vm_object_t	 vm_object_allocate __P((vsize_t));
 void		 vm_object_cache_clear __P((void));
 void		 vm_object_cache_trim __P((void));
 boolean_t	 vm_object_coalesce __P((vm_object_t, vm_object_t,
-		    vm_offset_t, vm_offset_t, vm_offset_t, vm_size_t));
+		    vaddr_t, vaddr_t, vaddr_t, vsize_t));
 void		 vm_object_collapse __P((vm_object_t));
-void		 vm_object_copy __P((vm_object_t, vm_offset_t, vm_size_t,
-		    vm_object_t *, vm_offset_t *, boolean_t *));
+void		 vm_object_copy __P((vm_object_t, vaddr_t, vsize_t,
+		    vm_object_t *, vaddr_t *, boolean_t *));
 void		 vm_object_deactivate_pages __P((vm_object_t));
 void		 vm_object_deallocate __P((vm_object_t));
 void		 vm_object_enter __P((vm_object_t, vm_pager_t));
-void		 vm_object_init __P((vm_size_t));
+void		 vm_object_init __P((vsize_t));
 vm_object_t	 vm_object_lookup __P((vm_pager_t));
 boolean_t	 vm_object_page_clean __P((vm_object_t,
-		    vm_offset_t, vm_offset_t, boolean_t, boolean_t));
+		    vaddr_t, vaddr_t, boolean_t, boolean_t));
 void		 vm_object_page_remove __P((vm_object_t,
-		    vm_offset_t, vm_offset_t));
+		    vaddr_t, vaddr_t));
 void		 vm_object_pmap_copy __P((vm_object_t,
-		    vm_offset_t, vm_offset_t));
+		    vaddr_t, vaddr_t));
 void		 vm_object_pmap_remove __P((vm_object_t,
-		    vm_offset_t, vm_offset_t));
+		    vaddr_t, vaddr_t));
 void		 vm_object_prefer __P((vm_object_t,
-		    vm_offset_t, vm_offset_t *));
+		    vaddr_t, vaddr_t *));
 void		 vm_object_print __P((vm_object_t, boolean_t));
 void		 _vm_object_print __P((vm_object_t, boolean_t,
 		    void (*)(const char *, ...)));
 void		 vm_object_reference __P((vm_object_t));
 void		 vm_object_remove __P((vm_pager_t));
 void		 vm_object_setpager __P((vm_object_t,
-		    vm_pager_t, vm_offset_t, boolean_t));
+		    vm_pager_t, vaddr_t, boolean_t));
 void		 vm_object_shadow __P((vm_object_t *,
-		    vm_offset_t *, vm_size_t));
+		    vaddr_t *, vsize_t));
 #endif
 #endif /* _VM_OBJECT_ */

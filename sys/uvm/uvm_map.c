@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.22 1998/07/08 04:28:28 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.22.2.1 1998/07/30 14:04:12 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -327,11 +327,11 @@ void uvm_map_clip_start(map, entry, start)
 
 register vm_map_t       map;
 register vm_map_entry_t entry;
-register vm_offset_t    start;
+register vaddr_t    start;
 
 {
 				register vm_map_entry_t new_entry;
-	vm_offset_t new_adj;
+	vaddr_t new_adj;
 
 	/* uvm_map_simplify_entry(map, entry); */ /* XXX */
 
@@ -380,10 +380,10 @@ void
 uvm_map_clip_end(map, entry, end)
 	vm_map_t	map;
 	vm_map_entry_t	entry;
-	vm_offset_t	end;
+	vaddr_t	end;
 {
 	vm_map_entry_t	new_entry;
-	vm_offset_t new_adj; /* #bytes we move start forward */
+	vaddr_t new_adj; /* #bytes we move start forward */
 
 	/*
 	 *	Create a new entry and insert it
@@ -441,10 +441,10 @@ uvm_map_clip_end(map, entry, end)
 int
 uvm_map(map, startp, size, uobj, uoffset, flags)
 	vm_map_t map;
-	vm_offset_t *startp;	/* IN/OUT */
-	vm_size_t size;
+	vaddr_t *startp;	/* IN/OUT */
+	vsize_t size;
 	struct uvm_object *uobj;
-	vm_offset_t uoffset;
+	vaddr_t uoffset;
 	uvm_flag_t flags;
 {
 	vm_map_entry_t prev_entry, new_entry;
@@ -488,7 +488,7 @@ uvm_map(map, startp, size, uobj, uoffset, flags)
 #if defined(PMAP_GROWKERNEL)	/* hack */
 	{
 		/* locked by kernel_map lock */
-		static vm_offset_t maxkaddr = 0;
+		static vaddr_t maxkaddr = 0;
 		
 		/*
 		 * hack: grow kernel PTPs in advance.
@@ -639,7 +639,7 @@ step3:
 		 * to_add: for BSS we overallocate a little since we
 		 * are likely to extend
 		 */
-		vm_offset_t to_add = (flags & UVM_FLAG_AMAPPAD) ? 
+		vaddr_t to_add = (flags & UVM_FLAG_AMAPPAD) ? 
 			UVM_AMAP_CHUNK * PAGE_SIZE : 0;
 		struct vm_amap *amap = amap_alloc(size, to_add, M_WAITOK);
 		new_entry->aref.ar_slotoff = 0;
@@ -676,7 +676,7 @@ step3:
 boolean_t
 uvm_map_lookup_entry(map, address, entry)
 	register vm_map_t	map;
-	register vm_offset_t	address;
+	register vaddr_t	address;
 	vm_map_entry_t		*entry;		/* OUT */
 {
 	register vm_map_entry_t		cur;
@@ -772,15 +772,15 @@ uvm_map_lookup_entry(map, address, entry)
 vm_map_entry_t
 uvm_map_findspace(map, hint, length, result, uobj, uoffset, fixed)
 	vm_map_t map;
-	vm_offset_t hint;
-	vm_size_t length;
-	vm_offset_t *result; /* OUT */
+	vaddr_t hint;
+	vsize_t length;
+	vaddr_t *result; /* OUT */
 	struct uvm_object *uobj;
-	vm_offset_t uoffset;
+	vaddr_t uoffset;
 	boolean_t fixed;
 {
 	vm_map_entry_t entry, next, tmp;
-	vm_offset_t end;
+	vaddr_t end;
 	UVMHIST_FUNC("uvm_map_findspace");
 	UVMHIST_CALLED(maphist);
 
@@ -883,13 +883,13 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, fixed)
 int
 uvm_unmap_remove(map, start, end, mainonly, entry_list)
 	vm_map_t map;
-	vm_offset_t start,end;
+	vaddr_t start,end;
 	boolean_t mainonly;
 	vm_map_entry_t *entry_list;	/* OUT */
 {
 	int result, refs;
 	vm_map_entry_t entry, first_entry, next;
-	vm_offset_t len;
+	vaddr_t len;
 	boolean_t already_removed;
 	struct uvm_object *uobj;
 	UVMHIST_FUNC("uvm_unmap_remove");
@@ -1199,9 +1199,9 @@ uvm_unmap_detach(first_entry, amap_unref_flags)
 int
 uvm_map_reserve(map, size, offset, raddr)
 	vm_map_t map;
-	vm_size_t size;
-	vm_offset_t offset;    /* hint for pmap_prefer */
-	vm_offset_t *raddr;	/* OUT: reserved VA */
+	vsize_t size;
+	vaddr_t offset;    /* hint for pmap_prefer */
+	vaddr_t *raddr;	/* OUT: reserved VA */
 {
 	UVMHIST_FUNC("uvm_map_reserve"); UVMHIST_CALLED(maphist); 
  
@@ -1241,7 +1241,7 @@ uvm_map_reserve(map, size, offset, raddr)
 int
 uvm_map_replace(map, start, end, newents, nnewents)
 	struct vm_map *map;
-	vm_offset_t start, end;
+	vaddr_t start, end;
 	vm_map_entry_t newents;
 	int nnewents;
 {
@@ -1273,7 +1273,7 @@ uvm_map_replace(map, start, end, newents, nnewents)
 	{
 		vm_map_entry_t tmpent = newents;
 		int nent = 0;
-		vm_offset_t cur = start;
+		vaddr_t cur = start;
 
 		while (tmpent) {
 			nent++;
@@ -1360,15 +1360,15 @@ uvm_map_replace(map, start, end, newents, nnewents)
 int
 uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 	vm_map_t srcmap, dstmap;
-	vm_offset_t start, *dstaddrp;
-	vm_size_t len;
+	vaddr_t start, *dstaddrp;
+	vsize_t len;
 	int flags;
 {
-	vm_offset_t dstaddr, end, newend, oldoffset, fudge, orig_fudge,
+	vaddr_t dstaddr, end, newend, oldoffset, fudge, orig_fudge,
 	    oldstart;
 	vm_map_entry_t chain, endchain, entry, orig_entry, newentry, deadentry;
 	vm_map_entry_t oldentry;
-	vm_size_t elen;
+	vsize_t elen;
 	int nchain, error, copy_ok;
 	UVMHIST_FUNC("uvm_map_extract"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(srcmap=0x%x,start=0x%x, len=0x%x", srcmap, start,
@@ -1699,7 +1699,7 @@ bad2:			/* src already unlocked */
 int
 uvm_map_submap(map, start, end, submap)
 	vm_map_t map, submap;
-	vm_offset_t start, end;
+	vaddr_t start, end;
 {
 	vm_map_entry_t entry;
 	int result;
@@ -1754,7 +1754,7 @@ uvm_map_submap(map, start, end, submap)
 int
 uvm_map_protect(map, start, end, new_prot, set_max)
 	vm_map_t map;
-	vm_offset_t start, end;
+	vaddr_t start, end;
 	vm_prot_t new_prot;
 	boolean_t set_max;
 {
@@ -1814,7 +1814,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 			    !UVM_ET_ISSUBMAP(current)) {
 				/* share map?   gotta go down a level */
 				vm_map_entry_t  share_entry;
-				vm_offset_t     share_end;
+				vaddr_t     share_end;
 				
 				/*
 				 * note: a share map has its own address
@@ -1901,8 +1901,8 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 int
 uvm_map_inherit(map, start, end, new_inheritance)
 	vm_map_t map;
-	vm_offset_t start;
-	vm_offset_t end;
+	vaddr_t start;
+	vaddr_t end;
 	vm_inherit_t new_inheritance;
 {
 	vm_map_entry_t entry, temp_entry;
@@ -1956,11 +1956,11 @@ uvm_map_inherit(map, start, end, new_inheritance)
 int
 uvm_map_pageable(map, start, end, new_pageable)
 	vm_map_t map;
-	vm_offset_t start, end;
+	vaddr_t start, end;
 	boolean_t new_pageable;
 {
 	vm_map_entry_t entry, start_entry;
-	vm_offset_t failed = 0;
+	vaddr_t failed = 0;
 	int rv;
 	UVMHIST_FUNC("uvm_map_pageable"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(map=0x%x,start=0x%x,end=0x%x,new_pageable=0x%x)",
@@ -2200,14 +2200,14 @@ uvm_map_pageable(map, start, end, new_pageable)
 int
 uvm_map_clean(map, start, end, flags)
 	vm_map_t map;
-	vm_offset_t start, end;
+	vaddr_t start, end;
 	int flags;
 {
 	vm_map_entry_t current;
 	vm_map_entry_t entry;
-	vm_size_t size;
+	vsize_t size;
 	struct uvm_object *object;
-	vm_offset_t offset;
+	vaddr_t offset;
 	UVMHIST_FUNC("uvm_map_clean"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(map=0x%x,start=0x%x,end=0x%x,flags=0x%x)",
 	map, start, end, flags);
@@ -2250,7 +2250,7 @@ uvm_map_clean(map, start, end, flags)
 		if (UVM_ET_ISMAP(current)) {   /* share map? */
 			register vm_map_t smap;
 			vm_map_entry_t tentry;
-			vm_size_t tsize;
+			vsize_t tsize;
 
 			smap = current->object.share_map;
 			vm_map_lock_read(smap);
@@ -2300,7 +2300,7 @@ uvm_map_clean(map, start, end, flags)
 boolean_t
 uvm_map_checkprot(map, start, end, protection)
 	vm_map_t       map;
-	vm_offset_t    start, end;
+	vaddr_t    start, end;
 	vm_prot_t      protection;
 {
 	 vm_map_entry_t entry;
@@ -2350,7 +2350,7 @@ uvm_map_checkprot(map, start, end, protection)
  */
 struct vmspace *
 uvmspace_alloc(min, max, pageable)
-	vm_offset_t min, max;
+	vaddr_t min, max;
 	int pageable;
 {
 	struct vmspace *vm;
@@ -2372,7 +2372,7 @@ void
 uvmspace_init(vm, pmap, min, max, pageable)
 	struct vmspace *vm;
 	struct pmap *pmap;
-	vm_offset_t min, max;
+	vaddr_t min, max;
 	boolean_t pageable;
 {
 	UVMHIST_FUNC("uvmspace_init"); UVMHIST_CALLED(maphist);
@@ -2502,7 +2502,7 @@ uvmspace_exec(p)
 		 * XXXCDC: this should go away once all pmaps are fixed
 		 */
 		{ 
-			vm_offset_t addr = VM_MAXUSER_ADDRESS;
+			vaddr_t addr = VM_MAXUSER_ADDRESS;
 			if (uvm_map(&nvm->vm_map, &addr, VM_MAX_ADDRESS - addr,
 			    NULL, UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_ALL,
 			    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_NORMAL,
@@ -2895,7 +2895,7 @@ uvmspace_fork(vm1)
 	 * XXXCDC: this should go away once all pmaps are fixed
 	 */
 	{
-		vm_offset_t addr = VM_MAXUSER_ADDRESS;
+		vaddr_t addr = VM_MAXUSER_ADDRESS;
 		if (uvm_map(new_map, &addr, VM_MAX_ADDRESS - addr, NULL,
 		    UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_ALL,
 		    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_NORMAL,
@@ -2942,7 +2942,7 @@ uvm_map_sharemapcopy(main_map, main_entry, new_map)
 {
 	vm_map_t share_map = main_entry->object.share_map;
 	vm_map_entry_t share_entry, new_entry;
-	vm_offset_t shend = main_entry->offset + 
+	vaddr_t shend = main_entry->offset + 
 		(main_entry->end - main_entry->start);
 	int refs;
 

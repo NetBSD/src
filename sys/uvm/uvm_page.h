@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.9 1998/07/08 04:28:28 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.9.2.1 1998/07/30 14:04:14 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -103,22 +103,22 @@
  * prototypes: the following prototypes define the interface to pages
  */
 
-void uvm_page_init __P((vm_offset_t *, vm_offset_t *));
+void uvm_page_init __P((vaddr_t *, vaddr_t *));
 #if defined(UVM_PAGE_TRKOWN)
 void uvm_page_own __P((struct vm_page *, char *));
 #endif
 #if !defined(PMAP_STEAL_MEMORY)
-boolean_t uvm_page_physget __P((vm_offset_t *));
+boolean_t uvm_page_physget __P((paddr_t *));
 #endif
 void uvm_page_rehash __P((void));
 
 PAGE_INLINE void uvm_pageactivate __P((struct vm_page *));
-vm_offset_t uvm_pageboot_alloc __P((vm_size_t));
+vaddr_t uvm_pageboot_alloc __P((vsize_t));
 PAGE_INLINE void uvm_pagecopy __P((struct vm_page *, struct vm_page *));
 PAGE_INLINE void uvm_pagedeactivate __P((struct vm_page *));
 void uvm_pagefree __P((struct vm_page *));
 PAGE_INLINE struct vm_page *uvm_pagelookup 
-					__P((struct uvm_object *, vm_offset_t));
+					__P((struct uvm_object *, vaddr_t));
 void uvm_pageremove __P((struct vm_page *));
 /* uvm_pagerename: not needed */
 PAGE_INLINE void uvm_pageunwire __P((struct vm_page *));

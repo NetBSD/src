@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.45 1998/07/24 20:47:59 thorpej Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.45.2.1 1998/07/30 14:04:05 eeh Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -86,7 +86,7 @@ struct shm_handle {
 };
 
 struct shmmap_state {
-	vm_offset_t va;
+	vaddr_t va;
 	int shmid;
 };
 
@@ -198,7 +198,7 @@ sys_shmdt(p, v, retval)
 
 	for (i = 0; i < shminfo.shmseg; i++, shmmap_s++)
 		if (shmmap_s->shmid != -1 &&
-		    shmmap_s->va == (vm_offset_t)SCARG(uap, shmaddr))
+		    shmmap_s->va == (vaddr_t)SCARG(uap, shmaddr))
 			break;
 	if (i == shminfo.shmseg)
 		return EINVAL;
@@ -221,9 +221,9 @@ sys_shmat(p, v, retval)
 	struct shmid_ds *shmseg;
 	struct shmmap_state *shmmap_s = NULL;
 	struct shm_handle *shm_handle;
-	vm_offset_t attach_va;
+	vaddr_t attach_va;
 	vm_prot_t prot;
-	vm_size_t size;
+	vsize_t size;
 	int rv;
 
 	shmmap_s = (struct shmmap_state *)p->p_vmspace->vm_shm;
@@ -257,9 +257,9 @@ sys_shmat(p, v, retval)
 		flags |= MAP_FIXED;
 		if (SCARG(uap, shmflg) & SHM_RND) 
 			attach_va =
-			    (vm_offset_t)SCARG(uap, shmaddr) & ~(SHMLBA-1);
-		else if (((vm_offset_t)SCARG(uap, shmaddr) & (SHMLBA-1)) == 0)
-			attach_va = (vm_offset_t)SCARG(uap, shmaddr);
+			    (vaddr_t)SCARG(uap, shmaddr) & ~(SHMLBA-1);
+		else if (((vaddr_t)SCARG(uap, shmaddr) & (SHMLBA-1)) == 0)
+			attach_va = (vaddr_t)SCARG(uap, shmaddr);
 		else
 			return EINVAL;
 	} else {

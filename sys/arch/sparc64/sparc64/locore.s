@@ -1910,11 +1910,25 @@ dmmu_write_fault:
 	 btst	TTE_REAL_W|TTE_W, %g4			! Is it a ref fault?
 	bz,pn	%xcc, winfix				! No -- really fault
 	 or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g4	! Update the modified bit
+
+#if __notyet
+	/* Need to check for and handle large pages. */
+	srlx	%g4, 61, %g5				! Isolate the size bits
+	and	%g5, 0x3, %g5				! (Really needed?)
+	sllx	%g5, 1, %g1				! Calculate page size = 1 << (13 + (3 * size))
+	add	%g1, %g5, %g5				! %g5 = 3 * size
+	mov	1, %g1
+	add	%g5, 13, %g5				! %g5 = 13 + (3 * size)
+	sllx	%g1, %g5, %g5				! %g5 = 1 << (13 + (3 * size))
+#endif
+	
 	ldxa	[%g0] ASI_DMMU_8KPTR, %g2		! Load DMMU 8K TSB pointer
 	ldxa	[%g0] ASI_DMMU, %g1			! Hard coded for unified 8K TSB		Load DMMU tag target register
 	stxa	%g4, [%g6] ASI_PHYS_CACHED		!  and write it out
 	stx	%g1, [%g2]				! Update TSB entry tag
 	stx	%g4, [%g2+8]				! Update TSB entry data
+
+
 	set	trapbase, %g6	! debug
 	stx	%g1, [%g6+0x40]	! debug
 	set	0x88, %g5	! debug
@@ -1985,6 +1999,7 @@ data_miss:
 #if DEBUG
 	/* Make sure we don't try to replace a kernel translation */
 	/* This should not be necessary */
+	brnz,pt	%g6, Ludata_miss			! If user context continue miss
 	sethi	%hi(KERNBASE), %g5			! Don't need %lo
 	set	0x0400000, %g6				! 4MB
 	sub	%g3, %g5, %g5
@@ -2792,6 +2807,7 @@ instr_miss:
 #if 1
 	/* Make sure we don't try to replace a kernel translation */
 	/* This should not be necessary */
+	brnz,pt	%g6, Lutext_miss			! If user context continue miss
 	sethi	%hi(KERNBASE), %g5			! Don't need %lo
 	set	0x0400000, %g6				! 4MB
 	sub	%g3, %g5, %g5
@@ -4182,7 +4198,7 @@ return_from_trap:
 	ldx	[%g6 + CCFSZ + TF_PC], %g2
 	ldx	[%g6 + CCFSZ + TF_NPC], %g3
 
-#ifdef DEBUG
+#ifdef NOTDEF_DEBUG
 	ldub	[%g6 + CCFSZ + TF_PIL], %g5		! restore %pil
 	wrpr	%g5, %pil				! DEBUG
 #endif
@@ -4923,7 +4939,7 @@ dostart:
 	 * Set supervisor mode, interrupt level >= 13, traps enabled
 	 */
 	wrpr	%g0, 13, %pil
-	wrpr	%g0, PSTATE_INTR, %pstate
+	wrpr	%g0, PSTATE_INTR|PSTATE_PEF, %pstate
 #ifdef DDB
 	/*
 	 * First, check for DDB arguments.  A pointer to an argument 
@@ -5354,7 +5370,7 @@ _C_LABEL(openfirmware):
 	ld	[%l7+%lo(romp)], %o4		! v9 stack, just load the addr and callit
 	save	%sp, -CC64FSZ, %sp
 	rdpr	%pil, %i2
-	wrpr	%g0, 15, %pil
+	wrpr	%g0, 12, %pil
 #if 1
 !!!
 !!! Since prom addresses overlap user addresses
@@ -5426,7 +5442,7 @@ _C_LABEL(openfirmware):
 	mov	%g6, %l6
 	mov	%g7, %l7
 	jmpl	%o1, %o7
-	 wrpr	%g0, PSTATE_PROM, %pstate	! Enable 64-bit addresses for the prom
+	 wrpr	%g0, PSTATE_PROM|PSTATE_IE, %pstate	! Enable 64-bit addresses for the prom
 	wrpr	%l0, 0, %pstate
 	wrpr	%i2, 0, %pil
 #if 1
@@ -5444,7 +5460,7 @@ _C_LABEL(openfirmware):
 	 restore	%o0, %g0, %o0
 	
 /*
- * tlb_flush_pte(vm_offset_t va, int ctx)
+ * tlb_flush_pte(vaddr_t va, int ctx)
  * 
  * Flush tte from both IMMU and DMMU.
  *
@@ -7563,6 +7579,14 @@ ENTRY(_remque)
  * to sync the I$.
  */
 ENTRY(pmap_zero_page)
+	!!
+	!! If we have 64-bit physical addresses (and we do now)
+	!! we need to move the pointer from %o0:%o1 to %o0
+	!!
+#if PADDRT == 8
+	sllx	%o0, 32, %o0
+	or	%o0, %o1, %o0
+#endif
 #ifdef DEBUG
 	set	pmapdebug, %o4
 	ld	[%o4], %o4
@@ -7622,6 +7646,17 @@ ENTRY(pmap_zero_page)
  * pmap_zero_page.
  */
 ENTRY(pmap_copy_page)
+	!!
+	!! If we have 64-bit physical addresses (and we do now)
+	!! we need to move the pointer from %o0:%o1 to %o0 and
+	!! %o2:%o3 to %o1
+	!!
+#if PADDRT == 8
+	sllx	%o0, 32, %o0
+	or	%o0, %o1, %o0
+	sllx	%o2, 32, %o1
+	or	%o3, %o1, %o1
+#endif
 #ifdef DEBUG
 	set	pmapdebug, %o4
 	ld	[%o4], %o4
@@ -7757,7 +7792,7 @@ ENTRY(pmap_copy_page)
 #endif
 	
 /*
- * extern int64_t pseg_get(struct pmap* %o0, vm_offset_t addr %o1);
+ * extern int64_t pseg_get(struct pmap* %o0, vaddr_t addr %o1);
  *
  * Return TTE at addr in pmap.  Uses physical addressing only.
  * pmap->pm_physaddr must by the physical address of pm_segs
@@ -7765,7 +7800,11 @@ ENTRY(pmap_copy_page)
  */
 ENTRY(pseg_get)
 !	flushw			! Make sure we don't have stack probs & lose hibits of %o
+#if PADDRT == 8	
+	ldx	[%o0 + PM_PHYS], %o0			! pmap->pm_segs
+#else
 	lduw	[%o0 + PM_PHYS], %o0			! pmap->pm_segs
+#endif
 	srlx	%o1, 32, %o2
 	brnz,pn	%o2, 1f					! >32 bits? not here
 	 srlx	%o1, STSHIFT-2, %o3
@@ -7788,7 +7827,7 @@ ENTRY(pseg_get)
 	 clr	%o0
 
 /*
- * extern void pseg_set(struct pmap* %o0, vm_offset_t addr %o1, int64_t tte %o2:%o3);
+ * extern void pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2:%o3);
  *
  * Set a pseg entry to a particular TTE value.  Returns 0 on success, else the pointer
  * to the empty pseg entry.  Allocate a page, put the phys addr in the returned location,
@@ -7797,8 +7836,11 @@ ENTRY(pseg_get)
  */
 ENTRY(pseg_set)
 	flushw			! Make sure we don't have stack probs & lose hibits of %o
-	
+#if PADDRT == 8	
+	ldx	[%o0 + PM_PHYS], %o4			! pmap->pm_segs
+#else
 	lduw	[%o0 + PM_PHYS], %o4			! pmap->pm_segs
+#endif
 #ifdef DEBUG
 	mov	%o0, %g1				! DEBUG
 #endif

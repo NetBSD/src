@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.7 1998/05/05 20:51:05 kleink Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.7.2.1 1998/07/30 14:04:11 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -79,7 +79,7 @@ struct uvmexp uvmexp;	/* decl */
 void
 uvm_init()
 {
-	vm_offset_t kvm_start, kvm_end;
+	vaddr_t kvm_start, kvm_end;
 
 	/*
 	 * step 0: ensure that the hardware set the page size

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.2 1998/07/04 22:18:42 jonathan Exp $ */
+/*	$NetBSD: db_interface.c,v 1.2.2.1 1998/07/30 14:03:54 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -181,7 +181,8 @@ kdb_trap(type, tf)
 
 	ddb_regs.ddb_tf = *tf;
 	/* We should do a proper copyin and xlate 64-bit stack frames, but... */
-	if (tf->tf_tstate & TSTATE_PRIV) {
+/*	if (tf->tf_tstate & TSTATE_PRIV) { */
+	if ((unsigned)tf->tf_out[6] > (unsigned)KERNBASE) {
 		ddb_regs.ddb_fr = *(struct frame *)tf->tf_out[6];
 	} else {
 		copyin(tf->tf_out[6], &ddb_regs.ddb_fr, sizeof(struct frame));
@@ -221,7 +222,7 @@ kdb_trap(type, tf)
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t	addr;
 	register size_t	size;
 	register char	*data;
 {
@@ -242,7 +243,7 @@ db_read_bytes(addr, size, data)
  */
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t	addr;
 	register size_t	size;
 	register char	*data;
 {
@@ -299,7 +300,7 @@ db_dump_dtlb(addr, have_addr, count, modif)
 		print_dtlb();
 }
 
-int64_t pseg_get __P((struct pmap *, vm_offset_t));
+int64_t pseg_get __P((struct pmap *, vaddr_t));
 
 void
 db_pmap_kernel(addr, have_addr, count, modif)
@@ -321,7 +322,7 @@ db_pmap_kernel(addr, have_addr, count, modif)
 	if (have_addr) {
 		/* lookup an entry for this VA */
 		
-		if (data = pseg_get(&kernel_pmap_, (vm_offset_t)addr)) {
+		if (data = pseg_get(&kernel_pmap_, (vaddr_t)addr)) {
 			db_printf("pmap_kernel(%p)->pm_segs[%x][%x]=>%x:%x\n",
 				  addr, va_to_seg(addr), va_to_pte(addr),
 				  (int)(data>>32),

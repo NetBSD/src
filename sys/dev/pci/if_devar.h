@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.27 1998/05/25 22:13:28 mark Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.27.2.1 1998/07/30 14:04:01 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -998,7 +998,7 @@ extern struct cfdriver de_cd;
 #if !defined(TULIP_BUS_DMA) || defined(TULIP_BUS_DMA_NORX) || defined(TULIP_BUS_DMA_NOTX)
 #if defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
-#define TULIP_KVATOPHYS(sc, va)		alpha_XXX_dmamap((vm_offset_t)(va))
+#define TULIP_KVATOPHYS(sc, va)		alpha_XXX_dmamap((vaddr_t)(va))
 #endif
 #endif
 #endif	/* __NetBSD__ */

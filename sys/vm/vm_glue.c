@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.75 1998/05/09 15:04:40 kleink Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.75.2.1 1998/07/30 14:04:20 eeh Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -90,7 +90,7 @@ kernacc(addr, len, rw)
 	int rw;
 {
 	boolean_t rv;
-	vm_offset_t saddr, eaddr;
+	vaddr_t saddr, eaddr;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
 	saddr = trunc_page(addr);
@@ -105,8 +105,8 @@ kernacc(addr, len, rw)
 	 * or worse, inconsistencies at the pmap level.  We only worry
 	 * about the buffer cache for now.
 	 */
-	if (!readbuffers && rv && (eaddr > (vm_offset_t)buffers &&
-		   saddr < (vm_offset_t)buffers + MAXBSIZE * nbuf))
+	if (!readbuffers && rv && (eaddr > (vaddr_t)buffers &&
+		   saddr < (vaddr_t)buffers + MAXBSIZE * nbuf))
 		rv = FALSE;
 	return(rv == TRUE);
 }
@@ -125,9 +125,9 @@ useracc(addr, len, rw)
 	 * XXX - specially disallow access to user page tables - they are
 	 * in the map.  This is here until i386 & pc532 pmaps are fixed...
 	 */
-	if ((vm_offset_t) addr >= VM_MAXUSER_ADDRESS
-	    || (vm_offset_t) addr + len > VM_MAXUSER_ADDRESS
-	    || (vm_offset_t) addr + len <= (vm_offset_t) addr)
+	if ((vaddr_t) addr >= VM_MAXUSER_ADDRESS
+	    || (vaddr_t) addr + len > VM_MAXUSER_ADDRESS
+	    || (vaddr_t) addr + len <= (vaddr_t) addr)
 		return (FALSE);
 #endif
 
@@ -156,7 +156,8 @@ chgkprot(addr, len, rw)
 	int rw;
 {
 	vm_prot_t prot;
-	vm_offset_t pa, sva, eva;
+	vaddr_t pa;
+	vaddr_t sva, eva;
 
 	prot = rw == B_READ ? VM_PROT_READ : VM_PROT_READ|VM_PROT_WRITE;
 	eva = round_page(addr + len);
@@ -225,8 +226,8 @@ vm_fork(p1, p2, shared)
 	 * Wire down the U-area for the process, which contains the PCB
 	 * and the kernel stack.
 	 */
-	vm_map_pageable(kernel_map, (vm_offset_t)up,
-	    (vm_offset_t)up + USPACE, FALSE);
+	vm_map_pageable(kernel_map, (vaddr_t)up,
+	    (vaddr_t)up + USPACE, FALSE);
 
 	/*
 	 * p_stats and p_sigacts currently point at fields
@@ -293,10 +294,10 @@ void
 swapin(p)
 	struct proc *p;
 {
-	vm_offset_t addr;
+	vaddr_t addr;
 	int s;
 
-	addr = (vm_offset_t)p->p_addr;
+	addr = (vaddr_t)p->p_addr;
 	vm_map_pageable(kernel_map, addr, addr + USPACE, FALSE);
 	/*
 	 * Some architectures need to be notified when the
@@ -466,7 +467,7 @@ void
 swapout(p)
 	register struct proc *p;
 {
-	vm_offset_t addr;
+	vaddr_t addr;
 	int s;
 
 #ifdef DEBUG
@@ -485,7 +486,7 @@ swapout(p)
 	/*
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
 	 */
-	addr = (vm_offset_t)p->p_addr;
+	addr = (vaddr_t)p->p_addr;
 	vm_map_pageable(kernel_map, addr, addr + USPACE, TRUE);
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 

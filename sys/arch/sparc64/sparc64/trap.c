@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5 1998/07/07 03:05:05 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.5.2.1 1998/07/30 14:03:57 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -155,7 +155,7 @@ int	rwindow_debug = RW_64|RW_ERR;
 #define TDB_STOPCALL	0x200
 #define TDB_STOPCPIO	0x400
 #define TDB_SYSTOP	0x800
-int	trapdebug = TDB_STOPSIG;
+int	trapdebug = 0;
 /* #define __inline */
 #endif
 
@@ -716,7 +716,7 @@ badtrap:
 		 * If we're busy doing copyin/copyout continue
 		 */
 		if (p->p_addr && p->p_addr->u_pcb.pcb_onfault) {
-			tf->tf_pc = p->p_addr->u_pcb.pcb_onfault;
+			tf->tf_pc = (vaddr_t)p->p_addr->u_pcb.pcb_onfault;
 			tf->tf_npc = tf->tf_pc + 4;
 			break;
 		}
@@ -754,7 +754,7 @@ badtrap:
 		fpproc = NULL;
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		if (p->p_md.md_fpstate->fs_qsize == 0) {
-			p->p_md.md_fpstate->fs_queue[0].fq_instr = fuword(pc);
+			p->p_md.md_fpstate->fs_queue[0].fq_instr = fuword((caddr_t)pc);
 			p->p_md.md_fpstate->fs_qsize = 1;
 			fpu_cleanup(p, p->p_md.md_fpstate);
 			ADVANCE;
@@ -840,7 +840,9 @@ rwindow_save(p)
 	register struct rwindow64 *rw = &pcb->pcb_rw[0];
 	register u_int64_t rwdest;
 	register int i, j;
+#ifndef TRAPWIN
 	register struct trapframe *tf = p->p_md.md_tf;
+#endif
 
 	/* Make sure our D$ is not polluted w/bad data */
 	blast_vcache();
@@ -863,8 +865,10 @@ rwindow_save(p)
 			printf("window %d at %x:%x\n", i, rwdest);
 #endif
 		if (rwdest & 1) {
+#ifndef TRAPWIN
 			struct rwindow64 *rwstack;
 			/* 64-bit window */
+#endif
 #ifdef DEBUG
 			if (rwindow_debug&RW_64) {
 				printf("rwindow_save: 64-bit tf to %p-BIAS or %p\n", 
@@ -951,8 +955,6 @@ kill_user_windows(p)
 	p->p_addr->u_pcb.pcb_nsaved = 0;
 }
 
-static int tfaultaddr = (int) 0xdeadbeef;
-
 #ifdef DEBUG
 int dfdebug = 0;
 #endif
@@ -968,7 +970,7 @@ data_access_fault(type, addr, pc, tf)
 	register u_int64_t tstate;
 	register struct proc *p;
 	register struct vmspace *vm;
-	register vm_offset_t va;
+	register vaddr_t va;
 	register int rv;
 	vm_prot_t ftype;
 	int onfault;
@@ -1073,7 +1075,7 @@ data_access_fault(type, addr, pc, tf)
 #ifdef DEBUG
 				if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 					printf("data_access_fault: kernel vm_fault(%x, %x, %x, 0) sez %x -- success\n",
-					       kernel_map, (vm_offset_t)va, ftype, rv);
+					       kernel_map, (vaddr_t)va, ftype, rv);
 #endif
 				return;
 			}
@@ -1081,14 +1083,14 @@ data_access_fault(type, addr, pc, tf)
 #ifdef DEBUG
 				if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 					printf("data_access_fault: kernel vm_fault(%x, %x, %x, 0) sez %x -- success\n",
-					       kernel_map, (vm_offset_t)va, ftype, rv);
+					       kernel_map, (vaddr_t)va, ftype, rv);
 #endif
 				return;
 			}
 #ifdef DEBUG
 			if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 				printf("data_access_fault: kernel vm_fault(%x, %x, %x, 0) sez %x -- failure\n",
-				       kernel_map, (vm_offset_t)va, ftype, rv);
+				       kernel_map, (vaddr_t)va, ftype, rv);
 #endif
 			goto kfault;
 		}
@@ -1097,12 +1099,12 @@ data_access_fault(type, addr, pc, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = vm_fault(&vm->vm_map, (vm_offset_t)va, ftype, FALSE);
+	rv = vm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
 
 #ifdef DEBUG
 	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 		printf("data_access_fault: user vm_fault(%x, %x, %x, FALSE) sez %x\n",
-		       &vm->vm_map, (vm_offset_t)va, ftype, rv);
+		       &vm->vm_map, (vaddr_t)va, ftype, rv);
 #endif
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1125,7 +1127,6 @@ data_access_fault(type, addr, pc, tf)
 		 * address.  Any other page fault in kernel, die; if user
 		 * fault, deliver SIGSEGV.
 		 */
-fault:
 		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 kfault:
 			onfault = p->p_addr ?
@@ -1158,7 +1159,6 @@ kfault:
 #endif
 		trapsignal(p, SIGSEGV, (u_int)addr);
 	}
-out:
 	if ((tstate & TSTATE_PRIV) == 0) {
 		userret(p, pc, sticks);
 		share_fpu(p, tf);
@@ -1170,7 +1170,7 @@ out:
 		print_trapframe(tf);
 	}
 	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW)) {
-		extern void* return_from_trap();
+		extern void* return_from_trap __P((void));
 		if ((void*)tf->tf_pc == (void*)return_from_trap) {
 			printf("Returning from stack datafault\n");
 		}
@@ -1191,7 +1191,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	register u_int64_t tstate;
 	register struct proc *p;
 	register struct vmspace *vm;
-	register vm_offset_t va;
+	register vaddr_t va;
 	register int rv;
 	vm_prot_t ftype;
 	int onfault;
@@ -1236,7 +1236,6 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	cnt.v_trap++;
 #endif
 	if ((p = curproc) == NULL)	/* safety check */
-/*	if ((p = masterpaddr) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
 
@@ -1357,7 +1356,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 		printf("data_access_error: calling vm_fault\n");
 #endif
-	rv = vm_fault(&vm->vm_map, (vm_offset_t)va, ftype, FALSE);
+	rv = vm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1434,7 +1433,7 @@ text_access_fault(type, pc, tf)
 	register u_int64_t tstate;
 	register struct proc *p;
 	register struct vmspace *vm;
-	register vm_offset_t va;
+	register vaddr_t va;
 	register int rv;
 	vm_prot_t ftype;
 	u_quad_t sticks;
@@ -1471,7 +1470,6 @@ text_access_fault(type, pc, tf)
 	cnt.v_trap++;
 #endif
 	if ((p = curproc) == NULL)	/* safety check */
-/*	if ((p = masterpaddr) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
 
@@ -1493,12 +1491,12 @@ text_access_fault(type, pc, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = vm_fault(&vm->vm_map, (vm_offset_t)va, ftype, FALSE);
+	rv = vm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
 
 #ifdef DEBUG
 	if (trapdebug&(TDB_TXTFLT|TDB_FOLLOW))
 		printf("text_access_fault: vm_fault(%x, %x, %x, FALSE) sez %x\n",
-		       &vm->vm_map, (vm_offset_t)va, ftype, rv);
+		       &vm->vm_map, (vaddr_t)va, ftype, rv);
 #endif
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1538,7 +1536,6 @@ text_access_fault(type, pc, tf)
 #endif
 		trapsignal(p, SIGSEGV, (u_int)pc);
 	}
-out:
 	if ((tstate & TSTATE_PRIV) == 0) {
 		userret(p, pc, sticks);
 		share_fpu(p, tf);
@@ -1567,7 +1564,7 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	register int64_t tstate;
 	register struct proc *p;
 	register struct vmspace *vm;
-	register vm_offset_t va;
+	register vaddr_t va;
 	register int rv;
 	vm_prot_t ftype;
 	u_quad_t sticks;
@@ -1610,7 +1607,6 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	cnt.v_trap++;
 #endif
 	if ((p = curproc) == NULL)	/* safety check */
-/*	if ((p = masterpaddr) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
 
@@ -1666,7 +1662,7 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = vm_fault(&vm->vm_map, (vm_offset_t)va, ftype, FALSE);
+	rv = vm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
 
 	/*
 	 * If this was a stack access we keep track of the maximum

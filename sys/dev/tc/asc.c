@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.46 1998/05/08 15:39:01 mhitch Exp $	*/
+/*	$NetBSD: asc.c,v 1.46.2.1 1998/07/30 14:04:03 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -1413,7 +1413,7 @@ asc_end(asc, status, ss, ir)
 			ss->byte2 = sc_link->lun << 5;
 			ss->length = sizeof(struct scsipi_sense_data);
 			state->cmdlen = sizeof(*ss);
-			state->buf = (vm_offset_t)&scsicmd->sense;
+			state->buf = (vaddr_t)&scsicmd->sense;
 			state->buflen = sizeof(struct scsipi_sense_data);
 			state->flags |= CHECK_SENSE;
 			MachFlushDCache(state->buf, state->buflen);

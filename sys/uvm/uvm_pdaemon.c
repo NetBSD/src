@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.9 1998/07/23 20:36:09 pk Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.9.2.1 1998/07/30 14:04:15 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -326,7 +326,7 @@ uvmpd_scan_inactive(pglst)
 	int swslot, oldslot;
 	struct vm_anon *anon;
 	boolean_t swap_backed;
-	vm_offset_t start;
+	vaddr_t start;
 	UVMHIST_FUNC("uvmpd_scan_inactive"); UVMHIST_CALLED(pdhist);
 
 	/*
@@ -633,7 +633,7 @@ uvmpd_scan_inactive(pglst)
 			npages = swcpages;
 			ppsp = swpps;
 			/* for swap-backed pages only */
-			start = (vm_offset_t) swslot;
+			start = (vaddr_t) swslot;
 
 			/* if this is final pageout we could have a few
 			 * extra swap blocks */

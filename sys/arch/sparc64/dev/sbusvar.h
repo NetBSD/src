@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.1.1.1.2.1 1998/07/30 14:03:51 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,8 +80,8 @@
  *	@(#)sbusvar.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef _SBUS_VAR_H
-#define _SBUS_VAR_H
+#ifndef _SBUS_VAR_H_
+#define _SBUS_VAR_H_
 
 /*
  * Most devices are configured according to information kept in
@@ -141,7 +141,7 @@ struct sbus_softc {
 	u_int		sc_dvmabase;
         int64_t		*sc_tsb;	/* TSB vaddr */
 	int		sc_tsbsize;
-	vm_offset_t	sc_ptsb;	/* TSB physaddr */
+	paddr_t		sc_ptsb;	/* TSB physaddr */
 	int		sc_hasiocache;
 	int		sc_ign;		/* Interrupt group number for this sysio */
 
@@ -186,4 +186,4 @@ int	sbus_setup_attach_args __P((
 #define sbus_bus_map(t, b, a, s, f, v, hp) \
 	bus_space_map2(t, b, a, s, f, v, hp)
 
-#endif /* _SBUS_VAR_H */
+#endif /* _SBUS_VAR_H_ */

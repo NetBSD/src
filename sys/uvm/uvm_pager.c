@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.8 1998/05/05 20:51:07 kleink Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.8.2.1 1998/07/30 14:04:14 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -120,18 +120,18 @@ uvm_pager_init()
  * map and then use pmap_enter() to put the mappings in by hand.
  */
 
-vm_offset_t
+vaddr_t
 uvm_pagermapin(pps, npages, aiop, waitf)
 	struct vm_page **pps;
 	int npages;
 	struct uvm_aiodesc **aiop;	/* OUT */
 	int waitf;
 {
-	vm_size_t size;
-	vm_offset_t kva;
+	vsize_t size;
+	vaddr_t kva;
 	struct uvm_aiodesc *aio;
 #if !defined(PMAP_NEW)
-	vm_offset_t cva;
+	vaddr_t cva;
 	struct vm_page *pp;
 #endif
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
@@ -205,10 +205,10 @@ ReStart:
 
 void
 uvm_pagermapout(kva, npages)
-	vm_offset_t kva;
+	vaddr_t kva;
 	int npages;
 {
-	vm_size_t size = npages * PAGE_SIZE;
+	vsize_t size = npages * PAGE_SIZE;
 	vm_map_entry_t entries;
 	UVMHIST_FUNC("uvm_pagermapout"); UVMHIST_CALLED(maphist);
 	
@@ -260,10 +260,10 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 	struct uvm_object *uobj;	/* IN */
 	struct vm_page **pps, *center;  /* IN/OUT, IN */
 	int *npages, flags;		/* IN/OUT, IN */
-	vm_offset_t mlo, mhi;		/* IN (if !PGO_ALLPAGES) */
+	vaddr_t mlo, mhi;		/* IN (if !PGO_ALLPAGES) */
 {
 	struct vm_page **ppsp, *pclust;
-	vm_offset_t lo, hi, curoff;
+	vaddr_t lo, hi, curoff;
 	int center_idx, forward;
 	UVMHIST_FUNC("uvm_mk_pcluster"); UVMHIST_CALLED(maphist);
 
@@ -385,7 +385,7 @@ uvm_shareprot(entry, prot)
 {
 	struct uvm_object *uobj = entry->object.uvm_obj;
 	struct vm_page *pp;
-	vm_offset_t start, stop;
+	vaddr_t start, stop;
 	UVMHIST_FUNC("uvm_shareprot"); UVMHIST_CALLED(maphist);
 
 	if (UVM_ET_ISMAP(entry)) 
@@ -451,7 +451,7 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 	struct vm_page *pg, ***ppsp_ptr;/* IN, IN/OUT */
 	int *npages;			/* IN/OUT */
 	int flags;			/* IN */
-	vm_offset_t start, stop;	/* IN, IN */
+	vaddr_t start, stop;	/* IN, IN */
 {
 	int result;
 	daddr_t swblk;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.37 1998/03/27 01:46:20 thorpej Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.37.2.1 1998/07/30 14:04:21 eeh Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -142,18 +142,18 @@
 #if defined(MACHINE_NEW_NONCONTIG)
 u_int8_t	kentry_data_store[MAX_KMAP*sizeof(struct vm_map) +
 			MAX_KMAPENT*sizeof(struct vm_map_entry)];
-vm_offset_t	kentry_data = (vm_offset_t) kentry_data_store;
-vm_size_t	kentry_data_size = sizeof(kentry_data_store);
+vaddr_t	kentry_data = (vaddr_t) kentry_data_store;
+vsize_t	kentry_data_size = sizeof(kentry_data_store);
 #else
 /* NUKE NUKE NUKE */
-vm_offset_t	kentry_data;
-vm_size_t	kentry_data_size;
+vaddr_t	kentry_data;
+vsize_t	kentry_data_size;
 #endif
 vm_map_entry_t	kentry_free;
 vm_map_t	kmap_free;
 
-static void	_vm_map_clip_end __P((vm_map_t, vm_map_entry_t, vm_offset_t));
-static void	_vm_map_clip_start __P((vm_map_t, vm_map_entry_t, vm_offset_t));
+static void	_vm_map_clip_end __P((vm_map_t, vm_map_entry_t, vaddr_t));
+static void	_vm_map_clip_start __P((vm_map_t, vm_map_entry_t, vaddr_t));
 
 void
 vm_map_startup()
@@ -200,7 +200,7 @@ vm_map_startup()
  */
 struct vmspace *
 vmspace_alloc(min, max, pageable)
-	vm_offset_t min, max;
+	vaddr_t min, max;
 	int pageable;
 {
 	register struct vmspace *vm;
@@ -219,7 +219,7 @@ void
 vmspace_init(vm, pmap, min, max, pageable)
 	struct vmspace *vm;
 	struct pmap *pmap;
-	vm_offset_t min, max;
+	vaddr_t min, max;
 	boolean_t pageable;
 {
 
@@ -313,7 +313,7 @@ vmspace_exec(p)
 		    map->entries_pageable);
 #if defined(i386) || defined(pc532)		/* XXX XXX XXX */
 		/* Allocate page table space. */
-		{ vm_offset_t addr = VM_MAXUSER_ADDRESS;
+		{ vaddr_t addr = VM_MAXUSER_ADDRESS;
 		(void) vm_allocate(&nvm->vm_map, &addr, VM_MAX_ADDRESS - addr,
 		    FALSE);
 		(void) vm_map_inherit(&nvm->vm_map, addr, VM_MAX_ADDRESS,
@@ -360,7 +360,7 @@ vmspace_free(vm)
 vm_map_t
 vm_map_create(pmap, min, max, pageable)
 	pmap_t		pmap;
-	vm_offset_t	min, max;
+	vaddr_t	min, max;
 	boolean_t	pageable;
 {
 	register vm_map_t	result;
@@ -388,7 +388,7 @@ vm_map_create(pmap, min, max, pageable)
 void
 vm_map_init(map, min, max, pageable)
 	register struct vm_map *map;
-	vm_offset_t	min, max;
+	vaddr_t	min, max;
 	boolean_t	pageable;
 {
 	map->header.next = map->header.prev = &map->header;
@@ -556,9 +556,9 @@ int
 vm_map_insert(map, object, offset, start, end)
 	vm_map_t	map;
 	vm_object_t	object;
-	vm_offset_t	offset;
-	vm_offset_t	start;
-	vm_offset_t	end;
+	vaddr_t	offset;
+	vaddr_t	start;
+	vaddr_t	end;
 {
 	register vm_map_entry_t		new_entry;
 	register vm_map_entry_t		prev_entry;
@@ -611,10 +611,10 @@ vm_map_insert(map, object, offset, start, end)
 			if (vm_object_coalesce(prev_entry->object.vm_object,
 					NULL,
 					prev_entry->offset,
-					(vm_offset_t) 0,
-					(vm_size_t)(prev_entry->end
+					(vaddr_t) 0,
+					(vsize_t)(prev_entry->end
 						     - prev_entry->start),
-					(vm_size_t)(end - prev_entry->end))) {
+					(vsize_t)(end - prev_entry->end))) {
 				/*
 				 *	Coalesced the two objects - can extend
 				 *	the previous map entry to include the
@@ -691,7 +691,7 @@ vm_map_insert(map, object, offset, start, end)
 boolean_t
 vm_map_lookup_entry(map, address, entry)
 	register vm_map_t	map;
-	register vm_offset_t	address;
+	register vaddr_t	address;
 	vm_map_entry_t		*entry;		/* OUT */
 {
 	register vm_map_entry_t		cur;
@@ -767,12 +767,12 @@ vm_map_lookup_entry(map, address, entry)
 int
 vm_map_findspace(map, start, length, addr)
 	register vm_map_t map;
-	register vm_offset_t start;
-	vm_size_t length;
-	vm_offset_t *addr;
+	register vaddr_t start;
+	vsize_t length;
+	vaddr_t *addr;
 {
 	register vm_map_entry_t entry, next;
-	register vm_offset_t end;
+	register vaddr_t end;
 
 	if (start < map->min_offset)
 		start = map->min_offset;
@@ -828,12 +828,12 @@ int
 vm_map_find(map, object, offset, addr, length, find_space)
 	vm_map_t	map;
 	vm_object_t	object;
-	vm_offset_t	offset;
-	vm_offset_t	*addr;		/* IN/OUT */
-	vm_size_t	length;
+	vaddr_t	offset;
+	vaddr_t	*addr;		/* IN/OUT */
+	vsize_t	length;
 	boolean_t	find_space;
 {
-	register vm_offset_t	start;
+	register vaddr_t	start;
 	int			result;
 
 	start = *addr;
@@ -936,7 +936,7 @@ static void
 _vm_map_clip_start(map, entry, start)
 	register vm_map_t	map;
 	register vm_map_entry_t	entry;
-	register vm_offset_t	start;
+	register vaddr_t	start;
 {
 	register vm_map_entry_t	new_entry;
 
@@ -991,7 +991,7 @@ static void
 _vm_map_clip_end(map, entry, end)
 	register vm_map_t	map;
 	register vm_map_entry_t	entry;
-	register vm_offset_t	end;
+	register vaddr_t	end;
 {
 	register vm_map_entry_t	new_entry;
 
@@ -1051,8 +1051,8 @@ _vm_map_clip_end(map, entry, end)
 int
 vm_map_submap(map, start, end, submap)
 	register vm_map_t	map;
-	register vm_offset_t	start;
-	register vm_offset_t	end;
+	register vaddr_t	start;
+	register vaddr_t	end;
 	vm_map_t		submap;
 {
 	vm_map_entry_t		entry;
@@ -1095,8 +1095,8 @@ vm_map_submap(map, start, end, submap)
 int
 vm_map_protect(map, start, end, new_prot, set_max)
 	register vm_map_t	map;
-	register vm_offset_t	start;
-	register vm_offset_t	end;
+	register vaddr_t	start;
+	register vaddr_t	end;
 	register vm_prot_t	new_prot;
 	register boolean_t	set_max;
 {
@@ -1163,7 +1163,7 @@ vm_map_protect(map, start, end, new_prot, set_max)
 
 			if (current->is_a_map) {
 				vm_map_entry_t	share_entry;
-				vm_offset_t	share_end;
+				vaddr_t	share_end;
 
 				vm_map_lock(current->object.share_map);
 				(void) vm_map_lookup_entry(
@@ -1217,8 +1217,8 @@ vm_map_protect(map, start, end, new_prot, set_max)
 int
 vm_map_inherit(map, start, end, new_inheritance)
 	register vm_map_t	map;
-	register vm_offset_t	start;
-	register vm_offset_t	end;
+	register vaddr_t	start;
+	register vaddr_t	end;
 	register vm_inherit_t	new_inheritance;
 {
 	register vm_map_entry_t	entry;
@@ -1270,13 +1270,13 @@ vm_map_inherit(map, start, end, new_inheritance)
 int
 vm_map_pageable(map, start, end, new_pageable)
 	register vm_map_t	map;
-	register vm_offset_t	start;
-	register vm_offset_t	end;
+	register vaddr_t	start;
+	register vaddr_t	end;
 	register boolean_t	new_pageable;
 {
 	register vm_map_entry_t	entry;
 	vm_map_entry_t		start_entry;
-	register vm_offset_t	failed = 0;
+	register vaddr_t	failed = 0;
 	int			rv;
 
 	vm_map_lock(map);
@@ -1392,15 +1392,15 @@ vm_map_pageable(map, start, end, new_pageable)
 
 				vm_object_shadow(&entry->object.vm_object,
 						&entry->offset,
-						(vm_size_t)(entry->end
+						(vsize_t)(entry->end
 							- entry->start));
 				entry->needs_copy = FALSE;
 			    }
 			    else if (entry->object.vm_object == NULL) {
 				entry->object.vm_object =
-				    vm_object_allocate((vm_size_t)(entry->end
+				    vm_object_allocate((vsize_t)(entry->end
 				    			- entry->start));
-				entry->offset = (vm_offset_t)0;
+				entry->offset = (vaddr_t)0;
 			    }
 			}
 		    }
@@ -1507,16 +1507,16 @@ vm_map_pageable(map, start, end, new_pageable)
 int
 vm_map_clean(map, start, end, syncio, invalidate)
 	vm_map_t	map;
-	vm_offset_t	start;
-	vm_offset_t	end;
+	vaddr_t	start;
+	vaddr_t	end;
 	boolean_t	syncio;
 	boolean_t	invalidate;
 {
 	register vm_map_entry_t current;
 	vm_map_entry_t entry;
-	vm_size_t size;
+	vsize_t size;
 	vm_object_t object;
-	vm_offset_t offset;
+	vaddr_t offset;
 
 	vm_map_lock_read(map);
 	VM_MAP_RANGE_CHECK(map, start, end);
@@ -1556,7 +1556,7 @@ vm_map_clean(map, start, end, syncio, invalidate)
 		if (current->is_a_map) {
 			register vm_map_t smap;
 			vm_map_entry_t tentry;
-			vm_size_t tsize;
+			vsize_t tsize;
 
 			smap = current->object.share_map;
 			vm_map_lock_read(smap);
@@ -1646,8 +1646,8 @@ vm_map_entry_delete(map, entry)
 int
 vm_map_delete(map, start, end)
 	register vm_map_t	map;
-	vm_offset_t		start;
-	register vm_offset_t	end;
+	vaddr_t		start;
+	register vaddr_t	end;
 {
 	register vm_map_entry_t	entry;
 	vm_map_entry_t		first_entry;
@@ -1683,7 +1683,7 @@ vm_map_delete(map, start, end)
 
 	while ((entry != &map->header) && (entry->start < end)) {
 		vm_map_entry_t		next;
-		register vm_offset_t	s, e;
+		register vaddr_t	s, e;
 		register vm_object_t	object;
 
 		vm_map_clip_end(map, entry, end);
@@ -1742,8 +1742,8 @@ vm_map_delete(map, start, end)
 int
 vm_map_remove(map, start, end)
 	register vm_map_t	map;
-	register vm_offset_t	start;
-	register vm_offset_t	end;
+	register vaddr_t	start;
+	register vaddr_t	end;
 {
 	register int		result;
 
@@ -1765,8 +1765,8 @@ vm_map_remove(map, start, end)
 boolean_t
 vm_map_check_protection(map, start, end, protection)
 	register vm_map_t	map;
-	register vm_offset_t	start;
-	register vm_offset_t	end;
+	register vaddr_t	start;
+	register vaddr_t	end;
 	register vm_prot_t	protection;
 {
 	register vm_map_entry_t	entry;
@@ -1893,7 +1893,7 @@ vm_map_copy_entry(src_map, dst_map, src_entry, dst_entry)
 		temp_object = dst_entry->object.vm_object;
 		vm_object_copy(src_entry->object.vm_object,
 				src_entry->offset,
-				(vm_size_t)(src_entry->end -
+				(vsize_t)(src_entry->end -
 					    src_entry->start),
 				&dst_entry->object.vm_object,
 				&dst_entry->offset,
@@ -1960,9 +1960,9 @@ vm_map_copy(dst_map, src_map,
 			  dst_alloc, src_destroy)
 	vm_map_t	dst_map;
 	vm_map_t	src_map;
-	vm_offset_t	dst_addr;
-	vm_size_t	len;
-	vm_offset_t	src_addr;
+	vaddr_t	dst_addr;
+	vsize_t	len;
+	vaddr_t	src_addr;
 	boolean_t	dst_alloc;
 	boolean_t	src_destroy;
 {
@@ -1971,12 +1971,12 @@ vm_map_copy(dst_map, src_map,
 	register
 	vm_map_entry_t	dst_entry;
 	vm_map_entry_t	tmp_entry;
-	vm_offset_t	src_start;
-	vm_offset_t	src_end;
-	vm_offset_t	dst_start;
-	vm_offset_t	dst_end;
-	vm_offset_t	src_clip;
-	vm_offset_t	dst_clip;
+	vaddr_t	src_start;
+	vaddr_t	src_end;
+	vaddr_t	dst_start;
+	vaddr_t	dst_end;
+	vaddr_t	src_clip;
+	vaddr_t	dst_clip;
 	int		result;
 	boolean_t	old_src_destroy;
 
@@ -2041,7 +2041,7 @@ vm_map_copy(dst_map, src_map,
 		if (dst_alloc) {
 			/* XXX Consider making this a vm_map_find instead */
 			if ((result = vm_map_insert(dst_map, NULL,
-					(vm_offset_t) 0, dst_start, dst_end)) != KERN_SUCCESS)
+					(vaddr_t) 0, dst_start, dst_end)) != KERN_SUCCESS)
 				goto Return;
 		}
 		else if (!vm_map_check_protection(dst_map, dst_start, dst_end,
@@ -2124,10 +2124,10 @@ vm_map_copy(dst_map, src_map,
 		}
 		else {
 			register vm_map_t	new_dst_map;
-			vm_offset_t		new_dst_start;
-			vm_size_t		new_size;
+			vaddr_t		new_dst_start;
+			vsize_t		new_size;
 			vm_map_t		new_src_map;
-			vm_offset_t		new_src_start;
+			vaddr_t		new_src_start;
 
 			/*
 			 *	We have to follow at least one sharing map.
@@ -2146,7 +2146,7 @@ vm_map_copy(dst_map, src_map,
 			}
 
 			if (dst_entry->is_a_map) {
-			    	vm_offset_t	new_dst_end;
+			    	vaddr_t	new_dst_end;
 
 				new_dst_map = dst_entry->object.share_map;
 				new_dst_start = dst_entry->offset;
@@ -2171,7 +2171,7 @@ vm_map_copy(dst_map, src_map,
 							new_dst_end);
 					(void) vm_map_insert(new_dst_map,
 							NULL,
-							(vm_offset_t) 0,
+							(vaddr_t) 0,
 							new_dst_start,
 							new_dst_end);
 					vm_map_unlock(new_dst_map);
@@ -2385,7 +2385,7 @@ vmspace_fork(vm1)
 				check = vm_map_copy(new_map,
 						old_entry->object.share_map,
 						new_entry->start,
-						(vm_size_t)(new_entry->end -
+						(vsize_t)(new_entry->end -
 							new_entry->start),
 						old_entry->offset,
 						FALSE, FALSE);
@@ -2406,7 +2406,7 @@ vmspace_fork(vm1)
 
 #if defined(i386) || defined(pc532)		/* XXX XXX XXX */
 	/* Allocate page table space. */
-	{ vm_offset_t addr = VM_MAXUSER_ADDRESS;
+	{ vaddr_t addr = VM_MAXUSER_ADDRESS;
 	(void) vm_allocate(new_map, &addr, VM_MAX_ADDRESS - addr, FALSE);
 	(void) vm_map_inherit(new_map, addr, VM_MAX_ADDRESS,
 	    VM_INHERIT_NONE);
@@ -2447,18 +2447,18 @@ int
 vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 				object, offset, out_prot, wired, single_use)
 	vm_map_t		*var_map;	/* IN/OUT */
-	register vm_offset_t	vaddr;
+	register vaddr_t	vaddr;
 	register vm_prot_t	fault_type;
 
 	vm_map_entry_t		*out_entry;	/* OUT */
 	vm_object_t		*object;	/* OUT */
-	vm_offset_t		*offset;	/* OUT */
+	vaddr_t		*offset;	/* OUT */
 	vm_prot_t		*out_prot;	/* OUT */
 	boolean_t		*wired;		/* OUT */
 	boolean_t		*single_use;	/* OUT */
 {
 	vm_map_t			share_map;
-	vm_offset_t			share_offset;
+	vaddr_t			share_offset;
 	register vm_map_entry_t		entry;
 	register vm_map_t		map = *var_map;
 	register vm_prot_t		prot;
@@ -2598,7 +2598,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 			vm_object_shadow(
 				&entry->object.vm_object,
 				&entry->offset,
-				(vm_size_t) (entry->end - entry->start));
+				(vsize_t) (entry->end - entry->start));
 				
 			entry->needs_copy = FALSE;
 			lockmgr(&share_map->lock, LK_DOWNGRADE, (void *)0);
@@ -2625,7 +2625,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 		}
 
 		entry->object.vm_object = vm_object_allocate(
-					(vm_size_t)(entry->end - entry->start));
+					(vsize_t)(entry->end - entry->start));
 		entry->offset = 0;
 		lockmgr(&share_map->lock, LK_DOWNGRADE, (void *)0);
 	}
@@ -2697,7 +2697,7 @@ vm_map_lookup_done(map, entry)
 void
 vm_map_simplify(map, start)
 	vm_map_t	map;
-	vm_offset_t	start;
+	vaddr_t	start;
 {
 	vm_map_entry_t	this_entry;
 	vm_map_entry_t	prev_entry;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.67 1998/06/08 06:55:57 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.67.2.1 1998/07/30 14:04:02 eeh Exp $	*/
 
 /**************************************************************************
 **
@@ -248,7 +248,7 @@
 #if defined(__NetBSD__) && defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #undef vtophys
-#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
+#define	vtophys(va)	alpha_XXX_dmamap((vaddr_t)(va))
 #endif
 
 /*==========================================================
@@ -1094,11 +1094,11 @@ struct ncb {
 	**	of the 53c810 chip.
 	*/
 #ifndef __NetBSD__
-	vm_offset_t     vaddr;
-	vm_offset_t     paddr;
+	vaddr_t     vaddr;
+	paddr_t     paddr;
 
-	vm_offset_t     vaddr2;
-	vm_offset_t     paddr2;
+	vaddr_t     vaddr2;
+	paddr_t     paddr2;
 
 #else
 	bus_addr_t	paddr;
@@ -1397,8 +1397,8 @@ static	void	ncb_profile	(ncb_p np, ccb_p cp);
 static	void	ncr_script_copy_and_bind
 				(ncb_p np, ncrcmd *src, ncrcmd *dst, int len);
 static  void    ncr_script_fill (struct script * scr, struct scripth *scrh);
-static	int	ncr_scatter	(struct dsb* phys, vm_offset_t vaddr,
-				 vm_size_t datalen);
+static	int	ncr_scatter	(struct dsb* phys, vaddr_t vaddr,
+				 vsize_t datalen);
 static	void	ncr_setmaxtags	(tcb_p tp, u_long usrtags);
 static	void	ncr_getsync	(ncb_p np, u_char sfac, u_char *fakp,
 				 u_char *scntl3p);
@@ -1434,7 +1434,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.67 1998/06/08 06:55:57 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.67.2.1 1998/07/30 14:04:02 eeh Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4597,8 +4597,8 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	**----------------------------------------------------
 	*/
 
-	segments = ncr_scatter (&cp->phys, (vm_offset_t) xp->data,
-					(vm_size_t) xp->datalen);
+	segments = ncr_scatter (&cp->phys, (vaddr_t) xp->data,
+					(vsize_t) xp->datalen);
 
 	if (segments < 0) {
 		xp->error = XS_DRIVER_STUFFUP;
@@ -7348,7 +7348,7 @@ static void ncr_opennings (ncb_p np, lcb_p lp, struct scsipi_xfer * xp)
 */
 
 static	int	ncr_scatter
-	(struct dsb* phys, vm_offset_t vaddr, vm_size_t datalen)
+	(struct dsb* phys, vaddr_t vaddr, vsize_t datalen)
 {
 	u_long	paddr, pnext;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.1.1.1.2.1 1998/07/30 14:03:54 eeh Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -796,7 +796,7 @@ struct sparc_insn sparc_i[] = {
 
 db_addr_t
 db_disasm(loc, altfmt)
-	vm_offset_t loc;
+	vaddr_t loc;
 	boolean_t altfmt;
 {
 	struct sparc_insn*	i_ptr = (struct sparc_insn *)&sparc_i;
