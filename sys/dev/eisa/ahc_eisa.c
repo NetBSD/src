@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.13 1997/08/27 11:24:42 bouyer Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.14 1998/03/16 15:40:51 leo Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -384,7 +384,7 @@ ahc_eisa_attach(parent, self, aux)
 	}
 	printf(": %s\n", model);
 
-	ahc_construct(ahc, iot, ioh, type, AHC_FNONE);
+	ahc_construct(ahc, iot, ioh, ea->eba_dmat, type, AHC_FNONE);
 	if (eisa_intr_map(ec, irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",
 		    ahc->sc_dev.dv_xname, irq);

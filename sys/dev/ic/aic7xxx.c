@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.27 1998/01/12 09:23:13 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.28 1998/03/16 15:36:17 leo Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -173,7 +173,14 @@ extern vm_offset_t alpha_XXX_dmamap(vm_offset_t);
 #endif /* defined(__NetBSD__) */
 
 #include <sys/kernel.h>
+
+#define	SCB_DMA_OFFSET(ahc, scb, member)				\
+			((ahc)->sc_dmamap_control->dm_segs[0].ds_addr +	\
+			(scb)->tag * sizeof(struct scb) +		\
+			offsetof(struct scb, member))
 #define KVTOPHYS(x)   vtophys(x)
+
+#define AHC_MAXXFER	((AHC_NSEG - 1) << PGSHIFT)
 
 #define MIN(a,b) ((a < b) ? a : b)
 #define ALL_TARGETS -1
@@ -308,6 +315,8 @@ static void	ahc_handle_seqint __P((struct ahc_data *ahc, u_int8_t intstat));
 static struct scb *
 		ahc_get_scb __P((struct ahc_data *ahc, int flags));
 static void	ahc_loadseq __P((struct ahc_data *ahc));
+static struct scb *
+		ahc_new_scb __P((struct ahc_data *ahc, struct scb *scb));
 static int	ahc_match_scb __P((struct scb *scb, int target, char channel));
 static int	ahc_poll __P((struct ahc_data *ahc, int wait));
 #ifdef AHC_DEBUG
@@ -432,10 +441,11 @@ ahc_alloc(unit, iobase, type, flags)
 	u_long iobase;
 #elif defined(__NetBSD__)
 void
-ahc_construct(ahc, st, sh, type, flags)
+ahc_construct(ahc, st, sh, dt, type, flags)
 	struct  ahc_data *ahc;
 	bus_space_tag_t st;
 	bus_space_handle_t sh;
+	bus_dma_tag_t dt;
 #endif
 	ahc_type type;
 	ahc_flag flags;
@@ -471,6 +481,7 @@ ahc_construct(ahc, st, sh, type, flags)
 #elif defined(__NetBSD__)
 	ahc->sc_st = st;
 	ahc->sc_sh = sh;
+	ahc->sc_dt = dt;
 #endif
 	ahc->type = type;
 	ahc->flags = flags;
@@ -756,6 +767,7 @@ ahc_send_scb(ahc, scb)
         struct	scb *scb;
 {
 	AHC_OUTB(ahc, SCBCNT, SCBAUTO);
+
 	if( ahc->type == AHC_284 )
 		/* Can only do 8bit PIO */
 		AHC_OUTSB(ahc, SCBARRAY, scb, SCB_PIO_TRANSFER_SIZE);
@@ -1652,20 +1664,36 @@ ahc_handle_seqint(ahc, intstat)
 				sc->byte2 =  xs->sc_link->AIC_SCSI_LUN << 5;
 				sc->length = sizeof(struct scsipi_sense_data);
 				sc->control = 0;
+#if defined(__NetBSD__)
+				sg->addr =
+					SCB_DMA_OFFSET(ahc, scb, scsi_sense);
+#elif defined(__FreeBSD__)
 				sg->addr = KVTOPHYS(&xs->AIC_SCSI_SENSE);
+#endif
 				sg->len = sizeof(struct scsipi_sense_data);
 
 				scb->control &= DISCENB;
 				scb->status = 0;
 				scb->SG_segment_count = 1;
+
+#if defined(__NetBSD__)
+				scb->SG_list_pointer =
+					SCB_DMA_OFFSET(ahc, scb, ahc_dma);
+#elif defined(__FreeBSD__)
 				scb->SG_list_pointer = KVTOPHYS(sg);
+#endif
 				scb->data = sg->addr; 
 				scb->datalen = sg->len;
 #ifdef AHC_BROKEN_CACHE
 				if (ahc_broken_cache)
 					INVALIDATE_CACHE();
 #endif
+#if defined(__NetBSD__)
+				scb->cmdpointer =
+					SCB_DMA_OFFSET(ahc, scb, sense_cmd);
+#elif defined(__FreeBSD__)
 				scb->cmdpointer = KVTOPHYS(sc);
+#endif
 				scb->cmdlen = sizeof(*sc);
 
 				scb->flags |= SCB_SENSE;
@@ -1751,11 +1779,16 @@ ahc_handle_seqint(ahc, intstat)
 			 */
 			resid_sgs = AHC_INB(ahc, SCB_RESID_SGCNT) - 1;
 			while (resid_sgs > 0) {
-				int sg;
+			    int sg;
 
-				sg = scb->SG_segment_count - resid_sgs;
-				xs->resid += scb->ahc_dma[sg].len;
-				resid_sgs--;
+			    sg = scb->SG_segment_count - resid_sgs;
+#if defined(__NetBSD_)
+			    /* 'ahc_dma' might contain swapped values */
+			    xs->resid += scb->dmamap_xfer->dm_segs[sg].ds_len;
+#else
+			    xs->resid += scb->ahc_dma[sg].len;
+#endif
+			    resid_sgs--;
 			}
 
 #if defined(__FreeBSD__)
@@ -1948,6 +1981,27 @@ ahc_done(ahc, scb)
 	struct scsipi_xfer *xs = scb->xs;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("ahc_done\n"));
+
+#if defined(__NetBSD__)
+	/*
+	 * If we were a data transfer, unload the map that described
+	 * the data buffer.
+	 */
+	if (xs->datalen) {
+		bus_dmamap_sync(ahc->sc_dt, scb->dmamap_xfer, 0,
+			scb->dmamap_xfer->dm_mapsize,
+			(xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
+			BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(ahc->sc_dt, scb->dmamap_xfer);
+	}
+	/*
+	 * Sync the scb map, so all it's contents are valid
+	 */
+	bus_dmamap_sync(ahc->sc_dt, ahc->sc_dmamap_control,
+		(scb)->tag * sizeof(struct scb), sizeof(struct scb),
+		BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		
+#endif
 	/*
 	 * Put the results of the operation
 	 * into the xfer and call whoever started it
@@ -1959,8 +2013,13 @@ ahc_done(ahc, scb)
 		xs->error = XS_DRIVER_STUFFUP;
 	} else
 #endif
-	if(scb->flags & SCB_SENSE)
+	if(scb->flags & SCB_SENSE) {
 		xs->error = XS_SENSE;
+#if defined(__NetBSD__)
+		bcopy(&scb->scsi_sense, &xs->AIC_SCSI_SENSE,
+			sizeof(scb->scsi_sense));
+#endif
+	}
 	if(scb->flags & SCB_SENTORDEREDTAG)
 		ahc->in_timeout = FALSE;
 #if defined(__FreeBSD__)
@@ -2038,6 +2097,12 @@ ahc_init(ahc)
 	u_int8_t  scsi_conf, sblkctl, i;
 	u_int16_t ultraenable = 0;
 	int	  max_targ = 15;
+#if defined(__NetBSD__)
+	bus_dma_segment_t	seg;
+	int			error, rseg, scb_size;
+	struct scb		*scb_space;
+#endif
+
 	/*
 	 * Assume we have a board at this stage and it has been reset.
 	 */
@@ -2119,7 +2184,45 @@ ahc_init(ahc)
 		ahc->maxscbs = ahc->maxhscbs;
 		ahc->flags &= ~AHC_PAGESCBS;
 	}
-
+#if defined(__NetBSD__)
+	/*
+	 * We allocate the space for all control-blocks at once in
+	 * dma-able memory.
+	 */
+	scb_size = ahc->maxscbs * sizeof(struct scb);
+	if ((error = bus_dmamem_alloc(ahc->sc_dt, scb_size, 
+			NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to allocate control structures, "
+			"error = %d\n", ahc_name(ahc), error);
+		return -1;
+	}
+	if ((error = bus_dmamem_map(ahc->sc_dt, &seg, rseg, scb_size,
+			(caddr_t *)&scb_space,
+			BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("%s: unable to map control structures, error = %d\n",
+			ahc_name(ahc), error);
+		return -1;
+	}
+	if ((error = bus_dmamap_create(ahc->sc_dt, scb_size, 1, scb_size,
+			0, BUS_DMA_NOWAIT | ahc->sc_dmaflags,
+			&ahc->sc_dmamap_control)) != 0) {
+                printf("%s: unable to create control DMA map, error = %d\n",
+			ahc_name(ahc), error);
+                return -1;
+        }
+	if ((error = bus_dmamap_load(ahc->sc_dt, ahc->sc_dmamap_control,
+			scb_space, scb_size, NULL, BUS_DMA_NOWAIT)) != 0) {
+                printf("%s: unable to load control DMA map, error = %d\n",
+                    ahc_name(ahc), error);
+                return -1;
+        }
+	for (i = 0; i < ahc->maxscbs; i++) {
+		if (ahc_new_scb(ahc, &scb_space[i]) == NULL)
+			break;
+		STAILQ_INSERT_HEAD(&ahc->page_scbs, &scb_space[i], links);
+	}
+	ahc->maxscbs = i;
+#endif
 	printf("%d SCBs\n", ahc->maxhscbs);
 
 #ifdef AHC_DEBUG
@@ -2426,14 +2529,18 @@ ahc_scsi_cmd(xs)
 	struct	scb *scb;
 	struct	ahc_dma_seg *sg;
 	int	seg;		/* scatter gather seg being worked on */
+#if defined(__FreeBSD__)
 	unsigned long thiskv, nextkv;
 	physaddr thisphys, nextphys;
 	int	bytes_this_seg, bytes_this_page, datalen, flags;
+#endif
+	int	flags;
 	struct	ahc_data *ahc;
 	u_short	mask;
 	int	s;
 #if defined(__NetBSD__)			/* XXX */
 	int	dontqueue = 0, fromqueue = 0;
+	int	error;
 #endif
 
 	ahc = (struct ahc_data *)xs->sc_link->adapter_softc;
@@ -2575,18 +2682,61 @@ ahc_scsi_cmd(xs)
 #endif
 				  (xs->sc_link->AIC_SCSI_LUN & 0x07);
 	scb->cmdlen = xs->cmdlen;
+#if defined(__NetBSD__)
+	bcopy(xs->cmd, &scb->scsi_cmd, xs->cmdlen);
+	scb->cmdpointer = SCB_DMA_OFFSET(ahc, scb, scsi_cmd);
+#elif defined(__FreeBSD__)
 	scb->cmdpointer = KVTOPHYS(xs->cmd);
+#endif
 	xs->resid = 0;
 	xs->status = 0;
 	if (xs->datalen) {      /* should use S/G only if not zero length */
+		SC_DEBUG(xs->sc_link, SDEV_DB4,
+			 ("%ld @%p:- ", (long)xs->datalen, xs->data));
+
+#if defined(__NetBSD__)
+		error = bus_dmamap_load(ahc->sc_dt, scb->dmamap_xfer,
+			    xs->data, xs->datalen, NULL,
+			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    BUS_DMA_WAITOK);
+		if (error) {
+			if (error == EFBIG) {
+			    printf("%s: ahc_scsi_cmd: more than %d DMA segs\n",
+					ahc_name(ahc), AHC_NSEG);
+			} else {
+			    printf("%s: ahc_scsi_cmd: error %d loading dma "
+					"map\n", ahc_name(ahc), error);
+			}
+			SC_DEBUGN(xs->sc_link, SDEV_DB4, ("\n"));
+			xs->error = XS_DRIVER_STUFFUP;
+			ahc_free_scb(ahc, scb, flags);
+			return (COMPLETE);
+		}
+		bus_dmamap_sync(ahc->sc_dt, scb->dmamap_xfer, 0,
+			scb->dmamap_xfer->dm_mapsize, (flags & SCSI_DATA_IN) ?
+			BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+		/*
+		 * Load the hardware scatter/gather map with the contents
+		 * of the DMA map.
+		 */
+		scb->SG_list_pointer = SCB_DMA_OFFSET(ahc, scb, ahc_dma);
+
+		sg = scb->ahc_dma;
+		for (seg = 0; seg < scb->dmamap_xfer->dm_nsegs; seg++) {
+			sg->addr = scb->dmamap_xfer->dm_segs[seg].ds_addr;
+			sg->len  = scb->dmamap_xfer->dm_segs[seg].ds_len;
+			SC_DEBUGN(xs->sc_link, SDEV_DB4, ("0x%lx",
+					(u_long)sg->addr));
+			sg++;
+		}
+		SC_DEBUGN(xs->sc_link, SDEV_DB4, ("\n"));
+#elif defined(__FreeBSD__)
 		scb->SG_list_pointer = KVTOPHYS(scb->ahc_dma);
 		sg = scb->ahc_dma;
 		seg = 0;
 		/*
 		 * Set up the scatter gather block
 		 */
-		SC_DEBUG(xs->sc_link, SDEV_DB4,
-			 ("%ld @%p:- ", (long)xs->datalen, xs->data));
 		datalen = xs->datalen;
 		thiskv = (unsigned long) xs->data;
 		thisphys = KVTOPHYS(thiskv);
@@ -2633,11 +2783,6 @@ ahc_scsi_cmd(xs)
 			sg++;
 			seg++;
 		}
-		scb->SG_segment_count = seg;
-
-		/* Copy the first SG into the data pointer area */
-		scb->data = scb->ahc_dma->addr;
-		scb->datalen = scb->ahc_dma->len;
 		SC_DEBUGN(xs->sc_link, SDEV_DB4, ("\n"));
 		if (datalen) { 
 			/* there's still data, must have run out of segs! */
@@ -2647,6 +2792,12 @@ ahc_scsi_cmd(xs)
 			ahc_free_scb(ahc, scb, flags);
 			return (COMPLETE);
 		}
+#endif
+		scb->SG_segment_count = seg;
+
+		/* Copy the first SG into the data pointer area */
+		scb->data = scb->ahc_dma->addr;
+		scb->datalen = scb->ahc_dma->len;
 #ifdef AHC_BROKEN_CACHE
 		if (ahc_broken_cache)
 			INVALIDATE_CACHE();
@@ -2661,6 +2812,11 @@ ahc_scsi_cmd(xs)
 		scb->data = 0;
 		scb->datalen = 0;
 	}
+#if defined(__NetBSD__)
+	bus_dmamap_sync(ahc->sc_dt, ahc->sc_dmamap_control,
+		(scb)->tag * sizeof(struct scb), sizeof(struct scb),
+		BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+#endif
 
 #ifdef AHC_DEBUG
 	if((ahc_debug & AHC_SHOWSCBS) &&
@@ -2786,6 +2942,53 @@ ahc_free_scb(ahc, scb, flags)
 }
 
 /*
+ * Allocate and initialize a new scb
+ */
+static struct scb *
+ahc_new_scb(ahc, scbp)
+	struct ahc_data *ahc;
+	struct scb	*scbp;
+{
+#if defined(__NetBSD__)
+	int		error;
+#endif
+
+	if (scbp == NULL)
+	    scbp = (struct scb *) malloc(sizeof(struct scb), M_TEMP, M_NOWAIT);
+
+	if (scbp != NULL) {
+		bzero(scbp, sizeof(struct scb));
+#if defined(__NetBSD__)
+		error =  bus_dmamap_create(ahc->sc_dt, AHC_MAXXFER, AHC_NSEG,
+			    AHC_MAXXFER, 0,
+			    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW|ahc->sc_dmaflags,
+			    &scbp->dmamap_xfer);
+		if (error) {
+			printf("%s: unable to create DMA map, error = %d\n",
+			    ahc_name(ahc), error);
+			free(scbp, M_TEMP);
+			return (NULL);
+		}
+#endif
+		scbp->tag = ahc->numscbs;
+		if( ahc->numscbs < ahc->maxhscbs )
+			scbp->position = ahc->numscbs;
+		else
+			scbp->position = SCB_LIST_NULL;
+		ahc->numscbs++;
+		/*
+		 * Place in the scbarray
+		 * Never is removed.
+		 */
+		ahc->scbarray[scbp->tag] = scbp;
+	}
+	else {
+		printf("%s: Can't malloc SCB\n", ahc_name(ahc));
+	}
+	return (scbp);
+}
+
+/*
  * Get a free scb, either one already assigned to a hardware slot
  * on the adapter or one that will require an SCB to be paged out before
  * use. If there are none, see if we can allocate a new SCB.  Otherwise
@@ -2811,28 +3014,11 @@ ahc_get_scb(ahc, flags)
 		else if((scbp = ahc->page_scbs.stqh_first)) {
 			STAILQ_REMOVE_HEAD(&ahc->page_scbs, links);
 		}
+#if defined(__FreeBSD__)
 		else if(ahc->numscbs < ahc->maxscbs) {
-			scbp = (struct scb *) malloc(sizeof(struct scb),
-				M_TEMP, M_NOWAIT);
-			if (scbp) {
-				bzero(scbp, sizeof(struct scb));
-				scbp->tag = ahc->numscbs;
-				if( ahc->numscbs < ahc->maxhscbs )
-					scbp->position = ahc->numscbs;
-				else
-					scbp->position = SCB_LIST_NULL;
-				ahc->numscbs++;
-				/*
-				 * Place in the scbarray
-				 * Never is removed.
-				 */
-				ahc->scbarray[scbp->tag] = scbp;
-			}
-			else {
-				printf("%s: Can't malloc SCB\n",
-				       ahc_name(ahc));
-			}
+			scbp = ahc_new_scb(ahc);
 		}
+#endif
 		else {
 			if (!(flags & SCSI_NOSLEEP)) {
 				tsleep((caddr_t)&ahc->free_scbs, PRIBIO,
