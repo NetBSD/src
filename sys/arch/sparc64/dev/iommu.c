@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.27 2001/01/25 21:41:10 martin Exp $	*/
+/*	$NetBSD: iommu.c,v 1.28 2001/01/27 03:40:39 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -567,7 +567,7 @@ iommu_dvmamap_unload(t, is, map)
 	struct iommu_state *is;
 	bus_dmamap_t map;
 {
-	vaddr_t addr;
+	vaddr_t addr, offset;
 	size_t len;
 	int error, s, i;
 	bus_addr_t dvmaddr;
@@ -575,11 +575,12 @@ iommu_dvmamap_unload(t, is, map)
 	paddr_t pa;
 
 	dvmaddr = (map->dm_segs[0].ds_addr & ~PGOFSET);
-	pa = (paddr_t)map->dm_segs[0].ds_addr;
+	pa = 0;
 	sgsize = 0;
 	for (i = 0; i<map->dm_nsegs; i++) {
 
 		addr = trunc_page(map->dm_segs[i].ds_addr);
+		offset = map->dm_segs[i].ds_addr & PGOFSET;
 		len = map->dm_segs[i].ds_len;
 		if (len == 0 || addr == 0)
 			printf("iommu_dvmamap_unload: map = %p, i = %d, len = %d, addr = %lx\n",
@@ -590,10 +591,11 @@ iommu_dvmamap_unload(t, is, map)
 			 map, (long)addr, (long)len));
 		iommu_remove(is, addr, len);
 		
-		sgsize += map->dm_segs[i].ds_len;
-		if (round_page(pa) != round_page(map->dm_segs[i].ds_addr))
-			sgsize = round_page(sgsize);
-		pa = map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len;
+		if (trunc_page(pa) == addr)
+			sgsize += trunc_page(len + offset);
+		else 
+			sgsize += round_page(len + offset);
+		pa = addr + offset + len;
 
 	}
 	/* Flush the caches */
