@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.95 2000/09/14 19:13:29 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.96 2000/09/15 06:36:25 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1020,10 +1020,10 @@ suspendsched()
 	}
 	proclist_unlock_read();
 
-	/* go through the run queues, remove non-P_SYSTEM processes */
+	/* Go through the run queues, remove non-P_SYSTEM processes */
 	for (i = 0; i < RUNQUE_NQS; i++) {
-		for (p = (struct proc *)&sched_qs[i];
-		    p->p_forw != (struct proc *)&sched_qs[i]; p = next) {
+		for (p = sched_qs[i].ph_link;
+		    p != (struct proc *)&sched_qs[i]; p = next) {
 			next = p->p_forw;
 			if ((p->p_flag & P_SYSTEM) == 0) {
 				if (p->p_flag & P_INMEM)
