@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.13 2004/08/30 15:05:19 drochner Exp $
+#	$NetBSD: files.xen,v 1.14 2004/09/14 16:51:58 jdolecek Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -187,9 +187,6 @@ include	"compat/freebsd/files.freebsd"
 file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 file	arch/i386/i386/freebsd_sigcode.S	compat_freebsd
 file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
-
-# a.out binary compatibility (COMPAT_AOUT)
-include	"compat/aout/files.aout"
 
 # Win32 binary compatibility (COMPAT_PECOFF)
 include	"compat/pecoff/files.pecoff"
