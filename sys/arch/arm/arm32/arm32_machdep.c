@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2001/06/11 11:56:58 rearnsha Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.1 2001/07/28 13:28:03 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.

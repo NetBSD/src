@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.14 2000/03/24 17:05:30 ws Exp $	*/
+/*	$NetBSD: exception.S,v 1.1 2001/07/28 13:28:03 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
