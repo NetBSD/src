@@ -1,4 +1,4 @@
-/* $NetBSD: sysarch.h,v 1.9 2002/01/14 00:53:16 thorpej Exp $ */
+/* $NetBSD: sysarch.h,v 1.10 2003/09/11 09:40:11 kleink Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,12 +94,15 @@ extern	int (*alpha_bus_get_window)(int, int,
 	    struct alpha_bus_space_translation *);
 extern	struct alpha_pci_chipset *alpha_pci_chipset;
 #else
+#include <sys/cdefs.h>
+
 struct alpha_bus_window {
 	caddr_t		abw_addr;
 	size_t		abw_size;
 	struct alpha_bus_space_translation abw_abst;
 };
 
+__BEGIN_DECLS
 int	alpha_bus_getwindows(int, struct alpha_bus_window **);
 int	alpha_bus_mapwindow(struct alpha_bus_window *);
 void	alpha_bus_unmapwindow(struct alpha_bus_window *);
@@ -113,6 +116,7 @@ u_int32_t alpha_pci_conf_read(u_int, u_int, u_int, u_int);
 void	alpha_pci_conf_write(u_int, u_int, u_int, u_int, u_int32_t);
 
 int	sysarch(int, void *);
+__END_DECLS
 #endif /* _KERNEL */
 
 #endif /* !_ALPHA_SYSARCH_H_ */
