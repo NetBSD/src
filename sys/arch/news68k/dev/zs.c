@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1 1999/12/09 14:53:06 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.2 1999/12/29 05:01:13 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ struct zsdevice {
 };
 
 static struct zsdevice *zsaddr[NZS];
-static u_long zs_sir;
+static u_char zs_sir;
 
 /* Flags from cninit() */
 static int zs_hwflags[NZS][2];

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 1999/12/09 14:53:17 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 1999/12/29 05:01:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1035,47 +1035,48 @@ void intrhand_lev2 __P((void));
 void intrhand_lev3 __P((void));
 void intrhand_lev4 __P((void));
 void intrhand_lev5 __P((void));
-#if NLE > 0
-int leintr __P((int));
-#endif
-#if NSI > 0
-int si_intr __P((void *));
-#endif
 
 void (*sir_routines[NSIR]) __P((void *));
 void *sir_args[NSIR];
-u_long ssir;
+u_char ssir;
 int next_sir;
 
 void
 intrhand_lev2()
 {
-	int bit;
+	int bit, s;
+	u_char sintr;
 
 	/* disable level 2 interrupt */
 	*ctrl_int2 = 0;
+
+	s = splhigh();
+	sintr = ssir;
+	ssir = 0;
+	splx(s);
+
 	intrcnt[2]++;
 	uvmexp.intrs++;
 
-	while ((bit = ffs(ssir)) != 0) {
-		--bit;
-		ssir &= ~(1 << bit);
-		uvmexp.softs++;
-		if (sir_routines[bit])
-			sir_routines[bit](sir_args[bit]);
+	for (bit = 0; bit < next_sir; bit++) {
+		if (sintr & (1 << bit)) {
+			uvmexp.softs++;
+			if (sir_routines[bit])
+				sir_routines[bit](sir_args[bit]);
+		}
 	}
 }
 /*
  * Allocation routines for software interrupts.
  */
-u_long
+u_char
 allocate_sir(proc, arg)
 	void (*proc) __P((void *));
 	void *arg;
 {
 	int bit;
 
-	if( next_sir >= NSIR )
+	if (next_sir >= NSIR)
 		panic("allocate_sir: none left");
 	bit = next_sir++;
 	sir_routines[bit] = proc;
@@ -1088,9 +1089,9 @@ init_sir()
 {
 	extern void netintr __P((void));
 
-	sir_routines[0] = (void (*) __P((void *)))netintr;
-	sir_routines[1] = (void (*) __P((void *)))softclock;
-	next_sir = 2;
+	sir_routines[SIR_NET]   = (void (*) __P((void *)))netintr;
+	sir_routines[SIR_CLOCK] = (void (*) __P((void *)))softclock;
+	next_sir = NEXT_SIR;
 }
 
 
@@ -1112,6 +1113,12 @@ void
 intrhand_lev4()
 {
 	int stat;
+#if NLE > 0
+	extern int leintr __P((int));
+#endif
+#if NSI > 0
+	extern int si_intr __P((int));
+#endif
 
 #define	INTST_LANCE	0x04
 #define INTST_SCSI	0x80
