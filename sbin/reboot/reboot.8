@@ -1,4 +1,4 @@
-.\"	$NetBSD: reboot.8,v 1.15 2001/11/16 12:06:32 wiz Exp $
+.\"	$NetBSD: reboot.8,v 1.16 2002/04/17 16:31:02 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,14 +40,13 @@
 .Nm reboot ,
 .Nm poweroff ,
 .Nm halt
-.Nd
-stopping, powering down and restarting the system
+.Nd restarting, powering down and stopping the system
 .Sh SYNOPSIS
 .Nm halt
 .Op Fl dlnpq
-.Nm ""
-.Op Fl dlnq
 .Nm poweroff
+.Op Fl dlnq
+.Nm ""
 .Op Fl dlnq
 .Sh DESCRIPTION
 The
