@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.6.2.1 1994/08/15 22:18:21 mycroft Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.6.2.2 1994/08/15 22:37:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -52,6 +52,10 @@
 #include <sys/exec_ecoff.h>
 #endif
 
+#ifdef COMPAT_SVR4
+#include <compat/svr4/svr4_exec.h>
+#endif
+
 #ifdef COMPAT_IBCS2
 #include <compat/ibcs2/ibcs2_exec.h>
 #endif
@@ -72,6 +76,9 @@ struct execsw execsw[] = {
 #endif
 #ifdef EXEC_ECOFF
 	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, },	/* ecoff binaries */
+#endif
+#ifdef COMPAT_SVR4
+	{ ELF_HDR_SIZE, exec_svr4_elf_makecmds, },	/* elf binaries */
 #endif
 #ifdef COMPAT_IBCS2
 	{ COFF_HDR_SIZE, exec_ibcs2_coff_makecmds, },	/* coff binaries */
