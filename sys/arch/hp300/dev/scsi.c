@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.16 1997/03/10 08:37:31 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.17 1997/03/31 01:05:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -1407,7 +1407,7 @@ scsi_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)
 	 */
 	if (freedma) {
 		hs->sc_flags &=~ SCSI_HAVEDMA;
-		dmafree(hs->sc_dq);
+		dmafree(&hs->sc_dq);
 	}
 	/*
 	 * Initialize command block
