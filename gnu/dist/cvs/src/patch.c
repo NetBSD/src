@@ -771,6 +771,11 @@ patch_dirproc (callerdat, dir, repos, update_dir, entries)
 static RETSIGTYPE
 patch_cleanup ()
 {
+    static int reenter = 0;
+
+    if (reenter++)
+	_exit(1);
+
     /* Note that the checks for existence_error are because we are
        called from a signal handler, without SIG_begincrsect, so
        we don't know whether the files got created.  */
