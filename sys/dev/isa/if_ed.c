@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.17 1994/01/12 04:12:10 mycroft Exp $
+ * $Id: if_ed.c,v 1.18 1994/01/24 00:17:20 deraadt Exp $
  */
 
 /*
@@ -2106,12 +2106,6 @@ ed_get_packet(sc, buf, len)
 	 * Fix up data start offset in mbuf to point past ether header
 	 */
 	m_adj(head, sizeof(struct ether_header));
-
-	/*
-	 * silly ether_input routine needs 'type' in host byte order
-	 */
-	eh->ether_type = ntohs(eh->ether_type);
-
 	ether_input(&sc->arpcom.ac_if, eh, head);
 	return;
 

@@ -80,8 +80,8 @@
  * This structure contains the output queue for the interface, its address, ...
  */
 struct	is_softc {
-	struct arpcom arpcom;             /* Ethernet common part */
-	int iobase;                       /* IO base address of card */
+	struct arpcom arpcom;	     /* Ethernet common part */
+	int iobase;		       /* IO base address of card */
 	struct init_block  *init_block;   /* Lance initialisation block */
 	struct mds 	*rd;
 	struct mds	*td;
@@ -90,7 +90,7 @@ struct	is_softc {
 	int	last_rd;
 	int	last_td;
 	int	no_td;
-	caddr_t bpf;                      /* BPF "magic cookie" */
+	caddr_t bpf;		      /* BPF "magic cookie" */
 
 } is_softc[NIS] ;
 
@@ -222,7 +222,7 @@ is_attach(isa_dev)
 	 */
 
 #define MAXMEM ((NRBUF+NTBUF)*(BUFSIZE) + (NRBUF+NTBUF)*sizeof(struct mds) \
-                 + sizeof(struct init_block) + 8)
+		 + sizeof(struct init_block) + 8)
 	is->init_block = (struct init_block *)malloc(MAXMEM,M_TEMP,M_NOWAIT);
 	if (!is->init_block) {
 		printf("is%d : Couldn't allocate memory for card\n",unit);
@@ -279,10 +279,10 @@ is_attach(isa_dev)
 
 int
 is_watchdog(unit)
-        int unit;
+	int unit;
 {
-        log(LOG_ERR, "is%d: device timeout\n", unit);
-        is_reset(unit);
+	log(LOG_ERR, "is%d: device timeout\n", unit);
+	is_reset(unit);
 }
 
 
@@ -401,7 +401,7 @@ is_init(unit)
 		/* Start lance */
 		iswrcsr(unit,0,STRT|IDON|INEA);
 		ifp->if_flags |= IFF_RUNNING;
-        	ifp->if_flags &= ~IFF_OACTIVE;
+		ifp->if_flags &= ~IFF_OACTIVE;
 
 		is_start(ifp);
 	}
@@ -454,69 +454,69 @@ is_start(ifp)
 			len += m->m_len;
 		}
 #if NBPFILTER > 0
-        if (is->bpf) {
-                u_short etype;
-                int off, datasize, resid;
-                struct ether_header *eh;
-                struct trailer_header {
-                        u_short ether_type;
-                        u_short ether_residual;
-                } trailer_header;
-                char ether_packet[ETHER_MAX_LEN];
-                char *ep;
+	if (is->bpf) {
+		u_short etype;
+		int off, datasize, resid;
+		struct ether_header *eh;
+		struct trailer_header {
+			u_short ether_type;
+			u_short ether_residual;
+		} trailer_header;
+		char ether_packet[ETHER_MAX_LEN];
+		char *ep;
 
-                ep = ether_packet;
+		ep = ether_packet;
 
-                /*
-                 * We handle trailers below:
-                 * Copy ether header first, then residual data,
-                 * then data. Put all this in a temporary buffer
-                 * 'ether_packet' and send off to bpf. Since the
-                 * system has generated this packet, we assume
-                 * that all of the offsets in the packet are
-                 * correct; if they're not, the system will almost
-                 * certainly crash in m_copydata.
-                 * We make no assumptions about how the data is
-                 * arranged in the mbuf chain (i.e. how much
-                 * data is in each mbuf, if mbuf clusters are
-                 * used, etc.), which is why we use m_copydata
-                 * to get the ether header rather than assume
-                 * that this is located in the first mbuf.
-                 */
-                /* copy ether header */
-                m_copydata(m0, 0, sizeof(struct ether_header), ep);
-                eh = (struct ether_header *) ep;
-                ep += sizeof(struct ether_header);
-                etype = ntohs(eh->ether_type);
-                if (etype >= ETHERTYPE_TRAIL &&
-                    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-                        datasize = ((etype - ETHERTYPE_TRAIL) << 9);
-                        off = datasize + sizeof(struct ether_header);
+		/*
+		 * We handle trailers below:
+		 * Copy ether header first, then residual data,
+		 * then data. Put all this in a temporary buffer
+		 * 'ether_packet' and send off to bpf. Since the
+		 * system has generated this packet, we assume
+		 * that all of the offsets in the packet are
+		 * correct; if they're not, the system will almost
+		 * certainly crash in m_copydata.
+		 * We make no assumptions about how the data is
+		 * arranged in the mbuf chain (i.e. how much
+		 * data is in each mbuf, if mbuf clusters are
+		 * used, etc.), which is why we use m_copydata
+		 * to get the ether header rather than assume
+		 * that this is located in the first mbuf.
+		 */
+		/* copy ether header */
+		m_copydata(m0, 0, sizeof(struct ether_header), ep);
+		eh = (struct ether_header *) ep;
+		ep += sizeof(struct ether_header);
+		etype = ntohs(eh->ether_type);
+		if (etype >= ETHERTYPE_TRAIL &&
+		    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
+			datasize = ((etype - ETHERTYPE_TRAIL) << 9);
+			off = datasize + sizeof(struct ether_header);
 
-                        /* copy trailer_header into a data structure */
-                        m_copydata(m0, off, sizeof(struct trailer_header),
-                                &trailer_header.ether_type);
+			/* copy trailer_header into a data structure */
+			m_copydata(m0, off, sizeof(struct trailer_header),
+				&trailer_header.ether_type);
 
-                        /* copy residual data */
+			/* copy residual data */
 			resid = trailer_header.ether_residual -
 				sizeof(struct trailer_header);
 			resid = ntohs(resid);
-                        m_copydata(m0, off+sizeof(struct trailer_header),
-                                resid, ep);
-                        ep += resid;
+			m_copydata(m0, off+sizeof(struct trailer_header),
+				resid, ep);
+			ep += resid;
 
-                        /* copy data */
-                        m_copydata(m0, sizeof(struct ether_header),
-                                datasize, ep);
-                        ep += datasize;
+			/* copy data */
+			m_copydata(m0, sizeof(struct ether_header),
+				datasize, ep);
+			ep += datasize;
 
-                        /* restore original ether packet type */
-                        eh->ether_type = trailer_header.ether_type;
+			/* restore original ether packet type */
+			eh->ether_type = trailer_header.ether_type;
 
-                        bpf_tap(is->bpf, ether_packet, ep - ether_packet);
-                } else
-                        bpf_mtap(is->bpf, m0);
-        }
+			bpf_tap(is->bpf, ether_packet, ep - ether_packet);
+		} else
+			bpf_mtap(is->bpf, m0);
+	}
 #endif
 
 		
@@ -705,70 +705,70 @@ static inline void is_rint(int unit)
 static inline void 
 isread(struct is_softc *is, unsigned char *buf, int len)
 {
-        register struct ether_header *eh;
-        struct mbuf *m;
-        int off, resid;
-        register struct ifqueue *inq;
+	register struct ether_header *eh;
+	struct mbuf *m;
+	int off, resid;
+	register struct ifqueue *inq;
+	u_short etype;
 
-        /*
-         * Deal with trailer protocol: if type is trailer type
-         * get true type from first 16-bit word past data.
-         * Remember that type was trailer by setting off.
-         */
-        eh = (struct ether_header *)buf;
-        eh->ether_type = ntohs((u_short)eh->ether_type);
-        len = len - sizeof(struct ether_header) - 4;
+	/*
+	 * Deal with trailer protocol: if type is trailer type
+	 * get true type from first 16-bit word past data.
+	 * Remember that type was trailer by setting off.
+	 */
+	eh = (struct ether_header *)buf;
+	etype = ntohs((u_short)eh->ether_type);
+	len = len - sizeof(struct ether_header) - 4;
 #define nedataaddr(eh, off, type)       ((type)(((caddr_t)((eh)+1)+(off))))
-        if (eh->ether_type >= ETHERTYPE_TRAIL &&
-            eh->ether_type < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-                off = (eh->ether_type - ETHERTYPE_TRAIL) * 512;
-                if (off >= ETHERMTU) return;            /* sanity */
-                eh->ether_type = ntohs(*nedataaddr(eh, off, u_short *));
-                resid = ntohs(*(nedataaddr(eh, off+2, u_short *)));
-                if (off + resid > len) return;          /* sanity */
-                len = off + resid;
-        } else  off = 0;
+	if (etype >= ETHERTYPE_TRAIL &&
+	    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
+		off = (etype - ETHERTYPE_TRAIL) * 512;
+		if (off >= ETHERMTU) return;	    /* sanity */
+		eh->ether_type = *nedataaddr(eh, off, u_short *);
+		resid = ntohs(*(nedataaddr(eh, off+2, u_short *)));
+		if (off + resid > len) return;	  /* sanity */
+		len = off + resid;
+	} else  off = 0;
 
-        if (len == 0) return;
+	if (len == 0) return;
 
-        /*
-         * Pull packet off interface.  Off is nonzero if packet
-         * has trailing header; neget will then force this header
-         * information to be at the front, but we still have to drop
-         * the type and length which are at the front of any trailer data.
-         */
-        is->arpcom.ac_if.if_ipackets++;
-        m = isget(buf, len, off, &is->arpcom.ac_if);
-        if (m == 0) return;
+	/*
+	 * Pull packet off interface.  Off is nonzero if packet
+	 * has trailing header; neget will then force this header
+	 * information to be at the front, but we still have to drop
+	 * the type and length which are at the front of any trailer data.
+	 */
+	is->arpcom.ac_if.if_ipackets++;
+	m = isget(buf, len, off, &is->arpcom.ac_if);
+	if (m == 0) return;
 #if NBPFILTER > 0
-        /*
-         * Check if there's a BPF listener on this interface.
-         * If so, hand off the raw packet to bpf. 
-         */
-        if (is->bpf) {
-                bpf_mtap(is->bpf, m);
+	/*
+	 * Check if there's a BPF listener on this interface.
+	 * If so, hand off the raw packet to bpf. 
+	 */
+	if (is->bpf) {
+		bpf_mtap(is->bpf, m);
 
-                /*
-                 * Note that the interface cannot be in promiscuous mode if
-                 * there are no BPF listeners.  And if we are in promiscuous
-                 * mode, we have to check if this packet is really ours.
-                 *
-                 * XXX This test does not support multicasts.
-                 */
-                if ((is->arpcom.ac_if.if_flags & IFF_PROMISC) &&
-                        bcmp(eh->ether_dhost, is->arpcom.ac_enaddr,
-                                sizeof(eh->ether_dhost)) != 0 &&
-                        bcmp(eh->ether_dhost, etherbroadcastaddr,
-                                sizeof(eh->ether_dhost)) != 0) {
+		/*
+		 * Note that the interface cannot be in promiscuous mode if
+		 * there are no BPF listeners.  And if we are in promiscuous
+		 * mode, we have to check if this packet is really ours.
+		 *
+		 * XXX This test does not support multicasts.
+		 */
+		if ((is->arpcom.ac_if.if_flags & IFF_PROMISC) &&
+			bcmp(eh->ether_dhost, is->arpcom.ac_enaddr,
+				sizeof(eh->ether_dhost)) != 0 &&
+			bcmp(eh->ether_dhost, etherbroadcastaddr,
+				sizeof(eh->ether_dhost)) != 0) {
 
-                        m_freem(m);
-                        return;
-                }
-        }
+			m_freem(m);
+			return;
+		}
+	}
 #endif
 
-
-        ether_input(&is->arpcom.ac_if, eh, m);
+	ether_input(&is->arpcom.ac_if, eh, m);
 }
 
 /*
@@ -786,69 +786,69 @@ isread(struct is_softc *is, unsigned char *buf, int len)
  */
 struct mbuf *
 isget(buf, totlen, off0, ifp)
-        caddr_t buf;
-        int totlen, off0;
-        struct ifnet *ifp;
+	caddr_t buf;
+	int totlen, off0;
+	struct ifnet *ifp;
 {
-        struct mbuf *top, **mp, *m, *p;
-        int off = off0, len;
-        register caddr_t cp = buf;
-        char *epkt;
+	struct mbuf *top, **mp, *m, *p;
+	int off = off0, len;
+	register caddr_t cp = buf;
+	char *epkt;
 
-        buf += sizeof(struct ether_header);
-        cp = buf;
-        epkt = cp + totlen;
+	buf += sizeof(struct ether_header);
+	cp = buf;
+	epkt = cp + totlen;
 
 
-        if (off) {
-                cp += off + 2 * sizeof(u_short);
-                totlen -= 2 * sizeof(u_short);
-        }
+	if (off) {
+		cp += off + 2 * sizeof(u_short);
+		totlen -= 2 * sizeof(u_short);
+	}
 
-        MGETHDR(m, M_DONTWAIT, MT_DATA);
-        if (m == 0)
-                return (0);
-        m->m_pkthdr.rcvif = ifp;
-        m->m_pkthdr.len = totlen;
-        m->m_len = MHLEN;
-        top = 0;
-        mp = &top;
-        while (totlen > 0) {
-                if (top) {
-                        MGET(m, M_DONTWAIT, MT_DATA);
-                        if (m == 0) {
-                                m_freem(top);
-                                return (0);
-                        }
-                        m->m_len = MLEN;
-                }
-                len = min(totlen, epkt - cp);
-                if (len >= MINCLSIZE) {
-                        MCLGET(m, M_DONTWAIT);
-                        if (m->m_flags & M_EXT)
-                                m->m_len = len = min(len, MCLBYTES);
-                        else
-                                len = m->m_len;
-                } else {
-                        /*
-                         * Place initial small packet/header at end of mbuf.
-                         */
-                        if (len < m->m_len) {
-                                if (top == 0 && len + max_linkhdr <= m->m_len)
-                                        m->m_data += max_linkhdr;
-                                m->m_len = len;
-                        } else
-                                len = m->m_len;
-                }
-                bcopy(cp, mtod(m, caddr_t), (unsigned)len);
-                cp += len;
-                *mp = m;
-                mp = &m->m_next;
-                totlen -= len;
-                if (cp == epkt)
-                        cp = buf;
-        }
-        return (top);
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == 0)
+		return (0);
+	m->m_pkthdr.rcvif = ifp;
+	m->m_pkthdr.len = totlen;
+	m->m_len = MHLEN;
+	top = 0;
+	mp = &top;
+	while (totlen > 0) {
+		if (top) {
+			MGET(m, M_DONTWAIT, MT_DATA);
+			if (m == 0) {
+				m_freem(top);
+				return (0);
+			}
+			m->m_len = MLEN;
+		}
+		len = min(totlen, epkt - cp);
+		if (len >= MINCLSIZE) {
+			MCLGET(m, M_DONTWAIT);
+			if (m->m_flags & M_EXT)
+				m->m_len = len = min(len, MCLBYTES);
+			else
+				len = m->m_len;
+		} else {
+			/*
+			 * Place initial small packet/header at end of mbuf.
+			 */
+			if (len < m->m_len) {
+				if (top == 0 && len + max_linkhdr <= m->m_len)
+					m->m_data += max_linkhdr;
+				m->m_len = len;
+			} else
+				len = m->m_len;
+		}
+		bcopy(cp, mtod(m, caddr_t), (unsigned)len);
+		cp += len;
+		*mp = m;
+		mp = &m->m_next;
+		totlen -= len;
+		if (cp == epkt)
+			cp = buf;
+	}
+	return (top);
 }
 
 
@@ -877,21 +877,21 @@ is_ioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			is_init(ifp->if_unit);	/* before arpwhohas */
-                        /*
-                         * See if another station has *our* IP address.
-                         * i.e.: There is an address conflict! If a
-                         * conflict exists, a message is sent to the
-                         * console.
-                         */
+			/*
+			 * See if another station has *our* IP address.
+			 * i.e.: There is an address conflict! If a
+			 * conflict exists, a message is sent to the
+			 * console.
+			 */
 			((struct arpcom *)ifp)->ac_ipaddr =
 				IA_SIN(ifa)->sin_addr;
 			arpwhohas((struct arpcom *)ifp, &IA_SIN(ifa)->sin_addr);
 			break;
 #endif
 #ifdef NS
-                /*
-                 * XXX - This code is probably wrong
-                 */
+		/*
+		 * XXX - This code is probably wrong
+		 */
 		case AF_NS:
 		    {
 			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
@@ -907,9 +907,9 @@ is_ioctl(ifp, cmd, data)
 				    (caddr_t)is->arpcom.ac_enaddr,
 					sizeof(is->arpcom.ac_enaddr));
 			}
-                        /*
-                         * Set new address
-                         */
+			/*
+			 * Set new address
+			 */
 			is_init(ifp->if_unit); 
 			break;
 		    }
@@ -921,17 +921,17 @@ is_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
-                /*
-                 * If interface is marked down and it is running, then stop it
-                 */
+		/*
+		 * If interface is marked down and it is running, then stop it
+		 */
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    ifp->if_flags & IFF_RUNNING) {
 			iswrcsr(unit,0,STOP);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else {
-                /*
-                 * If interface is marked up and it is stopped, then start it
-                 */
+		/*
+		 * If interface is marked up and it is stopped, then start it
+		 */
 			if ((ifp->if_flags & IFF_UP) &&
 		    		(ifp->if_flags & IFF_RUNNING) == 0)
 			is_init(ifp->if_unit);
@@ -943,21 +943,21 @@ is_ioctl(ifp, cmd, data)
 			is_debug = 0;
 #endif
 #if NBPFILTER > 0
-                if (ifp->if_flags & IFF_PROMISC) {
-                        /*
-                         * Set promiscuous mode on interface.
-                         *      XXX - for multicasts to work, we would need to
-                         *              write 1's in all bits of multicast
-                         *              hashing array. For now we assume that
-                         *              this was done in is_init().
-                         */
+		if (ifp->if_flags & IFF_PROMISC) {
+			/*
+			 * Set promiscuous mode on interface.
+			 *      XXX - for multicasts to work, we would need to
+			 *	      write 1's in all bits of multicast
+			 *	      hashing array. For now we assume that
+			 *	      this was done in is_init().
+			 */
 			 is->init_block->mode = PROM;	
-                } else
-                        /*
-                         * XXX - for multicasts to work, we would need to
-                         *      rewrite the multicast hashing array with the
-                         *      proper hash (would have been destroyed above).
-                         */
+		} else
+			/*
+			 * XXX - for multicasts to work, we would need to
+			 *      rewrite the multicast hashing array with the
+			 *      proper hash (would have been destroyed above).
+			 */
 			{ /* Don't know about this */};
 #endif
 		break;

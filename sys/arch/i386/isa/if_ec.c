@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ec.c,v 1.12 1993/12/20 09:05:46 mycroft Exp $
+ *	$Id: if_ec.c,v 1.13 1994/01/24 00:17:16 deraadt Exp $
  */
 
 /*
@@ -545,6 +545,7 @@ int len;
 	register struct ether_header *eh;
     	struct mbuf *m, *ecget();
 	int off, resid;
+	u_short etype;
 
 	++sc->ec_if.if_ipackets;
 	/*
@@ -553,12 +554,12 @@ int len;
 	 * Remember that type was trailer by setting off.
 	 */
 	eh = (struct ether_header *)buf;
-	eh->ether_type = ntohs((u_short)eh->ether_type);
-	if (eh->ether_type >= ETHERTYPE_TRAIL &&
-	    eh->ether_type < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-		off = (eh->ether_type - ETHERTYPE_TRAIL) * 512;
+	etype = ntohs((u_short)eh->ether_type);
+	if (etype >= ETHERTYPE_TRAIL &&
+	    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
+		off = (etype - ETHERTYPE_TRAIL) * 512;
 		if (off >= ETHERMTU) return;		/* sanity */
-		eh->ether_type = ntohs(*ecdataaddr(sc, eh, off, u_short *));
+		eh->ether_type = *ecdataaddr(sc, eh, off, u_short *);
 		resid = ntohs(*(ecdataaddr(sc, eh, off+2, u_short *)));
 		if (off + resid > len) return;		/* sanity */
 		len = off + resid;

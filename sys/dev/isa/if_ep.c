@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.7 1994/01/23 07:57:50 deraadt Exp $
+ *	$Id: if_ep.c,v 1.8 1994/01/24 00:17:24 deraadt Exp $
  */
 /*
  * TODO:
@@ -700,7 +700,6 @@ epread(sc)
 	}
 #endif
 	m_adj(top, sizeof(struct ether_header));
-	eh->ether_type = ntohs(eh->ether_type);
 	ether_input(&sc->ep_if, eh, top);
 	return;
 

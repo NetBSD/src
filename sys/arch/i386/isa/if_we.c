@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_we.c	7.3 (Berkeley) 5/21/91
- *	$Id: if_we.c,v 1.12 1993/12/20 09:06:12 mycroft Exp $
+ *	$Id: if_we.c,v 1.13 1994/01/24 00:17:33 deraadt Exp $
  */
 
 #include "we.h"
@@ -926,12 +926,6 @@ weread(sc, buf, len)
 	 * Fix up data start offset in mbuf to point past ether header
 	 */
 	m_adj(head, sizeof(struct ether_header));
-
-	/*
-	 * silly ether_input routine needs 'type' in host byte order
-	 */
-	eh->ether_type = ntohs(eh->ether_type);
-
 	ether_input(&sc->we_if, eh, head);
 	return;
 
