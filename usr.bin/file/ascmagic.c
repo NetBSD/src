@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.5 2000/09/22 16:01:07 pooka Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.6 2000/11/23 23:07:24 pooka Exp $	*/
 
 /*
  * ASCII magic -- file types that we know based on keywords
@@ -48,7 +48,7 @@
 #include "names.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)Id: ascmagic.c,v 1.28 2000/08/05 17:36:47 christos Exp ")
+FILE_RCSID("@(#)Id: ascmagic.c,v 1.29 2000/08/05 19:00:11 christos Exp ")
 #endif	/* lint */
 
 typedef unsigned long unichar;
