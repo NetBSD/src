@@ -1,7 +1,7 @@
-/*	$NetBSD: psycho.c,v 1.2 1999/07/08 18:08:59 thorpej Exp $	*/
+/*	$NetBSD: psycho.c,v 1.3 2000/04/08 03:08:20 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999 Matthew R. Green
+ * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
 #ifdef DEBUG
 #define	PDB_PROM	0x1
 #define	PDB_IOMMU	0x2
-int psycho_debug = 0;
+int psycho_debug = 0x0;
 #define DPRINTF(l, s)   do { if (psycho_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -140,7 +140,6 @@ psycho_attach(parent, self, aux)
 	struct psycho_softc *sc = (struct psycho_softc *)self;
 	struct pcibus_attach_args pba;
 	struct mainbus_attach_args *ma = aux;
-	bus_space_handle_t bh;
 	char *model = getpropstring(ma->ma_node, "model");
 
 	printf("\n");
@@ -169,27 +168,6 @@ psycho_attach(parent, self, aux)
 #ifdef DIAGNOSTIC
 	else
 		panic("psycho_attach: unknown model %s?", model);
-#endif
-
-	/*
-	 * get us a config space tag, and punch in the physical address
-	 * of the PCI configuration space.  note that we use unmapped
-	 * access to PCI configuration space, relying on the bus space
-	 * macros to provide the proper ASI based on the bus tag.
-	 */
-	sc->sc_configtag = psycho_alloc_config_tag(sc->sc_simba_a);
-#if 0
-	sc->sc_configaddr = (paddr_t)sc->sc_basepaddr + 0x01000000;
-#else
-	if (bus_space_map2(ma->ma_bustag,
-			  PCI_CONFIG_BUS_SPACE,
-			  sc->sc_basepaddr + 0x01000000,
-			  0x0100000,
-			  0,
-			  0,
-			  &bh))
-		panic("could not map sabre PCI configuration space");
-	sc->sc_configaddr = (paddr_t)bh;
 #endif
 
 	/*
@@ -229,6 +207,7 @@ sabre_init(sc, pba)
 	struct pcibus_attach_args *pba;
 {
 	struct psycho_pbm *pp;
+	bus_space_handle_t bh;
 	u_int64_t csr;
 	int node;
 	int sabre_br[2], simba_br[2];
@@ -331,6 +310,27 @@ sabre_init(sc, pba)
 
 	/* and finally start up the IOMMU ... */
 	psycho_iommu_init(sc);
+
+	/*
+	 * get us a config space tag, and punch in the physical address
+	 * of the PCI configuration space.  note that we use unmapped
+	 * access to PCI configuration space, relying on the bus space
+	 * macros to provide the proper ASI based on the bus tag.
+	 */
+	sc->sc_configtag = psycho_alloc_config_tag(sc->sc_simba_a);
+#if 0
+	sc->sc_configaddr = (paddr_t)sc->sc_basepaddr + 0x01000000;
+#else
+	if (bus_space_map2(sc->sc_bustag,
+			  PCI_CONFIG_BUS_SPACE,
+			  sc->sc_basepaddr + 0x01000000,
+			  0x0100000,
+			  0,
+			  0,
+			  &bh))
+		panic("could not map sabre PCI configuration space");
+	sc->sc_configaddr = (paddr_t)bh;
+#endif
 }
 
 /*
@@ -349,11 +349,39 @@ psycho_init(sc, pba)
 	struct psycho_softc *sc;
 	struct pcibus_attach_args *pba;
 {
+#if 1
+	panic("can't do SUNW,psycho yet");
+#else
 
 	/*
-	 * ok, we are a psycho. 
+	 * OK, so the deal here is:
+	 *	- given our base register address, search our sibling
+	 *	  devices for a match.
+	 *	- if we find a match, we are attaching an almost
+	 *	  already setup PCI bus, the partner already done.
+	 *	- otherwise, we are doing the hard slog.
 	 */
-	panic("can't do SUNW,psycho yet");
+	for (n = 0; n < psycho_cd.cd_ndevs; n++) {
+		psycho_softc *osc = &psycho_cd.cd_devs[n];
+
+		/*
+		 * I am not myself.
+		 */
+		if (osc == sc || osc->sc_regs != sc->sc_regs)
+			continue;
+
+		/*
+		 * OK, so we found a matching regs that wasn't me,
+		 * so that must make me partly attached.  Finish it.
+		 */
+	}
+
+	/* Oh, dear.  OK, lets get started */
+
+	/* who? said a voice, incredulous */
+	sc->sc_mode = PSYCHO_MODE_PSYCHO_A;
+	printf("psycho: ");
+#endif
 }
 
 /*
