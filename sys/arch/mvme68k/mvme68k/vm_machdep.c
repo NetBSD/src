@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.14 1998/08/16 15:33:48 scw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.15 1998/08/22 10:55:36 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,11 +78,11 @@
  */
 void
 cpu_fork(p1, p2)
-	register struct proc *p1, *p2;
+	struct proc *p1, *p2;
 {
-	register struct pcb *pcb = &p2->p_addr->u_pcb;
-	register struct trapframe *tf;
-	register struct switchframe *sf;
+	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
 	extern struct pcb *curpcb;
 	extern void proc_trampoline(), child_return();
 
@@ -216,27 +216,27 @@ cpu_coredump(p, vp, cred, chdr)
  */
 void
 pagemove(from, to, size)
-	register caddr_t from, to;
+	caddr_t from, to;
 	size_t size;
 {
-	register vm_offset_t pa;
+	paddr_t pa;
 
 #ifdef DEBUG
 	if (size & CLOFSET)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
+		pa = pmap_extract(pmap_kernel(), (vaddr_t)from);
 #ifdef DEBUG
 		if (pa == 0)
 			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vm_offset_t)to) != 0)
+		if (pmap_extract(pmap_kernel(), (vaddr_t)to) != 0)
 			panic("pagemove 3");
 #endif
 		pmap_remove(pmap_kernel(),
-			    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
+			    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+			   (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -251,10 +251,10 @@ pagemove(from, to, size)
 void
 physaccess(vaddr, paddr, size, prot)
 	caddr_t vaddr, paddr;
-	register int size, prot;
+	int size, prot;
 {
-	register pt_entry_t *pte;
-	register u_int page;
+	pt_entry_t *pte;
+	u_int page;
 
 	pte = kvtopte(vaddr);
 	page = (u_int)paddr & PG_FRAME;
@@ -268,9 +268,9 @@ physaccess(vaddr, paddr, size, prot)
 void
 physunaccess(vaddr, size)
 	caddr_t vaddr;
-	register int size;
+	int size;
 {
-	register pt_entry_t *pte;
+	pt_entry_t *pte;
 
 	pte = kvtopte(vaddr);
 	for (size = btoc(size); size; size--)
@@ -288,7 +288,7 @@ iomap(paddr, size)
 	size_t size;
 {
 	u_long pa, off;
-	vm_offset_t va, rval;
+	vaddr_t va, rval;
 
 	off = paddr & PGOFSET;
 	pa = m68k_trunc_page(paddr);
@@ -316,9 +316,9 @@ iounmap(kva, size)
 	void *kva;
 	size_t size;
 {
-	vm_offset_t va;
+	vaddr_t va;
 
-	va = m68k_trunc_page((vm_offset_t)kva);
+	va = m68k_trunc_page((vaddr_t)kva);
 	size = m68k_round_page(size);
 
 	physunaccess((caddr_t)va, size);
@@ -351,11 +351,11 @@ setredzone(pte, vaddr)
  * Convert kernel VA to physical address
  */
 kvtop(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	vm_offset_t va;
+	vaddr_t va;
 
-	va = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
+	va = pmap_extract(pmap_kernel(), (vaddr_t)addr);
 	if (va == 0)
 		panic("kvtop: zero page frame");
 	return((int)va);
@@ -374,19 +374,19 @@ extern vm_map_t phys_map;
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
 	struct pmap *upmap, *kpmap;
-	vm_offset_t uva;	/* User VA (map from) */
-	vm_offset_t kva;	/* Kernel VA (new to) */
-	vm_offset_t pa; 	/* physical address */
-	vm_size_t off;
+	vaddr_t uva;	/* User VA (map from) */
+	vaddr_t kva;	/* Kernel VA (new to) */
+	paddr_t pa; 	/* physical address */
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
 	uva = m68k_trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vm_offset_t)bp->b_data - uva;
+	off = (vaddr_t)bp->b_data - uva;
 	len = m68k_round_page(off + len);
 #ifdef UVM
 	kva = uvm_km_valloc_wait(phys_map, len);
@@ -414,16 +414,16 @@ vmapbuf(bp, len)
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t kva;
-	vm_size_t off;
+	vaddr_t kva;
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
 	kva = m68k_trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - kva;
+	off = (vaddr_t)bp->b_data - kva;
 	len = m68k_round_page(off + len);
 
 	/*

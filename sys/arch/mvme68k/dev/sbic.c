@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.7 1998/07/04 22:18:32 jonathan Exp $	*/
+/*	$NetBSD: sbic.c,v 1.8 1998/08/22 10:55:33 scw Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -666,7 +666,7 @@ sbic_scsidone(acb, stat)
 
     } else {
 
-        register struct sbic_acb *a;
+        struct sbic_acb *a;
 
         for (a = dev->nexus_list.tqh_first; a; a = a->chain.tqe_next) {
             if ( a == acb ) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: libc_sa.c,v 1.1.1.1 1995/07/25 23:12:33 chuck Exp $	*/
+/*	$NetBSD: libc_sa.c,v 1.2 1998/08/22 10:55:37 scw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,11 +56,11 @@ void
 bcopy(src0, dst0, length)
 	void *dst0;
 	const void *src0;
-	register size_t length;
+	size_t length;
 {
-	register char *dst = dst0;
-	register const char *src = src0;
-	register size_t t;
+	char *dst = dst0;
+	const char *src = src0;
+	size_t t;
 
 	if (length == 0 || dst == src)		/* nothing to do */
 		goto done;
@@ -160,11 +160,11 @@ done:
 void *
 bzero(dst, n)
 	void *dst;
-	register size_t n;
+	size_t n;
 {
 
 	if (n != 0) {
-		register char *d = dst;
+		char *d = dst;
 
 		do
 			*d++ = 0;
@@ -172,7 +172,7 @@ bzero(dst, n)
 	}
 	return (dst);
 }
-/*	$NetBSD: libc_sa.c,v 1.1.1.1 1995/07/25 23:12:33 chuck Exp $	*/
+/*	$NetBSD: libc_sa.c,v 1.2 1998/08/22 10:55:37 scw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -265,8 +265,8 @@ printf(fmt /* , va_alist */)
 	char *fmt;
 #endif
 {
-	register char *p;
-	register int ch, n;
+	char *p;
+	int ch, n;
 	unsigned long ul;
 	int lflag, set;
 	va_list ap;

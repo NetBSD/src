@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.c,v 1.1.1.1 1995/07/25 23:11:57 chuck Exp $	*/
+/*	$NetBSD: dkbad.c,v 1.2 1998/08/22 10:55:35 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -47,11 +47,11 @@
  */
 
 isbad(bt, cyl, trk, sec)
-	register struct dkbad *bt;
+	struct dkbad *bt;
 	int cyl, trk, sec;
 {
-	register int i;
-	register long blk, bblk;
+	int i;
+	long blk, bblk;
 
 	blk = ((long)cyl << 16) + (trk << 8) + sec;
 	for (i = 0; i < 126; i++) {

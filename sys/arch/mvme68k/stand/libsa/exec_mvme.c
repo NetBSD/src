@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_mvme.c,v 1.4 1998/08/01 11:22:53 scw Exp $ */
+/*	$NetBSD: exec_mvme.c,v 1.5 1998/08/22 10:55:36 scw Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -50,12 +50,12 @@ exec_mvme(file, flag)
 	int	flag;
 {
 	char *loadaddr;
-	register int io;
+	int io;
 	struct exec x;
 	int cc, magic;
 	void (*entry)();
-	register char *cp;
-	register int *ip;
+	char *cp;
+	int *ip;
 
 #ifdef	DEBUG
 	printf("exec_mvme: file=%s flag=0x%x\n", file, flag);

@@ -1,4 +1,4 @@
-/*	$NetBSD: seglist.h,v 1.3 1998/03/18 07:18:50 thorpej Exp $	*/
+/*	$NetBSD: seglist.h,v 1.4 1998/08/22 10:55:35 scw Exp $	*/
 
 /*
  * Copyright (c) 1997 The Steve Woodford
@@ -42,8 +42,8 @@
  * NOTE: If you change this, you'll need to update locore.s ...
  */
 typedef struct {
-	vm_offset_t	ps_start;	/* Start of segment */
-	vm_offset_t	ps_end;		/* End of segment */
+	paddr_t		ps_start;	/* Start of segment */
+	paddr_t		ps_end;		/* End of segment */
 	int		ps_startpage;	/* Page number of first page */
 } phys_seg_list_t;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 1998/07/08 04:40:29 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 1998/08/22 10:55:35 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -114,7 +114,6 @@ vm_map_t phys_map = NULL;
 #else
 vm_map_t buffer_map;
 #endif
-extern vm_offset_t avail_end;
 
 /*
  * Model information, filled in by the Bug; see locore.s
@@ -136,7 +135,7 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 caddr_t	msgbufaddr;		/* KVA of message buffer */
-vm_offset_t msgbufpa;		/* PA of message buffer */
+paddr_t msgbufpa;		/* PA of message buffer */
 
 int	maxmem;			/* max memory per process */
 int	physmem;		/* size of physical memory */
@@ -274,7 +273,7 @@ mvme68k_init()
 	 * Initialize error message buffer (at end of core).
 	 */
 	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
 		    msgbufpa + i * NBPG, VM_PROT_ALL, TRUE);
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 }
@@ -371,12 +370,12 @@ void
 cpu_startup()
 {
 	extern char *kernel_text, *etext;
-	register unsigned i;
-	register caddr_t v;
+	unsigned i;
+	caddr_t v;
 	int base, residual;
 	u_quad_t vmememsize;
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
+	vaddr_t minaddr, maxaddr;
+	vsize_t size;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -408,7 +407,7 @@ cpu_startup()
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	size = (vm_size_t)allocsys((caddr_t)0);
+	size = (vsize_t)allocsys((caddr_t)0);
 #if defined(UVM)
 	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size))) == 0)
 		panic("startup: no room for tables");
@@ -426,17 +425,17 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 #if defined(UVM)
-	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
-	minaddr = (vm_offset_t)buffers;
+	minaddr = (vaddr_t)buffers;
 #else
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
+	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
 				   &maxaddr, size, TRUE);
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+	minaddr = (vaddr_t)buffers;
+	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
 #endif
@@ -444,8 +443,8 @@ cpu_startup()
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
 #if defined(UVM)
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 		struct vm_page *pg;
 
 		/*
@@ -454,7 +453,7 @@ cpu_startup()
 		 * for the first "residual" buffers, and then we allocate
 		 * "base" pages for the rest.
 		 */
-		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
@@ -472,8 +471,8 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 #else /* ! UVM */
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 
 		/*
 		 * First <residual> buffers get (base+1) physical pages
@@ -482,7 +481,7 @@ cpu_startup()
 		 * The rest of each buffer occupies virtual space,
 		 * but has no physical memory allocated for it.
 		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
@@ -515,10 +514,10 @@ cpu_startup()
 	 * Finally, allocate mbuf cluster submap.
 	 */
 #if defined(UVM)
-	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 				 VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 #endif
 
@@ -658,7 +657,7 @@ allocsys(v)
  */
 void
 setregs(p, pack, stack)
-	register struct proc *p;
+	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
 {
@@ -850,7 +849,7 @@ int	waittime = -1;
 
 void
 cpu_reboot(howto, bootstr)
-	register int howto;
+	int howto;
 	char *bootstr;
 {
 	extern int cold;
@@ -1148,7 +1147,7 @@ dumpsys()
 			if (n > NBPG)
 				n = NBPG;
 
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
+			pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
 			    VM_PROT_READ, TRUE);
 
 			error = (*dump)(dumpdev, blkno, vmmap, n);
@@ -1223,10 +1222,10 @@ int	*nofault;
 
 int
 badaddr(addr, nbytes)
-	register caddr_t addr;
+	caddr_t addr;
 	int nbytes;
 {
-	register int i;
+	int i;
 	label_t faultbuf;
 
 #ifdef lint
