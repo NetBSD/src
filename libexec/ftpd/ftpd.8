@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.32 1998/11/17 16:00:28 msaitoh Exp $
+.\"	$NetBSD: ftpd.8,v 1.33 1998/11/18 13:32:17 hubertf Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -226,7 +226,7 @@ If the user's shell field in the password database is empty, the
 shell is assumed to be
 .Pa /bin/sh .
 .It
-f directed by the file
+If directed by the file
 .Pa /etc/ftpchroot
 (see below)
 the session's root will be changed to the user's login directory by
