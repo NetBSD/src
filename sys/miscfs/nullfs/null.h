@@ -1,4 +1,4 @@
-/*	$NetBSD: null.h,v 1.7 1996/05/17 20:53:11 gwr Exp $	*/
+/*	$NetBSD: null.h,v 1.8 1997/04/10 05:35:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,7 +64,7 @@ struct null_node {
 #endif
 };
 
-#if !defined(__GNUC__) || __GNUC__ < 2 || \
+#if defined(__alpha__) || !defined(__GNUC__) || __GNUC__ < 2 || \
 	(__GNUC__ == 2 && __GNUC_MINOR__ < 5)
 #define RETURN_PC(frameno) (void *)0
 #else
