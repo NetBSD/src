@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.47 1998/11/13 04:47:05 oster Exp $	*/
+/*	$NetBSD: conf.c,v 1.48 1999/02/18 07:16:17 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,19 +69,19 @@ bdev_decl(vnd);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),         		/* 0 */
+	bdev_notdef(),			/* 0 */
 	bdev_notdef(),			/* 1 */
-	bdev_notdef(),         		/* 2 */
+	bdev_notdef(),			/* 2 */
 	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
-	bdev_notdef(),        	 	/* 7 */
+	bdev_notdef(),			/* 7 */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
-	bdev_notdef(),        	 	/* 10 */
-	bdev_notdef(),        	 	/* 11 */
-	bdev_notdef(),        	 	/* 12 */
+	bdev_notdef(),			/* 10 */
+	bdev_notdef(),			/* 11 */
+	bdev_notdef(),			/* 12 */
 	bdev_disk_init(NMD,md),	 	/* 13: memory disk -- for install */
 	bdev_lkm_dummy(),		/* 14 */
 	bdev_lkm_dummy(),		/* 15 */
