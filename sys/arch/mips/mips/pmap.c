@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100 2000/06/22 05:00:48 soren Exp $	*/
+/*	$NetBSD: pmap.c,v 1.101 2000/06/26 03:05:04 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2000/06/22 05:00:48 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2000/06/26 03:05:04 nisimura Exp $");
 
 /*
  *	Manages physical address maps.
@@ -904,12 +904,7 @@ pmap_protect(pmap, sva, eva, prot)
 			entry &= ~(mips_pg_m_bit() | mips_pg_ro_bit());
 			entry |= p;
 			pte->pt_entry = entry;
-#if defined(MIPS1) && !defined(MIPS3)
-			/* replace PTE if sva is found in TLB */
-			mips1_TBRPL(sva, sva, entry);
-#else
 			MachTLBUpdate(sva, entry);
-#endif
 		}
 		return;
 	}
