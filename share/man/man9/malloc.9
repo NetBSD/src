@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.19 2001/12/04 20:39:02 jdolecek Exp $
+.\"	$NetBSD: malloc.9,v 1.20 2001/12/04 23:42:02 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -107,7 +107,7 @@ Note that
 .Dv M_WAITOK
 is conveniently defined to be 0, and hence may be or'ed into the
 .Fa flags
-argument to indicate that it's Ok to wait for resources.
+argument to indicate that it's ok to wait for resources.
 .It Dv M_ZERO
 Causes the allocated memory to be set to all zeros.
 .It Dv M_CANFAIL
@@ -116,12 +116,13 @@ Changes behaviour for
 case - if the requested memory size is bigger than
 .Fn malloc
 can ever allocate, return failure, rather than calling
-.Xr panic 9 . This is different to M_NOWAIT, since
+.Xr panic 9 .
+This is different to M_NOWAIT, since
 the call can still wait for resources.
 .Pp
 Rather than depending on
 .Dv M_CANFAIL ,
-kernel code should do proper bound checking itself. This
+kernel code should do proper bound checking itself.  This
 flag should only be used in cases where this is not feasible.
 Since it can hide real kernel bugs, it's usage is
 .Em strongly discouraged .
