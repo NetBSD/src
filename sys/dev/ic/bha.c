@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.14 1997/08/27 11:24:51 bouyer Exp $	*/
+/*	$NetBSD: bha.c,v 1.14.4.1 1997/10/28 23:44:53 thorpej Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -125,7 +125,7 @@ int bha_cmd __P((bus_space_tag_t, bus_space_handle_t, struct bha_softc *,
 integrate void bha_finish_ccbs __P((struct bha_softc *));
 integrate void bha_reset_ccb __P((struct bha_softc *, struct bha_ccb *));
 void bha_free_ccb __P((struct bha_softc *, struct bha_ccb *));
-integrate void bha_init_ccb __P((struct bha_softc *, struct bha_ccb *));
+integrate int bha_init_ccb __P((struct bha_softc *, struct bha_ccb *));
 struct bha_ccb *bha_get_ccb __P((struct bha_softc *, int));
 struct bha_ccb *bha_ccb_phys_kv __P((struct bha_softc *, u_long));
 void bha_queue_ccb __P((struct bha_softc *, struct bha_ccb *));
@@ -137,7 +137,7 @@ void bhaminphys __P((struct buf *));
 int bha_scsi_cmd __P((struct scsipi_xfer *));
 int bha_poll __P((struct bha_softc *, struct scsipi_xfer *, int));
 void bha_timeout __P((void *arg));
-int bha_create_ccbs __P((struct bha_softc *, void *, size_t));
+int bha_create_ccbs __P((struct bha_softc *, void *, size_t, int));
 
 struct scsipi_adapter bha_switch = {
 	bha_scsi_cmd,
@@ -508,13 +508,13 @@ bha_free_ccb(sc, ccb)
 	splx(s);
 }
 
-integrate void
+integrate int
 bha_init_ccb(sc, ccb)
 	struct bha_softc *sc;
 	struct bha_ccb *ccb;
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
-	int hashnum;
+	int hashnum, error;
 
 	/*
 	 * XXX Should we put a DIAGNOSTIC check for multiple
@@ -526,22 +526,37 @@ bha_init_ccb(sc, ccb)
 	/*
 	 * Create DMA maps for this CCB.
 	 */
-	if (bus_dmamap_create(dmat, sizeof(struct bha_ccb), 1,
+	error = bus_dmamap_create(dmat, sizeof(struct bha_ccb), 1,
 	    sizeof(struct bha_ccb), 0, BUS_DMA_NOWAIT | sc->sc_dmaflags,
-	    &ccb->dmamap_self) ||
+	    &ccb->dmamap_self);
+	if (error) {
+		printf("%s: can't create ccb dmamap_self\n",
+		    sc->sc_dev.dv_xname);
+		return (error);
+	}
 
-					/* XXX What's a good value for this? */
-	    bus_dmamap_create(dmat, BHA_MAXXFER, BHA_NSEG, BHA_MAXXFER,
+	error = bus_dmamap_create(dmat, BHA_MAXXFER, BHA_NSEG, BHA_MAXXFER,
 	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW | sc->sc_dmaflags,
-	    &ccb->dmamap_xfer))
-		panic("bha_init_ccb: can't create DMA maps");
+	    &ccb->dmamap_xfer);
+	if (error) {
+		printf("%s: can't create ccb dmamap_xfer\n",
+		    sc->sc_dev.dv_xname);
+		bus_dmamap_destroy(dmat, ccb->dmamap_self);
+		return (error);
+	}
 
 	/*
 	 * Load the permanent DMA maps.
 	 */
-	if (bus_dmamap_load(dmat, ccb->dmamap_self, ccb,
-	    sizeof(struct bha_ccb), NULL, BUS_DMA_NOWAIT))
-		panic("bha_init_ccb: can't load permanent maps");
+	error = bus_dmamap_load(dmat, ccb->dmamap_self, ccb,
+	    sizeof(struct bha_ccb), NULL, BUS_DMA_NOWAIT);
+	if (error) {
+		printf("%s: can't load ccb dmamap_self\n",
+		    sc->sc_dev.dv_xname);
+		bus_dmamap_destroy(dmat, ccb->dmamap_self);
+		bus_dmamap_destroy(dmat, ccb->dmamap_xfer);
+		return (error);
+	}
 
 	/*
 	 * put in the phystokv hash table
@@ -552,16 +567,18 @@ bha_init_ccb(sc, ccb)
 	ccb->nexthash = sc->sc_ccbhash[hashnum];
 	sc->sc_ccbhash[hashnum] = ccb;
 	bha_reset_ccb(sc, ccb);
+	return (0);
 }
 
 /*
  * Create a set of ccbs and add them to the free list.
  */
 int
-bha_create_ccbs(sc, mem, size)
+bha_create_ccbs(sc, mem, size, max_ccbs)
 	struct bha_softc *sc;
 	void *mem;
 	size_t size;
+	int max_ccbs;
 {
 	bus_dma_segment_t seg;
 	struct bha_ccb *ccb;
@@ -570,32 +587,43 @@ bha_create_ccbs(sc, mem, size)
 	if (sc->sc_numccbs >= BHA_CCB_MAX)
 		return (0);
 
+	if (max_ccbs > BHA_CCB_MAX)
+		max_ccbs = BHA_CCB_MAX;
+
 	if ((ccb = mem) != NULL)
 		goto have_mem;
 
 	size = NBPG;
 	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT);
-	if (error)
+	if (error) {
+		printf("%s: can't allocate memory for ccbs\n",
+		    sc->sc_dev.dv_xname);
 		return (error);
+	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
 	    (caddr_t *)&ccb, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
 	if (error) {
+		printf("%s: can't map memory for ccbs\n",
+		    sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		return (error);
 	}
 
  have_mem:
 	bzero(ccb, size);
-	while (size > sizeof(struct bha_ccb)) {
-		bha_init_ccb(sc, ccb);
-		sc->sc_numccbs++;
-		if (sc->sc_numccbs >= BHA_CCB_MAX)
-			break;
+	while (size > sizeof(struct bha_ccb) && sc->sc_numccbs < max_ccbs) {
+		error = bha_init_ccb(sc, ccb);
+		if (error) {
+			printf("%s: can't initialize ccb\n",
+			    sc->sc_dev.dv_xname);
+			return (error);
+		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, chain);
 		(caddr_t)ccb += ALIGN(sizeof(struct bha_ccb));
 		size -= ALIGN(sizeof(struct bha_ccb));
+		sc->sc_numccbs++;
 	}
 
 	return (0);
@@ -628,7 +656,13 @@ bha_get_ccb(sc, flags)
 			break;
 		}
 		if (sc->sc_numccbs < BHA_CCB_MAX) {
-			if (bha_create_ccbs(sc, NULL, 0)) {
+			/*
+			 * bha_create_ccbs() might have managed to create
+			 * one before it failed.  If so, don't abort,
+			 * just grab it and continue to hobble along.
+			 */
+			if (bha_create_ccbs(sc, NULL, 0, BHA_CCB_MAX) != 0 &&
+			    sc->sc_free_ccb.tqh_first == NULL) {
 				printf("%s: can't allocate ccbs\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
@@ -1049,7 +1083,7 @@ bha_init(sc)
 	struct bha_setup setup;
 	struct bha_mailbox mailbox;
 	struct bha_period period;
-	int i, rlen, rseg;
+	int i, j, initial_ccbs, rlen, rseg;
 
 	/* Enable round-robin scheme - appeared at firmware rev. 3.31. */
 	if (strcmp(sc->sc_firmware, "3.31") >= 0) {
@@ -1074,6 +1108,15 @@ bha_init(sc)
 	    sizeof(devices.cmd), (u_char *)&devices.cmd,
 	    sizeof(devices.reply), (u_char *)&devices.reply);
 
+	/* Count installed units. */
+	initial_ccbs = 0;
+	for (i = 0; i < 8; i++) {
+		for (j = 0; j < 8; j++) {
+			if (((devices.reply.lun_map[i] >> j) & 1) == 1)
+				initial_ccbs++;
+		}
+	}
+
 	/*
 	 * Poll targets 8 - 15 if we have a wide bus.
 	 */
@@ -1082,7 +1125,16 @@ bha_init(sc)
 		bha_cmd(iot, ioh, sc,
 		    sizeof(devices.cmd), (u_char *)&devices.cmd,
 		    sizeof(devices.reply), (u_char *)&devices.reply);
+
+		for (i = 0; i < 8; i++) {
+			for (j = 0; j < 8; j++) {
+				if (((devices.reply.lun_map[i] >> j) & 1) == 1)
+					initial_ccbs++;
+			}
+		}
 	}
+
+	initial_ccbs *= sc->sc_link.openings;
 
 	/* Obtain setup information from. */
 	rlen = sizeof(setup.reply) +
@@ -1153,7 +1205,7 @@ bha_init(sc)
 	 */
 	if (bha_create_ccbs(sc, ((caddr_t)wmbx) +
 	    ALIGN(sizeof(struct bha_mbx)),
-	    NBPG - ALIGN(sizeof(struct bha_mbx))))
+	    NBPG - ALIGN(sizeof(struct bha_mbx)), initial_ccbs))
 		panic("bha_init: can't create ccbs");
 
 	/*
