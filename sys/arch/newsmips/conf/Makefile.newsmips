@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.newsmips,v 1.5 1998/05/31 23:25:42 thorpej Exp $
+#	$NetBSD: Makefile.newsmips,v 1.6 1998/07/22 19:59:21 tsubai Exp $
 
 # Makefile for NetBSD
 #
@@ -52,7 +52,7 @@ CWARNFLAGS?=	-Werror -Wall -Wno-parentheses
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
-GP?=		-G 0
+GP?=		-G0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80001000 -e start ${GP} -T ../../conf/kern.ldscript
