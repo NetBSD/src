@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)snake.h	5.5 (Berkeley) 6/1/90
+ *	@(#)snake.h	8.1 (Berkeley) 5/31/93
  */
 
 # include <stdio.h>
@@ -74,6 +74,12 @@ struct sgttyb orig, new;
 struct ltchars olttyc, nlttyc;
 #endif
 struct point *point();
+#if __STDC__
+void	apr(struct point *, const char *, ...);
+void	pr(const char *, ...);
+#else
+void	apr();
+void	pr();
+#endif
 
 #define	same(s1, s2)	((s1)->line == (s2)->line && (s1)->col == (s2)->col)
-
