@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.113.4.3 2002/12/07 23:02:09 he Exp $	*/
+/*	$NetBSD: tulip.c,v 1.113.4.4 2003/07/28 17:43:14 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.113.4.3 2002/12/07 23:02:09 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.113.4.4 2003/07/28 17:43:14 he Exp $");
 
 #include "bpfilter.h"
 
@@ -3523,8 +3523,10 @@ tlp_21140_reset(sc)
 	}
 
 	/* If there were no sequences, just lower the pins. */
-	if (tm->tm_reset_length == 0 && tm->tm_gp_length == 0)
+	if (tm->tm_reset_length == 0 && tm->tm_gp_length == 0) {
+		delay(10);
 		TULIP_WRITE(sc, CSR_GPP, 0);
+	}
 }
 
 /*
@@ -3630,6 +3632,7 @@ const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 	{ TULIP_ROM_MB_MEDIA_TP,	IFM_10_T,	0,
 	  "10baseT",
 	  OPMODE_TTM,
+	  BMSR_10THDX,
 	  { SIACONN_21040_10BASET,
 	    SIATXRX_21040_10BASET,
 	    SIAGEN_21040_10BASET },
@@ -3644,6 +3647,7 @@ const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 
 	{ TULIP_ROM_MB_MEDIA_BNC,	IFM_10_2,	0,
 	  "10base2",
+	  0,
 	  0,
 	  { 0,
 	    0,
@@ -3660,6 +3664,7 @@ const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 	{ TULIP_ROM_MB_MEDIA_AUI,	IFM_10_5,	0,
 	  "10base5",
 	  0,
+	  0,
 	  { SIACONN_21040_AUI,
 	    SIATXRX_21040_AUI,
 	    SIAGEN_21040_AUI },
@@ -3675,6 +3680,7 @@ const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 	{ TULIP_ROM_MB_MEDIA_100TX,	IFM_100_TX,	0,
 	  "100baseTX",
 	  OPMODE_PS|OPMODE_PCS|OPMODE_SCR|OPMODE_HBD,
+	  BMSR_100TXHDX,
 	  { 0,
 	    0,
 	    0 },
@@ -3690,6 +3696,7 @@ const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 	{ TULIP_ROM_MB_MEDIA_TP_FDX,	IFM_10_T,	IFM_FDX,
 	  "10baseT-FDX",
 	  OPMODE_TTM|OPMODE_FD|OPMODE_HBD,
+	  BMSR_10TFDX,
 	  { SIACONN_21040_10BASET_FDX,
 	    SIATXRX_21040_10BASET_FDX,
 	    SIAGEN_21040_10BASET_FDX },
@@ -3705,6 +3712,7 @@ const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 	{ TULIP_ROM_MB_MEDIA_100TX_FDX,	IFM_100_TX,	IFM_FDX,
 	  "100baseTX-FDX",
 	  OPMODE_PS|OPMODE_PCS|OPMODE_SCR|OPMODE_FD|OPMODE_HBD,
+	  BMSR_100TXFDX,
 	  { 0,
 	    0,
 	    0 },
@@ -3720,6 +3728,7 @@ const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 	{ TULIP_ROM_MB_MEDIA_100T4,	IFM_100_T4,	0,
 	  "100baseT4",
 	  OPMODE_PS|OPMODE_PCS|OPMODE_SCR|OPMODE_HBD,
+	  BMSR_100T4,
 	  { 0,
 	    0,
 	    0 },
@@ -3735,6 +3744,7 @@ const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 	{ TULIP_ROM_MB_MEDIA_100FX,	IFM_100_FX,	0,
 	  "100baseFX",
 	  OPMODE_PS|OPMODE_PCS|OPMODE_HBD,
+	  0,
 	  { 0,
 	    0,
 	    0 },
@@ -3750,6 +3760,7 @@ const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 	{ TULIP_ROM_MB_MEDIA_100FX_FDX,	IFM_100_FX,	IFM_FDX,
 	  "100baseFX-FDX",
 	  OPMODE_PS|OPMODE_PCS|OPMODE_FD|OPMODE_HBD,
+	  0,
 	  { 0,
 	    0,
 	    0 },
@@ -3764,6 +3775,7 @@ const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 
 	{ 0,				0,		0,
 	  NULL,
+	  0,
 	  0,
 	  { 0,
 	    0,
@@ -3812,6 +3824,8 @@ tlp_srom_media_info(sc, tsti, tm)
 
 	tm->tm_name = tsti->tsti_name;
 	tm->tm_opmode = tsti->tsti_opmode;
+
+	sc->sc_sia_cap |= tsti->tsti_sia_cap;
 
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_DE425:
@@ -5170,22 +5184,36 @@ void
 tlp_2114x_nway_auto(sc)
 	struct tulip_softc *sc;
 {
-	uint32_t siastat;
+	uint32_t siastat, siatxrx;
 
 	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
 
-	sc->sc_opmode &= ~(OPMODE_PS|OPMODE_PCS|OPMODE_SCR|OPMODE_TTM);
-	sc->sc_opmode |= OPMODE_FD|OPMODE_HBD;
+	sc->sc_opmode &= ~(OPMODE_PS|OPMODE_PCS|OPMODE_SCR|OPMODE_FD);
+	sc->sc_opmode |= OPMODE_TTM|OPMODE_HBD;
+	siatxrx = 0xffbf;		/* XXX magic number */
+
+	/* Compute the link code word to advertise. */
+	if (sc->sc_sia_cap & BMSR_100T4)
+		siatxrx |= SIATXRX_T4;
+	if (sc->sc_sia_cap & BMSR_100TXFDX)
+		siatxrx |= SIATXRX_TXF;
+	if (sc->sc_sia_cap & BMSR_100TXHDX)
+		siatxrx |= SIATXRX_THX;
+	if (sc->sc_sia_cap & BMSR_10TFDX)
+		sc->sc_opmode |= OPMODE_FD;
+	if (sc->sc_sia_cap & BMSR_10THDX)
+		siatxrx |= SIATXRX_TH;
+
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
 
 	TULIP_WRITE(sc, CSR_SIACONN, 0);
 	delay(1000);
+	TULIP_WRITE(sc, CSR_SIATXRX, siatxrx);
 	TULIP_WRITE(sc, CSR_SIACONN, SIACONN_SRL);
 
-	TULIP_WRITE(sc, CSR_SIATXRX, 0x3ffff);
-
 	siastat = TULIP_READ(sc, CSR_SIASTAT);
-	siastat &= ~(SIASTAT_ANS|SIASTAT_LPC|SIASTAT_TRA|SIASTAT_ARA|SIASTAT_LS100|SIASTAT_LS10|SIASTAT_MRA);
+	siastat &= ~(SIASTAT_ANS|SIASTAT_LPC|SIASTAT_TRA|SIASTAT_ARA|
+		     SIASTAT_LS100|SIASTAT_LS10|SIASTAT_MRA);
 	siastat |= SIASTAT_ANS_TXDIS;
 	TULIP_WRITE(sc, CSR_SIASTAT, siastat);
 }
@@ -5218,18 +5246,20 @@ tlp_2114x_nway_status(sc)
 
 		if (siastat & SIASTAT_LPN) {
 			anlpar = SIASTAT_GETLPC(siastat);
-			if (anlpar & ANLPAR_T4 /* &&
-			    sc->mii_capabilities & BMSR_100TXHDX */)
+			if (anlpar & ANLPAR_T4 &&
+			    sc->sc_sia_cap & BMSR_100T4)
 				mii->mii_media_active |= IFM_100_T4;
-			else if (anlpar & ANLPAR_TX_FD /* &&
-			    sc->mii_capabilities & BMSR_100TXFDX */)
+			else if (anlpar & ANLPAR_TX_FD &&
+				 sc->sc_sia_cap & BMSR_100TXFDX)
 				mii->mii_media_active |= IFM_100_TX|IFM_FDX;
-			else if (anlpar & ANLPAR_TX /* &&
-			    sc->mii_capabilities & BMSR_100TXHDX */)
+			else if (anlpar & ANLPAR_TX &&
+				 sc->sc_sia_cap & BMSR_100TXHDX)
 				mii->mii_media_active |= IFM_100_TX;
-			else if (anlpar & ANLPAR_10_FD)
+			else if (anlpar & ANLPAR_10_FD &&
+				 sc->sc_sia_cap & BMSR_10TFDX)
 				mii->mii_media_active |= IFM_10_T|IFM_FDX;
-			else if (anlpar & ANLPAR_10)
+			else if (anlpar & ANLPAR_10 &&
+				 sc->sc_sia_cap & BMSR_10THDX)
 				mii->mii_media_active |= IFM_10_T;
 			else
 				mii->mii_media_active |= IFM_NONE;
