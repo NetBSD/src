@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.11 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12 2004/01/13 14:30:43 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11 2003/11/17 10:07:58 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 2004/01/13 14:30:43 sekiya Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,7 +66,7 @@ struct sgimips_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
 	_bus_dmamap_unload,
-	_bus_dmamap_sync,
+	_bus_dmamap_sync_mips3,
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
