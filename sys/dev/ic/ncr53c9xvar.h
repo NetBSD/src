@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.1 1997/02/27 01:12:09 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.2 1997/02/27 13:59:34 briggs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -74,7 +74,8 @@
 #define	NCR_VARIANT_ESP100A		1
 #define	NCR_VARIANT_ESP200		2
 #define	NCR_VARIANT_NCR53C94		3
-#define	NCR_VARIANT_MAX			4
+#define	NCR_VARIANT_NCR53C96		4
+#define	NCR_VARIANT_MAX			5
 
 /*
  * ECB. Holds additional information for each SCSI command Comments: We
