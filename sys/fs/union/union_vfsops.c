@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.16 2004/05/22 22:13:50 christos Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.17 2004/05/24 03:09:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.16 2004/05/22 22:13:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.17 2004/05/24 03:09:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,8 +481,8 @@ union_statvfs(mp, sbp, p)
 {
 	int error;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
-	unsigned long l_bsize;
-	fsblkcnt_t l_blocks, l_files;
+	struct statvfs *sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
+	unsigned long lbsize;
 
 #ifdef UNION_DIAGNOSTIC
 	printf("union_statvfs(mp = %p, lvp = %p, uvp = %p)\n", mp,
@@ -490,32 +490,47 @@ union_statvfs(mp, sbp, p)
 #endif
 
 	if (um->um_lowervp) {
-		error = VFS_STATVFS(um->um_lowervp->v_mount, sbp, p);
+		error = VFS_STATVFS(um->um_lowervp->v_mount, sbuf, p);
 		if (error)
-			return (error);
-		l_bsize = sbp->f_bsize;
-		l_blocks = sbp->f_blocks - sbp->f_bfree;
-		l_files = sbp->f_files - sbp->f_ffree;
-	} else {
-		l_bsize = 0;
-		l_blocks = 0;
-		l_files = 0;
+			goto done;
 	}
 
-	error = VFS_STATVFS(um->um_uppervp->v_mount, sbp, p);
+	/* now copy across the "interesting" information and fake the rest */
+	lbsize = sbuf->f_bsize;
+	sbp->f_blocks = sbuf->f_blocks - sbuf->f_bfree;
+	sbp->f_files = sbuf->f_files - sbuf->f_ffree;
+
+	error = VFS_STATVFS(um->um_uppervp->v_mount, sbuf, p);
 	if (error)
-		return (error);
+		goto done;
+
+	sbp->f_flag = sbuf->f_flag;
+	sbp->f_bsize = sbuf->f_bsize;
+	sbp->f_frsize = sbuf->f_frsize;
+	sbp->f_iosize = sbuf->f_iosize;
+
 	/*
 	 * The "total" fields count total resources in all layers,
 	 * the "free" fields count only those resources which are
 	 * free in the upper layer (since only the upper layer
 	 * is writable).
 	 */
-	sbp->f_blocks += l_blocks * l_bsize / sbp->f_bsize;
-	sbp->f_files += l_files;
+
+	if (sbuf->f_bsize != lbsize)
+		sbp->f_blocks = sbp->f_blocks * lbsize / sbuf->f_bsize;
+	sbp->f_blocks += sbuf->f_blocks;
+	sbp->f_bfree = sbuf->f_bfree;
+	sbp->f_bavail = sbuf->f_bavail;
+	sbp->f_bresvd = sbuf->f_bresvd;
+	sbp->f_files += sbuf->f_files;
+	sbp->f_ffree = sbuf->f_ffree;
+	sbp->f_favail = sbuf->f_favail;
+	sbp->f_fresvd = sbuf->f_fresvd;
 
 	copy_statvfs_info(sbp, mp);
-	return (0);
+done:
+	free(sbuf, M_TEMP);
+	return error;
 }
 
 /*ARGSUSED*/
