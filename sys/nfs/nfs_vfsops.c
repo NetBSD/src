@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.95 2000/09/19 17:04:51 bjh21 Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.96 2000/09/19 22:15:41 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -883,7 +883,7 @@ loop:
 		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;
 		error = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p);
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p);
 		if (error)
 			allerror = error;
 		vput(vp);
