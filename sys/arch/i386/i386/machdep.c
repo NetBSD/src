@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.93 1994/04/05 17:56:26 mycroft Exp $
+ *	$Id: machdep.c,v 1.94 1994/04/05 19:09:14 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -1091,29 +1091,40 @@ init386(first_avail)
 	proc0.p_addr->u_pcb.pcb_ptd = IdlePTD;
 }
 
+struct queue {
+	struct queue *q_next, *q_prev;
+};
+
 /*
  * insert an element into a queue
  */
-#undef insque
-_insque(element, head)
-	register struct prochd *element, *head;
+void
+_insque(elem, head)
+	register struct queue *elem, *head;
 {
-	element->ph_link = head->ph_link;
-	head->ph_link = (struct proc *)element;
-	element->ph_rlink = (struct proc *)head;
-	((struct prochd *)(element->ph_link))->ph_rlink=(struct proc *)element;
+	register struct queue *next;
+
+	next = head->q_next;
+	elem->q_next = next;
+	head->q_next = elem;
+	elem->q_prev = head;
+	next->q_prev = elem;
 }
 
 /*
  * remove an element from a queue
  */
-#undef remque
-_remque(element)
-	register struct prochd *element;
+void
+_remque(elem)
+	register struct queue *elem;
 {
-	((struct prochd *)(element->ph_link))->ph_rlink = element->ph_rlink;
-	((struct prochd *)(element->ph_rlink))->ph_link = element->ph_link;
-	element->ph_rlink = (struct proc *)0;
+	register struct queue *next, *prev;
+
+	next = elem->q_next;
+	prev = elem->q_prev;
+	next->q_prev = prev;
+	prev->q_next = next;
+	elem->q_prev = 0;
 }
 
 /*
@@ -1274,16 +1285,16 @@ pmap_page_index(pa)
 /*
  * consinit:
  * initialize the system console.
- * XXX - shouldn't deal with this cons_initted thing, but then,
+ * XXX - shouldn't deal with this initted thing, but then,
  * it shouldn't be called from init386 either.
  */
-static int cons_initted;
-
 void
 consinit()
 {
-	if (!cons_initted) {
-		cninit();
-		cons_initted = 1;
-	}
+	static int initted;
+
+	if (initted)
+		return;
+	initted = 1;
+	cninit();
 }
