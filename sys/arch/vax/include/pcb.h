@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.7 1995/03/30 20:43:02 ragge Exp $	*/
+/*	$NetBSD: pcb.h,v 1.8 1995/05/07 16:43:34 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -35,6 +35,7 @@
 #ifndef _VAX_PCB_H_
 #define _VAX_PCB_H_
 
+#include "machine/trap.h"
 
 struct pcb {
 
@@ -62,8 +63,10 @@ struct pcb {
 #define	AST_MASK 0x07000000
 #define	AST_PCB	 0x04000000
 
-/* Not yet... */
+/* machine-specific core dump; save trapframe */
 struct	md_coredump {
+	struct trapframe md_tf;
 };
+
 #endif /* _VAX_PCB_H_ */
 
