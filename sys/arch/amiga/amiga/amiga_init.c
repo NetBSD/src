@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.76 2002/01/28 09:56:44 aymeric Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.77 2002/04/25 09:20:25 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,7 +35,7 @@
 #include "opt_p5ppc68kboard.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.76 2002/01/28 09:56:44 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.77 2002/04/25 09:20:25 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.76 2002/01/28 09:56:44 aymeric Exp 
 
 #define RELOC(v, t)	*((t*)((u_int)&(v) + loadbase))
 
-extern int	machineid, mmutype;
 extern u_int	lowram;
 extern u_int	Sysptmap, Sysptsize, Sysseg, Umap, proc0paddr;
 extern u_int	Sysseg_pa;
@@ -109,6 +108,10 @@ u_int namigahwpg;
 vaddr_t amigashdwaddr;
 u_int namigashdwpg;
 
+vaddr_t CHIPMEMADDR;
+vaddr_t chipmem_start;
+vaddr_t chipmem_end;
+
 vaddr_t z2mem_start;		/* XXX */
 static vaddr_t z2mem_end;		/* XXX */
 int use_z2_mem = 1;			/* XXX */
@@ -116,6 +119,11 @@ int use_z2_mem = 1;			/* XXX */
 u_long boot_fphystart, boot_fphysize, boot_cphysize;
 
 static u_long boot_flags;
+
+struct boot_memlist *memlist;
+
+struct cfdev *cfdev;
+int ncfdev;
 
 u_long scsi_nosync;
 int shift_nosync;
@@ -241,7 +249,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	RELOC(boot_cphysize, u_long) = cphysize;
 
 	RELOC(machineid, int) = id;
-	RELOC(chipmem_end, paddr_t) = cphysize;
+	RELOC(chipmem_start, vaddr_t) = cphysize;
+	RELOC(chipmem_end, vaddr_t) = cphysize;
 	RELOC(esym, char *) = esym_addr;
 	RELOC(boot_flags, u_long) = flags;
 	RELOC(boot_partition, u_long) = boot_part;
@@ -504,7 +513,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		/*
 		 * Initialize Sysptmap
 		 */
-		sg = (uint *) Sysptmap_pa;
+		sg = (u_int *) Sysptmap_pa;
 		esg = &sg[(ptsize >> PGSHIFT) + 1];
 		pg_proto = ptpa | PG_RW | PG_CI | PG_V;
 		while (sg < esg) {
@@ -743,15 +752,15 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		RELOC(DRCCADDR, u_int) =
 		    (u_int)RELOC(Sysmap, u_int) - ptextra * NBPG;
 
-		RELOC(CIAADDR, u_int) =
+		RELOC(CIAADDR, vaddr_t) =
 		    RELOC(DRCCADDR, u_int) + DRCIAPG * NBPG;
 
 		if (RELOC(z2mem_end, vaddr_t)) {		/* XXX */
-			RELOC(ZTWOMEMADDR, u_int) =
+			RELOC(ZTWOMEMADDR, vaddr_t) =
 			    RELOC(DRCCADDR, u_int) + NDRCCPG * NBPG;
 
 			RELOC(ZBUSADDR, vaddr_t) =
-			    RELOC(ZTWOMEMADDR, u_int) +
+			    RELOC(ZTWOMEMADDR, vaddr_t) +
 			    RELOC(NZTWOMEMPG, u_int)*NBPG;
 		} else {
 			RELOC(ZBUSADDR, vaddr_t) =
@@ -765,28 +774,28 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	} else
 #endif
 	{
-		RELOC(CHIPMEMADDR, u_int) =
+		RELOC(CHIPMEMADDR, vaddr_t) =
 		    (u_int)RELOC(Sysmap, u_int) - ptextra * NBPG;
 		if (RELOC(z2mem_end, u_int) == 0)
-			RELOC(CIAADDR, u_int) =
-			    RELOC(CHIPMEMADDR, u_int) + NCHIPMEMPG * NBPG;
+			RELOC(CIAADDR, vaddr_t) =
+			    RELOC(CHIPMEMADDR, vaddr_t) + NCHIPMEMPG * NBPG;
 		else {
-			RELOC(ZTWOMEMADDR, u_int) =
-			    RELOC(CHIPMEMADDR, u_int) + NCHIPMEMPG * NBPG;
-			RELOC(CIAADDR, u_int) =
-			    RELOC(ZTWOMEMADDR, u_int) + RELOC(NZTWOMEMPG, u_int) * NBPG;
+			RELOC(ZTWOMEMADDR, vaddr_t) =
+			    RELOC(CHIPMEMADDR, vaddr_t) + NCHIPMEMPG * NBPG;
+			RELOC(CIAADDR, vaddr_t) =
+			    RELOC(ZTWOMEMADDR, vaddr_t) + RELOC(NZTWOMEMPG, u_int) * NBPG;
 		}
 		RELOC(ZTWOROMADDR, vaddr_t)  =
-		    RELOC(CIAADDR, u_int) + NCIAPG * NBPG;
+		    RELOC(CIAADDR, vaddr_t) + NCIAPG * NBPG;
 		RELOC(ZBUSADDR, vaddr_t) =
-		    RELOC(ZTWOROMADDR, u_int) + NZTWOROMPG * NBPG;
+		    RELOC(ZTWOROMADDR, vaddr_t) + NZTWOROMPG * NBPG;
 		RELOC(CIAADDR, vaddr_t) += NBPG/2;	/* not on 8k boundery :-( */
 		RELOC(CUSTOMADDR, vaddr_t)  =
-		    RELOC(ZTWOROMADDR, u_int) - ZTWOROMBASE + CUSTOMBASE;
+		    RELOC(ZTWOROMADDR, vaddr_t) - ZTWOROMBASE + CUSTOMBASE;
 		/*
 		 * some nice variables for pmap to use
 		 */
-		RELOC(amigahwaddr, vaddr_t) = RELOC(CHIPMEMADDR, u_int);
+		RELOC(amigahwaddr, vaddr_t) = RELOC(CHIPMEMADDR, vaddr_t);
 	}
 
 	/* Set number of pages to reserve for mapping Amiga hardware pages */
@@ -920,8 +929,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	/*
 	 * Get our chip memory allocation system working
 	 */
-	chipmem_start = CHIPMEMADDR + chipmem_start;
-	chipmem_end   = CHIPMEMADDR + chipmem_end;
+	chipmem_start += CHIPMEMADDR;
+	chipmem_end   += CHIPMEMADDR;
 
 	/* XXX is: this MUST NOT BE DONE before the pmap_bootstrap() call */
 	if (z2mem_end) {
