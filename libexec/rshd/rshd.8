@@ -1,4 +1,4 @@
-.\"	$NetBSD: rshd.8,v 1.16 2004/07/17 18:33:01 wiz Exp $
+.\"	$NetBSD: rshd.8,v 1.17 2005/03/09 07:49:08 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -193,13 +193,18 @@ and is not preceded by a flag byte.
 .El
 .Sh SEE ALSO
 .Xr rsh 1 ,
+.Xr ssh 1 ,
 .Xr rcmd 3 ,
 .Xr ruserok 3 ,
-.Xr login.conf 5
+.Xr hosts_access 5 ,
+.Xr login.conf 5 ,
+.Xr sshd 8
 .Sh BUGS
 The authentication procedure used here assumes the integrity
-of each client machine and the connecting medium.
+of every machine and every network that can reach the rshd/rlogind
+ports on the server.
 This is insecure, but is useful in an ``open'' environment.
+Sshd or a Kerberized version of this server are much more secure.
 .Pp
 A facility to allow all data exchanges to be encrypted should be
 present.
