@@ -82,7 +82,7 @@ Otherwise, a value of -1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Utimes
+.Fn Utime
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EACCES
@@ -125,8 +125,9 @@ The file system containing the file is mounted read-only.
 .Sh SEE ALSO
 .Xr stat 2 ,
 .Xr utimes 2
-.Sh HISTORY
-A
+.Sh STANDARDS
+The
 .Fn utime
-function appeared in 
-.At v7 .
+function
+conforms to
+.St -p1003.1-88 .
