@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4 2002/08/12 02:06:18 simonb Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5 2002/08/23 12:46:49 scw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -102,6 +102,7 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	int own, pcf, cas, pcl, aid;
 	struct cputab *cp = models;
 	unsigned int processor_freq;
+	int eccirq;
 
 	if (board_info_get("processor-frequency",
 		&processor_freq, sizeof(processor_freq)) == -1)
@@ -150,6 +151,16 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 		own, pcf, cas, pcl, aid);
 #endif
 
+	/*
+	 * If there is no ECC irq property, assume the hardware
+	 * doesn't support it.
+	 *
+	 * XXX: ECC handling needs to be pulled out of here so it
+	 * doesn't add unnecessary code to ports which don't need it.
+	 */
+	if (board_info_get("4xx-ecc-irq", &eccirq, sizeof(eccirq)) == -1)
+		return;
+
 	/* Initialize ECC error-logging handler.  This is always enabled,
 	 * but it will never be called on systems that do not have ECC
 	 * enabled by POST code in the bootloader.
@@ -160,7 +171,7 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	intr_ecc_iv = processor_freq; /* Set interval */
 	intr_ecc_cnt = 0;
 
-	intr_establish(16, IST_LEVEL, IPL_SERIAL, intr_ecc, NULL);
+	intr_establish(eccirq, IST_LEVEL, IPL_SERIAL, intr_ecc, NULL);
 }
 
 /*
