@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.146 2003/01/01 15:51:00 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.147 2003/01/02 09:42:09 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -306,6 +306,8 @@ cpu_mainbus_attach(parent, self, aux)
 	cpu_attach((struct cpu_softc *)self, node, mid);
 
 	cpi = ((struct cpu_softc *)self)->sc_cpuinfo;
+	if (cpi == NULL)
+		return;
 
 	/*
 	 * Map CPU mailbox if available
@@ -448,6 +450,7 @@ static	struct cpu_softc *bootcpu;
 		 */
 		getcpuinfo(cpi, node);
 #else
+		sc->sc_cpuinfo = NULL;
 		printf(": no SMP support in kernel\n");
 		return;
 #endif
