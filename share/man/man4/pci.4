@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.58 2001/10/22 22:23:45 augustss Exp $
+.\"	$NetBSD: pci.4,v 1.59 2001/11/07 16:38:58 tsutsui Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -111,6 +111,10 @@ Advanced Micro Devices Am53c974 PCscsi-PCI
 interfaces.
 .It siop
 Symbios Logic/NCR 53c8xx-family
+.Tn SCSI
+interfaces.
+.It trm
+Tekram TRM-S1040 ASIC based
 .Tn SCSI
 interfaces.
 .El
@@ -364,6 +368,7 @@ VGA graphics boards.
 .Xr sv 4 ,
 .Xr tl 4 ,
 .Xr tlp 4 ,
+.Xr trm 4 ,
 .Xr twe 4 ,
 .Xr uhci 4 ,
 .Xr vga 4 ,
