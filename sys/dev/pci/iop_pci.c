@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.10 2002/10/02 16:51:39 thorpej Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.11 2002/11/08 05:47:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.10 2002/10/02 16:51:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.11 2002/11/08 05:47:35 msaitoh Exp $");
 
 #include "opt_i2o.h"
 
@@ -88,6 +88,10 @@ iop_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_I2O_STANDARD &&
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_I2O_INTRDRIVEN)
 		return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DPT && 
+	    ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DPT_RAID_2000S)
+		|| (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DPT_RAID_2005S)))
+		return (1);
 
 	return (0);
 }
@@ -129,6 +133,30 @@ iop_pci_attach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_ioh, NULL, NULL)) {
 		printf("%s: can't map register window\n", sc->sc_dv.dv_xname);
 		return;
+	}
+
+	/* Map the 2nd register window. */
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DPT_RAID_2005S) {
+		i += 4;	/* next BAR */
+		if (i == PCI_MAPREG_END) {
+			printf("can't find mapping\n");
+			return;
+		}
+
+#if 0
+		/* Should we check it? (see FreeBSD's asr driver) */
+		reg = pci_conf_read(pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+		printf("subid %x, %x\n", PCI_VENDOR(reg), PCI_PRODUCT(reg));
+#endif
+		if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_MEM, 0,
+		    &sc->sc_rep_iot, &sc->sc_rep_ioh, NULL, NULL)) {
+			printf("%s: can't map 2nd register window\n", sc->sc_dv.dv_xname);
+			return;
+		}
+	} else {
+		/* iop devices other than 2005S */
+		sc->sc_rep_iot = sc->sc_iot;
+		sc->sc_rep_ioh = sc->sc_ioh;
 	}
 
 	sc->sc_pcibus = pa->pa_bus;
