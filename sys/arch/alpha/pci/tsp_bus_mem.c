@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_bus_mem.c,v 1.6 2000/11/29 06:30:09 thorpej Exp $ */
+/* $NetBSD: tsp_bus_mem.c,v 1.7 2003/07/14 23:25:40 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -30,6 +30,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tsp_bus_mem.c,v 1.7 2003/07/14 23:25:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
