@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.7 2005/02/26 05:45:54 perseant Exp $ */
+/* $NetBSD: segwrite.c,v 1.8 2005/03/25 20:16:37 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -271,7 +271,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 		daddr = fs->lfs_offset;
 		fs->lfs_offset += btofsb(fs, fs->lfs_ibsize);
 		sp->ibp = *sp->cbpp++ =
-		    getblk(fs->lfs_unlockvp, fsbtodb(fs, daddr),
+		    getblk(fs->lfs_devvp, fsbtodb(fs, daddr),
 		    fs->lfs_ibsize);
 		sp->ibp->b_flags |= B_GATHERED;
 		gotblk++;
@@ -661,7 +661,7 @@ lfs_initseg(struct lfs * fs)
 
 	/* Get a new buffer for SEGSUM and enter it into the buffer list. */
 	sp->cbpp = sp->bpp;
-	sbp = *sp->cbpp = getblk(fs->lfs_unlockvp,
+	sbp = *sp->cbpp = getblk(fs->lfs_devvp,
 	    fsbtodb(fs, fs->lfs_offset), fs->lfs_sumsize);
 	sp->segsum = sbp->b_data;
 	memset(sp->segsum, 0, fs->lfs_sumsize);
@@ -752,7 +752,7 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	if ((nblocks = sp->cbpp - sp->bpp) == 1)
 		return 0;
 
-	devvp = fs->lfs_unlockvp;
+	devvp = fs->lfs_devvp;
 
 	/* Update the segment usage information. */
 	LFS_SEGENTRY(sup, fs, sp->seg_number, bp);
@@ -830,11 +830,11 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 		printf("i = %d, bp = %p, flags %lx, bn = %" PRIx64 "\n",
 		       nblocks - i, bp, bp->b_flags, bp->b_blkno);
 		printf("  vp = %p\n", bp->b_vp);
-		if (bp->b_vp != fs->lfs_unlockvp)
+		if (bp->b_vp != fs->lfs_devvp)
 			printf("  ino = %d lbn = %" PRId64 "\n",
 			       VTOI(bp->b_vp)->i_number, bp->b_lblkno);
 #endif
-		if (bp->b_vp == fs->lfs_unlockvp)
+		if (bp->b_vp == fs->lfs_devvp)
 			written_dev += bp->b_bcount;
 		else {
 			if (bp->b_lblkno >= 0)
@@ -1003,7 +1003,7 @@ lfs_writesuper(struct lfs *fs, ufs_daddr_t daddr)
 	/* Checksum the superblock and copy it into a buffer. */
 	fs->lfs_cksum = lfs_sb_cksum(&(fs->lfs_dlfs));
 	assert(daddr > 0);
-	bp = getblk(fs->lfs_unlockvp, fsbtodb(fs, daddr), LFS_SBPAD);
+	bp = getblk(fs->lfs_devvp, fsbtodb(fs, daddr), LFS_SBPAD);
 	memset(bp->b_data + sizeof(struct dlfs), 0,
 	    LFS_SBPAD - sizeof(struct dlfs));
 	*(struct dlfs *) bp->b_data = fs->lfs_dlfs;
