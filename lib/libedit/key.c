@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.11 2001/01/23 15:55:30 jdolecek Exp $	*/
+/*	$NetBSD: key.c,v 1.12 2001/05/17 01:02:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: key.c,v 1.11 2001/01/23 15:55:30 jdolecek Exp $");
+__RCSID("$NetBSD: key.c,v 1.12 2001/05/17 01:02:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -222,11 +222,11 @@ protected void
 key_clear(EditLine *el, el_action_t *map, char *in)
 {
 
-	if ((map[(unsigned char) *in] == ED_SEQUENCE_LEAD_IN) &&
+	if ((map[(unsigned char)*in] == ED_SEQUENCE_LEAD_IN) &&
 	    ((map == el->el_map.key &&
-	    el->el_map.alt[(unsigned char) *in] != ED_SEQUENCE_LEAD_IN) ||
+	    el->el_map.alt[(unsigned char)*in] != ED_SEQUENCE_LEAD_IN) ||
 	    (map == el->el_map.alt &&
-	    el->el_map.key[(unsigned char) *in] != ED_SEQUENCE_LEAD_IN)))
+	    el->el_map.key[(unsigned char)*in] != ED_SEQUENCE_LEAD_IN)))
 		(void) key_delete(el, in);
 }
 

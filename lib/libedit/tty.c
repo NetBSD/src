@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.14 2001/01/09 17:31:04 jdolecek Exp $	*/
+/*	$NetBSD: tty.c,v 1.15 2001/05/17 01:02:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.14 2001/01/09 17:31:04 jdolecek Exp $");
+__RCSID("$NetBSD: tty.c,v 1.15 2001/05/17 01:02:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -763,7 +763,7 @@ tty_bind_char(EditLine *el, int force)
 
 	unsigned char *t_n = el->el_tty.t_c[ED_IO];
 	unsigned char *t_o = el->el_tty.t_ed.c_cc;
-	char new[2], old[2];
+	unsigned char new[2], old[2];
 	const ttymap_t *tp;
 	el_action_t *map, *alt;
 	const el_action_t *dmap, *dalt;
@@ -785,16 +785,16 @@ tty_bind_char(EditLine *el, int force)
 		if (new[0] == old[0] && !force)
 			continue;
 		/* Put the old default binding back, and set the new binding */
-		key_clear(el, map, old);
-		map[(int) old[0]] = dmap[(int) old[0]];
-		key_clear(el, map, new);
+		key_clear(el, map, (char *)old);
+		map[old[0]] = dmap[old[0]];
+		key_clear(el, map, (char *)new);
 		/* MAP_VI == 1, MAP_EMACS == 0... */
-		map[(int) new[0]] = tp->bind[(int) el->el_map.type];
+		map[new[0]] = tp->bind[el->el_map.type];
 		if (dalt) {
-			key_clear(el, alt, old);
-			alt[(int) old[0]] = dalt[(int) old[0]];
-			key_clear(el, alt, new);
-			alt[(int) new[0]] = tp->bind[(int) el->el_map.type + 1];
+			key_clear(el, alt, (char *)old);
+			alt[old[0]] = dalt[old[0]];
+			key_clear(el, alt, (char *)new);
+			alt[new[0]] = tp->bind[el->el_map.type + 1];
 		}
 	}
 }

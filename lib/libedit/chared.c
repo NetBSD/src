@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.13 2001/04/13 01:04:19 lukem Exp $	*/
+/*	$NetBSD: chared.c,v 1.14 2001/05/17 01:02:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.13 2001/04/13 01:04:19 lukem Exp $");
+__RCSID("$NetBSD: chared.c,v 1.14 2001/05/17 01:02:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -588,7 +588,7 @@ ch_end(EditLine *el)
 public int
 el_insertstr(EditLine *el, const char *s)
 {
-	int len;
+	size_t len;
 
 	if ((len = strlen(s)) == 0)
 		return (-1);
@@ -597,7 +597,7 @@ el_insertstr(EditLine *el, const char *s)
 			return (-1);
 	}
 
-	c_insert(el, len);
+	c_insert(el, (int)len);
 	while (*s)
 		*el->el_line.cursor++ = *s++;
 	return (0);
