@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.20 2001/04/18 16:04:43 thorpej Exp $ */
+/* $NetBSD: vmparam.h,v 1.21 2001/04/29 22:44:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -132,10 +132,19 @@
 #define	VM_FREELIST_DEFAULT	0
 
 /*
- * pmap-specific data stored in the vm_physmem[] array.
+ * pmap-specific data store in the vm_page structure.
  */
-struct pmap_physseg {
-	struct pv_head *pvhead;		/* pv list of this seg */
-};
+#include <sys/queue.h>
+
+#define	VM_MDPAGE_MEMBERS						\
+	LIST_HEAD(, pv_entry) pvh_list;		/* pv_entry list */	\
+	struct simplelock pvh_slock;		/* lock on this head */	\
+	int pvh_attrs;				/* page attributes */
+
+#define	VM_MDPAGE_INIT(pg)						\
+do {									\
+	LIST_INIT(&(pg)->pvh_list);					\
+	simple_lock_init(&(pg)->pvh_slock);				\
+} while (/*CONSTCOND*/0)
 
 #endif	/* ! _ALPHA_VMPARAM_H_ */

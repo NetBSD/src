@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.27 2001/02/04 10:16:03 jmc Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.28 2001/04/29 22:44:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,9 +59,9 @@ extern	char KERNBASE[];
 
 /* This is needed by some LKMs. */
 #define VM_PHYSSEG_MAX		4
-struct pmap_physseg {
-	/* NULL */
-};
+
+#define	VM_MDPAGE_MEMBERS	/* XXX nothing yet */
+#define	VM_MDPAGE_INIT(pg)	/* XXX nothing yet */
 
 /*
  * The time for a process to be blocked before being very swappable.

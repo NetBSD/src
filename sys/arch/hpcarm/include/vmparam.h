@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2001/02/23 03:48:20 ichiro Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2001/04/29 22:44:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -193,6 +193,10 @@
  * define structure pmap_physseg: there is one of these structures
  * for each chunk of noncontig RAM you have.
  */
+
+#define	VM_MDPAGE_MEMBERS	/* XXX nothing yet */
+#define	VM_MDPAGE_INIT(pg)	/* XXX nothing yet */
+#define	PMAP_PHYSSEG		/* XXX for now */
 
 struct pmap_physseg {
 	struct pv_entry *pvent;		/* pv_entry array */
