@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.14 1999/10/07 18:26:58 perseant Exp $	*/
+/*	$NetBSD: library.c,v 1.15 2000/01/18 08:02:30 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.14 1999/10/07 18:26:58 perseant Exp $");
+__RCSID("$NetBSD: library.c,v 1.15 2000/01/18 08:02:30 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -244,7 +244,7 @@ get_ifile (fsp, use_mmap)
 
 	if (use_mmap && file_stat.st_size == fsp->fi_ifile_length) {
 		/* (void) close(fid); */
-                free(ifile_name); /* XXX KS */
+                free(ifile_name);
 		return;
 	}
 
@@ -616,6 +616,7 @@ pseg_valid (fsp, ssp, addr)
 	}
 	if (cksum ((void *)datap, nblocks * sizeof(u_long)) != ssp->ss_datasum) {
                 syslog(LOG_DEBUG, "Bad data checksum");
+		free(datap);
 		return 0;
         }
 #endif
