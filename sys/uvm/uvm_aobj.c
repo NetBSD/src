@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.44 2001/06/22 06:20:24 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.45 2001/06/23 20:52:03 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -236,32 +236,35 @@ uao_find_swhash_elt(aobj, pageidx, create)
 	struct uao_swhash_elt *elt;
 	voff_t page_tag;
 
-	swhash = UAO_SWHASH_HASH(aobj, pageidx); /* first hash to get bucket */
-	page_tag = UAO_SWHASH_ELT_TAG(pageidx);	/* tag to search for */
+	swhash = UAO_SWHASH_HASH(aobj, pageidx);
+	page_tag = UAO_SWHASH_ELT_TAG(pageidx);
 
 	/*
 	 * now search the bucket for the requested tag
 	 */
+
 	LIST_FOREACH(elt, swhash, list) {
-		if (elt->tag == page_tag)
-			return(elt);
+		if (elt->tag == page_tag) {
+			return elt;
+		}
 	}
-
-	/* fail now if we are not allowed to create a new entry in the bucket */
-	if (!create)
+	if (!create) {
 		return NULL;
-
+	}
 
 	/*
 	 * allocate a new entry for the bucket and init/insert it in
 	 */
-	elt = pool_get(&uao_swhash_elt_pool, PR_WAITOK);
+
+	elt = pool_get(&uao_swhash_elt_pool, PR_NOWAIT);
+	if (elt == NULL) {
+		return NULL;
+	}
 	LIST_INSERT_HEAD(swhash, elt, list);
 	elt->tag = page_tag;
 	elt->count = 0;
 	memset(elt->slots, 0, sizeof(elt->slots));
-
-	return(elt);
+	return elt;
 }
 
 /*
@@ -307,6 +310,8 @@ uao_find_swslot(aobj, pageidx)
  *
  * => setting a slot to zero frees the slot
  * => object must be locked by caller
+ * => we return the old slot number, or -1 if we failed to allocate
+ *    memory to record the new slot number
  */
 int
 uao_set_swslot(uobj, pageidx, slot)
@@ -314,6 +319,7 @@ uao_set_swslot(uobj, pageidx, slot)
 	int pageidx, slot;
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
+	struct uao_swhash_elt *elt;
 	int oldslot;
 	UVMHIST_FUNC("uao_set_swslot"); UVMHIST_CALLED(pdhist);
 	UVMHIST_LOG(pdhist, "aobj %p pageidx %d slot %d",
@@ -345,11 +351,9 @@ uao_set_swslot(uobj, pageidx, slot)
 		 * we are freeing.
 		 */
 
-		struct uao_swhash_elt *elt =
-		    uao_find_swhash_elt(aobj, pageidx, slot ? TRUE : FALSE);
+		elt = uao_find_swhash_elt(aobj, pageidx, slot ? TRUE : FALSE);
 		if (elt == NULL) {
-			KASSERT(slot == 0);
-			return (0);
+			return slot ? -1 : 0;
 		}
 
 		oldslot = UAO_SWHASH_ELT_PAGESLOT(elt, pageidx);
@@ -364,8 +368,8 @@ uao_set_swslot(uobj, pageidx, slot)
 		if (slot) {
 			if (oldslot == 0)
 				elt->count++;
-		} else {		/* freeing slot ... */
-			if (oldslot)	/* to be safe */
+		} else {
+			if (oldslot)
 				elt->count--;
 
 			if (elt->count == 0) {
@@ -1194,7 +1198,9 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 				 */
 				swslot = uao_set_swslot(&aobj->u_obj, pageidx,
 							SWSLOT_BAD);
-				uvm_swap_markbad(swslot, 1);
+				if (swslot != -1) {
+					uvm_swap_markbad(swslot, 1);
+				}
 
 				ptmp->flags &= ~(PG_WANTED|PG_BUSY);
 				UVM_PAGE_OWN(ptmp, NULL);
