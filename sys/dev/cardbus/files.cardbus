@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.9 2000/04/10 07:42:57 haya Exp $
+#	$NetBSD: files.cardbus,v 1.10 2000/04/13 11:18:24 joda Exp $
 #
 # files.cardbus
 #
@@ -31,8 +31,8 @@ file	dev/cardbus/if_fxp_cardbus.c		fxp_cardbus
 
 #
 #
-#attach	com at cardbus with com_cardbus
-#file	dev/cardbus/com_cardbus.c		com_cardbus
+attach	com at cardbus with com_cardbus
+file	dev/cardbus/com_cardbus.c		com_cardbus
 
 #
 # DECchip 21143 and clones.
