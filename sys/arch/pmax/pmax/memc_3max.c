@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3max.c,v 1.12 2002/09/27 15:36:36 provos Exp $	*/
+/*	$NetBSD: memc_3max.c,v 1.13 2002/09/29 15:11:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.12 2002/09/27 15:36:36 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.13 2002/09/29 15:11:14 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ dec_mtasic_err(erradr, errsyn, bnk32m)
 	}
 	else
 		printf("\n");
-	panic("panic(\"Mem error interrupt\");");
+	panic("Mem error interrupt");
 }
 
 /*
