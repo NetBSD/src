@@ -1,4 +1,4 @@
-/* $NetBSD: gusreg.h,v 1.4 1997/03/19 06:45:23 mikel Exp $ */
+/* $NetBSD: gusreg.h,v 1.5 1997/09/06 14:23:14 augustss Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,10 +46,13 @@
  * address.
  */
 
-#define GUS_MIDI_CONTROL	0x100
-#define GUS_MIDI_STATUS		0x100
-#define GUS_MIDI_READ		0x101
-#define GUS_MIDI_WRITE		0x101
+#define GUS_IOH4_OFFSET		0x100
+#define GUS_NPORT4		2
+
+#define GUS_MIDI_CONTROL	(0x100-GUS_IOH4_OFFSET)
+#define GUS_MIDI_STATUS		(0x100-GUS_IOH4_OFFSET)
+#define GUS_MIDI_READ		(0x101-GUS_IOH4_OFFSET)
+#define GUS_MIDI_WRITE		(0x101-GUS_IOH4_OFFSET)
 
 /*
  * Joystick interface - note this is an absolute address, NOT an offset from
@@ -78,11 +81,18 @@
 #define GUS_DMA_CONTROL		0x00b
 #define GUS_IRQCTL_CONTROL	0x00b
 #define GUS_JUMPER_CONTROL	0x00b
-#define GUS_VOICE_SELECT	0x102
-#define GUS_REG_SELECT		0x103
-#define GUS_DATA_LOW		0x104
-#define GUS_DATA_HIGH		0x105
-#define GUS_DRAM_DATA		0x107
+
+#define GUS_NPORT1 16
+
+#define GUS_IOH2_OFFSET		0x102
+#define GUS_VOICE_SELECT	(0x102-GUS_IOH2_OFFSET)
+#define GUS_REG_SELECT		(0x103-GUS_IOH2_OFFSET)
+#define GUS_DATA_LOW		(0x104-GUS_IOH2_OFFSET)
+#define GUS_DATA_HIGH		(0x105-GUS_IOH2_OFFSET)
+/* GUS_MIXER_SELECT 106 */
+#define GUS_DRAM_DATA		(0x107-GUS_IOH2_OFFSET)
+
+#define GUS_NPORT2 6
 
 /*
  * GUS on-board global registers
@@ -228,9 +238,12 @@
  * ICS Mixer registers
  */
 
-#define GUS_MIXER_SELECT	0x506		/* read=board rev, wr=mixer */
-#define GUS_BOARD_REV		0x506
-#define GUS_MIXER_DATA		0x106		/* data for mixer control */
+#define GUS_IOH3_OFFSET		0x506
+#define GUS_NPORT3		1
+
+#define GUS_MIXER_SELECT	(0x506-GUS_IOH3_OFFSET)		/* read=board rev, wr=mixer */
+#define GUS_BOARD_REV		(0x506-GUS_IOH3_OFFSET)
+#define GUS_MIXER_DATA		(0x106-GUS_IOH2_OFFSET)		/* data for mixer control */
 
 #define GUSMIX_CHAN_MIC		ICSMIX_CHAN_0
 #define GUSMIX_CHAN_LINE	ICSMIX_CHAN_1
