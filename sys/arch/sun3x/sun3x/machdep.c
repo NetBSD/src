@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 1997/01/16 22:08:31 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 1997/01/23 22:48:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,8 +90,9 @@
 #include <machine/mon.h>
 #include <machine/dvma.h>
 #include <machine/db_machdep.h>
+#include <machine/machdep.h>
 
-#include "machdep.h"
+#include <sun3/sun3/sunmon.h>
 
 extern char *cpu_string;
 extern char version[];
@@ -850,7 +851,7 @@ boot(howto, user_boot_string)
 	if (howto & RB_HALT) {
 	haltsys:
 		printf("Kernel halted.\n");
-		sun3x_mon_halt();
+		sunmon_halt();
 	}
 
 	/*
@@ -880,7 +881,7 @@ boot(howto, user_boot_string)
 		}
 	}
 	printf("Kernel rebooting...\n");
-	sun3x_mon_reboot(bootstr);
+	sunmon_reboot(bootstr);
 	for (;;) ;
 	/*NOTREACHED*/
 }
