@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 1995/12/11 12:44:39 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.19 1996/02/05 01:59:12 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -239,8 +239,11 @@ dvma_mapout(kva, va, len)
 /*
  * Map an IO request into kernel virtual address space.
  */
-vmapbuf(bp)
+/*ARGSUSED*/
+void
+vmapbuf(bp, sz)
 	register struct buf *bp;
+	vm_size_t sz;
 {
 	register vm_offset_t addr, kva, pa;
 	register vm_size_t size, off;
@@ -281,8 +284,11 @@ vmapbuf(bp)
 /*
  * Free the io map addresses associated with this IO operation.
  */
-vunmapbuf(bp)
+/*ARGSUSED*/
+void
+vunmapbuf(bp, sz)
 	register struct buf *bp;
+	vm_size_t sz;
 {
 	register vm_offset_t kva = (vm_offset_t)bp->b_data;
 	register vm_size_t size, off;
