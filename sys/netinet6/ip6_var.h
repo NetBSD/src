@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_var.h,v 1.12.4.1 2000/07/14 06:14:34 itojun Exp $	*/
-/*	$KAME: ip6_var.h,v 1.28 2000/03/09 00:46:12 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.12.4.2 2000/08/27 01:25:08 itojun Exp $	*/
+/*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -229,6 +229,11 @@ extern int	ip6_dad_count;		/* DupAddrDetectionTransmits */
 
 extern u_int32_t ip6_flow_seq;
 extern int ip6_auto_flowlabel;
+
+extern int   ip6_anonportmin;		/* minimum ephemeral port */
+extern int   ip6_anonportmax;		/* maximum ephemeral port */
+extern int   ip6_lowportmin;		/* minimum reserved port */
+extern int   ip6_lowportmax;		/* maximum reserved port */
 
 struct in6pcb;
 

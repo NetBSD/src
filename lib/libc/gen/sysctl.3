@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.58.2.3 2000/08/27 00:51:08 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.58.2.4 2000/08/27 01:25:07 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -877,6 +877,10 @@ The currently defined protocols and names are:
 .It ip6	use_deprecated	integer	yes
 .It ip6	rr_prune	integer	yes
 .It ip6	bindv6only	integer	yes
+.It ip6	anonportmin	integer	yes
+.It ip6	anonportmax	integer	yes
+.It ip6	lowportmin	integer	yes
+.It ip6	lowportmax	integer	yes
 .It icmp6	rediraccept	integer	yes
 .It icmp6	redirtimeout	integer	yes
 .It icmp6	nd6_prune	integer	yes
@@ -975,6 +979,24 @@ socket.
 Please refer to
 .Xr ip6 4
 for detail.
+.It Li ip6.anonportmin
+The lowest port number to use for TCP and UDP ephemeral port allocation.
+This cannot be set to less than 1024 or greater than 65535.
+.It Li ip6.anonportmax
+The highest port number to use for TCP and UDP ephemeral port allocation.
+This cannot be set to less than 1024 or greater than 65535, and must
+be greater than
+.Li ip6.anonportmin .
+.It Li ip6.lowportmin
+The lowest port number to use for TCP and UDP reserved port allocation.
+This cannot be set to less than 0 or greater than 1024, and must
+be smaller than
+.Li ip6.lowportmax .
+.It Li ip6.lowportmax
+The highest port number to use for TCP and UDP reserved port allocation.
+This cannot be set to less than 0 or greater than 1024, and must
+be greater than
+.Li ip6.lowportmin .
 .It Li icmp6.rediraccept
 If set to non-zero, the host will accept ICMPv6 redirect packets.
 Note that IPv6 routers will never accept ICMPv6 redirect packets,
