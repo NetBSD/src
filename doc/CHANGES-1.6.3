@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.64 2004/04/06 05:32:52 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.65 2004/04/06 05:40:45 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -397,3 +397,8 @@ gnu/usr.bin/send-pr/send-pr.sh			1.21-1.22 via patch
 
 	Use mktemp(1) for safe temp files. PR#21840
 	[reed, ticket #1649]
+
+bin/sh/arith_lex.l				1.11
+
+	Recognise octal and hexadecimal constants in expressions.
+	[simonb, ticket #1650]
