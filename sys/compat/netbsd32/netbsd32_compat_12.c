@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.7 2000/12/01 12:28:33 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.8 2000/12/01 19:18:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -40,6 +40,8 @@
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
+static void netbsd32_stat12_to_netbsd32 __P((struct stat12 *,
+		struct netbsd32_stat12 *));
 
 /* for use with {,fl}stat() */
 static void
