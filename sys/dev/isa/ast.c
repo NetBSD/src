@@ -1,9 +1,11 @@
 /*
  * Multi-port serial card interrupt demuxing support.
  * Roland McGrath 3/20/94
- * Charles Hannum 3/22/94
+ * The author disclaims copyright and places this file in the public domain.
  *
- *	$Id: ast.c,v 1.3 1994/03/23 03:04:32 mycroft Exp $
+ * Modified by: Charles Hannum, 3/22/94
+ *
+ *	$Id: ast.c,v 1.4 1994/03/23 03:55:24 cgd Exp $
  */
 
 #include "ast.h"
