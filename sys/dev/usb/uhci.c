@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.168 2003/02/08 03:32:51 ichiro Exp $	*/
+/*	$NetBSD: uhci.c,v 1.169 2003/02/16 23:15:28 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.168 2003/02/08 03:32:51 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.169 2003/02/16 23:15:28 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,9 +363,13 @@ struct usbd_pipe_methods uhci_device_isoc_methods = {
 };
 
 #define uhci_add_intr_info(sc, ii) \
-	LIST_INSERT_HEAD(&(sc)->sc_intrhead, (ii), list);
+	LIST_INSERT_HEAD(&(sc)->sc_intrhead, (ii), list)
 #define uhci_del_intr_info(ii) \
-	LIST_REMOVE((ii), list)
+	do { \
+		LIST_REMOVE((ii), list); \
+		(ii)->list.le_prev = NULL; \
+	} while (0)
+#define uhci_active_intr_info(ii) ((ii)->list.le_prev != NULL)
 
 Static __inline__ uhci_soft_qh_t *
 uhci_find_prev_qh(uhci_soft_qh_t *pqh, uhci_soft_qh_t *sqh)
@@ -1809,8 +1813,8 @@ uhci_device_bulk_start(usbd_xfer_handle xfer)
 	int len, isread, endpt;
 	int s;
 
-	DPRINTFN(3, ("uhci_device_bulk_transfer: xfer=%p len=%d flags=%d\n",
-		     xfer, xfer->length, xfer->flags));
+	DPRINTFN(3, ("uhci_device_bulk_start: xfer=%p len=%d flags=%d ii=%p\n",
+		     xfer, xfer->length, xfer->flags, ii));
 
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
@@ -2664,7 +2668,8 @@ uhci_device_intr_done(usbd_xfer_handle xfer)
 		/* The ii is already on the examined list, just leave it. */
 	} else {
 		DPRINTFN(5,("uhci_device_intr_done: removing\n"));
-		uhci_del_intr_info(ii);
+		if (uhci_active_intr_info(ii))
+			uhci_del_intr_info(ii);
 	}
 }
 
@@ -2680,6 +2685,9 @@ uhci_device_ctrl_done(usbd_xfer_handle xfer)
 	if (!(xfer->rqflags & URQ_REQUEST))
 		panic("uhci_ctrl_done: not a request");
 #endif
+
+	if (!uhci_active_intr_info(ii))
+		return;
 
 	uhci_del_intr_info(ii);	/* remove from active list */
 
@@ -2701,6 +2709,12 @@ uhci_device_bulk_done(usbd_xfer_handle xfer)
 	uhci_intr_info_t *ii = &UXFER(xfer)->iinfo;
 	uhci_softc_t *sc = ii->sc;
 	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->pipe;
+
+	DPRINTFN(5,("uhci_device_ctrl_done: xfer=%p ii=%p sc=%p upipe=%p\n",
+		    xfer, ii, sc, upipe));
+
+	if (!uhci_active_intr_info(ii))
+		return;
 
 	uhci_del_intr_info(ii);	/* remove from active list */
 

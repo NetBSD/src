@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.43 2003/02/08 03:32:50 ichiro Exp $	*/
+/*	$NetBSD: ehci.c,v 1.44 2003/02/16 23:15:27 augustss Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.43 2003/02/08 03:32:50 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.44 2003/02/16 23:15:27 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,11 @@ Static void		ehci_dump_exfer(struct ehci_xfer *);
 #define ehci_add_intr_list(sc, ex) \
 	LIST_INSERT_HEAD(&(sc)->sc_intrhead, (ex), inext);
 #define ehci_del_intr_list(ex) \
-	LIST_REMOVE((ex), inext)
+	do { \
+		LIST_REMOVE((ex), inext); \
+		(ex)->inext.le_prev = NULL; \
+	} while (0)
+#define ehci_active_intr_list(ex) ((ex)->inext.le_prev != NULL)
 
 Static struct usbd_bus_methods ehci_bus_methods = {
 	ehci_open,
@@ -2414,7 +2418,7 @@ ehci_device_ctrl_done(usbd_xfer_handle xfer)
 	}
 #endif
 
-	if (xfer->status != USBD_NOMEM) {
+	if (xfer->status != USBD_NOMEM && ehci_active_intr_list(ex)) {
 		ehci_del_intr_list(ex);	/* remove from active list */
 		ehci_free_sqtd_chain(sc, ex->sqtdstart, NULL);
 	}
@@ -2734,9 +2738,9 @@ ehci_device_bulk_done(usbd_xfer_handle xfer)
 	DPRINTFN(10,("ehci_bulk_done: xfer=%p, actlen=%d\n",
 		     xfer, xfer->actlen));
 
-	if (xfer->status != USBD_NOMEM) {
+	if (xfer->status != USBD_NOMEM && ehci_active_intr_list(ex)) {
 		ehci_del_intr_list(ex);	/* remove from active list */
-		ehci_free_sqtd_chain(sc, ex->sqtdstart, 0);
+		ehci_free_sqtd_chain(sc, ex->sqtdstart, NULL);
 	}
 
 	DPRINTFN(5, ("ehci_bulk_done: length=%d\n", xfer->actlen));
