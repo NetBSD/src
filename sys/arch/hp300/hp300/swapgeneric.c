@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.8 1994/12/20 06:53:45 hpeyerl Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.9 1995/09/02 04:54:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -35,20 +35,22 @@
  *	@(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
  */
 
-#include "sys/param.h"
-#include "sys/conf.h"
-#include "sys/buf.h"
-#include "sys/systm.h"
-#include "sys/reboot.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/systm.h>
+#include <sys/reboot.h>
 
-#include "../dev/device.h"
+#include <hp300/dev/device.h>
 
 #include "sd.h"
 #include "rd.h"
+#include "le.h"
 
 /*
  * Generic configuration;  all in one
  */
+
 dev_t	rootdev = NODEV;
 dev_t	argdev = NODEV;
 dev_t	dumpdev = NODEV;
@@ -65,24 +67,50 @@ extern	struct driver rddriver;
 #if NSD > 0
 extern	struct driver sddriver;
 #endif
+#if NLE > 0
+extern	struct driver ledriver;
+#endif
+
 extern struct hp_ctlr hp_cinit[];
 extern struct hp_device hp_dinit[];
+
+static	int no_mountroot __P((void));
+
+#ifdef FFS
+extern int ffs_mountroot();
+#else
+#define ffs_mountroot		no_mountroot
+#endif /* FFS */
+
+#ifdef NFSCLIENT
+extern char *nfsbootdevname;	/* from nfs_boot.c */
+extern int nfs_mountroot();	/* nfs_vfsops.c */
+static char nfsbootdevname_buf[128];
+#else
+static char *nfsbootdevname;
+#define nfs_mountroot		no_mountroot
+#endif /* NFSCLIENT */
+
+/* XXX: should eventually ask for root fs type. */
 
 struct	genericconf {
 	caddr_t	gc_driver;
 	char	*gc_name;
 	dev_t	gc_root;
+	int	(*gc_mountroot)();
 } genericconf[] = {
 #if NRD > 0
-	{ (caddr_t)&rddriver,	"rd",	makedev(2, 0),	},
+	{ (caddr_t)&rddriver,	"rd",	makedev(2, 0),	ffs_mountroot },
 #endif
 #if NSD > 0
-	{ (caddr_t)&sddriver,	"sd",	makedev(4, 0),	},
+	{ (caddr_t)&sddriver,	"sd",	makedev(4, 0),	ffs_mountroot },
+#endif
+#if NLE > 0
+	{ (caddr_t)&ledriver,	"le",	NODEV,		nfs_mountroot },
 #endif
 	{ 0 },
 };
 
-extern int ffs_mountroot();
 int (*mountroot)() = ffs_mountroot;
 
 setconf()
@@ -107,7 +135,7 @@ retry:
 				goto gotit;
 		printf("use one of:");
 		for (gc = genericconf; gc->gc_driver; gc++)
-			printf(" %s%%d", gc->gc_name);
+			printf(" %s?", gc->gc_name);
 		printf("\n");
 		goto retry;
 gotit:
@@ -120,6 +148,17 @@ gotit:
 			unit = 10 * unit + *cp++ - '0';
 		if (*cp == '*')
 			swaponroot++;
+
+#ifdef NFSCLIENT
+		if (gc->gc_root == NODEV) {
+			/*
+			 * Tell nfs_mountroot if it's a network interface.
+			 */
+			bzero(nfsbootdevname_buf, sizeof(nfsbootdevname_buf));
+			sprintf(nfsbootdevname_buf, "%s%d", gc->gc_name, unit);
+			nfsbootdevname = nfsbootdevname_buf;
+		}
+#endif /* NFSCLIENT */
 		goto found;
 	}
 	for (gc = genericconf; gc->gc_driver; gc++) {
@@ -133,17 +172,23 @@ gotit:
 			}
 		}
 	}
-	printf("no suitable root\n");
+	printf("No suitable root, halting.\n");
 	asm("stop #0x2700");
 found:
-	gc->gc_root = makedev(major(gc->gc_root), unit*8);
+	if (gc->gc_root != NODEV)
+		gc->gc_root = makedev(major(gc->gc_root), unit*8);
+	mountroot = gc->gc_mountroot;	/* XXX: should ask for fs type. */
 	rootdev = gc->gc_root;
 doswap:
-	swdevt[0].sw_dev = argdev = dumpdev =
-	    makedev(major(rootdev), minor(rootdev)+1);
-	/* swap size and dumplo set during autoconfigure */
-	if (swaponroot)
-		rootdev = dumpdev;
+	if (rootdev == NODEV)
+		swdevt[0].sw_dev = argdev = dumpdev = NODEV;
+	else {
+		swdevt[0].sw_dev = argdev = dumpdev =
+		    makedev(major(rootdev), minor(rootdev)+1);
+		/* swap size and dumplo set during autoconfigure */
+		if (swaponroot)
+			rootdev = dumpdev;
+	}
 }
 
 gets(cp)
@@ -182,4 +227,13 @@ gets(cp)
 			*lp++ = c;
 		}
 	}
+}
+
+static int
+no_mountroot()
+{
+
+	printf("root/swap configuration error, halting.\n");
+	asm("stop #0x2700");
+	/* NOTREACHED */
 }
