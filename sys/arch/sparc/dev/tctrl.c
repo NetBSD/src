@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.4 1999/12/15 08:12:30 garbled Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.5 1999/12/17 00:32:25 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -563,13 +563,24 @@ tadpole_request(req, spin)
 		}
 	} else {
 		tctrl_intr(sc);
-		while ((sc->sc_rspoff != sc->sc_rsplen) ||
-		    (sc->sc_cmdoff != sc->sc_cmdlen))
-			if (req->p != NULL)
-				tsleep(sc, PWAIT, "tctrl_data", 0);
+		i = 0;
+		while (((sc->sc_rspoff != sc->sc_rsplen) ||
+		    (sc->sc_cmdoff != sc->sc_cmdlen)) &&
+		    (i < (5 * sc->sc_rsplen + sc->sc_cmdlen)))
+			if (req->p != NULL) {
+				tsleep(sc, PWAIT, "tctrl_data", 15);
+				i++;
+			}
 			else
 				DELAY(1);
 	}
+	/*
+	 * we give the user a reasonable amount of time for a command
+	 * to complete.  If it doesn't complete in time, we hand them
+	 * garbage.  This is here to stop things like setting the
+	 * rsplen too long, and sleeping forever in a CMD_REQ ioctl.
+	 */
+	sc->sc_wantdata = 0;
 	memcpy(req->rspbuf, sc->sc_rspbuf, req->rsplen);
 	splx(s);
 }
