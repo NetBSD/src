@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.18 1993/06/18 02:03:39 brezak Exp $
+ *	$Id: locore.s,v 1.19 1993/06/27 04:27:58 andrew Exp $
  */
 
 
@@ -486,7 +486,7 @@ _sigcode:
 	LCALL(0x7,0)		# enter kernel with args on stack
 	hlt			# never gets here
 _esigcode:
-#else
+#else	/* anno bde */
 ENTRY(sigcode)
 	call	12(%esp)
 	lea	28(%esp),%eax	# scp (the call may have clobbered the
@@ -996,7 +996,9 @@ ENTRY(lgdt)
 	lgdt	(%eax)
 	/* flush the prefetch q */
 	jmp	1f
+#ifndef I486_CPU
 	nop
+#endif
 1:
 	/* reload "stale" selectors */
 	movl	$KDSEL,%eax
@@ -1652,9 +1654,9 @@ LF:	.asciz "swtch %x"
 #define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
 #define	TRAP(a)		pushl $(a) ; jmp alltraps
 #ifdef KGDB
-#define	BPTTRAP(a)	sti; pushl $(a) ; jmp bpttraps
+#define	BPTTRAP(a)	sti; SHOW_STI; pushl $(a) ; jmp bpttraps
 #else
-#define	BPTTRAP(a)	sti; TRAP(a)
+#define	BPTTRAP(a)	sti; SHOW_STI; TRAP(a)
 #endif
 
 	.text
@@ -1708,9 +1710,11 @@ IDTVEC(fpu)
 	pushl	$0		/* dummy error code */
 	pushl	$T_ASTFLT
 	pushal
+#ifndef I486_CPU
 	nop			/* silly, the bug is for popal and it only
 				 * bites when the next instruction has a
 				 * complicated address mode */
+#endif
 	pushl	%ds
 	pushl	%es		/* now the stack frame is a trap frame */
 	movl	$KDSEL,%eax
@@ -1759,7 +1763,9 @@ IDTVEC(rsvd14)
 	SUPERALIGN_TEXT
 alltraps:
 	pushal
+#ifndef I486_CPU
 	nop
+#endif
 	pushl	%ds
 	pushl	%es
 	movl	$KDSEL,%eax
@@ -1785,7 +1791,9 @@ calltrap:
 	ALIGN_TEXT
 bpttraps:
 	pushal
+#ifndef I486_CPU
 	nop
+#endif
 	pushl	%es
 	pushl	%ds
 	movl	$KDSEL,%eax
@@ -1807,7 +1815,9 @@ IDTVEC(syscall)
 	pushfl	# only for stupid carry bit and more stupid wait3 cc kludge
 		# XXX - also for direction flag (bzero, etc. clear it)
 	pushal	# only need eax,ecx,edx - trap resaves others
+#ifndef I486_CPU
 	nop
+#endif
 	movl	$KDSEL,%eax		# switch to kernel segments
 	movl	%ax,%ds
 	movl	%ax,%es
@@ -1828,11 +1838,15 @@ IDTVEC(syscall)
 	movl	%ecx,32+4(%esp)
 	movl	%eax,32+8(%esp)
 	popal
+#ifndef I486_CPU
 	nop
+#endif
 	pushl	$0		/* dummy error code */
 	pushl	$T_ASTFLT
 	pushal
+#ifndef I486_CPU
 	nop
+#endif
 	movl	__udatasel,%eax	/* switch back to user segments */
 	push	%eax		/* XXX - better to preserve originals? */
 	push	%eax
@@ -1843,7 +1857,7 @@ IDTVEC(syscall)
 ENTRY(htonl)
 ENTRY(ntohl)
 	movl	4(%esp),%eax
-#ifdef i486
+#ifdef I486_CPU
 	/* XXX */
 	/* Since Gas 1.38 does not grok bswap this has been coded as the
 	 * equivalent bytes.  This can be changed back to bswap when we
