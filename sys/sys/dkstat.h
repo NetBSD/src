@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstat.h,v 1.13 2002/01/28 02:06:04 simonb Exp $	*/
+/*	$NetBSD: dkstat.h,v 1.14 2003/06/11 17:11:13 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,8 +42,6 @@
 
 #ifndef _SYS_DKSTAT_H_
 #define _SYS_DKSTAT_H_
-
-#define	DK_NDRIVE	8
 
 #ifdef _KERNEL
 extern u_int64_t tk_cancc;
