@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.4 1999/02/06 15:01:13 kleink Exp $
+.\" $NetBSD: doc2html,v 1.5 1999/03/07 02:17:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -683,6 +683,20 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .	mode-bold-on
 .	recurse \\$@
 .	mode-bold-off
+.	pc-fin
+..
+.de Oo
+.DEBUG .tm .Oo \\$*
+.	as doc-pcresult \&[
+.	ie \\n(.$>0 .recurse \\$@
+.	el .nr r-lvl +1
+.	pc-fin
+..
+.de Oc
+.DEBUG .tm .Oc \\$*
+.	as doc-pcresult \&]
+.	ie \\n(.$>0 .recurse \\$@
+.	el .nr r-lvl -1
 .	pc-fin
 ..
 .de Op
