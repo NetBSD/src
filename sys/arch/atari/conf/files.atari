@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.23 1996/10/04 07:12:39 leo Exp $
+#	$NetBSD: files.atari,v 1.24 1996/10/16 12:50:33 leo Exp $
 #
 
 maxpartitions 16
@@ -94,14 +94,14 @@ file	arch/atari/pci/pci_machdep.c	pci | grfet
 device	pcibus
 attach	pcibus at mainbus
 
-include "../../../dev/pci/files.pci"
+include "dev/pci/files.pci"
 
 #
 # XXX: Some scsi-devices must be at fixed major#
 major   {sd = 4}
 major   {st = 5}
 major   {cd = 6}
-include "../../../scsi/files.scsi"
+include "scsi/files.scsi"
 
 # ncr 5380 controller
 device	ncrscsi: scsi
@@ -130,10 +130,10 @@ file	arch/m68k/m68k/copy.s
 
 # Emulation modules
 # 6888x emulator (FPU_EMULATE)
-include "../../m68k/fpe/files.fpe"
+include "arch/m68k/fpe/files.fpe"
 
 # Compatibility modules
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
-include "../../../compat/sunos/files.sunos"
+include "compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos

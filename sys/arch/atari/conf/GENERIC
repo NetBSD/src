@@ -1,12 +1,12 @@
 #
-#	$NetBSD: GENERIC,v 1.18 1996/10/04 07:08:31 leo Exp $
+#	$NetBSD: GENERIC,v 1.19 1996/10/16 12:50:33 leo Exp $
 #
 # Generic atari
 #
 # This configuration file is for a multiple disk/multiple tape ATARI-TT/Falcon
 # with network (through ppp or slip).
 
-include "std.atari"
+include "arch/atari/conf/std.atari"
 #
 # Add support for about 16 users. This variable is used to size
 # various kernel structures.
