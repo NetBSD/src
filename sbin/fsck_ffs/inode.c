@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.34 2001/01/05 02:02:57 lukem Exp $	*/
+/*	$NetBSD: inode.c,v 1.35 2002/09/28 20:11:06 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.34 2001/01/05 02:02:57 lukem Exp $");
+__RCSID("$NetBSD: inode.c,v 1.35 2002/09/28 20:11:06 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,7 @@ ckinode(dp, idesc)
 	mode = iswap16(dp->di_mode) & IFMT;
 	if (mode == IFBLK || mode == IFCHR || (mode == IFLNK &&
 	    (idesc->id_filesize < sblock->fs_maxsymlinklen ||
+	    (isappleufs && (idesc->id_filesize < APPLEUFS_MAXSYMLINKLEN)) ||
 	     (sblock->fs_maxsymlinklen == 0 && dp->di_blocks == 0))))
 		return (KEEPON);
 	dino = *dp;
@@ -351,6 +352,7 @@ getnextinode(inumber)
 				ffs_dinode_swap(dp, dp);
 				/* ffs_dinode_swap() doesn't swap blocks addrs */
 				if ((iswap16(dp->di_mode) & IFMT) != IFLNK ||
+					(isappleufs && (iswap64(dp->di_size) > APPLEUFS_MAXSYMLINKLEN)) ||
 					iswap64(dp->di_size) > sblock->fs_maxsymlinklen) {
 					for (j=0; j<NDADDR + NIADDR; j++)
 						dp->di_db[j] = bswap32(dp->di_db[j]);
