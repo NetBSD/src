@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.19 2000/11/01 12:18:55 abs Exp $ */
+/* $NetBSD: sbic.c,v 1.20 2001/04/05 18:06:45 rearnsha Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,12 +38,13 @@
  *
  *	from: sbic.c,v 1.21 1996/01/07 22:01:54
  */
-#define UNPROTECTED_CSR
-#define DEBUG
-/*#define SBIC_DEBUG*/
 /*
  * WD 33C93 scsi adaptor driver
  */
+
+#define UNPROTECTED_CSR
+#define DEBUG
+/* #define SBIC_DEBUG(a) a */
 
 #include "opt_ddb.h"
 
@@ -68,7 +69,7 @@
 /* These are for bounce buffers */
 
 /* Since I can't find this in any other header files */
-#define SCSI_PHASE(reg)	(reg&0x07)
+#define SCSI_PHASE(reg)	(reg & 0x07)
 
 /*
  * SCSI delays
@@ -82,30 +83,30 @@
 
 extern u_int kvtop();
 
-int  sbicicmd __P((struct sbic_softc *, int, int, void *, int, void *, int));
-int  sbicgo __P((struct sbic_softc *, struct scsipi_xfer *));
-int  sbicdmaok __P((struct sbic_softc *, struct scsipi_xfer *));
-int  sbicwait __P((sbic_regmap_p, char, int , int));
-int  sbiccheckdmap __P((void *, u_long, u_long));
-int  sbicselectbus __P((struct sbic_softc *, sbic_regmap_p, u_char, u_char, u_char));
-int  sbicxfstart __P((sbic_regmap_p, int, u_char, int));
-int  sbicxfout __P((sbic_regmap_p regs, int, void *, int));
-int  sbicfromscsiperiod __P((struct sbic_softc *, sbic_regmap_p, int));
-int  sbictoscsiperiod __P((struct sbic_softc *, sbic_regmap_p, int));
-int  sbicintr __P((struct sbic_softc *));
-int  sbicpoll __P((struct sbic_softc *));
-int  sbicnextstate __P((struct sbic_softc *, u_char, u_char));
-int  sbicmsgin __P((struct sbic_softc *));
-int  sbicxfin __P((sbic_regmap_p regs, int, void *));
-int  sbicabort __P((struct sbic_softc *, sbic_regmap_p, char *));
-void sbicxfdone __P((struct sbic_softc *, sbic_regmap_p, int));
-void sbicerror __P((struct sbic_softc *, sbic_regmap_p, u_char));
-void sbicstart __P((struct sbic_softc *));
-void sbicreset __P((struct sbic_softc *));
-void sbic_scsidone __P((struct sbic_acb *, int));
-void sbic_sched __P((struct sbic_softc *));
-void sbic_save_ptrs __P((struct sbic_softc *, sbic_regmap_p,int,int));
-void sbic_load_ptrs __P((struct sbic_softc *, sbic_regmap_p,int,int));
+static int  sbicicmd		(struct sbic_softc *, int, int, void *,
+				 int, void *, int);
+static int  sbicgo		(struct sbic_softc *, struct scsipi_xfer *);
+static int  sbicdmaok		(struct sbic_softc *, struct scsipi_xfer *);
+static int  sbicwait		(sbic_regmap_p, char, int , int);
+static int  sbiccheckdmap	(void *, u_long, u_long);
+static int  sbicselectbus	(struct sbic_softc *, sbic_regmap_p, u_char,
+				 u_char, u_char);
+static int  sbicxfstart		(sbic_regmap_p, int, u_char, int);
+static int  sbicxfout		(sbic_regmap_p regs, int, void *, int);
+static int  sbicfromscsiperiod	(struct sbic_softc *, sbic_regmap_p, int);
+static int  sbictoscsiperiod	(struct sbic_softc *, sbic_regmap_p, int);
+static int  sbicpoll		(struct sbic_softc *);
+static int  sbicnextstate	(struct sbic_softc *, u_char, u_char);
+static int  sbicmsgin		(struct sbic_softc *);
+static int  sbicxfin		(sbic_regmap_p regs, int, void *);
+static int  sbicabort		(struct sbic_softc *, sbic_regmap_p, char *);
+static void sbicxfdone		(struct sbic_softc *, sbic_regmap_p, int);
+static void sbicerror		(struct sbic_softc *, sbic_regmap_p, u_char);
+static void sbicreset		(struct sbic_softc *);
+static void sbic_scsidone	(struct sbic_acb *, int);
+static void sbic_sched		(struct sbic_softc *);
+static void sbic_save_ptrs	(struct sbic_softc *, sbic_regmap_p,int,int);
+static void sbic_load_ptrs	(struct sbic_softc *, sbic_regmap_p,int,int);
 
 /*
  * Synch xfer parameters, and timing conversions
@@ -134,7 +135,9 @@ int	sbicdma_bounces = 0;	/* number operations using bounce buffer */
 int	sbicdma_hits = 0;	/* number of DMA chains that were contiguous */
 int	sbicdma_misses = 0;	/* number of DMA chains that were not contiguous */
 int     sbicdma_saves = 0;
-#define QPRINTF(a) if (sbic_debug > 1) printf a
+#define QPRINTF(a)	if (sbic_debug > 1) printf a
+#define DBGPRINTF(x,p)	if (p) printf x
+#define DBG(x)		x
 int	sbic_debug = 0;
 int	sync_debug = 0;
 int	sbic_dma_debug = 0;
@@ -142,8 +145,9 @@ int	reselect_debug = 0;
 int	report_sense = 0;
 int	data_pointer_debug = 0;
 u_char	debug_asr, debug_csr, routine;
-void sbictimeout __P((struct sbic_softc *dev));
-void sbic_dump __P((struct sbic_softc *dev));
+void sbictimeout	(struct sbic_softc *dev);
+void sbic_dump		(struct sbic_softc *dev);
+void sbic_dump_acb	(struct sbic_acb *);
 
 #define CSR_TRACE_SIZE 32
 #if CSR_TRACE_SIZE
@@ -195,19 +199,23 @@ struct {
 #endif
 
 #else
-#define QPRINTF
+#define QPRINTF(a)
+#define DBGPRINTF(x,p)
+#define DBG(x)
 #define CSR_TRACE
 #define SBIC_TRACE
+#endif
+
+#ifndef SBIC_DEBUG
+#define SBIC_DEBUG(x)
 #endif
 
 /*
  * default minphys routine for sbic based controllers
  */
 void
-sbic_minphys(bp)
-	struct buf *bp;
+sbic_minphys(struct buf *bp)
 {
-
 	/*
 	 * No max transfer at this level.
 	 */
@@ -217,23 +225,17 @@ sbic_minphys(bp)
 /*
  * Save DMA pointers.  Take into account partial transfer. Shut down DMA.
  */
-void
-sbic_save_ptrs(dev, regs, target, lun)
-	struct sbic_softc *dev;
-	sbic_regmap_p regs;
-	int target, lun;
+static void
+sbic_save_ptrs(struct sbic_softc *dev, sbic_regmap_p regs, int target, int lun)
 {
 	int count, asr, s;
-/*	int csr; */
-/*	unsigned long ptr;*/
-/*	char *vptr;*/
 	struct sbic_acb* acb;
 
-/*	extern vm_offset_t vm_first_phys;*/
-
 	SBIC_TRACE(dev);
-	if( !dev->sc_cur ) return;
-	if( !(dev->sc_flags & SBICF_INDMA) ) return; /* DMA not active */
+	if (!dev->sc_cur)
+		return;
+	if (!(dev->sc_flags & SBICF_INDMA))
+		return; /* DMA not active */
 
 	s = splbio();
 
@@ -241,13 +243,13 @@ sbic_save_ptrs(dev, regs, target, lun)
 	count = -1;
 	do {
 		GET_SBIC_asr(regs, asr);
-		if( asr & SBIC_ASR_DBR ) {
+		if (asr & SBIC_ASR_DBR) {
 			printf("sbic_save_ptrs: asr %02x canceled!\n", asr);
 			splx(s);
 			SBIC_TRACE(dev);
 			return;
 		}
-	} while( asr & (SBIC_ASR_BSY|SBIC_ASR_CIP) );
+	} while (asr & (SBIC_ASR_BSY|SBIC_ASR_CIP));
 
 	/* Save important state */
 	/* must be done before dmastop */
@@ -259,13 +261,11 @@ sbic_save_ptrs(dev, regs, target, lun)
 	dev->sc_flags &= ~SBICF_INDMA;
 	SBIC_TC_PUT(regs, 0);
 
-#ifdef DEBUG
-	if(!count && sbic_debug) printf("%dcount0",target);
-	if(data_pointer_debug == -1)
-		printf("SBIC saving target %d data pointers from (%p,%x)%xASR:%02x",
-		       target, dev->sc_cur->dc_addr, dev->sc_cur->dc_count,
-		       acb->sc_dmacmd, asr);
-#endif
+	DBGPRINTF(("%dcount0", target), !count && sbic_debug);
+	DBGPRINTF(("SBIC saving target %d data pointers from "
+	    "(%p,%x)%xASR:%02x",
+	    target, dev->sc_cur->dc_addr, dev->sc_cur->dc_count,
+	    acb->sc_dmacmd, asr), data_pointer_debug == -1);
 
 	/* Fixup partial xfers */
 	acb->sc_kv.dc_addr += (dev->sc_tcnt - count);
@@ -274,12 +274,12 @@ sbic_save_ptrs(dev, regs, target, lun)
 	acb->sc_pa.dc_count -= ((dev->sc_tcnt - count)>>1);
 
 	acb->sc_tcnt = dev->sc_tcnt = count;
-#ifdef DEBUG
-	if(data_pointer_debug)
-		printf(" at (%p,%x):%x\n",
-		       dev->sc_cur->dc_addr, dev->sc_cur->dc_count,count);
-	sbicdma_saves++;
-#endif
+
+	DBGPRINTF((" at (%p,%x):%x\n",
+	    dev->sc_cur->dc_addr, dev->sc_cur->dc_count,count),
+	    data_pointer_debug);
+	DBG(sbicdma_saves++);
+
 	splx(s);
 	SBIC_TRACE(dev);
 }
@@ -288,20 +288,16 @@ sbic_save_ptrs(dev, regs, target, lun)
 /*
  * DOES NOT RESTART DMA!!!
  */
-void sbic_load_ptrs(dev, regs, target, lun)
-	struct sbic_softc *dev;
-	sbic_regmap_p regs;
-	int target, lun;
+static void
+sbic_load_ptrs(struct sbic_softc *dev, sbic_regmap_p regs, int target, int lun)
 {
 	int s, count;
-/*	int i, asr;*/
 	char* vaddr;
-/*	char* paddr;*/
 	struct sbic_acb *acb;
 
 	SBIC_TRACE(dev);
 	acb = dev->sc_nexus;
-	if( !acb->sc_kv.dc_count ) {
+	if (!acb->sc_kv.dc_count) {
 		/* No data to xfer */
 		SBIC_TRACE(dev);
 		return;
@@ -313,10 +309,9 @@ void sbic_load_ptrs(dev, regs, target, lun)
 	dev->sc_tcnt = acb->sc_tcnt;
 	dev->sc_dmacmd = acb->sc_dmacmd;
 
-#ifdef DEBUG
-	sbicdma_ops++;
-#endif
-	if( !dev->sc_tcnt ) {
+	DBG(sbicdma_ops++);
+
+	if (!dev->sc_tcnt) {
 		/* sc_tcnt == 0 implies end of segment */
 
 		/* do kvm to pa mappings */
@@ -327,41 +322,33 @@ void sbic_load_ptrs(dev, regs, target, lun)
 		vaddr = acb->sc_kv.dc_addr;
 		count = acb->sc_kv.dc_count;
 #if 0 /* mark */
-		for(count = (NBPG - ((int)vaddr & PGOFSET));
+		for (count = (NBPG - ((int)vaddr & PGOFSET));
 		    count < acb->sc_kv.dc_count
 		    && (char*)kvtop(vaddr + count + 4) == paddr + count + 4;
 		    count += NBPG);
 #endif
 		/* If it's all contiguous... */
-		if(count > acb->sc_kv.dc_count ) {
+		if (count > acb->sc_kv.dc_count) {
 			count = acb->sc_kv.dc_count;
-#ifdef DEBUG
-			sbicdma_hits++;
-#endif
+
+			DBG(sbicdma_hits++);
 		} else {
-#ifdef DEBUG
-			sbicdma_misses++;
-#endif
+			DBG(sbicdma_misses++);
 		}
 		acb->sc_tcnt = count;
 		acb->sc_pa.dc_count = count >> 1;
 
-#ifdef DEBUG
-		if(data_pointer_debug)
-			printf("DMA recalc:kv(%p,%x)pa(%p,%lx)\n",
-			       acb->sc_kv.dc_addr,
-			       acb->sc_kv.dc_count,
-			       acb->sc_pa.dc_addr,
-			       acb->sc_tcnt);
-#endif
+		DBGPRINTF(("DMA recalc:kv(%p,%x)pa(%p,%lx)\n",
+		    acb->sc_kv.dc_addr, acb->sc_kv.dc_count,
+		    acb->sc_pa.dc_addr, acb->sc_tcnt),
+		    data_pointer_debug);
 	}
 	splx(s);
-#ifdef DEBUG
-	if(data_pointer_debug)
-		printf("SBIC restoring target %d data pointers at (%p,%x)%x\n",
-		       target, dev->sc_cur->dc_addr, dev->sc_cur->dc_count,
-		       dev->sc_dmacmd);
-#endif
+
+	DBGPRINTF(("SBIC restoring target %d data pointers at (%p,%x)%x\n",
+	    target, dev->sc_cur->dc_addr, dev->sc_cur->dc_count,
+	    dev->sc_dmacmd), data_pointer_debug);
+
 	SBIC_TRACE(dev);
 }
 
@@ -373,8 +360,7 @@ void sbic_load_ptrs(dev, regs, target, lun)
  * in scsi_scsi_cmd().
  */
 int
-sbic_scsicmd(xs)
-	struct scsipi_xfer *xs;
+sbic_scsicmd(struct scsipi_xfer *xs)
 {
 	struct sbic_acb *acb;
 	struct sbic_softc *dev;
@@ -389,7 +375,7 @@ sbic_scsicmd(xs)
 	if (flags & XS_CTL_DATA_UIO)
 		panic("sbic: scsi data uio requested");
 
-	if (dev->sc_nexus && flags & XS_CTL_POLL)
+	if (dev->sc_nexus && (flags & XS_CTL_POLL))
 		panic("sbic_scsicmd: busy");
 
 	if (slp->scsipi_scsi.target == slp->scsipi_scsi.adapter_target)
@@ -402,13 +388,12 @@ sbic_scsicmd(xs)
 	splx(s);
 
 	if (acb == NULL) {
-#ifdef DEBUG
-		printf("sbic_scsicmd: unable to queue request for target %d\n",
-		    slp->scsipi_scsi.target);
-#ifdef DDB
+		DBG(printf("sbic_scsicmd: Can't queue request for target %d\n",
+		    slp->scsipi_scsi.target));
+#if defined(DDB) && defined(DEBUG)
 		Debugger();
 #endif
-#endif
+
 		xs->error = XS_DRIVER_STUFFUP;
 		SBIC_TRACE(dev);
 		return(TRY_AGAIN_LATER);
@@ -418,13 +403,11 @@ sbic_scsicmd(xs)
 	if (flags & XS_CTL_DATA_IN)
 		acb->flags |= ACB_DATAIN;
 	acb->xs = xs;
-	bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
+	memcpy(&acb->cmd, xs->cmd, xs->cmdlen);
 	acb->clen = xs->cmdlen;
 	acb->sc_kv.dc_addr = xs->data;
 	acb->sc_kv.dc_count = xs->datalen;
-#if 0
-	acb->pa_addr = xs->data ? (char *)kvtop(xs->data) : 0;	/* XXXX check */
-#endif
+
 	if (flags & XS_CTL_POLL) {
 		s = splbio();
 		/*
@@ -433,16 +416,16 @@ sbic_scsicmd(xs)
 
 		dev->sc_flags |= SBICF_ICMD;
 		do {
-			while(dev->sc_nexus)
+			while (dev->sc_nexus)
 				sbicpoll(dev);
 			dev->sc_nexus = acb;
 			dev->sc_stat[0] = -1;
 			dev->sc_xs = xs;
 			dev->target = slp->scsipi_scsi.target;
 			dev->lun = slp->scsipi_scsi.lun;
-			stat = sbicicmd(dev, slp->scsipi_scsi.target, slp->scsipi_scsi.lun,
-					&acb->cmd, acb->clen,
-					acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
+			stat = sbicicmd(dev, slp->scsipi_scsi.target,
+			    slp->scsipi_scsi.lun, &acb->cmd, acb->clen,
+			    acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
 		} while (dev->sc_nexus != acb);
 		sbic_scsidone(acb, stat);
 
@@ -478,9 +461,8 @@ sbic_scsicmd(xs)
 /*
  * attempt to start the next available command
  */
-void
-sbic_sched(dev)
-	struct sbic_softc *dev;
+static void
+sbic_sched(struct sbic_softc *dev)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_link *slp;
@@ -519,16 +501,16 @@ sbic_sched(dev)
 	if (flags & XS_CTL_RESET)
 		sbicreset(dev);
 
-#ifdef DEBUG
-	if( data_pointer_debug > 1 )
-		printf("sbic_sched(%d,%d)\n",slp->scsipi_scsi.target,slp->scsipi_scsi.lun);
-#endif
+	DBGPRINTF(("sbic_sched(%d,%d)\n", slp->scsipi_scsi.target,
+	    slp->scsipi_scsi.lun), data_pointer_debug > 1);
+
 	dev->sc_stat[0] = -1;
 	dev->target = slp->scsipi_scsi.target;
 	dev->lun = slp->scsipi_scsi.lun;
-	if ( flags & XS_CTL_POLL || ( !sbic_parallel_operations
-				 && (sbicdmaok(dev, xs) == 0) ) )
-		stat = sbicicmd(dev, slp->scsipi_scsi.target, slp->scsipi_scsi.lun, &acb->cmd,
+	if (flags & XS_CTL_POLL ||
+	    (!sbic_parallel_operations && (sbicdmaok(dev, xs) == 0)))
+		stat = sbicicmd(dev, slp->scsipi_scsi.target,
+		    slp->scsipi_scsi.lun, &acb->cmd,
 		    acb->clen, acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
 	else if (sbicgo(dev, xs) == 0 && xs->error != XS_SELTIMEOUT) {
 		SBIC_TRACE(dev);
@@ -540,10 +522,8 @@ sbic_sched(dev)
 	SBIC_TRACE(dev);
 }
 
-void
-sbic_scsidone(acb, stat)
-	struct sbic_acb *acb;
-	int stat;
+static void
+sbic_scsidone(struct sbic_acb *acb, int stat)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_link *slp;
@@ -570,25 +550,22 @@ sbic_scsidone(acb, stat)
 	 */
 	xs->status = stat;
 
-#ifdef DEBUG
-	if( data_pointer_debug > 1 )
-		printf("scsidone: (%d,%d)->(%d,%d)%02x\n",
-		       slp->scsipi_scsi.target, slp->scsipi_scsi.lun,
-		       dev->target,  dev->lun,  stat);
-	if( xs->sc_link->scsipi_scsi.target == dev->sc_link.scsipi_scsi.adapter_target )
-		panic("target == hostid");
-#endif
+	DBGPRINTF(("scsidone: (%d,%d)->(%d,%d)%02x\n",
+	    slp->scsipi_scsi.target, slp->scsipi_scsi.lun,
+	    dev->target,  dev->lun,  stat), data_pointer_debug > 1);
+	DBG(if( xs->sc_link->scsipi_scsi.target ==
+	    dev->sc_link.scsipi_scsi.adapter_target )
+	    panic("target == hostid"));
 
 	if (xs->error == XS_NOERROR && !(acb->flags & ACB_CHKSENSE)) {
 		if (stat == SCSI_CHECK) {
 			/* Schedule a REQUEST SENSE */
 			struct scsipi_sense *ss = (void *)&acb->cmd;
-#ifdef DEBUG
-			if (report_sense)
-				printf("sbic_scsidone: autosense %02x targ %d lun %d",
-				    acb->cmd.opcode, slp->scsipi_scsi.target, slp->scsipi_scsi.lun);
-#endif
-			bzero(ss, sizeof(*ss));
+
+			DBGPRINTF(("sbic_scsidone: autosense %02x targ %d lun %d",
+			    acb->cmd.opcode, slp->scsipi_scsi.target,
+			    slp->scsipi_scsi.lun), report_sense);
+			memset(ss, 0, sizeof(*ss));
 			ss->opcode = REQUEST_SENSE;
 			ss->byte2 = slp->scsipi_scsi.lun << 5;
 			ss->length = sizeof(struct scsipi_sense_data);
@@ -599,7 +576,7 @@ sbic_scsidone(acb, stat)
 			acb->pa_addr = (char *)kvtop(&xs->sense.scsi_sense); /* XXX check */
 #endif
 			acb->flags = ACB_ACTIVE | ACB_CHKSENSE | ACB_DATAIN;
-                        bzero(acb->sc_kv.dc_addr, acb->clen);
+                        memset(acb->sc_kv.dc_addr, 0, acb->clen);
 			TAILQ_INSERT_HEAD(&dev->ready_list, acb, chain);
 			dev->sc_tinfo[slp->scsipi_scsi.target].lubusy &=
 			    ~(1 << slp->scsipi_scsi.lun);
@@ -620,7 +597,7 @@ sbic_scsidone(acb, stat)
 			struct scsipi_sense *ss = (void *)&acb->cmd;
 
 			QPRINTF(("Retrying sense.\n"));
-			bzero(ss, sizeof(*ss));
+			memset(ss, 0, sizeof(*ss));
 			ss->opcode = REQUEST_SENSE;
 			ss->byte2 = slp->scsipi_scsi.lun << 5;
 			ss->length = sizeof(struct scsipi_sense_data);
@@ -629,7 +606,7 @@ sbic_scsidone(acb, stat)
 			acb->sc_kv.dc_count = sizeof(struct scsipi_sense_data);
 
 			acb->flags = ACB_ACTIVE | ACB_CHKSENSE | ACB_DATAIN;
-			bzero(acb->sc_kv.dc_addr, acb->clen);
+			memset(acb->sc_kv.dc_addr, 0, acb->clen);
 			TAILQ_INSERT_HEAD(&dev->ready_list, acb, chain);
 			dev->sc_tinfo[slp->scsipi_scsi.target].lubusy &=
 				~(1 << slp->scsipi_scsi.lun);
@@ -643,12 +620,11 @@ sbic_scsidone(acb, stat)
 			return;
 		}
 		xs->error = XS_SENSE;
-#ifdef DEBUG
-		if (report_sense)
-			printf(" => %02x %02x %02x\n", xs->sense.scsi_sense.error_code,
-				xs->sense.scsi_sense.flags,
-				xs->sense.scsi_sense.extra_bytes[3]);
-#endif
+		DBGPRINTF((" => %02x %02x %02x\n",
+		    xs->sense.scsi_sense.error_code,
+		    xs->sense.scsi_sense.flags,
+		    xs->sense.scsi_sense.extra_bytes[3]), report_sense);
+
 	} else {
 		xs->resid = 0;		/* XXXX */
 	}
@@ -669,7 +645,8 @@ sbic_scsidone(acb, stat)
 	if (acb == dev->sc_nexus) {
 		dev->sc_nexus = NULL;
 		dev->sc_xs = NULL;
-		dev->sc_tinfo[slp->scsipi_scsi.target].lubusy &= ~(1<<slp->scsipi_scsi.lun);
+		dev->sc_tinfo[slp->scsipi_scsi.target].lubusy &=
+		    ~(1<<slp->scsipi_scsi.lun);
 		if (dev->ready_list.tqh_first)
 			dosched = 1;	/* start next command */
 	} else if (dev->ready_list.tqh_last == &acb->chain.tqe_next) {
@@ -710,28 +687,27 @@ sbic_scsidone(acb, stat)
 	SBIC_TRACE(dev);
 }
 
-int
-sbicdmaok(dev, xs)
-	struct sbic_softc *dev;
-	struct scsipi_xfer *xs;
+static int
+sbicdmaok(struct sbic_softc *dev, struct scsipi_xfer *xs)
 {
-	if (sbic_no_dma || !xs->datalen || xs->datalen & 0x1 || (u_int)xs->data & 0x3)
-		return(0);
+	if (sbic_no_dma || !xs->datalen || (xs->datalen & 0x1) ||
+	    ((u_int)xs->data & 0x3))
+		return 0;
 	/*
 	 * controller supports dma to any addresses?
 	 */
 	else if ((dev->sc_flags & SBICF_BADDMA) == 0)
-		return(1);
+		return 1;
 	/*
 	 * this address is ok for dma?
 	 */
 	else if (sbiccheckdmap(xs->data, xs->datalen, dev->sc_dmamask) == 0)
-		return(1);
+		return 1;
 	/*
 	 * we have a bounce buffer?
 	 */
 	else if (dev->sc_tinfo[xs->sc_link->scsipi_scsi.target].bounce)
-		return(1);
+		return 1;
 	/*
 	 * try to get one
 	 */
@@ -748,19 +724,15 @@ sbicdmaok(dev, xs)
 			printf("alloc CHIP target %d bounce pa 0x%x\n",
 			       xs->sc_link->scsipi_scsi.target,
 			       PREP_DMA_MEM(dev->sc_tinfo[xs->sc_link->scsipi_scsi.target].bounce));
-		return(1);
+		return 1;
 	}
 #endif
-	return(0);
+	return 0;
 }
 
 
-int
-sbicwait(regs, until, timeo, line)
-	sbic_regmap_p regs;
-	char until;
-	int timeo;
-	int line;
+static int
+sbicwait(sbic_regmap_p regs, char until, int timeo, int line)
 {
 	u_char val;
 	int csr;
@@ -788,11 +760,8 @@ sbicwait(regs, until, timeo, line)
 	return(val);
 }
 
-int
-sbicabort(dev, regs, where)
-	struct sbic_softc *dev;
-	sbic_regmap_p regs;
-	char *where;
+static int
+sbicabort(struct sbic_softc *dev, sbic_regmap_p regs, char *where)
 {
 	u_char csr, asr;
 
@@ -817,32 +786,36 @@ sbicabort(dev, regs, where)
 
 	/* Clean up chip itself */
 	if (dev->sc_flags & SBICF_SELECTED) {
-		while( asr & SBIC_ASR_DBR ) {
+		while (asr & SBIC_ASR_DBR) {
 			/* sbic is jammed w/data. need to clear it */
 			/* But we don't know what direction it needs to go */
 			GET_SBIC_data(regs, asr);
 			printf("%s: abort %s: clearing data buffer 0x%02x\n",
 			       dev->sc_dev.dv_xname, where, asr);
 			GET_SBIC_asr(regs, asr);
-			if( asr & SBIC_ASR_DBR ) /* Not the read direction, then */
+			/* Not the read direction, then */
+			if (asr & SBIC_ASR_DBR)
 				SET_SBIC_data(regs, asr);
 			GET_SBIC_asr(regs, asr);
 		}
 		WAIT_CIP(regs);
-printf("%s: sbicabort - sending ABORT command\n", dev->sc_dev.dv_xname);
+		printf("%s: sbicabort - sending ABORT command\n",
+		    dev->sc_dev.dv_xname);
 		SET_SBIC_cmd(regs, SBIC_CMD_ABORT);
 		WAIT_CIP(regs);
 
 		GET_SBIC_asr(regs, asr);
-		if (asr & (SBIC_ASR_BSY|SBIC_ASR_LCI)) {
+		if (asr & (SBIC_ASR_BSY | SBIC_ASR_LCI)) {
 			/* ok, get more drastic.. */
 
-printf("%s: sbicabort - asr %x, trying to reset\n", dev->sc_dev.dv_xname, asr);
+			printf("%s: sbicabort - asr %x, trying to reset\n",
+			    dev->sc_dev.dv_xname, asr);
 			sbicreset(dev);
 			dev->sc_flags &= ~SBICF_SELECTED;
 			return -1;
 		}
-printf("%s: sbicabort - sending DISC command\n", dev->sc_dev.dv_xname);
+		printf("%s: sbicabort - sending DISC command\n",
+		    dev->sc_dev.dv_xname);
 		SET_SBIC_cmd(regs, SBIC_CMD_DISC);
 
 		do {
@@ -864,8 +837,7 @@ printf("%s: sbicabort - sending DISC command\n", dev->sc_dev.dv_xname);
  */
 
 void
-sbicinit(dev)
-	struct sbic_softc *dev;
+sbicinit(struct sbic_softc *dev)
 {
 	sbic_regmap_p regs;
 	u_int i;
@@ -877,9 +849,7 @@ sbicinit(dev)
 	extern u_long scsi_nosync;
 	extern int shift_nosync;
 
-#ifdef SBIC_DEBUG
-	printf("sbicinit:\n");
-#endif
+	SBIC_DEBUG(printf("sbicinit:\n"));
 
 	regs = dev->sc_sbicp;
 
@@ -891,58 +861,50 @@ sbicinit(dev)
 		dev->sc_nexus = NULL;
 		dev->sc_xs = NULL;
 		acb = dev->sc_acb;
-		bzero(acb, sizeof(dev->sc_acb));
-#ifdef SBIC_DEBUG
-		printf("sbicinit: %d\n", __LINE__);
-#endif
+		memset(acb, 0, sizeof(dev->sc_acb));
+		SBIC_DEBUG(printf("sbicinit: %d\n", __LINE__));
 
 		for (i = 0; i < sizeof(dev->sc_acb) / sizeof(*acb); i++) {
 			TAILQ_INSERT_TAIL(&dev->free_list, acb, chain);
 			acb++;
 		}
-		bzero(dev->sc_tinfo, sizeof(dev->sc_tinfo));
-#ifdef DEBUG
+		memset(dev->sc_tinfo, 0, sizeof(dev->sc_tinfo));
+
 		/* make sure timeout is really not needed */
-		callout_reset(&dev->sc_timo_ch, 30 * hz,
-		    (void *)sbictimeout, dev);
-#endif
+		DBG(callout_reset(&dev->sc_timo_ch, 30 * hz,
+		    (void *)sbictimeout, dev));
 
-	} else panic("sbic: reinitializing driver!");
+	} else
+		panic("sbic: reinitializing driver!");
 
-#ifdef SBIC_DEBUG
-	printf("sbicinit: %d\n", __LINE__);
-#endif
+	SBIC_DEBUG(printf("sbicinit: %d\n", __LINE__));
 
 	dev->sc_flags |= SBICF_ALIVE;
 	dev->sc_flags &= ~SBICF_SELECTED;
 
 	/* initialize inhibit array */
 	if (scsi_nosync) {
-#ifdef SBIC_DEBUG
-		printf("sbicinit: %d\n", __LINE__);
-#endif
+
+		SBIC_DEBUG(printf("sbicinit: %d\n", __LINE__));
+
 		inhibit_sync = (scsi_nosync >> shift_nosync) & 0xff;
 		shift_nosync += 8;
-#ifdef DEBUG
-		if (inhibit_sync)
-			printf("%s: Inhibiting synchronous transfer %02x\n",
-				dev->sc_dev.dv_xname, inhibit_sync);
-#endif
+
+		DBGPRINTF(("%s: Inhibiting synchronous transfer %02x\n",
+		    dev->sc_dev.dv_xname, inhibit_sync), inhibit_sync);
+
 		for (i = 0; i < 8; ++i)
 			if (inhibit_sync & (1 << i))
 				sbic_inhibit_sync[i] = 1;
 	}
 
-#ifdef SBIC_DEBUG
-	printf("sbicinit: %d\n", __LINE__);
-#endif
+	SBIC_DEBUG(printf("sbicinit: %d\n", __LINE__));
 
 	sbicreset(dev);
 }
 
-void
-sbicreset(dev)
-	struct sbic_softc *dev;
+static void
+sbicreset(struct sbic_softc *dev)
 {
 	sbic_regmap_p regs;
 	u_int my_id, s;
@@ -950,15 +912,12 @@ sbicreset(dev)
 	u_char csr;
 /*	struct sbic_acb *acb;*/
 
-#ifdef SBIC_DEBUG
-	printf("sbicreset: %d\n", __LINE__);
-#endif
+	SBIC_DEBUG(printf("sbicreset: %d\n", __LINE__));
 
 	regs = dev->sc_sbicp;
 
-#ifdef SBIC_DEBUG
-	printf("sbicreset: regs = %08x\n", regs);
-#endif
+	SBIC_DEBUG(printf("sbicreset: regs = %08x\n", regs));
+
 #if 0
 	if (dev->sc_flags & SBICF_ALIVE) {
 		SET_SBIC_cmd(regs, SBIC_CMD_ABORT);
@@ -966,13 +925,12 @@ sbicreset(dev)
 	}
 #else
 		SET_SBIC_cmd(regs, SBIC_CMD_ABORT);
-#ifdef SBIC_DEBUG
-		printf("sbicreset: %d\n", __LINE__);
-#endif
+
+		SBIC_DEBUG(printf("sbicreset: %d\n", __LINE__));
+
 		WAIT_CIP(regs);
-#ifdef SBIC_DEBUG
-		printf("sbicreset: %d\n", __LINE__);
-#endif
+
+		SBIC_DEBUG(printf("sbicreset: %d\n", __LINE__));
 #endif
 	s = splbio();
 	my_id = dev->sc_link.scsipi_scsi.adapter_target & SBIC_ID_MASK;
@@ -980,9 +938,8 @@ sbicreset(dev)
 	/* Enable advanced mode */
 	my_id |= SBIC_ID_EAF /*| SBIC_ID_EHP*/ ;
 	SET_SBIC_myid(regs, my_id);
-#ifdef SBIC_DEBUG
-	printf("sbicreset: %d\n", __LINE__);
-#endif
+
+	SBIC_DEBUG(printf("sbicreset: %d\n", __LINE__));
 
 	/*
 	 * Disable interrupts (in dmainit) then reset the chip
@@ -1000,9 +957,8 @@ sbicreset(dev)
 		my_id |= SBIC_ID_FS_16_20;
 
 	SET_SBIC_myid(regs, my_id);
-#ifdef SBIC_DEBUG
-	printf("sbicreset: %d\n", __LINE__);
-#endif
+
+	SBIC_DEBUG(printf("sbicreset: %d\n", __LINE__));
 
 	/*
 	 * Set up various chip parameters
@@ -1029,12 +985,12 @@ sbicreset(dev)
 		dev->sc_nexus = NULL;
 		dev->sc_xs = NULL;
 		acb = dev->sc_acb;
-		bzero(acb, sizeof(dev->sc_acb));
+		memset(acb, 0, sizeof(dev->sc_acb));
 		for (i = 0; i < sizeof(dev->sc_acb) / sizeof(*acb); i++) {
 			TAILQ_INSERT_TAIL(&dev->free_list, acb, chain);
 			acb++;
 		}
-		bzero(dev->sc_tinfo, sizeof(dev->sc_tinfo));
+		memset(dev->sc_tinfo, 0, sizeof(dev->sc_tinfo));
 	} else {
 		if (dev->sc_nexus != NULL) {
 			dev->sc_nexus->xs->error = XS_DRIVER_STUFFUP;
@@ -1051,11 +1007,8 @@ sbicreset(dev)
 	dev->sc_flags &= ~SBICF_SELECTED;
 }
 
-void
-sbicerror(dev, regs, csr)
-	struct sbic_softc *dev;
-	sbic_regmap_p regs;
-	u_char csr;
+static void
+sbicerror(struct sbic_softc *dev, sbic_regmap_p regs, u_char csr)
 {
 	struct scsipi_xfer *xs;
 
@@ -1075,11 +1028,9 @@ sbicerror(dev, regs, csr)
 /*
  * select the bus, return when selected or error.
  */
-int
-sbicselectbus(dev, regs, target, lun, our_addr)
-        struct sbic_softc *dev;
-	sbic_regmap_p regs;
-	u_char target, lun, our_addr;
+static int
+sbicselectbus(struct sbic_softc *dev, sbic_regmap_p regs, u_char target,
+    u_char lun, u_char our_addr)
 {
 	u_char asr, csr, id;
 
@@ -1111,7 +1062,7 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 		SET_SBIC_syn(regs, SBIC_SYN (0, sbic_min_period));
 
 	GET_SBIC_asr(regs, asr);
-	if( asr & (SBIC_ASR_INT|SBIC_ASR_BSY) ) {
+	if (asr & (SBIC_ASR_INT | SBIC_ASR_BSY)) {
 		/* This means we got ourselves reselected upon */
 /*		printf("sbicselectbus: INT/BSY asr %02x\n", asr);*/
 #ifdef DDB
@@ -1131,49 +1082,51 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 	do {
 		asr = SBIC_WAIT(regs, SBIC_ASR_INT | SBIC_ASR_LCI, 0);
 		if (asr & SBIC_ASR_LCI) {
-#ifdef DEBUG
-			if (reselect_debug)
-				printf("sbicselectbus: late LCI asr %02x\n", asr);
-#endif
+
+			DBGPRINTF(("sbicselectbus: late LCI asr %02x\n", asr),
+			    reselect_debug);
+
 			SBIC_TRACE(dev);
 			return 1;
 		}
 		GET_SBIC_csr (regs, csr);
 		CSR_TRACE('s',csr,asr,target);
 		QPRINTF(("%02x ", csr));
-		if( csr == SBIC_CSR_RSLT_NI || csr == SBIC_CSR_RSLT_IFY) {
-#ifdef DEBUG
-			if(reselect_debug)
-				printf("sbicselectbus: reselected asr %02x\n", asr);
-#endif
-			/* We need to handle this now so we don't lock up later */
+		if (csr == SBIC_CSR_RSLT_NI || csr == SBIC_CSR_RSLT_IFY) {
+
+			DBGPRINTF(("sbicselectbus: reselected asr %02x\n",
+			    asr), reselect_debug);
+
+			/* We need to handle this now so we don't lock
+			   up later */
 			sbicnextstate(dev, csr, asr);
 			SBIC_TRACE(dev);
 			return 1;
 		}
-		if( csr == SBIC_CSR_SLT || csr == SBIC_CSR_SLT_ATN) {
+		if (csr == SBIC_CSR_SLT || csr == SBIC_CSR_SLT_ATN) {
 			panic("sbicselectbus: target issued select!");
 			return 1;
 		}
-	} while (csr != (SBIC_CSR_MIS_2|MESG_OUT_PHASE)
-	    && csr != (SBIC_CSR_MIS_2|CMD_PHASE) && csr != SBIC_CSR_SEL_TIMEO);
+	} while (csr != (SBIC_CSR_MIS_2 | MESG_OUT_PHASE) &&
+	    csr != (SBIC_CSR_MIS_2 | CMD_PHASE) &&
+	    csr != SBIC_CSR_SEL_TIMEO);
 
 	/* Enable (or not) reselection */
-	if(!sbic_enable_reselect && dev->nexus_list.tqh_first == NULL)
+	if (!sbic_enable_reselect && dev->nexus_list.tqh_first == NULL)
 		SET_SBIC_rselid (regs, 0);
 	else
 		SET_SBIC_rselid (regs, SBIC_RID_ER);
 
-	if (csr == (SBIC_CSR_MIS_2|CMD_PHASE)) {
-		dev->sc_flags |= SBICF_SELECTED;	/* device ignored ATN */
+	if (csr == (SBIC_CSR_MIS_2 | CMD_PHASE)) {
+		dev->sc_flags |= SBICF_SELECTED;  /* device ignored ATN */
 		GET_SBIC_selid(regs, id);
 		dev->target = id;
 		GET_SBIC_tlun(regs,dev->lun);
-		if( dev->lun & SBIC_TLUN_VALID )
+		if (dev->lun & SBIC_TLUN_VALID)
 			dev->lun &= SBIC_TLUN_MASK;
 		else
 			dev->lun = lun;
-	} else if (csr == (SBIC_CSR_MIS_2|MESG_OUT_PHASE)) {
+	} else if (csr == (SBIC_CSR_MIS_2 | MESG_OUT_PHASE)) {
 		/*
 		 * Send identify message
 		 * (SCSI-2 requires an identify msg (?))
@@ -1181,7 +1134,7 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 		GET_SBIC_selid(regs, id);
 		dev->target = id;
 		GET_SBIC_tlun(regs,dev->lun);
-		if( dev->lun & SBIC_TLUN_VALID )
+		if (dev->lun & SBIC_TLUN_VALID)
 			dev->lun &= SBIC_TLUN_MASK;
 		else
 			dev->lun = lun;
@@ -1191,10 +1144,9 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 		 */
 		if (sbic_inhibit_sync[id]
 		    && dev->sc_sync[id].state == SYNC_START) {
-#ifdef DEBUG
-			if (sync_debug)
-				printf("Forcing target %d asynchronous.\n", id);
-#endif
+			DBGPRINTF(("Forcing target %d asynchronous.\n", id),
+			    sync_debug);
+
 			dev->sc_sync[id].offset = 0;
 			dev->sc_sync[id].period = sbic_min_period;
 			dev->sc_sync[id].state = SYNC_DONE;
@@ -1202,12 +1154,12 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 
 
 		if (dev->sc_sync[id].state != SYNC_START){
-			if( dev->sc_xs->xs_control & XS_CTL_POLL
-			   || (dev->sc_flags & SBICF_ICMD)
-			   || !sbic_enable_reselect )
-				SEND_BYTE (regs, MSG_IDENTIFY | lun);
+			if (dev->sc_xs->xs_control & XS_CTL_POLL
+			    || (dev->sc_flags & SBICF_ICMD)
+			    || !sbic_enable_reselect)
+				SEND_BYTE(regs, MSG_IDENTIFY | lun);
 			else
-				SEND_BYTE (regs, MSG_IDENTIFY_DR | lun);
+				SEND_BYTE(regs, MSG_IDENTIFY_DR | lun);
 		} else {
 			/*
 			 * try to initiate a sync transfer.
@@ -1215,11 +1167,9 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 			 * to send to the target
 			 */
 
-#ifdef DEBUG
-			if (sync_debug)
-				printf("Sending sync request to target %d ... ",
-				    id);
-#endif
+			DBGPRINTF(("Sending sync request to target %d ... ",
+			    id), sync_debug);
+
 			/*
 			 * setup scsi message sync message request
 			 */
@@ -1231,24 +1181,23 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 			    sbic_min_period);
 			dev->sc_msg[5] = sbic_max_offset;
 
-			if (sbicxfstart(regs, 6, MESG_OUT_PHASE, sbic_cmd_wait))
-				sbicxfout(regs, 6, dev->sc_msg, MESG_OUT_PHASE);
+			if (sbicxfstart(regs, 6, MESG_OUT_PHASE,
+			    sbic_cmd_wait))
+				sbicxfout(regs, 6, dev->sc_msg,
+				    MESG_OUT_PHASE);
 
 			dev->sc_sync[id].state = SYNC_SENT;
-#ifdef DEBUG
-			if (sync_debug)
-				printf ("sent\n");
-#endif
+
+			DBGPRINTF(("sent\n"), sync_debug);
 		}
 
 		asr = SBIC_WAIT (regs, SBIC_ASR_INT, 0);
 		GET_SBIC_csr (regs, csr);
 		CSR_TRACE('y',csr,asr,target);
 		QPRINTF(("[%02x]", csr));
-#ifdef DEBUG
-		if (sync_debug && dev->sc_sync[id].state == SYNC_SENT)
-			printf("csr-result of last msgout: 0x%x\n", csr);
-#endif
+
+		DBGPRINTF(("csr-result of last msgout: 0x%x\n", csr),
+		    sync_debug && dev->sc_sync[id].state == SYNC_SENT);
 
 		if (csr != SBIC_CSR_SEL_TIMEO)
 			dev->sc_flags |= SBICF_SELECTED;
@@ -1262,11 +1211,8 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 	return(csr == SBIC_CSR_SEL_TIMEO);
 }
 
-int
-sbicxfstart(regs, len, phase, wait)
-	sbic_regmap_p regs;
-	int len, wait;
-	u_char phase;
+static int
+sbicxfstart(sbic_regmap_p regs, int len, u_char phase, int wait)
 {
 	u_char id;
 
@@ -1294,12 +1240,8 @@ sbicxfstart(regs, len, phase, wait)
 	return(1);
 }
 
-int
-sbicxfout(regs, len, bp, phase)
-	sbic_regmap_p regs;
-	int len;
-	void *bp;
-	int phase;
+static int
+sbicxfout(sbic_regmap_p regs, int len, void *bp, int phase)
 {
 	u_char orig_csr, asr, *buf;
 /*	u_char csr;*/
@@ -1329,11 +1271,10 @@ sbicxfout(regs, len, bp, phase)
 		GET_SBIC_asr (regs, asr);
 		while ((asr & SBIC_ASR_DBR) == 0) {
 			if ((asr & SBIC_ASR_INT) || --wait < 0) {
-#ifdef DEBUG
-				if (sbic_debug)
-					printf("sbicxfout fail: l%d i%x w%d\n",
-					    len, asr, wait);
-#endif
+
+				DBGPRINTF(("sbicxfout fail: l%d i%x w%d\n",
+				    len, asr, wait), sbic_debug);
+
 				return (len);
 			}
 /*			DELAY(1);*/
@@ -1352,11 +1293,8 @@ sbicxfout(regs, len, bp, phase)
 }
 
 /* returns # bytes left to read */
-int
-sbicxfin(regs, len, bp)
-	sbic_regmap_p regs;
-	int len;
-	void *bp;
+static int
+sbicxfin(sbic_regmap_p regs, int len, void *bp)
 {
 	int wait;
 /*	int read;*/
@@ -1379,31 +1317,27 @@ sbicxfin(regs, len, bp)
 	for (;len > 0; len--) {
 		GET_SBIC_asr (regs, asr);
 		if((asr & SBIC_ASR_PE)) {
-#ifdef DEBUG
-			printf("sbicxfin parity error: l%d i%x w%d\n",
-			       len, asr, wait);
-/*			return ((unsigned long)buf - (unsigned long)bp); */
+			DBG(printf("sbicxfin parity error: l%d i%x w%d\n",
+			       len, asr, wait));
 #ifdef DDB
 			Debugger();
 #endif
-#endif
+			DBG(return ((unsigned long)buf - (unsigned long)bp));
 		}
 		while ((asr & SBIC_ASR_DBR) == 0) {
 			if ((asr & SBIC_ASR_INT) || --wait < 0) {
-#ifdef DEBUG
-				if (sbic_debug) {
+
+				DBG(if (sbic_debug) {
 	QPRINTF(("sbicxfin fail:{%d} %02x %02x %02x %02x %02x %02x "
 	    "%02x %02x %02x %02x\n", len, obp[0], obp[1], obp[2],
 	    obp[3], obp[4], obp[5], obp[6], obp[7], obp[8], obp[9]));
-					printf("sbicxfin fail: l%d i%x w%d\n",
-					    len, asr, wait);
-}
-#endif
+	printf("sbicxfin fail: l%d i%x w%d\n", len, asr, wait); });
+
 				return len;
 			}
 
 #ifdef UNPROTECTED_CSR
-			if( ! asr & SBIC_ASR_BSY ) {
+			if (! asr & SBIC_ASR_BSY) {
 				GET_SBIC_csr(regs, csr);
 				CSR_TRACE('<',csr,asr,len);
 				QPRINTF(("[CSR%02xASR%02x]", csr, asr));
@@ -1436,11 +1370,9 @@ sbicxfin(regs, len, bp)
  * (i.e., by the scsi bus data xfer phase).  If 'len' is zero, the
  * command must supply no data.
  */
-int
-sbicicmd(dev, target, lun, cbuf, clen, buf, len)
-	struct sbic_softc *dev;
-	void *cbuf, *buf;
-	int clen, len;
+static int
+sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
+    void *buf, int len)
 {
 	sbic_regmap_p regs;
 	u_char phase, csr, asr;
@@ -1469,13 +1401,10 @@ sbicicmd(dev, target, lun, cbuf, clen, buf, len)
 	acb->sc_kv.dc_addr = buf;
 	acb->sc_kv.dc_count = len;
 
-#ifdef DEBUG
-	routine = 3;
-	debug_sbic_regs = regs; /* store this to allow debug calls */
-	if( data_pointer_debug > 1 )
-		printf("sbicicmd(%d,%d):%d\n", target, lun,
-		       acb->sc_kv.dc_count);
-#endif
+	DBG(routine = 3);
+	DBG(debug_sbic_regs = regs); /* store this to allow debug calls */
+	DBGPRINTF(("sbicicmd(%d,%d):%d\n", target, lun, acb->sc_kv.dc_count),
+	    data_pointer_debug > 1);
 
 	/*
 	 * set the sbic into non-DMA mode
@@ -1493,16 +1422,17 @@ sbicicmd(dev, target, lun, cbuf, clen, buf, len)
 		/*
 		 * select the SCSI bus (it's an error if bus isn't free)
 		 */
-		if (!( dev->sc_flags & SBICF_SELECTED )
-		    && sbicselectbus(dev, regs, target, lun, dev->sc_scsiaddr)) {
+		if (!( dev->sc_flags & SBICF_SELECTED)
+		    && sbicselectbus(dev, regs, target, lun,
+			dev->sc_scsiaddr)) {
 			/*printf("sbicicmd trying to select busy bus!\n");*/
 			dev->sc_flags &= ~SBICF_ICMD;
 			return(-1);
 		}
 
 		/*
-		 * Wait for a phase change (or error) then let the device sequence
-		 * us through the various SCSI phases.
+		 * Wait for a phase change (or error) then let the
+		 * device sequence us through the various SCSI phases.
 		 */
 
 		wait = sbic_cmd_wait;
@@ -1528,42 +1458,42 @@ sbicicmd(dev, target, lun, cbuf, clen, buf, len)
 				i = 0; /* done */
 /*				break;*/ /* Bypass all the state gobldygook */
 			} else {
-#ifdef DEBUG
-				if(reselect_debug>1)
-					printf("sbicicmd: handling disconnect\n");
-#endif
+				DBGPRINTF(("sbicicmd: handling disconnect\n"),
+				    reselect_debug > 1);
+
 				i = SBIC_STATE_DISCONNECT;
 			}
 			break;
 
-		case SBIC_CSR_XFERRED|CMD_PHASE:
-		case SBIC_CSR_MIS|CMD_PHASE:
-		case SBIC_CSR_MIS_1|CMD_PHASE:
-		case SBIC_CSR_MIS_2|CMD_PHASE:
+		case SBIC_CSR_XFERRED | CMD_PHASE:
+		case SBIC_CSR_MIS     | CMD_PHASE:
+		case SBIC_CSR_MIS_1   | CMD_PHASE:
+		case SBIC_CSR_MIS_2   | CMD_PHASE:
 			if (sbicxfstart(regs, clen, CMD_PHASE, sbic_cmd_wait))
 				if (sbicxfout(regs, clen,
 					      cbuf, CMD_PHASE))
-					i = sbicabort(dev, regs,"icmd sending cmd");
+					i = sbicabort(dev, regs,
+					    "icmd sending cmd");
 #if 0
 			GET_SBIC_csr(regs, csr); /* Lets us reload tcount */
 			WAIT_CIP(regs);
 			GET_SBIC_asr(regs, asr);
 			CSR_TRACE('I',csr,asr,target);
-			if( asr & (SBIC_ASR_BSY|SBIC_ASR_LCI|SBIC_ASR_CIP) )
+			if (asr & (SBIC_ASR_BSY|SBIC_ASR_LCI|SBIC_ASR_CIP))
 				printf("next: cmd sent asr %02x, csr %02x\n",
 				       asr, csr);
 #endif
 			break;
 
 #if 0
-		case SBIC_CSR_XFERRED|DATA_OUT_PHASE:
-		case SBIC_CSR_XFERRED|DATA_IN_PHASE:
-		case SBIC_CSR_MIS|DATA_OUT_PHASE:
-		case SBIC_CSR_MIS|DATA_IN_PHASE:
-		case SBIC_CSR_MIS_1|DATA_OUT_PHASE:
-		case SBIC_CSR_MIS_1|DATA_IN_PHASE:
-		case SBIC_CSR_MIS_2|DATA_OUT_PHASE:
-		case SBIC_CSR_MIS_2|DATA_IN_PHASE:
+		case SBIC_CSR_XFERRED | DATA_OUT_PHASE:
+		case SBIC_CSR_XFERRED | DATA_IN_PHASE:
+		case SBIC_CSR_MIS     | DATA_OUT_PHASE:
+		case SBIC_CSR_MIS     | DATA_IN_PHASE:
+		case SBIC_CSR_MIS_1   | DATA_OUT_PHASE:
+		case SBIC_CSR_MIS_1   | DATA_IN_PHASE:
+		case SBIC_CSR_MIS_2   | DATA_OUT_PHASE:
+		case SBIC_CSR_MIS_2   | DATA_IN_PHASE:
 			if (acb->sc_kv.dc_count <= 0)
 				i = sbicabort(dev, regs, "icmd out of data");
 			else {
@@ -1589,18 +1519,16 @@ sbicicmd(dev, target, lun, cbuf, clen, buf, len)
 			break;
 
 #endif
-		case SBIC_CSR_XFERRED|STATUS_PHASE:
-		case SBIC_CSR_MIS|STATUS_PHASE:
-		case SBIC_CSR_MIS_1|STATUS_PHASE:
-		case SBIC_CSR_MIS_2|STATUS_PHASE:
+		case SBIC_CSR_XFERRED | STATUS_PHASE:
+		case SBIC_CSR_MIS     | STATUS_PHASE:
+		case SBIC_CSR_MIS_1   | STATUS_PHASE:
+		case SBIC_CSR_MIS_2   | STATUS_PHASE:
 			/*
 			 * the sbic does the status/cmd-complete reading ok,
 			 * so do this with its hi-level commands.
 			 */
-#ifdef DEBUG
-			if(sbic_debug)
-				printf("SBICICMD status phase\n");
-#endif
+			DBGPRINTF(("SBICICMD status phase\n"), sbic_debug);
+
 			SBIC_TC_PUT(regs, 0);
 			SET_SBIC_cmd_phase(regs, 0x46);
 			SET_SBIC_cmd(regs, SBIC_CMD_SEL_ATN_XFER);
@@ -1608,7 +1536,7 @@ sbicicmd(dev, target, lun, cbuf, clen, buf, len)
 
 #if THIS_IS_A_RESERVED_STATE
 		case BUS_FREE_PHASE:		/* This is not legal */
-			if( dev->sc_stat[0] != 0xff )
+			if (dev->sc_stat[0] != 0xff)
 				goto out;
 			break;
 #endif
@@ -1625,9 +1553,10 @@ sbicicmd(dev, target, lun, cbuf, clen, buf, len)
 
 		/* tapes may take a loooong time.. */
 		while (asr & SBIC_ASR_BSY){
-			if(asr & SBIC_ASR_DBR) {
-				printf("sbicicmd: Waiting while sbic is jammed, CSR:%02x,ASR:%02x\n",
-				       csr,asr);
+			if (asr & SBIC_ASR_DBR) {
+				printf("sbicicmd: Waiting while sbic is "
+				    "jammed, CSR:%02x,ASR:%02x\n",
+				    csr, asr);
 #ifdef DDB
 				Debugger();
 #endif
@@ -1636,7 +1565,7 @@ sbicicmd(dev, target, lun, cbuf, clen, buf, len)
 				/* Try old direction */
 				GET_SBIC_data(regs,i);
 				GET_SBIC_asr(regs, asr);
-				if( asr & SBIC_ASR_DBR) /* Wants us to write */
+				if (asr & SBIC_ASR_DBR) /* Wants us to write */
 					SET_SBIC_data(regs,i);
 			}
 			GET_SBIC_asr(regs, asr);
@@ -1648,31 +1577,29 @@ sbicicmd(dev, target, lun, cbuf, clen, buf, len)
 		if (asr & SBIC_ASR_LCI) {
 			printf("sbicicmd: last command ignored\n");
 		}
-		else if( i == 1 ) /* Bsy */
-			SBIC_WAIT (regs, SBIC_ASR_INT, wait);
+		else if (i == 1) /* Bsy */
+			SBIC_WAIT(regs, SBIC_ASR_INT, wait);
 
 		/*
 		 * do it again
 		 */
-	} while ( i > 0 && dev->sc_stat[0] == 0xff);
+	} while (i > 0 && dev->sc_stat[0] == 0xff);
 
 	/* Sometimes we need to do an extra read of the CSR */
 	GET_SBIC_csr(regs, csr);
 	CSR_TRACE('I',csr,asr,0xff);
 
 #if CSR_LOG_BUF_SIZE
-	if(reselect_debug>1)
-		for(i=0; i<bufptr; i++)
+	if (reselect_debug > 1)
+		for (i = 0; i < bufptr; i++)
 			printf("CSR:%02x", csrbuf[i]);
 #endif
 
-#ifdef DEBUG
-	if(data_pointer_debug > 1)
-		printf("sbicicmd done(%d,%d):%d =%d=\n",
-		       dev->target, lun,
-		       acb->sc_kv.dc_count,
-		       dev->sc_stat[0]);
-#endif
+	DBGPRINTF(("sbicicmd done(%d,%d):%d =%d=\n",
+	    dev->target, lun,
+	    acb->sc_kv.dc_count,
+	    dev->sc_stat[0]),
+	    data_pointer_debug > 1);
 
 	QPRINTF(("=STS:%02x=", dev->sc_stat[0]));
 	dev->sc_flags &= ~SBICF_ICMD;
@@ -1687,11 +1614,8 @@ sbicicmd(dev, target, lun, cbuf, clen, buf, len)
  * programmed i/o.  This routine is a lot like sbicicmd except we
  * skip (and don't allow) the select, cmd out and data in/out phases.
  */
-void
-sbicxfdone(dev, regs, target)
-	struct sbic_softc *dev;
-	sbic_regmap_p regs;
-	int target;
+static void
+sbicxfdone(struct sbic_softc *dev, sbic_regmap_p regs, int target)
 {
 	u_char phase, asr, csr;
 	int s;
@@ -1733,10 +1657,8 @@ sbicxfdone(dev, regs, target)
 	 * No DMA chains
 	 */
 
-int
-sbicgo(dev, xs)
-	struct sbic_softc *dev;
-	struct scsipi_xfer *xs;
+static int
+sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 {
 	int i, dmaflags, count, usedma;
 /*	int wait;*/
@@ -1752,17 +1674,16 @@ sbicgo(dev, xs)
 	regs = dev->sc_sbicp;
 
 	usedma = sbicdmaok(dev, xs);
-#ifdef DEBUG
-	routine = 1;
-	debug_sbic_regs = regs; /* store this to allow debug calls */
-	if( data_pointer_debug > 1 )
-		printf("sbicgo(%d,%d)\n", dev->target, dev->lun);
-#endif
+
+	DBG(routine = 1);
+	DBG(debug_sbic_regs = regs); /* store this to allow debug calls */
+	DBGPRINTF(("sbicgo(%d,%d)\n", dev->target, dev->lun),
+	    data_pointer_debug > 1);
 
 	/*
 	 * set the sbic into DMA mode
 	 */
-	if( usedma )
+	if (usedma)
 		SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI |
 				 SBIC_MACHINE_DMA_MODE);
 	else
@@ -1805,9 +1726,8 @@ sbicgo(dev, xs)
 	}
 #endif
 
-#ifdef DEBUG
-	++sbicdma_ops;			/* count total DMA operations */
-#endif
+	DBG(++sbicdma_ops);		/* count total DMA operations */
+
 	if (usedma)
 		panic("sbic: Cannot use DMA\n");
 #if 0
@@ -1821,7 +1741,7 @@ sbicgo(dev, xs)
 			acb->sc_dmausrbuf = addr;
 			acb->sc_dmausrlen = count;
 			acb->sc_usrbufpa = (u_char *)kvtop(addr);
-			if(!dev->sc_tinfo[dev->target].bounce) {
+			if (!dev->sc_tinfo[dev->target].bounce) {
 				printf("sbicgo: HELP! no bounce allocated for %d\n",
 				       dev->target);
 				printf("xfer: (%p->%p,%lx)\n", acb->sc_dmausrbuf,
@@ -1842,19 +1762,17 @@ sbicgo(dev, xs)
 				       kvtop(dev->sc_tinfo[dev->target].bounce));
 			}
 		} else {	/* write: copy to dma buffer */
-#ifdef DEBUG
-			if(data_pointer_debug)
-			printf("sbicgo: copying %x bytes to target %d bounce %x\n",
-			       count, dev->target,
-			       kvtop(dev->sc_tinfo[dev->target].bounce));
-#endif
-			bcopy (addr, dev->sc_tinfo[dev->target].bounce, count);
+			DBGPRINTF(("sbicgo: copying %x bytes to target %d bounce %x\n",
+			    count, dev->target,
+			    kvtop(dev->sc_tinfo[dev->target].bounce)),
+			    data_pointer_debug);
+
+			memcpy(dev->sc_tinfo[dev->target].bounce, addr, count);
 		}
 		addr = dev->sc_tinfo[dev->target].bounce;/* and use dma buffer */
 		acb->sc_kv.dc_addr = addr;
-#ifdef DEBUG
-		++sbicdma_bounces;		/* count number of bounced */
-#endif
+
+		DBG(++sbicdma_bounces);		/* count number of bounced */
 	}
 #endif
 	/*
@@ -1879,9 +1797,8 @@ sbicgo(dev, xs)
 		dev->sc_tcnt = dev->sc_dmago(dev, acb->sc_pa.dc_addr,
 		    acb->sc_pa.dc_count,
 		    dmaflags);
-#ifdef DEBUG
-		dev->sc_dmatimo = dev->sc_tcnt ? 1 : 0;
-#endif
+
+		DBG(dev->sc_dmatimo = dev->sc_tcnt ? 1 : 0);
         } else
 		dev->sc_dmacmd = 0; /* Don't use DMA */
 	dev->sc_flags |= SBICF_INDMA;
@@ -1907,13 +1824,11 @@ sbicgo(dev, xs)
 	/*
 	 * enintr() also enables interrupts for the sbic
 	 */
-#ifdef DEBUG
-	if( data_pointer_debug > 1 )
-		printf("sbicgo dmago:%d(%p:%lx)\n",
-		       dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt);
-	debug_asr = asr;
-	debug_csr = csr;
-#endif
+	DBGPRINTF(("sbicgo dmago:%d(%p:%lx)\n",
+	    dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt),
+	    data_pointer_debug > 1);
+	DBG(debug_asr = asr);
+	DBG(debug_csr = csr);
 
 	/*
 	 * Lets cycle a while then let the interrupt handler take over
@@ -1923,29 +1838,30 @@ sbicgo(dev, xs)
 	do {
 		GET_SBIC_csr(regs, csr);
 		CSR_TRACE('g',csr,asr,dev->target);
-#ifdef DEBUG
-		debug_csr = csr;
-		routine = 1;
-#endif
+
+		DBG(debug_csr = csr);
+		DBG(routine = 1);
+
 		QPRINTF(("go[0x%x]", csr));
 
 		i = sbicnextstate(dev, csr, asr);
 
 		WAIT_CIP(regs);
 		GET_SBIC_asr(regs, asr);
-#ifdef DEBUG
-		debug_asr = asr;
-#endif
-		if(asr & SBIC_ASR_LCI) printf("sbicgo: LCI asr:%02x csr:%02x\n",
-					      asr,csr);
-	} while( i == SBIC_STATE_RUNNING
-		&& asr & (SBIC_ASR_INT|SBIC_ASR_LCI) );
+
+		DBG(debug_asr = asr);
+
+		if(asr & SBIC_ASR_LCI)
+			printf("sbicgo: LCI asr:%02x csr:%02x\n", asr, csr);
+	} while (i == SBIC_STATE_RUNNING
+	    && (asr & (SBIC_ASR_INT | SBIC_ASR_LCI)));
 
 	CSR_TRACE('g',csr,asr,i<<4);
 	SBIC_TRACE(dev);
-if (i == SBIC_STATE_DONE && dev->sc_stat[0] == 0xff) printf("sbicgo: done & stat = 0xff\n");
+	if (i == SBIC_STATE_DONE && dev->sc_stat[0] == 0xff)
+		printf("sbicgo: done & stat = 0xff\n");
 	if (i == SBIC_STATE_DONE && dev->sc_stat[0] != 0xff) {
-/*	if( i == SBIC_STATE_DONE && dev->sc_stat[0] ) { */
+/*	if (i == SBIC_STATE_DONE && dev->sc_stat[0]) { */
 		/* Did we really finish that fast? */
 		return 1;
 	}
@@ -1954,8 +1870,7 @@ if (i == SBIC_STATE_DONE && dev->sc_stat[0] == 0xff) printf("sbicgo: done & stat
 
 
 int
-sbicintr(dev)
-	struct sbic_softc *dev;
+sbicintr(struct sbic_softc *dev)
 {
 	sbic_regmap_p regs;
 /*	struct dma_chain *df, *dl;*/
@@ -1979,25 +1894,25 @@ sbicintr(dev)
 	do {
 		GET_SBIC_csr(regs, csr);
 		CSR_TRACE('i',csr,asr,dev->target);
-#ifdef DEBUG
-		debug_csr = csr;
-		routine = 2;
-#endif
+
+		DBG(debug_csr = csr);
+		DBG(routine = 2);
+
 		QPRINTF(("intr[0x%x]", csr));
 
 		i = sbicnextstate(dev, csr, asr);
 
 		WAIT_CIP(regs);
 		GET_SBIC_asr(regs, asr);
-#ifdef DEBUG
-		debug_asr = asr;
-#endif
+
+		DBG(debug_asr = asr);
+
 #if 0
-		if(asr & SBIC_ASR_LCI) printf("sbicintr: LCI asr:%02x csr:%02x\n",
-					      asr,csr);
+		if (asr & SBIC_ASR_LCI)
+			printf("sbicintr: LCI asr:%02x csr:%02x\n", asr, csr);
 #endif
-	} while(i == SBIC_STATE_RUNNING &&
-		asr & (SBIC_ASR_INT|SBIC_ASR_LCI));
+	} while (i == SBIC_STATE_RUNNING &&
+		(asr & (SBIC_ASR_INT | SBIC_ASR_LCI)));
 	CSR_TRACE('i',csr,asr,i<<4);
 	SBIC_TRACE(dev);
 	return(1);
@@ -2006,7 +1921,7 @@ sbicintr(dev)
 /*
  * Run commands and wait for disconnect
  */
-int
+static int
 sbicpoll(dev)
 	struct sbic_softc *dev;
 {
@@ -2021,15 +1936,15 @@ sbicpoll(dev)
 
 	do {
 		GET_SBIC_asr (regs, asr);
-#ifdef DEBUG
-		debug_asr = asr;
-#endif
+
+		DBG(debug_asr = asr);
+
 		GET_SBIC_csr(regs, csr);
 		CSR_TRACE('p',csr,asr,dev->target);
-#ifdef DEBUG
-		debug_csr = csr;
-		routine = 2;
-#endif
+
+		DBG(debug_csr = csr);
+		DBG(routine = 2);
+
 		QPRINTF(("poll[0x%x]", csr));
 
 		i = sbicnextstate(dev, csr, asr);
@@ -2038,9 +1953,9 @@ sbicpoll(dev)
 		GET_SBIC_asr(regs, asr);
 		/* tapes may take a loooong time.. */
 		while (asr & SBIC_ASR_BSY){
-			if(asr & SBIC_ASR_DBR) {
+			if (asr & SBIC_ASR_DBR) {
 				printf("sbipoll: Waiting while sbic is jammed, CSR:%02x,ASR:%02x\n",
-				       csr,asr);
+				       csr, asr);
 #ifdef DDB
 				Debugger();
 #endif
@@ -2055,23 +1970,22 @@ sbicpoll(dev)
 			GET_SBIC_asr(regs, asr);
 		}
 
-		if(asr & SBIC_ASR_LCI) printf("sbicpoll: LCI asr:%02x csr:%02x\n",
-					      asr,csr);
-		else if( i == 1 ) /* BSY */
+		if (asr & SBIC_ASR_LCI)
+			printf("sbicpoll: LCI asr:%02x csr:%02x\n", asr, csr);
+		else if (i == 1) /* BSY */
 			SBIC_WAIT(regs, SBIC_ASR_INT, sbic_cmd_wait);
-	} while(i == SBIC_STATE_RUNNING);
+	} while (i == SBIC_STATE_RUNNING);
 	CSR_TRACE('p',csr,asr,i<<4);
 	SBIC_TRACE(dev);
-	return(1);
+	return 1;
 }
 
 /*
  * Handle a single msgin
  */
 
-int
-sbicmsgin(dev)
-	struct sbic_softc *dev;
+static int
+sbicmsgin(struct sbic_softc *dev)
 {
 	sbic_regmap_p regs;
 	int recvlen;
@@ -2083,10 +1997,8 @@ sbicmsgin(dev)
 	dev->sc_msg[1] = 0xff;
 
 	GET_SBIC_asr(regs, asr);
-#ifdef DEBUG
-	if(reselect_debug>1)
-		printf("sbicmsgin asr=%02x\n", asr);
-#endif
+
+	DBGPRINTF(("sbicmsgin asr=%02x\n", asr), reselect_debug > 1);
 
 	sbic_save_ptrs(dev, regs, dev->target, dev->lun);
 
@@ -2097,7 +2009,7 @@ sbicmsgin(dev)
 	tmpaddr = dev->sc_msg;
 	recvlen = 1;
 	do {
-		while( recvlen-- ) {
+		while (recvlen--) {
 			asr = GET_SBIC_asr(regs, asr);
 			GET_SBIC_csr(regs, csr);
 			QPRINTF(("sbicmsgin ready to go (csr,asr)=(%02x,%02x)\n",
@@ -2120,18 +2032,17 @@ sbicmsgin(dev)
 				csr = 0xff;
 				GET_SBIC_csr(regs, csr);
 				CSR_TRACE('X',csr,asr,dev->target);
-				if( csr == 0xff )
+				if (csr == 0xff)
 					printf("sbicmsgin waiting: csr %02x asr %02x\n", csr, asr);
-			} while( csr == 0xff );
+			} while (csr == 0xff);
 #endif
-#ifdef DEBUG
-			if(reselect_debug>1)
-				printf("sbicmsgin: got %02x csr %02x asr %02x\n",
-				       *tmpaddr, csr, asr);
-#endif
+
+			DBGPRINTF(("sbicmsgin: got %02x csr %02x asr %02x\n",
+			    *tmpaddr, csr, asr), reselect_debug > 1);
+
 #if do_parity_check
-			if( asr & SBIC_ASR_PE ) {
-				printf ("Parity error");
+			if (asr & SBIC_ASR_PE) {
+				printf("Parity error");
 				/* This code simply does not work. */
 				WAIT_CIP(regs);
 				SET_SBIC_cmd(regs, SBIC_CMD_SET_ATN);
@@ -2140,20 +2051,21 @@ sbicmsgin(dev)
 				WAIT_CIP(regs);
 				SET_SBIC_cmd(regs, SBIC_CMD_CLR_ACK);
 				WAIT_CIP(regs);
-				if( !(asr & SBIC_ASR_LCI) )
+				if (!(asr & SBIC_ASR_LCI))
 					/* Target wants to send garbled msg*/
 					continue;
 				printf("--fixing\n");
 				/* loop until a msgout phase occurs on target */
-				while(csr & 0x07 != MESG_OUT_PHASE) {
-					while( asr & SBIC_ASR_BSY &&
-					      !(asr & SBIC_ASR_DBR|SBIC_ASR_INT) )
+				while ((csr & 0x07) != MESG_OUT_PHASE) {
+					while ((asr & SBIC_ASR_BSY) &&
+					    !(asr &
+						(SBIC_ASR_DBR | SBIC_ASR_INT)))
 						GET_SBIC_asr(regs, asr);
-					if( asr & SBIC_ASR_DBR )
+					if (asr & SBIC_ASR_DBR)
 						panic("msgin: jammed again!\n");
 					GET_SBIC_csr(regs, csr);
 					CSR_TRACE('e',csr,asr,dev->target);
-					if( csr & 0x07 != MESG_OUT_PHASE ) {
+					if ((csr & 0x07) != MESG_OUT_PHASE) {
 						sbicnextstate(dev, csr, asr);
 						sbic_save_ptrs(dev, regs,
 							       dev->target,
@@ -2167,7 +2079,7 @@ sbicmsgin(dev)
 #endif
 				tmpaddr++;
 
-			if(recvlen) {
+			if (recvlen) {
 				/* Clear ACK */
 				WAIT_CIP(regs);
 				GET_SBIC_asr(regs, asr);
@@ -2181,15 +2093,14 @@ sbicmsgin(dev)
 
 		};
 
-		if(dev->sc_msg[0] == 0xff) {
+		if (dev->sc_msg[0] == 0xff) {
 			printf("sbicmsgin: sbic swallowed our message\n");
 			break;
 		}
-#ifdef DEBUG
-		if (sync_debug)
-			printf("msgin done csr 0x%x asr 0x%x msg 0x%x\n",
-			       csr, asr, dev->sc_msg[0]);
-#endif
+
+		DBGPRINTF(("msgin done csr 0x%x asr 0x%x msg 0x%x\n",
+		    csr, asr, dev->sc_msg[0]), sync_debug);
+
 		/*
 		 * test whether this is a reply to our sync
 		 * request
@@ -2204,11 +2115,10 @@ sbicmsgin(dev)
 		} else if (dev->sc_msg[0] == MSG_REJECT
 			   && dev->sc_sync[dev->target].state == SYNC_SENT) {
 			QPRINTF(("REJECT of SYN"));
-#ifdef DEBUG
-			if (sync_debug)
-				printf("target %d rejected sync, going async\n",
-				       dev->target);
-#endif
+
+			DBGPRINTF(("target %d rejected sync, going async\n",
+			    dev->target), sync_debug);
+
 			dev->sc_sync[dev->target].period = sbic_min_period;
 			dev->sc_sync[dev->target].offset = 0;
 			dev->sc_sync[dev->target].state = SYNC_DONE;
@@ -2227,18 +2137,19 @@ sbicmsgin(dev)
 			 */
 		} else if ((dev->sc_msg[0] == MSG_DISCONNECT)) {
 			QPRINTF(("DISCONNECT"));
-#ifdef DEBUG
-			if( reselect_debug>1 && dev->sc_msg[0] == MSG_DISCONNECT )
-				printf("sbicmsgin: got disconnect msg %s\n",
-				       (dev->sc_flags & SBICF_ICMD)?"rejecting":"");
-#endif
-			if( dev->sc_flags & SBICF_ICMD ) {
+
+			DBGPRINTF(("sbicmsgin: got disconnect msg %s\n",
+			    (dev->sc_flags & SBICF_ICMD) ? "rejecting" : ""),
+			    reselect_debug > 1 &&
+			    dev->sc_msg[0] == MSG_DISCONNECT);
+
+			if (dev->sc_flags & SBICF_ICMD) {
 				/* We're in immediate mode. Prevent disconnects. */
 				/* prepare to reject the message, NACK */
 				SET_SBIC_cmd(regs, SBIC_CMD_SET_ATN);
 				WAIT_CIP(regs);
 			}
-		} else if (dev->sc_msg[0] == MSG_CMD_COMPLETE ) {
+		} else if (dev->sc_msg[0] == MSG_CMD_COMPLETE) {
 			QPRINTF(("CMD_COMPLETE"));
 			/* !! KLUDGE ALERT !! quite a few drives don't seem to
 			 * really like the current way of sending the
@@ -2256,18 +2167,17 @@ sbicmsgin(dev)
 			 * thru status/cc-phase.
 			 */
 
-#ifdef DEBUG
-			if (sync_debug)
-				printf ("GOT MSG %d! target %d acting weird.."
-					" waiting for disconnect...\n",
-					dev->sc_msg[0], dev->target);
-#endif
+			DBGPRINTF(("GOT MSG %d! target %d acting weird.."
+			    " waiting for disconnect...\n",
+			    dev->sc_msg[0], dev->target), sync_debug);
+
 			/* Check to see if sbic is handling this */
 			GET_SBIC_asr(regs, asr);
-			if(asr & SBIC_ASR_BSY)
+			if (asr & SBIC_ASR_BSY)
 				return SBIC_STATE_RUNNING;
 
-			/* Let's try this: Assume it works and set status to 00 */
+			/* Let's try this: Assume it works and set
+                           status to 00 */
 			dev->sc_stat[0] = 0;
 		} else if (dev->sc_msg[0] == MSG_EXT_MESSAGE
 			   && tmpaddr == &dev->sc_msg[1]) {
@@ -2285,8 +2195,9 @@ sbicmsgin(dev)
 			recvlen = *tmpaddr++;
 			QPRINTF(("Recving ext msg, asr %02x csr %02x len %02x\n",
 			       asr, csr, recvlen));
-		} else if (dev->sc_msg[0] == MSG_EXT_MESSAGE && dev->sc_msg[1] == 3
-			   && dev->sc_msg[2] == MSG_SYNC_REQ) {
+		} else if (dev->sc_msg[0] == MSG_EXT_MESSAGE &&
+		    dev->sc_msg[1] == 3 &&
+		    dev->sc_msg[2] == MSG_SYNC_REQ) {
 			QPRINTF(("SYN"));
 			dev->sc_sync[dev->target].period =
 				sbicfromscsiperiod(dev,
@@ -2301,11 +2212,10 @@ sbicmsgin(dev)
 			       dev->sc_dev.dv_xname, dev->target,
 			       dev->sc_msg[3] * 4, dev->sc_msg[4]);
 		} else {
-#ifdef DEBUG
-			if (sbic_debug || sync_debug)
-				printf ("sbicmsgin: Rejecting message 0x%02x\n",
-					dev->sc_msg[0]);
-#endif
+
+			DBGPRINTF(("sbicmsgin: Rejecting message 0x%02x\n",
+			    dev->sc_msg[0]), sbic_debug || sync_debug);
+
 			/* prepare to reject the message, NACK */
 			SET_SBIC_cmd(regs, SBIC_CMD_SET_ATN);
 			WAIT_CIP(regs);
@@ -2321,10 +2231,10 @@ sbicmsgin(dev)
 		SBIC_WAIT(regs, SBIC_ASR_INT, 0);
 	}
 #if 0
-	while((csr == SBIC_CSR_MSGIN_W_ACK)
-	      || (SBIC_PHASE(csr) == MESG_IN_PHASE));
+	while ((csr == SBIC_CSR_MSGIN_W_ACK)
+	    || (SBIC_PHASE(csr) == MESG_IN_PHASE));
 #else
-	while (recvlen>0);
+	while (recvlen > 0);
 #endif
 
 	QPRINTF(("sbicmsgin finished: csr %02x, asr %02x\n",csr, asr));
@@ -2342,10 +2252,8 @@ sbicmsgin(dev)
  *		2  == disconnected
  *		-1 == error
  */
-int
-sbicnextstate(dev, csr, asr)
-	struct sbic_softc *dev;
-	u_char csr, asr;
+static int
+sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 {
 	sbic_regmap_p regs;
 /*	struct dma_chain *df, *dl;*/
@@ -2361,10 +2269,10 @@ sbicnextstate(dev, csr, asr)
 	QPRINTF(("next[%02x,%02x]",asr,csr));
 
 	switch (csr) {
-	case SBIC_CSR_XFERRED|CMD_PHASE:
-	case SBIC_CSR_MIS|CMD_PHASE:
-	case SBIC_CSR_MIS_1|CMD_PHASE:
-	case SBIC_CSR_MIS_2|CMD_PHASE:
+	case SBIC_CSR_XFERRED | CMD_PHASE:
+	case SBIC_CSR_MIS     | CMD_PHASE:
+	case SBIC_CSR_MIS_1   | CMD_PHASE:
+	case SBIC_CSR_MIS_2   | CMD_PHASE:
 		sbic_save_ptrs(dev, regs, dev->target, dev->lun);
 		if (sbicxfstart(regs, acb->clen, CMD_PHASE, sbic_cmd_wait))
 			if (sbicxfout(regs, acb->clen,
@@ -2372,10 +2280,10 @@ sbicnextstate(dev, csr, asr)
 				goto abort;
 		break;
 
-	case SBIC_CSR_XFERRED|STATUS_PHASE:
-	case SBIC_CSR_MIS|STATUS_PHASE:
-	case SBIC_CSR_MIS_1|STATUS_PHASE:
-	case SBIC_CSR_MIS_2|STATUS_PHASE:
+	case SBIC_CSR_XFERRED | STATUS_PHASE:
+	case SBIC_CSR_MIS     | STATUS_PHASE:
+	case SBIC_CSR_MIS_1   | STATUS_PHASE:
+	case SBIC_CSR_MIS_2   | STATUS_PHASE:
 		/*
 		 * this should be the normal i/o completion case.
 		 * get the status & cmd complete msg then let the
@@ -2393,47 +2301,48 @@ sbicnextstate(dev, csr, asr)
 	 		 */
 		}
 #endif
-#ifdef DEBUG
-		if( data_pointer_debug > 1 )
-			printf("next dmastop: %d(%p:%lx)\n",
-			       dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt);
-		dev->sc_dmatimo = 0;
-#endif
+
+		DBGPRINTF(("next dmastop: %d(%p:%lx)\n",
+		    dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt),
+		    data_pointer_debug > 1);
+		DBG(dev->sc_dmatimo = 0);
+
 		dev->sc_dmastop(dev); /* was dmafree */
 		if (acb->flags & ACB_BBUF) {
 			if ((u_char *)kvtop(acb->sc_dmausrbuf) != acb->sc_usrbufpa)
 				printf("%s: WARNING - buffer mapping changed %p->%x\n",
 				    dev->sc_dev.dv_xname, acb->sc_usrbufpa,
 				    kvtop(acb->sc_dmausrbuf));
-#ifdef DEBUG
-			if(data_pointer_debug)
-			printf("sbicgo:copying %lx bytes from target %d bounce %x\n",
-			       acb->sc_dmausrlen,
-			       dev->target,
-			       kvtop(dev->sc_tinfo[dev->target].bounce));
-#endif
-			bcopy(dev->sc_tinfo[dev->target].bounce,
-			      acb->sc_dmausrbuf,
-			      acb->sc_dmausrlen);
+
+			DBGPRINTF(("sbicgo:copying %lx bytes from target %d bounce %x\n",
+			    acb->sc_dmausrlen,
+			    dev->target,
+			    kvtop(dev->sc_tinfo[dev->target].bounce)),
+			    data_pointer_debug);
+
+			memcpy(acb->sc_dmausrbuf,
+			    dev->sc_tinfo[dev->target].bounce,
+			    acb->sc_dmausrlen);
 		}
 		dev->sc_flags &= ~(SBICF_INDMA | SBICF_DCFLUSH);
 		sbic_scsidone(acb, dev->sc_stat[0]);
 		SBIC_TRACE(dev);
 		return SBIC_STATE_DONE;
 
-	case SBIC_CSR_XFERRED|DATA_OUT_PHASE:
-	case SBIC_CSR_XFERRED|DATA_IN_PHASE:
-	case SBIC_CSR_MIS|DATA_OUT_PHASE:
-	case SBIC_CSR_MIS|DATA_IN_PHASE:
-	case SBIC_CSR_MIS_1|DATA_OUT_PHASE:
-	case SBIC_CSR_MIS_1|DATA_IN_PHASE:
-	case SBIC_CSR_MIS_2|DATA_OUT_PHASE:
-	case SBIC_CSR_MIS_2|DATA_IN_PHASE:
+	case SBIC_CSR_XFERRED | DATA_OUT_PHASE:
+	case SBIC_CSR_XFERRED | DATA_IN_PHASE:
+	case SBIC_CSR_MIS     | DATA_OUT_PHASE:
+	case SBIC_CSR_MIS     | DATA_IN_PHASE:
+	case SBIC_CSR_MIS_1   | DATA_OUT_PHASE:
+	case SBIC_CSR_MIS_1   | DATA_IN_PHASE:
+	case SBIC_CSR_MIS_2   | DATA_OUT_PHASE:
+	case SBIC_CSR_MIS_2   | DATA_IN_PHASE:
 	{
 		int i = 0;
 
-		if( dev->sc_xs->xs_control & XS_CTL_POLL || dev->sc_flags & SBICF_ICMD
-		   || acb->sc_dmacmd == 0 ) {
+		if (dev->sc_xs->xs_control & XS_CTL_POLL ||
+		    dev->sc_flags & SBICF_ICMD ||
+		    acb->sc_dmacmd == 0) {
 			/* Do PIO */
 			SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI);
 			if (acb->sc_kv.dc_count <= 0) {
@@ -2442,22 +2351,21 @@ sbicnextstate(dev, csr, asr)
 				goto abort;
 			}
 			wait = sbic_data_wait;
-			if( sbicxfstart(regs,
+			if (sbicxfstart(regs,
 					acb->sc_kv.dc_count,
 					SBIC_PHASE(csr), wait)) {
-				if( SBIC_PHASE(csr) == DATA_IN_PHASE )
+				if (SBIC_PHASE(csr) == DATA_IN_PHASE)
 					/* data in? */
-					i=sbicxfin(regs,
-						   acb->sc_kv.dc_count,
-						   acb->sc_kv.dc_addr);
+					i = sbicxfin(regs,
+					    acb->sc_kv.dc_count,
+					    acb->sc_kv.dc_addr);
 				else
-					i=sbicxfout(regs,
-						    acb->sc_kv.dc_count,
-						    acb->sc_kv.dc_addr,
-						    SBIC_PHASE(csr));
+					i = sbicxfout(regs,
+					    acb->sc_kv.dc_count,
+					    acb->sc_kv.dc_addr,
+					    SBIC_PHASE(csr));
 			}
-			acb->sc_kv.dc_addr +=
-				(acb->sc_kv.dc_count - i);
+			acb->sc_kv.dc_addr += (acb->sc_kv.dc_count - i);
 			acb->sc_kv.dc_count = i;
 		} else {
 			if (acb->sc_kv.dc_count <= 0) {
@@ -2483,13 +2391,12 @@ sbicnextstate(dev, csr, asr)
 			sbic_save_ptrs(dev, regs, dev->target, dev->lun);
 			sbic_load_ptrs(dev, regs, dev->target, dev->lun);
 #endif
-#ifdef DEBUG
-			if( data_pointer_debug > 1 )
-				printf("next dmanext: %d(%p:%lx)\n",
-				       dev->target,dev->sc_cur->dc_addr,
-				       dev->sc_tcnt);
-			dev->sc_dmatimo = 1;
-#endif
+
+			DBGPRINTF(("next dmanext: %d(%p:%lx)\n",
+			    dev->target,dev->sc_cur->dc_addr,
+			    dev->sc_tcnt), data_pointer_debug > 1);
+			DBG(dev->sc_dmatimo = 1);
+
 			dev->sc_tcnt = dev->sc_dmanext(dev);
 			SBIC_TC_PUT(regs, (unsigned)dev->sc_tcnt);
 			SET_SBIC_cmd(regs, SBIC_CMD_XFER_INFO);
@@ -2497,26 +2404,25 @@ sbicnextstate(dev, csr, asr)
 		}
 		break;
 	}
-	case SBIC_CSR_XFERRED|MESG_IN_PHASE:
-	case SBIC_CSR_MIS|MESG_IN_PHASE:
-	case SBIC_CSR_MIS_1|MESG_IN_PHASE:
-	case SBIC_CSR_MIS_2|MESG_IN_PHASE:
+	case SBIC_CSR_XFERRED | MESG_IN_PHASE:
+	case SBIC_CSR_MIS     | MESG_IN_PHASE:
+	case SBIC_CSR_MIS_1   | MESG_IN_PHASE:
+	case SBIC_CSR_MIS_2   | MESG_IN_PHASE:
 		SBIC_TRACE(dev);
 		return sbicmsgin(dev);
 
 	case SBIC_CSR_MSGIN_W_ACK:
-		SET_SBIC_cmd(regs, SBIC_CMD_CLR_ACK); /* Dunno what I'm ACKing */
+		/* Dunno what I'm ACKing */
+		SET_SBIC_cmd(regs, SBIC_CMD_CLR_ACK);
 		printf("Acking unknown msgin CSR:%02x",csr);
 		break;
 
-	case SBIC_CSR_XFERRED|MESG_OUT_PHASE:
-	case SBIC_CSR_MIS|MESG_OUT_PHASE:
-	case SBIC_CSR_MIS_1|MESG_OUT_PHASE:
-	case SBIC_CSR_MIS_2|MESG_OUT_PHASE:
-#ifdef DEBUG
-		if (sync_debug)
-			printf ("sending REJECT msg to last msg.\n");
-#endif
+	case SBIC_CSR_XFERRED | MESG_OUT_PHASE:
+	case SBIC_CSR_MIS     | MESG_OUT_PHASE:
+	case SBIC_CSR_MIS_1   | MESG_OUT_PHASE:
+	case SBIC_CSR_MIS_2   | MESG_OUT_PHASE:
+
+		DBGPRINTF(("sending REJECT msg to last msg.\n"), sync_debug);
 
 		sbic_save_ptrs(dev, regs, dev->target, dev->lun);
 		/*
@@ -2526,28 +2432,27 @@ sbicnextstate(dev, csr, asr)
 		 */
 		SEND_BYTE(regs, MSG_REJECT);
 		WAIT_CIP(regs);
-		if( asr & (SBIC_ASR_BSY|SBIC_ASR_LCI|SBIC_ASR_CIP) )
+		if (asr & (SBIC_ASR_BSY|SBIC_ASR_LCI|SBIC_ASR_CIP))
 			printf("next: REJECT sent asr %02x\n", asr);
 		SBIC_TRACE(dev);
 		return SBIC_STATE_RUNNING;
 
 	case SBIC_CSR_DISC:
 	case SBIC_CSR_DISC_1:
-		dev->sc_flags &= ~(SBICF_INDMA|SBICF_SELECTED);
+		dev->sc_flags &= ~(SBICF_INDMA | SBICF_SELECTED);
 
 		/* Try to schedule another target */
-#ifdef DEBUG
-		if(reselect_debug>1)
-			printf("sbicnext target %d disconnected\n", dev->target);
-#endif
+		DBGPRINTF(("sbicnext target %d disconnected\n", dev->target),
+		    reselect_debug > 1);
+
 		TAILQ_INSERT_HEAD(&dev->nexus_list, acb, chain);
 		++dev->sc_tinfo[dev->target].dconns;
 		dev->sc_nexus = NULL;
 		dev->sc_xs = NULL;
 
-		if((acb->xs->xs_control & XS_CTL_POLL)
-		   || (dev->sc_flags & SBICF_ICMD)
-		   || (!sbic_parallel_operations) ) {
+		if ((acb->xs->xs_control & XS_CTL_POLL)
+		    || (dev->sc_flags & SBICF_ICMD)
+		    || (!sbic_parallel_operations)) {
 			SBIC_TRACE(dev);
 			return SBIC_STATE_DISCONNECT;
 		}
@@ -2576,16 +2481,16 @@ sbicnextstate(dev, csr, asr)
 			}
 			newlun = 0;	/* XXXX */
 			if ((asr & SBIC_ASR_INT) == 0) {
-#ifdef DEBUG
-				if (reselect_debug)
-					printf("RSLT_NI - no IFFY message? asr %x\n", asr);
-#endif
+
+				DBGPRINTF(("RSLT_NI - no IFFY message? asr %x\n",
+				    asr), reselect_debug);
+
 			} else {
 				GET_SBIC_csr(regs,csr);
 				CSR_TRACE('n',csr,asr,newtarget);
-				if ((csr == (SBIC_CSR_MIS|MESG_IN_PHASE)) ||
-				    (csr == (SBIC_CSR_MIS_1|MESG_IN_PHASE)) ||
-				    (csr == (SBIC_CSR_MIS_2|MESG_IN_PHASE))) {
+				if ((csr == (SBIC_CSR_MIS | MESG_IN_PHASE)) ||
+				    (csr == (SBIC_CSR_MIS_1 | MESG_IN_PHASE)) ||
+				    (csr == (SBIC_CSR_MIS_2 | MESG_IN_PHASE))) {
 					sbicmsgin(dev);
 					newlun = dev->sc_msg[0] & 7;
 				} else {
@@ -2594,31 +2499,32 @@ sbicnextstate(dev, csr, asr)
 				}
 			}
 		}
-#ifdef DEBUG
-		if(reselect_debug>1 || (reselect_debug && csr==SBIC_CSR_RSLT_NI))
-			printf("sbicnext: reselect %s from targ %d lun %d\n",
-			    csr == SBIC_CSR_RSLT_NI ? "NI" : "IFY",
-			    newtarget, newlun);
-#endif
+
+		DBGPRINTF(("sbicnext: reselect %s from targ %d lun %d\n",
+		    csr == SBIC_CSR_RSLT_NI ? "NI" : "IFY",
+		    newtarget, newlun),
+		    reselect_debug > 1 ||
+		    (reselect_debug && csr == SBIC_CSR_RSLT_NI));
+
 		if (dev->sc_nexus) {
-#ifdef DEBUG
-			if (reselect_debug > 1)
-				printf("%s: reselect %s with active command\n",
-				    dev->sc_dev.dv_xname,
-				    csr == SBIC_CSR_RSLT_NI ? "NI" : "IFY");
-#ifdef DDB
+			DBGPRINTF(("%s: reselect %s with active command\n",
+			    dev->sc_dev.dv_xname,
+			    csr == SBIC_CSR_RSLT_NI ? "NI" : "IFY"),
+			    reselect_debug > 1);
+#if defined(DDB) && defined (DEBUG)
 /*			Debugger();*/
 #endif
-#endif
-			TAILQ_INSERT_HEAD(&dev->ready_list, dev->sc_nexus, chain);
+			TAILQ_INSERT_HEAD(&dev->ready_list, dev->sc_nexus,
+			    chain);
 			dev->sc_tinfo[dev->target].lubusy &= ~(1 << dev->lun);
 			dev->sc_nexus = NULL;
 			dev->sc_xs = NULL;
 		}
 		/* Reload sync values for this target */
 		if (dev->sc_sync[newtarget].state == SYNC_DONE)
-			SET_SBIC_syn(regs, SBIC_SYN (dev->sc_sync[newtarget].offset,
-			    dev->sc_sync[newtarget].period));
+			SET_SBIC_syn(regs,
+			    SBIC_SYN(dev->sc_sync[newtarget].offset,
+				dev->sc_sync[newtarget].period));
 		else
 			SET_SBIC_syn(regs, SBIC_SYN (0, sbic_min_period));
 		for (acb = dev->nexus_list.tqh_first; acb;
@@ -2650,16 +2556,17 @@ sbicnextstate(dev, csr, asr)
 		/*
 		 * Something unexpected happened -- deal with it.
 		 */
-		printf("sbicnextstate: aborting csr %02x asr %02x\n", csr, asr);
+		printf("sbicnextstate: aborting csr %02x asr %02x\n", csr,
+		    asr);
 #ifdef DDB
 		Debugger();
 #endif
-#ifdef DEBUG
-		if( data_pointer_debug > 1 )
-			printf("next dmastop: %d(%p:%lx)\n",
-			       dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt);
-		dev->sc_dmatimo = 0;
-#endif
+
+		DBGPRINTF(("next dmastop: %d(%p:%lx)\n",
+		    dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt), 
+		    data_pointer_debug > 1);
+		DBG(dev->sc_dmatimo = 0);
+
 		dev->sc_dmastop(dev);
 		SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI);
 		sbicerror(dev, regs, csr);
@@ -2679,12 +2586,12 @@ sbicnextstate(dev, csr, asr)
 #endif
 			dev->sc_flags &=
 				~(SBICF_INDMA | SBICF_DCFLUSH);
-#ifdef DEBUG
-			if( data_pointer_debug > 1 )
-				printf("next dmastop: %d(%p:%lx)\n",
-				    dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt);
-			dev->sc_dmatimo = 0;
-#endif
+
+			DBGPRINTF(("next dmastop: %d(%p:%lx)\n",
+			    dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt),
+			    data_pointer_debug > 1);
+			DBG(dev->sc_dmatimo = 0);
+
 			dev->sc_dmastop(dev);
 			sbic_scsidone(acb, -1);
 		}
@@ -2701,10 +2608,8 @@ sbicnextstate(dev, csr, asr)
  * Check if DMA can not be used with specified buffer
  */
 
-int
-sbiccheckdmap(bp, len, mask)
-	void *bp;
-	u_long len, mask;
+static int
+sbiccheckdmap(void *bp, u_long len, u_long mask)
 {
 	u_char *buffer;
 	u_long phy_buf;
@@ -2713,7 +2618,7 @@ sbiccheckdmap(bp, len, mask)
 	buffer = bp;
 
 	if (len == 0)
-		return(0);
+		return 0;
 
 	while (len) {
 		phy_buf = kvtop(buffer);
@@ -2724,14 +2629,11 @@ sbiccheckdmap(bp, len, mask)
 		buffer += phy_len;
 		len -= phy_len;
 	}
-	return(0);
+	return 0;
 }
 
-int
-sbictoscsiperiod(dev, regs, a)
-	struct sbic_softc *dev;
-	sbic_regmap_p regs;
-	int a;
+static int
+sbictoscsiperiod(struct sbic_softc *dev, sbic_regmap_p regs, int a)
 {
 	unsigned int fs;
 
@@ -2748,11 +2650,8 @@ sbictoscsiperiod(dev, regs, a)
 	return ((fs*a)>>2);		/* in 4 ns units */
 }
 
-int
-sbicfromscsiperiod(dev, regs, p)
-	struct sbic_softc *dev;
-	sbic_regmap_p regs;
-	int p;
+static int
+sbicfromscsiperiod(struct sbic_softc *dev, sbic_regmap_p regs, int p)
 {
 	register unsigned int fs, ret;
 
@@ -2775,7 +2674,8 @@ sbicfromscsiperiod(dev, regs, p)
 
 #ifdef DEBUG
 
-void sbicdumpstate()
+void
+sbicdumpstate()
 {
 	u_char csr, asr;
 
@@ -2790,8 +2690,8 @@ void sbicdumpstate()
 
 }
 
-void sbictimeout(dev)
-	struct sbic_softc *dev;
+void
+sbictimeout(struct sbic_softc *dev)
 {
 	int s, asr;
 
@@ -2817,8 +2717,7 @@ void sbictimeout(dev)
 }
 
 void
-sbic_dump_acb(acb)
-	struct sbic_acb *acb;
+sbic_dump_acb(struct sbic_acb *acb)
 {
 	u_char *b = (u_char *) &acb->cmd;
 	int i;
@@ -2828,7 +2727,8 @@ sbic_dump_acb(acb)
 		printf("<unused>\n");
 		return;
 	}
-	printf("(%d:%d) flags %2x clen %2d cmd ", acb->xs->sc_link->scsipi_scsi.target,
+	printf("(%d:%d) flags %2x clen %2d cmd ",
+	    acb->xs->sc_link->scsipi_scsi.target,
 	    acb->xs->sc_link->scsipi_scsi.lun, acb->flags, acb->clen);
 	for (i = acb->clen; i; --i)
 		printf(" %02x", *b++);
@@ -2836,13 +2736,12 @@ sbic_dump_acb(acb)
 	printf("  xs: %8p data %8p:%04x ", acb->xs, acb->xs->data,
 	    acb->xs->datalen);
 	printf("va %8p:%04x ", acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
-	printf("pa %8p:%04x tcnt %lx\n", acb->sc_pa.dc_addr, acb->sc_pa.dc_count
-          ,acb->sc_tcnt);
+	printf("pa %8p:%04x tcnt %lx\n", acb->sc_pa.dc_addr,
+	    acb->sc_pa.dc_count, acb->sc_tcnt);
 }
 
 void
-sbic_dump(dev)
-	struct sbic_softc *dev;
+sbic_dump(struct sbic_softc *dev)
 {
 	sbic_regmap_p regs;
 	u_char csr, asr;
