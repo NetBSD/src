@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.398 2000/11/05 04:08:10 thorpej Exp $
+#	$NetBSD: files,v 1.399 2000/11/05 17:17:13 onoe Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -169,6 +169,7 @@ define	atm
 define	ether
 define	fddi
 define	hippi
+define	ieee1394
 define	token
 define	sppp
 define	wlan
@@ -831,6 +832,7 @@ file net/if_fddisubr.c			fddi			needs-flag
 file net/if_gif.c			gif			needs-count
 file net/if_gre.c			gre			needs-count	
 file net/if_hippisubr.c                 hippi                   needs-flag
+file net/if_ieee1394subr.c		ieee1394
 file net/if_loop.c			loop			needs-count
 file net/if_media.c
 file net/if_ppp.c			ppp			needs-count
@@ -880,6 +882,7 @@ file netccitt/pk_timer.c		ccitt
 file netccitt/pk_usrreq.c		ccitt
 file netinet/fil.c			ipfilter
 file netinet/if_arp.c			arp | netatalk		needs-flag
+file netinet/if_ieee1394arp.c		arp & ieee1394 & inet
 file netinet/if_atm.c			atm
 file netinet/igmp.c			inet
 file netinet/in.c			inet

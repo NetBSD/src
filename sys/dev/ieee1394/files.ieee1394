@@ -1,0 +1,6 @@
+#	$NetBSD: files.ieee1394,v 1.1 2000/11/05 17:17:14 onoe Exp $
+
+device  fw: arp, ieee1394, ifnet
+attach	fw at fwbus
+
+file	dev/ieee1394/if_fw.c		fw
