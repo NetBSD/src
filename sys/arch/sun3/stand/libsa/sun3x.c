@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3x.c,v 1.2 1998/02/05 04:57:17 gwr Exp $	*/
+/*	$NetBSD: sun3x.c,v 1.3 1998/06/29 20:06:34 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ sun3x_mapinfo[MAP__NTYPES] = {
 };
 
 /* The virtual address we will use for PROM device mappings. */
-int sun3x_devmap = MON_KDB_BASE;
+u_int sun3x_devmap = MON_KDB_BASE;
 
 char *
 dev3x_mapin(maptype, physaddr, length)
