@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.20.2.1 2000/06/03 14:26:33 he Exp $	*/
+/*	$NetBSD: test.c,v 1.20.2.2 2000/06/03 14:27:37 he Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.20.2.1 2000/06/03 14:26:33 he Exp $");
+__RCSID("$NetBSD: test.c,v 1.20.2.2 2000/06/03 14:27:37 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -24,6 +24,11 @@ __RCSID("$NetBSD: test.c,v 1.20.2.1 2000/06/03 14:26:33 he Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
 /* test(1) accepts the following grammar:
 	oexpr	::= aexpr | aexpr "-o" oexpr ;
@@ -93,7 +98,7 @@ enum token_types {
 	PAREN
 };
 
-struct t_op {
+static struct t_op {
 	const char *op_text;
 	short op_num, op_type;
 } const ops [] = {
@@ -139,8 +144,8 @@ struct t_op {
 	{0,	0,	0}
 };
 
-char **t_wp;
-struct t_op const *t_wp_op;
+static char **t_wp;
+static struct t_op const *t_wp_op;
 
 static void syntax __P((const char *, const char *));
 static int oexpr __P((enum token));
@@ -156,20 +161,61 @@ static int newerf __P((const char *, const char *));
 static int olderf __P((const char *, const char *));
 static int equalf __P((const char *, const char *));
 
+#if defined(SHELL)
+extern void error __P((const char *, ...)) __attribute__((__noreturn__));
+#else
+static void error __P((const char *, ...)) __attribute__((__noreturn__));
+
+static void
+#ifdef __STDC__
+error(const char *msg, ...)
+#else
+error(va_alist)
+	va_dcl
+#endif
+{
+	va_list ap;
+#ifndef __STDC__
+	const char *msg;
+
+	va_start(ap);
+	msg = va_arg(ap, const char *);
+#else
+	va_start(ap, msg);
+#endif
+	verrx(2, msg, ap);
+	/*NOTREACHED*/
+	va_end(ap);
+}
+#endif
+
+#ifdef SHELL
+int testcmd __P((int, char **));
+
+int
+testcmd(argc, argv)
+	int argc;
+	char **argv;
+#else
 int main __P((int, char **));
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
+#endif
 {
 	int	res;
 
+
 	if (strcmp(argv[0], "[") == 0) {
 		if (strcmp(argv[--argc], "]"))
-			errx(2, "missing ]");
+			error("missing ]");
 		argv[argc] = NULL;
 	}
+
+	if (argc < 2)
+		return 1;
 
 	t_wp = &argv[1];
 	res = !oexpr(t_lex(*t_wp));
@@ -186,9 +232,9 @@ syntax(op, msg)
 	const char	*msg;
 {
 	if (op && *op)
-		errx(2, "%s: %s", op, msg);
+		error("%s: %s", op, msg);
 	else
-		errx(2, "%s", msg);
+		error("%s", msg);
 }
 
 static int
@@ -418,13 +464,13 @@ getn(s)
 	r = strtol(s, &p, 10);
 
 	if (errno != 0)
-	  errx(2, "%s: out of range", s);
+	      error("%s: out of range", s);
 
 	while (isspace((unsigned char)*p))
-	  p++;
+	      p++;
 	
 	if (*p)
-	  errx(2, "%s: bad number", s);
+	      error("%s: bad number", s);
 
 	return (int) r;
 }
