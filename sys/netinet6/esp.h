@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.h,v 1.19 2002/08/09 06:29:01 itojun Exp $	*/
+/*	$NetBSD: esp.h,v 1.20 2002/08/09 06:38:12 itojun Exp $	*/
 /*	$KAME: esp.h,v 1.19 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -92,6 +92,7 @@ struct esp_algorithm {
 };
 
 extern const struct esp_algorithm *esp_algorithm_lookup __P((int));
+extern int esp_max_padbound __P((void));
 extern int esp_max_ivlen __P((void));
 
 /* crypt routines */
