@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.28 1995/11/25 00:03:35 cgd Exp $	*/
+/*	$NetBSD: cons.c,v 1.29 1996/02/04 02:04:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -228,19 +228,19 @@ cngetc()
 	return ((*cn_tab->cn_getc)(cn_tab->cn_dev));
 }
 
-int
+void
 cnputc(c)
 	register int c;
 {
 
 	if (cn_tab == NULL)
-		return 0;			/* XXX should be void */
+		return;			
+
 	if (c) {
 		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
 		if (c == '\n')
 			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
 	}
-	return 0;				/* XXX should be void */
 }
 
 void
