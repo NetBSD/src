@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.17 2001/11/09 06:52:24 thorpej Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.18 2003/01/07 15:15:06 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -62,6 +62,8 @@ db_regs_t		ddb_regs;	/* register state */
 #define	DDB_TF		(&ddb_regs.db_tf)
 #define	DDB_FR		(&ddb_regs.db_fr)
 #endif
+
+extern struct cpu_info *ddb_cpuinfo;
 
 #if defined(lint)
 #define	PC_REGS(regs)	((regs)->db_tf.tf_pc)
