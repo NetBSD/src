@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.109 2001/09/15 07:12:22 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110 2001/09/18 02:23:14 chs Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -2860,7 +2860,7 @@ pmap_clear_modify(pg)
 			if (data & (TLB_MODIFY))
 				changed |= 1;
 #ifdef HWREF
-			data &= ~(TLB_MODIFY);
+			data &= ~(TLB_MODIFY|TLB_W);
 #else
 			data &= ~(TLB_MODIFY|TLB_W|TLB_REAL_W);
 #endif
