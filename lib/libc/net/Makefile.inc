@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 1995/02/25 06:20:26 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.22 1995/02/25 17:10:57 cgd Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -13,12 +13,10 @@ SRCS+=	gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
 	send.c sethostent.c ethers.c
 
 # machine-dependent net sources
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/net/Makefile.inc)
+# m-d Makefile.inc must include sources for:
+#	htonl() htons() ntohl() ntohs()
+
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/net/Makefile.inc"
-.else 
-# the functions for which we provide "default" C implementations
-SRCS+=	htonl.c htons.c ntohl.c ntohs.c
-.endif
 
 MAN+=	byteorder.3 gethostbyname.3 getnetent.3 getprotoent.3 getservent.3 \
 	inet.3 linkaddr.3 ns.3 rcmd.3 resolver.3 ethers.3
