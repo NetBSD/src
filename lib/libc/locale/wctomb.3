@@ -1,4 +1,4 @@
-.\" $NetBSD: wctomb.3,v 1.3 2003/04/16 13:34:41 wiz Exp $
+.\" $NetBSD: wctomb.3,v 1.4 2004/01/24 16:58:54 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -41,41 +41,44 @@ The
 .Fn wctomb
 converts the wide character
 .Fa wchar
-to the corresponding multibyte character, and store it to the array
-pointed by
+to the corresponding multibyte character, and stores it in the array
+pointed to by
 .Fa s .
-The
 .Fn wctomb
-may store at most MB_CUR_MAX bytes to the array.
+may store at most
+.Dv MB_CUR_MAX
+bytes in the array.
 .Pp
 In state-dependent encoding,
-the
 .Fn wctomb
 may store the special sequence to change the conversion state
-before an actual multibyte character into the array pointed
+before an actual multibyte character into the array pointed to by
 .Fa s .
 If
 .Fa wchar
-is null wide character (L\'\\0\'),
-this function places its own internal state to an initial conversion state.
+is a null wide character
+.Pq Sq \e0 ,
+this function sets its own internal state to an initial conversion state.
 .Pp
-Calling any other functions in the
+Calling any other functions in
 .Lb libc
-never change the internal
-state of the
+never changes the internal state of
 .Fn wctomb ,
-except for calling
-.Xr setlocale 3
-with changing LC_CTYPE category of the current locale.
+except changing the
+.Dv LC_CTYPE
+category of the current locale by calling
+.Xr setlocale 3 .
 Such
 .Xr setlocale 3
-call causes the internal state of this function to be indeterminate.
+calls cause the internal state of this function to be indeterminate.
 .Pp
-The behaviour of the
+The behaviour of
 .Fn wctomb
-is affected by LC_CTYPE category of the current locale.
+is affected by the
+.Dv LC_CTYPE
+category of the current locale.
 .Pp
-There is a special case:
+There is one special case:
 .Bl -tag -width 012345678901
 .It s == NULL
 .Fn wctomb
@@ -88,24 +91,27 @@ In this case,
 is completely ignored.
 .El
 .Sh RETURN VALUES
-In the usual case, the
+Normally,
 .Fn wctomb
 returns:
 .Bl -tag -width 012345678901
 .It positive
-number of bytes for the valid multibyte character pointed by
+Number of bytes for the valid multibyte character pointed to by
 .Fa s .
-There is no cases that the value returned is greater than
+There are no cases that the value returned is greater than
 .Fa n
-or the value of MB_CUR_MAX macro.
+or the value of the
+.Dv MB_CUR_MAX
+macro.
 .It -1
 .Fa wchar
 is an invalid wide character.
 .El
 .Pp
-In the case that
+If
 .Fa s
-is equal to NULL, the
+is equal to
+.Dv NULL ,
 .Fn mbtowc
 returns:
 .Bl -tag -width 0123456789

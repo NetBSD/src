@@ -1,4 +1,4 @@
-.\" $NetBSD: wctype.3,v 1.4 2003/04/16 13:34:41 wiz Exp $
+.\" $NetBSD: wctype.3,v 1.5 2004/01/24 16:58:54 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -54,23 +54,22 @@ alnum alpha blank cntrl digit graph
 lower print punct space upper xdigit
 .Ed
 .Pp
-The behaviour of the
+The behaviour of
 .Fn wctype
 is affected by the
 .Dv LC_CTYPE
 category of the current locale.
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
-The
 .Fn wcttype
 returns:
 .Bl -tag -width 012345678901
 .It 0
-if
+If
 .Fa charclass
 does not correspond to a valid character class name.
 .It non-zero
-a character class identifier corresponding to
+A character class identifier corresponding to
 .Fa charclass .
 .El
 .Pp

@@ -1,4 +1,4 @@
-.\" $NetBSD: wcsrtombs.3,v 1.7 2004/01/21 12:40:14 jmmv Exp $
+.\" $NetBSD: wcsrtombs.3,v 1.8 2004/01/24 16:58:54 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -45,10 +45,11 @@
 .Sh DESCRIPTION
 The
 .Fn wcsrtombs
-converts the null-terminated wide character string indirectly pointed by
+converts the null-terminated wide character string indirectly pointed
+to by
 .Fa pwcs
 to the corresponding multibyte character string,
-and store it to the array pointed by
+and stores it in the array pointed to by
 .Fa s .
 The conversion stops due to the following reasons:
 .Bl -bullet
@@ -60,7 +61,7 @@ The
 .Fn wcsrtombs
 has already stored
 .Fa n
-bytes to the array pointed by
+bytes in the array pointed to by
 .Fa s .
 .It
 The conversion encounters an invalid character.
@@ -75,90 +76,95 @@ will not be affected.
 After conversion,
 if
 .Fa s
-is not NULL pointer,
-the pointer object pointed by
+is not a
+.Dv NULL
+pointer, the pointer object pointed to by
 .Fa pwcs
-is NULL pointer (if the conversion is stopped due to reach a null wide character)
+is a
+.Dv NULL
+pointer (if the conversion is stopped due to reaching a null wide character)
 or the first byte of the character just after the last character converted.
 .Pp
 If
 .Fa s
-is not null pointer and the conversion is stopped due to reach
-a null wide character, the
+is not a
+.Dv NULL
+pointer and the conversion is stopped due to reaching
+a null wide character,
 .Fn wcsrtombs
-places the state object pointed by
+places the state object pointed to by
 .Fa ps
 to an initial state after the conversion is taken place.
 .Pp
-The behaviour of the
+The behaviour of
 .Fn wcsrtombs
-is affected by LC_CTYPE category of the current locale.
+is affected by the
+.Dv LC_CTYPE
+category of the current locale.
 .Pp
-There are special cases:
+These are the special cases:
 .Bl -tag -width 012345678901
 .It "s == NULL"
-The
 .Fn wcsrtombs
 returns the number of bytes to store the whole multibyte character string
-corresponding to the wide character string pointed by
+corresponding to the wide character string pointed to by
 .Fa pwcs ,
 not including the terminating null byte.
 In this case,
 .Fa n
 is ignored.
 .It "pwcs == NULL || *pwcs == NULL"
-undefined (may causes the program to crash).
+Undefined (may cause the program to crash).
 .It "ps == NULL"
-The
 .Fn wcsrtombs
 uses its own internal state object to keep the conversion state,
 instead of
 .Fa ps
 mentioned in this manual page.
 .Pp
-Calling any other functions in the
+Calling any other functions in
 .Lb libc
-never change the internal
-state of the
+never changes the internal
+state of
 .Fn wcsrtombs ,
-that is initialized at startup time of the program.
+which is initialized at startup time of the program.
 .El
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
-The
 .Fn wcsrtombs
 returns:
 .Bl -tag -width 012345678901
 .It 0 or positive
-number of bytes stored to the array pointed by
+Number of bytes stored in the array pointed to by
 .Fa s ,
 except for a null byte.
-There is no cases that the value returned is greater than
+There are no cases that the value returned is greater than
 .Fa n
 (unless
 .Fa s
 is a null pointer).
 If the return value is equal to
 .Fa n ,
-the string pointed by
+the string pointed to by
 .Fa s
 will not be null-terminated.
 .It (size_t)-1
 .Fa pwcs
-points the string containing invalid wide character.
+points to a string containing an invalid wide character.
 The
 .Fn wcsrtombs
-also sets errno to indicate the error.
+also sets
+.Va errno
+to indicate the error.
 .El
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
-The
 .Fn wcsrtombs
-may causes an error in the following case:
+may cause an error in the following case:
 .Bl -tag -width Er
 .It Bq Er EILSEQ
 .Fa pwcs
-points the string containing invalid wide character.
+points to a string containing an invalid wide character.
 .El
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO

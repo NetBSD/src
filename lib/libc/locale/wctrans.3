@@ -1,4 +1,4 @@
-.\" $NetBSD: wctrans.3,v 1.3 2003/04/16 13:34:41 wiz Exp $
+.\" $NetBSD: wctrans.3,v 1.4 2004/01/24 16:58:54 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -53,23 +53,22 @@ The following names are defined in all locales:
 tolower toupper
 .Ed
 .Pp
-The behaviour of the
+The behaviour of
 .Fn wctrans
 is affected by the
 .Dv LC_CTYPE
 category of the current locale.
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
-The
 .Fn wctrans
 returns:
 .Bl -tag -width 012345678901
 .It 0
-if the string
+If the string
 .Fa charmap
 does not corresponding to a valid character mapping name.
 .It non-zero
-a character mapping identifier corresponding to
+A character mapping identifier corresponding to
 .Fa charmap .
 .El
 .Pp

@@ -1,4 +1,4 @@
-.\" $NetBSD: mbsinit.3,v 1.4 2003/04/16 13:34:40 wiz Exp $
+.\" $NetBSD: mbsinit.3,v 1.5 2004/01/24 16:58:54 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" ----------------------------------------------------------------------
 .Sh NAME
 .Nm mbsinit
-.Nd determines whether the state object is initial state
+.Nd determines whether the state object is in the initial state
 .\" ----------------------------------------------------------------------
 .Sh LIBRARY
 .Lb libc
@@ -42,27 +42,30 @@
 .Sh DESCRIPTION
 The
 .Fn mbsinit
-determines whether the state object pointed by
+determines whether the state object pointed to by
 .Fa ps
-is initial conversion state, or not.
+is the initial conversion state, or not.
 .Pp
 .Fa ps
-may be NULL pointer.
+may be a
+.Dv NULL
+pointer.
 In this case,
 .Fn mbsinit
 will always return non-zero.
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
-The
 .Fn mbsinit
 returns:
 .Bl -tag -width 0123456789
 .It 0
-The current state is not initial state.
+The current state is not the initial state.
 .It non-zero
-The current state is initial state or
+The current state is the initial state or
 .Fa ps
-is NULL pointer.
+is a
+.Dv NULL
+pointer.
 .El
 .\" ----------------------------------------------------------------------
 .Sh ERRORS

@@ -1,4 +1,4 @@
-.\" $NetBSD: mbsrtowcs.3,v 1.7 2004/01/21 12:40:14 jmmv Exp $
+.\" $NetBSD: mbsrtowcs.3,v 1.8 2004/01/24 16:58:54 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -45,10 +45,10 @@
 .Sh DESCRIPTION
 The
 .Fn mbsrtowcs
-converts the multibyte character string indirectly pointed by
+converts the multibyte character string indirectly pointed to by
 .Fa s
-to the corresponding wide character string, and stores it to the
-array pointed by
+to the corresponding wide character string, and stores it in the
+array pointed to by
 .Fa pwcs .
 The conversion stops due to the following reasons:
 .Bl -bullet
@@ -72,33 +72,41 @@ is continuously called.
 After conversion,
 if
 .Fa pwcs
-is not NULL pointer,
-the pointer object pointed by
+is not a
+.Dv NULL
+pointer,
+the pointer object pointed to by
 .Fa s
-is NULL pointer (if the conversion is stopped due to reach a null byte)
+is a
+.Dv NULL
+pointer (if the conversion is stopped due to reaching a null byte)
 or the first byte of the character just after the last character converted.
 .Pp
 If
 .Fa pwcs
-is not null pointer and the conversion is stopped due to reach
+is not a
+.Dv NULL
+pointer and the conversion is stopped due to reaching
 a null byte, the
 .Fn mbsrtowcs
-places the state object pointed by
+places the state object pointed to by
 .Fa ps
-to an initial state after the conversion is taken place.
+to an initial state after the conversion has taken place.
 .Pp
-The behaviour of the
+The behaviour of
 .Fn mbsrtowcs
-is affected by LC_CTYPE category of the current locale.
+is affected by the
+.Dv LC_CTYPE
+category of the current locale.
 .Pp
-There are special cases:
+These are the special cases:
 .Bl -tag -width 012345678901
 .It "s == NULL || *s == NULL"
-undefined (may causes the program to crash).
+Undefined (may cause the program to crash).
 .It "pwcs == NULL"
-The conversion is taken place, but the result wide character string
-is discarded.
-In this case, the pointer object pointed by
+The conversion has taken place, but the resulting wide character string
+was discarded.
+In this case, the pointer object pointed to by
 .Fa s
 is not modified and
 .Fa n
@@ -111,55 +119,55 @@ instead of
 .Fa ps
 mentioned in this manual page.
 .Pp
-Calling any other functions in the
+Calling any other functions in
 .Lb libc
-never change the internal
-state of the
+never changes the internal state of
 .Fn mbsrtowcs ,
-that is initialized at startup time of the program.
+which is initialized at startup time of the program.
 .El
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
-The
 .Fn mbsrtowcs
-returns
+returns:
 .Bl -tag -width 012345678901
 .It 0 or positive
-The value returned is the number of elements stored to the array pointed by
+The value returned is the number of elements stored in the array
+pointed to by
 .Fa pwcs ,
-except for a terminate null wide character (if any).
+except for a terminating null wide character (if any).
 If
 .Fa pwcs
 is not null and the value returned is equal to
 .Fa n ,
-the wide character string pointed by
+the wide character string pointed to by
 .Fa pwcs
 is not null terminated.
 If
 .Fa pwcs
 is a null pointer, the value returned is the number of elements to contain
-the whole string converted, except for a terminate null wide character.
+the whole string converted, except for a terminating null wide character.
 .It (size_t)-1
-The array indirectly pointed by
+The array indirectly pointed to by
 .Fa s
 contains a byte sequence forming invalid character.
-In this case, the
+In this case,
 .Fn mbsrtowcs
-sets errno to indicate the error.
+sets
+.Va errno
+to indicate the error.
 .El
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
-The
 .Fn mbsrtowcs
-may causes an error in the following case:
+may cause an error in the following case:
 .Bl -tag -width Er
 .It Bq Er EILSEQ
-The pointer pointed by
+The pointer pointed to by
 .Fa s
-points an invalid or incomplete multibyte character.
+points to an invalid or incomplete multibyte character.
 .It Bq Er EINVAL
 .Fa ps
-points an invalid or uninitialized mbstate_t object.
+points to an invalid or uninitialized mbstate_t object.
 .El
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\" $NetBSD: mbrlen.3,v 1.5 2003/09/08 17:54:31 wiz Exp $
+.\" $NetBSD: mbrlen.3,v 1.6 2004/01/24 16:58:54 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" ----------------------------------------------------------------------
 .Sh NAME
 .Nm mbrlen
-.Nd get number of bytes consisting a multibyte character (restartable)
+.Nd get number of bytes in a multibyte character (restartable)
 .\" ----------------------------------------------------------------------
 .Sh LIBRARY
 .Lb libc
@@ -43,10 +43,10 @@
 .Sh DESCRIPTION
 The
 .Fn mbrlen
-function usually determines the number of bytes consisting in
-a multibyte character pointed by
+function usually determines the number of bytes in
+a multibyte character pointed to by
 .Fa s
-and return it.
+and returns it.
 This function shall only examine max n bytes of the array beginning from
 .Fa s .
 .Pp
@@ -54,8 +54,7 @@ This function shall only examine max n bytes of the array beginning from
 is equivalent to the following call (except
 .Fa ps
 is evaluated only once):
-.Pp
-.Bd -literal
+.Bd -literal -offset indent
 mbrtowc(NULL, s, n, (ps != NULL) ? ps : &internal);
 .Ed
 .Pp
@@ -65,9 +64,10 @@ is an internal state object.
 .Pp
 In state-dependent encodings,
 .Fa s
-may point the special sequence bytes to change the shift-state.
+may point to the special sequence bytes to change the shift-state.
 Although such sequence bytes corresponds to no individual
-wide-character code, these affect the conversion state object pointed by
+wide-character code, these affect the conversion state object pointed
+to by
 .Fa ps ,
 and the
 .Fn mbrlen
@@ -76,34 +76,34 @@ as if these are a part of the subsequent multibyte character.
 .Pp
 Unlike
 .Xr mblen 3 ,
-the
 .Fn mbrlen
-may accept the byte sequence being not complete character
-but possible to consist a part of a valid character.
-In this case, this function will accept the all such bytes
-and save them into the conversion state object pointed by
+may accept the byte sequence when it is not a complete character
+but possibly contains part of a valid character.
+In this case, this function will accept all such bytes
+and save them into the conversion state object pointed to by
 .Fa ps .
-They will be used at the subsequent call of this function to restart
+They will be used on subsequent calls of this function to restart
 the conversion suspended.
 .Pp
-The behaviour of the
+The behaviour of
 .Fn mbrlen
-is affected by LC_CTYPE category of the current locale.
+is affected by the
+.Dv LC_CTYPE
+category of the current locale.
 .Pp
-There are the special cases:
+These are the special cases:
 .Bl -tag -width 0123456789
 .It "s == NULL"
-The
 .Fn mbrlen
-sets the conversion state object pointed by
+sets the conversion state object pointed to by
 .Fa ps
-to an initial state and always return 0.
+to an initial state and always returns 0.
 Unlike
 .Xr mblen 3 ,
 the value returned does not indicate whether the current encoding of
 the locale is state-dependent.
 .Pp
-In this case, the
+In this case,
 .Fn mbrlen
 ignores
 .Fa n .
@@ -111,31 +111,32 @@ ignores
 In this case,
 the first
 .Fa n
-bytes of the array pointed by
+bytes of the array pointed to by
 .Fa s
 never form a complete character.
-Thus, the
+Thus,
 .Fn mbrlen
 always returns (size_t)-2.
 .It "ps == NULL"
-The
 .Fn mbrlen
 uses its own internal state object to keep the conversion state,
 instead of
 .Fa ps
 mentioned in this manual page.
 .Pp
-Calling any other functions in the
+Calling any other functions in
 .Lb libc
-never change the internal
-state of the
+never changes the internal
+state of
 .Fn mbrlen ,
 except for calling
 .Xr setlocale 3
-with changing LC_CTYPE category of the current locale.
+with a changing
+.Dv LC_CTYPE
+category of the current locale.
 Such
 .Xr setlocale 3
-call causes the internal state of this function to be indeterminate.
+calls cause the internal state of this function to be indeterminate.
 This internal state is initialized at startup time of the program.
 .El
 .\" ----------------------------------------------------------------------
@@ -146,44 +147,49 @@ returns:
 .Bl -tag -width 0123456789
 .It "0"
 .Fa s
-points a null byte (\'\\0\').
+points to a null byte
+.Pq Sq \e0 .
 .It "positive"
 The value returned is
-a number of bytes for the valid multibyte character pointed by
+a number of bytes for the valid multibyte character pointed to by
 .Fa s .
-There is no cases that this value is greater than
+There are no cases that this value is greater than
 .Fa n
-or the value of MB_CUR_MAX macro.
+or the value of the
+.Dv MB_CUR_MAX
+macro.
 .It "(size_t)-2"
 .Fa s
-points the byte sequence which is possible to consist a part of valid
-multibyte character but incomplete.
+points to the byte sequence which possibly contains part of a valid
+multibyte character, but which is incomplete.
 When
 .Fa n
-is at least MB_CUR_MAX,
-this case can only occur if the array pointed
+is at least
+.Dv MB_CUR_MAX ,
+this case can only occur if the array pointed to by
 .Fa s
-contains redundant shift sequence.
+contains a redundant shift sequence.
 .It "(size_t)-1"
 .Fa s
-points a illegal byte sequence which does not form a valid multibyte
+points to an illegal byte sequence which does not form a valid multibyte
 character.
-In this case, the
+In this case,
 .Fn mbrtowc
-sets errno to indicate the error.
+sets
+.Va errno
+to indicate the error.
 .El
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
-The
 .Fn mbrlen
-may causes an error in the following case:
+may cause an error in the following case:
 .Bl -tag -width Er
 .It Bq Er EILSEQ
 .Fa s
-points an invalid multibyte character.
+points to an invalid multibyte character.
 .It Bq Er EINVAL
 .Fa ps
-points an invalid or uninitialized mbstate_t object.
+points to an invalid or uninitialized mbstate_t object.
 .El
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettext.3,v 1.9 2003/04/16 13:35:05 wiz Exp $
+.\"	$NetBSD: gettext.3,v 1.10 2004/01/24 16:59:51 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Citrus Project,
 .\" All rights reserved.
@@ -82,26 +82,26 @@ is undetermined until the function is
 called.
 The
 .Fa msgid
-argument is a null-terminated string.
+argument is a nul-terminated string.
 .Pp
 The
 .Fn ngettext ,
-.Fn dngettext
+.Fn dngettext ,
 and
 .Fn dcngettext
 functions are equivalent to
 .Fn gettext ,
-.Fn dgettext
+.Fn dgettext ,
 and
 .Fn dcgettext ,
 respectively, except for the handling of
 plural forms.
 The
 .Fn ngettext ,
-.Fn dngettext
+.Fn dngettext ,
 and
 .Fn dcngettext
-searches for the
+functions search for the
 message string using the
 .Fa msgid1
 argument as the key, using the argument
@@ -142,16 +142,16 @@ If the
 .Dv LANGUAGE
 environment variable is not defined,
 .Dv LC_ALL ,
-.Dv LC_xxx
+.Dv LC_xxx ,
 and
 .Dv LANG
-environment variables are examined to locate the message catalog, following the
-convention used by the
+environment variables are examined to locate the message catalog,
+following the convention used by the
 .Xr setlocale 3
 function.
 .Pp
 The pathname used to locate the message catalog is
-.Pa dirname/locale/category/domainname.mo,
+.Pa dirname/locale/category/domainname.mo ,
 where dirname is the directory specified by
 .Fn bindtextdomain ,
 locale is a locale name determined by the definition of environment variables,
@@ -161,7 +161,7 @@ is
 if
 .Fn gettext ,
 .Fn ngettext ,
-.Fn dgettext
+.Fn dgettext ,
 or
 .Fn dngettext
 is
@@ -182,7 +182,7 @@ or the
 argument of
 .Fn dgettext ,
 .Fn dngettext ,
-.Fn dcgettext
+.Fn dcgettext ,
 or
 .Fn dcngettext .
 .Pp
@@ -200,7 +200,7 @@ domain (called messages) is used.
 For
 .Fn dgettext ,
 .Fn dngettext ,
-.Fn dcgettext
+.Fn dcgettext ,
 and
 .Fn dcngettext ,
 the domain used is
@@ -218,7 +218,7 @@ except that the
 selection of the domain is valid only for the duration of the
 .Fn dgettext ,
 .Fn dngettext ,
-.Fn dcgettext
+.Fn dcgettext ,
 or
 .Fn dcngettext
 function call.
@@ -239,7 +239,7 @@ argument are
 .Dv LC_COLLATE ,
 .Dv LC_MESSAGES ,
 .Dv LC_MONETARY ,
-.Dv LC_NUMERIC
+.Dv LC_NUMERIC ,
 and
 .Dv LC_TIME .
 The call of
@@ -259,7 +259,7 @@ locale category.
 The
 .Fa domainname
 argument is a
-null-terminated string that can contain only the characters allowed in legal
+nul-terminated string that can contain only the characters allowed in legal
 filenames.
 .Pp
 The
@@ -290,12 +290,16 @@ state of the domain by calling
 .Fn textdomain
 with
 .Fa domainname
-set to the null pointer.
+set to the
+.Dv NULL
+pointer.
 Calling
 .Fn textdomain
 with a
 .Fa domainname
-argument of a null string sets
+argument of a
+.Dv NULL
+string sets
 the domain to the default domain
 .Pq messages .
 .Pp
@@ -331,9 +335,13 @@ or
 are called.
 If
 .Fa domainname
-is a null pointer or an empty string,
+is a
+.Dv NULL
+pointer or an empty string,
 .Fn bindtextdomain
-returns null pointer.
+returns a
+.Dv NULL
+pointer.
 If
 .Fn bindtextdomain
 is not called, implementation-defined default directory is used.
@@ -353,13 +361,17 @@ function.
 .Pp
 If the
 .Fa codeset
-argument is the null pointer,
+argument is the
+.Dv NULL
+pointer,
 .Fn bind_textdomain_codeset
 returns the currently selected
 .Fa codeset
 for the domain with the name
 .Fa domainname .
-It returns null pointer if no
+It returns a
+.Dv NULL
+pointer if no
 .Fa codeset
 has yet been selected.
 .Pp
@@ -392,4 +404,4 @@ based on the documentations for GNU gettext.
 \." .Pp
 .Fn bind_textdomain_codeset
 does not work at this moment
-.Pq always fail .
+.Pq it always fails .

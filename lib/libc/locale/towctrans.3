@@ -1,4 +1,4 @@
-.\" $NetBSD: towctrans.3,v 1.4 2003/04/16 13:34:41 wiz Exp $
+.\" $NetBSD: towctrans.3,v 1.5 2004/01/24 16:58:54 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -48,7 +48,7 @@ function converts a wide character
 with a character mapping
 .Fa charmap .
 .Pp
-The behaviour of the
+The behaviour of
 .Fn towctrans
 is undefined if the
 .Fn towctrans
@@ -61,16 +61,15 @@ category invalidate
 or invalid wide character
 .Fa wc .
 .Pp
-The behaviour of the
+The behaviour of
 .Fn towctrans
 is affected by the
 .Dv LC_CTYPE
 category of the current locale.
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
-The
 .Fn towctrans
-returns the result character of the conversion.
+returns the resulting character of the conversion.
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
 No errors are defined.
