@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.33 2003/09/28 07:22:01 jdolecek Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.34 2003/12/06 11:18:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.33 2003/09/28 07:22:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.34 2003/12/06 11:18:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -840,6 +840,16 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/* NetMos 2P PCI : 2P */
+	{   "NetMos NM9815 Dual 1284 Printer port",
+	    {	0x9710,	0x9815,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
 	    },
 	},
 
