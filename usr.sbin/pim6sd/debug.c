@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.2 2000/02/02 01:08:26 thorpej Exp $	*/
+/*	$NetBSD: debug.c,v 1.3 2000/03/27 17:07:22 kleink Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -553,7 +553,8 @@ va_dcl
 	if (!debug)
 	    fprintf(fp, "%s: ", progname);
 	fprintf(fp, "%02d:%02d:%02d.%03ld %s", thyme->tm_hour,
-		thyme->tm_min, thyme->tm_sec, now.tv_usec / 1000, msg);
+		thyme->tm_min, thyme->tm_sec, (long int)now.tv_usec / 1000,
+		msg);
 	if (syserr == 0)
 	    fprintf(fp, "\n");
 	else

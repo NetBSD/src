@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.7 2000/03/13 06:16:46 itojun Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.8 2000/03/27 17:07:23 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -243,7 +243,7 @@ main(argc, argv)
 		       "<%s> set timer to %ld:%ld. waiting for inputs " 
 		       "or timeout",
 		       __FUNCTION__,
-		       timeout->tv_sec, timeout->tv_usec);
+		       (long int)timeout->tv_sec, (long int)timeout->tv_usec);
 
 		if ((i = select(maxfd + 1, &select_fd,
 				NULL, NULL, timeout)) < 0){
@@ -1344,7 +1344,8 @@ ra_timer_update(void *data, struct timeval *tm)
 
 	syslog(LOG_DEBUG,
 	       "<%s> RA timer on %s is set to %ld:%ld",
-	       __FUNCTION__, rai->ifname, tm->tv_sec, tm->tv_usec);
+	       __FUNCTION__, rai->ifname,
+	       (long int)tm->tv_sec, (long int)tm->tv_usec);
 
 	return;
 }

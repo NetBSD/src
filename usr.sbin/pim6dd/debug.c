@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.5 1999/12/10 06:13:31 itojun Exp $	*/
+/*	$NetBSD: debug.c,v 1.6 2000/03/27 17:07:22 kleink Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -355,7 +355,8 @@ log(severity, syserr, format, va_alist)
 	if (!debug)
 	    fprintf(stderr, "%s: ", progname);
 	fprintf(stderr, "%02d:%02d:%02d.%03ld %s", thyme->tm_hour,
-		thyme->tm_min, thyme->tm_sec, now.tv_usec / 1000, msg);
+		thyme->tm_min, thyme->tm_sec, (long int)now.tv_usec / 1000,
+		msg);
 	if (syserr == 0)
 	    fprintf(stderr, "\n");
 	else if (syserr < sys_nerr)
