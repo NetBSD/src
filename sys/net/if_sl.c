@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.86 2004/08/19 20:58:24 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.87 2004/12/05 05:43:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,10 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.86 2004/08/19 20:58:24 christos Exp $");
-
-#include "sl.h"
-#if NSL > 0
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.87 2004/12/05 05:43:04 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -176,7 +173,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.86 2004/08/19 20:58:24 christos Exp $");
 #define	ABT_COUNT	3	/* count of escapes for abort */
 #define	ABT_WINDOW	(ABT_COUNT*2+2)	/* in seconds - time to count */
 
-struct sl_softc sl_softc[NSL];
+static int		sl_clone_create(struct if_clone *, int);
+static int		sl_clone_destroy(struct ifnet *);
+
+static LIST_HEAD(, sl_softc) sl_softc_list;
+
+struct if_clone sl_cloner =
+    IF_CLONE_INITIALIZER("sl", sl_clone_create, sl_clone_destroy);
 
 #define FRAME_END	 	0xc0		/* Frame End */
 #define FRAME_ESCAPE		0xdb		/* Frame Esc */
@@ -191,35 +194,55 @@ void	slintr(void *);
 static int slinit __P((struct sl_softc *));
 static struct mbuf *sl_btom __P((struct sl_softc *, int));
 
-/*
- * Called from boot code to establish sl interfaces.
- */
 void
-slattach()
+slattach(void)
+{
+    LIST_INIT(&sl_softc_list);
+    if_clone_attach(&sl_cloner);
+}
+
+int
+sl_clone_create(struct if_clone *ifc, int unit)
 {
 	struct sl_softc *sc;
-	int i = 0;
 
-	for (sc = sl_softc; i < NSL; sc++) {
-		sc->sc_unit = i;		/* XXX */
-		snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname),
-		    "sl%d", i++);
-		sc->sc_if.if_softc = sc;
-		sc->sc_if.if_mtu = SLMTU;
-		sc->sc_if.if_flags =
-		    IFF_POINTOPOINT | SC_AUTOCOMP | IFF_MULTICAST;
-		sc->sc_if.if_type = IFT_SLIP;
-		sc->sc_if.if_ioctl = slioctl;
-		sc->sc_if.if_output = sloutput;
-		sc->sc_if.if_dlt = DLT_SLIP;
-		sc->sc_fastq.ifq_maxlen = 32;
-		IFQ_SET_READY(&sc->sc_if.if_snd);
-		if_attach(&sc->sc_if);
-		if_alloc_sadl(&sc->sc_if);
+	MALLOC(sc, struct sl_softc *, sizeof(*sc), M_DEVBUF, M_WAIT|M_ZERO);
+	sc->sc_unit = unit;
+	(void)snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname),
+	    "%s%d", ifc->ifc_name, unit);
+	sc->sc_if.if_softc = sc;
+	sc->sc_if.if_mtu = SLMTU;
+	sc->sc_if.if_flags =
+	    IFF_POINTOPOINT | SC_AUTOCOMP | IFF_MULTICAST;
+	sc->sc_if.if_type = IFT_SLIP;
+	sc->sc_if.if_ioctl = slioctl;
+	sc->sc_if.if_output = sloutput;
+	sc->sc_if.if_dlt = DLT_SLIP;
+	sc->sc_fastq.ifq_maxlen = 32;
+	IFQ_SET_READY(&sc->sc_if.if_snd);
+	if_attach(&sc->sc_if);
+	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
-		bpfattach(&sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
+	bpfattach(&sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
 #endif
-	}
+	LIST_INSERT_HEAD(&sl_softc_list, sc, sc_iflist);
+	return 0;
+}
+
+static int
+sl_clone_destroy(struct ifnet *ifp)
+{
+    struct sl_softc *sc = (struct sl_softc *)ifp->if_softc;
+
+    if (sc->sc_ttyp != NULL)
+	return EBUSY; /* Not removing it */
+
+    LIST_REMOVE(sc, sc_iflist);
+
+    if_detach(ifp);
+
+    FREE(sc, M_DEVBUF);
+    return 0;
 }
 
 static int
@@ -253,7 +276,6 @@ slopen(dev, tp)
 {
 	struct proc *p = curproc;		/* XXX */
 	struct sl_softc *sc;
-	int nsl;
 	int error;
 	int s;
 
@@ -263,7 +285,7 @@ slopen(dev, tp)
 	if (tp->t_linesw->l_no == SLIPDISC)
 		return (0);
 
-	for (nsl = NSL, sc = sl_softc; --nsl >= 0; sc++)
+	LIST_FOREACH(sc, &sl_softc_list, sc_iflist)
 		if (sc->sc_ttyp == NULL) {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 			sc->sc_si = softintr_establish(IPL_SOFTNET,
@@ -675,9 +697,8 @@ void
 slnetisr(void)
 {
 	struct sl_softc *sc;
-	int i;
 
-	for (i = 0; i < NSL; i++) {
+	LIST_FOREACH(sc, &sl_softc_list, sc_iflist)
 		sc = &sl_softc[i];
 		if (sc->sc_ttyp == NULL)
 			continue;
@@ -1033,4 +1054,3 @@ slioctl(ifp, cmd, data)
 	splx(s);
 	return (error);
 }
-#endif
