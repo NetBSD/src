@@ -32,7 +32,6 @@
 
 /*#include <machine/vm_param.h>*/
 
-
 #define PHYS_CUSTOM 0xdff000
 
 
@@ -41,68 +40,69 @@ struct Custom
   {
     /*** read-only registers ***/
 
-    short zz1;
-    short dmaconr;
-    short vposr;
-    short vhposr;
-    short zz2;
-    short joy0dat;
-    short joy1dat;
-    short clxdat;
-    short adkconr;
-    short pot0dat;
-    short pot1dat;
-    short potgor;
-    short serdatr;
-    short dskbytr;
-    short intenar;
-    short intreqr;
+    unsigned short zz1;
+    unsigned short dmaconr;
+    unsigned short vposr;
+    unsigned short vhposr;
+    unsigned short zz2;
+    unsigned short joy0dat;
+    unsigned short joy1dat;
+    unsigned short clxdat;
+    unsigned short adkconr;
+    unsigned short pot0dat;
+    unsigned short pot1dat;
+    unsigned short potgor;
+    unsigned short serdatr;
+    unsigned short dskbytr;
+    unsigned short intenar;
+    unsigned short intreqr;
 
     /*** write-only registers ***/
 
     /* disk */
     void *dskpt;
-    short dsklen;
+    unsigned short dsklen;
 
-    short zz3[2];
-    short vposw;
-    short vhposw;
-    short copcon;
-    short serdat;
-    short serper;
-    short potgo;
-    short joytest;
-    short zz4[4];
+    unsigned short zz3[2];
+    unsigned short vposw;
+    unsigned short vhposw;
+    unsigned short copcon;
+    unsigned short serdat;
+    unsigned short serper;
+    unsigned short potgo;
+    unsigned short joytest;
+    unsigned short zz4[4];
 
     /* blitter */
-    short bltcon0;
-    short bltcon1;
-    short bltafwm;
-    short bltalwn;
+    unsigned short bltcon0;
+    unsigned short bltcon1;
+    unsigned short bltafwm;
+    unsigned short bltalwm;
     void *bltcpt;
     void *bltbpt;
     void *bltapt;
     void *bltdpt;
-    short bltsize;
-    short zz5[3];
-    short bltcmod;
-    short bltbmod;
-    short bltamod;
-    short bltdmod;
-    short zz6[4];
-    short bltcdat;
-    short bltbdat;
-    short bltadat;
-    short zz7[4];
+    unsigned short bltsize;
+    unsigned short zz5[3];
+    unsigned short bltcmod;
+    unsigned short bltbmod;
+    unsigned short bltamod;
+    unsigned short bltdmod;
+    unsigned short zz6[4];
+    unsigned short bltcdat;
+    unsigned short bltbdat;
+    unsigned short bltadat;
+    unsigned short zz7[3];
+    unsigned short deniseid;
 
     /* more disk */
-    short dsksync;
+    unsigned short dsksync;
 
     /* copper */
     union {
       void *cp;
       struct {
-        short ch, cl;
+        unsigned short ch, cl;
       } cs;
     } _cop1lc;
 #define cop1lc	_cop1lc.cp
@@ -111,45 +111,45 @@ struct Custom
     union {
       void *cp;
       struct {
-        short ch, cl;
+        unsigned short ch, cl;
       } cs;
     } _cop2lc;
 #define cop2lc	_cop2lc.cp
 #define cop2lch	_cop2lc.cs.ch
 #define cop2lcl	_cop2lc.cs.cl
-    short copjmp1;
-    short copjmp2;
-    short copins;
+    unsigned short copjmp1;
+    unsigned short copjmp2;
+    unsigned short copins;
 
     /* display parameters */
-    short diwstrt;
-    short diwstop;
-    short ddfstrt;
-    short ddfstop;
+    unsigned short diwstrt;
+    unsigned short diwstop;
+    unsigned short ddfstrt;
+    unsigned short ddfstop;
 
     /* control registers */
-    short dmacon;
-    short clxcon;
-    short intena;
-    short intreq;
+    unsigned short dmacon;
+    unsigned short clxcon;
+    unsigned short intena;
+    unsigned short intreq;
 
     /* audio */
-    short adkcon;
+    unsigned short adkcon;
     struct Audio
       {
         void *lc;
-        short len;
-        short per;
-        short vol;
-        short zz[3];
+        unsigned short len;
+        unsigned short per;
+        unsigned short vol;
+        unsigned short zz[3];
       } aud[4];
 
     /* display */
     union {
       void *bp[6];
       struct {
-        short bph;
-        short bpl;
+        unsigned short bph;
+        unsigned short bpl;
       } bs[6];
 
     } _bplpt;
@@ -157,26 +157,47 @@ struct Custom
 #define bplptl(n)	_bplpt.bs[n].bpl
 #define bplpth(n)	_bplpt.bs[n].bph
 
-    short zz8[4];
-    short bplcon0;
-    short bplcon1;
-    short bplcon2;
-    short zz9;
-    short bpl1mod;
-    short bpl2mod;
-    short zz10[2+6+2];
+    unsigned short zz8[4];
+    unsigned short bplcon0;
+    unsigned short bplcon1;
+    unsigned short bplcon2;
+    unsigned short zz9;
+    unsigned short bpl1mod;
+    unsigned short bpl2mod;
+    unsigned short zz10[2+6+2];
 
     /* sprites */
     void *sprpt[8];
     struct Sprite
       {
-        short pos;
-        short ctl;
-        short data;
-        short datb;
+        unsigned short pos;
+        unsigned short ctl;
+        unsigned short data;
+        unsigned short datb;
       } spr[8];
 
-    short color[32];
+    unsigned short color[32];
+    unsigned short htotal;
+    unsigned short hsstop;
+    unsigned short hbstrt;
+    unsigned short hbstop;
+    unsigned short vtotal;
+    unsigned short vsstop;
+    unsigned short vbstrt;
+    unsigned short vbstop;
+    unsigned short sprhstrt;
+    unsigned short sprhstop;
+    unsigned short bplhstrt;
+    unsigned short bplhstop;
+    unsigned short hhposw;
+    unsigned short hhposr;
+    unsigned short beamcon0;
+    unsigned short hsstrt;
+    unsigned short vsstrt;
+    unsigned short hcenter;
+    unsigned short diwhigh;	/* 1e4 */
+    unsigned short padf3[11];
+    unsigned short fmode;
   };
 #endif
 
@@ -188,7 +209,6 @@ extern volatile struct Custom *CUSTOMbase;
 #endif
 #define custom (*((volatile struct Custom *)CUSTOMbase))
 #endif
-
 
 /* This is used for making copper lists.  */
 #define CUSTOM_OFS(field) ((long)&((struct Custom*)0)->field)

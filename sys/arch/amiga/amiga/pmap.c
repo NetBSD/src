@@ -154,7 +154,7 @@ extern vm_offset_t pager_sva, pager_eva;
 /*
  * Get STEs and PTEs for user/kernel address space
  */
-#define	pmap_ste(m, v)	(&((m)->pm_stab[(vm_offset_t)(v) >> SG_ISHIFT]))
+#define	pmap_ste(m, v)	(&((m)->pm_stab[(vm_offset_t)(v) >> pmap_ishift]))
 #define pmap_pte(m, v)	(&((m)->pm_ptab[(vm_offset_t)(v) >> PG_SHIFT]))
 
 #define pmap_pte_pa(pte)	(*(int *)(pte) & PG_FRAME)
@@ -195,6 +195,7 @@ struct kpt_page *kpt_pages;
  * Segtabzero is an empty segment table which all processes share til they
  * reference something.
  */
+st_entry_t	*Sysseg1;		/* root segment for 68040 */
 st_entry_t	*Sysseg;
 pt_entry_t	*Sysmap, *Sysptmap;
 st_entry_t	*Segtabzero;
@@ -218,6 +219,7 @@ vm_offset_t	vm_last_phys;	/* PA just past last managed page */
 int		amigapagesperpage;	/* PAGE_SIZE / AMIGA_PAGE_SIZE */
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
 char		*pmap_attributes;	/* reference and modify bits */
+static int	pmap_ishift;	/* segment table index shift */
 
 boolean_t	pmap_testbit();
 void		pmap_enter_ptpage();
@@ -283,8 +285,11 @@ pmap_bootstrap(firstaddr, loadaddr)
 	 * Kernel page/segment table allocated in locore,
 	 * just initialize pointers.
 	 */
+	if (cpu040)
+		kernel_pmap->pm_rtab = Sysseg1;
 	kernel_pmap->pm_stab = Sysseg;
 	kernel_pmap->pm_ptab = Sysmap;
+	pmap_ishift = cpu040 ? SG_040ISHIFT : SG_ISHIFT;
 
 	simple_lock_init(&kernel_pmap->pm_lock);
 	kernel_pmap->pm_count = 1;
@@ -322,6 +327,7 @@ pmap_init(phys_start, phys_end)
 	int		rv;
 	extern char kstack[];
 	extern caddr_t CHIPMEMADDR;
+	extern u_int Z2MEMSIZE;		/* XXX */
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -336,7 +342,7 @@ pmap_init(phys_start, phys_end)
 #if 0
 			   &addr, amiga_ptob(CHIPMEMSIZE + CIASIZE + CUSTOMSIZE + SCSISIZE), FALSE);
 #else
-			   &addr, amiga_ptob(CHIPMEMSIZE + CIASIZE + ZORRO2SIZE), FALSE);
+			   &addr, amiga_ptob(CHIPMEMSIZE + CIASIZE + ZORRO2SIZE) + Z2MEMSIZE, FALSE);
 #endif
 	if (addr != (vm_offset_t)CHIPMEMADDR)
 		goto bogons;
@@ -375,11 +381,12 @@ bogons:
 	 * initial segment table, pv_head_table and pmap_attributes.
 	 */
 	npg = atop(phys_end - phys_start);
-	s = (vm_size_t) (AMIGA_STSIZE + sizeof(struct pv_entry) * npg + npg);
+	s = (vm_size_t) ((cpu040 ? AMIGA_040STSIZE : AMIGA_STSIZE) +
+	  sizeof(struct pv_entry) * npg + npg);
 	s = round_page(s);
 	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
 	Segtabzero = (st_entry_t *) addr;
-	addr += AMIGA_STSIZE;
+	addr += cpu040 ? AMIGA_040STSIZE : AMIGA_STSIZE;
 	pv_table = (pv_entry_t) addr;
 	addr += sizeof(struct pv_entry) * npg;
 	pmap_attributes = (char *) addr;
@@ -543,6 +550,8 @@ pmap_pinit(pmap)
 	 * "null" segment table.  On the first pmap_enter, a real
 	 * segment table will be allocated.
 	 */
+	if (cpu040)
+		pmap->pm_rtab = Segtabzero;
 	pmap->pm_stab = Segtabzero;
 	pmap->pm_stchanged = TRUE;
 	pmap->pm_count = 1;
@@ -600,7 +609,12 @@ pmap_release(pmap)
 		kmem_free_wakeup(pt_map, (vm_offset_t)pmap->pm_ptab,
 				 AMIGA_MAX_PTSIZE);
 	if (pmap->pm_stab != Segtabzero)
-		kmem_free(kernel_map, (vm_offset_t)pmap->pm_stab, AMIGA_STSIZE);
+		if (cpu040) {
+			kmem_free(kernel_map, (vm_offset_t)pmap->pm_rtab, AMIGA_040RTSIZE);
+			kmem_free(kernel_map, (vm_offset_t)pmap->pm_stab, AMIGA_040STSIZE*128);
+			}
+		else
+			kmem_free(kernel_map, (vm_offset_t)pmap->pm_stab, AMIGA_STSIZE);
 }
 
 /*
@@ -790,7 +804,24 @@ pmap_remove(pmap, sva, eva)
 				       *(int *)&opte, pmap_pte(pmap, va));
 			}
 #endif
-			*ste = SG_NV;
+			if (cpu040) {
+			/*
+			 * On the 68040, the PT page contains 64 page tables,
+			 * so we need to remove all the associated segment
+			 * table entries
+			 * (This may be incorrect:  if a single page table is
+			 *  being removed, the whole page should not be removed.)
+			 */
+				for (ix = 0; ix < 64; ++ix)
+					*ste++ = SG_NV;
+				ste -= 64;
+#ifdef DEBUG
+				if (pmapdebug & (PDB_REMOVE|PDB_SEGTAB|0x10000))
+					printf("pmap_remove: PT at %x removed\n", va);
+#endif
+			}
+			else
+				*ste = SG_NV;
 			/*
 			 * If it was a user PT page, we decrement the
 			 * reference count on the segment table as well,
@@ -812,9 +843,19 @@ pmap_remove(pmap, sva, eva)
 					printf("remove: free stab %x\n",
 					       ptpmap->pm_stab);
 #endif
-					kmem_free(kernel_map,
-						  (vm_offset_t)ptpmap->pm_stab,
-						  AMIGA_STSIZE);
+					if (cpu040) {
+						kmem_free(kernel_map,
+							(vm_offset_t)ptpmap->pm_rtab,
+							AMIGA_040RTSIZE);
+						kmem_free(kernel_map,
+							(vm_offset_t)ptpmap->pm_stab,
+							AMIGA_040STSIZE*128);
+						ptpmap->pm_rtab = Segtabzero;
+					}
+					else
+						kmem_free(kernel_map,
+							  (vm_offset_t)ptpmap->pm_stab,
+							  AMIGA_STSIZE);
 					ptpmap->pm_stab = Segtabzero;
 					ptpmap->pm_stchanged = TRUE;
 					/*
@@ -1011,6 +1052,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	vm_offset_t opa;
 	boolean_t cacheable = TRUE;
 	boolean_t checkpv = TRUE;
+	extern u_int cache_copyback;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1187,12 +1229,16 @@ validate:
 	 * Assume uniform modified and referenced status for all
 	 * AMIGA pages in a MACH page.
 	 */
+	if (cpu040 && pmap == kernel_pmap && va >= AMIGA_PTBASE)
+		cacheable = FALSE;	/* don't cache user page tables */
 	npte = (pa & PG_FRAME) | pte_prot(pmap, prot) | PG_V;
 	npte |= (*(int *)pte & (PG_M|PG_U));
 	if (wired)
 		npte |= PG_W;
 	if (!checkpv && !cacheable)
 		npte |= PG_CI;
+	else if (cpu040)
+		npte |= cache_copyback;		/* Cacheable, copyback */
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("enter: new pte value %x\n", npte);
@@ -1858,6 +1904,7 @@ pmap_enter_ptpage(pmap, va)
 	register pv_entry_t pv;
 	st_entry_t *ste;
 	int s;
+	u_int sg_proto, *sg;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER|PDB_PTPAGE))
@@ -1872,8 +1919,28 @@ pmap_enter_ptpage(pmap, va)
 	 * reference count drops to zero.
 	 */
 	if (pmap->pm_stab == Segtabzero) {
-		pmap->pm_stab = (st_entry_t *)
-			kmem_alloc(kernel_map, AMIGA_STSIZE);
+		if (cpu040) {
+			pmap->pm_rtab = (st_entry_t *)
+				kmem_alloc(kernel_map, AMIGA_040RTSIZE);
+			pmap->pm_stab = (st_entry_t *)
+				kmem_alloc(kernel_map, AMIGA_040STSIZE*128);
+			/* intialize root table entries */
+			sg = (u_int *) pmap->pm_rtab;
+			sg_proto = pmap_extract(kernel_pmap, (vm_offset_t) pmap->pm_stab) |
+			    SG_RW | SG_V;
+#ifdef DEBUG
+			if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
+				printf ("pmap_enter_ptpage: ROOT TABLE SETUP %x %x\n",
+				    pmap->pm_rtab, sg_proto);
+#endif
+			while (sg < (u_int *) ((u_int) pmap->pm_rtab + AMIGA_040RTSIZE)) {
+				*sg++ = sg_proto;
+				sg_proto += AMIGA_040STSIZE;
+			}
+		}
+		else
+			pmap->pm_stab = (st_entry_t *)
+				kmem_alloc(kernel_map, AMIGA_STSIZE);
 		pmap->pm_stchanged = TRUE;
 		/*
 		 * XXX may have changed segment table pointer for current
@@ -1888,8 +1955,19 @@ pmap_enter_ptpage(pmap, va)
 #endif
 	}
 
-	ste = pmap_ste(pmap, va);
-	va = trunc_page((vm_offset_t)pmap_pte(pmap, va));
+	/*
+	 * On the 68040, a page will hold 64 page tables, so the segment
+	 * table will have to have 64 entries set up.  First get the ste
+	 * for the page mapped by the first PT entry.
+	 */
+	if (cpu040) {
+		ste = pmap_ste(pmap, va & (SG_040IMASK << 6));
+		va = trunc_page((vm_offset_t)pmap_pte(pmap, va & (SG_040IMASK << 6)));
+	}
+	else {
+		ste = pmap_ste(pmap, va);
+		va = trunc_page((vm_offset_t)pmap_pte(pmap, va));
+	}
 
 	/*
 	 * In the kernel we allocate a page from the kernel PT page
@@ -1946,7 +2024,7 @@ pmap_enter_ptpage(pmap, va)
 			panic("pmap_enter: vm_fault failed");
 		ptpa = pmap_extract(kernel_pmap, va);
 #ifdef DEBUG
-		PHYS_TO_VM_PAGE(ptpa)->ptpage = TRUE;
+		PHYS_TO_VM_PAGE(ptpa)->flags |=  PG_PTPAGE;
 #endif
 	}
 
@@ -1983,7 +2061,17 @@ pmap_enter_ptpage(pmap, va)
 	 * it would be difficult to identify ST pages in pmap_pageable to
 	 * release them.  We also avoid the overhead of vm_map_pageable.
 	 */
-	*(int *)ste = (ptpa & SG_FRAME) | SG_RW | SG_V;
+	if (cpu040) {
+		/* 68040 has 64 page tables, so we have to map all 64 */
+		sg = (u_int *) ste;
+		sg_proto = (ptpa & SG_FRAME) | SG_RW | SG_V;
+		while (sg < (u_int *) (ste + 64)) {
+			*sg++ = sg_proto;
+			sg_proto += AMIGA_040PTSIZE;
+		}
+	}
+	else
+		*(int *)ste = (ptpa & SG_FRAME) | SG_RW | SG_V;
 	if (pmap != kernel_pmap) {
 		pmap->pm_sref++;
 #ifdef DEBUG

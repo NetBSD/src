@@ -55,10 +55,20 @@
 #include "malloc.h"
 #include "mbuf.h"
 #include "msgbuf.h"
-#include "user.h"
-#include "exec.h"            /* for PS_STRINGS */
+#include <sys/user.h>
+#include <sys/exec.h>            /* for PS_STRINGS */
+#include <sys/exec_aout.h>
+
 #ifdef SYSVSHM
-#include "shm.h"
+#include <sys/shm.h>
+#endif
+
+#ifdef SYSVMSG
+#include <sys/msg.h>
+#endif
+
+#ifdef SYSVSEM
+#include <sys/sem.h>
 #endif
 
 #include "machine/cpu.h"
@@ -86,6 +96,12 @@
 #include "a3000scsi.h"
 #include "a2091scsi.h"
 #include "gvp11scsi.h"
+#include "zeusscsi.h"
+#include "magnumscsi.h"
+
+#include "cc.h"
+
+#include "memlist.h"
 
 /* vm_map_t buffer_map; */
 extern vm_offset_t avail_end;
@@ -118,11 +134,15 @@ extern	u_int lowram;
 /* used in init_main.c */
 char *cpu_type = "m68k";
 
+extern struct Mem_List *mem_list;
+extern u_int Z2MEMADDR;
+extern u_int z2mem_end;
+
 #ifdef COMPAT_SUNOS
 void sun_sendsig ();
 #endif
 
-/*
+ /*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
@@ -136,8 +156,14 @@ consinit()
 	 * might use delay.
 	 */
 
-	cpuspeed = MHZ_25;		/* XXX */
+	if (cpu040)
+		cpuspeed = MHZ_33;		/* MLH - PPI Zeus */
+	else
+		cpuspeed = MHZ_25;		/* XXX */
 
+	/* initialize custom chip interface */
+	custom_chips_init ();
+		
 	/*
          * Find what hardware is attached to this machine.
          */
@@ -216,7 +242,18 @@ again:
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
-	
+#ifdef SYSVSEM
+	valloc(sema, struct semid_ds, seminfo.semmni);
+	valloc(sem, struct sem, seminfo.semmns);
+	/* This is pretty disgusting! */
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
+#endif
 	/*
 	 * Determine how many buffers to allocate.
 	 * Since HPs tend to be long on memory and short on disk speed,
@@ -225,9 +262,13 @@ again:
 	 * We just allocate a flat 10%.  Insure a minimum of 16 buffers.
 	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
-	if (bufpages == 0)
-		bufpages = physmem / 10 / CLSIZE;
-	bufpages = min(NKMEMCLUSTERS*2/5, bufpages);  /* XXX ? - cgd */
+  	if (bufpages == 0)
+		if (physmem < btoc(2 * 1024 * 1024))
+			bufpages = physmem / (10 * CLSIZE);
+		else
+			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
+			    (20 * CLSIZE);
+
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -262,7 +303,7 @@ again:
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t)&buffers,
+	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
 				   &maxaddr, size, FALSE);
 	minaddr = (vm_offset_t)buffers;
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
@@ -291,14 +332,12 @@ again:
 		vm_map_simplify(buffer_map, curbuf);
 	}
 
-#if 0
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, TRUE);
-#endif
 
 	/*
 	 * Allocate a submap for physio
@@ -313,7 +352,7 @@ again:
 	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
 				   M_MBUF, M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 
 	/*
@@ -329,6 +368,16 @@ again:
 	printf("avail mem = %d\n", ptoa(vm_page_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
+#ifdef DEBUG
+	/* display memory configuration passed from loadbsd */
+	printf("%d Amiga memory segments\n", mem_list->num_mem);
+	if (mem_list->num_mem > 0 && mem_list->num_mem < 16)
+		for (i = 0; i < mem_list->num_mem; i++)
+			printf ("segment %d at %08lx size %08lx\n", i,
+				mem_list->mem_seg[i].mem_start,
+				mem_list->mem_seg[i].mem_size);
+	printf ("Zorro II memory at %08x-%08x\n", Z2MEMADDR,z2mem_end);
+#endif
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
@@ -372,34 +421,43 @@ identifycpu()
 
 	printf ("AMIGA/");
 
+	if (is_a4000 ())
+	  printf ("A4000");	/* XXX XXX */
 	if (is_a3000 ())
 	  printf ("A3000");	/* XXX */
 	else
 	  printf ("A2000");
 
-	if (mmutype == MMU_68030)
-	  cpu_type = "m68030";	/* XXX */
-	else
-	  cpu_type = "m68020";
+	if (cpu040) {
+		cpu_type = "m68040";
 
-	printf(" MC680%s CPU", mmutype == MMU_68030 ? "30" : "20");
-	switch (mmutype) {
-	case MMU_68030:
-		printf("+MMU");
-		break;
-	case MMU_68851:
-		printf(", MC68851 MMU");
-		break;
-	default:
-		printf("\nunknown MMU type %d\n", mmutype);
-		panic("startup");
+		printf (" MC68040 CPU");
 	}
-	/* XXX */
-	if (mmutype == MMU_68030)
-		printf(", %sMhz MC68882 FPU", "25");
-	else
-		printf(", %sMhz MC68881 FPU", "16.67");
-	printf(")\n");
+	else {
+		if (mmutype == MMU_68030)
+		  cpu_type = "m68030";	/* XXX */
+		else
+		  cpu_type = "m68020";
+
+		printf(" MC680%s CPU", mmutype == MMU_68030 ? "30" : "20");
+		switch (mmutype) {
+		case MMU_68030:
+			printf("+MMU");
+			break;
+		case MMU_68851:
+			printf(", MC68851 MMU");
+			break;
+		default:
+			printf("\nunknown MMU type %d\n", mmutype);
+			panic("startup");
+		}
+		/* XXX */
+		if (mmutype == MMU_68030)
+			printf(", %sMhz MC68882 FPU", "25");
+		else
+			printf(", %sMhz MC68881 FPU", "16.67");
+	}
+	printf("\n");
 	/*
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
@@ -495,6 +553,7 @@ sendsig(catcher, sig, mask, code)
 	extern short exframesize[];
 	extern char sigcode[], esigcode[];
 
+
 /*printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);*/
 
 	frame = (struct frame *)p->p_regs;
@@ -502,8 +561,12 @@ sendsig(catcher, sig, mask, code)
 	oonstack = ps->ps_onstack;
 
 #ifdef COMPAT_SUNOS
-	if (p->p_md.md_emul == MDPE_SUNOS)
+	if (p->p_emul == EMUL_SUNOS)
 	  {
+#if 0
+	    /* SunOS doesn't seem to make any distinction between
+	       hardware faults and normal signals.. */
+
 	    /* if this is a hardware fault (ft >= FMT9), sun_sendsig
 	       can't currently handle it. Reset signal actions and
 	       have the process die unconditionally. */
@@ -517,6 +580,7 @@ sendsig(catcher, sig, mask, code)
 		psignal(p, sig);
 		return;
 	      }
+#endif
 
 	    /* else build the short SunOS frame instead */
 	    sun_sendsig (catcher, sig, mask, code);
@@ -524,6 +588,7 @@ sendsig(catcher, sig, mask, code)
 	  }
 #endif
 
+ 
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -562,6 +627,10 @@ sendsig(catcher, sig, mask, code)
 		psignal(p, SIGILL);
 		return;
 	}
+#ifdef DEBUG
+	if (fsize != sizeof (struct sigframe))
+	  panic ("YUCK! sendsig");
+#endif
 	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
 	/* 
 	 * Build the argument list for the signal handler.
@@ -770,6 +839,9 @@ sigreturn(p, uap, retval)
 	struct sigstate tstate;
 	int flags;
 	extern short exframesize[];
+
+	if (p->p_emul == EMUL_SUNOS)
+	  return sun_sigreturn (p, uap, retval);
 
 	scp = uap->sigcntxp;
 #ifdef DEBUG
@@ -1311,6 +1383,14 @@ intrhand(sr)
 
     case 2:
       custom.intreq = INTF_PORTS;
+      /* siopintr2() must be called first because the interrupt may
+	 have been generated by directly setting the interrupt at
+	 IPL6 and would be lost if another IPL2 interrupt is processed
+	 first */
+#if (NZEUSSCSI > 0 || NMAGNUMSCSI > 0)
+      if (siopintr2 ())
+	break;
+#endif
       /* dmaintr() also calls scsiintr() if the corresponding bit is set in
          the interrupt status register of the sdmac */
 #if NA3000SCSI > 0
@@ -1332,12 +1412,14 @@ intrhand(sr)
       ciaa_intr ();
       break;
 
-    case 3:
+    case 3: 
       /* VBL */
-      custom.intreq = INTF_VERTB | INTF_COPER | INTF_BLIT;
-      /* do modem-control check in vbl */
-      sermint (0);
-      cc_vbl ();
+      if (custom.intreqr& INTF_BLIT)  
+	  blitter_handler ();
+      if (custom.intreqr & INTF_COPER)  
+	  copper_handler ();
+      if (custom.intreqr & INTF_VERTB) 
+	  vbl_handler ();
       break;
 
 #if 0
@@ -1351,7 +1433,9 @@ intrhand(sr)
 #endif
 
     case 4:
-      custom.intreq = INTF_AUD0 | INTF_AUD1 | INTF_AUD2 | INTF_AUD3;
+      audio_handler ();
+      break;
+      break;
 
     default:
       printf("intrhand: unexpected sr 0x%x, intreq = 0x%x\n", sr, ireq);
@@ -1547,132 +1631,23 @@ cpu_exec_aout_makecmds(p, epp)
     struct proc *p;
     struct exec_package *epp;
 {
-	int rv;
+  int error = ENOEXEC;
+  struct exec *execp = epp->ep_hdr;
 
 #ifdef COMPAT_NOMID
-  if (! ((epp->ep_execp->a_midmag >> 16) & 0x0fff)
-      && epp->ep_execp->a_midmag == ZMAGIC)
+  if (! ((execp->a_midmag >> 16) & 0x0fff)
+      && execp->a_midmag == ZMAGIC)
     return exec_aout_prep_zmagic (p, epp);
 #endif
 
 #ifdef COMPAT_SUNOS
-  if (((epp->ep_execp->a_midmag >> 16) & 0x0fff) == MID_SUN020
-      || ((epp->ep_execp->a_midmag >> 16) & 0x0fff) == MID_SUN010)
-    {
-      int error;
-
-      switch (epp->ep_execp->a_midmag & 0xffff)
-	{
-	case ZMAGIC:
-	  error = sun_exec_aout_prep_zmagic (p, epp);
-	  break;
-
-	case NMAGIC:
-	  error = sun_exec_aout_prep_nmagic (p, epp);
-	  break;
-
-	  /* not yet */
-	case OMAGIC:
-	  error = sun_exec_aout_prep_omagic (p, epp);
-	  break;
-
-	default:
-	  error = ENOEXEC;
-	  break;
-	}
-
-      if (error == 0)
-	p->p_md.md_emul = MDPE_SUNOS;
-      return error;
-    }
+  {
+    extern sun_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+    if ((error = sun_exec_aout_makecmds(p, epp)) == 0)
+      return 0;
+  }
 #endif
-
-  return ENOEXEC;
-}
-
-#ifdef COMPAT_SUNOS
-/*
-   XXX this is not nice.. I need to have a possibility of resetting
-   XXX the OS emulator when executing another binary, as we might have
-   XXX to switch back to NetBSD emulation. Any better idea of achieving
-   XXX this? */
-struct sun_execve_args {
-	char	*fname;
-	char	**argp;
-	char	**envp;
-};
-sun_execve(p, uap, retval)
-	struct proc *p;
-	struct sun_execve_args *uap;
-	int *retval;
-{
-  int error;
-
-  /* switch the process to NetBSD mode, just to get default
-     behavior of execve. */
-  p->p_md.md_emul = MDPE_NETBSD;
-
-  error = execve (p, uap, retval);
-
-  if (error > 0)
-    /* in that case, have to switch back to SunOS mode */
-    p->p_md.md_emul = MDPE_SUNOS;
 
   return error;
 }
-#endif /* COMPAT_SUNOS */
-
-int
-ptrace_set_pc (struct proc *p, unsigned int addr)
-{
-  struct frame *frame = (struct frame *) 
-    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
-
-  frame->f_pc = addr & ~1;
-  return 0;
-}
-
-int
-ptrace_single_step (struct proc *p)
-{
-  struct frame *frame = (struct frame *) 
-    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
-
-  frame->f_sr |= PSL_T;
-  return 0;
-}
-
-int
-ptrace_getregs (struct proc *p, unsigned int *addr)
-{
-  u_long ipcreg[NIPCREG];
-  struct frame *frame = (struct frame *) 
-    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
-
-  bcopy (frame->f_regs, ipcreg, sizeof (frame->f_regs));
-  ipcreg[PS] = frame->f_sr;
-  ipcreg[PC] = frame->f_pc;
-  return copyout (ipcreg, addr, sizeof (ipcreg));
-}
-
-int
-ptrace_setregs (struct proc *p, unsigned int *addr)
-{
-  int error;
-  u_long ipcreg[NIPCREG];
-  struct frame *frame = (struct frame *) 
-    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
-
-  if (error = copyin (addr, ipcreg, sizeof(ipcreg)))
-    return error;
-
-  bcopy (ipcreg, frame->f_regs, sizeof (ipcreg));
-  frame->f_sr = (ipcreg[PS] | PSL_USERSET) &~ PSL_USERCLR;
-  frame->f_pc = ipcreg[PC];
-  return 0;
-}
-
-
-
-
 
