@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.5 1996/10/21 22:31:07 thorpej Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.6 1996/11/15 22:53:39 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -59,6 +59,9 @@ struct cfattach uha_eisa_ca = {
 	sizeof(struct uha_softc), uha_eisa_match, uha_eisa_attach
 };
 
+#ifndef	DDB
+#define Debugger() panic("should call debugger here (uha_eisa.c)")
+#endif /* ! DDB */
 #define KVTOPHYS(x)	vtophys(x)
 
 int u24_find __P((bus_space_tag_t, bus_space_handle_t, struct uha_softc *));

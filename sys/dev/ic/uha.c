@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.4 1996/11/12 20:57:43 mycroft Exp $	*/
+/*	$NetBSD: uha.c,v 1.5 1996/11/15 22:53:36 jonathan Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -80,7 +80,7 @@
 #include <dev/ic/uhavar.h>
 
 #ifndef	DDB
-#define Debugger() panic("should call debugger here (ultra14f.c)")
+#define Debugger() panic("should call debugger here (uha.c)")
 #endif /* ! DDB */
 
 #define KVTOPHYS(x)	vtophys(x)
