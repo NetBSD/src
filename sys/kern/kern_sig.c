@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.15 2002/04/25 22:21:24 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.16 2002/05/23 19:09:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.15 2002/04/25 22:21:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.16 2002/05/23 19:09:27 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -844,11 +844,7 @@ psignal1(struct proc *p, int signum,
 		if (p->p_stat == SACTIVE) {
 			/* All LWPs must be sleeping */
 			
-			if (l == NULL)
-				/* None of them were interruptable */
-				goto out;
-			
-			if (p->p_flag & P_TRACED)
+			if (l != NULL && (p->p_flag & P_TRACED))
 				goto run;
 			     
 			/*
@@ -884,6 +880,10 @@ psignal1(struct proc *p, int signum,
 				proc_stop(p);	/* XXXSMP: recurse? */
 				goto out;
 			}
+
+			if (l == NULL)
+				goto out;
+
 			/*
 			 * All other (caught or default) signals
 			 * cause the process to run.
@@ -1427,10 +1427,22 @@ static	const char lognocoredump[] =
 static void
 lwp_coredump_hook(struct lwp *l, void *arg)
 {
-	/* Un-detach the LWP so it won't be reaped while we're busy
-	 * dumping memory or other LWP state.
+	int s;
+
+	/*
+	 * Suspend ourselves, so that the kernel stack and therefore
+	 * the userland registers saved in the trapframe are around
+	 * for coredump() to write them out.
 	 */
 	l->l_flag &= ~L_DETACHED;
+	SCHED_LOCK(s);
+	l->l_stat = LSSUSPENDED;
+	l->l_proc->p_nrlwps--;
+	/* XXX NJWLWP check if this makes sense here: */
+	l->l_proc->p_stats->p_ru.ru_nvcsw++; 
+	mi_switch(l, NULL);
+	SCHED_ASSERT_UNLOCKED();
+
 	lwp_exit(l);
 }
 
@@ -1442,7 +1454,8 @@ sigexit(struct lwp *l, int signum)
 
 	p = l->l_proc;
 
-	/* Don't call coredump() or exit1() multiple times 
+	/*
+	 * Don't permit coredump() or exit1() multiple times 
 	 * in the same process.
 	 */
 	if (p->p_flag & P_WEXIT)
