@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.5 1996/02/09 22:22:24 christos Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -145,7 +145,7 @@ ffs_checkoverlap(bp, ip)
 		    ep->b_blkno + btodb(ep->b_bcount) <= start)
 			continue;
 		vprint("Disk overlap", vp);
-		(void)printf("\tstart %d, end %d overlap start %d, end %d\n",
+		(void)printf("\tstart %d, end %d overlap start %d, end %ld\n",
 			start, last, ep->b_blkno,
 			ep->b_blkno + btodb(ep->b_bcount) - 1);
 		panic("Disk buffer overlap");
