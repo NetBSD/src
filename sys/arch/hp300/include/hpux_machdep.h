@@ -1,7 +1,7 @@
-/*	$NetBSD: hpux_machdep.h,v 1.3 1996/02/28 01:05:57 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.h,v 1.4 1997/03/16 03:45:33 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,6 +39,32 @@
 #ifndef _MACHINE_HPUX_MACHDEP_H_
 #define _MACHINE_HPUX_MACHDEP_H_
 
+/*    
+ * Information pushed on stack when a signal is delivered.
+ * This is used by the kernel to restore state following
+ * execution of the signal handler.  It is also made available
+ * to the handler to allow it to restore state properly if
+ * a non-standard exit is performed. 
+ */
+struct hpuxsigcontext {
+	int	hsc_syscall;		/* ??? (syscall number?) */
+	char	hsc_action;		/* ??? */
+	char	hsc_pad1;
+	char	hsc_pad2;
+	char	hsc_onstack;		/* sigstack state to restore */
+	int	hsc_mask;		/* signal mask to restore */
+	int	hsc_sp;			/* sp to restore */
+	short	hsc_ps;			/* psl to restore */
+	int	hsc_pc;			/* pc to restore */
+
+	/*
+	 * The following are not actually used by HP-UX.  They exist
+	 * for the convenience of the compatibility code.
+	 */
+	short	_hsc_pad;
+	int	_hsc_ap;		/* pointer to hpuxsigstate */
+};
+
 int	hpux_cpu_makecmds __P((struct proc *, struct exec_package *));
 int	hpux_cpu_vmcmd __P((struct proc *, struct exec_vmcmd *));
 void	hpux_cpu_bsd_to_hpux_stat __P((struct stat *, struct hpux_stat *));
@@ -46,5 +72,7 @@ void	hpux_cpu_uname __P((struct hpux_utsname *));
 int	hpux_cpu_sysconf_arch __P((void));
 int	hpux_to_bsd_uoff __P((int *, int *, struct proc *));
 int	hpux_dumpu __P((struct vnode *, struct ucred *));
+
+void	hpux_sendsig __P((sig_t, int, int, u_long));
 
 #endif /* ! _MACHINE_HPUX_MACHDEP_H_ */
