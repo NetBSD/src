@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.18.2.1 1999/10/19 17:47:38 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.18.2.2 1999/10/19 21:38:27 thorpej Exp $ */
 /* release_6_5_99 */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
@@ -165,15 +165,17 @@ struct isposinfo {
 #define	XS_IS_CMD_DONE(xs)	(((xs)->xs_status & XS_STS_DONE) != 0)
 
 /*
- * We use whether or not we're a polled command to decide about tagging.
+ * Can we use tagging?
  */
-#define	XS_CANTAG(xs)		(((xs)->xs_control & XS_CTL_POLL) != 0)
+#define	XS_CANTAG(xs)		(XS_CTL_TAGTYPE(xs) != 0)
 
 /*
- * This is our default tag (simple).
+ * The kind of tag to use for this command.
  */
-#define	XS_KINDOF_TAG(xs)	\
-	(((xs)->xs_control & XS_CTL_URGENT) ? REQFLAG_HTAG : REQFLAG_OTAG)
+#define	XS_KINDOF_TAG(xs)						\
+	(XS_CTL_TAGTYPE(xs) == XS_CTL_SIMPLE_TAG ? REQFLAG_STAG :	\
+	 (XS_CTL_TAGTYPE(xs) == XS_CTL_HEAD_TAG ? REQFLAG_HTAG :	\
+	  REQFLAG_OTAG))
 
 /*
  * These get turned into NetBSD midlayer codes
