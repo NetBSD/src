@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.178 1998/04/03 19:50:50 pk Exp $
+#	$NetBSD: files,v 1.179 1998/04/15 19:55:09 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -205,6 +205,19 @@ define  i2c_eeprom
 # device  wdc: ata, atapi
 # file    dev/ic/wdc.c
 #				wdc & (wd | !wd) needs-flag # XXX
+
+# Definitions for wscons
+# device attributes: display, display with emulator, keyboard, and mouse
+define  wsdisplaydev { }
+define  wsemuldisplaydev {[console = -1]}
+define  wskbddev {[console = -1]}
+define	wsmousedev { }
+# attribute to pull in raster support
+define	wsrasteremulops
+# VGA graphics
+device	vga: wsemuldisplaydev
+file	dev/ic/vga.c		vga
+file	dev/ic/vga_subr.c	vga
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
