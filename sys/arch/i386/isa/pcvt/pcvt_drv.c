@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_drv.c,v 1.13 1995/04/18 00:59:53 mycroft Exp $	*/
+/*	$NetBSD: pcvt_drv.c,v 1.14 1995/04/19 18:33:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -123,6 +123,7 @@ pcprobe(struct isa_device *dev)
 void
 pcattach(struct device *parent, struct device *self, void *aux)
 {
+	struct vt_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 #else
 int
@@ -195,16 +196,13 @@ pcattach(struct isa_device *dev)
 
 #if PCVT_NETBSD
 	for(i = 0; i < totalscreens; i++)
-	{
-		pc_tty[i] = ttymalloc();		
-		vs[i].vs_tty = pc_tty[i];
-	}
+		vs[i].vs_tty = ttymalloc();
 
 #if PCVT_EMU_MOUSE
 	pc_tty[totalscreens] = ttymalloc(); /* the mouse emulator tty */
 #endif /* PCVT_EMU_MOUSE */
 
-	pcconsp = pc_tty[0];
+	pcconsp = vs[0].vs_tty;
 
 #endif /* PCVT_NETBSD */
 	
@@ -272,8 +270,8 @@ pcattach(struct isa_device *dev)
 	async_update(0);		/* start asynchronous updates */
 
 #if PCVT_NETBSD > 9
-	isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY, pcrint,
-	    (void *)0);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
+	    pcintr, sc);
 #else
 	return 1;
 #endif
@@ -312,7 +310,7 @@ get_pccons(Dev_t dev)
 
 	if(i >= PCVT_NSCREENS)
 		return(NULL);
-	return(pc_tty[i]);
+	return(vs[i].vs_tty);
 }
 
 #endif /* !PCVT_NETBSD */
@@ -456,6 +454,17 @@ pcwrite(Dev_t dev, struct uio *uio, int flag)
 		return ENXIO;
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+}
+
+struct tty *
+pctty(Dev_t dev)
+{
+	register struct tty *tp;
+
+	if((tp = get_pccons(dev)) == NULL)
+		return 0;
+
+	return tp;
 }
 
 int
@@ -609,7 +618,7 @@ pcmmap(Dev_t dev, int offset, int nprot)
  *
  *---------------------------------------------------------------------------*/
 int
-pcrint(void *arg)
+pcintr(void *arg)
 {
 	u_char *cp;
 	
@@ -806,6 +815,10 @@ pccngetc(Dev_t dev)
 void
 pccnpollc(Dev_t dev, int on)
 {
+#if PCVT_NETBSD
+	struct vt_softc *sc = vtcd.cd_devs[0];	/* XXX */
+#endif
+
 	kbd_polling = on;
 	if (!on) {
 		register int s;
@@ -816,7 +829,11 @@ pccnpollc(Dev_t dev, int on)
 		 * won't get any further interrupts.
 		 */
 		s = spltty();
-		pcrint((void *)0);
+#if PCVT_NETBSD
+		pcintr(sc);
+#else
+		pcintr((void *)0);
+#endif
 		splx(s);
 	}
 }
