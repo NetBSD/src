@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.22 1999/10/26 05:57:48 simonb Exp $	
+.\"	$NetBSD: install,v 1.23 1999/12/28 11:05:48 simonb Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -172,7 +172,7 @@ in the NetBSD-\*V distribution.  To install the new bootblocks,
 use the following commands:
 .D1 # Ic "cd /
 .D1 # Ic "tar xvpfz .../pmax/installation/misc/bootblocks.tgz
-.D1 # Ic "disklabel -B rzX
+.D1 # Ic "/usr/mdec/installboot /dev/rrzXc /usr/mdec/bootxx_ffs
 where X is your boot disk SCSI ID.
 .Note)
 .Pp
