@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.11 1997/02/04 06:30:57 mark Exp $	*/
+/*	$NetBSD: cpu.c,v 1.12 1997/10/14 20:01:54 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -68,7 +68,6 @@
 cpu_t cpus[MAX_CPUS];
 
 char cpu_model[48];
-extern int cpu_ctrl;		/* Control bits for boot CPU */
 volatile int undefined_test;	/* Used for FPA test */
 
 /* Declare prototypes */
@@ -84,21 +83,20 @@ extern int initialise_fpe	__P((cpu_t *cpu));
 
 
 /*
- * int cpumatch(struct device *parent, void *match, void *aux)
+ * int cpumatch(struct device *parent, struct cfdata *cf, void *aux)
  *
  * Probe for the main cpu. Currently all this does is return 1 to
  * indicate that the cpu was found.
  */ 
  
 int
-cpumatch(parent, match, aux)
+cpumatch(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
 	void *aux;
 {
-	struct device *dev = match;
 
-	if (dev->dv_unit == 0)
+	if (cf->cf_unit == 0)
 		return(1);
 	return(0);
 }
@@ -129,7 +127,7 @@ struct cfattach cpu_ca = {
 };
 
 struct cfdriver cpu_cd = {
-	NULL, "cpu", DV_DULL, 1
+	NULL, "cpu", DV_DULL, 0
 };
 
 
@@ -188,9 +186,9 @@ identify_master_cpu(cpu_number, dev_name)
 	cpus[cpu_number].cpu_class = CPU_CLASS_ARM;
 	cpus[cpu_number].cpu_host = CPU_HOST_MAINBUS;
 	cpus[cpu_number].cpu_flags = CPU_FLAG_PRESENT;
-	cpus[cpu_number].cpu_ctrl = cpu_ctrl;
+	cpus[cpu_number].cpu_ctrl = cpu_control(0, 0);
 
-/* Get the cpu ID from coprocessor 15 */
+	/* Get the cpu ID from coprocessor 15 */
 
 	cpus[cpu_number].cpu_id = cpu_id();
 
@@ -198,23 +196,49 @@ identify_master_cpu(cpu_number, dev_name)
 	strcpy(cpu_model, cpus[cpu_number].cpu_model);
 
 	if (cpus[CPU_MASTER].cpu_class == CPU_CLASS_SARM
-	  && (cpus[CPU_MASTER].cpu_id & CPU_ID_REVISION_MASK) < 3) {
+	    && (cpus[CPU_MASTER].cpu_id & CPU_ID_REVISION_MASK) < 3) {
 		printf("%s: SA-110 with bugged STM^ instruction\n", dev_name);
 	}
 
-/*
- * Ok now we test for an FPA
- * At this point no floating point emulator has been installed.
- * This means any FP instruction will cause undefined exception.
- * We install a temporay coproc 1 handler which will modify undefined_test
- * if it is called.
- * We then try to read the FP status register. If undefined_test has been
- * decremented then the instruction was not handled by an FPA so we know
- * the FPA is missing. If undefined_test is still 1 then we know the
- * instruction was handled by an FPA.
- * We then remove our test handler and look at the
- * FP status register for identification.
- */
+#ifdef CPU_ARM8
+	if (cpus[CPU_MASTER].cpu_class == CPU_CLASS_ARM
+	    && (cpus[CPU_MASTER].cpu_id & CPU_ID_CPU_MASK) == ID_ARM810) {
+		int clock = arm8_clock_config(0, 0);
+		char *fclk;
+		printf("%s: ARM810 cp15=%02x", dev_name, clock);
+		printf(" clock:%s", (clock & 1) ? " dynamic" : "");
+		printf("%s", (clock & 2) ? " sync" : "");
+		switch ((clock >> 2) & 3) {
+		case 0 :
+			fclk = "bus clock";
+			break;
+		case 1 :
+			fclk = "ref clock";
+			break;
+		case 3 :
+			fclk = "pll";
+			break;
+		default :
+			fclk = "illegal";
+			break;
+		}
+		printf(" fclk source=%s\n", fclk);
+ 	}
+#endif
+
+	/*
+	 * Ok now we test for an FPA
+	 * At this point no floating point emulator has been installed.
+	 * This means any FP instruction will cause undefined exception.
+	 * We install a temporay coproc 1 handler which will modify
+	 * undefined_test if it is called.
+	 * We then try to read the FP status register. If undefined_test
+	 * has been decremented then the instruction was not handled by
+	 * an FPA so we know the FPA is missing. If undefined_test is
+	 * still 1 then we know the instruction was handled by an FPA.
+	 * We then remove our test handler and look at the
+	 * FP status register for identification.
+	 */
  
 	install_coproc_handler(FP_COPROC, fpa_test);
 
@@ -239,19 +263,19 @@ identify_master_cpu(cpu_number, dev_name)
 		cpus[cpu_number].fpu_class = FPU_CLASS_NONE;
 		cpus[cpu_number].fpu_flags = 0;
 
-/*
- * Ok if ARMFPE is defined and the boot options request the ARM FPE then
- * it will be installed as the FPE. If the installation fails the existing
- * FPE is used as a fall back.
- * If either ARMFPE is not defined or the boot args did not request it the
- * old FPE is installed.
- * This is just while I work on integrating the new FPE.
- * It means the new FPE gets installed if compiled int (ARMFPE defined)
- * and also gives me a on/off option when I boot in case the new FPE is
- * causing panics.
- * In all cases it falls back on the existing FPE is the ARMFPE was not
- * successfully installed.
- */
+	/*
+	 * Ok if ARMFPE is defined and the boot options request the ARM FPE
+	 * then it will be installed as the FPE. If the installation fails
+	 * the existing FPE is used as a fall back.
+	 * If either ARMFPE is not defined or the boot args did not request
+	 * it the old FPE is installed.
+	 * This is just while I work on integrating the new FPE.
+	 * It means the new FPE gets installed if compiled int (ARMFPE
+	 * defined) and also gives me a on/off option when I boot in case
+	 * the new FPE is causing panics.
+	 * In all cases it falls back on the existing FPE is the ARMFPE
+	 * was not successfully installed.
+	 */
 
 #ifdef ARMFPE
         if (boot_args) {
@@ -280,7 +304,7 @@ identify_master_cpu(cpu_number, dev_name)
 #ifdef FPE
 		initialise_fpe(&cpus[cpu_number]);
 #else
-#error No FPE built in
+		/* Now we support softfloat libraries we may not have an FPE. */
 #endif
 #endif
 	}
@@ -323,26 +347,30 @@ identify_arm_cpu(cpu_number)
 		printf("Unrecognised designer ID = %08x\n", cpuid);*/
 
 	switch (cpuid & CPU_ID_CPU_MASK) {
+#ifdef CPU_ARM6
         case ID_ARM610:
         	cpu->cpu_type = cpuid & CPU_ID_CPU_MASK;
 		break;
-          
+#endif
+#ifdef CPU_ARM7
 	case ID_ARM710 :
 	case ID_ARM700 :
 		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
 		break;
-
+#endif
+#ifdef CPU_ARM8
 	case ID_ARM810 :
 		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
 		break;
-
+#endif
+#ifdef CPU_SA110
 	case ID_SA110 :
 		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
 		cpu->cpu_class = CPU_CLASS_SARM;
 		sprintf(cpu->cpu_model, "SA-110 rev %d",
 		    cpuid & CPU_ID_REVISION_MASK);
 		break;
-
+#endif
 	default :
 		printf("Unrecognised processor ID = %08x\n", cpuid);
 		cpu->cpu_type = cpuid & CPU_ID_CPU_MASK;
@@ -376,6 +404,9 @@ identify_arm_cpu(cpu_number)
 		strcat(cpu->cpu_model, " LABT");
 	else
 		strcat(cpu->cpu_model, " EABT");
+
+	if (cpu->cpu_ctrl & CPU_CONTROL_BPRD_ENABLE)
+		strcat(cpu->cpu_model, " branch prediction enabled");
 
 	/* Print the info */
 
