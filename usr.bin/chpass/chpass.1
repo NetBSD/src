@@ -1,4 +1,4 @@
-.\"	$NetBSD: chpass.1,v 1.12 1998/02/06 06:17:29 perry Exp $
+.\"	$NetBSD: chpass.1,v 1.13 1998/03/18 06:05:10 mikel Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -197,8 +197,9 @@ to update the user database.
 .Sh ENVIRONMENT
 The
 .Xr vi 1
-editor will be used unless the environment variable EDITOR is set to
-an alternative editor.
+editor will be used unless the environment variable
+.Ev EDITOR
+is set to an alternative editor.
 When the editor terminates, the information is re-read and used to
 update the user database itself.
 Only the user, or the super-user, may edit the information associated
@@ -227,7 +228,7 @@ The list of approved shells
 .Rs
 .%A Robert Morris
 .%A Ken Thompson
-.%T "UNIX Password security"
+.%T "UNIX Password Security"
 .Re
 .Sh BUGS
 This program's interface is poorly suited to cryptographic systems such as
