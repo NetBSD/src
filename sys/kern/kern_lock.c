@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.31 2000/06/08 05:50:59 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.32 2000/06/10 18:44:43 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -322,6 +322,21 @@ lockstatus(lkp)
 }
 
 /*
+ * XXX XXX kludge around another kludge..
+ *
+ * vfs_shutdown() may be called from interrupt context, either as a result
+ * of a panic, or from the debugger.   It proceeds to call
+ * sys_sync(&proc0, ...), pretending its running on behalf of proc0
+ *
+ * We would like to make an attempt to sync the filesystems in this case, so
+ * if this happens, we treat attempts to acquire locks specially.
+ * All locks are acquired on behalf of proc0.
+ *
+ * If we've already paniced, we don't block waiting for locks, but
+ * just barge right ahead since we're already going down in flames.
+ */
+
+/*
  * Set, change, or release a lock.
  *
  * Shared requests increment the shared count. Exclusive requests set the
@@ -339,6 +354,7 @@ lockmgr(lkp, flags, interlkp)
 	int extflags;
 	cpuid_t cpu_id;
 	struct proc *p = curproc;
+	int lock_shutdown_noblock = 0;
 
 	error = 0;
 
@@ -359,10 +375,19 @@ lockmgr(lkp, flags, interlkp)
 	if (extflags & LK_SPIN)
 		pid = LK_KERNPROC;
 	else {
-#ifdef DIAGNOSTIC /* { */
-		if (p == NULL)
-			panic("lockmgr: no context");
-#endif /* } */
+		if (p == NULL) {
+			if (!doing_shutdown) {
+#ifdef DIAGNOSTIC
+				panic("lockmgr: no context");
+#endif
+			} else {
+				p = &proc0;
+				if (panicstr && (!(flags & LK_NOWAIT))) {
+					flags |= LK_NOWAIT;
+					lock_shutdown_noblock = 1;
+				}
+			}
+		}
 		pid = p->p_pid;
 	}
 	cpu_id = cpu_number();
@@ -637,6 +662,13 @@ lockmgr(lkp, flags, interlkp)
 		lkp->lk_flags &= ~LK_WAITDRAIN;
 		wakeup_one((void *)&lkp->lk_flags);
 	}
+	/*
+	 * Note that this panic will be a recursive panic, since
+	 * we only set lock_shutdown_noblock above if panicstr != NULL.
+	 */
+	if (error && lock_shutdown_noblock)
+		panic("lockmgr: deadlock (see previous panic)");
+	
 	simple_unlock(&lkp->lk_interlock);
 	return (error);
 }

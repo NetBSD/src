@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.127 2000/06/10 18:27:01 assar Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.128 2000/06/10 18:44:44 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2290,23 +2290,11 @@ vaccess(type, file_mode, uid, gid, acc_mode, cred)
  * will avoid needing to worry about dependencies.
  */
 void
-vfs_unmountall()
+vfs_unmountall(p)
+	struct proc *p;
 {
 	struct mount *mp, *nmp;
 	int allerror, error;
-	struct proc *p = curproc;	/* XXX */
-
-	/*
-	 * Unmounting a file system blocks the requesting process.
-	 * However, it's possible for this routine to be called when
-	 * curproc is NULL (e.g. panic situation, or via the debugger).
-	 * If we get stuck in this situation, just abort, since any
-	 * attempts to sleep will fault.
-	 */
-	if (p == NULL) {
-		printf("vfs_unmountall: no context, aborting\n");
-		return;
-	}
 
 	for (allerror = 0,
 	     mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
@@ -2335,13 +2323,21 @@ vfs_shutdown()
 {
 	struct buf *bp;
 	int iter, nbusy, dcount, s;
+	struct proc *p = curproc;
 
+	/* XXX we're certainly not running in proc0's context! */
+	if (p == NULL)
+		p = &proc0;
+	
 	printf("syncing disks... ");
 
 	/* XXX Should suspend scheduling. */
 	(void) spl0();
 
-	sys_sync(&proc0, (void *)0, (register_t *)0);
+	/* avoid coming back this way again if we panic. */
+	doing_shutdown = 1;
+
+	sys_sync(p, (void *)0, (register_t *)0);
 
 	/* Wait for sync to finish. */
 	dcount = 10000;
@@ -2406,7 +2402,7 @@ fail:
 	vnshutdown();
 #endif
 	/* Unmount file systems. */
-	vfs_unmountall();
+	vfs_unmountall(p);
 }
 
 /*
