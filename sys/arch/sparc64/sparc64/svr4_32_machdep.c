@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.15 2003/09/26 18:10:01 christos Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.16 2003/09/28 10:27:25 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.15 2003/09/26 18:10:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.16 2003/09/28 10:27:25 martin Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.15 2003/09/26 18:10:01 christo
 #include <compat/svr4_32/svr4_32_syscallargs.h>
 #include <compat/svr4_32/svr4_32_util.h>
 #include <compat/svr4_32/svr4_32_exec.h>
+#include <compat/netbsd32/netbsd32_exec.h>
 
 #include <machine/cpu.h>
 #include <machine/psl.h>
