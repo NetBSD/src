@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.74 2002/11/06 09:32:26 jdolecek Exp $	*/
+/*	$NetBSD: pstat.c,v 1.75 2002/12/11 22:19:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.74 2002/11/06 09:32:26 jdolecek Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.75 2002/12/11 22:19:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,38 +111,10 @@ kvm_t	*kd;
 
 static const struct {
 	u_int m_flag;
+	u_int m_visible;
 	const char *m_name;
 } mnt_flags[] = {
-	{ MNT_RDONLY, "rdonly" },
-	{ MNT_SYNCHRONOUS, "sync" },
-	{ MNT_NOEXEC, "noexec" },
-	{ MNT_NOSUID, "nosuid" },
-	{ MNT_NODEV, "nodev" },
-	{ MNT_UNION, "union" },
-	{ MNT_ASYNC, "async" },
-	{ MNT_NOCOREDUMP, "nocoredump" },
-	{ MNT_NOATIME, "noatime" },
-	{ MNT_SYMPERM, "symperm" },
-	{ MNT_NODEVMTIME, "nodevmtime" },
-	{ MNT_SOFTDEP, "softdep" },
-	{ MNT_EXRDONLY, "exrdonly" },
-	{ MNT_EXPORTED, "exported" },
-	{ MNT_DEFEXPORTED, "defexported" },
-	{ MNT_EXPORTANON, "exportanon" },
-	{ MNT_EXKERB, "exkerb" },
-	{ MNT_EXNORESPORT, "exnoresport" },
-	{ MNT_EXPUBLIC, "expublic" },
-	{ MNT_LOCAL, "local" },
-	{ MNT_QUOTA, "quota" },
-	{ MNT_ROOTFS, "rootfs" },
-	{ MNT_UPDATE, "update" },
-	{ MNT_DELEXPORT, "delexport" },
-	{ MNT_RELOAD, "reload" },
-	{ MNT_FORCE, "force" },
-	{ MNT_GONE, "gone" },
-	{ MNT_UNMOUNT, "unmount" },
-	{ MNT_WANTRDWR, "wantrdwr" },
-	{ 0 }
+	__MNT_FLAGS
 };
 
 struct flagbit_desc {
@@ -696,7 +668,7 @@ mount_print(mp)
 		int i;
 		const char *sep = " (";
 
-		for (i = 0; mnt_flags[i].m_flag; i++) {
+		for (i = 0; i <= sizeof mnt_flags / sizeof mnt_flags[0]; i++) {
 			if (flags & mnt_flags[i].m_flag) {
 				(void)printf("%s%s", sep, mnt_flags[i].m_name);
 				flags &= ~mnt_flags[i].m_flag;
