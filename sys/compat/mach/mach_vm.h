@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.9 2002/12/10 21:36:45 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.10 2002/12/11 21:23:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -164,6 +164,22 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_protect_reply_t;
 
+/* vm_inherit */
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_vm_address_t req_addr;
+	mach_vm_size_t req_size;
+	mach_vm_inherit_t req_inh;
+} mach_vm_inherit_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_inherit_reply_t;
+
 int mach_vm_map(struct proc *, mach_msg_header_t *,
     size_t, mach_msg_header_t *);
 int mach_vm_allocate(struct proc *, mach_msg_header_t *,
@@ -173,6 +189,8 @@ int mach_vm_deallocate(struct proc *, mach_msg_header_t *,
 int mach_vm_wire(struct proc *, mach_msg_header_t *,
     size_t, mach_msg_header_t *);
 int mach_vm_protect(struct proc *, mach_msg_header_t *,
+    size_t, mach_msg_header_t *);
+int mach_vm_inherit(struct proc *, mach_msg_header_t *,
     size_t, mach_msg_header_t *);
 
 #endif /* _MACH_VM_H_ */
