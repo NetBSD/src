@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.11 1998/01/17 12:14:34 mycroft Exp $	*/
+/*	$NetBSD: mknod.c,v 1.12 1998/01/17 13:04:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 Charles M. Hannum.  All rights reserved.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 Charles M. Hannum.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.11 1998/01/17 12:14:34 mycroft Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.12 1998/01/17 13:04:18 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -193,6 +193,7 @@ struct format {
 } formats[] = {
 	{"386bsd",  pack_8_8},
 	{"4bsd",    pack_8_8},
+	{"bsdos",   pack_12_20},
 	{"freebsd", pack_freebsd},
 	{"hpux",    pack_8_24},
 	{"linux",   pack_8_8},
