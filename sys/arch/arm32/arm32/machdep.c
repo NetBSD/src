@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 1997/10/14 11:21:21 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 1997/10/17 06:33:57 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -60,6 +60,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 
@@ -205,14 +206,7 @@ bootsync(void)
 		printf("Warning IRQ's disabled during boot()\n");
 	}
 
-	/*
-	 * Ok we set cold so that syslogd does not get rescheduled
-	 * during the shutdown.
-	 */
-
-	cold = 1;	/* no sleeping etc. */
 	vfs_shutdown();
-	cold = 0;	/* sleeping etc. */
 }
 
 /*
