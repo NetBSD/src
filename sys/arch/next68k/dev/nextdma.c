@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.20 1999/08/29 05:56:26 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.21 2000/01/12 19:18:00 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -505,34 +505,19 @@ nextdma_intr(arg)
 				dmadir = DMACSR_SETWRITE;
 			}
 
-			if (state & DMACSR_ENABLE) {
-
-				if ((nd->_nd_map_cont == NULL) && (nd->_nd_idx+1 == nd->_nd_map->dm_nsegs)) {
-					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-							DMACSR_CLRCOMPLETE | dmadir);
-				} else {
-					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-							DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETSUPDATE);
-				}
-
+				/* we used to SETENABLE here only
+                                   conditionally, but we got burned
+                                   because DMA sometimes would shut
+                                   down between when we checked and
+                                   when we acted upon it.  CL19991211 */
+			if ((nd->_nd_map_cont == NULL) && (nd->_nd_idx+1 == nd->_nd_map->dm_nsegs)) {
+				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
+						  DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETENABLE);
 			} else {
-
-#if (defined(ND_DEBUG))
-				if (nextdma_debug) next_dma_print(nd);
-#endif
-#if 0 && defined(DIAGNOSTIC)
-				printf("DMA: Unexpected shutdown, restarting intr(0x%b)\n",
-						NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS);
-#endif
-
-				if ((nd->_nd_map_cont == NULL) && (nd->_nd_idx+1 == nd->_nd_map->dm_nsegs)) {
-					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 
-							DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETENABLE);
-				} else {
-					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-							DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETSUPDATE | DMACSR_SETENABLE);
-				}
+				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
+						  DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETSUPDATE | DMACSR_SETENABLE);
 			}
+
 		}
 
 	}
