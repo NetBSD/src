@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.15 1996/08/27 21:56:46 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.16 1996/10/06 06:29:53 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -79,9 +79,6 @@ void	kn01_intr_establish __P((struct device *parent, void *cookie,
 			       intr_arg_t val ));
 void	kn01_intr_disestablish __P((struct confargs *));
 static void	kn01_attach __P((struct device *, struct device *, void *));
-
-void	config_tcbus __P((struct device *parent, int cputype,
-	int	(*printfn) __P((void *, const char *)) ));
 
 
 static int
