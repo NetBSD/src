@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.24 2000/10/03 13:28:27 scw Exp $	*/
+/*	$NetBSD: lpd.c,v 1.25 2000/10/03 13:54:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.24 2000/10/03 13:28:27 scw Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.25 2000/10/03 13:54:31 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -713,9 +713,9 @@ socksetup(af, options)
 		if (error) {
 			if (blist_addrs)
 				syslog(LOG_ERR, "%s: %s", blist[blidx],
-				    (gai_strerror(error)));
+				    gai_strerror(error));
 			else
-				syslog(LOG_ERR, (gai_strerror(error)));
+				syslog(LOG_ERR, "%s", gai_strerror(error));
 			mcleanup(0);
 		}
 
