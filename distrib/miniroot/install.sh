@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.7 1996/05/30 06:57:13 leo Exp $
+#	$NetBSD: install.sh,v 1.8 1996/06/18 12:50:56 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -258,10 +258,13 @@ echo -n	"Configure the network? [y] "
 getresp "y"
 case "$resp" in
 	y*|Y*)
-		echo -n "Enter system hostname: "
 		resp=""		# force at least one iteration
+		if [ -f /etc/myname ]; then
+			resp=`cat /etc/myname`
+		fi
+		echo -n "Enter system hostname: [$resp] "
 		while [ "X${resp}" = X"" ]; do
-			getresp ""
+			getresp "$resp"
 		done
 		hostname $resp
 		echo $resp > /tmp/myname
