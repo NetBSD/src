@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.44 1998/07/04 22:18:36 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.45 1998/11/28 09:52:55 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.44 1998/07/04 22:18:36 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.45 1998/11/28 09:52:55 jonathan Exp $");
 
 /*
  * devDC7085.c --
@@ -124,8 +124,8 @@ void dcxint	__P((struct tty *));
 int dcmctl	 __P((dev_t dev, int bits, int how));
 void dcscan	__P((void *));
 int dcparam	__P((struct tty *tp, struct termios *t));
-static int cold_dcparam __P((struct tty *tp, struct termios *t, 
-		      dcregs *dcaddr, int overload_exta_38400));
+static int cold_dcparam __P((struct tty *tp, struct termios *t,
+			     struct dc_softc *sc));
 
 extern void ttrstrt __P((void *));
 
@@ -195,6 +195,7 @@ struct speedtab dcspeedtab[] = {
  */
 extern int cold;
 dcregs *dc_cons_addr = 0;
+static struct dc_softc coldcons_softc;
 
 /* Test to see if active serial console on this unit. */
 #define CONSOLE_ON_UNIT(unit) \
@@ -220,30 +221,36 @@ dc_consinit(dev, dcaddr)
 	dev_t dev;
 	register dcregs *dcaddr;
 {
-  	struct termios cterm;
-  	struct tty ctty;
+	struct dc_softc *sc;
 
 	/* save address in case we're cold */
-	if (cold && dc_cons_addr == 0)
+	if (cold && dc_cons_addr == 0) {
+		/* called while very cold to initalize console output */
 		dc_cons_addr = dcaddr;
+		sc = &coldcons_softc;
+		sc->dc_pdma[0].p_addr = (void*)dcaddr;
+		sc->dc_pdma[1].p_addr = (void*)dcaddr;
+		sc->dc_pdma[2].p_addr = (void*)dcaddr;
+		sc->dc_pdma[3].p_addr = (void*)dcaddr;
+	} else {
+		/* being called from dcattach() to reset console */
+		sc = dc_cd.cd_devs[DCUNIT(dev)];
+	}
 
 	/* reset chip */
 	dc_reset(dcaddr);
 
+#if	1	/*XXX failsafe */
 	dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 		LPR_B9600 | DCLINE(dev);
 	wbflush();
 	DELAY(10);
+#endif
 
-	bzero(&cterm, sizeof(cterm));
-	bzero(&ctty, sizeof(ctty));
-	ctty.t_dev = dev;
 	dccons.cn_dev = dev;
-	cterm.c_cflag |= CLOCAL;
-	cterm.c_cflag = CS8;
-	cterm.c_ospeed = 9600;
 	*cn_tab = dccons;
-	cold_dcparam(&ctty, &cterm, dcaddr, 0); /* XXX untested */
+	sc->dcsoftCAR |= 1 << DCLINE(cn_tab->cn_dev);
+	dc_tty_init(sc, cn_tab->cn_dev);
 }
 
 
@@ -316,21 +323,9 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 			splx(s);
 		}
 
-		/* 5100 uses line 0 as serial console */
-		if (cn_tab->cn_dev != makedev(DCDEV, 0)) {
-			s = spltty();
-			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
-				LPR_B4800 | DCKBD_PORT;
-			wbflush();
-			DELAY(10000);
-			KBDReset(makedev(DCDEV, DCKBD_PORT), dcPutc);
-			DELAY(10000);
-			dcaddr->dc_lpr = LPR_RXENAB | LPR_B4800 | LPR_OPAR |
-				LPR_PARENB | LPR_8_BIT_CHAR | DCMOUSE_PORT;
-			wbflush();
-			DELAY(10000);
-			MouseInit(makedev(DCDEV, DCMOUSE_PORT), dcPutc, dcGetc);
-			splx(s);
+		if (major(cn_tab->cn_dev) == RCONSDEV) {
+			dc_kbd_init(sc, makedev(DCDEV, DCKBD_PORT));
+			dc_mouse_init(sc, makedev(DCDEV, DCMOUSE_PORT));
 		}
 	}
 	return (1);
@@ -381,7 +376,7 @@ dc_tty_init(sc, dev)
 	cterm.c_cflag  |= CLOCAL;
 #endif
 	cterm.c_ospeed = cterm.c_ispeed = 9600;
-	(void) dcparam(&ctty, &cterm);
+	(void) cold_dcparam(&ctty, &cterm,  sc);
 	DELAY(1000);
 	splx(s);
 }
@@ -398,15 +393,20 @@ dc_kbd_init(sc, dev)
 	s = spltty();
 	ctty.t_dev = dev;
 	cterm.c_cflag = CS8;
+
 #ifdef pmax
 	/* XXX -- why on pmax, not on Alpha? */
 	cterm.c_cflag |= CLOCAL;
 #endif /* pmax */
 	cterm.c_ospeed = cterm.c_ispeed = 4800;
-	(void) dcparam(&ctty, &cterm);
-	DELAY(10000);
-	splx(s);
 
+	(void) cold_dcparam(&ctty, &cterm, sc);
+	DELAY(10000);
+
+	KBDReset(ctty.t_dev, dcPutc);
+	DELAY(10000);
+
+	splx(s);
 }
 
 void
@@ -422,7 +422,7 @@ dc_mouse_init(sc, dev)
 	ctty.t_dev = dev;
 	cterm.c_cflag = CS8 | PARENB | PARODD;
 	cterm.c_ospeed = cterm.c_ispeed = 4800;
-	(void) dcparam(&ctty, &cterm);
+	(void) cold_dcparam(&ctty, &cterm, sc);
 
 #ifdef HAVE_RCONS
 	/*
@@ -434,7 +434,7 @@ dc_mouse_init(sc, dev)
 		goto done;
 
 	DELAY(10000);
-	MouseInit(ctty.t_dev, sccPutc, sccGetc);
+	MouseInit(ctty.t_dev, dcPutc, dcGetc);
 	DELAY(10000);
 
 done:
@@ -683,17 +683,22 @@ dcparam(tp, t)
 	 */
 	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
 	dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;
-	return (cold_dcparam(tp, t, dcaddr, sc->dc_19200));
+	return (cold_dcparam(tp, t, sc));
 
 }
 
+/*
+ * ttyparam entry point, but callable when very cold.
+ */
 int
-cold_dcparam(tp, t, dcaddr, overload_exta_38400)
+cold_dcparam(tp, t, sc)
 	register struct tty *tp;
 	register struct termios *t;
-	register dcregs *dcaddr;
-	int overload_exta_38400;
+	register struct dc_softc *sc;
 {
+	register dcregs *dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;
+  	int overload_exta_38400 =  0;
+
 	register int lpr;
 	register int cflag = t->c_cflag;
 	int unit = minor(tp->t_dev);
@@ -713,29 +718,6 @@ cold_dcparam(tp, t, dcaddr, overload_exta_38400)
         tp->t_ospeed = t->c_ospeed;
         tp->t_cflag = cflag;
 
-	/*
-	 * Handle console cases specially.
-	 */
-#if 0	/* XXX5100: do this in caller. */
-	if (/*XXX*/ 1) {	/* XXX jrs */
-		if (unit == DCKBD_PORT) {
-			lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
-				LPR_B4800 | DCKBD_PORT;
-			goto out;
-		} else if (unit == DCMOUSE_PORT) {
-			lpr = LPR_RXENAB | LPR_B4800 | LPR_OPAR |
-				LPR_PARENB | LPR_8_BIT_CHAR | DCMOUSE_PORT;
-			goto out;
-		}
-	} else
-#endif /* 0 */
-
-	/* XXX force consoles to 9600, 8 bit, no parity */
-	/* XXX fix callers instead? */
-	if (tp->t_dev == cn_tab->cn_dev) {
-		lpr = LPR_RXENAB | LPR_8_BIT_CHAR | LPR_B9600 | line;
-		goto out;
-	}
 	if (ospeed == 0) {
 		(void) dcmctl(unit, 0, DMSET);	/* hang up line */
 		return (0);
@@ -751,7 +733,7 @@ cold_dcparam(tp, t, dcaddr, overload_exta_38400)
 		lpr |= LPR_OPAR;
 	if (cflag & CSTOPB)
 		lpr |= LPR_2_STOP;
-out:
+
 	s = spltty();
 	dcaddr->dc_lpr = lpr;
 	wbflush();
