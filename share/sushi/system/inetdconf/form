@@ -1,4 +1,5 @@
-# $NetBSD: form,v 1.1 2001/03/06 21:18:42 garbled Exp $
+# $NetBSD: form,v 1.2 2001/08/01 08:11:33 garbled Exp $
+list:YES,NO			Restart inetd?
 script:script1,ftp,tcp		Ftp service
 script:script1,telnet,tcp	Telnet service
 script:script1,shell,tcp	Rshd/shell service
