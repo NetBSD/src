@@ -1,4 +1,4 @@
-/*	$NetBSD: close.c,v 1.7 1997/01/22 00:38:09 cgd Exp $	*/
+/*	$NetBSD: close.c,v 1.8 1999/03/31 01:50:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -77,14 +77,24 @@ oclose(fd)
 	register struct open_file *f = &files[fd];
 	int err1 = 0, err2 = 0;
 
+#if !defined(LIBSA_NO_FD_CHECKING)
 	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
 		errno = EBADF;
 		return (-1);
 	}
-	if (!(f->f_flags & F_RAW) && f->f_ops)
-		err1 = (f->f_ops->close)(f);
-	if (!(f->f_flags & F_NODEV) && f->f_dev)
-		err2 = (f->f_dev->dv_close)(f);
+#endif
+#if !defined(LIBSA_NO_RAW_ACCESS)
+	if (!(f->f_flags & F_RAW))
+#endif
+#if !defined(LIBSA_SINGLE_FILESYSTEM)
+		if (f->f_ops != NULL)
+#endif
+			err1 = FS_CLOSE(f->f_ops)(f);
+	if (!(f->f_flags & F_NODEV))
+#if !defined(LIBSA_SINGLE_DEVICE)
+		if (f->f_dev != NULL)
+#endif
+			err2 = DEV_CLOSE(f->f_dev)(f);
 	f->f_flags = 0;
 	if (err1) {
 		errno = err1;
