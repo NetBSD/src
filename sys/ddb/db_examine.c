@@ -1,27 +1,27 @@
-/*	$NetBSD: db_examine.c,v 1.6 1994/09/26 17:10:15 gwr Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.7 1994/10/06 05:20:42 mycroft Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
@@ -61,10 +61,10 @@ db_examine_cmd(addr, have_addr, count, modif)
 	char *		modif;
 {
 	if (modif[0] != '\0')
-	    db_strcpy(db_examine_format, modif);
+		db_strcpy(db_examine_format, modif);
 
 	if (count == -1)
-	    count = 1;
+		count = 1;
 
 	db_examine((db_addr_t) addr, db_examine_format, count);
 }
@@ -80,26 +80,26 @@ db_examine(addr, fmt, count)
 	int		size;
 	int		width;
 	char *		fp;
-	
+
 	while (--count >= 0) {
-	    fp = fmt;
-	    size = 4;
-	    width = 16;
-	    while ((c = *fp++) != 0) {
+		fp = fmt;
+		size = 4;
+		width = 16;
+		while ((c = *fp++) != 0) {
 			switch (c) {
-		    case 'b':
+			case 'b':
 				size = 1;
 				width = 4;
 				break;
-		    case 'h':
+			case 'h':
 				size = 2;
 				width = 8;
 				break;
-		    case 'l':
+			case 'l':
 				size = 4;
 				width = 16;
 				break;
-		    case 'a':	/* address */
+			case 'a':	/* address */
 				/* always forces a new line */
 				if (db_print_position() != 0)
 					db_printf("\n");
@@ -109,11 +109,11 @@ db_examine(addr, fmt, count)
 				break;
 			}
 			if (db_print_position() == 0) {
-				
+
 				/* Always print the address. */
 				db_printsym(addr, DB_STGY_ANY);
 				db_printf(":\t");
-				
+
 				db_prev = addr;
 			}
 			switch (c) {
@@ -151,19 +151,19 @@ db_examine(addr, fmt, count)
 				value = db_get_value(addr, 1, FALSE);
 				addr += 1;
 				if (value >= ' ' && value <= '~')
-				    db_printf("%c", value);
+					db_printf("%c", value);
 				else
-				    db_printf("\\%03o", value);
+					db_printf("\\%03o", value);
 				break;
 			case 's':	/* null-terminated string */
 				for (;;) {
-				    value = db_get_value(addr, 1, FALSE);
-				    addr += 1;
-				    if (value == 0)
+					value = db_get_value(addr, 1, FALSE);
+					addr += 1;
+					if (value == 0)
 						break;
-				    if (value >= ' ' && value <= '~')
+					if (value >= ' ' && value <= '~')
 						db_printf("%c", value);
-				    else
+					else
 						db_printf("\\%03o", value);
 				}
 				break;
@@ -178,7 +178,7 @@ db_examine(addr, fmt, count)
 			}
 			if (db_print_position() != 0)
 				db_end_line();
-	    }
+		}
 	}
 	db_next = addr;
 }
@@ -199,36 +199,36 @@ db_print_cmd(addr, have_addr, count, modif)
 	db_expr_t	value;
 
 	if (modif[0] != '\0')
-	    db_print_format = modif[0];
+		db_print_format = modif[0];
 
 	switch (db_print_format) {
-	    case 'a':
+	case 'a':
 		db_printsym((db_addr_t)addr, DB_STGY_ANY);
 		break;
-	    case 'r':
+	case 'r':
 		db_printf("%11r", addr);
 		break;
-	    case 'x':
+	case 'x':
 		db_printf("%8x", addr);
 		break;
-	    case 'z':
+	case 'z':
 		db_printf("%8z", addr);
 		break;
-	    case 'd':
+	case 'd':
 		db_printf("%11d", addr);
 		break;
-	    case 'u':
+	case 'u':
 		db_printf("%11u", addr);
 		break;
-	    case 'o':
+	case 'o':
 		db_printf("%16o", addr);
 		break;
-	    case 'c':
+	case 'c':
 		value = addr & 0xFF;
 		if (value >= ' ' && value <= '~')
-		    db_printf("%c", value);
+			db_printf("%c", value);
 		else
-		    db_printf("\\%03o", value);
+			db_printf("\\%03o", value);
 		break;
 	}
 	db_printf("\n");
@@ -247,7 +247,7 @@ db_strcpy(dst, src)
 	register char *src;
 {
 	while (*dst++ = *src++)
-	    ;
+		;
 }
 
 /*
@@ -266,52 +266,52 @@ db_search_cmd()
 
 	t = db_read_token();
 	if (t == tSLASH) {
-	    t = db_read_token();
-	    if (t != tIDENT) {
-	      bad_modifier:
-		db_printf("Bad modifier\n");
-		db_flush_lex();
-		return;
-	    }
+		t = db_read_token();
+		if (t != tIDENT) {
+			bad_modifier:
+			db_printf("Bad modifier\n");
+			db_flush_lex();
+			return;
+		}
 
-	    if (!strcmp(db_tok_string, "b"))
-		size = 1;
-	    else if (!strcmp(db_tok_string, "h"))
-		size = 2;
-	    else if (!strcmp(db_tok_string, "l"))
-		size = 4;
-	    else
-		goto bad_modifier;
+		if (!strcmp(db_tok_string, "b"))
+			size = 1;
+		else if (!strcmp(db_tok_string, "h"))
+			size = 2;
+		else if (!strcmp(db_tok_string, "l"))
+			size = 4;
+		else
+			goto bad_modifier;
 	} else {
-	    db_unread_token(t);
-	    size = 4;
+		db_unread_token(t);
+		size = 4;
 	}
 
 	if (!db_expression(&addr)) {
-	    db_printf("Address missing\n");
-	    db_flush_lex();
-	    return;
+		db_printf("Address missing\n");
+		db_flush_lex();
+		return;
 	}
 
 	if (!db_expression(&value)) {
-	    db_printf("Value missing\n");
-	    db_flush_lex();
-	    return;
+		db_printf("Value missing\n");
+		db_flush_lex();
+		return;
 	}
 
 	if (!db_expression(&mask))
-	    mask = 0xffffffff;
+		mask = 0xffffffff;
 
 	t = db_read_token();
 	if (t == tCOMMA) {
-	    if (!db_expression(&count)) {
-		db_printf("Count missing\n");
-		db_flush_lex();
-		return;
-	    }
+		if (!db_expression(&count)) {
+			db_printf("Count missing\n");
+			db_flush_lex();
+			return;
+		}
 	} else {
-	    db_unread_token(t);
-	    count = -1;		/* effectively forever */
+		db_unread_token(t);
+		count = -1;		/* effectively forever */
 	}
 	db_skip_to_eol();
 
