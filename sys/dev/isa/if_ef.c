@@ -1,5 +1,5 @@
-/*	$NetBSD: if_ef.c,v 1.2 1998/02/28 01:14:15 pk Exp $ */
-/*	$Id: if_ef.c,v 1.2 1998/02/28 01:14:15 pk Exp $ */
+/*	$NetBSD: if_ef.c,v 1.3 1998/03/02 23:12:18 pk Exp $ */
+/*	$Id: if_ef.c,v 1.3 1998/03/02 23:12:18 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -363,7 +363,6 @@ ef_match(parent, cf, aux)
 #endif
 	void *aux;
 {
-	struct ef_softc *sc = (struct ef_softc *) cf;
 	struct isa_attach_args * const ia = aux;
 
 	int idx;
@@ -412,7 +411,7 @@ ef_match(parent, cf, aux)
 		 * Reset and put card in CONFIG state without
 		 * changing address.
 		 */
-		elink_reset(iot, ioh, sc->sc_ie.sc_dev.dv_parent->dv_unit);
+		elink_reset(iot, ioh, parent->dv_unit);
 		elink_idseq(iot, ioh, ELINK_507_POLY);
 		elink_idseq(iot, ioh, ELINK_507_POLY);
 		bus_space_write_1(iot, ioh, 0, 0xff);
