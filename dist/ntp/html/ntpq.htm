@@ -34,7 +34,7 @@ again defaulting to localhost when no other host is specified. <TT>ntpq</TT>
 will prompt for commands if the standard input is a terminal device.
 
 <P><TT>ntpq</TT> uses NTP mode 6 packets to communicate with the NTP server,
-and hence can be used to query any compatable server on the network which
+and hence can be used to query any compatible server on the network which
 permits it. Note that since NTP is a UDP protocol this communication will
 be somewhat unreliable, especially over large distances in terms of network
 topology. <TT>ntpq</TT> makes one attempt to retransmit requests, and will
@@ -94,7 +94,7 @@ requests being sent to a server. These are described following.
 <DD>
 A <TT>"?"</TT> by itself will print a list of all the command keywords
 known to this incarnation of <TT>ntpq</TT>. A <TT>"?"</TT> followed by
-a command keyword will print funcation and usage information about the
+a command keyword will print function and usage information about the
 command. This command is probably a better source of information about
 <TT>ntpq</TT> than this manual page.</DD>
 
@@ -315,7 +315,7 @@ cause the server to return a default variable display.</DD>
 &nbsp;</DD>
 
 <DT>
-<TT>lassocations</TT></DT>
+<TT>lassociations</TT></DT>
 
 <DD>
 Obtains and prints a list of association identifiers and peer statuses
@@ -415,7 +415,7 @@ of the peer, all in milliseconds.</DD>
 
 <DD>
 The character in the left margin indicates the fate of this peer in the
-clock selection process. Folowing is a list of these characters, the pidgeon
+clock selection process. Following is a list of these characters, the pidgeon
 used in the <TT>rv</TT> command, and a short explanation of the condition
 revealed.</DD>
 
@@ -485,7 +485,7 @@ The peer is a survivor and a candidate for the combining algorithm.</DD>
 <DL>
 <DD>
 The peer is a survivor, but not among the first six peers sorted by synchronization
-distance. If the assocation is ephemeral, it may be demobilized to conserve
+distance. If the association is ephemeral, it may be demobilized to conserve
 resources.</DD>
 
 <DD>
