@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.25 2001/06/23 13:40:35 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.26 2001/06/23 17:32:21 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -63,7 +63,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.25 2001/06/23 13:40:35 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.26 2001/06/23 17:32:21 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -1354,9 +1354,8 @@ ea_mc_reset_8004(struct seeq8005_softc *sc)
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
-        u_int8_t *cp, c;
         u_int32_t crc;
-        int i, len;
+        int i;
         struct ether_multistep step;
         u_int8_t af[8];
 
@@ -1393,19 +1392,9 @@ ea_mc_reset_8004(struct seeq8005_softc *sc)
 				af[i] = 0xff;
 			break;
 		}
-		cp = enm->enm_addrlo;
-		crc = 0xffffffff;
-		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
-			c = *cp++;
-			for (i = 8; --i >= 0;) {
-				if (((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01)) {
-					crc <<= 1;
-					crc ^= 0x04c11db6 | 1;
-				} else
-					crc <<= 1;
-				c >>= 1;
-			}
-		}
+
+		crc = ether_crc32_be(enm->enm_addrlo, sizeof(enm->enm_addrlo));
+
 		/* Just want the 6 most significant bits. */
 		crc = (crc >> 2) & 0x3f;
 
