@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2001/06/14 15:29:23 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2001/06/14 16:14:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,6 +84,9 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+
+#include "opt_memsize.h"
+#include "opt_ethaddr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,7 +325,12 @@ mach_init(int argc, char *argv[], char *envp[])
 	/*
 	 * Get the Ethernet address of the on-board Ethernet.
 	 */
-	if ((cp = pmon_getenv("ethaddr")) != NULL) {
+#if defined(ETHADDR)
+	cp = ETHADDR;
+#else
+	cp = pmon_getenv("ethaddr");
+#endif
+	if (cp != NULL) {
 		for (i = 0; i < ETHER_ADDR_LEN; i++) {
 			algor_ethaddr[i] = strtoul(cp, &cp0, 16);
 			cp = cp0 + 1;
@@ -385,17 +393,23 @@ mach_init(int argc, char *argv[], char *envp[])
 	 * Note: Reserve the first page!  That's where the trap
 	 * vectors are located.
 	 */
-	mem_clusters[mem_cluster_cnt].start = NBPG;
-	if ((cp = pmon_getenv("memsize")) != NULL) {
+#if defined(MEMSIZE)
+	size = MEMSIZE * 1024 * 1024;
+#else
+	if ((cp = pmon_getenv("memsize")) != NULL)
 		size = strtoul(cp, NULL, 10) * 1024 * 1024;
-		mem_clusters[mem_cluster_cnt].size =
-		    size - mem_clusters[mem_cluster_cnt].start;
-		mem_cluster_cnt++;
-	} else {
+	else {
 		printf("FATAL: `memsize' PMON variable not set.  Set it to\n");
 		printf("       the amount of memory (in MB) and try again.\n");
+		printf("       Or, build a kernel with the `MEMSIZE' "
+		    "option.\n");
 		panic("algor_init");
 	}
+#endif /* MEMSIZE */
+	mem_clusters[mem_cluster_cnt].start = NBPG;
+	mem_clusters[mem_cluster_cnt].size =
+	    size - mem_clusters[mem_cluster_cnt].start;
+	mem_cluster_cnt++;
 
 	/*
 	 * Copy the exception-dispatch code down to the exception vector.
