@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_null.8,v 1.12 2001/06/05 11:22:49 wiz Exp $
+.\"	$NetBSD: mount_null.8,v 1.13 2001/06/07 13:58:23 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,7 +71,7 @@ The
 .Nm
 filesystem differs from a traditional
 loopback file system in two respects: it is implemented using
-a stackable layers techniques, and its 
+a stackable layers technique, and its 
 .Do
 null-nodes
 .Dc
@@ -90,11 +90,11 @@ man page for possible options and their meanings.
 .El
 .Pp
 The null layer has two purposes.
-First, it serves as a demonstration of layering by proving a layer
+First, it serves as a demonstration of layering by providing a layer
 which does nothing.
 Second, the null layer can serve as a prototype layer.
 Since it provides all necessary layer framework,
-new file system layers can be created very easily be starting
+new file system layers can be created very easily by starting
 with a null layer.
 .Pp
 The remainder of this man page examines the null layer as a basis
@@ -134,12 +134,12 @@ Although bypass handles most operations,
 and
 .Em vop_print
 are not bypassed.
-.Em Vop_getattr
+.Em vop_getattr
 must change the fsid being returned.
-.Em Vop_inactive
+.Em vop_inactive
 and vop_reclaim are not bypassed so that
 they can handle freeing null-layer specific data.
-.Em Vop_print
+.Em vop_print
 is not bypassed to avoid excessive debugging
 information.
 .\"
@@ -174,7 +174,7 @@ done on the root null-node.  This operation would bypass through
 to the lower layer which would return a vnode representing 
 the UFS 
 .Pa sys .
-Null_bypass then builds a null-node
+null_bypass then builds a null-node
 aliasing the UFS 
 .Pa sys
 and returns this to the caller.
@@ -187,8 +187,9 @@ process when constructing other vnode stacks.
 .Sh CREATING OTHER FILE SYSTEM LAYERS
 One of the easiest ways to construct new file system layers is to make
 a copy of the null layer, rename all files and variables, and
-then begin modifying the copy.  Sed can be used to easily rename
-all variables.
+then begin modifying the copy.
+.Xr sed 1
+can be used to easily rename all variables.
 .Pp
 The umap layer is an example of a layer descended from the 
 null layer.
@@ -200,23 +201,23 @@ when the operation cannot be completely bypassed.  Each method
 is appropriate in different situations.  In both cases,
 it is the responsibility of the aliasing layer to make
 the operation arguments "correct" for the lower layer
-by mapping an vnode arguments to the lower layer.
+by mapping any vnode arguments to the lower layer.
 .Pp
 The first approach is to call the aliasing layer's bypass routine.
 This method is most suitable when you wish to invoke the operation
 currently being handled on the lower layer.  It has the advantage
-the bypass routine already must do argument mapping.
+that the bypass routine already must do argument mapping.
 An example of this is 
 .Em null_getattrs
 in the null layer.
 .Pp
-A second approach is to directly invoked vnode operations on
+A second approach is to directly invoke vnode operations on
 the lower layer with the
 .Em VOP_OPERATIONNAME
 interface.
 The advantage of this method is that it is easy to invoke
 arbitrary operations on the lower layer.  The disadvantage
-is that vnodes arguments must be manually mapped.
+is that vnode arguments must be manually mapped.
 .\"
 .\"
 .Sh SEE ALSO
