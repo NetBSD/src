@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.13 1993/05/22 08:01:27 cgd Exp $
+ *	$Id: isa.c,v 1.14 1993/05/28 09:10:52 deraadt Exp $
  */
 
 /*
@@ -63,6 +63,10 @@
 #include "i386/isa/icu.h"
 #include "i386/isa/ic/i8237.h"
 #include "i386/isa/ic/i8042.h"
+
+/* sorry, has to be here, no place else really suitable */
+#include "machine/pc/display.h"
+u_short *Crtat = (u_short *)MONO_BUF;
 
 /*
 **  Register definitions for DMA controller 1 (channels 0..3):

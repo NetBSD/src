@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isa.h,v 1.5 1993/05/22 08:01:28 cgd Exp $
+ *	$Id: isa.h,v 1.6 1993/05/28 09:10:53 deraadt Exp $
  */
 
 /*
@@ -181,3 +181,10 @@ unsigned kbd_8042cmd(int);
 #define	WEITEK_FPU	0xC0000000	/* WTL 2167 */
 #define	CYRIX_EMC	0xC0000000	/* Cyrix EMC */
 #endif	COMPAQ_RAMRELOC
+
+/* stuff that used to be in pccons.c */
+#define MONO_BASE	0x3B4
+#define MONO_BUF	0xfe0B0000
+#define CGA_BASE	0x3D4
+#define CGA_BUF		0xfe0B8000
+#define IOPHYSMEM	0xA0000

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.18 1993/05/26 10:11:07 deraadt Exp $
+ *	$Id: pccons.c,v 1.19 1993/05/28 09:10:55 deraadt Exp $
  */
 
 /*
@@ -60,12 +60,18 @@
 #include "i386/isa/kbd.h"
 #include "machine/pc/display.h"
 
+#include "pc.h"
+#if NPC > 0
+
+extern u_short *Crtat;
+
 #ifdef XSERVER						/* 15 Aug 92*/
 int pc_xmode;
 #endif /* XSERVER */
 
 struct	tty pccons;
 struct	tty *pccons_tty = &pccons;
+struct	tty **pc_tty = &pccons_tty;
 
 struct	pcconsoftc {
 	char	cs_flags;
@@ -112,14 +118,8 @@ struct	isa_driver pcdriver = {
 #define	COL		80
 #define	ROW		25
 #define	CHR		2
-#define MONO_BASE	0x3B4
-#define MONO_BUF	0xfe0B0000
-#define CGA_BASE	0x3D4
-#define CGA_BUF		0xfe0B8000
-#define IOPHYSMEM	0xA0000
 
 static unsigned int addr_6845 = MONO_BASE;
-u_short *Crtat = (u_short *)MONO_BUF;
 static openf;
 
 char *sgetc __P((int));
@@ -1713,8 +1713,6 @@ dprintf(flgs, fmt /*, va_alist */)
 	__color = 0;
 }
 
-consinit() {}
-
 int pcmmap(dev_t dev, int offset, int nprot)
 {
 	if (offset > 0x20000)
@@ -1753,6 +1751,4 @@ pc_xmode_off ()
 }
 #endif	/* XSERVER*/
 
-/*
- * EOF -- File has not been truncated
- */
+#endif /* NPC > 0 */
