@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.11 1995/03/08 02:14:54 cgd Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.12 1995/04/11 04:25:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -72,7 +72,8 @@ struct ifnet_en {
 	struct ifnet_en *ifen_next;
 };
 
-int	nsipoutput(), nsipioctl(), nsipstart();
+int	nsipoutput(), nsipioctl();
+void	nsipstart();
 #define LOMTU	(1024+512);
 
 struct ifnet nsipif;
@@ -300,8 +301,9 @@ bad:
 	return (ENETUNREACH);
 }
 
+void
 nsipstart(ifp)
-struct ifnet *ifp;
+	struct ifnet *ifp;
 {
 	panic("nsip_start called\n");
 }
