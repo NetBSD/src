@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.h,v 1.97 1999/03/28 17:32:52 kleink Exp $	*/
+/*	$NetBSD: syscall.h,v 1.98 1999/06/08 03:08:32 thorpej Exp $	*/
 
 /*
  * System call numbers.
@@ -217,7 +217,7 @@
 
 				/* 76 is obsolete vhangup */
 				/* 77 is obsolete vlimit */
-/* syscall: "mincore" ret: "int" args: "caddr_t" "size_t" "char *" */
+/* syscall: "mincore" ret: "int" args: "void *" "size_t" "char *" */
 #define	SYS_mincore	78
 
 /* syscall: "getgroups" ret: "int" args: "int" "gid_t *" */
