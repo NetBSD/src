@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.78 1999/04/14 23:42:00 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.79 1999/04/17 00:01:19 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -816,6 +816,8 @@ process_sstep(p, sstep)
  * uses resource maps when allocating space, which is allocated from 
  * the IOMAP submap. The implementation is similar to the uba resource
  * map handling. Size is given in pages.
+ * If the page requested is bigger than a logical page, space is
+ * allocated from the kernel map instead.
  *
  * It is known that the first page in the iospace area is unused; it may
  * be use by console device drivers (before the map system is inited).
@@ -834,13 +836,19 @@ vax_map_physmem(phys, size)
 	if (!iospace_inited)
 		panic("vax_map_physmem: called before rminit()?!?");
 #endif
-	pageno = rmalloc(iomap, size);
-	if (pageno == 0) {
-		if (warned++ == 0) /* Warn only once */
-			printf("vax_map_physmem: iomap too small\n");
-		return 0;
+	if (size >= LTOHPN) {
+		addr = uvm_km_valloc(kernel_map, size * VAX_NBPG);
+		if (addr == 0)
+			panic("vax_map_physmem: kernel map full");
+	} else {
+		pageno = rmalloc(iomap, size);
+		if (pageno == 0) {
+			if (warned++ == 0) /* Warn only once */
+				printf("vax_map_physmem: iomap too small");
+			return 0;
+		}
+		addr = iospace + (pageno * VAX_NBPG);
 	}
-	addr = iospace + (pageno * VAX_NBPG);
 	ioaccess(addr, phys, size);
 #ifdef PHYSMEMDEBUG
 	printf("vax_map_physmem: alloc'ed %d pages for paddr %lx, at %lx\n",
@@ -863,6 +871,9 @@ vax_unmap_physmem(addr, size)
 	printf("vax_unmap_physmem: unmapping %d pages at addr %lx\n", 
 	    size, addr);
 #endif
-	rmfree(iomap, size, pageno);
 	iounaccess(addr, size);
+	if (size >= LTOHPN)
+		uvm_km_free(kernel_map, addr, size * VAX_NBPG);
+	else
+		rmfree(iomap, size, pageno);
 }
