@@ -1,8 +1,12 @@
-PROG=re
-SRCS=main.c split.c debug.c
+#	$NetBSD: Makefile,v 1.2 1995/02/16 19:38:45 cgd Exp $
+
+PROG=	re
+SRCS=	main.c split.c debug.c
 NOMAN=
 
-TESTS=/usr/src/lib/libc/regex/tests
+CFLAGS+= -I${.CURDIR}/../../../../lib/libc/regex
+
+TESTS=	${.CURDIR}/tests
 
 regress:
 	./re < ${TESTS}
@@ -10,4 +14,3 @@ regress:
 	./re -er < ${TESTS}
 
 .include <bsd.prog.mk>
-.PATH: /usr/src/lib/libc/regex
