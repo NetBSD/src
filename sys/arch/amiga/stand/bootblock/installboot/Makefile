@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1997/05/19 21:19:23 is Exp $
-MANSUBDIR=/amiga
+#	$NetBSD: Makefile,v 1.2 1997/06/16 13:39:48 is Exp $
 SCRIPTS=installboot.sh
 SCRIPTSNAME=installboot
-MAN=installboot.8
+NOMAN=share/man/man8/man8.amiga
 
 .include <bsd.prog.mk>
