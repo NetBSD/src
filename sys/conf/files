@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.226 1998/07/24 15:26:27 rvb Exp $
+#	$NetBSD: files,v 1.227 1998/07/26 03:29:12 explorer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -187,7 +187,7 @@ file	dev/ic/lemac.c			lc
 device	le: arp, ether, ifnet
 define le24
 define le32
-file	dev/ic/am7990.c		le24
+file	dev/ic/am7990.c			le24
 file	dev/ic/am79900.c		le32
 file	dev/ic/lance.c			le24 | le32
 
@@ -215,6 +215,10 @@ file	dev/ic/midway.c			en
 # NCR 53x9x or Emulex ESP SCSI Controller
 define	ncr53c9x
 file	dev/ic/ncr53c9x.c		ncr53c9x
+
+# Hitachi HD64570 serial controller
+define hd64570
+file	dev/ic/hd64570.c		hd64570
 
 # Intel 82586 Ethernet Controller
 define	i82586
