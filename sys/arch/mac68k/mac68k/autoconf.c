@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.48 1998/10/23 01:16:24 ender Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.49 1999/02/18 07:24:52 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,8 +77,8 @@ static void findbootdev __P((void));
 static int target_to_unit __P((u_long, u_long, u_long));
 
 struct devnametobdevmaj mac68k_nam2blk[] = {
-	{ "sd",         4 },
-	{ "cd",         6 },
+	{ "sd",		4 },
+	{ "cd",		6 },
 	{ "md",		13 },
 	{ NULL,		0 },
 };
