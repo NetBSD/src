@@ -4409,6 +4409,7 @@ template_proc (repository, template)
 	    return 1;
 	}
     }
+    buf_send_counted (protocol);
     if (fclose (fp) < 0)
 	error (0, errno, "cannot close rcsinfo template file %s", template);
     return 0;
@@ -5125,10 +5126,11 @@ error ENOMEM Virtual memory exhausted.\n");
 
 
 #if defined (HAVE_KERBEROS) || defined (AUTH_SERVER_SUPPORT) || defined (HAVE_GSSAPI)
-static void switch_to_user PROTO((const char *));
+static void switch_to_user PROTO((const char *, const char *));
 
 static void
-switch_to_user (username)
+switch_to_user (cvs_username, username)
+    const char *cvs_username; /* Only used for error messages. */
     const char *username;
 {
     struct passwd *pw;
@@ -5144,6 +5146,20 @@ switch_to_user (username)
 error 0 %s: no such system user\n", username);
 	/* Don't worry about server_cleanup; server_active isn't set yet.  */
 	error_exit ();
+    }
+
+    if (pw->pw_uid == 0)
+    {
+#ifdef HAVE_SYSLOG_H
+	    /* FIXME: Can the IP address of the connecting client be retrieved
+	     * and printed here?
+	     */
+	    syslog (LOG_DAEMON | LOG_ALERT,
+		    "attempt to root from account: %s", cvs_username
+		   );
+#endif
+        printf("error 0: root not allowed\n");
+        error_exit ();
     }
 
 #if HAVE_INITGROUPS
@@ -5751,7 +5767,7 @@ pserver_authenticate_connection ()
     strcpy (Pserver_Repos, repository);
 
     /* Switch to run as this user. */
-    switch_to_user (host_user);
+    switch_to_user (username, host_user);
     free (host_user);
     free (tmp);
     free (repository);
@@ -5834,7 +5850,7 @@ error 0 kerberos: can't get local name: %s\n", krb_get_err_text(status));
     }
 
     /* Switch to run as this user. */
-    switch_to_user (user);
+    switch_to_user (user, user);
 }
 #endif /* HAVE_KERBEROS */
 
@@ -5946,7 +5962,7 @@ gserver_authenticate_connection ()
 	    error (1, errno, "fwrite failed");
     }
 
-    switch_to_user (buf);
+    switch_to_user ("GSSAPI", buf);
 
     printf ("I LOVE YOU\n");
     fflush (stdout);
