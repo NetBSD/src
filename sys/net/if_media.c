@@ -1,4 +1,41 @@
-/*	$NetBSD: if_media.c,v 1.1 1997/03/17 02:55:15 thorpej Exp $	*/
+/*	$NetBSD: if_media.c,v 1.2 1998/08/06 02:19:34 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1997
@@ -356,53 +393,15 @@ ifmedia_match(ifm, target, mask)
 }
 
 #ifdef IFMEDIA_DEBUG
+
 struct ifmedia_description ifm_type_descriptions[] =
     IFM_TYPE_DESCRIPTIONS;
 
-struct ifmedia_description ifm_subtype_ethernet_descriptions[] =
-    IFM_SUBTYPE_ETHERNET_DESCRIPTIONS;
+struct ifmedia_description ifm_subtype_descriptions[] =
+    IFM_SUBTYPE_DESCRIPTIONS;
 
-struct ifmedia_description ifm_subtype_ethernet_option_descriptions[] =
-    IFM_SUBTYPE_ETHERNET_OPTION_DESCRIPTIONS;
-
-struct ifmedia_description ifm_subtype_tokenring_descriptions[] =
-    IFM_SUBTYPE_TOKENRING_DESCRIPTIONS;
-
-struct ifmedia_description ifm_subtype_tokenring_option_descriptions[] =
-    IFM_SUBTYPE_TOKENRING_OPTION_DESCRIPTIONS;
-
-struct ifmedia_description ifm_subtype_fddi_descriptions[] =
-    IFM_SUBTYPE_FDDI_DESCRIPTIONS;
-
-struct ifmedia_description ifm_subtype_fddi_option_descriptions[] =
-    IFM_SUBTYPE_FDDI_OPTION_DESCRIPTIONS;
-
-struct ifmedia_description ifm_subtype_shared_descriptions[] =
-    IFM_SUBTYPE_SHARED_DESCRIPTIONS;
-
-struct ifmedia_description ifm_shared_option_descriptions[] =
-    IFM_SHARED_OPTION_DESCRIPTIONS;
-
-struct ifmedia_type_to_subtype {
-	struct ifmedia_description *subtypes;
-	struct ifmedia_description *options;
-};
-
-/* must be in the same order as IFM_TYPE_DESCRIPTIONS */
-struct ifmedia_type_to_subtype ifmedia_types_to_subtypes[] = {
-	{
-	  &ifm_subtype_ethernet_descriptions[0],
-	  &ifm_subtype_ethernet_option_descriptions[0]
-	},
-	{
-	  &ifm_subtype_tokenring_descriptions[0],
-	  &ifm_subtype_tokenring_option_descriptions[0]
-	},
-	{
-	  &ifm_subtype_fddi_descriptions[0],
-	  &ifm_subtype_fddi_option_descriptions[0]
-	},
-};
+struct ifmedia_description ifm_option_descriptions[] =
+    IFM_OPTION_DESCRIPTIONS;
 
 /*
  * print a media word.
@@ -412,64 +411,45 @@ ifmedia_printword(ifmw)
 	int ifmw;
 {
 	struct ifmedia_description *desc;
-	struct ifmedia_type_to_subtype *ttos;
 	int seen_option = 0;
 
-	/* Find the top-level interface type. */
-	for (desc = ifm_type_descriptions, ttos = ifmedia_types_to_subtypes;
-	    desc->ifmt_string != NULL; desc++, ttos++)
+	/* Print the top-level interface type. */
+	for (desc = ifm_type_descriptions; desc->ifmt_string != NULL;
+	     desc++) {
 		if (IFM_TYPE(ifmw) == desc->ifmt_word)
 			break;
-	if (desc->ifmt_string == NULL) {
-		printf("<unknown type>\n");
-		return;
 	}
-	printf(desc->ifmt_string);
+	if (desc->ifmt_string == NULL)
+		printf("<unknown type> ");
+	else
+		printf("%s ", desc->ifmt_string);
 
-	/*
-	 * Check for the shared subtype descriptions first, then the
-	 * type-specific ones.
-	 */
-	for (desc = ifm_subtype_shared_descriptions;
-	    desc->ifmt_string != NULL; desc++)
-		if (IFM_SUBTYPE(ifmw) == desc->ifmt_word)
-			goto got_subtype;
-
-	for (desc = ttos->subtypes; desc->ifmt_string != NULL; desc++)
-		if (IFM_SUBTYPE(ifmw) == desc->ifmt_word)
+	/* Print the subtype. */
+	for (desc = ifm_subtype_descriptions; desc->ifmt_string != NULL;
+	     desc++) {
+		if (IFM_TYPE_MATCH(desc->ifmt_word, ifmw) &&
+		    IFM_SUBTYPE(desc->ifmt_word) == IFM_SUBTYPE(ifmw))
 			break;
-	if (desc->ifmt_string == NULL) {
-		printf(" <unknown subtype>\n");
-		return;
 	}
+	if (desc->ifmt_string == NULL)
+		printf("<unknown subtype>");
+	else
+		printf("%s", desc->ifmt_string);
 
- got_subtype:
-	printf(" %s", desc->ifmt_string);
-
-	/*
-	 * Look for shared options.
-	 */
-	for (desc = ifm_shared_option_descriptions;
-	    desc->ifmt_string != NULL; desc++) {
-		if (ifmw & desc->ifmt_word) {
+	/* Print any options. */
+	for (desc = ifm_option_descriptions; desc->ifmt_string != NULL;
+	     desc++) {
+		if (IFM_TYPE_MATCH(desc->ifmt_word, ifmw) &&
+		    (ifmw & desc->ifmt_word) != 0 &&
+		    (seen_option & IFM_OPTIONS(desc->ifmt_word)) == 0) {
 			if (seen_option == 0)
 				printf(" <");
-			printf("%s%s", seen_option++ ? "," : "",
+			printf("%s%s", seen_option ? "," : ""
 			    desc->ifmt_string);
-		}
-	}
-
-	/*
-	 * Look for subtype-specific options.
-	 */
-	for (desc = ttos->options; desc->ifmt_string != NULL; desc++) {
-		if (ifmw & desc->ifmt_word) {
-			if (seen_option == 0)
-				printf(" <");
-			printf("%s%s", seen_option++ ? "," : "",
-			    desc->ifmt_string); 
+			seen_option |= IFM_OPTIONS(desc->ifmt_word);
 		}
 	}
 	printf("%s\n", seen_option ? ">" : "");
 }
+
 #endif /* IFMEDIA_DEBUG */
