@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.7 1995/01/25 06:08:06 cgd Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.8 1995/03/26 00:01:08 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -184,7 +184,11 @@ int hostnamelen;
 char domainname[MAXHOSTNAMELEN];
 int domainnamelen;
 long hostid;
+#ifdef INSECURE
+int securelevel = -1;
+#else
 int securelevel;
+#endif
 
 /*
  * kernel related system variables.
