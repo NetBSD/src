@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_misc.c,v 1.2.2.7 2002/08/01 02:44:20 nathanw Exp $	*/
+/*	$NetBSD: pecoff_misc.c,v 1.2.2.8 2002/08/05 18:18:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.2.2.7 2002/08/01 02:44:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.2.2.8 2002/08/05 18:18:06 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -580,32 +580,34 @@ pecoff_sys_lutimes(l, v, retval)
 }
 
 int
-pecoff_sys___stat13(p, v, retval)
-	struct proc *p;
+pecoff_sys___stat13(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	struct pecoff_sys___stat13_args *uap = v;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return sys___stat13(p, v, retval);
+	return sys___stat13(l, v, retval);
 }
 
 
 int
-pecoff_sys___lstat13(p, v, retval)
-	struct proc *p;
+pecoff_sys___lstat13(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	struct pecoff_sys___lstat13_args *uap = v;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
-	return sys___lstat13(p, v, retval);
+	return sys___lstat13(l, v, retval);
 }
 
 int
