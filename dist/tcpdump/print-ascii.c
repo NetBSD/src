@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ascii.c,v 1.1.1.1 2001/06/25 19:26:33 itojun Exp $	*/
+/*	$NetBSD: print-ascii.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,9 +40,14 @@
 #include "config.h"
 #endif
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
      "@(#) Header: /tcpdump/master/tcpdump/print-ascii.c,v 1.6 2000/01/29 16:47:46 itojun Exp";
+#else
+__RCSID("$NetBSD: print-ascii.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+#endif
 #endif
 #include <stdio.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip6opts.c,v 1.1.1.1 2001/06/25 19:26:35 itojun Exp $	*/
+/*	$NetBSD: print-ip6opts.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -33,9 +33,14 @@
 #include "config.h"
 #endif
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
      "@(#) Header: /tcpdump/master/tcpdump/print-ip6opts.c,v 1.9 2001/05/09 02:47:26 itojun Exp";
+#else
+__RCSID("$NetBSD: print-ip6opts.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+#endif
 #endif
 
 #ifdef INET6

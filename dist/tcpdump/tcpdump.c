@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump.c,v 1.1.1.1 2001/06/25 19:26:41 itojun Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.2 2001/06/25 20:00:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -21,12 +21,17 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/tcpdump.c,v 1.165 2001/06/24 20:38:52 itojun Exp (LBL)";
+#else
+__RCSID("$NetBSD: tcpdump.c,v 1.2 2001/06/25 20:00:01 itojun Exp $");
+#endif
 #endif
 
 /*
