@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.231.2.20 2001/11/26 10:09:26 he Exp $
+#	$NetBSD: mi,v 1.231.2.21 2002/02/26 22:12:52 he Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2373,6 +2373,7 @@
 ./usr/share/man/cat3/pw_copy.0	comp-c-catman
 ./usr/share/man/cat3/pw_edit.0	comp-c-catman
 ./usr/share/man/cat3/pw_error.0	comp-c-catman
+./usr/share/man/cat3/pw_getconf.0	comp-c-catman
 ./usr/share/man/cat3/pw_init.0	comp-c-catman
 ./usr/share/man/cat3/pw_lock.0	comp-c-catman
 ./usr/share/man/cat3/pw_mkdb.0	comp-c-catman
@@ -4093,6 +4094,7 @@
 ./usr/share/man/man3/pw_copy.3		comp-c-man
 ./usr/share/man/man3/pw_edit.3		comp-c-man
 ./usr/share/man/man3/pw_error.3		comp-c-man
+./usr/share/man/man3/pw_getconf.3	comp-c-man
 ./usr/share/man/man3/pw_init.3		comp-c-man
 ./usr/share/man/man3/pw_lock.3		comp-c-man
 ./usr/share/man/man3/pw_mkdb.3		comp-c-man

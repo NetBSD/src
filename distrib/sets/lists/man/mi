@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.39 2002/02/26 20:30:35 he Exp $
+# $NetBSD: mi,v 1.253.2.40 2002/02/26 22:12:51 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -973,6 +973,7 @@
 ./usr/share/man/cat5/nsswitch.conf.0
 ./usr/share/man/cat5/openssl.cnf.0
 ./usr/share/man/cat5/passwd.0
+./usr/share/man/cat5/passwd.conf.0
 ./usr/share/man/cat5/phones.0
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
@@ -2406,6 +2407,7 @@
 ./usr/share/man/man5/nsswitch.conf.5
 ./usr/share/man/man5/openssl.cnf.5
 ./usr/share/man/man5/passwd.5
+./usr/share/man/man5/passwd.conf.5
 ./usr/share/man/man5/phones.5
 ./usr/share/man/man5/printcap.5
 ./usr/share/man/man5/protocols.5
