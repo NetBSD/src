@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.16 1998/02/03 04:26:46 sakamoto Exp $ */
+/*	$NetBSD: wdc.c,v 1.17 1998/02/04 14:13:42 sakamoto Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -63,12 +63,12 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 
-#ifndef __BUS_SPACE_NEED_STREAM_METHODS
+#ifndef __BUS_SPACE_HAS_STREAM_METHODS
 #define	bus_space_write_multi_stream_2	bus_space_write_multi_2
 #define	bus_space_write_multi_stream_4	bus_space_write_multi_4
 #define	bus_space_read_multi_stream_2	bus_space_read_multi_2
 #define	bus_space_read_multi_stream_4	bus_space_read_multi_4
-#endif /* __BUS_SPACE_NEED_STREAM_METHODS */
+#endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
