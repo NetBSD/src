@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.57 2000/05/10 08:55:22 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.58 2000/05/24 18:42:03 soren Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.57 2000/05/10 08:55:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.58 2000/05/24 18:42:03 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,10 +399,10 @@ kvtophys(kva)
 		return MIPS_KSEG0_TO_PHYS(kva);
 
 overrun:
-#ifdef DDB
 	printf("Virtual address %lx: cannot map to physical\n", kva);
+#ifdef DDB
 	Debugger();
-#else
-	panic("Virtual address %lx: cannot map to physical\n", kva);
+	return 0;	/* XXX */
 #endif
+	panic("kvtophys");
 }
