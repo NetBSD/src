@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.2 2004/03/23 12:31:17 simonb Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.2.2.1 2004/07/04 12:55:24 he Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,8 +62,15 @@ __longjmp14(jmp_buf env, int val)
 	if (val == 0)
 		val = 1;
 
-	/* Set _UC_SIGMASK and _UC_CPU */
-	uc.uc_flags = _UC_SIGMASK | _UC_CPU;
+	/*
+	 * Set _UC_{SET,CLR}STACK according to SS_ONSTACK.
+	 *
+	 * Restore the signal mask with sigprocmask() instead of _UC_SIGMASK,
+	 * since libpthread may want to interpose on signal handling.
+	 */
+	uc.uc_flags = _UC_CPU | (sc->sc_onstack ? _UC_SETSTACK : _UC_CLRSTACK);
+
+	sigprocmask(SIG_SETMASK, &sc->sc_mask, NULL);
 
 	/* Clear uc_link */
 	uc.uc_link = 0;
@@ -88,15 +95,13 @@ __longjmp14(jmp_buf env, int val)
 	/* Copy FP state */
 	if (sc->sc_fpused) {
 		/* FP saved regs are $f20 .. $f31 */
-		memcpy(&uc.uc_mcontext.__fpregs.__fp_r.
-		    __fp_regs32.__fp32_regs[20], &sc->sc_fpregs[20], 32 - 20);
-		uc.uc_mcontext.__fpregs.__fp_csr = sc->sc_regs[_R_FSR];
+		memcpy(&uc.uc_mcontext.__fpregs.__fp_r.__fp_regs[20],
+		    &sc->sc_fpregs[20], 32 - 20);
+		uc.uc_mcontext.__fpregs.__fp_csr =
+		    sc->sc_fpregs[_R_FSR - _FPBASE];
 		/* XXX sc_fp_control */
 		uc.uc_flags |= _UC_FPU;
 	}
-
-	/* Copy signal mask */
-	uc.uc_sigmask = sc->sc_mask;
 
 	setcontext(&uc);
  err:
