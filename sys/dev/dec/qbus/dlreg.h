@@ -1,4 +1,4 @@
-/*	$NetBSD: dlreg.h,v 1.1 1997/02/04 19:13:19 ragge Exp $	*/
+/*	$NetBSD: dlreg.h,v 1.2 1999/05/26 02:01:50 ragge Exp $	*/
 /*
  * Copyright (c) 1997  Ben Harris.  All rights reserved.
  *
@@ -36,6 +36,7 @@
  * Style in imitation of dzreg.h.
  */
 
+#ifdef notdef
 union w_b
 {
 	u_short word;
@@ -55,6 +56,12 @@ struct DLregs
 };
 
 typedef struct DLregs dlregs;
+#endif
+
+#define	DL_UBA_RCSR	0
+#define	DL_UBA_RBUF	2
+#define	DL_UBA_XCSR	4
+#define	DL_UBA_XBUFL	6
 
 /* RCSR bits */
 
