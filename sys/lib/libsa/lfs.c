@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.2 1999/08/18 21:33:50 cgd Exp $ */
+/* $NetBSD: lfs.c,v 1.3 1999/08/19 00:19:16 simonb Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -134,7 +134,6 @@ struct file {
 
 static int	find_inode_sector(ino_t inumber, struct open_file *f,
 		    ufs_daddr_t *ibp);
-static int	find_inode(ino_t inumber, struct open_file *f);
 static int	read_inode __P((ino_t, struct open_file *));
 static int	block_map __P((struct open_file *, daddr_t, daddr_t *));
 static int	buf_read_file __P((struct open_file *, char **, size_t *));
