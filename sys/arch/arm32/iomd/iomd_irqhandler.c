@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_irqhandler.c,v 1.14 1997/04/02 21:52:19 christos Exp $ */
+/*	$NetBSD: iomd_irqhandler.c,v 1.15 1997/10/14 11:06:01 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -40,7 +40,7 @@
  *
  * IRQ/FIQ initialisation, claim, release and handler routines
  *
- * Created      : 30/09/94
+ *	from: irqhandler.c,v 1.14 1997/04/02 21:52:19 christos Exp $
  */
 
 #include <sys/param.h>
@@ -50,9 +50,10 @@
 #include <vm/vm.h>
 #include <net/netisr.h>
 
+#include <arm32/iomd/iomdreg.h>
+
 #include <machine/irqhandler.h>
 #include <machine/cpu.h>
-#include <machine/iomd.h>
 #include <machine/katelib.h>
 
 #include "podulebus.h"
@@ -61,7 +62,7 @@ irqhandler_t *irqhandlers[NIRQS];
 fiqhandler_t *fiqhandlers;
 
 int current_intr_depth = 0;
-u_int irqmasks[IRQ_LEVELS];
+u_int irqmasks[IPL_LEVELS];
 u_int current_mask;
 u_int actual_mask;
 u_int disabled_mask = 0;
@@ -88,12 +89,6 @@ extern int fiq_setregs		__P((fiqhandler_t *));
 extern int fiq_getregs		__P((fiqhandler_t *));
 extern void set_spl_masks	__P((void));
 
-extern void arpintr	__P((void));
-extern void ipintr	__P((void));
-extern void atintr	__P((void));
-extern void pppintr	__P((void));
-extern void plipintr	__P((void));
-
 /*
  * void irq_init(void)
  *
@@ -118,16 +113,16 @@ irq_init()
 
 	/* Clear the IRQ/FIQ masks in the IOMD */
 
-	WriteByte(IOMD_IRQMSKA, 0x00);
-	WriteByte(IOMD_IRQMSKB, 0x00);
+	IOMD_WRITE_BYTE(IOMD_IRQMSKA, 0x00);
+	IOMD_WRITE_BYTE(IOMD_IRQMSKB, 0x00);
 
 #ifdef CPU_ARM7500
-	WriteByte(IOMD_IRQMSKC, 0x00);
-	WriteByte(IOMD_IRQMSKD, 0x00);
+	IOMD_WRITE_BYTE(IOMD_IRQMSKC, 0x00);
+	IOMD_WRITE_BYTE(IOMD_IRQMSKD, 0x00);
 #endif	/* CPU_ARM7500 */
 
-	WriteByte(IOMD_FIQMSK, 0x00);
-	WriteByte(IOMD_DMAMSK, 0x00);
+	IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x00);
+	IOMD_WRITE_BYTE(IOMD_DMAMSK, 0x00);
 
 	/*
 	 * Setup the irqmasks for the different Interrupt Priority Levels
@@ -231,7 +226,7 @@ irq_claim(irq, handler)
 	 * the masks.
 	 */
 
-	if (handler->ih_level >= 0 && handler->ih_level < IRQ_LEVELS) {
+	if (handler->ih_level >= 0 && handler->ih_level < IPL_LEVELS) {
 		irqhandler_t *ptr;
 
 		ptr = irqhandlers[irq];
@@ -382,12 +377,12 @@ irq_release(irq, handler)
 	 * the masks.
 	 */
   
-	if (handler->ih_level >= 0 && handler->ih_level < IRQ_LEVELS) {
+	if (handler->ih_level >= 0 && handler->ih_level < IPL_LEVELS) {
 		irqhandler_t *ptr;
 
 	/* Clean the bit from all the masks */
 
-		for (level = 0; level < IRQ_LEVELS; ++level)
+		for (level = 0; level < IPL_LEVELS; ++level)
 			irqmasks[level] &= ~(1 << irq);
 
 	/*
@@ -477,17 +472,20 @@ intr_claim(irq, level, name, ih_func, ih_arg)
 }
 
 
-void
+int
 intr_release(arg)
 	void *arg;
 {
 	irqhandler_t *ih = (irqhandler_t *)arg;
 
-	if (irq_release(ih->ih_num, ih) == 0)
+	if (irq_release(ih->ih_num, ih) == 0) {
 		free(ih, M_DEVBUF);
+		return(0);
+	}
+	return(1);
 }
 
-
+#if 0
 u_int
 disable_interrupts(mask)
 	u_int mask;
@@ -514,7 +512,7 @@ enable_interrupts(mask)
 {
 	return(SetCPSR(mask, 0));
 }
-
+#endif
 
 /*
  * void disable_irq(int irq)
@@ -575,106 +573,6 @@ stray_irqhandler(mask)
 }
 
 
-/* Handle software interrupts */
-
-void
-dosoftints()
-{
-	register u_int softints;
-	int s;
-
-	softints = soft_interrupts & spl_mask;
-	if (softints == 0) return;
-
-	if (current_intr_depth > 1)
-		return;
-
-	s = splsoft();
-
-	/*
-	 * Software clock interrupts
-	 */
-
-	if (softints & IRQMASK_SOFTCLOCK) {
-		++cnt.v_soft;
-		++intrcnt[IRQ_SOFTCLOCK];
-		atomic_clear_bit(&soft_interrupts, IRQMASK_SOFTCLOCK);
-		softclock();
-	}
-
-#if defined(INET) && defined(PLIP) && defined(notyet)
-	if (softints & IRQMASK_SOFTPLIP) {
-		++cnt.v_soft;
-		++intrcnt[IRQ_SOFTPLIP];
-		atomic_clear_bit(&soft_interrupts, IRQMASK_SOFTPLIP);
-		plipintr();
-	}
-#endif
-
-	/*
-	 * Network software interrupts
-	 */
-
-	if (softints & IRQMASK_SOFTNET) {
-		++cnt.v_soft;
-		++intrcnt[IRQ_SOFTNET];
-		atomic_clear_bit(&soft_interrupts, IRQMASK_SOFTNET);
-
-#ifdef INET
-#include "ether.h"
-#if NETHER > 0
-		if (netisr & (1 << NETISR_ARP)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_ARP));
-			arpintr();
-		}
-#endif
-		if (netisr & (1 << NETISR_IP)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_IP));
-			ipintr();
-		}
-#endif
-#ifdef NETATALK
-		if (netisr & (1 << NETISR_ATALK)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_ATALK));
-			atintr();
-		}
-#endif
-#ifdef NS
-		if (netisr & (1 << NETISR_NS)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_NS));
-			nsintr();
-		}
-#endif
-#ifdef IMP
-		if (netisr & (1 << NETISR_IMP)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_IMP));
-			impintr();
-		}
-#endif
-#ifdef ISO
-		if (netisr & (1 << NETISR_ISO)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_ISO));
-			clnlintr();
-		}
-#endif
-#ifdef CCITT
-		if (netisr & (1 << NETISR_CCITT)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_CCITT));
-			ccittintr();
-		}
-#endif
-#include "ppp.h"
-#if NPPP > 0
-		if (netisr & (1 << NETISR_PPP)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_PPP));
-			pppintr();
-		}
-#endif
-	}
-	(void)splx(s);
-}
-
-
 /*
  * int fiq_claim(fiqhandler_t *handler)
  *
@@ -713,7 +611,7 @@ fiq_claim(handler)
 
 	/* Set up the FIQ mask */
 
-	WriteWord(IOMD_FIQMSK, handler->fh_mask);
+	IOMD_WRITE_BYTE(IOMD_FIQMSK, handler->fh_mask);
     
 	/* Make sure that the FIQ's are enabled */
     
@@ -743,7 +641,7 @@ fiq_release(handler)
 
 	/* Clear up the FIQ mask */
 
-	WriteWord(IOMD_FIQMSK, 0x00);
+	IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x00);
 
 	/* Retrieve the FIQ registers */
 
