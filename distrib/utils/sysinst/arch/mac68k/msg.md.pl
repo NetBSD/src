@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.3 2002/08/12 02:22:55 grant Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.4 2002/09/03 00:35:53 rnestor Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.10 2001/07/26 22:47:34 wiz Exp */
 
@@ -81,7 +81,7 @@ na dysk, dopoki nie ukonczysz ustawiania partycji.
 Kontynuowac?}
 
 message part_header
-{Part przesun    rozmiar    FStype uzycie    punk montazu (nazwa)
+{Part    przesun    rozmiar FStype uzycie    punk montazu (nazwa)
 ---- ---------- ---------- ------ --------- ------------------\n}
 
 message part_row
