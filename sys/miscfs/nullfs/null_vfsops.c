@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.12 1996/10/10 22:54:10 christos Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.13 1996/10/13 02:21:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,7 +87,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	size_t size;
 
 #ifdef NULLFS_DIAGNOSTIC
-	kprintf("nullfs_mount(mp = %x)\n", mp);
+	printf("nullfs_mount(mp = %x)\n", mp);
 #endif
 
 	/*
@@ -165,7 +165,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 #ifdef NULLFS_DIAGNOSTIC
-	kprintf("nullfs_mount: lower %s, alias at %s\n",
+	printf("nullfs_mount: lower %s, alias at %s\n",
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
 #endif
 	return (0);
@@ -202,7 +202,7 @@ nullfs_unmount(mp, mntflags, p)
 	extern int doforce;
 
 #ifdef NULLFS_DIAGNOSTIC
-	kprintf("nullfs_unmount(mp = %x)\n", mp);
+	printf("nullfs_unmount(mp = %x)\n", mp);
 #endif
 
 	if (mntflags & MNT_FORCE) {
@@ -291,7 +291,7 @@ nullfs_statfs(mp, sbp, p)
 	struct statfs mstat;
 
 #ifdef NULLFS_DIAGNOSTIC
-	kprintf("nullfs_statfs(mp = %x, vp = %x->%x)\n", mp,
+	printf("nullfs_statfs(mp = %x, vp = %x->%x)\n", mp,
 	    MOUNTTONULLMOUNT(mp)->nullm_rootvp,
 	    NULLVPTOLOWERVP(MOUNTTONULLMOUNT(mp)->nullm_rootvp));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.12 1996/10/10 22:54:15 christos Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.13 1996/10/13 02:21:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -84,54 +84,54 @@ procfs_dostatus(curp, p, pfs, uio)
 	bcopy(p->p_comm, ps, MAXCOMLEN);
 	ps[MAXCOMLEN] = '\0';
 	ps += strlen(ps);
-	ps += ksprintf(ps, " %d %d %d %d ", pid, ppid, pgid, sid);
+	ps += sprintf(ps, " %d %d %d %d ", pid, ppid, pgid, sid);
 
 	if ((p->p_flag&P_CONTROLT) && (tp = sess->s_ttyp))
-		ps += ksprintf(ps, "%d,%d ", major(tp->t_dev),
+		ps += sprintf(ps, "%d,%d ", major(tp->t_dev),
 		    minor(tp->t_dev));
 	else
-		ps += ksprintf(ps, "%d,%d ", -1, -1);
+		ps += sprintf(ps, "%d,%d ", -1, -1);
 
 	sep = "";
 	if (sess->s_ttyvp) {
-		ps += ksprintf(ps, "%sctty", sep);
+		ps += sprintf(ps, "%sctty", sep);
 		sep = ",";
 	}
 	if (SESS_LEADER(p)) {
-		ps += ksprintf(ps, "%ssldr", sep);
+		ps += sprintf(ps, "%ssldr", sep);
 		sep = ",";
 	}
 	if (*sep != ',')
-		ps += ksprintf(ps, "noflags");
+		ps += sprintf(ps, "noflags");
 
 	if (p->p_flag & P_INMEM)
-		ps += ksprintf(ps, " %ld,%ld",
+		ps += sprintf(ps, " %ld,%ld",
 			p->p_stats->p_start.tv_sec,
 			p->p_stats->p_start.tv_usec);
 	else
-		ps += ksprintf(ps, " -1,-1");
+		ps += sprintf(ps, " -1,-1");
 	
 	{
 		struct timeval ut, st;
 
 		calcru(p, &ut, &st, (void *) 0);
-		ps += ksprintf(ps, " %ld,%ld %ld,%ld",
+		ps += sprintf(ps, " %ld,%ld %ld,%ld",
 			ut.tv_sec,
 			ut.tv_usec,
 			st.tv_sec,
 			st.tv_usec);
 	}
 
-	ps += ksprintf(ps, " %s",
+	ps += sprintf(ps, " %s",
 	    (p->p_wchan && p->p_wmesg) ? p->p_wmesg : "nochan");
 
 	cr = p->p_ucred;
 
-	ps += ksprintf(ps, " %d", cr->cr_uid);
-	ps += ksprintf(ps, " %d", cr->cr_gid);
+	ps += sprintf(ps, " %d", cr->cr_uid);
+	ps += sprintf(ps, " %d", cr->cr_gid);
 	for (i = 0; i < cr->cr_ngroups; i++)
-		ps += ksprintf(ps, ",%d", cr->cr_groups[i]);
-	ps += ksprintf(ps, "\n");
+		ps += sprintf(ps, ",%d", cr->cr_groups[i]);
+	ps += sprintf(ps, "\n");
 
 	xlen = ps - psbuf;
 	xlen -= uio->uio_offset;
