@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.163 2003/03/06 23:47:35 taca Exp $	*/
+/*	$NetBSD: pccons.c,v 1.164 2003/05/14 11:27:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.163 2003/03/06 23:47:35 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.164 2003/05/14 11:27:39 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -756,8 +756,8 @@ pcattach(parent, self, aux)
 	struct pc_softc *sc = (void *)self;
 #if (NPCCONSKBD == 0)
 	struct isa_attach_args *ia = aux;
-#endif
 	bus_space_handle_t ioh;
+#endif
 
 	if (crtat == 0)
 		pcinit();
