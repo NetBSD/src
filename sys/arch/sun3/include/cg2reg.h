@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2reg.h,v 1.2 1995/03/21 16:22:25 gwr Exp $ */
+/*	$NetBSD: cg2reg.h,v 1.3 1995/04/07 02:54:43 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Dennis Ferguson
@@ -204,10 +204,15 @@ struct memropc {
  * avoids mapping the latter, though X uses it.
  */
 struct cg2fb {
+
+#ifndef	_KERNEL	/* XXX - Hack! */
+	/* XXX - Don't want this permanently in the kernel mapping. */
 	union {			/* raster op mode frame memory */
 		union bitplane ropplane[CG2_N_PLANE];
 		union byteplane roppixel;
 	} ropio;
+#endif	/* _KERNEL	XXX - Hack! */
+
 	union {			/* raster op control unit (1 per plane) */
 		struct memropc ropregs;
 		struct {
