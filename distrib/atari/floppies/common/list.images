@@ -1,0 +1,20 @@
+#	$NetBSD: list.images,v 1.1.1.1 2002/04/12 21:11:47 leo Exp $
+
+SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/atari/stand
+LIBS	libhack.o -lrmt -ledit -lbz2 -lutil -lcurses -ltermcap -lcrypt -lkvm -ll -lm
+
+# init invokes the shell as -sh
+ARGVLN	sh -sh
+
+# files that we need in /etc for the install
+COPY	${_SRC_TOP_}/etc/group		etc/group
+COPY	${_SRC_TOP_}/etc/master.passwd	etc/master.passwd
+
+# the termcap file
+COPY	${CURDIR}/../common/termcap.mini	usr/share/misc/termcap
+
+COPY	${CURDIR}/../common/dot.profile .profile
+
+# and the keyboard maps
+MTREE	./usr/share/keymaps	type=dir uname=root gname=wheel mode=0755
+COPYDIR	${DESTDIR}/usr/share/keymaps/atari	usr/share/keymaps/atari
