@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.71 2005/01/31 06:07:32 joff Exp $ */
+/* $NetBSD: wsconsio.h,v 1.72 2005/02/04 05:58:44 joff Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -285,6 +285,7 @@ struct wsmouse_id {
 #define	WSDISPLAY_TYPE_SUNTCX	38	/* Sun TCX */
 #define	WSDISPLAY_TYPE_SUNFFB	39	/* Sun creator FFB */
 #define	WSDISPLAY_TYPE_STI	40	/* HP STI frambuffers */
+#define	WSDISPLAY_TYPE_HDLCD	41	/* Hitachi HD44780 based LCDs */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
