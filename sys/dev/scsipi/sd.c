@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.209 2003/09/18 00:06:36 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.210 2003/09/18 06:55:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.209 2003/09/18 00:06:36 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.210 2003/09/18 06:55:53 mycroft Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -87,8 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.209 2003/09/18 00:06:36 mycroft Exp $");
 #include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/sdvar.h>
-
-#include "sd.h"		/* NSD_SCSIBUS and NSD_ATAPIBUS come from here */
 
 #define	SDUNIT(dev)			DISKUNIT(dev)
 #define	SDPART(dev)			DISKPART(dev)
@@ -804,9 +802,7 @@ sdstart(periph)
 	struct disklabel *lp = sd->sc_dk.dk_label;
 	struct buf *bp = 0;
 	struct scsipi_rw_big cmd_big;
-#if NSD_SCSIBUS > 0
 	struct scsi_rw cmd_small;
-#endif
 	struct scsipi_generic *cmdp;
 	int nblks, cmdlen, error, flags;
 
@@ -854,7 +850,6 @@ sdstart(periph)
 		else
 			nblks = howmany(bp->b_bcount, lp->d_secsize);
 
-#if NSD_SCSIBUS > 0
 		/*
 		 *  Fill out the scsi command.  If the transfer will
 		 *  fit in a "small" cdb, use it.
@@ -872,9 +867,7 @@ sdstart(periph)
 			cmd_small.length = nblks & 0xff;
 			cmdlen = sizeof(cmd_small);
 			cmdp = (struct scsipi_generic *)&cmd_small;
-		} else
-#endif /* NSD_SCSIBUS > 0 */
-		{
+		} else {
 			/*
 			 * Need a large cdb.
 			 */
@@ -1231,23 +1224,25 @@ sdgetdefaultlabel(sd, lp)
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
 	switch (scsipi_periph_bustype(sd->sc_periph)) {
-#if NSD_SCSIBUS > 0
 	case SCSIPI_BUSTYPE_SCSI:
 		lp->d_type = DTYPE_SCSI;
 		break;
-#endif
-#if NSD_ATAPIBUS > 0
 	case SCSIPI_BUSTYPE_ATAPI:
 		lp->d_type = DTYPE_ATAPI;
 		break;
-#endif
 	}
+	/*
+	 * XXX
+	 * We could probe the mode pages to figure out what kind of disc it is.
+	 * Is this worthwhile?
+	 */
 	strncpy(lp->d_typename, "mydisk", 16);
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = sd->params.disksize;
 	lp->d_rpm = sd->params.rot_rate;
 	lp->d_interleave = 1;
-	lp->d_flags = 0;
+	lp->d_flags = sd->sc_periph->periph_flags & PERIPH_REMOVABLE ?
+	    D_REMOVABLE : 0;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
 	lp->d_partitions[RAW_PART].p_size =
@@ -1947,7 +1942,7 @@ sd_flush(sd, flags)
 		       NULL, 0, SDRETRIES, 100000, NULL,
 		       flags|XS_CTL_IGNORE_ILLEGAL_REQUEST));
 	} else
-		return(0);
+		return (0);
 }
 
 int
