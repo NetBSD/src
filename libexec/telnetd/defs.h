@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.10 2001/08/24 00:14:03 wiz Exp $	*/
+/*	$NetBSD: defs.h,v 1.11 2002/05/26 00:02:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -83,9 +83,7 @@
 #include <arpa/telnet.h>
 
 #include <stdio.h>
-#ifdef	__STDC__
 #include <stdlib.h>
-#endif
 #include <signal.h>
 #include <errno.h>
 #include <netdb.h>
@@ -118,9 +116,7 @@ typedef unsigned char cc_t;
 
 #include <time.h>
 
-#ifdef	__STDC__
 #include <unistd.h>
-#endif
 
 #ifndef _POSIX_VDISABLE
 # ifdef VDISABLE
