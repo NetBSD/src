@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.98 2000/06/05 09:22:53 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.99 2000/06/11 02:12:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.98 2000/06/05 09:22:53 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.99 2000/06/11 02:12:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1596,8 +1596,8 @@ reinit:
 				data_addr.su_family = AF_INET6;
 				data_addr.su_len = sizeof(struct sockaddr_in6);
 			    {
-				u_int32_t *p32;
-				p32 = (u_int32_t *)&data_addr.su_sin6.sin6_addr;
+				in_addr_t *p32;
+				p32 = (in_addr_t *)&data_addr.su_sin6.sin6_addr;
 				p32[0] = htonl(pack4(addr, 0));
 				p32[1] = htonl(pack4(addr, 4));
 				p32[2] = htonl(pack4(addr, 8));
@@ -2209,6 +2209,7 @@ ai_unmapped(struct addrinfo *ai)
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
 	struct sockaddr_in sin;
+	int len;
 
 	if (ai->ai_family != AF_INET6)
 		return;
@@ -2221,13 +2222,16 @@ ai_unmapped(struct addrinfo *ai)
 
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
-	sin.sin_len = sizeof(struct sockaddr_in);
+	len = sizeof(struct sockaddr_in);
 	memcpy(&sin.sin_addr, &sin6->sin6_addr.s6_addr[12],
 	    sizeof(sin.sin_addr));
 	sin.sin_port = sin6->sin6_port;
 
 	ai->ai_family = AF_INET;
-	memcpy(ai->ai_addr, &sin, sin.sin_len);
-	ai->ai_addrlen = sin.sin_len;
+#ifdef BSD4_4
+	sin.sin_len = len;
+#endif
+	memcpy(ai->ai_addr, &sin, len);
+	ai->ai_addrlen = len;
 #endif
 }
