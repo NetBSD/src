@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1.1.1 1997/01/14 20:57:04 gwr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 1997/03/20 15:56:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
  *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
  */
+
+#ifndef _CPU_H_
+#define _CPU_H_
 
 #ifdef _KERNEL
 
@@ -132,3 +135,4 @@ union sun3sir {
 #endif	/* _KERNEL */
 
 #include <m68k/sysctl.h>
+#endif /* _CPU_H_ */
