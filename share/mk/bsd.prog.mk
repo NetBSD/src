@@ -153,10 +153,9 @@ lint: ${SRCS} _PROGSUBDIR
 obj: _PROGSUBDIR
 .else
 obj: _PROGSUBDIR
-	@cd ${.CURDIR}; \
+	@cd ${.CURDIR}; rm -f obj > /dev/null 2>&1 || true; \
 	here=`pwd`; subdir=`echo $$here | sed 's,^/usr/src/,,'`; \
 	if test $$here != $$subdir ; then \
-		rm -rf obj; \
 		dest=/usr/obj/$$subdir ; \
 		echo "$$here -> $$dest"; ln -s $$dest obj; \
 		if test -d /usr/obj -a ! -d $$dest; then \
@@ -167,7 +166,6 @@ obj: _PROGSUBDIR
 	else \
 		true ; \
 		dest=$$here/obj ; \
-		/bin/rm -f $$dest 2> /dev/null || true; \
 		echo "making $$here/obj" ; \
 		if test ! -d obj ; then \
 			mkdir $$here/obj; \
