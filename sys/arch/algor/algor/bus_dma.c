@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1 2001/05/28 16:22:15 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.2 2001/06/01 19:52:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1 2001/05/28 16:22:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2001/06/01 19:52:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -501,7 +501,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     int flags, paddr_t low, paddr_t high)
 {
 	paddr_t curaddr, lastaddr;
-	vm_page_t m;    
+	struct vm_page *m;    
 	struct pglist mlist;
 	int curseg, error;
 
@@ -558,7 +558,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 void
 _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
-	vm_page_t m;
+	struct vm_page *m;
 	bus_addr_t addr;
 	struct pglist mlist;
 	int curseg;
