@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.22 1996/12/22 10:10:19 cgd Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.23 1998/02/18 07:26:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -300,6 +300,13 @@ fdesc_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
+extern struct vnodeopv_desc fdesc_vnodeop_opv_desc;
+
+struct vnodeopv_desc *fdesc_vnodeopv_descs[] = {
+	&fdesc_vnodeop_opv_desc,
+	NULL,
+};
+
 struct vfsops fdesc_vfsops = {
 	MOUNT_FDESC,
 	fdesc_mount,
@@ -313,4 +320,6 @@ struct vfsops fdesc_vfsops = {
 	fdesc_fhtovp,
 	fdesc_vptofh,
 	fdesc_init,
+	NULL,				/* vfs_mountroot */
+	fdesc_vnodeopv_descs,
 };
