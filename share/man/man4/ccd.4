@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccd.4,v 1.9 1997/06/20 20:42:36 pk Exp $
+.\"	$NetBSD: ccd.4,v 1.10 1997/09/20 03:56:38 mikel Exp $
 .\"
 .\" Copyright (c) 1994 Jason Downs.
 .\" Copyright (c) 1994, 1995, 1996 Jason R. Thorpe.
@@ -39,7 +39,7 @@
 .Nm ccd
 .Nd Concatenated Disk Driver
 .Sh SYNOPSIS
-.Cd "pseudo-device ccd 4"
+.Cd "pseudo-device ccd" Op Ar count
 .Sh DESCRIPTION
 The
 .Nm
@@ -57,8 +57,9 @@ partitions of the disks
 be combined.  Each component partition should be offset at least one
 cylinder from the beginning of the component disk.  This avoids potential
 conflicts between the component disk's disklabel and the
-.Nm ccd's
-disklabel.  The kernel will only allow component partitions of type FS_BSDFFS.
+.Nm ccd Ns 's
+disklabel.  The kernel will only allow component partitions of type
+.Dv FS_BSDFFS .
 .Pp
 In order to compile in support for the ccd, you must add a line similar
 to the following to your kernel configuration file:
@@ -67,9 +68,9 @@ pseudo-device	ccd	4	# concatenated disk devices
 .Ed
 .Pp
 The count argument is how many
-.Nm ccds
+.Nm ccd Ns s
 memory is allocated for at boot time.  In this example, no more than 4
-.Nm ccds
+.Nm ccd Ns s
 may be configured.
 .Pp
 A
@@ -80,10 +81,14 @@ is interleaved correctly, a
 .Dq striping
 effect is achieved, which can increase performance.  The optimum interleave
 factor is typically the size of a track.  Since the interleave factor
-is expressed in units of DEV_BSIZE, one must account for sector sizes
-other than DEV_BSIZE in order to calculate the correct interleave.
+is expressed in units of
+.Dv DEV_BSIZE ,
+one must account for sector sizes other than
+.Dv DEV_BSIZE
+in order to calculate the correct interleave.
 The kernel will not allow an interleave factor less than the size
-of the largest component sector divided by DEV_BSIZE.
+of the largest component sector divided by
+.Dv DEV_BSIZE .
 .Pp
 Note that best performance is achieved if all component disks have the same
 geometry and size.  Optimum striping cannot occur with different
@@ -95,11 +100,11 @@ also supports primitive data mirroring.  To enable this mirroring support,
 the
 .Nm ccd
 must be configured with the
-.Nm CCDF_MIRROR
+.Dv CCDF_MIRROR
 flag set.  Note that the
-.Nm CCDF_MIRROR
+.Dv CCDF_MIRROR
 flag implies the
-.Nm CCDF_UNIFORM
+.Dv CCDF_UNIFORM
 flag and requires an interleaved even number of components.
 .Pp
 Mirroring functions by making the second n/2 components exact duplicates
@@ -129,7 +134,7 @@ above, the recovery process might look like this:
 .Ed
 .Pp
 There is a run-time utility that is used for configuring
-.Nm ccds .
+.Nm ccd Ns s.
 See
 .Xr ccdconfig 8
 for more information.
@@ -139,7 +144,10 @@ If just one (or more) of the disks in a non-mirrored
 fails, the entire
 file system will be lost.
 .Sh FILES
-/dev/{,r}ccd* - ccd device special files.
+.Bl -tag -width /dev/XXrXccdX -compact
+.It Pa /dev/{,r}ccd*
+ccd device special files.
+.El
 .Pp
 .Sh HISTORY
 The concatenated disk driver was originally written at the University of
