@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.13 2003/03/23 11:43:09 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.14 2003/03/23 16:46:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.13 2003/03/23 11:43:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.14 2003/03/23 16:46:41 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +339,7 @@ smb_rq_reply(struct smb_rq *rqp)
 			error = smb_maperror(rqp->sr_errclass, rqp->sr_serror);
 	}
 	(void) md_get_uint8(mdp, NULL);		/* rpflags */
-	(void) md_get_uint16le(mdp, NULL);	/* rpflags2 */
+	(void) md_get_uint16(mdp, NULL);	/* rpflags2 */
 
 	(void) md_get_uint32(mdp, NULL);
 	(void) md_get_uint32(mdp, NULL);
