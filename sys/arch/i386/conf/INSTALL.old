@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL.old,v 1.1 1995/05/12 03:19:51 cgd Exp $
+#	$NetBSD: INSTALL.old,v 1.2 1995/07/24 03:33:16 mycroft Exp $
 #
 #	INSTALL -- somewhat generic kernel with a snowball's chance of
 #		   fitting on an install floppy.
@@ -14,8 +14,6 @@
 #
 
 machine		i386		# architecture, used by config; REQUIRED
-
-makeoptions	CC="cc -Werror"
 
 options		I386_CPU	# CPU classes; at least one is REQUIRED
 options		I486_CPU
