@@ -33,15 +33,13 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)cerror.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: cerror.S,v 1.5 2000/06/28 19:20:18 matt Exp $"
+	.asciz "$NetBSD: cerror.S,v 1.6 2000/08/07 03:18:05 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 	.globl	_C_LABEL(errno)
-CERROR:
-	nop
-	nop
+CERROR: .word 0
 #ifdef _REENTRANT
 	pushl	r0
 	calls	$0,_C_LABEL(__errno)
