@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.10 1999/04/05 18:52:28 mycroft Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.11 1999/04/08 17:07:02 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.2 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: getgrouplist.c,v 1.10 1999/04/05 18:52:28 mycroft Exp $");
+__RCSID("$NetBSD: getgrouplist.c,v 1.11 1999/04/08 17:07:02 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,7 +97,6 @@ getgrouplist(uname, agroup, groups, grpcnt)
 			}
 		}
 	}
-out:
 	endgrent();
 	*grpcnt = ngroups;
 	return (ret);
