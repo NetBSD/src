@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.75.2.8 2002/06/20 03:47:15 nathanw Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.75.2.9 2002/06/20 22:59:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.8 2002/06/20 03:47:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.9 2002/06/20 22:59:40 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1178,10 +1178,14 @@ format_bytes(buf, len, bytes)
 }
 
 int
-trace_enter(struct proc *p, register_t code, void *args, register_t rval[])
+trace_enter(struct lwp *l, register_t code, void *args, register_t rval[])
 {
+#if defined(KTRACE) || defined(SYSTRACE)
+	struct proc *p = l->l_proc;
+#endif
+
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif /* SYSCALL_DEBUG */
 
 #ifdef KTRACE
@@ -1197,11 +1201,15 @@ trace_enter(struct proc *p, register_t code, void *args, register_t rval[])
 }
 
 void
-trace_exit(struct proc *p, register_t code, void *args, register_t rval[],
+trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
     int error)
 {
+#if defined(KTRACE) || defined(SYSTRACE)
+	struct proc *p = l->l_proc;
+#endif
+
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */
 
 #ifdef KTRACE
