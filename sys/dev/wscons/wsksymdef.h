@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.8 1998/07/14 19:33:58 drochner Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.9 1998/07/15 14:06:34 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -440,7 +440,7 @@
 #define KB_DK			0x0400
 
 #define KB_NODEAD		0x0001
-#define KB_LK			0x0002
+#define KB_DECLK		0x0002	/* DEC LKnnn layout */
 
 #define KB_NAMETAB \
 	{ KB_USER,	"user" }, \
@@ -448,6 +448,6 @@
 	{ KB_DE,	"de" }, \
 	{ KB_DK,	"dk" }, \
 	{ KB_NODEAD,	"nodead" }, \
-	{ KB_LK,	"LK" }
+	{ KB_DECLK,	"declk" }
 
 #endif /* !_DEV_WSCONS_WSKSYMDEF_H_ */
