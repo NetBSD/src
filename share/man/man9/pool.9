@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.16 2001/04/04 11:39:17 wiz Exp $
+.\"	$NetBSD: pool.9,v 1.17 2001/04/06 15:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,11 +114,11 @@ The arguments are:
 .It Fa size
 Specifies the size of the memory items managed by the pool.
 .It Fa align
-Specifies the memory address aligment of the items returned by
+Specifies the memory address alignment of the items returned by
 .Fn pool_get .
 This argument must be a power of two.
 If zero,
-the alignment defaults to a architecture-specific natural aligment.
+the alignment defaults to a architecture-specific natural alignment.
 .It Fa align_offset
 The offset within an item to which the
 .Fa align
