@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.8 2001/07/01 22:54:39 kristerw Exp $
+.\" $NetBSD: ioctl.9,v 1.9 2001/07/26 14:29:09 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,14 +74,77 @@ the call writes data to the kernel and wants information back.
 This integer describes to which subsystem the ioctl applies.
 T
 can be one of
-.Bl -tag -width 'a'
+.Bl -tag -width 'a' -compact
+.It '1' pulse-per-second interface
+.It '4' Xr i4b 4
+.It 'a' ISO networking
+.It 'A' ac devices (hp300)
+.It 'A' Advanced Power Management (hpcmips, i386, sparc) Xr apm 4
+.It 'A' ADB devices (mac68k, macppc)
+.It 'A' Xr audio 4
+.It 'A' Xr i4btel 4
+.It 'b' Xr tb 4
+.It 'B' bell device (x68k)
+.It 'B' Xr bpf 4
+.It 'c' coda
+.It 'c' Xr cd 4
+.It 'c' Xr ch 4
+.It 'C' clock devices (amiga, atari, hp300, x68k)
+.It 'C' Xr i4bctl 4
 .It 'd' the disk subsystem
+.It 'E' Xr envsys 4
 .It 'f' files
+.It 'F' Sun-compatible framebuffers
+.It 'F' Xr ccd 4 \& and Xr vnd 4
+.It 'g' qdss framebuffers
+.It 'G' grf devices (amiga, atari, hp300, mac68k, x68k)
+.It 'h' HIL devices (hp300)
+.It 'H' HIL devices (hp300)
+.It 'H' HPc framebuffers
 .It 'i' a (pseudo) interface
+.It 'I' Xr ite 4 \& (mac68k)
+.It 'J' ISA joystick interface
+.It 'k' Sun-compatible (and other) keyboards
+.It 'K' Xr lkm 4
+.It 'l' leo devices (atari)
+.It 'm' Xr mtio 4
+.It 'M' mouse devices (atari)
+.It 'M' Xr mlx 4
+.It 'n' virtual console device (arm32)
+.It 'n' SMB networking
+.It 'O' OpenPROM and OpenFirmware
+.It 'p' power control (x68k)
+.It 'P' parallel port (amiga, x68k)
+.It 'P' profiling (arm32)
+.It 'P' printer/plotter interface (hp300)
+.It 'P' Xr magma 4 \& bpp (sparc)
+.It 'q' Xr altq 4
+.It 'q' pmax graphics devices
+.It 'Q' Xr altq 4
+.It 'Q' raw SCSI commands
 .It 'r' the routing subsystem
+.It 'r' Xr md 4
+.It 'R' Xr i4brbch 4
+.It 'R' Xr rnd 4
 .It 's' the socket layer
+.It 's' satlink devices
+.It 'S' SCSI disks (arc, hp300, pmax)
+.It 'S' watchdog devices (sh3)
+.It 'S' ISA speaker devices
+.It 'S' stic devices
+.It 'S' scanners
 .It 't' the tty layer
 .It 'u' user defined ???
+.It 'U' scsibus Pq Xr scsi 4
+.It 'v' Sun-compatible Dq firm events
+.It 'V' view device (amiga, atari)
+.It 'V' sram device (x68k)
+.It 'w' watchdog devices
+.It 'W' wt devices
+.It 'W' wscons devices
+.It 'x' bt8xx devices
+.It 'Z' ite devices (amiga, atari, x68k)
+.It 'Z' passthrough ioctls
 .El
 .It n
 This numbers the ioctl within the group. There may be only one
