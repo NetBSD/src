@@ -1,6 +1,8 @@
+/*	$NetBSD: getpass.c,v 1.5 1995/02/27 04:12:59 cgd Exp $	*/
+
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +34,20 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)getpass.c	5.9 (Berkeley) 5/6/91";*/
-static char *rcsid = "$Id: getpass.c,v 1.4 1994/01/04 18:27:08 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)getpass.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: getpass.c,v 1.5 1995/02/27 04:12:59 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/termios.h>
 #include <sys/signal.h>
+
+#include <paths.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <pwd.h>
-#include <paths.h>
 
 char *
 getpass(prompt)
@@ -82,7 +88,7 @@ getpass(prompt)
 	(void)write(fileno(outfp), "\n", 1);
 	if (echo) {
 		term.c_lflag |= ECHO;
-		tcsetattr(fileno(fp), TCSAFLUSH|TCSASOFT, &term);
+		(void)tcsetattr(fileno(fp), TCSAFLUSH|TCSASOFT, &term);
 	}
 	(void)sigsetmask(omask);
 	if (fp != stdin)
