@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.25 2002/11/11 22:13:51 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.26 2002/11/14 23:02:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.25 2002/11/11 22:13:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.26 2002/11/14 23:02:44 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1019,7 +1019,7 @@ setrunnable(struct lwp *l)
 		updatepri(l);
 	l->l_slptime = 0;
 	if ((l->l_flag & L_INMEM) == 0)
-		wakeup((caddr_t)&proc0);
+		sched_wakeup((caddr_t)&proc0);
 	else if (l->l_priority < curcpu()->ci_schedstate.spc_curpriority) {
 		/*
 		 * XXXSMP
