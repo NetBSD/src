@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.10 2001/02/19 23:22:48 cgd Exp $	*/
+/*	$NetBSD: trpt.c,v 1.11 2001/07/09 07:54:59 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.10 2001/02/19 23:22:48 cgd Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.11 2001/07/09 07:54:59 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,6 +143,10 @@ struct nlist nl[] = {
 static caddr_t tcp_pcbs[TCP_NDEBUG];
 static n_time ntime;
 static int aflag, follow, sflag, tflag;
+
+/* see sys/netinet/tcp_debug.c */
+struct  tcp_debug tcp_debug[TCP_NDEBUG];
+int tcp_debx;
 
 int	main __P((int, char *[]));
 void	dotrace __P((caddr_t));
