@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.18 2001/11/02 05:07:22 tv Exp $
+#  $NetBSD: build.sh,v 1.19 2001/11/05 02:17:47 dillo Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -168,7 +168,7 @@ while eval $getoptcmd; do case $opt in
 		makewrapper="$OPTARG";;
 
 	-D)	eval $optargcmd; resolvepath
-		DESTDIR="$OPTARG"
+		DESTDIR="$OPTARG"; export DESTDIR
 		makeenv="$makeenv DESTDIR";;
 
 	-O)	eval $optargcmd; resolvepath
@@ -309,7 +309,7 @@ if $do_rebuildmake || [ ! -f $makewrapper ] || [ $makewrapper -ot build.sh ]; th
 	eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.18 2001/11/02 05:07:22 tv Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.19 2001/11/05 02:17:47 dillo Exp $
 #
 
 EOF
