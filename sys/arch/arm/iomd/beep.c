@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.18 2003/05/03 18:10:45 wiz Exp $	*/
+/*	$NetBSD: beep.c,v 1.18.2.1 2003/07/03 00:40:22 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.18 2003/05/03 18:10:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.18.2.1 2003/07/03 00:40:22 wrstuden Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -193,7 +193,7 @@ beepattach(struct device *parent, struct device *self, void *aux)
 
 
 int
-beepopen(dev_t dev, int flag, int mode, struct proc *p)
+beepopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct beep_softc *sc;
 	int unit = minor(dev);
@@ -220,7 +220,7 @@ beepopen(dev_t dev, int flag, int mode, struct proc *p)
 
 
 int
-beepclose(dev_t dev, int flag, int mode, struct proc *p)
+beepclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct beep_softc *sc = beep_cd.cd_devs[unit];
@@ -261,7 +261,7 @@ beep_generate(void)
 
 
 int
-beepioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+beepioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct beep_softc *sc = beep_cd.cd_devs[minor(dev)];
 	int rate;
