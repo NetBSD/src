@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.185 2004/08/02 22:20:54 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.186 2004/08/04 18:24:11 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.185 2004/08/02 22:20:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.186 2004/08/04 18:24:11 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -800,6 +800,7 @@ wdcattach(struct wdc_channel *chp)
 	}
 	TAILQ_INIT(&chp->ch_queue->queue_xfer);
 	chp->ch_queue->queue_freeze = 0;
+	chp->ch_queue->active_xfer = NULL;
 
 	chp->atabus = config_found(&wdc->sc_dev, chp, atabusprint);
 }
@@ -877,7 +878,7 @@ wdcstart(struct wdc_channel *chp)
 	/* adjust chp, in case we have a shared queue */
 	chp = xfer->c_chp;
 
-	if ((chp->ch_flags & WDCF_ACTIVE) != 0 ) {
+	if (chp->ch_queue->active_xfer != NULL) {
 		return; /* channel aleady active */
 	}
 	if (__predict_false(chp->ch_queue->queue_freeze > 0)) {
@@ -893,11 +894,13 @@ wdcstart(struct wdc_channel *chp)
 
 	WDCDEBUG_PRINT(("wdcstart: xfer %p channel %d drive %d\n", xfer,
 	    chp->ch_channel, xfer->c_drive), DEBUG_XFERS);
-	chp->ch_flags |= WDCF_ACTIVE;
 	if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_RESET) {
 		chp->ch_drive[xfer->c_drive].drive_flags &= ~DRIVE_RESET;
 		chp->ch_drive[xfer->c_drive].state = 0;
 	}
+	chp->ch_queue->active_xfer = xfer;
+	TAILQ_REMOVE(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
+	
 	if (wdc->cap & WDC_CAPABILITY_NOIRQ)
 		KASSERT(xfer->c_flags & C_POLL);
 	xfer->c_start(chp, xfer);
@@ -944,7 +947,11 @@ wdcintr(void *arg)
 	}
 
 	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
-	xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
+	xfer = chp->ch_queue->active_xfer;
+#ifdef DIAGNOSTIC
+	if (xfer == NULL)
+		panic("wdcintr: no xfer");
+#endif
 	if (chp->ch_flags & WDCF_DMA_WAIT) {
 		wdc->dma_status =
 		    (*wdc->dma_finish)(wdc->dma_arg, chp->ch_channel,
@@ -979,10 +986,12 @@ wdc_reset_drive(struct ata_drive_datas *drvp, int flags)
 void
 wdc_reset_channel(struct wdc_channel *chp, int flags)
 {
+	TAILQ_HEAD(, ata_xfer) reset_xfer;
 	struct ata_xfer *xfer, *next_xfer;
 	int drive;
 
 	chp->ch_queue->queue_freeze++;
+	TAILQ_INIT(&reset_xfer);
 
 	/* if we can poll or wait it's OK, otherwise wake up the kernel
 	 * thread
@@ -998,34 +1007,61 @@ wdc_reset_channel(struct wdc_channel *chp, int flags)
 		return;
 	}
 
-	/* reset the channel */
 	chp->ch_flags &= ~WDCF_IRQ_WAIT;
-	if ((flags & AT_WAIT) == 0) {
-		(void) wdcreset(chp, RESET_POLL);
-	} else {
-		(void) wdcreset(chp, RESET_SLEEP);
+	/*
+	 * if the current command if on an ATAPI device, issue a
+	 * ATAPI_SOFT_RESET
+	 */
+	xfer = chp->ch_queue->active_xfer;
+	if (xfer && xfer->c_chp == chp && (xfer->c_flags & C_ATAPI)) {
+		wdccommandshort(chp, xfer->c_drive, ATAPI_SOFT_RESET);
+		if (flags & AT_WAIT)
+			tsleep(&flags, PRIBIO, "atardl", mstohz(1) + 1);
+		else 
+			delay(1000);
 	}
 
+	/* reset the channel */
+	if (flags & AT_WAIT)
+		(void) wdcreset(chp, RESET_SLEEP);
+	else
+		(void) wdcreset(chp, RESET_POLL);
+
 	/*
-	 * wait a bit after reset; in case the the DMA engines needs some time
+	 * wait a bit after reset; in case the DMA engines needs some time
 	 * to recover.
 	 */
 	if (flags & AT_WAIT)
-		tsleep(&flags, PRIBIO, "atardl", 1);
+		tsleep(&flags, PRIBIO, "atardl", mstohz(1) + 1);
 	else 
 		delay(1000);
 	/*
 	 * look for pending xfers. If we have a shared queue, we'll also reset
 	 * the other channel if the current xfer is running on it.
 	 * Then we'll dequeue only the xfers for this channel.
-	 * xfer->c_kill_xfer() will reset any ATAPI device when needed.
 	 */
 	if ((flags & AT_RST_NOCMD) == 0) {
-		xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
+		/*
+		 * move all xfers queued for this channel to the reset queue,
+		 * and then process the current xfer and then the reset queue.
+		 * We have to use a temporary queue because c_kill_xfer()
+		 * may requeue commands.
+		 */
+		for (xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
+		    xfer != NULL; xfer = next_xfer) {
+			next_xfer = TAILQ_NEXT(xfer, c_xferchain);
+			if (xfer->c_chp != chp)
+				continue;
+			TAILQ_REMOVE(&chp->ch_queue->queue_xfer,
+			    xfer, c_xferchain);
+			TAILQ_INSERT_TAIL(&reset_xfer, xfer, c_xferchain);
+		}
+		xfer = chp->ch_queue->active_xfer;
 		if (xfer) {
 			if (xfer->c_chp != chp)
 				wdc_reset_channel(xfer->c_chp, flags);
 			else {
+				callout_stop(&chp->ch_callout);
 				/*
 				 * If we're waiting for DMA, stop the
 				 * DMA engine
@@ -1036,15 +1072,19 @@ wdc_reset_channel(struct wdc_channel *chp, int flags)
 					    chp->ch_channel,
 					    xfer->c_drive,
 					    WDC_DMAEND_ABRT_QUIET);
-					chp->ch_flags &= WDCF_DMA_WAIT;
+					chp->ch_flags &= ~WDCF_DMA_WAIT;
 				}
+				chp->ch_queue->active_xfer = NULL;
+				if ((flags & AT_RST_EMERG) == 0)
+					xfer->c_kill_xfer(
+					    chp, xfer, KILL_RESET);
 			}
 		}
-		for (xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
+
+		for (xfer = TAILQ_FIRST(&reset_xfer);
 		    xfer != NULL; xfer = next_xfer) {
 			next_xfer = TAILQ_NEXT(xfer, c_xferchain);
-			if (xfer->c_chp != chp)
-				continue;
+			TAILQ_REMOVE(&reset_xfer, xfer, c_xferchain);
 			if ((flags & AT_RST_EMERG) == 0)
 				xfer->c_kill_xfer(chp, xfer, KILL_RESET);
 		}
@@ -1060,6 +1100,7 @@ wdc_reset_channel(struct wdc_channel *chp, int flags)
 		/* make sure that we can use polled commands */
 		TAILQ_INIT(&chp->ch_queue->queue_xfer);
 		chp->ch_queue->queue_freeze = 0;
+		chp->ch_queue->active_xfer = NULL;
 	}
 }
 
@@ -1252,7 +1293,7 @@ __wdcwait(struct wdc_channel *chp, int mask, int bits, int timeout)
 #ifdef WDCNDELAY_DEBUG
 	/* After autoconfig, there should be no long delays. */
 	if (!cold && time > WDCNDELAY_DEBUG) {
-		struct ata_xfer *xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
+		struct ata_xfer *xfer = chp->ch_queue->active_xfer;
 		if (xfer == NULL)
 			printf("%s channel %d: warning: busy-wait took %dus\n",
 			    wdc->sc_dev.dv_xname, chp->ch_channel,
@@ -1343,7 +1384,7 @@ wdctimeout(void *arg)
 {
 	struct wdc_channel *chp = (struct wdc_channel *)arg;
 	struct wdc_softc *wdc = chp->ch_wdc;
-	struct ata_xfer *xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
+	struct ata_xfer *xfer = chp->ch_queue->active_xfer;
 	int s;
 
 	WDCDEBUG_PRINT(("wdctimeout\n"), DEBUG_FUNCS);
@@ -1882,6 +1923,7 @@ __wdccommand_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 		wdc_c->r_features = bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_features], 0);
 	}
+	callout_stop(&chp->ch_callout);
 	__wdccommand_done_end(chp, xfer);
 }
 	
@@ -1890,7 +1932,6 @@ __wdccommand_done_end(struct wdc_channel *chp, struct ata_xfer *xfer)
 {
 	struct wdc_command *wdc_c = xfer->c_cmd;
 
-	callout_stop(&chp->ch_callout);
 	wdc_c->flags |= AT_DONE;
 	if (wdc_c->flags & AT_POLL) {
 		/* enable interrupts */
@@ -1898,6 +1939,7 @@ __wdccommand_done_end(struct wdc_channel *chp, struct ata_xfer *xfer)
 		    WDCTL_4BIT);
 		delay(10); /* some drives need a little delay here */
 	}
+	chp->ch_queue->active_xfer = NULL;
 	wdc_free_xfer(chp, xfer);
 	if (wdc_c->flags & AT_WAIT)
 		wakeup(wdc_c);
@@ -2078,8 +2120,6 @@ wdc_free_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
 	if (wdc->cap & WDC_CAPABILITY_HWLOCK)
 		(*wdc->free_hw)(chp);
 	s = splbio();
-	chp->ch_flags &= ~WDCF_ACTIVE;
-	TAILQ_REMOVE(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
 	pool_put(&wdc_xfer_pool, xfer);
 	splx(s);
 }
@@ -2092,10 +2132,22 @@ wdc_free_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
 void
 wdc_kill_pending(struct wdc_channel *chp)
 {
-	struct ata_xfer *xfer;
+	struct ata_xfer *xfer, *next_xfer;
 
-	while ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) != NULL) {
-		chp = xfer->c_chp;
+	if ((xfer = chp->ch_queue->active_xfer) != NULL) {
+		if (xfer->c_chp == chp) {
+			callout_stop(&chp->ch_callout);
+			chp->ch_queue->active_xfer = NULL;
+			(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE);
+		}
+	}
+
+	for (xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
+	    xfer != NULL; xfer = next_xfer) {
+		next_xfer = TAILQ_NEXT(xfer, c_xferchain);
+		if (xfer->c_chp != chp)
+			continue;
+		TAILQ_REMOVE(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
 		(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE);
 	}
 }

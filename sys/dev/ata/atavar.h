@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.45 2004/08/01 21:40:41 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.46 2004/08/04 18:24:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -73,8 +73,9 @@ struct ata_xfer {
 
 /* Per-channel queue of ata_xfers.  May be shared by multiple channels. */
 struct ata_queue {
-	TAILQ_HEAD(, ata_xfer) queue_xfer;
-	int queue_freeze;
+	TAILQ_HEAD(, ata_xfer) queue_xfer; /* queue of pending commands */
+	int queue_freeze; /* freeze count for the queue */
+	struct ata_xfer *active_xfer; /* active command */
 };
 
 /* ATA bus instance state information. */
