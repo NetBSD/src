@@ -1,4 +1,4 @@
-/* $NetBSD: postmortem.c,v 1.1 1996/01/31 23:16:43 mark Exp $ */
+/* $NetBSD: postmortem.c,v 1.2 1996/02/22 22:51:14 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -38,15 +38,16 @@
  * Postmortem routines
  *
  * Created      : 17/09/94
- * Last updated : 28/08/95
  *
- *    $Id: postmortem.c,v 1.1 1996/01/31 23:16:43 mark Exp $
+ *    $Id: postmortem.c,v 1.2 1996/02/22 22:51:14 mark Exp $
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
 #include <machine/frame.h>
 #include <machine/katelib.h>
 
@@ -303,7 +304,8 @@ postmortem(frame)
 }
 
 
-void buried_alive(p)
+void
+buried_alive(p)
 	struct proc *p;
 {
 	printf("Ok major screw up detected on kernel stack\n");
@@ -325,10 +327,28 @@ postmortem(frame)
 	printf("No postmortem support compiled in\n");	
 }
 
-void buried_alive(p)
+void
+buried_alive(p)
 	struct proc *p;
 {
 }
 #endif
+
+void
+traceback_sym(lr, pc)
+	u_int lr;
+	u_int pc;
+{
+#ifdef DDB
+	printf("fp->lr=%08x fp->pc=%08x\n", lr, pc);
+/*	printf("fp->lr=");
+	db_printsym((db_addr_t)(lr), DB_STGY_ANY);
+	printf(" fp->pc=");
+	db_printsym((db_addr_t)(pc), DB_STGY_ANY);	
+	printf("\n");*/
+#else
+	printf("fp->lr=%08x fp->pc=%08x\n", lr, pc);
+#endif
+}
 
 /* End of postmortem.c */
