@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.40 1999/04/16 13:34:32 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.41 1999/05/03 00:17:30 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.40 1999/04/16 13:34:32 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.41 1999/05/03 00:17:30 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -723,6 +723,9 @@ printval(bp, v)
 		break;
 	case KPTR:
 		(void)printf(ofmt, v->width, GET(u_long));
+		break;
+	case KPTR24:
+		(void)printf(ofmt, v->width, GET(u_long) & 0xffffff);
 		break;
 	case SIGLIST:
 		{

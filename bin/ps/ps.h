@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.13 1999/04/16 13:34:32 christos Exp $	*/
+/*	$NetBSD: ps.h,v 1.14 1999/05/03 00:17:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,6 +37,7 @@
 
 #define	UNLIMITED	0	/* unlimited terminal width */
 enum type {
+	CHAR, UCHAR, SHORT, USHORT, INT, UINT, LONG, ULONG, KPTR, KPTR24,
 	CHAR, UCHAR, SHORT, USHORT, INT, UINT, LONG, ULONG, KPTR,
 	INT32, UINT32, SIGLIST
 };
