@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.243 2004/06/01 04:35:17 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.244 2004/06/01 04:38:28 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3433,3 +3433,8 @@ sys/arch/amd64/amd64/pmap.c			1.10
 	four-level pte, invalidating the entire address space results in 
 	multi-minute system hangs.
 	[sekiya, ticket #429]
+
+sys/arch/hp300/dev/ite.c			1.63
+
+	Handle CAPSLOCK correctly. PR#4689
+	[tsutsui, ticket #430]
