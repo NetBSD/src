@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.41 1998/02/07 15:42:32 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.42 1998/02/07 16:18:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.41 1998/02/07 15:42:32 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.42 1998/02/07 16:18:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -386,7 +386,23 @@ dovmstat(interval, reps)
 		(void)printf("%6ld%6ld ",
 		    pgtok(total.t_avm), pgtok(total.t_free));
 #if defined(UVM)
-		/* XXX FILL ME IN! */
+		(void)printf("%4lu ", rate(uvmexp.faults - ouvmexp.faults));
+		(void)printf("%3lu ", rate(uvmexp.pdreact - ouvmexp.pdreact));
+		(void)printf("%3lu ", rate(uvmexp.pageins - ouvmexp.pageins));
+		(void)printf("%3lu %3lu ",
+		    rate(uvmexp.pageouts - ouvmexp.pageouts), (u_long)0);	/* XXX */
+		(void)printf("%3lu ", rate(uvmexp.pdscans - ouvmexp.pdscans));
+		dkstats();
+		(void)printf("%4lu %4lu %3lu ",
+		    rate(uvmexp.intrs - ouvmexp.intrs),
+		    rate(uvmexp.syscalls - ouvmexp.syscalls),
+		    rate(uvmexp.swtch - ouvmexp.swtch));
+		cpustats();
+		(void)printf("\n");
+		(void)fflush(stdout);
+		if (reps >= 0 && --reps <= 0)
+			break;
+		ouvmexp = uvmexp;
 #else
 		(void)printf("%4lu ", rate(sum.v_faults - osum.v_faults));
 		(void)printf("%3lu ",
