@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.55 2003/11/22 08:49:41 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.56 2003/12/28 12:31:30 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.55 2003/11/22 08:49:41 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.56 2003/12/28 12:31:30 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,15 +418,35 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		if (pci_mapreg_map(pa, ICH_MMBAR, PCI_MAPREG_TYPE_MEM, 0,
 				   &sc->iot, &sc->mix_ioh, NULL, &mix_size)) {
-			aprint_error("%s: can't map codec i/o space\n",
+			aprint_error("%s: can't map native codec i/o space\n",
 				     sc->sc_dev.dv_xname);
-			return;
+			v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
+			pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG,
+				       v | ICH_CFG_IOSE);
+			if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO,
+					   0, &sc->iot, &sc->mix_ioh, NULL,
+					   &mix_size)) {
+				aprint_error("%s: can't map compatible codec "
+					     "i/o space\n",
+					     sc->sc_dev.dv_xname);
+				return;
+			}
 		}
 		if (pci_mapreg_map(pa, ICH_MBBAR, PCI_MAPREG_TYPE_MEM, 0,
 				   &sc->iot, &sc->aud_ioh, NULL, &aud_size)) {
-			aprint_error("%s: can't map device i/o space\n",
+			aprint_error("%s: can't map native device i/o space\n",
 				     sc->sc_dev.dv_xname);
-			return;
+			v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
+			pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG,
+				       v | ICH_CFG_IOSE);
+			if (pci_mapreg_map(pa, ICH_NABMBAR, PCI_MAPREG_TYPE_IO,
+					   0, &sc->iot, &sc->aud_ioh, NULL,
+					   &aud_size)) {
+				aprint_error("%s: can't map compatible device "
+					     "i/o space\n",
+					     sc->sc_dev.dv_xname);
+				return;
+			}
 		}
 	} else {
 		if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
