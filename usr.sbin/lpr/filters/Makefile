@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/12 01:48:52 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2002/09/18 13:31:54 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
-PROG=	lpf
 NOMAN=	# defined
+
+PROG=	lpf
 BINDIR=	/usr/libexec/lpr
 
 .include <bsd.prog.mk>
