@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.5 1999/03/27 23:27:58 nathanw Exp $
+#	$NetBSD: GENERIC_TINY,v 1.5.2.1 2000/01/31 18:53:20 he Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, PCMCIA or SCSI.
@@ -221,6 +221,8 @@ com2	at isa? port 0x3e8 irq 5
 #com*	at ast? slave ?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
 #com*	at boca? slave ?
+#ioat0	at isa? port 0x220 irq 5	# BOCA IOAT 6-port serial cards 
+#com*	at ioat? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
 #cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
