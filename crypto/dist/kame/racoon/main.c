@@ -1,4 +1,4 @@
-/*	$KAME: main.c,v 1.24 2001/01/10 02:58:58 sakane Exp $	*/
+/*	$KAME: main.c,v 1.29 2001/02/06 15:15:46 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 
 #include <netinet/in.h>
 
@@ -44,6 +45,7 @@
 #include <unistd.h>
 #endif
 #include <paths.h>
+#include <err.h>
 
 #include "var.h"
 #include "misc.h"
@@ -60,10 +62,12 @@
 #include "pfkey.h"
 #include "crypto_openssl.h"
 #include "random.h"
+#include "backupsa.h"
 
 int f_foreground = 0;	/* force running in foreground. */
 int f_local = 0;	/* local test mode.  behave like a wall. */
 int vflag = 1;		/* for print-isakmp.c */
+static int loading_sa = 0;	/* install sa when racoon boots up. */
 
 static char version[] = "@(#)racoon 20001216 sakane@ydc.co.jp";
 
@@ -90,6 +94,7 @@ Usage()
 #else
 		""
 #endif
+		"[-B]"
 		);
 	printf("   -d: debug level, more -d will generate more debug message.\n");
 	printf("   -F: run in foreground, do not become daemon.\n");
@@ -104,6 +109,8 @@ Usage()
 	printf("   -6: IPv6 mode.\n");
 	printf("   -4: IPv4 mode.\n");
 #endif
+	printf("   -B: install SA to the kernel from the file "
+		"specified by the configuration file.\n");
 	exit(1);
 }
 
@@ -113,6 +120,13 @@ main(ac, av)
 	char **av;
 {
 	int error;
+
+	/* don't let anyone read files I write */
+	umask(077);
+	if (umask(077) != 077) {
+		errx(1, "could not set umask");
+		/*NOTREACHED*/
+	}
 
 	initlcconf();
 	initrmconf();
@@ -146,6 +160,15 @@ main(ac, av)
 	}
 	restore_params();
 
+	/*
+	 * install SAs from the specified file.  If the file is not specified
+	 * by the configuration file, racoon will exit.
+	 */
+	if (loading_sa && !f_local) {
+		if (backupsa_from_file() != 0)
+			exit(1);
+	}
+
 	if (f_foreground)
 		close(0);
 	else {
@@ -177,9 +200,11 @@ main(ac, av)
 			plog(LLV_ERROR, LOCATION, NULL,
 				"cannot open %s", pid_file);
 		}
-		if (atexit(cleanup_pidfile) < 0) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"cannot register pidfile cleanup");
+		if (!f_local) {
+			if (atexit(cleanup_pidfile) < 0) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"cannot register pidfile cleanup");
+			}
 		}
 	}
 
@@ -214,7 +239,7 @@ parse(ac, av)
 	else
 		pname = *av;
 
-	while ((c = getopt(ac, av, "dFp:a:f:l:vZ"
+	while ((c = getopt(ac, av, "dFp:a:f:l:vZB"
 #ifdef YYDEBUG
 			"y"
 #endif
@@ -254,6 +279,9 @@ parse(ac, av)
 		case 'Z':
 			/*
 			 * only local test.
+			 * To specify -Z option and to choice a appropriate
+			 * port number for ISAKMP, you can launch some racoons
+			 * on the local host for debug.
 			 * pk_sendadd() on initiator side is always failed
 			 * even if this flag is used.  Because there is same
 			 * spi in the SAD which is inserted by pk_sendgetspi()
@@ -275,6 +303,9 @@ parse(ac, av)
 			lcconf->default_af = AF_INET6;
 			break;
 #endif
+		case 'B':
+			loading_sa++;
+			break;
 		default:
 			Usage();
 			break;
