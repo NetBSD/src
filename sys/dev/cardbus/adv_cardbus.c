@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.3 2001/09/29 01:53:23 yamt Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.4 2001/09/29 02:16:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -191,8 +191,6 @@ adv_cardbus_attach(parent, self, aux)
 		    DEVNAME(sc));
 		return;
 	}
-
-	printf("tag = %u\n", iot);
 
 	/* Make sure the right access type is on the CardBus bridge. */
 	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cbenable);
