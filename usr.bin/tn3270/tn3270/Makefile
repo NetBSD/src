@@ -1,8 +1,5 @@
-#	$NetBSD: Makefile,v 1.25 1997/05/09 15:04:06 mycroft Exp $
+#	$NetBSD: Makefile,v 1.25.2.1 1997/11/08 10:38:36 lukem Exp $
 
-.include "../../Makefile.inc"
-
-CFLAGS+=-I${.CURDIR} -I.
 LDADD+=	-lcurses -ltermcap -lcrypt
 DPADD+=	${LIBCURSES} ${LIBTERMCAP} ${LIBCRYPT}
 
@@ -53,7 +50,7 @@ disp_asc.out: ${MKDSTOAS}
 CLEANFILES+=	disp_asc.tmp
 
 kbd.out: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/${KBD} ${MKHITS}
-	${CC} ${CFLAGS} -E ${.CURDIR}/../ctlr/function.c > TMPfunc.out
+	${CC} ${CPPFLAGS} -E ${.CURDIR}/../ctlr/function.c > TMPfunc.out
 	${MKHITS} \
 	    ${.CURDIR}/../ctlr/hostctlr.h TMPfunc.out \
 	    < ${.CURDIR}/../ctlr/${KBD} > kbd.tmp
