@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.16 2001/01/27 07:34:40 jmc Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.16.2.1 2002/07/29 14:58:36 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -134,7 +134,9 @@ message parttable
 }
 
 message editpart
-{La partition %d ressemble à:\n\n}
+{La partition %d ressemble à:
+
+}
 
 message editparttable
 {Editez votre table de partition DOS. La partition en surbrillance est
