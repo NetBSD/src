@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.5 2001/11/21 23:22:25 thorpej Exp $	*/
+/*	$NetBSD: sbic.c,v 1.6 2002/02/11 10:44:39 wiz Exp $	*/
 
 /*
  * Changes Copyright (c) 2001 Wayne Knowles
@@ -943,7 +943,7 @@ wd33c93_selectbus(dev, acb)
 	WAIT_CIP(dev);
 
 	/*
-	 * wait for select (merged from seperate function may need
+	 * wait for select (merged from separate function may need
 	 * cleanup)
 	 */
 	do {

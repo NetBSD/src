@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.13 2002/01/12 16:29:31 tsutsui Exp $	*/
+/*	$NetBSD: stic.c,v 1.14 2002/02/11 10:44:40 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.13 2002/01/12 16:29:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.14 2002/02/11 10:44:40 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1426,7 +1426,7 @@ stic_set_hwcurpos(struct stic_info *si)
 }
 
 /*
- * STIC control inteface.  We have a seperate device for mapping the board,
+ * STIC control inteface.  We have a separate device for mapping the board,
  * because access to the DMA engine means that it's possible to circumvent
  * the securelevel mechanism.  Given the way devices work in the BSD kernel,
  * and given the unfortunate design of the mmap() call it's near impossible
