@@ -1,11 +1,11 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.5 2000/06/14 22:02:14 veego Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.6 2000/08/11 03:05:20 thorpej Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.5 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.6 $"
 
 maxusers 64
 
@@ -292,6 +292,8 @@ ahc*	at	eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 #ep*	at	eisa? slot ?			# 3COM 3c579 Ethernet (untested)
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI
 tlp*	at	eisa? slot ?			# DEC DE-425 Ethernet
+depca*	at	eisa? slot ?			# DEC DE-422 Ethernet
+le*	at	depca?
 #uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
 
 # PCMCIA device
