@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.21 1997/01/15 01:37:57 perry Exp $	*/
+/*	$NetBSD: time.h,v 1.22 1997/06/20 07:21:40 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -170,9 +170,13 @@ void	microtime __P((struct timeval *tv));
 
 __BEGIN_DECLS
 int	adjtime __P((const struct timeval *, struct timeval *));
+int	clock_getres __P((clockid_t, struct timespec *));
+int	clock_gettime __P((clockid_t, struct timespec *));
+int	clock_settime __P((clockid_t, const struct timespec *));
 int	futimes __P((int, const struct timeval *));
 int	getitimer __P((int, struct itimerval *));
 int	gettimeofday __P((struct timeval *, struct timezone *));
+int	nanosleep __P((const struct timespec *, struct timespec *));
 int	setitimer __P((int, const struct itimerval *, struct itimerval *));
 int	settimeofday __P((const struct timeval *, const struct timezone *));
 int	utimes __P((const char *, const struct timeval *));
