@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.37 2003/08/07 16:29:13 agc Exp $ */
+/* $NetBSD: dec_3100.c,v 1.38 2003/12/13 23:04:38 ad Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.37 2003/08/07 16:29:13 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.38 2003/12/13 23:04:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,14 +117,24 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.37 2003/08/07 16:29:13 agc Exp $");
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
+#include <dev/tc/tcvar.h>		/* tc_addr_t */
+
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn01.h>
-#include <pmax/dev/pmvar.h>
-#include <pmax/dev/dcvar.h>
 
 #include <pmax/ibus/ibusvar.h>
 
+#ifdef WSCONS
+#include <dev/dec/dzreg.h>
+#include <dev/dec/dzvar.h>
+#include <dev/dec/dzkbdvar.h>
+#include <pmax/pmax/cons.h>
+#else
+#include <pmax/dev/pmvar.h>
+#include <pmax/dev/dcvar.h>
 #include "rasterconsole.h"
+#endif
+
 #include "pm.h"
 
 void		dec_3100_init __P((void));		/* XXX */
@@ -187,7 +197,13 @@ dec_3100_cons_init()
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if NRASTERCONSOLE > 0 && NPM > 0
+#if defined(WSCONS) && NPM > 0
+ 		if (pm_cnattach() > 0) {
+			dz_ibus_cnsetup(KN01_SYS_DZ);
+			dzkbd_cnattach(NULL);
+ 			return;
+ 		}
+#elif NRASTERCONSOLE > 0 && NPM > 0
 		if (pm_cnattach() > 0) {
 			dckbd_cnattach(KN01_SYS_DZ);
 			return;
@@ -204,7 +220,12 @@ dec_3100_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
+#ifdef WSCONS
+	dz_ibus_cnsetup(KN01_SYS_DZ);
+	dz_ibus_cnattach(kbd);
+#else
 	dc_cnattach(KN01_SYS_DZ, kbd);
+#endif
 }
 
 #define CALLINTR(vvv, cp0)					\

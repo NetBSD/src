@@ -1,0 +1,85 @@
+#	$NetBSD: files.pmax_rcons,v 1.1 2003/12/13 23:04:37 ad Exp $
+
+# DC7085 (DZ-like four-port serial device) on ibus
+device dc: tty
+file	arch/pmax/dev/dc.c		dc
+attach dc at ibus with dc_ds
+file	arch/pmax/dev/dc_ds.c		dc needs-flag
+
+
+# The "desktop bus" on the MAXINE (5k/25). What is it, anyway? ADB?
+device dtop
+attach dtop at ioasic
+file	arch/pmax/dev/dtop.c		dtop needs-flag
+
+
+# Raster operations for rcons. This isn't in the rcons section, since
+# it depends on fb devices for configuration glue.
+include "dev/rasops/files.rasops"
+
+
+# 3100 (pmax) onboard framebuffer
+device pm: rasops1, rasops8
+attach pm at ibus with pm_ds
+file	arch/pmax/dev/pm.c		pm needs-flag
+file	arch/pmax/dev/bt478.c		pm
+
+
+#########################################################################
+# TURBOchannel option cards.						#
+#########################################################################
+
+device cfb: rasops8
+attach cfb at tc
+file	arch/pmax/dev/cfb.c		cfb needs-flag
+
+device sfb: rasops8
+attach sfb at tc
+file	arch/pmax/dev/sfb.c		sfb needs-flag
+
+device mfb: rasops8
+attach mfb at tc
+file	arch/pmax/dev/mfb.c		mfb needs-flag
+
+# Zilog 8350/Intel 82350(?) SCC UART.
+device scc: tty
+attach scc at ioasic
+file	arch/pmax/tc/scc.c		scc needs-flag
+
+# MAXINE onboard framebuffer
+device	xcfb: rasops8
+attach	xcfb at tc
+file	arch/pmax/dev/xcfb.c 		xcfb needs-flag
+file	arch/pmax/dev/ims332.c		xcfb
+
+# PixelStamp graphics boards
+device	px: rasops8
+attach	px at tc
+file	arch/pmax/dev/px.c 		px needs-flag
+
+# pmax configuration glue for rconsole. Requires fb pseudo-device.
+
+include "dev/rcons/files.rcons"
+include "dev/wsfont/files.wsfont"
+
+defpseudo	rasterconsole
+file	arch/pmax/dev/rcons.c			rasterconsole	needs-flag
+
+## Support code for LK-201 keyboards, mice, and qvss ring buffers
+file	arch/pmax/dev/lk201.c		pm | cfb | sfb | mfb | xcfb | px
+file	arch/pmax/dev/qvss_compat.c	fb | px
+
+
+# VDAC/RAMDAC support for framebuffers. Other devices supported by
+# NetBSD may use the same chips, too.
+file	arch/pmax/dev/bt459.c			cfb | sfb
+
+#
+# Pseudo-device driver for framebuffers.  All user-level requests,
+# including open(), go through the fb driver, which presents a consistent
+# interface to all framebuffers.  Configure as many units as you
+# have framebuffers.  Provides qvss-style interface compatible with
+# X11R5 servers.
+#
+defpseudo	fb
+file	arch/pmax/dev/fb.c		fb needs-count
