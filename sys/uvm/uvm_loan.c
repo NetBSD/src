@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.10 1998/10/11 23:16:20 chuck Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.11 1998/10/18 23:50:00 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -272,7 +272,7 @@ uvm_loan(map, start, len, result, flags)
 		/*
 		 * done!   advance pointers and unlock.
 		 */
-		rv = rv * PAGE_SIZE;
+		rv <<= PAGE_SHIFT;
 		len -= rv;
 		start += rv;
 		uvmfault_unlockmaps(&ufi, FALSE);

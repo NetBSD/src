@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.17 1998/10/11 23:18:20 chuck Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.18 1998/10/18 23:49:59 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -555,7 +555,7 @@ uvm_km_pgremove(uobj, start, end)
 
 	/* choose cheapest traversal */
 	by_list = (uobj->uo_npages <=
-	     ((end - start) / PAGE_SIZE) * UKM_HASH_PENALTY);
+	     ((end - start) >> PAGE_SHIFT) * UKM_HASH_PENALTY);
  
 	if (by_list)
 		goto loop_by_list;
@@ -581,7 +581,8 @@ uvm_km_pgremove(uobj, start, end)
 			 */
 			if (is_aobj) {
 				int slot = uao_set_swslot(uobj,
-				    curoff / PAGE_SIZE, 0);
+							  curoff >> PAGE_SHIFT,
+							  0);
 
 				if (slot)
 					uvm_swap_free(slot, 1);
@@ -620,7 +621,7 @@ loop_by_list:
 			 */
 			if (is_aobj) {
 				int slot = uao_set_swslot(uobj,
-				    pp->offset / PAGE_SIZE, 0);
+						pp->offset >> PAGE_SHIFT, 0);
 
 				if (slot)
 					uvm_swap_free(slot, 1);

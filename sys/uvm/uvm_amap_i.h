@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.8 1998/08/13 02:10:59 eeh Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.9 1998/10/18 23:49:59 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -213,11 +213,11 @@ amap_ref(entry, flags)
 		amap->am_flags |= AMAP_SHARED;
 #ifdef VM_AMAP_PPREF
 	if (amap->am_ppref == NULL && (flags & AMAP_REFALL) == 0 &&
-	    (entry->start - entry->end) / PAGE_SIZE != amap->am_nslot)
+	    (entry->start - entry->end) >> PAGE_SHIFT != amap->am_nslot)
 		amap_pp_establish(amap);
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
 		if (flags & AMAP_REFALL)
-			amap_pp_adjref(amap, 0, amap->am_nslot * PAGE_SIZE, 1);
+			amap_pp_adjref(amap, 0, amap->am_nslot << PAGE_SHIFT, 1);
 		else
 			amap_pp_adjref(amap, entry->aref.ar_slotoff, 
 			 	entry->end - entry->start, 1);
@@ -270,11 +270,11 @@ amap_unref(entry, all)
 		amap->am_flags &= ~AMAP_SHARED;	/* clear shared flag */
 #ifdef VM_AMAP_PPREF
 	if (amap->am_ppref == NULL && all == 0 &&
-	    (entry->start - entry->end) / PAGE_SIZE != amap->am_nslot)
+	    (entry->start - entry->end) >> PAGE_SHIFT != amap->am_nslot)
 		amap_pp_establish(amap);
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
 		if (all)
-			amap_pp_adjref(amap, 0, amap->am_nslot * PAGE_SIZE, -1);
+			amap_pp_adjref(amap, 0, amap->am_nslot << PAGE_SHIFT, -1);
 		else
 			amap_pp_adjref(amap, entry->aref.ar_slotoff, 
 			    entry->end - entry->start, -1);

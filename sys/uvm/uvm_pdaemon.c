@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.10 1998/08/13 02:11:03 eeh Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.11 1998/10/18 23:50:00 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -165,8 +165,8 @@ uvmpd_tune()
 
 	/* between 16k and 256k */
 	/* XXX:  what are these values good for? */
-	uvmexp.freemin = max(uvmexp.freemin, (16*1024)/PAGE_SIZE);
-	uvmexp.freemin = min(uvmexp.freemin, (256*1024)/PAGE_SIZE);
+	uvmexp.freemin = max(uvmexp.freemin, (16*1024) >> PAGE_SHIFT);
+	uvmexp.freemin = min(uvmexp.freemin, (256*1024) >> PAGE_SHIFT);
 
 	uvmexp.freetarg = (uvmexp.freemin * 4) / 3;
 	if (uvmexp.freetarg <= uvmexp.freemin)
@@ -319,9 +319,9 @@ uvmpd_scan_inactive(pglst)
 	int s, free, result;
 	struct vm_page *p, *nextpg;
 	struct uvm_object *uobj;
-	struct vm_page *pps[MAXBSIZE/PAGE_SIZE], **ppsp;
+	struct vm_page *pps[MAXBSIZE >> PAGE_SHIFT], **ppsp;
 	int npages;
-	struct vm_page *swpps[MAXBSIZE/PAGE_SIZE]; 	/* XXX: see below */
+	struct vm_page *swpps[MAXBSIZE >> PAGE_SHIFT]; 	/* XXX: see below */
 	int swnpages, swcpages;				/* XXX: see below */
 	int swslot, oldslot;
 	struct vm_anon *anon;
@@ -553,7 +553,7 @@ uvmpd_scan_inactive(pglst)
 					}
 				} else {
 					oldslot = uao_set_swslot(uobj,
-					    p->offset/PAGE_SIZE, 0);
+					    p->offset >> PAGE_SHIFT, 0);
 
 					if (oldslot)
 						uvm_swap_free(oldslot, 1);
@@ -564,7 +564,7 @@ uvmpd_scan_inactive(pglst)
 				 */
 				if (swslot == 0) {
 					/* want this much */
-					swnpages = MAXBSIZE/PAGE_SIZE;
+					swnpages = MAXBSIZE >> PAGE_SHIFT;
 
 					swslot = uvm_swap_alloc(&swnpages,
 					    TRUE);
@@ -593,7 +593,7 @@ uvmpd_scan_inactive(pglst)
 					anon->an_swslot = swslot + swcpages;
 				else
 					uao_set_swslot(uobj,
-					    p->offset/PAGE_SIZE,
+					    p->offset >> PAGE_SHIFT,
 					    swslot + swcpages);
 				swcpages++;
 

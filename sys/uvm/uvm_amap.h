@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.7 1998/08/13 02:10:59 eeh Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.8 1998/10/18 23:49:59 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -80,12 +80,12 @@
 
 #ifdef DIAGNOSTIC
 #define AMAP_B2SLOT(S,B) { \
-	if ((B) % PAGE_SIZE) \
+	if ((B) & (PAGE_SIZE - 1)) \
 		panic("AMAP_B2SLOT: invalid byte count"); \
-	(S) = (B) / PAGE_SIZE; \
+	(S) = (B) >> PAGE_SHIFT; \
 }
 #else
-#define AMAP_B2SLOT(S,B) (S) = (B) / PAGE_SIZE
+#define AMAP_B2SLOT(S,B) (S) = (B) >> PAGE_SHIFT
 #endif
 
 #ifdef VM_AMAP_PPREF

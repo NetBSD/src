@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.15 1998/08/13 02:11:04 eeh Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.16 1998/10/18 23:50:01 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -841,7 +841,7 @@ uvn_flush(uobj, start, stop, flags)
 {
 	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
 	struct vm_page *pp, *ppnext, *ptmp;
-	struct vm_page *pps[MAXBSIZE/PAGE_SIZE], **ppsp;
+	struct vm_page *pps[MAXBSIZE >> PAGE_SHIFT], **ppsp;
 	int npages, result, lcv;
 	boolean_t retval, need_iosync, by_list, needs_clean;
 	vaddr_t curoff;
@@ -867,7 +867,7 @@ uvn_flush(uobj, start, stop, flags)
 			    "flush (fixed)\n");
 
 		by_list = (uobj->uo_npages <= 
-		    ((stop - start) / PAGE_SIZE) * UVN_HASH_PENALTY);
+		    ((stop - start) >> PAGE_SHIFT) * UVN_HASH_PENALTY);
 	}
 
 	UVMHIST_LOG(maphist,
@@ -1680,7 +1680,7 @@ uvn_io(uvn, pps, npages, flags, rw)
 	 */
 	
 	iov.iov_base = (caddr_t) kva;
-	wanted = npages * PAGE_SIZE;
+	wanted = npages << PAGE_SHIFT;
 	if (file_offset + wanted > uvn->u_size)
 		wanted = uvn->u_size - file_offset;	/* XXX: needed? */
 	iov.iov_len = wanted;
@@ -1725,7 +1725,8 @@ uvn_io(uvn, pps, npages, flags, rw)
 		if (wanted && got == 0) {
 			result = EIO;		/* XXX: error? */
 		} else if (got < PAGE_SIZE * npages && rw == UIO_READ) {
-			memset((void *) (kva + got), 0, (PAGE_SIZE * npages) - got);
+			memset((void *) (kva + got), 0,
+			       (npages << PAGE_SHIFT) - got);
 		}
 	}
 
