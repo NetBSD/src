@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2.6.6 2002/06/24 22:07:03 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.2.6.7 2002/07/03 20:33:28 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -427,9 +427,9 @@ brain_damage:
 			postsig(sig);
 	}
 
-	/* If our process is on the way out, die. */
-	if (p->p_flag & P_WEXIT)
-		lwp_exit(l);
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
 
 	/* Invoke any pending upcalls */
 	if (l->l_flag & L_SA_UPCALL)
