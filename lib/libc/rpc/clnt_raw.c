@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.7 1998/02/10 04:54:29 lukem Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.8 1998/02/11 07:50:07 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.7 1998/02/10 04:54:29 lukem Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.8 1998/02/11 07:50:07 lukem Exp $");
 #endif
 #endif
 
@@ -81,7 +81,7 @@ static enum clnt_stat clntraw_call __P((CLIENT *, u_int32_t, xdrproc_t,
 static void clntraw_geterr __P((CLIENT *, struct rpc_err *));
 static bool_t clntraw_freeres __P((CLIENT *, xdrproc_t, caddr_t));
 static void clntraw_abort __P((CLIENT *));
-static bool_t clntraw_control __P((CLIENT *, size_t, caddr_t));
+static bool_t clntraw_control __P((CLIENT *, u_int, caddr_t));
 static void clntraw_destroy __P((CLIENT *));
 
 static struct clnt_ops client_ops = {
@@ -267,7 +267,7 @@ clntraw_abort(cl)
 static bool_t
 clntraw_control(cl, ui, str)
 	CLIENT *cl;
-	size_t ui;
+	u_int ui;
 	caddr_t str;
 {
 	return (FALSE);
