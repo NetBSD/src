@@ -1,4 +1,4 @@
-/*	$NetBSD: rrs.c,v 1.32 2000/01/13 00:05:32 mycroft Exp $	*/
+/*	$NetBSD: rrs.c,v 1.33 2000/10/27 01:05:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -356,7 +356,7 @@ claim_rrs_jmpslot(entry, rp, sp, addend)
 	current_jmpslot_offset += sizeof(jmpslot_t);
 
 #ifdef DEBUG
-printf("claim_rrs_jmpslot: %s: %s(%d) -> offset %x\n",
+printf("claim_rrs_jmpslot: %s: %s(%d) -> offset %lx\n",
 	get_file_name(entry),
 	sp->name, sp->rrs_symbolnum, sp->jmpslot_offset);
 #endif
@@ -450,7 +450,7 @@ claim_rrs_gotslot(entry, rp, lsp, addend)
 	current_got_offset += sizeof(got_t);
 
 #ifdef DEBUG
-printf("claim_rrs_gotslot: %s(%d,%#x) slot offset %#x, addend %#x\n",
+printf("claim_rrs_gotslot: %s(%d,%#lx) slot offset %#lx, addend %#lx\n",
 	 sp->name, sp->rrs_symbolnum, sp->value, sp->gotslot_offset, addend);
 #endif
 
@@ -553,7 +553,7 @@ claim_rrs_internal_gotslot(entry, rp, lsp, addend)
 	}
 
 #ifdef DEBUG
-printf("claim_rrs_internal_gotslot: %s: slot offset %#x, addend = %#x\n",
+printf("claim_rrs_internal_gotslot: %s: slot offset %#lx, addend = %#lx\n",
 	get_file_name(entry), lsp->gotslot_offset, addend);
 #endif
 
