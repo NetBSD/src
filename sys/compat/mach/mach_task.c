@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.18 2002/12/30 18:44:34 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.19 2002/12/31 15:47:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.18 2002/12/30 18:44:34 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.19 2002/12/31 15:47:38 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,16 +78,16 @@ mach_task_get_special_port(args)
 
 	switch (req->req_which_port) {
 	case MACH_TASK_KERNEL_PORT:
-		mr = mach_right_get(med->med_kernel, p, MACH_PORT_TYPE_SEND);
+		mr = mach_right_get(med->med_kernel, p, MACH_PORT_TYPE_SEND, 0);
 		break;
 
 	case MACH_TASK_HOST_PORT:
-		mr = mach_right_get(med->med_host, p, MACH_PORT_TYPE_SEND);
+		mr = mach_right_get(med->med_host, p, MACH_PORT_TYPE_SEND, 0);
 		break;
 
 	case MACH_TASK_BOOTSTRAP_PORT:
 		mr = mach_right_get(med->med_bootstrap, 
-		    p, MACH_PORT_TYPE_SEND);
+		    p, MACH_PORT_TYPE_SEND, 0);
 #ifdef DEBUG_MACH
 		printf("*** get bootstrap right %p, port %p, recv %p [%p]\n",
 		    mr, mr->mr_port, mr->mr_port->mp_recv,
@@ -111,7 +111,7 @@ mach_task_get_special_port(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_msgh_body.msgh_descriptor_count = 1;
-	rep->rep_special_port.name = (mach_port_t)mr;
+	rep->rep_special_port.name = (mach_port_t)mr->mr_name;
 	rep->rep_special_port.disposition = 0x11; /* XXX why? */
 	rep->rep_trailer.msgh_trailer_size = 8;
 
@@ -151,11 +151,11 @@ mach_ports_lookup(args)
 	msp[6] = MACH_PORT_DEAD;
 
 	msp[MACH_TASK_KERNEL_PORT] = 
-	    mach_right_get(med->med_kernel, p, MACH_PORT_TYPE_SEND);
+	    mach_right_get(med->med_kernel, p, MACH_PORT_TYPE_SEND, 0);
 	msp[MACH_TASK_HOST_PORT] = 
-	    mach_right_get(med->med_host, p, MACH_PORT_TYPE_SEND);
+	    mach_right_get(med->med_host, p, MACH_PORT_TYPE_SEND, 0);
 	msp[MACH_TASK_BOOTSTRAP_PORT] = 
-	    mach_right_get(med->med_bootstrap, p, MACH_PORT_TYPE_SEND);
+	    mach_right_get(med->med_bootstrap, p, MACH_PORT_TYPE_SEND, 0);
 
 	/*
 	 * On Darwin, the data seems always null...
@@ -190,18 +190,19 @@ mach_task_set_special_port(args)
 	mach_task_set_special_port_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct proc *p = args->p;
+	mach_port_t mn;
 	struct mach_right *mr;
 	struct mach_port *mp;
 	struct mach_emuldata *med;
 
-	mr = (struct mach_right *)req->req_special_port.name;
+	mn = req->req_special_port.name;
 
 	/* Null port ? */
-	if (mr == MACH_PORT_NULL)
+	if (mn == NULL)
 		return mach_msg_error(args, 0);
 
 	/* Does the inserted port exists? */
-	if (mach_right_check(mr, p, MACH_PORT_TYPE_ALL_RIGHTS) == 0)
+	if ((mr = mach_right_check(mn, p, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
 		return mach_msg_error(args, EPERM);
 
 	if (mr->mr_type == MACH_PORT_TYPE_DEAD_NAME)
