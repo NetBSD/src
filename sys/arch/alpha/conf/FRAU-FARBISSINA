@@ -1,4 +1,4 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.20 2002/11/30 07:06:41 itohy Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.21 2003/02/10 08:04:39 grant Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
@@ -7,7 +7,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.20 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.21 $"
 
 maxusers 64
 
@@ -216,6 +216,7 @@ tlp*	at	pci? dev ? function ?		# DECchip 21x4x and clones
 #uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 #vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
+#wi*	at	pci? dev ? function ?		# Lucent/Intersil WaveLAN/IEEE
 
 #audio*	at	eap?
 #audio*	at	eso?
@@ -303,7 +304,7 @@ le*	at	depca?
 #ne*	at	pcmcia? function ?		# NE2000-compatible Eth.
 #sm*	at	pcmcia? function ?		# Megahertz Ethernet
 #ray*	at	pcmcia? function ?		# Raytheon Raylink (802.11)
-#wi*	at	pcmcia? function ?		# Lucent WaveLAN/IEEE
+#wi*	at	pcmcia? function ?		# Lucent/Intersil WaveLAN/IEEE
 
 # SCSI bus support
 #scsibus* at	adv?
