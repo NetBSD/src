@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.1.1.3 2001/02/11 13:51:18 assar Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.1.1.4 2001/09/17 12:24:43 assar Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -43,7 +43,7 @@
 %{
 
 #include "ftpd_locl.h"
-RCSID("$Id: ftpcmd.y,v 1.1.1.3 2001/02/11 13:51:18 assar Exp $");
+RCSID("$Id: ftpcmd.y,v 1.1.1.4 2001/09/17 12:24:43 assar Exp $");
 
 off_t	restart_point;
 
@@ -1238,9 +1238,9 @@ yylex(void)
 				cpos++;
 				return (SP);
 			}
-			if (isdigit(cbuf[cpos])) {
+			if (isdigit((unsigned char)cbuf[cpos])) {
 				cp = &cbuf[cpos];
-				while (isdigit(cbuf[++cpos]))
+				while (isdigit((unsigned char)cbuf[++cpos]))
 					;
 				c = cbuf[cpos];
 				cbuf[cpos] = '\0';
@@ -1253,9 +1253,9 @@ yylex(void)
 			goto dostr1;
 
 		case ARGS:
-			if (isdigit(cbuf[cpos])) {
+			if (isdigit((unsigned char)cbuf[cpos])) {
 				cp = &cbuf[cpos];
-				while (isdigit(cbuf[++cpos]))
+				while (isdigit((unsigned char)cbuf[++cpos]))
 					;
 				c = cbuf[cpos];
 				cbuf[cpos] = '\0';
