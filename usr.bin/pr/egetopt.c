@@ -1,4 +1,4 @@
-/*	$NetBSD: egetopt.c,v 1.3 1997/10/19 12:41:58 lukem Exp $	*/
+/*	$NetBSD: egetopt.c,v 1.4 1998/12/19 20:16:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 from: static char sccsid[] = "@(#)egetopt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: egetopt.c,v 1.3 1997/10/19 12:41:58 lukem Exp $");
+__RCSID("$NetBSD: egetopt.c,v 1.4 1998/12/19 20:16:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,12 +124,12 @@ egetopt(nargc, nargv, ostr)
 			return (-1);
 		if (strchr(ostr, '#') && (isdigit(eoptopt) ||
 		    (((eoptopt == (int)'-') || (eoptopt == (int)'+')) &&
-		      isdigit(*place)))) {
+		      isdigit((unsigned char)*place)))) {
 			/*
 			 * # option: +/- with a number is ok
 			 */
 			for (p = place; *p != '\0'; ++p) {
-				if (!isdigit(*p))
+				if (!isdigit((unsigned char)*p))
 					break;
 			}
 			eoptarg = place-1;
