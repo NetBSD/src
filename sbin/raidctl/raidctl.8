@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.45 2005/01/31 16:42:15 fredb Exp $
+.\"     $NetBSD: raidctl.8,v 1.46 2005/01/31 17:11:33 fredb Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -170,7 +170,7 @@ All components of the set must be of type
 .Dv RAID
 in the disklabel.
 Note that only certain architectures
-.Pq currently alpha, i386, pmax, sparc, and sparc64
+.Pq currently alpha, i386, pmax, sparc, sparc64, and vax
 support booting a kernel directly from a RAID set.
 .It Fl B Ar dev
 Initiate a copyback of reconstructed data from a spare disk to
@@ -1212,7 +1212,7 @@ arguments.
 .Pp
 Note that kernels can only be directly read from RAID 1 components on
 architectures that support that
-.Pq currently alpha, i386, pmax, sparc, and sparc64 .
+.Pq currently alpha, i386, pmax, sparc, sparc64, and vax .
 On those architectures, the
 .Dv FS_RAID
 file system is recognized by the bootblocks, and will properly load the
