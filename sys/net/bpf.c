@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.86 2003/09/22 13:00:01 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.87 2004/01/21 22:15:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.86 2003/09/22 13:00:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.87 2004/01/21 22:15:16 jonathan Exp $");
 
 #include "bpfilter.h"
 
@@ -80,15 +80,22 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.86 2003/09/22 13:00:01 christos Exp $");
 #endif
 
 #ifndef BPF_BUFSIZE
-# define BPF_BUFSIZE 8192		/* 4096 too small for FDDI frames */
+/*
+ * 4096 is too small for FDDI frames. 8192 is too small for gigabit Ethernet
+ * jumbos (circa 9k), ATM, or Intel gig/10gig ethernet jumbos (16k).
+ */
+# define BPF_BUFSIZE 32768
 #endif
 
 #define PRINET  26			/* interruptible */
 
 /*
- * The default read buffer size is patchable.
+ * The default read buffer size, and limit for BIOCSBLEN, is patchable.
+ * XXX both should be made sysctl'able, and the defaults computed
+ * dynamically based on available memory size and available mbuf clusters.
  */
 int bpf_bufsize = BPF_BUFSIZE;
+int bpf_maxbufsize = (1024 *  1024)	/* XXX set dynamically, see above */
 
 /*
  *  bpf_iflist is the list of interfaces; each corresponds to an ifnet
@@ -662,8 +669,8 @@ bpfioctl(dev, cmd, addr, flag, p)
 		else {
 			u_int size = *(u_int *)addr;
 
-			if (size > BPF_MAXBUFSIZE)
-				*(u_int *)addr = size = BPF_MAXBUFSIZE;
+			if (size > bpf_maxbufsize)
+				*(u_int *)addr = size = bpf_maxbufsize;
 			else if (size < BPF_MINBUFSIZE)
 				*(u_int *)addr = size = BPF_MINBUFSIZE;
 			d->bd_bufsize = size;
