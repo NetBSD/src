@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.c,v 1.11 2000/07/07 15:45:00 mjl Exp $	*/
+/*	$NetBSD: skey.c,v 1.12 2000/09/14 15:26:42 mjl Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.c)
@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: skey.c,v 1.11 2000/07/07 15:45:00 mjl Exp $");
+__RCSID("$NetBSD: skey.c,v 1.12 2000/09/14 15:26:42 mjl Exp $");
 #endif
 
 #include <ctype.h>
@@ -53,7 +53,7 @@ main(int	argc, char **argv)
 			cnt = atoi(optarg);
 			break;
 		case 'p':
-			if (strlcpy(passwd, argv[++i], sizeof(passwd)) >=
+			if (strlcpy(passwd, optarg, sizeof(passwd)) >=
 							sizeof(passwd))
 				errx(1, "Password too long");
 			pass = 1;
