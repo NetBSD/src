@@ -1,0 +1,1112 @@
+This is gdbint.info, produced by makeinfo version 4.1 from
+./gdbint.texinfo.
+
+INFO-DIR-SECTION Programming & development tools.
+START-INFO-DIR-ENTRY
+* Gdb-Internals: (gdbint).	The GNU debugger's internals.
+END-INFO-DIR-ENTRY
+
+   This file documents the internals of the GNU debugger GDB.
+Copyright 1990,1991,1992,1993,1994,1996,1998,1999,2000,2001,2002
+Free Software Foundation, Inc.  Contributed by Cygnus Solutions.
+Written by John Gilmore.  Second Edition by Stan Shebs.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with the Front-Cover Texts being "A GNU Manual,"
+and with the Back-Cover Texts as in (a) below.
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: gdbint.info,  Node: Releasing GDB,  Next: Testsuite,  Prev: Porting GDB,  Up: Top
+
+Releasing GDB
+*************
+
+Versions and Branches
+=====================
+
+Version Identifiers
+-------------------
+
+   GDB's version is determined by the file `gdb/version.in'.
+
+   GDB's mainline uses ISO dates to differentiate between versions.
+The CVS repository uses YYYY-MM-DD-cvs while the corresponding snapshot
+uses YYYYMMDD.
+
+   GDB's release branch uses a slightly more complicated scheme.  When
+the branch is first cut, the mainline version identifier is prefixed
+with the MAJOR.MINOR from of the previous release series but with .90
+appended.  As draft releases are drawn from the branch, the minor minor
+number (.90) is incremented.  Once the first release (M.N) has been
+made, the version prefix is updated to M.N.0.90 (dot zero, dot ninety).
+Follow on releases have an incremented minor minor version number (.0).
+
+   Using 5.1 (previous) and 5.2 (current), the example below
+illustrates a typical sequence of version identifiers:
+
+5.1.1
+     final release from previous branch
+
+2002-03-03-cvs
+     main-line the day the branch is cut
+
+5.1.90-2002-03-03-cvs
+     corresponding branch version
+
+5.1.91
+     first draft release candidate
+
+5.1.91-2002-03-17-cvs
+     updated branch version
+
+5.1.92
+     second draft release candidate
+
+5.1.92-2002-03-31-cvs
+     updated branch version
+
+5.1.93
+     final release candidate (see below)
+
+5.2
+     official release
+
+5.2.0.90-2002-04-07-cvs
+     updated CVS branch version
+
+5.2.1
+     second official release
+
+   Notes:
+
+   * Minor minor minor draft release candidates such as 5.2.0.91 have
+     been omitted from the example.  Such release candidates are,
+     typically, never made.
+
+   * For 5.1.93 the bziped tar ball `gdb-5.1.93.tar.bz2' is just the
+     official `gdb-5.2.tar' renamed and compressed.
+
+   To avoid version conflicts, vendors are expected to modify the file
+`gdb/version.in' to include a vendor unique alphabetic identifier (an
+official GDB release never uses alphabetic characters in its version
+identifer).
+
+   Since GDB does not make minor minor minor releases (e.g., 5.1.0.1)
+the conflict between that and a minor minor draft release identifier
+(e.g., 5.1.0.90) is avoided.
+
+Branches
+--------
+
+   GDB draws a release series (5.2, 5.2.1, ...) from a single release
+branch (gdb_5_2-branch).  Since minor minor minor releases (5.1.0.1)
+are not made, the need to branch the release branch is avoided (it also
+turns out that the effort required for such a a branch and release is
+significantly greater than the effort needed to create a new release
+from the head of the release branch).
+
+   Releases 5.0 and 5.1 used branch and release tags of the form:
+
+     gdb_N_M-YYYY-MM-DD-branchpoint
+     gdb_N_M-YYYY-MM-DD-branch
+     gdb_M_N-YYYY-MM-DD-release
+
+   Release 5.2 is trialing the branch and release tags:
+
+     gdb_N_M-YYYY-MM-DD-branchpoint
+     gdb_N_M-branch
+     gdb_M_N-YYYY-MM-DD-release
+
+   _Pragmatics: The branchpoint and release tags need to identify when
+a branch and release are made.  The branch tag, denoting the head of the
+branch, does not have this criteria._
+
+Branch Commit Policy
+====================
+
+   The branch commit policy is pretty slack.  GDB releases 5.0, 5.1 and
+5.2 all used the below:
+
+   * The `gdb/MAINTAINERS' file still holds.
+
+   * Don't fix something on the branch unless/until it is also fixed in
+     the trunk.  If this isn't possible, mentioning it in the
+     `gdb/PROBLEMS' file is better than committing a hack.
+
+   * When considering a patch for the branch, suggested criteria
+     include: Does it fix a build?  Does it fix the sequence `break
+     main; run' when debugging a static binary?
+
+   * The further a change is from the core of GDB, the less likely the
+     change will worry anyone (e.g., target specific code).
+
+   * Only post a proposal to change the core of GDB after you've sent
+     individual bribes to all the people listed in the `MAINTAINERS'
+     file ;-)
+
+   _Pragmatics: Provided updates are restricted to non-core
+functionality there is little chance that a broken change will be fatal.
+This means that changes such as adding a new architectures or (within
+reason) support for a new host are considered acceptable._
+
+Obsoleting code
+===============
+
+   Before anything else, poke the other developers (and around the
+source code) to see if there is anything that can be removed from GDB
+(an old target, an unused file).
+
+   Obsolete code is identified by adding an `OBSOLETE' prefix to every
+line.  Doing this means that it is easy to identify something that has
+been obsoleted when greping through the sources.
+
+   The process is done in stages -- this is mainly to ensure that the
+wider GDB community has a reasonable opportunity to respond.  Remember,
+everything on the Internet takes a week.
+
+  1. Post the proposal on the GDB mailing list <gdb@sources.redhat.com>
+     Creating a bug report to track the task's state, is also highly
+     recommended.
+
+  2. Wait a week or so.
+
+  3. Post the proposal on the GDB Announcement mailing list
+     <gdb-announce@sources.redhat.com>.
+
+  4. Wait a week or so.
+
+  5. Go through and edit all relevant files and lines so that they are
+     prefixed with the word `OBSOLETE'.
+
+  6. Wait until the next GDB version, containing this obsolete code,
+     has been released.
+
+  7. Remove the obsolete code.
+
+_Maintainer note: While removing old code is regrettable it is
+hopefully better for GDB's long term development.  Firstly it helps the
+developers by removing code that is either no longer relevant or simply
+wrong.  Secondly since it removes any history associated with the file
+(effectively clearing the slate) the developer has a much freer hand
+when it comes to fixing broken files._
+
+Before the Branch
+=================
+
+   The most important objective at this stage is to find and fix simple
+changes that become a pain to track once the branch is created.  For
+instance, configuration problems that stop GDB from even building.  If
+you can't get the problem fixed, document it in the `gdb/PROBLEMS' file.
+
+Prompt for `gdb/NEWS'
+---------------------
+
+   People always forget.  Send a post reminding them but also if you
+know something interesting happened add it yourself.  The `schedule'
+script will mention this in its e-mail.
+
+Review `gdb/README'
+-------------------
+
+   Grab one of the nightly snapshots and then walk through the
+`gdb/README' looking for anything that can be improved.  The `schedule'
+script will mention this in its e-mail.
+
+Refresh any imported files.
+---------------------------
+
+   A number of files are taken from external repositories.  They
+include:
+
+   * `texinfo/texinfo.tex'
+
+   * `config.guess' et. al. (see the top-level `MAINTAINERS' file)
+
+   * `etc/standards.texi', `etc/make-stds.texi'
+
+Check the ARI
+-------------
+
+   A.R.I. is an `awk' script (Awk Regression Index ;-) that checks for
+a number of errors and coding conventions.  The checks include things
+like using `malloc' instead of `xmalloc' and file naming problems.
+There shouldn't be any regressions.
+
+Review the bug data base
+------------------------
+
+   Close anything obviously fixed.
+
+Check all cross targets build
+-----------------------------
+
+   The targets are listed in `gdb/MAINTAINERS'.
+
+Cut the Branch
+==============
+
+Create the branch
+-----------------
+
+     $  u=5.1
+     $  v=5.2
+     $  V=`echo $v | sed 's/\./_/g'`
+     $  D=`date -u +%Y-%m-%d`
+     $  echo $u $V $D
+     5.1 5_2 2002-03-03
+     $  echo cvs -f -d :ext:sources.redhat.com:/cvs/src rtag \
+     -D $D-gmt gdb_$V-$D-branchpoint insight+dejagnu
+     cvs -f -d :ext:sources.redhat.com:/cvs/src rtag
+     -D 2002-03-03-gmt gdb_5_2-2002-03-03-branchpoint insight+dejagnu
+     $  ^echo ^^
+     ...
+     $  echo cvs -f -d :ext:sources.redhat.com:/cvs/src rtag \
+     -b -r gdb_$V-$D-branchpoint gdb_$V-branch insight+dejagnu
+     cvs -f -d :ext:sources.redhat.com:/cvs/src rtag \
+     -b -r gdb_5_2-2002-03-03-branchpoint gdb_5_2-branch insight+dejagnu
+     $  ^echo ^^
+     ...
+     $
+
+   * by using `-D YYYY-MM-DD-gmt' the branch is forced to an exact
+     date/time.
+
+   * the trunk is first taged so that the branch point can easily be
+     found
+
+   * Insight (which includes GDB) and dejagnu are all tagged at the
+     same time
+
+   * `version.in' gets bumped to avoid version number conflicts
+
+   * the reading of `.cvsrc' is disabled using `-f'
+
+Update `version.in'
+-------------------
+
+     $  u=5.1
+     $  v=5.2
+     $  V=`echo $v | sed 's/\./_/g'`
+     $  echo $u $v$V
+     5.1 5_2
+     $  cd /tmp
+     $  echo cvs -f -d :ext:sources.redhat.com:/cvs/src co \
+     -r gdb_$V-branch src/gdb/version.in
+     cvs -f -d :ext:sources.redhat.com:/cvs/src co
+      -r gdb_5_2-branch src/gdb/version.in
+     $  ^echo ^^
+     U src/gdb/version.in
+     $  cd src/gdb
+     $  echo $u.90-0000-00-00-cvs > version.in
+     $  cat version.in
+     5.1.90-0000-00-00-cvs
+     $  cvs -f commit version.in
+
+   * `0000-00-00' is used as a date to pump prime the version.in update
+     mechanism
+
+   * `.90' and the previous branch version are used as fairly arbitrary
+     initial branch version number
+
+Update the web and news pages
+-----------------------------
+
+   Something?
+
+Tweak cron to track the new branch
+----------------------------------
+
+   The file `gdbadmin/cron/crontab' contains gdbadmin's cron table.
+This file needs to be updated so that:
+
+   * a daily timestamp is added to the file `version.in'
+
+   * the new branch is included in the snapshot process
+
+See the file `gdbadmin/cron/README' for how to install the updated cron
+table.
+
+   The file `gdbadmin/ss/README' should also be reviewed to reflect any
+changes.  That file is copied to both the branch/ and current/ snapshot
+directories.
+
+Update the NEWS and README files
+--------------------------------
+
+   The `NEWS' file needs to be updated so that on the branch it refers
+to _changes in the current release_ while on the trunk it also refers
+to _changes since the current release_.
+
+   The `README' file needs to be updated so that it refers to the
+current release.
+
+Post the branch info
+--------------------
+
+   Send an announcement to the mailing lists:
+
+   * GDB Announcement mailing list <gdb-announce@sources.redhat.com>
+
+   * GDB Discsussion mailing list <gdb@sources.redhat.com> and GDB
+     Discsussion mailing list <gdb-testers@sources.redhat.com>
+
+   _Pragmatics: The branch creation is sent to the announce list to
+ensure that people people not subscribed to the higher volume discussion
+list are alerted._
+
+   The announcement should include:
+
+   * the branch tag
+
+   * how to check out the branch using CVS
+
+   * the date/number of weeks until the release
+
+   * the branch commit policy still holds.
+
+Stabilize the branch
+====================
+
+   Something goes here.
+
+Create a Release
+================
+
+   The process of creating and then making available a release is broken
+down into a number of stages.  The first part addresses the technical
+process of creating a releasable tar ball.  The later stages address the
+process of releasing that tar ball.
+
+   When making a release candidate just the first section is needed.
+
+Create a release candidate
+--------------------------
+
+   The objective at this stage is to create a set of tar balls that can
+be made available as a formal release (or as a less formal release
+candidate).
+
+Freeze the branch
+.................
+
+   Send out an e-mail notifying everyone that the branch is frozen to
+<gdb-patches@sources.redhat.com>.
+
+Establish a few defaults.
+.........................
+
+     $  b=gdb_5_2-branch
+     $  v=5.2
+     $  t=/sourceware/snapshot-tmp/gdbadmin-tmp
+     $  echo $t/$b/$v
+     /sourceware/snapshot-tmp/gdbadmin-tmp/gdb_5_2-branch/5.2
+     $  mkdir -p $t/$b/$v
+     $  cd $t/$b/$v
+     $  pwd
+     /sourceware/snapshot-tmp/gdbadmin-tmp/gdb_5_2-branch/5.2
+     $  which autoconf
+     /home/gdbadmin/bin/autoconf
+     $
+
+Notes:
+
+   * Check the `autoconf' version carefully.  You want to be using the
+     version taken from the `binutils' snapshot directory, which can be
+     found at `ftp://sources.redhat.com/pub/binutils/'. It is very
+     unlikely that a system installed version of `autoconf' (e.g.,
+     `/usr/bin/autoconf') is correct.
+
+Check out the relevant modules:
+...............................
+
+     $  for m in gdb insight dejagnu
+     do
+     ( mkdir -p $m && cd $m && cvs -q -f -d /cvs/src co -P -r $b $m )
+     done
+     $
+
+Note:
+
+   * The reading of `.cvsrc' is disabled (`-f') so that there isn't any
+     confusion between what is written here and what your local `cvs'
+     really does.
+
+Update relevant files.
+......................
+
+`gdb/NEWS'
+     Major releases get their comments added as part of the mainline.
+     Minor releases should probably mention any significant bugs that
+     were fixed.
+
+     Don't forget to include the `ChangeLog' entry.
+
+          $  emacs gdb/src/gdb/NEWS
+          ...
+          c-x 4 a
+          ...
+          c-x c-s c-x c-c
+          $  cp gdb/src/gdb/NEWS insight/src/gdb/NEWS
+          $  cp gdb/src/gdb/ChangeLog insight/src/gdb/ChangeLog
+
+`gdb/README'
+     You'll need to update:
+
+        * the version
+
+        * the update date
+
+        * who did it
+
+          $  emacs gdb/src/gdb/README
+          ...
+          c-x 4 a
+          ...
+          c-x c-s c-x c-c
+          $  cp gdb/src/gdb/README insight/src/gdb/README
+          $  cp gdb/src/gdb/ChangeLog insight/src/gdb/ChangeLog
+
+     _Maintainer note: Hopefully the `README' file was reviewed before
+     the initial branch was cut so just a simple substitute is needed
+     to get it updated._
+
+     _Maintainer note: Other projects generate `README' and `INSTALL'
+     from the core documentation.  This might be worth pursuing._
+
+`gdb/version.in'
+          $  echo $v > gdb/src/gdb/version.in
+          $  cat gdb/src/gdb/version.in
+          5.2
+          $  emacs gdb/src/gdb/version.in
+          ...
+          c-x 4 a
+          ... Bump to version ...
+          c-x c-s c-x c-c
+          $  cp gdb/src/gdb/version.in insight/src/gdb/version.in
+          $  cp gdb/src/gdb/ChangeLog insight/src/gdb/ChangeLog
+
+`dejagnu/src/dejagnu/configure.in'
+     Dejagnu is more complicated.  The version number is a parameter to
+     `AM_INIT_AUTOMAKE'.  Tweak it to read something like gdb-5.1.91.
+
+     Don't forget to re-generate `configure'.
+
+     Don't forget to include a `ChangeLog' entry.
+
+          $  emacs dejagnu/src/dejagnu/configure.in
+          ...
+          c-x 4 a
+          ...
+          c-x c-s c-x c-c
+          $  ( cd  dejagnu/src/dejagnu && autoconf )
+
+Do the dirty work
+.................
+
+   This is identical to the process used to create the daily snapshot.
+
+     $  for m in gdb insight
+     do
+     ( cd $m/src && gmake -f Makefile.in $m.tar )
+     done
+     $  ( m=dejagnu; cd $m/src && gmake -f Makefile.in $m.tar.bz2 )
+
+Check the source files
+......................
+
+   You're looking for files that have mysteriously disappeared.
+`distclean' has the habit of deleting files it shouldn't.  Watch out
+for the `version.in' update `cronjob'.
+
+     $  ( cd gdb/src && cvs -f -q -n update )
+     M djunpack.bat
+     ? gdb-5.1.91.tar
+     ? proto-toplev
+     ... lots of generated files ...
+     M gdb/ChangeLog
+     M gdb/NEWS
+     M gdb/README
+     M gdb/version.in
+     ... lots of generated files ...
+     $
+
+_Don't worry about the `gdb.info-??' or `gdb/p-exp.tab.c'.  They were
+generated (and yes `gdb.info-1' was also generated only something
+strange with CVS means that they didn't get supressed).  Fixing it
+would be nice though._
+
+Create compressed versions of the release
+.........................................
+
+     $  cp */src/*.tar .
+     $  cp */src/*.bz2 .
+     $  ls -F
+     dejagnu/ dejagnu-gdb-5.2.tar.bz2 gdb/ gdb-5.2.tar insight/ insight-5.2.tar
+     $  for m in gdb insight
+     do
+     bzip2 -v -9 -c $m-$v.tar > $m-$v.tar.bz2
+     gzip -v -9 -c $m-$v.tar > $m-$v.tar.gz
+     done
+     $
+
+Note:
+
+   * A pipe such as `bunzip2 < xxx.bz2 | gzip -9 > xxx.gz' is not since,
+     in that mode, `gzip' does not know the name of the file and, hence,
+     can not include it in the compressed file.  This is also why the
+     release process runs `tar' and `bzip2' as separate passes.
+
+Sanity check the tar ball
+-------------------------
+
+   Pick a popular machine (Solaris/PPC?) and try the build on that.
+
+     $  bunzip2 < gdb-5.2.tar.bz2 | tar xpf -
+     $  cd gdb-5.2
+     $  ./configure
+     $  make
+     ...
+     $  ./gdb/gdb ./gdb/gdb
+     GNU gdb 5.2
+     ...
+     (gdb)  b main
+     Breakpoint 1 at 0x80732bc: file main.c, line 734.
+     (gdb)  run
+     Starting program: /tmp/gdb-5.2/gdb/gdb
+     
+     Breakpoint 1, main (argc=1, argv=0xbffff8b4) at main.c:734
+     734       catch_errors (captured_main, &args, "", RETURN_MASK_ALL);
+     (gdb)  print args
+     $1 = {argc = 136426532, argv = 0x821b7f0}
+     (gdb)
+
+Make a release candidate available
+----------------------------------
+
+   If this is a release candidate then the only remaining steps are:
+
+  1. Commit `version.in' and `ChangeLog'
+
+  2. Tweak `version.in' (and `ChangeLog' to read L.M.N-0000-00-00-cvs
+     so that the version update process can restart.
+
+  3. Make the release candidate available in
+     `ftp://sources.redhat.com/pub/gdb/snapshots/branch'
+
+  4. Notify the relevant mailing lists ( <gdb@sources.redhat.com> and
+     <gdb-testers@sources.redhat.com> that the candidate is available.
+
+Make a formal release available
+-------------------------------
+
+   (And you thought all that was required was to post an e-mail.)
+
+Install on sware
+................
+
+   Copy the new files to both the release and the old release directory:
+
+     $  cp *.bz2 *.gz ~ftp/pub/gdb/old-releases/
+     $  cp *.bz2 *.gz ~ftp/pub/gdb/releases
+
+Clean up the releases directory so that only the most recent releases
+are available (e.g. keep 5.2 and 5.2.1 but remove 5.1):
+
+     $  cd ~ftp/pub/gdb/releases
+     $  rm ...
+
+Update the file `README' and `.message' in the releases directory:
+
+     $  vi README
+     ...
+     $  rm -f .message
+     $  ln README .message
+
+Update the web pages.
+.....................
+
+`htdocs/download/ANNOUNCEMENT'
+     This file, which is posted as the official announcement, includes:
+        * General announcement
+
+        * News.  If making an M.N.1 release, retain the news from
+          earlier M.N release.
+
+        * Errata
+
+`htdocs/index.html'
+`htdocs/news/index.html'
+`htdocs/download/index.html'
+     These files include:
+        * announcement of the most recent release
+
+        * news entry (remember to update both the top level and the
+          news directory).
+     These pages also need to be regenerate using `index.sh'.
+
+`download/onlinedocs/'
+     You need to find the magic command that is used to generate the
+     online docs from the `.tar.bz2'.  The best way is to look in the
+     output from one of the nightly `cron' jobs and then just edit
+     accordingly.  Something like:
+
+          $  ~/ss/update-web-docs \
+           ~ftp/pub/gdb/releases/gdb-5.2.tar.bz2 \
+           $PWD/www \
+           /www/sourceware/htdocs/gdb/download/onlinedocs \
+           gdb
+
+`download/ari/'
+     Just like the online documentation.  Something like:
+
+          $  /bin/sh ~/ss/update-web-ari \
+           ~ftp/pub/gdb/releases/gdb-5.2.tar.bz2 \
+           $PWD/www \
+           /www/sourceware/htdocs/gdb/download/ari \
+           gdb
+
+Shadow the pages onto gnu
+.........................
+
+   Something goes here.
+
+Install the GDB tar ball on GNU
+...............................
+
+   At the time of writing, the GNU machine was `gnudist.gnu.org' in
+`~ftp/gnu/gdb'.
+
+Make the `ANNOUNCEMENT'
+.......................
+
+   Post the `ANNOUNCEMENT' file you created above to:
+
+   * GDB Announcement mailing list <gdb-announce@sources.redhat.com>
+
+   * General GNU Announcement list <info-gnu@gnu.org> (but delay it a
+     day or so to let things get out)
+
+   * GDB Bug Report mailing list <bug-gdb@gnu.org>
+
+Cleanup
+-------
+
+   The release is out but you're still not finished.
+
+Commit outstanding changes
+..........................
+
+   In particular you'll need to commit any changes to:
+
+   * `gdb/ChangeLog'
+
+   * `gdb/version.in'
+
+   * `gdb/NEWS'
+
+   * `gdb/README'
+
+Tag the release
+...............
+
+   Something like:
+
+     $  d=`date -u +%Y-%m-%d`
+     $  echo $d
+     2002-01-24
+     $  ( cd insight/src/gdb && cvs -f -q update )
+     $  ( cd insight/src && cvs -f -q tag gdb_5_2-$d-release )
+
+   Insight is used since that contains more of the release than GDB
+(`dejagnu' doesn't get tagged but I think we can live with that).
+
+Mention the release on the trunk
+................................
+
+   Just put something in the `ChangeLog' so that the trunk also
+indicates when the release was made.
+
+Restart `gdb/version.in'
+........................
+
+   If `gdb/version.in' does not contain an ISO date such as
+`2002-01-24' then the daily `cronjob' won't update it.  Having
+committed all the release changes it can be set to
+`5.2.0_0000-00-00-cvs' which will restart things (yes the `_' is
+important - it affects the snapshot process).
+
+   Don't forget the `ChangeLog'.
+
+Merge into trunk
+................
+
+   The files committed to the branch may also need changes merged into
+the trunk.
+
+Revise the release schedule
+...........................
+
+   Post a revised release schedule to GDB Discussion List
+<gdb@sources.redhat.com> with an updated announcement.  The schedule
+can be generated by running:
+
+     $  ~/ss/schedule `date +%s` schedule
+
+The first parameter is approximate date/time in seconds (from the epoch)
+of the most recent release.
+
+   Also update the schedule `cronjob'.
+
+Post release
+============
+
+   Remove any `OBSOLETE' code.
+
+
+File: gdbint.info,  Node: Testsuite,  Next: Hints,  Prev: Releasing GDB,  Up: Top
+
+Testsuite
+*********
+
+   The testsuite is an important component of the GDB package.  While
+it is always worthwhile to encourage user testing, in practice this is
+rarely sufficient; users typically use only a small subset of the
+available commands, and it has proven all too common for a change to
+cause a significant regression that went unnoticed for some time.
+
+   The GDB testsuite uses the DejaGNU testing framework.  DejaGNU is
+built using `Tcl' and `expect'.  The tests themselves are calls to
+various `Tcl' procs; the framework runs all the procs and summarizes
+the passes and fails.
+
+Using the Testsuite
+===================
+
+   To run the testsuite, simply go to the GDB object directory (or to
+the testsuite's objdir) and type `make check'.  This just sets up some
+environment variables and invokes DejaGNU's `runtest' script.  While
+the testsuite is running, you'll get mentions of which test file is in
+use, and a mention of any unexpected passes or fails.  When the
+testsuite is finished, you'll get a summary that looks like this:
+
+                     === gdb Summary ===
+     
+     # of expected passes            6016
+     # of unexpected failures        58
+     # of unexpected successes       5
+     # of expected failures          183
+     # of unresolved testcases       3
+     # of untested testcases         5
+
+   The ideal test run consists of expected passes only; however, reality
+conspires to keep us from this ideal.  Unexpected failures indicate
+real problems, whether in GDB or in the testsuite.  Expected failures
+are still failures, but ones which have been decided are too hard to
+deal with at the time; for instance, a test case might work everywhere
+except on AIX, and there is no prospect of the AIX case being fixed in
+the near future.  Expected failures should not be added lightly, since
+you may be masking serious bugs in GDB.  Unexpected successes are
+expected fails that are passing for some reason, while unresolved and
+untested cases often indicate some minor catastrophe, such as the
+compiler being unable to deal with a test program.
+
+   When making any significant change to GDB, you should run the
+testsuite before and after the change, to confirm that there are no
+regressions.  Note that truly complete testing would require that you
+run the testsuite with all supported configurations and a variety of
+compilers; however this is more than really necessary.  In many cases
+testing with a single configuration is sufficient.  Other useful
+options are to test one big-endian (Sparc) and one little-endian (x86)
+host, a cross config with a builtin simulator (powerpc-eabi, mips-elf),
+or a 64-bit host (Alpha).
+
+   If you add new functionality to GDB, please consider adding tests
+for it as well; this way future GDB hackers can detect and fix their
+changes that break the functionality you added.  Similarly, if you fix
+a bug that was not previously reported as a test failure, please add a
+test case for it.  Some cases are extremely difficult to test, such as
+code that handles host OS failures or bugs in particular versions of
+compilers, and it's OK not to try to write tests for all of those.
+
+Testsuite Organization
+======================
+
+   The testsuite is entirely contained in `gdb/testsuite'.  While the
+testsuite includes some makefiles and configury, these are very minimal,
+and used for little besides cleaning up, since the tests themselves
+handle the compilation of the programs that GDB will run.  The file
+`testsuite/lib/gdb.exp' contains common utility procs useful for all
+GDB tests, while the directory `testsuite/config' contains
+configuration-specific files, typically used for special-purpose
+definitions of procs like `gdb_load' and `gdb_start'.
+
+   The tests themselves are to be found in `testsuite/gdb.*' and
+subdirectories of those.  The names of the test files must always end
+with `.exp'.  DejaGNU collects the test files by wildcarding in the
+test directories, so both subdirectories and individual files get
+chosen and run in alphabetical order.
+
+   The following table lists the main types of subdirectories and what
+they are for.  Since DejaGNU finds test files no matter where they are
+located, and since each test file sets up its own compilation and
+execution environment, this organization is simply for convenience and
+intelligibility.
+
+`gdb.base'
+     This is the base testsuite.  The tests in it should apply to all
+     configurations of GDB (but generic native-only tests may live
+     here).  The test programs should be in the subset of C that is
+     valid K&R, ANSI/ISO, and C++ (`#ifdef's are allowed if necessary,
+     for instance for prototypes).
+
+`gdb.LANG'
+     Language-specific tests for any language LANG besides C.  Examples
+     are `gdb.c++' and `gdb.java'.
+
+`gdb.PLATFORM'
+     Non-portable tests.  The tests are specific to a specific
+     configuration (host or target), such as HP-UX or eCos.  Example is
+     `gdb.hp', for HP-UX.
+
+`gdb.COMPILER'
+     Tests specific to a particular compiler.  As of this writing (June
+     1999), there aren't currently any groups of tests in this category
+     that couldn't just as sensibly be made platform-specific, but one
+     could imagine a `gdb.gcc', for tests of GDB's handling of GCC
+     extensions.
+
+`gdb.SUBSYSTEM'
+     Tests that exercise a specific GDB subsystem in more depth.  For
+     instance, `gdb.disasm' exercises various disassemblers, while
+     `gdb.stabs' tests pathways through the stabs symbol reader.
+
+Writing Tests
+=============
+
+   In many areas, the GDB tests are already quite comprehensive; you
+should be able to copy existing tests to handle new cases.
+
+   You should try to use `gdb_test' whenever possible, since it
+includes cases to handle all the unexpected errors that might happen.
+However, it doesn't cost anything to add new test procedures; for
+instance, `gdb.base/exprs.exp' defines a `test_expr' that calls
+`gdb_test' multiple times.
+
+   Only use `send_gdb' and `gdb_expect' when absolutely necessary, such
+as when GDB has several valid responses to a command.
+
+   The source language programs do _not_ need to be in a consistent
+style.  Since GDB is used to debug programs written in many different
+styles, it's worth having a mix of styles in the testsuite; for
+instance, some GDB bugs involving the display of source lines would
+never manifest themselves if the programs used GNU coding style
+uniformly.
+
+
+File: gdbint.info,  Node: Hints,  Next: GNU Free Documentation License,  Prev: Testsuite,  Up: Top
+
+Hints
+*****
+
+   Check the `README' file, it often has useful information that does
+not appear anywhere else in the directory.
+
+* Menu:
+
+* Getting Started::		Getting started working on GDB
+* Debugging GDB::		Debugging GDB with itself
+
+
+File: gdbint.info,  Node: Getting Started,  Up: Hints
+
+Getting Started
+===============
+
+   GDB is a large and complicated program, and if you first starting to
+work on it, it can be hard to know where to start.  Fortunately, if you
+know how to go about it, there are ways to figure out what is going on.
+
+   This manual, the GDB Internals manual, has information which applies
+generally to many parts of GDB.
+
+   Information about particular functions or data structures are
+located in comments with those functions or data structures.  If you
+run across a function or a global variable which does not have a
+comment correctly explaining what is does, this can be thought of as a
+bug in GDB; feel free to submit a bug report, with a suggested comment
+if you can figure out what the comment should say.  If you find a
+comment which is actually wrong, be especially sure to report that.
+
+   Comments explaining the function of macros defined in host, target,
+or native dependent files can be in several places.  Sometimes they are
+repeated every place the macro is defined.  Sometimes they are where the
+macro is used.  Sometimes there is a header file which supplies a
+default definition of the macro, and the comment is there.  This manual
+also documents all the available macros.
+
+   Start with the header files.  Once you have some idea of how GDB's
+internal symbol tables are stored (see `symtab.h', `gdbtypes.h'), you
+will find it much easier to understand the code which uses and creates
+those symbol tables.
+
+   You may wish to process the information you are getting somehow, to
+enhance your understanding of it.  Summarize it, translate it to another
+language, add some (perhaps trivial or non-useful) feature to GDB, use
+the code to predict what a test case would do and write the test case
+and verify your prediction, etc.  If you are reading code and your eyes
+are starting to glaze over, this is a sign you need to use a more active
+approach.
+
+   Once you have a part of GDB to start with, you can find more
+specifically the part you are looking for by stepping through each
+function with the `next' command.  Do not use `step' or you will
+quickly get distracted; when the function you are stepping through
+calls another function try only to get a big-picture understanding
+(perhaps using the comment at the beginning of the function being
+called) of what it does.  This way you can identify which of the
+functions being called by the function you are stepping through is the
+one which you are interested in.  You may need to examine the data
+structures generated at each stage, with reference to the comments in
+the header files explaining what the data structures are supposed to
+look like.
+
+   Of course, this same technique can be used if you are just reading
+the code, rather than actually stepping through it.  The same general
+principle applies--when the code you are looking at calls something
+else, just try to understand generally what the code being called does,
+rather than worrying about all its details.
+
+   A good place to start when tracking down some particular area is with
+a command which invokes that feature.  Suppose you want to know how
+single-stepping works.  As a GDB user, you know that the `step' command
+invokes single-stepping.  The command is invoked via command tables
+(see `command.h'); by convention the function which actually performs
+the command is formed by taking the name of the command and adding
+`_command', or in the case of an `info' subcommand, `_info'.  For
+example, the `step' command invokes the `step_command' function and the
+`info display' command invokes `display_info'.  When this convention is
+not followed, you might have to use `grep' or `M-x tags-search' in
+emacs, or run GDB on itself and set a breakpoint in `execute_command'.
+
+   If all of the above fail, it may be appropriate to ask for
+information on `bug-gdb'.  But _never_ post a generic question like "I
+was wondering if anyone could give me some tips about understanding
+GDB"--if we had some magic secret we would put it in this manual.
+Suggestions for improving the manual are always welcome, of course.
+
+
+File: gdbint.info,  Node: Debugging GDB,  Up: Hints
+
+Debugging GDB with itself
+=========================
+
+   If GDB is limping on your machine, this is the preferred way to get
+it fully functional.  Be warned that in some ancient Unix systems, like
+Ultrix 4.2, a program can't be running in one process while it is being
+debugged in another.  Rather than typing the command `./gdb ./gdb',
+which works on Suns and such, you can copy `gdb' to `gdb2' and then
+type `./gdb ./gdb2'.
+
+   When you run GDB in the GDB source directory, it will read a
+`.gdbinit' file that sets up some simple things to make debugging gdb
+easier.  The `info' command, when executed without a subcommand in a
+GDB being debugged by gdb, will pop you back up to the top level gdb.
+See `.gdbinit' for details.
+
+   If you use emacs, you will probably want to do a `make TAGS' after
+you configure your distribution; this will put the machine dependent
+routines for your local machine where they will be accessed first by
+`M-.'
+
+   Also, make sure that you've either compiled GDB with your local cc,
+or have run `fixincludes' if you are compiling with gcc.
+
+Submitting Patches
+==================
+
+   Thanks for thinking of offering your changes back to the community of
+GDB users.  In general we like to get well designed enhancements.
+Thanks also for checking in advance about the best way to transfer the
+changes.
+
+   The GDB maintainers will only install "cleanly designed" patches.
+This manual summarizes what we believe to be clean design for GDB.
+
+   If the maintainers don't have time to put the patch in when it
+arrives, or if there is any question about a patch, it goes into a
+large queue with everyone else's patches and bug reports.
+
+   The legal issue is that to incorporate substantial changes requires a
+copyright assignment from you and/or your employer, granting ownership
+of the changes to the Free Software Foundation.  You can get the
+standard documents for doing this by sending mail to `gnu@gnu.org' and
+asking for it.  We recommend that people write in "All programs owned
+by the Free Software Foundation" as "NAME OF PROGRAM", so that changes
+in many programs (not just GDB, but GAS, Emacs, GCC, etc) can be
+contributed with only one piece of legalese pushed through the
+bureaucracy and filed with the FSF.  We can't start merging changes
+until this paperwork is received by the FSF (their rules, which we
+follow since we maintain it for them).
+
+   Technically, the easiest way to receive changes is to receive each
+feature as a small context diff or unidiff, suitable for `patch'.  Each
+message sent to me should include the changes to C code and header
+files for a single feature, plus `ChangeLog' entries for each directory
+where files were modified, and diffs for any changes needed to the
+manuals (`gdb/doc/gdb.texinfo' or `gdb/doc/gdbint.texinfo').  If there
+are a lot of changes for a single feature, they can be split down into
+multiple messages.
+
+   In this way, if we read and like the feature, we can add it to the
+sources with a single patch command, do some testing, and check it in.
+If you leave out the `ChangeLog', we have to write one.  If you leave
+out the doc, we have to puzzle out what needs documenting.  Etc., etc.
+
+   The reason to send each change in a separate message is that we will
+not install some of the changes.  They'll be returned to you with
+questions or comments.  If we're doing our job correctly, the message
+back to you will say what you have to fix in order to make the change
+acceptable.  The reason to have separate messages for separate features
+is so that the acceptable changes can be installed while one or more
+changes are being reworked.  If multiple features are sent in a single
+message, we tend to not put in the effort to sort out the acceptable
+changes from the unacceptable, so none of the features get installed
+until all are acceptable.
+
+   If this sounds painful or authoritarian, well, it is.  But we get a
+lot of bug reports and a lot of patches, and many of them don't get
+installed because we don't have the time to finish the job that the bug
+reporter or the contributor could have done.  Patches that arrive
+complete, working, and well designed, tend to get installed on the day
+they arrive.  The others go into a queue and get installed as time
+permits, which, since the maintainers have many demands to meet, may not
+be for quite some time.
+
+   Please send patches directly to the GDB maintainers
+<gdb-patches@sources.redhat.com>.
+
+Obsolete Conditionals
+=====================
+
+   Fragments of old code in GDB sometimes reference or set the following
+configuration macros.  They should not be used by new code, and old uses
+should be removed as those parts of the debugger are otherwise touched.
+
+`STACK_END_ADDR'
+     This macro used to define where the end of the stack appeared, for
+     use in interpreting core file formats that don't record this
+     address in the core file itself.  This information is now
+     configured in BFD, and GDB gets the info portably from there.  The
+     values in GDB's configuration files should be moved into BFD
+     configuration files (if needed there), and deleted from all of
+     GDB's config files.
+
+     Any `FOO-xdep.c' file that references STACK_END_ADDR is so old
+     that it has never been converted to use BFD.  Now that's old!
+

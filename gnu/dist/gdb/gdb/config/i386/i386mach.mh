@@ -1,0 +1,9 @@
+# OBSOLETE # Host: Intel 386 running Mach
+# OBSOLETE 
+# OBSOLETE # This is for mach2, maybe, or is obsolete (and seems to have only
+# OBSOLETE # host and native, not target).  Once we get the mach3 stuff working,
+# OBSOLETE # I think it can go away.
+# OBSOLETE 
+# OBSOLETE XM_FILE= xm-i386mach.h
+# OBSOLETE NAT_FILE= nm-i386mach.h
+# OBSOLETE NATDEPFILES= infptrace.o inftarg.o fork-child.o i386mach-nat.o
