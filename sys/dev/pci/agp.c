@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.14 2002/01/22 17:29:36 augustss Exp $	*/
+/*	$NetBSD: agp.c,v 1.14.10.1 2003/01/26 10:23:20 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.14 2002/01/22 17:29:36 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.14.10.1 2003/01/26 10:23:20 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -514,8 +514,10 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	for (contigpages = 8; contigpages > 0; contigpages >>= 1) {
 		nseg = (mem->am_size / (contigpages * PAGE_SIZE)) + 1;
 		segs = malloc(nseg * sizeof *segs, M_AGP, M_WAITOK);
-		if (segs == NULL)
+		if (segs == NULL) {
+			lockmgr(&sc->as_lock, LK_RELEASE, 0);
 			return ENOMEM;
+		}
 		if (bus_dmamem_alloc(sc->as_dmat, mem->am_size, PAGE_SIZE, 0,
 				     segs, nseg, &mem->am_nseg,
 				     BUS_DMA_WAITOK) != 0) {
@@ -668,7 +670,8 @@ agp_release_helper(struct agp_softc *sc, enum agp_acquire_state state)
 		return EBUSY;
 
 	/*
-	 * Clear out the aperture and free any outstanding memory blocks.
+	 * Clear out outstanding aperture mappings.
+	 * (should not be necessary, done by caller)
 	 */
 	TAILQ_FOREACH(mem, &sc->as_memory, am_link) {
 		if (mem->am_is_bound) {
@@ -797,12 +800,31 @@ int
 agpclose(dev_t dev, int fflag, int devtype, struct proc *p)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
+	struct agp_memory *mem;
 
 	/*
 	 * Clear the GATT and force release on last close
 	 */
-	if (sc->as_state == AGP_ACQUIRE_USER)
+	if (sc->as_state == AGP_ACQUIRE_USER) {
+		while ((mem = TAILQ_FIRST(&sc->as_memory))) {
+			if (mem->am_is_bound) {
+				printf("agpclose: mem %d is bound\n",
+				       mem->am_id);
+				AGP_UNBIND_MEMORY(sc, mem);
+			}
+			/*
+			 * XXX it is not documented, but if the protocol allows
+			 * allocate->acquire->bind, it would be possible that
+			 * memory ranges are allocated by the kernel here,
+			 * which we shouldn't free. We'd have to keep track of
+			 * the memory range's owner.
+			 * The kernel API is unsed yet, so we get away with
+			 * freeing all.
+			 */
+			AGP_FREE_MEMORY(sc, mem);
+		}
 		agp_release_helper(sc, AGP_ACQUIRE_USER);
+	}
 	sc->as_isopen = 0;
 
 	return 0;
