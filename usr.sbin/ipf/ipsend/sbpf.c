@@ -1,11 +1,11 @@
-/*	$NetBSD: sbpf.c,v 1.1.1.2 1997/05/27 22:18:18 thorpej Exp $	*/
+/*	$NetBSD: sbpf.c,v 1.1.1.3 1997/09/21 16:49:14 veego Exp $	*/
 
 /*
- * (C)opyright October 1995 Darren Reed. (from tcplog)
+ * (C)opyright 1995-1997 Darren Reed. (from tcplog)
  *
- *   This software may be freely distributed as long as it is not altered
- * in any way and that this messagge always accompanies it.
- *
+ * Redistribution and use in source and binary forms are permitted
+ * provided that this notice is preserved and due credit is given
+ * to the original author and the contributors.
  */
 #include <stdio.h>
 #include <netdb.h>

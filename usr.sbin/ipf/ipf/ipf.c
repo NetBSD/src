@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.1.1.5 1997/07/05 05:12:37 darrenr Exp $	*/
+/*	$NetBSD: ipf.c,v 1.1.1.6 1997/09/21 16:47:47 veego Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -42,11 +42,11 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ipf.c,v 1.1.1.5 1997/07/05 05:12:37 darrenr Exp $";
+static	char	rcsid[] = "Id: ipf.c,v 2.0.2.12 1997/09/10 11:15:37 darrenr Exp ";
 #endif
 
-#if	SOLARIS
 static	void	frsync __P((void));
+#if	SOLARIS
 static	void	blockunknown __P((void));
 #endif
 #if !defined(__SVR4) && defined(__GNUC__)
@@ -75,7 +75,7 @@ char *argv[];
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "AdDEf:F:Il:nopPrsUvyzZ")) != -1) {
+	while ((c = getopt(argc, argv, "AdDEf:F:Il:noPrsUvyzZ")) != -1) {
 		switch (c)
 		{
 		case 'A' :
@@ -108,9 +108,6 @@ char *argv[];
 		case 'o' :
 			opts |= OPT_OUTQUE;
 			break;
-		case 'p' :
-			opts |= OPT_PRINTFR;
-			break;
 		case 'P' :
 			ipfname = IPL_AUTH;
 			break;
@@ -128,11 +125,9 @@ char *argv[];
 		case 'v' :
 			opts |= OPT_VERBOSE;
 			break;
-#if SOLARIS
 		case 'y' :
 			frsync();
 			break;
-#endif
 		case 'z' :
 			opts |= OPT_ZERORULEST;
 			break;
@@ -370,7 +365,6 @@ static void swapactive()
 }
 
 
-#if defined(sun) && (defined(__SVR4) || defined(__svr4__))
 static void frsync()
 {
 	if (opendevice() != -2 && ioctl(fd, SIOCFRSYN, 0) == -1)
@@ -378,7 +372,6 @@ static void frsync()
 	else
 		printf("filter sync'd\n");
 }
-#endif
 
 
 void zerostats()

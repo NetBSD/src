@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.1.1.5 1997/07/05 05:12:38 darrenr Exp $	*/
+/*	$NetBSD: parse.c,v 1.1.1.6 1997/09/21 16:47:49 veego Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -37,7 +37,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: parse.c,v 1.1.1.5 1997/07/05 05:12:38 darrenr Exp $";
+static	char	rcsid[] = "Id: parse.c,v 2.0.2.14 1997/08/26 12:54:07 darrenr Exp ";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -438,6 +438,30 @@ char	*line;
 	while (*cpp && !strcasecmp(*cpp, "keep"))
 		if (addkeep(&cpp, &fil))
 			return NULL;
+
+	/*
+	 * head of a new group ?
+	 */
+	if (*cpp && !strcasecmp(*cpp, "head")) {
+		if (!*++cpp) {
+			(void)fprintf(stderr, "head without group #\n");
+			return NULL;
+		}
+		fil.fr_grhead = atoi(*cpp);
+		cpp++;
+	}
+
+	/*
+	 * head of a new group ?
+	 */
+	if (*cpp && !strcasecmp(*cpp, "group")) {
+		if (!*++cpp) {
+			(void)fprintf(stderr, "group without group #\n");
+			return NULL;
+		}
+		fil.fr_group = atoi(*cpp);
+		cpp++;
+	}
 
 	/*
 	 * leftovers...yuck
@@ -1288,6 +1312,10 @@ struct	frentry	*fp;
 		printf(" keep state");
 	if (fp->fr_flags & FR_KEEPFRAG)
 		printf(" keep frags");
+	if (fp->fr_grhead)
+		printf(" head %d", fp->fr_grhead);
+	if (fp->fr_group)
+		printf(" group %d", fp->fr_group);
 	(void)putchar('\n');
 }
 

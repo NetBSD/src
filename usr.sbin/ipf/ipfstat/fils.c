@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.1.1.5 1997/07/05 05:12:45 darrenr Exp $	*/
+/*	$NetBSD: fils.c,v 1.1.1.6 1997/09/21 16:48:01 veego Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -48,7 +48,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: fils.c,v 1.1.1.5 1997/07/05 05:12:45 darrenr Exp $";
+static	char	rcsid[] = "Id: fils.c,v 2.0.2.19 1997/09/10 13:08:13 darrenr Exp ";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
@@ -75,6 +75,7 @@ static	void	showlist __P((friostat_t *));
 static	void	showipstates __P((int, ips_stat_t *));
 static	void	showauthstates __P((int, fr_authstat_t *));
 static	void	Usage __P((char *));
+static	void	printlist __P((frentry_t *));
 
 
 static void Usage(name)
@@ -124,11 +125,11 @@ char *argv[];
 		case 'i' :
 			opts |= OPT_INQUE|OPT_SHOWLIST;
 			break;
-		case 'n' :
-			opts |= OPT_SHOWLINENO;
-			break;
 		case 'I' :
 			opts |= OPT_INACTIVE;
+			break;
+		case 'n' :
+			opts |= OPT_SHOWLINENO;
 			break;
 		case 'o' :
 			opts |= OPT_OUTQUE|OPT_SHOWLIST;
@@ -267,15 +268,52 @@ struct	friostat	*fp;
 		PRINTF("\tnone\n");
 }
 
+
+static void printlist(fp)
+frentry_t *fp;
+{
+	struct	frentry	fb;
+	int	n;
+
+	for (n = 1; fp; n++) {
+		if (kmemcpy((char *)&fb, (u_long)fp, sizeof(fb)) == -1) {
+			perror("kmemcpy");
+			return;
+		}
+		fp = &fb;
+		if (opts & OPT_OUTQUE)
+			fp->fr_flags |= FR_OUTQUE;
+		if (opts & (OPT_HITS|OPT_VERBOSE))
+#ifdef	USE_QUAD_T
+			PRINTF("%qd ", fp->fr_hits);
+#else
+			PRINTF("%ld ", fp->fr_hits);
+#endif
+		if (opts & (OPT_ACCNT|OPT_VERBOSE))
+#ifdef	USE_QUAD_T
+			PRINTF("%qd ", fp->fr_bytes);
+#else
+			PRINTF("%ld ", fp->fr_bytes);
+#endif
+		if (opts & OPT_SHOWLINENO)
+			PRINTF("@%d ", n);
+		printfr(fp);
+		if (opts & OPT_VERBOSE)
+			binprint(fp);
+		if (fp->fr_grp)
+			printlist(fp->fr_grp);
+		fp = fp->fr_next;
+	}
+}
+
 /*
  * print out filter rule list
  */
 static	void	showlist(fiop)
 struct	friostat	*fiop;
 {
-	struct	frentry	fb;
 	struct	frentry	*fp = NULL;
-	int	i, set, n;
+	int	i, set;
 
 	set = fiop->f_active;
 	if (opts & OPT_INACTIVE)
@@ -303,40 +341,13 @@ struct	friostat	*fiop;
 		FPRINTF(stderr, "showlist:opts %#x i %d\n", opts, i);
 
 	if (opts & OPT_VERBOSE)
-		PRINTF("fp %#x set %d\n", (u_long)fp, set);
+		PRINTF("fp %p set %d\n", fp, set);
 	if (!fp) {
 		FPRINTF(stderr, "empty list for %s%s\n",
 			(opts & OPT_INACTIVE) ? "inactive " : "", filters[i]);
 		return;
 	}
-
-	for (n = 1; fp; n++) {
-		if (kmemcpy((char *)&fb, (u_long)fp, sizeof(fb)) == -1) {
-			perror("kmemcpy");
-			return;
-		}
-		fp = &fb;
-		if (opts & OPT_OUTQUE)
-			fp->fr_flags |= FR_OUTQUE;
-		if (opts & (OPT_HITS|OPT_VERBOSE))
-#ifdef	USE_QUAD_T
-			PRINTF("%qd ", fp->fr_hits);
-#else
-			PRINTF("%ld ", fp->fr_hits);
-#endif
-		if (opts & (OPT_ACCNT|OPT_VERBOSE))
-#ifdef	USE_QUAD_T
-			PRINTF("%qd ", fp->fr_bytes);
-#else
-			PRINTF("%ld ", fp->fr_bytes);
-#endif
-		if (opts & OPT_SHOWLINENO)
-			PRINTF("@%d ", n);
-		printfr(fp);
-		if (opts & OPT_VERBOSE)
-			binprint(fp);
-		fp = fp->fr_next;
-	}
+	printlist(fp);
 }
 
 
