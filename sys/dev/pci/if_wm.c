@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.64 2003/12/04 06:57:37 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.65 2004/01/14 14:29:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.64 2003/12/04 06:57:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.65 2004/01/14 14:29:48 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1278,14 +1278,15 @@ wm_shutdown(void *arg)
  */
 static int
 wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
-    uint32_t *fieldsp)
+    uint8_t *fieldsp)
 {
 	struct mbuf *m0 = txs->txs_mbuf;
 	struct livengood_tcpip_ctxdesc *t;
-	uint32_t fields = 0, ipcs, tucs;
+	uint32_t ipcs, tucs;
 	struct ip *ip;
 	struct ether_header *eh;
 	int offset, iphl;
+	uint8_t fields = 0;
 
 	/*
 	 * XXX It would be nice if the mbuf pkthdr had offset
@@ -1333,36 +1334,36 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 
 	if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4) {
 		WM_EVCNT_INCR(&sc->sc_ev_txipsum);
-		fields |= htole32(WTX_IXSM);
-		ipcs = htole32(WTX_TCPIP_IPCSS(offset) |
+		fields |= WTX_IXSM;
+		ipcs = WTX_TCPIP_IPCSS(offset) |
 		    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
-		    WTX_TCPIP_IPCSE(offset + iphl - 1));
+		    WTX_TCPIP_IPCSE(offset + iphl - 1);
 	} else if (__predict_true(sc->sc_txctx_ipcs != 0xffffffff)) {
 		/* Use the cached value. */
 		ipcs = sc->sc_txctx_ipcs;
 	} else {
 		/* Just initialize it to the likely value anyway. */
-		ipcs = htole32(WTX_TCPIP_IPCSS(offset) |
+		ipcs = WTX_TCPIP_IPCSS(offset) |
 		    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
-		    WTX_TCPIP_IPCSE(offset + iphl - 1));
+		    WTX_TCPIP_IPCSE(offset + iphl - 1);
 	}
 
 	offset += iphl;
 
 	if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
 		WM_EVCNT_INCR(&sc->sc_ev_txtusum);
-		fields |= htole32(WTX_TXSM);
-		tucs = htole32(WTX_TCPIP_TUCSS(offset) |
+		fields |= WTX_TXSM;
+		tucs = WTX_TCPIP_TUCSS(offset) |
 		    WTX_TCPIP_TUCSO(offset + m0->m_pkthdr.csum_data) |
-		    WTX_TCPIP_TUCSE(0) /* rest of packet */);
+		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
 	} else if (__predict_true(sc->sc_txctx_tucs != 0xffffffff)) {
 		/* Use the cached value. */
 		tucs = sc->sc_txctx_tucs;
 	} else {
 		/* Just initialize it to a valid TCP context. */
-		tucs = htole32(WTX_TCPIP_TUCSS(offset) |
+		tucs = WTX_TCPIP_TUCSS(offset) |
 		    WTX_TCPIP_TUCSO(offset + offsetof(struct tcphdr, th_sum)) |
-		    WTX_TCPIP_TUCSE(0) /* rest of packet */);
+		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
 	}
 
 	if (sc->sc_txctx_ipcs == ipcs &&
@@ -1380,10 +1381,9 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 #endif
 		t = (struct livengood_tcpip_ctxdesc *)
 		    &sc->sc_txdescs[sc->sc_txnext];
-		t->tcpip_ipcs = ipcs;
-		t->tcpip_tucs = tucs;
-		t->tcpip_cmdlen =
-		    htole32(WTX_CMD_DEXT | WTX_DTYP_C);
+		t->tcpip_ipcs = htole32(ipcs);
+		t->tcpip_tucs = htole32(tucs);
+		t->tcpip_cmdlen = htole32(WTX_CMD_DEXT | WTX_DTYP_C);
 		t->tcpip_seg = 0;
 		WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
 
@@ -1416,7 +1416,8 @@ wm_start(struct ifnet *ifp)
 	struct wm_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx = -1, ofree, seg;
-	uint32_t cksumcmd, cksumfields;
+	uint32_t cksumcmd;
+	uint8_t cksumfields;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1556,7 +1557,7 @@ wm_start(struct ifnet *ifp)
 			cksumfields = 0;
 		}
 
-		cksumcmd |= htole32(WTX_CMD_IDE);
+		cksumcmd |= WTX_CMD_IDE;
 
 		/*
 		 * Initialize the transmit descriptor.
@@ -1571,17 +1572,19 @@ wm_start(struct ifnet *ifp)
 			sc->sc_txdescs[nexttx].wtx_addr.wa_high = 0;
 			sc->sc_txdescs[nexttx].wtx_addr.wa_low =
 			    htole32(dmamap->dm_segs[seg].ds_addr);
-			sc->sc_txdescs[nexttx].wtx_cmdlen = cksumcmd |
-			    htole32(dmamap->dm_segs[seg].ds_len);
-			sc->sc_txdescs[nexttx].wtx_fields.wtxu_bits =
+			sc->sc_txdescs[nexttx].wtx_cmdlen =
+			    htole32(cksumcmd | dmamap->dm_segs[seg].ds_len);
+			sc->sc_txdescs[nexttx].wtx_fields.wtxu_status = 0;
+			sc->sc_txdescs[nexttx].wtx_fields.wtxu_options =
 			    cksumfields;
+			sc->sc_txdescs[nexttx].wtx_fields.wtxu_vlan = 0;
 			lasttx = nexttx;
 
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: desc %d: low 0x%08x, len 0x%04x\n",
 			    sc->sc_dev.dv_xname, nexttx,
-			    (uint32_t) dmamap->dm_segs[seg].ds_addr,
-			    (uint32_t) dmamap->dm_segs[seg].ds_len));
+			    le32toh(dmamap->dm_segs[seg].ds_addr),
+			    le32toh(dmamap->dm_segs[seg].ds_len)));
 		}
 
 		KASSERT(lasttx != -1);
@@ -1605,7 +1608,7 @@ wm_start(struct ifnet *ifp)
 		    (mtag = m_tag_find(m0, PACKET_TAG_VLAN, NULL)) != NULL) {
 			sc->sc_txdescs[lasttx].wtx_cmdlen |=
 			    htole32(WTX_CMD_VLE);
-			sc->sc_txdescs[lasttx].wtx_fields.wtxu_fields.wtxu_vlan
+			sc->sc_txdescs[lasttx].wtx_fields.wtxu_vlan
 			    = htole16(*(u_int *)(mtag + 1) & 0xffff);
 		}
 #endif /* XXXJRT */
@@ -1614,7 +1617,7 @@ wm_start(struct ifnet *ifp)
 
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: desc %d: cmdlen 0x%08x\n", sc->sc_dev.dv_xname,
-		    lasttx, sc->sc_txdescs[lasttx].wtx_cmdlen));
+		    lasttx, le32toh(sc->sc_txdescs[lasttx].wtx_cmdlen)));
 
 		/* Sync the descriptors we're using. */
 		WM_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
@@ -1821,8 +1824,8 @@ wm_txintr(struct wm_softc *sc)
 		WM_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_dmamap->dm_nsegs,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		status = le32toh(sc->sc_txdescs[
-		    txs->txs_lastdesc].wtx_fields.wtxu_bits);
+		status =
+		    sc->sc_txdescs[txs->txs_lastdesc].wtx_fields.wtxu_status;
 		if ((status & WTX_ST_DD) == 0) {
 			WM_CDTXSYNC(sc, txs->txs_lastdesc, 1,
 			    BUS_DMASYNC_PREREAD);
