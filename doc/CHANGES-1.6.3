@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.44 2004/03/28 08:50:55 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.45 2004/03/28 08:56:45 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -275,3 +275,9 @@ sys/dev/pci/pciide.c			1.196 via patch
 
 	Add support for VIA VT8237 (KT600) IDE controller. PR#22453
 	[bouyer, ticket #1632]
+
+sys/dev/ic/esiop.c			1.25
+
+	The real value of the message is in msgin, not 
+	esiop_cmd->cmd_tables->msg_in[0], so print the correct value.
+	[bouyer, ticket #1633]
