@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.32 1993/11/14 14:40:44 cgd Exp $
+#	$Id: ALL,v 1.33 1993/12/21 05:27:35 brezak Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -219,6 +219,9 @@ pseudo-device sl
 
 # point-to-point protocol
 pseudo-device ppp
+
+# vn virtual filesystem device
+pseudo-device vn 4
 
 # speaker queue
 pseudo-device speaker
