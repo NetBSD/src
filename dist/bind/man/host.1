@@ -1,4 +1,4 @@
-.\"     $NetBSD: host.1,v 1.3.2.1 2001/01/28 15:52:49 he Exp $
+.\"     $NetBSD: host.1,v 1.3.2.2 2002/07/01 17:16:14 he Exp $
 .\"
 .\" ++Copyright++ 1993
 .\" -
@@ -52,14 +52,14 @@
 .\" SOFTWARE.
 .\" -
 .\" --Copyright--
-.\" Id: host.1,v 8.4 2000/02/29 03:50:47 vixie Exp
+.\" Id: host.1,v 8.7 2002/06/18 02:39:26 marka Exp
 .Dd December 15, 1994
 .Dt HOST 1
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm host 
 .Nd look up host names using domain server
-.Sh SYNOPSIS 
+.Sh SYNOPSIS
 .Nm host 
 .Op Fl l
 .Op Fl v
@@ -70,11 +70,11 @@
 .Op Fl a 
 .Ar host 
 .Op Ar server 
-.Sh DESCRIPTION 
+.Sh DESCRIPTION
 .Ic Host
 looks for information about Internet hosts.  It gets this information
 from a set of interconnected servers that are spread across the
-country.  By default, it simply converts between host names and
+world.  By default, it simply converts between host names and
 Internet addresses.  However, with the 
 .Dq Fl t 
 or 
@@ -86,7 +86,7 @@ by the domain server.
 The arguments can be either host names or host numbers.  The program
 first attempts to interpret them as host numbers.  If this fails,
 it will treat them as host names.  A host number consists of
-first decimal numbers separated by dots, e.g. 128.6.4.194
+IPv4 dotted decimal quad (127.0.0.1) or IPv6 raw address (::1).
 A host name consists of names separated by dots, e.g. topaz.rutgers.edu.  
 Unless the name ends in a dot, the local domain
 is automatically tacked on the end.  Thus, a Rutgers user can say
@@ -194,6 +194,7 @@ to be looked up.  The arguments are defined in the man page for
 .Xr named 8 .
 Currently-supported types include: 
 .Dq Cm a , 
+.Dq Cm aaaa , 
 .Dq Cm ns , 
 .Dq Cm md , 
 .Dq Cm mf , 
@@ -253,7 +254,7 @@ will give a complete download of the zone data for rutgers.edu,
 in the official master file format.  (However the SOA record is
 listed twice, for arcane reasons.)  
 .Pp
-.Sy NOTE: 
+.Sy NOTE :
 .Dq Fl l 
 is implemented by
 doing a complete zone transfer and then filtering out the information
@@ -277,21 +278,17 @@ host name.  The name file must be contained in the
 .Ev HOSTALIASES 
 environment variable.
 .Sh ENVIRONMENT
-.Bl -tag -width "/etc/resolv.conf  " -compress
+.Bl -tag -width "/etc/resolv.conf  " -compact
 .It Ev HOSTALIASES
 Name of file containing
 .Pq Ar host alias , full hostname
 pairs.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/resolv.conf  " -compress
+.Bl -tag -width "/etc/resolv.conf  " -compact
 .It Pa /etc/resolv.conf 
 See
 .Xr resolver 5 .
-.It Ev HOSTALIASES
-Name of file containing
-.Pq Ar host alias , full hostname
-pairs.
 .El
 .Sh SEE ALSO
 .Xr named  8 , 
@@ -319,10 +316,3 @@ to get a list of all the name servers for foo.edu, and then try
 for all 
 .Dq Ic xxx 
 on the list of name servers, until you find one that works.
-.Pp
-.Nm
-does not support DNS queries/replies over IPv6 transport, and ignores
-IPv6 address on
-.Dq nameserver
-line in
-.Xr resolv.conf 5 .
