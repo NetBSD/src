@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.statd.8,v 1.4 2002/02/02 01:43:21 wiz Exp $
+.\"	$NetBSD: rpc.statd.8,v 1.5 2002/12/21 12:47:21 wiz Exp $
 .\"
 .\" Copyright (c) 1995 A.R.Gordon, andrew.gordon@net-tel.co.uk
 .\" All rights reserved.
@@ -98,7 +98,7 @@ appeared in
 .Tn SunOS 4 .
 .Sh BUGS
 There is no means for the daemon to tell when a monitored host has
-disappeared permanently (eg. catastrophic harware failure), as opposed
+disappeared permanently (e.g. catastrophic hardware failure), as opposed
 to transient failure of the host or an intermediate router.  At present,
 it will retry notification attempts at frequent intervals for 10 minutes,
 then hourly, and finally gives up after 24 hours.
