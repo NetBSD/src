@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.36.4.2 2000/10/18 17:51:21 tv Exp $ */
+/*	$NetBSD: md.c,v 1.36.4.3 2000/10/20 17:32:32 tv Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -647,14 +647,10 @@ md_init()
 	char *bootmodel;
 
 	bootmodel = get_bootmodel();
-	if (strcmp(bootmodel, "tiny") == 0 || strcmp(bootmodel, "laptop")
-	    == 0) {
-		/*
-		 * XXX assumes the kernset is the first in the array.
-		 */
-		snprintf(kernstr, sizeof kernstr, "kern-%s", bootmodel);
-		dist_list[0].name = &kernstr[0];
-	}
+	if (strcmp(bootmodel, "laptop") == 0)
+		dist_list[0] = special_kernel_list[0];
+	else if (strcmp(bootmodel, "tiny") == 0)
+		dist_list[0] = special_kernel_list[1];
 }
 
 /*
