@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/11/07 02:50:22 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2001/11/08 02:10:27 christos Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -12,12 +12,10 @@ AUXDEPENDS= 	dot.profile dot.hdprofile disktab.preinstall \
 CBIN=		ramdiskbin
 
 MOUNT_POINT?=	/mnt
-# DEV/RDEV file system device, CDEV/RDEV vnconfig device
+# DEV/RDEV file system device
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
-VND_CDEV=	/dev/${VND}d
-VND_CRDEV=	/dev/r${VND}d
 IMAGE?=		xxx.fs
 MDEC=		${DESTDIR}/usr/mdec
 
@@ -38,10 +36,10 @@ realall: ${IMAGE}
 ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 	rm -f ${IMAGE}.tmp
 	dd if=/dev/zero of=${IMAGE}.tmp count=${RAMDISKSIZE}
-	vnconfig -v -c ${VND_CRDEV} ${IMAGE}.tmp \
+	vnconfig -v -c ${VND} ${IMAGE}.tmp \
 	    512/${RAMDISKSPC}/1/${RAMDISKCYLS}
-	-disklabel ${VND_CRDEV} >tmplabel
-	disklabel -r -R ${VND_CRDEV} tmplabel
+	-disklabel ${VND} >tmplabel
+	disklabel -r -R ${VND} tmplabel
 	newfs -B le -m 0 -o space -i 3950 -c 80 ${VND_RDEV} 
 	mount ${VND_DEV} ${MOUNT_POINT}
 	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -U
@@ -51,7 +49,7 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CRDEV}
+	vnconfig -u ${VND}
 	mv -f ${IMAGE}.tmp ${IMAGE}
 
 unconfig:
