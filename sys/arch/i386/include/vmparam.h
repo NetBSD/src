@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.44 2001/10/20 00:17:47 fvdl Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.45 2001/11/15 18:06:14 soren Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -95,17 +95,6 @@
  * Size of User Raw I/O map
  */
 #define	USRIOSIZE 	300
-
-/*
- * The time for a process to be blocked before being very swappable.
- * This is a number of seconds which the system takes as being a non-trivial
- * amount of real time.  You probably shouldn't change this;
- * it is used in subtle ways (fractions and multiples of it are, that is, like
- * half of a ``long time'', almost a long time, etc.)
- * It is related to human patience and other factors which don't really
- * change over time.
- */
-#define	MAXSLP 		20
 
 /*
  * Mach derived constants

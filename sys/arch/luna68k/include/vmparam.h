@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 2001/05/01 02:19:16 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 2001/11/15 18:06:14 soren Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,16 +94,9 @@
 #define SHMMAXPGS	1024		/* 8mb */
 #endif
 
-/*
- * The time for a process to be blocked before being very swappable.
- * This is a number of seconds which the system takes as being a non-trivial
- * amount of real time.  You probably shouldn't change this;
- * it is used in subtle ways (fractions and multiples of it are, that is, like
- * half of a ``long time'', almost a long time, etc.)
- * It is related to human patience and other factors which don't really
- * change over time.
+/* 
+ * Mach derived constants       
  */
-#define MAXSLP 		20
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
