@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.47 1999/09/28 04:49:26 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.48 1999/09/29 07:17:57 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -601,3 +601,9 @@ sys/dev/raidframe/rf_reconmap.c			1.6
 
   Fix an 'off-by-one' error in a RF_ASSERT which meant that a reconstruct
   would panic in the case where the stripe width was 1 block.
+
+usr.sbin/nfsd/nfsd.c				1.31
+usr.sbin/nfds/nfsd.8				1.10-1.11
+
+  Serve UDP requests by default if neither UDP nor TCP is specified,
+  as already documented in the man page.  Fixes PR#7358.
