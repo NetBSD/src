@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11.4.6 2002/07/12 01:39:41 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11.4.7 2002/10/05 06:37:34 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,7 +64,7 @@ cpu_proc_fork(p1, p2)
 	struct proc *p1, *p2;
 {
 
-	p2->p_md.md_flags = p1->p_md.md_flags;
+	p2->p_md.mdp_flags = p1->p_md.mdp_flags;
 }
 
 /*
