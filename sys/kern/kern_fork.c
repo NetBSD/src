@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.100 2002/11/30 11:20:51 manu Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.101 2002/12/05 16:24:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.100 2002/11/30 11:20:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.101 2002/12/05 16:24:46 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -189,6 +189,9 @@ sys___clone(struct proc *p, void *v, register_t *retval)
 	    NULL, NULL, retval, NULL));
 }
 
+/* print the 'table full' message once per 10 seconds */
+struct timeval fork_tfmrate = { 10, 0 };
+
 int
 fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
     void (*func)(void *), void *arg, register_t *retval,
@@ -204,14 +207,18 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Although process entries are dynamically created, we still keep
 	 * a global limit on the maximum number we will create.  Don't allow
-	 * a nonprivileged user to use the last process; don't let root
+	 * a nonprivileged user to use the last few processes; don't let root
 	 * exceed the limit. The variable nprocs is the current number of
 	 * processes, maxproc is the limit.
 	 */
 	uid = p1->p_cred->p_ruid;
-	if (__predict_false((nprocs >= maxproc - 1 && uid != 0) ||
+	if (__predict_false((nprocs >= maxproc - 5 && uid != 0) ||
 			    nprocs >= maxproc)) {
-		tablefull("proc", "increase kern.maxproc or NPROC");
+		static struct timeval lasttfm;
+
+		if (ratecheck(&lasttfm, &fork_tfmrate))
+			tablefull("proc", "increase kern.maxproc or NPROC");
+		(void)tsleep(&nprocs, PUSER, "forkmx", hz / 2);
 		return (EAGAIN);
 	}
 	nprocs++;
@@ -225,6 +232,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 			    p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
 		(void)chgproccnt(uid, -1);
 		nprocs--;
+		(void)tsleep(&nprocs, PUSER, "forkulim", hz / 2);
 		return (EAGAIN);
 	}
 
