@@ -1,4 +1,4 @@
-/*	$NetBSD: temp.c,v 1.8 2002/03/02 14:59:38 wiz Exp $	*/
+/*	$NetBSD: temp.c,v 1.9 2002/03/04 03:07:27 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: temp.c,v 1.8 2002/03/02 14:59:38 wiz Exp $");
+__RCSID("$NetBSD: temp.c,v 1.9 2002/03/04 03:07:27 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,21 +77,21 @@ tinit(void)
 	 * It's okay to call savestr in here because main will
 	 * do a spreserve() after us.
 	 */
-	if (myname != NOSTR) {
+	if (myname != NULL) {
 		if (getuserid(myname) < 0) {
 			printf("\"%s\" is not a user of this system\n",
 			    myname);
 			exit(1);
 		}
 	} else {
-		if ((cp = username()) == NOSTR) {
+		if ((cp = username()) == NULL) {
 			myname = "nobody";
 			if (rcvmode)
 				exit(1);
 		} else
 			myname = savestr(cp);
 	}
-	if ((cp = getenv("HOME")) == NOSTR)
+	if ((cp = getenv("HOME")) == NULL)
 		cp = ".";
 	homedir = savestr(cp);
 	if (debug)

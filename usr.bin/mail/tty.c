@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.12 2002/03/02 14:59:38 wiz Exp $	*/
+/*	$NetBSD: tty.c,v 1.13 2002/03/04 03:07:27 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.12 2002/03/02 14:59:38 wiz Exp $");
+__RCSID("$NetBSD: tty.c,v 1.13 2002/03/04 03:07:27 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ grabh(struct header *hp, int gflags)
 	}
 	if (gflags & GSUBJECT) {
 #ifndef TIOCSTI
-		if (!ttyset && hp->h_subject != NOSTR)
+		if (!ttyset && hp->h_subject != NULL)
 			ttyset++, tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
 #endif
 		hp->h_subject = readtty("Subject: ", hp->h_subject);
@@ -196,19 +196,19 @@ readtty(char pr[], char src[])
 
 	fputs(pr, stdout);
 	fflush(stdout);
-	if (src != NOSTR && strlen(src) > BUFSIZ - 2) {
+	if (src != NULL && strlen(src) > BUFSIZ - 2) {
 		printf("too long to edit\n");
 		return(src);
 	}
 #ifndef TIOCSTI
-	if (src != NOSTR)
+	if (src != NULL)
 		cp = copy(src, canonb);
 	else
 		cp = copy("", canonb);
 	fputs(canonb, stdout);
 	fflush(stdout);
 #else
-	cp = src == NOSTR ? "" : src;
+	cp = src == NULL ? "" : src;
 	while ((c = *cp++) != '\0') {
 		if ((c_erase != _POSIX_VDISABLE && c == c_erase) ||
 		    (c_kill != _POSIX_VDISABLE && c == c_kill)) {
@@ -243,16 +243,16 @@ readtty(char pr[], char src[])
 	signal(SIGTTIN, SIG_DFL);
 	if (c == EOF && ferror(stdin)) {
 redo:
-		cp = strlen(canonb) > 0 ? canonb : NOSTR;
+		cp = strlen(canonb) > 0 ? canonb : NULL;
 		clearerr(stdin);
 		return(readtty(pr, cp));
 	}
 #ifndef TIOCSTI
-	if (cp == NOSTR || *cp == '\0')
+	if (cp == NULL || *cp == '\0')
 		return(src);
 	cp2 = cp;
 	if (!ttyset)
-		return(strlen(canonb) > 0 ? savestr(canonb) : NOSTR);
+		return(strlen(canonb) > 0 ? savestr(canonb) : NULL);
 	while (*cp != '\0') {
 		c = *cp++;
 		if (c_erase != _POSIX_VDISABLE && c == c_erase) {
@@ -280,7 +280,7 @@ redo:
 	*cp2 = '\0';
 #endif
 	if (equal("", canonb))
-		return(NOSTR);
+		return(NULL);
 	return(savestr(canonb));
 }
 
