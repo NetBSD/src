@@ -1,5 +1,5 @@
-/*	$NetBSD: sigreturn.S,v 1.2 1998/05/25 15:28:03 ws Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.3 1998/10/03 12:30:39 tsubai Exp $	*/
 
 #include "SYS.h"
 
-RSYSCALL(sigreturn)
+PSEUDO(sigreturn,compat_13_sigreturn13)
