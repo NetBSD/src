@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vmparam.h 1.16 91/01/18
  *	from: @(#)vmparam.h	7.3 (Berkeley) 5/7/91
- *	$Id: vmparam.h,v 1.4 1993/08/19 14:32:24 mycroft Exp $
+ *	$Id: vmparam.h,v 1.5 1993/08/24 17:56:21 mycroft Exp $
  */
 
 /*
@@ -69,10 +69,10 @@
 #define	MAXTSIZ		(6*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
-#define	DFLDSIZ		(8*1024*1024)		/* initial data size limit */
+#define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(16*1024*1024)		/* max data size */
+#define	MAXDSIZ		(32*1024*1024)		/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(512*1024)		/* initial stack size limit */
