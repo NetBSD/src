@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getttyent.c	5.10 (Berkeley) 3/23/91";*/
-static char *rcsid = "$Id: getttyent.c,v 1.6 1994/03/18 04:14:31 cgd Exp $";
+static char *rcsid = "$Id: getttyent.c,v 1.7 1994/03/30 08:22:07 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ttyent.h>
@@ -109,16 +109,16 @@ getttyent()
 			tty.ty_status |= TTY_ON;
 		else if (scmp(_TTYS_SECURE))
 			tty.ty_status |= TTY_SECURE;
+		else if (scmp(_TTYS_LOCAL))
+			tty.ty_status |= TTY_LOCAL;
+		else if (scmp(_TTYS_RTSCTS))
+			tty.ty_status |= TTY_RTSCTS;
+		else if (scmp(_TTYS_SOFTCAR))
+			tty.ty_status |= TTY_SOFTCAR;
+		else if (scmp(_TTYS_MDMBUF))
+			tty.ty_status |= TTY_MDMBUF;
 		else if (vcmp(_TTYS_WINDOW))
 			tty.ty_window = value(p);
-		else if (vcmp(_TTYS_LOCAL))
-			tty.ty_status |= TTY_LOCAL;
-		else if (vcmp(_TTYS_RTSCTS))
-			tty.ty_status |= TTY_RTSCTS;
-		else if (vcmp(_TTYS_SOFTCAR))
-			tty.ty_status |= TTY_SOFTCAR;
-		else if (vcmp(_TTYS_MDMBUF))
-			tty.ty_status |= TTY_MDMBUF;
 		else
 			break;
 	}
