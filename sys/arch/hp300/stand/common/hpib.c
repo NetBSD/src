@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.1 1997/02/04 03:52:26 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.2 1997/05/12 07:48:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -47,7 +47,9 @@
 #include <hp300/stand/common/hpibvar.h>
 #include <hp300/stand/common/samachdep.h>
 
-int	internalhpib = IIOV(0x478000);
+#include <hp300/dev/dioreg.h>
+
+int	internalhpib = IIOV(DIO_IHPIBADDR);
 int	fhpibppoll(), nhpibppoll();
 
 struct	hpib_softc hpib_softc[NHPIB];
