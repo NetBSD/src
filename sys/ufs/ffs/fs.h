@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.37 2003/12/31 19:19:39 dbj Exp $	*/
+/*	$NetBSD: fs.h,v 1.38 2004/01/02 05:08:57 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -616,8 +616,9 @@ struct appleufslabel {
 	u_int32_t	ul_version;
 	u_int32_t	ul_time;
 	u_int16_t	ul_namelen;
-	u_char	ul_name[APPLEUFS_MAX_LABEL_NAME];
-	u_char	ul_reserved[32];
+	u_char	ul_name[APPLEUFS_MAX_LABEL_NAME]; /* Warning: may not be null terminated */
+	u_int64_t ul_uuid;
+	u_char	ul_reserved[24];
 	u_char	ul_unused[460];
 };
 
