@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.5 1997/09/21 18:02:26 veego Exp $	*/
+/*	$NetBSD: sock.c,v 1.6 1997/09/25 01:45:14 thorpej Exp $	*/
 
 /*
  * sock.c (C) 1995-1997 Darren Reed
@@ -267,39 +267,39 @@ struct	tcpiphdr *ti;
 	o = (struct file **)calloc(1, sizeof(*o) * (fd->fd_lastfile + 1));
 	if (KMCPY(o, fd->fd_ofiles, (fd->fd_lastfile + 1) * sizeof(*o)) == -1)
 	    {
-		fprintf(stderr, "read(%#lx,%#lx,%d) - u_ofile - failed\n",
-			(u_long)fd->fd_ofiles, (u_long)o, sizeof(*o));
+		fprintf(stderr, "read(%#lx,%#lx,%lu) - u_ofile - failed\n",
+			(u_long)fd->fd_ofiles, (u_long)o, (u_long)sizeof(*o));
 		return NULL;
 	    }
 	f = (struct file *)calloc(1, sizeof(*f));
 	if (KMCPY(f, o[tfd], sizeof(*f)) == -1)
 	    {
-		fprintf(stderr, "read(%#lx,%#lx,%d) - o[tfd] - failed\n",
-			(u_long)o[tfd], (u_long)f, sizeof(*f));
+		fprintf(stderr, "read(%#lx,%#lx,%lu) - o[tfd] - failed\n",
+			(u_long)o[tfd], (u_long)f, (u_long)sizeof(*f));
 		return NULL;
 	    }
 
 	s = (struct socket *)calloc(1, sizeof(*s));
 	if (KMCPY(s, f->f_data, sizeof(*s)) == -1)
 	    {
-		fprintf(stderr, "read(%#lx,%#lx,%d) - f_data - failed\n",
-			(u_long)f->f_data, (u_long)s, sizeof(*s));
+		fprintf(stderr, "read(%#lx,%#lx,%lu) - f_data - failed\n",
+			(u_long)f->f_data, (u_long)s, (u_long)sizeof(*s));
 		return NULL;
 	    }
 
 	i = (struct inpcb *)calloc(1, sizeof(*i));
 	if (KMCPY(i, s->so_pcb, sizeof(*i)) == -1)
 	    {
-		fprintf(stderr, "kvm_read(%#lx,%#lx,%d) - so_pcb - failed\n",
-			(u_long)s->so_pcb, (u_long)i, sizeof(*i));
+		fprintf(stderr, "kvm_read(%#lx,%#lx,%lu) - so_pcb - failed\n",
+			(u_long)s->so_pcb, (u_long)i, (u_long)sizeof(*i));
 		return NULL;
 	    }
 
 	t = (struct tcpcb *)calloc(1, sizeof(*t));
 	if (KMCPY(t, i->inp_ppcb, sizeof(*t)) == -1)
 	    {
-		fprintf(stderr, "read(%#lx,%#lx,%d) - inp_ppcb - failed\n",
-			(u_long)i->inp_ppcb, (u_long)t, sizeof(*t));
+		fprintf(stderr, "read(%#lx,%#lx,%lu) - inp_ppcb - failed\n",
+			(u_long)i->inp_ppcb, (u_long)t, (u_long)sizeof(*t));
 		return NULL;
 	    }
 	return (struct tcpcb *)i->inp_ppcb;
