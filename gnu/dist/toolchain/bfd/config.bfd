@@ -616,10 +616,16 @@ case "${targ}" in
   mipsel*-*-netbsd*)
     targ_defvec=bfd_elf32_littlemips_vec
     targ_selvecs="mipselnetbsd_vec bfd_elf32_bigmips_vec ecoff_little_vec ecoff_big_vec"
+#ifdef BFD64
+    targ_selvecs="${targ_selvecs} bfd_elf64_bigmips_vec bfd_elf64_littlemips_vec "
+#endif
     ;;
   mipseb*-*-netbsd*)
     targ_defvec=bfd_elf32_bigmips_vec
     targ_selvecs="bfd_elf32_littlemips_vec mipselnetbsd_vec ecoff_big_vec ecoff_little_vec"
+#ifdef BFD64
+    targ_selvecs="${targ_selvecs} bfd_elf64_bigmips_vec bfd_elf64_littlemips_vec "
+#endif
     ;;
   mips*-dec-bsd*)
     targ_defvec=aout_mips_little_vec
