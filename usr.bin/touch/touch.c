@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.19 1998/01/20 21:04:04 mycroft Exp $	*/
+/*	$NetBSD: touch.c,v 1.20 1998/01/21 00:24:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.19 1998/01/20 21:04:04 mycroft Exp $");
+__RCSID("$NetBSD: touch.c,v 1.20 1998/01/21 00:24:46 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -201,7 +201,7 @@ main(argc, argv)
 	exit(rval);
 }
 
-#define	ATOI2(ar)	((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
+#define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
 void
 stime_arg1(arg, tvp)
@@ -227,30 +227,33 @@ stime_arg1(arg, tvp)
 	}
 		
 	yearset = 0;
-	switch(strlen(arg)) {
+	switch (strlen(arg)) {
 	case 12:			/* CCYYMMDDhhmm */
-		t->tm_year = ATOI2(arg);
-		t->tm_year *= 100;
+		t->tm_year = ATOI2(arg) * 100 - TM_YEAR_BASE;
 		yearset = 1;
 		/* FALLTHOUGH */
 	case 10:			/* YYMMDDhhmm */
 		if (yearset) {
-			yearset = ATOI2(arg);
-			t->tm_year += yearset;
+			t->tm_year += ATOI2(arg);
 		} else {
 			yearset = ATOI2(arg);
 			if (yearset < 69)
-				t->tm_year = yearset + 2000;
+				t->tm_year = yearset + 2000 - TM_YEAR_BASE;
 			else
-				t->tm_year = yearset + 1900;
+				t->tm_year = yearset + 1900 - TM_YEAR_BASE;
 		}
-		t->tm_year -= TM_YEAR_BASE;	/* Convert to UNIX time. */
 		/* FALLTHROUGH */
 	case 8:				/* MMDDhhmm */
 		t->tm_mon = ATOI2(arg);
 		--t->tm_mon;		/* Convert from 01-12 to 00-11 */
+		/* FALLTHROUGH */
+	case 6:
 		t->tm_mday = ATOI2(arg);
+		/* FALLTHROUGH */
+	case 4:
 		t->tm_hour = ATOI2(arg);
+		/* FALLTHROUGH */
+	case 2:
 		t->tm_min = ATOI2(arg);
 		break;
 	default:
