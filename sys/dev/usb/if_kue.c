@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.27 2000/03/30 00:18:17 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.28 2000/04/02 21:25:41 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1121,8 +1121,8 @@ kue_send(sc, m, idx)
 	/* Transmit */
 	err = usbd_transfer(c->kue_xfer);
 	if (err != USBD_IN_PROGRESS) {
-		DPRINTF(("%s: kue_send err=%s\n", USBDEVNAME(sc->kue_dev),
-			 usbd_errstr(err)));
+		printf("%s: kue_send error=%s\n", USBDEVNAME(sc->kue_dev),
+		       usbd_errstr(err));
 		kue_stop(sc);
 		return (EIO);
 	}
