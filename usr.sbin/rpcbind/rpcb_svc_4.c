@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_4.c,v 1.1 2000/06/02 23:15:41 fvdl Exp $	*/
+/*	$NetBSD: rpcb_svc_4.c,v 1.2 2001/04/30 00:36:07 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -359,7 +359,7 @@ rpcbproc_getaddrlist_4_local(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
 		}
 #ifdef RPCBIND_DEBUG
 		if (debugging)
-			fprintf(stderr, "\tmerge with: %s", rbl->rpcb_map.r_addr);
+			fprintf(stderr, "\tmerge with: %s\n", rbl->rpcb_map.r_addr);
 #endif
 		if ((maddr = mergeaddr(transp, rbl->rpcb_map.r_netid,
 				rbl->rpcb_map.r_addr, saddr)) == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6 2001/04/22 21:43:05 fvdl Exp $	*/
+/*	$NetBSD: util.c,v 1.7 2001/04/30 00:36:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@ addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
 			free(serv_nbp);
 			free(clnt_nbp);
 			free(clnt_sa);
-			return strdup(clnt_uaddr);
+			return strdup(serv_uaddr);
 		}
 	} else {
 		clnt_sa = (struct sockaddr *)
