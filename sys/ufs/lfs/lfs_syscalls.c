@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.26 1999/03/29 22:13:07 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.27 1999/04/11 23:24:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -875,9 +875,7 @@ lfs_segwait(p, v, retval)
  * In either case we lfs_vref, and it is the caller's responsibility to
  * lfs_vunref and VOP_UNLOCK (if necessary) when finished.
  */
-#ifdef USE_UFS_HASHLOCK
 extern struct lock ufs_hashlock;
-#endif
 
 int
 lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
@@ -903,24 +901,19 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	 * locked, in which case they are going to be distinctly unhappy
 	 * if we trash something.
 	 */
-#ifdef USE_UFS_HASHLOCK
 	do {
-#endif
 		if ((*vpp = ufs_ihashlookup(dev, ino)) != NULL) {
-			lfs_vref(*vpp);
 			if ((*vpp)->v_flag & VXLOCK) {
-				printf("vnode VXLOCKed for ino %d\n",ino);
+				printf("lfs_fastvget: vnode VXLOCKed for ino %d\n",ino);
 				clean_vnlocked++;
 #ifdef LFS_EAGAIN_FAIL
-#if 0 /* XXXX KS */
-				lfs_vunref(*vpp);
-#endif
 				return EAGAIN;
 #endif
 			}
 			ip = VTOI(*vpp);
+			lfs_vref(*vpp);
 			if (VOP_ISLOCKED(*vpp)) {
-				printf("ino %d inlocked by pid %d\n",ip->i_number,
+				printf("lfs_fastvget: ino %d inlocked by pid %d\n",ip->i_number,
 				       ip->i_lock.lk_lockholder);
 				clean_inlocked++;
 #ifdef LFS_EAGAIN_FAIL
@@ -933,16 +926,12 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 			}
 			return (0);
 		}
-#ifdef USE_UFS_HASHLOCK
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
-#endif
 
 	/* Allocate new vnode/inode. */
 	if ((error = lfs_vcreate(mp, ino, &vp)) != 0) {
 		*vpp = NULL;
-#ifdef USE_UFS_HASHLOCK
 		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-#endif
 		return (error);
 	}
 	/*
@@ -953,9 +942,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	 */
 	ip = VTOI(vp);
 	ufs_ihashins(ip);
-#ifdef USE_UFS_HASHLOCK
 	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-#endif
 	
 	/*
 	 * XXX
