@@ -28,8 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/dev/Attic/if_le_subr.c,v 1.5 1994/05/28 15:45:53 gwr Exp $
- * gwr: uncomment obio_probe_byte
+ * $Id: if_le_subr.c,v 1.6 1994/09/20 16:21:44 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -57,6 +56,8 @@
 
 #include "if_lereg.h"
 #include "if_le.h"
+
+extern int leintr();
 
 int
 le_md_match(parent, cf, args)
@@ -87,8 +88,8 @@ le_md_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
-	caddr_t dvma_malloc(), le_addr;
-	int level, leintr();
+	caddr_t dvma_malloc();
+	int le_addr, level;
 	struct le_softc *le = (struct le_softc *) self;
 	struct obio_cf_loc *obio_loc = OBIO_LOC(self);
 	
@@ -97,11 +98,11 @@ le_md_attach(parent, self, args)
 	if (!le->sc_r2)
 		panic(": not enough dvma space");
 	idprom_etheraddr(le->sc_addr); /* ethernet addr */
-	le_addr = OBIO_DEFAULT_PARAM(caddr_t, obio_loc->obio_addr, OBIO_AMD_ETHER);
+	le_addr = OBIO_DEFAULT_PARAM(int, obio_loc->obio_addr, OBIO_AMD_ETHER);
 
 	/* register access */
 	le->sc_r1 = (struct lereg1 *)
-		obio_alloc(le_addr, OBIO_AMD_ETHER_SIZE, OBIO_WRITE);
+		obio_alloc(le_addr, OBIO_AMD_ETHER_SIZE);
 	if (!le->sc_r1)
 		panic(": not enough obio space\n");
 	level = OBIO_DEFAULT_PARAM(int, obio_loc->obio_level, 3);
