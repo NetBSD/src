@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.38 2001/06/28 01:48:22 dmcmahill Exp $
+	$NetBSD: syscalls.master,v 1.39 2001/06/28 04:08:58 simonb Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -387,3 +387,8 @@
 259	UNIMPL		swapctl
 260	UNIMPL		memcntl
 261	UNIMPL		fdatasync
+262	UNIMPL		oflock
+263	UNIMPL		_F64_readv
+264	UNIMPL		_F64_writev
+265	UNIMPL		cdslxlate
+266	UNIMPL		sendfile
