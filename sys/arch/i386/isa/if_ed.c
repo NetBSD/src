@@ -14,7 +14,7 @@
  */
 
 /*
- *	$Id: if_ed.c,v 1.2.2.4 1993/07/27 05:57:54 cgd Exp $
+ *	$Id: if_ed.c,v 1.2.2.5 1993/07/27 06:00:45 cgd Exp $
  */
  
 #include "ed.h"
@@ -23,6 +23,7 @@
 
 #include "param.h"
 #include "systm.h"
+#include "select.h"
 #include "errno.h"
 #include "ioctl.h"
 #include "mbuf.h"
