@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.24 1996/01/04 22:21:57 jtc Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.25 1996/03/08 06:00:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -502,6 +502,7 @@ linux_machdepioctl(p, v, retval)
 		break;
 #endif
 	default:
+		printf("linux_machdepioctl: invalid ioctl %08x\n", com);
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;
