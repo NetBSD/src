@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.65 2003/04/29 15:59:08 nakayama Exp $
+# 	$NetBSD: GENERIC32,v 1.66 2003/04/29 16:17:12 nakayama Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.65 $"
+#ident 		"GENERIC-$Revision: 1.66 $"
 
 maxusers	64
 
@@ -457,9 +457,12 @@ tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI USB controllers
-ohci*	at pci? dev ? function ?			# Open Host Controller
+ehci*	at pci? dev ? function ?	# Enhanced Host Controller
+ohci*	at pci? dev ? function ?	# Open Host Controller
 
-usb*	at ohci?					# USB bus support
+usb*	at ehci?			# USB bus support
+usb*	at ohci?
+
 uhub*	at usb?						# USB Hubs
 uhub*	at uhub? port ? configuration ? interface ?
 
@@ -492,8 +495,8 @@ fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 fw*	at fwbus?			# IP over 1394
 
 # IEEE1394 nodes
-#fwnode*at fwbus? oui ? devhi ? devlo ?
-#scsibus* at fwnode?
+#fwnode* at fwbus? idhi ? idlo ?
+#sbpscsi* at fwnode?
 
 ## Loopback network interface; required
 pseudo-device	loop
