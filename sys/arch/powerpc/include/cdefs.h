@@ -1,9 +1,13 @@
-/*	$NetBSD: cdefs.h,v 1.2 1997/04/16 22:53:27 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.3 1997/10/22 05:21:23 thorpej Exp $	*/
 
 #ifndef	_MACHINE_CDEFS_H_
 #define	_MACHINE_CDEFS_H_
 
 #define _C_LABEL(x)	_STRING(x)
+
+#ifdef __GNUC__
+#define	__RENAME(x)	__asm__(x)
+#endif
 
 #define	__DO_NOT_DO_WEAK__		/* NO WEAK SYMS IN LIBC YET */
 
