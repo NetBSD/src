@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.75 2004/02/13 11:36:16 wiz Exp $	*/
+/*	$NetBSD: locore.s,v 1.76 2004/03/26 21:39:57 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -39,7 +39,7 @@
  * Modified by Matthias Pfaller, Jan 1996.
  *
  */
-#define __HAVE_SIGINFO
+
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_cpu30mhz.h"

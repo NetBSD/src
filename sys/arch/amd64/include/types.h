@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 2004/01/21 11:31:20 mrg Exp $	*/
+/*	$NetBSD: types.h,v 1.9 2004/03/26 21:39:57 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,6 @@ typedef	__volatile int		__cpu_simple_lock_t;
 #define	__HAVE_MINIMAL_EMUL
 #define __HAVE_GENERIC_SOFT_INTERRUPTS
 #define __HAVE_CPU_MAXPROC
-#define __HAVE_SIGINFO
 
 #if defined(_KERNEL)
 #define __HAVE_RAS
