@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.4 1998/07/06 00:53:07 mark Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.5 1998/07/06 01:04:17 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,6 +44,7 @@
  */
 
 #include "opt_irqstats.h"
+#include "opt_uvm.h"
 
 #include "assym.h"
 #include <machine/cpu.h>
@@ -419,7 +420,11 @@ _irq_setmasks:
 
 
 Lcnt:
+#if defined(UVM)
+	.word	_uvmexp
+#else
 	.word	_cnt
+#endif
 
 Lintrcnt:
 	.word	_intrcnt
