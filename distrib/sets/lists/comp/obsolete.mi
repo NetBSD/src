@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.40 2001/03/20 13:04:54 ad Exp $
+# $NetBSD: obsolete.mi,v 1.41 2001/03/24 09:32:49 jdolecek Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -21,6 +21,7 @@
 /usr/include/dev/isa/if_ie507.h
 /usr/include/dev/isa/if_ieatt.h
 /usr/include/dev/isa/if_iee16.h
+/usr/include/dev/isa/if_wereg.h
 /usr/include/dev/isa/lptreg.h
 /usr/include/dev/isa/pckbcvar.h
 /usr/include/dev/isa/wdlink.h
