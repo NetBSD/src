@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.3 2001/03/11 16:18:40 bjh21 Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.4 2001/03/13 23:56:49 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -325,7 +325,6 @@ db_trapper(addr, inst, frame, fault_code)
 	int		fault_code;
 {
 	if (fault_code == 0) {
-		frame->tf_pc -= INSN_SIZE;
 		if ((inst & ~INSN_COND_MASK) == (BKPT_INST & ~INSN_COND_MASK))
 			kdb_trap(T_BREAKPOINT, frame);
 		else
