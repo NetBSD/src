@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.149 2003/08/07 16:28:33 agc Exp $	*/
+/*	$NetBSD: pmap.c,v 1.150 2003/09/12 15:29:16 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.149 2003/08/07 16:28:33 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.150 2003/09/12 15:29:16 chs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -995,12 +995,18 @@ pmap_procwr(p, va, len)
 		pt_entry_t *pte;
 		unsigned entry;
 
-		if (!(pte = pmap_segmap(pmap, va)))
-			return;
-		pte += (va >> PGSHIFT) & (NPTEPG - 1);
+		if (pmap == pmap_kernel()) {
+			pte = kvtopte(va);
+		} else {
+			if (!(pte = pmap_segmap(pmap, va))) {
+				return;
+			}
+			pte += (va >> PGSHIFT) & (NPTEPG - 1);
+		}
 		entry = pte->pt_entry;
 		if (!mips_pg_v(entry))
 			return;
+
 		/*
 		 * XXXJRT -- Wrong -- since page is physically-indexed, we
 		 * XXXJRT need to loop.
