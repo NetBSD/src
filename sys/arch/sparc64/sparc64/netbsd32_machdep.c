@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.5.4.1 2000/07/18 16:23:30 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.5.4.2 2000/08/07 01:03:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -83,7 +83,7 @@ netbsd32_setregs(p, pack, stack)
 	 *	%g1: address of PS_STRINGS (used by crt0)
 	 *	%tpc,%tnpc: entry point of program
 	 */
-	tstate = ((PSTATE_USER)<<TSTATE_PSTATE_SHIFT) 
+	tstate = ((PSTATE_USER32)<<TSTATE_PSTATE_SHIFT) 
 		| (tf->tf_tstate & TSTATE_CWP);
 	if ((fs = p->p_md.md_fpstate) != NULL) {
 		/*
@@ -136,7 +136,7 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	register struct proc *p = curproc;
 	register struct sigacts *psp = p->p_sigacts;
 	register struct sparc32_sigframe *fp;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 	register int addr, onstack; 
 	struct rwindow32 *kwin, *oldsp, *newsp;
 	struct sparc32_sigframe sf;
@@ -267,7 +267,7 @@ compat_13_netbsd32_sigreturn(p, v, retval)
 	} */ *uap = v;
 	struct netbsd32_sigcontext13 *scp;
 	struct netbsd32_sigcontext13 sc;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 	struct rwindow32 *rwstack, *kstack;
 	sigset_t mask;
 
@@ -443,7 +443,7 @@ netbsd32_process_read_regs(p, regs)
 	struct reg *regs;
 {
 	struct reg32* regp = (struct reg32*)regs;
-	struct trapframe* tf = p->p_md.md_tf;
+	struct trapframe64* tf = p->p_md.md_tf;
 	int i;
 
 	/* 
@@ -470,7 +470,7 @@ netbsd32_process_write_regs(p, regs)
 	struct reg *regs;
 {
 	struct reg32* regp = (struct reg32*)regs;
-	struct trapframe* tf = p->p_md.md_tf;
+	struct trapframe64* tf = p->p_md.md_tf;
 	int i;
 
 	tf->tf_pc = regp->r_pc;
