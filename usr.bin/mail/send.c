@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.16 2002/03/04 03:07:26 wiz Exp $	*/
+/*	$NetBSD: send.c,v 1.17 2002/03/04 03:16:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.16 2002/03/04 03:07:26 wiz Exp $");
+__RCSID("$NetBSD: send.c,v 1.17 2002/03/04 03:16:10 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -282,9 +282,9 @@ sendmail(void *v)
 
 	head.h_to = extract(str, GTO);
 	head.h_subject = NULL;
-	head.h_cc = NIL;
-	head.h_bcc = NIL;
-	head.h_smopts = NIL;
+	head.h_cc = NULL;
+	head.h_bcc = NULL;
+	head.h_smopts = NULL;
 	mail1(&head, 0);
 	return(0);
 }
@@ -334,7 +334,7 @@ mail1(struct header *hp, int printheaders)
 	 */
 	senderr = 0;
 	to = usermap(cat(hp->h_bcc, cat(hp->h_to, hp->h_cc)));
-	if (to == NIL) {
+	if (to == NULL) {
 		printf("No recipients specified\n");
 		senderr++;
 	}
@@ -411,10 +411,10 @@ fixhead(struct header *hp, struct name *tolist)
 {
 	struct name *np;
 
-	hp->h_to = NIL;
-	hp->h_cc = NIL;
-	hp->h_bcc = NIL;
-	for (np = tolist; np != NIL; np = np->n_flink) {
+	hp->h_to = NULL;
+	hp->h_cc = NULL;
+	hp->h_bcc = NULL;
+	for (np = tolist; np != NULL; np = np->n_flink) {
 		if (np->n_type & GDEL)
 			continue;	/* Don't copy deleted addresses to the header */
 		if ((np->n_type & GMASK) == GTO)
@@ -484,13 +484,13 @@ puthead(struct header *hp, FILE *fo, int w)
 	int gotcha;
 
 	gotcha = 0;
-	if (hp->h_to != NIL && w & GTO)
+	if (hp->h_to != NULL && w & GTO)
 		fmt("To:", hp->h_to, fo, w&GCOMMA), gotcha++;
 	if (hp->h_subject != NULL && w & GSUBJECT)
 		fprintf(fo, "Subject: %s\n", hp->h_subject), gotcha++;
-	if (hp->h_cc != NIL && w & GCC)
+	if (hp->h_cc != NULL && w & GCC)
 		fmt("Cc:", hp->h_cc, fo, w&GCOMMA), gotcha++;
-	if (hp->h_bcc != NIL && w & GBCC)
+	if (hp->h_bcc != NULL && w & GBCC)
 		fmt("Bcc:", hp->h_bcc, fo, w&GCOMMA), gotcha++;
 	if (gotcha && w & GNL)
 		(void) putc('\n', fo);
@@ -509,8 +509,8 @@ fmt(char *str, struct name *np, FILE *fo, int comma)
 	col = strlen(str);
 	if (col)
 		fputs(str, fo);
-	for (; np != NIL; np = np->n_flink) {
-		if (np->n_flink == NIL)
+	for (; np != NULL; np = np->n_flink) {
+		if (np->n_flink == NULL)
 			comma = 0;
 		len = strlen(np->n_name);
 		col++;		/* for the space */
