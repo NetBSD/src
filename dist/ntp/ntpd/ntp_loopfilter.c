@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.1.1.2 2000/04/22 14:53:17 simonb Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.2 2002/09/20 14:09:45 uwe Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -288,7 +288,7 @@ local_clock(
 		 * reset or shaken, but never stirred.
 		 */
 		default:
-			if (allow_set_backward | correct_any) {
+			if (allow_set_backward || correct_any) {
 				step_systime(fp_offset);
 				NLOG(NLOG_SYNCEVENT|NLOG_SYSEVENT)
 				    msyslog(LOG_NOTICE, "time reset %.6f s",
