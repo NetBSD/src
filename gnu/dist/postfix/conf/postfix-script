@@ -212,6 +212,14 @@ check)
 	find corrupt -type f -exec $WARN damaged message: {} \;
 
 	# XXX also: look for weird stuff, weird permissions, etc.
+
+	test -f /usr/sbin/sendmail -a -f /usr/lib/sendmail && {
+	    cmp -s /usr/sbin/sendmail /usr/lib/sendmail || {
+		$WARN /usr/lib/sendmail and /usr/sbin/sendmail differ
+		$WARN Replace one by a symbolic link to the other
+	    }
+	}
+	exit 0
 	;;
 
 *)

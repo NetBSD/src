@@ -196,7 +196,7 @@ static void qmqpd_open_file(QMQPD_STATE *state)
      * bloody likely, but present for the sake of consistency with all other
      * Postfix points of entrance).
      */
-    rec_fprintf(state->cleanup, REC_TYPE_TIME, "%ld", state->time);
+    rec_fprintf(state->cleanup, REC_TYPE_TIME, "%ld", (long) state->time);
     if (*var_filter_xport)
 	rec_fprintf(state->cleanup, REC_TYPE_FILT, "%s", var_filter_xport);
 }

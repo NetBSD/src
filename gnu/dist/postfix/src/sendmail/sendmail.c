@@ -386,7 +386,8 @@ static void enqueue(const int flags, const char *sender, const char *full_name,
 	    msg_warn("-f option specified malformed sender: %s", sender);
     } else {
 	if ((sender = username()) == 0)
-	    msg_fatal_status(EX_OSERR, "unable to find out your login name");
+	    msg_fatal_status(EX_OSERR, "no login name found for user ID %lu",
+			     (unsigned long) uid);
 	saved_sender = mystrdup(sender);
     }
 
