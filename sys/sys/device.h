@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.64 2002/11/24 17:33:43 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.65 2003/07/04 00:24:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,6 +81,7 @@
 #ifndef _SYS_DEVICE_H_
 #define	_SYS_DEVICE_H_
 
+#include <sys/properties.h>
 #include <sys/queue.h>
 
 /*
@@ -307,6 +308,8 @@ extern struct cftablelist allcftables;	/* list of all cfdata tables */
 extern struct device *booted_device;	/* the device we booted from */
 
 extern __volatile int config_pending; 	/* semaphore for mountroot */
+
+extern propdb_t dev_propdb;		/* device properties database */
 
 void	config_init(void);
 void	configure(void);
