@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.16 2002/11/26 16:52:07 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.17 2003/02/26 19:23:25 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.16 2002/11/26 16:52:07 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.17 2003/02/26 19:23:25 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: utmpx.c,v 1.16 2002/11/26 16:52:07 christos Exp $");
 #include <db.h>
 
 static FILE *fp;
+static int readonly = 0;
 static struct utmpx ut;
 static char utfile[MAXPATHLEN] = _PATH_UTMPX;
 static char llfile[MAXPATHLEN] = _PATH_LASTLOGX;
@@ -88,6 +89,7 @@ endutxent()
 	if (fp != NULL) {
 		(void)fclose(fp);
 		fp = NULL;
+		readonly = 0;
 	}
 }
 
@@ -100,9 +102,13 @@ getutxent()
 		struct stat st;
 
 		if ((fp = fopen(utfile, "r+")) == NULL)
-			if ((fp = fopen(utfile, "w+")) == NULL)
+			if ((fp = fopen(utfile, "w+")) == NULL) {
 				if ((fp = fopen(utfile, "r")) == NULL)
 					goto fail;
+				else
+					readonly = 1;
+			}
+					
 
 		/* get file size in order to check if new file */
 		if (fstat(fileno(fp), &st) == -1)
@@ -216,17 +222,19 @@ pututxline(const struct utmpx *utx)
 
 	_DIAGASSERT(utx != NULL);
 
-	if (strcmp(_PATH_UTMPX, utfile) == 0 && geteuid() != 0)
-		return utmp_update(utx);
-
 	if (utx == NULL)
 		return NULL;
+
+	if (strcmp(_PATH_UTMPX, utfile) == 0)
+		if ((fp != NULL && readonly) || (fp == NULL && geteuid() != 0))
+			return utmp_update(utx);
+
 
 	(void)memcpy(&temp, utx, sizeof(temp));
 
 	if (fp == NULL) {
 		(void)getutxent();
-		if (fp == NULL)
+		if (fp == NULL || readonly)
 			return NULL;
 	}
 
