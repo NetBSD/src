@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.4.2.6 1997/12/20 21:30:29 perry Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.4.2.7 1998/05/29 20:48:52 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,7 +77,10 @@ void do_upgrade(void)
 	if (!fsck_disks())
 		return;
 
-	  /* Move /mnt/etc /mnt/etc.old so old stuff isn't overwritten. */
+	/*
+	 * Move target /etc -> target /etc.old so existing configuration
+	 * isn't overwritten by upgrade.
+	 */
 	if (save_etc())
 		return;
 
@@ -93,7 +96,7 @@ void do_upgrade(void)
 
 	get_and_unpack_sets(MSG_upgrcomplete, MSG_abortupgr);
 
-	/* Copy back any files we shuld restore after the upgrade.*/
+	/* Copy back any files we should restore after the upgrade.*/
 	merge_etc();
 
 	sanity_check();
@@ -119,10 +122,10 @@ int save_etc(void)
 	printf("saving /etc as /etc.old...");
 #endif
 
-	/* Move /mnt/etc /mnt/etc.old so old stuff isn't overwritten. */
+	/* Move target /etc to /etc.old.  Abort on error. */
 	mv_within_target_or_die ("/etc", "/etc.old");
 
-	/* now make an /etc that should let the user reboot */
+	/* now make an /etc that should let the user reboot. */
 	make_target_dir("/etc");
 
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.8.2.14 1997/12/26 02:39:49 perry Exp $	*/
+/*	$NetBSD: net.c,v 1.8.2.15 1998/05/29 20:48:51 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <curses.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/param.h>
 #include "defs.h"
@@ -234,6 +235,11 @@ int config_network (void)
 		run_prog("/sbin/ifconfig %s inet %s netmask %s", net_dev,
 			  net_ip, net_mask);
 
+	/* Set host name */
+	if (strcmp(net_host, "") != 0) {
+	  	sethostname(net_host, strlen(net_host));
+	}
+
 	/* Set a default route if one was given */
 	if (strcmp(net_defroute, "") != 0) {
 		run_prog ("/sbin/route -f > /dev/null 2> /dev/null");
@@ -375,6 +381,13 @@ mnt_net_config(void)
 	if (network_up) {
 		msg_prompt (MSG_mntnetconfig, ans, ans, 5);
 		if (*ans == 'y') {
+
+			/* Write hostname to /etc/myname */
+		        f = target_fopen("/etc/myname", "w");
+			if (f != 0) {
+			  	fprintf(f, "%s\n", net_host);
+				fclose(f);
+			}
 
 			/* If not running in target, copy resolv.conf there. */
 			if (strcmp(net_namesvr, "") != 0)

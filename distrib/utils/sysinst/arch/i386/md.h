@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3.2.5 1997/12/17 14:49:50 mellon Exp $	*/
+/*	$NetBSD: md.h,v 1.3.2.6 1998/05/29 20:48:52 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,20 +38,37 @@
 
 /* md.h -- Machine specific definitions for the i386 */
 
+
+/* incore fdisk (mbr, bios) geometry */
+EXTERN int bcyl, bhead, bsec, bsize, bcylsize;
+EXTERN int bstuffset INIT(0);
+
+/* incore copy of  MBR partitions */
+enum info {ID,SIZE,START,FLAG,SET};
+EXTERN int part[4][5] INIT({{0}});
+EXTERN int activepart;
+EXTERN int bsdpart;			/* partition in use by NetBSD */
+EXTERN int usefull;			/* on install, clobber entire disk */
+
+
+/* from mbr.c */
+void	set_fdisk_geom (void);		/* edit incore BIOS geometry */
+void	disp_cur_geom (void);
+int	check_geom (void);		/* primitive geometry sanity-check */
+
+int	edit_mbr __P((void));		
+int 	partsoverlap (int, int);	/* primive partition sanity-check */
+
+/* from fdisk.c */
+void	get_fdisk_info (void);		/* read from disk into core */
+void	set_fdisk_info (void);		/* write incore info into disk */
+
 /* constants and defines */
+
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 50
 
-/* fdisk partition information dlxxxx => NetBSD disklabel, bxxxx => bios */
-EXTERN int bcyl, bhead, bsec, bsize, bcylsize;
-EXTERN int bstuffset INIT(0);
-
-enum info {ID,SIZE,START,FLAG,SET};
-EXTERN int part[4][5] INIT({{0}});
-EXTERN int activepart;
-EXTERN int bsdpart;
-EXTERN int usefull;
 
 /*
  *  Default filesets to fetch and install during installation
@@ -76,6 +93,13 @@ EXTERN distinfo dist_list[]
     {"man",	1, "ak", "Manuals      : "},
     {"misc",	1, "aj", "Miscellaneous: "},
     {"text",	1, "ae", "Text tools   : "},
+
+    /* XXX no X11 on floppies, what sets are they?*/
+    {"xbase",	1, "al", "X11 clients  : "},
+    {"xfont",	1, "az", "X11 fonts    : "},
+    {"xserver",	1, "ci", "X11 servers  : "},
+    {"xcontrib",1, "aa", "X11 contrib  : "},
+    {"xcomp",	1, "ah", "X programming: "},
     {NULL, 0, NULL, NULL }
 }
 #endif
@@ -128,11 +152,4 @@ EXTERN	char *fdtype INIT("msdos");
  *  prototypes for MD code.
  */
 
-
-/* from fdisk.c */
-void	set_fdisk_geom (void);
-void	disp_cur_geom (void);
-int	check_geom (void);
-int 	partsoverlap (int, int);
-void	get_fdisk_info (void);
 
