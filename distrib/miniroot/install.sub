@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.18 1997/09/07 22:43:13 is Exp $
+#	$NetBSD: install.sub,v 1.19 1997/09/08 23:22:44 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -371,6 +371,8 @@ configure_ifs() {
 	local _interface_mask
 	local _interface_symname
 	local _interface_extra
+	local _interface_mediumtype
+	local _interface_supported_media
 
 	_interface_name=$1
 	_up=DOWN
@@ -389,7 +391,9 @@ configure_ifs() {
 		3s/broadcast//
 		3p'`
 
-	_interface_mediumtype=$1
+	if [ "$1" != "manual" ]; then
+		_interface_mediumtype=$1
+	fi
 	_interface_ip=$2
 	_interface_mask=$3
 
