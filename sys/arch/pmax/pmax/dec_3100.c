@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.15 1999/11/16 06:00:12 nisimura Exp $ */
+/* $NetBSD: dec_3100.c,v 1.16 1999/11/19 04:34:02 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,10 +105,6 @@ void		dec_3100_cons_init __P((void));
 void		dec_3100_device_register __P((struct device *, void *));
 
 static void	dec_3100_errintr __P((void));
-
-void	dec_3100_intr_establish __P((struct device *, void* cookie, int level,
-			 int (*handler)(void *), void *arg));
-void	dec_3100_intr_disestablish __P((struct device *, void *));
 
 #define	kn01_wbflush()	mips1_wbflush() /* XXX to be corrected XXX */
 
