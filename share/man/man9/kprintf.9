@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.7 1999/09/12 18:47:13 kleink Exp $
+.\"     $NetBSD: kprintf.9,v 1.8 2000/02/07 12:37:02 abs Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -158,6 +158,10 @@ Its argument is the new formatting string to obey and the argument which
 follows it is a
 .Va va_list
 argument vector from which to obtain the data to be formatted.
+The
+.Li %:
+specifier is non portable, and its use is strongly discouraged, even in
+NetBSD specific code (it is not supported on all ports).
 .It Li %r
 Integer value using current
 .Tn DDB
