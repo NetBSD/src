@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2002/09/25 22:21:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2002/11/25 05:13:41 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -517,7 +517,6 @@ dumpsys(void)
 void
 softnet(void)
 {
-	extern volatile int netisr;
 	int isr;
 
 	isr = netisr;
