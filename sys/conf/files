@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.427 2001/02/27 00:29:36 eeh Exp $
+#	$NetBSD: files,v 1.428 2001/03/08 04:18:17 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -254,6 +254,8 @@ file	dev/ic/ld_mlx.c			ld_mlx
 # AdvanSys 1200A, 1200B and ULTRA SCSI controllers
 device	adv: scsi
 file	dev/ic/adv.c			adv
+file	dev/ic/advlib.c			adv
+file	dev/ic/advmcode.c		adv
 
 # AdvanSys ULTRA WIDE SCSI controllers
 device	adw: scsi
