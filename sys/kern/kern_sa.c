@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.15 2002/02/02 00:03:57 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.16 2002/02/04 23:50:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -484,6 +484,7 @@ sa_newcachelwp(struct lwp *l)
 	struct sadata *sa;
 	struct lwp *l2;
 	vaddr_t uaddr;
+	int s;
 
 	p = l->l_proc;
 	sa = p->p_sa;
@@ -497,7 +498,9 @@ sa_newcachelwp(struct lwp *l)
 		 * newlwp helpfully puts it there. Unclear if newlwp should
 		 * be tweaked.
 		 */
+		SCHED_LOCK(s);
 		sa_putcachelwp(p, l2);
+		SCHED_UNLOCK(s);
 	}
 
 	return (0);
@@ -511,6 +514,8 @@ void
 sa_putcachelwp(struct proc *p, struct lwp *l)
 {
 	struct sadata *sa;
+
+	SCHED_ASSERT_LOCKED();
 
 	sa = p->p_sa;
 
@@ -535,6 +540,8 @@ sa_getcachelwp(struct proc *p)
 {
 	struct sadata *sa;
 	struct lwp *l;
+
+	SCHED_ASSERT_LOCKED();
 
 	l = NULL;
 	sa = p->p_sa;
