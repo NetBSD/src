@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.17 2004/04/22 00:17:12 itojun Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.18 2004/07/03 21:29:08 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.17 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.18 2004/07/03 21:29:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,13 +128,18 @@ lemac_isa_find(sc, ia, attach)
 	    ia->ia_iomem[0].ir_addr != maddr)
 		goto outio;
 
-	sc->sc_memt = ia->ia_memt;
-	if (bus_space_map(ia->ia_memt, maddr, msize, 0, &sc->sc_memh)) {
-		if (attach)
-			printf(": can't map mem space\n");
-		goto outio;
-	}
+	if (attach) {
+		if (msize == 0) {
+			printf(": memory configuration is invalid\n");
+			goto outio;
+		}
 
+		sc->sc_memt = ia->ia_memt;
+		if (bus_space_map(ia->ia_memt, maddr, msize, 0, &sc->sc_memh)) {
+			printf(": can't map mem space\n");
+			goto outio;
+		}
+	}
 
 	/*
 	 * Double-check IRQ configuration.
@@ -173,7 +178,7 @@ lemac_isa_find(sc, ia, attach)
 
 	ia->ia_ndrq = 0;
 
-	if (rv == 0 || !attach)
+	if (rv == 0 && attach)
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, msize);
 outio:
 	if (rv == 0 || !attach)
