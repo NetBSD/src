@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.8 2004/03/30 06:00:35 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.9 2004/03/30 06:03:47 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -79,3 +79,8 @@ games/worms/worms.c				1.15
 
 	Properly handle -d 1000.
 	[hubertf, ticket #13]
+
+sys/sys/userret.h				1.4
+
+	Update comment to match reality:  sparc64 uses mi_userret.
+	[cl, ticket #14]
