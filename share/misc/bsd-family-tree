@@ -137,8 +137,8 @@ FreeBSD 4.0  |      |  |  |  | NetBSD 1.4.2    |             |
  |   FreeBSD 4.1.1  |  |  /  |    |            |             |
  |      |           |  | /   |    |            |             |
  |   FreeBSD 4.2   Darwin/   | NetBSD 1.4.3    |             |
- |      |         Mac OS X   |    |        OpenBSD 2.8     BSD/OS 4.2
- |      |             |      |    v            |             |
+ |      |         Mac OS X   |             OpenBSD 2.8     BSD/OS 4.2
+ |      |             |      |                 |             |
  |      |             |      |                 |             |
  |      |           10.0  NetBSD 1.5           |             |
  |   FreeBSD 4.3      |      |    |            |             |
@@ -389,7 +389,7 @@ Australian Computer Society, Hobart, August 1993.
 Peter H. Salus. Unix at 25. Byte Magazine, October 1994.
 URL: http://www.byte.com/art/9410/sec8/art3.htm (unreachable)
 
-Andreas Klemm, Lars Köller. If you're going to San Francisco ...
+Andreas Klemm, Lars K)Böller. If you're going to San Francisco ...
 Die freien BSD-Varianten von Unix. c't April 1997, page 368ff.
 
 BSD Release Announcements collection.
