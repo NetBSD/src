@@ -1,4 +1,6 @@
-#	$NetBSD: files.pmax,v 1.56 1998/09/26 21:02:56 drochner Exp $
+#	$Id: files.pmax,v 1.56.2.1 1998/10/15 01:30:23 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.56.2.1 1998/10/15 01:30:23 nisimura Exp $
+#
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -6,268 +8,165 @@ maxpartitions 8
 
 maxusers 2 8 64
 
-#
 # Bus-independent devices
-#
-device mainbus { }			# no locators
-attach mainbus at root
+device	mainbus {}			# no locators
+attach	mainbus at root
 
-device cpu				# not optional
-attach cpu at mainbus
-file arch/pmax/pmax/cpu.c		cpu
+device	cpu				# not optional
+attach	cpu at mainbus
+file	arch/pmax/pmax/cpu.c		cpu
 
-# CPU support option headers
-defopt	DEC_3100	# "kn01":	3100, 2100 (kn01)
-defopt	DEC_3MAX	# "kn02":	Decstation 5000/200
-defopt	DEC_3MIN	# "kn02ba":	Decstation 5000/{20,25,33,50}
-defopt	DEC_MAXINE	# "kn02ca":	Decstation 5000/{20,25,33,50}
-defopt	DEC_3MAXPLUS	# "kn03":	Decstation 5000/240, 5000/260
+# Model support option headers
+defopt	DEC_3100	# kn01:		DECstation 3100, 2100
+defopt	DEC_5100	# kn230:	DECsystem 5100
+defopt	DEC_3MAX	# kn02:		DECstation 5000/200
+defopt	DEC_3MIN	# kn02ba:	DECstation 5000/{120,125,133,150}
+defopt	DEC_MAXINE	# kn02ca:	DECstation 5000/{20,25,33,50}
+defopt	DEC_3MAXPLUS	# kn03:		DECstation 5000/240, 5000/260
 
-defopt	DEC_5800	# "kn??":	Decstation 5800 isis (XMI)
-defopt	DEC_5400	# "kn210":	Decstation 5400 mipsfair
-defopt	DEC_5500	# "kn220":	Decstation 5500 mipsfair2
-defopt	DEC_5100	# "kn230":	Decstation 5100 mipsmate
+defopt	DEC_5800	# kn5800:	DECsystem 5800 isis (XMI)
+defopt	DEC_5400	# kn210:	DECsystem 5400 mipsfair (Qbus)
+defopt	DEC_5500	# kn220:	DECsystem 5500 mipsfair2 (Qbus)
 
-#
-# CPU-dependent files
-#
-file	arch/pmax/pmax/dec_3100.c	dec_3100	# DS3100, pmax
-file	arch/pmax/pmax/dec_3max.c	dec_3max	# DS5000/200, 3max
-file	arch/pmax/pmax/dec_3maxplus.c	dec_3maxplus	# DS5000/240, 3maxplus
-file	arch/pmax/pmax/dec_3min.c	dec_3min	# DS5000/1xx, 3min
-file	arch/pmax/pmax/dec_maxine.c	dec_maxine	# DS5000/1xx, maxine
-file	arch/pmax/pmax/dec_5100.c	dec_5100	# kn230, mipsmate
-#file	arch/pmax/pmax/dec_5400.c	dec_5400	# DS5400, mipsfair
-#file	arch/pmax/pmax/dec_5500.c	dec_5500	# kn220, mipsfair2
-#file	arch/pmax/pmax/dec_5800.c	dec_5800	# 5800, isis
+# Model dependent files
+file	arch/pmax/pmax/dec_3100.c	dec_3100
+file	arch/pmax/pmax/dec_5100.c	dec_5100
+file	arch/pmax/pmax/dec_3max.c	dec_3max
+file	arch/pmax/pmax/dec_3maxplus.c	dec_3maxplus
+file	arch/pmax/pmax/dec_3min.c	dec_3min
+file	arch/pmax/pmax/dec_maxine.c	dec_maxine
+#file	arch/pmax/pmax/dec_5400.c	dec_5400
+#file	arch/pmax/pmax/dec_5500.c	dec_5500
+#file	arch/pmax/pmax/dec_5800.c	dec_5800
 
-# handlers for memory subsystems shared across models..
+# Memory error handlers shared across models...
 file	arch/pmax/pmax/dec_kn02_subr.c	dec_3min|dec_maxine
 file	arch/pmax/pmax/dec_3max_subr.c	dec_3max|dec_3maxplus
 
-#
 # Bus-independent support for DEC devices
-#
 include "dev/dec/files.dec"
 
-# 3100 and 5100 ibus
-define baseboard {}
-device kn01bus {}: baseboard
-attach  kn01bus at mainbus
+# "ibus" for PMAX, MIPSMATE and 3MAX
+device	ibus {}
+file	arch/pmax/ibus/ibus_subr.c	ibus
 
-device kn230bus {}: baseboard
-attach  kn230bus at mainbus
+attach	ibus at mainbus with ibus_pmax
+file	arch/pmax/ibus/ibus_pmax.c	ibus_pmax
 
-device ibus {}
-attach  ibus at baseboard
-
-file	arch/pmax/ibus/ibus.c		ibus
-file	arch/pmax/ibus/ibus_3100.c	ibus & dec_3100
-file	arch/pmax/ibus/ibus_5100.c	ibus & dec_5100
-
-
-#
-# TurboChannel Devices
-#
-device tcasic {}
-attach tcasic	at mainbus
+# TURBOchannel devices
 include	"dev/tc/files.tc"
-#attach tc	at tcasic
-attach tc	at mainbus
+attach	tc at mainbus
+file	arch/pmax/tc/tc_subr.c		tc needs-flag
+file	arch/pmax/tc/tc_machdep.c	tc
 
-
-file	arch/pmax/tc/tcasic.c		tcasic
-file	arch/pmax/tc/tc_conf.c		tcasic
-file	arch/pmax/tc/tc_subr.c		tc	needs-flag
-file	arch/pmax/tc/tc_3max.c		tc & dec_3max
-file	arch/pmax/tc/tc_3min.c		tc & dec_3min
-file	arch/pmax/tc/tc_3maxplus.c	tc & dec_3maxplus
-file	arch/pmax/tc/tc_maxine.c	tc & dec_maxine
-
-#
-# The TurboChannel IOCTL ASIC. Present on IOASIC machines,
-# which is all turbochannel machines ever built except the 3MAX (5000/200).
-#
+# IOASIC as a TURBOchannel device for 3MIN, 3MAX+ and MAXINE
 # device defined in files.tc:
 # device ioasic { offset = -1 }
 # attach ioasic at tc
-file	arch/pmax/tc/asic.c		ioasic
+file	arch/pmax/tc/ioasic.c		ioasic
 
+# 3MAX system slot as a TURBOchannel device
+attach	ibus at tc with kn02sys
 
-# Real-time clock (not optional)
+# Real-time clock; MC146818 or DS1287A
 device	mcclock
 attach	mcclock at ioasic with mcclock_ioasic
 attach	mcclock at ibus with mcclock_ibus
 file	arch/pmax/pmax/clock.c
-file	dev/clock_subr.c
 file	arch/pmax/pmax/mcclock.c	mcclock
 file	dev/dec/mcclock.c		mcclock
 file	dev/dec/mcclock_pad32.c		mcclock
 file	arch/pmax/tc/mcclock_ioasic.c	mcclock_ioasic
 file	arch/pmax/ibus/mcclock_ibus.c	mcclock_ibus
 
-#
 # Machine-independent SCSI driver.
-#
+device	asc: ncr53c9x,scsi
+file	arch/pmax/tc/asc.c		asc needs-flag
+attach	asc at tc with asc_pmaz
+file	arch/pmax/tc/asc_pmaz.c		asc_pmaz
+attach	asc at ioasic with asc_ioasic
+file	arch/pmax/tc/asc_ioasic.c	asc_ioasic
+device	sii: scsi
+file	arch/pmax/ibus/sii.c		sii needs-flag
 
 include "dev/scsipi/files.scsipi"
-#major { st = 10 }
-#major { cd = 3 }
-#major { sd = 21 }
-major { tz = 10 }
-major { rz = 21 }
+major { sd = 19 }
+major { cd = 25 }
+major { st = 18 }
 
-#
-# Old 4.4bsd pmax-specific scsi driver (deprecated).
-#
-define	oldscsi {}
-device oldscsibus {target = -1, drive = -1}
-attach oldscsibus at oldscsi
-
-# asc:  system-slot or turbochannel-option SCSI interface
-#device asc: oldscsi,scsi
-device asc: oldscsi
-attach asc at ioasic with asc_ioasic
-file	dev/tc/asc_ioasic.c		asc_ioasic
-attach asc at tc with asc_tc
-file	dev/tc/asc_tc.c			asc_tc
-
-file	dev/tc/asc.c			asc needs-flag
-
-# sii:  kn01 SCSI interface 
-#device sii: scsi,oldscsi
-device sii: oldscsi
-file	arch/pmax/dev/sii.c		sii needs-flag
-attach sii at ibus with sii_ds
-file	arch/pmax/dev/sii_ds.c		sii_ds
-
-
-device	tz: tape
-attach	tz at oldscsibus
-file	arch/pmax/dev/tz.c		tz needs-count
-
-device	rz: disk
-attach	rz at oldscsibus
-file	arch/pmax/dev/rz.c		rz needs-count
-
-#
-# Optional device-drivers
-#
-
-# DC7085 (DZ-like four-port serial device) on mainbus on non-IOASIC machines.
-# For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an  ASIC.
-device dc: tty
-file	arch/pmax/dev/dc.c		dc
-attach dc at ioasic with dc_ioasic
-file	arch/pmax/dev/dc_ioasic.c	dc_ioasic	needs-flag
-attach dc at ibus with dc_ds
-file	arch/pmax/dev/dc_ds.c		dc_ds	needs-flag
-
-
-# The "desktop bus" on the MAXINE (5k/25). What is it, anyway? ADB?
-device dtop
-attach dtop at ioasic
-file	arch/pmax/dev/dtop.c		dtop needs-flag
 
 # LANCE ethernet driver.
 #   device defined in sys/conf/files.
 #   TC and ioasic attachment and files in sys/dev/tc/files.tc
 
-attach le at ibus with le_pmax:		le24, le_dec_subr
-file	dev/tc/if_le_ibus.c		le_pmax		needs-flag #for kn01_intr
+attach	le at ibus with le_pmax:	le24, le_dec_subr
+file	arch/pmax/ibus/if_le_ibus.c	le_pmax
+
+# DC7085 Quad line serial controller
+device	dc: tty
+attach	dc at ibus
+file	arch/pmax/ibus/dc.c		dc needs-flag
+
+# 8530 UARTs using the MI 8530 driver
+device	zsc { channel = -1 }
+attach	zsc at ioasic with zsc_ioasic	
+file	arch/pmax/tc/zs_ioasic.c	zsc_ioasic
+file	dev/ic/z8530sc.c		zsc
+
+device	zstty: tty 
+attach	zstty at zsc
+file	dev/ic/z8530tty.c		zstty needs-flag
+
+# ACCESS.bus (desktop bus) for MAXINE keyboard and mouse
+device	dtop: tty
+attach	dtop at ioasic
+file	arch/pmax/tc/dtop.c		dtop needs-flag
 
 
-# 3100 (pmax) onboard framebuffer
-device pm
-file	arch/pmax/dev/pm.c		pm needs-flag
-file	arch/pmax/dev/bt478.c		pm
-attach pm at ibus with pm_ds
-file	arch/pmax/dev/pm_ds.c		pm_ds
+include "dev/wscons/files.wscons"
 
-########################################################################
-# Turbochannel options.
-########################################################################
+device	cfb: wsemuldisplaydev, wsrasteremulops
+attach	cfb at tc
+file	arch/pmax/tc/cfb.c		cfb needs-flag
 
-device cfb
-attach cfb at tc
-file	arch/pmax/dev/cfb.c		cfb needs-flag
+device	sfb: wsemuldisplaydev, wsrasteremulops
+attach	sfb at tc
+file	arch/pmax/tc/sfb.c		sfb needs-flag
 
-device sfb
-attach sfb at tc
-file	arch/pmax/dev/sfb.c		sfb needs-flag
+device	mfb: wsemuldisplaydev, wsrasteremulops
+attach	mfb at tc
+file	arch/pmax/tc/mfb.c		mfb needs-flag
 
-device mfb
-attach mfb at tc
-file	arch/pmax/dev/mfb.c		mfb needs-flag
+device	tfb: wsemuldisplaydev, wsrasteremulops
+attach	tfb at tc
+file	arch/pmax/tc/tfb.c		tfb needs-flag
 
-#  Zilog 8350/Intel 82350(?) SCC UART.
-device scc: tty
-attach scc at ioasic
-file	arch/pmax/tc/scc.c		scc needs-flag
-
-# MAXINE onboard framebuffer
-device	xcfb
+device	xcfb: wsemuldisplaydev, wsrasteremulops
 attach	xcfb at tc
-file	arch/pmax/dev/xcfb.c 		xcfb needs-flag
-file	arch/pmax/dev/ims332.c		xcfb
+file	arch/pmax/tc/xcfb.c 		xcfb needs-flag
 
-# DECWRL 45Mbit T3 interface
-device	tt: tty
-attach	tt at tc
-file	arch/pmax/dev/if_tt.c		tt needs-count
-
-## bogus pmax-specific SCSI code. Leave in until new-style config done.
-file	arch/pmax/dev/scsi.c
+device	pm: wsemuldisplaydev, wsrasteremulops
+attach	pm at ibus
+file	arch/pmax/ibus/pm.c 		pm needs-flag
 
 file	arch/pmax/pmax/autoconf.c
 file	arch/pmax/pmax/bus_dma.c
 file	arch/pmax/pmax/bus_space.c
 file	arch/pmax/pmax/conf.c
-#file	arch/pmax/pmax/kadb.c			optional kadb
-#file	arch/pmax/pmax/machdep.c		standard config-dependent
+#file	arch/pmax/pmax/kadb.c		optional kadb
 file	arch/pmax/pmax/machdep.c
 file	arch/pmax/pmax/disksubr.c
 file	arch/pmax/stand/libsa/callvec.c
 file	arch/pmax/pmax/mainbus.c
 file	arch/pmax/pmax/sysconf.c
 
+file	arch/pmax/pmax/memcpy.c		# XXX temporary hack XXX
+file	arch/pmax/pmax/memset.c		# XXX temporary hack XXX
 
 # Console code.
 file	dev/cons.c
-file	arch/pmax/dev/promio.c			# default console
-file	arch/pmax/dev/findcons.c		# find and set up console.
-
-# pmax configuration glue for rconsole. Requires fb pseudo-device.
-
-include "dev/rcons/files.rcons"
-
-pseudo-device	rasterconsole
-file	arch/pmax/dev/rcons.c			rasterconsole	needs-flag
-file	arch/pmax/dev/font.c			rasterconsole	# rcons fontdef
-
-## Support code for LK-201 keyboards, mice, and qvss ring buffers
-file	arch/pmax/dev/lk201.c		pm | cfb | sfb | mfb | xcfb
-file	arch/pmax/dev/qvss_compat.c	fb
-
-
-# VDAC/RAMDAC support for framebuffers. Other  devices supported by
-# NetBSD  may use the same chips, too.
-file	arch/pmax/dev/bt459.c			cfb | sfb
-
-#
-# Pseudo-device driver for framebuffers.  All user-level requests,
-# including open(), go through the fb driver, which presents a consistent
-# interface to all framebuffers.  Configure as many units as you
-# have framebuffers.  Provides qvss-style interface compatible with
-# X11R5 servers.
-#
-pseudo-device	fb
-file	arch/pmax/dev/fb.c		fb needs-count
-
-# Glue for old-style config
-file	arch/pmax/pmax/conf-glue.c
+file	arch/pmax/dev/promio.c		# default console
+#file	arch/pmax/dev/findcons.c	# find and set up console.
 
 # Ultrix Binary Compatibility (COMPAT_ULTRIX)
 include "compat/ultrix/files.ultrix"
-
-# Configs
