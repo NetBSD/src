@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.33 2004/03/14 01:19:41 cl Exp $	*/
+/*	$NetBSD: pthread.c,v 1.33.2.1 2004/08/30 10:01:22 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.33 2004/03/14 01:19:41 cl Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.33.2.1 2004/08/30 10:01:22 tron Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: pthread.c,v 1.33 2004/03/14 01:19:41 cl Exp $");
 #endif
 
 static void	pthread__create_tramp(void *(*start)(void *), void *arg);
+static void	pthread__dead(pthread_t, pthread_t);
 
 int pthread__started;
 
@@ -529,7 +530,7 @@ pthread_exit(void *retval)
 	pthread_t self;
 	struct pt_clean_t *cleanup;
 	char *name;
-	int nt, flags;
+	int nt;
 
 	self = pthread__self();
 	SDPRINTF(("(pthread_exit %p) Exiting (status %p, flags %x, cancel %d).\n", self, retval, self->pt_flags, self->pt_cancel));
@@ -537,7 +538,6 @@ pthread_exit(void *retval)
 	/* Disable cancellability. */
 	pthread_spinlock(self, &self->pt_flaglock);
 	self->pt_flags |= PT_FLAG_CS_DISABLED;
-	flags = self->pt_flags;
 	self->pt_cancel = 0;
 	pthread_spinunlock(self, &self->pt_flaglock);
 
@@ -553,7 +553,14 @@ pthread_exit(void *retval)
 
 	self->pt_exitval = retval;
 
-	if (flags & PT_FLAG_DETACHED) {
+	/*
+	 * it's safe to check PT_FLAG_DETACHED without pt_flaglock
+	 * because it's only set by pthread_detach with pt_join_lock held.
+	 */
+	pthread_spinlock(self, &self->pt_join_lock);
+	if (self->pt_flags & PT_FLAG_DETACHED) {
+		self->pt_state = PT_STATE_DEAD;
+		pthread_spinunlock(self, &self->pt_join_lock);
 		name = self->pt_name;
 		self->pt_name = NULL;
 
@@ -566,7 +573,6 @@ pthread_exit(void *retval)
 		nt = nthreads;
 		pthread_spinunlock(self, &pthread__allqueue_lock);
 
-		self->pt_state = PT_STATE_DEAD;
 		if (nt == 0) {
 			/* Whoah, we're the last one. Time to go. */
 			exit(0);
@@ -577,12 +583,11 @@ pthread_exit(void *retval)
 		PTQ_INSERT_HEAD(&pthread__deadqueue, self, pt_allq);
 		pthread__block(self, &pthread__deadqueue_lock);
 	} else {
+		self->pt_state = PT_STATE_ZOMBIE;
 		/* Note: name will be freed by the joiner. */
-		pthread_spinlock(self, &self->pt_join_lock);
 		pthread_spinlock(self, &pthread__allqueue_lock);
 		nthreads--;
 		nt = nthreads;
-		self->pt_state = PT_STATE_ZOMBIE;
 		pthread_spinunlock(self, &pthread__allqueue_lock);
 		if (nt == 0) {
 			/* Whoah, we're the last one. Time to go. */
@@ -679,14 +684,7 @@ pthread_join(pthread_t thread, void **valptr)
 
 	SDPRINTF(("(pthread_join %p) Joined %p.\n", self, thread));
 
-	/* Cleanup time. Move the dead thread from allqueue to the deadqueue */
-	pthread_spinlock(self, &pthread__allqueue_lock);
-	PTQ_REMOVE(&pthread__allqueue, thread, pt_allq);
-	pthread_spinunlock(self, &pthread__allqueue_lock);
-
-	pthread_spinlock(self, &pthread__deadqueue_lock);
-	PTQ_INSERT_HEAD(&pthread__deadqueue, thread, pt_allq);
-	pthread_spinunlock(self, &pthread__deadqueue_lock);
+	pthread__dead(self, thread);
 
 	if (name != NULL)
 		free(name);
@@ -708,6 +706,8 @@ int
 pthread_detach(pthread_t thread)
 {
 	pthread_t self;
+	int doreclaim = 0;
+	char *name = NULL;
 
 	self = pthread__self();
 
@@ -731,10 +731,43 @@ pthread_detach(pthread_t thread)
 	/* Any joiners have to be punted now. */
 	pthread__sched_sleepers(self, &thread->pt_joiners);
 
+	if (thread->pt_state == PT_STATE_ZOMBIE) {
+		thread->pt_state = PT_STATE_DEAD;
+		name = thread->pt_name;
+		thread->pt_name = NULL;
+		doreclaim = 1;
+	}
+
 	pthread_spinunlock(self, &thread->pt_join_lock);
 	pthread_spinunlock(self, &thread->pt_flaglock);
 
+	if (doreclaim) {
+		pthread__dead(self, thread);
+		if (name != NULL)
+			free(name);
+	}
+
 	return 0;
+}
+
+
+static void
+pthread__dead(pthread_t self, pthread_t thread)
+{
+
+	SDPRINTF(("(pthread__dead %p) Reclaimed %p.\n", self, thread));
+	pthread__assert(thread != self);
+	pthread__assert(thread->pt_state == PT_STATE_DEAD);
+	pthread__assert(thread->pt_name == NULL);
+
+	/* Cleanup time. Move the dead thread from allqueue to the deadqueue */
+	pthread_spinlock(self, &pthread__allqueue_lock);
+	PTQ_REMOVE(&pthread__allqueue, thread, pt_allq);
+	pthread_spinunlock(self, &pthread__allqueue_lock);
+
+	pthread_spinlock(self, &pthread__deadqueue_lock);
+	PTQ_INSERT_HEAD(&pthread__deadqueue, thread, pt_allq);
+	pthread_spinunlock(self, &pthread__deadqueue_lock);
 }
 
 
