@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.2 2004/04/11 00:00:43 cl Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.3 2004/04/21 12:14:45 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.2 2004/04/11 00:00:43 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.3 2004/04/21 12:14:45 cl Exp $");
 
 #include "opt_inet.h"
 
@@ -90,15 +90,25 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.2 2004/04/11 00:00:43 cl Exp $");
 #include <machine/if_xennetvar.h>
 
 #ifdef DEBUG
-/* #define XENNET_DEBUG */
+#define XENNET_DEBUG
+#endif
+#if defined(XENNET_DEBUG) && !defined(DEBUG)
+#define DEBUG
 #endif
 /* #define XENNET_DEBUG_DUMP */
 
 #ifdef XENNET_DEBUG
-int xennet_debug = 1;
+#define XEDB_FOLLOW	0x01
+#define XEDB_INIT	0x02
+#define XEDB_EVENT	0x04
+#define XEDB_MBUF	0x08
+#define XEDB_MEM	0x10
+int xennet_debug = 0;
 #define DPRINTF(x) if (xennet_debug) printf x;
+#define DPRINTFN(n,x) if (xennet_debug & (n)) printf x;
 #else
 #define DPRINTF(x)
+#define DPRINTFN(n,x)
 #endif
 #define PRINTF(x) printf x;
 
@@ -210,9 +220,9 @@ xennet_attach(struct device *parent, struct device *self, void *aux)
 	pmap_kenter_ma((vaddr_t)sc->sc_net_ring,
 	    xneta->xa_netop.u.get_vif_info.ring_mfn << PAGE_SHIFT,
 	    VM_PROT_READ|VM_PROT_WRITE);
-	DPRINTF(("net ring va %p and wired to %p\n", sc->sc_net_ring,
-		    (void *)(xneta->xa_netop.u.get_vif_info.ring_mfn <<
-			PAGE_SHIFT)));
+	DPRINTFN(XEDB_INIT, ("net ring va %p and wired to %p\n",
+	    sc->sc_net_ring, (void *)(xneta->xa_netop.u.get_vif_info.ring_mfn
+		<< PAGE_SHIFT)));
 	sc->sc_net_idx = &HYPERVISOR_shared_info->net_idx[sc->sc_ifno];
 
 	for (idx = 0; idx < TX_RING_SIZE; idx++)
@@ -247,7 +257,8 @@ xennet_tx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 {
 	struct xennet_txbuf *txbuf = (struct xennet_txbuf *)arg;
 
-	DPRINTF(("xennet_tx_mbuf_free %p pa %p\n", txbuf, (void *)txbuf->xt_pa));
+	DPRINTFN(XEDB_MBUF, ("xennet_tx_mbuf_free %p pa %p\n", txbuf,
+	    (void *)txbuf->xt_pa));
 	SLIST_INSERT_HEAD(&txbuf->xt_sc->sc_tx_bufs, txbuf, xt_next);
 	pool_cache_put(&mbpool_cache, m);
 }
@@ -260,18 +271,18 @@ xennet_rx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 	netop_t netop;
 	int id = (xb - sc->sc_rx_bufa), ringidx;
 
-	DPRINTF(("xennet_rx_mbuf_free id %d, mbuf %p, buf %p, size %d\n", id,
-		    m, buf, size));
+	DPRINTFN(XEDB_MBUF, ("xennet_rx_mbuf_free id %d, mbuf %p, buf %p, "
+	    "size %d\n", id, m, buf, size));
 	KASSERT(sc == thesc);
 
 	ringidx = sc->sc_net_idx->rx_req_prod;
 
-	DPRINTF(("adding ptp %p/%p for page va %p ma %p to rx_ring at %d with id %d\n",
-		    (void *)sc->sc_rx_bufa[id].xb_rx.xbrx_ptpa,
-		    (void *)xpmap_ptom(sc->sc_rx_bufa[id].xb_rx.xbrx_ptpa),
-		    (void *)sc->sc_rx_bufa[id].xb_rx.xbrx_va,
-		    (void *)(PTE_BASE[x86_btop(sc->sc_rx_bufa[id].xb_rx.xbrx_va)] & PG_FRAME),
-		    ringidx, id));
+	DPRINTFN(XEDB_MEM, ("adding ptp %p/%p for page va %p ma %p to rx_ring "
+	    "at %d with id %d\n", (void *)sc->sc_rx_bufa[id].xb_rx.xbrx_ptpa,
+	    (void *)xpmap_ptom(sc->sc_rx_bufa[id].xb_rx.xbrx_ptpa),
+	    (void *)sc->sc_rx_bufa[id].xb_rx.xbrx_va,
+	    (void *)(PTE_BASE[x86_btop (sc->sc_rx_bufa[id].xb_rx.xbrx_va)] &
+		PG_FRAME), ringidx, id));
 
 	sc->sc_net_ring->rx_ring[ringidx].req.id = id;
 	sc->sc_net_ring->rx_ring[ringidx].req.addr =
@@ -321,19 +332,21 @@ xen_network_handler(void *arg)
 			machine_to_phys_mapping[pa >> PAGE_SHIFT]] =
 			pa >> PAGE_SHIFT;
 
-		DPRINTF(("rx event %d for id %d, size %d, status %d, offset %d\n",
-			    ringidx, rx->id, rx->size, rx->status, rx->offset));
-		DPRINTF(("rx packet mbuf %p ptp %p va %p pa %p ma %p\n", m,
+		DPRINTFN(XEDB_EVENT, ("rx event %d for id %d, size %d, "
+		    "status %d, offset %d\n", ringidx, rx->id, rx->size,
+		    rx->status, rx->offset));
+		DPRINTFN(XEDB_MBUF, ("rx packet mbuf %p ptp %p va %p pa %p "
+		    "ma %p\n", m,
 		    (void *)sc->sc_rx_bufa[rx->id].xb_rx.xbrx_ptpa,
 		    (void *)sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va,
-		    (void *)(xpmap_mtop(PTE_BASE[x86_btop(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va)] & PG_FRAME)),
-			    (void *)(PTE_BASE[x86_btop(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va)] & PG_FRAME)));
-/* 		printf("packet ma(pa) %p\n", */
-/* 		    (void *)xpmap_ptom(xpmap_mtop(PTE_BASE[x86_btop(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va)] & PG_FRAME))); */
+		    (void *)(xpmap_mtop(PTE_BASE[x86_btop
+			(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va)] & PG_FRAME)),
+		    (void *)(PTE_BASE[x86_btop
+			(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va)] & PG_FRAME)));
 
-		MEXTADD(m,
-		    (void *)(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va + rx->offset),
-		    rx->size, M_DEVBUF, xennet_rx_mbuf_free, &sc->sc_rx_bufa[rx->id]);
+		MEXTADD(m, (void *)(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va +
+		    rx->offset), rx->size, M_DEVBUF, xennet_rx_mbuf_free,
+		    &sc->sc_rx_bufa[rx->id]);
 		m->m_len = m->m_pkthdr.len = rx->size;
 		m->m_pkthdr.rcvif = ifp;
 
@@ -394,10 +407,11 @@ network_tx_buf_gc(struct xennet_softc *sc)
 
 		for (idx = sc->sc_tx_resp_cons; idx != prod;
 		     idx = TX_RING_INC(idx)) {
-			DPRINTF(("tx event at pos %d, status: %d, id: %d, mbuf %p\n",
-				    idx, tx_ring[idx].resp.status,
-				    tx_ring[idx].resp.id,
-				    M_BUFADDR(sc->sc_tx_bufa[tx_ring[idx].resp.id].xb_m)));
+			DPRINTFN(XEDB_EVENT, ("tx event at pos %d, status: "
+			    "%d, id: %d, mbuf %p\n", idx,
+			    tx_ring[idx].resp.status, tx_ring[idx].resp.id,
+			    M_BUFADDR
+			    (sc->sc_tx_bufa[tx_ring[idx].resp.id].xb_m)));
 			m_freem(sc->sc_tx_bufa[tx_ring[idx].resp.id].xb_m);
 			put_bufarray_entry(sc->sc_tx_bufa,
 			    tx_ring[idx].resp.id);
@@ -406,9 +420,12 @@ network_tx_buf_gc(struct xennet_softc *sc)
 
 		sc->sc_tx_resp_cons = prod;
 
-		/* Set a new event, then check for race with update of tx_cons. */
-		sc->sc_net_idx->tx_event =
-			TX_RING_ADD(prod, (sc->sc_tx_entries >> 1) + 1); /* atomic */
+		/*
+		 * Set a new event, then check for race with update of
+		 * tx_cons.
+		 */
+		sc->sc_net_idx->tx_event = /* atomic */
+			TX_RING_ADD(prod, (sc->sc_tx_entries >> 1) + 1);
 		__insn_barrier();
 	} while (prod != sc->sc_net_idx->tx_resp_prod);
 
@@ -451,11 +468,12 @@ network_alloc_rx_buffers(struct xennet_softc *sc)
 		if (pmap_extract(pmap_kernel(),
 			(vaddr_t)&PTE_BASE[x86_btop(va)], &ptpa) != TRUE)
 			panic("pmap_extract failed");
-		DPRINTF(("adding ptp %p/%p for page va %p pa %p ma %p to rx_ring at %d with id %d\n",
-			    (void *)ptpa, (void *)xpmap_ptom(ptpa), (void *)va,
-			    (void *)(VM_PAGE_TO_PHYS(pg) & PG_FRAME),
-			    (void *)(PTE_BASE[x86_btop(va)] & PG_FRAME),
-			    ringidx, id));
+		DPRINTFN(XEDB_MEM, ("adding ptp %p/%p for page va %p pa %p "
+		    "ma %p to rx_ring at %d with id %d\n", (void *)ptpa,
+		    (void *)xpmap_ptom(ptpa), (void *)va,
+		    (void *)(VM_PAGE_TO_PHYS(pg) & PG_FRAME),
+		    (void *)(PTE_BASE[x86_btop(va)] & PG_FRAME),
+		    ringidx, id));
 		sc->sc_rx_bufa[id].xb_rx.xbrx_ptpa = ptpa;
 		sc->sc_net_ring->rx_ring[ringidx].req.id = id;
 		sc->sc_net_ring->rx_ring[ringidx].req.addr = xpmap_ptom(ptpa);
@@ -468,7 +486,8 @@ network_alloc_rx_buffers(struct xennet_softc *sc)
 
 	sc->sc_net_idx->rx_req_prod = ringidx;
 	sc->sc_net_idx->rx_event = RX_RING_INC(sc->sc_rx_resp_cons);
-        DPRINTF(("expecting rx event at %d\n", sc->sc_net_idx->rx_event));
+        DPRINTFN(XEDB_EVENT, ("expecting rx event at %d\n",
+	    sc->sc_net_idx->rx_event));
 
 #if 0
 	/* Batch Xen notifications. */
@@ -512,24 +531,6 @@ network_alloc_tx_buffers(struct xennet_softc *sc)
 	}
 }
 
-#if 0
-static void
-network_free_rx_buffers(struct xennet_softc *sc)
-{
-	unsigned int i;
-	struct net_private *np = dev->priv;
-	struct sk_buff *skb;    
-
-	for ( i  = np->rx_resp_cons; 
-	      i != np->net_idx->rx_req_prod; 
-	      i  = RX_RING_INC(i) )
-	{
-		skb = np->rx_skbs[np->net_ring->rx_ring[i].req.id];
-		dev_kfree_skb_any(skb);
-	}
-}
-#endif
-
 /* 
  * Called at splnet.
  */
@@ -543,7 +544,7 @@ xennet_start(struct ifnet *ifp)
 	paddr_t pa;
 	int idx, bufid;
 
-	DPRINTF(("%s: xennet_start()\n", sc->sc_dev.dv_xname));
+	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_start()\n", sc->sc_dev.dv_xname));
 
 #ifdef DIAGNOSTIC
 	IFQ_POLL(&ifp->if_snd, m);
@@ -551,8 +552,7 @@ xennet_start(struct ifnet *ifp)
 		panic("%s: No packet to start", sc->sc_dev.dv_xname);
 #endif
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
-	    IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	while (/*CONSTCOND*/1) {
@@ -619,11 +619,11 @@ xennet_start(struct ifnet *ifp)
 		sc->sc_tx_entries++; /* XXX atomic */
 
 #ifdef XENNET_DEBUG
-		printf("packet addr %p/%p, physical %p/%p, m_paddr %p, len %d/%d\n",
-		    M_BUFADDR(m), mtod(m, void *),
+		DPRINTFN(XEDB_MEM, ("packet addr %p/%p, physical %p/%p, "
+		    "m_paddr %p, len %d/%d\n", M_BUFADDR(m), mtod(m, void *),
 		    (void *)*kvtopte(mtod(m, vaddr_t)),
 		    (void *)xpmap_mtop(*kvtopte(mtod(m, vaddr_t))),
-		    (void *)m->m_paddr, m->m_pkthdr.len, m->m_len);
+		    (void *)m->m_paddr, m->m_pkthdr.len, m->m_len));
 #endif
 #ifdef XENNET_DEBUG_DUMP
 		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len);
@@ -653,7 +653,8 @@ xennet_start(struct ifnet *ifp)
 
 	ifp->if_opackets++;
 
-	DPRINTF(("%s: xennet_start() done\n", sc->sc_dev.dv_xname));
+	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_start() done\n",
+	    sc->sc_dev.dv_xname));
 }
 
 int
@@ -668,12 +669,12 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	s = splnet();
 
-	DPRINTF(("%s: xennet_ioctl()\n", sc->sc_dev.dv_xname));
+	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl()\n", sc->sc_dev.dv_xname));
 
 	switch(cmd) {
 	case SIOCSIFADDR:
-		DPRINTF(("%s: xennet_ioctl() SIOCSIFADDR\n",
-			    sc->sc_dev.dv_xname));
+		DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl() SIOCSIFADDR\n",
+		    sc->sc_dev.dv_xname));
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
@@ -689,38 +690,36 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFFLAGS:
-		DPRINTF(("%s: xennet_ioctl() SIOCSIFFLAGS\n",
-			    sc->sc_dev.dv_xname));
+		DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl() SIOCSIFFLAGS\n",
+		    sc->sc_dev.dv_xname));
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		DPRINTF(("%s: xennet_ioctl() SIOC*MULTI\n",
-			    sc->sc_dev.dv_xname));
+		DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl() SIOC*MULTI\n",
+		    sc->sc_dev.dv_xname));
 		break;
 
 #ifdef mediacode
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		DPRINTF(("%s: xennet_ioctl() SIOC*IFMEDIA\n",
-			    sc->sc_dev.dv_xname));
+		DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl() SIOC*IFMEDIA\n",
+		    sc->sc_dev.dv_xname));
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 #endif
 
 	default:
-		DPRINTF(("%s: xennet_ioctl(0x%lx) unknown cmd\n",
-			    sc->sc_dev.dv_xname, cmd));
+		DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl(0x%lx) unknown cmd\n",
+		    sc->sc_dev.dv_xname, cmd));
 		error = EINVAL;
 		break;
 	}
 
 	splx(s);
 
-#if 1
-	DPRINTF(("%s: xennet_ioctl() returning %d\n", sc->sc_dev.dv_xname,
-		    error));
-#endif
+	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl() returning %d\n",
+	    sc->sc_dev.dv_xname, error));
 
 	return error;
 }
@@ -737,7 +736,7 @@ xennet_init(struct xennet_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	DPRINTF (("%s: xennet_init()\n", sc->sc_dev.dv_xname));
+	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_init()\n", sc->sc_dev.dv_xname));
 
 	if (ifp->if_flags & IFF_UP) {
 
@@ -759,7 +758,7 @@ void
 xennet_reset(struct xennet_softc *sc)
 {
 
-	DPRINTF (("%s: xennet_reset()\n", sc->sc_dev.dv_xname));
+	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_reset()\n", sc->sc_dev.dv_xname));
 }
 
 
@@ -837,17 +836,18 @@ xennet_hex_dump(unsigned char *pkt, size_t len)
 	printf("00000000  ");
 	for(i=0; i<len; i++) {
 		printf("%c%c ", XCHR(pkt[i]>>4), XCHR(pkt[i]));
-		if ((i+1) % 16 == 8) {
+		if ((i+1) % 16 == 8)
 			printf(" ");
-		}
 		if ((i+1) % 16 == 0) {
 			printf(" %c", '|');
-			for(j=0; j<16; j++) {
-				printf("%c", pkt[i-15+j]>=32 && pkt[i-15+j]<127?pkt[i-15+j]:'.');
-			}
+			for(j=0; j<16; j++)
+				printf("%c", pkt[i-15+j]>=32 &&
+				    pkt[i-15+j]<127?pkt[i-15+j]:'.');
 			printf("%c\n%c%c%c%c%c%c%c%c  ", '|', 
-					XCHR((i+1)>>28),XCHR((i+1)>>24),XCHR((i+1)>>20),XCHR((i+1)>>16),
-					XCHR((i+1)>>12), XCHR((i+1)>>8), XCHR((i+1)>>4), XCHR(i+1));
+			    XCHR((i+1)>>28), XCHR((i+1)>>24),
+			    XCHR((i+1)>>20), XCHR((i+1)>>16),
+			    XCHR((i+1)>>12), XCHR((i+1)>>8),
+			    XCHR((i+1)>>4), XCHR(i+1));
 		}
 	}
 	printf("\n");
