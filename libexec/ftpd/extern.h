@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.37 2000/12/18 02:32:51 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.38 2001/02/04 22:04:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -140,7 +140,9 @@ char   *getline(char *, int, FILE *);
 void	init_curclass(void);
 void	logxfer(const char *, off_t, const char *, const char *,
 	    const struct timeval *, const char *);
+#if 0
 void	logwtmp(const char *, const char *, const char *);
+#endif
 struct tab *lookup(struct tab *, const char *);
 void	makedir(const char *);
 void	mlsd(const char *);
@@ -269,7 +271,9 @@ struct ftpclass {
 	mode_t		 umask;		/* Umask to use */
 };
 
+#ifndef YYEMPTY
 extern  int		yyparse(void);
+#endif
 
 #ifndef	GLOBAL
 #define	GLOBAL	extern

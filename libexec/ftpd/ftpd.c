@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.120 2001/01/16 02:50:29 cgd Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.121 2001/02/04 22:04:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.120 2001/01/16 02:50:29 cgd Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.121 2001/02/04 22:04:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,6 @@ __RCSID("$NetBSD: ftpd.c,v 1.120 2001/01/16 02:50:29 cgd Exp $");
 
 int	data;
 jmp_buf	urgcatch;
-struct	passwd *pw;
 int	sflag;
 int	stru;			/* avoid C keyword */
 int	mode;
