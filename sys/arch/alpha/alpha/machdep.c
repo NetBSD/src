@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 1996/06/13 23:16:43 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 1996/06/14 20:40:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -180,6 +180,9 @@ void		(*cpu_device_register) __P((struct device *dev, void *aux));
 char		*cpu_iobus;
 
 char boot_flags[64];
+
+/* for cpu_sysctl() */
+char		root_device[17];
 
 int
 alpha_init(pfn, ptb)
@@ -1211,6 +1214,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 			sizeof consdev));
+
+	case CPU_ROOT_DEVICE:
+		return (sysctl_rdstring(oldp, oldlenp, newp, root_device));
+
 	default:
 		return (EOPNOTSUPP);
 	}
