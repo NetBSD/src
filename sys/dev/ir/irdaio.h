@@ -1,4 +1,4 @@
-/*	$NetBSD: irdaio.h,v 1.5 2001/12/13 00:33:36 augustss Exp $	*/
+/*	$NetBSD: irdaio.h,v 1.6 2001/12/13 15:09:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,14 +77,14 @@ struct irda_params {
 /* Coordinate numbering with cirio.h. */
 #define IRDA_RESET_PARAMS	_IO ('I', 1)
 #define IRDA_SET_PARAMS		_IOW('I', 2, struct irda_params)
-#define IRDA_GET_SPEEDMASK	_IOR('I', 3, int)
-#define IRDA_GET_TURNAROUNDMASK	_IOR('I', 4, int)
+#define IRDA_GET_SPEEDMASK	_IOR('I', 3, unsigned int)
+#define IRDA_GET_TURNAROUNDMASK	_IOR('I', 4, unsigned int)
 
 
 /* irframetty device ioctls */
-#define IRFRAMETTY_GET_DEVICE	_IOR('I', 100, int)
-#define IRFRAMETTY_GET_DONGLE	_IOR('I', 101, int)
-#define IRFRAMETTY_SET_DONGLE	_IOW('I', 102, int)
+#define IRFRAMETTY_GET_DEVICE	_IOR('I', 100, unsigned int)
+#define IRFRAMETTY_GET_DONGLE	_IOR('I', 101, unsigned int)
+#define IRFRAMETTY_SET_DONGLE	_IOW('I', 102, unsigned int)
 #define   DONGLE_NONE		0
 #define   DONGLE_TEKRAM		1
 #define   DONGLE_JETEYE		2
