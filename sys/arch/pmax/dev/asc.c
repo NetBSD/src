@@ -189,12 +189,13 @@ int	asc_debug = 1;
 int	asc_debug_cmd;
 int	asc_debug_bn;
 int	asc_debug_sz;
-#define NLOG 16
+#define NLOG 32
 struct asc_log {
 	u_int	status;
 	u_char	state;
 	u_char	msg;
 	int	target;
+	int	resid;
 } asc_log[NLOG], *asc_logp = asc_log;
 #define PACK(unit, status, ss, ir) \
 	((unit << 24) | (status << 16) | (ss << 8) | ir)
@@ -221,7 +222,7 @@ typedef struct script {
 } script_t;
 
 /* Matching on the condition value */
-#define	SCRIPT_MATCH(ir, csr)		((ir) | (ASC_PHASE(csr) << 8))
+#define	SCRIPT_MATCH(ir, csr)		((ir) | (((csr) & 0x67) << 8))
 
 /* forward decls of script actions */
 static int script_nop();		/* when nothing needed */
@@ -390,6 +391,7 @@ typedef struct scsi_state {
 #define DMA_OUT		0x10	/* true if writing to SCSI device */
 #define DID_SYNC	0x20	/* true if synchronous offset was negotiated */
 #define TRY_SYNC	0x40	/* true if try neg. synchronous offset */
+#define PARITY_ERR	0x80	/* true if parity error seen */
 
 /*
  * State kept for each active SCSI host interface (53C94).
@@ -654,19 +656,12 @@ asc_startcmd(asc, target)
 	regs = asc->regs;
 
 	/*
-	 * Check to see if a reselection is in progress and if so,
-	 * try to cancel it or respond to the reselection if it won.
+	 * If a reselection is in progress, it is Ok to ignore it since
+	 * the ASC will automatically cancel the command and flush
+	 * the FIFO if the ASC is reselected before the command starts.
+	 * If we try to use ASC_CMD_DISABLE_SEL, we can hang the system if
+	 * a reselect occurs before starting the command.
 	 */
-	if (asc->state == ASC_STATE_RESEL) {
-		regs->asc_cmd = ASC_CMD_DISABLE_SEL;
-		readback(regs->asc_cmd);
-		while (!(regs->asc_status & ASC_CSR_INT))
-			DELAY(1);
-		asc_intr(asc - asc_softc);
-		/* we will be busy if a reselecting device won */
-		if (asc->state == ASC_STATE_BUSY)
-			return;
-	}
 
 	asc->state = ASC_STATE_BUSY;
 	asc->target = target;
@@ -681,28 +676,11 @@ asc_startcmd(asc, target)
 			scsicmd->sd->sd_driver->d_name, target,
 			scsicmd->cmd[0], scsicmd->buflen);
 	}
-	asc_debug_cmd = scsicmd->cmd[0];
-	if (scsicmd->cmd[0] == SCSI_READ_EXT) {
-		asc_debug_bn = (scsicmd->cmd[2] << 24) |
-			(scsicmd->cmd[3] << 16) |
-			(scsicmd->cmd[4] << 8) |
-			scsicmd->cmd[5];
-		asc_debug_sz = (scsicmd->cmd[7] << 8) | scsicmd->cmd[8];
-	}
-	asc_logp->status = PACK(asc - asc_softc, 0, 0, asc_debug_cmd);
-	asc_logp->target = asc->target;
-	asc_logp->state = 0;
-	asc_logp->msg = 0xff;
-	if (++asc_logp >= &asc_log[NLOG])
-		asc_logp = asc_log;
 #endif
 
 	/*
 	 * Init the chip and target state.
 	 */
-	regs->asc_cmd = ASC_CMD_FLUSH;
-	readback(regs->asc_cmd);
-	DELAY(2);
 	state->flags = state->flags & DID_SYNC;
 	state->error = 0;
 	state->script = (script_t *)0;
@@ -711,9 +689,15 @@ asc_startcmd(asc, target)
 	/*
 	 * Copy command data to the DMA buffer.
 	 */
-	len = scsicmd->cmdlen;
+	if (asc->dma_start == asic_dma_start) {
+		len = scsicmd->cmdlen;
+		bcopy(scsicmd->cmd, state->dmaBufAddr, len);
+	} else {
+		len = scsicmd->cmdlen + 1;
+		state->dmaBufAddr[0] = SCSI_DIS_REC_IDENTIFY;
+		bcopy(scsicmd->cmd, state->dmaBufAddr + 1, scsicmd->cmdlen);
+	}
 	state->dmalen = len;
-	bcopy(scsicmd->cmd, state->dmaBufAddr, len);
 
 	/* check for simple SCSI command with no data transfer */
 	if ((state->buflen = scsicmd->buflen) == 0) {
@@ -735,11 +719,31 @@ asc_startcmd(asc, target)
 		state->flags |= DMA_IN;
 	}
 
-	/* preload the FIFO with the message to be sent */
-	regs->asc_fifo = SCSI_DIS_REC_IDENTIFY;
-	MachEmptyWriteBuffer();
+#ifdef DEBUG
+	asc_debug_cmd = scsicmd->cmd[0];
+	if (scsicmd->cmd[0] == SCSI_READ_EXT) {
+		asc_debug_bn = (scsicmd->cmd[2] << 24) |
+			(scsicmd->cmd[3] << 16) |
+			(scsicmd->cmd[4] << 8) |
+			scsicmd->cmd[5];
+		asc_debug_sz = (scsicmd->cmd[7] << 8) | scsicmd->cmd[8];
+	}
+	asc_logp->status = PACK(asc - asc_softc, 0, 0, asc_debug_cmd);
+	asc_logp->target = asc->target;
+	asc_logp->state = asc->script - asc_scripts;
+	asc_logp->msg = SCSI_DIS_REC_IDENTIFY;
+	asc_logp->resid = scsicmd->buflen;
+	if (++asc_logp >= &asc_log[NLOG])
+		asc_logp = asc_log;
+#endif
 
-	/* start the asc */
+	/* For the I/O ASIC, preload the FIFO with the message to be sent */
+	if (asc->dma_start == asic_dma_start) {
+		regs->asc_fifo = SCSI_DIS_REC_IDENTIFY;
+		MachEmptyWriteBuffer();
+	}
+
+	/* initialize the DMA */
 	(*asc->dma_start)(asc, state, state->dmaBufAddr, ASCDMA_WRITE);
 	ASC_TC_PUT(regs, len);
 	readback(regs->asc_cmd);
@@ -788,6 +792,7 @@ again:
 	asc_logp->target = (asc->state == ASC_STATE_BUSY) ? asc->target : -1;
 	asc_logp->state = scpt - asc_scripts;
 	asc_logp->msg = -1;
+	asc_logp->resid = 0;
 	if (++asc_logp >= &asc_log[NLOG])
 		asc_logp = asc_log;
 	if (asc_debug > 2)
@@ -808,6 +813,27 @@ again:
 		goto done;
 	}
 
+	/*
+	 * Check for parity error.
+	 * Hardware will automatically set ATN
+	 * to request the device for a MSG_OUT phase.
+	 */
+	if (status & ASC_CSR_PE) {
+		printf("asc%d: SCSI device %d: incomming parity error seen\n",
+			asc - asc_softc, asc->target);
+		asc->st[asc->target].flags |= PARITY_ERR;
+	}
+
+	/*
+	 * Check for gross error.
+	 * Probably a bug in a device driver.
+	 */
+	if (status & ASC_CSR_GE) {
+		printf("asc%d: SCSI device %d: gross error\n",
+			asc - asc_softc, asc->target);
+		goto abort;
+	}
+
 	/* check for message in or out */
 	if ((ir & ~ASC_INT_FC) == ASC_INT_BS) {
 		register int len, fifo;
@@ -826,8 +852,19 @@ again:
 			break;
 
 		case ASC_PHASE_MSG_OUT:
+			/*
+			 * Check for parity error.
+			 * Hardware will automatically set ATN
+			 * to request the device for a MSG_OUT phase.
+			 */
+			if (state->flags & PARITY_ERR) {
+				state->flags &= ~PARITY_ERR;
+				state->msg_out = SCSI_MESSAGE_PARITY_ERROR;
+				/* reset message in counter */
+				state->msglen = 0;
+			} else
+				state->msg_out = SCSI_NO_OP;
 			regs->asc_fifo = state->msg_out;
-			state->msg_out = SCSI_NO_OP;
 			regs->asc_cmd = ASC_CMD_XFER_INFO;
 			readback(regs->asc_cmd);
 			goto done;
@@ -872,11 +909,31 @@ again:
 		if (len) {
 			/* save number of bytes still to be sent or received */
 			state->dmaresid = len;
+#ifdef DEBUG
+			if (asc_logp == asc_log)
+				asc_log[NLOG - 1].resid = len;
+			else
+				asc_logp[-1].resid = len;
+#endif
 			/* setup state to resume to */
-			if (state->flags & DMA_IN)
+			if (state->flags & DMA_IN) {
+				/*
+				 * Since the ASC_CNFG3_SRB bit of the
+				 * cnfg3 register bit is not set,
+				 * we just transferred an extra byte.
+				 * Since we can't resume on an odd byte
+				 * boundary, we copy the valid data out
+				 * and resume DMA at the start address.
+				 */
+				if (len & 1) {
+					printf("asc_intr: msg in len %d (fifo %d)\n",
+						len, fifo);
+					len = state->dmalen - len;
+					goto do_in;
+				}
 				state->script =
 					&asc_scripts[SCRIPT_RESUME_DMA_IN];
-			else if (state->flags & DMA_OUT)
+			} else if (state->flags & DMA_OUT)
 				state->script =
 					&asc_scripts[SCRIPT_RESUME_DMA_OUT];
 			else
@@ -885,9 +942,10 @@ again:
 			/* setup state to resume to */
 			if (state->flags & DMA_IN) {
 				if (state->flags & DMA_IN_PROGRESS) {
+					len = state->dmalen;
+				do_in:
 					state->flags &= ~DMA_IN_PROGRESS;
 					(*asc->dma_end)(asc, state, ASCDMA_READ);
-					len = state->dmalen;
 					bcopy(state->dmaBufAddr, state->buf,
 						len);
 					state->buf += len;
@@ -962,11 +1020,25 @@ again:
 		state = &asc->st[asc->target];
 		switch (ASC_SS(ss)) {
 		case 0: /* device did not respond */
-			state->error = ENXIO;
-			asc_end(asc, status, ss, ir);
-			return;
+			/* check for one of the starting scripts */
+			switch (asc->script - asc_scripts) {
+			case SCRIPT_TRY_SYNC:
+			case SCRIPT_SIMPLE:
+			case SCRIPT_DATA_IN:
+			case SCRIPT_DATA_OUT:
+				if (regs->asc_flags & ASC_FLAGS_FIFO_CNT) {
+					regs->asc_cmd = ASC_CMD_FLUSH;
+					readback(regs->asc_cmd);
+				}
+				state->error = ENXIO;
+				asc_end(asc, status, ss, ir);
+				return;
+			}
+			/* FALLTHROUGH */
 
 		default:
+			printf("asc%d: SCSI device %d: unexpected disconnect\n",
+				asc - asc_softc, asc->target);
 			/*
 			 * On rare occasions my RZ24 does a disconnect during
 			 * data in phase and the following seems to keep it
@@ -1001,8 +1073,6 @@ again:
 		else
 			asc_logp[-1].msg = msg;
 #endif
-		if (asc->state != ASC_STATE_RESEL)
-			goto abort;
 		asc->state = ASC_STATE_BUSY;
 		asc->target = id;
 		state = &asc->st[id];
@@ -1022,7 +1092,11 @@ again:
 	if (ir & (ASC_INT_SEL | ASC_INT_SEL_ATN))
 		goto abort;
 
-	/* must be just a ASC_INT_FC */
+	/*
+	 * 'ir' must be just ASC_INT_FC.
+	 * This is normal if canceling an ASC_ENABLE_SEL.
+	 */
+
 done:
 	MachEmptyWriteBuffer();
 	/* watch out for HW race conditions and setup & hold time violations */
@@ -1072,6 +1146,7 @@ asc_get_status(asc, status, ss, ir)
 	 */
 	if ((data = regs->asc_flags & ASC_FLAGS_FIFO_CNT) != 2) {
 		printf("asc_get_status: fifo cnt %d\n", data); /* XXX */
+		asc_DumpLog("get_status"); /* XXX */
 		if (data < 2) {
 			asc->regs->asc_cmd = ASC_CMD_MSG_ACPT;
 			readback(asc->regs->asc_cmd);
@@ -1143,7 +1218,11 @@ asc_end(asc, status, ss, ir)
 		break;
 	}
 
-	/* look for another device that is ready */
+	/*
+	 * Look for another device that is ready.
+	 * May want to keep last one started and increment for fairness
+	 * rather than always starting at zero.
+	 */
 	for (i = 0; i < ASC_NCMD; i++) {
 		/* don't restart a disconnected command */
 		if (!asc->cmd[i] || (asc->st[i].flags & DISCONN))
@@ -1333,7 +1412,7 @@ asc_dma_out(asc, status, ss, ir)
 		state->buflen -= len;
 	}
 
-	/* setup for this chunck */
+	/* setup for this chunk */
 	len = state->buflen;
 	if (len > state->dmaBufSize)
 		len = state->dmaBufSize;
@@ -1378,6 +1457,8 @@ asc_last_dma_out(asc, status, ss, ir)
 		len += fifo;
 		regs->asc_cmd = ASC_CMD_FLUSH;
 		readback(regs->asc_cmd);
+		printf("asc_last_dma_out: buflen %d dmalen %d tc %d fifo %d\n",
+			state->buflen, state->dmalen, len, fifo);
 	}
 	state->flags &= ~DMA_IN_PROGRESS;
 	len = state->dmalen - len;
@@ -1395,7 +1476,7 @@ asc_resume_out(asc, status, ss, ir)
 	register State *state = &asc->st[asc->target];
 	register int len;
 
-	/* setup for this chunck */
+	/* setup for this chunk */
 	len = state->buflen;
 	if (len > state->dmaBufSize)
 		len = state->dmaBufSize;
@@ -1718,14 +1799,20 @@ asc_disconnect(asc, status, ss, ir)
 {
 	register State *state = &asc->st[asc->target];
 
+#ifdef DIAGNOSTIC
+	if (!(state->flags & DISCONN)) {
+		printf("asc_disconnect: device %d: DISCONN not set!\n",
+			asc->target);
+	}
+#endif
 	asc->target = -1;
 	asc->state = ASC_STATE_RESEL;
 	return (1);
 }
 
 /*
- * DMA handling routines. For a turbochannel device, just set the dmar
- * for the I/O ASIC, handle the actual DMA interface.
+ * DMA handling routines. For a turbochannel device, just set the dmar.
+ * For the I/O ASIC, handle the actual DMA interface.
  */
 static void
 tb_dma_start(asc, state, cp, flag)
@@ -1763,7 +1850,7 @@ asic_dma_start(asc, state, cp, flag)
 
 	/* stop DMA engine first */
 	*ssr &= ~ASIC_CSR_DMAEN_SCSI;
-	* ((volatile int *)ASIC_REG_SCSI_SCR(asic_base)) = 0;
+	*((volatile int *)ASIC_REG_SCSI_SCR(asic_base)) = 0;
 
 	phys = MACH_CACHED_TO_PHYS(cp);
 	cp = (caddr_t)pmax_trunc_page(cp + NBPG);
@@ -1791,10 +1878,15 @@ asic_dma_end(asc, state, flag)
 {
 	register volatile u_int *ssr = (volatile u_int *)
 		ASIC_REG_CSR(asic_base);
+	register volatile u_int *dmap = (volatile u_int *)
+		ASIC_REG_SCSI_DMAPTR(asic_base);
+	register u_short *to;
+	register int w;
 	int nb;
 
 	*ssr &= ~ASIC_CSR_DMAEN_SCSI;
-	*((volatile int *)ASIC_REG_SCSI_DMAPTR(asic_base)) = -1;
+	to = (u_short *)MACH_PHYS_TO_CACHED(*dmap >> 3);
+	*dmap = -1;
 	*((volatile int *)ASIC_REG_SCSI_DMANPTR(asic_base)) = -1;
 	MachEmptyWriteBuffer();
 
@@ -1803,11 +1895,8 @@ asic_dma_end(asc, state, flag)
 		    MACH_UNCACHED_TO_PHYS(state->dmaBufAddr)), state->dmalen);
 		if (nb = *((int *)ASIC_REG_SCSI_SCR(asic_base))) {
 			/* pick up last upto6 bytes, sigh. */
-			register u_short *to;
-			register int w;
 	
 			/* Last byte really xferred is.. */
-			to = (u_short *)(state->dmaBufAddr + state->dmalen - (nb << 1));
 			w = *(int *)ASIC_REG_SCSI_SDR0(asic_base);
 			*to++ = w;
 			if (--nb > 0) {
@@ -1859,7 +1948,7 @@ asc_DumpLog(str)
 	lp = asc_logp;
 	do {
 		status = lp->status;
-		printf("asc%d tgt %d status %x ss %x ir %x cond %d:%x msg %x\n",
+		printf("asc%d tgt %d status %x ss %x ir %x cond %d:%x msg %x resid %d\n",
 			status >> 24,
 			lp->target,
 			(status >> 16) & 0xFF,
@@ -1867,7 +1956,7 @@ asc_DumpLog(str)
 			status & 0XFF,
 			lp->state,
 			asc_scripts[lp->state].condition,
-			lp->msg);
+			lp->msg, lp->resid);
 		if (++lp >= &asc_log[NLOG])
 			lp = asc_log;
 	} while (lp != asc_logp);

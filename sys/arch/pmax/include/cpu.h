@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  * from: @(#)cpu.h	7.7 (Berkeley) 11/15/92
- * $Id: cpu.h,v 1.1.1.1 1993/10/12 03:22:40 deraadt Exp $
+ * $Id: cpu.h,v 1.2 1993/10/15 02:57:11 deraadt Exp $
  */
 
 #ifndef _CPU_H_
@@ -61,10 +61,10 @@
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.
  */
-struct clockframe {
+typedef struct intrframe {
 	int	pc;	/* program counter at time of interrupt */
 	int	sr;	/* status register at time of interrupt */
-};
+} clockframe;
 
 #define	CLKF_USERMODE(framep)	((framep)->sr & MACH_SR_KU_PREV)
 #define	CLKF_BASEPRI(framep)	\
@@ -134,8 +134,10 @@ union cpuprid {
 #define	MIPS_R4010	0x05
 
 #ifdef KERNEL
+#ifdef notdef
 union	cpuprid cpu;
 union	cpuprid fpu;
+#endif
 u_int	machDataCacheSize;
 u_int	machInstCacheSize;
 extern	struct intr_tab intr_tab[];
