@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.54 2000/11/01 04:06:49 enami Exp $	*/
+/*	$NetBSD: mount.c,v 1.55 2000/11/01 04:10:02 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.54 2000/11/01 04:06:49 enami Exp $");
+__RCSID("$NetBSD: mount.c,v 1.55 2000/11/01 04:10:02 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: mount.c,v 1.54 2000/11/01 04:06:49 enami Exp $");
 #include <sys/ioctl.h>
 
 #include "pathnames.h"
+#include "vfslist.h"
 
 static int	debug, verbose;
 
@@ -83,10 +84,7 @@ static void	prmount __P((struct statfs *));
 static void	usage __P((void));
 
 void	checkname __P((int, char *[]));
-int	checkvfsname __P((const char *, const char **));
 int	main __P((int, char *[]));
-const char **
-	makevfslist __P((char *));
 
 /* Map from mount otions to printable formats. */
 static const struct opt {
