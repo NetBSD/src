@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.21 2000/11/21 13:50:25 itojun Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.22 2001/01/09 23:29:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.21 2000/11/21 13:50:25 itojun Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.22 2001/01/09 23:29:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,9 +56,6 @@ __RCSID("$NetBSD: tftpd.c,v 1.21 2000/11/21 13:50:25 itojun Exp $");
 #include <sys/stat.h>
 #include <sys/socket.h>
 
-#include <signal.h>
-#include <fcntl.h>
-
 #include <netinet/in.h>
 #include <arpa/tftp.h>
 #include <arpa/inet.h>
@@ -66,10 +63,12 @@ __RCSID("$NetBSD: tftpd.c,v 1.21 2000/11/21 13:50:25 itojun Exp $");
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <fcntl.h>
 #include <grp.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <setjmp.h>
+#include <signal.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -113,24 +112,24 @@ static char	*securedir;
 
 struct formats;
 
-static void tftp __P((struct tftphdr *, int));
-static const char *errtomsg __P((int));
-static void nak __P((int));
-static char *verifyhost __P((struct sockaddr *));
-static void usage __P((void));
-void timer __P((int));
-void sendfile __P((struct formats *));
-void recvfile __P((struct formats *));
-void justquit __P((int));
-int validate_access __P((char **, int));
-int main __P((int, char **));
+static const char *errtomsg(int);
+static void	 nak(int);
+static void	 tftp(struct tftphdr *, int);
+static void	 usage(void);
+static char	*verifyhost(struct sockaddr *);
+void	justquit(int);
+int	main(int, char **);
+void	recvfile(struct formats *);
+void	sendfile(struct formats *);
+void	timer(int);
+int	validate_access(char **, int);
 
 struct formats {
-	char	*f_mode;
-	int	(*f_validate) __P((char **, int));
-	void	(*f_send) __P((struct formats *));
-	void	(*f_recv) __P((struct formats *));
-	int	f_convert;
+	const char	*f_mode;
+	int		(*f_validate)(char **, int);
+	void		(*f_send)(struct formats *);
+	void		(*f_recv)(struct formats *);
+	int		f_convert;
 } formats[] = {
 	{ "netascii",	validate_access,	sendfile,	recvfile, 1 },
 	{ "octet",	validate_access,	sendfile,	recvfile, 0 },
@@ -138,8 +137,9 @@ struct formats {
 };
 
 static void
-usage()
+usage(void)
 {
+
 	syslog(LOG_ERR,
     "Usage: %s [-ln] [-u user] [-g group] [-s directory] [directory ...]",
 		    __progname);
@@ -147,23 +147,21 @@ usage()
 }
 
 int
-main(argc, argv)
-	int    argc;
-	char **argv;
+main(int argc, char *argv[])
 {
-	struct passwd *pwent;
-	struct group *grent;
-	struct tftphdr *tp;
-	int n = 0;
-	int ch, on;
-	int fd = 0;
 	struct sockaddr_storage me;
-	int len;
-	char *tgtuser, *tgtgroup, *ep;
-	uid_t curuid, tgtuid;
-	gid_t curgid, tgtgid;
-	long nid;
+	struct passwd	*pwent;
+	struct group	*grent;
+	struct tftphdr	*tp;
+	char		*tgtuser, *tgtgroup, *ep;
+	int	n, ch, on, fd;
+	int	len;
+	uid_t	curuid, tgtuid;
+	gid_t	curgid, tgtgid;
+	long	nid;
 
+	n = 0;
+	fd = 0;
 	openlog("tftpd", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 	tgtuser = DEFAULTUSER;
 	tgtgroup = NULL;
@@ -261,8 +259,10 @@ main(argc, argv)
 		}
 	}
 
-	syslog(LOG_DEBUG, "running as user `%s' (%d), group `%s' (%d)",
-	    tgtuser, tgtuid, tgtgroup ? tgtgroup : "(unspecified)" , tgtgid);
+	if (logging)
+		syslog(LOG_DEBUG, "running as user `%s' (%d), group `%s' (%d)",
+		    tgtuser, tgtuid, tgtgroup ? tgtgroup : "(unspecified)",
+		    tgtgid);
 	if (curgid != tgtgid) {
 		if (setgid(tgtgid)) {
 			syslog(LOG_ERR, "setgid to %d: %m", (int)tgtgid);
@@ -394,14 +394,15 @@ main(argc, argv)
  * Handle initial connection protocol.
  */
 static void
-tftp(tp, size)
-	struct tftphdr *tp;
-	int size;
+tftp(struct tftphdr *tp, int size)
 {
-	char *cp;
-	int first = 1, ecode;
 	struct formats *pf;
-	char *filename, *mode = NULL; /* XXX gcc */
+	char	*cp;
+	char	*filename, *mode;
+	int	 first, ecode;
+
+	first = 1;
+	mode = NULL;
 
 	filename = cp = tp->th_stuff;
 again:
@@ -466,15 +467,15 @@ FILE *file;
  * in one of the given directory prefixes.
  */
 int
-validate_access(filep, mode)
-	char **filep;
-	int mode;
+validate_access(char **filep, int mode)
 {
-	struct stat stbuf;
-	int	fd;
-	struct dirlist *dirp;
-	static char pathname[MAXPATHLEN];
-	char *filename = *filep;
+	struct stat	 stbuf;
+	struct dirlist	*dirp;
+	static char	 pathname[MAXPATHLEN];
+	char		*filename;
+	int		 fd;
+
+	filename = *filep;
 
 	/*
 	 * Prevent tricksters from getting around the directory restrictions
@@ -563,7 +564,7 @@ validate_access(filep, mode)
 	file = fdopen(fd, (mode == RRQ)? "r":"w");
 	if (file == NULL) {
 		close(fd);
-		return errno+100;
+		return (errno + 100);
 	}
 	return (0);
 }
@@ -572,8 +573,7 @@ int	timeout;
 jmp_buf	timeoutbuf;
 
 void
-timer(dummy)
-	int dummy;
+timer(int dummy)
 {
 
 	timeout += rexmtval;
@@ -586,13 +586,12 @@ timer(dummy)
  * Send the requested file.
  */
 void
-sendfile(pf)
-	struct formats *pf;
+sendfile(struct formats *pf)
 {
-	struct tftphdr *dp;
-	struct tftphdr *ap;    /* ack packet */
-	int size, n;
 	volatile unsigned int block;
+	struct tftphdr	*dp;
+	struct tftphdr	*ap;    /* ack packet */
+	int		 size, n;
 
 	signal(SIGALRM, timer);
 	dp = r_init();
@@ -646,9 +645,9 @@ abort:
 }
 
 void
-justquit(dummy)
-	int dummy;
+justquit(int dummy)
 {
+
 	exit(0);
 }
 
@@ -656,13 +655,12 @@ justquit(dummy)
  * Receive a file.
  */
 void
-recvfile(pf)
-	struct formats *pf;
+recvfile(struct formats *pf)
 {
-	struct tftphdr *dp;
-	struct tftphdr *ap;    /* ack buffer */
-	int n, size;
 	volatile unsigned int block;
+	struct tftphdr	*dp;
+	struct tftphdr	*ap;    /* ack buffer */
+	int		 n, size;
 
 	signal(SIGALRM, timer);
 	dp = w_init();
@@ -731,8 +729,8 @@ abort:
 }
 
 const struct errmsg {
-	int	e_code;
-	const char *e_msg;
+	int		 e_code;
+	const char	*e_msg;
 } errmsgs[] = {
 	{ EUNDEF,	"Undefined error code" },
 	{ ENOTFOUND,	"File not found" },
@@ -746,19 +744,18 @@ const struct errmsg {
 };
 
 static const char *
-errtomsg(error)
-	int error;
+errtomsg(int error)
 {
-	static char buf[20];
+	static char ebuf[20];
 	const struct errmsg *pe;
 
 	if (error == 0)
-		return "success";
+		return ("success");
 	for (pe = errmsgs; pe->e_code >= 0; pe++)
 		if (pe->e_code == error)
-			return pe->e_msg;
-	sprintf(buf, "error %d", error);
-	return buf;
+			return (pe->e_msg);
+	snprintf(ebuf, sizeof(ebuf), "error %d", error);
+	return (ebuf);
 }
 
 /*
@@ -768,13 +765,12 @@ errtomsg(error)
  * offset by 100.
  */
 static void
-nak(error)
-	int error;
+nak(int error)
 {
-	struct tftphdr *tp;
-	int length;
 	const struct errmsg *pe;
-	size_t msglen;
+	struct tftphdr *tp;
+	int	length;
+	size_t	msglen;
 
 	tp = (struct tftphdr *)buf;
 	tp->th_opcode = htons((u_short)ERROR);
@@ -796,12 +792,11 @@ nak(error)
 }
 
 static char *
-verifyhost(fromp)
-	struct sockaddr *fromp;
+verifyhost(struct sockaddr *fromp)
 {
 	static char hbuf[MAXHOSTNAMELEN];
 
 	if (getnameinfo(fromp, fromp->sa_len, hbuf, sizeof(hbuf), NULL, 0, 0))
 		strlcpy(hbuf, "?", sizeof(hbuf));
-	return hbuf;
+	return (hbuf);
 }
