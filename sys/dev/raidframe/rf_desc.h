@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.14 2004/06/02 22:58:28 drochner Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.15 2004/11/16 16:45:51 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -78,6 +78,7 @@ struct RF_RaidAccessDesc_s {
 				 * RAID operation has gotten */
 	const RF_AccessState_t *states;	/* array of states to be run */
 	int     status;		/* pass/fail status of the last operation */
+	int     numRetries;     /* number of times this IO has been attempted */
 	RF_DagList_t *dagList;	/* list of dag lists, one list per stripe */
 	RF_VoidPointerListElem_t *iobufs; /* iobufs that need to be cleaned 
 					     up at the end of this IO */

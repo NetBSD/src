@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.35 2004/03/23 13:09:18 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.36 2004/11/16 16:45:52 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.35 2004/03/23 13:09:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.36 2004/11/16 16:45:52 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -512,13 +512,18 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t *desc)
 
 	desc->status = 0;	/* good status */
 
-	if (selectStatus) {
+	if (selectStatus || (desc->numRetries > RF_RETRY_THRESHOLD)) {
 		/* failed to create a dag */
 		/* this happens when there are too many faults or incomplete
 		 * dag libraries */
-		printf("raid%d: failed to create a dag. "
-		       "Too many component failures.\n", 
-		       desc->raidPtr->raidid);
+		if (selectStatus) {
+			printf("raid%d: failed to create a dag. "
+			       "Too many component failures.\n", 
+			       desc->raidPtr->raidid);
+		} else {
+			printf("raid%d: IO failed after %d retries.\n",
+			       desc->raidPtr->raidid, RF_RETRY_THRESHOLD);
+		}
 
 		desc->status = 1; /* bad status */ 
 		/* skip straight to rf_State_Cleanup() */
@@ -624,6 +629,13 @@ rf_State_ProcessDAG(RF_RaidAccessDesc_t *desc)
 				rf_FreeDAGList(temp);
 			}
 			rf_MarkFailuresInASMList(raidPtr, asmh);
+
+			/* note the retry so that we'll bail in
+			   rf_State_CreateDAG() once we've retired
+			   the IO RF_RETRY_THRESHOLD times */
+
+			desc->numRetries++;
+
 			/* back up to rf_State_CreateDAG */
 			desc->state = desc->state - 2;
 			return RF_FALSE;
