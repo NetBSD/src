@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.35 2000/12/17 21:42:21 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.36 2000/12/19 05:09:06 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -384,7 +384,7 @@ clockattach(node, bt, bh)
 	h |= idp->id_hostid[1] << 8;
 	h |= idp->id_hostid[2];
 	hostid = h;
-	printf(": hostid %lx\n", (long)hostid);
+	printf(": hostid %x\n", (u_int)hostid);
 
 	idprom = idp;
 }
