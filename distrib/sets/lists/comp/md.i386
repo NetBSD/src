@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.55 2001/04/15 15:33:09 kleink Exp $
+# $NetBSD: md.i386,v 1.56 2001/04/15 17:14:27 kleink Exp $
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
 ./usr/include/i386/ansi.h		comp-c-include
@@ -28,6 +28,7 @@
 ./usr/include/i386/ieee.h		comp-c-include
 ./usr/include/i386/ieeefp.h		comp-c-include
 ./usr/include/i386/int_const.h		comp-c-include
+./usr/include/i386/int_fmtio.h		comp-c-include
 ./usr/include/i386/int_limits.h		comp-c-include
 ./usr/include/i386/int_mwgwtypes.h		comp-c-include
 ./usr/include/i386/int_types.h		comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.7 2001/04/15 15:33:09 kleink Exp $
+# $NetBSD: md.hpcsh,v 1.8 2001/04/15 17:14:27 kleink Exp $
 ./usr/include/hpcsh	comp-c-include
 ./usr/include/hpcsh/ansi.h	comp-c-include
 ./usr/include/hpcsh/aout_machdep.h	comp-c-include
@@ -22,6 +22,7 @@
 ./usr/include/hpcsh/ieee.h	comp-c-include
 ./usr/include/hpcsh/ieeefp.h	comp-c-include
 ./usr/include/hpcsh/int_const.h	comp-c-include
+./usr/include/hpcsh/int_fmtio.h	comp-c-include
 ./usr/include/hpcsh/int_limits.h	comp-c-include
 ./usr/include/hpcsh/int_mwgwtypes.h	comp-c-include
 ./usr/include/hpcsh/int_types.h	comp-c-include

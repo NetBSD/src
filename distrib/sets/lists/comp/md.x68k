@@ -1,4 +1,4 @@
-# $NetBSD: md.x68k,v 1.37 2001/04/15 15:33:09 kleink Exp $
+# $NetBSD: md.x68k,v 1.38 2001/04/15 17:14:28 kleink Exp $
 ./usr/include/x68k	comp-c-include
 ./usr/include/x68k/_G_config.h	comp-c-include
 ./usr/include/x68k/ansi.h	comp-c-include
@@ -22,6 +22,7 @@
 ./usr/include/x68k/ieee.h	comp-c-include
 ./usr/include/x68k/ieeefp.h	comp-c-include
 ./usr/include/x68k/int_const.h	comp-c-include
+./usr/include/x68k/int_fmtio.h	comp-c-include
 ./usr/include/x68k/int_limits.h	comp-c-include
 ./usr/include/x68k/int_mwgwtypes.h	comp-c-include
 ./usr/include/x68k/int_types.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.46 2001/04/15 15:33:09 kleink Exp $
+# $NetBSD: md.arm32,v 1.47 2001/04/15 17:14:26 kleink Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -30,6 +30,7 @@
 ./usr/include/arm/ieee.h		comp-c-include
 ./usr/include/arm/ieeefp.h		comp-c-include
 ./usr/include/arm/int_const.h		comp-c-include
+./usr/include/arm/int_fmtio.h		comp-c-include
 ./usr/include/arm/int_limits.h		comp-c-include
 ./usr/include/arm/int_mwgwtypes.h		comp-c-include
 ./usr/include/arm/int_types.h		comp-c-include

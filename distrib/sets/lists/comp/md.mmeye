@@ -1,4 +1,4 @@
-# $NetBSD: md.mmeye,v 1.11 2001/04/15 15:33:09 kleink Exp $
+# $NetBSD: md.mmeye,v 1.12 2001/04/15 17:14:28 kleink Exp $
 ./usr/include/mmeye	comp-c-include
 ./usr/include/mmeye/_G_config.h	comp-c-include
 ./usr/include/mmeye/ansi.h	comp-c-include
@@ -23,6 +23,7 @@
 ./usr/include/mmeye/ieee.h	comp-c-include
 ./usr/include/mmeye/ieeefp.h	comp-c-include
 ./usr/include/mmeye/int_const.h	comp-c-include
+./usr/include/mmeye/int_fmtio.h	comp-c-include
 ./usr/include/mmeye/int_limits.h	comp-c-include
 ./usr/include/mmeye/int_mwgwtypes.h	comp-c-include
 ./usr/include/mmeye/int_types.h	comp-c-include
