@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.341 2001/08/13 08:51:38 cjs Exp $
+$NetBSD: pcidevs,v 1.342 2001/08/17 23:14:00 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -766,6 +766,9 @@ product APPLE PANGEA_MACIO	0x0025	MAC-IO I/O Controller (Pangea)
 product APPLE PANGEA_AGP	0x0027	Pangea AGP Interface
 product APPLE PANGEA_PCI1	0x0028	Pangea Host-PCI Bridge
 product APPLE PANGEA_PCI2	0x0029	Pangea Host-PCI Bridge
+product APPLE UNIN_AGP		0x002d	Uni-N AGP Interface
+product APPLE UNIN_PCI1		0x002e	Uni-N Host-External PCI Bridge
+product APPLE UNIN_PCI2		0x002f	Uni-N Host-Internal PCI Bridge
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
