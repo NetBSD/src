@@ -1,4 +1,4 @@
-.\" $NetBSD: iconv.3,v 1.1 2003/07/04 06:05:30 tshiozak Exp $
+.\" $NetBSD: iconv.3,v 1.2 2003/07/04 07:44:19 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd July 1, 2003
-.Dt iconv 3
+.Dt ICONV 3
 .Os
 .\" ----------------------------------------------------------------------
 .Sh NAME
@@ -40,11 +40,11 @@
 .Sh SYNOPSIS
 .In iconv.h
 .Ft iconv_t
-.Fn iconv_open "const char * dstname" "const char * srcname"
+.Fn iconv_open "const char *dstname" "const char *srcname"
 .Ft int
 .Fn iconv_close "iconv_t cd"
 .Ft size_t
-.Fn iconv "iconv_t cd" "const char ** src" "size_t *srcleft" "char ** dst" "size_t dstleft"
+.Fn iconv "iconv_t cd" "const char **src" "size_t *srcleft" "char **dst" "size_t dstleft"
 .\" ----------------------------------------------------------------------
 .Sh DESCRIPTION
 The
@@ -57,103 +57,111 @@ and returns its descriptor.
 .Pp
 The
 .Fn iconv_close
-function closes a converter specified
+function closes the specified converter
 .Fa cd .
 .Pp
 The
 .Fn iconv
-function converts a string pointed by
+function converts the string in the buffer
 .Fa *src
-up to
+of length
 .Fa *srcleft
-bytes and stores the converted string to a buffer pointed by
+bytes and stores the converted string in the buffer
 .Fa *dst
-up to
+of size
 .Fa *dstleft
 bytes.
 After calling
 .Fn iconv ,
-the values pointed by
+the values pointed to by
 .Fa src ,
 .Fa srcleft ,
-.Fa dst
+.Fa dst ,
 and
 .Fa dstleft
-are updated as the following:
+are updated as follows:
 .Bl -tag -width 01234567
 .It *src
 Pointer to the byte just after the last character fetched.
 .It *srcleft
-Number of remainder bytes of the source buffer.
+Number of remaining bytes in the source buffer.
 .It *dst
 Pointer to the byte just after the last character stored.
 .It *srcleft
-Number of remainder bytes of the destination buffer.
+Number of remainder bytes in the destination buffer.
 .El
 .Pp
-If the string pointed by
+If the string pointed to by
 .Fa *src
-contains a byte sequence which is not valid character of the source
+contains a byte sequence which is not a valid character in the source
 codeset, the conversion stops just after the last successful conversion.
-If the output buffer is lacked to store the converted
+If the output buffer is too small to store the converted
 character, the conversion also stops in the same way.
-In these case, the values pointed by
+In these cases, the values pointed to by
 .Fa src ,
 .Fa srcleft ,
-.Fa dst
+.Fa dst ,
 and
 .Fa dstleft
-are updated on the state just after the last successful conversion.
+are updated to the state just after the last successful conversion.
 .Pp
-If the string pointed by
+If the string pointed to by
 .Fa *src
 contains a character which is valid unders the source codeset but
 can not be converted to the destination codeset,
-the character is replaced to an "invalid character" which depends on the
-destination codeset, e.g. `?', and the conversion is continued.
+the character is replaced by an
+.Dq invalid character
+which depends on the destination codeset, e.g.,
+.Sq \&? ,
+and the conversion is continued.
 .Fn iconv
-returns the number of such "invalid conversions".
+returns the number of such
+.Dq invalid conversions .
 .Pp
-There are special cases of
+There are two special cases of
 .Fn iconv :
 .Bl -tag -width 0123
-.It "(src == NULL || *src == NULL) && dst != NULL && *dst != NULL"
+.It "(src == NULL || *src == NULL) \*[Am]\*[Am] dst != NULL \*[Am]\*[Am] *dst != NULL"
 If the destination codeset is stateful,
 .Fa iconv
-places the destination into its initial state and
-stores the shift sequence to back the initial state to the buffer pointed by
+places the destination into its initial state and stores the shift
+sequence to go back to the initial state in the buffer pointed to
+by
 .Fa *dst .
-.It "(src == NULL || *src == NULL) && (dst == NULL || *dst == NULL)"
+.It "(src == NULL || *src == NULL) \*[Am]\*[Am] (dst == NULL || *dst == NULL)"
 If the source codeset is stateful,
 .Fa iconv
 places the source into its initial state.
 .El
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
-Upon successful comletion of
+Upon successful completion of
 .Fn iconv_open ,
-it returns a conversion descriptor.  Otherwise,
+it returns a conversion descriptor.
+Otherwise,
 .Fn iconv_open
-returns (iconv_t)-1 and set errno to indicate the error.
+returns (iconv_t)\-1 and sets errno to indicate the error.
 .Pp
-Upon successful comletion of
+Upon successful completion of
 .Fn iconv_close ,
 it returns 0.
 Otherwise,
 .Fn iconv_close
-returns -1 and set errno to indicate the error.
+returns \-1 and sets errno to indicate the error.
 .Pp
-Upon successful comletion of
+Upon successful completion of
 .Fn iconv ,
-it returns the number of "invalid" conversion.
+it returns the number of
+.Dq invalid
+conversions.
 Otherwise,
 .Fn iconv
-returns (size_t)-1 and set errno to indicate the error.
+returns (size_t)\-1 and sets errno to indicate the error.
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
 The
 .Fn iconv_open
-function may causes an error in the following case:
+function may causes an error in the following cases:
 .Bl -tag -width Er
 .It Bq Er ENOMEM
 Memory is exhausted.
@@ -176,40 +184,42 @@ is invalid.
 .Pp
 The
 .Fn iconv
-function may causes an error in the following case:
+function may causes an error in the following cases:
 .Bl -tag -width Er
 .It Bq Er EBADF
 The conversion descriptor specified by
 .Fa cd
 is invalid.
 .It Bq Er EILSEQ
-The string pointed by
+The string pointed to by
 .Fa *src
-contains a byte sequence which does not figures a valid character of
+contains a byte sequence which does not describe a valid character of
 the source codeset.
 .It Bq Er E2BIG
-The output buffer pointed by
+The output buffer pointed to by
 .Fa *dst
 is too small to store the result string.
 .It Bq Er EINVAL
-The string pointed by
+The string pointed to by
 .Fa *src
-terminates an incomplete character or shift sequence.
+terminates with an incomplete character or shift sequence.
 .El
-.\" ----------------------------------------------------------------------
-.Sh BUGS
-If
-.Fn iconv
-is aborted due to the occurrence of some error,
-the "invalid conversion" count mentioned above is unfortunately lost.
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO
 .Xr iconv 1
 .\" ----------------------------------------------------------------------
 .Sh STANDARDS
 .Fn iconv_open ,
-.Fn iconv_close
+.Fn iconv_close ,
 and
 .Fn iconv
 conform to
 .St -p1003.1-2001 .
+.\" ----------------------------------------------------------------------
+.Sh BUGS
+If
+.Fn iconv
+is aborted due to the occurrence of some error,
+the
+.Dq invalid conversion
+count mentioned above is unfortunately lost.
