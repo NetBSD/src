@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_msdos.8,v 1.3 1998/02/06 06:00:57 perry Exp $
+.\"	$NetBSD: newfs_msdos.8,v 1.4 1998/04/29 09:49:13 fair Exp $
 .\"
 .\" Copyright (c) 1997 Christos Zoulas
 .\" Copyright (c) 1995, 1996 Joerg Wunsch
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" Id: mkdosfs.1,v 1.5 1997/02/22 16:06:38 peter Exp 
+.\" Id: mkdosfs.1,v 1.5 1997/02/22 16:06:38 peter Exp
 .\"
 .Dd February 25, 1997
 .Os
@@ -41,27 +41,28 @@
 .Bq Fl L Ar vollabel
 .Ar device
 .Sh DESCRIPTION
-.Nm 
+.Nm
 establishes a file system structure on
 .Ar device
 that is understood by
-.Xr mount_msdos
+.Xr mount_msdos 8
 and some ancient program loader.
 .Ar Device
 will typically be the character device node for a floppy disk drive,
 .Pq e.\ g. Pa /dev/rfd0 ,
-although any existing writable file or device is acceptable.  In case
-of a regular file it is treated as a dumped image of an MS-DOS file
-system; only the file system structure will be written to it, and it
-won't be truncated.
+although any existing writable file or device is acceptable.
+In case of a regular file it is treated as a dumped image of an
+.Tn MS-DOS
+file system; only the file system structure will be written to it,
+and it won't be truncated.
 .Pp
 The options are as follows:
 .Bl -tag -width 10n -offset indent
 .It Fl f Ar capacity
 Use defaults for a typical file system with
 .Ar capacity
-kilobytes.  Currently, the values 360, 720, 1200, and 1440 are
-recognized.
+kilobytes.
+Currently, the values 360, 720, 1200, and 1440 are recognized.
 .Pp
 If this option is not specified,
 .Nm
@@ -79,7 +80,8 @@ to describe the file system, instead of the default
 The file system structure consists of three major areas:
 .Bl -tag -width 10n -offset indent
 .It Em The bootsector
-This is the very first (512-byte) sector.  It contains executable
+This is the very first (512-byte) sector.
+It contains executable
 code that normally would bootstrap an operating system when loaded.
 Since it's beyond the scope of
 .Nm
@@ -91,24 +93,25 @@ is the
 .Em BIOS parameter block (BPB) ,
 where several statistical parameters of the file system are being
 held.
-.It Em The file allocation table(s) (FAT)
+.It Em The File Allocation Table(s) (FAT)
 Sectors next to the
 .Em bootsector
-hold the FAT, which is used to register file system allocation,
-as well as keeping pointer chains for the chunks constituting
-one file.  There are usually two identical copies of the FAT.
+hold the FAT, which is used to register file system allocation, as
+well as keeping pointer chains for the chunks constituting one file.
+There are usually two identical copies of the FAT.
 .It Em The root directory
-The final structure is the root directory for this medium.  It is
-merely a space reservation, padded with 0's, and unfortunately fixed
+The final structure is the root directory for this medium.
+It is merely a space reservation, padded with 0's, and unfortunately fixed
 in its size.
 .Nm
 initializes it to empty, and enters a volume label record into the
 very first directory slot.
 .Sh DIAGNOSTICS
-An exit status of 0 is returned upon successful operation. Exit status
-1 is returned on any errors during file system creation, and an exit status
-of 2 reflects invalid arguments given to the program (along with an
-appropriate information written to diagnostic output).
+An exit status of 0 is returned upon successful operation.
+Exit status 1 is returned on any errors during file system creation,
+and an exit status of 2 reflects invalid arguments given to the
+program (along with an appropriate information written to diagnostic
+output).
 .Sh SEE ALSO
 .Xr fdformat 1 ,
 .Xr mount_msdos 8 ,
@@ -116,12 +119,12 @@ appropriate information written to diagnostic output).
 .Xr newfs 8 .
 .Sh BUGS
 There is currently no way to specify obscure file system parameters.
-Thus, only media with one of the supported capacity values can be
-formatted.  For the same reason, it's not possible to handle hard disk
-partitions.  More options should be added to allow this.  More entries
-should be added to the table of known formats, too.
+Thus, only media with one of the supported capacity values can be formatted.
+For the same reason, it's not possible to handle hard disk partitions.
+More options should be added to allow this.
+More entries should be added to the table of known formats, too.
 .Pp
-No attempt is made to handle media defects. 
+No attempt is made to handle media defects.
 .Sh HISTORY
 .Nm
 appeared in
