@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7 1997/07/25 16:46:30 perry Exp $	*/
+/*	$NetBSD: defs.h,v 1.7.4.1 2000/10/19 16:33:23 he Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -266,7 +266,6 @@ extern int nvars;
 extern int ntags;
 
 extern char unionized;
-extern char line_format[];
 
 extern int   start_symbol;
 extern char  **symbol_name;
