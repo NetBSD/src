@@ -38,6 +38,7 @@
 #	local	configuration specific devices
 # Tapes:
 #	ct*	HP300 HP-IB cartridge tape
+#	mt*	(Magnetic) 9-track reel tape
 #	st*	Exabyte tape
 # Disks:
 #	ccd*	"concatenated" pseudo-disks
@@ -100,10 +101,11 @@ fd)
 	chmod 666 fd/*
 	;;
 
-ct*|st*)
+ct*|mt*|st*)
 	umask 0 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
 	ct*) name=ct; blk=0; chr=7;;
+	mt*) name=mt; blk=1; chr=16;;
 	st*) name=st; blk=6; chr=20;;
 	esac
 	case $unit in
