@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.10 2001/02/19 20:50:17 jdolecek Exp $	*/
+/*	$NetBSD: msort.c,v 1.11 2002/12/25 21:19:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.10 2001/02/19 20:50:17 jdolecek Exp $");
+__RCSID("$NetBSD: msort.c,v 1.11 2002/12/25 21:19:15 jdolecek Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ static u_char *wts, *wts1 = NULL;
 
 static int cmp __P((RECHEADER *, RECHEADER *));
 static int insert __P((struct mfile **, struct mfile **, int, int));
+static void merge(int, int, get_func_t, FILE *, put_func_t, struct field *);
 
 void
 fmerge(binno, top, filelist, nfiles, get, outfp, fput, ftbl)
@@ -133,7 +134,7 @@ fmerge(binno, top, filelist, nfiles, get, outfp, fput, ftbl)
 	}
 }
 
-void
+static void
 merge(infl0, nfiles, get, outfp, put, ftbl)
 	int infl0, nfiles;
 	get_func_t get;
@@ -163,7 +164,7 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 		bufs_sz[i] = DEFLLEN;
 	}
 
-	for (i = j = 0; i < nfiles; i++) {
+	for (i = j = 0; i < nfiles; i++, j++) {
 		cfile = (struct mfile *) bufs[j];
 		cfile->flno = infl0 + j;
 		cfile->end = (u_char *) bufs[j] + bufs_sz[j];
@@ -193,7 +194,6 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 			else
 				flist[0] = cfile;
 		}
-		j++;
 	}
 
 	cfile = (struct mfile *) bufs[nf];
