@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.516 2002/10/05 16:02:39 elric Exp $
+# $NetBSD: GENERIC,v 1.517 2002/10/08 13:09:05 augustss Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.516 $"
+#ident 		"GENERIC-$Revision: 1.517 $"
 
 maxusers	32		# estimated number of users
 
@@ -804,6 +804,9 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 upl*	at uhub? port ?
 
 # Serial adapters
+ubsa*	at uhub? port ?		# Belkin serial adapter
+ucom*	at ubsa? portno ?
+
 uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?
 
