@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.51 2001/06/07 17:59:48 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.52 2001/06/08 09:51:40 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,10 @@
 #include <machine/promlib.h>
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cpuvar.h>
+
+#if defined(MULTIPROCESSOR) && defined(DDB)
+#include <machine/db_machdep.h>
+#endif
 
 #include "com.h"
 #if NCOM > 0
@@ -240,9 +244,19 @@ nmi_soft(tf)
 		}
 		break;
 	case XPMSG_PAUSECPU: {
+#if defined(DDB)
+		db_regs_t regs;
+
+		regs.db_tf = *tf;
+		regs.db_fr = *(struct frame *)tf->tf_out[6];
+		cpuinfo.ci_ddb_regs = &regs;
+#endif
 		cpuinfo.flags |= CPUFLG_PAUSED|CPUFLG_GOTMSG;
 		while (cpuinfo.flags & CPUFLG_PAUSED)
 			cpuinfo.cache_flush((caddr_t)&cpuinfo.flags, sizeof(cpuinfo.flags));
+#if defined(DDB)
+		cpuinfo.ci_ddb_regs = 0;
+#endif
 		return;
 		}
 	case XPMSG_VCACHE_FLUSH_PAGE: {
