@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOT,v 1.39 2001/07/09 14:01:09 leo Exp $
+# $NetBSD: BOOT,v 1.40 2001/11/20 11:30:44 lukem Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
-# Created from: 
-#		NetBSD: FALCON.in,v 1.4 2001/04/10 06:28:38 leo Exp $
-#		NetBSD: GENERIC.in,v 1.6 2001/07/09 13:37:38 leo Exp $
+# Created from:
+#		NetBSD: FALCON.in,v 1.5 2001/11/20 11:29:41 lukem Exp $
+#		NetBSD: GENERIC.in,v 1.10 2001/11/20 11:29:41 lukem Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -35,11 +35,11 @@ options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
 
 #Networking options
 
-options 	INET            # IP + ICMP + TCP + UDP
+options 	INET		# IP + ICMP + TCP + UDP
 
-options 	PPP_BSDCOMP     # BSD-Compress compression support for PPP
-options 	PPP_DEFLATE     # Deflate compression support for PPP
-options 	PPP_FILTER      # Active filter support for PPP (requires bpf)
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 #File systems
 file-system 	FFS		# Berkeley fast file system
@@ -61,6 +61,9 @@ options 	COMPAT_11	# Compatibility to NetBSD1.1
 options 	COMPAT_12	# Compatibility to NetBSD1.2
 options 	COMPAT_13	# Compatibility to NetBSD1.3
 options 	COMPAT_14	# Compatibility to NetBSD1.4
+
+options 	COMPAT_AOUT_M68K # Compatibility to a.out executables
+options 	EXEC_AOUT	# a.out format executables
 
 #These options enable verbose messages for several subsystems.
 #Warning, these may compile large string tables into the kernel!
@@ -108,11 +111,11 @@ nvr0		at mainbus0	# nvram driver
 wdc0		at mainbus0	# IDE-bus
 wd*		at wdc? channel ? drive ?
 
- #ATAPI bus support
+ # ATAPI bus support
 atapibus* at wdc? channel ?
 
 #ATAPI devices
-cd*    at atapibus? drive ?	# ATAPI CD-ROM drives
+cd*	at atapibus? drive ?	# ATAPI CD-ROM drives
 
 #SCSI devices
 sd* 	at scsibus? target ? lun ?	# SCSI disk drives
