@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.41 1998/11/17 23:56:23 ross Exp $	*/
+/*	$NetBSD: parse.c,v 1.42 1999/06/02 18:47:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.41 1998/11/17 23:56:23 ross Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.42 1999/06/02 18:47:11 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.41 1998/11/17 23:56:23 ross Exp $");
+__RCSID("$NetBSD: parse.c,v 1.42 1999/06/02 18:47:11 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1520,6 +1520,14 @@ Parse_DoVar (line, ctxt)
 	Boolean	  oldOldVars = oldVars;
 
 	oldVars = FALSE;
+
+	/*
+	 * make sure that we set the variable the first time to nothing
+	 * so that it gets substituted!
+	 */
+	if (!Var_Exists(line, ctxt))
+	    Var_Set(line, "", ctxt);
+
 	cp = Var_Subst(NULL, cp, ctxt, FALSE);
 	oldVars = oldOldVars;
 
