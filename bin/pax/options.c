@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.53 2002/10/16 23:37:49 soren Exp $	*/
+/*	$NetBSD: options.c,v 1.54 2002/10/17 00:42:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.53 2002/10/16 23:37:49 soren Exp $");
+__RCSID("$NetBSD: options.c,v 1.54 2002/10/17 00:42:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1037,7 +1037,7 @@ tar_options(int argc, char **argv)
 	argv += optind;
 
 	/* Tar requires an action. */
-	if (act == DEFOP)
+	if (act == ERROR)
 		tar_usage();
 
 	/* Traditional tar behaviour (pax uses stderr unless in list mode) */
@@ -1314,7 +1314,6 @@ cpio_options(int argc, char **argv)
 	pmtime = 0;
 	arcname = NULL;
 	dflag = 1;
-	act = -1;
 	nodirs = 1;
 	/*
 	 * process option flags
