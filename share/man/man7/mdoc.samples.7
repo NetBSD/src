@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.17 1998/10/21 01:08:02 ross Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.18 1999/01/11 19:27:20 garbled Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -571,12 +571,9 @@ or for a locally produced set
 The Berkeley default,
 .Ql \&.Os
 without an argument, has been defined as
-.Tn BSD
-Experimental in the
-site specific file
-.Pa /usr/src/share/tmac/doc-common .
-It really should default to
-.Tn LOCAL .
+.Nx 1.4
+in the site specific file
+.Pa /usr/share/tmac/tmac.doc-common .
 Note, if the
 .Ql \&.Os
 macro is not present, the bottom left corner of the page
@@ -1379,7 +1376,7 @@ any arguments.
 .Sh GENERAL TEXT DOMAIN
 .Ss AT&T Macro
 .Bd -literal -offset indent -compact
-Usage: .At [v6 | v7 | 32v | V.1 | V.4] ... \*(Pu
+Usage: .At [v1 .. v7 | 32v | V.1 | V.4] ... \*(Pu
 .Ed
 .Bl -tag -width ".At v6 ) ," -compact -offset 14n
 .It Li ".At"
