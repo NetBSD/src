@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.6 2004/06/19 18:12:55 fredb Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.7 2004/06/19 20:02:38 fredb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.6 2004/06/19 18:12:55 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.7 2004/06/19 20:02:38 fredb Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -83,7 +83,7 @@ cc_microtime(struct timeval *tvp)
 	static struct simplelock microtime_slock = SIMPLELOCK_INITIALIZER;
 	struct timeval t;
 	struct cpu_info *ci = curcpu();
-	int64_t sec, usec;
+	int64_t cc, sec, usec;
 	int s;
 
 #ifdef MULTIPROCESSOR
@@ -105,10 +105,10 @@ cc_microtime(struct timeval *tvp)
 		 * case, the following sanity checks will suppress timewarps.
 		 */
 		t = ci->ci_cc_time;
-		usec = cpu_counter32() - ci->ci_cc_cc;
-		if (usec < 0)
-			usec += 0x100000000LL;
-		t.tv_usec += (usec * ci->ci_cc_ms_delta) / ci->ci_cc_denom;
+		cc = cpu_counter32() - ci->ci_cc_cc;
+		if (cc < 0)
+			cc += 0x100000000LL;
+		t.tv_usec += (cc / (ci->ci_cc_denom / ci->ci_cc_ms_delta));
 		while (t.tv_usec >= 1000000) {
 			t.tv_usec -= 1000000;
 			t.tv_sec++;
