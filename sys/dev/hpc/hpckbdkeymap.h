@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.28 2004/06/28 14:44:28 uch Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.29 2004/07/03 12:47:53 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -736,7 +736,7 @@ static const keysym_t jornada6x0_scnv_keydesc[] = {
 
 
 const int jornada6x0_special_keymap[] = {
-	[KEY_SPECIAL_OFF]	= 88,
+	[KEY_SPECIAL_OFF]	= -1,
 	[KEY_SPECIAL_LIGHT]	= -1
 };
 
