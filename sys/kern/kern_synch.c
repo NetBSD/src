@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.74 2000/05/27 00:40:46 sommerfeld Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.75 2000/05/27 05:00:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -476,70 +476,6 @@ endtsleep(arg)
 			unsleep(p);
 		p->p_flag |= P_TIMEOUT;
 	}
-	splx(s);
-}
-
-/*
- * Short-term, non-interruptable sleep.
- */
-void
-sleep(ident, priority)
-	void *ident;
-	int priority;
-{
-	struct proc *p = curproc;
-	struct slpque *qp;
-	int s;
-
-#ifdef DIAGNOSTIC
-	if (priority > PZERO) {
-		printf("sleep called with priority %d > PZERO, wchan: %p\n",
-		    priority, ident);
-		panic("old sleep");
-	}
-#endif
-	s = splhigh();
-	if (cold || panicstr) {
-		/*
-		 * After a panic, or during autoconfiguration,
-		 * just give interrupts a chance, then just return;
-		 * don't run any other procs or panic below,
-		 * in case this is the idle process and already asleep.
-		 */
-		splx(safepri);
-		splx(s);
-		return;
-	}
-#ifdef DIAGNOSTIC
-	if (ident == NULL || p->p_stat != SONPROC || p->p_back)
-		panic("sleep");
-#endif
-	p->p_wchan = ident;
-	p->p_wmesg = NULL;
-	p->p_slptime = 0;
-	p->p_priority = priority;
-	qp = SLPQUE(ident);
-	if (qp->sq_head == 0)
-		qp->sq_head = p;
-	else
-		*qp->sq_tailp = p;
-	*(qp->sq_tailp = &p->p_forw) = 0;
-	p->p_stat = SSLEEP;
-	p->p_stats->p_ru.ru_nvcsw++;
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p, 1, 0);
-#endif
-	mi_switch(p);
-#ifdef	DDB
-	/* handy breakpoint location after process "wakes" */
-	asm(".globl bpendsleep ; bpendsleep:");
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p, 0, 0);
-#endif
-	curcpu()->ci_schedstate.spc_curpriority = p->p_usrpri;
 	splx(s);
 }
 
