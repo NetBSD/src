@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigaction.2,v 1.33 2003/05/11 18:04:42 kleink Exp $
+.\"	$NetBSD: sigaction.2,v 1.34 2003/05/11 19:22:18 kleink Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,13 +43,6 @@
 .Lb libc
 .Sh SYNOPSIS
 .In signal.h
-.Bd -literal
-struct sigaction {
-	void     (*sa_handler)(int);
-	sigset_t sa_mask;
-	int	 sa_flags;
-};
-.Ed
 .Ft int
 .Fn sigaction "int sig" "const struct sigaction *act" "struct sigaction *oact"
 .Sh DESCRIPTION
@@ -117,6 +110,14 @@ routine returns normally the process will resume execution in the
 context from before the signal's delivery.
 If the process wishes to resume in a different context, then it
 must arrange to restore the previous context itself.
+.Pp
+.Em "struct sigaction"
+includes the following members:
+.Bd -literal -offset indent
+void      (*sa_handler)(int)
+sigset_t  sa_mask
+int       sa_flags
+.Ed
 .Pp
 When a signal is delivered to a process a new signal mask is
 installed for the duration of the process' signal handler
