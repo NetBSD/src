@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.62.2.1 2002/07/14 18:37:13 gehenna Exp $	*/
+/*	$NetBSD: cpu.h,v 1.62.2.2 2002/07/16 08:50:43 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -215,7 +215,7 @@ extern int mips3_pg_cached;
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
-#endif /* MIPS32 */
+#endif /* MIPS64 */
 
 #else /* run-time test */
 
