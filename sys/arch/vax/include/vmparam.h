@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 1995/06/05 17:18:01 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 1995/08/22 04:28:20 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -106,9 +106,10 @@
  * Ptsizes are in PTEs.
  */
 
-#define	USRPTSIZE 	(((256*1024*1024)>>PG_SHIFT)/4) /* 256MB */
+#define	USRPTSIZE 	((MAXDSIZ >> PG_SHIFT) * maxproc)
 #define	KALLOCMEM	(((1*1024*1024*maxproc)>>PG_SHIFT)/4)
-#define SYSPTSIZE	((USRPTSIZE>>PG_SHIFT)+UPAGES*maxproc+KALLOCMEM)
+#define SYSPTSIZE	(((USRPTSIZE * 4) >> PG_SHIFT) + UPAGES * maxproc + \
+			    KALLOCMEM)
 
 /*
  * The time for a process to be blocked before being very swappable.
