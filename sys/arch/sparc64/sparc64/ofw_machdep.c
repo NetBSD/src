@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.9.4.1 2000/07/18 16:23:31 mrg Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.9.4.2 2000/10/17 01:56:37 tv Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -163,7 +163,7 @@ prom_vtop(vaddr)
 		    (int)(args.mode>>32), (int)args.mode, (int)(args.phys_hi>>32), (int)args.phys_hi,
 		    (int)(args.phys_lo>>32), (int)args.phys_lo);
 #endif
-	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(int)args.phys_lo); 
+	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(u_int32_t)args.phys_lo); 
 }
 
 /* 
@@ -401,7 +401,7 @@ prom_alloc_phys(len, align)
 	args.len = len;
 	if (openfirmware(&args) != 0)
 		return 0;
-	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(int)args.phys_lo);
+	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(u_int32_t)args.phys_lo);
 }
 
 /* 
@@ -444,7 +444,7 @@ prom_claim_phys(phys, len)
 	args.phys_lo = HDL2CELL(phys);
 	if (openfirmware(&args) != 0)
 		return -1;
-	return (paddr_t)((((paddr_t)args.rphys_hi)<<32)|(int)args.rphys_lo);
+	return (paddr_t)((((paddr_t)args.rphys_hi)<<32)|(u_int32_t)args.rphys_lo);
 }
 
 /* 
@@ -507,12 +507,26 @@ prom_get_msgbuf(len, align)
 		cell_t phys_lo;
 	} args;
 	paddr_t addr;
+	int rooth;
+	int is_e250 = 1;
+
+	/* E250s tend to have buggy PROMs that break on test-method */
+	if ((rooth = OF_finddevice("/")) != -1) {
+		char name[80];
+
+		if ((OF_getprop(rooth, "name", &name, sizeof(name))) != -1) {
+			if (strcmp(name, "SUNW,Ultra-250")) 
+				is_e250 = 0;
+		} else prom_printf("prom_get_msgbuf: cannot get \"name\"\r\n");
+	} else prom_printf("prom_get_msgbuf: cannot open root device \r\n");
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
 		prom_printf("prom_get_msgbuf: cannot get memh\r\n");
 		return -1;
 	}
-	if (OF_test("test-method") == 0) {
+	if (is_e250) {
+		prom_printf("prom_get_msgbuf: Cannot recover msgbuf on E250\r\n");
+	} else if (OF_test("test-method") == 0) {
 		if (OF_test_method(memh, "SUNW,retain") != 0) {
 			args.name = ADR2CELL(&"call-method");
 			args.nargs = 5;
@@ -524,7 +538,8 @@ prom_get_msgbuf(len, align)
 			args.align = align;
 			args.status = -1;
 			if (openfirmware(&args) == 0 && args.status == 0) {
-				return (((paddr_t)args.phys_hi<<32)|args.phys_lo);
+				return (((paddr_t)args.phys_hi<<32)|
+					(u_int32_t)args.phys_lo);
 			} else prom_printf("prom_get_msgbuf: SUNW,retain failed\r\n");
 		} else prom_printf("prom_get_msgbuf: test-method failed\r\n");
 	} else prom_printf("prom_get_msgbuf: test failed\r\n");
