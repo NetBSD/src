@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.73 2003/12/14 01:32:02 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.74 2004/03/29 01:36:49 kristerw Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -105,6 +105,7 @@ satalink* at pci? dev ? function ?	# SiI SATALink controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
+wdc*	at pci? dev ? function ?	# Kauai ATA
 obio0	at pci? dev ? function ?
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
