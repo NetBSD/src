@@ -1,4 +1,4 @@
-/*	$NetBSD: print-vrrp.c,v 1.2 2001/06/25 20:00:01 itojun Exp $	*/
+/*	$NetBSD: print-vrrp.c,v 1.3 2001/09/27 12:33:26 kleink Exp $	*/
 
 /*
  * Copyright (c) 2000 William C. Fenner.
@@ -31,7 +31,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-vrrp.c,v 1.3 2000/10/10 05:05:08 guy Exp";
 #else
-__RCSID("$NetBSD: print-vrrp.c,v 1.2 2001/06/25 20:00:01 itojun Exp $");
+__RCSID("$NetBSD: print-vrrp.c,v 1.3 2001/09/27 12:33:26 kleink Exp $");
 #endif
 #endif
 
@@ -71,30 +71,47 @@ __RCSID("$NetBSD: print-vrrp.c,v 1.2 2001/06/25 20:00:01 itojun Exp $");
  *    |                     Authentication Data (2)                   |
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
+
+/* Type */
+#define	VRRP_TYPE_ADVERTISEMENT	1
+
+static const struct tok type2str[] = {
+	{ VRRP_TYPE_ADVERTISEMENT,	"advertisement"	},
+	{ 0,				NULL		}
+};
+
+/* Auth Type */
+#define	VRRP_AUTH_NONE		0
+#define	VRRP_AUTH_SIMPLE	1
+#define	VRRP_AUTH_AH		2
+
+static const struct tok auth2str[] = {
+	{ VRRP_AUTH_NONE,		"none"		},
+	{ VRRP_AUTH_SIMPLE,		"simple"	},
+	{ VRRP_AUTH_AH,			"ah"		},
+	{ 0,				NULL		}
+};
+
 void
 vrrp_print(register const u_char *bp, register u_int len, int ttl)
 {
 	int version, type, auth_type;
-	char *type_s;
+	const char *type_s;
 
 	TCHECK(bp[0]);
 	version = (bp[0] & 0xf0) >> 4;
 	type = bp[0] & 0x0f;
-	if (type == 1)
-		type_s = "advertise";
-	else
-		type_s = "unknown";
+	type_s = tok2str(type2str, "type#%d", type);
 	printf("VRRPv%d-%s %d: ", version, type_s, len);
 	if (ttl != 255)
 		printf("[ttl=%d!] ", ttl);
-	if (version != 2 || type != 1)
+	if (version != 2 || type != VRRP_TYPE_ADVERTISEMENT)
 		return;
 	TCHECK(bp[2]);
 	printf("vrid=%d prio=%d", bp[1], bp[2]);
 	TCHECK(bp[5]);
 	auth_type = bp[4];
-	if (auth_type != 0)
-		printf(" authtype=%d", auth_type);
+	printf(" authtype=%s", tok2str(auth2str, NULL, auth_type));
 	printf(" intvl=%d", bp[5]);
 	if (vflag) {
 		int naddrs = bp[3];
@@ -116,9 +133,11 @@ vrrp_print(register const u_char *bp, register u_int len, int ttl)
 			c = ',';
 			bp += 4;
 		}
-		if (auth_type == 1) { /* simple text password */
+		if (auth_type == VRRP_AUTH_SIMPLE) { /* simple text password */
 			TCHECK(bp[7]);
-			printf(" auth %.8s", bp);
+			printf(" auth \"");
+			fn_printn(bp, 8, NULL);
+			printf("\"");
 		}
 	}
 	return;
