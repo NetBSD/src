@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.18 2001/01/10 12:23:57 lukem Exp $	*/
+/*	$NetBSD: k5login.c,v 1.19 2001/01/19 21:55:19 pk Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,14 +55,13 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.18 2001/01/10 12:23:57 lukem Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.19 2001/01/19 21:55:19 pk Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
 #include <sys/param.h>
 #include <sys/syslog.h>
 #include <krb5/krb5.h>
-#include <com_err.h>
 #include <pwd.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -88,11 +87,11 @@ static krb5_creds forw_creds;
 int have_forward;
 static krb5_principal me, server;
 
-int k5_read_creds __P((char *));
-int k5_write_creds __P((void));
-int k5_verify_creds __P((krb5_context, krb5_ccache));
-int k5login __P((struct passwd *, char *, char *, char *));
-void k5destroy __P((void));
+int k5_read_creds(char *);
+int k5_write_creds(void);
+int k5_verify_creds(krb5_context, krb5_ccache);
+int k5login(struct passwd *, char *, char *, char *);
+void k5destroy(void);
 
 #ifndef krb5_realm_length
 #define krb5_realm_length(r)	((r).length)
@@ -126,7 +125,7 @@ k5_verify_creds(c, ccache)
 
 	kerror = krb5_sname_to_principal(c, 0, 0, KRB5_NT_SRV_HST, &princ);
 	if (kerror) {
-		com_err("login", kerror, "constructing local service name");
+		krb5_warn(kcontext, kerror, "constructing local service name");
 		return (-1);
 	}
 
@@ -168,9 +167,9 @@ k5_verify_creds(c, ccache)
 		}
 	}
 	else if (kerror) {
-		com_err("login", kerror,
-		        "Unable to verify Kerberos V5 TGT: %s", phost);
-		syslog(LOG_NOTICE, "Kerberos V5 TGT bad: %s", 
+		krb5_warn(kcontext, kerror,
+			  "Unable to verify Kerberos V5 TGT: %s", phost);
+		syslog(LOG_NOTICE, "Kerberos V5 TGT bad: %s",
 		       krb5_get_err_text(kcontext, kerror));
 		retval = -1;
 		goto EGRESS;
@@ -198,7 +197,7 @@ k5_verify_creds(c, ccache)
 			 * under attack. */
 			retval = -1;
 		}
-		com_err("login", kerror, "Unable to verify host ticket");
+		krb5_warn(kcontext, kerror, "Unable to verify host ticket");
 		syslog(LOG_NOTICE, "can't verify v5 ticket: %s; %s\n",
 		       krb5_get_err_text(kcontext, kerror),
 		       retval
@@ -230,7 +229,7 @@ int
 k5_read_creds(username)
 	char *username;
 {
-	krb5_error_code code;
+	krb5_error_code kerror;
 	krb5_creds mcreds;
 	krb5_ccache ccache;
 
@@ -238,38 +237,40 @@ k5_read_creds(username)
 	memset((char*) &mcreds, 0, sizeof(forw_creds));
 	memset((char*) &forw_creds, 0, sizeof(forw_creds));
 
-	code = krb5_cc_default(kcontext, &ccache);
-	if (code) {
-		com_err("login", code, "while getting default ccache");
+	kerror = krb5_cc_default(kcontext, &ccache);
+	if (kerror) {
+		krb5_warn(kcontext, kerror, "while getting default ccache");
 		return(1);
 	}
 
-	code = krb5_parse_name(kcontext, username, &me);
-	if (code) {
-		com_err("login", code, "when parsing name %s", username);
+	kerror = krb5_parse_name(kcontext, username, &me);
+	if (kerror) {
+		krb5_warn(kcontext, kerror, "when parsing name %s", username);
 		return(1);
 	}
 
 	mcreds.client = me;
-	code = krb5_build_principal_ext(kcontext, &mcreds.server,
-					krb5_realm_length(*krb5_princ_realm(kcontext, me)),
-					krb5_realm_data(*krb5_princ_realm(kcontext, me)),
-					KRB5_TGS_NAME_SIZE,
-					KRB5_TGS_NAME,
-					krb5_realm_length(*krb5_princ_realm(kcontext, me)),
-					krb5_realm_data(*krb5_princ_realm(kcontext, me)),
-					0);
-	if (code) {
-		com_err("login", code, "while building server name");
+	kerror = krb5_build_principal_ext(kcontext, &mcreds.server,
+			krb5_realm_length(*krb5_princ_realm(kcontext, me)),
+			krb5_realm_data(*krb5_princ_realm(kcontext, me)),
+			KRB5_TGS_NAME_SIZE,
+			KRB5_TGS_NAME,
+			krb5_realm_length(*krb5_princ_realm(kcontext, me)),
+			krb5_realm_data(*krb5_princ_realm(kcontext, me)),
+			0);
+	if (kerror) {
+		krb5_warn(kcontext, kerror, "while building server name");
 		goto nuke_ccache;
 	}
 
-	code = krb5_cc_retrieve_cred(kcontext, ccache, 0,
+	kerror = krb5_cc_retrieve_cred(kcontext, ccache, 0,
 				       &mcreds, &forw_creds);
-	if (code) {
-		com_err("login", code, "while retrieving V5 initial ticket for copy");
+	if (kerror) {
+		krb5_warn(kcontext, kerror,
+			  "while retrieving V5 initial ticket for copy");
 		goto nuke_ccache;
 	}
+
 	have_forward = 1;
 
 	strlcpy(tkt_location, getenv("KRB5CCNAME"), sizeof(tkt_location));
@@ -285,32 +286,35 @@ nuke_ccache:
 int
 k5_write_creds()
 {
-	krb5_error_code code;
+	krb5_error_code kerror;
 	krb5_ccache ccache;
 
 	if (!have_forward)
-		return(1);
-	code = krb5_cc_default(kcontext, &ccache);
-	if (code) {
-		com_err("login", code, "while getting default ccache");
-		return(1);
+		return (1);
+
+	kerror = krb5_cc_default(kcontext, &ccache);
+	if (kerror) {
+		krb5_warn(kcontext, kerror, "while getting default ccache");
+		return (1);
 	}
 
-	code = krb5_cc_initialize(kcontext, ccache, me);
-	if (code) {
-		com_err("login", code, "while re-initializing V5 ccache as user");
+	kerror = krb5_cc_initialize(kcontext, ccache, me);
+	if (kerror) {
+		krb5_warn(kcontext, kerror,
+			  "while re-initializing V5 ccache as user");
 		goto nuke_ccache_contents;
 	}
 
-	code = krb5_cc_store_cred(kcontext, ccache, &forw_creds);
-	if (code) {
-		com_err("login", code, "while re-storing V5 ccache as user");
+	kerror = krb5_cc_store_cred(kcontext, ccache, &forw_creds);
+	if (kerror) {
+		krb5_warn(kcontext, kerror,
+			  "while re-storing V5 ccache as user");
 		goto nuke_ccache_contents;
 	}
 
 nuke_ccache_contents:
 	krb5_free_cred_contents(kcontext, &forw_creds);
-	return(code != 0);
+	return (kerror != 0);
 }
 
 /*
@@ -359,71 +363,72 @@ k5login(pw, instance, localhost, password)
 	 */
 
 	if (strcmp(instance, "root") != 0)
-	    (void)snprintf(tkt_location, sizeof tkt_location,
-		"FILE:/tmp/krb5cc_%d.%s", pw->pw_uid, tty);
+		(void)snprintf(tkt_location, sizeof tkt_location,
+				"FILE:/tmp/krb5cc_%d.%s", pw->pw_uid, tty);
 	else
-	    (void)snprintf(tkt_location, sizeof tkt_location,
-		"FILE:/tmp/krb5cc_root_%d.%s", pw->pw_uid, tty);
+		(void)snprintf(tkt_location, sizeof tkt_location,
+				"FILE:/tmp/krb5cc_root_%d.%s", pw->pw_uid, tty);
 	krb5tkfile_env = tkt_location;
 	has_ccache = 1;
 
 	principal = (char *)malloc(strlen(pw->pw_name)+strlen(instance)+2);
 	strcpy(principal, pw->pw_name);	/* XXX strcpy is safe */
 	if (strlen(instance)) {
-	    strcat(principal, "/");		/* XXX strcat is safe */
-	    strcat(principal, instance);	/* XXX strcat is safe */
+		strcat(principal, "/");		/* XXX strcat is safe */
+		strcat(principal, instance);	/* XXX strcat is safe */
 	}
-	
+
 	if ((kerror = krb5_cc_resolve(kcontext, tkt_location, &ccache)) != 0) {
-	    syslog(LOG_NOTICE, "warning: %s while getting default ccache",
-		krb5_get_err_text(kcontext, kerror));
-	    return(1);
+		syslog(LOG_NOTICE, "warning: %s while getting default ccache",
+			krb5_get_err_text(kcontext, kerror));
+		return (1);
 	}
 
 	if ((kerror = krb5_parse_name(kcontext, principal, &me)) != 0) {
-	    syslog(LOG_NOTICE, "warning: %s when parsing name %s",
-		krb5_get_err_text(kcontext, kerror), principal);
-	    return(1);
+		syslog(LOG_NOTICE, "warning: %s when parsing name %s",
+			krb5_get_err_text(kcontext, kerror), principal);
+		return (1);
 	}
-    
+
 	if ((kerror = krb5_unparse_name(kcontext, me, &client_name)) != 0) {
-	    syslog(LOG_NOTICE, "warning: %s when unparsing name %s",
-		krb5_get_err_text(kcontext, kerror), principal);
-	    return(1);
+		syslog(LOG_NOTICE, "warning: %s when unparsing name %s",
+			krb5_get_err_text(kcontext, kerror), principal);
+		return (1);
 	}
 
 	kerror = krb5_cc_initialize(kcontext, ccache, me);
 	if (kerror != 0) {
-	    syslog(LOG_NOTICE, "%s when initializing cache %s",
-		krb5_get_err_text(kcontext, kerror), tkt_location);
-	    return(1);
+		syslog(LOG_NOTICE, "%s when initializing cache %s",
+			krb5_get_err_text(kcontext, kerror), tkt_location);
+		return (1);
 	}
 
 	memset((char *)&my_creds, 0, sizeof(my_creds));
-    
+
 	my_creds.client = me;
 
 	if ((kerror = krb5_build_principal_ext(kcontext,
-					&server,
-					krb5_realm_length(*krb5_princ_realm(kcontext, me)),
-					krb5_realm_data(*krb5_princ_realm(kcontext, me)),
-					KRB5_TGS_NAME_SIZE,
-					KRB5_TGS_NAME,
-					krb5_realm_length(*krb5_princ_realm(kcontext, me)),
-					krb5_realm_data(*krb5_princ_realm(kcontext, me)),
-					0)) != 0) {
-	    syslog(LOG_NOTICE, "%s while building server name",
-		krb5_get_err_text(kcontext, kerror));
-	    return(1);
+			&server,
+			krb5_realm_length(*krb5_princ_realm(kcontext, me)),
+			krb5_realm_data(*krb5_princ_realm(kcontext, me)),
+			KRB5_TGS_NAME_SIZE,
+			KRB5_TGS_NAME,
+			krb5_realm_length(*krb5_princ_realm(kcontext, me)),
+			krb5_realm_data(*krb5_princ_realm(kcontext, me)),
+			0)) != 0) {
+		syslog(LOG_NOTICE, "%s while building server name",
+			krb5_get_err_text(kcontext, kerror));
+		return (1);
 	}
 
 	my_creds.server = server;
 
 	if ((kerror = krb5_timeofday(kcontext, &now)) != 0) {
-	    syslog(LOG_NOTICE, "%s while getting time of day",
-		krb5_get_err_text(kcontext, kerror));
-	    return(1);
+		syslog(LOG_NOTICE, "%s while getting time of day",
+			krb5_get_err_text(kcontext, kerror));
+		return (1);
 	}
+
 	my_creds.times.starttime = 0;	/* start timer when request
 					   gets to KDC */
 	my_creds.times.endtime = now + lifetime;
@@ -444,21 +449,22 @@ k5login(pw, instance, localhost, password)
 		syslog(LOG_ERR, "chown tkfile (%s): %m", &tkt_location[5]);
 
 	if (kerror) {
-	    if (kerror == KRB5KRB_AP_ERR_BAD_INTEGRITY)
-		printf("%s: Kerberos Password incorrect\n", principal);
-	    else
-		printf("%s while getting initial credentials\n", krb5_get_err_text(kcontext, kerror));
+		if (kerror == KRB5KRB_AP_ERR_BAD_INTEGRITY)
+			printf("%s: Kerberos Password incorrect\n", principal);
+		else
+			krb5_warn(kcontext, kerror,
+				  "while getting initial credentials");
 
-	    return(1);
+		return (1);
 	}
-	if (k5_verify_creds(kcontext, ccache) < 0) {
-	    return(1);
-	}
+
+	if (k5_verify_creds(kcontext, ccache) < 0)
+		return (1);
 
 
 	/* Success */
 	notickets = 0;
-	return(0);
+	return (0);
 }
 
 /*
@@ -467,14 +473,14 @@ k5login(pw, instance, localhost, password)
 void
 k5destroy()
 {
-        krb5_error_code code;
+        krb5_error_code kerror;
 	krb5_ccache ccache = NULL;
 
 	if (krb5tkfile_env == NULL)
-	    return;
+		return;
 
-	code = krb5_cc_resolve(kcontext, krb5tkfile_env, &ccache);
-	if (!code)
-	    code = krb5_cc_destroy(kcontext, ccache);
+	kerror = krb5_cc_resolve(kcontext, krb5tkfile_env, &ccache);
+	if (kerror == 0)
+		(void)krb5_cc_destroy(kcontext, ccache);
 }
 #endif
