@@ -1,4 +1,4 @@
-$NetBSD: README.mach-traps,v 1.2 1999/03/23 09:19:25 itohy Exp $
+$NetBSD: README.mach-traps,v 1.3 2001/06/04 20:06:41 nathanw Exp $
 
 Some Alpha AXP OSF/1 binaries directly use the facilities provided by
 the Mach kernel that is the basis for OSF/1.  These include (but are
@@ -8,6 +8,12 @@ Invariably, the symptom that these binaries display is that they crash
 with an "unimplemented system call" trap (SIGSYS signal) for a syscall
 that has a negative number.  In general, binaries that use the Mach
 syscalls appear to invoke task_self() as their first syscall.
+
+Note that system call numbers are now range-bounded by masking off the
+high bits, so negative system call numbers will appear in the high
+end of the system call number range, thanks to the wonders of two's
+compliment arithmetic. System call -10, for example, will appear as
+"CALL  [502]" in kdump output.
 
 The name, number, and number of arguments for each Mach syscall is
 given below; this information was gleaned by looking through the OSF/1
