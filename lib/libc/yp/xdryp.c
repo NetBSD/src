@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.20 1997/11/04 23:53:10 thorpej Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.21 1998/11/15 17:10:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: xdryp.c,v 1.20 1997/11/04 23:53:10 thorpej Exp $");
+__RCSID("$NetBSD: xdryp.c,v 1.21 1998/11/15 17:10:30 christos Exp $");
 #endif
 
 /*
@@ -196,7 +196,8 @@ xdr_yp_inaddr(xdrs, objp)
 	XDR *xdrs;
 	struct in_addr *objp;
 {
-	return xdr_opaque(xdrs, (caddr_t)&objp->s_addr, sizeof objp->s_addr);
+	return xdr_opaque(xdrs, (caddr_t)(void *)&objp->s_addr,
+	    sizeof objp->s_addr);
 }
 
 static bool_t
@@ -338,7 +339,8 @@ xdr_ypall(xdrs, incallback)
 		 * error.
 		 */
 		if (status) {
-			if ((*incallback->foreach)(out.status,
+			/* LINTED const dropouts */
+			if ((*incallback->foreach)((int)out.status,
 			    (char *)out.keydat.dptr, out.keydat.dsize,
 			    (char *)out.valdat.dptr, out.valdat.dsize,
 			    incallback->data))

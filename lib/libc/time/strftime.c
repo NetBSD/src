@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.5 1998/09/27 16:41:20 kleink Exp $	*/
+/*	$NetBSD: strftime.c,v 1.6 1998/11/15 17:11:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strftime.c	5.11 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.5 1998/09/27 16:41:20 kleink Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.6 1998/11/15 17:11:06 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: strftime.c,v 1.5 1998/09/27 16:41:20 kleink Exp $");
 #include <time.h>
 
 static	int _add __P((const char *, char **, const char *));
-static	int _conv __P((int, int, char, char **, const char *));
+static	int _conv __P((int, int, int, char **, const char *));
 static	int _secs __P((const struct tm *, char **, const char *));
 static	size_t _fmt __P((const char *, const struct tm *, char **,
 	    const char *));
@@ -319,14 +319,14 @@ _secs(t, pt, ptlim)
 	tmp = *t;
 	s = mktime(&tmp);
 	for (p = buf + sizeof(buf) - 2; s > 0 && p > buf; s /= 10)
-		*p-- = s % 10 + '0';
+		*p-- = (char)(s % 10 + '0');
 	return (_add(++p, pt, ptlim));
 }
 
 static int
 _conv(n, digits, pad, pt, ptlim)
 	int n, digits;
-	char pad;
+	int pad;
 	char **pt;
 	const char * const ptlim;
 {

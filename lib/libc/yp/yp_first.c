@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_first.c,v 1.8 1997/07/21 14:09:26 jtc Exp $	 */
+/*	$NetBSD: yp_first.c,v 1.9 1998/11/15 17:10:30 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_first.c,v 1.8 1997/07/21 14:09:26 jtc Exp $");
+__RCSID("$NetBSD: yp_first.c,v 1.9 1998/11/15 17:10:30 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -97,21 +97,23 @@ again:
 	}
 	if (!(r = ypprot_err(yprkv.status))) {
 		*outkeylen = yprkv.keydat.dsize;
-		if ((*outkey = malloc(*outkeylen + 1)) == NULL)
+		if ((*outkey = malloc((size_t)(*outkeylen + 1))) == NULL)
 			r = YPERR_RESRC;
 		else {
-			(void)memcpy(*outkey, yprkv.keydat.dptr, *outkeylen);
+			(void)memcpy(*outkey, yprkv.keydat.dptr, 
+			    (size_t)*outkeylen);
 			(*outkey)[*outkeylen] = '\0';
 		}
 		*outvallen = yprkv.valdat.dsize;
-		if ((*outval = malloc(*outvallen + 1)) == NULL)
+		if ((*outval = malloc((size_t)(*outvallen + 1))) == NULL)
 			r = YPERR_RESRC;
 		else {
-			(void)memcpy(*outval, yprkv.valdat.dptr, *outvallen);
+			(void)memcpy(*outval, yprkv.valdat.dptr,
+			    (size_t)*outvallen);
 			(*outval)[*outvallen] = '\0';
 		}
 	}
-	xdr_free(xdr_ypresp_key_val, (char *) &yprkv);
+	xdr_free(xdr_ypresp_key_val, (char *)(void *)&yprkv);
 	__yp_unbind(ysd);
 	if (r != 0) {
 		if (*outkey) {
@@ -176,21 +178,23 @@ again:
 	}
 	if (!(r = ypprot_err(yprkv.status))) {
 		*outkeylen = yprkv.keydat.dsize;
-		if ((*outkey = malloc(*outkeylen + 1)) == NULL)
+		if ((*outkey = malloc((size_t)(*outkeylen + 1))) == NULL)
 			r = YPERR_RESRC;
 		else {
-			(void)memcpy(*outkey, yprkv.keydat.dptr, *outkeylen);
+			(void)memcpy(*outkey, yprkv.keydat.dptr,
+			    (size_t)*outkeylen);
 			(*outkey)[*outkeylen] = '\0';
 		}
 		*outvallen = yprkv.valdat.dsize;
-		if ((*outval = malloc(*outvallen + 1)) == NULL)
+		if ((*outval = malloc((size_t)(*outvallen + 1))) == NULL)
 			r = YPERR_RESRC;
 		else {
-			(void)memcpy(*outval, yprkv.valdat.dptr, *outvallen);
+			(void)memcpy(*outval, yprkv.valdat.dptr,
+			    (size_t)*outvallen);
 			(*outval)[*outvallen] = '\0';
 		}
 	}
-	xdr_free(xdr_ypresp_key_val, (char *) &yprkv);
+	xdr_free(xdr_ypresp_key_val, (char *)(void *)&yprkv);
 	__yp_unbind(ysd);
 	if (r != 0) {
 		if (*outkey) {
