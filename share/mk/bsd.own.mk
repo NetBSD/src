@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.295 2002/05/28 21:56:06 bjh21 Exp $
+#	$NetBSD: bsd.own.mk,v 1.296 2002/06/05 02:42:09 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -280,14 +280,14 @@ HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
 # toolchain-dependent targets and shared libraries are built
 # for different platforms and object formats.
 #
-# OBJECT_FMT:		currently either "ELF", "a.out", or "COFF".
+# OBJECT_FMT:		currently either "ELF" or "a.out".
 #
-# All new-toolchain platforms are ELF.
-.if defined(USE_NEW_TOOLCHAIN)
-OBJECT_FMT=	ELF
+# All platforms are ELF, except for ns32k (which does not yet have
+# an ELF BFD back-end).
+.if ${MACHINE_ARCH} == "ns32k"
+OBJECT_FMT?=	a.out		# allow overrides, to ease transition
 .else
-# Everything else defaults to a.out.
-OBJECT_FMT?=	a.out
+OBJECT_FMT=	ELF
 .endif
 
 # The sh3 port is incomplete.
@@ -300,6 +300,12 @@ NOPIC=		# defined
 .if ${MACHINE_ARCH} == "m68000"
 NOPIC=		# defined
 NOPROFILE=	# defined
+.endif
+
+# If the ns32k port is using an external toolchain, shared libraries
+# are not yet supported.
+.if ${MACHINE_ARCH} == "ns32k" && defined(USE_NEW_TOOLCHAIN)
+NOPIC=		# defined
 .endif
 
 # Location of the file that contains the major and minor numbers of the
@@ -318,6 +324,7 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 .if ${OBJECT_FMT} == "ELF" && \
     (${MACHINE_GNU_ARCH} == "arm" || \
      ${MACHINE_GNU_ARCH} == "armeb" || \
+     ${MACHINE_ARCH} == "ns32k" || \
      ${MACHINE_ARCH} == "i386" || \
      ${MACHINE_ARCH} == "m68k" || \
      ${MACHINE_ARCH} == "m68000" || \
@@ -414,6 +421,14 @@ MKDOC:=		no
 MKINFO:=	no
 MKMAN:=		no
 MKNLS:=		no
+.endif
+
+# If using the "new toolchain" build framework for ns32k, we can't build
+# the in-tree toolchain.
+.if ${MACHINE_ARCH} == "ns32k" && defined(USE_NEW_TOOLCHAIN)
+MKBFD:= no
+MKGDB:= no      
+MKGCC:= no
 .endif
 
 # x86-64 cannot currently use the in-tree toolchain, but does
