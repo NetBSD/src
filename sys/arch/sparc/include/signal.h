@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.19 2004/03/26 21:39:57 drochner Exp $ */
+/*	$NetBSD: signal.h,v 1.20 2004/05/10 21:51:50 drochner Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,10 +95,12 @@ struct sigcontext {
 	sigset_t	sc_mask;	/* signal mask to restore (new style) */
 };
 
+#ifdef _KERNEL
 #ifdef COMPAT_16
 #define	SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
 #else
 #define	SIGTRAMP_VALID(vers)	((vers) == 2)
+#endif
 #endif
 
 #else /* _LOCORE */
