@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.6 1995/04/26 21:45:57 brezak Exp $
+#	$NetBSD: files.isa,v 1.7 1995/05/03 17:09:28 cgd Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -49,8 +49,8 @@ file	dev/isa/com.c			com needs-flag
 
 # Cyclades Cyclom multiport serial cards
 # XXX currently broken
-#device	cy at isa: tty
-#file	dev/isa/cy.c			cy needs-count
+device	cy at isa: tty
+file	dev/isa/cy.c			cy needs-count
 
 # PC parallel ports (XXX what chip?)
 device	lpt at isa
