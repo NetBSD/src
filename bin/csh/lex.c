@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.11 1997/07/04 21:24:05 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.12 1998/03/29 04:36:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.11 1997/07/04 21:24:05 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.12 1998/03/29 04:36:29 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1331,7 +1331,7 @@ readc(wanteof)
     bool    wanteof;
 {
     int c;
-    static  sincereal;
+    static int sincereal;
 
     aret = F_SEEK;
     if ((c = peekread) != '\0') {
