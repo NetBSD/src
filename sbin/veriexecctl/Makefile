@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2003/04/26 12:46:35 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.3 2005/01/19 20:42:04 xtraeme Exp $
 
+WARNS=	2
 PROG=	veriexecctl
 MAN=	veriexecctl.8
 SRCS=	veriexecctl_parse.y veriexecctl_conf.l veriexecctl.c
