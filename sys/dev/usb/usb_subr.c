@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.7 1998/08/02 22:30:53 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.8 1998/11/21 18:57:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -695,7 +695,7 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 		if (found != 0)
 			return (USBD_NORMAL_COMPLETION);
 	}
-	/* No interfaces were attach in any of the configurations. */
+	/* No interfaces were attached in any of the configurations. */
 	if (d->bNumConfigurations > 0)
 		usbd_set_config_no(dev, 0, 0);
 
