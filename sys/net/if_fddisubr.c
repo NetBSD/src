@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.27 1999/07/01 08:12:48 itojun Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.28 1999/09/21 22:18:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -339,7 +339,7 @@ fddi_output(ifp, m0, dst, rt0)
 		if (aa->aa_flags & AFA_PHASE2) {
 			struct llc llc;
 
-			M_PREPEND(m, sizeof(struct llc), M_WAIT);
+			M_PREPEND(m, sizeof(struct llc), M_NOWAIT);
 			if (m == 0)
 				senderr(ENOBUFS);
 			llc.llc_dsap = llc.llc_ssap = LLC_SNAP_LSAP;
