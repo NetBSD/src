@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.35 1997/09/02 18:53:26 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.36 1997/09/16 01:52:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.35 1997/09/02 18:53:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.36 1997/09/16 01:52:00 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -46,7 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.35 1997/09/02 18:53:26 thorpej Exp $");
 									\
 	/* Flush out the entire TLB.  (XXX only user side?) */		\
 	ldiq	a0, -2						;	\
-	call_pal PAL_OSF1_tbi
+	call_pal PAL_OSF1_tbi					;	\
+	call_pal PAL_imb
 
 
 	/* don't reorder instructions; paranoia. */
