@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.24 2000/08/21 13:53:50 tv Exp $
+.\"	$NetBSD: pax.1,v 1.25 2000/09/04 07:26:38 kleink Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -658,7 +658,9 @@ are not selected and will be skipped.
 Reset the access times of any file or directory read or accessed by
 .Nm
 to be the same as they were before being read or accessed by
-.Nm "" .
+.Nm "" ,
+if the user has the appropriate permissions required by
+.Xr utime 3 .
 .It Fl u
 Ignore files that are older (having a less recent file modification time)
 than a pre-existing file or archive member with the same name.
