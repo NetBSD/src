@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.117 1999/11/29 13:22:37 itojun Exp $
+#	$NetBSD: Makefile,v 1.118 1999/12/11 23:10:15 augustss Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	ahb.4 ahc.4 aria.4 atalk.4 audio.4 awi.4 bha.4 bpf.4 cardbus.4 ccd.4 \
-	cd.4 ch.4 clnp.4 cltp.4 cnw.4 ddb.4 drum.4 eap.4 eisa.4 en.4 \
+	cd.4 ch.4 clcs.4 clnp.4 cltp.4 cnw.4 ddb.4 drum.4 eap.4 eisa.4 en.4 \
 	ep.4 esh.4 esis.4 eso.4 exphy.4 fd.4 fpa.4 fms.4 fxp.4 \
 	gre.4 icmp.4 icsphy.4 idp.4 ifmedia.4 inet.4 inphy.4 \
 	iophy.4 ip.4 ipip.4 iso.4 isp.4 lc.4 lkm.4 lo.4 lxtphy.4 \
@@ -38,6 +38,7 @@ MAN+=	si.4
 MAN+=	faith.4 gif.4 ipsec.4 inet6.4
 
 MLINKS+=bha.4 bt.4
+MLINKS+=cardbus.4 cbb.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=fpa.4 fea.4 fpa.4 fta.4
 MLINKS+=netintro.4 networking.4
