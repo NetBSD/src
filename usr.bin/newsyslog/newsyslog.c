@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.22 2000/07/07 10:52:41 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.23 2000/07/07 13:53:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.22 2000/07/07 10:52:41 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.23 2000/07/07 13:53:14 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -79,6 +79,7 @@ __RCSID("$NetBSD: newsyslog.c,v 1.22 2000/07/07 10:52:41 ad Exp $");
 #include <errno.h>
 #include <err.h>
 #include <util.h>
+#include <paths.h>
 
 #include "pathnames.h"
 
@@ -130,6 +131,8 @@ main(int argc, char **argv)
 	char *p, *cfile;
 	int c, force, needroot;
 	size_t lineno;
+	uid_t euid;
+	pid_t oldpid;
 
 	force = 0;
 	needroot = 1;
@@ -162,8 +165,18 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (needroot && getuid() != 0 && geteuid() != 0)
+	euid = geteuid();
+	if (needroot && euid != 0)
 		errx(EXIT_FAILURE, "must be run as root");
+
+	/* Prevent multiple instances if running as root */
+	if (euid == 0) {
+		if ((oldpid = readpidfile("newsyslog.pid")) == (pid_t)-1) {
+			errx(EXIT_FAILURE, "already running (pid %ld)",
+			    (long)oldpid);
+		}
+		pidfile("newsyslog");
+	}
 
 	if (strcmp(cfile, "-") == 0)
 		fd = stdin;
@@ -549,18 +562,25 @@ readpidfile(const char *file)
 {
 	FILE *fd;
 	char line[BUFSIZ];
+	char tmp[MAXPATHLEN];
 	pid_t pid;
 
-	if ((fd = fopen(file, "rt")) == NULL) {
-		warn("%s", file);
+	if (file[0] != '/') {
+		strcpy(tmp, _PATH_VARRUN);
+		strlcat(tmp, file, sizeof(tmp));
+	} else
+		strlcpy(tmp, file, sizeof(tmp));
+
+	if ((fd = fopen(tmp, "rt")) == NULL) {
+		warn("%s", tmp);
 		return (-1);
 	}
-	
+
 	if (fgets(line, sizeof(line) - 1, fd) != NULL) {
 		line[sizeof(line) - 1] = '\0';
 		pid = (pid_t)strtol(line, NULL, 0);
 	}
-	
+
 	fclose(fd);
 	return (pid);
 }
