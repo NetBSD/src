@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.i386,v 1.10 2002/04/18 12:56:57 wiz Exp $
+# $NetBSD: obsolete.i386,v 1.11 2002/06/26 16:59:07 bouyer Exp $
 /dev/pms0
 /dev/ttyv1
 /dev/ttyv2
@@ -86,6 +86,7 @@
 /usr/include/i386/disklabel.h
 /usr/include/i386/elf_machdep.h
 /usr/include/i386/endian.h
+/usr/include/i386/endian_machdep.h
 /usr/include/i386/float.h
 /usr/include/i386/frame.h
 /usr/include/i386/freebsd_machdep.h
@@ -97,6 +98,9 @@
 /usr/include/i386/joystick.h
 /usr/include/i386/kcore.h
 /usr/include/i386/limits.h
+/usr/include/i386/loadfile_machdep.h
+/usr/include/i386/lock.h
+/usr/include/i386/math.h
 /usr/include/i386/mouse.h
 /usr/include/i386/npx.h
 /usr/include/i386/param.h
