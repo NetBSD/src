@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.275 2005/02/05 16:37:37 yamt Exp $
+#	$NetBSD: 3RDPARTY,v 1.276 2005/02/10 19:28:59 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -462,6 +462,15 @@ Notes:
 See /usr/src/dist/ntp/ntp2netbsd for update instructions.
 NOTE: As of 20010405 -current includes a fix for the "ntpdx" root
 exploit/DoS attack which has been pulled up to the 1.4 and 1.5 branches.
+
+Package:	openpam
+Version:	20040210
+Current Vers:	20050201
+Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
+Archive Site:	http://www.openpam.org/
+Mailing List:
+Responsible:	christos
+Notes:
 
 Package:	OpenSSH
 Version:	3.6.1 around 20030403
