@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.2 2000/05/13 12:17:49 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.3 2000/08/22 21:22:48 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.2 2000/05/13 12:17:49 bjh21 Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.3 2000/08/22 21:22:48 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -53,8 +53,8 @@ __RCSID("$NetBSD: arckbd.c,v 1.2 2000/05/13 12:17:49 bjh21 Exp $");
 #include <sys/systm.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/irq.h>
-#include <machine/spl.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>

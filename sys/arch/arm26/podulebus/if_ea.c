@@ -1,6 +1,7 @@
-/* $NetBSD: if_ea.c,v 1.17 2000/08/12 18:18:52 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.18 2000/08/22 21:22:49 bjh21 Exp $ */
 
 /*
+ * Copyright (c) 2000 Ben Harris
  * Copyright (c) 1995 Mark Brinicombe
  * All rights reserved.
  *
@@ -54,7 +55,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.17 2000/08/12 18:18:52 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.18 2000/08/22 21:22:49 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -91,6 +92,7 @@ __RCSID("$NetBSD: if_ea.c,v 1.17 2000/08/12 18:18:52 bjh21 Exp $");
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/irq.h>
 
 #include <arm26/podulebus/if_eareg.h>
