@@ -1,7 +1,7 @@
-/*	$NetBSD: dpt.c,v 1.15 2000/01/15 18:10:32 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.16 2000/01/15 18:13:22 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.15 2000/01/15 18:10:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.16 2000/01/15 18:13:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1145,7 +1145,7 @@ dpt_hba_inquire(sc, ei)
 
 	if (ccb->ccb_hba_status != HA_NO_ERROR ||
 	    ccb->ccb_scsi_status != SCSI_OK)
-	    	panic("%s: inquiry failed (hba:%02x scsi:%02x", 
+	    	panic("%s: inquiry failed (hba:%02x scsi:%02x)", 
 	    	    sc->sc_dv.dv_xname, ccb->ccb_hba_status,
 	    	    ccb->ccb_scsi_status);
 	
