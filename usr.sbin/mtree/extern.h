@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 2000/10/11 20:23:54 is Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 2001/02/20 19:45:51 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,10 +36,6 @@
  */
 
 #include "mtree.h"
-
-#ifdef __APPLE__
-#include <fts.h>
-#endif
 
 int	 compare __P((char *, NODE *, FTSENT *));
 int	 crc __P((int, u_int32_t *, u_int32_t *));
