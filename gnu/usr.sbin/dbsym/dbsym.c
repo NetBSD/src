@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.3 2002/04/01 21:58:09 thorpej Exp $ */
+/* $NetBSD: dbsym.c,v 1.4 2002/04/08 14:20:41 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -31,14 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT(
     "@(#) Copyright (c) 1996 Christopher G. Demetriou, 2001 Simon Burge.\
   All rights reserved.\n");
 #endif /* not lint */
 
-#ifndef lint
-__RCSID("$NetBSD: dbsym.c,v 1.3 2002/04/01 21:58:09 thorpej Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: dbsym.c,v 1.4 2002/04/08 14:20:41 bjh21 Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
