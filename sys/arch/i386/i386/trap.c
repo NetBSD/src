@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.31 1994/04/02 03:51:37 mycroft Exp $
+ *	$Id: trap.c,v 1.32 1994/04/02 03:52:15 mycroft Exp $
  */
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/ktrace.h>
 #endif
 #include <sys/vmmeter.h>
+#include <sys/syscall.h>
 
 #include <vm/vm_param.h>
 #include <vm/pmap.h>
