@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.461 2002/08/03 17:10:35 kent Exp $
+$NetBSD: pcidevs,v 1.462 2002/08/04 21:47:25 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1372,6 +1372,7 @@ product INTEL 82815_FULL_HUB	0x1130	82815 Hub
 product INTEL 82815_FULL_AGP	0x1131	82815 AGP
 product INTEL 82815_FULL_GRAPH	0x1132	82815 Graphics
 product INTEL 82806AA		0x1161	82806AA PCI64 Hub Advanced Programmable Interrupt Controller
+product INTEL ADI_BECC		0x1162	ADI i80200 Big Endian Companion Chip
 product INTEL IXP1200		0x1200	IXP1200 Network Processor
 product INTEL 82559ER		0x1209	82559ER Fast Ethernet LAN Controller
 product INTEL 82092AA		0x1222	82092AA IDE controller
