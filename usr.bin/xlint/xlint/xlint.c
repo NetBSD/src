@@ -1,4 +1,4 @@
-/*	$NetBSD: xlint.c,v 1.4 1996/12/22 11:31:47 cgd Exp $	*/
+/*	$NetBSD: xlint.c,v 1.5 1997/10/19 19:34:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: xlint.c,v 1.4 1996/12/22 11:31:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: xlint.c,v 1.5 1997/10/19 19:34:56 mycroft Exp $";
 #endif
 
 #include <sys/param.h>
@@ -699,7 +699,7 @@ rdok(path)
 
 	if (stat(path, &sbuf) == -1)
 		return (0);
-	if ((sbuf.st_mode & S_IFMT) != S_IFREG)
+	if (!S_ISREG(sbuf.st_mode))
 		return (0);
 	if (access(path, R_OK) == -1)
 		return (0);
