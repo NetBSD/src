@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.11 2001/12/13 15:09:07 augustss Exp $	*/
+/*	$NetBSD: irframe.c,v 1.12 2001/12/13 17:15:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,6 +53,15 @@
 #include <dev/ir/irdaio.h>
 #include <dev/ir/irframevar.h>
 
+#ifdef IRFRAME_DEBUG
+#define DPRINTF(x)	if (irframedebug) printf x
+#define Static
+int irframedebug = 0;
+#else
+#define DPRINTF(x)
+#define Static static
+#endif
+
 cdev_decl(irframe);
 
 int irframe_match(struct device *parent, struct cfdata *match, void *aux);
@@ -60,7 +69,7 @@ void irframe_attach(struct device *parent, struct device *self, void *aux);
 int irframe_activate(struct device *self, enum devact act);
 int irframe_detach(struct device *self, int flags);
 
-static int irf_reset_params(struct irframe_softc *sc);
+Static int irf_reset_params(struct irframe_softc *sc);
 
 #if NIRFRAME == 0
 /* In case we just have tty attachment. */
@@ -217,8 +226,13 @@ irframeread(dev_t dev, struct uio *uio, int flag)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (EIO);
-	if (uio->uio_resid < sc->sc_params.maxsize)
+	if (uio->uio_resid < sc->sc_params.maxsize) {
+#ifdef DIAGNOSTIC
+		printf("irframeread: short read %d < %d\n", uio->uio_resid,
+		       sc->sc_params.maxsize);
+#endif
 		return (EINVAL);
+	}
 	return (sc->sc_methods->im_read(sc->sc_handle, uio, flag));
 }
 
@@ -232,8 +246,13 @@ irframewrite(dev_t dev, struct uio *uio, int flag)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (EIO);
-	if (uio->uio_resid > sc->sc_params.maxsize)
+	if (uio->uio_resid > sc->sc_params.maxsize) {
+#ifdef DIAGNOSTIC
+		printf("irframeread: long write %d > %d\n", uio->uio_resid,
+		       sc->sc_params.maxsize);
+#endif
 		return (EINVAL);
+	}
 	return (sc->sc_methods->im_write(sc->sc_handle, uio, flag));
 }
 
@@ -241,11 +260,15 @@ int
 irf_reset_params(struct irframe_softc *sc)
 {
 	struct irda_params params;
+	int error;
 
 	params.speed = IRDA_DEFAULT_SPEED;
 	params.ebofs = IRDA_DEFAULT_EBOFS;
 	params.maxsize = IRDA_DEFAULT_SIZE;
-	return (sc->sc_methods->im_set_params(sc->sc_handle, &params));
+	error = sc->sc_methods->im_set_params(sc->sc_handle, &params);
+	if (!error)
+		sc->sc_params = params;
+	return (error);
 }
 
 int
@@ -269,6 +292,7 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 
 	case IRDA_SET_PARAMS:
+		DPRINTF(("irframeioctl: set params speed=%u ebofs=%u maxsize=%u\n", parms->speed, parms->ebofs, parms->maxsize));
 #ifdef DIAGNOSTIC
 		if (parms->speed != sc->sc_speed) {
 			sc->sc_speed = parms->speed;
@@ -282,8 +306,10 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			return (EINVAL);
 		/* XXX check speed */
 		error = sc->sc_methods->im_set_params(sc->sc_handle, vaddr);
-		if (!error)
+		if (!error) {
 			sc->sc_params = *parms;
+			DPRINTF(("irframeioctl: ok\n"));
+		}
 		break;
 
 	case IRDA_RESET_PARAMS:
