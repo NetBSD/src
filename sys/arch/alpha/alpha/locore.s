@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.31 1997/04/07 23:56:39 cgd Exp $ */
+/* $NetBSD: locore.s,v 1.32 1997/04/08 00:19:01 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,8 +28,10 @@
  */
 
 #include <machine/options.h>		/* Config options headers */
-
 #include <machine/asm.h>
+
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.32 1997/04/08 00:19:01 cgd Exp $");
+
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
 #endif
