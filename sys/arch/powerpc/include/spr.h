@@ -120,7 +120,6 @@
 #define	SPR_DCWR		0x3ba	/* 4.. Data Cache Write-through Register */
 #define	SPR_PMC2		0x3ba	/* .6. Performance Counter Register 2 */
 #define	SPR_SLER		0x3bb	/* 4.. Storage Little Endian Register */
-#define	SPR_SIAR		0x3bc	/* .6. Sample Instruction Address Register */
 #define	SPR_MMCR1		0x3bc	/* .6. Monitor Mode Control Register 2 */
 #define	SPR_SU0R		0x3bc	/* 4.. Storage User-defined 0 Register */
 #define	SPR_DBCR1		0x3bd	/* 4.. Debug Control Register 1 */
