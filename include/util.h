@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.4 1997/06/30 21:22:59 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.5 1997/07/24 08:47:48 phil Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -54,7 +54,8 @@ int	pw_abort __P((void));
 void	pw_init __P((void));
 void	pw_edit __P((int notsetuid, const char *filename));
 void	pw_prompt __P((void));
-void	pw_copy __P((int ffd, int tfd, struct passwd *pw));
+void	pw_copy __P((int ffd, int tfd, struct passwd *pw,
+		     struct passwd *old_pw));
 int	pw_scan __P((char *bp, struct passwd *pw, int *flags));
 void	pw_error __P((const char *name, int err, int eval));
 int	openpty __P((int *, int *, char *, struct termios *,
