@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 1997/11/04 22:59:20 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.42 1998/01/03 00:34:02 thorpej Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -93,6 +93,7 @@ pmap_bootstrap()
 	unsigned int sysptsize, istack, i;
 	extern	unsigned int etext, proc0paddr;
 	struct pcb *pcb = (struct pcb *)proc0paddr;
+	pmap_t pmap = pmap_kernel();
 
 
 	/*
@@ -205,13 +206,19 @@ pmap_bootstrap()
 
 
 	/* Init kernel pmap */
-	pmap_kernel()->ref_count = 1;
-	simple_lock_init(&pmap_kernel()->pm_lock);
+	pmap->pm_p1br = (void *)0x80000000;
+	pmap->pm_p0br = (void *)0x80000000;
+	pmap->pm_p1lr = 0x200000;
+	pmap->pm_p0lr = AST_PCB;
 
-	mtpr(pcb->P1BR = (void *)0x80000000, PR_P1BR);
-	mtpr(pcb->P0BR = (void *)0x80000000, PR_P0BR);
-	mtpr(pcb->P1LR = 0x200000, PR_P1LR);
-	mtpr(pcb->P0LR = AST_PCB, PR_P0LR);
+	pmap->ref_count = 1;
+
+	/* Activate the kernel pmap. */
+	mtpr(pcb->P1BR = pmap->pm_p1br, PR_P1BR);
+	mtpr(pcb->P0BR = pmap->pm_p0br, PR_P0BR);
+	mtpr(pcb->P1LR = pmap->pm_p1lr, PR_P1LR);
+	mtpr(pcb->P0LR = pmap->pm_p0lr, PR_P0LR);
+
 	/*
 	 * Now everything should be complete, start virtual memory.
 	 */
@@ -259,6 +266,34 @@ if(startpmapdebug)printf("pmap_create: phys_size %x\n",phys_size);
 	return (pmap);
 }
 
+/*
+ * Initialize a preallocated an zeroed pmap structure,
+ */
+void
+pmap_pinit(pmap)
+	pmap_t pmap;
+{
+	int bytesiz;
+
+	/*
+	 * Allocate PTEs and stash them away in the pmap.
+	 * XXX Ok to use kmem_alloc_wait() here?
+	 */
+	bytesiz = btoc(MAXTSIZ + MAXDSIZ + MMAPSPACE + MAXSSIZ) *
+	    sizeof(struct pte);
+	pmap->pm_p0br = (void *)kmem_alloc_wait(pte_map, bytesiz);
+	pmap->pm_p0lr = btoc(MAXTSIZ + MAXDSIZ + MMAPSPACE) | AST_PCB;
+	pmap->pm_p1br = (void *)pmap->pm_p0br + bytesiz - 0x800000;
+	pmap->pm_p1lr = (0x200000 - btoc(MAXSSIZ));
+
+#ifdef PMAPDEBUG
+if(startpmapdebug)
+    printf("pmap_pinit(%p): p0br=%p p0lr=0x%lx p1br=%p p1lr=0x%lx\n",
+    pmap, pmap->pm_p0br, pmap->pm_p0lr, pmap->pm_p1br, pmap->pm_p1lr);
+#endif
+
+	pmap->ref_count = 1;
+}
 
 /*
  * Release any resources held by the given physical map.
@@ -273,8 +308,8 @@ pmap_release(pmap)
 if(startpmapdebug)printf("pmap_release: pmap %x\n",pmap);
 #endif
 
-	if (pmap->pm_pcb->P0BR)
-		kmem_free_wakeup(pte_map, (vm_offset_t)pmap->pm_pcb->P0BR, 
+	if (pmap->pm_p0br)
+		kmem_free_wakeup(pte_map, (vm_offset_t)pmap->pm_p0br, 
 		    USRPTSIZE * sizeof(struct pte));
 }
 
@@ -329,20 +364,20 @@ printf("pmap_enter: pmap: %x,virt %x, phys %x, prot %x w %x\n",
 		return;
 
 	if (v < 0x40000000) {
-		patch = (int *)pmap->pm_pcb->P0BR;
+		patch = (int *)pmap->pm_p0br;
 		i = (v >> PGSHIFT);
-		if (i >= (pmap->pm_pcb->P0LR & ~AST_MASK))
+		if (i >= (pmap->pm_p0lr & ~AST_MASK))
 			panic("P0 too small in pmap_enter");
-		patch = (int *)pmap->pm_pcb->P0BR;
+		patch = (int *)pmap->pm_p0br;
 		nypte = PG_V|(p>>PGSHIFT)|(prot&VM_PROT_WRITE?PG_RW:PG_RO);
 	} else if (v & KERNBASE) {
 		patch = (int *)Sysmap;
 		i = (v - KERNBASE) >> PGSHIFT;
 		nypte = PG_V|(p>>PGSHIFT)|(prot&VM_PROT_WRITE?PG_KW:PG_KR);
 	} else {
-		patch = (int *)pmap->pm_pcb->P1BR;
+		patch = (int *)pmap->pm_p1br;
 		i = (v - 0x40000000) >> PGSHIFT;
-		if (i < pmap->pm_pcb->P1LR)
+		if (i < pmap->pm_p1lr)
 			panic("pmap_enter: must expand P1");
 		if (v < pmap->pm_stack)
 			pmap->pm_stack = v;
@@ -453,14 +488,14 @@ if(startpmapdebug)printf("pmap_extract: pmap %x, va %x\n",pmap, va);
 #endif
 
         if (va < 0x40000000) {
-                pte = pmap->pm_pcb->P0BR;
-                if ((va >> PGSHIFT) > (pmap->pm_pcb->P0LR & ~AST_MASK))
+                pte = pmap->pm_p0br;
+                if ((va >> PGSHIFT) > (pmap->pm_p0lr & ~AST_MASK))
                         return 0;
         } else if (va & KERNBASE) {
 		pte = Sysmap;
 	} else {
-                pte = pmap->pm_pcb->P1BR;
-                if (POFF(va) < pmap->pm_pcb->P1LR)
+                pte = pmap->pm_p1br;
+                if (POFF(va) < pmap->pm_p1lr)
                         return 0;
         }
 
@@ -520,9 +555,6 @@ if(startpmapdebug) printf("pmap_protect: pmap %x, start %x, end %x, prot %x\n",
 	if (pmap == 0)
 		return;
 
-	if ((pmap->pm_pcb == 0) && (start < KERNBASE)) /* No page registers */
-		return;
-
 	if (start & KERNBASE) { /* System space */
 		pt = Sysmap;
 #ifdef DIAGNOSTIC
@@ -535,16 +567,16 @@ if(startpmapdebug) printf("pmap_protect: pmap %x, start %x, end %x, prot %x\n",
 			return;
 		if (start < pmap->pm_stack)
 			start = pmap->pm_stack;
-		pt = pmap->pm_pcb->P1BR;
+		pt = pmap->pm_p1br;
 #ifdef DIAGNOSTIC
-		if (((start & 0x3fffffff) >> PGSHIFT) < pmap->pm_pcb->P1LR)
+		if (((start & 0x3fffffff) >> PGSHIFT) < pmap->pm_p1lr)
 			panic("pmap_protect: outside P1LR");
 #endif
 		pr = (prot & VM_PROT_WRITE ? PROT_RW : PROT_RO);
 	} else { /* P0 space */
-		pt = pmap->pm_pcb->P0BR;
+		pt = pmap->pm_p0br;
 #ifdef DIAGNOSTIC
-		if ((end >> PGSHIFT) > (pmap->pm_pcb->P0LR & ~AST_MASK))
+		if ((end >> PGSHIFT) > (pmap->pm_p0lr & ~AST_MASK))
 			panic("pmap_protect: outside P0LR");
 #endif
 		pr = (prot & VM_PROT_WRITE ? PROT_RW : PROT_RO);
@@ -670,4 +702,31 @@ if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
 		} while ((pv = pv->pv_next));
 	}
 	mtpr(0, PR_TBIA);
+}
+
+/*
+ * Activate the address space for the specified process.  Note that we
+ * only need to load the process's PCB, since the page base/length registers
+ * will be implicitly restored on the way back out to user space.
+ */
+void
+pmap_activate(p)
+	struct proc *p;
+{
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+
+	pcb->P0BR = pmap->pm_p0br;
+	pcb->P0LR = pmap->pm_p0lr;
+	pcb->P1BR = pmap->pm_p1br;
+	pcb->P1LR = pmap->pm_p1lr;
+}
+
+/*
+ * Deactivate the address space for the specified process.
+ */
+void
+pmap_deactivate(p)
+	struct proc *p;
+{
 }
