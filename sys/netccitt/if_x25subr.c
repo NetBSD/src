@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.29 2002/07/03 19:06:52 thorpej Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.30 2002/07/03 21:39:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.29 2002/07/03 19:06:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.30 2002/07/03 21:39:42 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -772,7 +772,7 @@ pk_rtattach(so, m0)
 	while ((m = (s)->sb_mb) != NULL) \
 		{ \
 			(s)->sb_mb = m->m_nextpkt; \
-			SB_UPDATE_TAIL((s)); \
+			SB_EMPTY_FIXUP((s)); \
 			m->m_nextpkt = 0; \
 			sbfree((s), m); \
 			f; \

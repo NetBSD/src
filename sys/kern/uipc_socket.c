@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.69 2002/07/03 19:06:48 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.70 2002/07/03 21:39:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.69 2002/07/03 19:06:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.70 2002/07/03 21:39:41 thorpej Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -995,7 +995,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		if ((flags & MSG_PEEK) == 0) {
 			KASSERT(so->so_rcv.sb_mb == m);
 			so->so_rcv.sb_mb = nextrecord;
-			SB_UPDATE_TAIL(&so->so_rcv);
+			SB_EMPTY_FIXUP(&so->so_rcv);
 		}
 	}
 	SBLASTRECORDCHK(&so->so_rcv, "soreceive 2");
@@ -1082,7 +1082,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 						so->so_rcv.sb_lastrecord = m;
 				} else {
 					so->so_rcv.sb_mb = nextrecord;
-					SB_UPDATE_TAIL(&so->so_rcv);
+					SB_EMPTY_FIXUP(&so->so_rcv);
 				}
 				SBLASTRECORDCHK(&so->so_rcv, "soreceive 3");
 				SBLASTMBUFCHK(&so->so_rcv, "soreceive 3");
@@ -1162,7 +1162,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	if ((flags & MSG_PEEK) == 0) {
 		if (m == 0) {
 			/*
-			 * First part is an inline SB_UPDATE_TAIL().  Second
+			 * First part is an inline SB_EMPTY_FIXUP().  Second
 			 * part makes sure sb_lastrecord is up-to-date if
 			 * there is still data in the socket buffer.
 			 */

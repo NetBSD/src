@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.3 2002/07/03 19:36:52 thorpej Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.4 2002/07/03 21:39:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -537,7 +537,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 		if ((flags & MSG_PEEK) == 0) {
 			KASSERT(so->so_rcv.sb_mb == m);
 			so->so_rcv.sb_mb = nextrecord;
-			SB_UPDATE_TAIL(&so->so_rcv);
+			SB_EMPTY_FIXUP(&so->so_rcv);
 		}
 	}
 	SBLASTRECORDCHK(&so->so_rcv, "kttcp_soreceive 2");
@@ -599,7 +599,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 						so->so_rcv.sb_lastrecord = m;
 				} else {
 					so->so_rcv.sb_mb = nextrecord;
-					SB_UPDATE_TAIL(&so->so_rcv);
+					SB_EMPTY_FIXUP(&so->so_rcv);
 				}
 				SBLASTRECORDCHK(&so->so_rcv,
 				    "kttcp_soreceive 3");
@@ -683,7 +683,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 	if ((flags & MSG_PEEK) == 0) {
 		if (m == 0) {
 			/*
-			 * First part is an SB_UPDATE_TAIL().  Second part
+			 * First part is an SB_EMPTY_FIXUP().  Second part
 			 * makes sure sb_lastrecord is up-to-date if
 			 * there is still data in the socket buffer.
 			 */
