@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_300.c,v 1.6 1996/04/12 06:09:58 cgd Exp $	*/
+/*	$NetBSD: tc_3000_300.c,v 1.7 1996/05/01 23:19:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -182,7 +182,7 @@ tc_3000_300_iointr(framep, vec)
 	void *framep;
 	int vec;
 {
-	u_int32_t tcir, ioasicir;
+	u_int32_t tcir, ioasicir, ioasicimr;
 	int opt0intr, opt1intr, ifound;
 
 #ifdef DIAGNOSTIC
@@ -202,7 +202,12 @@ tc_3000_300_iointr(framep, vec)
 		tcir = *(volatile u_int32_t *)TC_3000_300_IR;
 		ioasicir = *(volatile u_int32_t *)
 		    IOASIC_REG_INTR(DEC_3000_300_IOASIC_ADDR);
+		ioasicimr = *(volatile u_int32_t *)
+		    IOASIC_REG_IMSK(DEC_3000_300_IOASIC_ADDR);
 		tc_mb();
+
+		/* Ignore interrupts that aren't enabled out. */
+		ioasicir &= ioasicimr;
 
 		/* clear the interrupts/errors we found. */
 		*(volatile u_int32_t *)TC_3000_300_IR = tcir;
@@ -222,9 +227,9 @@ tc_3000_300_iointr(framep, vec)
 		CHECKINTR(TC_3000_300_DEV_IOASIC, tcir & TC_3000_300_IR_IOASIC);
 		CHECKINTR(TC_3000_300_DEV_TCDS, tcir & TC_3000_300_IR_TCDS);
 		CHECKINTR(TC_3000_300_DEV_OPT1,
-		    ioasicir & IOASIC_INTR_300_OPT0);
-		CHECKINTR(TC_3000_300_DEV_OPT0,
 		    ioasicir & IOASIC_INTR_300_OPT1);
+		CHECKINTR(TC_3000_300_DEV_OPT0,
+		    ioasicir & IOASIC_INTR_300_OPT0);
 #undef CHECKINTR
 
 #ifdef DIAGNOSTIC
