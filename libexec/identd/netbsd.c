@@ -1,6 +1,6 @@
+/*	$NetBSD: netbsd.c,v 1.10 1997/10/08 07:07:51 mrg Exp $	*/
+
 /*
-**	$NetBSD: netbsd.c,v 1.9 1996/08/30 17:41:37 thorpej Exp $
-**
 ** netbsd.c		Low level kernel access functions for NetBSD
 **
 ** This program is in the public domain and may be used freely by anyone
@@ -19,6 +19,7 @@
 #include <pwd.h>
 #include <signal.h>
 #include <syslog.h>
+#include <stdlib.h>
 
 #include "kvm.h"
 
@@ -62,11 +63,6 @@
 #include "identd.h"
 #include "error.h"
 
-
-extern void *calloc();
-extern void *malloc();
-
-
 struct nlist nl[] =
 {
 #define N_FILE 0
@@ -86,6 +82,9 @@ static int nfile;
 
 static struct inpcbtable tcbtable;
   
+static int getbuf __P((long, char *, int, char *));
+static struct socket *getlist __P((struct inpcbtable *, struct inpcbtable *,
+    struct in_addr *, int, struct in_addr *, int));
 
 int k_open()
 {
@@ -121,7 +120,7 @@ static int getbuf(addr, buf, len, what)
   if (kvm_read(kd, addr, buf, len) < 0)
   {
     if (syslog_flag)
-      syslog(LOG_ERR, "getbuf: kvm_read(%08x, %d) - %s : %m",
+      syslog(LOG_ERR, "getbuf: kvm_read(%#lx, %d) - %s : %m",
 	     addr, len, what);
 
     return 0;
@@ -152,7 +151,8 @@ getlist(tcbtablep, ktcbtablep, faddr, fport, laddr, lport)
 	for (kpcbp = tcbtablep->inpt_queue.cqh_first;
 	     kpcbp != (struct inpcb *)ktcbtablep;
 	     kpcbp = pcb.inp_queue.cqe_next) {
-		if (!getbuf((long) kpcbp, &pcb, sizeof(struct inpcb), "tcb"))
+		if (!getbuf((long)kpcbp, (char *)&pcb, sizeof(struct inpcb),
+		    "tcb"))
 			break;
 		if (pcb.inp_faddr.s_addr == faddr->s_addr &&
 		    pcb.inp_laddr.s_addr == laddr->s_addr &&
@@ -181,10 +181,10 @@ int k_getuid(faddr, fport, laddr, lport, uid)
   struct ucred ucb;
   
   /* -------------------- FILE DESCRIPTOR TABLE -------------------- */
-  if (!getbuf(nl[N_NFILE].n_value, &nfile, sizeof(nfile), "nfile"))
+  if (!getbuf(nl[N_NFILE].n_value, (char *)&nfile, sizeof(nfile), "nfile"))
     return -1;
   
-  if (!getbuf(nl[N_FILE].n_value, &addr, sizeof(addr), "&file"))
+  if (!getbuf(nl[N_FILE].n_value, (char *)&addr, sizeof(addr), "&file"))
     return -1;
 
   {
@@ -210,11 +210,12 @@ int k_getuid(faddr, fport, laddr, lport, uid)
   }
   
   /* -------------------- TCP PCB LIST -------------------- */
-  if (!getbuf(nl[N_TCBTABLE].n_value, &tcbtable, sizeof(tcbtable), "tcbtable"))
+  if (!getbuf(nl[N_TCBTABLE].n_value, (char *)&tcbtable, sizeof(tcbtable),
+      "tcbtable"))
     return -1;
   
-  sockp = getlist(&tcbtable, nl[N_TCBTABLE].n_value, faddr, fport, laddr,
-      lport);
+  sockp = getlist(&tcbtable, (struct inpcbtable *)nl[N_TCBTABLE].n_value,
+      faddr, fport, laddr, lport);
   
   if (!sockp)
     return -1;
@@ -231,7 +232,7 @@ int k_getuid(faddr, fport, laddr, lport, uid)
     if (xfile[i].f_type == DTYPE_SOCKET &&
 	(struct socket *) xfile[i].f_data == sockp)
     {
-      if (!getbuf(xfile[i].f_cred, &ucb, sizeof(ucb), "ucb"))
+      if (!getbuf((long)xfile[i].f_cred, (char *)&ucb, sizeof(ucb), "ucb"))
 	return -1;
 
       *uid = ucb.cr_uid;
