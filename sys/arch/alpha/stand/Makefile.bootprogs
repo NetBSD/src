@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.2 1998/03/28 00:54:15 cgd Exp $
+# $NetBSD: Makefile.bootprogs,v 1.3 1998/09/28 21:18:55 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -26,7 +26,7 @@ AFLAGS += -DASSEMBLER
 #CPPFLAGS+= -nostdinc -I${.OBJDIR}
 CPPFLAGS+= -I${.OBJDIR}
 CPPFLAGS += -D_STANDALONE -I${.CURDIR}/../.. -I${S}
-CFLAGS = -Wall -Werror -mno-fp-regs -g
+CFLAGS = ${CWARNFLAGS} -mno-fp-regs -g
 
 # For descriptions of regions available to bootstrap programs, see
 # section 3.4.1.2 (pp. III 3-14 - III 3-18) of the second edition of
