@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.1.2.1 1997/08/11 19:52:05 thorpej Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.1.2.2 1997/08/24 15:25:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,8 +45,6 @@ struct smc91cxx_softc {
 	bus_space_handle_t sc_bsh;
 
 	struct	ifmedia sc_media;	/* our media info */
-
-	int	sc_pages_wanted;	/* size of outstanding MMU ALLOC */
 };
 
 #define	SMC_SELECT_BANK(sc, x)						\
