@@ -1,4 +1,4 @@
-/*	$NetBSD: v_ulcase.c,v 1.9 2002/04/09 01:47:36 thorpej Exp $	*/
+/*	$NetBSD: v_ulcase.c,v 1.10 2002/12/06 03:25:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)v_ulcase.c	10.7 (Berkeley) 3/6/96";
 #else
-__RCSID("$NetBSD: v_ulcase.c,v 1.9 2002/04/09 01:47:36 thorpej Exp $");
+__RCSID("$NetBSD: v_ulcase.c,v 1.10 2002/12/06 03:25:45 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,7 @@ v_mulcase(sp, vp)
 	recno_t lno;
 
 	for (lno = vp->m_start.lno;;) {
-		if (db_get(sp, lno, DBG_FATAL, (char **) &p, &len))
+		if (db_get(sp, lno, DBG_FATAL, (void *) &p, &len))
 			return (1);
 		if (len != 0 && ulcase(sp, lno, p, len,
 		    lno == vp->m_start.lno ? vp->m_start.cno : 0,
