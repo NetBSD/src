@@ -1,10 +1,21 @@
 			SENDMAIL RELEASE NOTES
-      Id: RELEASE_NOTES,v 8.561 2000/04/06 23:51:49 gshapiro Exp
+      Id: RELEASE_NOTES,v 8.561.4.6 2000/06/07 07:39:53 gshapiro Exp
 
 
 This listing shows the version of the sendmail binary, the version
 of the sendmail configuration files, the date of release, and a
 summary of the changes in that release.
+
+8.10.2/8.10.2	2000/06/07
+	SECURITY: Work around broken Linux setuid() implementation.
+		On Linux, a normal user process has the ability to subvert
+		the setuid() call such that it is impossible for a root
+		process to drop its privileges.  Problem noted by Wojciech 
+		Purczynski of elzabsoft.pl.
+	SECURITY: Add more vigilance around set*uid(), setgid(), setgroups(),
+		initgroups(), and chroot() calls.
+	Added Files:
+		test/t_setuid.c
 
 8.10.1/8.10.1	2000/04/06
 	SECURITY: Limit the choice of outgoing (client-side) SMTP
