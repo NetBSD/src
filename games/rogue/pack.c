@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.4 1997/10/12 11:45:37 lukem Exp $	*/
+/*	$NetBSD: pack.c,v 1.5 1998/09/11 14:10:39 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)pack.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pack.c,v 1.4 1997/10/12 11:45:37 lukem Exp $");
+__RCSID("$NetBSD: pack.c,v 1.5 1998/09/11 14:10:39 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ char *curse_message = "you can't, it appears to be cursed";
 object *
 add_to_pack(obj, pack, condense)
 	object *obj, *pack;
+	int condense;
 {
 	object *op;
 
@@ -106,6 +107,7 @@ take_from_pack(obj, pack)
 object *
 pick_up(row, col, status)
 	short *status;
+	int row, col;
 {
 	object *obj;
 
