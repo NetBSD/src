@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.65 2002/11/04 20:02:09 thorpej Exp $ */
+/* $NetBSD: locore.h,v 1.66 2003/10/05 16:34:51 tsutsui Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -26,7 +26,6 @@
 
 #ifndef _LKM
 #include "opt_cputype.h"
-#include "opt_mips_cache.h"
 #endif
 
 #include <mips/cpuregs.h>
