@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.3 2001/10/23 20:59:42 pooka Exp $	*/
+/*	$NetBSD: auxio.c,v 1.4 2002/03/16 14:00:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -45,7 +45,7 @@
 #include <machine/cpu.h>
 
 #include <dev/ebus/ebusreg.h>
-#include <sparc64/dev/ebusvar.h>
+#include <dev/ebus/ebusvar.h>
 #include <sparc64/dev/sbusvar.h>
 #include <sparc64/dev/auxioreg.h>
 
@@ -164,23 +164,23 @@ auxio_ebus_attach(parent, self, aux)
 	struct auxio_softc *sc = (struct auxio_softc *)self;
 	struct ebus_attach_args *ea = aux;
 
-	if (ea->ea_nregs < 1 || ea->ea_nvaddrs < 1) {
+	if (ea->ea_nreg < 1 || ea->ea_nvaddr < 1) {
 		printf(": no registers??\n");
 		return;
 	}
 
-	if (ea->ea_nregs != 5 || ea->ea_nvaddrs != 5) {
+	if (ea->ea_nreg != 5 || ea->ea_nvaddr != 5) {
 		printf(": not 5 (%d) registers, only setting led",
-		    ea->ea_nregs);
+		    ea->ea_nreg);
 		sc->sc_flags = AUXIO_LEDONLY|AUXIO_EBUS;
 	} else {
 		sc->sc_flags = AUXIO_EBUS;
-		sc->sc_pci = (bus_space_handle_t)(u_long)ea->ea_vaddrs[1];
-		sc->sc_freq = (bus_space_handle_t)(u_long)ea->ea_vaddrs[2];
-		sc->sc_scsi = (bus_space_handle_t)(u_long)ea->ea_vaddrs[3];
-		sc->sc_temp = (bus_space_handle_t)(u_long)ea->ea_vaddrs[4];
+		sc->sc_pci = (bus_space_handle_t)(u_long)ea->ea_vaddr[1];
+		sc->sc_freq = (bus_space_handle_t)(u_long)ea->ea_vaddr[2];
+		sc->sc_scsi = (bus_space_handle_t)(u_long)ea->ea_vaddr[3];
+		sc->sc_temp = (bus_space_handle_t)(u_long)ea->ea_vaddr[4];
 	}
-	sc->sc_led = (bus_space_handle_t)(u_long)ea->ea_vaddrs[0];
+	sc->sc_led = (bus_space_handle_t)(u_long)ea->ea_vaddr[0];
 	
 	sc->sc_tag = ea->ea_bustag;
 
