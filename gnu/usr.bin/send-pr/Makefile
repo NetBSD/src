@@ -12,7 +12,7 @@ LIBDIR=		/usr/lib
 NOPROG=	
 MAN1=		send-pr.0
 
-CLEANFILES=	send-pr install-sid
+CLEANFILES=	send-pr install-sid send-pr.1
 
 all:		send-pr install-sid send-pr.1
 
@@ -30,13 +30,12 @@ install-sid:	install-sid.sh
 		${.CURDIR}/install-sid.sh > install-sid
 
 beforeinstall:
-	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} send-pr \
+	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} send-pr \
 		${DESTDIR}${BINDIR}
-	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} install-sid \
+	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} install-sid \
 		${DESTDIR}${BINDIR}
-
 	install -d -o root -g wheel -m 755 ${DESTDIR}${LIBDIR}/gnats
-	install -o ${BINOWN} -g ${BINGRP} -m 444 categories \
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/categories \
 		${DESTDIR}${LIBDIR}/gnats/${GNATS_HOST}
 
 .include <bsd.prog.mk>
