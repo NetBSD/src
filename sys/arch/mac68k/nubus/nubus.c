@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: nubus.c,v 1.6 1994/02/23 04:38:24 briggs Exp $
+ * $Id: nubus.c,v 1.7 1994/06/26 12:59:19 briggs Exp $
  *
  */
 
@@ -635,6 +635,7 @@ find_nubus(void)
    drivers are initialized later, they can look through this array to
    see if their hardware is present and claim it. */
 
+   extern unsigned long	NuBusBase;
    register struct nubus_hw *nu;
    int nubus_num;
 
@@ -650,7 +651,7 @@ find_nubus(void)
    for (nubus_num = 0; nubus_num < 6; nubus_num++)
    {
       nu = nubus_table + nubus_num + 9;
-      nu->addr = (caddr_t)(NBBASE + nubus_num * NBMEMSIZE);
+      nu->addr = (caddr_t)(NuBusBase + nubus_num * NBMEMSIZE);
       nu->rom = nu->addr + NBROMOFFSET;
 
       if(!badbaddr(nu->addr+NBMEMSIZE-1))
