@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.3 2001/05/03 13:19:52 kleink Exp $ */
+/*	$NetBSD: ieee.h,v 1.4 2002/02/28 01:58:53 uch Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -127,11 +127,6 @@ struct ieee_double {
  */
 #define	SNG_EXP_INFNAN	255
 #define	DBL_EXP_INFNAN	2047
-
-#if 0
-#define	SNG_QUIETNAN	(1 << 22)
-#define	DBL_QUIETNAN	(1 << 19)
-#endif
 
 /*
  * Exponent biases.
