@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.2 1999/04/01 20:40:07 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.3 2000/05/20 13:30:03 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,8 +38,13 @@
 
 #include "lib/libsa/stand.h"
 
+#include "lib/libkern/libkern.h"
+
 #include "../include/pte.h"
-/*#include "../include/macros.h"*/
+#include "../include/rpb.h"
+#include "../include/sid.h"
+#define VAX780 1
+#include "../include/ka750.h"
 
 #include "../mba/mbareg.h"
 #include "../mba/hpreg.h"
@@ -53,81 +58,54 @@
  * But it works :)
  */
 
-struct	hp_softc {
-	int adapt;
-	int ctlr;
-	int unit;
-	int part;
-};
+static struct disklabel hplabel;
+static char io_buf[DEV_BSIZE];
+static volatile struct mba_regs *mr;
+static volatile struct hp_drv *hd;
+static int dpart;
 
-struct	disklabel hplabel;
-struct	hp_softc hp_softc;
-char io_buf[MAXBSIZE];
-daddr_t part_offset;
-
-hpopen(f, adapt, ctlr, unit, part)
-	struct open_file *f;
-        int ctlr, unit, part;
+int
+hpopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
-	struct disklabel *lp;
-	struct hp_softc *hs;
-	volatile struct mba_regs *mr;
-	volatile struct hp_drv *hd;
 	char *msg;
-	int i,err;
+	int i, err;
 
-	lp = &hplabel;
-	hs = &hp_softc;
-	mr = (void *)mbaaddr[ctlr];
-	hd = (void *)&mr->mba_md[unit];
+	if (askname == 0) { /* Take info from RPB */
+		mr = (void *)bootrpb.adpphy;
+		hd = (void *)&mr->mba_md[bootrpb.unit];
+	} else {
+		mr = (void *)nexaddr;
+		hd = (void *)&mr->mba_md[unit];
+		bootrpb.adpphy = (int)mr;
+		bootrpb.unit = unit;
+	}
+	bzero(&hplabel, sizeof(struct disklabel));
 
-	if (adapt > nsbi) return(EADAPT);
-	if (ctlr > nmba) return(ECTLR);
-	if (unit > MAXMBAU) return(EUNIT);
-
-	bzero(lp, sizeof(struct disklabel));
-
-	lp->d_secpercyl = 32;
-	lp->d_nsectors = 32;
-	hs->adapt = adapt;
-	hs->ctlr = ctlr;
-	hs->unit = unit;
-	hs->part = part;
+	hplabel.d_secpercyl = 32;
+	hplabel.d_nsectors = 32;
 
 	/* Set volume valid and 16 bit format; only done once */
 	mr->mba_cr = MBACR_INIT;
 	hd->hp_cs1 = HPCS_PA;
 	hd->hp_of = HPOF_FMT;
 
-	err = hpstrategy(hs, F_READ, LABELSECTOR, DEV_BSIZE, io_buf, &i);
+	err = hpstrategy(0, F_READ, LABELSECTOR, DEV_BSIZE, io_buf, &i);
 	if (err) {
 		printf("reading disklabel: %s\n", strerror(err));
 		return 0;
 	}
 
-	msg = getdisklabel(io_buf + LABELOFFSET, lp);
+	msg = getdisklabel(io_buf + LABELOFFSET, &hplabel);
 	if (msg)
 		printf("getdisklabel: %s\n", msg);
-	
-	f->f_devdata = (void *)hs;
 	return 0;
 }
 
-hpstrategy(hs, func, dblk, size, buf, rsize)
-	struct hp_softc *hs;
-	daddr_t	dblk;
-	u_int size, *rsize;
-	char *buf;
-	int func;
+int
+hpstrategy(void *f, int func, daddr_t dblk,
+    size_t size, void *buf, size_t *rsize)
 {
-	volatile struct mba_regs *mr;
-	volatile struct hp_drv *hd;
-	struct disklabel *lp;
-	unsigned int i, pfnum, mapnr, nsize, bn, cn, sn, tn;
-
-	mr = (void *)mbaaddr[hs->ctlr];
-	hd = (void *)&mr->mba_md[hs->unit];
-	lp = &hplabel;
+	unsigned int pfnum, mapnr, nsize, bn, cn, sn, tn;
 
 	pfnum = (u_int)buf >> VAX_PGSHIFT;
 
@@ -136,21 +114,23 @@ hpstrategy(hs, func, dblk, size, buf, rsize)
 
 	mr->mba_var = ((u_int)buf & VAX_PGOFSET);
 	mr->mba_bc = (~size) + 1;
-	bn = dblk + lp->d_partitions[hs->part].p_offset;
+	bn = dblk + hplabel.d_partitions[dpart].p_offset;
 
 	if (bn) {
-		cn = bn / lp->d_secpercyl;
-		sn = bn % lp->d_secpercyl;
-		tn = sn / lp->d_nsectors;
-		sn = sn % lp->d_nsectors;
+		cn = bn / hplabel.d_secpercyl;
+		sn = bn % hplabel.d_secpercyl;
+		tn = sn / hplabel.d_nsectors;
+		sn = sn % hplabel.d_nsectors;
 	} else
 		cn = sn = tn = 0;
 
 	hd->hp_dc = cn;
 	hd->hp_da = (tn << 8) | sn;
+#ifdef notdef
 	if (func == F_WRITE)
 		hd->hp_cs1 = HPCS_WRITE;
 	else
+#endif
 		hd->hp_cs1 = HPCS_READ;
 
 	while (mr->mba_sr & MBASR_DTBUSY)
@@ -158,8 +138,7 @@ hpstrategy(hs, func, dblk, size, buf, rsize)
 
 	if (mr->mba_sr & MBACR_ABORT)
 		return 1;
-	
-	*rsize = size;
 
+	*rsize = size;
 	return 0;
 }
