@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.56 2000/03/30 13:25:06 augustss Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.57 2000/06/30 16:44:33 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -703,7 +703,7 @@ send:
 			m->m_len += len;
 		} else {
 			m->m_next = m_copy(so->so_snd.sb_mb, off, (int) len);
-			if (m->m_next == 0) {
+			if (m->m_next == NULL) {
 				m_freem(m);
 				error = ENOBUFS;
 				goto out;
