@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/05/07 09:03:52 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.12 2002/05/08 11:27:30 jdolecek Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -21,7 +21,7 @@ SAMISCMAKEFLAGS= SA_USE_LOADFILE=yes # SA_USE_CREAD=yes
 RELOC=	4380000
 
 # XXX make defs arch-indep.
-INCLUDES+=	-I${.CURDIR} -I${.CURDIR}/obj.${MACHINE} -I${S}/arch -I${S} -I${S}/lib/libsa -I${S}/lib/libkern
+INCLUDES+=	-I${.OBJDIR} -I${S}/arch -I${S} -I${S}/lib/libsa 
 DEFS+=		-D_STANDALONE -DMC68040 -DSUPPORT_BOOTP -DSUPPORT_DHCP  -DDEBUG -DSD_DEBUG -DSCSI_DEBUG # -DEN_DEBUG   -DNETIF_DEBUG  
 SAMISCCPPFLAGS=	-DSUPPORT_DHCP -DSUPPORT_BOOTP -DINSECURE # -DBOOTP_DEBUG -DETHER_DEBUG -DNET_DEBUG # -DNETIF_DEBUG -DNFS_DEBUG  -DARP_DEBUG 
 WARNS=1
@@ -30,8 +30,11 @@ LIBCRT0=
 
 PROG=	boot
 SRCS=   boot.c machdep.c conf.c devopen.c rtc.c sd.c scsi.c en.c vers.c build.c
+
 # @@@ dev_net.c should really be in libsa, but it doesn't
 # declare ip_convertaddr correctly, so I put it here _temporarily_.
+.PATH: ${S}/lib/libsa
+SRCS+=	dev_net.c
 
 CLEANFILES+= srt0.o boot.elf boot.raw machine ${MACHINE_ARCH} limits.h
 CLEANFILES+= vers.c build.c build	# generated dynamically
@@ -40,8 +43,6 @@ NOMAN=	# defined
 BINDIR=	/usr/mdec
 #LIBS=	${SALIB} ${KERNLIB} ${ZLIB}
 LIBS=	${SALIB} ${KERNLIB}
-
-OBJS+=	dev_net.o
 
 AWKPROG='\
 function x(v) { printf "\0%c%c%c", v / 65536, v / 256, v } \
@@ -58,11 +59,6 @@ ${PROG}: srt0.o ${OBJS} ${LIBS}
 	@${SIZE} $@.elf
 	@${OBJCOPY} -O binary $@.elf $@.raw
 	@(${SIZE} $@.elf | tail +2 | awk ${AWKPROG} ; cat $@.raw) > $@
-
-# this looks useful to me ... let's see when it will be an official part
-# of libsa
-dev_net.o : ${S}/lib/libsa/dev_net.c
-	${COMPILE.c} ${.IMPSRC}
 
 # startup
 
