@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_start.S,v 1.2 2002/04/05 16:58:09 thorpej Exp $	*/
+/*	$NetBSD: iq80310_start.S,v 1.3 2002/04/26 18:01:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -117,6 +117,10 @@ _C_LABEL(iq80310_start):
 	mov	r0, #1
 	mcr	p15, 0, r0, c3, c0, 0
 
+	/* Get ready to jump to the "real" kernel entry point... */
+	add	r0, pc, #(Lstart - . - 8)
+	ldr	r0, [r0]
+
 	/* OK, let's enable the MMU. */
 	mrc	p15, 0, r2, c1, c0, 0
 	orr	r2, r2, #CPU_CONTROL_MMU_ENABLE
@@ -126,9 +130,10 @@ _C_LABEL(iq80310_start):
 	nop
 	nop
 
-	/* ...and now we jump to the "real" kernel entry point! */
-	add	r0, pc, #(Lstart - . - 8)
-	ldr	pc, [r0]
+	/* CPWAIT sequence to make sure the MMU is on... */
+	mrc	p15, 0, r2, c2, c0, 0	/* arbitrary read of CP15 */
+	mov	r2, r2			/* force it to complete */
+	mov	pc, r0			/* leap to kernel entry point! */
 
 Ltable:
 	.word	0xa0004000
