@@ -32,13 +32,15 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)fixdfsi.s	5.4 (Berkeley) 4/12/91
+ *	$Id: fixdfsi.s,v 1.2 1993/10/21 01:39:59 jtc Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.text
-	/*.asciz "from: @(#)fixdfsi.s	5.4 (Berkeley) 4/12/91"*/
-	.asciz "$Id: fixdfsi.s,v 1.1 1993/10/07 00:19:02 cgd Exp $"
-#endif /* LIBC_SCCS and not lint */
+	.asciz "$Id: fixdfsi.s,v 1.2 1993/10/21 01:39:59 jtc Exp $"
+#endif
 
 	.globl ___fixdfsi
 ___fixdfsi:
