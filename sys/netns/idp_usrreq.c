@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.9 1996/02/13 22:13:43 christos Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.10 1996/05/22 13:56:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -44,6 +44,7 @@
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/stat.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -403,17 +404,18 @@ idp_ctloutput(req, so, level, name, value)
 
 /*ARGSUSED*/
 int
-idp_usrreq(so, req, m, nam, control)
+idp_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	struct nspcb *nsp = sotonspcb(so);
 	int error = 0;
 
 	if (req == PRU_CONTROL)
                 return (ns_control(so, (long)m, (caddr_t)nam,
-			(struct ifnet *)control));
+		    (struct ifnet *)control, p));
 	if (control && control->m_len) {
 		error = EINVAL;
 		goto release;
@@ -446,7 +448,7 @@ idp_usrreq(so, req, m, nam, control)
 		break;
 
 	case PRU_BIND:
-		error = ns_pcbbind(nsp, nam);
+		error = ns_pcbbind(nsp, nam, p);
 		break;
 
 	case PRU_LISTEN:
@@ -567,10 +569,11 @@ release:
 
 /*ARGSUSED*/
 int
-idp_raw_usrreq(so, req, m, nam, control)
+idp_raw_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	int error = 0;
 	struct nspcb *nsp = sotonspcb(so);
@@ -579,9 +582,12 @@ idp_raw_usrreq(so, req, m, nam, control)
 	switch (req) {
 
 	case PRU_ATTACH:
-
-		if (!(so->so_state & SS_PRIV) || (nsp != NULL)) {
-			error = EINVAL;
+		if (nsp != 0) {
+			error = EISCONN;
+			break;
+		}
+		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
+			error = EACCES;
 			break;
 		}
 		error = ns_pcballoc(so, &nsrawpcb);
@@ -595,7 +601,7 @@ idp_raw_usrreq(so, req, m, nam, control)
 		nsp->nsp_flags = NSP_RAWIN | NSP_RAWOUT;
 		break;
 	default:
-		error = idp_usrreq(so, req, m, nam, control);
+		error = idp_usrreq(so, req, m, nam, control, p);
 	}
 	return (error);
 }
