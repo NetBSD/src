@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.27 2001/01/20 02:41:19 lukem Exp $ */
+/* $NetBSD: if_eb.c,v 1.28 2001/03/17 18:46:25 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -331,10 +331,10 @@ ebattach(parent, self, aux)
 	/* Print out some information for the user. */
 
 	if ((id & 0xf0) == 0xa0)
-		printf(" SEEQ80C04 rev %x address %s", id & 0x0f,
+		printf(": SEEQ80C04 rev %x address %s", id & 0x0f,
 		    ether_sprintf(myaddr));
 	else
-		printf(" SEEQ???? rev %02x address %s", id,
+		printf(": SEEQ???? rev %02x address %s", id,
 		    ether_sprintf(myaddr));
 
 	sc->sc_irqclaimed = 0;

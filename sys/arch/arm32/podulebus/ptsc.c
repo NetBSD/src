@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.25 2000/06/29 08:53:02 mrg Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.26 2001/03/17 18:46:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -186,7 +186,7 @@ ptscattach(pdp, dp, auxp)
 	(void)get_bootconf_option(boot_args, "ptsc.hostid",
 	    BOOTOPT_TYPE_INT, &sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
 
-	printf(" host=%d", sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
+	printf(": host=%d", sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
 
 	sc->sc_softc.sc_ih.ih_func = ptsc_intr;
 	sc->sc_softc.sc_ih.ih_arg  = &sc->sc_softc;
