@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.9 1995/08/18 15:27:48 chopps Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.10 1995/09/04 13:04:40 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -55,7 +55,7 @@ int ahscprint __P((void *auxp, char *));
 void ahscattach __P((struct device *, struct device *, void *));
 int ahscmatch __P((struct device *, struct cfdata *, void *));
 
-void ahsc_dmafree __P((struct sbic_softc *));
+void ahsc_enintr __P((struct sbic_softc *));
 void ahsc_dmastop __P((struct sbic_softc *));
 int ahsc_dmanext __P((struct sbic_softc *));
 int ahsc_dmaintr __P((struct sbic_softc *));
@@ -77,7 +77,6 @@ struct scsi_device ahsc_scsidev = {
 
 
 #ifdef DEBUG
-void	ahsc_dmatimeout __P((struct sbic_softc *));
 int	ahsc_dmadebug = 0;
 #endif
 
@@ -119,16 +118,12 @@ ahscattach(pdp, dp, auxp)
 	 */
 	rp->CNTR = CNTR_PDMD;
 	rp->DAWR = DAWR_AHSC;
-	sc->sc_dmafree = ahsc_dmafree;
+	sc->sc_enintr = ahsc_enintr;
 	sc->sc_dmago = ahsc_dmago;
 	sc->sc_dmanext = ahsc_dmanext;
 	sc->sc_dmastop = ahsc_dmastop;
 	sc->sc_dmacmd = 0;
 
-#ifdef DEBUG
-	/* make sure timeout is really not needed */
-	timeout((void *)ahsc_dmatimeout, sc, 30 * hz);
-#endif
 	/*
 	 * eveything is a valid dma address
 	 */
@@ -170,41 +165,15 @@ ahscprint(auxp, pnp)
 
 
 void
-ahsc_dmafree(dev)
+ahsc_enintr(dev)
 	struct sbic_softc *dev;
 {
 	volatile struct sdmac *sdp;
-	int s;
 
 	sdp = dev->sc_cregs;
 
-	s = splbio();
-#ifdef DEBUG
-	dev->sc_dmatimo = 0;
-#endif
-	if (dev->sc_dmacmd) {
-		if ((dev->sc_dmacmd & (CNTR_TCEN | CNTR_DDIR)) == 0) {
-			/*
-			 * only FLUSH if terminal count not enabled, 
-			 * and reading from peripheral
-			 */
-			sdp->FLUSH = 1;
-			while ((sdp->ISTR & ISTR_FE_FLG) == 0)
-				;
-		}
-		/* 
-		 * clear possible interrupt and stop dma
-		 */
-		sdp->CINT = 1;
-		sdp->SP_DMA = 1;
-		dev->sc_dmacmd = 0;
-	}
-	/*
-	 * disable interrupts
-	 */
-	sdp->CNTR = CNTR_PDMD;	/* disable interrupts from dma/scsi */
-	dev->sc_flags &= ~SBICF_INTR;
-	splx(s);
+	dev->sc_flags |= SBICF_INTR;
+	sdp->CNTR = CNTR_PDMD | CNTR_INTEN;
 }
 
 int
@@ -225,7 +194,6 @@ ahsc_dmago(dev, addr, count, flags)
 #ifdef DEBUG
 	if (ahsc_dmadebug & DDB_IO)
 		printf("ahsc_dmago: cmd %x\n", dev->sc_dmacmd);
-	dev->sc_dmatimo = 1;
 #endif
 
 	dev->sc_flags |= SBICF_INTR;
@@ -248,7 +216,6 @@ ahsc_dmastop(dev)
 #ifdef DEBUG
 	if (ahsc_dmadebug & DDB_FOLLOW)
 		printf("ahsc_dmastop()\n");
-	dev->sc_dmatimo = 0;
 #endif
 	if (dev->sc_dmacmd) {
 		s = splbio();
@@ -327,9 +294,6 @@ ahsc_dmanext(dev)
 		ahsc_dmastop(dev);
 		return(0);
 	}
-#ifdef DEBUG
-	dev->sc_dmatimo = 1;
-#endif
 	if ((dev->sc_dmacmd & (CNTR_TCEN | CNTR_DDIR)) == 0) {
 		  /* 
 		   * only FLUSH if terminal count not enabled,
@@ -353,21 +317,13 @@ ahsc_dmanext(dev)
 }
 
 #ifdef DEBUG
-/*ARGSUSED*/
 void
-ahsc_dmatimeout(sc)
-	struct sbic_softc *sc;
+ahsc_dump()
 {
-	int s;
+	int i;
 
-	s = splbio();
-	if (sc->sc_dmatimo) {
-		if (sc->sc_dmatimo > 1)
-			printf("%s: dma timeout #%d\n", 
-			    sc->sc_dev.dv_xname, sc->sc_dmatimo - 1);
-		sc->sc_dmatimo++;
-	}
-	splx(s);
-	timeout((void *)ahsc_dmatimeout, sc, 30 * hz);
+	for (i = 0; i < ahsccd.cd_ndevs; ++i)
+		if (ahsccd.cd_devs[i])
+			sbic_dump(ahsccd.cd_devs[i]);
 }
 #endif
