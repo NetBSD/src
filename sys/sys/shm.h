@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.36 2004/09/28 17:26:25 jdolecek Exp $	*/
+/*	$NetBSD: shm.h,v 1.37 2004/09/28 19:05:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -82,6 +82,10 @@
 
 #define	SHM_RDONLY	010000	/* Attach read-only (else read-write) */
 #define	SHM_RND		020000	/* Round attach address to SHMLBA */
+#ifdef _KERNEL
+#define _SHM_RMLINGER	040000	/* Attach even if segment removed */
+#endif
+
 /* Segment low boundry address multiple */
 #if defined(_KERNEL) || defined(_STANDALONE) || defined(_LKM)
 #define	SHMLBA		PAGE_SIZE
