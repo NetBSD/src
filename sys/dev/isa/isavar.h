@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.19 1996/03/08 20:25:25 cgd Exp $	*/
+/*	$NetBSD: isavar.h,v 1.20 1996/03/16 02:00:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Chris G. Demetriou
@@ -130,12 +130,5 @@ char	*isa_intr_typename __P((int type));
  */
 void isa_establish __P((struct isadev *, struct device *));
 #endif
-
-/*
- * software conventions
- */
-typedef enum { BUS_ISA, BUS_EISA } isa_type;
-
-extern isa_type isa_bustype;	/* type of bus; XXX should be in softc */
 
 #endif /* _DEV_ISA_ISAVAR_H_ */
