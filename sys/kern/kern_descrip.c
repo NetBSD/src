@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.33 1995/03/08 01:20:21 cgd Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.34 1995/04/10 18:28:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -167,7 +167,7 @@ dup2(p, uap, retval)
 		if (new != i)
 			panic("dup2: fdalloc");
 	} else {
-		(void) fdclose(p, new);
+		(void) fdrelease(p, new);
 	}
 	return (finishdup(fdp, old, new, retval));
 }
@@ -345,7 +345,7 @@ finishdup(fdp, old, new, retval)
 }
 
 int
-fdclose(p, fd)
+fdrelease(p, fd)
 	struct proc *p;
 	int fd;
 {
@@ -382,7 +382,7 @@ close(p, uap, retval)
 
 	if ((u_int)fd >= fdp->fd_nfiles)
 		return (EBADF);
-	return (fdclose(p, fd));
+	return (fdrelease(p, fd));
 }
 
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2)
@@ -954,5 +954,5 @@ fdcloseexec(p)
 
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++)
 		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE)
-			(void) fdclose(p, fd);
+			(void) fdrelease(p, fd);
 }
