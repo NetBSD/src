@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.16 2000/11/24 21:58:06 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.17 2000/11/24 22:05:13 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.16 2000/11/24 21:58:06 sato Exp $";
+    "$Id: hpcfb.c,v 1.17 2000/11/24 22:05:13 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,6 @@ int	hpcfb_debug = 0;
 #define HPCFB_MAX_ROW 80
 #endif /* HPCFB_MAX_ROW */
 
-#define HPCFB_TVOPTIM
 /*
  * currently experimental
 #define HPCFB_JUMP
@@ -110,13 +109,11 @@ struct hpcfb_vchar {
 	long attr;
 };
 
-#ifdef HPCFB_TVOPTIM
 struct hpcfb_tvrow {
 	int maxcol;
 	int spacecol;
 	struct hpcfb_vchar col[HPCFB_MAX_COLUMN];
 };
-#endif /* HPCFB_TVOPTIM */
 
 struct hpcfb_devconfig {
 	struct rasops_info	dc_rinfo;	/* rasops infomation */
@@ -125,11 +122,7 @@ struct hpcfb_devconfig {
 	struct hpcfb_softc *dc_sc;
 	int dc_rows;
 	int dc_cols;
-#ifdef HPCFB_TVOPTIM
 	struct hpcfb_tvrow *dc_tvram;
-#else /* HPCFB_TVOPTIM */
-	struct hpcfb_vchar *dc_tvram;
-#endif /* HPCFB_TVOPTIM */
 	int dc_curx;
 	int dc_cury;
 #ifdef HPCFB_JUMP
@@ -290,11 +283,7 @@ struct wsdisplay_emulops rasops_emul;
 static int hpcfbconsole;
 struct hpcfb_devconfig hpcfb_console_dc;
 struct wsscreen_descr hpcfb_console_wsscreen;
-#ifdef HPCFB_TVOPTIM
 struct hpcfb_tvrow hpcfb_console_tvram[HPCFB_MAX_ROW];
-#else /* HPCFB_TVOPTIM */
-struct hpcfb_vchar hpcfb_console_tvram[200*200];
-#endif /* HPCFB_TVOPTIM */
 
 /*
  *  function bodies
@@ -793,22 +782,11 @@ hpcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	dc->dc_rinfo.ri_bits  = dc->dc_bstore;
 #endif /* HPCFB_BSTORE */
 	if (dc->dc_tvram == NULL){
-#ifdef HPCFB_TVOPTIM
 		dc->dc_tvram = 
 			malloc(sizeof(struct hpcfb_tvrow)*dc->dc_rows,
 				M_DEVBUF, M_WAITOK);
 		bzero(dc->dc_tvram, 
 				sizeof(struct hpcfb_tvrow)*dc->dc_rows);
-#else /* HPCFB_TVOPTIM */
-		dc->dc_tvram = 
-			malloc(sizeof(struct hpcfb_vchar)
-				* dc->dc_rows
-				* dc->dc_cols , M_DEVBUF, M_WAITOK);	
-		bzero(dc->dc_tvram, 
-				sizeof(struct hpcfb_vchar)
-				* dc->dc_rows
-				* dc->dc_cols);
-#endif /* HPCFB_TVOPTIM */
 	}
 				
 	*curxp = 0;
@@ -986,15 +964,9 @@ hpcfb_tv_putchar(dc, row, col, uc, attr)
 	u_int uc;
 	long attr;
 {
-#ifdef HPCFB_TVOPTIM
 	struct hpcfb_tvrow *vscn = dc->dc_tvram;
 	struct hpcfb_vchar *vc = &vscn[row].col[col];
 	struct hpcfb_vchar *vcb;
-#else /* HPCFB_TVOPTIM */
-	struct hpcfb_vchar *vscn = dc->dc_tvram;
-	struct hpcfb_vchar *vc = 
-		(vscn + row * dc->dc_cols + col);
-#endif /* HPCFB_TVOPTIM */
 
 	if (vscn == 0)
 		return;
@@ -1007,7 +979,6 @@ hpcfb_tv_putchar(dc, row, col, uc, attr)
 		dc->dc_max_row = row;
 
 #endif /* HPCFB_JUMP */
-#ifdef HPCFB_TVOPTIM
 	if (vscn[row].maxcol +1 == col)
 		vscn[row].maxcol = col;
 	else if (vscn[row].maxcol < col) {
@@ -1015,7 +986,6 @@ hpcfb_tv_putchar(dc, row, col, uc, attr)
 		bzero(vcb, sizeof(struct hpcfb_vchar)*(col-vscn[row].maxcol-1));
 		vscn[row].maxcol = col;
 	}
-#endif /* HPCFB_TVOPTIM */
 	vc->c = uc;
 	vc->attr = attr;
 	dc->dc_state &= ~HPCFB_DC_TDRAWING;
@@ -1076,17 +1046,9 @@ hpcfb_tv_copycols(dc, row, srccol, dstcol, ncols)
 	struct hpcfb_devconfig *dc;
 	int row, srccol, dstcol, ncols;
 {
-#ifdef HPCFB_TVOPTIM
 	struct hpcfb_tvrow *vscn = dc->dc_tvram;
 	struct hpcfb_vchar *svc = &vscn[row].col[srccol];
 	struct hpcfb_vchar *dvc = &vscn[row].col[dstcol];
-#else /* HPCFB_TVOPTIM */
-	struct hpcfb_vchar *vscn = dc->dc_tvram;
-	struct hpcfb_vchar *svc = 
-		(vscn + row * dc->dc_cols + srccol);
-	struct hpcfb_vchar *dvc = 
-		(vscn + row * dc->dc_cols + dstcol);
-#endif /* HPCFB_TVOPTIM */
 
 	if (vscn == 0)
 		return;
@@ -1100,12 +1062,10 @@ hpcfb_tv_copycols(dc, row, srccol, dstcol, ncols)
 #endif /* HPCFB_JUMP */
 
 	bcopy(svc, dvc, ncols*sizeof(struct hpcfb_vchar));
-#ifdef HPCFB_TVOPTIM
 	if (vscn[row].maxcol < srccol+ncols-1)
 		vscn[row].maxcol = srccol+ncols-1;
 	if (vscn[row].maxcol < dstcol+ncols-1)
 		vscn[row].maxcol = dstcol+ncols-1;
-#endif /* HPCFB_TVOPTIM */
 	dc->dc_state &= ~HPCFB_DC_TDRAWING;
 #ifdef HPCFB_JUMP
 	hpcfb_check_scroll(dc);
@@ -1163,14 +1123,7 @@ hpcfb_tv_erasecols(dc, row, startcol, ncols, attr)
 	int row, startcol, ncols;
 	long attr;
 {
-#ifdef HPCFB_TVOPTIM
 	struct hpcfb_tvrow *vscn = dc->dc_tvram;
-#else /* HPCFB_TVOPTIM */
-	int cols = dc->dc_cols;
-	struct hpcfb_vchar *vscn = dc->dc_tvram;
-	struct hpcfb_vchar *svc = vscn + row * cols + startcol;
-	int i;
-#endif /* HPCFB_TVOPTIM */
 
 	if (vscn == 0)
 		return;
@@ -1183,17 +1136,9 @@ hpcfb_tv_erasecols(dc, row, startcol, ncols, attr)
 		dc->dc_max_row = row;
 #endif /* HPCFB_JUMP */
 
-#ifdef HPCFB_TVOPTIM
 	vscn[row].maxcol = startcol-1;
 	if (vscn[row].spacecol < startcol+ncols-1)
 		vscn[row].spacecol = startcol+ncols-1;
-#else /* HPCFB_TVOPTIM */
-	for (i = 0; i < ncols; i++) {
-		svc->c = ' ';
-		svc->attr = attr;
-		svc++;
-	}
-#endif /* HPCFB_TVOPTIM */
 	dc->dc_state &= ~HPCFB_DC_TDRAWING;
 #ifdef HPCFB_JUMP
 	hpcfb_check_scroll(dc);
@@ -1247,18 +1192,11 @@ hpcfb_tv_copyrows(dc, src, dst, num)
 	struct hpcfb_devconfig *dc;
 	int src, dst, num;
 {
-#ifdef HPCFB_TVOPTIM
 	struct hpcfb_tvrow *vscn = dc->dc_tvram;
 	struct hpcfb_tvrow *svc = &vscn[src];
 	struct hpcfb_tvrow *dvc = &vscn[dst];
 	int i;
 	int d;
-#else /* HPCFB_TVOPTIM */
-	int cols = dc->dc_cols;
-	struct hpcfb_vchar *vscn = dc->dc_tvram;
-	struct hpcfb_vchar *svc = vscn + src * cols;
-	struct hpcfb_vchar *dvc = vscn + dst * cols;
-#endif /* HPCFB_TVOPTIM */
 
 	if (vscn == 0)
 		return;
@@ -1271,7 +1209,6 @@ hpcfb_tv_copyrows(dc, src, dst, num)
 		dc->dc_max_row = dst + num -1;
 #endif /* HPCFB_JUMP */
 
-#ifdef HPCFB_TVOPTIM
 	if (svc > dvc)
 		d = 1;
 	else if (svc < dvc) {
@@ -1287,24 +1224,13 @@ hpcfb_tv_copyrows(dc, src, dst, num)
 	}
 
 	for (i = 0; i < num; i++) {
-#if 0
-		bcopy(&svc->col[0], &dvc->col[0], sizeof(struct hpcfb_vchar)*dc->dc_cols);
-		if (svc->maxcol > dvc->maxcol)
-			dvc->maxcol = svc->maxcol;
-		else if (dvc->maxcol-1 < HPCFB_MAX_COLUMN)
-			bzero( &dvc->col[svc->maxcol+1], dvc->maxcol-svc->maxcol);
-#else
 		bcopy(&svc->col[0], &dvc->col[0], sizeof(struct hpcfb_vchar)*(svc->maxcol+1));
 		if (svc->maxcol < dvc->maxcol && dvc->spacecol < dvc->maxcol)
 			dvc->spacecol = dvc->maxcol;
 		dvc->maxcol = svc->maxcol;
-#endif
 		svc+=d;
 		dvc+=d;
 	}
-#else /* HPCFB_TVOPTIM */
-	bcopy(svc, dvc, num*cols*sizeof(struct hpcfb_vchar));
-#endif /* HPCFB_TVOPTIM */
 	dc->dc_state &= ~HPCFB_DC_TDRAWING;
 #ifdef HPCFB_JUMP
 	hpcfb_check_scroll(dc);
@@ -1319,13 +1245,8 @@ hpcfb_redraw(cookie, row, num, all)
 {
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
 	struct rasops_info *ri = &dc->dc_rinfo;
-#ifdef HPCFB_TVOPTIM
 	int cols;
 	struct hpcfb_tvrow *vscn = dc->dc_tvram;
-#else /* HPCFB_TVOPTIM */
-	int cols = dc->dc_cols;
-	struct hpcfb_vchar *vscn = dc->dc_tvram;
-#endif /* HPCFB_TVOPTIM */
 	struct hpcfb_vchar *svc;
 	int i, j;
 
@@ -1343,7 +1264,6 @@ hpcfb_redraw(cookie, row, num, all)
 
 	dc->dc_state |= HPCFB_DC_DRAWING;
 	dc->dc_state |= HPCFB_DC_TDRAWING;
-#ifdef HPCFB_TVOPTIM
 	for (i = 0; i < num; i++) {
 		cols = vscn[row+i].maxcol;
 		for (j = 0; j <= cols; j++) {
@@ -1359,14 +1279,6 @@ hpcfb_redraw(cookie, row, num, all)
 		}
 		vscn[row+i].spacecol = 0;
 	}
-#else /* HPCFB_TVOPTIM */
-	for (i = 0; i < num; i++) {
-		for (j = 0; j < cols; j++) {
-			svc = vscn + (row+i) * cols + j;
-			rasops_emul.putchar(ri, row + i, j, svc->c, svc->attr);
-		}
-	}
-#endif /* HPCFB_TVOPTIM */
 	dc->dc_state &= ~HPCFB_DC_DRAWING;
 	dc->dc_state &= ~HPCFB_DC_TDRAWING;
 #ifdef HPCFB_JUMP
@@ -1500,15 +1412,8 @@ hpcfb_tv_eraserows(dc, row, nrow, attr)
 	int row, nrow;
 	long attr;
 {
-#ifdef HPCFB_TVOPTIM
 	struct hpcfb_tvrow *vscn = dc->dc_tvram;
 	int cols;
-#else /* HPCFB_TVOPTIM */
-	int cols = dc->dc_cols;
-	struct hpcfb_vchar *vscn = dc->dc_tvram;
-	struct hpcfb_vchar *svc = vscn + row * dc->dc_cols;
-	int j;
-#endif /* HPCFB_TVOPTIM */
 	int i;
 
 	if (vscn == 0)
@@ -1524,18 +1429,10 @@ hpcfb_tv_eraserows(dc, row, nrow, attr)
 #endif /* HPCFB_JUMP */
 
 	for (i = 0; i < nrow; i++) {
-#ifdef HPCFB_TVOPTIM
 		cols = vscn[row+i].maxcol;
 		if (vscn[row+i].spacecol < cols)
 			vscn[row+i].spacecol = cols;
 		vscn[row+i].maxcol = -1;
-#else /* HPCFB_TVOPTIM */
-		for (j = 0; j <= cols; j++) {
-			svc->c = ' ';
-			svc->attr = attr;
-			svc++;
-		}
-#endif /* HPCFB_TVOPTIM */
 	}
 #ifdef HPCFB_JUMP
 	hpcfb_check_scroll(dc);
