@@ -27,6 +27,9 @@
  **********************************************************************
  * HISTORY
  * $Log: supcname.c,v $
+ * Revision 1.2  1995/09/16 19:12:14  glass
+ * if the function returns nothing, declare it void
+ *
  * Revision 1.1.1.1  1993/05/21 14:52:18  cgd
  * initial import of CMU's SUP to NetBSD
  *
@@ -67,7 +70,7 @@ extern COLLECTION *firstC;		/* collection list pointer */
  * It's a fatal error if a collection has no file server.
  */
 
-getnams ()
+void getnams ()
 {
 	register COLLECTION *c;
 	char buf[STRINGLENGTH];
