@@ -1,5 +1,5 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.24 2000/02/25 00:29:00 itojun Exp $	*/
-/*	$KAME: udp6_usrreq.c,v 1.39 2000/02/23 08:54:23 jinmei Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.25 2000/02/28 16:10:52 itojun Exp $	*/
+/*	$KAME: udp6_usrreq.c,v 1.40 2000/02/28 15:44:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -481,18 +481,19 @@ udp6_ctlinput(cmd, sa, d)
 	register struct ip6_hdr *ip6;
 	struct mbuf *m;
 	int off;
+	void (*notify) __P((struct in6pcb *, int)) = udp6_notify;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
 		return;
 
-#if 0
-	if (cmd == PRC_IFNEWADDR)
-		in6_mrejoin(&udb6);
-	else
-#endif
-	if (!PRC_IS_REDIRECT(cmd) &&
-	    ((unsigned)cmd >= PRC_NCMDS || inet6ctlerrmap[cmd] == 0))
+	if ((unsigned)cmd >= PRC_NCMDS)
+		return;
+	if (PRC_IS_REDIRECT(cmd))
+		notify = in6_rtchange, d = NULL;
+	else if (cmd == PRC_HOSTDEAD)
+		d = NULL;
+	else if (inet6ctlerrmap[cmd] == 0)
 		return;
 
 	/* if the parameter is from icmp6, decode it. */
@@ -534,10 +535,10 @@ udp6_ctlinput(cmd, sa, d)
 			uhp = (struct udphdr *)(mtod(m, caddr_t) + off);
 		(void) in6_pcbnotify(&udb6, (struct sockaddr *)&sa6,
 					uhp->uh_dport, &s,
-					uhp->uh_sport, cmd, udp6_notify);
+					uhp->uh_sport, cmd, notify);
 	} else {
 		(void) in6_pcbnotify(&udb6, (struct sockaddr *)&sa6, 0,
-					&zeroin6_addr, 0, cmd, udp6_notify);
+					&zeroin6_addr, 0, cmd, notify);
 	}
 }
 
