@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.41 2002/10/06 01:36:09 lukem Exp $	*/
+/*	$NetBSD: compare.c,v 1.42 2002/10/08 00:34:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.41 2002/10/06 01:36:09 lukem Exp $");
+__RCSID("$NetBSD: compare.c,v 1.42 2002/10/08 00:34:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,15 +79,6 @@ do {									\
 
 #if HAVE_STRUCT_STAT_ST_FLAGS
 
-#if HAVE_LCHFLAGS
-#define CHANGE_LCHFLAGS	if (lchflags(p->fts_accpath, flags))
-#else
-#define CHANGE_LCHFLAGS	if (S_ISLNK(p->fts_statp->st_mode)) {		\
-				label++;				\
-				printf(					\
-				    ", not modified: no lchflags call)\n"); \
-			} else if (chflags(p->fts_accpath, flags))
-#endif
 
 #define CHANGEFLAGS							\
 	if (flags != p->fts_statp->st_flags) {				\
@@ -96,7 +87,7 @@ do {									\
 			printf("%sflags (\"%s\"", tab,			\
 			    flags_to_string(p->fts_statp->st_flags, "none")); \
 		}							\
-		CHANGE_LCHFLAGS {					\
+		if (lchflags(p->fts_accpath, flags)) {			\
 			label++;					\
 			printf(", not modified: %s)\n",			\
 			    strerror(errno));				\
@@ -260,13 +251,7 @@ compare(NODE *s, FTSENT *p)
 		    tab, (u_long)s->st_mode,
 		    (u_long)p->fts_statp->st_mode & MBITS);
 		if (uflag) {
-#if HAVE_LCHMOD
 			if (lchmod(p->fts_accpath, s->st_mode))
-#else
-			if (S_ISLNK(p->fts_statp->st_mode))
-				printf(", not modified: no lchmod call\n");
-			else if (chmod(p->fts_accpath, s->st_mode))
-#endif
 				printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
