@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 1999/08/30 00:51:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 1999/11/09 21:50:21 kleink Exp $
 
 KDIR=	/sys/arch/pica/include
 INCSDIR= /usr/include/pica
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h bswap.h bsd-aout.h bus.h \
-	cdefs.h cpu.h disklabel.h display.h ecoff_machdep.h elf.h \
+	cdefs.h cpu.h disklabel.h display.h ecoff_machdep.h \
 	elf_machdep.h endian.h float.h ieee.h ieeefp.h kbdreg.h kcore.h \
 	kdbparam.h limits.h machAsmDefs.h machConst.h mips_opcode.h mouse.h \
 	param.h pcb.h pccons.h pio.h pmap.h proc.h profile.h psl.h pte.h \
