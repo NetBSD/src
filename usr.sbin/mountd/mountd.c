@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.81 2002/11/08 00:15:46 fvdl Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.82 2003/01/06 12:29:52 wiz Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.81 2002/11/08 00:15:46 fvdl Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.82 2003/01/06 12:29:52 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1343,7 +1343,7 @@ hang_dirp(dp, grp, ep, flags)
 	} else {
 
 		/*
-		 * Loop throught the directories adding them to the tree.
+		 * Loop through the directories adding them to the tree.
 		 */
 		while (dp) {
 			dp2 = dp->dp_left;
