@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.9 1999/09/08 21:57:20 jsm Exp $	*/
+/*	$NetBSD: score.c,v 1.10 1999/09/12 09:02:22 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.9 1999/09/08 21:57:20 jsm Exp $");
+__RCSID("$NetBSD: score.c,v 1.10 1999/09/12 09:02:22 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,18 +116,17 @@ write_score(inf)
  *	top list.
  */
 void
-score()
+score(score_wfd)
+	int score_wfd;
 {
-	int			inf;
+	int			inf = score_wfd;
 	SCORE			*scp;
 	int			uid;
 	bool			done_show = FALSE;
 
 	Newscore = FALSE;
-	if ((inf = open(Scorefile, O_RDWR)) < 0) {
-		warn("opening `%s'", Scorefile);
+	if (inf < 0)
 		return;
-	}
 
 	read_score(inf);
 
@@ -161,7 +160,7 @@ score()
 
 	if (!Newscore) {
 		Full_clear = FALSE;
-		close(inf);
+		lseek(inf, 0, SEEK_SET);
 		return;
 	}
 	else
@@ -191,7 +190,7 @@ score()
 	if (Newscore) {
 		write_score(inf);
 	}
-	close(inf);
+	lseek(inf, 0, SEEK_SET);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 1998/11/10 13:01:32 hubertf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 1999/09/12 09:02:23 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: machdep.c,v 1.9 1998/11/10 13:01:32 hubertf Exp $");
+__RCSID("$NetBSD: machdep.c,v 1.10 1999/09/12 09:02:23 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -471,10 +471,13 @@ md_lock(l)
 	short tries;
 
 	if (l) {
+		setegid(egid);
 		if ((fd = open(_PATH_SCOREFILE, O_RDONLY)) < 1) {
+			setegid(gid);
 			message("cannot lock score file", 0);
 			return;
 		}
+		setegid(gid);
 		for (tries = 0; tries < 5; tries++)
 			if (!flock(fd, LOCK_EX|LOCK_NB))
 				return;
@@ -500,10 +503,6 @@ md_shell(shell)
 	int w;
 
 	if (!fork()) {
-		int uid;
-
-		uid = getuid();
-		setuid(uid);
 		execl(shell, shell, 0);
 	}
 	wait(&w);

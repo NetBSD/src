@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.9 1999/09/08 21:45:30 jsm Exp $	*/
+/*	$NetBSD: rogue.h,v 1.10 1999/09/12 09:02:23 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -457,6 +457,8 @@ extern char *CL;
  */
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 object	*alloc_object __P((void));
 object	*check_duplicate __P((object *, object *));
@@ -817,3 +819,5 @@ extern	short	r_rings;
 extern	short	regeneration;
 extern	short	ring_exp;
 extern	short	stealthy;
+extern	gid_t	gid;
+extern	gid_t	egid;
