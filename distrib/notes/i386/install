@@ -1,35 +1,54 @@
-Installing NetBSD is a relatively complex process, but if you have
-this document in hand and are careful to read and remember the
-information which is presented to you by the install program, it
-shouldn't be too much trouble.
 
-Before you begin, you should know the geometry of your hard disk, i.e.
-the sector size (note that sector sizes other than 512 bytes are not
-currently supported), the number of sectors per track, the number of
-tracks per cylinder (also known as the number of heads), and the
-number of cylinders on the disk.  The NetBSD kernel will try to
-discover these parameters on its own, and if it can it will print them
-at boot time.  If possible, you should use the parameters it prints.
-(You might not be able to because you're sharing your disk with
-another operating system, or because your disk is old enough that the
-kernel can't figure out its geometry.)
+0. Introduction
 
-If NetBSD will be sharing the disk with DOS or another operating
-system, you should have already completed the section of these notes
-that instructed you on how to prepare your hard disk.  You should know
-the size of the NetBSD area of the disk and its offset from the
-beginning of the disk.  You will need this information when setting up
-your NetBSD partitions.
+	Using "sysinst", installing NetBSD is a relatively easy process.  You
+	still should read this document and have it in hand when doing the
+	installation process. This document tries to be a good guideline
+	for the installation and as such covers many details to be complete.
+	Do not let this discourage you, the install program is not hard
+	to use.
 
-You should now be ready to install NetBSD.  It might be handy for you
-to have a pencil, some paper, and a calculator handy.
+0.1 Possible PCMCIA issues
 
-The following is a walk-through of the steps you will take while
-getting NetBSD installed on your hard disk.  If any question has a
-default answer, it will be displayed in brackets ("[]") after the
-question.  If you wish to stop the installation, you may hit Control-C
-at any time, but if you do, you'll have to begin the installation
-process again from scratch.
+	There is a serious bug that may make installation of NetBSD on PCMCIA
+	machines difficult. This bug does not make USE of PCMCIA difficult  
+	once a machine is installed. If you do not have PCMCIA on your
+	machine (PCMCIA is only really used on laptop machines), you
+	can skip this section, and ignore the "[PCMCIA]" notes.
+
+	This will explains how to work around the installation problem.
+	It is anticipated that this bug will be fixed by NetBSD 1.4
+   
+	What is the bug: The kernel keeps careful track of what interrupts
+	and i/o ports are in use during autoconfiguration. It then allows
+	the PCMCIA devices to pick unused interrupts and ports.
+	Unfortunately, not all devices are included in the INSTALL
+	kernels in order to save space. Let's say your laptop has a
+	soundblaster device built in. The INSTALL kernel has no sound
+	support. The PCMCIA code might allocate your soundblaster's IRQ
+	and i/o ports to PCMCIA devices, causing them not to work. This
+	is especially bad if one of the devices in question is your
+	ethernet card.
+
+	This problem will impact some, but not all, users of PCMCIA. If
+	this bug is hurting you, watch the "[PCMCIA]" notes that will
+	appear in this document.
+
+1. General
+
+	The following is a walk-through of the steps you will take while
+	getting NetBSD installed on your hard disk.  sysinst is a menu driven
+	installation system that allows for some freedom in doing the
+	installation.  Sometimes, questions will be asked and in many cases
+	the default answer will be displayed in brackets ("[]") after the
+	question.  If you wish to stop the installation, you may hit Control-C
+	at any time, but if you do, you'll have to begin the installation
+	process again from scratch.
+
+2. Booting NetBSD
+
+	[PCMCIA]: unplug your PCMCIA devices, so that they won't be
+	found by NetBSD.
 
         Boot your machine using the boot floppy.  The boot loader will
         start, and will print a countdown and begin booting. You will
@@ -54,13 +73,16 @@ process again from scratch.
 	probably around a minute or so.
 
 	You will then be presented with the NetBSD kernel boot
-	messages.  You will want to read them, to determine your
-	disk's name and geometry.  Its name will be something like
-	"sd0" or "wd0" and the geometry will be printed on a line that
-	begins with its name.  As mentioned above, you will need your
-	disk's geometry when creating NetBSD's partitions.  You will
-	also need to know the name, to tell the install tools what
-	disk to install on.
+	messages. This may take a little while, as NetBSD will
+	be probing for a lot of types of hardware,  You may want to read the
+	boot messages, to notice your disk's name and geometry.  Its name
+	will be something like "sd0" or "wd0" and the geometry will be
+	printed on a line that begins with its name.  As mentioned above,
+	you may need your disk's geometry when creating NetBSD's partitions.
+	You will also need to know the name, to tell sysinst on which disk
+	to install. The most important thing to know is that
+	'wd0 is NetBSD's name for your first IDE disk, wd1 the second,
+	etc. 'sd0' is your first SCSI disk, sd1 the second, etc.
 
         Note that, once the system has finished booting, you need no
         longer leave the floppy in the disk drive. Earlier version of
@@ -69,348 +91,317 @@ process again from scratch.
         ramdisk file system and are no longer dependent on the floppy
         once it has booted.
 
-	While booting, you will probably see several warnings.  You
-	should be warned that no swap space is present, and that
-	init(8) cannot find /etc/rc.  Do not be alarmed, these are
-	completely normal.  When you reach the prompt asking you for a
-	shell name, just hit return.
+	Once NetBSD has booted and printed all the boot messages,
+	you will be presented with a welcome message and a main menu.
+	It will also include instructions for using the menus.
 
-	You will be asked if you wish to install or upgrade your
-	system or go to a shell prompt. Enter "install".
+3. Network configuration
 
-	You will be presented with a welcome message and a prompt,
-	asking if you wish to proceed with the installation process.
-	If you wish to proceed, enter "y" and hit return.
+	[PCMCIA] You can skip this section, as you will only get data
+	         from floppy in the first part of the install.
 
-	You will be asked what type of disk driver you have.  The
-	valid options are listed by the install program, to make sure
-	you get it right.  If you're installing on an ST-506 or ESDI
-	drive, you'll be asked if your disk supports automatic sector
-	forwarding.  If you are SURE that it does, reply
-	affirmatively.  Otherwise, the install program will
-	automatically reserve space for bad144 tables.
+	If you will not use network operation during the installation,
+	but you do want your machine to be configured for networking once
+	it is installed, you should first go to the utilities menu, and select
+	the "Configure network option". If you only want to temporarily
+	use networking during the installation, you can specify these
+	parameters later. If you are not using Domain Name Service (DNS),
+	you can give an empty response in reply to answers relating to
+	this.
 
-	The install program will then tell you which disks of that
-	type it can install on, and ask you which it should use.
-	Reply with the name of your disk.  (The first disk of the type
-	you selected, either "wd0" for ST-506/ESDI/IDE disks, or "sd0"
-	for SCSI disks, is the default.)
+4. The harddisk to install on and its parameters.
+
+	To start the installation, select the menu option to install
+	NetBSD from the main menu.
+
+	The first thing is to identify the disk on which you want to
+	install NetBSD.  sysinst will report a list of disks it finds
+	and ask you for your selection.  Depending on how many disks
+	are found, you may get a different message.  You should see
+	disk names like "wd0", "wd1", "sd0", or "sd1".
+
+	sysinst next tries to figure out the real and BIOS geometry
+	of your disk. It will present you with the values it found,
+	if any, and will give you a chance to change them.
+	Please note that if you change the values, sysinst WILL ALSO
+	REINITIALIZE YOUR MBR.
+
+	You will also be asked if you want to use the last cylinder of
+	the disk. Originally, the last cylinder of the disk was used for
+	diagnostic purposes, but this is usually not a concern anymore
+	these days. You will be able to specify whether you want to
+	skip the last cylinder anyway.
+
+	Next, depending on whether you are using a "wdX" or a "sdX" disk,
+	you will either be asked for the type of disk (wdX) you are
+	using or you will be asked if you want to specify a fake geometry
+	for your SCSI disk (sdX).  The types of disk are be IDE, ST-506
+	or ESDI.  If you're installing on an ST-506 or ESDI drive, you'll
+	be asked if your disk supports automatic sector forwarding.  If you
+	are SURE that it does, reply affirmatively.  Otherwise, the install
+	program will automatically reserve space for bad144 tables.
+
+5. Partitioning the disk.
+
+5.1 Which portion of the disk to use.
+
+	You will be asked if you want to use the entire disk or
+	only part of the disk. If you decide to use the entire disk
+	for NetBSD, it will be checked if there are already other
+	systems present on the disk, and you will be asked to confirm
+	whether you want to overwrite these.
+
+	If you want to use the entire disk for NetBSD, you can skip
+	the following section and go to section 5.3, "Editing the
+	NetBSD disklabel".
+
+5.2 Editing the Master Boot Record.
+
+	First, you will be prompted to specify the units of size
+	that you want to express the sizes of the partitions in.
+	You can either pick megabytes, cylinders or sectors.
+
+	After this, you will be presented with the current values
+	stored in the MBR, and will be given the opportunity to
+	change, create or delete partitions. For each partition
+	you can set the type, the start and the size. Setting
+	the type to 'unused' will delete a partition. You can
+	also mark a partition as active, meaning that this is
+	the one that the BIOS will start from at boottime.
+
+	Be sure to mark the partition you want to boot from as active!
+
+	After you are done editing the MBR, a sanity check
+	will be done, checking for partitions that overlap.
+	If everything is ok, you can go on to the next step,
+	editing the NetBSD disklabel.
+
+5.3 Editing the NetBSD disklabel.
+
+	The partition table of a NetBSD part of a disk is called
+	a 'disklabel'. There are 3 layouts for the NetBSD part
+	of the disk that you can pick from: Standard, Standard
+	with X and Custom. The first two use a set of default
+	values (that you can change) suitable for a normal
+	installation, possibly including X. The last option
+	lets you specify everything yourself.
+
+	You will be presented with the current layout of the
+	NetBSD disklabel, and given a chance to change it.
+	For each partition, you can set the type, offset and size,
+	block and fragment size, and the mountpoint. The type
+	that NetBSD uses for normal file storage is called
+	"4.2BSD". A swap partition has a special type called "swap".
+	You can also specify a partition as type "msdos". This
+	is useful if you share the disk with MS-DOS or Windows95,
+	NetBSD is able to access the files on these partitions.
+	You can use the values from the MBR for the MS-DOS part
+	of the disk to specify the partition of type "msdos"
+	(you don't have to do this now, you can always re-edit
+	the disklabel to add this once you have installed NetBSD).
+
+	Some partitions in the disklabel have a fixed purpose.
+	Partition 'a' is always the root partition, 'b' is the
+	swap partition, 'c' is the entire NetBSD part of the disk,
+	and 'd' is the whole disk. Partitions 'e'-'h' are available
+	for other use. Traditionally, 'e' is the partition mounted
+	on the /usr directory, but this is historical practice,
+	not a fixed value.
 
 	You will then be asked to name your disk's disklabel.  The
-	default response is "mywd" or "mysd" depending on the type of
-	your disk, and for most purposes it will be OK.  If you choose
-	to name it something different, make sure the name is a single
-	word and contains no special characters.  You don't need to
-	remember this name.
+	default response is "mydisk". For most purposes this will be OK.
+	If you choose to name it something different, make sure the name
+	is a single word and contains no special characters.  You don't
+	need to remember this name.
 
-	You will be prompted for your disk's geometry information,
-	i.e. the number of bytes per sector, cylinders on the disk,
-	tracks per cylinder (heads), and sectors per track.  Enter
-	them when they are requested.  If you make a mistake, hit
-	Control-C and when you get to the shell prompt, restart the
-	install process by running the "install" command.  Once you
-	have entered this data, the install program will tell you the
-	total size of your disk, in both sectors, and cylinders.
-	Remember this number; if you're installing on the whole disk,
-	you'll need it again soon.
-
-	When describing your partitions, you will have the option of
-	entering data about them in units of disk sectors or
-	cylinders.  If you choose to enter the information in units of
-	sectors, remember that, for optimal performance, partitions
-	should begin and end on cylinder boundaries.  You will be
-	asked about which units you wish to use, and you should reply
-	with "c" for cylinders, or "s" for sectors.
-
-	You will be asked for the size of the NetBSD portion of the
-	disk.  If you're installing on the whole disk, reply with the
-	size of the disk, as printed earlier by the install program.
-	If you're using only part of the disk, reply with the size
-	that you specified in the partition editor.  (Don't forget to
-	enter the size in the units you specified in the last step!)
-
-	If you are not installing on the whole disk, you will be asked
-	fro the offset of the NetBSD partition from the beginning of
-	the disk.  Reply with the appropriate offset (again, in
-	whichever units you specified), as determined by how you
-	set up your disk using the partition editor.
-
-	You will be asked to enter the size of your NetBSD root
-	partition.  It should be at least 13M, but if you are going to
-	be doing development, 14-16M is a more desirable size.  This
-	size should be expressed in units of sectors or cylinders,
-	depending on which you said you wanted to use.
-
-	Next, you will be asked for the size of your swap partition.
-	You should probably allocate twice as much swap space as you
-	have real memory.  Systems that will be heavily used should
-	have more swap space allocated, and systems that will be
-	lightly used can get by with less.  If you want the system to
-	be able to save crash dumps when it panics, you will need at
-	least as much swap space as you have RAM.  Again, this number
-	should be expressed in units of sectors or cylinders, as
-	appropriate.
-
-	The install program will then ask you for information about
-	the rest of the partitions you want on your disk.  For most
-	purposes, you will want only one more partition, "/usr".
-	(Machines used as servers will probably also want /var as a
-	separate partition.  That can be done with these installation
-	tools, but is not covered here.)  The install program will
-	tell you how much space there is left to be allocated in the
-	NetBSD area of the disk, and, if you only want one more
-	partition ("/usr"), you should enter it at the prompt when the
-	installer asks you how large the next partition should be.
-	It will then ask you for the name of the mount point for that
-	partition.  If you're doing a basic installation, that is
-	"/usr".
+6. Preparing your harddisk
 
 	YOU ARE NOW AT THE POINT OF NO RETURN.  Nothing has been
 	written to your disk yet, but if you confirm that you want to
-	install NetBSD, your hard drive will be modified, and its
-	contents may be scrambled at the whim of the install program.
-	This is especially likely if you have given the install
-	program incorrect information.  If you are sure you want to
-	proceed, enter "yes" at the prompt.
+	install NetBSD, your hard drive will be modified. If you are
+	sure you want to proceed, enter "yes" at the prompt.
 
 	The install program will now label your disk and make the file
-	systems you specified.  The filesystems will be initialized to
+	systems you specified. The filesystems will be initialized to
 	contain NetBSD bootstrapping binaries and configuration files.
-	It will also create an /etc/fstab for your system, and mount
-	all of the file systems under /mnt. (In other words, your root
-	partition will be mounted on /mnt, your /usr partition on
-	/mnt/usr, and so on.)  There should be no errors in this
-	section of the installation.  If there are, restart from the
-	beginning of the installation process.
-
-        You will be placed at a shell prompt ("#").  The task is to
-        install the distribution sets.  The flow of installation
-        differs depending on your hardware resources, and on what
-        media the distribution sets reside.
+	You will see messages on your screen from the various NetBSD
+	disk preparation tools that are running. There should be no
+	errors in this section of the installation. If there are,
+	restart from the beginning of the installation process.
+	Otherwise, you can continue the installation program
+	after pressing 'return'.
 
         NOTE: In previous versions of NetBSD, the kernel from the
         install floppy was copied onto the hard drive in a special
         step. In the new install system, the kernel on the floppy is
         unsuited to being copied onto the hard drive. Instead, a new
         set, "kern", has been added which contains a generic kernel to
-        be unloaded onto the drive. It must be extracted in addition
-        to "base" and "etc" in order to have a minimally functioning
-        system.
+        be unloaded onto the drive. So, you can not boot from your
+	hard drive yet at this point.
 
-	To install from floppy:
-		The first thing you should do is pick a temporary
-		directory where the distribution files can be stored.
-		To do this, enter the command "Set_tmp_dir", and enter
-		the name of the temporary directory.  (Don't forget
-		that if your disk is still mounted under /mnt; you
-		should probably pick a directory under /mnt/usr.)
+7. Getting the distribution sets.
 
-		After you have picked a temporary directory, enter the
-		"Load_fd" command, to load the distribution sets from
-		your floppies.
+	[PCMCIA] Load a kernel tar file (i.e. the kern.tgz set file)
+	         on to your harddisk, for example by mounting the
+	         harddisk first, copying the kern.tgz file from
+	         floppy and unpacking it. Example:
 
-		You will be asked which floppy drive to use.  Enter
-		"0" (zero) if you're using the first floppy drive
-		(i.e. what DOS would call "A:"), or enter "1" if
-		you're using the second (i.e. what DOS would call
-		"B:")
+		 mount /dev/wd0a /mnt
+		 cd /mnt
 
-		You will be prompted to insert a floppy into the drive,
-		to have its contents copied to your hard disk.  Do so,
-		and hit return to begin copying.  When that is done,
-		read the remainder of the floppies that contain the
-		distribution sets that you want to install, one by
-		one.  When the last is read, and you are being
-		prompted for another, hit Control-C.
+		 <repeat following 3 steps until all kern.* files are there>
+		 mount -t msdos /dev/fd0a /mnt2
+		 cp /mnt2/kern.* .
+		 umount /mnt2
 
-                Run the "Extract" command once for each distribution
-                set you wish to install.  For instance, if you wish to
-                install the "kern" distribution set, followed by the
-                "base" distribution set, and finally the "etc"
-                distribution set, use the commands:
-			Extract kern
-			Extract base
-			Extract etc
+		 cat kern.* | tar vxzf -
 
-		For each extraction, it will ask you if the extraction
-		should be verbose.  If you reply affirmatively, it
-		will print out the name of each file that's being
-		extracted.
-
-		(Note: if you know that you will be running low on
-		disk space when installing NetBSD, you can load and
-		extract one distribution set at a time.  To do this,
-		load only the floppies which contain the files for the
-		first distribution set, extract them, and then change
-		to the temporary directory and remove them with the
-		command "rm set_name.??".)
-
-		Once you are finished extracting all of the sets that
-		you wish to install, you should proceed to the
-		instructions below (after the last install medium
-		type-specific instructions), that explain how you
-		should configure your system.
-
-	To install from tape:
-		The first thing you should do is pick a temporary
-		directory where the distribution files can be stored.
-		To do this, enter the command "Set_tmp_dir", and enter
-		the name of the temporary directory.  (Don't forget
-		that your disk is mounted under /mnt; you should
-		probably pick a directory under /mnt/usr.)  The
-		default is /mnt/usr/distrib.
-
-		After you have picked a temporary directory, enter the
-		"Load_tape" command, to load the distribution sets from
-		tape.
-
-		You will be asked which tape drive to use.  The
-		default is "rst0", which is correct if you're using
-		the SCSI tape drive with the lowest SCSI ID number.
-		(For the SCSI tape drive with the next lowest SCSI ID
-		number, you should use "rst1", and so on.)
-
-		You will be prompted to hit return when you have
-		inserted the tape into the tape drive.  When you do,
-		the contents of the tape will be extracted into the
-		temporary directory, and the names of the files being
-		extracted will be printed.
-
-		After the tape has been extracted, to go the directory
-		containing the first distribution set you wish to
-		install.  (Depending on how you made the tape, it's
-		probably a subdirectory of the temporary directory you
-		specified above.)  Once there, run the "Set_tmp_dir"
-		command again, and accept its default answer by
-		hitting return at the prompt.
-
-		Use the "Extract" command to extract the distribution
-		set.  For instance, if you're extracting the "base"
-		set, use the command:
-			Extract base
-		You will be asked if you wish the extraction to be
-		verbose.  If you reply affirmatively, the name of each
-		file being extracted will be printed.
-
-		Repeat the previous two steps for each distribution
-		set you wish to install.  Change to the set's
-		directory, run "Set_tmp_dir", and then run
-		"Extract <set_name>" to extract the set.
-
-		Once you are finished extracting all of the sets that
-		you wish to install, you should proceed to the
-		instructions below (after the last install medium
-		type-specific instructions), that explain how you
-		should configure your system.
-
-	To install via FTP or NFS:
-		The first thing you should do is pick a temporary
-		directory where the distribution files can be stored.
-		To do this, enter the command "Set_tmp_dir", and enter
-		the name of the temporary directory.  (Don't forget
-		that your disk is mounted under /mnt; you should
-		probably pick a directory under /mnt/usr.)  The
-		default is /mnt/usr/distrib.
-
-		Configure the appropriate ethernet interface (e.g.
-		ed0, ep0, etc.) up, with a command like:
-
-		ifconfig <ifname> <ipaddr> [netmask <netmask>]
-
-		where "<ifname>" is the interface name, like those
-		listed above, and "<ipaddr>" is the numeric IP address
-		of the interface.  If the interface has a special
-		netmask, supply the word "netmask" at and that netmask
-		at the end of the command line.  (The brackets
-		indicate that those arguments are optional.)  For
-		instance, to configure interface ed0 with IP address
-		129.133.10.10, use the command:
-
-		ifconfig ed0 129.133.10.10
-
-		and to configure interface ep0 with IP address
-		128.32.240.167 and a special netmask, 0xffffff00, use
-		the command:
-
-		ifconfig ep0 128.32.240.167 netmask 0xffffff00
-
-		If your board selects software selection of the
-		ethernet interface to use, you might have to add
-		special "media" flags to the "ifconfig" command you
-		use to configure your board to use the appropriate
-		connector/media type, as in:
-
-		ifconfig de0 10BaseT
-
-		You may determine which media are supported on a given
-		interface by typing "ifconfig <interface> -m".
-
-		If the NFS server or FTP server is not on a directly-
-		connected network, you need to set up a route to it
-		using a command like:
-
-		route add default <gate_ipaddr>
-
-		where <gate_ipaddr> is your gateway's numeric IP
-		address.
-
-		If you are NFS-mounting the distribution sets, mount
-		them on the temporary directory with a command like:
-
-		mount -t nfs <serv_ipaddr>:<dist_dir> <tmp_dir>
-
-		where <serv_ipaddr> is the server's numeric IP address,
-		<dist_dir> is the path to the distribution files on
-		the server, and <tmp_dir> is the name of the local
-		temporary directory.
-
-		Once this is done, proceed as if you had loaded the
-		files from tape, changing to the appropriate
-		directories, running "Set_tmp_dir", and running
-		"Extract" as appropriate.
-
-		If you are retrieving the distribution sets using ftp,
-		change into the temporary directory, and execute the
-		command:
-
-		ftp <serv_ipaddr>
-
-		where <serv_ipaddr> is once again the server's numeric
-		IP address.  Get the files with FTP, taking care to
-		use binary mode when transferring the files.
-
-		Once you have all of the files for the distribution
-		sets that you wish to install, you can proceed using
-		the instructions above, as if you had installed from a
-		floppy.  (Note that as with the floppy install, if
-		you're short on disk space, you can transfer only one
-		set at a time, extract it, then delete it, to save
-		space.)
-
-Completing your installation:
-        Once you have finished extracting all of the distribution sets
-        that you wish to install, and are back at the "#" prompt, you
-        are ready to configure your system.  The configuration utility
-        expects that you have installed the "kern", "base" and
-        "etc" distribution sets.  If you have not, you will not be
-        able to run it successfully (nor will you have a functional
-        system, in any case).  To configure your newly-installed
-        NetBSD system, run the command "Configure".  It will ask you
-        for the system's host name, domain name, and other network
-        configuration information.  It will set up your configuration
-        files and make the device nodes for the newly-installed
-        system.
+		 Then halt the machine using the 'halt' command. Power
+		 the machine down, and re-insert all the PCMCIA devices.
+		 Remove any floppy from the floppy drive.
+		 Start the machine up. After booting NetBSD, you will
+		 be presented with the main sysinst menu. Choose the
+		 option to re-install sets. Wait for the filesystem
+		 checks that it will do to finish, and then proceed
+		 as described below.
 
 
-Congratulations, you have successfully installed NetBSD _VER.  When you
-reboot into NetBSD, you should log in as "root" at the login prompt.
-There is no initial password, but if you're using the machine in a
-networked environment, you should create yourself an account and
-protect it and the "root" account with good passwords.
+	The NetBSD distribution consists of a number of 'sets', that
+	come in the form of gzipped tarfiles. A few sets must be
+	installed for a working system, others are optional. At this
+	point of the installation, you will be presented with a menu
+	which enables you to choose from one of the following methods
+	of installing the sets. Some of these methods will first
+	load the sets on your harddisk, others will extract the sets
+	directly.
 
-Some of the files in the NetBSD _VER distribution might need to be
-tailored for your site.  In particular, the /etc/sendmail.cf file will
-almost definitely need to be adjusted, and other files in /etc will
-probably need to be modified, as well.  If you are unfamiliar with
-UN*X-like system administration, it's recommended that you buy a book
-that discusses it.
+	For all these methods, the first step is making the sets
+	available for extraction, and then do the actual installation.
+	The sets can be made available in a few different ways. The
+	following sections describe each of those methods. After
+	reading the one about the method you will be using, you
+	can continue to section 8
+
+7.1 Installation using ftp
+
+	To be able to install using ftp, you first need to configure
+	your network setup, if you haven't already at the start of
+	the install procedure. sysinst will do this for you, asking you
+	to provide some data, like IP number, hostname, etc. If you
+	do not have name service set up for the machine that you
+	are installing on, you can just press 'return' in answer
+	to these questions, and DNS will not be used.
+
+	You will also be asked to specify the host that you want
+	to transfer the sets from, the directory on that host,
+	and the accountname and password used to log into that
+	host using ftp. If you did not set up DNS when answering
+	the questions to configure networking, you will need to
+	specify an IP number instead of a hostname for the ftp
+	server.
+
+	sysinst will proceed to transfer all the default set files
+	from the remote site to your harddisk.
+
+7.2 Installation using NFS
+
+	To be able to install using NFS, you first need to configure
+	your network setup, if you haven't already at the start of
+	the install procedure. sysinst will do this for you, asking you
+	to provide some data, like IP number, hostname, etc. If you
+	do not have name service set up for the machine that you
+	are installing on, you can just press 'return' in answer
+	to these questions, and DNS will not be used.
+
+	You will also be asked to specify the host that you want
+	to transfer the sets from, and the directory on that host
+	that the files are in. This directory should be mountable
+	by the machine you are installing on, i.e. correctly
+	exported to your machine.
+
+	If you did not set up DNS when answering the questions to
+	configure networking, you will need to specify an IP number
+	instead of a hostname for the NFS server.
+
+
+7.3 Installation from CD-ROM
+
+	When installing from a CD-ROM, you will be asked to specify
+	the devicename for your CD-ROM player (usually 'cd0'), and
+	directoryname on the CD-ROM where the distribution files are.
+
+	sysinst will then check if the files are indeed available
+	in the specified location, and proceed to the actual
+	extraction of the sets.
+
+7.4 Installation from floppy
+
+	Because the installation sets are too big to fit on one floppy,
+	the floppies are expected to be filled with the split set
+	files. The floppies are expected to be in MS-DOS
+	format. You will be asked for a directory where the sets
+	should be reassembled. Then you will be prompted to insert
+	the floppies containing the split sets. This process
+	will continue until all the sets have been loaded from floppy.
+	
+
+7.5 Installation from an unmounted filesystem
+
+	In order to install from a local filesystem, you will
+	need to specify the device that the filesystem resides
+	on (for example 'wd1e'), the type of the filesystem,
+	and the directory on the specified filesystem where the
+	sets are located. sysinst will then check if it
+	can indeed access the sets at that location. 
+
+7.6 Installation from a local directoy
+
+	This option assumes that you have already done some preparation
+	yourself. The sets should be located in a directory on a
+	filesystem that is already accessible. sysinst will ask you
+	for the name of this directory.
+
+8. Extracting the distribution sets
+
+	After you the install sets containing the NetBSD distribution
+	have been made available, you can either extract all the
+	sets (a full installation), or only extract sets that
+	you have selected. In the latter case you will be shown the
+	currently selected sets, and given the opportunity to select
+	the sets you want. Some sets always need to be installed
+	("kern", "base" and "etc"), they will not be shown in
+	this selection menu.
+
+	Before extraction begins, you can elect to watch the files
+	being extracted; the name of each file that is extracted will
+	be shown.
+
+	After all the files have been extracted, all the necessary
+	device node files will be created. If you have already
+	configured networking, you will be asked if you want to
+	use this configuration for normal operation. If so, these
+	values will be installed in the network configuration files.
+
+9. Finalizing your installation.
+
+	Congratulations, you have successfully installed NetBSD _VER. When
+	you reboot into NetBSD, you should log in as "root" at the login
+	prompt.  There is no initial password, but if you're using the
+	machine in a networked environment, you should create yourself
+	an account and protect it and the "root" account with good passwords.
+
+	Some of the files in the NetBSD _VER distribution might need to be
+	tailored for your site.  In particular, the /etc/sendmail.cf file will
+	almost definitely need to be adjusted, and other files in /etc will
+	probably need to be modified, as well.
+
+	Some leftover files from the installation may be on your harddisk,
+	depending on the procedure you followed. If you find any of
+	the files, you should remove them:
+
+		/.profile
+		/.termcap
+		/sysinst
+
+	If you are unfamiliar with UN*X-like system administration, it's
+	recommended that you buy a book that discusses it.
