@@ -1,5 +1,5 @@
 /*
- * $Id: lib.c,v 1.10 1994/03/31 14:17:36 pk Exp $	- library routines
+ * $Id: lib.c,v 1.11 1994/04/03 18:38:02 pk Exp $	- library routines
  */
 
 #include <sys/param.h>
@@ -528,6 +528,7 @@ subfile_wanted_p(entry)
 					/*
 					 * But this member wants it to be
 					 * a common; ignore it.
+					 */
 					continue;
 			}
 
