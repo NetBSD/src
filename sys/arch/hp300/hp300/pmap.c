@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 1997/05/03 08:46:09 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 1997/06/10 18:52:23 veego Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -370,7 +370,7 @@ pmap_init(phys_start, phys_end)
 	 */
 	addr = (vm_offset_t) intiobase;
 	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
-			   &addr, hp300_ptob(IIOMAPSIZE+EIOMAPSIZE), FALSE);
+			   &addr, m68k_ptob(IIOMAPSIZE+EIOMAPSIZE), FALSE);
 	if (addr != (vm_offset_t)intiobase)
 		goto bogons;
 	addr = (vm_offset_t) Sysmap;
@@ -1170,7 +1170,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (!pmap_ste_v(pmap, va))
 		pmap_enter_ptpage(pmap, va);
 
-	pa = hp300_trunc_page(pa);
+	pa = m68k_trunc_page(pa);
 	pte = pmap_pte(pmap, va);
 	opa = pmap_pte_pa(pte);
 #ifdef DEBUG
@@ -1916,7 +1916,7 @@ vm_offset_t
 pmap_phys_address(ppn)
 	int ppn;
 {
-	return(hp300_ptob(ppn));
+	return(m68k_ptob(ppn));
 }
 
 #ifdef COMPAT_HPUX
