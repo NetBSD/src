@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.2 2002/06/18 07:53:05 tshiozak Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.3 2002/06/18 10:32:02 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.2 2002/06/18 07:53:05 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3 2002/06/18 10:32:02 drochner Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -121,8 +121,6 @@ enter_s4_with_bios(void)
 	UINT32			ret;
 	ACPI_STATUS		status;
 
-	ACPI_FUNCTION_TRACE("AcpiEnterSleepStateS4Bios");
-
 	/* run the _PTS and _GTS methods */
 
 	ACPI_MEMSET(&ArgList, 0, sizeof(ArgList));
@@ -167,7 +165,7 @@ enter_s4_with_bios(void)
 
 	write_eflags(ef);
 
-	return_ACPI_STATUS (AE_OK);
+	return (AE_OK);
 }
 
 static u_int16_t	r_ldt;
