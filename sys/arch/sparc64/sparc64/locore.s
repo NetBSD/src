@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.142 2002/01/16 22:44:48 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.143 2002/01/17 02:26:37 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -9224,7 +9224,7 @@ ENTRY(pseg_find)
 	.data
 	.align	8
 	.globl	block_disable
-block_disable:	.xword	1
+block_disable:	.xword	0
 	.text
 
 #if 0
