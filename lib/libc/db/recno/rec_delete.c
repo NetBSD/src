@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)rec_delete.c	8.2 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: rec_delete.c,v 1.4 1993/09/09 02:42:21 cgd Exp $";
+static char *rcsid = "$Id: rec_delete.c,v 1.5 1994/02/17 21:13:26 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -127,10 +127,8 @@ rec_rdelete(t, nrec)
 	int status;
 
 	/* Find the record; __rec_search pins the page. */
-	if ((e = __rec_search(t, nrec, SDELETE)) == NULL) {
-		mpool_put(t->bt_mp, e->page, 0);
+	if ((e = __rec_search(t, nrec, SDELETE)) == NULL)
 		return (RET_ERROR);
-	}
 
 	/* Delete the record. */
 	h = e->page;
