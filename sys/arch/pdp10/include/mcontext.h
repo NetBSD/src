@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.2 2003/10/08 22:43:01 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.3 2003/10/09 08:35:31 ragge Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  * As on Alpha, this maps directly to `struct reg'.
  */
 
-#define	_NGREG	17		/* R0-31, AP, SP, FP, PC, PSL */
+#define	_NGREG	17		/* 0-17, PC */
 
 typedef	int		__greg_t;
 typedef	__greg_t	__gregset_t[_NGREG];
@@ -75,7 +75,7 @@ typedef struct {
 
 #define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 #define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
-#define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_0])
+#define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_1])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
