@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.90 2001/06/21 19:08:38 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.91 2001/07/09 23:35:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -99,20 +99,20 @@
 
 #define PTRTOINT64(foo)	((u_int64_t)(uintptr_t)(foo))
 
-static int sysctl_file __P((void *, size_t *));
+static int sysctl_file(void *, size_t *);
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
-static int sysctl_sysvipc __P((int *, u_int, void *, size_t *));
+static int sysctl_sysvipc(int *, u_int, void *, size_t *);
 #endif
-static int sysctl_msgbuf __P((void *, size_t *));
-static int sysctl_doeproc __P((int *, u_int, void *, size_t *));
+static int sysctl_msgbuf(void *, size_t *);
+static int sysctl_doeproc(int *, u_int, void *, size_t *);
 #ifdef MULTIPROCESSOR
-static int sysctl_docptime __P((void *, size_t *, void *));
-static int sysctl_ncpus __P((void));
+static int sysctl_docptime(void *, size_t *, void *);
+static int sysctl_ncpus(void);
 #endif
-static void fill_kproc2 __P((struct proc *, struct kinfo_proc2 *));
-static int sysctl_procargs __P((int *, u_int, void *, size_t *, struct proc *));
+static void fill_kproc2(struct proc *, struct kinfo_proc2 *);
+static int sysctl_procargs(int *, u_int, void *, size_t *, struct proc *);
 #if NPTY > 0
-static int sysctl_pty __P((void *, size_t *, void *, size_t));
+static int sysctl_pty(void *, size_t *, void *, size_t);
 #endif
 
 /*
@@ -131,10 +131,7 @@ sysctl_init(void)
 }
 
 int
-sys___sysctl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys___sysctl(struct proc *p, void *v, register_t *retval)
 {
 	struct sys___sysctl_args /* {
 		syscallarg(int *) name;
@@ -278,10 +275,7 @@ extern	fixpt_t	ccpu;
 #endif
 
 static int
-sysctl_docptime(oldp, oldlenp, newp)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
+sysctl_docptime(void *oldp, size_t *oldlenp, void *newp)
 {
 	u_int64_t cp_time[CPUSTATES];
 	int i;
@@ -317,14 +311,8 @@ sysctl_ncpus(void)
  * kernel related system variables.
  */
 int
-kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
 {
 	int error, level, inthostid;
 	int old_autonicetime;
@@ -556,14 +544,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * hardware related system variables.
  */
 int
-hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
 {
 
 	/* all sysctl names at this level are terminal */
@@ -623,15 +605,10 @@ static struct ctldebug *debugvars[CTL_DEBUG_MAXID] = {
 	&debug10, &debug11, &debug12, &debug13, &debug14,
 	&debug15, &debug16, &debug17, &debug18, &debug19,
 };
+
 int
-debug_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+debug_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
 {
 	struct ctldebug *cdp;
 
@@ -654,14 +631,8 @@ debug_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #endif /* DEBUG */
 
 int
-proc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
 {
 	struct proc *ptmp = NULL;
 	const struct proclist_desc *pd;
@@ -857,12 +828,7 @@ cleanup:
  * for an integer-valued sysctl function.
  */
 int
-sysctl_int(oldp, oldlenp, newp, newlen, valp)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	int *valp;
+sysctl_int(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int *valp)
 {
 	int error = 0;
 
@@ -878,11 +844,7 @@ sysctl_int(oldp, oldlenp, newp, newlen, valp)
  * As above, but read-only.
  */
 int
-sysctl_rdint(oldp, oldlenp, newp, val)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	int val;
+sysctl_rdint(void *oldp, size_t *oldlenp, void *newp, int val)
 {
 	int error = 0;
 
@@ -899,12 +861,8 @@ sysctl_rdint(oldp, oldlenp, newp, val)
  * for an quad-valued sysctl function.
  */
 int
-sysctl_quad(oldp, oldlenp, newp, newlen, valp)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	quad_t *valp;
+sysctl_quad(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
+    quad_t *valp)
 {
 	int error = 0;
 
@@ -919,11 +877,7 @@ sysctl_quad(oldp, oldlenp, newp, newlen, valp)
  * As above, but read-only.
  */
 int
-sysctl_rdquad(oldp, oldlenp, newp, val)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	quad_t val;
+sysctl_rdquad(void *oldp, size_t *oldlenp, void *newp, quad_t val)
 {
 	int error = 0;
 
@@ -940,13 +894,8 @@ sysctl_rdquad(oldp, oldlenp, newp, val)
  * for a string-valued sysctl function.
  */
 int
-sysctl_string(oldp, oldlenp, newp, newlen, str, maxlen)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	char *str;
-	int maxlen;
+sysctl_string(void *oldp, size_t *oldlenp, void *newp, size_t newlen, char *str,
+    int maxlen)
 {
 	int len, error = 0, err2 = 0;
 
@@ -966,11 +915,7 @@ sysctl_string(oldp, oldlenp, newp, newlen, str, maxlen)
  * As above, but read-only.
  */
 int
-sysctl_rdstring(oldp, oldlenp, newp, str)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	const char *str;
+sysctl_rdstring(void *oldp, size_t *oldlenp, void *newp, const char *str)
 {
 	int len, error = 0, err2 = 0;
 
@@ -987,13 +932,8 @@ sysctl_rdstring(oldp, oldlenp, newp, str)
  * for a structure oriented sysctl function.
  */
 int
-sysctl_struct(oldp, oldlenp, newp, newlen, sp, len)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	void *sp;
-	int len;
+sysctl_struct(void *oldp, size_t *oldlenp, void *newp, size_t newlen, void *sp,
+    int len)
 {
 	int error = 0;
 
@@ -1009,12 +949,8 @@ sysctl_struct(oldp, oldlenp, newp, newlen, sp, len)
  * for a structure oriented sysctl function.
  */
 int
-sysctl_rdstruct(oldp, oldlenp, newp, sp, len)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	const void *sp;
-	int len;
+sysctl_rdstruct(void *oldp, size_t *oldlenp, void *newp, const void *sp,
+    int len)
 {
 	int error = 0;
 
@@ -1030,12 +966,8 @@ sysctl_rdstruct(oldp, oldlenp, newp, sp, len)
  * As above, but can return a truncated result.
  */
 int
-sysctl_rdminstruct(oldp, oldlenp, newp, sp, len)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	const void *sp;
-	int len;
+sysctl_rdminstruct(void *oldp, size_t *oldlenp, void *newp, const void *sp,
+    int len)
 {
 	int error = 0;
 
@@ -1052,9 +984,7 @@ sysctl_rdminstruct(oldp, oldlenp, newp, sp, len)
  * Get file structures.
  */
 static int
-sysctl_file(vwhere, sizep)
-	void *vwhere;
-	size_t *sizep;
+sysctl_file(void *vwhere, size_t *sizep)
 {
 	int buflen, error;
 	struct file *fp;
@@ -1140,11 +1070,7 @@ sysctl_file(vwhere, sizep)
 	} while (0)
 
 static int
-sysctl_sysvipc(name, namelen, where, sizep)
-	int *name;
-	u_int namelen;
-	void *where;
-	size_t *sizep;
+sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 {
 #ifdef SYSVMSG
 	struct msg_sysctl_info *msgsi;
@@ -1285,9 +1211,7 @@ sysctl_sysvipc(name, namelen, where, sizep)
 #endif /* SYSVMSG || SYSVSEM || SYSVSHM */
 
 static int
-sysctl_msgbuf(vwhere, sizep)
-	void *vwhere;
-	size_t *sizep;
+sysctl_msgbuf(void *vwhere, size_t *sizep)
 {
 	char *where = vwhere;
 	size_t len, maxlen = *sizep;
@@ -1344,11 +1268,7 @@ sysctl_msgbuf(vwhere, sizep)
 #define KERN_PROCSLOP	(5 * sizeof(struct kinfo_proc))
 
 static int
-sysctl_doeproc(name, namelen, vwhere, sizep)
-	int *name;
-	u_int namelen;
-	void *vwhere;
-	size_t *sizep;
+sysctl_doeproc(int *name, u_int namelen, void *vwhere, size_t *sizep)
 {
 	struct eproc eproc;
 	struct kinfo_proc2 kproc2;
@@ -1514,9 +1434,7 @@ again:
  * Fill in an eproc structure for the specified process.
  */
 void
-fill_eproc(p, ep)
-	struct proc *p;
-	struct eproc *ep;
+fill_eproc(struct proc *p, struct eproc *ep)
 {
 	struct tty *tp;
 
@@ -1566,9 +1484,7 @@ fill_eproc(p, ep)
  * Fill in an eproc structure for the specified process.
  */
 static void
-fill_kproc2(p, ki)
-	struct proc *p;
-	struct kinfo_proc2 *ki;
+fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 {
 	struct tty *tp;
 
@@ -1727,12 +1643,8 @@ fill_kproc2(p, ki)
 }
 
 int
-sysctl_procargs(name, namelen, where, sizep, up)
-	int *name;
-	u_int namelen;
-	void *where;
-	size_t *sizep;
-	struct proc *up;
+sysctl_procargs(int *name, u_int namelen, void *where, size_t *sizep,
+    struct proc *up)
 {
 	struct ps_strings pss;
 	struct proc *p;
@@ -1906,18 +1818,14 @@ done:
 }
 
 #if NPTY > 0
-int pty_maxptys __P((int, int));	/* defined in kern/tty_pty.c */
+int pty_maxptys(int, int);		/* defined in kern/tty_pty.c */
 
 /*
  * Validate parameters and get old / set new parameters
  * for pty sysctl function.
  */
 static int
-sysctl_pty(oldp, oldlenp, newp, newlen)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+sysctl_pty(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
 	int error = 0;
 	int oldmax = 0, newmax = 0;
