@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: reset_button,v 1.1 2003/04/20 20:55:40 thorpej Exp $
+#	$NetBSD: reset_button,v 1.2 2003/10/30 17:32:45 mycroft Exp $
 #
 # Generic script for reset button events.  We simply attempt to
 # reboot the system gracefully.
@@ -16,7 +16,7 @@ pressed)
 	;;
 
 *)
-	echo "${0}: unsupported event ${2} on device ${1}" >&1
+	logger -p warning "${0}: unsupported event ${2} on device ${1}" >&1
 	exit 1
 	;;
 esac
