@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.146.2.5 2001/09/21 22:36:28 nathanw Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.146.2.6 2001/09/26 19:55:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -421,6 +421,7 @@ getnewvnode(tag, mp, vops, vpp)
 	struct vnode *vp;
 	int error = 0, tryalloc;
 
+ try_again:
 	if (mp) {
 		/*
 		 * Mark filesystem busy while we're creating a vnode.
@@ -452,7 +453,6 @@ getnewvnode(tag, mp, vops, vpp)
 	 * referencing buffers.
 	 */
 
- try_again:
 	vp = NULL;
 
 	simple_lock(&vnode_free_list_slock);
@@ -462,8 +462,8 @@ getnewvnode(tag, mp, vops, vpp)
 		toggle = 0;
 
 	tryalloc = numvnodes < desiredvnodes ||
-	    (TAILQ_FIRST(listhd = &vnode_free_list) == NULL &&
-	     (TAILQ_FIRST(listhd = &vnode_hold_list) == NULL || toggle));
+	    (TAILQ_FIRST(&vnode_free_list) == NULL &&
+	     (TAILQ_FIRST(&vnode_hold_list) == NULL || toggle));
 
 	if (tryalloc &&
 	    (vp = pool_get(&vnode_pool, PR_NOWAIT)) != NULL) {
@@ -476,7 +476,9 @@ getnewvnode(tag, mp, vops, vpp)
 		TAILQ_INIT(&uobj->memq);
 		numvnodes++;
 	} else {
-		TAILQ_FOREACH(vp, listhd, v_freelist) {
+		if ((vp = TAILQ_FIRST(listhd = &vnode_free_list)) == NULL)
+			vp = TAILQ_FIRST(listhd = &vnode_hold_list);
+		for (; vp != NULL; vp = TAILQ_NEXT(vp, v_freelist)) {
 			if (simple_lock_try(&vp->v_interlock)) {
 				if ((vp->v_flag & VLAYER) == 0) {
 					break;

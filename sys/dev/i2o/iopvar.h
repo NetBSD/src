@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.4.2.3 2001/09/21 22:35:31 nathanw Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.4.2.4 2001/09/26 19:54:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -147,6 +147,8 @@ struct iop_softc {
 	bus_space_tag_t	sc_bus_iot;	/* Parent but I/O tag */
 	bus_addr_t	sc_memaddr;	/* Register window address */
 	bus_size_t	sc_memsize;	/* Register window size */
+	int		sc_pcibus;	/* PCI bus number */
+	int		sc_pcidev;	/* PCI device number */
 
 	struct i2o_status sc_status;	/* Last retrieved status record */
 };
@@ -164,9 +166,11 @@ void	iop_init(struct iop_softc *, const char *);
 int	iop_intr(void *);
 int	iop_lct_get(struct iop_softc *);
 int	iop_print_ident(struct iop_softc *, int);
+int	iop_post(struct iop_softc *, u_int32_t *);
+int	iop_reconfigure(struct iop_softc *, u_int);
+int	iop_status_get(struct iop_softc *, int);
 int	iop_simple_cmd(struct iop_softc *, int, int, int, int, int);
 void	iop_strvis(struct iop_softc *, const char *, int, char *, int);
-int	iop_post(struct iop_softc *, u_int32_t *);
 
 void	iop_initiator_register(struct iop_softc *, struct iop_initiator *);
 void	iop_initiator_unregister(struct iop_softc *, struct iop_initiator *);

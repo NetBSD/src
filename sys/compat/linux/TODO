@@ -1,4 +1,4 @@
-	$NetBSD: TODO,v 1.2.2.2 2001/08/24 00:08:45 nathanw Exp $
+	$NetBSD: TODO,v 1.2.2.3 2001/09/26 19:54:45 nathanw Exp $
 
 	A good place to look for things to do might be the gnats
 PR database at http://www.netbsd.org/Misc/query-pr.html
@@ -21,5 +21,5 @@ Jaromir Dolecek
 ITOH Yasufumi              m68k
 <itohy@netbsd.com>
 
-Emmanuel Dreyfus           PowerPC
+Emmanuel Dreyfus           PowerPC, Mips
 <manu@netbsd.org>

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.33.2.2 2001/08/24 00:11:17 nathanw Exp $	*/
+/*	$NetBSD: xy.c,v 1.33.2.3 2001/09/26 19:55:02 nathanw Exp $	*/
 
 /*
  *
@@ -1463,7 +1463,7 @@ xyc_startbuf(xycsc, xysc, bp)
 	/* init iorq and load iopb from it */
 	xyc_rqinit(iorq, xycsc, xysc, XY_SUB_NORM | XY_MODE_VERBO, block,
 		   bp->b_bcount / XYFM_BPS,
-		   (caddr_t)iorq->dmamap->dm_segs[0].ds_addr,
+		   (caddr_t)(u_long)iorq->dmamap->dm_segs[0].ds_addr,
 		   bp);
 
 	xyc_rqtopb(iorq, iopb, (bp->b_flags & B_READ) ? XYCMD_RD : XYCMD_WR, 0);

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_time.c,v 1.2.2.2 2001/06/21 19:59:57 nathanw Exp $ */
+/* $NetBSD: linux_time.c,v 1.2.2.3 2001/09/26 19:54:49 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,8 @@
 /*
  * This is not implemented for alpha yet
  */
-#if defined (__i386__) || defined (__m68k__) || defined (__powerpc__)
+#if defined (__i386__) || defined (__m68k__) || \
+    defined (__powerpc__) || defined (__mips__)
 
 /* 
  * Linux keeps track of a system timezone in the kernel. It is readen
@@ -119,4 +120,4 @@ int linux_sys_settimeofday(l, v, retval)
 	return (0);
 }
 
-#endif /* __i386__ || __m68k__ || __powerpc__ */
+#endif /* __i386__ || __m68k__ || __powerpc__ || __mips__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.37.2.2 2001/09/21 22:37:06 nathanw Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.37.2.3 2001/09/26 19:55:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -221,6 +221,7 @@ const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_fifoop_opv_desc =
@@ -264,27 +265,31 @@ ffs_fsync(v)
 	if (ap->a_offhi % bsize != 0)
 		blk_high++;
 
-	s = splbio();
-
 	/*
 	 * First, flush all pages in range.
 	 */
 
-	simple_lock(&vp->v_uobj.vmobjlock);
-	error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
-	    ap->a_offlo, ap->a_offhi, PGO_CLEANIT|PGO_SYNCIO);
-	if (error) {
-		return error;
+	if (vp->v_type == VREG) {
+		simple_lock(&vp->v_uobj.vmobjlock);
+		error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
+		    trunc_page(ap->a_offlo), round_page(ap->a_offhi),
+		    PGO_CLEANIT|PGO_SYNCIO);
+		if (error) {
+			return error;
+		}
 	}
 
 	/*
 	 * Then, flush indirect blocks.
 	 */
 
+	s = splbio();
 	if (!(ap->a_flags & FSYNC_DATAONLY) && blk_high >= NDADDR) {
 		error = ufs_getlbns(vp, blk_high, ia, &num);
-		if (error)
+		if (error) {
+			splx(s);
 			return error;
+		}
 		for (i = 0; i < num; i++) {
 			bp = incore(vp, ia[i].in_lbn);
 			if (bp != NULL && !(bp->b_flags & B_BUSY) &&

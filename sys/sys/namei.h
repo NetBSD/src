@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.20.2.1 2001/09/21 22:37:01 nathanw Exp $	*/
+/*	$NetBSD: namei.h,v 1.20.2.2 2001/09/26 19:55:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -191,6 +191,7 @@ int cache_lookup __P((struct vnode *, struct vnode **, struct componentname *));
 int cache_revlookup __P((struct vnode *, struct vnode **, char **, char *));
 void cache_enter __P((struct vnode *, struct vnode *, struct componentname *));
 void nchinit __P((void));
+void nchreinit __P((void));
 struct mount;
 void cache_purgevfs __P((struct mount *));
 void namecache_print(struct vnode *, void (*)(const char *, ...));

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.28.2.1 2001/04/09 01:58:00 nathanw Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.28.2.2 2001/09/26 19:55:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -75,9 +75,11 @@
 LIST_HEAD(nchashhead, namecache) *nchashtbl;
 u_long	nchash;				/* size of hash table - 1 */
 long	numcache;			/* number of cache entries allocated */
+#define NCHASH(cnp, dvp)	(((cnp)->cn_hash ^ (dvp)->v_id) & nchash)
 
 LIST_HEAD(ncvhashhead, namecache) *ncvhashtbl;
 u_long	ncvhash;			/* size of hash table - 1 */
+#define NCVHASH(vp)		((vp)->v_id & ncvhash)
 
 TAILQ_HEAD(, namecache) nclruhead;		/* LRU chain */
 struct	nchstats nchstats;		/* cache effectiveness statistics */
@@ -124,7 +126,7 @@ cache_lookup(dvp, vpp, cnp)
 		*vpp = 0;
 		return (-1);
 	}
-	ncpp = &nchashtbl[(cnp->cn_hash ^ dvp->v_id) & nchash];
+	ncpp = &nchashtbl[NCHASH(cnp, dvp)];
 	LIST_FOREACH(ncp, ncpp, nc_hash) {
 		if (ncp->nc_dvp == dvp &&
 		    ncp->nc_dvpid == dvp->v_id &&
@@ -272,7 +274,7 @@ cache_revlookup (vp, dvpp, bpp, bufp)
 	if (!doingcache)
 		goto out;
 
-	nvcpp = &ncvhashtbl[(vp->v_id & ncvhash)];
+	nvcpp = &ncvhashtbl[NCVHASH(vp)];
 
 	LIST_FOREACH(ncp, nvcpp, nc_vhash) {
 		if ((ncp->nc_vp == vp) &&
@@ -372,7 +374,7 @@ cache_enter(dvp, vp, cnp)
 	ncp->nc_nlen = cnp->cn_namelen;
 	memcpy(ncp->nc_name, cnp->cn_nameptr, (unsigned)ncp->nc_nlen);
 	TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
-	ncpp = &nchashtbl[(cnp->cn_hash ^ dvp->v_id) & nchash];
+	ncpp = &nchashtbl[NCHASH(cnp, dvp)];
 	LIST_INSERT_HEAD(ncpp, ncp, nc_hash);
 
 	ncp->nc_vhash.le_prev = 0;
@@ -390,7 +392,7 @@ cache_enter(dvp, vp, cnp)
 	     ((ncp->nc_nlen == 2) && (ncp->nc_name[0] != '.') && (ncp->nc_name[1] != '.')) ||
 	     ((ncp->nc_nlen == 1) && (ncp->nc_name[0] != '.'))))
 	{
-		nvcpp = &ncvhashtbl[(vp->v_id & ncvhash)];
+		nvcpp = &ncvhashtbl[NCVHASH(vp)];
 		LIST_INSERT_HEAD(nvcpp, ncp, nc_vhash);
 	}
 	
@@ -415,6 +417,49 @@ nchinit()
 	pool_init(&namecache_pool, sizeof(struct namecache), 0, 0, 0,
 	    "ncachepl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
 	    M_CACHE);
+}
+
+/*
+ * Name cache reinitialization, for when the maximum number of vnodes increases.
+ */
+void
+nchreinit()
+{
+	struct namecache *ncp;
+	struct nchashhead *oldhash1, *hash1;
+	struct ncvhashhead *oldhash2, *hash2;
+	u_long oldmask1, oldmask2, mask1, mask2;
+	int i;
+
+	hash1 = hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &mask1);
+	hash2 =
+#ifdef NAMECACHE_ENTER_REVERSE
+	    hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &mask2);
+#else
+	    hashinit(desiredvnodes/8, HASH_LIST, M_CACHE, M_WAITOK, &mask2);
+#endif
+	oldhash1 = nchashtbl;
+	oldmask1 = nchash;
+	nchashtbl = hash1;
+	nchash = mask1;
+	oldhash2 = ncvhashtbl;
+	oldmask2 = ncvhash;
+	ncvhashtbl = hash2;
+	ncvhash = mask2;
+	for (i = 0; i <= oldmask1; i++) {
+		while ((ncp = LIST_FIRST(&oldhash1[i])) != NULL) {
+			LIST_REMOVE(ncp, nc_hash);
+			ncp->nc_hash.le_prev = NULL;
+		}
+	}
+	for (i = 0; i <= oldmask2; i++) {
+		while ((ncp = LIST_FIRST(&oldhash2[i])) != NULL) {
+			LIST_REMOVE(ncp, nc_vhash);
+			ncp->nc_vhash.le_prev = NULL;
+		}
+	}
+	hashdone(oldhash1, M_CACHE);
+	hashdone(oldhash2, M_CACHE);
 }
 
 /*

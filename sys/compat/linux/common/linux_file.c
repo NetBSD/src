@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.37.2.4 2001/09/21 22:35:18 nathanw Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.37.2.5 2001/09/26 19:54:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -779,7 +779,8 @@ linux_sys_lchown16(l, v, retval)
 	return sys___posix_lchown(l, &bla, retval);
 }
 #endif /* __i386__ || __m68k__ */
-#if defined (__i386__) || defined (__m68k__) || defined (__powerpc__)
+#if defined (__i386__) || defined (__m68k__) || \
+    defined (__powerpc__) || defined (__mips__)
 int
 linux_sys_chown(l, v, retval)
 	struct lwp *l;
@@ -817,7 +818,7 @@ linux_sys_lchown(l, v, retval)
 
 	return sys___posix_lchown(l, uap, retval);
 }
-#endif /* __i386__ || __m68k__ || __powerpc__ */
+#endif /* __i386__ || __m68k__ || __powerpc__ || __mips__ */
 
 int
 linux_sys_rename(l, v, retval)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.16.2.1 2001/09/21 22:37:03 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.16.2.2 2001/09/26 19:55:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -107,6 +107,8 @@ ext2fs_read(v)
 		((u_int64_t)0x80000000 * fs->e2fs_bsize - 1))
 		return (EFBIG);
 	if (uio->uio_resid == 0)
+		return (0);
+	if (uio->uio_offset >= ip->i_e2fs_size)
 		return (0);
 
 	if (vp->v_type == VREG) {

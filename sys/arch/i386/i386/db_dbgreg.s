@@ -1,4 +1,4 @@
-/*	$NetBSD: db_dbgreg.s,v 1.2 1998/12/01 04:31:00 thorpej Exp $	*/
+/*	$NetBSD: db_dbgreg.s,v 1.2.24.1 2001/09/26 19:54:44 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -161,13 +161,13 @@ ENTRY(dr3)
 
 	movzbl	B_ARG1, %eax
 	andb	$3, %al
-	addb	$0x10, %ecx
+	addb	$0x10, %cl
 	shll	%cl, %eax
 	orl	%eax, %edx
 
 	movzbl	B_ARG2, %eax
 	andb	$3, %al
-	addb	$0x2, %ecx
+	addb	$0x2, %cl
 	shll	%cl, %eax
 	orl	%eax, %edx
 

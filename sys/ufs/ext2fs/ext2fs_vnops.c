@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.32.2.3 2001/09/21 22:37:03 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.32.2.4 2001/09/26 19:55:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -1578,6 +1578,7 @@ const struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, ext2fs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ext2fs_fifoop_opv_desc =
