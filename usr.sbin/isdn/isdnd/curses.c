@@ -27,7 +27,7 @@
  *	i4b daemon - curses fullscreen output
  *	-------------------------------------
  *
- *	$Id: curses.c,v 1.1.1.1 2001/01/06 13:00:13 martin Exp $ 
+ *	$Id: curses.c,v 1.2 2002/03/24 20:37:47 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -734,8 +734,7 @@ display_cards(void)
 	for (i = 0; i < ncontroller; i++)
 	{
 		mvwprintw(chan_w, 4+i, 2, " #%d  %s", i,
-			name_of_controller(isdn_ctrl_tab[i].ctrl_type,
-			isdn_ctrl_tab[i].card_type));
+			isdn_ctrl_tab[i].controller);
 	}
 
 	wrefresh(chan_w);
