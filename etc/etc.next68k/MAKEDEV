@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.34 2003/03/30 17:41:56 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.35 2003/03/30 18:08:31 wiz Exp $
 #
 ###########################################################################
 #
@@ -38,7 +38,7 @@
 #	raminst	for RAM disk install
 #
 # Tapes:
-#	st*	scsi tapes
+#	st*	SCSI tapes
 #
 # Disks:
 #	fd*	floppy disk drives (3 1/2") (unimp.)
