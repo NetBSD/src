@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.15 1997/04/02 17:09:48 kleink Exp $	*/
+/*	$NetBSD: specdev.h,v 1.16 1997/04/11 21:52:05 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -99,7 +99,7 @@ int	spec_ioctl	__P((void *));
 int	spec_poll	__P((void *));
 #define	spec_mmap	genfs_badop
 int	spec_fsync	__P((void *));
-#define	spec_seek	genfs_badop
+#define	spec_seek	genfs_nullop		/* XXX should query device */
 #define	spec_remove	genfs_badop
 #define	spec_link	genfs_badop
 #define	spec_rename	genfs_badop

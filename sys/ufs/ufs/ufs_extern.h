@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.7 1996/09/07 12:41:43 mycroft Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.8 1997/04/11 21:52:08 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -86,7 +86,7 @@ int	ufs_readlink	__P((void *));
 int	ufs_remove	__P((void *));
 int	ufs_rename	__P((void *));
 int	ufs_rmdir	__P((void *));
-#define	ufs_seek	genfs_nullop
+#define	ufs_seek	genfs_seek
 #define	ufs_poll	genfs_poll
 int	ufs_setattr	__P((void *));
 int	ufs_strategy	__P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.22 1996/09/07 12:41:22 mycroft Exp $	*/
+/*	$NetBSD: denode.h,v 1.23 1997/04/11 21:52:06 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -270,7 +270,7 @@ int	msdosfs_ioctl		__P((void *));
 #define	msdosfs_poll		genfs_poll
 int	msdosfs_mmap		__P((void *));
 #define	msdosfs_fsync		genfs_fsync
-#define	msdosfs_seek		genfs_nullop
+#define	msdosfs_seek		genfs_seek
 int	msdosfs_remove		__P((void *));
 int	msdosfs_link		__P((void *));
 int	msdosfs_rename		__P((void *));
