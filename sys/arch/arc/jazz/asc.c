@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.3 2001/06/13 15:10:36 soda Exp $	*/
+/*	$NetBSD: asc.c,v 1.4 2001/06/24 05:00:40 chs Exp $	*/
 /*	$OpenBSD: asc.c,v 1.9 1998/03/16 09:38:39 pefo Exp $	*/
 /*	NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp 	*/
 
@@ -2012,10 +2012,8 @@ asc_disconnect(asc, status, ss, ir)
 	asc_softc_t asc;
 	int status, ss, ir;
 {
-	State *state = &asc->st[asc->target];
-
 #ifdef DIAGNOSTIC
-	if (!(state->flags & DISCONN)) {
+	if (!(asc->st[asc->target].flags & DISCONN)) {
 		printf("asc_disconnect: device %d: DISCONN not set!\n",
 			asc->target);
 	}
