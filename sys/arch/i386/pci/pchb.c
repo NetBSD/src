@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.46 2003/08/28 10:58:37 tron Exp $	*/
+/*	$NetBSD: pchb.c,v 1.47 2003/10/25 18:40:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.46 2003/08/28 10:58:37 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.47 2003/10/25 18:40:58 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,7 +111,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	struct agpbus_attach_args apa;
 	pcireg_t bcreg;
-	u_char bdnum, pbnum;
+	u_char bdnum, pbnum = 0;
 	pcitag_t tag;
 	int doattach, attachflags, has_agp;
 
