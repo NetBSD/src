@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43.2.13 2001/06/18 03:33:32 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43.2.14 2001/09/03 19:48:12 sommerfeld Exp $	*/
 
 /*
  *
@@ -134,9 +134,9 @@
  * note that mapping of the PDP at PTP#767's VA (0xbffbf000) is
  * defined as "PDP_BASE".... within that mapping there are two
  * defines:
- *   "PDP_PDE" (0xbffbfefc) is the VA of the PDE in the PDP
+ *   "PDP_PDE" (0xbfeffbfc) is the VA of the PDE in the PDP
  *      which points back to itself.
- *   "APDP_PDE" (0xbffbfffc) is the VA of the PDE in the PDP which
+ *   "APDP_PDE" (0xbfeffffc) is the VA of the PDE in the PDP which
  *      establishes the recursive mapping of the alternate pmap.
  *      to set the alternate PDP, one just has to put the correct
  *	PA info in *APDP_PDE.
@@ -168,13 +168,6 @@
 #define APDP_BASE ((pd_entry_t *)(((char *)APTE_BASE) + (PDSLOT_APTE * NBPG)))
 #define PDP_PDE		(PDP_BASE + PDSLOT_PTE)
 #define APDP_PDE	(PDP_BASE + PDSLOT_APTE)
-
-/*
- * XXXCDC: tmp xlate from old names:
- * PTDPTDI -> PDSLOT_PTE
- * KPTDI -> PDSLOT_KERN
- * APTDPTDI -> PDSLOT_APTE
- */
 
 /*
  * the follow define determines how many PTPs should be set up for the
@@ -343,10 +336,10 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 #define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
 #define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
-#define pmap_copy(DP,SP,D,L,S)		
+#define pmap_copy(DP,SP,D,L,S)
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
-#define pmap_move(DP,SP,D,L,S)		
+#define pmap_move(DP,SP,D,L,S)
 #define pmap_phys_address(ppn)		i386_ptob(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 

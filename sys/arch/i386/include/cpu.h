@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.26 2001/07/02 12:52:16 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.27 2001/09/03 19:48:12 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -132,6 +132,7 @@ struct cpu_info {
 	int		ci_astpending;
 	struct trapframe *ci_ddb_regs;
 
+	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
 	struct i386_cache_info ci_cinfo[CAI_COUNT];
 
 	/*
@@ -323,6 +324,10 @@ extern int cpu_class;
 extern const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
 extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 
+extern int i386_use_fxsave;
+extern int i386_has_sse;
+extern int i386_has_sse2;
+
 /* machdep.c */
 void	dumpconf __P((void));
 void	cpu_reset __P((void));
@@ -411,7 +416,10 @@ void i386_bus_space_mallocok __P((void));
 #define	CPU_BOOTED_KERNEL	5	/* string: booted kernel name */
 #define CPU_DISKINFO		6	/* disk geometry information */
 #define CPU_FPU_PRESENT		7	/* FPU is present */
-#define	CPU_MAXID		8	/* number of valid machdep ids */
+#define	CPU_OSFXSR		8	/* OS uses FXSAVE/FXRSTOR */
+#define	CPU_SSE			9	/* OS/CPU supports SSE */
+#define	CPU_SSE2		10	/* OS/CPU supports SSE2 */
+#define	CPU_MAXID		11	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -422,6 +430,9 @@ void i386_bus_space_mallocok __P((void));
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "diskinfo", CTLTYPE_STRUCT }, \
 	{ "fpu_present", CTLTYPE_INT }, \
+	{ "osfxsr", CTLTYPE_INT }, \
+	{ "sse", CTLTYPE_INT }, \
+	{ "sse2", CTLTYPE_INT }, \
 }
 
 
