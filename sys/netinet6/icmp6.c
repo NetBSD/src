@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.6 1999/07/09 22:57:26 thorpej Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.7 1999/07/22 03:59:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -274,7 +274,7 @@ icmp6_error(m, type, code, param)
 	icmp6 = (struct icmp6_hdr *)(nip6 + 1);
 	icmp6->icmp6_type = type;
 	icmp6->icmp6_code = code;
-	icmp6->icmp6_pptr = htonl((u_long)param);
+	icmp6->icmp6_pptr = htonl((u_int32_t)param);
 
 	icmp6stat.icp6s_outhist[type]++;
 	icmp6_reflect(m, sizeof(struct ip6_hdr)); /*header order: IPv6 - ICMPv6*/
