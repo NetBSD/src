@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)db.h	8.2 (Berkeley) 9/7/93
+ *	from: @(#)db.h	8.2 (Berkeley) 9/7/93
+ *	$Id: db.h,v 1.10 1993/09/16 22:58:06 cgd Exp $
  */
 
 #ifndef _DB_H_
