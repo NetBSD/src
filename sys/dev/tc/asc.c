@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.39.2.1 1997/07/01 17:35:40 bouyer Exp $	*/
+/*	$NetBSD: asc.c,v 1.39.2.2 1997/07/30 16:23:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -450,12 +450,12 @@ void asc_minphys __P((struct buf *bp));
  * bus-parent shared attach function
  */
 void
-ascattach(asc, dmabufsize, bus_speed)
+ascattach(asc, bus_speed)
 	register asc_softc_t asc;
-	int dmabufsize;
+	int bus_speed;
 {
 	register asc_regmap_t *regs;
-	int id, s, i;
+	int id, s;
 
 	int unit;
 
@@ -521,21 +521,6 @@ ascattach(asc, dmabufsize, bus_speed)
 
 	id = asc->sc_id;
 	splx(s);
-
-	/*
-	 * Statically partition the DMA buffer between targets.
-	 * This way we will eventually be able to attach/detach
-	 * drives on-fly.  And 18k/target is plenty for normal use.
-	 */
-
-	/*
-	 * Give each target its own DMA buffer region.
-	 * We may want to try ping ponging buffers later.
-	 */
-	for (i = 0; i < ASC_NCMD; i++) {
-		asc->st[i].dmaBufAddr = asc->buff + dmabufsize * i;
-		asc->st[i].dmaBufSize = dmabufsize;
-	}
 
 	/* Hack for old-sytle SCSI-device probe */
 	(void) pmax_add_scsi(&ascdriver, unit);
@@ -732,12 +717,8 @@ asc_startcmd(asc, target)
 	state->script = (script_t *)0;
 	state->msg_out = SCSI_NO_OP;
 
-	/*
-	 * Copy command data to the DMA buffer.
-	 */
 	len = scsicmd->cmdlen;
 	state->dmalen = len;
-	bcopy(scsicmd->cmd, state->dmaBufAddr, len);
 
 	/* check for simple SCSI command with no data transfer */
 	if ((state->buflen = scsicmd->buflen) == 0) {
@@ -782,7 +763,8 @@ asc_startcmd(asc, target)
 	tc_mb();
 
 	/* initialize the DMA */
-	(*asc->dma_start)(asc, state, state->dmaBufAddr, ASCDMA_WRITE);
+	len = (*asc->dma_start)(asc, state, scsicmd->cmd, ASCDMA_WRITE,
+	   len, 0);
 	ASC_TC_PUT(regs, len);
 	readback(regs->asc_cmd);
 
@@ -1016,14 +998,16 @@ again:
 		/* flush any data in the FIFO */
 		if (fifo) {
 			if (state->flags & DMA_OUT) {
-#if 0
+#ifdef ASC_DIAGNOSTIC
 	 			printf("asc: DMA_OUT, fifo resid %d, len %d, flags 0x%x\n",
 				    fifo, len, state->flags);
-#endif
+#endif /* ASC_DIAGNOSTIC */
 				len += fifo;
 			} else if (state->flags & DMA_IN) {
+#ifdef ASC_DIAGNOSTIC
 				printf("asc_intr: IN: dmalen %d len %d fifo %d\n",
 					state->dmalen, len, fifo); /* XXX */
+#endif /* ASC_DIAGNOSTIC */
 			} else
 				printf("asc_intr: dmalen %d len %d fifo %d\n",
 					state->dmalen, len, fifo); /* XXX */
@@ -1079,8 +1063,8 @@ again:
 				len = state->dmalen;
 				state->flags &= ~DMA_IN_PROGRESS;
 			do_in:
+				state->dmalen = len;	/* dma_end needs actual length */
 				(*asc->dma_end)(asc, state, ASCDMA_READ);
-				bcopy(state->dmaBufAddr, state->buf, len);
 				state->buf += len;
 				state->buflen -= len;
 			}
@@ -1450,10 +1434,10 @@ asc_dma_in(asc, status, ss, ir)
 		 * There may be some bytes in the FIFO if synchonous transfers
 		 * are in progress.
 		 */
-		(*asc->dma_end)(asc, state, ASCDMA_READ);
 		ASC_TC_GET(regs, len);
 		len = state->dmalen - len;
-		bcopy(state->dmaBufAddr, state->buf, len);
+		state->dmalen = len;	/* dma_end may need actual length */
+		(*asc->dma_end)(asc, state, ASCDMA_READ);
 		state->buf += len;
 		state->buflen -= len;
 	}
@@ -1474,7 +1458,7 @@ asc_dma_in(asc, status, ss, ir)
 		 */
 		 if (state->sync_offset == 0)
 			async_fifo_junk = regs->asc_fifo;
-#ifdef DEBUG
+#ifdef ASC_DIAGNOSTIC
 		printf("%s: asc_dma_in: FIFO count %x flags %x sync_offset %d",
 		    asc->sc_dev.dv_xname, regs->asc_flags,
 		       state->flags, state->sync_offset);
@@ -1482,10 +1466,10 @@ asc_dma_in(asc, status, ss, ir)
 			printf("\n");
 		else
 			printf(" unexpected fifo data %x\n", async_fifo_junk);
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 		asc_DumpLog("asc_dma_in");
-#endif	/* DIAGNOSTIC */
 #endif	/* DEBUG */
+#endif	/* ASC_DIAGNOSTIC */
 
 	}
 	/* setup to start reading the next chunk */
@@ -1496,10 +1480,8 @@ asc_dma_in(asc, status, ss, ir)
 	else
 		asc_logp[-1].resid = len;
 #endif
-	if (len > state->dmaBufSize)
-		len = state->dmaBufSize;
+	len = (*asc->dma_start)(asc, state, state->buf, ASCDMA_READ, len, 0);
 	state->dmalen = len;
-	(*asc->dma_start)(asc, state, state->dmaBufAddr, ASCDMA_READ);
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
@@ -1527,8 +1509,6 @@ asc_last_dma_in(asc, status, ss, ir)
 	register State *state = &asc->st[asc->target];
 	register int len, fifo;
 
-	/* copy data from buffer to main memory */
-	(*asc->dma_end)(asc, state, ASCDMA_READ);
 	ASC_TC_GET(regs, len);
 	fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
 #ifdef DEBUG
@@ -1543,8 +1523,9 @@ asc_last_dma_in(asc, status, ss, ir)
 	}
 	state->flags &= ~DMA_IN_PROGRESS;
 	len = state->dmalen - len;
+	state->dmalen = len;	/* dma_end may need actual length */
+	(*asc->dma_end)(asc, state, ASCDMA_READ);
 	state->buflen -= len;
-	bcopy(state->dmaBufAddr, state->buf, len);
 
 	return (1);
 }
@@ -1567,10 +1548,8 @@ asc_resume_in(asc, status, ss, ir)
 	else
 		asc_logp[-1].resid = len;
 #endif
-	if (len > state->dmaBufSize)
-		len = state->dmaBufSize;
+	len = (*asc->dma_start)(asc, state, state->buf, ASCDMA_READ, len, 0);
 	state->dmalen = len;
-	(*asc->dma_start)(asc, state, state->dmaBufAddr, ASCDMA_READ);
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
@@ -1605,7 +1584,7 @@ asc_resume_dma_in(asc, status, ss, ir)
 	if ((off & 1) && state->sync_offset) {
 		printf("asc_resume_dma_in: odd xfer dmalen %d len %d off %d\n",
 			state->dmalen, len, off); /* XXX */
-		regs->asc_res_fifo = state->dmaBufAddr[off];
+		regs->asc_res_fifo = state->buf[off];
 	}
 #ifdef DEBUG
 	if (asc_logp == asc_log)
@@ -1613,7 +1592,7 @@ asc_resume_dma_in(asc, status, ss, ir)
 	else
 		asc_logp[-1].resid = len;
 #endif
-	(*asc->dma_start)(asc, state, state->dmaBufAddr + off, ASCDMA_READ);
+	len = (*asc->dma_start)(asc, state, state->buf + off, ASCDMA_READ, len, off);
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
@@ -1672,11 +1651,8 @@ asc_dma_out(asc, status, ss, ir)
 	else
 		asc_logp[-1].resid = len;
 #endif
-	if (len > state->dmaBufSize)
-		len = state->dmaBufSize;
+	len = (*asc->dma_start)(asc, state, state->buf, ASCDMA_WRITE, len, 0);
 	state->dmalen = len;
-	bcopy(state->buf, state->dmaBufAddr, len);
-	(*asc->dma_start)(asc, state, state->dmaBufAddr, ASCDMA_WRITE);
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
@@ -1742,11 +1718,8 @@ asc_resume_out(asc, status, ss, ir)
 	else
 		asc_logp[-1].resid = len;
 #endif
-	if (len > state->dmaBufSize)
-		len = state->dmaBufSize;
+	len = (*asc->dma_start)(asc, state, state->buf, ASCDMA_WRITE, len, 0);
 	state->dmalen = len;
-	bcopy(state->buf, state->dmaBufAddr, len);
-	(*asc->dma_start)(asc, state, state->dmaBufAddr, ASCDMA_WRITE);
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
@@ -1781,7 +1754,7 @@ asc_resume_dma_out(asc, status, ss, ir)
 	if (off & 1) {
 		printf("asc_resume_dma_out: odd xfer dmalen %d len %d off %d\n",
 			state->dmalen, len, off); /* XXX */
-		regs->asc_fifo = state->dmaBufAddr[off];
+		regs->asc_fifo = state->buf[off];
 		off++;
 		len--;
 	}
@@ -1791,7 +1764,8 @@ asc_resume_dma_out(asc, status, ss, ir)
 	else
 		asc_logp[-1].resid = len;
 #endif
-	(*asc->dma_start)(asc, state, state->dmaBufAddr + off, ASCDMA_WRITE);
+	/* XXX may result in redundant copy of data */
+	len = (*asc->dma_start)(asc, state, state->buf + off, ASCDMA_WRITE, len, off);
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
@@ -2101,7 +2075,6 @@ asc_disconnect(asc, status, ss, ir)
 	}
 	return (1);
 }
-
 
 void
 asc_timeout(arg)
