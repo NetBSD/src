@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-comp.c,v 1.3 1996/03/03 17:18:14 thorpej Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.4 1996/03/15 02:28:00 paulus Exp $	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
  *
@@ -314,7 +314,7 @@ bsd_alloc(options, opt_len, decomp)
     u_int newlen, hsize, hshift, maxmaxcode;
     struct bsd_db *db;
 
-    if (opt_len != CILEN_BSD_COMPRESS || options[0] != CI_BSD_COMPRESS
+    if (opt_len < CILEN_BSD_COMPRESS || options[0] != CI_BSD_COMPRESS
 	|| options[1] != CILEN_BSD_COMPRESS
 	|| BSD_VERSION(options[2]) != BSD_CURRENT_VERSION)
 	return NULL;
@@ -412,7 +412,7 @@ bsd_init(db, options, opt_len, unit, hdrlen, mru, debug, decomp)
 {
     int i;
 
-    if (opt_len != CILEN_BSD_COMPRESS || options[0] != CI_BSD_COMPRESS
+    if (opt_len < CILEN_BSD_COMPRESS || options[0] != CI_BSD_COMPRESS
 	|| options[1] != CILEN_BSD_COMPRESS
 	|| BSD_VERSION(options[2]) != BSD_CURRENT_VERSION
 	|| BSD_NBITS(options[2]) != db->maxbits
