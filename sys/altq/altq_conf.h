@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.h,v 1.3 2001/01/29 20:02:48 itojun Exp $	*/
+/*	$NetBSD: altq_conf.h,v 1.3.16.1 2002/05/16 12:30:22 gehenna Exp $	*/
 /*	$KAME: altq_conf.h,v 1.6 2001/01/29 19:59:09 itojun Exp $	*/
 
 /*
@@ -55,13 +55,13 @@
 typedef int d_open_t __P((dev_t, int, int, struct proc *));
 typedef int d_close_t __P((dev_t, int, int, struct proc *));
 typedef int d_ioctl_t __P((dev_t, u_long, caddr_t, int, struct proc *));
-
-#define	noopen	(dev_type_open((*))) enodev
-#define	noclose	(dev_type_close((*))) enodev
-#define	noioctl	(dev_type_ioctl((*))) enodev
 #endif /* __NetBSD__ || __OpenBSD__ */
 
 #if defined(__OpenBSD__)
+#define	noopen	(dev_type_open((*))) enodev
+#define	noclose	(dev_type_close((*))) enodev
+#define	noioctl	(dev_type_ioctl((*))) enodev
+
 int altqopen __P((dev_t, int, int, struct proc *));
 int altqclose __P((dev_t, int, int, struct proc *));
 int altqioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
