@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.168 2002/05/26 14:35:10 tshiozak Exp $
+$NetBSD: pcmciadevs,v 1.169 2002/05/31 13:29:19 mycroft Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -141,6 +141,7 @@ product	ARCHOS ARC_ATAPI	0x0043 MiniCD
 product BAY STACK_650		0x0804 BayStack 650 Wireless LAN
 product BAY SURFER_PRO		0x0806 AirSurfer Pro Wireless LAN
 product BAY STACK_660		0x0807 BayStack 660 Wireless LAN
+product	BAY EMOBILITY_11B	0x080a e-Mobility 11Mb Wireless LAN
 
 /* BreezeCOM */
 product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET
