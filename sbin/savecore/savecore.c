@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.31 1997/08/25 19:31:53 kleink Exp $	*/
+/*	$NetBSD: savecore.c,v 1.32 1997/09/15 11:08:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1986, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: savecore.c,v 1.31 1997/08/25 19:31:53 kleink Exp $";
+__RCSID("$NetBSD: savecore.c,v 1.32 1997/09/15 11:08:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,6 +130,7 @@ int	 get_crashtime __P((void));
 void	 kmem_setup __P((void));
 void	 log __P((int, char *, ...));
 void	 Lseek __P((int, off_t, int));
+int	 main __P((int, char *[]));
 int	 Open __P((char *, int rw));
 char	*rawname __P((char *s));
 void	 save_core __P((void));
@@ -253,8 +254,8 @@ kmem_setup()
 	}
 	dumplo *= DEV_BSIZE;
 	if (verbose)
-		(void)printf("dumplo = %d (%d * %d)\n",
-		    dumplo, dumplo / DEV_BSIZE, DEV_BSIZE);
+		(void)printf("dumplo = %ld (%ld * %ld)\n",
+		    (long)dumplo, (long)(dumplo / DEV_BSIZE), (long)DEV_BSIZE);
 	if (KREAD(kd_kern, current_nl[X_DUMPMAG].n_value, &dumpmag) != 0) {
 		if (verbose)
 		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_kern));
@@ -310,8 +311,8 @@ kmem_setup()
 void
 check_kmem()
 {
-	register char	*cp;
-	register long	panicloc;
+	char	*cp;
+	long	panicloc;
 	char core_vers[1024];
 
 	(void)kvm_read(kd_dump, dump_nl[X_VERSION].n_value, core_vers,
@@ -370,7 +371,8 @@ dump_exists()
 	 */
 	if (newdumpmag != dumpmag) {
 		if (verbose)
-			syslog(LOG_WARNING, "magic number mismatch (%x != %x)",
+			syslog(LOG_WARNING,
+			    "magic number mismatch (0x%x != 0x%x)",
 			    newdumpmag, dumpmag);
 		syslog(LOG_WARNING, "no core dump");
 		return (0);
@@ -392,10 +394,11 @@ char buf[1024 * 1024];
 void
 save_core()
 {
-	register FILE *fp;
-	register int bounds, ifd, nr, nw, ofd;
+	FILE *fp;
+	int bounds, ifd, nr, nw, ofd;
 	char *rawp, path[MAXPATHLEN];
 
+	ofd = -1;
 	/*
 	 * Get the current number and update the bounds file.  Do the update
 	 * now, because may fail later and don't want to overwrite anything.
@@ -432,7 +435,8 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 		ofd = Create(path, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 		fp  = fdopen(ofd, "w");
 		if (fp == NULL) {
-			syslog(LOG_ERR, "%s: fdopen: %s", path);
+			syslog(LOG_ERR, "%s: fdopen: %s", path,
+			    strerror(errno));
 			exit(1);
 		}
 	}
@@ -522,10 +526,10 @@ err2:			syslog(LOG_WARNING,
 
 char *
 find_dev(dev, type)
-	register dev_t dev;
-	register int type;
+	dev_t dev;
+	int type;
 {
-	register DIR *dfd;
+	DIR *dfd;
 	struct dirent *dir;
 	struct stat sb;
 	char *dp, devname[MAXPATHLEN + 1];
@@ -603,7 +607,7 @@ get_crashtime()
 int
 check_space()
 {
-	register FILE *fp;
+	FILE *fp;
 	char *tkernel;
 	off_t minfree, spacefree, kernelsize, needed;
 	struct stat st;
@@ -678,7 +682,7 @@ Create(file, mode)
 	char *file;
 	int mode;
 {
-	register int fd;
+	int fd;
 
 	fd = open(file, O_WRONLY | O_CREAT | O_TRUNC, mode);
 	if (fd < 0) {
