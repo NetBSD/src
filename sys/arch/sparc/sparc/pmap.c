@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81 1997/05/15 19:19:49 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.82 1997/05/24 20:09:45 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -614,13 +614,13 @@ setptesw4m(pm, va, pte)
 
 #ifdef DEBUG
 	if (pm->pm_regmap == NULL || rm == NULL)
-		panic("setpte4m: no regmap entry");
+		panic("setptesw4m: no regmap entry");
 #endif
 	sm = &rm->rg_segmap[VA_VSEG(va)];
 
 #ifdef DEBUG
 	if (rm->rg_segmap == NULL || sm == NULL || sm->sg_pte == NULL)
-		panic("setpte4m: no segmap for va %p", (caddr_t)va);
+		panic("setptesw4m: no segmap for va %p", (caddr_t)va);
 #endif
 	sm->sg_pte[VA_SUN4M_VPG(va)] = pte; /* set new pte */
 }
@@ -4246,7 +4246,7 @@ pmap_page_protect4_4c(pa, prot)
 	 * Skip unmanaged pages, or operations that do not take
 	 * away write permission.
 	 */
-	if ((pa & (PMAP_TNC & ~PMAP_NC)) ||
+	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) ||
 	     !managed(pa) || prot & VM_PROT_WRITE)
 		return;
 	write_user_windows();	/* paranoia */
@@ -4926,8 +4926,8 @@ pmap_enter4_4c(pm, va, pa, prot, wired)
 		    pm, va, pa, prot, wired);
 #endif
 
-	pteproto = PG_V | ((pa & PMAP_TNC) << PG_TNC_SHIFT);
-	pa &= ~PMAP_TNC;
+	pteproto = PG_V | PMAP_T2PTE_4(pa);
+	pa &= ~PMAP_TNC_4;
 	/*
 	 * Set up prototype for new PTE.  Cannot set PG_NC from PV_NC yet
 	 * since the pvlist no-cache bit might change as a result of the
@@ -5287,17 +5287,19 @@ pmap_enter4m(pm, va, pa, prot, wired)
 	/* Initialise pteproto with cache bit */
 	pteproto = (pa & PMAP_NC) == 0 ? SRMMU_PG_C : 0;
 
-	if (pa & PMAP_TYPE4M) {		/* this page goes in an iospace */
+#ifdef DEBUG
+	if (pa & PMAP_TYPE_SRMMU) {	/* this page goes in an iospace */
 		if (cpuinfo.cpu_type == CPUTYP_MS1)
 			panic("pmap_enter4m: attempt to use 36-bit iospace on"
 			      " MicroSPARC");
-		pteproto |= (pa & PMAP_TYPE4M) << PMAP_PTESHFT4M;
 	}
+#endif
+	pteproto |= PMAP_T2PTE_SRMMU(pa);
 
 	/* Make sure we get a pte with appropriate perms! */
 	pteproto |= SRMMU_TEPTE | PPROT_RX_RX;
 
-	pa &= ~PMAP_TNC;
+	pa &= ~PMAP_TNC_SRMMU;
 	/*
 	 * Set up prototype for new PTE.  Cannot set PG_NC from PV_NC yet
 	 * since the pvlist no-cache bit might change as a result of the
@@ -5757,7 +5759,7 @@ pmap_clear_modify4_4c(pa)
 {
 	register struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC & ~PMAP_NC)) == 0 && managed(pa)) {
+	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && managed(pa)) {
 		pv = pvhead(pa);
 		(void) pv_syncflags4_4c(pv);
 		pv->pv_flags &= ~PV_MOD;
@@ -5773,7 +5775,7 @@ pmap_is_modified4_4c(pa)
 {
 	register struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC & ~PMAP_NC)) == 0 && managed(pa)) {
+	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && managed(pa)) {
 		pv = pvhead(pa);
 		if (pv->pv_flags & PV_MOD || pv_syncflags4_4c(pv) & PV_MOD)
 			return (1);
@@ -5790,7 +5792,7 @@ pmap_clear_reference4_4c(pa)
 {
 	register struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC & ~PMAP_NC)) == 0 && managed(pa)) {
+	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && managed(pa)) {
 		pv = pvhead(pa);
 		(void) pv_syncflags4_4c(pv);
 		pv->pv_flags &= ~PV_REF;
@@ -5806,7 +5808,7 @@ pmap_is_referenced4_4c(pa)
 {
 	register struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC & ~PMAP_NC)) == 0 && managed(pa)) {
+	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && managed(pa)) {
 		pv = pvhead(pa);
 		if (pv->pv_flags & PV_REF || pv_syncflags4_4c(pv) & PV_REF)
 			return (1);
@@ -5835,7 +5837,7 @@ pmap_clear_modify4m(pa)	   /* XXX %%%: Should service from swpagetbl for 4m */
 {
 	register struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC & ~PMAP_NC)) == 0 && managed(pa)) {
+	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && managed(pa)) {
 		pv = pvhead(pa);
 		(void) pv_syncflags4m(pv);
 		pv->pv_flags &= ~PV_MOD4M;
@@ -5851,7 +5853,7 @@ pmap_is_modified4m(pa) /* Test performance with SUN4M && SUN4/4C. XXX */
 {
 	register struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC & ~PMAP_NC)) == 0 && managed(pa)) {
+	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && managed(pa)) {
 		pv = pvhead(pa);
 		if (pv->pv_flags & PV_MOD4M || pv_syncflags4m(pv) & PV_MOD4M)
 		        return(1);
@@ -5868,7 +5870,7 @@ pmap_clear_reference4m(pa)
 {
 	register struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC & ~PMAP_NC)) == 0 && managed(pa)) {
+	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && managed(pa)) {
 		pv = pvhead(pa);
 		(void) pv_syncflags4m(pv);
 		pv->pv_flags &= ~PV_REF4M;
@@ -5884,7 +5886,7 @@ pmap_is_referenced4m(pa)
 {
 	register struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC & ~PMAP_NC)) == 0 && managed(pa)) {
+	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && managed(pa)) {
 		pv = pvhead(pa);
 		if (pv->pv_flags & PV_REF4M || pv_syncflags4m(pv) & PV_REF4M)
 		        return(1);
@@ -5928,7 +5930,7 @@ pmap_zero_page4_4c(pa)
 	register caddr_t va;
 	register int pte;
 
-	if (((pa & (PMAP_TNC & ~PMAP_NC)) == 0) && managed(pa)) {
+	if (((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0) && managed(pa)) {
 		/*
 		 * The following might not be necessary since the page
 		 * is being cleared because it is about to be allocated,
@@ -5999,7 +6001,7 @@ pmap_zero_page4m(pa)
 	register int pte;
 	int ctx;
 
-	if (((pa & (PMAP_TNC & ~PMAP_NC)) == 0) && managed(pa)) {
+	if (((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0) && managed(pa)) {
 		/*
 		 * The following might not be necessary since the page
 		 * is being cleared because it is about to be allocated,
