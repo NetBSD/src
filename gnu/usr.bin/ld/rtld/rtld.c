@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.44 1996/09/10 22:17:51 thorpej Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -57,6 +57,16 @@
 #endif
 
 #include "ld.h"
+
+#ifdef __m68k__
+/*
+ * This is a slight hack to allow the same loader to be used on
+ * 4k and 8k __LDPGSZ executables.
+ */
+static int page_size = 0x2000;
+#undef PAGSIZ
+#define PAGSIZ	page_size
+#endif /* __m68k__ */
 
 #ifndef MAP_ANON
 #define MAP_ANON	0
@@ -252,6 +262,8 @@ rtld(version, crtp, dp)
 		md_relocate_simple(reloc, crtp->crt_ba, addr);
 	}
 
+	/* Now (and NOT BEFORE this point) we can call externals. */
+
 	if (version >= CRT_VERSION_BSD_4)
 		__progname = crtp->crt_ldso;
 
@@ -261,16 +273,50 @@ rtld(version, crtp, dp)
 	/* Setup out (private) environ variable */
 	environ = crtp->crt_ep;
 
-	/* Get user and group identifiers */
+	/*
+	 * Make sure we do not allow the library search path
+	 * to be modified through the environment if we are
+	 * running either setuid or setgid.
+	 */
 	uid = getuid(); euid = geteuid();
 	gid = getgid(); egid = getegid();
-
 	careful = (uid != euid) || (gid != egid);
-
 	if (careful) {
 		unsetenv("LD_LIBRARY_PATH");
 		unsetenv("LD_PRELOAD");
 	}
+
+#ifdef __m68k__
+	/*
+	 * Locate the a.out header and check the machine ID.
+	 * If we see MID_M68K4K, we alter the page size we
+	 * use for address calculations.  This allows the
+	 * same loader to be used for 4k and 8k executables
+	 * and libraries.  Trust me; the world is a better
+	 * place because this.
+	 */
+	{
+		register long textaddr;
+		register struct exec *eh;
+
+		/* XXX Assume this is near the start of text. */
+		textaddr = ((long)crtp->crt_bp) & ~0xFFF;
+		eh = (struct exec *) textaddr;
+#if 0
+		xprintf("%s: textaddr is 0x%x\n", us, textaddr);
+		xprintf("\t magic=0x%x\n", eh->a_midmag);
+#endif
+		/*
+		 * Use this rather than N_PAGSIZ(), to be
+		 * safe...
+		 */
+		if (N_GETMID((*eh)) == MID_M68K4K)
+			page_size = 0x1000;
+#if 0
+		xprintf("\t page_size=%d\n", page_size);
+#endif
+	}
+#endif /* __m68k__ */
 
 	/* Setup directory search */
 	ld_library_path = getenv("LD_LIBRARY_PATH");
