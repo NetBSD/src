@@ -1,4 +1,4 @@
-.\"	$NetBSD: release.7,v 1.6 1999/03/15 08:22:21 garbled Exp $
+.\"	$NetBSD: release.7,v 1.7 1999/05/10 19:34:22 is Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -168,9 +168,16 @@ a file containing the date, in UTC, of the source code from which the
 release or snapshot was built, in the default format produced by the
 command:
 .Sy date -u
-.It Sy INSTALL
+.It Sy INSTALL.txt
 Installation notes, including complete descriptions of files contained
 within the release hierarchy
+.It Sy INSTALL.more
+pretty version of this, suited for viewing with
+.Xr more 1 
+.It Sy INSTALL.html
+HTML version of this
+.It Sy INSTALL.ps
+PostScript version of this
 .It Sy binary/
 system binaries
 .Bl -tag -width "security/"
