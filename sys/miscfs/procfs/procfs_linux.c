@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.4 2001/12/09 03:07:44 chs Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.5 2003/02/25 21:00:31 jrf Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.4 2001/12/09 03:07:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.5 2003/02/25 21:00:31 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,34 @@ procfs_docpuinfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 	len = sizeof buf;
 	if (procfs_getcpuinfstr(buf, &len) < 0)
 		return EIO;
+
+	if (len == 0)
+		return 0;
+
+	len -= uio->uio_offset;
+	cp = buf + uio->uio_offset;
+	len = imin(len, uio->uio_resid);
+	if (len <= 0)
+		error = 0;
+	else
+		error = uiomove(cp, len, uio);
+	return error;
+}
+
+int
+procfs_douptime(struct proc *curp, struct proc *p, struct pfsnode *pfs,
+		 struct uio *uio)
+{
+	char buf[512], *cp;
+	int len, error;
+	struct timeval runtime;
+	u_int64_t idle;
+
+	timersub(&curcpu()->ci_schedstate.spc_runtime, &boottime, &runtime);
+	idle = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
+	len = sprintf(buf, "%lu.%02lu %llu.%02llu\n",
+		      runtime.tv_sec, runtime.tv_usec / 10000,
+		      idle / hz, (((idle % hz) * 100) / hz) % 100);
 
 	if (len == 0)
 		return 0;
