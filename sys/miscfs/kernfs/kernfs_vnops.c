@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.100 2004/05/07 14:56:48 cl Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.101 2004/05/07 15:06:15 cl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.100 2004/05/07 14:56:48 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.101 2004/05/07 15:06:15 cl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.100 2004/05/07 14:56:48 cl Exp $"
 
 #define	READ_MODE	(S_IRUSR|S_IRGRP|S_IROTH)
 #define	WRITE_MODE	(S_IWUSR|S_IRUSR|S_IRGRP|S_IROTH)
+#define	UREAD_MODE	(S_IRUSR)
 #define DIR_MODE	(S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 #define UDIR_MODE	(S_IRUSR|S_IXUSR)
 
@@ -125,6 +126,10 @@ const struct kern_target ipsecsp_targets[] = {
      { DT_DIR, N("."),         0,            KFSipsecspdir,  VDIR, DIR_MODE   },
      { DT_DIR, N(".."),        0,            KFSkern,        VDIR, DIR_MODE   },
 };
+const struct kern_target ipsecsa_kt =
+     { DT_DIR, N(""),          0,            KFSipsecsa,     VREG, UREAD_MODE };
+const struct kern_target ipsecsp_kt =
+     { DT_DIR, N(""),          0,            KFSipsecsp,     VREG, UREAD_MODE };
 #endif
 #undef N
 int nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
@@ -494,7 +499,7 @@ kernfs_lookup(v)
 		if (!ep || *ep || ep == pname)
 			break;
 
-		error = kernfs_allocvp(dvp->v_mount, vpp, KFSipsecsa, NULL, id);
+		error = kernfs_allocvp(dvp->v_mount, vpp, KFSipsecsa, &ipsecsa_kt, id);
 		if ((error == 0) && wantpunlock) {
 			VOP_UNLOCK(dvp, 0);
 			cnp->cn_flags |= PDIRUNLOCK;
@@ -519,7 +524,7 @@ kernfs_lookup(v)
 		if (!ep || *ep || ep == pname)
 			break;
 
-		error = kernfs_allocvp(dvp->v_mount, vpp, KFSipsecsp, NULL, id);
+		error = kernfs_allocvp(dvp->v_mount, vpp, KFSipsecsp, &ipsecsp_kt, id);
 		if ((error == 0) && wantpunlock) {
 			VOP_UNLOCK(dvp, 0);
 			cnp->cn_flags |= PDIRUNLOCK;
@@ -789,6 +794,59 @@ kernfs_write(v)
 	return (kernfs_xwrite(kfs, strbuf, xlen));
 }
 
+static int
+kernfs_setdirentfileno_kt(struct dirent *d, const struct kern_target *kt,
+    u_int32_t value, struct vop_readdir_args *ap)
+{
+	struct kernfs_node *kfs;
+	struct vnode *vp;
+	int error;
+
+	if ((error = kernfs_allocvp(ap->a_vp->v_mount, &vp, kt->kt_tag, kt,
+	    value)) != 0)
+		return error;
+	if (kt->kt_tag == KFSdevice) {
+		struct vattr va;
+		if ((error = VOP_GETATTR(vp, &va, ap->a_cred,
+		    ap->a_uio->uio_segflg == UIO_USERSPACE ?
+		    ap->a_uio->uio_procp : &proc0)) != 0)
+			return (error);
+		d->d_fileno = va.va_fileid;
+	} else {
+		kfs = VTOKERN(vp);
+		d->d_fileno = kfs->kfs_fileno;
+	}
+	vput(vp);
+	return 0;
+}
+
+static int
+kernfs_setdirentfileno(struct dirent *d, off_t entry,
+    struct kernfs_node *thisdir_kfs, const struct kern_target *parent_kt,
+    const struct kern_target *kt, struct vop_readdir_args *ap)
+{
+	const struct kern_target *ikt;
+	int error;
+
+	switch (entry) {
+	case 0:
+		d->d_fileno = thisdir_kfs->kfs_fileno;
+		return 0;
+	case 1:
+		ikt = parent_kt;
+		break;
+	default:
+		ikt = kt;
+		break;
+	}
+	if (ikt != thisdir_kfs->kfs_kt) {
+		if ((error = kernfs_setdirentfileno_kt(d, ikt, 0, ap)) != 0)
+			return error;
+	} else
+		d->d_fileno = thisdir_kfs->kfs_fileno;
+	return 0;
+}
+
 int
 kernfs_readdir(v)
 	void *v;
@@ -849,11 +907,9 @@ kernfs_readdir(v)
 					continue;
 			}
 			d.d_namlen = kt->kt_namlen;
-			if (i < 2)
-				d.d_fileno = KERNFS_FILENO(&kern_targets[0],
-				    kern_targets[0].kt_tag, 0);
-			else
-				d.d_fileno = KERNFS_FILENO(kt, kt->kt_tag, 0);
+			if ((error = kernfs_setdirentfileno(&d, i, kfs,
+			    &kern_targets[0], kt, ap)) != 0)
+				break;
 			memcpy(d.d_name, kt->kt_name, kt->kt_namlen + 1);
 			d.d_type = kt->kt_type;
 			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
@@ -923,7 +979,9 @@ kernfs_readdir(v)
 		for (; i < nipsecsa_targets && uio->uio_resid >= UIO_MX; i++) {
 			kt = &ipsecsa_targets[i];
 			d.d_namlen = kt->kt_namlen;
-			d.d_fileno = KERNFS_FILENO(kt, kt->kt_tag, 0);
+			if ((error = kernfs_setdirentfileno(&d, i, kfs,
+			    &kern_targets[0], kt, ap)) != 0)
+				break;
 			memcpy(d.d_name, kt->kt_name, kt->kt_namlen + 1);
 			d.d_type = kt->kt_type;
 			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
@@ -950,8 +1008,9 @@ kernfs_readdir(v)
 				continue;
 			if (uio->uio_resid < UIO_MX)
 				break;
-			d.d_fileno = KERNFS_FILENO(kfs->kfs_kt, kfs->kfs_type,
-			    kfs->kfs_cookie);
+			if ((error = kernfs_setdirentfileno_kt(&d, &ipsecsa_kt,
+			    sav->spi, ap)) != 0)
+				break;
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
 			    "%u", ntohl(sav->spi));
 			d.d_type = DT_REG;
@@ -985,7 +1044,9 @@ kernfs_readdir(v)
 		for (; i < nipsecsp_targets && uio->uio_resid >= UIO_MX; i++) {
 			kt = &ipsecsp_targets[i];
 			d.d_namlen = kt->kt_namlen;
-			d.d_fileno = KERNFS_FILENO(kt, kt->kt_tag, 0);
+			if ((error = kernfs_setdirentfileno(&d, i, kfs,
+			    &kern_targets[0], kt, ap)) != 0)
+				break;
 			memcpy(d.d_name, kt->kt_name, kt->kt_namlen + 1);
 			d.d_type = kt->kt_type;
 			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
@@ -1002,8 +1063,9 @@ kernfs_readdir(v)
 		TAILQ_FOREACH(sp, &sptailq, tailq) {
 			if (uio->uio_resid < UIO_MX)
 				break;
-			d.d_fileno = KERNFS_FILENO(kfs->kfs_kt, kfs->kfs_type,
-			    kfs->kfs_cookie);
+			if ((error = kernfs_setdirentfileno_kt(&d, &ipsecsp_kt,
+			    sp->id, ap)) != 0)
+				break;
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
 			    "%u", sp->id);
 			d.d_type = DT_REG;
