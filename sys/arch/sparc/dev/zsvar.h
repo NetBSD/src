@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.8 1996/03/31 22:39:08 pk Exp $ */
+/*	$NetBSD: zsvar.h,v 1.9 1996/05/29 01:58:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,8 +90,12 @@ struct zsdevice {
 #define	ZRING_VALUE(x)	((x) >> 8)
 #define	ZRING_MAKE(t, v)	((t) | (v) << 8)
 
+/* forard decl */
+struct zs_softc;
+
 struct zs_chanstate {
 	struct	zs_chanstate *cs_next;	/* linked list for zshard() */
+	struct	zs_softc *cs_sc;	/* pointer to softc */
 	volatile struct zschan *cs_zc;	/* points to hardware regs */
 	int	cs_unit;		/* unit number */
 	struct	tty *cs_ttyp;		/* ### */
