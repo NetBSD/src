@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.175.2.2 1998/06/04 16:52:35 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.175.2.3 1998/06/05 16:17:47 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -419,6 +419,7 @@ __wdstart(wd, bp)
 	wd->sc_wdc_bio.blkno = bp->b_blkno + p_offset;
 	wd->sc_wdc_bio.blkno /= (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 	wd->sc_bp = bp;
+	/* If we're retrying, retry in single-sector mode, just in case ... */
 	if (wd->sc_multi == 1 || wd->retries > 0)
 		wd->sc_wdc_bio.flags = ATA_SINGLE;
 	else
