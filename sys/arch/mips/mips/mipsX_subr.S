@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.8 2002/11/07 05:39:48 cgd Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.9 2002/11/08 04:13:13 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -391,7 +391,7 @@ VECTOR(MIPSX(XTLBMiss), unknown)
 	mtc0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
 	sll	k1, 2				#12: chop top 2 bits (part 2a)
 	srl	k1, 2				#13: chop top 2 bits (part 2b)
-	mtc0	k1, MIPS_COP_0_TLB_LO1	#14: lo1 is loaded
+	mtc0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
 	nop					#15: standard nop
 	nop					#16: extra nop for QED5230
 	tlbwr					#17: write to tlb
