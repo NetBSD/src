@@ -335,7 +335,7 @@ int	 tgetnum __P((char *));
 int	 tgetflag __P((char *));
 char	*tgetstr __P((char *, char **));
 char	*tgoto __P((char *, int, int));
-int	 tputs __P((char *, int, void (*)(int)));
+void	 tputs __P((char *, int, void (*)(int)));
 __END_DECLS
 
 #endif /* !_CURSES_H_ */
