@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.8 2001/07/22 09:56:40 takemura Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.9 2001/12/28 01:41:54 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -100,7 +100,6 @@ struct hpcfb_accessops sed1356_ha = {
 	sed1356_ioctl, sed1356_mmap
 };
 
-static int console_flag = 0;
 static int attach_flag = 0;
 
 /*
@@ -119,6 +118,7 @@ sed1356attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sed1356_softc *sc = (struct sed1356_softc *)self;
 	struct hpcfb_attach_args ha;
+	int console = (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) ? 0 : 1;
 
 	printf("\n");
 
@@ -141,7 +141,7 @@ sed1356attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("%s: Epson SED1356", sc->sc_dev.dv_xname);
-	if (console_flag) {
+	if (console) {
 		printf(", console");
 	}
 	printf("\n");
@@ -161,7 +161,10 @@ sed1356attach(struct device *parent, struct device *self, void *aux)
 	sed1356_init_contrast(sc, 1);
 	sed1356_init_backlight(sc, 1);
 
-	ha.ha_console = console_flag;
+	if (console && hpcfb_cnattach(&sc->sc_fbconf) != 0)
+		panic("sed1356attach: cannot init fb console");
+
+	ha.ha_console = console;
 	ha.ha_accessops = &sed1356_ha;
 	ha.ha_accessctx = sc;
 	ha.ha_curfbconf = 0;
@@ -179,14 +182,6 @@ sed1356attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	config_found(self, &ha, hpcfbprint);
-}
-
-int
-sed1356_getcnfb(struct hpcfb_fbconf *fb)
-{
-	console_flag = 1;
-
-	return sed1356_init(fb);
 }
 
 static int
