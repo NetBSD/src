@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2001/06/22 06:02:54 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2001/06/25 21:25:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -430,10 +430,10 @@ mach_init(int argc, char *argv[], char *envp[])
 	 * vectors are located.
 	 */
 #if defined(MEMSIZE)
-	size = MEMSIZE * 1024 * 1024;
+	size = MEMSIZE;
 #else
 	if ((cp = pmon_getenv("memsize")) != NULL)
-		size = strtoul(cp, NULL, 10) * 1024 * 1024;
+		size = strtoul(cp, NULL, 0);
 	else {
 		printf("FATAL: `memsize' PMON variable not set.  Set it to\n");
 		printf("       the amount of memory (in MB) and try again.\n");
@@ -442,6 +442,18 @@ mach_init(int argc, char *argv[], char *envp[])
 		panic("algor_init");
 	}
 #endif /* MEMSIZE */
+	/*
+	 * Deal with 2 different conventions of the contents
+	 * of the memsize variable -- if it's > 1024, assume
+	 * it's already in bytes, not megabytes.
+	 */
+	if (size < 1024) {
+		printf("Memory size: 0x%08lx (0x%08lx)\n", size * 1024 * 1024,
+		    size);
+		size *= 1024 * 1024;
+	} else
+		printf("Memory size: 0x%08lx\n", size);
+
 	mem_clusters[mem_cluster_cnt].start = NBPG;
 	mem_clusters[mem_cluster_cnt].size =
 	    size - mem_clusters[mem_cluster_cnt].start;
