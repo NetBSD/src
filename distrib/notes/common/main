@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253.2.8 2004/10/01 03:52:38 jmc Exp $
+.\"	$NetBSD: main,v 1.253.2.9 2004/11/12 04:45:39 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -467,8 +467,8 @@ Improvements have been made to NetBSD's Linux emulation to support the latest
 Sun JDK/JRE for Linux.
 Testing has shown that it now runs as well as it does on Linux natively.
 .It
-NetBSD 2.0 has support for non-executable mappings on many platforms.
-If enabled, parts of the stack and heap are made non-executable
+NetBSD 2.0 enforces non-executable mappings on many platforms. 
+This means that parts of the stack and heap are made non-executable
 when they are marked writable.
 This makes exploiting potential buffer overflows harder.
 .It
