@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.20 1994/10/26 07:24:21 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.21 1995/04/19 22:16:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -119,9 +119,9 @@ struct	le_softc {
 } le_softc[NLE];
 
 int leintr __P((int));
-int leioctl __P((struct ifnet *, int, caddr_t));
-int lestart __P((struct ifnet *));
-int lewatchdog __P((/* short */));
+int leioctl __P((struct ifnet *, u_long, caddr_t));
+void lestart __P((struct ifnet *));
+void lewatchdog __P((int));
 static inline void lewrcsr __P((/* struct le_softc *, u_short, u_short */));
 static inline u_short lerdcsr __P((/* struct le_softc *, u_short */));
 void leinit __P((struct le_softc *));
@@ -247,14 +247,15 @@ lereset(sc)
 	leinit(sc);
 }
 
-int
+void
 lewatchdog(unit)
-	short unit;
+	int unit;
 {
 	struct le_softc *sc = &le_softc[unit];
 
 	log(LOG_ERR, "le%d: device timeout\n", unit);
 	++sc->sc_arpcom.ac_if.if_oerrors;
+
 	lereset(sc);
 }
 
@@ -487,7 +488,7 @@ out:
  * interface before starting the output.
  * Called only at splimp or interrupt level.
  */
-int
+void
 lestart(ifp)
 	struct ifnet *ifp;
 {
@@ -828,7 +829,7 @@ leget(buf, totlen, ifp)
 int
 leioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	struct le_softc *sc = &le_softc[ifp->if_unit];
@@ -846,15 +847,8 @@ leioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			leinit(sc);	/* before arpwhohas */
-			/*
-			 * See if another station has *our* IP address.
-			 * i.e.: There is an address conflict! If a
-			 * conflict exists, a message is sent to the
-			 * console.
-			 */
-			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
-			arpwhohas(&sc->sc_arpcom, &IA_SIN(ifa)->sin_addr);
+			leinit(sc);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
 #ifdef NS
