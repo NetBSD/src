@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.1 1998/11/04 00:29:29 fvdl Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.1.6.1 1999/04/27 00:13:56 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@ struct ex_softc {
 	u_char	ex_bustype;		/* parent bus type (currently unused) */
 
 #define EX_BUS_PCI	0
+#define EX_BUS_CARDBUS	1
 
 #if NRND > 0
 	rndsource_element_t rnd_source;
