@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.4 1998/08/06 11:25:05 kleink Exp $	*/
+/*	$NetBSD: limits.h,v 1.5 1998/11/16 04:12:29 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,5 +66,19 @@
 
 #endif	/* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif	/* !_ANSI_SOURCE */
+
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
+    defined(_XOPEN_SOURCE)
+#define LONG_BIT	32
+#define WORD_BIT	32
+
+#define DBL_DIG		15
+#define DBL_MAX		1.7976931348623157E+308
+#define DBL_MIN		2.2250738585072014E-308
+
+#define FLT_DIG		6
+#define FLT_MAX		3.40282347E+38F
+#define FLT_MIN		1.17549435E-38F
+#endif
 
 #endif /* _MACHINE_LIMITS_H_ */
