@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6 2001/03/01 23:45:56 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7 2001/03/03 17:09:25 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -287,6 +287,39 @@ identify_master_cpu(cpu_number, dev_name)
 	identify_arm_fpu(cpu_number);
 }
 
+struct cpuidtab {
+	u_int32_t	cpuid;
+	char *		cpu_name;
+};
+
+const struct cpuidtab cpuids[] = {
+	{ CPU_ID_ARM2,		"ARM2" },
+	{ CPU_ID_ARM250,	"ARM2as" },
+	{ CPU_ID_ARM3,		"ARM3" },
+	{ CPU_ID_ARM600,	"ARM600" },
+	{ CPU_ID_ARM610,	"ARM610" },
+	{ CPU_ID_ARM620,	"ARM620" },
+	{ CPU_ID_ARM700,	"ARM700" },
+	{ CPU_ID_ARM710,	"ARM710" },
+	{ CPU_ID_ARM7500,	"ARM7500" },
+	{ CPU_ID_ARM710A,	"ARM710a" },
+	{ CPU_ID_ARM710T,	"ARM710T" },
+	{ CPU_ID_ARM720T,	"ARM720T" },
+	{ CPU_ID_ARM740T8K,	"ARM740T (8 KB cache)" },
+	{ CPU_ID_ARM740T4K,	"ARM740T (4 KB cache)" },
+	{ CPU_ID_ARM810,	"ARM810" },
+	{ CPU_ID_ARM920T,	"ARM920T" },
+	{ CPU_ID_ARM922T,	"ARM922T" },
+	{ CPU_ID_ARM940T,	"ARM940T" },
+	{ CPU_ID_ARM946ES,	"ARM946E-S" },
+	{ CPU_ID_ARM966ES,	"ARM966E-S" },
+	{ CPU_ID_ARM966ESR1,	"ARM966E-S (Rev 1)" },
+	{ CPU_ID_SA110,		"SA-110" },
+	{ CPU_ID_SA1100,	"SA-1100" },
+	{ CPU_ID_SA1110,	"SA-1110" },
+	{ CPU_ID_I80200,	"80200" },
+	{ 0, NULL }
+};
 
 
 /*
@@ -300,7 +333,8 @@ identify_arm_cpu(cpu_number)
 	int cpu_number;
 {
 	cpu_t *cpu;
-	u_int cpuid, cpu_type;
+	u_int cpuid;
+	int i;
 
 	cpu = &cpus[cpu_number];
 	if (cpu->cpu_host == CPU_HOST_NONE || cpu->cpu_class == CPU_CLASS_NONE) {
@@ -318,56 +352,24 @@ identify_arm_cpu(cpu_number)
 		return;
 	}
 
+	for (i = 0; cpuids[i].cpuid != 0; i++)
+		if (cpuids[i].cpuid == (cpuid & CPU_ID_CPU_MASK)) {
+			sprintf(cpu->cpu_model, "%s rev %d",
+			    cpuids[i].cpu_name, cpuid & CPU_ID_REVISION_MASK);
+			break;
+		}
+
+	if (cpuids[i].cpuid == 0)
+		sprintf(cpu->cpu_model, "unknown CPU (ID = 0x%x)", cpuid);
+
 	switch (cpuid & CPU_ID_CPU_MASK) {
-#ifdef CPU_ARM6
-        case CPU_ID_ARM610:
-        	cpu_type = cpuid & CPU_ID_PARTNO_MASK;
-		break;
-#endif
-#ifdef CPU_ARM7
-	case CPU_ID_ARM700 :
-	case CPU_ID_ARM710 :
-	case CPU_ID_ARM7500:
-	case CPU_ID_ARM710A:
-	case CPU_ID_ARM710T:
-		cpu_type = (cpuid & CPU_ID_PARTNO_MASK) >> 4;
-		break;
-#endif
-#ifdef CPU_ARM8
-	case CPU_ID_ARM810 :
-		cpu_type = (cpuid & CPU_ID_PARTNO_MASK) >> 4;
-		break;
-#endif
-#ifdef CPU_SA110
-	case CPU_ID_SA110 :
-		cpu_type = (cpuid & CPU_ID_PARTNO_MASK) >> 4;
+	case CPU_ID_SA110:
+	case CPU_ID_SA1100:
+	case CPU_ID_SA1110:
 		cpu->cpu_class = CPU_CLASS_SARM;
-		sprintf(cpu->cpu_model, "SA-110 rev %d",
-		    cpuid & CPU_ID_REVISION_MASK);
-		break;
-	case CPU_ID_SA1100 :
-		cpu_type = (cpuid & CPU_ID_PARTNO_MASK) >> 4;
-		cpu->cpu_class = CPU_CLASS_SARM;
-		sprintf(cpu->cpu_model, "SA-1100 rev %d",
-		    cpuid & CPU_ID_REVISION_MASK);
-		break;
-	case CPU_ID_SA1110 :
-		cpu_type = (cpuid & CPU_ID_PARTNO_MASK) >> 4;
-		cpu->cpu_class = CPU_CLASS_SARM;
-		sprintf(cpu->cpu_model, "SA-1110 rev %d",
-		    cpuid & CPU_ID_REVISION_MASK);
-		break;
-#endif
-	default :
-		printf("Unrecognised processor ID = %08x\n", cpuid);
-		cpu_type = cpuid & CPU_ID_PARTNO_MASK;
-		break;
 	}
 
 	if (cpu->cpu_class == CPU_CLASS_ARM) {
-		sprintf(cpu->cpu_model, "ARM%x rev %d", cpu_type,
-		    cpuid & CPU_ID_REVISION_MASK);
-
 		if ((cpu->cpu_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
 			strcat(cpu->cpu_model, " IDC disabled");
 		else
