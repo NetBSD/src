@@ -1,11 +1,11 @@
-#	$NetBSD: JORNADA720,v 1.6 2001/06/01 14:08:35 toshii Exp $
+#	$NetBSD: JORNADA720,v 1.7 2001/06/23 09:25:17 toshii Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
 
 include	"arch/hpcarm/conf/std.hpcarm"
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 # estimated number of users
 maxusers	32
@@ -186,12 +186,6 @@ wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 #lpt*    at pioc? offset 0x0278 irq 0
 #lpt*    at pioc? offset 0x0378 irq -1
 #lpt*    at pioc? offset 0x03bc irq -1
-
-# XXX workaround broken bootinfo
-options 	BOOTINFO_FB_LINE_BYTES=0x500
-options 	BOOTINFO_FB_WIDTH=640
-options 	BOOTINFO_FB_HEIGHT=240
-options 	BOOTINFO_FB_TYPE=5
 
 # physical console
 sed0		at saip?
