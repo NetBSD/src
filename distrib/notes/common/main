@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.39 2000/10/13 17:42:53 he Exp $
+.\" $NetBSD: main,v 1.6.2.40 2000/10/27 15:57:36 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -194,7 +194,7 @@ Support for several new PCI IDE controllers have been added,
 see
 .Xr pciide 4.
 .It
-The i386 port can now be installed also on wd2 or wd3.
+The i386 port may now be installed on wd2 or wd3.
 .It
 A possible CPU hog problem related to large I/Os has been fixed.
 Fixes SA#2000-005.
