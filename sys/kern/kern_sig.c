@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.194 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.195 2004/05/04 21:25:47 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.194 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.195 2004/05/04 21:25:47 pk Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -263,11 +263,9 @@ sigactsunshare(struct proc *p)
  * Release a sigctx structure.
  */
 void
-sigactsfree(struct proc *p)
+sigactsfree(struct sigacts *ps)
 {
-	struct sigacts *ps;
 
-	ps = p->p_sigacts;
 	if (--ps->sa_refcnt > 0)
 		return;
 
