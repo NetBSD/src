@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.5 2002/10/08 15:49:26 scw Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.6 2002/11/23 09:25:54 scw Exp $	*/
 
 /*
  * This is still very much experimental. There is as yet no DB support
@@ -68,9 +68,7 @@ db_regs_t		ddb_regs;	/* register state */
 	db_check_access(addr, size, task)
 #define	DB_PHYS_EQ(task1, addr1, task2, addr2)				\
 	db_phys_eq(task1, addr1, task2, addr2)
-#define	DB_VALID_KERN_ADDR(addr)					\
-	((addr) >= VM_MIN_KERNEL_ADDRESS &&				\
-	 (addr) < VM_MAX_KERNEL_ADDRESS)
+#define	DB_VALID_KERN_ADDR(addr) ((addr) >= SH5_KSEG0_BASE)
 #define	DB_VALID_ADDRESS(addr, user)					\
 	((!(user) && DB_VALID_KERN_ADDR(addr)) ||			\
 	 ((user) && (addr) < VM_MAX_ADDRESS))

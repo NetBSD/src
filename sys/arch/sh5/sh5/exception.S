@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.18 2002/10/31 14:24:16 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.19 2002/11/23 09:25:55 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -528,68 +528,85 @@ Lsh5_vector_general:
 
 Lsh5_vector_tlbmiss:
 	getcon	usr, r24		/* Save USR in r24 for the duration */
-	putcon	r15, kcr1		/* #00: Save current SP */
+	putcon	r15, kcr1		/* Save current SP */
 	getcon	kcr0, r15
-	st.q	r15, TS(TS_R0), r0	/* #14: Free up some registers */
-	st.q	r15, TS(TS_R1), r1	/* #18: */
-	st.q	r15, TS(TS_R2), r2	/* #1c: */
-	st.q	r15, TS(TS_R3), r3	/* #20: */
-	st.q	r15, TS(TS_R4), r4	/* #24: */
-	st.q	r15, TS(TS_R5), r5	/* #24: */
-	st.q	r15, TS(TS_R6), r6	/* #24: */
-	gettr	tr0, r0			/* #28: */
-	st.q	r15, TS(TS_TR0), r0	/* #2c: */
-	gettr	tr1, r0			/* #28: */
-	st.q	r15, TS(TS_TR1), r0	/* #2c: */
+	st.q	r15, TS(TS_R0), r0	/* Free up some registers */
+	st.q	r15, TS(TS_R1), r1
+	st.q	r15, TS(TS_R2), r2
+	st.q	r15, TS(TS_R3), r3
+	st.q	r15, TS(TS_R4), r4
+	st.q	r15, TS(TS_R5), r5
+	st.q	r15, TS(TS_R6), r6
+	gettr	tr0, r0
+	st.q	r15, TS(TS_TR0), r0
+	gettr	tr1, r0
+	st.q	r15, TS(TS_TR1), r0
 	movi	TS(TS_STACK), r0
 	add	r15, r0, r15
 
-	getcon	tea, r0			/* #30: VA which missed -> r0 */
-	shari	r0, PGSHIFT, r0		/* #34: Get missing VPN */
+	getcon	tea, r0			/* VA which missed -> r0 */
+	shari	r0, PGSHIFT, r0		/* Get missing VPN */
 
 	/* Determine whether the access was kernel or user-mode */
 
-	getcon	ssr, r1			/* #38: r1 = SR at time of miss */
-	shlri	r1, SH5_CONREG_SR_MD_SHIFT, r1 /* #3c: */
-	andi	r1, 1, r1		/* #40: r1 = 0 if came from user mode */
-	pta/u	Ltlbmiss_user_ipt, tr0	/* #44: */
-	beq/u	r1, r63, tr0		/* #48: Jump if user-mode TLB miss */
+	getcon	ssr, r1			/* r1 = SR at time of miss */
+	shlri	r1, SH5_CONREG_SR_MD_SHIFT, r1
+	andi	r1, 1, r1		/* r1 = 0 if came from user mode */
+	pta/u	Ltlbmiss_user_ipt, tr0
+	beq/u	r1, r63, tr0		/* Jump if user-mode TLB miss */
 
 	/* The miss happened in kernel-mode */
+
 #ifndef _LP64
-	LDSC32(SH5_KSEG1_BASE, r1)	/* #4c: */
+	LDSC32(SH5_KSEG1_BASE, r1)
 #else
-	LDSC64(SH5_KSEG1_BASE, r1)	/* #4c: */
+	LDSC64(SH5_KSEG1_BASE, r1)
 #endif
 	shari	r1, PGSHIFT, r1
-	bgtu/u	r1, r0, tr0		/* #54: Jump if not in KSEG1 */
+	bgtu/u	r1, r0, tr0		/* Jump if not in KSEG1 */
 
 	/* Ok, we're dealing with a kernel-mode KSEG1 access */
 
 	sub	r0, r1, r0		/* Convert to IPT index */
-	pta/u	Ltlbmiss_dotrap, tr0	/* #58: */
-	LDC32(KERNEL_IPT_SIZE-1, r1)	/* #5c: */
-	bgtu/u	r0, r1, tr0		/* #68: Jump if KVA is invalid */
+	pta/u	Ltlbmiss_dotrap, tr0
+	LDC32(KERNEL_IPT_SIZE-1, r1)
+	bgtu/u	r0, r1, tr0		/* Jump if KVA is invalid */
 
 	/* The access was somewhere inside managed KVA space */
 
-	LEA(_C_LABEL(pmap_kernel_ipt), r4) /* #6c: Base of KVA IPT */
-	shlli	r0, KERNEL_IPT_SHIFT, r0/* #7c: VPN * sizeof(*pmap_kernel_ipt)*/
-	add	r4, r0, r4		/* #80 */
-	LDPTE	r4, SH5_PTE_PTEL, r1	/* #84: Get the PTEL for this page */
+	LEA(_C_LABEL(pmap_kernel_ipt), r4) /* Base of KVA IPT */
+
+#if SH5_NEFF_BITS > 32
+	shlli	r0, 3, r1		/* VPN * sizeof(*pmap_kernel_ipt) */
+	shlli	r0, 2, r0
+	add	r0, r1, r0
+	add	r4, r0, r4
+	ldlo.q	r4, SH5_PTE_PTEL, r1	/* Get the PTEL for this page */
+	ldhi.q	r4, SH5_PTE_PTEL + 7, r0
+	or	r0, r1, r1
+#else
+	shlli	r0, 2, r1		/* VPN * sizeof(*pmap_kernel_ipt) */
+	shlli	r0, 1, r0
+	add	r0, r1, r0
+	add	r4, r0, r4
+	ldlo.l	r4, SH5_PTE_PTEL, r1	/* Get the PTEL for this page */
+	ldhi.l	r4, SH5_PTE_PTEL + 3, r0
+	or	r0, r1, r1
+#endif
+
 	movi	SH5_PTEL_RM_MASK, r0
 	andc	r1, r0, r1
-	beq/u	r1, r63, tr0		/* #88: Jump if KVA not mapped */
+	beq/u	r1, r63, tr0		/* Jump if KVA not mapped */
 
 	/*
 	 * We have a valid PTEL entry for the page.
 	 * Now synthesise a PTEH entry.
 	 */
 
-	getcon	tea, r0			/* #8c: Re-fetch missed address */
-	movi	NBPG-1, r2		/* #90: */
-	andc	r0, r2, r0		/* #94: Keep only VPN part (ASID=0) */
-	ori	r0, (SH5_PTEH_SH | SH5_PTEH_V), r0 /* #98: Set SH and V bits */
+	getcon	tea, r0			/* Re-fetch missed address */
+	movi	NBPG-1, r2
+	andc	r0, r2, r0		/* Keep only VPN part (ASID=0) */
+	ori	r0, (SH5_PTEH_SH | SH5_PTEH_V), r0 /* Set SH and V bits */
 
 	/*
 	 * Invoke the cpu-specific TLB fill subroutine.
@@ -604,55 +621,65 @@ Lsh5_vector_tlbmiss:
 	 *
 	 *  r3, tr0, and tr1.
 	 *
-	 * It returns status in r0:
-	 *
-	 *  r0 - A "TLB Cookie" which must be passed as the second arg
-	 *       of any subsequent __cpu_tlbinv_cookie() call for the same
-	 *       PTEH value. (Not used for KVA TLB misses)
-	 *
 	 * If the PTE's protection bits are incompatible with the type of
 	 * TLB miss (e.g. ITLB miss, but non-executable mapping) the
 	 * subroutine will vector off to Ltlbmiss_dotrap instead
 	 * of returning.
 	 */
+Ltlbmiss_updatetlb:
 	LEA(_C_LABEL(__cpu_tlbload), r2)
 	LDPTR	r2, 0, r2
 	ptabs/l	r2, tr0
 	blink	tr0, r2
 
 	/*
-	 * Mapping has been inserted into the TLB.
-	 *
+	 * The TLB has been updated.
 	 * We know for certain that the access will succeed when we
 	 * return to the exception site, so we can safely update the
 	 * pmap's referenced/modified attributes for the page.
 	 */
-Ltlbmiss_updaterm:
-	getcon	expevt, r0		/* #12c: Test for Write TLB Miss */
-	movi	SH5_PTEL_M, r1		/* #138: Presume "modified" */
-	addi	r0, -T_WTLBMISS, r0	/* #134: r0 == 0 for Writes */
-	cmvne	r0, r63, r1		/* #13c: If r0 != 0, Clear "modified" */
-	movi	SH5_PTEL_R, r0		/* #140: Referenced bit is always set */
-	or	r0, r1, r1		/* #144: r1 = Ref/Mod bits */
-	LDPTE	r4, SH5_PTE_PTEL, r0	/* #148: Fetch PTEL from IPT */
-	or	r0, r1, r0		/* #14c: OR in ref/mod bits */
-	STPTE	r4, SH5_PTE_PTEL, r0	/* #150: Write back to IPT */
+	getcon	expevt, r0		/* Test for Write TLB Miss */
+	movi	SH5_PTEL_M, r1		/* Presume "modified" */
+	addi	r0, -T_WTLBMISS, r0	/* r0 == 0 for Writes */
+	cmvne	r0, r63, r1		/* If r0 != 0, Clear "modified" */
+	movi	SH5_PTEL_R, r0		/* Referenced bit is always set */
+	or	r0, r1, r1		/* r1 = Ref/Mod bits */
+
+#if SH5_NEFF_BITS > 32
+	ldlo.q	r4, SH5_PTE_PTEL, r0	/* Get the PTEL for this page */
+	ldhi.q	r4, SH5_PTE_PTEL + 7, r2
+	or	r0, r2, r0
+#else
+	ldlo.l	r4, SH5_PTE_PTEL, r0	/* Get the PTEL for this page */
+	ldhi.l	r4, SH5_PTE_PTEL + 3, r2
+	or	r0, r2, r0
+#endif
+	or	r0, r1, r1		/* OR in the ref/mod bits */
+
+#if SH5_NEFF_BITS > 32
+	stlo.q	r4, SH5_PTE_PTEL, r1	/* Update the PTE */
+	sthi.q	r4, SH5_PTE_PTEL + 7, r1
+#else
+	stlo.l	r4, SH5_PTE_PTEL, r1	/* Update the PTE */
+	sthi.l	r4, SH5_PTE_PTEL + 3, r1
+#endif
+
 	getcon	kcr0, r15
-	ld.q	r15, TS(TS_TR0), r0	/* #154: Restore scratch registers */
-	ptabs/u	r0, tr0			/* #158: */
-	ld.q	r15, TS(TS_TR1), r0	/* #154: */
-	ptabs/u	r0, tr1			/* #158: */
-	ld.q	r15, TS(TS_R0), r0	/* #15c: */
-	ld.q	r15, TS(TS_R1), r1	/* #160: */
-	ld.q	r15, TS(TS_R2), r2	/* #164: */
-	ld.q	r15, TS(TS_R3), r3	/* #168: */
-	ld.q	r15, TS(TS_R4), r4	/* #16c: */
-	ld.q	r15, TS(TS_R5), r5	/* #16c: */
-	ld.q	r15, TS(TS_R6), r6	/* #16c: */
-	getcon	kcr1, r15		/* #170: Restore SP */
+	ld.q	r15, TS(TS_TR0), r0	/* Restore scratch registers */
+	ptabs/u	r0, tr0
+	ld.q	r15, TS(TS_TR1), r0
+	ptabs/u	r0, tr1
+	ld.q	r15, TS(TS_R0), r0
+	ld.q	r15, TS(TS_R1), r1
+	ld.q	r15, TS(TS_R2), r2
+	ld.q	r15, TS(TS_R3), r3
+	ld.q	r15, TS(TS_R4), r4
+	ld.q	r15, TS(TS_R5), r5
+	ld.q	r15, TS(TS_R6), r6
+	getcon	kcr1, r15		/* Restore SP */
 	putcon	r24, usr
 	synco
-	rte				/* #174: Return to previous context */
+	rte				/* Return to previous context */
 	nop
 	nop
 	nop
@@ -967,12 +994,12 @@ Ltlbmiss_user_ipt:
 	/* Get the VSID for the current pmap */
 
 	getcon	kcr0, r2		/* Get cpu_info */
-	LDPTE	r2, CI_CURVSID, r2	/* Fetch current vsid */
+	ld.uw	r2, CI_CURVSID, r2	/* Fetch current vsid */
 	or	r2, r63, r5		/* Save vsid in r5 */
 	LEA(_C_LABEL(pmap_pteg_bits), r3)
 	ld.l	r3, 0, r3
 	MAKE_PTEG_HASH(r2, r0, r3)
-	or	r2, r63, r3		/* Save hash in r3 */
+	or	r2, r63, r3		/* Save hash in r3 (in case of spill) */
 	HASH_TO_PTEG_IDX(r2, r1)	/* Generate pteg table offset */
 	LEA(_C_LABEL(pmap_pteg_table), r0)
 	LDPTR	r0, 0, r0
@@ -994,14 +1021,13 @@ Ltlbmiss_user_ipt:
 	movi	SH5_PTE_PN_MASK_MOVI, r1/* Mask for EPN */
 	movi	SH5_PTEG_SIZE, r6	/* How many PTEs per group */
 	and	r4, r1, r4
-1:	LDPTE	r2, SH5_PTE_VSID, r0	/* Fetch VSID */
-	bne/l	r5, r0, tr1		/* Jump if PTE's VSID doesn't match */
+1:	ld.uw	r2, SH5_PTE_VSID, r0	/* Fetch VSID */
+	bne/u	r5, r0, tr1		/* Jump if PTE's VSID doesn't match */
 	LDPTE	r2, SH5_PTE_PTEH, r0	/* Fetch PTEH */
 	and	r0, r1, r0		/* Keep only EPN bits */
-	bne/l	r4, r0, tr1		/* Jump if PTE's EPN doesn't match */
+	bne/u	r4, r0, tr1		/* Jump if PTE's EPN doesn't match */
 	pta/l	Ltlbmiss_gotpte, tr0	/* Got it. */
 	blink	tr0, r63
-
 2:	addi	r2, SZ_SH5_PTE_T, r2	/* Next PTE in the group */
 	addi	r6, -1, r6
 	bne/l	r6, r63, tr0		/* Back for all 8 */
@@ -1013,9 +1039,9 @@ Ltlbmiss_user_ipt:
 	 * Found the required mapping in the pteg table.
 	 *
 	 * r2 = &pmap_pteg_table[hash].pte[required_pte]
+	 * r0 = PTEH from the above pte
 	 */
 Ltlbmiss_gotpte:
-	LDPTE	r2, SH5_PTE_PTEH, r0	/* Fetch PTEH */
 	LDPTE	r2, SH5_PTE_PTEL, r1	/* Fetch PTEL */
 	movi	SH5_PTEL_RM_MASK, r3
 	andc	r1, r3, r1
@@ -1037,26 +1063,10 @@ Ltlbmiss_gotpte:
 	andi	r3, SH5_CONREG_SR_ASID_MASK, r3
 	shlli	r3, SH5_PTEH_ASID_SHIFT, r3
 	movi	SH5_PTE_PN_MASK_MOVI, r4
+	pta/l	Ltlbmiss_updatetlb, tr0
 	and	r0, r4, r0
 	or	r3, r0, r0		/* Now have correct PTEH value */
 	or	r2, r63, r4		/* Preserve PTE pointer in r4 */
-
-	/* Invoke the cpu-specific TLB fill subroutine */
-	LEA(_C_LABEL(__cpu_tlbload), r2)
-	LDPTR	r2, 0, r2
-	ptabs/l	r2, tr0
-	blink	tr0, r2
-
-	/* Stash the cookie returned in r0 into some unused bits of PTEH */
-
-	LDPTE	r4, SH5_PTE_PTEH, r2	/* Fetch PTEH */
-	movi	SH5_PTEH_TLBCOOKIE_MASK, r1
-	and	r0, r1, r0
-	andc	r2, r1, r2
-	or	r2, r0, r2
-	STPTE	r4, SH5_PTE_PTEH, r2	/* Write back to PTE */
-
-	pta/u	Ltlbmiss_updaterm, tr0
 	blink	tr0, r63
 
 	/*
@@ -1083,9 +1093,11 @@ Ltlbmiss_nomatch:
 	_INTR_FRAME_RESTORE(SZ_INTRFRAME) /* Restore Caller-Save registers */
 	addi	r15, SZ_INTRFRAME, r15	/* Restore stack */
 	or	r1, r63, r2
+	pta/u	Ltlbmiss_dotrap, tr0
+	beq/u	r1, r63, tr0
 	pta/l	Ltlbmiss_gotpte, tr0
-	bne/l	r2, r63, tr0		/* If found, update TLB */
-
+	LDPTE	r2, SH5_PTE_PTEH, r0
+	blink	tr0, r63
 
 	/*
 	 * We come here for one of three reasons:

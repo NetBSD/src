@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 2002/10/07 14:42:31 scw Exp $	*/
+/*	$NetBSD: pte.h,v 1.3 2002/11/23 09:25:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -50,23 +50,40 @@
 #if SH5_NEFF_BITS > 32
 typedef	u_int64_t	pteh_t;
 typedef	u_int64_t	ptel_t;
-typedef u_int64_t	vsid_t;
 #else
 typedef	u_int32_t	pteh_t;
 typedef	u_int32_t	ptel_t;
-typedef	u_int32_t	vsid_t;
 #endif
 
+typedef u_int16_t	vsid_t;
+typedef u_int16_t	tlbcookie_t;
+
 /*
- * The in-core PTE.
+ * The in-core PTE for user mappings
  *
  * XXX: Don't change the ordering of this structure. XXX
  */
 typedef struct pte {
 	ptel_t	ptel;
-	pteh_t	pteh;
+	tlbcookie_t tlbcookie;
 	vsid_t	vsid;
+	pteh_t	pteh;
 } pte_t;
+
+/*
+ * The in-core PTE for kernel (KSEG1) mappings.
+ *
+ * Note: This structure must match the first two items of the userland
+ * PTE structure.
+ *
+ * Note#2: Use pmap_kernel_ipt_{set,get}_{ptel,tlbcookie}() to access
+ * members of the following structure. The compiler generates lousy
+ * code otherwise.
+ */
+typedef struct kpte {
+	ptel_t ptel;
+	tlbcookie_t tlbcookie;
+} __attribute__ ((__packed__)) kpte_t;
 
 /*
  * Hardware fields in a pteh_t
@@ -86,13 +103,6 @@ typedef struct pte {
 #else
 #define	SH5_PTEH_EPN_MASK	0xfffffffffffff000UL
 #endif
-
-/*
- * Software bits stored in the low-order bits of an in-core PTEH
- */
-#define	SH5_PTEH_TLBCOOKIE_MASK	0x3ff	/* Reserved for cpu-specific TLB code */
-#define	SH5_PTEH_TLB_COOKIE(pteh)	((pteh) & SH5_PTEH_TLBCOOKIE_MASK)
-
 
 /*
  * Hardware fields in a ptel_t
