@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.592 2003/11/28 06:00:16 cube Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.593 2003/11/28 20:05:14 chs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.594 2003/11/28 05:59:41 cube Exp 
+ *	NetBSD: pcidevs,v 1.595 2003/11/28 20:04:16 chs Exp 
  */
 
 /*
@@ -2403,7 +2403,10 @@
 #define	PCI_PRODUCT_TAMARACK_TC9021	0x1021		/* Tamarack TC9021 Gigabit Ethernet */
 #define	PCI_PRODUCT_TAMARACK_TC9021_ALT	0x9021		/* Tamarack TC9021 Gigabit Ethernet (alt ID) */
 
-/* Tekram Technology products (1st PCI Vendor ID)*/
+/* Tandem Computers */
+#define	PCI_PRODUCT_TANDEM_SERVERNETII	0x0005		/* ServerNet II VIA adapter */
+
+/* Tekram Technology products (1st PCI Vendor ID) */
 #define	PCI_PRODUCT_TEKRAM_DC290	0xdc29		/* DC-290(M) */
 
 /* Tekram Technology products (2nd PCI Vendor ID) */
@@ -2511,10 +2514,13 @@
 
 /* Triones Technologies products */
 /* The 366 and 370 controllers have the same product ID */
-#define	PCI_PRODUCT_TRIONES_HPT366	0x0004		/* HPT366/370 IDE Controller */
-#define	PCI_PRODUCT_TRIONES_HPT372	0x0005		/* HPT372 IDE Controller */
+#define	PCI_PRODUCT_TRIONES_HPT343	0x0003		/* HPT343/345 IDE Controller */
+#define	PCI_PRODUCT_TRIONES_HPT366	0x0004		/* HPT366/370/372 IDE Controller */
+#define	PCI_PRODUCT_TRIONES_HPT372A	0x0005		/* HPT372A IDE Controller */
 #define	PCI_PRODUCT_TRIONES_HPT302	0x0006		/* HPT302 IDE Controller */
+#define	PCI_PRODUCT_TRIONES_HPT371	0x0007		/* HPT371 IDE Controller */
 #define	PCI_PRODUCT_TRIONES_HPT374	0x0008		/* HPT374 IDE Controller */
+#define	PCI_PRODUCT_TRIONES_HPT372N	0x0009		/* HPT372N IDE Controller */
 
 /* TriTech Microelectronics products*/
 #define	PCI_PRODUCT_TRITECH_TR25202	0xfc02		/* Pyramid3D TR25202 */
