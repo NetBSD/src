@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 2001/03/09 03:09:45 simonb Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 2001/07/18 04:51:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,14 +37,15 @@
 
 #include "mtree.h"
 
-int	 compare(char *, NODE *, FTSENT *);
+int	 compare(const char *, NODE *, FTSENT *);
 int	 crc(int, u_int32_t *, u_int32_t *);
 void	 cwalk(void);
 void	 mtree_err(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
-char	*inotype(u_int);
-u_int	 parsekey(char *, int *);
-char	*rlink(char *);
+const char *inotype(u_int);
+u_int	 parsekey(const char *, int *);
+u_int	 parsetype(const char *);
+const char *rlink(const char *);
 NODE	*spec(void);
 int	 verify(void);
 
