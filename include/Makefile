@@ -5,7 +5,8 @@
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
 #
-all clean cleandir depend lint tags:
+
+SUBDIR= rpcsvc
 
 # Missing: mp.h
 
