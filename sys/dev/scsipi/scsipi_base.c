@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.10 2001/01/22 17:43:02 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.11 2001/03/27 13:03:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ scsipi_channel_init(chan)
 	TAILQ_INIT(&chan->chan_queue);
 	TAILQ_INIT(&chan->chan_complete);
 
-	nbytes = chan->chan_ntargets * sizeof(struct scsipi_link **);
+	nbytes = chan->chan_ntargets * sizeof(struct scsipi_periph **);
 	chan->chan_periphs = malloc(nbytes, M_DEVBUF, M_WAITOK);
 
 	nbytes = chan->chan_nluns * sizeof(struct scsipi_periph *);
