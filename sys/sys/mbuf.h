@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.55 2000/12/02 03:03:14 itojun Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.56 2001/01/14 02:07:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ struct mbuf {
  * drivers.
  */
 #define	MBUFLOCK(code) \
-	do { int ms = splimp(); \
+	do { int ms = splvm(); \
 	  { code } \
 	  splx(ms); \
 	} while (0)
@@ -254,7 +254,7 @@ struct mbuf {
 /*
  * Macros for tracking external storage associated with an mbuf.
  *
- * Note: add and delete reference must be called at splimp().
+ * Note: add and delete reference must be called at splvm().
  */
 #ifdef DEBUG
 #define MCLREFDEBUGN(m, file, line) do {				\
