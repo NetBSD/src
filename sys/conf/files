@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.303 1999/07/22 22:58:40 thorpej Exp $
+#	$NetBSD: files,v 1.304 1999/07/29 18:25:53 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -368,8 +368,8 @@ file    dev/ic/wdc.c wdc_base
 # device attributes: display, display with emulator, keyboard, and mouse
 define  wsdisplaydev { }
 define  wsemuldisplaydev {[console = -1]}
-define  wskbddev {[console = -1]}
-define	wsmousedev { }
+define  wskbddev {[console = -1], [mux = -1]}
+define	wsmousedev {[mux = -1]}
 # attribute to pull in raster support
 define	wsrasteremulops
 # common PC display functions
