@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.22 1999/11/15 19:18:25 fvdl Exp $	*/
+/*	$NetBSD: pass1.c,v 1.23 2001/01/05 02:02:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.22 1999/11/15 19:18:25 fvdl Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.23 2001/01/05 02:02:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ checkinode(inumber, idesc)
 	    size + sblock->fs_bsize - 1 < size ||
 	    (mode == IFDIR && size > MAXDIRSIZE)) {
 		if (debug)
-			printf("bad size %qu:",(unsigned long long)size);
+			printf("bad size %llu:",(unsigned long long)size);
 		goto unknown;
 	}
 	if (!preen && mode == IFMT && reply("HOLD BAD BLOCK") == 1) {
@@ -155,7 +155,7 @@ checkinode(inumber, idesc)
 	ndb = howmany(size, sblock->fs_bsize);
 	if (ndb < 0) {
 		if (debug)
-			printf("bad size %qu ndb %d:",
+			printf("bad size %llu ndb %d:",
 				(unsigned long long)size, ndb);
 		goto unknown;
 	}
@@ -178,7 +178,7 @@ checkinode(inumber, idesc)
 				errx(EEXIT, "cannot read symlink");
 			if (debug) {
 				symbuf[size] = 0;
-				printf("convert symlink %u(%s) of size %qd\n",
+				printf("convert symlink %u(%s) of size %lld\n",
 				    inumber, symbuf,
 				    (unsigned long long)size);
 			}
