@@ -1,4 +1,4 @@
-#	$NetBSD: std.macppc,v 1.9 2000/06/22 20:27:53 fvdl Exp $
+#	$NetBSD: std.macppc,v 1.10 2001/02/04 17:33:42 briggs Exp $
 #
 # Standard/required options for NetBSD/macppc.
 
@@ -10,3 +10,5 @@ machine	macppc powerpc
 options 	EXEC_ELF32	# (native) ELF32 binary support
 options 	EXEC_AOUT	# (native) a.out binary support (deprecated)
 options 	EXEC_SCRIPT	# shell script support
+
+options 	OPENPIC		# OpenPIC (really only on CHRP-ish systems)
