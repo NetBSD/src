@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 1996/10/25 20:58:11 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 1996/11/06 20:19:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -1537,10 +1537,10 @@ spl0()
 /*
  * The following primitives manipulate the run queues.  _whichqs tells which
  * of the 32 queues _qs have processes in them.  Setrunqueue puts processes
- * into queues, Remrq removes them from queues.  The running process is on
- * no queue, other processes are on a queue related to p->p_priority, divided
- * by 4 actually to shrink the 0-127 range of priorities into the 32 available
- * queues.
+ * into queues, Remrunqueue removes them from queues.  The running process is
+ * on no queue, other processes are on a queue related to p->p_priority,
+ * divided by 4 actually to shrink the 0-127 range of priorities into the 32
+ * available queues.
  */
 /*
  * setrunqueue(p)
@@ -1568,19 +1568,19 @@ setrunqueue(p)
 }
 
 /*
- * Remrq(p)
+ * remrunqueue(p)
  *
  * Call should be made at splclock().
  */
 void
-remrq(p)
+remrunqueue(p)
 	struct proc *p;
 {
 	int bit;
 
 	bit = p->p_priority >> 2;
 	if ((whichqs & (1 << bit)) == 0)
-		panic("remrq");
+		panic("remrunqueue");
 
 	p->p_back->p_forw = p->p_forw;
 	p->p_forw->p_back = p->p_back;

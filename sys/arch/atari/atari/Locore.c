@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.6 1996/10/13 04:10:34 christos Exp $	*/
+/*	$NetBSD: Locore.c,v 1.7 1996/11/06 20:19:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -226,7 +226,7 @@ savectx(pcbp) struct pcb *pcbp; { return (0); }
 setrunqueue(p) struct proc *p; { }
 
 /*ARGSUSED*/
-remrq(p) struct proc *p; { }
+remrunqueue(p) struct proc *p; { }
 
 swtch() { if (whichqs) whichqs = 0; }
 
