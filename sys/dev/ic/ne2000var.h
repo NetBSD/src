@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.10 2000/02/09 15:40:24 enami Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.11 2000/03/22 20:58:28 ws Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,5 +65,9 @@ int	ne2000_attach __P((struct ne2000_softc *, u_int8_t *,
 int	ne2000_detect __P((bus_space_tag_t, bus_space_handle_t,
 	    bus_space_tag_t, bus_space_handle_t));
 int	ne2000_detach __P((struct ne2000_softc *, int));
+
+#ifdef IPKDB_NE
+int	ne2000_ipkdb_attach __P((struct ipkdb_if *));
+#endif
 
 #endif /* _DEV_IC_NE2000VAR_H_ */
