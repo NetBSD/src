@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.3 2001/07/31 00:06:02 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.4 2001/08/01 23:44:11 nathanw Exp $
 
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,6 +45,7 @@ define PT_NEXT		offsetof(struct pthread_st, pt_next)
 define PT_STATE		offsetof(struct pthread_st, pt_state)
 define PT_SWITCHTO	offsetof(struct pthread_st, pt_switchto)
 define PT_SWITCHTOUC	offsetof(struct pthread_st, pt_switchtouc)
+define PT_SLEEPUC	offsetof(struct pthread_st, pt_sleepuc)
 define PT_SPINLOCKS	offsetof(struct pthread_st, pt_spinlocks)
 define PT_HELDLOCK	offsetof(struct pthread_st, pt_heldlock)
 define PT_UC		offsetof(struct pthread_st, pt_uc)
