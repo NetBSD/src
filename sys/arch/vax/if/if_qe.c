@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.21 1997/04/19 15:02:27 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.22 1997/05/02 17:11:24 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -136,7 +136,11 @@
 
 /*
  * Digital Q-BUS to NI Adapter
+ * supports DEQNA and DELQA in DEQNA-mode.
  */
+
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -173,9 +177,21 @@
 extern char all_es_snpa[], all_is_snpa[], all_l1is_snpa[], all_l2is_snpa[];
 #endif
 
+#if defined(CCITT) && defined(LLC)
+#include <sys/socketvar.h>
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_var.h>
+#include <netccitt/pk_extern.h>
+#endif
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
+#endif
+
 #include <machine/pte.h>
 #include <machine/cpu.h>
-#include <machine/mtpr.h>
 
 #include <vax/if/if_qereg.h>
 #include <vax/if/if_uba.h>
@@ -203,8 +219,8 @@ struct	qe_softc {
 	struct	ethercom qe_ec;		/* Ethernet common part		*/
 #define qe_if	qe_ec.ec_if		/* network-visible interface	*/
 	struct	ifubinfo qe_uba;	/* Q-bus resources		*/
-	struct	ifrw qe_ifr[NRCV]; /*	for receive buffers;	*/
-	struct	ifxmt qe_ifw[NXMT]; /*	for xmit buffers;	*/
+	struct	ifrw qe_ifr[NRCV];	/*	for receive buffers;	*/
+	struct	ifxmt qe_ifw[NXMT];	/*	for xmit buffers;	*/
 	struct	qedevice *qe_vaddr;
 	int	qe_flags;		/* software state		*/
 #define QEF_RUNNING	0x01
@@ -214,15 +230,16 @@ struct	qe_softc {
 	int	ipl;			/* interrupt priority		*/
 	struct	qe_ring *rringaddr;	/* mapping info for rings	*/
 	struct	qe_ring *tringaddr;	/*	 ""			*/
-	struct	qe_ring rring[NRCV+1]; /* Receive ring descriptors */
-	struct	qe_ring tring[NXMT+1]; /* Xmit ring descriptors */
+	struct	qe_ring rring[NRCV+1];	/* Receive ring descriptors	*/
+	struct	qe_ring tring[NXMT+1];	/* Xmit ring descriptors	*/
 	u_char	setup_pkt[16][8];	/* Setup packet			*/
 	int	rindex;			/* Receive index		*/
 	int	tindex;			/* Transmit index		*/
 	int	otindex;		/* Old transmit index		*/
 	int	qe_intvec;		/* Interrupt vector		*/
-	struct	qedevice *addr; /* device addr		*/
+	struct	qedevice *addr;		/* device addr			*/
 	int	setupqueued;		/* setup packet queued		*/
+	int	setuplength;		/* length of setup packet	*/
 	int	nxmit;			/* Transmits in progress	*/
 	int	qe_restarts;		/* timeouts			*/
 };
@@ -369,7 +386,8 @@ qeattach(parent, self, aux)
 	 * The Deqna is cable of transmitting broadcasts, but
 	 * doesn't listen to its own.
 	 */
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
+	    IFF_MULTICAST;
 
 	/*
 	 * Read the address from the prom and save it.
@@ -394,6 +412,10 @@ qeattach(parent, self, aux)
 	sc->qe_uba.iff_flags = UBA_CANTWAIT;
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
+
+#if NBPFILTER > 0
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
 }
 
 /*
@@ -540,7 +562,7 @@ qestart(ifp)
 		rp = &sc->tring[index];
 		if( sc->setupqueued ) {
 			buf_addr = sc->setupaddr;
-			len = 128;
+			len = sc->setuplength;
 			rp->qe_setup = 1;
 			sc->setupqueued = 0;
 		} else {
@@ -549,6 +571,10 @@ qestart(ifp)
 				splx(s);
 				return;
 			}
+#if NBPFILTER > 0
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m);
+#endif
 			buf_addr = sc->qe_ifw[index].ifw_info;
 			len = if_ubaput(&sc->qe_uba, &sc->qe_ifw[index], m);
 		}
@@ -768,6 +794,7 @@ qeioctl(ifp, cmd, data)
 {
 	struct qe_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
 	int s = splnet(), error = 0;
 
 	switch (cmd) {
@@ -808,6 +835,25 @@ qeioctl(ifp, cmd, data)
 		else
 			qeinit(sc);
 
+		break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		/*
+		 * Update our multicast list.
+		 */
+		error = (cmd == SIOCADDMULTI) ?
+			ether_addmulti(ifr, &sc->qe_ec):
+			ether_delmulti(ifr, &sc->qe_ec);
+
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
+			qeinit(sc);
+			error = 0;
+		}
 		break;
 
 	default:
@@ -884,11 +930,53 @@ qesetup(sc)
 	for (i = 0; i < 6; i++) {
 		sc->setup_pkt[i][2] = 0xff;
 #ifdef ISO
+		/*
+		 * XXX layer violation, should use SIOCADDMULTI.
+		 * Will definitely break with IPmulticast.
+		 */
+
 		sc->setup_pkt[i][3] = all_es_snpa[i];
 		sc->setup_pkt[i][4] = all_is_snpa[i];
 		sc->setup_pkt[i][5] = all_l1is_snpa[i];
 		sc->setup_pkt[i][6] = all_l2is_snpa[i];
 #endif
+	}
+	if (sc->qe_if.if_flags & IFF_PROMISC) {
+		sc->setuplength = QE_PROMISC;
+	/* XXX no IFF_ALLMULTI support in 4.4bsd */
+	} else if (sc->qe_if.if_flags & IFF_ALLMULTI) {
+		sc->setuplength = QE_ALLMULTI;
+	} else {
+		register k;
+		struct ether_multi *enm;
+		struct ether_multistep step;
+		/*
+		 * Step through our list of multicast addresses, putting them
+		 * in the third through fourteenth address slots of the setup
+		 * packet.  (See the DEQNA manual to understand the peculiar
+		 * layout of the bytes within the setup packet.)  If we have
+		 * too many multicast addresses, or if we have to listen to
+		 * a range of multicast addresses, turn on reception of all
+		 * multicasts.
+		 */
+		sc->setuplength = QE_SOMEMULTI;
+		i = 2;
+		k = 0;
+		ETHER_FIRST_MULTI(step, &sc->qe_ec, enm);
+		while (enm != NULL) {
+			if ((++i > 7 && k != 0) ||
+			    bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
+				sc->setuplength = QE_ALLMULTI;
+				break;
+			}
+			if (i > 7) {
+				i = 1;
+				k = 8;
+			}
+			for (j = 0; j < 6; j++)
+				sc->setup_pkt[j+k][i] = enm->enm_addrlo[j];
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
 	sc->setupqueued++;
 }
@@ -903,6 +991,7 @@ qeread(sc, ifrw, len)
 	struct ifrw *ifrw;
 	int len;
 {
+	struct	ifnet *ifp = (struct ifnet *)&sc->qe_if;
 	struct ether_header *eh;
 	struct mbuf *m;
 
@@ -929,8 +1018,41 @@ if (m) {
 *(((u_long *)m->m_data)+1),
 *(((u_long *)m->m_data)+2),
 *(((u_long *)m->m_data)+3)
-); }
+; }
 #endif
+
+#if NBPFILTER > 0
+	/*
+	 * Check for a BPF filter; if so, hand it up.
+	 * Note that we have to stick an extra mbuf up front, because
+	 * bpf_mtap expects to have the ether header at the front.
+	 * It doesn't matter that this results in an ill-formatted mbuf chain,
+	 * since BPF just looks at the data.  (It doesn't try to free the mbuf,
+	 * tho' it will make a copy for tcpdump.)
+	 */
+	if (sc->qe_if.if_bpf) {
+		struct mbuf m0;
+		m0.m_len = sizeof (struct ether_header);
+		m0.m_data = (caddr_t)eh;
+		m0.m_next = m;
+ 
+		/* Pass it up */
+		bpf_mtap(sc->qe_if.if_bpf, &m0);
+
+		/*
+		 * Note that the interface cannot be in promiscuous mode if
+		 * there are no BPF listeners.	And if we are in promiscuous
+		 * mode, we have to check if this packet is really ours.
+		 */
+		if ((ifp->if_flags & IFF_PROMISC) &&
+		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
+		    bcmp(eh->ether_dhost, LLADDR(sc->qe_if.if_sadl),
+			    sizeof(eh->ether_dhost)) != 0) {
+			m_freem(m);
+			return;
+		}
+	}
+#endif /* NBPFILTER > 0 */
 
 	if (m)
 		ether_input((struct ifnet *)&sc->qe_if, eh, m);
