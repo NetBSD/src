@@ -1,4 +1,4 @@
-/*	$NetBSD: p_sni_rm200pci.c,v 1.2 2003/05/25 14:00:12 tsutsui Exp $	*/
+/*	$NetBSD: p_sni_rm200pci.c,v 1.3 2003/06/14 17:01:09 thorpej Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -181,5 +181,5 @@ p_sni_rm200pci_cons_init()
 #endif
 	}
 	comcnattach(&arc_bus_io /* XXX? */, com_console_address,
-	    com_console_speed, com_freq, com_console_mode);
+	    com_console_speed, com_freq, COM_TYPE_NORMAL, com_console_mode);
 }

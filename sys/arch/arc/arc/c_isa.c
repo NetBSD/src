@@ -1,4 +1,4 @@
-/*	$NetBSD: c_isa.c,v 1.3 2003/01/19 10:06:12 tsutsui Exp $	*/
+/*	$NetBSD: c_isa.c,v 1.4 2003/06/14 17:01:08 thorpej Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 
 /*-
@@ -206,6 +206,6 @@ c_isa_cons_init()
 	if (com_console_address == 0)
 		com_console_address = IO_COM1;
 	comcnattach(&arc_bus_io, com_console_address,
-	    com_console_speed, com_freq, com_console_mode);
+	    com_console_speed, com_freq, COM_TYPE_NORMAL, com_console_mode);
 #endif
 }

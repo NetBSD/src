@@ -1,4 +1,4 @@
-/*	$NetBSD: c_jazz_eisa.c,v 1.5 2003/05/04 10:37:48 tsutsui Exp $	*/
+/*	$NetBSD: c_jazz_eisa.c,v 1.6 2003/06/14 17:01:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -193,6 +193,6 @@ c_jazz_eisa_cons_init()
 		com_console_address = jazzio_bus.bs_start + 0x6000;
 	}
 	comcnattach(&jazzio_bus, com_console_address,
-	    com_console_speed, com_freq, com_console_mode);
+	    com_console_speed, com_freq, COM_TYPE_NORMAL, com_console_mode);
 #endif
 }

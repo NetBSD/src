@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.5 2003/05/25 14:00:12 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.6 2003/06/14 17:01:09 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -316,6 +316,6 @@ c_nec_pci_cons_init()
 	if (com_console_address == 0)
 		com_console_address = RD94_SYS_COM1;
 	comcnattach(&jazzio_bus, com_console_address,
-	    com_console_speed, com_freq, com_console_mode);
+	    com_console_speed, com_freq, COM_TYPE_NORMAL, com_console_mode);
 #endif
 }
