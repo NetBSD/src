@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.5 1998/10/05 02:30:17 mark Exp $
+$NetBSD: usbdevs,v 1.6 1998/12/02 17:02:59 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,14 +42,20 @@ $NetBSD: usbdevs,v 1.5 1998/10/05 02:30:17 mark Exp $
 
 vendor NEC		0x0409	NEC
 vendor KODAK		0x040a	Eastman Kodak
+vendor CATC		0x0423	Computer Access Technolgy Corporation
 vendor NANAO		0x0440	Nanao
 vendor UNIXTAR		0x0451  Unixtar
 vendor GENIUS		0x0458	Genius
 vendor CHERRY		0x046a	Cherry
+vendor BTC		0x046e	Behavior Technology Corporation
 vendor PHILIPS		0x0471	Philips
 vendor CONNECTIX	0x0478	Connectix
-vendor CYPRESS		0x04b4	Cypress Semicondutor
+vendor CYPRESS		0x04b4	Cypress Semiconductor
+vendor 3COM		0x04c1	3Com
+vendor JAZZ		0x04fa	Jazz
+vendor ATEN		0x0557	ATen
 vendor EIZO		0x056d	EIZO
+vendor AGILER		0x056e	Agiler
 vendor BELKIN		0x05ab	Belkin
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor CHIC		0x05fe	Chic Technology
@@ -67,6 +73,9 @@ product NEC HUB			0x55aa	hub
 /* Kodak products */
 product KODAK DC260		0x0110	Digital Science DC260
 
+/* CATC products */
+product CATC ANDROMEDA		0x1237	Andromeda hub
+
 /* Nanao products */
 product NANAO HUB		0x0000	hub
 product NANAO MONITOR		0x0001	monitor
@@ -82,6 +91,9 @@ product GENIUS FLIGHT2000	0x1004	Flight 2000 joystick
 product CHERRY MY3000KBD	0x0001	My3000 keyboard
 product CHERRY MY3000HUB	0x0003	My3000 hub
 
+/* Behavior Technology Corporation products */
+product BTC BTC7932		0x6782	Keyboard with mouse port
+
 /* Philips products */
 product PHILIPS DSS		0x0101	DSS 350 Digital Speaker System
 product PHILIPS HUB		0x0201	hub
@@ -89,8 +101,20 @@ product PHILIPS HUB		0x0201	hub
 /* Connectix products */
 product CONNECTIX QUICKCAM	0x0001	QuickCam
 
+/* 3Com products */
+product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice USB Modem
+
+/* Jazz products */
+product JAZZ J6502		0x4201	J-6502 speakers
+
 /* Cypress Semiconduuctor products */
 product CYPRESS MOUSE		0x0001	mouse
+
+/* ATen */
+product ATEN UC1284		0x2001	Parallel printer adapter
+
+/* Agiler products */
+product AGILER MOUSE29UO	0x0002	mouse 29UO
 
 /* Belkin products */
 product BELKIN F5U002		0x0002	Parallel printer adapter
