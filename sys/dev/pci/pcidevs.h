@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.106 1998/12/30 13:50:42 hwr Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.107 1999/01/16 11:28:19 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.100 1998/12/30 13:49:49 hwr Exp 
+ *	NetBSD: pcidevs,v 1.101 1999/01/16 11:27:40 drochner Exp 
  */
 
 /*
@@ -916,6 +916,7 @@
 #define	PCI_PRODUCT_SYMBIOS_810AP	0x0005		/* 53c810AP */
 #define	PCI_PRODUCT_SYMBIOS_860	0x0006		/* 53c860 */
 #define	PCI_PRODUCT_SYMBIOS_875	0x000f		/* 53c875 */
+#define	PCI_PRODUCT_SYMBIOS_875J	0x008f		/* 53c875J */
 
 /* Packet Engines products */
 #define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC Ethernet */
