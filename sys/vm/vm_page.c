@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_page.c,v 1.9 1993/12/20 12:40:18 cgd Exp $
+ *	$Id: vm_page.c,v 1.10 1994/01/07 18:32:14 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -419,9 +419,6 @@ vm_offset_t vm_page_startup(start, end, vaddr)
 
 	pa = first_phys_addr;
 	while (npages--) {
-		m->flags &= ~(PG_COW | PG_WANTED | PG_INACTIVE | PG_ACTIVE |
-		    PG_BUSY);
-		m->object = NULL;
 		m->phys_addr = pa;
 		queue_enter(&vm_page_queue_free, m, vm_page_t, pageq);
 		m++;
