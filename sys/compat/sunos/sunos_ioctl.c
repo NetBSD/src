@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.44 2003/02/23 14:37:32 pk Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.45 2003/03/21 21:13:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.44 2003/02/23 14:37:32 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.45 2003/03/21 21:13:55 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -416,7 +416,7 @@ sunos_sys_ioctl(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
+	int (*ctl)(struct file *, u_long, void *, struct proc *);
 	int error;
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
