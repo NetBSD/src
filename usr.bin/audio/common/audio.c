@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.7 1999/03/30 14:46:23 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.8 1999/09/13 17:35:33 tron Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -70,7 +70,7 @@ struct {
 	{ AudioEmpeg_l2_stream,	AUDIO_ENCODING_MPEG_L2_STREAM },
 	{ AudioEmpeg_l2_packets,AUDIO_ENCODING_MPEG_L2_PACKETS },
 	{ AudioEmpeg_l2_system,	AUDIO_ENCODING_MPEG_L2_SYSTEM },
-	{ 0, -1 }
+	{ NULL, -1 }
 };
 
 
