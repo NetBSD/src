@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.60 1998/08/13 02:11:07 eeh Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.61 1998/09/30 12:07:51 tv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -590,8 +590,11 @@ sys_madvise(p, v, retval)
 	} */ *uap = v;
 #endif
 
-	/* Not yet implemented */
-	return (EOPNOTSUPP);
+	/*
+	 * Not supported, but harmless to declare "success".
+	 * Some emulations expect a working madvise().
+	 */
+	return (0);
 }
 
 /* ARGSUSED */
