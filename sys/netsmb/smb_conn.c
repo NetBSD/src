@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.15 2004/03/21 10:09:52 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.16 2004/05/28 09:38:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.15 2004/03/21 10:09:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.16 2004/05/28 09:38:13 itojun Exp $");
 
 /*
  * Connection engine.
@@ -693,14 +693,10 @@ smb_share_create(struct smb_vc *vcp, struct smb_sharespec *shspec,
 	/*
 	 * Only superuser can create shares with different uid and gid
 	 */
-	if (uid != SMBM_ANY_OWNER && uid != realuid && !isroot) {
-printf("uid %d realuid %d isroot %d\n", uid, realuid, isroot);
+	if (uid != SMBM_ANY_OWNER && uid != realuid && !isroot)
 		return EPERM;
-	}
-	if (gid != SMBM_ANY_GROUP && !groupmember(gid, cred) && !isroot) {
-printf("gid %d groupmem %d isroot %d\n", uid, groupmember(gid, cred), isroot);
+	if (gid != SMBM_ANY_GROUP && !groupmember(gid, cred) && !isroot)
 		return EPERM;
-	}
 	error = smb_vc_lookupshare(vcp, shspec, scred, &ssp);
 	if (!error) {
 		smb_share_put(ssp, scred);
