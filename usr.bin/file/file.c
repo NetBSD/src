@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.26 2002/05/30 17:36:57 thorpej Exp $	*/
+/*	$NetBSD: file.c,v 1.27 2002/06/14 19:05:18 wiz Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -66,7 +66,7 @@
 #if 0
 FILE_RCSID("@(#)Id: file.c,v 1.62 2002/05/16 18:45:56 christos Exp ")
 #else
-__RCSID("$NetBSD: file.c,v 1.26 2002/05/30 17:36:57 thorpej Exp $");
+__RCSID("$NetBSD: file.c,v 1.27 2002/06/14 19:05:18 wiz Exp $");
 #endif
 #endif	/* lint */
 
@@ -112,25 +112,23 @@ char *progname;		/* used throughout 			*/
 int lineno;		/* line number in the magic file	*/
 
 
-static void	unwrap		__P((char *fn));
-static void	usage		__P((void));
+static void	unwrap(char *fn);
+static void	usage(void);
 #ifdef HAVE_GETOPT_H
-static void	help		__P((void));
+static void	help(void);
 #endif
 #if 0
-static int	byteconv4	__P((int, int, int));
-static short	byteconv2	__P((int, int, int));
+static int	byteconv4(int, int, int);
+static short	byteconv2(int, int, int);
 #endif
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 /*
  * main - parse arguments and handle options
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	int c;
 	int action = 0, didsomefiles = 0, errflg = 0, ret = 0, app = 0;
@@ -300,8 +298,7 @@ main(argc, argv)
  * unwrap -- read a file of filenames, do each one.
  */
 static void
-unwrap(fn)
-	char *fn;
+unwrap(char *fn)
 {
 	char buf[MAXPATHLEN];
 	FILE *f;
@@ -345,10 +342,7 @@ unwrap(fn)
  *	big_endian	whether we are a big endian host
  */
 static int
-byteconv4(from, same, big_endian)
-	int from;
-	int same;
-	int big_endian;
+byteconv4(int from, int same, int big_endian)
 {
 	if (same)
 		return from;
@@ -375,10 +369,7 @@ byteconv4(from, same, big_endian)
  * Same as byteconv4, but for shorts
  */
 static short
-byteconv2(from, same, big_endian)
-	int from;
-	int same;
-	int big_endian;
+byteconv2(int from, int same, int big_endian)
 {
 	if (same)
 		return from;
@@ -403,9 +394,7 @@ byteconv2(from, same, big_endian)
  * process - process input file
  */
 void
-process(inname, wid)
-	const char	*inname;
-	int wid;
+process(const char *inname, int wid)
 {
 	int	fd = 0;
 	static  const char stdname[] = "standard input";
@@ -505,10 +494,7 @@ process(inname, wid)
 
 
 int
-tryit(fn, buf, nb, zfl)
-	const char *fn;		/* file name*/
-	unsigned char *buf;	/* buffer */
-	int nb, zfl;
+tryit(const char *fn, unsigned char *buf, int nb, int zfl)
 {
 
 	/*
@@ -542,7 +528,7 @@ tryit(fn, buf, nb, zfl)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, USAGE, progname);
 	(void)fprintf(stderr, "Usage: %s -C [-m magic]\n", progname);
@@ -554,7 +540,7 @@ usage()
 
 #ifdef HAVE_GETOPT_H
 static void
-help()
+help(void)
 {
 	puts(
 "Usage: file [OPTION]... [FILE]...\n"
