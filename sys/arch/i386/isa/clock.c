@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.67 2001/04/23 09:35:12 jdolecek Exp $	*/
+/*	$NetBSD: clock.c,v 1.68 2001/11/03 11:16:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -752,7 +752,7 @@ inittodr(base)
 	 * the latter case, it's likely that the CMOS battery has died.)
 	 */
 
-	if (base < 25*SECYR) {	/* if before 1995, something's odd... */
+	if (base && base < 25*SECYR) {	/* if before 1995, something's odd... */
 		printf("WARNING: preposterous time in file system\n");
 		/* read the system clock anyway */
 		base = 27*SECYR + 186*SECDAY + SECDAY/2;
@@ -802,7 +802,7 @@ inittodr(base)
 	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
 #endif
 
-	if (base < time.tv_sec - 5*SECYR)
+	if (base != 0 && base < time.tv_sec - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
 	else if (base > time.tv_sec + 5*SECYR) {
 		printf("WARNING: clock time much less than file system time\n");
