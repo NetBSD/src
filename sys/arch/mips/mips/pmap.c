@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.133 2001/09/09 19:48:12 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.134 2001/09/10 21:19:18 chris Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.133 2001/09/09 19:48:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134 2001/09/10 21:19:18 chris Exp $");
 
 /*
  *	Manages physical address maps.
@@ -823,7 +823,7 @@ pmap_page_protect(pg, prot)
 				va = pv->pv_va;
 				pmap_protect(pv->pv_pmap, va, va + PAGE_SIZE,
 					prot);
-				pmap_update();
+				pmap_update(pv->pv_pmap);
 			}
 		}
 		break;
@@ -835,7 +835,7 @@ pmap_page_protect(pg, prot)
 			pmap_remove(pv->pv_pmap, pv->pv_va,
 				    pv->pv_va + PAGE_SIZE);
 		}
-		pmap_update();
+		pmap_update(pv->pv_pmap);
 	}
 }
 
@@ -1870,7 +1870,7 @@ again:
 				    mips_indexof(va)) {
 					pmap_remove(npv->pv_pmap, npv->pv_va,
 						    npv->pv_va + PAGE_SIZE);
-					pmap_update();
+					pmap_update(npv->pv_pmap);
 					goto again;
 				}
 			}
