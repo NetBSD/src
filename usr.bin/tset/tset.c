@@ -1,4 +1,4 @@
-/*	$NetBSD: tset.c,v 1.5 1997/10/14 02:08:03 lukem Exp $	*/
+/*	$NetBSD: tset.c,v 1.6 1997/10/20 01:07:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,12 +43,13 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tset.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: tset.c,v 1.5 1997/10/14 02:08:03 lukem Exp $");
+__RCSID("$NetBSD: tset.c,v 1.6 1997/10/20 01:07:54 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,7 +84,7 @@ main(argc, argv)
 	char savech, *p, *t, *tcapbuf, *ttype;
 
 	if (tcgetattr(STDERR_FILENO, &mode) < 0)
-		err("standard error: %s", strerror(errno));
+		err(1, "standard error");
 
 	oldmode = mode;
 	ospeed = cfgetospeed(&mode);
@@ -100,7 +101,7 @@ main(argc, argv)
 
 	obsolete(argv);
 	noinit = noset = quiet = Sflag = sflag = showterm = 0;
-	while ((ch = getopt(argc, argv, "-a:d:e:Ii:k:m:np:QSrs")) != EOF) {
+	while ((ch = getopt(argc, argv, "-a:d:e:Ii:k:m:np:QSrs")) != -1) {
 		switch (ch) {
 		case '-':		/* display term only */
 			noset = 1;
@@ -195,7 +196,7 @@ main(argc, argv)
 			savech = *p;
 			*p = '\0';
 			if ((ttype = strdup(t)) == NULL)
-				err("%s", strerror(errno));
+				err(1, "strdup");
 			*p = savech;
 		}
 	}

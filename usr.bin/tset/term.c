@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.8 1997/10/14 02:08:01 lukem Exp $	*/
+/*	$NetBSD: term.c,v 1.9 1997/10/20 01:07:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: term.c,v 1.8 1997/10/14 02:08:01 lukem Exp $");
+__RCSID("$NetBSD: term.c,v 1.9 1997/10/20 01:07:53 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -114,12 +115,14 @@ found:	if ((p = getenv("TERMCAP")) != NULL && *p != '/')
 
 	/* Find the termcap entry.  If it doesn't exist, ask the user. */
 	while ((rval = tgetent(tbuf, ttype)) == 0) {
-		(void)fprintf(stderr,
-		    "tset: terminal type %s is unknown\n", ttype);
+		warnx("terminal type %s is unknown", ttype);
 		ttype = askuser(NULL);
 	}
-	if (rval == -1)
-		err("termcap: %s", strerror(errno ? errno : ENOENT));
+	if (rval == -1) {
+		if (!errno)
+			errno = ENOENT;
+		err(1, "%s", "");
+	}
 	*tcapbufp = tbuf;
 	return (ttype);
 }
