@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.22 2001/09/27 19:29:50 christos Exp $
+.\"	$NetBSD: editline.3,v 1.23 2001/10/04 00:45:19 lukem Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -336,7 +336,7 @@ Refresh display.
 Refresh display, and beep.
 .It Dv CC_CURSOR
 Cursor moved, so update and perform
-.Dv CC_REFRESH.
+.Dv CC_REFRESH .
 .It Dv CC_REDISPLAY
 Redisplay entire input line.
 This is useful if a key binding outputs extra information.
@@ -579,10 +579,10 @@ is updated to contain more details about the error.
 .\"XXX.Sh EXAMPLES
 .\"XXX: provide some examples
 .Sh SEE ALSO
-.Xr editrc 5 ,
 .Xr sh 1 ,
 .Xr signal 3 ,
-.Xr termcap 3
+.Xr termcap 3 ,
+.Xr editrc 5
 .Sh HISTORY
 The
 .Nm
