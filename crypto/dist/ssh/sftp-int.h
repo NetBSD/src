@@ -1,4 +1,5 @@
-/* $OpenBSD: sftp-int.h,v 1.1 2001/02/04 11:11:54 djm Exp $ */
+/*	$NetBSD: sftp-int.h,v 1.1.1.1.2.3 2001/12/10 23:52:59 he Exp $	*/
+/* $OpenBSD: sftp-int.h,v 1.4 2001/06/26 17:27:25 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
@@ -24,4 +25,4 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void interactive_loop(int fd_in, int fd_out);
+void	 interactive_loop(int, int, char *, char *);
