@@ -10,6 +10,80 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+4.1.8 - Released 29 March 2005
+
+include path from Phil Dibowitz for sorting ipfstat -t output by source or
+destination port.
+
+fix a bug in printing rules where interface names could not be printed,
+even if they're in the rule structure.
+
+fix BSD/kupgrade to correctly change ipfilter lkm Makefile for FreeBSD
+
+add 2 new features to SIOCGNATL:
+- if IPN_FINDFORWARD is set, check if the respective MAP is already
+  present in the outbound table
+- if IPN_IN is set, search for a matching MAP entry instead of RDR
+  (Peter Potsma)
+
+turn off function inlining for freebsd 5.3+
+
+UDP doesn't pullup enough data which can sometimes cause a panic.
+Fix other protocols, as required, where a similar problem may exist.
+
+overhaul the timeout queue management, especially that for user defined queues
+which are now only freed in an orderly manner.
+
+4.1.7 - Released 13 March 2005
+
+Using the GRE call field is almost impossible because it is unbalanced and
+both call fields are not present in each v1 header.
+
+Fix a problem where it was possible to load duplicate rules into ipf
+
+patch from John Wehle to address problems with fastroute on solaris
+
+Copying data out for ipf -z failed because it tried to copy out to an address
+that is a kernel pointer in user space.
+
+add "ip" timeout for both NAT & state that's for non-TCP/UDP/ICMP
+
+synch up with NetBSD's changes
+
+fix problems parsing long lines of text in the ftp proxy where they would not
+be parsed properly and stop the session from working
+
+enhance the PPTP proxy so that it tries to decode messages in the TCP stream
+so it knows when to create and destroy the state/nat sessions for GRE.  There
+are also 4 new regression tests for it, testing map/rdr rules.
+
+impose some limits on the size of data that can be moved with SIOCSTPUT in
+the NAT code and also prevent a duplicate session entry from being created
+using this method.
+
+add a new flag (IPN_FINDFORWARD) to NAT code that can be used with SIOCGNATL
+to check if it is possible to create an outgoing transparent NAT mapping to
+compliment the redirect being investigated.
+
+Linux requires that the checksums in the IP header get adjusted
+
+only resolve unknown interfaces in fr_stinsert, and nuke all interface pointers
+in SIOCSTPUT to prevent bad data being loaded from userspace.
+
+make the byte counting for state correct (was counting data from ICMP packet
+twice)
+
+print out the keyword "frag-body" if the flag is set.
+
+fix ipfs loading/restoring NAT sessions
+
+patch from Frank to correctly format IP addresses in ipfstat -t output
+
+parsing port numbers in ipf/ipnat was confusing as the port number was returned
+in an int that was also overloaded to be the suceess/failure.  instead, change
+the port using pass by reference and only use the return value for indicating
+success or failure.
+
 4.1.6 - Released 19 February 2005
 
 add a new timeout number to NAT (fr_defnatipage) that is used for all
