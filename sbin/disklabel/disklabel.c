@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.97 2001/03/29 12:18:32 drochner Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.98 2001/06/15 18:49:37 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.97 2001/03/29 12:18:32 drochner Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.98 2001/06/15 18:49:37 nonaka Exp $");
 #endif
 #endif	/* not lint */
 
@@ -291,6 +291,10 @@ main(int argc, char *argv[])
 	 * partition, if present.
 	 */
 	dosdp = readmbr(f);
+	if (dosdp) {
+		dosdp->mbrp_start = le32toh(dosdp->mbrp_start);
+		dosdp->mbrp_size = le32toh(dosdp->mbrp_size);
+	}
 #endif	/* USE_MBR */
 
 #ifdef __arm32__
