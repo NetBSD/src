@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.26 2003/01/17 00:11:00 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.27 2003/01/17 00:24:29 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -201,7 +201,7 @@ int	bgedebug = 0;
 #define	BGE_QUIRK_ONLY_PHY_1		0x00000004
 #define	BGE_QUIRK_5700_SMALLDMA		0x00000008
 #define	BGE_QUIRK_5700_PCIX_REG_BUG	0x00000010
-#define	BGE_QUIRK_5700_PRODUCER_BUG	0x00000011
+#define	BGE_QUIRK_PRODUCER_BUG		0x00000011
 
 /* following bugs are common to bcm5700 rev B, all flavours */
 #define BGE_QUIRK_5700_COMMON \
@@ -1810,8 +1810,7 @@ bge_setpowerstate(sc, powerlevel)
 		pci_write_config(sc->bge_dev, BGE_PCI_PWRMGMT_CMD,
 		    pm_ctl, 2);
 		DELAY(10000);
-		CSR_WRITE_4(sc, BGE_MISC_LOCAL_CTL,
-		    sc->bge_local_ctrl_reg);
+		CSR_WRITE_4(sc, BGE_MISC_LOCAL_CTL, sc->bge_local_ctrl_reg);
 		DELAY(10000);
 
 #ifdef NOTYET
