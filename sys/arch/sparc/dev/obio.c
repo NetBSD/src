@@ -1,8 +1,8 @@
-/*	$NetBSD: obio.c,v 1.32 1997/05/18 19:37:37 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.33 1997/05/18 21:26:22 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
- * Copyright (c) 1995 Paul Kranenburg
+ * Copyright (c) 1995, 1997 Paul Kranenburg
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -419,12 +419,16 @@ busattach(parent, cf, args, bustype)
 			return 0;
 	}
 
-	oca.ca_ra.ra_iospace = -1;
+	/* XXX - streamline bustype stuff */
+	oca.ca_ra.ra_iospace = CPU_ISSUN4
+		? -1
+		: ((bustype == BUS_VME32) ? VME_SUN4M_32 : VME_SUN4M_16);
 	oca.ca_ra.ra_paddr = (void *)cf->cf_loc[0];
 	oca.ca_ra.ra_len = 0;
 	oca.ca_ra.ra_nreg = 1;
 	if (oca.ca_ra.ra_paddr)
-		tmp = (caddr_t)bus_tmp(oca.ca_ra.ra_paddr, bustype);
+		tmp = (caddr_t)mapdev(oca.ca_ra.ra_reg,
+				      TMPMAP_VA, 0, NBPG, bustype);
 	else
 		tmp = NULL;
 	oca.ca_ra.ra_vaddr = tmp;
@@ -627,29 +631,6 @@ bus_map(pa, len, bustype)
 		pa->rr_iospace =
 		     (bustype == BUS_VME32) ? VME_SUN4M_32 : VME_SUN4M_16;
 	return mapiodev(pa, 0, len, bustype);
-}
-
-void *
-bus_tmp(pa, bustype)
-	void *pa;
-	int bustype;
-{
-	vm_offset_t addr = (vm_offset_t)pa & ~PGOFSET;
-	int pmtype;
-
-	if (CPU_ISSUN4)
-		pmtype = bt2pmt[bustype];
-	else if (CPU_ISSUN4M) {
-		/* XXX - clear up bustype stuff */
-		pmtype = (bustype == BUS_VME32) ? VME_SUN4M_32 : VME_SUN4M_16;
-		pmtype <<= PMAP_SHFT4M;
-	} else
-		panic("bus_tmp: architecture unsupported");
-
-	pmap_enter(pmap_kernel(), TMPMAP_VA,
-		   addr | pmtype | PMAP_NC,
-		   VM_PROT_READ | VM_PROT_WRITE, 1);
-	return ((void *)(TMPMAP_VA | ((u_long) pa & PGOFSET)) );
 }
 
 void
