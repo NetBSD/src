@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.18 2003/04/23 21:39:08 mycroft Exp $	*/
+/*	$NetBSD: ldd.c,v 1.19 2003/05/28 20:45:39 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -115,13 +115,6 @@ main(int argc, char **argv)
 
 	_rtld_pagesz = sysconf(_SC_PAGESIZE);
 
-	_rtld_trust = geteuid() == getuid() && getegid() == getgid();
-	if (_rtld_trust) {
-		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
-	}
-
-	_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
-
 	for (argc--, argv++; argc != 0; argc--, argv++) {
 		int fd = open(*argv, O_RDONLY);
 		if (fd == -1) {
@@ -133,6 +126,13 @@ main(int argc, char **argv)
 			close(fd);
 			continue;
 		}
+
+		_rtld_paths = NULL;
+		_rtld_trust = (st.st_mode & (S_ISUID | S_ISGID)) == 0;
+		if (_rtld_trust)
+			_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
+
+		_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
 		_rtld_objmain = _rtld_map_object(xstrdup(*argv), fd, &st);
 		if (_rtld_objmain == NULL) {
 			if (ldd_aout(*argv, fd) < 0)
