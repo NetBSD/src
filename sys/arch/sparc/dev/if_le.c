@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.35 1996/05/16 22:57:32 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.35.4.1 1996/07/17 01:46:00 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -145,7 +145,7 @@ lehwinit(sc)
 
 		if (ifp->if_flags & IFF_LINK0)
 			lesc->sc_dma->sc_regs->csr |= DE_AUI_TP;
-		else
+		else if (ifp->if_flags & IFF_LINK1)
 			lesc->sc_dma->sc_regs->csr &= ~DE_AUI_TP;
 
 		delay(20000);	/* must not touch le for 20ms */
