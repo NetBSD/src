@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.743 2004/12/14 01:49:30 yamt Exp $
+#	$NetBSD: mi,v 1.744 2004/12/14 02:27:55 lukem Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1432,7 +1432,7 @@
 ./usr/include/tcpd.h				comp-c-include
 ./usr/include/termcap.h				comp-c-include
 ./usr/include/termios.h				comp-c-include
-./usr/include/threadlib.h			comp-c-include
+./usr/include/threadlib.h			comp-c-include		obsolete
 ./usr/include/time.h				comp-c-include
 ./usr/include/ttyent.h				comp-c-include
 ./usr/include/tzfile.h				comp-c-include
