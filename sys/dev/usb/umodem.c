@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.20 2000/01/25 08:12:58 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.21 2000/02/02 13:18:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -271,6 +271,9 @@ USB_ATTACH(umodem)
 
 	DPRINTF(("umodem_attach: sc=%p\n", sc));
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
 
 	USB_ATTACH_SUCCESS_RETURN;
 
@@ -602,12 +605,9 @@ umodem_activate(self, act)
 	return (rv);
 }
 
-int
-umodem_detach(self, flags)
-	device_ptr_t self;
-	int flags;
+USB_DETACH(umodem)
 {
-	struct umodem_softc *sc = (struct umodem_softc *)self;
+	USB_DETACH_START(umodem, sc);
 	int rv = 0;
 
 	DPRINTF(("umodem_detach: sc=%p flags=%d\n", sc, flags));
@@ -616,6 +616,9 @@ umodem_detach(self, flags)
 
 	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
 
 	return (rv);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.31 2000/01/19 00:23:58 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.32 2000/02/02 13:18:45 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ int	uhiddebug = 0;
 
 struct uhid_softc {
 	USBBASEDEVICE sc_dev;			/* base device */
+	usbd_device_handle sc_udev;
 	usbd_interface_handle sc_iface;	/* interface */
 	usbd_pipe_handle sc_intrpipe;	/* interrupt pipe */
 	int sc_ep_addr;
@@ -180,6 +181,7 @@ USB_ATTACH(uhid)
 	usbd_status err;
 	char devinfo[1024];
 	
+	sc->sc_udev = uaa->device;
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
 	usbd_devinfo(uaa->device, 0, devinfo);
@@ -240,6 +242,9 @@ USB_ATTACH(uhid)
 		}
 	}
 #endif
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -306,6 +311,9 @@ USB_DETACH(uhid)
 #endif
 
 	free(sc->sc_repdesc, M_USBDEV);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
 
 	return (0);
 }
