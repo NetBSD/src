@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.39 1996/02/09 18:59:26 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.40 1996/03/14 19:01:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -818,7 +818,7 @@ sys_flock(p, v, retval)
  */
 /* ARGSUSED */
 int
-fdopen(dev, mode, type, p)
+filedescopen(dev, mode, type, p)
 	dev_t dev;
 	int mode, type;
 	struct proc *p;
