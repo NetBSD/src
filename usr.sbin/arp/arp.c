@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.14 1997/01/18 02:12:13 mikel Exp $ */
+/*	$NetBSD: arp.c,v 1.15 1997/02/07 05:07:13 mikel Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$NetBSD: arp.c,v 1.14 1997/01/18 02:12:13 mikel Exp $";
+static char *rcsid = "$NetBSD: arp.c,v 1.15 1997/02/07 05:07:13 mikel Exp $";
 #endif /* not lint */
 
 /*
@@ -64,14 +64,15 @@ static char *rcsid = "$NetBSD: arp.c,v 1.14 1997/01/18 02:12:13 mikel Exp $";
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
 
-#include <netdb.h>
-#include <errno.h>
 #include <err.h>
+#include <errno.h>
+#include <netdb.h>
 #include <nlist.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <paths.h>
+#include <unistd.h>
 
 int delete __P((const char *, const char *));
 void dump __P((u_long));
@@ -94,37 +95,52 @@ main(argc, argv)
 	char **argv;
 {
 	int ch;
+	int op = 0;
 
 	pid = getpid();
-	while ((ch = getopt(argc, argv, "andsf")) != EOF)
+
+	while ((ch = getopt(argc, argv, "andsf")) != -1)
 		switch((char)ch) {
 		case 'a':
-			dump(0);
-			return (0);
 		case 'd':
-			if (argc < 3 || argc > 4)
+		case 's':
+		case 'f':
+			if (op)
 				usage();
-			(void)delete(argv[2], argv[3]);
-			return (0);
+			op = ch;
+			break;
 		case 'n':
 			nflag = 1;
 			break;
-		case 's':
-			if (argc < 4 || argc > 7)
-				usage();
-			return (set(argc-2, &argv[2]) ? 1 : 0);
-		case 'f':
-			if (argc != 3)
-				usage();
-			return (file(argv[2]));
-		case '?':
 		default:
 			usage();
 		}
-	if (argc == 2 || (argc == 3 && nflag))
-		get(argv[argc - 1]);
-	else
-		usage();
+	argc -= optind;
+	argv += optind;
+
+	switch((char)op) {
+	case 'a':
+		dump(0);
+		break;
+	case 'd':
+		if (argc < 1 || argc > 2)
+			usage();
+		(void)delete(argv[0], argv[1]);
+		break;
+	case 's':
+		if (argc < 2 || argc > 5)
+			usage();
+		return (set(argc, argv) ? 1 : 0);
+	case 'f':
+		if (argc != 1)
+			usage();
+		return (file(argv[0]));
+	default:
+		if (argc != 1)
+			usage();
+		get(argv[0]);
+		break;
+	}
 	return (0);
 }
 
@@ -277,7 +293,6 @@ get(host)
 	const char *host;
 {
 	struct sockaddr_inarp *sin;
-	u_char *ea;
 
 	sin = &sin_m;
 	sin_m = blank_sin;		/* struct copy */
@@ -302,8 +317,6 @@ delete(host, info)
 	register struct sockaddr_inarp *sin;
 	register struct rt_msghdr *rtm;
 	struct sockaddr_dl *sdl;
-	u_char *ea;
-	char *eaddr;
 
 	sin = &sin_m;
 	rtm = &m_rtmsg.m_rtm;
@@ -514,7 +527,6 @@ getinetaddr(host, inap)
 	struct in_addr *inap;
 {
 	struct hostent *hp;
-	u_long addr;
 
 	if (inet_aton(host, inap) == 1)
 		return (0);
