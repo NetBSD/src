@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.2 1996/04/26 22:01:59 mark Exp $ */
+/* $NetBSD: pms.c,v 1.3 1996/05/07 21:04:08 mark Exp $ */
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -99,6 +99,8 @@ struct pms_softc {		/* driver status information */
 int pmsprobe __P((struct device *, void *, void *));
 void pmsattach __P((struct device *, struct device *, void *));
 int pmsintr __P((void *));
+int pmsinit __P(());
+void pmswatchdog __P((void *));
 
 struct cfattach pms_ca = {
 	sizeof(struct pms_softc), pmsprobe, pmsattach
@@ -113,7 +115,8 @@ struct cfdriver	pms_cd = {
 static inline void
 pms_flush()
 {
-	while (inb(IOMD_MSCR) & 0x20) {
+	int n = 1000;
+	while (n-- && (inb(IOMD_MSCR) & 0x20)) {
 		delay(6);
 		(void) inb(IOMD_MSDATA);
 		delay(6);
@@ -123,7 +126,7 @@ pms_flush()
 	}
 }
 
-static void
+static int
 cmd_mouse(unsigned char cmd)
 {
 	unsigned char c;
@@ -142,7 +145,8 @@ resend:
 	outb(IOMD_MSDATA, cmd);
 	delay(2);
 	c = inb(IOMD_MSCR) & (unsigned char) 0xff;
-	while (!(c & (unsigned char) 0x20)) {
+	i = 1000;
+	while (i-- && !(c & (unsigned char) 0x20)) {
 		delay(1);
 		c = inb(IOMD_MSCR);
 	}
@@ -151,7 +155,7 @@ resend:
 
 	c = inb(IOMD_MSDATA) & 0xff;
 	if ((c == 0xFA) || (c == 0xEE))
-		return;
+		return(0);
 
 	if (--retry) {
 		pms_flush();
@@ -159,8 +163,16 @@ resend:
 	}
 
 	printf("Mouse cmd failed, cmd = %x, status = %x\n", cmd, c);
-	return;
+	return(1);
 }
+
+/*
+ * This needs fixing ...
+ * The probe should just establish the presence not wether it is fully
+ * working. We should just verify that we have an IOMD that supports
+ * a PS2 mouse interface and leave it at that.
+ * The attach function just test the mouse and flag is as working or not.
+ */
 
 int
 pmsprobe(parent, match, aux)
@@ -168,6 +180,12 @@ pmsprobe(parent, match, aux)
 	void *match, *aux;
 {
 	/*struct mainbus_attach_args *mb = aux;*/
+	return(pmsinit());
+}
+
+int
+pmsinit()
+{
 	int i, j;
 	int mid;
 	int id;
@@ -208,7 +226,9 @@ pmsprobe(parent, match, aux)
 	/*
 	 * Disable, reset and enable the mouse.
 	 */
-	cmd_mouse(PMS_DEV_DISABLE);
+	if (cmd_mouse(PMS_DEV_DISABLE))
+		return(0);
+
 	cmd_mouse(PMS_RESET);
 	delay(300000);
 	j = 10;
@@ -230,10 +250,10 @@ pmsprobe(parent, match, aux)
 	cmd_mouse(PMS_SET_RES);
 	cmd_mouse(3);		/* 8 counts/mm */
 	cmd_mouse(PMS_SET_SCALE21);
-	cmd_mouse(PMS_SET_SAMPLE);
-	cmd_mouse(100);	/* 100 samples/sec */
-	cmd_mouse(PMS_SET_STREAM);
 #endif
+	cmd_mouse(PMS_SET_SAMPLE);
+	cmd_mouse(40);	/* 40 samples/sec */
+	cmd_mouse(PMS_SET_STREAM);
 	cmd_mouse(PMS_DEV_ENABLE);
 	return 1;
 }
@@ -304,6 +324,8 @@ pmsopen(dev, flag, mode, p)
 	if (irq_claim(IRQ_INSTRUCT, &sc->sc_ih) == -1)
 		panic("Cannot claim MOUSE IRQ\n");
 
+	timeout(pmswatchdog, (void *) sc, 30 * hz);
+
 	return 0;
 }
 
@@ -315,6 +337,8 @@ pmsclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+
+	untimeout(pmswatchdog, (void *) sc);
 
 	if (irq_release(IRQ_INSTRUCT, &sc->sc_ih) != 0)
 		panic("Cannot release MOUSE IRQ\n");
@@ -609,4 +633,18 @@ pmsselect(dev, rw, p)
 	splx(s);
 
 	return ret;
+}
+
+void
+pmswatchdog(arg)
+	void *arg;
+{
+	int s;
+
+	if ((inb(IOMD_MSCR) & 0x03) != 0x03) {
+		printf("Mouse is dead (%x), restart it\n", inb(IOMD_MSCR));
+		s = spltty();
+		pmsinit();
+		splx(s);
+	}
 }
