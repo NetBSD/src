@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: krb_locl.h,v 1.1.1.2 2000/12/29 01:43:16 assar Exp $ */
+/* $Id: krb_locl.h,v 1.2 2001/01/07 05:44:03 christos Exp $ */
 
 #ifndef __krb_locl_h
 #define __krb_locl_h
@@ -168,8 +168,5 @@ fixup_quad_cksum __P((
 	void *new_checksum,
 	void *old_checksum,
 	int little));
-
-void
-krb_kdctimeofday __P((struct timeval *tv));
 
 #endif /*  __krb_locl_h */
