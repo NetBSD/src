@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.15 2003/09/30 00:35:30 thorpej Exp $
+# $NetBSD: GENERIC,v 1.16 2003/10/08 10:59:55 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -169,12 +169,10 @@ ea*		at podulebus0 slot ?	# Atomwide Ether3
 eh*		at podulebus0 slot ?	# i-cubed EtherH (E100/200/500)
 
 dtide*		at podulebus0 slot ?	# D.T. Software IDE interface
-wd*		at dtide? channel ? drive ? # IDE hard discs
-atapibus*	at dtide? channel ?	# ATAPI devices
+atabus* 	at dtide? channel ?	# ATA bus
 
 hcide*		at podulebus0 slot ?	# HCCS IDE interface
-wd*		at hcide? channel ? drive ? # IDE hard discs
-atapibus*	at hcide? channel ?	# ATAPI devices
+atabus* 	at hcide? channel ?	# ATA bus
 
 hcsc*		at podulebus0 slot ?	# HCCS 8-bit SCSI interface
 scsibus*	at hcsc?
@@ -186,8 +184,10 @@ upc0		at iobus0 base 0x010000	# I/O chip on IOEB machines
 com0		at upc0			# Serial port
 lpt0		at upc0			# Parallel port
 wdc0		at upc0			# IDE controller
-wd*		at wdc? drive ?		# IDE hard discs
-atapibus*	at wdc?			# ATAPI devices
+atabus* 	at wdc?			# ATA bus
+
+wd*		at atabus? drive ?	# IDE hard discs
+atapibus*	at atabus?		# ATAPI devices
 
 cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
 sd*		at atapibus? drive ? 	# ATAPI disk drives
