@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.8 2002/03/13 13:12:29 simonb Exp $	*/
+/*	$NetBSD: ip22.c,v 1.9 2002/04/29 02:06:14 rafal Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -46,6 +46,9 @@
 static struct evcnt mips_int5_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
 
+static struct evcnt mips_spurint_evcnt =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
+
 static u_int32_t iocwrite;	/* IOC write register: read-only */
 static u_int32_t iocreset;	/* IOC reset register: read-only */
 
@@ -60,7 +63,7 @@ void 		ip22_bus_reset(void);
 int 		ip22_local0_intr(void);
 int		ip22_local1_intr(void);
 int 		ip22_mappable_intr(void *);
-void 		ip22_intr(u_int, u_int, u_int, u_int);
+void		ip22_intr(u_int, u_int, u_int, u_int);
 void		ip22_intr_establish(int, int, int (*)(void *), void *);
 
 unsigned long 	ip22_clkread(void);
@@ -180,6 +183,7 @@ ip22_init(void)
 	ticks_per_usec = cps * hz / 1000000;
 
 	evcnt_attach_static(&mips_int5_evcnt);
+	evcnt_attach_static(&mips_spurint_evcnt);
 }
 
 void
@@ -189,6 +193,10 @@ ip22_bus_reset(void)
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000fc) = 0;
 }
 
+/*
+ * NB: Do not re-enable interrupts here -- reentrancy here can cause all
+ * sorts of Bad Things(tm) to happen, including kernel stack overflows.
+ */
 void
 ip22_intr(status, cause, pc, ipending)
 	u_int32_t status;
@@ -235,7 +243,8 @@ ip22_intr(status, cause, pc, ipending)
 		cause &= ~MIPS_INT_MASK_4;
 	}
 
-	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	if (cause & status & MIPS_HARD_INT_MASK) 
+		mips_spurint_evcnt.ev_count++;
 }
 
 int

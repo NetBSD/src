@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 2002/03/13 13:12:29 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 2002/04/29 02:06:14 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -836,9 +836,18 @@ cpu_intr(status, cause, pc, ipending)
 	if (ipending & MIPS_HARD_INT_MASK)
 		(*platform.iointr)(status, cause, pc, ipending);
 
+	/*
+	 * Service pending soft interrupts -- make sure to re-enable
+	 * only those hardware interrupts that are not masked and 
+	 * that weren't pending on the current invocation of the
+	 * interrupt handler, else we risk infinite stack growth
+	 * due to nested interrupts.
+	 */
 	/* software simulated interrupt */
-	if ((ipending & MIPS_SOFT_INT_MASK_1)
-		    || (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
+	if ((ipending & MIPS_SOFT_INT_MASK_1) || 
+	    (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
+		_splset(MIPS_SR_INT_IE |
+			    (status & ~ipending & MIPS_HARD_INT_MASK));
 		_clrsoftintr(MIPS_SOFT_INT_MASK_1);
 		softintr_dispatch();
 	}
