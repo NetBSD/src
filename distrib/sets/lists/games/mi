@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.16 1999/04/19 03:11:35 simonb Exp $
+# $NetBSD: mi,v 1.17 1999/07/22 01:05:20 mrg Exp $
 ./usr/games/adventure
 ./usr/games/arithmetic
 ./usr/games/atc
@@ -78,6 +78,7 @@
 ./usr/games/wargames
 ./usr/games/worm
 ./usr/games/worms
+./usr/games/wtf
 ./usr/games/wump
 ./usr/share/games/atc/Atlantis
 ./usr/share/games/atc/Game_List
@@ -196,6 +197,7 @@
 ./usr/share/man/cat6/trek.0
 ./usr/share/man/cat6/worm.0
 ./usr/share/man/cat6/worms.0
+./usr/share/man/cat6/wtf.0
 ./usr/share/man/cat6/wump.0
 ./usr/share/man/man6/adventure.6
 ./usr/share/man/man6/arithmetic.6
@@ -240,6 +242,7 @@
 ./usr/share/man/man6/trek.6
 ./usr/share/man/man6/worm.6
 ./usr/share/man/man6/worms.6
+./usr/share/man/man6/wtf.6
 ./usr/share/man/man6/wump.6
 ./var/games/hackdir/data
 ./var/games/hackdir/help
