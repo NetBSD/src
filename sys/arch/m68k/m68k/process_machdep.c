@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.15 1995/08/13 09:05:51 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.16 1996/04/29 20:50:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -65,6 +65,8 @@
 #ifdef cpu_set_init_frame
 extern char kstack[];		/* XXX */
 #endif
+static struct frame   *process_frame __P((struct proc *p));
+static struct fpframe *process_fpframe __P((struct proc *p));
 
 static inline struct frame *
 process_frame(p)
