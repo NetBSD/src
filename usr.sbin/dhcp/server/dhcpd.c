@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.18 2000/06/24 06:50:04 mellon Exp $ Copyright 1995-2000 Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.19 2000/06/24 16:21:02 mellon Exp $ Copyright 1995-2000 Internet Software Consortium.";
 #endif
 
   static char copyright[] =
@@ -165,6 +165,20 @@ int main (argc, argv, envp)
 	int lose;
 	int omapi_port;
 
+	/* Set up the client classification system. */
+	classification_setup ();
+
+	/* Initialize the omapi system. */
+	result = omapi_init ();
+	if (result != ISC_R_SUCCESS)
+		log_fatal ("Can't initialize OMAPI: %s",
+			   isc_result_totext (result));
+
+	/* Set up the OMAPI wrappers for various server database internal
+	   objects. */
+	dhcp_db_objects_setup ();
+	dhcp_common_objects_setup ();
+
 	/* Initially, log errors to stderr as well as to syslogd. */
 #ifdef SYSLOG_4_2
 	openlog ("dhcpd", LOG_NDELAY);
@@ -235,16 +249,20 @@ int main (argc, argv, envp)
 			usage ();
 		} else {
 			struct interface_info *tmp =
-				((struct interface_info *)
-				 dmalloc (sizeof *tmp, MDL));
-			if (!tmp)
-				log_fatal ("Insufficient memory to %s %s",
-				       "record interface", argv [i]);
-			memset (tmp, 0, sizeof *tmp);
+				(struct interface_info *)0;
+			result = interface_allocate (&tmp, MDL);
+			if (result != ISC_R_SUCCESS)
+				log_fatal ("Insufficient memory to %s %s: %s",
+					   "record interface", argv [i],
+					   isc_result_totext (result));
 			strcpy (tmp -> name, argv [i]);
-			tmp -> next = interfaces;
+			if (interfaces) {
+				interface_reference (&tmp -> next,
+						     interfaces, MDL);
+				interface_dereference (&interfaces, MDL);
+			}
+			interface_reference (&interfaces, tmp, MDL);
 			tmp -> flags = INTERFACE_REQUESTED;
-			interfaces = tmp;
 		}
 	}
 
@@ -291,20 +309,6 @@ int main (argc, argv, envp)
 
 	/* Get the current time... */
 	GET_TIME (&cur_time);
-
-	/* Set up the client classification system. */
-	classification_setup ();
-
-	/* Initialize the omapi system. */
-	result = omapi_init ();
-	if (result != ISC_R_SUCCESS)
-		log_fatal ("Can't initialize OMAPI: %s",
-			   isc_result_totext (result));
-
-	/* Set up the OMAPI wrappers for various server database internal
-	   objects. */
-	dhcp_db_objects_setup ();
-	dhcp_common_objects_setup ();
 
 	/* Set up the initial dhcp option universe. */
 	initialize_common_option_spaces ();
