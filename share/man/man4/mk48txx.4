@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk48txx.4,v 1.5 2002/01/21 18:48:31 kleink Exp $
+.\"	$NetBSD: mk48txx.4,v 1.6 2002/02/07 03:15:08 ross Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,7 @@ To tie in instance of this device to the system, use
 .Fn mk48txx_attach "bus_space_tag_t bus_tag" "bus_space_handle_t bus_handle" \
 "const char *model" "int year0"
 .Pp
-.Bl -tag -width -offset xxxxx
+.Bl -tag -width Dv -offset indent
 .It Fa bus_tag
 .It Fa bus_handle
 Specify bus space access to the chip's non-volatile memory
@@ -91,7 +91,7 @@ to zero.
 .Sh HARDWARE
 The following models are supported:
 .Pp
-.Bl -tag -width -offset indent -compact
+.Bl -tag -width indent -offset indent -compact
 .It Tn Mostek MK48T02
 .It Tn Mostek MK48T08
 .It Tn Mostek MK48T18
