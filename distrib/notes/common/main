@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.68 2000/07/28 22:26:50 federico Exp $
+.\" $NetBSD: main,v 1.69 2000/07/29 04:02:18 wdk Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -912,6 +912,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Lawrence Kesteloot Ta Mt kesteloo@cs.unc.edu
 .It Ta Thomas Klausner Ta Mt wiz@NetBSD.ORG
 .It Ta Klaus Klein Ta Mt kleink@NetBSD.ORG
+.It Ta Wayne Knowles Ta Mt wdk@NetBSD.ORG
 .It Ta John Kohl Ta Mt jtk@NetBSD.ORG
 .It Ta Kevin Lahey Ta Mt kml@NetBSD.ORG
 .It Ta Johnny C. Lam Ta Mt jlam@NetBSD.ORG
