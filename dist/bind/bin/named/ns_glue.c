@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_glue.c,v 1.5 2002/06/20 11:42:57 itojun Exp $	*/
+/*	$NetBSD: ns_glue.c,v 1.6 2002/06/20 12:01:49 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: ns_glue.c,v 8.24 2002/01/07 02:54:37 marka Exp";
@@ -190,7 +190,6 @@ ns_assertion_failed(const char *file, int line, assertion_type type,
 		(print_errno) ? strerror(errno) : "");
 }
 
-#if 1
 /*
  * XXX This is for compatibility and should eventually be removed.
  */
@@ -198,7 +197,6 @@ void
 panic(const char *msg, const void *arg) {
 	ns_panic(ns_log_default, 1, msg, arg);
 }
-#endif
 
 /*
  * How many labels in this name?
