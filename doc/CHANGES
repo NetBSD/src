@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.408 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.409 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -174,7 +174,9 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	shark: Switch to wscons. [tsutsui 20050109]
 	/rescue: Add: cgdconfig chroot less more scp slogin ssh vi
 		[lukem 20050110]
-	audio(9): Add capability of audio software filter pipeline.
-		[kent 20050111]
+	audio(9): Add capability of audio software filter pipeline.  The
+		feature makes it easy for hadware drivers to add encoding
+		support or sample rates support, and does not lead user-
+		visible changes at this moment.  [kent 20050111]
 	auixp(4): Add driver for the audio part of the ATI IXP series of
 		chipsets. [reinoud 20050112]
