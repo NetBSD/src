@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.24 1997/12/04 11:27:56 jonathan Exp $	*/
+/*	$NetBSD: defs.h,v 1.25 1997/12/05 14:00:59 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -83,6 +83,7 @@ EXTERN char rel[SSTRSIZE] INIT(REL);
 EXTERN char machine[SSTRSIZE] INIT(MACH);
 
 EXTERN int yesno;
+EXTERN int ignorerror;
 EXTERN int layoutkind;
 EXTERN int sizemult INIT(1);
 EXTERN char *multname; 
@@ -222,7 +223,9 @@ int	fsck_disks __P((void));
 
 /* from label.c */
 
-void	emptylabel(partinfo *lp);
+void	emptylabel __P((partinfo *lp));
+int	savenewlabel __P((partinfo *lp, int nparts));
+int	incorelabel __P((const char *dkname, partinfo *lp));
 int	edit_and_check_label __P((partinfo *lp, int nparts,
 				  int rawpart, int bsdpart));
 
@@ -249,8 +252,12 @@ int	run_prog_or_continue __P((char *, ...));
 
 /* from upgrade.c */
 void	do_upgrade __P((void));
+void	do_reinstall_sets __P((void));
 
 /* from util.c */
+int	dir_exists_p(const char *path);
+int	file_exists_p(const char *path);
+int	distribution_sets_exist_p __P((const char *path));
 void	get_ramsize __P((void));
 void	ask_sizemult __P((void));
 void	reask_sizemult __P((void));
@@ -259,13 +266,12 @@ void	run_makedev __P((void));
 int	get_via_floppy __P((void));
 int	get_via_cdrom __P((void));
 int	get_via_localfs __P((void));
+int	get_via_localdir __P((void));
 void	cd_dist_dir __P((char *));
 void	toggle_getit __P((int));
 void	show_cur_distsets __P((void));
 void	make_ramdisk_dir __P((const char *path));
 void	ask_verbose_dist __P((void));
-void	extract_file __P((char *path));
-void	extract_dist __P((void));
 void 	get_and_unpack_sets(int success_msg, int failure_msg);
 int	sanity_check __P((void));
 
@@ -288,7 +294,7 @@ void	mv_within_target_or_die __P((const char *from, const char *to));
 int	cp_within_target __P((const char *frompath, const char *topath));
 int	target_mount __P((const char *fstype, const char *from, const char* on));
 int	target_test __P((const char*, const char*));
-int	target_verify_dir __P((const char *path));
-int	target_verify_file __P((const char *path));
+int	target_dir_exists_p __P((const char *path));
+int	target_file_exists_p __P((const char *path));
 void	unwind_mounts __P((void));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.23 1997/11/25 06:53:11 thorpej Exp $	*/
+/*	$NetBSD: net.c,v 1.24 1997/12/05 14:01:07 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -313,13 +313,28 @@ get_via_nfs(void)
 
 	/* Get server and filepath */
 	process_menu (MENU_nfssource);
+again:
 
+	run_prog("/sbin/umount /mnt2  2> /dev/null");
+	
 	/* Mount it */
-	while(run_prog("/sbin/mount -t nfs %s:%s /mnt2", nfs_host, nfs_dir)) {
+	if (run_prog("/sbin/mount -t nfs %s:%s /mnt2", nfs_host, nfs_dir)) {
+		msg_display (MSG_nfsbadmount, nfs_host, nfs_dir);
 		process_menu (MENU_nfsbadmount);
 		if (!yesno)
 			return 0;
-		/* verify distribution files are there. XXX */
+		if (!ignorerror)
+			goto again;
+	}
+
+	/* Verify distribution files exist.  */
+	if (distribution_sets_exist_p("/mnt2") == 0) {
+		msg_display(MSG_badsetdir, "/mnt2");
+		process_menu (MENU_nfsbadmount);
+		if (!yesno)
+			return (0);
+		if (!ignorerror)
+			goto again;
 	}
 
 	/* return location, don't clean... */

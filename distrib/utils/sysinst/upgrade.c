@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.11 1997/11/09 12:47:10 jonathan Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.12 1997/12/05 14:01:10 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -109,7 +109,7 @@ void do_upgrade(void)
 int save_etc(void)
 {
 
-	if (target_verify_file("/etc.old") == 0) {
+	if (target_dir_exists_p("/etc.old")) {
 		msg_display(MSG_etc_oldexists);
 		process_menu (MENU_ok);
 		return EEXIST;
@@ -167,4 +167,40 @@ int merge_etc(void)
 	cp_within_target("/etc.old/fstab", "/etc/");
 
 	return 0;	
+}
+
+
+
+/*
+ * Unpacks sets,  clobbering existintg contents.
+ */
+void
+do_reinstall_sets(void)
+{
+
+	unwind_mounts();
+	msg_display (MSG_reinstallusure);
+	process_menu (MENU_noyes);
+	if (!yesno)
+		return;
+
+
+	if (find_disks () < 0)
+		return;
+
+	/* if we need the user to mount root, ask them to. */
+	if (must_mount_root()) {
+		msg_display(MSG_pleasemountroot, diskdev, diskdev, diskdev);
+		process_menu (MENU_ok);
+		return;
+	}
+
+	if (!fsck_disks())
+		return;
+
+	/* Unpack the distribution. */
+	get_and_unpack_sets(MSG_unpackcomplete, MSG_abortunpack);
+
+	sanity_check();
+
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.21 1997/11/25 06:53:13 thorpej Exp $	*/
+/*	$NetBSD: util.c,v 1.22 1997/12/05 14:01:12 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,7 +54,48 @@
 /*
  * local prototypes 
  */
+struct  tarstats{
+	int nselected;
+	int nfound;
+	int nnotfound;
+	int nerror;
+	int nsuccess;
+} tarstats;
+
+void	extract_file __P((char *path));
+int	extract_dist __P((void));
+int	distribution_sets_exist_p __P((const char *path));
 static int check_for __P((const char *type, const char *pathname));
+
+
+int dir_exists_p(const char *path)
+{
+	register int result;
+	result = (run_prog("test -d %s", path) == 0);
+	return (result);
+}
+
+int file_exists_p(const char *path)
+{
+	register int result;
+	result = (run_prog("test -f %s", path) == 0);
+	return (result);
+}
+
+int distribution_sets_exist_p (const char *path)
+{
+	char buf[STRSIZE];
+	int result;
+
+	result = 1;
+	snprintf(buf, STRSIZE, "%s/%s", path, "kern.tgz");
+	result = result && file_exists_p(buf);
+
+	snprintf(buf, STRSIZE, "%s/%s", path, "etc.tgz");
+	result = result && file_exists_p(buf);
+
+	return(result);
+}
 
 
 void get_ramsize(void)
@@ -113,13 +154,20 @@ ask_ynquestion (char *quest, char def, ...)
 
 void run_makedev (void)
 {
+	char *owd;
+
 	msg_display (MSG_makedev);
 	sleep (1);
+
+	owd = getcwd (NULL,0);
 
 	/* make /dev, in case the user  didn't extract it. */
 	make_target_dir("/dev");
 	target_chdir_or_die("/dev");
 	run_prog ("/bin/sh MAKEDEV all");
+
+	chdir(owd);
+	free(owd);
 }
 
 
@@ -191,7 +239,9 @@ int get_via_floppy (void)
 int
 get_via_cdrom(void)
 {
-	/* Get server and filepath */
+	char tmpdir[STRSIZE];
+
+	/* Get CD-rom device name and path within CD-rom */
 	process_menu (MENU_cdromsource);
 
 	/* Fill in final default path. */
@@ -199,44 +249,127 @@ get_via_cdrom(void)
 	strcat  (cdrom_dir, "/");
 	strncat (cdrom_dir, machine, STRSIZE-strlen(cdrom_dir));
 
+again:
+	run_prog("/sbin/umount /mnt2  2> /dev/null");
+
 	/* Mount it */
-	while (run_prog ("/sbin/mount -rt cd9660 /dev/%sa /mnt2", cdrom_dev)) {
+	if (run_prog ("/sbin/mount -rt cd9660 /dev/%sa /mnt2", cdrom_dev)) {
+		msg_display(MSG_badsetdir, cdrom_dev);
 		process_menu (MENU_cdrombadmount);
 		if (!yesno)
 			return 0;
-		/* Verify distribution files exist.  XXX */
+		if (!ignorerror)
+			goto again;
 	}
 
+	snprintf(tmpdir, STRSIZE, "%s/%s", "/mnt2", cdrom_dir);
+
+	/* Verify distribution files exist.  */
+	if (distribution_sets_exist_p(tmpdir) == 0) {
+		msg_display(MSG_badsetdir, tmpdir);
+		process_menu (MENU_cdrombadmount);
+		if (!yesno)
+			return (0);
+		if (!ignorerror)
+			goto again;
+	}
+
+
 	/* return location, don't clean... */
-	strcpy (ext_dir, "/mnt2");
-	strncat (ext_dir, cdrom_dir, STRSIZE-strlen(ext_dir)-1);
+	strncpy(ext_dir, tmpdir, STRSIZE);
 	clean_dist_dir = 0;
 	mnt2_mounted = 1;
 	return 1;
 }
 
-int
-get_via_localfs(void)
+
+/*
+ * Get from a pathname inside an unmounted local filesystem
+ * (e.g., where sets were preloaded onto a local DOS partition) 
+ */
+int get_via_localfs(void)
 {
+	char tmpdir[STRSIZE];
+
 	/* Get device, filesystem, and filepath */
 	process_menu (MENU_localfssource);
 
+again:
+
+	run_prog("/sbin/umount /mnt2  2> /dev/null");
+
 	/* Mount it */
-	while (run_prog ("/sbin/mount -rt %s /dev/%s /mnt2", localfs_fs,
+	if (run_prog ("/sbin/mount -rt %s /dev/%s /mnt2", localfs_fs,
 	    localfs_dev)) {
+
+		msg_display (MSG_localfsbadmount, localfs_dir, localfs_dev); 
 		process_menu (MENU_localfsbadmount);
 		if (!yesno)
 			return 0;
-		/* Verify distribution files exist.  XXX */
+		if (!ignorerror)
+		goto again;
+	}
+
+	snprintf(tmpdir, STRSIZE, "%s/%s", "/mnt2", localfs_dir);
+
+	/* Verify distribution files exist.  */
+	if (distribution_sets_exist_p(tmpdir) == 0) {
+		msg_display(MSG_badsetdir, tmpdir);
+		process_menu (MENU_localfsbadmount);
+		if (!yesno)
+			return 0;
+		if (!ignorerror)
+			goto again;
 	}
 
 	/* return location, don't clean... */
-	strcpy (ext_dir, "/mnt2");
-	strncat (ext_dir, localfs_dir, STRSIZE-strlen(ext_dir)-1);
+	strncpy(ext_dir, tmpdir, STRSIZE);
 	clean_dist_dir = 0;
 	mnt2_mounted = 1;
 	return 1;
 }
+
+
+
+/* Get from an already-mounted  pathname. */
+
+int get_via_localdir(void)
+{
+
+
+	/* Get device, filesystem, and filepath */
+	process_menu (MENU_localdirsource);
+
+again:
+	/* Complain if not a directory */
+	if (dir_exists_p(localfs_dir) == 0) {
+
+		msg_display (MSG_badlocalsetdir, localfs_dir);
+		process_menu (MENU_localdirbad);
+		if (!yesno)
+			return (0);
+		if (!ignorerror)
+			goto again;
+	}
+	
+	/* Verify distribution files exist.  */
+	if (distribution_sets_exist_p(localfs_dir) == 0) {
+		msg_display(MSG_badsetdir, localfs_dir);
+		process_menu (MENU_localdirbad);
+		if (!yesno)
+			return (0);
+		if (!ignorerror)
+			goto again;
+	}
+
+
+	/* return location, don't clean... */
+	strncpy (ext_dir, localfs_dir, STRSIZE);
+	clean_dist_dir = 0;
+	mnt2_mounted = 0;
+	return 1;
+}
+
 
 void cd_dist_dir (char *forwhat)
 {
@@ -300,6 +433,14 @@ extract_file (char *path)
 	
 	owd = getcwd (NULL,0);
 
+	/* check tarfile exists */
+	if (!file_exists_p(path)) {
+		tarstats.nnotfound++;
+		ask_ynquestion(msg_string(MSG_notarfile), 0, path);
+		return;
+	}
+
+	tarstats.nfound++;	
 	/* cd to the target root. */
 	target_chdir_or_die("/");	
 
@@ -307,10 +448,17 @@ extract_file (char *path)
 	(void)printf (msg_string(MSG_extracting), path);
 	tarexit = run_prog ("/usr/bin/tar --unlink -xpz%s -f %s",
 			    verbose ? "v":"", path);
-	/* Check tarexit for errors and give warning. */
-	if (tarexit)
-		ask_ynquestion (msg_string(MSG_tarerror), 0, path);
 
+	/* Check tarexit for errors and give warning. */
+	if (tarexit) {
+		tarstats.nerror++;
+		ask_ynquestion (msg_string(MSG_tarerror), 0, path);
+		sleep(3);
+	} else {
+		tarstats.nsuccess++;
+		sleep(1);
+	}
+	
 	chdir (owd);
 	free (owd);
 }
@@ -321,17 +469,21 @@ extract_file (char *path)
  * full path name to the directory. 
  */
 
-void
+int
 extract_dist (void)
 {
 	char distname[STRSIZE];
 	char fname[STRSIZE];
 	distinfo *list;
 
+	/* reset failure/success counters */
+	bzero(&tarstats, sizeof(tarstats));
+
 	endwin();
 	list = dist_list;
 	while (list->name) {
 		if (list->getit) {
+			tarstats.nselected++;
 			(void)snprintf (distname, STRSIZE, "%s%s", list->name,
 					dist_postfix);
 			(void)snprintf (fname, STRSIZE, "%s/%s", ext_dir,
@@ -340,8 +492,22 @@ extract_dist (void)
 		}
 		list++;
 	}
+
 	puts(CL);
 	wrefresh(stdscr);
+
+	if (tarstats.nerror == 0 && tarstats.nsuccess == tarstats.nselected) {
+		msg_display (MSG_endtarok);
+		process_menu (MENU_ok);
+		return 0;
+	} else {
+		/* We encountered  errors. Let the user know. */
+		msg_display(MSG_endtar,
+		    tarstats.nselected, tarstats.nnotfound,
+		    tarstats.nfound, tarstats.nsuccess, tarstats.nerror);
+		process_menu (MENU_ok);
+		return 1;
+	}
 }
 
 
@@ -362,11 +528,15 @@ void get_and_unpack_sets(int success_msg, int failure_msg)
 		return;
 
 
-	ask_verbose_dist ();
-
 	if (got_dist) {
-		/* Extract the distribution */
-		extract_dist ();
+
+		/* ask user  whether to do normal or verbose extraction */
+		ask_verbose_dist ();
+
+		/* Extract the distribution, abort on errors. */
+		if (extract_dist ()) {
+			goto bad;
+		}
 
 		/* Configure the system */
 		run_makedev ();
@@ -385,11 +555,16 @@ void get_and_unpack_sets(int success_msg, int failure_msg)
 		/* Install/Upgrade  complete ... reboot or exit to script */
 		msg_display (success_msg);
 		process_menu (MENU_ok);
-	} else {
+		return;
+	}
+
+bad:
 		msg_display (failure_msg);
 		process_menu (MENU_ok);
-	}
+
 }
+
+
 
 /*
  * Do a quick sanity check that  the target can reboot.
