@@ -1,4 +1,4 @@
-.\"	$NetBSD: expr.1,v 1.25 2003/12/21 11:18:25 wiz Exp $
+.\"	$NetBSD: expr.1,v 1.26 2004/04/20 19:44:51 jdolecek Exp $
 .\"
 .\" Copyright (c) 2000,2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -101,14 +101,22 @@ otherwise the matching operator returns the number of characters matched.
 If the match fails and the pattern contains a regular expression subexpression
 the null string is returned;
 otherwise 0.
-.It Ar "( " expr Li " )"
+.It "( " Ar expr Li " )"
 Parentheses are used for grouping in the usual manner.
+.El
+.Pp
+Additionally, following keywords are recognized:
+.Bl -tag -width indent
+.It length Ar expr 
+Returns length of specified string in bytes.
 .El
 .Pp
 Operator precedence (from highest to lowest):
 .Bl -enum -compact -offset indent
 .It
 parentheses
+.It
+length
 .It
 .Dq \&:
 .It
@@ -163,6 +171,10 @@ The
 .Nm
 utility conforms to
 .St -p1003.2 .
+The
+.Ar length
+keyword is an extension for compatibility with GNU
+.Nm .
 .Sh AUTHORS
 Original implementation was written by
 .An J.T. Conklin
