@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2004/02/20 20:58:24 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2004/02/21 15:56:03 skrll Exp $
 
 SRCS+=		rtld_start.S mips_reloc.c
 
@@ -8,4 +8,4 @@ CPPFLAGS+=	-mabicalls -G0 -fPIC
 CPPFLAGS+=	-DELFSIZE=32
 CPPFLAGS+=	-DRTLD_INHIBIT_COPY_RELOCS
 
-LDFLAGS+=	-Bshareable -Bsymbolic -e .rtld_start
+LDFLAGS+=	-e .rtld_start

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2004/02/20 20:58:24 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2004/02/21 15:56:03 skrll Exp $
 
 SRCS+=		rtld_start.S ppc_reloc.c
 
@@ -7,5 +7,5 @@ CPPFLAGS+=	-fpic -msoft-float
 
 CPPFLAGS+=	-DELFSIZE=32
 
-LDFLAGS+=	-Bshareable -Bsymbolic -e .rtld_start
+LDFLAGS+=	-e .rtld_start
 LDFLAGS+=	--script ${.CURDIR}/arch/powerpc/ld.so.script
