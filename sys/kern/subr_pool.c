@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.77 2002/07/11 17:18:48 matt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.78 2002/07/30 01:41:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.77 2002/07/11 17:18:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.78 2002/07/30 01:41:00 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -415,7 +415,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	if (size < sizeof(struct pool_item))
 		size = sizeof(struct pool_item);
 
-	size = ALIGN(size);
+	size = roundup(size, align);
 #ifdef DIAGNOSTIC
 	if (size > palloc->pa_pagesz)
 		panic("pool_init: pool item size (%lu) too large",
@@ -1124,6 +1124,8 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 
 	while (n--) {
 		pi = (struct pool_item *)cp;
+
+		KASSERT(((((vaddr_t)pi) + ioff) & (align - 1)) == 0);
 
 		/* Insert on page list */
 		TAILQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);
