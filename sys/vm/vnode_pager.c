@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.38 1998/07/07 23:22:14 thorpej Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.39 1998/07/12 17:14:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -139,6 +139,8 @@ vnode_pager_alloc(handle, size, prot, foff)
 	struct partinfo pi;
 	u_quad_t used_vnode_size;
 	struct proc *p = curproc;	/* XXX */
+
+	used_vnode_size = 0;		/* XXX gcc -Wuninitialized */
 
 #ifdef DEBUG
 	if (vpagerdebug & (VDB_FOLLOW|VDB_ALLOC))
