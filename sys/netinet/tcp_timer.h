@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.17 2001/11/04 13:42:28 matt Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.18 2003/02/03 23:51:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ char *tcptimers[] =
 	callout_stop(&(tp)->t_timer[(timer)])
 
 #define	TCP_TIMER_ISARMED(tp, timer)					\
-	callout_active(&(tp)->t_timer[(timer)])
+	callout_pending(&(tp)->t_timer[(timer)])
 
 /*
  * Force a time value to be in a certain range.
