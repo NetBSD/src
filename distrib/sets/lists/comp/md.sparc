@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.62 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.sparc,v 1.63 2004/07/08 10:04:45 hannken Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -95,6 +95,7 @@
 ./usr/include/sparc64/int_limits.h		comp-c-include
 ./usr/include/sparc64/int_mwgwtypes.h		comp-c-include
 ./usr/include/sparc64/int_types.h		comp-c-include
+./usr/include/sparc64/joystick.h		comp-c-include
 ./usr/include/sparc64/kbd.h			comp-c-include
 ./usr/include/sparc64/kbio.h			comp-c-include
 ./usr/include/sparc64/kcore.h			comp-c-include
