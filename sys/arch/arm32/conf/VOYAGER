@@ -1,4 +1,4 @@
-#	$NetBSD: VOYAGER,v 1.48 2000/03/06 03:16:26 mark Exp $
+#	$NetBSD: VOYAGER,v 1.48.4.1 2001/12/27 12:22:54 he Exp $
 #
 #	VOYAGER - Mark's development kernel
 #
@@ -215,8 +215,8 @@ scsibus* at cosc?
 ptsc*	at podulebus?			# Power-Tec SCSI II card
 scsibus* at ptsc?
 
-csc*	at podulebus?			# Cumana SCSI II card
-scsibus* at csc?
+#csc*	at podulebus?			# Cumana SCSI II card
+#scsibus* at csc?			# Not currently working
 
 oak*	at podulebus?			# Oak SCSI I card
 scsibus* at oak?
