@@ -1,4 +1,4 @@
-/*	$NetBSD: loop-bsd.c,v 1.5 1999/01/11 22:40:01 kleink Exp $	*/
+/*	$NetBSD: loop-bsd.c,v 1.6 2002/09/20 14:16:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: loop-bsd.c,v 1.5 1999/01/11 22:40:01 kleink Exp $");
+__RCSID("$NetBSD: loop-bsd.c,v 1.6 2002/09/20 14:16:03 mycroft Exp $");
 #endif
 
 #include <errno.h>
@@ -43,6 +43,8 @@ __RCSID("$NetBSD: loop-bsd.c,v 1.5 1999/01/11 22:40:01 kleink Exp $");
 #endif
 #include <net/bpf.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
+#include <assert.h>
 
 #include "os.h"
 #include "common.h"
@@ -105,10 +107,10 @@ void
 Loop()
 {
 	u_char *buf, *bp, *ep;
-	int     cc;
-	fd_set  fds, listeners;
-	int     bufsize, maxfd = 0;
-	struct if_info *ii;
+	int     cc, n, m;
+	struct	pollfd *set;
+	int     bufsize;
+	struct	if_info *ii;
 
 	if (iflist == 0) {
 		syslog(LOG_ERR, "no interfaces");
@@ -129,26 +131,22 @@ Loop()
          * Find the highest numbered file descriptor for select().
          * Initialize the set of descriptors to listen to.
          */
-	FD_ZERO(&fds);
-	for (ii = iflist; ii; ii = ii->next) {
-		if (ii->fd != -1) {
-			FD_SET(ii->fd, &fds);
-			if (ii->fd > maxfd)
-				maxfd = ii->fd;
-	        }
+	for (ii = iflist, n = 0; ii; ii = ii->next, n++)
+		;
+	set = malloc(n * sizeof(*set));
+	for (ii = iflist, m = 0; ii; ii = ii->next, m++) {
+		assert(ii->fd != -1);
+		set[m].fd = ii->fd;
+		set[m].events = POLLIN;
 	}
-	while (1) {
-		listeners = fds;
-		if (select(maxfd + 1, &listeners, (struct fd_set *) 0,
-			(struct fd_set *) 0, (struct timeval *) 0) < 0) {
-			syslog(LOG_ERR, "select: %m");
+	for (;;) {
+		if (poll(set, n, INFTIM) < 0) {
+			syslog(LOG_ERR, "poll: %m");
 			exit(0);
 		}
-		for (ii = iflist; ii; ii = ii->next) {
-			if (ii->fd != -1) {
-				if (!FD_ISSET(ii->fd, &listeners))
-					continue;
-			}
+		for (ii = iflist, m = 0; ii; ii = ii->next, m++) {
+			if (!(set[m].revents & POLLIN))
+				continue;
 	again:
 			cc = read(ii->fd, (char *) buf, bufsize);
 			/* Don't choke when we get ptraced */
