@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.h,v 1.4 2003/05/13 20:48:16 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.h,v 1.5 2003/05/14 14:41:05 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,5 +43,9 @@ extern struct mach_iokit_devclass darwin_ioframebuffer_devclass;
 
 int 
 darwin_ioframebuffer_connect_method_scalari_scalaro(struct mach_trap_args *);
+int 
+darwin_ioframebuffer_connect_method_scalari_structo(struct mach_trap_args *);
+int
+darwin_ioframebuffer_connect_method_structi_structo(struct mach_trap_args *);
 
 #endif /* _DARWIN_IOFRAMEBUFFER_H_ */

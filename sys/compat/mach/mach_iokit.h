@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.12 2003/05/13 20:48:16 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.13 2003/05/14 14:41:04 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ typedef struct {
 	mach_ndr_record_t rep_ndr;
 	mach_kern_return_t rep_retval;
 	mach_msg_type_number_t rep_outcount;
-	int rep_out[4096];
+	int rep_out[16];
 	mach_msg_trailer_t rep_trailer;
 } mach_io_connect_method_scalari_scalaro_reply_t;
 
@@ -373,6 +373,65 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_io_iterator_reset_reply_t;
 
+/* io_connect_set_properties */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_ool_descriptor_t req_properties;
+	mach_ndr_record_t req_ndr;
+	mach_msg_type_number_t req_count;
+} mach_io_connect_set_properties_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_natural_t rep_result;
+	mach_msg_trailer_t rep_trailer;
+} mach_io_connect_set_properties_reply_t;
+
+/* io_connect_method_scalari_structo */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	int req_selector;
+	mach_msg_type_number_t req_incount;
+	int req_in[16];
+	mach_msg_type_number_t req_outcount;
+} mach_io_connect_method_scalari_structo_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_type_number_t rep_outcount;
+	char rep_out[4096];
+	mach_msg_trailer_t rep_trailer;
+} mach_io_connect_method_scalari_structo_reply_t;
+
+/* io_connect_method_structi_structo */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	int req_selector;
+	mach_msg_type_number_t req_incount;
+	int req_in[4096];
+	mach_msg_type_number_t req_outcount;
+	
+} mach_io_connect_method_structi_structo_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_type_number_t rep_outcount;
+	char rep_out[4096];
+	mach_msg_trailer_t rep_trailer;
+} mach_io_connect_method_structi_structo_reply_t;
+
 int mach_io_service_get_matching_services(struct mach_trap_args *);
 int mach_io_iterator_next(struct mach_trap_args *);
 int mach_io_service_open(struct mach_trap_args *);
@@ -392,6 +451,9 @@ int mach_io_registry_entry_get_properties(struct mach_trap_args *);
 int mach_io_registry_entry_get_path(struct mach_trap_args *);
 int mach_io_connect_map_memory(struct mach_trap_args *);
 int mach_io_iterator_reset(struct mach_trap_args *);
+int mach_io_connect_set_properties(struct mach_trap_args *);
+int mach_io_connect_method_scalari_structo(struct mach_trap_args *);
+int mach_io_connect_method_structi_structo(struct mach_trap_args *);
 
 extern struct mach_iokit_devclass *mach_iokit_devclasses[];
 
@@ -410,6 +472,8 @@ struct mach_iokit_devclass {
 	char *mid_properties;
 	struct mach_iokit_property *mid_properties_array;
 	int (*mid_connect_method_scalari_scalaro)(struct mach_trap_args *);
+	int (*mid_connect_method_scalari_structo)(struct mach_trap_args *);
+	int (*mid_connect_method_structi_structo)(struct mach_trap_args *);
 	int (*mid_connect_map_memory)(struct mach_trap_args *);
 	char *mid_name;
 };
