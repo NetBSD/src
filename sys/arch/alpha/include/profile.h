@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.7 1996/11/13 22:21:01 cgd Exp $	*/
+/*	$NetBSD: profile.h,v 1.8 1996/12/19 09:13:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -129,7 +129,7 @@ LX99:	SETGP(pv)
 	END(_mcount)
 #endif /* 0 */
 
-#define MCOUNT asm("		\
+#define MCOUNT __asm ("		\
 	.globl	_mcount;	\
 	.ent	_mcount 0;	\
 _mcount:;			\
