@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.79 1994/01/14 02:58:37 mycroft Exp $
+ *	$Id: machdep.c,v 1.80 1994/01/16 03:08:58 cgd Exp $
  */
 
 #include <stddef.h>
@@ -1141,13 +1141,16 @@ cpu_exec_aout_makecmds(p, epp)
 	int error;
 	u_long midmag, magic;
 	u_short mid;
+	struct exec *execp = epp->ep_hdr;
 
-	midmag = ntohl(epp->ep_execp->a_midmag);
+	/* check on validity of epp->ep_hdr performed by exec_out_makecmds */
+
+	midmag = ntohl(execp->a_midmag);
 	mid = (midmag >> 16) & 0xffff;
 	magic = midmag & 0xffff;
 
 	if (magic == 0) {
-		magic = (epp->ep_execp->a_midmag & 0xffff);
+		magic = (execp->a_midmag & 0xffff);
 		mid = MID_ZERO;
 	}
 
@@ -1193,7 +1196,7 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct exec *execp = epp->ep_execp;
+	struct exec *execp = epp->ep_hdr;
 	struct exec_vmcmd *ccmdp;
 
 	epp->ep_taddr = 0;
