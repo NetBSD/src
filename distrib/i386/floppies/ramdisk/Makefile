@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2000/06/07 19:41:47 thorpej Exp $
+#	$NetBSD: Makefile,v 1.28 2000/06/07 22:15:31 marc Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -40,7 +40,9 @@ upgrade.sh: upgrade.tmpl
 start.sh: start.tmpl
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
 
-realall: ${AUXTARGETS} ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
+realall: ${IMAGE}
+
+${IMAGE}: ${AUXTARGETS} ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
 	dd if=/dev/zero of=${IMAGE} count=${RAMDISKSIZE}
 	vnconfig -v -c ${VND_CDEV} ${IMAGE} 512/${RAMDISKSPC}/1/${RAMDISKCYLS}
 	-disklabel ${VND_CDEV} >tmplabel
