@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.15 1996/12/29 13:32:46 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.16 1996/12/29 17:01:58 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -90,6 +90,7 @@ int epioctl __P((struct ifnet *, u_long, caddr_t));
 void epstart __P((struct ifnet *));
 void epwatchdog __P((struct ifnet *));
 void epreset __P((struct ep_softc *));
+static void epshutdown __P((void *));
 void epread __P((struct ep_softc *));
 struct mbuf *epget __P((struct ep_softc *, int));
 void epmbuffill __P((void *));
@@ -180,7 +181,7 @@ epconfig(sc, conn)
 		sc->sc_arpcom.ac_enaddr[(i << 1) + 1] = x;
 	}
 
-	printf("%s: , address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: MAC address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*
@@ -207,7 +208,9 @@ epconfig(sc, conn)
 
 	case (EP_LARGEWIN_PROBE << 2):
 		sc->ep_pktlenshift = 2;
-		ep_vortex_internalconfig(sc);
+		/* XXX do 3c579, 3c515 support Vortex-style RESET_OPTIONS? */
+		if (sc->bustype == EP_BUS_PCI)
+			ep_vortex_internalconfig(sc);
 		break;
 
 	default:
@@ -241,6 +244,9 @@ epconfig(sc, conn)
 #endif
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
+
+	/*  Establish callback to reset card when we reboot. */
+	shutdownhook_establish(epshutdown, sc);
 
 #if 0
 	/* XXX */
@@ -1204,6 +1210,28 @@ epstop(sc)
 
 	epmbufempty(sc);
 }
+
+
+/*
+ * Before reboots, reset card completely.
+ */
+static void
+epshutdown(arg)
+	void *arg;
+{
+	register struct ep_softc *sc = arg;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+
+	epstop(sc);
+	bus_space_write_2(iot, ioh, EP_COMMAND, GLOBAL_RESET);
+	/*
+	 * should loop waiting for CMD_COMPLETE but some earlier cards
+	 * may not support that properly.
+	 */
+	DELAY(20000);	/* need at least 1 ms, but be generous. */
+}
+
 
 /*
  * We get eeprom data from the id_port given an offset into the
