@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.1.2.2 1997/08/24 15:25:41 thorpej Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.1.2.3 1997/09/29 21:17:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,6 +45,11 @@ struct smc91cxx_softc {
 	bus_space_handle_t sc_bsh;
 
 	struct	ifmedia sc_media;	/* our media info */
+
+	/* Power management hooks and state. */
+	int	(*sc_enable) __P((struct smc91cxx_softc *));
+	void	(*sc_disable) __P((struct smc91cxx_softc *));
+	int	sc_enabled;
 };
 
 #define	SMC_SELECT_BANK(sc, x)						\
