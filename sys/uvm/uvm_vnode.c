@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.26.2.7 2001/03/12 13:32:15 bouyer Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.26.2.8 2001/03/23 11:38:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -612,30 +612,6 @@ uvn_flush(uobj, start, stop, flags)
 		 * on error uvm_pager_put drops the cluster for us.
 		 * on success uvm_pager_put returns the cluster to us in
 		 * ppsp/npages.
-		 */
-
-		if (result == VM_PAGER_AGAIN) {
-
-			/*
-			 * it is unlikely, but page could have been released
-			 * while we had the object lock dropped.   we ignore
-			 * this now and retry the I/O.  we will detect and
-			 * handle the released page after the syncio I/O
-			 * completes.
-			 */
-#ifdef DIAGNOSTIC
-			if (flags & PGO_SYNCIO)
-	panic("uvn_flush: PGO_SYNCIO return 'try again' error (impossible)");
-#endif
-			flags |= PGO_SYNCIO;
-			goto ReTry;
-		}
-
-		/*
-		 * the cleaning operation is now done.   finish up.  note that
-		 * on error (!OK, !PEND) uvm_pager_put drops the cluster for us.
-		 * if success (OK, PEND) then uvm_pager_put returns the cluster
-		 * to us in ppsp/npages.
 		 */
 
 		/*
