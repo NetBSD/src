@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.7 2003/06/26 21:51:59 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.8 2003/07/17 21:14:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.7 2003/06/26 21:51:59 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.8 2003/07/17 21:14:49 nathanw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -178,7 +178,7 @@ td_thr_iter(td_proc_t *proc, int (*call)(td_thread_t *, void *), void *callarg)
 			return 0;
 
 		val = READ(proc, 
-		    next + offsetof(struct pthread_st, pt_allq.ptqe_next), 
+		    next + offsetof(struct __pthread_st, pt_allq.ptqe_next), 
 		    &next, sizeof(next));
 		if (val != 0)
 			return val;
@@ -201,7 +201,7 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 
 	info->thread_addr = thread->addr;
 	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct pthread_st, pt_state), 
+	    thread->addr + offsetof(struct __pthread_st, pt_state), 
 	    &tmp, sizeof(tmp))) != 0)
 		return val;
 	switch (tmp) {
@@ -225,7 +225,7 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	}
 
 	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct pthread_st, pt_type), 
+	    thread->addr + offsetof(struct __pthread_st, pt_type), 
 	    &tmp, sizeof(tmp))) != 0)
 		return val;
 	switch (tmp) {
@@ -241,12 +241,12 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	}
 
 	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct pthread_st, pt_stack),
+	    thread->addr + offsetof(struct __pthread_st, pt_stack),
 	    &info->thread_stack, sizeof(stack_t))) != 0)
 		return val;
 
 	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct pthread_st, pt_joiners),
+	    thread->addr + offsetof(struct __pthread_st, pt_joiners),
 	    &queue, sizeof(queue))) != 0)
 		return val;
 
@@ -256,22 +256,22 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 		info->thread_hasjoiners = 1;
 
 	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct pthread_st, pt_errno),
+	    thread->addr + offsetof(struct __pthread_st, pt_errno),
 	    &info->thread_errno, sizeof(info->thread_errno))) != 0)
 		return val;
 
 	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct pthread_st, pt_num),
+	    thread->addr + offsetof(struct __pthread_st, pt_num),
 	    &info->thread_id, sizeof(info->thread_id))) != 0)
 		return val;
 
 	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct pthread_st, pt_sigmask),
+	    thread->addr + offsetof(struct __pthread_st, pt_sigmask),
 	    &info->thread_sigmask, sizeof(info->thread_sigmask))) != 0)
 		return val;
 
 	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct pthread_st, pt_siglist),
+	    thread->addr + offsetof(struct __pthread_st, pt_siglist),
 	    &info->thread_sigpending, sizeof(info->thread_sigpending))) != 0)
 		return val;
 	
@@ -293,7 +293,7 @@ td_thr_getname(td_thread_t *thread, char *name, int len)
 		return TD_ERR_BADTHREAD;
 
 	if ((val = READ(thread->proc,
-	    thread->addr + offsetof(struct pthread_st, pt_name),
+	    thread->addr + offsetof(struct __pthread_st, pt_name),
 	    &nameaddr, sizeof(nameaddr))) != 0)
 		return val;
 
@@ -314,7 +314,7 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 	ucontext_t uc;
 
 	val = READ(thread->proc, 
-	    thread->addr + offsetof(struct pthread_st, pt_state), 
+	    thread->addr + offsetof(struct __pthread_st, pt_state), 
 	    &tmp, sizeof(tmp));
 	if (val != 0)
 		return val;
@@ -337,13 +337,13 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 		 * of the thread structure.
 		 */
 		val = READ(thread->proc, 
-		    thread->addr + offsetof(struct pthread_st, pt_trapuc),
+		    thread->addr + offsetof(struct __pthread_st, pt_trapuc),
 		    &addr, sizeof(addr));
 		if (val != 0)
 			return val;
 		if (addr == 0) {
 			val = READ(thread->proc, 
-			    thread->addr + offsetof(struct pthread_st, pt_uc),
+			    thread->addr + offsetof(struct __pthread_st, pt_uc),
 			    &addr, sizeof(addr));
 			if (val != 0)
 				return val;
@@ -380,7 +380,7 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 	ucontext_t uc;
 
 	val = READ(thread->proc, 
-	    thread->addr + offsetof(struct pthread_st, pt_state), 
+	    thread->addr + offsetof(struct __pthread_st, pt_state), 
 	    &tmp, sizeof(tmp));
 	if (val != 0)
 		return val;
@@ -406,13 +406,13 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 		 * besides the registers that should be preserved.
 		 */
 		val = READ(thread->proc, 
-		    thread->addr + offsetof(struct pthread_st, pt_trapuc),
+		    thread->addr + offsetof(struct __pthread_st, pt_trapuc),
 		    &addr, sizeof(addr));
 		if (val != 0)
 			return val;
 		if (addr == 0) {
 			val = READ(thread->proc, 
-			    thread->addr + offsetof(struct pthread_st, pt_uc),
+			    thread->addr + offsetof(struct __pthread_st, pt_uc),
 			    &addr, sizeof(addr));
 			if (val != 0)
 				return val;
@@ -459,7 +459,7 @@ td_thr_join_iter(td_thread_t *thread, int (*call)(td_thread_t *, void *),
 	struct pthread_queue_t queue;
 
 	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct pthread_st, pt_joiners),
+	    thread->addr + offsetof(struct __pthread_st, pt_joiners),
 	    &queue, sizeof(queue))) != 0)
 		return val;
 
@@ -473,7 +473,7 @@ td_thr_join_iter(td_thread_t *thread, int (*call)(td_thread_t *, void *),
 			return 0;
 
 		val = READ(thread->proc, 
-		    next + offsetof(struct pthread_st, pt_sleep.ptqe_next), 
+		    next + offsetof(struct __pthread_st, pt_sleep.ptqe_next), 
 		    &next, sizeof(next));
 		if (val != 0)
 			return val;
@@ -500,9 +500,9 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 	switch (magic) {
 	case _PT_MUTEX_MAGIC:
 		info->sync_type = TD_SYNC_MUTEX;
-		info->sync_size = sizeof(struct pthread_mutex_st);
+		info->sync_size = sizeof(struct __pthread_mutex_st);
 		if ((val = READ(s->proc, 
-		    s->addr + offsetof(struct pthread_mutex_st, ptm_blocked),
+		    s->addr + offsetof(struct __pthread_mutex_st, ptm_blocked),
 		    &queue, sizeof(queue))) != 0)
 		return val;
 
@@ -514,13 +514,13 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 		 * from __cpu_simple_lock_t.
 		 */
 		if ((val = READ(s->proc, 
-		    s->addr + offsetof(struct pthread_mutex_st, ptm_lock),
+		    s->addr + offsetof(struct __pthread_mutex_st, ptm_lock),
 		    (void *)&slock, sizeof(slock))) != 0)
 			return val;
 		if (slock == __SIMPLELOCK_LOCKED) {
 			info->sync_data.mutex.locked = 1;
 			if ((val = READ(s->proc, 
-			    s->addr + offsetof(struct pthread_mutex_st, 
+			    s->addr + offsetof(struct __pthread_mutex_st, 
 				ptm_owner),
 			    &taddr, sizeof(taddr))) != 0)
 				return val;
@@ -532,9 +532,9 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 		break;
 	case _PT_COND_MAGIC:
 		info->sync_type = TD_SYNC_COND;
-		info->sync_size = sizeof(struct pthread_cond_st);
+		info->sync_size = sizeof(struct __pthread_cond_st);
 		if ((val = READ(s->proc, 
-		    s->addr + offsetof(struct pthread_cond_st, ptc_waiters),
+		    s->addr + offsetof(struct __pthread_cond_st, ptc_waiters),
 		    &queue, sizeof(queue))) != 0)
 			return val;
 		if (!PTQ_EMPTY(&queue))
@@ -542,9 +542,9 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 		break;
 	case _PT_SPINLOCK_MAGIC:
 		info->sync_type = TD_SYNC_SPIN;
-		info->sync_size = sizeof(struct pthread_spinlock_st);
+		info->sync_size = sizeof(struct __pthread_spinlock_st);
 		if ((val = READ(s->proc, 
-		    s->addr + offsetof(struct pthread_spinlock_st, pts_spin),
+		    s->addr + offsetof(struct __pthread_spinlock_st, pts_spin),
 		    (void *)&slock, sizeof(slock))) != 0)
 			return val;
 		if (slock == __SIMPLELOCK_LOCKED)
@@ -552,11 +552,11 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 		break;
 	case PT_MAGIC:
 		info->sync_type = TD_SYNC_JOIN;
-		info->sync_size = sizeof(struct pthread_st);
+		info->sync_size = sizeof(struct __pthread_st);
 		td__getthread(s->proc, s->addr,
 		    &info->sync_data.join.thread);
 		if ((val = READ(s->proc, 
-		    s->addr + offsetof(struct pthread_st, pt_joiners),
+		    s->addr + offsetof(struct __pthread_st, pt_joiners),
 		    &queue, sizeof(queue))) != 0)
 			return val;
 
@@ -565,16 +565,16 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 		break;
 	case (int)_PT_RWLOCK_MAGIC:
 		info->sync_type = TD_SYNC_RWLOCK;
-		info->sync_size = sizeof(struct pthread_rwlock_st);
+		info->sync_size = sizeof(struct __pthread_rwlock_st);
 		if ((val = READ(s->proc, 
-		    s->addr + offsetof(struct pthread_rwlock_st, ptr_rblocked),
+		    s->addr + offsetof(struct __pthread_rwlock_st, ptr_rblocked),
 		    &queue, sizeof(queue))) != 0)
 			return val;
 		if (!PTQ_EMPTY(&queue))
 			info->sync_haswaiters = 1;
 
 		if ((val = READ(s->proc, 
-		    s->addr + offsetof(struct pthread_rwlock_st, ptr_wblocked),
+		    s->addr + offsetof(struct __pthread_rwlock_st, ptr_wblocked),
 		    &queue, sizeof(queue))) != 0)
 			return val;
 		if (!PTQ_EMPTY(&queue))
@@ -583,7 +583,7 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 
 		info->sync_data.rwlock.locked = 0;
 		if ((val = READ(s->proc, 
-		    s->addr + offsetof(struct pthread_rwlock_st, ptr_nreaders),
+		    s->addr + offsetof(struct __pthread_rwlock_st, ptr_nreaders),
 		    &n, sizeof(n))) != 0)
 			return val;
 		info->sync_data.rwlock.readlocks = n;
@@ -591,7 +591,7 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 			info->sync_data.rwlock.locked = 1;
 	
 		if ((val = READ(s->proc, 
-		    s->addr + offsetof(struct pthread_rwlock_st, ptr_writer),
+		    s->addr + offsetof(struct __pthread_rwlock_st, ptr_writer),
 		    &taddr, sizeof(taddr))) != 0)
 			return val;
 		if (taddr != 0) {
@@ -626,20 +626,20 @@ td_sync_waiters_iter(td_sync_t *s, int (*call)(td_thread_t *, void *),
 	switch (magic) {
 	case _PT_MUTEX_MAGIC:
 		if ((val = READ(s->proc, 
-		    s->addr + offsetof(struct pthread_mutex_st, ptm_blocked),
+		    s->addr + offsetof(struct __pthread_mutex_st, ptm_blocked),
 		    &queue, sizeof(queue))) != 0)
 			return val;
 		break;
 	case _PT_COND_MAGIC:
 		if ((val = READ(s->proc, 
-		    s->addr + offsetof(struct pthread_cond_st, ptc_waiters),
+		    s->addr + offsetof(struct __pthread_cond_st, ptc_waiters),
 		    &queue, sizeof(queue))) != 0)
 			return val;
 		break;
 	case PT_MAGIC:
 		/* Redundant with join_iter, but what the hell... */
 		if ((val = READ(s->proc, 
-		    s->addr + offsetof(struct pthread_st, pt_joiners),
+		    s->addr + offsetof(struct __pthread_st, pt_joiners),
 		    &queue, sizeof(queue))) != 0)
 			return val;
 		break;
@@ -657,7 +657,7 @@ td_sync_waiters_iter(td_sync_t *s, int (*call)(td_thread_t *, void *),
 			return 0;
 
 		val = READ(s->proc, 
-		    next + offsetof(struct pthread_st, pt_sleep.ptqe_next), 
+		    next + offsetof(struct __pthread_st, pt_sleep.ptqe_next), 
 		    &next, sizeof(next));
 		if (val != 0)
 			return val;
@@ -732,14 +732,14 @@ td_map_id2thr(td_proc_t *proc, int threadid, td_thread_t **threadp)
 	next = (void *)allq.ptqh_first;
 	while (next != NULL) {
 		val = READ(proc, 
-		    next + offsetof(struct pthread_st, pt_num), 
+		    next + offsetof(struct __pthread_st, pt_num), 
 		    &num, sizeof(num));
 
 		if (num == threadid)
 			break;
 
 		val = READ(proc, 
-		    next + offsetof(struct pthread_st, pt_allq.ptqe_next), 
+		    next + offsetof(struct __pthread_st, pt_allq.ptqe_next), 
 		    &next, sizeof(next));
 		if (val != 0)
 			return val;
@@ -863,7 +863,7 @@ td_thr_sleepinfo(td_thread_t *thread, td_sync_t **s)
 	caddr_t addr;
 
 	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct pthread_st, pt_sleepobj), 
+	    thread->addr + offsetof(struct __pthread_st, pt_sleepobj), 
 	    &addr, sizeof(addr))) != 0)
 		return val;
 
@@ -936,7 +936,7 @@ td_thr_tsd(td_thread_t *thread, pthread_key_t key, void **value)
 	int val;
 
 	val = READ(thread->proc, thread->addr + 
-	    offsetof(struct pthread_st, pt_specific) +
+	    offsetof(struct __pthread_st, pt_specific) +
 	    key * sizeof(void *), value, sizeof(*value));
 
 	return val;
