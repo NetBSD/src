@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.6 2000/12/28 22:59:08 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7 2001/02/08 13:55:45 tsutsui Exp $	*/
 
 /*
  * Modified for arm32 by Mark Brinicombe
@@ -63,7 +63,7 @@ struct arm32_pci_chipset {
 	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
 	void		*pc_intr_v;
-	int		(*pc_intr_map)(void *, pcitag_t, int, int,
+	int		(*pc_intr_map)(struct pci_attach_args *,
 			    pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
 	const struct evcnt *(*pc_intr_evcnt)(void *, pci_intr_handle_t);
