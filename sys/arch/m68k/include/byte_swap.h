@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.3 2001/04/09 05:35:32 leo Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.4 2001/12/05 04:37:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,17 +39,22 @@
 #ifndef	M68K_BYTE_SWAP_H_
 #define	M68K_BYTE_SWAP_H_
 
-#define __byte_swap_word(var)				\
-        ({ u_int16_t    __var = (var);  		\
-        	__asm__ __volatile ("rorw #8, %0"	\
-					: "=d" (__var)	\
-					: "0" (__var)); \
-            __var; })
+static __inline u_int16_t __byte_swap_word(u_int16_t);
+static __inline u_int32_t __byte_swap_long(u_int32_t);
 
-#define __byte_swap_long(var)    \
-        ({ u_int32_t    __var = (var);					\
-        	__asm__ __volatile ("rorw #8, %0; swap %0; rorw #8, %0"	\
-					: "=d" (__var) : "0" (__var));	\
-            __var; })
+static __inline u_int16_t
+__byte_swap_word(u_int16_t var)
+{
+	__asm__ __volatile ("rorw #8, %0" : "=d" (var) : "0" (var));
+	return (var);
+}
+
+static __inline u_int32_t
+__byte_swap_long(u_int32_t var)
+{
+	__asm__ __volatile (
+		"rorw #8, %0; swap %0; rorw #8, %0" : "=d" (var) : "0" (var));
+	return (var);
+}
 
 #endif /* !M68K_BYTE_SWAP_H_ */
