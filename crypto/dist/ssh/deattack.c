@@ -1,4 +1,5 @@
-/*	$OpenBSD: deattack.c,v 1.12 2001/01/21 19:05:48 markus Exp $	*/
+/*	$NetBSD: deattack.c,v 1.1.1.1.2.4 2001/12/10 23:53:22 he Exp $	*/
+/*	$OpenBSD: deattack.c,v 1.16 2001/12/05 03:56:39 itojun Exp $	*/
 
 /*
  * Cryptographic attack detector for ssh - source code
@@ -45,8 +46,7 @@
 /* Hash function (Input keys are cipher results) */
 #define HASH(x)		GET_32BIT(x)
 
-#define CMP(a,b)	(memcmp(a, b, SSH_BLOCKSIZE))
-
+#define CMP(a, b)	(memcmp(a, b, SSH_BLOCKSIZE))
 
 static void
 crc_update(u_int32_t *a, u_int32_t b)
@@ -87,9 +87,9 @@ detect_attack(u_char *buf, u_int32_t len, u_char *IV)
 {
 	static u_int16_t *h = (u_int16_t *) NULL;
 	static u_int32_t n = HASH_MINSIZE / HASH_ENTRYSIZE;
-	register u_int32_t i, j;
+	u_int32_t i, j;
 	u_int32_t l;
-	register u_char *c;
+	u_char *c;
 	u_char *d;
 
 	if (len > (SSH_MAXBLOCKS * SSH_BLOCKSIZE) ||
