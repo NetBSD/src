@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.7.2.8 1994/01/11 15:15:47 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.7.2.9 1994/02/01 19:28:36 mycroft Exp $
  */
 
 /*
@@ -159,8 +159,7 @@ cpu_exit(p)
 	p->p_addr = (struct user *) &nullpcb;
 
 	splclock();
-	cnt.v_swtch++;
-	cpu_swtch(NULL);
+	swtch();
 	/* NOTREACHED */
 }
 #else
@@ -180,9 +179,8 @@ cpu_exit(p)
 	}
 #endif
 	splclock();
-	cnt.v_swtch++;
-	cpu_swtch(NULL);
-	panic("cpu_exit: cpu_swtch returned");
+	swtch();
+	panic("cpu_exit: swtch returned");
 }
 
 void
