@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.12 2003/11/24 21:44:37 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.13 2003/11/25 19:34:05 rafal Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -251,6 +251,8 @@ ht_remove(struct hashtab *ht, const char *name)
 		if (hp->h_name != name)
 			continue;
 		TAILQ_REMOVE(hpp, hp, h_next);
+
+		memset(hp, 0, sizeof(*hp));
 		TAILQ_INSERT_TAIL(&hefreelist, hp, h_next);
 		ht->ht_used--;
 		return (0);
