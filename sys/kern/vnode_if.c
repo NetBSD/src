@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.c,v 1.33 2001/01/22 09:53:31 jdolecek Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.34 2001/05/07 08:48:07 lukem Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -7,7 +7,7 @@
  * Created from the file:
  *	NetBSD: vnode_if.src,v 1.26 2000/11/27 08:39:45 chs Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.28 2001/01/22 09:52:21 jdolecek Exp 
+ *	NetBSD: vnode_if.sh,v 1.29 2001/05/07 08:46:02 lukem Exp 
  */
 
 /*
@@ -58,7 +58,7 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 
-struct vnodeop_desc vop_default_desc = {
+const struct vnodeop_desc vop_default_desc = {
 	0,
 	"default",
 	0,
