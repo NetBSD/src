@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.56 2000/11/16 13:15:14 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.57 2000/11/28 09:31:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.56 2000/11/16 13:15:14 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.57 2000/11/28 09:31:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,6 @@ char	*fromname;
 %token
 	A	B	C	E	F	I
 	L	N	P	R	S	T
-	ALL
 
 	SP	CRLF	COMMA
 
@@ -266,8 +265,12 @@ cmd
 
 	| LPRT check_login SP host_long_port6 CRLF
 		{
+#ifdef INET6
 			if ($2)
 				port_check("LPRT", AF_INET6);
+#else
+			reply(500, "IPv6 support not available.");
+#endif
 		}
 
 	| EPRT check_login SP STRING CRLF

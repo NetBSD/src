@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.112 2000/11/24 12:56:45 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.113 2000/11/28 09:31:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.112 2000/11/24 12:56:45 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.113 2000/11/28 09:31:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1950,8 +1950,10 @@ statcmd(void)
 			struct sockinet tmp;
 
 			tmp = *su;
+#ifdef INET6
 			if (tmp.su_family == AF_INET6)
 				tmp.su_scope_id = 0;
+#endif
 			if (getnameinfo((struct sockaddr *)&tmp.si_su,
 			    tmp.su_len, hbuf, sizeof(hbuf), sbuf, sizeof(sbuf),
 			    NI_NUMERICHOST | NI_NUMERICSERV) == 0)
@@ -2467,11 +2469,13 @@ extended_port(const char *arg)
 	if (sizeof(data_dest) < res->ai_addrlen)
 		goto parsefail;
 	memcpy(&data_dest, res->ai_addr, res->ai_addrlen);
+#ifdef INET6
 	if (his_addr.su_family == AF_INET6 &&
 	    data_dest.su_family == AF_INET6) {
 			/* XXX: more sanity checks! */
 		data_dest.su_scope_id = his_addr.su_scope_id;
 	}
+#endif
 
 	if (tmp != NULL)
 		free(tmp);
