@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.172.2.1 2004/05/29 14:05:54 tron Exp $ */
+/*	$NetBSD: wdc.c,v 1.172.2.2 2004/05/29 14:08:18 tron Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.1 2004/05/29 14:05:54 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.2 2004/05/29 14:08:18 tron Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -204,21 +204,25 @@ wdc_drvprobe(struct wdc_channel *chp)
 
 	/* for ATA/OLD drives, wait for DRDY, 3s timeout */
 	for (i = 0; i < mstohz(3000); i++) {
-		if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_SELECT))
-			wdc->select(chp,0);
-		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
-		    WDSD_IBM);
-		delay(10);	/* 400ns delay */
-		st0 = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_status], 0);
+		if (chp->ch_drive[0].drive_flags & (DRIVE_ATA|DRIVE_OLD)) {
+			if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_SELECT))
+				wdc->select(chp,0);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh],
+			    0, WDSD_IBM);
+			delay(10);	/* 400ns delay */
+			st0 = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_status], 0);
+		}
 		
-		if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_SELECT))
-			wdc->select(chp,1);
-		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
-		    WDSD_IBM | 0x10);
-		delay(10);	/* 400ns delay */
-		st1 = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_status], 0);
+		if (chp->ch_drive[1].drive_flags & (DRIVE_ATA|DRIVE_OLD)) {
+			if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_SELECT))
+				wdc->select(chp,1);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh],
+			    0, WDSD_IBM | 0x10);
+			delay(10);	/* 400ns delay */
+			st1 = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_status], 0);
+		}
 	
 		if (((chp->ch_drive[0].drive_flags & (DRIVE_ATA|DRIVE_OLD))
 			== 0 ||
@@ -487,6 +491,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 	 * Sanity check to see if the wdc channel responds at all.
 	 */
 
+	s = splbio();
 	if (wdc == NULL ||
 	    (wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
 
@@ -524,27 +529,67 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 			    0, WDSD_IBM);
 			bus_space_write_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_cyl_lo], 0, 0x02);
-			if (bus_space_read_1(chp->cmd_iot,
-			    chp->cmd_iohs[wd_cyl_lo], 0) != 0x02)
+			cl = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_cyl_lo], 0);
+			if (cl != 0x02) {
+				WDCDEBUG_PRINT(("%s:%d drive 0 wd_cyl_lo: "
+				    "got 0x%x != 0x02\n",
+				    wdc != NULL ?
+				    wdc->sc_dev.dv_xname : "wdcprobe",
+				    chp->ch_channel, cl),
+				    DEBUG_PROBE);
 				ret_value &= ~0x01;
+			}
 			bus_space_write_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_cyl_lo], 0, 0x01);
-			if (bus_space_read_1(chp->cmd_iot,
-			    chp->cmd_iohs[wd_cyl_lo], 0) != 0x01)
+			cl = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_cyl_lo], 0);
+			if (cl != 0x01) {
+				WDCDEBUG_PRINT(("%s:%d drive 0 wd_cyl_lo: "
+				    "got 0x%x != 0x01\n",
+				    wdc != NULL ?
+				    wdc->sc_dev.dv_xname : "wdcprobe",
+				    chp->ch_channel, cl),
+				    DEBUG_PROBE);
 				ret_value &= ~0x01;
+			}
 			bus_space_write_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_sector], 0, 0x01);
-			if (bus_space_read_1(chp->cmd_iot,
-			    chp->cmd_iohs[wd_sector], 0) != 0x01)
+			cl = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_sector], 0);
+			if (cl != 0x01) {
+				WDCDEBUG_PRINT(("%s:%d drive 0 wd_sector: "
+				    "got 0x%x != 0x01\n",
+				    wdc != NULL ?
+				    wdc->sc_dev.dv_xname : "wdcprobe",
+				    chp->ch_channel, cl),
+				    DEBUG_PROBE);
 				ret_value &= ~0x01;
+			}
 			bus_space_write_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_sector], 0, 0x02);
-			if (bus_space_read_1(chp->cmd_iot,
-			    chp->cmd_iohs[wd_sector], 0) != 0x02)
+			cl = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_sector], 0);
+			if (cl != 0x02) {
+				WDCDEBUG_PRINT(("%s:%d drive 0 wd_sector: "
+				    "got 0x%x != 0x02\n",
+				    wdc != NULL ?
+				    wdc->sc_dev.dv_xname : "wdcprobe",
+				    chp->ch_channel, cl),
+				    DEBUG_PROBE);
 				ret_value &= ~0x01;
-			if (bus_space_read_1(chp->cmd_iot,
-			    chp->cmd_iohs[wd_cyl_lo], 0) != 0x01)
+			}
+			cl = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_cyl_lo], 0);
+			if (cl != 0x01) {
+				WDCDEBUG_PRINT(("%s:%d drive 0 wd_cyl_lo(2): "
+				    "got 0x%x != 0x01\n",
+				    wdc != NULL ?
+				    wdc->sc_dev.dv_xname : "wdcprobe",
+				    chp->ch_channel, cl),
+				    DEBUG_PROBE);
 				ret_value &= ~0x01;
+			}
 		}
 		/* Register writability test, drive 1. */
 		if (ret_value & 0x02) {
@@ -554,40 +599,102 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 			     0, WDSD_IBM | 0x10);
 			bus_space_write_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_cyl_lo], 0, 0x02);
-			if (bus_space_read_1(chp->cmd_iot,
-			     chp->cmd_iohs[wd_cyl_lo], 0) != 0x02)
+			cl = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_cyl_lo], 0);
+			if (cl != 0x02) {
+				WDCDEBUG_PRINT(("%s:%d drive 1 wd_cyl_lo: "
+				    "got 0x%x != 0x02\n",
+				    wdc != NULL ?
+				    wdc->sc_dev.dv_xname : "wdcprobe",
+				    chp->ch_channel, cl),
+				    DEBUG_PROBE);
 				ret_value &= ~0x02;
+			}
 			bus_space_write_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_cyl_lo], 0, 0x01);
-			if (bus_space_read_1(chp->cmd_iot,
-			     chp->cmd_iohs[wd_cyl_lo], 0) != 0x01)
+			cl = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_cyl_lo], 0);
+			if (cl != 0x01) {
+				WDCDEBUG_PRINT(("%s:%d drive 1 wd_cyl_lo: "
+				    "got 0x%x != 0x01\n",
+				    wdc != NULL ?
+				    wdc->sc_dev.dv_xname : "wdcprobe",
+				    chp->ch_channel, cl),
+				    DEBUG_PROBE);
 				ret_value &= ~0x02;
+			}
 			bus_space_write_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_sector], 0, 0x01);
-			if (bus_space_read_1(chp->cmd_iot,
-			    chp->cmd_iohs[wd_sector], 0) != 0x01)
+			cl = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_sector], 0);
+			if (cl != 0x01) {
+				WDCDEBUG_PRINT(("%s:%d drive 1 wd_sector: "
+				    "got 0x%x != 0x01\n",
+				    wdc != NULL ?
+				    wdc->sc_dev.dv_xname : "wdcprobe",
+				    chp->ch_channel, cl),
+				    DEBUG_PROBE);
 				ret_value &= ~0x02;
+			}
 			bus_space_write_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_sector], 0, 0x02);
-			if (bus_space_read_1(chp->cmd_iot,
-			    chp->cmd_iohs[wd_sector], 0) != 0x02)
+			cl = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_sector], 0);
+			if (cl != 0x02) {
+				WDCDEBUG_PRINT(("%s:%d drive 1 wd_sector: "
+				    "got 0x%x != 0x02\n",
+				    wdc != NULL ?
+				    wdc->sc_dev.dv_xname : "wdcprobe",
+				    chp->ch_channel, cl),
+				    DEBUG_PROBE);
 				ret_value &= ~0x02;
-			if (bus_space_read_1(chp->cmd_iot,
-			    chp->cmd_iohs[wd_cyl_lo], 0) != 0x01)
+			}
+			cl = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_cyl_lo], 0);
+			if (cl != 0x01) {
+				WDCDEBUG_PRINT(("%s:%d drive 1 wd_cyl_lo(2): "
+				    "got 0x%x != 0x01\n",
+				    wdc != NULL ?
+				    wdc->sc_dev.dv_xname : "wdcprobe",
+				    chp->ch_channel, cl),
+				    DEBUG_PROBE);
 				ret_value &= ~0x02;
+			}
 		}
 
-		if (ret_value == 0)
+		if (ret_value == 0) {
+			splx(s);
 			return 0;
+		}
 	}
 
-	s = splbio();
+
+	/*
+	 * reset bus. Also send an ATAPI_RESET to devices, in case there are
+	 * ATAPI device out there which don't react to the bus reset
+	 */
+	if (ret_value & 0x01) {
+		if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_SELECT))
+			wdc->select(chp,0);
+		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh],
+		     0, WDSD_IBM);
+		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_command], 0,
+		    ATAPI_SOFT_RESET);
+	}
+	if (ret_value & 0x02) {
+		if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_SELECT))
+			wdc->select(chp,0);
+		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh],
+		     0, WDSD_IBM | 0x10);
+		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_command], 0,
+		    ATAPI_SOFT_RESET);
+	}
 
 	if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_SELECT))
 		wdc->select(chp,0);
-	/* assert SRST, wait for reset to complete */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0, WDSD_IBM);
 	delay(10);	/* 400ns delay */
+	/* assert SRST, wait for reset to complete */
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 	    WDCTL_RST | WDCTL_IDS | WDCTL_4BIT); 
 	DELAY(1000);
@@ -926,40 +1033,44 @@ __wdcwait_reset(struct wdc_channel *chp, int drv_mask, int poll)
 		nloop = WDC_RESET_WAIT * hz / 1000;
 	/* wait for BSY to deassert */
 	for (timeout = 0; timeout < nloop; timeout++) {
-		if (wdc && wdc->cap & WDC_CAPABILITY_SELECT)
-			wdc->select(chp,0);
-		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
-		    WDSD_IBM); /* master */
-		delay(10);
-		st0 = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_status], 0);
+		if ((drv_mask & 0x01) != 0) {
+			if (wdc && wdc->cap & WDC_CAPABILITY_SELECT)
+				wdc->select(chp,0);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh],
+			    0, WDSD_IBM); /* master */
+			delay(10);
+			st0 = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_status], 0);
 #ifdef WDCDEBUG
-		sc0 = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_seccnt], 0);
-		sn0 = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_sector], 0);
-		cl0 = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_cyl_lo], 0);
-		ch0 = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_cyl_hi], 0);
+			sc0 = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_seccnt], 0);
+			sn0 = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_sector], 0);
+			cl0 = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_cyl_lo], 0);
+			ch0 = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_cyl_hi], 0);
 #endif
-		if (wdc && wdc->cap & WDC_CAPABILITY_SELECT)
-			wdc->select(chp,1);
-		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
-		    WDSD_IBM | 0x10); /* slave */
-		delay(10);
-		st1 = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_status], 0);
+		}
+		if ((drv_mask & 0x02) != 0) {
+			if (wdc && wdc->cap & WDC_CAPABILITY_SELECT)
+				wdc->select(chp,1);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh],
+			    0, WDSD_IBM | 0x10); /* slave */
+			delay(10);
+			st1 = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_status], 0);
 #ifdef WDCDEBUG
-		sc1 = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_seccnt], 0);
-		sn1 = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_sector], 0);
-		cl1 = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_cyl_lo], 0);
-		ch1 = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_cyl_hi], 0);
+			sc1 = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_seccnt], 0);
+			sn1 = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_sector], 0);
+			cl1 = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_cyl_lo], 0);
+			ch1 = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_cyl_hi], 0);
 #endif
+		}
 
 		if ((drv_mask & 0x01) == 0) {
 			/* no master */
