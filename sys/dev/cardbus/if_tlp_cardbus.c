@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.12 2000/02/04 07:59:20 haya Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.13 2000/02/04 13:43:56 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -440,12 +440,12 @@ tlp_cardbus_detach(self, flags)
 {
 	struct tulip_cardbus_softc *csc = (void *) self;
 	struct tulip_softc *sc = &csc->sc_tulip;
-	struct cardbus_devfunc *ct;
+	struct cardbus_devfunc *ct = csc->sc_ct;
 	int rv;
 	int reg;
 
-#if defined DIAGNOSTIC
-	if ((ct = csc->sc_ct) == NULL) {
+#if defined(DIAGNOSTIC)
+	if (ct == NULL) {
 		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
 	}
 #endif
@@ -466,7 +466,8 @@ tlp_cardbus_detach(self, flags)
 			reg = TULIP_PCI_IOBA;
 		}
 
-		Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, csc->sc_mapsize);
+		Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, 
+		    csc->sc_mapsize);
 	}
 	return (rv);
 }
