@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.300 2001/01/26 08:04:40 rh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.301 2001/01/26 10:04:12 rh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.294 2001/01/26 08:02:46 rh Exp 
+ *	NetBSD: pcidevs,v 1.295 2001/01/26 10:03:47 rh Exp 
  */
 
 /*
@@ -1643,6 +1643,7 @@
 #define	PCI_PRODUCT_TOSHIBA_TC35856F	0x0020		/* TC35856F ATM (\"Meteor\") */
 
 /* Toshiba products */
+#define	PCI_PRODUCT_TOSHIBA2_PROTEGE	0x0001		/* Protege Notebook */
 #define	PCI_PRODUCT_TOSHIBA2_HOST	0x0601		/* Host Bridge/Controller */
 #define	PCI_PRODUCT_TOSHIBA2_ISA	0x0602		/* ISA Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC95	0x0603		/* ToPIC95 CardBus-PCI Bridge */
