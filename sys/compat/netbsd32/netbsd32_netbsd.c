@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.22 2000/01/31 16:41:20 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.23 2000/02/06 16:45:56 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -1887,11 +1887,11 @@ netbsd32_execve(p, v, retval)
 
 	/* Now check if args & environ fit into new stack */
 	if (pack.ep_flags & EXEC_32)
-		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
+		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(int) +
 		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
 		       sizeof(struct ps_strings)) - argp;
 	else
-		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(int) +
+		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
 		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
 		       sizeof(struct ps_strings)) - argp;
 
