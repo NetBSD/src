@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.5.20.1 2000/06/26 18:16:35 scw Exp $
 
 #
 # sboot would like a newer GNU ld because it can generate S-Records.
@@ -15,7 +15,7 @@ CLEANFILES+= srec sboot sboot.srec
 
 BOOTS=	sboot.srec
 
-all: ${BOOTS}
+realall: ${BOOTS}
 
 sboot.srec: sboot srec
 	dd ibs=32 skip=1 if=sboot | ${.OBJDIR}/srec 4 0x4000 sboot > ${.TARGET}
@@ -29,5 +29,11 @@ srec: ${.CURDIR}/srec.c
 install:
 	${INSTALL} -c -m 444 -g bin -o bin sboot.srec \
 	    ${DESTDIR}${MDEC_DIR}/sboot
+
+afterdepend:	.depend
+	@(TMP=/tmp/_depend$$$$; \
+		sed -e 's/^\([^\.]*\).o[ ]*:/\1.o g\1.o s\1.o:/' \
+		< .depend > $$TMP; \
+	mv $$TMP .depend)
 
 .include <bsd.prog.mk>
