@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.19 1995/12/31 00:27:16 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.20 1996/02/14 02:44:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -80,7 +80,6 @@ struct	dca_softc {
 	struct hp_device	*sc_hd;		/* device info */
 	struct dcadevice	*sc_dca;	/* pointer to hardware */
 	struct tty		*sc_tty;	/* our tty instance */
-	struct isr		sc_isr;		/* interrupt handler */
 	int			sc_oflows;	/* overflow counter */
 	short			sc_flags;	/* state flags */
 
@@ -94,11 +93,11 @@ struct	dca_softc {
 } dca_softc[NDCA];
 
 void	dcastart();
-int	dcaparam(), dcaintr();
+int	dcaparam();
+int	dcaintr __P((void *));
 int	ndca = NDCA;
 int	dcadefaultrate = TTYDEF_SPEED;
 int	dcamajor;
-int	dcafastservice;
 
 /*
  * Stuff for DCA console support.  This could probably be done a little
@@ -194,10 +193,8 @@ dcaattach(hd)
 	sc->sc_dca = dca;
 
 	/* Establish interrupt handler. */
-	sc->sc_isr.isr_ipl = hd->hp_ipl;
-	sc->sc_isr.isr_arg = unit;
-	sc->sc_isr.isr_intr = dcaintr;
-	isrlink(&sc->sc_isr);
+	isrlink(dcaintr, sc, hd->hp_ipl,
+	    (sc->sc_flags & DCA_HASFIFO) ? ISRPRI_TTY : ISRPRI_TTYNOBUF);
 
 	sc->sc_flags |= DCA_ACTIVE;
 	if (hd->hp_flags)
@@ -335,13 +332,6 @@ dcaopen(dev, flag, mode, p)
 
 	if (error == 0)
 		error = (*linesw[tp->t_line].l_open)(dev, tp);
-	/*
-	 * XXX hack to speed up unbuffered builtin port.
-	 * If dca_fastservice is set, a level 5 interrupt
-	 * will be directed to dcaintr first.
-	 */
-	if (error == 0 && unit == 0 && (sc->sc_flags & DCA_HASFIFO) == 0)
-		dcafastservice = 1;
 
 	return (error);
 }
@@ -360,9 +350,6 @@ dcaclose(dev, flag, mode, p)
 	int s;
  
 	unit = DCAUNIT(dev);
-
-	if (unit == 0)
-		dcafastservice = 0;
 
 	sc = &dca_softc[unit];
 	dca = sc->sc_dca;
@@ -433,10 +420,11 @@ dcatty(dev)
 }
  
 int
-dcaintr(unit)
-	register int unit;
+dcaintr(arg)
+	void *arg;
 {
-	struct dca_softc *sc = &dca_softc[unit];
+	struct dca_softc *sc = arg;
+	int unit = sc->sc_hd->hp_unit;
 	register struct dcadevice *dca = sc->sc_dca;
 	register struct tty *tp = sc->sc_tty;
 	register u_char code;
