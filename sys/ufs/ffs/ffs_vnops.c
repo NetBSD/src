@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.31.2.1 2000/12/14 23:36:48 he Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.31.2.2 2002/02/26 21:18:05 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -333,12 +333,15 @@ ffs_full_fsync(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp, *nbp;
-	int s, error, passes, skipmeta;
+	int s, error, passes, skipmeta, inodedeps_only, waitfor;;
 
 	if (vp->v_type == VBLK &&
 	    vp->v_specmountpoint != NULL &&
 	    (vp->v_specmountpoint->mnt_flag & MNT_SOFTDEP))
 		softdep_fsync_mountdev(vp);
+
+	inodedeps_only = DOINGSOFTDEP(vp) && (ap->a_flags & FSYNC_RECLAIM)
+	    && LIST_EMPTY(&vp->v_dirtyblkhd);
 
 	/* 
 	 * Flush all dirty buffers associated with a vnode
@@ -421,8 +424,12 @@ loop:
 		}
 	}
 	splx(s);
-	return (VOP_UPDATE(vp, NULL, NULL,
-	    (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
+
+	if (inodedeps_only)
+		waitfor = 0;
+	else
+		waitfor = (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
+	return (VOP_UPDATE(vp, NULL, NULL, waitfor));
 }
 
 /*
