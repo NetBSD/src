@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcrm.c,v 1.11 1999/08/26 07:18:10 hwr Exp $	*/
+/*	$NetBSD: ipcrm.c,v 1.12 2003/11/02 17:43:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -122,7 +122,7 @@ main(argc, argv)
 
 	errflg = 0;
 	signal(SIGSYS, (void (*) __P((int))) not_configured);
-	while ((c = getopt(argc, argv, ":q:m:s:Q:M:S:")) != -1) {
+	while ((c = getopt(argc, argv, "q:m:s:Q:M:S:")) != -1) {
 
 		signaled = 0;
 		switch (c) {
@@ -175,12 +175,7 @@ main(argc, argv)
 					    IPC_TO_STRING(c));
 			}
 			break;
-		case ':':
-			fprintf(stderr, "option -%c requires an argument\n",
-			    optopt);
-			usage();
-		case '?':
-			fprintf(stderr, "unrecognized option: -%c\n", optopt);
+		default:
 			usage();
 		}
 	}
