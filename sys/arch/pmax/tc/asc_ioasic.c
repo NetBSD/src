@@ -1,7 +1,7 @@
-/* $NetBSD: asc_ioasic.c,v 1.1.2.12 1999/09/09 01:50:46 nisimura Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.1.2.13 1999/09/10 09:53:25 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.12 1999/09/09 01:50:46 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.13 1999/09/10 09:53:25 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -309,6 +309,24 @@ asc_ioasic_setup(sc, addr, len, datain, dmasize)
 		mips3_HitFlushDCache((vaddr_t)*addr, size);
 
 	cp = (vaddr_t)*addr;
+	if ((cp & 7) == 0)
+		scr = 0;
+	else {
+		u_int32_t *p;
+
+		p = (u_int32_t *)(cp & ~7);
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+					IOASIC_SCSI_SDR0, p[0]);
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+					IOASIC_SCSI_SDR1, p[1]);
+
+		scr = (cp >> 1) & 3;
+		cp &= ~7;
+		if (asc->sc_ispullup == 0) {
+			scr |= 4;
+			cp += 8;
+		}
+	}
 	ptr0 = kvtophys(cp);
 	cp = mips_trunc_page(cp + NBPG);
 	ptr1 = ((vaddr_t)*addr + size > cp) ? kvtophys(cp) : ~0;
@@ -325,20 +343,6 @@ asc_ioasic_setup(sc, addr, len, datain, dmasize)
 		}
 	}
 
-	cp = (vaddr_t)*addr;
-	if ((cp & 07) == 0)
-		scr = 0;
-	else {
-		u_int32_t *p;
-
-		scr = ((asc->sc_ispullup == 0) << 2) | ((cp >> 1) & 3);
-		p = (u_int32_t *)(cp & ~07);
-		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
-					IOASIC_SCSI_SDR0, p[0]);
-		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
-					IOASIC_SCSI_SDR1, p[1]);
-		ptr0 &= ~07;
-	}
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, scr);
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
 				IOASIC_SCSI_DMAPTR, IOASIC_DMA_ADDR(ptr0));
