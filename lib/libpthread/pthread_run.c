@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.5 2003/01/31 04:58:57 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.6 2003/01/31 12:27:19 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ pthread__sched_sleepers(pthread_t self, struct pthread_queue_t *threadq)
 
 	pthread_spinlock(self, &pthread__runqueue_lock);
 	PTQ_FOREACH(thread, threadq, pt_sleep) {
-		SDPRINTF(("(sched_sleepers %p) scheduling %p\n", self, thread);
+		SDPRINTF(("(sched_sleepers %p) scheduling %p\n", self, thread));
 		thread->pt_state = PT_STATE_RUNNABLE;
 		assert (thread->pt_type == PT_THREAD_NORMAL);
 		assert (thread->pt_spinlocks == 0);
