@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.4 2003/07/15 02:29:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.5 2003/10/23 20:25:40 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ vrdsiu_attach(parent, self, aux)
 
 	bus_space_tag_t iot = va->va_iot;
 
-        if (va->va_parent_ioh != NULL)
+        if (va->va_parent_ioh != 0)
                 res = bus_space_subregion(iot, va->va_parent_ioh, va->va_addr,
                     va->va_size, &sc->sc_ioh);
         else
