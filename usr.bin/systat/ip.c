@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.4 2000/01/08 23:12:37 itojun Exp $ */
+/*	$NetBSD: ip.c,v 1.5 2000/01/13 12:39:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip.c,v 1.4 2000/01/08 23:12:37 itojun Exp $");
+__RCSID("$NetBSD: ip.c,v 1.5 2000/01/13 12:39:05 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: ip.c,v 1.4 2000/01/08 23:12:37 itojun Exp $");
 #include <paths.h>
 #include <nlist.h>
 #include <kvm.h>
+
 #include "systat.h"
 #include "extern.h"
 

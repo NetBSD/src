@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.2 1999/07/30 16:08:59 ad Exp $ */
+/*	$NetBSD: tcp.c,v 1.3 2000/01/13 12:39:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tcp.c,v 1.2 1999/07/30 16:08:59 ad Exp $");
+__RCSID("$NetBSD: tcp.c,v 1.3 2000/01/13 12:39:05 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: tcp.c,v 1.2 1999/07/30 16:08:59 ad Exp $");
 #include <paths.h>
 #include <nlist.h>
 #include <kvm.h>
+
 #include "systat.h"
 #include "extern.h"
 
