@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.13 2003/02/02 20:43:23 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.14 2003/02/03 21:48:01 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,6 +45,19 @@
  *
  * Change ordering to cluster together these register_t's.		XXX
  */
+struct utrapframe {
+	register_t fixreg[32];
+	register_t lr;
+	int cr;
+	int xer;
+	register_t ctr;
+	register_t srr0;
+	register_t srr1;
+	int vrsave;
+	int mq;
+	int spare;
+};
+
 struct trapframe {
 	register_t fixreg[32];
 	register_t lr;
@@ -68,7 +81,7 @@ struct trapframe {
 
 #if defined(_KERNEL) || defined(_LKM)
 #ifdef _LP64
-struct trapframe32 {
+struct utrapframe {
 	register32_t fixreg[32];
 	register32_t lr;
 	int cr;
@@ -76,11 +89,9 @@ struct trapframe32 {
 	register32_t ctr;
 	register32_t srr0;
 	register32_t srr1;
-	register32_t dar;		/* dar & dsisr are only filled on a DSI trap */
-	int dsisr;
-	int exc;
-	uint32_t vrsave;
-	uint32_t mq;
+	int vrsave;
+	int mq;
+	int spare;
 };
 #endif
 #endif /* _KERNEL || _LKM */
