@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.28 1996/02/09 18:59:38 christos Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.29 1996/03/16 23:17:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -240,8 +240,8 @@ lkmioctl(dev, cmd, data, flag, p)
 		resrvp->addr = curp->area; /* ret kernel addr */
 
 #ifdef DEBUG
-		printf("LKM: LMRESERV (actual   = 0x%08x)\n", curp->area);
-		printf("LKM: LMRESERV (adjusted = 0x%08x)\n",
+		printf("LKM: LMRESERV (actual   = 0x%08lx)\n", curp->area);
+		printf("LKM: LMRESERV (adjusted = 0x%08lx)\n",
 			trunc_page(curp->area));
 #endif	/* DEBUG */
 		lkm_state = LKMS_RESERVED;
@@ -273,7 +273,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		if ((curp->offset + i) < curp->size) {
 			lkm_state = LKMS_LOADING;
 #ifdef DEBUG
-			printf("LKM: LMLOADBUF (loading @ %d of %d, i = %d)\n",
+			printf("LKM: LMLOADBUF (loading @ %ld of %ld, i = %d)\n",
 			curp->offset, curp->size, i);
 #endif	/* DEBUG */
 		} else {

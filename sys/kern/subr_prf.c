@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.22 1996/03/14 19:01:11 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.23 1996/03/16 23:17:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -54,6 +54,7 @@
 #include <sys/tprintf.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/cpu.h>
 
 #include <dev/cons.h>
 
@@ -95,10 +96,6 @@ const char *panicstr;
  * and then reboots.  If we are called twice, then we avoid trying to sync
  * the disks as this often leads to recursive panics.
  */
-#ifdef __GNUC__
-volatile void boot(int flags);	/* boot() does not return */
-volatile			/* panic() does not return */
-#endif
 void
 #ifdef __STDC__
 panic(const char *fmt, ...)

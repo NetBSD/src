@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.14 1996/02/20 23:56:16 cgd Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.15 1996/03/16 23:17:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -199,7 +199,7 @@ malloc(size, type, flags)
 		memname[freep->type] : "???";
 	if (kbp->kb_next &&
 	    !kernacc(kbp->kb_next, sizeof(struct freelist), 0)) {
-		printf("%s %d of object %p size %d %s %s (invalid addr %p)\n",
+		printf("%s %d of object %p size %ld %s %s (invalid addr %p)\n",
 			"Data modified on freelist: word", 
 			(int32_t *)&kbp->kb_next - (int32_t *)kbp, va, size,
 			"previous type", savedtype, kbp->kb_next);
@@ -223,7 +223,7 @@ malloc(size, type, flags)
 	for (lp = (int32_t *)va; lp < end; lp++) {
 		if (*lp == WEIRD_ADDR)
 			continue;
-		printf("%s %d of object %p size %d %s %s (0x%x != 0x%x)\n",
+		printf("%s %d of object %p size %ld %s %s (0x%x != 0x%x)\n",
 			"Data modified on freelist: word", lp - (int32_t *)va,
 			va, size, "previous type", savedtype, *lp, WEIRD_ADDR);
 		break;
@@ -289,7 +289,7 @@ free(addr, type)
 	else
 		alloc = addrmask[kup->ku_indx];
 	if (((u_long)addr & alloc) != 0)
-		panic("free: unaligned addr 0x%x, size %d, type %s, mask %d\n",
+		panic("free: unaligned addr %p, size %ld, type %s, mask %ld\n",
 			addr, size, memname[type], alloc);
 #endif /* DIAGNOSTIC */
 	if (size > MAXALLOCSAVE) {
