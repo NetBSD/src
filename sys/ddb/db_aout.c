@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.34 2003/04/24 20:00:48 ragge Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.35 2003/05/17 00:28:44 kristerw Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.34 2003/04/24 20:00:48 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.35 2003/05/17 00:28:44 kristerw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ db_aout_sym_numargs(db_symtab_t *symtab, db_sym_t cursym, int *nargp,
 	u_long			addr;
 	int			maxnarg = *nargp, nargs = 0;
 
-	if (cursym == NULL)
+	if ((struct nlist *)cursym == NULL)
 		return FALSE;
 
 	symtab = &db_symtabs;
