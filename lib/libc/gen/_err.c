@@ -10,6 +10,7 @@ __indr_reference(_err, err);
 #else
 
 #define	_err	err
+#define	_verr	verr
 #define	rcsid	_rcsid
 #include "err.c"
 
