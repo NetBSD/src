@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.42.2.4 2001/05/01 12:54:28 he Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.42.2.5 2001/12/24 14:23:22 he Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -400,6 +400,7 @@ pccbbattach(parent, self, aux)
 	bus_addr_t sockbase;
 	char devinfo[256];
 	int flags;
+	int pwrmgt_offs;
 
 	sc->sc_chipset = cb_chipset(pa->pa_id, &flags);
 
@@ -419,6 +420,19 @@ pccbbattach(parent, self, aux)
 #endif /* rbus */
 
 	sc->sc_base_memh = 0;
+
+	/* power management: set D0 state */
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT,
+	    &pwrmgt_offs, 0)) {
+		reg = pci_conf_read(pc, pa->pa_tag, pwrmgt_offs + 4);
+		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0 ||
+		    reg & 0x100 /* PCI_PMCSR_PME_EN */) {
+			reg &= ~PCI_PMCSR_STATE_MASK;
+			reg |= PCI_PMCSR_STATE_D0;
+			reg &= ~(0x100 /* PCI_PMCSR_PME_EN */);
+			pci_conf_write(pc, pa->pa_tag, pwrmgt_offs + 4, reg);
+		}
+	}
 
 	/* 
 	 * MAP socket registers and ExCA registers on memory-space
