@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.458 2002/07/29 20:08:51 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.459 2002/07/30 20:43:57 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.456 2002/07/29 20:08:25 augustss Exp 
+ *	NetBSD: pcidevs,v 1.457 2002/07/30 20:43:12 bouyer Exp 
  */
 
 /*
@@ -3910,6 +3910,66 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801CAM LPC Interface",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC,
+	    0,
+	    "Intel",
+	    "82801DB LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC,
+	    0,
+	    "Intel",
+	    "82801DB LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_1,
+	    0,
+	    "Intel",
+	    "82801DB USB UHCI Controller #1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_SMB,
+	    0,
+	    "Intel",
+	    "82801DB SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_2,
+	    0,
+	    "Intel",
+	    "82801DB USB UHCI Controller #2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_AC,
+	    0,
+	    "Intel",
+	    "82801DB AC97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_MOD,
+	    0,
+	    "Intel",
+	    "82801DB AC97 Modem Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_3,
+	    0,
+	    "Intel",
+	    "82801DB USB UHCI Controller #3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_IDE,
+	    0,
+	    "Intel",
+	    "82801DB IDE Controller (UltraATA/100)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USBC,
+	    0,
+	    "Intel",
+	    "82801DB USB EHCI Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH,
 	    0,
 	    "Intel",
@@ -4016,6 +4076,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "E7500 MCH HI_C vppb 2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_DRAM,
+	    0,
+	    "Intel",
+	    "82845G/GL DRAM Controller / Host-Hub I/F Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_AGP,
+	    0,
+	    "Intel",
+	    "82845G/GL Host-to-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_IGD,
+	    0,
+	    "Intel",
+	    "82845G/GL Integrated Graphics Device",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
