@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.26 2004/12/04 05:56:28 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.27 2005/01/19 22:22:56 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -185,20 +185,10 @@ ASENTRY(Idle)
  * At this point, other routines can be called (such as uvm_pageidlezero).
  */
 
-#if defined(PPC_OEA)
-/* Check if we can use power saving mode */
-	lis	%r8,_C_LABEL(powersave)@ha
-	ldint	%r9,_C_LABEL(powersave)@l(%r8)
-	add.	%r9,%r9,%r9
-	ble	1f
-
-	sync
-	mfmsr	%r4
-	oris	%r4,%r4,PSL_POW@h	/* enter power saving mode */
-	mtmsr	%r4
-	isync
-1:
-#endif /* PPC_OEA */
+	GET_CPUINFO(%r8)
+	ldptr	%r9,CI_IDLESPIN(%r8)
+	mtctr	%r9
+	bctrl
 
 #if defined(PPC_IBM4XX)
 	wrteei	0			/* disable interrupts while
@@ -474,7 +464,8 @@ switch_return:
 #endif
 	ldreg	%r0,CFRAME_LR(%r1)
 	mtlr	%r0
-	blr
+ENTRY_NOPROFILE(emptyidlespin)
+	blr				/* CPUINIT needs a raw blr */
 
 /*
  * void
