@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.76 1998/12/19 02:46:12 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.77 1999/01/11 22:35:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1222,7 +1222,6 @@ ip_forward(m, srcrt)
 		m_freem(m);
 		return;
 	}
-	HTONS(ip->ip_id);
 	if (ip->ip_ttl <= IPTTLDEC) {
 		icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, dest, 0);
 		return;
@@ -1269,16 +1268,20 @@ ip_forward(m, srcrt)
 		if (rt->rt_ifa &&
 		    (ip->ip_src.s_addr & ifatoia(rt->rt_ifa)->ia_subnetmask) ==
 		    ifatoia(rt->rt_ifa)->ia_subnet) {
-		    if (rt->rt_flags & RTF_GATEWAY)
-			dest = satosin(rt->rt_gateway)->sin_addr.s_addr;
-		    else
-			dest = ip->ip_dst.s_addr;
-		    /* Router requirements says to only send host redirects */
-		    type = ICMP_REDIRECT;
-		    code = ICMP_REDIRECT_HOST;
+			if (rt->rt_flags & RTF_GATEWAY)
+				dest = satosin(rt->rt_gateway)->sin_addr.s_addr;
+			else
+				dest = ip->ip_dst.s_addr;
+			/*
+			 * Router requirements says to only send host
+			 * redirects.
+			 */
+			type = ICMP_REDIRECT;
+			code = ICMP_REDIRECT_HOST;
 #ifdef DIAGNOSTIC
-		    if (ipprintfs)
-		    	printf("redirect (%d) to %x\n", code, (u_int32_t)dest);
+			if (ipprintfs)
+				printf("redirect (%d) to %x\n", code,
+				    (u_int32_t)dest);
 #endif
 		}
 	}
