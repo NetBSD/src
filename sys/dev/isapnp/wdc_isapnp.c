@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.18 2002/10/02 16:34:04 thorpej Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.19 2003/03/22 20:05:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.18 2002/10/02 16:34:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.19 2003/03/22 20:05:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.18 2002/10/02 16:34:04 thorpej Exp 
 
 struct wdc_isapnp_softc {
 	struct	wdc_softc sc_wdcdev;
-	struct	channel_softc *wdc_chanptr;
+	struct	channel_softc *wdc_chanlist[1];
 	struct	channel_softc wdc_channel;
+	struct	channel_queue wdc_chqueue;
 	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
 	int	sc_drq;
@@ -101,26 +102,21 @@ wdc_isapnp_attach(parent, self, aux)
 	struct wdc_isapnp_softc *sc = (void *)self;
 	struct isapnp_attach_args *ipa = aux;
 
-	printf("\n");
-
 	if (ipa->ipa_nio != 2 ||
 	    ipa->ipa_nmem != 0 ||
 	    ipa->ipa_nmem32 != 0 ||
 	    ipa->ipa_nirq != 1 ||
 	    ipa->ipa_ndrq > 1) {
-		printf("%s: unexpected configuration\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		printf(": unexpected configuration\n");
 		return;
 	}
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: couldn't map registers\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		printf(": couldn't map registers\n");
 		return;
 	}
 
-	printf("%s: %s %s\n", sc->sc_wdcdev.sc_dev.dv_xname, ipa->ipa_devident,
-	    ipa->ipa_devclass);
+	printf(": %s %s\n", ipa->ipa_devident, ipa->ipa_devclass);
 
 	sc->wdc_channel.cmd_iot = ipa->ipa_iot;
 	sc->wdc_channel.ctl_iot = ipa->ipa_iot;
@@ -155,19 +151,14 @@ wdc_isapnp_attach(parent, self, aux)
 #endif
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.PIO_cap = 0;
-	sc->wdc_chanptr = &sc->wdc_channel;
-	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
+	sc->wdc_chanlist[0] = &sc->wdc_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->wdc_channel.ch_queue == NULL) {
-	    printf("%s: can't allocate memory for command queue",
-		sc->sc_wdcdev.sc_dev.dv_xname);
-	    return;
-	}
+	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
 	wdcattach(&sc->wdc_channel);
+	wdc_print_modes(&sc->wdc_channel);
 }
 
 #ifdef notyet
