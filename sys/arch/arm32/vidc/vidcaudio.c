@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.26 1998/08/31 02:36:11 mark Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.27 1999/01/01 12:45:12 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -230,8 +230,8 @@ vidcaudio_attach(parent, self, aux)
 	if (ag.silence == NULL)
 		panic("vidcaudio: Cannot allocate memory\n");
 
-	bzero((char *)ag.silence, NBPG);
-	bcopy((char *)beep_waveform, (char *)ag.silence, sizeof(beep_waveform));
+	memset((char *)ag.silence, 0, NBPG);
+	memcpy((char *)ag.silence, (char *)beep_waveform, sizeof(beep_waveform));
 
 	ag.buffer = 0;
 
@@ -387,7 +387,7 @@ vidcaudio_start_output(addr, p, cc, intr, arg)
 		printf("vidcaudio: DMA over page boundary requested."
 		    "  Fixing up\n");
 #endif
-		bcopy((char *)ag.silence, p, cc > NBPG ? NBPG : cc);
+		memcpy(p, (char *)ag.silence, cc > NBPG ? NBPG : cc);
 		p = (void *)ag.silence;
 
 		/*
