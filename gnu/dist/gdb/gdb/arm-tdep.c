@@ -2751,6 +2751,7 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
 	    default:
 	      /* Leave it as "unknown".  */
+	      ;
 	    }
 	}
     }
