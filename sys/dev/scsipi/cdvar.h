@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.15 2002/07/22 14:59:44 hannken Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.16 2003/04/03 22:18:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -49,6 +49,7 @@ struct cd_softc {
 	struct cd_parms {
 		int blksize;
 		u_long disksize;	/* total number sectors */
+		u_long disksize512;	/* total number sectors */
 	} params;
 
 	struct bufq_state buf_queue;

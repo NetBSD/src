@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.27 2003/03/07 16:18:57 drochner Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.28 2003/04/03 22:18:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.27 2003/03/07 16:18:57 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.28 2003/04/03 22:18:26 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	int flags;
 {
 	struct sd_scsibus_mode_sense_data scsipi_sense;
-	u_long sectors;
+	u_int64_t sectors;
 	int error;
 
 	dp->blksize = 512;
@@ -236,6 +236,7 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	dp->sectors = 32;
 	dp->cyls = sectors / (dp->heads * dp->sectors);
 	dp->disksize = sectors;
+	dp->disksize512 = (sectors * dp->blksize) / DEV_BSIZE;
 
 	return (SDGP_RESULT_OK);
 }
@@ -258,7 +259,7 @@ sd_scsibus_get_simplifiedparms(sd, dp, flags)
 		u_int8_t flags;
 		u_int8_t resvd;
 	} scsipi_sense;
-	u_long sectors;
+	u_int64_t sectors;
 	int error;
 
 	/*
@@ -288,15 +289,14 @@ sd_scsibus_get_simplifiedparms(sd, dp, flags)
 	dp->heads = 64;
 	dp->sectors = 32;
 	dp->cyls = sectors / (dp->heads * dp->sectors);
-	/* XXX disksize is only a "long" currently */
-	dp->disksize = /* XXX _5btol */
-		(_3btol(scsipi_sense.size) << 16)
-		| (_2btol(&scsipi_sense.size[3]));
-	if (dp->disksize != sectors) {
-		printf("RBC size: mode sense=%ld, get cap=%ld\n",
-		       dp->disksize, sectors);
+	dp->disksize = _5btol(scsipi_sense.size);
+	if (dp->disksize <= UINT32_MAX && dp->disksize != sectors) {
+		printf("RBC size: mode sense=%llu, get cap=%llu\n",
+		       (unsigned long long)dp->disksize,
+		       (unsigned long long)sectors);
 		dp->disksize = sectors;
 	}
+	dp->disksize512 = (dp->disksize * dp->blksize) / DEV_BSIZE;
 
 	return (SDGP_RESULT_OK);
 }
@@ -312,7 +312,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 	int flags;
 {
 	struct sd_scsibus_mode_sense_data scsipi_sense;
-	u_long sectors;
+	u_int64_t sectors;
 	int page;
 	int error;
 
@@ -356,6 +356,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 
 		sectors = scsipi_size(sd->sc_periph, flags);
 		dp->disksize = sectors;
+		dp->disksize512 = (sectors * dp->blksize) / DEV_BSIZE;
 		sectors /= (dp->heads * dp->cyls);
 		dp->sectors = sectors;	/* XXX dubious on SCSI */
 
@@ -374,6 +375,8 @@ sd_scsibus_get_parms(sd, dp, flags)
 
 		if (dp->blksize == 0)
 			dp->blksize = 512;
+
+		dp->disksize512 = (dp->disksize * dp->blksize) / DEV_BSIZE;
 
 		return (SDGP_RESULT_OK);
 	}
@@ -397,7 +400,7 @@ fake_it:
 	if (sectors == 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 	dp->blksize = 512;
-	dp->disksize = sectors;
+	dp->disksize512 = dp->disksize = sectors;
 	/* Try calling driver's method for figuring out geometry. */
 	if (sd->sc_periph->periph_channel->chan_adapter->adapt_getgeom ==
 	    NULL ||

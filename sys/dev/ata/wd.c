@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.239 2003/03/21 22:40:56 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.240 2003/04/03 22:18:23 fvdl Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.239 2003/03/21 22:40:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.240 2003/04/03 22:18:23 fvdl Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -366,13 +366,12 @@ wdattach(parent, self, aux)
 		    wd->sc_params.atap_heads *
 		    wd->sc_params.atap_sectors;
 	}
-	format_bytes(pbuf, sizeof(pbuf),
-	    (u_int64_t)wd->sc_capacity * DEV_BSIZE);
+	format_bytes(pbuf, sizeof(pbuf), wd->sc_capacity * DEV_BSIZE);
 	printf("%s: %s, %d cyl, %d head, %d sec, "
-	    "%d bytes/sect x %d sectors\n",
+	    "%d bytes/sect x %llu sectors\n",
 	    self->dv_xname, pbuf, wd->sc_params.atap_cylinders,
 	    wd->sc_params.atap_heads, wd->sc_params.atap_sectors,
-	    DEV_BSIZE, wd->sc_capacity);
+	    DEV_BSIZE, (unsigned long long)wd->sc_capacity);
 
 	WDCDEBUG_PRINT(("%s: atap_dmatiming_mimi=%d, atap_dmatiming_recom=%d\n",
 	    self->dv_xname, wd->sc_params.atap_dmatiming_mimi,
@@ -502,9 +501,15 @@ wdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (bounds_check_with_label(bp, wd->sc_dk.dk_label,
-	    (wd->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
-		goto done;
+	if (WDPART(bp->b_dev) == RAW_PART) {
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE,
+		    wd->sc_capacity) <= 0)
+			goto done;
+	} else {
+		if (bounds_check_with_label(bp, wd->sc_dk.dk_label,
+		    (wd->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
+			goto done;
+	}
 
 	/*
 	 * Now convert the block number to absolute and put it in
@@ -996,7 +1001,10 @@ wdgetdefaultlabel(wd, lp)
 
 	strncpy(lp->d_typename, wd->sc_params.atap_model, 16);
 	strncpy(lp->d_packname, "fictitious", 16);
-	lp->d_secperunit = wd->sc_capacity;
+	if (wd->sc_capacity > UINT32_MAX)
+		lp->d_secperunit = UINT32_MAX;
+	else
+		lp->d_secperunit = wd->sc_capacity;
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.71 2002/10/19 18:41:34 mjacob Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.72 2003/04/03 22:18:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -641,7 +641,7 @@ caddr_t	scsipi_inqmatch __P((struct scsipi_inquiry_pattern *, caddr_t,
 char	*scsipi_dtype __P((int));
 void	scsipi_strvis __P((u_char *, int, u_char *, int));
 int	scsipi_execute_xs __P((struct scsipi_xfer *));
-u_long	scsipi_size __P((struct scsipi_periph *, int));
+u_int64_t	scsipi_size __P((struct scsipi_periph *, int));
 int	scsipi_test_unit_ready __P((struct scsipi_periph *, int));
 int	scsipi_prevent __P((struct scsipi_periph *, int, int));
 int	scsipi_inquire __P((struct scsipi_periph *,
@@ -719,6 +719,8 @@ static __inline u_int32_t _2btol __P((const u_int8_t *bytes))
 static __inline u_int32_t _3btol __P((const u_int8_t *bytes))
 	__attribute__ ((unused));
 static __inline u_int32_t _4btol __P((const u_int8_t *bytes))
+	__attribute__ ((unused));
+static __inline u_int64_t _5btol __P((const u_int8_t *bytes))
 	__attribute__ ((unused));
 
 static __inline void _lto2l __P((u_int32_t val, u_int8_t *bytes))
@@ -800,6 +802,20 @@ _4btol(bytes)
 	     (bytes[1] << 16) |
 	     (bytes[2] << 8) |
 	     bytes[3];
+	return (rv);
+}
+
+static __inline u_int64_t
+_5btol(bytes)
+	const u_int8_t *bytes;
+{
+	u_int64_t rv;
+
+	rv = ((u_int64_t)bytes[0] << 32) |
+	     ((u_int64_t)bytes[1] << 24) |
+	     ((u_int64_t)bytes[2] << 16) |
+	     ((u_int64_t)bytes[3] << 8) |
+	     (u_int64_t)bytes[4];
 	return (rv);
 }
 
