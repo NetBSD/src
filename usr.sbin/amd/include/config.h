@@ -437,6 +437,9 @@
 /* Mount Table option string: support property lists (ACLs) */
 /* #undef MNTTAB_OPT_PROPLIST */
 
+/* 32<->64 dir cookie translation */
+#define MNTTAB_OPT_XLATECOOKIE "xlatecookie"
+
 /*
  * Generic mount(2) options (hex numbers)
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fs.c,v 1.3 2001/05/13 18:07:00 veego Exp $	*/
+/*	$NetBSD: mount_fs.c,v 1.4 2002/06/14 15:16:54 tron Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Erez Zadok
@@ -114,6 +114,10 @@ struct opt_tab mnt_flags[] =
 #if defined(MNT2_NFS_OPT_NONLM) && defined(MNTTAB_OPT_NOLOCK)
   {MNTTAB_OPT_NOLOCK, MNT2_NFS_OPT_NONLM},
 #endif /* defined(MNT2_NFS_OPT_NONLM) && defined(MNTTAB_OPT_NOLOCK) */
+
+#if defined(MNT2_NFS_OPT_XLATECOOKIE) && defined(MNTTAB_OPT_XLATECOOKIE)
+  {MNTTAB_OPT_XLATECOOKIE, MNT2_NFS_OPT_XLATECOOKIE},
+#endif /* defined(MNT2_NFS_OPT_XLATECOOKIE) && defined(MNTTAB_OPT_XLATECOOKIE) */
 
   {0, 0}
 };
@@ -715,6 +719,11 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct sockaddr_
   if (nap->maxgrouplist != NULL)
     nap->flags |= MNT2_NFS_OPT_MAXGRPS;
 #endif /* defined(MNT2_NFS_OPT_MAXGRPS) && defined(MNTTAB_OPT_MAXGROUPS) */
+
+#if defined(MNT2_NFS_OPT_XLATECOOKIE) && defined(MNTTAB_OPT_XLATECOOKIE)
+  if (hasmntopt(mntp, MNTTAB_OPT_XLATECOOKIE) != NULL)
+    nap->flags |= MNT2_NFS_OPT_XLATECOOKIE;
+#endif /* defined(MNT2_NFS_OPT_XLATECOOKIE) && defined(MNTTAB_OPT_XLATECOOKIE) */
 
 #ifdef HAVE_FIELD_NFS_ARGS_T_OPTSTR
   nap->optstr = mntp->mnt_opts;
