@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3.newconf,v 1.18 1994/12/12 18:58:47 gwr Exp $
+#	$NetBSD: files.sun3.newconf,v 1.19 1995/01/24 05:48:29 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -97,7 +97,7 @@ device le at obio: ifnet, ether
 file arch/sun3/dev/if_le.c		le
 file arch/sun3/dev/if_le_subr.c		le
 
-device si at obio: scsi
+device si at obio, vmes: scsi
 file	arch/sun3/dev/si.c		si
 
 #
