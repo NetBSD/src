@@ -11,7 +11,7 @@
  * UCL. This driver is based much more on read/write/select mode of
  * operation though.
  * 
- * $Id: if_tun.c,v 1.8 1993/12/13 05:06:33 deraadt Exp $
+ * $Id: if_tun.c,v 1.9 1993/12/24 03:20:59 deraadt Exp $
  */
 
 #include "tun.h"
@@ -29,6 +29,8 @@
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/file.h>
+
+#include <machine/cpu.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
