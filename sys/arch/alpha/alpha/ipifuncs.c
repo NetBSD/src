@@ -1,7 +1,7 @@
-/* $NetBSD: ipifuncs.c,v 1.25 2001/04/20 00:10:17 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.26 2001/04/20 16:22:33 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.25 2001/04/20 00:10:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.26 2001/04/20 16:22:33 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -86,6 +86,7 @@ ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 	alpha_ipi_synch_fpu,
 	alpha_ipi_discard_fpu,
 	alpha_ipi_pause,
+	pmap_do_reactivate,
 };
 
 const char *ipinames[ALPHA_NIPIS] = {
@@ -98,6 +99,7 @@ const char *ipinames[ALPHA_NIPIS] = {
 	"synch fpu ipi",
 	"discard fpu ipi",
 	"pause ipi",
+	"pmap reactivate ipi",
 };
 
 /*
