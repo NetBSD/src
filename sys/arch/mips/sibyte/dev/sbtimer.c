@@ -1,4 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.2 2002/03/06 03:25:09 simonb Exp $ */
+/* $NetBSD: sbtimer.c,v 1.3 2002/03/06 07:47:57 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -177,6 +177,9 @@ sbtimer_clockintr(void *arg, uint32_t status, uint32_t pc)
 		printf("+");
 	cf.pc = pc;
 	cf.sr = status;
+
+	/* reset the CPU count register (used by microtime) */
+	mips3_cp0_count_write(0);
 
 	hardclock(&cf);
 }
