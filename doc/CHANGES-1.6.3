@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.124 2004/07/23 15:07:55 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.125 2004/08/13 04:39:45 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1357,3 +1357,9 @@ usr.sbin/pppd/chat/chat.c			patch
 	Fix problems when building the netbsd-1-6 branch with GCC 3.3.3.
 	[dbj, ticket #1724]
 
+
+sys/arch/sparc64/sparc64/locore.s		1.198
+
+	Change interrupt pending list end value to -1, to avoid linking an
+	interrupt handler twice.
+	[nakayama, ticket #1727]
