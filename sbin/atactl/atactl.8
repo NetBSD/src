@@ -1,4 +1,4 @@
-.\"	$NetBSD: atactl.8,v 1.10 2002/08/05 23:29:29 soren Exp $
+.\"	$NetBSD: atactl.8,v 1.11 2002/08/06 00:00:21 soren Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -105,7 +105,7 @@ Will print out if the device is in Active, Idle, or Standby power
 management mode.
 .Pp
 .Cm smart
-.Ar [enable | disable | info]
+.Ar [enable | disable | status]
 .Pp
 Controls SMART feature set of the specified device.  SMART stands for
 Self-Monitoring, Analysis, and Reporting Technology.  It provides an
@@ -124,7 +124,7 @@ be preserved by the device across power cycles.
 Disables access to SMART capabilities within the device.  Attribute values
 will be saved, and will no longer be monitored.
 .Pp
-.Ar info
+.Ar status
 .Pp
 Reports whether SMART is supported by the device, and whether SMART is
 enabled on the device (can only be determined on ATA6 or better devices).
