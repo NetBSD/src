@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.68 1997/03/10 09:34:59 mycroft Exp $
+#	$NetBSD: rc,v 1.69 1997/03/10 10:15:11 mycroft Exp $
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -149,12 +149,15 @@ fi
 nfs_locking=NO
 
 if [ "$nfs_server" = YES ] && [ -r /etc/exports ]; then
-	if [ "$nfsd_flags" = DEFAULT ]; then
-		nfsd_flags="-tun 4"
+	if [ "$mountd_flags" = DEFAULT ]; then
+		mountd_flags=""
 	fi
         rm -f /var/db/mountdtab
         echo -n > /var/db/mountdtab
         echo -n ' mountd';              mountd $mountd_flags
+	if [ "$nfsd_flags" = DEFAULT ]; then
+		nfsd_flags="-tun 4"
+	fi
         echo -n ' nfsd';                nfsd $nfsd_flags
 	nfs_locking=MAYBE
 fi
@@ -172,14 +175,14 @@ if [ "$nfs_locking" != NO ]; then
 		if [ "$statd_flags" = DEFAULT ]; then
 			statd_flags=""
 		fi
-		echo ' statd';		rpc.statd $statd_flags
+		echo -n ' statd';		rpc.statd $statd_flags
 	fi
 
 	if [ "$lockd_flags" != NO ]; then
 		if [ "$lockd_flags" = DEFAULT ]; then
 			lockd_flags=""
 		fi
-		echo ' lockd';		rpc.lockd $lockd_flags
+		echo -n ' lockd';		rpc.lockd $lockd_flags
 	fi
 fi
 
