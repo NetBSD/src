@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.55 2001/02/19 13:26:17 bjh21 Exp $
+#	$NetBSD: Makefile.arm32,v 1.56 2001/05/29 02:20:21 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -38,7 +38,7 @@ ARM32=	$S/arch/arm32
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Darm32
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Darm32
 CWARNFLAGS?=	-Werror -Wall -Wcomment -Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
 # XXX always get it right.  --thorpej 
