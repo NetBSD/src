@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/02/05 15:26:52 fredb Exp $
+#	$NetBSD: Makefile,v 1.5 2002/02/05 15:28:03 fredb Exp $
 #
 # Makefile for loadable iwm device driver kernel module
 #
@@ -29,6 +29,4 @@ iwm.o: iwm.s
 	${CPP} ${AFLAGS} ${CPPFLAGS} ${.IMPSRC} | sed -e 's/^#.*//' | \
 		${AS} -o ${.TARGET}
 
-.include <bsd.kmod.mk> 
-
-
+.include <bsd.kmod.mk>
