@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/02/09 15:57:53 tv Exp $
+#	$NetBSD: Makefile,v 1.2 1999/02/10 17:53:50 tv Exp $
 
 LIB=		bfd
 
@@ -114,10 +114,11 @@ DEFAULT_VEC.mips=	bfd_elf32_littlemips_vec # compatibility
 DEFAULT_VEC.mipseb=	bfd_elf32_bigmips_vec
 DEFAULT_VEC.mipsel=	bfd_elf32_littlemips_vec
 SELECT_VECS+=		${DEFAULT_VEC.mipseb} ${DEFAULT_VEC.mipsel} \
-			ecoff_big_vec ecoff_little_vec
+			ecoff_big_vec ecoff_little_vec mipselnetbsd_vec
 SRCS+=			cpu-mips.c elf32-mips.c coff-mips.c \
 			mips-dis.c mips-opc.c mips16-opc.c \
-			ecoff.c ecofflink.c elf32.c elf.c elflink.c dwarf2.c
+			ecoff.c ecofflink.c elf32.c elf.c elflink.c dwarf2.c \
+			mipselnetbsd.c aout32.c
 .endif
 
 ##### ns32k #####
