@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.35 1998/05/31 23:18:57 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.36 1998/07/15 17:45:52 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -204,8 +204,6 @@ file	arch/hp300/dev/md_root.c		memory_disk_hooks
 
 file	dev/cons.c
 file	dev/cninit.c
-
-file	kludge_for_in_proto.c			hy needs-flag
 
 major	{vnd = 6}
 
