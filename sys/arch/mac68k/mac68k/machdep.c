@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.2 1993/11/29 00:40:54 briggs Exp $
+ *	$Id: machdep.c,v 1.3 1993/12/15 03:27:59 briggs Exp $
  */
 
 #include "param.h"
@@ -619,7 +619,6 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Signal trampoline code is at base of user stack.
 	 */
-	/* frame->f_pc = USRSTACK - (esigcode - sigcode); */
 	frame->f_pc = (int) (((u_char *)PS_STRINGS) - (esigcode - sigcode));
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -2006,31 +2005,54 @@ likeyuhknow(void)
 		p->p_pid, p->p_comm, p->p_regs[PC], p->p_regs[SP]);*/
 }
 
-/*
- * XXX -- these functions need to be implemented
- */
 int
 ptrace_set_pc (struct proc *p, unsigned int addr)
 {
-	return EINVAL;
+  struct frame *frame = (struct frame *) 
+    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
+
+  frame->f_pc = addr & ~1;
+  return 0;
 }
 
 int
 ptrace_single_step (struct proc *p)
 {
-	return EINVAL;
+  struct frame *frame = (struct frame *) 
+    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
+
+  frame->f_sr |= PSL_T;
+  return 0;
 }
 
 int
 ptrace_getregs (struct proc *p, unsigned int *addr)
 {
-	return EINVAL;
+  u_long ipcreg[NIPCREG];
+  struct frame *frame = (struct frame *) 
+    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
+
+  bcopy (frame->f_regs, ipcreg, sizeof (frame->f_regs));
+  ipcreg[PS] = frame->f_sr;
+  ipcreg[PC] = frame->f_pc;
+  return copyout (ipcreg, addr, sizeof (ipcreg));
 }
 
 int
 ptrace_setregs (struct proc *p, unsigned int *addr)
 {
-	return EINVAL;
+  int error;
+  u_long ipcreg[NIPCREG];
+  struct frame *frame = (struct frame *) 
+    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
+
+  if (error = copyin (addr, ipcreg, sizeof(ipcreg)))
+    return error;
+
+  bcopy (ipcreg, frame->f_regs, sizeof (ipcreg));
+  frame->f_sr = (ipcreg[PS] | PSL_USERSET) &~ PSL_USERCLR;
+  frame->f_pc = ipcreg[PC];
+  return 0;
 }
 
 int

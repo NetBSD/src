@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.3 1993/12/02 06:25:10 briggs Exp $
+ *	$Id: locore.s,v 1.4 1993/12/15 03:27:56 briggs Exp $
  */
 
 #include "assym.s"
@@ -775,7 +775,8 @@ Ldorte:
 		.set	_kstack, USRSTACK  
 _Umap:		.long	0
 longscratch:	.long	0
-		.globl	_kstack, _Umap
+_esym:		.long	0
+		.globl	_kstack, _Umap, _esym
 
 /*
  * Initialization
@@ -829,6 +830,8 @@ start:
 	movw	#PSL_HIGHIPL,sr		| no interrupts
 
 | Some parameters provided by MacOS
+	movl	d3,_esym		| end of symbol table.
+	movl	_end,_esym		| (fake it for now).
 	movl	d4,_machineid		| flags to machineid (from MacOS)
 	movl	d5,_videoaddr		|   and video NuBus address
 	movl	a3,_videorowbytes	|   and bytes per row
@@ -900,7 +903,7 @@ no_serial_boot:
 /* LAK: Sysptsize is initialized at 2 in pmap.c (from param.h)   */
 /* The IO map size and NuBus map size are defined in cpu.h.      */
 	movl	_Sysptsize,d0		| initial system PT size (pages)
-	addl	#(IOMAPSIZE+NPTEPG-1)/NPTEPG+(NBMAPSIZE+NPTEPG-1)/NPTEPG,d0
+	addl	#(IIOMAPSIZE+NPTEPG-1)/NPTEPG+(NBMAPSIZE+NPTEPG-1)/NPTEPG,d0
 					| add pages for IO maps and NB maps
 	movl	#PGSHIFT,d1
 	lsll	d1,d0			| convert to bytes
@@ -993,13 +996,13 @@ List2:
 
 	movl	sp@,a1			| Get start of PM
 	movl	sp@(4),a0		| and ST
-	movl	#IOBASE,d1		| Find offset to IO space
+	movl	#INTIOBASE,d1		| Find offset to IO space
 	movl	#SG_ISHIFT,d0
 	lsrl	d0,d1			| Find which segment it is (/4M)
 	lsll	#2,d1			| 4 bytes per PTE
 	addl	d1,a1
 	addl	d1,a0
-	movl	#(IOMAPSIZE+NPTEPG-1)/NPTEPG,d0	| How many PT
+	movl	#(IIOMAPSIZE+NPTEPG-1)/NPTEPG,d0	| How many PT
 List3:					| map internal IO space
 	movl	d4,a0@+			| d3 and d4 are still correct
 	movl	d3,a1@+			| Really. I swear to god.
@@ -1102,8 +1105,8 @@ Lipt3:
 	addl	sp@,d7			| + start of kernel PT = start of IO
 	movl	d7,a0
 	movl	a0,a2			| ptr to end of PTEs to init
-	addl	#IOMAPSIZE*4,a2		| # of PTE to initialize
-	movl	#IOBASE,d1		| Start of IO space
+	addl	#IIOMAPSIZE*4,a2		| # of PTE to initialize
+	movl	#INTIOBASE,d1		| Start of IO space
 	andl	#PG_FRAME,d1		| Round to a page frame
 	orl	#PG_RW+PG_CI+PG_V,d1	| create proto PTE
 Lipt4:
@@ -1112,7 +1115,7 @@ Lipt4:
 	cmpl	a2,a0			| done yet?
 	jcs	Lipt4			| no, keep going
 /* record base KVA of IO spaces (they are mapped PA == VA) */
-	movl	#IOBASE,d0
+	movl	#INTIOBASE,d0
 	movl	d0,_intiobase
 	movl	#NBBASE,d0		| base of NuBus
 	movl	d0,_extiobase		| and record
@@ -1124,7 +1127,7 @@ Lipt4:
 /* This section wasn't here at all.  How did they initialize their EIO */
 /* space? (BARF) */
 	movl	_Sysptsize,d0		| initial system PT size (pages)
-	addl	#(IOMAPSIZE+NPTEPG-1)/NPTEPG,d0 | start of nubus PT
+	addl	#(IIOMAPSIZE+NPTEPG-1)/NPTEPG,d0 | start of nubus PT
 	movl	#PGSHIFT,d1		| PT to bytes
 	lsll	d1,d0			| # of page tables
 	movl	d0,a0
@@ -1277,8 +1280,8 @@ Lclru1:
 	.text
 _icode:
 	clrl	sp@-
-	pea	pc@((argv-.)+2)
-	pea	pc@((init-.)+2)
+	pea	pc@((argv-.)-2)
+	pea	pc@((init-.)-2)
 	clrl	sp@-
 	moveq	#SYS_execve,d0
 	trap	#0

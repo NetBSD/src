@@ -39,7 +39,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.2 1993/11/29 00:41:06 briggs Exp $
+ *	$Id: trap.c,v 1.3 1993/12/15 03:28:05 briggs Exp $
  */
 
 #include "param.h"
@@ -56,15 +56,15 @@
 #include "ktrace.h"
 #endif
 
-#include "../include/psl.h"
-#include "../include/trap.h"
-#include "../include/cpu.h"
-#include "../include/reg.h"
-#include "../include/mtpr.h"
+#include "machine/psl.h"
+#include "machine/trap.h"
+#include "machine/cpu.h"
+#include "machine/reg.h"
+#include "machine/mtpr.h"
 
 #include "vm/vm.h"
 #include "vm/pmap.h"
-#include "vmmeter.h"
+#include "sys/vmmeter.h"
 
 extern int dbg_flg;
 
@@ -134,11 +134,21 @@ trap(type, code, v, frame)
 	int s;
 
 	cnt.v_trap++;
+
 	syst = p->p_stime;
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
 		p->p_regs = frame.f_regs;
 	}
+
+#if DDB
+	if (type == T_TRAP15 || type == T_TRACE) {
+printf("kernel trap: calling kdb_trap(%d, &frame).\n", type);
+		if (kdb_trap(type, &frame))
+			return;
+	}
+#endif
+
 	switch (type) {
 
 	default:
