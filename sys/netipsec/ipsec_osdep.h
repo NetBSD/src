@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.5 2004/01/16 09:50:40 scw Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.6 2004/01/20 22:55:14 jonathan Exp $	*/
 
 #ifndef NETIPSEC_OSDEP_H
 #define NETIPSEC_OSDEP_H
@@ -240,6 +240,68 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 #ifdef __NetBSD__
 #define INITFN extern
 #endif
+
+/*
+ * 12. IPv6 support, and "generic" inpcb vs. IPv4 pcb vs. IPv6 pcb.
+ * To IPv6 V4-mapped addresses (and the KAME-derived implementation
+ * of IPv6 v4-mapped addresses)  we must support limited polymorphism:
+ * partway down the stack we detect an IPv6 protocol address is really
+ * a mapped V4 address, and then start dispatching that address to
+ * native IPv4 PCB lookup. In KAME-derived IPsec (including fas-ipsec)
+ * some functions must handle arguments which (dynamically) may be either
+ * a IPv4 pcb (struct inpcb *) or an IPv6 pcb (struct in6pcb *).
+ *
+ * In FreeBSD 4.x, sgtrucr in6pcb is syntactic sugar for struct inpcb,
+ * so punning between struct inpcb* and struct in6pcb* is trivial.
+ * NetBSD until recently used completely different structs for IPv4
+ * and IPv6 PCBs. To simplify fast-ipsec coexisting with IPv6,
+ * NetBSD's struct inpcb and struct in6pcb were changed to both have
+ * common struct, struct inpcb_hdr, as their first member.  NetBSD can
+ * thus pass arguments as struct inpcb_hdr*, and dispatch on a v4/v6
+ * flag in the inpcb_hdr at runtime. 
+ *
+ * We hide the NetBSD-vs-FreeBSD differences inside the following abstraction:
+ *
+ *  PCB_T:  a macro name for a struct type which is used as a "generic"
+ *      argument for actual arguments  an in4pcb or an in6pcb.
+ *
+ * PCB_FAMILY(p): given a "generic" pcb_t p, returns the protocol
+ *	family (AF_INET, AF_INET6) of the unperlying inpcb/in6pcb.
+ *
+ * PCB_TO_IN4PCB(p): given generic pcb_t *p, returns a struct inpcb *
+ * PCB_TO_IN6PCB(p): given generic pcb_t *p, returns a struct in6pcb *
+ *
+ * IN4PCB_TO_PCB(inp):  given a struct inpcb *inp,   returns a pcb_t *
+ * IN6PCB_TO_PCB(in6p): given a struct in6pcb *in6p, returns a pcb_t *
+ */
+#ifdef __FreeBSD__
+#define PCB_T		struct inpcb
+#define PCB_FAMILY(p)	((p)->inp_socket->so_proto->pr_domain->dom_family)
+
+/* Convert generic pcb to IPv4/IPv6 pcb */
+#define PCB_TO_IN4PCB(p) (p)
+#define PCB_TO_IN6PCB(p) (p)
+
+/* Convert IPv4/IPv6 pcb to generic pcb, for callers of fast-ipsec */
+#define IN4PCB_TO_PCB(p) (p)
+#define IN6PCB_TO_PCB(p) (p)
+#endif	/* __FreeBSD__ */
+
+#ifdef __NetBSD__
+#ifndef notyet
+#  define PCB_T		struct inpcb_hdr
+#  define PCB_FAMILY(p)	((p)->inph_af)
+#else
+#  define PCB_T		struct inpcb
+#  define PCB_FAMILY(p)	((p)->inp_head.inph_af)
+#endif 
+
+#define PCB_TO_IN4PCB(p) ((struct inpcb *)(p))
+#define PCB_TO_IN6PCB(p) ((struct in6pcb *)(p))
+
+#define IN4PCB_TO_PCB(p) ((PCB_T *)(&(p)->inp_head))
+#define IN6PCB_TO_PCB(p) ((PCB_T *)(&(p)->in6p_head))
+#endif	/* __NetBSD__ */
 
 /*
  * Differences that we don't attempt to hide:
