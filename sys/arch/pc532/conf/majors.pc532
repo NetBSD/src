@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pc532,v 1.1.2.2 2002/05/30 07:14:49 gehenna Exp $
+#	$NetBSD: majors.pc532,v 1.1.2.3 2002/07/15 00:33:00 gehenna Exp $
 #
 # Device majors for pc532
 #
@@ -32,3 +32,4 @@ device-major	rnd		char 29			rnd
 device-major	scsibus		char 30			scsibus
 device-major	raid		char 31  block 13	raid
 device-major	clockctl	char 32			clockctl
+device-major	systrace	char 33			systrace

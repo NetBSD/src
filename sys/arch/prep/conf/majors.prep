@@ -1,4 +1,4 @@
-#	$NetBSD: majors.prep,v 1.1.2.2 2002/05/30 07:14:50 gehenna Exp $
+#	$NetBSD: majors.prep,v 1.1.2.3 2002/07/15 00:33:14 gehenna Exp $
 #
 # Device majors for prep
 #
@@ -61,3 +61,4 @@ device-major	isdntel		char 70			isdntel
 device-major	wsfont		char 71			wsfont
 device-major	pci		char 72			pci
 device-major	clockctl	char 73			clockctl
+device-major	systrace	char 74			systrace

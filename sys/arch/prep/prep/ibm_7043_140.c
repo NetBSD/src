@@ -1,7 +1,7 @@
-/*      $NetBSD: ibm_machdep.c,v 1.5.2.1 2002/07/15 00:33:17 gehenna Exp $        */
+/*	$NetBSD: ibm_7043_140.c,v 1.1.6.2 2002/07/15 00:33:16 gehenna Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,41 +36,70 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_platform.h"
+#include "opt_openpic.h"
+#if !defined(OPENPIC)
+#error RS/6000 43P 7043-140 require "options OPENPIC" in kernel config file!
+#endif
+
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/platform.h>
 
-static struct platform *platform_ibm[] = {
-#if defined(PLATFORM_IBM_6050)
-	&platform_ibm_6050,
-#endif
-#if defined(PLATFORM_IBM_7248)
-	&platform_ibm_7248,
-#endif
-#if defined(PLATFORM_IBM_7043_140)
-	&platform_ibm_7043_140,
-#endif
-	NULL
-};
+#include <powerpc/openpic.h>
 
-struct plattab plattab_ibm = {
-	platform_ibm,	sizeof(platform_ibm)/sizeof(platform_ibm[0]) - 1
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
+
+void pci_intr_fixup_ibm_7043_140(int, int, int *);
+void init_intr_mpic(void);
+
+struct platform platform_ibm_7043_140 = {
+	"IBM Model 7042/7043 (ED)",		/* model */
+	platform_generic_match,			/* match */
+	prep_pci_get_chipset_tag_indirect,	/* pci_get_chipset_tag */
+	pci_intr_fixup_ibm_7043_140,		/* pci_intr_fixup */
+	init_intr_mpic,				/* init_intr */
+	cpu_setup_unknown,			/* cpu_setup */
+	reset_prep_generic,			/* reset */
+	obiodevs_nodev,				/* obiodevs */
 };
 
 void
-cpu_setup_ibm_generic(struct device *dev)
+pci_intr_fixup_ibm_7043_140(int bus, int dev, int *line)
 {
-	u_char l2ctrl, cpuinf;
 
-	/* system control register */
-	l2ctrl = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x81c);
-	/* device status register */
-	cpuinf = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x80c);
+	if (*line >= 1 && *line < OPENPIC_INTR_NUM - 3)
+		*line += I8259_INTR_NUM;
+}
 
-	/* Enable L2 cache */
-	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x81c) = l2ctrl | 0xc0;
+void
+init_intr_mpic(void)
+{
+	unsigned char *baseaddr = (unsigned char *)0xC0006800;	/* XXX */
+#if NPCI > 0
+	struct prep_pci_chipset pc;
+	pcitag_t tag;
+	pcireg_t id, address;
+
+	(*platform->pci_get_chipset_tag)(&pc);
+
+	tag = pci_make_tag(&pc, 0, 13, 0);
+	id = pci_conf_read(&pc, tag, PCI_ID_REG);
+
+	if (PCI_VENDOR(id) == PCI_VENDOR_IBM
+	    && PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC) {
+		address = pci_conf_read(&pc, tag, 0x10);
+		if ((address & PCI_MAPREG_TYPE_MASK) == PCI_MAPREG_TYPE_MEM) {
+			address &= PCI_MAPREG_MEM_ADDR_MASK;
+			baseaddr = (unsigned char *)(PREP_BUS_SPACE_MEM | address);
+		}
+	}
+#endif
+
+	openpic_init(baseaddr);
 }

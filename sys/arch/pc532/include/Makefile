@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.14.1 2002/05/19 08:31:25 gehenna Exp $
+#	$NetBSD: Makefile,v 1.12.14.2 2002/07/15 00:33:01 gehenna Exp $
 
 KDIR=	/sys/arch/pc532/include
 INCSDIR= /usr/include/pc532
@@ -11,6 +11,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	float.h fpu.h frame.h \
 	icu.h ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
+	intr.h \
 	jmpbuf.h \
 	kcore.h \
 	limits.h lock.h \
