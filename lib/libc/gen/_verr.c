@@ -9,6 +9,7 @@
 __indr_reference(_verr, verr);
 #else
 
+#define	__NO_NAMESPACE_H	/* XXX */
 #define _verr	verr
 #define rcsid	_rcsid
 #include "verr.c"
