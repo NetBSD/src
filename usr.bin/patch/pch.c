@@ -1,7 +1,7 @@
-/*	$NetBSD: pch.c,v 1.16 2003/05/30 18:14:13 kristerw Exp $	*/
+/*	$NetBSD: pch.c,v 1.17 2003/06/01 22:04:29 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pch.c,v 1.16 2003/05/30 18:14:13 kristerw Exp $");
+__RCSID("$NetBSD: pch.c,v 1.17 2003/06/01 22:04:29 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -27,7 +27,7 @@ static LINENUM p_input_line = 0;	/* current line # from patch file */
 static char **p_line = NULL;		/* the text of the hunk */
 static size_t *p_len = NULL;		/* length of each line */
 static char *p_char = NULL;		/* +, -, and ! */
-static int hunkmax = INITHUNKMAX;	/* size of above arrays to begin with */
+static int hunkmax = INITHUNKMAX;	/* size of above arrays */
 static int p_indent;			/* indent to patch */
 static long p_base;			/* where to intuit this time */
 static LINENUM p_bline;			/* line # of p_base */
@@ -73,7 +73,7 @@ open_patch_file(char *filename)
 		pfatal("patch file %s not found", filename);
 	Fstat(fileno(pfp), &filestat);
 	p_filesize = filestat.st_size;
-	next_intuit_at(0L,1);			/* start at the beginning */
+	next_intuit_at(0L, 1);			/* start at the beginning */
 	set_hunkmax();
 }
 
@@ -121,10 +121,11 @@ there_is_another_patch(void)
 	if (!diff_type) {
 		if (p_base != 0L) {
 			if (verbose)
-				say("  Ignoring the trailing garbage.\ndone\n");
-		}
-		else
-			say("  I can't seem to find a patch in there anywhere.\n");
+				say("  Ignoring the trailing garbage.\n"
+				    "done\n");
+		} else
+			say("  I can't seem to find a patch in there"
+			    " anywhere.\n");
 		return FALSE;
 	}
 	if (verbose)
@@ -138,8 +139,8 @@ there_is_another_patch(void)
 		    "an ed script" );
 	if (p_indent && verbose)
 		say("(Patch is indented %d space%s.)\n",
-		    p_indent, p_indent==1?"":"s");
-	skip_to(p_start,p_sline);
+		    p_indent, p_indent == 1 ? "" : "s");
+	skip_to(p_start, p_sline);
 	while (filearg[0] == NULL) {
 		if (force || batch) {
 			say("No file to patch.  Skipping...\n");
@@ -156,9 +157,8 @@ there_is_another_patch(void)
 		}
 		if (filearg[0] == NULL) {
 			ask("No file found--skip this patch? [n] ");
-			if (*buf != 'y') {
+			if (*buf != 'y')
 				continue;
-			}
 			if (verbose)
 				say("Skipping patch...\n");
 			filearg[0] = fetchname(bestguess, 0, TRUE);
@@ -213,8 +213,7 @@ intuit_diff_type(void)
 				p_sline = fcl_line;
 				retval = ED_DIFF;
 				goto scan_exit;
-			}
-			else {
+			} else {
 				p_start = this_line;
 				p_sline = p_input_line;
 				retval = 0;
@@ -227,9 +226,11 @@ intuit_diff_type(void)
 			else
 				indent++;
 		}
-		for (t=s; isdigit((unsigned char)*t) || *t == ','; t++) ; 
-		this_is_a_command = (isdigit((unsigned char)*s) &&
-				     (*t == 'd' || *t == 'c' || *t == 'a') );
+		for (t = s; isdigit((unsigned char)*t) || *t == ','; t++)
+			;
+		this_is_a_command =
+		    isdigit((unsigned char)*s) &&
+		    (*t == 'd' || *t == 'c' || *t == 'a');
 		if (first_command_line < 0L && this_is_a_command) { 
 			first_command_line = this_line;
 			fcl_line = p_input_line;
@@ -268,7 +269,7 @@ intuit_diff_type(void)
 		}
 		if ((!diff_type || diff_type == UNI_DIFF) &&
 		    strnEQ(s, "@@ -", 4)) {
-			if (!atol(s+3))
+			if (!atol(s + 3))
 				ok_to_create_file = TRUE;
 			p_indent = indent;
 			p_start = this_line;
@@ -280,7 +281,7 @@ intuit_diff_type(void)
 		if ((!diff_type || diff_type == CONTEXT_DIFF) &&
 		    stars_last_line &&
 		    strnEQ(s, "*** ", 4)) {
-			if (!atol(s+4))
+			if (!atol(s + 4))
 				ok_to_create_file = TRUE;
 			/*
 			 * If this is a new context diff the character just
@@ -291,7 +292,7 @@ intuit_diff_type(void)
 			p_indent = indent;
 			p_start = previous_line;
 			p_sline = p_input_line - 1;
-			retval = (*(s-1) == '*' ?
+			retval = (*(s - 1) == '*' ?
 				  NEW_CONTEXT_DIFF : CONTEXT_DIFF);
 			goto scan_exit;
 		}
@@ -397,7 +398,8 @@ skip_to(long file_pos, LINENUM file_line)
 		fatal("seeked too far %ld > %ld\n", p_base, file_pos);
 	if (verbose && p_base < file_pos) {
 		Fseek(pfp, p_base, 0);
-		say("The text leading up to this was:\n--------------------------\n");
+		say("The text leading up to this was:\n"
+		    "--------------------------\n");
 		while (ftell(pfp) < file_pos) {
 			ret = fgets(buf, sizeof buf, pfp);
 			if (ret == NULL)
@@ -531,26 +533,28 @@ another_hunk(void)
 		}
 		context = 0;
 		p_line[p_end] = xstrdup(buf);
-		for (s=buf; *s && !isdigit((unsigned char)*s); s++) ;
+		for (s = buf; *s && !isdigit((unsigned char)*s); s++)
+			;
 		if (!*s)
-		    malformed ();
-		if (strnEQ(s,"0,0",3))
-		    strcpy(s,s+2);
+		    malformed();
+		if (strnEQ(s, "0,0", 3))
+		    strcpy(s, s + 2);
 		p_first = atoi(s);
-		while (isdigit((unsigned char)*s)) s++;
+		while (isdigit((unsigned char)*s))
+			s++;
 		if (*s == ',') {
-		    for (; *s && !isdigit((unsigned char)*s); s++) ;
+		    for (; *s && !isdigit((unsigned char)*s); s++)
+			    ;
 		    if (!*s)
-			malformed ();
+			malformed();
 		    p_ptrn_lines = atoi(s) - p_first + 1;
-		}
-		else if (p_first)
+		} else if (p_first)
 		    p_ptrn_lines = 1;
 		else {
 		    p_ptrn_lines = 0;
 		    p_first = 1;
 		}
-		p_max = p_ptrn_lines + 6;	/* we need this much at least */
+		p_max = p_ptrn_lines + 6;  /* we need this much at least */
 		while (p_max >= hunkmax)
 		    grow_hunkmax();
 		p_max = hunkmax;
@@ -558,8 +562,8 @@ another_hunk(void)
 	    case '-':
 		if (buf[1] == '-') {
 		    if (repl_beginning ||
-			(p_end != p_ptrn_lines + 1 + (p_char[p_end-1] == '\n')))
-		    {
+			(p_end !=
+			     p_ptrn_lines + 1 + (p_char[p_end - 1] == '\n'))) {
 			if (p_end == 1) {
 			    /* `old' lines were omitted - set up to fill */
 			    /* them in from 'new' context lines. */
@@ -567,24 +571,23 @@ another_hunk(void)
 			    fillsrc = p_end + 1;
 			    filldst = 1;
 			    fillcnt = p_ptrn_lines;
-			}
-			else {
+			} else {
 			    if (repl_beginning) {
-				if (repl_could_be_missing){
+				if (repl_could_be_missing) {
 				    repl_missing = TRUE;
 				    goto hunk_done;
 				}
-				fatal(
-"duplicate \"---\" at line %d--check line numbers at line %d\n",
-				    p_input_line, p_hunk_beg + repl_beginning);
-			    }
-			    else {
-				fatal(
-"%s \"---\" at line %d--check line numbers at line %d\n",
-				    (p_end <= p_ptrn_lines
-					? "Premature"
-					: "Overdue" ),
-				    p_input_line, p_hunk_beg);
+				fatal("duplicate \"---\" at line %d"
+				      "--check line numbers at line %d\n",
+				      p_input_line,
+				      p_hunk_beg + repl_beginning);
+			    } else {
+				fatal("%s \"---\" at line %d"
+				      "--check line numbers at line %d\n",
+				      (p_end <= p_ptrn_lines
+				       ? "Premature"
+				       : "Overdue" ),
+				      p_input_line, p_hunk_beg);
 			    }
 			}
 		    }
@@ -593,18 +596,20 @@ another_hunk(void)
 		    repl_patch_line = p_input_line;
 		    p_line[p_end] = xstrdup(buf);
 		    p_char[p_end] = '=';
-		    for (s=buf; *s && !isdigit((unsigned char)*s); s++) ;
+		    for (s = buf; *s && !isdigit((unsigned char)*s); s++)
+			    ;
 		    if (!*s)
-			malformed ();
+			malformed();
 		    p_newfirst = atoi(s);
-		    while (isdigit((unsigned char)*s)) s++;
+		    while (isdigit((unsigned char)*s))
+			    s++;
 		    if (*s == ',') {
-			for (; *s && !isdigit((unsigned char)*s); s++) ;
+			for (; *s && !isdigit((unsigned char)*s); s++)
+				;
 			if (!*s)
-			    malformed ();
+			    malformed();
 			p_repl_lines = atoi(s) - p_newfirst + 1;
-		    }
-		    else if (p_newfirst)
+		    } else if (p_newfirst)
 			p_repl_lines = 1;
 		    else {
 			p_repl_lines = 0;
@@ -617,18 +622,19 @@ another_hunk(void)
 		    while (p_max >= hunkmax)
 			grow_hunkmax();
 		    if (p_repl_lines != ptrn_copiable
-		     && (p_context != 0 || p_repl_lines != 1))
+			&& (p_context != 0 || p_repl_lines != 1))
 			repl_could_be_missing = FALSE;
 		    break;
 		}
 		goto change_line;
 	    case '+':  case '!':
 		repl_could_be_missing = FALSE;
-	      change_line:
+	    change_line:
 		if (buf[1] == '\n' && canonicalize)
-		    strcpy(buf+1," \n");
-		if (!isspace((unsigned char)buf[1]) && buf[1] != '>' && buf[1] != '<' &&
-		  repl_beginning && repl_could_be_missing) {
+		    strcpy(buf + 1," \n");
+		if (!isspace((unsigned char)buf[1]) &&
+		    buf[1] != '>' && buf[1] != '<' &&
+		    repl_beginning && repl_could_be_missing) {
 		    repl_missing = TRUE;
 		    goto hunk_done;
 		}
@@ -637,7 +643,7 @@ another_hunk(void)
 			p_context = context;
 		    context = -1000;
 		}
-		p_line[p_end] = xstrdup(buf+2);
+		p_line[p_end] = xstrdup(buf + 2);
 		if (p_end == p_ptrn_lines)
 		{
 			if (remove_special_line()) {
@@ -650,7 +656,7 @@ another_hunk(void)
 		break;
 	    case '\t': case '\n':	/* assume the 2 spaces got eaten */
 		if (repl_beginning && repl_could_be_missing &&
-		  (!ptrn_spaces_eaten || diff_type == NEW_CONTEXT_DIFF) ) {
+		    (!ptrn_spaces_eaten || diff_type == NEW_CONTEXT_DIFF)) {
 		    repl_missing = TRUE;
 		    goto hunk_done;
 		}
@@ -665,21 +671,21 @@ another_hunk(void)
 		break;
 	    case ' ':
 		if (!isspace((unsigned char)buf[1]) &&
-		  repl_beginning && repl_could_be_missing) {
+		    repl_beginning && repl_could_be_missing) {
 		    repl_missing = TRUE;
 		    goto hunk_done;
 		}
 		context++;
 		if (!repl_beginning)
 		    ptrn_copiable++;
-		p_line[p_end] = xstrdup(buf+2);
+		p_line[p_end] = xstrdup(buf + 2);
 		break;
 	    default:
 		if (repl_beginning && repl_could_be_missing) {
 		    repl_missing = TRUE;
 		    goto hunk_done;
 		}
-		malformed ();
+		malformed();
 	    }
 	    /* set up p_len for strncmp() so we don't have to */
 	    /* assume null termination */
@@ -690,17 +696,16 @@ another_hunk(void)
 	}
 	
     hunk_done:
-	if (p_end >=0 && !repl_beginning)
+	if (p_end >= 0 && !repl_beginning)
 	    fatal("no --- found in patch at line %d\n", pch_hunk_beg());
 
-	if (repl_missing) {
-	    
+	if (repl_missing) {	    
 	    /* reset state back to just after --- */
 	    p_input_line = repl_patch_line;
 	    for (p_end--; p_end > repl_beginning; p_end--)
 		free(p_line[p_end]);
 	    Fseek(pfp, repl_backtrack_position, 0);
-	    
+
 	    /* redundant 'new' context lines were omitted - set */
 	    /* up to fill them in from the old file context */
 	    if (!p_context && p_repl_lines == 1) {
@@ -708,17 +713,16 @@ another_hunk(void)
 		p_max--;
 	    }
 	    fillsrc = 1;
-	    filldst = repl_beginning+1;
+	    filldst = repl_beginning + 1;
 	    fillcnt = p_repl_lines;
 	    p_end = p_max;
-	}
-	else if (!p_context && fillcnt == 1) {
+	} else if (!p_context && fillcnt == 1) {
 	    /* the first hunk was a null hunk with no context */
 	    /* and we were expecting one line -- fix it up. */
 	    while (filldst < p_end) {
-		p_line[filldst] = p_line[filldst+1];
-		p_char[filldst] = p_char[filldst+1];
-		p_len[filldst] = p_len[filldst+1];
+		p_line[filldst] = p_line[filldst + 1];
+		p_char[filldst] = p_char[filldst + 1];
+		p_len[filldst] = p_len[filldst + 1];
 		filldst++;
 	    }
 #if 0
@@ -731,12 +735,12 @@ another_hunk(void)
 	}
 
 	if (diff_type == CONTEXT_DIFF &&
-	  (fillcnt || (p_first > 1 && ptrn_copiable > 2*p_context)) ) {
+	    (fillcnt || (p_first > 1 && ptrn_copiable > 2 * p_context))) {
 	    if (verbose)
-		say("%s\n%s\n%s\n",
-"(Fascinating--this is really a new-style context diff but without",
-"the telltale extra asterisks on the *** line that usually indicate",
-"the new style...)");
+		say("%s\n",
+		    "(Fascinating--this is really a new-style context diff"
+		    "but without\nthe telltale extra asterisks on the *** "
+		    "line that usually indicate\nthe new style...)");
 	    diff_type = NEW_CONTEXT_DIFF;
 	}
 	
@@ -748,20 +752,21 @@ another_hunk(void)
 		while (fillsrc <= p_end && p_char[fillsrc] != ' ')
 		    fillsrc++;
 		if (fillsrc > p_end)
-		    fatal("replacement text or line numbers mangled in hunk at line %d\n",
-			p_hunk_beg);
+		    fatal("replacement text or line numbers mangled in"
+			  " hunk at line %d\n",
+			  p_hunk_beg);
 		p_line[filldst] = p_line[fillsrc];
 		p_char[filldst] = p_char[fillsrc];
 		p_len[filldst] = p_len[fillsrc];
 		fillsrc++; filldst++;
 	    }
 	    while (fillsrc <= p_end && fillsrc != repl_beginning &&
-	      p_char[fillsrc] != ' ')
+		   p_char[fillsrc] != ' ')
 		fillsrc++;
 #ifdef DEBUGGING
 	    if (debug & 64)
-		printf("fillsrc %d, filldst %d, rb %d, e+1 %d\n",
-		    fillsrc,filldst,repl_beginning,p_end+1);
+		printf("fillsrc %d, filldst %d, rb %d, e %d\n",
+		    fillsrc, filldst, repl_beginning, p_end);
 #endif
 	    if (fillsrc != p_end + 1 && fillsrc != repl_beginning)
 		malformed();
@@ -776,8 +781,7 @@ another_hunk(void)
 			(p_line[p_end])[p_len[p_end]] = 0;
 		}
 	}
-    }
-    else if (diff_type == UNI_DIFF) {
+    } else if (diff_type == UNI_DIFF) {
 	long line_beginning = ftell(pfp);
 					/* file pos of the current line */
 	LINENUM fillsrc;		/* index of old lines */
@@ -790,29 +794,35 @@ another_hunk(void)
 	    next_intuit_at(line_beginning,p_input_line);
 	    return FALSE;
 	}
-	s = buf+4;
+	s = buf + 4;
 	if (!*s)
-	    malformed ();
+	    malformed();
 	p_first = atoi(s);
-	while (isdigit((unsigned char)*s)) s++;
+	while (isdigit((unsigned char)*s))
+		s++;
 	if (*s == ',') {
 	    p_ptrn_lines = atoi(++s);
-	    while (isdigit((unsigned char)*s)) s++;
+	    while (isdigit((unsigned char)*s))
+		    s++;
 	} else
 	    p_ptrn_lines = 1;
-	if (*s == ' ') s++;
+	if (*s == ' ')
+		s++;
 	if (*s != '+' || !*++s)
-	    malformed ();
+	    malformed();
 	p_newfirst = atoi(s);
-	while (isdigit((unsigned char)*s)) s++;
+	while (isdigit((unsigned char)*s))
+		s++;
 	if (*s == ',') {
 	    p_repl_lines = atoi(++s);
-	    while (isdigit((unsigned char)*s)) s++;
+	    while (isdigit((unsigned char)*s))
+		    s++;
 	} else
 	    p_repl_lines = 1;
-	if (*s == ' ') s++;
+	if (*s == ' ')
+		s++;
 	if (*s != '@')
-	    malformed ();
+	    malformed();
 	if (!p_ptrn_lines)
 	    p_first++;			/* do append rather than insert */
 	p_max = p_ptrn_lines + p_repl_lines + 1;
@@ -821,10 +831,11 @@ another_hunk(void)
 	fillsrc = 1;
 	filldst = fillsrc + p_ptrn_lines;
 	p_end = filldst + p_repl_lines;
-	Sprintf(buf,"*** %d,%d ****\n",p_first,p_first + p_ptrn_lines - 1);
+	Sprintf(buf, "*** %d,%d ****\n", p_first, p_first + p_ptrn_lines - 1);
 	p_line[0] = xstrdup(buf);
 	p_char[0] = '*';
-        Sprintf(buf,"--- %d,%d ----\n",p_newfirst,p_newfirst+p_repl_lines-1);
+        Sprintf(buf, "--- %d,%d ----\n", p_newfirst,
+		p_newfirst + p_repl_lines - 1);
 	p_line[filldst] = xstrdup(buf);
 	p_char[filldst++] = '=';
 	p_context = 100;
@@ -844,17 +855,16 @@ another_hunk(void)
 	    if (*buf == '\t' || *buf == '\n') {
 		ch = ' ';		/* assume the space got eaten */
 		s = xstrdup(buf);
-	    }
-	    else {
+	    } else {
 		ch = *buf;
-		s = xstrdup(buf+1);
+		s = xstrdup(buf + 1);
 	    }
 	    switch (ch) {
 	    case '-':
 		if (fillsrc > p_ptrn_lines) {
 		    free(s);
-		    p_end = filldst-1;
-		    malformed ();
+		    p_end = filldst - 1;
+		    malformed();
 		}
 		p_char[fillsrc] = ch;
 		p_line[fillsrc] = s;
@@ -874,8 +884,8 @@ another_hunk(void)
 		    free(s);
 		    while (--filldst > p_ptrn_lines)
 			free(p_line[filldst]);
-		    p_end = fillsrc-1;
-		    malformed ();
+		    p_end = fillsrc - 1;
+		    malformed();
 		}
 		context++;
 		p_char[fillsrc] = ch;
@@ -888,8 +898,8 @@ another_hunk(void)
 		    free(s);
 		    while (--filldst > p_ptrn_lines)
 			free(p_line[filldst]);
-		    p_end = fillsrc-1;
-		    malformed ();
+		    p_end = fillsrc - 1;
+		    malformed();
 		}
 		p_char[filldst] = ch;
 		p_line[filldst] = s;
@@ -903,7 +913,7 @@ another_hunk(void)
 		break;
 	    default:
 		p_end = filldst;
-		malformed ();
+		malformed();
 	    }
 	    if (ch != ' ' && context > 0) {
 		if (context < p_context)
@@ -911,8 +921,7 @@ another_hunk(void)
 		context = -1000;
 	    }
 	}/* while */
-    }
-    else {				/* normal diff--fake it up */
+    } else {				/* normal diff--fake it up */
 	char hunk_type;
 	int i;
 	LINENUM min, max;
@@ -922,22 +931,24 @@ another_hunk(void)
 	ret = pgets(buf, sizeof buf, pfp);
 	p_input_line++;
 	if (ret == NULL || !isdigit((unsigned char)*buf)) {
-	    next_intuit_at(line_beginning,p_input_line);
+	    next_intuit_at(line_beginning, p_input_line);
 	    return FALSE;
 	}
 	p_first = atoi(buf);
-	for (s=buf; isdigit((unsigned char)*s); s++) ;
+	for (s = buf; isdigit((unsigned char)*s); s++)
+		;
 	if (*s == ',') {
 	    p_ptrn_lines = atoi(++s) - p_first + 1;
-	    while (isdigit((unsigned char)*s)) s++;
-	}
-	else
+	    while (isdigit((unsigned char)*s))
+		    s++;
+	} else
 	    p_ptrn_lines = (*s != 'a');
 	hunk_type = *s;
 	if (hunk_type == 'a')
 	    p_first++;			/* do append rather than insert */
 	min = atoi(++s);
-	for (; isdigit((unsigned char)*s); s++) ;
+	for (; isdigit((unsigned char)*s); s++)
+		;
 	if (*s == ',')
 	    max = atoi(++s);
 	else
@@ -955,22 +966,22 @@ another_hunk(void)
 	Sprintf(buf, "*** %d,%d\n", p_first, p_first + p_ptrn_lines - 1);
 	p_line[0] = xstrdup(buf);
 	p_char[0] = '*';
-	for (i=1; i<=p_ptrn_lines; i++) {
+	for (i = 1; i <= p_ptrn_lines; i++) {
 	    ret = pgets(buf, sizeof buf, pfp);
 	    p_input_line++;
 	    if (ret == NULL)
 		fatal("unexpected end of file in patch at line %d\n",
-		  p_input_line);
+		      p_input_line);
 	    if (*buf != '<')
 		fatal("< expected at line %d of patch\n", p_input_line);
-	    p_line[i] = xstrdup(buf+2);
+	    p_line[i] = xstrdup(buf + 2);
 	    p_len[i] = strlen(p_line[i]);
 	    p_char[i] = '-';
 	}
 
 	if (remove_special_line()) {
-		p_len[i-1] -= 1;
-		(p_line[i-1])[p_len[i-1]] = 0;
+		p_len[i - 1] -= 1;
+		(p_line[i - 1])[p_len[i - 1]] = 0;
 	}
 
 	if (hunk_type == 'c') {
@@ -985,7 +996,7 @@ another_hunk(void)
 	Sprintf(buf, "--- %d,%d\n", min, max);
 	p_line[i] = xstrdup(buf);
 	p_char[i] = '=';
-	for (i++; i<=p_end; i++) {
+	for (i++; i <= p_end; i++) {
 	    ret = pgets(buf, sizeof buf, pfp);
 	    p_input_line++;
 	    if (ret == NULL)
@@ -993,14 +1004,14 @@ another_hunk(void)
 		    p_input_line);
 	    if (*buf != '>')
 		fatal("> expected at line %d of patch\n", p_input_line);
-	    p_line[i] = xstrdup(buf+2);
+	    p_line[i] = xstrdup(buf + 2);
 	    p_len[i] = strlen(p_line[i]);
 	    p_char[i] = '+';
 	}
 
 	if (remove_special_line()) {
-		p_len[i-1] -= 1;
-		(p_line[i-1])[p_len[i-1]] = 0;
+		p_len[i - 1] -= 1;
+		(p_line[i - 1])[p_len[i - 1]] = 0;
 	}
     }
     if (reverse)			/* backwards patch? */
@@ -1011,7 +1022,7 @@ another_hunk(void)
 	int i;
 	char special;
 
-	for (i=0; i <= p_end; i++) {
+	for (i = 0; i <= p_end; i++) {
 	    if (i == p_ptrn_lines)
 		special = '^';
 	    else
@@ -1021,8 +1032,8 @@ another_hunk(void)
 	}
     }
 #endif
-    if (p_end+1 < hunkmax)	/* paranoia reigns supreme... */
-	p_char[p_end+1] = '^';  /* add a stopper for apply_hunk */
+    if (p_end + 1 < hunkmax)	/* paranoia reigns supreme... */
+	p_char[p_end + 1] = '^';  /* add a stopper for apply_hunk */
     return TRUE;
 }
 
@@ -1037,7 +1048,7 @@ pgets(char *bf, int sz, FILE *fp)
 	int indent = 0;
 
 	if (p_indent && ret != NULL) {
-		for (s=buf;
+		for (s = buf;
 		     indent < p_indent &&
 			     (*s == ' ' || *s == '\t' || *s == 'X');
 		     s++) {
@@ -1107,7 +1118,7 @@ pch_swap(void)
 		p_efake += n;
 		p_bfake += n;
 	}
-	for (n=0; i <= p_end; i++,n++) {
+	for (n = 0; i <= p_end; i++, n++) {
 		p_line[n] = tp_line[i];
 		p_char[n] = tp_char[i];
 		if (p_char[n] == '+')
@@ -1125,7 +1136,7 @@ pch_swap(void)
 		fatal("malformed patch at line %d: expected `=' found `%c'\n",
 		    p_input_line, p_char[0]);
 	p_char[0] = '*';
-	for (s=p_line[0]; *s; s++)
+	for (s = p_line[0]; *s; s++)
 		if (*s == '-')
 			*s = '*';
 
@@ -1135,10 +1146,10 @@ pch_swap(void)
 		fatal("malformed patch at line %d: expected `*' found `%c'\n",
 		    p_input_line, tp_char[0]);
 	tp_char[0] = '=';
-	for (s=tp_line[0]; *s; s++)
+	for (s = tp_line[0]; *s; s++)
 		if (*s == '*')
 			*s = '-';
-	for (i=0; n <= p_end; i++,n++) {
+	for (i = 0; n <= p_end; i++, n++) {
 		p_line[n] = tp_line[i];
 		p_char[n] = tp_char[i];
 		if (p_char[n] == '-')
@@ -1273,11 +1284,12 @@ do_ed_script(void)
 	for (;;) {
 		beginning_of_this_line = ftell(pfp);
 		if (pgets(buf, sizeof buf, pfp) == NULL) {
-			next_intuit_at(beginning_of_this_line,p_input_line);
+			next_intuit_at(beginning_of_this_line, p_input_line);
 			break;
 		}
 		p_input_line++;
-		for (t=buf; isdigit((unsigned char)*t) || *t == ','; t++) ;
+		for (t = buf; isdigit((unsigned char)*t) || *t == ','; t++)
+			;
 		this_line_is_command = (isdigit((unsigned char)*buf) &&
 					(*t == 'd' || *t == 'c' || *t == 'a'));
 		if (this_line_is_command) {
@@ -1292,8 +1304,7 @@ do_ed_script(void)
 						break;
 				}
 			}
-		}
-		else {
+		} else {
 			next_intuit_at(beginning_of_this_line,p_input_line);
 			break;
 		}
@@ -1308,8 +1319,7 @@ do_ed_script(void)
 	if (move_file(TMPOUTNAME, outname) < 0) {
 		toutkeep = TRUE;
 		chmod(TMPOUTNAME, filemode);
-	}
-	else
+	} else
 		chmod(outname, filemode);
 	set_signals(1);
 }
