@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.15 1997/03/15 18:09:38 is Exp $ */
+/* $NetBSD: if_eh.c,v 1.16 1997/07/28 17:54:07 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -220,7 +220,8 @@ ehprobe(parent, match, aux)
 
 /* Look for a network slot interface */
 
-	if (matchpodule(pa, MANUFACTURER_ICUBED, PODULE_ICUBED_ETHERH, -1) == 0)
+	if ((matchpodule(pa, MANUFACTURER_ICUBED, PODULE_ICUBED_ETHERLAN600, -1) == 0) &&
+	   (matchpodule(pa, MANUFACTURER_ICUBED, PODULE_ICUBED_ETHERLAN600A, -1) == 0))
 		return(0);
 
 	return(1);
@@ -328,8 +329,8 @@ ehattach(parent, self, aux)
 
 	if (counter == 0) {
 		printf(": card faulty\n");
-		sc->sc_flags |= EH_BROKEN;
-		return;
+/*		sc->sc_flags |= EH_BROKEN;
+		return;*/
 	}
 
 	/* Let it sleep since we're not doing anything with it for now */
