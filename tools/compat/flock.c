@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.1 2002/01/21 20:04:37 tv Exp $	*/
+/*	$NetBSD: flock.c,v 1.2 2002/01/31 19:23:14 tv Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,13 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Emulate flock() with fcntl(), where available. */
+/*
+ * Emulate flock() with fcntl(), where available.
+ * Otherwise, don't do lokcing; just pretend success.
+ */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
-#ifndef HAVE_FLOCK
+#if !HAVE_FLOCK
 #include <errno.h>
 #include <fcntl.h>
 
