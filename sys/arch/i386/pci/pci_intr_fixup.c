@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.5 2000/04/28 17:15:15 uch Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.5.6.1 2000/07/27 02:13:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -493,7 +493,7 @@ pciintr_header_fixup(pc)
 	printf("  device vendor product pin PIRQ   IRQ stage\n");
 	printf("--------------------------------------------\n");
 #endif
-	pci_device_foreach(pc, 0, pciintr_do_header_fixup);
+	pci_device_foreach(pc, pcibios_max_bus, pciintr_do_header_fixup);
 #ifdef PCIBIOSVERBOSE
 	printf("--------------------------------------------\n");
 #endif
