@@ -388,6 +388,9 @@ obj_emit_symbols (where, symbol_rootP)
       /* Adjust the type of a weak symbol.  */
       if (S_GET_WEAK (symbolP))
 	{
+#ifdef TE_NetBSD
+	  S_SET_OTHER(symbolP, S_GET_OTHER(symbolP) | 0x20);
+#else
 	  switch (S_GET_TYPE (symbolP))
 	    {
 	    case N_UNDF: S_SET_TYPE (symbolP, N_WEAKU); break;
@@ -397,6 +400,7 @@ obj_emit_symbols (where, symbol_rootP)
 	    case N_BSS:  S_SET_TYPE (symbolP, N_WEAKB); break;
 	    default: as_bad ("%s: bad type for weak symbol", temp); break;
 	    }
+#endif
 	}
 
       obj_symbol_to_chars (where, symbolP);
