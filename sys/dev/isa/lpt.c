@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.17 1994/04/22 23:02:40 mycroft Exp $
+ *	$Id: lpt.c,v 1.18 1994/05/05 05:36:39 cgd Exp $
  */
 
 /*
@@ -124,7 +124,7 @@ struct cfdriver lptcd = {
 static int notready __P((u_char, struct lpt_softc *));
 #endif
 
-static void lptout __P((struct lpt_softc *));
+static void lptout __P((void *arg));
 static int pushbytes __P((struct lpt_softc *));
 
 /*
@@ -357,11 +357,13 @@ notready(status, sc)
 #endif
 
 void
-lptout(sc)
-	struct lpt_softc *sc;
+lptout(arg)
+	void *arg;
 {
+	struct lpt_softc *sc;
 	int s;
 
+	sc = (struct lpt_softc *)arg;
 	if (sc->sc_flags & LPT_NOINTR)
 		return;
 
@@ -369,7 +371,7 @@ lptout(sc)
 	lptintr(sc);
 	splx(s);
 
-	timeout((timeout_t)lptout, (caddr_t)sc, STEP);
+	timeout(lptout, (caddr_t)sc, STEP);
 }
 
 /*

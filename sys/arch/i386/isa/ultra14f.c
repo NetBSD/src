@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: ultra14f.c,v 1.27 1994/04/29 23:16:02 cgd Exp $
+ *      $Id: ultra14f.c,v 1.28 1994/05/05 05:36:58 cgd Exp $
  */
 
 /*
@@ -267,7 +267,7 @@ int uha_find __P((struct uha_softc *));
 void uha_init __P((struct uha_softc *));
 void uhaminphys __P((struct buf *));
 int uha_scsi_cmd __P((struct scsi_xfer *));
-void uha_timeout __P((caddr_t));
+void uha_timeout __P((void *arg));
 #ifdef UHADEBUG
 void uha_print_mscp __P((struct mscp *));
 void uha_print_active_mscp __P((struct uha_softc *));
@@ -559,7 +559,7 @@ uhaintr(uha)
 			printf("uha: BAD MSCP RETURNED\n");
 			return 0;	/* whatever it was, it'll timeout */
 		}
-		untimeout((timeout_t)uha_timeout, mscp);
+		untimeout(uha_timeout, mscp);
 
 		uha_done(uha, mscp);
 	} while (inb(iobase + UHA_SINT) & UHA_SINTP);
@@ -1057,7 +1057,7 @@ uha_scsi_cmd(xs)
 	if (!(flags & SCSI_NOMASK)) {
 		s = splbio();
 		uha_send_mbox(uha, mscp);
-		timeout((timeout_t)uha_timeout, mscp,
+		timeout(uha_timeout, mscp,
 		    (xs->timeout * hz) / 1000);
 		splx(s);
 		SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
@@ -1089,10 +1089,10 @@ uha_scsi_cmd(xs)
 
 void
 uha_timeout(arg)
-	caddr_t arg;
+	void *arg;
 {
 	int s = splbio();
-	struct mscp *mscp = (void *)arg;
+	struct mscp *mscp = (struct mscp *)arg;
 	struct uha_softc *uha = mscp->xs->sc_link->adapter_softc;
 
 	sc_print_addr(mscp->xs->sc_link);
@@ -1108,7 +1108,7 @@ uha_timeout(arg)
 		uha_done(uha, mscp);
 	} else {		/* abort the operation that has timed out */
 		printf("\n");
-		timeout((timeout_t)uha_timeout, mscp, 2 * hz);
+		timeout(uha_timeout, mscp, 2 * hz);
 		mscp->flags = MSCP_ABORTED;
 	}
 	splx(s);

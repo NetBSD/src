@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: aha1742.c,v 1.30 1994/04/29 23:15:54 cgd Exp $
+ *      $Id: aha1742.c,v 1.31 1994/05/05 05:36:23 cgd Exp $
  */
 
 /*
@@ -303,7 +303,7 @@ int ahb_find __P((struct ahb_softc *));
 void ahb_init __P((struct ahb_softc *));
 void ahbminphys __P((struct buf *));
 int ahb_scsi_cmd __P((struct scsi_xfer *));
-void ahb_timeout __P((caddr_t));
+void ahb_timeout __P((void *));
 void ahb_print_ecb __P((struct ecb *));
 void ahb_print_active_ecb __P((struct ahb_softc *));
 
@@ -667,7 +667,7 @@ ahbintr(ahb)
 			if ((ahb_debug & AHB_SHOWECBS) && ecb)
 				printf("<int ecb(%x)>", ecb);
 #endif /*AHBDEBUG */
-			untimeout((timeout_t)ahb_timeout, (caddr_t)ecb);
+			untimeout(ahb_timeout, (caddr_t)ecb);
 			ahb_done(ahb, ecb, stat != AHB_ECB_OK);
 		}
 	} while (inb(port + G2STAT) & G2STAT_INT_PEND);
@@ -1028,7 +1028,7 @@ ahb_scsi_cmd(xs)
 		if (!(flags & SCSI_NOMASK)) {
 			s = splbio();
 			ahb_send_immed(ahb, sc_link->target, AHB_TARG_RESET);
-			timeout((timeout_t)ahb_timeout, ecb,
+			timeout(ahb_timeout, ecb,
 			    (xs->timeout * hz) / 1000);
 			splx(s);
 			return SUCCESSFULLY_QUEUED;
@@ -1165,7 +1165,7 @@ ahb_scsi_cmd(xs)
 	if (!(flags & SCSI_NOMASK)) {
 		s = splbio();
 		ahb_send_mbox(ahb, OP_START_ECB, sc_link->target, ecb);
-		timeout((timeout_t)ahb_timeout, ecb, (xs->timeout * hz) / 1000);
+		timeout(ahb_timeout, ecb, (xs->timeout * hz) / 1000);
 		splx(s);
 		SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
 		return SUCCESSFULLY_QUEUED;
@@ -1197,10 +1197,10 @@ ahb_scsi_cmd(xs)
 
 void
 ahb_timeout(arg)
-	caddr_t arg;
+	void *arg;
 {
 	int s = splbio();
-	struct ecb *ecb = (void *)arg;
+	struct ecb *ecb = (struct ecb *)arg;
 	struct ahb_softc *ahb = ecb->xs->sc_link->adapter_softc;
 
 	sc_print_addr(ecb->xs->sc_link);
@@ -1235,7 +1235,7 @@ ahb_timeout(arg)
 	} else {		/* abort the operation that has timed out */
 		printf("\n");
 		ahb_send_mbox(ahb, OP_ABORT_ECB, ecb->xs->sc_link->target, ecb);
-		timeout((timeout_t)ahb_timeout, ecb, 2 * hz);
+		timeout(ahb_timeout, ecb, 2 * hz);
 		ecb->flags = ECB_ABORTED;
 	}
 	splx(s);

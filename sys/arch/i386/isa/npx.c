@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.19 1994/04/24 01:34:12 mycroft Exp $
+ *	$Id: npx.c,v 1.20 1994/05/05 05:36:48 cgd Exp $
  */
 #include "npx.h"
 #if NNPX > 0
@@ -456,7 +456,7 @@ npxintr(frame)
 		 * in doreti, and the frame for that could easily be set up
 		 * just before it is used).
 		 */
-		curproc->p_regs = (int *)&frame->if_es;
+		curproc->p_md.md_regs = (int *)&frame->if_es;
 #ifdef notyet
 		/*
 		 * Encode the appropriate code for detailed information on

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)resourcevar.h	7.1 (Berkeley) 5/9/91
- *	$Id: resourcevar.h,v 1.4 1993/06/22 00:56:37 glass Exp $
+ *	$Id: resourcevar.h,v 1.5 1994/05/05 05:40:15 cgd Exp $
  */
 
 #ifndef _SYS_RESOURCEVAR_H_
@@ -51,10 +51,12 @@ struct pstats {
 	struct	itimerval p_timer[3];	/* virtual-time timers */
 
 	struct uprof {			/* profile arguments */
-		short	*pr_base;	/* buffer base */
-		unsigned pr_size;	/* buffer size */
-		unsigned pr_off;	/* pc offset */
-		unsigned pr_scale;	/* pc scaling */
+		caddr_t	pr_base;	/* buffer base */
+		u_long	pr_size;	/* buffer size */
+		u_long	pr_off;		/* pc offset */
+		u_long	pr_scale;	/* pc scaling */
+		u_long	pr_addr;	/* temp storage for addr until AST */
+		u_long	pr_ticks;       /* temp storage for ticks until AST */
 	} p_prof;
 #define	pstat_endcopy	p_start
 	struct	timeval p_start;	/* starting time */

@@ -1,11 +1,6 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
- * (c) UNIX System Laboratories, Inc.
- * All or some portions of this file are derived from material licensed
- * to the University of California by American Telephone and Telegraph
- * Co. or Unix System Laboratories, Inc. and are reproduced herein with
- * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,28 +30,69 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kernel.h	8.3 (Berkeley) 1/21/94
- *	$Id: kernel.h,v 1.7 1994/05/05 05:40:10 cgd Exp $
+ *	@(#)libkern.h	8.1 (Berkeley) 6/10/93
  */
 
-/* Global variables for the kernel. */
+#include <sys/types.h>
 
-/* 1.1 */
-extern long hostid;
-extern char hostname[MAXHOSTNAMELEN];
-extern int hostnamelen;
-extern char domainname[MAXHOSTNAMELEN];
-extern int domainnamelen;
+static inline int
+imax(a, b)
+	int a, b;
+{
+	return (a > b ? a : b);
+}
+static inline int
+imin(a, b)
+	int a, b;
+{
+	return (a < b ? a : b);
+}
+static inline long
+lmax(a, b)
+	long a, b;
+{
+	return (a > b ? a : b);
+}
+static inline long
+lmin(a, b)
+	long a, b;
+{
+	return (a < b ? a : b);
+}
+static inline u_int
+max(a, b)
+	u_int a, b;
+{
+	return (a > b ? a : b);
+}
+static inline u_int
+min(a, b)
+	u_int a, b;
+{
+	return (a < b ? a : b);
+}
+static inline u_long
+ulmax(a, b)
+	u_long a, b;
+{
+	return (a > b ? a : b);
+}
+static inline u_long
+ulmin(a, b)
+	u_long a, b;
+{
+	return (a < b ? a : b);
+}
 
-/* 1.2 */
-extern volatile struct timeval mono_time;
-extern struct timeval boottime;
-extern struct timeval runtime;
-extern volatile struct timeval time;
-extern struct timezone tz;			/* XXX */
-
-extern int tick;			/* usec per tick (1000000 / hz) */
-extern int hz;				/* system clock's frequency */
-extern int stathz;			/* statistics clock's frequency */
-extern int profhz;			/* profiling clock's frequency */
-extern int lbolt;			/* once a second sleep address */
+/* Prototypes for non-quad routines. */
+int	 bcmp __P((const void *, const void *, size_t));
+int	 ffs __P((int));
+int	 locc __P((int, char *, u_int));
+u_long	 random __P((void));
+char	*rindex __P((const char *, int));
+int	 scanc __P((u_int, u_char *, u_char *, int));
+int	 skpc __P((int, int, char *));
+char	*strcat __P((char *, const char *));
+char	*strcpy __P((char *, const char *));
+size_t	 strlen __P((const char *));
+char	*strncpy __P((char *, const char *, size_t));
