@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.138 2003/09/06 09:44:10 rearnsha Exp $	*/
+/*	$NetBSD: pmap.c,v 1.139 2003/09/21 00:26:09 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138 2003/09/06 09:44:10 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.139 2003/09/21 00:26:09 matt Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -3923,9 +3923,9 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)csrc_pte);
 	pmap_alloc_specials(&virtual_avail, 1, &cdstp, &cdst_pte);
 	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)cdst_pte);
-	pmap_alloc_specials(&virtual_avail, 1, (vaddr_t *)&memhook, NULL);
+	pmap_alloc_specials(&virtual_avail, 1, (void *)&memhook, NULL);
 	pmap_alloc_specials(&virtual_avail, round_page(MSGBUFSIZE) / PAGE_SIZE,
-	    (vaddr_t *)&msgbufaddr, NULL);
+	    (void *)&msgbufaddr, NULL);
 
 	/*
 	 * Allocate a range of kernel virtual address space to be used
