@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.9 1997/10/10 13:04:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 1997/10/22 04:56:18 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=		fortune
 MAN=		fortune.6
-CFLAGS+=	-I${.CURDIR}/../strfile 
+CPPFLAGS+=	-I${.CURDIR}/../strfile 
 LDADD+=		-lcompat
 DPADD+=		${LIBCOMPAT}
 
