@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.9 2002/11/25 06:25:09 provos Exp $	*/
+/*	$NetBSD: policy.c,v 1.10 2002/12/04 03:19:05 provos Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.9 2002/11/25 06:25:09 provos Exp $");
+__RCSID("$NetBSD: policy.c,v 1.10 2002/12/04 03:19:05 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -484,18 +484,26 @@ static char *
 systrace_policyline(char *line)
 {
 	char *p;
+	int quoted = 0;
 
 	if ((p = strchr(line, '\n')) == NULL)
 		return (NULL);
 	*p = '\0';
 
-	/* Remove comments from the input line */
-	p = strchr(line, '#');
-	if (p != NULL) {
-		if (p != line && *(p-1) == '-')
-			p = strchr(p + 1, '#');
-		if (p != NULL)
+	/* Remove comments from the input line but ignore # that are part
+	 * of the system call name or within quotes.
+	 */
+	for (p = line; *p; p++) {
+		if (*p == '"')
+			quoted = quoted ? 0 : 1;
+		if (*p == '#') {
+			if (quoted)
+				continue;
+			if (p != line && *(p-1) == '-')
+				continue;
 			*p = '\0';
+			break;
+		}
 	}
 
 	/* Remove trailing white space */
