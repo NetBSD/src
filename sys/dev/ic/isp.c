@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.2 1997/03/12 21:06:51 cgd Exp $	*/
+/*	$NetBSD: isp.c,v 1.3 1997/03/23 00:50:07 cgd Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -84,7 +84,7 @@ static struct scsi_adapter isp_switch = {
 
 static struct scsi_device isp_dev = { NULL, NULL, NULL, NULL };
 
-static int isp_poll __P((struct ispsoftc *, int));	
+static int isp_poll __P((struct ispsoftc *, struct scsi_xfer *, int));	
 static int isp_parse_status __P((struct ispsoftc *, ispstatusreq_t *));
 
 /*
@@ -599,11 +599,18 @@ ispscsicmd(xs)
 	if ((xs->flags & SCSI_POLL) == 0) {
 		return (SUCCESSFULLY_QUEUED);
 	}
-	do {
-		if (isp_poll(isp, xs->timeout)) {
-			break;
+
+	/*
+	 * If we can't use interrupts, poll on completion.
+	 */
+	if (isp_poll(isp, xs, xs->timeout)) {
+#if 0
+		/* XXX try to abort it, or whatever */
+		if (isp_poll(isp, xs, xs->timeout) {
+			/* XXX really nuke it */
 		}
-	} while ((xs->flags & ITSDONE) == 0);
+#endif
+	}
 	return (COMPLETE);
 }
 
@@ -612,20 +619,23 @@ ispscsicmd(xs)
  */
 
 int
-isp_poll(isp, mswait)
+isp_poll(isp, xs, mswait)
 	struct ispsoftc *isp;
+	struct scsi_xfer *xs;
 	int mswait;
 {
-	while (--mswait > 0) {
-		if (isp_intr((void *)isp)) {
-			break;
-		}
-		delay(1000);
+
+	while (mswait) {
+		/* Try the interrupt handling routine */
+		(void)isp_intr((void *)isp);
+
+		/* See if the xs is now done */
+		if (xs->flags & ITSDONE)
+			return (0);
+		delay(1000);		/* wait one millisecond */
+		mswait--;
 	}
-	if (mswait <= 0)
-		return (1);
-	else
-		return (0);
+	return (1);
 }
 
 int
