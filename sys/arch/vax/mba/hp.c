@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.18 1998/01/24 14:16:54 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.19 1999/08/14 11:33:09 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -181,13 +181,13 @@ hpstrategy(bp)
 {
 	struct	hp_softc *sc;
 	struct	buf *gp;
-	int	unit, s;
+	int	unit, s, err;
 
 	unit = DISKUNIT(bp->b_dev);
 	sc = hp_cd.cd_devs[unit];
 
-	if (bounds_check_with_label(bp, sc->sc_disk.dk_label, sc->sc_wlabel)
-	    <= 0)
+	err = bounds_check_with_label(bp, sc->sc_disk.dk_label, sc->sc_wlabel);
+	if (err < 0)
 		goto done;
 	s = splbio();
 
