@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.4 2000/06/04 04:35:13 thorpej Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.5 2000/06/07 01:45:25 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -262,6 +262,7 @@ svc_com_create(fd, sendsize, recvsize, netid)
 	memset(&sin, 0, sizeof sin);
 	sin.sin_family = AF_INET;
 	bindresvport(fd, &sin);
+	listen(fd, SOMAXCONN);
 	svc = svc_tli_create(fd, nconf, (struct t_bind *)NULL,
 				sendsize, recvsize);
 	(void) freenetconfigent(nconf);
