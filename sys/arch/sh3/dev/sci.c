@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.4 1999/09/17 01:23:00 msaitoh Exp $ */
+/* $NetBSD: sci.c,v 1.5 2000/01/07 10:50:14 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -189,6 +189,7 @@ struct sci_softc {
 static int sci_match __P((struct device *, struct cfdata *, void *));
 static void sci_attach __P((struct device *, struct device *, void *));
 
+void	sci_break	__P((struct sci_softc *, int));
 void	sci_iflush	__P((struct sci_softc *));
 
 #define	integrate	static inline
@@ -279,24 +280,21 @@ WaitFor(mSec)
 	int mSec;
 {
 
-	/* using clock = Internal RTC */
-	SHREG_TOCR = 0x01;
-
 	/* Disable Under Flow interrupt, rising edge, 1/4 */
-	SHREG_TCR0 = 0x0000;
+	SHREG_TCR2 = 0x0000;
 
 	/* Set counter value (count down with 4 KHz) */
-	SHREG_TCNT0 = mSec * 4;
+	SHREG_TCNT2 = mSec * 4;
 
-	/* start Channel0 */
-	SHREG_TSTR |= TSTR_STR0;
+	/* start Channel2 */
+	SHREG_TSTR |= TSTR_STR2;
 
-	/* wait for under flag ON of channel0 */
-	while ((SHREG_TCR0 & 0x0100) == 0)
+	/* wait for under flag ON of channel2 */
+	while ((SHREG_TCR2 & 0x0100) == 0)
 		;
 
-	/* stop channel0 */
-	SHREG_TSTR &= ~TSTR_STR0;
+	/* stop channel2 */
+	SHREG_TSTR &= ~TSTR_STR2;
 }
 
 /*
@@ -938,15 +936,14 @@ sciioctl(dev, cmd, data, flag, p)
 	s = splserial();
 
 	switch (cmd) {
-#if 0
 	case TIOCSBRK:
-		scif_break(sc, 1);
+		sci_break(sc, 1);
 		break;
 
 	case TIOCCBRK:
-		scif_break(sc, 0);
+		sci_break(sc, 0);
 		break;
-#endif
+
 	case TIOCGFLAGS:
 		*(int *)data = sc->sc_swflags;
 		break;
@@ -987,6 +984,29 @@ sci_schedrx(sc)
 		timeout(scisoft, NULL, 1);
 	}
 #endif
+#endif
+}
+
+void
+sci_break(sc, onoff)
+	struct sci_softc *sc;
+	int onoff;
+{
+
+	if (onoff)
+		SHREG_SCSSR2 &= ~SCSSR2_TDFE;
+	else
+		SHREG_SCSSR2 |= SCSSR2_TDFE;
+
+#if 0	/* XXX */
+	if (!sc->sc_heldchange) {
+		if (sc->sc_tx_busy) {
+			sc->sc_heldtbc = sc->sc_tbc;
+			sc->sc_tbc = 0;
+			sc->sc_heldchange = 1;
+		} else
+			sci_loadchannelregs(sc);
+	}
 #endif
 }
 

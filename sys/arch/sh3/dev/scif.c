@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.5 1999/10/06 09:19:46 msaitoh Exp $ */
+/* $NetBSD: scif.c,v 1.6 2000/01/07 10:50:14 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -190,6 +190,7 @@ struct scif_softc {
 static int scif_match __P((struct device *, struct cfdata *, void *));
 static void scif_attach __P((struct device *, struct device *, void *));
 
+void	scif_break	__P((struct scif_softc *, int));
 void	scif_iflush	__P((struct scif_softc *));
 
 #define	integrate	static inline
@@ -280,24 +281,21 @@ WaitFor(mSec)
 	int mSec;
 {
 
-	/* using clock = Internal RTC */
-	SHREG_TOCR = 0x01;
-
 	/* Disable Under Flow interrupt, rising edge, 1/4 */
-	SHREG_TCR0 = 0x0000;
+	SHREG_TCR2 = 0x0000;
 
 	/* Set counter value (count down with 4 KHz) */
-	SHREG_TCNT0 = mSec * 4;
+	SHREG_TCNT2 = mSec * 4;
 
-	/* start Channel0 */
-	SHREG_TSTR |= TSTR_STR0;
+	/* start Channel2 */
+	SHREG_TSTR |= TSTR_STR2;
 
-	/* wait for under flag ON of channel0 */
-	while ((SHREG_TCR0 & 0x0100) == 0)
+	/* wait for under flag ON of channel2 */
+	while ((SHREG_TCR2 & 0x0100) == 0)
 		;
 
-	/* stop channel0 */
-	SHREG_TSTR &= ~TSTR_STR0;
+	/* stop channel2 */
+	SHREG_TSTR &= ~TSTR_STR2;
 }
 
 /*
@@ -314,8 +312,11 @@ InitializeScif(bps)
 	/* Initialize SCR */
 	SHREG_SCSCR2 = 0x00;
 
+#if 0
+	SHREG_SCFCR2 = SCFCR2_TFRST | SCFCR2_RFRST | SCFCR2_MCE;
+#else
 	SHREG_SCFCR2 = SCFCR2_TFRST | SCFCR2_RFRST;
-
+#endif
 	/*Serial Mode Register */
 	SHREG_SCSMR2 = 0x00;	/* 8bit,NonParity,Even,1Stop */
 
@@ -325,7 +326,11 @@ InitializeScif(bps)
 	/*wait 1mSec, because Send/Recv must begin 1 bit period after BRR is set. */
 	WaitFor(1);
 
+#if 0
+	SHREG_SCFCR2 = FIFO_RCV_TRIGGER_14 | FIFO_XMT_TRIGGER_1 | SCFCR2_MCE;
+#else
 	SHREG_SCFCR2 = FIFO_RCV_TRIGGER_14 | FIFO_XMT_TRIGGER_1;
+#endif
 
 	/* Send permission, Recieve permission ON */
 	SHREG_SCSCR2 = SCSCR2_TE | SCSCR2_RE;
@@ -423,12 +428,12 @@ GetcScif(void)
 	while ((SHREG_SCFDR2 & SCFDR2_RECVCNT) == 0)
 		;
 	err_c = SHREG_SCSSR2;
-	if ((err_c & (SCSSR2_ER | SCSSR2_FER | SCSSR2_PER)) != 0)
+	if ((err_c & (SCSSR2_ER | SCSSR2_BRK | SCSSR2_FER | SCSSR2_PER)) != 0)
 		return(err_c |= 0x80);
 
 	c = SHREG_SCFRDR2;
 
-	SHREG_SCSSR2 &= ~(SCSSR2_RDF | SCSSR2_DR);
+	SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_RDF | SCSSR2_DR);
 
 	return(c);
 }
@@ -969,7 +974,6 @@ scifioctl(dev, cmd, data, flag, p)
 	s = splserial();
 
 	switch (cmd) {
-#if 0
 	case TIOCSBRK:
 		scif_break(sc, 1);
 		break;
@@ -977,7 +981,7 @@ scifioctl(dev, cmd, data, flag, p)
 	case TIOCCBRK:
 		scif_break(sc, 0);
 		break;
-#endif
+
 	case TIOCGFLAGS:
 		*(int *)data = sc->sc_swflags;
 		break;
@@ -1018,6 +1022,29 @@ scif_schedrx(sc)
 		timeout(scifsoft, NULL, 1);
 	}
 #endif
+#endif
+}
+
+void
+scif_break(sc, onoff)
+	struct scif_softc *sc;
+	int onoff;
+{
+
+	if (onoff)
+		SHREG_SCSSR2 &= ~SCSSR2_TDFE;
+	else
+		SHREG_SCSSR2 |= SCSSR2_TDFE;
+
+#if 0	/* XXX */
+	if (!sc->sc_heldchange) {
+		if (sc->sc_tx_busy) {
+			sc->sc_heldtbc = sc->sc_tbc;
+			sc->sc_tbc = 0;
+			sc->sc_heldchange = 1;
+		} else
+			scif_loadchannelregs(sc);
+	}
 #endif
 }
 
@@ -1096,8 +1123,8 @@ scif_rxsoft(sc, tp)
 	while (cc) {
 		code = get[0];
 		ssr2 = get[1];
-		if (ISSET(ssr2, SCSSR2_FER | SCSSR2_PER)) {
-			if (ISSET(ssr2, SCSSR2_FER))
+		if (ISSET(ssr2, SCSSR2_BRK | SCSSR2_FER | SCSSR2_PER)) {
+			if (ISSET(ssr2, SCSSR2_BRK | SCSSR2_FER))
 				SET(code, TTY_FE);
 			if (ISSET(ssr2, SCSSR2_PER))
 				SET(code, TTY_PE);
@@ -1303,8 +1330,9 @@ scifintr(arg)
 	do {
 
 		ssr2 = SHREG_SCSSR2;
-#if defined(DDB) || defined(KGDB)
 		if (ISSET(ssr2, SCSSR2_BRK)) {
+			SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_DR);
+#if defined(DDB) || defined(KGDB)
 #ifdef DDB
 			if (ISSET(sc->sc_hwflags, SCIF_HW_CONSOLE)) {
 				console_debugger();
@@ -1317,8 +1345,9 @@ scifintr(arg)
 				continue;
 			}
 #endif
-		}
 #endif /* DDB || KGDB */
+			continue;
+		}
 		count = SHREG_SCFDR2 & SCFDR2_RECVCNT;
 		if (count != 0) {
 			while ((cc > 0) && (count > 0)){
@@ -1542,6 +1571,12 @@ scifcninit(cp)
 {
 
 	InitializeScif(SCIFCN_SPEED);
+
+#if 0
+	scif_intr_init(); 	/* XXX msaitoh */
+#endif
+
+	scif_puts("scif initialized.\n\r");
 }
 
 #define scif_getc GetcScif
