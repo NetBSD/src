@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.h,v 1.8 1995/05/11 21:29:19 christos Exp $	*/
+/*	$NetBSD: jobs.h,v 1.9 1997/10/15 13:23:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -52,8 +52,8 @@
  */
 
 struct procstat {
-	short pid;		/* process id */
-	short status;		/* status flags (defined above) */
+	pid_t pid;		/* process id */
+	int status;		/* status flags (defined above) */
 	char *cmd;		/* text of command being run */
 };
 
