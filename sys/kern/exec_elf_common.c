@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf_common.c,v 1.8 1998/10/03 20:39:33 christos Exp $	*/
+/*	$NetBSD: exec_elf_common.c,v 1.9 2000/06/26 14:38:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -53,8 +53,6 @@
 
 #include <sys/mman.h>
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_map.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>

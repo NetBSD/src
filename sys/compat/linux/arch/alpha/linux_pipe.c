@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.2 1998/10/03 20:17:37 christos Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.3 2000/06/26 14:38:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,6 @@
 #include <sys/syscallargs.h> 
  
 #include <vm/vm.h>
-#include <vm/vm_param.h> 
  
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>

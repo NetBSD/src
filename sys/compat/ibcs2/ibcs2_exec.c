@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.31 2000/06/23 22:03:22 matt Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.32 2000/06/26 14:38:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -54,8 +54,6 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_map.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>

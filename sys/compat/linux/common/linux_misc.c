@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.69 2000/03/30 11:27:17 augustss Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.70 2000/06/26 14:38:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,6 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>

@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.14 1999/04/27 15:42:37 christos Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.15 2000/06/26 14:38:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@
 #include <sys/syslog.h>
 #include <sys/mount.h>
 
-#include <vm/vm_param.h>
 
 #include <compat/common/compat_util.h>
 
