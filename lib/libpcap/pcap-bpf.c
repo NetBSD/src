@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bpf.c,v 1.9 2002/10/19 22:03:44 thorpej Exp $	*/
+/*	$NetBSD: pcap-bpf.c,v 1.10 2003/11/24 21:49:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: pcap-bpf.c,v 1.29 96/12/31 20:53:40 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: pcap-bpf.c,v 1.9 2002/10/19 22:03:44 thorpej Exp $");
+__RCSID("$NetBSD: pcap-bpf.c,v 1.10 2003/11/24 21:49:12 christos Exp $");
 #endif
 #endif
 
@@ -245,7 +245,6 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 		if (ioctl(fd, BIOCGDLTLIST, (caddr_t) &bdl) < 0) {
 			(void)snprintf(ebuf, PCAP_ERRBUF_SIZE,
 			    "BIOCGDLTLIST: %s", pcap_strerror(errno));
-			free(bdl.bfl_list);
 			goto bad;
 		}
 
