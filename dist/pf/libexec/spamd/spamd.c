@@ -1,4 +1,4 @@
-/*	$NetBSD: spamd.c,v 1.5 2004/11/14 11:26:48 yamt Exp $	*/
+/*	$NetBSD: spamd.c,v 1.6 2004/11/16 05:14:12 yamt Exp $	*/
 /*	$OpenBSD: spamd.c,v 1.71 2004/08/17 09:38:07 henning Exp $	*/
 
 /*
@@ -102,9 +102,7 @@ void     handler(struct con *);
 void     handlew(struct con *, int one);
 
 char hostname[MAXHOSTNAMELEN];
-#ifdef HAVE_SYSLOG_R
 struct syslog_data sdata = SYSLOG_DATA_INIT;
-#endif
 char *reply = NULL;
 char *nreply = "450";
 char *spamd = "spamd IP-based SPAM blocker";
