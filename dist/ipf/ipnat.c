@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.8 2002/01/24 08:21:34 martti Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.9 2002/03/14 12:32:38 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -7,6 +7,9 @@
  *
  * Added redirect stuff and a variety of bug fixes. (mcn@EnGarde.com)
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
@@ -59,7 +62,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipnat.c,v 2.16.2.19 2002/01/15 14:36:51 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 2.16.2.20 2002/02/22 15:32:55 darrenr Exp";
 #endif
 
 

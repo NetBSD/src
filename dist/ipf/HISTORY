@@ -22,7 +22,65 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
-3.4.22	16/01/2002 - Released
+3.4.25	13/03/2002 - Released
+
+retain rule # in state information
+
+log the direction of a packet so ipmon gets it right rather than incorrectly
+deriving it from the rule flags
+
+add #ifdef for IPFILTER_LOGSIZE (put options IPFILTER_LOGSIZE=16384 in BSD
+kernel config files to increase that buffer size)
+
+recognise return-* rules differently to block in ipftest
+
+fix bug in ipmon output for solaris
+
+add regression testing for skip rules, logging and using head/group
+
+fix output of ipmon: was displaying large unsigned ints rather than -1
+when no rules matched.
+
+make logging code compile into ipftest and add -l command line option to
+dump binary log file (read with ipmon -f) when it finishes.
+
+protect rule # and group # from interference when checking accounting rules
+
+add regression testing for log output (text) from ipmon.
+
+document -b command line option for ipmon
+ 
+fix double-quick in Solaris startup script
+
+3.4.24	01/03/2002 - Released
+
+fix how files are installed on SunOS5
+
+fix some minor problems in SunOS5 ipfboot script
+
+by default, compile all OpenBSD tools in 3.0 for IPv6
+
+fix NULL-pointer dereference in NAT code
+
+make a better attempt at replacing the appropriate binaries on BSD systems
+
+always print IPv6 icmp-types as a number
+
+impose some rules about what "skip" can be used with
+
+fix parsing problems with "keep state" and "keep state-age"
+
+Try to read as much data as is in the log device in ipmon
+
+remove some redundant checks when searching for rdr/nat rules
+
+fix bug in handling of ACCT with FTP proxy
+
+increase array size for interface names, using LIFNAMSIZ
+
+include H.323 proxy from QNX
+
+3.4.23	16/01/2002 - Released
 
 Include patches to install IPFilter into OpenBSD 3.0, both for just kernel
 compiles and complete system builds.
