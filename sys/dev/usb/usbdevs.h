@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.9 1998/12/11 17:44:41 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.10 1998/12/21 15:45:20 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.9 1998/12/11 17:43:31 augustss Exp 
+ *	NetBSD: usbdevs,v 1.10 1998/12/21 15:42:59 augustss Exp 
  */
 
 /*
@@ -69,6 +69,7 @@
 #define	USB_VENDOR_BELKIN	0x05ab		/* Belkin */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
 #define	USB_VENDOR_CHIC	0x05fe		/* Chic Technology */
+#define	USB_VENDOR_ADS	0x06e1		/* ADS Technologies */
 #define	USB_VENDOR_PLX	0x10b5		/* PLX */
 #define	USB_VENDOR_INSIDEOUT	0x1608		/* Inside Out Networks */
 #define	USB_VENDOR_INTEL	0x8086		/* Intel */
@@ -138,8 +139,11 @@
 #define	USB_PRODUCT_EIZONANAO_HUB	0x0000		/* hub */
 #define	USB_PRODUCT_EIZONANAO_MONITOR	0x0001		/* monitor */
 
-/* Chic Technology */
+/* Chic Technology products */
 #define	USB_PRODUCT_CHIC_MOUSE1	0x0001		/* mouse */
+
+/* ADS products */
+#define	USB_PRODUCT_ADS_0x0008	Ethernet		/* adapter */
 
 /* PLX products */
 #define	USB_PRODUCT_PLX_TESTBOARD	0x9060		/* test board */
