@@ -1,4 +1,5 @@
-/*	$NetBSD: mtrace6.c,v 1.4 2000/10/07 06:42:40 itojun Exp $	*/
+/*	$NetBSD: mtrace6.c,v 1.5 2000/12/04 07:03:18 itojun Exp $	*/
+/*	$KAME: mtrace6.c,v 1.16 2000/12/04 06:45:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
