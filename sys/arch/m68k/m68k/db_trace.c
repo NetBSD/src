@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.17 1997/01/15 23:11:48 gwr Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.18 1997/01/27 23:07:04 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -46,24 +46,27 @@ extern label_t	*db_recover;
 static int db_var_short __P((struct db_variable *, db_expr_t *, int));
 
 struct db_variable db_regs[] = {
-	{ "d0",	(int *)&ddb_regs.d0,	FCN_NULL },
-	{ "d1",	(int *)&ddb_regs.d1,	FCN_NULL },
-	{ "d2",	(int *)&ddb_regs.d2,	FCN_NULL },
-	{ "d3",	(int *)&ddb_regs.d3,	FCN_NULL },
-	{ "d4",	(int *)&ddb_regs.d4,	FCN_NULL },
-	{ "d5",	(int *)&ddb_regs.d5,	FCN_NULL },
-	{ "d6",	(int *)&ddb_regs.d6,	FCN_NULL },
-	{ "d7",	(int *)&ddb_regs.d7,	FCN_NULL },
-	{ "a0",	(int *)&ddb_regs.a0,	FCN_NULL },
-	{ "a1",	(int *)&ddb_regs.a1,	FCN_NULL },
-	{ "a2",	(int *)&ddb_regs.a2,	FCN_NULL },
-	{ "a3",	(int *)&ddb_regs.a3,	FCN_NULL },
-	{ "a4",	(int *)&ddb_regs.a4,	FCN_NULL },
-	{ "a5",	(int *)&ddb_regs.a5,	FCN_NULL },
-	{ "a6",	(int *)&ddb_regs.a6,	FCN_NULL },
-	{ "sp",	(int *)&ddb_regs.sp,	FCN_NULL },
-	{ "pc",	(int *)&ddb_regs.pc,	FCN_NULL },
-	{ "sr",	(int *)&ddb_regs.sr,	db_var_short }
+	/* D0-D7 */
+	{ "d0",	(int *)&ddb_regs.tf_regs[0],	FCN_NULL },
+	{ "d1",	(int *)&ddb_regs.tf_regs[1],	FCN_NULL },
+	{ "d2",	(int *)&ddb_regs.tf_regs[2],	FCN_NULL },
+	{ "d3",	(int *)&ddb_regs.tf_regs[3],	FCN_NULL },
+	{ "d4",	(int *)&ddb_regs.tf_regs[4],	FCN_NULL },
+	{ "d5",	(int *)&ddb_regs.tf_regs[5],	FCN_NULL },
+	{ "d6",	(int *)&ddb_regs.tf_regs[6],	FCN_NULL },
+	{ "d7",	(int *)&ddb_regs.tf_regs[7],	FCN_NULL },
+	/* A0-A7 */
+	{ "a0",	(int *)&ddb_regs.tf_regs[8+0],	FCN_NULL },
+	{ "a1",	(int *)&ddb_regs.tf_regs[8+1],	FCN_NULL },
+	{ "a2",	(int *)&ddb_regs.tf_regs[8+2],	FCN_NULL },
+	{ "a3",	(int *)&ddb_regs.tf_regs[8+3],	FCN_NULL },
+	{ "a4",	(int *)&ddb_regs.tf_regs[8+4],	FCN_NULL },
+	{ "a5",	(int *)&ddb_regs.tf_regs[8+5],	FCN_NULL },
+	{ "a6",	(int *)&ddb_regs.tf_regs[8+6],	FCN_NULL },
+	{ "sp",	(int *)&ddb_regs.tf_regs[8+7],	FCN_NULL },
+	/* misc. */
+	{ "pc",	(int *)&ddb_regs.tf_pc, 	FCN_NULL },
+	{ "sr",	(int *)&ddb_regs.tf_sr,	db_var_short }
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
@@ -124,23 +127,16 @@ stacktop(regs, sp)
 	register db_regs_t *regs;
 	register struct stackpos *sp;
 {
-	sp->k_regloc[0]  = (int) &regs->d0;
-	sp->k_regloc[1]  = (int) &regs->d1;
-	sp->k_regloc[2]  = (int) &regs->d2;
-	sp->k_regloc[3]  = (int) &regs->d3;
-	sp->k_regloc[4]  = (int) &regs->d4;
-	sp->k_regloc[5]  = (int) &regs->d5;
-	sp->k_regloc[6]  = (int) &regs->d6;
-	sp->k_regloc[7]  = (int) &regs->d7;
-	sp->k_regloc[8]  = (int) &regs->a0;
-	sp->k_regloc[9]  = (int) &regs->a1;
-	sp->k_regloc[10] = (int) &regs->a2;
-	sp->k_regloc[11] = (int) &regs->a3;
-	sp->k_regloc[12] = (int) &regs->a4;
-	sp->k_regloc[13] = (int) &regs->a5;
+	int i;
 
-	sp->k_fp = get(&regs->a6, 0);
-	sp->k_pc = get(&regs->pc, 0);
+	/* Note: leave out a6, a7 */
+	for (i = 0; i < (8+6); i++) {
+		sp->k_regloc[i] = (int) &regs->tf_regs[i];
+	}
+
+	sp->k_fp = get(&regs->tf_regs[8+6], 0);
+	/* skip sp (a7) */
+	sp->k_pc = get(&regs->tf_pc, 0);
 	sp->k_flags = 0;
 
 	findentry(sp);
@@ -508,7 +504,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		
 		t_pcb = (pcb_t) get(&th->pcb, 0);
 		user_regs = (db_regs_t *)
-		get(&t_pcb->user_regs, 0);
+			get(&t_pcb->user_regs, 0);
 		
 		stacktop(user_regs, &pos);
 
