@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.1 1995/06/24 20:16:15 christos Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.2 1995/08/10 04:08:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -45,6 +45,7 @@
 #include <vm/vm_map.h>
 #include <vm/vm_kern.h>
 
+#ifdef SYSVSEM
 int
 compat_10_semsys(p, uap, retval)
 	struct proc *p;
@@ -105,8 +106,9 @@ compat_10_semsys(p, uap, retval)
 		return (EINVAL);
 	}
 }
+#endif
 
-
+#ifdef SYSVSHM
 int
 compat_10_shmsys(p, uap, retval)
 	struct proc *p;
@@ -164,8 +166,9 @@ compat_10_shmsys(p, uap, retval)
 		return (EINVAL);
 	}
 }
+#endif
 
-
+#ifdef SYSVMSG
 int
 compat_10_msgsys(p, uap, retval)
 	struct caller *p;
@@ -234,3 +237,4 @@ compat_10_msgsys(p, uap, retval)
 		return (EINVAL);
 	}
 }
+#endif
