@@ -1,4 +1,4 @@
-#	$NetBSD: Src-omapip,v 1.1 2000/05/12 20:53:22 thorpej Exp $
+#	$NetBSD: Src-omapip,v 1.2 2000/09/18 11:56:10 darrenr Exp $
 
-OMSRCS=	protocol.c buffer.c OMalloc.c result.c connection.c errwarn.c \
+OMSRCS=	auth.c protocol.c buffer.c OMalloc.c result.c connection.c errwarn.c \
 	listener.c OMdispatch.c generic.c OMsupport.c handle.c message.c
