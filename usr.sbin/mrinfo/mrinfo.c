@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.12.2.1 2002/06/04 11:56:50 lukem Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.12.2.2 2002/08/09 22:50:14 lukem Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -80,7 +80,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.12.2.1 2002/06/04 11:56:50 lukem Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.12.2.2 2002/08/09 22:50:14 lukem Exp $");
 #endif
 #endif
 
@@ -155,7 +155,6 @@ log(severity, syserr, format, va_alist)
 #endif
 {
 	va_list ap;
-	char    fmt[100];
 
 	switch (debug) {
 	case 0:
@@ -168,11 +167,8 @@ log(severity, syserr, format, va_alist)
 		if (severity > LOG_INFO)
 			return;
 	default:
-		fmt[0] = '\0';
 		if (severity == LOG_WARNING)
-			strcat(fmt, "warning - ");
-		strncat(fmt, format, 80);
-		format = fmt;
+			fprintf(stderr, "warning - ");
 #ifdef __STDC__
 		va_start(ap, format);
 #else
@@ -351,12 +347,16 @@ main(argc, argv)
 	char *host;
 	int curaddr;
 
-	setlinebuf(stderr);
-
 	if (geteuid() != 0) {
 		fprintf(stderr, "mrinfo: must be root\n");
 		exit(1);
 	}
+	init_igmp();
+	if (setuid(getuid()) == -1)
+		log(LOG_ERR, errno, "setuid");
+
+	setlinebuf(stderr);
+
 	argv++, argc--;
 	while (argc > 0 && argv[0][0] == '-') {
 		switch (argv[0][1]) {
@@ -391,20 +391,22 @@ main(argc, argv)
 		hp = &bogus;
 		hp->h_length = sizeof(target_addr);
 		hp->h_addr_list = (char **)malloc(2 * sizeof(char *));
+		if (hp->h_addr_list == NULL)
+			log(LOG_ERR, errno, "malloc");
 		hp->h_addr_list[0] = malloc(hp->h_length);
+		if (hp->h_addr_list[0] == NULL)
+			log(LOG_ERR, errno, "malloc");
 		memcpy(hp->h_addr_list[0], &target_addr, sizeof(hp->h_addr_list[0]));
-		hp->h_addr_list[1] = 0;
+		hp->h_addr_list[1] = NULL;
 	} else
 		hp = gethostbyname(host);
 
-	if (hp == NULL) {
+	if (hp == NULL || hp->h_length != sizeof(target_addr)) {
 		fprintf(stderr, "mrinfo: %s: no such host\n", argv[0]);
 		exit(1);
 	}
 	if (debug)
 		fprintf(stderr, "Debug level %u\n", debug);
-
-	init_igmp();
 
 	/* Check all addresses; mrouters often have unreachable interfaces */
 	for (curaddr = 0; hp->h_addr_list[curaddr] != NULL; curaddr++) {
@@ -455,6 +457,8 @@ main(argc, argv)
 		int     ipdatalen, iphdrlen, igmpdatalen;
 
 		FD_ZERO(&fds);
+		if (igmp_socket >= FD_SETSIZE)
+			log(LOG_ERR, 0, "descriptor too big");
 		FD_SET(igmp_socket, &fds);
 
 		gettimeofday(&now, 0);
