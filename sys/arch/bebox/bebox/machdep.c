@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1999/12/04 21:20:17 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 1999/12/18 01:37:00 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -242,15 +242,17 @@ initppc(startkernel, endkernel, args, btinfo)
 	/*
 	 * Set up initial BAT table
 	 */
-	/* map the lowest 256 MB area */
-	battable[0].batl = BATL(0x00000000, BAT_M);
-	battable[0].batu = BATU(0x00000000);
-	/* map the PCI/ISA I/O 256 MB area */
-	battable[1].batl = BATL(BEBOX_BUS_SPACE_IO, BAT_I);
-	battable[1].batu = BATU(BEBOX_BUS_SPACE_IO);
-	/* map the PCI/ISA MEMORY 256 MB area */
-	battable[2].batl = BATL(BEBOX_BUS_SPACE_MEM, BAT_I);
-	battable[2].batu = BATU(BEBOX_BUS_SPACE_MEM);
+	/* map the lowest 256M area */
+	battable[0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
+	battable[0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
+
+	/* map the PCI/ISA I/O 256M area */
+	battable[1].batl = BATL(BEBOX_BUS_SPACE_IO, BAT_I, BAT_PP_RW);
+	battable[1].batu = BATU(BEBOX_BUS_SPACE_IO, BAT_BL_256M, BAT_Vs);
+
+	/* map the PCI/ISA MEMORY 256M area */
+	battable[2].batl = BATL(BEBOX_BUS_SPACE_MEM, BAT_I, BAT_PP_RW);
+	battable[2].batu = BATU(BEBOX_BUS_SPACE_MEM, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Now setup fixed bat registers

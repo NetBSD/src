@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 1999/12/04 21:20:47 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 1999/12/18 01:37:00 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -167,23 +167,23 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Set up BAT0 to only map the lowest 256 MB area
 	 */
-	battable[0].batl = BATL(0x00000000, BAT_M);
-	battable[0].batu = BATU(0x00000000);
+	battable[0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
+	battable[0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Map PCI memory space.
 	 */
-	battable[8].batl = BATL(0x80000000, BAT_I);
-	battable[8].batu = BATU(0x80000000);
+	battable[8].batl = BATL(0x80000000, BAT_I, BAT_PP_RW);
+	battable[8].batu = BATU(0x80000000, BAT_BL_256M, BAT_Vs);
 
-	battable[9].batl = BATL(0x90000000, BAT_I);
-	battable[9].batu = BATU(0x90000000);
+	battable[9].batl = BATL(0x90000000, BAT_I, BAT_PP_RW);
+	battable[9].batu = BATU(0x90000000, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Map obio devices.
 	 */
-	battable[0xf].batl = BATL(0xf0000000, BAT_I);
-	battable[0xf].batu = BATU(0xf0000000);
+	battable[0xf].batl = BATL(0xf0000000, BAT_I, BAT_PP_RW);
+	battable[0xf].batu = BATU(0xf0000000, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Now setup fixed bat registers
@@ -331,8 +331,10 @@ initppc(startkernel, endkernel, args)
 	pmap_bootstrap(startkernel, endkernel);
 
 	restore_ofw_mapping();
-	battable[msgbuf_paddr >> 28].batl = BATL(msgbuf_paddr, BAT_M);
-	battable[msgbuf_paddr >> 28].batu = BATU(msgbuf_paddr);
+	battable[msgbuf_paddr >> 28].batl = BATL(msgbuf_paddr, BAT_M,
+	    BAT_PP_RW);
+	battable[msgbuf_paddr >> 28].batu = BATU(msgbuf_paddr, BAT_BL_256M,
+	    BAT_Vs);
 }
 
 static int N_mapping;
