@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 2000/03/19 23:07:44 soren Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2 2000/03/21 02:26:48 soren Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -74,15 +74,6 @@ writedisklabel(dev, strat, lp, osdep)
         struct cpu_disklabel *osdep;
 {               
 	return ENODEV;
-}
-
-int      
-bounds_check_with_label(bp, lp, wlabel) 
-	struct buf *bp;
-	struct disklabel *lp;
-	int wlabel; 
-{               
-	return 1;
 }
 
 void
@@ -338,4 +329,58 @@ out:
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
         brelse(bp);
 	return (rv);
+}
+
+/*
+ * Determine the size of the transfer, and make sure it is
+ * within the boundaries of the partition. Adjust transfer
+ * if needed, and signal errors or early completion.
+ */
+int
+bounds_check_with_label(bp, lp, wlabel)
+	struct buf *bp;
+	struct disklabel *lp;
+	int wlabel;
+{
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	int labelsector = lp->d_partitions[2].p_offset + LABELSECTOR;
+	int sz;
+
+	sz = howmany(bp->b_bcount, lp->d_secsize);
+
+	if (bp->b_blkno + sz > p->p_size) {
+		sz = p->p_size - bp->b_blkno;
+		if (sz == 0) {
+			/* If exactly at end of disk, return EOF. */
+			bp->b_resid = bp->b_bcount;
+			goto done;
+		}
+		if (sz < 0) {
+			/* If past end of disk, return EINVAL. */
+			bp->b_error = EINVAL;
+			goto bad;
+		}
+		/* Otherwise, truncate request. */
+		bp->b_bcount = sz << DEV_BSHIFT;
+	}
+
+	/* Overwriting disk label? */
+	if (bp->b_blkno + p->p_offset <= labelsector &&
+#if LABELSECTOR != 0
+	    bp->b_blkno + p->p_offset + sz > labelsector &&
+#endif
+	    (bp->b_flags & B_READ) == 0 && !wlabel) {
+		bp->b_error = EROFS;
+		goto bad;
+	}
+
+	/* Calculate cylinder for disksort to order transfers with. */
+	bp->b_cylinder = (bp->b_blkno + p->p_offset) /
+	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
+	return (1);
+
+bad:
+	bp->b_flags |= B_ERROR;
+done:
+	return (0);
 }
