@@ -1,3 +1,5 @@
+/*	$NetBSD: nlist.c,v 1.5 1995/02/27 04:35:29 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: nlist.c,v 1.5 1995/02/27 04:35:29 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
