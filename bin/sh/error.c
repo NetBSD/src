@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.25 2002/05/25 23:09:06 wiz Exp $	*/
+/*	$NetBSD: error.c,v 1.26 2002/09/27 16:56:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.25 2002/05/25 23:09:06 wiz Exp $");
+__RCSID("$NetBSD: error.c,v 1.26 2002/09/27 16:56:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ STATIC const struct errname errormsg[] = {
 	{ ENOTDIR,	E_CREAT,"directory nonexistent" },
 	{ ENOTDIR,	E_EXEC,	"not found" },
 	{ EISDIR,	ALL,	"is a directory" },
-#ifdef notdef
+#ifdef EMFILE
 	{ EMFILE,	ALL,	"too many open files" },
 #endif
 	{ ENFILE,	ALL,	"file table overflow" },
@@ -220,7 +220,7 @@ STATIC const struct errname errormsg[] = {
 	{ ENXIO,	ALL,	"no such device or address" },
 	{ EROFS,	ALL,	"read-only file system" },
 	{ ETXTBSY,	ALL,	"text busy" },
-#ifdef SYSV
+#ifdef EAGAIN
 	{ EAGAIN,	E_EXEC,	"not enough memory" },
 #endif
 	{ ENOMEM,	ALL,	"not enough memory" },
