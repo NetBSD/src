@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.71 2001/08/06 12:13:49 ad Exp $
+#	$NetBSD: DEVNAMES,v 1.72 2001/08/20 23:15:40 bjh21 Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -345,6 +345,7 @@ fdc			x68k
 fddi			MI		Attribute
 fea			MI		
 fhpib			hp300
+fiq			arm26		Attribute
 flsc			amiga
 flsc			amigappc
 fms			MI		
