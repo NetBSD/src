@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 1999/06/21 01:19:36 cgd Exp $
+# $NetBSD: Makefile,v 1.6 1999/06/25 01:07:56 cgd Exp $
 # Build a smaller ftp (i.e. for boot media)
 
 PROG=	ftp
@@ -13,7 +13,7 @@ SRCDIR= ${.CURDIR}/../../../usr.bin/ftp
 SRCS=	cmds.c cmdtab.c complete.c domacro.c fetch.c ftp.c main.c ruserpass.c \
 	util.c
 
-CPPFLAGS+= -DSMALL -I${SRCDIR}
+CPPFLAGS+= -DNO_EDITCOMPLETE -DNO_ABOUT -I${SRCDIR}
 
 all: ${PROG}
 
