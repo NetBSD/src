@@ -200,16 +200,11 @@ all: config.h
 
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno
-$(srcdir)/Makefile.in:  Makefile.am  $(top_srcdir)/configure.ac $(ACLOCAL_M4)
-	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  Makefile
 Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe)
 
 $(top_builddir)/config.status: $(srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck
-$(srcdir)/configure:  $(srcdir)/configure.ac $(ACLOCAL_M4) $(CONFIGURE_DEPENDENCIES)
-	cd $(srcdir) && $(AUTOCONF)
 
 $(ACLOCAL_M4):  configure.ac acinclude.m4 m4/check-decl.m4 m4/codeset.m4 m4/gettext.m4 m4/glibc21.m4 m4/iconv.m4 m4/intdiv0.m4 m4/inttypes-pri.m4 m4/inttypes.m4 m4/inttypes_h.m4 m4/isc-posix.m4 m4/lcmessage.m4 m4/lib-ld.m4 m4/lib-link.m4 m4/lib-prefix.m4 m4/mkstemp.m4 m4/onceonly_2_57.m4 m4/prereq.m4 m4/progtest.m4 m4/stdint_h.m4 m4/uintmax_t.m4 m4/ulonglong.m4
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
@@ -223,10 +218,6 @@ config.h: stamp-h1
 stamp-h1: $(srcdir)/config.in $(top_builddir)/config.status
 	@rm -f stamp-h1
 	cd $(top_builddir) && $(SHELL) ./config.status config.h
-
-$(srcdir)/config.in:  $(top_srcdir)/configure.ac $(ACLOCAL_M4) 
-	cd $(top_srcdir) && $(AUTOHEADER)
-	touch $(srcdir)/config.in
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
