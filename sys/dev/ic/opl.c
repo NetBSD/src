@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.15 2001/10/23 17:58:15 augustss Exp $	*/
+/*	$NetBSD: opl.c,v 1.16 2001/11/04 06:44:31 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -165,13 +165,23 @@ opl_attach(sc)
 	for (i = 0; i < OPL3_NVOICE; i++)
 		sc->voices[i] = voicetab[i];
 
+	opl_reset(sc);
+
+	printf(": model OPL%d", sc->model);
+
 	/* Set up panpot */
 	for (i = 0; i < MIDI_MAX_CHANS; i++)
 		sc->pan[i] = OPL_VOICE_TO_LEFT | OPL_VOICE_TO_RIGHT;
+	sc->panl = OPL_VOICE_TO_LEFT;
+	sc->panr = OPL_VOICE_TO_RIGHT;
+	if (sc->model == OPL_3 &&
+	    sc->mididev.dev.dv_cfdata->cf_flags & OPL_FLAGS_SWAP_LR) {
+		sc->panl = OPL_VOICE_TO_RIGHT;
+		sc->panr = OPL_VOICE_TO_LEFT;
+		printf(": LR swapped");
+	}
 
-	opl_reset(sc);
-
-	printf(": model OPL%d\n", sc->model);
+	printf("\n");
 
 	sc->sc_mididev =
 	    midi_attach_mi(&midisyn_hw_if, &sc->syn, &sc->mididev.dev);
@@ -585,8 +595,8 @@ oplsyn_ctlchange(ms, chan, parm, w14)
 	switch (parm) {
 	case MIDI_CTRL_PAN_MSB:
 		sc->pan[chan] =
-		    (w14 <= OPL_MIDI_CENTER_MAX ? OPL_VOICE_TO_LEFT : 0) |
-		    (w14 >= OPL_MIDI_CENTER_MIN ? OPL_VOICE_TO_RIGHT : 0);
+		    (w14 <= OPL_MIDI_CENTER_MAX ? sc->panl : 0) |
+		    (w14 >= OPL_MIDI_CENTER_MIN ? sc->panr : 0);
 		break;
 	}
 }
