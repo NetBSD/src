@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.13 2002/04/07 11:25:40 wiz Exp $	*/
+/*	$NetBSD: mmap.c,v 1.13.2.1 2002/06/05 03:28:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,9 @@ main(argc, argv)
 
 	(void) close(fd);
 
-	npgs = (st.st_size / pgsize) + 1;
+	npgs = (st.st_size / pgsize);
+	if (st.st_size % pgsize != 0)
+		npgs++;
 
 	printf("    CHECKING RESIDENCY\n");
 
