@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.42 2001/06/08 22:38:07 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.43 2001/07/02 23:18:35 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -78,7 +78,6 @@ extern struct bus_space podulebus_bs_tag;
 void map_section __P((vm_offset_t, vm_offset_t, vm_offset_t, int cacheable));
 int poduleirqhandler __P((void *arg));
 u_int poduleread __P((u_int, int));
-u_int netslotread __P((u_int, int));
 
 
 /*
@@ -314,26 +313,6 @@ poduleread(address, offset)
 	return(ReadByte(address + offset));
 }
 
-u_int
-netslotread(address, offset)
-	u_int address;
-	int offset;
-{
-	static int netslotoffset = -1;
-
-	offset = offset >> 2;
-	if (netslotoffset == -1 || offset < netslotoffset) {
-		WriteByte(address, 0);
-		netslotoffset = 0;
-	}
-	while (netslotoffset < offset) {
-		(void)ReadByte(address);
-		++netslotoffset;
-	}
-	++netslotoffset;
-	return(ReadByte(address));
-}
-
 void
 podulescan(dev)
 	struct device *dev;
@@ -427,72 +406,6 @@ podulescan(dev)
 
 		poduleexamine(podule, dev, SLOT_POD);
 	}
-}
-
-
-void
-netslotscan(dev)
-	struct device *dev;
-{
-	podule_t *podule;
-	volatile u_char *address;
-
-	/* Only one netslot atm */
-
-	/* Reset the address counter */
-
-	WriteByte(NETSLOT_BASE, 0x00);
-
-	address = (u_char *)NETSLOT_BASE;
-
-	podule = &podules[MAX_PODULES];
-
-	podule->fast_base = NETSLOT_BASE;
-	podule->medium_base = NETSLOT_BASE;
-	podule->slow_base = NETSLOT_BASE;
-	podule->sync_base = NETSLOT_BASE;
-	podule->mod_base = NETSLOT_BASE;
-	podule->easi_base = 0;
-	podule->attached = 0;
-	podule->slottype = SLOT_NONE;
-	podule->podulenum = MAX_PODULES;
-	podule->interrupt = IRQ_NETSLOT;
-	podule->read_rom = netslotread;
-	podule->dma_channel = -1;
-	podule->dma_interrupt = -1;
-	podule->description[0] = 0;
-
-	/* XXX - Really needs to be linked to a DMA manager */
-	if (IOMD_ID == RPC600_IOMD_ID)
-		podule->dma_channel = 0;
-
-	/* Get information from the podule header */
-
-	podule->flags0 = *address;
-	podule->flags1 = *address;
-	podule->reserved = *address;
-	podule->product = *address + (*address << 8);
-	podule->manufacturer = *address + (*address << 8);
-	podule->country = *address;
-	if (podule->flags1 & PODULE_FLAGS_IS) {
-		podule->irq_mask = *address;
-		podule->irq_addr = *address + (*address << 8) + (*address << 16);
-		podule->irq_addr += podule->slow_base;
-		if (podule->irq_mask == 0)
-			podule->irq_mask = 0x01;
-		podule->fiq_mask = *address;
-		podule->fiq_addr = *address + (*address << 8) + (*address << 16);
-		podule->fiq_addr += podule->slow_base;
-		if (podule->fiq_mask == 0)
-			podule->fiq_mask = 0x04;
-	} else {
-		podule->irq_addr = podule->slow_base;
-		podule->irq_mask = 0x01;
-		podule->fiq_addr = podule->slow_base;
-		podule->fiq_mask = 0x04;
-	}
-
-	poduleexamine(podule, dev, SLOT_NET);
 }
 
 
@@ -692,19 +605,6 @@ matchpodule(pa, manufacturer, product, required_slot)
 		return(1);
 
 	return(0);
-}
-
-void
-netslot_ea(buffer)
-	u_int8_t *buffer;
-{
-	/* Build station address from machine ID */
-	buffer[0] = 0x00;
-	buffer[1] = 0x00;
-	buffer[2] = 0xa4;
-	buffer[3] = bootconfig.machine_id[2] + 0x10;
-	buffer[4] = bootconfig.machine_id[1];
-	buffer[5] = bootconfig.machine_id[0];
 }
 
 void *
