@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.11 1998/10/01 14:27:57 eeh Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.12 1998/12/18 15:08:21 drochner Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -32,6 +32,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_compat_sunos.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
