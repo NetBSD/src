@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1999/02/12 11:34:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 1999/08/15 10:59:01 blymn Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	termcap
@@ -7,7 +7,10 @@ SRCS=	termcap.c tgoto.c tputs.c
 
 MAN=	termcap.3
 MLINKS=	termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
-	termcap.3 tgetstr.3 termcap.3 tgoto.3 termcap.3 tputs.3
+	termcap.3 tgetstr.3 termcap.3 tgoto.3 termcap.3 tputs.3 \
+	termcap.3 t_getent.3 termcap.3 t_getflag.3 termcap.3 t_getnum.3 \
+	termcap.3 t_getstr.3 termcap.3 t_goto.3 termcap.3 t_puts.3 \
+	termcap.3 t_freent.3
 INCS=	termcap.h
 INCSDIR=/usr/include
 
