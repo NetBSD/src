@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1997/10/18 14:49:45 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1997/10/19 11:52:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: main.c,v 1.7 1997/10/18 14:49:45 lukem Exp $";
+#if 0
+static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: main.c,v 1.8 1997/10/19 11:52:43 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,6 +63,7 @@ int isdepth;			/* do directories on post-order visit */
 int isoutput;			/* user specified output operator */
 int isxargs;			/* don't permit xargs delimiting chars */
 
+int main __P((int, char **));
 static void usage __P((void));
 
 int
@@ -66,7 +71,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char **p, **start;
+	char **p, **start;
 	int ch;
 
 	(void)time(&now);	/* initialize the time-of-day */

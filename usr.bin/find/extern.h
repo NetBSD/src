@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1997/01/09 20:19:09 tls Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 1997/10/19 11:52:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	8.1 (Berkeley) 6/6/93
- *      $NetBSD: extern.h,v 1.5 1997/01/09 20:19:09 tls Exp $
+ *      $NetBSD: extern.h,v 1.6 1997/10/19 11:52:12 lukem Exp $
  */
 
 #include <sys/cdefs.h>
@@ -43,6 +43,7 @@ void	*emalloc __P((unsigned int));
 PLAN	*find_create __P((char ***));
 void	 find_execute __P((PLAN *, char **));
 PLAN	*find_formplan __P((char **));
+int	 f_expr __P((PLAN *, FTSENT *));
 PLAN	*not_squish __P((PLAN *));
 OPTION	*option __P((char *));
 PLAN	*or_squish __P((PLAN *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.5 1997/01/09 20:19:15 tls Exp $	*/
+/*	$NetBSD: misc.c,v 1.6 1997/10/19 11:52:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,9 +36,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)misc.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: misc.c,v 1.5 1997/01/09 20:19:15 tls Exp $";
+#if 0
+static char sccsid[] = "from: @(#)misc.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: misc.c,v 1.6 1997/10/19 11:52:50 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,15 +67,15 @@ brace_subst(orig, store, path, len)
 	char *orig, **store, *path;
 	int len;
 {
-	register int plen;
-	register char ch, *p;
+	int plen;
+	char ch, *p;
 
 	plen = strlen(path);
-	for (p = *store; ch = *orig; ++orig)
+	for (p = *store; (ch = *orig) != 0; ++orig)
 		if (ch == '{' && orig[1] == '}') {
 			while ((p - *store) + plen > len)
 				if (!(*store = realloc(*store, len *= 2)))
-					err(1, NULL);
+					err(1, "realloc");
 			memmove(p, path, plen);
 			p += plen;
 			++orig;
@@ -87,7 +91,7 @@ brace_subst(orig, store, path, len)
  */
 int
 queryuser(argv)
-	register char **argv;
+	char **argv;
 {
 	int ch, first, nl;
 
@@ -125,7 +129,7 @@ emalloc(len)
 {
 	void *p;
 
-	if (p = malloc(len))
+	if ((p = malloc(len)) != NULL)
 		return (p);
-	err(1, NULL);
+	err(1, "malloc");
 }

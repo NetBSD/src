@@ -1,4 +1,4 @@
-/*	$NetBSD: operator.c,v 1.4 1997/01/09 20:19:15 tls Exp $	*/
+/*	$NetBSD: operator.c,v 1.5 1997/10/19 11:52:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,9 +36,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)operator.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: operator.c,v 1.4 1997/01/09 20:19:15 tls Exp $";
+#if 0
+static char sccsid[] = "from: @(#)operator.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: operator.c,v 1.5 1997/10/19 11:52:55 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -76,11 +80,10 @@ static PLAN *
 yankexpr(planp)    
 	PLAN **planp;		/* pointer to top of plan (modified) */
 {
-	register PLAN *next;	/* temp node holding subexpression results */
+	PLAN *next;		/* temp node holding subexpression results */
 	PLAN *node;		/* pointer to returned node or expression */
 	PLAN *tail;		/* pointer to tail of subplan */
 	PLAN *subplan;		/* pointer to head of ( ) expression */
-	int f_expr();
     
 	/* first pull the top node from the plan */
 	if ((node = yanknode(planp)) == NULL)
@@ -131,8 +134,8 @@ PLAN *
 paren_squish(plan)
 	PLAN *plan;		/* plan with ( ) nodes */
 {
-	register PLAN *expr;	/* pointer to next expression */
-	register PLAN *tail;	/* pointer to tail of result plan */
+	PLAN *expr;		/* pointer to next expression */
+	PLAN *tail;		/* pointer to tail of result plan */
 	PLAN *result;		/* pointer to head of result plan */
     
 	result = tail = NULL;
@@ -169,9 +172,9 @@ PLAN *
 not_squish(plan)
 	PLAN *plan;		/* plan to process */
 {
-	register PLAN *next;	/* next node being processed */
-	register PLAN *node;	/* temporary node used in N_NOT processing */
-	register PLAN *tail;	/* pointer to tail of result plan */
+	PLAN *next;		/* next node being processed */
+	PLAN *node;		/* temporary node used in N_NOT processing */
+	PLAN *tail;		/* pointer to tail of result plan */
 	PLAN *result;		/* pointer to head of result plan */
     
 	tail = result = next = NULL;
@@ -227,8 +230,8 @@ PLAN *
 or_squish(plan)
 	PLAN *plan;		/* plan with ors to be squished */
 {
-	register PLAN *next;	/* next node being processed */
-	register PLAN *tail;	/* pointer to tail of result plan */
+	PLAN *next;		/* next node being processed */
+	PLAN *tail;		/* pointer to tail of result plan */
 	PLAN *result;		/* pointer to head of result plan */
     
 	tail = result = next = NULL;

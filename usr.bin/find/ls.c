@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.8 1997/06/30 21:26:57 jtc Exp $	*/
+/*	$NetBSD: ls.c,v 1.9 1997/10/19 11:52:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: ls.c,v 1.8 1997/06/30 21:26:57 jtc Exp $";
+#if 0
+static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: ls.c,v 1.9 1997/10/19 11:52:38 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -43,12 +47,17 @@ static char rcsid[] = "$NetBSD: ls.c,v 1.8 1997/06/30 21:26:57 jtc Exp $";
 
 #include <err.h>
 #include <errno.h>
+#include <fts.h>
+#include <grp.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
 #include <utmp.h>
+
+#include "find.h"
 
 /* Derived from the print routines in the ls(1) source code. */
 
@@ -61,9 +70,9 @@ printlong(name, accpath, sb)
 	char *accpath;			/* current valid path to filename */
 	struct stat *sb;		/* stat buffer */
 {
-	char modep[15], *user_from_uid(), *group_from_gid();
+	char modep[15];
 
-	(void)printf("%6lu %4qd ", sb->st_ino, sb->st_blocks);
+	(void)printf("%6lu %4qd ", (u_long)sb->st_ino, sb->st_blocks);
 	(void)strmode(sb->st_mode, modep);
 	(void)printf("%s %3u %-*s %-*s ", modep, sb->st_nlink, UT_NAMESIZE,
 	    user_from_uid(sb->st_uid, 0), UT_NAMESIZE,
