@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.25 2003/12/05 03:28:38 mrg Exp $
+# $NetBSD: HACKS,v 1.26 2003/12/07 12:52:33 simonb Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -241,6 +241,17 @@ port	pc532
 		warning, so -Wno-error is turned on for this file.
 	kcah
 
+	hack	gcc332-cppmacro-ice
+	cdate	Sun Dec  7 12:48:33 UTC 2003
+	who	simonb
+	file	gnu/usr.bin/gcc3/libcpp/Makefile : 1.2
+	descr
+		gcc 3.3.2 gets an ICE when compiling cppmacro.c with -O2.
+		The hack is to use -O1 for this file.  Fixed in gcc
+		-current mainline, unable to work out where the fix is
+		right now.
+	kcah
+
 
 port	sh3
 
@@ -250,7 +261,7 @@ port	sh3
 	file	usr.bin/sed/Makefile	: 1.9 : 9 : 13
 	descr
 		The in-tree GCC 2.95.3-based compiler ICEs when building
-		with optimization for SuperH.  Hack is to biuld with -O0.
+		with optimization for SuperH.  Hack is to build with -O0.
 	kcah
 
 
@@ -289,7 +300,7 @@ port	sun2
 	file	gnu/usr.sbin/mdsetimage/Makefile : 1.15
 	descr
 		mdsetimage.c causes cc1 to barf for as-yet unknown reasons.
-		this hack ues -O0 to avoid the problem.
+		this hack uses -O0 to avoid the problem.
 	kcah
 
 	hack	gcc 3.3.2/installboot/ffs.c
@@ -298,7 +309,7 @@ port	sun2
 	file	usr.sbin/installboot/Makefile : 1.26
 	descr
 		ffs.c causes cc1 to barf for as-yet unknown reasons.  this
-		hack ues -O0 to avoid the problem.
+		hack uses -O0 to avoid the problem.
 	kcah
 
 
