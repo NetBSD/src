@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
+#	$NetBSD: special,v 1.5 1996/11/11 06:38:00 mikel Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -119,7 +119,7 @@ at		type=dir mode=0755 uname=root gname=daemon ignore
 backups		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#var/backups
 db		type=dir mode=0755 uname=root gname=wheel
-kvm_netbsd.db	type=file mode=0644 uname=root gname=wheel
+kvm.db		type=file mode=0644 uname=root gname=wheel
 ..	#var/db
 log		type=dir mode=0755 uname=root gname=wheel
 secure		type=file mode=0600 uname=root gname=wheel
