@@ -1,4 +1,4 @@
-/* $NetBSD: iic.c,v 1.9 1997/07/28 18:01:49 mark Exp $ */
+/*	$NetBSD: iic.c,v 1.10 1997/10/14 19:35:40 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -52,13 +52,12 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <machine/io.h>
-#include <machine/iomd.h>
+#include <machine/bus.h>
+/*#include <machine/io.h>*/
 #include <machine/katelib.h>
 #include <machine/cpu.h>
-#include <machine/irqhandler.h>
-#include <machine/iic.h>
-#include <arm32/mainbus/mainbus.h>
+#include <arm32/dev/iic.h>
+#include <arm32/dev/iicvar.h>
 
 #include "locators.h"
 
@@ -71,16 +70,14 @@ static u_char iic_read_byte	__P((void));
 static void iic_start_bit	__P((void));
 static void iic_stop_bit	__P((void));
 
-struct iic_softc {
-	struct device	sc_dev;
-	int		sc_flags;
-#define IIC_BROKEN	1
-#define IIC_OPEN	2
-#define IIC_BUSY	4
-};
+static int  iicprint  __P((void *aux, const char *name));
 
-void iicattach __P((struct device *parent, struct device *self, void *aux));
-int iicmatch __P((struct device *parent, void *match, void *aux));
+/* External functions that do the bit twiddling */
+extern int  iic_getstate		__P((void));
+extern void iic_set_state_and_ack	__P((int, int));
+extern void iic_set_state		__P((int, int));
+extern void iic_delay			__P((int));
+
 
 /*
  * Main entry to IIC driver.
@@ -94,21 +91,21 @@ iic_control(address, buffer, count)
 {
 	int loop;
 
-/* Send the start bit */
+	/* Send the start bit */
 
 	iic_start_bit();
 
-/* Send the address */
+	/* Send the address */
 
 	if (!iic_write_byte(address)) {
 		iic_stop_bit();
 		return(-1);
 	}
 
-/* Read or write the data as required */
+	/* Read or write the data as required */
 
 	if ((address & 1) == 0) {
-/* Write bytes */
+		/* Write bytes */
 		for (loop = 0; loop < count; ++loop) {
 			if (!iic_write_byte(buffer[loop])) {
 				iic_stop_bit();
@@ -117,11 +114,11 @@ iic_control(address, buffer, count)
 		}
 	}
 	else {
-/* Read bytes */
+		/* Read bytes */
 		for (loop = 0; loop < count; ++loop) {
 			buffer[loop] = iic_read_byte();
 
-/* Send final acknowledge */
+			/* Send final acknowledge */
 
 			if (loop == (count - 1))
 				iic_write_bit(1);
@@ -130,7 +127,7 @@ iic_control(address, buffer, count)
 		}
 	}
 
-/* Send stop bit */
+	/* Send stop bit */
 
 	iic_stop_bit();
 
@@ -147,7 +144,7 @@ iic_getack()
 	iic_set_state(1, 0);
 	oldirqstate = disable_interrupts(I32_bit);
 	iic_set_state_and_ack(1, 1);
-	ack = ReadByte(IOMD_IOCR);
+	ack = iic_getstate();
 	iic_set_state(1, 0);
 	restore_interrupts(oldirqstate);
 
@@ -199,7 +196,7 @@ iic_read_byte()
 	for (loop = 0; loop < 8; ++loop) {
 		oldirqstate = disable_interrupts(I32_bit);
 		iic_set_state_and_ack(1, 1);
-		byte = (byte << 1) + (ReadByte(IOMD_IOCR) & 1);
+		byte = (byte << 1) + (iic_getstate() & 1);
 		iic_set_state(1, 0);
 		restore_interrupts(oldirqstate);
 	}
@@ -225,97 +222,73 @@ iic_stop_bit()
 	iic_set_state(1, 1);
 }
 
-
-struct cfattach iic_ca = {
-	sizeof(struct iic_softc), iicmatch, iicattach
-};
+/* driver structures */
 
 struct cfdriver iic_cd = {
 	NULL, "iic", DV_DULL, 0
 };
 
-int
-iicmatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
-{
-	struct mainbus_attach_args *mb = aux;
-	int id;
+/*
+ * int iicprint(void *aux, const char *name)
+ *
+ * print function for child device configuration
+ */
 
-	/* We need a base address */
-	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
-		return(0);
-
-/* Make sure we have an IOMD we understand */
-    
-	id = IOMD_ID;
-
-/* So far I only know about this IOMD */
-
-	switch (id) {
-	case RPC600_IOMD_ID:
-	case ARM7500_IOC_ID:
-		return(1);
-		break;
-	default:
-		printf("iic: Unknown IOMD id=%04x", id);
-		break;
-	}
-
-	return(0);
-}
-
-int
+static int
 iicprint(aux, name)
 	void *aux;
 	const char *name;
 {
-	struct iicbus_attach_args *ib = aux;
+	struct iicbus_attach_args *iba = aux;
 
 	if (!name) {
-		if (ib->ib_addr)
-			printf(" addr 0x%02x", ib->ib_addr);
+		if (iba->ib_addr)
+			printf(" addr 0x%02x", iba->ib_addr);
 	}
 
-/* XXXX print flags */
+	/* XXXX print flags */
 	return (QUIET);
 }
 
+/*
+ * iic search function
+ *
+ * search for devices that are children of the iic device
+ * fill out the attach arguments and call the probe and
+ * attach function (as required).
+ *
+ * Note: since the offsets of the devices need to be specified in the
+ * config file we ignore the FSTAT_STAR.
+ */
 
 int
-iicsubmatch(parent, match, aux)
+iicsearch(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
 	void *aux;
 {
-	struct cfdata *cf = match;
-	struct iicbus_attach_args *ib = aux;
+	struct iic_softc *sc = (struct iic_softc *)parent;
+	struct iicbus_attach_args iba;
+	int tryagain;
 
-	if (cf->cf_fstate == FSTATE_STAR)
-		panic("eekkk, I'm stuffed");
+	do {
+		iba.ib_iic_softc = sc;
+		iba.ib_addr = cf->cf_loc[IICCF_ADDR];
+		iba.ib_aux = NULL;
 
-	ib->ib_addr = cf->cf_loc[IICCF_ADDR];
+		tryagain = 0;
+		if ((*cf->cf_attach->ca_match)(parent, cf, &iba) > 0) {
+			config_attach(parent, cf, &iba, iicprint);
+/*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
+		}
+	} while (tryagain);
 
-	if (ib->ib_addr == IICCF_ADDR_DEFAULT)
-		return(0);
-
-	return((*cf->cf_attach->ca_match)(parent, match, aux));
+	return (0);
 }
 
-void
-iicattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
-{
-	struct iicbus_attach_args iaa;
-
-	printf("\n");
-
-	while (config_found_sm(self, &iaa, iicprint, iicsubmatch));
-}
-
+/* 
+ * Q: Do we really need a device interface ?
+ */
 
 int
 iicopen(dev, flag, mode, p)
