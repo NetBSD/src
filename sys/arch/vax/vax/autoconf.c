@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49 2000/04/22 21:40:40 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.50 2000/04/23 20:30:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -204,8 +204,11 @@ booted_qe(dev, aux)
 	void *aux;
 {
 	if ((B_TYPE(bootdev) == BDEV_QE) &&
-	    (B_CONTROLLER(bootdev) == dev->dv_unit) &&
-	    !strcmp("qe", dev->dv_cfdata->cf_driver->cd_name))
+	    !strcmp("qe", dev->dv_cfdata->cf_driver->cd_name) &&
+	    ((dev->dv_cfdata->cf_loc[0] == 0174440 &&
+			B_CONTROLLER(bootdev) == 0) || /* XQA0 */
+	     (dev->dv_cfdata->cf_loc[0] == 0174460 &&
+			B_CONTROLLER(bootdev) == 1)))  /* XQB0 */
 		return 1;
 	return 0;
 }
