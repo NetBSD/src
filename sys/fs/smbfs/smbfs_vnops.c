@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.17 2003/03/24 13:30:44 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.18 2003/03/24 13:50:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.17 2003/03/24 13:30:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.18 2003/03/24 13:50:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,7 +357,7 @@ smbfs_getattr(v)
 	struct vattr *va=ap->a_vap;
 	struct smbfattr fattr;
 	struct smb_cred scred;
-	u_int32_t oldsize;
+	u_quad_t oldsize;
 	int error;
 
 	SMBVDEBUG("%p: '%.*s' isroot %d\n", vp,
