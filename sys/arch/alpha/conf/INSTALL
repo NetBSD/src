@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.8 1998/02/28 02:01:33 cgd Exp $
+# $NetBSD: INSTALL,v 1.9 1998/03/25 02:16:42 ross Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -10,11 +10,6 @@ maxusers 8
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MINIROOTSIZE=6144	# 3 Megabytes
-
-# set kernel load address a bit higher to allow kernel to be netbooted.
-# if not netbooting, the "makeoptions LOADADDRESS" line can be commented
-# out to save a fair chunk (~850k) of RAM.
-makeoptions	LOADADDRESS="fffffc0000300000"
 
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
