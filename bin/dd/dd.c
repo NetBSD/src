@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.21 2001/11/25 06:53:48 lukem Exp $	*/
+/*	$NetBSD: dd.c,v 1.22 2001/11/25 06:57:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.21 2001/11/25 06:53:48 lukem Exp $");
+__RCSID("$NetBSD: dd.c,v 1.22 2001/11/25 06:57:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,8 +124,6 @@ main(int argc, char *argv[])
 static void
 setup(void)
 {
-	u_int cnt;
-
 	if (in.name == NULL) {
 		in.name = "stdin";
 		in.fd = STDIN_FILENO;
@@ -201,6 +199,8 @@ setup(void)
 		/* Should not get here, but just in case... */
 		errx(1, "case conv and -DNO_CONV");
 #else	/* NO_CONV */
+		u_int cnt;
+
 		if (ddflags & C_ASCII || ddflags & C_EBCDIC) {
 			if (ddflags & C_LCASE) {
 				for (cnt = 0; cnt < 0377; ++cnt)

@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.17 2001/11/25 06:53:48 lukem Exp $	*/
+/*	$NetBSD: args.c,v 1.18 2001/11/25 06:57:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.17 2001/11/25 06:53:48 lukem Exp $");
+__RCSID("$NetBSD: args.c,v 1.18 2001/11/25 06:57:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,9 @@ __RCSID("$NetBSD: args.c,v 1.17 2001/11/25 06:53:48 lukem Exp $");
 #include "extern.h"
 
 static int	c_arg(const void *, const void *);
+#ifndef	NO_CONV
 static int	c_conv(const void *, const void *);
+#endif
 static void	f_bs(char *);
 static void	f_cbs(char *);
 static void	f_conv(char *);
