@@ -109,7 +109,7 @@ Upgrade to gcc 2.8.x or use IBM's xlC compiler.
 in strlen inside strdup inside svc_register().
 
 
-(5) *-linux-gnu (RedHat Linux 5.1)
+(5) *-linux-rh51 (RedHat Linux 5.1)
 
 There's a UDP file descriptor leak in libnsl in RedHat Linux 5.1.  This
 library part of glibc2.  Am-utils currently declares redhat 5.1 systems as
@@ -139,15 +139,15 @@ plock on aix-4.3: set it to plock=no in amd.conf (which is the default if
 you do nothing).
 
 
-(8) *-linux-gnu (systems using glibc 2.1, such as RedHat-6.1)
+(8) *-linux (systems using glibc 2.1, such as RedHat-6.x)
 
-There's a UDP file descriptor leak in the nis routines in glibc, especially
+There's a UDP file descriptor leak in the NIS routines in glibc, especially
 those that do yp_bind.  Until this is bug fixed, do not set nis_domain in
 amd.conf, but let the system pick up the default domain name as set by your
 system.  That would avoid using the buggy yp_bind routines in libc.
 
 
-(9) *-linux-gnu (SuSE systems using unfsd)
+(9) *-linux (SuSE systems using unfsd)
 
 The user-level nfsd (2.2beta44) on older SuSE Linux systems (and possibly
 others) dies with a SEGV when amd tries to contact it for access to a volume
@@ -172,6 +172,9 @@ problems.  See http://www.am-utils.org/patches/.
 Later 2.4.x kernels completely disallow the hack amd was using for direct
 mounts, so another solution will have to be found.
 
+Note: the above is for the old-style amd mount_type = nfs. The autofs mounts
+don't support direct mounts at all (due to lack of kernel support).
+
 (12) *-aix5.1.0.0 and *-hpux9*
 
 /bin/sh is broken and fails to run the configure script properly. You need
@@ -179,5 +182,20 @@ to use /bin/ksh instead. The buildall script will do it for you; if for some
 reason you need to run configure directly, run it using 'ksh configure'
 instead of just 'configure'.
 
+13) *-linux and *-darwin6.0
 
-Erez.
+Certain linux kernels (2.4.18+ are fine, 2.4.10- are probably bad, those in
+between have not been tested) have a bug which causes them to reconnect
+broken NFS/TCP connections using unprivileged ports (greater than 1024),
+unlike the initial connections which do originate from privileged
+ports. This can upset quite a few NFS servers and causes accesses to the
+mounted shares to fail with "Operation not permitted" (EPERM).
+
+The darwin (MacOS X) kernel defaults to using unprivileged ports, but that
+can be changed by setting the resvport mount flag (which amd sets by
+default). Nonetheless, if a TCP connection breaks, under certain unclear
+circumstances the kernel might "forget" about that flag and start using
+unprivileged ports, causing the same EPERM error above.
+
+
+Erez & Ion

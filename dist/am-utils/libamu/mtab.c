@@ -1,7 +1,7 @@
-/*	$NetBSD: mtab.c,v 1.1.1.5 2002/11/29 22:59:06 christos Exp $	*/
+/*	$NetBSD: mtab.c,v 1.1.1.6 2003/03/09 01:13:59 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mtab.c,v 1.10 2002/02/02 20:59:04 ezk Exp
+ * Id: mtab.c,v 1.12 2002/12/27 22:44:10 ezk Exp
  *
  */
 
@@ -126,7 +126,7 @@ hasmnteq(mntent_t *mnt, char *opt)
 {
   if (mnt && opt) {		/* disallow null input pointers */
     if ( *opt ) {		/* disallow the null string as an opt */
-      char *str = hasmntopt(mnt, opt);
+      char *str = amu_hasmntopt(mnt, opt);
       if ( str ) {		/* option was there */
 	char *eq = str + strlen(opt); /* Look at char just after option */
 	if (*eq == '=')		/* Is it '=' ? */
@@ -146,7 +146,7 @@ hasmnteq(mntent_t *mnt, char *opt)
 int
 hasmntval(mntent_t *mnt, char *opt)
 {
-  char *str = hasmntopt(mnt, opt);
+  char *str = amu_hasmntopt(mnt, opt);
 
   if (str) { /* The option was there */
 

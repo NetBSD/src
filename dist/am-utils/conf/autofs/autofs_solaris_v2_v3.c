@@ -1,8 +1,8 @@
-/*	$NetBSD: autofs_solaris_v2_v3.c,v 1.1.1.1 2002/11/29 22:58:28 christos Exp $	*/
+/*	$NetBSD: autofs_solaris_v2_v3.c,v 1.1.1.2 2003/03/09 01:13:20 christos Exp $	*/
 
 /*
- * Copyright (c) 1999-2002 Ion Badulescu
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1999-2003 Ion Badulescu
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: autofs_solaris_v2_v3.c,v 1.23 2002/06/24 03:05:15 ib42 Exp
+ * Id: autofs_solaris_v2_v3.c,v 1.27 2002/12/27 22:43:54 ezk Exp
  *
  */
 
@@ -215,7 +215,7 @@ xdr_action_list(XDR *xdrs, action_list *objp)
 bool_t
 xdr_umntrequest(XDR *xdrs, umntrequest *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_umntrequest:");
 
   if (!xdr_bool_t(xdrs, &objp->isdirect))
@@ -246,7 +246,7 @@ xdr_umntrequest(XDR *xdrs, umntrequest *objp)
 bool_t
 xdr_umntres(XDR *xdrs, umntres *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_mntres:");
 
   if (!xdr_int(xdrs, &objp->status))
@@ -316,7 +316,7 @@ xdr_autofs_res(XDR *xdrs, autofs_res *objp)
 bool_t
 xdr_autofs_lookupargs(XDR *xdrs, autofs_lookupargs *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_autofs_lookupargs:");
 
   if (!xdr_string(xdrs, &objp->map, AUTOFS_MAXPATHLEN))
@@ -358,7 +358,7 @@ xdr_mount_result_type(XDR *xdrs, mount_result_type *objp)
 bool_t
 xdr_autofs_mountres(XDR *xdrs, autofs_mountres *objp)
 {
-  amuDebug(D_XDRTRACE)
+  if (amuDebug(D_XDRTRACE))
     plog(XLOG_DEBUG, "xdr_mntres:");
 
   if (!xdr_mount_result_type(xdrs, &objp->mr_type))
@@ -968,7 +968,7 @@ autofs_get_fh(am_node *mp)
   fh->addr.len = fh->addr.maxlen = strlen(buf);
 #endif /* HAVE_AUTOFS_ARGS_T_ADDR */
 
-  fh->direct = (mf->mf_ops == &amfs_direct_ops);
+  fh->direct = ((mf->mf_ops->autofs_fs_flags & FS_DIRECT) == FS_DIRECT);
   fh->rpc_to = 1;		/* XXX: arbitrary */
   fh->mount_to = mp->am_timeo;
   fh->path = mp->am_path;
@@ -1019,128 +1019,21 @@ autofs_handle_fdset(fd_set *readfds, int nsel)
 
 
 /*
- * find the IP address that can be used to connect autofs service to.
- */
-static int
-get_autofs_address(struct netconfig *ncp, struct t_bind *tbp)
-{
-  int ret;
-  struct nd_addrlist *addrs = (struct nd_addrlist *) NULL;
-  struct nd_hostserv service;
-
-  service.h_host = HOST_SELF;
-  service.h_serv = "autofs";
-
-  ret = netdir_getbyname(ncp, &service, &addrs);
-
-  if (ret) {
-    plog(XLOG_FATAL, "get_autofs_address: cannot get local host address: %s", netdir_sperror());
-    goto out;
-  }
-
-  /*
-   * XXX: there may be more more than one address for this local
-   * host.  Maybe something can be done with those.
-   */
-  tbp->addr.len = addrs->n_addrs->len;
-  tbp->addr.maxlen = addrs->n_addrs->len;
-  memcpy(tbp->addr.buf, addrs->n_addrs->buf, addrs->n_addrs->len);
-  tbp->qlen = 8;		/* arbitrary? who cares really */
-
-  /* all OK */
-  netdir_free((voidp) addrs, ND_ADDRLIST);
-
-out:
-  return ret;
-}
-
-
-#include <rpc/nettype.h>
-static char *autofs_conftype = "ticotsord";
-/*
  * Create the autofs service for amd
  */
 int
 create_autofs_service(void)
 {
-  struct t_bind *tbp = 0;
-  int fd = -1, err = 1;		/* assume failed */
-  struct netconfig *autofs_ncp;
-
-  plog(XLOG_INFO, "creating autofs service listener");
-  autofs_ncp = getnetconfigent(autofs_conftype);
-  if (autofs_ncp == NULL) {
-    plog(XLOG_ERROR, "create_autofs_service: cannot getnetconfigent for %s", autofs_conftype);
-    goto out;
-  }
-
-  fd = t_open(autofs_ncp->nc_device, O_RDWR, NULL);
-  if (fd < 0) {
-    plog(XLOG_ERROR, "create_autofs_service: t_open failed (%s)",
-	 t_errlist[t_errno]);
-    goto out;
-  }
-
-  tbp = (struct t_bind *) t_alloc(fd, T_BIND, T_ADDR);
-  if (!tbp) {
-    plog(XLOG_ERROR, "create_autofs_service: t_alloca failed");
-    goto out;
-  }
-
-  if (get_autofs_address(autofs_ncp, tbp) != 0) {
-    plog(XLOG_ERROR, "create_autofs_service: get_autofs_address failed");
-    goto out;
-  }
-
-  autofs_xprt = svc_tli_create(fd, autofs_ncp, tbp, 0, 0);
-  if (autofs_xprt == NULL) {
-    plog(XLOG_ERROR, "cannot create autofs tli service for amd");
-    goto out;
-  }
-
-  rpcb_unset(AUTOFS_PROG, AUTOFS_VERS, autofs_ncp);
-  if (svc_reg(autofs_xprt, AUTOFS_PROG, AUTOFS_VERS, autofs_program_2, autofs_ncp) == FALSE) {
-    plog(XLOG_ERROR, "could not register amd AUTOFS service");
-    goto out;
-  }
-  err = 0;
-  goto really_out;
-
-out:
-  if (autofs_ncp)
-    freenetconfigent(autofs_ncp);
-  if (autofs_xprt)
-    SVC_DESTROY(autofs_xprt);
-  else {
-    if (fd > 0)
-      t_close(fd);
-  }
-
-really_out:
-  if (tbp)
-    t_free((char *) tbp, T_BIND);
-
-  dlog("create_autofs_service: returning %d\n", err);
-  return err;
+  dlog("creating autofs service listener");
+  return register_autofs_service(AUTOFS_CONFTYPE, autofs_program_2);
 }
 
 
 int
 destroy_autofs_service(void)
 {
-  struct netconfig *autofs_ncp;
-  int err = 1;
-
-  plog(XLOG_INFO, "destroying autofs service listener");
-  autofs_ncp = getnetconfigent(autofs_conftype);
-  if (autofs_ncp == NULL) {
-    plog(XLOG_ERROR, "create_autofs_service: cannot getnetconfigent for %s", autofs_conftype);
-    goto out;
-  }
-
-out:
-  rpcb_unset(AUTOFS_PROG, AUTOFS_VERS, autofs_ncp);
-  return err;
+  dlog("destroying autofs service listener");
+  return unregister_autofs_service(AUTOFS_CONFTYPE);
 }
 
 
