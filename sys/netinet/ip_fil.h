@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.36 2000/05/23 06:07:43 veego Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.37 2000/06/12 10:28:21 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.29.2.2 2000/05/22 10:26:13 darrenr Exp
+ * Id: ip_fil.h,v 2.29.2.3 2000/06/05 13:12:42 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FIL_H_
@@ -523,8 +523,8 @@ extern	int	iplioctl __P((dev_t, int, int *, int, cred_t *, int *));
 extern	int	iplopen __P((dev_t *, int, int, cred_t *));
 extern	int	iplclose __P((dev_t, int, int, cred_t *));
 extern	int	ipfsync __P((void));
-extern	int	ipfr_fastroute __P((qif_t *, ip_t *, mblk_t *, mblk_t **,
-				   fr_info_t *, frdest_t *));
+extern	int	ipfr_fastroute __P((ip_t *, mblk_t *, mblk_t **,
+				    fr_info_t *, frdest_t *));
 extern	void	copyin_mblk __P((mblk_t *, size_t, size_t, char *));
 extern	void	copyout_mblk __P((mblk_t *, size_t, size_t, char *));
 extern	int	fr_qin __P((queue_t *, mblk_t *));
@@ -533,8 +533,6 @@ extern	int	iplread __P((dev_t, struct uio *, cred_t *));
 # else /* SOLARIS */
 extern	int	fr_check __P((ip_t *, int, void *, int, mb_t **));
 extern	int	(*fr_checkp) __P((ip_t *, int, void *, int, mb_t **));
-extern	int	send_reset __P((struct ip *, fr_info_t *));
-extern	int	send_icmp_err __P((ip_t *, int, fr_info_t *, int));
 extern	int	ipfr_fastroute __P((mb_t *, fr_info_t *, frdest_t *));
 extern	size_t	mbufchainlen __P((mb_t *));
 #  ifdef	__sgi
