@@ -1,4 +1,4 @@
-#	$NetBSD: std.vax,v 1.12 2000/07/19 18:29:21 matt Exp $
+#	$NetBSD: std.vax,v 1.13 2000/07/19 20:29:45 matt Exp $
 #
 # Std vaxfiles
 #
@@ -6,4 +6,4 @@ machine	vax
 
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_SCRIPT	# execve(2) support for scripts
-otpions		EXEC_ELF32	# execve(2) support for ELF32 binaries
+options		EXEC_ELF32	# execve(2) support for ELF32 binaries
