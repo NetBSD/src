@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.27 2000/06/29 19:27:56 fvdl Exp $	*/
+/*	$NetBSD: xy.c,v 1.28 2000/07/07 21:12:21 pk Exp $	*/
 
 /*
  *
@@ -82,6 +82,7 @@
 #include <dev/sun/disklabel.h>
 #endif
 
+#include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>
 
 #include <dev/vme/xyreg.h>
@@ -372,12 +373,12 @@ int xycmatch(parent, cf, aux)
 	vme_am_t		mod;
 	int error;
 
-	mod = 0x2d; /* VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
-	if (vme_space_alloc(va->va_vct, va->r[0].offset, sizeof(struct xyc),
-			    mod))
+	mod = VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA;
+	if (vme_space_alloc(ct, va->r[0].offset, sizeof(struct xyc), mod))
 		return (0);
+
 	error = vme_probe(ct, va->r[0].offset, sizeof(struct xyc),
-			  mod, VME_D32, xyc_probe, 0);
+			  mod, VME_D16, xyc_probe, 0);
 	vme_space_free(va->va_vct, va->r[0].offset, sizeof(struct xyc), mod);
 
 	return (error == 0);
@@ -392,13 +393,13 @@ xycattach(parent, self, aux)
 	void   *aux;
 
 {
+	struct xyc_softc	*xyc = (void *) self;
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
 	bus_space_tag_t		bt;
 	bus_space_handle_t	bh;
 	vme_intr_handle_t	ih;
 	vme_am_t		mod;
-	struct xyc_softc	*xyc = (void *) self;
 	struct xyc_attach_args	xa;
 	int			lcv, res, error;
 	bus_dma_segment_t	seg;
@@ -408,13 +409,13 @@ xycattach(parent, self, aux)
 	/* get addressing and intr level stuff from autoconfig and load it
 	 * into our xyc_softc. */
 
-	mod = 0x2d; /* VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
+	mod = VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA;
 
-	if (vme_space_alloc(va->va_vct, va->r[0].offset, sizeof(struct xyc),
-			    mod))
+	if (vme_space_alloc(ct, va->r[0].offset, sizeof(struct xyc), mod))
 		panic("xyc: vme alloc");
+
 	if (vme_space_map(ct, va->r[0].offset, sizeof(struct xyc),
-			  mod, VME_D32, 0, &bt, &bh, &resc) != 0)
+			  mod, VME_D16, 0, &bt, &bh, &resc) != 0)
 		panic("xyc: vme_map");
 
 	xyc->xyc = (struct xyc *) bh; /* XXX */
@@ -432,28 +433,36 @@ xycattach(parent, self, aux)
 	 */
 
 	/* Get DMA handle for misc. transfers */
-	if ((error = bus_dmamap_create(
-				xyc->dmatag,
-				MAXPHYS,
+	if ((error = vme_dmamap_create(
+				ct,		/* VME chip tag */
+				MAXPHYS,	/* size */
+				VME_AM_A24,	/* address modifier */
+				VME_D16,	/* data size */
+				0,		/* swap */
 				1,		/* nsegments */
-				MAXPHYS,
+				MAXPHYS,	/* maxsegsz */
 				0,		/* boundary */
 				BUS_DMA_NOWAIT,
-				&xyc->auxmap)) != 0) {
+				&xyc->reqs[lcv].dmamap)) != 0) {
+
 		printf("%s: DMA buffer map create error %d\n",
 			xyc->sc_dev.dv_xname, error);
 		return;
 	}
 
 	/* Get DMA handle for mapping iorq descriptors */
-	if ((error = bus_dmamap_create(
-				xyc->dmatag,
+	if ((error = vme_dmamap_create(
+				ct,		/* VME chip tag */
 				XYC_MAXIOPB * sizeof(struct xy_iopb),
+				VME_AM_A24,	/* address modifier */
+				VME_D16,	/* data size */
+				0,		/* swap */
 				1,		/* nsegments */
 				XYC_MAXIOPB * sizeof(struct xy_iopb),
 				64*1024,	/* boundary */
 				BUS_DMA_NOWAIT,
 				&xyc->iopmap)) != 0) {
+
 		printf("%s: DMA buffer map create error %d\n",
 			xyc->sc_dev.dv_xname, error);
 		return;
@@ -493,15 +502,18 @@ xycattach(parent, self, aux)
 		xyc->iopbase[lcv].relo = 1;	/* always the same */
 		xyc->iopbase[lcv].thro = XY_THRO;/* always the same */
 
-		error = bus_dmamap_create(
-				xyc->dmatag,
+		if ((error = vme_dmamap_create(
+				ct,		/* VME chip tag */
 				MAXPHYS,	/* size */
+				VME_AM_A24,	/* address modifier */
+				VME_D16,	/* data size */
+				0,		/* swap */
 				1,		/* nsegments */
 				MAXPHYS,	/* maxsegsz */
 				0,		/* boundary */
 				BUS_DMA_NOWAIT,
-				&xyc->reqs[lcv].dmamap);
-		if (error) {
+				&xyc->reqs[lcv].dmamap)) != 0) {
+
 			printf("%s: DMA buffer map create error %d\n",
 				xyc->sc_dev.dv_xname, error);
 			return;
