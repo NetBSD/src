@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.221 2003/01/05 19:31:12 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.222 2003/01/05 19:38:42 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -531,77 +531,43 @@ void 		(*pmap_rmu_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
  */
 
 #if defined(SUN4M) || defined(SUN4D)
-#ifdef MULTIPROCESSOR
-/* XXX - should be optimised by hand-coding */
-#define trapoff()	do { setpsr(getpsr() & ~PSR_ET); } while(0)
-#define trapon()	do { setpsr(getpsr() | PSR_ET); } while(0)
-#else
-#define trapoff()
-#define trapon()
-#endif
 /*
- * SP versions of the tlb flush routines.
+ * SP versions of the tlb flush operations.
+ *
+ * Turn off traps to prevent register window overflows
+ * from writing user windows to the wrong stack.
  */
 static void sp_tlb_flush(int va, int ctx, int lvl)
 {
-	__asm__("rd	%psr, %o3");
-	__asm__("wr	%%o3, %0, %%psr" : : "n" (PSR_ET));
-	__asm__("mov	%0, %%o4" : : "n"(SRMMU_CXR));
-	__asm__("lda	[%%o4]%0, %%o5" : : "n"(ASI_SRMMU));
-	__asm__("andn	%o0, 0xfff, %o0");
-	__asm__("sta	%o1, [%o4]4");
-	__asm__("or	%o0, %o2, %o0");
-	__asm__("sta	%g0, [%o0]3");
-	__asm__("sta	%o5, [%o4]4");
-	__asm__("wr	%o3, 0, %psr");
-	__asm__("nop");
-	__asm__("retl");
-	__asm__("nop");
-}
+	/* Traps off */
+	__asm("rd	%psr, %o3");
+	__asm("wr	%%o3, %0, %%psr" :: "n" (PSR_ET));
 
-static __inline__ void sp_tlb_flush_page(int va, int ctx)
-{
-	int octx = getcontext4m();
-	trapoff();
-	setcontext4m(ctx);
-	tlb_flush_page_real(va);
-	setcontext4m(octx);
-	trapon();
-}
+	/* Save context */
+	__asm("mov	%0, %%o4" :: "n"(SRMMU_CXR));
+	__asm("lda	[%%o4]%0, %%o5" :: "n"(ASI_SRMMU));
 
-static __inline__ void sp_tlb_flush_segment(int va, int ctx)
-{
-	int octx = getcontext4m();
-	trapoff();
-	setcontext4m(ctx);
-	tlb_flush_segment_real(va);
-	setcontext4m(octx);
-	trapon();
-}
+	/* Set new context and flush type bits */
+	__asm("andn	%o0, 0xfff, %o0");
+	__asm("sta	%%o1, [%%o4]%0" :: "n"(ASI_SRMMU));
+	__asm("or	%o0, %o2, %o0");
 
-static __inline__ void sp_tlb_flush_region(int va, int ctx)
-{
-	int octx = getcontext4m();
-	trapoff();
-	setcontext4m(ctx);
-	tlb_flush_region_real(va);
-	setcontext4m(octx);
-	trapon();
-}
+	/* Do the TLB flush */
+	__asm("sta	%%g0, [%%o0]%0" :: "n"(ASI_SRMMUFP));
 
-static __inline__ void sp_tlb_flush_context(int ctx)
-{
-	int octx = getcontext4m();
-	trapoff();
-	setcontext4m(ctx);
-	tlb_flush_context_real();
-	setcontext4m(octx);
-	trapon();
+	/* Restore context */
+	__asm("sta	%%o5, [%%o4]%0" :: "n"(ASI_SRMMU));
+
+	/* and turn traps on again */
+	__asm("wr	%o3, 0, %psr");
+	__asm("nop");
+	__asm("retl");
+	__asm("nop");
 }
 
 static __inline__ void sp_tlb_flush_all(void)
 {
-	tlb_flush_all_real();
+	sta(ASI_SRMMUFP_LN, ASI_SRMMUFP, 0);
 }
 
 #if defined(MULTIPROCESSOR)
@@ -632,10 +598,10 @@ smp_tlb_flush_page(int va, int ctx)
 {
 	if (CPU_ISSUN4D) {
 		LOCK_4DTLB();
-		sp_tlb_flush_page(va, ctx);
+		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L3);
 		UNLOCK_4DTLB();
 	} else
-		XCALL2(sp_tlb_flush_page, va, ctx, CPUSET_ALL);
+		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L3, CPUSET_ALL);
 }
 
 static __inline__ void
@@ -643,10 +609,10 @@ smp_tlb_flush_segment(int va, int ctx)
 {
 	if (CPU_ISSUN4D) {
 		LOCK_4DTLB();
-		sp_tlb_flush_segment(va, ctx);
+		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L2);
 		UNLOCK_4DTLB();
 	} else
-		XCALL2(sp_tlb_flush_segment, va, ctx, CPUSET_ALL);
+		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L2, CPUSET_ALL);
 }
 
 static __inline__ void
@@ -654,10 +620,10 @@ smp_tlb_flush_region(int va, int ctx)
 {
 	if (CPU_ISSUN4D) {
 		LOCK_4DTLB();
-		sp_tlb_flush_region(va, ctx);
+		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L1);
 		UNLOCK_4DTLB();
 	} else
-		XCALL2(sp_tlb_flush_region, va, ctx, CPUSET_ALL);
+		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L1, CPUSET_ALL);
 }
 
 static __inline__ void
@@ -665,10 +631,10 @@ smp_tlb_flush_context(int ctx)
 {
 	if (CPU_ISSUN4D) {
 		LOCK_4DTLB();
-		sp_tlb_flush_context(ctx);
+		sp_tlb_flush(ctx, 0, ASI_SRMMUFP_L0);
 		UNLOCK_4DTLB();
 	} else
-		XCALL1(sp_tlb_flush_context, ctx, CPUSET_ALL);
+		XCALL3(sp_tlb_flush, 0, ctx, ASI_SRMMUFP_L0, CPUSET_ALL);
 }
 
 static __inline__ void
@@ -681,7 +647,7 @@ smp_tlb_flush_all()
 	} else
 		XCALL0(sp_tlb_flush_all, CPUSET_ALL);
 }
-#endif
+#endif /* MULTIPROCESSOR */
 
 #if defined(MULTIPROCESSOR)
 #define tlb_flush_page(va,ctx)		smp_tlb_flush_page(va,ctx)
@@ -690,11 +656,11 @@ smp_tlb_flush_all()
 #define tlb_flush_context(ctx)		smp_tlb_flush_context(ctx)
 #define tlb_flush_all()			smp_tlb_flush_all()
 #else
-#define tlb_flush_page(va,ctx)		sp_tlb_flush_page(va,ctx)
-#define tlb_flush_segment(va,ctx)	sp_tlb_flush_segment(va,ctx)
-#define tlb_flush_region(va,ctx)	sp_tlb_flush_region(va,ctx)
-#define tlb_flush_context(ctx)		sp_tlb_flush_context(ctx)
-#define tlb_flush_all()			sp_tlb_flush_all()
+#define tlb_flush_page(va,ctx)		sp_tlb_flush(va,ctx,ASI_SRMMUFP_L3)
+#define tlb_flush_segment(va,ctx)	sp_tlb_flush(va,ctx,ASI_SRMMUFP_L2)
+#define tlb_flush_region(va,ctx)	sp_tlb_flush(va,ctx,ASI_SRMMUFP_L1)
+#define tlb_flush_context(ctx)		sp_tlb_flush(ctx,ASI_SRMMUFP_L0)
+#define tlb_flush_all()			sp_tlb_flush(ASI_SRMMUFP_LN)
 #endif
 
 /*
