@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.13 1998/03/01 02:26:07 fvdl Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.14 1998/03/05 14:02:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: sysctl.c,v 1.13 1998/03/01 02:26:07 fvdl Exp $";
+__RCSID("$NetBSD: sysctl.c,v 1.14 1998/03/05 14:02:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +68,8 @@ static char *rcsid = "$NetBSD: sysctl.c,v 1.13 1998/03/01 02:26:07 fvdl Exp $";
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 
+#include <err.h>
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -116,6 +119,15 @@ int	Aflag, aflag, nflag, wflag;
 #define	BOOTTIME	0x00000002
 #define	CONSDEV		0x00000004
 
+int main __P((int, char *[]));
+
+static void listall __P((char *, struct list *));
+static void parse __P((char *, int));
+static void debuginit __P((void));
+static int sysctl_inet __P((char *, char **, int[], int, int *));
+static int findname __P((char *, char *, char **, struct list *));
+static void usage __P((void));
+
 int
 main(argc, argv)
 	int argc;
@@ -155,18 +167,19 @@ main(argc, argv)
 		debuginit();
 		for (lvl1 = 1; lvl1 < CTL_MAXID; lvl1++)
 			listall(topname[lvl1].ctl_name, &secondlevel[lvl1]);
-		exit(0);
+		return 0;
 	}
 	if (argc == 0)
 		usage();
 	while (argc-- > 0)
 		parse(*argv++, 1);
-	exit(0);
+	return 0;
 }
 
 /*
  * List all variables known to the system.
  */
+static void
 listall(prefix, lp)
 	char *prefix;
 	struct list *lp;
@@ -192,6 +205,7 @@ listall(prefix, lp)
  * Lookup and print out the MIB entry if it exists.
  * Set a new value if requested.
  */
+static void
 parse(string, flags)
 	char *string;
 	int flags;
@@ -204,18 +218,16 @@ parse(string, flags)
 	size_t size;
 	struct list *lp;
 	int mib[CTL_MAXNAME];
-	char *cp, *bufp, buf[BUFSIZ], strval[BUFSIZ];
+	char *cp, *bufp, buf[BUFSIZ];
 
 	bufp = buf;
 	snprintf(buf, BUFSIZ, "%s", string);
 	if ((cp = strchr(string, '=')) != NULL) {
-		if (!wflag) {
-			fprintf(stderr, "Must specify -w to set variables\n");
-			exit(2);
-		}
+		if (!wflag)
+			errx(2, "Must specify -w to set variables");
 		*strchr(buf, '=') = '\0';
 		*cp++ = '\0';
-		while (isspace(*cp))
+		while (isspace((unsigned char) *cp))
 			cp++;
 		newval = cp;
 		newsize = strlen(cp);
@@ -227,8 +239,8 @@ parse(string, flags)
 		debuginit();
 	lp = &secondlevel[indx];
 	if (lp->list == 0) {
-		fprintf(stderr, "%s: class is not implemented\n",
-		    topname[indx]);
+		warnx("Class `%s' is not implemented",
+		    topname[indx].ctl_name);
 		return;
 	}
 	if (bufp == NULL) {
@@ -252,8 +264,7 @@ parse(string, flags)
 					return;
 				if (!nflag)
 					fprintf(stdout, "%s: ", string);
-				fprintf(stderr,
-				    "kernel is not compiled for profiling\n");
+				warnx("Kernel is not compiled for profiling");
 				return;
 			}
 			if (!nflag)
@@ -264,14 +275,12 @@ parse(string, flags)
 		case KERN_FILE:
 			if (flags == 0)
 				return;
-			fprintf(stderr,
-			    "Use pstat to view %s information\n", string);
+			warnx("Use pstat to view %s information", string);
 			return;
 		case KERN_PROC:
 			if (flags == 0)
 				return;
-			fprintf(stderr,
-			    "Use ps to view %s information\n", string);
+			warnx("Use ps to view %s information", string);
 			return;
 		case KERN_CLOCKRATE:
 			special |= CLOCK;
@@ -282,8 +291,7 @@ parse(string, flags)
 		case KERN_NTPTIME:
 			if (flags == 0)
 				return;
-			fprintf(stderr,
-			    "Use xntpdc -c kerninfo to view %s information\n",
+			warnx("Use xntpdc -c kerninfo to view %s information",
 			    string);
 			return;
 		}
@@ -305,8 +313,7 @@ parse(string, flags)
 		}
 		if (flags == 0)
 			return;
-		fprintf(stderr,
-		    "Use vmstat or systat to view %s information\n", string);
+		warnx("Use vmstat or systat to view %s information", string);
 		return;
 
 	case CTL_NET:
@@ -318,7 +325,7 @@ parse(string, flags)
 		}
 		if (flags == 0)
 			return;
-		fprintf(stderr, "Use netstat to view %s information\n", string);
+		warnx("Use netstat to view %s information", string);
 		return;
 
 	case CTL_DEBUG:
@@ -339,12 +346,12 @@ parse(string, flags)
 		break;
 
 	default:
-		fprintf(stderr, "Illegal top level value: %d\n", mib[0]);
+		warnx("Illegal top level value: %d", mib[0]);
 		return;
 	
 	}
 	if (bufp) {
-		fprintf(stderr, "name %s in %s is unknown\n", bufp, string);
+		warnx("Name %s in %s is unknown", bufp, string);
 		return;
 	}
 	if (newsize > 0) {
@@ -368,18 +375,18 @@ parse(string, flags)
 			return;
 		switch (errno) {
 		case EOPNOTSUPP:
-			fprintf(stderr, "%s: value is not available\n", string);
+			warnx("The value of %s is not available", string);
 			return;
 		case ENOTDIR:
-			fprintf(stderr, "%s: specification is incomplete\n",
+			warnx("The specification of %s is incomplete",
 			    string);
 			return;
 		case ENOMEM:
-			fprintf(stderr, "%s: type is unknown to this program\n",
+			warnx("The type %s is unknown to this program",
 			    string);
 			return;
 		default:
-			perror(string);
+			warn("sysctl() for %s failed", string);
 			return;
 		}
 	}
@@ -401,7 +408,7 @@ parse(string, flags)
 			boottime = btp->tv_sec;
 			fprintf(stdout, "%s = %s\n", string, ctime(&boottime));
 		} else
-			fprintf(stdout, "%d\n", btp->tv_sec);
+			fprintf(stdout, "%ld\n", (long) btp->tv_sec);
 		return;
 	}
 	if (special & CONSDEV) {
@@ -436,7 +443,7 @@ parse(string, flags)
 		} else {
 			if (!nflag)
 				fprintf(stdout, "%s: %s -> ", string, buf);
-			fprintf(stdout, "%s\n", newval);
+			fprintf(stdout, "%s\n", (char *) newval);
 		}
 		return;
 
@@ -454,14 +461,12 @@ parse(string, flags)
 		return;
 
 	case CTLTYPE_STRUCT:
-		fprintf(stderr, "%s: unknown structure returned\n",
-		    string);
+		warnx("%s: unknown structure returned", string);
 		return;
 
 	default:
 	case CTLTYPE_NODE:
-		fprintf(stderr, "%s: unknown type returned\n",
-		    string);
+		warnx("%s: unknown type returned", string);
 		return;
 	}
 }
@@ -469,6 +474,7 @@ parse(string, flags)
 /*
  * Initialize the set of debugging names
  */
+static void
 debuginit()
 {
 	int mib[3], loc, i;
@@ -520,6 +526,7 @@ struct list inetvars[] = {
 /*
  * handle internet requests
  */
+static int
 sysctl_inet(string, bufpp, mib, flags, typep)
 	char *string;
 	char **bufpp;
@@ -542,8 +549,7 @@ sysctl_inet(string, bufpp, mib, flags, typep)
 	else if (!flags)
 		return (-1);
 	else {
-		fprintf(stderr, "%s: no variables defined for this protocol\n",
-		    string);
+		warnx("No variables defined for protocol %s", string);
 		return (-1);
 	}
 	if (*bufpp == NULL) {
@@ -560,6 +566,7 @@ sysctl_inet(string, bufpp, mib, flags, typep)
 /*
  * Scan a list of names searching for a particular name.
  */
+static int
 findname(string, level, bufp, namelist)
 	char *string;
 	char *level;
@@ -570,7 +577,7 @@ findname(string, level, bufp, namelist)
 	int i;
 
 	if (namelist->list == 0 || (name = strsep(bufp, ".")) == NULL) {
-		fprintf(stderr, "%s: incomplete specification\n", string);
+		warnx("%s: incomplete specification", string);
 		return (-1);
 	}
 	for (i = 0; i < namelist->size; i++)
@@ -578,18 +585,22 @@ findname(string, level, bufp, namelist)
 		    strcmp(name, namelist->list[i].ctl_name) == 0)
 			break;
 	if (i == namelist->size) {
-		fprintf(stderr, "%s level name %s in %s is invalid\n",
+		warnx("%s level name %s in %s is invalid",
 		    level, name, string);
 		return (-1);
 	}
 	return (i);
 }
 
+static void
 usage()
 {
+	extern char *__progname;
 
-	(void)fprintf(stderr, "usage:\t%s\n\t%s\n\t%s\n\t%s\n",
-	    "sysctl [-n] variable ...", "sysctl [-n] -w variable=value ...",
-	    "sysctl [-n] -a", "sysctl [-n] -A");
+	(void)fprintf(stderr, "Usage:\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n",
+	    __progname, "[-n] variable ...", 
+	    __progname, "[-n] -w variable=value ...",
+	    __progname, "[-n] -a",
+	    __progname, "[-n] -A");
 	exit(1);
 }
