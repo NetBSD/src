@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.36 2005/01/19 20:43:06 xtraeme Exp $	*/
+/*	$NetBSD: umount.c,v 1.37 2005/01/31 01:19:30 erh Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.36 2005/01/19 20:43:06 xtraeme Exp $");
+__RCSID("$NetBSD: umount.c,v 1.37 2005/01/31 01:19:30 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 	sync();
 
 #ifdef SMALL
-#define OPTS "fr"
+#define OPTS "fR"
 #else
 #define OPTS "AaFfh:Rt:v"
 #endif
@@ -161,7 +161,7 @@ main(int argc, char *argv[])
 			if (checkvfsname(mntbuf[mnts].f_fstypename, typelist))
 				continue;
 			if (umountfs(mntbuf[mnts].f_mntonname, typelist,
-				     raw) != 0)
+			             1) != 0)
 				errs = 1;
 		}
 	} else 
