@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_resp.c,v 1.1.1.1.2.2 1999/12/04 16:55:52 he Exp $	*/
+/*	$NetBSD: ns_resp.c,v 1.1.1.1.2.3 2000/10/10 21:13:03 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_resp.c	4.65 (Berkeley) 3/3/91";
@@ -1958,8 +1958,8 @@ rrextract(u_char *msg, int msglen, u_char *rrp, struct databuf **dpp,
 		/* Don't let bogus name servers increase the signed TTL */
 		if (ttl > origTTL) {
 			ns_debug(ns_log_default, 3,
-				 "shrinking SIG TTL from %d to origTTL %d",
-				 ttl, origTTL);
+				 "shrinking SIG TTL from %ld to origTTL %ld",
+				 (long)ttl, (long)origTTL);
 			ttl = origTTL;
 		}
 
@@ -1983,7 +1983,7 @@ rrextract(u_char *msg, int msglen, u_char *rrp, struct databuf **dpp,
 		timetilexp = exptime - now;
 		if (timetilexp < ttl) {
 			ns_debug(ns_log_default, 3,
-				 "shrinking expiring %s SIG TTL from %d to %d",
+				 "shrinking expiring %s SIG TTL from %d to %ld",
 				 p_secstodate (exptime), ttl, timetilexp);
 			ttl = timetilexp;
 		}
@@ -2279,7 +2279,7 @@ sysquery(const char *dname, int class, int type,
 	DST_KEY *key;
 
 	nsp[0] = NULL;
-	ns_debug(ns_log_default, 3, "sysquery(%s, %d, %d, %#x, %d, %d)",
+	ns_debug(ns_log_default, 3, "sysquery(%s, %d, %d, %p, %d, %d)",
 		 dname, class, type, nss, nsc, ntohs(port));
 	qp = qnew(dname, class, type);
 
@@ -2694,7 +2694,7 @@ findns(struct namebuf **npp, int class,
 				break;
 	}
 	while (np != NULL) {
-		ns_debug(ns_log_default, 5, "findns: np %#x '%s'", np,
+		ns_debug(ns_log_default, 5, "findns: np %p '%s'", np,
 			 NAME(*np));
 		/* Look first for SOA records. */
 #ifdef ADDAUTH
@@ -3199,7 +3199,7 @@ wanted(const struct databuf *dp, int class, int type) {
 #ifdef DEBUG
 	strcpy(pclass, p_class(class));
 	strcpy(ptype, p_type(type));
-	ns_debug(ns_log_default, 3, "wanted(%#x, %s %s) [%s %s]",
+	ns_debug(ns_log_default, 3, "wanted(%p, %s %s) [%s %s]",
 		 dp, pclass, ptype,
 		 p_class(dp->d_class), p_type(dp->d_type));
 #endif
@@ -3279,7 +3279,7 @@ wantedsig(const struct databuf *dp, int class, int type) {
 #ifdef DEBUG
 	strcpy(pclass, p_class(class));
 	strcpy(ptype, p_type(type));
-	ns_debug(ns_log_default, 3, "wantedtsig(%#x, %s %s) [%s %s]",
+	ns_debug(ns_log_default, 3, "wantedtsig(%p, %s %s) [%s %s]",
 		 dp, pclass, ptype,
 		 p_class(dp->d_class), p_type(dp->d_type));
 #endif
@@ -3694,7 +3694,7 @@ void
 delete_all(struct namebuf *np, int class, int type) {
 	struct databuf *dp, *pdp;
 
-	ns_debug(ns_log_default, 3, "delete_all(%#x:\"%s\" %s %s)",
+	ns_debug(ns_log_default, 3, "delete_all(%p:\"%s\" %s %s)",
 		 np, NAME(*np), p_class(class), p_type(type));
 	pdp = NULL;
 	dp = np->n_data;
