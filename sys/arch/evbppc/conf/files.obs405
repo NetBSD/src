@@ -1,4 +1,4 @@
-#	$NetBSD: files.obs405,v 1.8 2005/01/18 17:57:41 shige Exp $
+#	$NetBSD: files.obs405,v 1.9 2005/01/24 18:47:37 shige Exp $
 #
 # obs405-specific configuration info
 
@@ -13,6 +13,10 @@ file	arch/powerpc/ibm4xx/openbios/openbios.c
 file	arch/evbppc/obs405/md_autoconf.c
 file	arch/evbppc/obs405/consinit.c
 file	arch/evbppc/obs405/md_machdep.c
+
+device obsled
+attach  obsled at gpio
+file	arch/evbppc/obs405/dev/obsled.c		obsled
 
 # Memory Disk for install kernel
 file	dev/md_root.c				memory_disk_hooks
