@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2000/03/05 05:41:05 shin Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2000/11/09 06:25:52 thorpej Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -58,12 +58,17 @@ CPPFLAGS+=-DTARGET_LITTLE_ENDIAN_DEFAULT
 
 EGCS_VERSION!=	sed -e 's/.*\(egcs-[0-9\.]*\).*/\1/' ${DIST}/version.c
 
+.if !defined(COMPILER_EXEC_PREFIX)
+COMPILER_EXEC_PREFIX=
+.endif
+
 CPPFLAGS+=	-DHAVE_CONFIG_H -DPREFIX=\"/usr\" \
 		-DDEFAULT_TARGET_VERSION=\"${EGCS_VERSION}\" \
 		-DDEFAULT_TARGET_MACHINE=\"${MACHINE_GNU_ARCH}-netbsd\" \
 		-DSTANDARD_STARTFILE_PREFIX=\"/usr/lib/\" \
 		-DSTANDARD_EXEC_PREFIX=\"/usr/libexec/\" \
-		-DTOOLDIR_BASE_PREFIX=\"/usr/libexec/\"
+		-DTOOLDIR_BASE_PREFIX=\"/usr/libexec/\" \
+		-DNBSD_EXEC_PREFIX=\"${COMPILER_EXEC_PREFIX}/usr/libexec/\"
 
 .if defined(USE_EGCS_HAIFA)
 CPPFLAGS+=	-DHAIFA
