@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.5 1994/06/29 06:40:13 cgd Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.6 1995/03/08 02:16:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -150,14 +150,14 @@ tp_inputprep(m)
 		if((m = m_pullup(m, 1)) == MNULL)
 			return (MNULL);
 	}
-	if(((int)m->m_data) & 0x3) {
+	if(((long)m->m_data) & 0x3) {
 		/* If we are not 4-byte aligned, we have to be
 		 * above the beginning of the mbuf, and it is ok just
 		 * to slide it back. 
 		 */
 		caddr_t ocp = m->m_data;
 
-		m->m_data = (caddr_t)(((int)m->m_data) & ~0x3);
+		m->m_data = (caddr_t)(((long)m->m_data) & ~0x3);
 		bcopy(ocp, m->m_data, (unsigned)m->m_len);
 	}
 	CHANGE_MTYPE(m, TPMT_DATA);
