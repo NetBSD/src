@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.17 2001/04/13 23:30:22 thorpej Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.18 2001/06/02 16:17:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -179,10 +179,24 @@ ipflow_fastforward(
 		return 0;
 
 	/*
-	 * Veryify the IP header checksum.
+	 * Verify the IP header checksum.
 	 */
-	if (in_cksum(m, sizeof(struct ip)) != 0)
-		return 0;
+	switch (m->m_pkthdr.csum_flags &
+		((m->m_pkthdr.rcvif->if_csum_flags & M_CSUM_IPv4) |
+		 M_CSUM_IPv4_BAD)) {
+	case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
+		return (0);
+
+	case M_CSUM_IPv4:
+		/* Checksum was okay. */
+		break;
+
+	default:
+		/* Must compute it ourselves. */
+		if (in_cksum(m, sizeof(struct ip)) != 0)
+			return (0);
+		break;
+	}
 
 	/*
 	 * Route and interface still up?
@@ -199,12 +213,20 @@ ipflow_fastforward(
 		return 0;
 
 	/*
+	 * Clear any in-bound checksum flags for this packet.
+	 */
+	m->m_pkthdr.csum_flags = 0;
+
+	/*
 	 * Everything checks out and so we can forward this packet.
 	 * Modify the TTL and incrementally change the checksum.
 	 * 
 	 * This method of adding the checksum works on either endian CPU.
 	 * If htons() is inlined, all the arithmetic is folded; otherwise
 	 * the htons()s are combined by CSE due to the __const__ attribute.
+	 *
+	 * Don't bother using HW checksumming here -- the incremental
+	 * update is pretty fast.
 	 */
 	ip->ip_ttl -= IPTTLDEC;
 	if (ip->ip_sum >= (u_int16_t) ~htons(IPTTLDEC << 8))

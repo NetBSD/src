@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.124 2001/05/08 10:15:13 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.125 2001/06/02 16:17:10 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -126,6 +126,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
+#include "opt_inet_csum.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,6 +243,22 @@ do {									\
 	NTOHS((th)->th_win);						\
 	NTOHS((th)->th_urp);						\
 } while (0)
+
+#ifdef TCP_CSUM_COUNTERS
+#include <sys/device.h>
+
+extern struct evcnt tcp_hwcsum_ok;
+extern struct evcnt tcp_hwcsum_bad;
+extern struct evcnt tcp_hwcsum_data;
+extern struct evcnt tcp_swcsum;
+
+#define	TCP_CSUM_COUNTER_INCR(ev)	(ev)->ev_count++
+
+#else
+
+#define	TCP_CSUM_COUNTER_INCR(ev)	/* nothing */
+
+#endif /* TCP_CSUM_COUNTERS */
 
 int
 tcp_reass(tp, th, m, tlen)
@@ -949,35 +966,52 @@ findpcb:
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-#ifndef PULLDOWN_TEST
-	    {
-		struct ipovly *ipov;
-		ipov = (struct ipovly *)ip;
-		bzero(ipov->ih_x1, sizeof ipov->ih_x1); 
-		ipov->ih_len = htons(tlen + off);
+		switch (m->m_pkthdr.csum_flags &
+			((m->m_pkthdr.rcvif->if_csum_flags & M_CSUM_TCPv4) |
+			 M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
+		case M_CSUM_TCPv4|M_CSUM_TCP_UDP_BAD:
+			TCP_CSUM_COUNTER_INCR(&tcp_hwcsum_bad);
+			goto badcsum;
 
-		if (in_cksum(m, len) != 0) {
-			tcpstat.tcps_rcvbadsum++;
-			goto drop;
-		}
-	    }
+		case M_CSUM_TCPv4|M_CSUM_DATA:
+			TCP_CSUM_COUNTER_INCR(&tcp_hwcsum_data);
+			if ((m->m_pkthdr.csum_data ^ 0xffff) != 0)
+				goto badcsum;
+			break;
+
+		case M_CSUM_TCPv4:
+			/* Checksum was okay. */
+			TCP_CSUM_COUNTER_INCR(&tcp_hwcsum_ok);
+			break;
+
+		default:
+			/* Must compute it ourselves. */
+			TCP_CSUM_COUNTER_INCR(&tcp_swcsum);
+#ifndef PULLDOWN_TEST
+		    {
+			struct ipovly *ipov;
+			ipov = (struct ipovly *)ip;
+			bzero(ipov->ih_x1, sizeof ipov->ih_x1); 
+			ipov->ih_len = htons(tlen + off);
+
+			if (in_cksum(m, len) != 0)
+				goto badcsum;
+		    }
 #else
-		if (in4_cksum(m, IPPROTO_TCP, toff, tlen + off) != 0) {
-			tcpstat.tcps_rcvbadsum++; 
-			goto drop;
+			if (in4_cksum(m, IPPROTO_TCP, toff, tlen + off) != 0)
+				goto badcsum;
+#endif /* ! PULLDOWN_TEST */
+			break;
 		}
-#endif
 		break;
-#endif
+#endif /* INET4 */
 
 #ifdef INET6
 	case AF_INET6:
-		if (in6_cksum(m, IPPROTO_TCP, toff, tlen + off) != 0) {
-			tcpstat.tcps_rcvbadsum++;
-			goto drop;
-		}
+		if (in6_cksum(m, IPPROTO_TCP, toff, tlen + off) != 0)
+			goto badcsum;
 		break;
-#endif
+#endif /* INET6 */
 	}
 
 	TCP_FIELDS_TO_HOST(th);
@@ -2204,6 +2238,8 @@ dropwithreset:
 		m_freem(tcp_saveti);
 	return;
 
+badcsum:
+	tcpstat.tcps_rcvbadsum++;
 drop:
 	/*
 	 * Drop space held by incoming segment and return.
