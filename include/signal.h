@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.17 1998/10/01 19:41:23 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.18 1998/10/24 16:35:19 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -93,16 +93,14 @@ int	sigsuspend __P((const sigset_t *)) __RENAME(__sigsuspend14);
 extern __inline int
 sigaddset(sigset_t *set, int signo)
 {
-#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
-    defined(_REENTRANT)
+#ifdef _REENTRANT
 	extern int *__errno __P((void));
 #else
 	extern int errno;
 #endif
 
 	if (signo <= 0 || signo >= _NSIG) {
-#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
-    defined(_REENTRANT)
+#ifdef _REENTRANT
 		*__errno() = 22;		/* EINVAL */
 #else
 		errno = 22;			/* EINVAL */
@@ -116,16 +114,14 @@ sigaddset(sigset_t *set, int signo)
 extern __inline int
 sigdelset(sigset_t *set, int signo)
 {
-#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
-    defined(_REENTRANT)
+#ifdef _REENTRANT
 	extern int *__errno __P((void));
 #else
 	extern int errno;
 #endif
 
 	if (signo <= 0 || signo >= _NSIG) {
-#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
-    defined(_REENTRANT)
+#ifdef _REENTRANT
 		*__errno() = 22;		/* EINVAL */
 #else
 		errno = 22;			/* EINVAL */
@@ -139,16 +135,14 @@ sigdelset(sigset_t *set, int signo)
 extern __inline int
 sigismember(const sigset_t *set, int signo)
 {
-#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
-    defined(_REENTRANT)
+#ifdef _REENTRANT
 	extern int *__errno __P((void));
 #else
 	extern int errno;
 #endif
 
 	if (signo <= 0 || signo >= _NSIG) {
-#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
-    defined(_REENTRANT)
+#ifdef _REENTRANT
 		*__errno() = 22;		/* EINVAL */
 #else
 		errno = 22;			/* EINVAL */
