@@ -1,5 +1,8 @@
-# $NetBSD: Makefile,v 1.2 1996/07/27 17:54:13 is Exp $
+# $NetBSD: Makefile,v 1.3 1996/07/27 18:08:15 is Exp $
 
-SUBDIR=binpatch loadkmap
+PROG=loadkmap
+NOMAN=loadkmap
+BINDIR=/usr/sbin
+SUBDIR=din sw us
 
-.include <bsd.subdir.mk>
+.include <bsd.prog.mk>
