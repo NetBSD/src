@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.25 2004/03/15 23:38:16 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.26 2004/06/04 13:23:34 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.25 2004/03/15 23:38:16 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.26 2004/06/04 13:23:34 uch Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
@@ -1109,7 +1109,7 @@ hd64461video_get_clut(struct hd64461video_chip *vc, int idx, int cnt,
 	while (cnt && LEGAL_CLUT_INDEX(idx)) {
 		u_int16_t v;
 #define	HD64461VIDEO_GET_CLUT(x)					\
-	v = hd64461_reg_read_2(HD64461_LCDCPTWDR_REG16);		\
+	v = hd64461_reg_read_2(HD64461_LCDCPTRDR_REG16);		\
 	x = HD64461_LCDCPTRDR(v);					\
 	x <<= 2
 		HD64461VIDEO_GET_CLUT(*r);
