@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.5 1998/07/28 22:01:25 augustss Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.6 1998/08/02 14:18:07 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -35,27 +35,38 @@
  */
 
 /*
- * Attachment information provided by wskbddev devices when attaching
- * wskbd units or console input keyboards.
+ * Keyboard access functions (must be provided by all keyboards).
  *
  * There is a "void *" cookie provided by the keyboard driver associated
  * with these functions, which is passed to them when they are invoked.
  */
+struct wskbd_accessops {
+	int	(*enable) __P((void *, int));
+	void    (*set_leds) __P((void *, int));
+	int     (*ioctl) __P((void *v, u_long cmd, caddr_t data, int flag,
+			      struct proc *p));
+};
+
+/*
+ * Keyboard console functions (must be provided by console input keyboards).
+ *
+ * There is a "void *" cookie provided by the keyboard driver associated
+ * with these functions, which is passed to them when they are invoked.
+ */
+struct wskbd_consops {
+	void    (*getc) __P((void *, u_int *, int *));
+	void    (*pollc) __P((void *, int));
+};
+
+/*
+ * Attachment information provided by wskbddev devices when attaching
+ * wskbd units.
+ */
 struct wskbddev_attach_args {
 	int	console;				/* is it console? */
-	int	layout;					/* initial layout */
-	int	num_keydescs;				/* number of maps */
-	const struct wscons_keydesc *keydesc;		/* array of maps */
+	const struct wskbd_mapdata *keymap;
 
-							/* console only */
-	void	(*getc) __P((void *, u_int *, int *));
-	void	(*pollc) __P((void *, int));
-
-							/* wskbd_attach only */
-	void	(*set_leds) __P((void *, int));
-	int	(*ioctl) __P((void *v, u_long cmd, caddr_t data, int flag,
-		    struct proc *p));
-
+	const struct wskbd_accessops *accessops;        /* access ops */
 	void	*accesscookie;				/* access cookie */
 };
 
@@ -67,7 +78,8 @@ struct wskbddev_attach_args {
 /*
  * Autoconfiguration helper functions.
  */
-void	wskbd_cnattach __P((const struct wskbddev_attach_args *));
+void	wskbd_cnattach __P((const struct wskbd_consops *, void *,
+			    const struct wskbd_mapdata *));
 int	wskbddevprint __P((void *, const char *));
 
 /*
