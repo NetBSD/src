@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.683 2005/01/15 08:40:41 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.684 2005/01/15 13:23:31 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.684 2005/01/15 08:40:07 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.685 2005/01/15 13:21:31 skrll Exp 
  */
 
 /*
@@ -6224,6 +6224,10 @@ const struct pci_product pci_products[] = {
 	    "PRO/Wireless LAN 2200BG Mini-PCI Adapter",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2915ABG,
+	    "PRO/Wireless LAN 2915ABG Mini-PCI Adapter",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312_ATU,
 	    "80310 ATU",
 	},
@@ -9940,4 +9944,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1906;
+const int pci_nproducts = 1907;

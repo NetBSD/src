@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.685 2005/01/15 08:40:41 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.686 2005/01/15 13:23:31 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.684 2005/01/15 08:40:07 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.685 2005/01/15 13:21:31 skrll Exp 
  */
 
 /*
@@ -1830,6 +1830,7 @@
 #define	PCI_PRODUCT_INTEL_82830MP_IV	0x3577		/* 82830MP Integrated Video */
 #define	PCI_PRODUCT_INTEL_82830MP_IO_2	0x3578		/* 82830MP CPU to I/O Bridge 2 */
 #define	PCI_PRODUCT_INTEL_PRO_WL_2200BG	0x4220		/* PRO/Wireless LAN 2200BG Mini-PCI Adapter */
+#define	PCI_PRODUCT_INTEL_PRO_WL_2915ABG	0x4223		/* PRO/Wireless LAN 2915ABG Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_80312_ATU	0x530d		/* 80310 ATU */
 #define	PCI_PRODUCT_INTEL_82371SB_ISA	0x7000		/* 82371SB (PIIX3) PCI-ISA Bridge */
 #define	PCI_PRODUCT_INTEL_82371SB_IDE	0x7010		/* 82371SB (PIIX3) IDE Interface */
