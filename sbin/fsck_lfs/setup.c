@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.5 2000/05/23 01:48:55 perseant Exp $	 */
+/* $NetBSD: setup.c,v 1.6 2000/06/14 18:44:00 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -86,7 +86,7 @@ useless(void)
 }
 #endif
 
-static          daddr_t
+static daddr_t
 try_verify(struct lfs * osb, struct lfs * nsb)
 {
 	daddr_t         daddr;
@@ -216,7 +216,7 @@ setup(const char *dev)
 	}
 	bufinit();
 
-	if (bflag == 0) {
+	if (bflag == 0x0 && idaddr == 0x0) {
 		/*
 		 * Even if that superblock read in properly, it may not
 		 * be guaranteed to point to a complete checkpoint.
@@ -269,6 +269,8 @@ setup(const char *dev)
 		free(sb0);
 		free(sb1);
 	}
+	if (idaddr == 0x0)
+		idaddr = sblock.lfs_idaddr;
 	if (debug) {
 		printf("dev_bsize = %lu\n", dev_bsize);
 		printf("lfs_bsize = %lu\n", (unsigned long)sblock.lfs_bsize);
@@ -291,23 +293,17 @@ setup(const char *dev)
 	}
 	maxino = sblock.lfs_ncg * sblock.lfs_ipg;
 #else
-#if 0
-	/* XXX - count the number of inodes here */
-	maxino = sblock.lfs_nfiles + 2;
-#else
 	initbarea(&iblk);
 	iblk.b_un.b_buf = malloc(sblock.lfs_bsize);
-	if (bread(fsreadfd, (char *)iblk.b_un.b_buf,
-		  sblock.lfs_idaddr,
+	if (bread(fsreadfd, (char *)iblk.b_un.b_buf, idaddr,
 		  (long)sblock.lfs_bsize) != 0) {
-		printf("Couldn't read disk block %d\n", sblock.lfs_idaddr);
+		printf("Couldn't read disk block %d\n", idaddr);
 		exit(1);
 	}
 	idinode = lfs_difind(&sblock, sblock.lfs_ifile, &ifblock);
 	maxino = ((idinode->di_size
 	    - (sblock.lfs_cleansz + sblock.lfs_segtabsz) * sblock.lfs_bsize)
-		  / sblock.lfs_bsize) * sblock.lfs_ifpb - 1;
-#endif
+		  / sblock.lfs_bsize) * sblock.lfs_ifpb;
 	if (debug)
 		printf("maxino=%d\n", maxino);
 	din_table = (daddr_t *)malloc(maxino * sizeof(*din_table));
@@ -422,22 +418,22 @@ setup(const char *dev)
 		       (unsigned)bmapsize);
 		goto badsblabel;
 	}
-	statemap = calloc((unsigned)(maxino + 1), sizeof(char));
+	statemap = calloc((unsigned)maxino, sizeof(char));
 	if (statemap == NULL) {
 		printf("cannot alloc %u bytes for statemap\n",
-		       (unsigned)(maxino + 1));
+		       (unsigned)maxino);
 		goto badsblabel;
 	}
-	typemap = calloc((unsigned)(maxino + 1), sizeof(char));
+	typemap = calloc((unsigned)maxino, sizeof(char));
 	if (typemap == NULL) {
 		printf("cannot alloc %u bytes for typemap\n",
-		       (unsigned)(maxino + 1));
+		       (unsigned)maxino);
 		goto badsblabel;
 	}
-	lncntp = (int16_t *)calloc((unsigned)(maxino + 1), sizeof(int16_t));
+	lncntp = (int16_t *)calloc((unsigned)maxino, sizeof(int16_t));
 	if (lncntp == NULL) {
 		printf("cannot alloc %lu bytes for lncntp\n",
-		       (unsigned long)(maxino + 1) * sizeof(int16_t));
+		       (unsigned long)maxino * sizeof(int16_t));
 		goto badsblabel;
 	}
 	return (1);
