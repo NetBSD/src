@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.11 2001/09/27 03:24:03 itojun Exp $	*/
+/*	$NetBSD: packet.c,v 1.12 2001/11/07 06:26:47 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: packet.c,v 1.69 2001/06/25 08:25:38 markus Exp $");
+RCSID("$OpenBSD: packet.c,v 1.70 2001/09/27 11:59:37 markus Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -1227,6 +1227,7 @@ packet_set_maxsize(int s)
 		log("packet_set_maxsize: bad size %d", s);
 		return -1;
 	}
+	called = 1;
 	debug("packet_set_maxsize: setting to %d", s);
 	max_packet_size = s;
 	return s;

@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.15 2001/10/18 19:46:12 sommerfeld Exp $	*/
+/*	$NetBSD: channels.c,v 1.16 2001/11/07 06:26:47 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.134 2001/09/17 21:04:01 markus Exp $");
+RCSID("$OpenBSD: channels.c,v 1.140 2001/10/10 22:18:47 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -135,7 +135,7 @@ static char *auth_sock_name = NULL;
 static char *auth_sock_dir = NULL;
 
 /* AF_UNSPEC or AF_INET or AF_INET6 */
-extern int IPv4or6;
+static int IPv4or6 = AF_UNSPEC;
 
 /* helper */
 static void port_open_helper(Channel *c, char *rtype);
@@ -243,6 +243,7 @@ channel_new(char *ctype, int type, int rfd, int wfd, int efd,
 	}
 	/* Initialize and return new channel. */
 	c = channels[found] = xmalloc(sizeof(Channel));
+	memset(c, 0, sizeof(Channel));
 	buffer_init(&c->input);
 	buffer_init(&c->output);
 	buffer_init(&c->extended);
@@ -332,10 +333,6 @@ channel_free(Channel *c)
 	debug3("channel_free: status: %s", s);
 	xfree(s);
 
-	if (c->detach_user != NULL) {
-		debug("channel_free: channel %d: detaching channel user", c->self);
-		c->detach_user(c->self, NULL);
-	}
 	if (c->sock != -1)
 		shutdown(c->sock, SHUT_RDWR);
 	channel_close_fds(c);
@@ -358,22 +355,6 @@ channel_free_all(void)
 	for (i = 0; i < channels_alloc; i++)
 		if (channels[i] != NULL)
 			channel_free(channels[i]);
-}
-
-void
-channel_detach_all(void)
-{
-	int i;
-	Channel *c;
-
-	for (i = 0; i < channels_alloc; i++) {
-		c = channels[i];
-		if (c != NULL && c->detach_user != NULL) {
-			debug("channel_detach_all: channel %d", c->self);
-			c->detach_user(c->self, NULL);
-			c->detach_user = NULL;
-		}
-	}
 }
 
 /*
@@ -431,14 +412,18 @@ channel_not_very_much_buffered_data()
 	for (i = 0; i < channels_alloc; i++) {
 		c = channels[i];
 		if (c != NULL && c->type == SSH_CHANNEL_OPEN) {
-			if (!compat20 && buffer_len(&c->input) > packet_get_maxsize()) {
+#if 0
+			if (!compat20 &&
+			    buffer_len(&c->input) > packet_get_maxsize()) {
 				debug("channel %d: big input buffer %d",
 				    c->self, buffer_len(&c->input));
 				return 0;
 			}
+#endif
 			if (buffer_len(&c->output) > packet_get_maxsize()) {
-				debug("channel %d: big output buffer %d",
-				    c->self, buffer_len(&c->output));
+				debug("channel %d: big output buffer %d > %d",
+				    c->self, buffer_len(&c->output),
+				    packet_get_maxsize());
 				return 0;
 			}
 		}
@@ -972,7 +957,7 @@ channel_pre_dynamic(Channel *c, fd_set * readset, fd_set * writeset)
 	int have, ret;
 
 	have = buffer_len(&c->input);
-
+	c->delayed = 0;
 	debug2("channel %d: pre_dynamic: have %d", c->self, have);
 	/* buffer_dump(&c->input); */
 	/* check if the fixed size part of the packet is in buffer. */
@@ -1134,11 +1119,18 @@ channel_post_port_listener(Channel *c, fd_set * readset, fd_set * writeset)
 		    "to %.100s port %d requested.",
 		    c->listening_port, c->path, c->host_port);
 
-		rtype = (c->type == SSH_CHANNEL_RPORT_LISTENER) ?
-		    "forwarded-tcpip" : "direct-tcpip";
-		nextstate = (c->host_port == 0 &&
-		    c->type != SSH_CHANNEL_RPORT_LISTENER) ?
-		    SSH_CHANNEL_DYNAMIC : SSH_CHANNEL_OPENING;
+		if (c->type == SSH_CHANNEL_RPORT_LISTENER) {
+			nextstate = SSH_CHANNEL_OPENING;
+			rtype = "forwarded-tcpip";
+		} else {
+			if (c->host_port == 0) {
+				nextstate = SSH_CHANNEL_DYNAMIC;
+				rtype = "dynamic-tcpip";
+			} else {
+				nextstate = SSH_CHANNEL_OPENING;
+				rtype = "direct-tcpip";
+			}
+		}
 
 		addrlen = sizeof(addr);
 		newsock = accept(c->sock, &addr, &addrlen);
@@ -1159,8 +1151,16 @@ channel_post_port_listener(Channel *c, fd_set * readset, fd_set * writeset)
 		nc->host_port = c->host_port;
 		strlcpy(nc->path, c->path, sizeof(nc->path));
 
-		if (nextstate != SSH_CHANNEL_DYNAMIC)
+		if (nextstate == SSH_CHANNEL_DYNAMIC) {
+			/*
+			 * do not call the channel_post handler until
+			 * this flag has been reset by a pre-handler.
+			 * otherwise the FD_ISSET calls might overflow
+			 */
+			nc->delayed = 1;
+		} else {
 			port_open_helper(nc, rtype);
+		}
 	}
 }
 
@@ -1410,6 +1410,8 @@ channel_check_window(Channel *c)
 static void
 channel_post_open_1(Channel *c, fd_set * readset, fd_set * writeset)
 {
+	if (c->delayed)
+		return;
 	channel_handle_rfd(c, readset, writeset);
 	channel_handle_wfd(c, readset, writeset);
 }
@@ -1417,6 +1419,8 @@ channel_post_open_1(Channel *c, fd_set * readset, fd_set * writeset)
 static void
 channel_post_open_2(Channel *c, fd_set * readset, fd_set * writeset)
 {
+	if (c->delayed)
+		return;
 	channel_handle_rfd(c, readset, writeset);
 	channel_handle_wfd(c, readset, writeset);
 	channel_handle_efd(c, readset, writeset);
@@ -1517,6 +1521,28 @@ channel_handler_init(void)
 		channel_handler_init_15();
 }
 
+/* gc dead channels */
+static void
+channel_garbage_collect(Channel *c)
+{
+	if (c == NULL)
+		return;
+	if (c->detach_user != NULL) {
+		if (!chan_is_dead(c, 0))
+			return;
+		debug("channel %d: gc: notify user", c->self);
+		c->detach_user(c->self, NULL);
+		/* if we still have a callback */
+		if (c->detach_user != NULL)
+			return;
+		debug("channel %d: gc: user detached", c->self);
+	}
+	if (!chan_is_dead(c, 1))
+		return;
+	debug("channel %d: garbage collecting", c->self);
+	channel_free(c);
+}
+
 static void
 channel_handler(chan_fn *ftab[], fd_set * readset, fd_set * writeset)
 {
@@ -1534,24 +1560,7 @@ channel_handler(chan_fn *ftab[], fd_set * readset, fd_set * writeset)
 			continue;
 		if (ftab[c->type] != NULL)
 			(*ftab[c->type])(c, readset, writeset);
-		if (chan_is_dead(c)) {
-			/*
-			 * we have to remove the fd's from the select mask
-			 * before the channels are free'd and the fd's are
-			 * closed
-			 */
-			if (c->wfd != -1)
-				FD_CLR(c->wfd, writeset);
-			if (c->rfd != -1)
-				FD_CLR(c->rfd, readset);
-			if (c->efd != -1) {
-				if (c->extended_usage == CHAN_EXTENDED_READ)
-					FD_CLR(c->efd, readset);
-				if (c->extended_usage == CHAN_EXTENDED_WRITE)
-					FD_CLR(c->efd, writeset);
-			}
-			channel_free(c);
-		}
+		channel_garbage_collect(c);
 	}
 }
 
@@ -1622,7 +1631,7 @@ channel_output_poll(void)
 		if (compat20 &&
 		    (c->flags & (CHAN_CLOSE_SENT|CHAN_CLOSE_RCVD))) {
 			/* XXX is this true? */
-			debug2("channel %d: no data after CLOSE", c->self);
+			debug3("channel %d: will not send data after close", c->self);
 			continue;
 		}
 
@@ -2042,6 +2051,12 @@ channel_input_port_open(int type, int plen, void *ctxt)
 
 
 /* -- tcp forwarding */
+
+void
+channel_set_af(int af)
+{
+	IPv4or6 = af;
+}
 
 /*
  * Initiate forwarding of connections to local port "port" through the secure

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.11 2001/09/27 03:24:05 itojun Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.12 2001/11/07 06:26:48 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keygen.c,v 1.81 2001/09/17 20:50:22 markus Exp $");
+RCSID("$OpenBSD: ssh-keygen.c,v 1.83 2001/10/25 21:14:32 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -492,6 +492,14 @@ do_upload(struct passwd *pw, const char *sc_reader_id)
 	status = 0;
 	log("loading key done");
 done:
+
+	memset(elements[0], '\0', BN_num_bytes(prv->rsa->q));
+	memset(elements[1], '\0', BN_num_bytes(prv->rsa->p));
+	memset(elements[2], '\0', BN_num_bytes(prv->rsa->iqmp));
+	memset(elements[3], '\0', BN_num_bytes(prv->rsa->dmq1));
+	memset(elements[4], '\0', BN_num_bytes(prv->rsa->dmp1));
+	memset(elements[5], '\0', BN_num_bytes(prv->rsa->n));
+
 	if (prv)
 		key_free(prv);
 	for (i = 0; i < NUM_RSA_KEY_ELEMENTS; i++)
@@ -604,7 +612,7 @@ do_fingerprint(struct passwd *pw)
 		fclose(f);
 	}
 	if (invalid) {
-		printf("%s is not a valid key file.\n", identity_file);
+		printf("%s is not a public key file.\n", identity_file);
 		exit(1);
 	}
 	exit(0);

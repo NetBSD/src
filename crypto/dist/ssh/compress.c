@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.4 2001/04/10 08:07:57 itojun Exp $	*/
+/*	$NetBSD: compress.c,v 1.5 2001/11/07 06:26:47 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: compress.c,v 1.14 2001/04/05 10:39:01 markus Exp $");
+RCSID("$OpenBSD: compress.c,v 1.15 2001/09/27 11:58:16 markus Exp $");
 
 #include "log.h"
 #include "buffer.h"
@@ -34,7 +34,7 @@ void
 buffer_compress_init_send(int level)
 {
 	if (compress_init_send_called == 1)
-		deflateEnd(&incoming_stream);
+		deflateEnd(&outgoing_stream);
 	compress_init_send_called = 1;
 	debug("Enabling compression at level %d.", level);
 	if (level < 1 || level > 9)

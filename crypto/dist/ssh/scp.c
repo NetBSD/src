@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.15 2001/09/27 03:24:04 itojun Exp $	*/
+/*	$NetBSD: scp.c,v 1.16 2001/11/07 06:26:48 itojun Exp $	*/
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -76,7 +76,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.84 2001/09/19 19:24:19 stevesk Exp $");
+RCSID("$OpenBSD: scp.c,v 1.85 2001/10/01 08:06:28 markus Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
@@ -486,6 +486,11 @@ source(argc, argv)
 		len = strlen(name);
 		while (len > 1 && name[len-1] == '/')
 			name[--len] = '\0';
+		if (strchr(name, '\n') != NULL) {
+			run_err("%s: skipping, filename contains a newline",
+			    name);
+			goto next;
+		}
 		if ((fd = open(name, O_RDONLY, 0)) < 0)
 			goto syserr;
 		if (fstat(fd, &stb) < 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.11 2001/09/27 03:24:06 itojun Exp $	*/
+/*	$NetBSD: ssh-keyscan.c,v 1.12 2001/11/07 06:26:48 itojun Exp $	*/
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.29 2001/08/30 22:22:32 markus Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.30 2001/10/08 19:05:05 markus Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -33,11 +33,7 @@ RCSID("$OpenBSD: ssh-keyscan.c,v 1.29 2001/08/30 22:22:32 markus Exp $");
 
 /* Flag indicating whether IPv4 or IPv6.  This can be set on the command line.
    Default value is AF_UNSPEC means both IPv4 and IPv6. */
-#ifdef IPV4_DEFAULT
-int IPv4or6 = AF_INET;
-#else
 int IPv4or6 = AF_UNSPEC;
-#endif
 
 int ssh_port = SSH_DEFAULT_PORT;
 

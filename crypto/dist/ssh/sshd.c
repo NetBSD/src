@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.13 2001/09/27 03:24:07 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.14 2001/11/07 06:26:49 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.204 2001/08/23 17:59:31 camield Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.207 2001/10/24 08:41:41 markus Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -72,6 +72,7 @@ RCSID("$OpenBSD: sshd.c,v 1.204 2001/08/23 17:59:31 camield Exp $");
 #include "auth.h"
 #include "misc.h"
 #include "dispatch.h"
+#include "channels.h"
 
 #ifdef LIBWRAP
 #include <tcpd.h>
@@ -660,6 +661,7 @@ main(int ac, char **av)
 		}
 	}
 	SSLeay_add_all_algorithms();
+	channel_set_af(IPv4or6);
 
 	/*
 	 * Force logging to stderr until we have loaded the private host
@@ -1151,7 +1153,7 @@ main(int ac, char **av)
 	if (remote_port >= IPPORT_RESERVED ||
 	    remote_port < IPPORT_RESERVED / 2) {
 		debug("Rhosts Authentication disabled, "
-		    "originating port not trusted.");
+		    "originating port %d not trusted.", remote_port);
 		options.rhosts_authentication = 0;
 	}
 #if defined(KRB4) && !defined(KRB5)
