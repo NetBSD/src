@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.141 2002/05/07 02:59:38 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.141.4.1 2002/07/21 00:55:11 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.141 2002/05/07 02:59:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.141.4.1 2002/07/21 00:55:11 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3237,6 +3237,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 #endif
 	else
 		tp = NULL;
+	tp->t_flags = sototcpcb(oso)->t_flags & TF_NODELAY;
 	if (sc->sc_request_r_scale != 15) {
 		tp->requested_s_scale = sc->sc_requested_s_scale;
 		tp->request_r_scale = sc->sc_request_r_scale;
