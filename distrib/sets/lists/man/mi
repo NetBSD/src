@@ -895,6 +895,12 @@
 ./usr/share/man/cat9/rnd_add_uint32.0
 ./usr/share/man/cat9/rnd_attach_source.0
 ./usr/share/man/cat9/rnd_detach_source.0
+./usr/share/man/cat9/rt_timer.0 
+./usr/share/man/cat9/rt_timer_queue_create.0
+./usr/share/man/cat9/rt_timer_queue_change.0
+./usr/share/man/cat9/rt_timer_queue_destroy.0
+./usr/share/man/cat9/rt_timer_add.0
+./usr/share/man/cat9/rt_timer_remove_all.0
 ./usr/share/man/cat9/runtime.0
 ./usr/share/man/cat9/setdisklabel.0
 ./usr/share/man/cat9/shutdownhook_disestablish.0
@@ -1828,6 +1834,12 @@
 ./usr/share/man/man9/rnd_add_uint32.9
 ./usr/share/man/man9/rnd_attach_source.9
 ./usr/share/man/man9/rnd_detach_source.9
+./usr/share/man/man9/rt_timer.0 
+./usr/share/man/man9/rt_timer_queue_create.0
+./usr/share/man/man9/rt_timer_queue_change.0
+./usr/share/man/man9/rt_timer_queue_destroy.0
+./usr/share/man/man9/rt_timer_add.0
+./usr/share/man/man9/rt_timer_remove_all.0
 ./usr/share/man/man9/runtime.9
 ./usr/share/man/man9/setdisklabel.9
 ./usr/share/man/man9/shutdownhook_disestablish.9
