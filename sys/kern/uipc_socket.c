@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.48 1999/06/08 02:39:57 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.49 2000/02/07 18:43:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -53,6 +53,9 @@
 #include <sys/pool.h>
 
 struct pool socket_pool;
+
+extern int somaxconn;			/* patchable (XXX sysctl) */
+int somaxconn = SOMAXCONN;
 
 void
 soinit()
@@ -154,7 +157,7 @@ solisten(so, backlog)
 		so->so_options |= SO_ACCEPTCONN;
 	if (backlog < 0)
 		backlog = 0;
-	so->so_qlimit = min(backlog, SOMAXCONN);
+	so->so_qlimit = min(backlog, somaxconn);
 	splx(s);
 	return (0);
 }
