@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.259 2005/01/21 00:39:56 dan Exp $
+.\"	$NetBSD: options.4,v 1.260 2005/01/21 10:29:50 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1304,7 +1304,7 @@ or
 .Pa std.$MACHINE .
 The embedded config file can be extracted from the resulting kernel with
 .Xr config 8
-.Ar -x ,
+.Fl x ,
 or by the following command:
 .Bd -literal -offset indent
 strings netbsd | sed -n 's/^_CFG_//p' | unvis
