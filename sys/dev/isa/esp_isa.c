@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.16.10.1 2000/11/20 11:41:12 bouyer Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.16.10.2 2001/01/22 18:03:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -120,8 +120,8 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
 #include <dev/isa/isavar.h>
@@ -412,7 +412,9 @@ esp_isa_attach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	ncr53c9x_attach(sc, NULL, NULL);
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	ncr53c9x_attach(sc);
 }
 
 /*
