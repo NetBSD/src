@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcpy.c,v 1.7 2001/01/13 04:19:54 itojun Exp $	*/
+/*	$NetBSD: strlcpy.c,v 1.8 2002/01/21 21:33:42 tv Exp $	*/
 /*	$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $ 	*/
 
 /*
@@ -28,15 +28,20 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H 
+#include "config.h"
+#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcpy.c,v 1.7 2001/01/13 04:19:54 itojun Exp $");
+__RCSID("$NetBSD: strlcpy.c,v 1.8 2002/01/21 21:33:42 tv Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <assert.h>
 #include <string.h>
+#endif
 
+#if !HAVE_STRLCPY
 /*
  * Copy src to string dst of size siz.  At most siz-1 characters
  * will be copied.  Always NUL terminates (unless siz == 0).
@@ -73,3 +78,4 @@ strlcpy(dst, src, siz)
 
 	return(s - src - 1);	/* count does not include NUL */
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: basename.c,v 1.2 2000/01/22 22:19:09 mycroft Exp $	*/
+/*	$NetBSD: basename.c,v 1.3 2002/01/21 21:33:42 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,20 +36,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: basename.c,v 1.2 2000/01/22 22:19:09 mycroft Exp $");
+__RCSID("$NetBSD: basename.c,v 1.3 2002/01/21 21:33:42 tv Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"
 #include <libgen.h>
-#include <string.h>
 
 #ifdef __weak_alias
 __weak_alias(basename,_basename)
 #endif
+#endif
 
+#include <string.h>
 
+#if !HAVE_BASENAME
 char *
 basename(path)
 	char *path;
@@ -75,3 +80,4 @@ basename(path)
 	else
 		return (p + 1);
 }
+#endif

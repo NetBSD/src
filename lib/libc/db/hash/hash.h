@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.9 2001/06/11 01:50:50 wiz Exp $	*/
+/*	$NetBSD: hash.h,v 1.10 2002/01/21 21:33:42 tv Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,6 +37,10 @@
  *
  *	@(#)hash.h	8.3 (Berkeley) 5/31/94
  */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /* Operations */
 typedef enum {

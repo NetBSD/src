@@ -1,4 +1,4 @@
-/*	$NetBSD: dirname.c,v 1.3 2001/09/15 15:43:40 simonb Exp $	*/
+/*	$NetBSD: dirname.c,v 1.4 2002/01/21 21:33:42 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,20 +36,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dirname.c,v 1.3 2001/09/15 15:43:40 simonb Exp $");
+__RCSID("$NetBSD: dirname.c,v 1.4 2002/01/21 21:33:42 tv Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"
 #include <libgen.h>
-#include <string.h>
 
 #ifdef __weak_alias
 __weak_alias(dirname,_dirname)
 #endif
+#endif
 
+#include <string.h>
 
+#if !HAVE_DIRNAME
 char *
 dirname(path)
 	char *path;
@@ -75,3 +80,4 @@ dirname(path)
 
 	return (path);
 }
+#endif
