@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.43 2003/05/17 21:18:46 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.44 2003/05/20 19:20:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.43 2003/05/17 21:18:46 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.44 2003/05/20 19:20:03 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -365,7 +365,11 @@ main(int argc, char *argv[])
 			signal(SIGALRM, dingdong);
 			alarm(TO);
 		}
-		if (AL) {
+		if (NN) {
+			name[0] = '\0';
+			lower = 1;
+			upper = digit = 0;
+		} else if (AL) {
 			const char *p = AL;
 			char *q = name;
 
@@ -384,7 +388,7 @@ main(int argc, char *argv[])
 		        exit(1);
 		} 
 		
-		if (rval || AL) {
+		if (rval || AL || NN) {
 			int i;
 
 			oflush();
@@ -419,8 +423,12 @@ main(int argc, char *argv[])
 			limit.rlim_max = RLIM_INFINITY;
 			limit.rlim_cur = RLIM_INFINITY;
 			(void)setrlimit(RLIMIT_CPU, &limit);
-			execle(LO, "login", AL ? "-fp" : "-p", "--", name, 
-			    (char *)0, env);
+			if (NN)
+				execle(LO, "login", AL ? "-fp" : "-p",
+				    NULL, env);
+			else
+				execle(LO, "login", AL ? "-fp" : "-p",
+				    "--", name, NULL, env);
 			syslog(LOG_ERR, "%s: %m", LO);
 			exit(1);
 		}
