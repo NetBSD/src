@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.37 2000/01/24 03:42:57 thorpej Exp $	*/
+/*	$NetBSD: buf.h,v 1.38 2000/01/24 04:56:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ do {									\
 	if (((bp)->b_flags & B_ORDERED) != 0 &&				\
 	    (bufq)->bq_barrier == NULL)					\
 		(bufq)->bq_barrier = (bp);				\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define	BUFQ_INSERT_TAIL(bufq, bp)					\
 do {									\
