@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1.2.2 2002/01/24 02:37:18 petrov Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.1.2.3 2002/02/08 02:59:48 petrov Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,11 +38,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1.2.2 2002/01/24 02:37:18 petrov Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.1.2.3 2002/02/08 02:59:48 petrov Exp $");
 #endif
 
 #include <inttypes.h>
 #include <stddef.h>
+#include <sys/types.h>
 #include <ucontext.h>
 #include "extern.h"
 
@@ -53,26 +54,31 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 {
 	__greg_t *gr = ucp->uc_mcontext.__gregs;
 	int i;
-	unsigned long *sp;
+	ulong *sp;
 	va_list ap;
 
-	sp  = (unsigned long *)
-	    ((unsigned long)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
-	/* Make room for: argx, argd, struct return pointer, rwindow. */
-	sp -= (argc > 6 ? argc - 6 : 0) + 6 + 8 + 8;
+	sp  = (ulong *)((caddr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
 	/* Align on quad-word boundary. */
-	sp = (unsigned long *)((unsigned long)sp & ~0xf);
+	sp = (long *)((ulong)sp & ~0xf);
+
+	/* Make room for: argx, argd, struct return pointer(?), rwindow. */
+	sp -= (argc > 6 ? argc - 6 : 0) + 6 + 8 + 8;
 
 	va_start(ap, argc);
+
 	/* Pass up to 6 arguments in %o0-5. */
 	for (i = 0; i < argc && i < 6; i++)
-		gr[_REG_O0 + i] = va_arg(ap, unsigned long);
+		gr[_REG_O0 + i] = sp[i + 16] = va_arg(ap, unsigned long);
+
 	/* Pass any additional arguments on the stack. */
-	for (sp += 6 + 8 + 8; argc > 0; argc--)
-		*sp++ = va_arg(ap, unsigned long);
+	for (; i < argc; i++)
+		sp[i + 16] = va_arg(ap, unsigned long);
 	va_end(ap);
 
-	sp -= 2047;
+	sp[14] = (ulong)((caddr_t)sp - 2047);
+	sp[15] = (ulong)(_resumecontext - 8);
+
+	sp = (ulong *)((caddr_t)sp - 2047);
 
 	gr[_REG_O6] = (__greg_t)sp;
 	gr[_REG_PC] = (__greg_t)func;
