@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.5 1995/07/12 07:24:27 jonathan Exp $	*/
+/*	$NetBSD: tz.c,v 1.6 1995/09/11 08:29:11 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 int	tzprobe();
 void	tzstart(), tzdone();
 
-struct	driver tzdriver = {
+struct	pmax_driver tzdriver = {
 	"tz", tzprobe, tzstart, tzdone,
 };
 

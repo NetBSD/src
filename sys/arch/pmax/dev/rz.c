@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.10 1995/07/24 19:36:52 jonathan Exp $	*/
+/*	$NetBSD: rz.c,v 1.11 1995/09/11 08:29:13 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,7 +74,7 @@ extern int physio();
 int	rzprobe();
 void	rzstrategy(), rzstart(), rzdone();
 
-struct	driver rzdriver = {
+struct	pmax_driver rzdriver = {
 	"rz", rzprobe, rzstart, rzdone,
 };
 
@@ -347,6 +347,9 @@ rzprobe(sd)
 	sc->sc_buf.b_actf = (struct buf *)0;
 	sc->sc_tab.b_actf = &sc->sc_buf;
 	rzstart(sd->sd_unit);
+
+/*XXX*/	/*printf("probe rz%d\n", sd->sd_unit);*/
+
 	if (biowait(&sc->sc_buf) ||
 	    (i = sizeof(inqbuf) - sc->sc_buf.b_resid) < 5)
 		goto bad;
@@ -358,6 +361,7 @@ rzprobe(sd)
 		break;
 
 	default:			/* not a disk */
+		printf("rz%d: unknown media code 0x%x\n", inqbuf.type);
 		goto bad;
 	}
 	sc->sc_type = inqbuf.type;
