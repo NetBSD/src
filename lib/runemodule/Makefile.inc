@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.2 2001/01/31 18:39:47 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2001/11/05 15:04:54 lukem Exp $
 
 .include <bsd.own.mk>
 
-WARNS?=	1
+.include "../Makefile.inc"
 
 SHLIB_VERSION_FILE=	${.CURDIR}/../shlib_version
 SHLIBDIR=	/usr/lib/runemodule
