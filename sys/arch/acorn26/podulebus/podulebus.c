@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.7 2002/10/02 03:25:47 thorpej Exp $ */
+/* $NetBSD: podulebus.c,v 1.8 2003/01/01 00:34:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.7 2002/10/02 03:25:47 thorpej Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.8 2003/01/01 00:34:05 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -333,13 +333,13 @@ podulebus_print(void *aux, char const *pnp)
 				if (*p >= 32 && *p < 126)
 					*q++ = *p;
 			*q++ = 0;
-			printf("%s", pa->pa_descr);
+			aprint_normal("%s", pa->pa_descr);
 		} else
-			printf("podule");
-		printf(" <%04x:%04x> at %s",
+			aprint_normal("podule");
+		aprint_normal(" <%04x:%04x> at %s",
 		       pa->pa_manufacturer, pa->pa_product, pnp);
 	}
-	printf(" slot %d", pa->pa_slotnum);
+	aprint_normal(" slot %d", pa->pa_slotnum);
 	return UNCONF;
 }	
 
