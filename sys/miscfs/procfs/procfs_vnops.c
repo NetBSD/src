@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.49 1997/05/08 16:20:22 mycroft Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.50 1997/08/12 22:47:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -213,15 +213,23 @@ procfs_open(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
+	struct proc *p1, *p2;
+	int error;
+
+	p1 = ap->a_p;
+	p2 = PFIND(pfs->pfs_pid);
+
+	if (p2 == NULL)
+		return (ENOENT);		/* was ESRCH, jsp */
 
 	switch (pfs->pfs_type) {
 	case Pmem:
-		if (PFIND(pfs->pfs_pid) == 0)
-			return (ENOENT);	/* was ESRCH, jsp */
-
 		if (((pfs->pfs_flags & FWRITE) && (ap->a_mode & O_EXCL)) ||
 		    ((pfs->pfs_flags & O_EXCL) && (ap->a_mode & FWRITE)))
 			return (EBUSY);
+
+		if ((error = procfs_checkioperm(p1, p2)) != 0)
+			return (EPERM);
 
 		if (ap->a_mode & FWRITE)
 			pfs->pfs_flags = ap->a_mode & (FWRITE|O_EXCL);
