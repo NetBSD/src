@@ -1,10 +1,11 @@
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.4 1994/04/18 10:16:34 cgd Exp $
+#	$Id: Makefile.inc,v 1.5 1994/05/01 07:50:20 cgd Exp $
 
 .ifdef DESTDIR
-snap_md: netbsd-aha netbsd-bt kc_aha.fs kc_bt.fs
+snap_md: netbsd-aha netbsd-bt
+#snap_md: kc_aha.fs kc_bt.fs
 
 netbsd-aha:
 	cd ${.CURDIR}/../sys/arch/i386/conf && config GENERICAHA
