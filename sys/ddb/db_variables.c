@@ -23,11 +23,12 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_variables.c,v 1.4 1993/08/02 17:53:15 mycroft Exp $
+ *	$Id: db_variables.c,v 1.5 1993/12/18 04:46:42 mycroft Exp $
  */
 
-#include "param.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+
 #include <machine/db_machdep.h>
 
 #include <ddb/db_lex.h>

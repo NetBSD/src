@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.c	7.14 (Berkeley) 4/20/91
- *	$Id: if.c,v 1.8 1993/12/18 00:40:52 mycroft Exp $
+ *	$Id: if.c,v 1.9 1993/12/18 04:53:37 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -48,6 +48,7 @@
 #include <net/af.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/route.h>
 
 #include "ether.h"
 
@@ -308,7 +309,7 @@ ifaof_ifpforaddr(addr, ifp)
 	}
 	return (ifa_maybe);
 }
-#include "route.h"
+
 /*
  * Default action when installing a route with a Link Level gateway.
  * Lookup an appropriate real ifa to point to.

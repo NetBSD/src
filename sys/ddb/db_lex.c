@@ -22,42 +22,12 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-/*
- * $Id: db_lex.c,v 1.2 1993/05/20 03:39:16 cgd Exp $
  *
- * HISTORY
- * $Log: db_lex.c,v $
- * Revision 1.2  1993/05/20 03:39:16  cgd
- * add explicit rcs id
- *
- * Revision 1.1.1.1  1993/03/21  09:46:26  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 1.1  1992/03/25  21:45:13  pace
- * Initial revision
- *
- * Revision 2.3  91/02/05  17:06:36  mrt
- * 	Changed to new Mach copyright
- * 	[91/01/31  16:18:20  mrt]
- * 
- * Revision 2.2  90/08/27  21:51:10  dbg
- * 	Add 'dotdot' token.
- * 	[90/08/22            dbg]
- * 
- * 	Allow backslash to quote any character into an identifier.
- * 	Allow colon in identifier for symbol table qualification.
- * 	[90/08/16            dbg]
- * 	Reduce lint.
- * 	[90/08/07            dbg]
- * 	Created.
- * 	[90/07/25            dbg]
- * 
- */
-/*
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
+ *	$Id: db_lex.c,v 1.3 1993/12/18 04:46:34 mycroft Exp $
  */
+
 /*
  * Lexical analyzer.
  */
