@@ -1,5 +1,5 @@
 #	from: @(#)files.sparc	8.1 (Berkeley) 7/19/93
-#	$Id: files.mac68k.newconf,v 1.8 1994/02/22 01:35:55 briggs Exp $
+#	$Id: files.mac68k.newconf,v 1.9 1994/02/27 16:39:54 briggs Exp $
 # files.mac68k.newconf
 # mac68k-specific configuration info
 
@@ -66,3 +66,8 @@ file	arch/mac68k/mac68k/sys_machdep.c
 file	arch/mac68k/mac68k/trap.c
 file	arch/mac68k/mac68k/via.c
 file	arch/mac68k/mac68k/vm_machdep.c
+
+file	compat/sunos/sun_misc.c		compat_sunos
+file	compat/sunos/sun_sysent.c	compat_sunos
+file	compat/sunos/sun_ioctl.c	compat_sunos
+file	compat/sunos/sun_exec.c		compat_sunos
