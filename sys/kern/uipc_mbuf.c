@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.18 1997/03/27 20:33:08 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.19 1997/04/24 08:14:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -705,10 +705,11 @@ m_devget(buf, totlen, off0, ifp, copy)
 		len = min(totlen, epkt - cp);
 		if (len >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				m->m_len = len = min(len, MCLBYTES);
-			else
-				len = m->m_len;
+			if ((m->m_flags & M_EXT) == 0) {
+				m_freem(top);
+				return (0);
+			}
+			m->m_len = len = min(len, MCLBYTES);
 		} else {
 			/*
 			 * Place initial small packet/header at end of mbuf.

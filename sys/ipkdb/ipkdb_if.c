@@ -162,8 +162,9 @@ ipkdbread(kip)
 		}
 		if (len >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				l = MCLBYTES;
+			if ((m->m_flags & M_EXT) == 0)
+				goto bad;
+			l = MCLBYTES;
 		}
 		m->m_len = l = min(len, l);
 		ipkdbrcpy(kip, buf, mtod(m, caddr_t), l);
