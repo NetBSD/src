@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpres.c,v 1.4 1997/01/24 21:58:36 christos Exp $	*/
+/*	$NetBSD: isapnpres.c,v 1.5 1997/01/24 22:13:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -52,7 +52,7 @@ static struct isapnp_attach_args *
 static struct isapnp_attach_args *
     isapnp_newconf __P((struct isapnp_attach_args *));
 static void isapnp_merge __P((struct isapnp_attach_args *,
-    struct isapnp_attach_args *));
+    const struct isapnp_attach_args *));
 static struct isapnp_attach_args *
     isapnp_flatten __P((struct isapnp_attach_args *));
 static int isapnp_process_tag __P((u_char, u_char, u_char *,
@@ -143,8 +143,9 @@ isapnp_newconf(dev)
  *	Merge the common device configurations to the subconfigurations
  */
 static void
-isapnp_merge(d, c)
-	struct isapnp_attach_args *d, *c;
+isapnp_merge(c, d)
+	struct isapnp_attach_args *c;
+	const struct isapnp_attach_args *d;
 {
 	int i;
 
@@ -193,7 +194,7 @@ isapnp_flatten(card)
 			 * subconfigurations
 			 */
 			for (pa = d->ipa_child; pa; pa = pa->ipa_sibling)
-				isapnp_merge(d, pa);
+				isapnp_merge(pa, d);
 
 			pa = d->ipa_child;
 			ISAPNP_FREE(d);
