@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.5 1995/06/27 13:13:41 chopps Exp $	*/
+/*	$NetBSD: if_es.c,v 1.6 1995/07/02 00:16:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -206,9 +206,6 @@ esinit(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	union smcregs *smc = sc->sc_base;
 	int s;
-
-	if (ifp->if_addrlist.tqh_first == 0)
-		return;
 
 	s = splimp();
 
