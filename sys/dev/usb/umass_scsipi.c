@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.12 2003/09/10 05:25:44 mycroft Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.13 2003/09/10 05:30:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.12 2003/09/10 05:25:44 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.13 2003/09/10 05:30:15 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -243,7 +243,7 @@ umass_scsipi_request(struct scsipi_channel *chan,
 	struct scsipi_xfer *xs;
 	struct umass_softc *sc = (void *)adapt->adapt_dev;
 	struct umass_scsipi_softc *scbus = (struct umass_scsipi_softc *)sc->bus;
-	struct scsipi_generic *cmd, trcmd;
+	struct scsipi_generic *cmd;
 	int cmdlen;
 	int dir;
 #ifdef UMASS_DEBUG
