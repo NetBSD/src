@@ -54,7 +54,10 @@
 #define PACKAGE "grep"
 
 /* Version number. */
-#define VERSION "2.2f"
+#define VERSION "2.4"
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+/* #undef ssize_t */
 
 /* Hack for Visual C++ suggested by irox. */
 /* #undef alloca */
@@ -101,6 +104,9 @@
 /* Define if you have the memchr function.  */
 #define HAVE_MEMCHR 1
 
+/* Define if you have the memmove function.  */
+#define HAVE_MEMMOVE 1
+
 /* Define if you have the munmap function.  */
 #define HAVE_MUNMAP 1
 
@@ -130,6 +136,9 @@
 
 /* Define if you have the strerror function.  */
 #define HAVE_STRERROR 1
+
+/* Define if you have the wctype function.  */
+/* #undef HAVE_WCTYPE */
 
 /* Define if you have the <argz.h> header file.  */
 /* #undef HAVE_ARGZ_H */
@@ -184,3 +193,16 @@
 
 /* Define if you have the i library (-li).  */
 /* #undef HAVE_LIBI */
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+/* #undef _FILE_OFFSET_BITS */
+
+/* Define to make fseeko etc. visible, on some hosts. */
+/* #undef _LARGEFILE_SOURCE */
+
+/* Define for large files, on AIX-style hosts. */
+/* #undef _LARGE_FILES */
+
+/* Define if compiler has function prototypes */
+#define PROTOTYPES 1
+
