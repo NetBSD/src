@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.33 1997/08/14 15:41:49 drochner Exp 
+ *	NetBSD: pcidevs,v 1.35 1997/08/23 13:44:06 drochner Exp 
  */
 
 /*
@@ -607,6 +607,7 @@
 #define	PCI_PRODUCT_CHIPS_65545	0x00d8		/* 65545 */
 #define	PCI_PRODUCT_CHIPS_65548	0x00dc		/* 65548 */
 #define	PCI_PRODUCT_CHIPS_65550	0x00e0		/* 65550 */
+#define	PCI_PRODUCT_CHIPS_65554	0x00e4		/* 65554 */
 
 /* Cirrus Logic products */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7548	0x0038		/* CL-GD7548 */
