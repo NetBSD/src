@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.80 2005/03/08 00:18:19 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.81 2005/03/09 22:12:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.80 2005/03/08 00:18:19 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.81 2005/03/09 22:12:15 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,14 +508,13 @@ lfs_flush_fs(struct lfs *fs, int flags)
 }
 
 /*
- * XXX
- * This routine flushes buffers out of the B_LOCKED queue when LFS has too
- * many locked down.  Eventually the pageout daemon will simply call LFS
- * when pages need to be reclaimed.  Note, we have one static count of locked
- * buffers, so we can't have more than a single file system.  To make this
- * work for multiple file systems, put the count into the mount structure.
+ * This routine initiates segment writes when LFS is consuming too many
+ * resources.  Ideally the pageout daemon would be able to direct LFS
+ * more subtly.
+ * XXX We have one static count of locked buffers;
+ * XXX need to think more about the multiple filesystem case.
  *
- * called and return with lfs_subsys_lock held.
+ * Called and return with lfs_subsys_lock held.
  */
 void
 lfs_flush(struct lfs *fs, int flags, int only_onefs)
@@ -528,11 +527,12 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 
 	if (lfs_dostats)
 		++lfs_stats.write_exceeded;
-	if (lfs_writing && flags == 0) {/* XXX flags */
+	/* XXX should we include SEGM_CKP here? */
+	if (lfs_writing && !(flags & (SEGM_SYNC | SEGM_WRITERD))) {
 		DLOG((DLOG_FLUSH, "lfs_flush: not flushing because another flush is active\n"));
 		return;
 	}
-	while (lfs_writing && (flags & SEGM_WRITERD))
+	while (lfs_writing)
 		ltsleep(&lfs_writing, PRIBIO + 1, "lfsflush", 0,
 		    &lfs_subsys_lock);
 	lfs_writing = 1;
