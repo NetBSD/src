@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.2 2002/03/28 21:49:19 ichiro Exp $	*/
+/*	$NetBSD: if_url.c,v 1.3 2002/05/13 12:10:04 augustss Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.2 2002/03/28 21:49:19 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.3 2002/05/13 12:10:04 augustss Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -258,7 +258,7 @@ USB_ATTACH(url)
 	err = url_mem(sc, URL_CMD_READMEM, URL_IDR0, (void *)eaddr,
 		      ETHER_ADDR_LEN);
 	if (err) {
-		printf("%s: read MAC address faild\n", devname);
+		printf("%s: read MAC address failed\n", devname);
 		splx(s);
 		goto bad;
 	}
@@ -269,6 +269,7 @@ USB_ATTACH(url)
 	/* initialize interface infomation */
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
+	ifp->if_mtu = ETHERMTU;
 	strncpy(ifp->if_xname, devname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = url_start;
