@@ -1,8 +1,11 @@
-/*	$NetBSD: conf.c,v 1.2.8.2 2002/07/15 00:33:03 gehenna Exp $	*/
+/*	$NetBSD: cpc_mainbus.c,v 1.1.4.2 2002/07/15 00:33:06 gehenna Exp $	*/
 
-/*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (lennart@augustsson.net) at Sandburst Corp.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,13 +37,53 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
+#include <sys/extent.h>
+#include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
 
-/*
- * Routine that identifies /dev/mem and /dev/kmem.
- */
+#include <machine/bus.h>
+#include "locators.h"
+
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pciconf.h>
+
+#include <dev/ic/cpc700reg.h>
+#include <dev/ic/cpc700var.h>
+#include <dev/ic/cpc700uic.h>
+
+#include <machine/pmppc.h>
+#include <machine/mainbus.h>
+
+
+void
+cpc_attach(struct device *self, pci_chipset_tag_t pc, bus_space_tag_t mem,
+	   bus_space_tag_t pciio, bus_dma_tag_t tag, int attachpci,
+	   uint freq);
+
+static int	cpc_mainbus_match(struct device *, struct cfdata *, void *);
+static void	cpc_mainbus_attach(struct device *, struct device *, void *);
+
+struct cfattach cpc_mainbus_ca = {
+	sizeof(struct device), cpc_mainbus_match, cpc_mainbus_attach
+};
+
 int
-iskmemdev(dev_t dev)
+cpc_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return (major(dev) == mem_no && (minor(dev) < 2 || minor(dev) == 14));
+	struct mainbus_attach_args *maa = aux;
+
+	return (strcmp(maa->mb_name, "cpc") == 0);
+}
+
+void
+cpc_mainbus_attach(struct device *parent, struct device *self, void *aux)
+{
+	cpc_attach(self, 0, &pmppc_mem_tag, &pmppc_pci_io_tag,
+		   &pci_bus_dma_tag, a_config.a_is_monarch,
+		   a_config.a_bus_freq);
+
+	if (!a_config.a_is_monarch)
+		printf("%s: not Monarch, pci not attached\n", self->dv_xname);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmppc,v 1.2.2.3 2002/05/31 01:10:54 gehenna Exp $
+#	$NetBSD: files.pmppc,v 1.2.2.4 2002/07/15 00:33:06 gehenna Exp $
 #
 #
 maxpartitions 16
@@ -22,21 +22,17 @@ file	dev/cons.c
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
-major	{sd = 4}
-major	{cd = 6}
 
 #
 # Machine-independent ATA drivers
 #
 
 include "dev/ata/files.ata"
-major	{wd = 0}
 
 #
 # Memory Disk for install floppy
 #
 file dev/md_root.c	memory_disk_hooks
-major	{md = 17}
 
 #
 # Compatibility modules
@@ -82,6 +78,8 @@ file	arch/pmppc/pci/pci_machdep.c		pci
 device	pchb: pcibus
 attach	pchb at pci
 file	arch/pmppc/pci/pchb.c			pchb
+
+include	"dev/usb/files.usb"
 
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"

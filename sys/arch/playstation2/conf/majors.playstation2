@@ -1,4 +1,4 @@
-#	$NetBSD: majors.playstation2,v 1.1.2.2 2002/05/30 07:14:49 gehenna Exp $
+#	$NetBSD: majors.playstation2,v 1.1.2.3 2002/07/15 00:33:02 gehenna Exp $
 #
 # Device majors for playstation2
 #
@@ -41,3 +41,4 @@ device-major	ucom		char 35			ucom
 device-major	urio		char 36			urio
 device-major	uscanner	char 37			uscanner
 device-major	clockctl	char 38			clockctl
+device-major	systrace	char 39			systrace

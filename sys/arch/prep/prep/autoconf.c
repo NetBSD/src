@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4.20.1 2002/05/17 13:49:59 gehenna Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4.20.2 2002/07/15 00:33:15 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,8 +75,9 @@ cpu_configure()
 		panic("configure: mainbus not configured");
 
 	printf("biomask %x netmask %x ttymask %x\n",
-	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
-	    (u_short)imask[IPL_TTY]);
+	    imask[IPL_BIO] & 0x1fffffff,
+	    imask[IPL_NET] & 0x1fffffff,
+	    imask[IPL_TTY] & 0x1fffffff);
 
 	spl0();
 }

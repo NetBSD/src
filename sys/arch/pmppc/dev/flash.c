@@ -1,8 +1,11 @@
-/*	$NetBSD: conf.c,v 1.2.8.2 2002/07/15 00:33:03 gehenna Exp $	*/
+/*	$NetBSD: flash.c,v 1.1.4.2 2002/07/15 00:33:07 gehenna Exp $	*/
 
-/*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (lennart@augustsson.net) at Sandburst Corp.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,13 +37,57 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/systm.h>
 
-/*
- * Routine that identifies /dev/mem and /dev/kmem.
- */
+#include <machine/bus.h>
+#include <machine/mainbus.h>
+
+struct flash_softc {
+	struct device sc_dev;
+	bus_space_tag_t sc_tag;
+	bus_space_handle_t sc_handle;
+	u_int32_t sc_addr;
+	u_int32_t sc_size;
+	u_int32_t sc_width;
+};
+
+static int	flash_match(struct device *, struct cfdata *, void *);
+static void	flash_attach(struct device *, struct device *, void *);
+
+struct cfattach flash_ca = {
+	sizeof(struct flash_softc), flash_match, flash_attach
+};
+
 int
-iskmemdev(dev_t dev)
+flash_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return (major(dev) == mem_no && (minor(dev) < 2 || minor(dev) == 14));
+	struct mainbus_attach_args *maa = aux;
+
+	return (strcmp(maa->mb_name, "flash") == 0);
+}
+
+void
+flash_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct mainbus_attach_args *maa = aux;
+	struct flash_softc *sc = (struct flash_softc *)self;
+
+	sc->sc_tag = maa->mb_bt;
+	sc->sc_addr = maa->mb_addr;
+	sc->sc_size = maa->u.mb_flash.size / 8; /* bytes */
+	sc->sc_width = maa->u.mb_flash.width;
+
+	printf(": %d Mbyte, %d bits wide\n", sc->sc_size / (1024*1024),
+	       sc->sc_width);
+#if 0
+	/* The extend map doesn't cover this area. */
+	if (bus_space_map(sc->sc_tag, sc->sc_addr, sc->sc_size, 0,
+			  &sc->sc_handle)) {
+		printf("%s: can't map i/o space\n", self->dv_xname);
+		return;
+	}
+#endif
+
+	printf("%s: driver not implemented\n", self->dv_xname);
 }
