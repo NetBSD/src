@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.32 2003/10/13 15:36:33 agc Exp $	*/
+/*	$NetBSD: pwd.h,v 1.32.2.1 2004/06/22 07:23:02 tron Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -68,7 +68,7 @@
 #include <sys/featuretest.h>
 #include <sys/types.h>
 
-#if defined(_NETBSD_SOURCE)
+#if defined(_NETBSD_SOURCE) || defined(HAVE_NBTOOL_CONFIG_H)
 #define	_PATH_PASSWD		"/etc/passwd"
 #define	_PATH_MASTERPASSWD	"/etc/master.passwd"
 #define	_PATH_MASTERPASSWD_LOCK	"/etc/ptmp"
