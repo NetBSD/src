@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)gmon.c	5.3 (Berkeley) 5/22/91";
-static char rcsid[] = "$Id: gmon.c,v 1.1 1993/10/16 22:03:00 pk Exp $";
+static char rcsid[] = "$Id: gmon.c,v 1.2 1994/03/10 21:09:49 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 
@@ -73,7 +73,7 @@ monstartup(lowpc, highpc)
     int			monsize;
     char		*buffer;
     register int	o;
-    int			fdz, len;
+    int			len;
 
 	/*
 	 *	round lowpc and highpc to multiples of the density we're using
@@ -94,15 +94,14 @@ monstartup(lowpc, highpc)
     } else if ( tolimit > 65534 ) {
 	tolimit = 65534;
     }
-	/*
-	 * We use mmap(2) here in stead of sbrk(2), it's the modern times...
-	 */
+    /*
+     * We use mmap(2) here in stead of sbrk(2), maybe we'll be able to
+     * profile mmap'ed code some day.
+     */
     len = ROUNDUP(monsize, 8) + ROUNDUP(s_textsize / HASHFRACTION, 8) +
 		tolimit * sizeof(struct tostruct);
 
-    fdz = open("/dev/zero", 0, 0);
-    buffer = mmap(0, len, PROT_READ|PROT_WRITE, MAP_PRIVATE, fdz, 0);
-    close(fdz);
+    buffer = mmap(0, len, PROT_READ|PROT_WRITE, MAP_ANON|MAP_COPY, -1, 0);
 
     if ( buffer == (char *) -1 ) {
 	write( 2 , MSG , sizeof(MSG) );
