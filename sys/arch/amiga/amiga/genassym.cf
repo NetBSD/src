@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 1997/05/22 22:51:19 veego Exp $
+#	$NetBSD: genassym.cf,v 1.2 1997/06/17 00:17:26 is Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -83,6 +83,9 @@ define	AMIGA_68040	AMIGA_68040
 define	AMIGA_68060	AMIGA_68060
 ifdef DRACO
 define	DRACO		DRACO
+endif
+ifdef BB060STUPIDROM
+define BB060STUPIDROM BB060STUPIDROM
 endif
 
 # proc structure fields and values
