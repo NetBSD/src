@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_domain.c	7.9 (Berkeley) 3/4/91
- *	$Id: uipc_domain.c,v 1.5 1993/12/18 04:22:23 mycroft Exp $
+ *	$Id: uipc_domain.c,v 1.6 1994/01/14 22:20:25 deraadt Exp $
  */
 
 #include <sys/cdefs.h>
@@ -95,8 +95,8 @@ if (max_linkhdr < 16)		/* XXX */
 max_linkhdr = 16;
 	max_hdr = max_linkhdr + max_protohdr;
 	max_datalen = MHLEN - max_hdr;
-	pffasttimo(NULL);
-	pfslowtimo(NULL);
+	timeout(pffasttimo, (caddr_t)0, 1);
+	timeout(pfslowtimo, (caddr_t)0, 1);
 }
 
 struct protosw *
@@ -159,7 +159,8 @@ pfctlinput(cmd, sa)
 
 /* ARGSUSED */
 void
-pfslowtimo(caddr_t arg)
+pfslowtimo(arg)
+	caddr_t arg;
 {
 	register struct domain *dp;
 	register struct protosw *pr;
@@ -173,7 +174,8 @@ pfslowtimo(caddr_t arg)
 
 /* ARGSUSED */
 void
-pffasttimo(caddr_t arg)
+pffasttimo(arg)
+	caddr_t arg;
 {
 	register struct domain *dp;
 	register struct protosw *pr;
