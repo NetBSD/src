@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.97.4.3 2002/11/21 20:15:23 he Exp $	*/
+/*	$NetBSD: pmap.c,v 1.97.4.4 2002/12/07 20:43:02 he Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97.4.3 2002/11/21 20:15:23 he Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97.4.4 2002/12/07 20:43:02 he Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -813,6 +813,22 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pve, struct pmap *pmap,
 	simple_unlock(&pg->mdpage.pvh_slock);	/* unlock, done! */
 	if (pve->pv_flags & PVF_WIRED)
 		++pmap->pm_stats.wired_count;
+#ifdef PMAP_ALIAS_DEBUG
+    {
+	int s = splhigh();
+	if (pve->pv_flags & PVF_WRITE)
+		pg->mdpage.rw_mappings++;
+	else
+		pg->mdpage.ro_mappings++;
+	if (pg->mdpage.rw_mappings != 0 &&
+	    (pg->mdpage.kro_mappings != 0 || pg->mdpage.krw_mappings != 0)) {
+		printf("pmap_enter_pv: rw %u, kro %u, krw %u\n",
+		    pg->mdpage.rw_mappings, pg->mdpage.kro_mappings,
+		    pg->mdpage.krw_mappings);
+	}
+	splx(s);
+    }
+#endif /* PMAP_ALIAS_DEBUG */
 }
 
 /*
@@ -838,6 +854,19 @@ pmap_remove_pv(struct vm_page *pg, struct pmap *pmap, vaddr_t va)
 			*prevptr = pve->pv_next;		/* remove it! */
 			if (pve->pv_flags & PVF_WIRED)
 			    --pmap->pm_stats.wired_count;
+#ifdef PMAP_ALIAS_DEBUG
+    {
+			int s = splhigh();
+			if (pve->pv_flags & PVF_WRITE) {
+				KASSERT(pg->mdpage.rw_mappings != 0);
+				pg->mdpage.rw_mappings--;
+			} else {
+				KASSERT(pg->mdpage.ro_mappings != 0);
+				pg->mdpage.ro_mappings--;
+			}
+			splx(s);
+    }
+#endif /* PMAP_ALIAS_DEBUG */
 			break;
 		}
 		prevptr = &pve->pv_next;		/* previous pointer */
@@ -881,6 +910,31 @@ pmap_modify_pv(struct pmap *pmap, vaddr_t va, struct vm_page *pg,
 				else
 					--pmap->pm_stats.wired_count;
 			}
+#ifdef PMAP_ALIAS_DEBUG
+    {
+			int s = splhigh();
+			if ((flags ^ oflags) & PVF_WRITE) {
+				if (flags & PVF_WRITE) {
+					pg->mdpage.rw_mappings++;
+					pg->mdpage.ro_mappings--;
+					if (pg->mdpage.rw_mappings != 0 &&
+					    (pg->mdpage.kro_mappings != 0 ||
+					     pg->mdpage.krw_mappings != 0)) {
+						printf("pmap_modify_pv: rw %u, "
+						    "kro %u, krw %u\n",
+						    pg->mdpage.rw_mappings,
+						    pg->mdpage.kro_mappings,
+						    pg->mdpage.krw_mappings);
+					}
+				} else {
+					KASSERT(pg->mdpage.rw_mappings != 0);
+					pg->mdpage.rw_mappings--;
+					pg->mdpage.ro_mappings++;
+				}
+			}
+			splx(s);
+    }
+#endif /* PMAP_ALIAS_DEBUG */
 			return (oflags);
 		}
 	}
@@ -1367,6 +1421,13 @@ pmap_alloc_ptpt(struct pmap *pmap)
 
 	*pte = L2_S_PROTO | pmap->pm_pptpt |
 	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE);
+#ifdef PMAP_ALIAS_DEBUG
+    {
+	int s = splhigh();
+	pg->mdpage.krw_mappings++;
+	splx(s);
+    }
+#endif /* PMAP_ALIAS_DEBUG */
 
 	return (0);
 }
@@ -2820,9 +2881,43 @@ void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	pt_entry_t *pte;
- 
+
 	pte = vtopte(va);
 	KASSERT(!pmap_pte_v(pte));
+
+#ifdef PMAP_ALIAS_DEBUG
+    {
+	struct vm_page *pg;
+	int s;
+
+	pg = PHYS_TO_VM_PAGE(pa);
+	if (pg != NULL) {
+		s = splhigh();
+		if (pg->mdpage.ro_mappings == 0 &&
+		    pg->mdpage.rw_mappings == 0 &&
+		    pg->mdpage.kro_mappings == 0 &&
+		    pg->mdpage.krw_mappings == 0) {
+			/* This case is okay. */
+		} else if (pg->mdpage.rw_mappings == 0 &&
+			   pg->mdpage.krw_mappings == 0 &&
+			   (prot & VM_PROT_WRITE) == 0) {
+			/* This case is okay. */
+		} else {
+			/* Something is awry. */
+			printf("pmap_kenter_pa: ro %u, rw %u, kro %u, krw %u "
+			    "prot 0x%x\n", pg->mdpage.ro_mappings,
+			    pg->mdpage.rw_mappings, pg->mdpage.kro_mappings,
+			    pg->mdpage.krw_mappings, prot);
+			Debugger();
+		}
+		if (prot & VM_PROT_WRITE)
+			pg->mdpage.krw_mappings++;
+		else
+			pg->mdpage.kro_mappings++;
+		splx(s);
+	}
+    }
+#endif /* PMAP_ALIAS_DEBUG */
 
 	*pte = L2_S_PROTO | pa |
 	    L2_S_PROT(PTE_KERNEL, prot) | pte_l2_s_cache_mode;
@@ -2842,6 +2937,25 @@ pmap_kremove(vaddr_t va, vsize_t len)
 
 		KASSERT(pmap_pde_page(pmap_pde(pmap_kernel(), va)));
 		pte = vtopte(va);
+#ifdef PMAP_ALIAS_DEBUG
+    {
+		struct vm_page *pg;
+		int s;
+
+		if ((*pte & L2_TYPE_MASK) != L2_TYPE_INV &&
+		    (pg = PHYS_TO_VM_PAGE(*pte & L2_S_FRAME)) != NULL) {
+			s = splhigh();
+			if (*pte & L2_S_PROT_W) {
+				KASSERT(pg->mdpage.krw_mappings != 0);
+				pg->mdpage.krw_mappings--;
+			} else {
+				KASSERT(pg->mdpage.kro_mappings != 0);
+				pg->mdpage.kro_mappings--;
+			}
+			splx(s);
+		}
+    }
+#endif /* PMAP_ALIAS_DEBUG */
 		cpu_idcache_wbinv_range(va, PAGE_SIZE);
 		*pte = 0;
 		cpu_tlb_flushID_SE(va);
@@ -3106,6 +3220,18 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 	 * Loop over all current mappings setting/clearing as appropos
 	 */
 	for (pv = pg->mdpage.pvh_list; pv; pv = pv->pv_next) {
+#ifdef PMAP_ALIAS_DEBUG
+    {
+		int s = splhigh();
+		if ((maskbits & PVF_WRITE) != 0 &&
+		    (pv->pv_flags & PVF_WRITE) != 0) {
+			KASSERT(pg->mdpage.rw_mappings != 0);
+			pg->mdpage.rw_mappings--;
+			pg->mdpage.ro_mappings++;
+		}
+		splx(s);
+    }
+#endif /* PMAP_ALIAS_DEBUG */
 		va = pv->pv_va;
 		pv->pv_flags &= ~maskbits;
 		ptes = pmap_map_ptes(pv->pv_pmap);	/* locks pmap */
