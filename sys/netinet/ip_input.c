@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.80 1999/01/19 23:39:57 mycroft Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.81 1999/03/26 08:51:36 proff Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -351,6 +351,15 @@ next:
 	NTOHS(ip->ip_len);
 	NTOHS(ip->ip_off);
 	len = ip->ip_len;
+
+	/*
+	 * Check for additional length bogosity
+	 */
+	if (len < hlen)
+	{
+	 	ipstat.ips_badlen++;
+		goto bad;
+	}
 
 	/*
 	 * Check that the amount of data in the buffers
