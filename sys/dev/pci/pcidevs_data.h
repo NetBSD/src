@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.405 2002/02/20 23:46:56 simonb Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.406 2002/02/20 23:53:33 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.402 2002/02/20 23:45:50 simonb Exp 
+ *	NetBSD: pcidevs,v 1.403 2002/02/20 23:53:01 simonb Exp 
  */
 
 /*
@@ -5192,6 +5192,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "SGS Thomson Microelectric",
 	    "STG 1764X",
+	},
+	{
+	    PCI_VENDOR_SIBYTE, PCI_PRODUCT_SIBYTE_SB1250_PCIHB,
+	    0,
+	    "Broadcom Corp. (SiByte)",
+	    "SB-1250 PCI Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIBYTE, PCI_PRODUCT_SIBYTE_SB1250_LDTHB,
+	    0,
+	    "Broadcom Corp. (SiByte)",
+	    "SB-1250 LDT Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIGMA, PCI_PRODUCT_SIGMA_HOLLYWOODPLUS,
