@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.48 2002/04/01 20:37:41 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.49 2002/09/19 08:31:05 jmc Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.48 2002/04/01 20:37:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.49 2002/09/19 08:31:05 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,8 @@ atapibusattach(parent, self, aux)
 	printf(": %d targets\n", chan->chan_ntargets);
 
 	/* Initialize the channel. */
+	chan->chan_init_cb = NULL;
+	chan->chan_init_cb_arg = NULL;
 	scsipi_channel_init(chan);
 
 	/* Probe the bus for devices. */
