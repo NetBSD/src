@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.12 1995/07/24 07:28:18 cgd Exp $	*/
+/*	$NetBSD: idesc.c,v 1.13 1995/09/16 16:11:18 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -371,12 +371,14 @@ idescattach(pdp, dp, auxp)
 	/* Dummy up the unit structures */
 	sc->sc_ide[0].sc_dev.dv_parent = (void *) sc;
 	sc->sc_ide[1].sc_dev.dv_parent = (void *) sc;
+#if 0	/* Amiga ROM does this; it also takes a lot of time on the Seacrate */
 	/* Execute a controller only command. */
 	if (idecommand(&sc->sc_ide[0], 0, 0, 0, 0, IDEC_DIAGNOSE) != 0 ||
 	    wait_for_unbusy(sc) != 0) {
 		printf (" ide attach failed\n");
 		return;
 	}
+#endif
 #ifdef DEBUG
 	if (ide_debug)
 		ide_dump_regs(rp);

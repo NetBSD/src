@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.11 1995/08/18 15:28:20 chopps Exp $	*/
+/*	$NetBSD: zssc.c,v 1.12 1995/09/16 16:11:34 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -112,10 +112,10 @@ zsscattach(pdp, dp, auxp)
 	sc->sc_siopp = rp = zap->va + 0x4000;
 
 	/*
-	 * DCNTL = 50.01->66MHZ / SCLK/3
 	 * CTEST7 = 00
 	 */
-	sc->sc_clock_freq = 0xc0;
+	sc->sc_clock_freq = 66;		/* Clock = 66Mhz */
+	sc->sc_ctest7 = 0x00;
 
 	alloc_sicallback();
 
@@ -190,3 +190,15 @@ zssc_dmaintr(sc)
 	add_sicallback (siopintr, sc, NULL);
 	return(1);
 }
+
+#ifdef DEBUG
+void
+zssc_dump()
+{
+	int i;
+
+	for (i = 0; i < zssccd.cd_ndevs; ++i)
+		if (zssccd.cd_devs[i])
+			siop_dump(zssccd.cd_devs[i]);
+}
+#endif

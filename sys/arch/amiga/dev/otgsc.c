@@ -1,4 +1,4 @@
-/*	$NetBSD: otgsc.c,v 1.8 1995/02/12 19:19:19 chopps Exp $	*/
+/*	$NetBSD: otgsc.c,v 1.9 1995/09/16 16:11:24 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -181,7 +181,7 @@ otgsc_dma_xfer_in (dev, len, buf, phase)
 	int wait = sci_data_wait;
 	u_char csr;
 	u_char *obp = buf;
-	volatile register u_char *sci_dma = dev->sci_data + 0x80;
+	volatile register u_char *sci_dma = dev->sci_data + 0x100;
 	volatile register u_char *sci_csr = dev->sci_csr;
 	volatile register u_char *sci_icmd = dev->sci_icmd;
 
@@ -230,7 +230,7 @@ otgsc_dma_xfer_out (dev, len, buf, phase)
 	int wait = sci_data_wait;
 	u_char csr;
 	u_char *obp = buf;
-	volatile register u_char *sci_dma = dev->sci_data + 0x80;
+	volatile register u_char *sci_dma = dev->sci_data + 0x100;
 	volatile register u_char *sci_csr = dev->sci_csr;
 	volatile register u_char *sci_icmd = dev->sci_icmd;
 
