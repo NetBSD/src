@@ -1,0 +1,121 @@
+$NetBSD: STYLE,v 1.1 1997/04/07 23:57:10 cgd Exp $
+
+Style guide for NetBSD/alpha kernel files.
+
+This file is meant to supplement the NetBSD KNF style guide (which covers
+most of the rest of the system, and can be found in /usr/share/misc/style).
+
+
+SECTIONS
+
+	* INCLUDE FILES
+	* RCS IDS
+	* COMPILATION FLAGS
+	* MACRO DEFINITIONS
+	* BLOCKS AND EXPRESSIONS
+
+
+INCLUDE FILES
+
+(1) All C and assembly sources (which are not included by other C or
+assembly sources) sources should include <machine/options.h> as the
+first header to be included, with a line like:
+
+#include <machine/options.h>		/* Pull in config options headers */
+
+(2) All C sources should include <sys/cdefs.h> (after <machine/options.h>,
+when it is included, otherwise as the first header to be included), with
+a line like:
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+(3) Nothing should include <sys/conf.h> directly.  Instead, <machine/conf.h>
+should be included.  It includes <sys/conf.h> and provides appropriate
+definitions for the machine-dependent devices and macros used by the Alpha
+port.
+
+
+RCS IDS
+
+(1) NetBSD RCS ID tags ($NetBSD: STYLE,v 1.1 1997/04/07 23:57:10 cgd Exp $ tags) in C sources and headers should
+appear at the top of the file in a single-line comment of the form
+
+/*<space>$NetBSD: STYLE,v 1.1 1997/04/07 23:57:10 cgd Exp $<space>*/
+
+which differs from the normal NetBSD style, in that it uses spaces
+rather than tabs to seperate the tag from the comment start and end
+delimiters.
+
+(2) All C sources should include an RCS ID tag which can be compiled into
+the binary, with a line like:
+
+__KERNEL_RCSID(0, "$NetBSD: STYLE,v 1.1 1997/04/07 23:57:10 cgd Exp $");
+
+after the inclusion of cdefs.h.  C sources which include other C sources
+should change the number '0' to a different number, so that it doesn't
+conflict with the RCS ID definitios in included sources.  Generation
+of these RCS IDs is disabled if the kernel option NO_KERNEL_RCSIDS is
+defined.
+
+
+COMPILATION FLAGS
+
+By default, NetBSD/alpha kernel files are compiled with the following gcc
+warning flags:
+
+	-Werror
+	-Wall
+	-Wstrict-prototypes
+	-Wmissing-prototypes
+	-Wno-format
+
+NetBSD/alpha kernel code should compile cleanly with those flags.  At some
+point in the future (when the nonstandard extensions have been removed
+from the kernel printf() function), -Wformat will be re-enabled, so sources
+should be able to compile with it enabled as well.
+
+
+MACRO DEFINITIONS
+
+(1) Macros which use C blocks (i.e. are of the form "{ ... expressions
+... }") should always be defined like:
+
+#define	MACRO(arg1, arg2, argN)					\
+do {								\
+	...							\
+	expressions						\
+	...							\
+} while (0)
+
+so that they behave like functions or macros which don't use blocks (e.g.
+for the purpose of "if (foo) MACRO(); else ...").
+
+
+BLOCKS AND EXPRESSIONS
+
+(1) Surround blocks with { and } more often than is absolutely necessary.
+For instance:
+
+	if (foo)
+		bar();
+
+is acceptable, but:
+
+	if (foo) {
+		bar();
+	}
+
+is preferred.  (In contrast, NetBSD KNF says that no braces are to be
+used for control statements with zero or one statements.)
+
+(2) Use extra parentheses when it makes expressions clearer.  For instance,
+
+	(foo == 10 && bar == 20)
+
+is acceptable, but:
+
+	((foo == 10) && (bar == 20))
+
+is preferred.  (In contrast, NetBSD KNF says to avoid using parentheses
+except where necessary unless the expression is very confusing without
+them.)
