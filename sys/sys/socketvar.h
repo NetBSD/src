@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.62 2003/06/29 22:32:28 fvdl Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.63 2003/07/02 20:07:46 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -254,6 +254,7 @@ do {									\
 
 #ifdef _KERNEL
 extern u_long		sb_max;
+extern int		somaxkva;
 /* to catch callers missing new second argument to sonewconn: */
 #define	sonewconn(head, connstatus)	sonewconn1((head), (connstatus))
 
