@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.27 1994/05/25 07:58:30 chopps Exp $
+ *	$Id: machdep.c,v 1.28 1994/05/29 04:49:51 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -1425,8 +1425,16 @@ intrhand(sr)
 		if (wesc_dmaintr())
 			goto intports_done;
 #endif
-#if (NOTGSC + NWSTSC + NIVSC) > 0
-		if (sciintr())
+#if NWSTSC > 0
+		if (wstsc_intr())
+			goto intports_done;
+#endif
+#if NOTGSSC > 0
+		if (otgssc_intr())
+			goto intports_done;
+#endif
+#if NIVSC > 0
+		if (ivsc_intr())
 			goto intports_done;
 #endif
 #if NLE > 0

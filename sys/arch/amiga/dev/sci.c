@@ -1,4 +1,5 @@
- /*
+/*
+ * Copyright (c) 1994 Michael L. Hitch
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -33,247 +34,278 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sci.c	7.5 (Berkeley) 5/4/91
- *	$Id: sci.c,v 1.4 1994/05/08 05:53:40 chopps Exp $
- *
+ *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
+ *	$Id: sci.c,v 1.5 1994/05/29 04:50:21 chopps Exp $
  */
 
 /*
  * AMIGA NCR 5380 scsi adaptor driver
  */
 
-#include "mlhscsi.h"
-#include "csa12gscsi.h"
-#include "suprascsi.h"
-#include "ivsscsi.h"
-#if (NMLHSCSI + NCSA12GSCSI + NSUPRASCSI + NIVSSCSI) > 0
-#define NSCI	NMLHSCSI
-#if NSCI < NCSA12GSCSI
-#undef NSCI
-#define NSCI	NCSA12GSCSI
-#endif
-#if NSCI < NSUPRASCSI
-#undef NSCI
-#define NSCI	NSUPRASCSI
-#endif
-#if NSCI < NIVSSCSI
-#undef NSCI
-#define NSCI	NIVSSCI
-#endif
-
-/* need to know if any tapes have been configured */
-#include "st.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/buf.h>
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 #include <machine/pmap.h>
-
-#include <amiga/dev/device.h>
-
-#include <amiga/dev/scsidefs.h>
-#include <amiga/dev/scivar.h>
-#include <amiga/dev/scireg.h>
-
-#include <amiga/amiga/custom.h>
-
 #include <machine/cpu.h>
-
-extern u_int kvtop();
-
-static int sci_wait __P((char until, int timeo, int line));
-static void scsiabort __P((register struct sci_softc *dev, char *where));
-static void scsierror __P((register struct sci_softc *dev, u_char csr));
-static int issue_select __P((register struct sci_softc *dev, u_char target,
-    u_char our_addr));
-static int ixfer_out __P((register struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-static void ixfer_in __P((register struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-static int scsiicmd __P((struct sci_softc *dev, int target, u_char *cbuf,
-    int clen, u_char *buf, int len, u_char xferphase));
-
+#include <amiga/amiga/device.h>
+#include <amiga/amiga/custom.h>
+#include <amiga/dev/scireg.h>
+#include <amiga/dev/scivar.h>
 
 /*
  * SCSI delays
  * In u-seconds, primarily for state changes on the SPC.
  */
-#define	SCSI_CMD_WAIT	50000	/* wait per step of 'immediate' cmds */
-#define	SCSI_DATA_WAIT	50000	/* wait per data in/out step */
-#define	SCSI_INIT_WAIT	50000	/* wait per step (both) during init */
+#define	SCI_CMD_WAIT	50000	/* wait per step of 'immediate' cmds */
+#define	SCI_DATA_WAIT	50000	/* wait per data in/out step */
+#define	SCI_INIT_WAIT	50000	/* wait per step (both) during init */
 
-extern void _insque();
-extern void _remque();
+#define	b_cylin		b_resid
 
-void scistart __P((int unit));
-int scigo __P((int ctlr, int slave, int unit, struct buf *bp,
-    struct scsi_fmt_cdb *cdb, int pad));
-int sciintr __P((void));
-void scidone __P((int unit));
-int sciustart __P((int unit));
-int scireq __P((register struct devqueue *dq));
-void scifree __P((register struct devqueue *dq));
-void scireset __P((int unit));
-void sci_delay __P((int delay));
-int sci_test_unit_rdy __P((int ctlr, int slave, int unit));
-int sci_start_stop_unit __P((int ctlr, int slave, int unit, int start));
-int sci_request_sense __P((int ctlr, int slave, int unit, u_char *buf,
-    unsigned int len));
-int sci_immed_command __P((int ctlr, int slave, int unit,
-    struct scsi_fmt_cdb *cdb, u_char *buf, unsigned int len, int rd));
-int sci_immed_command_nd __P((int ctlr, int slave, int unit,
-     struct scsi_fmt_cdb *cdb));
-int sci_tt_read __P((int ctlr, int slave, int unit, u_char *buf,
-    u_int len, daddr_t blk, int bshift));
-int sci_tt_write __P((int ctlr, int slave, int unit, u_char *buf,
-    u_int len, daddr_t blk, int bshift));
-#if NST > 0
-int sci_tt_oddio __P((int ctlr, int slave, int unit, u_char *buf, u_int len, int b_flags, int freedma));
-#endif
+int  sciicmd __P((struct sci_softc *, int, void *, int, void *, int,u_char));
+int  scigo __P((struct sci_softc *, struct scsi_xfer *));
+int  scigetsense __P((struct sci_softc *, struct scsi_xfer *));
+int  sciselectbus __P((struct sci_softc *, u_char, u_char));
+void sciabort __P((struct sci_softc *, char *));
+void scierror __P((struct sci_softc *, u_char));
+void scireset __P((struct sci_softc *));
+void scisetdelay __P((int));
+void sci_scsidone __P((struct sci_softc *, int));
+void sci_donextcmd __P((struct sci_softc *));
 
-
-#if NMLHSCSI > 0
-int mlhscsiinit ();
-
-struct driver mlhscsidriver = {
-	(int (*)(void *)) mlhscsiinit, "mlhscsi", (int (*)(int)) scistart,
-	(int (*)(int,...)) scigo, (int (*)(int,int)) sciintr,
-	(int (*)())scidone, sciustart, scireq, scifree, scireset,
-	sci_delay, sci_test_unit_rdy, sci_start_stop_unit,
-	sci_request_sense, sci_immed_command, sci_immed_command_nd,
-	sci_tt_read, sci_tt_write,
-#if NST > 0
-	sci_tt_oddio
-#else
-	NULL
-#endif
-};
-#endif
-
-#if NCSA12GSCSI > 0
-int csa12gscsiinit ();
-
-struct driver csa12gscsidriver = {
-	(int (*)(void *)) csa12gscsiinit, "csa12gscsi", (int (*)(int)) scistart,
-	(int (*)(int,...)) scigo, (int (*)(int,int)) sciintr,
-	(int (*)())scidone, sciustart, scireq, scifree, scireset,
-	sci_delay, sci_test_unit_rdy, sci_start_stop_unit,
-	sci_request_sense, sci_immed_command, sci_immed_command_nd,
-	sci_tt_read, sci_tt_write,
-#if NST > 0
-	sci_tt_oddio
-#else
-	NULL
-#endif
-};
-#endif
-
-#if NSUPRASCSI > 0
-int suprascsiinit ();
-
-struct driver suprascsidriver = {
-	(int (*)(void *)) suprascsiinit, "suprascsi", (int (*)(int)) scistart,
-	(int (*)(int,...)) scigo, (int (*)(int,int)) sciintr,
-	(int (*)())scidone, sciustart, scireq, scifree, scireset,
-	sci_delay, sci_test_unit_rdy, sci_start_stop_unit,
-	sci_request_sense, sci_immed_command, sci_immed_command_nd,
-	sci_tt_read, sci_tt_write,
-#if NST > 0
-	sci_tt_oddio
-#else
-	NULL
-#endif
-};
-#endif
-
-#if NIVSSCSI > 0
-int ivsscsiinit ();
-
-struct driver ivsscsidriver = {
-	(int (*)(void *)) ivsscsiinit, "ivsscsi", (int (*)(int)) scistart,
-	(int (*)(int,...)) scigo, (int (*)(int,int)) sciintr,
-	(int (*)())scidone, sciustart, scireq, scifree, scireset,
-	sci_delay, sci_test_unit_rdy, sci_start_stop_unit,
-	sci_request_sense, sci_immed_command, sci_immed_command_nd,
-	sci_tt_read, sci_tt_write,
-#if NST > 0
-	sci_tt_oddio
-#else
-	NULL
-#endif
-};
-#endif
-
-struct	sci_softc sci_softc[NSCI];
-
-int sci_cmd_wait = SCSI_CMD_WAIT;
-int sci_data_wait = SCSI_DATA_WAIT;
-int sci_init_wait = SCSI_INIT_WAIT;
+int sci_cmd_wait = SCI_CMD_WAIT;
+int sci_data_wait = SCI_DATA_WAIT;
+int sci_init_wait = SCI_INIT_WAIT;
 
 int sci_no_dma = 0;
 
 #ifdef DEBUG
-int	sci_debug = 0;
-#define WAITHIST
-#define QUASEL
-
-static long	dmahits[NSCI];
-static long	dmamisses[NSCI];
-#endif
-
-#ifdef QUASEL
 #define QPRINTF(a) if (sci_debug > 1) printf a
+int	sci_debug = 0;
 #else
 #define QPRINTF
 #endif
 
-#ifdef WAITHIST
-#define MAXWAIT	1022
-u_int	ixstart_wait[MAXWAIT+2];
-u_int	ixin_wait[MAXWAIT+2];
-u_int	ixout_wait[MAXWAIT+2];
-u_int	mxin_wait[MAXWAIT+2];
-u_int	mxin2_wait[MAXWAIT+2];
-u_int	cxin_wait[MAXWAIT+2];
-u_int	fxfr_wait[MAXWAIT+2];
-u_int	sgo_wait[MAXWAIT+2];
-#define HIST(h,w) (++h[((w)>MAXWAIT? MAXWAIT : ((w) < 0 ? -1 : (w))) + 1]);
-#else
-#define HIST(h,w)
-#endif
-
-#define	b_cylin		b_resid
-
-static sci_wait (until, timeo, line)
-	char until;
-	int timeo;
-	int line;
+/*
+ * default minphys routine for sci based controllers
+ */
+void
+sci_minphys(bp)
+	struct buf *bp;
 {
-	register unsigned char val;
-
-	if (! timeo)
-		timeo = 1000000;	/* some large value.. */
-
-	return val;
+	/*
+	 * no max transfer at this level
+	 */
 }
 
-static void
-scsiabort(dev, where)
-	register struct sci_softc *dev;
+/*
+ * must be used
+ */
+u_int
+sci_adinfo()
+{
+	/* 
+	 * one request at a time please
+	 */
+	return(1);
+}
+
+/*
+ * used by specific sci controller
+ *
+ * it appears that the higher level code does nothing with LUN's
+ * so I will too.  I could plug it in, however so could they
+ * in scsi_scsi_cmd().
+ */
+int
+sci_scsicmd(xs)
+	struct scsi_xfer *xs;
+{
+	struct sci_pending *pendp;
+	struct sci_softc *dev;
+	struct scsi_link *slp;
+	int flags, s;
+
+	slp = xs->sc_link;
+	dev = slp->adapter_softc;
+	flags = xs->flags;
+
+	if (flags & SCSI_DATA_UIO)
+		panic("sci: scsi data uio requested");
+	
+	if (dev->sc_xs && flags & SCSI_NOMASK)
+		panic("sci_scsicmd: busy");
+
+	s = splbio();
+	pendp = &dev->sc_xsstore[slp->target][slp->lun];
+	if (pendp->xs) {
+		splx(s);
+		return(TRY_AGAIN_LATER);
+	}
+
+	if (dev->sc_xs) {
+		pendp->xs = xs;
+		TAILQ_INSERT_TAIL(&dev->sc_xslist, pendp, link);
+		splx(s);
+		return(SUCCESSFULLY_QUEUED);
+	}
+	pendp->xs = NULL;
+	dev->sc_xs = xs;
+	splx(s);
+
+	/*
+	 * nothing is pending do it now.
+	 */
+	sci_donextcmd(dev);
+
+	if (flags & SCSI_NOMASK)
+		return(COMPLETE);
+	return(SUCCESSFULLY_QUEUED);
+}
+
+/*
+ * entered with dev->sc_xs pointing to the next xfer to perform
+ */
+void
+sci_donextcmd(dev)
+	struct sci_softc *dev;
+{
+	struct scsi_xfer *xs;
+	struct scsi_link *slp;
+	int flags, phase, stat;
+
+	xs = dev->sc_xs;
+	slp = xs->sc_link;
+	flags = xs->flags;
+
+	if (flags & SCSI_DATA_IN)
+		phase = DATA_IN_PHASE;
+	else if (flags & SCSI_DATA_OUT)
+		phase = DATA_OUT_PHASE;
+	else
+		phase = STATUS_PHASE;
+	
+	if (flags & SCSI_RESET)
+		scireset(dev);
+
+	dev->sc_stat[0] = -1;
+	if (phase == STATUS_PHASE || flags & SCSI_NOMASK) 
+		stat = sciicmd(dev, slp->target, xs->cmd, xs->cmdlen, 
+		    xs->data, xs->datalen, phase);
+	else if (scigo(dev, xs) == 0)
+		return;
+	else 
+		stat = dev->sc_stat[0];
+	
+	sci_scsidone(dev, stat);
+}
+
+void
+sci_scsidone(dev, stat)
+	struct sci_softc *dev;
+	int stat;
+{
+	struct sci_pending *pendp;
+	struct scsi_xfer *xs;
+	int s, donext;
+
+	xs = dev->sc_xs;
+#ifdef DIAGNOSTIC
+	if (xs == NULL)
+		panic("sci_scsidone");
+#endif
+	/*
+	 * is this right?
+	 */
+	xs->status = stat;
+
+	if (stat == 0 || xs->flags & SCSI_ERR_OK)
+		xs->resid = 0;
+	else {
+		switch(stat) {
+		case SCSI_CHECK:
+			if (stat = scigetsense(dev, xs))
+				goto bad_sense;
+			xs->error = XS_SENSE;
+			break;
+		case SCSI_BUSY:
+			xs->error = XS_BUSY;
+			break;
+		bad_sense:
+		default:
+			xs->error = XS_DRIVER_STUFFUP;
+			QPRINTF(("sci_scsicmd() bad %x\n", stat));
+			break;
+		}
+	}
+	xs->flags |= ITSDONE;
+
+	/*
+	 * grab next command before scsi_done()
+	 * this way no single device can hog scsi resources.
+	 */
+	s = splbio();
+	pendp = dev->sc_xslist.tqh_first;
+	if (pendp == NULL) {
+		donext = 0;
+		dev->sc_xs = NULL;
+	} else {
+		donext = 1;
+		TAILQ_REMOVE(&dev->sc_xslist, pendp, link);
+		dev->sc_xs = pendp->xs;
+		pendp->xs = NULL;
+	}
+	splx(s);
+	scsi_done(xs);
+
+	if (donext)
+		sci_donextcmd(dev);
+}
+
+int
+scigetsense(dev, xs)
+	struct sci_softc *dev;
+	struct scsi_xfer *xs;
+{
+	struct scsi_sense rqs;
+	struct scsi_link *slp;
+	int stat;
+
+	slp = xs->sc_link;
+	
+	rqs.op_code = REQUEST_SENSE;
+	rqs.byte2 = slp->lun << 5;
+#ifdef not_yet
+	rqs.length = xs->req_sense_length ? xs->req_sense_length : 
+	    sizeof(xs->sense);
+#else
+	rqs.length = sizeof(xs->sense);
+#endif
+	    
+	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
+	
+	return(sciicmd(dev, slp->target, &rqs, sizeof(rqs), &xs->sense,
+	    rqs.length, DATA_IN_PHASE));
+}
+
+void
+sciabort(dev, where)
+	struct sci_softc *dev;
 	char *where;
 {
-
-	printf ("sci%d: abort %s: csr = 0x%02x, bus = 0x%02x\n",
-	  dev->sc_ac->amiga_unit,
-	  where, *dev->sci_csr, *dev->sci_bus_csr);
+	printf ("%s: abort %s: csr = 0x%02x, bus = 0x%02x\n",
+	  dev->sc_dev.dv_xname, where, *dev->sci_csr, *dev->sci_bus_csr);
 
 	if (dev->sc_flags & SCI_SELECTED) {
 
 		/* XXX */
-		scireset (dev->sc_ac->amiga_unit);
+		scireset (dev);
 		/* lets just hope it worked.. */
 		dev->sc_flags &= ~SCI_SELECTED;
 	}
@@ -290,16 +322,16 @@ scsiabort(dev, where)
  * initialization).
  */
 void
-sci_delay(delay)
-	int delay;
+scisetdelay(del)
+	int del;
 {
 	static int saved_cmd_wait, saved_data_wait;
 
-	if (delay) {
+	if (del) {
 		saved_cmd_wait = sci_cmd_wait;
 		saved_data_wait = sci_data_wait;
-		if (delay > 0)
-			sci_cmd_wait = sci_data_wait = delay;
+		if (del > 0)
+			sci_cmd_wait = sci_data_wait = del;
 		else
 			sci_cmd_wait = sci_data_wait = sci_init_wait;
 	} else {
@@ -308,237 +340,24 @@ sci_delay(delay)
 	}
 }
 
-static int initialized[NSCI];
-
-#if NMLHSCSI > 0
-int
-mlhscsiinit(ac)
-	register struct amiga_ctlr *ac;
-{
-	register struct sci_softc *dev = &sci_softc[ac->amiga_unit];
-
-	if (! ac->amiga_addr)
-		return 0;
-
-	if (initialized[ac->amiga_unit])
-		return 0;
-
-	if (ac->amiga_unit > NSCI)
-		return 0;
-
-	initialized[ac->amiga_unit] = 1;
-
-	/* advance ac->amiga_addr to point to the real sci-registers */
-	ac->amiga_addr = (caddr_t) ((int)ac->amiga_addr);
-	dev->sci_data = (caddr_t) ac->amiga_addr + 1;
-	dev->sci_odata = (caddr_t) ac->amiga_addr + 1;
-	dev->sci_icmd = (caddr_t) ac->amiga_addr + 3;
-	dev->sci_mode = (caddr_t) ac->amiga_addr + 5;
-	dev->sci_tcmd = (caddr_t) ac->amiga_addr + 7;
-	dev->sci_bus_csr = (caddr_t) ac->amiga_addr + 9;
-	dev->sci_sel_enb = (caddr_t) ac->amiga_addr + 9;
-	dev->sci_csr = (caddr_t) ac->amiga_addr + 11;
-	dev->sci_dma_send = (caddr_t) ac->amiga_addr + 11;
-	dev->sci_idata = (caddr_t) ac->amiga_addr + 13;
-	dev->sci_trecv = (caddr_t) ac->amiga_addr + 13;
-	dev->sci_iack = (caddr_t) ac->amiga_addr + 15;
-	dev->sci_irecv = (caddr_t) ac->amiga_addr + 15;
-	mlhdmainit (dev);
-
-	/* hardwired IPL */
-	ac->amiga_ipl = 0;		/* doesn't use interrupts */
-	dev->sc_ac = ac;
-	dev->sc_sq.dq_forw = dev->sc_sq.dq_back = &dev->sc_sq;
-	scireset (ac->amiga_unit);
-
-	return(1);
-}
-#endif
-
-#if NCSA12GSCSI > 0
-int
-csa12gscsiinit(ac)
-	register struct amiga_ctlr *ac;
-{
-	register struct sci_softc *dev = &sci_softc[ac->amiga_unit];
-
-	if (! ac->amiga_addr)
-		return 0;
-
-	if (initialized[ac->amiga_unit])
-		return 0;
-
-	if (ac->amiga_unit > NSCI)
-		return 0;
-
-	initialized[ac->amiga_unit] = 1;
-
-	/* advance ac->amiga_addr to point to the real sci-registers */
-	ac->amiga_addr = (caddr_t) ((int)ac->amiga_addr + 0x2000);
-	dev->sci_data = (caddr_t) ac->amiga_addr;
-	dev->sci_odata = (caddr_t) ac->amiga_addr;
-	dev->sci_icmd = (caddr_t) ac->amiga_addr + 0x10;
-	dev->sci_mode = (caddr_t) ac->amiga_addr + 0x20;
-	dev->sci_tcmd = (caddr_t) ac->amiga_addr + 0x30;
-	dev->sci_bus_csr = (caddr_t) ac->amiga_addr + 0x40;
-	dev->sci_sel_enb = (caddr_t) ac->amiga_addr + 0x40;
-	dev->sci_csr = (caddr_t) ac->amiga_addr + 0x50;
-	dev->sci_dma_send = (caddr_t) ac->amiga_addr + 0x50;
-	dev->sci_idata = (caddr_t) ac->amiga_addr + 0x60;
-	dev->sci_trecv = (caddr_t) ac->amiga_addr + 0x60;
-	dev->sci_iack = (caddr_t) ac->amiga_addr + 0x70;
-	dev->sci_irecv = (caddr_t) ac->amiga_addr + 0x70;
-	csa12gdmainit (dev);
-
-	/* hardwired IPL */
-	ac->amiga_ipl = 2;
-	dev->sc_ac = ac;
-	dev->sc_sq.dq_forw = dev->sc_sq.dq_back = &dev->sc_sq;
-	scireset (ac->amiga_unit);
-
-	/* make sure IPL2 interrupts are delivered to the cpu when the sci
-	   generates some. Note that this does not yet enable sci-interrupts,
-	   this is handled in dma.c, which selectively enables interrupts only
-	   while DMA requests are pending.
-
-	   Note that enabling PORTS interrupts also enables keyboard interrupts
-	   as soon as the corresponding int-enable bit in CIA-A is set. */
-
-	custom.intreq = INTF_PORTS;
-	custom.intena = INTF_SETCLR | INTF_PORTS;
-	return(1);
-}
-#endif
-
-#if NSUPRASCSI > 0
-int
-suprascsiinit(ac)
-	register struct amiga_ctlr *ac;
-{
-	register struct sci_softc *dev = &sci_softc[ac->amiga_unit];
-
-	if (! ac->amiga_addr)
-		return 0;
-
-	if (initialized[ac->amiga_unit])
-		return 0;
-
-	if (ac->amiga_unit > NSCI)
-		return 0;
-
-	initialized[ac->amiga_unit] = 1;
-
-	/* advance ac->amiga_addr to point to the real sci-registers */
-	/* XXX Supra Word Sync version 2 only for now !!! */
-	dev->sci_data = (caddr_t) ac->amiga_addr;
-	dev->sci_odata = (caddr_t) ac->amiga_addr;
-	dev->sci_icmd = (caddr_t) ac->amiga_addr + 2;
-	dev->sci_mode = (caddr_t) ac->amiga_addr + 4;
-	dev->sci_tcmd = (caddr_t) ac->amiga_addr + 6;
-	dev->sci_bus_csr = (caddr_t) ac->amiga_addr + 8;
-	dev->sci_sel_enb = (caddr_t) ac->amiga_addr + 8;
-	dev->sci_csr = (caddr_t) ac->amiga_addr + 10;
-	dev->sci_dma_send = (caddr_t) ac->amiga_addr + 10;
-	dev->sci_idata = (caddr_t) ac->amiga_addr + 12;
-	dev->sci_trecv = (caddr_t) ac->amiga_addr + 12;
-	dev->sci_iack = (caddr_t) ac->amiga_addr + 14;
-	dev->sci_irecv = (caddr_t) ac->amiga_addr + 14;
-	supradmainit (dev);
-
-	/* hardwired IPL */
-	ac->amiga_ipl = 2;
-	dev->sc_ac = ac;
-	dev->sc_sq.dq_forw = dev->sc_sq.dq_back = &dev->sc_sq;
-	scireset (ac->amiga_unit);
-
-	/* make sure IPL2 interrupts are delivered to the cpu when the sci
-	   generates some. Note that this does not yet enable sci-interrupts,
-	   this is handled in dma.c, which selectively enables interrupts only
-	   while DMA requests are pending.
-
-	   Note that enabling PORTS interrupts also enables keyboard interrupts
-	   as soon as the corresponding int-enable bit in CIA-A is set. */
-
-	custom.intreq = INTF_PORTS;
-	custom.intena = INTF_SETCLR | INTF_PORTS;
-	return(1);
-}
-#endif
-
-#if NIVSSCSI > 0
-int
-ivsscsiinit(ac)
-	register struct amiga_ctlr *ac;
-{
-	register struct sci_softc *dev = &sci_softc[ac->amiga_unit];
-
-	if (! ac->amiga_addr)
-		return 0;
-
-	if (initialized[ac->amiga_unit])
-		return 0;
-
-	if (ac->amiga_unit > NSCI)
-		return 0;
-
-	initialized[ac->amiga_unit] = 1;
-
-	/* advance ac->amiga_addr to point to the real sci-registers */
-	ac->amiga_addr = (caddr_t) ((int)ac->amiga_addr + 0x40);
-	dev->sci_data = (caddr_t) ac->amiga_addr;
-	dev->sci_odata = (caddr_t) ac->amiga_addr;
-	dev->sci_icmd = (caddr_t) ac->amiga_addr + 2;
-	dev->sci_mode = (caddr_t) ac->amiga_addr + 4;
-	dev->sci_tcmd = (caddr_t) ac->amiga_addr + 6;
-	dev->sci_bus_csr = (caddr_t) ac->amiga_addr + 8;
-	dev->sci_sel_enb = (caddr_t) ac->amiga_addr + 8;
-	dev->sci_csr = (caddr_t) ac->amiga_addr + 10;
-	dev->sci_dma_send = (caddr_t) ac->amiga_addr + 10;
-	dev->sci_idata = (caddr_t) ac->amiga_addr + 12;
-	dev->sci_trecv = (caddr_t) ac->amiga_addr + 12;
-	dev->sci_iack = (caddr_t) ac->amiga_addr + 14;
-	dev->sci_irecv = (caddr_t) ac->amiga_addr + 14;
-	ivsdmainit (dev);
-
-	/* hardwired IPL */
-	ac->amiga_ipl = 2;
-	dev->sc_ac = ac;
-	dev->sc_sq.dq_forw = dev->sc_sq.dq_back = &dev->sc_sq;
-	scireset (ac->amiga_unit);
-
-	/* make sure IPL2 interrupts are delivered to the cpu when the sci
-	   generates some. Note that this does not yet enable sci-interrupts,
-	   this is handled in dma.c, which selectively enables interrupts only
-	   while DMA requests are pending.
-
-	   Note that enabling PORTS interrupts also enables keyboard interrupts
-	   as soon as the corresponding int-enable bit in CIA-A is set. */
-
-	custom.intreq = INTF_PORTS;
-	custom.intena = INTF_SETCLR | INTF_PORTS;
-	return(1);
-}
-#endif
-
 void
-scireset(unit)
-	register int unit;
+scireset(dev)
+	struct sci_softc *dev;
 {
-	register struct sci_softc *dev = &sci_softc[unit];
 	u_int i, s;
 	u_char my_id, csr;
 
 	if (dev->sc_flags & SCI_ALIVE)
-		scsiabort(dev, "reset");
+		sciabort(dev, "reset");
 
-	printf("sci%d: ", unit);
+	printf("%s: ", dev->sc_dev.dv_xname);
 
 	s = splbio();
 	/* preserve our ID for now */
 	my_id = 7;
 
 	/*
-	 * Disable interrupts (in dmainit) then reset the chip
+	 * Reset the chip
 	 */
 	*dev->sci_icmd = SCI_ICMD_TEST;
 	*dev->sci_icmd = SCI_ICMD_TEST | SCI_ICMD_RST;
@@ -561,26 +380,37 @@ scireset(unit)
 	dev->sc_flags &= ~SCI_SELECTED;
 }
 
-static void
-scsierror(dev, csr)
-	register struct sci_softc *dev;
+void
+scierror(dev, csr)
+	struct sci_softc *dev;
 	u_char csr;
 {
-	int unit = dev->sc_ac->amiga_unit;
-	char *sep = "";
+	struct scsi_xfer *xs;
 
-	printf("sci%d: ", unit);
-	printf("\n");
+	xs = dev->sc_xs;
+
+#ifdef DIAGNOSTIC
+	if (xs == NULL)
+		panic("scierror");
+#endif
+	if (xs->flags & SCSI_SILENT)
+		return;
+
+	printf("%s: ", dev->sc_dev.dv_xname);
+	printf("csr == 0x%02i\n", csr);	/* XXX */
 }
 
-static int
-issue_select(dev, target, our_addr)
-	register struct sci_softc *dev;
+/*
+ * select the bus, return when selected or error.
+ */
+int
+sciselectbus(dev, target, our_addr)
+        struct sci_softc *dev;
 	u_char target, our_addr;
 {
 	register int timeo = 2500;
 
-	QPRINTF (("issue_select %d\n", target));
+	QPRINTF (("sciselectbus %d\n", target));
 
 	/* if we're already selected, return */
 	if (dev->sc_flags & SCI_SELECTED)	/* XXXX */
@@ -610,8 +440,8 @@ issue_select(dev, target, our_addr)
 	return (1);
 }
 
-static int
-ixfer_out(dev, len, buf, phase)
+int
+sci_ixfer_out(dev, len, buf, phase)
 	register struct sci_softc *dev;
 	int len;
 	register u_char *buf;
@@ -620,7 +450,7 @@ ixfer_out(dev, len, buf, phase)
 	register int wait = sci_data_wait;
 	u_char csr;
 
-	QPRINTF(("ixfer_out {%d} %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+	QPRINTF(("sci_ixfer_out {%d} %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
 	  len, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5],
 	  buf[6], buf[7], buf[8], buf[9]));
 
@@ -632,10 +462,9 @@ ixfer_out(dev, len, buf, phase)
 			if ((csr & SCI_BUS_BSY) == 0 || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					printf("ixfer_out fail: l%d i%x w%d\n",
+					printf("sci_ixfer_out fail: l%d i%x w%d\n",
 					  len, csr, wait);
 #endif
-				HIST(ixout_wait, wait)
 				return (len);
 			}
 			DELAY(1);
@@ -651,14 +480,12 @@ ixfer_out(dev, len, buf, phase)
 		*dev->sci_icmd = SCI_ICMD_DATA;
 	}
 
-	QPRINTF(("ixfer_out done\n"));
-	/* this leaves with one csr to be read */
-	HIST(ixout_wait, wait)
+	QPRINTF(("sci_ixfer_out done\n"));
 	return (0);
 }
 
-static void
-ixfer_in(dev, len, buf, phase)
+void
+sci_ixfer_in(dev, len, buf, phase)
 	struct sci_softc *dev;
 	int len;
 	register u_char *buf;
@@ -673,7 +500,7 @@ ixfer_in(dev, len, buf, phase)
 
 	csr = *sci_bus_csr;
 
-	QPRINTF(("ixfer_in %d, csr=%02x\n", len, csr));
+	QPRINTF(("sci_ixfer_in %d, csr=%02x\n", len, csr));
 
 	*dev->sci_tcmd = phase;
 	*sci_icmd = 0;
@@ -683,10 +510,9 @@ ixfer_in(dev, len, buf, phase)
 			if (!(csr & SCI_BUS_BSY) || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					printf("ixfer_in fail: l%d i%x w%d\n",
+					printf("sci_ixfer_in fail: l%d i%x w%d\n",
 					len, csr, wait);
 #endif
-				HIST(ixin_wait, wait)
 				return;
 			}
 
@@ -703,12 +529,9 @@ ixfer_in(dev, len, buf, phase)
 		*sci_icmd = 0;
 	}
 
-	QPRINTF(("ixfer_in {%d} %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+	QPRINTF(("sci_ixfer_in {%d} %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
 	  len, obp[0], obp[1], obp[2], obp[3], obp[4], obp[5],
 	  obp[6], obp[7], obp[8], obp[9]));
-
-	/* this leaves with one csr to be read */
-	HIST(ixin_wait, wait)
 }
 
 /*
@@ -722,21 +545,18 @@ ixfer_in(dev, len, buf, phase)
  * caller expects to happen after the command is issued.  It should
  * be one of DATA_IN_PHASE, DATA_OUT_PHASE or STATUS_PHASE.
  */
-static int
-scsiicmd(dev, target, cbuf, clen, buf, len, xferphase)
+int
+sciicmd(dev, target, cbuf, clen, buf, len, xferphase)
 	struct sci_softc *dev;
-	int target;
-	u_char *cbuf;
-	int clen;
-	u_char *buf;
-	int len;
+	void *cbuf, *buf;
+	int clen, len;
 	u_char xferphase;
 {
 	u_char phase, csr, asr;
 	register int wait;
 
 	/* select the SCSI bus (it's an error if bus isn't free) */
-	if (issue_select (dev, target, dev->sc_scsi_addr))
+	if (sciselectbus (dev, target, dev->sc_scsi_addr))
 		return -1;
 	/*
 	 * Wait for a phase change (or error) then let the device
@@ -758,7 +578,7 @@ scsiicmd(dev, target, cbuf, clen, buf, len, xferphase)
 
 		switch (phase) {
 		case CMD_PHASE:
-			if (ixfer_out (dev, clen, cbuf, phase))
+			if (sci_ixfer_out (dev, clen, cbuf, phase))
 				goto abort;
 			phase = xferphase;
 			break;
@@ -767,7 +587,7 @@ scsiicmd(dev, target, cbuf, clen, buf, len, xferphase)
 			if (len <= 0)
 				goto abort;
 			wait = sci_data_wait;
-			ixfer_in (dev, len, buf, phase);
+			sci_ixfer_in (dev, len, buf, phase);
 			phase = STATUS_PHASE;
 			break;
 
@@ -775,14 +595,14 @@ scsiicmd(dev, target, cbuf, clen, buf, len, xferphase)
 			if (len <= 0)
 				goto abort;
 			wait = sci_data_wait;
-			if (ixfer_out (dev, len, buf, phase))
+			if (sci_ixfer_out (dev, len, buf, phase))
 				goto abort;
 			phase = STATUS_PHASE;
 			break;
 
 		case MESG_IN_PHASE:
 			dev->sc_msg[0] = 0xff;
-			ixfer_in (dev, 1, dev->sc_msg,phase);
+			sci_ixfer_in (dev, 1, dev->sc_msg,phase);
 			dev->sc_flags &= ~SCI_SELECTED;
 			while (*dev->sci_bus_csr & SCI_BUS_BSY);
 			goto out;
@@ -793,7 +613,7 @@ scsiicmd(dev, target, cbuf, clen, buf, len, xferphase)
 			break;
 
 		case STATUS_PHASE:
-			ixfer_in (dev, 1, dev->sc_stat, phase);
+			sci_ixfer_in (dev, 1, dev->sc_stat, phase);
 			phase = MESG_IN_PHASE;
 			break;
 
@@ -812,212 +632,35 @@ scsiicmd(dev, target, cbuf, clen, buf, len, xferphase)
 	}
 
 abort:
-	scsiabort(dev, "icmd");
+	sciabort(dev, "icmd");
 out:
 	QPRINTF(("=STS:%02x=", dev->sc_stat[0]));
 	return (dev->sc_stat[0]);
 }
 
 int
-sci_test_unit_rdy(ctlr, slave, unit)
-	int ctlr, slave, unit;
+scigo(dev, xs)
+	struct sci_softc *dev;
+	struct scsi_xfer *xs;
 {
-	register struct sci_softc *dev = &sci_softc[ctlr];
-	static struct scsi_cdb6 cdb = { CMD_TEST_UNIT_READY };
+	int i, count, target;
+	u_char phase, csr, asr, cmd, *addr;
+	int wait;
 
-	cdb.lun = unit;
-	return (scsiicmd(dev, slave, (u_char *)&cdb, sizeof(cdb), (u_char *)0, 0,
-			 STATUS_PHASE));
-}
-
-int
-sci_start_stop_unit (ctlr, slave, unit, start)
-	int ctlr, slave, unit;
-{
-	register struct sci_softc *dev = &sci_softc[ctlr];
-	static struct scsi_cdb6 cdb = { CMD_LOADUNLOAD };
-
-	cdb.lun = unit;
-	/* we don't set the immediate bit, so we wait for the
-	   command to succeed.
-	   We also don't touch the LoEj bit, which is primarily meant
-	   for floppies. */
-	cdb.len = start & 0x01;
-	return (scsiicmd(dev, slave, (u_char *)&cdb, sizeof(cdb), (u_char *)0, 0,
-			 STATUS_PHASE));
-}
-
-
-int
-sci_request_sense(ctlr, slave, unit, buf, len)
-	int ctlr, slave, unit;
-	u_char *buf;
-	unsigned len;
-{
-	register struct sci_softc *dev = &sci_softc[ctlr];
-	static struct scsi_cdb6 cdb = { CMD_REQUEST_SENSE };
-
-	cdb.lun = unit;
-	cdb.len = len;
-	return (scsiicmd(dev, slave, (u_char *)&cdb, sizeof(cdb), buf, len, DATA_IN_PHASE));
-}
-
-int
-sci_immed_command_nd(ctlr, slave, unit, cdb)
-	int ctlr, slave, unit;
-	struct scsi_fmt_cdb *cdb;
-{
-	register struct sci_softc *dev = &sci_softc[ctlr];
-
-	cdb->cdb[1] |= (unit << 5);
-	return(scsiicmd(dev, slave, (u_char *) cdb->cdb, cdb->len,
-	    0, 0, STATUS_PHASE));
-}
-
-int
-sci_immed_command(ctlr, slave, unit, cdb, buf, len, rd)
-	int ctlr, slave, unit;
-	struct scsi_fmt_cdb *cdb;
-	u_char *buf;
-	unsigned len;
-{
-	register struct sci_softc *dev = &sci_softc[ctlr];
-
-	cdb->cdb[1] |= (unit << 5);
-	return (scsiicmd(dev, slave, (u_char *) cdb->cdb, cdb->len, buf, len,
-			 rd != 0? DATA_IN_PHASE : DATA_OUT_PHASE));
-}
-
-/*
- * The following routines are test-and-transfer i/o versions of read/write
- * for things like reading disk labels and writing core dumps.  The
- * routine scigo should be used for normal data transfers, NOT these
- * routines.
- */
-int
-sci_tt_read(ctlr, slave, unit, buf, len, blk, bshift)
-	int ctlr, slave, unit;
-	u_char *buf;
-	u_int len;
-	daddr_t blk;
-	int bshift;
-{
-	register struct sci_softc *dev = &sci_softc[ctlr];
-	struct scsi_cdb10 cdb;
-	int stat;
-	int old_wait = sci_data_wait;
-
-	sci_data_wait = 300000;
-	bzero(&cdb, sizeof(cdb));
-	cdb.cmd = CMD_READ_EXT;
-	cdb.lun = unit;
-	blk >>= bshift;
-	cdb.lbah = blk >> 24;
-	cdb.lbahm = blk >> 16;
-	cdb.lbalm = blk >> 8;
-	cdb.lbal = blk;
-	cdb.lenh = len >> (8 + DEV_BSHIFT + bshift);
-	cdb.lenl = len >> (DEV_BSHIFT + bshift);
-	stat = scsiicmd(dev, slave, (u_char *) &cdb, sizeof(cdb), buf, len, DATA_IN_PHASE);
-	sci_data_wait = old_wait;
-	return (stat);
-}
-
-int
-sci_tt_write(ctlr, slave, unit, buf, len, blk, bshift)
-	int ctlr, slave, unit;
-	u_char *buf;
-	u_int len;
-	daddr_t blk;
-	int bshift;
-{
-	register struct sci_softc *dev = &sci_softc[ctlr];
-	struct scsi_cdb10 cdb;
-	int stat;
-	int old_wait = sci_data_wait;
-
-	sci_data_wait = 300000;
-
-	bzero(&cdb, sizeof(cdb));
-	cdb.cmd = CMD_WRITE_EXT;
-	cdb.lun = unit;
-	blk >>= bshift;
-	cdb.lbah = blk >> 24;
-	cdb.lbahm = blk >> 16;
-	cdb.lbalm = blk >> 8;
-	cdb.lbal = blk;
-	cdb.lenh = len >> (8 + DEV_BSHIFT + bshift);
-	cdb.lenl = len >> (DEV_BSHIFT + bshift);
-	stat = scsiicmd(dev, slave, (u_char *) &cdb, sizeof(cdb), buf, len, DATA_OUT_PHASE);
-	sci_data_wait = old_wait;
-	return (stat);
-}
-
-int
-scireq(dq)
-	register struct devqueue *dq;
-{
-	register struct devqueue *hq;
-
-	hq = &sci_softc[dq->dq_ctlr].sc_sq;
-	insque(dq, hq->dq_back);
-	if (dq->dq_back == hq)
-		return(1);
-	return(0);
-}
-
-int
-sciustart (int unit)
-{
-	register struct sci_softc *dev = &sci_softc[unit];
-
-	/* If we got here, this controller is not busy
-	   so we are ready to accept a command
-	 */
-	return(1);
-}
-
-void
-scistart (int unit)
-{
-	register struct devqueue *dq;
-	
-	dq = sci_softc[unit].sc_sq.dq_forw;
-	(dq->dq_driver->d_go)(dq->dq_unit);
-}
-
-int
-scigo(ctlr, slave, unit, bp, cdb, pad)
-	int ctlr, slave, unit;
-	struct buf *bp;
-	struct scsi_fmt_cdb *cdb;
-	int pad;
-{
-	register struct sci_softc *dev = &sci_softc[ctlr];
-	u_char phase, csr, asr, cmd;
-	char *addr;
-	int count;
-	register struct devqueue *dq;
-
-	cdb->cdb[1] |= unit << 5;
-
-	addr = bp->b_un.b_addr;
-	count = bp->b_bcount;
+	target = xs->sc_link->target;
+	count = xs->datalen;
+	addr = xs->data;
 
 	if (sci_no_dma)	{
-
-		scsiicmd (dev, slave, (u_char *) cdb->cdb, cdb->len,
+		sciicmd (dev, target, (u_char *) xs->cmd, xs->cmdlen,
 		  addr, count,
-		  bp->b_flags & B_READ ? DATA_IN_PHASE : DATA_OUT_PHASE);
+		  xs->flags & SCSI_DATA_IN ? DATA_IN_PHASE : DATA_OUT_PHASE);
 
-		dq = dev->sc_sq.dq_forw;
-		dev->sc_flags &=~ (SCI_IO);
-		(dq->dq_driver->d_intr)(dq->dq_unit, dev->sc_stat[0]);
-		return dev->sc_stat[0];
+		return (1);
 	}
 
 	/* select the SCSI bus (it's an error if bus isn't free) */
-	if (issue_select (dev, slave, dev->sc_scsi_addr))
+	if (sciselectbus (dev, target, dev->sc_scsi_addr))
 		return -1;
 	/*
 	 * Wait for a phase change (or error) then let the device
@@ -1038,9 +681,9 @@ scigo(ctlr, slave, unit, bp, cdb, pad)
 
 		switch (phase) {
 		case CMD_PHASE:
-			if (ixfer_out (dev, cdb->len, cdb->cdb, phase))
+			if (sci_ixfer_out (dev, xs->cmdlen, xs->cmd, phase))
 				goto abort;
-			phase = bp->b_flags & B_READ ? DATA_IN_PHASE : DATA_OUT_PHASE;
+			phase = xs->flags & SCSI_DATA_IN ? DATA_IN_PHASE : DATA_OUT_PHASE;
 			break;
 
 		case DATA_IN_PHASE:
@@ -1050,7 +693,7 @@ scigo(ctlr, slave, unit, bp, cdb, pad)
 			if (count >= 128 && dev->dma_xfer_in)
 				(*dev->dma_xfer_in)(dev, count, addr, phase);
 			else
-				ixfer_in (dev, count, addr, phase);
+				sci_ixfer_in (dev, count, addr, phase);
 			phase = STATUS_PHASE;
 			break;
 
@@ -1061,14 +704,14 @@ scigo(ctlr, slave, unit, bp, cdb, pad)
 			if (count >= 128 && dev->dma_xfer_out)
 				(*dev->dma_xfer_out)(dev, count, addr, phase);
 			else
-				if (ixfer_out (dev, count, addr, phase))
+				if (sci_ixfer_out (dev, count, addr, phase))
 					goto abort;
 			phase = STATUS_PHASE;
 			break;
 
 		case MESG_IN_PHASE:
 			dev->sc_msg[0] = 0xff;
-			ixfer_in (dev, 1, dev->sc_msg,phase);
+			sci_ixfer_in (dev, 1, dev->sc_msg,phase);
 			dev->sc_flags &= ~SCI_SELECTED;
 			while (*dev->sci_bus_csr & SCI_BUS_BSY);
 			goto out;
@@ -1079,7 +722,7 @@ scigo(ctlr, slave, unit, bp, cdb, pad)
 			break;
 
 		case STATUS_PHASE:
-			ixfer_in (dev, 1, dev->sc_stat, phase);
+			sci_ixfer_in (dev, 1, dev->sc_stat, phase);
 			phase = MESG_IN_PHASE;
 			break;
 
@@ -1088,114 +731,14 @@ scigo(ctlr, slave, unit, bp, cdb, pad)
 
 		default:
 		printf("sci: unexpected phase %d in icmd from %d\n",
-		  phase, slave);
+		  phase, target);
 		goto abort;
 		}
 	}
 
 abort:
-	scsiabort(dev, "go");
+	sciabort(dev, "go");
 out:
 	QPRINTF(("=STS:%02x=", dev->sc_stat[0]));
-	dq = dev->sc_sq.dq_forw;
-	dev->sc_flags &=~ (SCI_IO);
-	(dq->dq_driver->d_intr)(dq->dq_unit, dev->sc_stat[0]);
-	return dev->sc_stat[0];
+	return (1);
 }
-
-void
-scidone (int unit)
-{
-
-#ifdef DEBUG
-	if (sci_debug)
-		printf("sci%d: done called!\n", unit);
-#endif
-}
-
-int
-sciintr ()
-{
-	register struct sci_softc *dev = sci_softc;
-	int unit;
-	int dummy;
-	int found = 0;
-
-	for (unit = 0; unit < NSCI; ++unit, ++dev) {
-		if (dev->sc_ac->amiga_ipl == 0)
-			continue;
-		/* XXX check if expecting interrupt? */
-		if (dev->dma_intr)
-			found += (*dev->dma_intr)(dev);
-		else if ((*dev->sci_csr & SCI_CSR_INT)) {
-			*dev->sci_mode = 0;
-			dummy = *dev->sci_iack;
-			++found;
-		}
-	}
-	return found;
-}
-
-void
-scifree(dq)
-	register struct devqueue *dq;
-{
-	register struct devqueue *hq;
-
-	hq = &sci_softc[dq->dq_ctlr].sc_sq;
-	remque(dq);
-	if ((dq = hq->dq_forw) != hq)
-		(dq->dq_driver->d_start)(dq->dq_unit);
-}
-
-/*
- * (XXX) The following routine is needed for the SCSI tape driver
- * to read odd-size records.
- */
-
-#if NST > 0
-int
-sci_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)
-	int ctlr, slave, unit, b_flags;
-	u_char *buf;
-	u_int len;
-{
-	register struct sci_softc *dev = &sci_softc[ctlr];
-	struct scsi_cdb6 cdb;
-	u_char iphase;
-	int stat;
-
-	/*
-	 * First free any DMA channel that was allocated.
-	 * We can't use DMA to do this transfer.
-	 */
-	/*
-	 * Initialize command block
-	 */
-	bzero(&cdb, sizeof(cdb));
-	cdb.lun  = unit;
-	cdb.lbam = (len >> 16) & 0xff;
-	cdb.lbal = (len >> 8) & 0xff;
-	cdb.len = len & 0xff;
-	if (buf == 0) {
-		cdb.cmd = CMD_SPACE;
-		cdb.lun |= 0x00;
-		len = 0;
-		iphase = MESG_IN_PHASE;
-	} else if (b_flags & B_READ) {
-		cdb.cmd = CMD_READ;
-		iphase = DATA_IN_PHASE;
-	} else {
-		cdb.cmd = CMD_WRITE;
-		iphase = DATA_OUT_PHASE;
-	}
-	/*
-	 * Perform command (with very long delays)
-	 */
-	sci_delay(30000000);
-	stat = scsiicmd(dev, slave, (u_char *) &cdb, sizeof(cdb), buf, len, iphase);
-	sci_delay(0);
-	return (stat);
-}
-#endif
-#endif
