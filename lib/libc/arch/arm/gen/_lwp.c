@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.1.2.1 2001/11/16 03:44:25 thorpej Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.1.2.2 2001/11/16 17:27:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -54,8 +54,12 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 
 	sp = (void **) (stack_base + stack_size);
 
+	/*
+	 * Note: We make sure the stack is 8-byte aligned, here.
+	 */
+
 	u->uc_mcontext.__gregs[_REG_R0] = (__greg_t) arg;
-	u->uc_mcontext.__gregs[_REG_SP] = (__greg_t) sp; /* XXX adjust? */
+	u->uc_mcontext.__gregs[_REG_SP] = ((__greg_t) sp) & ~7;
 	u->uc_mcontext.__gregs[_REG_LR] = (__greg_t) _lwp_exit;
 	u->uc_mcontext.__gregs[_REG_PC] = (__greg_t) start;
 }
