@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.118 2002/10/21 03:58:07 enami Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.119 2002/10/21 12:52:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.118 2002/10/21 03:58:07 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.119 2002/10/21 12:52:34 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -169,7 +169,7 @@ nfs_statfs(mp, sbp, p)
 	nfsm_fhtom(vp, v3);
 	nfsm_request(vp, NFSPROC_FSSTAT, p, cred);
 	if (v3)
-		nfsm_postop_attr(vp, retattr);
+		nfsm_postop_attr(vp, retattr, 0);
 	if (error) {
 		if (mrep != NULL)
 			m_free(mrep);
@@ -237,7 +237,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 	nfsm_reqhead(vp, NFSPROC_FSINFO, NFSX_FH(1));
 	nfsm_fhtom(vp, 1);
 	nfsm_request(vp, NFSPROC_FSINFO, p, cred);
-	nfsm_postop_attr(vp, retattr);
+	nfsm_postop_attr(vp, retattr, 0);
 	if (!error) {
 		nfsm_dissect(fsp, struct nfsv3_fsinfo *, NFSX_V3FSINFO);
 		pref = fxdr_unsigned(u_int32_t, fsp->fs_wtpref);
