@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.17 2000/05/18 15:39:23 kleink Exp $	*/
+/*	$NetBSD: ms.c,v 1.18 2000/05/18 19:58:30 is Exp $	*/
 
 /*
  * based on:
@@ -375,6 +375,9 @@ msopen(dev, flags, mode, p)
 
 	if (ms->ms_events.ev_io)
 		return(EBUSY);
+
+	/* initialize potgo bits for mouse mode */
+	custom.potgo = custom.potgor | (0xf00 << (port * 4));
 
 	ms->ms_events.ev_io = p;
 	ev_init(&ms->ms_events);	/* may cause sleep */
