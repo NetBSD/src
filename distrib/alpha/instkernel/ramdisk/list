@@ -1,8 +1,6 @@
-#	$NetBSD: list,v 1.14 2002/03/14 22:26:08 lukem Exp $
+#	$NetBSD: list,v 1.15 2002/04/09 00:31:38 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
-SRCDIRS	sys/arch/${MACHINE}/stand
-
 
 PROG	bin/cat		usr/bin/strings
 PROG	bin/chmod
@@ -61,6 +59,10 @@ PROG	usr/sbin/chroot
 ARGVLN	sh -sh
 
 SPECIAL	ping		srcdir	distrib/utils/x_ping
+
+# we have not switched to MI usr.sbin/installboot yet.
+SPECIAL	installboot	srcdir	sys/arch/${MACHINE}/stand/installboot
+
 
 LIBS	-ledit -lbz2 -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm
 
