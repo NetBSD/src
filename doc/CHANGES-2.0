@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.122 2004/04/26 20:11:24 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.123 2004/04/27 18:00:25 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1297,4 +1297,29 @@ src/sys/arch/vax/vax/machdep.c			1.146
 	The second "console_device" node should really be called
 	"booted_device".
 	[atatat, ticket #183]
+
+src/sbin/newfs/mkfs.c				1.88
+
+	Fix support for creating APPLE_UFS filesystems with -v.
+	This includes most of the support for creating fs level 3
+	compatible filesystems, although there is currently no command
+	line option to invoke it when not using apple_ufs
+	PR#23924.
+	[dbj, ticket 184]
+
+src/sbin/fsck_ffs/utilities.c			1.46
+src/sbin/fsck_ffs/setup.c			1.72-1.73
+src/etc/rc.d/fixsb				1.1-1.10
+src/sys/ufs/ffs/ffs_alloc.c			1.75
+src/sys/ufs/ffs/ffs_vfsops.c			1.141-1.142
+src/etc/defaults/rc.conf			1.58
+src/distrib/sets/lists/etc/mi			1.141
+src/etc/postinstall				1.75
+src/etc/mtree/special				1.80
+src/etc/rc.d/Makefile				1.47
+
+	Fix problems related to superblock upgrade issues which may be
+	experienced by -current users from 2003.
+	PR#17910, PR#21283, PR#21404, PR#23925, PR#23926, PR#25138, 
+	[dbj, ticket 185]
 
