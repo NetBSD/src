@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.71.2.17 2002/02/06 14:18:40 he Exp $
+.\"	$NetBSD: hardware,v 1.71.2.18 2002/02/23 21:02:22 he Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -20,9 +20,9 @@ more RAM is more important than getting a faster CPU.)
 .Ss2 Supported devices
 Explanation of bracketted footnote tags [] follows this listing.
 .(bullet -offset indent
-Floppy controllers.
+.Te 2 "Floppy controllers."
 .It
-MFM, ESDI, IDE, and RLL hard disk controllers.
+.Te 2 "MFM, ESDI, IDE, and RLL hard disk controllers."
 .br
 There is complete support (including IDE DMA or Ultra-DMA) for the following
 PCI controllers
@@ -54,7 +54,7 @@ Most of these controllers are only available in multifunction PCI chips.
 Other PCI IDE controllers are supported, but performance may not be optimal.
 ISA, ISA Plug and Play and PCMCIA IDE controllers are supported as well.
 .It
-SCSI host adapters
+.Te 2 "SCSI host adapters"
 .(bullet -compact
 Adaptec AHA-154xA, -B, -C, and -CF
 .It
@@ -140,7 +140,7 @@ Ultrastor 14f, 34f, and (possibly) 24f
 Western Digital WD7000 SCSI and TMC-7000 host adapters (ISA cards only)
 .bullet)
 .It
-MDA, CGA, VGA, SVGA, and HGC Display Adapters.
+.Te 2 "MDA, CGA, VGA, SVGA, and HGC Display Adapters."
 .(Note
 Not all of the display adapters
 .Nx*M
@@ -149,7 +149,7 @@ See the XFree86 FAQ for more information. [m]
 .Note)
 .Pp
 .It
-Serial ports
+.Te 2 "Serial ports"
 .(bullet -compact
 8250/16450-based ports [m]
 .It
@@ -175,9 +175,10 @@ Byte Runner Technologies TC-400 and TC-800 serial cards [*]
 PCI universal communication cards
 .bullet)
 .It
-Parallel ports. [*] [+] [m]
+.Te 2 "Parallel ports."
+[*] [+] [m]
 .It
-Ethernet adapters
+.Te 2 "Ethernet adapters"
 .(bullet -compact
 AMD LANCE and PCnet-based ISA Ethernet adapters [*]
 .(bullet -compact
@@ -328,14 +329,14 @@ D-Link DFE530TX
 .bullet)
 .bullet)
 .It
-FDDI adapters
+.Te 2 "FDDI adapters"
 .(bullet -compact
 Digital DEFPA PCI FDDI adapters [*] [+]
 .It
 Digital DEFEA EISA FDDI adapters [*] [+]
 .bullet)
 .It
-Token-Ring adapters
+.Te 2 "Token-Ring adapters"
 .(bullet -compact
 .Tn IBM
 Token-Ring Network PC Adapter [+]
@@ -363,7 +364,7 @@ Auto 16/4 Token-Ring ISA Adapter [+]
 3COM 3C319 TokenLink Velocity [+]
 .bullet)
 .It
-Wireless network adapters
+.Te 2 "Wireless network adapters"
 .(bullet -compact
 3Com AirConnect Wireless LAN
 .It
@@ -386,7 +387,7 @@ Melco AIR CONNECT WLI-PCM-L11 cards
 NetWave AirSurfer PCMCIA cards
 .bullet)
 .It
-High Speed Serial
+.Te 2 "High Speed Serial"
 .(bullet -compact
 LAN Media Corporation SSI/LMC10000 (up to 10 Mbps) [*] [+]
 .It
@@ -395,14 +396,14 @@ LAN Media Corporation HSSI/LMC5200 [*] [+]
 LAN Media Corporation DS3/LMC5245 [*] [+]
 .bullet)
 .It
-Tape drives
+.Te 2 "Tape drives"
 .(bullet -compact
 Most SCSI tape drives
 .It
 QIC-02 and QIC-36 format (Archive- and Wangtek- compatible) tape drives [*] [+]
 .bullet)
 .It
-CD-ROM drives
+.Te 2 "CD-ROM drives"
 .(bullet -compact
 Non-IDE Mitsumi CD-ROM drives [*] [+]
 .(Note
@@ -422,7 +423,7 @@ quirk table) to work with
 .Note)
 .bullet)
 .It
-Mice
+.Te 2 "Mice"
 .(bullet -compact
 .Dq "Logitech"
 .Ns -style
@@ -437,7 +438,7 @@ mice [*] [+] [m]
 Serial mice (no kernel support necessary)
 .bullet)
 .It
-Sound Cards
+.Te 2 "Sound Cards"
 .(bullet -compact
 Aria based sound cards [*]
 .It
@@ -471,9 +472,10 @@ Yamaha YMF724/740/744/754 audio (DS-1 series) [*] [+]
 Yamaha OPL3-SA3 audio [*] [+]
 .bullet)
 .It
-Game Ports (Joysticks) [*] [+]
+.Te 2 "Game Ports (Joysticks)"
+[*] [+]
 .It
-Miscellaneous
+.Te 2 "Miscellaneous"
 .(bullet -compact
 Advanced power management (APM) [*]
 .bullet)
@@ -509,7 +511,7 @@ driver for the Prolific host-to-host adapter [*] [+]
 Handspring Visor driver [*] [+]
 .bullet)
 .It
-PCMCIA Controllers.
+.Te 2 "PCMCIA Controllers."
 .br
 ISA, PCI, and ISA Plug and Play attachments
 .(bullet -compact
@@ -525,7 +527,7 @@ PCMCIA slots for desktops.
 .Note)
 .Pp
 .It
-RAID Controllers
+.Te 2 "RAID Controllers"
 .(bullet -compact
 Compaq Integrated Array (PCI) [b]
 .It
@@ -554,7 +556,7 @@ SmartRAID IV
 .bullet)
 .bullet)
 .Pp
-Specific driver footnotes:
+.Te 2 "Specific driver footnotes:"
 .(tag "[*]"
 .It [*]
 Drivers are
@@ -590,7 +592,7 @@ in the
 .Li GENERIC
 or installation kernels at this moment.
 .tag)
-.Pp
+.Ss2 Unsupported devices
 Hardware the we do
 .Em not
 currently support, but get many questions about:
@@ -606,7 +608,7 @@ QIC-40 and QIC-80 tape drives.
 .bullet)
 .Pp
 We are planning future support for many of these devices.
-.Pp
+.Ss2 Required configurations
 To be detected by the distributed kernels, the devices must
 be configured as follows:
 .\"(disp
