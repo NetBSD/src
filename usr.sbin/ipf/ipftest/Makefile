@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2004/03/28 09:01:27 martti Exp $
+#	$NetBSD: Makefile,v 1.23 2004/03/28 09:17:33 martti Exp $
 
 .include <bsd.own.mk>
 
@@ -36,7 +36,7 @@ ipnat_y.c ipnat_y.h: ipnat_y.y ipnat_l.h
 	    -e 's/y.tab.h/ipnat_y.h/' \
 		y.tab.h > ipnat_y.h
 
-ipnat_l.c: lexer.c ipnat_l.h
+ipnat_l.c: lexer.c ipnat_l.h ipnat_y.h
 	sed -e 's/yy/ipnat_yy/g' \
 	    -e 's/y.tab.h/ipnat_y.h/' \
 	    -e 's/lexer.h/ipnat_l.h/' \
@@ -54,7 +54,7 @@ ippool_y.c ippool_y.h: ippool_y.y ippool_l.h
 	sed -e 's/yy/ippool_yy/g' \
 		y.tab.h > ippool_y.h
 
-ippool_l.c: lexer.c ippool_l.h
+ippool_l.c: lexer.c ippool_l.h ippool_y.h
 	sed -e 's/yy/ippool_yy/g' \
 	    -e 's/y.tab.h/ippool_y.h/' \
 	    -e 's/lexer.h/ippool_l.h/' \
