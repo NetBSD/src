@@ -1,4 +1,4 @@
-#	$NetBSD: sa-TODO,v 1.1.2.33 2003/01/04 23:56:42 thorpej Exp $
+#	$NetBSD: sa-TODO,v 1.1.2.34 2003/01/05 06:54:16 wdk Exp $
 
 Things to do for scheduler activations/LWP code.
 
@@ -115,7 +115,7 @@ Platform status:
 
 - sbmips: Works
 
-- sgimips: GENERIC compiles.  Reported to work once upon a time.
+- sgimips: Works
 
 - sh3: Works better than before; see above.
 
