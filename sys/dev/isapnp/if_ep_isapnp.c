@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.3 1997/02/18 10:51:10 jonathan Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.4 1997/03/18 18:58:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -45,12 +45,13 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
+#include <net/if_ether.h>
+
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h> 
-#include <netinet/if_ether.h>
 #endif
  
 #ifdef NS
