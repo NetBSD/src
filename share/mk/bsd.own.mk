@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.20 1995/09/27 13:34:11 cgd Exp $
+#	$NetBSD: bsd.own.mk,v 1.21 1995/10/02 20:30:28 cgd Exp $
 
 # Defining `SKEY' causes support for S/key authentication to be compiled in.
 SKEY=		yes
@@ -58,7 +58,7 @@ STRIP?=		-s
 NOPIC=
 .endif
 
-# Alpha doesn't have groff, working strip, or tested profiling support
+# Alpha doesn't have a working strip(1) or profiling support
 .if (${MACHINE_ARCH} == "alpha")
 STRIP=
 NOPROFILE=
