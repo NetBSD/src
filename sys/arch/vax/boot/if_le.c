@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.2 1997/03/22 12:47:31 ragge Exp $ */
+/*	$NetBSD: if_le.c,v 1.3 1998/07/21 17:36:05 drochner Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,6 +42,7 @@
 
 #include <lib/libsa/netif.h>
 
+#include <dev/ic/lancereg.h>
 #include <dev/ic/am7990reg.h>
 
 #define	ETHER_MIN_LEN	64

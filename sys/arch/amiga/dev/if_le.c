@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.29 1998/07/05 00:51:06 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.30 1998/07/21 17:36:01 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -104,6 +104,8 @@
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -117,22 +119,34 @@ struct cfattach le_zbus_ca = {
 	sizeof(struct le_softc), le_zbus_match, le_zbus_attach
 };
 
-hide void lepcnet_reset __P((struct am7990_softc *));
-hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
+#endif
+
+#ifdef DDB
+#define	integrate
+#define hide
+#else
+#define	integrate	static __inline
+#define hide		static
+#endif
+
+hide void lepcnet_reset __P((struct lance_softc *));
+hide void lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
+hide u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));
 
 hide u_int16_t ariadne_swapreg __P((u_int16_t));
-hide void ariadne_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t ariadne_rdcsr __P((struct am7990_softc *, u_int16_t));
-hide void ariadne_wribcr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-integrate void ariadne_copytodesc_word __P((struct am7990_softc *, void *, int, int));
-integrate void ariadne_copyfromdesc_word __P((struct am7990_softc *, void *, int, int));
-integrate void ariadne_copytobuf_word __P((struct am7990_softc *, void *, int, int));
-integrate void ariadne_copyfrombuf_word __P((struct am7990_softc *, void *, int, int));
-integrate void ariadne_zerobuf_word __P((struct am7990_softc *, int, int));
-void ariadne_autoselect __P((struct am7990_softc *, int));
-int ariadne_mediachange __P((struct am7990_softc *));
-void ariadne_hwinit __P((struct am7990_softc *));
+hide void ariadne_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
+hide u_int16_t ariadne_rdcsr __P((struct lance_softc *, u_int16_t));
+hide void ariadne_wribcr __P((struct lance_softc *, u_int16_t, u_int16_t));
+integrate void ariadne_copytodesc_word __P((struct lance_softc *, void *, int, int));
+integrate void ariadne_copyfromdesc_word __P((struct lance_softc *, void *, int, int));
+integrate void ariadne_copytobuf_word __P((struct lance_softc *, void *, int, int));
+integrate void ariadne_copyfrombuf_word __P((struct lance_softc *, void *, int, int));
+integrate void ariadne_zerobuf_word __P((struct lance_softc *, int, int));
+void ariadne_autoselect __P((struct lance_softc *, int));
+int ariadne_mediachange __P((struct lance_softc *));
+void ariadne_hwinit __P((struct lance_softc *));
 
 /*      
  * Media types supported by the Ariadne.
@@ -155,7 +169,7 @@ ariadne_swapreg(val)
 
 hide void
 ariadne_wrcsr(sc, port, val)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port, val;
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -166,7 +180,7 @@ ariadne_wrcsr(sc, port, val)
 
 hide u_int16_t
 ariadne_rdcsr(sc, port)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port;
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -179,7 +193,7 @@ ariadne_rdcsr(sc, port)
 
 hide void
 ariadne_wribcr(sc, port, val)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port, val;
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -190,7 +204,7 @@ ariadne_wribcr(sc, port, val)
 
 hide void
 lewrcsr(sc, port, val)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port, val;
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -201,7 +215,7 @@ lewrcsr(sc, port, val)
 
 hide u_int16_t
 lerdcsr(sc, port)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port;
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -214,7 +228,7 @@ lerdcsr(sc, port)
 
 hide void
 lepcnet_reset(sc)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	volatile int dummy;
@@ -224,7 +238,7 @@ lepcnet_reset(sc)
 
 void
 ariadne_autoselect(sc, on)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	int on;
 {
 
@@ -240,7 +254,7 @@ ariadne_autoselect(sc, on)
 
 int
 ariadne_mediachange(sc)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 {
 	struct ifmedia *ifm = &sc->sc_media;
 
@@ -256,12 +270,12 @@ ariadne_mediachange(sc)
 	switch (IFM_SUBTYPE(ifm->ifm_media)) {
 	    case IFM_10_T:
 		sc->sc_initmodemedia = 1;
-		am7990_init(sc);
+		lance_init(sc);
 		break;
 
 	    case IFM_10_2:
 		sc->sc_initmodemedia = 0;
-		am7990_init(sc);
+		lance_init(sc);
 		break;
 
 	    case IFM_AUTO:
@@ -278,7 +292,7 @@ ariadne_mediachange(sc)
 
 void
 ariadne_hwinit(sc)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 {
 
 	/*
@@ -326,7 +340,7 @@ le_zbus_attach(parent, self, aux)
 	void *aux;
 {
 	struct le_softc *lesc = (struct le_softc *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct zbus_args *zap = aux;
 	u_long ser;
 
@@ -346,11 +360,11 @@ le_zbus_attach(parent, self, aux)
 		lesc->sc_r1 = (struct lereg1 *)(0x4000 + (int)zap->va);
 		sc->sc_mem = (void *)(0x8000 + (int)zap->va);
 		sc->sc_addr = 0x8000;
-		sc->sc_copytodesc = am7990_copytobuf_contig;
-		sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-		sc->sc_copytobuf = am7990_copytobuf_contig;
-		sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-		sc->sc_zerobuf = am7990_zerobuf_contig;
+		sc->sc_copytodesc = lance_copytobuf_contig;
+		sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+		sc->sc_copytobuf = lance_copytobuf_contig;
+		sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+		sc->sc_zerobuf = lance_zerobuf_contig;
 		sc->sc_rdcsr = lerdcsr;
 		sc->sc_wrcsr = lewrcsr;
 		sc->sc_hwreset = NULL;
@@ -366,11 +380,11 @@ le_zbus_attach(parent, self, aux)
 		lesc->sc_r1 = (struct lereg1 *)(0x4000 + (int)zap->va);
 		sc->sc_mem = (void *)(0x8000 + (int)zap->va);
 		sc->sc_addr = 0x8000;
-		sc->sc_copytodesc = am7990_copytobuf_contig;
-		sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-		sc->sc_copytobuf = am7990_copytobuf_contig;
-		sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-		sc->sc_zerobuf = am7990_zerobuf_contig;
+		sc->sc_copytodesc = lance_copytobuf_contig;
+		sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+		sc->sc_copytobuf = lance_copytobuf_contig;
+		sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+		sc->sc_zerobuf = lance_zerobuf_contig;
 		sc->sc_rdcsr = lerdcsr;
 		sc->sc_wrcsr = lewrcsr;
 		sc->sc_hwreset = NULL;
@@ -414,7 +428,7 @@ le_zbus_attach(parent, self, aux)
 	sc->sc_enaddr[4] = (ser >>  8) & 0xff;
 	sc->sc_enaddr[5] = (ser      ) & 0xff;
 
-	am7990_config(sc);
+	am7990_config(&lesc->sc_am7990);
 
 	lesc->sc_isr.isr_intr = am7990_intr;
 	lesc->sc_isr.isr_arg = sc;
@@ -425,7 +439,7 @@ le_zbus_attach(parent, self, aux)
 
 integrate void
 ariadne_copytodesc_word(sc, from, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	void *from;
 	int boff, len;
 {
@@ -438,7 +452,7 @@ ariadne_copytodesc_word(sc, from, boff, len)
 
 integrate void
 ariadne_copyfromdesc_word(sc, to, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	void *to;
 	int boff, len;
 {
@@ -453,7 +467,7 @@ ariadne_copyfromdesc_word(sc, to, boff, len)
 
 integrate void
 ariadne_copytobuf_word(sc, from, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	void *from;
 	int boff, len;
 {
@@ -488,7 +502,7 @@ ariadne_copytobuf_word(sc, from, boff, len)
 
 integrate void
 ariadne_copyfrombuf_word(sc, to, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	void *to;
 	int boff, len;
 {
@@ -523,7 +537,7 @@ ariadne_copyfrombuf_word(sc, to, boff, len)
 
 integrate void
 ariadne_zerobuf_word(sc, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	int boff, len;
 {
 	volatile u_char *a1 = sc->sc_mem + boff;

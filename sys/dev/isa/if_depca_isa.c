@@ -1,4 +1,4 @@
-/*	$NetBSD: if_depca_isa.c,v 1.2 1998/07/05 00:51:20 jonathan Exp $	*/
+/*	$NetBSD: if_depca_isa.c,v 1.3 1998/07/21 17:36:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -104,6 +104,8 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -141,16 +143,28 @@ struct cfattach depca_isa_ca = {
 int depca_readprom __P((bus_space_tag_t, bus_space_handle_t, u_int8_t *));
 int depca_intredge __P((void *));
 
-hide void depca_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t depca_rdcsr __P((struct am7990_softc *, u_int16_t));  
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
+#endif
 
-void	depca_copytobuf __P((struct am7990_softc *, void *, int, int));
-void	depca_copyfrombuf __P((struct am7990_softc *, void *, int, int));
-void	depca_zerobuf __P((struct am7990_softc *, int, int));
+#ifdef DDB
+#define	integrate
+#define hide
+#else
+#define	integrate	static __inline
+#define hide		static
+#endif
+
+hide void depca_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
+hide u_int16_t depca_rdcsr __P((struct lance_softc *, u_int16_t));  
+
+void	depca_copytobuf __P((struct lance_softc *, void *, int, int));
+void	depca_copyfrombuf __P((struct lance_softc *, void *, int, int));
+void	depca_zerobuf __P((struct lance_softc *, int, int));
 
 hide void
 depca_wrcsr(sc, port, val)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port, val;
 {
 	struct depca_softc *lesc = (struct depca_softc *)sc;
@@ -163,7 +177,7 @@ depca_wrcsr(sc, port, val)
 
 hide u_int16_t
 depca_rdcsr(sc, port)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port;
 {
 	struct depca_softc *lesc = (struct depca_softc *)sc;
@@ -334,7 +348,7 @@ le_depca_attach(parent, self, aux)
 	void *aux;
 {
 	struct depca_softc *lesc = (void *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_tag_t memt = ia->ia_memt;
@@ -396,7 +410,7 @@ le_depca_attach(parent, self, aux)
 	sc->sc_hwinit = NULL;
 
 	printf("%s", sc->sc_dev.dv_xname);
-	am7990_config(sc);
+	am7990_config(&lesc->sc_am7990);
 
 	lesc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, depca_intredge, sc);
@@ -423,7 +437,7 @@ depca_intredge(arg)
 
 void
 depca_copytobuf(sc, from, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	void *from;
 	int boff, len;
 {
@@ -435,7 +449,7 @@ depca_copytobuf(sc, from, boff, len)
 
 void
 depca_copyfrombuf(sc, to, boff, len)
-	struct am7990_softc *sc;  
+	struct lance_softc *sc;  
 	void *to;
 	int boff, len;
 {
@@ -447,7 +461,7 @@ depca_copyfrombuf(sc, to, boff, len)
 
 void
 depca_zerobuf(sc, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	int boff, len;
 {
 	struct depca_softc *lesc = (struct depca_softc *)sc;

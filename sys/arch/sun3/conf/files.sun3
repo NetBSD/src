@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.46 1998/02/16 22:12:47 thorpej Exp $
+#	$NetBSD: files.sun3,v 1.47 1998/07/21 17:36:05 drochner Exp $
 
 #
 # sun3-specific configuration info
@@ -150,7 +150,7 @@ attach ie at obio with ie_obio
 file arch/sun3/dev/if_ie_obio.c		ie_obio
 
 # device defined in sys/conf/files
-attach le at obio
+attach le at obio: le24
 file arch/sun3/dev/if_le.c		le
 
 # Sun3/60 on-board SCSI

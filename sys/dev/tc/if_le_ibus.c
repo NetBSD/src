@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.10 1998/07/05 00:51:25 jonathan Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.11 1998/07/21 17:36:07 drochner Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -36,6 +36,8 @@
 #include <netinet/if_inarp.h>
 #endif
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -45,12 +47,24 @@
 #include <pmax/ibus/ibusvar.h>
 #include <pmax/pmax/kn01.h>
 
-extern void le_dec_copytobuf_gap2 __P((struct am7990_softc *, void *,
+extern void le_dec_copytobuf_gap2 __P((struct lance_softc *, void *,
 	    int, int));
-extern void le_dec_copyfrombuf_gap2 __P((struct am7990_softc *, void *,
+extern void le_dec_copyfrombuf_gap2 __P((struct lance_softc *, void *,
 	    int, int));
 
-hide void le_dec_zerobuf_gap2 __P((struct am7990_softc *, int, int));
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
+#endif
+
+#ifdef DDB
+#define	integrate
+#define hide
+#else
+#define	integrate	static __inline
+#define hide		static
+#endif
+
+hide void le_dec_zerobuf_gap2 __P((struct lance_softc *, int, int));
 
 
 int	le_pmax_match __P((struct device *, struct cfdata *, void *));
@@ -86,7 +100,7 @@ le_pmax_attach(parent, self, aux)
 	void *aux;
 {
 	register struct le_softc *lesc = (void *)self;
-	register struct am7990_softc *sc = &lesc->sc_am7990;
+	register struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	register u_char *cp;
 	register struct ibus_attach_args *ia = aux;
 
@@ -103,7 +117,7 @@ le_pmax_attach(parent, self, aux)
 	sc->sc_copyfrombuf = le_dec_copyfrombuf_gap2;
 	sc->sc_zerobuf = le_dec_zerobuf_gap2;
 
-	dec_le_common_attach(sc, cp);
+	dec_le_common_attach(&lesc->sc_am7990, cp);
 
 	/* XXX more thought about ia->ia_cookie */
 	ibus_intr_establish((void*)ia->ia_cookie, TC_IPL_NET,
@@ -119,7 +133,7 @@ le_pmax_attach(parent, self, aux)
 
 void
 le_dec_copytobuf_gap2(sc, fromv, boff, len)
-	struct am7990_softc *sc;  
+	struct lance_softc *sc;  
 	void *fromv;
 	int boff;
 	register int len;
@@ -148,7 +162,7 @@ le_dec_copytobuf_gap2(sc, fromv, boff, len)
 
 void
 le_dec_copyfrombuf_gap2(sc, tov, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	void *tov;
 	int boff, len;
 {
@@ -178,7 +192,7 @@ le_dec_copyfrombuf_gap2(sc, tov, boff, len)
 
 void
 le_dec_zerobuf_gap2(sc, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
