@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.12 2000/05/21 14:36:15 eeh Exp $	*/
+/*	$NetBSD: kd.c,v 1.12.4.1 2000/07/05 18:27:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ kdclose(dev, flag, mode, p)
 	ttyclose(tp);
 
 	if ((cc = kd->kd_in) != NULL)
-		(void)(*cc->cc_iclose)(cc->cc_dev);
+		(void)(*cc->cc_iclose)(cc);
 
 	return (0);
 }
