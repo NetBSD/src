@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.9 2002/04/26 15:50:27 lukem Exp $
+#	$NetBSD: Makefile.image,v 1.10 2002/05/02 13:05:49 lukem Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -9,13 +9,13 @@
 #	NETBSDSRCDIR	top level of src tree (set by <bsd.own.mk>)
 #	CRUNCHBIN	name of crunchgen(1)ed binary
 #	LISTS		list file(s) to use
-#	IMAGE		name of target image
 #	IMAGEDEPENDS	depends for ${IMAGE}
 #	IMAGEENDIAN	endianness of ${IMAGE}
 #	IMAGESIZE	size of ${IMAGE}
 #	MTREECONF	mtree specfiles to use to build a master specfile
 #
 # Optional variables:
+#	IMAGE		name of target image
 #	DESTDIR		destination directory
 #	MAKEFS_FLAGS	extra options to ${MAKEFS}
 #	PARSELISTENV	environment variables to set for parselist.awk
@@ -49,6 +49,9 @@ ${WORKSPEC}: ${MTREECONF} ${LISTS} ${PARSELISTDEP}
 	${PARSELIST} -v mode=mtree ${LISTS} >> ${.TARGET}.tmp \
 	&& mv ${.TARGET}.tmp ${.TARGET}
 
+CLEANFILES+=	${WORKBUILT} ${WORKSPEC} ${WORKSPEC}.tmp
+
+.if defined(IMAGE)						# {
 ${IMAGE}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
 	@echo "Creating image into ${.TARGET}..."
 	-rm -f ${.TARGET} ${.TARGET}.tmp
@@ -58,7 +61,8 @@ ${IMAGE}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
 	    ${MAKEFS_FLAGS} ${.TARGET}.tmp ${WORKDIR} \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}
 
-CLEANFILES+=	${IMAGE} ${IMAGE}.tmp ${WORKBUILT} ${WORKSPEC} ${WORKSPEC}.tmp
+CLEANFILES+=	${IMAGE} ${IMAGE}.tmp
+.endif								# }
 
 
 .if defined(IMAGETAR)						# {
