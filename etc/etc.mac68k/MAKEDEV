@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.35 1999/02/18 07:36:57 scottr Exp $
+#	$NetBSD: MAKEDEV,v 1.36 1999/02/21 00:34:43 ender Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering -- at least one of each except ch*
@@ -171,7 +171,7 @@ sd*|fd*|vnd*|ccd*|raid*)
 	case $i in
 	ccd*) name=ccd;	unit=${i#ccd};	blk=9;	chr=20;;
 	fd*) name=fd;	unit=${i#fd};	blk=21;	chr=43;;
-	raid*) name=raid; unit=${i#vnd}; blk=20; chr=42;;
+	raid*) name=raid; unit=${i#raid}; blk=20; chr=42;;
 	sd*) name=sd;	unit=${i#sd};	blk=4;	chr=13;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=8;	chr=19;;
 	esac
