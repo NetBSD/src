@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.248.2.22 2002/10/18 02:34:02 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.248.2.23 2002/12/16 17:26:26 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.22 2002/10/18 02:34:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.23 2002/12/16 17:26:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1921,13 +1921,13 @@ fpusave_proc(struct lwp *l, int save)
 
 #if defined(MULTIPROCESSOR)
 	if (oci == ci) {
-		KASSERT(ci->ci_fpcurlwp == p);
+		KASSERT(ci->ci_fpcurlwp == l);
 		FPCPU_UNLOCK(&l->l_addr->u_pcb, s);
 		fpusave_cpu(ci, save);
 		return;
 	}
 
-	KASSERT(oci->ci_fpcurlwp == p);
+	KASSERT(oci->ci_fpcurlwp == l);
 	alpha_send_ipi(oci->ci_cpuid, ipi);
 	FPCPU_UNLOCK(&l->l_addr->u_pcb, s);
 
