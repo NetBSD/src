@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.13 2000/03/10 01:31:23 nisimura Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.14 2000/07/24 15:07:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,6 @@
  *	@(#)locore.s	8.5 (Berkeley) 1/4/94
  */
 
-
 /*
  * DECstation-specific mips locore code.
  */
@@ -61,16 +60,17 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>	/* XXX - misnomer? */
 
+#include "sii.h"
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
 #include "opt_dec_5400.h"
 
 	.set	noreorder
-#if defined(DEC_3100) || defined(DEC_5100)
 
+#if NSII > 0 || NXSII > 0
 /*
  * Copy data to a DMA buffer padded with 16 bits of data, 16
- * bits of padding per 32bit word (e.g., for pmin/pmax  sii (and lance) DMA).
+ * bits of padding per 32bit word (e.g., for pmin/pmax sii DMA).
  *
  * The DMA bufffer can only be written one short at a time
  * (and takes ~14 cycles).
@@ -140,8 +140,7 @@ LEAF(CopyFromBuffer)
 	j	ra
 	nop
 END(CopyFromBuffer)
-#endif /* DEC_3100 || DEC_5100 */
-
+#endif	/* NSII > 0 || NXSII > 0 */
 
 /*
  * Write-buffer flush for writebuffer hardware on DEC mips r2000a
