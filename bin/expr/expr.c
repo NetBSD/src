@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.9 1998/07/28 11:41:48 mycroft Exp $	*/
+/*	$NetBSD: expr.c,v 1.10 1998/11/04 14:11:12 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -122,7 +122,7 @@ is_integer(vp, r)
 		s++;
 
 	while (*s) {
-		if (!isdigit(*s))
+		if (!isdigit((unsigned char)*s))
 			return 0;
 
 		i *= 10;
