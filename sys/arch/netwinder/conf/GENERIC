@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.59 2005/02/25 13:46:50 simonb Exp $
+# $NetBSD: GENERIC,v 1.60 2005/03/11 07:07:50 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -175,7 +175,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=280000
+options 	SYMTAB_SPACE=480000
 
 config		netbsd	root on ? type ?
 
