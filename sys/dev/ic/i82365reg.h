@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365reg.h,v 1.7 2002/11/24 02:46:55 takemura Exp $	*/
+/*	$NetBSD: i82365reg.h,v 1.8 2003/09/12 22:09:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -348,6 +348,7 @@
 #define PCIC_RICOH_CHIP_ID_5C296 0x32
 #define PCIC_RICOH_CHIP_ID_5C396 0xB2
 #define PCIC_RICOH_REG_MCR2 0x2F
+#define	PCIC_RICOH_MCR2_VCC_DIRECT 0x08
 #define PCIC_RICOH_MCR2_VCC_SEL_MASK 0x01
 #define PCIC_RICOH_MCR2_VCC_SEL_3V 0x01
 #define PCIC_RICOH_MCR2_VCC_SEL_5V 0x00
