@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.8 1997/10/14 00:53:26 lukem Exp $	*/
+/*	$NetBSD: back.h,v 1.9 1998/09/13 15:31:07 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -155,7 +155,7 @@ void	fixtty __P((struct termios *));
 void	getarg __P((char ***));
 int	getcaps __P((char *));
 void	getmove __P((void));
-void	getout __P((int));
+void	getout __P((int)) __attribute__((__noreturn__));
 void	gwrite __P((void));
 void	init __P((void));
 int	last __P((void));
@@ -178,7 +178,6 @@ void	refresh __P((void));
 void	roll __P((void));
 int	rsetbrd __P((void));
 void	save __P((int));
-void	strset __P((char *, char *));
 int	text __P((char **));
 void	tos __P((void));
 void	wrboard __P((void));
