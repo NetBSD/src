@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.16 1997/04/27 20:58:57 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.17 1997/07/18 03:38:35 jtk Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -199,10 +199,10 @@ hpibbussearch(parent, cf, aux)
 		 * the punit information.  Make sure the configuration
 		 * allows for this slave/punit combination.
 		 */
-		if (cf->hpibbuscf_slave != HPIBBUS_SLAVE_UNK &&
+		if (cf->hpibbuscf_slave != HPIBBUSCF_SLAVE_DEFAULT &&
 		    cf->hpibbuscf_slave != ha->ha_slave)
 			goto out;
-		if (cf->hpibbuscf_punit != HPIBBUS_PUNIT_UNK &&
+		if (cf->hpibbuscf_punit != HPIBBUSCF_PUNIT_DEFAULT &&
 		    cf->hpibbuscf_punit != ha->ha_punit)
 			goto out;
 

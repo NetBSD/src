@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.13 1997/04/02 22:37:33 scottr Exp $	*/
+/*	$NetBSD: ppi.c,v 1.14 1997/07/18 03:38:37 jtk Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -123,8 +123,8 @@ ppimatch(parent, match, aux)
 	 * To prevent matching all unused slots on the bus, we
 	 * don't allow wildcarded locators.
 	 */
-	if (match->hpibbuscf_slave == HPIBBUS_SLAVE_UNK ||
-	    match->hpibbuscf_punit == HPIBBUS_PUNIT_UNK)
+	if (match->hpibbuscf_slave == HPIBBUSCF_SLAVE_DEFAULT ||
+	    match->hpibbuscf_punit == HPIBBUSCF_PUNIT_DEFAULT)
 		return (0);
 
 	return (1);
