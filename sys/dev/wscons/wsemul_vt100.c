@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.6 1998/06/29 21:10:53 drochner Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.7 1998/08/12 20:09:47 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -69,8 +69,10 @@ static void wsemul_vt100_init __P((struct wsemul_vt100_emuldata *,
 				   const struct wsscreen_descr *,
 				   void *, int, int, long));
 
-static u_int wsemul_vt100_output_normal __P((struct wsemul_vt100_emuldata *,
-					     u_char, int));
+static void wsemul_vt100_output_normal __P((struct wsemul_vt100_emuldata *,
+					    u_char, int));
+static void wsemul_vt100_output_c0c1 __P((struct wsemul_vt100_emuldata *,
+					  u_char, int));
 typedef u_int vt100_handler __P((struct wsemul_vt100_emuldata *, u_char));
 static vt100_handler
 wsemul_vt100_output_esc,
@@ -285,18 +287,61 @@ wsemul_vt100_reset(edp)
  * now all the state machine bits
  */
 
-static u_int
+static void
 wsemul_vt100_output_normal(edp, c, kernel)
 	struct wsemul_vt100_emuldata *edp;
 	u_char c;
 	int kernel;
 {
-	u_int newstate = VT100_EMUL_STATE_NORMAL;
-	u_int n, dc;
-	u_int *ct;
+	u_int *ct, dc;
+
+	if ((edp->flags & (VTFL_LASTCHAR | VTFL_DECAWM)) ==
+	    (VTFL_LASTCHAR | VTFL_DECAWM)) {
+		if (ROWS_BELOW > 0) {
+			edp->crow++;
+			CHECK_DW;
+		} else
+			wsemul_vt100_scrollup(edp, 1);
+		edp->ccol = 0;
+		edp->flags &= ~VTFL_LASTCHAR;
+	}
+
+	if (c & 0x80) {
+		c &= 0x7f;
+		ct = edp->chartab_G[edp->chartab1];
+	} else {
+		if (edp->sschartab) {
+			ct = edp->chartab_G[edp->sschartab];
+			edp->sschartab = 0;
+		} else
+			ct = edp->chartab_G[edp->chartab0];
+	}
+	dc = (ct ? ct[c] : c);
+
+	if ((edp->flags & VTFL_INSERTMODE) && COLS_LEFT)
+		COPYCOLS(edp->ccol, edp->ccol + 1, COLS_LEFT);
+
+	(*edp->emulops->putchar)(edp->emulcookie, edp->crow,
+				 edp->ccol << edp->dw, dc,
+				 kernel ? edp->kernattr : edp->curattr);
+
+	if (COLS_LEFT)
+		edp->ccol++;
+	else
+		edp->flags |= VTFL_LASTCHAR;
+}
+
+static void
+wsemul_vt100_output_c0c1(edp, c, kernel)
+	struct wsemul_vt100_emuldata *edp;
+	u_char c;
+	int kernel;
+{
+	u_int n;
 
 	switch (c) {
 	    case ASCII_NUL:
+	    default:
 		/* ignore */
 		break;
 	    case ASCII_BEL:
@@ -337,57 +382,33 @@ wsemul_vt100_output_normal(edp, c, kernel)
 		if (kernel)
 			panic("ESC in kernel output");
 #endif
-		newstate = VT100_EMUL_STATE_ESC;
+		if (edp->state == VT100_EMUL_STATE_STRING) {
+			/* might be a string end */
+			edp->state = VT100_EMUL_STATE_STRING_ESC;
+		} else {
+			/* XXX cancel current escape sequence */
+			edp->state = VT100_EMUL_STATE_ESC;
+		}
 		break;
 #if 0
 	    case CSI: /* 8-bit */
+		/* XXX cancel current escape sequence */
 		edp->nargs = 0;
 		bzero(edp->args, sizeof (edp->args));
 		edp->modif1 = edp->modif2 = '\0';
-		newstate = VT100_EMUL_STATE_CSI;
+		edp->state = VT100_EMUL_STATE_CSI;
 		break;
 	    case DCS: /* 8-bit */
+		/* XXX cancel current escape sequence */
 		edp->nargs = 0;
 		bzero(edp->args, sizeof (edp->args));
-		newstate = VT100_EMUL_STATE_DCS;
+		edp->state = VT100_EMUL_STATE_DCS;
 		break;
+	    case ST: /* string end 8-bit */
+		/* XXX only in VT100_EMUL_STATE_STRING */
+		wsemul_vt100_handle_dcs(edp);
+		return (VT100_EMUL_STATE_NORMAL);
 #endif
-	    default: /* normal character */
-		if ((edp->flags & (VTFL_LASTCHAR | VTFL_DECAWM)) ==
-		    (VTFL_LASTCHAR | VTFL_DECAWM)) {
-			if (ROWS_BELOW > 0) {
-				edp->crow++;
-				CHECK_DW;
-			} else
-				wsemul_vt100_scrollup(edp, 1);
-			edp->ccol = 0;
-			edp->flags &= ~VTFL_LASTCHAR;
-		}
-
-		if (c & 0x80) {
-			c &= 0x7f;
-			ct = edp->chartab_G[edp->chartab1];
-		} else {
-			if (edp->sschartab) {
-				ct = edp->chartab_G[edp->sschartab];
-				edp->sschartab = 0;
-			} else
-				ct = edp->chartab_G[edp->chartab0];
-		}
-		dc = (ct ? ct[c] : c);
-
-		if ((edp->flags & VTFL_INSERTMODE) && COLS_LEFT)
-			COPYCOLS(edp->ccol, edp->ccol + 1, COLS_LEFT);
-
-		(*edp->emulops->putchar)(edp->emulcookie, edp->crow,
-					 edp->ccol << edp->dw, dc,
-					 kernel ? edp->kernattr : edp->curattr);
-
-		if (COLS_LEFT)
-			edp->ccol++;
-		else
-			edp->flags |= VTFL_LASTCHAR;
-		break;
 	    case ASCII_LF:
 	    case ASCII_VT:
 	    case ASCII_FF:
@@ -398,8 +419,6 @@ wsemul_vt100_output_normal(edp, c, kernel)
 			wsemul_vt100_scrollup(edp, 1);
 		break;
 	}
-
-	return (newstate);
 }
 
 static u_int
@@ -688,18 +707,8 @@ wsemul_vt100_output_string(edp, c)
 	struct wsemul_vt100_emuldata *edp;
 	u_char c;
 {
-	switch (c) {
-	    case ASCII_ESC: /* might be a string end */
-		return (VT100_EMUL_STATE_STRING_ESC);
-#if 0
-	    case ST: /* string end 8-bit */
-		wsemul_vt100_handle_dcs(edp);
-		return (VT100_EMUL_STATE_NORMAL);
-#endif
-	    default:
-		if (edp->dcstype && edp->dcspos < DCS_MAXLEN)
-			edp->dcsarg[edp->dcspos++] = c;
-	}
+	if (edp->dcstype && edp->dcspos < DCS_MAXLEN)
+		edp->dcsarg[edp->dcspos++] = c;
 	return (VT100_EMUL_STATE_STRING);
 }
 
@@ -928,9 +937,12 @@ wsemul_vt100_output(cookie, data, count, kernel)
 	(*edp->emulops->cursor)(edp->emulcookie, 0,
 				edp->crow, edp->ccol << edp->dw);
 	for (; count > 0; data++, count--) {
+		if ((*data & 0x7f) < 0x20) {
+			wsemul_vt100_output_c0c1(edp, *data, kernel);
+			continue;
+		}
 		if (edp->state == VT100_EMUL_STATE_NORMAL || kernel) {
-			edp->state = wsemul_vt100_output_normal(edp, *data,
-								kernel);
+			wsemul_vt100_output_normal(edp, *data, kernel);
 			continue;
 		}
 #ifdef DIAGNOSTIC
