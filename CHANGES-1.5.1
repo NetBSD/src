@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.59 2001/04/27 10:39:41 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.60 2001/04/28 07:05:58 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -3963,6 +3963,7 @@ distrib/sets/lists/etc/mi			patch
 distrib/sets/lists/base/mi			patch
 distrib/sets/lists/etc/obsolete.mi		1.6
 distrib/i386/floppies/ramdisk-big/list		patch
+etc/mtree/special				1.36 via patch
 
   /etc/dhclient-script moved to /sbin/dhclient-script.
 
@@ -4192,3 +4193,9 @@ usr.bin/lastcomm/lastcomm.1			1.9
 sys/dev/ic/tulip.c				patch
 
   Fix build problem.  Fixes PR#12738.
+
+sys/netinet6/icmp6.c				1.55 via patch (partial)
+
+  Correct source address selection in icmp6_reflect().
+  Fixes two problems: kernel may fail to send icmp6 messages, and
+  there would be a way for user programs to cause a panic.
