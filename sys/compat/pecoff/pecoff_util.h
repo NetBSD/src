@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_util.h,v 1.2 2000/12/01 12:28:35 jdolecek Exp $	*/
+/*	$NetBSD: pecoff_util.h,v 1.3 2003/01/08 12:29:44 oki Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include <compat/common/compat_util.h>
 
 #ifdef DEBUG_PECOFF
-#define DPRINTF(a)      printf a;
+#define DPRINTF(a)      uprintf a
 #else
 #define DPRINTF(a)
 #endif
