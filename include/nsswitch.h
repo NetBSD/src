@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.6 1999/01/26 01:04:07 lukem Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.7 1999/04/18 01:53:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,13 +39,15 @@
 #ifndef _NSSWITCH_H
 #define _NSSWITCH_H	1
 
+/*
+ * Don't use va_list in prototypes.   Va_list is typedef'd in two places
+ * (<machine/varargs.h> and <machine/stdarg.h>), so if we include one of
+ * them here we may collide with the utility's includes.  It's unreasonable
+ * for utilities to have to include one of them to include nsswitch.h, so
+ * we get _BSD_VA_LIST_ from <machine/ansi.h> and use it.
+ */
+#include <machine/ansi.h>
 #include <sys/types.h>
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifndef _PATH_NS_CONF
 #define _PATH_NS_CONF	"/etc/nsswitch.conf"
@@ -106,7 +108,8 @@
  */
 typedef struct {
 	const char	 *src;
-	int		(*callback)(void *retval, void *cb_data, va_list ap);
+	int		(*callback) __P((void *retval, void *cb_data,
+					_BSD_VA_LIST_));
 	void		 *cb_data;
 } ns_dtab;
 
