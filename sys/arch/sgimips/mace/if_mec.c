@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec_mace.c,v 1.6 2004/08/18 14:47:25 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.1 2004/09/23 14:45:20 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.6 2004/08/18 14:47:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.1 2004/09/23 14:45:20 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -1363,7 +1363,7 @@ mec_rxintr(struct mec_softc *sc)
 		}
 
 		/*
-		 * Note MEC chip seems to insert 2 byte paddingat the top of
+		 * Note MEC chip seems to insert 2 byte padding at the top of
 		 * RX buffer, but we copy whole buffer to avoid unaligned copy.
 		 */
 		MEC_RXBUFSYNC(sc, i, len, BUS_DMASYNC_POSTREAD);
