@@ -1,4 +1,4 @@
-/*	$NetBSD: start_rom.S,v 1.9 2003/02/01 14:48:19 dsl Exp $	*/
+/*	$NetBSD: start_rom.S,v 1.10 2003/02/25 11:17:37 dsl Exp $	*/
 	
 /*
  * ROM startup
@@ -235,6 +235,11 @@ bootdataseg = . - gdt
 bootrealseg = . - gdt
 	.word	0xffff, 0
 	.byte	0, 0x9f, 0x0f, 0
+
+	/* limits (etc) for data segment in real mode */
+bootrealdata = . - gdt
+	.word	0xffff, 0
+	.byte	0, 0x92, 0x00, 0
 gdtlen = . - gdt
 
 #ifdef __ELF__
@@ -292,6 +297,17 @@ ENTRY(prot_to_real)
 	sub	$reloc, %eax
 	movl	%eax, 4(%esp)
 	sub	$reloc, %esp		/* Adjust stack pointer */
+
+	/*
+	 * Load the segment registers while still in protected mode.
+	 * Otherwise the control bits don't get changed.
+	 * The correct values are loaded later.
+	 */
+	movw	$bootrealdata, %ax
+	movw	%ax, %ds
+	movw	%ax, %es
+	movw	%ax, %ss
+
 	ljmp	$bootrealseg, $1f	/* jump to a 16 bit segment */
 1:
 	.code16
