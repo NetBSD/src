@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.37.4.2 1999/01/30 15:07:41 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.37.4.3 1999/02/02 23:47:35 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -529,6 +529,7 @@ _fdctrap:
 #endif
 	jra	rei
 
+#if 0
 _fdcdmatrap:
 #if NFD > 0
 	INTERRUPT_SAVEREG
@@ -557,6 +558,7 @@ _fdcdmaerrtrap:
 	addql	#1,_C_LABEL(cnt)+V_INTR
 #endif
 	jra	rei
+#endif
 
 #ifdef SCSIDMA
 _spcdmatrap:
