@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos.S,v 1.4 2000/07/14 04:50:58 matt Exp $	*/
+/*	$NetBSD: n_sincos.S,v 1.5 2002/02/24 01:06:21 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,25 +51,25 @@
 #include <machine/asm.h>
 
 ENTRY(sin, 0xfc0)
-	movq	4(ap),r0
-	bicw3	$0x807f,r0,r2
+	movq	4(%ap),%r0
+	bicw3	$0x807f,%r0,%r2
 	beql	1f		# if x is zero or reserved operand then return x
 /*
  * Save the PSL's IV & FU bits on the stack.
  */
-	movpsl	r2
-	bicw3	$0xff9f,r2,-(sp)
+	movpsl	%r2
+	bicw3	$0xff9f,%r2,-(%sp)
 /*
  * Clear the IV & FU bits.
  */
 	bicpsw	$0x0060
 /*
- *  Entered by  sine    ; save  0  in  r4 .
+ *  Entered by  sine    ; save  0  in  %r4 .
  */
 	jsb	_C_LABEL(__libm_argred)+2
-	movl	$0,r4
+	movl	$0,%r4
 	jsb	_C_LABEL(__libm_sincos)+2
-	bispsw	(sp)+
+	bispsw	(%sp)+
 1:	ret
 
 /*
@@ -80,24 +80,24 @@ ENTRY(sin, 0xfc0)
  */
 
 ENTRY(cos, 0x0fc0)
-	movq	4(ap),r0
-	bicw3	$0x7f,r0,r2
-	cmpw	$0x8000,r2
+	movq	4(%ap),%r0
+	bicw3	$0x7f,%r0,%r2
+	cmpw	$0x8000,%r2
 	beql	1f		# if x is reserved operand then return x
 /*
  * Save the PSL's IV & FU bits on the stack.
  */
-	movpsl	r2
-	bicw3	$0xff9f,r2,-(sp)
+	movpsl	%r2
+	bicw3	$0xff9f,%r2,-(%sp)
 /*
  * Clear the IV & FU bits.
  */
 	bicpsw	$0x0060
 /*
- *  Entered by  cosine  ; save  1  in  r4 .
+ *  Entered by  cosine  ; save  1  in  %r4 .
  */
 	jsb	_C_LABEL(__libm_argred)+2
-	movl	$1,r4
+	movl	$1,%r4
 	jsb	_C_LABEL(__libm_sincos)+2
-	bispsw	(sp)+
+	bispsw	(%sp)+
 1:	ret

@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)pipe.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: pipe.S,v 1.2 2000/09/28 08:38:55 kleink Exp $"
+	.asciz "$NetBSD: pipe.S,v 1.3 2002/02/24 01:06:20 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -43,8 +43,8 @@ WEAK_ALIAS(pipe, _pipe)
 #endif
 
 _SYSCALL(_pipe,pipe)
-	movl	4(ap),r2
-	movl	r0,(r2)+
-	movl	r1,(r2)
-	clrl	r0
+	movl	4(%ap),%r2
+	movl	%r0,(%r2)+
+	movl	%r1,(%r2)
+	clrl	%r0
 	ret

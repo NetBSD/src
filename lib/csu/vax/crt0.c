@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.12 2001/07/26 22:55:12 wiz Exp $	*/
+/*	$NetBSD: crt0.c,v 1.13 2002/02/24 01:06:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ struct kframe {
 	asm("	.type start,@function");
 	asm("	start:");
 	asm("		.word 0x0101");		/* two nops just in case */
-	asm("		pushl sp");		/* no registers to save */
+	asm("		pushl %sp");		/* no registers to save */
 	asm("		calls $1,___start");	/* do the real start */
 	asm("		halt");
 
@@ -100,14 +100,14 @@ asm ("__callmain:");		/* Defined for the benefit of debuggers */
 #ifdef DYNAMIC
 	asm("	___syscall:");
 	asm("		.word 0");		/* no registers to save */
-	asm("		addl2 $4,ap");		/* n-1 args to syscall */
-	asm("		movl (ap),r0");		/* get syscall number */
-	asm("		subl3 $1,-4(ap),(ap)");	/* n-1 args to syscall */
-	asm("		chmk r0");		/* do system call */
+	asm("		addl2 $4,%ap");		/* n-1 args to syscall */
+	asm("		movl (%ap),r0");	/* get syscall number */
+	asm("		subl3 $1,-4(%ap),(%ap)"); /* n-1 args to syscall */
+	asm("		chmk %r0");		/* do system call */
 	asm("		jcc 1f");		/* check error */
-	asm("		mnegl $1,r0");
+	asm("		mnegl $1,%r0");
 	asm("		ret");
-	asm("	1:	movpsl -(sp)");		/* flush the icache */
+	asm("	1:	movpsl -(%sp)");	/* flush the icache */
 	asm("		pushab 2f");		/* by issuing an REI */
 	asm("		rei");
 	asm("	2:	ret");
@@ -117,7 +117,7 @@ asm ("__callmain:");		/* Defined for the benefit of debuggers */
 #include "common.c"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.12 2001/07/26 22:55:12 wiz Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.13 2002/02/24 01:06:18 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef MCRT0
