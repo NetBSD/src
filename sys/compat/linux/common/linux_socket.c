@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.21 1999/07/17 22:03:55 jtk Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.22 2000/01/12 17:19:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -500,9 +500,39 @@ linux_getifhwaddr(p, retval, fd, data)
 	lreq.if_name[IF_NAME_LEN-1] = '\0';		/* just in case */
 
 	/*
-	 * Only support finding addresses for "ethX".  Should we
-	 * do otherwise? XXX
+	 * Try real interface name first, then fake "ethX"
 	 */
+	for (ifp = ifnet.tqh_first, found = 0;
+	     ifp != 0 && !found;
+	     ifp = ifp->if_list.tqe_next) {
+		if (strcmp(lreq.if_name, ifp->if_xname))
+			/* not this interface */
+			continue;
+		found=1;           
+		if ((ifa = ifp->if_addrlist.tqh_first) != 0) {
+			for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
+				sadl = (struct sockaddr_dl *)ifa->ifa_addr;
+				/* only return ethernet addresses */
+				/* XXX what about FDDI, etc. ? */
+				if (sadl->sdl_family != AF_LINK ||
+				    sadl->sdl_type != IFT_ETHER)
+					continue;
+				memcpy((caddr_t)&lreq.hwaddr.sa_data,
+				       LLADDR(sadl),
+				       MIN(sadl->sdl_alen,
+					   sizeof(lreq.hwaddr.sa_data)));
+				lreq.hwaddr.sa_family =
+					sadl->sdl_family;
+				error = copyout((caddr_t)&lreq, data,
+						sizeof(lreq));
+				goto out; 
+			}
+		} else {
+			error = ENODEV;
+			goto out;
+		}
+	}
+
 	if (lreq.if_name[0] == 'e' &&
 	    lreq.if_name[1] == 't' &&
 	    lreq.if_name[2] == 'h') {
@@ -545,9 +575,10 @@ linux_getifhwaddr(p, retval, fd, data)
 					break;
 				}
 		}
-	} else
-		/* not an "eth*" name */
-		error = EINVAL;
+	} else {
+		/* unknown interface, not even an "eth*" name */
+		error = ENODEV;
+	}
     
 out:
 	FILE_UNUSE(fp, p);
