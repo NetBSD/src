@@ -178,8 +178,15 @@ sub icmpcheck {
 
 	local($len) = $bytes[$base + 1] - ($hl << 1);
 
-	if ($len > $cnt * 2) {
-		print "missing icmp data\n";
+	if ($bytes[$base + 1] > ($cnt - $base) * 2) {
+		print " ICMP: missing data(1)";
+		return;
+	} elsif ($bytes[$base + 1] < ($hl << 1) + 8) {
+		print " ICMP: missing data(2)";
+		return;
+	} elsif (($cnt - $base) * 2 < ($hl << 1) + 8) {
+		print " ICMP: missing data(3)";
+		return;
 	}
 
 	local($osum) = $bytes[$base + $hl + 1];
