@@ -1,4 +1,4 @@
-/*	$NetBSD: prompatch.c,v 1.3 2001/11/22 04:18:28 uwe Exp $ */
+/*	$NetBSD: prompatch.c,v 1.4 2001/12/11 21:09:52 aymeric Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -65,7 +65,7 @@ static struct patch_entry patch_js1_obp2[] = {
 	" d# 13 \" interrupts\" integer-attribute"
 	" close-dev"
 },
-    
+
 /*
  * TODO: Create "8042" (pckbc) node.
  *       Delete "zs"
@@ -76,7 +76,24 @@ static struct patch_entry patch_js1_obp2[] = {
 
 
 /*
- * Patches for JavaStation 1 with OBP 3.* (OpenFirmware).
+ * Patches for JavaStation 1 with OBP 3.x
+ */
+static struct patch_entry patch_js1_obp3[] = {
+
+/*
+ * Give "su" (com port) "interrupts" property.
+ */
+{ "su: adding \"interrupts\"",
+	"\" /obio/su\" select-dev"
+	" d# 13 \" interrupts\" integer-attribute"
+	" device-end"
+},
+
+{ NULL, NULL }
+};
+
+/*
+ * Patches for JavaStation 1 with OpenFirmware.
  * PROM in these machines is crippled in many ways.
  */
 static struct patch_entry patch_js1_ofw[] = {
@@ -156,6 +173,7 @@ static struct patch_entry patch_js1_ofw[] = {
 
 static struct prom_patch prom_patch_tab[] = {
 	{ "SUNW,JavaStation-1", PROM_OBP_V2,	patch_js1_obp2	},
+	{ "SUNW,JavaStation-1", PROM_OBP_V3,	patch_js1_obp3	},
 	{ "SUNW,JDM1",		PROM_OPENFIRM,	patch_js1_ofw	},
 	{ NULL, 0, NULL }
 };
