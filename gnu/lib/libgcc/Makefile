@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2001/12/02 03:06:55 jmc Exp $
+#	$NetBSD: Makefile,v 1.30 2001/12/02 12:23:52 jmc Exp $
 
 REQUIRETOOLS=	yes
 
@@ -25,17 +25,27 @@ CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
 CFLAGS+=        -msoft-quad-float
 .endif
 
-LIB2FUNCS=	${G_LIB2FUNCS:=.c} ${G_LIB2FUNCS_EH:=.c}
+LIB2FUNCS=	${G_LIB2FUNCS:=.c}
 CXX_LIB2FUNCS=	${G_CXX_LIB2FUNCS:Mop*:S/opdel.o/opdelete.o/:.o=.cc}
 
 SRCS+=		${LIB2FUNCS} ${CXX_LIB2FUNCS} \
 		${G_CXX_LIB2FUNCS:Nop*:.o=.cc} ${G_LIB2ADD:M*.c:T}
+OBJS+=		${G_LIB2FUNCS_EH:=.o}
 
 # XXX fp-bit.c should be removed from this list after some grace period.
 CLEANFILES+=	${LIB2FUNCS} ${CXX_LIB2FUNCS} dp-bit.c fp-bit.c
 
 ${LIB2FUNCS}: ${.CURDIR}/Makefile
 	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
+
+${G_LIB2FUNCS_EH:=.o}: libgcc2.c
+	${COMPILE.c} -fexceptions -DL$* -o $@ ${>:M*.c}
+
+${G_LIB2FUNCS_EH:=.po}: libgcc2.c
+	${COMPILE.c} -pg -fexceptions -DL$* -o $@ ${>:M*.c}
+
+${G_LIB2FUNCS_EH:=.so}: libgcc2.c
+	${COMPILE.c} ${CPICFLAGS} -fexceptions -DL$* -o $@ ${>:M*.c}
 
 ${CXX_LIB2FUNCS}: ${.CURDIR}/Makefile
 	printf '#define L_op_${.PREFIX:S/^op//}\n#include <new1.cc>\n#include <new2.cc>\n' >${.TARGET}
