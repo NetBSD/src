@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.19 1994/10/30 21:48:30 cgd Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.20 1994/11/14 06:05:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -292,6 +292,7 @@ fdesc_open(ap)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
+		struct file *a_fp;
 	} */ *ap;
 {
 	struct vnode *vp = ap->a_vp;
