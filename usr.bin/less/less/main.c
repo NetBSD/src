@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.11 2002/03/05 12:28:34 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2003/04/14 02:56:47 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -134,25 +134,6 @@ main(argc, argv)
 	} else
 		scan_option(lgetenv("LESS"));
 
-#if GNU_OPTIONS && 0
-	/*
-	 * Special case for "less --help" and "less --version".
-	 */
-	if (argc == 1)
-	{
-		if (strcmp(argv[0], "--help") == 0)
-		{
-			scan_option("-?");
-			argc = 0;
-		}
-		if (strcmp(argv[0], "--version") == 0)
-		{
-			scan_option("-V");
-			argc = 0;
-		}
-	}
-#endif
-
 #define	isoptstring(s)	(((s)[0] == '-' || (s)[0] == '+') && (s)[1] != '\0')
 	while (argc > 0 && (isoptstring(*argv) || isoptpending()))
 	{
@@ -211,14 +192,18 @@ main(argc, argv)
 		init_textlist(&tlist, gfilename);
 		filename = NULL;
 		while ((filename = forw_textlist(&tlist, filename)) != NULL)
-			ifile = get_ifile(filename, ifile);
+		{
+			(void) get_ifile(filename, ifile);
+			ifile = prev_ifile(NULL_IFILE);
+		}
 		free(gfilename);
 #else
 		filename = shell_quote(*argv);
 		if (filename == NULL)
 			filename = *argv;
 		argv++;
-		ifile = get_ifile(filename, ifile);
+		(void) get_ifile(filename, ifile);
+		ifile = prev_ifile(NULL_IFILE);
 #endif
 	}
 	/*
@@ -247,10 +232,9 @@ main(argc, argv)
 	if (missing_cap && !know_dumb && !more_mode)
 		error("WARNING: terminal is not fully functional", NULL_PARG);
 	init_mark();
-	raw_mode(1);
 	open_getchr();
+	raw_mode(1);
 	init_signals(1);
-
 
 	/*
 	 * Select the first file to examine.
@@ -296,6 +280,7 @@ main(argc, argv)
 	commands();
 	quit(QUIT_OK);
 	/*NOTREACHED*/
+	return (0);
 }
 
 /*
@@ -330,6 +315,7 @@ ecalloc(count, size)
 	error("Cannot allocate memory", NULL_PARG);
 	quit(QUIT_ERROR);
 	/*NOTREACHED*/
+	return (NULL);
 }
 
 /*
