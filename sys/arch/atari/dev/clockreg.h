@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.1.1.1 1995/03/26 07:12:15 leo Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.2 1995/05/28 19:38:51 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -47,61 +47,25 @@ struct rtc {
 #define rtc_data	rtc_dat[3]	/* data register		*/
 
 /*
- * Register number definitions
+ * Pull in general mc146818 definitions
  */
-#define	RTC_SEC		0
-#define	RTC_ASEC	1
-#define	RTC_MIN		2
-#define	RTC_A_MIN	3
-#define	RTC_HOUR	4
-#define	RTC_A_HOUR	5
-#define	RTC_WDAY	6
-#define	RTC_DAY		7
-#define	RTC_MONTH	8
-#define	RTC_YEAR	9
-#define	RTC_REGA	10
-#define	RTC_REGB	11
-#define	RTC_REGC	12
-#define	RTC_REGD	13
-#define	RTC_RAMBOT	14	/* Reg. offset of nv-RAM		*/
-#define	RTC_RAMSIZ	50	/* #bytes of nv-RAM available		*/
+#include <dev/ic/mc146818.h>
 
-/*
- * Define fields for register A
- */
-#define	RTC_A_UIP	0x80	/* Update In Progress			*/
-#define	RTC_A_DV2	0x40	/* Divider select			*/
-#define	RTC_A_DV1	0x20	/* Divider select			*/
-#define	RTC_A_DV0	0x10	/* Divider select			*/
-#define	RTC_A_RS3	0x08	/* Rate Select				*/
-#define	RTC_A_RS2	0x04	/* Rate Select				*/
-#define	RTC_A_RS1	0x02	/* Rate Select				*/
-#define	RTC_A_RS0	0x01	/* Rate Select				*/
+__inline__ u_int mc146818_read(rtc, regno)
+void	*rtc;
+u_int	regno;
+{
+	((struct rtc *)rtc)->rtc_regno = regno;
+	return(((struct rtc *)rtc)->rtc_data & 0377);
+}
 
-/*
- * Define fields for register B
- */
-#define	RTC_B_SET	0x80	/* SET date/time				*/
-#define	RTC_B_PIE	0x40	/* Periodic Int. Enable			*/
-#define	RTC_B_AIE	0x20	/* Alarm Int. Enable			*/
-#define	RTC_B_UIE	0x10	/* Update Ended Int. Enable		*/
-#define	RTC_B_SQWE	0x08	/* Square Wave Output Enable		*/
-#define	RTC_B_DM	0x04	/* Binary Data mode			*/
-#define	RTC_B_24_12	0x02	/* 24 Hour mode				*/
-#define	RTC_B_DSE	0x01	/* DST Enable				*/
-
-/*
- * Define fields for register C
- */
-#define	RTC_C_IRQF	0x80	/* IRQ flag				*/
-#define	RTC_C_PF	0x40	/* Periodic Int. flag			*/
-#define	RTC_C_AF	0x20	/* Alarm Int. flag			*/
-#define	RTC_C_UF	0x10	/* Update Ended Int. flag		*/
-
-/*
- * Define fields for register D
- */
-#define	RTC_D_VRT	0x80	/* Valid Ram and Time			*/
+__inline__ void mc146818_write(rtc, regno, value)
+void	*rtc;
+u_int	regno, value;
+{
+	((struct rtc *)rtc)->rtc_regno = regno;
+	((struct rtc *)rtc)->rtc_data  = value;
+}
 
 /*
  * Some useful constants/macros
@@ -110,5 +74,6 @@ struct rtc {
 #define	range_test(n, l, h)	((n) < (l) || (n) > (h))
 #define	SECS_DAY		86400L
 #define	SECS_HOUR		3600L
-#define	STARTOFTIME		1970
+#define	GEMSTARTOFTIME		((machineid & ATARI_CLKBROKEN) ? 1970 : 1968)
+#define	BSDSTARTOFTIME		1970
 #endif /* _CLOCKREG_H */
