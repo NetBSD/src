@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.53 2002/11/17 04:49:18 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.54 2003/03/27 13:56:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.53 2002/11/17 04:49:18 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.54 2003/03/27 13:56:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,6 @@ __RCSID("$NetBSD: main.c,v 1.53 2002/11/17 04:49:18 itojun Exp $");
 #include "dump.h"
 #include "pathnames.h"
 
-gid_t	egid;			/* Retain tty privs for notification */
 int	timestamp;		/* print message timestamps */
 int	notify;			/* notify operator flag */
 int	blockswritten;		/* number of blocks written on current tape */
@@ -119,10 +118,6 @@ main(int argc, char *argv[])
 	tzset(); /* set up timezone for strftime */
 	if ((new_time_format = getenv("TIMEFORMAT")) != NULL)
 		time_string = new_time_format;
-
-	/* Save setgid bit for use later */
-	egid = getegid();
-	setegid(getgid());
 
 	tsize = 0;	/* Default later, based on 'c' option for cart tapes */
 	if ((tape = getenv("TAPE")) == NULL)
@@ -383,8 +378,6 @@ main(int argc, char *argv[])
 		signal(SIGTERM, sig);
 	if (signal(SIGINT, interrupt) == SIG_IGN)
 		signal(SIGINT, SIG_IGN);
-
-	set_operators();	/* /etc/group snarfed */
 
 	/*
 	 *	disk can be either the full special file name, or
