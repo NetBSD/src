@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/12 08:08:19 lukem Exp $
 
 NOPIC=	1
 
@@ -9,8 +9,8 @@ LIB=	Xss
 
 SRCS=	XScrnSaver.c
 
-#LM#	LDADD+=	-lXt -lSM -lICE -lXext -lX11
-#LM#	DPADD+=	${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+LDADD+=	-lXt -lSM -lICE -lXext -lX11
+DPADD+=	${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 
 .include <bsd.lib.mk>
 .include <bsd.x11.mk>
