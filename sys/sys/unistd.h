@@ -34,7 +34,7 @@
  */
 
 #ifndef _SYS_UNISTD_H_
-#define	_SYS_UNISTD_H_
+#define _SYS_UNISTD_H_
 
 /* compile-time symbolic constants */
 #define	_POSIX_JOB_CONTROL	/* implementation supports job control */

@@ -33,8 +33,8 @@
  *	@(#)signalvar.h	7.1 (Berkeley) 5/9/91
  */
 
-#ifndef	_SIGNALVAR_H_		/* tmp for user.h */
-#define	_SIGNALVAR_H_
+#ifndef _SYS_SIGNALVAR_H_
+#define _SYS_SIGNALVAR_H_
 
 /*
  * Kernel signal definitions and data structures,
@@ -163,4 +163,5 @@ int	coredump __P((struct proc *p));
  */
 void	sendsig __P((sig_t action, int sig, int returnmask, unsigned code));
 #endif	/* KERNEL */
-#endif	/* !_SIGNALVAR_H_ */
+
+#endif /* !_SYS_SIGNALVAR_H_ */

@@ -33,8 +33,8 @@
  *	@(#)kinfo_proc.h	7.1 (Berkeley) 5/9/91
  */
 
-#ifndef _KINFO_PROC_H_
-#define	_KINFO_PROC_H_
+#ifndef _SYS_KINFO_PROC_H_
+#define	_SYS_KINFO_PROC_H_
 
 #ifndef KERNEL
 #include <sys/time.h>
@@ -78,4 +78,4 @@ struct kinfo_proc {
 void	fill_eproc __P((struct proc *, struct eproc *));
 #endif
 
-#endif	/* !_KINFO_PROC_H_ */
+#endif	/* !_SYS_KINFO_PROC_H_ */

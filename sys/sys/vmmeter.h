@@ -33,6 +33,9 @@
  *	@(#)vmmeter.h	7.3 (Berkeley) 5/5/91
  */
 
+#ifndef _SYS_VMMETER_H_
+#define _SYS_VMMETER_H_
+
 /*
  * Virtual memory related instrumentation
  */
@@ -139,3 +142,5 @@ int	rres;
 unsigned rectime;		/* accumulator for reclaim times */
 unsigned pgintime;		/* accumulator for page in times */
 #endif
+
+#endif /* !_SYS_VMMETER_H_ */

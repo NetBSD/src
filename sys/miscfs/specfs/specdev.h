@@ -33,6 +33,9 @@
  *	@(#)specdev.h	7.4 (Berkeley) 4/19/91
  */
 
+#ifndef _SYS_SPECDEV_H_
+#define _SYS_SPECDEV_H_
+
 /*
  * This structure defines the information maintained about
  * special devices. It is allocated in checkalias and freed
@@ -218,3 +221,5 @@ int	spec_advlock __P((
 		int op,
 		struct flock *fl,
 		int flags));
+
+#endif /* !_SYS_SPECDEV_H_ */

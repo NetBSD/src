@@ -33,6 +33,9 @@
  *	@(#)gprof.h	7.2 (Berkeley) 2/15/91
  */
 
+#ifndef _SYS_GPROF_H_
+#define _SYS_GPROF_H_
+
 struct phdr {
     char	*lpc;
     char	*hpc;
@@ -112,3 +115,5 @@ struct rawarc {
      */
 #define ROUNDDOWN(x,y)	(((x)/(y))*(y))
 #define ROUNDUP(x,y)	((((x)+(y)-1)/(y))*(y))
+
+#endif /* !_SYS_GPROF_H_ */

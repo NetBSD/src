@@ -33,6 +33,9 @@
  *	@(#)trace.h	7.6 (Berkeley) 5/5/91
  */
 
+#ifndef _SYS_TRACE_H_
+#define _SYS_TRACE_H_
+
 /*
  * File system buffer tracing points; all trace <pack(dev, size), bn>
  */
@@ -112,3 +115,5 @@ int	tracewhich;
 #define	trace(a,b,c)	;
 #endif
 #endif
+
+#endif /* !_SYS_TRACE_H_ */

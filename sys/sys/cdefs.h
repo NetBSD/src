@@ -33,8 +33,8 @@
  *	@(#)cdefs.h	7.6 (Berkeley) 5/4/91
  */
 
-#ifndef	_CDEFS_H_
-#define	_CDEFS_H_
+#ifndef	_SYS_CDEFS_H_
+#define	_SYS_CDEFS_H_
 
 #if defined(__cplusplus)
 #define	__BEGIN_DECLS	extern "C" {
@@ -75,4 +75,4 @@
 #endif	/* !__GNUC__ */
 #endif	/* !(__STDC__ || __cplusplus) */
 
-#endif /* !_CDEFS_H_ */
+#endif /* !_SYS_CDEFS_H_ */

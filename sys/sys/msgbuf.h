@@ -33,6 +33,9 @@
  *	@(#)msgbuf.h	7.5 (Berkeley) 5/2/91
  */
 
+#ifndef _SYS_MSGBUF_H_
+#define _SYS_MSGBUF_H_
+
 #define	MSG_BSIZE	(4096 - 3 * sizeof(long))
 struct	msgbuf {
 #define	MSG_MAGIC	0x063061
@@ -44,3 +47,5 @@ struct	msgbuf {
 #ifdef KERNEL
 struct	msgbuf *msgbufp;
 #endif
+
+#endif /* !_SYS_MSGBUF_H_ */

@@ -40,6 +40,9 @@
  *	@(#)mapmem.h	7.2 (Berkeley) 6/6/90
  */
 
+#ifndef _SYS_MAPMEM_H_
+#define _SYS_MAPMEM_H_
+
 /*
  * Mapped memory descriptors.
  *
@@ -110,3 +113,5 @@ struct mapmem {
 #define MMFREE(mp) \
 	free((caddr_t)(mp), M_MAPMEM)
 #endif
+
+#endif /* !_SYS_MAPMEM_H_ */

@@ -33,11 +33,12 @@
  *	@(#)termios.h	7.22 (Berkeley) 5/7/91
  */
 
+#ifndef _SYS_TERMIOS_H_
+#define _SYS_TERMIOS_H_
+
 /*
  *  termios structure
  */
-#ifndef _TERMIOS_H_
-#define _TERMIOS_H_
 
 /* 
  * Special Control Characters 
@@ -254,10 +255,7 @@ __END_DECLS
 
 #endif /* !KERNEL */
 
-/*
- * END OF PROTECTED INCLUDE.
- */
-#endif /* !_TERMIOS_H_ */
+#endif /* !_SYS_TERMIOS_H_ */
 
 #ifndef _POSIX_SOURCE
 #ifdef KERNEL

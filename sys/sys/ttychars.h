@@ -33,13 +33,14 @@
  *	@(#)ttychars.h	7.6 (Berkeley) 5/9/91
  */
 
+#ifndef _SYS_TTYCHARS_H_
+#define _SYS_TTYCHARS_H_
+
 /*
  * 4.3 COMPATIBILITY FILE
  *
  * User visible structures and constants related to terminal handling.
  */
-#ifndef _TTYCHARS_H_
-#define	_TTYCHARS_H_
 
 struct ttychars {
 	char	tc_erase;	/* erase last character */
@@ -60,4 +61,5 @@ struct ttychars {
 #ifdef USE_OLD_TTY
 #include <sys/ttydefaults.h>	/* to pick up character defaults */
 #endif
-#endif /* !_TTYCHARS_H_ */
+
+#endif /* !_SYS_TTYCHARS_H_ */

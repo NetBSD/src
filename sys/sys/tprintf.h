@@ -33,9 +33,14 @@
  *	@(#)tprintf.h	7.2 (Berkeley) 5/4/91
  */
 
+#ifndef _SYS_TPRINTF_H_
+#define _SYS_TPRINTF_H_
+
 typedef struct session *tpr_t;
 
 tpr_t	tprintf_open __P((struct proc *));
 void	tprintf_close __P((tpr_t));
 
 void	tprintf __P((tpr_t, const char *fmt, ...));
+
+#endif /* !_SYS_TPRINTF_H_ */

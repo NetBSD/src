@@ -33,8 +33,8 @@
  *	@(#)uio.h	7.8 (Berkeley) 4/15/91
  */
 
-#ifndef _UIO_H_
-#define	_UIO_H_
+#ifndef _SYS_UIO_H_
+#define _SYS_UIO_H_
 
 struct iovec {
 	caddr_t	iov_base;
@@ -79,4 +79,4 @@ __END_DECLS
 
 #endif	/* !KERNEL */
 
-#endif /* !_UIO_H_ */
+#endif /* !_SYS_UIO_H_ */

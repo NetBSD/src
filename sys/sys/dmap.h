@@ -33,13 +33,14 @@
  *	@(#)dmap.h	7.3 (Berkeley) 2/15/91
  */
 
-#ifndef _DMAP_H_
-#define	_DMAP_H_
+#ifndef _SYS_DMAP_H_
+#define	_SYS_DMAP_H_
 
 /*
  * Definitions for the mapping of vitual swap space to the physical swap
  * area - the disk map.
  */
+
 #define	NDMAP	38		/* size of the swap area map */
 
 struct dmap {
@@ -57,4 +58,5 @@ struct dblock {
 	swblk_t db_base;	/* base of physical contig drum block */
 	swblk_t db_size;	/* size of block */
 };
-#endif	/* !_DMAP_H_ */
+
+#endif	/* !_SYS_DMAP_H_ */

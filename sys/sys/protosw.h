@@ -33,6 +33,9 @@
  *	@(#)protosw.h	7.8 (Berkeley) 4/28/91
  */
 
+#ifndef _SYS_PROTOSW_H_
+#define _SYS_PROTOSW_H_
+
 /*
  * Protocol switch table.
  *
@@ -207,3 +210,5 @@ char	*prcorequests[] = {
 #ifdef KERNEL
 extern	struct protosw *pffindproto(), *pffindtype();
 #endif
+
+#endif /* !_SYS_PROTOSW_H_ */

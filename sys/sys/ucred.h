@@ -33,8 +33,8 @@
  *	@(#)ucred.h	7.5 (Berkeley) 2/5/91
  */
 
-#ifndef _UCRED_H_
-#define	_UCRED_H_
+#ifndef _SYS_UCRED_H_
+#define _SYS_UCRED_H_
 
 /*
  * Credentials.
@@ -55,4 +55,4 @@ struct ucred *crcopy();
 struct ucred *crdup();
 #endif KERNEL
 
-#endif /* !_UCRED_H_ */
+#endif /* !_SYS_UCRED_H_ */

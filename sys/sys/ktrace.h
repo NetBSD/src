@@ -33,6 +33,9 @@
  *	@(#)ktrace.h	7.4 (Berkeley) 5/7/91
  */
 
+#ifndef _SYS_KTRACE_H_
+#define _SYS_KTRACE_H_
+
 /*
  * operations to ktrace system call  (KTROP(op))
  */
@@ -142,3 +145,5 @@ int	ktrace __P((const char *, int, int, pid_t));
 __END_DECLS
 
 #endif	/* !KERNEL */
+
+#endif /* !_SYS_KTRACE_H_ */

@@ -44,11 +44,12 @@
    Stefan Grefen grefen@goofy.zdv.uni-mainz.de 
  */
 
+#ifndef _SYS_CHIO_H_
+#define _SYS_CHIO_H_
+
 /*
  * Structures and definitions for changer io control commands
  */
-#ifndef _CHIO_H_
-#define _CHIO_H_
 
 #define CH_INVERT		0x10000
 #define CH_ADDR_MASK		0xffff
@@ -124,4 +125,5 @@ struct chop {
 
 /* Changer IO control command */
 #define	CHIOOP	_IOWR('c', 1, struct chop)	/* do a mag tape op */
-#endif
+
+#endif /* !_SYS_CHIO_H_ */

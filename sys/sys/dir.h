@@ -33,13 +33,13 @@
  *	@(#)dir.h	7.3 (Berkeley) 2/5/91
  */
 
+#ifndef _SYS_DIR_H_
+#define	_SYS_DIR_H_
+
 /*
  * The information in this file should be obtained from <dirent.h>
  * and is provided solely (and temporarily) for backward compatibility.
  */
-
-#ifndef _DIR_H_
-#define	_DIR_H_
 
 #include <dirent.h>
 
@@ -58,4 +58,4 @@
 #define DIRSIZ(dp) \
     ((sizeof (struct direct) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3))
 
-#endif /* !_DIR_H_ */
+#endif /* !_SYS_DIR_H_ */

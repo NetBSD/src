@@ -33,12 +33,13 @@
  *	@(#)tablet.h	7.5 (Berkeley) 2/15/91
  */
 
-#ifndef _TABLET_H_
-#define	_TABLET_H_
+#ifndef _SYS_TABLET_H_
+#define _SYS_TABLET_H_
 
 /*
  * Tablet line discipline.
  */
+
 /*
  * Reads on the tablet return one of the following structures, depending on
  * the underlying tablet type.  The first two are defined such that a read of
@@ -89,4 +90,4 @@ struct	polpos {
 #define BIOSTYPE	_IOW('b', 3, int)	/* set tablet type */
 #define BIOGTYPE	_IOR('b', 4, int)	/* get tablet type*/
 
-#endif /* !_TABLET_H_ */
+#endif /* !_SYS_TABLET_H_ */

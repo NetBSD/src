@@ -33,6 +33,9 @@
  *	@(#)vcmd.h	7.4 (Berkeley) 5/5/91
  */
 
+#ifndef _SYS_VCMD_H_
+#define _SYS_VCMD_H_
+
 #include <sys/ioctl.h>
 
 #define	VPRINT		0100
@@ -41,3 +44,5 @@
 
 #define	VGETSTATE	_IOR('v', 0, int)
 #define	VSETSTATE	_IOW('v', 1, int)
+
+#endif /* !_SYS_VCMD_H_ */

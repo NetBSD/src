@@ -33,6 +33,9 @@
  *	@(#)un.h	7.7 (Berkeley) 6/28/90
  */
 
+#ifndef _SYS_UN_H_
+#define _SYS_UN_H_
+
 /*
  * Definitions for UNIX IPC domain.
  */
@@ -50,3 +53,5 @@ int	unp_discard();
 #define SUN_LEN(su) \
 	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
 #endif
+
+#endif /* !_SYS_UN_H_ */

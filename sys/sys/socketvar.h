@@ -40,6 +40,9 @@
  * 11 Dec 92	Williams Jolitz		Fixed tty handling
  */
 
+#ifndef _SYS_SOCKETVAR_H_
+#define _SYS_SOCKETVAR_H_
+
 /*
  * Kernel structure per socket.
  * Contains send and receive buffer queues,
@@ -204,3 +207,5 @@ int	soo_ioctl __P((struct file *fp, int com, caddr_t data, struct proc *p));
 int	soo_select __P((struct file *fp, int which, struct proc *p));
 int 	soo_close __P((struct file *fp, struct proc *p));
 #endif
+
+#endif /* !_SYS_SOCKETVAR_H_ */
