@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.3 2003/01/18 18:45:56 christos Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.4 2003/01/25 00:43:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 {
 	pthread_t t, self, next, intqueue;
 	int first = 1;
-	int deliversig = 0, runalarms = 0;
+	int runalarms = 0;
 	siginfo_t *si;
 
 	PTHREADD_ADD(PTHREADD_UPCALLS);
@@ -130,7 +130,6 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		break;
 	case SA_UPCALL_SIGNAL:
 		PTHREADD_ADD(PTHREADD_UP_SIGNAL);
-		deliversig = 1;
 		break;
 	case SA_UPCALL_SIGEV:
 		PTHREADD_ADD(PTHREADD_UP_SIGEV);
@@ -189,15 +188,23 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	 * This also means that a thread that was interrupted to take
 	 * a signal will be on a run queue, and not in upcall limbo.
 	 */
-	if (deliversig) {
+	if (type == SA_UPCALL_SIGNAL) {
 		si = arg;
 		if (ev)
-			pthread__signal(pthread__sa_id(sas[1]), si->si_signo,
-			    si->si_code);
+			pthread__signal(self, pthread__sa_id(sas[1]),
+			    si->si_signo, si->si_code);
 		else
-			pthread__signal(NULL, si->si_signo, si->si_code);
+			pthread__signal(self, NULL, si->si_signo, si->si_code);
+	} else if (type == SA_UPCALL_UNBLOCKED) {
+		/*
+		 * A signal may have been presented to this thread while
+		 * it was in the kernel.
+		 */
+		t = pthread__sa_id(sas[1]);
+		if (t->pt_flags & PT_FLAG_SIGDEFERRED)
+			pthread__signal_deferred(self, t);
 	}
-	
+
 	/*
 	 * At this point everything on our list should be scheduled
 	 * (or was an upcall).
