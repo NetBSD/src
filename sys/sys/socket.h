@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.65 2001/10/22 20:59:04 kleink Exp $	*/
+/*	$NetBSD: socket.h,v 1.66 2003/04/19 21:30:29 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -389,8 +389,9 @@ struct sockcred {
 /*
  * Maximum queue length specifiable by listen(2).
  */
-
+#ifndef SOMAXCONN
 #define	SOMAXCONN	128
+#endif
 
 /*
  * Message header for recvmsg and sendmsg calls.
