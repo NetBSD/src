@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.8 1998/12/19 17:00:08 christos Exp $	*/
+/*	$NetBSD: lexi.c,v 1.9 1999/03/15 20:28:45 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lexi.c,v 1.8 1998/12/19 17:00:08 christos Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.9 1999/03/15 20:28:45 kristerw Exp $");
 #endif
 #endif				/* not lint */
 
@@ -196,8 +196,18 @@ lexi()
 					}
 				}
 			}
-			if (*buf_ptr == 'L' || *buf_ptr == 'l')
+			if (*buf_ptr == 'F' || *buf_ptr == 'f') {
+				/* float constant */
 				*e_token++ = *buf_ptr++;
+			} else {
+				/* integer constant (U, L, UL, LL, ULL) */
+				if (*buf_ptr == 'U' || *buf_ptr == 'u')
+					*e_token++ = *buf_ptr++;
+				if (*buf_ptr == 'L' || *buf_ptr == 'l')
+					*e_token++ = *buf_ptr++;
+				if (*buf_ptr == 'L' || *buf_ptr == 'l')
+					*e_token++ = *buf_ptr++;
+			}
 		} else
 			while (chartype[(int) *buf_ptr] == alphanum) {	/* copy it over */
 				CHECK_SIZE_TOKEN;
