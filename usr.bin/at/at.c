@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
+/*	$NetBSD: at.c,v 1.5 1997/02/11 08:18:32 mrg Exp $	*/
 
 /*
  * at.c : Put file into atrun queue
@@ -64,7 +64,7 @@
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $";
+static char rcsid[] = "$NetBSD: at.c,v 1.5 1997/02/11 08:18:32 mrg Exp $";
 #endif
 
 char *no_export[] =
@@ -177,7 +177,7 @@ writefile(runtimer, queue)
 
 	sigaction(SIGINT, &act, NULL);
 
-	strcpy(atfile, _PATH_ATJOBS);
+	(void)strncpy(atfile, _PATH_ATJOBS, sizeof(atfile) - 1);
 	ppos = atfile + strlen(_PATH_ATJOBS);
 
 	/*
@@ -211,8 +211,8 @@ writefile(runtimer, queue)
 	alarm(0);
 
 	for (i = 0; i < AT_MAXJOBS; i++) {
-		sprintf(ppos, "%c%8lx.%3x", queue,
-		    (unsigned long) (runtimer / 60), i);
+		(void)snprintf(ppos, sizeof(atfile) - strlen(_PATH_ATJOBS),
+		    "%c%8lx.%3x", queue, (unsigned long) (runtimer / 60), i);
 		for (ap = ppos; *ap != '\0'; ap++)
 			if (*ap == ' ')
 				*ap = '0';
