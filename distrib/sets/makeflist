@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.50 2002/08/10 02:01:00 thorpej Exp $
+# $NetBSD: makeflist,v 1.51 2002/09/19 22:04:34 lukem Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -12,7 +12,7 @@ machine=`${MAKE} print_machine`
 machine_arch=`${MAKE} print_machine_arch`
 machine_cpu=`${MAKE} print_machine_cpu`
 object_fmt=`${MAKE} print_object_fmt`
-tc=`${MAKE} print_use_new_toolchain`
+toolchain_missing=`${MAKE} print_toolchain_missing`
 x11_version=`${MAKE} print_x11_version`
 setd=`pwd`
 nlists="base comp etc games man misc text"
@@ -135,7 +135,7 @@ for setname in $lists; do
 			cat $setd/lists/$setname/lint.mi
 		fi
 	fi
-	if [ "$tc" = "yes" ]; then
+	if [ "$toolchain_missing" != "yes" ]; then
 		if [ -f $setd/lists/$setname/tc.mi ]; then
 			cat $setd/lists/$setname/tc.mi
 		fi
@@ -143,10 +143,6 @@ for setname in $lists; do
 			if [ -f $setd/lists/$setname/tc.shl ]; then
 				cat $setd/lists/$setname/tc.shl
 			fi
-		fi
-	else
-		if [ -f $setd/lists/$setname/tc.old ]; then
-			cat $setd/lists/$setname/tc.old
 		fi
 	fi
 done | awk -- '/^[^#]/ {print $1}' | sort -u
