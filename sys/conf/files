@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.114 1997/02/12 00:56:06 gwr Exp $
+#	$NetBSD: files,v 1.115 1997/02/12 08:18:15 mikel Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -302,7 +302,7 @@ file netinet/in_pcb.c			inet
 file netinet/in_proto.c			inet
 file netinet/ip_icmp.c			inet
 file netinet/ip_input.c			inet
-file netinet/ip_mroute.c		inet
+file netinet/ip_mroute.c		inet & mrouting
 file netinet/ip_output.c		inet
 file netinet/raw_ip.c			inet
 file netinet/tcp_debug.c		inet
