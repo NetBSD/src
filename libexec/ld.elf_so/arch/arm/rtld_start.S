@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.7 2002/09/12 17:18:38 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.8 2004/08/21 11:12:03 rearnsha Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,11 @@ _rtld_start:
 	ldr	r1, [sp, #4]		/* r1 = obj_main */
 	add	sp, sp, #8		/* restore stack */
 	mov	r0, r4			/* restore ps_strings */
+#ifdef _ARM_ARCH_4T
+	bx	r3			/* jump to the entry point */
+#else
 	mov	pc, r3			/* jump to the entry point */
+#endif
 .L2:
 	.word	_GLOBAL_OFFSET_TABLE_ - (.L1+8)
 	.word	_GLOBAL_OFFSET_TABLE_(GOT)
@@ -97,5 +101,9 @@ _rtld_bind_start:
 	mov	ip, r0			/* save new address */
 
 	ldmia	sp!,{r0-r4,sl,fp,lr}	/* restore the stack */
+#ifdef _ARM_ARCH_4T
+	bx	ip			/* jump to the new address */
+#else
 	mov	pc, ip			/* jump to the new address */
+#endif
 
