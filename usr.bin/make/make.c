@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.18 1997/07/01 21:17:31 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.19 1997/09/28 03:31:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,14 +38,18 @@
  * SUCH DAMAGE.
  */
 
+#ifdef MAKE_BOOTSTRAP
+static char rcsid[] = "$NetBSD: make.c,v 1.19 1997/09/28 03:31:07 lukem Exp $";
+#else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.18 1997/07/01 21:17:31 christos Exp $");
+__RCSID("$NetBSD: make.c,v 1.19 1997/09/28 03:31:07 lukem Exp $");
 #endif
 #endif /* not lint */
+#endif
 
 /*-
  * make.c --

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 1997/07/01 21:17:28 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.38 1997/09/28 03:31:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,6 +38,9 @@
  * SUCH DAMAGE.
  */
 
+#ifdef MAKE_BOOTSTRAP
+static char rcsid[] = "$NetBSD: main.c,v 1.38 1997/09/28 03:31:07 lukem Exp $";
+#else
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
@@ -48,9 +51,10 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.37 1997/07/01 21:17:28 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.38 1997/09/28 03:31:07 lukem Exp $");
 #endif
 #endif /* not lint */
+#endif
 
 /*-
  * main.c --

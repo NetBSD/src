@@ -1,12 +1,16 @@
-/*	$NetBSD: util.c,v 1.14 1997/07/11 20:17:38 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.15 1997/09/28 03:31:13 lukem Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
+#ifdef MAKE_BOOTSTRAP
+static char rcsid[] = "$NetBSD: util.c,v 1.15 1997/09/28 03:31:13 lukem Exp $";
+#else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.14 1997/07/11 20:17:38 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.15 1997/09/28 03:31:13 lukem Exp $");
+#endif
 #endif
 
 #include <stdio.h>
