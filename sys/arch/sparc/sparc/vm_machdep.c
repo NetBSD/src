@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60.4.12 2003/01/15 18:40:21 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.60.4.13 2003/01/16 13:07:01 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -244,7 +244,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 				panic("FPU(%d): fplwp %p",
 					cpi->ci_cpuid, cpi->fplwp);
 			if (l1 == cpuinfo.fplwp)
-				savefpstate(p1->p_md.md_fpstate);
+				savefpstate(l1->l_md.md_fpstate);
 #if defined(MULTIPROCESSOR)
 			else
 				XCALL1(savefpstate, l1->l_md.md_fpstate,

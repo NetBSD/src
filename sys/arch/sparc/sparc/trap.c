@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.26 2003/01/15 18:40:20 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.27 2003/01/16 13:07:01 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -222,7 +222,7 @@ userret(l, pc, oticks)
 	/* take pending signals */
 	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
-	l->p_priority = l->p_usrpri;
+	l->l_priority = l->l_usrpri;
 	if (cpuinfo.want_ast) {
 		cpuinfo.want_ast = 0;
 		if (p->p_flag & P_OWEUPC) {
@@ -537,13 +537,13 @@ badtrap:
 			loadfpstate(fs);
 			cpuinfo.fplwp = l;		/* now we do have it */
 			l->l_md.md_fpu = curcpu();
-			FPU_UNLOCK();
+			FPU_UNLOCK(s);
 		}
 #else
 		if (cpuinfo.fplwp != l) {		/* we do not have it */
 			int mid;
 
-			FPU_LOCK();
+			FPU_LOCK(s);
 			mid = l->l_md.md_fpumid;
 			if (cpuinfo.fplwp != NULL) {	/* someone else had it*/
 				savefpstate(cpuinfo.fplwp->l_md.md_fpstate);
