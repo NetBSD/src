@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.1 2001/03/31 00:43:05 jdolecek Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.2 2001/04/23 06:10:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -179,10 +179,10 @@ ate_mca_attach(parent, self, aux)
 	}
 #endif
 
-	printf(" slot %d: %s\n", ma->ma_slot + 1, atp->at_name);
-
 	iobase = ats_iobase[pos3 & 0x7];
 	irq = ats_irq[((pos4 & 0x40) >> 4) | ((pos3 & 0xc0) >> 6)];
+
+	printf(" slot %d irq %d: %s\n", ma->ma_slot + 1, irq, atp->at_name);
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, iobase, ATE_NPORTS, 0, &ioh)) {
@@ -215,8 +215,6 @@ ate_mca_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-
-	printf("%s: interrupting at irq %d\n", sc->sc_dev.dv_xname, irq);
 }
 
 /*

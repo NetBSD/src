@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_mca.c,v 1.1 2001/04/20 07:37:42 jdolecek Exp $	*/
+/*	$NetBSD: if_ne_mca.c,v 1.2 2001/04/23 06:10:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -161,11 +161,11 @@ ne_mca_attach(struct device *parent, struct device *self, void *aux)
 
 	np = ne_mca_lookup(ma->ma_id);
 
-	printf(" slot %d: %s\n", ma->ma_slot + 1, np->ne_name);
-
 	iobase = ne_mca_iobase[(pos2 & 0x0e) >> 1];
 	irq = ne_mca_irq[(pos2 & 0x60) >> 5];
 	
+	printf(" slot %d irq %d: %s\n", ma->ma_slot + 1, irq, np->ne_name);
+
 	nict = ma->ma_iot;
 
 	/* Map the device. */
@@ -216,5 +216,4 @@ ne_mca_attach(struct device *parent, struct device *self, void *aux)
 		       dsc->sc_dev.dv_xname);
 		return;
 	}
-	printf("%s: interrupting at irq %d\n", dsc->sc_dev.dv_xname, irq);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.4 2001/04/22 11:52:18 jdolecek Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.5 2001/04/23 06:10:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1030,7 +1030,7 @@ ed_get_params(ed)
 	/*
 	 * Get Device Configuration (09).
 	 */
-	cmd_args[0] = 6;	/* Options: 00s110, s: 0=Physical 1=Pseudo */
+	cmd_args[0] = 14;	/* Options: 00s110, s: 0=Physical 1=Pseudo */
 	cmd_args[1] = 0;
 	if (edc_run_cmd(ed->edc_softc, CMD_GET_DEV_CONF, ed->sc_devno, cmd_args, 2, 0))
 		return (1);

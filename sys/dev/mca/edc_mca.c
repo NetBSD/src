@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.5 2001/04/22 20:02:38 jdolecek Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.6 2001/04/23 06:10:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -192,11 +192,11 @@ edc_mca_attach(parent, self, aux)
 		/* never reached */
 	}
 		
-	printf(" slot %d: %s\n", ma->ma_slot+1, typestr);
-
 	irq = ESDIC_IRQ;
 	iobase = (pos2 & IO_IS_ALT) ? ESDIC_IOALT : ESDIC_IOPRM;
 	drq = (pos2 & DRQ_MASK) >> 2;
+
+	printf(" slot %d irq %d: %s\n", ma->ma_slot+1, irq, typestr);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -253,7 +253,6 @@ edc_mca_attach(parent, self, aux)
 			sc->sc_dev.dv_xname);
 		return;
 	}
-	printf("%s: interrupting at irq %d\n", sc->sc_dev.dv_xname, irq);
 
 	/*
 	 * Integrated ESDI controller supports only one disk, other
