@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 2000/10/11 14:46:19 is Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 2002/06/14 00:47:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,16 +41,16 @@
 
 enum STYLE { NOTSET = 0, FBYTES, FLINES, RBYTES, RLINES, REVERSE };
 
-void forward __P((FILE *, enum STYLE, long, struct stat *));
-void reverse __P((FILE *, enum STYLE, long, struct stat *));
+void forward(FILE *, enum STYLE, long, struct stat *);
+void reverse(FILE *, enum STYLE, long, struct stat *);
 
-int bytes __P((FILE *, off_t));
-int lines __P((FILE *, off_t));
+int bytes(FILE *, off_t);
+int lines(FILE *, off_t);
 
-void err __P((int fatal, const char *fmt, ...))
+void err(int fatal, const char *fmt, ...)
      __attribute__((__format__(__printf__, 2, 3)));
-void ierr __P((void));
-void oerr __P((void));
+void ierr(void);
+void oerr(void);
 
 extern int fflag, rflag, rval;
 extern char *fname;

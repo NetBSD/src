@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tail.c,v 1.8 2002/04/29 20:12:31 wiz Exp $");
+__RCSID("$NetBSD: tail.c,v 1.9 2002/06/14 00:47:41 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,14 +59,12 @@ __RCSID("$NetBSD: tail.c,v 1.8 2002/04/29 20:12:31 wiz Exp $");
 int fflag, rflag, rval;
 char *fname;
 
-int	main __P((int, char **));
-static void obsolete __P((char **));
-static void usage __P((void));
+int	main(int, char **);
+static void obsolete(char **);
+static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat sb;
 	FILE *fp;
@@ -219,8 +217,7 @@ main(argc, argv)
  * the option argument for a -b, -c or -n option gets converted.
  */
 static void
-obsolete(argv)
-	char *argv[];
+obsolete(char *argv[])
 {
 	char *ap, *p, *t;
 	int len;
@@ -302,7 +299,7 @@ obsolete(argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: tail [-f | -F | -r] [-b # | -c # | -n #] [file ...]\n");
