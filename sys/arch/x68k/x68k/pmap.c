@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 1999/06/18 14:27:09 minoura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 1999/06/28 15:35:04 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2453,7 +2453,10 @@ pmap_remove_mapping(pmap, va, pte, flags)
 #ifdef DEBUG
 			ste -= NPTEPG/SG4_LEV3SIZE;
 #endif
-		} else
+		}
+#if defined(M68020) || defined(M68030)
+		else
+#endif
 #endif
 #if defined(M68020) || defined(M68030)
 		*ste = SG_NV;
@@ -2721,8 +2724,9 @@ pmap_enter_ptpage(pmap, va)
 			pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_stab);
 #if defined(M68040) || defined(M68060)
 #if defined(M68020) || defined(M68030)
-		if (mmutype == MMU_68040) {
+		if (mmutype == MMU_68040)
 #endif
+		{
 #ifdef DEBUG
 			if (dowriteback && dokwriteback)
 #endif
