@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930.c,v 1.11 2004/03/08 06:52:44 dyoung Exp $ */
+/* $NetBSD: am79c930.c,v 1.12 2004/03/11 05:59:33 jmc Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: am79c930.c,v 1.11 2004/03/08 06:52:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c930.c,v 1.12 2004/03/11 05:59:33 jmc Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
@@ -95,6 +95,13 @@ __FBSDID("$FreeBSD$");
 #endif
 
 #define AM930_DELAY(x) /*nothing*/
+
+#ifndef __BUS_SPACE_HAS_STREAM_METHODS
+#define bus_space_read_stream_2		bus_space_read_2
+#define bus_space_read_stream_4		bus_space_read_4
+#define bus_space_write_stream_2	bus_space_write_2
+#define bus_space_write_stream_4 	bus_space_write_4
+#endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 void am79c930_regdump(struct am79c930_softc *sc);
 
