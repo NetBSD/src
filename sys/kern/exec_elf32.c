@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.54 2000/08/01 04:57:28 thorpej Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.55 2000/11/08 05:47:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -76,24 +76,16 @@
 #include "opt_syscall_debug.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/fcntl.h>
 #include <sys/syscall.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
-
-#include <sys/mman.h>
-
-#include <machine/cpu.h>
-#include <machine/reg.h>
 
 #ifdef COMPAT_NETBSD32
 #include <compat/netbsd32/netbsd32_exec.h>
