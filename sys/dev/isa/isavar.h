@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.18 1996/02/28 01:43:49 cgd Exp $	*/
+/*	$NetBSD: isavar.h,v 1.19 1996/03/08 20:25:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Chris G. Demetriou
@@ -36,23 +36,30 @@
  *	BSDI Id: isavar.h,v 1.5 1992/12/01 18:06:00 karels Exp 
  */
 
+#ifndef _DEV_ISA_ISAVAR_H_
+#define	_DEV_ISA_ISAVAR_H_
+
 /*
  * Definitions for ISA autoconfiguration.
  */
 
 #include <sys/queue.h>
+#include <machine/bus.h>
 
 /*
  * ISA bus attach arguments
  */
 struct isabus_attach_args {
-	char		*iba_busname;		/* XXX should be common */
+	char	*iba_busname;			/* XXX should be common */
+	bus_chipset_tag_t iba_bc;		/* XXX should be common */
 };
 
 /*
  * ISA driver attach arguments
  */
 struct isa_attach_args {
+	bus_chipset_tag_t ia_bc;	/* bus chipset tag */
+
 	int	ia_iobase;		/* base i/o address */
 	int	ia_iosize;		/* span of ports used */
 	int	ia_irq;			/* interrupt request */
@@ -83,6 +90,8 @@ struct isa_softc {
 	struct	device sc_dev;		/* base device */
 	TAILQ_HEAD(, isadev)
 		sc_subdevs;		/* list of all children */
+
+	bus_chipset_tag_t sc_bc;	/* bus chipset tag */
 };
 
 #define		cf_iobase		cf_loc[0]
@@ -128,3 +137,5 @@ void isa_establish __P((struct isadev *, struct device *));
 typedef enum { BUS_ISA, BUS_EISA } isa_type;
 
 extern isa_type isa_bustype;	/* type of bus; XXX should be in softc */
+
+#endif /* _DEV_ISA_ISAVAR_H_ */

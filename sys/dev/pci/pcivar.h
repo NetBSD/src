@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.11 1996/02/28 01:44:44 cgd Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.12 1996/03/08 20:25:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_PCI_PCIVAR_H_
+#define	_DEV_PCI_PCIVAR_H_
+
 /*
  * Definitions for PCI autoconfiguration.
  *
@@ -36,6 +39,8 @@
  * configuration.  Some of this information is machine-specific, and is
  * separated into pci_machdep.h.
  */
+
+#include <machine/bus.h>
 
 #if (alpha + i386 != 1)
 ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
@@ -54,6 +59,7 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
  */
 struct pcibus_attach_args {
 	char		*pba_busname;	/* XXX should be common */
+	bus_chipset_tag_t pba_bc;	/* XXX should be common */
 
 	int		pba_bus;	/* PCI bus number */
 	int		pba_maxndevs;	/* max # of devs on bus [0..n-1] */
@@ -63,6 +69,8 @@ struct pcibus_attach_args {
  * PCI device attach arguments.
  */
 struct pci_attach_args {
+	bus_chipset_tag_t pa_bc;	/* bus chipset tag */
+
 	int		pa_device;
 	int		pa_function;
 	pcitag_t	pa_tag;
@@ -75,3 +83,5 @@ void	 pci_devinfo __P((pcireg_t, pcireg_t, int, char *));
 pcitag_t pci_make_tag __P((int, int, int));
 void	*pci_map_int __P((pcitag_t, int, int (*)(void *), void *));
 int	 pci_map_mem __P((pcitag_t, int, vm_offset_t *, vm_offset_t *));
+
+#endif /* _DEV_PCI_PCIVAR_H_ */
