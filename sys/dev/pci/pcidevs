@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.464 2002/08/10 16:26:14 toshii Exp $
+$NetBSD: pcidevs,v 1.465 2002/08/16 15:03:02 heinz Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1576,6 +1576,7 @@ product LUCENT LTMODEM_045a	0x045a	LTMODEM
 product LUCENT OR3LP26		0x5400	Lucent ORCA FPGA w/32-bit PCI ASIC core
 product LUCENT OR3TP12		0x5401	Lucent ORCA FPGA w/64-bit PCI ASIC core
 product LUCENT USBHC		0x5801	USB Host Controller
+product LUCENT FW322_323	0x5811	FW322/323 IEEE 1394 OHCI Controller
 
 /* Macronix */
 product MACRONIX MX98713	0x0512	MX98713 (PMAC) 10/100 Ethernet
