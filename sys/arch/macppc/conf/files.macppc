@@ -54,6 +54,12 @@ include "dev/pci/files.pci"
 # network devices MII bus
 include "dev/mii/files.mii"
 
+include "dev/wscons/files.wscons"
+
+device ofb: wsemuldisplaydev, wsrasteremulops
+attach ofb at pci
+file arch/macppc/dev/ofb.c			ofb needs-flag
+
 file arch/macppc/pci/pci_machdep.c		pci
 file arch/macppc/pci/bandit.c			pci
 
@@ -93,7 +99,7 @@ device aed
 attach aed at adb
 file arch/macppc/dev/aed.c			aed needs-flag
 
-device akbd
+device akbd: wskbddev
 attach akbd at adb
 file arch/macppc/dev/akbd.c			akbd
 
