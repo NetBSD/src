@@ -1,5 +1,7 @@
 #!/bin/sh -
 #
+#	$NetBSD: pagesize.sh,v 1.2 1997/10/19 11:53:01 lukem Exp $
+#
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
 #
