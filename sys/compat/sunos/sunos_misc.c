@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.38 1994/12/11 17:56:21 mycroft Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.39 1994/12/15 09:41:36 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -574,18 +574,19 @@ sunos_open(p, uap, retval)
 	register_t *retval;
 {
 	int l, r;
-	int noctty = SCARG(uap, mode) & 0x8000;
+	int noctty;
 	int ret;
 	
 	/* convert mode into NetBSD mode */
-	l = SCARG(uap, mode);
+	l = SCARG(uap, flags);
+	noctty = l & 0x8000;
 	r =	(l & (0x0001 | 0x0002 | 0x0008 | 0x0040 | 0x0200 | 0x0400 | 0x0800));
 	r |=	((l & (0x0004 | 0x1000 | 0x4000)) ? O_NONBLOCK : 0);
 	r |=	((l & 0x0080) ? O_SHLOCK : 0);
 	r |=	((l & 0x0100) ? O_EXLOCK : 0);
 	r |=	((l & 0x2000) ? O_FSYNC : 0);
 
-	SCARG(uap, mode) = r;
+	SCARG(uap, flags) = r;
 	ret = open(p, (struct open_args *)uap, retval);
 
 	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
@@ -965,7 +966,7 @@ sunos_poll(p, uap, retval)
 			goto done;
 		}
 		s = splclock();
-		__timeradd(&atv, &time);
+		timevaladd(&atv, (struct timeval *)&time);
 		timo = hzto(&atv);
 		/*
 		 * Avoid inadvertently sleeping forever.
