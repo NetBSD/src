@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.22 1999/09/15 02:56:34 mycroft Exp $	*/
+/*	$NetBSD: make.h,v 1.23 1999/09/16 19:57:54 kim Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -62,6 +62,11 @@
 #   define	__P(protos)	protos		/* full-blown ANSI C */
 #  else
 #   define	__P(protos)	()		/* traditional C preprocessor */
+#  endif
+# endif
+# ifndef __GNUC__
+#  ifndef __inline
+#   define __inline
 #  endif
 # endif
 # ifndef __STDC__
