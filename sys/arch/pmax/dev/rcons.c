@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.4 1995/09/11 21:29:26 jonathan Exp $	*/
+/*	$NetBSD: rcons.c,v 1.5 1995/09/22 23:48:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -66,12 +66,14 @@
 
 #include <sys/device.h>
 #include <machine/fbio.h>
-#include <sparc/rcons/raster.h>
+#include <dev/rcons/rcons.h>
+#include <dev/rcons/raster.h>
 #include <machine/fbvar.h>
 
 #include <machine/machConst.h>
 #include <machine/pmioctl.h>
 #include <pmax/dev/fbreg.h>
+
 
 
 /*
@@ -89,15 +91,23 @@ dev_t	cn_in_dev = NODEV;	/* console input device. */
 
 char rcons_maxcols [20];
 
-/* rcons_connect is called by fbconnect when the first frame buffer is
-   attached.   That frame buffer will always be the console frame buffer. */
+void rcons_vputc __P ((dev_t dev, int c));
 
+extern int (*v_putc) /*__P((dev_t dev, int c))*/ ();
+void nobell __P ((int));
+
+/*
+ * rcons_connect is called by fbconnect when the first frame buffer is
+ * attached.   That frame buffer will always be the console frame buffer.
+ */
+void
 rcons_connect (info)
 	struct fbinfo *info;
 {
-	static struct fbdevice fb;
+	static struct rconsole rc;
 	static int row, col;
 
+	void * tem;
 	/* If we're running a serial console, don't set up a raster console
 	   even if there's a device that can support it. */
 	if (cn_tab -> cn_pri == CN_REMOTE)
@@ -108,33 +118,77 @@ rcons_connect (info)
 	fbconstty->t_ispeed = fbconstty->t_ospeed = TTYDEF_SPEED;
 	fbconstty->t_param = (int (*)(struct tty *, struct termios *))nullop;
 
-	/* Connect the console geometry... */
-	fb.fb_devinfo = info;
-
-	/* Initialize the state information. */
-	fb.fb_bits = 0;
-	fb.fb_ringing = 0;
-	fb.fb_belldepth = 0;
-	fb.fb_scroll = 0;
-	fb.fb_p0 = 0;
-	fb.fb_p1 = 0;
-
-	fb.fb_row = &row;
-	fb.fb_col = &col;
-
+	/*
+	 * Connect the console geometry...
+	 * the part that rcons.h says
+	 * "This section must be filled in by the framebugger device"
+	 */
+	rc.rc_width = info->fi_type.fb_width;
+	rc.rc_height = info->fi_type.fb_height;
+	rc.rc_depth = info->fi_type.fb_depth;
+	rc.rc_pixels =info->fi_pixels;
+	rc.rc_linebytes = info->fi_linebytes;
 #define HW_FONT_WIDTH 8
 #define HW_FONT_HEIGHT 15
-	sprintf (rcons_maxcols, "%d", fb.fb_type.fb_height / HW_FONT_HEIGHT);
-	row = (fb.fb_type.fb_height / HW_FONT_HEIGHT) - 1;
-	col = 0;
-	rcons_init (&fb);
+	rc.rc_maxrow = rc.rc_height / HW_FONT_HEIGHT;
+	rc.rc_maxcol = 80;
+	rc.rc_bell = nobell;
 
-	fb.fb_xorigin = 0;
-	fb.fb_yorigin = 0;
+	/* Initialize the state information. */
+	rc.rc_bits = 0;
+	rc.rc_ringing = 0;
+	rc.rc_belldepth = 0;
+	rc.rc_scroll = 0;
+	rc.rc_p0 = 0;
+	rc.rc_p1 = 0;
+
+	/* The following two items may optionally be left zero */
+	rc.rc_row = &row;
+	rc.rc_col = &col;
+
+	row = (rc.rc_height / HW_FONT_HEIGHT) - 1;
+	col = 0;
+
+	tem = v_putc;
+	rcons_init (&rc);
+
+	rc.rc_xorigin = 0;
+	rc.rc_yorigin = 0;
 }
 
+/* We don't support ringing the keyboard bell yet */
+void
+nobell(arg)
+	int arg;
+{
+	return;
+}
+
+/* 
+ * Hack around the rcons putchar interface not taking a dev_t.
+ */
+void
+rcons_vputc(dev, c)
+	dev_t dev;
+	int c;
+{
+	int s;
+
+	/*
+	 * Call the pointer-to-function that rcons_init tried to give us,
+	 * discarding the dev_t argument.
+	 */
+	extern void rcons_cnputc __P((int c));
+	rcons_cnputc(c);
+}
+
+/*
+ * Pseudo-device attach routine.  rcons doesn't need to be a pseudo
+ * device, and isn't on a sparc; this is a useful point to set up
+ * the vnode, clean up pmax console initialization, and set
+ * the initial tty size.
 /* ARGSUSED */
-rconsattach (n)
+rconsoleattach (n)
 	int n;
 {
 	register struct tty *tp = &rcons_tty [0];
