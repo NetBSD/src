@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.149 2004/04/29 04:10:53 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.150 2004/04/29 04:13:36 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1515,3 +1515,8 @@ sys/arch/arm/include/arm32/frame.h		1.11
 	Always disable interrupts at the start of 
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS. PR#23581
 	[scw, ticket #209]
+
+usr.bin/su/su.1					1.37-1.38
+
+	Fix typo's
+	[cjep, ticket #210]
