@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41.4.4 2002/01/04 09:26:49 petrov Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.41.4.5 2002/01/04 10:03:37 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -246,7 +246,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 * the FPU user, we must save the FPU state first.
 	 */
 
-#ifdef DEBUG
+#ifdef NOTDEF_DEBUG
 	printf("cpu_lwp_fork()\n");
 #endif
 	if (l1 == curproc) {
