@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.13 1997/07/19 22:27:20 perry Exp $	*/
+/*	$NetBSD: reboot.c,v 1.14 1997/07/19 23:03:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -33,31 +33,34 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1986, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
+"	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: reboot.c,v 1.13 1997/07/19 22:27:20 perry Exp $";
+__RCSID("$NetBSD: reboot.c,v 1.14 1997/07/19 23:03:54 perry Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/reboot.h>
 #include <signal.h>
 #include <pwd.h>
+#include <err.h>
 #include <errno.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 
-void err __P((const char *fmt, ...));
+int main __P((int, char *[]));
 void usage __P((void));
 
 int dohalt;
@@ -67,7 +70,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int i;
+	int i;
 	struct passwd *pw;
 	int ch, howto, lflag, nflag, qflag, sverrno, len;
 	char *p, *user, *bootstr, **av;
@@ -113,11 +116,11 @@ main(argc, argv)
 		bootstr = NULL;
 
 	if (geteuid())
-		err("%s", strerror(EPERM));
+		errx(1, "%s", strerror(EPERM));
 
 	if (qflag) {
 		reboot(howto, bootstr);
-		err("%s", strerror(errno));
+		err(1, "reboot");
 	}
 
 	/* Log the reboot. */
@@ -149,7 +152,7 @@ main(argc, argv)
 
 	/* Just stop init -- if we fail, we'll restart it. */
 	if (kill(1, SIGTSTP) == -1)
-		err("SIGTSTP init: %s", strerror(errno));
+		err(1, "SIGTSTP init");
 
 	/* Ignore the SIGHUP we get when our parent shell dies. */
 	(void)signal(SIGHUP, SIG_IGN);
@@ -197,7 +200,7 @@ main(argc, argv)
 
 restart:
 	sverrno = errno;
-	err("%s%s", kill(1, SIGHUP) == -1 ? "(can't restart init): " : "",
+	errx(1, "%s%s", kill(1, SIGHUP) == -1 ? "(can't restart init): " : "",
 	    strerror(sverrno));
 	/* NOTREACHED */
 }
@@ -207,33 +210,4 @@ usage()
 {
 	(void)fprintf(stderr, "usage: %s [-nqd] [-- <boot string>]\n", dohalt ? "halt" : "reboot");
 	exit(1);
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "%s: ", dohalt ? "halt" : "reboot");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
 }
