@@ -1,7 +1,7 @@
 #
 # PAIN -- kernel for another of cgd's 486/50 EISA boxes...
 #
-#	$Id: PAIN,v 1.18 1994/01/04 14:06:23 cgd Exp $
+#	$Id: PAIN,v 1.19 1994/01/05 16:28:55 cgd Exp $
 #
 machine         "i386"
 cpu             "I486_CPU"
@@ -15,10 +15,16 @@ options         "TCP_COMPAT_42"
 options         UCONSOLE, XSERVER
 options		"DUMMY_NOPS"
 options		MSDOSFS
-options		FDESC
-options		KERNFS
 options		LKM
+
+# stuff residing in sys/miscfs
+options		FDESC
+options		FIFO
+options		KERNFS
+options		LOFS
+options		PORTAL
 options		PROCFS
+
 options		KTRACE
 options		SCSI
 options		"COMPAT_NOMID"
