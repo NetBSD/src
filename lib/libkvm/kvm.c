@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.63 1999/04/01 09:53:09 mycroft Exp $	*/
+/*	$NetBSD: kvm.c,v 1.63.2.1 2000/10/04 16:22:12 he Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.63 1999/04/01 09:53:09 mycroft Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.63.2.1 2000/10/04 16:22:12 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -170,7 +170,7 @@ _kvm_malloc(kd, n)
 	void *p;
 
 	if ((p = malloc(n)) == NULL)
-		_kvm_err(kd, kd->program, strerror(errno));
+		_kvm_err(kd, kd->program, "%s", strerror(errno));
 	return (p);
 }
 
