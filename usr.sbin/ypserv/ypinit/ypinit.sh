@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: ypinit.sh,v 1.4 1997/10/08 14:09:19 lukem Exp $
+#	$NetBSD: ypinit.sh,v 1.5 1997/10/25 10:18:36 lukem Exp $
 #
 # ypinit.sh - setup a master or slave YP server
 #
@@ -8,12 +8,12 @@
 # Modified by Jason R. Thorpe <thorpej@NetBSD.ORG>
 #
 
-DOMAINNAME=/bin/domainname
-HOSTNAME=/bin/hostname
-YPWHICH=/usr/bin/ypwhich
-YPXFR=/usr/sbin/ypxfr
-MAKEDBM=/usr/sbin/makedbm
-YP_DIR=/var/yp
+DOMAINNAME=	/bin/domainname
+HOSTNAME=	/bin/hostname
+YPWHICH=	/usr/bin/ypwhich
+YPXFR=		/usr/sbin/ypxfr
+MAKEDBM=	/usr/sbin/makedbm
+YP_DIR=		/var/yp
 
 ERROR=USAGE				# assume usage error
 
@@ -67,7 +67,7 @@ fi
 if [ X${DOMAIN} = "X" ]; then
 	cat << \__no_domain 1>&2
 The local host's YP domain name has not been set.  Please set it with
-the domainname(8) command or pass the domain as an argument to ypinit(8).
+the domainname(1) command or pass the domain as an argument to ypinit(8).
 __no_domain
 
 	exit 1
@@ -78,7 +78,7 @@ HOST=`${HOSTNAME}`
 if [ X${HOST} = "X" ]; then
 	cat << \__no_hostname 1>&2
 The local host's hostname has not been set.  Please set it with the
-hostname(8) command.
+hostname(1) command.
 __no_hostname
 
 	exit 1
@@ -190,7 +190,7 @@ if [ X${SERVERTYPE} = X"SLAVE" ]; then
 	echo ""
 
 	for MAP in `${YPWHICH} -d ${DOMAIN} -m | cut -d\  -f1`; do
-		echo "Transfering ${MAP}..."
+		echo "Transferring ${MAP}..."
 		if ! ${YPXFR} -h ${MASTER} -c -d ${DOMAIN} ${MAP}; then
 			echo "Can't transfer map ${MAP}." 1>&2
 			exit 1
