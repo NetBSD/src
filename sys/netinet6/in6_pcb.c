@@ -115,7 +115,14 @@ in6_pcballoc(so, head)
 	in6p->in6p_socket = so;
 	in6p->in6p_hops = -1;	/* use kernel default */
 	in6p->in6p_icmp6filt = NULL;
+#if 0
 	insque(in6p, head);
+#else
+	in6p->in6p_next = head->in6p_next;
+	head->in6p_next = in6p;
+	in6p->in6p_prev = head;
+	in6p->in6p_next->in6p_prev = in6p;
+#endif
 	so->so_pcb = (caddr_t)in6p;
 	return(0);
 }
@@ -649,7 +656,13 @@ in6_pcbdetach(in6p)
 	if (in6p->in6p_route.ro_rt)
 		rtfree(in6p->in6p_route.ro_rt);
 	ip6_freemoptions(in6p->in6p_moptions);
+#if 0
 	remque(in6p);
+#else
+	in6p->in6p_next->in6p_prev = in6p->in6p_prev;
+	in6p->in6p_prev->in6p_next = in6p->in6p_next;
+	in6p->in6p_prev = NULL;
+#endif
 	FREE(in6p, M_PCB);
 }
 
