@@ -1,4 +1,4 @@
-/*	$NetBSD: fancy.c,v 1.5 1997/10/10 08:59:45 lukem Exp $	*/
+/*	$NetBSD: fancy.c,v 1.6 1997/10/14 00:41:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,17 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fancy.c,v 1.5 1997/10/10 08:59:45 lukem Exp $");
+__RCSID("$NetBSD: fancy.c,v 1.6 1997/10/14 00:41:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "back.h"
-
-int tgetent __P((char *, char *));
-int tgetnum __P((char *));
-char   *tgoto __P((char *, int, int));
-char   *tgetstr __P((char *, char **));
-void tputs __P((char *, int, void (*outc) __P((int))));
 
 char    PC;			/* padding character */
 char   *BC;			/* backspace sequence */
