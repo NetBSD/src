@@ -1,4 +1,4 @@
-/*	$NetBSD: swap_pager.c,v 1.32.2.2 1997/05/08 00:23:55 pk Exp $	*/
+/*	$NetBSD: swap_pager.c,v 1.32.2.3 1997/05/11 19:22:06 pk Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -715,8 +715,8 @@ swap_pager_io(swp, mlist, npages, flags)
 	if ((bp->b_flags & B_READ) == 0) {
 		bp->b_dirtyoff = 0;
 		bp->b_dirtyend = npages * PAGE_SIZE;
-		swapdev_vp->v_numoutput++;
 		s = splbio();
+		swapdev_vp->v_numoutput++;
 		swp->sw_poip++;
 		splx(s);
 		mask = (~(~0 << npages)) << atop(off);
