@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 2003/11/18 04:04:42 chs Exp $	*/
+/*	$NetBSD: mem.c,v 1.9 2003/11/23 17:09:29 chs Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.8 2003/11/18 04:04:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.9 2003/11/23 17:09:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,8 +150,8 @@ struct mem_softc {
 	volatile struct l2_mioc *sc_l2;
 };
 
-int	memmatch __P((struct device *, struct cfdata *, void *));
-void	memattach __P((struct device *, struct device *, void *));
+int	memmatch(struct device *, struct cfdata *, void *);
+void	memattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mem, sizeof(struct mem_softc),
     memmatch, memattach, NULL, NULL);
@@ -173,12 +173,9 @@ static caddr_t zeropage;
 static __cpu_simple_lock_t vmmap_lock;
 
 int
-memmatch(parent, cf, aux)   
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+memmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_MEMORY ||
 	    ca->ca_type.iodc_sv_model != HPPA_MEMORY_PDEP)
@@ -187,14 +184,11 @@ memmatch(parent, cf, aux)
 }
 
 void
-memattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+memattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pdc_iodc_minit pdc_minit PDC_ALIGNMENT;
-	register struct confargs *ca = aux;
-	register struct mem_softc *sc = (struct mem_softc *)self;
+	struct confargs *ca = aux;
+	struct mem_softc *sc = (struct mem_softc *)self;
 	int err;
 	int pagezero_cookie;
 
@@ -266,10 +260,9 @@ memattach(parent, self, aux)
 }
 
 void
-viper_setintrwnd(mask)
-	uint32_t mask;
+viper_setintrwnd(uint32_t mask)
 {
-	register struct mem_softc *sc;
+	struct mem_softc *sc;
 
 	sc = mem_cd.cd_devs[0];
 
@@ -278,9 +271,9 @@ viper_setintrwnd(mask)
 }
 
 void
-viper_eisa_en()
+viper_eisa_en(void)
 {
-	register struct mem_softc *sc;
+	struct mem_softc *sc;
 	int pagezero_cookie;
 
 	sc = mem_cd.cd_devs[0];
@@ -292,17 +285,14 @@ viper_eisa_en()
 }
 
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
-	register u_int	 	c;
-	register struct iovec 	*iov;
-	int 			error = 0;
-	int32_t lockheld = 0;
+	struct iovec *iov;
 	vaddr_t	v, o;
 	vm_prot_t prot;
+	int32_t lockheld = 0;
+	u_int c;
+	int error = 0;
 	int rw;
 
 	while (uio->uio_resid > 0 && error == 0) {
@@ -417,11 +407,9 @@ use_kmem:
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;  
+mmmmap(dev_t dev, off_t off, int prot)
 {
+
 	if (minor(dev) != 0)
 		return (-1);
 

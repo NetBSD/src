@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2003/07/15 02:29:24 lukem Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2003/11/23 17:09:29 chs Exp $	*/
 
 /*	$OpenBSD: clock.c,v 1.10 2001/08/31 03:13:42 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2003/07/15 02:29:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2003/11/23 17:09:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,12 +60,12 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2003/07/15 02:29:24 lukem Exp $");
 
 volatile struct timeval time;
 
-void startrtclock __P((void));
+void startrtclock(void);
 
 static struct pdc_tod tod PDC_ALIGNMENT;
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	extern u_int cpu_hzticks;
 	u_int time_inval;
@@ -76,8 +76,7 @@ cpu_initclocks()
 }
 
 int
-clock_intr (v)
-	void *v;
+clock_intr(void *v)
 {
 	struct clockframe *frame = v;
 
@@ -103,8 +102,7 @@ clock_intr (v)
  * initialize the system time from the time of day clock
  */
 void
-inittodr(t)
-	time_t t;
+inittodr(time_t t)
 {
 	int 	tbad = 0;
 	int pagezero_cookie;
@@ -141,7 +139,7 @@ inittodr(t)
  * reset the time of day clock to the value in time
  */
 void
-resettodr()
+resettodr(void)
 {
 	int pagezero_cookie;
 
@@ -154,8 +152,7 @@ resettodr()
 }
 
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 	/* nothing we can do */
 }
