@@ -1,7 +1,7 @@
 NetBSD/amiga 1.2 runs on any Amiga that has a 68020 or better CPU with
 some form of FPU and MMU, and on DraCos which still have a CIA.
 
-The minimal configuration requires 4M of RAM and about 65M of disk
+The minimal configuration requires 4M of RAM and about 75M of disk
 space.  To install the entire system requires much more disk space,
 and to run X or compile the system, more RAM is recommended.  (4M of
 RAM will actually allow you to compile, however it won't be speedy. X
@@ -10,7 +10,7 @@ really isn't usable on a 4M system.)
 Here is a table of recommended HD partition sizes for a full install:
 	partition:	advise,	with X,	needed,	with X
 	root (/)	20M	20M	15M	15M
-	user (/usr)	75M	110M	55M 	90M
+	user (/usr)	80M	110M	60M 	90M
 	swap		----- 2M for every M ram -----
 	local (/local)	up to you
 
@@ -35,15 +35,16 @@ Supported devices include:
 	Video controllers:
 		ECS, AGA and A2024 built in on various Amigas.
 		Retina Z2, Retina Z3 and Altais.
-		Picasso II.
-		GVP Spectrum.
-		Piccolo.
-		Piccolo SD64.
+		Cirrus CL GD 54xx based boards:
+		    GVP Spectrum,
+		    Picasso II, II+ and IV,
+		    Piccolo and Piccolo SD64.
+		Tseng ET4000 based boards:
+		    Domino and Domino16M proto,
+		    oMniBus,
+		    Merlin.
 		A2410.
 		Cybervision 64.
-		Domino.
-		Merlin (Zorro 2 only).
-		Omnibus.
 	Ethernet controllers:
 		A2065 Ethernet
 		Hydra Ethernet
@@ -75,7 +76,7 @@ release. Especially (but this is an incomplete list), there is no
 driver for:
 
 	Cyberstorm SCSI option, Blizzard IV SCSI, Blizzard 2060 SCSI,
-	Ferret SCSI, Oktagon SCSI.
+	Ferret SCSI, Oktagon SCSI, CyberVision64/3D.
 
 Known problems with some hardware:
 
