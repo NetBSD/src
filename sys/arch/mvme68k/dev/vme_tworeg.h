@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_tworeg.h,v 1.3 2000/08/20 17:07:42 scw Exp $ */
+/*	$NetBSD: vme_tworeg.h,v 1.4 2000/11/24 09:27:43 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -500,9 +500,9 @@
 
 
 #define	vme2_lcsr_read(s,r) \
-	bus_space_read_4((s)->sc_bust, (s)->sc_lcrh, (r))
+	bus_space_read_4((s)->sc_mvmebus.sc_bust, (s)->sc_lcrh, (r))
 #define	vme2_lcsr_write(s,r,v) \
-	bus_space_write_4((s)->sc_bust, (s)->sc_lcrh, (r), (v))
+	bus_space_write_4((s)->sc_mvmebus.sc_bust, (s)->sc_lcrh, (r), (v))
 
 
 /*
