@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 1999/02/20 00:12:02 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11 1999/02/26 22:16:35 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -191,7 +191,7 @@ void	child_return __P((void *));
 void	myetheraddr	__P((u_char *));
 
 /* Prototypes from sys_machdep.c: */
-int	cachectl __P((int, caddr_t, int));
+int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 int	dma_cachectl __P((caddr_t, int));
 
 /* physical memory sections for mvme147 */

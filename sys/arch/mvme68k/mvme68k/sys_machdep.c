@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.15 1999/02/20 00:12:03 scw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.16 1999/02/26 22:16:36 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -133,10 +133,11 @@ vdoualarm(arg)
  */
 /*ARGSUSED1*/
 int
-cachectl(req, addr, len)
-	int req;
-	caddr_t	addr;
+cachectl1(req, addr, len, p)
+	unsigned long req;
+	vaddr_t	addr;
 	int len;
+	struct proc *p;
 {
 	int error = 0;
 
@@ -145,11 +146,11 @@ cachectl(req, addr, len)
 		int inc = 0;
 		int doall = 0;
 		paddr_t pa = 0;
-		caddr_t end = 0;
+		vaddr_t end = 0;
 #ifdef COMPAT_HPUX
 		extern struct emul emul_hpux;
 
-		if ((curproc->p_emul == &emul_hpux) &&
+		if ((p->p_emul == &emul_hpux) &&
 		    len != 16 && len != NBPG)
 			doall = 1;
 #endif
@@ -161,10 +162,10 @@ cachectl(req, addr, len)
 		if (!doall) {
 			end = addr + len;
 			if (len <= 1024) {
-				addr = (caddr_t)((int)addr & ~0xF);
+				addr = addr & ~0xF;
 				inc = 16;
 			} else {
-				addr = (caddr_t)((int)addr & ~PGOFSET);
+				addr = addr & ~PGOFSET;
 				inc = NBPG;
 			}
 		}
@@ -176,8 +177,8 @@ cachectl(req, addr, len)
 			 */
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
-				pa = pmap_extract(curproc->p_vmspace->vm_map.pmap,
-						  (vaddr_t)addr);
+				pa = pmap_extract(p->p_vmspace->vm_map.pmap,
+						  addr);
 				if (pa == 0)
 					doall = 1;
 			}
