@@ -1,4 +1,4 @@
-# $NetBSD: std.x86_64,v 1.2 2001/11/20 12:56:43 lukem Exp $
+# $NetBSD: std.x86_64,v 1.3 2002/05/03 00:06:56 eeh Exp $
 #
 # standard, required NetBSD/x86_64 'options'
 
@@ -6,3 +6,4 @@ machine x86_64
 
 options 	EXEC_ELF64	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
+options 	_LP64		# This is a 64-bit architecture

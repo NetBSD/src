@@ -1,4 +1,4 @@
-# $NetBSD: std.alpha,v 1.19 2000/06/22 20:27:49 fvdl Exp $
+# $NetBSD: std.alpha,v 1.20 2002/05/03 00:06:55 eeh Exp $
 #
 # Standard/required configuration info for NetBSD/alpha.
 
@@ -10,3 +10,4 @@ machine		alpha
 options 	EXEC_ECOFF	# (native) ECOFF binary support
 options 	EXEC_ELF64	# (native) ELF64 binary support
 options 	EXEC_SCRIPT	# shell script support
+options 	_LP64		# Always define this since we're 64-bit.
