@@ -1,4 +1,4 @@
-This is standards.info, produced by makeinfo version 4.3 from
+This is standards.info, produced by makeinfo version 4.6 from
 ./standards.texi.
 
 START-INFO-DIR-ENTRY
@@ -21,7 +21,7 @@ File: standards.info,  Node: Top,  Next: Preface,  Prev: (dir),  Up: (dir)
 Version
 *******
 
-   Last updated February 14, 2002.
+Last updated February 14, 2002.
 
 * Menu:
 
@@ -42,8 +42,8 @@ File: standards.info,  Node: Preface,  Next: Legal Issues,  Prev: Top,  Up: Top
 About the GNU Coding Standards
 ******************************
 
-   The GNU Coding Standards were written by Richard Stallman and other
-GNU Project volunteers.  Their purpose is to make the GNU system clean,
+The GNU Coding Standards were written by Richard Stallman and other GNU
+Project volunteers.  Their purpose is to make the GNU system clean,
 consistent, and easy to install.  This document can also be read as a
 guide to writing portable, robust and reliable programs.  It focuses on
 programs written in C, but many of the rules and principles are useful
@@ -87,7 +87,7 @@ File: standards.info,  Node: Legal Issues,  Next: Design Advice,  Prev: Preface,
 Keeping Free Software Free
 **************************
 
-   This node discusses how you can make sure that GNU software avoids
+This node discusses how you can make sure that GNU software avoids
 legal difficulties, and other related issues.
 
 * Menu:
@@ -102,8 +102,8 @@ File: standards.info,  Node: Reading Non-Free Code,  Next: Contributions,  Up: L
 Referring to Proprietary Programs
 =================================
 
-   Don't in any circumstances refer to Unix source code for or during
-your work on GNU!  (Or to any other proprietary programs.)
+Don't in any circumstances refer to Unix source code for or during your
+work on GNU!  (Or to any other proprietary programs.)
 
    If you have a vague recollection of the internals of a Unix program,
 this does not absolutely mean you can't write an imitation of it, but
@@ -139,7 +139,7 @@ File: standards.info,  Node: Contributions,  Next: Trademarks,  Prev: Reading No
 Accepting Contributions
 =======================
 
-   If the program you are working on is copyrighted by the Free Software
+If the program you are working on is copyrighted by the Free Software
 Foundation, then when someone else sends you a piece of code to add to
 the program, we need legal papers to use it--just as we asked you to
 sign papers initially.  _Each_ person who makes a nontrivial
@@ -186,7 +186,7 @@ File: standards.info,  Node: Trademarks,  Prev: Contributions,  Up: Legal Issues
 Trademarks
 ==========
 
-   Please do not include any trademark acknowledgements in GNU software
+Please do not include any trademark acknowledgements in GNU software
 packages or documentation.
 
    Trademark acknowledgements are the statements that such-and-such is a
@@ -210,7 +210,7 @@ File: standards.info,  Node: Design Advice,  Next: Program Behavior,  Prev: Lega
 General Program Design
 **********************
 
-   This node discusses some of the issues you should take into account
+This node discusses some of the issues you should take into account
 when designing your program.
 
 * Menu:
@@ -227,7 +227,7 @@ File: standards.info,  Node: Source Language,  Next: Compatibility,  Up: Design 
 Which Languages to Use
 ======================
 
-   When you want to use a language that gets compiled and runs at high
+When you want to use a language that gets compiled and runs at high
 speed, the best language to use is C.  Using another language is like
 using a non-standard feature: it will cause trouble for users.  Even if
 GCC supports the other language, users may find it inconvenient to have
@@ -272,7 +272,7 @@ File: standards.info,  Node: Compatibility,  Next: Using Extensions,  Prev: Sour
 Compatibility with Other Implementations
 ========================================
 
-   With occasional exceptions, utility programs and libraries for GNU
+With occasional exceptions, utility programs and libraries for GNU
 should be upward compatible with those in Berkeley Unix, and upward
 compatible with Standard C if Standard C specifies their behavior, and
 upward compatible with POSIX if POSIX specifies their behavior.
@@ -307,7 +307,7 @@ File: standards.info,  Node: Using Extensions,  Next: Standard C,  Prev: Compati
 Using Non-standard Features
 ===========================
 
-   Many GNU facilities that already exist support a number of convenient
+Many GNU facilities that already exist support a number of convenient
 extensions over the comparable Unix facilities.  Whether to use these
 extensions in implementing your program is a difficult question.
 
@@ -343,7 +343,7 @@ File: standards.info,  Node: Standard C,  Next: Conditional Compilation,  Prev: 
 Standard C and Pre-Standard C
 =============================
 
-   1989 Standard C is widespread enough now that it is ok to use its
+1989 Standard C is widespread enough now that it is ok to use its
 features in new programs.  There is one exception: do not ever use the
 "trigraph" feature of Standard C.
 
@@ -407,10 +407,10 @@ File: standards.info,  Node: Conditional Compilation,  Prev: Standard C,  Up: De
 Conditional Compilation
 =======================
 
-   When supporting configuration options already known when building
-your program we prefer using `if (... )' over conditional compilation,
-as in the former case the compiler is able to perform more extensive
-checking of all possible code paths.
+When supporting configuration options already known when building your
+program we prefer using `if (... )' over conditional compilation, as in
+the former case the compiler is able to perform more extensive checking
+of all possible code paths.
 
    For example, please write
 
@@ -452,8 +452,8 @@ File: standards.info,  Node: Program Behavior,  Next: Writing C,  Prev: Design A
 Program Behavior for All Programs
 *********************************
 
-   This node describes conventions for writing robust software.  It
-also describes general standards for error messages, the command line
+This node describes conventions for writing robust software.  It also
+describes general standards for error messages, the command line
 interface, and how libraries should behave.
 
 * Menu:
@@ -474,11 +474,10 @@ File: standards.info,  Node: Semantics,  Next: Libraries,  Up: Program Behavior
 Writing Robust Programs
 =======================
 
-   Avoid arbitrary limits on the length or number of _any_ data
-structure, including file names, lines, files, and symbols, by
-allocating all data structures dynamically.  In most Unix utilities,
-"long lines are silently truncated".  This is not acceptable in a GNU
-utility.
+Avoid arbitrary limits on the length or number of _any_ data structure,
+including file names, lines, files, and symbols, by allocating all data
+structures dynamically.  In most Unix utilities, "long lines are
+silently truncated".  This is not acceptable in a GNU utility.
 
    Utilities reading files should not drop NUL characters, or any other
 nonprinting characters _including those with codes above 0177_.  The
@@ -573,7 +572,7 @@ File: standards.info,  Node: Libraries,  Next: Errors,  Prev: Semantics,  Up: Pr
 Library Behavior
 ================
 
-   Try to make library functions reentrant.  If they need to do dynamic
+Try to make library functions reentrant.  If they need to do dynamic
 storage allocation, at least try to avoid any nonreentrancy aside from
 that of `malloc' itself.
 
@@ -604,7 +603,7 @@ File: standards.info,  Node: Errors,  Next: User Interfaces,  Prev: Libraries,  
 Formatting Error Messages
 =========================
 
-   Error messages from compilers should look like this:
+Error messages from compilers should look like this:
 
      SOURCE-FILE-NAME:LINENO: MESSAGE
 
@@ -654,9 +653,9 @@ File: standards.info,  Node: User Interfaces,  Next: Graphical Interfaces,  Prev
 Standards for Interfaces Generally
 ==================================
 
-   Please don't make the behavior of a utility depend on the name used
-to invoke it.  It is useful sometimes to make a link to a utility with
-a different name, and that should not change what it does.
+Please don't make the behavior of a utility depend on the name used to
+invoke it.  It is useful sometimes to make a link to a utility with a
+different name, and that should not change what it does.
 
    Instead, use a run time option or a compilation switch or both to
 select among the alternate behaviors.
@@ -688,7 +687,7 @@ File: standards.info,  Node: Graphical Interfaces,  Next: Command-Line Interface
 Standards for Graphical Interfaces
 ==================================
 
-   When you write a program that provides a graphical user interface,
+When you write a program that provides a graphical user interface,
 please make it work with X Windows and the GTK toolkit unless the
 functionality specifically requires some alternative (for example,
 "displaying jpeg images while in console mode").
@@ -710,12 +709,11 @@ File: standards.info,  Node: Command-Line Interfaces,  Next: Option Table,  Prev
 Standards for Command Line Interfaces
 =====================================
 
-   It is a good idea to follow the POSIX guidelines for the
-command-line options of a program.  The easiest way to do this is to use
-`getopt' to parse them.  Note that the GNU version of `getopt' will
-normally permit options anywhere among the arguments unless the special
-argument `--' is used.  This is not what POSIX specifies; it is a GNU
-extension.
+It is a good idea to follow the POSIX guidelines for the command-line
+options of a program.  The easiest way to do this is to use `getopt' to
+parse them.  Note that the GNU version of `getopt' will normally permit
+options anywhere among the arguments unless the special argument `--'
+is used.  This is not what POSIX specifies; it is a GNU extension.
 
    Please define long-named options that are equivalent to the
 single-letter Unix-style options.  We hope to make GNU more user
@@ -841,7 +839,7 @@ File: standards.info,  Node: Option Table,  Next: Memory Usage,  Prev: Command-L
 Table of Long Options
 =====================
 
-   Here is a table of long options used by GNU programs.  It is surely
+Here is a table of long options used by GNU programs.  It is surely
 incomplete, but we aim to list all the options that a new program might
 want to be compatible with.  If you use names not already in the table,
 please send <bug-standards@gnu.org> a list of them, with their
@@ -1931,7 +1929,7 @@ File: standards.info,  Node: Memory Usage,  Next: File Usage,  Prev: Option Tabl
 Memory Usage
 ============
 
-   If a program typically uses just a few meg of memory, don't bother
+If a program typically uses just a few meg of memory, don't bother
 making any effort to reduce memory usage.  For example, if it is
 impractical for other reasons to operate on files more than a few meg
 long, it is reasonable to read entire input files into core to operate
@@ -1954,7 +1952,7 @@ File: standards.info,  Node: File Usage,  Prev: Memory Usage,  Up: Program Behav
 File Usage
 ==========
 
-   Programs should be prepared to operate when `/usr' and `/etc' are
+Programs should be prepared to operate when `/usr' and `/etc' are
 read-only file systems.  Thus, if the program manages log files, lock
 files, backup files, score files, or any other files which are modified
 for internal purposes, these files should not be stored in `/usr' or
@@ -1973,7 +1971,7 @@ File: standards.info,  Node: Writing C,  Next: Documentation,  Prev: Program Beh
 Making The Best Use of C
 ************************
 
-   This node provides advice on how best to use the C language when
+This node provides advice on how best to use the C language when
 writing GNU software.
 
 * Menu:
@@ -1994,7 +1992,7 @@ File: standards.info,  Node: Formatting,  Next: Comments,  Up: Writing C
 Formatting Your Source Code
 ===========================
 
-   It is important to put the open-brace that starts the body of a C
+It is important to put the open-brace that starts the body of a C
 function in column zero, and avoid putting any other open-brace or
 open-parenthesis or open-bracket in column zero.  Several tools look
 for open-braces in column zero to find the beginnings of C functions.
@@ -2113,8 +2111,8 @@ File: standards.info,  Node: Comments,  Next: Syntactic Conventions,  Prev: Form
 Commenting Your Work
 ====================
 
-   Every program should start with a comment saying briefly what it is
-for.  Example: `fmt - filter for simple filling of text'.
+Every program should start with a comment saying briefly what it is for.
+Example: `fmt - filter for simple filling of text'.
 
    Please write the comments in a GNU program in English, because
 English is the one language that nearly all programmers in all
@@ -2193,7 +2191,7 @@ File: standards.info,  Node: Syntactic Conventions,  Next: Names,  Prev: Comment
 Clean Use of C Constructs
 =========================
 
-   Please explicitly declare the types of all objects.  For example, you
+Please explicitly declare the types of all objects.  For example, you
 should explicitly declare all arguments to functions, and you should
 declare functions to return `int' rather than omitting the `int'.
 
@@ -2306,7 +2304,7 @@ File: standards.info,  Node: Names,  Next: System Portability,  Prev: Syntactic 
 Naming Variables, Functions, and Files
 ======================================
 
-   The names of global variables and functions in a program serve as
+The names of global variables and functions in a program serve as
 comments of a sort.  So don't choose terse names--instead, look for
 names that give useful information about the meaning of the variable or
 function.  In a GNU program, names should be English, like other
@@ -2355,7 +2353,7 @@ File: standards.info,  Node: System Portability,  Next: CPU Portability,  Prev: 
 Portability between System Types
 ================================
 
-   In the Unix world, "portability" refers to porting to different Unix
+In the Unix world, "portability" refers to porting to different Unix
 versions.  For a GNU program, this kind of portability is desirable, but
 not paramount.
 
@@ -2405,7 +2403,7 @@ File: standards.info,  Node: CPU Portability,  Next: System Functions,  Prev: Sy
 Portability between CPUs
 ========================
 
-   Even GNU systems will differ because of differences among CPU
+Even GNU systems will differ because of differences among CPU
 types--for example, difference in byte ordering and alignment
 requirements.  It is absolutely essential to handle these differences.
 However, don't make any effort to cater to the possibility that an
@@ -2481,7 +2479,7 @@ File: standards.info,  Node: System Functions,  Next: Internationalization,  Pre
 Calling System Functions
 ========================
 
-   C implementations differ substantially.  Standard C reduces but does
+C implementations differ substantially.  Standard C reduces but does
 not eliminate the incompatibilities; meanwhile, many GNU packages still
 support pre-standard compilers because this is not hard to do.  This
 chapter gives recommendations for how to use the more-or-less standard C
@@ -2596,8 +2594,8 @@ File: standards.info,  Node: Internationalization,  Next: Mmap,  Prev: System Fu
 Internationalization
 ====================
 
-   GNU has a library called GNU gettext that makes it easy to translate
-the messages in a program into various languages.  You should use this
+GNU has a library called GNU gettext that makes it easy to translate the
+messages in a program into various languages.  You should use this
 library in every program.  Use English for the messages as they appear
 in the program, and let gettext provide the way to translate them into
 other languages.
@@ -2676,7 +2674,7 @@ File: standards.info,  Node: Mmap,  Prev: Internationalization,  Up: Writing C
 Mmap
 ====
 
-   Don't assume that `mmap' either works on all files or fails for all
+Don't assume that `mmap' either works on all files or fails for all
 files.  It may work on some files and fail on others.
 
    The proper way to use `mmap' is to try it on the specific file for
@@ -2695,9 +2693,9 @@ File: standards.info,  Node: Documentation,  Next: Managing Releases,  Prev: Wri
 Documenting Programs
 ********************
 
-   A GNU program should ideally come with full free documentation,
-adequate for both reference and tutorial purposes.  If the package can
-be programmed or extended, the documentation should cover programming or
+A GNU program should ideally come with full free documentation, adequate
+for both reference and tutorial purposes.  If the package can be
+programmed or extended, the documentation should cover programming or
 extending it, as well as just using it.
 
 * Menu:
@@ -2720,7 +2718,7 @@ File: standards.info,  Node: GNU Manuals,  Next: Doc Strings and Manuals,  Up: D
 GNU Manuals
 ===========
 
-   The preferred document format for the GNU system is the Texinfo
+The preferred document format for the GNU system is the Texinfo
 formatting language.  Every GNU package should (ideally) have
 documentation in Texinfo both for reference and for learners.  Texinfo
 makes it possible to produce a good quality formatted book, using TeX,
@@ -2818,11 +2816,11 @@ File: standards.info,  Node: Doc Strings and Manuals,  Next: Manual Structure De
 Doc Strings and Manuals
 =======================
 
-   Some programming systems, such as Emacs, provide a documentation
-string for each function, command or variable.  You may be tempted to
-write a reference manual by compiling the documentation strings and
-writing a little additional text to go around them--but you must not do
-it.  That approach is a fundamental mistake.  The text of well-written
+Some programming systems, such as Emacs, provide a documentation string
+for each function, command or variable.  You may be tempted to write a
+reference manual by compiling the documentation strings and writing a
+little additional text to go around them--but you must not do it.  That
+approach is a fundamental mistake.  The text of well-written
 documentation strings will be entirely wrong for a manual.
 
    A documentation string needs to stand alone--when it appears on the
@@ -2848,10 +2846,10 @@ File: standards.info,  Node: Manual Structure Details,  Next: License for Manual
 Manual Structure Details
 ========================
 
-   The title page of the manual should state the version of the
-programs or packages documented in the manual.  The Top node of the
-manual should also contain this information.  If the manual is changing
-more frequently than or independent of the program, also state a version
+The title page of the manual should state the version of the programs or
+packages documented in the manual.  The Top node of the manual should
+also contain this information.  If the manual is changing more
+frequently than or independent of the program, also state a version
 number for the manual in both of these places.
 
    Each program documented in the manual should have a node named
@@ -2878,8 +2876,8 @@ File: standards.info,  Node: License for Manuals,  Next: Manual Credits,  Prev: 
 License for Manuals
 ===================
 
-   Please use the GNU Free Documentation License for all GNU manuals
-that are more than a few pages long.  Likewise for a collection of short
+Please use the GNU Free Documentation License for all GNU manuals that
+are more than a few pages long.  Likewise for a collection of short
 documents--you only need one copy of the GNU FDL for the whole
 collection.  For a single short document, you can use a very permissive
 non-copyleft license, to avoid taking up space with a long license.
@@ -2900,10 +2898,10 @@ File: standards.info,  Node: Manual Credits,  Next: Printed Manuals,  Prev: Lice
 Manual Credits
 ==============
 
-   Please credit the principal human writers of the manual as the
-authors, on the title page of the manual.  If a company sponsored the
-work, thank the company in a suitable place in the manual, but do not
-cite the company as an author.
+Please credit the principal human writers of the manual as the authors,
+on the title page of the manual.  If a company sponsored the work, thank
+the company in a suitable place in the manual, but do not cite the
+company as an author.
 
 
 File: standards.info,  Node: Printed Manuals,  Next: NEWS File,  Prev: Manual Credits,  Up: Documentation
@@ -2911,12 +2909,12 @@ File: standards.info,  Node: Printed Manuals,  Next: NEWS File,  Prev: Manual Cr
 Printed Manuals
 ===============
 
-   The FSF publishes some GNU manuals in printed form.  To encourage
-sales of these manuals, the on-line versions of the manual should
-mention at the very start that the printed manual is available and
-should point at information for getting it--for instance, with a link
-to the page <http://www.gnu.org/order/order.html>.  This should not be
-included in the printed manual, though, because there it is redundant.
+The FSF publishes some GNU manuals in printed form.  To encourage sales
+of these manuals, the on-line versions of the manual should mention at
+the very start that the printed manual is available and should point at
+information for getting it--for instance, with a link to the page
+<http://www.gnu.org/order/order.html>.  This should not be included in
+the printed manual, though, because there it is redundant.
 
    It is also useful to explain in the on-line forms of the manual how
 the user can print out the manual from the sources.
@@ -2927,11 +2925,11 @@ File: standards.info,  Node: NEWS File,  Next: Change Logs,  Prev: Printed Manua
 The NEWS File
 =============
 
-   In addition to its manual, the package should have a file named
-`NEWS' which contains a list of user-visible changes worth mentioning.
-In each new release, add items to the front of the file and identify
-the version they pertain to.  Don't discard old items; leave them in
-the file after the newer items.  This way, a user upgrading from any
+In addition to its manual, the package should have a file named `NEWS'
+which contains a list of user-visible changes worth mentioning.  In
+each new release, add items to the front of the file and identify the
+version they pertain to.  Don't discard old items; leave them in the
+file after the newer items.  This way, a user upgrading from any
 previous version can see what is new.
 
    If the `NEWS' file gets very long, move some of the older items into
@@ -2944,7 +2942,7 @@ File: standards.info,  Node: Change Logs,  Next: Man Pages,  Prev: NEWS File,  U
 Change Logs
 ===========
 
-   Keep a change log to describe all the changes made to program source
+Keep a change log to describe all the changes made to program source
 files.  The purpose of this is so that people investigating bugs in the
 future will know about the changes that might have introduced the bug.
 Often a new bug can be found by looking at what was recently changed.
@@ -2966,7 +2964,7 @@ File: standards.info,  Node: Change Log Concepts,  Next: Style of Change Logs,  
 Change Log Concepts
 -------------------
 
-   You can think of the change log as a conceptual "undo list" which
+You can think of the change log as a conceptual "undo list" which
 explains how earlier versions were different from the current version.
 People can see the current version; they don't need the change log to
 tell them what is in it.  What they want from a change log is a clear
@@ -3004,8 +3002,8 @@ File: standards.info,  Node: Style of Change Logs,  Next: Simple Changes,  Prev:
 Style of Change Logs
 --------------------
 
-   Here are some simple examples of change log entries, starting with
-the header line that says who made the change and when, followed by
+Here are some simple examples of change log entries, starting with the
+header line that says who made the change and when, followed by
 descriptions of specific changes.  (These examples are drawn from Emacs
 and GCC.)
 
@@ -3053,7 +3051,7 @@ File: standards.info,  Node: Simple Changes,  Next: Conditional Changes,  Prev: 
 Simple Changes
 --------------
 
-   Certain simple kinds of changes don't need much detail in the change
+Certain simple kinds of changes don't need much detail in the change
 log.
 
    When you change the calling sequence of a function in a simple
@@ -3082,10 +3080,10 @@ File: standards.info,  Node: Conditional Changes,  Next: Indicating the Part Cha
 Conditional Changes
 -------------------
 
-   C programs often contain compile-time `#if' conditionals.  Many
-changes are conditional; sometimes you add a new definition which is
-entirely contained in a conditional.  It is very useful to indicate in
-the change log the conditions for which the change applies.
+C programs often contain compile-time `#if' conditionals.  Many changes
+are conditional; sometimes you add a new definition which is entirely
+contained in a conditional.  It is very useful to indicate in the
+change log the conditions for which the change applies.
 
    Our convention for indicating conditional changes is to use square
 brackets around the name of the condition.
@@ -3118,7 +3116,7 @@ File: standards.info,  Node: Indicating the Part Changed,  Prev: Conditional Cha
 Indicating the Part Changed
 ---------------------------
 
-   Indicate the part of a function which changed by using angle brackets
+Indicate the part of a function which changed by using angle brackets
 enclosing an indication of what the changed part does.  Here is an entry
 for a change in the part of the function `sh-while-getopts' that deals
 with `sh' commands:
@@ -3132,7 +3130,7 @@ File: standards.info,  Node: Man Pages,  Next: Reading other Manuals,  Prev: Cha
 Man Pages
 =========
 
-   In the GNU project, man pages are secondary.  It is not necessary or
+In the GNU project, man pages are secondary.  It is not necessary or
 expected for every GNU program to have a man page, but some of them do.
 It's your choice whether to include a man page in your program.
 
@@ -3166,7 +3164,7 @@ File: standards.info,  Node: Reading other Manuals,  Prev: Man Pages,  Up: Docum
 Reading other Manuals
 =====================
 
-   There may be non-free books or documentation files that describe the
+There may be non-free books or documentation files that describe the
 program you are documenting.
 
    It is ok to use these documents for reference, just as the author of
@@ -3184,7 +3182,7 @@ File: standards.info,  Node: Managing Releases,  Next: References,  Prev: Docume
 The Release Process
 *******************
 
-   Making a release is more than just bundling up your source files in a
+Making a release is more than just bundling up your source files in a
 tar file and putting it up for FTP.  You should set up your software so
 that it can be configured to run on a variety of systems.  Your Makefile
 should conform to the GNU standards described below, and your directory
@@ -3204,7 +3202,7 @@ File: standards.info,  Node: Configuration,  Next: Makefile Conventions,  Up: Ma
 How Configuration Should Work
 =============================
 
-   Each GNU distribution should come with a shell script named
+Each GNU distribution should come with a shell script named
 `configure'.  This script is given arguments which describe the kind of
 machine and system you want to compile the program for.
 
@@ -3351,7 +3349,7 @@ File: standards.info,  Node: Makefile Conventions,  Next: Releases,  Prev: Confi
 Makefile Conventions
 ====================
 
-   This node describes conventions for writing the Makefiles for GNU
+This node describes conventions for writing the Makefiles for GNU
 programs.  Using Automake will help you write a Makefile that follows
 these conventions.
 
@@ -3371,7 +3369,7 @@ File: standards.info,  Node: Makefile Basics,  Next: Utilities in Makefiles,  Up
 General Conventions for Makefiles
 ---------------------------------
 
-   Every Makefile should contain this line:
+Every Makefile should contain this line:
 
      SHELL = /bin/sh
 
@@ -3451,7 +3449,7 @@ File: standards.info,  Node: Utilities in Makefiles,  Next: Command Variables,  
 Utilities in Makefiles
 ----------------------
 
-   Write the Makefile commands (and any shell scripts, such as
+Write the Makefile commands (and any shell scripts, such as
 `configure') to run in `sh', not in `csh'.  Don't use any special
 features of `ksh' or `bash'.
 
@@ -3506,7 +3504,7 @@ File: standards.info,  Node: Command Variables,  Next: Directory Variables,  Pre
 Variables for Specifying Commands
 ---------------------------------
 
-   Makefiles should provide variables for overriding certain commands,
+Makefiles should provide variables for overriding certain commands,
 options, and so on.
 
    In particular, you should run most utility programs via variables.
@@ -3586,8 +3584,8 @@ File: standards.info,  Node: Directory Variables,  Next: Standard Targets,  Prev
 Variables for Installation Directories
 --------------------------------------
 
-   Installation directories should always be named by variables, so it
-is easy to install in a nonstandard place.  The standard names for these
+Installation directories should always be named by variables, so it is
+easy to install in a nonstandard place.  The standard names for these
 variables are described below.  They are based on a standard filesystem
 layout; variants of it are used in SVR4, 4.4BSD, GNU/Linux, Ultrix v4,
 and other modern operating systems.
@@ -3834,8 +3832,7 @@ File: standards.info,  Node: Standard Targets,  Next: Install Command Categories
 Standard Targets for Users
 --------------------------
 
-   All GNU programs should have the following targets in their
-Makefiles:
+All GNU programs should have the following targets in their Makefiles:
 
 `all'
      Compile the entire program.  This should be the default target.
@@ -4092,9 +4089,9 @@ File: standards.info,  Node: Install Command Categories,  Prev: Standard Targets
 Install Command Categories
 --------------------------
 
-   When writing the `install' target, you must classify all the
-commands into three categories: normal ones, "pre-installation"
-commands and "post-installation" commands.
+When writing the `install' target, you must classify all the commands
+into three categories: normal ones, "pre-installation" commands and
+"post-installation" commands.
 
    Normal commands move files into their proper places, and set their
 modes.  They may not alter any files except the ones that come entirely
@@ -4198,7 +4195,7 @@ File: standards.info,  Node: Releases,  Prev: Makefile Conventions,  Up: Managin
 Making Releases
 ===============
 
-   Package the distribution of `Foo version 69.96' up in a gzipped tar
+Package the distribution of `Foo version 69.96' up in a gzipped tar
 file with the name `foo-69.96.tar.gz'.  It should unpack into a
 subdirectory named `foo-69.96'.
 
@@ -4280,7 +4277,7 @@ File: standards.info,  Node: References,  Next: Copying This Manual,  Prev: Mana
 References to Non-Free Software and Documentation
 *************************************************
 
-   A GNU program should not recommend use of any non-free program.  We
+A GNU program should not recommend use of any non-free program.  We
 can't stop some people from writing proprietary programs, or stop other
 people from using them, but we can and should avoid helping to
 advertise them to new potential customers.  Proprietary software is a
@@ -4678,7 +4675,7 @@ GNU Free Documentation License
 ADDENDUM: How to use this License for your documents
 ====================================================
 
-   To use this License in a document you have written, include a copy of
+To use this License in a document you have written, include a copy of
 the License in the document and put the following copyright and license
 notices just after the title page:
 
@@ -4830,67 +4827,67 @@ Index
 
 Tag Table:
 Node: Top689
-Node: Preface1392
-Node: Legal Issues3611
-Node: Reading Non-Free Code4074
-Node: Contributions5797
-Node: Trademarks7946
-Node: Design Advice9004
-Node: Source Language9587
-Node: Compatibility11594
-Node: Using Extensions13217
-Node: Standard C14788
-Node: Conditional Compilation17186
-Node: Program Behavior18480
-Node: Semantics19398
-Node: Libraries24086
-Node: Errors25326
-Node: User Interfaces27102
-Node: Graphical Interfaces28702
-Node: Command-Line Interfaces29732
-Node: Option Table35798
-Node: Memory Usage50802
-Node: File Usage51822
-Node: Writing C52565
-Node: Formatting53414
-Node: Comments57472
-Node: Syntactic Conventions60770
-Node: Names64177
-Node: System Portability66381
-Node: CPU Portability68761
-Node: System Functions72012
-Node: Internationalization77214
-Node: Mmap80362
-Node: Documentation81067
-Node: GNU Manuals82171
-Node: Doc Strings and Manuals87223
-Node: Manual Structure Details88771
-Node: License for Manuals90184
-Node: Manual Credits91153
-Node: Printed Manuals91541
-Node: NEWS File92222
-Node: Change Logs92894
-Node: Change Log Concepts93643
-Node: Style of Change Logs95498
-Node: Simple Changes97544
-Node: Conditional Changes98779
-Node: Indicating the Part Changed100192
-Node: Man Pages100710
-Node: Reading other Manuals102329
-Node: Managing Releases103113
-Node: Configuration103875
-Node: Makefile Conventions110775
-Node: Makefile Basics111576
-Node: Utilities in Makefiles114741
-Node: Command Variables116877
-Node: Directory Variables120445
-Node: Standard Targets131330
-Ref: Standard Targets-Footnote-1142581
-Node: Install Command Categories142681
-Node: Releases147254
-Node: References151337
-Node: Copying This Manual153621
-Node: GNU Free Documentation License153835
-Node: Index173521
+Node: Preface1389
+Node: Legal Issues3605
+Node: Reading Non-Free Code4065
+Node: Contributions5785
+Node: Trademarks7931
+Node: Design Advice8986
+Node: Source Language9566
+Node: Compatibility11570
+Node: Using Extensions13190
+Node: Standard C14758
+Node: Conditional Compilation17153
+Node: Program Behavior18444
+Node: Semantics19359
+Node: Libraries24044
+Node: Errors25281
+Node: User Interfaces27054
+Node: Graphical Interfaces28651
+Node: Command-Line Interfaces29678
+Node: Option Table35741
+Node: Memory Usage50742
+Node: File Usage51759
+Node: Writing C52499
+Node: Formatting53345
+Node: Comments57400
+Node: Syntactic Conventions60694
+Node: Names64098
+Node: System Portability66299
+Node: CPU Portability68676
+Node: System Functions71924
+Node: Internationalization77123
+Node: Mmap80268
+Node: Documentation80970
+Node: GNU Manuals82071
+Node: Doc Strings and Manuals87120
+Node: Manual Structure Details88665
+Node: License for Manuals90075
+Node: Manual Credits91041
+Node: Printed Manuals91426
+Node: NEWS File92104
+Node: Change Logs92774
+Node: Change Log Concepts93520
+Node: Style of Change Logs95372
+Node: Simple Changes97415
+Node: Conditional Changes98647
+Node: Indicating the Part Changed100057
+Node: Man Pages100572
+Node: Reading other Manuals102188
+Node: Managing Releases102969
+Node: Configuration103728
+Node: Makefile Conventions110625
+Node: Makefile Basics111423
+Node: Utilities in Makefiles114585
+Node: Command Variables116718
+Node: Directory Variables120283
+Node: Standard Targets131165
+Ref: Standard Targets-Footnote-1142413
+Node: Install Command Categories142513
+Node: Releases147083
+Node: References151163
+Node: Copying This Manual153444
+Node: GNU Free Documentation License153658
+Node: Index173341
 
 End Tag Table
