@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.40 1997/07/20 19:40:25 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.41 1997/07/20 19:48:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -205,8 +205,10 @@ _C_LABEL(kernel_text):
  * This code is copied the user's stack for returning from signal handlers
  * (see sendsig() and sigreturn()). We have to compute the address
  * of the sigcontext struct for the sigreturn call.
+ *
+ * NB: we cannot profile sigcode(), it executes from userspace.
  */
-LEAF(sigcode)
+NLEAF(sigcode)
 	addu	a0, sp, 16		# address of sigcontext
 	li	v0, SYS_sigreturn	# sigreturn(scp)
 	syscall

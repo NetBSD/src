@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.39 1997/07/07 03:54:35 jonathan Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.40 1997/07/20 19:48:08 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1935,11 +1935,22 @@ END(mips3_InvalidateDCache)
  *
  * mips3_VCED --
  *
- *	Handle virtual coherency exceptions
+ *	Handle virtual coherency exceptions.
+ *	Called directly from the mips3 execption-table  code.
+ *	only k0, k1 are avaiable on entry
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Remaps the conflicting address as uncached and returns
+ *	from the execption.
+ *
+ *	NB: cannot be profiled, all registers are user registers on entry.
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips3_VCED)
+NLEAF(mips3_VCED)
 ALEAF(mips3_VCEI)	/* XXXX */
 	.set	noat
 	move	k0, AT
@@ -2135,6 +2146,7 @@ LEAF(mips3_switch_exit)
 	lw	a0, kernel_map
 	la	ra, sw1				# goto cpu_switch()
 	j	kmem_free			# free exiting USPACE
+	nop					# XXX schedule better
 END(mips3_switch_exit)
 
 /*
@@ -2155,8 +2167,11 @@ END(mips3_switch_exit)
  * entries to map the u-area, depending upon whether the u-area
  * begins on an even or odd page.  Also, any current mapping for the u-area
  * address space needs to be flushed as well.
+ *
+ * NB: cannot be profiled due to weird argument-assing convention.
+ *     mcount would trash v0, t0, t1.
  */
-LEAF(mips3_cpu_switch_resume)
+NLEAF(mips3_cpu_switch_resume)
 	or	v0, v0, UADDR			# v0 = first HI entry
 	mtc0	zero, MIPS_COP_0_TLB_INDEX	# set the index register
 	mtc0	v0, MIPS_COP_0_TLB_HI		# init high entry
