@@ -1,8 +1,8 @@
-/*	$NetBSD: biosmem.S,v 1.4 1997/08/14 15:22:01 drochner Exp $	*/
+/*	$NetBSD: getextmemx.c,v 1.1 1997/08/14 15:22:00 drochner Exp $	*/
 
 /*
- * Copyright (c) 1996
- * 	Perry E. Metzger.  All rights reserved.
+ * Copyright (c) 1997
+ *	Matthias Drochner.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,10 +13,10 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgements:
+ *    must display the following acknowledgement:
  *	This product includes software developed for the NetBSD Project
- *	by Perry E. Metzger.
- * 4. The names of the authors may not be used to endorse or promote products
+ *	by Matthias Drochner.
+ * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -31,69 +31,36 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-	
 
-#include <machine/asm.h>
+/* Try 2 more fancy BIOS calls to get the size of extended
+ memory besides the classical int15/88, take maximum.
+ needs lowlevel parts from biosmemx.S and biosmem.S
+ */
 
-#define	data32	.byte 0x66
+#include <lib/libsa/stand.h>
+#include "libi386.h"
 
-	.text
+extern int getextmem2 __P((int*));
+extern int getmementry __P((int, int*));
 
-/* get mem below 1M, in kByte */
+int getextmemx()
+{
+	int buf[5], i;
+	int extmem = getextmem1();
 
-ENTRY(getbasemem)
-	pushl	%ebp
-	movl	%esp,%ebp
-	pushl	%ebx
-	push	%esi
-	push	%edi
+	if(!getextmem2(buf) && buf[0] <= 15 * 1024) {
+		int help = buf[0];
+		if(help == 15 * 1024)
+			help += buf[1] * 64;
+		if(extmem < help)
+			extmem = help;
+	}
 
-	call	_C_LABEL(prot_to_real)
+	for(i = 0; (i = getmementry(i, buf)) != 0;) {
+		if((buf[4] == 1 && buf[0] == 0x100000)
+		   && extmem < buf[2] / 1024)
+			extmem = buf[2] / 1024;
+	}
 
-	int	$0x12
-	# zero-extend 16-bit result to 32 bits.
-	data32
-	movl	$0, %ebx
-	mov	%eax,%ebx		# !!! at run time, it's mov %ax,%bx
-
-	data32
-	call	_C_LABEL(real_to_prot)
-
-	movl	%ebx, %eax
-
-	pop	%edi
-	pop	%esi
-	popl	%ebx
-	popl	%ebp
-	ret
-
-/* get mem above 1M, in kByte */
-
-ENTRY(getextmem1)
-	pushl	%ebp
-	movl	%esp,%ebp
-	pushl	%ebx
-	push	%esi
-	push	%edi
-
-	call	_C_LABEL(prot_to_real)
-
-	movb	$0x88,%ah
-	int	$0x15
-
-	# zero-extend 16-bit result to 32 bits.
-	data32
-	movl	$0, %ebx
-	mov	%eax,%ebx		# !!! at run time, it's mov %ax,%bx
-
-	data32
-	call	_C_LABEL(real_to_prot)
-
-	movl	%ebx, %eax
-
-	pop	%edi
-	pop	%esi
-	popl	%ebx
-	popl	%ebp
-	ret
-
+	return(extmem);
+}
