@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.17 1999/12/18 22:47:11 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.18 2000/03/27 08:27:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@ static void		usb_block_freemem  __P((usb_dma_block_t *));
 
 static LIST_HEAD(, usb_dma_block) usb_blk_freelist = 
 	LIST_HEAD_INITIALIZER(usb_blk_freelist);
+int usb_blk_nfree = 0;
 /* XXX should have different free list for different tags (for speed) */
 static LIST_HEAD(, usb_frag_dma) usb_frag_freelist =
 	LIST_HEAD_INITIALIZER(usb_frag_freelist);
@@ -117,6 +118,7 @@ usb_block_allocmem(tag, size, align, dmap)
 	for (p = LIST_FIRST(&usb_blk_freelist); p; p = LIST_NEXT(p, next)) {
 		if (p->tag == tag && p->size >= size && p->align >= align) {
 			LIST_REMOVE(p, next);
+			usb_blk_nfree--;
 			splx(s);
 			*dmap = p;
 			DPRINTFN(6,("usb_block_allocmem: free list size=%lu\n",
@@ -206,6 +208,7 @@ usb_block_freemem(p)
 	DPRINTFN(6, ("usb_block_freemem: size=%lu\n", (u_long)p->size));
 	s = splusb();
 	LIST_INSERT_HEAD(&usb_blk_freelist, p, next);
+	usb_blk_nfree++;
 	splx(s);
 }
 
