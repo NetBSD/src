@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_hdr.h,v 1.16 1995/04/21 05:10:02 mycroft Exp $	*/
+/*	$NetBSD: pcvt_hdr.h,v 1.17 1995/05/05 22:28:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -115,6 +115,8 @@
 
 #if PCVT_NETBSD > 9
 #include "dev/cons.h"
+#include "dev/ic/mc146818.h"
+#include "i386/isa/nvram.h"
 #else
 #include "i386/i386/cons.h"
 #endif
@@ -641,16 +643,6 @@ in the config file"
 #define KB_UNKNOWN	0	/* unknown keyboard type */
 #define KB_AT		1	/* AT (84 keys) Keyboard */
 #define KB_MFII		2	/* MF II (101/102 keys) Keyboard */
-
-/*---------------------------------------------------------------------------*
- *	CMOS ram access to get the "Equipment Byte"
- *---------------------------------------------------------------------------*/
-
-#define RTC_EQUIPMENT	0x14	/* equipment byte in cmos ram	*/
-#define EQ_EGAVGA	0	/* reserved (= ega/vga)		*/
-#define EQ_40COLOR	1	/* display = 40 col color	*/
-#define EQ_80COLOR	2	/* display = 80 col color	*/
-#define EQ_80MONO	3	/* display = 80 col mono	*/
 
 /*---------------------------------------------------------------------------*
  *	VT220 -> internal color conversion table fields
