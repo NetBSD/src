@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.32 2004/06/25 14:35:29 wiz Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.33 2005/01/19 20:46:16 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.32 2004/06/25 14:35:29 wiz Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.33 2005/01/19 20:46:16 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,6 @@ static	int	getnum(const char *, const char *, int, int);
 static	void	getsb(struct fs *, const char *);
 static	int	openpartition(const char *, int, char *, size_t);
 static	void	usage(void);
-int		main(int, char *[]);
 
 int
 main(int argc, char *argv[])
