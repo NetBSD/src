@@ -1,7 +1,7 @@
-/*	$NetBSD: homedir.c,v 1.5 1998/07/27 00:52:00 mycroft Exp $	*/
+/*	$NetBSD: homedir.c,v 1.6 1998/08/08 22:33:36 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -59,37 +59,24 @@
  */
 static FILE *passwd_fp = NULL;
 static char pw_name[16], pw_dir[128];
+static int cur_pwtab_num = 0, max_pwtab_num = 0;
 static int hlfsd_diskspace(char *);
 static int hlfsd_stat(char *, struct stat *);
-static int cur_pwtab_num = 0, max_pwtab_num = 0;
 static int passwd_line = 0;
 static int plt_reset(void);
 static struct passwd passwd_ent;
 static uid2home_t *lastchild;
 static uid2home_t *pwtab;
 static void delay(uid2home_t *, int);
-static void plt_init(void);
 static void table_add(int, const char *, const char *);
 
 /* GLOBAL FUNCTIONS */
 char *homeof(char *username);
 int uidof(char *username);
 
-/*
- * GLOBALS:
- */
+/* GLOBALS VARIABLES */
 char mboxfile[MAXPATHLEN];
 username2uid_t *untab;		/* user name table */
-
-
-/*
- * read and hash the passwd file or NIS map
- */
-void
-init_homedir(void)
-{
-  plt_init();
-}
 
 
 /*
@@ -103,6 +90,8 @@ homedir(int userid)
   uid2home_t *found;
   char *homename;
   struct stat homestat;
+
+  clock_valid = 0;		/* invalidate logging clock */
 
   if ((int) userid == 0) {	/* force superuser to use "/" as home */
     sprintf(linkval, "/%s", home_subdir);
@@ -161,7 +150,6 @@ homedir(int userid)
 
     if (found->child)
       delay(found, 5);		/* wait a bit if in progress */
-
     if (found->child) {		/* better safe than sorry - maybe */
       found->last_status = 1;
       return alt_spooldir;
@@ -170,9 +158,7 @@ homedir(int userid)
       found->last_status = 1;
       return alt_spooldir;
     }
-
-    if (found->child) {
-      /* parent */
+    if (found->child) {		/* PARENT */
 #ifdef DEBUG
       if (lastchild)
 	plog(XLOG_INFO, "cache spill uid = %d, pid = %d, home = %s",
@@ -198,6 +184,7 @@ homedir(int userid)
    * to the parent upon SIGCHLD in interlock().
    *
    */
+  mypid = getpid();		/* for logging routines */
   if (seteuid(userid) < 0) {
     plog(XLOG_WARNING, "could not seteuid to %d: %m", userid);
     return linkval;
@@ -242,6 +229,8 @@ hlfsd_diskspace(char *path)
 {
   char buf[MAXPATHLEN];
   int fd, len;
+
+  clock_valid = 0;		/* invalidate logging clock */
 
   sprintf(buf, "%s/._hlfstmp_%lu", path, (long) getpid());
   if ((fd = open(buf, O_RDWR | O_CREAT, 0600)) < 0) {
@@ -470,7 +459,14 @@ static void
 hlfsd_endpwent(void)
 {
   if (!passwdfile) {
-    endpwent();
+    /*
+     * Don't actually run this because we will be making more passwd calls
+     * afterwards.  On Solaris 2.5.1, making getpwent() calls after calling
+     * endpwent() results in a memory leak! (and no, even Purify didn't
+     * detect it...)
+     *
+     endpwent();
+     */
     return;
   }
 
@@ -490,6 +486,8 @@ hlfsd_getpwent(void)
   if (!passwdfile) {
     return getpwent();
   }
+
+  clock_valid = 0;		/* invalidate logging clock */
 
   /* return here to read another entry */
 readent:
@@ -547,7 +545,10 @@ readent:
 }
 
 
-static void
+/*
+ * read and hash the passwd file or NIS map
+ */
+void
 plt_init(void)
 {
   struct passwd *pent_p;
@@ -581,6 +582,8 @@ plt_reset(void)
 {
   int i;
 
+  clock_valid = 0;		/* invalidate logging clock */
+
   hlfsd_setpwent();
   if (hlfsd_getpwent() == (struct passwd *) NULL) {
     hlfsd_endpwent();
@@ -592,15 +595,17 @@ plt_reset(void)
 
   if (max_pwtab_num > 0)	/* was used already. cleanup old table */
     for (i = 0; i < cur_pwtab_num; ++i) {
-      if (pwtab[i].home)
-	free(pwtab[i].home);
-      pwtab[i].home = (char *) NULL;
+      if (pwtab[i].home) {
+	XFREE(pwtab[i].home);
+	pwtab[i].home = (char *) NULL;
+      }
       pwtab[i].uid = INVALIDID;	/* not a valid uid (yet...) */
       pwtab[i].child = (pid_t) 0;
       pwtab[i].uname = (char *) NULL;	/* only a ptr to untab[i].username */
-      if (untab[i].username)
-	free(untab[i].username);
-      untab[i].username = (char *) NULL;
+      if (untab[i].username) {
+	XFREE(untab[i].username);
+	untab[i].username = (char *) NULL;
+      }
       untab[i].uid = INVALIDID;	/* invalid uid */
       untab[i].home = (char *) NULL;	/* only a ptr to pwtab[i].home  */
     }
@@ -620,23 +625,33 @@ table_add(int u, const char *h, const char *n)
 {
   int i;
 
+  clock_valid = 0;		/* invalidate logging clock */
+
   if (max_pwtab_num <= 0) {	/* was never initialized */
     max_pwtab_num = 1;
     pwtab = (uid2home_t *) xmalloc(max_pwtab_num *
 				   sizeof(uid2home_t));
+    memset((char *) &pwtab[0], 0, max_pwtab_num * sizeof(uid2home_t));
     untab = (username2uid_t *) xmalloc(max_pwtab_num *
 				       sizeof(username2uid_t));
+    memset((char *) &untab[0], 0, max_pwtab_num * sizeof(username2uid_t));
   }
 
   /* check if need more space. */
   if (cur_pwtab_num + 1 > max_pwtab_num) {
     /* need more space in table */
     max_pwtab_num *= 2;
+    plog(XLOG_INFO, "reallocating table spaces to %d entries", max_pwtab_num);
     pwtab = (uid2home_t *) xrealloc(pwtab,
 				    sizeof(uid2home_t) * max_pwtab_num);
     untab = (username2uid_t *) xrealloc(untab,
 					sizeof(username2uid_t) *
 					max_pwtab_num);
+    /* zero out newly added entries */
+    for (i=cur_pwtab_num; i<max_pwtab_num; ++i) {
+      memset((char *) &pwtab[i], 0, sizeof(uid2home_t));
+      memset((char *) &untab[i], 0, sizeof(username2uid_t));
+    }
   }
 
   /* do NOT add duplicate entries (this is an O(N^2) algorithm... */
@@ -650,22 +665,22 @@ table_add(int u, const char *h, const char *n)
     }
 
   /* add new password entry */
-  pwtab[cur_pwtab_num].home = xmalloc((strlen(h) + 1) * sizeof(char));
-  strcpy(pwtab[cur_pwtab_num].home, h);
+  pwtab[cur_pwtab_num].home = strdup(h);
   pwtab[cur_pwtab_num].child = 0;
   pwtab[cur_pwtab_num].last_access_time = 0;
   pwtab[cur_pwtab_num].last_status = 0;	/* assume best: used homedir */
   pwtab[cur_pwtab_num].uid = u;
 
   /* add new userhome entry */
-  untab[cur_pwtab_num].username = xmalloc((strlen(n) + 1) * sizeof(char));
-  strcpy(untab[cur_pwtab_num].username, n);
+  untab[cur_pwtab_num].username = strdup(n);
 
   /* just a second pointer */
   pwtab[cur_pwtab_num].uname = untab[cur_pwtab_num].username;
   untab[cur_pwtab_num].uid = u;
   untab[cur_pwtab_num].home = pwtab[cur_pwtab_num].home;	/* a ptr */
-  ++cur_pwtab_num;		/* increment counter */
+
+  /* increment counter */
+  ++cur_pwtab_num;
 }
 
 
@@ -712,9 +727,26 @@ void
 plt_print(int signum)
 {
   FILE *dumpfile;
+  int dumpfd;
+  char dumptmp[] = "/usr/tmp/hlfsd.dump.XXXXXX";
   int i;
 
-  if ((dumpfile = fopen("/tmp/hlfsdump", "a")) != NULL) {
+#ifdef HAVE_MKSTEMP
+  dumpfd = mkstemp(dumptmp);
+#else /* not HAVE_MKSTEMP */
+  mktemp(dumptmp);
+  if (!dumptmp) {
+    plot(XLOG_ERROR, "cannot create temporary dump file");
+    return;
+  }
+  dumpfd = open(dumptmp, O_RDONLY);
+#endif /* not HAVE_MKSTEMP */
+  if (dumpfd < 0) {
+    plog(XLOG_ERROR, "cannot open temporary dump file");
+    return;
+  }
+  if ((dumpfile = fdopen(dumpfd, "a")) != NULL) {
+    plog(XLOG_INFO, "dumping internal state to file %s", dumptmp);
     fprintf(dumpfile, "\n\nNew plt_dump():\n");
     for (i = 0; i < cur_pwtab_num; ++i)
       fprintf(dumpfile,
@@ -730,6 +762,7 @@ plt_print(int signum)
     for (i = 0; i < cur_pwtab_num; ++i)
       fprintf(dumpfile, "%4d : \"%s\" %4lu \"%s\"\n", i,
 	      untab[i].username, (long) untab[i].uid, untab[i].home);
+    close(dumpfd);
     fclose(dumpfile);
   }
 }

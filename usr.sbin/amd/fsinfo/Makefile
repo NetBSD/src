@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1998/04/09 00:32:39 tv Exp $
+#	$NetBSD: Makefile,v 1.14 1998/08/08 22:33:34 christos Exp $
 
 PROG= fsinfo
 SRCS=	fsi_gram.c fsi_lex.c wr_fstab.c wr_exportfs.c wr_dumpset.c wr_bparam.c \

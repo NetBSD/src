@@ -1,7 +1,7 @@
-/*	$NetBSD: info_file.c,v 1.6 1997/10/26 00:24:56 christos Exp $	*/
+/*	$NetBSD: info_file.c,v 1.7 1998/08/08 22:33:29 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,7 +54,7 @@
 #include <am_defs.h>
 #include <amd.h>
 
-#define	MAX_LINE_LEN	2048
+#define	MAX_LINE_LEN	1500
 
 /* forward declarations */
 int file_init(mnt_map *m, char *map, time_t *tp);
@@ -132,7 +132,7 @@ search_or_reload_file(FILE * fp, char *map, char *key, char **val, mnt_map *m, v
     /*
      * Find start of key
      */
-    for (kp = key_val; *kp && isascii(*kp) && isspace(*kp); kp++) ;
+    for (kp = key_val; *kp && isascii(*kp) && isspace((int)*kp); kp++) ;
 
     /*
      * Ignore blank lines
@@ -143,7 +143,7 @@ search_or_reload_file(FILE * fp, char *map, char *key, char **val, mnt_map *m, v
     /*
      * Find end of key
      */
-    for (cp = kp; *cp && (!isascii(*cp) || !isspace(*cp)); cp++) ;
+    for (cp = kp; *cp && (!isascii(*cp) || !isspace((int)*cp)); cp++) ;
 
     /*
      * Check whether key matches
@@ -152,7 +152,7 @@ search_or_reload_file(FILE * fp, char *map, char *key, char **val, mnt_map *m, v
       *cp++ = '\0';
 
     if (fn || (*key == *kp && STREQ(key, kp))) {
-      while (*cp && isascii(*cp) && isspace(*cp))
+      while (*cp && isascii(*cp) && isspace((int)*cp))
 	cp++;
       if (*cp) {
 	/*

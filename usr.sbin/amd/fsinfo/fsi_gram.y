@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -43,7 +43,7 @@
  */
 
 %{
-/*	$NetBSD: fsi_gram.y,v 1.5 1997/10/26 00:25:38 christos Exp $	*/
+/*	$NetBSD: fsi_gram.y,v 1.6 1998/08/08 22:33:34 christos Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: rpc_fwd.c,v 1.6 1997/10/26 00:25:21 christos Exp $	*/
+/*	$NetBSD: rpc_fwd.c,v 1.7 1998/08/08 22:33:32 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -149,7 +149,7 @@ static void
 fwd_free(rpc_forward *p)
 {
   rem_que(&p->rf_q);
-  free((voidp) p);
+  XFREE(p);
 }
 
 
@@ -166,18 +166,24 @@ fwd_init(void)
 #ifdef HAVE_TRANSPORT_TYPE_TLI
   /*
    * Create ping TLI socket (/dev/tcp and /dev/ticlts did not work)
+   * (HPUX-11 does not like using O_NDELAY in flags)
    */
-  fwd_sock = t_open("/dev/udp", O_RDWR|O_NDELAY|O_NONBLOCK, 0);
+  fwd_sock = t_open("/dev/udp", O_RDWR|O_NONBLOCK, 0);
+  if (fwd_sock < 0) {
+    plog(XLOG_ERROR, "unable to create RPC forwarding TLI socket: %s",
+	 t_errlist[t_errno]);
+    return errno;
+  }
 #else /* not HAVE_TRANSPORT_TYPE_TLI */
   /*
    * Create ping socket
    */
   fwd_sock = socket(AF_INET, SOCK_DGRAM, 0);
-#endif /* not HAVE_TRANSPORT_TYPE_TLI */
   if (fwd_sock < 0) {
-    plog(XLOG_ERROR, "Unable to create RPC forwarding socket: %m");
+    plog(XLOG_ERROR, "unable to create RPC forwarding socket: %m");
     return errno;
   }
+#endif /* not HAVE_TRANSPORT_TYPE_TLI */
 
   /*
    * Some things we talk to require a priv port - so make one here
@@ -363,7 +369,7 @@ fwd_reply(void)
   int rc;
   rpc_forward *p;
   struct sockaddr_in src_addr;
-  int src_addr_len;
+  RECVFROM_FROMLEN_TYPE src_addr_len;
 #ifdef HAVE_TRANSPORT_TYPE_TLI
   struct t_unitdata ud;
   int flags = 0;
@@ -394,8 +400,12 @@ again:
     plog(XLOG_ERROR,"fwd_reply failed: t_errno=%d, errno=%d, flags=%d",t_errno,errno, flags);
   }
 #else /* not HAVE_TRANSPORT_TYPE_TLI */
-  rc = recvfrom(fwd_sock, (char *) pkt, len, 0,
-		(struct sockaddr *) &src_addr, &src_addr_len);
+  rc = recvfrom(fwd_sock,
+		(char *) pkt,
+		len,
+		0,
+		(struct sockaddr *) &src_addr,
+		&src_addr_len);
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
 
   /*

@@ -1,7 +1,7 @@
-/*	$NetBSD: fsi_analyze.c,v 1.5 1997/10/26 00:25:36 christos Exp $	*/
+/*	$NetBSD: fsi_analyze.c,v 1.6 1998/08/08 22:33:34 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -154,7 +154,7 @@ find_volname(char *nn)
       *q = '\0';
   } while (!de && q);
 
-  free(p);
+  XFREE(p);
   return de;
 }
 
@@ -229,7 +229,7 @@ analyze_dkmount_tree(qelem *q, fsi_mount *parent, disk_fs *dk)
       else if (STREQ(mp->m_name, "default"))
 	lwarning(mp->m_ioloc, "sub-directory of %s is named \"default\"", parent->m_name);
       log("Changing name %s to %s", mp->m_name, n);
-      free(mp->m_name);
+      XFREE(mp->m_name);
       mp->m_name = strdup(n);
     }
 
@@ -287,7 +287,7 @@ analyze_dkmounts(disk_fs *dk, qelem *q)
     if (ISSET(mp2->m_mask, DM_VOLNAME)) {
       char nbuf[1024];
       compute_automount_point(nbuf, dk->d_host, mp2->m_volname);
-      free(mp2->m_name);
+      XFREE(mp2->m_name);
       mp2->m_name = strdup(nbuf);
       log("%s:%s has default mount on %s", dk->d_host->h_hostname, dk->d_dev, mp2->m_name);
     } else {
@@ -418,11 +418,8 @@ fixup_required_mount_info(fsmount *fp, dict_ent *de)
     } else {
       dict_data *dd;
       fsi_mount *mp = 0;
-
-      ITER(dd, dict_data, &de->de_q) {
-	mp = (fsi_mount *) dd->dd_data;
-	break;
-      }
+      dd = AM_FIRST(dict_data, &de->de_q);
+      mp = (fsi_mount *) dd->dd_data;
       if (!mp)
 	abort();
       fp->f_ref = mp;
@@ -541,7 +538,7 @@ analyze_mounts(host *hp)
 	if (p)
 	  *p = 0;
       } while (de && p);
-    free(nn);
+    XFREE(nn);
 
     if (!found) {
       lerror(fp->f_ioloc, "volname %s unknown", fp->f_volname);
@@ -637,7 +634,7 @@ analyze_automount_tree(qelem *q, char *pref, int lvl)
       if (ap->a_name[1] && strchr(ap->a_name + 1, '/'))
 	lerror(ap->a_ioloc, "not allowed '/' in a directory name");
     sprintf(nname, "%s/%s", pref, ap->a_name);
-    free(ap->a_name);
+    XFREE(ap->a_name);
     ap->a_name = strdup(nname[1] == '/' ? nname + 1 : nname);
     log("automount point %s:", ap->a_name);
     show_new("ana-automount");
