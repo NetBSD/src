@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.44 1998/04/11 19:30:56 is Exp $	*/
+/*	$NetBSD: ser.c,v 1.45 1998/06/26 17:50:20 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -319,7 +319,7 @@ seropen(dev, flag, mode, p)
 		ttsetwater(tp);
 
 		s2 = splser();
-		(void)sermctl(dev, TIOCM_DTR | TIOCM_RTS, DMSET);
+		(void)sermctl(dev, TIOCM_DTR, DMSET);
 		/* clear input ring */
 		sbrpt = sbwpt = serbuf;
 		sbcnt = 0;
@@ -777,9 +777,11 @@ serparam(tp, t)
 		 * (re)enable DTR
 		 * and set baud rate. (8 bit mode)
 		 */
-		(void)sermctl(tp->t_dev, TIOCM_DTR | TIOCM_RTS, DMSET);
+		(void)sermctl(tp->t_dev, TIOCM_DTR, DMSET);
 		custom.serper = (0 << 15) | ospeed;
 	}
+	(void)(*linesw[tp->t_line].l_modem)(tp, ISDCD(last_ciab_pra));
+	
 	return(0);
 }
 
