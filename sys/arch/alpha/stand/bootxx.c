@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.3 1996/06/14 20:04:45 cgd Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.4 1997/01/18 00:28:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -38,6 +38,7 @@ struct bbinfoloc desc = {
 	0xbabefacedeadbeef,
 	(u_int64_t)&start,
 	(u_int64_t)&_end,
+	{ 0, },
 	0xdeadbeeffacebabe
 };
 
