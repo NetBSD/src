@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.18 2002/09/06 03:12:07 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.19 2002/09/06 12:00:41 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -38,7 +38,7 @@
 #include "debug.h"
 #include "rtld.h"
 
-caddr_t _rtld_bind_powerpc __P((Obj_Entry *, Elf_Word));
+caddr_t _rtld_bind_powerpc __P((const Obj_Entry *, Elf_Word));
 void _rtld_powerpc_pltcall __P((Elf_Word));
 void _rtld_powerpc_pltresolve __P((Elf_Word, Elf_Word));
 
@@ -51,7 +51,7 @@ void _rtld_powerpc_pltresolve __P((Elf_Word, Elf_Word));
  */
 caddr_t
 _rtld_bind_powerpc(obj, reloff)
-	Obj_Entry *obj;
+	const Obj_Entry *obj;
 	Elf_Word reloff;
 {
 	const Elf_Rela *rela;
