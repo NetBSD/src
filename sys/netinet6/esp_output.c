@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.14 2002/08/09 06:38:14 itojun Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.15 2002/08/09 07:01:21 itojun Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.14 2002/08/09 06:38:14 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.15 2002/08/09 07:01:21 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -144,12 +144,12 @@ esp_hdrsiz(isr)
 	 *	sizeof(struct newesp) > sizeof(struct esp).
 	 *	esp_max_ivlen() = max ivlen for CBC mode
 	 *	esp_max_padbound - 1 =
-	 *	   (maximum padding length without random padding length)
+	 *	   maximum padding length without random padding length
 	 *	2 = (Pad Length field) + (Next Header field).
-	 *	16 = maximum ICV we support.
+	 *	AH_MAXSUMSIZE = maximum ICV we support.
 	 */
 	return sizeof(struct newesp) + esp_max_ivlen() +
-	    esp_max_padbound() - 1 + 2 + 16;
+	    esp_max_padbound() - 1 + 2 + AH_MAXSUMSIZE;
 }
 
 /*
