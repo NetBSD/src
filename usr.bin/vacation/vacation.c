@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.26 2004/04/03 23:57:32 christos Exp $	*/
+/*	$NetBSD: vacation.c,v 1.27 2004/04/04 01:19:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.26 2004/04/03 23:57:32 christos Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.27 2004/04/04 01:19:35 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -95,11 +95,12 @@ static int fflag = 0;
 #define	FROM_FROM		1
 #define	RETURN_PATH_FROM	2
 #define	SENDER_FROM		4
+static int debug = 0;
 
 int main(int, char **);
 int junkmail(void);
 int nsearch(const char *, const char *);
-void readheaders(void);
+int readheaders(void);
 int recent(void);
 void getfrom(char *);
 void sendmessage(const char *);
@@ -113,13 +114,13 @@ main(int argc, char **argv)
 	struct passwd *pw;
 	alias_t *cur;
 	time_t interval;
-	int ch, iflag;
+	int ch, iflag, rv;
 	char *p;
 
 	opterr = iflag = 0;
 	interval = -1;
 	openlog(getprogname(), 0, LOG_USER);
-	while ((ch = getopt(argc, argv, "a:f:Iir:t:")) != -1)
+	while ((ch = getopt(argc, argv, "a:df:Iir:t:")) != -1)
 		switch((char)ch) {
 		case 'a':			/* alias */
 			if (!(cur = (alias_t *)malloc((size_t)sizeof(alias_t))))
@@ -127,6 +128,9 @@ main(int argc, char **argv)
 			cur->name = optarg;
 			cur->next = names;
 			names = cur;
+			break;
+		case 'd':
+			debug++;
 			break;
 		case 'f':
 			for (p = optarg; *p; p++)
@@ -181,25 +185,26 @@ main(int argc, char **argv)
 		if (!iflag)
 			usage();
 		if (!(pw = getpwuid(getuid()))) {
-			syslog(LOG_ERR,
-			    "vacation: no such user uid %u.", getuid());
+			syslog(LOG_ERR, "%s: no such user uid %u.",
+			    getprogname(), getuid());
 			exit(1);
 		}
 	}
 	else if (!(pw = getpwnam(*argv))) {
-		syslog(LOG_ERR, "vacation: no such user %s.", *argv);
+		syslog(LOG_ERR, "%s: no such user %s.",
+		    getprogname(), *argv);
 		exit(1);
 	}
 	if (chdir(pw->pw_dir)) {
-		syslog(LOG_ERR,
-		    "vacation: no such directory %s.", pw->pw_dir);
+		syslog(LOG_ERR, "%s: no such directory %s.",
+		    getprogname(), pw->pw_dir);
 		exit(1);
 	}
 
 	db = dbopen(VDB, O_CREAT|O_RDWR | (iflag ? O_TRUNC : 0),
 	    S_IRUSR|S_IWUSR, DB_HASH, NULL);
 	if (!db) {
-		syslog(LOG_ERR, "vacation: %s: %m", VDB);
+		syslog(LOG_ERR, "%s: %s: %m", getprogname(), VDB);
 		exit(1);
 	}
 
@@ -211,13 +216,20 @@ main(int argc, char **argv)
 		exit(0);
 	}
 
-	if (!(cur = malloc((size_t)sizeof(alias_t))))
+	if (!(cur = malloc((size_t)sizeof(alias_t)))) {
+		syslog(LOG_ERR, "%s: %m", getprogname());
+		(void)(db->close)(db);
 		exit(1);
+	}
 	cur->name = pw->pw_name;
 	cur->next = names;
 	names = cur;
 
-	readheaders();
+	if ((rv = readheaders()) != -1) {
+		(void)(db->close)(db);
+		exit(rv);
+	}
+		
 	if (!recent()) {
 		setreply();
 		(void)(db->close)(db);
@@ -233,7 +245,7 @@ main(int argc, char **argv)
  * readheaders --
  *	read mail headers
  */
-void
+int
 readheaders(void)
 {
 	alias_t *cur;
@@ -312,11 +324,13 @@ findme:			for (cur = names; !tome && cur; cur = cur->next)
 				tome += nsearch(cur->name, buf);
 		}
 	if (!tome)
-		exit(0);
+		return 0;
 	if (!*from) {
-		syslog(LOG_ERR, "vacation: no initial \"From\" line.");
-		exit(1);
+		syslog(LOG_ERR, "%s: no initial \"From\" line.",
+			getprogname());
+		return 1;
 	}
+	return -1;
 }
 
 /*
@@ -344,16 +358,19 @@ getfrom(char *buf)
 {
 	char *s, *p;
 
-	for (s = buf; *s && isspace((unsigned char)*s); s++)
+	if ((s = strchr(buf, '<')) != NULL)
+		s++;
+	else
+		s = buf;
+
+	for (; *s && isspace((unsigned char)*s); s++)
 		continue;
-	if (*s == '<')
-		*s++;
 	for (p = s; *p && !isspace((unsigned char)*p); p++)
 		continue;
 	if (*--p == '>')
 		*p = '\0';
 	else
-		*p = '\0';
+		*++p = '\0';
 	(void)strlcpy(from, s, sizeof(from));
 	if (junkmail())
 		exit(0);
@@ -486,43 +503,50 @@ sendmessage(const char *myname)
 
 	mfp = fopen(VMSG, "r");
 	if (mfp == NULL) {
-		syslog(LOG_ERR, "vacation: no ~%s/%s file.", myname, VMSG);
+		syslog(LOG_ERR, "%s: no ~%s/%s file.", getprogname(),
+		    myname, VMSG);
 		exit(1);
 	}
-	if (pipe(pvect) < 0) {
-		syslog(LOG_ERR, "vacation: pipe: %m");
-		exit(1);
-	}
-	i = vfork();
-	if (i < 0) {
-		syslog(LOG_ERR, "vacation: fork: %m");
-		exit(1);
-	}
-	if (i == 0) {
-		dup2(pvect[0], 0);
-		close(pvect[0]);
-		close(pvect[1]);
-		close(fileno(mfp));
-		execl(_PATH_SENDMAIL, "sendmail", "-f", myname, "--", from,
-		    NULL);
-		syslog(LOG_ERR, "vacation: can't exec %s: %m",
-		    _PATH_SENDMAIL);
-		_exit(1);
-	}
-	close(pvect[0]);
-	sfp = fdopen(pvect[1], "w");
+
+	if (debug) {
+		sfp = stdout;
+	} else {
+		if (pipe(pvect) < 0) {
+			syslog(LOG_ERR, "%s: pipe: %m", getprogname());
+			exit(1);
+		}
+		i = vfork();
+		if (i < 0) {
+			syslog(LOG_ERR, "%s: fork: %m", getprogname());
+			exit(1);
+		}
+		if (i == 0) {
+			dup2(pvect[0], 0);
+			close(pvect[0]);
+			close(pvect[1]);
+			close(fileno(mfp));
+			execl(_PATH_SENDMAIL, "sendmail", "-f", myname,
+			    "--", from, NULL);
+			syslog(LOG_ERR, "%s: can't exec %s: %m",
+			    getprogname(), _PATH_SENDMAIL);
+			_exit(1);
+		}
+		(void)close(pvect[0]);
+		sfp = fdopen(pvect[1], "w");
+	} 
 	fprintf(sfp, "To: %s\n", from);
 	while (fgets(buf, sizeof buf, mfp))
 		fputs(buf, sfp);
-	fclose(mfp);
-	fclose(sfp);
+	(void)fclose(mfp);
+	if (sfp != stdout)
+		(void)fclose(sfp);
 }
 
 void
 usage(void)
 {
 
-	syslog(LOG_ERR, "uid %u: usage: %s [-i] [-a alias] [-t A|D] login",
-	    getuid(), getprogname());
+	syslog(LOG_ERR, "uid %u: Usage: %s [-id] [-a alias] [-t A|D] [-f F|R|S]"
+	    " login", getuid(), getprogname());
 	exit(1);
 }
