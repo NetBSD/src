@@ -98,4 +98,4 @@ _szicode:
 #include "signal.s"
 #include "process.s"
 #include "softint.s"
-
+#include "interrupt.s"

@@ -45,12 +45,17 @@ void cpu_startup()
     cold = 0;
 }
 
+void internal_configure()
+{
+    obio_internal_configure();
+}
 
 void consinit()
 {
     extern void cninit();
-    mon_printf("determining console:");
+    mon_printf("determining console\n");
     cninit();
+    mon_printf("determining console (completed)\n");
 }
 
 void cpu_reset()
@@ -549,6 +554,9 @@ int waittime = -1;
 void boot(howto)
      int howto;
 {
+
+    mon_printf("booting....\n");
+    mon_exit_to_mon();
     if ((howto&RB_NOSYNC) == 0 && waittime < 0 && bfreelist[0].b_forw) {
 	struct buf *bp;
 	int iter, nbusy;
@@ -708,4 +716,41 @@ netintr()
 		clnlintr();
 	}
 #endif
+}
+
+intrhand(sr)
+	int sr;
+{
+    register struct isr *isr;
+    register int found = 0;
+    register int ipl;
+    extern struct isr isrqueue[];
+
+    ipl = (sr >> 8) & 7;
+    switch (ipl) {
+
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+	ipl = ISRIPL(ipl);
+	isr = isrqueue[ipl].isr_forw;
+	for (; isr != &isrqueue[ipl]; isr = isr->isr_forw) {
+	    if ((isr->isr_intr)(isr->isr_arg)) {
+		found++;
+		break;
+	    }
+	}
+	if (found == 0)
+	    printf("stray interrupt, sr 0x%x\n", sr);
+	break;
+	
+    case 0:
+    default:
+	printf("intrhand: unexpected sr 0x%x\n", sr);
+	break;
+    }
 }

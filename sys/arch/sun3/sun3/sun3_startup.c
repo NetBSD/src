@@ -9,20 +9,23 @@
 #include "machine/control.h"
 #include "machine/pte.h"
 #include "machine/pmap.h"
+#include "machine/idprom.h"
+#include "machine/frame.h"
 
 #include "vector.h"
-
-#include "../dev/idprom.h"
-
-
 
 unsigned int *old_vector_table;
 
 static struct idprom identity_prom;
-
+unsigned char cpu_machine_id;
 
 vm_offset_t high_segment_free_start = 0;
 vm_offset_t high_segment_free_end = 0;
+
+int msgbufmapped = 0;
+struct msgbuf *msgbufp = NULL;
+caddr_t vmmap;
+extern vm_offset_t tmp_vpages[];
 
 static void initialize_vector_table()
 {
@@ -38,9 +41,32 @@ static void initialize_vector_table()
     mon_printf("initializing vector table (ended)\n");
 }
 
+vm_offset_t high_segment_alloc(npages)
+     int npages;
+{
+    int i;
+    vm_offset_t va, tmp;
+
+    if (npages == 0)
+	mon_panic("panic: request for high segment allocation of 0 pages");
+    if (high_segment_free_start == high_segment_free_end) return NULL;
+
+    va = high_segment_free_start + (npages*NBPG);
+    if (va > high_segment_free_end) return NULL;
+    tmp = high_segment_free_start;
+    high_segment_free_start = va;
+    return tmp;
+}
+
 void sun3_stop()
 {
     mon_exit_to_mon();
+}
+
+void sun3_printf(str)
+     char *str;
+{
+    mon_printf(str);
 }
 
 /*
@@ -77,7 +103,7 @@ void sun3_context_equiv()
 void sun3_vm_init()
 {
     unsigned int monitor_memory = 0;
-    vm_offset_t va, eva, sva, pte;
+    vm_offset_t va, eva, sva, pte, temp_seg;
     extern char start[], etext[], end[];
     unsigned char sme;
     int valid;
@@ -99,6 +125,8 @@ void sun3_vm_init()
     }
 
     virtual_avail = sun3_round_seg(end); /* start a new segment */
+    mon_printf("literal kernel_end %x\nvirtual_avail_after %x\n",
+	       end, virtual_avail);
     virtual_end = VM_MAX_KERNEL_ADDRESS;
 
     if (romp->romvecVersion >=1)
@@ -180,6 +208,56 @@ void sun3_vm_init()
     }
 
     /*
+     * we need to kill off a segment to handle the stupid non-contexted
+     * pmeg 
+     *
+     */
+    temp_seg = sun3_round_seg(virtual_avail);
+    set_temp_seg_addr(temp_seg);
+    mon_printf("%x virtual bytes lost allocating temporary segment for pmap\n",
+	       temp_seg - virtual_avail); 
+    set_segmap(temp_seg, SEGINV);
+    virtual_avail = temp_seg + NBSG;
+    mon_printf("temp_seg: starts at %x ends at %x\n", temp_seg, virtual_avail);
+
+    /* allocating page for msgbuf */
+    sme = get_segmap(virtual_avail); 
+    if (sme == SEGINV)
+	mon_printf("bad pmeg encountered while looking for msgbuf page\n");
+    pmeg_steal(sme);
+    eva = sun3_round_up_seg(virtual_avail);
+
+    /* msgbuf */
+    avail_end -= NBPG;
+    msgbufp = (struct msgbuf *) virtual_avail;
+    pte = PG_VALID | PG_WRITE |PG_SYSTEM | PG_NC | (avail_end >>PGSHIFT);
+    set_pte((vm_offset_t) msgbufp, pte);
+    msgbufmapped = 1;
+
+    /* cleaning rest of page */
+    virtual_avail +=NBPG;
+    for (va = virtual_avail; va < eva; va += NBPG)
+	set_pte(va, PG_INVAL);
+    
+    /* vmmap (used by /dev/mem */
+    vmmap = (caddr_t) virtual_avail;
+    virtual_avail += NBPG;
+
+    /*
+     * vpages array:
+     *   just some virtual addresses for temporary mappings
+     *   in the pmap module
+     */
+
+    tmp_vpages[0] = virtual_avail;
+    virtual_avail += NBPG;
+    tmp_vpages[1] = virtual_avail;
+    virtual_avail += NBPG;
+
+    virtual_avail = eva;
+
+    mon_printf("unmapping range: %x to %x\n", virtual_avail, virtual_end);
+    /*
      * unmap kernel virtual space (only segments.  if it squished ptes, bad
      * things might happen.
      */
@@ -196,7 +274,6 @@ void sun3_vm_init()
 
 void sun3_verify_hardware()
 {
-    unsigned char cpu_machine_id;
     unsigned char arch;
     int cpu_match = 0;
     char *cpu_string;
@@ -252,6 +329,100 @@ void sun3_verify_hardware()
     mon_printf("kernel configured for Sun 3/%s\n", cpu_string);
 }
 
+/*
+ * Print out a traceback for the caller - can be called anywhere
+ * within the kernel or from the monitor by typing "g4" (for sun-2
+ * compatibility) or "w trace".  This causes the monitor to call
+ * the v_handler() routine which will call tracedump() for these cases.
+ */
+/*VARARGS0*/
+tracedump(x1)
+	caddr_t x1;
+{
+    struct funcall_frame *fp = (struct funcall_frame *)(&x1 - 2);
+    u_int tospage = btoc(fp);
+
+    mon_printf("Begin traceback...fp = %x\n", fp);
+    while (btoc(fp) == tospage) {
+	if (fp == fp->fr_savfp) {
+	    mon_printf("FP loop at %x", fp);
+	    break;
+	}
+	mon_printf("Called from %x, fp=%x, args=%x %x %x %x\n",
+		   fp->fr_savpc, fp->fr_savfp,
+		   fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3]);
+	fp = fp->fr_savfp;
+    }
+    mon_printf("End traceback...\n");
+}
+
+/*
+ * Handler for monitor vector cmd -
+ * For now we just implement the old "g0" and "g4"
+ * commands and a printf hack.  [lifted from freed cmu mach3 sun3 port]
+ */
+void
+v_handler(addr, str)
+	int addr;
+	char *str;
+{
+
+    switch (*str) {
+    case '\0':
+	/*
+	 * No (non-hex) letter was specified on
+	 * command line, use only the number given
+	 */
+	switch (addr) {
+	case 0:			/* old g0 */
+	case 0xd:		/* 'd'ump short hand */
+	    panic("zero");
+	    /*NOTREACHED*/
+		
+	case 4:			/* old g4 */
+	    tracedump();
+	    break;
+
+	default:
+	    goto err;
+	}
+	break;
+
+    case 'p':			/* 'p'rint string command */
+    case 'P':
+	mon_printf("%s\n", (char *)addr);
+	break;
+
+    case '%':			/* p'%'int anything a la printf */
+	mon_printf(str, addr);
+	mon_printf("\n");
+	break;
+
+    case 't':			/* 't'race kernel stack */
+    case 'T':
+	tracedump();
+	break;
+
+    case 'u':			/* d'u'mp hack ('d' look like hex) */
+    case 'U':
+	if (addr == 0xd) {
+	    panic("zero");
+	} else
+	    goto err;
+	break;
+
+    default:
+    err:
+	mon_printf("Don't understand 0x%x '%s'\n", addr, str);
+    }
+}
+void sun3_monitor_hooks()
+{
+    if (romp->romvecVersion >= 2)
+	*romp->vector_cmd = v_handler;
+}
+
+
 void sun3_bootstrap()
 {
     static char hello[] = "hello world";
@@ -273,7 +444,11 @@ void sun3_bootstrap()
     sun3_vm_init();		/* handle kernel mapping problems, etc */
     mon_printf("ending sun3 vm init\n");
 
+    sun3_monitor_hooks();
+
     pmap_bootstrap();		/*  */
+
+    internal_configure();	/* stuff that can't wait for configure() */
 
     main();
 
