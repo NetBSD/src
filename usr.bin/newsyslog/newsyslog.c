@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.43.2.2 2002/06/27 03:27:46 lukem Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.43.2.3 2004/11/11 23:52:33 he Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.43.2.2 2002/06/27 03:27:46 lukem Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.43.2.3 2004/11/11 23:52:33 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -502,20 +502,22 @@ log_trim(struct conf_entry *log)
 	struct stat st;
 	pid_t pid;
 
-	/* Remove oldest historical log. */
-	snprintf(file1, sizeof(file1), "%s.%d", log->logfile,
-	    log->numhist - 1);
+	if (log->numhist != 0) {
+		/* Remove oldest historical log. */
+		snprintf(file1, sizeof(file1), "%s.%d", log->logfile,
+		    log->numhist - 1);
 
-	PRINFO(("rm -f %s\n", file1));
-	if (!noaction)
-		unlink(file1);
-	strlcat(file1, ".gz", sizeof(file1));
-	PRINFO(("rm -f %s\n", file1));
-	if (!noaction)
-		unlink(file1);
+		PRINFO(("rm -f %s\n", file1));
+		if (!noaction)
+			unlink(file1);
+		strlcat(file1, ".gz", sizeof(file1));
+		PRINFO(("rm -f %s\n", file1));
+		if (!noaction)
+			unlink(file1);
+	}
 
 	/* Move down log files. */
-	for (i = log->numhist - 1; i != 0; i--) {
+	for (i = log->numhist - 1; i > 0; i--) {
 		snprintf(file1, sizeof(file1), "%s.%d", log->logfile, i - 1);
 		snprintf(file2, sizeof(file2), "%s.%d", log->logfile, i);
 
@@ -602,7 +604,8 @@ log_trim(struct conf_entry *log)
 	}
 
 	/* If the newest historical log is to be compressed, do it here. */
-	if ((log->flags & (CE_PLAIN0 | CE_COMPRESS)) == CE_COMPRESS) {
+	if ((log->flags & (CE_PLAIN0 | CE_COMPRESS)) == CE_COMPRESS
+	    && log->numhist != 0) {
 		snprintf(file1, sizeof(file1), "%s.0", log->logfile);
 		if ((log->flags & CE_NOSIGNAL) == 0) {
 			PRINFO(("sleep for 10 seconds before compressing...\n"));
