@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.102 2000/03/26 20:42:42 kleink Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.103 2000/03/28 23:57:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -752,7 +752,6 @@ sunos_sys_uname(p, v, retval)
 {
 	struct sunos_sys_uname_args *uap = v;
 	struct sunos_utsname sut;
-	extern char ostype[], machine[], osrelease[];
 
 	memset(&sut, 0, sizeof(sut));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.377 2000/03/22 20:58:27 ws Exp $	*/
+/*	$NetBSD: machdep.c,v 1.378 2000/03/28 23:57:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -445,7 +445,6 @@ i386_bufinit()
  * Info for CTL_HW
  */
 char	cpu_model[120];
-extern	char version[];
 
 /*
  * Note: these are just the ones that may not have a cpuid instruction.

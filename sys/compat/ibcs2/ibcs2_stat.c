@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.12 1999/05/05 20:01:03 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.13 2000/03/28 23:57:33 simonb Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -344,7 +344,6 @@ ibcs2_sys_utssys(p, v, retval)
 	case 0:			/* uname(struct utsname *) */
 	{
 		struct ibcs2_utsname sut;
-		extern char ostype[], machine[], osrelease[];
 
 		memset(&sut, 0, ibcs2_utsname_len);
 		memcpy(sut.sysname, ostype, sizeof(sut.sysname) - 1);

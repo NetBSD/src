@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149 2000/03/26 07:52:58 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150 2000/03/28 23:57:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -439,7 +439,6 @@ setregs(p, pack, stack)
  * Info for CTL_HW
  */
 char cpu_model[120];
-extern char version[];
 
 #if defined(M68060)
 int m68060_pcr_init = 0x21;	/* make this patchable */
