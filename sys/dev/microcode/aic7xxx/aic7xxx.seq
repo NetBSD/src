@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.seq,v 1.7 1998/03/11 20:57:03 leo Exp $	*/
+/*	$NetBSD: aic7xxx.seq,v 1.8 1998/04/16 07:07:37 leo Exp $	*/
 
 /*+M***********************************************************************
  *Adaptec 274x/284x/294x device driver for Linux and FreeBSD.
@@ -43,7 +43,7 @@
  *
  *-M************************************************************************/
 
-VERSION AIC7XXX_SEQ_VER "$NetBSD: aic7xxx.seq,v 1.7 1998/03/11 20:57:03 leo Exp $"
+VERSION AIC7XXX_SEQ_VER "$NetBSD: aic7xxx.seq,v 1.8 1998/04/16 07:07:37 leo Exp $"
 
 #if defined(__NetBSD__)
 #include "../../ic/aic7xxxreg.h"
@@ -425,17 +425,10 @@ dma_finish2:
  * };
  */
 
-#if BIG_ENDIAN_CPU
-	mov	HADDR3,DFDAT
-	mov	HADDR2,DFDAT
-	mov	HADDR1,DFDAT
-	mov	HADDR0,DFDAT
-#else
 	mov	HADDR0,DFDAT
 	mov	HADDR1,DFDAT
 	mov	HADDR2,DFDAT
 	mov	HADDR3,DFDAT
-#endif
 /*
  * For Linux, we must throw away four bytes since there is a 32bit gap
  * in the middle of a struct scatterlist.
@@ -446,16 +439,9 @@ dma_finish2:
 	mov	NONE,DFDAT
 	mov	NONE,DFDAT
 #endif
-#if BIG_ENDIAN_CPU
-	mov	HCNT2,DFDAT	/* LEO: MSB unused */
-	mov	HCNT2,DFDAT
-	mov	HCNT1,DFDAT
-	mov	HCNT0,DFDAT
-#else
 	mov	HCNT0,DFDAT
 	mov	HCNT1,DFDAT
 	mov	HCNT2,DFDAT
-#endif
 
 /* Load STCNT as well.  It is a mirror of HCNT */
 	mov	STCNT0,HCNT0
@@ -492,17 +478,10 @@ p_command:
 /*
  * Load HADDR and HCNT.
  */
-#if BIG_ENDIAN_CPU
-	mov	HADDR3, SCB_CMDPTR0
-	mov	HADDR2, SCB_CMDPTR1
-	mov	HADDR1, SCB_CMDPTR2
-	mov	HADDR0, SCB_CMDPTR3
-#else
 	mov	HADDR0, SCB_CMDPTR0
 	mov	HADDR1, SCB_CMDPTR1
 	mov	HADDR2, SCB_CMDPTR2
 	mov	HADDR3, SCB_CMDPTR3
-#endif
 	mov	HCNT0, SCB_CMDLEN
 	clr	HCNT1
 	clr	HCNT2
@@ -1035,15 +1014,6 @@ find_abort_tag:
  * Make a working copy of the scatter-gather parameters from the SCB.
  */
 sg_scb2ram:
-#if BIG_ENDIAN_CPU
-	mov	HADDR3, SCB_DATAPTR0
-	mov	HADDR2, SCB_DATAPTR1
-	mov	HADDR1, SCB_DATAPTR2
-	mov	HADDR0, SCB_DATAPTR3
-	mov	HCNT0, SCB_DATACNT3
-	mov	HCNT1, SCB_DATACNT2
-	mov	HCNT2, SCB_DATACNT1
-#else
 	mov	HADDR0, SCB_DATAPTR0
 	mov	HADDR1, SCB_DATAPTR1
 	mov	HADDR2, SCB_DATAPTR2
@@ -1051,7 +1021,6 @@ sg_scb2ram:
 	mov	HCNT0, SCB_DATACNT0
 	mov	HCNT1, SCB_DATACNT1
 	mov	HCNT2, SCB_DATACNT2
-#endif
 
 	mov	STCNT0, HCNT0
 	mov	STCNT1, HCNT1
@@ -1059,17 +1028,10 @@ sg_scb2ram:
 
 	mov	SG_COUNT,SCB_SGCOUNT
 
-#if BIG_ENDIAN_CPU
-	mov	SG_NEXT3, SCB_SGPTR0
-	mov	SG_NEXT2, SCB_SGPTR1
-	mov	SG_NEXT1, SCB_SGPTR2
-	mov	SG_NEXT0, SCB_SGPTR3 ret
-#else
 	mov	SG_NEXT0, SCB_SGPTR0
 	mov	SG_NEXT1, SCB_SGPTR1
 	mov	SG_NEXT2, SCB_SGPTR2
 	mov	SG_NEXT3, SCB_SGPTR3 ret
-#endif
 
 /*
  * Copying RAM values back to SCB, for Save Data Pointers message, but
@@ -1081,39 +1043,22 @@ sg_ram2scb:
 	test	FLAGS, DPHASE	jz return
 	mov	SCB_SGCOUNT,SG_COUNT
 
-#if BIG_ENDIAN_CPU
-	mov	SCB_SGPTR3,SG_NEXT0
-	mov	SCB_SGPTR2,SG_NEXT1
-	mov	SCB_SGPTR1,SG_NEXT2
-	mov	SCB_SGPTR0,SG_NEXT3
-	mov	SCB_DATAPTR3,SHADDR0
-	mov	SCB_DATAPTR2,SHADDR1
-	mov	SCB_DATAPTR1,SHADDR2
-	mov	SCB_DATAPTR0,SHADDR3
-#else
 	mov	SCB_SGPTR0,SG_NEXT0
 	mov	SCB_SGPTR1,SG_NEXT1
 	mov	SCB_SGPTR2,SG_NEXT2
 	mov	SCB_SGPTR3,SG_NEXT3
+	
 	mov	SCB_DATAPTR0,SHADDR0
 	mov	SCB_DATAPTR1,SHADDR1
 	mov	SCB_DATAPTR2,SHADDR2
 	mov	SCB_DATAPTR3,SHADDR3
-#endif
-	
 
 /*
  * Use the residual number since STCNT is corrupted by any message transfer
  */
-#if BIG_ENDIAN_CPU
-	mov	SCB_DATACNT3,SCB_RESID_DCNT0
-	mov	SCB_DATACNT2,SCB_RESID_DCNT1
-	mov	SCB_DATACNT1,SCB_RESID_DCNT2 ret
-#else
 	mov	SCB_DATACNT0,SCB_RESID_DCNT0
 	mov	SCB_DATACNT1,SCB_RESID_DCNT1
 	mov	SCB_DATACNT2,SCB_RESID_DCNT2 ret
-#endif
 
 /*
  * Add the array base TARG_SCRATCH to the target offset (the target address
