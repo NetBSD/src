@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.7 2001/11/21 21:38:00 uwe Exp $	*/
+/*	$NetBSD: srt0.S,v 1.8 2003/06/28 00:59:09 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -161,6 +161,8 @@ start:
 	b,a	is_sun4cm
 
 is_openfirm:
+	! only javastations have OFW, so we know it is a sun4m
+	mov	CPU_SUN4M, %g4
 	! save address of OpenFirmware client interface handler
 	sethi	%hi(_C_LABEL(romp)), %o1
 	st	%i3, [%o1 + %lo(_C_LABEL(romp))]
