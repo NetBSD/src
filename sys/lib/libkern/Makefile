@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.12 1994/06/30 04:26:07 deraadt Exp $
+#	$Id: Makefile,v 1.13 1994/06/30 06:54:22 deraadt Exp $
 
 LIB=	kern
 NOPIC=
@@ -25,6 +25,7 @@ LIBC=	${.CURDIR}/../../../lib/libc
 .PATH: ${LIBC}/stdlib ${LIBC}/arch/${MACHINE_ARCH}/stdlib
 .PATH: ${LIBC}/sys ${LIBC}/arch/${MACHINE_ARCH}/sys
 AINC+=	-I${LIBC}/arch/${MACHINE_ARCH}
+CFLAGS+= -I${.CURDIR}/arch/${MACHINE_ARCH}
 
 # Quad support
 SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
