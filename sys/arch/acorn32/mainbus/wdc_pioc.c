@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.17 2004/08/14 15:08:04 thorpej Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.18 2004/08/20 06:39:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.17 2004/08/14 15:08:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.18 2004/08/20 06:39:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ wdc_pioc_probe(parent, cf, aux)
 
 	memset(&wdc, 0, sizeof(wdc));
 	memset(&ch, 0, sizeof(ch));
-	ch.ch_wdc = &wdc;
+	ch.ch_atac = &wdc.sc_atac;
 	wdc.regs = &wdr;
 
 	iobase = pa->pa_iobase + pa->pa_offset;
@@ -183,12 +183,12 @@ wdc_pioc_attach(parent, self, aux)
 	     &sc->sc_channel);
 	if (!sc->sc_ih)
 		panic("%s: Cannot claim IRQ %d", self->dv_xname, pa->pa_irq);
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
-	sc->sc_wdcdev.PIO_cap = 0;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
 	sc->sc_chanlist[0] = &sc->sc_channel;
-	sc->sc_wdcdev.channels = sc->sc_chanlist;
-	sc->sc_channel.ch_wdc = &sc->sc_wdcdev;
-	sc->sc_wdcdev.nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
+	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_queue = &sc->sc_chqueue;
 

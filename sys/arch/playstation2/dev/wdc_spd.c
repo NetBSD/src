@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.15 2004/08/14 15:08:04 thorpej Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.16 2004/08/20 06:39:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.15 2004/08/14 15:08:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.16 2004/08/20 06:39:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ wdc_spd_match(struct device *parent, struct cfdata *cf, void *aux)
 
 	memset(&wdc, 0, sizeof(wdc));
 	memset(&ch, 0, sizeof(ch));
-	ch.ch_wdc = &wdc;
+	ch.ch_atac = &wdc.sc_atac;
 	wdc.regs = &wdr;
 
 	__wdc_spd_bus_space(&ch);
@@ -210,17 +210,17 @@ wdc_spd_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_wdcdev.regs = &sc->sc_wdc_regs;
 
-	__wdc_spd_bus_space(ch);
-
-	wdc->cap =
-	    WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA | WDC_CAPABILITY_DATA16;
-	wdc->PIO_cap = 0;
+	wdc->sc_atac.atac_cap =
+	    ATAC_CAP_DMA | ATAC_CAP_UDMA | ATAC_CAP_DATA16;
+	wdc->sc_atac.atac_PIO_cap = 0;
 	sc->sc_chanlist[0] = &sc->sc_channel;
-	wdc->channels = sc->sc_chanlist;
-	wdc->nchannels = 1;
+	wdc->sc_atac.atac_channels = sc->sc_chanlist;
+	wdc->sc_atac.atac_nchannels = 1;
 	ch->ch_channel = 0;
-	ch->ch_wdc = &sc->sc_wdcdev;
+	ch->ch_atac = &sc->sc_wdcdev.sc_atac;
 	ch->ch_queue = &sc->sc_chqueue;
+
+	__wdc_spd_bus_space(ch);
 
 	spd_intr_establish(SPD_HDD, wdcintr, &sc->sc_channel);
 
@@ -232,7 +232,7 @@ wdc_spd_attach(struct device *parent, struct device *self, void *aux)
 void
 __wdc_spd_bus_space(struct ata_channel *ch)
 {
-	struct wdc_regs *wdr = &ch->ch_wdc->regs;
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(ch);
 	int i;
 
 	wdr->cmd_iot = &_wdc_spd_space;

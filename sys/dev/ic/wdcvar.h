@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.76 2004/08/19 23:25:35 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.77 2004/08/20 06:39:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,34 +66,13 @@ struct wdc_regs {
  * Per-controller data
  */
 struct wdc_softc {
-	struct device sc_dev;		/* generic device info */
+	struct atac_softc sc_atac;	/* generic ATA controller info */
 
 	struct wdc_regs *regs;		/* register array (per-channel) */
 
 	int           cap;		/* controller capabilities */
-#define	WDC_CAPABILITY_DATA16	0x0001	/* can do 16-bit data access */
-#define	WDC_CAPABILITY_DATA32	0x0002	/* can do 32-bit data access */
-#define	WDC_CAPABILITY_DMA	0x0008	/* DMA */
-#define	WDC_CAPABILITY_UDMA	0x0010	/* Ultra-DMA/33 */
-#define	WDC_CAPABILITY_ATA_NOSTREAM 0x0040 /* Don't use stream funcs on ATA */
-#define	WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080 /* Don't use stream f on ATAPI */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
 #define WDC_CAPABILITY_PREATA	0x0200	/* ctrl can be a pre-ata one */
-#define WDC_CAPABILITY_NOIRQ	0x1000	/* Controller never interrupts */
-#define	WDC_CAPABILITY_RAID	0x4000	/* Controller "supports" RAID */
-	u_int8_t      PIO_cap;		/* highest PIO mode supported */
-	u_int8_t      DMA_cap;		/* highest DMA mode supported */
-	u_int8_t      UDMA_cap;		/* highest UDMA mode supported */
-	int nchannels;			/* # channels on this controller */
-	struct ata_channel **channels;  /* channel-specific data (array) */
-
-	/*
-	 * The reference count here is used for both IDE and ATAPI devices.
-	 */
-	struct atapi_adapter sc_atapi_adapter;
-
-	/* Function used to probe for drives. */
-	void		(*drv_probe)(struct ata_channel *);
 
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
 	void            *dma_arg;
@@ -115,16 +94,6 @@ struct wdc_softc {
 #define WDC_DMAST_ERR	0x02	/* DMA error */
 #define WDC_DMAST_UNDER	0x04	/* DMA underrun */
 
-	/* Optional callbacks to lock/unlock hardware. */
-	int            (*claim_hw)(void *, int);
-	void            (*free_hw)(void *);
-
-	/*
-	 * Optional callback to set drive mode.  Required for anything
-	 * but basic PIO operation.
-	 */
-	void 		(*set_modes)(struct ata_channel *);
-
 	/* Optional callback to select drive. */
 	void		(*select)(struct ata_channel *,int);
 
@@ -137,7 +106,7 @@ struct wdc_softc {
 };
 
 /* Given an ata_channel, get the wdc_softc. */
-#define	CHAN_TO_WDC(chp)	((chp)->ch_wdc)
+#define	CHAN_TO_WDC(chp)	((struct wdc_softc *)(chp)->ch_atac)
 
 /* Given an ata_channel, get the wdc_regs. */
 #define	CHAN_TO_WDC_REGS(chp)	(&CHAN_TO_WDC(chp)->regs[(chp)->ch_channel])
