@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.65.6.4 2004/11/02 07:50:36 skrll Exp $
+#	$NetBSD: INSTALL,v 1.65.6.5 2004/11/14 08:15:16 skrll Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -29,6 +29,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_43	# and 4.3BSD
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

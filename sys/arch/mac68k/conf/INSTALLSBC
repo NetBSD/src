@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALLSBC,v 1.14.2.3 2004/09/21 13:17:57 skrll Exp $
+#	$NetBSD: INSTALLSBC,v 1.14.2.4 2004/11/14 08:15:16 skrll Exp $
 #
 # INSTALLSBC
 
@@ -49,6 +49,7 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_43	# and 4.3BSD
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

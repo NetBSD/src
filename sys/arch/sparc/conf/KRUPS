@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.15.2.3 2004/09/21 13:22:01 skrll Exp $
+# $NetBSD: KRUPS,v 1.15.2.4 2004/11/14 08:15:25 skrll Exp $
 # From: NetBSD: GENERIC,v 1.160 2004/07/10 12:05:35 uwe Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.15.2.3 $"
+#ident 		"KRUPS-$Revision: 1.15.2.4 $"
 
 maxusers	32
 
@@ -170,6 +170,7 @@ options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem

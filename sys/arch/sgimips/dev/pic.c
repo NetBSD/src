@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.8.2.4 2004/09/21 13:21:13 skrll Exp $	 */
+/*	$NetBSD: pic.c,v 1.8.2.5 2004/11/14 08:15:24 skrll Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.8.2.4 2004/09/21 13:21:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.8.2.5 2004/11/14 08:15:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -117,6 +117,28 @@ pic_attach(struct device * parent, struct device * self, void *aux)
 	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_MODE);
 	printf(": dblk (0x%x), iblk (0x%x)\n", reg & PIC_MODE_DBSIZ,
 	       reg & PIC_MODE_IBSIZ);
+
+	/* display the machine type, board revision */
+	printf("pic0: ");
+
+	switch (mach_subtype) {
+		case MACH_SGI_IP12_4D_3X:
+			printf("Personal Iris 4D/3x");
+			break;
+		case MACH_SGI_IP12_VIP12:
+			printf("VME IP12");
+			break;
+		case MACH_SGI_IP12_HP1:
+			printf("Indigo R3000");
+			break;
+		case MACH_SGI_IP12_HPLC:
+			printf("Hollywood Light");
+			break;
+		default:
+			printf("unknown machine");
+			break;
+	}
+	printf(", board revision %x\n", mach_boardrev);
 
 	printf("pic0: ");
 

@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.23.2.4 2004/11/02 07:50:46 skrll Exp $
+#	$NetBSD: NATSUMI,v 1.23.2.5 2004/11/14 08:15:24 skrll Exp $
 #
 #	for development
 #
@@ -51,6 +51,7 @@ options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_43	# and 4.3BSD
 
 options 	COMPAT_LINUX	# binary compatibility with Linux
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

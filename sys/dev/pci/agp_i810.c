@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.16.2.3 2004/09/21 13:31:00 skrll Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.16.2.4 2004/11/14 08:15:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.16.2.3 2004/09/21 13:31:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.16.2.4 2004/11/14 08:15:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		case PCI_PRODUCT_INTEL_82840_HB:
 		case PCI_PRODUCT_INTEL_82865_HB:
 		case PCI_PRODUCT_INTEL_82845G_DRAM:
+		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
 			return agp_intel_attach(parent, self, aux);
 		}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.13.6.3 2004/09/21 13:39:22 skrll Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.13.6.4 2004/11/14 08:16:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,10 +43,13 @@ struct mfsnode {
 	caddr_t	mfs_baseoff;		/* base of file system in memory */
 	long	mfs_size;		/* size of memory file system */
 	struct	proc *mfs_proc;		/* supporting process */
-	struct	bufq_state mfs_buflist;	/* list of I/O requests */
 	int	mfs_shutdown;		/* shutdown this mfsnode */
+#if defined(_KERNEL)
+	struct	bufq_state mfs_buflist;	/* list of I/O requests */
+#endif /* defined(_KERNEL) */
 };
 
+#if defined(_KERNEL)
 /*
  * Convert between mfsnode pointers and vnode pointers
  */
@@ -87,5 +90,7 @@ struct mfsnode {
 #define	mfs_bwrite	vn_bwrite
 #define	mfs_revoke	genfs_revoke
 #define	mfs_putpages	genfs_null_putpages
+
+#endif /* defined(_KERNEL) */
 
 #endif /* !_UFS_MFS_MFSNODE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.7.6.5 2004/09/24 10:53:27 skrll Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.7.6.6 2004/11/14 08:15:43 skrll Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -71,12 +71,22 @@ struct ac97_codec_if_vtbl {
 	u_int16_t (*get_extcaps)(struct ac97_codec_if *);
 	int (*set_rate)(struct ac97_codec_if *, int, u_long *);
 	void (*set_clock)(struct ac97_codec_if *, unsigned int);
+	void (*detach)(struct ac97_codec_if *);
 };
 
 struct ac97_codec_if {
 	struct ac97_codec_if_vtbl *vtbl;
 };
 
-int ac97_attach __P((struct ac97_host_if *));
+int ac97_attach(struct ac97_host_if *);
+
+#define AC97_IS_FIXED_RATE(codec)	\
+	!((codec)->vtbl->get_extcaps(codec) & AC97_EXT_AUDIO_VRA)
+#define AC97_IS_4CH(codec)		\
+	((codec)->vtbl->get_extcaps(codec) & AC97_EXT_AUDIO_SDAC)
+#define AC97_IS_6CH(codec)		\
+	(((codec)->vtbl->get_extcaps(codec) \
+	& (AC97_EXT_AUDIO_SDAC | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_LDAC)) \
+	== (AC97_EXT_AUDIO_SDAC | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_LDAC))
 
 #endif /* _DEV_IC_AC97VAR_H_ */

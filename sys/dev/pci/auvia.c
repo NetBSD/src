@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.31.2.6 2004/11/02 07:52:09 skrll Exp $	*/
+/*	$NetBSD: auvia.c,v 1.31.2.7 2004/11/14 08:15:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.31.2.6 2004/11/02 07:52:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.31.2.7 2004/11/14 08:15:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
 #define VIA_REV_8233	0x30
 #define VIA_REV_8233A	0x40
 #define VIA_REV_8235	0x50
+#define VIA_REV_8237	0x60
 
 #define AUVIA_PCICONF_JUNK	0x40
 #define		AUVIA_PCICONF_ENABLES	 0x00FF0000	/* reg 42 mask */
@@ -302,7 +303,9 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 		default:
 			break;
 		}
-		if (r >= VIA_REV_8235) /* 2 rec, 4 pb, 1 multi-pb, spdif */
+		if (r >= VIA_REV_8235)
+			revnum = "7";
+		else if (r >= VIA_REV_8235) /* 2 rec, 4 pb, 1 multi-pb, spdif */
 			revnum = "5";
 		aprint_normal(": VIA Technologies VT823%s AC'97 Audio "
 		    "(rev %s)\n", revnum, sc->sc_revision);
@@ -610,7 +613,6 @@ auvia_set_params(void *addr, int setmode, int usemode,
 	struct audio_params *p;
 	struct ac97_codec_if* codec;
 	int reg, mode;
-	u_int16_t ext_id;
 
 	codec = sc->codec_if;
 	/* for mode in (RECORD, PLAY) */
@@ -630,17 +632,13 @@ auvia_set_params(void *addr, int setmode, int usemode,
 		}
 
 		if (ch->sc_base == VIA8233_MP_BASE && mode == AUMODE_PLAY) {
-			ext_id = codec->vtbl->get_extcaps(codec);
 			if (p->channels == 1) {
 				/* ok */
 			} else if (p->channels == 2) {
 				/* ok */
-			} else if (p->channels == 4
-				&& ext_id & AC97_EXT_AUDIO_SDAC) {
+			} else if (p->channels == 4 && AC97_IS_4CH(codec)) {
 				/* ok */
-#define BITS_6CH	(AC97_EXT_AUDIO_SDAC | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_LDAC)
-			} else if (p->channels == 6
-				&& (ext_id & BITS_6CH) == BITS_6CH) {
+			} else if (p->channels == 6 && AC97_IS_6CH(codec)) {
 				/* ok */
 			} else {
 				return (EINVAL);
@@ -653,7 +651,7 @@ auvia_set_params(void *addr, int setmode, int usemode,
 		    (p->precision != 8 && p->precision != 16))
 			return (EINVAL);
 
-		if (IS_FIXED_RATE(codec)) {
+		if (AC97_IS_FIXED_RATE(codec)) {
 			/* Enable aurateconv */
 			p->hw_sample_rate = AC97_SINGLE_RATE;
 		} else {
@@ -712,7 +710,7 @@ auvia_set_params(void *addr, int setmode, int usemode,
 				p->sw_code = mulaw_to_slinear16_le;
 				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 				p->hw_precision = 16;
-			} else if (!IS_FIXED_RATE(codec)) {
+			} else if (!AC97_IS_FIXED_RATE(codec)) {
 				p->sw_code = ulinear8_to_mulaw;
 				p->hw_encoding = AUDIO_ENCODING_ULINEAR;
 			} else {
@@ -731,7 +729,7 @@ auvia_set_params(void *addr, int setmode, int usemode,
 				p->sw_code = alaw_to_slinear16_le;
 				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 				p->hw_precision = 16;
-			} else if (!IS_FIXED_RATE(codec)) {
+			} else if (!AC97_IS_FIXED_RATE(codec)) {
 				p->sw_code = ulinear8_to_alaw;
 				p->hw_encoding = AUDIO_ENCODING_ULINEAR;
 			} else {
@@ -796,7 +794,7 @@ auvia_getdev(void *addr, struct audio_device *retp)
 
 	if (retp) {
 		if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
-			strncpy(retp->name, "VIA VT8233/8235",
+			strncpy(retp->name, "VIA VT823x",
 				sizeof(retp->name));
 		} else {
 			strncpy(retp->name, "VIA VT82C686A",
@@ -958,7 +956,7 @@ auvia_get_props(void *addr)
 	 * rate because of aurateconv.  Applications can't know what rate the
 	 * device can process in the case of mmap().
 	 */
-	if (!IS_FIXED_RATE(sc->codec_if))
+	if (!AC97_IS_FIXED_RATE(sc->codec_if))
 		props |= AUDIO_PROP_MMAP;
 	return props;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.37.2.4 2004/09/21 13:35:13 skrll Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.37.2.5 2004/11/14 08:15:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.37.2.4 2004/09/21 13:35:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.37.2.5 2004/11/14 08:15:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,24 @@ soo_ioctl(fp, cmd, data, l)
 
 	case FIONREAD:
 		*(int *)data = so->so_rcv.sb_cc;
+		return (0);
+
+	case FIONWRITE:
+		*(int *)data = so->so_snd.sb_cc;
+		return (0);
+
+	case FIONSPACE:
+		/*
+		 * See the comment around sbspace()'s definition
+		 * in sys/socketvar.h in face of counts about maximum
+		 * to understand the following test. We detect overflow
+		 * and return zero.
+		 */
+		if ((so->so_snd.sb_hiwat < so->so_snd.sb_cc)
+		    || (so->so_snd.sb_mbmax < so->so_snd.sb_mbcnt))
+			*(int *)data = 0;
+		else
+			*(int *)data = sbspace(&so->so_snd);
 		return (0);
 
 	case SIOCSPGRP:

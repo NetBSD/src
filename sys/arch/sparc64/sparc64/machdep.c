@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.145.2.5 2004/11/02 07:50:56 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.145.2.6 2004/11/14 08:15:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.2.5 2004/11/02 07:50:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.2.6 2004/11/14 08:15:32 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1798,7 +1798,7 @@ sparc_bus_unmap(t, bh, size)
 	if (PHYS_ASI(bh._asi)) return (0);
 
 	error = extent_free(io_space, va, size, EX_NOWAIT);
-	if (error) printf("sparc_bus_unmap: extent free sez %d\n", error);
+	if (error) printf("sparc_bus_unmap: extent_free returned %d\n", error);
 
 	pmap_remove(pmap_kernel(), va, endva);
 	return (0);
@@ -1895,7 +1895,7 @@ cpu_getmcontext(l, mcp, flags)
 		sigexit(l, SIGILL);
 
 	/* For now: Erase any random indicators for optional state. */
-	(void)memset(mcp, '0', sizeof (*mcp));
+	(void)memset(mcp, 0, sizeof (*mcp));
 
 	/* Save general register context. */
 #ifdef __arch64__

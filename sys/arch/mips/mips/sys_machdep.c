@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.23.2.4 2004/11/02 07:50:45 skrll Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.23.2.5 2004/11/14 08:15:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.23.2.4 2004/11/02 07:50:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.23.2.5 2004/11/14 08:15:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,8 @@ int
 mips_user_cacheflush(p, va, nbytes, whichcache)
 	struct proc *p;
 	vaddr_t va;
-	int nbytes, whichcache;
+	size_t nbytes;
+	int whichcache;
 {
 
 	/* validate the cache we're going to flush. */
@@ -125,7 +126,7 @@ mips_user_cacheflush(p, va, nbytes, whichcache)
 
 #else
 	void * uncached_physaddr;
-	u_int len;
+	size_t len;
 
 	/*
 	 * Invalidate each page in the virtual-address range,
@@ -157,7 +158,8 @@ int
 mips_user_cachectl(p, va, nbytes, cachectl)
 	struct proc *p;
 	vaddr_t va;
-	int nbytes, cachectl;
+	size_t nbytes;
+	int cachectl;
 {
 	/* validate the cache we're going to flush. */
 	switch (cachectl) {

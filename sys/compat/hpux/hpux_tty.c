@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.24.2.4 2004/11/02 07:51:06 skrll Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.24.2.5 2004/11/14 08:15:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.24.2.4 2004/11/02 07:51:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.24.2.5 2004/11/14 08:15:33 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -514,7 +514,7 @@ hpuxtobsdbaud(hpux_speed)
 		B0,	B0,	B0,	B0,	B0,	B0,	EXTA,	EXTB
 	};
 
-	if (hpux_speed < 0)
+	if (hpux_speed < 0 || hpux_speed > 31)
 		return(B0);
 	return(hpuxtobsdbaudtab[hpux_speed & TIO_CBAUD]);
 }

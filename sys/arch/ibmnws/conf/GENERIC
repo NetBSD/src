@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8.2.4 2004/09/21 13:17:18 skrll Exp $
+#	$NetBSD: GENERIC,v 1.8.2.5 2004/11/14 08:15:16 skrll Exp $
 #
 #
 
@@ -27,6 +27,7 @@ maxusers	8
 #options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_16	# NetBSD 1.6,
 #options 	COMPAT_43	# and 4.3BSD
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.138.2.6 2004/11/02 07:50:24 skrll Exp $
+# $NetBSD: GENERIC,v 1.138.2.7 2004/11/14 08:15:06 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138.2.6 $"
+#ident 		"GENERIC-$Revision: 1.138.2.7 $"
 
 maxusers	16
 
@@ -124,6 +124,7 @@ options 	INET6		# IPV6
 # NetBSD backwards compatibility
 options 	COMPAT_43
 options 	COMPAT_16
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	LKM		# loadable kernel modules
 

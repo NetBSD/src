@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.1.2.2 2004/10/19 15:56:57 skrll Exp $	*/
+/*	$NetBSD: auacer.c,v 1.1.2.3 2004/11/14 08:15:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.1.2.2 2004/10/19 15:56:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.1.2.3 2004/11/14 08:15:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,6 @@ struct auacer_softc {
 	/* Power Management */
 	void *sc_powerhook;
 	int sc_suspend;
-	u_int16_t ext_status;
 };
 
 #define READ1(sc, a) bus_space_read_1(sc->iot, sc->aud_ioh, a)
@@ -145,15 +144,6 @@ struct auacer_softc {
 #define WRITE1(sc, a, v) bus_space_write_1(sc->iot, sc->aud_ioh, a, v)
 #define WRITE2(sc, a, v) bus_space_write_2(sc->iot, sc->aud_ioh, a, v)
 #define WRITE4(sc, a, v) bus_space_write_4(sc->iot, sc->aud_ioh, a, v)
-
-#define IS_FIXED_RATE(codec)	!((codec)->vtbl->get_extcaps(codec) \
-				& AC97_EXT_AUDIO_VRA)
-#define SUPPORTS_4CH(codec)	((codec)->vtbl->get_extcaps(codec) \
-				& AC97_EXT_AUDIO_SDAC)
-#define AC97_6CH_DACS		(AC97_EXT_AUDIO_SDAC | AC97_EXT_AUDIO_CDAC \
-				| AC97_EXT_AUDIO_LDAC)
-#define SUPPORTS_6CH(codec)	(((codec)->vtbl->get_extcaps(codec) \
-				& AC97_6CH_DACS) == AC97_6CH_DACS)
 
 /* Debug */
 #ifdef AUACER_DEBUG
@@ -329,7 +319,6 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_suspend = PWR_RESUME;
 	sc->sc_powerhook = powerhook_establish(auacer_powerhook, sc);
 
-	sc->codec_if->vtbl->set_clock(sc->codec_if, 48000); /* XXX ? */
 	audio_attach_mi(&auacer_hw_if, sc, &sc->sc_dev);
 
 	auacer_reset(sc);
@@ -612,11 +601,11 @@ auacer_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			case 2:
 				break;
 			case 4:
-				if (!SUPPORTS_4CH(sc->codec_if))
+				if (!AC97_IS_4CH(sc->codec_if))
 					return EINVAL;
 				break;
 			case 6:
-				if (!SUPPORTS_6CH(sc->codec_if))
+				if (!AC97_IS_6CH(sc->codec_if))
 					return EINVAL;
 				break;
 			default:
@@ -700,7 +689,7 @@ auacer_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			return (EINVAL);
 		}
 
-		if (IS_FIXED_RATE(sc->codec_if)) {
+		if (AC97_IS_FIXED_RATE(sc->codec_if)) {
 			p->hw_sample_rate = AC97_SINGLE_RATE;
 			/* If hw_sample_rate is changed, aurateconv works. */
 		} else {
@@ -901,7 +890,7 @@ auacer_get_props(void *v)
 	 * rate because of aurateconv.  Applications can't know what rate the
 	 * device can process in the case of mmap().
 	 */
-	if (!IS_FIXED_RATE(sc->codec_if))
+	if (!AC97_IS_FIXED_RATE(sc->codec_if))
 		props |= AUDIO_PROP_MMAP;
 	return props;
 }
@@ -1170,7 +1159,6 @@ auacer_powerhook(int why, void *addr)
 		/* Power down */
 		DPRINTF(1, ("%s: power down\n", sc->sc_dev.dv_xname));
 		sc->sc_suspend = why;
-		auacer_read_codec(sc, AC97_REG_EXT_AUDIO_CTRL, &sc->ext_status);
 		break;
 
 	case PWR_RESUME:
@@ -1186,7 +1174,6 @@ auacer_powerhook(int why, void *addr)
 		auacer_reset_codec(sc);
 		delay(1000);
 		sc->codec_if->vtbl->restore_ports(sc->codec_if);
-		auacer_write_codec(sc, AC97_REG_EXT_AUDIO_CTRL, sc->ext_status);
 		break;
 
 	case PWR_SOFTSUSPEND:

@@ -37,7 +37,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumrevive.c,v 1.2.4.4 2004/09/21 13:34:15 skrll Exp $
+ * $Id: vinumrevive.c,v 1.2.4.5 2004/11/14 08:15:57 skrll Exp $
  * $FreeBSD$
  */
 
@@ -201,7 +201,7 @@ revive_block(int sdno)
 
 	    if (debug & DEBUG_REVIVECONFLICT)
 		log(LOG_DEBUG,
-		    "Relaunch revive conflict sd %d: %p\n%s dev %d.%d, offset 0x%llx, length %ld\n",
+		    "Relaunch revive conflict sd %d: %p\n%s dev %d.%d, offset 0x%llx, length %d\n",
 		    rq->sdno,
 		    rq,
 		    rq->bp->b_flags & B_READ ? "Read" : "Write",

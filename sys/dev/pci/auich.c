@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.39.2.7 2004/11/02 07:52:09 skrll Exp $	*/
+/*	$NetBSD: auich.c,v 1.39.2.8 2004/11/14 08:15:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.39.2.7 2004/11/02 07:52:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.39.2.8 2004/11/14 08:15:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,15 +223,6 @@ struct auich_softc {
 	int sc_ac97_clock_mib;
 };
 
-#define IS_FIXED_RATE(codec)	!((codec)->vtbl->get_extcaps(codec) \
-				& AC97_EXT_AUDIO_VRA)
-#define SUPPORTS_4CH(codec)	((codec)->vtbl->get_extcaps(codec) \
-				& AC97_EXT_AUDIO_SDAC)
-#define AC97_6CH_DACS		(AC97_EXT_AUDIO_SDAC | AC97_EXT_AUDIO_CDAC \
-				| AC97_EXT_AUDIO_LDAC)
-#define SUPPORTS_6CH(codec)	(((codec)->vtbl->get_extcaps(codec) \
-				& AC97_6CH_DACS) == AC97_6CH_DACS)
-
 /* Debug */
 #ifdef AUICH_DEBUG
 #define	DPRINTF(l,x)	do { if (auich_debug & (l)) printf x; } while(0)
@@ -320,40 +311,44 @@ int	auich_read_codec(void *, u_int8_t, u_int16_t *);
 int	auich_write_codec(void *, u_int8_t, u_int16_t);
 int	auich_reset_codec(void *);
 
+#define PCI_ID_CODE0(v, p)	PCI_ID_CODE(PCI_VENDOR_##v, PCI_PRODUCT_##v##_##p)
+#define PCIID_ICH		PCI_ID_CODE0(INTEL, 82801AA_ACA)
+#define PCIID_ICH0		PCI_ID_CODE0(INTEL, 82801AB_ACA)
+#define PCIID_ICH2		PCI_ID_CODE0(INTEL, 82801BA_ACA)
+#define PCIID_440MX		PCI_ID_CODE0(INTEL, 82440MX_ACA)
+#define PCIID_ICH3		PCI_ID_CODE0(INTEL, 82801CA_AC)
+#define PCIID_ICH4		PCI_ID_CODE0(INTEL, 82801DB_AC)
+#define PCIID_ICH5		PCI_ID_CODE0(INTEL, 82801EB_AC)
+#define PCIID_ICH6		PCI_ID_CODE0(INTEL, 82801FB_AC)
+#define PCIID_SIS7012		PCI_ID_CODE0(SIS, 7012_AC)
+#define PCIID_NFORCE		PCI_ID_CODE0(NVIDIA, NFORCE_MCP_AC)
+#define PCIID_NFORCE2		PCI_ID_CODE0(NVIDIA, NFORCE2_MCPT_AC)
+#define PCIID_NFORCE3		PCI_ID_CODE0(NVIDIA, NFORCE3_MCPT_AC)
+#define PCIID_NFORCE3_250	PCI_ID_CODE0(NVIDIA, NFORCE3_250_MCPT_AC)
+#define PCIID_AMD768		PCI_ID_CODE0(AMD, PBC768_AC)
+#define PCIID_AMD8111		PCI_ID_CODE0(AMD, PBC8111_AC)
+
 static const struct auich_devtype {
-	int	vendor;
-	int	product;
-	const char *name;
-	const char *shortname;	/* must be less than 11 characters */
+	pcireg_t	id;
+	const char	*name;
+	const char	*shortname;	/* must be less than 11 characters */
 } auich_devices[] = {
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACA,
-	    "i82801AA (ICH) AC-97 Audio",	"ICH" },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACA,
-	    "i82801AB (ICH0) AC-97 Audio",	"ICH0" },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACA,
-	    "i82801BA (ICH2) AC-97 Audio",	"ICH2" },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ACA,
-	    "i82440MX AC-97 Audio",		"440MX" },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_AC,
-	    "i82801CA (ICH3) AC-97 Audio",	"ICH3" },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_AC,
-	    "i82801DB/DBM (ICH4/ICH4M) AC-97 Audio",	"ICH4" },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_AC,
-	    "i82801EB (ICH5) AC-97 Audio",   "ICH5" },
-	{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC,
-	    "SiS 7012 AC-97 Audio",		"SiS7012" },
-	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC,
-	    "nForce MCP AC-97 Audio",		"nForce" },
-	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AC,
-	    "nForce2 MCP-T AC-97 Audio",	"nForce2" },
-	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_MCPT_AC,
-	    "nForce3 MCP-T AC-97 Audio",	"nForce3" },
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_AC,
-	    "AMD768 AC-97 Audio",		"AMD768" },
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
-	    "AMD8111 AC-97 Audio",		"AMD8111" },
-	{ 0, 0,
-	    NULL,				NULL },
+	{ PCIID_ICH,	"i82801AA (ICH) AC-97 Audio",	"ICH" },
+	{ PCIID_ICH0, 	"i82801AB (ICH0) AC-97 Audio",	"ICH0" },
+	{ PCIID_ICH2, 	"i82801BA (ICH2) AC-97 Audio",	"ICH2" },
+	{ PCIID_440MX, 	"i82440MX AC-97 Audio",		"440MX" },
+	{ PCIID_ICH3, 	"i82801CA (ICH3) AC-97 Audio",	"ICH3" },
+	{ PCIID_ICH4,	"i82801DB/DBM (ICH4/ICH4M) AC-97 Audio",	"ICH4" },
+	{ PCIID_ICH5, 	"i82801EB (ICH5) AC-97 Audio",	"ICH5" },
+	{ PCIID_ICH6, 	"i82801FB (ICH6) AC-97 Audio",	"ICH6" },
+	{ PCIID_SIS7012, "SiS 7012 AC-97 Audio",		"SiS7012" },
+	{ PCIID_NFORCE,	"nForce MCP AC-97 Audio",	"nForce" },
+	{ PCIID_NFORCE2, "nForce2 MCP-T AC-97 Audio",	"nForce2" },
+	{ PCIID_NFORCE3, "nForce3 MCP-T AC-97 Audio",	"nForce3" },
+	{ PCIID_NFORCE3_250,	"nForce3 250 MCP-T AC-97 Audio",	"nForce3" },
+	{ PCIID_AMD768,	"AMD768 AC-97 Audio",		"AMD768" },
+	{ PCIID_AMD8111,"AMD8111 AC-97 Audio",		"AMD8111" },
+	{ 0,		NULL,				NULL },
 };
 
 static const struct auich_devtype *
@@ -362,8 +357,7 @@ auich_lookup(struct pci_attach_args *pa)
 	const struct auich_devtype *d;
 
 	for (d = auich_devices; d->name != NULL; d++) {
-		if (PCI_VENDOR(pa->pa_id) == d->vendor
-			&& PCI_PRODUCT(pa->pa_id) == d->product)
+		if (pa->pa_id == d->id)
 			return (d);
 	}
 
@@ -407,12 +401,9 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal(": %s\n", d->name);
 
-	if ((d->vendor == PCI_VENDOR_INTEL
-	     && d->product == PCI_PRODUCT_INTEL_82801DB_AC)
-	    || (d->vendor == PCI_VENDOR_INTEL
-		&& d->product == PCI_PRODUCT_INTEL_82801EB_AC)) {
+	if (d->id == PCIID_ICH4 || d->id == PCIID_ICH5 || d->id == PCIID_ICH6) {
 		/*
-		 * Use native mode for ICH4/ICH5
+		 * Use native mode for ICH4/ICH5/ICH6
 		 */
 		if (pci_mapreg_map(pa, ICH_MMBAR, PCI_MAPREG_TYPE_MEM, 0,
 				   &sc->iot, &sc->mix_ioh, NULL, &mix_size)) {
@@ -485,8 +476,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_audev.config, sc->sc_dev.dv_xname, MAX_AUDIO_DEV_LEN);
 
 	/* SiS 7012 needs special handling */
-	if (d->vendor == PCI_VENDOR_SIS
-	    && d->product == PCI_PRODUCT_SIS_7012_AC) {
+	if (d->id == PCIID_SIS7012) {
 		sc->sc_sts_reg = ICH_PICB;
 		sc->sc_sample_shift = 0;
 	} else {
@@ -496,8 +486,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Workaround for a 440MX B-stepping erratum */
 	sc->sc_dmamap_flags = BUS_DMA_COHERENT;
-	if (d->vendor == PCI_VENDOR_INTEL
-	    && d->product == PCI_PRODUCT_INTEL_82440MX_ACA) {
+	if (d->id == PCIID_440MX) {
 		sc->sc_dmamap_flags |= BUS_DMA_NOCACHE;
 		printf("%s: DMA bug workaround enabled\n", sc->sc_dev.dv_xname);
 	}
@@ -525,7 +514,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	config_interrupts(self, auich_finish_attach);
 
 	/* sysctl setup */
-	if (IS_FIXED_RATE(sc->codec_if))
+	if (AC97_IS_FIXED_RATE(sc->codec_if))
 		return;
 	err = sysctl_createv(&sc->sc_log, 0, NULL, NULL, 0,
 			     CTLTYPE_NODE, "hw", NULL, NULL, 0, NULL, 0,
@@ -603,7 +592,7 @@ auich_finish_attach(struct device *self)
 {
 	struct auich_softc *sc = (void *)self;
 
-	if (!IS_FIXED_RATE(sc->codec_if))
+	if (!AC97_IS_FIXED_RATE(sc->codec_if))
 		auich_calibrate(sc);
 
 	sc->sc_audiodev = audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
@@ -631,6 +620,9 @@ auich_read_codec(void *v, u_int8_t reg, u_int16_t *val)
 			bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GSTS,
 					  status & ~(ICH_SRI|ICH_PRI|ICH_GSCI));
 			*val = 0xffff;
+			DPRINTF(ICH_DEBUG_CODECIO,
+			    ("%s: read_codec error\n", sc->sc_dev.dv_xname));
+			return -1;
 		}
 		return 0;
 	} else {
@@ -819,11 +811,11 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			case 2:
 				break;
 			case 4:
-				if (!SUPPORTS_4CH(sc->codec_if))
+				if (!AC97_IS_4CH(sc->codec_if))
 					return EINVAL;
 				break;
 			case 6:
-				if (!SUPPORTS_6CH(sc->codec_if))
+				if (!AC97_IS_6CH(sc->codec_if))
 					return EINVAL;
 				break;
 			default:
@@ -907,7 +899,7 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			return (EINVAL);
 		}
 
-		if (IS_FIXED_RATE(sc->codec_if)) {
+		if (AC97_IS_FIXED_RATE(sc->codec_if)) {
 			p->hw_sample_rate = AC97_SINGLE_RATE;
 			/* If hw_sample_rate is changed, aurateconv works. */
 		} else {
@@ -1081,7 +1073,7 @@ auich_get_props(void *v)
 	 * rate because of aurateconv.  Applications can't know what rate the
 	 * device can process in the case of mmap().
 	 */
-	if (!IS_FIXED_RATE(sc->codec_if))
+	if (!AC97_IS_FIXED_RATE(sc->codec_if))
 		props |= AUDIO_PROP_MMAP;
 	return props;
 }
@@ -1536,7 +1528,7 @@ auich_calibrate(struct auich_softc *sc)
 
 	/* Force the codec to a known state first. */
 	sc->codec_if->vtbl->set_clock(sc->codec_if, 48000);
-	rate = 48000;
+	rate = sc->sc_ac97_clock = 48000;
 	sc->codec_if->vtbl->set_rate(sc->codec_if, AC97_REG_PCM_LR_ADC_RATE,
 	    &rate);
 
