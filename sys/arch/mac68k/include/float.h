@@ -1,8 +1,3 @@
-/*	$NetBSD: float.h,v 1.6 1996/05/05 06:17:44 briggs Exp $	*/
-
-#ifndef _FLOAT_MACHINE_
-#define _FLOAT_MACHINE_
+/*	$NetBSD: float.h,v 1.6.16.1 1998/05/08 08:30:31 mycroft Exp $	*/
 
 #include <m68k/float.h>
-
-#endif /* _FLOAT_MACHINE */
