@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.11 2000/02/16 04:50:23 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.12 2000/02/17 17:06:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -233,7 +233,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 				if (scopelen + 1 + numaddrlen + 1 > hostlen)
 					return ENI_MEMORY;
 
-#if 1
+#if 0
 				/*
 				 * construct <scopeid><delim><numeric-addr>
 				 */
