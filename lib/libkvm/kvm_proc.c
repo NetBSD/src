@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.16 1996/03/18 22:33:57 thorpej Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.17 1997/06/20 05:18:22 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$NetBSD: kvm_proc.c,v 1.16 1996/03/18 22:33:57 thorpej Exp $";
+static char *rcsid = "$NetBSD: kvm_proc.c,v 1.17 1997/06/20 05:18:22 mikel Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -273,11 +273,13 @@ _kvm_readfrompager(kd, vmop, offset)
 	if (swap.sw_blocks == 0 || ix >= swap.sw_nblocks) {
 		int i;
 		printf("BUG BUG BUG BUG:\n");
-		printf("object %x offset %x pgoffset %x pager %x swpager %x\n",
-		    vmop, offset - vmop->paging_offset, vmop->paging_offset,
+		printf("object %p offset %lx pgoffset %lx ",
+		    vmop, offset - vmop->paging_offset,
+		    (u_long)vmop->paging_offset);
+		printf("pager %p swpager %p\n",
 		    vmop->pager, pager.pg_data);
-		printf("osize %x bsize %x blocks %x nblocks %x\n",
-		    swap.sw_osize, swap.sw_bsize, swap.sw_blocks,
+		printf("osize %lx bsize %x blocks %p nblocks %x\n",
+		    (u_long)swap.sw_osize, swap.sw_bsize, swap.sw_blocks,
 		    swap.sw_nblocks);
 		for (ix = 0; ix < swap.sw_nblocks; ix++) {
 			addr = (u_long)&swap.sw_blocks[ix];
