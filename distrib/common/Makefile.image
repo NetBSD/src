@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.15 2002/05/07 03:34:17 lukem Exp $
+#	$NetBSD: Makefile.image,v 1.16 2002/05/07 14:27:25 lukem Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -70,7 +70,8 @@ ${IMAGE}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
 .endif
 
 ${IMAGE}.gz: ${IMAGE}
-	gzip -9f ${IMAGE}
+	-rm -f ${.TARGET}
+	gzip -9c ${.ALLSRC} > ${.TARGET}
 
 realall: ${IMAGE}
 
