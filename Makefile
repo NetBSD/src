@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 1997/03/24 22:22:15 christos Exp $
+#	$NetBSD: Makefile,v 1.40 1997/05/26 03:55:19 cjs Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -40,7 +40,7 @@ afterinstall:
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
 .endif
 
-build:
+oldbuild:
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
 	${MAKE} includes
 .if !defined(UPDATE)
@@ -54,5 +54,17 @@ build:
 	    ${MAKE} install)
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
+
+build:
+	@# can't do domestic includes until crt0.o, etc. is built.
+	${MAKE} EXPORTABLE_SYSTEM=1 includes
+	(cd ${.CURDIR}/lib/csu && ${MAKE} depend && ${MAKE})
+	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE})
+	(cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE})
+.if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
+	(cd ${.CURDIR}/domestic && ${MAKE} includes)
+	(cd ${.CURDIR}/domestic/lib/ && ${MAKE} depend && ${MAKE})
+.endif
+	${MAKE} depend && ${MAKE}
 
 .include <bsd.subdir.mk>

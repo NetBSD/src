@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.107 1997/05/24 01:42:38 jonathan Exp $
+#	$NetBSD: bsd.lib.mk,v 1.108 1997/05/26 03:58:18 cjs Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -43,8 +43,8 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 .if (${MACHINE_ARCH} == "alpha")
 
 SHLIB_TYPE=ELF
-SHLIB_LDSTARTFILE= ${DESTDIR}/usr/lib/crtbeginS.o
-SHLIB_LDENDFILE= ${DESTDIR}/usr/lib/crtendS.o
+SHLIB_LDSTARTFILE= ${BUILDDIR}${LIBDIR}/crtbeginS.o
+SHLIB_LDENDFILE= ${BUILDDIR}${LIBDIR}/crtendS.o
 SHLIB_SOVERSION=${SHLIB_MAJOR}
 CPICFLAGS ?= -fpic -DPIC
 CPPPICFLAGS?= -DPIC 
@@ -181,14 +181,35 @@ CLEANFILES+=	${DPSRCS}
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 lib${LIB}.a:: ${OBJS} __archivebuild
 	@echo building standard ${LIB} library
+.if defined(OBJDIR)
+	@echo install -d ${BUILDDIR}${LIBDIR}
+	@install -d ${BUILDDIR}${LIBDIR}
+	@echo ${BUILDDIR}${LIBDIR}/${.TARGET} '->' `pwd`/${.TARGET};
+	@rm -f ${BUILDDIR}${LIBDIR}/${.TARGET};
+	@ln -s `pwd`/${.TARGET} ${BUILDDIR}${LIBDIR}/${.TARGET};
+.endif
 
 POBJS+=		${OBJS:.o=.po}
 lib${LIB}_p.a:: ${POBJS} __archivebuild
 	@echo building profiled ${LIB} library
+.if defined(OBJDIR)
+	@echo install -d ${BUILDDIR}${LIBDIR}
+	@install -d ${BUILDDIR}${LIBDIR}
+	@echo ${BUILDDIR}${LIBDIR}/${.TARGET} '->' `pwd`/${.TARGET};
+	@rm -f ${BUILDDIR}${LIBDIR}/${.TARGET};
+	@ln -s `pwd`/${.TARGET} ${BUILDDIR}${LIBDIR}/${.TARGET};
+.endif
 
 SOBJS+=		${OBJS:.o=.so}
 lib${LIB}_pic.a:: ${SOBJS} __archivebuild
 	@echo building shared object ${LIB} library
+.if defined(OBJDIR)
+	@echo install -d ${BUILDDIR}${LIBDIR}
+	@install -d ${BUILDDIR}${LIBDIR}
+	@echo ${BUILDDIR}${LIBDIR}/${.TARGET} '->' `pwd`/${.TARGET};
+	@rm -f ${BUILDDIR}${LIBDIR}/${.TARGET};
+	@ln -s `pwd`/${.TARGET} ${BUILDDIR}${LIBDIR}/${.TARGET};
+.endif
 
 lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
@@ -203,6 +224,21 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
 	    --whole-archive lib${LIB}_pic.a --no-whole-archive ${LDADD} \
 	    ${SHLIB_LDENDFILE}
 .endif
+.if defined(OBJDIR)
+	@echo install -d ${BUILDDIR}${LIBDIR}
+	@install -d ${BUILDDIR}${LIBDIR}
+	@echo ${BUILDDIR}${LIBDIR}/${.TARGET} '->' `pwd`/${.TARGET};
+	@rm -f ${BUILDDIR}${LIBDIR}/${.TARGET};
+	@ln -s `pwd`/${.TARGET} ${BUILDDIR}${LIBDIR}/${.TARGET};
+.if (${SHLIB_TYPE} == "ELF")
+	rm -f ${BUILDDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
+	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	    ${BUILDDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
+	rm -f ${BUILDDIR}${LIBDIR}/lib${LIB}.so
+	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	    ${BUILDDIR}${LIBDIR}/lib${LIB}.so
+.endif	# SHLIB_TYPE == ELF
+.endif	# defined(OBJDIR)
 
 LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 LLIBS?=		-lc
@@ -312,9 +348,9 @@ ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
 .endif
 
 .include <bsd.obj.mk>
+.include <bsd.links.mk>
 .include <bsd.files.mk>
 .include <bsd.inc.mk>
-.include <bsd.links.mk>
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
 .include <bsd.sys.mk>
