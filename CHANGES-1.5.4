@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.98 2003/03/20 15:32:46 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.99 2003/03/27 09:15:29 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2011,3 +2011,24 @@ crypto/dist/openssl/ssl/s3_srvr.c		1.4
   OpenSSL Security Advisory [19 March 2003]
   Klima-Pokorny-Rosa attack on RSA in SSL/TLS
   [itojun, ticket #35]
+
+lib/libc/rpc/xdr_mem.c			1.16
+include/rpc/xdr.h			1.20
+
+	CERT Advisory CA-2003-10:
+	Fix buffer overflow in Sun RPC implementation.
+	Fix SA#2003-008
+	[david, ticket #36]
+
+gnu/usr.bin/tar/extract.c		patched by hand
+
+	If an entry for a directory into which files are to be extracted is
+	missing in an archive, tar handles this by noticing it, and creating
+	the necessary directory itself. Since the mode for that directory is
+	not regietered in the incomplete archive, tar creates these
+	directories mode 0777, expecting the user's umask to strip of all
+	unwanted permission bits. However, if tar is called with the "-p"
+	option (preserve modes) the umask is cleared, and thus directories not
+	contained in the archive are created mode 0777. The attached patch
+	fixes this by honouring the umask in this special case.
+	[wennmach, ticket #38]
