@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.87 2004/03/27 14:49:13 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.88 2004/03/27 14:52:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.87 2004/03/27 14:49:13 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.88 2004/03/27 14:52:36 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -306,8 +306,11 @@ command(void *arg, VARENT *ve, int mode)
 					fmt_puts(*p, &left);
 					p++;
 					fmt_putc(' ', &left);
+					if (v->flag & ARGV0)
+						break;
 				}
-				if (titlecmp(name, argv)) {
+				if (!(v->flag & ARGV0) &&
+				    titlecmp(name, argv)) {
 					/*
 					 * append the real command name within
 					 * parentheses, if the command name
