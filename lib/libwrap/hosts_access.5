@@ -64,6 +64,8 @@ daemon_list : client_list : option : option ...
 \fIclient_list\fR is a list
 of one or more host names, host addresses, patterns or wildcards (see
 below) that will be matched against the client host name or address.
+When a client_list item needs to include colon character (for IPv6 addresses),
+the item needs to be wrapped with square bracket.
 .PP
 The more complex forms \fIdaemon@host\fR and \fIuser@host\fR are
 explained in the sections on server endpoint patterns and on client
@@ -97,6 +99,16 @@ An expression of the form `n.n.n.n/m.m.m.m\' is interpreted as a
 bitwise AND of the address and the `mask\'. For example, the net/mask
 pattern `131.155.72.0/255.255.254.0\' matches every address in the
 range `131.155.72.0\' through `131.155.73.255\'.
+Note that `m.m.m.m\' portion must always be specified.
+.IP \(bu
+An expression of the form `ipv6-addr/ipv6-mask\' is interpreted as
+masked IPv6 address match, just like masked IPv4 address match (see above).
+Note that `ipv6-mask\' portion must always be specified.
+.IP \(bu
+An expression of the form `ipv6-addr/prefixlen\' is interpreted as
+masked IPv6 address match (with mask specified by numeric prefixlen),
+just like masked IPv4 address match (see above).
+Note that `prefixlen\' portion must always be specified.
 .SH WILDCARDS
 The access control language supports explicit wildcards:
 .IP ALL
@@ -378,4 +390,4 @@ Eindhoven University of Technology
 Den Dolech 2, P.O. Box 513, 
 5600 MB Eindhoven, The Netherlands
 \" @(#) hosts_access.5 1.20 95/01/30 19:51:46
-\"	$NetBSD: hosts_access.5,v 1.9 1999/08/02 16:09:41 bouyer Exp $
+\"	$NetBSD: hosts_access.5,v 1.10 1999/08/31 13:58:58 itojun Exp $
