@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.26 2004/08/19 23:07:01 christos Exp $	*/
+/*	$NetBSD: paths.h,v 1.27 2004/08/19 23:10:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,9 +41,9 @@
  */
 #ifdef RESCUEDIR
 #define	_PATH_DEFPATH	RESCUEDIR ":/usr/bin:/bin:/usr/pkg/bin:/usr/local/bin"
-#endif
-#define	_PATH_DEFPATH	"/usr/bin:/bin:/usr/pkg/bin:/usr/local/bin"
 #else
+#define	_PATH_DEFPATH	"/usr/bin:/bin:/usr/pkg/bin:/usr/local/bin"
+#endif
 
 /*
  * All standard utilities path.
