@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.18 2000/12/19 00:36:54 bjh21 Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.1 2001/03/17 20:32:00 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.16 2000/12/19 00:36:26 bjh21 Exp 
+ *	NetBSD: podules,v 1.1 2001/03/17 19:05:19 bjh21 Exp 
  */
 
 /*
