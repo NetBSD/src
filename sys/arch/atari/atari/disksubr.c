@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.27 2003/05/02 08:45:21 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28 2003/05/10 23:12:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -68,11 +68,12 @@ static u_int ahdi_getparts __P((dev_t, void (*)(struct buf *), u_int,
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(bp, lp, wlabel)
+bounds_check_with_label(dk, bp, wlabel)
+	struct disk		*dk;
 	struct buf		*bp;
-	struct disklabel	*lp;
 	int			wlabel;
 {
+	struct disklabel	*lp = dk->dk_label;
 	struct partition	*pp;
 	u_int			maxsz, sz;
 

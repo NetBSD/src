@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.182 2003/05/02 08:45:29 dsl Exp $	*/
+/*	$NetBSD: cd.c,v 1.183 2003/05/10 23:12:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.182 2003/05/02 08:45:29 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.183 2003/05/10 23:12:47 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -589,7 +589,7 @@ cdstrategy(bp)
 		    cd->params.disksize512) <= 0)
 			goto done;
 	} else {
-		if (bounds_check_with_label(bp, lp,
+		if (bounds_check_with_label(&cd->sc_dk, bp,
 		    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
 			goto done;
 	}

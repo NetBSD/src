@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.158 2003/05/02 08:45:28 dsl Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.159 2003/05/10 23:12:46 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -111,7 +111,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.158 2003/05/02 08:45:28 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.159 2003/05/10 23:12:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -706,7 +706,7 @@ raidstrategy(bp)
 
 	wlabel = rs->sc_flags & (RAIDF_WLABEL | RAIDF_LABELLING);
 	if (DISKPART(bp->b_dev) != RAW_PART)
-		if (bounds_check_with_label(bp, lp, wlabel) <= 0) {
+		if (bounds_check_with_label(&rs->sc_dkdev, bp, wlabel) <= 0) {
 			db1_printf(("Bounds check failed!!:%d %d\n",
 				(int) bp->b_blkno, (int) wlabel));
 			biodone(bp);

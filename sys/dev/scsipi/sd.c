@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.198 2003/05/02 08:45:28 dsl Exp $	*/
+/*	$NetBSD: sd.c,v 1.199 2003/05/10 23:12:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.198 2003/05/02 08:45:28 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.199 2003/05/10 23:12:47 thorpej Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -636,7 +636,7 @@ sdstrategy(bp)
 		    sd->params.disksize512) <= 0)
 			goto done;
 	} else {
-		if (bounds_check_with_label(bp, lp,
+		if (bounds_check_with_label(&sd->sc_dk, bp,
 		    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
 			goto done;
 	}
