@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.61 1999/09/01 00:32:42 thorpej Exp $
+#	$NetBSD: files.pci,v 1.62 1999/09/01 11:54:32 drochner Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -219,3 +219,8 @@ attach	btvmei at pci
 file	dev/pci/btvmei.c		btvmei
 #file	dev/pci/btvmei_dma.c		btvmei
 #file	dev/pci/btvmei_cntlrdma.c	btvmei
+
+# Alteon ACEnic Gigabit Ethernet controller
+device	ti: ether, ifnet, arp
+attach	ti at pci
+file	dev/pci/if_ti.c			ti
