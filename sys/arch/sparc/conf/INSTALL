@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.11 1999/07/29 10:37:22 augustss Exp $
+#	$NetBSD: INSTALL,v 1.12 2000/01/14 13:41:45 pk Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -14,7 +14,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	MINIROOTSIZE=3074	# size of memory disk, in blocks
-options 	MINIROOTSIZE=3312	# 1.44M * 1.15.  this must match
+options 	MINIROOTSIZE=3600	# 1.44M * 1.15.  this must match
 					# what is `instfs' in /etc/disktab.
 
 pseudo-device	md		1	# memory disk device (ramdisk)
