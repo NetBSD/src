@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2003/04/08 23:48:48 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 2003/04/26 18:13:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@
 #include "apm.h"
 #include "lapic.h"
 #include "ioapic.h"
+#include "ksyms.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
@@ -513,7 +514,7 @@ try586:	/* Use the `cpuid' instruction. */
 
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
-#if defined(DDB) && !defined(SYMTAB_SPACE)
+#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
 	/* Save the symbols (if loaded). */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax
