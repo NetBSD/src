@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.38 2002/04/23 05:47:38 manu Exp $
+	$NetBSD: syscalls.master,v 1.39 2002/04/28 17:21:59 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -244,11 +244,14 @@
 127	NOARGS		{ int sys_adjtime(struct timeval *delta, \
 			    struct timeval *olddelta); }
 128	NOARGS		{ int svr4_sys_gettimeofday(struct timeval *tp); }
-129	UNIMPL		sproc
+129	STD		{ irix_pid_t irix_sys_sproc(void *entry, \
+			    unsigned int inh, void *arg); }
 130	STD		{ ptrdiff_t irix_sys_prctl(unsigned int option, \
 			    void *arg1); }
 131	UNIMPL		procblk
-132	UNIMPL		sprocsp
+132	STD		{ irix_pid_t irix_sys_sprocsp(void *entry, \
+			    unsigned int inh, void *arg, caddr_t sp, \
+			    irix_size_t len); }
 133	UNIMPL		sgigsc
 134	STD		{ void *irix_sys_mmap(void *addr, irix_size_t len, \
 			    int prot, int flags, int fd, irix_off_t pos); }
@@ -355,7 +358,9 @@
 			    irix_dirent64_t *buf, unsigned short nbyte, \
 			    int *eof); }
 209	UNIMPL		sgi_sesmgr
-210	UNIMPL		pidsprocsp
+210	STD		{ irix_pid_t irix_sys_pidsprocsp(void *entry, \
+			    unsigned int inh, void *arg, caddr_t sp, \
+			    irix_size_t len, irix_pid_t pid); }
 211	UNIMPL		rexec
 212	UNIMPL		timer_create
 213	UNIMPL		timer_delete

@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_prctl.h,v 1.1 2001/12/02 09:23:59 manu Exp $ */
+/*	$NetBSD: irix_prctl.h,v 1.2 2002/04/28 17:21:59 manu Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -62,4 +62,17 @@
 #define IRIX_PR_THREAD_CTL	21
 #define IRIX_PR_LASTSHEXIT	22
 
+#define IRIX_PR_SPROC		0x00000001
+#define IRIX_PR_SFDS		0x00000002
+#define IRIX_PR_SDIR		0x00000004
+#define IRIX_PR_SUMASK		0x00000008
+#define IRIX_PR_SULIMIT		0x00000010
+#define IRIX_PR_SID		0x00000020
+#define IRIX_PR_SADDR		0x00000040
+#define IRIX_PR_THREADS		0x00000080
+#define IRIX_PR_BLOCK		0x01000000
+#define IRIX_PR_NOLIBC		0x02000000
+#define IRIX_PR_EVENT		0x04000000
+
+#define IRIX_SPROC_STACK_OFFSET	0x04000000
 #endif /* _IRIX_IRIX_PRCTL_H_ */
