@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.83.2.12 2002/04/17 00:05:08 nathanw Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.83.2.13 2002/04/17 02:01:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.83.2.12 2002/04/17 00:05:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.83.2.13 2002/04/17 02:01:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -812,8 +812,8 @@ out1:
  * Note that this doesn't handle union-mounted filesystems.
  */
 int
-linux_sys_getdents64(p, v, retval)
-	struct proc *p;
+linux_sys_getdents64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -822,6 +822,7 @@ linux_sys_getdents64(p, v, retval)
 		syscallarg(struct linux_dirent64 *) dent;
 		syscallarg(unsigned int) count;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	caddr_t	inp, buf;		/* BSD-format */
