@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.41 2000/08/19 19:36:18 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.42 2000/08/21 02:17:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ do {									\
 #define	INTERLOCK_ACQUIRE(lkp, s)					\
 do {									\
 	if ((lkp)->lk_flags & LK_SPIN)					\
-		s = splhigh();						\
+		s = splsched();						\
 	simple_lock(&(lkp)->lk_interlock);				\
 } while (0)
 
@@ -856,24 +856,25 @@ _simple_lock(__volatile struct simplelock *alp, const char *id, int l)
 int
 _simple_lock_held(__volatile struct simplelock *alp)
 {
-#if defined(MULTIPROCESSOR)
 	cpuid_t cpu_id = cpu_number();
 	int s, locked = 0;
 
 	s = splhigh();
+
+#if defined(MULTIPROCESSOR)
 	if (__cpu_simple_lock_try(&alp->lock_data) == 0)
 		locked = (alp->lock_holder == cpu_id);
 	else
 		__cpu_simple_unlock(&alp->lock_data);
-	splx(s);
 #else
-	int s, locked;
-
-	s = splhigh();
-	locked = (alp->lock_data == __SIMPLELOCK_LOCKED);
-	KASSERT(alp->lock_holder == cpu_number());
-	splx(s);
+	if (alp->lock_data == __SIMPLELOCK_LOCKED) {
+		locked = 1;
+		KASSERT(alp->lock_holder == cpu_id);
+	}
 #endif
+
+	splx(s);
+
 	return (locked);
 }
 
@@ -1015,10 +1016,18 @@ simple_lock_switchcheck(void)
 	cpuid_t cpu_id = cpu_number();
 	int s;
 
-	s = splhigh();
+	/*
+	 * We must be holding exactly one lock: the sched_lock.
+	 */
+
+	SCHED_ASSERT_LOCKED();
+
+	s = splhigh();		/* XXX spllock */
 	SLOCK_LIST_LOCK();
 	for (alp = TAILQ_FIRST(&simplelock_list); alp != NULL;
 	     alp = TAILQ_NEXT(alp, list)) {
+		if (alp == &sched_lock)
+			continue;
 		if (alp->lock_holder == cpu_id) {
 			lock_printf("switching with held simple_lock %p "
 			    "CPU %lu %s:%d\n",
