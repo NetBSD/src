@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.33 2003/11/03 06:03:47 kochi Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.34 2003/11/03 17:24:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.33 2003/11/03 06:03:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.34 2003/11/03 17:24:22 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,8 +271,8 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 				      ACPI_DEVICE_NOTIFY,
 				      acpibat_notify_handler, sc);
 	if (rv != AE_OK) {
-		printf("%s: unable to register DEVICE NOTIFY handler: %d\n",
-		       sc->sc_dev.dv_xname, rv);
+		printf("%s: unable to register DEVICE NOTIFY handler: %s\n",
+		       sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 
@@ -281,8 +281,8 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 				      ACPI_SYSTEM_NOTIFY,
 				      acpibat_notify_handler, sc);
 	if (rv != AE_OK) {
-		printf("%s: unable to register SYSTEM NOTIFY handler: %d\n",
-		       sc->sc_dev.dv_xname, rv);
+		printf("%s: unable to register SYSTEM NOTIFY handler: %s\n",
+		       sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 
@@ -356,8 +356,8 @@ acpibat_battery_present(struct acpibat_softc *sc)
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_STA", &val);
 	if (rv != AE_OK) {
-		printf("%s: failed to evaluate _STA: %x\n",
-		       sc->sc_dev.dv_xname, rv);
+		printf("%s: failed to evaluate _STA: %s\n",
+		       sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return (-1);
 	}
 
@@ -392,8 +392,8 @@ acpibat_get_info(struct acpibat_softc *sc)
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_BIF", &buf);
 	if (rv != AE_OK) {
-		printf("%s: failed to evaluate _BIF: 0x%x\n",
-		    sc->sc_dev.dv_xname, rv);
+		printf("%s: failed to evaluate _BIF: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return (rv);
 	}
 	p1 = (ACPI_OBJECT *)buf.Pointer;
@@ -482,7 +482,8 @@ acpibat_get_status(struct acpibat_softc *sc)
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_BST", &buf);
 	if (rv != AE_OK) {
-		printf("bat: failed to evaluate _BST: 0x%x\n", rv);
+		printf("%s: failed to evaluate _BST: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return (rv);
 	}
 	p1 = (ACPI_OBJECT *)buf.Pointer;
@@ -552,7 +553,7 @@ acpibat_print_info(struct acpibat_softc *sc)
 	else
 		tech = "primary";
 
-	printf("%s: %s battery, Design %d.%03d%s, Predicted %d.%03d%s"
+	printf("%s: %s battery, Design %d.%03d%s, Last full %d.%03d%s"
 	       "Warn %d.%03d%s Low %d.%03d%s\n",
 	       sc->sc_dev.dv_xname, tech,
 	       SCALE(sc->sc_data[ACPIBAT_DCAPACITY].cur.data_s), CAPUNITS(sc),
@@ -677,8 +678,8 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
 					     acpibat_update, sc);
 		if (rv != AE_OK)
-			printf("%s: unable to queue status check: %d\n",
-			       sc->sc_dev.dv_xname, rv);
+			printf("%s: unable to queue status check: %s\n",
+			       sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		break;
 
 	case ACPI_NOTIFY_BatteryStatusChanged:
@@ -688,8 +689,8 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
 					     acpibat_update, sc);
 		if (rv != AE_OK)
-			printf("%s: unable to queue status check: %d\n",
-			       sc->sc_dev.dv_xname, rv);
+			printf("%s: unable to queue status check: %s\n",
+			       sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		break;
 
 	default:

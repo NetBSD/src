@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.4 2003/10/31 21:52:11 mycroft Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.5 2003/11/03 17:24:22 mycroft Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.4 2003/10/31 21:52:11 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.5 2003/11/03 17:24:22 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,8 +171,8 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_devnode->ad_handle,
 	    ACPI_SYSTEM_NOTIFY, acpitz_notify_handler, sc);
 	if (rv != AE_OK) {
-		printf("%s: unable to install system notify handler\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: unable to install SYSTEM NOTIFY handler: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 
@@ -192,8 +192,8 @@ acpitz_get_status(void *opaque)
 	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, "_TMP",
 	    &sc->sc_zone.tmp);
 	if (rv != AE_OK) {
-		printf("%s: failed to evaluate _TMP: 0x%x\n",
-		    sc->sc_dev.dv_xname, rv);
+		printf("%s: failed to evaluate _TMP: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 
@@ -228,12 +228,12 @@ acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
 		    acpitz_get_status, sc);
 		if (rv != AE_OK) {
-			printf("%s: unable to queue status check\n",
-			    sc->sc_dev.dv_xname);
+			printf("%s: unable to queue status check: %s\n",
+			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		}
 		break;
 	default:
-		printf("%s: received unhandled notify message %d\n",
+		printf("%s: received unhandled notify message 0x%x\n",
 		    sc->sc_dev.dv_xname, notify);
 		break;
 	}
