@@ -33,7 +33,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.9 1996/02/29 20:58:22 cgd Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.10 1997/01/22 06:51:59 mikel Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -149,6 +149,9 @@ exec > $out_h
 echo -n "$warning" | sed -e 's/\$//g'
 echo ""
 echo -n "$copyright"
+echo ''
+echo '#ifndef _SYS_VNODE_IF_H_'
+echo '#define _SYS_VNODE_IF_H_'
 echo '
 extern struct vnodeop_desc vop_default_desc;
 '
@@ -219,7 +222,8 @@ END	{
 # End stuff
 echo '
 /* End of special cases. */'
-
+echo ''
+echo '#endif /* !_SYS_VNODE_IF_H_ */'
 
 #
 # Redirect stdout to the C file.
