@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.13 1999/08/04 19:12:22 ragge Exp $ */
+/*	$NetBSD: bi.c,v 1.14 2000/03/26 11:45:04 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -114,11 +114,12 @@ bi_attach(sc)
 
 	ba.ba_iot = sc->sc_iot;
 	ba.ba_busnr = sc->sc_busnr;
+	ba.ba_dmat = sc->sc_dmat;
+	ba.ba_intcpu = sc->sc_intcpu;
 	/*
 	 * Interrupt numbers. All vectors from 256-512 are free, use
 	 * them for BI devices and just count them up.
 	 * Above 512 are only interrupt vectors for unibus devices.
-	 * Is it realistic with more than 64 BI devices???
 	 */
 	for (nodenr = 0; nodenr < NNODEBI; nodenr++) {
 		if (bus_space_map(sc->sc_iot, sc->sc_addr + BI_NODE(nodenr),
@@ -129,11 +130,11 @@ bi_attach(sc)
 		}
 		if (badaddr((caddr_t)ba.ba_ioh, 4)) {
 			bus_space_unmap(sc->sc_iot, ba.ba_ioh, NODESIZE);
-		} else {
-			ba.ba_nodenr = nodenr;
-			ba.ba_ivec = 256 + lastiv;
-			lastiv += 4;
-			config_found(&sc->sc_dev, &ba, bi_print);
+			continue;
 		}
+		ba.ba_nodenr = nodenr;
+		ba.ba_ivec = 256 + lastiv;
+		lastiv += 4;
+		config_found(&sc->sc_dev, &ba, bi_print);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.16 1999/07/12 13:43:11 ragge Exp $ */
+/*	$NetBSD: kdb.c,v 1.17 2000/03/26 11:45:04 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,21 +51,25 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#include <machine/sid.h>
+#ifdef __vax__
 #include <machine/pte.h>
 #include <machine/pcb.h>
-#include <machine/trap.h>
-#include <machine/scb.h>
+#endif
+#include <machine/bus.h>
 
-#include <vax/bi/bireg.h>
-#include <vax/bi/bivar.h>
-#include <vax/bi/kdbreg.h>
+#include <dev/bi/bireg.h>
+#include <dev/bi/bivar.h>
+#include <dev/bi/kdbreg.h>
 
-#include <vax/mscp/mscp.h>
-#include <vax/mscp/mscpvar.h>
-#include <vax/mscp/mscpreg.h>
+#include <dev/mscp/mscp.h>
+#include <dev/mscp/mscpreg.h>
+#include <dev/mscp/mscpvar.h>
 
 #include "locators.h"
+
+#define KDB_WL(adr, val) bus_space_write_4(sc->sc_iot, sc->sc_ioh, adr, val)
+#define KDB_RL(adr) bus_space_read_4(sc->sc_iot, sc->sc_ioh, adr)
+#define KDB_RS(adr) bus_space_read_2(sc->sc_iot, sc->sc_ioh, adr)
 
 #define	    b_forw  b_hash.le_next
 /*
@@ -73,27 +77,26 @@
  */
 struct	kdb_softc {
 	struct	device sc_dev;		/* Autoconfig info */
-	struct	ivec_dsp sc_ivec;	/* Interrupt vector handler */
-	struct	mscp_pack sc_kdb;	/* Struct for kdb communication */
+	caddr_t	sc_kdb;			/* Struct for kdb communication */
 	struct	mscp_softc *sc_softc;	/* MSCP info (per mscpvar.h) */
-	struct	kdb_regs *sc_kr;	/* KDB controller registers */
-	struct	mscp *sc_mscp;		/* Keep pointer to active mscp */
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_cmap;		/* Control structures */
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
 };
 
 int	kdbmatch __P((struct device *, struct cfdata *, void *));
 void	kdbattach __P((struct device *, struct device *, void *));
 void	kdbreset __P((int));
-void	kdbintr __P((int));
-void	kdbctlrdone __P((struct device *, int));
+void	kdbintr __P((void *));
+void	kdbctlrdone __P((struct device *));
 int	kdbprint __P((void *, const char *));
 void	kdbsaerror __P((struct device *, int));
-int	kdbgo __P((struct device *, struct buf *));
+void	kdbgo __P((struct device *, struct mscp_xi *));
 
 struct	cfattach kdb_ca = {
 	sizeof(struct kdb_softc), kdbmatch, kdbattach
 };
-
-extern struct cfdriver kdb_cd;
 
 /*
  * More driver definitions, for generic MSCP code.
@@ -125,7 +128,7 @@ kdbmatch(parent, cf, aux)
 {
 	struct bi_attach_args *ba = aux;
 
-	if (ba->ba_node->biic.bi_dtype != BIDT_KDB50)
+	if (bus_space_read_2(ba->ba_iot, ba->ba_ioh, BIREG_DTYPE) != BIDT_KDB50)
 		return 0;
 
 	if (cf->cf_loc[BICF_NODE] != BICF_NODE_DEFAULT &&
@@ -143,104 +146,131 @@ kdbattach(parent, self, aux)
 	struct	kdb_softc *sc = (void *)self;
 	struct	bi_attach_args *ba = aux;
 	struct	mscp_attach_args ma;
-	extern	struct ivec_dsp idsptch;
 	volatile int i = 10000;
+	int error, rseg;
+	bus_dma_segment_t seg;
 
 	printf("\n");
-	bcopy(&idsptch, &sc->sc_ivec, sizeof(struct ivec_dsp));
-	scb->scb_nexvec[1][ba->ba_nodenr] = &sc->sc_ivec;
-	sc->sc_ivec.hoppaddr = kdbintr;
-	sc->sc_ivec.pushlarg = self->dv_unit;
-	sc->sc_kr = (void *)ba->ba_node;
+	bi_intr_establish(ba->ba_icookie, ba->ba_ivec, kdbintr, sc);
 
-	bzero(&sc->sc_kdb, sizeof (struct mscp_pack));
+	sc->sc_iot = ba->ba_iot;
+	sc->sc_ioh = ba->ba_ioh;
+	sc->sc_dmat = ba->ba_dmat;
+
+	/*
+	 * Map the communication area and command and
+	 * response packets into Unibus space.
+	 */
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct mscp_pack),
+	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+		printf("Alloc ctrl area %d\n", error);
+		return;
+	}
+	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
+	    sizeof(struct mscp_pack), &sc->sc_kdb,
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("Map ctrl area %d\n", error);
+err:		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		return;
+	}
+	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct mscp_pack),
+	    1, sizeof(struct mscp_pack), 0, BUS_DMA_NOWAIT, &sc->sc_cmap))) {
+		printf("Create DMA map %d\n", error);
+err2:		bus_dmamem_unmap(sc->sc_dmat, sc->sc_kdb,
+		    sizeof(struct mscp_pack));
+		goto err;
+	}
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cmap, 
+	    sc->sc_kdb, sizeof(struct mscp_pack), 0, BUS_DMA_NOWAIT))) {
+		printf("Load ctrl map %d\n", error);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_cmap);
+		goto err2;
+	}
+	bzero(sc->sc_kdb, sizeof(struct mscp_pack));
 
 	ma.ma_mc = &kdb_mscp_ctlr;
 	ma.ma_type = MSCPBUS_DISK|MSCPBUS_KDB;
-	ma.ma_uuda = (struct mscp_pack *)kvtophys(&sc->sc_kdb);
-	ma.ma_uda = &sc->sc_kdb;
-	ma.ma_ip = &sc->sc_kr->kdb_ip;
-	ma.ma_sa = &sc->sc_kr->kdb_sa;
-	ma.ma_sw = &sc->sc_kr->kdb_sw;
+	ma.ma_uda = (struct mscp_pack *)sc->sc_kdb;
 	ma.ma_softc = &sc->sc_softc;
-	ma.ma_ivec = (int)&scb->scb_nexvec[1][ba->ba_nodenr] - (int)scb;
+	ma.ma_iot = sc->sc_iot;
+	ma.ma_iph = sc->sc_ioh + KDB_IP;
+	ma.ma_sah = sc->sc_ioh + KDB_SA;
+	ma.ma_swh = sc->sc_ioh + KDB_SW;
+	ma.ma_dmat = sc->sc_dmat;
+	ma.ma_dmam = sc->sc_cmap;
+	ma.ma_ivec = ba->ba_ivec;
 	ma.ma_ctlrnr = ba->ba_nodenr;
-	sc->sc_kr->kdb_bi.bi_csr |= BICSR_NRST;
+	ma.ma_adapnr = ba->ba_busnr;
+
+	KDB_WL(BIREG_VAXBICSR, KDB_RL(BIREG_VAXBICSR) | BICSR_NRST);
 	while (i--) /* Need delay??? */
 		;
-	sc->sc_kr->kdb_bi.bi_intrdes = ba->ba_intcpu;
-	sc->sc_kr->kdb_bi.bi_bcicsr |= BCI_STOPEN | BCI_IDENTEN | BCI_UINTEN |
-	    BCI_INTEN;
-	sc->sc_kr->kdb_bi.bi_uintrcsr = ma.ma_ivec;
+	KDB_WL(BIREG_INTRDES, ba->ba_intcpu); /* Interrupt on CPU # */
+	KDB_WL(BIREG_BCICSR, KDB_RL(BIREG_BCICSR) |
+	    BCI_STOPEN | BCI_IDENTEN | BCI_UINTEN | BCI_INTEN);
+	KDB_WL(BIREG_UINTRCSR, ba->ba_ivec);
 	config_found(&sc->sc_dev, &ma, kdbprint);
 }
 
-int
-kdbgo(usc, bp)
+void
+kdbgo(usc, mxi)
 	struct device *usc;
-	struct buf *bp;
+	struct mscp_xi *mxi;
 {
 	struct kdb_softc *sc = (void *)usc;
-	struct mscp_softc *mi = sc->sc_softc;
-	struct mscp *mp = (void *)bp->b_actb;
-	struct	pcb *pcb;
-	pt_entry_t *pte;
-	int	npf, o, i;
-	unsigned info = 0;
-	caddr_t addr;
+	struct buf *bp = mxi->mxi_bp;
+	struct mscp *mp = mxi->mxi_mp;
+	u_int32_t addr = (u_int32_t)bp->b_un.b_addr;
+	u_int32_t mapaddr;
+	int err;
 
-	o = (int)bp->b_un.b_addr & VAX_PGOFSET;
-	npf = vax_btoc(bp->b_bcount + o) + 1;
-	addr = bp->b_un.b_addr;
+	/*
+	 * The KDB50 wants to read VAX Page tables directly, therefore
+	 * the result from bus_dmamap_load() is uninteresting. (But it
+	 * should never fail!).
+	 *
+	 * On VAX, point to the corresponding page tables. (user/sys)
+	 * On other systems, do something else... 
+	 */
+	err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_un.b_addr,
+	    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
 
+	if (err) /* Shouldn't happen */
+		panic("kdbgo: bus_dmamap_load: error %d", err);
+
+#ifdef __vax__
 	/*
 	 * Get a pointer to the pte pointing out the first virtual address.
 	 * Use different ways in kernel and user space.
 	 */
 	if ((bp->b_flags & B_PHYS) == 0) {
-		pte = kvtopte(addr);
+		mapaddr = ((u_int32_t)kvtopte(addr)) & ~KERNBASE;
 	} else {
+		struct pcb *pcb;
+		u_int32_t eaddr;
+
+		/*
+		 * We check if the PTE's needed crosses a page boundary.
+		 * If they do; only transfer the amount of data that is
+		 * mapped by the first PTE page and led the system handle
+		 * the rest of the data.
+		 */
 		pcb = &bp->b_proc->p_addr->u_pcb;
-		pte = uvtopte(addr, pcb);
-	}
-
-	/*
-	 * When we are doing DMA to user space, be sure that all pages
-	 * we want to transfer to is mapped. WHY DO WE NEED THIS???
-	 * SHOULDN'T THEY ALWAYS BE MAPPED WHEN DOING THIS???
-	 */
-	for (i = 0; i < (npf - 1); i++) {
-		if ((pte + i)->pg_pfn == 0) {
-			int rv;
-			rv = uvm_fault(&bp->b_proc->p_vmspace->vm_map,
-			    (unsigned)addr + i * VAX_NBPG, 0,
-			    VM_PROT_READ|VM_PROT_WRITE);
-			if (rv)
-				panic("KDB DMA to nonexistent page, %d", rv);
+		mapaddr = (u_int32_t)uvtopte(addr, pcb);
+		eaddr = (u_int32_t)uvtopte(addr + (bp->b_bcount - 1), pcb);
+		if (trunc_page(mapaddr) != trunc_page(eaddr)) {
+			mp->mscp_seq.seq_bytecount =
+			    (((round_page(mapaddr) - mapaddr)/4) * 512);
 		}
+		mapaddr = kvtophys(mapaddr);
 	}
-	/*
-	 * pte's for userspace isn't necessary positioned
-	 * in consecutive physical pages. We check if they 
-	 * are, otherwise we need to copy the pte's to a
-	 * physically contigouos page area.
-	 * XXX some copying here may be unneccessary. Subject to fix.
-	 */
-	if (bp->b_flags & B_PHYS) {
-		int i = kvtophys(pte);
-		unsigned k;
+#else
+#error Must write code to handle KDB50 on non-vax.
+#endif
 
-		if (trunc_page(i) != trunc_page(kvtophys(pte) + npf * 4)) {
-			info = (unsigned)malloc(2 * VAX_NBPG, M_DEVBUF, M_WAITOK);
-			k = (info + VAX_PGOFSET) & ~VAX_PGOFSET;
-			bcopy(pte, (void *)k, VAX_NBPG);
-			i = kvtophys(k);
-		}
-		mp->mscp_seq.seq_mapbase = i;
-	} else
-		mp->mscp_seq.seq_mapbase = (unsigned)pte;
-	mscp_dgo(mi, KDB_MAP | o, info, bp);
-	return 1;
+	mp->mscp_seq.seq_mapbase = mapaddr;
+	mxi->mxi_dmam->dm_segs[0].ds_addr = (addr & 511) | KDB_MAP;
+	mscp_dgo(sc->sc_softc, mxi);
 }
 
 void
@@ -249,11 +279,11 @@ kdbsaerror(usc, doreset)
 	int doreset;
 {
 	struct	kdb_softc *sc = (void *)usc;
-	register int code = sc->sc_kr->kdb_sa;
 
-	if ((code & MP_ERR) == 0)
+	if ((KDB_RS(KDB_SA) & MP_ERR) == 0)
 		return;
-	printf("%s: controller error, sa=0x%x\n", sc->sc_dev.dv_xname, code);
+	printf("%s: controller error, sa=0x%x\n", sc->sc_dev.dv_xname,
+	    KDB_RS(KDB_SA));
 	/* What to do now??? */
 }
 
@@ -263,12 +293,11 @@ kdbsaerror(usc, doreset)
  * interrupts, and process responses.
  */
 void
-kdbintr(ctlr)
-	int	ctlr;
+kdbintr(void *arg)
 {
-	struct kdb_softc *sc = kdb_cd.cd_devs[ctlr];
+	struct kdb_softc *sc = arg;
 
-	if (sc->sc_kr->kdb_sa & MP_ERR) {	/* ctlr fatal error */
+	if (KDB_RS(KDB_SA) & MP_ERR) {	/* ctlr fatal error */
 		kdbsaerror(&sc->sc_dev, 1);
 		return;
 	}
@@ -284,7 +313,7 @@ void
 kdbreset(ctlr)
 	int ctlr;
 {
-	register struct kdb_softc *sc;
+	struct kdb_softc *sc;
 
 	sc = kdb_cd.cd_devs[ctlr];
 	printf(" kdb%d", ctlr);
@@ -305,10 +334,7 @@ kdbreset(ctlr)
 #endif
 
 void
-kdbctlrdone(usc, info)
+kdbctlrdone(usc)
 	struct device *usc;
-	int info;
 {
-	if (info)
-		free((void *)info, VAX_NBPG * 2);
 }
