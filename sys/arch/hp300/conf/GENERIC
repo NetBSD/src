@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.26 1997/02/18 21:09:56 mrg Exp $
+#	$NetBSD: GENERIC,v 1.27 1997/03/31 00:03:11 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -80,6 +80,7 @@ options 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
 options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 options 	DDB		# Kernel Dynamic Debugger
+makeoptions	DEBUG="-g"	# netbsd.gdb with full debugging symbols
 
 # Verbose descriptions of unconfigured DIO devices
 # (Warning: this compiles in a large string table)
