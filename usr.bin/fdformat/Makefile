@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3.10.1 2000/08/26 00:46:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.10.2 2001/04/22 18:25:04 he Exp $
 
-.if (${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "i386" || \
-     ${MACHINE} == "atari" || ${MACHINE_ARCH} == "arm32" || \
+.if (${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "arm32" || \
+     ${MACHINE} == "atari" || ${MACHINE} == "bebox" || \
+     ${MACHINE_ARCH} == "i386" || \
      ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64")
 PROG=	fdformat
 .endif
