@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.10 1998/07/11 00:52:10 mjacob Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.11 1998/11/19 03:45:39 thorpej Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -20,6 +20,9 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
+
+#ifndef _DEV_SCSIPI_SCSIPI_ALL_H_
+#define	_DEV_SCSIPI_SCSIPI_ALL_H_
 
 /*
  * SCSI-like command format and opcode
@@ -203,3 +206,5 @@ struct scsipi_inquiry_data {
 	char	revision[4];
 	u_int8_t extra[8];
 };
+
+#endif /* _DEV_SCSIPI_SCSIPI_ALL_H_ */
