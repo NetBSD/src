@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.287 2005/02/20 14:30:04 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.288 2005/02/20 15:54:02 manu Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -339,17 +339,6 @@ in sys/netinet6/in6.h.  No script is available for upgrades.
 "KAME" branch is used for kernel merge work purposes.
 http://www.kame.net/dev/cvsweb.cgi/kame/COVERAGE has functionality comparison
 among KAME/*BSD, *BSD-current and recent *BSD releases.
-
-Package:	KAME racoon
-Version:	KAME/NetBSD current 20040617
-Current Vers:	KAME/NetBSD SNAP kit (shipped every week)
-Maintainer:	KAME Project <kame@kame.net>
-Archive Site:	http://www.kame.net/
-Mailing List:	snap-users@kame.net
-Responsible:	itojun
-Notes:
-Please minimize # of local changes.  All changes should go back to KAME
-repository.  Please contact itojun if you want to put changes.
 
 Package:	krb4
 Version:	1.2
