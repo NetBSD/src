@@ -1,4 +1,4 @@
-.\"	$NetBSD: atoi.3,v 1.6 2002/02/07 07:00:28 ross Exp $
+.\"	$NetBSD: atoi.3,v 1.7 2002/07/10 14:37:16 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,3 +75,15 @@ The
 .Fn atoi
 function conforms to
 .St -ansiC .
+.Sh CAVEATS
+.Nm
+does no overflow checking, handles unsigned numbers poorly,
+and handles strings containing trailing extra characters
+(like
+.Dq "123abc" Ns )
+poorly.
+Careful use of
+.Xr strtol 3
+and
+.Xr strtoul 3
+can alleviate these problems.
