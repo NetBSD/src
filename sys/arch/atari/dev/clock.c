@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1.1.1 1995/03/26 07:12:13 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 1995/05/05 16:31:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,37 +105,37 @@ struct device	*pdp, *dp;
 void			*auxp;
 {
 	/*
-	 * Initialize Timer-A in the TT-MFP. An exact reduce to HZ is not
+	 * Initialize Timer-A in the ST-MFP. An exact reduce to HZ is not
 	 * possible by hardware. We use a divisor of 64 and reduce by software
 	 * with a factor of 4. The MFP clock runs at 2457600Hz. Therefore the
 	 * timer runs at an effective rate of: 2457600/(64*4) = 9600Hz. The
 	 * following expression works for all 'normal' values of hz.
 	 */
-	divisor        = 9600/hz;
-	MFP2->mf_tacr  = 0;		/* Stop timer			*/
-	MFP2->mf_iera &= ~IA_TIMA2;	/* Disable timer interrupts	*/
-	MFP2->mf_tadr  = divisor;	/* Set divisor			*/
+	divisor       = 9600/hz;
+	MFP->mf_tacr  = 0;		/* Stop timer			*/
+	MFP->mf_iera &= ~IA_TIMA;	/* Disable timer interrupts	*/
+	MFP->mf_tadr  = divisor;	/* Set divisor			*/
 
 	printf(": system hz %d timer-A divisor %d\n", hz, divisor);
 
 	/*
-	 * Initialize Timer-B in the TT-MFP. This timer is used by the 'delay'
+	 * Initialize Timer-B in the ST-MFP. This timer is used by the 'delay'
 	 * function below. This time is setup to be continueously counting from 
 	 * 255 back to zero at a frequency of 614400Hz.
 	 */
-	MFP2->mf_tbcr  = 0;		/* Stop timer			*/
-	MFP2->mf_iera &= ~IA_TIMB2;	/* Disable timer interrupts	*/
-	MFP2->mf_tbdr  = 0;	
-	MFP2->mf_tbcr  = T_Q004;	/* Start timer			*/
+	MFP->mf_tbcr  = 0;		/* Stop timer			*/
+	MFP->mf_iera &= ~IA_TIMB;	/* Disable timer interrupts	*/
+	MFP->mf_tbdr  = 0;	
+	MFP->mf_tbcr  = T_Q004;	/* Start timer			*/
 	
 }
 
 void cpu_initclocks()
 {
-	MFP2->mf_tacr  = T_Q064;	/* Start timer			*/
-	MFP2->mf_ipra &= ~IA_TIMA2;	/* Clear pending interrupts	*/
-	MFP2->mf_iera |= IA_TIMA2;	/* Enable timer interrupts	*/
-	MFP2->mf_imra |= IA_TIMA2;	/*    .....			*/
+	MFP->mf_tacr  = T_Q064;		/* Start timer			*/
+	MFP->mf_ipra &= ~IA_TIMA;	/* Clear pending interrupts	*/
+	MFP->mf_iera |= IA_TIMA;	/* Enable timer interrupts	*/
+	MFP->mf_imra |= IA_TIMA;	/*    .....			*/
 }
 
 setstatclockrate(hz)
@@ -152,23 +152,23 @@ clkread()
 	extern	short	clk_div;
 			u_int	delta, elapsed;
    
-	elapsed = (divisor - MFP2->mf_tadr) + ((4 - clk_div) * divisor);
+	elapsed = (divisor - MFP->mf_tadr) + ((4 - clk_div) * divisor);
 	delta   = (elapsed * tick) / (divisor << 2);
 	
 	/*
 	 * Account for pending clock interrupts
 	 */
-	if(MFP2->mf_iera & IA_TIMA2)
+	if(MFP->mf_iera & IA_TIMA)
 		return(delta + tick);
 	return(delta);
 }
 
-#define TIMB2_FREQ	614400
-#define TIMB2_LIMIT	256
+#define TIMB_FREQ	614400
+#define TIMB_LIMIT	256
 
 /*
  * Wait "n" microseconds.
- * Relies on MFP2-Timer B counting down from TIMB2_LIMIT at TIMB2_FREQ Hz.
+ * Relies on MFP-Timer B counting down from TIMB_LIMIT at TIMB_FREQ Hz.
  * Note: timer had better have been programmed before this is first used!
  */
 void delay(n)
@@ -180,7 +180,7 @@ int	n;
 	 * Read the counter first, so that the rest of the setup overhead is
 	 * counted.
 	 */
-	otick = MFP2->mf_tbdr;
+	otick = MFP->mf_tbdr;
 
 	/*
 	 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler code so
@@ -194,217 +194,19 @@ int	n;
 	    u_int	temp;
 		
 	    __asm __volatile ("mulul %2,%1:%0" : "=d" (n), "=d" (temp)
-					       : "d" (TIMB2_FREQ));
+					       : "d" (TIMB_FREQ));
 	    __asm __volatile ("divul %1,%2:%0" : "=d" (n)
 					       : "d"(1000000),"d"(temp),"0"(n));
 	}
 
 	while(n > 0) {
-		tick = MFP2->mf_tbdr;
+		tick = MFP->mf_tbdr;
 		if(tick > otick)
-			n -= TIMB2_LIMIT - (tick - otick);
+			n -= TIMB_LIMIT - (tick - otick);
 		else n -= otick - tick;
 		otick = tick;
 	}
 }
-
-#ifdef notyet
-/*
- * Needs to be calibrated for use, its way off most of the time
- */
-void
-DELAY(mic)
-	int mic;
-{
-	u_long	n;
-	short	hpos;
-
-	/*
-	 * this function uses HSync pulses as base units. The custom chips 
-	 * display only deals with 31.6kHz/2 refresh, this gives us a
-	 * resolution of 1/15800 s, which is ~63us (add some fuzz so we really
-	 * wait awhile, even if using small timeouts)
-	 */
-	n = mic/63 + 2;
-	do {
-		hpos = custom.vhposr & 0xff00;
-		while (hpos == (custom.vhposr & 0xff00))
-			;
-	} while (n--);
-}
-#endif /* notyet */
-
-#if notyet
-
-/* implement this later. I'd suggest using both timers in CIA-A, they're
-   not yet used. */
-
-#include "clock.h"
-#if NCLOCK > 0
-/*
- * /dev/clock: mappable high resolution timer.
- *
- * This code implements a 32-bit recycling counter (with a 4 usec period)
- * using timers 2 & 3 on the 6840 clock chip.  The counter can be mapped
- * RO into a user's address space to achieve low overhead (no system calls),
- * high-precision timing.
- *
- * Note that timer 3 is also used for the high precision profiling timer
- * (PROFTIMER code above).  Care should be taken when both uses are
- * configured as only a token effort is made to avoid conflicting use.
- */
-#include <sys/proc.h>
-#include <sys/resourcevar.h>
-#include <sys/ioctl.h>
-#include <sys/malloc.h>
-#include <vm/vm.h>
-#include <amiga/amiga/clockioctl.h>
-#include <sys/specdev.h>
-#include <sys/vnode.h>
-#include <sys/mman.h>
-
-int clockon = 0;		/* non-zero if high-res timer enabled */
-#ifdef PROFTIMER
-int  profprocs = 0;		/* # of procs using profiling timer */
-#endif
-#ifdef DEBUG
-int clockdebug = 0;
-#endif
-
-/*ARGSUSED*/
-clockopen(dev, flags)
-	dev_t dev;
-{
-#ifdef PROFTIMER
-#ifdef PROF
-	/*
-	 * Kernel profiling enabled, give up.
-	 */
-	if (profiling)
-		return(EBUSY);
-#endif
-	/*
-	 * If any user processes are profiling, give up.
-	 */
-	if (profprocs)
-		return(EBUSY);
-#endif
-	if (!clockon) {
-		startclock();
-		clockon++;
-	}
-	return(0);
-}
-
-/*ARGSUSED*/
-clockclose(dev, flags)
-	dev_t dev;
-{
-	(void) clockunmmap(dev, (caddr_t)0, curproc);	/* XXX */
-	stopclock();
-	clockon = 0;
-	return(0);
-}
-
-/*ARGSUSED*/
-clockioctl(dev, cmd, data, flag, p)
-	dev_t		dev;
-	u_long		cmd;
-	caddr_t		data;
-	struct proc	*p;
-{
-	int error = 0;
-	
-	switch (cmd) {
-
-	case CLOCKMAP:
-		error = clockmmap(dev, (caddr_t *)data, p);
-		break;
-
-	case CLOCKUNMAP:
-		error = clockunmmap(dev, *(caddr_t *)data, p);
-		break;
-
-	case CLOCKGETRES:
-		*(int *)data = CLK_RESOLUTION;
-		break;
-
-	default:
-		error = EINVAL;
-		break;
-	}
-	return(error);
-}
-
-/*ARGSUSED*/
-clockmap(dev, off, prot)
-	dev_t dev;
-{
-	return((off + (INTIOBASE+CLKBASE+CLKSR-1)) >> PGSHIFT);
-}
-
-clockmmap(dev, addrp, p)
-	dev_t dev;
-	caddr_t *addrp;
-	struct proc *p;
-{
-	int error;
-	struct vnode vn;
-	struct specinfo si;
-	int flags;
-
-	flags = MAP_FILE|MAP_SHARED;
-	if (*addrp)
-		flags |= MAP_FIXED;
-	else
-		*addrp = (caddr_t)0x1000000;	/* XXX */
-	vn.v_type = VCHR;			/* XXX */
-	vn.v_specinfo = &si;			/* XXX */
-	vn.v_rdev = dev;			/* XXX */
-	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
-			PAGE_SIZE, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
-	return(error);
-}
-
-clockunmmap(dev, addr, p)
-	dev_t dev;
-	caddr_t addr;
-	struct proc *p;
-{
-	int rv;
-
-	if (addr == 0)
-		return(EINVAL);		/* XXX: how do we deal with this? */
-	rv = vm_deallocate(p->p_vmspace->vm_map, (vm_offset_t)addr, PAGE_SIZE);
-	return(rv == KERN_SUCCESS ? 0 : EINVAL);
-}
-
-startclock()
-{
-	register struct clkreg *clk = (struct clkreg *)clkstd[0];
-
-	clk->clk_msb2 = -1; clk->clk_lsb2 = -1;
-	clk->clk_msb3 = -1; clk->clk_lsb3 = -1;
-
-	clk->clk_cr2 = CLK_CR3;
-	clk->clk_cr3 = CLK_OENAB|CLK_8BIT;
-	clk->clk_cr2 = CLK_CR1;
-	clk->clk_cr1 = CLK_IENAB;
-}
-
-stopclock()
-{
-	register struct clkreg *clk = (struct clkreg *)clkstd[0];
-
-	clk->clk_cr2 = CLK_CR3;
-	clk->clk_cr3 = 0;
-	clk->clk_cr2 = CLK_CR1;
-	clk->clk_cr1 = CLK_IENAB;
-}
-#endif
-
-#endif
-
 
 #ifdef PROFTIMER
 /*
@@ -593,7 +395,7 @@ int	regno, value;
 static u_long
 gettod()
 {
-	int		i, year, mon, day, hour, min, sec;
+	int	i, year, mon, day, hour, min, sec;
 	u_long	new_time = 0;
 	char	*msize;
 
