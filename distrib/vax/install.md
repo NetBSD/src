@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.1 2000/05/18 02:12:44 matt Exp $
+#	$NetBSD: install.md,v 1.2 2000/05/24 23:20:46 matt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,8 +54,8 @@ md_set_term() {
 	if [ ! -z "$TERM" ]; then
 		return
 	fi
-	echo -n "Specify terminal type [vt220]: "
-	getresp "vt220"
+	echo -n "Specify terminal type [vt100]: "
+	getresp "vt100"
 	TERM="$resp"
 	export TERM
 }
