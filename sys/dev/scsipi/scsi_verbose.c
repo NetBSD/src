@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_verbose.c,v 1.2 1998/04/15 16:52:37 mjacob Exp $	*/
+/*	$NetBSD: scsi_verbose.c,v 1.3 1998/06/24 18:36:25 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -476,7 +476,43 @@ scsi_print_sense(xs, verbosity)
 	struct scsipi_xfer *xs;
 	int verbosity;
 {
+	int i, j;
+
 	xs->sc_link->sc_print_addr(xs->sc_link);
-	printf(" Check Condition on opcode 0x%x\n", xs->cmd->opcode);
+ 	printf(" Check Condition on CDB: 0x%02x", xs->cmd->opcode);
+
+ 	switch (CDB_GROUPID(xs->cmd->opcode)) {
+ 	case CDB_GROUPID_0:
+ 		j = CDB_GROUP0;
+ 		break;
+ 	case CDB_GROUPID_1:
+ 		j = CDB_GROUP1;
+ 		break;
+ 	case CDB_GROUPID_2:
+ 		j = CDB_GROUP2;
+ 		break;
+ 	case CDB_GROUPID_3:
+ 		j = CDB_GROUP3;
+ 		break;
+ 	case CDB_GROUPID_4:
+ 		j = CDB_GROUP4;
+ 		break;
+ 	case CDB_GROUPID_5:
+ 		j = CDB_GROUP5;
+ 		break;
+ 	case CDB_GROUPID_6:
+ 		j = CDB_GROUP6;
+ 		break;
+ 	case CDB_GROUPID_7:
+ 		j = CDB_GROUP7;
+ 		break;
+ 	default:
+ 		j = 0;
+ 	}
+ 	if (j == 0)
+ 		j = sizeof (xs->cmd->bytes);
+ 	for (i = 0; i < j-1; i++) /* already done the opcode */
+ 		printf(" %02x", xs->cmd->bytes[i]);
+ 	printf("\n");
 	scsi_print_sense_data(&xs->sense.scsi_sense, verbosity);
 }
