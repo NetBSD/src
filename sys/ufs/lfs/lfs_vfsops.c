@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.53 2000/06/27 20:57:17 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.54 2000/06/28 14:11:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/socket.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <miscfs/specfs/specdev.h>
