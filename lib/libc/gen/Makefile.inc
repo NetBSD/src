@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.60 1994/12/22 10:14:18 cgd Exp $
+#	$Id: Makefile.inc,v 1.61 1994/12/23 22:25:48 jtc Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -17,7 +17,7 @@ SRCS+=	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c ctime.c \
 	raise.c readdir.c rewinddir.c scandir.c seekdir.c \
 	setdomainname.c sethostname.c setjmperr.c setmode.c \
 	setproctitle.c siginterrupt.c \
-	siglist.c signal.c signame.c sigsetjmp.c sigsetops.c sleep.c \
+	siglist.c signal.c signame.c sigsetops.c sleep.c \
 	sysconf.c sysctl.c \
 	syslog.c telldir.c \
 	termios.c time.c times.c timezone.c tolower_.c ttyname.c ttyslot.c \
@@ -37,11 +37,11 @@ SRCS+=	adddf3.S addsf3.S ashlsi3.S ashrsi3.S cmpdf2.S cmpsf2.S divdf3.S \
 	negdf2.S negsf2.S saveregs.c subdf3.S subsf3.S truncdfsf2.S udivsi3.S \
 	umodsi3.S umulsi3.S
 .elif (${MACHINE_ARCH} == "i386")
-SRCS+=	_setjmp.S alloca.S fabs.S frexp.c ldexp.c modf.S setjmp.S
+SRCS+=	_setjmp.S alloca.S fabs.S frexp.c ldexp.c modf.S setjmp.S sigsetjmp.S
 SRCS+=	divsi3.S fixdfsi.S fixunsdfsi.S udivsi3.S
 .elif (${MACHINE_ARCH} == "ns32k")
 SRCS+=	__main.c _setjmp.S alloca.S fabs.S frexp.S isinf.c
-SRCS+=  ldexp.S modf.S setjmp.S
+SRCS+=  ldexp.S modf.S setjmp.S sigsetjmp.S
 .elif (${MACHINE_ARCH} == "tahoe")
 CFLAGS+=-I/sys
 SRCS+=	_setjmp.S alloca.S fabs.S frexp.c ldexp.S modf.S setjmp.S
