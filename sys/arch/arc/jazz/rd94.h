@@ -1,4 +1,4 @@
-/*	$NetBSD: rd94.h,v 1.1 2000/12/24 09:25:29 ur Exp $	*/
+/*	$NetBSD: rd94.h,v 1.2 2001/03/30 09:10:49 ur Exp $	*/
 /*	$OpenBSD: pica.h,v 1.4 1996/09/14 15:58:28 pefo Exp $ */
 
 /*
@@ -90,7 +90,8 @@
 #define	RD94_SYS_THERMOMETER	(RD94LB+0x12000)/* DS1620 thermometer */
 
 #define	RD94_SYS_LB_LED		(RD94LB+0xE000)	/* LED/self-test register */
-#define	RD94_SYS_LB_IE		(RD94LB+0xF000)	/* Local bus int enable */
+#define	RD94_SYS_LB_IE1		(RD94LB+0xF000)	/* Local bus int enable */
+#define	RD94_SYS_LB_IE2		(RD94LB+0xF002)	/* Local bus int enable */
 #define RD94_SYS_LB_IE_PAR1	0x0001		/* Parallel port enable */
 #define	RD94_SYS_LB_IE_FLOPPY	0x0002		/* Floppy ctrl enable */
 #define	RD94_SYS_LB_IE_SOUND	0x0004		/* Sound port enable */

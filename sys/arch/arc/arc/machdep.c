@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2001/03/15 06:10:35 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 2001/03/30 09:10:48 ur Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -1326,7 +1326,8 @@ initcpu()
 	case NEC_RD94:
 	case NEC_R96:
 	case NEC_JC94:
-		out32(RD94_SYS_LB_IE, 0);
+		out16(RD94_SYS_LB_IE1, 0);
+		out16(RD94_SYS_LB_IE2, 0);
 		out32(RD94_SYS_EXT_IMASK, 0);
 		break;
 	}
