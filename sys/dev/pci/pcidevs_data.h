@@ -602,16 +602,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "S3 805",
 	},
 	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
+	    0,
+	    "Matrox",
+	    "MGA Impression",
+	},
+	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_ATLAS,
 	    0,
 	    "Matrox",
 	    "MGA-2 Atlas PX2085",
 	},
 	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENIUM,
 	    0,
 	    "Matrox",
-	    "MGA Impression",
+	    "MGA Millenium 2064W",
 	},
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
