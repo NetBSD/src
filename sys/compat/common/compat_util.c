@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.11 1999/02/14 14:32:02 christos Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.12 1999/04/24 02:56:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -188,6 +188,28 @@ bad2:
 bad:
 	free(buf, M_TEMP);
 	return error;
+}
+
+/*
+ * Translate one set of flags to another, based on the entries in
+ * the given table.  If 'leftover' is specified, it is filled in
+ * with any flags which could not be translated.
+ */
+unsigned long
+emul_flags_translate(const struct emul_flags_xtab *tab,
+		     unsigned long in, unsigned long *leftover)
+{
+	unsigned long out;
+
+	for (out = 0; tab->omask != 0; tab++) {
+		if ((in & tab->omask) == tab->oval) {
+			in &= ~tab->omask;
+			out |= tab->nval;
+		}
+	}
+	if (leftover != NULL)
+		*leftover = in;
+	return (out);
 }
 
 caddr_t
