@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.h,v 1.7 1998/09/20 19:31:37 pk Exp $ */
+/*	$NetBSD: intreg.h,v 1.8 1998/09/22 13:42:26 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,6 @@ void	ienab_bic __P((int bic));	/* clear given bits */
 #if defined(SUN4M)
 /*
  * Interrupt Control Registers, located in IO space.
- * (mapped to `locore' for now..)
  * There are two sets of interrupt registers called `Processor Interrupts'
  * and `System Interrupts'. The `Processor' set corresponds to the 15
  * interrupt levels as seen by the CPU. The `System' set corresponds to
@@ -99,9 +98,23 @@ void	ienab_bic __P((int bic));	/* clear given bits */
  * system-wide interrupts, and the ICR_ITR selects the processor to get
  * the system's interrupts.
  */
-#define ICR_PI_PEND		(PI_INTR_VA + 0x0)
-#define ICR_PI_CLR		(PI_INTR_VA + 0x4)
-#define ICR_PI_SET		(PI_INTR_VA + 0x8)
+#ifndef _LOCORE
+struct icr_pi {
+	u_int32_t	pi_pend;	/* Pending interrupts (read-only) */
+	u_int32_t	pi_clr;		/* Clear interrupts (write-only) */
+	u_int32_t	pi_set;		/* Raise interrupts (write-only) */
+};
+#endif
+#define ICR_PI_PEND_OFFSET	0
+#define ICR_PI_CLR_OFFSET	4
+#define ICR_PI_SET_OFFSET	8
+
+#define ICR_PI_PEND		(PI_INTR_VA + ICR_PI_PEND_OFFSET)
+#define ICR_PI_CLR		(PI_INTR_VA + ICR_PI_CLR_OFFSET)
+#define ICR_PI_SET		(PI_INTR_VA + ICR_PI_SET_OFFSET)
+
+
+/* The system interrupt register */
 #define ICR_SI_PEND		(SI_INTR_VA)
 #define ICR_SI_MASK		(SI_INTR_VA + 0x4)
 #define ICR_SI_CLR		(SI_INTR_VA + 0x8)
