@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.1 2002/02/15 22:29:23 tron Exp $
+# $NetBSD: md.i386,v 1.2 2003/03/01 00:11:31 tron Exp $
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/pcitweak
 ./usr/X11R6/bin/xf86cfg
@@ -10,6 +10,8 @@
 ./usr/X11R6/lib/X11/doc/LICENSE
 ./usr/X11R6/lib/X11/doc/README.DRI
 ./usr/X11R6/lib/X11/doc/README.DRIcomp
+./usr/X11R6/lib/X11/doc/README.XKB-Config
+./usr/X11R6/lib/X11/doc/README.XKB-Enhancing
 ./usr/X11R6/lib/X11/doc/README.dps
 ./usr/X11R6/lib/X11/doc/README.fonts
 ./usr/X11R6/lib/X11/doc/README.i810
@@ -62,6 +64,7 @@
 ./usr/X11R6/lib/modules/drivers/cirrus_drv.o
 ./usr/X11R6/lib/modules/drivers/cirrus_laguna.o
 ./usr/X11R6/lib/modules/drivers/cyrix_drv.o
+./usr/X11R6/lib/modules/drivers/dummy_drv.o
 ./usr/X11R6/lib/modules/drivers/fbdev_drv.o
 ./usr/X11R6/lib/modules/drivers/glint_drv.o
 ./usr/X11R6/lib/modules/drivers/i128_drv.o
@@ -70,6 +73,7 @@
 ./usr/X11R6/lib/modules/drivers/mga_drv.o
 ./usr/X11R6/lib/modules/drivers/neomagic_drv.o
 ./usr/X11R6/lib/modules/drivers/nv_drv.o
+./usr/X11R6/lib/modules/drivers/nsc_drv.o
 ./usr/X11R6/lib/modules/drivers/r128_drv.o
 ./usr/X11R6/lib/modules/drivers/radeon_drv.o
 ./usr/X11R6/lib/modules/drivers/rendition_drv.o
@@ -105,13 +109,19 @@
 ./usr/X11R6/lib/modules/input/dmc_drv.o
 ./usr/X11R6/lib/modules/input/dynapro_drv.o
 ./usr/X11R6/lib/modules/input/elographics_drv.o
+./usr/X11R6/lib/modules/input/fpit_drv.o
 ./usr/X11R6/lib/modules/input/hyperpen_drv.o
+./usr/X11R6/lib/modules/input/js_x_drv.o
+./usr/X11R6/lib/modules/input/kbd_drv.o
+./usr/X11R6/lib/modules/input/magellan_drv.o
 ./usr/X11R6/lib/modules/input/microtouch_drv.o
 ./usr/X11R6/lib/modules/input/mouse_drv.o
 ./usr/X11R6/lib/modules/input/mutouch_drv.o
+./usr/X11R6/lib/modules/input/palmax_drv.o
 ./usr/X11R6/lib/modules/input/penmount_drv.o
 ./usr/X11R6/lib/modules/input/spaceorb_drv.o
 ./usr/X11R6/lib/modules/input/summa_drv.o
+./usr/X11R6/lib/modules/input/tek4957_drv.o
 ./usr/X11R6/lib/modules/input/void_drv.o
 ./usr/X11R6/lib/modules/input/wacom_drv.o
 ./usr/X11R6/lib/modules/libafb.a
@@ -157,21 +167,27 @@
 ./usr/X11R6/man/cat4/i128.0
 ./usr/X11R6/man/cat4/i740.0
 ./usr/X11R6/man/cat4/i810.0
+./usr/X11R6/man/cat4/js_x.0
+./usr/X11R6/man/cat4/kbd.0
 ./usr/X11R6/man/cat4/keyboard.0
 ./usr/X11R6/man/cat4/mga.0
 ./usr/X11R6/man/cat4/microtouch.0
 ./usr/X11R6/man/cat4/mouse.0
 ./usr/X11R6/man/cat4/mutouch.0
 ./usr/X11R6/man/cat4/neomagic.0
+./usr/X11R6/man/cat4/nsc.0
 ./usr/X11R6/man/cat4/nv.0
+./usr/X11R6/man/cat4/palmax.0
 ./usr/X11R6/man/cat4/penmount.0
 ./usr/X11R6/man/cat4/r128.0
+./usr/X11R6/man/cat4/radeon.0
 ./usr/X11R6/man/cat4/rendition.0
 ./usr/X11R6/man/cat4/s3virge.0
 ./usr/X11R6/man/cat4/savage.0
 ./usr/X11R6/man/cat4/siliconmotion.0
 ./usr/X11R6/man/cat4/sis.0
 ./usr/X11R6/man/cat4/tdfx.0
+./usr/X11R6/man/cat4/tek4957.0
 ./usr/X11R6/man/cat4/trident.0
 ./usr/X11R6/man/cat4/tseng.0
 ./usr/X11R6/man/cat4/vesa.0

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.10 2002/02/11 16:23:19 tron Exp $
+# $NetBSD: mi,v 1.11 2003/03/01 00:11:30 tron Exp $
 ./usr/X11R6/bin/gccmakedep
 ./usr/X11R6/bin/imake
 ./usr/X11R6/bin/lndir
@@ -712,7 +712,6 @@
 ./usr/X11R6/man/cat3/XRaiseWindow.0
 ./usr/X11R6/man/cat3/XReadBitmapFile.0
 ./usr/X11R6/man/cat3/XReadBitmapFileData.0
-./usr/X11R6/man/cat3/XRebindKeySym.0
 ./usr/X11R6/man/cat3/XRecolorCursor.0
 ./usr/X11R6/man/cat3/XReconfigureWMWindow.0
 ./usr/X11R6/man/cat3/XRectInRegion.0
