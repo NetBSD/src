@@ -1,4 +1,4 @@
-/*	$NetBSD: at.h,v 1.2 1998/09/09 04:32:39 thorpej Exp $	*/
+/*	$NetBSD: at.h,v 1.3 2000/06/26 16:16:42 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -28,6 +28,14 @@
 
 #ifndef _NETATALK_AT_H_
 #define _NETATALK_AT_H_
+
+#include <sys/ansi.h>
+
+#ifndef sa_family_t
+typedef __sa_family_t	sa_family_t;
+#define sa_family_t	sa_family_t
+#endif
+
 /*
  * Supported protocols
  */
@@ -75,7 +83,7 @@ struct netrange {
  */
 struct sockaddr_at {
 	u_int8_t	sat_len;
-	u_int8_t        sat_family;
+	sa_family_t	sat_family;
 	u_int8_t        sat_port;
 	struct at_addr  sat_addr;
 	union {
