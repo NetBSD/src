@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.10 2002/04/28 17:10:37 uch Exp $	*/
+/*	$NetBSD: Locore.c,v 1.11 2002/04/29 09:32:56 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -267,16 +267,16 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 	char *to = uaddr;
 
 	if (to + len < to || to + len > (char *)VM_MAXUSER_ADDRESS)
-		return EFAULT;
+		return (EFAULT);
 
 	curpcb->pcb_onfault = &&Err999;
 	memcpy(to, from, len);
 	curpcb->pcb_onfault = 0;
-	return 0;
+	return (0);
 
  Err999:
 	curpcb->pcb_onfault = 0;
-	return EFAULT;
+	return (EFAULT);
 }
 
 /*
@@ -290,16 +290,16 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 	void *to = kaddr;
 
 	if (from + len < from || from + len > (char *)VM_MAXUSER_ADDRESS)
-		return EFAULT;
+		return (EFAULT);
 
 	curpcb->pcb_onfault = &&Err999;
 	memcpy(to, from, len);
 	curpcb->pcb_onfault = 0;
-	return 0;
+	return (0);
 
  Err999:
 	curpcb->pcb_onfault = 0;
-	return EFAULT;
+	return (EFAULT);
 }
 
 /*
@@ -339,13 +339,13 @@ out:
 	if (lencopied)
 		*lencopied = from - from_top;
 	curpcb->pcb_onfault = 0;
-	return rc;
+	return (rc);
 
  Err999:
 	if (lencopied)
 		*lencopied = from - from_top;
 	curpcb->pcb_onfault = 0;
-	return EFAULT;
+	return (EFAULT);
 }
 
 /*
@@ -385,13 +385,13 @@ out:
 	if (lencopied)
 		*lencopied = from - from_top;
 	curpcb->pcb_onfault = 0;
-	return rc;
+	return (rc);
 
  Err999:
 	if (lencopied)
 		*lencopied = from - from_top;
 	curpcb->pcb_onfault = 0;
-	return EFAULT;
+	return (EFAULT);
 }
 
 /*
@@ -431,18 +431,18 @@ fuword(const void *base)
 	long rc;
 
 	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(long))
-		return -1;
+		return (-1);
 
 	curpcb->pcb_onfault = &&Err999;
 
 	rc = *(long *)uaddr;
 
 	curpcb->pcb_onfault = 0;
-	return rc;
+	return (rc);
 
  Err999:
 	curpcb->pcb_onfault = 0;
-	return -1;
+	return (-1);
 }
 
 /*
@@ -456,18 +456,18 @@ fusword(const void *base)
 	int rc;
 
 	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(short))
-		return -1;
+		return (-1);
 
 	curpcb->pcb_onfault = &&Err999;
 
 	rc = *(unsigned short *)uaddr;
 
 	curpcb->pcb_onfault = 0;
-	return rc;
+	return (rc);
 
  Err999:
 	curpcb->pcb_onfault = 0;
-	return -1;
+	return (-1);
 }
 
 /*
@@ -482,7 +482,7 @@ fuswintr(const void *base)
 	int rc;
 
 	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(short))
-		return -1;
+		return (-1);
 
 	curpcb->pcb_onfault = &&Err999;
 	curpcb->fusubail = 1;
@@ -491,12 +491,12 @@ fuswintr(const void *base)
 
 	curpcb->pcb_onfault = 0;
 	curpcb->fusubail = 0;
-	return rc;
+	return (rc);
 
  Err999:
 	curpcb->pcb_onfault = 0;
 	curpcb->fusubail = 0;
-	return -1;
+	return (-1);
 }
 
 /*
@@ -510,18 +510,18 @@ fubyte(const void *base)
 	int rc;
 
 	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(char))
-		return -1;
+		return (-1);
 
 	curpcb->pcb_onfault = &&Err999;
 
 	rc = *(unsigned char *)uaddr;
 
 	curpcb->pcb_onfault = 0;
-	return rc;
+	return (rc);
 
  Err999:
 	curpcb->pcb_onfault = 0;
-	return -1;
+	return (-1);
 }
 
 /*
@@ -534,18 +534,18 @@ suword(void *base, long x)
 	char *uaddr = base;
 
 	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(long))
-		return -1;
+		return (-1);
 
 	curpcb->pcb_onfault = &&Err999;
 
 	*(int *)uaddr = x;
 
 	curpcb->pcb_onfault = 0;
-	return 0;
+	return (0);
 
  Err999:
 	curpcb->pcb_onfault = 0;
-	return -1;
+	return (-1);
 }
 
 /*
@@ -558,18 +558,18 @@ susword(void *base, short x)
 	char *uaddr = base;
 
 	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(short))
-		return -1;
+		return (-1);
 
 	curpcb->pcb_onfault = &&Err999;
 
 	*(short *)uaddr = x;
 
 	curpcb->pcb_onfault = 0;
-	return 0;
+	return (0);
 
  Err999:
 	curpcb->pcb_onfault = 0;
-	return -1;
+	return (-1);
 }
 
 /*
@@ -583,7 +583,7 @@ suswintr(void *base, short x)
 	char *uaddr = base;
 
 	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(short))
-		return -1;
+		return (-1);
 
 	curpcb->pcb_onfault = &&Err999;
 	curpcb->fusubail = 1;
@@ -592,12 +592,12 @@ suswintr(void *base, short x)
 
 	curpcb->pcb_onfault = 0;
 	curpcb->fusubail = 0;
-	return 0;
+	return (0);
 
  Err999:
 	curpcb->pcb_onfault = 0;
 	curpcb->fusubail = 0;
-	return -1;
+	return (-1);
 }
 
 /*
@@ -610,18 +610,18 @@ subyte(void *base, int x)
 	char *uaddr = base;
 
 	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(char))
-		return -1;
+		return (-1);
 
 	curpcb->pcb_onfault = &&Err999;
 
 	*(char *)uaddr = x;
 
 	curpcb->pcb_onfault = 0;
-	return 0;
+	return (0);
 
  Err999:
 	curpcb->pcb_onfault = 0;
-	return -1;
+	return (-1);
 }
 
 int
@@ -635,10 +635,10 @@ kcopy(const void *src, void *dst, size_t len)
 	memcpy(dst, src, len);
 	curpcb->pcb_onfault = oldfault;
 
-	return 0;
+	return (0);
 
  Err999:
 	curpcb->pcb_onfault = oldfault;
 
-	return EFAULT;
+	return (EFAULT);
 }
