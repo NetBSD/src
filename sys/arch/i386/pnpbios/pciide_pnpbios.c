@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.11 2003/12/05 19:00:07 christos Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.12 2004/01/01 17:18:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.11 2003/12/05 19:00:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.12 2004/01/01 17:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,8 +136,8 @@ pciide_pnpbios_attach(parent, self, aux)
 	sc->wdc_chanarray[0] = &cp->wdc_channel;
 	cp->wdc_channel.channel = 0;
 	cp->wdc_channel.wdc = &sc->sc_wdcdev;
-	cp->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
-						M_DEVBUF, M_NOWAIT);
+	cp->wdc_channel.ch_queue = malloc(sizeof(struct ata_queue),
+					  M_DEVBUF, M_NOWAIT);
 	if (cp->wdc_channel.ch_queue == NULL) {
 		printf("%s: unable to allocate memory for command queue\n",
 			self->dv_xname);

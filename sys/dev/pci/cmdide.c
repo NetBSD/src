@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.7 2003/12/13 23:13:41 thorpej Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.8 2004/01/01 17:18:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -165,7 +165,7 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 		    sc->pciide_channels[0].wdc_channel.ch_queue;
 	} else {
 		cp->wdc_channel.ch_queue =
-		    malloc(sizeof(struct channel_queue), M_DEVBUF, M_NOWAIT);
+		    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
 	}
 	if (cp->wdc_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
@@ -508,7 +508,7 @@ cmd680_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 	cp->wdc_channel.wdc = &sc->sc_wdcdev;
 
 	cp->wdc_channel.ch_queue =
-	    malloc(sizeof(struct channel_queue), M_DEVBUF, M_NOWAIT);
+	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
 	if (cp->wdc_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",

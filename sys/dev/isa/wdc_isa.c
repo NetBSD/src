@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.37 2003/11/27 23:02:40 fvdl Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.38 2004/01/01 17:18:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.37 2003/11/27 23:02:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.38 2004/01/01 17:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ struct wdc_isa_softc {
 	struct	wdc_softc sc_wdcdev;
 	struct	channel_softc *wdc_chanlist[1];
 	struct	channel_softc wdc_channel;
-	struct	channel_queue wdc_chqueue;
+	struct	ata_queue wdc_chqueue;
 	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
 	int	sc_drq;

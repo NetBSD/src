@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.9 2003/12/31 02:51:59 thorpej Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.10 2004/01/01 17:18:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.9 2003/12/31 02:51:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.10 2004/01/01 17:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ struct wdc_spd_softc {
 	struct wdc_softc sc_wdcdev;
 	struct channel_softc wdc_chanlist[1];
 	struct channel_softc wdc_channel;
-	struct channel_queue wdc_chqueue;
+	struct ata_queue wdc_chqueue;
 	void *sc_ih;
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.12 2003/11/29 20:30:27 bjh21 Exp $ */
+/* $NetBSD: dtide.c,v 1.13 2004/01/01 17:18:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.12 2003/11/29 20:30:27 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.13 2004/01/01 17:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -53,7 +53,7 @@ struct dtide_softc {
 	struct wdc_softc sc_wdc;
 	struct channel_softc *sc_chp[DTIDE_NCHANNELS];/* pointers to sc_chan */
 	struct channel_softc sc_chan[DTIDE_NCHANNELS];
-	struct channel_queue sc_chq[DTIDE_NCHANNELS];
+	struct ata_queue sc_chq[DTIDE_NCHANNELS];
 	bus_space_tag_t		sc_magict;
 	bus_space_handle_t	sc_magich;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.4 2003/11/27 23:02:40 fvdl Exp $	*/
+/*	$NetBSD: cypide.c,v 1.5 2004/01/01 17:18:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -150,7 +150,7 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	cp->wdc_channel.channel = 0;
 	cp->wdc_channel.wdc = &sc->sc_wdcdev;
 	cp->wdc_channel.ch_queue =
-	    malloc(sizeof(struct channel_queue), M_DEVBUF, M_NOWAIT);
+	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
 	if (cp->wdc_channel.ch_queue == NULL) {
 		aprint_error("%s primary channel: "
 		    "can't allocate memory for command queue",
