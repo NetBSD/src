@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 1998/10/01 02:53:54 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.37 1998/10/06 09:22:01 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,6 +79,10 @@
 #include <machine/pte.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
+#endif
+
+#ifdef DEBUG
+#include <dev/cons.h>  /* cngetc() */
 #endif
 
 #ifdef FPU_EMULATE
@@ -632,7 +636,7 @@ trap(type, code, v, frame)
 #endif
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 #endif
 		/*
@@ -1010,7 +1014,7 @@ dumpwb(num, s, a, d)
 	if (pa == 0)
 		printf("<invalid address>");
 	else
-		printf("%x, current value %x", pa, fuword((caddr_t)a));
+		printf("%lx, current value %lx", pa, fuword((caddr_t)a));
 	printf("\n");
 }
 #endif /* DEBUG  */
