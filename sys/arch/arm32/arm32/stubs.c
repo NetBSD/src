@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.21 1998/02/19 04:18:31 thorpej Exp $	*/
+/*	$NetBSD: stubs.c,v 1.22 1998/02/21 22:57:44 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -74,8 +74,6 @@
 
 extern dev_t dumpdev;
 extern BootConfig bootconfig;
-
-int	savectx		__P((struct pcb *pcb));
 
 /* These queue functions are candiates for arm32/machdep.c */
 
