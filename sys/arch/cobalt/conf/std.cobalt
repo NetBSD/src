@@ -1,11 +1,10 @@
-#	$NetBSD: std.cobalt,v 1.8 2003/09/12 17:55:48 tsutsui Exp $
+#	$NetBSD: std.cobalt,v 1.9 2003/12/13 01:31:57 sekiya Exp $
 
 machine cobalt mips
 makeoptions	MACHINE_ARCH="mipsel"
 
 options 	MIPS3
 options 	MIPS3_5200
-options 	MIPS3_L2CACHE_ABSENT
 
 options 	EXEC_ELF32	# exec ELF32 binaries
 options 	EXEC_SCRIPT	# exec #! scripts

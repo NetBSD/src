@@ -1,11 +1,10 @@
 #
-#	$NetBSD: std.hpcmips.vr41,v 1.9 2002/03/23 09:02:01 hamajima Exp $
+#	$NetBSD: std.hpcmips.vr41,v 1.10 2003/12/13 01:33:41 sekiya Exp $
 #	VR41XX common configuration.
 #
 options 	MIPS3			# R4000/R4400/R4600 CPUs
 options 	MIPS3_4100		# VR4100 core
 options 	VR41XX			# NEC VR41xx series
-options 	MIPS3_L2CACHE_ABSENT
 options 	MIPS3_NO_PV_UNCACHED
 
 #

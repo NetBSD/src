@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.17 2003/10/25 13:21:13 simonb Exp $
+#	$NetBSD: P6032,v 1.18 2003/12/13 01:30:50 sekiya Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.17 $"
+#ident 		"P6032-$Revision: 1.18 $"
 
 maxusers 32
 
@@ -15,8 +15,6 @@ maxusers 32
 #options 	ALGOR_P4032	# Algorithmics P-4032
 #options 	ALGOR_P5064	# Algorithmics P-5064
 options 	ALGOR_P6032	# Algorithmics P-6032
-
-options 	MIPS3_L2CACHE_ABSENT	# No L2 cache on this machine
 
 # Standard system options
 options 	KTRACE			# System call tracing support

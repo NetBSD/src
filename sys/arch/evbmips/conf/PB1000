@@ -1,18 +1,17 @@
-#	$NetBSD: PB1000,v 1.9 2003/10/25 14:33:14 simonb Exp $
+#	$NetBSD: PB1000,v 1.10 2003/12/13 01:32:29 sekiya Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.10 $"
 
 maxusers	32
 
 options 	MIPS32
 options 	NOFPU		# No FPU
 options 	SOFTFLOAT	# emulate FPU insn
-options 	MIPS3_L2CACHE_ABSENT
 options		CONSPEED=115200	# YAMON default
 options 	HZ=512		# for profiling
 

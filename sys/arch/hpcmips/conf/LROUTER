@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.13 2003/10/18 08:30:14 lukem Exp $
+# 	$NetBSD: LROUTER,v 1.14 2003/12/13 01:33:41 sekiya Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -17,7 +17,6 @@ options 	MIPS3			# R4000/R4400/R4600 CPUs
 options 	MIPS3_4100		# VR4100 core
 options 	VR41XX			# NEC VR41xx series
 options 	VR4122			# NEC VR4122
-options 	MIPS3_L2CACHE_ABSENT
 
 # Standard system options
 options 	DDB			# in-kernel debugger
