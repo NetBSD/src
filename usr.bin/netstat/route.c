@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.61 2003/07/12 13:39:23 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.62 2003/08/04 11:10:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.61 2003/07/12 13:39:23 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.62 2003/08/04 11:10:33 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -699,7 +699,7 @@ domask(dst, dlen, addr, mask)
 {
 	int b, i;
 
-	if (!mask || (forgemask(addr) == mask)) {
+	if (!mask) {
 		*dst = '\0';
 		return;
 	}
