@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK3X,v 1.7 1998/06/26 01:54:13 lukem Exp $
+# $NetBSD: RAMDISK3X,v 1.8 1999/04/08 06:49:55 gwr Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -80,7 +80,9 @@ le0 at obio0 addr 0x65002000 ipl 3
 #
 
 # Emulex SCSI (3/80 only)
+# Both `dma' and `esp' are needed.
 # See GENERIC3X for the flags description.
+dma0 at obio0 addr 0x66001000 ipl 2
 esp0 at obio0 addr 0x66000000 ipl 2 flags 0xff0f
 
 # Floppy drive
