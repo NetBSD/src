@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.34 2004/02/29 11:47:08 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.35 2004/02/29 12:19:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.34 2004/02/29 11:47:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.35 2004/02/29 12:19:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,9 +578,10 @@ smbfs_remove(v)
 	int error;
 
 	if (vp->v_type == VDIR || (np->n_flag & NOPEN) != 0
-	    || vp->v_usecount != 1)
+	    || vp->v_usecount != 1) {
+		/* XXX Eventually should do something along NFS sillyrename */
 		error = EPERM;
-	else {
+	} else {
 		smb_makescred(&scred, cnp->cn_proc, cnp->cn_cred);
 		error = smbfs_smb_delete(np, &scred);
 	}
