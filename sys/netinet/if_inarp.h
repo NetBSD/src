@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.27 1998/02/10 01:26:27 perry Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.28 1999/02/21 15:17:14 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -77,7 +77,6 @@ void revarpinput __P((struct mbuf *));
 void in_revarpinput __P((struct mbuf *));
 void revarprequest __P((struct ifnet *));
 int revarpwhoarewe __P((struct ifnet *, struct in_addr *, struct in_addr *));
-int revarpwhoami __P((struct in_addr *, struct ifnet *));
 int db_show_arptab __P((void));
 #endif
 

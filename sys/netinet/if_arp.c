@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.54 1998/12/19 02:46:12 thorpej Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.55 1999/02/21 15:17:14 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -866,17 +866,18 @@ revarpwhoarewe(ifp, serv_in, clnt_in)
 {
 	int result, count = 20;
 	
-	if (!myip_initialized) {
-		myip_ifp = ifp;
-		revarp_in_progress = 1;
-		while (count--) {
-			revarprequest(ifp);
-			result = tsleep((caddr_t)&myip, PSOCK, "revarp", hz/2);
-			if (result != EWOULDBLOCK)
-				break;
-		}
-		revarp_in_progress = 0;
+	myip_initialized = 0;
+	myip_ifp = ifp;
+
+	revarp_in_progress = 1;
+	while (count--) {
+		revarprequest(ifp);
+		result = tsleep((caddr_t)&myip, PSOCK, "revarp", hz/2);
+		if (result != EWOULDBLOCK)
+			break;
 	}
+	revarp_in_progress = 0;
+
 	if (!myip_initialized)
 		return ENETUNREACH;
 	
@@ -885,15 +886,6 @@ revarpwhoarewe(ifp, serv_in, clnt_in)
 	return 0;
 }
 
-/* For compatibility: only saves interface address. */
-int
-revarpwhoami(in, ifp)
-	struct in_addr *in;
-	struct ifnet *ifp;
-{
-	struct in_addr server;
-	return (revarpwhoarewe(ifp, &server, in));
-}
 
 
 #ifdef DDB
