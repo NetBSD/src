@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.15 2003/02/16 16:50:09 tshiozak Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.16 2003/02/17 14:37:57 tshiozak Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.15 2003/02/16 16:50:09 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.16 2003/02/17 14:37:57 tshiozak Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,8 @@ acpibat_clear_info(struct acpibat_softc *sc)
 	ABAT_ASSERT_LOCKED(sc);
 
 	acpibat_clear_stat(sc);
-	sc->sc_available = ABAT_ALV_PRESENCE;
+	if (sc->sc_available>ABAT_ALV_PRESENCE)
+		sc->sc_available = ABAT_ALV_PRESENCE;
 	sc->sc_data[ACPIBAT_DCAPACITY].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_LFCCAPACITY].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_LFCCAPACITY].max.data_s = 0;
@@ -299,7 +300,8 @@ acpibat_clear_stat(struct acpibat_softc *sc)
 
 	ABAT_ASSERT_LOCKED(sc);
 
-	sc->sc_available = ABAT_ALV_INFO;
+	if (sc->sc_available>ABAT_ALV_INFO)
+		sc->sc_available = ABAT_ALV_INFO;
 	sc->sc_data[ACPIBAT_LOAD].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_CAPACITY].cur.data_s = 0;
 	sc->sc_data[ACPIBAT_VOLTAGE].cur.data_s = 0;
@@ -564,11 +566,21 @@ acpibat_update(void *arg)
 
 	if (sc->sc_available < ABAT_ALV_INFO) {
 		/* current information is invalid */
+#if 0
+		/*
+		 * XXX: The driver sometimes unaware that the battery exist.
+		 * (i.e. just after the boot or resuming)
+		 * Thus, the driver should always check it here.
+		 */
 		if (sc->sc_available < ABAT_ALV_PRESENCE)
+#endif
 			/* presence is invalid */
-			if (acpibat_battery_present(sc)<0)
+			if (acpibat_battery_present(sc)<0) {
 				/* error */
+				printf("%s: cannot get battery presence.\n",
+				       sc->sc_dev.dv_xname);
 				return;
+			}
 		if (ABAT_ISSET(sc, ABAT_F_PRESENT)) {
 			/* the battery is present. */
 			if (ABAT_ISSET(sc, ABAT_F_VERBOSE))
@@ -587,9 +599,10 @@ acpibat_update(void *arg)
 		}
 	} else {
 		/* current information is valid */
-		if (!ABAT_ISSET(sc, ABAT_F_PRESENT))
+		if (!ABAT_ISSET(sc, ABAT_F_PRESENT)) {
 			/* the battery is not present. */
 			return;
+		}
  	}
 
 	if (ACPI_FAILURE(acpibat_get_status(sc)))
@@ -718,10 +731,10 @@ acpibat_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
 	struct acpibat_softc *sc = sme->sme_cookie;
 
-	if (sc->sc_available < ABAT_ALV_STAT)
-		acpibat_update(sc);
+	acpibat_update(sc);
 
 	/* XXX locking */
+	/* XXX it should be checked whether info/stat is valid. */
 	*tred = sc->sc_data[tred->sensor];
 	/* XXX locking */
 
