@@ -1,4 +1,4 @@
-/* $NetBSD: grtwo.c,v 1.3 2004/07/07 00:11:11 sekiya Exp $	 */
+/* $NetBSD: grtwo.c,v 1.4 2004/07/08 10:02:10 sekiya Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.3 2004/07/07 00:11:11 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.4 2004/07/08 10:02:10 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,17 +530,13 @@ int
 grtwo_cnattach(struct gio_attach_args * ga)
 {
 	long            defattr = GR2_ATTR_ENCODE(WSCOL_WHITE, WSCOL_BLACK);
-	const struct wsscreen_descr *screen;
 
 	if (!grtwo_match(NULL, NULL, ga)) {
 		return ENXIO;
 	}
 
 	grtwo_attach_common(&grtwo_console_dc, ga);
-
-	screen = &grtwo_screen;
-
-	wsdisplay_cnattach(screen, &grtwo_console_dc, 0, 0, defattr);
+	wsdisplay_cnattach(&grtwo_screen, &grtwo_console_dc, 0, 0, defattr);
 
 	grtwo_is_console = 1;
 
