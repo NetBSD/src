@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.34 1998/08/25 20:59:39 ross Exp $	*/
+/*	$NetBSD: inet.c,v 1.35 1999/02/18 07:42:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.34 1998/08/25 20:59:39 ross Exp $");
+__RCSID("$NetBSD: inet.c,v 1.35 1999/02/18 07:42:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,8 @@ void	inetprint __P((struct in_addr *, u_int16_t, const char *, int));
  * Listening processes (aflag) are suppressed unless the
  * -a (all) flag is specified.
  */
+static int width;
+
 void
 protopr(off, name)
 	u_long off;
@@ -98,8 +100,13 @@ protopr(off, name)
 	struct inpcbtable table;
 	struct inpcb *head, *next, *prev;
 	struct inpcb inpcb;
-	int istcp;
+	int istcp, compact;
 	static int first = 1;
+	static char *shorttcpstates[] = {
+		"CLOSED",	"LISTEN",	"SYNSEN",	"SYSRCV",
+		"ESTABL",	"CLWAIT",	"FWAIT1",	"CLOSNG",
+		"LASTAK",	"FWAIT2",	"TMWAIT",
+	};
 
 	if (off == 0)
 		return;
@@ -109,6 +116,16 @@ protopr(off, name)
 	    (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
 	next = table.inpt_queue.cqh_first;
 
+	compact = 0;
+	if (Aflag) {
+		if (!nflag)
+			width = 18;
+		else {
+			width = 21;
+			compact = 1;
+		}
+	} else
+		width = 22;
 	while (next != head) {
 		kread((u_long)next, (char *)&inpcb, sizeof inpcb);
 		if (inpcb.inp_queue.cqe_prev != prev) {
@@ -133,11 +150,11 @@ protopr(off, name)
 			putchar('\n');
 			if (Aflag)
 				printf("%-8.8s ", "PCB");
-			printf(Aflag ?
-				"%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
-				"%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
+			printf("%-5.5s %-6.6s %-6.6s %s%-*.*s %-*.*s %s\n",
 				"Proto", "Recv-Q", "Send-Q",
-				"Local Address", "Foreign Address", "(state)");
+				compact ? "" : " ",
+				width, width, "Local Address",
+				width, width, "Foreign Address", "State");
 			first = 0;
 		}
 		if (Aflag) {
@@ -146,8 +163,8 @@ protopr(off, name)
 			else
 				printf("%8lx ", (u_long) prev);
 		}
-		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
-			sockb.so_snd.sb_cc);
+		printf("%-5.5s %6ld %6ld%s", name, sockb.so_rcv.sb_cc,
+			sockb.so_snd.sb_cc, compact ? "" : " ");
 		if (nflag) {
 			inetprint(&inpcb.inp_laddr, inpcb.inp_lport, name, 1);
 			inetprint(&inpcb.inp_faddr, inpcb.inp_fport, name, 1);
@@ -163,7 +180,9 @@ protopr(off, name)
 			if (tcpcb.t_state < 0 || tcpcb.t_state >= TCP_NSTATES)
 				printf(" %d", tcpcb.t_state);
 			else
-				printf(" %s", tcpstates[tcpcb.t_state]);
+				printf(" %s", compact ?
+				    shorttcpstates[tcpcb.t_state] :
+				    tcpstates[tcpcb.t_state]);
 		}
 		putchar('\n');
 	}
@@ -483,11 +502,10 @@ inetprint(in, port, proto, numeric)
 {
 	struct servent *sp = 0;
 	char line[80], *cp;
-	int width;
 	size_t space;
 
 	(void)snprintf(line, sizeof line, "%.*s.",
-	    (Aflag && !numeric) ? 12 : 16, inetname(in));
+	    (Aflag && !nflag) ? 12 : 16, inetname(in));
 	cp = strchr(line, '\0');
 	if (!numeric && port)
 		sp = getservbyport((int)port, proto);
@@ -496,7 +514,6 @@ inetprint(in, port, proto, numeric)
 		(void)snprintf(cp, space, "%.8s", sp ? sp->s_name : "*");
 	else
 		(void)snprintf(cp, space, "%u", ntohs(port));
-	width = Aflag ? 18 : 22;
 	(void)printf(" %-*.*s", width, width, line);
 }
 
