@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.30.4.1 1996/11/10 21:57:51 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.30.4.2 1996/12/11 01:56:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -345,7 +345,7 @@ ours:
 	 * if the packet was previously fragmented,
 	 * but it's not worth the time; just let them time out.)
 	 */
-	if (ip->ip_off &~ IP_DF) {
+	if (ip->ip_off & ~(IP_DF|IP_RF)) {
 		if (m->m_flags & M_EXT) {		/* XXX */
 			if ((m = m_pullup(m, sizeof (struct ip))) == 0) {
 				ipstat.ips_toosmall++;
