@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.49 1998/08/09 06:17:07 wrstuden Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.50 1998/08/09 18:36:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -466,6 +466,8 @@ zsopen(dev, flags, mode, p)
 	 */
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
+
+		tp->t_dev = dev;
 
 		s2 = splzs();
 
