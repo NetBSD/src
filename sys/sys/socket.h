@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.18 1997/01/11 05:15:03 thorpej Exp $	*/
+/*	$NetBSD: socket.h,v 1.19 1997/02/11 17:47:44 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -125,8 +125,9 @@ struct	linger {
 #define AF_ISDN		26		/* Integrated Services Digital Network*/
 #define AF_E164		AF_ISDN		/* CCITT E.164 recommendation */
 #define AF_NATM		27		/* native ATM access */
+#define AF_ARP		28		/* (rev.) addr. res. prot. (RFC 826) */
 
-#define	AF_MAX		28
+#define	AF_MAX		29
 
 /*
  * Structure used by kernel to store most
@@ -179,6 +180,7 @@ struct sockproto {
 #define PF_RTIP		pseudo_AF_FTIP	/* same format as AF_INET */
 #define PF_PIP		pseudo_AF_PIP
 #define PF_NATM		AF_NATM
+#define PF_ARP		AF_ARP
 
 #define	PF_MAX		AF_MAX
 
