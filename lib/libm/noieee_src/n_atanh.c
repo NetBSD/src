@@ -1,4 +1,4 @@
-/*      $NetBSD: n_atanh.c,v 1.3 1998/10/20 02:26:10 matt Exp $ */
+/*      $NetBSD: n_atanh.c,v 1.4 1998/11/08 19:29:34 ragge Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -76,11 +76,11 @@ double x;
 	double z;
 	z = copysign(0.5,x);
 	x = copysign(x,1.0);
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 	if (x == 1.0) {
 	    return(copysign(1.0,z)*infnan(ERANGE));	/* sign(x)*INF */
 	}
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 	x = x/(1.0-x);
 	return( z*log1p(x+x) );
 }
