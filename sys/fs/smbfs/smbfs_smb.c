@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.12 2003/03/03 21:17:05 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.13 2003/03/15 02:22:13 kristerw Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.12 2003/03/03 21:17:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.13 2003/03/15 02:22:13 kristerw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1065,7 +1065,7 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 	u_int8_t tb;
 	u_int16_t date, time, wattr;
 	u_int32_t size, next, dattr;
-	int64_t lint;
+	int64_t tmp;
 	int error, svtz, cnt, fxsz, nmlen, recsz;
 
 	if (ctx->f_ecnt == 0) {
@@ -1105,14 +1105,14 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 		md_get_uint32le(mbp, &next);
 		md_get_uint32(mbp, NULL);	/* file index */
 		md_get_int64(mbp, NULL);	/* creation time */
-		md_get_int64le(mbp, &lint);
-		smb_time_NT2local(lint, svtz, &ctx->f_attr.fa_atime);
-		md_get_int64le(mbp, &lint);
-		smb_time_NT2local(lint, svtz, &ctx->f_attr.fa_mtime);
-		md_get_int64le(mbp, &lint);
-		smb_time_NT2local(lint, svtz, &ctx->f_attr.fa_ctime);
-		md_get_int64le(mbp, &lint);	/* file size */
-		ctx->f_attr.fa_size = lint;
+		md_get_int64le(mbp, &tmp);
+		smb_time_NT2local(tmp, svtz, &ctx->f_attr.fa_atime);
+		md_get_int64le(mbp, &tmp);
+		smb_time_NT2local(tmp, svtz, &ctx->f_attr.fa_mtime);
+		md_get_int64le(mbp, &tmp);
+		smb_time_NT2local(tmp, svtz, &ctx->f_attr.fa_ctime);
+		md_get_int64le(mbp, &tmp);	/* file size */
+		ctx->f_attr.fa_size = tmp;
 		md_get_int64(mbp, NULL);	/* real size (should use) */
 		md_get_uint32le(mbp, &dattr);	/* EA */
 		ctx->f_attr.fa_attr = dattr;
