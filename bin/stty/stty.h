@@ -1,4 +1,4 @@
-/*	$NetBSD: stty.h,v 1.7 1996/05/07 18:20:11 jtc Exp $	*/
+/*	$NetBSD: stty.h,v 1.8 1999/03/02 17:27:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -55,6 +55,6 @@ struct cchar {
 	u_char def;
 };
 
-enum FMT { NOTSET, GFLAG, BSD, POSIX };
+enum FMT { STTY_NOTSET, STTY_GFLAG, STTY_BSD, STTY_POSIX };
 
 #define	LINELENGTH	72

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.18 1998/07/27 17:55:17 mycroft Exp $	*/
+/*	$NetBSD: print.c,v 1.19 1999/03/02 17:27:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.18 1998/07/27 17:55:17 mycroft Exp $");
+__RCSID("$NetBSD: print.c,v 1.19 1999/03/02 17:27:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ print(tp, wp, ldisc, fmt)
 	cnt = 0;
 
 	/* Line discipline. */
+#ifdef TTYDISC
 	if (ldisc != TTYDISC) {
 		switch(ldisc) {
 		case TABLDISC:	
@@ -90,6 +91,7 @@ print(tp, wp, ldisc, fmt)
 			break;
 		}
 	}
+#endif
 
 	/* Line speed. */
 	ispeed = cfgetispeed(tp);
@@ -99,14 +101,14 @@ print(tp, wp, ldisc, fmt)
 		    printf("ispeed %d baud; ospeed %d baud;", ispeed, ospeed);
 	else
 		cnt += printf("speed %d baud;", ispeed);
-	if (fmt >= BSD)
+	if (fmt >= STTY_BSD)
 		cnt += printf(" %d rows; %d columns;", wp->ws_row, wp->ws_col);
 	if (cnt)
 		(void)printf("\n");
 
 #define	on(f)	((tmp&f) != 0)
 #define put(n, f, d) \
-	if (fmt >= BSD || on(f) != d) \
+	if (fmt >= STTY_BSD || on(f) != d) \
 		bput(n + on(f));
 
 	/* "local" flags */
@@ -186,7 +188,7 @@ print(tp, wp, ldisc, fmt)
 
 	/* special control characters */
 	cc = tp->c_cc;
-	if (fmt == POSIX) {
+	if (fmt == STTY_POSIX) {
 		binit("cchars");
 		for (p = cchars1; p->name; ++p) {
 			(void)snprintf(buf1, sizeof(buf1), "%s = %s;",
@@ -197,7 +199,7 @@ print(tp, wp, ldisc, fmt)
 	} else {
 		binit(NULL);
 		for (p = cchars1, cnt = 0; p->name; ++p) {
-			if (fmt != BSD && cc[p->sub] == p->def)
+			if (fmt != STTY_BSD && cc[p->sub] == p->def)
 				continue;
 #define	WD	"%-8s"
 			(void)snprintf(buf1 + cnt * 8, 9, WD, p->name);

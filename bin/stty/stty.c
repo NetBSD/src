@@ -1,4 +1,4 @@
-/*	$NetBSD: stty.c,v 1.15 1998/07/28 11:40:59 mycroft Exp $	*/
+/*	$NetBSD: stty.c,v 1.16 1999/03/02 17:27:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: stty.c,v 1.15 1998/07/28 11:40:59 mycroft Exp $");
+__RCSID("$NetBSD: stty.c,v 1.16 1999/03/02 17:27:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ main(argc, argv)
 	enum FMT fmt;
 	int ch;
 
-	fmt = NOTSET;
+	fmt = STTY_NOTSET;
 	i.fd = STDIN_FILENO;
 
 	opterr = 0;
@@ -81,7 +81,7 @@ main(argc, argv)
 	    (ch = getopt(argc, argv, "aef:g")) != -1)
 		switch(ch) {
 		case 'a':		/* undocumented: POSIX compatibility */
-			fmt = POSIX;
+			fmt = STTY_POSIX;
 			break;
 		case 'e':
 			fmt = BSD;
@@ -91,7 +91,7 @@ main(argc, argv)
 				err(1, "%s", optarg);
 			break;
 		case 'g':
-			fmt = GFLAG;
+			fmt = STTY_GFLAG;
 			break;
 		case '?':
 		default:
@@ -109,15 +109,15 @@ args:	argc -= optind;
 		warn("TIOCGWINSZ");
 
 	switch(fmt) {
-	case NOTSET:
+	case STTY_NOTSET:
 		if (*argv)
 			break;
 		/* FALLTHROUGH */
-	case BSD:
-	case POSIX:
+	case STTY_BSD:
+	case STTY_POSIX:
 		print(&i.t, &i.win, i.ldisc, fmt);
 		break;
-	case GFLAG:
+	case STTY_GFLAG:
 		gprint(&i.t);
 		break;
 	}
@@ -132,7 +132,7 @@ args:	argc -= optind;
 		if (msearch(&argv, &i))
 			continue;
 
-		if (isdigit(**argv)) {
+		if (isdigit((unsigned char)**argv)) {
 			int speed;
 
 			speed = atoi(*argv);

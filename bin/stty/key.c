@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.15 1999/01/13 23:55:26 sommerfe Exp $	*/
+/*	$NetBSD: key.c,v 1.16 1999/03/02 17:27:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
 #else
-__RCSID("$NetBSD: key.c,v 1.15 1999/01/13 23:55:26 sommerfe Exp $");
+__RCSID("$NetBSD: key.c,v 1.16 1999/03/02 17:27:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ void
 f_extproc(ip)
 	struct info *ip;
 {
-
+#ifdef TIOCEXT
 	if (ip->off) {
 		int tmp = 0;
 		(void)ioctl(ip->fd, TIOCEXT, &tmp);
@@ -212,6 +212,7 @@ f_extproc(ip)
 		(void)ioctl(ip->fd, TIOCEXT, &tmp);
 	}
 	ip->set = 1;
+#endif
 }
 
 void
@@ -307,11 +308,13 @@ void
 f_tty(ip)
 	struct info *ip;
 {
+#ifdef TTYDISC
 	int tmp;
 
 	tmp = TTYDISC;
 	if (ioctl(0, TIOCSETD, &tmp) < 0)
 		err(1, "TIOCSETD");
+#endif
 }
 
 void
