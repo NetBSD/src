@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/02/10 19:20:53 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/02 17:02:54 thorpej Exp $
 #
 # Makefile for arm32
 #
@@ -7,7 +7,7 @@
 
 SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	txtwalk.c run.c factor.c net.c disks.c disks_lfs.c util.c  geom.c \
-	label.c target.c md.c
+	label.c target.c md.c aout2elf.c
 
 md.o:	menu_defs.h msg_defs.h
 

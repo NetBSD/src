@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2002/03/31 02:14:06 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2002/04/02 17:02:54 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,7 +37,7 @@
  *
  */
 
-/* md.h -- Machine specific definitions for the arm32 */
+/* md.h -- Machine specific definitions for the shark */
 
 /* Constants and defines */
 
@@ -49,9 +49,6 @@
  *  or upgrade. The standard sets are:
  *      base, etc, comp, games, man, misc, text,
  *      xbase, xfont, xserver, xcontrib, xcomp.
- *
- * arm32 has the MD set kern first, because generic kernels are too
- * big to fit on install floppies. arm32 does not yet include xsets
  *
  * Third entry is the last extension name in the split sets for loading
  * from floppy.
@@ -82,7 +79,7 @@ EXTERN distinfo dist_list[]
 /*
  * Disk names accepted as valid targets for a from-scratch installation.
  *
- * On arm32, we allow "wd" IDE disks and "sd" scsi disks.
+ * On shark, we allow "wd" IDE disks and "sd" scsi disks.
  */
 EXTERN	char *disk_names[]
 #ifdef MAIN
@@ -95,14 +92,13 @@ EXTERN	char *disk_names[]
  * this must return 1 for a character that matches the first
  * characters of each member of disk_names.
  *
- * On arm32, that means matching 'w' for ide and 's' for sd.
+ * On shark, that means matching 'w' for ide and 's' for sd.
  */
 #define ISDISKSTART(dn)	(dn == 'w' || dn == 's')
 
 /*
  * Machine-specific command to write a new label to a disk.
- * For example, arm32 uses "/sbin/disklabel -w -r", just like arm32
- * miniroot scripts, though this may leave a bogus incore label.
+ * For example, shark uses "/sbin/disklabel -w -r".
  * Sun ports should probably use  DISKLABEL_CMD "/sbin/disklabel -w"
  * to get incore to ondisk inode translation for the Sun proms.
  * If not defined, we assume the port does not support disklabels and
@@ -112,10 +108,12 @@ EXTERN	char *disk_names[]
 
 /*
  * Default fileystem type for floppy disks.
- * On arm32, that is  msdos.
+ * On shark, that is msdos.
  */
 EXTERN char *fdtype INIT("msdos");
 
+#define	LIB_COUNT	0
+#define	LIB_MOVE	1
 
 /*
  *  prototypes for MD code.
