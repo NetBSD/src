@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.5 1999/12/04 10:55:18 takemura Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.6 2000/02/21 13:46:04 shin Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -86,7 +86,7 @@ extern struct platform {
 	void	(*iointr) __P((void *, unsigned long));
 	void	(*clockintr) __P((void *));
 	void	(*fb_init) __P((caddr_t*));
-	int	(*mem_init) __P((caddr_t));
+	void	(*mem_init) __P((paddr_t));
 #ifdef notyet
 	void	(*mcheck_handler) __P((unsigned long, struct trapframe *,
 		unsigned long, unsigned long));
