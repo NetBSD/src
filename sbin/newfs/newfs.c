@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)newfs.c	8.8 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: newfs.c,v 1.12 1994/09/23 23:51:31 mycroft Exp $";
+static char *rcsid = "$Id: newfs.c,v 1.13 1994/12/01 18:46:38 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -108,9 +108,9 @@ void	fatal();
  * ROTDELAY gives the minimum number of milliseconds to initiate
  * another disk transfer on the same cylinder. It is used in
  * determining the rotationally optimal layout for disk blocks
- * within a file; the default of fs_rotdelay is 4ms.
+ * within a file; the default of fs_rotdelay is 0ms.
  */
-#define ROTDELAY	4
+#define ROTDELAY	0
 
 /*
  * MAXBLKPG determines the maximum number of data blocks which are
@@ -131,9 +131,11 @@ void	fatal();
  * rotational positions, so that we can lay out the data to be picked
  * up with minimum rotational latency.  NRPOS is the default number of
  * rotational positions that we distinguish.  With NRPOS of 8 the resolution
- * of our summary information is 2ms for a typical 3600 rpm drive.
+ * of our summary information is 2ms for a typical 3600 rpm drive.  Caching
+ * and zoning pretty much defeats rotational optimization, so we now use a
+ * default of 1.
  */
-#define	NRPOS		8	/* number distinct rotational positions */
+#define	NRPOS		1	/* number distinct rotational positions */
 
 
 int	mfs;			/* run as the memory based filesystem */
@@ -162,7 +164,7 @@ int	cpgflg;			/* cylinders/cylinder group flag was given */
 int	minfree = MINFREE;	/* free space threshold */
 int	opt = DEFAULTOPT;	/* optimization preference (space or time) */
 int	density;		/* number of bytes per inode */
-int	maxcontig = 0;		/* max contiguous blocks to allocate */
+int	maxcontig = 8;		/* max contiguous blocks to allocate */
 int	rotdelay = ROTDELAY;	/* rotational delay between blocks */
 int	maxbpg;			/* maximum blocks per file in a cyl group */
 int	nrpos = NRPOS;		/* # of distinguished rotational positions */
