@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 1999/02/28 00:26:46 eeh Exp $
+#	$NetBSD: genassym.cf,v 1.10 1999/03/22 06:45:15 eeh Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -158,6 +158,7 @@ define	FS_REGS		offsetof(struct fpstate, fs_regs)
 define	FS_FSR		offsetof(struct fpstate, fs_fsr)
 define	FS_QSIZE	offsetof(struct fpstate, fs_qsize)
 define	FS_QUEUE	offsetof(struct fpstate, fs_queue)
+define	FS_SIZE		sizeof(struct fpstate)
 define	FSR_QNE		FSR_QNE
 define	FPRS_FEF	FPRS_FEF
 define	FPRS_DL		FPRS_DL
