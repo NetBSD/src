@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.1 2002/02/12 20:38:41 scw Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.2 2003/07/18 19:20:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
@@ -60,8 +60,6 @@ struct clock_attach_args {
 
 void	clock_config __P((struct device *, struct clock_attach_args *,
 			struct evcnt *));
-
-void	clock_rtc_config __P((todr_chip_handle_t));
 
 /*
  * Macro to compute a new randomized interval.  The intervals are
