@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.97 2002/11/07 00:22:29 manu Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.98 2002/11/13 00:51:02 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.97 2002/11/07 00:22:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.98 2002/11/13 00:51:02 provos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -351,16 +351,6 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 			ktradref(p2);
 	}
 #endif
-#ifdef SYSTRACE
-	/* Tell systrace what's happening. */
-	if (ISSET(p1->p_flag, P_SYSTRACE))
-		systrace_sys_fork(p1, p2);
-#endif
-
-
-#ifdef __HAVE_SYSCALL_INTERN
-	(*p2->p_emul->e_syscall_intern)(p2);
-#endif
 
 	scheduler_fork_hook(p1, p2);
 
@@ -469,6 +459,16 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * END PID ALLOCATION.
 	 */
 	proclist_unlock_write(s);
+
+#ifdef SYSTRACE
+	/* Tell systrace what's happening. */
+	if (ISSET(p1->p_flag, P_SYSTRACE))
+		systrace_sys_fork(p1, p2);
+#endif
+
+#ifdef __HAVE_SYSCALL_INTERN
+	(*p2->p_emul->e_syscall_intern)(p2);
+#endif
 
 	/*
 	 * Make child runnable, set start time, and add to run queue
