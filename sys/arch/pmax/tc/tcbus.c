@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.9 2000/02/29 07:20:22 nisimura Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.10 2000/02/29 09:03:30 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,15 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.9 2000/02/29 07:20:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.10 2000/02/29 09:03:30 nisimura Exp $");
+
+/*
+ * Which system models were configured?
+ */
+#include "opt_dec_3max.h"
+#include "opt_dec_3min.h"
+#include "opt_dec_maxine.h"
+#include "opt_dec_3maxplus.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,26 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.9 2000/02/29 07:20:22 nisimura Exp $");
 #include <dev/tc/tcvar.h>
 #include <pmax/pmax/pmaxtype.h>
 
-/*
- * Which system models were configured?
- */
-#include "opt_dec_3max.h"
-#include "opt_dec_3min.h"
-#include "opt_dec_maxine.h"
-#include "opt_dec_3maxplus.h"
-
-/* XXX XXX TO BE REMOVED XXX XXX */
-/*
- * DECstation tc implementations dont' have a tcasic to handle interrupts,
- * and the mapping to CPU interrupt lines is model-dependent.
- * We have to pass TC interrupt establish/disestablish requests up to
- * motherboard-specific code.
- */
 static void	tc_ds_intr_establish __P((struct device *, void *,
 				int, int (*)(void *), void *));
 static void	tc_ds_intr_disestablish __P((struct device *, void *));
-/* XXX XXX XXX XXX XXX XXX XXX */
-
 static bus_dma_tag_t tc_ds_get_dma_tag __P((int));
 
 extern struct tcbus_attach_args kn02_tc_desc[];	/* XXX */
@@ -82,7 +73,7 @@ struct cfattach tcbus_ca = {
 
 static int tcbus_found;
 
-int
+static int
 tcbus_match(parent, cfdata, aux)
 	struct device *parent;
 	struct cfdata *cfdata;
@@ -96,7 +87,7 @@ tcbus_match(parent, cfdata, aux)
 	return 1;
 }
 
-void
+static void
 tcbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -136,6 +127,30 @@ tcbus_attach(parent, self, aux)
 }
 
 /*
+ * Dispatch to model specific interrupt establishing routine
+ */
+static void
+tc_ds_intr_establish(dev, cookie, level, handler, val)
+	struct device *dev;
+	void *cookie;
+	int level;
+        int (*handler) __P((void *));
+	void *val;
+{
+
+	 (*platform.intr_establish)(dev, cookie, level, handler, val);
+}
+
+static void
+tc_ds_intr_disestablish(dev, arg)
+	struct device *dev;
+	void *arg;
+{
+
+    	printf("cannot disestablish TC interrupts\n");
+}
+
+/*
  * Return the DMA tag for use by the specified TURBOchannel slot.
  */
 static bus_dma_tag_t
@@ -146,31 +161,6 @@ tc_ds_get_dma_tag(slot)
 	 * All DECstations use the default DMA tag.
 	 */
 	return (&pmax_default_bus_dma_tag);
-}
-
-/*
- * Establish an interrupt handler.
- * For both TC and IOCTL asic, we must upcall to motherboard-specific
- * interrupt-hanlder functions,  in case we need to recompute masks for
- * CPU interrupt lines.
- */
-static void
-tc_ds_intr_establish(dev, cookie, level, handler, val)
-	struct device *dev;
-	void *cookie;
-	int level;
-        int (*handler) __P((void *));
-	void *val;
-{
-	 (*platform.intr_establish)(dev, cookie, level, handler, val);
-}
-
-static void
-tc_ds_intr_disestablish(dev, arg)
-	struct device *dev;
-	void *arg;
-{
-    	printf("cannot dis-establish TC interrupts\n");
 }
 
 #include "rasterconsole.h"
