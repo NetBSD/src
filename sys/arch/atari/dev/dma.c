@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.2 1995/04/22 22:18:17 leo Exp $	*/
+/*	$NetBSD: dma.c,v 1.3 1995/04/30 12:04:48 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -53,53 +53,90 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/queue.h>
 #include <machine/cpu.h>
 #include <machine/iomap.h>
 #include <machine/dma.h>
 
 #define	NDMA_DEV	10	/* Max 2 floppy's, 8 hard-disks		*/
-typedef struct {
-	void	(*call_func)();
-	void	(*int_func)();
-	void	*softc;
-} DMA_DISP;
+typedef struct dma_entry {
+	TAILQ_ENTRY(dma_entry)	entries;	/* List pointers	   */
+	void			(*call_func)();	/* Call when lock granted  */
+	void			(*int_func)();	/* Call on DMA interrupt   */
+	void			*softc;		/* Arg. to int_func	   */
+	int			*lock_stat;	/* status of DMA lock	   */
+} DMA_ENTRY;
 
-static	DMA_DISP  dispatch[NDMA_DEV];	/* dispatch table		     */
-static	int	  dma_free = 0;		/* next free entry in dispatch table */
-static	int	  dma_curr = 0;		/* current entry in dispatch table   */
-static	int	  dmalock = 0;		/* if != 0, dma is not free	     */
-static	void	  (*xxxint)();		/* current interrupt function	     */
-static	void	  *dma_softc;		/* Device currently owning DMA-intr  */
-static	int	  sched_soft = 0;	/* Software interrupt scheduled	     */
+/*
+ * Preallocated entries. An allocator seem an overkill here.
+ */
+static	DMA_ENTRY dmatable[NDMA_DEV];	/* preallocated entries		*/
+static	int	  sched_soft = 0;	/* callback scheduled		*/
+
+/*
+ * Heads of free and active lists:
+ */
+static  TAILQ_HEAD(freehead, dma_entry)	dma_free;
+static  TAILQ_HEAD(acthead, dma_entry)	dma_active;
+
+static	int	must_init = 1;		/* Must initialize		*/
 
 static	void	cdmasoft __P((void));
+static	void	init_queues __P((void));
 
-int st_dmagrab(int_func, call_func, softc, rcaller)
+static void init_queues()
+{
+	int	i;
+
+	TAILQ_INIT(&dma_free);
+	TAILQ_INIT(&dma_active);
+
+	for(i = 0; i < NDMA_DEV; i++)
+		TAILQ_INSERT_HEAD(&dma_free, &dmatable[i], entries);
+}
+
+int st_dmagrab(int_func, call_func, softc, lock_stat, rcaller)
 void 	(*int_func)();
 void 	(*call_func)();
 void	*softc;
+int	*lock_stat;
 int	rcaller;
 {
 	int		sps;
-	DMA_DISP	*disp;
+	DMA_ENTRY	*req;
 
-	sps = splbio();
+	if(must_init) {
+		init_queues();
+		must_init = 0;
+	}
+	*lock_stat = DMA_LOCK_REQ;
 
-	if(dmalock) {
-		disp = &dispatch[dma_free++];
-		if(dma_free >= NDMA_DEV)
-			dma_free = 0;
-		if(disp->call_func != NULL)
-			panic("dma dispatch table overflow");
-		disp->call_func = call_func;
-		disp->int_func  = int_func;
-		disp->softc     = softc;
+	sps = splhigh();
+
+	/*
+	 * Create a request...
+	 */
+	if(dma_free.tqh_first == NULL)
+		panic("st_dmagrab: Too many outstanding requests\n");
+	req = dma_free.tqh_first;
+	TAILQ_REMOVE(&dma_free, dma_free.tqh_first, entries);
+	req->call_func = call_func;
+	req->int_func  = int_func;
+	req->softc     = softc;
+	req->lock_stat = lock_stat;
+	TAILQ_INSERT_TAIL(&dma_active, req, entries);
+
+	if(dma_active.tqh_first != req) {
 		splx(sps);
 		return(0);
 	}
-	dmalock++;
-	xxxint    = int_func;	/* Grab DMA interrupts			*/
-	dma_softc = softc;	/* Identify device which got DMA	*/
+	splx(sps);
+
+	/*
+	 * We're at the head of the queue, ergo: we got the lock.
+	 */
+	*lock_stat = DMA_LOCK_GRANT;
+
 	if(rcaller) {
 		/*
 		 * Just return to caller immediately without going
@@ -109,43 +146,56 @@ int	rcaller;
 	}
 
 	(*call_func)(softc);	/* Call followup function		*/
-	splx(sps);
 	return(0);
 }
 
 void
-st_dmafree()
+st_dmafree(softc, lock_stat)
+void	*softc;
+int	*lock_stat;
 {
 	int		sps;
-	DMA_DISP	*disp;
+	DMA_ENTRY	*req;
 	
-	sps = splbio();
-	disp = &dispatch[dma_curr];
-	if(disp->call_func != NULL) {
-		xxxint    = disp->int_func;
-		dma_softc = disp->softc;
-		(*disp->call_func)(dma_softc);
-		disp->call_func = NULL;
-		if(++dma_curr >= NDMA_DEV)
-			dma_curr = 0;
-		splx(sps);
-		return;
+	sps = splhigh();
+
+	/*
+	 * Some validity checks first.
+	 */
+	if((req = dma_active.tqh_first) == NULL)
+		panic("st_dmafree: empty active queue\n");
+	if(req->softc != softc)
+		printf("Caller of st_dmafree is not lock-owner!\n");
+
+	/*
+	 * Clear lock status, move request from active to free queue.
+	 */
+	*lock_stat = 0;
+	TAILQ_REMOVE(&dma_active, req, entries);
+	TAILQ_INSERT_HEAD(&dma_free, req, entries);
+
+	if((req = dma_active.tqh_first) != NULL) {
+		/*
+		 * Call next request through softint handler. This avoids
+		 * spl-conflicts.
+		 */
+		*req->lock_stat = DMA_LOCK_GRANT;
+		add_sicallback(req->call_func, req->softc, 0);
 	}
-	dmalock = 0;
-	xxxint = NULL;		/* no more DMA interrupts */
 	splx(sps);
+	return;
 }
 
 int
 st_dmawanted()
 {
-	return(dispatch[dma_curr].call_func != NULL);
+	return(dma_active.tqh_first->entries.tqe_next != NULL);
 }
 
 cdmaint(sr)
 long	sr;	/* sr at time of interrupt */
 {
-	if(xxxint != NULL) {
+	if(dma_active.tqh_first != NULL) {
 		if(!BASEPRI(sr)) {
 			if(!sched_soft++)
 				add_sicallback(cdmasoft, 0, 0);
@@ -155,13 +205,13 @@ long	sr;	/* sr at time of interrupt */
 			cdmasoft();
 		}
 	}
-	else printf("DMA interrupt discarded\r\n");
+	else printf("DMA interrupt discarded\n");
 }
 
 static void cdmasoft()
 {
 	sched_soft = 0;
-	(*xxxint)(dma_softc);
+	(*dma_active.tqh_first->int_func)(dma_active.tqh_first->softc);
 }
 
 /*
