@@ -4323,6 +4323,29 @@
 [(set_attr "conds" "use")
  (set_attr "type" "load")])
 
+(define_expand "return_addr_mask"
+  [(set (match_dup 1)
+	(compare:CC_NOOV (unspec [(const_int 0)] 4)
+			 (const_int 0)))
+   (set (match_operand:SI 0 "s_register_operand" "")
+	(if_then_else:SI (eq (match_dup 1) (const_int 0))
+			 (const_int -1)
+			 (const_int 67108860)))] ; 0x03fffffc
+  ""
+  "
+  operands[1] = gen_rtx_REG (CC_NOOVmode, 24);
+  ")
+
+(define_insn "*check_arch2"
+  [(set (match_operand:CC_NOOV 0 "cc_register" "")
+	(compare:CC_NOOV (unspec [(const_int 0)] 4)
+			 (const_int 0)))]
+  ""
+  "teq\\t%|r0, %|r0\;teq\\t%|pc, %|pc"
+  [(set_attr "length" "8")
+   (set_attr "conds" "set")]
+)
+
 ;; Call subroutine returning any type.
 
 (define_expand "untyped_call"

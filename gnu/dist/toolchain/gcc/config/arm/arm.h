@@ -2117,12 +2117,16 @@ do {									\
 
 /* Used to mask out junk bits from the return address, such as
    processor state, interrupt status, condition codes and the like.  */
-#define MASK_RETURN_ADDR \
+#define MASK_RETURN_ADDR						\
   /* If we are generating code for an ARM2/ARM3 machine or for an ARM6	\
      in 26 bit mode, the condition codes must be masked out of the	\
      return address.  This does not apply to ARM6 and later processors	\
-     when running in 32 bit mode.  */					\
-  ((!TARGET_APCS_32) ? (GEN_INT (0x03fffffc)) : (GEN_INT (0xffffffff)))
+     when running in 32 bit mode, but if we are not targeting archv4 	\
+     or later, assume this may be ARM2/3 running in 32-bit compatible	\
+     code mode.  */							\
+  ((!TARGET_APCS_32) ? (GEN_INT (0x03fffffc))				\
+   : arm_arch4 ? (GEN_INT (0xffffffff))					\
+   : arm_gen_return_addr_mask ())
 
 /* The remainder of this file is only needed for building the compiler 
    itself, not for the collateral.  */
@@ -2221,6 +2225,7 @@ int    arm_gen_movstrqi PROTO ((Rtx *));
 Rtx    gen_rotated_half_load PROTO ((Rtx));
 Mmode  arm_select_cc_mode RTX_CODE_PROTO ((Rcode, Rtx, Rtx));
 Rtx    gen_compare_reg RTX_CODE_PROTO ((Rcode, Rtx, Rtx, int));
+Rtx    arm_gen_return_addr_mask PROTO ((void));
 void   arm_reload_in_hi PROTO ((Rtx *));
 void   arm_reload_out_hi PROTO ((Rtx *));
 void   arm_reorg PROTO ((Rtx));
