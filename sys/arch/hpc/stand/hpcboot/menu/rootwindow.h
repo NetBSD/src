@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.h,v 1.5 2004/02/27 03:53:33 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.h,v 1.6 2004/08/06 17:24:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ public:
 	BOOL isDialogMessage(MSG &);
 	BOOL focusManagerHook(MSG &, HWND);
 
-	void progress();
+	void progress(const char * = NULL);
 	void unprogress();
 };
 
