@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.18 2002/08/31 03:07:32 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.19 2002/10/05 13:46:59 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,6 +44,7 @@
  */
 
 #include "opt_armfpe.h"
+#include "opt_multiprocessor.h"
 
 #include "assym.h"
 #include <machine/param.h>
@@ -207,8 +208,16 @@ ENTRY(remrunqueue)
  * This function has several entry points
  */
 
+#ifdef MULTIPROCESSOR
+.Lcpu_info_store:
+	.word	_C_LABEL(cpu_info_store)
+.Lcurproc:
+	/* FIXME: This is bogus in the general case. */
+	.word	_C_LABEL(cpu_info_store) + CI_CURPROC
+#else
 .Lcurproc:
 	.word	_C_LABEL(curproc)
+#endif
 
 .Lcurpcb:
 	.word	_C_LABEL(curpcb)
@@ -240,7 +249,7 @@ _C_LABEL(curpcb):
  */
 /* LINTSTUB: Ignore */
 ASENTRY_NP(idle)
-#if defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 	ldr	r3, .Lcpu_do_powersave
@@ -306,7 +315,7 @@ ENTRY(cpu_switch)
 	/* stash the old proc while we call functions */
 	mov	r5, r1
 
-#if defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* release the sched_lock before handling interrupts */
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
@@ -336,7 +345,7 @@ ENTRY(cpu_switch)
 
 .Lswitch_search:
 	IRQdisable
-#if defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
 
@@ -434,7 +443,7 @@ ENTRY(cpu_switch)
 	 */
 	str	r0, [r6, #(P_BACK)]
 
-#if defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/*
 	 * unlock the sched_lock, but leave interrupts off, for now.
 	 */
@@ -443,7 +452,13 @@ ENTRY(cpu_switch)
 	mov	r1, r7
 #endif
 
+#ifdef MULTIPROCESSOR
+	/* XXX use curcpu() */
+	ldr	r0, .Lcpu_info_store
+	str	r0, [r6, #(P_CPU)]
+#else
 	/* p->p_cpu initialized in fork1() for single-processor */
+#endif
 
 	/* Process is now on a processor. */
 	mov	r0, #SONPROC			/* p->p_stat = SONPROC */
@@ -737,6 +752,9 @@ ENTRY(savectx)
 	ldmfd	sp!, {r4-r7, pc}
 
 ENTRY(proc_trampoline)
+#ifdef MULTIPROCESSOR
+	bl	_C_LABEL(proc_trampoline_mp)
+#endif
 	add	lr, pc, #(.Ltrampoline_return - . - 8)
 	mov	r0, r5
 	mov	r1, sp

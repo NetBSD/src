@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10 2002/06/17 16:32:59 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.11 2002/10/05 13:46:59 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2002/06/17 16:32:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.11 2002/10/05 13:46:59 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -186,6 +186,8 @@ syscall(struct trapframe *frame, struct proc *p, u_int32_t insn)
 	int code, error;
 	u_int nap, nargs;
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
+
+	KERNEL_PROC_LOCK(p);
 
 	switch (insn & SWI_OS_MASK) { /* Which OS is the SWI from? */
 	case SWI_OS_ARM: /* ARM-defined SWIs */
@@ -291,7 +293,7 @@ syscall(struct trapframe *frame, struct proc *p, u_int32_t insn)
 	}
 
 	trace_exit(p, code, args, rval, error);
-
+	KERNEL_PROC_UNLOCK(p);
 	userret(p);
 }
 
@@ -309,10 +311,14 @@ child_return(arg)
 		frame->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
 #endif
 
+	KERNEL_PROC_UNLOCK(p);
 	userret(p);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p, SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }
 
