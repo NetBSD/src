@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.10 1999/03/28 21:09:54 is Exp $	*/
+/*	$NetBSD: siop2.c,v 1.11 1999/04/01 17:27:22 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -1091,7 +1091,8 @@ siopng_checkintr(sc, istat, dstat, sist, status)
 #endif /* MAXTOR_KLUDGE */
 				printf ("%s: target %d now synchronous, period=%dns, offset=%d\n",
 				    sc->sc_dev.dv_xname, target,
-				    acb->msg[4] * 4, acb->msg[5]);
+				    (acb->msg[4] == 12) ? 50 : acb->msg[4] * 4,
+				    acb->msg[5]);
 				scsi_period_to_siopng (sc, target);
 			}
 			rp->siop_sxfer = sc->sc_sync[target].sxfer;
