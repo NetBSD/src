@@ -1,5 +1,5 @@
 /* vms.c -- Write out a VAX/VMS object file
-   Copyright (C) 1987, 88, 92, 94, 95, 97, 98, 2000
+   Copyright 1987, 1988, 1992, 1993, 1994, 1995, 1997, 1998, 2000, 2001
    Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
@@ -552,7 +552,7 @@ obj_crawl_symbol_chain (headers)
 	{
 	  symbolP->sy_number = symbol_number++;
 	  symbolP->sy_name_offset = 0;
-	  symbolPP = &(symbol_next (symbolP));
+	  symbolPP = &symbolP->sy_next;
 	}
       else
 	{

@@ -1,5 +1,5 @@
 /* BFD back-end for Intel IA-32 EFI application files.
-   Copyright 1999 Free Software Foundation, Inc.
+   Copyright 1999, 2000 Free Software Foundation, Inc.
    Contributed by David Mosberger <davidm@hpl.hp.com>
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -28,8 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define PCRELOFFSET true
 #define TARGET_UNDERSCORE '_'
 #define COFF_LONG_SECTION_NAMES
-#define ALIGN_SECTIONS_IN_FILE
-#define PEI_DEFAULT_TARGET_SUBSYSTEM	IMAGE_SUBSYSTEM_EFI_APPLICATION
+#define PEI_TARGET_SUBSYSTEM	IMAGE_SUBSYSTEM_EFI_APPLICATION
 #define PEI_FORCE_MINIMUM_ALIGNMENT
 
 #include "coff-i386.c"

@@ -1,3 +1,211 @@
+2001-06-18  Philip Blundell  <philb@gnu.org>
+
+	* gas/arm/arm.exp (msr_bad): Deleted.
+	* gas/arm/msr-bad.s: Likewise.
+
+2001-06-11  Alan Modra  <amodra@bigpond.net.au>
+
+	Merge from mainline.
+	2001-06-10  H.J. Lu  <hjl@gnu.org>
+	* gas/elf/section2.l: Match various white spaces.
+	* gas/elf/section2.e: Support 64bit ELF.
+	* gas/elf/section2.e-mips: Likewise.
+
+	2001-06-08  Alan Modra  <amodra@bigpond.net.au>
+	* gas/elf/elf.exp (run_list_test): Undo $readelf change in 2001-06-07.
+
+	2001-06-07  H.J. Lu  <hjl@gnu.org>
+	* gas/elf/section2.e-mips: New file.
+	* gas/elf/elf.exp (run_list_test): Add suffix.
+	Pass -mips as suffix to run_list_test for mips.
+	* gas/elf/section2.l: Match ".*GAS.*" instead of
+	"GAS LISTING .*".
+	* gas/mips/mips.exp: Set xfail for "lineno" on Linux/mips.
+	* gas/mips/empic.d: Support stabs.
+	* gas/mips/mips16-e.d: Likewise.
+	* gas/mips/mips16-f.d: Likewise.
+	* gas/mips/mipsel16-f.d: Likewise.
+	* gas/mips/telempic.d: Likewise.
+	* gas/mips/tempic.d: Likewise.
+	* gas/mips/tmips16-e.d: Likewise.
+	* gas/mips/tmipsel16-e.d: Likewise.
+
+	2001-06-06  H.J. Lu  <hjl@gnu.org>
+	* gas/mips/elf-rel3.s: New file.
+	* gas/mips/elf-rel3.d: Likewise.
+	* gas/mips/elfel-rel3.s: Likewise.
+	* gas/mips/elfel-rel3.d: Likewise.
+	* gas/mips/mips.exp: Run elf-rel3/elfel-rel3.
+	* gas/elf/elf.exp (run_list_test): New.
+	Run section2 with run_list_test.
+	* gas/elf/section2.e: New file.
+	* gas/elf/section2.l: Likewise.
+	* gas/elf/section2.s: Likewise.
+
+	2001-06-04  H.J. Lu  <hjl@gnu.org>
+	* gas/mips/mips4010.s: Add the missing ".end".
+	* gas/mips/mips4100.s: Likewise.
+	* gas/mips/mips4650.s: Likewise.
+	* gas/mips/sync.s: Likewise.
+
+	2001-06-02  H.J. Lu  <hjl@gnu.org>
+	* gas/sparc/unalign.d: Support Sparc V9.
+
+	2001-05-25  H.J. Lu  <hjl@gnu.org>
+	* gas/mips/e32el-rel2.d: New for little endian mips.
+	* gas/mips/elfel-rel2.d: Likewise.
+	* gas/mips/elfel-rel.d: Likewise.
+	* gas/mips/mipsel16-f.d: Likewise.
+	* gas/mips/telempic.d: Likewise.
+	* gas/mips/tmipsel16-e.d: Likewise.
+	* gas/mips/tempic.d: New for traditional mips.
+	* gas/mips/tmips16-e.d: Likewise.
+	* gas/mips/elf-rel.d: Handle alignment padding.
+	* gas/mips/elf-rel2.d: Likewise.
+	* gas/mips/mips.exp: Support little endian and traditional
+	mips.
+
+	2001-05-24  H.J. Lu  <hjl@gnu.org>
+	* gas/m68k/pcrel.d: Support 64bit BFD.
+	* gas/arm/adrl.d: Support 64bit BFD.
+	* gas/arm/arm7t.d: Likewise.
+	* gas/arm/inst.d: Likewise.
+	* gas/arm/pic.d: Likewise.
+	* gas/arm/xscale.d: Likewise.
+
+	2001-05-15  Thiemo Seufer <seufer@csv.ica.uni-stuttgart.de>
+	* gas/mips/abs.d: Remove $ before register names, per latest
+	disassembler.
+	* gas/mips/add.d: Ditto.
+	* gas/mips/and.d: Ditto.
+	* gas/mips/beq.d: Ditto.
+	* gas/mips/bge.d: Ditto.
+	* gas/mips/bgeu.d: Ditto.
+	* gas/mips/blt.d: Ditto.
+	* gas/mips/bltu.d: Ditto.
+	* gas/mips/delay.d: Ditto.
+	* gas/mips/div-ilocks.d: Ditto.
+	* gas/mips/div.d: Ditto.
+	* gas/mips/dli.d: Ditto.
+	* gas/mips/elf_e_flags1.d: Ditto.
+	* gas/mips/elf_e_flags2.d: Ditto.
+	* gas/mips/elf_e_flags3.d: Ditto.
+	* gas/mips/elf_e_flags4.d: Ditto.
+	* gas/mips/jal-empic.d: Ditto.
+	* gas/mips/jal-svr4pic.d: Ditto.
+	* gas/mips/jal-xgot.d: Ditto.
+	* gas/mips/jal.d: Ditto.
+	* gas/mips/la-empic.d: Ditto.
+	* gas/mips/la-svr4pic.d: Ditto.
+	* gas/mips/la-xgot.d: Ditto.
+	* gas/mips/la.d: Ditto.
+	* gas/mips/lb-empic.d: Ditto.
+	* gas/mips/lb-svr4pic.d: Ditto.
+	* gas/mips/lb-xgot-ilocks.d: Ditto.
+	* gas/mips/lb-xgot.d: Ditto.
+	* gas/mips/lb.d: Ditto.
+	* gas/mips/ld-empic.d: Ditto.
+	* gas/mips/ld-ilocks-addr32.d: Ditto.
+	* gas/mips/ld-ilocks.d: Ditto.
+	* gas/mips/ld-svr4pic.d: Ditto.
+	* gas/mips/ld-xgot.d: Ditto.
+	* gas/mips/ld.d: Ditto.
+	* gas/mips/li.d: Ditto.
+	* gas/mips/lif-empic.d: Ditto.
+	* gas/mips/lif-svr4pic.d: Ditto.
+	* gas/mips/lif-xgot.d: Ditto.
+	* gas/mips/lifloat.d: Ditto.
+	* gas/mips/mips16.d: Ditto.
+	* gas/mips/mips32.d: Ditto.
+	* gas/mips/mips4.d: Ditto.
+	* gas/mips/mips4010.d: Ditto.
+	* gas/mips/mips4100.d: Ditto.
+	* gas/mips/mips4650.d: Ditto.
+	* gas/mips/mips64.d: Ditto.
+	* gas/mips/mul-ilocks.d: Ditto.
+	* gas/mips/mul.d: Ditto.
+	* gas/mips/nodelay.d: Ditto.
+	* gas/mips/rol.d: Ditto.
+	* gas/mips/sb.d: Ditto.
+	* gas/mips/trap20.d: Ditto.
+	* gas/mips/trunc.d: Ditto.
+	* gas/mips/uld.d: Ditto.
+	* gas/mips/ulh-empic.d: Ditto.
+	* gas/mips/ulh-svr4pic.d: Ditto.
+	* gas/mips/ulh-xgot.d: Ditto.
+	* gas/mips/ulh.d: Ditto.
+	* gas/mips/ulw.d: Ditto.
+	* gas/mips/usd.d: Ditto.
+	* gas/mips/ush.d: Ditto.
+	* gas/mips/usw.d: Ditto.
+
+	2001-04-05  Hans-Peter Nilsson  <hp@axis.com>
+	* lib/gas-defs.exp (run_dump_test): Support using readelf.
+	* config/default.exp: Default READELF and READELFFLAGS.
+
+	2001-03-30  H.J. Lu  <hjl@gnu.org>
+	* gas/i386/relax.d: Dump with -s instead of -drw.
+
+	2001-03-29  H.J. Lu  <hjl@gnu.org>
+	* gas/i386/relax.s: New test for relaxation between sections.
+	* gas/i386/relax.d: New.
+	* gas/i386/i386.exp: Add tests for ELF.
+
+	2001-03-27  Chris Demetriou  <cgd@broadcom.com>
+	* gas/mips/lineno.d: Allow for the possibility that
+	the local labels won't be in the objdump output.  Match
+	zeros in addresses using '+' for better compatibility with
+	different targets.
+
+	2001-03-26  Chris Demetriou  <cgd@broadcom.com>
+	* gas/mips/sync.s: Declare 'foo' as a function so that this
+	test will work on properly on ECOFF targets.
+
+	2001-03-18  H.J. Lu  <hjl@gnu.org>
+	* gas/i386/intel.s: Move PIC code to ...
+	* gas/i386/intelpic.s: New. Here.
+	* gas/i386/intel.d: Updated.
+	* gas/i386/intelpic.d: New.
+	* gas/i386/i386.exp: Check PIC code in Intel syntax for ELF
+	targets only.
+
+	2001-02-17  Chris Demetriou  <cgd@broadcom.com>
+	* gas/mips/mips32.d: Remove ELF dependencies.  This test
+	wasn't meant to be ELF specific, and doesn't have to be.
+	* gas/mips/mips64.d: Likewise.
+	* gas/mips/mips.exp: Don't attempt the elf_e_flags family of
+	tests if not ELF; they test ELF-specific features.
+
+2001-05-28  Jeff Sturm  <jsturm@one-point.com>
+
+	* gas/sparc/unalign.s: New test.  Check unaligned relocs.
+	* gas/sparc/unalign.d: New expected test results.
+	* gas/sparc/sparc.exp: Run new test.
+
+2001-05-23  Alan Modra  <amodra@one.net.au>
+
+	* gas/elf/ehopt0.d: Tweak for bigendian targets.
+
+2001-05-14  Richard Henderson  <rth@redhat.com>
+
+	* gas/elf/ehopt0.s: New.
+	* gas/elf/ehopt0.d: New.
+	* gas/elf/elf.exp: Run it.
+
+2001-05-12  Alan Modra  <amodra@one.net.au>
+
+	* gas/i386/sse2.s: Correct cvtps2dq, movdq2q, and movq2dq
+	* gas/i386/sse2.d: Likewise.  Fix pmuludq and punpckhqdq too.
+
+	* gas/i386/ssemmx2.d: Correct movq.
+
+2001-05-04  Alan Modra  <amodra@one.net.au>
+
+	* gas/i386/katmai.d: Correct pmovmskb and pextrw opcodes.
+	* gas/i386/ssemmx2.d: Likewise.  Correct register for pextrw,
+	pinsrw, and pmovmskb.
+	* gas/i386/sse2.d: Correct register for movmskpd.
+
 2001-03-31  Alan Modra  <alan@linuxcare.com.au>
 
 	* gas/all/cond.s: Add .if .elseif tree.

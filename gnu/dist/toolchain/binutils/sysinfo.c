@@ -11,7 +11,7 @@
 #define	NUMBER	261
 #define	UNIT	262
 
-#line 1 "sysinfo.y"
+#line 20 "sysinfo.y"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,7 +33,7 @@ char *loop [] = {"","n","m","/*BAD*/"};
 char *names[] = {" ","[n]","[n][m]"};
 char *pnames[]= {"","*","**"};
 
-#line 24 "sysinfo.y"
+#line 43 "sysinfo.y"
 typedef union {
  int i;
  char *s;
@@ -106,9 +106,9 @@ static const short yyrhs[] = {    -1,
 
 #if YYDEBUG != 0
 static const short yyrline[] = { 0,
-    38,    59,    75,    76,    79,   130,   150,   152,   153,   154,
-   157,   186,   204,   217,   230,   233,   338,   340,   343,   348,
-   354,   356,   359,   360,   362,   363
+    57,    78,    94,    95,    98,   149,   169,   171,   172,   173,
+   176,   205,   223,   236,   249,   252,   357,   359,   362,   367,
+   373,   375,   378,   379,   381,   382
 };
 #endif
 
@@ -180,7 +180,7 @@ static const short yycheck[] = {    11,
      0,     0,     8,     8,     6,    -1,     4
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/share/misc/bison.simple"
+#line 3 "/usr/share/bison/bison.simple"
 /* This file comes from bison-1.28.  */
 
 /* Skeleton output parser for bison,
@@ -394,7 +394,7 @@ __yy_memcpy (char *to, char *from, unsigned int count)
 #endif
 #endif
 
-#line 217 "/usr/share/misc/bison.simple"
+#line 217 "/usr/share/bison/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -723,7 +723,7 @@ yyreduce:
   switch (yyn) {
 
 case 1:
-#line 38 "sysinfo.y"
+#line 57 "sysinfo.y"
 {
   switch (writecode)
     {
@@ -747,7 +747,7 @@ case 1:
  ;
     break;}
 case 2:
-#line 59 "sysinfo.y"
+#line 78 "sysinfo.y"
 {
   switch (writecode) {
   case 'i':
@@ -762,7 +762,7 @@ case 2:
 ;
     break;}
 case 5:
-#line 81 "sysinfo.y"
+#line 100 "sysinfo.y"
 {
 	it = yyvsp[-1].s; code = yyvsp[0].i;
 	switch (writecode) 
@@ -813,7 +813,7 @@ case 5:
       ;
     break;}
 case 6:
-#line 131 "sysinfo.y"
+#line 150 "sysinfo.y"
 {
   switch (writecode) {
   case 'd': 
@@ -831,7 +831,7 @@ case 6:
 ;
     break;}
 case 11:
-#line 158 "sysinfo.y"
+#line 177 "sysinfo.y"
 {
 	  rdepth++;
 	  switch (writecode) 
@@ -861,7 +861,7 @@ case 11:
 	;
     break;}
 case 12:
-#line 188 "sysinfo.y"
+#line 207 "sysinfo.y"
 {
 	  repeat = oldrepeat;
 	  oldrepeat =0;
@@ -877,7 +877,7 @@ case 12:
 	;
     break;}
 case 13:
-#line 205 "sysinfo.y"
+#line 224 "sysinfo.y"
 {
 	  switch (writecode) 
 	    {
@@ -891,7 +891,7 @@ case 13:
 	;
     break;}
 case 14:
-#line 218 "sysinfo.y"
+#line 237 "sysinfo.y"
 {
 	  switch (writecode)
 	    {
@@ -904,11 +904,11 @@ case 14:
 	;
     break;}
 case 15:
-#line 232 "sysinfo.y"
+#line 251 "sysinfo.y"
 {name = yyvsp[0].s; ;
     break;}
 case 16:
-#line 234 "sysinfo.y"
+#line 253 "sysinfo.y"
 {
 	  char *desc = yyvsp[-8].s;
 	  char *type = yyvsp[-6].s;
@@ -1011,31 +1011,31 @@ char *ptr = pnames[rdepth];
 	;
     break;}
 case 17:
-#line 339 "sysinfo.y"
+#line 358 "sysinfo.y"
 { yyval.s = yyvsp[0].s; ;
     break;}
 case 18:
-#line 340 "sysinfo.y"
+#line 359 "sysinfo.y"
 { yyval.s = "INT";;
     break;}
 case 19:
-#line 345 "sysinfo.y"
+#line 364 "sysinfo.y"
 { yyval.s = yyvsp[-1].s; ;
     break;}
 case 20:
-#line 350 "sysinfo.y"
+#line 369 "sysinfo.y"
 { yyval.i = yyvsp[-1].i * yyvsp[0].i; ;
     break;}
 case 21:
-#line 355 "sysinfo.y"
+#line 374 "sysinfo.y"
 { yyval.s = yyvsp[-1].s; ;
     break;}
 case 22:
-#line 356 "sysinfo.y"
+#line 375 "sysinfo.y"
 { yyval.s = "dummy";;
     break;}
 case 26:
-#line 364 "sysinfo.y"
+#line 383 "sysinfo.y"
 { 
 	  switch (writecode) 
 	    {
@@ -1049,7 +1049,7 @@ case 26:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 543 "/usr/share/misc/bison.simple"
+#line 543 "/usr/share/bison/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -1269,7 +1269,7 @@ yyerrhandle:
     }
   return 1;
 }
-#line 379 "sysinfo.y"
+#line 398 "sysinfo.y"
 
 /* four modes
 

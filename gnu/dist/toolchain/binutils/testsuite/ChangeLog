@@ -1,3 +1,39 @@
+2001-06-11  Alan Modra  <amodra@bigpond.net.au>
+
+	Merge from mainline.
+	2001-06-07  H.J. Lu  <hjl@gnu.org>
+	* binutils-all/readelf.ss-mips: Support stabs.
+	* binutils-all/readelf.ss-tmips: Likewise.
+
+	2001-05-25  H.J. Lu  <hjl@gnu.org>
+	* binutils-all/readelf.exp (readelf_test): Set target_machine
+	to tmips for traditional mips.
+	* binutils-all/readelf.s: Support traditional mips.
+	* binutils-all/readelf.ss-tmips: New for traditional mips.
+
+	2001-05-25  Alan Modra  <amodra@one.net.au>
+	* binutils-all/readelf.exp: Replace linuxoldld with linux*oldld
+	and linuxaout with linux*aout.
+	* binutils-all/objcopy.exp: Remove xfail for linuxaout.
+
+	2001-03-30  H.J. Lu  <hjl@gnu.org>
+	* binutils-all/readelf.exp: Run on more ELF targets.
+
+	2001-02-11  H.J. Lu  <hjl@gnu.org>
+	* config/default.exp: Set up gcc_gas_flag.
+	* binutils-all/objcopy.exp (copy_setup): Process gcc_gas_flag
+	for Linux only.
+	* binutils-all/testprog.c: Include <string.h> and don't use
+	exit ().
+
+2001-06-07  Alan Modra  <amodra@bigpond.net.au>
+
+	* (binutils-all/ar.exp, binutils-all/nm.exp,
+	binutils-all/objcopy.exp, binutils-all/objdump.exp,
+	binutils-all/readelf.exp, binutils-all/size.exp,
+	binutils-all/hppa/objdump.exp, config/default.exp,
+	lib/utils-lib.exp): Update copyright notices.
+
 2001-01-16  Matthew Green  <mrg@redhat.com>
 
 	* binutils-all/readelf.s-64: Match readelf -S output.

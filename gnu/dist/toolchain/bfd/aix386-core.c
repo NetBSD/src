@@ -1,7 +1,7 @@
 /* BFD back-end for AIX on PS/2 core files.
    This was based on trad-core.c, which was written by John Gilmore of
         Cygnus Support.
-   Copyright 1988, 89, 91, 92, 93, 94, 95, 96, 97, 98, 2000
+   Copyright 1988, 1989, 1991, 1992, 1993, 1994, 1996, 1998, 1999, 2000
    Free Software Foundation, Inc.
    Written by Minh Tran-Le <TRANLE@INTELLICORP.COM>.
    Converted to back end form by Ian Lance Taylor <ian@cygnus.com>.

@@ -62,16 +62,16 @@ Disassembly of section \.text:
 0+00a6 <lbl_a\+(0x|)2> nop
 0+00a8 <lbl_a\+(0x|)4> lea %pc@\(0+002a <lbl_b\+0x28>,%d0:l\),%a0
 0+00ac <lbl_a\+(0x|)8> lea %pc@\(0+002d <lbl_b\+0x2b>,%d0:l\),%a0
-0+00b2 <lbl_a\+(0x|)e> lea %pc@\(ffff80b4 <lbl_a\+0xffff8010>,%d0:l\),%a0
-0+00b8 <lbl_a\+(0x|)14> lea %pc@\(ffff80b9 <lbl_a\+0xffff8015>,%d0:l\),%a0
+0+00b2 <lbl_a\+(0x|)e> lea %pc@\(f+80b4 <lbl_a\+0xf+8010>,%d0:l\),%a0
+0+00b8 <lbl_a\+(0x|)14> lea %pc@\(f+80b9 <lbl_a\+0xf+8015>,%d0:l\),%a0
 0+00c0 <lbl_a\+(0x|)1c> nop
 0+00c2 <lbl_a\+(0x|)1e> lea %pc@\(0+0143 <lbl_a\+0x9f>,%d0:l\),%a0
 0+00c6 <lbl_a\+(0x|)22> lea %pc@\(0+0148 <lbl_a\+0xa4>,%d0:l\),%a0
 0+00cc <lbl_a\+(0x|)28> lea %pc@\(0+80cd <lbl_a\+0x8029>,%d0:l\),%a0
 0+00d2 <lbl_a\+(0x|)2e> lea %pc@\(0+80d4 <lbl_a\+0x8030>,%d0:l\),%a0
 0+00da <lbl_a\+(0x|)36> nop
-0+00dc <lbl_a\+(0x|)38> lea %pc@\(ffff80de <lbl_a\+0xffff803a>\),%a0
-0+00e0 <lbl_a\+(0x|)3c> lea %pc@\(ffff80e1 <lbl_a\+0xffff803d>\),%a0
+0+00dc <lbl_a\+(0x|)38> lea %pc@\(f+80de <lbl_a\+0xf+803a>\),%a0
+0+00e0 <lbl_a\+(0x|)3c> lea %pc@\(f+80e1 <lbl_a\+0xf+803d>\),%a0
 0+00e8 <lbl_a\+(0x|)44> nop
 0+00ea <lbl_a\+(0x|)46> lea %pc@\(0+80eb <lbl_a\+0x8047>\),%a0
 0+00ee <lbl_a\+(0x|)4a> lea %pc@\(0+80f0 <lbl_a\+0x804c>\),%a0

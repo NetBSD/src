@@ -17,6 +17,51 @@ Software Foundation, Inc.
 section entitled "GNU Free Documentation License".
 
 
+File: as.info,  Node: AMD29K-Regs,  Prev: AMD29K-Chars,  Up: AMD29K Syntax
+
+Register Names
+..............
+
+   General-purpose registers are represented by predefined symbols of
+the form `GRNNN' (for global registers) or `LRNNN' (for local
+registers), where NNN represents a number between `0' and `127',
+written with no leading zeros.  The leading letters may be in either
+upper or lower case; for example, `gr13' and `LR7' are both valid
+register names.
+
+   You may also refer to general-purpose registers by specifying the
+register number as the result of an expression (prefixed with `%%' to
+flag the expression as a register number):
+     %%EXPRESSION
+
+--where EXPRESSION must be an absolute expression evaluating to a
+number between `0' and `255'.  The range [0, 127] refers to global
+registers, and the range [128, 255] to local registers.
+
+   In addition, `as' understands the following protected
+special-purpose register names for the AMD 29K family:
+
+       vab    chd    pc0
+       ops    chc    pc1
+       cps    rbp    pc2
+       cfg    tmc    mmu
+       cha    tmr    lru
+
+   These unprotected special-purpose register names are also recognized:
+       ipc    alu    fpe
+       ipa    bp     inte
+       ipb    fc     fps
+       q      cr     exop
+
+
+File: as.info,  Node: AMD29K Floating Point,  Next: AMD29K Directives,  Prev: AMD29K Syntax,  Up: AMD29K-Dependent
+
+Floating Point
+--------------
+
+   The AMD 29K family uses IEEE floating-point numbers.
+
+
 File: as.info,  Node: AMD29K Directives,  Next: AMD29K Opcodes,  Prev: AMD29K Floating Point,  Up: AMD29K-Dependent
 
 AMD 29K Machine Directives
@@ -1502,47 +1547,4 @@ pseudo-instructions are needed on this family.
      mov[:f].b rs,@(disp8,fp)       xorc.b imm8,crb
      mov[:g] sz rs,ea_mem           xorc.w imm16,sr
      mov[:g] sz ea,rd
-
-
-File: as.info,  Node: HPPA-Dependent,  Next: ESA/390-Dependent,  Prev: H8/500-Dependent,  Up: Machine Dependencies
-
-HPPA Dependent Features
-=======================
-
-* Menu:
-
-* HPPA Notes::                Notes
-* HPPA Options::              Options
-* HPPA Syntax::               Syntax
-* HPPA Floating Point::       Floating Point
-* HPPA Directives::           HPPA Machine Directives
-* HPPA Opcodes::              Opcodes
-
-
-File: as.info,  Node: HPPA Notes,  Next: HPPA Options,  Up: HPPA-Dependent
-
-Notes
------
-
-   As a back end for GNU CC `as' has been throughly tested and should
-work extremely well.  We have tested it only minimally on hand written
-assembly code and no one has tested it much on the assembly output from
-the HP compilers.
-
-   The format of the debugging sections has changed since the original
-`as' port (version 1.3X) was released; therefore, you must rebuild all
-HPPA objects and libraries with the new assembler so that you can debug
-the final executable.
-
-   The HPPA `as' port generates a small subset of the relocations
-available in the SOM and ELF object file formats.  Additional relocation
-support will be added as it becomes necessary.
-
-
-File: as.info,  Node: HPPA Options,  Next: HPPA Syntax,  Prev: HPPA Notes,  Up: HPPA-Dependent
-
-Options
--------
-
-   `as' has no machine-dependent command-line options for the HPPA.
 
