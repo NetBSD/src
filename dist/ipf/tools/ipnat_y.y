@@ -499,6 +499,7 @@ rdrproxy:
 					{ strncpy(nat->in_plabel, $2,
 						  sizeof(nat->in_plabel));
 					  nat->in_dport = nat->in_pnext;
+					  nat->in_dport = htons(nat->in_dport);
 					  free($2);
 					}
 	| proxy				{ if (nat->in_plabel[0] != '\0') {
@@ -569,6 +570,7 @@ static	wordtab_t	yywords[] = {
 	{ "map",	IPNY_MAP },
 	{ "map-block",	IPNY_MAPBLOCK },
 	{ "mssclamp",	IPNY_MSSCLAMP },
+	{ "netmask",	IPNY_MASK },
 	{ "port",	IPNY_PORT },
 	{ "portmap",	IPNY_PORTMAP },
 	{ "ports",	IPNY_PORTS },
@@ -697,15 +699,30 @@ int p;
 		nat->in_flags |= IPN_UDP;
 		nat->in_flags &= ~IPN_TCP;
 		break;
-	default :
-		if ((nat->in_redir & NAT_MAPBLK) == 0) {
+	case IPPROTO_ICMP :
+		nat->in_flags &= ~IPN_TCPUDP;
+		if (!(nat->in_flags & IPN_ICMPQUERY)) {
+			nat->in_dcmp = 0;
+			nat->in_scmp = 0;
 			nat->in_pmin = 0;
 			nat->in_pmax = 0;
 			nat->in_pnext = 0;
+		}
+		break;
+	default :
+		if ((nat->in_redir & NAT_MAPBLK) == 0) {
 			nat->in_flags &= ~IPN_TCPUDP;
+			nat->in_dcmp = 0;
+			nat->in_scmp = 0;
+			nat->in_pmin = 0;
+			nat->in_pmax = 0;
+			nat->in_pnext = 0;
 		}
 		break;
 	}
+
+	if ((nat->in_flags & (IPN_TCPUDP|IPN_FIXEDDPORT)) == IPN_FIXEDDPORT)
+		nat->in_flags &= ~IPN_FIXEDDPORT;
 }
 
 

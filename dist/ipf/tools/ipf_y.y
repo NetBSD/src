@@ -50,11 +50,13 @@ static	int		*yycont = 0;
 static	ioctlfunc_t	ipfioctl[IPL_LOGSIZE];
 static	addfunc_t	ipfaddfunc = NULL;
 static	struct	wordtab ipfwords[95];
+static	struct	wordtab	addrwords[4];
+static	struct	wordtab	maskwords[5];
 static	struct	wordtab icmpcodewords[17];
 static	struct	wordtab icmptypewords[16];
 static	struct	wordtab ipv4optwords[25];
 static	struct	wordtab ipv4secwords[9];
-static	struct	wordtab ipv6optwords[5];
+static	struct	wordtab ipv6optwords[8];
 static	struct	wordtab logwords[33];
 
 %}
@@ -82,7 +84,7 @@ static	struct	wordtab logwords[33];
 %type	<num>	portc porteq
 %type	<ipa>	hostname ipv4 ipv4mask ipv4_16 ipv4_24
 %type	<ip6>	ipv6mask
-%type	<ipp>	addr
+%type	<ipp>	addr ipaddr
 %type	<str>	servicename name interfacename
 %type	<pc>	portrange portcomp
 %type	<alist>	addrlist poollist
@@ -117,6 +119,7 @@ static	struct	wordtab logwords[33];
 %token	IPFY_IPOPTS IPFY_SHORT IPFY_NAT IPFY_BADSRC IPFY_LOWTTL IPFY_FRAG
 %token	IPFY_MBCAST IPFY_BAD IPFY_BADNAT IPFY_OOW IPFY_NEWISN IPFY_NOICMPERR
 %token	IPFY_KEEP IPFY_STATE IPFY_FRAGS IPFY_LIMIT IPFY_STRICT IPFY_AGE
+%token	IPFY_SYNC IPFY_FRAGBODY
 %token	IPFY_IPOPT_NOP IPFY_IPOPT_RR IPFY_IPOPT_ZSU IPFY_IPOPT_MTUP
 %token	IPFY_IPOPT_MTUR IPFY_IPOPT_ENCODE IPFY_IPOPT_TS IPFY_IPOPT_TR
 %token	IPFY_IPOPT_SEC IPFY_IPOPT_LSRR IPFY_IPOPT_ESEC IPFY_IPOPT_CIPSO
@@ -393,6 +396,7 @@ head:	| IPFY_HEAD YY_STR		{ DOALL(strncpy(fr->fr_grhead, $2, \
 
 settagin:
 	| IPFY_SETTAG '(' taginlist ')'
+	;
 
 taginlist:
 	taginspec
@@ -404,10 +408,10 @@ taginspec:
 	;
 
 nattag:	IPFY_NAT '=' YY_STR		{ DOALL(strncpy(fr->fr_nattag.ipt_tag,\
-						$3, 16););
+						$3, IPFTAG_LEN););
 					  free($3); }
 	| IPFY_NAT '=' YY_NUMBER	{ DOALL(sprintf(fr->fr_nattag.ipt_tag,\
-						"%15d", $3);) }
+						"%d", $3 & 0xffffffff);) }
 	;
 
 logtag:	IPFY_LOG '=' YY_NUMBER		{ DOALL(fr->fr_logtag = $3;) }
@@ -415,6 +419,7 @@ logtag:	IPFY_LOG '=' YY_NUMBER		{ DOALL(fr->fr_logtag = $3;) }
 
 settagout:
 	| IPFY_SETTAG '(' tagoutlist ')'
+	;
 
 tagoutlist:
 	tagoutspec
@@ -576,11 +581,14 @@ protocol:
 					DOREM(fr->fr_flx |= FI_TCPUDP; \
 					      fr->fr_mflx |= FI_TCPUDP;)
 				  } else {
-					  DOREM(fr->fr_proto = getproto($1); \
+					int p = getproto($1);
+					if (p == -1)
+						yyerror("protocol unknown");
+					DOREM(fr->fr_proto = p; \
 						fr->fr_mproto = 0xff;)
 				  }
 				  free($1);
-				}
+					}
 	| YY_STR nextstring YY_STR
 				{ if (!strcmp($1, "tcp") &&
 				      !strcmp($3, "udp")) {
@@ -606,14 +614,20 @@ from:	IPFY_FROM			{ setipftype();
 					  if (fr == NULL)
 						fr = frc;
 					  yyexpectaddr = 1;
+					  if (yydebug)
+						printf("set yyexpectaddr\n");
 					  yycont = &yyexpectaddr;
+					  yysetdict(addrwords);
 					  resetaddr(); }
 	;
 
 to:	IPFY_TO				{ if (fr == NULL)
 						fr = frc;
 					  yyexpectaddr = 1;
+					  if (yydebug)
+						printf("set yyexpectaddr\n");
 					  yycont = &yyexpectaddr;
+					  yysetdict(addrwords);
 					  resetaddr(); }
 	;
 
@@ -657,10 +671,10 @@ flagset:
 	;
 
 srcobject:
-	srcaddr srcport
+	{ yyresetdict(); } fromport
+	| srcaddr srcport
 	| '!' srcaddr srcport
 		{ DOALL(fr->fr_flags |= FR_NOTSRCIP;) }
-	| fromport
 	;
 
 srcaddr:
@@ -722,7 +736,7 @@ srcportlist:
 	;
 
 dstobject:
-	toport
+	{ yyresetdict(); } toport
 	| dstaddr dstport
 	| '!' dstaddr dstport
 			{ DOALL(fr->fr_flags |= FR_NOTDSTIP;) }
@@ -787,30 +801,50 @@ dstportlist:
 			{ DOREM(fr->fr_dcmp = FR_EQUAL; fr->fr_dport = $3;) }
 	;
 
-addr:	IPFY_ANY			{ bzero(&($$), sizeof($$)); }
-	| pool '/' YY_NUMBER		{ pooled = 1;
+addr:	pool '/' YY_NUMBER		{ pooled = 1;
+					  yyexpectaddr = 0;
 					  $$.a.iplookuptype = IPLT_POOL;
 					  $$.a.iplookupnum = $3; }
 	| pool '=' '(' poollist ')'	{ pooled = 1;
+					  yyexpectaddr = 0;
 					  $$.a.iplookuptype = IPLT_POOL;
 					  $$.a.iplookupnum = makepool($4); }
 	| hash '/' YY_NUMBER		{ hashed = 1;
+					  yyexpectaddr = 0;
 					  $$.a.iplookuptype = IPLT_HASH;
 					  $$.a.iplookupnum = $3; }
 	| hash '=' '(' addrlist ')'	{ hashed = 1;
+					  yyexpectaddr = 0;
 					  $$.a.iplookuptype = IPLT_HASH;
 					  $$.a.iplookupnum = makehash($4); }
-	| hostname			{ $$.a.in4 = $1;
-					  $$.m.in4_addr = 0xffffffff; }
-	| hostname maskspace ipv4mask	{ $$.a.in4 = $1;
-					  $$.m.in4_addr = $3.s_addr;
-					  $$.a.in4_addr &= $3.s_addr; }
-	| YY_IPV6			{ bcopy(&$1, &$$.a, sizeof($$.a));
-					  fill6bits(128, (u_32_t *)&$$.m); }
-	| YY_IPV6 maskspace ipv6mask	{ bcopy(&$1, &$$.a, sizeof($$.a));
-					  bcopy(&$3, &$$.m, sizeof($$.m)); }
+	| ipaddr			{ bcopy(&$1, &$$, sizeof($$));
+					  yyexpectaddr = 0; }
 	;
 
+ipaddr:	IPFY_ANY			{ bzero(&($$), sizeof($$));
+					  yyresetdict();
+					  yyexpectaddr = 0; }
+	| hostname			{ $$.a.in4 = $1;
+					  $$.m.in4_addr = 0xffffffff;
+					  yyexpectaddr = 0; }
+	| hostname			{ yyresetdict();
+					  $$.a.in4_addr = $1.s_addr; }
+		maskspace		{ yysetdict(maskwords); }
+		ipv4mask		{ $$.m.in4_addr = $5.s_addr;
+					  $$.a.in4_addr &= $5.s_addr;
+					  yyresetdict();
+					  yyexpectaddr = 0; }
+	| YY_IPV6			{ bcopy(&$1, &$$.a, sizeof($$.a));
+					  fill6bits(128, (u_32_t *)&$$.m);
+					  yyresetdict();
+					  yyexpectaddr = 0; }
+	| YY_IPV6			{ yyresetdict();
+					  bcopy(&$1, &$$.a, sizeof($$.a)); }
+		maskspace		{ yysetdict(maskwords); }
+		ipv6mask		{ bcopy(&$5, &$$.m, sizeof($$.m));
+					  yyresetdict();
+					  yyexpectaddr = 0; }
+	;
 maskspace:
 	'/'
 	| IPFY_MASK
@@ -884,34 +918,34 @@ hostname:
 	;
 
 addrlist:
-	addr		{ $$ = newalist(NULL);
+	ipaddr		{ $$ = newalist(NULL);
 			  bcopy(&($1.a), &($$->al_i6addr), sizeof($1.a));
 			  bcopy(&($1.m), &($$->al_i6mask), sizeof($1.m)); }
-	| addrlist ',' addr
+	| addrlist ',' ipaddr
 			{ $$ = newalist($1);
 			  bcopy(&($3.a), &($$->al_i6addr), sizeof($3.a));
 			  bcopy(&($3.m), &($$->al_i6mask), sizeof($3.m)); }
 	;
 
-pool:	IPFY_POOL	{ yyexpectaddr = 0; yycont = NULL; }
+pool:	IPFY_POOL	{ yyexpectaddr = 0; yycont = NULL; yyresetdict(); }
 	;
 
-hash:	IPFY_HASH	{ yyexpectaddr = 0; yycont = NULL; }
+hash:	IPFY_HASH	{ yyexpectaddr = 0; yycont = NULL; yyresetdict(); }
 	;
 
 poollist:
-	addr		{ $$ = newalist(NULL);
+	ipaddr		{ $$ = newalist(NULL);
 			  bcopy(&($1.a), &($$->al_i6addr), sizeof($1.a));
 			  bcopy(&($1.m), &($$->al_i6mask), sizeof($1.m)); }
-	| '!' addr	{ $$ = newalist(NULL);
+	| '!' ipaddr	{ $$ = newalist(NULL);
 			  $$->al_not = 1;
 			  bcopy(&($2.a), &($$->al_i6addr), sizeof($2.a));
 			  bcopy(&($2.m), &($$->al_i6mask), sizeof($2.m)); }
-	| addrlist ',' addr
+	| poollist ',' ipaddr
 			{ $$ = newalist($1);
 			  bcopy(&($3.a), &($$->al_i6addr), sizeof($3.a));
 			  bcopy(&($3.m), &($$->al_i6mask), sizeof($3.m)); }
-	| addrlist ',' '!' addr
+	| poollist ',' '!' ipaddr
 			{ $$ = newalist($1);
 			  $$->al_not = 1;
 			  bcopy(&($4.a), &($$->al_i6addr), sizeof($4.a));
@@ -1045,12 +1079,15 @@ stateopt:
 						fr->fr_flags |= FR_NEWISN;)
 				}
 	| IPFY_NOICMPERR	{ DOALL(fr->fr_flags |= FR_NOICMPERR;) }
+
+	| IPFY_SYNC		{ DOALL(fr->fr_flags |= FR_STATESYNC;) }
 	;
 
 portnum:
-	servicename			{ $$ = ntohs(getport(frc, $1));
+	servicename			{ $$ = getport(frc, $1);
 					  if ($$ == -1)
 						yyerror("service unknown");
+					  $$ = ntohs($$);
 					  free($1);
 					}
 	| YY_NUMBER			{ $$ = $1; }
@@ -1095,6 +1132,7 @@ opttype:
 	| IPFY_BADSRC			{ $$ = FI_BADSRC; }
 	| IPFY_LOWTTL			{ $$ = FI_LOWTTL; }
 	| IPFY_FRAG			{ $$ = FI_FRAG; }
+	| IPFY_FRAGBODY			{ $$ = FI_FRAGBODY; }
 	| IPFY_FRAGS			{ $$ = FI_FRAG; }
 	| IPFY_MBCAST			{ $$ = FI_MBCAST; }
 	| IPFY_MULTICAST		{ $$ = FI_MULTICAST; }
@@ -1345,7 +1383,6 @@ static	struct	wordtab ipfwords[95] = {
 	{ "ah",				IPFY_AH },
 	{ "all",			IPFY_ALL },
 	{ "and",			IPFY_AND },
-	{ "any",			IPFY_ANY },
 	{ "auth",			IPFY_AUTH },
 	{ "bad",			IPFY_BAD },
 	{ "bad-nat",			IPFY_BADNAT },
@@ -1357,24 +1394,22 @@ static	struct	wordtab ipfwords[95] = {
 #ifdef USE_INET6
 	{ "bpf-v6",			IPFY_BPFV6 },
 #endif
-	{ "broadcast",			IPFY_BROADCAST },
 	{ "call",			IPFY_CALL },
 	{ "code",			IPFY_ICMPCODE },
 	{ "count",			IPFY_COUNT },
-	{ "dstopts",			IPFY_IPV6OPT_DSTOPTS },
 	{ "dup-to",			IPFY_DUPTO },
 	{ "eq",				YY_CMP_EQ },
 	{ "esp",			IPFY_ESP },
 	{ "fastroute",			IPFY_FROUTE },
 	{ "first",			IPFY_FIRST },
-	{ "frag",			IPFY_FRAG },
 	{ "flags",			IPFY_FLAGS },
+	{ "frag",			IPFY_FRAG },
+	{ "frag-body",			IPFY_FRAGBODY },
 	{ "frags",			IPFY_FRAGS },
 	{ "from",			IPFY_FROM },
 	{ "ge",				YY_CMP_GE },
 	{ "group",			IPFY_GROUP },
 	{ "gt",				YY_CMP_GT },
-	{ "hash",			IPFY_HASH },
 	{ "head",			IPFY_HEAD },
 	{ "icmp",			IPFY_ICMP },
 	{ "icmp-type",			IPFY_ICMPTYPE },
@@ -1396,8 +1431,6 @@ static	struct	wordtab ipfwords[95] = {
 	{ "nat",			IPFY_NAT },
 	{ "ne",				YY_CMP_NE },
 	{ "net",			IPFY_NETWORK },
-	{ "netmasked",			IPFY_NETMASKED },
-	{ "network",			IPFY_NETWORK },
 	{ "newisn",			IPFY_NEWISN },
 	{ "no",				IPFY_NO },
 	{ "no-icmp-err",		IPFY_NOICMPERR },
@@ -1410,8 +1443,6 @@ static	struct	wordtab ipfwords[95] = {
 	{ "out",			IPFY_OUT },
 	{ "out-via",			IPFY_OUTVIA },
 	{ "pass",			IPFY_PASS },
-	{ "peer",			IPFY_PEER },
-	{ "pool",			IPFY_POOL },
 	{ "port",			IPFY_PORT },
 	{ "pps",			IPFY_PPS },
 	{ "preauth",			IPFY_PREAUTH },
@@ -1429,6 +1460,7 @@ static	struct	wordtab ipfwords[95] = {
 	{ "state",			IPFY_STATE },
 	{ "state-age",			IPFY_AGE },
 	{ "strict",			IPFY_STRICT },
+	{ "sync",			IPFY_SYNC },
 	{ "tcp",			IPFY_TCP },
 	{ "tcp-udp",			IPFY_TCPUDP },
 	{ "tos",			IPFY_TOS },
@@ -1437,6 +1469,21 @@ static	struct	wordtab ipfwords[95] = {
 	{ "udp",			IPFY_UDP },
 	{ "v6hdrs",			IPF6_V6HDRS },
 	{ "with",			IPFY_WITH },
+	{ NULL,				0 }
+};
+
+static	struct	wordtab	addrwords[4] = {
+	{ "any",			IPFY_ANY },
+	{ "hash",			IPFY_HASH },
+	{ "pool",			IPFY_POOL },
+	{ NULL,				0 }
+};
+
+static	struct	wordtab	maskwords[5] = {
+	{ "broadcast",			IPFY_BROADCAST },
+	{ "netmasked",			IPFY_NETMASKED },
+	{ "network",			IPFY_NETWORK },
+	{ "peer",			IPFY_PEER },
 	{ NULL,				0 }
 };
 
@@ -1519,7 +1566,10 @@ static	struct	wordtab ipv4secwords[9] = {
 	{ NULL,				0 },
 };
 
-static	struct	wordtab ipv6optwords[5] = {
+static	struct	wordtab ipv6optwords[8] = {
+	{ "dstopts",			IPFY_IPV6OPT_DSTOPTS },
+	{ "esp",			IPFY_ESP },
+	{ "frag",			IPFY_FRAG },
 	{ "hopopts",			IPFY_IPV6OPT_HOPOPTS },
 	{ "ipv6",			IPFY_IPV6OPT_IPV6 },
 	{ "none",			IPFY_IPV6OPT_NONE },

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.1.1.2 2005/02/08 06:53:27 martti Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.2 2005/02/08 07:01:55 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -9,8 +9,8 @@
  * Id: ip_fil.h,v 2.170.2.15 2005/01/08 14:26:18 darrenr Exp
  */
 
-#ifndef	__IP_FIL_H__
-#define	__IP_FIL_H__
+#ifndef _NETINET_IP_FIL_H_
+#define _NETINET_IP_FIL_H_
 
 #ifndef	SOLARIS
 # define SOLARIS (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
@@ -1354,4 +1354,4 @@ extern	frentry_t *ipfrule_match __P((fr_info_t *));
 extern	u_char	ipf_iss_secret[32];
 extern	ipftuneable_t ipf_tuneables[];
 
-#endif	/* __IP_FIL_H__ */
+#endif /* _NETINET_IP_FIL_H_ */

@@ -181,6 +181,8 @@ nextchar:
 		}
 		yylast -= yypos;
 		yypos = 0;
+		lnext = 0;
+		nokey = 0;
 		goto nextchar;
 
 	case '\\' :
@@ -302,6 +304,8 @@ nextchar:
 	switch (c)
 	{
 	case '-' :
+		if (yyexpectaddr)
+			break;
 		if (isbuilding == 1)
 			break;
 		n = yygetc();
@@ -328,6 +332,8 @@ nextchar:
 		goto done;
 
 	case '<' :
+		if (yyexpectaddr)
+			break;
 		if (isbuilding == 1) {
 			yyunputc(c);
 			goto done;
@@ -346,6 +352,8 @@ nextchar:
 		goto done;
 
 	case '>' :
+		if (yyexpectaddr)
+			break;
 		if (isbuilding == 1) {
 			yyunputc(c);
 			goto done;
@@ -474,7 +482,7 @@ done:
 	switch (rval)
 	{
 	case YY_NUMBER :
-		yylval.num = atoi(yystr);
+		sscanf(yystr, "%u", &yylval.num);
 		break;
 
 	case YY_HEX :
