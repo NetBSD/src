@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.52 2000/03/23 06:30:10 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.53 2000/03/23 20:51:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -338,11 +338,6 @@ volatile struct	timeval mono_time;
  * the BSD Callout and Timer Facilities", and Justin Gibbs's subsequent
  * integration into FreeBSD, modified for NetBSD by Jason R. Thorpe.
  *
- * This version has been modified to keep the hash chains sorted.  Since
- * the hash chains are typically short, the overhead of this is minimal.
- * Sorted hash chains reduce the number of comparisons in softclock().
- * This feature is enabled by defining CALLWHEEL_SORT.
- *
  * The original work on the data structures used in this implementation
  * was published by G. Varghese and A. Lauck in the paper "Hashed and
  * Hierarchical Timing Wheels: Data Structures for the Efficient
@@ -367,9 +362,6 @@ u_int64_t callwheel_changed;		/* # callouts changed */
 u_int64_t callwheel_softclocks;		/* # times softclock() called */
 u_int64_t callwheel_softchecks;		/* # checks per softclock() */
 u_int64_t callwheel_softempty;		/* # empty buckets seen */
-#ifdef CALLWHEEL_SORT
-u_int64_t callwheel_comparisons;	/* # of comparisons on insert */
-#endif
 #endif /* CALLWHEEL_STATS */
 
 /*
@@ -810,9 +802,7 @@ softclock()
 	void (*func) __P((void *));
 	void *arg;
 	int s, idx;
-#ifndef CALLWHEEL_SORT
 	int steps = 0;
-#endif
 
 	s = splhigh();
 	softclock_running = 1;
@@ -834,25 +824,6 @@ softclock()
 #ifdef CALLWHEEL_STATS
 			callwheel_softchecks++;
 #endif
-#ifdef CALLWHEEL_SORT
-			if (c->c_time > hardclock_ticks)
-				break;
-			nextsoftcheck = TAILQ_NEXT(c, c_link);
-			TAILQ_REMOVE(bucket, c, c_link);
-#ifdef CALLWHEEL_STATS
-			callwheel_sizes[idx]--;
-			callwheel_fired++;
-			callwheel_count--;
-#endif
-			func = c->c_func;
-			arg = c->c_arg;
-			c->c_func = NULL;
-			c->c_flags &= ~CALLOUT_PENDING;
-			splx(s);
-			(*func)(arg);
-			(void) splhigh();
-			c = nextsoftcheck;
-#else /* CALLWHEEL_SORT */
 			if (c->c_time != softclock_ticks) {
 				c = TAILQ_NEXT(c, c_link);
 				if (++steps >= MAX_SOFTCLOCK_STEPS) {
@@ -881,7 +852,6 @@ softclock()
 				steps = 0;
 				c = nextsoftcheck;
 			}
-#endif /* CALLWHEEL_SORT */
 		}
 	}
 	nextsoftcheck = NULL;
@@ -947,9 +917,6 @@ callout_reset(c, ticks, func, arg)
 	void *arg;
 {
 	struct callout_queue *bucket;
-#ifdef CALLWHEEL_SORT
-	struct callout *c0;
-#endif
 	int s;
 
 	if (ticks <= 0)
@@ -981,22 +948,7 @@ callout_reset(c, ticks, func, arg)
 		callwheel_collisions++;
 #endif
 
-#ifdef CALLWHEEL_SORT
-	for (c0 = TAILQ_FIRST(bucket); c0 != NULL;
-	     c0 = TAILQ_NEXT(c0, c_link)) {
-#ifdef CALLWHEEL_STATS
-		callwheel_comparisons++;
-#endif
-		if (c0->c_time < c->c_time)
-			continue;
-		TAILQ_INSERT_BEFORE(c0, c, c_link);
-		goto out;
-	}
 	TAILQ_INSERT_TAIL(bucket, c, c_link);
- out:
-#else /* CALLWHEEL_SORT */
-	TAILQ_INSERT_TAIL(bucket, c, c_link);
-#endif /* CALLWHEEL_SORT */
 
 #ifdef CALLWHEEL_STATS
 	callwheel_count++;
@@ -1067,12 +1019,7 @@ callout_showstats()
 
 	printf("Callwheel statistics:\n");
 	printf("\tCallouts currently queued: %llu\n", callwheel_count);
-#ifdef CALLWHEEL_SORT
-	printf("\tCallouts established: %llu, Comparisons: %llu\n",
-	    callwheel_established, callwheel_comparisons);
-#else
 	printf("\tCallouts established: %llu\n", callwheel_established);
-#endif
 	printf("\tCallouts disestablished: %llu\n", callwheel_disestablished);
 	if (callwheel_changed != 0)
 		printf("\t\tOf those, %llu were changes\n", callwheel_changed);
