@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.36 2004/08/14 01:30:56 mycroft Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.37 2004/12/15 07:11:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.36 2004/08/14 01:30:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.37 2004/12/15 07:11:51 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -103,13 +103,12 @@ ffs_balloc_ufs1(v)
 	int size;
 	struct ucred *cred;
 	int flags;
-	int32_t nb;
 	struct buf *bp, *nbp;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 	struct indir indirs[NIADDR + 2];
-	daddr_t newb, pref;
+	daddr_t newb, pref, nb;
 	int32_t *bap;	/* XXX ondisk32 */
 	int deallocated, osize, nsize, num, i, error;
 	int32_t *blkp, *allocblk, allociblk[NIADDR + 1];
@@ -160,7 +159,7 @@ ffs_balloc_ufs1(v)
 			ip->i_size = lblktosize(fs, nb + 1);
 			ip->i_ffs1_size = ip->i_size;
 			uvm_vnp_setsize(vp, ip->i_ffs1_size);
-			ip->i_ffs1_db[nb] = ufs_rw32((int32_t)newb, needswap);
+			ip->i_ffs1_db[nb] = ufs_rw32((u_int32_t)newb, needswap);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (bpp) {
 				if (flags & B_SYNC)
@@ -268,7 +267,7 @@ ffs_balloc_ufs1(v)
 				    nsize, 0, bpp ? *bpp : NULL);
 			}
 		}
-		ip->i_ffs1_db[lbn] = ufs_rw32((int32_t)newb, needswap);
+		ip->i_ffs1_db[lbn] = ufs_rw32((u_int32_t)newb, needswap);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (0);
 	}
