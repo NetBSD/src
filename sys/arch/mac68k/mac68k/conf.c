@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.36 1996/09/07 12:40:36 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.37 1996/11/21 08:33:22 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -114,6 +114,10 @@ cdev_decl(ptc);
 cdev_decl(log);
 cdev_decl(st);
 cdev_decl(sd);
+#include "ss.h"
+cdev_decl(ss);
+#include "uk.h"
+cdev_decl(uk);
 cdev_decl(fd);
 #include "grf.h"
 cdev_decl(grf);
@@ -123,8 +127,11 @@ cdev_decl(adb);
 cdev_decl(zsc);
 #include "zstty.h"
 cdev_decl(zs);
+#include "ch.h"
+cdev_decl(ch);
 cdev_decl(vnd);
 cdev_decl(ccd);
+cdev_decl(rd);
 #include "bpfilter.h"
 cdev_decl(bpf);
 #include "tun.h"
@@ -150,8 +157,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
 	cdev_notdef(),			/* 16 */
-/*	cdev_disk_init(NCH,ch),		 17: SCSI autochanger */
-	cdev_notdef(),			/* 17: until we find chstrategy... */
+	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
 	cdev_notdef(),			/* 18 */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_disk_init(NCCD,ccd),	/* 20: concatenated disk driver */
@@ -166,6 +172,9 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
 	cdev_lkm_dummy(),		/* 31 */
+	cdev_disk_init(NRD,rd),		/* 32: ram disk driver */
+	cdev_scanner_init(NSS,ss),	/* 33: SCSI scanner */
+	cdev_uk_init(NUK,uk),		/* 34: SCSI unknown */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
