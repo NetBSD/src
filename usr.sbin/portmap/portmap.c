@@ -1,4 +1,4 @@
-/*	$NetBSD: portmap.c,v 1.10 1997/10/17 05:37:37 mrg Exp $	*/
+/*	$NetBSD: portmap.c,v 1.11 1997/10/17 12:01:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)portmap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: portmap.c,v 1.10 1997/10/17 05:37:37 mrg Exp $");
+__RCSID("$NetBSD: portmap.c,v 1.11 1997/10/17 12:01:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ main(argc, argv)
 	int len = sizeof(struct sockaddr_in);
 	struct pmaplist *pml;
 
-	while ((c = getopt(argc, argv, "d")) != EOF) {
+	while ((c = getopt(argc, argv, "d")) != -1) {
 		switch (c) {
 
 		case 'd':
