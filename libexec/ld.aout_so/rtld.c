@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.81 2001/06/21 21:19:25 christos Exp $	*/
+/*	$NetBSD: rtld.c,v 1.82 2001/09/20 20:55:29 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1926,7 +1926,7 @@ char	*fmt;
 	va_start(ap);
 #endif
 
-	vsprintf(buf, fmt, ap);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 	(void)write(1, buf, strlen(buf));
 	va_end(ap);
 }
