@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.10 1995/04/10 13:08:54 mycroft Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.11 1995/05/07 15:37:10 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -39,7 +39,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <vm/vm.h>		/* XXXX Kludge for IVS Vector - mlh */
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <amiga/amiga/custom.h>
@@ -54,12 +53,10 @@ void ivscattach __P((struct device *, struct device *, void *));
 int ivscmatch __P((struct device *, struct cfdata *, void *));
 
 int ivsc_intr __P((struct sci_softc *));
-#ifdef notyet
 int ivsc_dma_xfer_in __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
 int ivsc_dma_xfer_out __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
-#endif
 
 struct scsi_adapter ivsc_scsiswitch = {
 	sci_scsicmd,
@@ -82,6 +79,8 @@ extern int sci_debug;
 #endif
 
 extern int sci_data_wait;
+
+int ivsdma_pseudo = 1;		/* 0=off, 1=on */
 
 struct cfdriver ivsccd = {
 	NULL, "ivsc", (cfmatch_t)ivscmatch, ivscattach, 
@@ -107,31 +106,6 @@ ivscmatch(pdp, cdp, auxp)
 	    (zap->prodid != 52 &&	/*   product = Trumpcard */
 	    zap->prodid != 243))	/*   product = Vector SCSI */
 		return(0);		/* didn't match */
-#if 0 /* shouldn't need this any more */
-	if (zap->prodid == 243) {
-		/*
-		 * XXXX Ouch! board addresss isn't Zorro II or Zorro III!
-		 * XXXX Kludge it up until I can do it better (MLH).
-		 *
-		 * XXXX pa 0x00f00000 shouldn't be used for anything
-		 */
-		if (pmap_extract(pmap_kernel(), (vm_offset_t) ztwomap(0x00f00000))
-		    == 0x00f00000) {
-			physaccess(ztwomap(0x00f00000),zap->pa,
-			    NBPG, PG_W|PG_CI);
-			zap->va = (void *) ztwomap(0x00f00000) +
-			    ((int)zap->pa & PGOFSET);
-#ifdef DEBUG
-			printf("IVS Vector: mapped to %x kva %x\n",
-			    ztwomap(0x00f00000), zap->va);
-#endif
-		}
-		else {
-			printf("Unable to map IVS Vector SCSI\n");
-			return (0);
-		}
-	}
-#endif
 	return(1);
 }
 
@@ -164,10 +138,10 @@ ivscattach(pdp, dp, auxp)
 	sc->sci_iack = rp + 14;
 	sc->sci_irecv = rp + 14;
 
-#ifdef notyet
-	sc->dma_xfer_in = ivsc_dma_xfer_in;
-	sc->dma_xfer_out = ivsc_dma_xfer_out;
-#endif
+	if (ivsdma_pseudo == 1) {
+		sc->dma_xfer_in = ivsc_dma_xfer_in;
+		sc->dma_xfer_out = ivsc_dma_xfer_out;
+	}
 
 	sc->sc_isr.isr_intr = ivsc_intr;
 	sc->sc_isr.isr_arg = sc;
@@ -202,7 +176,6 @@ ivscprint(auxp, pnp)
 	return(QUIET);
 }
 
-#ifdef notyet
 int
 ivsc_dma_xfer_in (dev, len, buf, phase)
 	struct sci_softc *dev;
@@ -210,6 +183,82 @@ ivsc_dma_xfer_in (dev, len, buf, phase)
 	register u_char *buf;
 	int phase;
 {
+	int wait = sci_data_wait;
+	u_char csr;
+	u_char *obp = buf;
+	volatile register u_char *sci_dma = dev->sci_idata + 0x20;
+	volatile register u_char *sci_csr = dev->sci_csr;
+
+	QPRINTF(("ivsc_dma_in %d, csr=%02x\n", len, *dev->sci_bus_csr));
+
+	*dev->sci_tcmd = phase;
+	*dev->sci_mode |= SCI_MODE_DMA;
+	*dev->sci_irecv = 0;
+
+	while (len >= 128) {
+		wait = sci_data_wait;
+		while ((*sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) !=
+		  (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) {
+			if (!(*sci_csr & SCI_CSR_PHASE_MATCH)
+			  || !(*dev->sci_bus_csr & SCI_BUS_BSY)
+			  || --wait < 0) {
+#ifdef DEBUG
+				if (sci_debug)
+					printf("ivsc_dma_in2 fail: l%d i%x w%d\n",
+					len, csr, wait);
+#endif
+				*dev->sci_mode &= ~SCI_MODE_DMA;
+				return 0;
+			}
+		}
+
+#define	R1	(*buf++ = *sci_dma)
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		len -= 128;
+	}
+
+  	while (len > 0) {
+		wait = sci_data_wait;
+		while ((*sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) !=
+		  (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) {
+			if (!(*sci_csr & SCI_CSR_PHASE_MATCH)
+			  || !(*dev->sci_bus_csr & SCI_BUS_BSY)
+			  || --wait < 0) {
+#ifdef DEBUG
+				if (sci_debug)
+					printf("ivsc_dma_in1 fail: l%d i%x w%d\n",
+					len, csr, wait);
+#endif
+				*dev->sci_mode &= ~SCI_MODE_DMA;
+				return 0;
+			}
+		}
+
+		*buf++ = *sci_dma;
+		len--;
+	}
+
+	QPRINTF(("ivsc_dma_in {%d} %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+	  len, obp[0], obp[1], obp[2], obp[3], obp[4], obp[5],
+	  obp[6], obp[7], obp[8], obp[9]));
+
+	*dev->sci_mode &= ~SCI_MODE_DMA;
+	return 0;
 }
 
 int
@@ -219,8 +268,51 @@ ivsc_dma_xfer_out (dev, len, buf, phase)
 	register u_char *buf;
 	int phase;
 {
-}
+	int wait = sci_data_wait;
+	u_char csr;
+	u_char *obp = buf;
+	volatile register u_char *sci_dma = dev->sci_data + 0x20;
+	volatile register u_char *sci_csr = dev->sci_csr;
+
+	QPRINTF(("ivsc_dma_out %d, csr=%02x\n", len, *dev->sci_bus_csr));
+
+	QPRINTF(("ivsc_dma_out {%d} %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+  	 len, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5],
+	 buf[6], buf[7], buf[8], buf[9]));
+
+	*dev->sci_tcmd = phase;
+	*dev->sci_mode |= SCI_MODE_DMA;
+	*dev->sci_icmd |= SCI_ICMD_DATA;
+	*dev->sci_dma_send = 0;
+	while (len > 0) {
+		wait = sci_data_wait;
+		while ((*sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) !=
+		  (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) {
+			if (!(*sci_csr & SCI_CSR_PHASE_MATCH)
+			  || !(*dev->sci_bus_csr & SCI_BUS_BSY)
+			  || --wait < 0) {
+#ifdef DEBUG
+				if (sci_debug)
+					printf("ivsc_dma_out fail: l%d i%x w%d\n",
+					len, csr, wait);
 #endif
+				*dev->sci_mode &= ~SCI_MODE_DMA;
+				return 0;
+			}
+		}
+
+		*sci_dma = *buf++;
+		len--;
+	}
+
+	wait = sci_data_wait;
+	while ((*sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) ==
+	  SCI_CSR_PHASE_MATCH && --wait);
+
+
+	*dev->sci_mode &= ~SCI_MODE_DMA;
+	return 0;
+}
 
 int
 ivsc_intr(dev)
