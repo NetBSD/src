@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 1997/10/10 02:07:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 1997/10/22 02:01:17 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	atc
-CFLAGS+=-DBSD -I${.CURDIR} -I. -DYY_NO_UNPUT
+CPPFLAGS+=-DBSD -I${.CURDIR} -I. -DYY_NO_UNPUT
 SRCS=	extern.c grammar.c graphics.c input.c lex.c list.c log.c \
 	main.c tunable.c update.c
 MAN=	atc.6
@@ -16,5 +16,9 @@ HIDEGAME=hidegame
 FILES=${GAMES:S@^@${.CURDIR}/games/@g}
 FILESDIR=/usr/share/games/atc
 FILESMODE=400
+
+y.tab.h:	grammar.c
+
+lex.o:	y.tab.h
 
 .include <bsd.prog.mk>
