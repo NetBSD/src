@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_drv.c,v 1.10 1995/01/03 03:56:09 mycroft Exp $	*/
+/*	$NetBSD: pcvt_drv.c,v 1.11 1995/04/10 01:07:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -746,7 +746,7 @@ consinit()		/* init for kernel messages during boot */
 }
 #endif /* PCVT_NETBSD */
 
-int
+void
 pccnprobe(struct consdev *cp)
 {
 	int maj;
@@ -770,13 +770,13 @@ pccnprobe(struct consdev *cp)
 	return 1;
 }
 
-int
+void
 pccninit(struct consdev *cp)
 {
 	return 0;
 }
 
-int
+void
 pccnputc(Dev_t dev, U_char c)
 {
 	if (c == '\n')
