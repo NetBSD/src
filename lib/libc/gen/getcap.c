@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.9 1995/02/25 13:41:26 cgd Exp $	*/
+/*	$NetBSD: getcap.c,v 1.10 1995/08/24 05:26:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$NetBSD: getcap.c,v 1.9 1995/02/25 13:41:26 cgd Exp $";
+static char rcsid[] = "$NetBSD: getcap.c,v 1.10 1995/08/24 05:26:35 mycroft Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -276,10 +276,7 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 				fd = open(*db_p, O_RDONLY, 0);
 				if (fd < 0) {
 					/* No error on unfound file. */
-					if (errno == ENOENT)
-						continue;
-					free(record);
-					return (-2);
+					continue;
 				}
 				myfd = 1;
 			}
