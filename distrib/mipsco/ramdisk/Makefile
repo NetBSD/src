@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/03/05 05:07:45 wdk Exp $
+#	$NetBSD: Makefile,v 1.4 2001/10/10 05:13:54 enami Exp $
 
 TOP?=		${.CURDIR}/..
 ARCHDIR?=	${.CURDIR}/../miniroot
@@ -24,7 +24,7 @@ CLEANFILES=	${IMAGE} ${DISKIMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
 
 LISTS=		${.CURDIR}/list
 CRUNCHCONF=	${.CURDIR}/${CBIN}.conf
-MTREE=		${.CURDIR}/mtree.conf
+MTREECONF=	${.CURDIR}/mtree.conf
 
 realall: ${IMAGE}
 
@@ -34,7 +34,7 @@ ${IMAGE}: ${CBIN}
 	disklabel -rw -f ${DISKTAB} ${VND} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i 5120 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
+	mtree -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
