@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.10 2002/12/09 21:29:24 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.11 2002/12/09 21:53:28 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.10 2002/12/09 21:29:24 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.11 2002/12/09 21:53:28 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,7 +59,6 @@ mach_sys_reply_port(p, v, retval)
 {
 	static int current_port = 0x80b;
 
-	DPRINTF(("mach_sys_reply_port();\n"));
 	*retval = current_port; /* XXX */
 	return 0;
 }
@@ -70,7 +69,6 @@ mach_sys_thread_self_trap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	DPRINTF(("mach_sys_thread_self_trap();\n"));
 	*retval = 0; /* XXX */
 	return 0;
 }
@@ -82,7 +80,6 @@ mach_sys_task_self_trap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	DPRINTF(("mach_sys_task_self_trap();\n"));
 	*retval = 0xa07; /* XXX */
 	return 0;
 }
@@ -94,7 +91,6 @@ mach_sys_host_self_trap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	DPRINTF(("mach_sys_host_self_trap();\n"));
 	*retval = 0x90b; /* XXX */
 	return 0;
 }
@@ -113,7 +109,6 @@ mach_port_deallocate(p, msgh, maxlen, dst)
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 
-	DPRINTF(("mach_port_deallocate();\n"));
 	bzero(&rep, sizeof(rep));
 
 	rep.rep_msgh.msgh_bits =
@@ -139,8 +134,6 @@ mach_port_allocate(p, msgh, maxlen, dst)
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
-
-	DPRINTF(("mach_port_allocate();\n"));
 
 	bzero(&rep, sizeof(rep));
 
@@ -168,8 +161,6 @@ mach_port_insert_right(p, msgh, maxlen, dst)
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 
-	DPRINTF(("mach_port_insert_right();\n"));
-
 	bzero(&rep, sizeof(rep));
 
 	rep.rep_msgh.msgh_bits =
@@ -195,8 +186,6 @@ mach_port_type(p, msgh, maxlen, dst)
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
-
-	DPRINTF(("mach_port_type();\n"));
 
 	bzero(&rep, sizeof(rep));
 	
