@@ -1,6 +1,7 @@
 #
 # GENERIC AMIGA
 #
+#	$Id: GENERIC.AMIGA,v 1.2 1994/02/11 07:00:41 chopps Exp $
 machine		"amiga"
 
 cpu		"A3000"

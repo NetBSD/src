@@ -1,3 +1,7 @@
+/*
+ *	$Id: ite_cc.c,v 1.9 1994/02/11 07:01:49 chopps Exp $
+ */
+
 #include "ite.h"
 #if ! defined (NITE)
 #define NITE 1

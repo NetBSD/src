@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
+ *	$Id: magnumdma.c,v 1.2 1994/02/11 07:02:01 chopps Exp $
  */
 
 /*

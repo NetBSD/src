@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)proc.h	7.1 (Berkeley) 5/15/91
+ *	$Id: proc.h,v 1.6 1994/02/11 07:02:46 chopps Exp $
  */
 
 /*

@@ -1,3 +1,7 @@
+/*
+ *	$Id: us-kbdmap.c,v 1.2 1994/02/11 07:03:09 chopps Exp $
+ */
+
 #include "../../dev/kbdmap.h"
 
 /* define a default keymap. This can be changed by keyboard ioctl's 

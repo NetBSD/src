@@ -38,6 +38,7 @@
  * from: Utah $Hdr: pte.h 1.11 89/09/03$
  *
  *	@(#)pte.h	7.3 (Berkeley) 5/8/91
+ *	$Id: pte.h,v 1.2 1994/02/11 07:02:47 chopps Exp $
  */
 
 #ifndef _PTE_H

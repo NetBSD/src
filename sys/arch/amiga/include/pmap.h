@@ -36,6 +36,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.h	7.6 (Berkeley) 5/10/91
+ *	$Id: pmap.h,v 1.5 1994/02/11 07:02:45 chopps Exp $
  */
 
 #ifndef	_PMAP_MACHINE_

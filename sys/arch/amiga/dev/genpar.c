@@ -1,3 +1,7 @@
+/*
+ *	$Id: genpar.c,v 1.4 1994/02/11 07:01:34 chopps Exp $
+ */
+
 #define bset(i,b) ((i & (1<<b))?1:0)
 
 main()
