@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.159 2004/12/03 01:54:14 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.160 2005/02/22 16:21:07 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.159 2004/12/03 01:54:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.160 2005/02/22 16:21:07 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -303,26 +303,6 @@ struct page_size_map page_size_map[] = {
 	{ (8 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_8K  },
 	{ 0, 0  }
 };
-
-/*
- * Calculate the largest page size that will map this.
- *
- * You really need to do this both on VA and PA.
- */
-#define	PMAP_PAGE_SIZE(va, pa, len, pgsz, pglen)			\
-do {									\
-	for ((pgsz) = PGSZ_4M; (pgsz); (pgsz)--) {			\
-		(pglen) = PG_SZ(pgsz);					\
-									\
-		if (((len) >= (pgsz)) &&				\
-			((pa) & ((pglen) - 1) & ~PG_SZ(PGSZ_8K)) == 0 &&\
-			((va) & ((pglen) - 1) & ~PG_SZ(PGSZ_8K)) == 0)	\
-			break;						\
-	}								\
-	(pgsz) = 0;							\
-	(pglen) = PG_SZ(pgsz);						\
-} while (0)
-
 
 /*
  * Enter a TTE into the kernel pmap only.  Don't do anything else.
@@ -1163,12 +1143,8 @@ remap_data:
 	va = (vaddr_t)msgbufp;
 	prom_map_phys(phys_msgbuf, msgbufsiz, (vaddr_t)msgbufp, -1);
 	while (msgbufsiz) {
-		int pgsz;
-		psize_t psize;
-
-		PMAP_PAGE_SIZE(va, phys_msgbuf, msgbufsiz, pgsz, psize);
 		data = TSB_DATA(0 /* global */,
-			pgsz,
+			PGSZ_8K,
 			phys_msgbuf,
 			1 /* priv */,
 			1 /* Write */,
@@ -1176,12 +1152,10 @@ remap_data:
 			FORCE_ALIAS /* ALIAS -- Disable D$ */,
 			1 /* valid */,
 			0 /* IE */);
-		do {
-			pmap_enter_kpage(va, data);
-			va += PAGE_SIZE;
-			msgbufsiz -= PAGE_SIZE;
-			phys_msgbuf += PAGE_SIZE;
-		} while (psize -= PAGE_SIZE);
+		pmap_enter_kpage(va, data);
+		va += PAGE_SIZE;
+		msgbufsiz -= PAGE_SIZE;
+		phys_msgbuf += PAGE_SIZE;
 	}
 	BDPRINTF(PDB_BOOT1, ("Done inserting mesgbuf into pmap_kernel()\n"));
 
@@ -1817,7 +1791,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	pv_entry_t pvh, npv = NULL;
 	struct vm_page *pg, *opg, *ptpg;
 	int s, i, uncached = 0;
-	int size = 0; /* PMAP_SZ_TO_TTE(pa); */
+	int size = PGSZ_8K; /* PMAP_SZ_TO_TTE(pa); */
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	boolean_t wasmapped = FALSE;
 	boolean_t dopv = TRUE;
