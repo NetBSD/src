@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.10 1997/08/18 23:21:33 augustss Exp $
+.\"	$NetBSD: audio.4,v 1.11 1997/08/24 22:44:16 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -211,6 +211,9 @@ the device admits full duplex operation.
 .It Dv AUDIO_PROP_MMAP
 the device can be used with
 .Xr mmap 2 .
+.It Dv AUDIO_PROP_INDEPENDENT
+the device can set the playing and recording encoding paramaters
+independently.
 .El
 .It Dv AUDIO_GETIOFFS (audio_offset_t)
 .It Dv AUDIO_GETOOFFS (audio_offset_t)
@@ -330,9 +333,12 @@ struct audio_prinfo {
 };
 .Ed
 .Pp
-[Note:  many hardware audio drivers require identical playback and
+Note:  many hardware audio drivers require identical playback and
 recording sample rates, sample encodings, and channel counts.  The
-recording information is always set last and will prevail on such hardware.]
+playing information is always set last and will prevail on such hardware.
+If the hardware can handle different settings the
+.It Dv AUDIO_PROP_INDEPENDENT
+property is set.
 .Pp
 The encoding parameter can have the following values:
 .Bl -tag -width indent -compact
