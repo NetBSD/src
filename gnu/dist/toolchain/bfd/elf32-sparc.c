@@ -1478,7 +1478,7 @@ elf32_sparc_relocate_section (output_bfd, info, input_bfd, input_section,
 		}
 	      else
 		{
-		  if (r_type == R_SPARC_32)
+		  if (r_type == R_SPARC_32 || r_type == R_SPARC_UA32)
 		    {
 		      outrel.r_info = ELF32_R_INFO (0, R_SPARC_RELATIVE);
 		      outrel.r_addend = relocation + rel->r_addend;
