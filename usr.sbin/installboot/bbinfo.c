@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.c,v 1.1 2002/05/15 09:56:59 lukem Exp $ */
+/*	$NetBSD: bbinfo.c,v 1.2 2002/05/15 13:34:27 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: bbinfo.c,v 1.1 2002/05/15 09:56:59 lukem Exp $");
+__RCSID("$NetBSD: bbinfo.c,v 1.2 2002/05/15 13:34:27 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -241,10 +241,8 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 			goto done;
 		}
 	}
-	if (callback != NULL && ! (*callback)(params, bbparams, bb)) {
-		warnx("Machine dependant bbinfo callback failed");
+	if (callback != NULL && ! (*callback)(params, bbparams, bb))
 		goto done;
-	}
 
 	if (params->flags & IB_VERBOSE) {
 		printf("Bootstrap start sector: %u\n",
