@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.14 2001/08/16 16:10:52 tv Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.15 2001/08/16 16:19:12 tv Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -199,3 +199,10 @@ sys/dev/ccdvar.h				1.20
 
   Provide hard limit on the number of concatenated disks, and bounds
   check against that limit.
+
+sys/dev/wscons/wsdisplay.c			1.52
+sys/dev/wscons/wskbd.c				1.42
+sys/dev/wscons/wsconsio.h			1.40
+
+  Introduce hard limits on wscons font size and keymap size, and
+  bounds check against those limits.
