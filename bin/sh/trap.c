@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 1998/07/28 05:31:28 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.19 1999/01/18 16:18:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.18 1998/07/28 05:31:28 mycroft Exp $");
+__RCSID("$NetBSD: trap.c,v 1.19 1999/01/18 16:18:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,6 +232,7 @@ setsignal(signo)
 		case S_IGN:	sigact = SIG_IGN;	break;
 	}
 	*t = action;
+	siginterrupt(signo, 1);
 	return (long)signal(signo, sigact);
 }
 
