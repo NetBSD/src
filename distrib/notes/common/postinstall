@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.56 2004/06/11 06:40:51 mbw Exp $
+.\"	$NetBSD: postinstall,v 1.57 2004/06/12 17:00:45 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -443,7 +443,7 @@ file will almost definitely need to be adjusted;
 files aiding in this can be found in
 .Pa /usr/share/sendmail .
 See the
-.Li Tn README
+.Li README
 file there for more information.
 .It
 Edit
