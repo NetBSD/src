@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.44 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.45 2004/03/09 03:16:08 atatat Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.44 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.45 2004/03/09 03:16:08 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,10 +288,6 @@ SYSCTL_SETUP(sysctl_vfs_null_setup, "sysctl vfs.null subtree setup")
 	 * XXX the "9" above could be dynamic, thereby eliminating one
 	 * more instance of the "number to vfs" mapping problem, but
 	 * "9" is the order as taken from sys/mount.h
-	 *
-	 * this subtree should really be an alias to "layerfs_sysctl",
-	 * but since we can't tell if layerfs has been instantiated
-	 * yet, we can't do that
 	 */
 }
 
