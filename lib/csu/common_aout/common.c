@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.2 1995/06/04 23:29:14 pk Exp $	*/
+/*	$NetBSD: common.c,v 1.3 1995/06/15 21:41:41 pk Exp $	*/
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
  * All rights reserved.
@@ -244,8 +244,6 @@ _getenv(name)
 }
 #endif
 
-#endif /* DYNAMIC */
-
 static char *
 _strrchr(p, ch)
 register char *p, ch;
@@ -260,3 +258,5 @@ register char *p, ch;
 	}
 /* NOTREACHED */
 }
+
+#endif /* DYNAMIC */
