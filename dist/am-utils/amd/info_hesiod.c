@@ -1,4 +1,4 @@
-/*	$NetBSD: info_hesiod.c,v 1.2 2003/07/15 09:01:16 itojun Exp $	*/
+/*	$NetBSD: info_hesiod.c,v 1.3 2003/07/29 12:08:59 markd Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -103,6 +103,9 @@ hesiod_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 
   dlog("hesiod_search(m=%lx, map=%s, key=%s, pval=%lx tp=%lx)",
        (unsigned long) m, map, key, (unsigned long) pval, (unsigned long) tp);
+
+  if (key[0] == '.')
+    return ENOENT;
 
   snprintf(hes_key, sizeof(hes_key), "%s.%s", key, map + HES_PREFLEN);
 
