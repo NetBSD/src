@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.4 1998/10/03 12:30:38 tsubai Exp $	*/
+/*	$NetBSD: sigpending.S,v 1.5 1998/11/24 11:14:57 tsubai Exp $	*/
 
 #include "SYS.h"
 
@@ -11,4 +11,4 @@ ENTRY(sigpending)
 	li	3,0			# and return 0
 	blr
 1:
-	b	_ASM_LABEL(cerror)
+	b	PIC_PLT(_ASM_LABEL(cerror))
