@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.61 2002/09/22 07:17:21 chs Exp $ */
+/*	$NetBSD: pmap.h,v 1.62 2002/09/22 07:53:49 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -273,7 +273,7 @@ void		pmap_writetext __P((unsigned char *, int));
 void		pmap_globalize_boot_cpuinfo __P((struct cpu_info *));
 
 static __inline void
-pmap_remove_all(void)
+pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
 }

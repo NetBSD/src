@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.60 2002/09/22 07:17:10 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.61 2002/09/22 07:53:40 chs Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -183,7 +183,7 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 
 static __inline void
-pmap_remove_all(void)
+pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
 }
