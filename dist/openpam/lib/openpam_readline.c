@@ -70,7 +70,7 @@ openpam_readline(FILE *f, int *lineno, size_t *lenp)
 	} \
 	line[len++] = ch; \
 	line[len] = '\0'; \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 	for (;;) {
 		ch = fgetc(f);
@@ -83,7 +83,7 @@ openpam_readline(FILE *f, int *lineno, size_t *lenp)
 		/* eof */
 		if (ch == EOF) {
 			/* remove trailing whitespace */
-			while (len > 0 && isspace(line[len - 1]))
+			while (len > 0 && isspace((unsigned char)line[len - 1]))
 				--len;
 			line[len] = '\0';
 			if (len == 0)
@@ -96,7 +96,7 @@ openpam_readline(FILE *f, int *lineno, size_t *lenp)
 				++*lineno;
 
 			/* remove trailing whitespace */
-			while (len > 0 && isspace(line[len - 1]))
+			while (len > 0 && isspace((unsigned char)line[len - 1]))
 				--len;
 			line[len] = '\0';
 			/* skip blank lines */
