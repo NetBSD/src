@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.20 1996/12/17 08:56:18 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.21 1997/03/14 22:52:20 jtk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,6 +92,7 @@ struct cfdata {
 	int	*cf_loc;		/* locators (machine dependent) */
 	int	cf_flags;		/* flags from config */
 	short	*cf_parents;		/* potential parents */
+	const char **cf_locnames;	/* locator names (machine dependent) */
 };
 #define FSTATE_NOTFOUND	0	/* has not been found */
 #define	FSTATE_FOUND	1	/* has been found */
