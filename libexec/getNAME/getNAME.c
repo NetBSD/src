@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.15 1998/10/10 02:53:12 hubertf Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.16 1999/02/08 20:05:57 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997, Christos Zoulas
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.15 1998/10/10 02:53:12 hubertf Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.16 1999/02/08 20:05:57 augustss Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,9 @@ static void split __P((char *, char *));
 static void usage __P((void));
 
 int main __P((int, char *[]));
+
+/* The .SH NAMEs that are allowed. */
+char *names[] = { "name", "namn", 0 };
 
 int
 main(argc, argv)
@@ -188,7 +191,10 @@ oldman(pathname, name)
 		warnx("missing argument to .SH in `%s'", pathname);
 		return;
 	}
-	if (strncasecmp(s, "name", 4) != 0) {
+	for (i = 0; names[i]; i++)
+		if (strncasecmp(s, names[i], strlen(names[i])) == 0)
+			break;
+	if (names[i] == NULL) {
 		warnx("first .SH section is not \"NAME\" in `%s'", pathname);
 		return;
 	}
@@ -287,8 +293,11 @@ newman(pathname, name)
 		warnx("missing argument to .Sh in `%s'", pathname);
 		return;
 	}
-	if (strncasecmp(s, "name", 4) != 0) {
-		warnx("first .Sh section is not \"NAME\" in `%s'", pathname);
+	for (i = 0; names[i]; i++)
+		if (strncasecmp(s, names[i], strlen(names[i])) == 0)
+			break;
+	if (names[i] == NULL) {
+		warnx("first .SH section is not \"NAME\" in `%s'", pathname);
 		return;
 	}
 
