@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.17 1999/03/30 04:25:07 minoura Exp $	*/
+/*	$NetBSD: ite.c,v 1.17.2.1 1999/06/22 17:23:48 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2404,11 +2404,6 @@ itecnprobe(cd)
 	struct consdev *cd;
 {
 	int maj;
-
-	/*
-	 * bring graphics layer up.
-	 */
-	config_console();
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
