@@ -1,4 +1,4 @@
-# $NetBSD: md.arm26,v 1.19 2001/06/23 12:24:52 bjh21 Exp $
+# $NetBSD: md.arm26,v 1.20 2001/06/23 13:26:36 bjh21 Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -33,6 +33,7 @@
 ./usr/include/arm/limits.h		comp-c-include
 ./usr/include/arm/lock.h		comp-c-include
 ./usr/include/arm/math.h		comp-c-include
+./usr/include/arm/param.h		comp-c-include
 ./usr/include/arm/ptrace.h		comp-c-include
 ./usr/include/arm/reg.h			comp-c-include
 ./usr/include/arm/setjmp.h		comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.50 2001/06/23 12:24:52 bjh21 Exp $
+# $NetBSD: md.arm32,v 1.51 2001/06/23 13:26:36 bjh21 Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -43,6 +43,7 @@
 ./usr/include/arm/math.h		comp-c-include
 ./usr/include/arm/ofisa_machdep.h	comp-c-include
 ./usr/include/arm/ofw.h			comp-c-include
+./usr/include/arm/param.h		comp-c-include
 ./usr/include/arm/pci_machdep.h		comp-c-include
 ./usr/include/arm/pio.h			comp-c-include
 ./usr/include/arm/proc.h		comp-c-include
