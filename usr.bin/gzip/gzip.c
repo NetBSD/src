@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.22 2004/07/19 09:46:10 tron Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.23 2004/07/19 09:48:19 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.22 2004/07/19 09:46:10 tron Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.23 2004/07/19 09:48:19 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -105,6 +105,19 @@ enum filetype {
 
 #define OS_CODE		3	/* Unix */
 
+#ifndef SMALL
+static	char	const *suffixes[] = {
+	GZ_SUFFIX, ".z", ".taz", ".tgz", "-gz", "-z", "_z",
+#ifndef NO_BZIP2_SUPPORT
+	BZ2_SUFFIX,
+#endif
+#ifndef NO_COMPRESS_SUPPORT
+	Z_SUFFIX,
+#endif
+	NULL
+};
+#endif /* SMALL */
+
 static	const char	gzip_version[] = "NetBSD gzip 20040711";
 
 static	int	cflag;			/* stdout mode */
@@ -136,7 +149,6 @@ static	void	maybe_errx(const char *fmt, ...);
 static	void	maybe_warn(const char *fmt, ...);
 static	void	maybe_warnx(const char *fmt, ...);
 static	enum filetype file_gettype(u_char *);
-static	int	check_outfile(const char *outfile, struct stat *sb);
 static	off_t	gz_compress(FILE *, int, off_t *, const char *, time_t);
 static	off_t	gz_uncompress(int, int, char *, size_t, off_t *, const char *);
 static	off_t	file_compress(char *, char *, size_t);
@@ -157,6 +169,8 @@ static	void	handle_dir(char *, struct stat *);
 static	void	print_verbage(char *, char *, off_t, off_t);
 static	void	print_test(const char *, int);
 static	void	copymodes(const char *, struct stat *);
+static	int	check_outfile(const char *outfile, struct stat *sb);
+static	const char *check_suffix(char *);
 #endif
 
 #ifndef NO_BZIP2_SUPPORT
@@ -214,7 +228,7 @@ main(int argc, char **argv)
 
 	/* XXX set up signals */
 
-	suffix = GZ_SUFFIX;;
+	suffix = GZ_SUFFIX;
 
 #ifndef SMALL
 	if ((gzip = getenv("GZIP")) != NULL)
@@ -966,6 +980,20 @@ check_outfile(const char *outfile, struct stat *sb)
 	}
 	return ok;
 }
+
+static const char *
+check_suffix(char *file)
+{
+	char const **s;
+	size_t slen, len = strlen(file);
+
+	for (s = suffixes; *s; s++) {
+		slen = strlen(*s);
+		if (strcmp(*s, file + len - slen) == 0)
+			return *s;
+	}
+	return NULL;
+}
 #endif
 
 /*
@@ -985,6 +1013,17 @@ file_compress(char *file, char *outfile, size_t outsize)
 #endif
 
 	if (cflag == 0) {
+#ifndef SMALL
+		const char *suff;
+
+		if (fflag == 0 && (suff = check_suffix(file))) {
+			maybe_warnx("%s already has %s suffix -- unchanged",
+				    file, suff);
+			goto lose;
+		}
+			
+#endif
+
 		(void)strncpy(outfile, file, outsize - suffix_len);
 		outfile[outsize - suffix_len] = '\0';
 		(void)strlcat(outfile, suffix, outsize);
