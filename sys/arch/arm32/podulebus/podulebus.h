@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.4 1996/08/21 19:44:53 mark Exp $ */
+/* $NetBSD: podulebus.h,v 1.5 1996/10/14 23:21:22 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -58,6 +58,8 @@ struct podule_list {
 
 /* Define the structure used to describe a podule */
 
+#define PODULE_DESCRIPTION_LENGTH	47
+
 typedef struct {
 /* The podule header, read from the on board ROM */
 
@@ -86,6 +88,10 @@ typedef struct {
 	int podulenum; 
 	int slottype;
 	int attached;
+
+/* Other info */
+
+	char description[PODULE_DESCRIPTION_LENGTH + 1];
 } podule_t;
 
 #define PODULE_FLAGS_CD	0x01
