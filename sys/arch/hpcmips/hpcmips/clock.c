@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $ */
+/* $NetBSD: clock.c,v 1.2 1999/09/19 00:46:05 shin Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 1999/09/19 00:46:05 shin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $
 #include <sys/sched.h>
 
 #include <dev/clock_subr.h>
+
+#include <machine/clock_machdep.h>
 
 #ifdef alpha
 #include <machine/autoconf.h>
@@ -126,6 +128,7 @@ cpu_initclocks()
 	if (clockfns == NULL)
 		panic("cpu_initclocks: no clock attached");
 
+	hz = CLOCK_RATE;	/* 256 Hz clock */
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
 	tickfix = 1000000 - (hz * tick);
 	if (tickfix) {
