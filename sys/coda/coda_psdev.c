@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.16.2.3 2002/01/10 19:50:53 thorpej Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.16.2.4 2002/10/02 21:27:08 jdolecek Exp $	*/
 
 /*
  * 
@@ -52,7 +52,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.16.2.3 2002/01/10 19:50:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.16.2.4 2002/10/02 21:27:08 jdolecek Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -484,7 +484,7 @@ vc_nb_poll(dev, events, p)
 static void
 filt_vc_nb_detach(struct knote *kn)
 {
-	struct vcomm *vcp = (void *) kn->kn_data;
+	struct vcomm *vcp = kn->kn_hook;
 
 	SLIST_REMOVE(&vcp->vc_selproc.si_klist, kn, knote, kn_selnext);
 }
@@ -492,7 +492,7 @@ filt_vc_nb_detach(struct knote *kn)
 static int
 filt_vc_nb_read(struct knote *kn, long hint)
 {
-	struct vcomm *vcp = (void *) kn->kn_data; 
+	struct vcomm *vcp = kn->kn_hook; 
 	struct vmsg *vmp;
 
 	if (EMPTY(vcp->vc_requests))
@@ -530,7 +530,7 @@ vc_nb_kqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) vcp;
+	kn->kn_hook = vcp;
 
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 
