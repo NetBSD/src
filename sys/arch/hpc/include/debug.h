@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.4 2002/05/03 07:31:24 takemura Exp $	*/
+/*	$NetBSD: debug.h,v 1.5 2004/03/21 00:41:04 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -72,10 +72,13 @@ int	DPRINTF_DEBUG = DPRINTF_LEVEL;
 #define	_DPRINTF(fmt, args...)	if (DPRINTF_DEBUG) printf(fmt, ##args)
 #define DPRINTFN(n, fmt, args...)					\
 			   	if (DPRINTF_DEBUG > (n)) PRINTF(fmt, ##args)
+#define _DPRINTFN(n, fmt, args...)					\
+			   	if (DPRINTF_DEBUG > (n)) printf(fmt, ##args)
 #else /* DPRINTF_ENABLE */
 #define	DPRINTF(args...)	((void)0)
 #define	_DPRINTF(args...)	((void)0)
 #define DPRINTFN(n, args...)	((void)0)
+#define _DPRINTFN(n, args...)	((void)0)
 #endif /* DPRINTF_ENABLE */
 
 #else	/* __DPRINTF_EXT */
