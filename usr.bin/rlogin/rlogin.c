@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.29 2003/08/07 11:15:41 agc Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.29.2.1 2004/04/01 02:33:43 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.29 2003/08/07 11:15:41 agc Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.29.2.1 2004/04/01 02:33:43 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -972,7 +972,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: rlogin [ -%s]%s[-e char] [ -l username ] [-p port] [username@]host\n",
+	    "usage: rlogin [-%s]%s[-e char] [-l username] [-p port] [username@]host\n",
 #ifdef KERBEROS
 #ifdef CRYPT
 	    "8EKLdx", " [-k realm] ");
