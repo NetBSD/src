@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.6 1996/03/18 19:55:01 mark Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.7 1996/04/26 21:02:49 mark Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -98,7 +98,6 @@ void
 arm_fpe_mod_reloc(void)
 {
 	int cnt;
-	arm_fpe_mod_hdr_t *arm_fpe_mod_hdr = (arm_fpe_mod_hdr_t *)arm_fpe_mod;
 
 	/* Go through the module header, and convert all offsets into absolute
 	 * addresses. Careful here - the last two fields of the header do _NOT_
