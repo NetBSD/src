@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.20 1995/04/12 14:55:45 briggs Exp $	*/
+/*	$NetBSD: ser.c,v 1.21 1995/04/20 15:27:12 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -102,6 +102,42 @@
 /*#define DEBUG*/
 #undef DEBUG
 
+struct ser_status {
+	unsigned char	ddcd, dcts;	/* delta (change) flags */
+	unsigned char	dcd, cts;	/* last state of signal */
+	unsigned char	dtr, rts;	/* current state of signal */
+	int		oflo;		/* s/w fifo over flow */
+	int		over;		/* h/w fifo over flow */
+	int		flags;
+#define SER_BUSY	0x01
+};
+
+#define INBUFLEN	128
+#define OUTBUFLEN	512
+
+struct ser_softc {
+	struct	device		sc_dev;
+	struct	tty		*sc_tty;
+	struct	ser_status	status;
+
+/* private buffers used by driver at splscc() */
+	u_char			inbuf[INBUFLEN];
+	volatile u_char		inlen;
+	u_char			intail;
+
+	u_char			outbuf[OUTBUFLEN];
+	volatile u_int		outlen;
+	volatile u_int		outtail;
+};
+
+extern int	matchbyname();
+static void	serattach(struct device *par, struct device *dev, void *aux);
+static void	serinit(int);
+
+struct cfdriver sercd = {
+	NULL, "ser", matchbyname, serattach, DV_TTY, sizeof(struct ser_softc)
+};
+
 volatile unsigned char *sccA = (unsigned char *) 0x4000;
 
 static void	serstart __P((register struct tty *));
@@ -113,21 +149,11 @@ static int	ser_active = 0;
 static int	nser = NSER;
 static int	serdefaultrate = TTYDEF_SPEED;
 
-struct	tty *ser_tty[NSER];
-
 extern	struct tty *constty;
 
 #define	UNIT(x)		minor(x)
-
-struct ser_status {
-	unsigned char ddcd, dcts;	/* delta (change) flags */
-	unsigned char dcd, cts;		/* last state of signal */
-	unsigned char dtr, rts;		/* current state of signal */
-	int	oflo;			/* s/w fifo over flow */
-	int	over;			/* h/w fifo over flow */
-	int	flags;
-#define	SER_BUSY	0x01
-} ser_status[NSER];
+#define SER_TTY(unit) \
+	(((struct ser_softc *) sercd.cd_devs[unit])->sc_tty)
 
 #define	SCC_INT		10
 #define	SCC_SPEED	11
@@ -160,8 +186,6 @@ static unsigned char ser_init_bytes[]={
 	 1, 0x0a,	/* enable rcv and xmit interrupts. */
 	 9, 0x0e,	/* enable master interrupt bit d3. */
 };
-
-extern int matchbyname();
 
 static void
 serinit(int running_interrupts)
@@ -218,31 +242,30 @@ serattach(parent, dev, aux)
 	serinit(1);
 }
 
-struct cfdriver sercd =
-      {	NULL, "ser", matchbyname, serattach,
-	DV_TTY, sizeof(struct device), NULL, 0 };
-
 /* ARGSUSED */
 extern int
 seropen(dev_t dev, int flag, int mode, struct proc *p)
 {
+	struct ser_softc *sc;
 	register struct tty *tp;
-	register int unit;
+	register int unit = UNIT(dev);
 	int error = 0;
  
 #if defined(DEBUG)
 	printf("ser: entered seropen(%d, %d, %d, xx)\n", dev, flag, mode);
 #endif
-	unit = UNIT(dev);
-	if (unit >= NSER ){
-		return (ENXIO);
-	}
+	if (unit >= sercd.cd_ndevs)
+		return ENXIO;
+	sc = sercd.cd_devs[unit];
+	if (sc == 0)
+		return ENXIO;
+
 	ser_active |= 1 << unit;
-	if (ser_tty[unit]) {
-		tp = ser_tty[unit];
-	} else {
-		tp = ser_tty[unit] = ttymalloc();
-	}
+	if (sc->sc_tty == NULL)
+		tp = sc->sc_tty = ttymalloc();
+	else
+		tp = sc->sc_tty;
+
 	tp->t_oproc = serstart;
 	tp->t_param = serparam;
 	tp->t_dev = dev;
@@ -260,12 +283,12 @@ seropen(dev_t dev, int flag, int mode, struct proc *p)
 		ttsetwater(tp);
 	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0){
 		printf("ser%d: device is busy.\n", unit);
-		return (EBUSY);
+		return EBUSY;
 	}
 
 	/* serial device open code */
 
-	bzero((char *)&ser_status[unit], sizeof(struct ser_status));
+	bzero((char *)&sc->status, sizeof(struct ser_status));
 
 	/* turn on RTS & DTR */
 	serctl(unit, ZSWR5_RTS | ZSWR5_DTR, DMSET);
@@ -301,15 +324,13 @@ seropen(dev_t dev, int flag, int mode, struct proc *p)
 extern int
 serclose(dev_t dev, int flag, int mode, struct proc *p)
 {
-	register struct tty *tp;
-	register int unit;
+	register int unit = UNIT(dev);
+	register struct tty *tp = SER_TTY(unit);
 	int s;
  
 #if defined(DEBUG)
 	printf("ser: entered serclose()\n");
 #endif
-	unit = UNIT(dev);
-	tp = ser_tty[unit];
 	(*linesw[tp->t_line].l_close)(tp, flag);
 
 	/* serial device close code */
@@ -327,7 +348,6 @@ serclose(dev_t dev, int flag, int mode, struct proc *p)
 	ttyclose(tp);
 #ifdef broken
 	ttyfree(tp);
-	ser_tty[unit] = NULL;
 #endif
 
 #if defined(DEBUG)
@@ -342,7 +362,7 @@ serread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp = ser_tty[UNIT(dev)];
+	register struct tty *tp = SER_TTY(UNIT(dev));
 #if defined(DEBUG)
 	printf("ser: called serread()\n");
 #endif
@@ -356,8 +376,7 @@ serwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	int unit = UNIT(dev);
-	register struct tty *tp = ser_tty[unit];
+	register struct tty *tp = SER_TTY(UNIT(dev));
  
 #if defined(DEBUG)
 	printf("ser: called serwrite()\n");
@@ -365,29 +384,20 @@ serwrite(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
-/* private buffers used by driver at splscc() */
-#define INBUFLEN	128
-#define OUTBUFLEN	512
-static unsigned char ser_inbuf[NSER][INBUFLEN];
-static volatile unsigned char ser_inlen[NSER] = {0,0};
-static unsigned char ser_intail[NSER] = {0,0};
+/*
+ * NOTE: This function is called by locore.s on a level 4 interrupt. 
+ * since "splscc()" is level 4, and this is currently higher than
+ * anything except splhigh(), you can't call anything from this
+ * routine or you'll break the syncronization.  basically we just
+ * do i/o from our local buffers and signal the upper layer with
+ * a software interrupt.
+ */
 
-static unsigned char ser_outbuf[NSER][OUTBUFLEN];
-static volatile unsigned int ser_outlen[NSER] = {0,0};
-static volatile unsigned int ser_outtail[NSER] = {0,0};
-
-/* NOTE: This function is called by locore.s on a level 4 interrupt. 
-   since "splscc()" is level 4, and this is currently higher than
-   anything except splhigh(), you can't call anything from this
-   routine or you'll break the syncronization.  basically we just
-   do i/o from our local buffers and signal the upper layer with
-   a software interrupt.
-*/
-
+/* serial interrupt code */
 extern int
 ser_intr(void)
 {
-    /* serial interrupt code */
+    register struct ser_softc *sc;
     unsigned char reg0, reg1, ch, ch1, c, bits;
     int s;
     register int unit;
@@ -401,37 +411,38 @@ ser_intr(void)
 	unit = 1;
     else
 	unit = 0;
+    sc = sercd.cd_devs[unit];
 
     reg0 = SER_STATUS(unit, 0);
     switch ((bits & 7) >> 1) {
       case 0:	/* tranmitter buffer empty */
-	if (ser_outlen[unit] > 0)
+	if (sc->outlen > 0)
 	{
-	    c = ser_outbuf[unit][ser_outtail[unit]];
-	    ser_outtail[unit] = (ser_outtail[unit] + 1) % OUTBUFLEN;
+	    c = sc->outbuf[sc->outtail];
+	    sc->outtail = (sc->outtail + 1) % OUTBUFLEN;
 	    SCCRDWR(unit) = c;
-	    ser_outlen[unit]--;
+	    sc->outlen--;
 	} else {
 	    SER_DOCNTL(unit, 0, ZSWR0_RESET_TXINT);
-	    ser_status[unit].flags &= ~SER_BUSY;
+	    sc->status.flags &= ~SER_BUSY;
 	    setsoftserial();
 	}
 	SER_DOCNTL(unit, 0, ZSWR0_CLR_INTR);
 	break;
       case 1:	/* ext/status change */
-	if ((reg0 & ZSRR0_DCD) && ser_status[unit].dcd == 0)
-		ser_status[unit].ddcd = 1;
+	if ((reg0 & ZSRR0_DCD) && sc->status.dcd == 0)
+		sc->status.ddcd = 1;
 	else
-		if (!(reg0 & ZSRR0_DCD) && ser_status[unit].dcd != 0)
-			ser_status[unit].ddcd = 1;
-	ser_status[unit].dcd = reg0 & ZSRR0_DCD;
+		if (!(reg0 & ZSRR0_DCD) && sc->status.dcd != 0)
+			sc->status.ddcd = 1;
+	sc->status.dcd = reg0 & ZSRR0_DCD;
 
-	if ((reg0 & ZSRR0_CTS) && ser_status[unit].cts == 0)
-		ser_status[unit].dcts = 1;
+	if ((reg0 & ZSRR0_CTS) && sc->status.cts == 0)
+		sc->status.dcts = 1;
 	else
-		if (!(reg0 & ZSRR0_CTS) && ser_status[unit].cts != 0)
-			ser_status[unit].dcts = 1;
-	ser_status[unit].cts = reg0 & ZSRR0_CTS;
+		if (!(reg0 & ZSRR0_CTS) && sc->status.cts != 0)
+			sc->status.dcts = 1;
+	sc->status.cts = reg0 & ZSRR0_CTS;
 
 	if (reg0 & ZSRR0_TXUNDER)
 	    SER_DOCNTL(unit, 0, ZSWR0_RESET_EOM);
@@ -447,13 +458,13 @@ ser_intr(void)
 		c = 2;
 	}
 
-	if (ser_inlen[unit] < INBUFLEN) 
-	ser_inbuf[unit][(ser_intail[unit] + (ser_inlen[unit]++)) % INBUFLEN] = ch;
-	else ser_status[unit].oflo++;
+	if (sc->inlen < INBUFLEN) 
+	sc->inbuf[(sc->intail + (sc->inlen++)) % INBUFLEN] = ch;
+	else sc->status.oflo++;
 	if (c > 1) {
-		if (ser_inlen[unit] < INBUFLEN) 
-			ser_inbuf[unit][(ser_intail[unit] + (ser_inlen[unit]++)) % INBUFLEN] = ch1;
-		else ser_status[unit].oflo++;
+		if (sc->inlen < INBUFLEN) 
+			sc->inbuf[(sc->intail+(sc->inlen++)) % INBUFLEN] = ch1;
+		else sc->status.oflo++;
 	}
 	setsoftserial();
 
@@ -463,7 +474,7 @@ ser_intr(void)
 	reg1 = SER_STATUS(unit, 1);
 	SCCRDWR(unit); /* flush fifo */
 	if (reg1 & ZSRR1_DO)
-		ser_status[unit].over++;
+		sc->status.over++;
 	SER_DOCNTL(unit, 0, ZSWR0_RESET_ERRORS);
 	SER_DOCNTL(unit, 0, ZSWR0_CLR_INTR);
 	break;
@@ -480,41 +491,43 @@ ser_intr(void)
 extern void
 sersir(void)
 {
-	int unit, s, c;
+	register struct ser_softc *sc;
 	register struct tty *tp;
+	int unit, s, c;
 
 	for (unit = 0; unit < 2; unit++) {
-		if ((tp = ser_tty[unit]) == 0)
+		sc = sercd.cd_devs[unit];
+		if ((tp = sc->sc_tty) == 0)
 			continue;
 
 		/* check for overflows */
-		if (ser_status[unit].oflo || ser_status[unit].over) {
+		if (sc->status.oflo || sc->status.over) {
 			s = splhigh();
-			ser_status[unit].oflo = 0;
-			ser_status[unit].over = 0;
+			sc->status.oflo = 0;
+			sc->status.over = 0;
 			splx(s);
 			if (tp->t_state & TS_ISOPEN)
 				(*linesw[tp->t_line].l_rint)('#', tp);
 		}
 		/* check for change in DCD */
-		if (ser_status[unit].ddcd) {
+		if (sc->status.ddcd) {
 			s = splhigh();
-			ser_status[unit].ddcd = 0;
+			sc->status.ddcd = 0;
 			splx(s);
 			if (0) {
-				if (ser_status[unit].dcd)
+				if (sc->status.dcd)
 					tp->t_state |= TS_CARR_ON;
 				else
 					tp->t_state &= ~TS_CARR_ON;
 
 				(*linesw[tp->t_line].l_modem)(tp,
-					ser_status[unit].dcd ? 1 : 0);
+					sc->status.dcd ? 1 : 0);
 			}
 		}
 		/* check for change in CTS */
-		if (ser_status[unit].dcts) {
+		if (sc->status.dcts) {
 			s = splhigh();
-			ser_status[unit].dcts = 0;
+			sc->status.dcts = 0;
 			splx(s);
 			if ((tp->t_state & TS_ISOPEN) &&
 			    (tp->t_flags & CRTSCTS)) {
@@ -524,21 +537,21 @@ sersir(void)
 				tp->t_state |= TS_TTSTOP;
 		}
 		/* drain input fifo */
-		while (ser_inlen[unit] > 0) {
+		while (sc->inlen > 0) {
 			if (tp->t_rawq.c_cc + tp->t_canq.c_cc >= TTYHOG) {
 				setsoftserial();
 				break;
 			}
 			s = splhigh();
-			c = ser_inbuf[unit][ser_intail[unit]];
-			ser_intail[unit] = (ser_intail[unit] + 1) % INBUFLEN;
-			ser_inlen[unit]--;
+			c = sc->inbuf[sc->intail];
+			sc->intail = (sc->intail + 1) % INBUFLEN;
+			sc->inlen--;
 			splx(s);
 			if (tp->t_state & TS_ISOPEN)
 				(*linesw[tp->t_line].l_rint)(c, tp);
 		}
 		/* fill output fifo */
-		if (ser_outlen[unit] == 0) {
+		if (sc->outlen == 0) {
 			if (tp->t_line)
 				(*linesw[tp->t_line].l_start)(tp);
 			else
@@ -550,14 +563,12 @@ sersir(void)
 extern int
 serioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 {
-	register struct tty *tp;
-	register int unit = UNIT(dev);
+	register struct tty *tp = SER_TTY(UNIT(dev));
 	register int error;
  
 #if defined(DEBUG)
 	printf("ser: entering ioctl()\n");
 #endif
-	tp = ser_tty[unit];
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
@@ -635,12 +646,13 @@ ser_calc_regs(int unit, int cflag, unsigned char *preg3, unsigned char *preg4,
 	      unsigned char *preg5)
 {
 	unsigned char r3, r4, r5;
+	struct ser_softc *sc = sercd.cd_devs[unit];
 
 	r3 = ZSWR3_RX_ENABLE;
 	r5 = ZSWR5_TX_ENABLE;
-	if (ser_status[unit].dtr)
+	if (sc->status.dtr)
 		r5 |= ZSWR5_DTR;
-	if (ser_status[unit].rts)
+	if (sc->status.rts)
 		r5 |= ZSWR5_RTS;
 	switch (cflag&CSIZE) {
 	    case CS5:
@@ -730,8 +742,11 @@ serstart(register struct tty *tp)
 {
 	int s, s1;
 	int i, space, unit, c, need_start, first_char;
+	struct ser_softc *sc;
  
 	unit = UNIT(tp->t_dev);
+	sc = sercd.cd_devs[unit];
+
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_TTSTOP)) {
 		goto out;
@@ -744,11 +759,11 @@ serstart(register struct tty *tp)
 		selwakeup(&(tp->t_wsel));
 	}
 	if (tp->t_outq.c_cc == 0 || (tp->t_state & TS_BUSY) ||
-	    (ser_status[unit].flags & SER_BUSY))
+	    (sc->status.flags & SER_BUSY))
 		goto out;
 	tp->t_state |= TS_BUSY;
 
-	if(ser_outlen[unit] == 0){
+	if(sc->outlen == 0){
 		first_char = (char)getc(&tp->t_outq);
 		need_start = 1;
 	} else
@@ -759,7 +774,7 @@ serstart(register struct tty *tp)
 
 	/* get free space in s/w fifo - this will only get better */
 	s1 = splhigh();
-	space = OUTBUFLEN - ser_outlen[unit];
+	space = OUTBUFLEN - sc->outlen;
 	splx(s1);
 
 	while(tp->t_outq.c_cc && space > 0) {
@@ -767,7 +782,7 @@ serstart(register struct tty *tp)
 		c = getc(&tp->t_outq);
 		/* protect s/w fifo at splhigh() */
 		s1 = splhigh();
-		ser_outbuf[unit][(ser_outtail[unit] + (ser_outlen[unit]++))
+		sc->outbuf[(sc->outtail + (sc->outlen++))
 		    % OUTBUFLEN] = (char)c;
 		splx(s1);
 		space--;
@@ -776,7 +791,7 @@ serstart(register struct tty *tp)
 
 	if (need_start) {
 		s1 = splhigh();
-		ser_status[unit].flags |= SER_BUSY;
+		sc->status.flags |= SER_BUSY;
 		SCCRDWR(unit) = first_char;	/* to start chain */
 		splx(s1);
 	}
@@ -808,19 +823,28 @@ serstop(register struct tty *tp, int flag)
 	splx(s);
 }
 
+struct tty *
+sertty(dev)
+	dev_t dev;
+{
+	return (SER_TTY(UNIT(dev)));
+}
+
 static int
 serctl(dev_t dev, int bits, int how)
 {
+	struct ser_softc *sc;
 	int unit, s;
 
 	unit = UNIT(dev);
+	sc = sercd.cd_devs[unit];
 	/* run at splhigh so we don't get interrupted by i/o */
 	s = splhigh();
 	switch (how) {
 
 	case DMSET:
-		ser_status[unit].dtr = bits & ZSWR5_DTR;
-		ser_status[unit].rts = bits & ZSWR5_RTS;
+		sc->status.dtr = bits & ZSWR5_DTR;
+		sc->status.rts = bits & ZSWR5_RTS;
 		SER_DOCNTL(unit, 5, bits | 0x68);
 		break;
 
