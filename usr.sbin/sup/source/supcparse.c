@@ -32,6 +32,12 @@
  *	across the network to save BandWidth
  *
  * $Log: supcparse.c,v $
+ * Revision 1.5  1996/12/23 19:42:20  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.4  1995/06/09 04:33:34  christos
  * fixed bug related to the ascii `when' files previous fix, where the -t
  * option would fail to read the timestamp files.
@@ -69,6 +75,7 @@
  */
 
 #include "supcdefs.h"
+#include "supextern.h"
 
 
 #ifdef	lint
@@ -88,26 +95,28 @@ struct option {
 	char *op_name;
 	OPTION op_enum;
 } options[] = {
-	"host",		OHOST,
-	"base",		OBASE,
-	"hostbase",	OHOSTBASE,
-	"prefix",	OPREFIX,
-	"release",	ORELEASE,
-	"notify",	ONOTIFY,
-	"login",	OLOGIN,
-	"password",	OPASSWORD,
-	"crypt",	OCRYPT,
-	"backup",	OBACKUP,
-	"delete",	ODELETE,
-	"execute",	OEXECUTE,
-	"old",		OOLD,
-	"timeout",	OTIMEOUT,
-	"keep",		OKEEP,
-	"use-rel-suffix", OURELSUF,
- 	"compress", 	OCOMPRESS
+	{ "host",	OHOST },
+	{ "base",	OBASE },
+	{ "hostbase",	OHOSTBASE },
+	{ "prefix",	OPREFIX },
+	{ "release",	ORELEASE },
+	{ "notify",	ONOTIFY },
+	{ "login",	OLOGIN },
+	{ "password",	OPASSWORD },
+	{ "crypt",	OCRYPT },
+	{ "backup",	OBACKUP },
+	{ "delete",	ODELETE },
+	{ "execute",	OEXECUTE },
+	{ "old",	OOLD },
+	{ "timeout",	OTIMEOUT },
+	{ "keep",	OKEEP },
+	{ "use-rel-suffix", OURELSUF },
+ 	{ "compress", 	OCOMPRESS }
 };
 
-passdelim (ptr,delim)		/* skip over delimiter */
+static void passdelim __P((char **, int ));
+
+static void passdelim (ptr,delim)		/* skip over delimiter */
 char **ptr,delim;
 {
 	*ptr = skipover (*ptr, " \t");
@@ -117,7 +126,7 @@ char **ptr,delim;
 	}
 }
 
-parsecoll(c,collname,args)
+int parsecoll(c,collname,args)
 COLLECTION *c;
 char *collname,*args;
 {

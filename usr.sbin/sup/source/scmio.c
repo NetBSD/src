@@ -109,6 +109,12 @@
  **********************************************************************
  * HISTORY
  * $Log: scmio.c,v $
+ * Revision 1.3  1996/12/23 19:42:13  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.2  1993/05/24 17:57:26  brezak
  * Remove netcrypt.c. Remove unneeded files. Cleanup make.
  *
@@ -166,7 +172,8 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
-#include "sup.h"
+#include "supcdefs.h"
+#include "supextern.h"
 #include "supmsg.h"
 
 extern int errno;
@@ -187,7 +194,6 @@ extern int errno;
  ***    G L O B A L   V A R I A B L E S    ***
  *********************************************/
 
-extern int scmerr ();			/* error printing routine */
 extern int netfile;			/* network file descriptor */
 
 int scmdebug;				/* scm debug flag */
@@ -204,12 +210,17 @@ struct buf {
 } buffers[2];
 struct buf *bufptr;			/* buffer pointer */
 
+static int writedata __P((int, char *));
+static int writeblock __P((int, char *));
+static int readdata __P((int, char *));
+static int readcount __P((int *));
+
 
 /***********************************************
  ***    O U T P U T   T O   N E T W O R K    ***
  ***********************************************/
 
-static
+static int
 writedata (count,data)		/* write raw data to network */
 int count;
 char *data;
@@ -256,7 +267,7 @@ char *data;
 	return (SCMOK);
 }
 
-static
+static int
 writeblock (count,data)		/* write data block */
 int count;
 char *data;
@@ -269,6 +280,7 @@ char *data;
 	return (x);
 }
 
+int
 writemsg (msg)		/* write start of message */
 int msg;
 {
@@ -285,6 +297,7 @@ int msg;
 	return (writedata(sizeof(int),(char *)&x));
 }
 
+int
 writemend ()		/* write end of message */
 {
 	register int count;
@@ -306,6 +319,7 @@ writemend ()		/* write end of message */
 	return (writedata (count, data));
 }
 
+int
 writeint (i)		/* write int as data block */
 int i;
 {
@@ -316,6 +330,7 @@ int i;
 	return (writeblock(sizeof(int),(char *)&x));
 }
 
+int
 writestring (p)		/* write string as data block */
 char *p;
 {
@@ -339,11 +354,12 @@ char *p;
 	return (writeblock(len,p));
 }
 
+int
 writefile (f)		/* write open file as a data block */
 int f;
 {
 	char buf[FILEXFER];
-	register int number,sum,filesize,x;
+	register int number = 0,sum = 0,filesize,x;
 	int y;
 	struct stat statbuf;
 
@@ -378,6 +394,7 @@ int f;
 	return (x);
 }
 
+int
 writemnull (msg)	/* write message with no data */
 int msg;
 {
@@ -387,6 +404,7 @@ int msg;
 	return (x);
 }
 
+int
 writemint (msg,i)		/* write message of one int */
 int msg,i;
 {
@@ -397,6 +415,7 @@ int msg,i;
 	return (x);
 }
 
+int
 writemstr (msg,p)		/* write message of one string */
 int msg;
 char *p;
@@ -412,7 +431,7 @@ char *p;
  ***    I N P U T   F R O M   N E T W O R K    ***
  *************************************************/
 
-static
+static int
 readdata (count,data)		/* read raw data from network */
 int count;
 char *data;
@@ -516,11 +535,13 @@ int *count;
 	return (SCMOK);
 }
 
+int
 readflush ()
 {
 	return (readdata (0, (char *)NULL));
 }
 
+int
 readmsg (msg)		/* read header for expected message */
 int msg;		/* if message is unexpected, send back SCMHUH */
 {
@@ -545,6 +566,7 @@ int msg;		/* if message is unexpected, send back SCMHUH */
 	return (SCMEOF);
 }
 
+int
 readmend ()
 {
 	register int x;
@@ -556,6 +578,7 @@ readmend ()
 	return (x);
 }
 
+int
 readskip ()			/* skip over one input block */
 {
 	register int x;
@@ -630,6 +653,7 @@ register char **buf;
 	return (SCMOK);
 }
 
+int
 readfile (f)		/* read data block into open file */
 int f;
 {
@@ -660,6 +684,7 @@ int f;
 	return (x);
 }
 
+int
 readmnull (msg)		/* read null message */
 int msg;
 {
@@ -669,6 +694,7 @@ int msg;
 	return (x);
 }
 
+int
 readmint (msg,buf)		/* read int message */
 int msg,*buf;
 {
@@ -694,6 +720,7 @@ char **buf;
  ***    C R O S S P A T C H     ***
  **********************************/
 
+void
 crosspatch ()
 {
 	fd_set ibits, obits, xbits;
