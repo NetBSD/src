@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2000/06/11 11:35:20 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2000/06/17 18:37:44 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 .include <bsd.kernobj.mk>
+.include <bsd.subdir.mk>
 
 KERN=		${KERNOBJDIR}/INSTALL/netbsd
 .if !make(print-objdir)
@@ -36,4 +37,3 @@ clean cleandir distclean:
 	rm -f *.core ${CLEANFILES}
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>
