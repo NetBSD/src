@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.18 1997/07/21 23:02:35 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.18.6.1 1997/10/28 23:27:46 mellon Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -301,20 +301,38 @@ svr4_sys_pread(p, v, retval)
 	struct svr4_sys_pread_args *uap = v;
 	struct sys_lseek_args lap;
 	struct sys_read_args rap;
-	int error;
+	register_t retval2;
+	off_t oldoff;
+	int error, error2;
 
+	/*
+	 * Record the current file offset; it will be restored after
+	 * completition of the actual read operation.
+	 */
 	SCARG(&lap, fd) = SCARG(uap, fd);
-	SCARG(&lap, offset) = SCARG(uap, off);
+	SCARG(&lap, offset) = 0;
 	SCARG(&lap, whence) = SEEK_CUR;
+	if ((error = sys_lseek(p, &lap, retval)) != 0)
+		return error;
+	oldoff = *(off_t *)retval;
 
+	/* Seek to the requested file offset. */
+	SCARG(&lap, offset) = SCARG(uap, off);
+	SCARG(&lap, whence) = SEEK_SET;
 	if ((error = sys_lseek(p, &lap, retval)) != 0)
 		return error;
 
+	/* Perform the actual read operation. */
 	SCARG(&rap, fd) = SCARG(uap, fd);
 	SCARG(&rap, buf) = SCARG(uap, buf);
 	SCARG(&rap, nbyte) = SCARG(uap, nbyte);
+	error = sys_read(p, &rap, retval);
 
-	return sys_read(p, &rap, retval);
+	/* In any case, try to seek back to the old file offset. */
+	SCARG(&lap, offset) = oldoff;
+	error2 = sys_lseek(p, &lap, &retval2);
+	
+	return (error == 0 ? error2 : error);
 }
 
 
@@ -327,20 +345,38 @@ svr4_sys_pread64(p, v, retval)
 	struct svr4_sys_pread64_args *uap = v;
 	struct sys_lseek_args lap;
 	struct sys_read_args rap;
-	int error;
+	register_t retval2;
+	off_t oldoff;
+	int error, error2;
 
+	/*
+	 * Record the current file offset; it will be restored after
+	 * completition of the actual read operation.
+	 */
 	SCARG(&lap, fd) = SCARG(uap, fd);
-	SCARG(&lap, offset) = SCARG(uap, off);
+	SCARG(&lap, offset) = 0;
 	SCARG(&lap, whence) = SEEK_CUR;
+	if ((error = sys_lseek(p, &lap, retval)) != 0)
+		return error;
+	oldoff = *(off_t *)retval;
 
+	/* Seek to the requested file offset. */
+	SCARG(&lap, offset) = SCARG(uap, off);
+	SCARG(&lap, whence) = SEEK_SET;
 	if ((error = sys_lseek(p, &lap, retval)) != 0)
 		return error;
 
+	/* Perform the actual read operation. */
 	SCARG(&rap, fd) = SCARG(uap, fd);
 	SCARG(&rap, buf) = SCARG(uap, buf);
 	SCARG(&rap, nbyte) = SCARG(uap, nbyte);
+	error = sys_read(p, &rap, retval);
 
-	return sys_read(p, &rap, retval);
+	/* In any case, try to seek back to the old file offset. */
+	SCARG(&lap, offset) = oldoff;
+	error2 = sys_lseek(p, &lap, &retval2);
+
+	return (error == 0 ? error2 : error);
 }
 
 
@@ -352,21 +388,39 @@ svr4_sys_pwrite(p, v, retval)
 {
 	struct svr4_sys_pwrite_args *uap = v;
 	struct sys_lseek_args lap;
-	struct sys_write_args wap;
-	int error;
+	struct sys_write_args rap;
+	register_t retval2;
+	off_t oldoff;
+	int error, error2;
 
+	/*
+	 * Record the current file offset; it will be restored after
+	 * completition of the actual write operation.
+	 */
 	SCARG(&lap, fd) = SCARG(uap, fd);
-	SCARG(&lap, offset) = SCARG(uap, off);
+	SCARG(&lap, offset) = 0;
 	SCARG(&lap, whence) = SEEK_CUR;
+	if ((error = sys_lseek(p, &lap, retval)) != 0)
+		return error;
+	oldoff = *(off_t *)retval;
 
+	/* Seek to the requested file offset. */
+	SCARG(&lap, offset) = SCARG(uap, off);
+	SCARG(&lap, whence) = SEEK_SET;
 	if ((error = sys_lseek(p, &lap, retval)) != 0)
 		return error;
 
-	SCARG(&wap, fd) = SCARG(uap, fd);
-	SCARG(&wap, buf) = SCARG(uap, buf);
-	SCARG(&wap, nbyte) = SCARG(uap, nbyte);
+	/* Perform the actual write operation. */
+	SCARG(&rap, fd) = SCARG(uap, fd);
+	SCARG(&rap, buf) = SCARG(uap, buf);
+	SCARG(&rap, nbyte) = SCARG(uap, nbyte);
+	error = sys_write(p, &rap, retval);
 
-	return sys_write(p, &wap, retval);
+	/* In any case, try to seek back to the old file offset. */
+	SCARG(&lap, offset) = oldoff;
+	error2 = sys_lseek(p, &lap, &retval2);
+
+	return (error == 0 ? error2 : error);
 }
 
 
@@ -376,23 +430,41 @@ svr4_sys_pwrite64(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct svr4_sys_pwrite_args *uap = v;
+	struct svr4_sys_pwrite64_args *uap = v;
 	struct sys_lseek_args lap;
-	struct sys_write_args wap;
-	int error;
+	struct sys_write_args rap;
+	register_t retval2;
+	off_t oldoff;
+	int error, error2;
 
+	/*
+	 * Record the current file offset; it will be restored after
+	 * completition of the actual write operation.
+	 */
 	SCARG(&lap, fd) = SCARG(uap, fd);
-	SCARG(&lap, offset) = SCARG(uap, off);
+	SCARG(&lap, offset) = 0;
 	SCARG(&lap, whence) = SEEK_CUR;
+	if ((error = sys_lseek(p, &lap, retval)) != 0)
+		return error;
+	oldoff = *(off_t *)retval;
 
+	/* Seek to the requested file offset. */
+	SCARG(&lap, offset) = SCARG(uap, off);
+	SCARG(&lap, whence) = SEEK_SET;
 	if ((error = sys_lseek(p, &lap, retval)) != 0)
 		return error;
 
-	SCARG(&wap, fd) = SCARG(uap, fd);
-	SCARG(&wap, buf) = SCARG(uap, buf);
-	SCARG(&wap, nbyte) = SCARG(uap, nbyte);
+	/* Perform the actual write operation. */
+	SCARG(&rap, fd) = SCARG(uap, fd);
+	SCARG(&rap, buf) = SCARG(uap, buf);
+	SCARG(&rap, nbyte) = SCARG(uap, nbyte);
+	error = sys_write(p, &rap, retval);
 
-	return sys_write(p, &wap, retval);
+	/* In any case, try to seek back to the old file offset. */
+	SCARG(&lap, offset) = oldoff;
+	error2 = sys_lseek(p, &lap, &retval2);
+
+	return (error == 0 ? error2 : error);
 }
 
 
