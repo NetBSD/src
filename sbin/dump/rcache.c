@@ -1,11 +1,11 @@
-/*      $NetBSD: rcache.c,v 1.4.6.1 2000/10/18 00:39:44 tv Exp $       */
+/*      $NetBSD: rcache.c,v 1.4.6.2 2002/01/16 09:57:29 he Exp $       */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin J. Laubach <mjl@emsi.priv.at> and 
+ * by Martin J. Laubach <mjl@emsi.priv.at> and
  *    Manuel Bouyer <Manuel.Bouyer@lip6.fr>.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -27,7 +27,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -103,7 +103,7 @@ initcache(cachesize, readblksize)
 	if(cachesize == -1) {	/* Compute from memory available */
 		int usermem;
 		int mib[2] = { CTL_HW, HW_USERMEM };
-		
+
 		len = sizeof(usermem);
 		if (sysctl(mib, 2, &usermem, &len, NULL, 0) < 0) {
 			msg("sysctl(hw.usermem) failed: %s\n", strerror(errno));
@@ -113,7 +113,7 @@ initcache(cachesize, readblksize)
 	} else {		/* User specified */
 		cachebufs = cachesize;
 	}
-	
+
 	if(cachebufs) {	/* Don't allocate if zero --> no caching */
 		if (cachebufs > MAXCACHEBUFS)
 			cachebufs = MAXCACHEBUFS;
@@ -121,7 +121,7 @@ initcache(cachesize, readblksize)
 		sharedSize = sizeof(struct cheader) +
 	   	    sizeof(struct cdesc) * cachebufs +
 	   	    nblksread * cachebufs * dev_bsize;
-#ifdef STATS	
+#ifdef STATS
 		fprintf(stderr, "Using %d buffers (%d bytes)\n", cachebufs,
 	   	    sharedSize);
 #endif
@@ -141,15 +141,16 @@ initcache(cachesize, readblksize)
 		memset(shareBuffer, '\0', sharedSize);
 	}
 }
-/*-----------------------------------------------------------------------*/
-/* Find the cache buffer descriptor that shows the minimal access time */
 
+/*
+ * Find the cache buffer descriptor that shows the minimal access time
+ */
 static int 
 findlru()
 {
-	int     i;
-	int     minTime = cdesc[0].time;
-	int     minIdx = 0;
+	int	i;
+	size_t	minTime = cdesc[0].time;
+	int	minIdx = 0;
 
 	for (i = 0; i < cachebufs; i++) {
 		if (cdesc[i].time < minTime) {
@@ -184,12 +185,27 @@ rawread(blkno, buf, size)
 	physreadsize += size;
 #endif
 
+ loop:
 	if (lseek(diskfd, ((off_t) blkno << dev_bshift), 0) < 0) {
 		msg("rawread: lseek fails\n");
 		goto err;
 	}
 	if ((cnt =  read(diskfd, buf, size)) == size)
 		return;
+	if (blkno + (size / dev_bsize) > ufsib->ufs_dsize) {
+		/*
+		 * Trying to read the final fragment.
+		 *
+		 * NB - dump only works in TP_BSIZE blocks, hence
+		 * rounds `dev_bsize' fragments up to TP_BSIZE pieces.
+		 * It should be smarter about not actually trying to
+		 * read more than it can get, but for the time being
+		 * we punt and scale back the read only when it gets
+		 * us into trouble. (mkm 9/25/83)
+		 */
+		size -= dev_bsize;
+		goto loop;
+	}
 	if (cnt == -1)
 		msg("read error from %s: %s: [block %d]: count=%d\n",
 			disk, strerror(errno), blkno, size);
@@ -240,7 +256,7 @@ bread(blkno, buf, size)
 	char *buf;
 	int size;
 {
-	int     osize = size;
+	int	osize = size;
 	daddr_t oblkno = blkno;
 	char   *obuf = buf;
 	daddr_t numBlocks = (size + dev_bsize -1) / dev_bsize;
@@ -262,11 +278,10 @@ bread(blkno, buf, size)
 		return;
 	}
 
-
 retry:
 	while(size > 0) {
-		int     i;
-		
+		int	i;
+
 		for (i = 0; i < cachebufs; i++) {
 			struct cdesc *curr = &cdesc[i];
 
@@ -307,7 +322,7 @@ retry:
 						curr->blkstart) * dev_bsize,
 					   CDATA(i));
 					fprintf(stderr, "cdesc[i].blkstart %d "
-					    "blkno %d dev_bsize %ld\n", 
+					    "blkno %d dev_bsize %ld\n",
 				   	    curr->blkstart, blkno, dev_bsize);
 					dumpabort(0);
 				}
@@ -342,18 +357,18 @@ retry:
 		/* No more to do? */
 		if (size == 0)
 			break;
-			
+
 		/*
 		 * This does actually not happen if fs blocks are not greater
 		 * than nblksread.
 		 */
-		if (numBlocks > nblksread) {
+		if (numBlocks > nblksread || blkno >= ufsib->ufs_dsize) {
 			rawread(oblkno, obuf, osize);
 			break;
 		} else {
-			int     idx;
-			ssize_t rsize;
-			daddr_t blockBlkNo;
+			int	idx;
+			ssize_t	rsize;
+			daddr_t	blockBlkNo;
 
 			blockBlkNo = (blkno / nblksread) * nblksread;
 			idx = findlru();
@@ -421,7 +436,7 @@ retry:
 			 */
 		}
 	}
-	
+
 	if (flock(diskfd, LOCK_UN))
 		msg("flock(LOCK_UN) failed: %s\n",
 		    strerror(errno));
