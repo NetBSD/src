@@ -40,19 +40,16 @@ They should look something like:
 	pseudo-device   vcoda           4       # coda minicache <-> venus comm.
 
 
-	2. src/sys/arch/xxx/xxx/conf.c
+	2. src/sys/arch/xxx/conf/majors.xxx
 
-Coda needs a pseudodevice, vc_nb_, to communicate between the kernel and the
-out of kernel client program, venus.  sys/conf.h defines it:
-	#define cdev_vc_nb_init \...
-You must include this device in your platform conf.c
+Coda needs a pseudodevice, vcoda, to communicate between the kernel and the
+out of kernel client program, venus.
 
 By way of example for the x86, you add:
-#include "vcoda.h"
-cdev_decl(vc_nb_);
-to the "header" area  and 
-        cdev_vc_nb_init(NVCODA,vc_nb_),  /* 60: coda file system psdev */
-to the cdev switch.
+
+device-major	vcoda		char 60			vcoda
+
+to the majors file.
 
 	3. src/etc/xxx/MAKEDEV
 
