@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.2 2001/11/28 12:00:54 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.1 2001/11/28 12:00:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IRIX_TYPES_H_
-#define _IRIX_TYPES_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.1 2001/11/28 12:00:54 manu Exp $");
 
-#endif /* _IRIX_TYPES_H_ */
+#include <sys/systm.h>
+
+#include <compat/svr4/svr4_types.h>
+
+#include <compat/irix/irix_types.h>
+#include <compat/irix/irix_syscall.h>
+#include <compat/irix/irix_syscallargs.h>
+#include <compat/irix/irix_syssgi.h>
+
+int
+irix_sys_syssgi(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_syssgi_args /* {
+		syscallarg(int) request;
+		syscallarg(void *) arg1;
+		syscallarg(void *) arg2;
+		syscallarg(void *) arg3;
+		syscallarg(void *) arg4;                                        
+		syscallarg(void *) arg5;                                        
+	} */ *uap = v;  
+
+#ifdef DEBUG_IRIX
+	printf("irix_syssgi(): request = %d\n", SCARG(uap, request));
+#endif
+	return 0;
+}

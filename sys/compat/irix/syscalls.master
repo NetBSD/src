@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.2 2001/11/26 21:36:25 manu Exp $
+	$NetBSD: syscalls.master,v 1.3 2001/11/28 12:00:54 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -41,135 +41,266 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
+#include <sys/ioctl_compat.h>
 #include <sys/syscallargs.h>
+
+#include <compat/svr4/svr4_types.h>
+
+#include <compat/irix/irix_types.h>
+#include <compat/irix/irix_syscallargs.h>
 
 %%
 
-0       NOARGS		{ int sys_nosys(void); } syscall
-1       NOARGS		{ int sys_exit(int rval); }
-2       NOARGS		{ int sys_fork(void); }
-3       NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
-4       NOARGS		{ int sys_write(int fd, char *buf, u_int nbyte); }
-5	UNIMPL	
-6	UNIMPL	
-7	UNIMPL	
-8	UNIMPL	
-9	UNIMPL	
-10	UNIMPL	
-11	UNIMPL	
-12	UNIMPL	
-13	UNIMPL	
-14	UNIMPL	
-15	UNIMPL	
-16	UNIMPL	
-17	UNIMPL	
-18	UNIMPL	
-19	UNIMPL	
-20	UNIMPL	
-21	UNIMPL	
-22	UNIMPL	
-23	UNIMPL	
-24	UNIMPL	
-25	UNIMPL	
-26	UNIMPL
-27	UNIMPL
-28	UNIMPL
-29	UNIMPL
-30	UNIMPL
-31	UNIMPL	
-32	UNIMPL
-33	UNIMPL
-34	UNIMPL
-35	UNIMPL
-36	UNIMPL
-37	UNIMPL
-38	UNIMPL
-39	UNIMPL
-40	UNIMPL
-41	UNIMPL
-42	UNIMPL
-43	UNIMPL
-44	UNIMPL
-45	UNIMPL
-46	UNIMPL
-47	UNIMPL
-48	UNIMPL
-49	UNIMPL
-50	UNIMPL
-51	UNIMPL
-52	UNIMPL
-53	UNIMPL
-54	UNIMPL
-55	UNIMPL
-56	UNIMPL
-57	UNIMPL
+0	NOARGS		{ int sys_nosys(void); } syscall
+1	NOARGS		{ int sys_exit(int rval); }
+2	NOARGS		{ int sys_fork(void); }
+3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
+4	NOARGS		{ int sys_write(int fd, char *buf, u_int nbyte); }
+5	STD		{ int svr4_sys_open(const char *path, int flags, \
+			    int mode); }
+6	NOARGS		{ int sys_close(int fd); }
+7	OBSOL		wait
+8	STD		{ int svr4_sys_creat(const char *path, int mode); }
+9	NOARGS		{ int sys_link(char *path, char *link); }
+10	NOARGS		{ int sys_unlink(char *path); }
+11	STD		{ int svr4_sys_execv(const char *path, char **argp); }
+12	NOARGS		{ int sys_chdir(char *path); }
+13	STD		{ int svr4_sys_time(svr4_time_t *t); }
+14	OBSOL		mknod
+15	NOARGS		{ int sys_chmod(char *path, int mode); }
+16	NOARGS		{ int sys___posix_chown(char *path, int uid, \
+			    int gid); } chown
+17	STD		{ int svr4_sys_break(caddr_t nsize); }
+18	OBSOL		stat
+19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
+			    int whence); }
+20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
+21	UNIMPL		old_mount
+22	UNIMPL		System V umount
+23	NOARGS		{ int sys_setuid(uid_t uid); }
+24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
+25	UNIMPL		stime
+26	UNIMPL		ptrace
+27	OBSOL		alarm
+28	STD		{ int svr4_sys_fstat(int fd, struct svr4_stat *sb); }
+29	STD		{ int svr4_sys_pause(void); }
+30	STD		{ int svr4_sys_utime(const char *path, \
+			     struct svr4_utimbuf *ubuf); }
+31	UNIMPL		was stty
+32	UNIMPL		was gtty
+33	STD		{ int svr4_sys_access(const char *path, int flags); }
+34	STD		{ int svr4_sys_nice(int prio); }
+35	UNIMPL		statfs
+36	NOARGS		{ int sys_sync(void); }
+37	STD		{ int svr4_sys_kill(int pid, int signum); }
+38	UNIMPL		fstatfs
+39	STD		{ int svr4_sys_pgrpsys(int cmd, int pid, int pgid); }
+40	STD		{ ptrdiff_t irix_sys_syssgi(int request, void *arg1, \
+			    void *arg2, void *arg3, void *arg4, void *arg5); }
+41	NOARGS		{ int sys_dup(u_int fd); }
+42	NOARGS		{ int sys_pipe(void); }
+43	STD		{ int svr4_sys_times(struct tms *tp); }
+44	UNIMPL		profil
+45	UNIMPL		plock
+46	NOARGS		{ int sys_setgid(gid_t gid); }
+47	NOARGS		{ gid_t sys_getgid_with_egid(void); }
+48	OBSOL		ssig
+#ifdef SYSVMSG
+49	STD		{ int svr4_sys_msgsys(int what, int a2, int a3, \
+					      int a4, int a5); }
+#else
+49	UNIMPL		msgsys
+#endif
+50	UNIMPL		sysmips
+51	UNIMPL		acct
+#ifdef SYSVSHM
+52	STD		{ int svr4_sys_shmsys(int what, int a2, int a3, \
+					      int a4); }
+#else
+52	UNIMPL		shmsys
+#endif
+#ifdef SYSVSEM
+53	STD		{ int svr4_sys_semsys(int what, int a2, int a3, \
+					      int a4, int a5); }
+#else
+53	UNIMPL		semsys
+#endif
+54	STD		{ int svr4_sys_ioctl(int fd, u_long com, \
+			    caddr_t data); }
+55	UNIMPL		uadmin
+56	UNIMPL		sysmp
+57	STD		{ int svr4_sys_utssys(void *a1, void *a2, int sel, \
+			    void *a3); }
 58	UNIMPL
-59	UNIMPL
-60	UNIMPL
-61	UNIMPL
-62	UNIMPL
-63	UNIMPL
-64	UNIMPL
-65	UNIMPL
-66	UNIMPL
-67	UNIMPL
-68	UNIMPL
-69	UNIMPL
-70	UNIMPL
-71	UNIMPL
-72	UNIMPL
-73	UNIMPL
-74	UNIMPL
-75	UNIMPL
-76	UNIMPL
-77	UNIMPL
-78	UNIMPL
-79	UNIMPL
-80	UNIMPL
-81	UNIMPL
-82	UNIMPL
-83	UNIMPL
-84	UNIMPL
-85	UNIMPL
-86	UNIMPL
-87	UNIMPL
-88	UNIMPL
-89	UNIMPL
-90	UNIMPL
-91	UNIMPL
-92	UNIMPL
-93	UNIMPL
-94	UNIMPL
-95	UNIMPL
-96	UNIMPL
-97	UNIMPL
-98	UNIMPL
-99	UNIMPL
-100	UNIMPL
-101	UNIMPL
-102	UNIMPL
-103	UNIMPL
-104	UNIMPL
-105	UNIMPL
-106	UNIMPL
-107	UNIMPL
-108	UNIMPL
-109	UNIMPL
-110	UNIMPL
-111	UNIMPL
-112	UNIMPL
-113	UNIMPL
-114	UNIMPL
-115	UNIMPL
-116	UNIMPL
-117	UNIMPL
+59	STD		{ int svr4_sys_execve(const char *path, char **argp, \
+			    char **envp); }
+60	NOARGS		{ int sys_umask(int newmask); }
+61	NOARGS		{ int sys_chroot(char *path); }
+62	STD		{ int svr4_sys_fcntl(int fd, int cmd, char *arg); }
+63	STD		{ long svr4_sys_ulimit(int cmd, long newlimit); }
+64	UNIMPL		reserved for unix/pc
+65	UNIMPL		reserved for unix/pc
+66	UNIMPL		reserved for unix/pc
+67	UNIMPL		reserved for unix/pc
+68	UNIMPL		reserved for unix/pc
+69	UNIMPL		reserved for unix/pc
+70	OBSOL		advfs
+71	OBSOL		unadvfs
+72	OBSOL		rmount
+73	OBSOL		rumount
+74	OBSOL		rfstart
+75	OBSOL		sigret
+76	OBSOL		rdebug
+77	OBSOL		rfstop
+78	UNIMPL		rfsys
+79	NOARGS		{ int sys_rmdir(char *path); }
+80	NOARGS		{ int sys_mkdir(char *path, int mode); }
+81	STD		{ int svr4_sys_getdents(int fd, char *buf, \
+			    int nbytes); }
+82	UNIMPL		sginap
+83	UNIMPL		sgikopt
+84	UNIMPL		sysfs
+85	STD		{ int svr4_sys_getmsg(int fd, struct svr4_strbuf *ctl, \
+			    struct svr4_strbuf *dat, int *flags); }
+86	STD		{ int svr4_sys_putmsg(int fd, struct svr4_strbuf *ctl, \
+			    struct svr4_strbuf *dat, int flags); }
+87	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
+			    int timeout); }
+88	UNIMPL		sigreturn
+89	UNIMPL		accept
+90	UNIMPL		bind
+91	UNIMPL		connect
+92	UNIMPL		sys_gethostid
+93	UNIMPL		getpeername
+94	UNIMPL		getsockname
+95	UNIMPL		getsockopt
+96	UNIMPL		listen
+97	UNIMPL		recv
+98	UNIMPL		recvfrom
+99	UNIMPL		recvmsg
+100	UNIMPL		select
+101	UNIMPL		send
+102	UNIMPL		sendmsg
+103	UNIMPL		sendto
+104	UNIMPL		sys_sethostid
+105	UNIMPL		setsockopt
+106	UNIMPL		shutdown
+107	UNIMPL		socket
+108	UNIMPL		sys_gethostname
+109	UNIMPL		sethostname
+110	UNIMPL		sys_getdomainname
+111	UNIMPL		setdomainname
+112	UNIMPL		truncate
+113	UNIMPL		ftruncate
+114	UNIMPL		rename
+115	UNIMPL		symlink
+116	UNIMPL		readlink
+117	UNIMPL		lstat
 118	UNIMPL
-119	UNIMPL
-120	UNIMPL
-121	UNIMPL
-122	UNIMPL
-123	UNIMPL
-124	UNIMPL
-125	UNIMPL
-126	UNIMPL
-127	UNIMPL
+119	UNIMPL		nfs_svc
+120	UNIMPL		nfs_getfh
+121	UNIMPL		async_daemon
+122	UNIMPL		exportfs
+123	UNIMPL		setregid
+124	UNIMPL		setreuid
+125	UNIMPL		getitimer
+126	UNIMPL		setitimer
+127	UNIMPL		adjtime
+128	UNIMPL		gettimeofday
+129	UNIMPL		sproc
+130	UNIMPL		prctl
+131	UNIMPL		procblk
+132	UNIMPL		sprocsp
+133	UNIMPL		sgigsc
+134	UNIMPL		mmap
+135	UNIMPL		munmap
+136	UNIMPL		mprotect
+137	UNIMPL		msync
+138	UNIMPL		madvise
+139	UNIMPL		pagelock
+140	UNIMPL		getpagesize
+141	UNIMPL		quotactl
+142	UNIMPL
+143	UNIMPL		getpgrp
+144	UNIMPL		vhangup
+145	UNIMPL		fsync
+146	UNIMPL		fchdir
+147	UNIMPL		getrlimit
+148	UNIMPL		setrlimit
+149	UNIMPL
+150	UNIMPL		cacheflush
+151	UNIMPL		cachectl
+152	UNIMPL		fchown
+153	UNIMPL		fchmod
+154	UNIMPL		wait3
+155	UNIMPL		socketpair
+156	UNIMPL		systeminfo
+157	UNIMPL		uname
+158	UNIMPL		xstat
+159	UNIMPL		lxstat
+160	UNIMPL		fxstat
+161	UNIMPL		xmknod
+162	UNIMPL		sigaction
+163	UNIMPL		sigpending
+164	UNIMPL		sigprocmask
+165	UNIMPL		sigsuspend
+166	UNIMPL		sigpoll_sys
+167	UNIMPL		swapctl
+168	UNIMPL		getcontext
+169	UNIMPL		setcontext
+170	UNIMPL		waitsys
+171	UNIMPL		sigstack
+172	UNIMPL		sigaltstack
+173	UNIMPL		sigsendset
+174	UNIMPL		statvfs
+175	UNIMPL		fstatvfs
+176	UNIMPL		getpmsg
+177	UNIMPL		putpmsg
+178	UNIMPL		lchown
+179	UNIMPL		priocntl
+180	UNIMPL		sigqueue
+181	UNIMPL		readv
+182	UNIMPL		writev
+183	UNIMPL		truncate64
+184	UNIMPL		ftruncate64
+185	UNIMPL		mmap64
+186	UNIMPL		dmi
+187	UNIMPL		pread
+188	UNIMPL		pwrite
+189	UNIMPL		fdatasync
+190	UNIMPL		sgifastpath
+191	UNIMPL		attr_get
+192	UNIMPL		attr_getf
+193	UNIMPL		attr_set
+194	UNIMPL		attr_setf
+195	UNIMPL		attr_remove
+196	UNIMPL		attr_removef
+197	UNIMPL		attr_list
+198	UNIMPL		attr_listf
+199	UNIMPL		attr_multi
+200	UNIMPL		attr_multif
+201	UNIMPL		statvfs64
+202	UNIMPL		fstatvfs64
+203	UNIMPL		getmountid
+204	UNIMPL		nsproc
+205	UNIMPL		getdents64
+206	UNIMPL		dfs_XXX
+207	UNIMPL		ngetdents
+208	UNIMPL		ngetdents64
+209	UNIMPL
+210	UNIMPL		pidsprocsp
+211	UNIMPL		rexec
+212	UNIMPL		timer_create
+213	UNIMPL		timer_delete
+214	UNIMPL		timer_settime
+215	UNIMPL		timer_gettime
+216	UNIMPL		timer_setoverrun
+217	UNIMPL		sched_rr_get_interval
+218	UNIMPL		sched_yield
+219	UNIMPL		sched_getscheduler
+220	UNIMPL		sched_setscheduler
+221	UNIMPL		sched_getparam
+222	UNIMPL		sched_setparam
+223	UNIMPL		usync_cntl
+224	UNIMPL		psema_cntl
+225	UNIMPL		restartreturn

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.3 2001/11/26 21:36:24 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.4 2001/11/28 12:00:53 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.3 2001/11/26 21:36:24 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.4 2001/11/28 12:00:53 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -50,10 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.3 2001/11/26 21:36:24 manu Exp $");
 #include <sys/exec_elf.h>
 #include <sys/malloc.h>
 
-#include <sys/syscall.h>
-
 #include <compat/common/compat_util.h>
 
+#include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_exec.h>
 
@@ -61,12 +60,12 @@ static int ELFNAME2(irix,mipsopt_signature) __P((struct proc *,
     struct exec_package *epp, Elf_Ehdr *eh));
 
 extern char sigcode[], esigcode[];
-extern struct sysent sysent[];
+extern struct sysent irix_sysent[];
 
 #ifndef __HAVE_SYSCALL_INTERN
-void syscall __P((void));
+void irix_syscall __P((void));
 #else
-void syscall_intern __P((struct proc *));
+void irix_syscall_intern __P((struct proc *));
 #endif
 
 const struct emul emul_irix = {
@@ -75,12 +74,12 @@ const struct emul emul_irix = {
 #ifndef __HAVE_MINIMAL_EMUL
 	0,
 	0,
-	SYS_syscall,
-	SYS_MAXSYSCALL,
+	IRIX_SYS_syscall,
+	IRIX_SYS_MAXSYSCALL,
 #endif
-	sysent,
+	irix_sysent,
 #ifdef SYSCALL_DEBUG
-	syscallnames,
+	irix_syscallnames,
 #else
 	NULL,
 #endif
@@ -93,9 +92,9 @@ const struct emul emul_irix = {
 	NULL,
 	NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	syscall_intern,
+	irix_syscall_intern,
 #else
-	syscall,
+	irix_syscall,
 #endif
 };
 
