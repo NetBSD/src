@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.42.2.1 2001/09/09 04:15:55 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.42.2.2 2001/09/09 05:34:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -875,6 +875,44 @@ filt_hilread(struct knote *kn, long hint)
 			return (1);
 		}
 	}
+
+	return (0);
+}
+
+static const struct filterops hilread_filtops =
+	{ 1, NULL, filt_hilrdetach, filt_hilread };
+
+static const struct filterops hil_seltrue_filtops =
+	{ 1, NULL, filt_hilrdetach, filt_seltrue };
+
+int
+hilkqfilter(dev_t dev, struct knote *kn)
+{
+	struct hil_softc *hilp = &hil_softc[HILLOOP(dev)];
+	struct hilloopdev *dptr = &hilp->hl_device[HILUNIT(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &dptr->hd_selr.si_klist;
+		kn->kn_fop = &hilread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &dptr->hd_selr.si_klist;
+		kn->kn_fop = &hil_seltrue_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (caddr_t)(u_long) dev; /* XXX yuck */
+
+	s = splhil();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
 
 	return (0);
 }
