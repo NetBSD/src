@@ -1,0 +1,28 @@
+src/gnu/README:			<$Revision: 1.1 $>
+
+This directory hierarchy is using a new organization for
+separating the "stock" GNU sources from the BSD-ized
+build infrastructure.  The "stock" GNU sources are in:
+
+	dist/*
+
+and the above are organized exactly as they are in the
+GNU project's own common source repository.  Original
+sources for the above were imported as follows:
+
+	dist/gdb	FSF gdb-4-16
+	dist/readline	FSF readline-2-1
+	dist/(other)	FSF binutils-2-8
+
+The build infrastructure uses the normal BSD way under:
+
+	lib/*
+	usr.bin/*
+
+The makefiles in the above hierarchy will "reach over"
+into the stock GNU sources for everything they need.
+
+-----
+Working notes:
+
+Imported binutils-2.8, gdb-4.16, readline-2.1  [gwr 970924]
