@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.4 2001/06/26 02:28:51 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.5 2001/09/08 01:32:51 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,13 +97,13 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes:
+.It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tapes, see
 .Xr \&st 4
 . El
-.It Disks:
+.It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar wd#
 ``winchester'' disk drives (ST506,IDE,ESDI,RLL,...), see
@@ -129,26 +129,26 @@ Contatenated disk devices, see
 RAIDframe disk devices, see
 .Xr \&raid 4
 . El
-.It Console ports:
+.It Console ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttyv0
 Pccons
 . It Ar ttyE#
 Wscons
 . El
-.It Pointing devices:
+.It Pointing devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar wsmouse#
 Wscons mouse events, see
 .Xr \&wsmouse 4
 . El
-.It Keyboard devices:
+.It Keyboard devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar wskbd#
 Wscons keyboard events, see
 .Xr \&wskbd 4
 . El
-.It Terminal ports:
+.It Terminal ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar tty#
 Alias for PC COM ports, this is what the system really wants, see
@@ -156,18 +156,18 @@ Alias for PC COM ports, this is what the system really wants, see
 . It Ar ttyCY#
 Cyclom-Y multiport serial boards. Each ``unit'' makes 32 ports.
 . El
-.It Pseudo terminals:
+.It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
 . El
-.It Printers:
+.It Printers :
 . Bl -tag -width 0123456789 -compact
 . It Ar lpt#
 Stock lp
 . El
-.It ISDN devices:
+.It ISDN devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar i4b
 Comunication between userland isdnd and kernel
@@ -180,7 +180,7 @@ Telephonie device
 . It Ar i4btrc#
 Trace device
 . El
-.It Special purpose devices:
+.It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar fd
 File descriptors

@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.7 2001/06/26 02:28:50 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.8 2001/09/08 01:32:46 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,13 +93,13 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes:
+.It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tapes, see
 .Xr \&st 4
 . El
-.It Disks:
+.It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar sd#
 SCSI disks, see
@@ -120,19 +120,19 @@ Contatenated disk devices, see
 RAIDframe disk devices, see
 .Xr \&raid 4
 . El
-.It Serial ports:
+.It Serial ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar tty#
 Onboard serial ports. On the mvme147 these are: ttyZ1, ttyZ2 and ttyZ3. On the mvme167, and '177: ttyC1, ttyC2 and ttyC3. Note that tty[CZ]0 is grabbed by the console device so is not created by default, see
 .Xr \&tty 4
 . El
-.It Pseudo terminals:
+.It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
 . El
-.It Printers:
+.It Printers :
 . Bl -tag -width 0123456789 -compact
 . It Ar lpt#
 Stock lp, see
@@ -140,7 +140,7 @@ Stock lp, see
 . It Ar lpa#
 Interruptless lp
 . El
-.It Special purpose devices:
+.It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar fd
 File descriptors

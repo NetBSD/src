@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.7 2001/06/26 02:28:47 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.8 2001/09/08 01:32:38 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -101,13 +101,13 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes:
+.It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tape, see
 .Xr \&st 4
 . El
-.It Disks:
+.It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar ccd#
 Concatenated disk driver, see
@@ -133,7 +133,7 @@ IDE disks, see
 . It Ar fd#
 PC-style floppy disks
 . El
-.It Terminals:
+.It Terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttyC?
 Pccons
@@ -143,18 +143,18 @@ Workstation console (``wscons'') glass-tty emulators
 NS16550 (``com'') serial ports, see
 .Xr \&tty 4
 . El
-.It Pseudo terminals:
+.It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
 . El
-.It Printers:
+.It Printers :
 . Bl -tag -width 0123456789 -compact
 . It Ar lpt#
 PC parallel port driver (``lpt'') units
 . El
-.It ISDN devices:
+.It ISDN devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar i4b
 Comunication between userland isdnd and kernel
@@ -167,7 +167,7 @@ Telephonie device
 . It Ar i4btrc#
 Trace device
 . El
-.It Special purpose devices:
+.It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar bpf#
 Berkeley packet filter devices, see

@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.12 2001/06/26 02:28:47 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.13 2001/09/08 01:32:36 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,13 +103,13 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes:
+.It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tape, see
 .Xr \&st 4
 . El
-.It Disks:
+.It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar ccd#
 Concatenated disk driver, see
@@ -138,7 +138,7 @@ IDE disks, see
 . It Ar fd#
 PC-style floppy disks
 . El
-.It Terminals:
+.It Terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttyB?
 DEC 3000 ZS8530 (``scc'') serial ports
@@ -151,20 +151,20 @@ Cyclades-Z multiport serial boards. Each ``unit'' makes 64 ports.
 . It Ar ttyCY#
 Cyclom-Y multiport serial boards. Each ``unit'' makes 32 ports.
 . El
-.It Pseudo terminals:
+.It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
 . El
-.It Printers:
+.It Printers :
 . Bl -tag -width 0123456789 -compact
 . It Ar lpt#
 PC parallel port driver (``lpt'') units
 . It Ar lpa#
 Polled PC parallel port driver (``lpt'') units
 . El
-.It USB devices:
+.It USB devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar usb#
 Bus control devices used by usbd for attach/detach, see
@@ -187,7 +187,7 @@ Scanners, see
 . It Ar ttyU#
 Modem
 . El
-.It ISDN devices:
+.It ISDN devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar i4b
 Comunication between userland isdnd and kernel
@@ -200,7 +200,7 @@ Telephonie device
 . It Ar i4btrc#
 Trace device
 . El
-.It Special purpose devices:
+.It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar audio#
 Audio devices, see
