@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.8 2002/09/10 12:33:44 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.9 2002/10/02 08:13:09 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -214,9 +214,6 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 
 	/* Restore signal mask. */
 	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
-
-	/* Flag "no error" to the syscall stub  */
-	tf->tf_caller.r0 = 0;
 
 	return (EJUSTRETURN);
 }
