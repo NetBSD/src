@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.92 2002/05/14 10:27:29 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.93 2002/05/19 08:12:55 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -676,6 +676,7 @@ privilege may change the value.
 .It PF\_ROUTE	routing messages	no
 .It PF\_INET	IPv4 values	yes
 .It PF\_INET6	IPv6 values	yes
+.It PF\_KEY	IPsec key management values	yes
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -1168,6 +1169,67 @@ Please refer to
 section above.
 For variables net.*.ipsec6, please refer to
 .Xr ipsec 4 .
+.It Li PF_KEY
+Get or set various global information about the IPsec key management.
+The third level name is the variable name.
+The currently defined variable and names are:
+.Bl -column "blockacq_lifetime" "integer" "yes" -offset indent
+.It Pa Variable name	Type	Changeable
+.It debug	integer	yes
+.It spi_try	integer	yes
+.It spi_min_value	integer	yes
+.It spi_max_value	integer	yes
+.It random_int	integer	yes
+.It larval_lifetime	integer	yes
+.It blockacq_count	integer	yes
+.It blockacq_lifetime	integer	yes
+.It esp_keymin	integer	yes
+.It esp_auth	integer	yes
+.It ah_keymin	integer	yes
+.El
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Li debug
+Turn on debugging message from within the kernel.
+The value is a bitmap, as defined in
+.Pa /usr/include/netkey/key_debug.h .
+.It Li spi_try
+The number of times the kernel will try to obtain an unique SPI
+when it generates it from random number generator.
+.It Li spi_min_value
+Minimum SPI value when generating it within the kernel.
+.It Li spi_max_value
+Maximum SPI value when generating it within the kernel.
+.It Li random_int
+Interval to stir pseudo-random number generator, in seconds.
+Pseudo-random number generator is used only as a last resort when
+random number source
+.Pq Pa /dev/urandom
+is not available.
+It should not really be used, and if it were used,
+kernel will warn about it.
+.It Li larval_lifetime
+Lifetime for LARVAL SAD entries, in seconds.
+.It Li blockacq_count
+Number of ACQUIRE PF_KEY messages to be blocked after an ACQUIRE message.
+It avoids flood of ACQUIRE PF_KEY from being sent from the kernel to the
+key management daemon.
+.It Li blockacq_lifetime
+Lifetime of ACQUIRE PF_KEY message.
+.It Li esp_keymin
+Minimum ESP key length, in bits.
+The value is used when the kernel creates proposal payload
+on ACQUIRE PF_KEY message.
+.It Li esp_auth
+Whether ESP authentication should be used or not.
+Non-zero value indicates that ESP authentication should be used.
+The value is used when the kernel creates proposal payload
+on ACQUIRE PF_KEY message.
+.It Li ah_keymin
+Minimum AH key length, in bits, 
+The value is used when the kernel creates proposal payload
+on ACQUIRE PF_KEY message.
+.El
 .El
 .Sh CTL_PROC
 The string and integer information available for the CTL_PROC
@@ -1470,6 +1532,8 @@ definitions for fourth level UDP identifiers
 definitions for fourth level IPv6 UDP identifiers
 .It Pa Aq netinet6/ipsec.h
 definitions for fourth level IPsec identifiers
+.It Pa Aq netkey/key_var.h
+definitions for third level PF_KEY identifiers
 .El
 .Sh ERRORS
 The following errors may be reported:
