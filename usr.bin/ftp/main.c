@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.40 1999/03/31 02:00:42 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.40.2.1 1999/06/22 21:03:02 perry Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.40 1999/03/31 02:00:42 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.40.2.1 1999/06/22 21:03:02 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,7 +164,7 @@ main(argc, argv)
 	if (gatemode) {
 		if (*gateserver == '\0') {
 			warnx(
-"Neither $FTPSERVER nor $GATE_SERVER is defined; disabling gate-ftp");
+"Neither $FTPSERVER nor GATE_SERVER is defined; disabling gate-ftp");
 			gatemode = 0;
 		}
 	}
@@ -177,10 +177,11 @@ main(argc, argv)
 	fromatty = isatty(fileno(stdin));
 	ttyout = stdout;
 	if (isatty(fileno(ttyout))) {
-		verbose = 1;		/* verbose if from a tty */
+		verbose = 1;		/* verbose if to a tty */
 #ifndef SMALL
 		if (! dumbterm) {
-			editing = 1;	/* editing mode on if tty is usable */
+			if (fromatty)	/* editing mode on if tty is usable */
+				editing = 1;
 			if (foregroundproc())
 				progress = 1;	/* progress bar on if fg */
 		}
