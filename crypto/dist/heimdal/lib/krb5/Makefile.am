@@ -1,5 +1,5 @@
-# $Heimdal: Makefile.am,v 1.147 2002/09/03 14:45:13 joda Exp $
-# $NetBSD: Makefile.am,v 1.1.1.6 2002/09/12 12:41:40 joda Exp $
+# $Heimdal: Makefile.am,v 1.156.2.1 2003/05/12 15:20:47 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.7 2003/05/15 20:28:47 lha Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -7,14 +7,16 @@ INCLUDES += $(INCLUDE_krb4) $(INCLUDE_des) -I../com_err -I$(srcdir)/../com_err
 
 bin_PROGRAMS = verify_krb5_conf
 
-noinst_PROGRAMS = dump_config test_get_addrs krbhst-test
+noinst_PROGRAMS = dump_config test_get_addrs krbhst-test test_alname
 
 TESTS =						\
+	aes-test				\
 	n-fold-test				\
 	string-to-key-test			\
 	derived-key-test			\
 	store-test				\
 	parse-name-test				\
+	test_cc					\
 	name-45-test
 
 check_PROGRAMS = $(TESTS)
@@ -131,7 +133,7 @@ libkrb5_la_SOURCES =				\
 	write_message.c				\
 	$(ERR_FILES)
 
-libkrb5_la_LDFLAGS = -version-info 18:3:1
+libkrb5_la_LDFLAGS = -version-info 19:0:2
 
 $(libkrb5_la_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h
 
@@ -148,13 +150,17 @@ man_MANS =					\
 	krb5.3					\
 	krb5.conf.5				\
 	krb5_425_conv_principal.3		\
+	krb5_address.3				\
+	krb5_aname_to_localname.3		\
 	krb5_appdefault.3			\
 	krb5_auth_context.3			\
 	krb5_build_principal.3			\
+	krb5_ccache.3				\
 	krb5_config.3				\
 	krb5_context.3				\
 	krb5_create_checksum.3			\
 	krb5_crypto_init.3			\
+	krb5_data.3				\
 	krb5_encrypt.3				\
 	krb5_free_addresses.3			\
 	krb5_free_principal.3			\
@@ -163,9 +169,11 @@ man_MANS =					\
 	krb5_init_context.3			\
 	krb5_keytab.3				\
 	krb5_krbhst_init.3			\
+	krb5_kuserok.3				\
 	krb5_openlog.3				\
 	krb5_parse_name.3			\
 	krb5_principal_get_realm.3		\
+	krb5_set_default_realm.3		\
 	krb5_sname_to_principal.3		\
 	krb5_timeofday.3			\
 	krb5_unparse_name.3			\

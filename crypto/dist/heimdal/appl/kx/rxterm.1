@@ -1,7 +1,38 @@
-.\" $Heimdal: rxterm.1,v 1.8 2002/08/20 17:07:06 joda Exp $
-.\" $NetBSD: rxterm.1,v 1.1.1.4 2002/09/12 12:41:34 joda Exp $
+.\" Copyright (c) 1996 - 1997, 2001 - 2003 Kungliga Tekniska Högskolan
+.\" (Royal Institute of Technology, Stockholm, Sweden). 
+.\" All rights reserved. 
 .\"
-.Dd September 27, 1996
+.\" Redistribution and use in source and binary forms, with or without 
+.\" modification, are permitted provided that the following conditions 
+.\" are met: 
+.\"
+.\" 1. Redistributions of source code must retain the above copyright 
+.\"    notice, this list of conditions and the following disclaimer. 
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright 
+.\"    notice, this list of conditions and the following disclaimer in the 
+.\"    documentation and/or other materials provided with the distribution. 
+.\"
+.\" 3. Neither the name of the Institute nor the names of its contributors 
+.\"    may be used to endorse or promote products derived from this software 
+.\"    without specific prior written permission. 
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+.\" SUCH DAMAGE. 
+.\" 
+.\" $Heimdal: rxterm.1,v 1.10 2003/04/11 12:50:03 lha Exp $
+.\" $NetBSD: rxterm.1,v 1.1.1.5 2003/05/15 20:28:43 lha Exp $
+.\"
+.Dd April 11, 2003
 .Dt RXTERM 1
 .Os KTH_KRB
 .Sh NAME
@@ -22,12 +53,12 @@ start a secure remote xterm
 .Sh DESCRIPTION
 The
 .Nm
-program starts a
+program starts an
 .Nm xterm
 window on host
 .Ar host .
 From this window you will also be able to run X clients that will be
-able to connect securily to your X server. If
+able to connect securely to your X server. If
 .Ar port
 is given, that port will be used instead of the default.
 .Pp
@@ -35,24 +66,24 @@ The supported options are:
 .Bl -tag -width Ds
 .It Fl l
 Log in on the remote host as user
-.Ar username
+.Ar username .
 .It Fl k
-Disable keep-alives
+Disable keep-alives.
 .It Fl r
 Send
 .Ar rsh_args
 as arguments to
-.Nm rsh
+.Nm rsh .
 .It Fl x
 Send
 .Ar xterm_args
 as arguments to
-.Nm xterm
+.Nm xterm .
 .It Fl X
 Send
 .Ar kx_args
 as arguments to
-.Nm kx
+.Nm kx .
 .It Fl w
 Use
 .Ar term_emulator

@@ -1,5 +1,5 @@
-# $Heimdal: Makefile.am,v 1.53 2002/08/19 16:17:16 joda Exp $
-# $NetBSD: Makefile.am,v 1.1.1.6 2002/09/12 12:41:40 joda Exp $
+# $Heimdal: Makefile.am,v 1.53.4.1 2003/05/12 15:20:46 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.7 2003/05/15 20:28:46 lha Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -21,7 +21,7 @@ LDADD = libhdb.la \
 	$(LIB_roken)
 
 lib_LTLIBRARIES = libhdb.la
-libhdb_la_LDFLAGS = -version-info 7:5:0
+libhdb_la_LDFLAGS = -version-info 7:6:0
 
 libhdb_la_SOURCES =				\
 	common.c				\

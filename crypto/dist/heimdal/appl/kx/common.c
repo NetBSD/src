@@ -33,8 +33,8 @@
 
 #include "kx.h"
 
-__RCSID("$Heimdal: common.c,v 1.66 2002/08/22 16:23:28 joda Exp $"
-        "$NetBSD: common.c,v 1.1.1.6 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: common.c,v 1.68 2003/04/16 16:45:39 joda Exp $"
+        "$NetBSD: common.c,v 1.1.1.7 2003/05/15 20:28:43 lha Exp $");
 
 char x_socket[MaxPathLen];
 
@@ -406,11 +406,9 @@ create_and_write_cookie (char *xauthfile,
      int fd;
      FILE *f;
      char hostname[MaxHostNameLen];
-     struct in_addr loopback;
      int saved_errno;
 
      gethostname (hostname, sizeof(hostname));
-     loopback.s_addr = htonl(INADDR_LOOPBACK);
      
      auth.family = FamilyLocal;
      auth.address = hostname;
@@ -455,11 +453,6 @@ create_and_write_cookie (char *xauthfile,
 
      auth.family  = FamilyWild;
      auth.address_length = 0;
-
-#if 0 /* XXX */
-     auth.address = (char *)&loopback;
-     auth.address_length = sizeof(loopback);
-#endif
 
      if (XauWriteAuth(f, &auth) == 0) {
 	 saved_errno = errno;
@@ -755,17 +748,29 @@ replace_cookie(int xserver, int fd, char *filename, int cookiesp) /* XXX */
  */
 
 int
-suspicious_address (int sock, struct sockaddr_in addr)
+suspicious_address (int sock, struct sockaddr *addr)
 {
     char data[40];
     socklen_t len = sizeof(data);
 
-    return addr.sin_addr.s_addr != htonl(INADDR_LOOPBACK)
+    switch (addr->sa_family) {
+    case AF_INET:
+	return ((struct sockaddr_in *)addr)->sin_addr.s_addr != 
+	    htonl(INADDR_LOOPBACK)
 #if defined(IP_OPTIONS) && defined(HAVE_GETSOCKOPT)
-	|| getsockopt (sock, IPPROTO_IP, IP_OPTIONS, data, &len) < 0
-	|| len != 0
+	    || getsockopt (sock, IPPROTO_IP, IP_OPTIONS, data, &len) < 0
+	    || len != 0
 #endif
-    ;
+	    ;
+	break;
+#ifdef HAVE_IPV6
+    case AF_INET6:
+	/* XXX check route headers */
+	return !IN6_IS_ADDR_LOOPBACK(&((struct sockaddr_in6*)addr)->sin6_addr);
+#endif
+    default:
+	return 1;
+    }
 }
 
 /*
