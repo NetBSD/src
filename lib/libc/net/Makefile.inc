@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.43 1999/07/01 18:23:53 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.44 1999/09/15 14:21:02 kleink Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -13,7 +13,7 @@ SRCS+=	base64.c ethers.c gethnamaddr.c getnetnamadr.c getnetent.c getproto.c \
 	rcmd.c recv.c res_comp.c res_data.c res_debug.c res_init.c \
 	res_mkquery.c res_query.c res_send.c send.c sethostent.c
 
-SRCS+=	__dn_comp.c __res_close.c __res_send.c
+SRCS+=	__dn_comp.c __res_close.c __res_send.c _inet_aton.c _inet_pton.c
 CPPFLAGS+=-DRESOLVSORT -I.
 
 # IPv6
