@@ -1,9 +1,12 @@
 /*
- *	$Id: version.c,v 1.18 1994/02/04 16:08:55 mycroft Exp $
+ *	$Id: version.c,v 1.19 1994/03/30 11:19:28 cgd Exp $
  */
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
+ *
+ *	1.18 -> 1.19
+ *		add a '-r' option, to specify RB_DFLTROOT
  *
  *	1.17 -> 1.18
  *		removed some more code we don't need for BDB. (mycroft)
@@ -23,4 +26,4 @@
  *		look in boot.c revision logs
  */
 
-char *version = "$Revision: 1.18 $";
+char *version = "$Revision: 1.19 $";
