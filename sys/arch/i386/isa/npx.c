@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.70 1999/10/06 20:03:51 fvdl Exp $	*/
+/*	$NetBSD: npx.c,v 1.70.8.1 2000/02/20 18:18:29 sommerfeld Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -471,7 +471,7 @@ npxdna(p)
 	}
 
 #ifdef DIAGNOSTIC
-	if (cpl != 0 || npx_nointr != 0)
+	if (lapic_tpr > 0 || npx_nointr != 0)
 		panic("npxdna: masked");
 #endif
 
@@ -545,7 +545,7 @@ npxsave()
 {
 
 #ifdef DIAGNOSTIC
-	if (cpl != 0 || npx_nointr != 0)
+	if (lapic_tpr > 0 || npx_nointr != 0)
 		panic("npxsave: masked");
 #endif
 	IPRINTF(("Fork"));
