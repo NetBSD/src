@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.11 2001/06/22 01:29:26 toshii Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.12 2001/06/29 16:58:55 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -193,7 +193,7 @@ sa11x0_attach(parent, self, aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search(sa11x0_search, self, sa11x0_print);
+	config_search(sa11x0_search, self, NULL);
 }
 
 int
