@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.100 2000/09/13 01:53:01 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.101 2000/09/16 00:04:57 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.100 2000/09/13 01:53:01 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.101 2000/09/16 00:04:57 chuck Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -94,7 +94,7 @@ static void	mips1_vector_init __P((void));
 #endif
 
 #ifdef MIPS3
-static void	mips3_vector_init __P((void));
+static void	mips3_vector_init __P((int));
 #endif
 
 mips_locore_jumpvec_t mips_locore_jumpvec;
@@ -210,18 +210,19 @@ mips_locore_jumpvec_t mips3_locore_vec =
  *----------------------------------------------------------------------------
  */
 void
-mips3_ConfigCache()
+mips3_ConfigCache(mips3_csizebase)
+	int mips3_csizebase;
 {
 	u_int32_t config = mips3_read_config();
 	static int snoop_check = 0;
 	int i;
 
 	mips_L1ICacheSize = MIPS3_CONFIG_CACHE_SIZE(config,
-	    MIPS3_CONFIG_IC_MASK, MIPS3_CONFIG_IC_SHIFT);
+	    MIPS3_CONFIG_IC_MASK, mips3_csizebase, MIPS3_CONFIG_IC_SHIFT);
 	mips_L1ICacheLSize = MIPS3_CONFIG_CACHE_L1_LSIZE(config,
 	    MIPS3_CONFIG_IB);
 	mips_L1DCacheSize = MIPS3_CONFIG_CACHE_SIZE(config,
-	    MIPS3_CONFIG_DC_MASK, MIPS3_CONFIG_DC_SHIFT);
+	    MIPS3_CONFIG_DC_MASK, mips3_csizebase, MIPS3_CONFIG_DC_SHIFT);
 	mips_L1DCacheLSize = MIPS3_CONFIG_CACHE_L1_LSIZE(config,
 	    MIPS3_CONFIG_DB);
 
@@ -252,7 +253,8 @@ mips3_ConfigCache()
 }
 
 static void
-mips3_vector_init()
+mips3_vector_init(mips3_csizebase)
+	int mips3_csizebase;
 {
 
 	/* r4000 exception handler address and end */
@@ -289,7 +291,7 @@ mips3_vector_init()
 	/*
 	 * Clear out the I and D caches.
 	 */
-	mips3_ConfigCache();
+	mips3_ConfigCache(mips3_csizebase);
 
 #ifdef pmax		/* XXX */
 	mips_L2CachePresent = 1;
@@ -336,6 +338,9 @@ mips3_vector_init()
 void
 mips_vector_init()
 {
+#ifdef MIPS3
+	int mips3_csizebase = MIPS3_CONFIG_C_DEFBASE;
+#endif
 
 	/*
 	 * Copy exception-dispatch code down to exception vector.
@@ -417,6 +422,23 @@ mips_vector_init()
 		mips_num_tlb_entries = 64;
 		mips3_L1TwoWayCache = 1;
 		break;
+#if 0	/* not ready yet */
+	case MIPS_RC32364:
+		/* 
+		 * the IDT RC32364 core is a 32 bit MIPS2 processor with
+		 * MIPS3/MIPS4 extensions (e.g. it has an R4000-style TLB).
+		 * all registers are 32 bits (64 bit instructions like
+		 * ld/sd/dmfc0/dmtc0 are not allowed.
+		 * 
+		 * note that the Config register has a non-standard base
+		 * for IC and DC (2^9 instead of 2^12).
+		 */
+		cpu_arch = 3;
+		mips_num_tlb_entries = 16;  /* each entry maps 2 pages */
+		mips3_L1TwoWayCache = 1;    /* note: line size is 16bytes */
+		mips3_csizebase = 0x200;    /* non-standard base in Config */
+		break;
+#endif
 #endif /* MIPS3 */
 
 	default:
@@ -443,7 +465,7 @@ mips_vector_init()
 			mips3_locore_vec.flushDCache = mips3_FlushDCache_2way;
 			mips3_locore_vec.flushICache = mips3_FlushICache_2way;
 		}
-		mips3_vector_init();
+		mips3_vector_init(mips3_csizebase);
 		memcpy(mips_locoresw, mips3_locoresw, sizeof(mips_locoresw));
 		break;
 #endif
