@@ -1,4 +1,4 @@
-/*	$NetBSD: iso2022.h,v 1.2 2000/12/21 12:17:35 itojun Exp $	*/
+/*	$NetBSD: iso2022.h,v 1.3 2000/12/28 05:22:27 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -33,8 +33,8 @@ typedef struct {
 #define	CS96		(1U)
 #define	CS94MULTI	(2U)
 #define	CS96MULTI	(3U)
-	u_char	type,
-		final,
-		interm,
-		vers;
+	u_char	type;
+	u_char	final;
+	u_char	interm;
+	u_char	vers;
 } _Iso2022Charset;

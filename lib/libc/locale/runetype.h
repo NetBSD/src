@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.2 2000/12/21 11:29:47 itojun Exp $	*/
+/*	$NetBSD: runetype.h,v 1.3 2000/12/28 05:22:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -182,8 +182,10 @@ typedef struct _RuneState {
 } _RuneState;
 
 
-typedef rune_t		(*__rune_sgetrune_t) __P((struct _RuneLocale *, const char *, size_t, char const **, void *));
-typedef int		(*__rune_sputrune_t) __P((struct _RuneLocale *, rune_t, char *, size_t, char **, void *));
+typedef size_t (*__rune_mbrtowc_t) __P((struct _RuneLocale *, rune_t *,
+	const char *, size_t, void *));
+typedef size_t (*__rune_wcrtomb_t) __P((struct _RuneLocale *, char *, size_t,
+	const rune_t, void *));
 
 typedef struct _RuneLocale {
 	/*
@@ -209,8 +211,8 @@ typedef struct _RuneLocale {
 	/*
 	 * the following portion is generated on the fly
 	 */
-	__rune_sgetrune_t __rune_sgetrune;
-	__rune_sputrune_t __rune_sputrune;
+	__rune_mbrtowc_t __rune_mbrtowc;
+	__rune_wcrtomb_t __rune_wcrtomb;
 
 	struct _RuneState  *__rune_RuneState;
 	size_t		__rune_mb_cur_max;

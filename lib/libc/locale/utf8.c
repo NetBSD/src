@@ -1,4 +1,4 @@
-/*	$NetBSD: utf8.c,v 1.3 2000/12/21 12:21:38 itojun Exp $	*/
+/*	$NetBSD: utf8.c,v 1.4 2000/12/28 05:22:27 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)utf2.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utf8.c,v 1.3 2000/12/21 12:21:38 itojun Exp $");
+__RCSID("$NetBSD: utf8.c,v 1.4 2000/12/28 05:22:27 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,16 +83,26 @@ __RCSID("$NetBSD: utf8.c,v 1.3 2000/12/21 12:21:38 itojun Exp $");
 
 int _UTF8_init __P((_RuneLocale *));
 static int findlen __P((rune_t));
-rune_t	_UTF8_sgetrune __P((_RuneLocale *, const char *, size_t, char const **, void *));
-int	_UTF8_sputrune __P((_RuneLocale *, rune_t, char *, size_t, char **, void *));
+size_t _UTF8_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *, size_t,
+	void *));
+size_t _UTF8_wcrtomb __P((struct _RuneLocale *, char *, size_t, const rune_t,
+	void *));
+void _UTF8_initstate __P((_RuneLocale *, void *));
+void _UTF8_packstate __P((_RuneLocale *, mbstate_t *, void *));
+void _UTF8_unpackstate __P((_RuneLocale *, void *, const mbstate_t *));
 
 static int _utf_count[256];
 
+typedef struct {
+	char ch[6];
+	int chlen;
+} _UTF8State;
+
 static _RuneState _UTF8_RuneState = {
-	0,		/* sizestate */
-	NULL,		/* initstate */
-	NULL,		/* packstate */
-	NULL		/* unpackstate */
+	sizeof(_UTF8State),		/* sizestate */
+	_UTF8_initstate,		/* initstate */
+	_UTF8_packstate,		/* packstate */
+	_UTF8_unpackstate		/* unpackstate */
 };
 
 static u_int32_t _UTF8_range[] = {
@@ -107,8 +117,12 @@ _UTF8_init(rl)
 {
 	int i;
 
-	rl->__rune_sgetrune = _UTF8_sgetrune;
-	rl->__rune_sputrune = _UTF8_sputrune;
+	/* sanity check to avoid overruns */
+	if (sizeof(_UTF8State) > sizeof(mbstate_t))
+		return (EINVAL);
+
+	rl->__rune_mbrtowc = _UTF8_mbrtowc;
+	rl->__rune_wcrtomb = _UTF8_wcrtomb;
 
 	rl->__rune_RuneState = &_UTF8_RuneState;
 	rl->__rune_mb_cur_max = 6;
@@ -144,97 +158,157 @@ findlen(v)
 	return -1;	/*out of range*/
 }
 
-rune_t
-_UTF8_sgetrune(rl, string, n, result, state)
+/* s is non-null */
+size_t
+_UTF8_mbrtowc(rl, pwcs, s, n, state)
 	_RuneLocale *rl;
-	const char *string;
+	rune_t *pwcs;
+	const char *s;
 	size_t n;
-	char const **result;
 	void *state;
 {
+	_UTF8State *ps;
+	rune_t rune;
 	int c;
 	int i;
-	rune_t v;
 
-	if (n < 1 || (c = _utf_count[*(u_int8_t *)string]) > n) {
-		if (result)
-			*result = string;
-		return (___INVALID_RUNE(rl));
+	ps = state;
+
+	/* make sure we have the first byte in the buffer */
+	switch (ps->chlen) {
+	case 0:
+		if (n < 1)
+			return (size_t)-2;
+		ps->ch[0] = *s++;
+		ps->chlen = 1;
+		n--;
+		break;
+	case 1: case 2: case 3: case 4: case 5:
+		break;
+	default:
+		/* illegal state */
+		goto encoding_error;
 	}
+
+	c = _utf_count[ps->ch[0] & 0xff];
+	if (c == 0)
+		goto encoding_error;
+	while (ps->chlen < c) {
+		if (n < 1)
+			return (size_t)-2;
+		ps->ch[ps->chlen] = *s++;
+		ps->chlen++;
+		n--;
+	}
+
 	switch (c) {
 	case 1:
-		if (result)
-			*result = string + 1;
-		return (*string & 0xff);
-	case 2:
-	case 3:
-	case 4:
-	case 5:
-	case 6:
-		v = string[0] & (0x7f >> c);
+		rune = ps->ch[0] & 0xff;
+		break;
+	case 2: case 3: case 4: case 5: case 6:
+		rune = ps->ch[0] & (0x7f >> c);
 		for (i = 1; i < c; i++) {
-			if ((string[i] & 0xC0) != 0x80)
+			if ((ps->ch[i] & 0xc0) != 0x80)
 				goto encoding_error;
-			v <<= 6;
-			v |= (string[i] & 0x3f);
+			rune <<= 6;
+			rune |= (ps->ch[i] & 0x3f);
 		}
 
 #if 1	/* should we do it?  utf2.c does not reject redundant encodings */
-		/* sanity check on value range */
-		i = findlen(v);
+		i = findlen(rune);
 		if (i != c)
 			goto encoding_error;
 #endif
 
-		if (result)
-			*result = string + c;
-		return v;
-	default:
-encoding_error:	if (result)
-			*result = string + 1;
-		return (___INVALID_RUNE(rl));
+		break;
 	}
+
+	ps->chlen = 0;
+	if (pwcs)
+		*pwcs = rune;
+	if (!rune)
+		return 0;
+	else
+		return c;
+
+encoding_error:
+	ps->chlen = 0;
+	return (size_t)-1;
 }
 
-int
-_UTF8_sputrune(rl, c, string, n, result, state)
-	_RuneLocale *rl;
-	rune_t c;
-	char *string, **result;
+/* s is non-null */
+size_t
+_UTF8_wcrtomb(rl, s, n, wc, state)
+        _RuneLocale *rl;
+        char *s;
 	size_t n;
-	void *state;
+        const rune_t wc;
+        void *state;
 {
-	int cnt;
-	int i;
+	int cnt, i;
+	rune_t c;
 
-	cnt = findlen(c);
-
+	cnt = findlen(wc);
 	if (cnt <= 0 || cnt > 6) {
 		/* invalid UCS4 value */
-		if (result)
-			*result = NULL;
-		return 0;
+		errno = EILSEQ;
+		return (size_t)-1;
+	}
+	if (n < cnt) {
+		/* bound check failure */
+		errno = EILSEQ;	/*XXX*/
+		return (size_t)-1;
 	}
 
-	if (n >= cnt) {
-		if (string) {
-			for (i = cnt - 1; i > 0; i--) {
-				string[i] = 0x80 | (c & 0x3f);
-				c >>= 6;
-			}
-			string[0] = c;
-			if (cnt == 1)
-				string[0] &= 0x7f;
-			else {
-				string[0] &= (0x7f >> cnt);
-				string[0] |= ((0xff00 >> cnt) & 0xff);
-			}
+	c = wc;
+	if (s) {
+		for (i = cnt - 1; i > 0; i--) {
+			s[i] = 0x80 | (c & 0x3f);
+			c >>= 6;
 		}
-		if (result)
-			*result = string + cnt;
-	} else
-		if (result)
-			*result = NULL;
+		s[0] = c;
+		if (cnt == 1)
+			s[0] &= 0x7f;
+		else {
+			s[0] &= (0x7f >> cnt);
+			s[0] |= ((0xff00 >> cnt) & 0xff);
+		}
+	}
 
 	return cnt;
+}
+
+void
+_UTF8_initstate(rl, s)
+	_RuneLocale *rl;
+	void *s;
+{
+	_UTF8State *state;
+
+	if (!s)
+		return;
+	state = s;
+	memset(state, 0, sizeof(_UTF8State));
+}
+
+void
+_UTF8_packstate(rl, dst, src)
+	_RuneLocale *rl;
+	mbstate_t *dst;
+	void* src;
+{
+
+	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_UTF8State));
+	return;
+}
+
+void
+_UTF8_unpackstate(rl, dst, src)
+	_RuneLocale *rl;
+	void* dst;
+	const mbstate_t *src;
+{
+
+	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_UTF8State));
+	return;
 }

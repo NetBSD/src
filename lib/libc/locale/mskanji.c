@@ -1,4 +1,4 @@
-/*	$NetBSD: mskanji.c,v 1.2 2000/12/21 12:17:35 itojun Exp $	*/
+/*	$NetBSD: mskanji.c,v 1.3 2000/12/28 05:22:27 itojun Exp $	*/
 
 /*
  *    ja_JP.SJIS locale table for BSD4.4/rune
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mskanji.c	1.0 (Phase One) 5/5/95";
 #else
-__RCSID("$NetBSD: mskanji.c,v 1.2 2000/12/21 12:17:35 itojun Exp $");
+__RCSID("$NetBSD: mskanji.c,v 1.3 2000/12/28 05:22:27 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,23 +50,62 @@ __RCSID("$NetBSD: mskanji.c,v 1.2 2000/12/21 12:17:35 itojun Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 
+static int _mskanji1 __P((int));
+static int _mskanji2 __P((int));
 int _MSKanji_init __P((_RuneLocale *));
-rune_t	_MSKanji_sgetrune __P((_RuneLocale *, const char *, size_t, char const **, void *));
-int	_MSKanji_sputrune __P((_RuneLocale *, rune_t, char *, size_t, char **, void *));
+size_t _MSKanji_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *,
+	size_t, void *));
+size_t _MSKanji_wcrtomb __P((struct _RuneLocale *, char *, size_t,
+	const rune_t, void *));
+void _MSKanji_initstate __P((_RuneLocale *, void *));
+void _MSKanji_packstate __P((_RuneLocale *, mbstate_t *, void *));
+void _MSKanji_unpackstate __P((_RuneLocale *, void *, const mbstate_t *));
+
+typedef struct {
+	char ch[2];
+	int chlen;
+} _MSKanjiState;
 
 static _RuneState _MSKanji_RuneState = {
-	0,		/* sizestate */
-	NULL,		/* initstate */
-	NULL,		/* packstate */
-	NULL		/* unpackstate */
+	sizeof(_MSKanjiState),		/* sizestate */
+	_MSKanji_initstate,		/* initstate */
+	_MSKanji_packstate,		/* packstate */
+	_MSKanji_unpackstate		/* unpackstate */
 };
+
+static int
+_mskanji1(c)
+	int c;
+{
+
+	if ((c >= 0x81 && c <= 0x9f) || (c >= 0xe0 && c <= 0xef))
+		return 1;
+	else
+		return 0;
+}
+
+static int
+_mskanji2(c)
+	int c;
+{
+
+	if ((c >= 0x40 && c <= 0x7e) || (c >= 0x80 && c <= 0xfc))
+		return 1;
+	else
+		return 0;
+}
 
 int
 _MSKanji_init(rl)
 	_RuneLocale *rl;
 {
-	rl->__rune_sgetrune = _MSKanji_sgetrune;
-	rl->__rune_sputrune = _MSKanji_sputrune;
+
+	/* sanity check to avoid overruns */
+	if (sizeof(_MSKanjiState) > sizeof(mbstate_t))
+		return (EINVAL);
+
+	rl->__rune_mbrtowc = _MSKanji_mbrtowc;
+	rl->__rune_wcrtomb = _MSKanji_wcrtomb;
 
 	rl->__rune_RuneState = &_MSKanji_RuneState;
 	rl->__rune_mb_cur_max = 2;
@@ -74,53 +113,146 @@ _MSKanji_init(rl)
 	return (0);
 }
 
-rune_t
-_MSKanji_sgetrune(rl, string, n, result, state)
+/* s is non-null */
+size_t
+_MSKanji_mbrtowc(rl, pwcs, s, n, state)
 	_RuneLocale *rl;
-	const char *string;
+	rune_t *pwcs;
+	const char *s;
 	size_t n;
-	char const **result;
 	void *state;
 {
-	rune_t rune = 0;
+	_MSKanjiState *ps;
+	rune_t rune;
+	int len;
 
-	if (n < 1) {
-		rune = _INVALID_RUNE;
-	} else {
-		rune = *(string++) & 0xff;
-		if ((rune > 0x80 && rune < 0xa0) ||
-		    (rune >= 0xe0 && rune < 0xfa)) {
-			if (n < 2) {
-				rune = (rune_t)_INVALID_RUNE;
-				--string;
-			} else
-				rune = (rune << 8) | (*(string++) & 0xff);
-		}
+	ps = state;
+
+	/* make sure we have the first byte in the buffer */
+	switch (ps->chlen) {
+	case 0:
+		if (n < 1)
+			return (size_t)-2;
+		ps->ch[0] = *s++;
+		ps->chlen = 1;
+		n--;
+		break;
+	case 1:
+		break;
+	default:
+		/* illegal state */
+		goto encoding_error;
 	}
-	if (result)
-		*result = string;
-	return rune;
+
+	len = _mskanji1(ps->ch[0] & 0xff) ? 2 : 1;
+	while (ps->chlen < len) {
+		if (n < 1)
+			return (size_t)-2;
+		ps->ch[ps->chlen] = *s++;
+		ps->chlen++;
+		n--;
+	}
+
+	switch (len) {
+	case 1:
+		rune = ps->ch[0] & 0xff;
+		break;
+	case 2:
+		if (!_mskanji2(ps->ch[1] & 0xff))
+			goto encoding_error;
+		rune = ((ps->ch[0] & 0xff) << 8) | (ps->ch[1] & 0xff);
+		break;
+	default:
+		/* illegal state */
+		goto encoding_error;
+	}
+
+	ps->chlen = 0;
+	if (pwcs)
+		*pwcs = rune;
+	if (!rune)
+		return 0;
+	else
+		return len;
+
+encoding_error:
+	ps->chlen = 0;
+	return (size_t)-1;
 }
 
-int
-_MSKanji_sputrune(rl, c, string, n, result, state)
-	_RuneLocale *rl;
-	rune_t c;
-	char *string, **result;
+/* s is non-null */
+size_t
+_MSKanji_wcrtomb(rl, s, n, wc, state)
+        _RuneLocale *rl;
+        char *s;
 	size_t n;
-	void *state;
+        const rune_t wc;
+        void *state;
 {
-	int len, i;
 
-	len = (c > 0x100) ? 2 : 1;
-	if (n < len) {
-		if (result)
-			*result = (char *) 0;
-	} else {
-		if (result)
-			*result = string + len;
-		for (i = len; i-- > 0; )
-			*(string++) = c >> (i << 3);
+	/* check invalid sequence */
+	if (wc & ~0xffff) {
+		errno = EILSEQ;
+		return (size_t)-1;
 	}
-	return len;
+
+	if (wc & 0xff00) {
+		if (n < 2) {
+			/* bound check failure */
+			errno = EILSEQ;	/*XXX*/
+			return (size_t)-1;
+		}
+
+		s[0] = (wc >> 8) & 0xff;
+		s[1] = wc & 0xff;
+		if (!_mskanji1(s[0] & 0xff) || !_mskanji2(s[1] & 0xff)) {
+			errno = EILSEQ;
+			return (size_t)-1;
+		}
+
+		return 2;
+	} else {
+		s[0] = wc & 0xff;
+		if (_mskanji1(s[0] & 0xff)) {
+			errno = EILSEQ;
+			return (size_t)-1;
+		}
+
+		return 1;
+	}
+}
+
+void
+_MSKanji_initstate(rl, s)
+	_RuneLocale *rl;
+	void *s;
+{
+	_MSKanjiState *state;
+
+	if (!s)
+		return;
+	state = s;
+	memset(state, 0, sizeof(_MSKanjiState));
+}
+
+void
+_MSKanji_packstate(rl, dst, src)
+	_RuneLocale *rl;
+	mbstate_t *dst;
+	void* src;
+{
+
+	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_MSKanjiState));
+	return;
+}
+
+void
+_MSKanji_unpackstate(rl, dst, src)
+	_RuneLocale *rl;
+	void* dst;
+	const mbstate_t *src;
+{
+
+	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_MSKanjiState));
+	return;
 }

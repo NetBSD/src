@@ -1,4 +1,4 @@
-/*	$NetBSD: euctw.c,v 1.3 2000/12/25 09:25:15 itojun Exp $	*/
+/*	$NetBSD: euctw.c,v 1.4 2000/12/28 05:22:27 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: euctw.c,v 1.3 2000/12/25 09:25:15 itojun Exp $");
+__RCSID("$NetBSD: euctw.c,v 1.4 2000/12/28 05:22:27 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -48,22 +48,37 @@ __RCSID("$NetBSD: euctw.c,v 1.3 2000/12/25 09:25:15 itojun Exp $");
 int _EUCTW_init __P((_RuneLocale *));
 static inline int _euc_set __P((u_int));
 static inline int _euc_count __P((int));
-rune_t	_EUCTW_sgetrune __P((_RuneLocale *, const char *, size_t, char const **, void *));
-int	_EUCTW_sputrune __P((_RuneLocale *, rune_t, char *, size_t, char **, void *));
+size_t _EUCTW_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *,
+	size_t, void *));
+size_t _EUCTW_wcrtomb __P((struct _RuneLocale *, char *, size_t, const rune_t,
+	void *));
+void _EUCTW_initstate __P((_RuneLocale *, void *));
+void _EUCTW_packstate __P((_RuneLocale *, mbstate_t *, void *));
+void _EUCTW_unpackstate __P((_RuneLocale *, void *, const mbstate_t *));
+
+typedef struct {
+	char ch[4];
+	int chlen;
+} _EUCTWState;
 
 static _RuneState _EUCTW_RuneState = {
-	0,		/* sizestate */
-	NULL,		/* initstate */
-	NULL,		/* packstate */
-	NULL		/* unpackstate */
+	sizeof(_EUCTWState),		/* sizestate */
+	_EUCTW_initstate,		/* initstate */
+	_EUCTW_packstate,		/* packstate */
+	_EUCTW_unpackstate		/* unpackstate */
 };
 
 int
 _EUCTW_init(rl)
 	_RuneLocale *rl;
 {
-	rl->__rune_sgetrune = _EUCTW_sgetrune;
-	rl->__rune_sputrune = _EUCTW_sputrune;
+
+	/* sanity check to avoid overruns */
+	if (sizeof(_EUCTWState) > sizeof(mbstate_t))
+		return (EINVAL);
+
+	rl->__rune_mbrtowc = _EUCTW_mbrtowc;
+	rl->__rune_wcrtomb = _EUCTW_wcrtomb;
     
 	rl->__rune_RuneState = &_EUCTW_RuneState;
 	rl->__rune_mb_cur_max = 4;
@@ -101,64 +116,104 @@ _euc_count(set)
 	return 0;
 }
 
-rune_t
-_EUCTW_sgetrune(rl, string, n, result, state)
+/* s is non-null */
+size_t
+_EUCTW_mbrtowc(rl, pwcs, s, n, state)
 	_RuneLocale *rl;
-	const char *string;
+	rune_t *pwcs;
+	const char *s;
 	size_t n;
-	char const **result;
 	void *state;
 {
-	rune_t rune = 0;
-	rune_t runemask = 0;
-	int len=0, set;
+	_EUCTWState *ps;
+	rune_t rune;
+	int c, set;
 
-	if (n < 1 || (len = _euc_count(set = _euc_set(*string))) > n) {
-		if (result)
-			*result = string;
-		return (___INVALID_RUNE(rl));
-	}
-	switch (set) {
-	case 2:
-		if ((u_char)string[1] < 0xa1 || 0xa7 < (u_char)string[1]) {
-			if (result)
-				*result = string;
-			return (___INVALID_RUNE(rl));
-		}
-		--len;
-		++string;
-		runemask = ('G' + *string - 0xa1) << 24;
-		--len;
-		++string;
+	ps = state;
+
+	/* make sure we have the first byte in the buffer */
+	switch (ps->chlen) {
+	case 0:
+		if (n < 1)
+			return (size_t)-2;
+		ps->ch[0] = *s++;
+		ps->chlen = 1;
+		n--;
 		break;
 	case 1:
-		runemask = 'G' << 24;
+	case 2:
 		break;
+	default:
+		/* illgeal state */
+		goto encoding_error;
 	}
-	while (len-- > 0)
-		rune = (rune << 8) | ((u_int)(*string++) & 0x7f);
-	rune |= runemask;
-	if (result)
-		*result = string;
-	return (rune);
+
+	c = _euc_count(set = _euc_set(ps->ch[0] & 0xff));
+	if (c == 0)
+		goto encoding_error;
+	while (ps->chlen < c) {
+		if (n < 1)
+			return (size_t)-2;
+		ps->ch[ps->chlen] = *s++;
+		ps->chlen++;
+		n--;
+	}
+
+	rune = 0;
+	switch (set) {
+	case 0:
+		if (ps->ch[0] & 0x80)
+			goto encoding_error;
+		rune = ps->ch[0] & 0xff;
+		break;
+	case 1:
+		if (!(ps->ch[0] & 0x80) || !(ps->ch[1] & 0x80))
+			goto encoding_error;
+		rune = ((ps->ch[0] & 0xff) << 8) | (ps->ch[1] & 0xff);
+		rune |= 'G' << 24;
+		break;
+	case 2:
+		if ((u_char)ps->ch[1] < 0xa1 || 0xa7 < (u_char)ps->ch[1])
+			goto encoding_error;
+		if (!(ps->ch[2] & 0x80) || !(ps->ch[3] & 0x80))
+			goto encoding_error;
+		rune = ((ps->ch[2] & 0xff) << 8) | (ps->ch[3] & 0xff);
+		rune |= ('G' + ps->ch[1] - 0xa1) << 24;
+		break;
+	default:
+		goto encoding_error;
+	}
+
+	ps->chlen = 0;
+	if (pwcs)
+		*pwcs = rune;
+	if (!rune)
+		return 0;
+	else
+		return c;
+
+encoding_error:
+	ps->chlen = 0;
+	return (size_t)-1;
 }
 
-int
-_EUCTW_sputrune(rl, c, string, n, result, state)
-	_RuneLocale *rl;
-	rune_t c;
-	char *string, **result;
+/* s is non-null */
+size_t
+_EUCTW_wcrtomb(rl, s, n, wc, state)
+        _RuneLocale *rl;
+        char *s;
 	size_t n;
-	void *state;
+        const rune_t wc;
+        void *state;
 {
-	rune_t cs = c & 0x7f000080;
+	rune_t cs = wc & 0x7f000080;
 	rune_t v;
 	int i, len, clen;
 
 	clen = 1;
-	if (c & 0x00007f00)
+	if (wc & 0x00007f00)
 		clen = 2;
-	if ((c & 0x007f0000) && !(c & 0x00800000))
+	if ((wc & 0x007f0000) && !(wc & 0x00800000))
 		clen = 3;
 
 	if (clen == 1 && cs == 0x00000000) {
@@ -166,7 +221,7 @@ _EUCTW_sputrune(rl, c, string, n, result, state)
 		len = 1;
 		if (n < len)
 			goto notenough;
-		v = c & 0x0000007f;
+		v = wc & 0x0000007f;
 		goto output;
 	}
 	if (clen == 2 && cs == ('G' << 24)) {
@@ -174,7 +229,7 @@ _EUCTW_sputrune(rl, c, string, n, result, state)
 		len = 2;
 		if (n < len)
 			goto notenough;
-		v = c & 0x00007f7f;
+		v = wc & 0x00007f7f;
 		v |= 0x00008080;
 		goto output;
 	}
@@ -183,26 +238,61 @@ _EUCTW_sputrune(rl, c, string, n, result, state)
 		len = 4;
 		if (n < len)
 			goto notenough;
-		*string++ = _SS2;
-		*string++ = (cs >> 24) - 'H' + 0xa2;
-		v = c & 0x00007f7f;
+		*s++ = _SS2;
+		*s++ = (cs >> 24) - 'H' + 0xa2;
+		v = wc & 0x00007f7f;
 		v |= 0x00008080;
 		goto output;
 	}
 
-	abort();
+	/* invalid sequence */
+	errno = EILSEQ;	/*XXX*/
+	return (size_t)-1;
 
 output:
 	i = clen;
 	while (i-- > 0)
-		*string++ = (v >> (i << 3)) & 0xff;
+		*s++ = (v >> (i << 3)) & 0xff;
 
-	if (*result)
-		*result = string;
 	return len;
 
 notenough:
-	if (*result)
-		*result = NULL;
-	return len;
+	/* bound check failure */
+	errno = EILSEQ;	/*XXX*/
+	return (size_t)-1;
+}
+
+void
+_EUCTW_initstate(rl, s)
+	_RuneLocale *rl;
+	void *s;
+{
+	_EUCTWState *state;
+
+	if (!s)
+		return;
+	state = s;
+	memset(state, 0, sizeof(_EUCTWState));
+}
+
+void
+_EUCTW_packstate(rl, dst, src)
+	_RuneLocale *rl;
+	mbstate_t *dst;
+	void* src;
+{
+
+	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_EUCTWState));
+	return;
+}
+
+void
+_EUCTW_unpackstate(rl, dst, src)
+	_RuneLocale *rl;
+	void* dst;
+	const mbstate_t *src;
+{
+
+	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_EUCTWState));
+	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: utf2.c,v 1.2 2000/12/21 12:17:35 itojun Exp $	*/
+/*	$NetBSD: utf2.c,v 1.3 2000/12/28 05:22:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)utf2.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utf2.c,v 1.2 2000/12/21 12:17:35 itojun Exp $");
+__RCSID("$NetBSD: utf2.c,v 1.3 2000/12/28 05:22:27 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,27 +52,42 @@ __RCSID("$NetBSD: utf2.c,v 1.2 2000/12/21 12:17:35 itojun Exp $");
 #include <stdlib.h>
 
 int _UTF2_init __P((_RuneLocale *));
-rune_t	_UTF2_sgetrune __P((_RuneLocale *, const char *, size_t, char const **, void *));
-int	_UTF2_sputrune __P((_RuneLocale *, rune_t, char *, size_t, char **, void *));
+size_t _UTF2_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *, size_t,
+	void *));
+size_t _UTF2_wcrtomb __P((struct _RuneLocale *, char *, size_t, const rune_t,
+	void *));
+void _UTF2_initstate __P((_RuneLocale *, void *));
+void _UTF2_packstate __P((_RuneLocale *, mbstate_t *, void *));
+void _UTF2_unpackstate __P((_RuneLocale *, void *, const mbstate_t *));
 
 static int _utf_count[16] = {
 	1, 1, 1, 1, 1, 1, 1, 1,
 	0, 0, 0, 0, 2, 2, 3, 0,
 };
 
+typedef struct {
+	char ch[3];
+	int chlen;
+} _UTF2State;
+
 static _RuneState _UTF2_RuneState = {
-	0,		/* sizestate */
-	NULL,		/* initstate */
-	NULL,		/* packstate */
-	NULL		/* unpackstate */
+	sizeof(_UTF2State),		/* sizestate */
+	_UTF2_initstate,		/* initstate */
+	_UTF2_packstate,		/* packstate */
+	_UTF2_unpackstate		/* unpackstate */
 };
 
 int
 _UTF2_init(rl)
 	_RuneLocale *rl;
 {
-	rl->__rune_sgetrune = _UTF2_sgetrune;
-	rl->__rune_sputrune = _UTF2_sputrune;
+
+	/* sanity check to avoid overruns */
+	if (sizeof(_UTF2State) > sizeof(mbstate_t))
+		return (EINVAL);
+
+	rl->__rune_mbrtowc = _UTF2_mbrtowc;
+	rl->__rune_wcrtomb = _UTF2_wcrtomb;
 
 	rl->__rune_RuneState = &_UTF2_RuneState;
 	rl->__rune_mb_cur_max = 3;
@@ -80,90 +95,161 @@ _UTF2_init(rl)
 	return (0);
 }
 
-rune_t
-_UTF2_sgetrune(rl, string, n, result, state)
+/* s is non-null */
+size_t
+_UTF2_mbrtowc(rl, pwcs, s, n, state)
 	_RuneLocale *rl;
-	const char *string;
+	rune_t *pwcs;
+	const char *s;
 	size_t n;
-	char const **result;
 	void *state;
 {
+	_UTF2State *ps;
+	rune_t rune;
 	int c;
 
-	if (n < 1 || (c = _utf_count[(*string >> 4) & 0xf]) > n) {
-		if (result)
-			*result = string;
-		return (___INVALID_RUNE(rl));
+	ps = state;
+
+	/* make sure we have the first byte in the buffer */
+	switch (ps->chlen) {
+	case 0:
+		if (n < 1)
+			return (size_t)-2;
+		ps->ch[0] = *s++;
+		ps->chlen = 1;
+		n--;
+		break;
+	case 1:
+	case 2:
+		break;
+	default:
+		/* illegal state */
+		goto encoding_error;
 	}
+
+	c = _utf_count[(ps->ch[0] >> 4) & 0xf];
+	if (c == 0)
+		goto encoding_error;
+	while (ps->chlen < c) {
+		if (n < 1)
+			return (size_t)-2;
+		ps->ch[ps->chlen] = *s++;
+		ps->chlen++;
+		n--;
+	}
+
 	switch (c) {
 	case 1:
-		if (result)
-			*result = string + 1;
-		return (*string & 0xff);
+		rune = ps->ch[0] & 0xff;
+		break;
 	case 2:
-		if ((string[1] & 0xC0) != 0x80)
+		if ((ps->ch[1] & 0xc0) != 0x80)
 			goto encoding_error;
-		if (result)
-			*result = string + 2;
-		return (((string[0] & 0x1F) << 6) | (string[1] & 0x3F));
+		rune = ((ps->ch[0] & 0x1F) << 6) | (ps->ch[1] & 0x3F);
+		break;
 	case 3:
-		if ((string[1] & 0xC0) != 0x80 || (string[2] & 0xC0) != 0x80)
+		if ((ps->ch[1] & 0xC0) != 0x80 || (ps->ch[2] & 0xC0) != 0x80)
 			goto encoding_error;
-		if (result)
-			*result = string + 3;
-		return (((string[0] & 0x1F) << 12) | ((string[1] & 0x3F) << 6)
-		    | (string[2] & 0x3F));
-	default:
-encoding_error:	if (result)
-			*result = string + 1;
-		return (___INVALID_RUNE(rl));
+		rune = ((ps->ch[0] & 0x1F) << 12) | ((ps->ch[1] & 0x3F) << 6)
+		    | (ps->ch[2] & 0x3F);
+		break;
+	}
+
+	ps->chlen = 0;
+	if (pwcs)
+		*pwcs = rune;
+	if (!rune)
+		return 0;
+	else
+		return c;
+
+encoding_error:
+	ps->chlen = 0;
+	return (size_t)-1;
+}
+
+/* s is non-null */
+size_t
+_UTF2_wcrtomb(rl, s, n, wc, state)
+        _RuneLocale *rl;
+        char *s;
+	size_t n;
+        const rune_t wc;
+        void *state;
+{
+
+	/* check invalid sequence */
+	if (wc & ~0xffff) {
+		errno = EILSEQ;
+		return (size_t)-1;
+	}
+
+	if (wc & 0xf800) {
+		if (n < 3) {
+			/* bound check failure */
+			errno = EILSEQ;	/*XXX*/
+			return (size_t)-1;
+		}
+
+		s[0] = 0xE0 | ((wc >> 12) & 0x0F);
+		s[1] = 0x80 | ((wc >> 6) & 0x3F);
+		s[2] = 0x80 | ((wc) & 0x3F);
+		return 3;
+	} else {
+		if (wc & 0x0780) {
+			if (n < 2) {
+				/* bound check failure */
+				errno = EILSEQ;	/*XXX*/
+				return (size_t)-1;
+			}
+
+			s[0] = 0xC0 | ((wc >> 6) & 0x1F);
+			s[1] = 0x80 | ((wc) & 0x3F);
+			return 2;
+		} else {
+			if (n < 1) {
+				/* bound check failure */
+				errno = EILSEQ;	/*XXX*/
+				return (size_t)-1;
+			}
+
+			s[0] = wc;
+			return 1;
+		}
 	}
 }
 
-int
-_UTF2_sputrune(rl, c, string, n, result, state)
+void
+_UTF2_initstate(rl, s)
 	_RuneLocale *rl;
-	rune_t c;
-	char *string, **result;
-	size_t n;
-	void *state;
+	void *s;
 {
-	if (c & 0xF800) {
-		if (n >= 3) {
-			if (string) {
-				string[0] = 0xE0 | ((c >> 12) & 0x0F);
-				string[1] = 0x80 | ((c >> 6) & 0x3F);
-				string[2] = 0x80 | ((c) & 0x3F);
-			}
-			if (result)
-				*result = string + 3;
-		} else
-			if (result)
-				*result = NULL;
+	_UTF2State *state;
 
-		return (3);
-	} else
-		if (c & 0x0780) {
-			if (n >= 2) {
-				if (string) {
-					string[0] = 0xC0 | ((c >> 6) & 0x1F);
-					string[1] = 0x80 | ((c) & 0x3F);
-				}
-				if (result)
-					*result = string + 2;
-			} else
-				if (result)
-					*result = NULL;
-			return (2);
-		} else {
-			if (n >= 1) {
-				if (string)
-					string[0] = c;
-				if (result)
-					*result = string + 1;
-			} else
-				if (result)
-					*result = NULL;
-			return (1);
-		}
+	if (!s)
+		return;
+	state = s;
+	memset(state, 0, sizeof(_UTF2State));
+}
+
+void
+_UTF2_packstate(rl, dst, src)
+	_RuneLocale *rl;
+	mbstate_t *dst;
+	void* src;
+{
+
+	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_UTF2State));
+	return;
+}
+
+void
+_UTF2_unpackstate(rl, dst, src)
+	_RuneLocale *rl;
+	void* dst;
+	const mbstate_t *src;
+{
+
+	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_UTF2State));
+	return;
 }
