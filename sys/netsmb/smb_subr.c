@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.3 2002/01/04 02:39:44 deberg Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.4 2003/02/01 06:23:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -62,6 +62,9 @@
 #endif
 
 smb_unichar smb_unieol = 0;
+
+static MALLOC_DEFINE(M_SMBSTR, "smbstr", "SMB strings");
+MALLOC_DEFINE(M_SMPTEMP, "smbtemp", "Temp netsmb data");
 
 void
 smb_makescred(struct smb_cred *scred, struct proc *p, struct ucred *cred)

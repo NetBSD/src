@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prop.c,v 1.8 2002/09/27 15:37:47 provos Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.9 2003/02/01 06:23:44 thorpej Exp $	*/
 
 /*  
  * Copyright (c) 2001 Eduardo Horvath.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.8 2002/09/27 15:37:47 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.9 2003/02/01 06:23:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,8 @@ static struct kdbobj *kdbobj_find(propdb_t db, opaque_t object,
 	int create, int wait);
 static int prop_insert(struct kdbobj *obj, const char *name, void *val, 
 	size_t len, int type, int wait);
+
+MALLOC_DEFINE(M_PROP, "prop", "Kernel properties structures");
 
 /* 
  * Allocate a prop structure large enough to hold

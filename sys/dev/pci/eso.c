@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.29 2003/01/31 00:07:42 thorpej Exp $	*/
+/*	$NetBSD: eso.c,v 1.30 2003/02/01 06:23:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.29 2003/01/31 00:07:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.30 2003/02/01 06:23:39 thorpej Exp $");
 
 #include "mpu.h"
 
@@ -106,8 +106,8 @@ static int	eso_getdev __P((void *, struct audio_device *));
 static int	eso_set_port __P((void *, mixer_ctrl_t *));
 static int	eso_get_port __P((void *, mixer_ctrl_t *));
 static int	eso_query_devinfo __P((void *, mixer_devinfo_t *));
-static void *	eso_allocm __P((void *, int, size_t, int, int));
-static void	eso_freem __P((void *, void *, int));
+static void *	eso_allocm __P((void *, int, size_t, struct malloc_type *, int));
+static void	eso_freem __P((void *, void *, struct malloc_type *));
 static size_t	eso_round_buffersize __P((void *, int, size_t));
 static paddr_t	eso_mappage __P((void *, void *, off_t, int));
 static int	eso_get_props __P((void *));
@@ -1542,7 +1542,8 @@ eso_allocm(hdl, direction, size, type, flags)
 	void *hdl;
 	int direction;
 	size_t size;
-	int type, flags;
+	struct malloc_type *type;
+	int flags;
 {
 	struct eso_softc *sc = hdl;
 	struct eso_dma *ed;
@@ -1589,7 +1590,7 @@ static void
 eso_freem(hdl, addr, type)
 	void *hdl;
 	void *addr;
-	int type;
+	struct malloc_type *type;
 {
 	struct eso_softc *sc = hdl;
 	struct eso_dma *p, **pp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.9 2002/11/02 07:18:35 perry Exp $	*/
+/*	$NetBSD: cnode.h,v 1.10 2003/02/01 06:23:36 thorpej Exp $	*/
 
 /*
  * 
@@ -48,6 +48,9 @@
 #define	_CNODE_H_
 
 #include <sys/vnode.h>
+#include <sys/mallocvar.h>
+
+MALLOC_DECLARE(M_CODA);
 
 /*
  * tmp below since we need struct queue

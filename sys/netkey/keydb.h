@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.12 2003/01/08 05:46:50 itojun Exp $	*/
+/*	$NetBSD: keydb.h,v 1.13 2003/02/01 06:23:48 thorpej Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
 /*
@@ -35,7 +35,10 @@
 
 #ifdef _KERNEL
 
+#include <sys/mallocvar.h>
 #include <netkey/key_var.h>
+
+MALLOC_DECLARE(M_SECA);
 
 /* Security Assocciation Index */
 /* NOTE: Ensure to be same address family */

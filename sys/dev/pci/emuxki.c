@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.15 2003/01/31 00:07:41 thorpej Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.16 2003/02/01 06:23:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.15 2003/01/31 00:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.16 2003/02/01 06:23:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,16 +86,18 @@ static int  emuxki_detach(struct device *, int);
 
 /* dma mem mgmt */
 static struct dmamem *dmamem_alloc(bus_dma_tag_t, size_t, bus_size_t,
-				 int, int, int);
-static void           dmamem_free(struct dmamem *, int);
+				 int, struct malloc_type *, int);
+static void           dmamem_free(struct dmamem *, struct malloc_type *);
 
 /* Emu10k1 init & shutdown */
 static int  emuxki_init(struct emuxki_softc *);
 static void emuxki_shutdown(struct emuxki_softc *);
 
 /* Emu10k1 mem mgmt */
-static void   *emuxki_pmem_alloc(struct emuxki_softc *, size_t,int,int);
-static void   *emuxki_rmem_alloc(struct emuxki_softc *, size_t,int,int);
+static void   *emuxki_pmem_alloc(struct emuxki_softc *, size_t,
+		struct malloc_type *,int);
+static void   *emuxki_rmem_alloc(struct emuxki_softc *, size_t,
+		struct malloc_type *,int);
 
 /*
  * Emu10k1 channels funcs : There is no direct access to channels, everything
@@ -156,8 +158,8 @@ static int	emuxki_set_port(void *, mixer_ctrl_t *);
 static int	emuxki_get_port(void *, mixer_ctrl_t *);
 static int	emuxki_query_devinfo(void *, mixer_devinfo_t *);
 
-static void    *emuxki_allocm(void *, int, size_t, int, int);
-static void	emuxki_freem(void *, void *, int);
+static void    *emuxki_allocm(void *, int, size_t, struct malloc_type *, int);
+static void	emuxki_freem(void *, void *, struct malloc_type *);
 
 static paddr_t	emuxki_mappage(void *, void *, off_t, int);
 static int	emuxki_get_props(void *);
@@ -213,7 +215,7 @@ static struct audio_hw_if emuxki_hw_if = {
  */
 
 static void
-dmamem_delete(struct dmamem *mem, int type)
+dmamem_delete(struct dmamem *mem, struct malloc_type *type)
 {
 	free(mem->segs, type);
 	free(mem, type);
@@ -221,7 +223,7 @@ dmamem_delete(struct dmamem *mem, int type)
 
 static struct dmamem *
 dmamem_alloc(bus_dma_tag_t dmat, size_t size, bus_size_t align,
-	     int nsegs, int type, int flags)
+	     int nsegs, struct malloc_type *type, int flags)
 {
 	struct dmamem	*mem;
 	int		bus_dma_flags;
@@ -277,7 +279,7 @@ dmamem_alloc(bus_dma_tag_t dmat, size_t size, bus_size_t align,
 }
 
 static void
-dmamem_free(struct dmamem *mem, int type)
+dmamem_free(struct dmamem *mem, struct malloc_type *type)
 {
 	bus_dmamap_unload(mem->dmat, mem->map);
 	bus_dmamap_destroy(mem->dmat, mem->map);
@@ -781,7 +783,7 @@ emuxki_shutdown(struct emuxki_softc *sc)
 
 static struct emuxki_mem *
 emuxki_mem_new(struct emuxki_softc *sc, int ptbidx,
-		size_t size, int type, int flags)
+		size_t size, struct malloc_type *type, int flags)
 {
 	struct emuxki_mem *mem;
 
@@ -798,14 +800,15 @@ emuxki_mem_new(struct emuxki_softc *sc, int ptbidx,
 }
 
 static void
-emuxki_mem_delete(struct emuxki_mem *mem, int type)
+emuxki_mem_delete(struct emuxki_mem *mem, struct malloc_type *type)
 {
 	dmamem_free(mem->dmamem, type);
 	free(mem, type);
 }
 
 static void *
-emuxki_pmem_alloc(struct emuxki_softc *sc, size_t size, int type, int flags)
+emuxki_pmem_alloc(struct emuxki_softc *sc, size_t size,
+    struct malloc_type *type, int flags)
 {
 	int             i, j, s;
 	size_t          numblocks;
@@ -848,7 +851,8 @@ emuxki_pmem_alloc(struct emuxki_softc *sc, size_t size, int type, int flags)
 }
 
 static void *
-emuxki_rmem_alloc(struct emuxki_softc *sc, size_t size, int type, int flags)
+emuxki_rmem_alloc(struct emuxki_softc *sc, size_t size,
+    struct malloc_type *type, int flags)
 {
 	struct emuxki_mem *mem;
 	int             s;
@@ -1849,7 +1853,8 @@ emuxki_query_devinfo(void *addr, mixer_devinfo_t *minfo)
 }
 
 static void *
-emuxki_allocm(void *addr, int direction, size_t size, int type, int flags)
+emuxki_allocm(void *addr, int direction, size_t size,
+    struct malloc_type *type, int flags)
 {
 	struct emuxki_softc *sc = addr;
 
@@ -1860,7 +1865,7 @@ emuxki_allocm(void *addr, int direction, size_t size, int type, int flags)
 }
 
 static void
-emuxki_freem(void *addr, void *ptr, int type)
+emuxki_freem(void *addr, void *ptr, struct malloc_type *type)
 {
 	struct emuxki_softc *sc = addr;
 	int             i, s;

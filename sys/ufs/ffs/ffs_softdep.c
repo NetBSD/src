@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.42 2003/01/26 06:42:32 tsutsui Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.43 2003/02/01 06:23:52 thorpej Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.42 2003/01/26 06:42:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.43 2003/02/01 06:23:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -59,6 +59,11 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.42 2003/01/26 06:42:32 tsutsui Exp
 #include <uvm/uvm.h>
 struct pool sdpcpool;
 u_int softdep_lockedbufs;
+
+MALLOC_DEFINE(M_PAGEDEP, "pagedep", "file page dependencies");
+MALLOC_DEFINE(M_INODEDEP, "inodedep", "Inode depependencies");
+MALLOC_DEFINE(M_NEWBLK, "newblk", "New block allocation");
+MALLOC_DEFINE(M_INDIRDEP, "indirdep", "Indirect block dependencies");
 
 /*
  * These definitions need to be adapted to the system to which

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.24 2003/01/31 00:07:39 thorpej Exp $	*/
+/*	$NetBSD: agp.c,v 1.25 2003/02/01 06:23:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.24 2003/01/31 00:07:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.25 2003/02/01 06:23:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.24 2003/01/31 00:07:39 thorpej Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <machine/bus.h>
+
+MALLOC_DEFINE(M_AGP, "AGP", "AGP memory");
 
 /* Helper functions for implementing chipset mini drivers. */
 /* XXXfvdl get rid of this one. */

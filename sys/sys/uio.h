@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.24 2002/03/31 14:21:56 tron Exp $	*/
+/*	$NetBSD: uio.h,v 1.25 2003/02/01 06:23:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -90,6 +90,10 @@ struct uio {
 #endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
 #ifdef _KERNEL
+#include <sys/mallocvar.h>
+
+MALLOC_DECLARE(M_IOV);
+
 #define UIO_SMALLIOV	8		/* 8 on stack, else malloc */
 #endif
 

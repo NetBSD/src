@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.1 2002/12/23 17:30:41 jdolecek Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.2 2003/02/01 06:23:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.1 2002/12/23 17:30:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.2 2003/02/01 06:23:41 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.1 2002/12/23 17:30:41 jdolecek
 #include <fs/filecorefs/filecore_extern.h>
 #include <fs/filecorefs/filecore_node.h>
 #include <fs/filecorefs/filecore_mount.h>
+
+MALLOC_DEFINE(M_FILECOREMNT, "filecore mount", "Filecore FS mount structures");
 
 extern const struct vnodeopv_desc filecore_vnodeop_opv_desc;
 

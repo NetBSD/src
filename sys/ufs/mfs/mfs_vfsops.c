@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.43 2003/01/18 09:38:22 thorpej Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.44 2003/02/01 06:23:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.43 2003/01/18 09:38:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.44 2003/02/01 06:23:54 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -72,6 +72,8 @@ u_long	mfs_rootsize;	/* size of mini-root in bytes */
 static	int mfs_minor;	/* used for building internal dev_t */
 
 extern int (**mfs_vnodeop_p) __P((void *));
+
+MALLOC_DEFINE(M_MFSNODE, "MFS node", "MFS vnode private part");
 
 /*
  * mfs vfs operations.

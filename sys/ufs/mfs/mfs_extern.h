@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.13 2002/12/01 00:12:11 matt Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.14 2003/02/01 06:23:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,6 +37,9 @@
 
 #ifndef _UFS_MFS_MFS_EXTERN_H_
 #define _UFS_MFS_MFS_EXTERN_H_
+
+#include <sys/mallocvar.h>
+MALLOC_DECLARE(M_MFSNODE);
 
 struct buf;
 struct mount;

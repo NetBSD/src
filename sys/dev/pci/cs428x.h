@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.4 2001/04/18 01:35:08 tacha Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.5 2003/02/01 06:23:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -144,13 +144,14 @@ int  cs428x_write_codec(void *, u_int8_t, u_int16_t);
 int  cs428x_mixer_set_port(void *, mixer_ctrl_t *);
 int  cs428x_mixer_get_port(void *, mixer_ctrl_t *);
 int  cs428x_query_devinfo(void *, mixer_devinfo_t *);
-void *cs428x_malloc(void *, int, size_t, int, int);
+void *cs428x_malloc(void *, int, size_t, struct malloc_type *, int);
 size_t cs428x_round_buffersize(void *, int, size_t);
-void cs428x_free(void *, void *, int);
+void cs428x_free(void *, void *, struct malloc_type *);
 paddr_t cs428x_mappage(void *, void *, off_t, int);
 
 /* internal functions */
-int cs428x_allocmem(struct cs428x_softc *, size_t, int, int, struct cs428x_dma *);
+int cs428x_allocmem(struct cs428x_softc *, size_t, struct malloc_type *,
+	int, struct cs428x_dma *);
 int cs428x_src_wait(struct cs428x_softc *);
 
 

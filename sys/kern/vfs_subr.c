@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.185 2003/01/20 23:59:14 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.186 2003/02/01 06:23:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.185 2003/01/20 23:59:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.186 2003/02/01 06:23:45 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -166,6 +166,8 @@ struct vnode *rootvnode;
 struct device *root_device;			/* root device */
 
 struct pool vnode_pool;				/* memory pool for vnodes */
+
+MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
 
 /*
  * Local declarations.

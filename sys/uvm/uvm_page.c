@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.82 2003/01/27 02:10:20 enami Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.83 2003/02/01 06:23:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.82 2003/01/27 02:10:20 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.83 2003/02/01 06:23:55 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -138,6 +138,8 @@ static struct pglist uvm_bootbucket;
  */
 
 static boolean_t have_recolored_pages /* = FALSE */;
+
+MALLOC_DEFINE(M_VMPAGE, "VM page", "VM page");
 
 /*
  * local prototypes

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.129 2003/01/21 00:03:07 christos Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.130 2003/02/01 06:23:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.129 2003/01/21 00:03:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.130 2003/02/01 06:23:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -119,6 +119,9 @@ struct pool uvm_vmspace_pool;
 
 struct pool uvm_map_entry_pool;
 struct pool uvm_map_entry_kmem_pool;
+
+MALLOC_DEFINE(M_VMMAP, "VM map", "VM map structures");
+MALLOC_DEFINE(M_VMPMAP, "VM pmap", "VM pmap");
 
 #ifdef PMAP_GROWKERNEL
 /*

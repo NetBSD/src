@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.76 2003/01/31 05:00:24 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.77 2003/02/01 06:23:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.76 2003/01/31 05:00:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.77 2003/02/01 06:23:44 thorpej Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -96,6 +96,9 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.76 2003/01/31 05:00:24 thorpej Exp
 #include <uvm/uvm.h>
 
 struct pool	socket_pool;
+
+MALLOC_DEFINE(M_SOOPTS, "soopts", "socket options");
+MALLOC_DEFINE(M_SONAME, "soname", "socket name");
 
 extern int	somaxconn;			/* patchable (XXX sysctl) */
 int		somaxconn = SOMAXCONN;

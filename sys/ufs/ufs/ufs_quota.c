@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.22 2001/11/08 02:39:17 lukem Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.23 2003/02/01 06:23:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.22 2001/11/08 02:39:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.23 2003/02/01 06:23:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -682,6 +682,8 @@ u_long dqhash;
 #define	DQUOTINC	5	/* minimum free dquots desired */
 TAILQ_HEAD(dqfreelist, dquot) dqfreelist;
 long numdquot, desireddquot = DQUOTINC;
+
+MALLOC_DEFINE(M_DQUOT, "UFS quota", "UFS quota entries");
 
 /*
  * Initialize the quota system.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.9 2002/11/25 08:50:07 itojun Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.10 2003/02/01 06:23:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.9 2002/11/25 08:50:07 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.10 2003/02/01 06:23:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.9 2002/11/25 08:50:07 itojun
  * memory to be debugged. Use 0 for a wildcard. debug_malloc_size_lo
  * is the lower limit and debug_malloc_size_hi the upper limit of sizes
  * being debugged; 0 will not work as a wildcard for the upper limit.
- * For any debugging to take place, type must be != -1, size must be >= 0,
+ * For any debugging to take place, type must be != NULL, size must be >= 0,
  * and if the limits are being used, size must be set to 0.
  * See /usr/src/sys/sys/malloc.h and malloc(9) for a list of types.
  *
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.9 2002/11/25 08:50:07 itojun
  * if any memory chunks of this type are used. It's ok to change the size
  * in runtime.
  */
-int debug_malloc_type = -1;
+struct malloc_type *debug_malloc_type = NULL;
 int debug_malloc_size = -1;
 int debug_malloc_size_lo = -1;
 int debug_malloc_size_hi = -1;
@@ -98,7 +98,7 @@ struct debug_malloc_entry {
 	vaddr_t md_va;
 	paddr_t md_pa;
 	size_t md_size;
-	int md_type;
+	struct malloc_type *md_type;
 };
 
 TAILQ_HEAD(,debug_malloc_entry) debug_malloc_freelist;
@@ -112,7 +112,8 @@ int debug_malloc_chunks_on_freelist;
 struct pool debug_malloc_pool;
 
 int
-debug_malloc(unsigned long size, int type, int flags, void **addr)
+debug_malloc(unsigned long size, struct malloc_type *type, int flags,
+    void **addr)
 {
 	struct debug_malloc_entry *md = NULL;
 	int s, wait = !(flags & M_NOWAIT);
@@ -160,7 +161,7 @@ debug_malloc(unsigned long size, int type, int flags, void **addr)
 }
 
 int
-debug_free(void *addr, int type)
+debug_free(void *addr, struct malloc_type *type)
 {
 	struct debug_malloc_entry *md;
 	vaddr_t va;
@@ -291,8 +292,9 @@ debug_malloc_printit(void (*pr)(const char *, ...), vaddr_t addr)
 			if (addr >= md->md_va &&
 			    addr < md->md_va + 2 * PAGE_SIZE) {
 				(*pr)("Memory at address 0x%x is in a freed "
-				      "area. type %d, size: %d\n ",
-				      addr, md->md_type, md->md_size);
+				      "area. type %s, size: %d\n ",
+				      addr, md->md_type->ks_shortdesc,
+				      md->md_size);
 				return;
 			}
 		}
@@ -300,8 +302,9 @@ debug_malloc_printit(void (*pr)(const char *, ...), vaddr_t addr)
 			if (addr >= md->md_va + PAGE_SIZE &&
 			    addr < md->md_va + 2 * PAGE_SIZE) {
 				(*pr)("Memory at address 0x%x is just outside "
-				      "an allocated area. type %d, size: %d\n",
-				      addr, md->md_type, md->md_size);
+				      "an allocated area. type %s, size: %d\n",
+				      addr, md->md_type->ks_shortdesc,
+				      md->md_size);
 				return;
 			}
 		}
@@ -317,10 +320,10 @@ debug_malloc_printit(void (*pr)(const char *, ...), vaddr_t addr)
 	(*pr)("\taddr:\tsize:\n");
 	(*pr)("free chunks:\n");
 	TAILQ_FOREACH(md, &debug_malloc_freelist, md_list)
-		(*pr)("\t0x%x\t0x%x\t%d\n", md->md_va, md->md_size,
-		      md->md_type);
+		(*pr)("\t0x%x\t0x%x\t%s\n", md->md_va, md->md_size,
+		      md->md_type->ks_shortdesc);
 	(*pr)("used chunks:\n");
 	TAILQ_FOREACH(md, &debug_malloc_usedlist, md_list)
-		(*pr)("\t0x%x\t0x%x\t%d\n", md->md_va, md->md_size,
-		      md->md_type);
+		(*pr)("\t0x%x\t0x%x\t%s\n", md->md_va, md->md_size,
+		      md->md_type->ks_shortdesc);
 }

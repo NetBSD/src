@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.1 2002/12/23 17:15:26 jdolecek Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.2 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.1 2002/12/23 17:15:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.2 2003/02/01 06:23:40 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -81,6 +81,10 @@ int adosfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 struct simplelock adosfs_hashlock;
 
 struct pool adosfs_node_pool;
+
+MALLOC_DEFINE(M_ADOSFSMNT, "adosfs mount", "adosfs mount structures");
+MALLOC_DEFINE(M_ANODE, "adosfs anode", "adosfs anode structures and tables");
+MALLOC_DEFINE(M_ADOSFSBITMAP, "adosfs bitmap", "adosfs bitmap");
 
 struct genfs_ops adosfs_genfsops = {
 	genfs_size,

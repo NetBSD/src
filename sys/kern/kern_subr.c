@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.96 2003/01/24 01:42:53 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.97 2003/02/01 06:23:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.96 2003/01/24 01:42:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.97 2003/02/01 06:23:43 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -136,6 +136,8 @@ static void *hook_establish __P((hook_list_t *, void (*)(void *), void *));
 static void hook_disestablish __P((hook_list_t *, void *));
 static void hook_destroy __P((hook_list_t *));
 static void hook_proc_run __P((hook_list_t *, struct proc *));
+
+MALLOC_DEFINE(M_IOV, "iov", "large iov's");
 
 int
 uiomove(buf, n, uio)
@@ -321,7 +323,8 @@ void *
 hashinit(elements, htype, mtype, mflags, hashmask)
 	u_int elements;
 	enum hashtype htype;
-	int mtype, mflags;
+	struct malloc_type *mtype;
+	int mflags;
 	u_long *hashmask;
 {
 	u_long hashsize, i;
@@ -373,7 +376,7 @@ hashinit(elements, htype, mtype, mflags, hashmask)
 void
 hashdone(hashtbl, mtype)
 	void *hashtbl;
-	int mtype;
+	struct malloc_type *mtype;
 {
 
 	free(hashtbl, mtype);

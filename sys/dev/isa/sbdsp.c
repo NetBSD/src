@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.109 2002/01/06 20:24:12 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.110 2003/02/01 06:23:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.109 2002/01/06 20:24:12 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.110 2003/02/01 06:23:37 thorpej Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -2272,7 +2272,8 @@ sb_malloc(addr, direction, size, pool, flags)
 	void *addr;
 	int direction;
 	size_t size;
-	int pool, flags;
+	struct malloc_type *pool;
+	int flags;
 {
 	struct sbdsp_softc *sc = addr;
 	int drq;
@@ -2288,7 +2289,7 @@ void
 sb_free(addr, ptr, pool)
 	void *addr;
 	void *ptr;
-	int pool;
+	struct malloc_type *pool;
 {
 	isa_free(ptr, pool);
 }

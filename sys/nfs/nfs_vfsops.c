@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.120 2002/11/24 11:02:57 scw Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.121 2003/02/01 06:23:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.120 2002/11/24 11:02:57 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.121 2003/02/01 06:23:49 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -79,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.120 2002/11/24 11:02:57 scw Exp $")
 
 extern struct nfsstats nfsstats;
 extern int nfs_ticks;
+
+MALLOC_DEFINE(M_NFSMNT, "NFS mount", "NFS mount structure");
 
 int nfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		      struct proc *));

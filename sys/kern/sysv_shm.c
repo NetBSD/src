@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.66 2003/01/30 20:03:46 atatat Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.67 2003/02/01 06:23:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.66 2003/01/30 20:03:46 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.67 2003/02/01 06:23:44 thorpej Exp $");
 
 #define SYSVSHM
 
@@ -86,6 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.66 2003/01/30 20:03:46 atatat Exp $")
 #include <uvm/uvm_extern.h>
 
 struct shmid_ds *shm_find_segment_by_shmid __P((int, int));
+
+MALLOC_DEFINE(M_SHM, "shm", "SVID compatible shared memory segments");
 
 /*
  * Provides the following externally accessible functions:

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.21 2003/01/18 10:06:37 thorpej Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.22 2003/02/01 06:23:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.21 2003/01/18 10:06:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.22 2003/02/01 06:23:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.21 2003/01/18 10:06:37 thorpej Exp $
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
+
+MALLOC_DEFINE(M_LOCKF, "lockf", "Byte-range locking structures");
 
 /*
  * This variable controls the maximum number of processes that will

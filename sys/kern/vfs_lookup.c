@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.43 2003/01/20 23:57:49 christos Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.44 2003/02/01 06:23:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.43 2003/01/20 23:57:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.44 2003/02/01 06:23:45 thorpej Exp $");
 
 #include "opt_ktrace.h"
 
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.43 2003/01/20 23:57:49 christos Exp
 
 struct pool pnbuf_pool;		/* pathname buffer pool */
 struct pool_cache pnbuf_cache;	/* pathname buffer cache */
+
+MALLOC_DEFINE(M_NAMEI, "namei", "namei path buffer");
 
 /*
  * Convert a pathname into a pointer to a locked inode.

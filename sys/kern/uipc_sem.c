@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.3 2003/01/24 01:46:27 thorpej Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.4 2003/02/01 06:23:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -87,6 +87,8 @@
 #define SEM_VALUE_MAX (~0U)
 
 #define SEM_TO_ID(x)	((intptr_t)(x))
+
+MALLOC_DEFINE(M_SEM, "p1003_1b_sem", "p1003_1b semaphores");
 
 /*
  * Note: to read the ks_name member, you need either the ks_interlock

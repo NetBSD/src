@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.13 2003/01/31 00:07:40 thorpej Exp $	*/
+/*	$NetBSD: autri.c,v 1.14 2003/02/01 06:23:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -133,8 +133,8 @@ int	autri_halt_input(void *);
 int	autri_getdev(void *, struct audio_device *);
 int	autri_mixer_set_port(void *, mixer_ctrl_t *);
 int	autri_mixer_get_port(void *, mixer_ctrl_t *);
-void*	autri_malloc(void *, int, size_t, int, int);
-void	autri_free(void *, void *, int);
+void*	autri_malloc(void *, int, size_t, struct malloc_type *, int);
+void	autri_free(void *, void *, struct malloc_type *);
 size_t	autri_round_buffersize(void *, int, size_t);
 paddr_t autri_mappage(void *, void *, off_t, int);
 int	autri_get_props(void *);
@@ -1110,7 +1110,8 @@ autri_get_portnum_by_name(struct autri_softc *sc, char *class,
 }
 
 void *
-autri_malloc(void *addr, int direction, size_t size, int pool, int flags)
+autri_malloc(void *addr, int direction, size_t size,
+    struct malloc_type *pool, int flags)
 {
 	struct autri_softc *sc = addr;
 	struct autri_dma *p;
@@ -1135,7 +1136,7 @@ autri_malloc(void *addr, int direction, size_t size, int pool, int flags)
 }
 
 void
-autri_free(void *addr, void *ptr, int pool)
+autri_free(void *addr, void *ptr, struct malloc_type *pool)
 {
 	struct autri_softc *sc = addr;
 	struct autri_dma **pp, *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.3 2002/10/23 09:14:55 jdolecek Exp $	*/
+/*	$NetBSD: event.h,v 1.4 2003/02/01 06:23:50 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -32,6 +32,7 @@
 
 #include <sys/inttypes.h>		/* for uintptr_t */
 #include <sys/null.h>			/* for NULL */
+#include <sys/mallocvar.h>		/* for malloc types */
 
 #define	EVFILT_READ		0
 #define	EVFILT_WRITE		1
@@ -134,6 +135,8 @@ struct kfilter_mapping {
 #define KFILTER_BYNAME		_IOWR('k', 1, struct kfilter_mapping)
 
 #ifdef _KERNEL
+
+MALLOC_DECLARE(M_KEVENT);
 
 #define	KNOTE(list, hint)	if (!SLIST_EMPTY(list)) knote(list, hint)
 

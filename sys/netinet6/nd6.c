@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.78 2003/01/17 08:11:58 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.79 2003/02/01 06:23:47 thorpej Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.78 2003/01/17 08:11:58 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.79 2003/02/01 06:23:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,8 @@ struct callout nd6_timer_ch;
 
 static int fill_drlist __P((void *, size_t *, size_t));
 static int fill_prlist __P((void *, size_t *, size_t));
+
+MALLOC_DEFINE(M_IP6NDP, "NDP", "IPv6 Neighbour Discovery");
 
 void
 nd6_init()

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.56 2003/01/06 20:30:39 wiz Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.57 2003/02/01 06:23:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -248,6 +248,9 @@ do {									\
 } while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
+#include <sys/mallocvar.h>
+MALLOC_DECLARE(M_SONAME);
+
 extern u_long		sb_max;
 /* to catch callers missing new second argument to sonewconn: */
 #define	sonewconn(head, connstatus)	sonewconn1((head), (connstatus))

@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.16 2002/10/02 16:51:46 thorpej Exp $	*/
+/*	$NetBSD: neo.c,v 1.17 2003/02/01 06:23:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.16 2002/10/02 16:51:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.17 2003/02/01 06:23:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,8 +201,8 @@ int	neo_write_codec(void *sc, u_int8_t a, u_int16_t d);
 void    neo_reset_codec(void *sc);
 enum ac97_host_flags neo_flags_codec(void *sc);
 int	neo_query_devinfo(void *, mixer_devinfo_t *);
-void   *neo_malloc(void *, int, size_t, int, int);
-void	neo_free(void *, void *, int);
+void   *neo_malloc(void *, int, size_t, struct malloc_type *, int);
+void	neo_free(void *, void *, struct malloc_type *);
 size_t	neo_round_buffersize(void *, int, size_t);
 paddr_t	neo_mappage(void *, void *, off_t, int);
 int	neo_get_props(void *);
@@ -969,7 +969,8 @@ neo_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 void *
-neo_malloc(void *addr, int direction, size_t size, int pool, int flags)
+neo_malloc(void *addr, int direction, size_t size, struct malloc_type *pool,
+    int flags)
 {
 	struct neo_softc *sc = addr;
 	void *rv = NULL;
@@ -994,7 +995,7 @@ neo_malloc(void *addr, int direction, size_t size, int pool, int flags)
 }
 
 void
-neo_free(void *addr, void *ptr, int pool)
+neo_free(void *addr, void *ptr, struct malloc_type *pool)
 {
 	struct neo_softc *sc = addr;
 	vaddr_t v = (vaddr_t) ptr;

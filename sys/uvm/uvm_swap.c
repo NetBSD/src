@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.74 2003/01/18 09:43:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.75 2003/02/01 06:23:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.74 2003/01/18 09:43:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.75 2003/02/01 06:23:55 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -207,6 +207,8 @@ static struct pool vndbuf_pool;
  * local variables
  */
 static struct extent *swapmap;		/* controls the mapping of /dev/drum */
+
+MALLOC_DEFINE(M_VMSWAP, "VM swap", "VM swap structures");
 
 /* list of all active swap devices [by priority] */
 LIST_HEAD(swap_priority, swappri);

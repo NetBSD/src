@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.64 2003/01/31 00:07:41 thorpej Exp $	*/
+/*	$NetBSD: eap.c,v 1.65 2003/02/01 06:23:38 thorpej Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.64 2003/01/31 00:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.65 2003/02/01 06:23:38 thorpej Exp $");
 
 #include "midi.h"
 
@@ -202,8 +202,8 @@ int	eap1370_mixer_get_port(void *, mixer_ctrl_t *);
 int	eap1371_mixer_set_port(void *, mixer_ctrl_t *);
 int	eap1371_mixer_get_port(void *, mixer_ctrl_t *);
 int	eap1370_query_devinfo(void *, mixer_devinfo_t *);
-void   *eap_malloc(void *, int, size_t, int, int);
-void	eap_free(void *, void *, int);
+void   *eap_malloc(void *, int, size_t, struct malloc_type *, int);
+void	eap_free(void *, void *, struct malloc_type *);
 size_t	eap_round_buffersize(void *, int, size_t);
 paddr_t	eap_mappage(void *, void *, off_t, int);
 int	eap_get_props(void *);
@@ -1766,7 +1766,8 @@ eap1370_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 void *
-eap_malloc(void *addr, int direction, size_t size, int pool, int flags)
+eap_malloc(void *addr, int direction, size_t size,
+    struct malloc_type *pool, int flags)
 {
 	struct eap_instance *ei = addr;
 	struct eap_softc *sc = (struct eap_softc *)ei->parent;
@@ -1787,7 +1788,7 @@ eap_malloc(void *addr, int direction, size_t size, int pool, int flags)
 }
 
 void
-eap_free(void *addr, void *ptr, int pool)
+eap_free(void *addr, void *ptr, struct malloc_type *pool)
 {
 	struct eap_instance *ei = addr;
 	struct eap_softc *sc = (struct eap_softc *)ei->parent;

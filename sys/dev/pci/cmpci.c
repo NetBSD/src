@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.17 2003/01/31 00:07:40 thorpej Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.18 2003/02/01 06:23:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.17 2003/01/31 00:07:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.18 2003/02/01 06:23:38 thorpej Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -125,8 +125,10 @@ static int cmpci_intr __P((void *));
  * DMA stuffs
  */
 static int cmpci_alloc_dmamem __P((struct cmpci_softc *,
-				   size_t, int, int, caddr_t *));
-static int cmpci_free_dmamem __P((struct cmpci_softc *, caddr_t, int));
+				   size_t, struct malloc_type *,
+				   int, caddr_t *));
+static int cmpci_free_dmamem __P((struct cmpci_softc *, caddr_t,
+				  struct malloc_type *));
 static struct cmpci_dmanode * cmpci_find_dmamem __P((struct cmpci_softc *,
 						     caddr_t));
 
@@ -147,8 +149,8 @@ static int cmpci_getdev __P((void *, struct audio_device *));
 static int cmpci_set_port __P((void *, mixer_ctrl_t *));
 static int cmpci_get_port __P((void *, mixer_ctrl_t *));
 static int cmpci_query_devinfo __P((void *, mixer_devinfo_t *));
-static void *cmpci_allocm __P((void *, int, size_t, int, int));
-static void cmpci_freem __P((void *, void *, int));
+static void *cmpci_allocm __P((void *, int, size_t, struct malloc_type *, int));
+static void cmpci_freem __P((void *, void *, struct malloc_type *));
 static size_t cmpci_round_buffersize __P((void *, int, size_t));
 static paddr_t cmpci_mappage __P((void *, void *, off_t, int));
 static int cmpci_get_props __P((void *));
@@ -1099,7 +1101,8 @@ static int
 cmpci_alloc_dmamem(sc, size, type, flags, r_addr)
 	struct cmpci_softc *sc;
 	size_t size;
-	int type, flags;
+	struct malloc_type *type;
+	int flags;
 	caddr_t *r_addr;
 {
 	int error = 0;
@@ -1157,7 +1160,7 @@ static int
 cmpci_free_dmamem(sc, addr, type)
 	struct cmpci_softc *sc;
 	caddr_t addr;
-	int type;
+	struct malloc_type *type;
 {
 	struct cmpci_dmanode **nnp;
 
@@ -1209,7 +1212,8 @@ cmpci_allocm(handle, direction, size, type, flags)
 	void  *handle;
 	int    direction;
 	size_t size;
-	int    type, flags;
+	struct malloc_type *type;
+	int    flags;
 {
 	struct cmpci_softc *sc = handle;
 	caddr_t addr;
@@ -1223,7 +1227,7 @@ static void
 cmpci_freem(handle, addr, type)
 	void	*handle;
 	void	*addr;
-	int	type;
+	struct malloc_type *type;
 {
 	struct cmpci_softc *sc = handle;
 

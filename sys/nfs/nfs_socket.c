@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.77 2002/12/01 23:02:10 matt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.78 2003/02/01 06:23:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.77 2002/12/01 23:02:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.78 2003/02/01 06:23:49 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -81,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.77 2002/12/01 23:02:10 matt Exp $")
 #include <nfs/nfsrtt.h>
 #include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
+
+MALLOC_DEFINE(M_NFSREQ, "NFS req", "NFS request header");
 
 #define	TRUE	1
 #define	FALSE	0

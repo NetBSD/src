@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.53 2003/01/18 09:34:31 thorpej Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.54 2003/02/01 06:23:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.53 2003/01/18 09:34:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.54 2003/02/01 06:23:49 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -118,6 +118,8 @@ struct nfsdhead nfsd_head;
 
 int nfssvc_sockhead_flag;
 int nfsd_head_flag;
+
+MALLOC_DEFINE(M_NFSUID, "NFS uid", "Nfs uid mapping structure");
 
 #define	TRUE	1
 #define	FALSE	0
@@ -343,6 +345,10 @@ sys_nfssvc(l, v, retval)
 }
 
 #ifdef NFSSERVER
+MALLOC_DEFINE(M_NFSD, "NFS daemon", "Nfs server daemon structure");
+MALLOC_DEFINE(M_NFSSVC, "NFS srvsock", "Nfs server structure");
+MALLOC_DEFINE(M_NFSRVDESC, "NFS srvdesc", "NFS server descriptor");
+
 /*
  * Adds a socket to the list for servicing by nfsds.
  */

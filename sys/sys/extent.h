@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.10 1998/09/13 14:46:24 christos Exp $	*/
+/*	$NetBSD: extent.h,v 1.11 2003/02/01 06:23:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ struct extent {
 	LIST_HEAD(, extent_region) ex_regions;
 	u_long	ex_start;		/* start of extent */
 	u_long	ex_end;			/* end of extent */
-	int	ex_mtype;		/* memory type */
+	struct malloc_type *ex_mtype;	/* memory type */
 	int	ex_flags;		/* misc. information */
 };
 
@@ -102,8 +102,10 @@ struct extent_fixed {
 	((ALIGN(sizeof(struct extent_region))) *	\
 	 (_nregions)))
 
-struct	extent *extent_create __P((const char *, u_long, u_long, int,
-	    caddr_t, size_t, int));
+struct malloc_type;
+
+struct	extent *extent_create __P((const char *, u_long, u_long,
+	    struct malloc_type *, caddr_t, size_t, int));
 void	extent_destroy __P((struct extent *));
 int	extent_alloc_subregion1 __P((struct extent *, u_long, u_long,
 	    u_long, u_long, u_long, u_long, int, u_long *));

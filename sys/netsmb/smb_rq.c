@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.3 2002/01/04 02:39:43 deberg Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.4 2003/02/01 06:23:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -50,9 +50,9 @@
 #include <netsmb/smb_subr.h>
 #include <netsmb/smb_tran.h>
 
-#ifndef __NetBSD__
 MALLOC_DEFINE(M_SMBRQ, "SMBRQ", "SMB request");
 
+#ifndef __NetBSD__
 MODULE_DEPEND(netsmb, libmchain, 1, 1, 1);
 #endif
 

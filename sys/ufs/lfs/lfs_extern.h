@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.36 2003/01/30 14:18:32 yamt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.37 2003/02/01 06:23:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
 
 #ifndef _UFS_LFS_LFS_EXTERN_H_
 #define _UFS_LFS_LFS_EXTERN_H_
+
+#include <sys/mallocvar.h>
+MALLOC_DECLARE(M_SEGMENT);
 
 /* Copied from ext2fs for ITIMES.  XXX This is a bogus use of v_tag. */
 #define IS_LFS_VNODE(vp)   (vp->v_tag == VT_LFS)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.13 2003/01/31 04:55:52 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.14 2003/02/01 06:23:44 thorpej Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -66,13 +66,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.13 2003/01/31 04:55:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.14 2003/02/01 06:23:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+
+MALLOC_DEFINE(M_PACKET_TAGS, "packet tags", "Packet-attached information");
 
 /*
  * ensure that [off, off + len) is contiguous on the mbuf chain "m".

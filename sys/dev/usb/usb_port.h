@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.60 2003/01/05 03:48:18 dsainty Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.61 2003/02/01 06:23:40 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -52,6 +52,15 @@
  */
 
 #include "opt_usbverbose.h"
+
+#if defined(_KERNEL)
+#include <sys/mallocvar.h>
+
+MALLOC_DECLARE(M_USB);
+MALLOC_DECLARE(M_USBDEV);
+MALLOC_DECLARE(M_USBHC);
+
+#endif
 
 #define USB_USE_SOFTINTR
 
@@ -119,7 +128,7 @@ typedef struct callout usb_callout_t;
 #define usb_kthread_create1	kthread_create1
 #define usb_kthread_create	kthread_create
 
-typedef int usb_malloc_type;
+typedef struct malloc_type *usb_malloc_type;
 
 #define Ether_ifattach ether_ifattach
 #define IF_INPUT(ifp, m) (*(ifp)->if_input)((ifp), (m))

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.100 2003/01/19 22:54:47 simonb Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.101 2003/02/01 06:23:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.100 2003/01/19 22:54:47 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.101 2003/02/01 06:23:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,10 @@ int		nfiles;		/* actual number of open files */
 struct pool	file_pool;	/* memory pool for file structures */
 struct pool	cwdi_pool;	/* memory pool for cwdinfo structures */
 struct pool	filedesc0_pool;	/* memory pool for filedesc0 structures */
+
+MALLOC_DEFINE(M_FILE, "file", "Open file structure");
+MALLOC_DEFINE(M_FILEDESC, "file desc", "Open file descriptor table");
+MALLOC_DEFINE(M_IOCTLOPS, "ioctlops", "ioctl data buffer");
 
 static __inline void	fd_used(struct filedesc *, int);
 static __inline void	fd_unused(struct filedesc *, int);

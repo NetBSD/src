@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.2 2002/01/09 17:43:28 deberg Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.3 2003/02/01 06:23:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -64,13 +64,11 @@
 #define	smbfs_hash_unlock(smp)	lockmgr(&smp->sm_hashlock, LK_RELEASE, NULL)
 
 #ifndef __NetBSD__
-
 extern vop_t **smbfs_vnodeop_p;
+#endif /* !NetBSD */
 
 MALLOC_DEFINE(M_SMBNODE, "SMBFS node", "SMBFS vnode private part");
 static MALLOC_DEFINE(M_SMBNODENAME, "SMBFS nname", "SMBFS node name");
-
-#endif /* !NetBSD */
 
 #ifdef __NetBSD__
 #define VI_LOCK(vp) simple_lock(&(vp)->v_interlock)

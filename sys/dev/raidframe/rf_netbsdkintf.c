@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.152 2003/01/19 16:52:55 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.153 2003/02/01 06:23:40 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -77,9 +77,6 @@
  *      @(#)cd.c        8.2 (Berkeley) 11/16/93
  */
 
-
-
-
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -114,7 +111,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.152 2003/01/19 16:52:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.153 2003/02/01 06:23:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -169,6 +166,8 @@ static RF_SparetWait_t *rf_sparet_wait_queue;	/* requests to install a
 						 * spare table */
 static RF_SparetWait_t *rf_sparet_resp_queue;	/* responses from
 						 * installation process */
+
+MALLOC_DEFINE(M_RAIDFRAME, "RAIDframe", "RAIDframe structures");
 
 /* prototypes */
 static void KernelWakeupFunc(struct buf * bp);

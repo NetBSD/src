@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.50 2002/09/27 15:37:22 provos Exp $	*/
+/*	$NetBSD: isadma.c,v 1.51 2003/02/01 06:23:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.50 2002/09/27 15:37:22 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.51 2003/02/01 06:23:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -748,7 +748,7 @@ _isa_malloc(ids, chan, size, pool, flags)
 	struct isa_dma_state *ids;
 	int chan;
 	size_t size;
-	int pool;
+	struct malloc_type *pool;
 	int flags;
 {
 	bus_addr_t addr;
@@ -783,7 +783,7 @@ _isa_malloc(ids, chan, size, pool, flags)
 void
 _isa_free(addr, pool)
 	void *addr;
-	int pool;
+	struct malloc_type *pool;
 {
 	struct isa_mem **mp, *m;
 	caddr_t kva = (caddr_t)addr;

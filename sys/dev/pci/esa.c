@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.19 2003/01/31 00:07:41 thorpej Exp $ */
+/* $NetBSD: esa.c,v 1.20 2003/02/01 06:23:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -113,8 +113,8 @@ int		esa_halt_input(void *);
 int		esa_set_port(void *, mixer_ctrl_t *);
 int		esa_get_port(void *, mixer_ctrl_t *);
 int		esa_query_devinfo(void *, mixer_devinfo_t *);
-void *		esa_malloc(void *, int, size_t, int, int);
-void		esa_free(void *, void *, int);
+void *		esa_malloc(void *, int, size_t, struct malloc_type *, int);
+void		esa_free(void *, void *, struct malloc_type *);
 int		esa_getdev(void *, struct audio_device *);
 size_t		esa_round_buffersize(void *, int, size_t);
 int		esa_get_props(void *);
@@ -477,7 +477,8 @@ esa_halt_input(void *hdl)
 }
 
 void *
-esa_malloc(void *hdl, int direction, size_t size, int type, int flags)
+esa_malloc(void *hdl, int direction, size_t size, struct malloc_type *type,
+    int flags)
 {
 	struct esa_voice *vc = hdl;
 	struct esa_softc *sc = (struct esa_softc *)vc->parent;
@@ -501,7 +502,7 @@ esa_malloc(void *hdl, int direction, size_t size, int type, int flags)
 }
 
 void
-esa_free(void *hdl, void *addr, int type)
+esa_free(void *hdl, void *addr, struct malloc_type *type)
 {
 	struct esa_voice *vc = hdl;
 	struct esa_softc *sc = (struct esa_softc *)vc->parent;

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.1 2002/12/23 17:30:40 jdolecek Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.2 2003/02/01 06:23:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -43,6 +43,10 @@
 #ifndef	FILECOREMNT_ROOT
 #define	FILECOREMNT_ROOT	0
 #endif
+
+#include <sys/mallocvar.h>
+
+MALLOC_DECLARE(M_FILECOREMNT);
 
 struct filecore_mnt {
 	struct mount *fc_mountp;

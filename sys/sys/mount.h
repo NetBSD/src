@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.98 2002/09/21 18:06:08 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.99 2003/02/01 06:23:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -456,6 +456,9 @@ struct nfs_public {
 };
 
 #ifdef _KERNEL
+#include <sys/mallocvar.h>
+MALLOC_DECLARE(M_MOUNT);
+
 /*
  * exported vnode operations
  */
