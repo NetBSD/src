@@ -1,4 +1,4 @@
-.\"	$NetBSD: beyond43.ms,v 1.2 1998/01/09 06:40:54 perry Exp $
+.\"	$NetBSD: beyond43.ms,v 1.3 2003/02/04 23:48:30 perry Exp $
 .\"
 .\" Copyright (c) 1989 The Regents of the University of California.
 .\" All rights reserved.
@@ -116,7 +116,7 @@ BSD release.
 Kernel Memory Allocator
 .PP
 The 4.3BSD UNIX kernel used 10 different memory allocation mechanisms,
-each designed for the particular needs of the utilizing subsystem.
+each designed for the particular needs of the particular subsystem.
 These mechanisms have been replaced by a general purpose dynamic
 memory allocator that can be used by all of the kernel subsystems.
 The design of this allocator takes advantage of known memory usage
