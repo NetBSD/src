@@ -2689,7 +2689,7 @@ barrier_align (barrier_or_label)
      rtx barrier_or_label;
 {
   rtx next = next_real_insn (barrier_or_label), pat, prev;
-  int slot, credit;
+  int slot, credit, jump_to_next;
  
   if (! next)
     return 0;
@@ -2732,6 +2732,13 @@ barrier_align (barrier_or_label)
 	 an alignment, against that of fetching unneeded insn in front of the
 	 branch target when there is no alignment.  */
 
+      /* There are two delay_slot cases to consider.  One is the simple case 
+	 where the preceding branch is to the insn beyond the barrier (simple 
+	 delay slot filling), and the other is where the preceding branch has 
+	 a delay slot that is a duplicate of the insn after the barrier 
+	 (fill_eager_delay_slots) and the branch is to the insn after the insn 
+	 after the barrier.  */
+
       /* PREV is presumed to be the JUMP_INSN for the barrier under
 	 investigation.  Skip to the insn before it.  */
       prev = prev_real_insn (prev);
@@ -2740,11 +2747,21 @@ barrier_align (barrier_or_label)
 	   credit >= 0 && prev && GET_CODE (prev) == INSN;
 	   prev = prev_real_insn (prev))
 	{
+	  jump_to_next = 0;
 	  if (GET_CODE (PATTERN (prev)) == USE
 	      || GET_CODE (PATTERN (prev)) == CLOBBER)
 	    continue;
 	  if (GET_CODE (PATTERN (prev)) == SEQUENCE)
-	    prev = XVECEXP (PATTERN (prev), 0, 1);
+	    {
+	      prev = XVECEXP (PATTERN (prev), 0, 1);
+	      if (INSN_UID (prev) == INSN_UID (next)) 
+		{
+	  	  /* Delay slot was filled with insn at jump target.  */
+		  jump_to_next = 1;
+		  continue;
+  		}
+	    }
+
 	  if (slot &&
 	      get_attr_in_delay_slot (prev) == IN_DELAY_SLOT_YES)
 	    slot = 0;
@@ -2754,8 +2771,14 @@ barrier_align (barrier_or_label)
 	  && GET_CODE (prev) == JUMP_INSN
 	  && JUMP_LABEL (prev)
 	  && next_real_insn (JUMP_LABEL (prev)) == next_real_insn (barrier_or_label)
-	  && (credit - slot >= (GET_CODE (SET_SRC (PATTERN (prev))) == PC ? 2 : 0)))
-	return 0;
+	  && (jump_to_next || next_real_insn (JUMP_LABEL (prev)) == next))
+	{
+  	  rtx pat = PATTERN (prev);
+  	  if (GET_CODE (pat) == PARALLEL)
+	    pat = XVECEXP (pat, 0, 0);
+	  if (credit - slot >= (GET_CODE (SET_SRC (pat)) == PC ? 2 : 0))
+	    return 0;
+	}
     }
 
   return CACHE_LOG;
