@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.12 1998/07/23 17:56:00 phil Exp $	*/
+/*	$NetBSD: mdb.c,v 1.13 1999/06/19 06:38:49 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -203,6 +203,7 @@ write_menu_file (char *initcode)
 		"extern int __m_endwin;\n"
 		"\n"
 		"/* Prototypes */\n"
+		"int menu_init (void);\n"
 		"void process_menu (int num);\n"
 		"void __menu_initerror (void);\n"
 		);
