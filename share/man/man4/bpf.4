@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.23 2003/02/04 22:38:15 perry Exp $
+.\"	$NetBSD: bpf.4,v 1.24 2003/02/25 10:35:13 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,7 +70,7 @@ Reads from these files return the next group of packets
 that have matched the filter.
 To improve performance, the buffer passed to read must be
 the same size as the buffers used internally by
-.Nm "" .
+.Nm .
 This size is returned by the
 .Dv BIOCGBLEN
 ioctl (see below), and under
@@ -82,7 +82,7 @@ truncated.
 The packet filter will support any link level protocol that has fixed length
 headers.  Currently, only Ethernet, SLIP and PPP drivers have been
 modified to interact with
-.Nm "" .
+.Nm .
 .Pp
 Since packet data is in network byte order, applications should use the
 .Xr byteorder 3

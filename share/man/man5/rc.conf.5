@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.75 2002/12/18 19:29:26 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.76 2003/02/25 10:35:15 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -91,7 +91,7 @@ reads
 (if it is readable)
 to obtain default values for various variables, and the end-user
 may override these by appending appropriate entries to the end of
-.Nm "" .
+.Nm .
 .Pp
 .Xr rc.d 8
 scripts that use
@@ -1172,7 +1172,7 @@ resides in
 .Pa /etc .
 .It Pa /etc/defaults/rc.conf
 Default settings for
-.Nm "" ,
+.Nm ,
 sourced by
 .Nm
 before the end-user configuration section.

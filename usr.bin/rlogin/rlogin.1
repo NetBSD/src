@@ -1,4 +1,4 @@
-.\"	$NetBSD: rlogin.1,v 1.13 2003/02/04 23:07:36 perry Exp $
+.\"	$NetBSD: rlogin.1,v 1.14 2003/02/25 10:35:52 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@
 .Op Fl k Ar realm
 .Op Fl l Ar username
 .Ar host
-.Nm ""
+.Nm
 .Op Fl 8EKLdx
 .Op Fl e Ar char
 .Op Fl k Ar realm
@@ -173,7 +173,7 @@ standard Berkeley
 is used instead.
 .Sh ENVIRONMENT
 The following environment variable is used by
-.Nm "" :
+.Nm :
 .Bl -tag -width TERM
 .It Ev TERM
 Determines the user's terminal type.

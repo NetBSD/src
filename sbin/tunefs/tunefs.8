@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.30 2002/12/21 12:50:54 wiz Exp $
+.\"	$NetBSD: tunefs.8,v 1.31 2003/02/25 10:35:11 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm tunefs
 .Nd tune up an existing file system
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl AFN
 .Op Fl a Ar maxcontig
 .Op Fl d Ar rotdelay
@@ -60,7 +60,7 @@ is designed to change the dynamic parameters of a file system
 which affect the layout policies.
 .Pp
 The following options are supported by
-.Nm "" :
+.Nm :
 .Bl -tag -width Ds
 .It Fl A
 Cause the values to be updated in all the alternate
@@ -69,7 +69,7 @@ If this option is not used,
 then use of a backup superblock by
 .Xr fsck 8
 will lose anything changed by
-.Nm "" .
+.Nm .
 .Fl A
 is ignored when
 .Fl N
