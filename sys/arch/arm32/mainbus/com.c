@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.5 1996/03/28 21:52:32 mark Exp $	*/
+/*	$NetBSD: com.c,v 1.6 1996/04/26 22:01:51 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -102,6 +102,7 @@ int comintr __P((void *));
 void compoll __P((void *));
 int comparam __P((struct tty *, struct termios *));
 void comstart __P((struct tty *));
+void cominit __P((int unit, int rate));
 
 struct cfattach com_ca = {
 	sizeof(struct com_softc), comprobe, comattach
@@ -199,7 +200,7 @@ comattach(parent, self, aux)
 	struct mainbus_attach_args *mb = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	int iobase = mb->mb_iobase;
-	struct tty *tp;
+/*	struct tty *tp;*/
 
 	sc->sc_iobase = iobase;
 	sc->sc_hwflags = ISSET(cf->cf_flags, COM_HW_NOIEN);
@@ -958,6 +959,7 @@ comcninit(cp)
 	comconsinit = 0;
 }
 
+void
 cominit(unit, rate)
 	int unit, rate;
 {
@@ -976,6 +978,7 @@ cominit(unit, rate)
 	splx(s);
 }
 
+int
 comcngetc(dev)
 	dev_t dev;
 {

@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.1 1996/03/28 21:50:19 mark Exp $ */
+/* $NetBSD: pms.c,v 1.2 1996/04/26 22:01:59 mark Exp $ */
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -349,7 +349,7 @@ pmsread(dev, uio, flag)
 			return EWOULDBLOCK;
 		}
 		sc->sc_state |= PMS_ASLP;
-		if (error = tsleep((caddr_t)sc, (PZERO | PCATCH), "pmsread", 0)) {
+		if ((error = tsleep((caddr_t)sc, (PZERO | PCATCH), "pmsread", 0))) {
 			sc->sc_state &= ~PMS_ASLP;
 			splx(s);
 			return error;
@@ -367,7 +367,7 @@ pmsread(dev, uio, flag)
 		(void) q_to_b(&sc->sc_q, buffer, length);
 
 		/* Copy the data to the user process. */
-		if (error = uiomove(buffer, length, uio))
+		if ((error = uiomove(buffer, length, uio)))
 			break;
 	}
 	splx(s);

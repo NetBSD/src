@@ -1,4 +1,4 @@
-/* $NetBSD: iic.c,v 1.1 1996/04/19 19:49:03 mark Exp $ */
+/* $NetBSD: iic.c,v 1.2 1996/04/26 22:01:56 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -357,8 +357,8 @@ iicread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	int unit = minor(dev);
-	struct iic_softc *sc = iic_cd.cd_devs[unit];
+/*	int unit = minor(dev);*/
+/*	struct iic_softc *sc = iic_cd.cd_devs[unit];*/
 
 	return(ENXIO);
 }
@@ -370,8 +370,8 @@ iicwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	int unit = minor(dev);
-	struct iic_softc *sc = iic_cd.cd_devs[unit];
+/*	int unit = minor(dev);*/
+/*	struct iic_softc *sc = iic_cd.cd_devs[unit];*/
 
 	return(ENXIO);
 }
@@ -385,7 +385,7 @@ iicioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct iic_softc *sc = iic_cd.cd_devs[minor(dev)];
+/*	struct iic_softc *sc = iic_cd.cd_devs[minor(dev)];*/
 
 /*
 	switch (cmd) {
