@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.7 2000/04/10 07:59:22 jdolecek Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.8 2000/04/10 09:30:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -46,5 +46,4 @@
 
 int	 getpoints __P((char *));
 char	*ioctlname __P((long));
-void dumpfile __P((char *, int, int));
-void setemul __P((const char *, pid_t, int));
+void	dumpfile __P((char *, int, int));
