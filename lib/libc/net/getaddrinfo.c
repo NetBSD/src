@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.17 1999/12/27 10:20:59 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.18 2000/01/17 08:34:04 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -47,19 +47,8 @@
  *   in ai_flags?
  */
 
-#if 0
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif 
-#else
-#define HAVE_SOCKADDR_SA_LEN
-#endif
-
 #include <sys/types.h>
 #include <sys/param.h>
-#if 0
-#include <sys/sysctl.h>
-#endif
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -74,28 +63,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
-
-#if 0
-#ifndef HAVE_PORTABLE_PROTOTYPE
-#include "cdecl_ext.h"
-#endif 
-
-#ifndef HAVE_U_INT32_T
-#include "bittypes.h"
-#endif 
-
-#ifndef HAVE_SOCKADDR_STORAGE
-#include "sockstorage.h"
-#endif 
-
-#ifndef HAVE_ADDRINFO
-#include "addrinfo.h"
-#endif
-
-#if defined(__KAME__) && defined(INET6)
-# define FAITH
-#endif
-#endif
 
 #define SUCCESS 0
 #define ANY 0
@@ -995,9 +962,7 @@ get_ai(pai, afd, addr)
 	memcpy(ai, pai, sizeof(struct addrinfo));
 	ai->ai_addr = (struct sockaddr *)(ai + 1);
 	memset(ai->ai_addr, 0, afd->a_socklen);
-#ifdef HAVE_SOCKADDR_SA_LEN
 	ai->ai_addr->sa_len = afd->a_socklen;
-#endif
 	ai->ai_addrlen = afd->a_socklen;
 	ai->ai_addr->sa_family = ai->ai_family = afd->a_af;
 	p = (char *)(ai->ai_addr);
