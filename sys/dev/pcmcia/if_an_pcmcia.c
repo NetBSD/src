@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.9 2001/04/06 09:28:39 onoe Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.10 2001/07/01 16:35:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,14 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
-#include "bpfilter.h"
-
-#ifdef INET
-#define	ANCACHE		/* XXX: should be defined elsewhere */
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -60,24 +52,6 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_ieee80211.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

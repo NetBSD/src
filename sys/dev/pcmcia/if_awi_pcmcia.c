@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.18 2001/01/18 20:28:25 jdolecek Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.19 2001/07/01 16:35:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,10 +44,6 @@
  * DS cards based on the same chipset.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -63,24 +59,6 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_ieee80211.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
