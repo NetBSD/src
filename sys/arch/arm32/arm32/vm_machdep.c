@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 1997/10/14 11:23:54 mark Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16.2.1 1998/05/09 00:36:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -257,7 +257,7 @@ cpu_fork(p1, p2)
 
 	*tf = *p1->p_md.md_regs;
 	sf = (struct switchframe *)tf - 1;
-	sf->sf_spl = SPL_0;
+	sf->sf_spl = _SPL_0;
 	sf->sf_r4 = (u_int)child_return;
 	sf->sf_r5 = (u_int)p2;
 	sf->sf_pc = (u_int)proc_trampoline;
@@ -338,8 +338,8 @@ cpu_swapin(p)
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
-		printf("fun time: paging in PT %p for 0\n", addr);
-		printf("p->p_vmspace->vm_pmap.pm_pdir[0] = %p\n",
+		printf("fun time: paging in PT %lx for 0\n", addr);
+		printf("p->p_vmspace->vm_pmap.pm_pdir[0] = %x\n",
 		    p->p_vmspace->vm_map.pmap->pm_pdir[0]);
 		printf("p->pm_vptpt[0] = %08x",
 		    *((int *)(p->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
@@ -377,7 +377,7 @@ cpu_swapout(p)
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
 		printf("cpu_swapout(%p, %d, %s, %p)\n", p, p->p_pid,
-		    p->p_comm, (u_int)&p->p_vmspace->vm_map.pmap);
+		    p->p_comm, &p->p_vmspace->vm_map.pmap);
 		printf("p->pm_vptpt[0] = %08x",
 		    *((int *)(p->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
 	}
