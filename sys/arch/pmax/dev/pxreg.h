@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxreg.h,v 1.4 1999/04/26 04:37:33 ad Exp $ */
+/* 	$NetBSD: pxreg.h,v 1.5 1999/04/26 12:05:11 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -104,7 +104,7 @@
 #define STAMP_PLANE_8X3		(0 << 5)
 #define STAMP_PLANE_24		(1 << 5)
 
-/* how to construct rewrites */
+/* when to write enable the stamp */
 #define STAMP_WE_SIGN		(0x04 << 8)
 #define STAMP_WE_XYMASK		(0x02 << 8)
 #define STAMP_WE_CLIPRECT	(0x01 << 8)
@@ -150,9 +150,6 @@
 #define STAMP_HALF_BUFF		(1<27)
 #define STAMP_INITIALIZE	(1<<31)
 
-/*
- * How to construct the masks in stamp packets.
- */
 #ifdef _KERNEL
 #define STAMP_WIDTH	(pxi->pxi_stampw)
 #define STAMP_HEIGHT	(pxi->pxi_stamph)
@@ -166,20 +163,18 @@
  * For the poll register. Don't mess with the # of retries or the delay
  * unless you know what you're doing. According to OSF header files,
  * the delay on Alpha is 20us, and the # of retries should be 4000. This is
- * inadequate.
+ * inadequate, particularly on the PXG which seems to run at a higher
+ * frequency. The STIC gets wedged while scrolling quite a lot.
  */
 #define STAMP_OK		(0)
 #define STAMP_BUSY		(1)
 #define STAMP_RETRIES		(7000)
 #define STAMP_DELAY		(20)
 
-/*
- * For differing offsets on alpha/pmax
- */
-#ifdef pmax
-#define __PXS(n)	(n)
-#else /* pmax */
+#ifdef alpha
 #define __PXS(n)	((n) << 1)
+#else
+#define __PXS(n)	(n)
 #endif
 
 /*
