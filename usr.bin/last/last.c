@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)last.c	5.18 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: last.c,v 1.2 1993/08/01 18:14:08 mycroft Exp $";
+static char rcsid[] = "$Id: last.c,v 1.3 1994/03/28 07:26:41 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -151,7 +151,7 @@ wtmp()
 	register TTY	*T;			/* tty list entry */
 	struct stat	stb;			/* stat of file for size */
 	long	bl, delta,			/* time difference */
-		lseek(), time();
+		time();
 	int	bytes, wfd;
 	char	*ct, *crmsg,
 		*asctime(), *ctime(), *strcpy();
