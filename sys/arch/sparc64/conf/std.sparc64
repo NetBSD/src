@@ -1,11 +1,9 @@
-#	$NetBSD: std.sparc64,v 1.4 1999/03/27 17:58:20 eeh Exp $
+#	$NetBSD: std.sparc64,v 1.5 1999/05/23 11:08:01 mrg Exp $
 
 #
 # Mandatory NetBSD/sparc kernel options.
 #
 
 machine		sparc64		# Machine architecture; required by config(8)
-
-options 	UVM		# UVM virtual memory system
 
 options 	EXEC_SCRIPT	# execve(2) support for scripts
