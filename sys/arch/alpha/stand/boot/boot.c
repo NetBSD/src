@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
+/*	$NetBSD: boot.c,v 1.11 1997/01/23 23:10:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,10 +62,10 @@ vm_offset_t ffp_save, ptbr_save;
 int debug;
 
 char *kernelnames[] = {
-	"netbsd",
-	"netbsd.bak",
-	"netbsd.old",
-	"onetbsd",
+	"netbsd",		"netbsd.gz",
+	"netbsd.bak",		"netbsd.bak.gz",
+	"netbsd.old",		"netbsd.old.gz",
+	"onetbsd",		"onetbsd.gz",
 	NULL
 };
 
