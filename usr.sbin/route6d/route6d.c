@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.27 2001/05/07 14:00:23 kleink Exp $	*/
+/*	$NetBSD: route6d.c,v 1.28 2001/06/13 04:31:52 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.60 2001/03/08 02:15:42 onoe Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.27 2001/05/07 14:00:23 kleink Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.28 2001/06/13 04:31:52 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -3296,22 +3296,28 @@ tracet(level, fmt, va_alist)
 {
 	va_list ap;
 
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (level <= dflag) {
+#ifdef __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		fprintf(stderr, "%s: ", hms());
 		vfprintf(stderr, fmt, ap);
+		va_end(ap);
 	}
 	if (dflag) {
+#ifdef __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		if (level > 0)
 			vsyslog(LOG_DEBUG, fmt, ap);
 		else
 			vsyslog(LOG_WARNING, fmt, ap);
+		va_end(ap);
 	}
-	va_end(ap);
 }
 
 void
@@ -3326,20 +3332,27 @@ trace(level, fmt, va_alist)
 {
 	va_list ap;
 
+	if (level <= dflag) {
 #ifdef __STDC__
-	va_start(ap, fmt);
+		va_start(ap, fmt);
 #else
-	va_start(ap);
+		va_start(ap);
 #endif
-	if (level <= dflag)
 		vfprintf(stderr, fmt, ap);
+		va_end(ap);
+	}
 	if (dflag) {
+#ifdef __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		if (level > 0)
 			vsyslog(LOG_DEBUG, fmt, ap);
 		else
 			vsyslog(LOG_WARNING, fmt, ap);
+		va_end(ap);
 	}
-	va_end(ap);
 }
 
 unsigned int
