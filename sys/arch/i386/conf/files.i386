@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.217 2002/10/06 12:36:16 fvdl Exp $
+#	$NetBSD: files.i386,v 1.218 2002/10/07 07:54:31 fvdl Exp $
 #
 # new style config file for i386 architecture
 #
@@ -97,7 +97,7 @@ file	arch/i386/i386/vm_machdep.c
 file	dev/cons.c
 
 file	arch/i386/i386/mptramp.s  	multiprocessor
-file	arch/i386/i386/lock_machdep.c	multiprocessor
+file	arch/i386/i386/lock_machdep.c	lockdebug
 file    arch/i386/i386/ipifuncs.c       multiprocessor
 
 file	arch/i386/i386/pmc.c		perfctrs
