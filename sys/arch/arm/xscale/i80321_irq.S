@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_irq.S,v 1.2 2002/07/29 22:00:01 thorpej Exp $	*/
+/*	$NetBSD: i80321_irq.S,v 1.3 2002/08/14 23:33:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -111,14 +111,14 @@ Lastloop:
 	mov	r1, #0x00000000
 	str	r1, [r0]		/* Clear astpending */
 
-	mrs	r4, cpsr_all		/* save CPSR */
+	mrs	r4, cpsr		/* save CPSR */
 	bic	r0, r4, #(I32_bit)	/* Enable IRQs */
-	msr	cpsr_all, r0
+	msr	cpsr_c, r0
 
 	mov	r0, sp
 	bl	_C_LABEL(ast)		/* ast(frame) */
 
-	msr	cpsr_all, r4		/* Disable IRQs */
+	msr	cpsr_c, r4		/* Disable IRQs */
 	b	Lastloop		/* Check for more ASTs */
 
 Lirqout:
