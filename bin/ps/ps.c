@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.55 2004/10/29 19:53:29 dsl Exp $	*/
+/*	$NetBSD: ps.c,v 1.56 2004/11/29 04:44:10 atatat Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.55 2004/10/29 19:53:29 dsl Exp $");
+__RCSID("$NetBSD: ps.c,v 1.56 2004/11/29 04:44:10 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,6 +269,9 @@ main(int argc, char *argv[])
 				flag = KERN_PROC_TTY_REVOKE;
 			else if (strcmp(ttname, "co") == 0)
 				ttypath = _PATH_CONSOLE;
+			else if (strncmp(ttname, "pts/", 4) == 0)
+				(void)snprintf(ttypath = pathbuf,
+				    sizeof(pathbuf), "%s%s", _PATH_DEV, ttname);
 			else if (*ttname != '/')
 				(void)snprintf(ttypath = pathbuf,
 				    sizeof(pathbuf), "%s%s", _PATH_TTY, ttname);
@@ -710,7 +713,7 @@ kludge_oldps_options(char *s)
 	 */
 	if (isdigit((unsigned char)*cp) &&
 	    (cp == s || (cp[-1] != 'U' && cp[-1] != 't' && cp[-1] != 'p' &&
-	     (cp - 1 == s || cp[-2] != 't'))))
+	    cp[-1] != '/' && (cp - 1 == s || cp[-2] != 't'))))
 		*ns++ = 'p';
 	/* and append the number */
 	(void)strcpy(ns, cp);		/* XXX strcpy is safe here */
