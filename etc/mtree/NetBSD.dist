@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.276.2.1 2005/04/06 20:54:57 tron Exp $
+#	$NetBSD: NetBSD.dist,v 1.276.2.2 2005/04/06 21:13:49 tron Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -189,7 +189,6 @@
 ./usr/X11R6/lib/X11/xkb/symbols/xfree68
 ./usr/X11R6/lib/X11/xkb/types
 ./usr/X11R6/lib/modules
-./usr/X11R6/lib/modules/codeconv
 ./usr/X11R6/lib/modules/extensions
 ./usr/X11R6/lib/modules/fonts
 ./usr/X11R6/lib/modules/drivers
