@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.59 2004/10/07 06:11:24 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.60 2004/10/11 09:42:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.59 2004/10/07 06:11:24 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.60 2004/10/11 09:42:06 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -173,6 +173,7 @@ static const ns_src defaultnis_forceall[] = {
  * in sync with that in `pwd_mkdb'.
  */
 
+#if defined(YP) || defined(HESIOD)
 /*
  * _pw_parse
  *	Parses entry using pw_scan(3) (without the trailing \n)
@@ -197,6 +198,7 @@ _pw_parse(const char *entry, struct passwd *pw, char *buf, size_t buflen,
 		flags |= _PASSWORD_OLDFMT;
 	return __pw_scan(buf, pw, &flags);
 }
+#endif /* YP || HESIOD */
 
 /*
  * _pw_opendb
@@ -1655,14 +1657,14 @@ _passwdcompat_endpwent(void)
 }
 
 /*
- * _passwdcompat_grscan
+ * _passwdcompat_pwscan
  *	When a name lookup in compat mode is required (e.g., `+name', or a
  *	name in `+@netgroup'), look it up in the 'passwd_compat' nsswitch
  *	database.
  *	Fail if passwd_compat contains files or compat.
  */
 static int
-_passwdcompat_grscan(struct passwd *pw, char *buffer, size_t buflen,
+_passwdcompat_pwscan(struct passwd *pw, char *buffer, size_t buflen,
 	int search, const char *name, uid_t uid)
 {
 	static const ns_dtab compatentdtab[] = {
@@ -1768,7 +1770,7 @@ _compat_pwscan(int *retval, struct passwd *pw, char *buffer, size_t buflen,
 
 			case COMPAT_FULL:
 					/* get next user */
-				rv = _passwdcompat_grscan(&cpw,
+				rv = _passwdcompat_pwscan(&cpw,
 				    cbuf, sizeof(cbuf),
 				    _PW_KEYBYNUM, NULL, 0);
 				if (rv != NS_SUCCESS)
@@ -1786,7 +1788,7 @@ _compat_pwscan(int *retval, struct passwd *pw, char *buffer, size_t buflen,
 				}
 				if (!user || !*user)
 					break;
-				rv = _passwdcompat_grscan(&cpw,
+				rv = _passwdcompat_pwscan(&cpw,
 				    cbuf, sizeof(cbuf),
 				    _PW_KEYBYNAME, user, 0);
 				break;
@@ -1797,7 +1799,7 @@ _compat_pwscan(int *retval, struct passwd *pw, char *buffer, size_t buflen,
 					state->mode = COMPAT_NONE;
 					break;
 				}
-				rv = _passwdcompat_grscan(&cpw,
+				rv = _passwdcompat_pwscan(&cpw,
 				    cbuf, sizeof(cbuf),
 				    _PW_KEYBYNAME, state->user, 0);
 				free(state->user);
