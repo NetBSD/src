@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 2000/08/12 22:58:06 wdk Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 2000/08/15 04:56:45 wdk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -35,17 +35,12 @@
 
 struct confargs;
 
-/* Handle device interrupt for  given unit of a driver */
-
-typedef void* intr_arg_t;		/* pointer to some softc */
-typedef int (*intr_handler_t) __P((intr_arg_t));
-
 struct confargs {
 	const char	*ca_name;	/* Device name. */
 	int		ca_addr;	/* Device address. */
+	int		ca_intr;	/* Device interrupt level */
 	bus_space_tag_t	ca_bustag;	/* parent bus tag */
 	bus_dma_tag_t	ca_dmatag;      /* parent bus dma */
-	bus_addr_t	ca_paddr;	/* physical address */
 };
 
 /* Locator aliases */
