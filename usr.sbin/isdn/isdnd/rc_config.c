@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.5 2002/01/04 12:24:33 martin Exp $ 
+ *	$Id: rc_config.c,v 1.6 2002/01/26 19:31:20 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -331,8 +331,8 @@ set_isppp_auth(int entry)
 		}
 		else if ((cep->ppp_send_auth == AUTH_CHAP 
 			  || cep->ppp_send_auth == AUTH_PAP)
-			 && cep->ppp_send_name[0] != 0
-			 && cep->ppp_send_password[0] != 0)
+			 && cep->ppp_send_name != NULL
+			 && cep->ppp_send_password != NULL)
 		{
 			spcfg.myauth = cep->ppp_send_auth == AUTH_PAP ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
 			spcfg.myname = cep->ppp_send_name;
@@ -791,7 +791,6 @@ cfg_setval(int keyword)
 				cfg_entry_tab[entrycount].ppp_auth_flags |= AUTH_RECHALLENGE;
 			else
 				cfg_entry_tab[entrycount].ppp_auth_flags &= ~AUTH_RECHALLENGE;
-			set_isppp_auth(entrycount);
 			break;
 
 		case PPP_AUTH_PARANOID:
@@ -800,7 +799,6 @@ cfg_setval(int keyword)
 				cfg_entry_tab[entrycount].ppp_auth_flags |= AUTH_REQUIRED;
 			else
 				cfg_entry_tab[entrycount].ppp_auth_flags &= ~AUTH_REQUIRED;
-			set_isppp_auth(entrycount);
 			break;
 
 		case PPP_EXPECT_AUTH:
@@ -817,7 +815,6 @@ cfg_setval(int keyword)
 				config_error_flag++;
 				break;
 			}
-			set_isppp_auth(entrycount);
 			break;
 
 		case PPP_EXPECT_NAME:
@@ -825,7 +822,6 @@ cfg_setval(int keyword)
 			if (cfg_entry_tab[entrycount].ppp_expect_name)
 			    free(cfg_entry_tab[entrycount].ppp_expect_name);
 			cfg_entry_tab[entrycount].ppp_expect_name = strdup(yylval.str);
-			set_isppp_auth(entrycount);
 			break;
 
 		case PPP_EXPECT_PASSWORD:
@@ -833,7 +829,6 @@ cfg_setval(int keyword)
 			if (cfg_entry_tab[entrycount].ppp_expect_password)
 			    free(cfg_entry_tab[entrycount].ppp_expect_password);
 			cfg_entry_tab[entrycount].ppp_expect_password = strdup(yylval.str);
-			set_isppp_auth(entrycount);
 			break;
 
 		case PPP_SEND_AUTH:
@@ -850,7 +845,6 @@ cfg_setval(int keyword)
 				config_error_flag++;
 				break;
 			}
-			set_isppp_auth(entrycount);
 			break;
 
 		case PPP_SEND_NAME:
@@ -858,7 +852,6 @@ cfg_setval(int keyword)
 			if (cfg_entry_tab[entrycount].ppp_send_name)
 			    free(cfg_entry_tab[entrycount].ppp_send_name);
 			cfg_entry_tab[entrycount].ppp_send_name = strdup(yylval.str);
-			set_isppp_auth(entrycount);
 			break;
 
 		case PPP_SEND_PASSWORD:
@@ -866,7 +859,6 @@ cfg_setval(int keyword)
 			if (cfg_entry_tab[entrycount].ppp_send_password)
 			    free(cfg_entry_tab[entrycount].ppp_send_password);
 			cfg_entry_tab[entrycount].ppp_send_password = strdup(yylval.str);
-			set_isppp_auth(entrycount);
 			break;
 
 		case PROTOCOL:
@@ -1289,12 +1281,12 @@ check_config(void)
 
 		if((cep->ppp_send_auth == AUTH_PAP) || (cep->ppp_send_auth == AUTH_CHAP))
 		{
-			if(cep->ppp_send_name[0] == 0)
+			if(cep->ppp_send_name == NULL)
 			{
 				log(LL_ERR, "check_config: no remote authentification name in entry %d!", i);
 				error++;
 			}
-			if(cep->ppp_send_password[0] == 0)
+			if(cep->ppp_send_password == NULL)
 			{
 				log(LL_ERR, "check_config: no remote authentification password in entry %d!", i);
 				error++;
@@ -1312,6 +1304,16 @@ check_config(void)
 				log(LL_ERR, "check_config: no local authentification secret in entry %d!", i);
 				error++;
 			}
+		}
+
+		if (cep->usrdevicename == BDRV_ISPPP) {
+			/*
+			 * Special treatement for ispp devices.
+			 * XXX - might want to create ispX here when we make
+			 *       them cloning.
+			 */
+			/* For now just set authentication configuration */
+			set_isppp_auth(i);
 		}
 	}
 	if(error)
