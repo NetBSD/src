@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.15 1996/01/31 04:01:48 mycroft Exp $	*/
+/*	$NetBSD: inet.c,v 1.16 1996/10/07 18:42:25 explorer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$NetBSD: inet.c,v 1.15 1996/01/31 04:01:48 mycroft Exp $";
+static char *rcsid = "$NetBSD: inet.c,v 1.16 1996/10/07 18:42:25 explorer Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,56 +179,56 @@ tcp_stats(off, name)
 #define	p3(f, m) if (tcpstat.f || sflag <= 1) \
     printf(m, tcpstat.f, plurales(tcpstat.f))
 
-	p(tcps_sndtotal, "\t%d packet%s sent\n");
+	p(tcps_sndtotal, "\t%u packet%s sent\n");
 	p2(tcps_sndpack,tcps_sndbyte,
-		"\t\t%d data packet%s (%d byte%s)\n");
+		"\t\t%u data packet%s (%u byte%s)\n");
 	p2(tcps_sndrexmitpack, tcps_sndrexmitbyte,
-		"\t\t%d data packet%s (%d byte%s) retransmitted\n");
+		"\t\t%u data packet%s (%u byte%s) retransmitted\n");
 	p2(tcps_sndacks, tcps_delack,
-		"\t\t%d ack-only packet%s (%d delayed)\n");
-	p(tcps_sndurg, "\t\t%d URG only packet%s\n");
-	p(tcps_sndprobe, "\t\t%d window probe packet%s\n");
-	p(tcps_sndwinup, "\t\t%d window update packet%s\n");
-	p(tcps_sndctrl, "\t\t%d control packet%s\n");
-	p(tcps_rcvtotal, "\t%d packet%s received\n");
-	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%d ack%s (for %d byte%s)\n");
-	p(tcps_rcvdupack, "\t\t%d duplicate ack%s\n");
-	p(tcps_rcvacktoomuch, "\t\t%d ack%s for unsent data\n");
+		"\t\t%u ack-only packet%s (%u delayed)\n");
+	p(tcps_sndurg, "\t\t%u URG only packet%s\n");
+	p(tcps_sndprobe, "\t\t%u window probe packet%s\n");
+	p(tcps_sndwinup, "\t\t%u window update packet%s\n");
+	p(tcps_sndctrl, "\t\t%u control packet%s\n");
+	p(tcps_rcvtotal, "\t%u packet%s received\n");
+	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%u ack%s (for %u byte%s)\n");
+	p(tcps_rcvdupack, "\t\t%u duplicate ack%s\n");
+	p(tcps_rcvacktoomuch, "\t\t%u ack%s for unsent data\n");
 	p2(tcps_rcvpack, tcps_rcvbyte,
-		"\t\t%d packet%s (%d byte%s) received in-sequence\n");
+		"\t\t%u packet%s (%u byte%s) received in-sequence\n");
 	p2(tcps_rcvduppack, tcps_rcvdupbyte,
-		"\t\t%d completely duplicate packet%s (%d byte%s)\n");
-	p(tcps_pawsdrop, "\t\t%d old duplicate packet%s\n");
+		"\t\t%u completely duplicate packet%s (%u byte%s)\n");
+	p(tcps_pawsdrop, "\t\t%u old duplicate packet%s\n");
 	p2(tcps_rcvpartduppack, tcps_rcvpartdupbyte,
-		"\t\t%d packet%s with some dup. data (%d byte%s duped)\n");
+		"\t\t%u packet%s with some dup. data (%u byte%s duped)\n");
 	p2(tcps_rcvoopack, tcps_rcvoobyte,
-		"\t\t%d out-of-order packet%s (%d byte%s)\n");
+		"\t\t%u out-of-order packet%s (%u byte%s)\n");
 	p2(tcps_rcvpackafterwin, tcps_rcvbyteafterwin,
-		"\t\t%d packet%s (%d byte%s) of data after window\n");
-	p(tcps_rcvwinprobe, "\t\t%d window probe%s\n");
-	p(tcps_rcvwinupd, "\t\t%d window update packet%s\n");
-	p(tcps_rcvafterclose, "\t\t%d packet%s received after close\n");
-	p(tcps_rcvbadsum, "\t\t%d discarded for bad checksum%s\n");
-	p(tcps_rcvbadoff, "\t\t%d discarded for bad header offset field%s\n");
-	p(tcps_rcvshort, "\t\t%d discarded because packet too short\n");
-	p(tcps_connattempt, "\t%d connection request%s\n");
-	p(tcps_accepts, "\t%d connection accept%s\n");
-	p(tcps_connects, "\t%d connection%s established (including accepts)\n");
+		"\t\t%u packet%s (%u byte%s) of data after window\n");
+	p(tcps_rcvwinprobe, "\t\t%u window probe%s\n");
+	p(tcps_rcvwinupd, "\t\t%u window update packet%s\n");
+	p(tcps_rcvafterclose, "\t\t%u packet%s received after close\n");
+	p(tcps_rcvbadsum, "\t\t%u discarded for bad checksum%s\n");
+	p(tcps_rcvbadoff, "\t\t%u discarded for bad header offset field%s\n");
+	p(tcps_rcvshort, "\t\t%u discarded because packet too short\n");
+	p(tcps_connattempt, "\t%u connection request%s\n");
+	p(tcps_accepts, "\t%u connection accept%s\n");
+	p(tcps_connects, "\t%u connection%s established (including accepts)\n");
 	p2(tcps_closed, tcps_drops,
-		"\t%d connection%s closed (including %d drop%s)\n");
-	p(tcps_conndrops, "\t%d embryonic connection%s dropped\n");
+		"\t%u connection%s closed (including %u drop%s)\n");
+	p(tcps_conndrops, "\t%u embryonic connection%s dropped\n");
 	p2(tcps_rttupdated, tcps_segstimed,
-		"\t%d segment%s updated rtt (of %d attempt%s)\n");
-	p(tcps_rexmttimeo, "\t%d retransmit timeout%s\n");
-	p(tcps_timeoutdrop, "\t\t%d connection%s dropped by rexmit timeout\n");
-	p(tcps_persisttimeo, "\t%d persist timeout%s\n");
-	p(tcps_keeptimeo, "\t%d keepalive timeout%s\n");
-	p(tcps_keepprobe, "\t\t%d keepalive probe%s sent\n");
-	p(tcps_keepdrops, "\t\t%d connection%s dropped by keepalive\n");
-	p(tcps_predack, "\t%d correct ACK header prediction%s\n");
-	p(tcps_preddat, "\t%d correct data packet header prediction%s\n");
-	p3(tcps_pcbhashmiss, "\t%d PCB hash miss%s\n");
-	p(tcps_noport, "\t%d dropped due to no socket\n");
+		"\t%u segment%s updated rtt (of %u attempt%s)\n");
+	p(tcps_rexmttimeo, "\t%u retransmit timeout%s\n");
+	p(tcps_timeoutdrop, "\t\t%u connection%s dropped by rexmit timeout\n");
+	p(tcps_persisttimeo, "\t%u persist timeout%s\n");
+	p(tcps_keeptimeo, "\t%u keepalive timeout%s\n");
+	p(tcps_keepprobe, "\t\t%u keepalive probe%s sent\n");
+	p(tcps_keepdrops, "\t\t%u connection%s dropped by keepalive\n");
+	p(tcps_predack, "\t%u correct ACK header prediction%s\n");
+	p(tcps_preddat, "\t%u correct data packet header prediction%s\n");
+	p3(tcps_pcbhashmiss, "\t%u PCB hash miss%s\n");
+	p(tcps_noport, "\t%u dropped due to no socket\n");
 
 #undef p
 #undef p2
@@ -448,7 +448,7 @@ inetprint(in, port, proto)
 	if (sp || port == 0)
 		sprintf(cp, "%.8s", sp ? sp->s_name : "*");
 	else
-		sprintf(cp, "%d", ntohs((u_short)port));
+		sprintf(cp, "%u", ntohs((u_short)port));
 	width = Aflag ? 18 : 22;
 	printf(" %-*.*s", width, width, line);
 }
