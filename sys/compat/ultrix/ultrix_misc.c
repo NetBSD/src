@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.40 1998/07/03 20:03:04 mhitch Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.41 1998/08/09 20:37:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.40 1998/07/03 20:03:04 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.41 1998/08/09 20:37:56 perry Exp $");
 
 /*
  * SunOS compatibility module.
@@ -439,14 +439,14 @@ ultrix_sys_uname(p, v, retval)
 	struct ultrix_utsname sut;
 	extern char ostype[], machine[], osrelease[];
 
-	bzero(&sut, sizeof(sut));
+	memset(&sut, 0, sizeof(sut));
 
-	bcopy(ostype, sut.sysname, sizeof(sut.sysname) - 1);
-	bcopy(hostname, sut.nodename, sizeof(sut.nodename));
+	memcpy(sut.sysname, ostype, sizeof(sut.sysname) - 1);
+	memcpy(sut.nodename, hostname, sizeof(sut.nodename));
 	sut.nodename[sizeof(sut.nodename)-1] = '\0';
-	bcopy(osrelease, sut.release, sizeof(sut.release) - 1);
-	bcopy("1", sut.version, sizeof(sut.version) - 1);
-	bcopy(machine, sut.machine, sizeof(sut.machine) - 1);
+	memcpy(sut.release, osrelease, sizeof(sut.release) - 1);
+	memcpy(sut.version, "1", sizeof(sut.version) - 1);
+	memcpy(sut.machine, machine, sizeof(sut.machine) - 1);
 
 	return copyout((caddr_t)&sut, (caddr_t)SCARG(uap, name),
 	    sizeof(struct ultrix_utsname));
@@ -488,14 +488,14 @@ ultrix_sys_nfssvc(p, v, retval)
 	struct sockaddr sa;
 	int error;
 
-	bzero(&outuap, sizeof outuap);
+	memset(&outuap, 0, sizeof outuap);
 	SCARG(&outuap, fd) = SCARG(uap, fd);
 	SCARG(&outuap, mskval) = STACKGAPBASE;
 	SCARG(&outuap, msklen) = sizeof sa;
 	SCARG(&outuap, mtchval) = outuap.mskval + sizeof sa;
 	SCARG(&outuap, mtchlen) = sizeof sa;
 
-	bzero(&sa, sizeof sa);
+	memset(&sa, 0, sizeof sa);
 	if (error = copyout(&sa, SCARG(&outuap, mskval), SCARG(&outuap, msklen)))
 		return (error);
 	if (error = copyout(&sa, SCARG(&outuap, mtchval), SCARG(&outuap, mtchlen)))
@@ -525,7 +525,7 @@ ultrix_sys_ustat(p, v, retval)
 	struct ultrix_ustat us;
 	int error;
 
-	bzero(&us, sizeof us);
+	memset(&us, 0, sizeof us);
 
 	/*
 	 * XXX: should set f_tfree and f_tinode at least

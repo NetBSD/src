@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.61 1998/08/02 04:41:33 thorpej Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.62 1998/08/09 20:37:55 perry Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -1158,7 +1158,7 @@ svr4_setinfo(p, st, s)
 {
 	svr4_siginfo_t i;
 
-	bzero(&i, sizeof(i));
+	memset(&i, 0, sizeof(i));
 
 	i.si_signo = SVR4_SIGCHLD;
 	i.si_errno = 0;	/* XXX? */
@@ -1353,15 +1353,15 @@ bsd_statfs_to_svr4_statvfs(bfs, sfs)
 	sfs->f_ffree = bfs->f_ffree;
 	sfs->f_favail = bfs->f_ffree;
 	sfs->f_fsid = bfs->f_fsid.val[0];
-	bcopy(bfs->f_fstypename, sfs->f_basetype, sizeof(sfs->f_basetype));
+	memcpy(sfs->f_basetype, bfs->f_fstypename, sizeof(sfs->f_basetype));
 	sfs->f_flag = 0;
 	if (bfs->f_flags & MNT_RDONLY)
 		sfs->f_flag |= SVR4_ST_RDONLY;
 	if (bfs->f_flags & MNT_NOSUID)
 		sfs->f_flag |= SVR4_ST_NOSUID;
 	sfs->f_namemax = MAXNAMLEN;
-	bcopy(bfs->f_fstypename, sfs->f_fstr, sizeof(sfs->f_fstr)); /* XXX */
-	bzero(sfs->f_filler, sizeof(sfs->f_filler));
+	memcpy(sfs->f_fstr, bfs->f_fstypename, sizeof(sfs->f_fstr)); /* XXX */
+	memset(sfs->f_filler, 0, sizeof(sfs->f_filler));
 }
 
 
@@ -1379,15 +1379,15 @@ bsd_statfs_to_svr4_statvfs64(bfs, sfs)
 	sfs->f_ffree = bfs->f_ffree;
 	sfs->f_favail = bfs->f_ffree;
 	sfs->f_fsid = bfs->f_fsid.val[0];
-	bcopy(bfs->f_fstypename, sfs->f_basetype, sizeof(sfs->f_basetype));
+	memcpy(sfs->f_basetype, bfs->f_fstypename, sizeof(sfs->f_basetype));
 	sfs->f_flag = 0;
 	if (bfs->f_flags & MNT_RDONLY)
 		sfs->f_flag |= SVR4_ST_RDONLY;
 	if (bfs->f_flags & MNT_NOSUID)
 		sfs->f_flag |= SVR4_ST_NOSUID;
 	sfs->f_namemax = MAXNAMLEN;
-	bcopy(bfs->f_fstypename, sfs->f_fstr, sizeof(sfs->f_fstr)); /* XXX */
-	bzero(sfs->f_filler, sizeof(sfs->f_filler));
+	memcpy(sfs->f_fstr, bfs->f_fstypename, sizeof(sfs->f_fstr)); /* XXX */
+	memset(sfs->f_filler, 0, sizeof(sfs->f_filler));
 }
 
 

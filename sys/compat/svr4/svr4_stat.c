@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.27 1998/08/03 14:23:30 kleink Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.28 1998/08/09 20:37:56 perry Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -87,7 +87,7 @@ bsd_to_svr4_stat(st, st4)
 	struct stat		*st;
 	struct svr4_stat 	*st4;
 {
-	bzero(st4, sizeof(*st4));
+	memset(st4, 0, sizeof(*st4));
 	st4->st_dev = bsd_to_svr4_odev_t(st->st_dev);
 	st4->st_ino = st->st_ino;
 	st4->st_mode = BSD_TO_SVR4_MODE(st->st_mode);
@@ -108,7 +108,7 @@ bsd_to_svr4_xstat(st, st4)
 	struct stat		*st;
 	struct svr4_xstat	*st4;
 {
-	bzero(st4, sizeof(*st4));
+	memset(st4, 0, sizeof(*st4));
 	st4->st_dev = bsd_to_svr4_dev_t(st->st_dev);
 	st4->st_ino = st->st_ino;
 	st4->st_mode = BSD_TO_SVR4_MODE(st->st_mode);
@@ -131,7 +131,7 @@ bsd_to_svr4_stat64(st, st4)
 	struct stat		*st;
 	struct svr4_stat64	*st4;
 {
-	bzero(st4, sizeof(*st4));
+	memset(st4, 0, sizeof(*st4));
 	st4->st_dev = bsd_to_svr4_dev_t(st->st_dev);
 	st4->st_ino = st->st_ino;
 	st4->st_mode = BSD_TO_SVR4_MODE(st->st_mode);
@@ -507,7 +507,7 @@ svr4_ustat(p, v, retval)
 	struct svr4_ustat	us;
 	int			error;
 
-	bzero(&us, sizeof us);
+	memset(&us, 0, sizeof us);
 
 	/*
          * XXX: should set f_tfree and f_tinode at least
@@ -532,7 +532,7 @@ svr4_sys_uname(p, v, retval)
 	extern char ostype[], hostname[], osrelease[], version[], machine[];
 
 
-	bzero(&sut, sizeof(sut));
+	memset(&sut, 0, sizeof(sut));
 
 	strncpy(sut.sysname, ostype, sizeof(sut.sysname));
 	sut.sysname[sizeof(sut.sysname) - 1] = '\0';

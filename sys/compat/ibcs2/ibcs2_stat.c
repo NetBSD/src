@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.9 1998/03/05 04:36:08 scottb Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.10 1998/08/09 20:37:54 perry Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -61,7 +61,7 @@ bsd_stat2ibcs_stat(st, st4)
 	struct stat *st;
 	struct ibcs2_stat *st4;
 {
-	bzero(st4, sizeof(*st4));
+	memset(st4, 0, sizeof(*st4));
 	st4->st_dev = (ibcs2_dev_t)st->st_dev;
 	st4->st_ino = (ibcs2_ino_t)st->st_ino;
 	st4->st_mode = (ibcs2_mode_t)st->st_mode;
@@ -86,7 +86,7 @@ cvt_statfs(sp, buf, len)
 {
 	struct ibcs2_statfs ssfs;
 
-	bzero(&ssfs, sizeof ssfs);
+	memset(&ssfs, 0, sizeof ssfs);
 	ssfs.f_fstyp = 0;
 	ssfs.f_bsize = sp->f_bsize;
 	ssfs.f_frsize = 0;
@@ -107,7 +107,7 @@ cvt_statvfs(sp, buf, len)
 {
 	struct ibcs2_statvfs ssvfs;
 
-	bzero(&ssvfs, sizeof ssvfs);
+	memset(&ssvfs, 0, sizeof ssvfs);
 	ssvfs.f_frsize = ssvfs.f_bsize = sp->f_bsize;
 	ssvfs.f_blocks = sp->f_blocks;
 	ssvfs.f_bfree = sp->f_bfree;
@@ -338,13 +338,13 @@ ibcs2_sys_utssys(p, v, retval)
 		struct ibcs2_utsname sut;
 		extern char ostype[], machine[], osrelease[];
 
-		bzero(&sut, ibcs2_utsname_len);
-		bcopy(ostype, sut.sysname, sizeof(sut.sysname) - 1);
-		bcopy(hostname, sut.nodename, sizeof(sut.nodename));
+		memset(&sut, 0, ibcs2_utsname_len);
+		memcpy(sut.sysname, ostype, sizeof(sut.sysname) - 1);
+		memcpy(sut.nodename, hostname, sizeof(sut.nodename));
 		sut.nodename[sizeof(sut.nodename)-1] = '\0';
-		bcopy(osrelease, sut.release, sizeof(sut.release) - 1);
-		bcopy("1", sut.version, sizeof(sut.version) - 1);
-		bcopy(machine, sut.machine, sizeof(sut.machine) - 1);
+		memcpy(sut.release, osrelease, sizeof(sut.release) - 1);
+		memcpy(sut.version, "1", sizeof(sut.version) - 1);
+		memcpy(sut.machine, machine, sizeof(sut.machine) - 1);
 
 		return copyout((caddr_t)&sut, (caddr_t)SCARG(uap, a1),
 			       ibcs2_utsname_len);

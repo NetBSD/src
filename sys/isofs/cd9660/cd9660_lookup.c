@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.19 1998/03/01 02:22:08 fvdl Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.20 1998/08/09 20:42:54 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -334,7 +334,7 @@ searchloop:
 			dp->i_ino = ino;
 			cd9660_rrip_getname(ep,altname,&namelen,&dp->i_ino,imp);
 			if (namelen == cnp->cn_namelen
-			    && !bcmp(name,altname,namelen))
+			    && !memcmp(name, altname, namelen))
 				goto found;
 			ino = 0;
 			break;

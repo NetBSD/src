@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.4 1998/05/20 16:35:01 chs Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.5 1998/08/09 20:37:54 perry Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -23,12 +23,12 @@ static void bsd_to_osf1_sigaction __P((const struct sigaction *bsa,
 static void osf1_to_bsd_sigaction __P((const struct osf1_sigaction *osa,
 				       struct sigaction *bsa));
 
-#define sigemptyset(s)		bzero((s), sizeof(*(s)))
+#define sigemptyset(s)		memset((s), 0, sizeof(*(s)))
 #define sigismember(s, n)	(*(s) & sigmask(n))
 #define sigaddset(s, n)		(*(s) |= sigmask(n))
 
 #define	osf1_sigmask(n)		(1 << ((n) - 1))
-#define osf1_sigemptyset(s)	bzero((s), sizeof(*(s)))
+#define osf1_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
 #define osf1_sigismember(s, n)	(*(s) & sigmask(n))
 #define osf1_sigaddset(s, n)	(*(s) |= sigmask(n))
 

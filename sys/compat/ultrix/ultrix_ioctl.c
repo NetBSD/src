@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.12 1998/06/25 23:41:49 thorpej Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.13 1998/08/09 20:37:56 perry Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -423,7 +423,7 @@ stios2stio(ts, t)
 	t->c_cflag = ts->c_cflag;
 	t->c_lflag = ts->c_lflag;
 	t->c_line  = ts->c_line;
-	bcopy(ts->c_cc, t->c_cc, TERMIO_NCC);
+	memcpy(t->c_cc, ts->c_cc, TERMIO_NCC);
 }
 
 /*
@@ -439,7 +439,7 @@ stio2stios(t, ts)
 	ts->c_cflag = t->c_cflag;
 	ts->c_lflag = t->c_lflag;
 	ts->c_line  = t->c_line;
-	bcopy(t->c_cc, ts->c_cc, TERMIO_NCC); /* don't touch the upper fields! */
+	memcpy(ts->c_cc, t->c_cc, TERMIO_NCC); /* don't touch the upper fields! */
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.37 1998/06/28 01:20:06 scottb Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.38 1998/08/09 20:37:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -309,7 +309,7 @@ ibcs2_sys_mount(p, v, retval)
 			return (error);
 		if (error = copyin(sna.addr, &sain, sizeof sain))
 			return (error);
-		bcopy(&sain, &sa, sizeof sa);
+		memcpy(&sa, &sain, sizeof sa);
 		sa.sa_len = sizeof(sain);
 		SCARG(uap, data) = (caddr_t)STACK_ALLOC();
 		na.addr = (struct sockaddr *)((int)SCARG(uap, data) + sizeof na);
@@ -553,7 +553,7 @@ again:
 		 */
 		idb.ino = (bdp->d_fileno > 0xfffe) ? 0xfffe : bdp->d_fileno;
 		(void)copystr(bdp->d_name, idb.name, 14, &size);
-		bzero(idb.name + size, 14 - size);
+		memset(idb.name + size, 0, 14 - size);
 		error = copyout(&idb, outp, ibcs2_reclen);
 		if (error)
 			goto out;
@@ -1608,7 +1608,7 @@ ibcs2_sys_scoinfo(p, v, retval)
 						 sizeof(struct scoutsname));
 	extern char ostype[], machine[], osrelease[];
 
-	bzero(utsp, sizeof(struct scoutsname));
+	memset(utsp, 0, sizeof(struct scoutsname));
 	strncpy(utsp->sysname, ostype, 8);
 	strncpy(utsp->nodename, hostname, 8);
 	strncpy(utsp->release, osrelease, 15);

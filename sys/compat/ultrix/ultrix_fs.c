@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.15 1998/03/05 22:51:35 thorpej Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.16 1998/08/09 20:37:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -161,7 +161,7 @@ make_ultrix_mntent(sp, tem)
 	register struct ultrix_fs_data *tem;
 {
 
-	bzero(tem, sizeof (*tem));
+	memset(tem, 0, sizeof (*tem));
 
 	tem->ufsd_flags = sp->f_flags;		/* XXX translate */
 	tem->ufsd_mtsize = sp->f_bsize;		/* XXX max transfer size */
@@ -360,7 +360,7 @@ ultrix_sys_mount(p, v, retval)
 
 	caddr_t usp = stackgap_init(p->p_emul);
 
-	bzero(&nuap, sizeof(nuap));
+	memset(&nuap, 0, sizeof(nuap));
 	SCARG(&nuap, flags) = 0;
 
 	/*
@@ -404,7 +404,7 @@ ultrix_sys_mount(p, v, retval)
 		struct ufs_args ua;
 
 		ua.fspec = SCARG(uap, special);
-		bzero(&ua.export, sizeof(ua.export));
+		memset(&ua.export, 0, sizeof(ua.export));
 		SCARG(&nuap, data) = usp;
 	
 		if ((error = copyout(&ua, SCARG(&nuap, data),
@@ -431,8 +431,8 @@ ultrix_sys_mount(p, v, retval)
 		struct osockaddr_in osa;
 		struct sockaddr_in *sap = (struct sockaddr_in *)& osa;
 
-		bzero(&osa, sizeof(osa));
-		bzero(&una, sizeof(una));
+		memset(&osa, 0, sizeof(osa));
+		memset(&una, 0, sizeof(una));
 		if ((error = copyin(SCARG(uap, data), &una, sizeof una)) !=0) {
 			return (error);
 		}

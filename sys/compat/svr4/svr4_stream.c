@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.25 1998/07/18 05:04:37 lukem Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.26 1998/08/09 20:37:56 perry Exp $	 */
 /*
  * Copyright (c) 1994, 1996 Christos Zoulas.  All rights reserved.
  *
@@ -338,7 +338,7 @@ netaddr_to_sockaddr_in(sain, sc)
 
 
 	na = SVR4_C_ADDROF(sc);
-	bzero(sain, sizeof(*sain));
+	memset(sain, 0, sizeof(*sain));
 	sain->sin_len = sizeof(*sain);
 	sain->sin_family = na->family;
 	sain->sin_port = na->port;
@@ -358,7 +358,7 @@ netaddr_to_sockaddr_un(saun, sc)
 	const char *src;
 
 	na = SVR4_C_ADDROF(sc);
-	bzero(saun, sizeof(*saun));
+	memset(saun, 0, sizeof(*saun));
 	saun->sun_family = na->family;
 	for (src = na->path, dst = saun->sun_path; (*dst++ = *src++) != '\0'; )
 		if (dst == edst)
@@ -691,7 +691,7 @@ ti_getinfo(fp, fd, ioc, p)
 	int error;
 	struct svr4_infocmd info;
 
-	bzero(&info, sizeof(info));
+	memset(&info, 0, sizeof(info));
 
 	if ((error = copyin(ioc->buf, &info, ioc->len)) != 0)
 		return error;
@@ -809,7 +809,7 @@ ti_bind(fp, fd, ioc, p)
 
 reply:
 	if (sup == NULL) {
-		bzero(&bnd, sizeof(bnd));
+		memset(&bnd, 0, sizeof(bnd));
 		bnd.len = sasize + 4;
 		bnd.offs = 0x10;	/* XXX */
 	}
@@ -1564,7 +1564,7 @@ svr4_sys_getmsg(p, v, retval)
 	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
 		return EBADF;
 
-	bzero(&sc, sizeof(sc));
+	memset(&sc, 0, sizeof(sc));
 
 #ifdef DEBUG_SVR4
 	show_msg(">getmsg", SCARG(uap, fd), SCARG(uap, ctl),

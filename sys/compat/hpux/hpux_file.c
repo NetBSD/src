@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.11 1998/02/14 21:13:52 kleink Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.12 1998/08/09 20:37:53 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -591,7 +591,7 @@ bsd_to_hpux_stat(sb, hsb)
 	struct hpux_stat *hsb;
 {
 
-	bzero((caddr_t)hsb, sizeof(struct hpux_stat));
+	memset((caddr_t)hsb, 0, sizeof(struct hpux_stat));
 	hsb->hst_dev = (long)sb->st_dev;
 	hsb->hst_ino = (u_long)sb->st_ino;
 	hsb->hst_mode = (u_short)sb->st_mode;
@@ -628,7 +628,7 @@ bsd_to_hpux_ostat(sb, hsb)
 	struct hpux_ostat *hsb;
 {
 
-	bzero(hsb, sizeof(struct hpux_ostat));
+	memset(hsb, 0, sizeof(struct hpux_ostat));
 	hsb->hst_dev = (u_short)sb->st_dev;
 	hsb->hst_ino = (u_short)sb->st_ino;
 	hsb->hst_mode = (u_short)sb->st_mode;

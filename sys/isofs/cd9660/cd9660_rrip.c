@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.17 1997/01/24 00:27:32 cgd Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.18 1998/08/09 20:42:54 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -209,7 +209,7 @@ cd9660_rrip_slink(v, ana)
 			return 0;
 		}
 		
-		bcopy(inbuf, outbuf, wlen);
+		memcpy(outbuf, inbuf, wlen);
 		outbuf += wlen;
 		len += wlen;
 	}
@@ -281,7 +281,7 @@ cd9660_rrip_altname(v, ana)
 		return 0;
 	}
 	
-	bcopy(inbuf, ana->outbuf, wlen);
+	memcpy(ana->outbuf, inbuf, wlen);
 	ana->outbuf += wlen;
 	
 	if (!cont) {
@@ -364,7 +364,7 @@ cd9660_rrip_tstamp(v, ana)
 			cd9660_tstamp_conv7(ptime, &ana->inop->inode.iso_mtime);
 			ptime += 7;
 		} else
-			bzero(&ana->inop->inode.iso_mtime, sizeof(struct timespec));
+			memset(&ana->inop->inode.iso_mtime, 0, sizeof(struct timespec));
 		
 		if (*p->flags & ISO_SUSP_TSTAMP_ACCESS) {
 			cd9660_tstamp_conv7(ptime, &ana->inop->inode.iso_atime);
@@ -385,7 +385,7 @@ cd9660_rrip_tstamp(v, ana)
 			cd9660_tstamp_conv17(ptime, &ana->inop->inode.iso_mtime);
 			ptime += 17;
 		} else
-			bzero(&ana->inop->inode.iso_mtime, sizeof(struct timespec));
+			memset(&ana->inop->inode.iso_mtime, 0, sizeof(struct timespec));
 		
 		if (*p->flags & ISO_SUSP_TSTAMP_ACCESS) {
 			cd9660_tstamp_conv17(ptime, &ana->inop->inode.iso_atime);
@@ -496,11 +496,11 @@ cd9660_rrip_extref(v, ana)
 	    && isonum_711(p->len_id) != 10)
 		return 0;
 	if (isonum_711(p->len_id) == 9
-	    && bcmp((char *)p + 8, "IEEE_1282", 9))
+	    && memcmp((char *)p + 8, "IEEE_1282", 9))
 		return 0;
 	if (isonum_711(p->len_id) == 10
-	    && bcmp((char *)p + 8, "IEEE_P1282", 10)
-	    && bcmp((char *)p + 8, "RRIP_1991A", 10))
+	    && memcmp((char *)p + 8, "IEEE_P1282", 10)
+	    && memcmp((char *)p + 8, "RRIP_1991A", 10))
 		return 0;
 	ana->fields &= ~ISO_SUSP_EXTREF;
 	return ISO_SUSP_EXTREF;
@@ -721,11 +721,11 @@ cd9660_rrip_offset(isodir, imp)
 	
 	imp->rr_skip0 = 0;
 	p = (ISO_RRIP_OFFSET *)(isodir->name + 1);
-	if (bcmp(p, "SP\7\1\276\357", 6)) {
+	if (memcmp(p, "SP\7\1\276\357", 6)) {
 		/* Maybe, it's a CDROM XA disc? */
 		imp->rr_skip0 = 15;
 		p = (ISO_RRIP_OFFSET *)((char *)p + 15);
-		if (bcmp(p, "SP\7\1\276\357", 6))
+		if (memcmp(p, "SP\7\1\276\357", 6))
 			return -1;
 	}
 	

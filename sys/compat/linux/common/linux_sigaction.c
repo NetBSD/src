@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.10 1996/04/04 23:51:36 christos Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.11 1998/08/09 20:37:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -52,12 +52,12 @@
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 
-#define	sigemptyset(s)		bzero((s), sizeof(*(s)))
+#define	sigemptyset(s)		memset((s), 0, sizeof(*(s)))
 #define	sigismember(s, n)	(*(s) & sigmask(n))
 #define	sigaddset(s, n)		(*(s) |= sigmask(n))
  
 #define	linux_sigmask(n)	(1 << ((n) - 1))
-#define	linux_sigemptyset(s)	bzero((s), sizeof(*(s)))
+#define	linux_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
 #define	linux_sigismember(s, n)	(*(s) & linux_sigmask(n))
 #define	linux_sigaddset(s, n)	(*(s) |= linux_sigmask(n))
 
