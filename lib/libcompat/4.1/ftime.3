@@ -49,6 +49,13 @@ This interface is obsoleted by
 It is available from the compatibility library, libcompat.
 .Ef
 .Pp
+.Bf -symbolic
+Note: time zone information is no longer provided by this interface.
+See
+.Xr localtime 3
+for information on how to retrieve it.
+.Ef
+.Pp
 The
 .Fn ftime
 routine fills in a structure pointed to by its argument,
@@ -58,27 +65,28 @@ as defined by
 /*
  * Structure returned by ftime system call
  */
-struct timeb
-{
-	  time_t  time;
-	  unsigned short millitm;
-	  short   timezone;
-	  short   dstflag;
+struct timeb {
+	time_t  time;
+	unsigned short millitm;
+	short   timezone;
+	short   dstflag;
 };
 .Ed
 .Pp
 The structure contains the time since the epoch in seconds,
-up to 1000 milliseconds of more-precise interval,
-the local time zone (measured in minutes of time westward from Greenwich),
-and a flag that, if nonzero, indicates that
-Daylight Saving time applies locally during the appropriate part of the year.
+up to 1000 milliseconds of more-precise interval.  The
+.Em timezone
+and
+.Em dstflag
+fields are provided for source compatibility, but are always zero.
 .Sh SEE ALSO
 .Xr gettimeofday 2 ,
 .Xr settimeofday 2 ,
 .Xr time 2 ,
-.Xr ctime 3
+.Xr ctime 3 ,
+.Xr localtime 3
 .Sh HISTORY
 The
-.Nm
+.Fn ftime
 function appeared in 
-.Bx 4.2 .
+.Bx 4.1 .
