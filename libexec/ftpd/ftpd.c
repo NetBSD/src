@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.76 1999/12/16 02:21:40 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.77 1999/12/16 07:01:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.76 1999/12/16 02:21:40 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.77 1999/12/16 07:01:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.76 1999/12/16 02:21:40 lukem Exp $");
 #include <varargs.h>
 #endif
 
-const char version[] = "NetBSD-ftpd 19991213";
+const char version[] = "NetBSD-ftpd 19991216";
 
 union sockunion  ctrl_addr;
 union sockunion  data_source;
