@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.5 2001/05/19 05:07:02 toshii Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.6 2001/05/22 17:54:50 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 
 /*
  * TODO:
- *   - implement IPL in intr handler
  *   - separate machine specific attach code
  *   - introduce bus abstraction to support SA1101
  */
@@ -67,10 +66,9 @@ static	void	sacc_attach(struct device *, struct device *, void *);
 static	int	sa1111_search(struct device *, struct cfdata *, void *);
 static	int	sa1111_print(void *, const char *);
 
-static int	sacc_intr_dispatch(void *);
-static void	sacc_stray_interrupt(struct sacc_softc *, int);
 static void	sacc_intr_calculatemasks(struct sacc_softc *);
 static void	sacc_intr_setpolarity(sacc_chipset_tag_t *, int , int);
+int		sacc_intr(void *);
 
 struct platid_data sacc_platid_table[] = {
 	{ &platid_mask_MACH_HP_JORNADA_720, (void *)1 },
@@ -137,12 +135,7 @@ sacc_attach(parent, self, aux)
 			  SACCIC_INTSTATCLR1, 0xffffffff);
 
 	/* connect to SA1110's GPIO intr */
-#ifdef notyet
-	sa11x0_cascadeintr_establish(0, gpiopin, sacc_intr_probe,
-				     sacc_intr_mask, sc);
-#endif
-	sa11x0_intr_establish(0, gpiopin,
-	    1, IPL_BIO, sacc_intr_dispatch, sc);
+	sa11x0_intr_establish(0, gpiopin, 1, IPL_SERIAL, sacc_intr, sc);
 
 	/*
 	 *  Attach each devices
@@ -171,11 +164,11 @@ sa1111_print(aux, name)
 	return (UNCONF);
 }
 
-static int
-sacc_intr_dispatch(arg)
+int
+sacc_intr(arg)
 	void *arg;
 {
-	int i, handled;
+	int i;
 	u_int32_t mask;
 	struct sacc_intrvec intstat;
 	struct sacc_softc *sc = arg;
@@ -187,11 +180,6 @@ sacc_intr_dispatch(arg)
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTSTATCLR1);
 	DPRINTF(("sacc_intr_dispatch: %x %x\n", intstat.lo, intstat.hi));
 
-	/* process the intrs which have the highest IPL */
-#ifdef notyet
-	intstat.lo &= sc->sc_imask[xx].lo;
-	intstat.hi &= sc->sc_imask[xx].hi;
-#endif
 	for(i = 0, mask = 1; i < 32; i++, mask <<= 1)
 		if (intstat.lo & mask) {
 			/* clear SA1110's GPIO intr status */
@@ -205,13 +193,8 @@ sacc_intr_dispatch(arg)
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 					  SACCIC_INTSTATCLR0, 1 << i);
 
-			handled = 0;
 			for(ih = sc->sc_intrhand[i]; ih; ih = ih->ih_next)
-				handled = handled |
-				    ((ih->ih_fun)(ih->ih_arg) == 1);
-
-			if (! handled)
-				sacc_stray_interrupt(sc, i + 32);
+				softintr_schedule(ih->ih_soft);
 		}
 	for(i = 0, mask = 1; i < SACCIC_LEN - 32; i++, mask <<= 1)
 		if (intstat.hi & mask) {
@@ -221,23 +204,10 @@ sacc_intr_dispatch(arg)
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 					  SACCIC_INTSTATCLR1, 1 << i);
 
-			handled = 0;
 			for(ih = sc->sc_intrhand[i + 32]; ih; ih = ih->ih_next)
-				handled = handled |
-				    ((ih->ih_fun)(ih->ih_arg) == 1);
-
-			if (! handled)
-				sacc_stray_interrupt(sc, i + 32);
+				softintr_schedule(ih->ih_soft);
 		}
 	return 1;
-}
-
-static void
-sacc_stray_interrupt(sc, irq)
-	struct sacc_softc *sc;
-	int irq;
-{
-	DPRINTF(("sacc_stray_interrupt\n"));
 }
 
 void *
@@ -260,22 +230,22 @@ sacc_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	    ! (type == IST_EDGE_RAISE || type == IST_EDGE_FALL))
 		panic("sacc_intr_establish: bogus irq or type");
 
+	if (sc->sc_intrhand[irq] == NULL) {
+		sacc_intr_setpolarity(ic, irq, type);
+		sc->sc_intrtype[irq] = type;
+	} else if (sc->sc_intrtype[irq] != type)
+		/* XXX we should be able to share raising and
+		 * falling edge intrs */
+		panic("sacc_intr_establish: type must be unique\n");
+
 	/* install intr handler */
-	ih->ih_fun = ih_fun;
-	ih->ih_arg = ih_arg;
+	ih->ih_soft = softintr_establish(level, ih_fun, ih_arg);
 	ih->ih_irq = irq;
-	ih->ih_type = type;
 	ih->ih_next = NULL;
 
 	s = splhigh();
 	for(p = &sc->sc_intrhand[irq]; *p; p = &(*p)->ih_next)
-		if ((*p)->ih_type != type)
-			/* XXX we should be able to share raising and
-			 * falling edge intrs */
-			panic("sacc_intr_establish: type must be unique\n");
-
-	if (sc->sc_intrhand[irq] == NULL)
-		sacc_intr_setpolarity(ic, irq, type);
+		;
 
 	*p = ih;
 
@@ -290,7 +260,7 @@ sacc_intr_disestablish(ic, arg)
 	sacc_chipset_tag_t *ic;
 	void *arg;
 {
-	int irq;
+	int irq, s;
 	struct sacc_softc *sc = (struct sacc_softc *)ic;
 	struct sacc_intrhand *ih, **p;
 
@@ -302,6 +272,8 @@ sacc_intr_disestablish(ic, arg)
 		panic("sacc_intr_disestablish: bogus irq");
 #endif
 
+	s = splhigh();
+
 	for(p = &sc->sc_intrhand[irq];; p = &(*p)->ih_next) {
 		if (*p == NULL)
 			panic("sacc_intr_disestablish: handler not registered");
@@ -309,6 +281,10 @@ sacc_intr_disestablish(ic, arg)
 			break;
 	}
 	*p = (*p)->ih_next;
+
+	sacc_intr_calculatemasks(sc);
+	splx(s);
+
 	free(ih, M_DEVBUF);
 }
 
@@ -347,21 +323,21 @@ sacc_intr_calculatemasks(sc)
 {
 	int irq;
 
-	sc->sc_imask[0].lo = 0;
-	sc->sc_imask[0].hi = 0;
+	sc->sc_imask.lo = 0;
+	sc->sc_imask.hi = 0;
 	for(irq = 0; irq < 32; irq++)
 		if (sc->sc_intrhand[irq])
-			sc->sc_imask[0].lo |= (1 << irq);
+			sc->sc_imask.lo |= (1 << irq);
 	for(irq = 0; irq < SACCIC_LEN - 32; irq++)
 		if (sc->sc_intrhand[irq + 32])
-			sc->sc_imask[0].hi |= (1 << irq);
+			sc->sc_imask.hi |= (1 << irq);
 
 
 	/* XXX this should not be done here */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTEN0,
-			  sc->sc_imask[0].lo);
+			  sc->sc_imask.lo);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTEN1,
-			  sc->sc_imask[0].hi);
-	DPRINTF(("sacc_intr_calculatemasks: %x %x\n", sc->sc_imask[0].lo,
-	    sc->sc_imask[0].hi));
+			  sc->sc_imask.hi);
+	DPRINTF(("sacc_intr_calculatemasks: %x %x\n", sc->sc_imask.lo,
+	    sc->sc_imask.hi));
 }
