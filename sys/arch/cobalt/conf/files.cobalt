@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.6 2000/10/23 11:32:30 ad Exp $
+#	$NetBSD: files.cobalt,v 1.7 2000/11/08 19:48:52 ad Exp $
 
 maxpartitions 16
 
@@ -40,6 +40,8 @@ major {md = 2}
 
 file dev/clock_subr.c
 file dev/cons.c
+
+include "dev/i2o/files.i2o"
 
 include "dev/pci/files.pci"
 file arch/cobalt/pci/pci_machdep.c	pci

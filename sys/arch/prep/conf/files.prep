@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.6 2000/06/08 13:16:23 nonaka Exp $
+#	$NetBSD: files.prep,v 1.7 2000/11/08 19:48:52 ad Exp $
 #
 # prep-specific configuration info
 #
@@ -16,6 +16,11 @@ file	arch/prep/prep/extintr.c
 file	arch/prep/prep/machdep.c
 file	dev/clock_subr.c
 file	dev/cons.c
+
+#
+# Machine-independent I2O drivers
+#
+include "dev/i2o/files.i2o"
 
 #
 # Machine-independent SCSI drivers

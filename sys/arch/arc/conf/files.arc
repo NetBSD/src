@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.23 2000/06/20 08:26:54 soda Exp $
+#	$NetBSD: files.arc,v 1.24 2000/11/08 19:48:51 ad Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -100,6 +100,11 @@ file	arch/arc/dev/if_sn.c		sn
 # Machine-independent MII/PHY drivers.
 #
 include "dev/mii/files.mii"
+
+#
+# Machine-independent I2O drivers.
+#
+include "dev/i2o/files.i2o"
 
 #	Use machine independent SCSI driver routines
 include	"dev/scsipi/files.scsipi"
