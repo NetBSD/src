@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.1 2000/08/23 13:41:15 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.2 2000/10/31 21:54:35 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,14 +106,14 @@ fb_is_console(node)
 
 	case PROM_OBP_V0:
 		/*
-		 * Prefer the `fb' property on the root node.
-		 * Fall back on prom_stdout() cookie if not present.
+		 * First, check if prom_stdout() represents a frame buffer,
+		 * then match on the `fb' property on the root node, if any.
 		 */
+		if (prom_stdout() != PROMDEV_SCREEN)
+			return (0);
+
 		fbnode = getpropint(findroot(), "fb", 0);
-		if (fbnode == 0)
-			return (prom_stdout() == PROMDEV_SCREEN);
-		else
-			return (node == fbnode);
+		return (fbnode == 0 || node == fbnode);
 
 	case PROM_OBP_V2:
 	case PROM_OBP_V3:
