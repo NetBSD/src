@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.47 2002/10/23 09:13:59 jdolecek Exp $	*/
+/*	$NetBSD: ucom.c,v 1.48 2002/11/25 02:28:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.47 2002/10/23 09:13:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.48 2002/11/25 02:28:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1067,7 +1067,7 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 		return;
 	}
 
-	usbd_get_xfer_status(xfer, NULL, (void **)&cp, &cc, NULL);
+	usbd_get_xfer_status(xfer, NULL, (void *)&cp, &cc, NULL);
 #if defined(__NetBSD__) && NRND > 0
 	rnd_add_uint32(&sc->sc_rndsource, cc);
 #endif
