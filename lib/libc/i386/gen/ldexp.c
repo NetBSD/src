@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Sean Eric Fagan.
+ * Charles Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,23 +40,21 @@ static char sccsid[] = "@(#)ldexp.c	5.1 (Berkeley) 4/23/90";
 
 /*
  * ldexp(value, exp): return value * (2 ** exp).
- *
- * Written by Sean Eric Fagan (sef@kithrup.COM)
- * Sun Mar 11 20:27:09 PST 1990
  */
 
-/*
- * We do the conversion in C to let gcc optimize it away, if possible.
- * The "fxch ; fstp" stuff is because value is still on the stack
- * (stupid 8087!).
- */
 double
 ldexp (double value, int exp)
 {
-	double temp, texp, temp2;
-	texp = exp;
-	asm ("fscale ; fxch %%st(1) ; fstp%L1 %1 "
-		: "=f" (temp), "=0" (temp2)
-		: "0" (texp), "f" (value));
+	double temp;
+#if __GNUC__ >= 2
+	asm ("fscale"
+		: "=t" (temp)
+		: "0" (value), "u" ((double)exp)
+		: "u");
+#else
+	asm ("fscale; fstp %%st(1)"
+		: "=f" (temp)
+		: "f" (value), "0" ((double)exp));
+#endif
 	return (temp);
 }
