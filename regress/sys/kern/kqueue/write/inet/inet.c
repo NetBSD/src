@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.2 2002/11/01 20:54:32 jdolecek Exp $	*/
+/*	$NetBSD: inet.c,v 1.3 2002/12/06 02:07:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ printf("iw: match is %d\n", match); usleep(10000);
 		    "iw: |----> count %d <------------------------------------------------------------------------------------------------------------------------------------------|\n", count++);
 		n = write(fd, buffer, i);
 		if (event[match].flags & EV_ERROR) {
-			printf("iw: error received: %d %m\n",
+			printf("iw: error received: %d %s\n",
 			    (int)event[match].data,
 			    strerror((int)event[match].data));
 			break;
@@ -275,7 +275,7 @@ printf("ir: match is %d\n", match); /* sleep(1); */
 buffer[0] = '\0';
 		printf("[%d] %s", n, buffer);
 		if (event[match].flags & EV_ERROR) {
-			printf("ir: error received: %" PRId64 " %m\n",
+			printf("ir: error received: %" PRId64 " %s\n",
 			    event[match].data,
 			    strerror((int)event[match].data));
 			break;
