@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.251 2000/08/29 01:17:06 wiz Exp $
+$NetBSD: pcidevs,v 1.252 2000/09/02 00:32:15 cgd Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -581,19 +581,19 @@ product 3COM 3C980SRV	0x9800	3c980 Server Adapter 10/100 Ethernet
 product 3COM 3C980CTXM	0x9805	3c980C-TXM 10/100 Ethernet
 product 3COM 3CR990TX97	0x9903	3CR990-TX-97 10/100 Ethernet
 
-/* 3Dfx Interactive producs */
+/* 3Dfx Interactive products */
 product 3DFX VOODOO	0x0001	Voodoo
 product 3DFX VOODOO2	0x0002	Voodoo2
 product 3DFX BANSHEE	0x0003	Banshee
 product 3DFX VOODOO3	0x0005	Voodoo3
 
 /* 3D Labs products */
-product 3DLABS 300SX	0x0001	GLINT 300SX
-product 3DLABS 500TX	0x0002	GLINT 500TX
-product 3DLABS DELTA	0x0003	GLINT DELTA
-product 3DLABS PERMEDIA	0x0004	GLINT Permedia
-product 3DLABS 500MX	0x0006	GLINT 500MX
-product 3DLABS PERMEDI2	0x0007	GLINT Permedia 2
+product 3DLABS 300SX		0x0001	GLINT 300SX
+product 3DLABS 500TX		0x0002	GLINT 500TX
+product 3DLABS DELTA		0x0003	GLINT DELTA
+product 3DLABS PERMEDIA		0x0004	GLINT Permedia
+product 3DLABS 500MX		0x0006	GLINT 500MX
+product 3DLABS PERMEDIA2	0x0007	GLINT Permedia 2
 
 /* 3ware products */
 product	3WARE ESCALADE	0x1000	Escalade IDE RAID
