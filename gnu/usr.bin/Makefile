@@ -1,8 +1,6 @@
-# $Header: /cvsroot/src/gnu/usr.bin/Attic/Makefile,v 1.13 1993/07/11 04:12:34 cgd Exp $
+#	$Id: Makefile,v 1.14 1993/07/18 11:52:00 cgd Exp $
 
-SUBDIR+= bc-1.02 gzip tar-1.11.2 gawk-2.15.2
-SUBDIR+= diff diff3 sdiff gas gcc2 gdb lex pr sort
-SUBDIR+= ld groff grep 
-SUBDIR+= rcs
+SUBDIR+=	bc diff diff3 grep groff gzip tar gas gawk gcc2 gdb ld lex
+SBUDIR+=	pr rcs sort sdiff
 
 .include <bsd.subdir.mk>
