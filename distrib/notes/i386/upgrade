@@ -23,7 +23,7 @@ another operating system's partition, before beginning the upgrade
 process.
 
 The upgrade procedure using the sysinst tool is basically the
-same as an installation, but without the harddisk partitioning.
+same as an installation, but without the hard disk partitioning.
 Another difference is that existing configuration files in /etc
 are backed up, and merged with the new files. Getting the binary
 sets is done in the same manner as the installation procedure;
