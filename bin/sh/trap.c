@@ -45,7 +45,6 @@ static char sccsid[] = "@(#)trap.c	8.1 (Berkeley) 5/31/93";
 #include "jobs.h"
 #include "options.h"
 #include "syntax.h"
-#include "signames.h"
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
@@ -70,9 +69,9 @@ static char sccsid[] = "@(#)trap.c	8.1 (Berkeley) 5/31/93";
 
 extern char nullstr[1];		/* null string */
 
-char *trap[MAXSIG+1];		/* trap handler commands */
-MKINIT char sigmode[MAXSIG];	/* current value of signal */
-char gotsig[MAXSIG];		/* indicates specified signal received */
+char *trap[NSIG+1];		/* trap handler commands */
+MKINIT char sigmode[NSIG];	/* current value of signal */
+char gotsig[NSIG];		/* indicates specified signal received */
 int pendingsigs;			/* indicates some signal received */
 
 /*
@@ -85,7 +84,7 @@ trapcmd(argc, argv)  char **argv; {
 	int signo;
 
 	if (argc <= 1) {
-		for (signo = 0 ; signo <= MAXSIG ; signo++) {
+		for (signo = 0 ; signo <= NSIG ; signo++) {
 			if (trap[signo] != NULL)
 				out1fmt("%d: %s\n", signo, trap[signo]);
 		}
@@ -97,7 +96,7 @@ trapcmd(argc, argv)  char **argv; {
 	else
 		action = *ap++;
 	while (*ap) {
-		if ((signo = number(*ap)) < 0 || signo > MAXSIG)
+		if ((signo = number(*ap)) < 0 || signo > NSIG)
 			error("%s: bad trap", *ap);
 		INTOFF;
 		if (action)
@@ -123,7 +122,7 @@ void
 clear_traps() {
 	char **tp;
 
-	for (tp = trap ; tp <= &trap[MAXSIG] ; tp++) {
+	for (tp = trap ; tp <= &trap[NSIG] ; tp++) {
 		if (*tp && **tp) {	/* trap not NULL or SIG_IGN */
 			INTOFF;
 			ckfree(*tp);
@@ -239,14 +238,14 @@ ignoresig(signo) {
 
 
 #ifdef mkinit
-INCLUDE "signames.h"
+INCLUDE <signal.h>
 INCLUDE "trap.h"
 
 SHELLPROC {
 	char *sm;
 
 	clear_traps();
-	for (sm = sigmode ; sm < sigmode + MAXSIG ; sm++) {
+	for (sm = sigmode ; sm < sigmode + NSIG ; sm++) {
 		if (*sm == S_IGN)
 			*sm = S_HARD_IGN;
 	}
@@ -286,7 +285,7 @@ dotrap() {
 		for (i = 1 ; ; i++) {
 			if (gotsig[i - 1])
 				break;
-			if (i >= MAXSIG)
+			if (i >= NSIG)
 				goto done;
 		}
 		gotsig[i - 1] = 0;
