@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.51 2003/10/08 04:25:45 lukem Exp $
+#	$NetBSD: Makefile.booters,v 1.52 2003/10/08 13:06:30 dsl Exp $
 
 .include <bsd.own.mk>
 
@@ -22,14 +22,7 @@ COPTS+= -ffreestanding
 
 I386_STAND_DIR?= $S/arch/i386/stand
 
-.PATH: ${I386_STAND_DIR}/lib/crt/bootsect ${I386_STAND_DIR}/lib
-# ensure the stuff we need to load all of 'boot' in in the first few
-# sectors, and that anything that goes to real mode is in the first 64k.
-# (prot_to_real will bleat if the return address is >64k)
-BSSTART= start_bootsect.o fraglist.o bootsectmain.o biosdisk_ll.o \
-	bios_disk.o diskbuf.o \
-	biosdelay.o biosgetrtc.o biosmca.o biosmem.o biosmemx.o \
-	biosreboot.o conio.o
+.PATH: ${I386_STAND_DIR}/lib
 
 .PATH: ${I386_STAND_DIR}/lib/crt/rom
 ROMSTART= start_rom.o
@@ -73,7 +66,7 @@ x86::
 	-rm -f $@
 	ln -s $S/arch/x86/include $@
 
-${OBJS} ${BSSTART} ${ROMSTART} ${DOSSTART} ${PXESTART}: machine x86
+${OBJS} ${ROMSTART} ${DOSSTART} ${PXESTART}: machine x86
 
 ### find out what to use for libkern
 KERN_AS=	library
