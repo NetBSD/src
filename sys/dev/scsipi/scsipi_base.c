@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.13 2001/04/03 15:27:18 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.14 2001/04/11 01:16:05 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ scsipi_init()
  *
  *	Initialize a scsipi_channel when it is attached.
  */
-void
+int
 scsipi_channel_init(chan)
 	struct scsipi_channel *chan;
 {
@@ -122,11 +122,20 @@ scsipi_channel_init(chan)
 	TAILQ_INIT(&chan->chan_complete);
 
 	nbytes = chan->chan_ntargets * sizeof(struct scsipi_periph **);
-	chan->chan_periphs = malloc(nbytes, M_DEVBUF, M_WAITOK);
+	chan->chan_periphs = malloc(nbytes, M_DEVBUF, M_NOWAIT);
+	if (chan->chan_periphs == NULL)
+		return (ENOMEM);
+	
 
 	nbytes = chan->chan_nluns * sizeof(struct scsipi_periph *);
 	for (i = 0; i < chan->chan_ntargets; i++) { 
-		chan->chan_periphs[i] = malloc(nbytes, M_DEVBUF, M_WAITOK);
+		chan->chan_periphs[i] = malloc(nbytes, M_DEVBUF, M_NOWAIT);
+		if (chan->chan_periphs[i] == NULL) {
+			while (--i >= 0) {
+				free(chan->chan_periphs[i], M_DEVBUF);
+			}
+			return (ENOMEM);
+		}
 		memset(chan->chan_periphs[i], 0, nbytes);
 	}
 
@@ -134,6 +143,7 @@ scsipi_channel_init(chan)
 	 * Create the asynchronous completion thread.
 	 */
 	kthread_create(scsipi_create_completion_thread, chan);
+	return (0);
 }
 
 /*
