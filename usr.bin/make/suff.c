@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.35 2001/11/14 19:27:40 tv Exp $	*/
+/*	$NetBSD: suff.c,v 1.36 2002/01/27 01:50:55 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.35 2001/11/14 19:27:40 tv Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.36 2002/01/27 01:50:55 reinoud Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.35 2001/11/14 19:27:40 tv Exp $");
+__RCSID("$NetBSD: suff.c,v 1.36 2002/01/27 01:50:55 reinoud Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1958,7 +1958,6 @@ SuffFindNormalDeps(gn, slst)
 
 	if (ln != NILLNODE) {
 	    int	    prefLen;	    /* Length of the prefix */
-	    Src	    *targ;
 
 	    /*
 	     * Allocate a Src structure to which things can be transformed

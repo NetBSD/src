@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.30 2002/01/26 22:36:41 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.31 2002/01/27 01:50:54 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: dir.c,v 1.30 2002/01/26 22:36:41 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.31 2002/01/27 01:50:54 reinoud Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.30 2002/01/26 22:36:41 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.31 2002/01/27 01:50:54 reinoud Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -940,7 +940,7 @@ Dir_FindFile (name, path)
     register char *file;		/* the current filename to check */
     register Path *p;			/* current path member */
     register char *cp;			/* index of first slash, if any */
-    Boolean	  lastDot = FALSE;	/* true we should search dot last */
+    Boolean	  hasLastDot = FALSE;	/* true we should search dot last */
     Boolean	  hasSlash;		/* true if 'name' contains a / */
     struct stat	  stb;			/* Buffer for stat, if necessary */
     Hash_Entry	  *entry;		/* Entry for mtimes table */
@@ -972,10 +972,9 @@ Dir_FindFile (name, path)
 
     if ((ln = Lst_First (path)) != NILLNODE) {
 	p = (Path *) Lst_Datum (ln);
-	if (p == dotLast)
-	    lastDot = TRUE;
-	if (DEBUG(DIR)) {
-	    printf("[dot last]...");
+	if (p == dotLast) {
+	    hasLastDot = TRUE;
+            if (DEBUG(DIR)) printf("[dot last]...");
 	}
     }
 
@@ -986,7 +985,7 @@ Dir_FindFile (name, path)
      * (fish.c) and what pmake finds (./fish.c).
      * Unless we found the magic DOTLAST path...
      */
-    if (!lastDot && name[0] != '/')
+    if (!hasLastDot && name[0] != '/')
 	if ((file = DirFindDot(hasSlash, name, cp)) != NULL)
 	    return file;
 
@@ -1012,7 +1011,7 @@ Dir_FindFile (name, path)
     }
     Lst_Close (path);
 
-    if (lastDot && name[0] != '/')
+    if (hasLastDot && name[0] != '/')
 	if ((file = DirFindDot(hasSlash, name, cp)) != NULL)
 	    return file;
 
@@ -1043,7 +1042,7 @@ Dir_FindFile (name, path)
 	    printf("failed. Trying subdirectories...");
 	}
 
-	if (!lastDot && cur && (file = DirLookupSubdir(cur, name)) != NULL)
+	if (!hasLastDot && cur && (file = DirLookupSubdir(cur, name)) != NULL)
 	    return file;
 
 	(void) Lst_Open (path);
@@ -1060,7 +1059,7 @@ Dir_FindFile (name, path)
 	}
 	Lst_Close (path);
 
-	if (lastDot && cur && (file = DirLookupSubdir(cur, name)) != NULL)
+	if (hasLastDot && cur && (file = DirLookupSubdir(cur, name)) != NULL)
 	    return file;
 
 	if (DEBUG(DIR)) {

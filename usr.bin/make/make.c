@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.39 2001/07/03 18:08:51 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.40 2002/01/27 01:50:55 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.39 2001/07/03 18:08:51 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.40 2002/01/27 01:50:55 reinoud Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.39 2001/07/03 18:08:51 christos Exp $");
+__RCSID("$NetBSD: make.c,v 1.40 2002/01/27 01:50:55 reinoud Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -650,7 +650,6 @@ Make_Update (cgn)
      * of this node.
      */
     if (Lst_Open (cgn->iParents) == SUCCESS) {
-	char    *p1;
 	char	*cpref = Var_Value(PREFIX, cgn, &p1);
 
 	while ((ln = Lst_Next (cgn->iParents)) != NILLNODE) {
