@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.25 2002/02/11 21:14:59 mycroft Exp $
+#	$NetBSD: bsd.info.mk,v 1.26 2002/03/01 15:42:10 pk Exp $
 
 .include <bsd.init.mk>
 
@@ -33,14 +33,22 @@ realall:	${INFOFILES}
 infoinstall::	# ensure existence
 .if ${MKINFO} != "no"
 
+INFODIRFILE=${DESTDIR}${INFODIR}/dir
+
+# serialize access to ${INFODIRFILE}; needed for parallel makes
 __infoinstall: .USE
 	${INSTALL_FILE} \
 	    -o ${INFOOWN_${.ALLSRC:T}:U${INFOOWN}} \
 	    -g ${INFOGRP_${.ALLSRC:T}:U${INFOGRP}} \
 	    -m ${INFOMODE_${.ALLSRC:T}:U${INFOMODE}} \
 	    ${.ALLSRC} ${.TARGET}
-	@${INSTALL_INFO} --remove --info-dir=${DESTDIR}${INFODIR} ${.TARGET} 2>/dev/null
-	${INSTALL_INFO} --info-dir=${DESTDIR}${INFODIR} ${.TARGET}
+	@[ -f ${INFODIRFILE} ] &&					\
+	while ! ln ${INFODIRFILE} ${INFODIRFILE}.lock 2> /dev/null;	\
+		do sleep 1; done;					\
+	${INSTALL_INFO} -d ${INFODIRFILE} -r ${.TARGET} 2> /dev/null;	\
+	${INSTALL_INFO} -d ${INFODIRFILE} ${.TARGET};			\
+	rm -f ${INFODIRFILE}.lock
+
 
 .for F in ${INFOFILES:O:u}
 _FDIR:=		${INFODIR_${F}:U${INFODIR}}		# dir overrides
