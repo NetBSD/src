@@ -1,5 +1,5 @@
-/* $NetBSD: isr.c,v 1.4 2000/07/02 04:40:38 cgd Exp $ */
-/*	$NetBSD: isr.c,v 1.4 2000/07/02 04:40:38 cgd Exp $	*/
+/* $NetBSD: isr.c,v 1.5 2000/07/09 08:08:20 nisimura Exp $ */
+/*	$NetBSD: isr.c,v 1.5 2000/07/09 08:08:20 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.4 2000/07/02 04:40:38 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.5 2000/07/09 08:08:20 nisimura Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -278,6 +278,8 @@ isrdispatch_vectored(pc, evec, frame)
 	if ((*isr->isr_func)(isr->isr_arg ? isr->isr_arg : frame) == 0)
 		printf("isrdispatch_vectored: vec 0x%x not claimed\n", vec);
 }
+
+void netintr __P((void));
 
 void
 netintr()
