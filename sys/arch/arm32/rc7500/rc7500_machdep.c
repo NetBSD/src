@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.14 1998/08/28 02:58:42 mark Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.15 1998/08/28 17:15:46 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -590,7 +590,7 @@ initarm(prom_id)
 
 	loop1 = 0;
 	kernel_l1pt.physical = 0;
-	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
+	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if ((physical_freestart & (PD_SIZE - 1)) == 0
 		    && kernel_l1pt.physical == 0) {
