@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: linkfarm.sh,v 1.1.2.12 2003/08/24 06:29:56 jlam Exp $
+# $NetBSD: linkfarm.sh,v 1.1.2.13 2003/08/24 07:06:45 jlam Exp $
 
 #
 # Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
@@ -214,7 +214,7 @@ yes)
 			if [ $verbose -gt 0 ]; then
 				echo "$lnprog ${linktype} $fromdir/$newf $todir/$newf"
 			fi
-			$doit $lnprog ${linktype} $fromdir/$newf $todir/$f ;;
+			$doit $lnprog ${linktype} $fromdir/$newf $todir/$newf ;;
 		esac
 	done)
 	;;
