@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.19 2002/03/01 07:21:14 lukem Exp $
+# $NetBSD: maketars,v 1.20 2002/04/01 15:50:30 bjh21 Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-a arch] [-m machine] [-s setsdir]
@@ -85,7 +85,27 @@ if [ -z "$dest" ]; then
 	exit 1
 fi
 
-SDIR=`mktemp -d /tmp/maketar.XXXXXX` || exit 1
+# Make sure we don't loop forever if mkdir will always fail.
+
+if [ ! -d /tmp ]; then
+	echo /tmp is not a directory
+	exit 1
+fi
+
+if [ ! -w /tmp ]; then
+	echo /tmp is not writeable
+	exit 1
+fi
+
+SDIR_BASE=/tmp/maketar.$$
+SDIR_SERIAL=0
+
+while true; do
+    SDIR=${SDIR_BASE}.${SDIR_SERIAL}
+    mkdir -m 0700 ${SDIR} && break
+    SDIR_SERIAL=`expr ${SDIR_SERIAL} + 1`
+done    
+
 trap "/bin/rm -rf $SDIR ; exit 0" 0 2 3 13		# EXIT INT QUIT PIPE
 
 if [ -n "$metalog" ]; then
