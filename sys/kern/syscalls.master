@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.102 2000/08/07 17:59:33 bjh21 Exp $
+	$NetBSD: syscalls.master,v 1.103 2000/12/09 05:27:31 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -49,6 +49,8 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+%%
 
 ; Reserved/unimplemented system calls in the range 0-150 inclusive
 ; are reserved for use in future Berkeley releases.
