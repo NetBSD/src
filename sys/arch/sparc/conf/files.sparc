@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.58 1998/07/27 05:49:02 mrg Exp $
+#	$NetBSD: files.sparc,v 1.59 1998/07/27 19:20:03 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -72,15 +72,10 @@ attach fd at fdc
 file	arch/sparc/dev/fd.c			fdc | fd needs-flag
 file	arch/sparc/sparc/bsd_fdintr.s		fdc
 
-device sbus { slot = -1, offset = -1 }
+include "../../../dev/sbus/files.sbus"
 attach sbus at mainbus with sbus_mainbus
 attach sbus at iommu with sbus_iommu
 file	arch/sparc/dev/sbus.c			sbus
-
-device xbox {}
-attach xbox at sbus
-attach sbus at xbox with sbus_xbox
-file	arch/sparc/dev/xbox.c			xbox
 
 #
 # Console (zs) related stuff
@@ -132,12 +127,8 @@ attach dma at obio with dma_obio
 device ledma {}
 attach ledma at sbus
 file	arch/sparc/dev/dma.c		dma | ledma
-device lebuffer {}
-attach lebuffer at sbus
-file	dev/sbus/lebuffer.c		lebuffer
 
 device esp: scsi, ncr53c9x
-##attach esp at sbus, dma, obio
 attach esp at sbus with esp_sbus
 attach esp at dma with esp_dma
 attach esp at obio with esp_obio
