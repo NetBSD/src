@@ -31,13 +31,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdarg.h	8.1 (Berkeley) 6/10/93
- *      $Id: stdarg.h,v 1.3 1994/05/27 09:02:26 glass Exp $
+ *      $Id: stdarg.h,v 1.4 1994/10/15 04:58:02 cgd Exp $
  */
 
-#ifndef _STDARG_H_
-#define	_STDARG_H_
+#ifndef _PMAX_STDARG_H_
+#define	_PMAX_STDARG_H_
 
-typedef char *va_list;
+#include <machine/ansi.h>
+
+typedef _BSD_VA_LIST_	va_list;
 
 #define	__va_promote(type) \
 	(((sizeof(type) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
@@ -58,4 +60,4 @@ typedef char *va_list;
 
 #define	va_end(ap)
 
-#endif /* !_STDARG_H_ */
+#endif /* !_PMAX_STDARG_H_ */

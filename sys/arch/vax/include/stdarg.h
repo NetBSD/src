@@ -31,10 +31,21 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)stdarg.h    7.2 (Berkeley) 5/4/91
- *	$Id: stdarg.h,v 1.1 1994/08/02 20:21:00 ragge Exp $
+ *	$Id: stdarg.h,v 1.2 1994/10/15 04:58:13 cgd Exp $
  */
 
-typedef char *va_list;
+#ifndef _VAX_STDARG_H_
+#define	_VAX_STDARG_H_
+
+#include <machine/ansi.h>
+
+typedef _BSD_VA_LIST_	va_list;
+
+#define __va_promote(type) \
+        (((sizeof(type) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
+
+#define va_start(ap, last) \
+        (ap = ((char *)&(last) + __va_promote(last)))
 
 #ifdef KERNEL
 #define va_arg(ap, type) \
@@ -47,8 +58,4 @@ typedef char *va_list;
 
 #define va_end(ap)
 
-#define __va_promote(type) \
-        (((sizeof(type) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
-
-#define va_start(ap, last) \
-        (ap = ((char *)&(last) + __va_promote(last)))
+#endif /* !_VAX_STDARG_H_ */

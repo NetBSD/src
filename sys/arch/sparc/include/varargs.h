@@ -47,11 +47,11 @@
  *	from: @(#)varargs.h	8.3 (Berkeley) 3/22/94
  *		from: Header: varargs.h,v 1.8 93/09/27 00:53:20 torek Exp
  *
- *	$Id: varargs.h,v 1.4 1994/05/25 16:56:03 pk Exp $
+ *	$Id: varargs.h,v 1.5 1994/10/15 04:58:08 cgd Exp $
  */
 
-#ifndef _MACHINE_VARARGS_H_
-#define	_MACHINE_VARARGS_H_
+#ifndef _SPARC_VARARGS_H_
+#define	_SPARC_VARARGS_H_
 
 #include <machine/stdarg.h>
 
@@ -70,9 +70,9 @@
 
 #undef va_start
 #ifdef __GCC_NEW_VARARGS__
-#define	va_start(ap)	((ap) = (char *)__builtin_saveregs())
+#define	va_start(ap)	((ap) = (va_list)__builtin_saveregs())
 #else
-#define	va_start(ap)	(__builtin_saveregs(), (ap) = (char *)&va_alist)
+#define	va_start(ap)	(__builtin_saveregs(), (ap) = (va_list)&va_alist)
 #endif
 
-#endif /* !_MACHINE_VARARGS_H_ */
+#endif /* !_SPARC_VARARGS_H_ */
