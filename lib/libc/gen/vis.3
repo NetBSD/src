@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.3,v 1.19 2003/08/07 16:43:00 agc Exp $
+.\"	$NetBSD: vis.3,v 1.20 2005/01/15 21:02:51 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)vis.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd January 16, 2005
 .Dt VIS 3
 .Os
 .Sh NAME
@@ -296,7 +296,7 @@ where
 .Em d
 represents an octal digit.
 .It Dv VIS_HTTPSTYLE
-Use URI encoding as described in RFC 1808.
+Use URI encoding as described in RFC 1738.
 The form is
 .Ql %xx
 where
@@ -320,9 +320,9 @@ ambiguous and non-invertible.
 .Xr vis 1 ,
 .Xr unvis 3
 .Rs
-.%A R. Fielding
-.%T Relative Uniform Resource Locators
-.%O RFC1808
+.%A T. Berners-Lee
+.%T Uniform Resource Locators (URL)
+.%O RFC1738
 .Re
 .Sh HISTORY
 The
