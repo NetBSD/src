@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.18 1997/02/28 17:17:22 gwr Exp $ */
+/*	$NetBSD: if_ie.c,v 1.19 1997/03/10 21:45:01 gwr Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -463,7 +463,7 @@ iewatchdog(ifp)
 	struct ie_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++sc->sc_if.if_oerrors;
 	iereset(sc);
 }
 
@@ -528,13 +528,13 @@ loop:
 	 * Receiver not ready (RNR) just means it has
 	 * run out of resources (buffers or frames).
 	 * One can easily cause this with (i.e.) spray.
-	 * This is not really an error, so be silent.
+	 * This is not a serious error, so be silent.
 	 */
 	if (status & IE_ST_RNR) {
 #ifdef IEDEBUG
 		printf("%s: receiver not ready\n", sc->sc_dev.dv_xname);
 #endif
-		sc->sc_arpcom.ac_if.if_ierrors++;
+		sc->sc_if.if_ierrors++;
 		iereset(sc);
 	}
 
@@ -570,7 +570,7 @@ ierint(sc)
 
 		if ((status & IE_FD_COMPLETE) && (status & IE_FD_OK)) {
 			if (!--timesthru) {
-				sc->sc_arpcom.ac_if.if_ierrors +=
+				sc->sc_if.if_ierrors +=
 				    SWAP(scb->ie_err_crc) +
 				    SWAP(scb->ie_err_align) +
 				    SWAP(scb->ie_err_resource) +
@@ -606,7 +606,7 @@ void
 ietint(sc)
 	struct ie_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_if;
 	int status;
 
 	ifp->if_timer = 0;
@@ -717,11 +717,11 @@ check_eh(sc, eh, to_bpf)
 		 */
 #if NBPFILTER > 0
 		/* BPF gets this packet if anybody cares */
-		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0);
+		*to_bpf = (sc->sc_if.if_bpf != 0);
 #endif
 		if (eh->ether_dhost[0] & 1)
 			return 1;
-		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
+		if (ether_equal(eh->ether_dhost, sc->sc_addr))
 			return 1;
 		return 0;
 
@@ -730,10 +730,10 @@ check_eh(sc, eh, to_bpf)
 		 * Receiving all packets.  These need to be passed on to BPF.
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0);
+		*to_bpf = (sc->sc_if.if_bpf != 0);
 #endif
 		/* If for us, accept and hand up to BPF */
-		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
+		if (ether_equal(eh->ether_dhost, sc->sc_addr))
 			return 1;
 
 #if NBPFILTER > 0
@@ -769,14 +769,14 @@ check_eh(sc, eh, to_bpf)
 		 * time.  Whew!  (Hope this is a fast machine...)
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0);
+		*to_bpf = (sc->sc_if.if_bpf != 0);
 #endif
 		/* We want to see multicasts. */
 		if (eh->ether_dhost[0] & 1)
 			return 1;
 
 		/* We want to see our own packets */
-		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
+		if (ether_equal(eh->ether_dhost, sc->sc_addr))
 			return 1;
 
 		/* Anything else goes to BPF but nothing else. */
@@ -796,7 +796,7 @@ check_eh(sc, eh, to_bpf)
 		 * as quickly as possible.
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0);
+		*to_bpf = (sc->sc_if.if_bpf != 0);
 #endif
 		return 1;
 	}
@@ -872,8 +872,8 @@ iexmit(sc)
 	 * If BPF is listening on this interface, let it see the packet before
 	 * we push it on the wire.
 	 */
-	if (sc->sc_arpcom.ac_if.if_bpf)
-		bpf_tap(sc->sc_arpcom.ac_if.if_bpf,
+	if (sc->sc_if.if_bpf)
+		bpf_tap(sc->sc_if.if_bpf,
 		    sc->xmit_cbuffs[sc->xctail],
 		    SWAP(sc->xmit_buffs[sc->xctail]->ie_xmit_flags));
 #endif
@@ -895,7 +895,7 @@ iexmit(sc)
 	    vtop16sw(sc, (void*) sc->xmit_cmds[sc->xctail]);
 	cmd_and_wait(sc, IE_CU_START, 0, 0);
 
-	sc->sc_arpcom.ac_if.if_timer = 5;
+	sc->sc_if.if_timer = 5;
 }
 
 /*
@@ -939,7 +939,7 @@ ieget(sc, ehp, to_bpf)
 	 */
 	if (!check_eh(sc, ehp, to_bpf)) {
 		/* just this case, it's not an error */
-		sc->sc_arpcom.ac_if.if_ierrors--;
+		sc->sc_if.if_ierrors--;
 		return 0;
 	}
 
@@ -949,7 +949,7 @@ ieget(sc, ehp, to_bpf)
 	if (m == 0)
 		return 0;
 
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
+	m->m_pkthdr.rcvif = &sc->sc_if;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
@@ -1056,7 +1056,7 @@ ie_readframe(sc, num)
 		ie_drop_packet_buffer(sc);
 	}
 	if (m == 0) {
-		sc->sc_arpcom.ac_if.if_ierrors++;
+		sc->sc_if.if_ierrors++;
 		return;
 	}
 
@@ -1082,7 +1082,7 @@ ie_readframe(sc, num)
 		m0.m_next = m;
 
 		/* Pass it up. */
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, &m0);
+		bpf_mtap(sc->sc_if.if_bpf, &m0);
 
 		/*
 		 * A signal passed up from the filtering code indicating that
@@ -1108,8 +1108,8 @@ ie_readframe(sc, num)
 	/*
 	 * Finally pass this packet up to higher layers.
 	 */
-	ether_input(&sc->sc_arpcom.ac_if, &eh, m);
-	sc->sc_arpcom.ac_if.if_ipackets++;
+	ether_input(&sc->sc_if, &eh, m);
+	sc->sc_if.if_ipackets++;
 }
 
 static void
@@ -1560,7 +1560,7 @@ ieinit(sc)
 		cmd->com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = SWAP(0xffff);
 
-		(sc->sc_bcopy)(sc->sc_arpcom.ac_enaddr,
+		(sc->sc_bcopy)(sc->sc_addr,
 		    (caddr_t)&cmd->ie_address, sizeof(cmd->ie_address));
 
 		if (cmd_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
@@ -1588,8 +1588,8 @@ ieinit(sc)
 	iememinit(sc);
 
 	/* tell higher levels that we are here */
-	sc->sc_arpcom.ac_if.if_flags |= IFF_RUNNING;
-	sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+	sc->sc_if.if_flags |= IFF_RUNNING;
+	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 
 	sc->scb->ie_recv_list =
 	    vtop16sw(sc, (void*) sc->rframes[0]);
@@ -1644,11 +1644,11 @@ ieioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+				    *(union ns_host *)(sc->sc_addr);
 			else
 				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				    sc->sc_addr,
+				    sizeof(sc->sc_addr));
 			/* Set new address. */
 			ieinit(sc);
 			break;
@@ -1732,8 +1732,8 @@ mc_reset(sc)
 	while (enm) {
 		if (sc->mcast_count >= MAXMCAST ||
 		    bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
-			sc->sc_arpcom.ac_if.if_flags |= IFF_ALLMULTI;
-			ieioctl(&sc->sc_arpcom.ac_if, SIOCSIFFLAGS, (void *)0);
+			sc->sc_if.if_flags |= IFF_ALLMULTI;
+			ieioctl(&sc->sc_if, SIOCSIFFLAGS, (void *)0);
 			goto setflag;
 		}
 		bcopy(enm->enm_addrlo, &sc->mcast_addrs[sc->mcast_count], 6);
