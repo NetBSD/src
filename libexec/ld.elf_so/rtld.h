@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.33 2001/12/28 05:44:22 lukem Exp $	 */
+/*	$NetBSD: rtld.h,v 1.34 2002/07/10 15:12:36 fredette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -293,12 +293,28 @@ Obj_Entry *_rtld_map_object __P((const char *, int, const struct stat *));
 void _rtld_obj_free(Obj_Entry *);
 Obj_Entry *_rtld_obj_new(void);
 
+/* function descriptors */
+#ifdef __HAVE_FUNCTION_DESCRIPTORS
+Elf_Addr _rtld_function_descriptor_alloc __P((const Obj_Entry *, 
+    const Elf_Sym *, Elf_Addr));
+const void *_rtld_function_descriptor_function __P((const void *));
+#endif /* __HAVE_FUNCTION_DESCRIPTORS */
+
 #if defined(__alpha__)
 /* alpha_reloc.c */
 void	_rtld_setup_alpha_pltgot __P((const Obj_Entry *, bool));
 
 /* rtld_start.S */
 void	_rtld_bind_start_old __P((void));
+#endif
+
+#if defined(__hppa__)
+/* hppa_reloc.c */
+void _rtld_bootstrap_hppa_got __P((Elf_Dyn *, Elf_Addr, Elf_Addr, Elf_Addr));
+void _rtld_setup_hppa_pltgot __P((const Obj_Entry *));
+
+/* rtld_start.S */
+void __rtld_setup_hppa_pltgot __P((const Obj_Entry *, Elf_Addr *));
 #endif
 
 #if defined(__mips__)
