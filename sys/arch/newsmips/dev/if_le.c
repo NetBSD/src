@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.4 1999/12/17 03:21:12 tsubai Exp $	*/
+/*	$NetBSD: if_le.c,v 1.5 1999/12/17 06:05:40 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -171,7 +171,15 @@ le_attach(parent, self, aux)
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	/*struct confargs *ca = aux;*/
+	int intlevel;
 	u_char *p;
+
+	intlevel = self->dv_cfdata->cf_level;
+	if (intlevel == -1) {
+		printf(": interrupt level not configured\n");
+		return;
+	}
+	printf(" level %d", intlevel);
 
 	switch (sc->sc_dev.dv_unit) {
 
@@ -226,10 +234,10 @@ le_attach(parent, self, aux)
 
 	switch (sc->sc_dev.dv_unit) {
 	case 0:
-		hb_intr_establish(1, IPL_NET, am7990_intr, sc);
+		hb_intr_establish(intlevel, IPL_NET, am7990_intr, sc);
 		break;
 	default:
-		hb_intr_establish(0, IPL_NET, am7990_intr, sc);
+		hb_intr_establish(intlevel, IPL_NET, am7990_intr, sc);
 		break;
 	}
 }
