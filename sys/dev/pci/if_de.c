@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.67 1998/05/22 18:51:00 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.68 1998/05/25 22:20:24 mark Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -134,9 +134,7 @@
 #include <netinet/if_inarp.h>
 #endif
 #include <machine/bus.h>
-#if defined(__alpha__)
 #include <machine/intr.h>
-#endif
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/ic/dc21040reg.h>
