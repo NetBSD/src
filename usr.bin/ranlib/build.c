@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)build.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$Id: build.c,v 1.6 1994/06/18 07:28:47 chopps Exp $";
+static char rcsid[] = "$Id: build.c,v 1.7 1994/12/24 17:35:27 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,6 +49,7 @@ static char rcsid[] = "$Id: build.c,v 1.6 1994/06/18 07:28:47 chopps Exp $";
 #include <ar.h>
 #include <ranlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <archive.h>
 
 extern CHDR chdr;			/* converted header */
