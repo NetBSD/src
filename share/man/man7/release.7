@@ -1,6 +1,6 @@
-.\"	$NetBSD: release.7,v 1.17 2004/10/04 19:12:52 rumble Exp $
+.\"	$NetBSD: release.7,v 1.18 2005/01/15 18:13:00 fredb Exp $
 .\"
-.\" Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997, 2000, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 6, 2000
+.Dd January 9, 2005
 .Dt RELEASE 7
 .Os
 .Sh NAME
@@ -73,6 +73,14 @@ All
 files are descriptions of the various files in directories that have
 .Dq non-standard
 contents.
+There may also be a
+.Sy README
+file at the top-level,
+describing who built the snapshot and under what circumstances
+.Po e.g. whether it's an offical
+.Nx snapshot,
+or not
+.Pc .
 .Pp
 All
 .Sy BSDSUM
@@ -131,11 +139,15 @@ The root of the release hierarchy is
 .Xo
 .Sy .../NetBSD-
 .Em \*[Lt]rel\*[Gt]
-.Sy /
-.Em \*[Lt]machine\*[Gt]
 .Sy / .
 .Xc
 .Sm on
+.Pp
+.Sy SOURCE_DATE
+is a file containing the date, in UTC, of the source code from which the
+release or snapshot was built, in the default format produced by the
+command:
+.Sy date -u .
 .Pp
 Files which may be shared by all systems of the same
 .Em \*[Lt]machine_arch\*[Gt]
@@ -201,19 +213,6 @@ in the CVS server.
 .It Sy MD5
 .It Sy README
 .It Sy SYSVSUM
-.It Sy Split/
-installation sets split with the
-.Xr split 1
-command.
-.Bl -tag -width "gnusrc.aa"
-.It Sy BSDSUM
-.It Sy CKSUM
-.It Sy MD5
-.It Sy SYSVSUM
-.It Sy gnusrc.aa
-.It Sy gnusrc.ab
-.It Sy ...
-.El
 .It Sy gnusrc.tgz
 Contains sources for all GPLed and possibly other programs that
 contains restrictions in their licensing that prevent others from
@@ -238,7 +237,7 @@ Includes X clients and servers.
 .El
 .El
 .Pp
-The release in
+The binary releases in
 .Sm off
 .Xo
 .Sy .../NetBSD-
@@ -248,13 +247,8 @@ The release in
 .Sy /
 .Xc
 .Sm on
-follows the following layout:
+follow the following layout:
 .Bl -tag -width "installation/"
-.It Sy SOURCE_DATE
-a file containing the date, in UTC, of the source code from which the
-release or snapshot was built, in the default format produced by the
-command:
-.Sy date -u
 .It Sy INSTALL.txt
 Installation notes, including complete descriptions of files contained
 within the release hierarchy
@@ -275,20 +269,6 @@ installation sets
 .It Sy CKSUM
 .It Sy MD5
 .It Sy SYSVSUM
-.It Sy Split/
-installation sets split with the
-.Xr split 1
-command.
-.Em "Note: split installation sets may not be available for all platforms" .
-.Bl -tag -width "base.aa"
-.It Sy BSDSUM
-.It Sy CKSUM
-.It Sy MD5
-.It Sy SYSVSUM
-.It Sy base.aa
-.It Sy base.ab
-.It Sy ...
-.El
 .It Sy base.tgz
 The base binary distribution.  This set contains the base
 .Nx
@@ -366,11 +346,9 @@ CDROM images in ISO 9660 format, usually created with
 in
 .Pa src/etc
 after a
-.Dq make release
-in both
-.Pa src
-and
-.Pa xsrc .
+.Dq ./build.sh -x ... release sourcesets ...
+in
+.Pa src .
 .Bl -tag -width "netbsd-ARCH.iso"
 .It Sy BSDSUM
 .It Sy CKSUM
