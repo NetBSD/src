@@ -37,7 +37,7 @@
 /*
  * greconfig - frontend to set/query tunnel endpoints
  *
- * $NetBSD: greconfig.c,v 1.3 1998/09/30 06:16:07 hwr Exp $
+ * $NetBSD: greconfig.c,v 1.4 1999/01/26 21:32:40 hwr Exp $
  */
 
 #include <stdio.h>
@@ -101,7 +101,7 @@ main(int argc, char **argv)
 		exit(3);
 	}
 
-	if((proto!=4) && (proto!=47) && (proto!=55)) {
+	if((proto!=47) && (proto!=55)) {
 		usage();
 		exit(4);
 	}
@@ -168,7 +168,7 @@ void
 usage(void)
 {
 	printf("greconfig -i unit [-d dst] [-s src] [-p proto] [-v]\n");
-	printf("unit is gre<n>, proto either 4, 47 or 55\n");
+	printf("unit is gre<n>, proto either 47 or 55\n");
 }
 
 void name2sa(char *name,struct sockaddr **sa)

@@ -1,4 +1,4 @@
-$Id: README.gre,v 1.3 1998/10/31 13:07:02 hwr Exp $
+$Id: README.gre,v 1.4 1999/01/26 21:32:39 hwr Exp $
 ---------------------------------------------------------------------------
                       A GRE Tunnel for NetBSD
 
@@ -7,8 +7,7 @@ $Id: README.gre,v 1.3 1998/10/31 13:07:02 hwr Exp $
 
 This is a very alpha implementation of GRE packet encapsulation.
 Generic Route Encapsulation (GRE) is described in RFC 1701 and 1702.
-The interface also supports IPIP (protocol 4) encapsulation,
-as described in RFC 2003 and MOBILE (protocol 55) as of RFC 2004  but 
+The interface also supports MOBILE (protocol 55) as of RFC 2004  but 
 default is GRE mode.
 
 Basically GRE allows to tunnel not only IP over IP, but also provides
@@ -19,8 +18,7 @@ the need for own tunneling in ip_mroute etc.
 
 This implementation is (as said) still alpha, but works for me.
 Successful testing has been done for GRE encapsulation with Cisco routers
-and NetBSD boxes as remote and with Cisco routers and Linux 2.0.35 for
-IPIP encapsulation.
+and NetBSD boxes as remote.
 
 The files:
 
@@ -28,9 +26,7 @@ The files:
    netinet/ip_gre.[ch]: input part, deencapsulates packets. Is IP only
                         at the moment and only supports GRE without options.
    netinet/in.h       : Addition of IPPROTO_GRE
-   netinet/in_proto.c : Addition of protocol switch for GRE , additional
-                        protocol switch for IPIP, when MROUTING is not
-                        defined.
+   netinet/in_proto.c : Addition of protocol switch for GRE 
    conf/files         : mention new files for GRE
    greconfig.c        : Utility to set/display tunnel endpoints / mode.
    greconfig.8        : Manpage for greconfig.
@@ -58,7 +54,6 @@ Todos/Bugs:
 
   GRE RFC not yet fully implemented (no GRE options), no other protocols
   yet than IP over IP.
-  RFC 2003 also not yet fully supported wrt. options etc.
 
   Code quality is surely not best and possibly not near anything like KNF
 
