@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.6 2003/01/24 21:55:04 fvdl Exp $  */
+/*      $NetBSD: coalesce.c,v 1.7 2003/02/24 08:48:18 perseant Exp $  */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@ extern int debug, do_mmap;
 static int
 tossdead(const void *client, const void *a, const void *b)
 {
-	return (((BLOCK_INFO_15 *)a)->bi_daddr <= 0 ||
-		((BLOCK_INFO_15 *)a)->bi_size == 0);
+	return (((BLOCK_INFO *)a)->bi_daddr <= 0 ||
+		((BLOCK_INFO *)a)->bi_size == 0);
 }
 
 static int log2int(int n)
@@ -106,7 +106,7 @@ char *coalesce_return[] = {
 	"Negative size",
 	"Not enough blocks to account for size",
 	"Malloc failed",
-	"lfs_bmapv failed",
+	"LIOCBMAPV failed",
 	"Not broken enough to fix",
 	"Too many blocks not found",
 	"Too many blocks found in active segments",
@@ -117,12 +117,12 @@ char *coalesce_return[] = {
 
 /*
  * Find out if this inode's data blocks are discontinuous; if they are,
- * rewrite them using lfs_markv.  Return the number of inodes rewritten.
+ * rewrite them using markv.  Return the number of inodes rewritten.
  */
 int clean_inode(struct fs_info *fsp, ino_t ino)
 {
 	int i, error;
-	BLOCK_INFO_15 *bip = NULL, *tbip;
+	BLOCK_INFO *bip = NULL, *tbip;
 	struct dinode *dip;
 	int nb, onb, noff;
 	daddr_t toff;
@@ -137,7 +137,7 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 	if (dip == NULL)
 		return COALESCE_NOINODE;
 
-	/* Compute file block size, set up for lfs_bmapv */
+	/* Compute file block size, set up for bmapv */
 	onb = nb = lblkno(lfsp, dip->di_size);
 
 	/* XXX for now, don't do any file small enough to have fragments */
@@ -158,20 +158,20 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 		return COALESCE_BADBLOCKSIZE;
 	}
 
-	bip = (BLOCK_INFO_15 *)malloc(sizeof(BLOCK_INFO_15) * nb);
+	bip = (BLOCK_INFO *)malloc(sizeof(BLOCK_INFO) * nb);
 	if (bip == NULL) {
 		syslog(LOG_WARNING, "ino %d, %d blocks: %m", ino, nb);
 		return COALESCE_NOMEM;
 	}
 	for (i = 0; i < nb; i++) {
-		memset(bip + i, 0, sizeof(BLOCK_INFO_15));
+		memset(bip + i, 0, sizeof(BLOCK_INFO));
 		bip[i].bi_inode = ino;
 		bip[i].bi_lbn = i;
 		bip[i].bi_version = dip->di_gen;
 		/* Don't set the size, but let lfs_bmap fill it in */
 	}
-	if ((error = lfs_bmapv(&fsp->fi_statfsp->f_fsid, bip, nb)) < 0) { 
-                syslog(LOG_WARNING, "lfs_bmapv: %m");
+	if ((error = lfs_bmapv_emul(ifile_fd, bip, nb)) < 0) { 
+                syslog(LOG_WARNING, "LIOCBMAPV: %m");
 		retval = COALESCE_BADBMAPV;
 		goto out;
 	}
@@ -218,10 +218,10 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 	}
         /*
 	 * Get rid of any we've marked dead.  If this is an older
-	 * kernel that doesn't have lfs_bmapv fill in the block
+	 * kernel that doesn't have bmapv fill in the block
 	 * sizes, we'll toss everything here.
 	 */
-	toss(bip, &nb, sizeof(BLOCK_INFO_15), tossdead, NULL);
+	toss(bip, &nb, sizeof(BLOCK_INFO), tossdead, NULL);
         if (nb && tossdead(NULL, bip + nb - 1, NULL))
                 --nb;
         if (nb == 0) {
@@ -268,11 +268,11 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 	bps = segtod(lfsp, 1);
 	for (tbip = bip; tbip < bip + nb; tbip += bps) {
 		while (fsp->fi_cip->clean < 4) {
-			lfs_segwait(&fsp->fi_statfsp->f_fsid, NULL);
+			lfs_segwait_emul(ifile_fd, NULL);
 			reread_fs_info(fsp, do_mmap);
 			/* XXX start over? */
 		}
-		lfs_markv(&fsp->fi_statfsp->f_fsid, tbip,
+		lfs_markv_emul(ifile_fd, tbip,
                           (tbip + bps < bip + nb ? bps : nb % bps));
 	}
 

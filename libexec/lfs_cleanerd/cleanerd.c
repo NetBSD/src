@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.43 2003/02/05 00:02:25 perry Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.44 2003/02/24 08:48:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,10 +40,11 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.43 2003/02/05 00:02:25 perry Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.44 2003/02/24 08:48:17 perseant Exp $");
 #endif
 #endif /* not lint */
 
+#include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/time.h>
@@ -103,7 +104,7 @@ typedef struct {
 	int nsegs;      /* number of segments */
 	struct seglist **segs; /* segment numbers, costs, etc */
 	int nb;         /* total number of blocks */
-	BLOCK_INFO_15 *ba; /* accumulated block_infos */
+	BLOCK_INFO *ba; /* accumulated block_infos */
 	caddr_t *buf;   /* segment buffers */
 } SEGS_AND_BLOCKS;
 
@@ -122,6 +123,43 @@ int	 cost_compare(const void *, const void *);
 void	 sig_report(int);
 void	 just_exit(int);
 int	 main(int, char *[]);
+
+/*
+ * Emulate lfs_{bmapv,markv,segwait} using ioctl calls.
+ * NOTE: the old system calls still use BLOCK_INFO_15,
+ * while the ioctls use BLOCK_INFO.
+ */
+int
+lfs_markv_emul(int fd, BLOCK_INFO *blkiov, int blkcnt)
+{
+	struct lfs_ioctl_markv /* {
+		BLOCK_INFO *blkiov;
+		int blkcnt;
+	} */ lim;
+
+	lim.blkiov = blkiov;
+	lim.blkcnt = blkcnt;
+	return ioctl(fd, LIOCMARKV, &lim);
+}
+
+int
+lfs_bmapv_emul(int fd, BLOCK_INFO *blkiov, int blkcnt)
+{
+	struct lfs_ioctl_markv /* {
+		BLOCK_INFO *blkiov;
+		int blkcnt;
+	} */ lim;
+
+	lim.blkiov = blkiov;
+	lim.blkcnt = blkcnt;
+	return ioctl(fd, LIOCBMAPV, &lim);
+}
+
+int
+lfs_segwait_emul(int fd, struct timeval *tv)
+{
+	return ioctl(fd, LIOCSEGWAIT, tv);
+}
 
 /*
  * Cleaning Cost Functions:
@@ -340,8 +378,8 @@ main(int argc, char **argv)
 		fsid = lstatfsp->f_fsid;
 		if(debug > 1)
 			syslog(LOG_DEBUG,"Cleaner going to sleep.");
-		if (lfs_segwait(&fsid, &timeout) < 0)
-			syslog(LOG_WARNING,"lfs_segwait returned error.");
+		if (lfs_segwait_emul(ifile_fd, &timeout) < 0)
+			syslog(LOG_WARNING,"LIOCSEGWAIT: %m");
 		if(debug > 1)
 			syslog(LOG_DEBUG,"Cleaner waking up.");
 	}
@@ -472,7 +510,7 @@ clean_fs(FS_INFO *fsp, unsigned long (*cost_func)(FS_INFO *, SEGUSE *),
 {
 	struct seglist *segs, *sp;
 	long int to_clean, cleaned_bytes;
-	unsigned long i, j, total;
+	unsigned long i, total;
 	struct rusage ru;
 	fsid_t *fsidp;
 	int error;
@@ -486,23 +524,7 @@ clean_fs(FS_INFO *fsp, unsigned long (*cost_func)(FS_INFO *, SEGUSE *),
 		return;
 	}
 	total = i = choose_segments(fsp, segs, cost_func);
-
-	/* If we can get lots of cleaning for free, do it now */
 	sp = segs;
-	for(j=0; j < total && sp->sl_bytes == 0; j++) {
-		if(debug)
-			syslog(LOG_DEBUG,"Wiping empty segment %ld",sp->sl_id);
-		if(lfs_segclean(fsidp, sp->sl_id) < 0)
-			syslog(LOG_WARNING,"lfs_segclean failed empty segment %ld: %m", sp->sl_id);
-		++cleaner_stats.segs_empty;
-		sp++;
-		i--;
-	}
-	if(j > nsegs) {
-		free(segs);
-		return;
-	}
-
 #if 0
 	/* If we relly need to clean a lot, do it now */
 	if(fsp->fi_cip->clean < 2 * fsp->fi_lfs.lfs_minfreeseg)
@@ -552,19 +574,8 @@ clean_fs(FS_INFO *fsp, unsigned long (*cost_func)(FS_INFO *, SEGUSE *),
 				}
 			}
 		}
-		if (clean_segments(fsp, sbp) >= 0) {
-			for (j = 0; j < sbp->nsegs; j++) {
-				sp = sbp->segs[j];
-				if (lfs_segclean(fsidp, sp->sl_id) < 0)
-					syslog(LOG_WARNING,
-					       "lfs_segclean: segment %ld: %m",
-					       sp->sl_id);
-				else
-					syslog(LOG_DEBUG,
-					       "finished segment %ld",
-					       sp->sl_id);
-			}
-		}
+		clean_segments(fsp, sbp);
+
 		if (sbp->buf)
 			free(sbp->buf);
 		if (sbp->segs)
@@ -656,13 +667,13 @@ choose_segments(FS_INFO *fsp, struct seglist *seglist, unsigned long (*cost_func
 
 /*
  * Add still-valid blocks from the given segment to the block array,
- * in preparation for sending through lfs_markv.
+ * in preparation for sending through markv.
  */
 int
 add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 {
 	int id = slp->sl_id;
-	BLOCK_INFO_15 *tba, *_bip;
+	BLOCK_INFO *tba, *_bip;
 	SEGUSE *sp;
 	struct lfs *lfsp;
 	struct tossstruct t;
@@ -716,16 +727,15 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 		syslog(LOG_DEBUG, "lfs_segmapv returned %d blocks", num_blocks);
 
 	/* get the current disk address of blocks contained by the segment */
-	if ((error = lfs_bmapv(&fsp->fi_statfsp->f_fsid, tba,
-			       num_blocks)) < 0) {
-		syslog(LOG_WARNING, "add_segment: lfs_bmapv failed");
+	if ((error = lfs_bmapv_emul(ifile_fd, tba, num_blocks)) < 0) {
+		syslog(LOG_WARNING, "add_segment: LIOCBMAPV failed");
 		goto out;
 	}
 
 	/* Now toss any blocks not in the current segment */
 	t.lfs = lfsp;
 	t.seg = id;
-	toss(tba, &num_blocks, sizeof(BLOCK_INFO_15), bi_tossold, &t);
+	toss(tba, &num_blocks, sizeof(BLOCK_INFO), bi_tossold, &t);
 	/* Check if last element should be tossed */
 	if (num_blocks && bi_tossold(&t, tba + num_blocks - 1, NULL))
 		--num_blocks;
@@ -761,7 +771,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 
 			/*
 			 * XXX KS - have to be careful here about Inodes;
-			 * if lfs_bmapv shows them somewhere else in the
+			 * if bmapv shows them somewhere else in the
 			 * segment from where we thought, we need to reload
 			 * the *right* inode, not the first one in the block.
 			 */
@@ -844,8 +854,8 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 	}
 
 	/* Add these blocks to the accumulated list */
-	sbp->ba = realloc(sbp->ba, (sbp->nb + num_blocks) * sizeof(BLOCK_INFO_15));
-	memcpy(sbp->ba + sbp->nb, tba, num_blocks * sizeof(BLOCK_INFO_15));
+	sbp->ba = realloc(sbp->ba, (sbp->nb + num_blocks) * sizeof(BLOCK_INFO));
+	memcpy(sbp->ba + sbp->nb, tba, num_blocks * sizeof(BLOCK_INFO));
 	sbp->nb += num_blocks;
 
 	free(tba);
@@ -870,7 +880,7 @@ int
 clean_segments(FS_INFO *fsp, SEGS_AND_BLOCKS *sbp)
 {
 	int maxblocks, clean_blocks, icount, extra, ebytes, nbytes;
-	BLOCK_INFO_15 *bp;
+	BLOCK_INFO *bp;
 	int i, error;
 	double util;
 	ino_t ino, inino;
@@ -924,9 +934,8 @@ clean_segments(FS_INFO *fsp, SEGS_AND_BLOCKS *sbp)
 
 	for (bp = sbp->ba; sbp->nb > 0; bp += clean_blocks) {
 		clean_blocks = maxblocks < sbp->nb ? maxblocks : sbp->nb;
-		if ((error = lfs_markv(&fsp->fi_statfsp->f_fsid,
-				       bp, clean_blocks)) < 0) {
-			syslog(LOG_WARNING,"clean_segment: lfs_markv failed: %m");
+		if ((error = lfs_markv_emul(ifile_fd, bp, clean_blocks)) < 0) {
+			syslog(LOG_WARNING,"clean_segment: LIOCMARKV failed: %m");
 			++cleaner_stats.segs_error;
 			if (errno == ENOENT) break;
 		}
@@ -953,8 +962,8 @@ bi_tossold(const void *client, const void *a, const void *b)
 
 	t = (struct tossstruct *)client;
 
-	return (((BLOCK_INFO_15 *)a)->bi_daddr == LFS_UNUSED_DADDR ||
-	    dtosn(t->lfs, ((BLOCK_INFO_15 *)a)->bi_daddr) != t->seg);
+	return (((BLOCK_INFO *)a)->bi_daddr == LFS_UNUSED_DADDR ||
+	    dtosn(t->lfs, ((BLOCK_INFO *)a)->bi_daddr) != t->seg);
 }
 
 void

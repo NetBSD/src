@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.33 2003/02/10 21:17:53 fvdl Exp $	*/
+/*	$NetBSD: library.c,v 1.34 2003/02/24 08:48:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.33 2003/02/10 21:17:53 fvdl Exp $");
+__RCSID("$NetBSD: library.c,v 1.34 2003/02/24 08:48:18 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,9 @@ __RCSID("$NetBSD: library.c,v 1.33 2003/02/10 21:17:53 fvdl Exp $");
 
 #include "clean.h"
 
-void	 add_blocks(FS_INFO *, BLOCK_INFO_15 *, int *, SEGSUM *, caddr_t,
+void	 add_blocks(FS_INFO *, BLOCK_INFO *, int *, SEGSUM *, caddr_t,
     daddr_t, daddr_t);
-void	 add_inodes(FS_INFO *, BLOCK_INFO_15 *, int *, SEGSUM *, caddr_t,
+void	 add_inodes(FS_INFO *, BLOCK_INFO *, int *, SEGSUM *, caddr_t,
     daddr_t);
 int	 bi_compare(const void *, const void *);
 int	 bi_toss(const void *, const void *, const void *);
@@ -76,7 +76,7 @@ int      pseg_size(daddr_t, FS_INFO *, SEGSUM *);
 extern int debug;
 extern u_long cksum(void *, size_t);	/* XXX */
 
-static int ifile_fd = -1;
+int ifile_fd = -1;
 static int dev_fd = -1;
 
 /*
@@ -190,7 +190,7 @@ get_dinode(FS_INFO *fsp, ino_t ino)
         static struct dinode dino;
         struct dinode *dip, *dib;
         struct lfs *lfsp;
-	BLOCK_INFO_15 bi;
+	BLOCK_INFO bi;
 
         lfsp = &fsp->fi_lfs;
 
@@ -201,8 +201,8 @@ get_dinode(FS_INFO *fsp, ino_t ino)
 	memset(&bi, 0, sizeof(bi));
 	bi.bi_inode = ino;
 	bi.bi_lbn = LFS_UNUSED_LBN; /* We want the inode */
-	if (lfs_bmapv(&fsp->fi_statfsp->f_fsid, &bi, 1) < 0) {
-		syslog(LOG_WARNING, "lfs_bmapv: %m");
+	if (lfs_bmapv_emul(ifile_fd, &bi, 1) < 0) {
+		syslog(LOG_WARNING, "LIOCBMAPV: %m");
 		return NULL;
 	}
 	if (bi.bi_daddr <= 0)
@@ -210,7 +210,7 @@ get_dinode(FS_INFO *fsp, ino_t ino)
 
 	lseek(getdevfd(fsp), (off_t)0, SEEK_SET);
 	if ((dib = malloc(lfsp->lfs_ibsize)) == NULL) {
-		syslog(LOG_WARNING, "lfs_bmapv: %m");
+		syslog(LOG_WARNING, "get_dinode: malloc: %m");
 		return NULL;
 	}
 
@@ -403,9 +403,9 @@ pseg_size(daddr_t pseg_addr, FS_INFO *fsp, SEGSUM *sp)
  * pair will be listed at most once.
  */
 int
-lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO_15 **blocks, int *bcount)
+lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO **blocks, int *bcount)
 {
-	BLOCK_INFO_15 *bip, *_bip;
+	BLOCK_INFO *bip, *_bip;
 	SEGSUM *sp;
 	SEGUSE *sup;
 	FINFO *fip;
@@ -418,9 +418,9 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO_15 **blocks, int 
 	bip = NULL;
 	lfsp = &fsp->fi_lfs;
 	nelem = 2 * segtod(lfsp, 1);
-	if (!(bip = malloc(nelem * sizeof(BLOCK_INFO_15)))) {
+	if (!(bip = malloc(nelem * sizeof(BLOCK_INFO)))) {
 		syslog(LOG_DEBUG, "couldn't allocate %ld bytes in lfs_segmapv",
-			(long)(nelem * sizeof(BLOCK_INFO_15)));
+			(long)(nelem * sizeof(BLOCK_INFO)));
 		goto err0;
 	}
 
@@ -478,7 +478,7 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO_15 **blocks, int 
 
 		if (*bcount + nblocks + sp->ss_ninos > nelem) {
 			nelem = *bcount + nblocks + sp->ss_ninos;
-			bip = realloc(bip, nelem * sizeof(BLOCK_INFO_15));
+			bip = realloc(bip, nelem * sizeof(BLOCK_INFO));
 			if (!bip)
 				goto err0;
 		}
@@ -494,8 +494,8 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO_15 **blocks, int 
 		       nsegs, seg, sup->su_nsums);
 		goto err0;
 	}
-	qsort(bip, *bcount, sizeof(BLOCK_INFO_15), bi_compare);
-	toss(bip, bcount, sizeof(BLOCK_INFO_15), bi_toss, NULL);
+	qsort(bip, *bcount, sizeof(BLOCK_INFO), bi_compare);
+	toss(bip, bcount, sizeof(BLOCK_INFO), bi_toss, NULL);
 
         if(debug > 1) {
             syslog(LOG_DEBUG, "BLOCK INFOS");
@@ -515,12 +515,12 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO_15 **blocks, int 
 }
 
 /*
- * This will parse a partial segment and fill in BLOCK_INFO_15 structures
+ * This will parse a partial segment and fill in BLOCK_INFO structures
  * for each block described in the segment summary.  It will not include
  * blocks or inodes from files with new version numbers.
  */
 void
-add_blocks(FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
+add_blocks(FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
     caddr_t seg_buf, daddr_t segaddr, daddr_t psegaddr)
 {
 	IFILE	*ifp;
@@ -614,13 +614,13 @@ add_blocks(FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
  * actually added.
  */
 void
-add_inodes(FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
+add_inodes(FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 	    caddr_t seg_buf, daddr_t seg_addr)
 {
 	struct dinode *di = NULL;	/* XXX gcc */
 	struct lfs *lfsp;
 	IFILE *ifp;
-	BLOCK_INFO_15 *bp;
+	BLOCK_INFO *bp;
 	int32_t	*daddrp;
 	ino_t inum;
 	int i;
@@ -795,7 +795,7 @@ print_SEGSUM(struct lfs *lfsp, SEGSUM *p, daddr_t addr)
 int
 bi_compare(const void *a, const void *b)
 {
-	const BLOCK_INFO_15 *ba, *bb;
+	const BLOCK_INFO *ba, *bb;
 	int diff;
 
 	ba = a;
@@ -826,7 +826,7 @@ bi_compare(const void *a, const void *b)
 int
 bi_toss(const void *dummy, const void *a, const void *b)
 {
-	const BLOCK_INFO_15 *ba, *bb;
+	const BLOCK_INFO *ba, *bb;
 
 	ba = a;
 	bb = b;
