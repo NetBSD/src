@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.52.6.1 1999/03/11 19:27:45 scottr Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.52.6.2 1999/06/15 04:32:13 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -67,6 +67,7 @@ static void	grfmv_intr_lapis __P((void *vsc));
 static void	grfmv_intr_formac __P((void *vsc));
 static void	grfmv_intr_vimage __P((void *vsc));
 static void	grfmv_intr_gvimage __P((void *vsc));
+static void	grfmv_intr_radius_gsc __P((void *vsc));
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static int	grfmv_match __P((struct device *, struct cfdata *, void *));
@@ -279,6 +280,9 @@ bad:
 	case NUBUS_DRHW_RPC24XP:
 		add_nubus_intr(na->slot, grfmv_intr_radius24, sc);
 		break;
+	case NUBUS_DRHW_RADGSC:
+		add_nubus_intr(na->slot, grfmv_intr_radius_gsc, sc);
+		break;
 	case NUBUS_DRHW_FIILX:
 	case NUBUS_DRHW_FIISXDSP:
 	case NUBUS_DRHW_FUTURASX:
@@ -304,6 +308,7 @@ bad:
 		add_nubus_intr(na->slot, grfmv_intr_formac, sc);
 		break;
 	case NUBUS_DRHW_ROPS24LXI:
+	case NUBUS_DRHW_ROPS24XLTV:
 		sc->cli_offset = 0xfb0010;
 		sc->cli_value = 0x00;
 		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc);
@@ -320,7 +325,10 @@ bad:
 		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc);
 		break;
 	case NUBUS_DRHW_MICRON:
-		/* What do we know about this one? */
+		sc->cli_offset = 0xa00014;
+		sc->cli_value = 0;
+		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc);
+		break;
 	default:
 		printf("%s: Unknown video card ID 0x%x --",
 		    sc->sc_dev.dv_xname, sc->card_id);
@@ -689,3 +697,19 @@ grfmv_intr_gvimage(vsc)
 
 	dummy = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xf00000);
 }
+
+/*
+ * Routine to clear interrupts for the Radius GS/C
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_radius_gsc(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t dummy;
+
+	dummy = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xfb802);
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xfb802, 0xff);
+}
+

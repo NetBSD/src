@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.85.2.5 1999/05/16 22:38:08 scottr Exp $
+#	$NetBSD: GENERIC,v 1.85.2.6 1999/06/15 04:32:10 scottr Exp $
 #
 # GENERIC
 
@@ -112,7 +112,7 @@ options 	WSDISPLAY_COMPAT_ITEFONT # use ite font (6x10)
 
 # Mac-specific options
 #options 	ALTXBUTTONS	# Map Opt-{1,2,3} to mouse buttons
-options 	DISABLE_EXT_CACHE # Don't use IIci external cache
+#options 	DISABLE_EXT_CACHE # If really paranoid, disable IIci ext. cache
 options 	GRF_COMPAT	# Include grf compatibility code
 #options 	MRG_ADB		# Use ROM-based ADB driver
 options 	ZS_CONSOLE_ABORT
