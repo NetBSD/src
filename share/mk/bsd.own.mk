@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.369 2003/09/27 04:27:32 mycroft Exp $
+#	$NetBSD: bsd.own.mk,v 1.370 2003/10/05 02:22:30 fvdl Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -23,8 +23,7 @@ NEED_OWN_INSTALL_TARGET?=	yes
 #
 .if ${MACHINE_CPU} == "hppa" || \
     ${MACHINE_CPU} == "ns32k" || \
-    ${MACHINE_CPU} == "sh5" || \
-    ${MACHINE_CPU} == "x86_64"
+    ${MACHINE_CPU} == "sh5"
 TOOLCHAIN_MISSING?=	yes
 .else
 TOOLCHAIN_MISSING=	no
@@ -48,7 +47,8 @@ TOOLCHAIN_MISSING=	no
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64"
+    ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "x86_64"
 HAVE_GCC3?=	yes
 .else
 HAVE_GCC3?=	no
