@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.14 2000/01/05 11:59:12 itojun Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.15 2000/04/27 00:30:51 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.14 2000/01/05 11:59:12 itojun Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.15 2000/04/27 00:30:51 jdc Exp $");
 #endif /* not lint */
 
 /*
@@ -292,7 +292,7 @@ showports()
 		if (sp)
 			printw("%s ", sp->s_name);
 		else
-			printw("%d ", p->port);
+			printw("%ld ", p->port);
 	}
 }
 

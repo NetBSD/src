@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.17 2000/01/10 21:06:16 itojun Exp $	*/
+/*	$NetBSD: netstat.c,v 1.18 2000/04/27 00:30:51 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.17 2000/01/10 21:06:16 itojun Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.18 2000/04/27 00:30:51 jdc Exp $");
 #endif /* not lint */
 
 /*
@@ -516,8 +516,8 @@ shownetstat()
 		if (p->ni_family == AF_INET6)
 			waddstr(wnd, "6");
 #endif
-		mvwprintw(wnd, p->ni_line, RCVCC, "%6d", p->ni_rcvcc);
-		mvwprintw(wnd, p->ni_line, SNDCC, "%6d", p->ni_sndcc);
+		mvwprintw(wnd, p->ni_line, RCVCC, "%6ld", p->ni_rcvcc);
+		mvwprintw(wnd, p->ni_line, SNDCC, "%6ld", p->ni_sndcc);
 		if (streq(p->ni_proto, "tcp")) {
 			if (p->ni_state < 0 || p->ni_state >= TCP_NSTATES)
 				mvwprintw(wnd, p->ni_line, STATE, "%d",
