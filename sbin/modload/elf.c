@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.5 2001/03/26 15:50:20 drochner Exp $	*/
+/*	$NetBSD: elf.c,v 1.6 2001/06/19 00:40:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se> 
@@ -29,11 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.5 2001/03/26 15:50:20 drochner Exp $");
+__RCSID("$NetBSD: elf.c,v 1.6 2001/06/19 00:40:57 fvdl Exp $");
 
 #include <sys/param.h>
 
-#if defined(__alpha__) || defined(__arch64__)
+#if defined(__alpha__) || defined(__arch64__) || defined(__x86_64__)
 #define ELFSIZE 64
 #else
 #define ELFSIZE 32
