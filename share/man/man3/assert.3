@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)assert.3	6.3 (Berkeley) 4/19/91
-.\"	$Id: assert.3,v 1.3 1993/08/01 07:37:14 mycroft Exp $
+.\"	$Id: assert.3,v 1.4 1993/12/16 00:19:18 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt ASSERT 3
@@ -67,9 +67,9 @@ The
 macro
 may be removed at compile time with
 the
-.Fl NDEBUG
-option, see
-.Xr cc 1 .
+.Xr cc 1
+option
+.Fl DNDEBUG .
 .Sh DIAGNOSTICS
 The following diagnostic message is written to
 .Em stderr
@@ -80,6 +80,9 @@ is false:
 "assertion \e"%s\e" failed: file \e"%s\e", line %d\en", \e
 		    "expression", __FILE__, __LINE__);
 .Ed
+.Sh SEE ALSO
+.Xr cc 1 ,
+.Xr abort 3
 .Sh STANDARDS
 The
 .Fn assert
