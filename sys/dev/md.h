@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 1996/03/22 23:02:04 gwr Exp $	*/
+/*	$NetBSD: md.h,v 1.5 1996/12/28 23:09:27 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -31,44 +31,44 @@
  */
 
 /*
- * RAM-disk ioctl functions:
+ * Memory-disk ioctl functions:
  */
 
 #include <sys/ioccom.h>
 
-struct rd_conf {
-	caddr_t rd_addr;
-	size_t  rd_size;
-	int     rd_type;
+struct md_conf {
+	caddr_t md_addr;
+	size_t  md_size;
+	int     md_type;
 };
 
-#define RD_GETCONF	_IOR('r', 0, struct rd_conf)	/* get unit config */
-#define RD_SETCONF	_IOW('r', 1, struct rd_conf)	/* set unit config */
+#define MD_GETCONF	_IOR('r', 0, struct md_conf)	/* get unit config */
+#define MD_SETCONF	_IOW('r', 1, struct md_conf)	/* set unit config */
 
 /*
  * There are three configurations supported for each unit,
- * reflected in the value of the rd_type field:
+ * reflected in the value of the md_type field:
  */
-#define RD_UNCONFIGURED 0
+#define MD_UNCONFIGURED 0
 /*
  *     Not yet configured.  Open returns ENXIO.
  */
-#define RD_KMEM_FIXED	1
+#define MD_KMEM_FIXED	1
 /*
  *     Disk image resident in kernel (patched in or loaded).
- *     Requires that the function: rd_set_kmem() is called to
+ *     Requires that the function: md_set_kmem() is called to
  *     attach the (initialized) kernel memory to be used by the
  *     device.  It can be initialized by an "open hook" if this
- *     driver is compiled with the RD_OPEN_HOOK option.
+ *     driver is compiled with the MD_OPEN_HOOK option.
  *     No attempt will ever be made to free this memory.
  */
-#define RD_KMEM_ALLOCATED 2
+#define MD_KMEM_ALLOCATED 2
 /*
  *     Small, wired-down chunk of kernel memory obtained from
  *     kmem_alloc().  The allocation is performed by an ioctl
  *     call on the "control" unit (regular unit + 16)
  */
-#define RD_UMEM_SERVER 3
+#define MD_UMEM_SERVER 3
 /*
  *     Indirect access to user-space of a user-level server.
  *     (Like the MFS hack, but better! 8^)  Device operates
@@ -76,15 +76,15 @@ struct rd_conf {
  *     continues to service I/O requests.  The process that
  *     does this setconf will become the I/O server.  This
  *     configuration type can be disabled using:
- *         option  RAMDISK_SERVER=0
+ *         options  MEMORY_DISK_SERVER=0
  */
 
 #ifdef	_KERNEL
 /*
- * If the option RAMDISK_HOOKS is on, then these functions are
+ * If the option MEMORY_DISK_HOOKS is on, then these functions are
  * called by the ramdisk driver to allow machine-dependent to
  * match/configure and/or load each ramdisk unit.
  */
-extern void rd_attach_hook __P((int unit, struct rd_conf *));
-extern void rd_open_hook   __P((int unit, struct rd_conf *));
+extern void md_attach_hook __P((int unit, struct md_conf *));
+extern void md_open_hook   __P((int unit, struct md_conf *));
 #endif
