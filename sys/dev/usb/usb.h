@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.9 1998/12/28 02:20:28 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.10 1998/12/28 03:27:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@ MALLOC_DECLARE(M_USBDEV);
 
 #define USB_CONTROL_ENDPOINT 0
 #define USB_MAX_ENDPOINTS 16
+
+#define USB_FRAMES_PER_SECOND 1000
 
 /*
  * The USB records contain some unaligned little-endian word
@@ -208,11 +210,15 @@ typedef struct {
 #define UE_GET_ADDR(a)	((a) & UE_ADDR)
 #define UE_GET_IN(a)	(((a) >> 7) & 1)
 	uByte		bmAttributes;
-#define UE_CONTROL	0x00
-#define UE_ISOCHRONOUS	0x01
-#define UE_BULK		0x02
-#define UE_INTERRUPT	0x03
 #define UE_XFERTYPE	0x03
+#define  UE_CONTROL	0x00
+#define  UE_ISOCHRONOUS	0x01
+#define  UE_BULK	0x02
+#define  UE_INTERRUPT	0x03
+#define UE_ISO_TYPE	0x0c
+#define  UE_ISO_ASYNC	0x04
+#define  UE_ISO_ADAPT	0x08
+#define  UE_ISO_SYNC	0x0c
 	uWord		wMaxPacketSize;
 	uByte		bInterval;
 } usb_endpoint_descriptor_t;
