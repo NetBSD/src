@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.217 1996/12/06 22:27:40 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.218 1996/12/09 22:51:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -402,6 +402,14 @@ allocsys(v)
 		if (nbuf < 16)
 			nbuf = 16;
 	}
+
+	/*
+	 * XXX stopgap measure to prevent wasting too much KVM on
+	 * the sparsely filled buffer cache.
+	 */
+	if (nbuf * MAXBSIZE > VM_MAX_KERNEL_BUF)
+		nbuf = VM_MAX_KERNEL_BUF / MAXBSIZE;
+
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
 		if (nswbuf > 256)
