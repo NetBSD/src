@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 2003/03/13 17:30:38 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31 2003/07/25 10:12:45 scw Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -266,6 +266,7 @@ void dcache_flush_page(vaddr_t);
 void icache_flush_page(vaddr_t);
 void dcache_flush(vaddr_t, vsize_t);
 void icache_flush(vaddr_t, vsize_t);
+void *mapiodev(paddr_t, psize_t);
 
 #define	DELAY(n)		delay(n)
 
@@ -278,7 +279,6 @@ void oea_init(void (*)(void));
 void oea_startup(const char *);
 void oea_dumpsys(void);
 void oea_install_extint(void (*)(void));
-void *mapiodev(paddr_t, psize_t);
 paddr_t kvtop(caddr_t); 
 void softnet(int);
 
