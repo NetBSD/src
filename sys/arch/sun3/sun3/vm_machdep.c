@@ -39,7 +39,7 @@
  *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
- *	$Id: vm_machdep.c,v 1.14 1994/05/06 07:47:15 gwr Exp $
+ *	$Id: vm_machdep.c,v 1.15 1994/05/20 04:40:25 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -48,6 +48,7 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/user.h>
+#include <sys/vnode.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -86,7 +87,7 @@ cpu_fork(p1, p2)
 	 * part of the stack.  The stack and pcb need to agree;
 	 * this is tricky, as the final pcb is constructed by savectx,
 	 * but its frame isn't yet on the stack when the stack is copied.
-	 * swtch compensates for this when the child eventually runs.
+	 * cpu_switch compensates for this when the child eventually runs.
 	 * This should be done differently, with a single call
 	 * that copies and updates the pcb+stack,
 	 * replacing the bcopy and savectx.
@@ -115,22 +116,45 @@ cpu_fork(p1, p2)
  * cpu_exit is called as the last action during exit.
  * We release the address space and machine-dependent resources,
  * including the memory for the user structure and kernel stack.
- * Once finished, we call swtch_exit, which switches to a temporary
+ * Once finished, we call switch_exit, which switches to a temporary
  * pcb and stack and never returns.  We block memory allocation
- * until swtch_exit has made things safe again.
+ * until switch_exit has made things safe again.
  */
 volatile void
 cpu_exit(p)
 	struct proc *p;
 {
-	extern volatile void swtch_exit();
+	extern volatile void switch_exit();
 	vmspace_free(p->p_vmspace);
 
 	(void) splimp();
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-	swtch_exit();
+	switch_exit();
 	/* NOTREACHED */
 }
+
+int
+cpu_coredump(p, vp, cred)
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
+{
+
+#ifdef COMPAT_HPUX
+	/*
+	 * BLETCH!  If we loaded from an HPUX format binary file
+	 * we have to dump an HPUX style user struct so that the
+	 * HPUX debuggers can grok it.
+	 */
+	if (p->p_addr->u_pcb.pcb_flags & PCB_HPUXBIN)
+		return (hpuxdumpu(vp, cred));
+	else
+#endif
+	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
+	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
+	    p));
+}
+
 
 extern vm_map_t phys_map;
 

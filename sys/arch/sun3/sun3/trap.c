@@ -39,7 +39,7 @@
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
  *	trap.c,v 1.3 1993/07/07 07:08:47 cgd Exp
- *	$Id: trap.c,v 1.20 1994/05/16 16:49:41 gwr Exp $
+ *	$Id: trap.c,v 1.21 1994/05/20 04:40:23 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -58,7 +58,6 @@
 
 #include <machine/cpu.h>
 #include <machine/endian.h>
-#include <machine/mtpr.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/reg.h>
@@ -137,7 +136,7 @@ void userret(p, pc, oticks)
 	int pc;
 	u_quad_t oticks;
 {
-        int sig;
+        int sig, s;
     
 	while ((sig = CURSIG(p)) !=0)
 		postsig(sig);
@@ -148,14 +147,14 @@ void userret(p, pc, oticks)
 		 * our priority without moving us from one queue to another
 		 * (since the running process is not on a queue.)
 		 * If that happened after we setrunqueue ourselves but
-		 * before we swtch()'ed, we might not be on the queue
+		 * before we switch()'ed, we might not be on the queue
 		 * indicated by our priority.
 		 */
-	        (void) splstatclock();
+		s = splstatclock();
 		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
-		spl0();	/* XXX - Is this right? -gwr */
+		mi_switch();
+		splx(s);	/* XXX - Is this right?  was: spl0() */
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
@@ -163,8 +162,10 @@ void userret(p, pc, oticks)
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL)
-		addupc_task(p, pc, (int)(p->p_sticks - oticks));
+	if (p->p_flag & P_PROFIL) {
+		extern int psratio;
+		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
+	}
 
 	curpriority = p->p_priority;
 }
