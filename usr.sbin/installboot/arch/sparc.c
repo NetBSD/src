@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc.c,v 1.5 2002/05/15 09:44:55 lukem Exp $ */
+/*	$NetBSD: sparc.c,v 1.6 2002/05/15 09:58:19 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc.c,v 1.5 2002/05/15 09:44:55 lukem Exp $");
+__RCSID("$NetBSD: sparc.c,v 1.6 2002/05/15 09:58:19 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -65,6 +65,9 @@ static struct bbinfo_params bbparams = {
 	32,			/* leave room for a.out header */
 	0,
 };
+
+static int sparc_frobheader(ib_params *, struct bbinfo_params *, char *);
+
 
 int
 sparc_clearboot(ib_params *params)
