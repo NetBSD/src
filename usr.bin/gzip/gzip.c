@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.69 2004/12/08 06:38:40 jmc Exp $	*/
+/*	$NetBSD: gzip.c,v 1.70 2005/01/31 09:11:49 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.69 2004/12/08 06:38:40 jmc Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.70 2005/01/31 09:11:49 enami Exp $");
 #endif /* not lint */
 
 /*
@@ -434,16 +434,17 @@ prepend_gzip(char *gzip, int *argc, char ***argv)
 	int nenvarg = 0, i;
 
 	/* scan how many arguments there are */
-	for (s = gzip; *s; s++) {
-		if (*s == ' ' || *s == '\t')
-			continue;
+	for (s = gzip;;) {
+		while (*s == ' ' || *s == '\t')
+			s++;
+		if (*s == 0)
+			goto count_done;
 		nenvarg++;
-		for (; *s; s++)
-			if (*s == ' ' || *s == '\t')
-				break;
-		if (*s == 0x0)
-			break;
+		while (*s != ' ' && *s != '\t')
+			if (*s++ == 0)
+				goto count_done;
 	}
+count_done:
 	/* punt early */
 	if (nenvarg == 0)
 		return;
@@ -466,16 +467,22 @@ prepend_gzip(char *gzip, int *argc, char ***argv)
 	s = strdup(gzip);
 	if (s == NULL)
 		maybe_err("strdup");
-	for (; *s; s++) {
-		if (*s == ' ' || *s == '\t')
-			continue;
+	for (;;) {
+		/* Skip whitespaces. */
+		while (*s == ' ' || *s == '\t')
+			s++;
+		if (*s == 0)
+			goto copy_done;
 		nargv[i++] = s;
-		for (; *s; s++)
-			if (*s == ' ' || *s == '\t') {
-				*s = 0;
-				break;
-			}
+		/* Find the end of this argument. */
+		while (*s != ' ' && *s != '\t')
+			if (*s++ == 0)
+				/* Argument followed by NUL. */
+				goto copy_done;
+		/* Terminate by overwriting ' ' or '\t' with NUL. */
+		*s++ = 0;
 	}
+copy_done:
 
 	/* copy the original arguments and a NULL */
 	while (*ac)
