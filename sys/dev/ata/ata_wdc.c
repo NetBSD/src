@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.1.2.5 1998/06/09 12:56:54 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.1.2.6 1998/06/09 13:32:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -678,6 +678,7 @@ timeout:
 	printf("%s:%d:%d: %s timed out\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive, errstring);
 	ata_bio->error = TIMEOUT;
+	drvp->state = 0;
 	wdc_ata_bio_done(chp, xfer);
 	return 0;
 error:
@@ -692,6 +693,7 @@ error:
 		ata_bio->r_error = chp->ch_error;
 		ata_bio->error = ERROR;
 	}
+	drvp->state = 0;
 	wdc_ata_bio_done(chp, xfer);
 	return 1;
 }
