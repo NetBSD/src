@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.51 2004/06/25 14:50:15 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.52 2004/10/11 15:24:09 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.51 2004/06/25 14:50:15 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.52 2004/10/11 15:24:09 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -367,6 +367,10 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	free(inostathead);
 	inostathead = NULL;
 
+	if (!resolved || rerun) {
+		pwarn("\n***** UNRESOLVED INCONSISTENCIES REMAIN *****\n");
+		returntosingle = 1;
+	}
 	if (!fsmodified)
 		return (0);
 	if (!preen)
