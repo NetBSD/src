@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.1.1.2 2001/01/27 06:18:46 itojun Exp $	*/
+/*	$NetBSD: misc.h,v 1.2 2001/01/27 07:22:02 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium

@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.h,v 1.1.1.2 2001/01/27 06:18:40 itojun Exp $	*/
+/*	$NetBSD: assertions.h,v 1.2 2001/01/27 07:22:02 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 by Internet Software Consortium.

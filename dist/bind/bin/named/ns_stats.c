@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_stats.c,v 1.2 2000/10/08 19:41:19 is Exp $	*/
+/*	$NetBSD: ns_stats.c,v 1.3 2001/01/27 07:22:00 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_stats.c	4.10 (Berkeley) 6/27/90";
-static const char rcsid[] = "Id: ns_stats.c,v 8.27 1999/10/13 16:39:12 vixie Exp";
+static const char rcsid[] = "Id: ns_stats.c,v 8.32 2000/11/29 06:56:05 marka Exp";
 #endif /* not lint */
 
 /*
@@ -59,7 +59,7 @@ static const char rcsid[] = "Id: ns_stats.c,v 8.27 1999/10/13 16:39:12 vixie Exp
  */
 
 /*
- * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
+ * Portions Copyright (c) 1996-2000 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -110,6 +110,27 @@ static const char rcsid[] = "Id: ns_stats.c,v 8.27 1999/10/13 16:39:12 vixie Exp
 
 static u_long		typestats[T_ANY+1];
 static void		nameserStats(FILE *);
+static u_int32_t	ns_stats_cnt = 0;
+static int		ns_stats_disabled = 0;
+
+void
+ns_stats_dumpandclear() {
+	time_t timenow = time(NULL);
+	FILE *f;
+
+	ns_stats();
+	if (!(f = fopen(server_options->stats_filename, "a"))) {
+		ns_notice(ns_log_statistics, "cannot open stat file, \"%s\"",
+			  server_options->stats_filename);
+	}
+	if (f != NULL) {
+		(void) fchown(fileno(f), user_id, group_id);
+		fprintf(f, "+++ Host Statistics Cleared +++ (%ld) %s",
+			(long)timenow, checked_ctime(&timenow));
+		(void) my_fclose(f);
+	}
+	ns_freestats();
+}
 
 void
 ns_stats() {
@@ -124,6 +145,7 @@ ns_stats() {
 			  server_options->stats_filename);
 		return;
 	}
+	(void) fchown(fileno(f), user_id, group_id);
 
 	fprintf(f, "+++ Statistics Dump +++ (%ld) %s",
 		(long)timenow, checked_ctime(&timenow));
@@ -146,10 +168,11 @@ ns_stats() {
 
 	/* Now do the memory statistics file */
 	if (!(f = fopen(server_options->memstats_filename, "a"))) {
-	       ns_notice(ns_log_statistics, "cannot open memstat file, \"%s\"",
+		ns_notice(ns_log_statistics, "cannot open memstat file, \"%s\"",
 			  server_options->memstats_filename);
 		return;
 	}
+	(void) fchown(fileno(f), user_id, group_id);
 
 	fprintf(f, "+++ Memory Statistics Dump +++ (%ld) %s",
 		(long)timenow, checked_ctime(&timenow));
@@ -209,6 +232,10 @@ static const char	*statNames[nssLast] = {
 			"SFErr",	/* sent them a FORMERR */
 			"SNaAns",       /* sent them a non autoritative answer */
 			"SNXD",         /* sent them a negative response */
+			"RUQ",		/* sent us an unapproved query */
+			"RURQ",		/* sent us an unapproved recursive query */
+			"RUXFR",	/* sent us an unapproved AXFR or IXFR */
+			"RUUpd",	/* sent us an unapproved update */
 			};
 
 /*
@@ -242,12 +269,23 @@ nameserFind(addr, flags)
 	if (!nameserInit) {
 		tree_init(&nameserTree);
 		nameserInit++;
+		ns_stats_cnt = 0;
+		ns_stats_disabled = 0;
 	}
 
 	dummy.addr = addr;
 	ns = (struct nameser *)tree_srch(&nameserTree, nameserCompar,
 					 (tree_t)&dummy);
 	if (ns == NULL && (flags & NS_F_INSERT) != 0) {
+		if (server_options->max_host_stats != 0 &&
+		    ns_stats_cnt > server_options->max_host_stats) {
+			if (!ns_stats_disabled)
+				ns_notice(ns_log_statistics,
+					  "ns_stats_disabled: %s reached",
+					  "host-statistics-max");
+			ns_stats_disabled = 1;
+			return (NULL);
+		}
 		ns = (struct nameser *)memget(sizeof(struct nameser));
 		if (ns == NULL) {
  nomem:			if (!haveComplained((u_long)nameserFind, 0))
@@ -264,6 +302,7 @@ nameserFind(addr, flags)
 			errno = save;
 			goto nomem;
 		}
+		ns_stats_cnt++;
 	}
 	return (ns);
 }
@@ -320,8 +359,11 @@ nameserStats(f)
 	nameserStatsHdr(f);
 	fprintf(f, "(Global)\n");
 	nameserStatsOut(f, globalStats);
-	if (NS_OPTION_P(OPTION_HOSTSTATS))
+	if (NS_OPTION_P(OPTION_HOSTSTATS)) {
 		tree_trav(&nameserTree, nameserStatsTravUAR);
+		if (ns_stats_disabled)
+			fprintf(f, "++ Host Statistics Incomplete ++\n");
+	}
 	fprintf(f, "-- Name Server Statistics --\n");
 	nameserStatsFile = NULL;
 }
@@ -331,7 +373,7 @@ ns_logstats(evContext ctx, void *uap, struct timespec due,
 	    struct timespec inter)
 {
 	char buffer[1024];
-	char buffer2[32], header[64];
+	char buffer2[32], header[128];
 	time_t timenow = time(NULL);
 	int i;
 #ifdef HAVE_GETRUSAGE
@@ -344,11 +386,18 @@ ns_logstats(evContext ctx, void *uap, struct timespec due,
 	getrusage(RUSAGE_SELF, &usage);
 	getrusage(RUSAGE_CHILDREN, &childu);
 
-	sprintf(buffer, "CPU=%gu/%gs CHILDCPU=%gu/%gs",
-		tv_float(usage.ru_utime), tv_float(usage.ru_stime),
-		tv_float(childu.ru_utime), tv_float(childu.ru_stime));
-	ns_info(ns_log_statistics, "USAGE %lu %lu %s", (u_long)timenow,
-		(u_long)boottime, buffer);
+	/*
+	 * Get around a stupid compiler bug in gcc on solaris.
+	 * There is a problem if three or more doubles are passed to
+	 * sprintf.
+	 * <http://gcc.gnu.org/cgi-bin/gnatsweb.pl?cmd=view&pr=337&database=gcc>
+	 */
+	sprintf(buffer, "CPU=%gu/%gs CHILDCPU=", tv_float(usage.ru_utime),
+		tv_float(usage.ru_stime));
+	sprintf(header, "%gu/%gs", tv_float(childu.ru_utime),
+		tv_float(childu.ru_stime));
+	ns_info(ns_log_statistics, "USAGE %lu %lu %s%s", (u_long)timenow,
+		(u_long)boottime, buffer, header);
 # undef tv_float
 #endif /*HAVE_GETRUSAGE*/
 
@@ -374,7 +423,7 @@ ns_logstats(evContext ctx, void *uap, struct timespec due,
 		sprintf(buffer2, " %s=%lu",
 			statNames[i]?statNames[i]:"?", (u_long)globalStats[i]);
 		if (strlen(buffer) + strlen(buffer2) > sizeof(buffer) - 1) {
-			ns_info(ns_log_statistics, "%s",buffer);
+			ns_info(ns_log_statistics, "%s", buffer);
 			strcpy(buffer, header);
 		}
 		strcat(buffer, buffer2);
@@ -395,4 +444,6 @@ ns_freestats(void) {
 		return;
 	tree_mung(&nameserTree, nameserFree);
 	nameserInit = 0;
+	ns_stats_cnt = 0;
+	ns_stats_disabled = 0;
 }

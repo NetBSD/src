@@ -1,4 +1,4 @@
-/*	$NetBSD: db_ixfr.c,v 1.1.1.2 2001/01/27 06:16:41 itojun Exp $	*/
+/*	$NetBSD: db_ixfr.c,v 1.2 2001/01/27 07:21:58 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static char     rcsid[] = "Id: db_ixfr.c,v 8.23 2000/12/23 08:14:35 vixie Exp";
