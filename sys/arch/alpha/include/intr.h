@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.27 2000/06/04 05:23:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -112,10 +112,8 @@
 #define	spllowersoftclock()	alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT)
 
 /* IPL-raising functions/macros */
-static __inline int _splraise __P((int)) __attribute__ ((unused));
 static __inline int
-_splraise(s)
-	int s;
+_splraise(int s)
 {
 	int cur = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;
 	return (s > cur ? alpha_pal_swpipl(s) : cur);
@@ -147,11 +145,11 @@ _splraise(s)
 
 #define	ALPHA_NIPIS		6	/* must not exceed 64 */
 
-typedef void (*ipifunc_t) __P((void));
+typedef void (*ipifunc_t)(void);
 extern	ipifunc_t ipifuncs[ALPHA_NIPIS];
 
-void	alpha_send_ipi __P((unsigned long, unsigned long));
-void	alpha_broadcast_ipi __P((unsigned long));
+void	alpha_send_ipi(unsigned long, unsigned long);
+void	alpha_broadcast_ipi(unsigned long);
 
 /*
  * Alpha shared-interrupt-line common code.
@@ -161,7 +159,7 @@ struct alpha_shared_intrhand {
 	TAILQ_ENTRY(alpha_shared_intrhand)
 		ih_q;
 	struct alpha_shared_intr *ih_intrhead;
-	int	(*ih_fn) __P((void *));
+	int	(*ih_fn)(void *);
 	void	*ih_arg;
 	int	ih_level;
 	unsigned int ih_num;
@@ -193,7 +191,7 @@ struct alpha_soft_intrhand {
 	LIST_ENTRY(alpha_soft_intrhand)
 		sih_q;
 	struct alpha_soft_intr *sih_intrhead;
-	void	(*sih_fn) __P((void *));
+	void	(*sih_fn)(void *);
 	void	*sih_arg;
 	int	sih_pending;
 };
@@ -205,10 +203,10 @@ struct alpha_soft_intr {
 	unsigned long softintr_ipl;
 };
 
-void	*softintr_establish __P((int, void (*)(void *), void *));
-void	softintr_disestablish __P((void *));
-void	softintr_init __P((void));
-void	softintr_dispatch __P((void));
+void	*softintr_establish(int, void (*)(void *), void *);
+void	softintr_disestablish(void *);
+void	softintr_init(void);
+void	softintr_dispatch(void);
 
 #define	softintr_schedule(arg)						\
 do {									\
@@ -224,27 +222,27 @@ extern struct alpha_soft_intrhand *softclock_intrhand;
 #define	setsoftnet()	softintr_schedule(softnet_intrhand)
 #define	setsoftclock()	softintr_schedule(softclock_intrhand)
 
-struct alpha_shared_intr *alpha_shared_intr_alloc __P((unsigned int));
-int	alpha_shared_intr_dispatch __P((struct alpha_shared_intr *,
-	    unsigned int));
-void	*alpha_shared_intr_establish __P((struct alpha_shared_intr *,
-	    unsigned int, int, int, int (*)(void *), void *, const char *));
-void	alpha_shared_intr_disestablish __P((struct alpha_shared_intr *,
-	    void *, const char *));
-int	alpha_shared_intr_get_sharetype __P((struct alpha_shared_intr *,
-	    unsigned int));
-int	alpha_shared_intr_isactive __P((struct alpha_shared_intr *,
-	    unsigned int));
-void	alpha_shared_intr_set_dfltsharetype __P((struct alpha_shared_intr *,
-	    unsigned int, int));
-void	alpha_shared_intr_set_maxstrays __P((struct alpha_shared_intr *,
-	    unsigned int, int));
-void	alpha_shared_intr_stray __P((struct alpha_shared_intr *, unsigned int,
-	    const char *));
-void	alpha_shared_intr_set_private __P((struct alpha_shared_intr *,
-	    unsigned int, void *));
-void	*alpha_shared_intr_get_private __P((struct alpha_shared_intr *,
-	    unsigned int));
+struct alpha_shared_intr *alpha_shared_intr_alloc(unsigned int);
+int	alpha_shared_intr_dispatch(struct alpha_shared_intr *,
+	    unsigned int);
+void	*alpha_shared_intr_establish(struct alpha_shared_intr *,
+	    unsigned int, int, int, int (*)(void *), void *, const char *);
+void	alpha_shared_intr_disestablish(struct alpha_shared_intr *,
+	    void *, const char *);
+int	alpha_shared_intr_get_sharetype(struct alpha_shared_intr *,
+	    unsigned int);
+int	alpha_shared_intr_isactive(struct alpha_shared_intr *,
+	    unsigned int);
+void	alpha_shared_intr_set_dfltsharetype(struct alpha_shared_intr *,
+	    unsigned int, int);
+void	alpha_shared_intr_set_maxstrays(struct alpha_shared_intr *,
+	    unsigned int, int);
+void	alpha_shared_intr_stray(struct alpha_shared_intr *, unsigned int,
+	    const char *);
+void	alpha_shared_intr_set_private(struct alpha_shared_intr *,
+	    unsigned int, void *);
+void	*alpha_shared_intr_get_private(struct alpha_shared_intr *,
+	    unsigned int);
 
 #endif /* _KERNEL */
 #endif /* ! _ALPHA_INTR_H_ */
