@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.25 2001/03/17 21:56:06 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.26 2001/03/18 15:56:04 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.25 2001/03/17 21:56:06 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.26 2001/03/18 15:56:04 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/socket.h>
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: if_ea.c,v 1.25 2001/03/17 21:56:06 bjh21 Exp $");
 
 struct ea_softc {
 	struct seeq8005_softc	sc_8005;
-	struct irq_handler *sc_ih;
+	void	*sc_ih;
 	struct evcnt sc_intrcnt;
 };
 
@@ -150,8 +150,8 @@ eaattach(struct device *parent, struct device *self, void *aux)
 
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    self->dv_xname, "intr");
-	sc->sc_ih = podulebus_irq_establish(sc->sc_8005.sc_dev.dv_parent,
-	    pa->pa_slotnum, IPL_NET, seeq8005intr, sc, &sc->sc_intrcnt);
+	sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_NET, seeq8005intr,
+	    sc, &sc->sc_intrcnt);
 }
 
 /* End of if_ea.c */

@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.5 2001/03/17 21:56:07 bjh21 Exp $ */
+/* $NetBSD: podulebus.h,v 1.6 2001/03/18 15:56:05 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -51,6 +51,8 @@ struct podulebus_chunk {
 	int	pc_useloader;
 };
 
+typedef int podulebus_intr_handle_t;
+
 struct podulebus_attach_args {
 	/* bus_space references for the (many) podule spaces */
 	bus_space_tag_t		pa_easi_t;
@@ -74,6 +76,8 @@ struct podulebus_attach_args {
 	u_int	pa_slow_base;
 	u_int	pa_sync_base;
 
+	podulebus_intr_handle_t	pa_ih;
+
 	int	pa_slotnum;
 	int	pa_ecid;
 	int	pa_flags1;
@@ -94,7 +98,7 @@ struct podulebus_attach_args {
 
 struct evcnt;
 
-extern struct irq_handler *podulebus_irq_establish(struct device *, int, int,
+extern void *podulebus_irq_establish(podulebus_intr_handle_t, int,
     int (*)(void *), void *, struct evcnt *);
 extern int podulebus_initloader(struct podulebus_attach_args *);
 extern int podloader_readbyte(struct podulebus_attach_args *, u_int);
