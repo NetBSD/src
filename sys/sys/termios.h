@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.14 1996/04/09 20:55:41 cgd Exp $	*/
+/*	$NetBSD: termios.h,v 1.15 1997/04/02 03:10:51 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -112,6 +112,7 @@
 #define ONLCR		0x00000002	/* map NL to CR-NL (ala CRMOD) */
 #define OXTABS		0x00000004	/* expand tabs to spaces */
 #define ONOEOT		0x00000008	/* discard EOT's (^D) on output) */
+#define OCRNL		0x00000010	/* map CR to NL */
 #endif  /*_POSIX_SOURCE */
 
 /*
