@@ -41,8 +41,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.11 1996/03/30 23:42:33 mark Exp $";
+/* static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95"; */
+static char *rcsid = "$NetBSD: edquota.c,v 1.12 1997/03/08 08:01:27 mikel Exp $";
 #endif /* not lint */
 
 /*
@@ -52,6 +52,7 @@ static char *rcsid = "$Id: edquota.c,v 1.11 1996/03/30 23:42:33 mark Exp $";
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/wait.h>
+#include <sys/queue.h>
 #include <ufs/ufs/quota.h>
 #include <errno.h>
 #include <fstab.h>
@@ -78,6 +79,7 @@ struct quotause {
 } *getprivs();
 #define	FOUND	0x01
 
+int
 main(argc, argv)
 	register char **argv;
 	int argc;
@@ -160,6 +162,7 @@ main(argc, argv)
 	exit(0);
 }
 
+void
 usage()
 {
 	fprintf(stderr, "%s%s%s%s",
@@ -174,6 +177,7 @@ usage()
  * an identifier. This routine must agree with the kernel routine
  * getinoquota as to the interpretation of quota types.
  */
+int
 getentry(name, quotatype)
 	char *name;
 	int quotatype;
@@ -291,6 +295,7 @@ getprivs(id, quotatype)
 /*
  * Store the requested quota information.
  */
+void
 putprivs(id, quotatype, quplist)
 	long id;
 	int quotatype;
@@ -306,7 +311,8 @@ putprivs(id, quotatype, quplist)
 		if ((fd = open(qup->qfname, O_WRONLY)) < 0) {
 			perror(qup->qfname);
 		} else {
-			lseek(fd, (off_t)(id * sizeof (struct dqblk)), 0);
+			lseek(fd,
+			    (off_t)(id * (long)sizeof (struct dqblk)), L_SET);
 			if (write(fd, &qup->dqblk, sizeof (struct dqblk)) !=
 			    sizeof (struct dqblk)) {
 				fprintf(stderr, "edquota: ");
@@ -320,6 +326,7 @@ putprivs(id, quotatype, quplist)
 /*
  * Take a list of priviledges and get it edited.
  */
+int
 editit(tmpfile)
 	char *tmpfile;
 {
@@ -365,6 +372,7 @@ editit(tmpfile)
 /*
  * Convert a quotause list to an ASCII file.
  */
+int
 writeprivs(quplist, outfd, name, quotatype)
 	struct quotause *quplist;
 	int outfd;
@@ -399,6 +407,7 @@ writeprivs(quplist, outfd, name, quotatype)
 /*
  * Merge changes to an ASCII file into a quotause list.
  */
+int
 readprivs(quplist, infd)
 	struct quotause *quplist;
 	int infd;
@@ -508,6 +517,7 @@ readprivs(quplist, infd)
 /*
  * Convert a quotause list to an ASCII file of grace times.
  */
+int
 writetimes(quplist, outfd, quotatype)
 	struct quotause *quplist;
 	int outfd;
@@ -540,6 +550,7 @@ writetimes(quplist, outfd, quotatype)
 /*
  * Merge changes of grace times in an ASCII file into a quotause list.
  */
+int
 readtimes(quplist, infd)
 	struct quotause *quplist;
 	int infd;
@@ -634,6 +645,7 @@ cvtstoa(time)
 /*
  * Convert ASCII input times to seconds.
  */
+int
 cvtatos(time, units, seconds)
 	time_t time;
 	char *units;
@@ -659,6 +671,7 @@ cvtatos(time, units, seconds)
 /*
  * Free a list of quotause structures.
  */
+void
 freeprivs(quplist)
 	struct quotause *quplist;
 {
@@ -673,6 +686,7 @@ freeprivs(quplist)
 /*
  * Check whether a string is completely composed of digits.
  */
+int
 alldigits(s)
 	register char *s;
 {
@@ -689,6 +703,7 @@ alldigits(s)
 /*
  * Check to see if a particular quota is to be enabled.
  */
+int
 hasquota(fs, type, qfnamep)
 	register struct fstab *fs;
 	int type;
