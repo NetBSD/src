@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.10 1996/05/17 15:12:30 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.11 1996/05/18 23:57:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -472,7 +472,7 @@ nhpibwait(hd, x)
 	register int timo = hpibtimeout;
 
 	while ((hd->hpib_mis & x) == 0 && --timo)
-		DELAY(5);
+		DELAY(1);
 	if (timo == 0) {
 #ifdef DEBUG
 		if (nhpibreporttimo)
