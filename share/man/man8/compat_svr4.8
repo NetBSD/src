@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_svr4.8,v 1.6.2.1 1997/11/13 03:41:39 thorpej Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.6.2.2 1998/11/10 05:50:00 cgd Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
 .\" All rights reserved.
@@ -136,7 +136,7 @@ Setup the configuration files and devices:
 .br
 .It (me@netbsd) cp SVR4_MAKEDEV /emul/svr4/dev
 .br
-.It (me@netbsd) cd /emul/svr4/dev; ./SVR4_MAKEDEV all
+.It (me@netbsd) cd /emul/svr4/dev; sh SVR4_MAKEDEV all
 .El
 .El
 .Pp
