@@ -1,4 +1,4 @@
-.\"	$NetBSD: getlogin.2,v 1.4 1995/02/27 12:33:03 cgd Exp $
+.\"	$NetBSD: getlogin.2,v 1.5 1997/07/14 23:19:59 kleink Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -104,6 +104,11 @@ The caller tried to set the login name and was not the super-user.
 .El
 .Sh SEE ALSO
 .Xr setsid 2
+.Sh STANDARDS
+The
+.Fn getlogin
+function conforms to
+.St -p1003.1-90 .
 .Sh BUGS
 Login names are limited in length by
 .Fn setlogin .

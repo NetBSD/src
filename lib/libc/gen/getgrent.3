@@ -1,4 +1,4 @@
-.\"	$NetBSD: getgrent.3,v 1.9 1997/03/08 13:36:38 mouse Exp $
+.\"	$NetBSD: getgrent.3,v 1.10 1997/07/14 23:19:41 kleink Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -149,6 +149,13 @@ group database file
 .Sh SEE ALSO
 .Xr getpwent 3 ,
 .Xr group 5
+.Sh STANDARDS
+The
+.Fn getgrnam
+and
+.Fn getgrgid
+functions conform to
+.St -p1003.1-90 .
 .Sh HISTORY
 The functions
 .Fn endgrent ,
