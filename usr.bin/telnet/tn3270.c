@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.9 2002/06/14 00:30:57 wiz Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.10 2002/06/14 09:55:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: tn3270.c,v 1.9 2002/06/14 00:30:57 wiz Exp $");
+__RCSID("$NetBSD: tn3270.c,v 1.10 2002/06/14 09:55:08 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -304,7 +304,7 @@ StringToTerminal(s)
  *	curses(3x) can call us to send out data.
  */
 
-    void
+    int
 _putchar(c)
     char c;
 {
@@ -319,6 +319,8 @@ _putchar(c)
     } else {
 	TTYADD(c);
     }
+
+    return (0);
 }
 #endif	/* ((!defined(NOT43)) || defined(PUTCHAR)) */
 
