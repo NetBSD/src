@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.6 2004/08/21 11:24:28 rearnsha Exp $	*/
+/*	$NetBSD: ffs.S,v 1.7 2004/08/21 13:08:29 rearnsha Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: ffs.S,v 1.6 2004/08/21 11:24:28 rearnsha Exp $")
+RCSID("$NetBSD: ffs.S,v 1.7 2004/08/21 13:08:29 rearnsha Exp $")
 
 /*
  * ffs - find first set bit, this algorithm isolates the first set
