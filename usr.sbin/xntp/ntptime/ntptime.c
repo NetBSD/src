@@ -197,24 +197,25 @@ main(argc, argv)
 #endif /* BADCALL */
 
   if (cost) {
-    for (c = 0; c < sizeof times / sizeof times[0]; c++)
-      {
 #ifdef SIGSYS
 	if (sigsetjmp(env, 1) == 0)
 	  {
 #endif
+        for (c = 0; c < sizeof times / sizeof times[0]; c++)
+          {
 	    status = ntp_gettime(&ntv);
 	    if ((status < 0) && (errno == ENOSYS))
 	      {
 		--pll_control;
 	      }
-#ifdef SIGSYS
-	  }
-#endif
 	if (pll_control < 0)
 	  break;
 	times[c] = ntv.time.tv_usec;
       }
+#ifdef SIGSYS
+      }
+#endif
+
     if (pll_control >= 0) {
       printf("[ us %06d:", times[0]);
       for (c = 1; c < sizeof times / sizeof times[0]; c++)
