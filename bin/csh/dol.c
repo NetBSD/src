@@ -1,4 +1,4 @@
-/*	$NetBSD: dol.c,v 1.12 1998/07/28 11:41:42 mycroft Exp $	*/
+/*	$NetBSD: dol.c,v 1.13 1998/08/19 01:31:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dol.c,v 1.12 1998/07/28 11:41:42 mycroft Exp $");
+__RCSID("$NetBSD: dol.c,v 1.13 1998/08/19 01:31:46 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -607,11 +607,12 @@ Dgetdol()
 	    stderror(ERR_SYNTAX);
     }
     else {
-	if (subscr > 0)
+	if (subscr > 0) {
 	    if (subscr > upb)
 		lwb = 1, upb = 0;
 	    else
 		lwb = upb = subscr;
+	}
 	unDredc(c);
     }
     if (dimen) {

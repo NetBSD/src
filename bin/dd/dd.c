@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.11 1998/07/28 05:31:23 mycroft Exp $	*/
+/*	$NetBSD: dd.c,v 1.12 1998/08/19 01:32:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.11 1998/07/28 05:31:23 mycroft Exp $");
+__RCSID("$NetBSD: dd.c,v 1.12 1998/08/19 01:32:44 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,11 +243,12 @@ dd_in()
 		 * last partial input block which should be padded
 		 * with zero and not garbage.
 		 */
-		if (flags & C_SYNC)
+		if (flags & C_SYNC) {
 			if (flags & (C_BLOCK|C_UNBLOCK))
 				(void)memset(in.dbp, ' ', in.dbsz);
 			else
 				(void)memset(in.dbp, 0, in.dbsz);
+		}
 
 		n = read(in.fd, in.dbp, in.dbsz);
 		if (n == 0) {

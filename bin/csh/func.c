@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.16 1998/07/28 11:41:44 mycroft Exp $	*/
+/*	$NetBSD: func.c,v 1.17 1998/08/19 01:31:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.16 1998/07/28 11:41:44 mycroft Exp $");
+__RCSID("$NetBSD: func.c,v 1.17 1998/08/19 01:31:46 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -765,11 +765,12 @@ getword(wp)
 	    c = readc(1);
 	    if (c == '\\' && (c = readc(1)) == '\n')
 		c = ' ';
-	    if (c == '\'' || c == '"')
+	    if (c == '\'' || c == '"') {
 		if (d == 0)
 		    d = c;
 		else if (d == c)
 		    d = 0;
+	    }
 	    if (c < 0)
 		goto past;
 	    if (wp) {
