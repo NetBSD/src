@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.1 1998/02/16 11:22:00 drochner Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.2 1999/05/11 19:57:05 drochner Exp $	*/
 
 /*
  * Polling driver for National Semiconductor DS8390/WD83C690 based
@@ -193,7 +193,7 @@ char *pkt;
 int len;
 {
 #ifdef _STANDALONE
-	vpbcopy(pkt, dp8390_membase, len);
+	vpbcopy(pkt, (void *)dp8390_membase, len);
 #else
 	bbcopy(pkt, vmembase, len);
 #endif
@@ -225,7 +225,7 @@ dp8390_read(buf, dest, len)
 
 		/* Copy amount up to end of NIC memory. */
 #ifdef _STANDALONE
-		pvbcopy(buf, dest, tmp_amount);
+		pvbcopy((void *)buf, dest, tmp_amount);
 #else
 		bbcopy(vmembase + buf - dp8390_membase, dest, tmp_amount);
 #endif
@@ -235,7 +235,7 @@ dp8390_read(buf, dest, len)
 		dest += tmp_amount;
 	}
 #ifdef _STANDALONE
-	pvbcopy(buf, dest, len);
+	pvbcopy((void *)buf, dest, len);
 #else
 	bbcopy(vmembase + buf - dp8390_membase, dest, len);
 #endif
@@ -284,7 +284,7 @@ int maxlen;
 	 * the NIC.
 	 */
 #ifdef _STANDALONE
-	pvbcopy(packet_ptr, &packet_hdr, 4);
+	pvbcopy((void *)packet_ptr, &packet_hdr, 4);
 #else
 	bbcopy(vmembase + packet_ptr - dp8390_membase, &packet_hdr, 4);
 #endif
