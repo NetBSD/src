@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.35 1996/04/22 01:46:05 christos Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.36 1996/05/03 19:48:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -793,18 +793,18 @@ void
 show_scsi_xs(xs)
 	struct scsi_xfer *xs;
 {
-	printf("xs(0x%x): ", xs);
+	printf("xs(%p): ", xs);
 	printf("flg(0x%x)", xs->flags);
-	printf("sc_link(0x%x)", xs->sc_link);
+	printf("sc_link(%p)", xs->sc_link);
 	printf("retr(0x%x)", xs->retries);
 	printf("timo(0x%x)", xs->timeout);
-	printf("cmd(0x%x)", xs->cmd);
+	printf("cmd(%p)", xs->cmd);
 	printf("len(0x%x)", xs->cmdlen);
-	printf("data(0x%x)", xs->data);
+	printf("data(%p)", xs->data);
 	printf("len(0x%x)", xs->datalen);
 	printf("res(0x%x)", xs->resid);
 	printf("err(0x%x)", xs->error);
-	printf("bp(0x%x)", xs->bp);
+	printf("bp(%p)", xs->bp);
 	show_scsi_cmd(xs);
 }
 
