@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.20 2000/07/19 01:02:52 matt Exp $	*/
+/*	$NetBSD: macros.h,v 1.21 2000/08/27 00:21:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -276,8 +276,8 @@ skpc(int mask, size_t size, u_char *cp)
 	__asm__ __volatile("movl %0,r0;jsb Remrq":: "g"(p):"r0","r1","r2");
 
 #define cpu_switch(p) \
-	__asm__ __volatile("movl %0,r0;movpsl -(sp);jsb Swtch" \
-	    ::"g"(p):"r0","r1","r2","r3");
+	__asm__ __volatile("movl %0,r6;movpsl -(sp);jsb Swtch" \
+	    ::"g"(p):"r0","r1","r2","r3","r4","r5","r6");
 
 /*
  * Interlock instructions. Used both in multiprocessor environments to
