@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.11 2002/02/13 08:18:50 ross Exp $
+.\"	$NetBSD: rnd.9,v 1.12 2002/08/19 17:41:46 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,13 +96,15 @@ is not to be used as a type.  It is used internally to the rnd system.
 .Pp
 .Fa flags
 are the logical OR of
-.Dv RND_FLAGS_NO_COLLECT (don't collect or estimate)
-.Dv RND_FLAGS_NO_ESTIMATE (don't estimate)
+.Dv RND_FLAG_NO_COLLECT
+(don't collect or estimate)
+.Dv RND_FLAG_NO_ESTIMATE
+(don't estimate)
 to control the default setting for collection and estimation.  Note that
 devices of type
 .Dv RND_TYPE_NET
 default to
-.Dv RND_FLAGS_NO_ESTIMATE .
+.Dv RND_FLAG_NO_ESTIMATE .
 .Pp
 .It Fn rnd_detach_source "rndsource_element_t *rnd_source"
 This function disconnects the device from entropy collection.
