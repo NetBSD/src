@@ -1,5 +1,5 @@
 static char *RCSid =
-"$Header: /cvsroot/src/usr.bin/rcs/src/Attic/sccstorcs.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+"$Header: /cvsroot/src/usr.bin/rcs/src/Attic/sccstorcs.c,v 1.2 1993/04/21 08:48:48 mycroft Exp $";
 
 /*
  * SCCSTORCS - build RCS file from SCCS file preserving deltas.
@@ -12,7 +12,10 @@ static char *RCSid =
  * author.
  *
  * $Log: sccstorcs.c,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
+ * Revision 1.2  1993/04/21 08:48:48  mycroft
+ * Use ANSI vfprintf() rather than outdated _doprnt().
+ *
+ * Revision 1.1.1.1  1993/03/21  09:58:11  cgd
  * initial import of 386bsd-0.1 sources
  *
  * Revision 1.4  84/10/17  21:12:11  root
@@ -81,7 +84,7 @@ quit (fmt, args)
 char *fmt;
 {
     fprintf (stderr, "sccstorcs: ");
-    _doprnt(fmt, &args, stderr);
+    vfprintf(stderr, fmt, &args);
     exit (1);
 }
 
