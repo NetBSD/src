@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.1 2003/05/01 07:02:02 igy Exp $ */
+/* $NetBSD: main.c,v 1.2 2003/06/15 08:49:09 igy Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -713,7 +713,14 @@ command_write(char *opt)
 		return;
 	}
 
-	printf("write mem to flash succeed\n");
+	printf("verifying...");
+	if (memcmp((void *) dst, (void *) src, len)) {
+		printf("verify error\n");
+		return;
+	}
+	printf("ok\n");
+
+	printf("writing memory to flash succeeded\n");
 	return;
 
 out:
