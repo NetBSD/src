@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.25 1999/05/10 21:13:05 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.26 1999/05/10 21:15:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -966,6 +966,7 @@ pool_prime(pp, n, storage)
 			return (ENOMEM);
 		}
 
+		pp->pr_npagealloc++;
 		pool_prime_page(pp, cp);
 		pp->pr_minpages++;
 	}
@@ -1100,6 +1101,7 @@ pool_catchup(pp)
 			error = ENOMEM;
 			break;
 		}
+		pp->pr_npagealloc++;
 		pool_prime_page(pp, cp);
 	}
 
