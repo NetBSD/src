@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2002/09/29 14:29:19 lukem Exp $
+# $NetBSD: Makefile,v 1.10 2002/10/03 03:58:56 lukem Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -154,6 +154,8 @@ ports:=${BASE_PORTS.${image}}
 MKISOFS_ARGS.${image}=	-V "${VOLID.${image}}"
 
 pathlist.${image}:=${STAGEDIR}/${image}.pathlist
+contents.${image}:=${IMAGEDIR}/${image}.contents
+
 MKISOFS_ARGS.${image}+=	-graft-points -path-list ${pathlist.${image}}
 
 .if defined(ABSTRACT.${image})
@@ -281,13 +283,14 @@ all: ${IMAGEDIR}/${image}.iso
 
 stage-${image}:
 	mkdir -p ${STAGEDIR}/${image} ${EXTFILEDIR}
-	rm -f ${pathlist.${image}}
+	rm -f ${pathlist.${image}} ${contents.${image}}
 .if defined(BASE_PORTS.${image}) && !empty(BASE_PORTS.${image})
 .for dir in ${INTDIRS.${image}}
 	mkdir -p ${STAGEDIR}/${image}/${dir}
 .endfor
 .for arch in ${BASE_PORTS.${image}}
-	echo "${arch}=${DISTRIBDIR}/${arch}" >> ${STAGEDIR}/${image}.pathlist
+	@echo "${arch}=${DISTRIBDIR}/${arch}" >> ${pathlist.${image}}
+	@echo "${arch}" >> ${contents.${image}}
 .endfor
 .endif
 
@@ -349,6 +352,7 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 # Actually build the image with all the bootstrap goo....
 
 ${IMAGEDIR}/${image}.iso: size-${image}
+	@sort -o ${contents.${image}} ${contents.${image}}
 .if defined(LOG_MKISOFS)
 	cd ${STAGEDIR}/${image} && ${MKISOFS} -o $@ ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} -v -v . >${IMAGEDIR}/${image}.iso.log 2>&1
 .else
@@ -362,14 +366,14 @@ ${IMAGEDIR}/${image}.iso: size-${image}
 	${MACPPC_IBOOTDIR}/macppc_installboot $@ $$blknum 756
 	dd if=${EXTFILEDIR}/macppc.ofwboot bs=64k count=1 conv=sync >>$@ 2>/dev/null
 .endif
+.if !empty(BASE_PORTS.${image}:Malpha)
+	${ALPHA_IBOOT} $@ ${BOOTFILE.alpha}
+.endif
 .if !empty(BASE_PORTS.${image}:Mpmax)
 	${PMAX_IBOOT} $@ ${BOOTFILE.pmax}
 .endif
 .if !empty(BASE_PORTS.${image}:Mvax)
 	${VAX_IBOOT} $@ ${BOOTFILE.vax}
-.endif
-.if !empty(BASE_PORTS.${image}:Malpha)
-	${ALPHA_IBOOT} $@ ${BOOTFILE.alpha}
 .endif
 	@echo Rounding up to 32k boundary and padding 32k....
 	@size=`ls -l $@ | awk '{print $$5}'` && \
@@ -389,7 +393,8 @@ cleandir distclean: cleandistribdir
 
 cleanimages:
 .for image in ${CD_IMAGES}
-	-rm -f ${IMAGEDIR}/${image}.iso ${IMAGEDIR}/${image}.iso.log
+	-rm -f ${IMAGEDIR}/${image}.iso ${IMAGEDIR}/${image}.iso.log \
+		${contents.${image}}
 .endfor
 
 cleanstagedir:
