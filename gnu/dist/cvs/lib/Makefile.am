@@ -87,6 +87,9 @@ EXTRA_DIST = \
 	libcvs.dep libcvs.dsp libcvs.mak \
 	xgssapi.h
 
+# For the xsize module from GNULIB.
+libcvs_a_SOURCES += xsize.h
+
 # Until Automake gets its act together
 distclean-local:
 	rm -f fnmatch.h
