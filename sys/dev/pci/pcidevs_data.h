@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.118.2.4 1999/09/24 05:52:04 cgd Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.118.2.5 1999/10/05 22:11:32 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.113.2.3 1999/08/29 20:58:45 he Exp 
+ *	NetBSD: pcidevs,v 1.113.2.4 1999/10/05 22:10:04 he Exp 
  */
 
 /*
@@ -39,6 +39,12 @@
  */
 
 struct pci_knowndev pci_knowndevs[] = {
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985,
+	    0,
+	    "3Com",
+	    "3c985 Gigabit Ethernet",
+	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C590,
 	    0,
@@ -440,6 +446,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Alliance Semiconductor",
 	    "AT24",
+	},
+	{
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC,
+	    0,
+	    "Alteon",
+	    "ACEnic Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
@@ -1714,6 +1726,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MagicGraph 128ZV",
 	},
 	{
+	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620,
+	    0,
+	    "Netgear",
+	    "GA620 Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_NEXGEN, PCI_PRODUCT_NEXGEN_NX82C501,
 	    0,
 	    "NexGen Microsystems",
@@ -2054,6 +2072,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "S3",
 	    "SonicVibes",
+	},
+	{
+	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,
+	    0,
+	    "Silicon Graphics",
+	    "Tigon Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_2000,
@@ -5560,6 +5584,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_ALTEON, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Alteon",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_PICTUREEL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Picture Elements",
@@ -5575,6 +5605,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_LMC, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "LAN Media Corporation",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_NETGEAR, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Netgear",
 	    NULL,
 	},
 	{
