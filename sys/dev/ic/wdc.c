@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.112 2002/03/08 20:48:38 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.113 2002/03/28 22:51:58 bouyer Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.112 2002/03/08 20:48:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.113 2002/03/28 22:51:58 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -714,6 +714,8 @@ wdcintr(arg)
 	}
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) == 0) {
 		WDCDEBUG_PRINT(("wdcintr: inactive controller\n"), DEBUG_INTR);
+		/* try to clear the pending interrupt anyway */
+		(void)bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
 		return (0);
 	}
 
