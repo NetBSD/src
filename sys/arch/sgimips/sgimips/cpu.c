@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7.2.4 2002/10/18 02:39:42 nathanw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7.2.5 2003/01/07 21:14:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -39,8 +39,6 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <mips/cache.h>
-
 #include <machine/cpu.h>
 #include <machine/locore.h>
 #include <machine/autoconf.h>
@@ -54,29 +52,6 @@ static void	cpu_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cpu, sizeof(struct device),
     cpu_match, cpu_attach, NULL, NULL);
-
-static void
-sgimips_find_l2cache(struct arcbios_component *comp,
-    struct arcbios_treewalk_context *atc)
-{
-	struct device *self = atc->atc_cookie;
-
-	if (comp->Class != COMPONENT_CLASS_CacheClass)
-		return;
-
-	switch (comp->Type) {
-	case COMPONENT_TYPE_SecondaryICache:
-		panic("%s: split L2 cache", self->dv_xname);
-	case COMPONENT_TYPE_SecondaryDCache:
-	case COMPONENT_TYPE_SecondaryCache:
-		mips_sdcache_size = COMPONENT_KEY_Cache_CacheSize(comp->Key);
-		mips_sdcache_line_size =
-		    COMPONENT_KEY_Cache_LineSize(comp->Key);
-		/* XXX */
-		mips_sdcache_ways = 1;
-		break;
-	}
-}
 
 static int
 cpu_match(parent, match, aux)
@@ -93,14 +68,6 @@ cpu_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	/*
-	 * Walk the ARCBIOS device tree to find the L2 cache.
-	 *
-	 * XXX We should be walking the tree to attach the CPUs,
-	 * XXX etc, but we don't currently do that.
-	 */
-	arcbios_tree_walk(sgimips_find_l2cache, self);
-
 	printf(": ");
 	cpu_identify();
 

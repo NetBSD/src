@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4.4.6 2003/01/03 16:50:12 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4.4.7 2003/01/07 21:14:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -80,6 +80,7 @@ cpu_configure()
 	printf("biomask %02x netmask %02x ttymask %02x clockmask %02x\n",
 	    biomask >> 8, netmask >> 8, ttymask >> 8, clockmask >> 8);
 
+	/* XXXrkb: hack until we get interrupt setup code right */
 	if (mach_type == MACH_SGI_IP32) {
 	   u_int64_t mask;
 

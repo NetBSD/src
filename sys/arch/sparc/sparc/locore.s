@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.22 2003/01/06 22:12:28 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.23 2003/01/07 21:21:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4274,7 +4274,6 @@ _C_LABEL(cpu_hatch):
 	be	1b
 	 ld	[%l1], %l0
 
-#if 0	/* doesn't quite work yet */
 #if ALT_SWITCH_CODE
 	mov	PSR_S|PSR_ET, %l1	! oldpsr = PSR_S | PSR_ET;
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
@@ -4283,33 +4282,11 @@ _C_LABEL(cpu_hatch):
 	b	idle_enter
 	 sethi	%hi(curlwp), %l7
 #else /* ALT_SWITCH_CODE */
-	!set	_C_LABEL(proc0), %g3		! p = proc0
-	sethi	%hi(_C_LABEL(sched_whichqs)), %g2
-	sethi	%hi(cpcb), %g6
-	sethi	%hi(curlwp), %g7
-	st	%g0, [%g7 + %lo(curlwp)]	! curlwp = NULL;
-
-	mov	PSR_S|PSR_ET, %g1		! oldpsr = PSR_S | PSR_ET;
-	sethi	%hi(IDLE_UP), %g5
-	ld	[%g5 + %lo(IDLE_UP)], %g5
-	st	%g5, [%g6 + %lo(cpcb)]		! cpcb = &idle_u
-	set	USPACE-CCFSZ, %o1
-	add	%g5, %o1, %sp			! set new %sp
-
-#ifdef DEBUG
-	mov	%g5, %o2			! %o2 = _idle_u
-	SET_SP_REDZONE(%o2, %o1)
-#endif /* DEBUG */
-
-	b	idle_enter_no_schedlock
-	 clr	%g4				! lastproc = NULL;	
-#endif /* ALT_SWITCH_CODE */
-#else
 	/* Idle here .. */
 9:	ba 9b
 	 nop
 	/*NOTREACHED*/
-#endif
+#endif /* ALT_SWITCH_CODE */
 
 #endif /* MULTIPROCESSOR */
 

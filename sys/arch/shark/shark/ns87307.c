@@ -1,4 +1,4 @@
-/*	$NetBSD: ns87307.c,v 1.1.2.2 2002/02/28 04:11:56 nathanw Exp $	*/
+/*	$NetBSD: ns87307.c,v 1.1.2.3 2003/01/07 21:14:38 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -269,7 +269,7 @@ i87307PrinterConfig(bus_space_tag_t iot,
                 NSIO_LPT_SPP_EXTENDED;
     	NSIO_WRITE_REG( iot, ioh, NSIO_CFG_REG0, value);
     	
-        /* set the type of interupt */
+        /* set the type of interrupt */
         value = NSIO_IRQ_HIGH | 
                 NSIO_IRQ_LEVEL;
         NSIO_CONFIG_IRQ( iot, ioh, irqNum,value);

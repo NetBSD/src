@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.45.6.2 2002/10/18 02:40:24 nathanw Exp $	*/
+/*	$NetBSD: isr.c,v 1.45.6.3 2003/01/07 21:23:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ static struct isr *isr_autovec_list[NUM_LEVELS];
 
 /*
  * This is called by the assembly routines
- * for handling auto-vectored interupts.
+ * for handling auto-vectored interrupts.
  */
 void isr_autovec(cf)
 	struct clockframe cf;
@@ -187,7 +187,7 @@ static struct vector_handler isr_vector_handlers[192];
 
 /*
  * This is called by the assembly glue
- * for handling vectored interupts.
+ * for handling vectored interrupts.
  */
 void
 isr_vectored(cf)

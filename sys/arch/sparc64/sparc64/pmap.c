@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113.4.15 2002/11/20 22:37:09 petrov Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113.4.16 2003/01/07 21:23:33 thorpej Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -85,7 +85,7 @@ extern int pseg_set __P((struct pmap *, vaddr_t, int64_t, paddr_t));
  *
  * When we map a page initially, we place a TTE in the page table.  It's 
  * inserted with the TLB_W and TLB_ACCESS bits cleared.  If a page is really
- * writeable we set the TLB_REAL_W bit for the trap handler.
+ * writable we set the TLB_REAL_W bit for the trap handler.
  *
  * Whenever we take a TLB miss trap, the trap handler will set the TLB_ACCESS
  * bit in the approprate TTE in the page table.  Whenever we take a protection

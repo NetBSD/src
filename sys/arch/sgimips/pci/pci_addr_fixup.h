@@ -1,8 +1,7 @@
-/*	$NetBSD: macevar.h,v 1.1.14.2 2003/01/07 21:14:32 thorpej Exp $	*/
+/*	$NetBSD: pci_addr_fixup.h,v 1.1.2.2 2003/01/07 21:14:33 thorpej Exp $	*/
 
-/*
- * Copyright (c) 2000 Soren S. Jorvang
- * All rights reserved.
+/*-
+ * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,12 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
- *          information about NetBSD.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -28,21 +22,32 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct mace_attach_args {
-	bus_space_tag_t maa_st;
-	bus_space_handle_t maa_sh;
-
-/* ? */
-	long	maa_offset;
-	int	maa_intr;
-#if 0
-	int	maa_stride;
-#endif
+struct pciaddr {
+	struct extent *extent_mem;
+	struct extent *extent_port;
+	bus_addr_t mem_alloc_start;
+	bus_addr_t port_alloc_start;
+	int nbogus;
 };
 
-extern void *	mace_intr_establish(int, int, int (*)(void *), void *);
-extern void	mace_intr(int);
+extern struct pciaddr pciaddr;
+
+void	pci_addr_fixup __P((pci_chipset_tag_t, int));
+
+/* for cardbus stuff */
+typedef int (*pciaddr_resource_manage_func_t) 
+	(pci_chipset_tag_t, pcitag_t, int, void *, int,
+	 bus_addr_t *, bus_size_t);
+
+void	pciaddr_resource_manage __P((pci_chipset_tag_t, pcitag_t,
+				     pciaddr_resource_manage_func_t,
+				     void *));
+
+void	pciaddr_print_devid __P((pci_chipset_tag_t, pcitag_t));
+
+bus_addr_t pciaddr_ioaddr __P((u_int32_t));
+

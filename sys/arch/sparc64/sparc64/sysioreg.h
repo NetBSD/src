@@ -1,4 +1,4 @@
-/*	$NetBSD: sysioreg.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: sysioreg.h,v 1.1.1.1.32.1 2003/01/07 21:23:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -140,7 +140,7 @@ typedef u_int32_t iopte_t;
 
 #define IOPTE_PPN	0xffffff00	/* PA<35:12> */
 #define IOPTE_C		0x00000080 	/* cacheable */
-#define IOPTE_W		0x00000004	/* writeable */
+#define IOPTE_W		0x00000004	/* writable */
 #define IOPTE_V		0x00000002	/* valid */
 #define IOPTE_WAZ	0x00000001	/* must write as zero */
 

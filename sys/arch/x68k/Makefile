@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1998/06/12 23:22:47 cgd Exp $
+#	$NetBSD: Makefile,v 1.7.34.1 2003/01/07 21:23:48 thorpej Exp $
 
 # Makefile for x68k tags file and boot blocks
 
@@ -27,6 +27,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	include usr.bin usr.sbin stand
+SUBDIR=	compile include usr.bin usr.sbin stand
 
 .include <bsd.subdir.mk>

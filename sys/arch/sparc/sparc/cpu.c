@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.124.4.16 2003/01/03 19:30:28 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.124.4.17 2003/01/07 21:21:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -61,6 +61,9 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
+#ifdef DEBUG
+#include <sys/kernel.h>		/* for `cold' */
+#endif
 
 #include <uvm/uvm.h>
 
@@ -139,6 +142,7 @@ struct cpu_info *alloc_cpuinfo_global_va __P((int, vsize_t *));
 struct cpu_info	*alloc_cpuinfo __P((void));
 
 int go_smp_cpus = 0;	/* non-primary cpu's wait for this to go */
+int ross_pend;		/* work around the hypersparc xcall bug */
 
 /* lock this to send IPI's */
 struct simplelock xpmsg_lock = SIMPLELOCK_INITIALIZER;
@@ -464,7 +468,9 @@ static	struct cpu_softc *bootcpu;
 	cpi->ci_cpuid = cpu_instance++;
 	cpi->mid = mid;
 	cpi->node = node;
+#if 0
 	simple_lock_init(&cpi->msg.lock);
+#endif
 
 	if (ncpu > 1) {
 		printf(": mid %d", mid);
@@ -640,7 +646,8 @@ extern void cpu_hatch __P((void));	/* in locore.s */
 }
 
 /*
- * Call a function on every CPU.
+ * Call a function on some CPUs.  `cpuset' can be set to CPUSET_ALL
+ * to call every CPU, or `1 << cpi->ci_cpuid' for each CPU to call.
  */
 void
 xcall(func, arg0, arg1, arg2, arg3, cpuset)
@@ -663,7 +670,18 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		return;
 	}
 
-	s = splvm();	/* XXX - should validate this level */
+	/* prevent interrupts that grab the kernel lock */
+	s = splclock();
+#ifdef DEBUG
+	if (!cold) {
+		u_int pc, lvl = ((u_int)s & PSR_PIL) >> 8;
+		if (lvl > IPL_CLOCK) {
+			__asm("mov %%i7, %0" : "=r" (pc) : );
+			printf("%d: xcall at lvl %u from 0x%x\n",
+				cpu_number(), lvl, pc);
+		}
+	}
+#endif
 	LOCK_XPMSG();
 
 	/*
@@ -679,7 +697,9 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
 			continue;
 
+#if 0
 		simple_lock(&cpi->msg.lock);
+#endif
 		cpi->msg.tag = XPMSG_FUNC;
 		cpi->flags &= ~CPUFLG_GOTMSG;
 		p = &cpi->msg.u.xpmsg_func;
@@ -704,7 +724,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	 * this in the process).
 	 */
 	done = 0;
-	i = 100000;	/* time-out */
+	i = 10000;	/* time-out, not too long, but still an _AGE_ */
 	while (!done) {
 		if (--i < 0) {
 			printf("xcall(cpu%d,%p): couldn't ping cpus:",
@@ -735,7 +755,9 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
 			continue;
 
+#if 0
 		simple_unlock(&cpi->msg.lock);
+#endif
 		if ((cpi->flags & CPUFLG_GOTMSG) == 0)
 			printf(" cpu%d", cpi->ci_cpuid);
 	}
@@ -754,19 +776,15 @@ mp_pause_cpus()
 	if (cpus == NULL)
 		return;
 
-	/* XXX - can currently be called at a high IPL level */
-	LOCK_XPMSG();
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
 		if (CPU_NOTREADY(cpi))
 			continue;
 
-		cpi->msg.tag = XPMSG_PAUSECPU;
-		cpi->flags &= ~CPUFLG_GOTMSG;
+		cpi->msg_lev15.tag = XPMSG11_PAUSECPU;
 		raise_ipi(cpi,15);	/* high priority intr */
 	}
-	UNLOCK_XPMSG();
 }
 
 void
@@ -1843,16 +1861,6 @@ getcpuinfo(sc, node)
 			mmu_impl = ANY;
 			mmu_vers = ANY;
 		}
-
-#if 0
-		/*
-		 * Get sparc architecture version
-		 * NOTE: This is now done much earlier in autoconf.c:find_cpus()
-		 */
-		cpu_arch = (node == 0)
-			? 7
-			: PROM_getpropint(node, "sparc-version", 7);
-#endif
 	} else {
 		/*
 		 * Get CPU version/implementation from ROM. If not
@@ -1969,6 +1977,7 @@ struct info {
 	char	*name;
 };
 
+/* XXX trim this table on a per-ARCH basis */
 /* NB: table order matters here; specific numbers must appear before ANY. */
 static struct info fpu_types[] = {
 	/*
