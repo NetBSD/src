@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_mod.c,v 1.5 2001/11/12 23:22:57 lukem Exp $	*/
+/*	$NetBSD: iwm_mod.c,v 1.5.8.1 2002/05/16 12:36:19 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.5 2001/11/12 23:22:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.5.8.1 2002/05/16 12:36:19 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -44,171 +44,21 @@ __KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.5 2001/11/12 23:22:57 lukem Exp $");
 #include <sys/file.h>
 #include <sys/errno.h>
 
-#include "iwm_mod.h"
-
-
-/*
- * From kern/kern_lkm.c
- * XXX If it's used outside, it should appear in the header!
- */
-int lkmexists __P((struct lkm_table *));
-int lkmdispatch __P((struct lkm_table *, int));
-
 /* The module entry */
 int iwmfd_lkmentry __P((struct lkm_table *lkmtp, int cmd, int ver));
 
-/* local */
-static int load_module __P((struct lkm_table * lkmtp, int cmd));
-static int unload_module __P((struct lkm_table * lkmtp, int cmd));
+extern int fd_mod_init __P((void));
+extern void fd_mod_free __P((void));
 
+extern const struct bdevsw fd_bdevsw;
+extern const struct cdevsw fd_cdevsw;
 
-/*
- * Provide standard device driver entry points
- * (Macros are in <sys/conf.h>, the variables {b,c}devsw[] live in
- * arch/mac68k/mac68k/conf.c).
- *
- * XXX Macros in <sys/conf.h> don't compile cleanly with -Werror.
- */
-static struct bdevsw newBDevEntry = {
-	fdopen,
-	fdclose,
-	fdstrategy,
-	fdioctl,
-	(dev_type_dump((*))) fddump,
-	fdsize,
-	D_DISK
-};
-
-static struct cdevsw newCDevEntry = {
-	fdopen,
-	fdclose,
-	fdread,
-	fdwrite,
-	fdioctl,
-	(dev_type_stop((*))) enodev,
-	0,
-	seltrue,
-	(dev_type_mmap((*))) enodev,
-	D_DISK
-};
-
-
-/*
- * Store away the old device driver switch entries for cleanup when we unload.
- */
-static struct bdevsw oldBDevEntry;
-static struct cdevsw oldCDevEntry;
-
-static struct lkm_misc _module = {
-	LM_MISC,
-	LKM_VERSION,
-	"iwmfd_lkmentry"
-};
-
-
-/*
- * These functions are called each time the module is loaded or unloaded.
- *
- * Although the LKM interface provides an instance for device drivers,
- * we have to roll our own for a disk driver: We need to patch both,
- * block _and_ character driver entries.
- */
-
-
-/*
- * load_module
- *
- * Check if already loaded and patch device driver switch table entries.
- */
-static int
-load_module (lkmtp, cmd)
-	struct lkm_table *lkmtp;
-	int cmd;
-{
-	int     i;
-	int     err;
-	struct lkm_misc *args;
-
-	i = 0;
-	args = lkmtp->private.lkm_misc;
-#ifdef DEBUG
-	printf("iwm: Calling iwmModuleHandler()...\n");
-#endif
-	/* Don't load twice! (lkmexists() is exported by kern_lkm.c) */
-	err = (0 == lkmexists(lkmtp)) ? 0 : EEXIST;
-
-	if (!err) {
-		/*
-		 * We would like to see the block device in slot #21
-		 * and the char device in slot #43.
-		 * For now, we enforce this.
-		 */
-
-		/* save old -- we must provide our own data area */
-		memcpy(&oldBDevEntry, &bdevsw[21], sizeof(struct bdevsw));
-		memcpy(&oldCDevEntry, &cdevsw[43], sizeof(struct cdevsw));
-
-		/* replace with new */
-		memcpy(&bdevsw[21], &newBDevEntry, sizeof(struct bdevsw));
-		memcpy(&cdevsw[43], &newCDevEntry, sizeof(struct cdevsw));
-		/* 
-		 * If we wanted to allocate device nodes in /dev, 
-		 * we could export the numbers here. 
-		 * For the floppy devices, we assume they
-		 * have already been allocated by /dev/MAKEDEV. 
-		 */
-		args->lkm_offset = i;
-		err = fd_mod_init();
-	}
-	if (!err) {
-		printf("IWM floppy disk driver kernel module.\n");
-		printf("Copyright (c) 1996-1998 Hauke Fath. ");
-		printf("All rights reserved.\n");
-	}
-	return (err);
-}
-
-
-/*
- * unload_module
- *
- * Free any occupied resources and restore patched device driver
- * switch entries.
- */
-static int
-unload_module(lkmtp, cmd)
-	struct lkm_table *lkmtp;
-	int cmd;
-{
-	int     i;
-	int     err;
-	struct lkm_misc *args;
-
-	i = 0;
-	err = 0;
-	args = lkmtp->private.lkm_misc;
-
-#ifdef DEBUG
-	printf("iwm: Calling unloadModule()...\n");
-#endif
-	i = args->lkm_offset;	/* current slot, unused	 */
-	fd_mod_free();
-
-	/* replace current slot contents with old contents */
-	memcpy(&bdevsw[21], &oldBDevEntry, sizeof(struct bdevsw));
-	memcpy(&cdevsw[43], &oldCDevEntry, sizeof(struct cdevsw));
-
-	return (err);
-}
-
+MOD_DEV("iwmfd", "fd", &fd_bdevsw, 21, &fd_cdevsw, 43)
 
 /*
  * iwmfd_lkmentry
  *
  * External entry point; should generally match name of .o file.
- *
- * XXX The DISPATCH macro from <sys/lkm.h> that was originally used here
- * 	does not compile noiselessly with -Werror.
  */
 int
 iwmfd_lkmentry (lkmtp, cmd, ver)
@@ -216,28 +66,30 @@ iwmfd_lkmentry (lkmtp, cmd, ver)
 	int cmd;
 	int ver;
 {
-	int err;
+	int error = 0;
 
-	err = (ver == LKM_VERSION) ? 0 : EINVAL;	/* version mismatch */
+	if (ver != LKM_VERSION)
+		return (EINVAL);
 
-	if (!err) {
-		switch (cmd) {
-		case LKM_E_LOAD:
-			lkmtp->private.lkm_any = (struct lkm_any *) & _module;
-			err = load_module(lkmtp, cmd);
+	switch (cmd) {
+	case LKM_E_LOAD:
+		lkmtp->private.lkm_any = (struct lkm_any *)&_module;
+		error = lkmdispatch(lkmtp, cmd);
+		if (error != 0)
 			break;
+		error = fd_mod_init();
+		break;
 
-		case LKM_E_UNLOAD:
-			err = unload_module(lkmtp, cmd);
-			break;
+	case LKM_E_UNLOAD:
+		fd_mod_free();
+		lkmtp->private.lkm_any = (struct lkm_any *)&_module;
+		error = lkmdispatch(lkmtp, cmd);
+		break;
 
-		case LKM_E_STAT:
-			err = lkm_nofunc(lkmtp, cmd);
-			break;
-		}
+	case LKM_E_STAT:
+		error = lkmdispatch(lkmtp, cmd);
+		break;
 	}
-	if (!err)
-		err = lkmdispatch(lkmtp, cmd);
 
-	return (err);
+	return (error);
 }
