@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2003/10/04 09:19:23 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 2004/01/18 00:47:21 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,29 +79,39 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2003/10/04 09:19:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2004/01/18 00:47:21 sekiya Exp $");
+
+#include "opt_machtypes.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <machine/sysconf.h>
 
 #include <mips/locore.h>
 #include <dev/clock_subr.h>
+#include <dev/ic/i8253reg.h>
+
+#include <machine/machtype.h>
 #include <sgimips/sgimips/clockvar.h>
 
 #define MINYEAR 2001 /* "today" */
 
-extern u_int32_t next_clk_intr;
+u_int32_t next_clk_intr;
+u_int32_t missed_clk_intrs;
+unsigned long last_clk_intr;
 
 static struct device *clockdev;
 static const struct clockfns *clockfns;
 static int clockinitted;
+void mips1_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void mips3_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+unsigned long mips1_clkread(void);
+unsigned long mips3_clkread(void);
 
 void
-clockattach(dev, fns)
-	struct device *dev;
-	const struct clockfns *fns;
+clockattach(struct device *dev, const struct clockfns *fns)
 {
 
 	if (clockfns != NULL)
@@ -130,8 +140,7 @@ clockattach(dev, fns)
  * but that would be a drag.
  */
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 
 	/* do something? */
@@ -147,17 +156,20 @@ cpu_initclocks()
 	if (clockfns == NULL)
 		panic("cpu_initclocks: clock device not attached");
 
-	next_clk_intr = mips3_cp0_count_read() + curcpu()->ci_cycles_per_hz;
-	mips3_cp0_compare_write(next_clk_intr);
+	if (mach_type != MACH_SGI_IP12) {
+		next_clk_intr = mips3_cp0_count_read() + curcpu()->ci_cycles_per_hz;
+		mips3_cp0_compare_write(next_clk_intr);
 
-	tick = 1000000 / hz;	/* number of microseconds between interrupts */
-	tickfix = 1000000 - (hz * tick);
-	if (tickfix) {
-		int ftp;
+		/* number of microseconds between interrupts */
+		tick = 1000000 / hz;
+		tickfix = 1000000 - (hz * tick);
+		if (tickfix) {
+			int ftp;
 
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= (ftp - 1);
-		tickfixinterval = hz >> (ftp - 1);
+			ftp = min(ffs(tickfix), ffs(hz));
+			tickfix >>= (ftp - 1);
+			tickfixinterval = hz >> (ftp - 1);
+		}
 	}
 
 	(*clockfns->cf_init)(clockdev);
@@ -169,8 +181,7 @@ cpu_initclocks()
  * and the time of year clock (if any) provides the rest.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	int deltat, badbase = 0;
 	struct clock_ymdhms dt;
@@ -184,10 +195,8 @@ inittodr(base)
 
 	(*clockfns->cf_get)(clockdev, &dt);
 
-#ifdef DEBUG
-	printf("readclock: %d/%d/%d/%d/%d/%d\n", dt.dt_year, dt.dt_mon,
+	aprint_debug("readclock: %d/%d/%d/%d/%d/%d\n", dt.dt_year, dt.dt_mon,
 			dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec);
-#endif
 	clockinitted = 1;
 
 	/* simple sanity checks */
@@ -206,10 +215,8 @@ inittodr(base)
 	}
 
 	time.tv_sec = clock_ymdhms_to_secs(&dt);
-#ifdef DEBUG
-	printf("time.tv_sec = %lu, time.tv_usec = %lu\n", time.tv_sec,
+	aprint_debug("time.tv_sec = %lu, time.tv_usec = %lu\n", time.tv_sec,
 							  time.tv_usec);
-#endif
 
 	if (!badbase) {
 		/*
@@ -244,10 +251,59 @@ resettodr()
 
 	clock_secs_to_ymdhms(time.tv_sec, &dt);
 
-#ifdef DEBUG
-	printf("setclock: %d/%d/%d/%d/%d/%d\n", dt.dt_year, dt.dt_mon,
+	aprint_debug("setclock: %d/%d/%d/%d/%d/%d\n", dt.dt_year, dt.dt_mon,
 			    dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec);
-#endif
 
 	(*clockfns->cf_set)(clockdev, &dt);
+}
+
+void
+mips1_clock_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+{
+	return;
+}
+
+void
+mips3_clock_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+{
+        u_int32_t newcnt;
+	struct clockframe cf;
+
+	last_clk_intr = mips3_cp0_count_read();
+
+	next_clk_intr += curcpu()->ci_cycles_per_hz;
+	mips3_cp0_compare_write(next_clk_intr);
+	newcnt = mips3_cp0_count_read();
+
+	/*
+	 * Missed one or more clock interrupts, so let's start
+	 * counting again from the current value.
+	 */
+	if ((next_clk_intr - newcnt) & 0x80000000) {
+		missed_clk_intrs++;
+
+		next_clk_intr = newcnt + curcpu()->ci_cycles_per_hz;
+		mips3_cp0_compare_write(next_clk_intr);
+	}
+
+	cf.pc = pc;
+	cf.sr = status;
+
+	hardclock(&cf);
+}
+
+unsigned long
+mips1_clkread(void)
+{
+	return 0;
+}
+
+unsigned long
+mips3_clkread(void)
+{
+	uint32_t res, count;
+
+	count = mips3_cp0_count_read() - last_clk_intr;
+	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
+	return (res);
 }
