@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.7 2000/02/02 14:44:09 enami Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.8 2000/02/03 23:03:11 enami Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -313,22 +313,22 @@ pcic_isa_config_interrupts(self)
 	} else if (chipmask == 0 ||
 	    isa_intr_alloc(ic, chipmask, IST_EDGE, &sc->irq)) {
 		printf("%s: no available irq", sc->dev.dv_xname);
-		sc->irq = -1;
+		sc->irq = IRQUNK;
 	} else if ((chipmask & ~(1 << sc->irq)) == 0 && chipuniq == 0) {
 		printf("%s: can\'t share irq with cards", sc->dev.dv_xname);
-		sc->irq = -1;
+		sc->irq = IRQUNK;
 	}
-	if (sc->irq != -1) {
+	if (sc->irq != IRQUNK) {
 		printf("%s: using irq %d\n", sc->dev.dv_xname, sc->irq);
 		sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY,
 		    pcic_intr, sc);
 		if (sc->ih == NULL) {
 			printf("%s: can't establish interrupt",
 			    sc->dev.dv_xname);
-			sc->irq = -1;
+			sc->irq = IRQUNK;
 		}
 	}
-	if (sc->irq == -1)
+	if (sc->irq == IRQUNK)
 		printf(", will poll for card insertion and removal\n");
 
 	pcic_attach_sockets_finish(sc);
