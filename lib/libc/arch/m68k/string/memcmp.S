@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)bcmp.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: memcmp.S,v 1.4 1993/12/06 23:45:48 mycroft Exp $"
+	.asciz "$Id: memcmp.S,v 1.5 1995/02/08 18:33:17 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* memcmp(s1, s2, n) */
@@ -54,36 +54,36 @@
  *	- use nested DBcc instructions or use one and limit size to 64K
  */
 ENTRY(memcmp)
-	movl	sp@(4),a0	/* string 1 */
-	movl	sp@(8),a1	/* string 2 */
-	movl	sp@(12),d0	/* length */
-	jeq	bcdone		/* if zero, nothing to do */
+	movl	sp@(4),a0		| string 1
+	movl	sp@(8),a1		| string 2
+	movl	sp@(12),d0		| length
+	beq	bcdone			| if zero, nothing to do
 	movl	a0,d1
-	btst	#0,d1		/* string 1 address odd? */
-	jeq	bceven		/* no, skip alignment */
-	cmpmb	a0@+,a1@+	/* yes, compare a byte */
-	jne	bcnoteq		/* not equal, return non-zero */
-	subql	#1,d0		/* adjust count */
-	jeq	bcdone		/* count 0, reutrn zero */
+	btst	#0,d1			| string 1 address odd?
+	beq	bceven			| no, skip alignment
+	cmpmb	a0@+,a1@+		| yes, compare a byte
+	bne	bcnoteq			| not equal, return non-zero
+	subql	#1,d0			| adjust count
+	beq	bcdone			| count 0, reutrn zero
 bceven:
 	movl	a1,d1
-	btst	#0,d1		/* string 2 address odd? */
-	jne	bcbloop		/* yes, no hope for alignment, compare bytes */
-	movl	d0,d1		/* no, both even */
-	lsrl	#2,d1		/* convert count to longword count */
-	jeq	bcbloop		/* count 0, skip longword loop */
+	btst	#0,d1			| string 2 address odd?
+	bne	bcbloop			| yes, no hope for alignment, compare bytes
+	movl	d0,d1			| no, both even
+	lsrl	#2,d1			| convert count to longword count
+	beq	bcbloop			| count 0, skip longword loop
 bclloop:
-	cmpml	a0@+,a1@+	/* compare a longword */
-	jne	bcnoteql	/* not equal, return non-zero */
-	subql	#1,d1		/* adjust count */
-	jne	bclloop		/* still more, keep comparing */
-	andl	#3,d0		/* what remains */
-	jeq	bcdone		/* nothing, all done */
+	cmpml	a0@+,a1@+		| compare a longword
+	bne	bcnoteql		| not equal, return non-zero
+	subql	#1,d1			| adjust count
+	bne	bclloop			| still more, keep comparing
+	andl	#3,d0			| what remains
+	beq	bcdone			| nothing, all done
 bcbloop:
-	cmpmb	a0@+,a1@+	/* compare a byte */
-	jne	bcnoteq		/* not equal, return non-zero */
-	subql	#1,d0		/* adjust count */
-	jne	bcbloop		/* still more, keep going */
+	cmpmb	a0@+,a1@+		| compare a byte
+	bne	bcnoteq			| not equal, return non-zero
+	subql	#1,d0			| adjust count
+	bne	bcbloop			| still more, keep going
 	rts
 bcnoteql:
 	subql	#4,a0
