@@ -69,7 +69,7 @@
  * Paul Mackerras (paulus@cs.anu.edu.au).
  */
 
-/* $Id: if_ppp.c,v 1.9 1994/05/13 06:02:48 mycroft Exp $ */
+/* $Id: if_ppp.c,v 1.10 1994/05/24 02:33:56 cgd Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
 #include "ppp.h"
@@ -423,7 +423,7 @@ pppwrite(tp, uio, flag)
 	}
 	if (uio->uio_resid >= MCLBYTES / 2)
 	    MCLGET(m, M_DONTWAIT);
-	len = MIN(M_TRAILINGSPACE(m), uio->uio_resid);
+	len = min(M_TRAILINGSPACE(m), uio->uio_resid);
 	if (error = uiomove(mtod(m, u_char *), len, uio)) {
 	    m_freem(m0);
 	    return (error);

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_vfsops.c	7.56 (Berkeley) 6/28/91
- *	$Id: ufs_vfsops.c,v 1.17 1994/05/18 10:21:49 cgd Exp $
+ *	$Id: ufs_vfsops.c,v 1.18 1994/05/24 02:33:03 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -299,8 +299,8 @@ mountfs(devvp, mp, p)
 	devvp->v_specflags |= SI_MOUNTEDON;
 
 	/* Sanity checks for old file systems.			   XXX */
-	fs->fs_npsect = MAX(fs->fs_npsect, fs->fs_nsect);	/* XXX */
-	fs->fs_interleave = MAX(fs->fs_interleave, 1);		/* XXX */
+	fs->fs_npsect = max(fs->fs_npsect, fs->fs_nsect);	/* XXX */
+	fs->fs_interleave = max(fs->fs_interleave, 1);		/* XXX */
 	if (fs->fs_postblformat == FS_42POSTBLFMT)		/* XXX */
 		fs->fs_nrpos = 8;				/* XXX */
 	return (0);
