@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";*/
-static char *rcsid = "$Id: getrpcent.c,v 1.2 1994/09/15 02:11:17 deraadt Exp $";
+static char *rcsid = "$Id: getrpcent.c,v 1.3 1994/12/04 01:13:18 cgd Exp $";
 #endif
 
 /*
@@ -38,6 +38,7 @@ static char *rcsid = "$Id: getrpcent.c,v 1.2 1994/09/15 02:11:17 deraadt Exp $";
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>
 #include <rpc/rpc.h>

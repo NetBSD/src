@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)xdr_mem.c 1.19 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)xdr_mem.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: xdr_mem.c,v 1.1 1993/10/07 07:30:27 cgd Exp $";
+static char *rcsid = "$Id: xdr_mem.c,v 1.2 1994/12/04 01:13:41 cgd Exp $";
 #endif
 
 /*
@@ -53,9 +53,9 @@ static bool_t	xdrmem_getlong();
 static bool_t	xdrmem_putlong();
 static bool_t	xdrmem_getbytes();
 static bool_t	xdrmem_putbytes();
-static u_int	xdrmem_getpos();
+static u_int	xdrmem_getpos(); /* XXX w/64-bit pointers, u_int not enough! */
 static bool_t	xdrmem_setpos();
-static long *	xdrmem_inline();
+static int32_t *xdrmem_inline();
 static void	xdrmem_destroy();
 
 static struct	xdr_ops xdrmem_ops = {
@@ -99,10 +99,10 @@ xdrmem_getlong(xdrs, lp)
 	long *lp;
 {
 
-	if ((xdrs->x_handy -= sizeof(long)) < 0)
+	if ((xdrs->x_handy -= sizeof(int32_t)) < 0)
 		return (FALSE);
-	*lp = (long)ntohl((u_long)(*((long *)(xdrs->x_private))));
-	xdrs->x_private += sizeof(long);
+	*lp = (long)ntohl((u_int32_t)(*((int32_t *)(xdrs->x_private))));
+	xdrs->x_private += sizeof(int32_t);
 	return (TRUE);
 }
 
@@ -112,10 +112,10 @@ xdrmem_putlong(xdrs, lp)
 	long *lp;
 {
 
-	if ((xdrs->x_handy -= sizeof(long)) < 0)
+	if ((xdrs->x_handy -= sizeof(int32_t)) < 0)
 		return (FALSE);
-	*(long *)xdrs->x_private = (long)htonl((u_long)(*lp));
-	xdrs->x_private += sizeof(long);
+	*(int32_t *)xdrs->x_private = (int32_t)htonl((int32_t)(*lp));
+	xdrs->x_private += sizeof(int32_t);
 	return (TRUE);
 }
 
@@ -152,7 +152,8 @@ xdrmem_getpos(xdrs)
 	register XDR *xdrs;
 {
 
-	return ((u_int)xdrs->x_private - (u_int)xdrs->x_base);
+	/* XXX w/64-bit pointers, u_int not enough! */
+	return ((u_long)xdrs->x_private - (u_long)xdrs->x_base);
 }
 
 static bool_t
@@ -166,20 +167,20 @@ xdrmem_setpos(xdrs, pos)
 	if ((long)newaddr > (long)lastaddr)
 		return (FALSE);
 	xdrs->x_private = newaddr;
-	xdrs->x_handy = (int)lastaddr - (int)newaddr;
+	xdrs->x_handy = (long)lastaddr - (long)newaddr;
 	return (TRUE);
 }
 
-static long *
+static int32_t *
 xdrmem_inline(xdrs, len)
 	register XDR *xdrs;
 	int len;
 {
-	long *buf = 0;
+	int32_t *buf = 0;
 
 	if (xdrs->x_handy >= len) {
 		xdrs->x_handy -= len;
-		buf = (long *) xdrs->x_private;
+		buf = (int32_t *) xdrs->x_private;
 		xdrs->x_private += len;
 	}
 	return (buf);

@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$Id: clnt_raw.c,v 1.1 1993/10/07 07:29:43 cgd Exp $";
+static char *rcsid = "$Id: clnt_raw.c,v 1.2 1994/12/04 01:13:14 cgd Exp $";
 #endif
 
 /*
@@ -44,6 +44,7 @@ static char *rcsid = "$Id: clnt_raw.c,v 1.1 1993/10/07 07:29:43 cgd Exp $";
  * any interference from the kernal.
  */
 
+#include <stdlib.h>
 #include <rpc/rpc.h>
 
 #define MCALL_MSG_SIZE 24
@@ -149,7 +150,7 @@ call_again:
 	XDR_SETPOS(xdrs, 0);
 	((struct rpc_msg *)clp->mashl_callmsg)->rm_xid ++ ;
 	if ((! XDR_PUTBYTES(xdrs, clp->mashl_callmsg, clp->mcnt)) ||
-	    (! XDR_PUTLONG(xdrs, (long *)&proc)) ||
+	    (! XDR_PUTLONG(xdrs, &proc)) ||
 	    (! AUTH_MARSHALL(h->cl_auth, xdrs)) ||
 	    (! (*xargs)(xdrs, argsp))) {
 		return (RPC_CANTENCODEARGS);

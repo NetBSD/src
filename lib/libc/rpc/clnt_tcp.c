@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$Id: clnt_tcp.c,v 1.2 1994/08/20 00:55:26 deraadt Exp $";
+static char *rcsid = "$Id: clnt_tcp.c,v 1.3 1994/12/04 01:13:15 cgd Exp $";
 #endif
  
 /*
@@ -53,6 +53,7 @@ static char *rcsid = "$Id: clnt_tcp.c,v 1.2 1994/08/20 00:55:26 deraadt Exp $";
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -60,8 +61,6 @@ static char *rcsid = "$Id: clnt_tcp.c,v 1.2 1994/08/20 00:55:26 deraadt Exp $";
 #include <rpc/pmap_clnt.h>
 
 #define MCALL_MSG_SIZE 24
-
-extern int errno;
 
 static int	readtcp();
 static int	writetcp();
@@ -235,7 +234,7 @@ clnttcp_call(h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
 	register XDR *xdrs = &(ct->ct_xdrs);
 	struct rpc_msg reply_msg;
 	u_long x_id;
-	u_long *msg_x_id = (u_long *)(ct->ct_mcall);	/* yuk */
+	u_int32_t *msg_x_id = (u_int32_t *)(ct->ct_mcall);	/* yuk */
 	register bool_t shipnow;
 	int refreshes = 2;
 
@@ -252,7 +251,7 @@ call_again:
 	ct->ct_error.re_status = RPC_SUCCESS;
 	x_id = ntohl(--(*msg_x_id));
 	if ((! XDR_PUTBYTES(xdrs, ct->ct_mcall, ct->ct_mpos)) ||
-	    (! XDR_PUTLONG(xdrs, (long *)&proc)) ||
+	    (! XDR_PUTLONG(xdrs, &proc)) ||
 	    (! AUTH_MARSHALL(h->cl_auth, xdrs)) ||
 	    (! (*xdr_args)(xdrs, args_ptr))) {
 		if (ct->ct_error.re_status == RPC_SUCCESS)

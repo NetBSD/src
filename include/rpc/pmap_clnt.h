@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.h,v 1.4 1994/10/26 00:56:58 cgd Exp $	*/
+/*	$NetBSD: pmap_clnt.h,v 1.5 1994/12/04 01:12:42 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -77,7 +77,8 @@ extern enum clnt_stat	pmap_rmtcall	__P((struct sockaddr_in *,
 extern enum clnt_stat	clnt_broadcast	__P((u_long, u_long, u_long,
 					     xdrproc_t, char *,
 					     xdrproc_t, char *,
-					     bool_t (*)()));
+					     bool_t (*) __P((caddr_t,
+						struct sockaddr_in *))));
 extern u_short		pmap_getport	__P((struct sockaddr_in *,
 					     u_long, u_long, u_int));
 __END_DECLS
