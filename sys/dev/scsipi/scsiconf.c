@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.40 1995/08/14 13:01:42 briggs Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.41 1995/08/21 09:30:09 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -502,8 +502,8 @@ scsi_probedev(scsi, target, lun)
 	sa.sa_inqbuf = &inqbuf;
 
 	if ((cf = config_search(scsibussubmatch, (struct device *)scsi, &sa)) != 0) {
-		config_attach((struct device *)scsi, cf, &sa, NULL);
 		scsi->sc_link[target][lun] = sc_link;
+		config_attach((struct device *)scsi, cf, &sa, NULL);
 	} else
 		goto bad;
 
