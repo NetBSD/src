@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.12 2003/02/01 14:48:17 dsl Exp $	 */
+/*	$NetBSD: devopen.c,v 1.13 2003/04/01 21:10:45 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -96,7 +96,7 @@ devopen(f, fname, file)
 	unsigned int    unit, partition;
 	int             biosdev;
 	int             error;
-	struct devsw   *dp;
+	const struct devsw   *dp;
 
 	if ((error = parsebootfile(fname, &fsname, &devname,
 				   &unit, &partition, (const char **) file))
