@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_boot.cpp,v 1.3 2001/05/08 18:51:25 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_boot.cpp,v 1.4 2001/05/16 08:40:51 enami Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@ MIPSBoot::setup()
 BOOL
 MIPSBoot::create()
 {
+	SYSTEM_INFO sysinfo;
 	size_t pagesz;
 	int shift;
 	BOOL(*lock_pages)(LPVOID, DWORD, PDWORD, int);
@@ -116,7 +117,10 @@ MIPSBoot::create()
 		break;
 	case ARCHITECTURE_MIPS_VR41:
 		_arch = new VR41XX(_cons, _mem);
-		pagesz = 1024;
+		GetSystemInfo(&sysinfo);
+		DPRINTF((TEXT("sysinfo.dwPageSize = %d\n"),
+		    sysinfo.dwPageSize));
+		pagesz = sysinfo.dwPageSize;
 		shift = 4; // VR41 specific shift. for LockPages()
 		break;
 	}
