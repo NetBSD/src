@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr.c,v 1.1 2002/06/18 08:30:33 fvdl Exp $ */
+/*	$NetBSD: mtrr.c,v 1.2 2002/07/07 23:25:37 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr.c,v 1.1 2002/06/18 08:30:33 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr.c,v 1.2 2002/07/07 23:25:37 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -636,6 +636,11 @@ i686_mtrr_set(struct mtrr *mtrrp, int *n, struct proc *p, int flags)
 	int i, error;
 	struct mtrr mtrr;
 
+	if (*n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR)) {
+		*n = 0;
+		return EINVAL;
+	}
+
 	error = 0;
 	for (i = 0; i < *n; i++) {
 		if (flags & MTRR_GETSET_USER) {
@@ -661,6 +666,8 @@ static int
 i686_mtrr_get(struct mtrr *mtrrp, int *n, struct proc *p, int flags)
 {
 	int idx, i, error;
+
+	error = 0;
 
 	if (mtrrp == NULL) {
 		*n = MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR;
