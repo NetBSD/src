@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.13.2.4 2003/06/02 15:01:14 tron Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.13.2.5 2003/06/02 15:03:42 tron Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -113,6 +113,8 @@
  *     non-zero integral value.  Otherwise, 0.
  *
  *   _STATE_NEEDS_EXPLICIT_INIT(ps) :
+ *     some encodings, states needs some explicit initialization.
+ *     (ie. initialization with memset isn't enough.)
  *     If the encoding state pointed by "ps" needs to be initialized
  *     explicitly, return non-zero. Otherwize, 0.
  *
@@ -419,12 +421,14 @@ _FUNCNAME(ctype_mblen)(void * __restrict cl,
 		       const char * __restrict s, size_t n,
 		       int * __restrict nresult)
 {
+	_ENCODING_STATE *psenc = &_CEI_TO_STATE(_TO_CEI(cl), mblen);
+	_ENCODING_INFO *ei = _CEI_TO_EI(_TO_CEI(cl));
 
 	_DIAGASSERT(cl != NULL);
 
-	return _FUNCNAME(mbtowc_priv)(_CEI_TO_EI(_TO_CEI(cl)), NULL, s, n,
-				      &_CEI_TO_STATE(_TO_CEI(cl), mblen),
-				      nresult);
+	if (_STATE_NEEDS_EXPLICIT_INIT(psenc))
+		_FUNCNAME(init_state)(ei, psenc);
+	return _FUNCNAME(mbtowc_priv)(ei, NULL, s, n, psenc, nresult);
 }
 
 static int
@@ -535,12 +539,14 @@ _FUNCNAME(ctype_mbtowc)(void * __restrict cl, wchar_t * __restrict pwc,
 			const char * __restrict s, size_t n,
 			int * __restrict nresult)
 {
+	_ENCODING_STATE *psenc = &_CEI_TO_STATE(_TO_CEI(cl), mbtowc);
+	_ENCODING_INFO *ei = _CEI_TO_EI(_TO_CEI(cl));
 
 	_DIAGASSERT(cl != NULL);
 
-	return _FUNCNAME(mbtowc_priv)(cl, pwc, s, n,
-				      &_CEI_TO_STATE(_TO_CEI(cl), mbtowc),
-				      nresult);
+	if (_STATE_NEEDS_EXPLICIT_INIT(psenc))
+		_FUNCNAME(init_state)(ei, psenc);
+	return _FUNCNAME(mbtowc_priv)(ei, pwc, s, n, psenc, nresult);
 }
 
 static int
@@ -609,6 +615,8 @@ _FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	_DIAGASSERT(cl != NULL);
 
 	psenc = &_CEI_TO_STATE(_TO_CEI(cl), wctomb);
+	if (_STATE_NEEDS_EXPLICIT_INIT(psenc))
+		_FUNCNAME(init_state)(_CEI_TO_EI(_TO_CEI(cl)), psenc);
 	if (s == NULL) {
 		_FUNCNAME(init_state)(_CEI_TO_EI(_TO_CEI(cl)), psenc);
 		*nresult = _ENCODING_IS_STATE_DEPENDENT;
