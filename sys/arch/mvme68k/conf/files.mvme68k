@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.7 1996/05/20 01:15:54 chuck Exp $
+#	$NetBSD: files.mvme68k,v 1.8 1996/08/12 00:16:25 mycroft Exp $
 
 # config file for mvme68k
 
@@ -73,7 +73,7 @@ file arch/mvme68k/mvme68k/conf.c
 file arch/mvme68k/mvme68k/disksubr.c
 file arch/mvme68k/mvme68k/dkbad.c
 file arch/mvme68k/mvme68k/isr.c
-file arch/mvme68k/mvme68k/machdep.c		config-dependent
+file arch/mvme68k/mvme68k/machdep.c
 file arch/mvme68k/mvme68k/mem.c
 file arch/mvme68k/mvme68k/pmap.c
 file arch/mvme68k/mvme68k/pmap_bootstrap.c
