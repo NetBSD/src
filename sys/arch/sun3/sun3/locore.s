@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.42 1997/01/18 19:32:38 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.43 1997/01/27 17:11:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -91,7 +91,6 @@ L_per_pmeg:
 
 | Kernel is now double mapped at zero and KERNBASE.
 | Force a long jump to the relocated code (high VA).
-
 	movl	#IC_CLEAR, d0		| Flush the I-cache
 	movc	d0, cacr
 	jmp L_high_code:l		| long jump
@@ -104,11 +103,11 @@ L_high_code:
 | Our boot loader leaves a copy of the kernel's exec header
 | just before the start of the kernel text segment, so the
 | kernel can sanity-check the DDB symbols at [end...esym].
-| Pass the struct exec at tmpstk-32 to sun3_bootstrap().
+| Pass the struct exec at tmpstk-32 to __bootstrap().
 	lea	tmpstk-32, sp
-	jsr	_sun3_bootstrap
+	jsr	__bootstrap		| See sun3_startup.c
 
-| Now that sun3_bootstrap is done using the PROM setcxsegmap
+| Now that __bootstrap() is done using the PROM setcxsegmap
 | we can safely set the sfc/dfc to something != FC_CONTROL
 	moveq	#FC_USERD, d0		| make movs access "user data"
 	movc	d0, sfc			| space for copyin/copyout
@@ -120,7 +119,7 @@ L_high_code:
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
 
-| Note curpcb was already set in sun3_bootstrap.
+| Note curpcb was already set in __bootstrap().
 | Will do fpu initialization during autoconfig (see fpu.c)
 | The interrupt vector table and stack are now ready.
 | Interrupts will be enabled later, AFTER  autoconfiguration
@@ -583,7 +582,7 @@ Lbrkpt2:
 	| Drop into the PROM temporarily...
 	movl	a2,sp@-			| push frame ptr
 	movl	d2,sp@-			| push trap type
-	jbsr	_nodb_trap		| handle the trap
+	jbsr	__nodb_trap		| handle the trap
 	addql	#8,sp			| pop args
 Lbrkpt3:
 	| The stack pointer may have been modified, or
@@ -891,7 +890,7 @@ Lrem2:
 	jbsr	_panic
 Lrem3:
 	.asciz	"remrunqueue"
-
+	.even
 
 | Message for Lbadsw panic
 Lsw0:
@@ -904,9 +903,6 @@ Lsw0:
 _masterpaddr:			| XXX compatibility (debuggers)
 _curpcb:
 	.long	0
-mdpflag:
-	.byte	0		| copy of proc md_flags low byte
-	.align	2
 	.comm	nullpcb,SIZEOF_PCB
 	.text
 
@@ -1020,7 +1016,7 @@ Lsw2:
 	movl	a0,_curproc
 	clrl	_want_resched
 #ifdef notyet
-	movl	sp@+,a1
+	movl	sp@+,a1			| XXX - Make this work!
 	cmpl	a0,a1			| switching to same proc?
 	jeq	Lswdone			| yes, skip save and restore
 #endif
@@ -1042,6 +1038,13 @@ Lsw2:
 	fmovem	fpcr/fpsr/fpi,a2@(FPF_FPCR)	| save FP control regs
 Lswnofpsave:
 
+	/*
+	 * Now that we have saved all the registers that must be
+	 * preserved, we are free to use those registers until
+	 * we load the registers for the switched-to process.
+	 * In this section, keep:  a0=curproc, a1=curpcb
+	 */
+
 #ifdef DIAGNOSTIC
 	tstl	a0@(P_WCHAN)
 	jne	Lbadsw
@@ -1051,29 +1054,28 @@ Lswnofpsave:
 	clrl	a0@(P_BACK)		| clear back link
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_curpcb
-	movb	a0@(P_MDFLAG+3),mdpflag	| low byte of p_md.md_flags
 
 	/* see if pmap_activate needs to be called; should remove this */
-	movl	a0@(P_VMSPACE),a0	| vmspace = p->p_vmspace
+	movl	a0@(P_VMSPACE),a2	| a2 = p->p_vmspace
 #ifdef DIAGNOSTIC
-	tstl	a0			| map == VM_MAP_NULL?
+	tstl	a2			| map == VM_MAP_NULL?
 	jeq	Lbadsw			| panic
 #endif
 
 | Important note:  We MUST call pmap_activate to set the
 | MMU context register (like setting a root table pointer).
-	lea	a0@(VM_PMAP),a0		| pmap = &vmspace.vm_pmap
-	pea	a1@			| push pcb (at p_addr)
-	pea	a0@			| push pmap
-	jbsr	_pmap_activate		| pmap_activate(pmap, pcb)
-	addql	#8,sp
+| XXX - Eventually, want to do that here, inline.
+	lea	a2@(VM_PMAP),a2		| pmap = &vmspace.vm_pmap
+	pea	a2@			| push pmap
+	jbsr	_pmap_activate		| pmap_activate(pmap)
+	addql	#4,sp
 	movl	_curpcb,a1		| restore p_addr
+| Note: pmap_activate will clear the cache if needed.
 
-| XXX - Should do this in pmap_activeate only if context reg changed.
-	movl	#IC_CLEAR,d0
-	movc	d0,cacr
-
-Lcxswdone:
+	/*
+	 * Reload the registers for the new process.
+	 * After this point we can only use d0,d1,a0,a1
+	 */
 	moveml	a1@(PCB_REGS),#0xFCFC	| reload registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
@@ -1139,8 +1141,8 @@ ENTRY(ICIA)
 ENTRY(DCIU)
 	rts
 
-/* ICPL, ICPP, DCPL, DCPP, DCPA, DCFL, DCFP, PCIA */
-/* ecacheon, ecacheoff */
+/* ICPL, ICPP, DCPL, DCPP, DCPA, DCFL, DCFP */
+/* PCIA, ecacheon, ecacheoff */
 
 /*
  * Get callers current SP value.
