@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.171 2004/01/14 22:29:03 jonathan Exp $
+# $NetBSD: GENERIC,v 1.172 2004/03/29 07:47:57 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.171 $"
+#ident 		"GENERIC-$Revision: 1.172 $"
 
 maxusers	32
 
@@ -99,6 +99,7 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
+file-system	SMBFS		# CIFS; also needs nsmb (below)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -488,3 +489,4 @@ pseudo-device	openfirm		# /dev/openfirm
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	nsmb			# SMB requester
