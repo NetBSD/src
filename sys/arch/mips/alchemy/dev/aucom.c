@@ -1,6 +1,6 @@
 #define	AU1x00_UART	/* XXX */
 
-/*	$NetBSD: aucom.c,v 1.1.4.3 2002/08/31 13:56:43 gehenna Exp $	*/
+/*	$NetBSD: aucom.c,v 1.1.4.4 2002/09/01 13:36:15 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.1.4.3 2002/08/31 13:56:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.1.4.4 2002/09/01 13:36:15 gehenna Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -616,7 +616,7 @@ com_attach_subr(struct com_softc *sc)
 		int maj;
 
 		/* locate the major number */
-		maj = cdevsw_lookup(&com_cdevsw);
+		maj = cdevsw_lookup_major(&com_cdevsw);
 
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
@@ -710,7 +710,7 @@ com_detach(struct device *self, int flags)
 	int maj, mn;
 
 	/* locate the major number */
-	maj = cdevsw_lookup(&com_cdevsw);
+	maj = cdevsw_lookup_major(&com_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
 	mn = self->dv_unit;
