@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.8.10.2 1999/07/06 11:03:08 itojun Exp $	*/
+/*	$NetBSD: sockio.h,v 1.8.10.3 1999/11/30 13:36:19 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
