@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.1 2002/07/05 13:31:39 scw Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.2 2002/08/30 11:03:25 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -200,9 +200,9 @@ sysfpga_intr_handler_irl1(void *arg)
 
 	ih = sc->sc_ih_superio;
 
-	for (intsr0 = sysfpga_reg_read(sc, 0);
+	for (intsr0 = sysfpga_reg_read(sc, SYSFPGA_REG_INTSR(0));
 	    (intsr0 & sc->sc_intmr[0]) != 0;
-	    intsr0 = sysfpga_reg_read(sc, 0)) {
+	    intsr0 = sysfpga_reg_read(sc, SYSFPGA_REG_INTSR(0))) {
 		intsr0 &= sc->sc_intmr[0];
 
 		if (intsr0 & (1 << SYSFPGA_SUPERIO_INUM_UART1))
