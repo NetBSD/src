@@ -271,7 +271,7 @@ sparcnbsd_fill_reg64 (char *regs, int regno)
 	{
 	  if (regno == i || regno == -1)
 	    regcache_collect (i, regs + REG64_OFFSET_GLOBAL +
-	                      ((i - G0_REGNUM) * 4));
+	                      ((i - G0_REGNUM) * 8));
 	}
     }
 
@@ -281,7 +281,7 @@ sparcnbsd_fill_reg64 (char *regs, int regno)
 	{
 	  if (regno == i || regno == -1)
 	    regcache_collect (i, regs + REG64_OFFSET_OUT +
-			      ((i - O0_REGNUM) * 4));
+			      ((i - O0_REGNUM) * 8));
         }
     }
 
@@ -317,7 +317,7 @@ sparcnbsd_supply_fpreg64 (char *fpregs, int regno)
   for (; i <= 47; i++)
     {
       if (regno == (FP0_REGNUM + i) || regno == -1)
-	supply_register (FP0_REGNUM + i, fpregs + (32 * 4) + (i * 8));
+	supply_register (FP0_REGNUM + i, fpregs + (32 * 4) + ((i - 32) * 8));
     }
 
   if (regno == FPS_REGNUM || regno == -1)
@@ -355,7 +355,7 @@ sparcnbsd_fill_fpreg64 (char *fpregs, int regno)
   for (; i <= 47; i++)
     {
       if (regno == (FP0_REGNUM + i) || regno == -1)
-	regcache_collect (FP0_REGNUM + i, fpregs + (32 * 4) + (i * 8));
+	regcache_collect (FP0_REGNUM + i, fpregs + (32 * 4) + ((i - 32) * 8));
     }
 
   if (regno == FPS_REGNUM || regno == -1)
