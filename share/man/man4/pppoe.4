@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.14 2002/09/01 20:16:47 wiz Exp $
+.\"	$NetBSD: pppoe.4,v 1.15 2003/02/04 21:56:34 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,10 +98,10 @@ file.
 .Ss MSS/MTU problems
 If you are using a
 .Nm
-interface, you will have an unusual low MTU for todays Internet.
+interface, you will have an unusually low MTU for todays Internet.
 Combined with a lot of misconfigured sites (host using path MTU discovery
 behind a router blocking all ICMP traffic) this will often cause problems.
-Connections to this servers will only work if your system advertises the
+Connections to these servers will only work if your system advertises the
 right MSS in the TCP three way handshake.
 To get the right MSS, you need to set
 .Bd -literal -offset indent
