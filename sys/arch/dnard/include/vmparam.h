@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2001/05/09 15:40:56 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2001/05/09 22:30:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_ARM32_VMPARAM_H_
-#define	_ARM32_VMPARAM_H_
+#ifndef	_DNARD_VMPARAM_H_
+#define	_DNARD_VMPARAM_H_
 
 /* for pt_entry_t definition */
 #include <machine/pte.h>
@@ -199,11 +199,13 @@
  * for each chunk of noncontig RAM you have.
  */
 
+#define	__HAVE_PMAP_PHYSSEG
+
 struct pmap_physseg {
 	struct pv_entry *pvent;		/* pv_entry array */
 	char *attrs;			/* attrs array */
 };
 
-#endif	/* _ARM32_VMPARAM_H_ */
+#endif	/* _DNARD_VMPARAM_H_ */
 
 /* End of vmparam.h */
