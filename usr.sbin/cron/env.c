@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.9 1998/10/11 10:27:46 scw Exp $	*/
+/*	$NetBSD: env.c,v 1.10 1998/10/12 22:15:47 aidan Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: env.c,v 2.7 1994/01/26 02:25:50 vixie Exp";
 #else
-__RCSID("$NetBSD: env.c,v 1.9 1998/10/11 10:27:46 scw Exp $");
+__RCSID("$NetBSD: env.c,v 1.10 1998/10/12 22:15:47 aidan Exp $");
 #endif
 #endif
 
@@ -134,7 +134,7 @@ load_env(envstr, f)
 	Debug(DPARS, ("load_env, read <%s>\n", envstr))
 
 	s = strchr(envstr, '=');
-	if (s) {
+	if (s && (*envstr != '"' || *envstr == '\'')) {
 		/*
 		 * decide if this is an environment variable or not by
 		 * checking for spaces in the middle of the variable name.
@@ -154,6 +154,22 @@ load_env(envstr, f)
 		 * space should equal s..  otherwise, this is not an
 		 * environment set command.
 		 */
+	} else if (s && (*envstr == '"' || *envstr == '\'')) {
+		/*
+		 * allow quoting the environment variable name to contain
+		 * spaces.  The close quote will have to exist before the
+		 * '=' character.
+		 */
+		space = strchr(envstr+1, *envstr);
+		if (!space || space > s) {
+			Debug(DPARS, ("load_env, didn't get valid string"));
+			fseek(f, filepos, 0);
+			Set_LineNum(fileline);
+			return (FALSE);
+		}
+		space++;
+		while (space < s && isspace(*space))
+			space++;
 	}
 	if (s != NULL && s != envstr && *space == '=') {
 		/* XXX:
@@ -162,7 +178,12 @@ load_env(envstr, f)
 		 */
 		*s++ = '\0';
 		val = s;
-		name = strdup(envstr);
+		if (*envstr == '"' || *envstr == '\'') {
+			space = strchr(envstr+1, *envstr);
+			*space = 0;
+			name = strdup(envstr+1);
+		} else
+			name = strdup(envstr);
 	} else {
 		Debug(DPARS, ("load_env, didn't get valid string"));
 		fseek(f, filepos, 0);
