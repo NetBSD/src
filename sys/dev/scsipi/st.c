@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.44 1994/12/28 19:43:17 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.45 1994/12/28 19:55:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1431,7 +1431,7 @@ st_space(st, number, what, flags)
 	lto3b(number, cmd.number);
 
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, 0, 600000, NULL, flags);
+	    sizeof(cmd), 0, 0, 0, 900000, NULL, flags);
 }
 
 /*
