@@ -19,13 +19,13 @@
  *		-d	use compiled-in rootdev
  *		-r	specify root device
  *
- *	$NetBSD: loadbsd.c,v 1.1 1998/09/01 19:55:33 itohy Exp $
+ *	$NetBSD: loadbsd.c,v 1.2 1999/04/30 15:31:18 minoura Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.1 1998/09/01 19:55:33 itohy Exp $");
-#define VERSION	"$Revision: 1.1 $ $Date: 1998/09/01 19:55:33 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.2 1999/04/30 15:31:18 minoura Exp $");
+#define VERSION	"$Revision: 1.2 $ $Date: 1999/04/30 15:31:18 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>
@@ -370,7 +370,7 @@ read_kernel(fn)
 	if (opt_v)
 		xwarnx("trampoline arg at %p", arg);
 
-	arg->bsr_inst = TRAMP_BSR + sizeof(struct tramparg) - 4;
+	arg->bsr_inst = TRAMP_BSR + sizeof(struct tramparg) - 2;
 	arg->tmp_stack = (char *) arg + sizeof(struct tramparg)
 				+ size_tramp + SIZE_TMPSTACK;
 	arg->mpu_type = IOCS_MPU_STAT() & 0xff;
