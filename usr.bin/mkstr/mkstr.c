@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstr.c,v 1.4 1995/09/28 06:22:20 tls Exp $	*/
+/*	$NetBSD: mkstr.c,v 1.5 1997/05/17 20:06:57 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkstr.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mkstr.c,v 1.4 1995/09/28 06:22:20 tls Exp $";
+static char rcsid[] = "$NetBSD: mkstr.c,v 1.5 1997/05/17 20:06:57 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,15 @@ char	*progname;
 char	usagestr[] =	"usage: %s [ - ] mesgfile prefix file ...\n";
 char	name[100], *np;
 
+void process __P((void));
+int match __P((char *));
+int octdigit __P((char));
+void inithash __P((void));
+int hashit __P((char *, char, unsigned));
+void copystr __P((void));
+int fgetNUL __P((char *, int, FILE *));
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -119,10 +128,11 @@ main(argc, argv)
 	exit(0);
 }
 
+void
 process()
 {
-	register char *cp;
-	register c;
+	char *cp;
+	int c;
 
 	for (;;) {
 		c = getchar();
@@ -143,11 +153,12 @@ process()
 	}
 }
 
+int
 match(ocp)
 	char *ocp;
 {
-	register char *cp;
-	register c;
+	char *cp;
+	int c;
 
 	for (cp = ocp + 1; *cp; cp++) {
 		c = getchar();
@@ -161,11 +172,12 @@ match(ocp)
 	return (1);
 }
 
+void
 copystr()
 {
-	register c, ch;
+	int c, ch;
 	char buf[512];
-	register char *cp = buf;
+	char *cp = buf;
 
 	for (;;) {
 		c = getchar();
@@ -224,6 +236,7 @@ out:
 	printf("%d", hashit(buf, 1, NULL));
 }
 
+int
 octdigit(c)
 	char c;
 {
@@ -231,13 +244,14 @@ octdigit(c)
 	return (c >= '0' && c <= '7');
 }
 
+void
 inithash()
 {
 	char buf[512];
 	int mesgpt = 0;
 
 	rewind(mesgread);
-	while (fgetNUL(buf, sizeof buf, mesgread) != NULL) {
+	while (fgetNUL(buf, sizeof buf, mesgread) != 0) {
 		hashit(buf, 0, mesgpt);
 		mesgpt += strlen(buf) + 2;
 	}
@@ -251,16 +265,17 @@ struct	hash {
 	struct	hash *hnext;
 } *bucket[NBUCKETS];
 
+int
 hashit(str, really, fakept)
 	char *str;
 	char really;
 	unsigned fakept;
 {
 	int i;
-	register struct hash *hp;
+	struct hash *hp;
 	char buf[512];
 	long hashval = 0;
-	register char *cp;
+	char *cp;
 
 	if (really)
 		fflush(mesgwrite);
@@ -300,13 +315,14 @@ hashit(str, really, fakept)
 #include <sys/types.h>
 #include <sys/stat.h>
 
+int
 fgetNUL(obuf, rmdr, file)
 	char *obuf;
-	register int rmdr;
+	int rmdr;
 	FILE *file;
 {
-	register c;
-	register char *buf = obuf;
+	int c;
+	char *buf = obuf;
 
 	while (--rmdr > 0 && (c = getc(file)) != 0 && c != EOF)
 		*buf++ = c;
