@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbusreg.h,v 1.1 1998/03/21 21:35:20 mark Exp $	*/
+/*	$NetBSD: if_ne_pbusreg.h,v 1.2 2001/03/31 15:32:46 chris Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,6 +60,8 @@
 #define EM_DSR_UTP	(1 << 7) /* Twisted pair selected */
 
 /* EtherLan 600 definitions */
+#define EH600_CONTROL_OFFSET    0x0a00
+#define EH600_CONTROL_SIZE      (1 << EH600_REGSHIFT)
 #define EH600_NIC_OFFSET	0x0800
 #define EH600_NIC_SIZE		(NE2000_NIC_NPORTS << EH600_REGSHIFT)
 #define EH600_ASIC_OFFSET	(EH600_NIC_OFFSET + (NE2000_ASIC_OFFSET \
@@ -71,3 +73,20 @@
 #define EH600_MCRB		0x0b	/* master control reg B */
 #define EH600_10BTSEL		0	/* 10BaseT interface */
 #define EH600_10B2SEL		1	/* 10Base2 interface */
+#define EH600_MEM_START         0x100   /* buffer ram start */
+#define EH600_MEM_END           0x8000  /* buffer ram end */
+
+/* Acorn EtherN registers */
+#define EN_REGSHIFT             3
+#define EN_NIC_OFFSET           0x400000
+#define EN_NIC_SIZE             (NE2000_NIC_NPORTS << EN_REGSHIFT)
+#define EN_ASIC_OFFSET	        (EN_NIC_OFFSET + (NE2000_ASIC_OFFSET \
+				    << EN_REGSHIFT))
+#define EN_ASIC_SIZE		(NE2000_ASIC_NPORTS << EN_REGSHIFT)
+
+/* Etherlan 600 control register */
+/*Write only */
+#define EH_INTR_MASK    (1 << 0)        /* Interrupt Mask.              */
+#define EH_ID_CONTROL   (1 << 1)        /* ID control.                  */
+/* Read only */
+#define EH_INTR_STAT    (1 << 0)        /* Interrupt status.            */
