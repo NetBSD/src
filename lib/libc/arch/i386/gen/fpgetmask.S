@@ -8,7 +8,7 @@
 ENTRY(fpgetmask)
 	subl $4,%esp
 	fnstcw (%esp)
-	movw (%esp),%ax
+	movl (%esp),%eax
 	notl %eax
 	andl $63,%eax
 	addl $4,%esp
