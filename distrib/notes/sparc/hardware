@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.22 2002/09/15 21:42:28 mbw Exp $
+.\"	$NetBSD: hardware,v 1.23 2002/09/15 21:55:41 mbw Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -279,7 +279,7 @@ Non-Sun SCSI CD-ROMs may have trouble booting any OS,
 or otherwise.  Your CD-ROM must support 512 byte blocks for the OpenBoot PROM
 to load a file.  Most newer CD-ROM drives support this automatically, and 
 many older drives allow you to set it using a jumper.  See
-.Lk http://saturn.tlug.org/suncdfaq/
+.Lk http://www.ebsinc.com/solaris/suncdrom.html
 for information on bootable CD-ROMs
 .Note)
 .bullet)
