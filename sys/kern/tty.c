@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.66 1996/02/09 19:00:38 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.67 1996/03/16 23:17:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1878,7 +1878,7 @@ ttyinfo(tp)
 			utime.tv_sec += 1;
 			utime.tv_usec -= 1000000;
 		}
-		ttyprintf(tp, "%d.%02du ", utime.tv_sec,
+		ttyprintf(tp, "%ld.%02ldu ", utime.tv_sec,
 		    utime.tv_usec / 10000);
 
 		/* Round up and print system time. */
@@ -1887,7 +1887,7 @@ ttyinfo(tp)
 			stime.tv_sec += 1;
 			stime.tv_usec -= 1000000;
 		}
-		ttyprintf(tp, "%d.%02ds ", stime.tv_sec,
+		ttyprintf(tp, "%ld.%02lds ", stime.tv_sec,
 		    stime.tv_usec / 10000);
 
 #define	pgtok(a)	(((a) * NBPG) / 1024)
