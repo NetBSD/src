@@ -4,11 +4,11 @@ disk: install diskimag
 label: 
 flags:
 bytes/sector: 512
-sectors/track: 32
-tracks/cylinder: 32
-sectors/cylinder: 1024
-cylinders: 1648
-total sectors: 1312344
+sectors/track: 16
+tracks/cylinder: 2
+sectors/cylinder: 32
+cylinders: 128
+total sectors: 4096
 rpm: 3600
 interleave: 1
 trackskew: 0
@@ -19,6 +19,6 @@ drivedata: 0
 
 3 partitions:
 #        size   offset     fstype   [fsize bsize   cpg]
-  a:     4096        0     4.2BSD     1024  8192    16   # (Cyl.    0 - 82*)
-  b:     4096     4096    unknown                        # (Cyl.   82*- 247*)
+  a:     4096        0     4.2BSD      512  4096    16   # (Cyl.    0 - 82*)
+  b:        0        0    unknown                        # (Cyl.   82*- 247*)
   c:     4096        0    unknown                        # (Cyl.    0 - 82*)
