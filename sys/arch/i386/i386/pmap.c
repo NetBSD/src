@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.104 2000/09/07 18:46:19 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105 2000/09/10 03:45:58 chs Exp $	*/
 
 /*
  *
@@ -64,7 +64,6 @@
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_largepages.h"
-#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,12 +415,16 @@ static boolean_t	 pmap_is_curpmap __P((struct pmap *));
 static pt_entry_t	*pmap_map_ptes __P((struct pmap *));
 static struct pv_entry	*pmap_remove_pv __P((struct pv_head *, struct pmap *,
 					     vaddr_t));
+static void		 pmap_do_remove __P((struct pmap *, vaddr_t,
+						vaddr_t, int));
 static boolean_t	 pmap_remove_pte __P((struct pmap *, struct vm_page *,
-					      pt_entry_t *, vaddr_t));
+					      pt_entry_t *, vaddr_t, int));
 static void		 pmap_remove_ptes __P((struct pmap *,
 					       struct pmap_remove_record *,
 					       struct vm_page *, vaddr_t,
-					       vaddr_t, vaddr_t));
+					       vaddr_t, vaddr_t, int));
+#define PMAP_REMOVE_ALL		0	/* remove all mappings */
+#define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
 static struct vm_page	*pmap_steal_ptp __P((struct uvm_object *,
 					     vaddr_t));
 static vaddr_t		 pmap_tmpmap_pa __P((paddr_t));
@@ -1700,7 +1703,8 @@ pmap_steal_ptp(obj, offset)
 					pmap_remove_ptes(pmaps_hand, NULL, ptp,
 							 (vaddr_t)ptes,
 							 ptp_i2v(idx),
-							 ptp_i2v(idx+1));
+							 ptp_i2v(idx+1),
+							 PMAP_REMOVE_ALL);
 				pmap_tmpunmap_pa();
 
 				if (lcv != PTES_PER_PTP)
@@ -2237,12 +2241,13 @@ pmap_copy_page(srcpa, dstpa)
  */
 
 static void
-pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva)
+pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva, flags)
 	struct pmap *pmap;
 	struct pmap_remove_record *pmap_rr;
 	struct vm_page *ptp;
 	vaddr_t ptpva;
 	vaddr_t startva, endva;
+	int flags;
 {
 	struct pv_entry *pv_tofree = NULL;	/* list of pv_entrys to free */
 	struct pv_entry *pve;
@@ -2263,6 +2268,9 @@ pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva)
 			     ; pte++, startva += NBPG) {
 		if (!pmap_valid_entry(*pte))
 			continue;			/* VA not mapped */
+		if ((flags & PMAP_REMOVE_SKIPWIRED) && (*pte & PG_W)) {
+			continue;
+		}
 
 		opte = *pte;		/* save the old PTE */
 		*pte = 0;			/* zap! */
@@ -2340,11 +2348,12 @@ pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva)
  */
 
 static boolean_t
-pmap_remove_pte(pmap, ptp, pte, va)
+pmap_remove_pte(pmap, ptp, pte, va, flags)
 	struct pmap *pmap;
 	struct vm_page *ptp;
 	pt_entry_t *pte;
 	vaddr_t va;
+	int flags;
 {
 	pt_entry_t opte;
 	int bank, off;
@@ -2352,6 +2361,9 @@ pmap_remove_pte(pmap, ptp, pte, va)
 
 	if (!pmap_valid_entry(*pte))
 		return(FALSE);		/* VA not mapped */
+	if ((flags & PMAP_REMOVE_SKIPWIRED) && (*pte & PG_W)) {
+		return(FALSE);
+	}
 
 	opte = *pte;			/* save the old PTE */
 	*pte = 0;			/* zap! */
@@ -2409,6 +2421,21 @@ pmap_remove(pmap, sva, eva)
 	struct pmap *pmap;
 	vaddr_t sva, eva;
 {
+	pmap_do_remove(pmap, sva, eva, PMAP_REMOVE_ALL);
+}
+
+/*
+ * pmap_do_remove: mapping removal guts
+ *
+ * => caller should not be holding any pmap locks
+ */
+
+static void
+pmap_do_remove(pmap, sva, eva, flags)
+	struct pmap *pmap;
+	vaddr_t sva, eva;
+	int flags;
+{
 	pt_entry_t *ptes;
 	boolean_t result;
 	paddr_t ptppa;
@@ -2456,7 +2483,7 @@ pmap_remove(pmap, sva, eva)
 
 			/* do it! */
 			result = pmap_remove_pte(pmap, ptp,
-						 &ptes[i386_btop(sva)], sva);
+			    &ptes[i386_btop(sva)], sva, flags);
 
 			/*
 			 * if mapping removed and the PTP is no longer
@@ -2551,7 +2578,7 @@ pmap_remove(pmap, sva, eva)
 			}
 		}
 		pmap_remove_ptes(pmap, prr, ptp,
-				 (vaddr_t)&ptes[i386_btop(sva)], sva, blkendva);
+		    (vaddr_t)&ptes[i386_btop(sva)], sva, blkendva, flags);
 
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
@@ -3046,7 +3073,8 @@ pmap_collect(pmap)
 	 * for its entire address space.
 	 */
 
-	pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
+	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS,
+	    PMAP_REMOVE_SKIPWIRED);
 }
 
 #if 0
