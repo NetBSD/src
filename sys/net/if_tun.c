@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.58 2002/12/25 08:40:20 jdolecek Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.59 2003/03/13 10:24:38 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.58 2002/12/25 08:40:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.59 2003/03/13 10:24:38 dsl Exp $");
 
 #include "tun.h"
 
@@ -542,6 +542,8 @@ tunioctl(dev, cmd, data, flag, p)
 {
 	int		s;
 	struct tun_softc *tp;
+	pid_t pgid;
+	int error;
 
 	tp = tun_find_unit(dev);
 
@@ -610,7 +612,13 @@ tunioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSPGRP:
-		tp->tun_pgrp = *(int *)data;
+		pgid = *(int *)data;
+		if (pgid != 0) {
+			error = pgid_in_session(p, pgid);
+			if (error != 0)
+				return error;
+		}
+		tp->tun_pgrp = pgid;
 		break;
 
 	case TIOCGPGRP:
