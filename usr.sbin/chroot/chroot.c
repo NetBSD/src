@@ -1,4 +1,4 @@
-/*	$NetBSD: chroot.c,v 1.8 2000/08/17 12:36:32 mrg Exp $	*/
+/*	$NetBSD: chroot.c,v 1.9 2001/04/06 02:14:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: chroot.c,v 1.8 2000/08/17 12:36:32 mrg Exp $");
+__RCSID("$NetBSD: chroot.c,v 1.9 2001/04/06 02:14:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,26 +60,27 @@ __RCSID("$NetBSD: chroot.c,v 1.8 2000/08/17 12:36:32 mrg Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	main __P((int, char **));
-void	usage __P((void)) __attribute__((__noreturn__));
+int	main(int, char **);
+void	usage(void) __attribute__((__noreturn__));
 
 char	*user;		/* user to switch to before running program */
 char	*group;		/* group to switch to ... */
 char	*grouplist;	/* group list to switch to ... */
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
-	struct group *gp;
-	struct passwd *pw;
-	char *shell, *endp, *comma;
-	gid_t gid = 0, gidlist[NGROUPS_MAX];
-	uid_t uid = 0;
-	int ch, gids;
+	struct group	*gp;
+	struct passwd	*pw;
+	char		*endp, *comma;
+	const char	*shell;
+	gid_t		gid, gidlist[NGROUPS_MAX];
+	uid_t		uid;
+	int		ch, gids;
 
-	while ((ch = getopt(argc, argv, "G:g:u:")) != -1)
+	gid = 0;
+	uid = 0;
+	while ((ch = getopt(argc, argv, "G:g:u:")) != -1) {
 		switch(ch) {
 		case 'u':
 			user = optarg;
@@ -94,30 +95,30 @@ main(argc, argv)
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
 	if (argc < 1)
 		usage();
 
-	if (group) {
+	if (group != NULL) {
 		if (isdigit(*group)) {
 			gid = (gid_t)strtol(group, &endp, 0);
 			if (endp == group)
 				goto getgroup;
 		} else {
-getgroup:
-			if ((gp = getgrnam(group)))
+ getgroup:
+			if ((gp = getgrnam(group)) != NULL)
 				gid = gp->gr_gid;
 			else
 				errx(1, "no such group %s", group);
 		}
 	}
 
-	for (gids = 0; grouplist; ) {
+	for (gids = 0; grouplist != NULL; ) {
 		comma = strchr(grouplist, ',');
-
-		if (comma)
+		if (comma != NULL)
 			*comma++ = '\0';
 
 		if (isdigit(*grouplist)) {
@@ -125,8 +126,8 @@ getgroup:
 			if (endp == grouplist)
 				goto getglist;
 		} else {
-getglist:
-			if ((gp = getgrnam(grouplist)))
+ getglist:
+			if ((gp = getgrnam(grouplist)) != NULL)
 				gidlist[gids] = gp->gr_gid;
 			else
 				errx(1, "no such group %s", group);
@@ -135,28 +136,28 @@ getglist:
 		grouplist = comma;
 	}
 
-	if (user) {
+	if (user != NULL) {
 		if (isdigit(*user)) {
 			uid = (uid_t)strtol(user, &endp, 0);
 			if (endp == user)
 				goto getuser;
 		} else {
-getuser:
-			if ((pw = getpwnam(user)))
+ getuser:
+			if ((pw = getpwnam(user)) != NULL)
 				uid = pw->pw_uid;
 			else
 				errx(1, "no such user %s", user);
 		}
 	}
 
-	if (chdir(argv[0]) || chroot("."))
+	if (chdir(argv[0]) == -1 || chroot(".") == -1)
 		err(1, "%s", argv[0]);
 
-	if (gids && setgroups(gids, gidlist) < 0)
+	if (gids && setgroups(gids, gidlist) == -1)
 		err(1, "setgroups");
-	if (group && setgid(gid) < 0)
+	if (group && setgid(gid) == -1)
 		err(1, "setgid");
-	if (user && setuid(uid) < 0)
+	if (user && setuid(uid) == -1)
 		err(1, "setuid");
 
 	if (argv[1]) {
@@ -164,7 +165,7 @@ getuser:
 		err(1, "%s", argv[1]);
 	}
 
-	if (!(shell = getenv("SHELL")))
+	if ((shell = getenv("SHELL")) == NULL)
 		shell = _PATH_BSHELL;
 	execlp(shell, shell, "-i", NULL);
 	err(1, "%s", shell);
@@ -172,8 +173,9 @@ getuser:
 }
 
 void
-usage()
+usage(void)
 {
+
 	(void)fprintf(stderr, "usage: chroot [-g group] [-G group,group,...] "
 	    "[-u user] newroot [command]\n");
 	exit(1);
