@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.48 1999/05/09 13:48:44 lukem Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.49 1999/05/20 05:58:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -952,42 +952,68 @@ getstr(cp, size)
 }
 
 /*
- * snprintf() `bytes' into `buf', reformatting it so that the number
- * (plus a possible `xB' extension) fits into len bytes (including the
- * terminating NUL).  Returns the number of bytes stored in buf, or -1
- * if there was a problem.  E.g, given a len of 9: 
+ * snprintf() `bytes' into `buf', reformatting it so that the number,
+ * plus a possible `x' + suffix extension) fits into len bytes (including
+ * the terminating NUL).
+ * Returns the number of bytes stored in buf, or -1 * if there was a problem.
+ * E.g, given a len of 9 and a suffix of `B': 
  *	bytes		result
  *	-----		------
- *	99999		`99999'
+ *	99999		`99999 B'
  *	100000		`97 KB'
  *	66715648	`65152 KB'
  *	252215296	`240 MB'
  */
+int
+humanize_number(buf, len, bytes, suffix)
+	char		*buf;
+	size_t		 len;
+	u_int64_t	 bytes;
+	const char	*suffix;
+{
+		/* prefixes are: (none), Kilo, Mega, Giga, Tera, Peta, Exa */
+	static const char prefixes[] = " KMGTPE";
+
+	int		i, r;
+	u_int64_t	max;
+	size_t		suffixlen;
+
+	if (buf == NULL || suffix == NULL)
+		return (-1);
+	if (len > 0)
+		buf[0] = '\0';
+	suffixlen = strlen(suffix);
+			/* check if enough room for `x y' + suffix + `\0' */
+	if (len < 4 + suffixlen)
+		return (-1);
+
+	max = 1;
+	for (i = 0; i < len - suffixlen - 3; i++)
+		max *= 10;
+	for (i = 0; bytes >= max && i < sizeof(prefixes); i++)
+		bytes /= 1024;
+
+	r = snprintf(buf, len, "%qd%s%c%s", (long long)bytes,
+	    i == 0 ? "" : " ", prefixes[i], suffix);
+
+	return (r);
+}
+
 int
 format_bytes(buf, len, bytes)
 	char		*buf;
 	size_t		 len;
 	u_int64_t	 bytes;
 {
-		/* prefixes are: Kilo, Mega, Giga, Tera, Peta, Exa */
-	static const char prefixes[] = " KMGTPE";
+	int	rv;
+	size_t	nlen;
 
-	int		i, r;
-	u_int64_t	max;
-
-	if (len > 0)
-		buf[0] = '\0';
-	if (len < 6)
-		return (-1);		/* not enough room for `xx yB\0' */
-
-	for (max = 1, i = 0; i < len - 4; i++)
-		max *= 10;
-	for (i = 0; bytes >= max && i < sizeof(prefixes); i++)
-		bytes /= 1024;
-
-	r = snprintf(buf, len, "%qd", (long long)bytes);
-	if (i > 0)
-		r += snprintf(buf + r, len - r, " %cB", prefixes[i]);
-
-	return (r);
+	rv = humanize_number(buf, len, bytes, "B");
+	if (rv != -1) {
+			/* nuke the trailing ` B' if it exists */
+		nlen = strlen(buf) - 2;
+		if (strcmp(&buf[nlen], " B") == 0)
+			buf[nlen] = '\0';
+	}
+	return (rv);
 }
