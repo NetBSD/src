@@ -27,9 +27,7 @@ MAN+=	ERR_GET_LIB.3 RSA_sign_ASN1_OCTET_STRING.3 DSA_dup_DH.3 \
 	d2i_RSAPublicKey.3 DSA_generate_key.3 RSA_generate_key.3 \
 	DH_generate_key.3 RSA_check_key.3 BN_copy.3 BN_mod_mul_montgomery.3 \
 	RSA_padding_add_PKCS1_type_1.3 mdc2.3 rc4.3 md5.3 \
-	crypto.3
-
-MAN+=	ssl.4
+	crypto.3 ssl.3
 
 MAN+=	openssl.cnf.5
 
