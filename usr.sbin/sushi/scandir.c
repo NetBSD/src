@@ -1,4 +1,4 @@
-/*      $NetBSD: scandir.c,v 1.4 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: scandir.c,v 1.5 2005/01/12 17:38:40 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,12 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/cdefs.h>
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
@@ -59,9 +59,7 @@ extern char *lang_id;
 extern nl_catd catalog;
 
 void
-scan_dir(cqm, basedir)
-	struct cqMenu *cqm;
-	char *basedir;
+scan_dir(struct cqMenu *cqm, char *basedir)
 {
 	FILE *filep;
 	struct stat sb;
@@ -79,7 +77,7 @@ scan_dir(cqm, basedir)
 			snprintf(path, sizeof(path), "%s/%s", basedir,
 			    INDEXFILE);
 	}
-	if((filep = fopen(path, "r"))) {
+	if ((filep = fopen(path, "r")) != NULL) {
 		for (lcnt = 1; (p = fgetln(filep, &len)) != NULL; ++lcnt) {
 			if (len == 1)		/* Skip empty lines. */
 				continue;
@@ -92,12 +90,14 @@ scan_dir(cqm, basedir)
 			p[len - 1] = '\0';	/* Terminate the line. */
 
 						/* Skip leading spaces. */
-			for (; *p != '\0' && isspace((unsigned char)*p); ++p);
+			while (*p != '\0' && isspace((unsigned char)*p))
+				p++;
 						/* Skip empty/comment lines. */
 			if (*p == '\0' || *p == '#')
 				continue;
 						/* Find first token. */
-			for (t = p; *t && !isspace((unsigned char)*t); ++t);
+			for (t = p; *t && !isspace((unsigned char)*t); ++t)
+				continue;
 			if (*t == '\0')		/* Need more than one token.*/
 				continue;
 			*t = '\0';
@@ -110,10 +110,7 @@ scan_dir(cqm, basedir)
 }
 
 void
-scan_index(cqm, basedir, row)
-	struct cqMenu *cqm;
-	char *basedir;
-	char *row;
+scan_index(struct cqMenu *cqm, char *basedir, char *row)
 {
 	char *t = row, *p;
 	char filename[PATH_MAX];
@@ -122,8 +119,9 @@ scan_index(cqm, basedir, row)
 	char quickname[80];
 	struct stat dirstat;
 
-	while (*++t && !isspace((unsigned char)*t));
-	snprintf(filename, (size_t)(t-row+1), "%s", row);
+	while (*++t && !isspace((unsigned char)*t))
+		continue;
+	snprintf(filename, (size_t)(t-row + 1), "%s", row);
 	snprintf(nextpath, sizeof(nextpath), "%s/%s", basedir, filename);
 
 	if (strcmp(filename, "BLANK") && stat(nextpath, &dirstat) < 0) {
@@ -131,18 +129,20 @@ scan_index(cqm, basedir, row)
 		return;
 	}
 
-	while (*++t && isspace((unsigned char)*t));
-	for (p=t; *p != '\0' && !isspace((unsigned char)*p); ++p);
-	*p='\0';
+	while (*++t && isspace((unsigned char)*t))
+		continue;
+	for (p = t; *p != '\0' && !isspace((unsigned char)*p); ++p)
+		continue;
+	*p = '\0';
 	snprintf(quickname, sizeof(quickname), "%s", t);
 
-	t=p;
-	while (*++t && isspace((unsigned char)*t));
+	t = p;
+	while (*++t && isspace((unsigned char)*t))
+		continue;
 	snprintf(menuname, sizeof(menuname), "%s", t);
 
 	tree_appenditem(cqm, filename, menuname, quickname, nextpath);
 
-	if(S_ISDIR(dirstat.st_mode)) {
+	if (S_ISDIR(dirstat.st_mode))
 		scan_dir(&CIRCLEQ_LAST(cqm)->cqSubMenuHead, nextpath);
-	}
 }

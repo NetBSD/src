@@ -1,4 +1,4 @@
-/*      $NetBSD: menutree.c,v 1.2 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: menutree.c,v 1.3 2005/01/12 17:38:40 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/queue.h>
+
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -59,29 +60,24 @@ tree_init(void)
 }
 
 void
-tree_appenditem(cqm, filename, itemname, quickname, path)
-	struct cqMenu *cqm;
-	char *filename;
-	char *itemname;
-	char *quickname;
-	char *path;
+tree_appenditem(struct cqMenu *cqm, char *filename, char *itemname,
+    char *quickname, char *path)
 {
 	MTREE_ENTRY *mte;
 
 	if ((mte = malloc(sizeof(MTREE_ENTRY))) == NULL ||
-		((mte->filename = strdup(filename)) == NULL) ||
-		((mte->quickname = strdup(quickname)) == NULL) ||
-		((mte->path = strdup(path)) == NULL) ||
-		((mte->itemname = strdup(itemname)) == NULL))
-			bailout("malloc: %s", strerror(errno));
+	    ((mte->filename = strdup(filename)) == NULL) ||
+	    ((mte->quickname = strdup(quickname)) == NULL) ||
+	    ((mte->path = strdup(path)) == NULL) ||
+	    ((mte->itemname = strdup(itemname)) == NULL))
+		bailout("malloc: %s", strerror(errno));
 
 	CIRCLEQ_INIT(&mte->cqSubMenuHead);
 	CIRCLEQ_INSERT_TAIL(cqm, mte, cqMenuEntries);
 }
 
 int
-tree_entries(cqm)
-	struct cqMenu *cqm;
+tree_entries(struct cqMenu *cqm)
 {
 	MTREE_ENTRY *mte;
 	int entries = 0;
@@ -94,27 +90,24 @@ tree_entries(cqm)
 }
 
 MTREE_ENTRY *
-tree_getentry(cqm, entry)
-	struct cqMenu *cqm;
-	int entry;
+tree_getentry(struct cqMenu *cqm, int entry)
 {
 	MTREE_ENTRY *mte;
 	int entries = 0;
 
 	for (mte = CIRCLEQ_FIRST(cqm); (mte != (void *)cqm);
 	     mte = CIRCLEQ_NEXT(mte, cqMenuEntries)) {
-		if(entry == entries)
-			return(mte);
+		if (entry == entries)
+			return (mte);
 		++entries;
 	}
 
-	return(NULL);
+	return (NULL);
 }
 
 #ifdef DEBUG
 void
-tree_printtree(cqm)
-	struct cqMenu *cqm;
+tree_printtree(struct cqMenu *cqm)
 {
 	MTREE_ENTRY *mtp;
 
@@ -134,13 +127,13 @@ tree_gettreebyname(struct cqMenu *cqm, char *quickname)
 	MTREE_ENTRY *mtp;
 
 	for (mtp = CIRCLEQ_FIRST((struct cqMenu *)cqm); mtp != (void *)cqm;
-	    mtp = CIRCLEQ_NEXT(mtp, cqMenuEntries)) {
+	     mtp = CIRCLEQ_NEXT(mtp, cqMenuEntries)) {
 		if (strcmp(mtp->quickname, quickname) == 0)
-			return(mtp);
-		if (!foundmtp)
+			return (mtp);
+		if (foundmtp == NULL)
 			foundmtp = tree_gettreebyname(&mtp->cqSubMenuHead,
 			    quickname);
 	}
 
-	return(foundmtp);
+	return (foundmtp);
 }
