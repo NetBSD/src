@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ether.c,v 1.6 1999/07/02 11:31:31 itojun Exp $	*/
+/*	$NetBSD: print-ether.c,v 1.7 2000/07/24 15:32:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ether.c,v 1.44 97/05/26 17:18:13 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ether.c,v 1.6 1999/07/02 11:31:31 itojun Exp $");
+__RCSID("$NetBSD: print-ether.c,v 1.7 2000/07/24 15:32:43 ad Exp $");
 #endif
 #endif
 
@@ -169,6 +169,7 @@ int
 ether_encap_print(u_short ethertype, const u_char *p,
     u_int length, u_int caplen)
 {
+ recurse:
 	extracted_ethertype = ethertype;
 
 	switch (ethertype) {
@@ -202,6 +203,33 @@ ether_encap_print(u_short ethertype, const u_char *p,
 		aarp_print(p, length);
 		return (1);
 
+	case ETHERTYPE_VLAN:
+		printf("802.1Q vlan#%d P%d%s",
+		       ntohs(*(u_int16_t *)p) & 0xfff,
+		       ntohs(*(u_int16_t *)p) >> 13,
+		       (ntohs(*(u_int16_t *)p) & 0x1000) ? " CFI" : "");
+		ethertype = ntohs(*(u_int16_t *)(p + 2));
+		p += 4;
+		length -= 4;
+		caplen -= 4;
+		if (ethertype > ETHERMTU)
+			goto recurse;
+
+		extracted_ethertype = 0;
+
+		if (llc_print(p, length, caplen, p - 18, p - 12) == 0) {
+			/* ether_type not known, print raw packet */
+			if (!eflag)
+				ether_print(p - 18, length + 4);
+			if (extracted_ethertype) {
+				printf("(LLC %s) ",
+			       etherproto_string(htons(extracted_ethertype)));
+			}
+			if (!xflag && !qflag)
+				default_print(p - 18, caplen + 4);
+		}
+		return (1);
+		
 	case ETHERTYPE_LAT:
 	case ETHERTYPE_SCA:
 	case ETHERTYPE_MOPRC:
