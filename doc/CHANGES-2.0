@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.348 2004/07/23 09:44:21 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.349 2004/07/23 13:40:32 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5967,4 +5967,21 @@ UPDATING					1.125 via patch
 	Note the sendmail auto-start change, add a note about the ath
 	reworking, and fix a little spacing and unnecessary abbreviation.
 	[atatat, ticket #687]
+
+doc/CHANGES					1.330
+
+	Note addition of strcasestr(3).
+	[junyoung, ticket #703]
+
+sys/dev/ata/wd.c				1.278
+
+	Fix an extremely obvious bug in the handling of the bad block list:
+	the "max" block was being set 512x further out than it should be,
+	causing rather severe escalation of the error.
+	[mycroft, ticket #704]
+
+doc/CHANGES					1.332
+
+	Note addition of round(3) and roundf(3).
+	[junyoung, ticket #705]
 
