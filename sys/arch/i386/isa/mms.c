@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.26 1996/10/11 00:27:08 christos Exp $	*/
+/*	$NetBSD: mms.c,v 1.27 1996/10/13 03:20:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -110,7 +110,7 @@ mmsattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	int iobase = ia->ia_iobase;
 
-	kprintf("\n");
+	printf("\n");
 
 	/* Other initialization was done by mmsprobe. */
 	sc->sc_iobase = iobase;
