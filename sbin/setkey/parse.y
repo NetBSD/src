@@ -1,5 +1,5 @@
-/*	$NetBSD: parse.y,v 1.7 2001/11/02 03:57:25 lukem Exp $	*/
-/*	$KAME: parse.y,v 1.63 2001/08/17 06:28:49 itojun Exp $	*/
+/*	$NetBSD: parse.y,v 1.8 2002/05/14 11:24:20 itojun Exp $	*/
+/*	$KAME: parse.y,v 1.69 2002/05/14 11:16:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -457,10 +457,25 @@ spdadd_command
 	:	SPDADD ipaddropts STRING prefix portstr STRING prefix portstr upper_spec policy_spec EOT
 		{
 			int status;
+			struct addrinfo *src, *dst;
+
+			src = parse_addr($3.buf, $5.buf);
+			dst = parse_addr($6.buf, $8.buf);
+			if (!src || !dst) {
+				/* yyerror is already called */
+				return -1;
+			}
+			if (src->ai_next || dst->ai_next) {
+				yyerror("multiple address specified");
+				freeaddrinfo(src);
+				freeaddrinfo(dst);
+				return -1;
+			}
 
 			status = setkeymsg_spdaddr(SADB_X_SPDADD, $9, &$10,
-			    parse_addr($3.buf, $5.buf), $4,
-			    parse_addr($6.buf, $8.buf), $7);
+			    src, $4, dst, $7);
+			freeaddrinfo(src);
+			freeaddrinfo(dst);
 			if (status < 0)
 				return -1;
 		}
@@ -487,10 +502,10 @@ spddelete_command
 
 			status = setkeymsg_spdaddr(SADB_X_SPDDELETE, $9, &$10,
 			    src, $4, dst, $7);
-			if (status < 0)
-				return -1;
 			freeaddrinfo(src);
 			freeaddrinfo(dst);
+			if (status < 0)
+				return -1;
 		}
 	;
 
