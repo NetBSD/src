@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 2000/04/16 05:42:40 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 2000/11/13 16:48:46 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,8 +59,7 @@
 #include "uk.h"
 #include "raid.h"
 
-struct bdevsw	bdevsw[] =
-{
+struct bdevsw bdevsw[] = {
 	bdev_disk_init(NSD,sd),		/* 0: SCSI disk */
 	bdev_disk_init(NFD,fd),		/* 1: fd */
 	bdev_disk_init(NMD,md),		/* 2: memory disk */
@@ -111,15 +110,15 @@ dev_t	swapdev = makedev(4, 0);
 #include "pty.h"
 #include "bpfilter.h"
 #include "zstty.h"
-#include "ms.h"
-#include "fb.h"
-#define fbpoll seltrue
 #include "ipfilter.h"
 #include "rnd.h"
 #include "scsibus.h"
+#include "wsdisplay.h"
+#include "wskbd.h"
+#include "wsmouse.h"
+#include "wsmux.h"
 
-struct cdevsw	cdevsw[] =
-{
+struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_tty_init(NZSTTY,zs),	/* 1: scc 8530 serial interface */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
@@ -132,9 +131,9 @@ struct cdevsw	cdevsw[] =
 	cdev_ptc_init(NPTY,ptc),        /* 9: pseudo-tty master */
 	cdev_notdef(),			/* 10: md */
 	cdev_notdef(),			/* 11: kb */
-	cdev_mouse_init(NMS,ms),	/* 12: ms */
+	cdev_notdef(),			/* 12: (was ms) */
 	cdev_notdef(),			/* 13: xio */
-	cdev_fb_init(NFB,fb),		/* 14: frame buffer */
+	cdev_notdef(),			/* 14: (was frame buffer) */
 	cdev_notdef(),			/* 15: */
 	cdev_tape_init(NST,st),		/* 16: SCSI tape */
 	cdev_notdef(),			/* 17: lbp */
@@ -142,7 +141,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 19: vme */
 	cdev_notdef(),			/* 20: gpib */
 	cdev_notdef(),			/* 21: rd */
-	cdev_tty_init(NFB,bmcn),	/* 22: bitmap console (was zd XXX) */
+	cdev_notdef(),			/* 22: (was bmcons (was zd XXX)) */
 	cdev_notdef(),			/* 23: ether */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 24: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 25: network tunnel */
@@ -180,10 +179,10 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 57: SCSI changer */
 	cdev_notdef(),			/* 58: */
 	cdev_notdef(),			/* 59: */
-	cdev_notdef(),			/* 60: */
-	cdev_notdef(),			/* 61: */
-	cdev_notdef(),			/* 62: */
-	cdev_notdef(),			/* 63: */
+	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 60: wsdisplay */
+	cdev_mouse_init(NWSKBD,wskbd),	/* 61: wskbd */
+	cdev_mouse_init(NWSMOUSE,wsmouse), /* 62: wsmouse */
+	cdev_mouse_init(NWSMUX,wsmux),  /* 63: ws multiplexor */
 	cdev_lkm_dummy(),		/* 64: */
 	cdev_lkm_dummy(),		/* 65: */
 	cdev_lkm_dummy(),		/* 66: */

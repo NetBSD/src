@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.12 2000/11/06 15:00:29 tsubai Exp $
+#	$NetBSD: files.newsmips,v 1.13 2000/11/13 16:48:41 tsubai Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -53,35 +53,19 @@ device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-count
 
-device ms
-attach ms at hb
-file arch/newsmips/dev/ms.c			ms needs-count
+device kb: wskbddev
+file arch/newsmips/dev/newskeymap.c		kb
 
-device kb
-attach kb at hb
-file arch/newsmips/dev/kb.c			kb needs-count
-file arch/newsmips/dev/kbms_if.c		kb | ms
-file arch/newsmips/dev/keyconf.c		kb
-file arch/newsmips/dev/kb_ctrl.c		kb
-file arch/newsmips/dev/kb_encode.c		kb
+attach kb at hb with kb_hb
+file arch/newsmips/dev/kb_hb.c			kb_hb
 
-device fb
+device ms: wsmousedev
+attach ms at hb with ms_hb
+file arch/newsmips/dev/ms_hb.c			ms_hb
+
+device fb: wsemuldisplaydev, rasops1
 attach fb at hb
 file arch/newsmips/dev/fb.c			fb needs-count
-file arch/newsmips/dev/fb_conf.c		fb
-file arch/newsmips/dev/fb_mfbs.c		fb
-file arch/newsmips/dev/fb_probe.c		fb
-file arch/newsmips/dev/fb_start.c		fb
-file arch/newsmips/dev/fb_sub.c			fb
-file arch/newsmips/dev/fbbm_253.c		fb
-#file arch/newsmips/dev/fbbm_lcdm.c		fb
-file arch/newsmips/dev/bmcons.c			fb
-file arch/newsmips/dev/bitmapif.c		fb
-file arch/newsmips/dev/fnt.c			fb
-file arch/newsmips/dev/fnt24.c			fb
-file arch/newsmips/dev/vt100.c			fb
-file arch/newsmips/dev/vt100esc.c		fb
-file arch/newsmips/dev/vt100if.c		fb
 
 device fdc {}
 attach fdc at hb
