@@ -1,0 +1,18 @@
+The .t and .d and .r files in this directory are used for testing ed.
+To run the tests, set the ED variable in the Makefile for the path name
+of the program to be tested (e.g., /bin/ed), and type `make'.
+
+Some spurious data may appear as the test runs.  Errors appear
+as:
+	*** The script u.ed exited abnormally ***
+or:
+	*** Output u.o of script u.ed is incorrect ***
+
+It is assumed that the ed being tested processes escapes (\) in file names.
+This is so that a name starting with bang (!) can be read, via:
+	r \!file
+Without the escape, a POSIX ed would attempt to read the output of
+the shell command `file'.
+
+Though numerous, the tests are very incomplete.  Please send any new
+tests/bug reports to: alm@netcom.com

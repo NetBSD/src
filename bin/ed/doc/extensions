@@ -1,0 +1,50 @@
+This version of ed is not strictly POSIX compliant, as described in the
+POSIX 1003.2 Draft 11.2 document (see the file `ed-1003.2').  BSD commands
+have been implemented wherever they do not conflict with the POSIX
+standard.  This includes the BSD `W' command for appending text to an
+existing file; the BSD `s' command (i.e., s[rgp]*) to repeat a previous
+substitution; the BSD `z' command for scrolling through the buffer; and
+the BSD `wq' command for exiting after write.  BSD line addressing syntax
+(i.e., `^' and `%' - see the file `legal.addrs') is also recognized.
+
+The POSIX interactive global commands `G' and `V' are extended to support
+multiple commands, including `a', `i' and `c'.  The command format is the
+same as for the global commands `g' and `v', i.e., one command per line
+with each line, except for the last, ending in a backslash (\).
+
+If crypt is available, files can be read and written using DES encryption.
+The `x' command prompts the user to enter a key for encrypting/decrypting
+subsequent reads and writes.  If only a newline is entered as the key,
+then encryption is disabled.  Otherwise, a key is read with echoing turned
+off until a newline is entered.  For more information on the encryption
+algorithm, see the bdes(1) man page.  Encryption/decryption should be
+fully compatible with SunOS DES.
+
+An extension to the POSIX file commands `E', `e', `r', `W' and `w' is that
+<file> arguments are processed for backslash (\) escapes, i.e.,  any
+character preceded by a backslash is interpreted literally.  A trailing
+backslash is ignored.  If the first unescaped character of a <file>
+argument is a bang (!), then the rest of the line is interpreted as a
+shell command and no escape processing is performed by ed.  This rule does
+not apply to the 'f' command (described below).
+
+While the default file name cannot be set to a shell command (i.e.,
+!<shell-cmd>) via any of the `r', `w', and `e' commands, POSIX evidently
+does not preclude using the `f' command for this purpose.  Upon reading
+or writing the default file when its name begins with a bang (!), ed
+interprets the rest of the line as a shell command and attempts to execute
+it.  Escape processing is not performed in this case.  The `f' command
+can be used in this way as a simple macro function.  For example, after
+setting the default file name to `!echo hello, world', the command `.r'
+inserts the line `hello world' after the current line.  The `f' command
+with no arguments prints the default unescaped file name.
+
+--
+The following commands are neither part of POSIX 1003.2 D11/2 nor are
+they supported in this version of ed. 
+
+The vi command: (addr1,addr2) !<shell-cmd> which replaces a range of
+lines with the output of a shell command is not supported.
+
+The vi command: [rwe] !!, where !! is replaced by the previous
+!<shell-cmd> is not supported.

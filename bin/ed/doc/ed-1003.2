@@ -1,0 +1,1314 @@
+
+		 IEEE P1003.2 Draft 11.2 - September 1991
+
+
+			Copyright (c) 1991 by the
+	 Institute of Electrical and Electronics Engineers, Inc.
+			   345 East 47th Street
+			 New York, NY 10017, USA
+	       All rights reserved as an unpublished work.
+
+       This is an unapproved and unpublished IEEE Standards Draft,
+       subject to change.  The publication, distribution, or
+       copying of this draft, as well as all derivative	works based
+       on this draft, is expressly prohibited except as	set forth
+       below.
+
+       Permission is hereby granted for	IEEE Standards Committee
+       participants to reproduce this document for purposes of IEEE
+       standardization activities only,	and subject to the
+       restrictions contained herein.
+
+       Permission is hereby also granted for member bodies and
+       technical committees of ISO and IEC to reproduce	this
+       document	for purposes of	developing a national position,
+       subject to the restrictions contained herein.
+
+       Permission is hereby also granted to the	preceding entities
+       to make limited copies of this document in an electronic
+       form only for the stated	activities.
+
+       The following restrictions apply	to reproducing or
+       transmitting the	document in any	form:  1) all copies or
+       portions	thereof	must identify the document's IEEE project
+       number and draft	number,	and must be accompanied	by this
+       entire notice in	a prominent location; 2) no portion of this
+       document	may be redistributed in	any modified or	abridged
+       form without the	prior approval of the IEEE Standards
+       Department.
+
+       Other entities seeking permission to reproduce this
+       document, or any	portion	thereof, for standardization or
+       other activities, must contact the IEEE Standards Department
+       for the appropriate license.
+
+       Use of information contained in this unapproved draft is	at
+       your own	risk.
+
+	    IEEE Standards Department
+	    Copyright and Permissions
+	    445	Hoes Lane, P.O.	Box 1331
+	    Piscataway,	NJ 08855-1331, USA
+	    +1 (908) 562-3800
+	    +1 (908) 562-1571 [FAX]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        P1003.2 Draft 11.2
+                                                       ISO/IEC CD 9945-2.2
+
+ 4.20  ed - Edit text
+
+
+ 4.20.1  Synopsis
+
+ ed  [-p _s_t_r_i_n_g] [-s] [_f_i_l_e]
+
+ _O_b_s_o_l_e_s_c_e_n_t _V_e_r_s_i_o_n:
+
+ ed  [-p _s_t_r_i_n_g] [-] [_f_i_l_e]
+
+
+ 4.20.2  Description
+
+ The ed utility is a line-oriented text editor that shall use two modes:
+ _c_o_m_m_a_n_d _m_o_d_e and _i_n_p_u_t _m_o_d_e.  In command mode the input characters shall
+ be interpreted as commands, and in input mode they shall be interpreted
+ as text.  See 4.20.7.
+
+
+ 4.20.3  Options
+
+ The ed utility shall conform to the utility argument syntax guidelines
+ described in 2.10.2, except for its nonstandard usage of - in the
+ obsolescent version.
+
+
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 4.20 ed - Edit text                                                   479
+
+
+
+
+
+ P1003.2/D11.2                               INFORMATION TECHNOLOGY--POSIX
+
+ The following options shall be supported by the implementation:
+
+    -p _s_t_r_i_n_g   Use _s_t_r_i_n_g as the prompt string when in command mode.  By
+                default, there shall be no prompt string.
+
+    -s          Suppress the writing of byte counts by e, E, r, and w
+                commands and of the ! prompt after a !_c_o_m_m_a_n_d.
+
+    -           (Obsolescent.)  Equivalent to the -s option.
+
+
+ 4.20.4  Operands
+
+ The following operand shall be supported by the implementation:
+
+    _f_i_l_e        If the _f_i_l_e argument is given, ed shall simulate an e
+                command on the file named by the pathname, _f_i_l_e, before
+                accepting commands from the standard input.
+
+
+ 4.20.5  External Influences
+
+
+ 4.20.5.1  Standard Input
+
+ The standard input shall be a text file consisting of commands, as
+ described in 4.20.7.
+
+ 4.20.5.2  Input Files
+
+ The input files shall be text files.
+
+
+ 4.20.5.3  Environment Variables
+
+ The following environment variables shall affect the execution of ed:
+
+    HOME               This variable shall determine the pathname of the
+                       user's home directory.
+
+    LANG               This variable shall determine the locale to use for
+                       the locale categories when both LC_ALL and the
+                       corresponding environment variable (beginning with
+                       LC_) do not specify a locale.  See 2.6.
+
+    LC_ALL             This variable shall determine the locale to be used
+                       to override any values for locale categories
+                       specified by the settings of LANG or any
+                       environment variables beginning with LC_.
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 480                                     4 Execution Environment Utilities
+
+
+
+
+
+ Part 2: SHELL AND UTILITIES                                 P1003.2/D11.2
+
+    LC_COLLATE         This variable shall determine the locale for the
+                       behavior of ranges, equivalence classes, and
+                       multicharacter collating elements within regular
+                       expressions.
+
+    LC_CTYPE           This variable shall determine the locale for the
+                       interpretation of sequences of bytes of text data
+                       as characters (e.g., single- versus multibyte
+                       characters in arguments and input files), the
+                       behavior of character classes within regular
+                       expressions.
+
+    LC_MESSAGES        This variable shall determine the language in which
+                       messages should be written.
+
+
+ 4.20.5.4  Asynchronous Events
+
+ The ed utility shall take the standard action for all signals (see
+ 2.11.5.4), with the following exceptions:
+
+    SIGINT      The ed utility shall interrupt its current activity, write
+                the string
+
+                      "?\n"
+
+                to standard output, and return to command mode (see
+                4.20.7).
+
+    SIGHUP      If the buffer is not empty and has changed since the last
+                write, the ed utility shall attempt to write a copy of the
+                buffer in a file.  First, the file named ed.hup in the
+                current directory shall be used; if that fails, the file
+                named ed.hup in the directory named by the HOME
+                environment variable shall be used.  In any case, the ed
+                utility shall exit without returning to command mode.
+
+
+ 4.20.6  External Effects
+
+ 4.20.6.1  Standard Output
+
+ Various editing commands and the prompting feature (see -p) write to
+ standard output, as described in 4.20.7.
+
+
+
+
+
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 4.20 ed - Edit text                                                   481
+
+
+
+
+
+ P1003.2/D11.2                               INFORMATION TECHNOLOGY--POSIX
+
+ 4.20.6.2  Standard Error
+
+ Used only for diagnostic messages.
+
+
+ 4.20.6.3  Output Files
+
+ The output files shall be text files whose formats are dependent on the
+ editing commands given.
+
+
+ 4.20.7  Extended Description
+
+ The ed utility shall operate on a copy of the file it is editing; changes
+ made to the copy shall have no effect on the file until a w (write)
+ command is given.  The copy of the text is called the _b_u_f_f_e_r in this
+ clause, although no attempt is made to imply a specific implementation.
+
+ Commands to ed have a simple and regular structure: zero, one, or two
+ _a_d_d_r_e_s_s_e_s followed by a single-character _c_o_m_m_a_n_d, possibly followed by
+ parameters to that command.  These addresses specify one or more lines in
+ the buffer.  Every command that requires addresses has default addresses,
+ so that the addresses very often can be omitted.  If the -p option is
+ specified, the prompt string shall be written to standard output before
+ each command is read.
+
+ In general, only one command can appear on a line.  Certain commands
+ allow text to be input.  This text is placed in the appropriate place in
+ the buffer.  While ed is accepting text, it is said to be in _i_n_p_u_t _m_o_d_e.
+ In this mode, no commands shall be recognized; all input is merely
+ collected.  Input mode is terminated by entering a line consisting of two
+ characters:  a period (.) followed by a <newline>.  This line is not
+ considered part of the input text.
+
+ _4._2_0._7._1  ed _R_e_g_u_l_a_r _E_x_p_r_e_s_s_i_o_n_s
+
+ The ed utility shall support basic regular expressions, as described in
+ 2.8.3.  Since regular expressions in ed are always matched against single
+ lines, never against any larger section of text, there is no way for a
+ regular expression to match a <newline>.  A null RE shall be equivalent
+ to the last RE encountered.
+
+ Regular expressions are used in addresses to specify lines, and in some
+ commands (for example, the s substitute command) to specify portions of a
+ line to be substituted.
+
+
+
+
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 482                                     4 Execution Environment Utilities
+
+
+
+
+
+ Part 2: SHELL AND UTILITIES                                 P1003.2/D11.2
+
+ _4._2_0._7._2  ed _A_d_d_r_e_s_s_e_s
+
+ Addressing in ed relates to the _c_u_r_r_e_n_t _l_i_n_e.  Generally, the current
+ line is the last line affected by a command.  The _c_u_r_r_e_n_t _l_i_n_e _n_u_m_b_e_r is
+ the address (line number) of the current line.  The exact effect on the
+ current line number is discussed under the description of each command.
+ The f, h, H, k, P, w, =, and ! commands shall not modify the current line
+ number.
+
+ Addresses are constructed as follows:
+
+     (1)  The character . (period) shall address the current line.
+
+     (2)  The character $ shall address the last line of the buffer.
+
+     (3)  A positive decimal number _n shall address the _n-th line of the
+          buffer.  The first line in the buffer is line number 1.
+
+     (4)  '_x shall address the line marked with the mark name character _x,
+          which shall be a lowercase letter from the portable character
+          set.  Lines can be marked with the k command described in
+          4.20.7.3.13.
+
+     (5)  An RE enclosed by slashes (/) shall address the first line found
+          by searching forward from the line following the current line
+          toward the end of the buffer and stopping at the first line
+          containing a string matching the RE.  [As stated in 4.20.7.1, an
+          address consisting of a null RE delimited by slashes (//) shall
+          address the next line containing the last RE encountered.]  If
+          necessary, the search shall wrap around to the beginning of the
+          buffer and continue up to and including the current line, so
+          that the entire buffer is searched.  Within the RE, the sequence
+          \/ shall represent a literal slash instead of the RE delimiter.
+
+     (6)  An RE enclosed in question-marks (?) shall address the first
+          line found by searching backward from the line preceding the
+          current line toward the beginning of the buffer and stopping at
+          the first line containing a string matching the RE.  If
+          necessary, the search wraps around to the end of the buffer and
+          continues up to and including the current line.  Within the RE,
+          the sequence \? shall represent a literal question-mark instead
+          of the RE delimiter.
+
+     (7)  An address followed by a plus sign (+) or a minus sign (-)
+          followed by a decimal number specifies that address plus
+          (respectively minus) the indicated number of lines.  The plus
+          sign can be omitted.
+
+
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 4.20 ed - Edit text                                                   483
+
+
+
+
+
+ P1003.2/D11.2                               INFORMATION TECHNOLOGY--POSIX
+
+     (8)  If an address begins with + or -, the addition or subtraction is
+          taken with respect to the current line number; for example, -5
+          is understood to mean .-5.
+
+     (9)  If an address ends with + or -, then 1 shall be added to or
+          subtracted from the address, respectively.  As a consequence of
+          this rule and of rule (8) immediately above, the address - shall
+          refer to the line preceding the current line.  Moreover,
+          trailing + and - characters shall have a cumulative effect, so
+          -- shall refer to the current line number less 2.
+
+    (10)  A comma (,) shall stand for the address pair 1,$, while a
+          semicolon (;) shall stand for the pair .,$.
+
+ Commands require zero, one, or two addresses.  Commands that require no
+ addresses shall regard the presence of an address as an error.  Commands
+ that accept one or two addresses assume default addresses when no
+ addresses are given, as described in 4.20.7.3.  If one address is given
+ to a command that allows two addresses, the command shall operate as if
+ it were specified as:
+
+       _g_i_v_e_n__a_d_d_r_e_s_s;.  _c_o_m_m_a_n_d
+
+ If more addresses are given than such a command requires, the results are
+ undefined.
+
+ Typically, addresses are separated from each other by a comma.  They can
+ also be separated by a semicolon.  In the latter case, the current line
+ number (.) shall be set to the first address, and only then shall the
+ second address be calculated.  This feature can be used to determine the
+ starting line for forward and backward searches [see rules (5) and (6)
+ above].  The second address of any two-address sequence shall correspond
+ to a line that does not precede, in the buffer, the line corresponding to
+ the first address.
+
+
+ _4._2_0._7._3  ed _C_o_m_m_a_n_d_s
+
+ In the following list of ed commands, the default addresses are shown in
+ parentheses.  The number of addresses shown in the default shall be the
+ number expected by the command.  The parentheses are not part of the
+ address; they show that the given addresses are the default.
+
+ It is generally invalid for more than one command to appear on a line.
+ However, any command (except e, E, f, q, Q, r, w, and !) can be suffixed
+ by the letter l, n, or p; in which case, except for the l, n, and p
+ commands, the command shall be executed and then the new current line      1
+ shall be written as described below under the l, n, and p commands.  When  1
+ an l, n, or p suffix is used with an l, n, or p command, the command
+ shall write to standard output as described below, but it is unspecified
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 484                                     4 Execution Environment Utilities
+
+
+
+
+
+ Part 2: SHELL AND UTILITIES                                 P1003.2/D11.2
+
+ whether the suffix writes the current line again in the requested format
+ or whether the suffix has no effect.  For example, the pl command (base p
+ command with an l suffix) shall either write just the current line or
+ shall write it twice--once as specified for p and once as specified for
+ l.  Also, the g, G, v, and V commands shall take a command as a
+ parameter.
+
+ Each address component can be preceded by zero or more <blank>_s.  The
+ command letter can be preceded by zero or more <blank>_s.  If a suffix
+ letter (l, n, or p) is given, it shall immediately follow the command.
+
+ The e, E, f, r, and w commands shall take an optional _f_i_l_e parameter,
+ separated from the command letter by one or more <blank>s.
+
+ If changes have been made in the buffer since the last w command that
+ wrote the entire buffer, ed shall warn the user if an attempt is made to
+ destroy the editor buffer via the e or q commands.  The ed utility shall
+ write the string:
+
+       "?\n"
+
+ (followed by an explanatory message if _h_e_l_p _m_o_d_e has been enabled via the
+ H command) to standard output and shall continue in command mode with the
+ current line number unchanged.  If the e or q command is repeated with no
+ intervening command, it shall take effect.
+
+ If an end-of-file is detected on standard input when a command is
+ expected, the ed utility shall act as if a q command had been entered.
+
+ If the closing delimiter of an RE or of a replacement string (e.g., /) in
+ a g, G, s, v, or V command would be the last character before a
+ <newline>, that delimiter can be omitted, in which case the addressed
+ line shall be written.  For example, the following pairs of commands are
+ equivalent:
+
+          s/s1/s2     s/s1/s2/p
+
+          g/s1        g/s1/p
+
+          ?s1         ?s1?
+
+ If an invalid command is entered, ed shall write the string:
+
+       "?\n"
+
+ (followed by an explanatory message if _h_e_l_p _m_o_d_e has been enabled via the
+ H command) to standard output and shall continue in command mode with the
+ current line number unchanged.
+
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 4.20 ed - Edit text                                                   485
+
+
+
+
+
+ P1003.2/D11.2                               INFORMATION TECHNOLOGY--POSIX
+
+ 4.20.7.3.1  Append Command
+
+ _S_y_n_o_p_s_i_s:  (.)a
+           <_t_e_x_t>
+           .
+
+ The _a_p_p_e_n_d command shall read the given text and append it after the
+ addressed line; the current line number shall become the address of the
+ last inserted line, or, if there were none, the addressed line.  Address
+ 0 shall be valid for this command:  it shall cause the ``appended'' text
+ to be placed at the beginning of the buffer.
+
+ 4.20.7.3.2  Change Command
+
+ _S_y_n_o_p_s_i_s:  (.,.)c                                                          1
+           <_t_e_x_t>
+           .
+
+ The _c_h_a_n_g_e command shall delete the addressed lines, then accept input
+ text that replaces these lines; the current line shall be set to the
+ address of the last line input; or, if there were none, at the line after
+ the last line deleted; if the lines deleted were originally at the end of
+ the buffer, the current line number shall be set to the address of the
+ new last line; if no lines remain in the buffer, the current line number
+ shall be set to zero.
+
+ 4.20.7.3.3  Delete Command
+
+ _S_y_n_o_p_s_i_s:  (.,.)d
+
+ The _d_e_l_e_t_e command shall delete the addressed lines from the buffer.  The
+ address of the line after the last line deleted shall become the current
+ line number; if the lines deleted were originally at the end of the
+ buffer, the current line number shall be set to the address of the new
+ last line; if no lines remain in the buffer, the current line number
+ shall be set to zero.
+
+ 4.20.7.3.4  Edit Command
+
+ _S_y_n_o_p_s_i_s:  e [_f_i_l_e]
+
+ The _e_d_i_t command shall delete the entire contents of the buffer and then
+ read in the file named by the pathname _f_i_l_e. The current line number
+ shall be set to the address of the last line of the buffer.  If no
+ pathname is given, the currently remembered pathname, if any, shall be
+ used (see the f command).  The number of bytes read shall be written to
+ standard output, unless the -s option was specified, in the following
+ format:
+
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 486                                     4 Execution Environment Utilities
+
+
+
+
+
+ Part 2: SHELL AND UTILITIES                                 P1003.2/D11.2
+
+       "%d\n", <_n_u_m_b_e_r _o_f _b_y_t_e_s _r_e_a_d>
+
+ The name _f_i_l_e shall be remembered for possible use as a default pathname
+ in subsequent e, E, r, and w commands.  If _f_i_l_e is replaced by !, the
+ rest of the line shall be taken to be a shell command line whose output
+ is to be read.  Such a shell command line shall not be remembered as the
+ current _f_i_l_e. All marks shall be discarded upon the completion of a
+ successful e command.  If the buffer has changed since the last time the
+ entire buffer was written, the user shall be warned, as described
+ previously.
+
+ 4.20.7.3.5  Edit Without Checking Command
+
+ _S_y_n_o_p_s_i_s:  E [_f_i_l_e]
+
+ The _E_d_i_t command shall possess all properties and restrictions of the e
+ command except that the editor shall not check to see if any changes have
+ been made to the buffer since the last w command.
+
+ 4.20.7.3.6  File-Name Command
+
+ _S_y_n_o_p_s_i_s:  f [_f_i_l_e]
+
+ If _f_i_l_e is given, the file-name command shall change the currently
+ remembered pathname to _f_i_l_e; whether the name is changed or not, it then
+ shall write the (possibly new) currently remembered pathname to the
+ standard output in the following format:
+
+       "%s\n", <_p_a_t_h_n_a_m_e>
+
+ The current line number shall be unchanged.
+
+ 4.20.7.3.7  Global Command
+
+ _S_y_n_o_p_s_i_s:  (1,$)g/_R_E/_c_o_m_m_a_n_d _l_i_s_t
+
+ In the _g_l_o_b_a_l command, the first step shall be to mark every line that
+ matches the given _R_E. Then, for every such line, the given _c_o_m_m_a_n_d _l_i_s_t
+ shall be executed with the current line number set to the address of that
+ line.  When the g command completes, the current line number shall have
+ the value assigned by the last command in the command list.  If there
+ were no matching lines, the current line number shall not be changed.  A
+ single command or the first of a list of commands shall appear on the
+ same line as the global command.  All lines of a multiline list except
+ the last line shall be ended with a backslash; the a, i, and c commands
+ and associated input are permitted.  The . terminating input mode can be
+ omitted if it would be the last line of the _c_o_m_m_a_n_d _l_i_s_t.  An empty
+ _c_o_m_m_a_n_d _l_i_s_t shall be equivalent to the p command.  The use of the g, G,
+ v, V, and ! commands in the _c_o_m_m_a_n_d _l_i_s_t produces undefined results.  Any
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 4.20 ed - Edit text                                                   487
+
+
+
+
+
+ P1003.2/D11.2                               INFORMATION TECHNOLOGY--POSIX
+
+ character other than <space> or <newline> can be used instead of a slash
+ to delimit the _R_E. Within the RE, the RE delimiter itself can be used as
+ a literal character if it is preceded by a backslash.
+
+ 4.20.7.3.8  Interactive Global Command
+
+ _S_y_n_o_p_s_i_s:  (1,$)G/_R_E/
+
+ In the _i_n_t_e_r_a_c_t_i_v_e _g_l_o_b_a_l command, the first step shall be to mark every
+ line that matches the given _R_E. Then, for every such line, that line
+ shall be written, the current line number shall be set to the address of
+ that line, and any one command (other than one of the a, c, i, g, G, v,
+ and V commands) can be input and shall be executed.  A <newline> shall
+ act as a null command (causing no action to be taken on the current
+ line); an & shall cause the reexecution of the most recent nonnull
+ command executed within the current invocation of G.  Note that the
+ commands input as part of the execution of the G command can address and
+ affect any lines in the buffer.  The final value of the current line
+ number shall be the value set by the last command successfully executed.
+ (Note that the last command successfully executed shall be the G command
+ itself if a command fails or the null command is specified.)  If there
+ were no matching lines, the current line number shall not be changed.
+ The G command can be terminated by a SIGINT signal.  Any character other
+ than <space> or <newline> can be used instead of a slash to delimit the
+ _R_E and the replacement.  Within the RE, the RE delimiter itself can be
+ used as a literal character if it is preceded by a backslash.
+
+ 4.20.7.3.9  Help Command
+
+ _S_y_n_o_p_s_i_s:  h
+
+ The _h_e_l_p command shall write a short message to standard output that
+ explains the reason for the most recent ? notification.  The current line
+ number shall be unchanged.
+
+ 4.20.7.3.10  Help-Mode Command
+
+ _S_y_n_o_p_s_i_s:  H
+
+ The _H_e_l_p command shall cause ed to enter a mode in which help messages
+ (see the h command) shall be written to standard output for all
+ subsequent ? notifications.  The H command alternately shall turn this
+ mode on and off; it shall be initially off.  If the help-mode is being
+ turned on, the H command also shall explain the previous ? notification,
+ if there was one.  The current line number shall be unchanged.
+
+
+
+
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 488                                     4 Execution Environment Utilities
+
+
+
+
+
+ Part 2: SHELL AND UTILITIES                                 P1003.2/D11.2
+
+ 4.20.7.3.11  Insert Command
+
+ _S_y_n_o_p_s_i_s:  (.)i
+           <_t_e_x_t>
+           .
+
+ The _i_n_s_e_r_t command shall insert the given text before the addressed line;
+ . shall be left at the last inserted line, or, if there was none, at the
+ addressed line.  This command differs from the a command only in the
+ placement of the input text.  Address 0 shall be invalid for this
+ command.
+
+ 4.20.7.3.12  Join Command
+
+ _S_y_n_o_p_s_i_s:  (.,.+1)j
+
+ The _j_o_i_n command shall join contiguous lines by removing the appropriate
+ <newline> characters.  If exactly one address is given, this command
+ shall do nothing.  If lines are joined, the current line number shall be
+ set to the address of the joined line; otherwise, the current line number
+ shall be unchanged.
+
+ 4.20.7.3.13  Mark Command
+
+ _S_y_n_o_p_s_i_s:  (.)k_x
+
+ The _m_a_r_k command shall mark the addressed line with name _x, which shall
+ be a lowercase letter from the portable character set.  The address '_x
+ then shall refer to this line; the current line number shall be
+ unchanged.
+
+ 4.20.7.3.14  List Command
+
+ _S_y_n_o_p_s_i_s:  (.,.)l
+
+ The _l_i_s_t command shall write to standard output the addressed lines in a   1
+ visually unambiguous form.  The characters listed in Table 2-15 (see       1
+ 2.12) shall be written as the corresponding escape sequence.               1
+ Nonprintable characters not in Table 2-15 shall be written as one three-   1
+ digit octal number (with a preceding <backslash>) for each byte in the     1
+ character (most significant byte first).  If the size of a byte on the     1
+ system is greater than nine bits, the format used for nonprintable         1
+ characters is implementation defined.                                      1
+
+ Long lines shall be folded, with the point of folding indicated by         1
+ writing <backslash><newline>; the length at which folding occurs is        1
+ unspecified, but should be appropriate for the output device.  The end of  1
+ each line shall be marked with a $.  An l command can be appended to any   1
+ other command other than e, E, f, q, Q, r, w, or !.  The current line
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 4.20 ed - Edit text                                                   489
+
+
+
+
+
+ P1003.2/D11.2                               INFORMATION TECHNOLOGY--POSIX
+
+ number shall be set to the address of the last line written.
+
+ 4.20.7.3.15  Move Command
+
+ _S_y_n_o_p_s_i_s:  (.,.)m_a_d_d_r_e_s_s
+
+ The _m_o_v_e command shall reposition the addressed line(s) after the line
+ addressed by _a_d_d_r_e_s_s. Address 0 shall be valid for _a_d_d_r_e_s_s and cause the
+ addressed line(s) to be moved to the beginning of the buffer.  It shall
+ be an error if address _a_d_d_r_e_s_s falls within the range of moved lines.
+ The current line number shall be set to the address of the last line
+ moved.
+
+ 4.20.7.3.16  Number Command
+
+ _S_y_n_o_p_s_i_s:  (.,.)n
+
+ The _n_u_m_b_e_r command shall write to standard output the addressed lines,
+ preceding each line by its line number and a <tab> character; the current
+ line number shall be set to the address of the last line written.  The n
+ command can be appended to any other command other than e, E, f, q, Q, r,
+ w, or !.
+
+ 4.20.7.3.17  Print Command
+
+ _S_y_n_o_p_s_i_s:  (.,.)p
+
+ The _p_r_i_n_t command shall write to standard output the addressed lines; the
+ current line number shall be set to the address of the last line written.
+ The p command can be appended to any other command other than e, E, f, q,
+ Q, r, w, or !.
+
+ 4.20.7.3.18  Prompt Command
+
+ _S_y_n_o_p_s_i_s:  P
+
+ The _P_r_o_m_p_t command shall cause ed to prompt with an asterisk (*) (or
+ _s_t_r_i_n_g, if -p is specified) for all subsequent commands.  The P command
+ alternately shall turn this mode on and off; it shall be initially on if
+ the -p option is specified, otherwise off.  The current line number shall
+ be unchanged.
+
+ 4.20.7.3.19  Quit Command
+
+ _S_y_n_o_p_s_i_s:  q
+
+ The _q_u_i_t command shall cause ed to exit.  If the buffer has changed since
+ the last time the entire buffer was written, the user shall be warned, as
+ described previously.
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 490                                     4 Execution Environment Utilities
+
+
+
+
+
+ Part 2: SHELL AND UTILITIES                                 P1003.2/D11.2
+
+ 4.20.7.3.20  Quit Without Checking Command
+
+ _S_y_n_o_p_s_i_s:  Q
+
+ The _Q_u_i_t command shall cause ed to exit without checking if changes have
+ been made in the buffer since the last w command.
+
+ 4.20.7.3.21  Read Command
+
+ _S_y_n_o_p_s_i_s:  ($)r [_f_i_l_e]
+
+ The _r_e_a_d command shall read in the file named by the pathname _f_i_l_e and
+ append it after the addressed line.  If no _f_i_l_e argument is given, the
+ currently remembered pathname, if any, shall be used (see e and f
+ commands).  The currently remembered pathname shall not be changed unless
+ there is no remembered pathname.  Address 0 shall be valid for r and
+ shall cause the file to be read at the beginning of the buffer.  If the
+ read is successful, and -s was not specified, the number of bytes read
+ shall be written to standard output in the following format:
+
+       "%d\n", <_n_u_m_b_e_r _o_f _b_y_t_e_s _r_e_a_d>
+
+ The current line number shall be set to the address of the last line read
+ in.  If _f_i_l_e is replaced by !, the rest of the line shall be taken to be
+ a shell command line whose output is to be read.  Such a shell command
+ line shall not be remembered as the current pathname.
+
+ 4.20.7.3.22  Substitute Command
+
+ _S_y_n_o_p_s_i_s:  (.,.)s/_R_E/_r_e_p_l_a_c_e_m_e_n_t/_f_l_a_g_s
+
+ The _s_u_b_s_t_i_t_u_t_e command shall search each addressed line for an occurrence
+ of the specified RE and replace either the first or all (nonoverlapped)
+ matched strings with the _r_e_p_l_a_c_e_m_e_n_t; see the following description of
+ the g suffix.  It is an error if the substitution fails on every
+ addressed line.  Any character other than <space> or <newline> can be
+ used instead of a slash to delimit the _R_E and the replacement.  Within
+ the RE, the RE delimiter itself can be used as a literal character if it
+ is preceded by a backslash.  The current line shall be set to the address
+ of the last line on which a substitution occurred.
+
+ An ampersand (&) appearing in the _r_e_p_l_a_c_e_m_e_n_t shall be replaced by the
+ string matching the RE on the current line.  The special meaning of & in
+ this context can be suppressed by preceding it by backslash.  As a more
+ general feature, the characters \_n, where _n is a digit, shall be replaced
+ by the text matched by the corresponding backreference expression (see
+ 2.8.3.3).  When the character % is the only character in the _r_e_p_l_a_c_e_m_e_n_t,
+ the _r_e_p_l_a_c_e_m_e_n_t used in the most recent substitute command shall be used
+ as the _r_e_p_l_a_c_e_m_e_n_t in the current substitute command; if there was no
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 4.20 ed - Edit text                                                   491
+
+
+
+
+
+ P1003.2/D11.2                               INFORMATION TECHNOLOGY--POSIX
+
+ previous substitute command, the use of % in this manner shall be an
+ error.  The % shall lose its special meaning when it is in a replacement
+ string of more than one character or is preceded by a backslash.
+
+ A line can be split by substituting a <newline> character into it.  The    1
+ application shall escape the <newline> in the _r_e_p_l_a_c_e_m_e_n_t by preceding it  1
+ by backslash.  Such substitution cannot be done as part of a g or v
+ command list.  The current line number shall be set to the address of the
+ last line on which a substitution is performed.  If no substitution is
+ performed, the current line number shall be unchanged.  If a line is
+ split, a substitution shall be considered to have been performed on each
+ of the new lines for the purpose of determining the new current line
+ number.  A substitution shall be considered to have been performed even
+ if the replacement string is identical to the string that it replaces.
+
+ The value of _f_l_a_g_s shall be zero or more of:
+
+    _c_o_u_n_t    Substitute for the _c_o_u_n_tth occurrence only of the _R_E found on
+             each addressed line.
+
+    g        Globally substitute for all nonoverlapping instances of the
+             _R_E rather than just the first one.  If both g and _c_o_u_n_t are
+             specified, the results are unspecified.
+
+    l        Write to standard output the final line in which a
+             substitution was made.  The line shall be written in the
+             format specified for the l command.
+
+    n        Write to standard output the final line in which a
+             substitution was made.  The line shall be written in the
+             format specified for the n command.
+
+    p        Write to standard output the final line in which a
+             substitution was made.  The line shall be written in the
+             format specified for the p command.
+
+ 4.20.7.3.23  Copy Command
+
+ _S_y_n_o_p_s_i_s:  (.,.)t_a_d_d_r_e_s_s
+
+ The t command shall be equivalent to the m command, except that a copy of
+ the addressed lines shall be placed after address _a_d_d_r_e_s_s (which can be
+ 0); the current line number shall be set to the address of the last line
+ added.
+
+
+
+
+
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 492                                     4 Execution Environment Utilities
+
+
+
+
+
+ Part 2: SHELL AND UTILITIES                                 P1003.2/D11.2
+
+ 4.20.7.3.24  Undo Command
+
+ _S_y_n_o_p_s_i_s:  u
+
+ The _u_n_d_o command shall nullify the effect of the most recent command that
+ modified anything in the buffer, namely the most recent a, c, d, g, i, j,
+ m, r, s, t, u, v, G, or V command.  All changes made to the buffer by a    1
+ g, G, v, or V global command shall be ``undone'' as a single change; if    1
+ no changes were made by the global command (such as with g/_R_E/p), the u    1
+ command shall have no effect.  The current line number shall be set to     1
+ the value it had immediately before the command being undone started.
+
+ 4.20.7.3.25  Global Non-Matched Command
+
+ _S_y_n_o_p_s_i_s:  (1,$)v/_R_E/_c_o_m_m_a_n_d _l_i_s_t
+
+ This command shall be equivalent to the global command g except that the
+ lines that are marked during the first step shall be those that do not
+ match the RE.
+
+ 4.20.7.3.26  Interactive Global Not-Matched Command
+
+ _S_y_n_o_p_s_i_s:  (1,$)V/_R_E/
+
+ This command shall be equivalent to the interactive global command G
+ except that the lines that are marked during the first step shall be
+ those that do not match the RE.
+
+ 4.20.7.3.27  Write Command
+
+ _S_y_n_o_p_s_i_s:  (1,$)w [_f_i_l_e]
+
+ The _w_r_i_t_e command shall write the addressed lines into the file named by
+ the pathname _f_i_l_e. The command shall create the file, if it does not
+ exist, or shall replace the contents of the existing file.  The currently
+ remembered pathname shall not be changed unless there is no remembered
+ pathname.  If no pathname is given, the currently remembered pathname, if
+ any, shall be used (see e and f commands); the current line number shall
+ be unchanged.  If the command is successful, the number of bytes written
+ shall be written to standard output, unless the -s option was specified,
+ in the following format:
+
+       "%d\n", <_n_u_m_b_e_r _o_f _b_y_t_e_s _w_r_i_t_t_e_n>
+
+ If _f_i_l_e begins with !, the rest of the line shall be taken to be a shell
+ command line whose standard input shall be the addressed lines.  Such a
+ shell command line shall not be remembered as the current pathname.  This  1
+ usage of the write command with ! shall not be considered as a ``last w    1
+ command that wrote the entire buffer,'' as described previously; thus,     1
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 4.20 ed - Edit text                                                   493
+
+
+
+
+
+ P1003.2/D11.2                               INFORMATION TECHNOLOGY--POSIX
+
+ this alone shall not prevent the warning to the user if an attempt is      1
+ made to destroy the editor buffer via the e or q commands.                 1
+
+ 4.20.7.3.28  Line Number Command
+
+ _S_y_n_o_p_s_i_s:  ($)=
+
+ The line number of the addressed line shall be written to standard output
+ in the following format:
+
+       "%d\n", <_l_i_n_e _n_u_m_b_e_r>
+
+ The current line number shall be unchanged by this command.
+
+ 4.20.7.3.29  Shell Escape Command
+
+ _S_y_n_o_p_s_i_s:  !_c_o_m_m_a_n_d
+
+ The remainder of the line after the ! shall be sent to the command
+ interpreter to be interpreted as a shell command line.  Within the text
+ of that shell command line, the unescaped character % shall be replaced
+ with the remembered pathname; if a ! appears as the first character of
+ the command, it shall be replaced with the text of the previous shell
+ command executed via !.  Thus, !! shall repeat the previous !_c_o_m_m_a_n_d. If   2
+ any replacements of % and/or ! are performed, the modified line shall be   2
+ written to the standard output before _c_o_m_m_a_n_d is executed.  The ! command  2
+ shall write                                                                2
+
+       "!\n"
+
+ to standard output upon completion, unless the -s option is specified.
+ The current line number shall be unchanged.
+
+ 4.20.7.3.30  Null Command
+
+ _S_y_n_o_p_s_i_s:  (.+1)
+
+ An address alone on a line shall cause the addressed line to be written.
+ A <newline> alone shall be equivalent to .+1p.  The current line number
+ shall be set to the address of the written line.
+
+
+ 4.20.8  Exit Status
+
+ The ed utility shall exit with one of the following values:
+
+     0    Successful completion without any file or command errors.
+
+
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 494                                     4 Execution Environment Utilities
+
+
+
+
+
+ Part 2: SHELL AND UTILITIES                                 P1003.2/D11.2
+
+    >0    An error occurred.
+
+
+ 4.20.9  Consequences of Errors
+
+ When an error in the input script is encountered, or when an error is      1
+ detected that is a consequence of the data (not) present in the file or    1
+ due to an external condition such as a read or write error:                1
+
+     - If the standard input is a terminal device file, all input shall be  2
+       flushed, and a new command read.                                     2
+
+     - If the standard input is a regular file, ed shall terminate with a   2
+       nonzero exit status.                                                 2
+
+ BEGIN_RATIONALE                                                            2
+
+
+ 4.20.10  Rationale. (_T_h_i_s _s_u_b_c_l_a_u_s_e _i_s _n_o_t _a _p_a_r_t _o_f _P_1_0_0_3._2)
+
+ _E_x_a_m_p_l_e_s_,__U_s_a_g_e
+
+ Some historical implementations contained a bug that allowed a single
+ period to be entered in input mode as <backslash> <period> <newline>.
+ This is not allowed by the POSIX.2 ed because there is no description of
+ escaping any of the characters in input mode; backslashes are entered
+ into the buffer exactly as typed.  The typical method of entering a
+ single period has been to precede it with another character and then use
+ the substitute command to delete that character.
+
+ Because of the extremely terse nature of the default error messages, the   1
+ prudent script writer will begin the ed input commands with an H command,  1
+ so that if any errors do occur at least some clue as to the cause will be  1
+ made available.                                                            1
+
+ _H_i_s_t_o_r_y__o_f__D_e_c_i_s_i_o_n_s__M_a_d_e
+
+ The initial description of this utility was adapted from the _S_V_I_D.  It
+ contains some features not found in Version 7 or BSD-derived systems.
+ Some of the differences between the POSIX.2 and BSD ed utilities include,
+ but need not be limited to:
+
+     - The BSD - option does not suppress the ! prompt after a ! command.
+
+     - BSD does not support the special meanings of the % and ! characters
+       within a ! command.
+
+     - BSD does not support the _a_d_d_r_e_s_s_e_s ; and ,.
+
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 4.20 ed - Edit text                                                   495
+
+
+
+
+
+ P1003.2/D11.2                               INFORMATION TECHNOLOGY--POSIX
+
+     - BSD allows the command/suffix pairs pp, ll, etc., which are
+       unspecified in POSIX.2.
+
+     - BSD does not support the ! character part of the e, r, or w
+       commands.
+
+     - A failed g command in BSD sets the line number to the last line
+       searched if there are no matches.
+
+     - BSD does not default the command list to the p command.
+
+     - BSD does not support the G, h, H, n, or V commands.
+
+     - On BSD, if there is no inserted text, the insert command changes
+       the current line to the referenced line -1; i.e., the line before
+       the specified line.
+
+     - On BSD, the join command with only a single address changes the
+       current line to that address.
+
+     - BSD does not support the P command; moreover, in BSD it is
+       synonymous with the p command.
+
+     - BSD does not support the _u_n_d_o of the commands j, m, r, s, or t.
+
+     - The BSD ed commands W, wq, and z are not present in POSIX.2.
+
+ The -s option was added to allow the functionality of the - option in a
+ manner compatible with the Utility Syntax Guidelines.  It is the intent
+ of the working group that portable applications use the -s option, and
+ that in the future the - option be removed from the standard.
+
+ Prior to Draft 8 there was a limit, {ED_FILE_MAX}, which described the
+ historical limitations of some ed utilities in their handling of large
+ files; some of these have had problems with files in the >100KB range.
+ It was this limitation that prompted much of the desire to include a
+ split command in the standard.  Since this limit was removed, the
+ standard requires that implementations document the file size limits
+ imposed by ed in the conformance document.  The limit {ED_LINE_MAX} was
+ also removed; therefore, the global limit {LINE_MAX} is used for input
+ and output lines.
+
+ The \{_m,_n\} notation was removed from the description of regular
+ expressions because this functionality is now described in 2.8.3.
+
+ The manner in which the l command writes nonprintable characters was
+ changed to avoid the historical backspace-overstrike method.  On video
+ display terminals, the overstrike is ambiguous because most terminals      1
+ simply replace overstruck characters, making the l format not useful for   1
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 496                                     4 Execution Environment Utilities
+
+
+
+
+
+ Part 2: SHELL AND UTILITIES                                 P1003.2/D11.2
+
+ its intended purpose of unambiguously understanding the content of the     1
+ line.  The historical backslash escapes were also ambiguous.  (The string
+ "a\0011" could represent a line containing those six characters or a line
+ containing the three characters 'a', a byte with a binary value of 1, and
+ a '1'.)  In the format required here, a backslash appearing in the line
+ will be written as "\\" so that the output is truly unambiguous.  The      1
+ method of marking the ends of lines was adopted from the ex editor (see    1
+ the User Portability Extension) and is required for any line ending in     1
+ <space>_s; the $ is placed on all lines so that a real $ at the end of a    1
+ line cannot be misinterpreted.                                             1
+
+ Systems with bytes too large to fit into three octal digits must devise    1
+ other means of displaying nonprintable characters.  Consideration was      1
+ given to requiring that the number of octal digits be large enough to      1
+ hold a byte, but this seemed to be too confusing for applications on the   1
+ vast majority of systems where three digits are adequate.  It would be     1
+ theoretically possible for the application to use the getconf utility to   1
+ find out the {CHAR_BIT} value and deal with such an algorithm; however,    1
+ there is really no portable way that an application can use the octal      1
+ values of the bytes across various coded character sets anyway, so the     1
+ additional specification did not seem worth the effort.                    1
+
+ The description of how a NUL is written was removed.  The NUL character
+ cannot be in text files, and the standard should not dictate behavior in
+ the case of undefined, erroneous input.
+
+ The text requiring filenames accepted by the E, e, R, and r commands to
+ be patterns was removed due to balloting objections that this was
+ undesirable and not existing practice.
+
+ The -p option in Drafts 8 and 9 said that it only worked when standard
+ input was associated with a terminal device.  This has been changed to
+ conform to existing implementations, thereby allowing applications to
+ interpose themselves between a user and the ed utility.
+
+ The form of the substitute command that uses the _n suffix was limited to
+ the first 512 matches in a previous draft (where this was described
+ incorrectly as ``backreferencing'').  This limit has been removed because
+ there is no reason an editor processing lines of {LINE_MAX} length should
+ have this restriction.  The command s/x/X/2047 should be able to
+ substitute the 2047th occurrence of x on a line.
+
+ The use of printing commands with printing suffixes (such as pn, lp,
+ etc.) was made unspecified because BSD-based systems allow this, whereas
+ System V does not.
+
+ Some BSD-based systems exit immediately upon receipt of end-of-file if
+ all of the lines in the file had been deleted.  Since POSIX.2 refers to
+ the q command in this instance, such behavior is not allowed.
+
+
+               Copyright c 1991 IEEE.  All rights reserved.
+      This is an unapproved IEEE Standards Draft, subject to change.
+
+
+
+
+
+ 4.20 ed - Edit text                                                   497
+
+
+
+
+
+ P1003.2/D11.2                               INFORMATION TECHNOLOGY--POSIX
+
+ Some historical implementations returned exit status zero even if command
+ errors had occurred; this is not allowed by POSIX.2.
+
+ END_RATIONALE
+
+
+

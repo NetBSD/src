@@ -1,0 +1,50 @@
+The following describes line addressing syntax.  This is a combination of
+both BSD and POSIX. 
+
+Addresses are computed from left to right relative to the current address.
+
+Addresses in a  pair are separated by either a comma or a semi-colon. If
+a semi-colon is used as a separator instead of a comma, then the pair is
+interpreted as only a single address (though syntactically still a pair)
+as follows:  the first address is computed, and the current address is
+set to this address;  then the second address is computed relative to the
+new current address.
+
+If multiple separated addresses are given, then only the last pair is
+used.  Address pairs are not legal where only a single address is expected.
+
+Addresses may be composed of the following: 
+.	- current line
+$	- last line
+-	- previous line - may be repeated
+-<n>	- <n>th previous line, where <n> is a non-negative number
+^	- previous line - may be repeated (BSD) 
+^<n>	- <n>th previous line, where <n> is a non-negative number
++	- next line - may be repeated
++<n>	- <n>th next line, where <n> is a non-negative number
+%	- first through last lines (BSD), i.e., equivalent to: 1,$
+,	- first through last lines (POSIX), i.e., equivalent to: 1,$
+;	- current through last lines (POSIX), i.e., equivalent to: .,$
+/pat/	- next line containing pattern pat
+?pat?	- previous line containing pattern pat
+[0-9]*  - line <n>, where <n> is a decimal number in the range [0,$]
+<ws><n>	- any whitespace <ws> after the first address followed by a number
+	  nn is interpreted as +nn
+'<lc>	- line previously marked by k command, where <lc> is a
+	  lower case letter
+
+After the first component of an address, only digits, whitespace and
+increments (i.e., `+', `-', and '^') are legal.  Leading whitespace is
+ignored.
+
+Examples:
+The address pair 0;+1 is equivalent to the single address 1.
+The address triple 4;-1,$ is equivalent to the address pair 3,$.
+The address triple 1,$;-1 is equivalent only to the single address $-1.
+If the current line is 1, then the address triple +1,+2,+3 is equivalent
+to the pair 3,4.  
+If the current line is 1, then the address triple +1;+2,+3 is equivalent
+to the pair 4,5.
+The command t$;-1 is invalid because, syntactically, $;-1 is an address
+pair.  The correct syntax is t$-.
+The command 0;/pat/;// prints the second line containing the pattern pat.
