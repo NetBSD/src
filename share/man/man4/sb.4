@@ -1,4 +1,4 @@
-.\"	$NetBSD: sb.4,v 1.17 1999/03/16 01:19:17 garbled Exp $
+.\"	$NetBSD: sb.4,v 1.18 1999/08/02 17:43:52 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,6 +46,7 @@
 .Cd "sb*    at isapnp?"
 .Cd "audio* at sb?"
 .Cd "midi*  at sb?"
+.Cd "mpu*   at sb?"
 .Cd "opl*   at sb?"
 .Sh DESCRIPTION
 The
@@ -83,6 +84,10 @@ The joystick interface (if enabled by a jumper) is handled by the
 driver, and the optional SCSI CD-ROM interface is handled by the
 .Xr aic 4
 driver.
+.Pp
+SoundBlaster 16 cards have MPU401 emulation and can use the mpu
+attachment, older cards have a different way to generate MIDI and
+has a midi device attached directly to the sb,
 .Sh BUGS
 Non-SCSI CD-ROM interfaces are not supported.
 .Pp
@@ -93,6 +98,7 @@ a lot of system time.
 .Xr aic 4 ,
 .Xr audio 4 ,
 .Xr midi 4 ,
+.Xr mpu 4 ,
 .Xr opl 4 ,
 .Xr joy 4
 .Sh HISTORY
