@@ -45,7 +45,7 @@ struct relocation_info *textrel, *datarel;
 struct nlist *symbase;
 
 
-#define SYMSTR(sp)	&strbase[(sp)->n_un.n_strx]
+#define SYMSTR(sp)	(&strbase[(sp)->n_un.n_strx])
 
 /* is the symbol a global symbol defined in the current file? */
 #define IS_GLOBAL_DEFINED(sp) \
