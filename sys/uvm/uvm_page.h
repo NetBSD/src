@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.24 2001/05/02 01:22:20 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.25 2001/05/16 00:16:01 ross Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -112,6 +112,11 @@
  * seperated things back out again.
  *
  * note the page structure has no lock of its own.
+ *
+ * XXX the use of locked u_short fields is dangerous, as they are not
+ *     addressable on all architectures and hence cannot be individually
+ *     locked. Right now it works because each aligned pair uses the same
+ *     lock and all current ports can lock an int32_t.
  */
 
 #include <uvm/uvm_extern.h>
