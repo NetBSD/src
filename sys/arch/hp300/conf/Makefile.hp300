@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.20 1994/10/26 07:23:13 cgd Exp $
+#	$NetBSD: Makefile.hp300,v 1.21 1995/03/23 19:46:38 jtc Exp $
 
 #	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
@@ -35,7 +35,7 @@ S=	../../../..
 HP300=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Dmc68020 -Dhp300 -DFPCOPROC
+COPTS=	${INCLUDES} ${IDENT} -DKERNEL -D_KERNEL -Dmc68020 -Dhp300 -DFPCOPROC
 CFLAGS=	-O6 ${COPTS}
 
 ### find out what to use for libkern

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.1 1995/02/13 23:07:25 cgd Exp $
+#	$NetBSD: Makefile.alpha,v 1.2 1995/03/23 19:46:18 jtc Exp $
 #
 # Makefile for NetBSD
 #
@@ -32,7 +32,7 @@ S=	../../../..
 ALPHA=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -DKERNEL
+COPTS=	${INCLUDES} ${IDENT} -DKERNEL -D_KERNEL
 .if ${CC} == "cc"
 CFLAGS=	-Wc,-nofloat -D__STDC__ -Dalpha ${DEBUG} ${COPTS}
 AFLAGS=	-D__ALPHA_AS__ ${COPTS}

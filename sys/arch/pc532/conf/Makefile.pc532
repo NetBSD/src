@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.10 1994/12/22 03:23:20 phil Exp $
+#	$NetBSD: Makefile.pc532,v 1.11 1995/03/23 19:47:13 jtc Exp $
 
 # Copyright 1990 W. Jolitz
 # 	@(#)Makefile.i386	7.1 5/10/91
@@ -37,7 +37,7 @@ PC532=	../..
 .s.o:; (${CPP} ${COPTS} ${PC532}/pc532/$*.s | ${AS} ${ASFLAGS} -o $*.o)
 
 INCLUDES= -I. -I$S -I$S/sys -I${PC532}
-COPTS=	${INCLUDES} ${IDENT} -DKERNEL
+COPTS=	${INCLUDES} ${IDENT} -DKERNEL -D_KERNEL
 ASFLAGS=
 CFLAGS=	-O -msb ${COPTS}
 
@@ -99,7 +99,7 @@ assym.h: genassym
 	./genassym >assym.h
 
 genassym: ${PC532}/pc532/genassym.c
-	${CC} -static ${INCLUDES} -DKERNEL ${IDENT} ${PARAM} \
+	${CC} -static ${INCLUDES} -DKERNEL -D_KERNEL ${IDENT} ${PARAM} \
 		 ${PC532}/pc532/genassym.c -o genassym
 
 depend: assym.h param.c vnode_if.h
