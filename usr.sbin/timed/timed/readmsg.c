@@ -1,4 +1,4 @@
-/*	$NetBSD: readmsg.c,v 1.9 2000/03/27 17:07:23 kleink Exp $	*/
+/*	$NetBSD: readmsg.c,v 1.9.4.1 2001/04/21 20:20:27 he Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,12 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: readmsg.c,v 1.9 2000/03/27 17:07:23 kleink Exp $");
+__RCSID("$NetBSD: readmsg.c,v 1.9.4.1 2001/04/21 20:20:27 he Exp $");
 #endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.9 $"
+#ident "$Revision: 1.9.4.1 $"
 #endif
 
 #include "globals.h"
@@ -92,6 +92,7 @@ readmsg(int type, char *machfrom, struct timeval *intvl,
 	struct tsplist *prev;
 	register struct netinfo *ntp;
 	register struct tsplist *ptr;
+	ssize_t n;
 
 	if (trace) {
 		fprintf(fd, "readmsg: looking for %s from %s, %s\n",
@@ -211,10 +212,17 @@ again:
 			continue;
 		}
 		length = sizeof(from);
-		if (recvfrom(sock, (char *)&msgin, sizeof(struct tsp), 0,
-			     (struct sockaddr*)&from, &length) < 0) {
+		if ((n = recvfrom(sock, (char *)&msgin, sizeof(struct tsp), 0,
+			     (struct sockaddr*)&from, &length)) < 0) {
 			syslog(LOG_ERR, "recvfrom: %m");
 			exit(1);
+		}
+		if (n < (ssize_t)sizeof(struct tsp)) {
+			syslog(LOG_NOTICE,
+			    "short packet (%lu/%lu bytes) from %s",
+			      (u_long)n, (u_long)sizeof(struct tsp),
+			      inet_ntoa(from.sin_addr));
+			continue;
 		}
 		(void)gettimeofday(&from_when, (struct timezone *)0);
 		bytehostorder(&msgin);
@@ -224,6 +232,13 @@ again:
 			    fprintf(fd,"readmsg: version mismatch\n");
 			    /* should do a dump of the packet */
 			}
+			continue;
+		}
+
+		if (memchr(msgin.tsp_name,
+		    '\0', sizeof msgin.tsp_name) == NULL) {
+			syslog(LOG_NOTICE, "hostname field not NUL terminated "
+			    "in packet from %s", inet_ntoa(from.sin_addr));
 			continue;
 		}
 
@@ -441,6 +456,12 @@ struct sockaddr_in *addr;
 {
 	char tm[26];
 	time_t msgtime;
+
+	if (msg->tsp_type >= TSPTYPENUMBER) {
+		fprintf(fd, "bad type (%u) on packet from %s\n",
+		  msg->tsp_type, inet_ntoa(addr->sin_addr));
+		return;
+	}
 
 	switch (msg->tsp_type) {
 
