@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs_data.h,v 1.26 2001/05/06 19:44:14 ad Exp $	*/
+/*	$NetBSD: eisadevs_data.h,v 1.27 2001/09/14 13:46:42 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.23 2001/05/06 19:43:54 ad Exp 
+ *	NetBSD: eisadevs,v 1.24 2001/09/14 13:41:29 martin Exp 
  */
 
 /*
@@ -403,6 +403,16 @@ const struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "TCM5094",
 	    EISA_PRODUCT_TCM5094,
+	},
+	{
+	    0,
+	    "TCM5095",
+	    EISA_PRODUCT_TCM5095,
+	},
+	{
+	    0,
+	    "TCM5098",
+	    EISA_PRODUCT_TCM5098,
 	},
 	{
 	    0,
