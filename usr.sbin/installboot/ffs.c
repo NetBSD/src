@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.13 2003/10/06 02:39:04 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.14 2004/03/21 21:18:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.13 2003/10/06 02:39:04 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.14 2004/03/21 21:18:40 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -469,7 +469,7 @@ ffs_match(ib_params *params)
 			params->fstype->needswap = 0;
 			params->fstype->blocksize = fs->fs_bsize;
 			params->fstype->sblockloc = loc;
-			return (1);
+			break;
 		case FS_UFS2_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/* FALLTHROUGH */
@@ -477,10 +477,13 @@ ffs_match(ib_params *params)
 			params->fstype->needswap = 1;
 			params->fstype->blocksize = bswap32(fs->fs_bsize);
 			params->fstype->sblockloc = loc;
-			return (1);
+			break;
 		default:
 			continue;
 		}
+		if (!is_ufs2 && sblock_try[i] == SBLOCK_UFS2)
+			continue;
+		return 1;
 	}
 
 	return (0);
