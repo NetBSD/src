@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.52 2002/08/09 02:57:09 itojun Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.53 2002/08/12 02:51:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.52 2002/08/09 02:57:09 itojun Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.53 2002/08/12 02:51:07 itojun Exp $");
 #endif
 #endif
 
@@ -642,9 +642,6 @@ main(int argc, char **argv)
 	}
 	if (options & SO_DEBUG)
 		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, (char *)&on,
-		    sizeof(on));
-	if (options & SO_DONTROUTE)
-		(void)setsockopt(s, SOL_SOCKET, SO_DONTROUTE, (char *)&on,
 		    sizeof(on));
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
