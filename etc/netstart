@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.40 1997/07/22 18:41:08 phil Exp $
+#	$NetBSD: netstart,v 1.41 1997/08/04 06:09:49 lukem Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.conf ]; then
@@ -33,6 +33,10 @@ if [ "$ipfilter" != NO ] && [ -f /etc/ipf.conf ]; then
 	echo 'installing packet filter rules ... '
 	ipf -E -Fa -f /etc/ipf.conf
 fi
+
+# Set the address for the first loopback interface, so that the auto-route
+# from a newly configured interface's address to lo0 works correctly.
+ifconfig lo0 inet localhost
 
 # Configure all of the network interfaces listed in $net_interfaces;
 # if $net_interfaces is DEFAULT, grab all interfaces from ifconfig.
@@ -76,21 +80,10 @@ if [ "$net_interfaces" != NO ]; then
 			fi
 			continue
 		fi
-		if [ "$int" = "lo0" ]; then
-			configured_lo0=yes
-		fi
 		configured_interfaces="$configured_interfaces $int"
 	done
 	echo '.'
 fi
-
-# Set the address for the loopback interface if it's not configured
-if [ "$configured_lo0" != "yes" ]; then
-	ifconfig lo0 inet localhost
-fi
-
-# Use loopback, not the wire
-route add $hostname localhost
 
 # Check $defaultroute, then /etc/mygate, for the name of my gateway host.
 # That name must be in /etc/hosts.
