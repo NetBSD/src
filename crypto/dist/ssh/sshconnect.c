@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.20 2002/07/01 06:17:13 itojun Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.21 2002/07/09 12:04:10 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,6 +43,7 @@ extern char *__progname;
 extern uid_t original_real_uid;
 extern uid_t original_effective_uid;
 
+#if 0
 static const char *
 sockaddr_ntop(struct sockaddr *sa, socklen_t salen)
 {
@@ -53,6 +54,7 @@ sockaddr_ntop(struct sockaddr *sa, socklen_t salen)
 		fatal("sockaddr_ntop: getnameinfo NI_NUMERICHOST failed");
 	return addrbuf;
 }
+#endif
 
 /*
  * Connect to the given ssh server using a proxy command.
@@ -304,9 +306,11 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 			} else {
 				if (errno == ECONNREFUSED)
 					full_failure = 0;
+#if 0
 				log("ssh: connect to address %s port %s: %s",
 				    sockaddr_ntop(ai->ai_addr, ai->ai_addrlen),
 				    strport, strerror(errno));
+#endif
 				/*
 				 * Close the failed socket; there appear to
 				 * be some problems when reusing a socket for
