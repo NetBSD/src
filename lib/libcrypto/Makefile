@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2004/07/02 00:05:23 sjg Exp $
+#	$NetBSD: Makefile,v 1.37 2005/03/02 01:04:21 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -35,16 +35,20 @@ CRYPTODIST=	${NETBSDSRCDIR}/crypto/dist
 
 .include "srcs.inc"
 
-# NetBSD's crypt(3) library, in lieu of the one included with OpenSSL,
-# since NetBSD's also supports MD5, SHA1 and Blowfish passwords.
-.PATH: ${NETBSDSRCDIR}/lib/libcrypt
-SRCS+=	crypt.c md5crypt.c bcrypt.c crypt-sha1.c util.c
+LIBDPLIBS= crypt ${.CURDIR}/../libcrypt
+
 
 # XXX
 .if ${OBJECT_FMT} == "ELF"
 AFLAGS+=-DELF
+LIBDPLIBS= crypt ${.CURDIR}/../libcrypt
 .else
 AFLAGS+=-DOUT
+# XXX: This is broken because we compile with the wrong des headers.
+# NetBSD's crypt(3) library, in lieu of the one included with OpenSSL,
+# since NetBSD's also supports MD5, SHA1 and Blowfish passwords.
+.PATH: ${NETBSDSRCDIR}/lib/libcrypt
+SRCS+=	crypt.c md5crypt.c bcrypt.c crypt-sha1.c util.c
 .endif
 
 OS_VERSION!= ${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
