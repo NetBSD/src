@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.52 2005/01/08 03:12:31 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.53 2005/01/09 01:32:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -206,7 +206,8 @@ LIST_HEAD(nfsnodehashhead, nfsnode);
 #define	NACC		0x0100	/* Special file accessed */
 #define	NUPD		0x0200	/* Special file updated */
 #define	NCHG		0x0400	/* Special file times changed */
-#define	NTRUNCDELAYED	0x1000	/* Should be truncated later */
+#define	NTRUNCDELAYED	0x1000	/* Should be truncated later;
+				   implies stale cache */
 #define	NREMOVED	0x2000	/* Has been removed */
 #define	NUSEOPENCRED	0x4000	/* Try open cred first rather than owner's */
 
