@@ -1,4 +1,10 @@
-#	$NetBSD: Makefile,v 1.24 1997/05/07 17:16:05 mycroft Exp $
+#	$NetBSD: Makefile,v 1.25 1997/08/22 21:53:00 perry Exp $
+#
+# WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+# This boot program is obsolete. It has been left in place for
+# reference only. It doesn't even build any longer. Please use the
+# boot blocks in sys/arch/i386/stand instead!
+# WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
 #
 # Ported to boot 386BSD by Julian Elischer (julian@tfs.com)
 # September 1992
@@ -23,6 +29,17 @@
 # any improvements or extensions that they make and grant Carnegie Mellon
 # the rights to redistribute these changes.
 #
+# WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+# This boot program is obsolete. It has been left in place for
+# reference only. It doesn't even build any longer. Please use the
+# boot blocks in sys/arch/i386/stand instead!
+# WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+
+all:
+	@echo "This boot program is obsolete. It has been left in place for"
+	@echo "reference only. It doesn't even build any longer. Please use"
+	@echo "the boot blocks in sys/arch/i386/stand instead."
+
 
 S=	${.CURDIR}/../../..
 
@@ -33,7 +50,7 @@ machine-links:
 	-rm -f ${MACHINE_ARCH} && \
 	    ln -s ${.CURDIR}/../include ${MACHINE_ARCH}
 
-all: machine-links biosboot bootbios
+real-all: machine-links biosboot bootbios
 
 NOPROG=	noprog
 NOMAN=	noman
