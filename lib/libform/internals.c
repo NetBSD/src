@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.1 2000/12/17 12:04:30 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.2 2001/01/04 12:30:37 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -35,6 +35,14 @@
 #include <strings.h>
 #include "internals.h"
 #include "form.h"
+
+#ifdef DEBUG
+/*
+ *  file handle to write debug info to, this will be initialised when
+ *  the form is first posted.
+ */
+FILE *dbg = NULL;
+#endif
 
 /* define our own min function - this is not generic but will do here
  * (don't believe me?  think about what value you would get
@@ -714,11 +722,11 @@ _formi_redraw_field(FORM *form, int field)
 			wattrset(form->subwin, cur->back);
 
 #ifdef DEBUG
-		fprintf(stderr, "redraw_field: start=%d, pre=%d, slen=%d, flen=%d, post=%d, hscroll=%d\n",
+		fprintf(dbg, "redraw_field: start=%d, pre=%d, slen=%d, flen=%d, post=%d, hscroll=%d\n",
 			start, pre, slen, flen, post, cur->hscroll);
 		strncpy(buffer, &str[cur->start_char], flen);
 		buffer[flen] = '\0';
-		fprintf(stderr, "redraw_field: %s\n", buffer);
+		fprintf(dbg, "redraw_field: %s\n", buffer);
 #endif
 		
 		for (i = start + cur->hscroll; i < pre; i++)
@@ -734,14 +742,14 @@ _formi_redraw_field(FORM *form, int field)
 			flen = 0;
 		
 #ifdef DEBUG
-		fprintf(stderr, "redraw_field: will add %d chars, offset is %d\n",
+		fprintf(dbg, "redraw_field: will add %d chars, offset is %d\n",
 			min(slen, flen), offset);
 #endif
 		for (i = 0;
 		     i < min(slen, flen); i++) 
 		{
 #ifdef DEBUG
-			fprintf(stderr, "adding char str[%d]=%c\n",
+			fprintf(dbg, "adding char str[%d]=%c\n",
 				i + offset, str[i + offset]);
 #endif
 			waddch(form->subwin,
@@ -789,12 +797,13 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	int status;
 
 #ifdef DEBUG
-	fprintf(stderr,"add_char: pos=%d, char=%c\n", pos, c);
-	fprintf(stderr,"add_char enter: xpos=%d, start=%d, length=%d(%d), allocated=%d\n",
+	fprintf(dbg, "add_char: pos=%d, char=%c\n", pos, c);
+	fprintf(dbg,
+	   "add_char enter: xpos=%d, start=%d, length=%d(%d), allocated=%d\n",
 		field->cursor_xpos, field->start_char,
 		field->buffers[0].length, strlen(field->buffers[0].string),
 		field->buffers[0].allocated);
-	fprintf(stderr,"add_char enter: %s\n", field->buffers[0].string);
+	fprintf(dbg, "add_char enter: %s\n", field->buffers[0].string);
 #endif
 	if (((field->opts & O_BLANK) == O_BLANK) &&
 	    (field->buf0_status == FALSE)) {
@@ -864,12 +873,13 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	}
 	
 #ifdef DEBUG
-	fprintf(stderr,"add_char exit: xpos=%d, start=%d, length=%d(%d), allocated=%d\n",
+	fprintf(dbg,
+	    "add_char exit: xpos=%d, start=%d, length=%d(%d), allocated=%d\n",
 		field->cursor_xpos, field->start_char,
 		field->buffers[0].length, strlen(field->buffers[0].string),
 		field->buffers[0].allocated);
-	fprintf(stderr,"add_char exit: %s\n", field->buffers[0].string);
-	fprintf(stderr, "add_char exit: status = %s\n",
+	fprintf(dbg,"add_char exit: %s\n", field->buffers[0].string);
+	fprintf(dbg, "add_char exit: status = %s\n",
 		(status == E_OK)? "OK" : "FAILED");
 #endif
 	return (status == E_OK);
@@ -890,10 +900,11 @@ _formi_manipulate_field(FORM *form, int c)
 	cur = form->fields[form->cur_field];
 
 #ifdef DEBUG
-	fprintf(stderr, "entry: xpos=%d, start_char=%d, length=%d, allocated=%d\n",
+	fprintf(dbg,
+		"entry: xpos=%d, start_char=%d, length=%d, allocated=%d\n",
 		cur->cursor_xpos, cur->start_char, cur->buffers[0].length,
 		cur->buffers[0].allocated);
-	fprintf(stderr, "entry: string=\"%s\"\n", cur->buffers[0].string);
+	fprintf(dbg, "entry: string=\"%s\"\n", cur->buffers[0].string);
 #endif
 	switch (c) {
 	case REQ_NEXT_CHAR:
@@ -1103,7 +1114,7 @@ _formi_manipulate_field(FORM *form, int c)
 			return E_REQUEST_DENIED;
 
 #ifdef DEBUG
-		fprintf(stderr, "req_right_char enter: start=%d, xpos=%d, c=%c\n",
+		fprintf(dbg, "req_right_char enter: start=%d, xpos=%d, c=%c\n",
 			cur->start_char, cur->cursor_xpos,
 			cur->buffers[0].string[pos]);
 #endif
@@ -1127,7 +1138,7 @@ _formi_manipulate_field(FORM *form, int c)
 				cur->cursor_xpos++;
 		}
 #ifdef DEBUG
-		fprintf(stderr, "req_right_char exit: start=%d, xpos=%d, c=%c\n",
+		fprintf(dbg, "req_right_char exit: start=%d, xpos=%d, c=%c\n",
 			cur->start_char, cur->cursor_xpos,
 			cur->buffers[0].string[cur->start_char +
 					      cur->cursor_xpos]);
@@ -1334,10 +1345,10 @@ _formi_manipulate_field(FORM *form, int c)
 	}
 	
 #ifdef DEBUG
-	fprintf(stderr, "exit: xpos=%d, start_char=%d, length=%d, allocated=%d\n",
+	fprintf(dbg, "exit: xpos=%d, start_char=%d, length=%d, allocated=%d\n",
 		cur->cursor_xpos, cur->start_char, cur->buffers[0].length,
 		cur->buffers[0].allocated);
-	fprintf(stderr, "exit: string=\"%s\"\n", cur->buffers[0].string);
+	fprintf(dbg, "exit: string=\"%s\"\n", cur->buffers[0].string);
 #endif
 	return 1;
 }
@@ -1561,7 +1572,7 @@ _formi_stitch_fields(FORM *form)
 	below_row = -1;
 	end_below = TRUE;
 	real_end = TRUE;
-	while (below != CIRCLEQ_FIRST(&form->sorted_fields)) {
+	while (below != (void *)&form->sorted_fields) {
 		if (below->form_row != cur_row) {
 			below_row = below->form_row;
 			end_below = FALSE;
