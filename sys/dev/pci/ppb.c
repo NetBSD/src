@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.10 1996/10/10 19:58:27 christos Exp $	*/
+/*	$NetBSD: ppb.c,v 1.11 1996/10/13 01:38:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -93,12 +93,12 @@ ppbattach(parent, self, aux)
 	char devinfo[256];
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	kprintf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	busdata = pci_conf_read(pc, pa->pa_tag, PPB_REG_BUSINFO);
 
 	if (PPB_BUSINFO_SECONDARY(busdata) == 0) {
-		kprintf("%s: not configured by system firmware\n",
+		printf("%s: not configured by system firmware\n",
 		    self->dv_xname);
 		return;
 	}
@@ -137,7 +137,7 @@ ppbprint(aux, pnp)
 
 	/* only PCIs can attach to PPBs; easy. */
 	if (pnp)
-		kprintf("pci at %s", pnp);
-	kprintf(" bus %d", pba->pba_bus);
+		printf("pci at %s", pnp);
+	printf(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }

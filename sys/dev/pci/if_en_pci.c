@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.3 1996/10/10 19:58:19 christos Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.4 1996/10/13 01:38:21 christos Exp $	*/
 
 /*
  *
@@ -148,7 +148,7 @@ void *aux;
   const char *intrstr;
   int retval;
 
-  kprintf("\n");
+  printf("\n");
 
   sc->en_bc = pa->pa_bc;
   scp->en_pc = pa->pa_pc;
@@ -159,19 +159,19 @@ void *aux;
 
   if (pci_intr_map(scp->en_pc, pa->pa_intrtag, pa->pa_intrpin, 
 					pa->pa_intrline, &ih)) {
-    kprintf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+    printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
     return;
   }
   intrstr = pci_intr_string(scp->en_pc, ih);
   scp->sc_ih = pci_intr_establish(scp->en_pc, ih, IPL_NET, en_intr, sc);
   if (scp->sc_ih == NULL) {
-    kprintf("%s: couldn't establish interrupt\n", sc->sc_dev.dv_xname);
+    printf("%s: couldn't establish interrupt\n", sc->sc_dev.dv_xname);
     if (intrstr != NULL)
-      kprintf(" at %s", intrstr);
-    kprintf("\n");
+      printf(" at %s", intrstr);
+    printf("\n");
     return;
   }
-  kprintf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+  printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
   sc->ipl = 1; /* XXX */
 
   /*
@@ -184,7 +184,7 @@ void *aux;
     retval = bus_mem_map(sc->en_bc, membase, sc->en_obmemsz, 0, &sc->en_base);
  
   if (retval) {
-    kprintf("%s: couldn't map memory\n", sc->sc_dev.dv_xname);
+    printf("%s: couldn't map memory\n", sc->sc_dev.dv_xname);
     return;
   }
 

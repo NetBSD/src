@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.3 1996/10/10 21:23:28 christos Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.4 1996/10/13 01:38:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -116,7 +116,7 @@ uha_isa_attach(parent, self, aux)
 	bus_io_handle_t ioh;
 	isa_chipset_tag_t ic = ia->ia_ic;
 
-	kprintf("\n");
+	printf("\n");
 
 	if (bus_io_map(bc, ia->ia_iobase, UHA_ISA_IOSIZE, &ioh))
 		panic("uha_attach: bus_io_map failed!");
@@ -132,7 +132,7 @@ uha_isa_attach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ic, sc->sc_irq, IST_EDGE, IPL_BIO,
 	    u14_intr, sc);
 	if (sc->sc_ih == NULL) {
-		kprintf("%s: couldn't establish interrupt\n",
+		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -179,7 +179,7 @@ u14_find(bc, ioh, sc)
 			drq = 7;
 			break;
 		default:
-			kprintf("u14_find: illegal drq setting %x\n",
+			printf("u14_find: illegal drq setting %x\n",
 			    config & U14_DMA_MASK);
 			return (0);
 		}
@@ -189,7 +189,7 @@ u14_find(bc, ioh, sc)
 		drq = -1;
 		break;
 	default:
-		kprintf("u14_find: unknown model %x\n", model);
+		printf("u14_find: unknown model %x\n", model);
 		return (0);
 	}
 
@@ -207,7 +207,7 @@ u14_find(bc, ioh, sc)
 		irq = 15;
 		break;
 	default:
-		kprintf("u14_find: illegal irq setting %x\n",
+		printf("u14_find: illegal irq setting %x\n",
 		    config & U14_IRQ_MASK);
 		return (0);
 	}
@@ -220,7 +220,7 @@ u14_find(bc, ioh, sc)
 		delay(1000);	/* 1 mSec per loop */
 	}
 	if (!resetcount) {
-		kprintf("u14_find: board timed out during reset\n");
+		printf("u14_find: board timed out during reset\n");
 		return (0);
 	}
 
@@ -252,7 +252,7 @@ u14_start_mbox(sc, mscp)
 		delay(100);
 	}
 	if (!spincount) {
-		kprintf("%s: uha_start_mbox, board not responding\n",
+		printf("%s: uha_start_mbox, board not responding\n",
 		    sc->sc_dev.dv_xname);
 		Debugger();
 	}
@@ -311,7 +311,7 @@ u14_intr(arg)
 	u_long mboxval;
 
 #ifdef	UHADEBUG
-	kprintf("%s: uhaintr ", sc->sc_dev.dv_xname);
+	printf("%s: uhaintr ", sc->sc_dev.dv_xname);
 #endif /*UHADEBUG */
 
 	if ((bus_io_read_1(bc, ioh, U14_SINT) & U14_SDIP) == 0)
@@ -328,7 +328,7 @@ u14_intr(arg)
 		bus_io_write_1(bc, ioh, U14_SINT, U14_ICM_ACK);
 
 #ifdef	UHADEBUG
-		kprintf("status = 0x%x ", uhastat);
+		printf("status = 0x%x ", uhastat);
 #endif /*UHADEBUG*/
 
 		/*
@@ -336,7 +336,7 @@ u14_intr(arg)
 		 */
 		mscp = uha_mscp_phys_kv(sc, mboxval);
 		if (!mscp) {
-			kprintf("%s: BAD MSCP RETURNED!\n",
+			printf("%s: BAD MSCP RETURNED!\n",
 			    sc->sc_dev.dv_xname);
 			continue;	/* whatever it was, it'll timeout */
 		}
@@ -358,7 +358,7 @@ u14_init(sc)
 
 	/* make sure interrupts are enabled */
 #ifdef UHADEBUG
-	kprintf("u14_init: lmask=%02x, smask=%02x\n",
+	printf("u14_init: lmask=%02x, smask=%02x\n",
 	    bus_io_read_1(bc, ioh, U14_LMASK),
 	    bus_io_read_1(bc, ioh, U14_SMASK));
 #endif

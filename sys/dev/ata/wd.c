@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.152 1996/10/10 22:05:16 christos Exp $	*/
+/*	$NetBSD: wd.c,v 1.153 1996/10/13 01:38:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -249,7 +249,7 @@ wdprint(aux, wdc)
 	struct wdc_attach_args *wa = aux;
 
 	if (!wdc)
-		kprintf(" drive %d", wa->wa_drive);
+		printf(" drive %d", wa->wa_drive);
 	return QUIET;
 }
 
@@ -265,7 +265,7 @@ wdcattach(parent, self, aux)
 	TAILQ_INIT(&wdc->sc_drives);
 	wdc->sc_drq = ia->ia_drq;
 
-	kprintf("\n");
+	printf("\n");
 
 	wdc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, wdcintr, wdc);
@@ -331,7 +331,7 @@ wdattach(parent, self, aux)
 	}
 	*q++ = '\0';
 
-	kprintf(": %dMB, %d cyl, %d head, %d sec, %d bytes/sec <%s>\n",
+	printf(": %dMB, %d cyl, %d head, %d sec, %d bytes/sec <%s>\n",
 	    wd->sc_params.wdp_cylinders *
 	    (wd->sc_params.wdp_heads * wd->sc_params.wdp_sectors) /
 	    (1048576 / DEV_BSIZE),
@@ -352,16 +352,16 @@ wdattach(parent, self, aux)
 		wd->sc_multiple = 1;
 	}
 
-	kprintf("%s: using", wd->sc_dev.dv_xname);
+	printf("%s: using", wd->sc_dev.dv_xname);
 	if (wd->sc_mode == WDM_DMA)
-		kprintf(" dma transfers,");
+		printf(" dma transfers,");
 	else
-		kprintf(" %d-sector %d-bit pio transfers,",
+		printf(" %d-sector %d-bit pio transfers,",
 		    wd->sc_multiple, (wd->sc_flags & WDF_32BIT) == 0 ? 16 : 32);
 	if ((wd->sc_params.wdp_capabilities & WD_CAP_LBA) != 0)
-		kprintf(" lba addressing\n");
+		printf(" lba addressing\n");
 	else
-		kprintf(" chs addressing\n");
+		printf(" chs addressing\n");
 }
 
 /*
@@ -411,7 +411,7 @@ wdstrategy(bp)
 	else {
 		struct wdc_softc *wdc = (void *)wd->sc_dev.dv_parent;
 		if ((wdc->sc_flags & (WDCF_ACTIVE|WDCF_ERROR)) == 0) {
-			kprintf("wdstrategy: controller inactive\n");
+			printf("wdstrategy: controller inactive\n");
 			wdcstart(wdc);
 		}
 	}
@@ -588,7 +588,7 @@ loop:
 		daddr_t blkno;
 
 #ifdef WDDEBUG
-		kprintf("\n%s: wdcstart %s %d@%d; map ", wd->sc_dev.dv_xname,
+		printf("\n%s: wdcstart %s %d@%d; map ", wd->sc_dev.dv_xname,
 		    (bp->b_flags & B_READ) ? "read" : "write", bp->b_bcount,
 		    bp->b_blkno);
 #endif
@@ -599,7 +599,7 @@ loop:
 		wd->sc_blkno = blkno / (lp->d_secsize / DEV_BSIZE);
 	} else {
 #ifdef WDDEBUG
-		kprintf(" %d)%x", wd->sc_skip, inb(wd->sc_iobase+wd_altsts));
+		printf(" %d)%x", wd->sc_skip, inb(wd->sc_iobase+wd_altsts));
 #endif
 	}
 
@@ -712,7 +712,7 @@ loop:
 		}
 
 #ifdef WDDEBUG
-		kprintf("sector %d cylin %d head %d addr %x sts %x\n", sector,
+		printf("sector %d cylin %d head %d addr %x sts %x\n", sector,
 		    cylin, head, bp->b_data, inb(wd->sc_iobase+wd_altsts));
 #endif
 	} else if (wd->sc_nblks > 1) {
@@ -773,7 +773,7 @@ wdcintr(arg)
 	bp = wd->sc_q.b_actf;
 
 #ifdef WDDEBUG
-	kprintf("I%d ", ctrlr);
+	printf("I%d ", ctrlr);
 #endif
 
 	if (wait_for_unbusy(wdc) < 0) {
@@ -1074,7 +1074,7 @@ wdgetdisklabel(wd)
 		    wdstrategy, lp, wd->sc_dk.dk_cpulabel);
 	}
 	if (errstring) {
-		kprintf("%s: %s\n", wd->sc_dev.dv_xname, errstring);
+		printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);
 		return;
 	}
 
@@ -1235,7 +1235,7 @@ wdsetctlr(wd)
 {
 
 #ifdef WDDEBUG
-	kprintf("wd(%d,%d) C%dH%dS%d\n", wd->sc_dev.dv_unit, wd->sc_drive,
+	printf("wd(%d,%d) C%dH%dS%d\n", wd->sc_dev.dv_unit, wd->sc_drive,
 	    wd->sc_dk.dk_label->d_ncylinders, wd->sc_dk.dk_label->d_ntracks,
 	    wd->sc_dk.dk_label->d_nsectors);
 #endif
@@ -1582,7 +1582,7 @@ wddump(dev, blkno, va, size)
 		}
 #else	/* WD_DUMP_NOT_TRUSTED */
 		/* Let's just talk about this first... */
-		kprintf("wd%d: dump addr 0x%x, cylin %d, head %d, sector %d\n",
+		printf("wd%d: dump addr 0x%x, cylin %d, head %d, sector %d\n",
 		    unit, va, cylin, head, sector);
 		delay(500 * 1000);	/* half a second */
 #endif
@@ -1648,7 +1648,7 @@ wdcreset(wdc)
 	outb(iobase+wd_ctlr, WDCTL_4BIT);
 
 	if (wait_for_unbusy(wdc) < 0) {
-		kprintf("%s: reset failed\n", wdc->sc_dev.dv_xname);
+		printf("%s: reset failed\n", wdc->sc_dev.dv_xname);
 		return 1;
 	}
 
@@ -1726,7 +1726,7 @@ wdcwait(wdc, mask)
 #ifdef WDCNDELAY_DEBUG
 	/* After autoconfig, there should be no long delays. */
 	if (!cold && timeout > WDCNDELAY_DEBUG)
-		kprintf("%s: warning: busy-wait took %dus\n",
+		printf("%s: warning: busy-wait took %dus\n",
 		    wdc->sc_dev.dv_xname, WDCDELAY * timeout);
 #endif
 	return 0;
@@ -1746,7 +1746,7 @@ wdctimeout(arg)
 
 		wdc->sc_flags &= ~WDCF_ACTIVE;
 		wderror(wdc, NULL, "lost interrupt");
-		kprintf("%s: lost interrupt: %sing %d@%s:%d\n",
+		printf("%s: lost interrupt: %sing %d@%s:%d\n",
 		    wdc->sc_dev.dv_xname,
 		    (bp->b_flags & B_READ) ? "read" : "writ",
 		    wd->sc_nblks, wd->sc_dev.dv_xname, wd->sc_blkno);
@@ -1768,8 +1768,8 @@ wderror(dev, bp, msg)
 	if (bp) {
 		diskerr(bp, "wd", msg, LOG_PRINTF, wd->sc_skip / DEV_BSIZE,
 		    wd->sc_dk.dk_label);
-		kprintf("\n");
+		printf("\n");
 	} else
-		kprintf("%s: %s: status %b error %b\n", wdc->sc_dev.dv_xname,
+		printf("%s: %s: status %b error %b\n", wdc->sc_dev.dv_xname,
 		    msg, wdc->sc_status, WDCS_BITS, wdc->sc_error, WDERR_BITS);
 }

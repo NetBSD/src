@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.3 1996/10/10 21:26:04 christos Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.4 1996/10/13 01:37:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -105,7 +105,7 @@ bha_isa_attach(parent, self, aux)
 	bus_io_handle_t ioh;
 	isa_chipset_tag_t ic = ia->ia_ic;
 
-	kprintf("\n");
+	printf("\n");
 
 	if (bus_io_map(bc, ia->ia_iobase, BHA_ISA_IOSIZE, &ioh))
 		panic("bha_attach: bus_io_map failed!");
@@ -121,7 +121,7 @@ bha_isa_attach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ic, sc->sc_irq, IST_EDGE, IPL_BIO,
 	    bha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		kprintf("%s: couldn't establish interrupt\n",
+		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}

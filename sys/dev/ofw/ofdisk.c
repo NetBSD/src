@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.2 1996/10/10 21:20:35 christos Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.3 1996/10/13 01:38:13 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -102,7 +102,7 @@ ofdattach(parent, self, aux)
 	strcpy(of->sc_name, of->sc_dev.dv_xname);
 	disk_attach(&of->sc_dk);
 	dk_establish(&of->sc_dk, self);				/* XXX */
-	kprintf("\n");
+	printf("\n");
 }
 
 int

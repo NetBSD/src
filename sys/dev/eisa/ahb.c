@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.4 1996/10/10 19:54:10 christos Exp $	*/
+/*	$NetBSD: ahb.c,v 1.5 1996/10/13 01:37:09 christos Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -204,7 +204,7 @@ ahbattach(parent, self, aux)
 		model = EISA_PRODUCT_ADP0400;
 	else
 		model = "unknown model!";
-	kprintf(": %s\n", model);
+	printf(": %s\n", model);
 
 	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, &ioh))
 		panic("ahbattach: could not map I/O addresses");
@@ -228,7 +228,7 @@ ahbattach(parent, self, aux)
 	sc->sc_link.openings = 4;
 
 	if (eisa_intr_map(ec, sc->sc_irq, &ih)) {
-		kprintf("%s: couldn't map interrupt (%d)\n",
+		printf("%s: couldn't map interrupt (%d)\n",
 		    sc->sc_dev.dv_xname, sc->sc_irq);
 		return;
 	}
@@ -236,15 +236,15 @@ ahbattach(parent, self, aux)
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    ahbintr, sc);
 	if (sc->sc_ih == NULL) {
-		kprintf("%s: couldn't establish interrupt",
+		printf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			kprintf(" at %s", intrstr);
-		kprintf("\n");
+			printf(" at %s", intrstr);
+		printf("\n");
 		return;
 	}
 	if (intrstr != NULL)
-		kprintf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
+		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
 		    intrstr);
 
 	/*
@@ -273,7 +273,7 @@ ahb_send_mbox(sc, opcode, ecb)
 		delay(10);
 	}
 	if (!wait) {
-		kprintf("%s: board not responding\n", sc->sc_dev.dv_xname);
+		printf("%s: board not responding\n", sc->sc_dev.dv_xname);
 		Debugger();
 	}
 
@@ -304,7 +304,7 @@ ahb_send_immed(sc, cmd, ecb)
 		delay(10);
 	}
 	if (!wait) {
-		kprintf("%s: board not responding\n", sc->sc_dev.dv_xname);
+		printf("%s: board not responding\n", sc->sc_dev.dv_xname);
 		Debugger();
 	}
 
@@ -331,7 +331,7 @@ ahbintr(arg)
 	u_long mboxval;
 
 #ifdef	AHBDEBUG
-	kprintf("%s: ahbintr ", sc->sc_dev.dv_xname);
+	printf("%s: ahbintr ", sc->sc_dev.dv_xname);
 #endif /* AHBDEBUG */
 
 	if ((bus_io_read_1(bc, ioh, G2STAT) & G2STAT_INT_PEND) == 0)
@@ -347,7 +347,7 @@ ahbintr(arg)
 		bus_io_write_1(bc, ioh, G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
 
 #ifdef	AHBDEBUG
-		kprintf("status = 0x%x ", ahbstat);
+		printf("status = 0x%x ", ahbstat);
 #endif /* AHBDEBUG */
 
 		/*
@@ -359,7 +359,7 @@ ahbintr(arg)
 		case AHB_ECB_ERR:
 			ecb = ahb_ecb_phys_kv(sc, mboxval);
 			if (!ecb) {
-				kprintf("%s: BAD ECB RETURNED!\n",
+				printf("%s: BAD ECB RETURNED!\n",
 				    sc->sc_dev.dv_xname);
 				goto next;	/* whatever it was, it'll timeout */
 			}
@@ -377,7 +377,7 @@ ahbintr(arg)
 			break;
 
 		default:
-			kprintf("%s: unexpected interrupt %x\n",
+			printf("%s: unexpected interrupt %x\n",
 			    sc->sc_dev.dv_xname, ahbstat);
 			goto next;
 		}
@@ -475,7 +475,7 @@ ahb_get_ecb(sc, flags)
 			ecb = (struct ahb_ecb *) malloc(sizeof(struct ahb_ecb),
 			    M_TEMP, M_NOWAIT);
 			if (!ecb) {
-				kprintf("%s: can't malloc ecb\n",
+				printf("%s: can't malloc ecb\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
 			}
@@ -532,7 +532,7 @@ ahb_done(sc, ecb)
 	 * into the xfer and call whoever started it
 	 */
 	if ((ecb->flags & ECB_ALLOC) == 0) {
-		kprintf("%s: exiting ecb not allocated!\n", sc->sc_dev.dv_xname);
+		printf("%s: exiting ecb not allocated!\n", sc->sc_dev.dv_xname);
 		Debugger();
 	}
 	if (ecb->flags & ECB_IMMED) {
@@ -547,7 +547,7 @@ ahb_done(sc, ecb)
 				xs->error = XS_SELTIMEOUT;
 				break;
 			default:	/* Other scsi protocol messes */
-				kprintf("%s: host_stat %x\n",
+				printf("%s: host_stat %x\n",
 				    sc->sc_dev.dv_xname, ecb->ecb_status.host_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 			}
@@ -563,7 +563,7 @@ ahb_done(sc, ecb)
 				xs->error = XS_BUSY;
 				break;
 			default:
-				kprintf("%s: target_stat %x\n",
+				printf("%s: target_stat %x\n",
 				    sc->sc_dev.dv_xname, ecb->ecb_status.target_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 			}
@@ -608,13 +608,13 @@ ahb_find(bc, ioh, sc)
 	}
 	if (!wait) {
 #ifdef	AHBDEBUG
-		kprintf("ahb_find: No answer from aha1742 board\n");
+		printf("ahb_find: No answer from aha1742 board\n");
 #endif /* AHBDEBUG */
 		return ENXIO;
 	}
 	i = bus_io_read_1(bc, ioh, MBOXIN0);
 	if (i) {
-		kprintf("self test failed, val = 0x%x\n", i);
+		printf("self test failed, val = 0x%x\n", i);
 		return EIO;
 	}
 
@@ -623,7 +623,7 @@ ahb_find(bc, ioh, sc)
 #endif
 
 	while (bus_io_read_1(bc, ioh, G2STAT) & G2STAT_INT_PEND) {
-		kprintf(".");
+		printf(".");
 		bus_io_write_1(bc, ioh, G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
 		delay(10000);
 	}
@@ -649,7 +649,7 @@ ahb_find(bc, ioh, sc)
 		irq = 15;
 		break;
 	default:
-		kprintf("illegal int setting %x\n", intdef);
+		printf("illegal int setting %x\n", intdef);
 		return EIO;
 	}
 
@@ -836,7 +836,7 @@ ahb_scsi_cmd(xs)
 			/*
 			 * there's still data, must have run out of segs!
 			 */
-			kprintf("%s: ahb_scsi_cmd, more than %d dma segs\n",
+			printf("%s: ahb_scsi_cmd, more than %d dma segs\n",
 			    sc->sc_dev.dv_xname, AHB_NSEG);
 			goto bad;
 		}
@@ -913,12 +913,12 @@ ahb_timeout(arg)
 	int s;
 
 	sc_print_addr(sc_link);
-	kprintf("timed out");
+	printf("timed out");
 
 	s = splbio();
 
 	if (ecb->flags & ECB_IMMED) {
-		kprintf("\n");
+		printf("\n");
 		ecb->flags |= ECB_IMMED_FAIL;
 		/* XXX Must reset! */
 	} else
@@ -930,11 +930,11 @@ ahb_timeout(arg)
 	 */
 	if (ecb->flags & ECB_ABORT) {
 		/* abort timed out */
-		kprintf(" AGAIN\n");
+		printf(" AGAIN\n");
 		/* XXX Must reset! */
 	} else {
 		/* abort the operation that has timed out */
-		kprintf("\n");
+		printf("\n");
 		ecb->xs->error = XS_TIMEOUT;
 		ecb->timeout = AHB_ABORT_TIMEOUT;
 		ecb->flags |= ECB_ABORT;

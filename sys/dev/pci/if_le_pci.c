@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.9 1996/10/10 19:58:22 christos Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.10 1996/10/13 01:38:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -171,14 +171,14 @@ le_pci_attach(parent, self, aux)
 		model = "unknown model!";
 	}
 
-	kprintf(": %s\n", model);
+	printf(": %s\n", model);
 
 	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
-		kprintf("%s: can't find I/O base\n", sc->sc_dev.dv_xname);
+		printf("%s: can't find I/O base\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	if (bus_io_map(bc, iobase, iosize, &ioh)) {
-		kprintf("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
+		printf("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -190,7 +190,7 @@ le_pci_attach(parent, self, aux)
 
 	sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_mem == 0) {
-		kprintf("%s: couldn't allocate memory for card\n",
+		printf("%s: couldn't allocate memory for card\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -212,7 +212,7 @@ le_pci_attach(parent, self, aux)
 	sc->sc_wrcsr = le_pci_wrcsr;
 	sc->sc_hwinit = NULL;
 
-	kprintf("%s", sc->sc_dev.dv_xname);
+	printf("%s", sc->sc_dev.dv_xname);
 	am7990_config(sc);
 
 	/* Enable the card. */
@@ -224,18 +224,18 @@ le_pci_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-		kprintf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	lesc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, am7990_intr, sc);
 	if (lesc->sc_ih == NULL) {
-		kprintf("%s: couldn't establish interrupt",
+		printf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			kprintf(" at %s", intrstr);
-		kprintf("\n");
+			printf(" at %s", intrstr);
+		printf("\n");
 		return;
 	}
-	kprintf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }

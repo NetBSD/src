@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.2 1996/10/10 20:25:35 christos Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.3 1996/10/13 01:38:36 christos Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -117,7 +117,7 @@ asc_ioasic_attach(parent, self, aux)
 	 * maxine are 12.5Mhz.
 	 */
 
-	/*kprintf(" (bus speed: %d) ", t->ta_busspeed);*/
+	/*printf(" (bus speed: %d) ", t->ta_busspeed);*/
 	/* XXX don't these run at 25MHz on any ioasic??*/
 	switch (pmax_boardtype) {
 	case DS_3MAX:

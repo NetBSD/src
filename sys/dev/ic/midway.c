@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.16 1996/10/10 22:18:37 christos Exp $	*/
+/*	$NetBSD: midway.c,v 1.17 1996/10/13 01:37:24 christos Exp $	*/
 /*	(sync'd to midway.c 1.62)	*/
 
 /*
@@ -238,7 +238,7 @@ u_int32_t r;
 
 {
   if (r > MID_MAXOFF || (r % 4)) {
-    kprintf("en_read out of range, r=0x%x\n", r);
+    printf("en_read out of range, r=0x%x\n", r);
     panic("en_read");
   }
   return(bus_mem_read_4(sc->en_bc, sc->en_base, r));
@@ -253,7 +253,7 @@ u_int32_t r, v;
 
 {
   if (r > MID_MAXOFF || (r % 4)) {
-    kprintf("en_write out of range, r=0x%x\n", r);
+    printf("en_write out of range, r=0x%x\n", r);
     panic("en_write");
   }
   bus_mem_write_4(sc->en_bc, sc->en_base, r, v);
@@ -581,18 +581,18 @@ done_probe:
 
   reg = EN_READ(sc, MID_RESID);
 
-  kprintf("%s: ATM midway v%d, board IDs %d.%d, %s%s%s, %dKB on-board RAM\n",
+  printf("%s: ATM midway v%d, board IDs %d.%d, %s%s%s, %dKB on-board RAM\n",
 	sc->sc_dev.dv_xname, MID_VER(reg), MID_MID(reg), MID_DID(reg), 
 	(MID_IS_SABRE(reg)) ? "sabre controller, " : "",
 	(MID_IS_SUNI(reg)) ? "SUNI" : "Utopia",
 	(!MID_IS_SUNI(reg) && MID_IS_UPIPE(reg)) ? " (pipelined)" : "",
 	sc->en_obmemsz / 1024);
-  kprintf("%s: maximum DMA burst length = %d bytes%s\n", sc->sc_dev.dv_xname,
+  printf("%s: maximum DMA burst length = %d bytes%s\n", sc->sc_dev.dv_xname,
 	sc->bestburstlen, (sc->alburst) ? " (must align)" : "");
 #if 0		/* WMAYBE doesn't work, don't complain about it */
   /* check if en_dmaprobe disabled wmaybe */
   if (en_dmaplan == en_dma_planB)
-    kprintf("%s: note: WMAYBE DMA has been disabled\n", sc->sc_dev.dv_xname);
+    printf("%s: note: WMAYBE DMA has been disabled\n", sc->sc_dev.dv_xname);
 #endif
 
   /*
@@ -622,7 +622,7 @@ done_probe:
   ptr = roundup(ptr, EN_TXSZ * 1024);	/* align */
   sz = sz - (ptr - sav);
   if (EN_TXSZ*1024 * EN_NTX > sz) {
-    kprintf("%s: EN_NTX/EN_TXSZ too big\n", sc->sc_dev.dv_xname);
+    printf("%s: EN_NTX/EN_TXSZ too big\n", sc->sc_dev.dv_xname);
     return;
   }
   for (lcv = 0 ; lcv < EN_NTX ; lcv++) {
@@ -634,7 +634,7 @@ done_probe:
     bzero(&sc->txslot[lcv].indma, sizeof(sc->txslot[lcv].indma));
     bzero(&sc->txslot[lcv].q, sizeof(sc->txslot[lcv].q));
 #ifdef EN_DEBUG
-    kprintf("%s: tx%d: start 0x%x, stop 0x%x\n", sc->sc_dev.dv_xname, lcv,
+    printf("%s: tx%d: start 0x%x, stop 0x%x\n", sc->sc_dev.dv_xname, lcv,
 		sc->txslot[lcv].start, sc->txslot[lcv].stop);
 #endif
   }
@@ -644,7 +644,7 @@ done_probe:
   sz = sz - (ptr - sav);
   sc->en_nrx = sz / (EN_RXSZ * 1024);
   if (sc->en_nrx <= 0) {
-    kprintf("%s: EN_NTX/EN_TXSZ/EN_RXSZ too big\n", sc->sc_dev.dv_xname);
+    printf("%s: EN_NTX/EN_TXSZ/EN_RXSZ too big\n", sc->sc_dev.dv_xname);
     return;
   }
   for (lcv = 0 ; lcv < sc->en_nrx ; lcv++) {
@@ -664,7 +664,7 @@ done_probe:
 	(en_k2sz(EN_RXSZ) << MIDV_SZSHIFT) | MIDV_TRASH;
 
 #ifdef EN_DEBUG
-    kprintf("%s: rx%d: start 0x%x, stop 0x%x, mode 0x%x\n", sc->sc_dev.dv_xname,
+    printf("%s: rx%d: start 0x%x, stop 0x%x, mode 0x%x\n", sc->sc_dev.dv_xname,
 	lcv, sc->rxslot[lcv].start, sc->rxslot[lcv].stop, sc->rxslot[lcv].mode);
 #endif
   }
@@ -678,7 +678,7 @@ done_probe:
 #endif
   sc->need_drqs = sc->need_dtqs = 0;
 
-  kprintf("%s: %d %dKB receive buffers, %d %dKB transmit buffers allocated\n",
+  printf("%s: %d %dKB receive buffers, %d %dKB transmit buffers allocated\n",
 	sc->sc_dev.dv_xname, sc->en_nrx, EN_RXSZ, EN_NTX, EN_TXSZ);
 
   /*
@@ -757,7 +757,7 @@ struct en_softc *sc;
   }
   if (EN_NOWMAYBE || fail) {
     if (fail)
-      kprintf("%s: WARNING: WMAYBE DMA test failed %d time(s)\n", 
+      printf("%s: WARNING: WMAYBE DMA test failed %d time(s)\n", 
 	sc->sc_dev.dv_xname, fail);
     en_dmaplan = en_dma_planB;		/* fall back to plan B */
   }
@@ -833,14 +833,14 @@ int wmtry;
       DELAY(1);
       cnt--;
       if (cnt == 0) {
-	kprintf("%s: unexpected timeout in tx DMA test\n", sc->sc_dev.dv_xname);
+	printf("%s: unexpected timeout in tx DMA test\n", sc->sc_dev.dv_xname);
 	return(retval);		/* timeout, give up */
       }
     }
     EN_WRAPADD(MID_DTQOFF, MID_DTQEND, sc->dtq_chip, 8);
     reg = EN_READ(sc, MID_INTACK); 
     if ((reg & MID_INT_DMA_TX) != MID_INT_DMA_TX) {
-      kprintf("%s: unexpected status in tx DMA test: 0x%x\n", 
+      printf("%s: unexpected status in tx DMA test: 0x%x\n", 
 		sc->sc_dev.dv_xname, reg);
       return(retval);
     }
@@ -856,14 +856,14 @@ int wmtry;
       DELAY(1);
       cnt--;
       if (cnt == 0) {
-	kprintf("%s: unexpected timeout in rx DMA test\n", sc->sc_dev.dv_xname);
+	printf("%s: unexpected timeout in rx DMA test\n", sc->sc_dev.dv_xname);
 	return(retval);		/* timeout, give up */
       }
     }
     EN_WRAPADD(MID_DRQOFF, MID_DRQEND, sc->drq_chip, 8);
     reg = EN_READ(sc, MID_INTACK); 
     if ((reg & MID_INT_DMA_RX) != MID_INT_DMA_RX) {
-      kprintf("%s: unexpected status in rx DMA test: 0x%x\n", 
+      printf("%s: unexpected status in rx DMA test: 0x%x\n", 
 		sc->sc_dev.dv_xname, reg);
       return(retval);
     }
@@ -932,7 +932,7 @@ caddr_t data;
 			sc->rxslot[slot].raw_threshold = 0;
 		}
 #ifdef EN_DEBUG
-		kprintf("%s: rxvci%d: turn %s raw (boodi) mode\n",
+		printf("%s: rxvci%d: turn %s raw (boodi) mode\n",
 			sc->sc_dev.dv_xname, ario->npcb->npcb_vci,
 			(ario->rawvalue) ? "on" : "off");
 #endif
@@ -1009,7 +1009,7 @@ int on;
   flags = ATM_PH_FLAGS(&pi->aph);
 
 #ifdef EN_DEBUG
-  kprintf("%s: %s vpi=%d, vci=%d, flags=%d\n", sc->sc_dev.dv_xname,
+  printf("%s: %s vpi=%d, vci=%d, flags=%d\n", sc->sc_dev.dv_xname,
 	(on) ? "enable" : "disable", ATM_PH_VPI(&pi->aph), vci, flags);
 #endif
 
@@ -1039,7 +1039,7 @@ int on;
     sc->rxslot[slot].rxhand = pi->rxhand;
     if (sc->rxslot[slot].indma.ifq_head || sc->rxslot[slot].q.ifq_head)
       panic("en_rxctl: left over mbufs on enable");
-    en_loadvc(sc, vci);		/* does debug kprintf for us */
+    en_loadvc(sc, vci);		/* does debug printf for us */
     return(0);
   }
 
@@ -1074,7 +1074,7 @@ int on;
   }
   splx(s);		/* enable enintr() */
 #ifdef EN_DEBUG
-  kprintf("%s: rx%d: VCI %d is now %s\n", sc->sc_dev.dv_xname, slot, vci,
+  printf("%s: rx%d: VCI %d is now %s\n", sc->sc_dev.dv_xname, slot, vci,
 	(sc->rxslot[slot].oth_flags & ENOTHER_DRAIN) ? "draining" : "free");
 #endif
   return(0);
@@ -1096,7 +1096,7 @@ struct en_softc *sc;
   int lcv, slot;
 
 #ifdef EN_DEBUG
-  kprintf("%s: reset\n", sc->sc_dev.dv_xname);
+  printf("%s: reset\n", sc->sc_dev.dv_xname);
 #endif
 
   EN_WRITE(sc, MID_RESID, 0x0);	/* reset hardware */
@@ -1127,7 +1127,7 @@ struct en_softc *sc;
       sc->rxslot[slot].oth_flags = ENOTHER_FREE;
       sc->rxvc2slot[lcv] = RX_NONE;
 #ifdef EN_DEBUG
-  kprintf("%s: rx%d: VCI %d is now free\n", sc->sc_dev.dv_xname, slot, lcv);
+  printf("%s: rx%d: VCI %d is now free\n", sc->sc_dev.dv_xname, slot, lcv);
 #endif
     }
   }
@@ -1170,7 +1170,7 @@ struct en_softc *sc;
 
   if ((sc->enif.if_flags & IFF_UP) == 0) {
 #ifdef EN_DEBUG
-    kprintf("%s: going down\n", sc->sc_dev.dv_xname);
+    printf("%s: going down\n", sc->sc_dev.dv_xname);
 #endif
     en_reset(sc);			/* to be safe */
     sc->enif.if_flags &= ~IFF_RUNNING;	/* disable */
@@ -1178,7 +1178,7 @@ struct en_softc *sc;
   }
 
 #ifdef EN_DEBUG
-  kprintf("%s: going up\n", sc->sc_dev.dv_xname);
+  printf("%s: going up\n", sc->sc_dev.dv_xname);
 #endif
   sc->enif.if_flags |= IFF_RUNNING;	/* enable */
 
@@ -1209,7 +1209,7 @@ struct en_softc *sc;
   sc->swsl_size = sc->swsl_head = sc->swsl_tail = 0;
 
 #ifdef EN_DEBUG
-  kprintf("%s: drq free/chip: %d/0x%x, dtq free/chip: %d/0x%x, hwslist: 0x%x\n", 
+  printf("%s: drq free/chip: %d/0x%x, dtq free/chip: %d/0x%x, hwslist: 0x%x\n", 
     sc->sc_dev.dv_xname, sc->drq_free, sc->drq_chip, 
     sc->dtq_free, sc->dtq_chip, sc->hwslistp);
 #endif
@@ -1224,7 +1224,7 @@ struct en_softc *sc;
     loc = loc >> MIDV_LOCTOPSHFT;	/* top 11 bits */
     EN_WRITE(sc, MIDX_PLACE(slot), MIDX_MKPLACE(en_k2sz(EN_TXSZ), loc));
 #ifdef EN_DEBUG
-    kprintf("%s: tx%d: place 0x%x\n", sc->sc_dev.dv_xname,  slot,
+    printf("%s: tx%d: place 0x%x\n", sc->sc_dev.dv_xname,  slot,
 	EN_READ(sc, MIDX_PLACE(slot)));
 #endif
   }
@@ -1269,7 +1269,7 @@ int vc;
   sc->rxslot[slot].cur = sc->rxslot[slot].start;
 
 #ifdef EN_DEBUG
-    kprintf("%s: rx%d: assigned to VCI %d\n", sc->sc_dev.dv_xname, slot, vc);
+    printf("%s: rx%d: assigned to VCI %d\n", sc->sc_dev.dv_xname, slot, vc);
 #endif
 }
 
@@ -1356,7 +1356,7 @@ struct ifnet *ifp;
        */
 
       if (atm_vpi || atm_vci > MID_N_VC) {
-	kprintf("%s: output vpi=%d, vci=%d out of card range, dropping...\n", 
+	printf("%s: output vpi=%d, vci=%d out of card range, dropping...\n", 
 		sc->sc_dev.dv_xname, atm_vpi, atm_vci);
 	m_freem(m);
 	continue;
@@ -1382,9 +1382,9 @@ struct ifnet *ifp;
       toadd = need - got;		/* recompute, including zero padding */
 
 #ifdef EN_DEBUG
-      kprintf("%s: txvci%d: mlen=%d, got=%d, need=%d, toadd=%d, cell#=%d\n",
+      printf("%s: txvci%d: mlen=%d, got=%d, need=%d, toadd=%d, cell#=%d\n",
 	sc->sc_dev.dv_xname, atm_vci, mlen, got, need, toadd, cellcnt);
-      kprintf("     leading_space=%d, trailing_space=%d\n", 
+      printf("     leading_space=%d, trailing_space=%d\n", 
 	M_LEADINGSPACE(m), M_TRAILINGSPACE(lastm));
 #endif
 
@@ -1448,7 +1448,7 @@ struct ifnet *ifp;
 	EN_COUNT(sc->txmbovr);
 	m_freem(m);
 #ifdef EN_DEBUG
-	kprintf("%s: tx%d: buffer space shortage\n", ifp->if_xname,
+	printf("%s: tx%d: buffer space shortage\n", ifp->if_xname,
 		txchan);
 #endif
 	continue;
@@ -1457,10 +1457,10 @@ struct ifnet *ifp;
       sc->txslot[txchan].mbsize += mlen;
 
 #ifdef EN_DEBUG
-      kprintf("%s: tx%d: VPI=%d, VCI=%d, FLAGS=0x%x, speed=0x%x\n",
+      printf("%s: tx%d: VPI=%d, VCI=%d, FLAGS=0x%x, speed=0x%x\n",
 	sc->sc_dev.dv_xname, txchan, atm_vpi, atm_vci, atm_flags, 
 	sc->txspeed[atm_vci]);
-      kprintf("     adjusted mlen=%d, mbsize=%d\n", mlen, 
+      printf("     adjusted mlen=%d, mbsize=%d\n", mlen, 
 		sc->txslot[txchan].mbsize);
 #endif
 
@@ -1491,7 +1491,7 @@ struct mbuf **mm, *prev;
 
   EN_COUNT(sc->mfix);			/* count # of calls */
 #ifdef EN_DEBUG
-  kprintf("%s: mfix mbuf m_data=0x%x, m_len=%d\n", sc->sc_dev.dv_xname,
+  printf("%s: mfix mbuf m_data=0x%x, m_len=%d\n", sc->sc_dev.dv_xname,
 	m->m_data, m->m_len);
 #endif
 
@@ -1568,7 +1568,7 @@ int chan;
   u_int8_t *cp;
 
 #ifdef EN_DEBUG
-  kprintf("%s: tx%d: starting...\n", sc->sc_dev.dv_xname, chan);
+  printf("%s: tx%d: starting...\n", sc->sc_dev.dv_xname, chan);
 #endif
 
   /*
@@ -1589,7 +1589,7 @@ again:
 
   if (launch.t == NULL) {
 #ifdef EN_DEBUG
-    kprintf("%s: tx%d: ...done!\n", sc->sc_dev.dv_xname, chan);
+    printf("%s: tx%d: ...done!\n", sc->sc_dev.dv_xname, chan);
 #endif
     return;	/* >>> exit here if no data waiting for DMA <<< */
   }
@@ -1661,7 +1661,7 @@ again:
   launch.need += MID_TBD_SIZE;
 
   if (launch.need > EN_TXSZ * 1024) {
-    kprintf("%s: tx%d: packet larger than xmit buffer (%d > %d)\n",
+    printf("%s: tx%d: packet larger than xmit buffer (%d > %d)\n",
       sc->sc_dev.dv_xname, chan, launch.need, EN_TXSZ * 1024);
     goto dequeue_drop;
   }
@@ -1669,7 +1669,7 @@ again:
   if (launch.need > sc->txslot[chan].bfree) {
     EN_COUNT(sc->txoutspace);
 #ifdef EN_DEBUG
-    kprintf("%s: tx%d: out of trasmit space\n", sc->sc_dev.dv_xname, chan);
+    printf("%s: tx%d: out of trasmit space\n", sc->sc_dev.dv_xname, chan);
 #endif
     return;		/* >>> exit here if out of obmem buffer space <<< */
   }
@@ -1685,7 +1685,7 @@ again:
     sc->need_dtqs = 1;
     EN_COUNT(sc->txdtqout);
 #ifdef EN_DEBUG
-    kprintf("%s: tx%d: out of trasmit DTQs\n", sc->sc_dev.dv_xname, chan);
+    printf("%s: tx%d: out of trasmit DTQs\n", sc->sc_dev.dv_xname, chan);
 #endif
     return;		/* >>> exit here if out of dtqs <<< */
   }
@@ -1790,14 +1790,14 @@ struct en_launch *l;
 
 #ifdef EN_DIAG
   if ((need - MID_TBD_SIZE) % MID_ATMDATASZ) 
-    kprintf("%s: tx%d: bogus trasmit needs (%d)\n", sc->sc_dev.dv_xname, chan,
+    printf("%s: tx%d: bogus trasmit needs (%d)\n", sc->sc_dev.dv_xname, chan,
 		need);
 #endif
 #ifdef EN_DEBUG
-  kprintf("%s: tx%d: launch mbuf 0x%x!   cur=0x%x[%d], need=%d, addtail=%d\n",
+  printf("%s: tx%d: launch mbuf 0x%x!   cur=0x%x[%d], need=%d, addtail=%d\n",
 	sc->sc_dev.dv_xname, chan, l->t, cur, (cur-start)/4, need, addtail);
   count = EN_READ(sc, MIDX_PLACE(chan));
-  kprintf("     HW: base_address=0x%x, size=%d, read=%d, descstart=%d\n",
+  printf("     HW: base_address=0x%x, size=%d, read=%d, descstart=%d\n",
 	MIDX_BASE(count), MIDX_SZ(count), EN_READ(sc, MIDX_READPTR(chan)), 
 	EN_READ(sc, MIDX_DESCSTART(chan)));
 #endif
@@ -1809,7 +1809,7 @@ struct en_launch *l;
   if ((l->atm_flags & EN_OBHDR) == 0) {
     /* note: data already in correct byte order.  use WRITEDAT to xfer */
 #ifdef EN_DEBUG
-    kprintf("%s: tx%d: insert header 0x%x 0x%x\n", sc->sc_dev.dv_xname,
+    printf("%s: tx%d: insert header 0x%x 0x%x\n", sc->sc_dev.dv_xname,
 	chan, ntohl(l->tbd1), ntohl(l->tbd2));
 #endif
     EN_WRITEDAT(sc, cur, l->tbd1);
@@ -1845,7 +1845,7 @@ struct en_launch *l;
       }
       need -= len;
 #ifdef EN_DEBUG
-      kprintf("%s: tx%d: copied %d bytes (%d left, cur now 0x%x)\n", 
+      printf("%s: tx%d: copied %d bytes (%d left, cur now 0x%x)\n", 
 		sc->sc_dev.dv_xname, chan, len, need, cur);
 #endif
       continue;		/* continue on to next mbuf */
@@ -1855,7 +1855,7 @@ struct en_launch *l;
     if (dma != cur) {
       EN_DTQADD(sc, WORD_IDX(start,cur), chan, MIDDMA_JK, 0, 0, 0);
 #ifdef EN_DEBUG
-      kprintf("%s: tx%d: dtq_sync: advance pointer to %d\n",
+      printf("%s: tx%d: dtq_sync: advance pointer to %d\n",
 		sc->sc_dev.dv_xname, chan, cur);
 #endif
     }
@@ -1891,7 +1891,7 @@ struct en_launch *l;
       need -= cnt;
       EN_WRAPADD(start, stop, cur, cnt);
 #ifdef EN_DEBUG
-      kprintf("%s: tx%d: small al_dma %d bytes (%d left, cur now 0x%x)\n",
+      printf("%s: tx%d: small al_dma %d bytes (%d left, cur now 0x%x)\n",
               sc->sc_dev.dv_xname, chan, cnt, need, cur);
 #endif
       len -= cnt;
@@ -1920,7 +1920,7 @@ struct en_launch *l;
       need -= cnt;
       EN_WRAPADD(start, stop, cur, cnt);
 #ifdef EN_DEBUG
-      kprintf("%s: tx%d: al_dma %d bytes (%d left, cur now 0x%x)\n", 
+      printf("%s: tx%d: al_dma %d bytes (%d left, cur now 0x%x)\n", 
 		sc->sc_dev.dv_xname, chan, cnt, need, cur);
 #endif
       len -= cnt;
@@ -1939,7 +1939,7 @@ struct en_launch *l;
       need -= cnt;
       EN_WRAPADD(start, stop, cur, cnt);
 #ifdef EN_DEBUG
-      kprintf("%s: tx%d: best_dma %d bytes (%d left, cur now 0x%x)\n", 
+      printf("%s: tx%d: best_dma %d bytes (%d left, cur now 0x%x)\n", 
 		sc->sc_dev.dv_xname, chan, cnt, need, cur);
 #endif
       len -= cnt;
@@ -1959,7 +1959,7 @@ struct en_launch *l;
       need -= cnt;
       EN_WRAPADD(start, stop, cur, cnt);
 #ifdef EN_DEBUG
-      kprintf("%s: tx%d: cleanup_dma %d bytes (%d left, cur now 0x%x)\n", 
+      printf("%s: tx%d: cleanup_dma %d bytes (%d left, cur now 0x%x)\n", 
 		sc->sc_dev.dv_xname, chan, cnt, need, cur);
 #endif
       len -= cnt;
@@ -1983,7 +1983,7 @@ struct en_launch *l;
       need -= len;
       EN_WRAPADD(start, stop, cur, len);
 #ifdef EN_DEBUG
-      kprintf("%s: tx%d: byte cleanup_dma %d bytes (%d left, cur now 0x%x)\n",
+      printf("%s: tx%d: byte cleanup_dma %d bytes (%d left, cur now 0x%x)\n",
               sc->sc_dev.dv_xname, chan, len, need, cur);
 #endif
       end = (need == 0) ? MID_DMA_END : 0;
@@ -2029,7 +2029,7 @@ struct en_launch *l;
     if (l->aal == MID_TBD_AAL5)
       pad -= 2;
 #ifdef EN_DEBUG
-      kprintf("%s: tx%d: padding %d bytes\n", 
+      printf("%s: tx%d: padding %d bytes\n", 
 		sc->sc_dev.dv_xname, chan, pad * sizeof(u_int32_t));
 #endif
     while (pad--) {
@@ -2053,7 +2053,7 @@ done:
   /* update current pointer */
   sc->txslot[chan].cur = cur;
 #ifdef EN_DEBUG
-      kprintf("%s: tx%d: DONE!   cur now = 0x%x\n", 
+      printf("%s: tx%d: DONE!   cur now = 0x%x\n", 
 		sc->sc_dev.dv_xname, chan, cur);
 #endif
 
@@ -2082,7 +2082,7 @@ void *arg;
     EN_INTR_RET(0); /* not us */
 
 #ifdef EN_DEBUG
-  kprintf("%s: interrupt=0x%b\n", sc->sc_dev.dv_xname, reg, MID_INTBITS);
+  printf("%s: interrupt=0x%b\n", sc->sc_dev.dv_xname, reg, MID_INTBITS);
 #endif
 
   /*
@@ -2090,7 +2090,7 @@ void *arg;
    */
 
   if ((reg & (MID_INT_IDENT|MID_INT_LERR|MID_INT_DMA_ERR|MID_INT_SUNI)) != 0) {
-    kprintf("%s: unexpected interrupt=0x%b, resetting card\n", 
+    printf("%s: unexpected interrupt=0x%b, resetting card\n", 
 	sc->sc_dev.dv_xname, reg, MID_INTBITS);
 #ifdef EN_DEBUG
 #ifdef DDB
@@ -2127,7 +2127,7 @@ void *arg;
 	else
 	  sc->txslot[lcv].bfree = (val + (EN_TXSZ*1024)) - sc->txslot[lcv].cur;
 #ifdef EN_DEBUG
-	kprintf("%s: tx%d: trasmit done.   %d bytes now free in buffer\n",
+	printf("%s: tx%d: trasmit done.   %d bytes now free in buffer\n",
 		sc->sc_dev.dv_xname, lcv, sc->txslot[lcv].bfree);
 #endif
       }
@@ -2147,7 +2147,7 @@ void *arg;
       kick = MID_NTX_CH - 1;		/* assume power of 2, kick all! */
       sc->need_dtqs = 0;		/* recalculated in "kick" loop below */
 #ifdef EN_DEBUG
-      kprintf("%s: cleared need DTQ condition\n", sc->sc_dev.dv_xname);
+      printf("%s: cleared need DTQ condition\n", sc->sc_dev.dv_xname);
 #endif
     }
     do {				/* while idx != val */ 
@@ -2159,7 +2159,7 @@ void *arg;
 	if (!m) panic("enintr: dtqsync");
 	sc->txslot[slot].mbsize -= EN_DQ_LEN(dtq);
 #ifdef EN_DEBUG
-	kprintf("%s: tx%d: free %d dma bytes, mbsize now %d\n",
+	printf("%s: tx%d: free %d dma bytes, mbsize now %d\n",
 		sc->sc_dev.dv_xname, slot, EN_DQ_LEN(dtq), 
 		sc->txslot[slot].mbsize);
 #endif
@@ -2177,7 +2177,7 @@ void *arg;
 
   if (kick) {
 #ifdef EN_DEBUG
-  kprintf("%s: tx kick mask = 0x%x\n", sc->sc_dev.dv_xname, kick);
+  printf("%s: tx kick mask = 0x%x\n", sc->sc_dev.dv_xname, kick);
 #endif
     for (mask = 1, lcv = 0 ; lcv < EN_NTX ; lcv++, mask = mask * 2) {
       if ((kick & mask) && sc->txslot[lcv].q.ifq_head) {
@@ -2205,7 +2205,7 @@ void *arg;
 	slot = EN_DQ_SLOT(drq);
 	IF_DEQUEUE(&sc->rxslot[slot].indma, m);
 	if (!m) {
-	  kprintf("%s: lost mbuf in slot %d!\n", sc->sc_dev.dv_xname, slot);
+	  printf("%s: lost mbuf in slot %d!\n", sc->sc_dev.dv_xname, slot);
 	  panic("enintr: drqsync");
 	}
 
@@ -2221,7 +2221,7 @@ void *arg;
 	    sc->rxslot[slot].atm_vci = RX_NONE;
 	    sc->rxvc2slot[vci] = RX_NONE;
 #ifdef EN_DEBUG
-	    kprintf("%s: rx%d: VCI %d now free\n", sc->sc_dev.dv_xname,
+	    printf("%s: rx%d: VCI %d now free\n", sc->sc_dev.dv_xname,
 			slot, vci);
 #endif
 	  }
@@ -2230,7 +2230,7 @@ void *arg;
 	  ATM_PH_VPI(&ah) = 0;
 	  ATM_PH_SETVCI(&ah, sc->rxslot[slot].atm_vci);
 #ifdef EN_DEBUG
-	  kprintf("%s: rx%d: rxvci%d: atm_input, mbuf 0x%x, len %d, hand 0x%x\n",
+	  printf("%s: rx%d: rxvci%d: atm_input, mbuf 0x%x, len %d, hand 0x%x\n",
 		sc->sc_dev.dv_xname, slot, sc->rxslot[slot].atm_vci, m,
 		EN_DQ_LEN(drq), sc->rxslot[slot].rxhand);
 #endif
@@ -2246,7 +2246,7 @@ void *arg;
       need_softserv = 1;
       sc->need_drqs = 0;
 #ifdef EN_DEBUG
-	kprintf("%s: cleared need DRQ condition\n", sc->sc_dev.dv_xname);
+	printf("%s: cleared need DRQ condition\n", sc->sc_dev.dv_xname);
 #endif
     }
   }
@@ -2265,7 +2265,7 @@ void *arg;
       EN_WRAPADD(MID_SLOFF, MID_SLEND, sc->hwslistp, 4);/* advance hw ptr */
       slot = sc->rxvc2slot[vci];
       if (slot == RX_NONE) {
-	kprintf("%s: unexpected rx interrupt on VCI %d\n", 
+	printf("%s: unexpected rx interrupt on VCI %d\n", 
 		sc->sc_dev.dv_xname, vci);
 	EN_WRITE(sc, MID_VC(vci), MIDV_TRASH);  /* rx off, damn it! */
 	continue;				/* next */
@@ -2274,7 +2274,7 @@ void *arg;
       EN_COUNT(sc->hwpull);
 
 #ifdef EN_DEBUG
-      kprintf("%s: pulled VCI %d off hwslist\n", sc->sc_dev.dv_xname, vci);
+      printf("%s: pulled VCI %d off hwslist\n", sc->sc_dev.dv_xname, vci);
 #endif
 
       /* add it to the software service list (if needed) */
@@ -2286,7 +2286,7 @@ void *arg;
 	EN_WRAPADD(0, MID_SL_N, sc->swsl_tail, 1);
 	sc->swsl_size++;
 #ifdef EN_DEBUG
-      kprintf("%s: added VCI %d to swslist\n", sc->sc_dev.dv_xname, vci);
+      printf("%s: added VCI %d to swslist\n", sc->sc_dev.dv_xname, vci);
 #endif
       }
     } while (sc->hwslistp != chip);   
@@ -2306,7 +2306,7 @@ void *arg;
   if (reg & MID_INT_DMA_OVR) {
     EN_COUNT(sc->dmaovr);
 #ifdef EN_DEBUG
-    kprintf("%s: MID_INT_DMA_OVR\n", sc->sc_dev.dv_xname);
+    printf("%s: MID_INT_DMA_OVR\n", sc->sc_dev.dv_xname);
 #endif
   }
   reg = EN_READ(sc, MID_STAT);
@@ -2350,7 +2350,7 @@ struct en_softc *sc;
 next_vci:
   if (sc->swsl_size == 0) {
 #ifdef EN_DEBUG
-    kprintf("%s: en_service done\n", sc->sc_dev.dv_xname);
+    printf("%s: en_service done\n", sc->sc_dev.dv_xname);
 #endif
     return;		/* >>> exit here if swsl now empty <<< */
   }
@@ -2375,7 +2375,7 @@ next_vci:
   cur = sc->rxslot[slot].cur;
 
 #ifdef EN_DEBUG
-  kprintf("%s: rx%d: service vci=%d raw=%d start/stop/cur=0x%x 0x%x 0x%x\n",
+  printf("%s: rx%d: service vci=%d raw=%d start/stop/cur=0x%x 0x%x 0x%x\n",
 	sc->sc_dev.dv_xname, slot, vci, raw, start, stop, cur);
 #endif
 
@@ -2391,7 +2391,7 @@ defer:					/* defer processing */
     sc->swsl_size--;
 					/* >>> remove from swslist <<< */
 #ifdef EN_DEBUG
-    kprintf("%s: rx%d: remove vci %d from swslist\n", 
+    printf("%s: rx%d: remove vci %d from swslist\n", 
 		sc->sc_dev.dv_xname, slot, vci);
 #endif
     goto next_vci;
@@ -2438,9 +2438,9 @@ defer:					/* defer processing */
       pdu = EN_READ(sc, pdu);		/* READ swaps to proper byte order */
       fill = tlen - MID_RBD_SIZE - MID_PDU_LEN(pdu);
       if (fill < 0) {
-        kprintf("%s: invalid AAL5 PDU length detected, dropping frame\n", 
+        printf("%s: invalid AAL5 PDU length detected, dropping frame\n", 
 						sc->sc_dev.dv_xname);
-        kprintf("%s: got %d cells (%d bytes), AAL5 len is %d bytes (pdu=0x%x)\n",
+        printf("%s: got %d cells (%d bytes), AAL5 len is %d bytes (pdu=0x%x)\n",
 	  sc->sc_dev.dv_xname, MID_RBD_CNT(rbd), tlen - MID_RBD_SIZE,
 		MID_PDU_LEN(pdu), pdu);
 	fill = tlen;
@@ -2469,7 +2469,7 @@ defer:					/* defer processing */
     sav = mtod(m, u_int32_t *);
     if (sav[0] != cur) {
 #ifdef EN_DEBUG
-      kprintf("%s: rx%d: q'ed mbuf 0x%x not ours\n", 
+      printf("%s: rx%d: q'ed mbuf 0x%x not ours\n", 
 		sc->sc_dev.dv_xname, slot, m);
 #endif
       m = NULL;			/* wasn't ours */
@@ -2479,7 +2479,7 @@ defer:					/* defer processing */
       IF_DEQUEUE(&sc->rxslot[slot].q, m);
       drqneed = sav[1];
 #ifdef EN_DEBUG
-      kprintf("%s: rx%d: recovered q'ed mbuf 0x%x (drqneed=%d)\n", 
+      printf("%s: rx%d: recovered q'ed mbuf 0x%x (drqneed=%d)\n", 
 	sc->sc_dev.dv_xname, slot, drqneed);
 #endif
     }
@@ -2492,17 +2492,17 @@ defer:					/* defer processing */
       mlen = 0;
       EN_COUNT(sc->rxmbufout);
 #ifdef EN_DEBUG
-      kprintf("%s: rx%d: out of mbufs\n", sc->sc_dev.dv_xname, slot);
+      printf("%s: rx%d: out of mbufs\n", sc->sc_dev.dv_xname, slot);
 #endif
     }
 #ifdef EN_DEBUG
-    kprintf("%s: rx%d: allocate mbuf 0x%x, mlen=%d, drqneed=%d\n", 
+    printf("%s: rx%d: allocate mbuf 0x%x, mlen=%d, drqneed=%d\n", 
 	sc->sc_dev.dv_xname, slot, m, mlen, drqneed);
 #endif
   }
 
 #ifdef EN_DEBUG
-  kprintf("%s: rx%d: VCI %d, mbuf_chain 0x%x, mlen %d, fill %d\n",
+  printf("%s: rx%d: VCI %d, mbuf_chain 0x%x, mlen %d, fill %d\n",
 	sc->sc_dev.dv_xname, slot, vci, m, mlen, fill);
 #endif
 
@@ -2517,7 +2517,7 @@ defer:					/* defer processing */
     if (m == NULL) {
       EN_COUNT(sc->rxoutboth);
 #ifdef EN_DEBUG
-      kprintf("%s: rx%d: out of DRQs *and* mbufs!\n", sc->sc_dev.dv_xname, slot);
+      printf("%s: rx%d: out of DRQs *and* mbufs!\n", sc->sc_dev.dv_xname, slot);
 #endif
       return;		/* >>> exit here if out of both mbufs and DRQs <<< */
     }
@@ -2527,7 +2527,7 @@ defer:					/* defer processing */
     IF_ENQUEUE(&sc->rxslot[slot].q, m);
     EN_COUNT(sc->rxdrqout);
 #ifdef EN_DEBUG
-    kprintf("%s: rx%d: out of DRQs\n", sc->sc_dev.dv_xname, slot);
+    printf("%s: rx%d: out of DRQs\n", sc->sc_dev.dv_xname, slot);
 #endif
     return;		/* >>> exit here if out of DRQs <<< */
   }
@@ -2556,7 +2556,7 @@ defer:					/* defer processing */
     data = mtod(tmp, u_int32_t *);
 
 #ifdef EN_DEBUG
-    kprintf("%s: rx%d: load mbuf 0x%x, m_len=%d, m_data=0x%x, tlen=%d\n",
+    printf("%s: rx%d: load mbuf 0x%x, m_len=%d, m_data=0x%x, tlen=%d\n",
 	sc->sc_dev.dv_xname, slot, tmp, tmp->m_len, tmp->m_data, tlen);
 #endif
     
@@ -2571,7 +2571,7 @@ defer:					/* defer processing */
       }
       need -= tlen;
 #ifdef EN_DEBUG
-      kprintf("%s: rx%d: vci%d: copied %d bytes (%d left)\n",
+      printf("%s: rx%d: vci%d: copied %d bytes (%d left)\n",
 		sc->sc_dev.dv_xname, slot, vci, tlen, need);
 #endif
       continue;
@@ -2581,7 +2581,7 @@ defer:					/* defer processing */
     if (dma != cur) {
       EN_DRQADD(sc, WORD_IDX(start,cur), vci, MIDDMA_JK, 0, 0, 0, 0);
 #ifdef EN_DEBUG
-      kprintf("%s: rx%d: vci%d: drq_sync: advance pointer to %d\n",
+      printf("%s: rx%d: vci%d: drq_sync: advance pointer to %d\n",
 		sc->sc_dev.dv_xname, slot, vci, cur);
 #endif
     }
@@ -2602,7 +2602,7 @@ defer:					/* defer processing */
       need -= cnt;
       EN_WRAPADD(start, stop, cur, cnt);
 #ifdef EN_DEBUG
-      kprintf("%s: rx%d: vci%d: al_dma %d bytes (%d left)\n",
+      printf("%s: rx%d: vci%d: al_dma %d bytes (%d left)\n",
 		sc->sc_dev.dv_xname, slot, vci, cnt, need);
 #endif
       tlen -= cnt;
@@ -2621,7 +2621,7 @@ defer:					/* defer processing */
       need -= cnt;
       EN_WRAPADD(start, stop, cur, cnt);
 #ifdef EN_DEBUG
-      kprintf("%s: rx%d: vci%d: best_dma %d bytes (%d left)\n",
+      printf("%s: rx%d: vci%d: best_dma %d bytes (%d left)\n",
 		sc->sc_dev.dv_xname, slot, vci, cnt, need);
 #endif
       tlen -= cnt;
@@ -2640,7 +2640,7 @@ defer:					/* defer processing */
       need -= tlen;
       EN_WRAPADD(start, stop, cur, tlen);
 #ifdef EN_DEBUG
-      kprintf("%s: rx%d: vci%d: cleanup_dma %d bytes (%d left)\n",
+      printf("%s: rx%d: vci%d: cleanup_dma %d bytes (%d left)\n",
 		sc->sc_dev.dv_xname, slot, vci, tlen, need);
 #endif
       end = (need == 0 && !fill) ? MID_DMA_END : 0;
@@ -2657,10 +2657,10 @@ defer:					/* defer processing */
   if (fill || dma != cur) {
 #ifdef EN_DEBUG
       if (fill)
-        kprintf("%s: rx%d: vci%d: skipping %d bytes of fill\n",
+        printf("%s: rx%d: vci%d: skipping %d bytes of fill\n",
 		sc->sc_dev.dv_xname, slot, vci, fill);
       else
-        kprintf("%s: rx%d: vci%d: syncing chip from 0x%x to 0x%x [cur]\n",
+        printf("%s: rx%d: vci%d: syncing chip from 0x%x to 0x%x [cur]\n",
 		sc->sc_dev.dv_xname, slot, vci, dma, cur);
 #endif
     EN_WRAPADD(start, stop, cur, fill);
@@ -2690,7 +2690,7 @@ done:
   sc->rxslot[slot].cur = cur;		/* update master copy of 'cur' */
 
 #ifdef EN_DEBUG
-  kprintf("%s: rx%d: vci%d: DONE!   cur now =0x%x\n", 
+  printf("%s: rx%d: vci%d: DONE!   cur now =0x%x\n", 
 	sc->sc_dev.dv_xname, slot, vci, cur);
 #endif
 
@@ -2732,89 +2732,89 @@ int unit, level;
     if (unit != -1 && unit != lcv)
       continue;
 
-    kprintf("dumping device %s at level 0x%b\n", sc->sc_dev.dv_xname, level,
+    printf("dumping device %s at level 0x%b\n", sc->sc_dev.dv_xname, level,
 			END_BITS);
 
     if (sc->dtq_us == 0) {
-      kprintf("<hasn't been en_init'd yet>\n");
+      printf("<hasn't been en_init'd yet>\n");
       continue;
     }
 
     if (level & END_STATS) {
-      kprintf("  en_stats:\n");
-      kprintf("    %d mfix (%d failed); %d/%d head/tail byte DMAs, %d flushes\n",
+      printf("  en_stats:\n");
+      printf("    %d mfix (%d failed); %d/%d head/tail byte DMAs, %d flushes\n",
 	   sc->mfix, sc->mfixfail, sc->headbyte, sc->tailbyte, sc->tailflush);
-      kprintf("    %d rx dma overflow interrupts\n", sc->dmaovr);
-      kprintf("    %d times we ran out of TX space and stalled\n", 
+      printf("    %d rx dma overflow interrupts\n", sc->dmaovr);
+      printf("    %d times we ran out of TX space and stalled\n", 
 							sc->txoutspace);
-      kprintf("    %d times we ran out of DTQs\n", sc->txdtqout);
-      kprintf("    %d times we launched a packet\n", sc->launch);
-      kprintf("    %d times we launched without on-board header\n", sc->lheader);
-      kprintf("    %d times we launched without on-board tail\n", sc->ltail);
-      kprintf("    %d times we pulled the hw service list\n", sc->hwpull);
-      kprintf("    %d times we pushed a vci on the sw service list\n", 
+      printf("    %d times we ran out of DTQs\n", sc->txdtqout);
+      printf("    %d times we launched a packet\n", sc->launch);
+      printf("    %d times we launched without on-board header\n", sc->lheader);
+      printf("    %d times we launched without on-board tail\n", sc->ltail);
+      printf("    %d times we pulled the hw service list\n", sc->hwpull);
+      printf("    %d times we pushed a vci on the sw service list\n", 
 								sc->swadd);
-      kprintf("    %d times RX pulled an mbuf from Q that wasn't ours\n", 
+      printf("    %d times RX pulled an mbuf from Q that wasn't ours\n", 
 							 sc->rxqnotus);
-      kprintf("    %d times RX pulled a good mbuf from Q\n", sc->rxqus);
-      kprintf("    %d times we ran out of mbufs *and* DRQs\n", sc->rxoutboth);
-      kprintf("    %d times we ran out of DRQs\n", sc->rxdrqout);
+      printf("    %d times RX pulled a good mbuf from Q\n", sc->rxqus);
+      printf("    %d times we ran out of mbufs *and* DRQs\n", sc->rxoutboth);
+      printf("    %d times we ran out of DRQs\n", sc->rxdrqout);
 
-      kprintf("    %d trasmit packets dropped due to mbsize\n", sc->txmbovr);
-      kprintf("    %d cells trashed due to turned off rxvc\n", sc->vtrash);
-      kprintf("    %d cells trashed due to totally full buffer\n", sc->otrash);
-      kprintf("    %d cells trashed due almost full buffer\n", sc->ttrash);
-      kprintf("    %d rx mbuf allocation failures\n", sc->rxmbufout);
+      printf("    %d trasmit packets dropped due to mbsize\n", sc->txmbovr);
+      printf("    %d cells trashed due to turned off rxvc\n", sc->vtrash);
+      printf("    %d cells trashed due to totally full buffer\n", sc->otrash);
+      printf("    %d cells trashed due almost full buffer\n", sc->ttrash);
+      printf("    %d rx mbuf allocation failures\n", sc->rxmbufout);
 #ifdef NATM
-      kprintf("    %d drops at natmintrq\n", natmintrq.ifq_drops);
+      printf("    %d drops at natmintrq\n", natmintrq.ifq_drops);
 #ifdef NATM_STAT
-      kprintf("    natmintr so_rcv: ok/drop cnt: %d/%d, ok/drop bytes: %d/%d\n",
+      printf("    natmintr so_rcv: ok/drop cnt: %d/%d, ok/drop bytes: %d/%d\n",
 	natm_sookcnt, natm_sodropcnt, natm_sookbytes, natm_sodropbytes);
 #endif
 #endif
     }
 
     if (level & END_MREGS) {
-      kprintf("mregs:\n");
-      kprintf("resid = 0x%x\n", EN_READ(sc, MID_RESID));
-      kprintf("interrupt status = 0x%b\n", 
+      printf("mregs:\n");
+      printf("resid = 0x%x\n", EN_READ(sc, MID_RESID));
+      printf("interrupt status = 0x%b\n", 
 				EN_READ(sc, MID_INTSTAT), MID_INTBITS);
-      kprintf("interrupt enable = 0x%b\n", 
+      printf("interrupt enable = 0x%b\n", 
 				EN_READ(sc, MID_INTENA), MID_INTBITS);
-      kprintf("mcsr = 0x%b\n", EN_READ(sc, MID_MAST_CSR), MID_MCSRBITS);
-      kprintf("serv_write = [chip=%d] [us=%d]\n", EN_READ(sc, MID_SERV_WRITE),
+      printf("mcsr = 0x%b\n", EN_READ(sc, MID_MAST_CSR), MID_MCSRBITS);
+      printf("serv_write = [chip=%d] [us=%d]\n", EN_READ(sc, MID_SERV_WRITE),
 			MID_SL_A2REG(sc->hwslistp));
-      kprintf("dma addr = 0x%x\n", EN_READ(sc, MID_DMA_ADDR));
-      kprintf("DRQ: chip[rd=0x%x,wr=0x%x], sc[chip=0x%x,us=0x%x]\n",
+      printf("dma addr = 0x%x\n", EN_READ(sc, MID_DMA_ADDR));
+      printf("DRQ: chip[rd=0x%x,wr=0x%x], sc[chip=0x%x,us=0x%x]\n",
 	MID_DRQ_REG2A(EN_READ(sc, MID_DMA_RDRX)), 
 	MID_DRQ_REG2A(EN_READ(sc, MID_DMA_WRRX)), sc->drq_chip, sc->drq_us);
-      kprintf("DTQ: chip[rd=0x%x,wr=0x%x], sc[chip=0x%x,us=0x%x]\n",
+      printf("DTQ: chip[rd=0x%x,wr=0x%x], sc[chip=0x%x,us=0x%x]\n",
 	MID_DTQ_REG2A(EN_READ(sc, MID_DMA_RDTX)), 
 	MID_DTQ_REG2A(EN_READ(sc, MID_DMA_WRTX)), sc->dtq_chip, sc->dtq_us);
 
-      kprintf("  unusal txspeeds: ");
+      printf("  unusal txspeeds: ");
       for (cnt = 0 ; cnt < MID_N_VC ; cnt++)
 	if (sc->txspeed[cnt])
-	  kprintf(" vci%d=0x%x", cnt, sc->txspeed[cnt]);
-      kprintf("\n");
+	  printf(" vci%d=0x%x", cnt, sc->txspeed[cnt]);
+      printf("\n");
 
-      kprintf("  rxvc slot mappings: ");
+      printf("  rxvc slot mappings: ");
       for (cnt = 0 ; cnt < MID_N_VC ; cnt++)
 	if (sc->rxvc2slot[cnt] != RX_NONE)
-	  kprintf("  %d->%d", cnt, sc->rxvc2slot[cnt]);
-      kprintf("\n");
+	  printf("  %d->%d", cnt, sc->rxvc2slot[cnt]);
+      printf("\n");
 
     }
 
     if (level & END_TX) {
-      kprintf("tx:\n");
+      printf("tx:\n");
       for (slot = 0 ; slot < EN_NTX; slot++) {
-	kprintf("tx%d: start/stop/cur=0x%x/0x%x/0x%x [%d]  ", slot,
+	printf("tx%d: start/stop/cur=0x%x/0x%x/0x%x [%d]  ", slot,
 	  sc->txslot[slot].start, sc->txslot[slot].stop, sc->txslot[slot].cur,
 		(sc->txslot[slot].cur - sc->txslot[slot].start)/4);
-	kprintf("mbsize=%d, bfree=%d\n", sc->txslot[slot].mbsize,
+	printf("mbsize=%d, bfree=%d\n", sc->txslot[slot].mbsize,
 		sc->txslot[slot].bfree);
-        kprintf("txhw: base_address=0x%x, size=%d, read=%d, descstart=%d\n",
+        printf("txhw: base_address=0x%x, size=%d, read=%d, descstart=%d\n",
 	  MIDX_BASE(EN_READ(sc, MIDX_PLACE(slot))), 
 	  MIDX_SZ(EN_READ(sc, MIDX_PLACE(slot))),
 	  EN_READ(sc, MIDX_READPTR(slot)), EN_READ(sc, MIDX_DESCSTART(slot)));
@@ -2822,15 +2822,15 @@ int unit, level;
     }
 
     if (level & END_RX) {
-      kprintf("  recv slots:\n");
+      printf("  recv slots:\n");
       for (slot = 0 ; slot < sc->en_nrx; slot++) {
-	kprintf("rx%d: vci=%d: start/stop/cur=0x%x/0x%x/0x%x ", slot,
+	printf("rx%d: vci=%d: start/stop/cur=0x%x/0x%x/0x%x ", slot,
 	  sc->rxslot[slot].atm_vci, sc->rxslot[slot].start, 
 	  sc->rxslot[slot].stop, sc->rxslot[slot].cur);
-	kprintf("mode=0x%x, atm_flags=0x%x, oth_flags=0x%x\n", 
+	printf("mode=0x%x, atm_flags=0x%x, oth_flags=0x%x\n", 
 	sc->rxslot[slot].mode, sc->rxslot[slot].atm_flags, 
 		sc->rxslot[slot].oth_flags);
-        kprintf("RXHW: mode=0x%x, DST_RP=0x%x, WP_ST_CNT=0x%x\n",
+        printf("RXHW: mode=0x%x, DST_RP=0x%x, WP_ST_CNT=0x%x\n",
 	  EN_READ(sc, MID_VC(sc->rxslot[slot].atm_vci)),
 	  EN_READ(sc, MID_DST_RP(sc->rxslot[slot].atm_vci)),
 	  EN_READ(sc, MID_WP_ST_CNT(sc->rxslot[slot].atm_vci)));
@@ -2838,12 +2838,12 @@ int unit, level;
     }
 
     if (level & END_DTQ) {
-      kprintf("  dtq [need_dtqs=%d,dtq_free=%d]:\n", 
+      printf("  dtq [need_dtqs=%d,dtq_free=%d]:\n", 
 					sc->need_dtqs, sc->dtq_free);
       ptr = sc->dtq_chip;
       while (ptr != sc->dtq_us) {
         reg = EN_READ(sc, ptr);
-        kprintf("\t0x%x=[cnt=%d, chan=%d, end=%d, type=%d @ 0x%x]\n", 
+        printf("\t0x%x=[cnt=%d, chan=%d, end=%d, type=%d @ 0x%x]\n", 
 	    sc->dtq[MID_DTQ_A2REG(ptr)], MID_DMA_CNT(reg), MID_DMA_TXCHAN(reg),
 	    (reg & MID_DMA_END) != 0, MID_DMA_TYPE(reg), EN_READ(sc, ptr+4));
         EN_WRAPADD(MID_DTQOFF, MID_DTQEND, ptr, 8);
@@ -2851,12 +2851,12 @@ int unit, level;
     }
 
     if (level & END_DRQ) {
-      kprintf("  drq [need_drqs=%d,drq_free=%d]:\n", 
+      printf("  drq [need_drqs=%d,drq_free=%d]:\n", 
 					sc->need_drqs, sc->drq_free);
       ptr = sc->drq_chip;
       while (ptr != sc->drq_us) {
         reg = EN_READ(sc, ptr);
-	kprintf("\t0x%x=[cnt=%d, chan=%d, end=%d, type=%d @ 0x%x]\n", 
+	printf("\t0x%x=[cnt=%d, chan=%d, end=%d, type=%d @ 0x%x]\n", 
 	  sc->drq[MID_DRQ_A2REG(ptr)], MID_DMA_CNT(reg), MID_DMA_RXVCI(reg),
 	  (reg & MID_DMA_END) != 0, MID_DMA_TYPE(reg), EN_READ(sc, ptr+4));
 	EN_WRAPADD(MID_DRQOFF, MID_DRQEND, ptr, 8);
@@ -2864,11 +2864,11 @@ int unit, level;
     }
 
     if (level & END_SWSL) {
-      kprintf(" swslist [size=%d]: ", sc->swsl_size);
+      printf(" swslist [size=%d]: ", sc->swsl_size);
       for (cnt = sc->swsl_head ; cnt != sc->swsl_tail ; 
 			cnt = (cnt + 1) % MID_SL_N)
-        kprintf("0x%x ", sc->swslist[cnt]);
-      kprintf("\n");
+        printf("0x%x ", sc->swslist[cnt]);
+      printf("\n");
     }
 
   }
@@ -2889,18 +2889,18 @@ int unit, addr, len;
 
   if (unit < 0 || unit > en_cd.cd_ndevs ||
 	(sc = (struct en_softc *) en_cd.cd_devs[unit]) == NULL) {
-    kprintf("invalid unit number: %d\n", unit);
+    printf("invalid unit number: %d\n", unit);
     return(0);
   }
   addr = addr & ~3;
   if (addr < MID_RAMOFF || addr + len*4 > MID_MAXOFF || len <= 0) {
-    kprintf("invalid addr/len number: %d, %d\n", addr, len);
+    printf("invalid addr/len number: %d, %d\n", addr, len);
     return(0);
   }
-  kprintf("dumping %d words starting at offset 0x%x\n", len, addr);
+  printf("dumping %d words starting at offset 0x%x\n", len, addr);
   while (len--) {
     reg = EN_READ(sc, addr);
-    kprintf("mem[0x%x] = 0x%x\n", addr, reg);
+    printf("mem[0x%x] = 0x%x\n", addr, reg);
     addr += 4;
   }
   return(0);

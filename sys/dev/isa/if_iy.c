@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.7 1996/10/10 22:05:04 christos Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.8 1996/10/13 01:37:51 christos Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -231,7 +231,7 @@ iyprobe(parent, match, aux)
 		goto out;
 		
 #ifdef IYDEBUG
-		kprintf("eepro_probe verified working ID reg.\n");
+		printf("eepro_probe verified working ID reg.\n");
 #endif
 	
 	for (i=0; i<64; ++i) {
@@ -241,14 +241,14 @@ iyprobe(parent, match, aux)
 			eaddr[i] = eepromtmp;
 	}
 	if (checksum != EEPP_CHKSUM)
-		kprintf("wrong EEPROM checksum 0x%x should be 0x%x\n",
+		printf("wrong EEPROM checksum 0x%x should be 0x%x\n",
 		    checksum, EEPP_CHKSUM);
 		
 	
 	if ((eaddr[EEPPEther0] != eepromread(bc, ioh, EEPROM_REG, EEPPEther0a)) &&
 	    (eaddr[EEPPEther1] != eepromread(bc, ioh, EEPROM_REG, EEPPEther1a)) &&
 	    (eaddr[EEPPEther2] != eepromread(bc, ioh, EEPROM_REG, EEPPEther2a)))
-		kprintf("EEPROM Ethernet address differs from copy\n");
+		printf("EEPROM Ethernet address differs from copy\n");
 	
         sc->sc_arpcom.ac_enaddr[1] = eaddr[EEPPEther0] & 0xFF;
         sc->sc_arpcom.ac_enaddr[0] = eaddr[EEPPEther0] >> 8;
@@ -319,7 +319,7 @@ iyattach(parent, self, aux)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-	kprintf(": address %s, chip rev. %d, %d kB SRAM\n",
+	printf(": address %s, chip rev. %d, %d kB SRAM\n",
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
 	    sc->hard_vers, sc->sram/1024);
 #if NBPFILTER > 0
@@ -352,7 +352,7 @@ struct iy_softc *sc;
 	bus_io_write_1(bc, ioh, COMMAND_REG, RESET_CMD);
 	delay(200);
 #ifdef IYDEBUG 
-	kprintf("%s: dumping tx chain (st 0x%x end 0x%x last 0x%x)\n", 
+	printf("%s: dumping tx chain (st 0x%x end 0x%x last 0x%x)\n", 
 		    sc->sc_dev.dv_xname, sc->tx_start, sc->tx_end, sc->tx_last);
 	p = sc->tx_last;
 	if (!p)
@@ -360,13 +360,13 @@ struct iy_softc *sc;
 	do {
 		bus_io_write_2(bc, ioh, HOST_ADDR_REG, p);
 		v = bus_io_read_2(bc, ioh, MEM_PORT_REG);
-		kprintf("0x%04x: %b ", p, v, "\020\006Ab\010Dn");
+		printf("0x%04x: %b ", p, v, "\020\006Ab\010Dn");
 		v = bus_io_read_2(bc, ioh, MEM_PORT_REG);
-		kprintf("0x%b", v, "\020\6MAX_COL\7HRT_BEAT\010TX_DEF\011UND_RUN\012JERR\013LST_CRS\014LTCOL\016TX_OK\020COLL");
+		printf("0x%b", v, "\020\6MAX_COL\7HRT_BEAT\010TX_DEF\011UND_RUN\012JERR\013LST_CRS\014LTCOL\016TX_OK\020COLL");
 		p = bus_io_read_2(bc, ioh, MEM_PORT_REG);
-		kprintf(" 0x%04x", p);
+		printf(" 0x%04x", p);
 		v = bus_io_read_2(bc, ioh, MEM_PORT_REG);
-		kprintf(" 0x%b\n", v, "\020\020Ch");
+		printf(" 0x%b\n", v, "\020\020Ch");
 		
 	} while (v & 0x8000);
 #endif
@@ -403,7 +403,7 @@ struct iy_softc *sc;
 
 	ifp = &sc->sc_arpcom.ac_if;
 #ifdef IYDEBUG
-	kprintf("ifp is %p\n", ifp);
+	printf("ifp is %p\n", ifp);
 #endif
 
 	bus_io_write_1(bc, ioh, 0, BANK_SEL(2));
@@ -423,7 +423,7 @@ struct iy_softc *sc;
 	temp = bus_io_read_1(bc, ioh, RECV_MODES_REG);
 	bus_io_write_1(bc, ioh, RECV_MODES_REG, temp | MATCH_BRDCST);
 #ifdef IYDEBUG
-	kprintf("%s: RECV_MODES were %b set to %b\n",
+	printf("%s: RECV_MODES were %b set to %b\n",
 	    sc->sc_dev.dv_xname, 
 	    temp, "\020\1PRMSC\2NOBRDST\3SEECRC\4LENGTH\5NOSaIns\6MultiIA",
 	    temp|MATCH_BRDCST,
@@ -435,7 +435,7 @@ struct iy_softc *sc;
 
 	temp = bus_io_read_1(bc, ioh, MEDIA_SELECT);
 #ifdef IYDEBUG
-	kprintf("%s: media select was 0x%b ", sc->sc_dev.dv_xname,
+	printf("%s: media select was 0x%b ", sc->sc_dev.dv_xname,
 	    temp, "\020\1LnkInDis\2PolCor\3TPE\4JabberDis\5NoAport\6BNC");
 #endif
 	temp = (temp & TEST_MODE_MASK);
@@ -459,7 +459,7 @@ struct iy_softc *sc;
 
 	bus_io_write_1(bc, ioh, MEDIA_SELECT, temp);
 #ifdef IYDEBUG
-	kprintf("changed to 0x%b\n", 
+	printf("changed to 0x%b\n", 
 	    temp, "\020\1LnkInDis\2PolCor\3TPE\4JabberDis\5NoAport\6BNC");
 #endif
 
@@ -469,10 +469,10 @@ struct iy_softc *sc;
 	bus_io_write_1(bc, ioh, INT_NO_REG, (temp & 0xf8) | sc->mappedirq);
 
 #ifdef IYDEBUG
-	kprintf("%s: int no was %b\n", sc->sc_dev.dv_xname,
+	printf("%s: int no was %b\n", sc->sc_dev.dv_xname,
 	    temp, "\020\4bad_irq\010flash/boot present");
 	temp = bus_io_read_1(bc, ioh, INT_NO_REG);
-	kprintf("%s: int no now 0x%02x\n", sc->sc_dev.dv_xname,
+	printf("%s: int no now 0x%02x\n", sc->sc_dev.dv_xname,
 	    temp, "\020\4BAD IRQ\010flash/boot present");
 #endif
 
@@ -484,14 +484,14 @@ struct iy_softc *sc;
 
 	temp = bus_io_read_1(bc, ioh, REG1);
 #ifdef IYDEBUG
-	kprintf("%s: HW access is %b\n", sc->sc_dev.dv_xname, 
+	printf("%s: HW access is %b\n", sc->sc_dev.dv_xname, 
 	    temp, "\020\2WORD_WIDTH\010INT_ENABLE");
 #endif
 	bus_io_write_1(bc, ioh, REG1, temp | INT_ENABLE); /* XXX what about WORD_WIDTH? */
 
 #ifdef IYDEBUG
 	temp = bus_io_read_1(bc, ioh, REG1);
-	kprintf("%s: HW access is %b\n", sc->sc_dev.dv_xname, 
+	printf("%s: HW access is %b\n", sc->sc_dev.dv_xname, 
 	    temp, "\020\2WORD_WIDTH\010INT_ENABLE");
 #endif
 
@@ -535,7 +535,7 @@ struct ifnet *ifp;
 	bus_io_handle_t ioh;
 
 #ifdef IYDEBUG
-	kprintf("iystart called\n");
+	printf("iystart called\n");
 #endif
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
                 return;
@@ -546,7 +546,7 @@ struct ifnet *ifp;
 
 	while ((m0 = ifp->if_snd.ifq_head) != NULL) {
 #ifdef IYDEBUG
-		kprintf("%s: trying to write another packet to the hardware\n",
+		printf("%s: trying to write another packet to the hardware\n",
 		    sc->sc_dev.dv_xname);
 #endif
 
@@ -558,7 +558,7 @@ struct ifnet *ifp;
 		pad = len & 1;
 
 #ifdef IYDEBUG
-		kprintf("%s: length is %d.\n", sc->sc_dev.dv_xname, len);
+		printf("%s: length is %d.\n", sc->sc_dev.dv_xname, len);
 #endif
 		if (len < ETHER_MIN_LEN) {
 			pad = ETHER_MIN_LEN - len;
@@ -582,7 +582,7 @@ struct ifnet *ifp;
 			avail += sc->tx_size;
 
 #ifdef IYDEBUG
-		kprintf("%s: avail is %d.\n", sc->sc_dev.dv_xname, avail);
+		printf("%s: avail is %d.\n", sc->sc_dev.dv_xname, avail);
 #endif
 		/* 
 		 * we MUST RUN at splnet here  --- 
@@ -592,7 +592,7 @@ struct ifnet *ifp;
        		/* See if there is room to put another packet in the buffer. */
 	
 		if ((len+pad+2*I595_XMT_HDRLEN) > avail) {
-			kprintf("%s: len = %d, avail = %d, setting OACTIVE\n",
+			printf("%s: len = %d, avail = %d, setting OACTIVE\n",
 			    sc->sc_dev.dv_xname, len, avail);
 			ifp->if_flags |= IFF_OACTIVE;
 			return;
@@ -626,7 +626,7 @@ struct ifnet *ifp;
 			llen = m->m_len;
 			if (residual) {
 #ifdef IYDEBUG
-				kprintf("%s: merging residual with next mbuf.\n",
+				printf("%s: merging residual with next mbuf.\n",
 				    sc->sc_dev.dv_xname);
 #endif
 				resval |= *data << 8;
@@ -641,7 +641,7 @@ struct ifnet *ifp;
 			if (residual) {
 				resval = *(data + llen - 1);
 #ifdef IYDEBUG
-				kprintf("%s: got odd mbuf to send.\n",
+				printf("%s: got odd mbuf to send.\n",
 				    sc->sc_dev.dv_xname);
 #endif
 			}
@@ -657,9 +657,9 @@ struct ifnet *ifp;
 			bus_io_write_2(bc, ioh, MEM_PORT_REG, 0);
 			
 #ifdef IYDEBUG
-		kprintf("%s: new last = 0x%x, end = 0x%x.\n",
+		printf("%s: new last = 0x%x, end = 0x%x.\n",
 		    sc->sc_dev.dv_xname, last, end);
-		kprintf("%s: old start = 0x%x, end = 0x%x, last = 0x%x\n",
+		printf("%s: old start = 0x%x, end = 0x%x, last = 0x%x\n",
 		    sc->sc_dev.dv_xname, sc->tx_start, sc->tx_end, sc->tx_last);
 #endif
 
@@ -671,7 +671,7 @@ struct ifnet *ifp;
 			bus_io_write_2(bc, ioh, MEM_PORT_REG, last);
 			bus_io_write_2(bc, ioh, MEM_PORT_REG, stat | CHAIN);
 #ifdef IYDEBUG
-			kprintf("%s: setting 0x%x to 0x%x\n",
+			printf("%s: setting 0x%x to 0x%x\n",
 			    sc->sc_dev.dv_xname, sc->tx_last + XMT_COUNT, 
 			    stat | CHAIN);
 #endif
@@ -687,13 +687,13 @@ struct ifnet *ifp;
 			bus_io_write_1(bc, ioh, 0, XMT_CMD);
 			sc->tx_start = last;
 #ifdef IYDEBUG
-			kprintf("%s: writing 0x%x to XAR and giving XCMD\n",
+			printf("%s: writing 0x%x to XAR and giving XCMD\n",
 			    sc->sc_dev.dv_xname, last);
 #endif
 		} else {
 			bus_io_write_1(bc, ioh, 0, RESUME_XMT_CMD);
 #ifdef IYDEBUG
-			kprintf("%s: giving RESUME_XCMD\n",
+			printf("%s: giving RESUME_XCMD\n",
 			    sc->sc_dev.dv_xname);
 #endif
 		}
@@ -810,13 +810,13 @@ iyintr(arg)
 	status = bus_io_read_1(bc, ioh, STATUS_REG);
 #ifdef IYDEBUG
 	if (status & ALL_INTS) {
-		kprintf("%s: got interupt %b", sc->sc_dev.dv_xname, status,
+		printf("%s: got interupt %b", sc->sc_dev.dv_xname, status,
 		    "\020\1RX_STP\2RX\3TX\4EXEC");
 		if (status & EXEC_INT)
-			kprintf(" event %b\n", bus_io_read_1(bc, ioh, 0),
+			printf(" event %b\n", bus_io_read_1(bc, ioh, 0),
 			    "\020\6ABORT");
 		else
-			kprintf("\n");
+			printf("\n");
 	}
 #endif
 	if ((status & (RX_INT | TX_INT) == 0))
@@ -893,7 +893,7 @@ iyget(sc, bc, ioh, rxlen)
 			    mtod(m, caddr_t), len/2);
 		} else {
 #ifdef IYDEBUG
-			kprintf("%s: received odd mbuf\n", sc->sc_dev.dv_xname);
+			printf("%s: received odd mbuf\n", sc->sc_dev.dv_xname);
 #endif
 			*(mtod(m, caddr_t)) = bus_io_read_2(bc, ioh, 
 			    MEM_PORT_REG);
@@ -952,7 +952,7 @@ struct iy_softc *sc;
 		rxnext = bus_io_read_2(bc, ioh, MEM_PORT_REG);
 		rxlen = bus_io_read_2(bc, ioh, MEM_PORT_REG);
 #ifdef IYDEBUG
-		kprintf("%s: pck at 0x%04x stat %b next 0x%x len 0x%x\n",
+		printf("%s: pck at 0x%04x stat %b next 0x%x len 0x%x\n",
 		    sc->sc_dev.dv_xname, rxadrs, rxstatus,
 		    "\020\1RCLD\2IA_MCH\010SHORT\011OVRN\013ALGERR"
 		    "\014CRCERR\015LENERR\016RCVOK\020TYP",
@@ -994,7 +994,7 @@ struct iy_softc *sc;
 		txnext = bus_io_read_2(bc, ioh, MEM_PORT_REG);
 		txlen = bus_io_read_2(bc, ioh, MEM_PORT_REG);
 #ifdef IYDEBUG
-		kprintf("txstat 0x%x stat2 0x%b next 0x%x len 0x%x\n",
+		printf("txstat 0x%x stat2 0x%b next 0x%x len 0x%x\n",
 		    txstatus, txstat2, "\020\6MAX_COL\7HRT_BEAT\010TX_DEF"
 		    "\011UND_RUN\012JERR\013LST_CRS\014LTCOL\016TX_OK\020COLL",
 			txnext, txlen);
@@ -1161,7 +1161,7 @@ iyioctl(ifp, cmd, data)
 	ifr = (struct ifreq *)data;
 
 #ifdef IYDEBUG
-	kprintf("iyioctl called with ifp 0x%p (%s) cmd 0x%x data 0x%p\n", 
+	printf("iyioctl called with ifp 0x%p (%s) cmd 0x%x data 0x%p\n", 
 	    ifp, ifp->if_xname, cmd, data);
 #endif
 
@@ -1295,7 +1295,7 @@ print_rbd(rbd)
 	volatile struct ie_recv_buf_desc *rbd;
 {
 
-	kprintf("RBD at %08lx:\nactual %04x, next %04x, buffer %08x\n"
+	printf("RBD at %08lx:\nactual %04x, next %04x, buffer %08x\n"
 	    "length %04x, mbz %04x\n", (u_long)rbd, rbd->ie_rbd_actual,
 	    rbd->ie_rbd_next, rbd->ie_rbd_buffer, rbd->ie_rbd_length,
 	    rbd->mbz);
@@ -1366,7 +1366,7 @@ iyprobemem(sc)
 		bus_io_write_2(bc, ioh, HOST_ADDR_REG, testing-2);
 		if (bus_io_read_2(bc, ioh, MEM_PORT_REG) != 0xdead) {
 #ifdef IYMEMDEBUG
-			kprintf("%s: Didn't keep 0xdead at 0x%x\n",
+			printf("%s: Didn't keep 0xdead at 0x%x\n",
 			    sc->sc_dev.dv_xname, testing-2);
 #endif
 			continue;
@@ -1377,7 +1377,7 @@ iyprobemem(sc)
 		bus_io_write_2(bc, ioh, HOST_ADDR_REG, testing-2);
 		if (bus_io_read_2(bc, ioh, MEM_PORT_REG) != 0xbeef) {
 #ifdef IYMEMDEBUG
-			kprintf("%s: Didn't keep 0xbeef at 0x%x\n",
+			printf("%s: Didn't keep 0xbeef at 0x%x\n",
 			    sc->sc_dev.dv_xname, testing-2);
 #endif
 			continue;
@@ -1390,7 +1390,7 @@ iyprobemem(sc)
 		bus_io_write_2(bc, ioh, HOST_ADDR_REG, 0);
 		if (bus_io_read_2(bc, ioh, MEM_PORT_REG) == (testing >> 1)) {
 #ifdef IYMEMDEBUG
-			kprintf("%s: 0x%x alias of 0x0\n",
+			printf("%s: 0x%x alias of 0x0\n",
 			    sc->sc_dev.dv_xname, testing >> 1);
 #endif
 			continue;

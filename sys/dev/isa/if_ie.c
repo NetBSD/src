@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.53 1996/10/10 20:04:03 christos Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.54 1996/10/13 01:37:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -424,7 +424,7 @@ sl_probe(sc, ia)
 	default:
 		/* Anything else is not recognized or cannot be used. */
 #ifdef DIAGNOSTIC
-		kprintf("%s: unknown AT&T board type code %d\n",
+		printf("%s: unknown AT&T board type code %d\n",
 		    sc->sc_dev.dv_xname, SL_BOARD(c));
 #endif
 		return 0;
@@ -433,7 +433,7 @@ sl_probe(sc, ia)
 	sc->hard_vers = SL_REV(c);
 
 	if (ia->ia_irq == IRQUNK || ia->ia_maddr == MADDRUNK) {
-		kprintf("%s: %s does not have soft configuration\n",
+		printf("%s: %s does not have soft configuration\n",
 		    sc->sc_dev.dv_xname, ie_hardware_names[sc->hard_type]);
 		return 0;
 	}
@@ -445,14 +445,14 @@ sl_probe(sc, ia)
 	ie_find_mem_size(sc);
 
 	if (!sc->sc_msize) {
-		kprintf("%s: can't find shared memory\n", sc->sc_dev.dv_xname);
+		printf("%s: can't find shared memory\n", sc->sc_dev.dv_xname);
 		return 0;
 	}
 
 	if (!ia->ia_msize)
 		ia->ia_msize = sc->sc_msize;
 	else if (ia->ia_msize != sc->sc_msize) {
-		kprintf("%s: msize mismatch; kernel configured %d != board configured %d\n",
+		printf("%s: msize mismatch; kernel configured %d != board configured %d\n",
 		    sc->sc_dev.dv_xname, ia->ia_msize, sc->sc_msize);
 		return 0;
 	}
@@ -484,7 +484,7 @@ el_probe(sc, ia)
 	 * Map the Etherlink ID port for the probe sequence.
 	 */
 	if (bus_io_map(bc, ELINK_ID_PORT, 1, &ioh)) {
-		kprintf("3c507 probe: can't map Etherlink ID port\n");
+		printf("3c507 probe: can't map Etherlink ID port\n");
 		return 0;
 	}
 
@@ -505,7 +505,7 @@ el_probe(sc, ia)
 
 	c = inb(PORT + IE507_MADDR);
 	if (c & 0x20) {
-		kprintf("%s: can't map 3C507 RAM in high memory\n",
+		printf("%s: can't map 3C507 RAM in high memory\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
@@ -526,7 +526,7 @@ el_probe(sc, ia)
 
 	if (ia->ia_irq != IRQUNK) {
 		if (ia->ia_irq != i) {
-			kprintf("%s: irq mismatch; kernel configured %d != board configured %d\n",
+			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
 			    sc->sc_dev.dv_xname, ia->ia_irq, i);
 			goto out;
 		}
@@ -537,7 +537,7 @@ el_probe(sc, ia)
 
 	if (ia->ia_maddr != MADDRUNK) {
 		if (ia->ia_maddr != i) {
-			kprintf("%s: maddr mismatch; kernel configured %x != board configured %x\n",
+			printf("%s: maddr mismatch; kernel configured %x != board configured %x\n",
 			    sc->sc_dev.dv_xname, ia->ia_maddr, i);
 			goto out;
 		}
@@ -553,7 +553,7 @@ el_probe(sc, ia)
 	ie_find_mem_size(sc);
 
 	if (!sc->sc_msize) {
-		kprintf("%s: can't find shared memory\n", sc->sc_dev.dv_xname);
+		printf("%s: can't find shared memory\n", sc->sc_dev.dv_xname);
 		outb(PORT + IE507_CTRL, EL_CTRL_NRST);
 		goto out;
 	}
@@ -561,7 +561,7 @@ el_probe(sc, ia)
 	if (!ia->ia_msize)
 		ia->ia_msize = sc->sc_msize;
 	else if (ia->ia_msize != sc->sc_msize) {
-		kprintf("%s: msize mismatch; kernel configured %d != board configured %d\n",
+		printf("%s: msize mismatch; kernel configured %d != board configured %d\n",
 		    sc->sc_dev.dv_xname, ia->ia_msize, sc->sc_msize);
 		outb(PORT + IE507_CTRL, EL_CTRL_NRST);
 		goto out;
@@ -692,14 +692,14 @@ ee16_probe(sc, ia)
 		case 16384:
 		case 49512:
 		default:
-			kprintf("ieprobe mapped memory size out of range\n");
+			printf("ieprobe mapped memory size out of range\n");
 			return 0;
 			break; /* NOTREACHED */
 	}
 
 	if ((kvtop(sc->sc_maddr) < 0xC0000) ||
 	    (kvtop(sc->sc_maddr) + sc->sc_msize > 0xF0000)) {
-		kprintf("ieprobe mapped memory address out of range\n");
+		printf("ieprobe mapped memory address out of range\n");
 		return 0;
 	}
 
@@ -737,7 +737,7 @@ ee16_probe(sc, ia)
 	if (ia->ia_irq != IRQUNK) {
 		if (irq != ia->ia_irq) {
 #ifdef DIAGNOSTIC
-			kprintf("\nie%d: fatal: board IRQ %d does not match kernel\n", sc->sc_dev.dv_unit, irq);
+			printf("\nie%d: fatal: board IRQ %d does not match kernel\n", sc->sc_dev.dv_unit, irq);
 #endif /* DIAGNOSTIC */
 			return 0; 	/* _must_ match or probe fails */
 		}
@@ -803,7 +803,7 @@ ieattach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	kprintf(": address %s, type %s R%d\n",
+	printf(": address %s, type %s R%d\n",
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
 	    ie_hardware_names[sc->hard_type], sc->hard_vers + 1);
 
@@ -861,7 +861,7 @@ loop:
 #ifdef IEDEBUG
 		in_ierint++;
 		if (sc->sc_debug & IED_RINT)
-			kprintf("%s: rint\n", sc->sc_dev.dv_xname);
+			printf("%s: rint\n", sc->sc_dev.dv_xname);
 #endif
 		ierint(sc);
 #ifdef IEDEBUG
@@ -873,7 +873,7 @@ loop:
 #ifdef IEDEBUG
 		in_ietint++;
 		if (sc->sc_debug & IED_TINT)
-			kprintf("%s: tint\n", sc->sc_dev.dv_xname);
+			printf("%s: tint\n", sc->sc_dev.dv_xname);
 #endif
 		ietint(sc);
 #ifdef IEDEBUG
@@ -882,14 +882,14 @@ loop:
 	}
 
 	if (status & IE_ST_RNR) {
-		kprintf("%s: receiver not ready\n", sc->sc_dev.dv_xname);
+		printf("%s: receiver not ready\n", sc->sc_dev.dv_xname);
 		sc->sc_arpcom.ac_if.if_ierrors++;
 		iereset(sc);
 	}
 
 #ifdef IEDEBUG
 	if ((status & IE_ST_CNA) && (sc->sc_debug & IED_CNA))
-		kprintf("%s: cna\n", sc->sc_dev.dv_xname);
+		printf("%s: cna\n", sc->sc_dev.dv_xname);
 #endif
 
 	/* Clear the interrupt latch on the 3C507. */
@@ -965,7 +965,7 @@ ietint(sc)
 	status = sc->xmit_cmds[sc->xctail]->ie_xmit_status;
 
 	if (!(status & IE_STAT_COMPL) || (status & IE_STAT_BUSY))
-		kprintf("ietint: command still busy!\n");
+		printf("ietint: command still busy!\n");
 
 	if (status & IE_STAT_OK) {
 		ifp->if_opackets++;
@@ -978,17 +978,17 @@ ietint(sc)
 		 * What if more than one bit is set?
 		 */
 		if (status & IE_STAT_ABORT)
-			kprintf("%s: send aborted\n", sc->sc_dev.dv_xname);
+			printf("%s: send aborted\n", sc->sc_dev.dv_xname);
 		else if (status & IE_XS_LATECOLL)
-			kprintf("%s: late collision\n", sc->sc_dev.dv_xname);
+			printf("%s: late collision\n", sc->sc_dev.dv_xname);
 		else if (status & IE_XS_NOCARRIER)
-			kprintf("%s: no carrier\n", sc->sc_dev.dv_xname);
+			printf("%s: no carrier\n", sc->sc_dev.dv_xname);
 		else if (status & IE_XS_LOSTCTS)
-			kprintf("%s: lost CTS\n", sc->sc_dev.dv_xname);
+			printf("%s: lost CTS\n", sc->sc_dev.dv_xname);
 		else if (status & IE_XS_UNDERRUN)
-			kprintf("%s: DMA underrun\n", sc->sc_dev.dv_xname);
+			printf("%s: DMA underrun\n", sc->sc_dev.dv_xname);
 		else if (status & IE_XS_EXCMAX) {
-			kprintf("%s: too many collisions\n", sc->sc_dev.dv_xname);
+			printf("%s: too many collisions\n", sc->sc_dev.dv_xname);
 			ifp->if_collisions += 16;
 		}
 	}
@@ -1194,7 +1194,7 @@ iexmit(sc)
 
 #ifdef IEDEBUG
 	if (sc->sc_debug & IED_XMIT)
-		kprintf("%s: xmit buffer %d\n", sc->sc_dev.dv_xname,
+		printf("%s: xmit buffer %d\n", sc->sc_dev.dv_xname,
 		    sc->xctail);
 #endif
 
@@ -1390,7 +1390,7 @@ ie_readframe(sc, num)
 
 #ifdef IEDEBUG
 	if (sc->sc_debug & IED_READFRAME)
-		kprintf("%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
+		printf("%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
 		    ether_sprintf(eh.ether_shost), (u_int)eh.ether_type);
 #endif
 
@@ -1508,7 +1508,7 @@ iestart(ifp)
 
 #ifdef IEDEBUG
 		if (sc->sc_debug & IED_ENQ)
-			kprintf("%s: fill buffer %d\n", sc->sc_dev.dv_xname,
+			printf("%s: fill buffer %d\n", sc->sc_dev.dv_xname,
 			    sc->xchead);
 #endif
 
@@ -1805,10 +1805,10 @@ iereset(sc)
 	 * Stop i82586 dead in its tracks.
 	 */
 	if (command_and_wait(sc, IE_RU_ABORT | IE_CU_ABORT, 0, 0))
-		kprintf("%s: abort commands timed out\n", sc->sc_dev.dv_xname);
+		printf("%s: abort commands timed out\n", sc->sc_dev.dv_xname);
 
 	if (command_and_wait(sc, IE_RU_DISABLE | IE_CU_STOP, 0, 0))
-		kprintf("%s: disable commands timed out\n", sc->sc_dev.dv_xname);
+		printf("%s: disable commands timed out\n", sc->sc_dev.dv_xname);
 
 	ieinit(sc);
 
@@ -1913,17 +1913,17 @@ run_tdr(sc, cmd)
 		return;
 
 	if (result & 0x10000)
-		kprintf("%s: TDR command failed\n", sc->sc_dev.dv_xname);
+		printf("%s: TDR command failed\n", sc->sc_dev.dv_xname);
 	else if (result & IE_TDR_XCVR)
-		kprintf("%s: transceiver problem\n", sc->sc_dev.dv_xname);
+		printf("%s: transceiver problem\n", sc->sc_dev.dv_xname);
 	else if (result & IE_TDR_OPEN)
-		kprintf("%s: TDR detected an open %d clocks away\n",
+		printf("%s: TDR detected an open %d clocks away\n",
 		    sc->sc_dev.dv_xname, result & IE_TDR_TIME);
 	else if (result & IE_TDR_SHORT)
-		kprintf("%s: TDR detected a short %d clocks away\n",
+		printf("%s: TDR detected a short %d clocks away\n",
 		    sc->sc_dev.dv_xname, result & IE_TDR_TIME);
 	else
-		kprintf("%s: TDR returned unknown status %x\n",
+		printf("%s: TDR returned unknown status %x\n",
 		    sc->sc_dev.dv_xname, result);
 }
 
@@ -2026,7 +2026,7 @@ mc_setup(sc, ptr)
 	sc->scb->ie_command_list = MK_16(MEM, cmd);
 	if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 	    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
-		kprintf("%s: multicast address setup command failed\n",
+		printf("%s: multicast address setup command failed\n",
 		    sc->sc_dev.dv_xname);
 		return 0;
 	}
@@ -2066,7 +2066,7 @@ ieinit(sc)
 
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
-			kprintf("%s: configure command failed\n",
+			printf("%s: configure command failed\n",
 			    sc->sc_dev.dv_xname);
 			return 0;
 		}
@@ -2088,7 +2088,7 @@ ieinit(sc)
 
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
-			kprintf("%s: individual address setup command failed\n",
+			printf("%s: individual address setup command failed\n",
 			    sc->sc_dev.dv_xname);
 			return 0;
 		}
@@ -2280,7 +2280,7 @@ print_rbd(rbd)
 	volatile struct ie_recv_buf_desc *rbd;
 {
 
-	kprintf("RBD at %08lx:\nactual %04x, next %04x, buffer %08x\n"
+	printf("RBD at %08lx:\nactual %04x, next %04x, buffer %08x\n"
 	    "length %04x, mbz %04x\n", (u_long)rbd, rbd->ie_rbd_actual,
 	    rbd->ie_rbd_next, rbd->ie_rbd_buffer, rbd->ie_rbd_length,
 	    rbd->mbz);

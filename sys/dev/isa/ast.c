@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.30 1996/10/10 22:04:51 christos Exp $	*/
+/*	$NetBSD: ast.c,v 1.31 1996/10/13 01:37:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -132,8 +132,8 @@ astprint(aux, pnp)
 	struct commulti_attach_args *ca = aux;
 
 	if (pnp)
-		kprintf("com at %s", pnp);
-	kprintf(" slave %d", ca->ca_slave);
+		printf("com at %s", pnp);
+	printf(" slave %d", ca->ca_slave);
 	return (UNCONF);
 }
 
@@ -161,7 +161,7 @@ astattach(parent, self, aux)
 	 */
 	bus_io_write_1(bc, sc->sc_slaveioh[3], 7, 0x80);
 
-	kprintf("\n");
+	printf("\n");
 
 	for (i = 0; i < NSLAVES; i++) {
 		ca.ca_slave = i;

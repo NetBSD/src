@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.10 1996/10/10 21:11:37 christos Exp $	*/
+/*	$NetBSD: kbd.c,v 1.11 1996/10/13 01:38:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -243,9 +243,9 @@ kbd_attach(parent, self, aux)
 
 	if (args->hwflags & ZS_HWFLAG_CONSOLE) {
 		k->k_isconsole = 1;
-		kprintf(" (console)");
+		printf(" (console)");
 	}
-	kprintf("\n");
+	printf("\n");
 
 	/* Initialize the speed, etc. */
 	tconst = BPS_TO_TCONST(cs->cs_brg_clk, KBD_BPS);
@@ -752,7 +752,7 @@ kbd_input_funckey(k, keysym)
 	 * XXX: Ugly compatibility mappings.
 	 */
 	n = 0xC0 + (keysym & 0x3F);
-	ksprintf(str, "\033[%dz", n);
+	sprintf(str, "\033[%dz", n);
 	kbd_input_string(k, str);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.12 1996/10/10 22:18:38 christos Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -116,7 +116,7 @@ void	ncr5380_cmd_timeout __P((void *));
 
 #ifndef DDB
 /* This is used only in recoverable places. */
-#define Debugger() kprintf("Debug: ncr5380.c:%d\n", __LINE__)
+#define Debugger() printf("Debug: ncr5380.c:%d\n", __LINE__)
 #endif
 
 #ifdef	NCR5380_DEBUG
@@ -508,13 +508,13 @@ ncr5380_cmd_timeout(arg)
 	/* Get all our variables... */
 	xs = sr->sr_xs;
 	if (xs == NULL) {
-		kprintf("ncr5380_cmd_timeout: no scsi_xfer\n");
+		printf("ncr5380_cmd_timeout: no scsi_xfer\n");
 		goto out;
 	}
 	sc_link = xs->sc_link;
 	sc = sc_link->adapter_softc;
 
-	kprintf("%s: cmd timeout, targ=%d, lun=%d\n",
+	printf("%s: cmd timeout, targ=%d, lun=%d\n",
 	    sc->sc_dev.dv_xname,
 	    sr->sr_target, sr->sr_lun);
 
@@ -600,7 +600,7 @@ ncr5380_scsi_cmd(xs)
 		/* Terminate any current command. */
 		sr = sc->sc_current;
 		if (sr) {
-			kprintf("%s: polled request aborting %d/%d\n",
+			printf("%s: polled request aborting %d/%d\n",
 			    sc->sc_dev.dv_xname,
 			    sr->sr_target, sr->sr_lun);
 			ncr5380_abort(sc);
@@ -732,7 +732,7 @@ ncr5380_done(sc)
 	case SCSI_CHECK:
 		if (sr->sr_flags & SR_SENSE) {
 			/* Sense command also asked for sense? */
-			kprintf("ncr5380_done: sense asked for sense\n");
+			printf("ncr5380_done: sense asked for sense\n");
 			NCR_BREAK();
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
@@ -756,7 +756,7 @@ ncr5380_done(sc)
 		/* This is our "impossible" initial value. */
 		/* fallthrough */
 	default:
-		kprintf("%s: target %d, bad status=%d\n",
+		printf("%s: target %d, bad status=%d\n",
 		    sc->sc_dev.dv_xname, sr->sr_target, sr->sr_status);
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
@@ -881,7 +881,7 @@ next_job:
 		/* Lost the race!  reselected out from under us! */
 		/* Work with the reselected job. */
 		if (sr->sr_flags & SR_IMMED) {
-			kprintf("%s: reselected while polling (abort)\n",
+			printf("%s: reselected while polling (abort)\n",
 			    sc->sc_dev.dv_xname);
 			/* Abort the reselected job. */
 			sc->sc_state |= NCR_ABORTING;
@@ -916,7 +916,7 @@ next_job:
 
 	case XS_BUSY:
 		/* XXX - Reset and try again. */
-		kprintf("%s: select found SCSI bus busy, resetting...\n",
+		printf("%s: select found SCSI bus busy, resetting...\n",
 		    sc->sc_dev.dv_xname);
 		ncr5380_reset_scsibus(sc);
 		/* fallthrough */
@@ -968,7 +968,7 @@ next_job:
 	 */
 #ifdef	NCR5380_DEBUG
 	if (ncr5380_debug & NCR_DBG_CMDS) {
-		kprintf("ncr5380_sched: begin, target=%d, LUN=%d\n",
+		printf("ncr5380_sched: begin, target=%d, LUN=%d\n",
 		    xs->sc_link->target, xs->sc_link->lun);
 		ncr5380_show_scsi_cmd(xs);
 	}
@@ -983,7 +983,7 @@ next_job:
 #ifdef	DIAGNOSTIC
 	if ((xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) == 0) {
 		if (sc->sc_dataptr) {
-			kprintf("%s: ptr but no data in/out flags?\n",
+			printf("%s: ptr but no data in/out flags?\n",
 			    sc->sc_dev.dv_xname);
 			NCR_BREAK();
 			sc->sc_dataptr = NULL;
@@ -1093,7 +1093,7 @@ ncr5380_reselect(sc)
 			break;
 		/* Probably never get here... */
 		if (--timo <= 0) {
-			kprintf("%s: reselect, BSY stuck, bus=0x%x\n",
+			printf("%s: reselect, BSY stuck, bus=0x%x\n",
 			    sc->sc_dev.dv_xname, bus);
 			/* Not much we can do. Reset the bus. */
 			ncr5380_reset_scsibus(sc);
@@ -1122,7 +1122,7 @@ ncr5380_reselect(sc)
 	 * selected as a target? (I/O == 0)
 	 */
 	if ((bus & SCI_BUS_IO) == 0) {
-		kprintf("%s: selected as target, data=0x%x\n",
+		printf("%s: selected as target, data=0x%x\n",
 		    sc->sc_dev.dv_xname, data);
 		/* Not much we can do. Reset the bus. */
 		/* XXX: send some sort of message? */
@@ -1140,7 +1140,7 @@ ncr5380_reselect(sc)
 	}
 	if ((data & 0x7F) != target_mask) {
 		/* No selecting ID? or >2 IDs on bus? */
-		kprintf("%s: bad reselect, data=0x%x\n",
+		printf("%s: bad reselect, data=0x%x\n",
 		    sc->sc_dev.dv_xname, data);
 		return;
 	}
@@ -1157,7 +1157,7 @@ ncr5380_reselect(sc)
 		if ((bus & SCI_BUS_SEL) == 0)
 			break;	/* success */
 		if (--timo <= 0) {
-			kprintf("%s: reselect, SEL stuck, bus=0x%x\n",
+			printf("%s: reselect, SEL stuck, bus=0x%x\n",
 			    sc->sc_dev.dv_xname, bus);
 			NCR_BREAK();
 			/* assume connected (fail later if not) */
@@ -1179,14 +1179,14 @@ ncr5380_reselect(sc)
 	lun = 0;
 	/* Wait for REQ before reading bus phase. */
 	if (ncr5380_wait_req(sc)) {
-		kprintf("%s: reselect, no REQ\n",
+		printf("%s: reselect, no REQ\n",
 		    sc->sc_dev.dv_xname);
 		/* Try to send an ABORT message. */
 		goto abort;
 	}
 	phase = SCI_BUS_PHASE(*sc->sci_bus_csr);
 	if (phase != PHASE_MSG_IN) {
-		kprintf("%s: reselect, phase=%d\n",
+		printf("%s: reselect, phase=%d\n",
 		    sc->sc_dev.dv_xname, phase);
 		goto abort;
 	}
@@ -1197,7 +1197,7 @@ ncr5380_reselect(sc)
 	/* Peek at the message byte without consuming it! */
 	msg = *(sc->sci_data);
 	if ((msg & 0x80) == 0) {
-		kprintf("%s: reselect, not identify, msg=%d\n",
+		printf("%s: reselect, not identify, msg=%d\n",
 		    sc->sc_dev.dv_xname, msg);
 		goto abort;
 	}
@@ -1243,7 +1243,7 @@ ncr5380_reselect(sc)
 		return;
 	}
 
-	kprintf("%s: phantom reselect: target=%d, LUN=%d\n",
+	printf("%s: phantom reselect: target=%d, LUN=%d\n",
 	    sc->sc_dev.dv_xname, target, lun);
 abort:
 	/*
@@ -1699,7 +1699,7 @@ have_msg:
 			/* The ncr5380 can not do synchronous mode. */
 			goto reject;
 		default:
-			kprintf("%s: unrecognized MESSAGE EXTENDED; sending REJECT\n",
+			printf("%s: unrecognized MESSAGE EXTENDED; sending REJECT\n",
 			    sc->sc_dev.dv_xname);
 			NCR_BREAK();
 			goto reject;
@@ -1708,7 +1708,7 @@ have_msg:
 
 	default:
 		NCR_TRACE("msg_in: eh? imsg=0x%x\n", sc->sc_imess[0]);
-		kprintf("%s: unrecognized MESSAGE; sending REJECT\n",
+		printf("%s: unrecognized MESSAGE; sending REJECT\n",
 		    sc->sc_dev.dv_xname);
 		NCR_BREAK();
 		/* fallthrough */
@@ -1821,7 +1821,7 @@ nextmsg:
 	case SEND_IDENTIFY:
 		NCR_TRACE("msg_out: SEND_IDENTIFY\n", 0);
 		if (sr == NULL) {
-			kprintf("%s: SEND_IDENTIFY while not connected; sending NOOP\n",
+			printf("%s: SEND_IDENTIFY while not connected; sending NOOP\n",
 			    sc->sc_dev.dv_xname);
 			NCR_BREAK();
 			goto noop;
@@ -1869,7 +1869,7 @@ nextmsg:
 		break;
 
 	case 0:
-		kprintf("%s: unexpected MESSAGE OUT; sending NOOP\n",
+		printf("%s: unexpected MESSAGE OUT; sending NOOP\n",
 		    sc->sc_dev.dv_xname);
 		NCR_BREAK();
 	noop:
@@ -1879,7 +1879,7 @@ nextmsg:
 		break;
 
 	default:
-		kprintf("%s: weird MESSAGE OUT; sending NOOP\n",
+		printf("%s: weird MESSAGE OUT; sending NOOP\n",
 		    sc->sc_dev.dv_xname);
 		NCR_BREAK();
 		goto noop;
@@ -2005,7 +2005,7 @@ ncr5380_command(sc)
 
 	if (len != xs->cmdlen) {
 #ifdef	NCR5380_DEBUG
-		kprintf("ncr5380_command: short transfer: wanted %d got %d.\n",
+		printf("ncr5380_command: short transfer: wanted %d got %d.\n",
 		    xs->cmdlen, len);
 		ncr5380_show_scsi_cmd(xs);
 		NCR_BREAK();
@@ -2038,7 +2038,7 @@ ncr5380_data_xfer(sc, phase)
 	if (sr->sr_flags & SR_SENSE) {
 		NCR_TRACE("data_xfer: get sense, sr=0x%x\n", (long)sr);
 		if (phase != PHASE_DATA_IN) {
-			kprintf("%s: sense phase error\n", sc->sc_dev.dv_xname);
+			printf("%s: sense phase error\n", sc->sc_dev.dv_xname);
 			goto abort;
 		}
 		/* acknowledge phase change */
@@ -2052,7 +2052,7 @@ ncr5380_data_xfer(sc, phase)
 	 * When aborting a command, disallow any data phase.
 	 */
 	if (sc->sc_state & NCR_ABORTING) {
-		kprintf("%s: aborting, but phase=%s (reset)\n",
+		printf("%s: aborting, but phase=%s (reset)\n",
 		    sc->sc_dev.dv_xname, phase_names[phase & 7]);
 		return ACT_RESET_BUS;	/* XXX */
 	}
@@ -2061,13 +2061,13 @@ ncr5380_data_xfer(sc, phase)
 	expected_phase = (xs->flags & SCSI_DATA_OUT) ?
 		PHASE_DATA_OUT : PHASE_DATA_IN;
 	if (phase != expected_phase) {
-		kprintf("%s: data phase error\n", sc->sc_dev.dv_xname);
+		printf("%s: data phase error\n", sc->sc_dev.dv_xname);
 		goto abort;
 	}
 
 	/* Make sure we have some data to move. */
 	if (sc->sc_datalen <= 0) {
-		kprintf("%s: can not transfer more data\n",
+		printf("%s: can not transfer more data\n",
 		    sc->sc_dev.dv_xname);
 		goto abort;
 	}
@@ -2130,7 +2130,7 @@ ncr5380_status(sc)
 	if (len) {
 		sr->sr_status = status;
 	} else {
-		kprintf("ncr5380_status: none?\n");
+		printf("ncr5380_status: none?\n");
 	}
 
 	return ACT_CONTINUE;
@@ -2179,7 +2179,7 @@ next_phase:
 
 	if (!SCI_BUSY(sc)) {
 		/* Unexpected disconnect */
-		kprintf("ncr5380_machine: unexpected disconnect.\n");
+		printf("ncr5380_machine: unexpected disconnect.\n");
 		xs->error = XS_DRIVER_STUFFUP;
 		act_flags |= (ACT_DISCONNECT | ACT_CMD_DONE);
 		goto do_actions;
@@ -2196,12 +2196,12 @@ next_phase:
 			break;
 		if (--timo <= 0) {
 			if (sc->sc_state & NCR_ABORTING) {
-				kprintf("%s: no REQ while aborting, reset\n",
+				printf("%s: no REQ while aborting, reset\n",
 				    sc->sc_dev.dv_xname);
 				act_flags |= ACT_RESET_BUS;
 				goto do_actions;
 			}
-			kprintf("%s: no REQ for next phase, abort\n",
+			printf("%s: no REQ for next phase, abort\n",
 			    sc->sc_dev.dv_xname);
 			sc->sc_state |= NCR_ABORTING;
 			ncr_sched_msgout(sc, SEND_ABORT);
@@ -2252,7 +2252,7 @@ next_phase:
 		break;
 
 	default:
-		kprintf("ncr5380_machine: Unexpected phase 0x%x\n", phase);
+		printf("ncr5380_machine: Unexpected phase 0x%x\n", phase);
 		sc->sc_state |= NCR_ABORTING;
 		ncr_sched_msgout(sc, SEND_ABORT);
 		goto next_phase;
@@ -2297,7 +2297,7 @@ do_actions:
 	 * XXX - better place to check?
 	 */
 	if (*(sc->sci_csr) & SCI_CSR_PERR) {
-		kprintf("%s: parity error!\n", sc->sc_dev.dv_xname);
+		printf("%s: parity error!\n", sc->sc_dev.dv_xname);
 		/* XXX: sc->sc_state |= NCR_ABORTING; */
 		ncr_sched_msgout(sc, SEND_PARITY_ERROR);
 	}
@@ -2315,7 +2315,7 @@ do_actions:
 		 * The error code XS_TIMEOUT allows retries.
 		 */
 		sc->sc_state |= NCR_ABORTING;
-		kprintf("%s: reset SCSI bus for TID=%d LUN=%d\n",
+		printf("%s: reset SCSI bus for TID=%d LUN=%d\n",
 		    sc->sc_dev.dv_xname, sr->sr_target, sr->sr_lun);
 		ncr5380_reset_scsibus(sc);
 	}
@@ -2325,7 +2325,7 @@ do_actions:
 		/* Need to call scsi_done() */
 		/* XXX: from the aic6360 driver, but why? */
 		if (sc->sc_datalen < 0) {
-			kprintf("%s: %d extra bytes from %d:%d\n",
+			printf("%s: %d extra bytes from %d:%d\n",
 			    sc->sc_dev.dv_xname, -sc->sc_datalen,
 			    sr->sr_target, sr->sr_lun);
 			sc->sc_datalen = 0;
@@ -2351,7 +2351,7 @@ do_actions:
 			delay(2);
 		}
 		/* Device is sitting on the bus! */
-		kprintf("%s: Target %d LUN %d stuck busy, resetting...\n",
+		printf("%s: Target %d LUN %d stuck busy, resetting...\n",
 		    sc->sc_dev.dv_xname, sr->sr_target, sr->sr_lun);
 		ncr5380_reset_scsibus(sc);
 	busfree:
@@ -2401,16 +2401,16 @@ ncr5380_show_scsi_cmd(xs)
 	int	i  = 0;
 
 	if ( ! ( xs->flags & SCSI_RESET ) ) {
-		kprintf("si(%d:%d:%d)-",
+		printf("si(%d:%d:%d)-",
 		    xs->sc_link->scsibus, xs->sc_link->target,
 		    xs->sc_link->lun);
 		while (i < xs->cmdlen) {
-			if (i) kprintf(",");
-			kprintf("%x",b[i++]);
+			if (i) printf(",");
+			printf("%x",b[i++]);
 		}
-		kprintf("-\n");
+		printf("-\n");
 	} else {
-		kprintf("si(%d:%d:%d)-RESET-\n",
+		printf("si(%d:%d:%d)-RESET-\n",
 		    xs->sc_link->scsibus, xs->sc_link->target,
 		    xs->sc_link->lun);
 	}
@@ -2424,10 +2424,10 @@ ncr5380_show_sense(xs)
 	u_char	*b = (u_char *)&xs->sense;
 	int	i;
 
-	kprintf("sense:");
+	printf("sense:");
 	for (i = 0; i < sizeof(xs->sense); i++)
-		kprintf(" %02x", b[i]);
-	kprintf("\n");
+		printf(" %02x", b[i]);
+	printf("\n");
 }
 
 int ncr5380_traceidx = 0;

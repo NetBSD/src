@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.87 1996/10/10 22:05:06 christos Exp $	*/
+/*	$NetBSD: isa.c,v 1.88 1996/10/13 01:37:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -78,7 +78,7 @@ isaattach(parent, self, aux)
 	struct isabus_attach_args *iba = aux;
 
 	isa_attach_hook(parent, self, iba);
-	kprintf("\n");
+	printf("\n");
 
 	sc->sc_bc = iba->iba_bc;
 	sc->sc_ic = iba->iba_ic;
@@ -102,17 +102,17 @@ isaprint(aux, isa)
 	struct isa_attach_args *ia = aux;
 
 	if (ia->ia_iosize)
-		kprintf(" port 0x%x", ia->ia_iobase);
+		printf(" port 0x%x", ia->ia_iobase);
 	if (ia->ia_iosize > 1)
-		kprintf("-0x%x", ia->ia_iobase + ia->ia_iosize - 1);
+		printf("-0x%x", ia->ia_iobase + ia->ia_iosize - 1);
 	if (ia->ia_msize)
-		kprintf(" iomem 0x%x", ia->ia_maddr);
+		printf(" iomem 0x%x", ia->ia_maddr);
 	if (ia->ia_msize > 1)
-		kprintf("-0x%x", ia->ia_maddr + ia->ia_msize - 1);
+		printf("-0x%x", ia->ia_maddr + ia->ia_msize - 1);
 	if (ia->ia_irq != IRQUNK)
-		kprintf(" irq %d", ia->ia_irq);
+		printf(" irq %d", ia->ia_irq);
 	if (ia->ia_drq != DRQUNK)
-		kprintf(" drq %d", ia->ia_drq);
+		printf(" drq %d", ia->ia_drq);
 	return (UNCONF);
 }
 

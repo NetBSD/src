@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.18 1996/10/10 20:25:38 christos Exp $	*/
+/*	$NetBSD: tc.c,v 1.19 1996/10/13 01:38:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -93,7 +93,7 @@ tcattach(parent, self, aux)
 	tc_addr_t tcaddr;
 	int i;
 
-	kprintf(": %s MHz clock\n",
+	printf(": %s MHz clock\n",
 	    tba->tba_speed == TC_SPEED_25_MHZ ? "25" : "12.5");
 
 	/*
@@ -198,9 +198,9 @@ tcprint(aux, pnp)
 
 	if (pnp) {
 		tc_devinfo(ta->ta_modname, devinfo);
-		kprintf("%s at %s", devinfo, pnp);
+		printf("%s at %s", devinfo, pnp);
 	}
-	kprintf(" slot %d offset 0x%lx", ta->ta_slot,
+	printf(" slot %d offset 0x%lx", ta->ta_slot,
 	    (long)ta->ta_offset);
 	return (UNCONF);
 }
@@ -337,7 +337,7 @@ tc_devinfo(id, cp)
 #endif
 
 	if (driver == NULL)
-		cp += ksprintf(cp, "%sdevice %s", unmatched, id);
+		cp += sprintf(cp, "%sdevice %s", unmatched, id);
 	else
-		cp += ksprintf(cp, "%s (%s)", driver, description);
+		cp += sprintf(cp, "%s (%s)", driver, description);
 }

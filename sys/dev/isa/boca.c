@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.17 1996/10/10 22:04:52 christos Exp $	*/
+/*	$NetBSD: boca.c,v 1.18 1996/10/13 01:37:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -132,8 +132,8 @@ bocaprint(aux, pnp)
 	struct commulti_attach_args *ca = aux;
 
 	if (pnp)
-		kprintf("com at %s", pnp);
-	kprintf(" slave %d", ca->ca_slave);
+		printf("com at %s", pnp);
+	printf(" slave %d", ca->ca_slave);
 	return (UNCONF);
 }
 
@@ -156,7 +156,7 @@ bocaattach(parent, self, aux)
 		    &sc->sc_slaveioh[i]))
 			panic("bocaattach: couldn't map slave %d", i);
 
-	kprintf("\n");
+	printf("\n");
 
 	for (i = 0; i < NSLAVES; i++) {
 
