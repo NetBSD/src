@@ -1,6 +1,6 @@
 #! /bin/sh -
 # from:	@(#)makesyscalls.sh	8.1 (Berkeley) 6/11/93
-# $Id: makesyscalls.sh,v 1.1 1993/10/02 10:24:36 deraadt Exp $
+# $Id: makesyscalls.sh,v 1.2 1993/10/11 02:44:06 deraadt Exp $
 
 set -e
 
@@ -54,10 +54,10 @@ awk < $1 "
 		printf "#include <sys/systm.h>\n\n" > sysdcl
 		printf "int\tnosys();\n\n" > sysdcl
 
-		printf "struct sysent sunsys[] = {\n" > sysent
+		printf "struct sysent sun_sysent[] = {\n" > sysent
 
 		printf " * created from%s\n */\n\n", $0 > sysnames
-		printf "char *syscallnames[] = {\n" > sysnames
+		printf "char *sun_syscallnames[] = {\n" > sysnames
 
 		printf " * created from%s\n */\n\n", $0 > syshdr
 		next
@@ -162,7 +162,7 @@ awk < $1 "
 		printf("#endif /* %s */\n\n", compat) > syscompat
 
 		printf("};\n\n") > sysent
-		printf("int\tnsunsys = sizeof(sunsys) / sizeof(sunsys[0]);\n") > sysent
+		printf("int\tnsun_sysent = sizeof(sun_sysent) / sizeof(sun_sysent[0]);\n") > sysent
 
 		printf("};\n") > sysnames
 	} '

@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sunos_misc.c,v 1.1 1993/10/02 10:24:40 deraadt Exp $
+ * $Id: sunos_misc.c,v 1.2 1993/10/11 02:44:08 deraadt Exp $
  */
 
 /*
@@ -72,7 +72,9 @@
 #include <sys/uio.h>
 #include <sys/wait.h>
 
+#ifdef XXX
 #include <miscfs/specfs/specdev.h>
+#endif
 
 #include <vm/vm.h>
 
@@ -258,6 +260,7 @@ sun_getdents(p, uap, retval)
 	register struct sun_getdents_args *uap;
 	int *retval;
 {
+#ifdef XXX
 	register struct vnode *vp;
 	register caddr_t inp, buf;	/* BSD-format */
 	register int len, reclen;	/* BSD-format */
@@ -345,6 +348,9 @@ out:
 	VOP_UNLOCK(vp);
 	free(buf, M_TEMP);
 	return (error);
+#else
+	return ENOENT;
+#endif
 }
 
 #define	MAXDOMAINNAME	64
@@ -423,6 +429,7 @@ sun_mmap(p, uap, retval)
 		return (EINVAL);
 	flags &= ~SUN_MMAP_CANDO;
 
+#ifdef XXX
 	/*
 	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
 	 */
@@ -435,11 +442,11 @@ sun_mmap(p, uap, retval)
 		flags |= MAP_ANON;
 		uap->fd = -1;
 	}
-
+#endif
 	/* All done, fix up fields and go. */
 	uap->flags = flags;
 	uap->qoff = (quad_t)uap->off;
-	return (mmap(p, uap, retval));
+	return (smmap(p, uap, retval));
 }
 
 #define	MC_SYNC		1
