@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.73 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.74 2003/12/29 04:00:17 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.73 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.74 2003/12/29 04:00:17 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -137,8 +137,6 @@ static int raidframe_booted = 0;
 static void rf_ConfigureDebug(RF_Config_t * cfgPtr);
 static void set_debug_option(char *name, long val);
 static void rf_UnconfigureArray(void);
-static int init_rad(RF_RaidAccessDesc_t *);
-static void clean_rad(RF_RaidAccessDesc_t *);
 static void rf_ShutdownRDFreeList(void *);
 static int rf_ConfigureRDFreeList(RF_ShutdownList_t **);
 
@@ -465,34 +463,6 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	return (0);
 }
 
-static int 
-init_rad(desc)
-	RF_RaidAccessDesc_t *desc;
-{
-	int     rc;
-
-	rc = rf_mutex_init(&desc->mutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-		return (rc);
-	}
-	rc = rf_cond_init(&desc->cond);
-	if (rc) {
-		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
-		rf_mutex_destroy(&desc->mutex);
-		return (rc);
-	}
-	return (0);
-}
-
-static void 
-clean_rad(desc)
-	RF_RaidAccessDesc_t *desc;
-{
-	rf_mutex_destroy(&desc->mutex);
-	rf_cond_destroy(&desc->cond);
-}
-
 static void 
 rf_ShutdownRDFreeList(ignored)
 	void   *ignored;
@@ -533,7 +503,8 @@ rf_AllocRaidAccDesc(
 	RF_RaidAccessDesc_t *desc;
 
 	desc = pool_get(&rf_rad_pool, PR_WAITOK);
-	init_rad(desc);
+	simple_lock_init(&desc->mutex);
+	desc->cond = 0;
 
 	if (raidPtr->waitShutdown) {
 		/*
@@ -542,7 +513,6 @@ rf_AllocRaidAccDesc(
 	         */
 
 		RF_UNLOCK_MUTEX(rf_rad_pool_lock);
-		clean_rad(desc);
 		pool_put(&rf_rad_pool, desc);
 		return (NULL);
 	}
@@ -581,7 +551,6 @@ rf_FreeRaidAccDesc(RF_RaidAccessDesc_t * desc)
 	RF_ASSERT(desc);
 
 	rf_FreeAllocList(desc->cleanupList);
-	clean_rad(desc);
 	pool_put(&rf_rad_pool, desc);
 	raidPtr->nAccOutstanding--;
 	if (raidPtr->waitShutdown) {
