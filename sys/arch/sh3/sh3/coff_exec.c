@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.1 1999/09/13 10:31:27 itojun Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.2 1999/12/09 08:33:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -165,7 +165,7 @@ exec_coff_setup_stack(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	/* DPRINTF(("enter exec_coff_setup_stack\n")); */
+	DPRINTF(("enter exec_coff_setup_stack\n"));
 
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
 	epp->ep_minsaddr = USRSTACK;
@@ -182,14 +182,14 @@ exec_coff_setup_stack(p, epp)
 	 * note that in memory, things assumed to be: 0 ....... ep_maxsaddr
 	 * <stack> ep_minsaddr
 	 */
-	/* DPRINTF(("VMCMD: addr %x size %d\n", epp->ep_maxsaddr,
-		 (epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr)); */
+	DPRINTF(("VMCMD: addr %lx size %ld\n", epp->ep_maxsaddr,
+		 (epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr));
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 		  ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
 		  epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
-	/* DPRINTF(("VMCMD: addr %x size %d\n",
+	DPRINTF(("VMCMD: addr %lx size %lu\n",
 		 epp->ep_minsaddr - epp->ep_ssize,
-		 epp->ep_ssize)); */
+		 epp->ep_ssize));
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
 		  (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
 		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
@@ -222,7 +222,7 @@ exec_coff_prep_omagic(p, epp, fp, ap)
 		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-#ifdef	__sh3__
+#ifdef	sh3
 	if (ap->a_bsize > 0)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, ap->a_bsize,
 			  COFF_ROUND(ap->a_dstart + ap->a_dsize, COFF_LDPGSZ),
@@ -312,7 +312,7 @@ coff_find_section(p, vp, fp, sh, s_type)
 				 resid, siz));
 			return ENOEXEC;
 		}
-		/* DPRINTF(("found section: %x\n", sh->s_flags)); */
+		DPRINTF(("found section: %lu\n", sh->s_flags));
 		if (sh->s_flags == s_type)
 			return 0;
 	}
@@ -339,12 +339,12 @@ exec_coff_prep_zmagic(p, epp, fp, ap)
 	int error;
 	u_long offset;
 	long dsize;
-#ifndef	__sh3__
+#ifndef	sh3
 	long  baddr, bsize;
 #endif
 	struct coff_scnhdr sh;
 	
-	/* DPRINTF(("enter exec_coff_prep_zmagic\n")); */
+	DPRINTF(("enter exec_coff_prep_zmagic\n"));
 
 	/* set up command for text segment */
 	error = coff_find_section(p, epp->ep_vp, fp, &sh, COFF_STYP_TEXT);
@@ -352,13 +352,13 @@ exec_coff_prep_zmagic(p, epp, fp, ap)
 		DPRINTF(("can't find text section: %d\n", error));
 		return error;
 	}
-	/* DPRINTF(("COFF text addr %x size %d offset %d\n", sh.s_vaddr,
-		 sh.s_size, sh.s_scnptr)); */
+	DPRINTF(("COFF text addr %lu size %ld offset %ld\n", sh.s_vaddr,
+		 sh.s_size, sh.s_scnptr));
 	epp->ep_taddr = COFF_ALIGN(sh.s_vaddr);
 	offset = sh.s_scnptr - (sh.s_vaddr - epp->ep_taddr);
 	epp->ep_tsize = sh.s_size + (sh.s_vaddr - epp->ep_taddr);
 
-#ifdef notyet
+#if 1
 	/*
 	 * check if vnode is in open for writing, because we want to
 	 * demand-page out of it.  if it is, don't do it, for various
@@ -375,17 +375,17 @@ exec_coff_prep_zmagic(p, epp, fp, ap)
 	epp->ep_vp->v_flag |= VTEXT;
 #endif
 	
-	/* DPRINTF(("VMCMD: addr %x size %d offset %d\n", epp->ep_taddr,
-		 epp->ep_tsize, offset)); */
-#ifdef notyet
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, epp->ep_tsize,
-		  epp->ep_taddr, epp->ep_vp, offset,
-		  VM_PROT_READ|VM_PROT_EXECUTE);
-#else
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, epp->ep_tsize,
-		  epp->ep_taddr, epp->ep_vp, offset,
-		  VM_PROT_READ|VM_PROT_EXECUTE);
-#endif
+	DPRINTF(("VMCMD: addr %lx size %ld offset %ld\n", epp->ep_taddr,
+		 epp->ep_tsize, offset));
+	if (!(offset & PAGE_MASK) && !(epp->ep_taddr & PAGE_MASK)) {
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, epp->ep_tsize,
+			  epp->ep_taddr, epp->ep_vp, offset,
+			  VM_PROT_READ|VM_PROT_EXECUTE);
+	} else {
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, epp->ep_tsize,
+			  epp->ep_taddr, epp->ep_vp, offset,
+			  VM_PROT_READ|VM_PROT_EXECUTE);
+	}
 
 	/* set up command for data segment */
 	error = coff_find_section(p, epp->ep_vp, fp, &sh, COFF_STYP_DATA);
@@ -393,30 +393,30 @@ exec_coff_prep_zmagic(p, epp, fp, ap)
 		DPRINTF(("can't find data section: %d\n", error));
 		return error;
 	}
-	/* DPRINTF(("COFF data addr %x size %d offset %d\n", sh.s_vaddr,
-		 sh.s_size, sh.s_scnptr)); */
+	DPRINTF(("COFF data addr %lx size %ld offset %ld\n", sh.s_vaddr,
+		 sh.s_size, sh.s_scnptr));
 	epp->ep_daddr = COFF_ALIGN(sh.s_vaddr);
 	offset = sh.s_scnptr - (sh.s_vaddr - epp->ep_daddr);
 	dsize = sh.s_size + (sh.s_vaddr - epp->ep_daddr);
-#ifdef __sh3__
+#ifdef sh3
 	epp->ep_dsize = round_page(dsize) + ap->a_bsize;
 #else
 	epp->ep_dsize = dsize + ap->a_bsize;
 #endif
 
-	/* DPRINTF(("VMCMD: addr %x size %d offset %d\n", epp->ep_daddr,
-		 dsize, offset)); */
-#ifdef notyet
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, dsize,
-		  epp->ep_daddr, epp->ep_vp, offset,
-		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-#else
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
-		  dsize, epp->ep_daddr, epp->ep_vp, offset,
-		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-#endif
+	DPRINTF(("VMCMD: addr %lx size %ld offset %ld\n", epp->ep_daddr,
+		 dsize, offset));
+	if (!(offset & PAGE_MASK) && !(epp->ep_daddr & PAGE_MASK)) {
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, dsize,
+			  epp->ep_daddr, epp->ep_vp, offset,
+			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	} else {
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
+			  dsize, epp->ep_daddr, epp->ep_vp, offset,
+			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	}
 
-#ifdef	__sh3__
+#ifdef	sh3
 	if (ap->a_bsize > 0){
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, ap->a_bsize,
 			  COFF_ROUND(ap->a_dstart + ap->a_dsize, COFF_LDPGSZ),
@@ -429,8 +429,8 @@ exec_coff_prep_zmagic(p, epp, fp, ap)
 	baddr = round_page(epp->ep_daddr + dsize);
 	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
 	if (bsize > 0) {
-		/* DPRINTF(("VMCMD: addr %x size %d offset %d\n",
-			 baddr, bsize, 0)); */
+		DPRINTF(("VMCMD: addr %x size %d offset %d\n",
+			 baddr, bsize, 0));
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 			  bsize, baddr, NULLVP, 0,
 			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
@@ -446,8 +446,8 @@ exec_coff_prep_zmagic(p, epp, fp, ap)
 		char buf[128], *bufp;	/* FIXME */
 		int len = sh.s_size, path_index, entry_len;
 		
-		/* DPRINTF(("COFF shlib size %d offset %d\n",
-			 sh.s_size, sh.s_scnptr)); */
+		DPRINTF(("COFF shlib size %d offset %d\n",
+			 sh.s_size, sh.s_scnptr));
 
 		error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t) buf,
 				len, sh.s_scnptr,
@@ -463,8 +463,8 @@ exec_coff_prep_zmagic(p, epp, fp, ap)
 			path_index = slhdr->path_index * sizeof(long);
 			entry_len = slhdr->entry_len * sizeof(long);
 
-			/* DPRINTF(("path_index: %d entry_len: %d name: %s\n",
-				 path_index, entry_len, slhdr->sl_name)); */
+			DPRINTF(("path_index: %d entry_len: %d name: %s\n",
+				 path_index, entry_len, slhdr->sl_name));
 
 			error = coff_load_shlib(p, slhdr->sl_name, epp);
 			if (error)
@@ -478,8 +478,8 @@ exec_coff_prep_zmagic(p, epp, fp, ap)
 	/* set up entry point */
 	epp->ep_entry = ap->a_entry;
 
-#if 0
-	DPRINTF(("text addr: %x size: %d data addr: %x size: %d entry: %x\n",
+#if 1
+	DPRINTF(("text addr: %lx size: %ld data addr: %lx size: %ld entry: %lx\n",
 		 epp->ep_taddr, epp->ep_tsize,
 		 epp->ep_daddr, epp->ep_dsize,
 		 epp->ep_entry));
@@ -540,12 +540,12 @@ coff_load_shlib(p, path, epp)
 	    vrele(nd.ni_vp);
 	    return error;
 	}
-	/* DPRINTF(("COFF text addr %x size %d offset %d\n", sh.s_vaddr,
-		 sh.s_size, sh.s_scnptr)); */
+	DPRINTF(("COFF text addr %x size %d offset %d\n", sh.s_vaddr,
+		 sh.s_size, sh.s_scnptr));
 	taddr = COFF_ALIGN(shp->s_vaddr);
 	offset = shp->s_scnptr - (shp->s_vaddr - taddr);
 	tsize = shp->s_size + (shp->s_vaddr - taddr);
-	/* DPRINTF(("VMCMD: addr %x size %d offset %d\n", taddr, tsize, offset)); */
+	DPRINTF(("VMCMD: addr %x size %d offset %d\n", taddr, tsize, offset));
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, tsize, taddr,
 		  nd.ni_vp, offset,
 		  VM_PROT_READ|VM_PROT_EXECUTE);
@@ -557,14 +557,14 @@ coff_load_shlib(p, path, epp)
 	    vrele(nd.ni_vp);
 	    return error;
 	}
-	/* DPRINTF(("COFF data addr %x size %d offset %d\n", shp->s_vaddr,
-		 shp->s_size, shp->s_scnptr)); */
+	DPRINTF(("COFF data addr %x size %d offset %d\n", shp->s_vaddr,
+		 shp->s_size, shp->s_scnptr));
 	daddr = COFF_ALIGN(shp->s_vaddr);
 	offset = shp->s_scnptr - (shp->s_vaddr - daddr);
 	dsize = shp->s_size + (shp->s_vaddr - daddr);
 	/* epp->ep_dsize = dsize + ap->a_bsize; */
 
-	/* DPRINTF(("VMCMD: addr %x size %d offset %d\n", daddr, dsize, offset)); */
+	DPRINTF(("VMCMD: addr %x size %d offset %d\n", daddr, dsize, offset));
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
 		  dsize, daddr, nd.ni_vp, offset,
 		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
@@ -575,8 +575,8 @@ coff_load_shlib(p, path, epp)
 		int baddr = round_page(daddr + dsize);
 		int bsize = daddr + dsize + shp->s_size - baddr;
 		if (bsize > 0) {
-			/* DPRINTF(("VMCMD: addr %x size %d offset %d\n",
-			   baddr, bsize, 0)); */
+			DPRINTF(("VMCMD: addr %x size %d offset %d\n",
+			   baddr, bsize, 0));
 			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 				  bsize, baddr, NULLVP, 0,
 				  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
