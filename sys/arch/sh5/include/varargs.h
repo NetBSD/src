@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.3 2003/12/07 20:00:38 scw Exp $	*/
+/*	$NetBSD: varargs.h,v 1.4 2005/02/26 21:13:56 scw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,19 +42,11 @@
 #include <machine/stdarg.h>
 
 #define	__va_ellipsis	...
-#ifndef __lint__
 #define	__va_alist_t	__builtin_va_alist_t
-#else
-#define	__va_alist_t	long
-#endif
 #define	va_alist	__builtin_va_alist
 #define	va_dcl		__va_alist_t __builtin_va_alist; __va_ellipsis
 
 #undef va_start
-#ifndef __lint__
 #define	va_start(ap)	__builtin_varargs_start((ap))
-#else
-#define	va_start(ap)	((ap) = (va_list)&__builtin_va_alist)
-#endif
 
 #endif /* !_SH5_VARARGS_H_ */
