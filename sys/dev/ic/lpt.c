@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.46 1997/10/14 15:50:15 is Exp $	*/
+/*	$NetBSD: lpt.c,v 1.47 1997/12/07 16:09:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -57,7 +57,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/buf.h>
+#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -188,7 +188,7 @@ lptopen(dev, flag, mode, p)
 	sc->sc_control = control;
 	bus_space_write_1(iot, ioh, lpt_control, control);
 
-	sc->sc_inbuf = geteblk(LPT_BSIZE);
+	sc->sc_inbuf = malloc(LPT_BSIZE, M_DEVBUF, M_WAITOK);
 	sc->sc_count = 0;
 	sc->sc_state = LPT_OPEN;
 
@@ -258,7 +258,7 @@ lptclose(dev, flag, mode, p)
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
 	sc->sc_state = 0;
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
-	brelse(sc->sc_inbuf);
+	free(sc->sc_inbuf, M_DEVBUF);
 
 	LPRINTF(("%s: closed\n", sc->sc_dev.dv_xname));
 	return 0;
@@ -343,7 +343,7 @@ lptwrite(dev, uio, flags)
 	int error = 0;
 
 	while ((n = min(LPT_BSIZE, uio->uio_resid)) != 0) {
-		uiomove(sc->sc_cp = sc->sc_inbuf->b_data, n, uio);
+		uiomove(sc->sc_cp = sc->sc_inbuf, n, uio);
 		sc->sc_count = n;
 		error = lptpushbytes(sc);
 		if (error) {
