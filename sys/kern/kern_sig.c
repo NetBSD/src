@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.148 2003/09/06 22:03:09 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.149 2003/09/10 16:41:26 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.148 2003/09/06 22:03:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.149 2003/09/10 16:41:26 kleink Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -195,6 +195,11 @@ sigaction1(struct proc *p, int signum, const struct sigaction *nsa,
 	if (nsa) {
 		if (nsa->sa_flags & ~SA_ALLBITS)
 			return (EINVAL);
+
+#ifndef __HAVE_SIGINFO
+		if (nsa->sa_flags & SA_SIGINFO)
+			return (EINVAL);
+#endif
 
 		prop = sigprop[signum];
 		if (prop & SA_CANTMASK)
