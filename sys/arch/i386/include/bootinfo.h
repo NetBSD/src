@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.7 1999/03/12 01:01:42 fvdl Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.8 2000/06/02 18:27:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -90,8 +90,15 @@ struct btinfo_symtab {
 };
 
 struct bi_memmap_entry {
-	int a[5]; /* 20 bytes */
-};
+	u_int64_t addr;		/* beginning of block */	/* 8 */
+	u_int64_t size;		/* size of block */		/* 8 */
+	u_int32_t type;		/* type of block */		/* 4 */
+};							/*	== 20 */
+
+#define	BIM_Memory	1	/* available RAM usable by OS */
+#define	BIM_Reserved	2	/* in use or reserved by the system */
+#define	BIM_ACPI	3	/* ACPI Reclaim memory */
+#define	BIM_NVS		4	/* ACPI NVS memory */
 
 struct btinfo_memmap {
 	struct btinfo_common common;
