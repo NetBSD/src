@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.92 2003/09/19 11:11:43 pooka Exp $
+#	$NetBSD: MAKEDEV,v 1.93 2003/09/22 18:17:30 jandberg Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -75,6 +75,7 @@
 #
 # Pointing devices:
 #	mouse*	Amiga mice
+#	wsmouse* wscons mouse events
 #
 # Terminal ports:
 #	tty00	standard serial port
@@ -495,7 +496,7 @@ view*)
 
 wscons)
 	makedev ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
-#	makedev wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	makedev wsmouse0 wsmouse1 wsmouse2 wsmouse3
 	makedev wskbd0 wskbd1 wskbd2 wskbd3
 	makedev ttyEcfg
 	;;
@@ -511,6 +512,15 @@ ttyE*)
 	chr=53; unit=${i#ttyE}
 	rm -f ttyE$unit
 	mknod ttyE$unit c $chr $unit
+	;;
+
+wsmouse*)
+	unit=${i#wsmouse}
+	wsmouse=wsmouse$unit
+	major=61
+	rm -f $wsmouse
+	mknod $wsmouse c $major $unit
+	chmod 600 $wsmouse
 	;;
 
 wskbd*)
