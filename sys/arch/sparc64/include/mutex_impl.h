@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex_impl.h,v 1.1.2.1 2002/03/19 02:32:06 thorpej Exp $	*/
+/*	$NetBSD: mutex_impl.h,v 1.1.2.2 2002/03/19 05:17:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ struct mutex {
 	union {
 		/* Adaptive mutex */
 		struct {
-			__volatile unsigned long mtx_owner;
+			__volatile unsigned long mtx_owner;	/* 0-7 */
 #ifndef __arch64__
 			unsigned long mtx_rsvd0;
 #endif
@@ -52,14 +52,24 @@ struct mutex {
 		/* Spin mutex */
 		struct {
 			/*
-			 * We're big-endian, so mtx_dummy is
-			 * in the top-half of mtx_owner, or
-			 * overlaps mtx_owner if we're 32-bit.
+			 * Note: we want the dummy byte to be
+			 * the LSB of the owner, since the LSB
+			 * of the address of the owning thread
+			 * could never possibly be 0xff.
 			 */
-			unsigned int mtx_dummy;
-			__cpu_simple_lock_t mtx_lock;
-			int mtx_oldspl;
-			int mtx_minspl;
+#ifdef __arch64__
+			short mtx_minspl;			/* 0-1 */
+			short mtx_oldspl;			/* 2-3 */
+			char mtx_rsvd[2];			/* 4-5 */
+			__cpu_simple_lock_t mtx_lock;		/* 6 */
+			char mtx_dummy;				/* 7 */
+#else
+			char mtx_rsvd[2];			/* 0-1 */
+			__cpu_simple_lock_t mtx_lock;		/* 2 */
+			char mtx_dummy;				/* 3 */
+			short mtx_minspl;			/* 4-5 */
+			short mtx_oldspl;			/* 6-7 */
+#endif
 		} mtx_spin;
 	} mtx_un;
 };
@@ -68,7 +78,7 @@ struct mutex {
 	{ { .mtx_adapt = { .mtx_owner = 0 } } }
 
 #define	MUTEX_INITIALIZER_SPIN(ipl)					\
-	{ { .mtx_spin = { .mtx_dummy = 0xffffffffU,			\
+	{ { .mtx_spin = { .mtx_dummy = 0xff,				\
 			  .mtx_lock = __SIMPLELOCK_UNLOCKED,		\
 	  		  .mtx_minspl = (ipl) } } }
 
@@ -91,7 +101,7 @@ do {									\
 		(mtx)->m_owner = 0;					\
 		break;							\
 	case MUTEX_SPIN:						\
-		(mtx)->mtx_un.mtx_spin.mtx_dummy = 0xffffffffU;		\
+		(mtx)->mtx_un.mtx_spin.mtx_dummy = 0xff;		\
 		__cpu_simple_lock_init(&(mtx)->m_spinlock);		\
 		break;							\
 	default:							\
@@ -101,9 +111,9 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 #define	MUTEX_ADAPTIVE_P(mtx)						\
-	((mtx)->mtx_un.mtx_spin.mtx_dummy != 0xffffffffU)
+	((mtx)->mtx_un.mtx_spin.mtx_dummy != 0xff)
 #define	MUTEX_SPIN_P(mtx)						\
-	((mtx)->mtx_un.mtx_spin.mtx_dummy == 0xffffffffU)
+	((mtx)->mtx_un.mtx_spin.mtx_dummy == 0xff)
 
 #define	MUTEX_OWNER(mtx)	((struct proc *)((mtx)->m_owner & MUTEX_THREAD))
 #define	MUTEX_HAS_WAITERS(mtx)	(((mtx)->m_owner & MUTEX_WAITERS) != 0)
