@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.65 2002/06/06 23:54:47 wrstuden Exp $	*/
+/*	$NetBSD: bpf.c,v 1.66 2002/08/28 09:34:57 onoe Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.65 2002/06/06 23:54:47 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.66 2002/08/28 09:34:57 onoe Exp $");
 
 #include "bpfilter.h"
 
@@ -117,6 +117,8 @@ static __inline void
 static void	catchpacket __P((struct bpf_d *, u_char *, u_int, u_int,
 				 void *(*)(void *, const void *, size_t)));
 static void	reset_d __P((struct bpf_d *));
+static int	bpf_getdltlist __P((struct bpf_d *, struct bpf_dltlist *));
+static int	bpf_setdlt __P((struct bpf_d *, u_int));
 
 static int
 bpf_movein(uio, linktype, mtu, mp, sockp)
@@ -746,6 +748,26 @@ bpfioctl(dev, cmd, addr, flag, p)
 		break;
 
 	/*
+	 * Get a list of supported device parameters.
+	 */
+	case BIOCGDLTLIST:
+		if (d->bd_bif == 0)
+			error = EINVAL;
+		else
+			error = bpf_getdltlist(d, (struct bpf_dltlist *)addr);
+		break;
+
+	/*
+	 * Set device parameters.
+	 */
+	case BIOCSDLT:
+		if (d->bd_bif == 0)
+			error = EINVAL;
+		else
+			error = bpf_setdlt(d, *(u_int *)addr);
+		break;
+
+	/*
 	 * Set interface name.
 	 */
 	case BIOCGETIF:
@@ -945,6 +967,9 @@ bpf_setif(d, ifr)
 
 		if (ifp == 0 ||
 		    strcmp(ifp->if_xname, ifr->ifr_name) != 0)
+			continue;
+		/* skip additional entry */
+		if (bp->bif_driverp != (struct bpf_if **)&ifp->if_bpf)
 			continue;
 		/*
 		 * We found the requested interface.
@@ -1227,13 +1252,28 @@ bpfattach(ifp, dlt, hdrlen)
 	struct ifnet *ifp;
 	u_int dlt, hdrlen;
 {
+
+	bpfattach2(ifp, dlt, hdrlen, &ifp->if_bpf);
+}
+
+/*
+ * Attach additional dlt for a interface to bpf.  dlt is the link layer type;
+ * hdrlen is the fixed size of the link header for the specified dlt
+ * (variable length headers not yet supported).
+ */
+void
+bpfattach2(ifp, dlt, hdrlen, driverp)
+	struct ifnet *ifp;
+	u_int dlt, hdrlen;
+	caddr_t *driverp;
+{
 	struct bpf_if *bp;
 	bp = (struct bpf_if *)malloc(sizeof(*bp), M_DEVBUF, M_DONTWAIT);
 	if (bp == 0)
 		panic("bpfattach");
 
 	bp->bif_dlist = 0;
-	bp->bif_driverp = (struct bpf_if **)&ifp->if_bpf;
+	bp->bif_driverp = (struct bpf_if **)driverp;
 	bp->bif_ifp = ifp;
 	bp->bif_dlt = dlt;
 
@@ -1288,18 +1328,19 @@ bpfdetach(ifp)
 		}
 	}
 
+  again:
 	for (bp = bpf_iflist, pbp = &bpf_iflist;
 	     bp != NULL; pbp = &bp->bif_next, bp = bp->bif_next) {
 		if (bp->bif_ifp == ifp) {
 			*pbp = bp->bif_next;
 			free(bp, M_DEVBUF);
-			break;
+			goto again;
 		}
 	}
 }
 
 /*
- * Change the data link type of a BPF instance.
+ * Change the data link type of a interface.
  */
 void
 bpf_change_type(ifp, dlt, hdrlen)
@@ -1324,4 +1365,63 @@ bpf_change_type(ifp, dlt, hdrlen)
 	 * performance reasons and to alleviate alignment restrictions).
 	 */
 	bp->bif_hdrlen = BPF_WORDALIGN(hdrlen + SIZEOF_BPF_HDR) - hdrlen;
+}
+
+/*
+ * Get a list of available data link type of the interface.
+ */
+static int
+bpf_getdltlist(d, bfl)
+	struct bpf_d *d;
+	struct bpf_dltlist *bfl;
+{
+	int n, error;
+	struct ifnet *ifp;
+	struct bpf_if *bp;
+
+	ifp = d->bd_bif->bif_ifp;
+	n = 0;
+	error = 0;
+	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+		if (bp->bif_ifp != ifp)
+			continue;
+		if (bfl->bfl_list != NULL) {
+			if (n >= bfl->bfl_len)
+				return ENOMEM;
+			error = copyout(&bp->bif_dlt,
+			    bfl->bfl_list + n, sizeof(u_int));
+		}
+		n++;
+	}
+	bfl->bfl_len = n;
+	return error;
+}
+
+/*
+ * Set the data link type of a BPF instance.
+ */
+static int
+bpf_setdlt(d, dlt)
+	struct bpf_d *d;
+	u_int dlt;
+{
+	int s;
+	struct ifnet *ifp;
+	struct bpf_if *bp;
+
+	if (d->bd_bif->bif_dlt == dlt)
+		return 0;
+	ifp = d->bd_bif->bif_ifp;
+	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+		if (bp->bif_ifp == ifp && bp->bif_dlt == dlt)
+			break;
+	}
+	if (bp == NULL)
+		return EINVAL;
+	s = splnet();
+	bpf_detachd(d);
+	bpf_attachd(d, bp);
+	reset_d(d);
+	splx(s);
+	return 0;
 }
