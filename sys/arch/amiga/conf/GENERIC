@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.167 2002/01/19 18:45:07 oster Exp $
+# $NetBSD: GENERIC,v 1.168 2002/01/26 13:22:12 aymeric Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.
@@ -34,7 +34,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.167 $"
+#ident 		"GENERIC-$Revision: 1.168 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -262,8 +262,8 @@ options 	GRF_SUPER72	# AGA Super-72
 
 #ifdef AMIGA_CONFIGURATION
 # wscons aware interface to amiga custom chips.
-# If you enable it enable also wskbd. 
-# 
+# If you enable it enable also wskbd.
+#
 #amidisplaycc0	at mainbus0		# wscons interface to custom chips
 #wsdisplay0	at amidisplaycc0 console ?
 #options	WSEMUL_VT100
