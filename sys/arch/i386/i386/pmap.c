@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 1998/01/20 12:48:05 drochner Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 1998/01/23 00:44:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -204,10 +204,11 @@ int	nkpde = 0;
  */
 pt_entry_t	*CMAP1, *CMAP2;
 caddr_t		CADDR1, CADDR2, vmmap;
+
 extern vm_offset_t msgbuf_vaddr, msgbuf_paddr;
+extern vm_offset_t idt_vaddr, idt_paddr;
 #ifdef I586_CPU
-extern vm_offset_t pentium_trap_vaddr, pentium_trap_paddr;
-extern int pentium_trap_fixup;
+extern vm_offset_t pentium_idt_vaddr;
 #endif
 
 /*
@@ -286,13 +287,13 @@ pmap_bootstrap(virtual_start)
 	SYSMAP(vm_offset_t, junk, msgbuf_vaddr, btoc(MSGBUFSIZE));
 	avail_end -= round_page(MSGBUFSIZE);
 	msgbuf_paddr = avail_end;
+	SYSMAP(vm_offset_t, junk, idt_vaddr, 1);
+	avail_end -= ctob(1);
+	idt_paddr = avail_end;
 #ifdef I586_CPU
-	if (pentium_trap_fixup) {
-		SYSMAP(vm_offset_t, junk, pentium_trap_vaddr, 1);
-		avail_end -= ctob(1);
-		pentium_trap_paddr = avail_end;
-	}
+	SYSMAP(vm_offset_t, junk, pentium_idt_vaddr, 1);
 #endif
+
 	virtual_avail = va;
 
 	/*

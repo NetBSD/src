@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.274 1998/01/22 00:39:26 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.275 1998/01/23 00:44:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -218,9 +218,9 @@ int	boothowto;
 int	cpu_class;
 
 vm_offset_t msgbuf_vaddr, msgbuf_paddr;
+vm_offset_t idt_vaddr, idt_paddr;
 #ifdef I586_CPU
-vm_offset_t pentium_trap_vaddr, pentium_trap_paddr;
-int pentium_trap_fixup = 1;
+vm_offset_t pentium_idt_vaddr;
 #endif
 
 vm_map_t buffer_map;
@@ -474,12 +474,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-#ifdef I586_CPU
-	if (pentium_trap_fixup)
-		pmap_enter(pmap_kernel(), pentium_trap_vaddr,
-		    pentium_trap_paddr, VM_PROT_READ, TRUE);
-#endif
 
 	/*
 	 * Set up proc0's TSS and LDT.
@@ -1291,9 +1285,13 @@ dumpsys()
 	 */
 	if (dumpsize == 0)
 		cpu_dumpconf();
-	if (dumplo < 0)
+	if (dumplo <= 0) {
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		    minor(dumpdev));
 		return;
-	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+	}
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	    minor(dumpdev), dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
@@ -1432,10 +1430,10 @@ setregs(p, pack, stack)
  * Initialize segments and descriptor tables
  */
 
-union descriptor static_gdt[NGDT], *gdt = static_gdt;
-union descriptor static_ldt[NLDT];
-struct gate_descriptor static_idt[NIDT], *idt = static_idt;
-
+union	descriptor *idt, *gdt, *ldt;
+#ifdef I586_CPU
+union	descriptor *pentium_idt;
+#endif
 extern  struct user *proc0paddr;
 
 void
@@ -1487,7 +1485,7 @@ setsegment(sd, base, limit, type, dpl, def32, gran)
 }
 
 #define	IDTVEC(name)	__CONCAT(X, name)
-extern	IDTVEC(syscall), IDTVEC(osyscall), IDTVEC(trap0e_pentium);
+extern	IDTVEC(syscall), IDTVEC(osyscall);
 extern	*IDTVEC(exceptions)[];
 
 void
@@ -1499,6 +1497,7 @@ init386(first_avail)
 	extern void consinit __P((void));
 
 	proc0.p_addr = proc0paddr;
+
 
 	/*
 	 * Initialize the I/O port and I/O mem extent maps.
@@ -1520,80 +1519,20 @@ init386(first_avail)
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
-	/* make gdt gates and memory segments */
-	setsegment(&static_gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL,
-	    1, 1);
-	setsegment(&static_gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL,
-	    1, 1);
-	setsegment(&static_gdt[GLDT_SEL].sd, static_ldt, sizeof(static_ldt) - 1,
-	    SDT_SYSLDT, SEL_KPL, 0, 0);
-	setsegment(&static_gdt[GUCODE_SEL].sd, 0,
-	    i386_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&static_gdt[GUDATA_SEL].sd, 0,
-	    i386_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 1);
-#if NBIOSCALL > 0
-	/* bios trampoline GDT entries */
-	setsegment(&static_gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA,
-	    SEL_KPL, 0, 0);
-	setsegment(&static_gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA,
-	    SEL_KPL, 0, 0);
-#endif
-
-	/* make ldt gates and memory segments */
-	setgate(&static_ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1,
-	    SDT_SYS386CGT, SEL_UPL);
-	static_ldt[LUCODE_SEL] = static_gdt[GUCODE_SEL];
-	static_ldt[LUDATA_SEL] = static_gdt[GUDATA_SEL];
-	static_ldt[LBSDICALLS_SEL] = static_ldt[LSYS5CALLS_SEL];
-
-	/* exceptions */
-	for (x = 0; x < 32; x++)
-		setgate(&static_idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
-		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL);
-
-	/* new-style interrupt gate for syscalls */
-	setgate(&static_idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL);
-
-	setregion(&region, static_gdt, sizeof(static_gdt) - 1);
-	lgdt(&region);
-	setregion(&region, static_idt, sizeof(static_idt) - 1);
-	lidt(&region);
-
-#if NISA > 0
-	isa_defaultirq();
-#endif
-
-	splraise(-1);
-	enable_intr();
-
-	/*
-	 * Use BIOS values passed in from the boot program.
-	 *
-	 * XXX Not only does probing break certain 386 AT relics, but
-	 * not all BIOSes (Dell, Compaq, others) report the correct
-	 * amount of extended memory.
-	 */
-	avail_end = biosextmem ? IOM_END + biosextmem * 1024
-	    : biosbasemem * 1024;	/* just temporary use */
-
 	/*
 	 * Allocate the physical addresses used by RAM from the iomem
 	 * extent map.  This is done before the addresses are
 	 * page rounded just to make sure we get them all.
 	 */
-	if (extent_alloc_region(iomem_ex, 0, IOM_BEGIN, EX_NOWAIT)) {
+	if (extent_alloc_region(iomem_ex, 0, biosbasemem * 1024, EX_NOWAIT)) {
 		/* XXX What should we do? */
 		printf("WARNING: CAN'T ALLOCATE BASE MEMORY FROM IOMEM EXTENT MAP!\n");
 	}
-	if (avail_end > IOM_END && extent_alloc_region(iomem_ex, IOM_END,
-	    (avail_end - IOM_END), EX_NOWAIT)) {
+	if (extent_alloc_region(iomem_ex, IOM_END, biosextmem * 1024,
+	    EX_NOWAIT)) {
 		/* XXX What should we do? */
 		printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM IOMEM EXTENT MAP!\n");
 	}
-
-	/* Round down to whole pages. */
-	biosbasemem &= -(NBPG / 1024);
-	biosextmem &= -(NBPG / 1024);
 
 #if NISADMA > 0
 	/*
@@ -1620,60 +1559,75 @@ init386(first_avail)
 	avail_start = NBPG;	/* BIOS leaves data in low memory */
 				/* and VM system doesn't work with phys 0 */
 #endif
-	avail_end = biosextmem ? IOM_END + biosextmem * 1024
-	    : biosbasemem * 1024;
+	avail_end = IOM_END + trunc_page(biosextmem * 1024);
 
-	/* number of pages of physmem addr space */
-	physmem = btoc((biosbasemem + biosextmem) * 1024);
-	dumpmem_low = btoc(biosbasemem * 1024);
-	dumpmem_high = btoc(biosextmem * 1024);
-
-	/*
-	 * Initialize for pmap_free_pages and pmap_next_page.
-	 * These guys should be page-aligned.
-	 */
-	hole_start = biosbasemem * 1024;
+	hole_start = trunc_page(biosbasemem * 1024);
 	/* we load right after the I/O hole; adjust hole_end to compensate */
 	hole_end = round_page(first_avail);
+
+	/* Call pmap initialization to make new kernel address space. */
+	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
+
 #if !defined(MACHINE_NEW_NONCONTIG)
+	/*
+	 * Initialize for pmap_free_pages and pmap_next_page.
+	 */
 	avail_next = avail_start;
 #endif
 
-	if (physmem < btoc(2 * 1024 * 1024)) {
-		printf("warning: too little memory available; "
-		       "have %d bytes, want %d bytes\n"
-		       "running in degraded mode\n"
-		       "press a key to confirm\n\n",
-		       ctob(physmem), 2*1024*1024);
-		cngetc();
-	}
 
-	/* call pmap initialization to make new kernel address space */
-	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-	for (x = 0; x < btoc(MSGBUFSIZE); x++)
-		pmap_enter(pmap_kernel(), msgbuf_vaddr + x * NBPG,
-		    msgbuf_paddr + x * NBPG, VM_PROT_ALL, TRUE);
-	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
-
+	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr, VM_PROT_ALL, TRUE);
+	idt = (union descriptor *)idt_vaddr;
 #ifdef I586_CPU
-	if (pentium_trap_fixup) {
-		struct gate_descriptor *new_idt;
-
-		pmap_enter(pmap_kernel(), pentium_trap_vaddr,
-		    pentium_trap_paddr, VM_PROT_ALL, TRUE);
-		new_idt = (struct gate_descriptor *)pentium_trap_vaddr;
-		bcopy(idt, new_idt, NIDT * sizeof(idt[0]));
-		setgate(&new_idt[14], &IDTVEC(trap0e_pentium), 0, SDT_SYS386TGT,
-		    SEL_KPL);
-		idt = new_idt;
-		setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
-		lidt(&region);
-	}
+	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr, VM_PROT_READ,
+	    TRUE);
+	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 #endif
+	gdt = idt + NIDT;
+	ldt = gdt + NGDT;
+
+
+	/* make gdt gates and memory segments */
+	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
+	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
+	setsegment(&gdt[GLDT_SEL].sd, ldt, NLDT * sizeof(ldt[0]) - 1,
+	    SDT_SYSLDT, SEL_KPL, 0, 0);
+	setsegment(&gdt[GUCODE_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+	    SDT_MEMERA, SEL_UPL, 1, 1);
+	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+	    SDT_MEMRWA, SEL_UPL, 1, 1);
+#if NBIOSCALL > 0
+	/* bios trampoline GDT entries */
+	setsegment(&gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 0,
+	    0);
+	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0,
+	    0);
+#endif
+
+	/* make ldt gates and memory segments */
+	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1,
+	    SDT_SYS386CGT, SEL_UPL);
+	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
+	ldt[LUDATA_SEL] = gdt[GUDATA_SEL];
+	ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];
+
+	/* exceptions */
+	for (x = 0; x < 32; x++)
+		setgate(&idt[x].gd, IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
+		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL);
+
+	/* new-style interrupt gate for syscalls */
+	setgate(&idt[128].gd, &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL);
+
+	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
+	lgdt(&region);
+#ifdef I586_CPU
+	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
+#else
+	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
+#endif
+	lidt(&region);
+
 
 #ifdef DDB
 	ddb_init();
@@ -1687,6 +1641,35 @@ init386(first_avail)
 		kgdb_connect(1);
 	}
 #endif
+
+#if NISA > 0
+	isa_defaultirq();
+#endif
+
+	splraise(-1);
+	enable_intr();
+
+	/* number of pages of physmem addr space */
+	physmem = btoc(biosbasemem * 1024) + btoc(biosextmem * 1024);
+	dumpmem_low = btoc(biosbasemem * 1024);
+	dumpmem_high = btoc(biosextmem * 1024);
+
+	if (physmem < btoc(2 * 1024 * 1024)) {
+		printf("warning: too little memory available; "
+		       "have %d bytes, want %d bytes\n"
+		       "running in degraded mode\n"
+		       "press a key to confirm\n\n",
+		       ctob(physmem), 2*1024*1024);
+		cngetc();
+	}
+
+	/*
+	 * Initialize error message buffer (at end of core).
+	 */
+	for (x = 0; x < btoc(MSGBUFSIZE); x++)
+		pmap_enter(pmap_kernel(), msgbuf_vaddr + x * NBPG,
+		    msgbuf_paddr + x * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 }
 
 struct queue {
@@ -1935,7 +1918,6 @@ kgdb_port_init()
 void
 cpu_reset()
 {
-	struct region_descriptor region;
 
 	disable_intr();
 
@@ -1954,8 +1936,6 @@ cpu_reset()
 	 * invalid and causing a fault.
 	 */
 	bzero((caddr_t)idt, NIDT * sizeof(idt[0]));
-	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
-	lidt(&region);
 	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0)); 
 
 #if 0

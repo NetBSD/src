@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.183 1998/01/22 00:44:11 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.184 1998/01/23 00:44:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -641,6 +641,24 @@ begin:
 	xorl	%ecx,%ecx
 	movl	%cx,%fs
 	movl	%cx,%gs
+
+#ifdef SAFARI_FIFO_HACK
+	movb	$5,%al
+	movw	$0x37b,%dx
+	outb	%al,%dx
+	movw	$0x37f,%dx
+	inb	%dx,%al
+	movb	%al,%cl
+
+	orb	$1,%cl
+
+	movb	$5,%al
+	movw	$0x37b,%dx
+	outb	%al,%dx
+	movw	$0x37f,%dx
+	movb	%cl,%al
+	outb	%al,%dx
+#endif /* SAFARI_FIFO_HACK */
 
 	call 	_main
 
@@ -2014,9 +2032,9 @@ IDTVEC(trap0c)
 IDTVEC(trap0d)
 	TRAP(T_PROTFLT)
 IDTVEC(trap0e)
+#ifndef I586_CPU
 	TRAP(T_PAGEFLT)
-#ifdef I586_CPU
-IDTVEC(trap0e_pentium)
+#else
 	pushl	$T_PAGEFLT
 	INTRENTRY
 	testb	$PGEX_U,TF_ERR(%esp)

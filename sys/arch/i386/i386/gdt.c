@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.10 1997/11/13 03:16:43 mycroft Exp $	*/
+/*	$NetBSD: gdt.c,v 1.11 1998/01/23 00:44:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -158,6 +158,7 @@ gdt_init()
 {
 	size_t max_len, min_len;
 	struct region_descriptor region;
+	union descriptor *old_gdt;
 
 	max_len = MAXGDTSIZ * sizeof(gdt[0]);
 	min_len = MINGDTSIZ * sizeof(gdt[0]);
@@ -167,10 +168,11 @@ gdt_init()
 	gdt_next = NGDT;
 	gdt_free = GNULL_SEL;
 
+	old_gdt = gdt;
 	gdt = (union descriptor *)kmem_alloc_pageable(kernel_map, max_len);
 	vm_map_pageable(kernel_map, (vm_offset_t)gdt,
 	    (vm_offset_t)gdt + min_len, FALSE);
-	bcopy(static_gdt, gdt, NGDT * sizeof(gdt[0]));
+	bcopy(old_gdt, gdt, NGDT * sizeof(gdt[0]));
 
 	setregion(&region, gdt, max_len - 1);
 	lgdt(&region);
