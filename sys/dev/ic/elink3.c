@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.65 1999/11/04 20:27:11 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.66 1999/11/12 18:14:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -925,7 +925,6 @@ epsetmedia(sc)
 
 		GO_WINDOW(3);
 
-#if 0
 		if (sc->ep_chipset == ELINK_CHIPSET_ROADRUNNER) {
 			int resopt;
 
@@ -934,7 +933,6 @@ epsetmedia(sc)
 			bus_space_write_2(iot, ioh, ELINK_W3_RESET_OPTIONS,
 			    resopt | ELINK_RUNNER_ENABLE_MII);
 		}
-#endif
 
 		config0 = (u_int)bus_space_read_2(iot, ioh,
 		    ELINK_W3_INTERNAL_CONFIG);
@@ -1879,6 +1877,9 @@ epstop(sc)
 	if (sc->ep_flags & ELINK_FLAGS_MII) {
 		/* Stop the one second clock. */
 		untimeout(ep_tick, sc);
+
+		/* Down the MII. */
+		mii_down(&sc->sc_mii);
 	}
 
 	if (sc->ep_chipset == ELINK_CHIPSET_ROADRUNNER) {

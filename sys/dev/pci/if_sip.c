@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.3 1999/11/04 00:24:32 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.4 1999/11/12 18:14:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -1562,6 +1562,9 @@ sip_stop(sc, drain)
 	 * Stop the one second clock.
 	 */
 	untimeout(sip_tick, sc);
+
+	/* Down the MII. */
+	mii_down(&sc->sc_mii);
 
 	/*
 	 * Disable interrupts.

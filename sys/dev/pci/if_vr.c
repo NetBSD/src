@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.27 1999/11/04 00:24:33 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.28 1999/11/12 18:14:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1506,6 +1506,9 @@ vr_stop(sc, drain)
 
 	/* Cancel one second timer. */
 	untimeout(vr_tick, sc);
+
+	/* Down the MII. */
+	mii_down(&sc->vr_mii);
 
 	ifp = &sc->vr_ec.ec_if;
 	ifp->if_timer = 0;
