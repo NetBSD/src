@@ -1,4 +1,4 @@
-/*	$KAME: pfkey_dump.c,v 1.27 2001/03/12 09:03:38 itojun Exp $	*/
+/*	$KAME: pfkey_dump.c,v 1.30 2001/06/27 13:20:15 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -299,17 +299,15 @@ pfkey_sadump(m)
 	}
 
 	/* replay windoe size & flags */
-	printf("\treplay=%u flags=0x%08x ",
+	printf("\tseq=0x%08x replay=%u flags=0x%08x ",
+		m_sa2->sadb_x_sa2_sequence,
 		m_sa->sadb_sa_replay,
 		m_sa->sadb_sa_flags);
 
 	/* state */
 	printf("state=");
 	GETMSGSTR(str_state, m_sa->sadb_sa_state);
-
-	printf("seq=%lu pid=%lu\n",
-		(u_long)m->sadb_msg_seq,
-		(u_long)m->sadb_msg_pid);
+	printf("\n");
 
 	/* lifetime */
 	if (m_lftc != NULL) {
@@ -353,8 +351,12 @@ pfkey_sadump(m)
 			0 : m_lfts->sadb_lifetime_allocations));
 	}
 
+	printf("\tsadb_seq=%lu pid=%lu ",
+		(u_long)m->sadb_msg_seq,
+		(u_long)m->sadb_msg_pid);
+
 	/* XXX DEBUG */
-	printf("\trefcnt=%u\n", m->sadb_msg_reserved);
+	printf("refcnt=%u\n", m->sadb_msg_reserved);
 
 	return;
 }
@@ -367,7 +369,7 @@ pfkey_spdump(m)
 	caddr_t mhp[SADB_EXT_MAX + 1];
 	struct sadb_address *m_saddr, *m_daddr;
 	struct sadb_x_policy *m_xpl;
-	struct sadb_lifetime *m_lft = NULL;
+	struct sadb_lifetime *m_lftc = NULL, *m_lfth = NULL;
 	struct sockaddr *sa;
 	u_int16_t port;
 
@@ -384,7 +386,8 @@ pfkey_spdump(m)
 	m_saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	m_daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	m_xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
-	m_lft = (struct sadb_lifetime *)mhp[SADB_EXT_LIFETIME_HARD];
+	m_lftc = (struct sadb_lifetime *)mhp[SADB_EXT_LIFETIME_CURRENT];
+	m_lfth = (struct sadb_lifetime *)mhp[SADB_EXT_LIFETIME_HARD];
 
 	/* source address */
 	if (m_saddr == NULL) {
@@ -458,11 +461,19 @@ pfkey_spdump(m)
     }
 
 	/* lifetime */
-	if (m_lft) {
-		printf("\tlifetime:%lu validtime:%lu\n",
-			(u_long)m_lft->sadb_lifetime_addtime,
-			(u_long)m_lft->sadb_lifetime_usetime);
+	if (m_lftc) {
+		printf("\tcreated:%s ",
+			str_time(m_lftc->sadb_lifetime_addtime));
+		printf("lastused:%s\n",
+			str_time(m_lftc->sadb_lifetime_usetime));
 	}
+	if (m_lfth) {
+		printf("\tlifetime:%lu(s) ",
+			(u_long)m_lfth->sadb_lifetime_addtime);
+		printf("validtime:%lu(s)\n",
+			(u_long)m_lfth->sadb_lifetime_usetime);
+	}
+
 
 	printf("\tspid=%ld seq=%ld pid=%ld\n",
 		(u_long)m_xpl->sadb_x_policy_id,

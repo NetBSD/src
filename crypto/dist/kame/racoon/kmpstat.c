@@ -1,4 +1,4 @@
-/*	$KAME: kmpstat.c,v 1.25 2001/04/03 15:51:55 thorpej Exp $	*/
+/*	$KAME: kmpstat.c,v 1.28 2001/06/01 10:14:49 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 
 #include <netinet/in.h>
 #include <net/pfkeyv2.h>
@@ -72,11 +73,11 @@
 #include "oakley.h"
 #include "handler.h"
 #include "pfkey.h"
-#include "admin_var.h"
 #include "admin.h"
+#include "admin_var.h"
 
 static void usage __P((void));
-static int com_init __P((void));
+static void com_init __P((void));
 static int com_send __P((vchar_t *));
 static vchar_t *com_recv __P((void));
 
@@ -139,7 +140,6 @@ struct ulproto_tag {
 	{ 0, NULL },
 };
 
-int port = PORT_ADMIN;
 int so;
 
 static char _addr1_[NI_MAXHOST], _addr2_[NI_MAXHOST];
@@ -159,11 +159,11 @@ usage()
 {
 	printf(
 "Usage:\n"
-"  %s [-p (admin port)] reload-config\n"
-"  %s [-p (admin port)] [-l [-l]] show-sa [protocol]\n"
-"  %s [-p (admin port)] flush-sa [protocol]\n"
-"  %s [-p (admin port)] delete-sa <saopts>\n"
-"  %s [-p (admin port)] establish-sa <saopts>\n"
+"  %s reload-config\n"
+"  %s [-l [-l]] show-sa [protocol]\n"
+"  %s flush-sa [protocol]\n"
+"  %s delete-sa <saopts>\n"
+"  %s establish-sa <saopts>\n"
 "\n"
 "    <protocol>: \"isakmp\", \"esp\" or \"ah\".\n"
 "        In the case of \"show-sa\" or \"flush-sa\", you can use \"ipsec\".\n"
@@ -188,18 +188,14 @@ main(ac, av)
 
 	pname = *av;
 
-	while ((c = getopt(ac, av, "p:ld")) != EOF) {
+	while ((c = getopt(ac, av, "ld")) != -1) {
 		switch(c) {
-		case 'p':
-			port = atoi(optarg);
-			break;
-
 		case 'l':
 			long_format++;
 			break;
 
 		case 'd':
-			loglevel = 0xffffffff;
+			loglevel++;
 			break;
 
 		default:
@@ -218,8 +214,7 @@ main(ac, av)
 	if (loglevel)
 		hexdump(combuf, ((struct admin_com *)combuf)->ac_len);
 
-	if (com_init() < 0)
-		goto bad;
+	com_init();
 
 	if (com_send(combuf) < 0)
 		goto bad;
@@ -236,41 +231,24 @@ main(ac, av)
 	exit(-1);
 }
 
-static int
+static void
 com_init()
 {
-	struct sockaddr_in name;
+	struct sockaddr_un name;
 
-	if ((so = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
-		perror("socket");
-		return -1;
-	}
+	memset(&name, 0, sizeof(name));
+	name.sun_family = AF_UNIX;
+	snprintf(name.sun_path, sizeof(name.sun_path),
+		"%s", PORT_ADMIN);
 
-	memset((char *)&name, 0, sizeof(name));
-	name.sin_family = AF_INET;
-	name.sin_port = htons((u_short)0);
-	name.sin_addr.s_addr = htonl(0x7f000001);
-	name.sin_len = sizeof(name);
-
-	if (bind(so, (struct sockaddr *)&name, sizeof(name)) < 0) {
-		perror("bind");
-		(void)close(so);
-		return -1;
-	}
-
-	memset((char *)&name, 0, sizeof(name));
-	name.sin_family = AF_INET;
-	name.sin_port = htons((u_short)port);
-	name.sin_addr.s_addr = htonl(0x7f000001);
-	name.sin_len = sizeof(name);
+	so = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (so < 0)
+		err(1, "socket");
 
 	if (connect(so, (struct sockaddr *)&name, sizeof(name)) < 0) {
-		perror("connect");
 		(void)close(so);
-		return -1;
+		err(1, "connect");
 	}
-
-	return so;
 }
 
 static int

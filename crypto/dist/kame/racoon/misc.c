@@ -1,4 +1,4 @@
-/*	$KAME: misc.c,v 1.21 2001/04/03 15:51:56 thorpej Exp $	*/
+/*	$KAME: misc.c,v 1.22 2001/07/14 05:48:33 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -146,4 +147,21 @@ getfsize(path)
                 return -1;
         else
                 return st.st_size;
+}
+
+/*
+ * calculate the difference between two times.
+ * t1: start
+ * t2: end
+ */
+double
+timedelta(t1, t2)
+	struct timeval *t1, *t2;
+{
+	if (t2->tv_usec >= t1->tv_usec)
+		return t2->tv_sec - t1->tv_sec +
+			(double)(t2->tv_usec - t1->tv_usec) / 1000000;
+
+	return t2->tv_sec - t1->tv_sec - 1 +
+		(double)(1000000 + t2->tv_usec - t1->tv_usec) / 1000000;
 }
