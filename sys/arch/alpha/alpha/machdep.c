@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.2.2 1996/12/07 23:06:56 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.2.3 1997/01/31 17:14:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -163,7 +163,6 @@ char boot_flags[64];
 char booted_kernel[64];
 
 /* for cpu_sysctl() */
-char	root_device[17];
 int	alpha_unaligned_print = 1;	/* warn about unaligned accesses */
 int	alpha_unaligned_fix = 1;	/* fix up unaligned accesses */
 int	alpha_unaligned_sigbus = 0;	/* don't SIGBUS on fixed-up accesses */
@@ -1328,7 +1327,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			sizeof consdev));
 
 	case CPU_ROOT_DEVICE:
-		return (sysctl_rdstring(oldp, oldlenp, newp, root_device));
+		return (sysctl_rdstring(oldp, oldlenp, newp,
+		    root_device->dv_xname));
 
 	case CPU_UNALIGNED_PRINT:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
