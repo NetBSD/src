@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.24 2003/11/14 16:53:37 tsutsui Exp $
+#	$NetBSD: Makefile.buildboot,v 1.25 2004/11/28 11:14:41 jmc Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -36,9 +36,9 @@ LIBCRTEND=
 vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version hp300 ${NEWVERSWHAT}
 
-${PROG}: ${PROGAOUT} ${MKBOOT_PROG}
+${PROG}: ${PROGAOUT}
 	${OBJCOPY} --output-target=binary ${PROGAOUT} ${PROGAOUT}.bin
-	${MKBOOT_PROG} -l 0x${RELOC} ${PROGAOUT}.bin ${PROG}
+	${TOOL_HP300MKBOOT} -l 0x${RELOC} ${PROGAOUT}.bin ${PROG}
 	rm -f ${PROGAOUT}.bin
 
 CPPFLAGS+=		-DDCACONSOLE -DAPCICONSOLE -DITECONSOLE -DDCMCONSOLE
@@ -61,13 +61,6 @@ DRIVERSOURCE=		apci.c ct.c dca.c dcm.c dnkbd.c fhpib.c hil.c \
 			nhpib.c rd.c scsi.c sd.c
 
 .include <bsd.own.mk>
-
-MKBOOTOBJDIR!=		cd ${.CURDIR}/../mkboot && ${PRINTOBJDIR}
-MKBOOT_PROG=		${MKBOOTOBJDIR}/mkboot
-
-# Make sure ${MKBOOT_PROG} is always available
-${MKBOOT_PROG}:
-	@cd ${MKBOOTDIR} && ${MAKE} depend && ${MAKE}
 
 .include <bsd.prog.mk>
 
