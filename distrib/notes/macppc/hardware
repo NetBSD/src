@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.35 2003/06/02 21:45:37 mbw Exp $
+.\"$NetBSD: hardware,v 1.36 2003/06/19 18:20:02 mbw Exp $
 .
 Currently,
 .Nx*M
@@ -113,7 +113,7 @@ models with ATI Rage Pro: Desktop, Mini Tower, and All-in-One)
 .Pp
 .(bullet -compact
 Apple original iBook, iBook SE, iBook (Dual USB), iBook (Late 2001),
-and iBook (16VRAM)
+iBook (16VRAM), and iBook (14.1 LCD 32 VRAM)
 .It
 Apple iMac; Bondi Blue (Rev A and Rev B, 233 MHz),
 5 Flavors (Rev C and Rev D, 266 MHz and 333 MHz), iMac (Slot Loading),
@@ -123,8 +123,8 @@ Apple original eMac
 .It
 Apple PowerBook (G3 Series (bronze keyboard) and G3 (FireWire))
 .It
-Apple PowerBook G4 (Titanium), PowerBook G4 (Gigabit Ethernet), and
-PowerBook G4 (DVI)
+Apple PowerBook (G4 (Titanium), G4 (Gigabit Ethernet), G4 (DVI), 
+G4 (12-inch), and G4 (17-inch))
 .It
 Apple PowerMacintosh G3 (Blue and White)
 .It
