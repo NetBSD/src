@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.155 2001/11/13 17:47:16 tv Exp $
+#	$NetBSD: Makefile,v 1.156 2001/11/15 19:32:19 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -102,6 +102,7 @@ whatis.db:
 
 # Targets (in order!) called by "make build".
 
+BUILDTARGETS+=	check-tools
 .if !defined(UPDATE) && !defined(NOCLEANDIR)
 BUILDTARGETS+=	cleandir
 .endif
@@ -133,7 +134,7 @@ build:
 .else
 	@echo -n "Build started at: " && date
 .for tgt in ${BUILDTARGETS}
-	(cd ${.CURDIR} && ${MAKE} ${_J} ${tgt})
+	@(cd ${.CURDIR} && ${MAKE} ${_J} ${tgt})
 .endfor
 	@echo -n "Build finished at: " && date
 .endif
@@ -144,6 +145,13 @@ release snapshot: build
 	(cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 release)
 
 # Special components of the "make build" process.
+
+check-tools:
+.if defined(USE_NEW_TOOLCHAIN) && (${USE_NEW_TOOLCHAIN} != "nowarn")
+	@echo '*** WARNING:  Building on MACHINE=${MACHINE} with USE_NEW_TOOLCHAIN.'
+	@echo '*** This platform is not yet verified to work with the new toolchain,'
+	@echo '*** and may result in a failed build or corrupt binaries!'
+.endif
 
 do-distrib-dirs:
 .if !defined(DESTDIR) || ${DESTDIR} == ""
