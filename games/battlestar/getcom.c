@@ -1,4 +1,4 @@
-/*	$NetBSD: getcom.c,v 1.9 2000/09/21 17:44:34 jsm Exp $	*/
+/*	$NetBSD: getcom.c,v 1.10 2000/09/24 15:51:40 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getcom.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getcom.c,v 1.9 2000/09/21 17:44:34 jsm Exp $");
+__RCSID("$NetBSD: getcom.c,v 1.10 2000/09/24 15:51:40 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -64,6 +64,12 @@ getcom(buf, size, prompt, error)
 			break;
 		if (error)
 			puts(error);
+	}
+	/* If we didn't get to the end of the line, don't read it in next time. */
+	if (buf[strlen(buf) - 1] != '\n') {
+		int i;
+		while ((i = getchar()) != '\n' && i != EOF)
+			continue;
 	}
 	return (buf);
 }
