@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.45 2003/08/06 07:18:56 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.46 2003/08/08 06:11:48 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -816,6 +816,7 @@ disitrap:
 	b	k_trap
 
 	.globl	_C_LABEL(trapstart)
+	.type	_C_LABEL(trapstart),@function
 _C_LABEL(trapstart):
 realtrap:
 /* Test whether we already had PR set */
