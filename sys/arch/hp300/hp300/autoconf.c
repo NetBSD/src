@@ -38,7 +38,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.2 1993/05/22 07:57:10 cgd Exp $
+ *	$Id: autoconf.c,v 1.3 1993/07/04 02:27:14 cgd Exp $
  */
 
 /*
@@ -1067,7 +1067,7 @@ setroot()
 }
 
 strcmp(s1, s2)
-	register char *s1, *s2;
+	const register char *s1, *s2;
 {
 	while (*s1 == *s2++)
 		if (*s1++=='\0')
