@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.26 2002/03/17 19:40:44 atatat Exp $	*/
+/*	$NetBSD: ofb.c,v 1.27 2002/06/24 21:08:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -41,6 +41,7 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pciio.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -174,6 +175,9 @@ ofbattach(parent, self, aux)
 			*(u_int32_t *)(dc->dc_paddr + i) = 0xffffffff;
 	}
 	sc->sc_dc = dc;
+
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_pcitag = pa->pa_tag;
 
 	/* XXX */
 	if (OF_getprop(node, "assigned-addresses", sc->sc_addrs,
@@ -347,6 +351,11 @@ ofb_ioctl(v, cmd, data, flag, p)
 		gm->gd_fbaddr = (caddr_t)dc->dc_paddr;
 		gm->gd_fbrowbytes = dc->dc_ri.ri_stride;
 		return 0;
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+		    cmd, data, flag, p));
 	}
 	return EPASSTHROUGH;
 }
