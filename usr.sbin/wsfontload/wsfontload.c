@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.6 2001/02/19 23:22:50 cgd Exp $ */
+/* $NetBSD: wsfontload.c,v 1.7 2001/09/04 17:59:04 drochner Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -73,6 +73,8 @@ static struct {
 	{"iso", WSDISPLAY_FONTENC_ISO},
 	{"ibm", WSDISPLAY_FONTENC_IBM},
 	{"pcvt", WSDISPLAY_FONTENC_PCVT},
+	{"iso7", WSDISPLAY_FONTENC_ISO7},
+	{"iso2", WSDISPLAY_FONTENC_ISO2},
 };
 
 static void
@@ -143,7 +145,7 @@ main(argc, argv)
 {
 	char *wsdev;
 	struct wsdisplay_font f;
-	int c, res, wsfd, ffd, verbose;
+	int c, res, wsfd, ffd, verbose = 0;
 	size_t len;
 	void *buf;
 
