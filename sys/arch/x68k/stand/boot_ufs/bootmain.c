@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.5 2003/04/09 12:57:14 itohy Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.6 2003/10/30 22:27:05 he Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -44,6 +44,7 @@
 #ifdef SCSI_ADHOC_BOOTPART
 #include <machine/disklabel.h>
 #endif
+#include <lib/libsa/stand.h>
 
 #include "boot_ufs.h"
 #include "readufs.h"
