@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.401 2000/11/08 22:41:58 eeh Exp $
+#	$NetBSD: files,v 1.402 2000/11/14 23:37:21 matt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -545,10 +545,10 @@ file	dev/usb/uhci.c			uhci	needs-flag
 device	ohci: usbus
 file	dev/usb/ohci.c			ohci	needs-flag
 
-# OHCI IEEE 1394 controller
-# (This needs to be here since it will have both PCI and CardBus attachments)
+# IEEE 1394 controllers
+# (These need to be here since it will have both PCI and CardBus attachments)
+device	fwlynx: fwbus
 device	fwohci: fwbus
-file	dev/ieee1394/fwohci.c		fwohci	needs-flag
 
 # legitimate pseudo-devices
 defpseudo vnd: disk
