@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.29 2001/11/08 05:24:52 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.30 2001/11/22 02:42:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.29 2001/11/08 05:24:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.30 2001/11/22 02:42:37 chs Exp $");
 
 #include "opt_quota.h"
 
@@ -247,7 +247,13 @@ out:
 			pgs[i]->flags |= PG_RELEASED;
 		}
 	}
-	uvm_page_unbusy(pgs, npages);
+	if (error) {
+		uvm_lock_pageq();
+		uvm_page_unbusy(pgs, npages);
+		uvm_unlock_pageq();
+	} else {
+		uvm_page_unbusy(pgs, npages);
+	}
 	simple_unlock(&uobj->vmobjlock);
 	return error;
 }
