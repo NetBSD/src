@@ -1,3 +1,5 @@
+/*	$NetBSD: pte.h,v 1.11 1998/02/06 21:58:05 thorpej Exp $	*/
+
 /*
  *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -125,7 +127,7 @@
  *    pmap to another.
  */
 
-#if defined(_KERNEL) && !defined(_LOCORE)
+#if !defined(_LOCORE)
 
 /*
  * here we define the data types for PDEs and PTEs
