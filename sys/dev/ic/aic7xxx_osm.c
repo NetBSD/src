@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.7 2003/04/21 19:59:48 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.8 2003/05/01 23:00:20 fvdl Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -105,8 +105,9 @@ ahc_attach(struct ahc_softc *ahc)
 			ahc->sc_child_b = config_found((void *)&ahc->sc_dev,
 			    &ahc->sc_channel_b, scsiprint);
 	} else {
-		ahc->sc_child = config_found((void *)&ahc->sc_dev,
-		    &ahc->sc_channel_b, scsiprint);
+		if (ahc->features & AHC_TWIN)
+			ahc->sc_child = config_found((void *)&ahc->sc_dev,
+			    &ahc->sc_channel_b, scsiprint);
 		ahc->sc_child_b = config_found((void *)&ahc->sc_dev,
 		    &ahc->sc_channel, scsiprint);
 	}
