@@ -1,4 +1,4 @@
-/* $NetBSD: elf2ecoff.c,v 1.2 1996/09/29 22:01:45 jonathan Exp $ */
+/* $NetBSD: elf2ecoff.c,v 1.3 1996/10/16 00:27:08 jonathan Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -38,12 +38,21 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <machine/elf.h>
+#include <sys/exec_elf.h>
+#include <sys/exec_aout.h>
 #include <stdio.h>
 #include <sys/exec_ecoff.h>
 #include <sys/errno.h>
 #include <string.h>
 #include <limits.h>
+
+
+/* Elf Program segment permissions, in program header flags field */
+
+#define PF_X            (1 << 0)        /* Segment is executable */
+#define PF_W            (1 << 1)        /* Segment is writable */
+#define PF_R            (1 << 2)        /* Segment is readable */
+#define PF_MASKPROC     0xF0000000      /* Processor-specific reserved bits */
 
 struct sect {
   unsigned long vaddr;
@@ -59,10 +68,10 @@ int *symTypeTable;
 
 main (int argc, char **argv, char **envp)
 {
-  struct ehdr ex;
-  struct phdr *ph;
-  struct shdr *sh;
-  struct sym *symtab;
+  Elf32_Ehdr ex;
+  Elf32_Phdr *ph;
+  Elf32_Shdr *sh;
+  Elf32_Sym *symtab;
   char *shstrtab;
   int strtabix, symtabix;
   int i, pad;
@@ -109,14 +118,14 @@ main (int argc, char **argv, char **envp)
     }
 
   /* Read the program headers... */
-  ph = (struct phdr *)saveRead (infile, ex.phoff,
-				ex.phcount * sizeof (struct phdr), "ph");
+  ph = (Elf32_Phdr *)saveRead (infile, ex.e_phoff,
+				ex.e_phnum * sizeof (Elf32_Phdr), "ph");
   /* Read the section headers... */
-  sh = (struct shdr *)saveRead (infile, ex.shoff,
-				ex.shcount * sizeof (struct shdr), "sh");
+  sh = (Elf32_Shdr *)saveRead (infile, ex.e_shoff,
+				ex.e_shnum * sizeof (Elf32_Shdr), "sh");
   /* Read in the section string table. */
-  shstrtab = saveRead (infile, sh [ex.shstrndx].offset,
-		       sh [ex.shstrndx].size, "shstrtab");
+  shstrtab = saveRead (infile, sh [ex.e_shstrndx].sh_offset,
+		       sh [ex.e_shstrndx].sh_size, "shstrtab");
 
   /* Figure out if we can cram the program header into an ECOFF
      header...  Basically, we can't handle anything but loadable
@@ -124,29 +133,29 @@ main (int argc, char **argv, char **envp)
      handle holes in the address space.  Segments may be out of order,
      so we sort them first. */
 
-  qsort (ph, ex.phcount, sizeof (struct phdr), phcmp);
+  qsort (ph, ex.e_phnum, sizeof (Elf32_Phdr), phcmp);
 
-  for (i = 0; i < ex.phcount; i++)
+  for (i = 0; i < ex.e_phnum; i++)
     {
       /* Section types we can ignore... */
-      if (ph [i].type == PT_NULL || ph [i].type == PT_NOTE ||
-	  ph [i].type == PT_PHDR || ph [i].type == PT_MIPS_REGINFO)
+      if (ph [i].p_type == Elf_pt_null || ph [i].p_type == Elf_pt_note ||
+	  ph [i].p_type == Elf_pt_phdr || ph [i].p_type == Elf_pt_mips_reginfo)
 	continue;
       /* Section types we can't handle... */
-      else if (ph [i].type != PT_LOAD)
+      else if (ph [i].p_type != Elf_pt_load)
         {
 	  fprintf (stderr, "Program header %d type %d can't be converted.\n");
 	  exit (1);
 	}
       /* Writable (data) segment? */
-      if (ph [i].flags & PF_W)
+      if (ph [i].p_flags & PF_W)
 	{
 	  struct sect ndata, nbss;
 
-	  ndata.vaddr = ph [i].vaddr;
-	  ndata.len = ph [i].filesz;
-	  nbss.vaddr = ph [i].vaddr + ph [i].filesz;
-	  nbss.len = ph [i].memsz - ph [i].filesz;
+	  ndata.vaddr = ph [i].p_vaddr;
+	  ndata.len = ph [i].p_filesz;
+	  nbss.vaddr = ph [i].p_vaddr + ph [i].p_filesz;
+	  nbss.len = ph [i].p_memsz - ph [i].p_filesz;
 
 	  combine (&data, &ndata, 0);
 	  combine (&bss, &nbss, 1);
@@ -155,14 +164,14 @@ main (int argc, char **argv, char **envp)
 	{
 	  struct sect ntxt;
 
-	  ntxt.vaddr = ph [i].vaddr;
-	  ntxt.len = ph [i].filesz;
+	  ntxt.vaddr = ph [i].p_vaddr;
+	  ntxt.len = ph [i].p_filesz;
 
 	  combine (&text, &ntxt);
 	}
       /* Remember the lowest segment start address. */
-      if (ph [i].vaddr < cur_vma)
-	cur_vma = ph [i].vaddr;
+      if (ph [i].p_vaddr < cur_vma)
+	cur_vma = ph [i].p_vaddr;
     }
 
   /* Sections must be in order to be converted... */
@@ -197,7 +206,7 @@ main (int argc, char **argv, char **envp)
   ep.a.tsize = text.len;
   ep.a.dsize = data.len;
   ep.a.bsize = bss.len;
-  ep.a.entry = ex.entry;
+  ep.a.entry = ex.e_entry;
   ep.a.text_start = text.vaddr;
   ep.a.data_start = data.vaddr;
   ep.a.bss_start = bss.vaddr;
@@ -291,15 +300,15 @@ main (int argc, char **argv, char **envp)
   /* Copy the loadable sections.   Zero-fill any gaps less than 64k;
      complain about any zero-filling, and die if we're asked to zero-fill
      more than 64k. */
-  for (i = 0; i < ex.phcount; i++)
+  for (i = 0; i < ex.e_phnum; i++)
     {
       /* Unprocessable sections were handled above, so just verify that
 	 the section can be loaded before copying. */
-      if (ph [i].type == PT_LOAD && ph [i].filesz)
+      if (ph [i].p_type == Elf_pt_load && ph [i].p_filesz)
 	{
-	  if (cur_vma != ph [i].vaddr)
+	  if (cur_vma != ph [i].p_vaddr)
 	    {
-	      unsigned long gap = ph [i].vaddr - cur_vma;
+	      unsigned long gap = ph [i].p_vaddr - cur_vma;
 	      char obuf [1024];
 	      if (gap > 65536)
 		{
@@ -322,9 +331,9 @@ main (int argc, char **argv, char **envp)
 		  gap -= count;
 		}
 	    }
-fprintf (stderr, "writing %d bytes...\n", ph [i].filesz);
-	  copy (outfile, infile, ph [i].offset, ph [i].filesz);
-	  cur_vma = ph [i].vaddr + ph [i].filesz;
+fprintf (stderr, "writing %d bytes...\n", ph [i].p_filesz);
+	  copy (outfile, infile, ph [i].p_offset, ph [i].p_filesz);
+	  cur_vma = ph [i].p_vaddr + ph [i].p_filesz;
 	}
     }
 
@@ -392,12 +401,13 @@ combine (base, new, pad)
     }
 }
 
+int
 phcmp (h1, h2)
-     struct phdr *h1, *h2;
+     Elf32_Phdr *h1, *h2;
 {
-  if (h1 -> vaddr > h2 -> vaddr)
+  if (h1 -> p_vaddr > h2 -> p_vaddr)
     return 1;
-  else if (h1 -> vaddr < h2 -> vaddr)
+  else if (h1 -> p_vaddr < h2 -> p_vaddr)
     return -1;
   else
     return 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: elf2aout.c,v 1.2 1996/09/29 22:01:44 jonathan Exp $ */
+/* $NetBSD: elf2aout.c,v 1.3 1996/10/16 00:27:05 jonathan Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -37,12 +37,21 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <machine/elf.h>
+#include <sys/exec_elf.h>
+#include <sys/exec_aout.h>
 #include <stdio.h>
 #include <a.out.h>
 #include <sys/errno.h>
 #include <string.h>
 #include <limits.h>
+
+
+/* Elf Program segment permissions, in program header flags field */
+
+#define PF_X            (1 << 0)        /* Segment is executable */
+#define PF_W            (1 << 1)        /* Segment is writable */
+#define PF_R            (1 << 2)        /* Segment is readable */
+#define PF_MASKPROC     0xF0000000      /* Processor-specific reserved bits */
 
 struct sect {
   unsigned long vaddr;
@@ -57,9 +66,9 @@ int *symTypeTable;
 
 main (int argc, char **argv, char **envp)
 {
-  struct ehdr ex;
-  struct phdr *ph;
-  struct shdr *sh;
+  Elf32_Ehdr ex;
+  Elf32_Phdr *ph;
+  Elf32_Shdr *sh;
   struct sym *symtab;
   char *shstrtab;
   int strtabix, symtabix;
@@ -106,30 +115,30 @@ main (int argc, char **argv, char **envp)
     }
 
   /* Read the program headers... */
-  ph = (struct phdr *)saveRead (infile, ex.phoff,
-				ex.phcount * sizeof (struct phdr), "ph");
+  ph = (Elf32_Phdr *)saveRead (infile, ex.e_phoff,
+				ex.e_phnum * sizeof (Elf32_Phdr), "ph");
   /* Read the section headers... */
-  sh = (struct shdr *)saveRead (infile, ex.shoff,
-				ex.shcount * sizeof (struct shdr), "sh");
+  sh = (Elf32_Shdr *)saveRead (infile, ex.e_shoff,
+				ex.e_shnum * sizeof (Elf32_Shdr), "sh");
   /* Read in the section string table. */
-  shstrtab = saveRead (infile, sh [ex.shstrndx].offset,
-		       sh [ex.shstrndx].size, "shstrtab");
+  shstrtab = saveRead (infile, sh [ex.e_shstrndx].sh_offset,
+		       sh [ex.e_shstrndx].sh_size, "shstrtab");
 
   /* Find space for a table matching ELF section indices to a.out symbol
      types. */
-  symTypeTable = (int *)malloc (ex.shcount * sizeof (int));
+  symTypeTable = (int *)malloc (ex.e_shnum * sizeof (int));
   if (!symTypeTable)
     {
       fprintf (stderr, "symTypeTable: can't allocate.\n");
       exit (1);
     }
-  memset (symTypeTable, 0, ex.shcount * sizeof (int));
+  memset (symTypeTable, 0, ex.e_shnum * sizeof (int));
 
   /* Look for the symbol table and string table...
      Also map section indices to symbol types for a.out */
-  for (i = 0; i < ex.shcount; i++)
+  for (i = 0; i < ex.e_shnum; i++)
     {
-      char *name = shstrtab + sh [i].name;
+      char *name = shstrtab + sh [i].sh_name;
       if (!strcmp (name, ".symtab"))
 	symtabix = i;
       else if (!strcmp (name, ".strtab"))
@@ -150,28 +159,28 @@ main (int argc, char **argv, char **envp)
      hoping that the loader will know where to load - a.out doesn't have
      an explicit load address.   Segments may be out of order, so we
      sort them first. */
-  qsort (ph, ex.phcount, sizeof (struct phdr), phcmp);
-  for (i = 0; i < ex.phcount; i++)
+  qsort (ph, ex.e_phnum, sizeof (Elf32_Phdr), phcmp);
+  for (i = 0; i < ex.e_phnum; i++)
     {
       /* Section types we can ignore... */
-      if (ph [i].type == PT_NULL || ph [i].type == PT_NOTE ||
-	  ph [i].type == PT_PHDR || ph [i].type == PT_MIPS_REGINFO)
+      if (ph [i].p_type == Elf_pt_null || ph [i].p_type == Elf_pt_note ||
+	  ph [i].p_type == Elf_pt_phdr || ph [i].p_type == Elf_pt_mips_reginfo)
 	continue;
       /* Section types we can't handle... */
-      else if (ph [i].type != PT_LOAD)
+      else if (ph [i].p_type != Elf_pt_load)
         {
 	  fprintf (stderr, "Program header %d type %d can't be converted.\n");
 	  exit (1);
 	}
       /* Writable (data) segment? */
-      if (ph [i].flags & PF_W)
+      if (ph [i].p_flags & PF_W)
 	{
 	  struct sect ndata, nbss;
 
-	  ndata.vaddr = ph [i].vaddr;
-	  ndata.len = ph [i].filesz;
-	  nbss.vaddr = ph [i].vaddr + ph [i].filesz;
-	  nbss.len = ph [i].memsz - ph [i].filesz;
+	  ndata.vaddr = ph [i].p_vaddr;
+	  ndata.len = ph [i].p_filesz;
+	  nbss.vaddr = ph [i].p_vaddr + ph [i].p_filesz;
+	  nbss.len = ph [i].p_memsz - ph [i].p_filesz;
 
 	  combine (&data, &ndata, 0);
 	  combine (&bss, &nbss, 1);
@@ -180,14 +189,14 @@ main (int argc, char **argv, char **envp)
 	{
 	  struct sect ntxt;
 
-	  ntxt.vaddr = ph [i].vaddr;
-	  ntxt.len = ph [i].filesz;
+	  ntxt.vaddr = ph [i].p_vaddr;
+	  ntxt.len = ph [i].p_filesz;
 
 	  combine (&text, &ntxt);
 	}
       /* Remember the lowest segment start address. */
-      if (ph [i].vaddr < cur_vma)
-	cur_vma = ph [i].vaddr;
+      if (ph [i].p_vaddr < cur_vma)
+	cur_vma = ph [i].p_vaddr;
     }
 
   /* Sections must be in order to be converted... */
@@ -221,10 +230,10 @@ main (int argc, char **argv, char **envp)
   aex.a_text = text.len;
   aex.a_data = data.len;
   aex.a_bss = bss.len;
-  aex.a_entry = ex.entry;
+  aex.a_entry = ex.e_entry;
   aex.a_syms = (sizeof (struct nlist) *
 		(symtabix != -1
-		 ? sh [symtabix].size / sizeof (struct sym) : 0));
+		 ? sh [symtabix].sh_size / sizeof (Elf32_Sym) : 0));
   aex.a_trsize = 0;
   aex.a_drsize = 0;
 
@@ -245,15 +254,15 @@ main (int argc, char **argv, char **envp)
   /* Copy the loadable sections.   Zero-fill any gaps less than 64k;
      complain about any zero-filling, and die if we're asked to zero-fill
      more than 64k. */
-  for (i = 0; i < ex.phcount; i++)
+  for (i = 0; i < ex.e_phnum; i++)
     {
       /* Unprocessable sections were handled above, so just verify that
 	 the section can be loaded before copying. */
-      if (ph [i].type == PT_LOAD && ph [i].filesz)
+      if (ph [i].p_type == Elf_pt_load && ph [i].p_filesz)
 	{
-	  if (cur_vma != ph [i].vaddr)
+	  if (cur_vma != ph [i].p_vaddr)
 	    {
-	      unsigned long gap = ph [i].vaddr - cur_vma;
+	      unsigned long gap = ph [i].p_vaddr - cur_vma;
 	      char obuf [1024];
 	      if (gap > 65536)
 		{
@@ -276,14 +285,15 @@ main (int argc, char **argv, char **envp)
 		  gap -= count;
 		}
 	    }
-	  copy (outfile, infile, ph [i].offset, ph [i].filesz);
-	  cur_vma = ph [i].vaddr + ph [i].filesz;
+	  copy (outfile, infile, ph [i].p_offset, ph [i].p_filesz);
+	  cur_vma = ph [i].p_vaddr + ph [i].p_filesz;
 	}
     }
 
   /* Copy and translate the symbol table... */
-  translate_syms (outfile, infile, sh [symtabix].offset, sh [symtabix].size,
-		  sh [strtabix].offset, sh [strtabix].size);
+  translate_syms (outfile, infile, 
+		  sh [symtabix].sh_offset, sh [symtabix].sh_size,
+		  sh [strtabix].sh_offset, sh [strtabix].sh_size);
 
   /* Looks like we won... */
   exit (0);
@@ -300,7 +310,7 @@ translate_syms (out, in, symoff, symsize, stroff, strsize)
      off_t stroff, strsize;
 {
 # define SYMS_PER_PASS	64
-  struct sym inbuf [64];
+  Elf32_Sym inbuf [64];
   struct nlist outbuf [64];
   int i, remaining, cur;
   char *oldstrings;
@@ -311,7 +321,7 @@ translate_syms (out, in, symoff, symsize, stroff, strsize)
   memset (outbuf, 0, sizeof outbuf);
 
   /* Find number of symbols to process... */
-  remaining = symsize / sizeof (struct sym);
+  remaining = symsize / sizeof (Elf32_Sym);
 
   /* Suck in the old string table... */
   oldstrings = saveRead (in, stroff, strsize, "string table");
@@ -343,8 +353,8 @@ translate_syms (out, in, symoff, symsize, stroff, strsize)
       if (cur > SYMS_PER_PASS)
 	cur = SYMS_PER_PASS;
       remaining -= cur;
-      if ((i = read (in, inbuf, cur * sizeof (struct sym)))
-	  != cur * sizeof (struct sym))
+      if ((i = read (in, inbuf, cur * sizeof (Elf32_Sym)))
+	  != cur * sizeof (Elf32_Sym))
 	{
 	  if (i < 0)
 	    perror ("translate_syms");
@@ -356,28 +366,33 @@ translate_syms (out, in, symoff, symsize, stroff, strsize)
       /* Do the translation... */
       for (i = 0; i < cur; i++)
 	{
+	  int binding, type;
+
 	  /* Copy the symbol into the new table, but prepend an underscore. */
 	  *nsp = '_';
-	  strcpy (nsp + 1, oldstrings + inbuf [i].name);
+	  strcpy (nsp + 1, oldstrings + inbuf [i].st_name);
 	  outbuf [i].n_un.n_strx = nsp - newstrings + 4;
 	  nsp += strlen (nsp) + 1;
 
+	  type = ELF_SYM_TYPE(inbuf[i].st_info);
+	  binding = ELF_SYM_BIND(inbuf[i].st_info);
+
 	  /* Convert ELF symbol type/section/etc info into a.out type info. */
-	  if (inbuf [i].type == STT_FILE)
+	  if (type == Elf_estt_file)
 	    outbuf [i].n_type = N_FN;
-	  else if (inbuf [i].shndx == SHN_UNDEF)
+	  else if (inbuf [i].st_shndx == Elf_eshn_undefined)
 	    outbuf [i].n_type = N_UNDF;
-	  else if (inbuf [i].shndx == SHN_ABS)
+	  else if (inbuf [i].st_shndx == Elf_eshn_absolute)
 	    outbuf [i].n_type = N_ABS;
-	  else if (inbuf [i].shndx == SHN_COMMON ||
-		 inbuf [i].shndx == SHN_MIPS_ACOMMON)
+	  else if (inbuf [i].st_shndx == Elf_eshn_common ||
+		 inbuf [i].st_shndx == Elf_eshn_mips_acommon)
 	    outbuf [i].n_type = N_COMM;
 	  else
-	    outbuf [i].n_type = symTypeTable [inbuf [i].shndx];
-	  if (inbuf [i].binding == STB_GLOBAL)
+	    outbuf [i].n_type = symTypeTable [inbuf [i].st_shndx];
+	  if (binding == Elf_estb_global)
 	    outbuf [i].n_type |= N_EXT;
 	  /* Symbol values in executables should be compatible. */
-	  outbuf [i].n_value = inbuf [i].value;
+	  outbuf [i].n_value = inbuf [i].st_value;
 	}
       /* Write out the symbols... */
       if ((i = write (out, outbuf, cur * sizeof (struct nlist)))
@@ -463,12 +478,13 @@ combine (base, new, pad)
     }
 }
 
+int
 phcmp (h1, h2)
-     struct phdr *h1, *h2;
+     Elf32_Phdr *h1, *h2;
 {
-  if (h1 -> vaddr > h2 -> vaddr)
+  if (h1 -> p_vaddr > h2 -> p_vaddr)
     return 1;
-  else if (h1 -> vaddr < h2 -> vaddr)
+  else if (h1 -> p_vaddr < h2 -> p_vaddr)
     return -1;
   else
     return 0;

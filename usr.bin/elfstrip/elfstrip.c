@@ -1,4 +1,4 @@
-/* $NetBSD: elfstrip.c,v 1.2 1996/09/29 22:01:47 jonathan Exp $ */
+/* $NetBSD: elfstrip.c,v 1.3 1996/10/16 00:27:10 jonathan Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -38,7 +38,9 @@
 #include <limits.h>
 #include <sys/types.h>
 #include <sys/errno.h>
-#include <machine/elf.h>
+/*#include <machine/elf.h>*/
+#include <sys/exec_elf.h>
+
 #include <a.out.h>
 
 struct sect {
@@ -48,32 +50,67 @@ struct sect {
 
 int phcmp ();
 
+void usage __P((void));
+int main __P((int argc, char *argv[]));
+
+
 void *saveRead (int file, off_t offset, int len, char *name);
 void placeWrite(int file, off_t offset, int len, char *name, void *data);
 extern int errno;
 
-int main (int argc, char **argv)
+int xflag = 0;
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-  struct ehdr ex;
-  struct phdr *ph;
-  int i;
-  int infile;
-  unsigned long lastp;
-  struct phdr **indt;
-  void *segment;
+	int i;
+	int ch;
 
-  /* Check args... */
-  if (argc != 2)
-    {
-      fprintf (stderr, "usage: elfstrip <elf executable>\n");
-      exit (1);
-    }
+	while ((ch = getopt(argc, argv, "dx")) != EOF)
+		switch(ch) {
+                case 'x':
+                        xflag = 1;
+                        /*FALLTHROUGH*/
+		case 'd':
+#ifdef notyet
+			sfcn = s_stab;
+#endif
+			break;
+		case '?':
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
 
-  /* Try the input file... */
-  if ((infile = open (argv [1], O_RDWR)) < 0)
+	/* Check args... */
+	if (argc < 1) {
+		usage();
+	}
+	while (argc > 0) {
+		elf32_strip(argv [0]);
+		 argc--; argv++;
+	}
+}
+
+int
+elf32_strip(filename)
+     const char *filename;
+{
+	Elf32_Ehdr ex;
+	Elf32_Phdr *ph;
+	int i;
+	int infile;
+	unsigned long lastp;
+	Elf32_Phdr **indt;
+	void *segment;
+
+  if ((infile = open (filename, O_RDWR)) < 0)
     {
       fprintf (stderr, "Can't open %s for read/write: %s\n",
-	       argv [1], strerror (errno));
+	       filename, strerror (errno));
       exit (1);
     }
 
@@ -87,78 +124,83 @@ int main (int argc, char **argv)
   if (i != sizeof ex)
     {
       fprintf (stderr, "ex: %s: %s.\n",
-	       argv [1], i ? strerror (errno) : "End of file reached");
+	       filename, i ? strerror (errno) : "End of file reached");
       exit (1);
     }
 
+  if (strncmp(ex.e_ident, Elf32_e_ident, sizeof(ex.e_ident)) != 0) {
+      fprintf (stderr, "strip: %s not  ELF format\n", filename);
+      return(0);
+  }
+
   /* Devalidate section headers */
-  ex.shoff = 0;
-  ex.shcount = 0;
-  ex.shsize = 0;
-  ex.shstrndx = 0;
+  ex.e_shoff = 0;
+  ex.e_shnum = 0;
+  ex.e_shentsize = 0;
+  ex.e_shstrndx = 0;
   placeWrite (infile, 0, sizeof ex, "ex", &ex);
 
 
   /* Read the program headers... */
   /*
   ** printf("program headers from file %x size %x\n",
-  **        ex.phoff, ex.phcount * sizeof (struct phdr));
+  **        ex.phoff, ex.phcount * sizeof (Elf32_Phdr));
   */
-  lastp = ex.phoff + ex.phcount * sizeof (struct phdr);
+  lastp = ex.e_phoff + ex.e_phnum * sizeof (Elf32_Phdr);
 
-  ph = (struct phdr *)saveRead (infile, ex.phoff,
-				ex.phcount * sizeof (struct phdr), "ph");
-  indt = (struct phdr **)malloc(ex.phcount * sizeof(struct phdr **));
-  for (i=0; i<ex.phcount; i++) {
+  ph = (Elf32_Phdr *)saveRead (infile, ex.e_phoff,
+				ex.e_phnum * sizeof(Elf32_Phdr), "ph");
+  indt = (Elf32_Phdr **)malloc(ex.e_phnum * sizeof(Elf32_Phdr **));
+  for (i=0; i<ex.e_phnum; i++) {
 	indt[i] = ph+i;
   }
 
-  qsort (indt, ex.phcount, sizeof (struct phdr **), phcmp);
+  qsort (indt, ex.e_phnum, sizeof (Elf32_Phdr **), phcmp);
 
-  for (i = 0; i < ex.phcount; i++)
+  for (i = 0; i < ex.e_phnum; i++)
     {
-      struct phdr *php = indt[i];
+      Elf32_Phdr *php = indt[i];
 
       /* Section types we can ignore... */
-      if (php->type == PT_NULL || php->type == PT_NOTE ||
-	  php->type == PT_PHDR || php->type == PT_MIPS_REGINFO)
+      if (php->p_type == Elf_pt_null || php->p_type == Elf_pt_note ||
+	  php->p_type == Elf_pt_phdr || php->p_type == Elf_pt_mips_reginfo)
       {
 	printf("segment type %ld ignored file %lx size %lx\n",
-		php->type, php->offset, php->filesz);
+		php->p_type, php->p_offset, php->p_filesz);
 	continue;
       }
       /* Section types we can't handle... */
-      else if (php->type != PT_LOAD)
+      else if (php->p_type != Elf_pt_load)
         {
 	  fprintf (stderr, "Program header %d type %ld can't be converted.\n",
-			php-ph, php->type);
+			php-ph, php->p_type);
 	  exit (1);
 	}
 
 	/*
 	** printf("segment %d load file %x size %x end %x\n",
 	**	php-ph,
-	**	php->offset, php->filesz, php->offset + php->filesz);
+	**	php->p_offset, php->p_filesz, php->p_offset + php->p_filesz);
 	*/
-	if ((php->offset - lastp) > 0x2000) {
+	if ((php->p_offset - lastp) > 0x2000) {
 		int pg;
 
-		pg = ((php->offset - lastp) / 0x2000);
+		pg = ((php->p_offset - lastp) / 0x2000);
 		pg *= 0x2000;
 
-  		segment = saveRead (infile, php->offset,
-					php->filesz, "segment");
-		php->offset -= pg;
-  		placeWrite (infile, php->offset,
-  					php->filesz, "segment", segment);
+  		segment = saveRead (infile, php->p_offset,
+					php->p_filesz, "segment");
+		php->p_offset -= pg;
+  		placeWrite (infile, php->p_offset,
+  					php->p_filesz, "segment", segment);
 		/*
 		** printf("Move segment %d shift %x to %x\n", 
-		**	php-ph, pg, php->offset);
+		**	php-ph, pg, php->p_offset);
 		*/
 	}
-	lastp = php->offset + php->filesz;
+	lastp = php->p_offset + php->p_filesz;
      }
-  placeWrite (infile, ex.phoff, ex.phcount * sizeof (struct phdr), "ph", ph);
+  placeWrite (infile, ex.e_phoff, ex.e_phnum * sizeof (Elf32_Phdr), "ph", ph);
   ftruncate(infile, lastp);
 
   /* Looks like we won... */
@@ -167,11 +209,11 @@ int main (int argc, char **argv)
 
 int
 phcmp (h1, h2)
-     struct phdr **h1, **h2;
+     Elf32_Phdr **h1, **h2;
 {
-  if ((*h1) -> offset > (*h2) -> offset)
+  if ((*h1) -> p_offset > (*h2) -> p_offset)
     return 1;
-  else if ((*h1) -> offset < (*h2) -> offset)
+  else if ((*h1) -> p_offset < (*h2) -> p_offset)
     return -1;
   else
     return 0;
@@ -219,4 +261,12 @@ placeWrite (int file, off_t offset, int len, char *name, void *data)
       fprintf (stderr, "%s: write: %s.\n", name, strerror (errno));
       exit (1);
     }
+}
+
+
+void
+usage()
+{
+	(void)fprintf(stderr, "usage: strip [-dx] file ...\n");
+	exit(1);
 }
