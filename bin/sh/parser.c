@@ -414,6 +414,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 				if (checkkwd = 2, readtoken() != TPIPE)
 					break;
 				app = &ap->narg.next;
+				readtoken();
 			}
 			ap->narg.next = NULL;
 			if (lasttoken != TRP)
