@@ -1,10 +1,10 @@
-/*	$NetBSD: ru_RU.KOI8-R.src,v 1.1 2001/01/22 17:48:21 itojun Exp $	*/
+/*	$NetBSD: ru_RU.KOI8-R.src,v 1.2 2001/03/26 19:56:37 tshiozak Exp $	*/
 
 /*
  * LOCALE_CTYPE for Russian koi8-r character set (RFC1489)
  */
 ENCODING	"NONE"
-VARIABLE        Russian koi8-r character set by ache@astral.msk.su
+VARIABLE        Russian CODESET=KOI8-R
 
 #
 # This is a comment

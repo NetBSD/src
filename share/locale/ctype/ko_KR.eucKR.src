@@ -1,4 +1,4 @@
-/*	$NetBSD: ko_KR.eucKR.src,v 1.1 2000/12/30 02:33:16 itojun Exp $	*/
+/*	$NetBSD: ko_KR.eucKR.src,v 1.2 2001/03/26 19:56:37 tshiozak Exp $	*/
 
 /*
  * Korean LC_CTYPE definitions using EUC-KR character sets
@@ -23,7 +23,7 @@ ENCODING     "EUC"
 /* We have only codeset 1 and 2, so others are dummy.
    But it must be defined to work in 2.2 xpg4 locale routine...
  */
-VARIABLE     1 0x0000 2 0x8080 2 0x0080 3 0x8000 0x8080
+VARIABLE     1 0x0000 2 0x8080 2 0x0080 3 0x8000 0x8080 CODESET=eucKR
 
 /*
  * Code Set 1, US-ASCII equivalent
