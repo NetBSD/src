@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.34 2002/07/22 15:44:14 lukem Exp $
+.\"	$NetBSD: xfer,v 1.35 2002/09/01 16:44:27 nsmrtks Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -452,6 +452,13 @@ Floppy disks are relatively unreliable media and cause some warning messages
 to report access errors, most of which are corrected and can be ignored.
 With the latter installation system the floppy disk is not used once the
 system has booted off and can be removed from the drive.
+.Pp
+.(Note
+The `floppy-root' installation system is currently broken,
+thus you cannot install
+.Nx*M
+on a machine with less than 5MB of memory.
+.Note)
 .Pp
 .\} \" \n[x68k]
 .
