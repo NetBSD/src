@@ -1,4 +1,4 @@
-/*	$NetBSD: rrenum.c,v 1.10 2002/07/10 21:11:44 itojun Exp $	*/
+/*	$NetBSD: rrenum.c,v 1.11 2003/10/21 03:01:44 fvdl Exp $	*/
 /*	$KAME: rrenum.c,v 1.10 2001/01/21 15:32:16 itojun Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ do_pco(struct icmp6_router_renum *rr, int len, struct rr_pco_match *rpm)
 	int ifindex = 0;
 	struct in6_rrenumreq irr;
 
-	if ((rr_pco_check(len, rpm) != NULL))
+	if ((rr_pco_check(len, rpm) != 0))
 		return 1;
 
 	if (s == -1 && (s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
