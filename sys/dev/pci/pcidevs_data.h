@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.87 1998/09/18 10:51:16 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.88 1998/09/22 23:00:45 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.81 1998/09/18 10:49:11 drochner Exp 
+ *	NetBSD: pcidevs,v 1.82 1998/09/22 22:59:02 mark Exp 
  */
 
 /*
@@ -190,10 +190,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "M1461 Host-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1531,
+	    0,
+	    "Acer Labs",
+	    "M1531 Host-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1541,
 	    0,
 	    "Acer Labs",
-	    "M1543 Host-PCI Bridge",
+	    "M1541 Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1543,
@@ -644,6 +650,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cirrus Logic",
 	    "CL-GD7541",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_CD4400,
+	    0,
+	    "Cirrus Logic",
+	    "CL-CD4400 Communications Controller",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4610,
+	    0,
+	    "Cirrus Logic",
+	    "CS4610 SoundFusion Audio Accelerator",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4280,
+	    0,
+	    "Cirrus Logic",
+	    "CS4280 CrystalClear Audio Interface",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640,

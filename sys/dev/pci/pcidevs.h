@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.88 1998/09/18 10:51:15 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.89 1998/09/22 23:00:44 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.81 1998/09/18 10:49:11 drochner Exp 
+ *	NetBSD: pcidevs,v 1.82 1998/09/22 22:59:02 mark Exp 
  */
 
 /*
@@ -567,7 +567,8 @@
 #define	PCI_PRODUCT_ALI_M1449	0x1449		/* M1449 PCI-ISA Bridge */
 #define	PCI_PRODUCT_ALI_M1451	0x1451		/* M1451 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M1461	0x1461		/* M1461 Host-PCI Bridge */
-#define	PCI_PRODUCT_ALI_M1541	0x1541		/* M1543 Host-PCI Bridge */
+#define	PCI_PRODUCT_ALI_M1531	0x1531		/* M1531 Host-PCI Bridge */
+#define	PCI_PRODUCT_ALI_M1541	0x1541		/* M1541 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M1543	0x1533		/* M1543 PCI-ISA Bridge */
 #define	PCI_PRODUCT_ALI_M4803	0x5215		/* M4803 */
 #define	PCI_PRODUCT_ALI_M5229	0x5229		/* M5229 UDMA IDE Controller */
@@ -676,6 +677,9 @@
 #define	PCI_PRODUCT_CIRRUS_CL_GD7542	0x1200		/* CL-GD7542 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7543	0x1202		/* CL-GD7543 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7541	0x1204		/* CL-GD7541 */
+#define	PCI_PRODUCT_CIRRUS_CL_CD4400	0x4400		/* CL-CD4400 Communications Controller */
+#define	PCI_PRODUCT_CIRRUS_CS4610	0x6001		/* CS4610 SoundFusion Audio Accelerator */
+#define	PCI_PRODUCT_CIRRUS_CS4280	0x6003		/* CS4280 CrystalClear Audio Interface */
 
 /* CMD Technology products -- info gleaned from their web site */
 #define	PCI_PRODUCT_CMDTECH_640	0x0640		/* PCI0640 */
