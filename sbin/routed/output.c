@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.20 2001/03/10 23:52:45 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.21 2001/11/02 05:30:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: output.c,v 1.20 2001/03/10 23:52:45 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.21 2001/11/02 05:30:56 lukem Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -104,7 +104,7 @@ output(enum output_type type,
        struct rip *buf,
        int size)			/* this many bytes */
 {
-	struct sockaddr_in sin;
+	struct sockaddr_in osin;
 	int flags;
 	const char *msg;
 	int res;
@@ -112,12 +112,12 @@ output(enum output_type type,
 	int soc;
 	int serrno;
 
-	sin = *dst;
-	if (sin.sin_port == 0)
-		sin.sin_port = htons(RIP_PORT);
+	osin = *dst;
+	if (osin.sin_port == 0)
+		osin.sin_port = htons(RIP_PORT);
 #ifdef _HAVE_SIN_LEN
-	if (sin.sin_len == 0)
-		sin.sin_len = sizeof(sin);
+	if (osin.sin_len == 0)
+		osin.sin_len = sizeof(osin);
 #endif
 
 	soc = rip_sock;
@@ -186,7 +186,7 @@ output(enum output_type type,
 				}
 				rip_sock_mcast = ifp;
 			}
-			sin.sin_addr.s_addr = htonl(INADDR_RIP_GROUP);
+			osin.sin_addr.s_addr = htonl(INADDR_RIP_GROUP);
 		}
 		break;
 
@@ -199,18 +199,18 @@ output(enum output_type type,
 		return -1;
 	}
 
-	trace_rip(msg, "to", &sin, ifp, buf, size);
+	trace_rip(msg, "to", &osin, ifp, buf, size);
 
 	res = sendto(soc, buf, size, flags,
-		     (struct sockaddr *)&sin, sizeof(sin));
+		     (struct sockaddr *)&osin, sizeof(osin));
 	if (res < 0
 	    && (ifp == 0 || !(ifp->int_state & IS_BROKE))) {
 		serrno = errno;
 		msglog("%s sendto(%s%s%s.%d): %s", msg,
 		       ifp != 0 ? ifp->int_name : "",
 		       ifp != 0 ? ", " : "",
-		       inet_ntoa(sin.sin_addr),
-		       ntohs(sin.sin_port),
+		       inet_ntoa(osin.sin_addr),
+		       ntohs(osin.sin_port),
 		       strerror(errno));
 		errno = serrno;
 	}
