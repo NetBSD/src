@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.12 2002/09/04 14:37:53 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.13 2002/09/10 12:27:21 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -128,6 +128,15 @@
  * And there you have it. Exceptions from hell.
  */
 
+#define	CHECK_CRITICAL(base)						       \
+	pta/l	50f, tr0		/* Assume critical section is free */ ;\
+	ld.q	base, ES(ES_CRITICAL), r0 /* Fetch owner */		      ;\
+	beq/l	r0, r63, tr0		/* Jump if it's free */		      ;\
+	pta/l	Lsh5_critical_fault, tr0				      ;\
+	blink	tr0, r0			/* Otherwise, we're toast. */	      ;\
+50:
+
+
 /*
  * The following three macros allow the _EXCEPTION_*, _INTR_FRAME_*
  * and _TRAP_FRAME_* macros to work with the two different exception
@@ -144,17 +153,16 @@
  * DO NOT add any more instructions without first checking there is space
  * for them in the exception handlers.
  */
-#define	_EXCEPTION_ENTRY(sz)						       \
+#define	_EXCEPTION_ENTRY(sz,id)						       \
 	getcon	usr, r24		/* Stash USR somewhere safe for now */;\
 	putcon	r24, kcr1						      ;\
 	getcon	kcr0, r24						      ;\
 	st.q	r24, ES(ES_R0), r0	/* Save r0 and tr0 temporarily */     ;\
 	gettr	tr0, r0							      ;\
 	st.q	r24, ES(ES_TR0), r0					      ;\
-	pta/u	Lsh5_critical_fault, tr0				      ;\
-	ld.q	r24, ES(ES_CRITICAL), r0				      ;\
-	bne/u	r0, r63, tr0						      ;\
-	st.q	r24, ES(ES_CRITICAL), r24				      ;\
+	CHECK_CRITICAL(r24)						      ;\
+	movi	id, r0			/* Identify who owns critical sect */ ;\
+	st.q	r24, ES(ES_CRITICAL), r0				      ;\
 	st.q	r24, ES(ES_R1), r1					      ;\
 	st.q	r24, ES(ES_R2), r2					      ;\
 	st.q	r24, ES(ES_R15), r15					      ;\
@@ -181,11 +189,13 @@
 	movi	sz, r0							      ;\
 	sub	r15, r0, r15		/* Make space for trapframe */	      ;\
 	getcon	sr, r1			/* Fetch current status register */   ;\
-	LDC32(SH5_CONREG_SR_BL, r0)	/* Unblock exceptions. This allows */ ;\
-	andc	r1, r0, r1		/* us to take a TLB miss exception */ ;\
-	ori	r1, SH5_CONREG_SR_IMASK_ALL, r0 /* But don't allow IRQs */    ;\
-	or	r24, r63, r2		/* Drop use of r24 now */	      ;\
+	ori	r1, SH5_CONREG_SR_IMASK_ALL, r0				      ;\
+	putcon	r0, sr							      ;\
+	LDC32(SH5_CONREG_SR_BL, r2)	/* Unblock exceptions. This allows */ ;\
+	andc	r0, r2, r0		/* us to take a TLB miss exception */ ;\
+	andc	r1, r2, r1						      ;\
 	putcon	r0, sr			/* Now safe to touch kernel stack */  ;\
+	or	r24, r63, r2		/* Drop use of r24 now */	      ;\
 	ld.q	r2, ES(ES_R0), r0					      ;\
 	st.q	r15, IFO(IF_R0,sz), r0	/* Save original r0 */		      ;\
 	ld.q	r2, ES(ES_SSR), r0					      ;\
@@ -210,12 +220,14 @@
  * Note that we can't block synchronous exceptions here in case touching
  * the kernel stack causes a DLTB miss.
  */
-#define	_EXCEPTION_EXIT(sz)						       \
+#define	_EXCEPTION_EXIT(sz,id)						       \
 	getcon	sr, r0							      ;\
 	ori	r0, SH5_CONREG_SR_IMASK_ALL, r2 /* No IRQs please */	      ;\
 	putcon	r2, sr							      ;\
 	getcon	kcr0, r1						      ;\
-	st.q	r1, ES(ES_CRITICAL), r1	/* Entering critical section */	      ;\
+	CHECK_CRITICAL(r1)						      ;\
+	movi	(id) | CRIT_EXIT, r0					      ;\
+	st.q	r1, ES(ES_CRITICAL), r0	/* Entering critical section */	      ;\
 	ld.q	r15, SFO(SF_SSR,sz), r0					      ;\
 	LDC32(SH5_CONREG_SR_ASID_MASK << SH5_CONREG_SR_ASID_SHIFT, r24)	      ;\
 	and	r2, r24, r2		/* Get current ASID into r2 */	      ;\
@@ -464,46 +476,11 @@
 	.balign 0x100
 
 GLOBAL(sh5_vector_table)
-
-/******************************************************************************
- * Reset/Panic Exception Vector.
- *
- * VBR Offset: 0x0
- *     Length: 0x100
- */
-Lsh5_vector_panic:
-	getcon	usr, r24		/* Stash USR somewhere safe for now */
-	putcon	r15, kcr1
-	getcon	kcr0, r15
-	LDPTR	r15, CI_PANICSTKPHYS, r15	/* Get on panic stack */
-	st.q	r15, IFO(IF_R0,SZ_TRAPFRAME), r0	/* Save r0 */
-	st.q	r15, IFO(IF_R1,SZ_TRAPFRAME), r1	/* Save r1 */
-	st.q	r15, IFO(IF_R2,SZ_TRAPFRAME), r2	/* Save r2 */
-	getcon	kcr1, r0
-	st.q	r15, IFO(IF_R15,SZ_TRAPFRAME), r0	/* Save r15 */
-	gettr	tr0, r0
-	st.q	r15, IFO(IF_TR0,SZ_TRAPFRAME), r0	/* Save tr0 */
-	getcon	ssr, r0
-	st.q	r15, SFO(SF_SSR,SZ_TRAPFRAME), r0	/* Save SSR */
-	getcon	spc, r0
-	st.q	r15, SFO(SF_SPC,SZ_TRAPFRAME), r0	/* Save SPC */
-	st.q	r15, SFO(SF_USR,SZ_TRAPFRAME), r24	/* Save USR */
-	getcon	expevt, r0
-	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0	/* Save EXPEVT */
-	getcon	intevt, r0
-	st.q	r15, SFO(SF_INTEVT, SZ_TRAPFRAME), r0	/* Save INTEVT */
-	getcon	tea, r0
-	st.q	r15, SFO(SF_TEA, SZ_TRAPFRAME), r0	/* Save TEA */
-	getcon	tra, r0
-	st.q	r15, SFO(SF_TRA, SZ_TRAPFRAME), r0	/* Save TRA */
-	pta/l	Lsh5_event_panic, tr0
-	blink	tr0, r63
-
-	.balign	0x100
+	.space	(0x100 - (. - _C_LABEL(sh5_vector_table)))
 
 
 /******************************************************************************
- * Non-TLB Miss/Debug Synchronous Exception Handler
+ * Non-TLB Miss Synchronous Exception Handler
  *
  * VBR Offset: 0x100
  *     Length: 0x100
@@ -511,34 +488,16 @@ Lsh5_vector_panic:
  * XXX: This handler very nearly fills the 0x100 byte exception slot :XXX
  */
 Lsh5_vector_general:
-	_EXCEPTION_ENTRY(SZ_TRAPFRAME)
+	_EXCEPTION_ENTRY(SZ_TRAPFRAME, CRIT_SYNC_EXCEPTION)
 	pta/l	Lsh5_event_sync, tr0
 	blink	tr0, r63
+	nop
+	nop
+	nop
+	nop
+	nop
 
-	.balign 0x100
-
-
-/******************************************************************************
- * Debug Interrupt Handler.
- *
- * VBR Offset: 0x200
- *     Length: 0x200
- *
- * XXX: This isn't actually used...
- */
-Lsh5_vector_debugint:
-	_EXCEPTION_ENTRY(SZ_INTRFRAME)
-	ld.q	r2, ES(ES_INTEVT), r0	/* Fetch interrupt vector */
-	st.q	r15, SFO(SF_INTEVT, SZ_INTRFRAME), r0 /* Save in stateframe */
-	st.q	r2, ES(ES_CRITICAL), r63 /* Left the critical section */
-	ld.l	r2, CI_INTR_DEPTH, r0	/* Update interrupt nesting level */
-	addi	r0, 1, r0
-	st.l	r2, CI_INTR_DEPTH, r0
-	putcon	r1, sr			/* Can safely take interrupts now */
-	pta/l	Lsh5_event_interrupt, tr0
-	blink	tr0, r63
-
-	.balign 0x200
+	.space	(0x300 - (. - Lsh5_vector_general))
 
 
 /******************************************************************************
@@ -689,8 +648,13 @@ Ltlbmiss_updaterm:
 	putcon	r24, usr
 	synco
 	rte				/* #174: Return to previous context */
+	nop
+	nop
+	nop
+	nop
+	nop
 
-	.balign 0x200
+	.space	(0x200 - (. - Lsh5_vector_tlbmiss))
 
 
 /******************************************************************************
@@ -702,7 +666,7 @@ Ltlbmiss_updaterm:
  * Asynchronous Exception Handler (Hardware interrupts to you and me)
  */
 Lsh5_vector_interrupt:
-	_EXCEPTION_ENTRY(SZ_INTRFRAME)
+	_EXCEPTION_ENTRY(SZ_INTRFRAME, CRIT_ASYNC_EXCEPTION)
 	ld.q	r2, ES(ES_INTEVT), r0	/* Fetch interrupt vector */
 	st.q	r15, SFO(SF_INTEVT, SZ_INTRFRAME), r0 /* Save in stateframe */
 	st.q	r2, ES(ES_CRITICAL), r63 /* Left the critical section */
@@ -713,40 +677,9 @@ Lsh5_vector_interrupt:
 	pta/l	Lsh5_event_interrupt, tr0
 	blink	tr0, r63
 
-	.balign 0x100
+	.balign 0x10
 
-/*========================== End of Vector Table =============================*/
-
-
-/******************************************************************************
- * Continuation of Panic Event.
- *
- * Save the remainder of the machine state, re-enable the MMU and head off
- * into C code to report the problem on the console (if possible), never
- * to return.
- */
-Lsh5_event_panic:
-	_INTR_FRAME_SAVE(SZ_TRAPFRAME)
-	_TRAP_FRAME_SAVE(SZ_TRAPFRAME)
-	getcon	pssr, r4
-	getcon	pspc, r5
-	LEAF(1f, r0)
-	putcon	r0, spc
-	LDUC32(SH5_CONREG_SR_BL|SH5_CONREG_SR_MD|SH5_CONREG_SR_MMU, r0)
-	putcon	r0, ssr
-	getcon	kcr0, r2
-	LEA(_C_LABEL(sh5_panic_stack), r15)
-	movi	(USPACE - SZ_TRAPFRAME), r0
-	add	r15, r0, r15
-	synco
-	rte
-1:	LEAF(_C_LABEL(panic_trap), r0)
-	ptabs/l	r0, tr0
-	or	r15, r63, r3
-	blink	tr0, r63
-	/*NOTREACHED*/
-
-	.comm	_C_LABEL(sh5_panic_stack),USPACE,16
+/*======================== End of VBR Vector Table ===========================*/
 
 
 /******************************************************************************
@@ -850,7 +783,7 @@ Ltrapexit:
 #endif
 	_TRAP_FRAME_RESTORE(SZ_TRAPFRAME)
 	_INTR_FRAME_RESTORE(SZ_TRAPFRAME)
-	_EXCEPTION_EXIT(SZ_TRAPFRAME)
+	_EXCEPTION_EXIT(SZ_TRAPFRAME, CRIT_SYNC_EXCEPTION)
 	/* NOTREACHED */
 
 /******************************************************************************
@@ -941,7 +874,7 @@ Lsh5_event_interrupt:
 
 Lintrexit:
 	_INTR_FRAME_RESTORE(SZ_INTRFRAME)
-	_EXCEPTION_EXIT(SZ_INTRFRAME)
+	_EXCEPTION_EXIT(SZ_INTRFRAME, CRIT_ASYNC_EXCEPTION)
 	/* NOTREACHED */
 
 
@@ -1202,7 +1135,7 @@ Ltlbmiss_dotrap:
 	 * because that would trash the contents of tr0 ...
 	 */
 
-	_EXCEPTION_ENTRY(SZ_TRAPFRAME)
+	_EXCEPTION_ENTRY(SZ_TRAPFRAME, CRIT_TLBMISS_TRAP)
 
 	/* Handle it using the normal exception code. */
 
@@ -1227,9 +1160,12 @@ Ltlbmiss_dotrap:
  * saved. R0 is likely to be lost, and USR is definately lost..
  */
 Lsh5_critical_fault:
+	getcon	kcr0, r24
+	st.q	r24, ES(ES_R1), r1	/* We need another register */
+	or	r0, r63, r1		/* r1 == where we just came from */
 	putcon	r15, kcr1		/* Save original (faulty?) stack ptr */
 	LEA(_C_LABEL(sh5_panic_stack), r15)
-	movi	USPACE - SZ_TRAPFRAME, r0
+	movi	(USPACE - SZ_TRAPFRAME), r0
 	add	r15, r0, r15
 	getcon	expevt, r0
 	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0
@@ -1245,7 +1181,8 @@ Lsh5_critical_fault:
 	st.q	r15, SFO(SF_SSR, SZ_TRAPFRAME), r0
 	ld.q	r24, ES(ES_R0), r0
 	st.q	r15, IFO(IF_R0, SZ_TRAPFRAME), r0
-	st.q	r15, IFO(IF_R1, SZ_TRAPFRAME), r1
+	ld.q	r24, ES(ES_R1), r0
+	st.q	r15, IFO(IF_R1, SZ_TRAPFRAME), r0
 	st.q	r15, IFO(IF_R2, SZ_TRAPFRAME), r2
 	getcon	kcr1, r0
 	st.q	r15, IFO(IF_R15, SZ_TRAPFRAME), r0
@@ -1255,12 +1192,32 @@ Lsh5_critical_fault:
 	_TRAP_FRAME_SAVE(SZ_TRAPFRAME)
 
 	/*
+	 * Unblock exceptions.
+	 * We need the TLB miss handler to be available so device
+	 * registers are accessable (think console output).
+	 */
+	getcon	sr, r0
+	ori	r0, SH5_CONREG_SR_IMASK_ALL, r0
+	putcon	r0, sr
+	movi	SH5_CONREG_SR_IMASK_ALL, r0
+	putcon	r0, sr
+
+	/*
+	 * Fetch the ID of the current owner of the critical section, and
+	 * clear the flag so that we may take further exceptions in the
+	 * debugger.
+	 */
+	ld.q	r24, ES(ES_CRITICAL), r5
+	st.q	r24, ES(ES_CRITICAL), r63
+
+	/*
 	 * Call panic_critical_fault(trapframe, exc_scratch_frame)
 	 */
 	LEAF(_C_LABEL(panic_critical_fault), r0)
 	ptabs/l	r0, tr0
-	or	r15, r63, r2
-	or	r24, r63, r3
+	or	r15, r63, r2	/* Pointer to trap frame */
+	addi	r24, CI_ESCRATCH, r3 /* Pointer to scratch frame */
+	or	r1, r63, r4	/* Where the error was detected */
 	blink	tr0, r63
 	/*NOTREACHED*/
 
@@ -1365,18 +1322,19 @@ ENTRY_NOPROFILE(proc_trampoline)
 ENTRY(sh5_setasid)
 	getcon	sr, r1
 	LDC32(SH5_CONREG_SR_ASID_MASK << SH5_CONREG_SR_ASID_SHIFT, r0)
-	shlli	r2, SH5_CONREG_SR_ASID_SHIFT, r2
-	ori	r1, SH5_CONREG_SR_IMASK_ALL, r3
-	and	r2, r0, r2
-	andc	r1, r0, r1
+	shlli	r2, SH5_CONREG_SR_ASID_SHIFT, r2 /* shift "asid" up */
+	LDC32(SH5_CONREG_SR_BL | SH5_CONREG_SR_IMASK_ALL, r3)
+	or	r1, r3, r3		/* SR.BL=1, IMASK=0xf */
+	and	r2, r0, r2		/* keep only valid asid bits */
+	andc	r1, r0, r1		/* Clear current asid bits */
 	putcon	r3, sr			/* Disable interrupts */
-	or	r1, r2, r1
-	pta/l	1f, tr0
+	or	r1, r2, r1		/* r1 == required SR */
+	pta/u	1f, tr0
 	putcon	r1, ssr			/* Desired status register */
 	gettr	tr0, r0
-	ptabs/l	r18, tr1
 	putcon	r0, spc			/* Continuation point */
 	synci
 	synco
 	rte
-1:	blink	tr1, r63
+1:	ptabs/l	r18, tr0
+	blink	tr0, r63
