@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.9 2001/07/26 14:29:09 bjh21 Exp $
+.\" $NetBSD: ioctl.9,v 1.10 2001/09/10 23:36:57 wiz Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -162,7 +162,7 @@ to it or sizeof(struct foo)
 In order for the new ioctl to be known to the system it is installed
 in either <sys/ioctl.h> or one of the files that are reached from
 <sys/ioctl.h>.
-.Sh EXAMPLE
+.Sh EXAMPLES
 
    #define FOOIOCTL	_IOWR('i',23,int)
 
