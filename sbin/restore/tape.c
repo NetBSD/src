@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.41 2000/05/23 02:27:33 enami Exp $	*/
+/*	$NetBSD: tape.c,v 1.42 2000/07/07 13:24:33 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.41 2000/05/23 02:27:33 enami Exp $");
+__RCSID("$NetBSD: tape.c,v 1.42 2000/07/07 13:24:33 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -573,6 +573,7 @@ extractfile(name)
 			(void) lutimes(name, timep);
 			(void) lchown(name, uid, gid);
 			(void) lchmod(name, mode);
+			(void) lchflags(name, flags);
 			return (GOOD);
 		}
 		return (FAIL);
