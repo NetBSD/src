@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isapnp.c,v 1.5 1999/03/22 10:00:10 mycroft Exp $	*/
+/*	$NetBSD: ess_isapnp.c,v 1.6 1999/06/18 20:25:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -71,7 +71,7 @@ struct cfattach ess_isapnp_ca = {
  */
 
 /*
- * Probe for the soundblaster hardware.
+ * Probe for the ess hardware.
  */
 int
 ess_isapnp_match(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.4 1999/03/18 20:57:11 mycroft Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.5 1999/06/18 20:25:23 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ ess_isa_probe(parent, match, aux)
 		DPRINTF(("ess_isa_probe succeeded (score %d)\n", ret));
 		ia->ia_iosize = ESS_NPORT;
 	} else
-		DPRINTF(("ess_isa_probe failed]n"));
+		DPRINTF(("ess_isa_probe failed\n"));
 		
 	return ret;
 }
