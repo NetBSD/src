@@ -1,4 +1,4 @@
-.\"	$NetBSD: semget.2,v 1.10 2001/09/16 01:39:02 wiz Exp $
+.\"	$NetBSD: semget.2,v 1.11 2001/09/16 02:13:31 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -58,7 +58,7 @@ or
 does not have a semaphore set associated with it and the
 .Dv IPC_CREAT
 bit is set in
-.Fa semflg.
+.Fa semflg .
 .Pp
 If a new set of semaphores is created, the data structure associated with it
 (the
@@ -102,7 +102,7 @@ is set to reflect the error.
 .Bl -tag -width Er
 .It Bq Er EACCES
 The caller has no permission to access a semaphore set already associated with
-.Fa key.
+.Fa key .
 .It Bq Er EEXIST
 Both
 .Dv IPC_CREAT
@@ -134,9 +134,9 @@ and no semaphore set associated with
 was found.
 .El
 .Sh SEE ALSO
-.Xr ftok 3 ,
 .Xr semctl 2 ,
-.Xr semop 2
+.Xr semop 2 ,
+.Xr ftok 3
 .Sh STANDARDS
 The
 .Nm

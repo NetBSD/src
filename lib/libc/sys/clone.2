@@ -1,4 +1,4 @@
-.\"	$NetBSD: clone.2,v 1.4 2001/09/16 01:39:00 wiz Exp $
+.\"	$NetBSD: clone.2,v 1.5 2001/09/16 02:13:27 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -138,18 +138,27 @@ is not intended to be used for new native
 applications.  It is provided as a means to port software
 originally written for the Linux operating system to
 .Nx .
-.Sh RETURN VALUES and ERRORS
+.Sh RETURN VALUES
+Same as for
+.Xr fork 2 .
+.Sh ERRORS
 Same as for
 .Xr fork 2 .
 .Sh SEE ALSO
 .Xr chdir 2 ,
 .Xr chroot 2 ,
 .Xr fork 2 ,
-.Xr vfork 2 ,
 .Xr sigaction 2 ,
 .Xr sigprocmask 2 ,
 .Xr umask 2 ,
+.Xr vfork 2 ,
 .Xr wait 2
+.Sh HISTORY
+The
+.Fn clone
+function call appeared in
+.Nx 1.6 .
+It is compatible with the Linux function call of the same name.
 .Sh BUGS
 The
 .Nx
@@ -166,9 +175,3 @@ implementation of
 does not implement the
 .Dv CLONE_PTRACE
 option that is present in the Linux implementation.
-.Sh HISTORY
-The
-.Fn clone
-function call appeared in
-.Nx 1.6 .
-It is compatible with the Linux function call of the same name.

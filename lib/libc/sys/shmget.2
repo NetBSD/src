@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmget.2,v 1.12 2001/09/16 01:39:02 wiz Exp $
+.\"	$NetBSD: shmget.2,v 1.13 2001/09/16 02:13:31 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -76,7 +76,7 @@ or
 does not have a shared memory segment identifier associated with it, and the
 .Dv IPC_CREAT
 bit is set in
-.Fa shmflg.
+.Fa shmflg .
 .Pp
 If a new shared memory segment is created, the data structure
 associated with it (the
@@ -150,10 +150,10 @@ There is not enough memory left to create a shared memory segment of the
 requested size.
 .El
 .Sh SEE ALSO
-.Xr ftok 3 ,
 .Xr mmap 2 ,
 .Xr shmat 2 ,
-.Xr shmctl 2
+.Xr shmctl 2 ,
+.Xr ftok 3
 .Sh STANDARDS
 The
 .Nm

@@ -1,4 +1,4 @@
-.\"	$NetBSD: poll.2,v 1.9 2001/04/25 02:19:48 simonb Exp $
+.\"	$NetBSD: poll.2,v 1.10 2001/09/16 02:13:30 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -180,6 +180,11 @@ The specified time limit is negative.
 .Xr select 2 ,
 .Xr send 2 ,
 .Xr write 2
+.Sh HISTORY
+The
+.Fn poll
+function call appeared in
+.At V.3 .
 .Sh BUGS
 The distinction between some of the fields in the
 .Fa events
@@ -187,8 +192,3 @@ and
 .Fa revents
 bitmasks is really not useful without STREAMS.  The fields are
 defined for compatibility with existing software.
-.Sh HISTORY
-The
-.Fn poll
-function call appeared in
-.At V.3 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: setreuid.2,v 1.15 2001/09/16 01:39:02 wiz Exp $
+.\"	$NetBSD: setreuid.2,v 1.16 2001/09/16 02:13:31 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,7 +110,7 @@ IDs in set-user-ID programs to temporarily relinquish the set-user-ID
 value.  This purpose is now better served by the use of the
 .Fn seteuid
 function (see
-.Xr setuid 2 ).
+.Xr setuid 2 ) .
 .Pp
 When setting the real and effective user IDs to the same value, this
 function is equivalent to the
@@ -135,8 +135,8 @@ was specified.
 .Sh SEE ALSO
 .Xr getuid 2 ,
 .Xr seteuid 2 ,
-.Xr setuid 2 ,
-.Xr setgid 2
+.Xr setgid 2 ,
+.Xr setuid 2
 .Sh HISTORY
 The
 .Fn setreuid
