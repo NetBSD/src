@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.241 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.242 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -553,3 +553,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[lonewolf 20031215]
 	satalink(4): Add support for the Silicon Image 3114 4-port
 		SATA controller.  [thorpej 20031219]
+	bpm(1): add a text-only menu-based binary package manager
+		[agc 20031221]
