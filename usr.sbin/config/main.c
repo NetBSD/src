@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.64 2002/01/19 06:10:13 mjl Exp $	*/
+/*	$NetBSD: main.c,v 1.65 2002/01/19 17:07:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,7 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
