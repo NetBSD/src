@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.10 1997/01/27 17:04:12 gwr Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.11 1997/01/27 21:59:50 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,12 +47,11 @@
 
 #include <machine/control.h>
 #include <machine/db_machdep.h>
+#include <machine/machdep.h>
 #include <machine/pte.h>
 
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
-
-#include <sun3/sun3/sunmon.h>
 
 static void db_mach_abort   __P((db_expr_t, int, db_expr_t, char *));
 static void db_mach_halt    __P((db_expr_t, int, db_expr_t, char *));

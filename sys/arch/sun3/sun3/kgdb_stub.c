@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.8 1997/01/23 23:58:05 gwr Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.9 1997/01/27 21:59:51 gwr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -63,10 +63,10 @@
 #include <machine/trap.h>
 
 #include <machine/db_machdep.h>
+#include <machine/machdep.h>
 #include <machine/remote-sl.h>
 
 #include <sun3/sun3/kgdb_proto.h>
-#include <sun3/sun3/sunmon.h>
 
 #ifndef KGDBDEV
 #define KGDBDEV -1

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.28 1997/01/27 20:51:20 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.29 1997/01/27 21:57:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,10 +43,9 @@
 #include <machine/autoconf.h>
 #include <machine/control.h>
 #include <machine/pte.h>
+#include <machine/machdep.h>
 #include <machine/mon.h>
 #include <machine/obio.h>
-
-#include <sun3/sun3/sunmon.h>
 
 static int  obio_match __P((struct device *, struct cfdata *, void *));
 static void obio_attach __P((struct device *, struct device *, void *));
