@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.27 2000/06/19 11:43:48 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.27.2.1 2000/10/06 23:43:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2137,13 +2137,13 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 				pswcode = mulaw_to_slinear8;
 				rswcode = slinear8_to_mulaw;
 				enc = AUDIO_ENCODING_SLINEAR_LE;
-#if 0
 			} else if (flags & HAS_16) {
 				pswcode = mulaw_to_slinear16_le;
 				pfactor = 2;
-				/* XXX recording not handled */
 				enc = AUDIO_ENCODING_SLINEAR_LE;
-#endif
+				/* XXX recording not handled */
+				if (setmode & AUMODE_RECORD)
+					return (EINVAL);
 			} else
 				return (EINVAL);
 		}
@@ -2158,13 +2158,13 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 				pswcode = alaw_to_slinear8;
 				rswcode = slinear8_to_alaw;
 				enc = AUDIO_ENCODING_SLINEAR_LE;
-#if 0
 			} else if (flags & HAS_16) {
 				pswcode = alaw_to_slinear16_le;
 				pfactor = 2;
-				/* XXX recording not handled */
 				enc = AUDIO_ENCODING_SLINEAR_LE;
-#endif
+				/* XXX recording not handled */
+				if (setmode & AUMODE_RECORD)
+					return (EINVAL);
 			} else
 				return (EINVAL);
 		}
