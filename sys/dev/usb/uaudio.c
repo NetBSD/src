@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.48 2002/02/14 12:55:51 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.49 2002/02/19 14:07:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.48 2002/02/14 12:55:51 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.49 2002/02/19 14:07:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1395,7 +1395,7 @@ uaudio_open(void *addr, int flags)
 
 	if (flags & FREAD) {
 		if ((sc->sc_mode & AUMODE_RECORD) == 0)
-		return (EACCES);
+			return (EACCES);
 		sc->sc_recchan.intr = NULL;
 	}
 
