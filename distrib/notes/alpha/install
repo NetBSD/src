@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.15.2.1 1999/04/20 01:06:59 cjs Exp $	
+.\"	$NetBSD: install,v 1.15.2.2 2000/06/27 15:27:04 he Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -223,7 +223,7 @@ At the time of this
 release, the URL for the netbooting instructions is:
 .Pp
 \~\~\~\~\~
-.Lk http://www.netbsd.org/Ports/alpha/netboot.html
+.Lk http://www.netbsd.org/Documentation/network/netboot/
 .Pp
 You'll want to map root to
 .Li root
