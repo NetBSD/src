@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.11 1999/10/20 12:27:38 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.11 1999/10/20 12:27:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,27 +125,6 @@ static char *dpt_cname[] = {
 	"SK2011", "SmartCache Plus",
 	NULL,     "unknown adapter, please report using send-pr(1)",
 };
-
-void	dpt_shutdown __P((void *));
-void	dpt_timeout __P((void *));
-void	dpt_minphys __P((struct buf *));
-int	dpt_scsi_cmd __P((struct scsipi_xfer *));
-int	dpt_wait __P((struct dpt_softc *, u_int8_t, u_int8_t, int));
-int	dpt_poll __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_cmd __P((struct dpt_softc *, struct eata_cp *, u_int32_t, int, int));
-void	dpt_hba_inquire __P((struct dpt_softc *, struct eata_inquiry_data **));
-
-void	dpt_reset_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-void	dpt_free_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-void	dpt_done_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_init_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_create_ccbs __P((struct dpt_softc *, struct dpt_ccb *, int));
-
-struct dpt_ccb	*dpt_alloc_ccb __P((struct dpt_softc *, int));
-
-#if 0 && defined(DEBUG)
-static void	dpt_dump_sp __P((struct eata_sp *));
-#endif
 
 /*
  * Handle an interrupt from the HBA.
@@ -1084,11 +1063,11 @@ dpt_timeout(arg)
 	splx(s);
 }
 
-#if 0 && defined(DEBUG)
+#ifdef DEBUG
 /*
  * Dump the contents of an EATA status packet.
  */
-static void
+void
 dpt_dump_sp(sp)
 	struct eata_sp *sp;
 {
