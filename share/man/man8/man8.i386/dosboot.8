@@ -1,5 +1,5 @@
-.\"	$NetBSD: dosboot.8,v 1.8.4.1 2000/08/13 09:22:42 jdolecek Exp $
-.Dd June 20, 1997
+.\"	$NetBSD: dosboot.8,v 1.8.4.2 2000/09/04 04:00:55 jhawk Exp $
+.Dd May 13, 2000
 .Os
 .Dt DOSBOOT 8 i386
 .Sh NAME
@@ -32,7 +32,7 @@ shares common code with the standard boot loader,
 .Xr boot 8 .
 .Pp
 The recognized options are:
-.Bl -tag -width -ads
+.Bl -tag -width -ads -offset 04n
 .It Fl u
 Boot from a UFS filesystem instead of an 
 .Tn MS-DOS
@@ -115,6 +115,12 @@ Leave the
 program and exit to 
 .Tn MS-DOS .
 .El
+.Pp
+.Nm
+is also installed in the
+.Xr release 7
+hierarchy, under
+.Pa installation/misc/dosboot.com .
 .Sh EXAMPLES
 To boot a
 .Nx
@@ -131,6 +137,8 @@ floppy into single user mode, type eg:
 .Bd -literal -offset indent
 dosboot -u fd0a:netbsd -s
 .Ed
+.Sh FILES
+.Pa /usr/mdec/dosboot.com
 .Sh BUGS
 .Nm
 assumes that the processor is in real mode at startup. It does not work
@@ -162,6 +170,7 @@ mode, no useful boot device specification is passed to
 It is necessary to have the root device hardwired into the kernel
 configuration or to enter it manually.
 .Sh SEE ALSO
+.Xr release 7 ,
 .Xr boot 8 ,
 .Xr w95boot 8
 .Sh HISTORY
