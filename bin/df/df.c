@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.39 2001/02/01 10:19:51 tsutsui Exp $	*/
+/*	$NetBSD: df.c,v 1.40 2001/02/20 23:02:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.39 2001/02/01 10:19:51 tsutsui Exp $");
+__RCSID("$NetBSD: df.c,v 1.40 2001/02/20 23:02:07 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,6 @@ __RCSID("$NetBSD: df.c,v 1.39 2001/02/01 10:19:51 tsutsui Exp $");
 #include <unistd.h>
 
 extern char * strpct __P((u_long num, u_long denom, u_int digits));
-extern char *__progname;
 
 int	 main __P((int, char *[]));
 int	 bread __P((off_t, void *, int));
@@ -470,7 +469,7 @@ usage()
 {
 	(void)fprintf(stderr,
 	    "Usage: %s [-aiklmnP] [-t type] [file | file_system ...]\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
