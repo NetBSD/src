@@ -74,10 +74,15 @@ attach	beep at mainbus
 file    arch/arm32/mainbus/beep.c		beep needs-flag
 major   {beep = 10}
 
-device	audio: audio
-attach	audio at mainbus
+device	vidcaudio: audio
+attach	vidcaudio at mainbus
 file	arch/arm32/mainbus/vidcaudio.c		vidcaudio needs-flag
-major   {audio = 36}
+major   {vidcaudio = 36}
+
+device	lmcaudio: audio
+attach	lmcaudio at mainbus
+file	arch/arm32/mainbus/lmcaudio.c		lmcaudio needs-flag
+file	arch/arm32/mainbus/lmc1982.S		lmcaudio
 
 # Standard keyboard driver
 device	kbd
