@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.34 2002/03/17 17:55:25 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.35 2002/03/18 17:00:20 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -622,7 +622,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	tf->tf_r6 = stack+4*tf->tf_r4 + 8; /* envp */
 	tf->tf_r7 = 0;
 	tf->tf_r8 = 0;
-	tf->tf_r9 = (int)PS_STRINGS;
+	tf->tf_r9 = (int)p->p_psstr;
 	tf->tf_r10 = 0;
 	tf->tf_r11 = 0;
 	tf->tf_r12 = 0;
