@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.36 2001/12/02 09:14:20 blymn Exp $
+.\"	$NetBSD: curses.3,v 1.37 2002/03/25 13:53:43 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -292,7 +292,8 @@ file streams.
 .Em win
 .It overlay(win1,win2)	overlay win1 on win2
 .It overwrite(win1,win2)	overwrite win1 on top of win2
-.It pair_content(p, r, g, b)	get foreground and background colors of pair
+.It pair_content(p, r, g, b)	get foreground and
+background colors of pair
 .It printw(fmt,arg1,arg2,...)	printf on
 .Em stdscr
 .It raw()	set raw mode
@@ -357,7 +358,8 @@ as changed
 .It wattrset(win,attribute)	set attribute modes for
 .Em win
 .It wbkgd(win, ch)	set background rendition for
-.Em win and apply this rendition to
+.Em win
+and apply this rendition to
 .Em win
 .It wbkgdset(win, ch)	set background rendition for
 .Em win
