@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 1997/05/19 10:15:20 veego Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5 1997/10/10 17:43:22 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,13 +70,13 @@
  */
 void
 cpu_fork(p1, p2)
-	register struct proc *p1, *p2;
+	struct proc *p1, *p2;
 {
-	register struct pcb *pcb = &p2->p_addr->u_pcb;
-	register struct trapframe *tf;
-	register struct switchframe *sf;
+	void child_return __P((struct proc *, struct frame));
+	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
 	extern struct pcb *curpcb;
-	extern void child_return();
 
 	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
 
@@ -202,10 +202,10 @@ cpu_coredump(p, vp, cred, chdr)
  */
 void
 pagemove(from, to, size)
-	register caddr_t from, to;
+	caddr_t from, to;
 	size_t size;
 {
-	register vm_offset_t pa;
+	vm_offset_t pa;
 
 #ifdef DEBUG
 	if (size & CLOFSET)
@@ -237,10 +237,10 @@ pagemove(from, to, size)
 void
 physaccess(vaddr, paddr, size, prot)
 	caddr_t vaddr, paddr;
-	register int size, prot;
+	int size, prot;
 {
-	register pt_entry_t *pte;
-	register u_int page;
+	pt_entry_t *pte;
+	u_int page;
 
 	pte = kvtopte(vaddr);
 	page = (u_int)paddr & PG_FRAME;
@@ -254,9 +254,9 @@ physaccess(vaddr, paddr, size, prot)
 void
 physunaccess(vaddr, size)
 	caddr_t vaddr;
-	register int size;
+	int size;
 {
-	register pt_entry_t *pte;
+	pt_entry_t *pte;
 
 	pte = kvtopte(vaddr);
 	for (size = btoc(size); size; size--)
@@ -288,7 +288,7 @@ setredzone(pte, vaddr)
  */
 int
 kvtop(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
 	vm_offset_t va;
 
@@ -311,16 +311,16 @@ extern vm_map_t phys_map;
 /*ARGSUSED*/
 void
 vmapbuf(bp, sz)
-	register struct buf *bp;
+	struct buf *bp;
 	vm_size_t sz;
 {
-	register int npf;
-	register caddr_t addr;
-	register long flags = bp->b_flags;
+	int npf;
+	caddr_t addr;
+	long flags = bp->b_flags;
 	struct proc *p;
 	int off;
 	vm_offset_t kva;
-	register vm_offset_t pa;
+	vm_offset_t pa;
 
 	if ((flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -348,11 +348,11 @@ vmapbuf(bp, sz)
 /*ARGSUSED*/
 void
 vunmapbuf(bp, sz)
-	register struct buf *bp;
+	struct buf *bp;
 	vm_size_t sz;
 {
-	register caddr_t addr;
-	register int npf;
+	caddr_t addr;
+	int npf;
 	vm_offset_t kva;
 
 	if ((bp->b_flags & B_PHYS) == 0)
