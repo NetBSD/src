@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.170 2002/03/22 10:11:05 martti Exp $
+#	$NetBSD: Makefile,v 1.171 2002/03/22 18:10:24 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -14,11 +14,19 @@ SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp catman \
 	mtree ndbootd netgroup_mkdb nfsd ntp pcictl pkg_install pppd pstat \
 	pwd_mkdb quot quotacheck quotaon rarpd rbootd rdate \
 	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \
-	rpc.statd rpc.yppasswdd rpcbind rwhod sa screenblank sesd \
+	rpc.statd rpcbind rwhod sa screenblank sesd \
 	sliplogin slstats spray sup sushi syslogd tadpolectl tcpdchk \
 	tcpdmatch tcpdump timed traceroute trpt trsp unlink \
 	usbdevs user videomode vipw vnconfig wiconfig wsconscfg \
-	wsfontload wsmuxctl ypbind yppoll ypserv ypset zdump zic
+	wsfontload wsmuxctl zdump zic
+
+.if (${MKKERBEROS} != "no")
+SUBDIR+= hprop kadmin kdc kstash ktutil
+.endif
+
+.if (${MKYP} != "no")
+SUBDIR+= rpc.yppasswdd ypbind yppoll ypserv ypset
+.endif
 
 .if !defined(USE_NEW_TOOLCHAIN)
 SUBDIR+= mdsetimage
@@ -32,7 +40,7 @@ SUBDIR+=faithd ifmcstat mld6query ndp \
 SUBDIR+=pvcsif pvctxctl
 
 .if (${MKCRYPTO} != "no")
-SUBDIR+= hprop kadmin kdc kstash ktutil racoon
+SUBDIR+= racoon
 .endif
 
 .include <bsd.subdir.mk>
