@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.88 2004/04/24 22:14:39 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.89 2004/05/06 04:45:14 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -621,7 +621,7 @@ sys/netinet/tcp_var.h				patch
 
 	If a segment is received with RST set and the segment is completely to  
 	the left of the receive window, ignore it.  Add some additional 
-	comments to the code that deals with received segemnts that are 
+	comments to the code that deals with received segments that are 
 	completely to the right of the receive window.  If an invalid SYN is 
 	received, force an ACK and drop it; if the other side really sent the 
 	SYN; it'll respond with a reset.
@@ -636,3 +636,13 @@ sys/arch/macppc/conf/INSTALL			1.74 via patch
 	Add "wdc* at pci? dev ? function ?".
 	[kristerw, ticket #1675]
 
+
+sys/arch/sparc/stand/ofwboot/version		1.7-1-8
+sys/arch/sparc/stand/ofwboot/elfXX_exec.c	1.4
+sys/arch/sparc/stand/ofwboot/ofdev.c		1.3
+sys/arch/sparc/stand/ofwboot/boot.c		1.5
+
+	Allow hyphen in kernel names.
+	When calculating the allocated symbol table size, round up the section
+	sizes with ELF_ALIGN(). PR#13429 PR#18691 PR#25429
+	[martin, ticket #1684]
