@@ -30,22 +30,27 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)atanh.3	5.2 (Berkeley) 5/6/91
-.\"	$Id: atanh.3,v 1.4 1993/10/29 22:57:24 jtc Exp $
+.\"	$Id: atanh.3,v 1.5 1995/03/04 01:36:40 jtc Exp $
 .\"
 .Dd May 6, 1991
 .Dt ATANH 3
 .Os BSD 4.3
 .Sh NAME
-.Nm atanh
+.Nm atanh ,
+.Nm atanhf
 .Nd inverse hyperbolic tangent function
 .Sh SYNOPSIS
 .Fd #include <math.h>
 .Ft double
 .Fn atanh "double x"
+.Ft float
+.Fn atanhf "float x"
 .Sh DESCRIPTION
 The
-.Fn  atanh
-function computes the inverse hyperbolic tangent
+.Fn atanh
+and
+.Fn atanhf
+functions compute the inverse hyperbolic tangent
 of the real
 argument
 .Ar x .
