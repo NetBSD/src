@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.288 2000/12/22 02:03:33 itojun Exp $
+#	$NetBSD: mi,v 1.289 2000/12/22 02:18:58 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2758,6 +2758,8 @@
 ./usr/share/man/cat3/toascii.0	comp-c-catman
 ./usr/share/man/cat3/tolower.0	comp-c-catman
 ./usr/share/man/cat3/toupper.0	comp-c-catman
+./usr/share/man/cat3/towlower.0			comp-c-catman
+./usr/share/man/cat3/towupper.0			comp-c-catman
 ./usr/share/man/cat3/tputs.0	comp-c-catman
 ./usr/share/man/cat3/tsearch.0	comp-c-catman
 ./usr/share/man/cat3/ttyaction.0	comp-c-catman
@@ -4539,6 +4541,8 @@
 ./usr/share/man/man3/toascii.3		comp-c-man
 ./usr/share/man/man3/tolower.3		comp-c-man
 ./usr/share/man/man3/toupper.3		comp-c-man
+./usr/share/man/man3/towlower.3			comp-c-man
+./usr/share/man/man3/towupper.3			comp-c-man
 ./usr/share/man/man3/tputs.3		comp-c-man
 ./usr/share/man/man3/tsearch.3		comp-c-man
 ./usr/share/man/man3/ttyaction.3		comp-c-man
