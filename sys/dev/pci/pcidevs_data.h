@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.70 1998/06/15 19:55:09 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.71 1998/06/30 14:42:00 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.65 1998/06/15 19:54:48 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.66 1998/06/30 14:41:29 augustss Exp 
  */
 
 /*
@@ -860,6 +860,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Essential Communications",
 	    "RoadRunner Gig-E Interface",
+	},
+	{
+	    PCI_VENDOR_2MICRO, PCI_PRODUCT_2MICRO_OZ6832,
+	    0,
+	    "2 Micro Inc",
+	    "OZ6832 CardBus Controller",
 	},
 	{
 	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
@@ -4813,6 +4819,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ESSENTIAL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Essential Communications",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_2MICRO, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "2 Micro Inc",
 	    NULL,
 	},
 	{
