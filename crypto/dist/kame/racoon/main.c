@@ -1,4 +1,4 @@
-/*	$KAME: main.c,v 1.32 2001/04/03 15:51:56 thorpej Exp $	*/
+/*	$KAME: main.c,v 1.36 2001/06/01 08:26:05 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -76,7 +76,13 @@ int f_local = 0;	/* local test mode.  behave like a wall. */
 int vflag = 1;		/* for print-isakmp.c */
 static int loading_sa = 0;	/* install sa when racoon boots up. */
 
-static char version[] = "@(#)racoon 20001216 sakane@ydc.co.jp";
+#define RACOON_VERSION	"20001216 sakane@ydc.co.jp"
+#ifdef RACOON_PKG_VERSION
+static char version0[] = "@(#)package version " RACOON_PKG_VERSION ;
+static char version[] = "@(#)internal version " RACOON_VERSION ;
+#else
+static char version[] = "@(#)racoon 20001216 " RACOON_VERSION ;
+#endif
 
 int main __P((int, char **));
 static void Usage __P((void));
@@ -135,10 +141,8 @@ main(ac, av)
 	 * at the creation time.
 	 */
 	umask(077);
-	if (umask(077) != 077) {
+	if (umask(077) != 077)
 		errx(1, "could not set umask");
-		/*NOTREACHED*/
-	}
 
 	initlcconf();
 	initrmconf();
@@ -150,14 +154,17 @@ main(ac, av)
 	ploginit();
 	random_init();
 
+#ifdef RACOON_PKG_VERSION
+	plog(LLV_INFO, LOCATION, NULL, "%s\n", version0);
+#endif
 	plog(LLV_INFO, LOCATION, NULL, "%s\n", version);
 	plog(LLV_INFO, LOCATION, NULL, "@(#)"
-	"This product linked software developed by the OpenSSL Project "
-	"for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
-	"\n");
+	"This product linked %s (http://www.openssl.org/)"
+	"\n", eay_version());
 
 	if (pfkey_init() < 0)
-		exit(1);
+		errx(1, "something error happened "
+			"while pfkey initializing.");
 
 	/*
 	 * in order to prefer the parameters by command line,
@@ -165,11 +172,8 @@ main(ac, av)
 	 */
 	save_params();
 	error = cfparse();
-	if (error != 0) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"failed to parse configuration file.\n");
-		exit(1);
-	}
+	if (error != 0)
+		errx(1, "failed to parse configuration file.");
 	restore_params();
 
 	/*
@@ -178,7 +182,8 @@ main(ac, av)
 	 */
 	if (loading_sa && !f_local) {
 		if (backupsa_from_file() != 0)
-			exit(1);
+			errx(1, "something error happened "
+				"SA recovering.");
 	}
 
 	if (f_foreground)
@@ -189,9 +194,8 @@ main(ac, av)
 		FILE *fp;
 
 		if (daemon(0, 0) < 0) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"failed to be daemon. (%s)\n", strerror(errno));
-			exit(1);
+			errx(1, "failed to be daemon. (%s)",
+				strerror(errno));
 		}
 		/*
 		 * In case somebody has started inetd manually, we need to
@@ -264,7 +268,7 @@ parse(ac, av)
 #ifdef INET6
 			"46"
 #endif
-			)) != EOF) {
+			)) != -1) {
 		switch (c) {
 		case 'd':
 			loglevel++;
