@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.101 2002/01/31 00:32:47 kleink Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.102 2002/02/11 18:11:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,12 +43,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.101 2002/01/31 00:32:47 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.102 2002/02/11 18:11:43 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
 #include "opt_defcorename.h"
-#include "opt_new_pipe.h"
+#include "opt_pipe.h"
 #include "opt_sysv.h"
 #include "pty.h"
 
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.101 2002/01/31 00:32:47 kleink Exp
 #include <ddb/ddbvar.h>
 #endif
 
-#ifdef NEW_PIPE
+#ifndef PIPE_SOCKETPAIR
 #include <sys/pipe.h>
 #endif
 
@@ -541,7 +541,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_MAXPTYS:
 		return sysctl_pty(oldp, oldlenp, newp, newlen);
 #endif
-#ifdef NEW_PIPE
+#ifndef PIPE_SOCKETPAIR
 	case KERN_PIPE:
 		return (sysctl_dopipe(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
