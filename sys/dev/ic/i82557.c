@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.8 1999/08/05 01:35:40 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.9 1999/10/28 19:21:51 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -187,6 +187,7 @@ void	fxp_tick __P((void *));
 void	fxp_mc_setup __P((struct fxp_softc *));
 
 void	fxp_shutdown __P((void *));
+void	fxp_power __P((int, void *));
 
 int	fxp_copy_small = 0;
 
@@ -344,6 +345,13 @@ fxp_attach(sc)
 	if (sc->sc_sdhook == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
+	/* 
+  	 * Add suspend hook, for similar reasons..
+	 */
+	sc->sc_powerhook = powerhook_establish(fxp_power, sc);
+	if (sc->sc_powerhook == NULL) 
+		printf("%s: WARNING: unable to establish power hook\n",
+		    sc->sc_dev.dv_xname);
 	return;
 
 	/*
@@ -424,7 +432,36 @@ fxp_shutdown(arg)
 {
 	struct fxp_softc *sc = arg;
 
-	fxp_stop(sc, 1);
+	/*
+	 * Since the system's going to halt shortly, don't bother
+	 * freeing mbufs.
+	 */
+	fxp_stop(sc, 0);
+}
+/*
+ * Power handler routine. Called when the system is transitioning
+ * into/out of power save modes.  As with fxp_shutdown, the main
+ * purpose of this routine is to shut off receiver DMA so it doesn't
+ * clobber kernel memory at the wrong time.
+ */
+void
+fxp_power(why, arg)
+	int why;
+	void *arg;
+{
+	struct fxp_softc *sc = arg;
+	struct ifnet *ifp;
+	int s;
+
+	s = splnet();
+	if (why != PWR_RESUME)
+		fxp_stop(sc, 0);
+	else {
+		ifp = &sc->sc_ethercom.ec_if;
+		if (ifp->if_flags & IFF_UP)
+			fxp_init(sc);
+	}
+	splx(s);
 }
 
 /*
@@ -729,6 +766,19 @@ fxp_intr(arg)
 	u_int16_t len;
 	u_int8_t statack;
 
+	/*
+	 * If the interface isn't running, don't try to
+	 * service the interrupt.. just ack it and bail.
+	 */
+	if ((ifp->if_flags & IFF_RUNNING) == 0) {
+		statack = CSR_READ_1(sc, FXP_CSR_SCB_STATACK);
+		if (statack) {
+			claimed = 1;
+			CSR_WRITE_1(sc, FXP_CSR_SCB_STATACK, statack);
+		}
+		return claimed;
+	}
+
 	while ((statack = CSR_READ_1(sc, FXP_CSR_SCB_STATACK)) != 0) {
 		claimed = 1;
 
@@ -1032,6 +1082,13 @@ fxp_stop(sc, drain)
 	int i;
 
 	/*
+	 * Turn down interface (done early to avoid bad interactions
+	 * between panics, shutdown hooks, and the watchdog timer)
+	 */
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	/*
 	 * Cancel stats updater.
 	 */
 	untimeout(fxp_tick, sc);
@@ -1062,8 +1119,6 @@ fxp_stop(sc, drain)
 		fxp_rxdrain(sc);
 	}
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	ifp->if_timer = 0;
 }
 
 /*
