@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.14 2003/06/16 20:01:06 thorpej Exp $	*/
+/* 	$NetBSD: intr.h,v 1.14.4.1 2004/07/02 18:25:16 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -69,7 +69,7 @@
 
 
 #ifdef _KERNEL
-#ifndef lint
+#ifndef __lint__
 #define splx(reg)						\
 ({								\
 	register int val;					\
