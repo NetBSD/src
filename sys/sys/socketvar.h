@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.14 1995/03/26 20:24:47 jtc Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.15 1995/08/04 01:14:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -91,7 +91,6 @@ struct socket {
 #define	SB_WAIT		0x04		/* someone is waiting for data/space */
 #define	SB_SEL		0x08		/* someone is selecting */
 #define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
-#define	SB_NOTIFY	(SB_WAIT|SB_SEL|SB_ASYNC)
 #define	SB_NOINTR	0x40		/* operations not interruptible */
 
 	caddr_t	so_tpcb;		/* Wisc. protocol control block XXX */
@@ -119,6 +118,11 @@ struct socket {
 /*
  * Macros for sockets and socket buffering.
  */
+
+/*
+ * Do we need to notify the other side when I/O is possible?
+ */
+#define	sb_notify(sb)	(((sb)->sb_flags & (SB_WAIT|SB_SEL|SB_ASYNC)) != 0)
 
 /*
  * How much space is there in a socket buffer (so->so_snd or so->so_rcv)?
