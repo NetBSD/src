@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.83 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.84 2005/03/27 08:34:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.83 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.84 2005/03/27 08:34:41 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -404,6 +404,9 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (error)
 			break;
 
+#ifdef PMAP_NEED_PROCWR
+		pmap_procwr(&proc0, curp->area + curp->offset, i);
+#endif
 		if ((curp->offset + i) < curp->size) {
 			lkm_state = LKMS_LOADING;
 #ifdef DEBUG
