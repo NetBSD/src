@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.21 1998/07/30 23:29:29 tron Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.22 1999/02/21 13:30:15 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ __RCSID("$NetBSD: syslogd.c,v 1.21 1998/07/30 23:29:29 tron Exp $");
 #include <sys/socket.h>
 #include <sys/msgbuf.h>
 #include <sys/uio.h>
+#include <sys/poll.h>
 #include <sys/un.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -106,7 +107,6 @@ __RCSID("$NetBSD: syslogd.c,v 1.21 1998/07/30 23:29:29 tron Exp $");
 #define SYSLOG_NAMES
 #include <sys/syslog.h>
 
-char	*LogName = _PATH_LOG;
 char	*ConfFile = _PATH_LOGCONF;
 char	*PidFile = _PATH_LOGPID;
 char	ctty[] = _PATH_CONSOLE;
@@ -193,6 +193,7 @@ int	Initialized = 0;	/* set when we have initialized ourselves */
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
 int	SecureMode = 0;		/* when true, speak only unix domain socks */
+char	**LogPaths;		/* array of pathnames to read messages from */
 
 void	cfline __P((char *, struct filed *));
 char   *cvthname __P((struct sockaddr_in *));
@@ -210,19 +211,24 @@ void	reapchild __P((int));
 void	usage __P((void));
 void	wallmsg __P((struct filed *, struct iovec *));
 int	main __P((int, char *[]));
+void	logpath_add __P((char ***, int *, int *, char *));
+void	logpath_fileadd __P((char ***, int *, int *, char *));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, funix, i, inetm, fklog, klogm, len, linesize;
+	int ch, *funix, i, j, fklog, len, linesize;
+	int nfinetix, nfklogix, nfunixbaseix, nfds;
+	int funixsize = 0, funixmaxsize = 0;
 	struct sockaddr_un sunx, fromunix;
 	struct sockaddr_in sin, frominet;
 	FILE *fp;
-	char *p, *line;
+	char *p, *line, **pp;
+	struct pollfd *readfds;
 
-	while ((ch = getopt(argc, argv, "dsf:m:p:")) != -1)
+	while ((ch = getopt(argc, argv, "dsf:m:p:P:")) != -1)
 		switch(ch) {
 		case 'd':		/* debug */
 			Debug++;
@@ -234,7 +240,12 @@ main(argc, argv)
 			MarkInterval = atoi(optarg) * 60;
 			break;
 		case 'p':		/* path */
-			LogName = optarg;
+			logpath_add(&LogPaths, &funixsize, 
+			    &funixmaxsize, optarg);
+			break;
+		case 'P':		/* file of paths */
+			logpath_fileadd(&LogPaths, &funixsize, 
+			    &funixmaxsize, optarg);
 			break;
 		case 's':		/* no network mode */
 			SecureMode++;
@@ -275,22 +286,38 @@ main(argc, argv)
 	(void)signal(SIGCHLD, reapchild);
 	(void)signal(SIGALRM, domark);
 	(void)alarm(TIMERINTVL);
-	(void)unlink(LogName);
 
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
-	memset(&sunx, 0, sizeof(sunx));
-	sunx.sun_family = AF_LOCAL;
-	(void)strncpy(sunx.sun_path, LogName, sizeof(sunx.sun_path));
-	funix = socket(AF_LOCAL, SOCK_DGRAM, 0);
-	if (funix < 0 ||
-	    bind(funix, (struct sockaddr *)&sunx, SUN_LEN(&sunx)) < 0 ||
-	    chmod(LogName, 0666) < 0) {
-		(void)snprintf(line, sizeof line, "cannot create %s", LogName);
-		logerror(line);
-		dprintf("cannot create %s (%d)\n", LogName, errno);
+	/* we can do this because we don't call logpath_add() */
+	if (funixsize == 0) {
+		char	*fake_logpaths[2] = { _PATH_LOG, 0 };
+
+		funixsize = 1;
+		LogPaths = (char **)fake_logpaths; 
+	}
+	funix = (int *)malloc(sizeof(int) * funixsize);
+	if (funix == NULL) {
+		logerror("couldn't allocate funix descriptors");
 		die(0);
+	}
+	for (j = 0, pp = LogPaths; *pp; pp++, j++) {
+		unlink(*pp);
+		memset(&sunx, 0, sizeof(sunx));
+		sunx.sun_family = AF_LOCAL;
+		(void)strncpy(sunx.sun_path, *pp, sizeof(sunx.sun_path));
+		funix[j] = socket(AF_LOCAL, SOCK_DGRAM, 0);
+		if (funix[j] < 0 || bind(funix[j],
+		    (struct sockaddr *)&sunx, SUN_LEN(&sunx)) < 0 ||
+		    chmod(*pp, 0666) < 0) {
+			(void)snprintf(line, sizeof line,
+			    "cannot create %s", *pp);
+			logerror(line);
+			dprintf("cannot create %s (%d)\n", *pp, errno);
+			die(0);
+		}
+		dprintf("listening on unix dgram socket %s\n", *pp);
 	}
 
 	if (!SecureMode)
@@ -298,7 +325,6 @@ main(argc, argv)
 	else
 		finet = -1;
 
-	inetm = 0;
 	if (finet >= 0) {
 		struct servent *sp;
 
@@ -316,15 +342,14 @@ main(argc, argv)
 			if (!Debug)
 				die(0);
 		} else {
-			inetm = FDMASK(finet);
 			InetInuse = 1;
 		}
+		dprintf("listening on inet socket\n");
 	}
-	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) >= 0)
-		klogm = FDMASK(fklog);
-	else {
+	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) < 0) {
 		dprintf("can't open %s (%d)\n", _PATH_KLOG, errno);
-		klogm = 0;
+	} else {
+		dprintf("listening on kernel log %s\n", _PATH_KLOG);
 	}
 
 	/* tuck my process id away, if i'm not in debug mode */
@@ -341,21 +366,45 @@ main(argc, argv)
 	init(0);
 	(void)signal(SIGHUP, init);
 
-	for (;;) {
-		int nfds, readfds = FDMASK(funix) | inetm | klogm;
+	/* setup pollfd set. */
+	readfds = (struct pollfd *)malloc(sizeof(struct pollfd) *
+	    funixsize + 2);
+	if (readfds == NULL) {
+		logerror("couldn't allocate pollfds");
+		die(0);
+	}
+	nfds = 0;
+	if (fklog >= 0) {
+		nfklogix = nfds++;
+		readfds[nfklogix].fd = fklog;
+		readfds[nfklogix].events = POLLIN | POLLPRI;
+	}
+	if (finet >= 0) {
+		nfinetix = nfds++;
+		readfds[nfinetix].fd = finet;
+		readfds[nfinetix].events = POLLIN | POLLPRI;
+	}
+	nfunixbaseix = nfds;
+	for (j = 0, pp = LogPaths; *pp; pp++) {
+		readfds[nfds].fd = funix[j++];
+		readfds[nfds++].events = POLLIN | POLLPRI;
+	}
 
-		dprintf("readfds = %#x\n", readfds);
-		nfds = select(20, (fd_set *)&readfds, (fd_set *)NULL,
-		    (fd_set *)NULL, (struct timeval *)NULL);
-		if (nfds == 0)
+	for (;;) {
+		int rv;
+
+		rv = poll(readfds, nfds, INFTIM);
+		if (rv == 0)
 			continue;
-		if (nfds < 0) {
+		if (rv < 0) {
 			if (errno != EINTR)
-				logerror("select");
+				logerror("poll");
 			continue;
 		}
-		dprintf("got a message (%d, %#x)\n", nfds, readfds);
-		if (readfds & klogm) {
+		dprintf("got a message (%d)\n", rv);
+		if (fklog >= 0 &&
+		    (readfds[nfklogix].revents & (POLLIN | POLLPRI))) {
+			dprintf("kernel log active\n");
 			i = read(fklog, line, linesize - 1);
 			if (i > 0) {
 				line[i] = '\0';
@@ -363,20 +412,31 @@ main(argc, argv)
 			} else if (i < 0 && errno != EINTR) {
 				logerror("klog");
 				fklog = -1;
-				klogm = 0;
 			}
 		}
-		if (readfds & FDMASK(funix)) {
+		for (j = 0, pp = LogPaths; *pp; pp++, j++) {
+			if ((readfds[nfunixbaseix + j].revents &
+			    (POLLIN | POLLPRI)) == 0)
+				continue;
+
+			dprintf("unix socket (%s) active\n", *pp);
 			len = sizeof(fromunix);
-			i = recvfrom(funix, line, MAXLINE, 0,
+			i = recvfrom(funix[j], line, MAXLINE, 0,
 			    (struct sockaddr *)&fromunix, &len);
 			if (i > 0) {
 				line[i] = '\0';
 				printline(LocalHostName, line);
-			} else if (i < 0 && errno != EINTR)
-				logerror("recvfrom unix");
+			} else if (i < 0 && errno != EINTR) {
+				char buf[MAXPATHLEN];
+
+				(void)snprintf(buf, sizeof buf,
+				    "recvfrom unix %s", *pp);
+				logerror(buf);
+			}
 		}
-		if (readfds & inetm) {
+		if (finet >= 0 &&
+		    (readfds[nfinetix].revents & (POLLIN | POLLPRI))) {
+			dprintf("inet socket active\n");
 			len = sizeof(frominet);
 			i = recvfrom(finet, line, MAXLINE, 0,
 			    (struct sockaddr *)&frominet, &len);
@@ -394,8 +454,67 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: syslogd [-f conffile] [-m markinterval] [-p logpath]\n");
+	    "usage: syslogd [-f conffile] [-m markinterval] [-p logpath1] [-p logpath2 ..]\n");
 	exit(1);
+}
+
+/*
+ * given a pointer to an array of char *'s, a pointer to it's current
+ * size and current allocated max size, and a new char * to add, add
+ * it, update everything as necessary, possibly allocating a new array
+ */
+void
+logpath_add(lp, szp, maxszp, new)
+	char ***lp;
+	int *szp;
+	int *maxszp;
+	char *new;
+{
+
+	if (*szp == *maxszp) {
+		if (*maxszp == 0) {
+			*maxszp = 4;	/* start of with enough for now */
+			*lp = (char **)malloc(sizeof(char **) * 4);
+			if (*lp == NULL) {
+				logerror("couldn't allocate line buffer");
+				die(0);
+			}
+		} else {
+			*maxszp *= 2;
+			*lp = realloc(*lp, sizeof(char **) * (*maxszp));
+			if (*lp == NULL) {
+				logerror("couldn't allocate line buffer");
+				die(0);
+			}
+		}
+	}
+	(*lp)[(*szp)++] = new;
+}
+
+/* do a file of log sockets */
+void
+logpath_fileadd(lp, szp, maxszp, file)
+	char ***lp;
+	int *szp;
+	int *maxszp;
+	char *file;
+{
+	FILE *fp;
+	char *line;
+	size_t len;
+
+	fp = fopen(file, "r");
+	if (fp == NULL) {
+		dprintf("can't open %s (%d)\n", file, errno);
+		logerror("could not open socket file list");
+		die(0);
+	}
+
+	while ((line = fgetln(fp, &len))) {
+		line[len - 1] = 0;
+		logpath_add(lp, szp, maxszp, line);
+	}
+	fclose(fp);
 }
 
 /*
@@ -877,7 +996,7 @@ die(signo)
 	int signo;
 {
 	struct filed *f;
-	char buf[100];
+	char buf[100], **p;
 
 	for (f = Files; f != NULL; f = f->f_next) {
 		/* flush any pending output */
@@ -890,7 +1009,8 @@ die(signo)
 		errno = 0;
 		logerror(buf);
 	}
-	(void)unlink(LogName);
+	for (p = LogPaths; p && *p; p++)
+		unlink(*p);
 	exit(0);
 }
 

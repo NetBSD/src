@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: syslogd.8,v 1.8 1998/04/28 06:00:58 fair Exp $
+.\"	$NetBSD: syslogd.8,v 1.9 1999/02/21 13:30:15 mrg Exp $
 .\"
-.Dd June 6, 1993
+.Dd February 18, 1999
 .Dt SYSLOGD 8
 .Os BSD 4.2
 .Sh NAME
@@ -41,10 +41,12 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl d
+.Op Fl s
 .Op Fl f Ar config_file
 .Op Fl m Ar mark_interval
+.Op Fl P Ar file_list
 .Op Fl p Ar log_socket
-.Op Fl s
+.Op Fl p Ar log_socket2 ...
 .Sh DESCRIPTION
 .Nm
 reads and logs messages to the system console, log files, other
@@ -71,9 +73,15 @@ which syslogd runs is subject to attack over the network and it is desired
 that the machine be protected from attempts to remotely fill logs
 and similar attacks.
 .It Fl p
-Specify the pathname of an alternative log socket;
-the default is
-.Pa /dev/log .
+Specify the pathname of an log socket.  Multiple
+.Fl p
+options create multiple log sockets.  If no -p arguments are created,
+the default socket of
+.Pa /dev/log
+is used.
+.It Fl P
+Specify the pathname of a file containing a list of sockets to be
+created.  The format of the file is simply one socket per line.
 .El
 .Pp
 .Nm
@@ -101,6 +109,17 @@ and stores its process
 id there.
 This can be used to kill or reconfigure
 .Nm "" .
+.Pp
+By using multiple
+.Fl p
+options, one can setup many chroot environments by passing the pathname
+to the log socket
+.Pa ( /dev/log )
+in each chroot area to syslogd.  For example:
+.Dl syslogd -p /dev/log -p /web/dev/log -p /ftp/dev/log
+.Pp
+note: the normal log socket must now also be passed to syslogd.
+.Sh SYSLOG PROTOCOL NOTES
 .Pp
 The message sent to
 .Nm
@@ -135,3 +154,5 @@ The
 .Nm
 command appeared in
 .Bx 4.3 .
+Support for multiple log sockets appeared in
+.Nx 1.4 .
