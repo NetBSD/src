@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/10/17 15:58:16 cjs Exp $
+#	$NetBSD: Makefile,v 1.3 2000/10/17 23:51:24 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,6 @@ PROG=	ssh
 
 BINOWN=	root
 BINMODE=0555
-INSTALLFLAGS=-fschg
 
 SRCS=	ssh.c log-client.c readconf.c clientloop.c sshconnect.c \
 	sshconnect1.c sshconnect2.c
