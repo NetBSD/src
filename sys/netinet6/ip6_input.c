@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.55 2002/06/08 21:22:33 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.56 2002/06/09 14:43:12 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.55 2002/06/08 21:22:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.56 2002/06/09 14:43:12 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -679,7 +679,7 @@ ip6_input(m)
 	} else if (!ours) {
 		ip6_forward(m, 0);
 		return;
-	}	
+	}
 
 	ip6 = mtod(m, struct ip6_hdr *);
 
@@ -742,7 +742,7 @@ ip6_input(m)
 			goto bad;
 		}
 #endif
-		
+
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
 	}
 	return;

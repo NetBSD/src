@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.32 2002/06/08 21:22:35 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.33 2002/06/09 14:43:14 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.32 2002/06/08 21:22:35 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.33 2002/06/09 14:43:14 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ nd6_ra_input(m, off, icmp6len)
 	/*
 	 * We only accept RAs only when
 	 * the system-wide variable allows the acceptance, and
-	 * per-interface variable allows RAs on the receiving interface. 
+	 * per-interface variable allows RAs on the receiving interface.
 	 */
 	if (ip6_accept_rtadv == 0)
 		goto freeit;
@@ -390,14 +390,14 @@ nd6_ra_input(m, off, icmp6len)
 	}
 
  skip:
-	
+
 	/*
 	 * Source link layer address
 	 */
     {
 	char *lladdr = NULL;
 	int lladdrlen = 0;
-	
+
 	if (ndopts.nd_opts_src_lladdr) {
 		lladdr = (char *)(ndopts.nd_opts_src_lladdr + 1);
 		lladdrlen = ndopts.nd_opts_src_lladdr->nd_opt_len << 3;
@@ -961,7 +961,7 @@ insert:
 	defrouter_select();
 
 	splx(s);
-		
+
 	return(n);
 }
 
@@ -971,7 +971,7 @@ pfxrtr_lookup(pr, dr)
 	struct nd_defrouter *dr;
 {
 	struct nd_pfxrouter *search;
-	
+
 	for (search = pr->ndpr_advrtrs.lh_first; search; search = search->pfr_next) {
 		if (search->router == dr)
 			break;
@@ -1268,7 +1268,7 @@ prelist_update(new, dr, m)
 		 */
 		if ((ifa6->ia6_flags & IN6_IFF_ANYCAST) != 0)
 			continue;
-		
+
 		ifa_plen = in6_mask2len(&ifa6->ia_prefixmask.sin6_addr, NULL);
 		if (ifa_plen != new->ndpr_plen ||
 		    !in6_are_prefix_equal(&ifa6->ia_addr.sin6_addr,
@@ -1850,7 +1850,7 @@ in6_ifadd(pr)
 	    (ib->ia_addr.sin6_addr.s6_addr32[2] & ~mask.s6_addr32[2]);
 	ifra.ifra_addr.sin6_addr.s6_addr32[3] |=
 	    (ib->ia_addr.sin6_addr.s6_addr32[3] & ~mask.s6_addr32[3]);
-	   
+
 	/* new prefix mask. */
 	ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
 	ifra.ifra_prefixmask.sin6_family = AF_INET6;
