@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 1995/04/22 13:17:51 briggs Exp $	*/
+/*	$NetBSD: param.h,v 1.18 1995/06/21 03:08:29 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,39 +98,31 @@
 #define ALIGNBYTES	(sizeof(int) - 1)
 #define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
 
-#define	NBPG		4096		/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	NPTEPG		(NBPG/(sizeof (struct pte)))
+#define	NBPG		(1 << PGSHIFT)	/* bytes/page */
+#define	PGOFSET		(NBPG-1)	/* byte offset into page */
+#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
-#define NBSEG		(cpu040 ? 64*NBPG : 1024*NBPG)	/* bytes/segment */
-#define	SEGOFSET	(NBSEG-1)			/* byte offset into segment */
-#define	SEGSHIFT	(cpu040 ? 18 : 22)		/* LOG2(NBSEG) */
+#define	SEGSHIFT	22		/* LOG2(NBSEG) */
+#define NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
+#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 
-/* ALICE 05/24/92,19:31:42 BG -- Well, I wish we didn't have to worry */
-/*  about re-locating the kernel, but I think we will probably have to. */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
-#define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
+#define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
-#define	CLSIZE		1
 #define	CLSIZELOG2	0
+#define	CLSIZE		(1 << CLSIZELOG2)
 
 /* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
-
 #define	UPAGES		3  		/* pages of u-area */
-
-/*
- * Number of pages that UPAGES eats.  This is for the wierd sparcs of
- * the world.
- */
-#define USPACE		(UPAGES * NBPG)
+#define USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 /*
  * Constants related to network buffer management.
@@ -156,24 +148,20 @@
  * Size of kernel malloc arena in CLBYTES-sized logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(2048*1024/CLBYTES)
+#define	NKMEMCLUSTERS	(2048 * 1024 / CLBYTES)
 #endif
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
-#define	ctod(x)	((x)<<(PGSHIFT-DEV_BSHIFT))
-#define	dtoc(x)	((x)>>(PGSHIFT-DEV_BSHIFT))
-#define	dtob(x)	((x)<<DEV_BSHIFT)
+#define	ctod(x)	((unsigned)(x) << (PGSHIFT - DEV_BSHIFT))
+#define	dtoc(x)	((unsigned)(x) >> (PGSHIFT - DEV_BSHIFT))
 
 /* pages to bytes */
-#define	ctob(x)	((x)<<PGSHIFT)
+#define	ctob(x)	((unsigned)(x) << PGSHIFT)
+#define	btoc(x)	(((unsigned)(x) + PGOFSET) >> PGSHIFT)
 
-/* bytes to pages */
-#define	btoc(x)	(((unsigned)(x)+(NBPG-1))>>PGSHIFT)
-
-#define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
-	((bytes) >> DEV_BSHIFT)
-#define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
-	((db) << DEV_BSHIFT)
+/* bytes to disk blocks */
+#define	btodb(x)	((x) >> DEV_BSHIFT)
+#define	dbtob(x)	((x) << DEV_BSHIFT)
 
 /*
  * Map a ``block device block'' to a file system block.
@@ -181,17 +169,13 @@
  * field from the disk label.
  * For now though just use DEV_BSIZE.
  */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
+#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
 
 /*
  * Mach derived conversion macros
  */
-#define mac68k_round_seg(x)	((((unsigned)(x)) + NBSEG - 1) & ~(NBSEG-1))
-#define mac68k_trunc_seg(x)	((unsigned)(x) & ~(NBSEG-1))
-#define mac68k_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
-#define mac68k_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define mac68k_btos(x)		((unsigned)(x) >> SEGSHIFT)
-#define mac68k_stob(x)		((unsigned)(x) << SEGSHIFT)
+#define mac68k_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
+#define mac68k_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
 #define mac68k_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define mac68k_ptob(x)		((unsigned)(x) << PGSHIFT)
 
