@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.17 1998/07/11 15:55:48 mrg Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.18 1998/07/12 15:18:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.17 1998/07/11 15:55:48 mrg Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.18 1998/07/12 15:18:55 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ pw_error(name, err, eval)
 {
 
 	if (err)
-		warn("%s", name ? name : "");
+		warn("%s", name);
 	errx(eval, "YP passwd database unchanged");
 }
 
@@ -216,8 +216,8 @@ getnewpasswd(pw, old_pass)
 		if (pw->pw_passwd[0]) {
 			if (strcmp(crypt(p = getpass("Old password:"),
 					 pw->pw_passwd),  pw->pw_passwd)) {
-				   errno = EACCES;
-				   pw_error(NULL, 1, 1);
+				   (void)printf("Sorry.\n");
+				   pw_error(NULL, 0, 1);
 			}
 		} else {
 			p = "";
