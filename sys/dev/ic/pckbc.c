@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.24 2003/01/01 00:20:32 thorpej Exp $ */
+/* $NetBSD: pckbc.c,v 1.25 2003/06/10 07:46:29 grant Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.24 2003/01/01 00:20:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.25 2003/06/10 07:46:29 grant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -804,7 +804,9 @@ pckbc_cmdresponse(t, slot, data)
 				/* try again last command */
 				goto restart;
 			} else {
+#ifdef PCKBCDEBUG
 				printf("pckbc: cmd failed\n");
+#endif
 				cmd->status = EIO;
 				/* dequeue */
 			}
