@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.167 2004/05/20 11:36:43 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.168 2004/06/28 09:32:14 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2004/05/20 11:36:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2004/06/28 09:32:14 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1800,6 +1800,8 @@ sparc_bus_free(t, h, s)
 struct sparc_bus_space_tag mainbus_space_tag = {
 	NULL,				/* cookie */
 	NULL,				/* parent bus tag */
+	NULL,				/* ranges */
+	0,				/* nranges */
 	UPA_BUS_SPACE,			/* type */
 	sparc_bus_alloc,
 	sparc_bus_free,

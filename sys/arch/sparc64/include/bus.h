@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.45 2003/06/15 23:09:06 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.46 2004/06/28 09:32:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -139,6 +139,14 @@ typedef struct sparc_bus_space_tag	*bus_space_tag_t;
 struct sparc_bus_space_tag {
 	void		*cookie;
 	bus_space_tag_t	parent;
+	/*
+	 * Windows onto the parent bus that this tag maps.  If ranges
+	 * is non-NULL, the address will be translated, and recursively
+	 * mapped via the parent tag.
+	 */
+	struct openprom_range *ranges;
+	int nranges;
+
 	int		type;
 
 	int     (*sparc_bus_alloc) __P((bus_space_tag_t, bus_addr_t, 
