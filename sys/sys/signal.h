@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.30 1998/05/25 21:37:10 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.31 1998/06/25 23:40:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -101,6 +101,10 @@
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>
+#endif
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_sunos.h"
 #endif
 
 #define	SIG_DFL		((void (*) __P((int)))  0)
