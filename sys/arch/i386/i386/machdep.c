@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.325 1998/10/03 21:38:49 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.326 1998/10/06 21:42:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -384,7 +384,6 @@ cpu_startup()
 	unsigned i;
 	caddr_t v;
 	int sz;
-	int base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	struct pcb *pcb;
@@ -562,8 +561,37 @@ cpu_startup()
 	configure();
 
 	/*
-	 * XXX Allocate physical pages for buffers; see above.
+	 * Set up proc0's TSS and LDT.
 	 */
+	gdt_init();
+	curpcb = pcb = &proc0.p_addr->u_pcb;
+	pcb->pcb_flags = 0;
+	pcb->pcb_tss.tss_ioopt =
+	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
+	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
+		pcb->pcb_iomap[x] = 0xffffffff;
+
+	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+	pcb->pcb_cr0 = rcr0();
+	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
+	tss_alloc(pcb);
+
+	ltr(pcb->pcb_tss_sel);
+	lldt(pcb->pcb_ldt_sel);
+
+	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
+
+}
+
+/*
+ * XXX Finish up the deferred buffer cache allocation and initialization.
+ */
+void
+i386_bufinit()
+{
+	int i, base, residual;
+
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
@@ -623,29 +651,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	/*
-	 * Set up proc0's TSS and LDT.
-	 */
-	gdt_init();
-	curpcb = pcb = &proc0.p_addr->u_pcb;
-	pcb->pcb_flags = 0;
-	pcb->pcb_tss.tss_ioopt =
-	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
-
-	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
-	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
-	tss_alloc(pcb);
-
-	ltr(pcb->pcb_tss_sel);
-	lldt(pcb->pcb_ldt_sel);
-
-	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
-
 }
 
 /*

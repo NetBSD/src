@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45 1998/10/06 20:50:16 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46 1998/10/06 21:42:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -132,6 +132,7 @@ extern struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 void	delay __P((int));
 void	dumpconf __P((void));
 void	cpu_reset __P((void));
+void	i386_bufinit __P((void));
 
 /* locore.s */
 struct region_descriptor;
