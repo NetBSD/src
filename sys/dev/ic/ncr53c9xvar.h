@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.38 2002/09/25 05:19:22 mycroft Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.39 2002/10/22 17:58:45 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -279,10 +279,10 @@ struct ncr53c9x_softc {
 	/* register defaults */
 	u_char	sc_cfg1;			/* Config 1 */
 	u_char	sc_cfg2;			/* Config 2, not ESP100 */
-	u_char	sc_cfg3;			/* Config 3, only ESP200 */
+	u_char	sc_cfg3;			/* Config 3, ESP200,FAS */
 	u_char	sc_cfg3_fscsi;			/* Chip-specific FSCSI bit */
-	u_char	sc_cfg4;			/* Config 3, only ESP200 */
-	u_char	sc_cfg5;			/* Config 3, only ESP200 */
+	u_char	sc_cfg4;			/* Config 4, only ESP200 */
+	u_char	sc_cfg5;			/* Config 5, only ESP200 */
 	u_char	sc_ccf;				/* Clock Conversion */
 	u_char	sc_timeout;
 
