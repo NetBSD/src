@@ -1,4 +1,4 @@
-/*	$NetBSD: number.c,v 1.4 1996/06/07 19:42:54 phil Exp $ */
+/*	$NetBSD: number.c,v 1.5 1996/07/24 23:23:23 phil Exp $ */
 
 /* number.c: Implements arbitrary precision numbers. */
 
@@ -1335,6 +1335,7 @@ out_num (num, o_base, out_char)
 	      }
 	      bc_multiply (t_num, base, &t_num, 0);
 	    }
+	    free_num (&t_num);
 	  }
     
 	/* Clean up. */
@@ -1342,7 +1343,6 @@ out_num (num, o_base, out_char)
 	free_num (&frac_part);
 	free_num (&base);
 	free_num (&cur_dig);
-	free_num (&t_num);
 	free_num (&max_o_digit);
       }
 }
