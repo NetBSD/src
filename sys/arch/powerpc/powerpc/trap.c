@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.100 2004/04/04 19:21:36 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.101 2004/04/15 21:07:07 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2004/04/04 19:21:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2004/04/15 21:07:07 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -64,7 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2004/04/04 19:21:36 matt Exp $");
 #include <powerpc/spr.h>
 #include <powerpc/userret.h>
 
-static int fix_unaligned(struct lwp *l, struct trapframe *frame);
+static int emulated_opcode(struct lwp *, struct trapframe *);
+static int fix_unaligned(struct lwp *, struct trapframe *);
 static __inline vaddr_t setusr(vaddr_t, size_t *);
 static __inline void unsetusr(void);
 
@@ -418,7 +419,6 @@ trap(struct trapframe *frame)
 #endif
 	case EXC_MCHK|EXC_USER:
 		ci->ci_ev_umchk.ev_count++;
-		KERNEL_PROC_LOCK(l);
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d (%s): user MCHK trap @ %#lx "
 			    "(SRR1=%#lx)\n",
@@ -429,13 +429,14 @@ trap(struct trapframe *frame)
 		ksi.ksi_trap = EXC_MCHK;
 		ksi.ksi_addr = (void *)frame->srr0;
 		ksi.ksi_code = BUS_OBJERR;
+		KERNEL_PROC_LOCK(l);
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		KERNEL_PROC_UNLOCK(l);
 
 	case EXC_PGM|EXC_USER:
 		ci->ci_ev_pgm.ev_count++;
-		KERNEL_PROC_LOCK(l);
 		if (frame->srr1 & 0x00020000) {	/* Bit 14 is set if trap */
+			KERNEL_PROC_LOCK(l);
 			if (LIST_EMPTY(&p->p_raslist) ||
 			    ras_lookup(p, (caddr_t)frame->srr0) == (caddr_t) -1) {
 				KSI_INIT_TRAP(&ksi);
@@ -448,11 +449,8 @@ trap(struct trapframe *frame)
 				/* skip the trap instruction */
 				frame->srr0 += 4;
 			}
+			KERNEL_PROC_UNLOCK(l);
 		} else {
-			if (cpu_printfataltraps)
-				printf("trap: pid %d.%d (%s): user PGM trap @"
-				    " %#lx (SRR1=%#lx)\n", p->p_pid, l->l_lid,
-				    p->p_comm, frame->srr0, frame->srr1);
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGILL;
 			ksi.ksi_trap = EXC_PGM;
@@ -461,12 +459,21 @@ trap(struct trapframe *frame)
 				ksi.ksi_signo = SIGFPE;
 				ksi.ksi_code = get_fpu_fault_code();
 			} else if (frame->srr1 & 0x40000) {
+				if (emulated_opcode(l, frame)) {
+					frame->srr0 += 4;
+					break;
+				}
 				ksi.ksi_code = ILL_PRVOPC;
 			} else
 				ksi.ksi_code = ILL_ILLOPC;
+			if (cpu_printfataltraps)
+				printf("trap: pid %d.%d (%s): user PGM trap @"
+				    " %#lx (SRR1=%#lx)\n", p->p_pid, l->l_lid,
+				    p->p_comm, frame->srr0, frame->srr1);
+			KERNEL_PROC_LOCK(l);
 			(*p->p_emul->e_trapsignal)(l, &ksi);
+			KERNEL_PROC_UNLOCK(l);
 		}
-		KERNEL_PROC_UNLOCK(l);
 		break;
 
 	case EXC_MCHK: {
@@ -747,6 +754,81 @@ fix_unaligned(struct lwp *l, struct trapframe *frame)
 	}
 
 	return -1;
+}
+
+int
+emulated_opcode(struct lwp *l, struct trapframe *tf)
+{
+	uint32_t opcode;
+	if (copyin((caddr_t)tf->srr0, &opcode, sizeof(opcode)) != 0)
+		return 0;
+
+#define	OPC_MFSPR_CODE		0x7c0002a6
+#define	OPC_MFSPR_MASK		(0xfc0007ff|0x001ff800)
+#define	OPC_MFSPR(spr)		(OPC_MFSPR_CODE |\
+				 (((spr) & 0x1f) << 16) |\
+				 (((spr) & 0x3e0) << 6))
+#define	OPC_MFSPR_REG(o)	(((o) >> 21) & 0x1f)
+#define	OPC_MFSPR_P(o, spr)	(((o) & OPC_MFSPR_MASK) == OPC_MFSPR(spr))
+
+	if (OPC_MFSPR_P(opcode, SPR_PVR)) {
+		__asm ("mfpvr %0" : "=r"(tf->fixreg[OPC_MFSPR_REG(opcode)]));
+		return 1;
+	}
+
+#define	OPC_MFMSR_CODE		0x7c0000a8
+#define	OPC_MFMSR_MASK		0xfc1fffff
+#define	OPC_MFMSR		OPC_MFMSR_CODE
+#define	OPC_MFMSR_REG(o)	(((o) >> 21) & 0x1f)
+#define	OPC_MFMSR_P(o)		(((o) & OPC_MFMSR_MASK) == OPC_MFMSR_CODE)
+
+	if (OPC_MFMSR_P(opcode)) {
+		struct pcb * const pcb = &l->l_addr->u_pcb;
+		register_t msr = tf->srr1 & PSL_USERSRR1;
+
+		if (pcb->pcb_flags & PCB_FPU)
+			msr |= PSL_FP;
+		msr |= (pcb->pcb_flags & (PCB_FE0|PCB_FE1));
+#ifdef ALTIVEC
+		if (pcb->pcb_flags & PCB_ALTIVEC)
+			msr |= PSL_VEC;
+#endif
+		tf->fixreg[OPC_MFMSR_REG(opcode)] = msr;
+		return 1;
+	}
+
+#define	OPC_MTMSR_CODE		0x7c0000a8
+#define	OPC_MTMSR_MASK		0xfc1fffff
+#define	OPC_MTMSR		OPC_MTMSR_CODE
+#define	OPC_MTMSR_REG(o)	(((o) >> 21) & 0x1f)
+#define	OPC_MTMSR_P(o)		(((o) & OPC_MTMSR_MASK) == OPC_MTMSR_CODE)
+
+	if (OPC_MTMSR_P(opcode)) {
+		struct pcb * const pcb = &l->l_addr->u_pcb;
+		register_t msr = tf->fixreg[OPC_MTMSR_REG(opcode)];
+
+		/*
+		 * Don't let the user muck with bits he's not allowed to.
+		 */
+		if (!PSL_USEROK_P(msr))
+			return 0;
+		/*
+		 * For now, only update the FP exception mode.
+		 */
+		pcb->pcb_flags &= ~(PSL_FE0|PSL_FE1);
+		pcb->pcb_flags |= msr & (PSL_FE0|PSL_FE1);
+		/*
+		 * If we think we have the FPU, update SRR1 too.  If we're
+		 * wrong userret() will take care of it.
+		 */
+		if (tf->srr1 & PSL_FP) {
+			tf->srr1 &= ~(PSL_FE0|PSL_FE1);
+			tf->srr1 |= msr & (PSL_FE0|PSL_FE1);
+		}
+		return 1;
+	}
+
+	return 0;
 }
 
 int

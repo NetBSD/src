@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.18 2003/11/29 23:56:09 manu Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.19 2004/04/15 21:07:07 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.18 2003/11/29 23:56:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.19 2004/04/15 21:07:07 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>
@@ -109,7 +109,7 @@ mach_create_thread_child(void *arg)
 	regs = (struct exec_macho_powerpc_thread_state *)mctc->mctc_state;
 
 	/* Security warning */
-	if ((regs->srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
+	if (!PSL_USEROK_P(regs->srr1))
 		uprintf("mach_create_thread_child: PSL_USERSTATIC change\n");		
 	/* 
 	 * Call upcallret before setting the register context as it
@@ -119,8 +119,7 @@ mach_create_thread_child(void *arg)
 
 	/* Set requested register context */
 	tf->srr0 = regs->srr0;
-	tf->srr1 = ((regs->srr1 & ~PSL_USERSTATIC) | 
-	    (tf->srr1 & PSL_USERSTATIC));
+	tf->srr1 = regs->srr1;
 	memcpy(tf->fixreg, &regs->r0, 32 * sizeof(register_t));
 	tf->cr = regs->cr;
 	tf->xer = regs->xer;
@@ -158,7 +157,7 @@ mach_thread_get_state_machdep(l, flavor, state, size)
 
 		mpts = (struct mach_ppc_thread_state *)state;
 		mpts->srr0 = tf->srr0;
-		mpts->srr1 = tf->srr1;
+		mpts->srr1 = tf->srr1 & PSL_USERSRR1;
 		memcpy(mpts->gpreg, tf->fixreg, 32 * sizeof(register_t));
 		mpts->cr = tf->cr;
 		mpts->xer = tf->xer;

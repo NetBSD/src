@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.5 2003/07/15 02:54:45 lukem Exp $	*/
+/*	$NetBSD: altivec.c,v 1.6 2004/04/15 21:07:07 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.5 2003/07/15 02:54:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.6 2004/04/15 21:07:07 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -109,7 +109,6 @@ enable_vec()
 	 * Enable AltiVec when we return to user-mode.
 	 * Record the new ownership of the AltiVec unit.
 	 */
-	tf->srr1 |= PSL_VEC;
 	curcpu()->ci_veclwp = l;
 	pcb->pcb_veccpu = curcpu();
 	__asm __volatile ("sync");
@@ -176,7 +175,6 @@ save_vec_cpu(void)
 	 * Note that we aren't using any CPU resources and stop any
 	 * data streams.
 	 */
-	tf->srr1 &= ~PSL_VEC;
 	pcb->pcb_veccpu = NULL;
 	ci->ci_veclwp = NULL;
 	__asm __volatile ("dssall; sync");

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.8 2003/09/27 04:44:42 matt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.9 2004/04/15 21:07:07 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.8 2003/09/27 04:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.9 2004/04/15 21:07:07 matt Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -68,7 +68,7 @@ compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 
 	/* Restore the register context. */
 	tf = trapframe(l);
-	if ((sc.sc_frame.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
+	if (!PSL_USEROK_P(sc.sc_frame.srr1))
 		return (EINVAL);
 
 	/* Restore register context. */
