@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ze.c,v 1.7 2000/05/08 17:06:48 ragge Exp $	*/
+/*	$NetBSD: if_ze.c,v 1.8 2000/05/09 20:53:52 ragge Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
  *
@@ -48,6 +48,9 @@
 #include <dev/ic/sgecreg.h>
 
 #include "arch/vax/include/sid.h"
+#include "arch/vax/include/rpb.h"
+
+#include "vaxstand.h"
 
 int ze_probe(), ze_match(), ze_get(), ze_put();
 void ze_init(), ze_end();
@@ -105,7 +108,7 @@ ze_init(desc, machdep_hint)
 	struct ze_tdes *ze_setup_tdes_list;
 
 	/* point to the device in memory */
-	addr = (struct zedevice *)0x20008000;
+	addr = (struct zedevice *)rpb->csrphy;
 
 	/* reset the device and wait for completion */
 	addr->ze_nicsr6 = ZE_NICSR6_MBO | ZE_NICSR6_RE;
