@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.16 1997/05/14 16:13:31 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.17 1997/06/10 19:37:58 veego Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ _vm_init(kehp)
 	 * Steal some special-purpose, already mapped pages.
 	 * Note: msgbuf is setup in machdep.c:cpu_startup()
 	 */
-	nextva = _round_page(esym);
+	nextva = m68k_round_page(esym);
 
 	/*
 	 * Setup the u-area pages (stack, etc.) for proc0.
