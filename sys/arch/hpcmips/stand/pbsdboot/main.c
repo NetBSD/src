@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1999/09/26 12:46:57 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1999/10/23 03:26:20 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -145,6 +145,12 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("E-55(Small Font)"), BIFB_D2_M2L_0x2,
 		480, 320, 256, 0xa000000,
 		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_CASIO_CASSIOPEIAE_E55 },
+	{ TEXT("E-100"), BIFB_D16_FFFF,
+		240, 320, 512, 0xa200000,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_CASIO_CASSIOPEIAE_E100 },
+	{ TEXT("E-500"), BIFB_D16_FFFF,
+		240, 320, 512, 0xa200000,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_CASIO_CASSIOPEIAE_E500 },
 	{ TEXT("INTERTOP CX300"), BIFB_D8_FF,
 		640, 480, 640, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_INTERTOP_IT300 },
@@ -395,7 +401,7 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
 			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.7.0 1999.09.26\r\n")
+			       TEXT("Version 1.7.1 1999.10.23\r\n")
 			       TEXT("\r\n")
 			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 			       TEXT("All rights reserved.\r\n")
