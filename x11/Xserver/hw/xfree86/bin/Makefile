@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/23 08:45:02 rtr Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2005/04/06 21:37:52 tron Exp $
 
-SUBDIR=	xf86config xf86cfg kbd_mode scanpci pcitweak mmapr mmapw gtf
+SUBDIR=	getconfig xf86config xf86cfg kbd_mode scanpci pcitweak mmapr mmapw gtf
 
 .if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=ioport
