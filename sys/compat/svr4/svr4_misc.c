@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.50 1997/10/10 22:16:22 fvdl Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.51 1997/10/19 00:16:08 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -448,7 +448,7 @@ svr4_sys_mmap(p, v, retval)
 {
 	struct svr4_sys_mmap_args	*uap = v;
 	struct sys_mmap_args	 mm;
-	caddr_t 		 rp;
+	void		*rp;
 #define _MAP_NEW	0x80000000
 	/*
          * Verify the arguments.
@@ -466,7 +466,7 @@ svr4_sys_mmap(p, v, retval)
 	SCARG(&mm, addr) = SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
 
-	rp = (caddr_t) round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+	rp = (void *) round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
 	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
 		SCARG(&mm, addr) = rp;
@@ -483,7 +483,7 @@ svr4_sys_mmap64(p, v, retval)
 {
 	struct svr4_sys_mmap64_args	*uap = v;
 	struct sys_mmap_args	 mm;
-	caddr_t 		 rp;
+	void		*rp;
 #define _MAP_NEW	0x80000000
 	/*
          * Verify the arguments.
@@ -501,7 +501,7 @@ svr4_sys_mmap64(p, v, retval)
 	SCARG(&mm, addr) = SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
 
-	rp = (caddr_t) round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+	rp = (void *) round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
 	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
 		SCARG(&mm, addr) = rp;
