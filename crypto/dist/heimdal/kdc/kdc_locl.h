@@ -32,7 +32,7 @@
  */
 
 /* 
- * $Id: kdc_locl.h,v 1.3 2000/09/10 19:29:44 joda Exp $ 
+ * $Id: kdc_locl.h,v 1.4 2000/10/08 18:40:08 is Exp $ 
  */
 
 #ifndef __KDC_LOCL_H__
@@ -82,9 +82,12 @@ extern struct timeval now;
 krb5_error_code as_rep (KDC_REQ*, krb5_data*, const char*, struct sockaddr*);
 void configure (int, char**);
 hdb_entry* db_fetch (krb5_principal);
-void kdc_log (int, const char*, ...);
-char* kdc_log_msg (int, const char*, ...);
-char* kdc_log_msg_va (int, const char*, va_list);
+void kdc_log (int, const char*, ...)
+	__attribute__((__format__(__printf__, 2, 3)));
+char* kdc_log_msg (int, const char*, ...)
+	__attribute__((__format__(__printf__, 2, 3)));
+char* kdc_log_msg_va (int, const char*, va_list)
+	__attribute__((__format__(__printf__, 2, 0)));
 void kdc_openlog (krb5_config_section*);
 void loop (void);
 void set_master_key (EncryptionKey);
