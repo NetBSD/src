@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.2 1995/03/08 02:41:37 cgd Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.3 1995/03/24 15:03:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -105,6 +105,10 @@ setconf()
 retry:
 		printf("root device? ");
 		gets(name);
+
+		if (strcmp(name, "halt") == 0)
+			boot(RB_HALT);
+			
 		for (gc = genericconf; gc->gc_driver; gc++)
 			if (gc->gc_name[0] == name[0] &&
 			    gc->gc_name[1] == name[1])
@@ -124,6 +128,7 @@ bad:
 		printf("use:\n");	
 		for (gc = genericconf; gc->gc_driver; gc++)
 			printf("\t%s%%d\n", gc->gc_name);
+		printf("\thalt\n");
 		goto retry;
 	}
 	unit = 0;
@@ -160,6 +165,7 @@ gets(cp)
 		switch (c) {
 		case '\n':
 		case '\r':
+			printf("%c", '\n');
 			*lp++ = '\0';
 			return;
 		case '\b':
