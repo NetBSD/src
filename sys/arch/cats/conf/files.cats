@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.24 2002/11/03 21:43:32 chris Exp $
+#	$NetBSD: files.cats,v 1.25 2003/10/04 15:43:05 chris Exp $
 #
 # CATS-specific configuration info
 #
@@ -11,6 +11,9 @@ defflag	IRQSTATS
 
 # X server support in console drivers
 defflag	XSERVER
+
+# ABLE booting ELF kernels
+defflag ABLEELF
 
 define todservice {}
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.51 2003/09/13 13:30:03 chris Exp $
+# $NetBSD: GENERIC,v 1.52 2003/10/04 15:43:05 chris Exp $
 #
 # GENERIC machine description file
 # 
@@ -32,6 +32,10 @@ options 	INSECURE	# disable kernel securelevel
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
+
+# experimental ELF support when used on a CATS board running ABLE
+#options	ABLEELF
+#makeoptions	ABLEELF="1"
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
