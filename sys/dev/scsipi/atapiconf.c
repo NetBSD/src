@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.55 2003/01/01 00:10:25 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.56 2003/02/19 14:33:15 hannken Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.55 2003/01/01 00:10:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.56 2003/02/19 14:33:15 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,8 @@ const struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	{{T_DIRECT, T_REMOV,
 	  "FUJIFILM", "USB-DRIVEUNIT", "1.00"},	PQUIRK_NO_FLEX_PAGE |
 						PQUIRK_NOSENSE },
+	{{T_OPTICAL, T_REMOV,
+	  "FUJITSU MCJ3230AP", "", ""},		PQUIRK_NO_FLEX_PAGE },
 };
 
 int
