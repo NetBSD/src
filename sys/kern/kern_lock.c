@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.30 2000/05/23 05:17:11 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.31 2000/06/08 05:50:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -168,12 +168,11 @@ do {									\
 				(lkp)->lk_flags |= LK_WAITDRAIN;	\
 			else						\
 				(lkp)->lk_waitcount++;			\
-			simple_unlock(&(lkp)->lk_interlock);		\
 			/* XXX Cast away volatile. */			\
-			error = tsleep((drain) ? &(lkp)->lk_flags :	\
+			error = ltsleep((drain) ? &(lkp)->lk_flags :	\
 			    (void *)(lkp), (lkp)->lk_prio,		\
-			    (lkp)->lk_wmesg, (lkp)->lk_timo);		\
-			simple_lock(&(lkp)->lk_interlock);		\
+			    (lkp)->lk_wmesg, (lkp)->lk_timo,		\
+			    &(lkp)->lk_interlock);			\
 			if ((drain) == 0)				\
 				(lkp)->lk_waitcount--;			\
 			if (error)					\
