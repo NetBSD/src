@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.20 2003/08/07 16:29:18 agc Exp $	*/
+/*	$NetBSD: ansi.h,v 1.21 2003/09/24 02:39:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -62,17 +62,13 @@
 #define	_BSD_TIMER_T_		int		/* timer_t */
 #define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
 #define	_BSD_USECONDS_T_	unsigned int	/* useconds_t */
-#ifdef _LP64
+#if __GNUC_PREREQ__(3, 0)
 #define	_BSD_VA_LIST_		__builtin_va_list /* GCC builtin type */
 #else
 #define	_BSD_VA_LIST_		__va_list	/* va_list */
 typedef struct {
-#if __GNUC_PREREQ__(3, 0)
-	__builtin_va_list __va;
-#else
 	char __gpr, __fpr, __pad[2];
 	char *__stack, *__base;
-#endif
 } __va_list;
 #endif
 
