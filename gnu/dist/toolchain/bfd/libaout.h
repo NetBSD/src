@@ -181,7 +181,7 @@ struct aout_backend_data
   boolean (*translate_from_native_sym_flags) PARAMS ((bfd *, 
                                                       aout_symbol_type *));
 
-  /* Set the fields of the external_nlist according to the asybol.  */
+  /* Set the fields of the external_nlist according to the asymbol.  */
   boolean (*translate_to_native_sym_flags) PARAMS ((bfd *, 
                                                     asymbol *,
                                                     struct external_nlist *));
