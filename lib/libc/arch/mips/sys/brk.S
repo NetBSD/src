@@ -1,3 +1,5 @@
+/*	$NetBSD: brk.S,v 1.6 1996/09/16 18:11:42 jonathan Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)brk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: brk.S,v 1.5 1995/09/25 19:21:41 jonathan Exp $")
+	ASMSTR("$NetBSD: brk.S,v 1.6 1996/09/16 18:11:42 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 	.globl	minbrk
