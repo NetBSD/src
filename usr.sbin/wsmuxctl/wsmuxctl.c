@@ -1,4 +1,4 @@
-/* $NetBSD: wsmuxctl.c,v 1.4 2001/10/24 18:31:16 augustss Exp $ */
+/* $NetBSD: wsmuxctl.c,v 1.5 2002/07/07 15:13:55 drochner Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -160,9 +160,9 @@ main(int argc, char **argv)
 			sprintf(buf, "%s%s", ctlpath, wsdev);
 			wsdev = buf;
 			wsfd = open(wsdev, O_WRONLY, 0);
-			if (wsfd < 0)
-				err(2, "%s", wsdev);
 		}
+		if (wsfd < 0)
+			err(2, "%s", wsdev);
 	}
 
 	if (list) {
