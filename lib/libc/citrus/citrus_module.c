@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_module.c,v 1.3 2003/08/07 16:42:38 agc Exp $	*/
+/*	$NetBSD: citrus_module.c,v 1.4 2004/12/21 09:00:01 yamt Exp $	*/
 
 /*-
  * Copyright (c)1999, 2000, 2001, 2002 Citrus Project,
@@ -96,7 +96,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_module.c,v 1.3 2003/08/07 16:42:38 agc Exp $");
+__RCSID("$NetBSD: citrus_module.c,v 1.4 2004/12/21 09:00:01 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -290,12 +290,8 @@ _citrus_find_getops(_citrus_module_t handle, const char *modname,
 	_DIAGASSERT(modname != NULL);
 	_DIAGASSERT(ifname != NULL);
 
-#ifdef __ELF__
-	snprintf(name, sizeof(name), "_citrus_%s_%s_getops", modname, ifname);
-#else
-	/* a.out case */
-	snprintf(name, sizeof(name), "__citrus_%s_%s_getops", modname, ifname);
-#endif
+	snprintf(name, sizeof(name), _C_LABEL_STRING("_citrus_%s_%s_getops"),
+	    modname, ifname);
 	p = dlsym((void *)handle, name);
 	return p;
 }
