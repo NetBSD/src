@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.22 2000/12/20 23:08:51 christos Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.22.2.1 2001/08/08 16:13:44 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.22 2000/12/20 23:08:51 christos Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.22.2.1 2001/08/08 16:13:44 nathanw Exp $");
 #endif
 #endif
 
@@ -65,8 +65,8 @@ __weak_alias(clntraw_create,_clntraw_create)
 __weak_alias(clnt_raw_create,_clnt_raw_create)
 #endif
 
-#ifdef __REENT
-extern mutex_t clntaw_lock;
+#ifdef _REENTRANT
+extern mutex_t clntraw_lock;
 #endif
 
 #define MCALL_MSG_SIZE 24
@@ -305,7 +305,7 @@ static struct clnt_ops *
 clnt_raw_ops()
 {
 	static struct clnt_ops ops;
-#ifdef __REENT
+#ifdef _REENTRANT
 	extern mutex_t  ops_lock;
 #endif
 

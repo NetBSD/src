@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.21 2001/01/04 14:42:22 lukem Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.21.2.1 2001/08/08 16:13:45 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -108,7 +108,7 @@ rpc_reg(prognum, versnum, procnum, progname, inproc, outproc, nettype)
 	struct netconfig *nconf;
 	int done = FALSE;
 	void *handle;
-#ifdef __REENT
+#ifdef _REENTRANT
 	extern mutex_t proglst_lock;
 #endif
 
@@ -249,7 +249,7 @@ universal(rqstp, transp)
 	char *outdata;
 	char *xdrbuf;
 	struct proglst *pl;
-#ifdef __REENT
+#ifdef _REENTRANT
 	extern mutex_t proglst_lock;
 #endif
 

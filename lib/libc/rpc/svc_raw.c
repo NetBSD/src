@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.15 2001/01/04 14:42:22 lukem Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.15.2.1 2001/08/08 16:13:45 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -74,7 +74,7 @@ static struct svc_raw_private {
 	char	verf_body[MAX_AUTH_BYTES];
 } *svc_raw_private;
 
-#ifdef __REENT
+#ifdef _REENTRANT
 extern mutex_t	svcraw_lock;
 #endif
 
@@ -245,7 +245,7 @@ svc_raw_ops(xprt)
 {
 	static struct xp_ops ops;
 	static struct xp_ops2 ops2;
-#ifdef __REENT
+#ifdef _REENTRANT
 	extern mutex_t ops_lock;
 #endif
 

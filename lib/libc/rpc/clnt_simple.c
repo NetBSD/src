@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_simple.c,v 1.22 2001/01/04 14:42:19 lukem Exp $	*/
+/*	$NetBSD: clnt_simple.c,v 1.22.2.1 2001/08/08 16:13:44 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -81,7 +81,7 @@ struct rpc_call_private {
 };
 static struct rpc_call_private *rpc_call_private_main;
 
-#ifdef __REENT
+#ifdef _REENTRANT
 static void rpc_call_destroy __P((void *));
 
 static void
@@ -95,7 +95,17 @@ rpc_call_destroy(void *vp)
 		free(rcp);
 	}
 }
+static thread_key_t rpc_call_key;
+static once_t rpc_call_once = ONCE_INITIALIZER;
+
+static void
+rpc_call_setup(void)
+{
+
+	thr_keycreate(&rpc_call_key, rpc_call_destroy);
+}
 #endif
+
 
 /*
  * This is the simplified interface to the client rpc layer.
@@ -118,28 +128,19 @@ rpc_call(host, prognum, versnum, procnum, inproc, in, outproc, out, nettype)
 	struct rpc_call_private *rcp = (struct rpc_call_private *) 0;
 	enum clnt_stat clnt_stat;
 	struct timeval timeout, tottimeout;
-#ifdef __REENT
-	static thread_key_t rpc_call_key;
-	extern mutex_t tsd_lock;
-#endif
-	int main_thread = 1;
+	extern int __isthreaded;
 
 	_DIAGASSERT(host != NULL);
 	/* XXX: in may be NULL ??? */
 	/* XXX: out may be NULL ??? */
 	/* XXX: nettype may be NULL ??? */
 
-#ifdef __REENT
-	if ((main_thread = _thr_main())) {
+#ifdef _REENTRANT
+	if (__isthreaded == 0) {
 		rcp = rpc_call_private_main;
 	} else {
-		if (rpc_call_key == 0) {
-			mutex_lock(&tsd_lock);
-			if (rpc_call_key == 0)
-				thr_keycreate(&rpc_call_key, rpc_call_destroy);
-			mutex_unlock(&tsd_lock);
-		}
-		thr_getspecific(rpc_call_key, (void **) &rcp);
+		thr_once(&rpc_call_once, rpc_call_setup);
+		rcp = thr_getspecific(rpc_call_key);
 	}
 #else
 	rcp = rpc_call_private_main;
@@ -151,7 +152,7 @@ rpc_call(host, prognum, versnum, procnum, inproc, in, outproc, out, nettype)
 			rpc_createerr.cf_error.re_errno = errno;
 			return (rpc_createerr.cf_stat);
 		}
-		if (main_thread)
+		if (__isthreaded == 0)
 			rpc_call_private_main = rcp;
 		else
 			thr_setspecific(rpc_call_key, (void *) rcp);
