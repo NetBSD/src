@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.5 1998/12/12 20:08:22 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.6 1999/02/05 20:53:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.5 1998/12/12 20:08:22 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.6 1999/02/05 20:53:50 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -131,8 +131,8 @@ re_addc(el, c)
     }
     else {
 	re_putc(el, '\\');
-	re_putc(el, (((unsigned int)c >> 6) & 07) + '0');
-	re_putc(el, (((unsigned int)c >> 3) & 07) + '0');
+	re_putc(el, (int)((((unsigned int)c >> 6) & 07) + '0'));
+	re_putc(el, (int)((((unsigned int)c >> 3) & 07) + '0'));
 	re_putc(el, (c & 07) + '0');
     }
 } /* end re_addc */
@@ -970,8 +970,8 @@ re_fastaddc(el)
     }
     else {
 	re_fastputc(el, '\\');
-	re_fastputc(el, (((unsigned int)c >> 6) & 7) + '0');
-	re_fastputc(el, (((unsigned int)c >> 3) & 7) + '0');
+	re_fastputc(el, (int)((((unsigned int)c >> 6) & 7) + '0'));
+	re_fastputc(el, (int)((((unsigned int)c >> 3) & 7) + '0'));
 	re_fastputc(el, (c & 7) + '0');
     }
     term__flush();
