@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.26 2000/02/17 08:54:16 fvdl Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.27 2000/03/12 22:56:49 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.26 2000/02/17 08:54:16 fvdl Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.27 2000/03/12 22:56:49 tsarna Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.26 2000/02/17 08:54:16 fvdl Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 struct ctlname topname[] = CTL_NAMES;
 struct ctlname kernname[] = CTL_KERN_NAMES;
@@ -189,9 +190,10 @@ main(argc, argv)
 {
 	extern char *optarg;
 	extern int optind;
+	char *fn = NULL;
 	int ch, lvl1;
 
-	while ((ch = getopt(argc, argv, "Aanw")) != -1) {
+	while ((ch = getopt(argc, argv, "Aaf:nw")) != -1) {
 		switch (ch) {
 
 		case 'A':
@@ -200,6 +202,11 @@ main(argc, argv)
 
 		case 'a':
 			aflag = 1;
+			break;
+
+		case 'f':
+			fn = optarg;
+			wflag = 1;
 			break;
 
 		case 'n':
@@ -223,10 +230,28 @@ main(argc, argv)
 			listall(topname[lvl1].ctl_name, &secondlevel[lvl1]);
 		return 0;
 	}
-	if (argc == 0)
-		usage();
-	while (argc-- > 0)
-		parse(*argv++, 1);
+
+	if (fn) {
+		FILE *fp;
+		char *l;
+		
+		fp = fopen(fn, "r");
+		if (fp == NULL) {
+			err(1, "%s", fn);
+		} else {
+			while (l = fparseln(fp, NULL, NULL, NULL, 0)) {
+				if (*l) {
+					parse(l, 1);
+				}
+			}
+			fclose(fp);
+		}
+	} else {
+		if (argc == 0)
+			usage();
+		while (argc-- > 0)
+			parse(*argv++, 1);
+	}
 	return 0;
 }
 
@@ -298,7 +323,7 @@ parse(string, flags)
 		lp = &secondlevel[indx];
 		if (lp->list == 0) {
 			warnx("Class `%s' is not implemented",
-		    	topname[indx].ctl_name);
+			topname[indx].ctl_name);
 			return;
 		}
 		if (bufp == NULL) {
