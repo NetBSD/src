@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.85 2003/11/13 03:09:30 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.86 2003/12/18 08:15:42 pk Exp $	*/
 
 /*
  *
@@ -599,6 +599,8 @@ vaddr_t			uvm_km_kmemalloc __P((struct vm_map *, struct
 struct vm_map		*uvm_km_suballoc __P((struct vm_map *, vaddr_t *,
 			    vaddr_t *, vsize_t, int, boolean_t,
 			    struct vm_map *));
+vaddr_t			uvm_km_valloc1 __P((struct vm_map *, vsize_t,
+				vsize_t, voff_t, uvm_flag_t));
 vaddr_t			uvm_km_valloc __P((struct vm_map *, vsize_t));
 vaddr_t			uvm_km_valloc_align __P((struct vm_map *, vsize_t,
 			    vsize_t));
@@ -608,6 +610,15 @@ vaddr_t			uvm_km_valloc_prefer_wait __P((struct vm_map *, vsize_t,
 vaddr_t			uvm_km_alloc_poolpage1 __P((struct vm_map *,
 			    struct uvm_object *, boolean_t));
 void			uvm_km_free_poolpage1 __P((struct vm_map *, vaddr_t));
+
+#define uvm_km_valloc(map, size)					\
+	uvm_km_valloc1(map, size, 0, UVM_UNKNOWN_OFFSET, UVM_KMF_NOWAIT)
+#define uvm_km_valloc_align(map, size, align)				\
+	uvm_km_valloc1(map, size, align, UVM_UNKNOWN_OFFSET, UVM_KMF_NOWAIT)
+#define uvm_km_valloc_prefer_wait(map, size, prefer)			\
+	uvm_km_valloc1(map, size, 0, prefer, 0)
+#define uvm_km_valloc_wait(map, size)					\
+	uvm_km_valloc1(map, size, 0, UVM_UNKNOWN_OFFSET, 0)
 
 #define	uvm_km_alloc_poolpage(waitok)					\
 	uvm_km_alloc_poolpage1(kmem_map, NULL, (waitok))
