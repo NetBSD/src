@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.14 1996/04/29 20:52:52 jtc Exp $
+#	$Id: Makefile,v 1.15 1996/04/29 21:11:24 jtc Exp $
 
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
@@ -36,9 +36,7 @@ includes:	${HDRS}
 .SUFFIXES: .x .c .h
 
 .x.c:
-	@echo generating $@...
-	@rpcgen -c ${.IMPSRC} -o ${.TARGET}
+	rpcgen -c ${.IMPSRC} -o ${.TARGET}
 
 .x.h:
-	@echo generating $@...
-	@rpcgen -h ${.IMPSRC} -o ${.TARGET}
+	rpcgen -h ${.IMPSRC} -o ${.TARGET}
