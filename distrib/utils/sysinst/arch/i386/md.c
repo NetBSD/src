@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.58.2.3 2002/07/29 14:46:33 lukem Exp $ */
+/*	$NetBSD: md.c,v 1.58.2.4 2002/08/02 10:36:38 lukem Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -241,6 +241,7 @@ md_make_bsd_partitions(void)
 	FILE *f;
 	int i;
 	int maxpart = getmaxpartitions();
+	struct disklabel l;
 
 editlab:
 	/* Ask for layout type -- standard or special */
@@ -332,6 +333,26 @@ editlab:
 
 	case 3:
 custom:
+
+	case 4: /* use existing parts */
+		if (get_real_geom(diskdev, &l) == 0) {
+			msg_display(MSG_abort);
+			return 0;
+		}
+
+#define p l.d_partitions[i]
+		for (i = 0; i < maxpart; i++) {
+			bsdlabel[i].pi_size = p.p_size;
+			bsdlabel[i].pi_offset = p.p_offset;
+			bsdlabel[i].pi_fstype = p.p_fstype;
+			bsdlabel[i].pi_bsize  = p.p_fsize * p.p_frag;
+			bsdlabel[i].pi_fsize  = p.p_fsize;
+		}
+#undef p
+
+		msg_display(MSG_postuseexisting);
+		getchar();
+		break;
 	}
 
 	/*
