@@ -1,4 +1,4 @@
-/* $NetBSD: wsqmsvar.h,v 1.2 2002/06/19 23:02:58 bjh21 Exp $ */
+/* $NetBSD: wsqmsvar.h,v 1.3 2002/06/19 23:05:07 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * Quadratic mouse driver variable for the wscons as used in the IOMD but is in
- * principle more generic.
+ * Quadrature mouse driver variable for the wscons as used in the IOMD
+ * but is in principle more generic.
  *
  * wsqmsvar.h
  */
@@ -46,8 +46,8 @@
 /* softc structure for the wsqms device */
 
 struct wsqms_softc {
-	struct device  sc_device;	/* remember our own device as attached */
-	struct device *sc_wsmousedev;	/* remember our wsmouse device... */
+	struct device  sc_device;
+	struct device *sc_wsmousedev;
 
 	bus_space_tag_t sc_iot;		/* bus tag */
 	bus_space_handle_t sc_ioh;	/* bus handle for XY */
@@ -65,7 +65,7 @@ struct wsqms_softc {
 
 
 /* function prototypes */
-extern void wsqms_attach	__P((struct wsqms_softc *sc, struct device *));
+extern void wsqms_attach(struct wsqms_softc *sc, struct device *);
 
 
 /* End of wsqmsvar.h */
