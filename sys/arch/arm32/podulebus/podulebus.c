@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.17 1996/11/23 03:42:39 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.18 1997/01/03 23:30:30 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -125,9 +125,6 @@ podulebussubmatch(parent, match, aux)
 	struct cfdata *cf = match;
 	struct podule_attach_args *pa = aux;
 
-	if (cf->cf_fstate == FSTATE_STAR)
-		panic("nope cannot handle this");
-
 	/* Return priority 0 or 1 for wildcarded podule */
 
 	if (cf->cf_loc[0] == -1)
@@ -208,7 +205,7 @@ podulechunkdirectory(podule)
 				}
 			}
 		}
-#if 0
+#ifdef DEBUG_CHUNK_DIR
 		if (id == 0xf5 || id == 0xf1 || id == 0xf2 || id == 0xf3 || id == 0xf4 || id == 0xf6) {
 			addr = poduleread(podule->sync_base, address + 16, podule->slottype);
 			addr |= (poduleread(podule->sync_base, address + 20, podule->slottype) << 8);
@@ -302,16 +299,20 @@ poduleread(address, offset, slottype)
 	int offset;
 	int slottype;
 {
-	static u_int netslotoffset;
+	static int netslotoffset = -1;
 
 	if (slottype == SLOT_NET) {
+		if (netslotoffset == -1) {
+			netslotoffset = 0;
+			WriteByte(address, 0x00);
+		}
 		offset = offset >> 2;
 		if (offset < netslotoffset) {
-			WriteWord(address, 0);
+			WriteByte(address, 0);
 			netslotoffset = 0;
 		}
 		while (netslotoffset < offset) {
-			slottype = ReadWord(address);
+			slottype = ReadByte(address);
 			++netslotoffset;
 		}
 		++netslotoffset;
@@ -333,22 +334,35 @@ podulescan(dev)
 	/* Loop round all the podules */
 
 	for (loop = 0; loop < MAX_PODULES; ++loop, offset += SIMPLE_PODULE_SIZE) {
+		podule = &podules[loop];
+		podule->podulenum = loop;
+		podule->attached = 0;
+		podule->slottype = SLOT_NONE;
+		podule->dma_channel = -1;
+		podule->description[0] = 0;
+
 		if (loop == 4) offset += PODULE_GAP;
 		address = ((u_char *)SYNC_PODULE_BASE) + offset;
         
-		podule = &podules[loop];
+		if ((address[0] & 0x02) == 0x00) {
+			podule->fast_base = FAST_PODULE_BASE + offset;
+			podule->medium_base = MEDIUM_PODULE_BASE + offset;
+			podule->slow_base = SLOW_PODULE_BASE + offset;
+			podule->sync_base = SYNC_PODULE_BASE + offset;
+			podule->mod_base = MOD_PODULE_BASE + offset;
+			podule->easi_base = EASI_BASE + loop * EASI_SIZE;
+		} else {
+			address = ((u_char *)EASI_BASE) + loop * EASI_SIZE;
+			if ((address[0] & 0x02) != 0x00)
+				continue;
 
-		podule->fast_base = FAST_PODULE_BASE + offset;
-		podule->medium_base = MEDIUM_PODULE_BASE + offset;
-		podule->slow_base = SLOW_PODULE_BASE + offset;
-		podule->sync_base = SYNC_PODULE_BASE + offset;
-		podule->mod_base = MOD_PODULE_BASE + offset;
-		podule->easi_base = EASI_BASE + loop * EASI_SIZE;
-		podule->attached = 0;
-		podule->slottype = SLOT_NONE;
-		podule->podulenum = loop;
-		podule->dma_channel = -1;
-		podule->description[0] = 0;
+			podule->fast_base = 0;
+			podule->medium_base = 0;
+			podule->slow_base = 0;
+			podule->sync_base = 0;
+			podule->mod_base = 0;
+			podule->easi_base = EASI_BASE + loop * EASI_SIZE;
+		}
 
 		/* XXX - Really needs to be linked to a DMA manager */
 		if (IOMD_ID == RPC600_IOMD_ID) {
@@ -500,9 +514,6 @@ podulebusattach(parent, self, aux)
 
 	/* Now map the EASI space */
 
-#if 0
-	/* XXX - we don't use EASI space yet */
-	
 	for (loop = 0; loop < MAX_PODULES; ++loop) {
 		int loop1;
         
@@ -510,7 +521,7 @@ podulebusattach(parent, self, aux)
 		map_section(PAGE_DIRS_BASE, EASI_BASE + loop1, EASI_HW_BASE + loop1);
 	}
 	tlb_flush();
-#endif
+
 	/*
 	 * The MEDIUM and SLOW simple podules and the module space will have been
 	 * mapped when the IOMD and COMBO we mapped in for the RPC
