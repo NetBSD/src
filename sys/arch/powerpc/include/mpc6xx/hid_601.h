@@ -1,4 +1,4 @@
-/*	$NetBSD: hid_601.h,v 1.1 2001/06/06 17:36:03 matt Exp $	*/
+/*	$NetBSD: hid_601.h,v 1.2 2002/02/06 19:59:30 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,6 +81,12 @@
 #define	HID0_601_S	0x40000000
 
 #define	HID0_601_CE	0x80000000	/* master checkstop enable */
+
+#define HID0_601_BITMASK "\020" \
+    "\040CE\037S\036M\035TD\034CD\033SH\032DT\031BA" \
+    "\030BD\027CP\026IU\025PP\021ES" \
+    "\020EM\017ETC\016ECD\015ESH\014EDT\013EBA\012EBD\011ECP" \
+    "\010EIU\007EPP\006DRF\005DRL\004LM\003PAR\002EMC\001EHP"
 
 
 /*
