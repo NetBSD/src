@@ -1,4 +1,4 @@
-/*	$NetBSD: fplib_libc.c,v 1.1.1.1 1999/09/16 12:18:25 takemura Exp $	*/
+/*	$NetBSD: fplib_libc.c,v 1.2 1999/12/26 00:22:31 shin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,47 +40,47 @@
 #include "environment.h"
 #include "softfloat.h"
 
-void sfp_setround __P((int rnd_dir));
-int sfp_getround __P((void));
-void sfp_setmask __P((int mask));
-int sfp_getmask __P((void));
-void sfp_setsticky __P((int except));
-int sfp_getsticky __P((void));
+void _mips_sfp_setround __P((int rnd_dir));
+int _mips_sfp_getround __P((void));
+void _mips_sfp_setmask __P((int mask));
+int _mips_sfp_getmask __P((void));
+void _mips_sfp_setsticky __P((int except));
+int _mips_sfp_getsticky __P((void));
 
 void
-sfp_setround(rnd_dir)
+_mips_sfp_setround(rnd_dir)
 	int rnd_dir;
 {
 	float_rounding_mode = rnd_dir;
 }
 
 int
-sfp_getround(void)
+_mips_sfp_getround(void)
 {
 	return(float_rounding_mode);
 }
 
 void
-sfp_setmask(mask)
+_mips_sfp_setmask(mask)
 	int mask;
 {
 }
 
 int
-sfp_getmask(void)
+_mips_sfp_getmask(void)
 {
 	return(0);
 }
 
 void
-sfp_setsticky(except)
+_mips_sfp_setsticky(except)
 	int except;
 {
 	float_exception_flags = except;
 }
 
 int
-sfp_getsticky(void)
+_mips_sfp_getsticky(void)
 {
 	return(float_exception_flags);
 }

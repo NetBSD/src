@@ -50,3 +50,42 @@ a compiler does not support inlining, this macro should be defined to be
 #define INLINE	/* for lint */
 #endif
 
+/*
+-------------------------------------------------------------------------------
+Move private identifiers with external linkage into implementation namespace.
+-------------------------------------------------------------------------------
+*/
+#define float32_eq			_mips_float32_eq
+#define float32_eq_signaling		_mips_float32_eq_signaling
+#define float32_is_nan			_mips_float32_is_nan
+#define float32_is_signaling_nan	_mips_float32_is_signaling_nan
+#define float32_le			_mips_float32_le
+#define float32_le_quiet		_mips_float32_le_quiet
+#define float32_lt			_mips_float32_lt
+#define float32_lt_quiet		_mips_float32_lt_quiet
+#define float32_rem			_mips_float32_rem
+#define float32_round_to_int		_mips_float32_round_to_int
+#define float32_sqrt			_mips_float32_sqrt
+#define float32_to_int32		_mips_float32_to_int32
+#define float32_to_int64		_mips_float32_to_int64
+#define float32_to_int64_round_to_zero	_mips_float32_to_int64_round_to_zero
+#define float64_eq			_mips_float64_eq
+#define float64_eq_signaling		_mips_float64_eq_signaling
+#define float64_is_nan			_mips_float64_is_nan
+#define float64_is_signaling_nan	_mips_float64_is_signaling_nan
+#define float64_le			_mips_float64_le
+#define float64_le_quiet		_mips_float64_le_quiet
+#define float64_lt			_mips_float64_lt
+#define float64_lt_quiet		_mips_float64_lt_quiet
+#define float64_rem			_mips_float64_rem
+#define float64_round_to_int		_mips_float64_round_to_int
+#define float64_sqrt			_mips_float64_sqrt
+#define float64_to_int32		_mips_float64_to_int32
+#define float64_to_int64		_mips_float64_to_int64
+#define float64_to_int64_round_to_zero	_mips_float64_to_int64_round_to_zero
+#define float_detect_tininess		_mips_float_detect_tininess
+#define float_exception_flags		_mips_float_exception_flags
+#define float_raise			_mips_float_raise
+#define float_rounding_mode		_mips_float_rounding_mode
+#define int64_to_float32		_mips_int64_to_float32
+#define int64_to_float64		_mips_int64_to_float64

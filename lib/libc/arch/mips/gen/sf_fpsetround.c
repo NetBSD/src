@@ -1,4 +1,4 @@
-/*	$NetBSD: sf_fpsetround.c,v 1.1.1.1 1999/09/16 12:18:26 takemura Exp $	*/
+/*	$NetBSD: sf_fpsetround.c,v 1.2 1999/12/26 00:22:32 shin Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -34,7 +34,7 @@
 #include <sys/types.h>
 #include <ieeefp.h>
 
-void sfp_setround __P((fp_rnd));
+void _mips_sfp_setround __P((fp_rnd));
 
 /*
  * Return the current FP rounding mode
@@ -63,7 +63,7 @@ fpsetround(rnd_dir)
 	old_rnd = fpgetround();
 
 #ifdef SOFTFLOAT
-	sfp_setround(rnd_dir);
+	_mips_sfp_setround(rnd_dir);
 #else
 	abort();
 #endif
