@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.70 2000/02/05 17:02:42 itojun Exp $
+#	$NetBSD: netstart,v 1.71 2000/02/05 17:52:06 itojun Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -207,7 +207,6 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	route add -inet6 fc80:: -prefixlen 10 ::1 -reject
 
 	# disallow "internal" addresses to appear on the wire.
-	# you may want to enable them for experiments.
 	route add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject
 	route add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject
 
