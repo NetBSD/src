@@ -1,4 +1,4 @@
-/*	$NetBSD: biff.c,v 1.8 2003/08/07 11:13:12 agc Exp $	*/
+/*	$NetBSD: biff.c,v 1.9 2005/02/17 17:09:47 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)biff.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: biff.c,v 1.8 2003/08/07 11:13:12 agc Exp $");
+__RCSID("$NetBSD: biff.c,v 1.9 2005/02/17 17:09:47 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,13 +53,10 @@ __RCSID("$NetBSD: biff.c,v 1.8 2003/08/07 11:13:12 agc Exp $");
 #include <string.h>
 #include <unistd.h>
 
-static void usage __P((void));
-int main __P((int, char **));
+static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat sb;
 	int ch;
@@ -102,7 +99,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: biff [y | n]\n");
 	exit(2);
