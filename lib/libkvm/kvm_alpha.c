@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_alpha.c,v 1.1 1995/02/10 17:51:56 cgd Exp $	*/
+/*	$NetBSD: kvm_alpha.c,v 1.2 1995/09/29 03:57:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -64,6 +64,8 @@ _kvm_kvatop(kd, va, pa)
 	u_long va;
 	u_long *pa;
 {
+
+	/* don't forget k0seg translations! */
 
 	return (0);
 }
