@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.6 2000/02/13 05:00:57 mark Exp $	*/
+/*	$NetBSD: iomd.c,v 1.7 2001/02/25 23:59:48 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -92,6 +92,7 @@ struct cfattach iomd_ca = {
 extern struct bus_space iomd_bs_tag;
 
 int iomd_found;
+int *iomd_base	= (int *) IOMD_BASE;
 
 /* Declare prototypes */
 
@@ -160,7 +161,7 @@ iomdattach(parent, self, aux)
 	iot = sc->sc_iot = &iomd_bs_tag;
 
 	/* Map the IOMD */
-	if (bus_space_map(iot, IOMD_BASE, IOMD_SIZE, 0, &ioh))
+	if (bus_space_map(iot, (int) iomd_base, IOMD_SIZE, 0, &ioh))
 		panic("%s: Cannot map registers\n", self->dv_xname);
 
 	sc->sc_ioh = ioh;
