@@ -1,4 +1,4 @@
-/* $NetBSD: endian.h,v 1.1 1996/01/31 23:21:45 mark Exp $ */
+/* $NetBSD: endian.h,v 1.2 1996/03/14 23:11:10 mark Exp $ */
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)endian.h	7.8 (Berkeley) 4/3/91
- *	$Id: endian.h,v 1.1 1996/01/31 23:21:45 mark Exp $
  */
 
 #ifndef _MACHINE_ENDIAN_H_

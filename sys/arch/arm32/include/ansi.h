@@ -1,4 +1,4 @@
-/* $NetBSD: ansi.h,v 1.1 1996/01/31 23:21:27 mark Exp $ */
+/* $NetBSD: ansi.h,v 1.2 1996/03/14 23:10:59 mark Exp $ */
 
 /*
  * Copyright (c) 1990, 1993
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ansi.h	8.2 (Berkeley) 1/4/94
- *	$Id: ansi.h,v 1.1 1996/01/31 23:21:27 mark Exp $
  */
 
 #ifndef	_ANSI_H_

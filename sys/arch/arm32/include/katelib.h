@@ -1,4 +1,4 @@
-/* $NetBSD: katelib.h,v 1.3 1996/03/08 16:25:07 mark Exp $ */
+/* $NetBSD: katelib.h,v 1.4 1996/03/14 23:11:20 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -46,11 +46,8 @@
  * should go. 
  *
  * Created      : 18/09/94
- * Last updated : 01/07/95
  *
  * Based on kate/katelib/prototypes.h
- *
- *    $Id: katelib.h,v 1.3 1996/03/08 16:25:07 mark Exp $
  */
 
 #include <sys/types.h>

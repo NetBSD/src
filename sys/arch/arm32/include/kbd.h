@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.h,v 1.1 1996/01/31 23:22:14 mark Exp $ */
+/* $NetBSD: kbd.h,v 1.2 1996/03/14 23:11:21 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -37,9 +37,6 @@
  * Keyboard ioctls
  *
  * Created      : 21/07/95
- * Last updated : 21/07/95
- *
- *    $Id: kbd.h,v 1.1 1996/01/31 23:22:14 mark Exp $
  */
 
 struct kbd_data {

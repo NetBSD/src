@@ -1,4 +1,4 @@
-/* $NetBSD: float.h,v 1.1 1996/01/31 23:21:49 mark Exp $ */
+/* $NetBSD: float.h,v 1.2 1996/03/14 23:11:13 mark Exp $ */
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)float.h	7.1 (Berkeley) 5/8/90
- *	$Id: float.h,v 1.1 1996/01/31 23:21:49 mark Exp $
  */
 
 /*extern int __flt_rounds();*/
