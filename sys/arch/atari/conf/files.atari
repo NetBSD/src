@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.10 1995/08/11 20:01:19 leo Exp $
+#	$NetBSD: files.atari,v 1.11 1995/08/20 18:17:12 leo Exp $
 #
 
 maxpartitions 16
@@ -44,6 +44,8 @@ device	grf at grfb {}
 file	arch/atari/dev/grf.c		grf needs-count
 file	arch/atari/dev/ite_cc.c		grf ite
 file	arch/atari/dev/grfabs.c		grf ite
+file	arch/atari/dev/grfabs_tt.c	grf ite
+file	arch/atari/dev/grfabs_fal.c	grf ite
 
 device	ite at grf
 file	arch/atari/dev/ite.c		ite needs-flag
