@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.32 2003/12/04 19:38:23 atatat Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.33 2004/03/21 13:43:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.32 2003/12/04 19:38:23 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.33 2004/03/21 13:43:46 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -161,10 +161,8 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 		return error;
 
 	if (args.version != SMBFS_VERSION) {
-#ifdef SMB_VNODE_DEBUG
-		printf("mount version mismatch: kernel=%d, mount=%d\n",
+		SMBVDEBUG("mount version mismatch: kernel=%d, mount=%d\n",
 		    SMBFS_VERSION, args.version);
-#endif
 		return EINVAL;
 	}
 	smb_makescred(&scred, p, p->p_ucred);
