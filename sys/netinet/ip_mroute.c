@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.15 1995/05/31 21:50:39 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.16 1995/06/01 21:36:32 mycroft Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -997,7 +997,7 @@ ip_mforward(m, ifp)
      * or a packet destined to a local-only group.
      */
     if (ip->ip_ttl <= 1 ||
-	ntohl(ip->ip_dst.s_addr) <= INADDR_MAX_LOCAL_GROUP)
+	IN_LOCAL_GROUP(ip->ip_dst.s_addr))
 	return (0);
 
     /*
@@ -1447,7 +1447,7 @@ ipip_input(m, hlen)
 	 * uniquely identifies the tunnel (i.e., that this site has
 	 * at most one tunnel with the remote site).
 	 */
-	if (! IN_MULTICAST(ntohl(((struct ip *)((char *)ip + hlen))->ip_dst.s_addr))) {
+	if (!IN_MULTICAST(((struct ip *)((char *)ip + hlen))->ip_dst.s_addr)) {
 		++mrtstat.mrts_bad_tunnel;
 		m_freem(m);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.12 1995/04/13 06:36:37 cgd Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.13 1995/06/01 21:36:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -556,7 +556,7 @@ findpcb:
 		 * packet with M_BCAST not set.
 		 */
 		if (m->m_flags & (M_BCAST|M_MCAST) ||
-		    IN_MULTICAST(ntohl(ti->ti_dst.s_addr)))
+		    IN_MULTICAST(ti->ti_dst.s_addr))
 			goto drop;
 		am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
 		if (am == NULL)
@@ -1282,7 +1282,7 @@ dropwithreset:
 	 * Don't bother to respond if destination was broadcast/multicast.
 	 */
 	if ((tiflags & TH_RST) || m->m_flags & (M_BCAST|M_MCAST) ||
-	    IN_MULTICAST(ntohl(ti->ti_dst.s_addr)))
+	    IN_MULTICAST(ti->ti_dst.s_addr))
 		goto drop;
 	if (tiflags & TH_ACK)
 		tcp_respond(tp, ti, m, (tcp_seq)0, ti->ti_ack, TH_RST);

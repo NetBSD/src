@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.13 1995/05/31 21:50:38 mycroft Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.14 1995/06/01 21:36:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -286,7 +286,7 @@ icmp_input(m, hlen)
 			icmpstat.icps_badlen++;
 			goto freeit;
 		}
-		if (IN_MULTICAST(ntohl(icp->icmp_ip.ip_dst.s_addr)))
+		if (IN_MULTICAST(icp->icmp_ip.ip_dst.s_addr))
 			goto badcode;
 		NTOHS(icp->icmp_ip.ip_len);
 #ifdef ICMPPRINTFS
@@ -422,8 +422,8 @@ icmp_reflect(m)
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
 
 	if (!in_canforward(ip->ip_src) &&
-	    ((ntohl(ip->ip_src.s_addr) & IN_CLASSA_NET) !=
-	     (IN_LOOPBACKNET << IN_CLASSA_NSHIFT))) {
+	    ((ip->ip_src.s_addr & IN_CLASSA_NET) !=
+	     htonl(IN_LOOPBACKNET << IN_CLASSA_NSHIFT))) {
 		m_freem(m);	/* Bad return address */
 		goto done;	/* ip_output() will check for broadcast */
 	}
