@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.5.2.1 1995/10/24 16:29:21 pk Exp $ */
+/*	$NetBSD: espvar.h,v 1.5.2.2 1995/11/12 11:46:22 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -118,6 +118,8 @@ struct esp_tinfo {
 #define ESP_SHOWSTART	0x20
 #define ESP_SHOWPHASE	0x40
 #define ESP_SHOWDMA	0x80
+#define ESP_SHOWCCMDS	0x100
+#define ESP_SHOWMSGS	0x200
 
 #ifdef ESP_DEBUG
 extern int esp_debug;
@@ -129,6 +131,7 @@ extern int esp_debug;
 #define ESP_START(str) do {if (esp_debug & ESP_SHOWSTART) printf str;}while (0)
 #define ESP_PHASE(str) do {if (esp_debug & ESP_SHOWPHASE) printf str;}while (0)
 #define ESP_DMA(str)   do {if (esp_debug & ESP_SHOWDMA) printf str;}while (0)
+#define ESP_MSGS(str)  do {if (esp_debug & ESP_SHOWMSGS) printf str;}while (0)
 #else
 #define ESP_ECBS(str)
 #define ESP_MISC(str)
@@ -183,6 +186,7 @@ struct esp_softc {
 	u_char	sc_state;		/* State applicable to the adapter */
 	u_char	sc_flags;
 	u_char	sc_selid;
+	u_char	sc_lastcmd;
 
 	/* Message stuff */
 	char	sc_msgpriq;	/* One or more messages to send (encoded) */
@@ -210,6 +214,7 @@ struct esp_softc {
 #define ESP_RESELECTED	0x04	/* Has been reselected */
 #define ESP_HASNEXUS	0x05	/* Actively using the SCSI bus */
 #define ESP_CLEANING	0x06
+#define ESP_SBR		0x07	/* Expect a SCSI RST because we commanded it */
 
 /* values for sc_flags */
 #define ESP_DROP_MSGI	0x01	/* Discard all msgs (parity err detected) */
@@ -297,8 +302,13 @@ struct esp_softc {
 #define INVALID_PHASE		0x101	/* Re/Selection valid, but no REQ yet */
 #define PSEUDO_PHASE		0x100	/* "pseudo" bit */
 
-#if ESP_DEBUG > 1
-#define	ESPCMD(sc, cmd)		printf("<cmd:0x%x>", (unsigned)(sc->sc_reg[ESP_CMD] = (unsigned)cmd))
+#ifdef ESP_DEBUG
+#define	ESPCMD(sc, cmd) do {				\
+	if (esp_debug & ESP_SHOWCCMDS)			\
+		printf("<cmd:0x%x>", (unsigned)cmd);	\
+	sc->sc_lastcmd = cmd;				\
+	sc->sc_reg[ESP_CMD] = (unsigned)cmd;		\
+} while (0)
 #else
 #define	ESPCMD(sc, cmd)		sc->sc_reg[ESP_CMD] = (unsigned)cmd
 #endif
