@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.216 2005/01/27 17:10:07 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.217 2005/01/27 17:14:04 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.216 2005/01/27 17:10:07 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.217 2005/01/27 17:14:04 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1536,7 +1536,7 @@ after_listen:
 		if (opti.ts_present &&
 		    SEQ_LEQ(th->th_seq, tp->last_ack_sent) &&
 		    SEQ_LT(tp->last_ack_sent, th->th_seq + tlen)) {
-			tp->ts_recent_age = TCP_TIMESTAMP(tp);
+			tp->ts_recent_age = tcp_now;
 			tp->ts_recent = opti.ts_val;
 		}
 
@@ -1793,7 +1793,7 @@ after_listen:
 	    TSTMP_LT(opti.ts_val, tp->ts_recent)) {
 
 		/* Check to see if ts_recent is over 24 days old.  */
-		if (TCP_TIMESTAMP(tp) - tp->ts_recent_age > TCP_PAWS_IDLE) {
+		if (tcp_now - tp->ts_recent_age > TCP_PAWS_IDLE) {
 			/*
 			 * Invalidate ts_recent.  If this segment updates
 			 * ts_recent, the age will be reset later and ts_recent
@@ -1941,7 +1941,7 @@ after_listen:
 	    SEQ_LEQ(th->th_seq, tp->last_ack_sent) &&
 	    SEQ_LT(tp->last_ack_sent, th->th_seq + tlen +
 		   ((tiflags & (TH_SYN|TH_FIN)) != 0))) {
-		tp->ts_recent_age = TCP_TIMESTAMP(tp);
+		tp->ts_recent_age = tcp_now;
 		tp->ts_recent = opti.ts_val;
 	}
 
@@ -2821,7 +2821,7 @@ tcp_dooptions(tp, cp, cnt, th, m, toff, oi)
 			if (th->th_flags & TH_SYN) {
 				tp->t_flags |= TF_RCVD_TSTMP;
 				tp->ts_recent = oi->ts_val;
-				tp->ts_recent_age = TCP_TIMESTAMP(tp);
+				tp->ts_recent_age = tcp_now;
 			}
 			break;
 		case TCPOPT_SACK_PERMITTED:
