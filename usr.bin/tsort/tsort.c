@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)tsort.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: tsort.c,v 1.7 1994/02/04 07:02:11 cgd Exp $";
+static char *rcsid = "$Id: tsort.c,v 1.8 1994/02/04 07:18:27 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,6 +53,7 @@ static char *rcsid = "$Id: tsort.c,v 1.7 1994/02/04 07:02:11 cgd Exp $";
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <err.h>
 
 /*
  *  Topological sort.  Input is a list of pairs of strings separated by
@@ -103,7 +104,6 @@ int longest = 0;
 int debug = 0;
 
 void	 add_arc __P((char *, char *));
-void	 err __P((const char *, ...));
 int	 find_cycle __P((NODE *, NODE *, int, int));
 NODE	*get_node __P((char *));
 void	*grow_buf __P((void *, int));
@@ -145,7 +145,7 @@ main(argc, argv)
 		break;
 	case 1:
 		if ((fp = fopen(*argv, "r")) == NULL)
-			err("%s: %s", *argv, strerror(errno));
+			err(1, NULL);
 		break;
 	default:
 		usage();
@@ -179,7 +179,7 @@ main(argc, argv)
 	}
 	(void)fclose(fp);
 	if (n)
-		err("odd data count");
+		errx(1, "odd data count");
 
 	/* do the sort */
 	tsort();
@@ -193,7 +193,7 @@ grow_buf(bp, size)
 	int size;
 {
 	if ((bp = realloc(bp, (u_int)size)) == NULL)
-		err("%s", strerror(errno));
+		err(1, NULL);
 	return (bp);
 }
 
@@ -246,7 +246,7 @@ get_node(name)
 
 	if (db == NULL &&
 	    (db = dbopen(NULL, O_RDWR, 0, DB_HASH, NULL)) == NULL)
-		err("db: open: %s", name, strerror(errno));
+		err(1, "db: open: %s", name);
 
 	key.data = name;
 	key.size = strlen(name) + 1;
@@ -259,11 +259,11 @@ get_node(name)
 		break;
 	default:
 	case -1:
-		err("db: get %s: %s", name, strerror(errno));
+		err(1, "db: get %s", name);
 	}
 
 	if ((n = malloc(sizeof(NODE) + key.size)) == NULL)
-		err("%s", strerror(errno));
+		err(1, NULL);
 
 	n->n_narcs = 0;
 	n->n_arcsize = 0;
@@ -282,7 +282,7 @@ get_node(name)
 	data.data = &n;
 	data.size = sizeof(n);
 	if ((*db->put)(db, &key, &data, 0))
-		err("db: put %s: %s", name, strerror(errno));
+		err(1, "db: put %s", name);
 	return (n);
 }
 
@@ -336,18 +336,17 @@ tsort()
 			cycle_buf = malloc((u_int)sizeof(NODE *) * cnt);
 			longest_cycle = malloc((u_int)sizeof(NODE *) * cnt);
 			if (cycle_buf == NULL || longest_cycle == NULL)
-				err("%s", strerror(errno));
+				err(1, NULL);
 		}
 		for (n = graph; n; n = n->n_next)
 			if (!(n->n_flags & NF_ACYCLIC)) {
 				if (cnt = find_cycle(n, n, 0, 0)) {
 					register int i;
 
-					(void)fprintf(stderr,
-					    "tsort: cycle in data\n");
+					warnx("cycle in data");
 					for (i = 0; i < cnt; i++)
-						(void)fprintf(stderr,
-				"tsort: %s\n", longest_cycle[i]->n_name);
+						warnx("%s",
+						    longest_cycle[i]->n_name);
 					remove_node(n);
 					clear_cycle();
 					break;
@@ -359,7 +358,7 @@ tsort()
 			}
 
 		if (!n)
-			err("internal error -- could not find cycle");
+			err(1, "internal error -- could not find cycle");
 	}
 }
 
@@ -435,33 +434,4 @@ usage()
 {
 	(void)fprintf(stderr, "usage: tsort [-l] [file]\n");
 	exit(1);
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "tsort: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
 }
