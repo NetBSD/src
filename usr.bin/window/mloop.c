@@ -1,6 +1,8 @@
+/*	$NetBSD: mloop.c,v 1.3 1995/09/28 10:34:28 tls Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Wang at The University of California, Berkeley.
@@ -35,10 +37,14 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mloop.c	3.17 (Berkeley) 6/6/90";*/
-static char rcsid[] = "$Id: mloop.c,v 1.2 1993/08/01 18:02:18 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)mloop.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: mloop.c,v 1.3 1995/09/28 10:34:28 tls Exp $";
+#endif
 #endif /* not lint */
 
+#include <sys/param.h>
 #include "defs.h"
 
 mloop()
@@ -60,14 +66,20 @@ mloop()
 
 			if (wwibp >= wwibq)
 				wwiomux();
-			for (p = wwibp; p < wwibq && *p != escapec;
+			for (p = wwibp; p < wwibq && wwmaskc(*p) != escapec;
 			     p++)
 				;
 			if ((n = p - wwibp) > 0) {
 				if (!w->ww_ispty && w->ww_stopped)
 					startwin(w);
+#if defined(sun) && !defined(BSD)
+				/* workaround for SunOS pty bug */
+				while (--n >= 0)
+					(void) write(w->ww_pty, wwibp++, 1);
+#else
 				(void) write(w->ww_pty, wwibp, n);
 				wwibp = p;
+#endif
 			}
 			if (wwpeekc() == escapec) {
 				(void) wwgetc();

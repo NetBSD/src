@@ -1,7 +1,8 @@
-#	from: @(#)Makefile	5.7 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.4 1994/12/23 19:46:49 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1995/09/28 10:33:55 tls Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	window
+CFLAGS+= -DVMIN_BUG
 SRCS=	char.c cmd.c cmd1.c cmd2.c cmd3.c cmd4.c cmd5.c cmd6.c cmd7.c \
 	context.c error.c lcmd.c lcmd1.c lcmd2.c main.c mloop.c parser1.c \
 	parser2.c parser3.c parser4.c parser5.c scanner.c startup.c string.c \
@@ -13,7 +14,8 @@ SRCS=	char.c cmd.c cmd1.c cmd2.c cmd3.c cmd4.c cmd5.c cmd6.c cmd7.c \
 	wwinschar.c wwinsline.c wwiomux.c wwlabel.c wwmisc.c wwmove.c \
 	wwopen.c wwprintf.c wwpty.c wwputc.c wwputs.c wwredraw.c \
 	wwredrawwin.c wwrint.c wwscroll.c wwsize.c wwspawn.c wwsuspend.c \
-	wwtty.c wwunframe.c wwupdate.c wwwrite.c xx.c xxflush.c compress.c
+	wwterminfo.c wwtty.c wwunframe.c wwupdate.c wwwrite.c xx.c xxflush.c \
+	compress.c
 MAN=	window.1
 DPADD=	${LIBTERMCAP}
 LDADD=	-ltermcap
