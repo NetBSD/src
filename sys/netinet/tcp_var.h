@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.83 2001/09/10 04:24:25 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.84 2001/09/10 15:23:11 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -136,7 +136,7 @@ struct tcpcb {
 	u_int	t_timer[TCPT_NTIMERS];	/* tcp timers */
 	short	t_state;		/* state of this connection */
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
-	short	t_rxtcur;		/* current retransmit value */
+	uint32_t t_rxtcur;		/* current retransmit value */
 	short	t_dupacks;		/* consecutive dup acks recd */
 	u_short	t_peermss;		/* peer's maximum segment size */
 	u_short	t_ourmss;		/* our's maximum segment size */
@@ -200,12 +200,12 @@ struct tcpcb {
  * transmit timing stuff.  See below for scale of srtt and rttvar.
  * "Variance" is actually smoothed difference.
  */
-	short	t_idle;			/* inactivity time */
-	short	t_rtt;			/* round trip time */
+	uint32_t t_rcvtime;		/* time last segment received */
+	uint32_t t_rtttime;		/* time we started measuring rtt */
 	tcp_seq	t_rtseq;		/* sequence number being timed */
-	short	t_srtt;			/* smoothed round-trip time */
-	short	t_rttvar;		/* variance in round-trip time */
-	short	t_rttmin;		/* minimum rtt allowed */
+	int32_t	t_srtt;			/* smoothed round-trip time */
+	int32_t	t_rttvar;		/* variance in round-trip time */
+	uint32_t t_rttmin;		/* minimum rtt allowed */
 	u_long	max_sndwnd;		/* largest window peer has offered */
 
 /* out-of-band data */
@@ -702,7 +702,7 @@ struct tcpcb *
 int	 tcp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	 tcp_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
-void	 tcp_xmit_timer __P((struct tcpcb *, int));
+void	 tcp_xmit_timer __P((struct tcpcb *, uint32_t));
 tcp_seq	 tcp_new_iss __P((struct tcpcb *, tcp_seq));
 tcp_seq  tcp_new_iss1 __P((void *, void *, u_int16_t, u_int16_t, size_t,
 	    tcp_seq));
