@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.69 2000/04/26 02:49:04 mrg Exp $	*/
+/*	$NetBSD: ld.c,v 1.70 2000/05/28 01:33:58 matt Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,7 @@
 
 #ifndef lint
 /* from: "@(#)ld.c	6.10 (Berkeley) 5/22/91"; */
-__RCSID("$NetBSD: ld.c,v 1.69 2000/04/26 02:49:04 mrg Exp $");
+__RCSID("$NetBSD: ld.c,v 1.70 2000/05/28 01:33:58 matt Exp $");
 #endif /* not lint */
 
 #define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
@@ -2384,10 +2384,6 @@ consider_relocation(entry, dataseg)
 
 			if (!RELOC_EXTERN_P(reloc))
 				continue;
-#if !RELOC_SYMBOLICS_THROUGH_JMPSLOT
-			if (link_mode & SYMBOLIC)
-				continue;
-#endif
 
 			lsp = &entry->symbols[reloc->r_symbolnum];
 			sp = lsp->symbol;
@@ -3165,10 +3161,6 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 #else
 				relocation = addend +
 					data_relocation - text_relocation;
-#endif
-#if !RELOC_SYMBOLICS_THROUGH_JMPSLOT
-			} else if (link_mode & SYMBOLIC) {
-				relocation = addend + sp->value;
 #endif
 			} else {
 #if defined (__arm32__) && 1 /* XXX MAGIC */
