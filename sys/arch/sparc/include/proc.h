@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.5 1998/10/21 07:11:47 pk Exp $ */
+/*	$NetBSD: proc.h,v 1.6 1998/10/26 08:16:08 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,13 @@
  *	@(#)proc.h	8.1 (Berkeley) 6/11/93
  */
 
+#if defined(_KERNEL)
+/*
+ * Included only for the current MD definition of `curproc'.
+ * May not be needed in future SMP kernels.
+ */
 #include <sparc/sparc/cpuvar.h>
+#endif
 
 /*
  * Machine-dependent part of the proc structure for SPARC.
