@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3.2.3 2004/09/21 13:21:49 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3.2.4 2004/11/02 07:50:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.2.3 2004/09/21 13:21:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.2.4 2004/11/02 07:50:47 skrll Exp $");
 
 #include "opt_md.h"
 
@@ -72,9 +72,6 @@ extern void	startrtclock __P((void));
 extern void ofw_device_register(struct device *dev, void *aux);
 #include <machine/ofw.h>
 #endif
-
-struct device *booted_device;
-int booted_partition;
 
 extern dev_t dumpdev;
 

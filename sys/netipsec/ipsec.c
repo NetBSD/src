@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.13.2.4 2004/09/21 13:37:48 skrll Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.13.2.5 2004/11/02 07:53:24 skrll Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.13.2.4 2004/09/21 13:37:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.13.2.5 2004/11/02 07:53:24 skrll Exp $");
 
 /*
  * IPsec controller part.
@@ -1542,6 +1542,7 @@ ipsec_get_reqlevel(isr)
 				level = ah_net_deflev;
 			else
 				level = ah_trans_deflev;
+			break;
 		case IPPROTO_IPCOMP:
 			/*
 			 * we don't really care, as IPcomp document says that

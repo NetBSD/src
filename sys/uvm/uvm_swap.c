@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.80.2.5 2004/09/21 13:39:31 skrll Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.80.2.6 2004/11/02 07:53:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.80.2.5 2004/09/21 13:39:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.80.2.6 2004/11/02 07:53:37 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.80.2.5 2004/09/21 13:39:31 skrll Exp 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/namei.h>

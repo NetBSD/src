@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.42.2.5 2004/10/19 15:56:58 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.42.2.6 2004/11/02 07:52:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.42.2.5 2004/10/19 15:56:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.42.2.6 2004/11/02 07:52:10 skrll Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1288,7 +1288,14 @@ bge_chipinit(sc)
 		BGE_MEMWIN_WRITE(pa->pa_pc, pa->pa_tag, i, 0);
 
 	/* Set up the PCI DMA control register. */
-	if (pci_conf_read(pa->pa_pc, pa->pa_tag,BGE_PCI_PCISTATE) &
+	if (sc->bge_pcie) {
+		/* From FreeBSD */
+		DPRINTFN(4, ("(%s: PCI-Express DMA setting)\n",
+		    sc->bge_dev.dv_xname));
+		dma_rw_ctl = (BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
+		    (0xf << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
+		    (0x2 << BGE_PCIDMARWCTL_WR_WAT_SHIFT));
+	} else if (pci_conf_read(pa->pa_pc, pa->pa_tag,BGE_PCI_PCISTATE) &
 	    BGE_PCISTATE_PCI_BUSMODE) {
 		/* Conventional PCI bus */
 	  	DPRINTFN(4, ("(%s: PCI 2.2 DMA setting)\n", sc->bge_dev.dv_xname));
@@ -1926,6 +1933,14 @@ static const struct bge_revision {
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5705 A3" },
 
+	{ BGE_CHIPID_BCM5750_A0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5750 A1" },
+
+	{ BGE_CHIPID_BCM5750_A1,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5750 A1" },
+
 	{ 0, 0, NULL }
 };
 
@@ -1953,6 +1968,10 @@ static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5705,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "unknown BCM5705" },
+
+	{ BGE_ASICREV_BCM5750,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "unknown BCM5750" },
 
 	{ 0,
 	  0,
@@ -2060,6 +2079,21 @@ static const struct bge_product {
    	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5705M,
 	  "Broadcom BCM5705M Gigabit Ethernet",
+	  },
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5750,
+	  "Broadcom BCM5750 Gigabit Ethernet",
+	  },
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5750M,
+	  "Broadcom BCM5750M Gigabit Ethernet",
+	  },
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5751,
+	  "Broadcom BCM5751 Gigabit Ethernet",
 	  },
 
    	{ PCI_VENDOR_BROADCOM,
@@ -2280,6 +2314,25 @@ bge_attach(parent, self, aux)
 	pci_conf_write(pc, pa->pa_tag, BGE_PCI_PWRMGMT_CMD, pm_ctl);
 	DELAY(1000);	/* 27 usec is allegedly sufficent */
 
+	/*
+	 * Save ASIC rev.  Look up any quirks associated with this
+	 * ASIC.
+	 */
+	sc->bge_chipid =
+	    pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL) &
+	    BGE_PCIMISCCTL_ASICREV;
+
+	/*
+	 * Detect PCI-Express devices
+	 * XXX: guessed from Linux/FreeBSD; no documentation
+	 */
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 &&
+	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
+	    NULL, NULL) != 0)
+		sc->bge_pcie = 1;
+	else
+		sc->bge_pcie = 0;
+
 	/* Try to reset the chip. */
 	DPRINTFN(5, ("bge_reset\n"));
 	bge_reset(sc);
@@ -2311,15 +2364,7 @@ bge_attach(parent, self, aux)
 		return;
 	}
 
-	/*
-	 * Save ASIC rev.  Look up any quirks associated with this
-	 * ASIC.
-	 */
-	sc->bge_chipid =
-	    pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL) &
-	    BGE_PCIMISCCTL_ASICREV;
 	br = bge_lookup_rev(sc->bge_chipid);
-
 	aprint_normal("%s: ", sc->bge_dev.dv_xname);
 
 	if (br == NULL) {
@@ -2544,7 +2589,7 @@ bge_reset(sc)
 {
 	struct pci_attach_args *pa = &sc->bge_pa;
 	u_int32_t cachesize, command, pcistate, new_pcistate;
-	int i, val = 0;
+	int i, val;
 
 	/* Save some important PCI state. */
 	cachesize = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_CACHESZ);
@@ -2555,11 +2600,41 @@ bge_reset(sc)
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR|
 	    BGE_HIF_SWAP_OPTIONS|BGE_PCIMISCCTL_PCISTATE_RW);
 
+	val = BGE_MISCCFG_RESET_CORE_CLOCKS | (65<<1);
+	/*
+	 * XXX: from FreeBSD/Linux; no documentation
+	 */
+	if (sc->bge_pcie) {
+		if (CSR_READ_4(sc, BGE_PCIE_CTL1) == 0x60)
+			CSR_WRITE_4(sc, BGE_PCIE_CTL1, 0x20);
+		if (sc->bge_chipid != BGE_CHIPID_BCM5750_A0) {
+			/* No idea what that actually means */
+			CSR_WRITE_4(sc, BGE_MISC_CFG, 1 << 29);
+			val |= (1<<29);
+		}
+	}
+
 	/* Issue global reset */
-	bge_writereg_ind(sc, BGE_MISC_CFG,
-	    BGE_MISCCFG_RESET_CORE_CLOCKS|(65<<1));
+	bge_writereg_ind(sc, BGE_MISC_CFG, val);
 
 	DELAY(1000);
+
+	/*
+	 * XXX: from FreeBSD/Linux; no documentation
+	 */
+	if (sc->bge_pcie) {
+		if (sc->bge_chipid == BGE_CHIPID_BCM5750_A0) {
+			pcireg_t reg;
+
+			DELAY(500000);
+			/* XXX: Magic Numbers */
+			reg = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_UNKNOWN0);
+			pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_UNKNOWN0,
+			    reg | (1 << 15));
+		}
+		/* XXX: Magic Numbers */
+		pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_UNKNOWN1, 0xf5000);
+	}
 
 	/* Reset some of the PCI state that got zapped by reset */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
@@ -2620,6 +2695,10 @@ bge_reset(sc)
 		printf("%s: pcistate failed to revert\n",
 		    sc->bge_dev.dv_xname);
 	}
+
+	/* XXX: from FreeBSD/Linux; no documentation */
+	if (sc->bge_pcie && sc->bge_chipid != BGE_CHIPID_BCM5750_A0)
+		CSR_WRITE_4(sc, BGE_PCIE_CTL0, CSR_READ_4(sc, BGE_PCIE_CTL0) | (1<<25));
 
 	/* Enable memory arbiter. */
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
@@ -3698,7 +3777,8 @@ bge_ioctl(ifp, command, data)
 	default:
 		error = ether_ioctl(ifp, command, data);
 		if (error == ENETRESET) {
-			bge_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				bge_setmulti(sc);
 			error = 0;
 		}
 		break;

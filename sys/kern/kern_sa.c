@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.16.2.4 2004/09/21 13:35:08 skrll Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.16.2.5 2004/11/02 07:53:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.16.2.4 2004/09/21 13:35:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.16.2.5 2004/11/02 07:53:23 skrll Exp $");
 
 #include "opt_ktrace.h"
 
@@ -632,9 +632,7 @@ sa_yield(struct lwp *l)
 	struct sadata_vp *vp = l->l_savp;
 	int ret;
 
-#if defined(MULTIPROCESSOR)
-	KDASSERT(lockstatus(&kernel_lock) == LK_EXCLUSIVE);
-#endif
+	KERNEL_LOCK_ASSERT_LOCKED();
 
 	if (vp->savp_lwp != l) {
 		/* 

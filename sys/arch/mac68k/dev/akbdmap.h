@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdmap.h,v 1.4.2.1 2004/08/03 10:37:05 skrll Exp $	*/
+/*	$NetBSD: akbdmap.h,v 1.4.2.2 2004/11/02 07:50:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -262,7 +262,7 @@ static const keysym_t akbd_keydesc_sv[] = {
     KC(44),	KS_minus,	KS_underscore,
     KC(47),	KS_period,	KS_colon,
     KC(50),	KS_less,	KS_greater,	KS_bar,
-    KC(52),	KS_Mode_switch,KS_Multi_key,
+    KC(58),	KS_Mode_switch,KS_Multi_key,
 };
 
 static const keysym_t akbd_keydesc_sv_nodead[] = {

@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.23.16.3 2004/09/21 13:28:04 skrll Exp $ */
+/* $NetBSD: lemac.c,v 1.23.16.4 2004/11/02 07:51:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.23.16.3 2004/09/21 13:28:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.23.16.4 2004/11/02 07:51:31 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -815,9 +815,9 @@ lemac_ifioctl(
 		error = ether_delmulti((struct ifreq *)data, &sc->sc_ec);
 
 	    if (error == ENETRESET) {
-
 		/* reset multicast filtering */
-		lemac_init(sc);
+		if (ifp->if_flags & IFF_RUNNING)
+		    lemac_init(sc);
 		error = 0;
 	    }
 	    break;

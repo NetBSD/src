@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.8.2.3 2004/09/21 13:24:59 skrll Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.8.2.4 2004/11/02 07:51:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.8.2.3 2004/09/21 13:24:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.8.2.4 2004/11/02 07:51:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,6 +146,7 @@ compat_43_sys_mmap(struct lwp *l, void *v, register_t *retval)
 
 	SCARG(&nargs, addr) = SCARG(uap, addr);
 	SCARG(&nargs, len) = SCARG(uap, len);
+	/* Note: index using prot is sign-safe due to mask */
 	SCARG(&nargs, prot) = cvtbsdprot[SCARG(uap, prot)&0x7];
 	SCARG(&nargs, flags) = 0;
 	if (SCARG(uap, flags) & OMAP_ANON)

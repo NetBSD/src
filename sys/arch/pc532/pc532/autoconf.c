@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34.6.3 2004/09/21 13:19:57 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34.6.4 2004/11/02 07:50:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.34.6.3 2004/09/21 13:19:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.34.6.4 2004/11/02 07:50:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.34.6.3 2004/09/21 13:19:57 skrll Exp 
  */
 
 u_long bootdev = 0;		/* should be dev_t, but not until 32 bits */
-struct device *booted_device;	/* boot device */
 
 /*
  * Determine i/o configuration for a machine.

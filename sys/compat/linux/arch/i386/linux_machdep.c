@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.89.2.4 2004/09/21 13:25:26 skrll Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.89.2.5 2004/11/02 07:51:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.89.2.4 2004/09/21 13:25:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.89.2.5 2004/11/02 07:51:07 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -120,7 +120,7 @@ int linux_write_ldt __P((struct lwp *, struct linux_sys_modify_ldt_args *,
 #endif
 
 static struct biosdisk_info *fd2biosinfo __P((struct proc *, struct file *));
-extern struct disklist *i386_alldisks;
+extern struct disklist *x86_alldisks;
 static void linux_save_ucontext __P((struct lwp *, struct trapframe *,
     const sigset_t *, struct sigaltstack *, struct linux_ucontext *));
 static void linux_save_sigcontext __P((struct lwp *, struct trapframe *,
@@ -841,7 +841,7 @@ fd2biosinfo(p, fp)
 	char diskname[16];
 	int i;
 	struct nativedisk_info *nip;
-	struct disklist *dl = i386_alldisks;
+	struct disklist *dl = x86_alldisks;
 
 	if (fp->f_type != DTYPE_VNODE)
 		return NULL;

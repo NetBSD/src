@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.82.2.3 2004/09/21 13:33:43 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.82.2.4 2004/11/02 07:53:02 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.82.2.3 2004/09/21 13:33:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.82.2.4 2004/11/02 07:53:02 skrll Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -169,7 +169,7 @@ struct aue_type {
 };
 
 Static const struct aue_type aue_devs[] = {
- {{ USB_VENDOR_3COM,		USB_PRODUCT_3COM_3C460B},         PII },
+ {{ USB_VENDOR_3COM,		USB_PRODUCT_3COM_3C460B},	  PII },
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX1},	  PNA|PII },
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX2},	  PII },
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_UFE1000},	  LSYS },
@@ -185,6 +185,7 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_ACCTON,		USB_PRODUCT_ACCTON_SS1001},	  PII },
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUS},	  PNA },
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII},	  PII },
+ {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII_2},  PII },
  {{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_USB2LAN},	  PII },
  {{ USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100},	  0 },
  {{ USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USBLP100}, PNA },
@@ -1615,10 +1616,12 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			ether_addmulti(ifr, &sc->aue_ec) :
 			ether_delmulti(ifr, &sc->aue_ec);
 		if (error == ENETRESET) {
-			aue_init(sc);
+			if (ifp->if_flags & IFF_RUNNING) {
+				aue_init(sc);
+				aue_setmulti(sc);
+			}
+			error = 0;
 		}
-		aue_setmulti(sc);
-		error = 0;
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:

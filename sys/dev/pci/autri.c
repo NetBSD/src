@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.15.2.4 2004/09/24 10:53:27 skrll Exp $	*/
+/*	$NetBSD: autri.c,v 1.15.2.5 2004/11/02 07:52:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.15.2.4 2004/09/24 10:53:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.15.2.5 2004/11/02 07:52:09 skrll Exp $");
 
 #include "midi.h"
 
@@ -145,7 +145,7 @@ int	autri_query_devinfo(void *addr, mixer_devinfo_t *dip);
 
 int     autri_get_portnum_by_name(struct autri_softc *, char *, char *, char *);
 
-static struct audio_hw_if autri_hw_if = {
+static const struct audio_hw_if autri_hw_if = {
         autri_open,
 	autri_close,
 	NULL,			/* drain */
@@ -182,7 +182,7 @@ int	autri_midi_open(void *, int, void (*)(void *, int),
 			   void (*)(void *), void *);
 int	autri_midi_output(void *, int);
 
-struct midi_hw_if autri_midi_hw_if = {
+const struct midi_hw_if autri_midi_hw_if = {
 	autri_midi_open,
 	autri_midi_close,
 	autri_midi_output,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.10.2.3 2004/09/21 13:31:02 skrll Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.10.2.4 2004/11/02 07:52:10 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -192,6 +192,9 @@
 #define BGE_PCI_UNDI_TX_BD_PRODIDX_LO	0xAC
 #define BGE_PCI_ISR_MBX_HI		0xB0
 #define BGE_PCI_ISR_MBX_LO		0xB4
+/* XXX: used in PCI-Express code for 575x chips */
+#define BGE_PCI_UNKNOWN0		0xC4
+#define BGE_PCI_UNKNOWN1		0xD8
 
 /* PCI Misc. Host control register */
 #define BGE_PCIMISCCTL_CLEAR_INTA	0x00000001
@@ -244,6 +247,8 @@
 #define BGE_CHIPID_BCM5705_A1		0x30010000
 #define BGE_CHIPID_BCM5705_A2		0x30020000
 #define BGE_CHIPID_BCM5705_A3		0x30030000
+#define BGE_CHIPID_BCM5750_A0		0x40000000
+#define BGE_CHIPID_BCM5750_A1		0x40010000
 
 /* shorthand one */
 #define BGE_ASICREV(x)                  ((x) >> 28)
@@ -252,6 +257,7 @@
 #define BGE_ASICREV_BCM5703             0x01
 #define BGE_ASICREV_BCM5704             0x02
 #define BGE_ASICREV_BCM5705             0x03
+#define BGE_ASICREV_BCM5750             0x04
 
 /* chip revisions */
 #define BGE_CHIPREV(x)                  ((x) >> 24)
@@ -1608,6 +1614,12 @@
 #define BGE_EE_CTL			0x6840
 #define BGE_MDI_CTL			0x6844
 #define BGE_EE_DELAY			0x6848
+/*
+ * XXX: Those names are made up as I have no documentation about it;
+ *      I only know it is only used in the PCI-Express case.
+ */
+#define BGE_PCIE_CTL0			0x7c00
+#define BGE_PCIE_CTL1			0x7e2c
 
 /* Mode control register */
 #define BGE_MODECTL_INT_SNDCOAL_ONLY	0x00000001
@@ -2313,6 +2325,7 @@ struct bge_softc {
 	u_int8_t		bge_extram;	/* has external SSRAM */
 	u_int8_t		bge_tbi;
     	u_int8_t		bge_rx_alignment_bug;
+	u_int8_t		bge_pcie;	/* on a PCI Express port */
 	u_int32_t		bge_return_ring_cnt;
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_chipid;

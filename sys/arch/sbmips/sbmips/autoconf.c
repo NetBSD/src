@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.3.2.3 2004/09/21 13:21:13 skrll Exp $ */
+/* $NetBSD: autoconf.c,v 1.3.2.4 2004/11/02 07:50:47 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.2.3 2004/09/21 13:21:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.2.4 2004/11/02 07:50:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,9 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.2.3 2004/09/21 13:21:13 skrll Exp $
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <machine/intr.h>
-
-struct device	*booted_device;
-int		booted_partition;
 
 void
 cpu_configure(void)

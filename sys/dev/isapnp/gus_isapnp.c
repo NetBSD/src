@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.22 2003/05/03 18:11:30 wiz Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.22.2.1 2004/11/02 07:51:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.22 2003/05/03 18:11:30 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.22.2.1 2004/11/02 07:51:55 skrll Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -77,7 +77,7 @@ int	gus_isapnp_match __P((struct device *, struct cfdata *, void *));
 void	gus_isapnp_attach __P((struct device *, struct device *, void *));
 static int     gus_isapnp_open __P((void *, int));
 
-static struct audio_hw_if guspnp_hw_if = {
+static const struct audio_hw_if guspnp_hw_if = {
 	gus_isapnp_open,
 	iwclose,
 	NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.8 2003/06/13 05:57:31 thorpej Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.8.2.1 2004/11/02 07:51:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.8 2003/06/13 05:57:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.8.2.1 2004/11/02 07:51:31 skrll Exp $");
 
 #include "rnd.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.8 2003/06/13 05:57:31 thorpej Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>

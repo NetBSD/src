@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.185.2.7 2004/10/19 15:57:27 skrll Exp $	*/
+/*	$NetBSD: cd.c,v 1.185.2.8 2004/11/02 07:52:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.185.2.7 2004/10/19 15:57:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.185.2.8 2004/11/02 07:52:46 skrll Exp $");
 
 #include "rnd.h"
 
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.185.2.7 2004/10/19 15:57:27 skrll Exp $");
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/errno.h>

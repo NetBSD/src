@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_promise.c,v 1.1.2.3 2004/09/21 13:27:23 skrll Exp $	*/
+/*	$NetBSD: ata_raid_promise.c,v 1.1.2.4 2004/11/02 07:51:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,10 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.1.2.3 2004/09/21 13:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.1.2.4 2004/11/02 07:51:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/disk.h>

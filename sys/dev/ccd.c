@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.90.2.6 2004/09/24 10:53:27 skrll Exp $	*/
+/*	$NetBSD: ccd.c,v 1.90.2.7 2004/11/02 07:51:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,13 +125,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.90.2.6 2004/09/24 10:53:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.90.2.7 2004/11/02 07:51:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/namei.h>
@@ -986,6 +987,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct buf *bp;
 	struct ccd_softc *cs;
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
+	struct ucred *uc;
 	char **cpp;
 	struct vnode **vpp;
 	struct proc *p = l->l_proc;
@@ -1020,6 +1022,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	switch (cmd) {
 	case CCDIOCCLR:
 	case DIOCGDINFO:
+	case DIOCCACHESYNC:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
 	case DIOCGPART:
@@ -1213,6 +1216,27 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		((struct partinfo *)data)->disklab = cs->sc_dkdev.dk_label;
 		((struct partinfo *)data)->part =
 		    &cs->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
+		break;
+
+	case DIOCCACHESYNC:
+		/*
+		 * XXX Do we really need to care about having a writable
+		 * file descriptor here?
+		 */
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/*
+		 * We pass this call down to all components and report
+		 * the first error we encounter.
+		 */
+		uc = (p != NULL) ? p->p_ucred : NOCRED;
+		for (error = 0, i = 0; i < cs->sc_nccdisks; i++) {
+			j = VOP_IOCTL(cs->sc_cinfo[i].ci_vp, cmd, data,
+				      flag, uc, l);
+			if (j != 0 && error == 0)
+				error = j;
+		}
 		break;
 
 	case DIOCWDINFO:

@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.26.2.5 2004/10/19 15:56:58 skrll Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.26.2.6 2004/11/02 07:52:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.26.2.5 2004/10/19 15:56:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.26.2.6 2004/11/02 07:52:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -181,7 +181,7 @@ static enum ac97_host_flags emuxki_ac97_flags(void *);
 CFATTACH_DECL(emuxki, sizeof(struct emuxki_softc),
     emuxki_match, emuxki_attach, emuxki_detach, NULL);
 
-static struct audio_hw_if emuxki_hw_if = {
+static const struct audio_hw_if emuxki_hw_if = {
 	emuxki_open,
 	emuxki_close,
 	NULL,			/* drain */

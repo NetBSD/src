@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.35.2.4 2004/09/21 13:15:13 skrll Exp $	*/
+/*	$NetBSD: ct.c,v 1.35.2.5 2004/11/02 07:50:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,11 +82,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.35.2.4 2004/09/21 13:15:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.35.2.5 2004/11/02 07:50:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>

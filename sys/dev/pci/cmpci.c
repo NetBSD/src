@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.18.2.3 2004/09/21 13:31:01 skrll Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.18.2.4 2004/11/02 07:52:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.18.2.3 2004/09/21 13:31:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.18.2.4 2004/11/02 07:52:09 skrll Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -165,7 +165,7 @@ static int cmpci_trigger_input __P((void *, void *, void *, int,
 				    void (*)(void *), void *,
 				    struct audio_params *));
 
-static struct audio_hw_if cmpci_hw_if = {
+static const struct audio_hw_if cmpci_hw_if = {
 	cmpci_open,		/* open */
 	cmpci_close,		/* close */
 	NULL,			/* drain */
@@ -1532,7 +1532,7 @@ cmpci_set_out_ports(sc)
 		cmpci_reg_clear_4(sc, CMPCI_REG_LEGACY_CTRL,
 				CMPCI_REG_XSPDIF_ENABLE);
 
-	/* SPDIF monitor (digital to alalog output) */
+	/* SPDIF monitor (digital to analog output) */
 	if (CMPCI_ISCAP(sc, SPDIN_MONITOR)) {
 		v = sc->sc_gain[CMPCI_MONITOR_DAC][CMPCI_LR];
 		if (!(v & CMPCI_MONDAC_ENABLE))

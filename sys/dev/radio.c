@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.11.2.4 2004/09/21 13:26:25 skrll Exp $ */
+/* $NetBSD: radio.c,v 1.11.2.5 2004/11/02 07:51:19 skrll Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.11.2.4 2004/09/21 13:26:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.11.2.5 2004/11/02 07:51:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ radioattach(struct device *parent, struct device *self, void *aux)
 {
 	struct radio_softc *sc = (void *)self;
 	struct radio_attach_args *sa = aux;
-	struct radio_hw_if *hwp = sa->hwif;
+	const struct radio_hw_if *hwp = sa->hwif;
 	void  *hdlp = sa->hdl;
 
 	printf("\n");
@@ -156,7 +156,7 @@ radioioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
  * probed/attached to the hardware driver
  */
 struct device *
-radio_attach_mi(struct radio_hw_if *rhwp, void *hdlp, struct device *dev)
+radio_attach_mi(const struct radio_hw_if *rhwp, void *hdlp, struct device *dev)
 {
 	struct radio_attach_args arg;
 

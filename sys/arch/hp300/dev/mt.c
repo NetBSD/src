@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.23.2.5 2004/09/24 10:53:16 skrll Exp $	*/
+/*	$NetBSD: mt.c,v 1.23.2.6 2004/11/02 07:50:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,12 +67,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.23.2.5 2004/09/24 10:53:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.23.2.6 2004/11/02 07:50:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <sys/file.h>

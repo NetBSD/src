@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.161.2.5 2004/10/19 15:57:27 skrll Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.161.2.6 2004/11/02 07:52:46 skrll Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.161.2.5 2004/10/19 15:57:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.161.2.6 2004/11/02 07:52:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -165,6 +165,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.161.2.5 2004/10/19 15:57:27 skr
 #include <sys/conf.h>
 #include <sys/lock.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/user.h>
 #include <sys/reboot.h>
 

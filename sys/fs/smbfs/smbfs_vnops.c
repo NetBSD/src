@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.28.2.5 2004/10/27 06:48:23 skrll Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.28.2.6 2004/11/02 07:53:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.28.2.5 2004/10/27 06:48:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.28.2.6 2004/11/02 07:53:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,17 +270,25 @@ do_open:
 
 	smb_makescred(&scred, ap->a_l, ap->a_cred);
 	if (vp->v_type == VDIR)
-		error = smbfs_smb_ntcreatex(np, SMB_AM_OPENREAD, &scred);
+		error = smbfs_smb_ntcreatex(np,
+		    SMB_SM_DENYNONE|SMB_AM_OPENREAD, &scred);
 	else {
-		accmode = SMB_AM_OPENREAD;
+		/*
+		 * Use DENYNONE to give unixy semantics of permitting
+		 * everything not forbidden by permissions.  Ie denial
+		 * is up to server with clients/openers needing to use
+		 * advisory locks for further control.
+		 */
+		accmode = SMB_SM_DENYNONE|SMB_AM_OPENREAD;
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
-			accmode = SMB_AM_OPENRW;
+			accmode = SMB_SM_DENYNONE|SMB_AM_OPENRW;
 		error = smbfs_smb_open(np, accmode, &scred);
 		if (error) {
 			if (ap->a_mode & FWRITE)
 				return EACCES;
 		
-			error = smbfs_smb_open(np, SMB_AM_OPENREAD, &scred);
+			error = smbfs_smb_open(np,
+			    SMB_SM_DENYNONE|SMB_AM_OPENREAD, &scred);
 		}
 	}
 	if (!error)
@@ -420,7 +428,8 @@ smbfs_setattr(v)
  		np->n_size = vap->va_size;
 		uvm_vnp_setsize(vp, vap->va_size);
 		if ((np->n_flag & NOPEN) == 0) {
-			error = smbfs_smb_open(np, SMB_AM_OPENRW, &scred);
+			error = smbfs_smb_open(np,
+			    SMB_SM_DENYNONE|SMB_AM_OPENRW, &scred);
 			if (error == 0)
 				doclose = 1;
 		}

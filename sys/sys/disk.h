@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.22.2.4 2004/10/19 15:58:30 skrll Exp $	*/
+/*	$NetBSD: disk.h,v 1.22.2.5 2004/11/02 07:53:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -313,6 +313,7 @@ struct disk_badsecinfo {
 #ifdef _KERNEL
 extern	int disk_count;			/* number of disks in global disklist */
 
+struct device;
 struct proc;
 
 void	disk_attach __P((struct disk *));
@@ -327,6 +328,7 @@ int	dkwedge_del(struct dkwedge_info *);
 void	dkwedge_delall(struct disk *);
 int	dkwedge_list(struct disk *, struct dkwedge_list *, struct lwp *);
 void	dkwedge_discover(struct disk *);
+void	dkwedge_set_bootwedge(struct device *, daddr_t, uint64_t);
 int	dkwedge_read(struct disk *, struct vnode *, daddr_t, void *, size_t);
 #endif
 

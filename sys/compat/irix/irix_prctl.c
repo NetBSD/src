@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.21.2.3 2004/09/21 13:25:14 skrll Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.21.2.4 2004/11/02 07:51:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.21.2.3 2004/09/21 13:25:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.21.2.4 2004/11/02 07:51:07 skrll Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -94,11 +94,11 @@ irix_sys_prctl(l, v, retval)
 	register_t *retval;
 {
 	struct irix_sys_prctl_args /* {
-		syscallarg(int) option;
+		syscallarg(unsigned) option;
 		syscallarg(void *) arg1;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	int option = SCARG(uap, option);
+	unsigned int option = SCARG(uap, option);
 
 #ifdef DEBUG_IRIX
 	printf("irix_sys_prctl(): option = %d\n", option);

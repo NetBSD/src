@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.18.16.5 2004/10/19 15:57:31 skrll Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.18.16.6 2004/11/02 07:52:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.18.16.5 2004/10/19 15:57:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.18.16.6 2004/11/02 07:52:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.18.16.5 2004/10/19 15:57:31 skrll Ex
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/device.h>

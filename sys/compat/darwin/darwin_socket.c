@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_socket.c,v 1.5.2.4 2004/09/21 13:24:59 skrll Exp $ */
+/*	$NetBSD: darwin_socket.c,v 1.5.2.5 2004/11/02 07:51:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.5.2.4 2004/09/21 13:24:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.5.2.5 2004/11/02 07:51:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ unsigned char darwin_to_native_af[] = {
 	0,
 };
 
-void
+int
 native_to_darwin_sockaddr(nsa, dsa)
 	struct sockaddr *nsa;
 	struct sockaddr_storage *dsa;
@@ -149,16 +149,17 @@ native_to_darwin_sockaddr(nsa, dsa)
 
 	if ((len = nsa->sa_len) > _SS_MAXSIZE) {
 		printf("native_to_darwin_sockaddr: sa_len too big");
-		return;
+		return 0;
 	}
 
 	memcpy(dsa, nsa, len);
+	/* Array dereference is safe. sa_family is type unsigned */
 	dsa->ss_family = native_to_darwin_af[nsa->sa_family];
 
-	return;
+	return 0;
 }
 
-void
+int
 darwin_to_native_sockaddr(dsa, nsa)
 	struct sockaddr *dsa;
 	struct sockaddr_storage *nsa;
@@ -167,7 +168,7 @@ darwin_to_native_sockaddr(dsa, nsa)
 
 	if ((len = dsa->sa_len) > _SS_MAXSIZE) {
 		printf("darwin_to_native_sockaddr: sa_len too big");
-		return;
+		return EINVAL;
 	}
 
 	if (len == 0) {
@@ -186,22 +187,23 @@ darwin_to_native_sockaddr(dsa, nsa)
 			if (len > _SS_MAXSIZE) {
 				printf("darwin_to_native_sockaddr: "
 				    "sa_len too big");
-				return;
+				return EINVAL;
 			}
 			break;
 		}
 
 		default:
 			printf("darwin_to_native_sockaddr: sa_len not set");
-			return;
+			return EINVAL;
 			break;
 		}
 	}
 
 	memcpy(nsa, dsa, len);
+	/* Array dereference is safe. sa_family is type unsigned */
 	nsa->ss_family = darwin_to_native_af[dsa->sa_family];
 
-	return;
+	return 0;
 }
 
 int
@@ -216,6 +218,9 @@ darwin_sys_socket(l, v, retval)
 		syscallarg(int) protocol;
 	} */ *uap = v;
 	struct sys_socket_args cup;
+
+	if (SCARG(uap, domain) < 0)
+		return (EPROTONOSUPPORT);
 
 	SCARG(&cup, domain) = darwin_to_native_af[SCARG(uap, domain)];
 	SCARG(&cup, type) = SCARG(uap, type);
@@ -265,7 +270,8 @@ darwin_sys_recvfrom(l, v, retval)
 	if ((error = copyin(nssp, &nss, sizeof(nss))) != 0)
 		return error;
 
-	native_to_darwin_sockaddr((struct sockaddr *)&nss, &dss);
+	if ((error = native_to_darwin_sockaddr((struct sockaddr *)&nss, &dss)) != 0)
+		return error;
 
 	if ((error = copyin(SCARG(uap, fromlenaddr), &len, sizeof(len))) != 0)
 		return error;
@@ -316,7 +322,8 @@ darwin_sys_accept(l, v, retval)
 	if ((error = copyin(nssp, &nss, sizeof(nss))) != 0)
 		return error;
 
-	native_to_darwin_sockaddr((struct sockaddr *)&nss, &dss);
+	if ((error = native_to_darwin_sockaddr((struct sockaddr *)&nss, &dss)) != 0)
+		return error;
 
 	if ((error = copyin(SCARG(uap, anamelen), &len, sizeof(len))) != 0)
 		return error;
@@ -367,7 +374,8 @@ darwin_sys_getpeername(l, v, retval)
 	if ((error = copyin(nssp, &nss, sizeof(nss))) != 0)
 		return error;
 
-	native_to_darwin_sockaddr((struct sockaddr *)&nss, &dss);
+	if ((error = native_to_darwin_sockaddr((struct sockaddr *)&nss, &dss)) != 0)
+		return error;
 
 	if ((error = copyin(SCARG(uap, alen), &len, sizeof(len))) != 0)
 		return error;
@@ -418,7 +426,8 @@ darwin_sys_getsockname(l, v, retval)
 	if ((error = copyin(nssp, &nss, sizeof(nss))) != 0)
 		return error;
 
-	native_to_darwin_sockaddr((struct sockaddr *)&nss, &dss);
+	if ((error = native_to_darwin_sockaddr((struct sockaddr *)&nss, &dss)) != 0)
+		return error;
 
 	if ((error = copyin(SCARG(uap, alen), &len, sizeof(len))) != 0)
 		return error;
@@ -462,7 +471,8 @@ darwin_sys_connect(l, v, retval)
 	if ((error = copyin(SCARG(uap, name), &dss, sizeof(dss))) != 0)
 		return error;
 
-	darwin_to_native_sockaddr((struct sockaddr *)&dss, &nss);
+	if ((error = darwin_to_native_sockaddr((struct sockaddr *)&dss, &nss)) != 0)
+		return error;
 
 	len = SCARG(uap, namelen);
 	if (nss.ss_len < len)
@@ -503,7 +513,8 @@ darwin_sys_bind(l, v, retval)
 	if ((error = copyin(SCARG(uap, name), &dss, sizeof(dss))) != 0)
 		return error;
 
-	darwin_to_native_sockaddr((struct sockaddr *)&dss, &nss);
+	if ((error = darwin_to_native_sockaddr((struct sockaddr *)&dss, &nss)) != 0)
+		return error;
 
 	len = SCARG(uap, namelen);
 	if (nss.ss_len < len)
@@ -547,7 +558,8 @@ darwin_sys_sendto(l, v, retval)
 	if ((error = copyin(SCARG(uap, to), &dss, sizeof(dss))) != 0)
 		return error;
 
-	darwin_to_native_sockaddr((struct sockaddr *)&dss, &nss);
+	if ((error = darwin_to_native_sockaddr((struct sockaddr *)&dss, &nss)) != 0)
+		return error;
 
 	len = SCARG(uap, tolen);
 	if (nss.ss_len < len)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.28.2.4 2004/09/21 13:28:04 skrll Exp $	*/
+/*	$NetBSD: mlx.c,v 1.28.2.5 2004/11/02 07:51:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.28.2.4 2004/09/21 13:28:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.28.2.5 2004/11/02 07:51:31 skrll Exp $");
 
 #include "ld.h"
 
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.28.2.4 2004/09/21 13:28:04 skrll Exp $");
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/endian.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
