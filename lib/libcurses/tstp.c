@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.10 1997/09/12 21:08:25 phil Exp $	*/
+/*	$NetBSD: tstp.c,v 1.10.2.1 1997/11/15 00:45:27 mellon Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.10 1997/09/12 21:08:25 phil Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.10.2.1 1997/11/15 00:45:27 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,9 +87,6 @@ __stop_signal_handler(signo)
 	/* restart things */
 	__restartwin();
 
-	/* Repaint the screen. */
-	wrefresh(curscr);
-
 	/* Reset the signals. */
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 }
@@ -118,13 +115,13 @@ __restore_stophandler()
 /* To allow both SIGTSTP and endwin() to come back nicely, we provide
    the following routines. */
 
-static struct termios save;
+static struct termios save_termios;
 
 int
 __stopwin() 
 {
 	/* Get the current terminal state (which the user may have changed). */
-	(void)tcgetattr(STDIN_FILENO, &save);
+	(void)tcgetattr(STDIN_FILENO, &save_termios);
 
 	__restore_stophandler();
 
@@ -157,8 +154,11 @@ __restartwin()
 
 	/* Reset the terminal state to the mode just before we stopped. */
 	(void)tcsetattr(STDIN_FILENO, __tcaction ?
-	    TCSASOFT | TCSADRAIN : TCSADRAIN, &save);
+	    TCSASOFT | TCSADRAIN : TCSADRAIN, &save_termios);
 
 	/* Restart the screen. */
 	__startwin();
+
+	/* Repaint the screen. */
+	wrefresh(curscr);
 }
