@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.26 1999/12/13 15:22:55 itojun Exp $
+.\"	$NetBSD: netstat.1,v 1.26.4.1 2001/04/05 12:42:24 he Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -286,6 +286,7 @@ The mapping between letters and flags is:
 2	RTF_PROTO1	Protocol specific routing flag #2 
 B	RTF_BLACKHOLE	Just discard pkts (during updates) 
 C	RTF_CLONING	Generate new routes on use 
+c	RTF_CLONED	Cloned routes (generated from RTF_CLONING)
 D	RTF_DYNAMIC	Created dynamically (by redirect) 
 G	RTF_GATEWAY	Destination requires forwarding by intermediary
 H	RTF_HOST	Host entry (net otherwise) 
