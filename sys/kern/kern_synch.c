@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.8 2001/11/17 01:07:59 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.9 2001/12/17 20:41:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.8 2001/11/17 01:07:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.9 2001/12/17 20:41:49 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -772,16 +772,36 @@ preempt(struct lwp *newl)
 	struct lwp *l = curproc;
 	int r, s;
 
-	SCHED_LOCK(s);
-	l->l_priority = l->l_usrpri;
-	l->l_stat = LSRUN;
-	setrunqueue(l);
-	l->l_proc->p_stats->p_ru.ru_nivcsw++;
-	r = mi_switch(l, newl);
-	if (r && (l->l_flag & L_SA))
-		sa_upcall(l, SA_UPCALL_PREEMPTED, l, NULL, 0, NULL);
-	SCHED_ASSERT_UNLOCKED();
-	splx(s);
+	if (l->l_flag & L_SA) {
+		SCHED_LOCK(s);
+		l->l_priority = l->l_usrpri;
+		l->l_stat = LSRUN;
+#ifdef DIAGNOSTIC
+		if (l->l_proc->p_sa->sa_preempted != NULL)
+			panic("preempt: SA process already has "
+			    "a preempted LWP (%p) pending.", 
+			    l->l_proc->p_sa->sa_preempted);
+#endif
+		l->l_proc->p_sa->sa_preempted = l;
+		setrunqueue(l);
+		l->l_proc->p_stats->p_ru.ru_nivcsw++;
+		r = mi_switch(l, newl);
+		l->l_proc->p_sa->sa_preempted = NULL;
+		SCHED_ASSERT_UNLOCKED();
+		splx(s);
+		if (r != 0)
+			sa_upcall(l, SA_UPCALL_PREEMPTED, l, NULL, 0, NULL);
+	} else {
+		SCHED_LOCK(s);
+		l->l_priority = l->l_usrpri;
+		l->l_stat = LSRUN;
+		setrunqueue(l);
+		l->l_proc->p_stats->p_ru.ru_nivcsw++;
+		mi_switch(l, newl);
+		SCHED_ASSERT_UNLOCKED();
+		splx(s);
+	}
+
 }
 
 /*
