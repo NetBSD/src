@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.50 2002/04/04 13:08:35 hannken Exp $ */
+/* $NetBSD: vga.c,v 1.51 2002/06/25 21:07:42 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.50 2002/04/04 13:08:35 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.51 2002/06/25 21:07:42 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,7 +366,8 @@ egavga_getfont(struct vga_config *vc, struct vgascreen *scr, char *name,
 	if (cookie == -1) {
 #ifdef VGAFONTDEBUG
 		if (scr != &vga_console_screen || vga_console_attached)
-			printf("vga_getfont: %s not found\n", name);
+			printf("vga_getfont: %s not found\n",
+			       name ? name : "<default>");
 #endif
 		return (0);
 	}
@@ -591,7 +592,8 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 
 void
 vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
-		  bus_space_tag_t memt, int type, const struct vga_funcs *vf)
+		  bus_space_tag_t memt, int type, int quirks,
+		  const struct vga_funcs *vf)
 {
 	int console;
 	struct vga_config *vc;
@@ -608,6 +610,7 @@ vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
 	}
 
 	vc->vc_type = type;
+	vc->vc_nfontslots = (quirks & VGA_QUIRK_ONEFONT) ? 1 : 8;
 	vc->vc_funcs = vf;
 
 	sc->sc_vc = vc;
@@ -640,6 +643,7 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 #else
 	scr = vga_console_vc.currenttype;
 #endif
+	vga_console_vc.vc_nfontslots = 1; /* for now assume buggy adapter */
 	vga_init_screen(&vga_console_vc, &vga_console_screen, scr, 1, &defattr);
 
 	wsdisplay_cnattach(scr, &vga_console_screen,
@@ -821,7 +825,7 @@ vga_usefont(struct vga_config *vc, struct egavga_font *f)
 	if (f->slot != -1)
 		goto toend;
 
-	for (slot = 0; slot < 8; slot++) {
+	for (slot = 0; slot < vc->vc_nfontslots; slot++) {
 		if (!vc->vc_fonts[slot])
 			goto loadit;
 	}
@@ -830,14 +834,22 @@ vga_usefont(struct vga_config *vc, struct egavga_font *f)
 	TAILQ_FOREACH(of, &vc->vc_fontlist, next) {
 		if (of->slot != -1) {
 			if (of == &vga_builtinfont)
-				continue; /* XXX for now */
+				continue;
 			KASSERT(vc->vc_fonts[of->slot] == of);
 			slot = of->slot;
 			of->slot = -1;
 			goto loadit;
 		}
 	}
-	panic("vga_usefont");
+
+	/*
+	 * This should only happen if there is only 1 font slot
+	 * which is occupied by the builtin font.
+	 * Last resort: kick out the builtin font.
+	 */
+	KASSERT(vc->vc_fonts[0] == &vga_builtinfont);
+	TAILQ_REMOVE(&vc->vc_fontlist, &vga_builtinfont, next);
+	slot = 0;
 
 loadit:
 	vga_loadchars(&vc->hdl, slot, 0, 256,
