@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 1996/01/12 21:22:46 chuck Exp $ */
+/*	$NetBSD: machdep.c,v 1.56 1996/01/13 03:11:18 chuck Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -866,6 +866,8 @@ mapdev(phys, virt, offset, size, bustype)
 		iobase = IODEV_BASE;
 
 	size = round_page(size);
+	if (size == 0) panic("mapdev: zero size");
+
 	if (virt)
 		v = trunc_page(virt);
 	else {
