@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.6 1994/12/08 09:31:07 jtc Exp $	*/
+/*	$NetBSD: tip.c,v 1.7 1995/08/11 00:10:40 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: tip.c,v 1.6 1994/12/08 09:31:07 jtc Exp $";
+static char rcsid[] = "$NetBSD: tip.c,v 1.7 1995/08/11 00:10:40 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -600,5 +600,5 @@ setparity(defparity)
 		(void) fflush(stderr);
 	}
 	for (i = 0; i < 0200; i++)
-		partab[i] = evenpartab[i] ^ flip | set & clr;
+		partab[i] = (evenpartab[i] ^ flip | set) & clr;
 }
