@@ -1,4 +1,4 @@
-/*	$NetBSD: ifmcstat.c,v 1.2 1999/07/06 13:16:33 itojun Exp $	*/
+/*	$NetBSD: ifmcstat.c,v 1.3 1999/07/07 00:28:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,6 +35,7 @@
 #include <kvm.h>
 #include <nlist.h>
 #include <string.h>
+#include <limits.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -99,7 +100,7 @@ const char *inet6_n2a(p)
 
 int main()
 {
-	char	buf[BUFSIZ], ifname[IFNAMSIZ];
+	char	buf[_POSIX2_LINE_MAX], ifname[IFNAMSIZ];
 	struct	ifnet	*ifp, ifnet;
 #ifndef __NetBSD__
 	struct	arpcom	arpcom;
