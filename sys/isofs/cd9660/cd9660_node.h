@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.8 1994/09/22 02:47:33 mycroft Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.9 1994/12/13 22:33:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cd9660_node.h	8.2 (Berkeley) 1/23/94
+ *	@(#)cd9660_node.h	8.4 (Berkeley) 12/5/94
  */
 
 /*

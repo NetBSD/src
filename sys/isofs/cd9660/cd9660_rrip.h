@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.h,v 1.5 1994/09/19 09:09:52 mycroft Exp $	*/
+/*	$NetBSD: cd9660_rrip.h,v 1.6 1994/12/13 22:33:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cd9660_rrip.h	8.1 (Berkeley) 1/21/94
+ *	@(#)cd9660_rrip.h	8.2 (Berkeley) 12/5/94
  */
 
 typedef struct {
