@@ -1,4 +1,4 @@
-/*	$NetBSD: cfscores.c,v 1.5 1997/10/11 02:41:45 lukem Exp $	*/
+/*	$NetBSD: cfscores.c,v 1.6 1998/08/29 22:47:57 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cfscores.c,v 1.5 1997/10/11 02:41:45 lukem Exp $");
+__RCSID("$NetBSD: cfscores.c,v 1.6 1998/08/29 22:47:57 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ main(argc, argv)
 		printf("Usage: cfscores [user]\n");
 		exit(1);
 	}
-	dbfd = open(_PATH_SCORE, 0);
+	dbfd = open(_PATH_SCORE, O_RDONLY);
 	if (dbfd < 0)
 		err(2, "open %s", _PATH_SCORE);
 	setpwent();
@@ -126,7 +126,7 @@ printuser(pw, printfail)
 		printf("Bad uid %d\n", pw->pw_uid);
 		return;
 	}
-	i = lseek(dbfd, pw->pw_uid * sizeof(struct betinfo), 0);
+	i = lseek(dbfd, pw->pw_uid * sizeof(struct betinfo), SEEK_SET);
 	if (i < 0)
 		warn("lseek %s", _PATH_SCORE);
 	i = read(dbfd, (char *)&total, sizeof(total));
