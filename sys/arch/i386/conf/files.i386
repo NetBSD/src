@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.113.2.9 1998/09/20 16:37:22 bouyer Exp $
+#	$NetBSD: files.i386,v 1.113.2.10 1998/10/02 19:51:48 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -241,7 +241,7 @@ file	arch/i386/i386/ibcs2_machdep.c		compat_ibcs2
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
-file	arch/i386/i386/linux_machdep.c		compat_linux
+include "compat/linux/i386/files.linux_i386"
 
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
 include "compat/freebsd/files.freebsd"

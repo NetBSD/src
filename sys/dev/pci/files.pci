@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.39.2.5 1998/09/11 16:23:13 bouyer Exp $
+#	$NetBSD: files.pci,v 1.39.2.6 1998/10/02 19:51:47 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -25,6 +25,13 @@ attach	adv at pci with adv_pci
 file	dev/pci/adv_pci.c		adv_pci
 file	dev/ic/advlib.c			adv_pci
 file	dev/ic/advmcode.c		adv_pci
+
+# AdvanSys ULTRA WIDE SCSI controllers
+# device declaration in sys/conf/files
+attach  adw at pci with adw_pci
+file    dev/pci/adw_pci.c               adw_pci
+file    dev/ic/adwlib.c                 adw_pci
+file    dev/ic/adwmcode.c               adw_pci
 
 # BusLogic BT-9xx PCI family
 # device declaration in sys/conf/files
