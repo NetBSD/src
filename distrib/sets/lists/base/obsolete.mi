@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.54 2002/09/12 17:18:48 joda Exp $
+# $NetBSD: obsolete.mi,v 1.55 2002/09/21 07:14:50 lukem Exp $
 /bin/rcorder
 /dev/i4b
 /dev/i4bctl
@@ -58,6 +58,7 @@
 /usr/lib/libusb.so
 /usr/lib/libusb.so.0
 /usr/lib/libusb.so.0.1
+/usr/libexec/cpp
 /usr/libexec/hprop
 /usr/libexec/kdc
 /usr/libexec/kfd
