@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.6 2002/05/04 10:04:42 chris Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.7 2002/09/27 15:35:44 provos Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -220,7 +220,7 @@ cpu_initclocks()
 	    "tmr1 hard clk", clockhandler, 0);
 
 	if (clock_sc->sc_clockintr == NULL)
-		panic("%s: Cannot install timer 1 interrupt handler\n",
+		panic("%s: Cannot install timer 1 interrupt handler",
 		    clock_sc->sc_dev.dv_xname);
 
 	/* If stathz is non-zero then setup the stat clock */
@@ -230,7 +230,7 @@ cpu_initclocks()
        		clock_sc->sc_statclockintr = intr_claim(IRQ_TIMER_2, IPL_CLOCK,
        		    "tmr2 stat clk", statclockhandler, 0);
 		if (clock_sc->sc_statclockintr == NULL)
-			panic("%s: Cannot install timer 2 interrupt handler\n",
+			panic("%s: Cannot install timer 2 interrupt handler",
 			    clock_sc->sc_dev.dv_xname);
 	}
 }
@@ -264,7 +264,7 @@ microtime(tvp)
 
 #ifdef DIAGNOSTIC
 	if (deltatm < 0)
-		panic("opps deltatm < 0 tm=%d deltatm=%d\n", tm, deltatm);
+		panic("opps deltatm < 0 tm=%d deltatm=%d", tm, deltatm);
 #endif
 
 	/* Fill in the timeval struct */

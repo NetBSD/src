@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.10 2002/09/27 03:17:53 thorpej Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.11 2002/09/27 15:36:04 provos Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -89,7 +89,7 @@ ipaq_attach(parent, self, aux)
 
 	/* Map the Extended GPIO registers */
 	if (bus_space_map(sc->sc_iot, SAEGPIO_BASE, 1, 0, &sc->sc_egpioh))
-		panic("%s: unable to map Extended GPIO registers\n",
+		panic("%s: unable to map Extended GPIO registers",
 			self->dv_xname);
 
 	sc->ipaq_egpio = EGPIO_INIT;
@@ -97,7 +97,7 @@ ipaq_attach(parent, self, aux)
 
 	/* Map the SSP registers */
 	if (bus_space_map(sc->sc_iot, SASSP_BASE, SASSP_NPORTS, 0, &sc->sc_ssph))
-		panic("%s: unable to map SSP registers\n",
+		panic("%s: unable to map SSP registers",
 			self->dv_xname);
 
 	sc->sc_ppch = psc->sc_ppch;

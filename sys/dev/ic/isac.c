@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.17 2002/05/21 10:31:12 martin Exp $ 
+ *	$Id: isac.c,v 1.18 2002/09/27 15:37:18 provos Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.17 2002/05/21 10:31:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.18 2002/09/27 15:37:18 provos Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -166,7 +166,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 			if((sc->sc_ibuf = i4b_Dgetmbuf(rest)) != NULL)
 				sc->sc_ib = sc->sc_ibuf->m_data;
 			else
-				panic("isic_isac_irq: RME, i4b_Dgetmbuf returns NULL!\n");
+				panic("isic_isac_irq: RME, i4b_Dgetmbuf returns NULL!");
 			sc->sc_ilen = 0;
 		}
 
@@ -219,7 +219,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 			if((sc->sc_ibuf = i4b_Dgetmbuf(MAX_DFRAME_LEN)) != NULL)
 				sc->sc_ib= sc->sc_ibuf->m_data;
 			else
-				panic("isic_isac_irq: RPF, i4b_Dgetmbuf returns NULL!\n");
+				panic("isic_isac_irq: RPF, i4b_Dgetmbuf returns NULL!");
 			sc->sc_ilen = 0;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.140 2002/09/27 02:24:31 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.141 2002/09/27 15:37:30 provos Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.140 2002/09/27 02:24:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.141 2002/09/27 15:37:30 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -326,7 +326,7 @@ raidattach(num)
 
 	RF_Calloc(raidPtrs, num, sizeof(RF_Raid_t *), (RF_Raid_t **));
 	if (raidPtrs == NULL) {
-		panic("raidPtrs is NULL!!\n");
+		panic("raidPtrs is NULL!!");
 	}
 
 	/* Initialize the component buffer pool. */
@@ -346,7 +346,7 @@ raidattach(num)
 	if (rc == 0)
 		printf("Kernelized RAIDframe activated\n");
 	else
-		panic("Serious error booting RAID!!\n");
+		panic("Serious error booting RAID!!");
 
 	/* put together some datastructures like the CCD device does.. This
 	 * lets us lock the device and what-not when it gets opened. */
@@ -364,7 +364,7 @@ raidattach(num)
 	raidrootdev = (struct device *)malloc(num * sizeof(struct device),
 					      M_RAIDFRAME, M_NOWAIT);
 	if (raidrootdev == NULL) {
-		panic("No memory for RAIDframe driver!!?!?!\n");
+		panic("No memory for RAIDframe driver!!?!?!");
 	}
 
 	for (raidID = 0; raidID < num; raidID++) {
@@ -1768,7 +1768,7 @@ rf_DispatchKernelIO(queue, req)
 	if (queue->raidPtr->raidid >= numraid) {
 		printf("Invalid unit number: %d %d\n", queue->raidPtr->raidid,
 		    numraid);
-		panic("Invalid Unit number in rf_DispatchKernelIO\n");
+		panic("Invalid Unit number in rf_DispatchKernelIO");
 	}
 #endif
 
@@ -1956,7 +1956,7 @@ InitBP(bp, b_vp, rw_flag, dev, startSect, numSect, buf, cbFunc, cbArg,
 	bp->b_blkno = startSect;
 	bp->b_resid = bp->b_bcount;	/* XXX is this right!??!?!! */
 	if (bp->b_bcount == 0) {
-		panic("bp->b_bcount is zero in InitBP!!\n");
+		panic("bp->b_bcount is zero in InitBP!!");
 	}
 	bp->b_proc = b_proc;
 	bp->b_iodone = cbFunc;
@@ -2871,7 +2871,7 @@ rf_create_auto_sets(ac_list)
 				malloc(sizeof(RF_ConfigSet_t), 
 				       M_RAIDFRAME, M_NOWAIT);
 			if (config_sets == NULL) {
-				panic("rf_create_auto_sets: No memory!\n");
+				panic("rf_create_auto_sets: No memory!");
 			}
 			/* this one is easy :) */
 			config_sets->ac = ac;
@@ -2896,7 +2896,7 @@ rf_create_auto_sets(ac_list)
 					malloc(sizeof(RF_ConfigSet_t), 
 					       M_RAIDFRAME, M_NOWAIT);
 				if (cset == NULL) {
-					panic("rf_create_auto_sets: No memory!\n");
+					panic("rf_create_auto_sets: No memory!");
 				}
 				cset->ac = ac;
 				ac->next = NULL;

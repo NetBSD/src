@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.6 2002/05/02 22:01:47 mycroft Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.7 2002/09/27 15:35:45 provos Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -254,7 +254,7 @@ cpu_initclocks()
 	    clockhandler, 0);
 
 	if (clockirq == NULL)
-		panic("%s: Cannot installer timer 0 IRQ handler\n",
+		panic("%s: Cannot installer timer 0 IRQ handler",
 		    clock_sc->sc_dev.dv_xname);
 
 	if (stathz) {
@@ -262,7 +262,7 @@ cpu_initclocks()
        		statclockirq = intr_claim(IRQ_TIMER1, IPL_CLOCK,
        		    "tmr1 stat clk", statclockhandler, 0);
 		if (statclockirq == NULL)
-			panic("%s: Cannot installer timer 1 IRQ handler\n",
+			panic("%s: Cannot installer timer 1 IRQ handler",
 			    clock_sc->sc_dev.dv_xname);
 	}
 #ifdef DIAGNOSTIC

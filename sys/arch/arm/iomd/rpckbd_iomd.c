@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd_iomd.c,v 1.3 2002/03/23 02:00:26 reinoud Exp $	*/
+/*	$NetBSD: rpckbd_iomd.c,v 1.4 2002/09/27 15:35:46 provos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ rpckbd_iomd_attach(parent, self, aux)
 	if (error == 0) {
 		sc->sc_ih = intr_claim(ka->ka_rxirq, IPL_TTY, "kbd rx", rpckbd_intr, sc);
 		if (!sc->sc_ih)
-			panic("%s: Cannot claim RX interrupt\n", sc->sc_device.dv_xname);
+			panic("%s: Cannot claim RX interrupt", sc->sc_device.dv_xname);
 	};
 }
 

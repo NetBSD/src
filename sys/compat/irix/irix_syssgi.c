@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.29 2002/09/21 21:14:57 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.30 2002/09/27 15:37:04 provos Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.29 2002/09/21 21:14:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.30 2002/09/27 15:37:04 provos Exp $");
 
 #include "opt_ddb.h"
 
@@ -389,7 +389,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 			vcp = &vcset.evs_cmds[j];
 			if (vcp->ev_flags & VMCMD_RELATIVE) {
 				if (base_vcp == NULL)
-					panic("irix_syssgi_mapelf():  bad vmcmd base\n");
+					panic("irix_syssgi_mapelf():  bad vmcmd base");
 				   
 				vcp->ev_addr += base_vcp->ev_addr;
 			}

@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.45 2002/09/16 17:12:07 mycroft Exp $ */
+/* $NetBSD: tga.c,v 1.46 2002/09/27 15:37:28 provos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.45 2002/09/16 17:12:07 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.46 2002/09/27 15:37:28 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1387,7 +1387,7 @@ tga_ramdac_wr(v, btreg, val)
 	struct tga_devconfig *dc = v;
 
 	if (btreg > BT485_REG_MAX)
-		panic("tga_ramdac_wr: reg %d out of range\n", btreg);
+		panic("tga_ramdac_wr: reg %d out of range", btreg);
 
 	TGAWREG(dc, TGA_REG_EPDR, (btreg << 9) | (0 << 8 ) | val); /* XXX */
 	TGAREGWB(dc, TGA_REG_EPDR, 1);
@@ -1403,7 +1403,7 @@ tga2_ramdac_wr(v, btreg, val)
 	bus_space_handle_t ramdac;
 
 	if (btreg > BT485_REG_MAX)
-		panic("tga_ramdac_wr: reg %d out of range\n", btreg);
+		panic("tga_ramdac_wr: reg %d out of range", btreg);
 
 	bus_space_subregion(dc->dc_memt, dc->dc_memh, TGA2_MEM_RAMDAC + 
 		(0xe << 12) + (btreg << 8), 4, &ramdac);
@@ -1474,7 +1474,7 @@ tga_ramdac_rd(v, btreg)
 	tga_reg_t rdval;
 
 	if (btreg > BT485_REG_MAX)
-		panic("tga_ramdac_rd: reg %d out of range\n", btreg);
+		panic("tga_ramdac_rd: reg %d out of range", btreg);
 
 	TGAWREG(dc, TGA_REG_EPSR, (btreg << 1) | 0x1); /* XXX */
 	TGAREGWB(dc, TGA_REG_EPSR, 1);
@@ -1493,7 +1493,7 @@ tga2_ramdac_rd(v, btreg)
 	u_int8_t retval;
 
 	if (btreg > BT485_REG_MAX)
-		panic("tga_ramdac_rd: reg %d out of range\n", btreg);
+		panic("tga_ramdac_rd: reg %d out of range", btreg);
 
 	bus_space_subregion(dc->dc_memt, dc->dc_memh, TGA2_MEM_RAMDAC + 
 		(0xe << 12) + (btreg << 8), 4, &ramdac);
@@ -1602,7 +1602,7 @@ tga2_ics9110_wr(dc, dotclock)
 	case  14300000:		/* this one is just a ref clock */
 		N = 0x03; M = 0x03; V = 0x1; X = 0x1; R = 0x3; break;
 	default:
-		panic("unrecognized clock rate %d\n", dotclock);
+		panic("unrecognized clock rate %d", dotclock);
 	}
 
 	/* XXX -- hard coded, bad */

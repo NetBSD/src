@@ -1,4 +1,4 @@
-/*	$NetBSD: ecc_plb.c,v 1.2 2002/09/27 02:24:21 thorpej Exp $	*/
+/*	$NetBSD: ecc_plb.c,v 1.3 2002/09/27 15:36:37 provos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@ ecc_plbmatch(struct device *parent, struct cfdata *cf, void *aux)
 		return (0);
 
 	if (cf->cf_loc[PLBCF_IRQ] == PLBCF_IRQ_DEFAULT)
-		panic("ecc_plbmatch: wildcard IRQ not allowed\n");
+		panic("ecc_plbmatch: wildcard IRQ not allowed");
 
 	paa->plb_irq = cf->cf_loc[PLBCF_IRQ];
 

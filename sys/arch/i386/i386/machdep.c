@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.482 2002/09/25 22:21:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.483 2002/09/27 15:36:09 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.482 2002/09/25 22:21:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.483 2002/09/27 15:36:09 provos Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1634,7 +1634,7 @@ identifycpu(struct cpu_info *ci)
 #ifdef DIAGNOSTIC
 		if (cpu < 0 || cpu >=
 		    sizeof(i386_nocpuid_cpus) / sizeof(i386_nocpuid_cpus[0]))
-			panic("unknown cpu type %d\n", cpu);
+			panic("unknown cpu type %d", cpu);
 #endif
 		name = i386_nocpuid_cpus[cpu].cpu_name;
 		vendor = i386_nocpuid_cpus[cpu].cpu_vendor;
@@ -3114,7 +3114,7 @@ init386(first_avail)
 	    panic("cannot steal memory for PT page of bioscall.");
 	}
 	if (biostramp_image_size > PAGE_SIZE)
-	    panic("biostramp_image_size too big: %x vs. %x\n",
+	    panic("biostramp_image_size too big: %x vs. %x",
 		  biostramp_image_size, PAGE_SIZE);
 #endif
 	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */

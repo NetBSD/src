@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.132 2002/09/25 22:21:16 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.133 2002/09/27 15:36:33 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -1041,7 +1041,7 @@ init532()
 	lprd(fp, 0);
 
 	main(curpcb->pcb_onstack);
-	panic("main returned to init532\n");
+	panic("main returned to init532");
 }
 
 /*

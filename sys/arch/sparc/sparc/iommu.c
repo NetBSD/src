@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.68 2002/09/27 02:24:24 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.69 2002/09/27 15:36:47 provos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -261,7 +261,7 @@ iommu_attach(parent, self, aux)
 	/* calculate log2(sc->sc_range/16MB) */
 	i = ffs(sc->sc_range/(1 << 24)) - 1;
 	if ((1 << i) != (sc->sc_range/(1 << 24)))
-		panic("iommu: bad range: %d\n", i);
+		panic("iommu: bad range: %d", i);
 
 	s = splhigh();
 	IOMMU_FLUSHALL(sc);

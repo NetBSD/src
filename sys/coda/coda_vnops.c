@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.31 2002/07/30 07:40:17 soren Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.32 2002/09/27 15:37:03 provos Exp $	*/
 
 /*
  * 
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.31 2002/07/30 07:40:17 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.32 2002/09/27 15:37:03 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -872,7 +872,7 @@ coda_inactive(v)
     coda_unsave(cp);
     if (vp->v_mount->mnt_data == NULL) {
 	myprintf(("Help! vfsp->vfs_data was NULL, but vnode %p wasn't dying\n", vp));
-	panic("badness in coda_inactive\n");
+	panic("badness in coda_inactive");
     }
 
     if (IS_UNMOUNTING(cp)) {
@@ -1989,7 +1989,7 @@ make_coda_node(fid, vfsp, type)
 	
 	err = getnewvnode(VT_CODA, vfsp, coda_vnodeop_p, &vp);  
 	if (err) {                                                
-	    panic("coda: getnewvnode returned error %d\n", err);   
+	    panic("coda: getnewvnode returned error %d", err);   
 	}                                                         
 	vp->v_data = cp;                                          
 	vp->v_type = type;                                      

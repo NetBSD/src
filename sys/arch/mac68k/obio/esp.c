@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.31 2002/05/30 21:38:55 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.32 2002/09/27 15:36:21 provos Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -517,7 +517,7 @@ esp_quick_dma_intr(sc)
 	int trans=0, resid=0;
 
 	if (esc->sc_active == 0)
-		panic("dma_intr--inactive DMA\n");
+		panic("dma_intr--inactive DMA");
 
 	esc->sc_active = 0;
 
@@ -743,7 +743,7 @@ restart_dmago:
 						len+=2; addr--;
 					}
 					if (res != len) {
-						panic("esp_quick_dma_go: res %d != len %d\n",
+						panic("esp_quick_dma_go: res %d != len %d",
 							res, len);
 					}
 				}

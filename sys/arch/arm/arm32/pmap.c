@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.117 2002/09/22 07:56:57 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118 2002/09/27 15:35:42 provos Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2002/09/22 07:56:57 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2002/09/27 15:35:42 provos Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -1171,7 +1171,7 @@ pmap_postinit(void)
 		/* Allocate a L1 page table */
 		pt = pmap_alloc_l1pt();
 		if (!pt)
-			panic("Cannot allocate static L1 page tables\n");
+			panic("Cannot allocate static L1 page tables");
 
 		/* Clean it */
 		bzero((void *)pt->pt_va, L1_TABLE_SIZE);
@@ -1285,7 +1285,7 @@ pmap_alloc_l1pt(void)
 
 #ifdef DIAGNOSTIC
 	if (m)
-		panic("pmap_alloc_l1pt: pglist not empty\n");
+		panic("pmap_alloc_l1pt: pglist not empty");
 #endif	/* DIAGNOSTIC */
 
 	pt->pt_flags = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.4 2002/08/05 23:30:05 bjh21 Exp $	*/
+/*	$NetBSD: csc.c,v 1.5 2002/09/27 15:35:30 provos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -196,7 +196,7 @@ cscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 	    csc_intr, &sc->sc_softc, &sc->sc_softc.sc_intrcnt);
 	if (sc->sc_softc.sc_ih == NULL)
-	    panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
+	    panic("%s: Cannot install IRQ handler", dp->dv_xname);
 #else
 	printf(" polling");
 	sc->sc_softc.sc_adapter.adapt_flags |= SCSIPI_ADAPT_POLL_ONLY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_mainbus.c,v 1.2 2002/09/27 02:24:12 thorpej Exp $	*/
+/*	$NetBSD: i80321_mainbus.c,v 1.3 2002/09/27 15:36:00 provos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -113,7 +113,7 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_space_subregion(sc->sc_st, sc->sc_sh, VERDE_MCU_BASE,
 	    VERDE_MCU_SIZE, &sc->sc_mcu_sh))
-		panic("%s: unable to subregion MCU registers\n",
+		panic("%s: unable to subregion MCU registers",
 		    sc->sc_dev.dv_xname);
 
 	/*

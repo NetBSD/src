@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.20 2002/09/11 03:45:45 itojun Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.21 2002/09/27 15:37:51 provos Exp $	*/
 /*	$KAME: ah_output.c,v 1.31 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.20 2002/09/11 03:45:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.21 2002/09/27 15:37:51 provos Exp $");
 
 #include "opt_inet.h"
 
@@ -92,7 +92,7 @@ ah_hdrsiz(isr)
 
 	/* sanity check */
 	if (isr == NULL)
-		panic("ah_hdrsiz: NULL was passed.\n");
+		panic("ah_hdrsiz: NULL was passed.");
 
 	if (isr->saidx.proto != IPPROTO_AH)
 		panic("unsupported mode passed to ah_hdrsiz");

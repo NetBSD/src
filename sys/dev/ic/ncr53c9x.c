@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.101 2002/09/25 06:23:29 mycroft Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.102 2002/09/27 15:37:18 provos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.101 2002/09/25 06:23:29 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.102 2002/09/27 15:37:18 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1272,7 +1272,7 @@ ncr53c9x_dequeue(sc, ecb)
 	li = TINFO_LUN(ti, lun);
 #ifdef DIAGNOSTIC
 	if (li == NULL || li->lun != lun)
-		panic("ncr53c9x_dequeue: lun %qx for ecb %p does not exist\n",
+		panic("ncr53c9x_dequeue: lun %qx for ecb %p does not exist",
 		      (long long) lun, ecb);
 #endif
 	if (li->untagged == ecb) {
@@ -1342,7 +1342,7 @@ ncr53c9x_rdfifo(struct ncr53c9x_softc *sc, int how)
 		buf = sc->sc_imess + sc->sc_imlen;
 		break;
 	default:
-		panic("ncr53c9x_rdfifo: bad flag\n");
+		panic("ncr53c9x_rdfifo: bad flag");
 		break;
 	}
 

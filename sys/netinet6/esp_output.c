@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.15 2002/08/09 07:01:21 itojun Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.16 2002/09/27 15:37:52 provos Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.15 2002/08/09 07:01:21 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.16 2002/09/27 15:37:52 provos Exp $");
 
 #include "opt_inet.h"
 
@@ -93,7 +93,7 @@ esp_hdrsiz(isr)
 
 	/* sanity check */
 	if (isr == NULL)
-		panic("esp_hdrsiz: NULL was passed.\n");
+		panic("esp_hdrsiz: NULL was passed.");
 
 	sav = isr->sav;
 

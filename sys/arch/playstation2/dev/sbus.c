@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.2 2002/09/27 03:18:02 thorpej Exp $	*/
+/*	$NetBSD: sbus.c,v 1.3 2002/09/27 15:36:35 provos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ sbus_intr_establish(enum sbus_irq irq, int (*ih_func)(void *), void *ih_arg)
 {
 	switch (irq) {
 	default:
-		panic("unknown IRQ\n");
+		panic("unknown IRQ");
 		break;
 	case SBUS_IRQ_PCMCIA:
 		sbus_pcmcia_intr = ih_func;
@@ -202,7 +202,7 @@ sbus_intr_disestablish(void *handle)
 
 	switch (irq) {
 	default:
-		panic("unknown IRQ\n");
+		panic("unknown IRQ");
 		break;
 	case SBUS_IRQ_PCMCIA:
 		sbus_pcmcia_intr = sbus_spurious_intr;

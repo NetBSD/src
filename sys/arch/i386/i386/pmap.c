@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137 2002/07/03 02:46:13 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.138 2002/09/27 15:36:10 provos Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137 2002/07/03 02:46:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138 2002/09/27 15:36:10 provos Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -644,7 +644,7 @@ pmap_kremove(va, len)
 #endif
 #ifdef DIAGNOSTIC
 		if (*pte & PG_PVLIST)
-			panic("pmap_kremove: PG_PVLIST mapping for 0x%lx\n",
+			panic("pmap_kremove: PG_PVLIST mapping for 0x%lx",
 			      va);
 #endif
 		*pte = 0;		/* zap! */

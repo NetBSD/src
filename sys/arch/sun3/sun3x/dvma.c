@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.24 2002/09/25 21:58:40 thorpej Exp $	*/
+/*	$NetBSD: dvma.c,v 1.25 2002/09/27 15:36:57 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ dvma_kvtopa(kva, bustype)
 
 	addr = (u_long)kva;
 	if ((addr & DVMA_MAP_BASE) != DVMA_MAP_BASE)
-		panic("dvma_kvtopa: bad dmva addr=0x%lx\n", addr);
+		panic("dvma_kvtopa: bad dmva addr=0x%lx", addr);
 
 	switch (bustype) {
 	case BUS_OBIO:

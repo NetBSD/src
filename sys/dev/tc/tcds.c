@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.4 2002/09/27 03:18:21 thorpej Exp $ */
+/* $NetBSD: tcds.c,v 1.5 2002/09/27 15:37:34 provos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.4 2002/09/27 03:18:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.5 2002/09/27 15:37:34 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -390,7 +390,7 @@ tcds_intrnull(val)
 	void *val;
 {
 
-	panic("tcds_intrnull: uncaught TCDS intr for chip %lu\n",
+	panic("tcds_intrnull: uncaught TCDS intr for chip %lu",
 	    (u_long)val);
 }
 

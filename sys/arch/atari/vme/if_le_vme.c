@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.13 2001/07/26 15:05:09 wiz Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.14 2002/09/27 15:35:54 provos Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -340,9 +340,9 @@ le_vme_attach(parent, self, aux)
 	printf("\n%s: ", sc->sc_dev.dv_xname);
 
 	if (bus_space_map(va->va_iot, va->va_iobase, va->va_iosize, 0, &ioh))
-		panic("leattach: cannot map io-area\n");
+		panic("leattach: cannot map io-area");
 	if (bus_space_map(va->va_memt, va->va_maddr, va->va_msize, 0, &memh))
-		panic("leattach: cannot map mem-area\n");
+		panic("leattach: cannot map mem-area");
 
 	lesc->sc_iot    = va->va_iot;
 	lesc->sc_ioh    = ioh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.5 2002/08/05 23:30:05 bjh21 Exp $	*/
+/*	$NetBSD: cosc.c,v 1.6 2002/09/27 15:35:30 provos Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -275,7 +275,7 @@ coscattach(pdp, dp, auxp)
 		sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 		    cosc_intr, sc, &sc->sc_intrcnt);
 		if (sc->sc_ih == NULL)
-			panic("%s: Cannot install IRQ handler\n",
+			panic("%s: Cannot install IRQ handler",
 			    dp->dv_xname);
 	}
 

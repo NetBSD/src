@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.17 2002/09/27 02:24:07 thorpej Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.18 2002/09/27 15:35:33 provos Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.17 2002/09/27 02:24:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.18 2002/09/27 15:35:33 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ dec_1000a_cons_init()
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
 
-		panic("consinit: unknown console type %ld\n",
+		panic("consinit: unknown console type %ld",
 		    ctb->ctb_term_type);
 	}
 #ifdef KGDB

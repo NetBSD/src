@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.51 2002/06/21 02:48:42 eeh Exp $	*/
+/*	$NetBSD: psycho.c,v 1.52 2002/09/27 15:36:49 provos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -719,7 +719,7 @@ psycho_bus_a(arg)
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
 
-	panic("%s: PCI bus A error AFAR %llx AFSR %llx\n",
+	panic("%s: PCI bus A error AFAR %llx AFSR %llx",
 		sc->sc_dev.dv_xname, 
 		(long long)regs->psy_pcictl[0].pci_afar, 
 		(long long)regs->psy_pcictl[0].pci_afsr);
@@ -736,7 +736,7 @@ psycho_bus_b(arg)
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
 
-	panic("%s: PCI bus B error AFAR %llx AFSR %llx\n",
+	panic("%s: PCI bus B error AFAR %llx AFSR %llx",
 		sc->sc_dev.dv_xname, 
 		(long long)regs->psy_pcictl[0].pci_afar, 
 		(long long)regs->psy_pcictl[0].pci_afsr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.41 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: xy.c,v 1.42 2002/09/27 15:37:39 provos Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.41 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.42 2002/09/27 15:37:39 provos Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -1572,7 +1572,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 	if (dmaiopb == NULL) { /* nothing doing? */
 		if (type == XY_SUB_NORM || type == XY_SUB_NOQ)
 			return(XY_ERR_AOK);
-		panic("xyc_submit_iorq: xyc_chain failed!\n");
+		panic("xyc_submit_iorq: xyc_chain failed!");
 	}
 
 	XYC_GO(xycsc->xyc, (u_long)dmaiopb);

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.4 2002/07/12 18:53:16 scottr Exp $ */
+/* $NetBSD: bus_dma.c,v 1.5 2002/09/27 15:36:14 provos Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4 2002/07/12 18:53:16 scottr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2002/09/27 15:36:14 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,7 +464,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			if (e % 16) e += 16 - (e % 16);
 #ifdef DIAGNOSTIC
 			if ((p % 16) || (e % 16)) {
-				panic("unaligned address in _bus_dmamap_sync while flushing.\n"
+				panic("unaligned address in _bus_dmamap_sync while flushing."
 					"address=0x%08lx, end=0x%08lx, ops=0x%x", p, e, ops);
 			}
 #endif
@@ -482,7 +482,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			}
 #ifdef DIAGNOSTIC
 			if (p != e) {
-				panic("overrun in _bus_dmamap_sync while flushing.\n"
+				panic("overrun in _bus_dmamap_sync while flushing."
 					"address=0x%08lx, end=0x%08lx, ops=0x%x", p, e, ops);
 			}
 #endif
@@ -521,7 +521,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 				}
 #ifdef DIAGNOSTIC
 				if ((p % 16) || (e % 16)) {
-					panic("unaligned address in _bus_dmamap_sync while purging.\n"
+					panic("unaligned address in _bus_dmamap_sync while purging."
 						"address=0x%08lx, end=0x%08lx, ops=0x%x", p, e, ops);
 				}
 #endif
@@ -539,7 +539,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 				}
 #ifdef DIAGNOSTIC
 				if (p != e) {
-					panic("overrun in _bus_dmamap_sync while purging.\n"
+					panic("overrun in _bus_dmamap_sync while purging."
 						"address=0x%08lx, end=0x%08lx, ops=0x%x", p, e, ops);
 				}
 #endif

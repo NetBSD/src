@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_500.c,v 1.37 2002/09/27 02:24:07 thorpej Exp $ */
+/* $NetBSD: dec_3000_500.c,v 1.38 2002/09/27 15:35:34 provos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.37 2002/09/27 02:24:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.38 2002/09/27 15:35:34 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ dec_3000_500_cons_init()
 	default:
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
-		panic("consinit: unknown console type %lu\n",
+		panic("consinit: unknown console type %lu",
 		    ctb->ctb_term_type);
 		/* NOTREACHED */
 	}

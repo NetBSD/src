@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.15 2002/05/15 15:19:55 uch Exp $	*/
+/*	$NetBSD: rtc.c,v 1.16 2002/09/27 15:36:07 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -161,7 +161,7 @@ vrrtc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_tclk_cnt_h_reg = RTC_NO_REG_W;
 		sc->sc_tclk_cnt_l_reg = RTC_NO_REG_W;
 	} else {
-		panic("%s: unknown base address 0x%lx\n",
+		panic("%s: unknown base address 0x%lx",
 		    sc->sc_dev.dv_xname, va->va_addr);
 	}
 #endif /* SINGLE_VRIP_BASE */

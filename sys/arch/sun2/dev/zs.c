@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.3 2002/09/27 02:24:26 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.4 2002/09/27 15:36:53 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -294,7 +294,7 @@ zs_attach(zsc, zsd, pri)
 	 */
 	bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, 0, zshard, zsc);
 	if (!(zsc->zsc_softintr = softintr_establish(softpri, zssoft, zsc)))
-		panic("zsattach: could not establish soft interrupt\n");
+		panic("zsattach: could not establish soft interrupt");
 
 	evcnt_attach_dynamic(&zsc->zsc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    zsc->zsc_dev.dv_xname, "intr");

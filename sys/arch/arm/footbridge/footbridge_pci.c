@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.5 2002/08/17 20:46:26 thorpej Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.6 2002/09/27 15:35:44 provos Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -344,7 +344,7 @@ footbridge_pci_intr_string(pcv, ih)
 	printf("footbridge_pci_intr_string(pcv=0x%p, ih=0x%lx)\n", pcv, ih);
 #endif
 	if (ih == 0)
-		panic("footbridge_pci_intr_string: bogus handle 0x%lx\n", ih);
+		panic("footbridge_pci_intr_string: bogus handle 0x%lx", ih);
 
 #if NISA > 0
 	if (ih >= 0x80 && ih <= 0x8f) {

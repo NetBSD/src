@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_output.c,v 1.8 2001/12/04 17:56:37 wiz Exp $	*/
+/*	$NetBSD: llc_output.c,v 1.9 2002/09/27 15:37:51 provos Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_output.c,v 1.8 2001/12/04 17:56:37 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_output.c,v 1.9 2002/09/27 15:37:51 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ llc_resend(linkp, cmdrsp, pollfinal)
 	if (linkp->llcl_slotsfree < linkp->llcl_window)
 		/* assert lock between nr_received & V(S) */
 		if (linkp->llcl_nr_received != linkp->llcl_vs)
-			panic("llc: V(S) != N(R) received\n");
+			panic("llc: V(S) != N(R) received");
 
 	for (slot = llc_seq2slot(linkp, linkp->llcl_vs);
 	     slot != linkp->llcl_freeslot;

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000.c,v 1.13 2002/05/15 16:57:42 thorpej Exp $ */
+/* $NetBSD: pci_1000.c,v 1.14 2002/09/27 15:35:37 provos Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.13 2002/05/15 16:57:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.14 2002/09/27 15:35:37 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -198,7 +198,7 @@ dec_1000_intr_string(ccv, ih)
         static char irqstr[sizeof irqmsg_fmt];
 
         if (ih >= PCI_NIRQ)
-                panic("dec_1000_intr_string: bogus dec_1000 IRQ 0x%lx\n", ih);
+                panic("dec_1000_intr_string: bogus dec_1000 IRQ 0x%lx", ih);
 
         snprintf(irqstr, sizeof irqstr, irqmsg_fmt, ih);
         return (irqstr);
@@ -211,7 +211,7 @@ dec_1000_intr_evcnt(ccv, ih)
 {
 
 	if (ih >= PCI_NIRQ)
-		panic("dec_1000_intr_evcnt: bogus dec_1000 IRQ 0x%lx\n", ih);
+		panic("dec_1000_intr_evcnt: bogus dec_1000 IRQ 0x%lx", ih);
 
 	return (alpha_shared_intr_evcnt(dec_1000_pci_intr, ih));
 }
@@ -226,7 +226,7 @@ dec_1000_intr_establish(ccv, ih, level, func, arg)
 	void *cookie;
 
         if (ih >= PCI_NIRQ)
-                panic("dec_1000_intr_establish: IRQ too high, 0x%lx\n", ih);
+                panic("dec_1000_intr_establish: IRQ too high, 0x%lx", ih);
 
 	cookie = alpha_shared_intr_establish(dec_1000_pci_intr, ih, IST_LEVEL,
 	    level, func, arg, "dec_1000 irq");

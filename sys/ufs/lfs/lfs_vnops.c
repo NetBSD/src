@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.66 2002/09/22 19:32:54 jdolecek Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.67 2002/09/27 15:38:08 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.66 2002/09/22 19:32:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.67 2002/09/27 15:38:08 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,7 +409,7 @@ lfs_set_dirop(struct vnode *vp)
 	--(fs)->lfs_dirops;						\
 	if (!(fs)->lfs_dirops) {					\
 		if ((fs)->lfs_nadirop) {				\
-			panic("SET_ENDOP: %s: no dirops but nadirop=%d\n", \
+			panic("SET_ENDOP: %s: no dirops but nadirop=%d", \
 			      (str), (fs)->lfs_nadirop);		\
 		}							\
 		wakeup(&(fs)->lfs_writer);				\

@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.6 2002/03/06 16:50:34 tsutsui Exp $	*/
+/*	$NetBSD: spifi.c,v 1.7 2002/09/27 15:36:30 provos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -234,7 +234,7 @@ spifi_scsipi_request(chan, req, arg)
 
 		scb = spifi_get_scb(sc);
 		if (scb == NULL) {
-			panic("spifi_scsipi_request: no scb\n");
+			panic("spifi_scsipi_request: no scb");
 		}
 
 		scb->xs = xs;

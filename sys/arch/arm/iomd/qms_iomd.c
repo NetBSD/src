@@ -1,4 +1,4 @@
-/*	$NetBSD: qms_iomd.c,v 1.3 2001/11/27 01:03:53 thorpej Exp $	*/
+/*	$NetBSD: qms_iomd.c,v 1.4 2002/09/27 15:35:46 provos Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -110,10 +110,10 @@ qms_iomd_intenable(sc, enable)
 	if (enable) {
 		sc->sc_ih = intr_claim(sc->sc_irqnum, IPL_TTY, "qms", qmsintr, sc);
 		if (!sc->sc_ih)
-			panic("%s: Cannot claim interrupt\n", sc->sc_device.dv_xname);
+			panic("%s: Cannot claim interrupt", sc->sc_device.dv_xname);
 	} else {
 		if (intr_release(sc->sc_ih) != 0)
-			panic("%s: Cannot release IRQ\n", sc->sc_device.dv_xname);
+			panic("%s: Cannot release IRQ", sc->sc_device.dv_xname);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.22 2001/10/18 19:00:38 jdolecek Exp $	*/
+/*	$NetBSD: arp.c,v 1.23 2002/09/27 15:37:48 provos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -151,7 +151,7 @@ arpwhohas(d, addr)
 	    arpsend, &wbuf.data, sizeof(wbuf.data),
 	    arprecv, &rbuf.data, sizeof(rbuf.data));
 	if (i == -1) {
-		panic("arp: no response for %s\n",
+		panic("arp: no response for %s",
 			  inet_ntoa(addr));
 	}
 

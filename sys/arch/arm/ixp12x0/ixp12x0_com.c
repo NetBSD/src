@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.4 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.5 2002/09/27 15:35:48 provos Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1175,7 +1175,7 @@ ixpcomintr(void* arg)
 			}
 		} else {
 #ifdef DIAGNOSTIC
-			panic("ixpcomintr: we shouldn't reach here\n");
+			panic("ixpcomintr: we shouldn't reach here");
 #endif
 			CLR(sc->sc_rie, CR_RIE);
 			ixpcom_set_cr(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.2 2002/07/21 14:19:43 ichiro Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.3 2002/09/27 15:35:48 provos Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -156,7 +156,7 @@ ixpclk_attach(parent, self, aux)
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0,
 			  &sc->sc_ioh))
-		panic("%s: Cannot map registers\n", self->dv_xname);
+		panic("%s: Cannot map registers", self->dv_xname);
 
 	/* disable all channel and clear interrupt status */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_CONTROL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysasic.c,v 1.2 2002/03/24 18:21:10 uch Exp $	*/
+/*	$NetBSD: sysasic.c,v 1.3 2002/09/27 15:35:58 provos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ sysasic_intr_establish(int event, int (*ih_fun)(void *), void *ih_arg)
 		evtcode = SH_INTEVT_IRL9;
 		break;
 	default:
-		panic("vaild but unknown event %d\n", event);
+		panic("vaild but unknown event %d", event);
 	}
 
 	syh = &sysasic_intrhand[idx];

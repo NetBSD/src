@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.8 2002/09/27 03:18:05 thorpej Exp $	*/
+/*	$NetBSD: hpc.c,v 1.9 2002/09/27 15:36:40 provos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -152,7 +152,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	default:
-		panic("hpc_attach: can't handle HPC on an IP%d\n",
+		panic("hpc_attach: can't handle HPC on an IP%d",
 		    mach_type);
 	};
 

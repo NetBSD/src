@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: fd.c,v 1.7 2002/09/27 15:35:29 provos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -408,7 +408,7 @@ fdcattach(parent, self, aux)
 	fdc->sc_ih = intr_claim(pa->pa_irq, IPL_BIO, "fdc",
 	    fdcintr, fdc);
 	if (!fdc->sc_ih)
-		panic("%s: Cannot claim IRQ %d\n", self->dv_xname, pa->pa_irq);
+		panic("%s: Cannot claim IRQ %d", self->dv_xname, pa->pa_irq);
 
 #if 0
 	/*
@@ -1086,7 +1086,7 @@ loop:
 		    fdc->sc_fr.fh_r12, (u_int)bp->b_data, fd->sc_skip);
 #endif
 		if (fiq_claim(&fdc->sc_fh) == -1)
-			panic("%s: Cannot claim FIQ vector\n", fdc->sc_dev.dv_xname);
+			panic("%s: Cannot claim FIQ vector", fdc->sc_dev.dv_xname);
 		IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x01);
 		bus_space_write_2(iot, ioh, fdctl, type->rate);
 #ifdef FD_DEBUG
@@ -1628,7 +1628,7 @@ load_memory_disc_from_floppy(md, dev)
 		fdstrategy(bp);
 
 		if (biowait(bp))
-			panic("Cannot load floppy image\n");
+			panic("Cannot load floppy image");
                                                  
 		memcpy((caddr_t)md->md_addr + loop * fd_types[type].sectrac
 		    * DEV_BSIZE, (caddr_t)bp->b_data,

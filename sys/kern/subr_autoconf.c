@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.71 2002/09/27 06:30:05 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.72 2002/09/27 15:37:45 provos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.71 2002/09/27 06:30:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.72 2002/09/27 15:37:45 provos Exp $");
 
 #include "opt_ddb.h"
 
@@ -297,7 +297,7 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 		pri = (*m->fn)(m->parent, cf, m->aux);
 	else {
 	        if (cf->cf_attach->ca_match == NULL) {
-			panic("mapply: no match function for '%s' device\n",
+			panic("mapply: no match function for '%s' device",
 			    cf->cf_name);
 		}
 		pri = (*cf->cf_attach->ca_match)(m->parent, cf, m->aux);

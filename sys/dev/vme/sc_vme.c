@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_vme.c,v 1.4 2001/11/15 09:48:19 lukem Exp $	*/
+/*	$NetBSD: sc_vme.c,v 1.5 2002/09/27 15:37:39 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000,2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.4 2001/11/15 09:48:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.5 2002/09/27 15:37:39 provos Exp $");
 
 #include "opt_ddb.h"
 
@@ -202,7 +202,7 @@ sc_vme_attach(parent, self, aux)
 	i = SUNSCPAL_OPENINGS * sizeof(struct sunscpal_dma_handle);
 	sc->sc_dma_handles = (struct sunscpal_dma_handle *)malloc(i, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_dma_handles == NULL)
-		panic("sc: dma handle malloc failed\n");
+		panic("sc: dma handle malloc failed");
 
 	for (i = 0; i < SUNSCPAL_OPENINGS; i++) {
 		sc->sc_dma_handles[i].dh_flags = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.7 2002/01/04 15:24:24 kanaoka Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.8 2002/09/27 15:37:12 provos Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.7 2002/01/04 15:24:24 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.8 2002/09/27 15:37:12 provos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -272,7 +272,7 @@ rtk_cardbus_detach(self, flags)
 
 #ifdef DIAGNOSTIC
 	if (ct == NULL)
-		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
 #endif
 	rv = rtk_detach(sc);
 	if (rv)

@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.10 2002/09/27 03:17:42 thorpej Exp $ */
+/* $NetBSD: podulebus.c,v 1.11 2002/09/27 15:35:31 provos Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.10 2002/09/27 03:17:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.11 2002/09/27 15:35:31 provos Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -118,7 +118,7 @@ podulebusprint(aux, name)
 		printf(" [ netslot %d ]", pa->pa_podule_number - MAX_PODULES);
 #ifdef DIAGNOSTIC
 	else
-		panic("Invalid slot type\n");
+		panic("Invalid slot type");
 #endif
 
 	return (UNCONF);
@@ -545,7 +545,7 @@ matchpodule(pa, manufacturer, product, required_slot)
 	int required_slot;
 {
 	if (pa->pa_podule->attached)
-		panic("podulebus: Podule already attached\n");
+		panic("podulebus: Podule already attached");
 
 	if (IS_PODULE(pa, manufacturer, product))
 		return(1);

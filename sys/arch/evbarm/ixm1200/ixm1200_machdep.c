@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.7 2002/08/24 02:16:33 thorpej Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.8 2002/09/27 15:36:01 provos Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002
@@ -448,7 +448,7 @@ initarm(void *arg)
 #ifdef DIAGNOSTIC
 	/* This should never be able to happen but better confirm that. */
 	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (L1_TABLE_SIZE-1)) != 0)
-		panic("initarm: Failed to align the kernel page directory\n");
+		panic("initarm: Failed to align the kernel page directory");
 #endif
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip32.c,v 1.11 2002/06/04 05:42:42 simonb Exp $	*/
+/*	$NetBSD: ip32.c,v 1.12 2002/09/27 15:36:41 provos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -139,7 +139,7 @@ panic("pcierr: %x %x", *(volatile u_int32_t *)0xbf080004,
 
 #if 1
 	if (ipending & 0x7800)
-		panic("interesting cpu_intr, pending 0x%x\n", ipending);
+		panic("interesting cpu_intr, pending 0x%x", ipending);
 #endif
 
 	if (ipending & MIPS_INT_MASK_5) {

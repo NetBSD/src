@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.16 2002/02/10 13:23:55 takemura Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.17 2002/09/27 15:36:06 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -95,7 +95,7 @@ vrbcu_addr()
 
 	if (addr == NULL) {
 		if ((p = platid_search_data(&platid, addrs)) == NULL)
-			panic("%s: can't find VR BCU address\n", __FUNCTION__);
+			panic("%s: can't find VR BCU address", __FUNCTION__);
 		addr = (bus_addr_t)p->data;
 	}
 
@@ -459,7 +459,7 @@ vrbcu_vrip_getcpuclock(void)
 		cpuspeed = (cpuclock / 3 + MHZ / 2) / MHZ;
 		break;
 	default:
-		panic("unknown CPU type %d\n", cpuid);
+		panic("unknown CPU type %d", cpuid);
 		break;
 	}
 

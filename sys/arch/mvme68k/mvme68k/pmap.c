@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 2002/05/22 14:29:31 drochner Exp $        */
+/*	$NetBSD: pmap.c,v 1.79 2002/09/27 15:36:25 provos Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -404,7 +404,7 @@ pmap_init()
 		 * and we overran the page table map.
 		 */
  bogons:
-		panic("pmap_init: bogons in the VM system!\n");
+		panic("pmap_init: bogons in the VM system!");
 	}
 
 	PMAP_DPRINTF(PDB_INIT,

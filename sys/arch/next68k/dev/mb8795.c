@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.30 2002/09/11 13:15:58 mycroft Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.31 2002/09/27 15:36:31 provos Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -755,7 +755,7 @@ mb8795_start(ifp)
 #ifdef DIAGNOSTIC
 	IFQ_POLL(&ifp->if_snd, m);
 	if (m == 0) {
-		panic("%s: No packet to start\n",
+		panic("%s: No packet to start",
 		      sc->sc_dev.dv_xname);
 	}
 #endif
@@ -829,7 +829,7 @@ mb8795_start_dma(sc)
 	IF_DEQUEUE(&sc->sc_tx_snd, m);
 	if (m == 0) {
 #ifdef DIAGNOSTIC
-		panic("%s: No packet to start_dma\n",
+		panic("%s: No packet to start_dma",
 		      sc->sc_dev.dv_xname);
 #endif
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.104 2002/06/08 17:10:02 yamt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.105 2002/09/27 15:37:25 provos Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.104 2002/06/08 17:10:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.105 2002/09/27 15:37:25 provos Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -573,7 +573,7 @@ tulip_media_link_monitor(
 
     if (mi == NULL) {
 #if defined(DIAGNOSTIC) || defined(TULIP_DEBUG)
-	panic("tulip_media_link_monitor: %s: botch at line %d\n",
+	panic("tulip_media_link_monitor: %s: botch at line %d",
 	      tulip_mediums[sc->tulip_media],__LINE__);
 #endif
 	return TULIP_LINK_UNKNOWN;
@@ -862,7 +862,7 @@ tulip_media_poll(
 	    }
 	    default: {
 #if defined(DIAGNOSTIC) || defined(TULIP_DEBUG)
-		panic("tulip_media_poll: botch at line %d\n", __LINE__);
+		panic("tulip_media_poll: botch at line %d", __LINE__);
 #endif
 		break;
 	    }
@@ -1533,7 +1533,7 @@ tulip_mii_autonegotiate(
 	}
 	default: {
 #if defined(DIAGNOSTIC)
-	    panic("tulip_media_poll: botch at line %d\n", __LINE__);
+	    panic("tulip_media_poll: botch at line %d", __LINE__);
 #endif
 	    break;
 	}

@@ -27,7 +27,7 @@
  *	i4b_l2fsm.c - layer 2 FSM
  *	-------------------------
  *
- *	$Id: i4b_l2fsm.c,v 1.5 2002/05/21 10:31:10 martin Exp $ 
+ *	$Id: i4b_l2fsm.c,v 1.6 2002/09/27 15:37:55 provos Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2fsm.c,v 1.5 2002/05/21 10:31:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2fsm.c,v 1.6 2002/09/27 15:37:55 provos Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -251,15 +251,15 @@ void i4b_next_l2state(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int event)
 
 	/* check event number */
 	if(event > N_EVENTS)
-		panic("i4b_l2fsm.c: event > N_EVENTS\n");
+		panic("i4b_l2fsm.c: event > N_EVENTS");
 
 	/* get current state and check it */
 	if((currstate = l2sc->Q921_state) > N_STATES) 	/* failsafe */
-		panic("i4b_l2fsm.c: currstate > N_STATES\n");	
+		panic("i4b_l2fsm.c: currstate > N_STATES");	
 
 	/* get new state and check it */
 	if((newstate = l2state_tab[event][currstate].newstate) > N_STATES)
-		panic("i4b_l2fsm.c: newstate > N_STATES\n");	
+		panic("i4b_l2fsm.c: newstate > N_STATES");	
 	
 	
 	if(newstate != ST_SUBSET)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.1 2002/02/12 20:38:47 scw Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.2 2002/09/27 15:37:24 provos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -772,7 +772,7 @@ mvmebus_dummy_dmamem_alloc(t, size, align, boundary, segs, nsegs, rsegs, flags)
 	int flags;
 {
 
-	panic("Must use vme_dmamem_alloc() in place of bus_dmamem_alloc()\n");
+	panic("Must use vme_dmamem_alloc() in place of bus_dmamem_alloc()");
 }
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlb.c,v 1.6 2001/11/14 18:15:15 thorpej Exp $	*/
+/*	$NetBSD: jazzdmatlb.c,v 1.7 2002/09/27 15:35:42 provos Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ jazz_dmatlb_init(iot, ioaddr)
 	dmatlb_iot = iot;
 	err = bus_space_map(iot, ioaddr, JAZZ_DMATLB_REGSIZE, 0, &dmatlb_ioh);
 	if (err != 0)
-		panic("jazz_dmatlb_init: cannot map 0x%lx\n", ioaddr);
+		panic("jazz_dmatlb_init: cannot map 0x%lx", ioaddr);
 
 	dma_tlb = (jazz_dma_pte_t *)PICA_TL_BASE;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.61 2002/09/27 02:24:25 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.62 2002/09/27 15:36:50 provos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -679,7 +679,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			}
 		}
 		if (node == 0)
-			panic("None of the CPUs found\n");
+			panic("None of the CPUs found");
 	}
 
 

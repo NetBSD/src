@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.18 2001/07/19 04:27:37 thorpej Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.19 2002/09/27 15:35:36 provos Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.18 2001/07/19 04:27:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.19 2002/09/27 15:35:36 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ alpha_sgmap_init(bus_dma_tag_t t, struct alpha_sgmap *sgmap, const char *name,
 			minptalign = ptsize;
 		if (bus_dmamem_alloc(t, ptsize, minptalign, 0, &seg, 1, &rseg,
 		    BUS_DMA_NOWAIT)) {
-			panic("unable to allocate page table for sgmap `%s'\n",
+			panic("unable to allocate page table for sgmap `%s'",
 			    name);
 			goto die;
 		}

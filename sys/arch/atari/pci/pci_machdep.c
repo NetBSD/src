@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35 2002/05/16 01:01:34 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.36 2002/09/27 15:35:54 provos Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -696,7 +696,7 @@ pci_intr_string(pc, ih)
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
 	if (ih == -1)
-		panic("pci_intr_string: bogus handle 0x%x\n", ih);
+		panic("pci_intr_string: bogus handle 0x%x", ih);
 
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);

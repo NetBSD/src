@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.14 2002/05/15 16:57:41 thorpej Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.15 2002/09/27 15:35:32 provos Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -640,7 +640,7 @@ tulip_media_link_monitor(
 
     if (mi == NULL) {
 #if defined(DIAGNOSTIC) || defined(TULIP_DEBUG)
-	panic("tulip_media_link_monitor: %s: botch at line %d\n",
+	panic("tulip_media_link_monitor: %s: botch at line %d",
 	      tulip_mediums[sc->tulip_media],__LINE__);
 #endif
 	return TULIP_LINK_UNKNOWN;
@@ -921,7 +921,7 @@ tulip_media_poll(
 	    }
 	    default: {
 #if defined(DIAGNOSTIC) || defined(TULIP_DEBUG)
-		panic("tulip_media_poll: botch at line %d\n", __LINE__);
+		panic("tulip_media_poll: botch at line %d", __LINE__);
 #endif
 		break;
 	    }
@@ -1573,7 +1573,7 @@ tulip_mii_autonegotiate(
 	}
 	default: {
 #if defined(DIAGNOSTIC)
-	    panic("tulip_media_poll: botch at line %d\n", __LINE__);
+	    panic("tulip_media_poll: botch at line %d", __LINE__);
 #endif
 	    break;
 	}

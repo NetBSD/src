@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.3 2002/09/27 03:18:12 thorpej Exp $	*/
+/*	$NetBSD: icp.c,v 1.4 2002/09/27 15:37:17 provos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.3 2002/09/27 03:18:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.4 2002/09/27 15:37:17 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -666,7 +666,7 @@ icp_ccb_map(struct icp_softc *icp, struct icp_ccb *ic, void *data, int size,
 			sg->sg_len = htole32(xfer->dm_segs[i].ds_len);
 		}
 	} else if (nsegs > 1)
-		panic("icp_ccb_map: no SG list specified, but nsegs > 1\n");
+		panic("icp_ccb_map: no SG list specified, but nsegs > 1");
 
 	if ((dir & IC_XFER_OUT) != 0)
 		i = BUS_DMASYNC_PREWRITE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.30 2002/06/08 16:34:06 yamt Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.31 2002/09/27 15:36:05 provos Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ tx3912video_hpcfbinit(sc)
 
 	switch (chip->vc_fbdepth) {
 	default:
-		panic("tx3912video_hpcfbinit: not supported color depth\n");
+		panic("tx3912video_hpcfbinit: not supported color depth");
 		/* NOTREACHED */
 	case 2:
 		fb->hf_class = HPCFB_CLASS_GRAYSCALE;

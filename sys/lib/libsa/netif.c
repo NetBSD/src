@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.16 2001/11/15 09:48:21 lukem Exp $	*/
+/*	$NetBSD: netif.c,v 1.17 2002/09/27 15:37:48 provos Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -197,7 +197,7 @@ netif_attach(nif, desc, machdep_hint)
 	desc->io_netif = nif; 
 #ifdef PARANOID
 	if (drv->netif_init == NULL)
-		panic("%s%d: no netif_init support\n", drv->netif_bname,
+		panic("%s%d: no netif_init support", drv->netif_bname,
 		    nif->nif_unit);
 #endif
 	drv->netif_init(desc, machdep_hint);
@@ -217,7 +217,7 @@ netif_detach(nif)
 #endif
 #ifdef PARANOID
 	if (drv->netif_end == NULL)
-		panic("%s%d: no netif_end support\n", drv->netif_bname,
+		panic("%s%d: no netif_end support", drv->netif_bname,
 		    nif->nif_unit);
 #endif
 	drv->netif_end(nif);
@@ -242,7 +242,7 @@ netif_get(desc, pkt, len, timo)
 #endif
 #ifdef PARANOID
 	if (drv->netif_get == NULL)
-		panic("%s%d: no netif_get support\n", drv->netif_bname,
+		panic("%s%d: no netif_get support", drv->netif_bname,
 		    nif->nif_unit);
 #endif
 	rv = drv->netif_get(desc, pkt, len, timo);
@@ -272,7 +272,7 @@ netif_put(desc, pkt, len)
 #endif
 #ifdef PARANOID
 	if (drv->netif_put == NULL)
-		panic("%s%d: no netif_put support\n", drv->netif_bname,
+		panic("%s%d: no netif_put support", drv->netif_bname,
 		    nif->nif_unit);
 #endif
 	rv = drv->netif_put(desc, pkt, len);

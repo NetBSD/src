@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_space.c,v 1.3 2002/08/29 17:29:34 briggs Exp $	*/
+/*	$NetBSD: i80321_space.c,v 1.4 2002/09/27 15:35:51 provos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -253,14 +253,14 @@ i80321_io_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
     bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 
-	panic("i80321_io_bs_alloc(): not implemented\n");
+	panic("i80321_io_bs_alloc(): not implemented");
 }
 
 void    
 i80321_io_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
-	panic("i80321_io_bs_free(): not implemented\n");
+	panic("i80321_io_bs_free(): not implemented");
 }
 
 void *
@@ -335,14 +335,14 @@ i80321_mem_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
     bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 
-	panic("i80321_mem_bs_alloc(): not implemented\n");
+	panic("i80321_mem_bs_alloc(): not implemented");
 }
 
 void    
 i80321_mem_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
-	panic("i80321_mem_bs_free(): not implemented\n");
+	panic("i80321_mem_bs_free(): not implemented");
 }
 
 paddr_t

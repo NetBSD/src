@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2002/09/27 15:36:28 provos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -960,7 +960,7 @@ news1700_init()
 		}
 	}
 	if (t == NULL)
-		panic("unexpected system model.\n");
+		panic("unexpected system model.");
 
 	strcat(cpu_model, t);
 	news_machine_id = (idrom.id_serial[0] << 8) + idrom.id_serial[1];

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.74 2002/09/25 22:21:43 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.75 2002/09/27 15:37:45 provos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.74 2002/09/25 22:21:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.75 2002/09/27 15:37:45 provos Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -461,7 +461,7 @@ free(void *addr, int type)
 	else
 		alloc = addrmask[kup->ku_indx];
 	if (((u_long)addr & alloc) != 0)
-		panic("free: unaligned addr %p, size %ld, type %s, mask %ld\n",
+		panic("free: unaligned addr %p, size %ld, type %s, mask %ld",
 		    addr, size, memname[type], alloc);
 #endif /* DIAGNOSTIC */
 	if (size > MAXALLOCSAVE) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.11 2001/11/13 07:48:42 lukem Exp $	*/
+/*	$NetBSD: fms.c,v 1.12 2002/09/27 15:37:25 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.11 2001/11/13 07:48:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.12 2002/09/27 15:37:25 provos Exp $");
 
 #include "mpu.h"
 
@@ -910,7 +910,7 @@ fms_trigger_output(addr, start, end, blksize, intr, arg, param)
 	
 	if (!p)
 		panic("fms_trigger_output: request with bad start "
-		      "address (%p)\n", start);
+		      "address (%p)", start);
 
 	sc->sc_play_start = p->map->dm_segs[0].ds_addr;
 	sc->sc_play_end = sc->sc_play_start + ((char *)end - (char *)start);
@@ -948,7 +948,7 @@ fms_trigger_input(addr, start, end, blksize, intr, arg, param)
 	
 	if (!p)
 		panic("fms_trigger_input: request with bad start "
-		      "address (%p)\n", start);
+		      "address (%p)", start);
 
 	sc->sc_rec_start = p->map->dm_segs[0].ds_addr;
 	sc->sc_rec_end = sc->sc_rec_start + ((char *)end - (char *)start);

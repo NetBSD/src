@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.3 2002/06/01 13:55:48 simonb Exp $ */
+/* $NetBSD: sbmac.c,v 1.4 2002/09/27 15:36:24 provos Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -1512,7 +1512,7 @@ sbmac_set_duplex(struct sbmac_softc *s, sbmac_duplex_t duplex, sbmac_fc_t fc)
 			/* fall through */
 		case sbmac_fc_frame:		/* not valid in half duplex */
 		default:			/* invalid selection */
-			panic("%s: invalid half duplex fc selection %d\n",
+			panic("%s: invalid half duplex fc selection %d",
 			    s->sc_dev.dv_xname, fc);
 			return 0;
 		}
@@ -1533,7 +1533,7 @@ sbmac_set_duplex(struct sbmac_softc *s, sbmac_duplex_t duplex, sbmac_fc_t fc)
 		case sbmac_fc_auto:		/* XXX not implemented */
 			/* fall through */
 		default:
-			panic("%s: invalid full duplex fc selection %d\n",
+			panic("%s: invalid full duplex fc selection %d",
 			    s->sc_dev.dv_xname, fc);
 			return 0;
 		}
@@ -1542,7 +1542,7 @@ sbmac_set_duplex(struct sbmac_softc *s, sbmac_duplex_t duplex, sbmac_fc_t fc)
 	default:
 		/* fall through */
 	case sbmac_duplex_auto:
-		panic("%s: bad duplex %d\n", s->sc_dev.dv_xname, duplex);
+		panic("%s: bad duplex %d", s->sc_dev.dv_xname, duplex);
 		/* XXX not implemented */
 		break;
 	}

@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.6 2002/09/11 01:46:35 mycroft Exp $        */
+/*      $NetBSD: rtc.c,v 1.7 2002/09/27 15:36:32 provos Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -235,7 +235,7 @@ poweroff(void)
 	
 	printf("....................."); /* @@@ work around some sort of bug. */
 
-	panic("Failed to poweroff!\n");
+	panic("Failed to poweroff!");
 }
 
 

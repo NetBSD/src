@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.11 2002/08/17 20:46:27 thorpej Exp $	*/
+/*	$NetBSD: i80312.c,v 1.12 2002/09/27 15:35:50 provos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -88,17 +88,17 @@ i80312_attach(struct i80312_softc *sc)
 
 	if (bus_space_subregion(sc->sc_st, sc->sc_sh, I80312_PPB_BASE,
 	    I80312_PPB_SIZE, &sc->sc_ppb_sh))
-		panic("%s: unable to subregion PPB registers\n",
+		panic("%s: unable to subregion PPB registers",
 		    sc->sc_dev.dv_xname);
 
 	if (bus_space_subregion(sc->sc_st, sc->sc_sh, I80312_ATU_BASE,
 	    I80312_ATU_SIZE, &sc->sc_atu_sh))
-		panic("%s: unable to subregion ATU registers\n",
+		panic("%s: unable to subregion ATU registers",
 		    sc->sc_dev.dv_xname);
 
 	if (bus_space_subregion(sc->sc_st, sc->sc_sh, I80312_INTC_BASE,
 	    I80312_INTC_SIZE, &sc->sc_intc_sh))
-		panic("%s: unable to subregion INTC registers\n",
+		panic("%s: unable to subregion INTC registers",
 		    sc->sc_dev.dv_xname);
 
 	/* We expect the Memory Controller to be already sliced off. */

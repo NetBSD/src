@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.3 2002/09/12 06:42:54 augustss Exp $	*/
+/*	$NetBSD: bthci.c,v 1.4 2002/09/27 15:37:11 provos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ bthci_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_methods->bt_read == NULL ||
 	    sc->sc_methods->bt_write == NULL ||
 	    sc->sc_methods->bt_poll == NULL)
-		panic("%s: missing methods\n", sc->sc_dev.dv_xname);
+		panic("%s: missing methods", sc->sc_dev.dv_xname);
 #endif
 
 	printf("driver not implemented");

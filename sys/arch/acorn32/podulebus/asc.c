@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.7 2002/08/05 23:30:04 bjh21 Exp $	*/
+/*	$NetBSD: asc.c,v 1.8 2002/09/27 15:35:30 provos Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -74,7 +74,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.7 2002/08/05 23:30:04 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.8 2002/09/27 15:35:30 provos Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -189,7 +189,7 @@ ascattach(struct device *pdp, struct device *dp, void *auxp)
 	if (bus_space_map (sbic->sc_sbicp.sc_sbiciot,
 	    sc->sc_podule->mod_base + ASC_SBIC, ASC_SBIC_SPACE, 0,
 	    &sbic->sc_sbicp.sc_sbicioh))
-		panic("%s: Cannot map SBIC\n", dp->dv_xname);
+		panic("%s: Cannot map SBIC", dp->dv_xname);
 
 	sbic->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
 
@@ -249,7 +249,7 @@ ascattach(struct device *pdp, struct device *dp, void *auxp)
 		sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 		    asc_intr, sc, &sc->sc_intrcnt);
 		if (sc->sc_ih == NULL)
-			panic("%s: Cannot claim podule IRQ\n", dp->dv_xname);
+			panic("%s: Cannot claim podule IRQ", dp->dv_xname);
 	}
 
 	/*
@@ -281,7 +281,7 @@ asc_dmasetup (void *dma_h, bus_dma_tag_t dma_t, struct sbic_acb *acb, int dir)
 #ifdef DDB
 	Debugger();
 #else
-	panic("Hit a brick wall\n");
+	panic("Hit a brick wall");
 #endif
 	return 0;
 }
@@ -293,7 +293,7 @@ asc_dmanext (void *dma_h, bus_dma_tag_t dma_t, struct sbic_acb *acb, int dir)
 #ifdef DDB
 	Debugger();
 #else
-	panic("Hit a brick wall\n");
+	panic("Hit a brick wall");
 #endif
 	return 0;
 }

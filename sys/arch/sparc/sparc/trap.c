@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.111 2002/06/20 00:55:39 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.112 2002/09/27 15:36:47 provos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -456,7 +456,7 @@ badtrap:
 			cpi = p->p_md.md_fpumid;
 			if (cpi != NULL) {
 				if (cpi->mid == cpuinfo.mid)
-					panic("FPU on module %d\n", mid);
+					panic("FPU on module %d", mid);
 				LOCK_XPMSG();
 				simple_lock(&cpi->fplock);
 				simple_lock(&cpi->msg.lock);

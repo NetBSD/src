@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.12 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.13 2002/09/27 15:36:07 provos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -325,7 +325,7 @@ hd64461video_setup_hpcfbif(struct hd64461video_chip *hvc)
 
 	switch (depth) {
 	default:
-		panic("%s: not supported color depth\n", __FUNCTION__);
+		panic("%s: not supported color depth", __FUNCTION__);
 		/* NOTREACHED */
 	case 16:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;

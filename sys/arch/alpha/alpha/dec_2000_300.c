@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2000_300.c,v 1.7 2002/09/27 02:24:07 thorpej Exp $ */
+/* $NetBSD: dec_2000_300.c,v 1.8 2002/09/27 15:35:34 provos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.7 2002/09/27 02:24:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.8 2002/09/27 15:35:34 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ dec_2000_300_cons_init(void)
 	printf("ctb->ctb_csr = 0x%lx\n", ctb->ctb_csr);
 	printf("ctb->ctb_baud = %lu\n", ctb->ctb_baud);
 
-	panic("consinit: unknown console type %lu\n",
+	panic("consinit: unknown console type %lu",
 	    ctb->ctb_type);
 }
 

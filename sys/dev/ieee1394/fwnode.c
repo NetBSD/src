@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.13 2002/04/03 04:15:59 jmc Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.14 2002/09/27 15:37:21 provos Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.13 2002/04/03 04:15:59 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.14 2002/09/27 15:37:21 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -175,7 +175,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 	}
 	
 	if (ab->ab_cbarg)
-		panic("Got an invalid abuf on callback\n");
+		panic("Got an invalid abuf on callback");
 
 	if (ab->ab_length != ab->ab_retlen) {
 		DPRINTF(("%s: config rom short read. Expected :%d, received: "
@@ -204,7 +204,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 
 #ifdef DIAGNOSTIC
 	if (ab->ab_retlen < (ab->ab_length / 4))
-		panic("Configrom shrank during iscomplete check?\n");
+		panic("Configrom shrank during iscomplete check?");
 #endif
 	
 	if (ab->ab_retlen > (ab->ab_length / 4)) {

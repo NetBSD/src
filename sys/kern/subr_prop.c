@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prop.c,v 1.7 2002/08/25 23:08:18 thorpej Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.8 2002/09/27 15:37:47 provos Exp $	*/
 
 /*  
  * Copyright (c) 2001 Eduardo Horvath.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.7 2002/08/25 23:08:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.8 2002/09/27 15:37:47 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ propdb_destroy(propdb_t db)
 	LIST_FOREACH(p, &propdbs, kd_link) {
 		if (p == db) break;
 	}
-	if (p == NULL) panic("propdb_destroy: invalid database\n");
+	if (p == NULL) panic("propdb_destroy: invalid database");
 #endif
 	LIST_REMOVE(db, kd_link);
 

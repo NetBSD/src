@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_dchan.c,v 1.1 2002/09/24 22:05:19 pooka Exp $	*/
+/*	$NetBSD: iwic_dchan.c,v 1.2 2002/09/27 15:37:27 provos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_dchan.c,v 1.1 2002/09/24 22:05:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_dchan.c,v 1.2 2002/09/27 15:37:27 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -296,7 +296,7 @@ dchan_get_mbuf(struct iwic_softc *sc, int len)
 	sc->sc_dchan.ibuf = i4b_Dgetmbuf(len);
 
 	if (!sc->sc_dchan.ibuf)
-		panic("dchan_get_mbuf: unable to allocate %d bytes for mbuf!\n", len);
+		panic("dchan_get_mbuf: unable to allocate %d bytes for mbuf!", len);
 		
 	sc->sc_dchan.ibuf_ptr = sc->sc_dchan.ibuf->m_data;
 	sc->sc_dchan.ibuf_max_len = sc->sc_dchan.ibuf->m_len;
@@ -323,7 +323,7 @@ dchan_receive(struct iwic_softc *sc, int ista)
 		else if ((sc->sc_dchan.ibuf_len + MAX_DFRAME_LEN) >
 			 sc->sc_dchan.ibuf_max_len)
 		{
-			panic("dchan_receive: not enough space in buffer!\n");
+			panic("dchan_receive: not enough space in buffer!");
 		}
 
 		IWIC_RDDFIFO(sc, sc->sc_dchan.ibuf_ptr, 64);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.177 2002/09/27 02:24:24 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.178 2002/09/27 15:36:46 provos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -921,7 +921,7 @@ cpu_configure()
 		int node = findroot();
 		cp = PROM_getpropstringA(node, "device_type", buf, sizeof buf);
 		if (strcmp(cp, "cpu") != 0)
-			panic("PROM root device type = %s (need CPU)\n", cp);
+			panic("PROM root device type = %s (need CPU)", cp);
 	}
 #endif
 

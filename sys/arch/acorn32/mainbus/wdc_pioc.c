@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.2 2001/11/27 00:53:11 thorpej Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.3 2002/09/27 15:35:29 provos Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -140,17 +140,17 @@ wdc_pioc_attach(parent, self, aux)
 	sc->wdc_channel.ctl_iot = pa->pa_iot;
 	if (bus_space_map(sc->wdc_channel.cmd_iot, iobase,
 	    WDC_PIOC_REG_NPORTS, 0, &sc->wdc_channel.cmd_ioh))
-		panic("%s: couldn't map drive registers\n", self->dv_xname);
+		panic("%s: couldn't map drive registers", self->dv_xname);
 	    
 	if (bus_space_map(sc->wdc_channel.ctl_iot,
 	    iobase + WDC_PIOC_AUXREG_OFFSET, WDC_PIOC_AUXREG_NPORTS, 0,
 	    &sc->wdc_channel.ctl_ioh))
-		panic("%s: couldn't map aux registers\n", self->dv_xname);
+		panic("%s: couldn't map aux registers", self->dv_xname);
 
 	sc->sc_ih = intr_claim(pa->pa_irq, IPL_BIO, "wdc",  wdcintr,
 	     &sc->wdc_channel);
 	if (!sc->sc_ih)
-		panic("%s: Cannot claim IRQ %d\n", self->dv_xname, pa->pa_irq);
+		panic("%s: Cannot claim IRQ %d", self->dv_xname, pa->pa_irq);
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanptr = &sc->wdc_channel;

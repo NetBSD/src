@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.19 2002/07/09 07:15:21 junyoung Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.20 2002/09/27 15:37:41 provos Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.19 2002/07/09 07:15:21 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.20 2002/09/27 15:37:41 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -928,7 +928,7 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 		}
 #ifdef DIAGNOSTIC
 		if (edp->state > sizeof(vt100_output) / sizeof(vt100_output[0]))
-			panic("wsemul_vt100: invalid state %d\n", edp->state);
+			panic("wsemul_vt100: invalid state %d", edp->state);
 #endif
 		edp->state = vt100_output[edp->state - 1](edp, *data);
 	}

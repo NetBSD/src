@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.16 2002/09/27 02:24:08 thorpej Exp $ */
+/* $NetBSD: dec_6600.c,v 1.17 2002/09/27 15:35:35 provos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.16 2002/09/27 02:24:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.17 2002/09/27 15:35:35 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ dec_6600_cons_init()
 		    " hose = %ld\n", ctb->ctb_term_type, ctbslot,
 		    CTB_TURBOSLOT_HOSE(ctbslot));
 
-		panic("consinit: unknown console type %ld\n",
+		panic("consinit: unknown console type %ld",
 		    ctb->ctb_term_type);
 	}
 #ifdef KGDB

@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.11 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: stubs.c,v 1.12 2002/09/27 15:36:04 provos Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -271,7 +271,7 @@ ipl_to_spl(ipl)
 		return _SPL_SERIAL;
 	
 	default:
-		panic("bogus ipl\n");
+		panic("bogus ipl");
 	}
 }
 

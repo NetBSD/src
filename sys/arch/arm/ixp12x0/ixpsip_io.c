@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpsip_io.c,v 1.1 2002/07/15 16:27:17 ichiro Exp $ */
+/*	$NetBSD: ixpsip_io.c,v 1.2 2002/09/27 15:35:48 provos Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -185,7 +185,7 @@ ixpsip_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("ixpsip_bs_alloc(): Help!\n");
+	panic("ixpsip_bs_alloc(): Help!");
 }
 
 void
@@ -194,7 +194,7 @@ ixpsip_bs_free(t, bsh, size)
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
-	panic("ixpsip_bs_free(): Help!\n");
+	panic("ixpsip_bs_free(): Help!");
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.25 2002/02/12 20:38:38 scw Exp $	*/
+/*	$NetBSD: isr.c,v 1.26 2002/09/27 15:36:25 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -266,7 +266,7 @@ isrdispatch_autovec(frame)
 
 #ifdef DIAGNOSTIC
 	if ((ipl < 0) || (ipl >= NISRAUTOVEC))
-		panic("isrdispatch_autovec: bad vec 0x%x\n", frame->vec);
+		panic("isrdispatch_autovec: bad vec 0x%x", frame->vec);
 #endif
 
 	intrcnt[ipl]++;	/* XXXSCW: Will go away soon */
@@ -316,7 +316,7 @@ isrdispatch_vectored(ipl, frame)
 
 #ifdef DIAGNOSTIC
 	if ((vec < 0) || (vec >= NISRVECTORED))
-		panic("isrdispatch_vectored: bad vec 0x%x\n", frame->vec);
+		panic("isrdispatch_vectored: bad vec 0x%x", frame->vec);
 #endif
 
 	isr = &isr_vectored[vec];

@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.4 2001/10/29 23:33:42 thorpej Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.5 2002/09/27 15:35:32 provos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -489,7 +489,7 @@ algor_p6032_pci_intr_string(void *v, pci_intr_handle_t ih)
 {
 
 	if (ih >= NIRQMAPS)
-		panic("algor_p6032_intr_string: bogus IRQ %ld\n", ih);
+		panic("algor_p6032_intr_string: bogus IRQ %ld", ih);
 
 	return (p6032_intrnames[ih]);
 }
@@ -507,7 +507,7 @@ algor_p6032_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 {
 
 	if (ih >= NIRQMAPS)
-		panic("algor_p6032_intr_establish: bogus IRQ %ld\n", ih);
+		panic("algor_p6032_intr_establish: bogus IRQ %ld", ih);
 
 	return (algor_p6032_intr_establish(ih, func, arg));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.5 2002/09/25 19:30:22 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.6 2002/09/27 15:36:02 provos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5 2002/09/25 19:30:22 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6 2002/09/27 15:36:02 provos Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ hp300_bus_space_probe(t, bsh, offset, sz)
 		break;
 
 	default:
-		panic("bus_space_probe: unupported data size %d\n", sz);
+		panic("bus_space_probe: unupported data size %d", sz);
 		/* NOTREACHED */
 	}
 

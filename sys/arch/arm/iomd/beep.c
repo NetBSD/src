@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.11 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: beep.c,v 1.12 2002/09/27 15:35:45 provos Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.11 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.12 2002/09/27 15:35:45 provos Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -138,9 +138,9 @@ beepattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_buffer0 = uvm_km_zalloc(kernel_map, NBPG);
 	if (sc->sc_buffer0 == 0) 
-		panic("beep: Cannot allocate buffer memory\n");
+		panic("beep: Cannot allocate buffer memory");
 	if ((sc->sc_buffer0 & (NBPG -1)) != 0)
-		panic("beep: Cannot allocate page aligned buffer\n");
+		panic("beep: Cannot allocate page aligned buffer");
 	sc->sc_buffer1 = sc->sc_buffer0;
 
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_buffer0,
@@ -167,7 +167,7 @@ beepattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih.ih_name = "dma snd ch 0";
 
 	if (irq_claim(sdma_channel, &sc->sc_ih))
-		panic("Cannot claim IRQ %d for beep%d\n",
+		panic("Cannot claim IRQ %d for beep%d",
 		    sdma_channel, parent->dv_unit);
 
 	disable_irq(sdma_channel);
