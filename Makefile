@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 1996/03/18 09:21:33 tls Exp $
+#	$NetBSD: Makefile,v 1.30 1996/03/18 09:53:11 tls Exp $
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -38,6 +38,7 @@ build:
 	(cd ${.CURDIR}/domestic/include && ${MAKE} install)
 .endif
 	(cd ${.CURDIR}/include && ${MAKE} install)
+	(cd ${.CURDIR}/share/mk && ${MAKE} install)
 	${MAKE} cleandir
 	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
