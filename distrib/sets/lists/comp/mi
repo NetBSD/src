@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.144 1999/05/18 13:23:17 kleink Exp $
+# $NetBSD: mi,v 1.145 1999/06/09 03:01:21 simonb Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1171,6 +1171,8 @@
 ./usr/share/man/cat1/cccp.0
 ./usr/share/man/cat1/crunchgen.0
 ./usr/share/man/cat1/crunchide.0
+./usr/share/man/cat1/elf2aout.0
+./usr/share/man/cat1/elf2ecoff.0
 ./usr/share/man/cat1/f77.0
 ./usr/share/man/cat1/fgen.0
 ./usr/share/man/cat1/flex.0
@@ -2227,6 +2229,8 @@
 ./usr/share/man/man1/cccp.1
 ./usr/share/man/man1/crunchgen.1
 ./usr/share/man/man1/crunchide.1
+./usr/share/man/man1/elf2aout.1
+./usr/share/man/man1/elf2ecoff.1
 ./usr/share/man/man1/f77.1
 ./usr/share/man/man1/fgen.1
 ./usr/share/man/man1/flex.1
