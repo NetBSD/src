@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_mod.c,v 1.2 1999/03/27 05:48:53 scottr Exp $	*/
+/*	$NetBSD: iwm_mod.c,v 1.3 1999/03/27 07:09:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -54,8 +54,8 @@ int lkmdispatch __P((struct lkm_table *, int));
 int IWM_lkmentry __P((struct lkm_table *lkmtp, int cmd, int ver));
 
 /* local */
-static int load_module(struct lkm_table * lkmtp, int cmd);
-static int unload_module(struct lkm_table * lkmtp, int cmd);
+static int load_module __P((struct lkm_table * lkmtp, int cmd));
+static int unload_module __P((struct lkm_table * lkmtp, int cmd));
 
 
 /*
@@ -117,8 +117,9 @@ static struct lkm_misc _module = {
  * Check if already loaded and patch device driver switch table entries.
  */
 static int
-load_module(struct lkm_table *lkmtp,
-	   int cmd)
+load_module (lkmtp, cmd)
+	struct lkm_table *lkmtp;
+	int cmd;
 {
 	int     i;
 	int     err;
@@ -134,18 +135,18 @@ load_module(struct lkm_table *lkmtp,
 
 	if (!err) {
 		/*
-		 * We would like to see the block device in slot #2
-		 * and the char device in slot #18.
+		 * We would like to see the block device in slot #21
+		 * and the char device in slot #43.
 		 * For now, we enforce this.
 		 */
 
 		/* save old -- we must provide our own data area */
-		bcopy(&bdevsw[2], &oldBDevEntry, sizeof(struct bdevsw));
-		bcopy(&cdevsw[18], &oldCDevEntry, sizeof(struct cdevsw));
+		memcpy(&oldBDevEntry, &bdevsw[21], sizeof(struct bdevsw));
+		memcpy(&oldCDevEntry, &cdevsw[43], sizeof(struct cdevsw));
 
 		/* replace with new */
-		bcopy(&newBDevEntry, &bdevsw[2], sizeof(struct bdevsw));
-		bcopy(&newCDevEntry, &cdevsw[18], sizeof(struct cdevsw));
+		memcpy(&bdevsw[21], &newBDevEntry, sizeof(struct bdevsw));
+		memcpy(&cdevsw[43], &newCDevEntry, sizeof(struct cdevsw));
 		/* 
 		 * If we wanted to allocate device nodes in /dev, 
 		 * we could export the numbers here. 
@@ -171,8 +172,9 @@ load_module(struct lkm_table *lkmtp,
  * switch entries.
  */
 static int
-unload_module(struct lkm_table * lkmtp,
-	     int cmd)
+unload_module(lkmtp, cmd)
+	struct lkm_table *lkmtp;
+	int cmd;
 {
 	int     i;
 	int     err;
@@ -189,8 +191,8 @@ unload_module(struct lkm_table * lkmtp,
 	fd_mod_free();
 
 	/* replace current slot contents with old contents */
-	bcopy(&oldBDevEntry, &bdevsw[2], sizeof(struct bdevsw));
-	bcopy(&oldCDevEntry, &cdevsw[18], sizeof(struct cdevsw));
+	memcpy(&bdevsw[21], &oldBDevEntry, sizeof(struct bdevsw));
+	memcpy(&cdevsw[43], &oldCDevEntry, sizeof(struct cdevsw));
 
 	return (err);
 }
@@ -205,7 +207,7 @@ unload_module(struct lkm_table * lkmtp,
  * 	does not compile noiselessly with -Werror.
  */
 int
-IWM_lkmentry(lkmtp, cmd, ver)
+IWM_lkmentry (lkmtp, cmd, ver)
 	struct lkm_table *lkmtp;		  
 	int cmd;
 	int ver;
