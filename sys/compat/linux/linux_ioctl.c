@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.15 1997/03/19 05:12:15 mycroft Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.16 1997/04/04 15:35:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -48,12 +48,15 @@
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_ioctl.h>
 
+#include <compat/ossaudio/ossaudio.h>
+#define LINUX_TO_OSS(v) (v)	/* do nothing, same ioctl() encoding */
+
 /*
  * Most ioctl command are just converted to their NetBSD values,
  * and passed on. The ones that take structure pointers and (flag)
  * values need some massaging. This is done the usual way by
  * allocating stackgap memory, letting the actual ioctl call do its
- * work their and converting back the data afterwards.
+ * work there and converting back the data afterwards.
  */
 int
 linux_sys_ioctl(p, v, retval)
@@ -69,9 +72,11 @@ linux_sys_ioctl(p, v, retval)
 
 	switch (LINUX_IOCGROUP(SCARG(uap, com))) {
 	case 'M':
-		return linux_ioctl_mixer(p, uap, retval);
+		return oss_ioctl_mixer(p, LINUX_TO_OSS(v), retval);
+	case 'Q':
+		return oss_ioctl_sequencer(p, LINUX_TO_OSS(v), retval);
 	case 'P':
-		return linux_ioctl_audio(p, uap, retval);
+		return oss_ioctl_audio(p, LINUX_TO_OSS(v), retval);
 	case 'T':
 		return linux_ioctl_termios(p, uap, retval);
 	case 0x89:
