@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.44 1997/03/16 11:54:03 jonathan Exp $
+#	$NetBSD: Makefile.pmax,v 1.45 1997/04/26 02:20:59 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -26,6 +26,7 @@ LD?=	ld
 KERNLD?=	ld.old	# GNU binutils 2.7 ld can't link kernels, use 2.6
 MKDEP?=	mkdep
 STRIP?=	strip
+SIZE?=	size
 COPTS?=		-O2
 
 # source tree is located via $S relative to the compilation directory
@@ -85,7 +86,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${KERNLD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
 		${KERNLD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
