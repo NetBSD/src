@@ -280,6 +280,7 @@ typedef struct acpi_object_mutex
 {
     ACPI_OBJECT_COMMON_HEADER
     UINT16                          SyncLevel;
+    UINT16                          PreviousSyncLevel;
     UINT16                          AcquisitionDepth;
     struct acpi_thread_state        *OwnerThread;
     void                            *Semaphore;
