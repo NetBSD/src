@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.31 1998/01/05 09:52:02 lukem Exp $	*/
+/*	$NetBSD: in.h,v 1.32 1998/01/07 22:51:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -68,12 +68,37 @@
 
 /*
  * Local port number conventions:
- * Ports < IPPORT_RESERVED are reserved for privileged processes (e.g. root).
- * IPPORT_ANONMIN <= Ports <= IPPORT_ANONMAX are for dynamic connections.
+ *
+ * Ports < IPPORT_RESERVED are reserved for privileged processes (e.g. root),
+ * unless a kernel is compiled with IPNOPRIVPORTS defined.
+ *
+ * When a user does a bind(2) or connect(2) with a port number of zero,
+ * a non-conflicting local port address is chosen.
+ *
+ * The default range is IPPORT_ANONMIX to IPPORT_ANONMAX, although
+ * that is settable by sysctl(3); net.inet.ip.anonportmin and
+ * net.inet.ip.anonportmax respectively.
+ *
+ * A user may set the IPPROTO_IP option IP_PORTRANGE to change this
+ * default assignment range.
+ *
+ * The value IP_PORTRANGE_DEFAULT causes the default behavior.
+ *
+ * The value IP_PORTRANGE_HIGH is the same as IP_PORTRANGE_DEFAULT,
+ * and exists only for FreeBSD compatibility purposes.
+ *
+ * The value IP_PORTRANGE_LOW changes the range to the "low" are
+ * that is (by convention) restricted to privileged processes.
+ * This convention is based on "vouchsafe" principles only.
+ * It is only secure if you trust the remote host to restrict these ports.
+ * The range is IPPORT_RESERVEDMIN to IPPORT_RESERVEDMAX.
  */
+
 #define	IPPORT_RESERVED		1024
 #define	IPPORT_ANONMIN		49152
 #define	IPPORT_ANONMAX		65535
+#define	IPPORT_RESERVEDMIN	600
+#define	IPPORT_RESERVEDMAX	(IPPORT_RESERVED-1)
 
 /*
  * Internet address (a structure for historical reasons)
@@ -187,6 +212,7 @@ struct ip_opts {
 #define	IP_MULTICAST_LOOP	11   /* u_char; set/get IP multicast loopback */
 #define	IP_ADD_MEMBERSHIP	12   /* ip_mreq; add an IP group membership */
 #define	IP_DROP_MEMBERSHIP	13   /* ip_mreq; drop an IP group membership */
+#define IP_PORTRANGE		19   /* int; range to use for ephemeral port */
 #define	IP_RECVIF		20   /* bool; receive reception if w/dgram */
 #define	IP_ERRORMTU		21   /* int; get MTU of last xmit = EMSGSIZE */
 
@@ -204,6 +230,14 @@ struct ip_mreq {
 	struct	in_addr imr_multiaddr;	/* IP multicast address of group */
 	struct	in_addr imr_interface;	/* local IP address of interface */
 };
+
+/*
+ * Argument for IP_PORTRANGE:
+ * - which range to search when port is unspecified at bind() or connect()
+ */
+#define	IP_PORTRANGE_DEFAULT	0	/* default range */
+#define	IP_PORTRANGE_HIGH	1	/* same as DEFAULT (FreeBSD compat) */
+#define	IP_PORTRANGE_LOW	2	/* use privileged range */
 
 /*
  * Definitions for inet sysctl operations.

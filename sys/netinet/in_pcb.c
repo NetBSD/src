@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.44 1998/01/05 10:31:53 thorpej Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.45 1998/01/07 22:51:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -178,15 +178,38 @@ in_pcbbind(v, nam, p)
 			return (EADDRINUSE);
 	}
 	inp->inp_laddr = sin->sin_addr;
+
 noname:
 	if (lport == 0) {
-		int cnt;
+		int	   cnt
+		u_int16_t  min, max;
+		u_int16_t *lastport;
 
-		lport = table->inpt_lastport + 1;
-		for (cnt = anonportmax - anonportmin + 1; cnt; cnt--, lport++) {
-			if (lport < (u_int16_t)anonportmin ||
-			    lport > (u_int16_t)anonportmax)
-				lport = (u_int16_t)anonportmin;
+		if (inp->inp_flags & INP_LOWPORT) {
+#ifndef IPNOPRIVPORTS
+			if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+				return (EACCES);
+#endif
+			min = IPPORT_RESERVEDMIN;
+			max = IPPORT_RESERVEDMAX;
+			lastport = &table->inpt_lastlow;
+		} else {
+			min = anonportmin;
+			max = anonportmax;
+			lastport = &table->inpt_lastport;
+		}
+		if (min > max) {	/* sanity check */
+			u_int16_t swp;
+
+			swp = min;
+			min = max;
+			max = swp;
+		}
+
+		lport = *lastport + 1;
+		for (cnt = max - min + 1; cnt; cnt--, lport++) {
+			if (lport < min || lport > max)
+				lport = min;
 			if (!in_pcblookup_port(table, inp->inp_laddr,
 			    htons(lport), wild))
 				goto found;
@@ -195,7 +218,8 @@ noname:
 			inp->inp_laddr.s_addr = INADDR_ANY;
 		return (EAGAIN);
 	found:
-		table->inpt_lastport = lport;
+		inp->inp_flags |= INP_ANONPORT;
+		*lastport = lport;
 		lport = htons(lport);
 	}
 	inp->inp_lport = lport;

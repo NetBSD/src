@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.22 1997/10/14 00:52:45 matt Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.23 1998/01/07 22:51:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -72,7 +72,9 @@ struct inpcbtable {
 	u_long	  inpt_bindhash;
 	u_long	  inpt_connecthash;
 	u_int16_t inpt_lastport;
+	u_int16_t inpt_lastlow;
 };
+#define inpt_lasthi inpt_lastport
 
 /* states in inp_state: */
 #define	INP_ATTACHED		0
@@ -84,6 +86,9 @@ struct inpcbtable {
 #define	INP_RECVRETOPTS		0x02	/* receive IP options for reply */
 #define	INP_RECVDSTADDR		0x04	/* receive IP dst address */
 #define	INP_HDRINCL		0x08	/* user supplies entire IP header */
+#define	INP_HIGHPORT		0x10	/* (unused; FreeBSD compat) */
+#define	INP_LOWPORT		0x20	/* user wants "low" port binding */
+#define	INP_ANONPORT		0x40	/* port chosen for user */
 #define	INP_RECVIF		0x80	/* receive incoming interface */
 #define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR|\
 				INP_RECVIF)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.40 1997/10/14 00:52:59 matt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.41 1998/01/07 22:51:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -598,6 +598,30 @@ ip_ctloutput(op, so, level, optname, mp)
 			error = ip_setmoptions(optname, &inp->inp_moptions, m);
 			break;
 
+		case IP_PORTRANGE:
+			if (m == 0 || m->m_len != sizeof(int))
+				error = EINVAL;
+			else {
+				optval = *mtod(m, int *);
+
+				switch (optval) {
+
+				case IP_PORTRANGE_DEFAULT:
+				case IP_PORTRANGE_HIGH:
+					inp->inp_flags &= ~(INP_LOWPORT);
+					break;
+
+				case IP_PORTRANGE_LOW:
+					inp->inp_flags |= INP_LOWPORT;
+					break;
+
+				default:
+					error = EINVAL;
+					break;
+				}
+			}
+			break;
+
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -669,6 +693,18 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_ADD_MEMBERSHIP:
 		case IP_DROP_MEMBERSHIP:
 			error = ip_getmoptions(optname, inp->inp_moptions, mp);
+			break;
+
+		case IP_PORTRANGE:
+			*mp = m = m_get(M_WAIT, MT_SOOPTS);
+			m->m_len = sizeof(int);
+
+			if (inp->inp_flags & INP_LOWPORT)
+				optval = IP_PORTRANGE_LOW;
+			else
+				optval = IP_PORTRANGE_DEFAULT;
+
+			*mtod(m, int *) = optval;
 			break;
 
 		default:
