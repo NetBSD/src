@@ -1,4 +1,4 @@
-/*	$NetBSD: klogin.c,v 1.10 1997/08/16 13:50:44 lukem Exp $	*/
+/*	$NetBSD: klogin.c,v 1.11 1997/10/12 14:07:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: klogin.c,v 1.10 1997/08/16 13:50:44 lukem Exp $");
+__RCSID("$NetBSD: klogin.c,v 1.11 1997/10/12 14:07:07 mycroft Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -88,15 +88,6 @@ klogin(pw, instance, localhost, password)
 	struct hostent *hp;
 	unsigned long faddr;
 	char realm[REALM_SZ], savehost[MAXHOSTNAMELEN];
-
-#ifdef SKEY
-	/*
-	 * We don't do s/key challenge and Kerberos at the same time
-	 */
-	if (strcasecmp(password, "s/key") == 0) {
-	    return (1);
-	}
-#endif
 
 	/*
 	 * Root logins don't use Kerberos.
