@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.25 1995/04/11 02:30:53 mycroft Exp $ */
+/*	$NetBSD: zs.c,v 1.26 1995/04/11 02:38:16 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -277,8 +277,8 @@ zsattach(parent, dev, aux)
 	zslist = cs;
 
 	cs->cs_unit = unit;
-	cs->cs_speed = zs_getspeed(&addr->zs_chan[CHAN_A]);
-	cs->cs_zc = &addr->zs_chan[CHAN_A];
+	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_A]);
+	cs->cs_zc = &addr->zs_chan[ZS_CHAN_A];
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
@@ -302,8 +302,8 @@ zsattach(parent, dev, aux)
 	cs++;
 	tp = zs_tty[unit];
 	cs->cs_unit = unit;
-	cs->cs_speed = zs_getspeed(&addr->zs_chan[CHAN_B]);
-	cs->cs_zc = &addr->zs_chan[CHAN_B];
+	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_B]);
+	cs->cs_zc = &addr->zs_chan[ZS_CHAN_B];
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
@@ -387,8 +387,8 @@ zsconsole(tp, unit, out, fnstop)
 		zs = unit >> 1;
 		if ((addr = zsaddr[zs]) == NULL)
 			addr = zsaddr[zs] = findzs(zs);
-		zs_conschan = (unit & 1) == 0 ? &addr->zs_chan[CHAN_A] :
-		    &addr->zs_chan[CHAN_B];
+		zs_conschan = (unit & 1) == 0 ? &addr->zs_chan[ZS_CHAN_A] :
+		    &addr->zs_chan[ZS_CHAN_B];
 		v_putc = zscnputc;
 	} else
 		zs_consin = unit;
@@ -1491,7 +1491,7 @@ zs_kgdb_init()
 	if ((addr = zsaddr[zs]) == NULL)
 		addr = zsaddr[zs] = findzs(zs);
 	unit &= 1;
-	zc = unit == 0 ? &addr->zs_chan[CHAN_A] : &addr->zs_chan[CHAN_B];
+	zc = unit == 0 ? &addr->zs_chan[ZS_CHAN_A] : &addr->zs_chan[ZS_CHAN_B];
 	zs_kgdb_savedspeed = zs_getspeed(zc);
 	printf("zs_kgdb_init: attaching zs%d%c at %d baud\n",
 	    zs, unit + 'a', kgdb_rate);
