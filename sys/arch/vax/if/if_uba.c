@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.5 1995/04/11 06:16:38 mycroft Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.6 1995/04/11 06:19:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -168,10 +168,7 @@ if_ubaalloc(ifu, ifrw, nmr)
 /*
  * Pull read data off a interface.
  * Totlen is length of data, with local net header stripped.
- * Off is non-zero if a trailer protocol was used, and
- * gives the offset of the trailer information.
- * We copy the header from the trailer and then all the normal
- * data into mbufs.  When full cluster sized units are present
+ * When full cluster sized units are present
  * on the interface on cluster boundaries we can get them more
  * easily by remapping, and take advantage of this here.
  * Save a pointer to the interface structure and the total length,
