@@ -368,6 +368,7 @@
 ./usr/share/man/cat5/stab.0
 ./usr/share/man/cat5/syslog.conf.0
 ./usr/share/man/cat5/termcap.0
+./usr/share/man/cat5/ttyaction.0
 ./usr/share/man/cat5/ttys.0
 ./usr/share/man/cat5/types.0
 ./usr/share/man/cat5/tzfile.0
@@ -595,6 +596,8 @@
 ./usr/share/man/cat9/copyout.0
 ./usr/share/man/cat9/copyoutstr.0
 ./usr/share/man/cat9/copystr.0
+./usr/share/man/cat9/cpu_switch.0
+./usr/share/man/cat9/ctxsw.0
 ./usr/share/man/cat9/disk.0
 ./usr/share/man/cat9/disk_attach.0
 ./usr/share/man/cat9/disk_busy.0
@@ -624,6 +627,7 @@
 ./usr/share/man/cat9/inittodr.0
 ./usr/share/man/cat9/kernacc.0
 ./usr/share/man/cat9/malloc.0
+./usr/share/man/cat9/mi_switch.0
 ./usr/share/man/cat9/mono_time.0
 ./usr/share/man/cat9/panic.0
 ./usr/share/man/cat9/pfil.0
