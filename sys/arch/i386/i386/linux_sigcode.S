@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.S,v 1.2 2002/12/06 00:00:20 christos Exp $	*/
+/*	$NetBSD: linux_sigcode.S,v 1.3 2003/07/03 21:25:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,13 +101,13 @@ NENTRY(linux_sigcode)
 	movl	$LINUX_SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
 
-/* LINTSTUB: Var: char linux_rt_sigcode[1], linux_rt_esigcode[1]; */
+/* LINTSTUB: Var: char linux_rt_sigcode[1]; */
 NENTRY(linux_rt_sigcode)
 	call	*LINUX_RT_SIGF_HANDLER(%esp)
-	leal	LINUX_RT_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
+	leal	LINUX_RT_SIGF_UC(%esp),%ebx # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
 	pushl	%eax			# junk to fake return address
-	movl	$LINUX_SYS_sigreturn,%eax
+	movl	$LINUX_SYS_rt_sigreturn,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$LINUX_SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
