@@ -1,4 +1,4 @@
-.\"	$NetBSD: utimes.2,v 1.11 1997/10/06 08:23:00 enami Exp $
+.\"	$NetBSD: utimes.2,v 1.12 1997/10/11 03:27:59 enami Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,9 +44,9 @@
 .Sh SYNOPSIS
 .Fd #include <sys/time.h>
 .Ft int
-.Fn utimes "const char *file" "const struct timeval *times"
+.Fn utimes "const char *path" "const struct timeval *times"
 .Ft int
-.Fn lutimes "const char *file" "const struct timeval *times"
+.Fn lutimes "const char *path" "const struct timeval *times"
 .Ft int
 .Fn futimes "int fd" "const struct timeval *times"
 .Sh DESCRIPTION
@@ -77,7 +77,7 @@ The caller must be the owner of the file or be the super-user.
 In either case, the inode-change-time of the file is set to the current
 time.
 .Pp
-.Fn Lutimes
+.Fn lutimes
 is like
 .Fn utimes
 except in the case where the named file is a symbolic link,
@@ -93,7 +93,7 @@ Otherwise, a value of -1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Utimes
+.Fn utimes
 and
 .Fn lutimes
 will fail if:
@@ -108,7 +108,7 @@ and the effective user ID of the process does not
 match the owner of the file, and is not the super-user, and write
 access is denied.
 .It Bq Er EFAULT
-.Xr File
+.Fa path
 or
 .Fa times
 points outside the process's allocated address space.
@@ -137,11 +137,11 @@ does not match the owner of the file and is not the super-user.
 The file system containing the file is mounted read-only.
 .El
 .Pp
-.Fn Futimes
+.Fn futimes
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
-.Fa Fd
+.Fa fd
 does not refer to a valid descriptor.
 .It Bq Er EACCES
 The
@@ -152,7 +152,7 @@ and the effective user ID of the process does not
 match the owner of the file, and is not the super-user, and write
 access is denied.
 .It Bq Er EFAULT
-.Fa Times
+.Fa times
 points outside the process's allocated address space.
 .It Bq Er EIO
 An I/O error occurred while reading or writing the affected inode.
