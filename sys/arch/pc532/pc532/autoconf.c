@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1996/04/04 06:25:48 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 1996/10/11 00:41:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,8 +81,8 @@ configure()
 		panic ("No mem bus found!");
 
 	for (i = 0; i < NIPL; i++)
-		printf("%s%s=%x", i?", ":"", ipl_names[i], imask[i]);
-	printf("\n");
+		kprintf("%s%s=%x", i?", ":"", ipl_names[i], imask[i]);
+	kprintf("\n");
 
 	safepri = imask[IPL_ZERO];
 	spl0();
@@ -172,7 +172,7 @@ setroot()
 	 */
 	if (rootdev == orootdev)
 		return;
-	printf("changing root device to %c%c%d%c\n",
+	kprintf("changing root device to %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
 		unit, part + 'a');
 
@@ -226,7 +226,7 @@ membusattach(parent, self, args)
 	struct device *parent, *self;
  	void *args;
 {
-	printf ("\n");
+	kprintf ("\n");
 	while (config_found(self, NULL, NULL) != NULL)
 		;
 }

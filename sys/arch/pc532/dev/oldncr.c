@@ -1,4 +1,4 @@
-/*	$NetBSD: oldncr.c,v 1.4 1996/08/28 19:00:27 cgd Exp $	*/
+/*	$NetBSD: oldncr.c,v 1.5 1996/10/11 00:41:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -71,7 +71,7 @@ static int ncr_debug=1;
 		((ptr)->sci_bus_csr & SCI_BUS_REQ) && \
 		(--scsi_timeout) ); \
 	if (!scsi_timeout) { \
-		printf("scsi timeout--WAIT_FOR_NOT_REQ---ncr.c, \
+		kprintf("scsi timeout--WAIT_FOR_NOT_REQ---ncr.c, \
  			line %d.\n", __LINE__); \
 		goto scsi_timeout_error; \
 	 } \
@@ -84,7 +84,7 @@ static int ncr_debug=1;
 		(((ptr)->sci_bus_csr & SCI_BUS_REQ) == 0) && \
 		(--scsi_timeout) ); \
 	if (!scsi_timeout) { \
-		printf("scsi timeout--WAIT_FOR_REQ---ncr.c, \
+		kprintf("scsi timeout--WAIT_FOR_REQ---ncr.c, \
 			line %d.\n", __LINE__); \
 		goto scsi_timeout_error; \
 	} \
@@ -96,7 +96,7 @@ static int ncr_debug=1;
 		(((ptr)->sci_bus_csr & SCI_BUS_BSY) == 0) && \
 		(--scsi_timeout) ); \
 	if (!scsi_timeout) { \
-		printf("scsi timeout--WAIT_FOR_BSY---ncr.c, \
+		kprintf("scsi timeout--WAIT_FOR_BSY---ncr.c, \
 			line %d.\n", __LINE__); \
 		goto scsi_timeout_error; \
 	} \
@@ -182,13 +182,13 @@ ncrprobe(parent, self, aux)
 #if 0
 DELETE THIS ????
  	if (unit >= NNCR5380) {
-		printf("ncr5380attach: unit %d more than %d configured.\n",
+		kprintf("ncr5380attach: unit %d more than %d configured.\n",
 			unit+1, NNCR5380);
 		return 0;
 	}
 	ncr5380 = malloc(sizeof(struct ncr5380_data), M_TEMP, M_NOWAIT);
 	if (!ncr5380) {
-		printf("ncr5380attach: Can't malloc.\n");
+		kprintf("ncr5380attach: Can't malloc.\n");
 		return 0;
 	}
 
@@ -219,7 +219,7 @@ ncrattach(parent, self, aux)
 	ncr5380->sc_link.device = &ncr_dev;
 	ncr5380->sc_link.openings = 1;
 
-	printf("\n");
+	kprintf("\n");
 
 	config_found(self, &(ncr5380->sc_link), scsiprint);
 }
@@ -229,7 +229,7 @@ static void
 ncr5380_minphys(struct buf *bp)
 {
     if (bp->b_bcount > MIN_PHYS) {
-	printf("Uh-oh...  ncr5380_minphys setting bp->b_bcount = %x.\n", MIN_PHYS);
+	kprintf("Uh-oh...  ncr5380_minphys setting bp->b_bcount = %x.\n", MIN_PHYS);
 	bp->b_bcount = MIN_PHYS;
 	}
     minphys(bp);
@@ -244,16 +244,16 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	flags = xs->flags;
 	if (xs->bp) flags |= (SCSI_NOSLEEP);
 	if ( flags & ITSDONE ) {
-		printf("Already done?");
+		kprintf("Already done?");
 		xs->flags &= ~ITSDONE;
 	}
 	if ( ! ( flags & INUSE ) ) {
-		printf("Not in use?");
+		kprintf("Not in use?");
 		xs->flags |= INUSE;
 	}
 
 	if ( flags & SCSI_RESET ) {
-		printf("flags & SCSIRESET.\n");
+		kprintf("flags & SCSIRESET.\n");
 		s = splbio();
 		ncr5380_reset_target(xs->sc_link->scsibus,
 				     xs->sc_link->target);
@@ -284,15 +284,15 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 	int	i  = 0;
 
 	if ( ! ( xs->flags & SCSI_RESET ) ) {
-		printf("ncr5380(%d:%d:%d)-",
+		kprintf("ncr5380(%d:%d:%d)-",
 			xs->sc_link->scsibus, xs->sc_link->target, xs->sc_link->lun);
 		while (i < xs->cmdlen) {
-			if (i) printf(",");
-			printf("%x",b[i++]);
+			if (i) kprintf(",");
+			kprintf("%x",b[i++]);
 		}
-		printf("-\n");
+		kprintf("-\n");
 	} else {
-		printf("ncr5380(%d:%d:%d)-RESET-\n",
+		kprintf("ncr5380(%d:%d:%d)-RESET-\n",
 			xs->sc_link->scsibus, xs->sc_link->target, xs->sc_link->lun);
 	}
 }
@@ -332,7 +332,7 @@ scsi_irq_intr(void)
 	register volatile sci_padded_regmap_t *regs = ncr;
 
 /*	if (regs->sci_csr != SCI_CSR_PHASE_MATCH)
-		printf("scsi_irq_intr called (not just phase match -- "
+		kprintf("scsi_irq_intr called (not just phase match -- "
 			"csr = 0x%x, bus_csr = 0x%x).\n",
 			regs->sci_csr, regs->sci_bus_csr);
 	ncr5380_intr(0); */
@@ -342,7 +342,7 @@ scsi_irq_intr(void)
 extern int
 scsi_drq_intr(void)
 {
-/*	printf("scsi_drq_intr called.\n"); */
+/*	kprintf("scsi_drq_intr called.\n"); */
 /*	ncr5380_intr(0); */
 	return 1;
 }
@@ -402,7 +402,7 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 					tsleep((caddr_t)&lbolt, PRIBIO, "ncrbusy", 0);
 			}
 			if (!i)
-				printf("ncr(%d:%d): Sense failed (dev busy)\n",
+				kprintf("ncr(%d:%d): Sense failed (dev busy)\n",
 				       xs->sc_link->target, xs->sc_link->lun);
 			xs->error = XS_SENSE;
 			return COMPLETE;
@@ -590,7 +590,7 @@ command_transfer(register volatile sci_padded_regmap_t *regs,
 {
 	int	xfer=0, phase;
 
-/*	printf("command_transfer called for 0x%x.\n", *data); */
+/*	kprintf("command_transfer called for 0x%x.\n", *data); */
 
 	regs->sci_icmd = 0;
 
@@ -607,20 +607,20 @@ command_transfer(register volatile sci_padded_regmap_t *regs,
 						   	maxlen, data);
 				return xfer;
 			case SCSI_PHASE_DATA_IN:
-				printf("Data in phase in command_transfer?\n");
+				kprintf("Data in phase in command_transfer?\n");
 				return 0;
 			case SCSI_PHASE_DATA_OUT:
-				printf("Data out phase in command_transfer?\n");
+				kprintf("Data out phase in command_transfer?\n");
 				return 0;
 			case SCSI_PHASE_STATUS:
 				SCI_ACK(regs,SCSI_PHASE_STATUS);
-				printf("status in command_transfer.\n");
+				kprintf("status in command_transfer.\n");
 				sci_data_in(regs, SCSI_PHASE_STATUS,
 					  	1, status);
 				break;
 			case SCSI_PHASE_MESSAGE_IN:
 				SCI_ACK(regs,SCSI_PHASE_MESSAGE_IN);
-				printf("msgin in command_transfer.\n");
+				kprintf("msgin in command_transfer.\n");
 				sci_data_in(regs, SCSI_PHASE_MESSAGE_IN,
 					  	1, msg);
 				break;
@@ -630,7 +630,7 @@ command_transfer(register volatile sci_padded_regmap_t *regs,
 					  	1, msg);
 				break;
 			default:
-				printf("Unexpected phase 0x%x in "
+				kprintf("Unexpected phase 0x%x in "
 					"command_transfer().\n", phase);
 scsi_timeout_error:
 				return xfer;
@@ -657,7 +657,7 @@ data_transfer(register volatile sci_padded_regmap_t *regs,
 
 		switch (phase) {
 			case SCSI_PHASE_CMD:
-				printf("Command phase in data_transfer().\n");
+				kprintf("Command phase in data_transfer().\n");
 				return retlen;
 			case SCSI_PHASE_DATA_IN:
 				SCI_ACK(regs,SCSI_PHASE_DATA_IN);
@@ -695,7 +695,7 @@ data_transfer(register volatile sci_padded_regmap_t *regs,
 				if (*msg == 0) {
 					return retlen;
 				} else {
-					printf( "message 0x%x in "
+					kprintf( "message 0x%x in "
 						"data_transfer.\n", *msg);
 				}
 				break;
@@ -705,7 +705,7 @@ data_transfer(register volatile sci_padded_regmap_t *regs,
 					  	1, msg);
 				break;
 			default:
-				printf( "Unexpected phase 0x%x in "
+				kprintf( "Unexpected phase 0x%x in "
 					"data_transfer().\n", phase);
 scsi_timeout_error:
 				return retlen;
@@ -733,7 +733,7 @@ scsi_request(register volatile sci_padded_regmap_t *regs,
 		case SCSI_RET_RETRY:
 			return 0x08;
 		default:
-			printf("select_target(target %d, lun %d) failed(%d).\n",
+			kprintf("select_target(target %d, lun %d) failed(%d).\n",
 				target, lun, r);
 		case SCSI_RET_DEVICE_DOWN:
 			return -1;
@@ -747,7 +747,7 @@ scsi_request(register volatile sci_padded_regmap_t *regs,
 	     != cmdlen) {
 		SCI_CLR_INTR(regs);
 		*ret = SCSI_RET_COMMAND_FAIL;
-		printf("Data underrun sending CCB (%d bytes of %d, sent).\n",
+		kprintf("Data underrun sending CCB (%d bytes of %d, sent).\n",
 			cmd_bytes_sent, cmdlen);
 		return -1;
 	}
@@ -807,9 +807,9 @@ scsi_group0(int adapter, int id, int lun, int opcode, int addr, int len,
 		if (   !(regs->sci_csr     & SCI_CSR_PHASE_MATCH) \
 		    || !(regs->sci_bus_csr & SCI_BUS_BSY) \
 		    || (i-- < 0) ) { \
-			printf("ncr.c: timeout counter = %d, len = %d count=%d (count-len %d).\n", \
+			kprintf("ncr.c: timeout counter = %d, len = %d count=%d (count-len %d).\n", \
 				i, len,count,count-len); \
-			printf("ncr_debug = %d,  1=out, 2=in",ncr_debug); \
+			kprintf("ncr_debug = %d,  1=out, 2=in",ncr_debug); \
 			/*dump_regs();*/ \
 			if (poll && !(regs->sci_csr & SCI_CSR_PHASE_MATCH)) { \
 				regs->sci_icmd &= ~SCI_ICMD_DATA; \
@@ -858,7 +858,7 @@ ncr_debug=1;
 	while ( ((regs->sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH))
 		== SCI_CSR_PHASE_MATCH) && --i);
 	if (!i)
-		printf("ncr.c:%d: timeout waiting for SCI_CSR_DREQ.\n", __LINE__);
+		kprintf("ncr.c:%d: timeout waiting for SCI_CSR_DREQ.\n", __LINE__);
 	*byte_data = 0;
 scsi_timeout_error:
 	regs->sci_mode &= ~SCI_MODE_DMA;
@@ -885,7 +885,7 @@ ncr_debug=2;
 	if (count < 128)
 		return sci_data_in(regs, phase, count, data);
 
-/*	printf("Called sci_pdma_in(0x%x, 0x%x, %d, 0x%x.\n", regs, phase, count, data); */
+/*	kprintf("Called sci_pdma_in(0x%x, 0x%x, %d, 0x%x.\n", regs, phase, count, data); */
 
 	WAIT_FOR_BSY(regs);
 	regs->sci_mode |= SCI_MODE_DMA;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.2 1996/05/12 20:49:57 oki Exp $	*/
+/*	$NetBSD: sram.c,v 1.3 1996/10/11 00:39:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -60,7 +60,7 @@ sramattach(num)
 	int num;
 {
 	sram_softc.flags = 0;
-	printf("sram0: 16k bytes accessible\n");
+	kprintf("sram0: 16k bytes accessible\n");
 }
 
 
@@ -78,7 +78,7 @@ sramopen(dev, flags)
 
 #ifdef DEBUG
 	if (sramdebug & SRAM_DEBUG_OPEN)
-		printf ("Sram open\n");
+		kprintf ("Sram open\n");
 #endif
 
 	if (minor(dev) >= 1)
@@ -102,7 +102,7 @@ sramclose (dev, flags)
 
 #ifdef DEBUG
 	if (sramdebug & SRAM_DEBUG_CLOSE)
-		printf ("Sram close\n");
+		kprintf ("Sram close\n");
 #endif
 
 	if (su->flags & SRF_OPEN) {
@@ -126,7 +126,7 @@ sramioctl (dev, cmd, data, flag, p)
 
 #ifdef DEBUG
 	if (sramdebug & SRAM_DEBUG_IOCTL)
-		printf("Sram ioctl cmd=%lx\n", cmd);
+		kprintf("Sram ioctl cmd=%lx\n", cmd);
 #endif
 	sram_io = (struct sram_io *)data;
 
@@ -134,8 +134,8 @@ sramioctl (dev, cmd, data, flag, p)
 	case SIOGSRAM:
 #ifdef DEBUG
 		if (sramdebug & SRAM_DEBUG_IOCTL) {
-    			printf("Sram ioctl SIOGSRAM address=%p\n", data);
-    			printf("Sram ioctl SIOGSRAM offset=%x\n", sram_io->offset);
+    			kprintf("Sram ioctl SIOGSRAM address=%p\n", data);
+    			kprintf("Sram ioctl SIOGSRAM offset=%x\n", sram_io->offset);
 		}
 #endif
 		if (sram_io == NULL ||
@@ -146,8 +146,8 @@ sramioctl (dev, cmd, data, flag, p)
 	case SIOPSRAM:
 #ifdef DEBUG
 		if (sramdebug & SRAM_DEBUG_IOCTL) {
-    			printf("Sram ioctl SIOSSRAM address=%p\n", data);
-    			printf("Sram ioctl SIOSSRAM offset=%x\n", sram_io->offset);
+    			kprintf("Sram ioctl SIOSSRAM address=%p\n", data);
+    			kprintf("Sram ioctl SIOSSRAM offset=%x\n", sram_io->offset);
 		}
 #endif
 		if (sram_io == NULL ||
