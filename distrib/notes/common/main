@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.116 2001/04/13 13:14:18 yyamano Exp $
+.\"	$NetBSD: main,v 1.117 2001/04/19 08:52:47 mrauch Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1188,6 +1188,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Matthias Pfaller Ta Mt matthias@netbsd.org
 .It Ta Dante Profeta Ta Mt dante@netbsd.org
 .It Ta Chris Provenzano Ta Mt proven@netbsd.org
+.It Ta Michael Rauch Ta Mt mrauch@netbsd.org
 .It Ta Waldi Ravens Ta Mt waldi@moacs.indiv.nl.net
 .It Ta Darren Reed Ta Mt darrenr@netbsd.org
 .It Ta Michael Richardson Ta Mt mcr@netbsd.org
