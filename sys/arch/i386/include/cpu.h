@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.25 2001/06/18 03:33:31 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.26 2001/07/02 12:52:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -115,7 +115,7 @@ struct cpu_info {
 	u_int32_t ci_ipis;		/* interprocessor interrupts pending */
 	int sc_apic_version;		/* local APIC version */
 
-	u_int32_t	ci_cpuid_level;
+	int32_t		ci_cpuid_level;
 	u_int32_t	ci_signature;	 /* X86 cpuid type */
 	u_int32_t	ci_feature_flags;/* X86 CPUID feature bits */
 	u_int32_t	ci_cpu_class;	 /* CPU class */
