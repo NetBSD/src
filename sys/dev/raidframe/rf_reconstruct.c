@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.59 2003/12/29 05:58:34 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.60 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.59 2003/12/29 05:58:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.60 2003/12/30 21:59:03 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -148,15 +148,13 @@ struct RF_ReconDoneProc_s {
  *
  **************************************************************************/
 static void 
-rf_ShutdownReconstruction(ignored)
-	void   *ignored;
+rf_ShutdownReconstruction(void *ignored)
 {
 	pool_destroy(&rf_recond_pool);
 }
 
 int 
-rf_ConfigureReconstruction(listp)
-	RF_ShutdownList_t **listp;
+rf_ConfigureReconstruction(RF_ShutdownList_t **listp)
 {
 	int     rc;
 
@@ -172,12 +170,9 @@ rf_ConfigureReconstruction(listp)
 }
 
 static RF_RaidReconDesc_t *
-AllocRaidReconDesc(raidPtr, col, spareDiskPtr, numDisksDone, scol)
-	RF_Raid_t *raidPtr;
-	RF_RowCol_t col;
-	RF_RaidDisk_t *spareDiskPtr;
-	int     numDisksDone;
-	RF_RowCol_t scol;
+AllocRaidReconDesc(RF_Raid_t *raidPtr, RF_RowCol_t col, 
+		   RF_RaidDisk_t *spareDiskPtr, int numDisksDone,
+		   RF_RowCol_t scol)
 {
 
 	RF_RaidReconDesc_t *reconDesc;
@@ -196,8 +191,7 @@ AllocRaidReconDesc(raidPtr, col, spareDiskPtr, numDisksDone, scol)
 }
 
 static void 
-FreeReconDesc(reconDesc)
-	RF_RaidReconDesc_t *reconDesc;
+FreeReconDesc(RF_RaidReconDesc_t *reconDesc)
 {
 #if RF_RECON_STATS > 0
 	printf("raid%d: %lu recon event waits, %lu recon delays\n",
@@ -222,9 +216,7 @@ FreeReconDesc(reconDesc)
  * fails, or is aborted.
  *****************************************************************************/
 int 
-rf_ReconstructFailedDisk(raidPtr, col)
-	RF_Raid_t *raidPtr;
-	RF_RowCol_t col;
+rf_ReconstructFailedDisk(RF_Raid_t *raidPtr, RF_RowCol_t col)
 {
 	const RF_LayoutSW_t *lp;
 	int     rc;
@@ -255,9 +247,7 @@ rf_ReconstructFailedDisk(raidPtr, col)
 }
 
 int 
-rf_ReconstructFailedDiskBasic(raidPtr, col)
-	RF_Raid_t *raidPtr;
-	RF_RowCol_t col;
+rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 {
 	RF_ComponentLabel_t c_label;
 	RF_RaidDisk_t *spareDiskPtr = NULL;
@@ -359,9 +349,7 @@ rf_ReconstructFailedDiskBasic(raidPtr, col)
 */
 
 int
-rf_ReconstructInPlace(raidPtr, col)
-	RF_Raid_t *raidPtr;
-	RF_RowCol_t col;
+rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 {
 	RF_RaidDisk_t *spareDiskPtr = NULL;
 	RF_RaidReconDesc_t *reconDesc;
@@ -575,8 +563,7 @@ rf_ReconstructInPlace(raidPtr, col)
 
 
 int 
-rf_ContinueReconstructFailedDisk(reconDesc)
-	RF_RaidReconDesc_t *reconDesc;
+rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 {
 	RF_Raid_t *raidPtr = reconDesc->raidPtr;
 	RF_RowCol_t col = reconDesc->col;
@@ -779,9 +766,7 @@ rf_ContinueReconstructFailedDisk(reconDesc)
  * indicated disk
  *****************************************************************************/
 static int 
-ProcessReconEvent(raidPtr, event)
-	RF_Raid_t *raidPtr;
-	RF_ReconEvent_t *event;
+ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 {
 	int     retcode = 0, submitblocked;
 	RF_ReconBuffer_t *rbuf;
@@ -912,9 +897,7 @@ ProcessReconEvent(raidPtr, event)
  *
  *****************************************************************************/
 static int 
-IssueNextReadRequest(raidPtr, col)
-	RF_Raid_t *raidPtr;
-	RF_RowCol_t col;
+IssueNextReadRequest(RF_Raid_t *raidPtr, RF_RowCol_t col)
 {
 	RF_PerDiskReconCtrl_t *ctrl = &raidPtr->reconControl->perDiskInfo[col];
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
@@ -990,9 +973,7 @@ IssueNextReadRequest(raidPtr, col)
  */
 
 static int 
-TryToRead(raidPtr, col)
-	RF_Raid_t *raidPtr;
-	RF_RowCol_t col;
+TryToRead(RF_Raid_t *raidPtr, RF_RowCol_t col)
 {
 	RF_PerDiskReconCtrl_t *ctrl = &raidPtr->reconControl->perDiskInfo[col];
 	RF_SectorCount_t sectorsPerRU = raidPtr->Layout.sectorsPerStripeUnit * raidPtr->Layout.SUsPerRU;
@@ -1083,19 +1064,23 @@ out:
  * since the calls to the mapping module are kept to a minimum.
  *
  * ASSUMES THAT THE STRIPE IDENTIFIER IDENTIFIES THE DISKS COMPRISING
- * THE STRIPE IN THE CORRECT ORDER */
+ * THE STRIPE IN THE CORRECT ORDER 
+ * 
+ * raidPtr          - raid descriptor
+ * psid             - parity stripe identifier
+ * col              - column of disk to find the offsets for
+ * spCol            - out: col of spare unit for failed unit
+ * spOffset         - out: offset into disk containing spare unit
+ *
+ */
 
 
 static int 
-ComputePSDiskOffsets(
-    RF_Raid_t * raidPtr,	/* raid descriptor */
-    RF_StripeNum_t psid,	/* parity stripe identifier */
-    RF_RowCol_t col,            /* column of disk to find the offsets for */
-    RF_SectorNum_t * outDiskOffset,
-    RF_SectorNum_t * outFailedDiskSectorOffset,
-    RF_RowCol_t * spCol,        /* OUT: col of spare unit for failed unit */
-    RF_SectorNum_t * spOffset)
-{				/* OUT: offset into disk containing spare unit */
+ComputePSDiskOffsets(RF_Raid_t *raidPtr, RF_StripeNum_t psid,
+		     RF_RowCol_t col, RF_SectorNum_t *outDiskOffset,
+		     RF_SectorNum_t *outFailedDiskSectorOffset,
+		     RF_RowCol_t *spCol, RF_SectorNum_t *spOffset)
+{
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_RowCol_t fcol = raidPtr->reconControl->fcol;
 	RF_RaidAddr_t sosRaidAddress;	/* start-of-stripe */
@@ -1194,8 +1179,7 @@ skipit:
 }
 /* this is called when a buffer has become ready to write to the replacement disk */
 static int 
-IssueNextWriteRequest(raidPtr)
-	RF_Raid_t *raidPtr;
+IssueNextWriteRequest(RF_Raid_t *raidPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_SectorCount_t sectorsPerRU = layoutPtr->sectorsPerStripeUnit * layoutPtr->SUsPerRU;
@@ -1244,9 +1228,7 @@ IssueNextWriteRequest(raidPtr)
  * illegal here.  
  */
 static int 
-ReconReadDoneProc(arg, status)
-	void   *arg;
-	int     status;
+ReconReadDoneProc(void *arg, int status)
 {
 	RF_PerDiskReconCtrl_t *ctrl = (RF_PerDiskReconCtrl_t *) arg;
 	RF_Raid_t *raidPtr = ctrl->reconCtrl->reconDesc->raidPtr;
@@ -1273,9 +1255,7 @@ ReconReadDoneProc(arg, status)
  * called at interrupt context in the kernel, so don't do anything illegal here.
  */
 static int 
-ReconWriteDoneProc(arg, status)
-	void   *arg;
-	int     status;
+ReconWriteDoneProc(void *arg, int status)
 {
 	RF_ReconBuffer_t *rbuf = (RF_ReconBuffer_t *) arg;
 
@@ -1295,9 +1275,7 @@ ReconWriteDoneProc(arg, status)
  * be woken as a result 
  */
 static void 
-CheckForNewMinHeadSep(raidPtr, hsCtr)
-	RF_Raid_t *raidPtr;
-	RF_HeadSepLimit_t hsCtr;
+CheckForNewMinHeadSep(RF_Raid_t *raidPtr, RF_HeadSepLimit_t hsCtr)
 {
 	RF_ReconCtrl_t *reconCtrlPtr = raidPtr->reconControl;
 	RF_HeadSepLimit_t new_min;
@@ -1346,12 +1324,9 @@ CheckForNewMinHeadSep(raidPtr, hsCtr)
  * indicated disk due to a head-separation delay.  
  */
 static int 
-CheckHeadSeparation(
-    RF_Raid_t * raidPtr,
-    RF_PerDiskReconCtrl_t * ctrl,
-    RF_RowCol_t col,
-    RF_HeadSepLimit_t hsCtr,
-    RF_ReconUnitNum_t which_ru)
+CheckHeadSeparation(RF_Raid_t *raidPtr, RF_PerDiskReconCtrl_t *ctrl,
+		    RF_RowCol_t col, RF_HeadSepLimit_t hsCtr,
+		    RF_ReconUnitNum_t which_ru)
 {
 	RF_ReconCtrl_t *reconCtrlPtr = raidPtr->reconControl;
 	RF_CallbackDesc_t *cb, *p, *pt;
@@ -1410,13 +1385,11 @@ CheckHeadSeparation(
  * ASSUMES THE PSS MUTEX IS LOCKED UPON ENTRY 
  */
 static int 
-CheckForcedOrBlockedReconstruction(
-    RF_Raid_t * raidPtr,
-    RF_ReconParityStripeStatus_t * pssPtr,
-    RF_PerDiskReconCtrl_t * ctrl,
-    RF_RowCol_t col,
-    RF_StripeNum_t psid,
-    RF_ReconUnitNum_t which_ru)
+CheckForcedOrBlockedReconstruction(RF_Raid_t *raidPtr,
+				   RF_ReconParityStripeStatus_t *pssPtr,
+				   RF_PerDiskReconCtrl_t *ctrl,
+				   RF_RowCol_t col, RF_StripeNum_t psid,
+				   RF_ReconUnitNum_t which_ru)
 {
 	RF_CallbackDesc_t *cb;
 	int     retcode = 0;
@@ -1449,11 +1422,8 @@ CheckForcedOrBlockedReconstruction(
  * invoked with the cbArg when the reconstruction has completed.  
  */
 int 
-rf_ForceOrBlockRecon(raidPtr, asmap, cbFunc, cbArg)
-	RF_Raid_t *raidPtr;
-	RF_AccessStripeMap_t *asmap;
-	void    (*cbFunc) (RF_Raid_t *, void *);
-	void   *cbArg;
+rf_ForceOrBlockRecon(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
+		     void (*cbFunc)(RF_Raid_t *, void *), void *cbArg)
 {
 	RF_StripeNum_t stripeID = asmap->stripeID;	/* the stripe ID we're
 							 * forcing recon on */
@@ -1560,9 +1530,7 @@ rf_ForceOrBlockRecon(raidPtr, asmap, cbFunc, cbArg)
  * called at interrupt context in the kernel, so don't do anything illegal here.
  */
 static void 
-ForceReconReadDoneProc(arg, status)
-	void   *arg;
-	int     status;
+ForceReconReadDoneProc(void *arg, int status)
 {
 	RF_ReconBuffer_t *rbuf = arg;
 
@@ -1576,9 +1544,7 @@ ForceReconReadDoneProc(arg, status)
 }
 /* releases a block on the reconstruction of the indicated stripe */
 int 
-rf_UnblockRecon(raidPtr, asmap)
-	RF_Raid_t *raidPtr;
-	RF_AccessStripeMap_t *asmap;
+rf_UnblockRecon(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap)
 {
 	RF_StripeNum_t stripeID = asmap->stripeID;
 	RF_ReconParityStripeStatus_t *pssPtr;
