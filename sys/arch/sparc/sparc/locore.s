@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.197 2004/02/13 11:36:18 wiz Exp $	*/
+/*	$NetBSD: locore.s,v 1.198 2004/03/21 14:04:30 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4140,6 +4140,14 @@ Lgandul:	nop
 	 clr	%o0			! our frame arg is ignored
 	/*NOTREACHED*/
 
+/*
+ * Openfirmware entry point: openfirmware(void *args)
+ */
+ENTRY(openfirmware)
+	sethi	%hi(_C_LABEL(romp)), %o1
+	ld	[%o1 + %lo(_C_LABEL(romp))], %o2
+	jmp	%o2
+	 nop
 
 #if defined(SUN4M) || defined(SUN4D)
 /*
