@@ -34,9 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: $Header: /cvsroot/src/sys/arch/sparc/include/Attic/fbio.h,v 1.1 1993/10/16 11:14:51 deraadt Exp $ (LBL)
+ * from: $Header: /cvsroot/src/sys/arch/sparc/include/Attic/fbio.h,v 1.2 1994/02/27 10:33:25 deraadt Exp $ (LBL)
  * from: @(#)fbio.h	7.2 (Berkeley) 4/1/92
- * $Id: fbio.h,v 1.1 1993/10/16 11:14:51 deraadt Exp $
+ * $Id: fbio.h,v 1.2 1994/02/27 10:33:25 deraadt Exp $
  */
 
 /*
@@ -147,3 +147,39 @@ struct fbgattr {
 #define	FBIOSVIDEO	_IOW('F', 7, int)
 #define	FBIOGVIDEO	_IOR('F', 8, int)
 
+/*
+ * hardware cursor control
+ */
+struct fbcurpos {
+	short x;
+	short y;
+};
+ 
+#define FB_CUR_SETCUR   0x01
+#define FB_CUR_SETPOS   0x02
+#define FB_CUR_SETHOT   0x04
+#define FB_CUR_SETCMAP  0x08
+#define FB_CUR_SETSHAPE 0x10
+#define FB_CUR_SETALL   0x1F
+
+struct fbcursor {
+	short set;		/* what to set */
+	short enable;		/* enable/disable cursor */
+	struct fbcurpos pos;	/* cursor's position */
+	struct fbcurpos hot;	/* cursor's hot spot */
+	struct fbcmap cmap;	/* color map info */
+	struct fbcurpos size;	/* cursor's bit map size */
+	char *image;		/* cursor's image bits */
+	char *mask;		/* cursor's mask bits */
+};
+ 
+/* set/get cursor attributes/shape */
+#define FBIOSCURSOR	_IOW('F', 24, struct fbcursor)
+#define FBIOGCURSOR	_IOWR('F', 25, struct fbcursor)
+ 
+/* set/get cursor position */
+#define FBIOSCURPOS	_IOW('F', 26, struct fbcurpos)
+#define FBIOGCURPOS	_IOW('F', 27, struct fbcurpos)
+ 
+/* get max cursor size */
+#define FBIOGCURMAX	_IOR('F', 28, struct fbcurpos)
