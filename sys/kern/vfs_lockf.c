@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.10 1997/04/02 18:42:46 kleink Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.11 1997/04/10 23:46:18 jtk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -753,11 +753,8 @@ lf_print(tag, lock)
 	if (lock->lf_flags & F_POSIX)
 		printf("proc %d", ((struct proc *)(lock->lf_id))->p_pid);
 	else
-		printf("id 0x%x", lock->lf_id);
-	printf(" in ino %d on dev <%d, %d>, %s, start %d, end %d",
-		lock->lf_inode->i_number,
-		major(lock->lf_inode->i_dev),
-		minor(lock->lf_inode->i_dev),
+		printf("id 0x%p", lock->lf_id);
+	printf(" %s, start %qx, end %qx",
 		lock->lf_type == F_RDLCK ? "shared" :
 		lock->lf_type == F_WRLCK ? "exclusive" :
 		lock->lf_type == F_UNLCK ? "unlock" :
@@ -775,17 +772,14 @@ lf_printlist(tag, lock)
 {
 	register struct lockf *lf;
 
-	printf("%s: Lock list for ino %d on dev <%d, %d>:\n",
-		tag, lock->lf_inode->i_number,
-		major(lock->lf_inode->i_dev),
-		minor(lock->lf_inode->i_dev));
-	for (lf = lock->lf_inode->i_lockf; lf; lf = lf->lf_next) {
+	printf("%s: Lock list:\n", tag);
+	for (lf = lock; lf; lf = lf->lf_block) {
 		printf("\tlock %p for ", lf);
 		if (lf->lf_flags & F_POSIX)
 			printf("proc %d", ((struct proc *)(lf->lf_id))->p_pid);
 		else
-			printf("id 0x%x", lf->lf_id);
-		printf(", %s, start %d, end %d",
+			printf("id 0x%p", lf->lf_id);
+		printf(", %s, start %qx, end %qx",
 			lf->lf_type == F_RDLCK ? "shared" :
 			lf->lf_type == F_WRLCK ? "exclusive" :
 			lf->lf_type == F_UNLCK ? "unlock" :
