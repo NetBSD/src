@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.11 1999/09/10 17:30:08 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.12 1999/09/13 20:21:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -464,7 +464,7 @@ ntfs_mountfs(devvp, mp, argsp, p)
 
 	if (strncmp(ntmp->ntm_bootfile.bf_sysid, NTFS_BBID, NTFS_BBIDLEN)) {
 		error = EINVAL;
-		printf("ntfs_mountfs: invalid boot block\n");
+		dprintf(("ntfs_mountfs: invalid boot block\n"));
 		goto out;
 	}
 
@@ -595,7 +595,7 @@ out1:
 		if(ntmp->ntm_sysvn[i]) vrele(ntmp->ntm_sysvn[i]);
 
 	if (vflush(mp,NULLVP,0))
-		printf("ntfs_mountfs: vflush failed\n");
+		dprintf(("ntfs_mountfs: vflush failed\n"));
 
 out:
 #if defined(__FreeBSD__)
