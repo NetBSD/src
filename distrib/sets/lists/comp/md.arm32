@@ -15,7 +15,6 @@
 ./usr/include/arm32/db_machdep.h
 ./usr/include/arm32/disklabel.h
 ./usr/include/arm32/disklabel_acorn.h
-./usr/include/arm32/disklabel_mbr.h
 ./usr/include/arm32/endian.h
 ./usr/include/arm32/float.h
 ./usr/include/arm32/fp.h
