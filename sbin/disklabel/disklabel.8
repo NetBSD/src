@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.19 1997/10/14 06:30:13 fair Exp $
+.\"	$NetBSD: disklabel.8,v 1.20 1997/10/18 23:46:44 fair Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -401,3 +401,18 @@ systems, the size of each partition must be a multiple of the number
 of sectors per cylinder (i.e. each partition must be an integer
 number of cylinders), or the boot ROMs will declare the label
 invalid and fail to boot the system.
+.Pp
+In addition, the
+.Fl r
+option should never be used on a sun3 or sparc system boot disk - the
+.Nx
+kernel translates the
+.Nx
+disk label into a SunOS compatible format (which is required by the
+boot PROMs) when it writes the label. Using the
+.Fl r
+causes
+.Nm
+to write directly to disk, and bypass the format translation.
+This will result in a disk label that the PROMs will not recognize,
+and that therefore cannot be booted from.
