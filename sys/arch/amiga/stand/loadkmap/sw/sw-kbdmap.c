@@ -1,4 +1,4 @@
-/*	$NetBSD: sw-kbdmap.c,v 1.2 1996/05/05 22:25:00 veego Exp $	*/
+/*	$NetBSD: sw-kbdmap.c,v 1.3 1996/06/08 15:28:58 is Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -29,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "../../dev/kbdmap.h"
+#include "../../../dev/kbdmap.h"
 
 /* define a default keymap. This can be changed by keyboard ioctl's 
    (later at least..) */

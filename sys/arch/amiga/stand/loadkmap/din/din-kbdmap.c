@@ -1,6 +1,6 @@
-/*	$NetBSD: din-kbdmap.c,v 1.4 1995/10/09 14:27:18 chopps Exp $	*/
+/*	$NetBSD: din-kbdmap.c,v 1.5 1996/06/08 15:28:51 is Exp $	*/
 
-#include "../../dev/kbdmap.h"
+#include "../../../dev/kbdmap.h"
 
 /* define a default keymap. This can be changed by keyboard ioctl's
    (later at least..) */
