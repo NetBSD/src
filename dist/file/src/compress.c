@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.1.1.4 2004/03/23 08:31:42 pooka Exp $	*/
+/*	$NetBSD: compress.c,v 1.1.1.5 2004/09/16 13:43:43 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -52,16 +52,15 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-#undef HAVE_LIBZ
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: compress.c,v 1.36 2004/03/22 19:11:54 christos Exp")
+FILE_RCSID("@(#)Id: compress.c,v 1.37 2004/07/24 21:00:56 christos Exp")
 #else
-__RCSID("$NetBSD: compress.c,v 1.1.1.4 2004/03/23 08:31:42 pooka Exp $");
+__RCSID("$NetBSD: compress.c,v 1.1.1.5 2004/09/16 13:43:43 pooka Exp $");
 #endif
 #endif
 
