@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.8 2004/09/16 03:57:10 rumble Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.9 2004/11/28 17:34:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 2004/09/16 03:57:10 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9 2004/11/28 17:34:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -286,6 +286,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		if (m->m_len == 0)
+			continue;
 		error = _bus_dmamap_load_buffer(map,
 		    m->m_data, m->m_len, NULL, flags, &lastaddr, &seg, first);
 		first = 0;

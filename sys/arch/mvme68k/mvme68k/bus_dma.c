@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.25 2004/09/16 03:57:10 rumble Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.26 2004/11/28 17:34:46 thorpej Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.25 2004/09/16 03:57:10 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26 2004/11/28 17:34:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,6 +319,8 @@ _bus_dmamap_load_mbuf_direct(t, map, m0, flags)
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		if (m->m_len == 0)
+			continue;
 		error = _bus_dmamap_load_buffer_direct_common(t, map,
 		    m->m_data, m->m_len, NULL, flags, &lastaddr, &seg, first);
 		first = 0;
