@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.5 1998/02/03 04:32:19 sakamoto Exp $	*/
+/*	$NetBSD: pcib.c,v 1.6 1998/02/12 05:19:04 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,51 +71,13 @@ pcibmatch(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 
 	/*
-	 * Match all known PCI-ISA bridges.
+	 * Match SIO(82378ZB) PCI-ISA bridge.
 	 */
-	switch (PCI_VENDOR(pa->pa_id)) {
-	case PCI_VENDOR_INTEL:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_INTEL_SIO:
-		case PCI_PRODUCT_INTEL_82426EX:
-		case PCI_PRODUCT_INTEL_82371MX:
-		case PCI_PRODUCT_INTEL_82380AB:
-		case PCI_PRODUCT_INTEL_82471FB_ISA:
-		case PCI_PRODUCT_INTEL_82371SB_ISA:
-		case PCI_PRODUCT_INTEL_82371AB_ISA:
-			return (1);
-		}
-		break;
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_SIO)
+			return (0);
 
-	case PCI_VENDOR_UMC:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_UMC_UM8886F:
-		case PCI_PRODUCT_UMC_UM82C886:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_ALI:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_ALI_M1449:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_COMPAQ:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_VIATECH:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_VIATECH_VT82C570MV:
-		case PCI_PRODUCT_VIATECH_VT82C586:
-			return (1);
-		}
-		break;
-	}
-
-	return (0);
+	return (1);
 }
 
 void
@@ -155,6 +117,13 @@ pcib_callback(arg)
 	iba.iba_memt = (bus_space_tag_t)BEBOX_BUS_SPACE_MEM;
 #if NISA > 0
 	iba.iba_dmat = &isa_bus_dma_tag;
+
+#if 0
+#define SIO_DMAHIGHPAGE	0x480
+	if (bus_space_map(iba.iba_iot, SIO_DMAHIGHPAGE, 0xf, 0,
+	    (bus_space_handle_t *)&iba.iba_ic))
+		panic("pcib_callback: can't map DMA high page registers");
+#endif
 #endif
 	config_found(self, &iba, pcib_print);
 }
