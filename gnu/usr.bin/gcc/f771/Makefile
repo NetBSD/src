@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/11/08 00:13:53 simonb Exp $
+#	$NetBSD: Makefile,v 1.5 2003/07/28 15:25:04 lukem Exp $
 
 PROG=		f771
 SRCS=		${G_F77_OBJS:.o=.c}
@@ -21,7 +21,7 @@ CLEANFILES+=	fini
 str-${f}.h str-${f}.j: str-${f}.fin fini
 	./fini ${>:M*.fin} str-${f}.j str-${f}.h
 
-${OBJS} .depend: str-${f}.h
+${OBJS} ${DEPENDSRCS}: str-${f}.h
 .endfor
 
 .PATH: ${DIST}/gcc/f
