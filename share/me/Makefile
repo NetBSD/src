@@ -1,5 +1,5 @@
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
-#	$NetBSD: Makefile,v 1.13 1997/07/07 18:44:43 phil Exp $
+#	$NetBSD: Makefile,v 1.14 1999/08/01 17:02:44 sommerfeld Exp $
 
 MELIB=	${BINDIR}/me
 TMLIB=	${BINDIR}/tmac
@@ -22,10 +22,10 @@ ${DESTDIR}${MELIB}/${M}: .MADE
 .endif
 
 ${DESTDIR}${MELIB}/${M}: ${M}
-	@rm -f ${.TARGET}
-	sed -f ${.CURDIR}/strip.sed < ${.ALLSRC} > ${.TARGET}
-	@chown ${BINOWN}:${BINGRP} ${.TARGET}
-	@chmod 444 ${.TARGET}
+	@rm -f ${.TARGET} ${M}.tmp
+	sed -f ${.CURDIR}/strip.sed < ${.ALLSRC} > ${M}.tmp
+	${INSTALL} ${RENAME} ${PRESERVE} -o ${BINOWN} \
+	    -g ${BINGRP} -m ${NONBINMODE} ${M}.tmp ${.TARGET}
 .endfor
 
 .for M in ${TMSRCS}
@@ -39,10 +39,10 @@ ${DESTDIR}${TMLIB}/${M}: .MADE
 .endif
 
 ${DESTDIR}${TMLIB}/${M}: ${M}
-	@rm -f ${.TARGET}
-	sed -f ${.CURDIR}/strip.sed < ${.ALLSRC} > ${.TARGET}
-	@chown ${BINOWN}:${BINGRP} ${.TARGET}
-	@chmod 444 ${.TARGET}
+	@rm -f ${.TARGET} ${M}.tmp
+	sed -f ${.CURDIR}/strip.sed < ${.ALLSRC} > ${M}.tmp
+	${INSTALL} ${RENAME} ${PRESERVE} -o ${BINOWN} \
+	    -g ${BINGRP} -m ${NONBINMODE} ${M}.tmp ${.TARGET}
 .endfor
 
 proginstall:: ${DESTDIR}${MELIB}/revisions
