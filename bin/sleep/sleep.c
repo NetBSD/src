@@ -39,12 +39,13 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sleep.c	5.5 (Berkeley) 4/8/91";*/
-static char rcsid[] = "$Id: sleep.c,v 1.5 1993/09/10 18:52:27 jtc Exp $";
+static char rcsid[] = "$Id: sleep.c,v 1.6 1993/12/31 19:30:02 jtc Exp $";
 #endif /* not lint */
 
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <locale.h>
 
 int
 main(argc, argv)
@@ -52,6 +53,8 @@ main(argc, argv)
 	char **argv;
 {
 	int secs;
+
+	setlocale (LC_ALL, "");
 
 	if (argc != 2) {
 		(void)fprintf(stderr, "usage: sleep time\n");

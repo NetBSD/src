@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)sleep.1	6.6 (Berkeley) 7/27/91
-.\"	$Id: sleep.1,v 1.4 1993/08/01 07:47:53 mycroft Exp $
+.\"	$Id: sleep.1,v 1.5 1993/12/31 19:30:00 jtc Exp $
 .\"
 .Dd July 27, 1991
 .Dt SLEEP 1
@@ -43,15 +43,16 @@
 .Nd suspend execution for an interval of time
 .Sh SYNOPSIS
 .Nm sleep
-.Ar seconds
+.Ar time
 .Sh DESCRIPTION
 The
 .Nm sleep
-command
+utility
 suspends execution for a minimum of
-.Ar seconds .
+.Ar time 
+seconds.
 .Nm Sleep
-is used to schedule the execution of other commands (see
+can be used to schedule the execution of other commands (see
 .Sx EXAMPLES
 below).
 .Pp
@@ -112,6 +113,5 @@ awk job.
 .Sh STANDARDS
 The
 .Nm sleep
-command is expected to be
-.St -p1003.2
-compatible.
+utility conforms to
+.St -p1003.2-92 .
