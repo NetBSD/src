@@ -7,7 +7,7 @@ ident		ODYSSEUS
 timezone	8 dst
 maxusers	2
 options		INET
-options		NFS
+options		NFSSERVER,NFSCLIENT
 options		MFS
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"

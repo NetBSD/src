@@ -6,7 +6,7 @@ cpu		"i386"
 ident		LARGE
 timezone	8 dst
 maxusers	30
-options		INET,NFS,MFS,HSFS,DIAGNOSTIC # OSI real soon
+options		INET,NFSSERVER,NFSCLIENT,MFS,HSFS,DIAGNOSTIC # OSI real soon
 options		"COMPAT_43","TCP_COMPAT_42"
 options 	DDB
 

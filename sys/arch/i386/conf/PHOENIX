@@ -7,7 +7,7 @@ ident		PHOENIX
 timezone	8 dst
 maxusers	4
 options		INET
-options		NFS
+options		NFSSERVER,NFSCLIENT
 options		MFS
 options		ISOFS
 options		"COMPAT_43"
