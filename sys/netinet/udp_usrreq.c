@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.105 2003/08/15 03:42:05 jonathan Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.106 2003/08/21 14:49:50 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.105 2003/08/15 03:42:05 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.106 2003/08/21 14:49:50 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -278,11 +278,16 @@ udp_input(m, va_alist)
 			UDP_CSUM_COUNTER_INCR(&udp_hwcsum_bad);
 			goto badcsum;
 
-		case M_CSUM_UDPv4|M_CSUM_DATA:
+		case M_CSUM_UDPv4|M_CSUM_DATA: {
+			u_int32_t hw_csum = m->m_pkthdr.csum_data;
 			UDP_CSUM_COUNTER_INCR(&udp_hwcsum_data);
-			if ((m->m_pkthdr.csum_data ^ 0xffff) != 0)
+			if (m->m_pkthdr.csum_flags & M_CSUM_NO_PSEUDOHDR)
+			  hw_csum = in_cksum_phdr(ip->ip_src.s_addr, ip->ip_dst.s_addr,
+				htonl(hw_csum + ntohs(ip->ip_len) + IPPROTO_UDP));
+			if ((hw_csum ^ 0xffff) != 0)
 				goto badcsum;
 			break;
+		}
 
 		case M_CSUM_UDPv4:
 			/* Checksum was okay. */
