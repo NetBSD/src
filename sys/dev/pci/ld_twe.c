@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.5 2001/01/22 21:56:11 ad Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.6 2001/01/26 19:53:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -164,8 +164,7 @@ ld_twe_dobio(struct ld_twe_softc *sc, void *data, int datasize, int blkno,
 		 * up to 2 seconds for the command to complete.
 		 */
 		s = splbio();
-		if ((rv = twe_ccb_submit(twe, ccb)) == 0)
-			rv = twe_ccb_poll(twe, ccb, 2000);
+		rv = twe_ccb_poll(twe, ccb, 2000);
 		twe_ccb_unmap(twe, ccb);
 		twe_ccb_free(twe, ccb);
 		splx(s);
