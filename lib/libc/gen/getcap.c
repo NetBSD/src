@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.11 1997/01/23 14:01:54 mrg Exp $	*/
+/*	$NetBSD: getcap.c,v 1.12 1997/05/17 19:29:18 pk Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$NetBSD: getcap.c,v 1.11 1997/01/23 14:01:54 mrg Exp $";
+static char rcsid[] = "$NetBSD: getcap.c,v 1.12 1997/05/17 19:29:18 pk Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -741,7 +741,7 @@ cgetnext(bp, db_array)
 			}
 		}
 		rp = buf;
-		for(cp = nbuf; *cp != NULL; cp++)
+		for(cp = nbuf; *cp != '\0'; cp++)
 			if (*cp == '|' || *cp == ':')
 				break;
 			else

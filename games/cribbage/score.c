@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.3 1995/03/21 15:08:57 cgd Exp $	*/
+/*	$NetBSD: score.c,v 1.4 1997/05/17 19:26:19 pk Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: score.c,v 1.3 1995/03/21 15:08:57 cgd Exp $";
+static char rcsid[] = "$NetBSD: score.c,v 1.4 1997/05/17 19:26:19 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ scorehand(hand, starter, n, crb, do_explain)
 	CARD h[(CINHAND + 1)];
 	char buf[32];
 
-	expl[0] = NULL;		/* initialize explanation */
+	expl[0] = '\0';		/* initialize explanation */
 	score = 0;
 	flag = TRUE;
 	k = hand[0].suit;
@@ -137,7 +137,7 @@ scorehand(hand, starter, n, crb, do_explain)
 	}
 
 	if (flag && n >= CINHAND) {
-		if (do_explain && expl[0] != NULL)
+		if (do_explain && expl[0] != '\0')
 			strcat(expl, ", ");
 		if (starter.suit == k) {
 			score += 5;
@@ -146,13 +146,13 @@ scorehand(hand, starter, n, crb, do_explain)
 		} else
 			if (!crb) {
 				score += 4;
-				if (do_explain && expl[0] != NULL)
+				if (do_explain && expl[0] != '\0')
 					strcat(expl, ", Four-flush");
 				else
 					strcpy(expl, "Four-flush");
 			}
 	}
-	if (do_explain && expl[0] != NULL)
+	if (do_explain && expl[0] != '\0')
 		strcat(expl, ", ");
 	h[n] = starter;
 	sorthand(h, n + 1);	/* sort by rank */
