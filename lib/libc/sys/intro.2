@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.2,v 1.41 2005/01/02 19:39:43 jmmv Exp $
+.\"	$NetBSD: intro.2,v 1.42 2005/01/20 13:23:57 kleink Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)intro.2	8.5 (Berkeley) 2/27/95
 .\"
-.Dd January 7, 2004
+.Dd January 20, 2005
 .Dt INTRO 2
 .Os
 .Sh NAME
@@ -471,6 +471,8 @@ A STREAM is not associated with the specified file descriptor.
 The timer set for a STREAMS
 .Xr ioctl 2
 operation has expired.
+.It Er 93 ENOATTR Em "Attribute not found" .
+The specified extended attribute does not exist.
 .El
 .Sh DEFINITIONS
 .Bl -tag -width Ds
