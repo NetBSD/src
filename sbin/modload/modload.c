@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modload.c,v 1.1 1993/06/07 19:52:11 cgd Exp $
+ *	$Id: modload.c,v 1.2 1993/06/07 23:10:34 cgd Exp $
  */
 
 #define printf I_HATE_ANSI
@@ -212,7 +212,7 @@ char	*av[];
 	 * to write the new module to it as our means of getting it in the
 	 * kernel).
 	 */
-	if( ( devfd = open( LKM_DEV, O_RDONLY, 0)) == -1) {
+	if( ( devfd = open( LKM_DEV, O_RDWR, 0)) == -1) {
 		perror( LKM_DEV);
 		err = 3;
 		goto done;
