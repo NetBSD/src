@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)timer.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: timer.c,v 1.5 1994/05/13 08:04:56 mycroft Exp $";
+static char *rcsid = "$Id: timer.c,v 1.6 1994/12/18 05:44:02 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -56,7 +56,6 @@ timer()
 	register struct rt_entry *rt;
 	struct rthash *base = hosthash;
 	int doinghost = 1, timetobroadcast;
-	extern int externalinterfaces;
 
 	(void) gettimeofday(&now, (struct timezone *)NULL);
 	faketime += TIMER_RATE;
@@ -103,6 +102,7 @@ again:
 /*
  * On hangup, let everyone know we're going away.
  */
+void
 hup()
 {
 	register struct rthash *rh;

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defs.h	8.1 (Berkeley) 6/5/93
- *	$Id: defs.h,v 1.7 1994/09/23 23:49:20 mycroft Exp $
+ *	$Id: defs.h,v 1.8 1994/12/18 05:43:51 cgd Exp $
  */
 
 /*
@@ -47,9 +47,14 @@
 #include <net/route.h>
 #include <netinet/in.h>
 #include <protocols/routed.h>
+#include <arpa/inet.h>
 
-#include <stdio.h>
 #include <netdb.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "trace.h"
 #include "interface.h"
@@ -92,13 +97,43 @@ char	**argv0;
 struct	servent *sp;
 
 struct	in_addr inet_makeaddr();
-int	inet_addr();
-int	inet_maskof();
 int	sndmsg();
 int	supply();
-int	cleanup();
 
-int	rtioctl();
+void addrouteforif __P((struct interface *));
+void bumploglevel();
+void dumppacket __P((FILE *, char *, struct sockaddr_in *, char *, 
+    int, struct timeval *));
+void gwkludge();
+void hup();
+void ifinit();
+#ifdef notdef /* XXX FUNCTION UNUSED */
+u_long inet_lnaof_subnet __P((struct in_addr));
+#endif
+int inet_maskof __P((u_long));
+u_long inet_netof_subnet __P((struct in_addr));
+int inet_rtflags __P((struct sockaddr_in *));
+int inet_sendroute __P((struct rt_entry *, struct sockaddr_in *));
+void rip_input __P((struct sockaddr *, struct rip *, int));
+void rtadd __P((struct sockaddr *, struct sockaddr *, int, int));
+void rtchange __P((struct rt_entry *, struct sockaddr *, short));
+void rtdefault();
+void rtdelete __P((struct rt_entry *));
+void rtdeleteall __P((int));
+void rtinit();
+int rtioctl __P((int, struct rtuentry *));
+void sigtrace __P((int));
+int sndmsg __P((struct sockaddr *, int, struct interface *, int));
+void timer();
+void timevaladd __P((struct timeval *, struct timeval *));
+void toall __P((int (*)(), int, struct interface *));
+void traceoff();
+void traceon __P((char *));
+void trace __P((struct ifdebug *, struct sockaddr *, char *, int, int));
+void traceaction __P((FILE *, char *, struct rt_entry *));
+void traceinit __P((struct interface *));
+void tracenewmetric __P((FILE *, struct rt_entry *, int));
+
 #define ADD 1
 #define DELETE 2
 #define CHANGE 3
