@@ -27,6 +27,11 @@ Boston, MA 02111-1307, USA.  */
 /* ARM6 family default cpu.  */
 #define SUBTARGET_CPU_DEFAULT TARGET_CPU_arm6
 
+#define TARGET_DEFAULT				\
+  (ARM_FLAG_APCS_32				\
+   | ARM_FLAG_SOFT_FLOAT			\
+   | ARM_FLAG_ATPCS_STACK_ALIGN)
+
 /* APCS-32 is the default for ELF anyway. */
 /* Unsigned chars are the default anyway. */
 

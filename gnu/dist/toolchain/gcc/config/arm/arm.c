@@ -566,7 +566,7 @@ use_return_insn (iscond)
   if (!reload_completed
       || current_function_pretend_args_size
       || current_function_anonymous_args
-      || ((get_frame_size () + current_function_outgoing_args_size != 0)
+      || ((arm_get_frame_size () + current_function_outgoing_args_size != 0)
 	  && !(TARGET_APCS && frame_pointer_needed)))
     return 0;
 
@@ -5840,11 +5840,71 @@ emit_sfm (base_reg, count)
   emit_insn (par);
 }
 
+/* Calculate the size of the stack frame, taking into account any
+   padding that is required to ensure stack-alignment.  */
+int arm_get_frame_size ()
+{
+  int regno;
+  
+  int base_size = (get_frame_size () + 3) & ~3;
+  int entry_size = 0;
+  int live_regs_mask = 0;
+  int volatile_func = (optimize > 0
+		       && TREE_THIS_VOLATILE (current_function_decl));
+
+  if (! TARGET_ATPCS_STACK_ALIGN)
+    return base_size;
+
+  /* We know that SP will be word aligned on entry, and we must
+     preserve that condition at any subroutine call.  But those are
+     the only constraints.  */
+
+  /* Space for variadic functions.  */
+  if (current_function_pretend_args_size)
+    entry_size += current_function_pretend_args_size;
+
+  if (! volatile_func)
+    {
+      for (regno = 0; regno <= 10; regno++)
+	if (regs_ever_live[regno] && ! call_used_regs[regno])
+	  live_regs_mask |= 1 << regno;
+
+      if (flag_pic && regs_ever_live[PIC_OFFSET_TABLE_REGNUM])
+	live_regs_mask |= 1 << PIC_OFFSET_TABLE_REGNUM;
+
+      if (regs_ever_live[14])
+	live_regs_mask |= 0x4000;
+    }
+
+  if (frame_pointer_needed)
+    live_regs_mask |= 0xD800;
+
+  /* If we have to push any registers, we must also push lr as well.  */
+  if (live_regs_mask)
+    live_regs_mask |= 0x4000;
+
+  for (regno = 0; regno < 16; regno++)
+    if (live_regs_mask & (1 << regno))
+      entry_size += 4;
+
+  if (! volatile_func)
+    {
+      for (regno = 23; regno > 15; regno--)
+	if (regs_ever_live[regno] && ! call_used_regs[regno])
+	  entry_size += 12;
+    }
+
+  if ((entry_size + base_size + current_function_outgoing_args_size) & 7)
+    base_size += 4;
+
+  return base_size;
+}
+
 void
 arm_expand_prologue ()
 {
   int reg;
-  rtx amount = GEN_INT (-(get_frame_size ()
+  rtx amount = GEN_INT (-(arm_get_frame_size ()
 			  + current_function_outgoing_args_size));
   int live_regs_mask = 0;
   int store_arg_regs = 0;
