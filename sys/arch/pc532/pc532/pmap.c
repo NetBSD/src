@@ -36,7 +36,7 @@
  *
  *	@(#)pmap.c	7.7 (Berkeley)	5/12/91
  *
- *	$Id: pmap.c,v 1.1.1.1 1993/09/09 23:53:49 phil Exp $
+ *	$Id: pmap.c,v 1.2 1993/09/13 07:26:50 phil Exp $
  */
 
 /*
@@ -315,7 +315,6 @@ pmap_bootstrap(firstaddr, loadaddr)
 	struct pte *pte;
 #endif
 	extern vm_offset_t maxmem, physmem;
-	extern int IdlePTD;
 
 	ns532pagesperpage = PAGE_SIZE / NS532_PAGE_SIZE;
 
