@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.11 2000/12/12 18:00:31 thorpej Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.12 2000/12/18 19:52:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -198,6 +198,7 @@ ipipattach(count)
 
 		sc->sc_if.if_softc = sc;
 		sc->sc_if.if_type = IFT_OTHER;
+		sc->sc_if.if_dlt = DLT_NULL;
 		sc->sc_if.if_addrlen = sizeof(struct in_addr);
 		sc->sc_if.if_hdrlen = sizeof(struct ip);
 		sc->sc_if.if_mtu = 0;	/* filled in later */

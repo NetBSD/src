@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.5 2000/12/13 22:07:51 thorpej Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.6 2000/12/18 19:44:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -639,6 +639,7 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	ifp->if_type = IFT_IEEE1394;
 	ifp->if_addrlen = sizeof(struct ieee1394_hwaddr);
 	ifp->if_hdrlen = sizeof(struct ieee1394_header);
+	ifp->if_dlt = DLT_EN10MB;	/* XXX */
 	ifp->if_mtu = IEEE1394MTU;
 	ifp->if_output = ieee1394_output;
 	ifp->if_input = ieee1394_input;

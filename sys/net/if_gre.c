@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.14 2000/12/12 18:00:26 thorpej Exp $ */
+/*	$NetBSD: if_gre.c,v 1.15 2000/12/18 19:50:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,6 +147,7 @@ gre_clone_create(ifc, unit)
 	sc->sc_if.if_type =  IFT_OTHER;
 	sc->sc_if.if_addrlen = 4;
 	sc->sc_if.if_hdrlen = 24; /* IP + GRE */
+	sc->sc_if.if_dlt = DLT_NULL;
 	sc->sc_if.if_mtu = GREMTU; 
 	sc->sc_if.if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
 	sc->sc_if.if_output = gre_output;

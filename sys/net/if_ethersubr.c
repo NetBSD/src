@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.72 2000/12/13 22:07:50 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.73 2000/12/18 19:44:33 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -828,6 +828,7 @@ ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 	ifp->if_type = IFT_ETHER;
 	ifp->if_addrlen = 6;
 	ifp->if_hdrlen = 14;
+	ifp->if_dlt = DLT_EN10MB;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_input = ether_input;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.32 2000/12/18 19:18:33 thorpej Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.33 2000/12/18 19:50:44 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -160,6 +160,7 @@ loopattach(n)
 		ifp->if_type = IFT_LOOP;
 		ifp->if_hdrlen = 0;
 		ifp->if_addrlen = 0;
+		ifp->if_dlt = DLT_NULL;
 		IFQ_SET_READY(&ifp->if_snd);
 		if_attach(ifp);
 #if NBPFILTER > 0
