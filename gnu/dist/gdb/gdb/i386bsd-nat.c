@@ -419,7 +419,7 @@ _initialize_i386bsd_nat (void)
 
   /* Override the default value for the offset of the program counter
      in the sigcontext structure.  */
-  sc_pc_offset = offsetof (struct sigcontext, sc_pc);
+  sc_pc_offset = offsetof (ucontext_t, uc_mcontext.__gregs[_REG_EIP]);
 
   if (SC_PC_OFFSET != sc_pc_offset)
     {
@@ -432,7 +432,7 @@ Please report this to <bug-gdb@gnu.org>.",
   SC_PC_OFFSET = sc_pc_offset;
 
   /* Likewise for the stack pointer.  */
-  sc_sp_offset = offsetof (struct sigcontext, sc_sp);
+  sc_sp_offset = offsetof (ucontext_t, uc_mcontext.__gregs[_REG_ESP]);
 
   if (SC_SP_OFFSET != sc_sp_offset)
     {
