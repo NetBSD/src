@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_isa.c,v 1.2 1999/04/13 20:37:21 augustss Exp $	*/
+/*	$NetBSD: opl_isa.c,v 1.3 1999/08/14 14:32:12 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -83,6 +83,8 @@ opl_isa_match(parent, match, aux)
 		return (0);
 	r = opl_find(&sc);
         bus_space_unmap(sc.iot, sc.ioh, OPL_SIZE);
+	if (r != 0)
+		ia->ia_iosize = OPL_SIZE;
 	return (r);
 }
 
