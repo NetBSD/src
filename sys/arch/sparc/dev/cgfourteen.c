@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.17 2000/06/26 04:56:04 simonb Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.18 2000/06/29 07:40:06 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -87,11 +87,10 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/fbio.h>
 #include <machine/autoconf.h>
-#include <machine/pmap.h>
 #include <machine/fbvar.h>
 #include <machine/cpu.h>
 #include <machine/conf.h>

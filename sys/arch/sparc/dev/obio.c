@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.47 2000/01/11 12:59:46 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.48 2000/06/29 07:40:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -47,12 +47,11 @@
 #include <sys/syslog.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <sparc/dev/sbusvar.h>
 #include <machine/autoconf.h>
-#include <machine/pmap.h>
 #include <machine/oldmon.h>
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>

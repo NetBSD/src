@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.139 2000/06/09 10:47:25 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.140 2000/06/29 07:40:09 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -69,7 +69,7 @@
 
 #include <dev/cons.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/promlib.h>
@@ -82,7 +82,6 @@
 #include <sparc/sparc/memreg.h>
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
-#include <machine/pmap.h>
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/timerreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_obio.c,v 1.2 2000/03/19 15:38:45 pk Exp $ */
+/*	$NetBSD: bwtwo_obio.c,v 1.3 2000/06/29 07:40:06 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -98,11 +98,8 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-#include <vm/vm.h>
-
 #include <machine/fbio.h>
 #include <machine/autoconf.h>
-#include <machine/pmap.h>
 #include <machine/fbvar.h>
 #include <machine/eeprom.h>
 #include <machine/ctlreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.15 2000/06/15 12:12:05 pk Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.16 2000/06/29 07:40:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -98,11 +98,10 @@
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/pmap.h>
 #include <machine/bus.h>
 
 #include <dev/ic/i82586reg.h>

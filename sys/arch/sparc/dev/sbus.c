@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.36 2000/01/11 12:59:46 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.37 2000/06/29 07:40:08 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,8 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <sparc/dev/sbusreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.46 2000/06/26 04:56:04 simonb Exp $ */
+/*	$NetBSD: cgthree.c,v 1.47 2000/06/29 07:40:07 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,12 +98,9 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-#include <vm/vm.h>
-
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/fbio.h>
-#include <machine/pmap.h>
 #include <machine/fbvar.h>
 #include <machine/cpu.h>
 #include <machine/conf.h>

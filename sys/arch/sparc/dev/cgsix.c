@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.51 2000/06/26 04:56:04 simonb Exp $ */
+/*	$NetBSD: cgsix.c,v 1.52 2000/06/29 07:40:06 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,11 +104,10 @@
 #include <sys/syslog.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/pmap.h>
 #include <machine/fbvar.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
