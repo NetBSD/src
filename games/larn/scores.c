@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: scores.c,v 1.6 1996/05/22 00:36:14 mrg Exp $";
+static char rcsid[] = "$NetBSD: scores.c,v 1.7 1996/08/15 03:53:48 mrg Exp $";
 #endif /* not lint */
 
 /* scores.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -516,18 +516,18 @@ invalid:
 	if ((wizard == 0) && (c[GOLD] > 0)) 	/*	wizards can't score		*/
 		{
 #ifndef NOLOG
+		seteuid(euid);
 		if (lappend(logfile)<0)  /* append to file */
 			{
 			if (lcreat(logfile)<0) /* and can't create new log file */
-		    	{
+				{
 				lcreat((char*)0);
 				lprcat("\nCan't open record file:  I can't post your score.\n");
 				sncbr();  resetscroll();  lflush();  exit();
 				}
-			seteuid(euid);
 			chmod(logfile,0660);
-			seteuid(uid);
 			}
+		seteuid(uid);
 		strcpy(logg.who,loginname);
 		logg.score = c[GOLD];		logg.diff = c[HARDGAME];
 		if (x < 256)
