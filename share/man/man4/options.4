@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.51 1998/07/05 07:26:45 jonathan Exp $
+.\"	$NetBSD: options.4,v 1.52 1998/07/27 13:39:51 bouyer Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1260,6 +1260,10 @@ option to access this memory).
 .It Cd options REALEXTMEM
 Overrides the extended memory size passed in from the boot block.
 Use this option only if the boot block reports the size incorrectly.
+.It Cd options FRENCH_KBD,GERMAN_KBD,NORVEGIAN_KBD
+Select a non-US keyboard layout for the 
+.Em pccons
+console driver.
 .El
 .Ss m68k-specific Options
 .Bl -ohang
