@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.37 2000/04/09 05:48:07 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.38 2000/04/12 15:13:15 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -223,7 +223,7 @@ svr4_setmcontext(p, mc, flags)
 #endif
 
 #ifdef DEBUG_SVR4
-	svr4_printmcontext("setmcontext", uc);
+	svr4_printmcontext("setmcontext", mc);
 #endif
 
 	write_user_windows();
