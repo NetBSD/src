@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.11 2003/05/03 18:10:41 wiz Exp $	*/
+/*	$NetBSD: csc.c,v 1.12 2003/07/14 22:48:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Cumana SCSI-2 driver uses the SFAS216 generic driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.12 2003/07/14 22:48:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

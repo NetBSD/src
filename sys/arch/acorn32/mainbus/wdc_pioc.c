@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.6 2002/10/02 03:31:59 thorpej Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.7 2003/07/14 22:48:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -32,6 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.7 2003/07/14 22:48:25 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

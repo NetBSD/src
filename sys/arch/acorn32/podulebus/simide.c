@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.7 2002/10/02 03:31:59 thorpej Exp $	*/
+/*	$NetBSD: simide.c,v 1.8 2003/07/14 22:48:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -38,6 +38,9 @@
  * Thanks to Gareth Simpson, Simtec Electronics for providing
  * the hardware information
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.8 2003/07/14 22:48:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
