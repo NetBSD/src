@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ze.c,v 1.10 2000/05/20 13:30:03 ragge Exp $	*/
+/*	$NetBSD: if_ze.c,v 1.11 2002/05/24 21:40:59 ragge Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
  *
@@ -97,8 +97,11 @@ zeopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	}
 
 	/* Get our Ethernet address */
-	if (vax_boardtype == VAX_BTYP_49) {
-		nisa_rom = (u_long *)0x27800000;
+	if (vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_VXT) {
+		if (vax_boardtype == VAX_BTYP_VXT)
+			nisa_rom = (u_long *)0x20040028; /* XXX */
+		else
+			nisa_rom = (u_long *)0x27800000;
 		for (i=0; i<ETHER_ADDR_LEN; i++)
 			ze_myaddr[i] = nisa_rom[i] & 0377;
 	} else {

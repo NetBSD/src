@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2002/02/24 01:04:24 matt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.17 2002/05/24 21:40:59 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -164,7 +164,8 @@ scbinit()
 	}
 	scb_vec[0xc0/4].hoppaddr = rtimer;
 
-	mtpr(-10000, PR_NICR);		/* Load in count register */
+	if (vax_boardtype != VAX_BTYP_VXT)
+		mtpr(-10000, PR_NICR);		/* Load in count register */
 	mtpr(0x800000d1, PR_ICCS);	/* Start clock and enable interrupt */
 
 	mtpr(20, PR_IPL);
