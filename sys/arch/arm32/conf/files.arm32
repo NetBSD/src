@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.103 2001/03/20 18:20:54 reinoud Exp $
+#	$NetBSD: files.arm32,v 1.104 2001/03/24 00:14:54 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -226,10 +226,6 @@ include "dev/podulebus/files.podulebus"
 # Novell NE1000 and NE2000 clones (EtherM, EtherH)
 attach	ne at podulebus with ne_pbus
 file	arch/arm32/podulebus/if_ne_pbus.c	ne_pbus
-
-device	ea: ether, ifnet, arp
-attach	ea at podulebus
-file	arch/arm32/podulebus/if_ea.c		ea
 
 device	eb: ether, ifnet, arp
 attach	eb at podulebus
