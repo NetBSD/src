@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.56 1995/01/30 11:50:23 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.57 1995/03/07 21:46:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -827,7 +827,7 @@ cdgetdisklabel(cd)
 
 	strncpy(cd->sc_dk.dk_label.d_typename, "SCSI CD-ROM", 16);
 	cd->sc_dk.dk_label.d_type = DTYPE_SCSI;
-	strncpy(cd->sc_dk.dk_label.d_packname, "ficticious", 16);
+	strncpy(cd->sc_dk.dk_label.d_packname, "fictitious", 16);
 	cd->sc_dk.dk_label.d_secperunit = cd->params.disksize;
 	cd->sc_dk.dk_label.d_rpm = 300;
 	cd->sc_dk.dk_label.d_interleave = 1;
