@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.50 1998/09/08 08:21:12 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.51 1998/09/08 08:37:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1480,10 +1480,10 @@ ufs_readdir(v)
 			edp = (struct dirent *)&dirbuf[readcnt];
 			for (dp = (struct dirent *)dirbuf; dp < edp; ) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-				if (ap->a_vp->v_mount->mnt_maxsymlinklen == 0 &&
+				if (ap->a_vp->v_mount->mnt_maxsymlinklen <= 0 &&
 				    UFS_MPNEEDSWAP(ap->a_vp->v_mount) == 0) {
 #else
-				if (ap->a_vp->v_mount->mnt_maxsymlinklen == 0 &&
+				if (ap->a_vp->v_mount->mnt_maxsymlinklen <= 0 &&
 				    UFS_MPNEEDSWAP(ap->a_vp->v_mount) != 0) {
 #endif
 					tmp = dp->d_namlen;
