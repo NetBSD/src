@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.95 2003/01/22 05:59:07 jhawk Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.96 2003/04/06 16:12:37 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -720,12 +720,17 @@ message fdmount
 
 message fdnotfound
 {Could not find the file named "%s" on the disk.  Please load the
-floppy with that file on it.}
+floppy with that file on it.
+
+If this was the last set's disk, hit "Set finished" to continue on
+the next set, if any.}
 
 message fdremount
 {The floppy was not mounted successfully.  You may:
 
 Try again and put in the floppy containing the file named "%s".
+
+Not load any more files from this set and continue on the next one, if any.
 
 Not load any more files from floppy and abort the process.
 }

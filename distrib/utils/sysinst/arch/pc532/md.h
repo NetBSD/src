@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.10 2000/07/25 18:17:08 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.11 2003/04/06 16:12:41 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -74,14 +74,14 @@ EXTERN	char *disk_names[]
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"base",	1, NULL, "Base         : "},
-    {"etc",	1, NULL, "System (/etc): "},
-    {"comp",	1, NULL, "Compiler     : "},
-    {"games",	1, NULL, "Games        : "},
-    {"man",	1, NULL, "Manuals      : "},
-    {"misc",	1, NULL, "Miscellaneous: "},
-    {"text",	1, NULL, "Text tools   : "},
-    {NULL, 0, NULL, NULL }
+    {"base",	1, "Base         : "},
+    {"etc",	1, "System (/etc): "},
+    {"comp",	1, "Compiler     : "},
+    {"games",	1, "Games        : "},
+    {"man",	1, "Manuals      : "},
+    {"misc",	1, "Miscellaneous: "},
+    {"text",	1, "Text tools   : "},
+    { NULL,	0, NULL }
 }
 #endif
 ;
