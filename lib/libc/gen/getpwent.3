@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpwent.3,v 1.23 2003/08/07 16:42:50 agc Exp $
+.\"	$NetBSD: getpwent.3,v 1.24 2004/10/05 04:45:54 lukem Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,13 +29,15 @@
 .\"
 .\"     @(#)getpwent.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd April 25, 1999
+.Dd October 5, 2004
 .Dt GETPWENT 3
 .Os
 .Sh NAME
 .Nm getpwent ,
 .Nm getpwnam ,
+.Nm getpwnam_r ,
 .Nm getpwuid ,
+.Nm getpwuid_r ,
 .Nm setpassent ,
 .Nm setpwent ,
 .Nm endpwent
@@ -47,9 +49,23 @@
 .Ft struct passwd *
 .Fn getpwent void
 .Ft struct passwd *
-.Fn getpwnam "const char *login"
+.Fn getpwnam "const char *name"
+.Fo getpwnam_r
+.Fa "const char *name"
+.Fa "struct passwd *pw"
+.Fa "char *buffer"
+.Fa "size_t buflen"
+.Fa "struct passwd **result"
+.Fc
 .Ft struct passwd *
 .Fn getpwuid "uid_t uid"
+.Fo getpwuid_r
+.Fa "uid_t uid"
+.Fa "struct passwd *pw"
+.Fa "char *buffer"
+.Fa "size_t buflen"
+.Fa "struct passwd **result"
+.Fc
 .Ft int
 .Fn setpassent "int  stayopen"
 .Ft void
@@ -58,7 +74,7 @@
 .Fn endpwent void
 .Sh DESCRIPTION
 These functions
-operate on the password database file
+operate on the password database
 which is described
 in
 .Xr passwd 5 .
@@ -74,8 +90,8 @@ struct passwd {
 	uid_t	pw_uid;		/* user uid */
 	gid_t	pw_gid;		/* user gid */
 	time_t	pw_change;	/* password change time */
-	char	*pw_class;	/* user access class */
-	char	*pw_gecos;	/* Honeywell login info */
+	char	*pw_class;	/* user login class */
+	char	*pw_gecos;	/* general information */
 	char	*pw_dir;	/* home directory */
 	char	*pw_shell;	/* default shell */
 	time_t	pw_expire;	/* account expiration */
@@ -86,8 +102,35 @@ The functions
 .Fn getpwnam
 and
 .Fn getpwuid
-search the password database for the given login name or user uid,
+search the password database for the given user name or user id,
 respectively, always returning the first one encountered.
+Identical user names or user ids may result in undefined behavior.
+.Pp
+The functions
+.Fn getpwnam_r
+and
+.Fn getpwuid_r
+search the password database for the given user name pointed to by
+.Ar name
+or the user id pointed to by
+.Ar uid ,
+respectively, updating the contents of
+.Ar pw
+and storing a pointer to that in
+.Ar result ,
+and returning 0.
+Storage used by
+.Ar pw
+is allocated from
+.Ar buffer ,
+which is
+.Ar buflen
+bytes in size.
+If an error occurs,
+an error number will be returned and
+.Ar result
+will point to null.
+Identical user names or user ids may result in undefined behavior.
 .Pp
 The
 .Fn getpwent
@@ -170,9 +213,14 @@ A Version 7 format password file
 .Xr vipw 8
 .Sh STANDARDS
 The
-.Fn getpwnam
+.Fn endpwent ,
+.Fn getpwent ,
+.Fn getpwnam ,
+.Fn getpwnam_r ,
+.Fn getpwuid ,
+.Fn getpwuid_r ,
 and
-.Fn getpwuid
+.Fn setpwent
 functions conform to
 .St -p1003.1-90 .
 .Sh HISTORY
@@ -189,6 +237,12 @@ The
 .Nm setpassent
 function appeared in
 .Bx 4.3 Reno .
+The functions
+.Fn getpwnam_r
+and
+.Fn getpwuid_r
+appeared in
+.Nx 3.0 .
 .Sh BUGS
 The functions
 .Fn getpwent ,

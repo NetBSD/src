@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.94 2004/10/04 04:16:26 lukem Exp $	*/
+/*	$NetBSD: namespace.h,v 1.95 2004/10/05 04:45:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -255,7 +255,9 @@
 #define getprotoent_r		_getprotoent_r
 #define getpwent		_getpwent
 #define getpwnam		_getpwnam
+#define getpwnam_r		_getpwnam_r
 #define getpwuid		_getpwuid
+#define getpwuid_r		_getpwuid_r
 #define getrpcbyname		_getrpcbyname
 #define getrpcbyname_r		_getrpcbyname_r
 #define getrpcbynumber		_getrpcbynumber
