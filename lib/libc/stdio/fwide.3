@@ -1,4 +1,4 @@
-.\"	$NetBSD: fwide.3,v 1.1 2001/12/07 11:47:42 yamt Exp $
+.\"	$NetBSD: fwide.3,v 1.2 2001/12/07 12:35:13 wiz Exp $
 .\"
 .\" Copyright (c)2001 Citrus Project,
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Os
 .Sh NAME
 .Nm fwide
-.Nd get/set orientation of stream
+.Nd get/set orientation of a stream
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -43,30 +43,40 @@
 The
 .Fn fwide
 function
-determines orientation of stream pointed at by
+determines the orientation of the stream pointed at by
 .Fa stream .
 .Pp
-If orientation of stream have already been determined,
+If the orientation of
+.Fa stream
+has already been determined,
 .Fn fwide
 leaves it unchanged.
 Otherwise,
 .Fn fwide
-set orientation of stream accoding to
+sets the orientation of
+.Fa stream
+according to
 .Fa mode .
 .Pp
 If
 .Fa mode
-is less than zero, stream is set to byte-oriented.
-If it is greater than zero, stream is set to wide-oriented.
+is less than zero,
+.Fa stream
+is set to byte-oriented.
+If it is greater than zero,
+.Fa stream
+is set to wide-oriented.
 Otherwise,
 .Fa mode
-is zero, and stream is unchanged.
+is zero, and
+.Fa stream
+is unchanged.
 .Sh RETURN VALUES
 .Fn fwide
 returns a value according to orientation after the call of
-.Fn fwide .
+.Fn fwide ;
 a value less than zero if byte-oriented, a value greater than zero
-if wide-oriented, and zero if stream has no orientation.
+if wide-oriented, and zero if the stream has no orientation.
 .Sh SEE ALSO
 .Xr ferror 3 ,
 .Xr fgetc 3 ,
@@ -80,5 +90,5 @@ if wide-oriented, and zero if stream has no orientation.
 The
 .Fn fwide
 function
-conform to
+conforms to
 .St -isoC99 .
