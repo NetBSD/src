@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.3 1996/03/14 23:11:36 mark Exp $ */
+/* $NetBSD: pte.h,v 1.4 1996/10/12 18:31:10 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -92,6 +92,7 @@ typedef	int	pt_entry_t;		/* page table entry */
 
 #define L2_PTE(p, a) ((p) | PT_AP(a) | L2_SPAGE | PT_C | PT_B)
 #define L2_PTE_NC(p, a) ((p) | PT_AP(a) | L2_SPAGE | PT_B)
+#define L2_PTE_NC_NB(p, a) ((p) | PT_AP(a) | L2_SPAGE)
 
 #define L1_PTE(p) ((p) | 0x00 | PT_U | L1_PAGE)
 
