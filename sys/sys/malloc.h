@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
+/*	$NetBSD: malloc.h,v 1.40 1998/07/23 20:34:59 pk Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -138,7 +138,8 @@
 #define	M_IPFLOW	86	/* IP flow entries */
 #define	M_USB		87	/* USB general */
 #define	M_USBDEV	88	/* USB permanent */
-#define	M_LAST		89	/* Must be last type + 1 */
+#define	M_POOL		89	/* memory pool structs */
+#define	M_LAST		90	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
