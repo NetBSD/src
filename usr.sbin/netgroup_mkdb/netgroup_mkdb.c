@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup_mkdb.c,v 1.6 1997/01/19 03:30:14 lukem Exp $	*/
+/*	$NetBSD: netgroup_mkdb.c,v 1.7 1997/06/16 23:18:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char *rcsid = "$NetBSD: netgroup_mkdb.c,v 1.6 1997/01/19 03:30:14 lukem Exp $";
+static char *rcsid = "$NetBSD: netgroup_mkdb.c,v 1.7 1997/06/16 23:18:50 christos Exp $";
 #endif
 
 #include <sys/types.h>
@@ -370,11 +370,11 @@ ng_reventry(db, udb, fe, name, s, ss)
 	char           *p;
 	DB             *xdb;
 
-	if (sl_find(ss, name) != NULL) {
+	if (sl_find(ss, fe->n_name) != NULL) {
 		warnx("Cycle in netgroup `%s'", name);
 		return;
 	}
-	sl_add(ss, name);
+	sl_add(ss, fe->n_name);
 
 	for (e = fe->n_next; e != NULL; e = e->n_next)
 		switch (e->n_type) {
@@ -407,9 +407,10 @@ ng_reventry(db, udb, fe, name, s, ss)
 			key.data = (u_char *) e->n_name;
 			key.size = strlen(e->n_name) + 1;
 			switch ((db->get)(db, &key, &data, 0)) {
+				struct nentry *rfe;
 			case 0:
-				memcpy(&fe, data.data, sizeof(fe));
-				ng_reventry(db, udb, fe, e->n_name, s, ss);
+				(void) memcpy(&rfe, data.data, sizeof(rfe));
+				ng_reventry(db, udb, rfe, name, s, ss);
 				break;
 
 			case 1:
