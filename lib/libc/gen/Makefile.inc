@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.132 2004/05/31 05:25:40 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.133 2004/05/31 06:51:59 itojun Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -33,10 +33,6 @@ SRCS+= 	_errno.c alarm.c arc4random.c assert.c basename.c clock.c closedir.c \
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 	_sysconf.c _verr.c _verrx.c _vwarn.c _vwarnx.c _warn.c _warnx.c
-
-# BSD auth
-SRCS+=	auth_subr.c authenticate.c login_cap.c secure_path.c pw_dup.c
-MAN+=	auth_subr.3 authenticate.3 login_cap.3 secure_path.3 pw_dup.3
 
 # machine-dependent gen sources
 # m-d Makefile.inc must include sources for:
@@ -134,29 +130,3 @@ MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3
 MLINKS+=unvis.3 strunvis.3
 MLINKS+=vis.3 svis.3 vis.3 strvis.3 vis.3 strvisx.3 vis.3 strsvis.3 \
 	vis.3 strsvisx.3
-
-# BSD auth
-MLINKS+=auth_subr.3 auth_open.3 auth_subr.3 auth_call.3 auth_subr.3 \
-	auth_challenge.3 auth_subr.3 auth_check_change.3 auth_subr.3 \
-	auth_check_expire.3 auth_subr.3 auth_clean.3 auth_subr.3 auth_close.3 \
-	auth_subr.3 auth_clrenv.3 auth_subr.3 auth_clroption.3 auth_subr.3 \
-	auth_clroptions.3 auth_subr.3 auth_getitem.3 auth_subr.3 auth_getpwd.3 \
-	auth_subr.3 auth_getstate.3 auth_subr.3 auth_getvalue.3 auth_subr.3 \
-	auth_set_va_list.3 auth_subr.3 auth_setdata.3 auth_subr.3 \
-	auth_setenv.3 auth_subr.3 auth_setitem.3 auth_subr.3 auth_setoption.3 \
-	auth_subr.3 auth_setpwd.3 auth_subr.3 auth_setstate.3 \
-	auth_subr.3 bsd_auth.3
-MLINKS+=authenticate.3 auth_approval.3 authenticate.3 auth_cat.3 \
-	authenticate.3 auth_checknologin.3 authenticate.3 auth_mkvalue.3 \
-	authenticate.3 auth_userchallenge.3 authenticate.3 auth_usercheck.3 \
-	authenticate.3 auth_userokay.3 authenticate.3 auth_userresponse.3 \
-	authenticate.3 auth_verify.3
-MLINKS+=login_cap.3 login_getclass.3
-MLINKS+=login_cap.3 login_getcapbool.3
-MLINKS+=login_cap.3 login_getcapnum.3
-MLINKS+=login_cap.3 login_getcapsize.3
-MLINKS+=login_cap.3 login_getcapstr.3
-MLINKS+=login_cap.3 login_getcaptime.3
-MLINKS+=login_cap.3 login_close.3
-MLINKS+=login_cap.3 setclasscontext.3
-MLINKS+=login_cap.3 setusercontext.3
