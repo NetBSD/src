@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_card.c,v 1.4 2000/05/20 16:16:15 augustss Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.5 2000/05/21 15:43:57 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.9 2000/02/12 08:49:21 peter Exp */
 
@@ -543,7 +543,8 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 	/* Select all GPIO bits as inputs */
 	OUTL(bktr, BKTR_GPIO_OUT_EN, 0);
 	if (bootverbose)
-	    printf("bktr: GPIO is 0x%08x\n", INL(bktr, BKTR_GPIO_DATA));
+	    printf("%s: GPIO is 0x%08x\n", bktr_name(bktr),
+		   INL(bktr, BKTR_GPIO_DATA)); 
 
 #ifdef HAUPPAUGE_MSP_RESET
 	/* Reset the MSP34xx audio chip. This resolves bootup card
@@ -607,7 +608,7 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
                 subsystem_vendor_id = (byte_254 << 8) | byte_255;
 
 	        if ( bootverbose ) 
-	            printf("subsystem 0x%04x 0x%04x\n",
+	            printf("%s: subsystem 0x%04x 0x%04x\n", bktr_name(bktr),
 			   subsystem_vendor_id, subsystem_id);
 
                 if (subsystem_vendor_id == VENDOR_AVER_MEDIA) {
@@ -654,11 +655,13 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 
                 /* Vendor is unknown. We will use the standard probe code */
 		/* which may not give best results */
-                printf("Warning - card vendor 0x%04x (model 0x%04x) unknown.\n",subsystem_vendor_id,subsystem_id);
+                printf("%s: Warning - card vendor 0x%04x (model 0x%04x) unknown.\n",
+		       bktr_name(bktr), subsystem_vendor_id, subsystem_id);
             }
 	    else
 	    {
-                printf("Card has no configuration EEPROM. Cannot determine card make.\n");
+                printf("%s: Card has no configuration EEPROM. Cannot determine card make.\n",
+		       bktr_name(bktr));
 	    }
 	} /* end of bt878/bt879 card detection code */
 
@@ -707,8 +710,10 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 			    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                             goto checkTuner;
 		    }
-		    printf("Warning: Unknown card type. EEPROM data not recognised\n");
-		    printf("%x %x %x %x\n",eeprom[0],eeprom[1],eeprom[2],eeprom[3]);
+		    printf("%s: Warning: Unknown card type. EEPROM data not recognised\n",
+			   bktr_name(bktr));
+		    printf("%s: %x %x %x %x\n", bktr_name(bktr),
+			   eeprom[0],eeprom[1],eeprom[2],eeprom[3]);
             }
 
             /* look for an STB card */
@@ -724,7 +729,7 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 	signCard( bktr, 1, 128, (u_char *)  &probe_signature );
 
 	if (bootverbose) {
-	  printf("card signature \n");
+	  printf("%s: card signature: ", bktr_name(bktr));
 	  for (j = 0; j < Bt848_MAX_SIGN; j++) {
 	    printf(" %02x ", probe_signature[j]);
 	  }
@@ -872,13 +877,13 @@ checkTuner:
 		model    = (eeprom[12] << 8  | eeprom[11]);
 		revision = (eeprom[15] << 16 | eeprom[14] << 8 | eeprom[13]);
 		if (verbose)
-		    printf("bktr%d: Hauppauge Model %d %c%c%c%c\n",
-			unit,
-			model,
-			((revision >> 18) & 0x3f) + 32,
-			((revision >> 12) & 0x3f) + 32,
-			((revision >>  6) & 0x3f) + 32,
-			((revision >>  0) & 0x3f) + 32 );
+		    printf("%s: Hauppauge Model %d %c%c%c%c\n",
+			   bktr_name(bktr),
+			   model,
+			   ((revision >> 18) & 0x3f) + 32,
+			   ((revision >> 12) & 0x3f) + 32,
+			   ((revision >>  6) & 0x3f) + 32,
+			   ((revision >>  0) & 0x3f) + 32 );
 
 	        /* Determine the tuner type from the eeprom */
 		tuner_code = eeprom[9];
@@ -929,7 +934,8 @@ checkTuner:
 		    goto checkDBX;
 
 	          default :
-		    printf("Warning - Unknown Hauppauge Tuner 0x%x\n",tuner_code);
+		    printf("%s: Warning - Unknown Hauppauge Tuner 0x%x\n",
+			   bktr_name(bktr), tuner_code);
 		}
 	    }
 	    break;
@@ -996,8 +1002,8 @@ checkTuner:
 			goto checkDBX;
 		}
 
-	    	printf("Warning - Unknown AVerMedia Tuner Make %d Format %d\n",
-			tuner_make, tuner_format);
+	    	printf("%s: Warning - Unknown AVerMedia Tuner Make %d Format %d\n",
+			bktr_name(bktr), tuner_make, tuner_format);
 	    }
 	    break;
 
@@ -1094,9 +1100,9 @@ checkMSPEnd:
 	if (bktr->card.msp3400c) {
 		bktr->msp_addr = MSP3400C_WADDR;
 		msp_read_id( bktr );
-		printf("bktr%d: Detected a MSP%s at 0x%x\n", unit,
-				bktr->msp_version_string,
-				bktr->msp_addr);
+		printf("%s: Detected a MSP%s at 0x%x\n", bktr_name(bktr),
+		       bktr->msp_version_string,
+		       bktr->msp_addr);
 
 	}
 
@@ -1108,9 +1114,9 @@ checkMSPEnd:
 	if (bktr->card.dpl3518a) {
 		bktr->dpl_addr = DPL3518A_WADDR;
 		dpl_read_id( bktr );
-		printf("bktr%d: Detected a DPL%s at 0x%x\n", unit,
-				bktr->dpl_version_string,
-				bktr->dpl_addr);
+		printf("%s: Detected a DPL%s at 0x%x\n", bktr_name(bktr),
+		       bktr->dpl_version_string,
+		       bktr->dpl_addr);
 	}
 
 /* Start of Check Remote */
@@ -1172,7 +1178,7 @@ checkPLLEnd:
 	bktr->card.tuner_pllAddr = tuner_i2c_address;
 
 	if ( verbose ) {
-		printf( "bktr%d: %s", unit, bktr->card.name );
+		printf( "%s: %s", bktr_name(bktr), bktr->card.name );
 		if ( bktr->card.tuner )
 			printf( ", %s tuner", bktr->card.tuner->name );
 		if ( bktr->card.dbx )

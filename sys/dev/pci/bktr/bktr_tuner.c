@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_tuner.c,v 1.2 2000/05/07 00:24:34 wiz Exp $	*/
+/*	$NetBSD: bktr_tuner.c,v 1.3 2000/05/21 15:43:57 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.5 2000/01/24 14:00:21 roger Exp */
 
@@ -840,16 +840,17 @@ tv_freq( bktr_ptr_t bktr, int frequency, int type )
 			    /* AFC failed, restore requested frequency */
 			    N = frequency + TBL_IF;
 #if defined( TEST_TUNER_AFC )
-			    printf("do_afc: failed to lock\n");
+			    printf("%s: do_afc: failed to lock\n",
+				   bktr_name(bktr));
 #endif
 			    i2cWrite( bktr, addr, (N>>8) & 0x7f, N & 0xff );
 			}
 			else
 			    frequency = N - TBL_IF;
 #if defined( TEST_TUNER_AFC )
- printf("do_afc: returned freq %d (%d %% %d)\n", frequency, frequency / 16, frequency % 16);
+ printf("%s: do_afc: returned freq %d (%d %% %d)\n", frequency, frequency / 16, bktr_name(bktr), frequency % 16);
 			    afcDelta = frequency - oldFrequency;
- printf("changed by: %d clicks (%d mod %d)\n", afcDelta, afcDelta / 16, afcDelta % 16);
+ printf("%s: changed by: %d clicks (%d mod %d)\n", bktr_name(bktr), afcDelta, afcDelta / 16, afcDelta % 16);
 #endif
 			}
 #endif /* TUNER_AFC */
@@ -918,14 +919,14 @@ do_afc( bktr_ptr_t bktr, int addr, int frequency )
 		return( -1 );
 
 #if defined( TEST_TUNER_AFC )
- printf( "\nOriginal freq: %d, status: 0x%02x\n", frequency, status );
+ printf( "%s: Original freq: %d, status: 0x%02x\n", bktr_name(bktr), frequency, status );
 #endif
 	for ( step = 0; step < AFC_MAX_STEP; ++step ) {
 		if ( (status = i2cRead( bktr, addr + 1 )) < 0 )
 			goto fubar;
 		if ( !(status & 0x40) ) {
 #if defined( TEST_TUNER_AFC )
- printf( "no lock!\n" );
+ printf( "%s: no lock!\n", bktr_name(bktr) );
 #endif
 			goto fubar;
 		}
@@ -933,14 +934,14 @@ do_afc( bktr_ptr_t bktr, int addr, int frequency )
 		switch( status & AFC_BITS ) {
 		case AFC_FREQ_CENTERED:
 #if defined( TEST_TUNER_AFC )
- printf( "Centered, freq: %d, status: 0x%02x\n", frequency, status );
+ printf( "%s: Centered, freq: %d, status: 0x%02x\n", bktr_name(bktr), frequency, status );
 #endif
 			return( frequency );
 
 		case AFC_FREQ_MINUS_125:
 		case AFC_FREQ_MINUS_62:
 #if defined( TEST_TUNER_AFC )
- printf( "Low, freq: %d, status: 0x%02x\n", frequency, status );
+ printf( "%s: Low, freq: %d, status: 0x%02x\n", bktr_name(bktr), frequency, status );
 #endif
 			--frequency;
 			break;
@@ -948,7 +949,7 @@ do_afc( bktr_ptr_t bktr, int addr, int frequency )
 		case AFC_FREQ_PLUS_62:
 		case AFC_FREQ_PLUS_125:
 #if defined( TEST_TUNER_AFC )
- printf( "Hi, freq: %d, status: 0x%02x\n", frequency, status );
+ printf( "%s: Hi, freq: %d, status: 0x%02x\n", bktr_name(bktr), frequency, status );
 #endif
 			++frequency;
 			break;
