@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 1999/09/12 01:17:30 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 1999/09/16 14:35:42 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -261,7 +261,7 @@ struct pmap	kernel_pmap_store;
 vm_map_t	st_map, pt_map;
 struct vm_map	st_map_store, pt_map_store;
 
-paddr_t    	avail_start;	/* PA of first available physical page */
+paddr_t		avail_start;	/* PA of first available physical page */
 paddr_t		avail_end;	/* PA of last available physical page */
 psize_t		mem_size;	/* memory size in bytes */
 vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
@@ -1569,7 +1569,7 @@ pmap_kremove(sva, size)
 	pmap_t pmap = pmap_kernel();
 	vaddr_t nssva;
 	pt_entry_t *pte;
-	vaddr_t eva;
+	vaddr_t eva = sva + size;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
 	    ("pmap_kremove(%lx, %lx)\n", sva, size));
@@ -1586,6 +1586,8 @@ pmap_kremove(sva, size)
 		while (sva < nssva) {
 			if (!pmap_pte_v(pte)) {
 				printf ("pmap_kremove: attempt to remove invalid mapping.\n");
+				pte++;
+				sva += NBPG;
 				continue;
 			}
 			if (pmap_pte_w(pte)) {
