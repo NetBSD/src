@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.223 2000/06/04 08:53:58 itojun Exp $
+#	$NetBSD: mi,v 1.224 2000/06/04 11:52:06 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -669,13 +669,11 @@
 ./usr/include/netinet6		comp-c-include
 ./usr/include/netinet6/ah.h		comp-c-include
 ./usr/include/netinet6/esp.h		comp-c-include
-./usr/include/netinet6/icmp6.h		comp-c-include
 ./usr/include/netinet6/in6.h		comp-c-include
 ./usr/include/netinet6/in6_gif.h		comp-c-include
 ./usr/include/netinet6/in6_ifattach.h		comp-c-include
 ./usr/include/netinet6/in6_pcb.h		comp-c-include
 ./usr/include/netinet6/in6_var.h		comp-c-include
-./usr/include/netinet6/ip6.h		comp-c-include
 ./usr/include/netinet6/ip6_mroute.h		comp-c-include
 ./usr/include/netinet6/ip6_var.h		comp-c-include
 ./usr/include/netinet6/ip6protosw.h		comp-c-include
@@ -722,7 +720,6 @@
 ./usr/include/netkey/key_var.h		comp-c-include
 ./usr/include/netkey/keydb.h		comp-c-include
 ./usr/include/netkey/keysock.h		comp-c-include
-./usr/include/netkey/keyv2.h		comp-c-include
 ./usr/include/netnatm/natm.h		comp-c-include
 ./usr/include/netns/idp.h		comp-c-include
 ./usr/include/netns/idp_var.h		comp-c-include
