@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.1 2002/02/22 20:09:01 christos Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.2 2002/02/25 03:19:15 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,9 +38,11 @@
 #ifndef	_UTMPX_H_
 #define	_UTMPX_H_
 
+#include <sys/socket.h>
+
 #define	_PATH_UTMPX		"/var/run/utmpx"
 #define	_PATH_WTMPX		"/var/log/wtmpx"
-#define	_PATH_LASTLOG		"/var/log/lastlogx"
+#define	_PATH_LASTLOGX		"/var/log/lastlogx"
 #define	_PATH_UTMP_UPDATE	"/usr/libexec/utmp_update"
 
 #define _UTX_NAMESIZE	32
