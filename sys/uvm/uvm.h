@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.24.2.5 2002/07/16 14:06:10 nathanw Exp $	*/
+/*	$NetBSD: uvm.h,v 1.24.2.6 2002/09/17 21:24:02 nathanw Exp $	*/
 
 /*
  *
@@ -64,6 +64,8 @@
 #include <uvm/uvm_pdaemon.h>
 #include <uvm/uvm_swap.h>
 
+#ifdef _KERNEL
+
 /*
  * pull in VM_NFREELIST
  */
@@ -121,6 +123,8 @@ struct uvm {
 	/* kernel object: to support anonymous pageable kernel memory */
 	struct uvm_object *kernel_object;
 };
+
+#endif /* _KERNEL */
 
 /*
  * vm_map_entry etype bits:

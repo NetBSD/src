@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.7.2.3 2002/08/13 02:20:13 nathanw Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.7.2.4 2002/09/17 21:22:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -329,11 +329,23 @@ struct ieee80211_auth {
 #define	SIOCS80211AUTH		 _IOW('i', 236, struct ieee80211_auth)
 #define	SIOCG80211AUTH		_IOWR('i', 237, struct ieee80211_auth)
 
+#define	SIOCS80211CHANNEL	 _IOW('i', 238, u_int16_t)
+#define	SIOCG80211CHANNEL	_IOWR('i', 239, u_int16_t)
+
+struct ieee80211_bssid {
+	u_int8_t	i_bssid[IEEE80211_ADDR_LEN];
+};
+
+#define	SIOCS80211BSSID		 _IOW('i', 240, struct ieee80211_bssid)
+#define	SIOCG80211BSSID		_IOWR('i', 241, struct ieee80211_bssid)
+
 #ifdef _KERNEL
 
 #define	IEEE80211_ASCAN_WAIT	2		/* active scan wait */
 #define	IEEE80211_PSCAN_WAIT 	5		/* passive scan wait */
 #define	IEEE80211_TRANS_WAIT 	5		/* transition wait */
+#define	IEEE80211_INACT_WAIT	5		/* inactivity timer interval */
+#define	IEEE80211_INACT_MAX	(300/IEEE80211_INACT_WAIT)
 
 /*
  * Structure for IEEE 802.11 drivers.
@@ -382,6 +394,7 @@ struct ieee80211_bss {
 	u_int16_t		bs_txseq;	/* seq to be transmitted */
 	u_int16_t		bs_rxseq;	/* seq previous received */
 	int			bs_fails;	/* failure count to associate */
+	int			bs_inact;	/* inactivity mark count */
 	int			bs_txrate;	/* index to bs_rates[] */
 	void			*bs_private;	/* driver private */
 };
@@ -402,7 +415,7 @@ struct ieee80211com {
 	void			(*ic_recv_mgmt[16])(struct ieee80211com *,
 				    struct mbuf *, int, u_int32_t);
 	int			(*ic_send_mgmt[16])(struct ieee80211com *,
-				    struct ieee80211_bss *, int);
+				    struct ieee80211_bss *, int, int);
 	int			(*ic_newstate)(void *, enum ieee80211_state);
 	int			(*ic_chancheck)(void *, u_char *);
 	u_int8_t		ic_myaddr[IEEE80211_ADDR_LEN];
@@ -412,6 +425,7 @@ struct ieee80211com {
 	struct ifqueue		ic_mgtq;
 	int			ic_flags;
 	enum ieee80211_state	ic_state;
+	caddr_t			ic_rawbpf;	/* packet filter structure */
 	struct ieee80211_bss	ic_bss;		/* information for this node */
 	int			ic_bss_privlen;	/* size for bs_private */
 	u_int8_t		ic_ibss_chan;
@@ -420,6 +434,7 @@ struct ieee80211com {
 	u_int16_t		ic_lintval;	/* listen interval */
 	int			ic_mgt_timer;	/* mgmt timeout */
 	int			ic_scan_timer;	/* scant wait */
+	int			ic_inact_timer;	/* inactivity timer wait */
 	int			ic_des_esslen;
 	u_int8_t		ic_des_essid[IEEE80211_NWID_LEN];
 	struct ieee80211_wepkey	ic_nw_keys[IEEE80211_WEP_NKID];
@@ -429,10 +444,10 @@ struct ieee80211com {
 #define	ic_if		ic_ec.ec_if
 #define	ic_softc	ic_ec.ec_if.if_softc
 
-#define	IEEE80211_SEND_MGMT(ic,bs,type,flag)	do {			      \
+#define	IEEE80211_SEND_MGMT(ic,bs,type,arg)	do {			      \
 	if ((ic)->ic_send_mgmt[(type)>>IEEE80211_FC0_SUBTYPE_SHIFT] != NULL)  \
 		(*(ic)->ic_send_mgmt[(type)>>IEEE80211_FC0_SUBTYPE_SHIFT])    \
-		    (ic,bs,flag);					      \
+		    (ic,bs,type,arg);					      \
 } while (0)
 
 /* ic_flags */
@@ -443,9 +458,11 @@ struct ieee80211com {
 #define	IEEE80211_F_PMGTON	0x00000400	/* CONF: Power mgmt enable */
 #define	IEEE80211_F_ADHOC	0x00000800	/* CONF: adhoc mode */
 #define	IEEE80211_F_SCANAP	0x00001000	/* CONF: scan AP mode */
+#define	IEEE80211_F_HOSTAP	0x00002000	/* CONF: AP mode */
 #define	IEEE80211_F_HASWEP	0x00010000	/* CAPABILITY: WEP available */
 #define	IEEE80211_F_HASIBSS	0x00020000	/* CAPABILITY: IBSS available */
 #define	IEEE80211_F_HASPMGT	0x00040000	/* CAPABILITY: Power mgmt */
+#define	IEEE80211_F_HASHAP	0x00080000	/* CAPABILITY: HOSTAP avail */
 #define	IEEE80211_F_FH		0x01000000	/* PHY: FH */
 #define	IEEE80211_F_DS		0x02000000	/* PHY: DS */
 #define	IEEE80211_F_OFDM	0x04000000	/* PHY: OFDM */
@@ -474,6 +491,8 @@ void	ieee80211_free_scan(struct ifnet *);
 int	ieee80211_fix_rate(struct ieee80211com *, struct ieee80211_bss *, int);
 int	ieee80211_new_state(struct ifnet *, enum ieee80211_state, int);
 struct mbuf *ieee80211_wep_crypt(struct ifnet *, struct mbuf *, int);
+int	ieee80211_rate2media(int, int);
+int	ieee80211_media2rate(int, int);
 
 int	ieee80211_cfgget(struct ifnet *, u_long, caddr_t);
 int	ieee80211_cfgset(struct ifnet *, u_long, caddr_t);

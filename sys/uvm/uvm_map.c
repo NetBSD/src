@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.93.2.13 2002/07/12 01:40:43 nathanw Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.93.2.14 2002/09/17 21:24:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.13 2002/07/12 01:40:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.14 2002/09/17 21:24:08 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -522,6 +522,7 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 	    UVM_MAXPROTECTION(flags);
 	vm_inherit_t inherit = UVM_INHERIT(flags);
 	int advice = UVM_ADVICE(flags);
+	int error;
 	UVMHIST_FUNC("uvm_map");
 	UVMHIST_CALLED(maphist);
 
@@ -656,7 +657,16 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 			goto nomerge;
 		}
 
-		/* got it! */
+		if (prev_entry->aref.ar_amap) {
+			error = amap_extend(prev_entry, size);
+			if (error) {
+				vm_map_unlock(map);
+				if (new_entry) {
+					uvm_mapent_free(new_entry);
+				}
+				return error;
+			}
+		}
 
 		UVMCNT_INCR(map_backmerge);
 		UVMHIST_LOG(maphist,"  starting back merge", 0, 0, 0, 0);
@@ -665,12 +675,9 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 		 * drop our reference to uobj since we are extending a reference
 		 * that we already have (the ref count can not drop to zero).
 		 */
+
 		if (uobj && uobj->pgops->pgo_detach)
 			uobj->pgops->pgo_detach(uobj);
-
-		if (prev_entry->aref.ar_amap) {
-			amap_extend(prev_entry, size);
-		}
 
 		prev_entry->end += size;
 		map->size += size;

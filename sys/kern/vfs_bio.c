@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.74.2.10 2002/08/27 23:47:37 nathanw Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.74.2.11 2002/09/17 21:22:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.74.2.10 2002/08/27 23:47:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.74.2.11 2002/09/17 21:22:27 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ bremfree(bp)
 	 *
 	 * NB: This makes an assumption about how tailq's are implemented.
 	 */
-	if (bp->b_freelist.tqe_next == NULL) {
+	if (TAILQ_NEXT(bp, b_freelist) == NULL) {
 		for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 			if (dp->tqh_last == &bp->b_freelist.tqe_next)
 				break;
@@ -404,16 +404,18 @@ bdwrite(bp)
 {
 	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
 	struct proc *p = l->l_proc;
+	const struct bdevsw *bdev;
 	int s;
 
 	/* If this is a tape block, write the block now. */
 	/* XXX NOTE: the memory filesystem usurpes major device */
-	/* XXX       number 255, which is a bad idea.		*/
-	if (bp->b_dev != NODEV &&
-	    major(bp->b_dev) != 255 &&	/* XXX - MFS buffers! */
-	    bdevsw[major(bp->b_dev)].d_type == D_TAPE) {
-		bawrite(bp);
-		return;
+	/* XXX       number 4095, which is a bad idea.		*/
+	if (bp->b_dev != NODEV && major(bp->b_dev) != 4095) {
+		bdev = bdevsw_lookup(bp->b_dev);
+		if (bdev != NULL && bdev->d_type == D_TAPE) {
+			bawrite(bp);
+			return;
+		}
 	}
 
 	/*
@@ -446,18 +448,6 @@ bawrite(bp)
 {
 
 	SET(bp->b_flags, B_ASYNC);
-	VOP_BWRITE(bp);
-}
-
-/*
- * Ordered block write; asynchronous, but I/O will occur in order queued.
- */
-void
-bowrite(bp)
-	struct buf *bp;
-{
-
-	SET(bp->b_flags, B_ASYNC | B_ORDERED);
 	VOP_BWRITE(bp);
 }
 
@@ -590,7 +580,7 @@ brelse(bp)
 
 already_queued:
 	/* Unlock the buffer. */
-	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE|B_ORDERED);
+	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE);
 	SET(bp->b_flags, B_CACHE);
 
 	/* Allow disk interrupts. */
@@ -611,10 +601,8 @@ incore(vp, blkno)
 {
 	struct buf *bp;
 
-	bp = BUFHASH(vp, blkno)->lh_first;
-
 	/* Search hash chain */
-	for (; bp != NULL; bp = bp->b_hash.le_next) {
+	LIST_FOREACH(bp, BUFHASH(vp, blkno), b_hash) {
 		if (bp->b_lblkno == blkno && bp->b_vp == vp &&
 		    !ISSET(bp->b_flags, B_INVAL))
 		return (bp);
@@ -762,7 +750,7 @@ allocbuf(bp, size)
 	 */
 	if (bp->b_bufsize > desired_size) {
 		s = splbio();
-		if ((nbp = bufqueues[BQ_EMPTY].tqh_first) == NULL) {
+		if ((nbp = TAILQ_FIRST(&bufqueues[BQ_EMPTY])) == NULL) {
 			/* No free buffer head */
 			splx(s);
 			goto out;
@@ -801,8 +789,8 @@ getnewbuf(slpflag, slptimeo)
 
 start:
 	s = splbio();
-	if ((bp = bufqueues[BQ_AGE].tqh_first) != NULL ||
-	    (bp = bufqueues[BQ_LRU].tqh_first) != NULL) {
+	if ((bp = TAILQ_FIRST(&bufqueues[BQ_AGE])) != NULL ||
+	    (bp = TAILQ_FIRST(&bufqueues[BQ_LRU])) != NULL) {
 		bremfree(bp);
 	} else {
 		/* wait for a free buffer of any kind */
@@ -944,8 +932,7 @@ count_lock_queue()
 	struct buf *bp;
 	int n = 0;
 
-	for (bp = bufqueues[BQ_LOCKED].tqh_first; bp;
-	    bp = bp->b_freelist.tqe_next)
+	TAILQ_FOREACH(bp, &bufqueues[BQ_LOCKED], b_freelist)
 		n++;
 	return (n);
 }
@@ -970,7 +957,7 @@ vfs_bufstats()
 		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
 			counts[j] = 0;
 		s = splbio();
-		for (bp = dp->tqh_first; bp; bp = bp->b_freelist.tqe_next) {
+		TAILQ_FOREACH(bp, dp, b_freelist) {
 			counts[bp->b_bufsize/PAGE_SIZE]++;
 			count++;
 		}

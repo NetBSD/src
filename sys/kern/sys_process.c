@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.18 2002/08/27 23:47:34 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.19 2002/09/17 21:22:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993 Jan-Simon Pendry.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.18 2002/08/27 23:47:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.19 2002/09/17 21:22:19 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.18 2002/08/27 23:47:34 nathan
 #include <sys/ptrace.h>
 #include <sys/uio.h>
 #include <sys/user.h>
+#include <sys/ras.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -256,6 +257,15 @@ sys_ptrace(l, v, retval)
 
 	case  PT_WRITE_I:		/* XXX no separate I and D spaces */
 	case  PT_WRITE_D:
+#if defined(__HAVE_RAS)
+		/*
+		 * Can't write to a RAS
+		 */
+		if ((t->p_nras != 0) &&
+		    (ras_lookup(t, SCARG(uap, addr)) != (caddr_t)-1)) {
+			return (EACCES);
+		}
+#endif
 		write = 1;
 		tmp = SCARG(uap, data);
 	case  PT_READ_I:		/* XXX no separate I and D spaces */
@@ -333,6 +343,11 @@ sys_ptrace(l, v, retval)
 
 		PHOLD(lt);
 
+		/* If the address parameter is not (int *)1, set the pc. */
+		if ((int *)SCARG(uap, addr) != (int *)1)
+			if ((error = process_set_pc(t, SCARG(uap, addr))) != 0)
+				goto relebad;
+
 #ifdef PT_STEP
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
@@ -341,11 +356,6 @@ sys_ptrace(l, v, retval)
 		if (error)
 			goto relebad;
 #endif
-
-		/* If the address parameter is not (int *)1, set the pc. */
-		if ((int *)SCARG(uap, addr) != (int *)1)
-			if ((error = process_set_pc(lt, SCARG(uap, addr))) != 0)
-				goto relebad;
 
 		PRELE(lt);
 

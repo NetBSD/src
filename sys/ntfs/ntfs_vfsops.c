@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.11 2002/08/01 02:46:56 nathanw Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.12 2002/09/17 21:23:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.33.2.11 2002/08/01 02:46:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.33.2.12 2002/09/17 21:23:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.33.2.11 2002/08/01 02:46:56 nathan
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #if defined(__NetBSD__)
 #include <uvm/uvm_extern.h>
@@ -337,7 +338,7 @@ ntfs_mount (
 #ifdef __FreeBSD__
 	if (bdevsw(devvp->v_rdev) == NULL) {
 #else
-	if (major(devvp->v_rdev) >= nblkdev) {
+	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 #endif
 		err = ENXIO;
 		goto error_2;

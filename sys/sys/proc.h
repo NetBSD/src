@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.22 2002/08/13 02:20:23 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.23 2002/09/17 21:23:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -86,6 +86,7 @@ struct pgrp {
  */
 struct exec_package;
 struct ps_strings;
+struct ras;
 
 struct emul {
 	const char	*e_name;	/* Symbolic name */
@@ -171,6 +172,10 @@ struct proc {
 	struct simplelock p_lwplock;	/* Lock on LWP-related state. */
 
 	LIST_HEAD(, lwp) p_lwps;	/* Pointer to list of LWPs. */
+
+	LIST_HEAD(, ras) p_raslist;	/* Pointer to RAS queue */
+	u_int p_nras;			/* number of RASs */
+	struct simplelock p_raslock;	/* Lock for RAS queue */
 
 /* The following fields are all zeroed upon creation in fork. */
 #define	p_startzero	p_nlwps

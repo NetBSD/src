@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.34.2.4 2002/04/01 07:48:19 nathanw Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.34.2.5 2002/09/17 21:22:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.34.2.4 2002/04/01 07:48:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.34.2.5 2002/09/17 21:22:46 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -135,7 +135,7 @@ arc_output(ifp, m0, dst, rt0)
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) 
-		return(ENETDOWN); /* m, m1 aren't initialized yet */
+		return (ENETDOWN); /* m, m1 aren't initialized yet */
 
 	error = newencoding = 0;
 	ac = (struct arccom *)ifp;
@@ -249,7 +249,7 @@ arc_output(ifp, m0, dst, rt0)
 #ifdef INET6
 	case AF_INET6:
 		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)&adst))
-			return(0); /* it must be impossible, but... */
+			return (0); /* it must be impossible, but... */
 		atype = htons(ARCTYPE_INET6);
 		newencoding = 1;
 		break;
@@ -518,7 +518,7 @@ arc_defrag(ifp, m)
 			/* is it the last one? */
 			if (af->af_lastseen > af->af_maxflag) {
 				af->af_packet = NULL;
-				return(m1);
+				return (m1);
 			} else
 				return NULL;
 		}

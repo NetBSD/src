@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.73.2.10 2002/08/01 02:46:36 nathanw Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.73.2.11 2002/09/17 21:22:43 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.73.2.10 2002/08/01 02:46:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.73.2.11 2002/09/17 21:22:43 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.73.2.10 2002/08/01 02:46:36 nat
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
+#include <sys/conf.h>
 
 #include <msdosfs/bpb.h>
 #include <msdosfs/bootsect.h>
@@ -310,7 +311,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return (ENOTBLK);
 	}
-	if (major(devvp->v_rdev) >= nblkdev) {
+	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 		vrele(devvp);
 		return (ENXIO);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.17.2.4 2002/07/12 01:40:24 nathanw Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.17.2.5 2002/09/17 21:22:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.17.2.4 2002/07/12 01:40:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.17.2.5 2002/09/17 21:22:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,7 +378,7 @@ lf_setlock(lock)
 			    overlap->lf_type == F_WRLCK) {
 				lf_wakelock(overlap);
 			} else {
-				while ((ltmp = overlap->lf_blkhd.tqh_first)) {
+				while ((ltmp = TAILQ_FIRST(&overlap->lf_blkhd))) {
 					KASSERT(ltmp->lf_next == overlap);
 					TAILQ_REMOVE(&overlap->lf_blkhd, ltmp,
 					    lf_block);
@@ -739,7 +739,7 @@ lf_wakelock(listhead)
 {
 	struct lockf *wakelock;
 
-	while ((wakelock = listhead->lf_blkhd.tqh_first)) {
+	while ((wakelock = TAILQ_FIRST(&listhead->lf_blkhd))) {
 		KASSERT(wakelock->lf_next == listhead);
 		TAILQ_REMOVE(&listhead->lf_blkhd, wakelock, lf_block);
 		wakelock->lf_next = NOLOCKF;
@@ -771,8 +771,8 @@ lf_print(tag, lock)
 		lock->lf_type == F_WRLCK ? "exclusive" :
 		lock->lf_type == F_UNLCK ? "unlock" :
 		"unknown", lock->lf_start, lock->lf_end);
-	if (lock->lf_blkhd.tqh_first)
-		printf(" block %p\n", lock->lf_blkhd.tqh_first);
+	if (TAILQ_FIRST(&lock->lf_blkhd))
+		printf(" block %p\n", TAILQ_FIRST(&lock->lf_blkhd));
 	else
 		printf("\n");
 }
@@ -796,8 +796,7 @@ lf_printlist(tag, lock)
 			lf->lf_type == F_WRLCK ? "exclusive" :
 			lf->lf_type == F_UNLCK ? "unlock" :
 			"unknown", lf->lf_start, lf->lf_end);
-		for (blk = lf->lf_blkhd.tqh_first; blk;
-		     blk = blk->lf_block.tqe_next) {
+		TAILQ_FOREACH(blk, &lf->lf_blkhd, lf_block) {
 			if (blk->lf_flags & F_POSIX)
 				printf("proc %d",
 				    ((struct proc *)(blk->lf_id))->p_pid);
@@ -808,7 +807,7 @@ lf_printlist(tag, lock)
 				blk->lf_type == F_WRLCK ? "exclusive" :
 				blk->lf_type == F_UNLCK ? "unlock" :
 				"unknown", blk->lf_start, blk->lf_end);
-			if (blk->lf_blkhd.tqh_first)
+			if (TAILQ_FIRST(&blk->lf_blkhd))
 				 panic("lf_printlist: bad list");
 		}
 		printf("\n");

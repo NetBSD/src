@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.83.2.14 2002/08/27 23:48:02 nathanw Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.83.2.15 2002/09/17 21:23:05 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.83.2.14 2002/08/27 23:48:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.83.2.15 2002/09/17 21:23:05 nathanw Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -825,7 +825,7 @@ ip_optlen(inp)
 	struct mbuf *m = inp->inp_options;
 
 	if (m && m->m_len > offsetof(struct ipoption, ipopt_dst))
-		return(m->m_len - offsetof(struct ipoption, ipopt_dst));
+		return (m->m_len - offsetof(struct ipoption, ipopt_dst));
 	else
 		return 0;
 }

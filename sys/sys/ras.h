@@ -1,11 +1,11 @@
-/*	$NetBSD: ffs.S,v 1.2.2.3 2002/09/17 21:22:34 nathanw Exp $	*/
+/*	$NetBSD: ras.h,v 1.1.6.2 2002/09/17 21:23:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by ITOH Yasufumi.
+ * by Gregory McGarry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,68 +36,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#ifndef _SYS_RAS_H_
+#define _SYS_RAS_H_
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ffs.S,v 1.2.2.3 2002/09/17 21:22:34 nathanw Exp $")
-#endif
+#include <sys/types.h>
+#include <sys/queue.h>
 
-/*
- * ffs - find first bit set
- *
- * This code makes use of ``test 8bit'' and ``shift 8bit'' instructions.
- * The remaining 8bit is tested in every 2bit.
- */
+struct ras {
+	LIST_ENTRY(ras) ras_list;
+	caddr_t ras_startaddr;
+	caddr_t ras_endaddr;
+	int ras_hits;
+};
 
-ENTRY(ffs)
-	mov	r4,r0		! using r0 specific instructions
-	tst	#0xff,r0
-	bf/s	L8bit
-	mov	#0+1,r1		! ret = 1..8
+#define RAS_INSTALL		0
+#define RAS_PURGE		1
+#define RAS_PURGE_ALL		2
 
-	tst	r0,r0		! ffs(0) is 0
-	bt	Lzero		! testing here to accelerate ret=1..8 cases
+#ifdef _KERNEL
 
-	shlr8	r0
-	tst	#0xff,r0
-	bf/s	L8bit
-	mov	#8+1,r1		! ret = 9..16
+struct proc;
 
-	shlr8	r0
-	tst	#0xff,r0
-	bf/s	L8bit
-	mov	#16+1,r1	! ret = 17..24
+caddr_t ras_lookup(struct proc *, caddr_t);
 
-	shlr8	r0
-	mov	#24+1,r1	! ret = 25..32
+int ras_fork(struct proc *, struct proc *);
+int ras_purgeall(struct proc *);
 
-L8bit:
-	tst	#0x0f,r0
-	bt	4f
+#else
 
-	tst	#0x03,r0
-	bt	2f
-	tst	#0x01,r0	! not bit 0 -> T
-	mov	#0,r0
-	rts
-	 addc	r1,r0		! 0 + r1 + T -> r0
+__BEGIN_DECLS
+int rasctl(caddr_t, size_t, int);
+__END_DECLS
 
-2:	tst	#0x04,r0
-	mov	#2,r0
-	rts
-	 addc	r1,r0
+#endif /* _KERNEL */
 
-4:	tst	#0x30,r0
-	bt	6f
-	tst	#0x10,r0
-	mov	#4,r0
-	rts
-	 addc	r1,r0
-
-6:	tst	#0x40,r0
-	mov	#6,r0
-	rts
-	 addc	r1,r0
-
-Lzero:	rts
-	 nop
+#endif /* !_SYS_RAS_H_ */
