@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.126.2.15 2002/09/17 21:15:45 nathanw Exp $	*/
+/*	$NetBSD: locore.S,v 1.126.2.16 2002/09/17 23:56:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -506,14 +506,14 @@ cpu_switch_queuescan:
 	/*
 	 * Check for restartable atomic sequences (RAS)
 	 */
-	lw	v1, L_PROC(s7)	
+	lw	t1, L_PROC(s7)	
 	lw	a0, L_ADDR(s7)
-	lw	v1, P_NRAS(v1)
+	lw	v1, P_NRAS(t1)
 
 	addu	t0, a0, USPACE - FRAME_SIZ
 	beq	v1, zero, 1f
 	nop
-	move	a0, s7
+	move	a0, t1
 	jal	_C_LABEL(ras_lookup)
 	lw	a1, FRAME_EPC(t0)
 	lw	a0, L_ADDR(s7)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.22 2002/09/17 21:13:20 nathanw Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.23 2002/09/17 23:50:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -659,8 +659,8 @@ ENTRY(cpu_switch)
 	 * Check for restartable atomic sequences (RAS).
 	 */
 
-	ldr	r2, [r6, #(L_PROC)]
-	ldr	r2, [r2, #(P_NRAS)]
+	ldr	r5, [r6, #(L_PROC)]
+	ldr	r2, [r5, #(P_NRAS)]
 	ldr	r4, [r7, #(PCB_TF)]	/* r4 = trapframe (used below) */
 	teq	r2, #0			/* p->p_nras == 0? */
 	bne	.Lswitch_do_ras		/* no, check for one */
@@ -682,7 +682,7 @@ ENTRY(cpu_switch)
 
 .Lswitch_do_ras:
 	ldr	r1, [r4, #(TF_PC)]	/* second ras_lookup() arg */
-	mov	r0, r6			/* first ras_lookup() arg */
+	mov	r0, r5			/* first ras_lookup() arg */
 	bl	_C_LABEL(ras_lookup)
 	cmn	r0, #1			/* -1 means "not in a RAS" */
 	strne	r0, [r4, #(TF_PC)]
