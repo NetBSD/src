@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1997/01/09 20:22:24 tls Exp $
+#	$NetBSD: Makefile,v 1.14 1997/03/13 23:23:38 cgd Exp $
 
 .include "../../Makefile.inc"
 
@@ -37,7 +37,7 @@ ${MKASTOSC}:
 
 depend: .depend
 .depend: ${DEPSRCS}
-	mkdep ${MKDEP} ${CFLAGS:M-[ID]*} ${.ALLSRC:M*.c}
+	${MKDEP} ${MKDEPFLAGS} ${CFLAGS:M-[ID]*} ${.ALLSRC:M*.c}
 
 .include <bsd.prog.mk>
 
