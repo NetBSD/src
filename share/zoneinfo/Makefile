@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2002/06/10 18:47:12 mason Exp $
-
-NOOBJ=	# defined
+#	$NetBSD: Makefile,v 1.30 2002/12/19 10:56:39 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -50,20 +48,30 @@ TDATA=		$(YDATA) $(NDATA) $(SDATA)
 DATA=		$(YDATA) $(NDATA) $(SDATA) leapseconds # yearistype.sh
 USNO=		usno1988 usno1989
 
-ZIC?=zic
+ZIC?=		zic
+
+TZBUILDDIR=	${.OBJDIR}/builddir
+TZBUILDSPEC=	${.OBJDIR}/builddir.spec
 
 .PHONY:	posix_only
 posix_only: ${TDATA}
-	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L /dev/null ${TDATA}
+	mkdir -p ${TZBUILDDIR}
+	cd ${.CURDIR} && \
+	    ${ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -L /dev/null ${TDATA}
 
 .PHONY:	right_only
 right_only: leapseconds ${TDATA}
-	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L leapseconds ${TDATA}
+	mkdir -p ${TZBUILDDIR}
+	cd ${.CURDIR} && \
+	    ${ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -L leapseconds ${TDATA}
 
 .PHONY:	other_two
 other_two: leapseconds ${TDATA}
-	${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/posix -L /dev/null ${TDATA}
-	${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/right -L leapseconds ${TDATA}
+	mkdir -p ${TZBUILDDIR}
+	cd ${.CURDIR} && \
+	    ${ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR}/posix -L /dev/null ${TDATA}
+	cd ${.CURDIR} && \
+	    ${ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR}/right -L leapseconds ${TDATA}
 
 .PHONY:	posix_right
 posix_right: posix_only other_two
@@ -73,21 +81,28 @@ right_posix: right_only other_two
 
 .if ${MKSHARE} != "no"
 afterinstall: ${DATA} ${REDO}
-	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -p ${POSIXRULES}
-	find ${TZDIR} -type d | xargs chmod u=rwX,go=rX
-	find ${TZDIR} -type f | xargs chmod a=r
-.if !defined(UNPRIVED)
-	chown -R ${BINOWN}:${BINGRP} ${TZDIR}
-.else
-	find ${TZDIR} -type d | xargs -n 1 printf \
-		"%s type=dir mode=0755 uname=${BINOWN} gname=${BINGRP}\n" | \
-		sed -e 's|^/|./|g' -e 's|//|/|g' | ${CAT} -l >> ${METALOG}
-	find ${TZDIR} -type f | xargs -n 1 printf \
-		"%s type=file mode=0444 uname=${BINOWN} gname=${BINGRP}\n" | \
-		sed -e 's|^/|./|g' -e 's|//|/|g' | ${CAT} -l >> ${METALOG}
+	mkdir -p ${TZBUILDDIR}
+	cd ${.CURDIR} && \
+	    ${ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -p ${POSIXRULES}
+	cd ${TZBUILDDIR} && \
+	(   find . -type d | xargs -n 1 printf \
+		"%s type=dir mode=0755 uname=${BINOWN} gname=${BINGRP}\n" ; \
+	    find . -type f | xargs -n 1 printf \
+		"%s type=file mode=0444 uname=${BINOWN} gname=${BINGRP}\n" ; \
+	) > ${TZBUILDSPEC}
+	cd ${TZBUILDDIR} && \
+	    ${PAX} -rw ${UNPRIVED:D:U-pe} -M -N ${NETBSDSRCDIR}/etc ${TZDIR} \
+	    < ${TZBUILDSPEC}
+.if defined(UNPRIVED)
+	sed -e "s|^\.|./${TZDIR}|g" -e "s|//|/|g" < ${TZBUILDSPEC} | \
+	    ${CAT} -l >>${METALOG}
 .endif
-.else
+
+.else	# ${MKSHARE} == "no"
 afterinstall:
-.endif
+.endif	# ${MKSHARE} == "no"
+
+clean:
+	-rm -rf ${TZBUILDDIR} ${TZBUILDSPEC}
 
 .include <bsd.prog.mk>
