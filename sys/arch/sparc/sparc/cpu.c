@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.47 1997/07/07 08:44:01 hannken Exp $ */
+/*	$NetBSD: cpu.c,v 1.48 1997/07/07 20:06:46 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -323,6 +323,7 @@ void srmmu_get_fltstatus __P((void));
 void ms1_get_fltstatus __P((void));
 void viking_get_fltstatus __P((void));
 void swift_get_fltstatus __P((void));
+void turbosparc_get_fltstatus __P((void));
 void hypersparc_get_fltstatus __P((void));
 void cypress_get_fltstatus __P((void));
 
@@ -866,7 +867,7 @@ struct module_info module_turbosparc = {	/* UNTESTED */
 	0,
 	turbosparc_cache_enable,
 	256,
-	srmmu_get_fltstatus,
+	turbosparc_get_fltstatus,
 	srmmu_cache_flush,
 	srmmu_vcache_flush_page,
 	srmmu_vcache_flush_segment,

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.71 1997/06/28 19:59:05 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.72 1997/07/07 20:06:42 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5532,6 +5532,7 @@ ALTENTRY(viking_get_fltstatus)
 
 ALTENTRY(ms1_get_fltstatus)
 ALTENTRY(swift_get_fltstatus)
+ALTENTRY(turbosparc_get_fltstatus)
 	cmp	%l3, T_TEXTFAULT
 	be,a	1f
 	 mov	%l1, %o2		! use PC if type == T_TEXTFAULT
