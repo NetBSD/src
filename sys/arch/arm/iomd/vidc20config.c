@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.14 2002/09/27 15:35:46 provos Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.15 2002/10/01 12:09:49 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.14 2002/09/27 15:35:46 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.15 2002/10/01 12:09:49 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -235,7 +235,7 @@ vidcvideo_setpalette(vidc)
 	int counter = 0;
 
 	vidcvideo_write(VIDC_PALREG, 0x00000000);
-	for (counter = 0; counter < 255; counter++)
+	for (counter = 0; counter <= 255; counter++)
 		vidcvideo_write(VIDC_PALETTE, vidc->palette[counter]);
 }
 
@@ -275,6 +275,7 @@ vidcvideo_setstate(vidc)
 /*	vidcvideo_write ( VIDC_CONREG,	vidc->conreg	);	*/
 /*	vidcvideo_write ( VIDC_DCTL,		vidc->dctl	);	*/
 
+	vidcvideo_setpalette(vidc);
 }
 
 
