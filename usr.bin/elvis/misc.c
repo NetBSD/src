@@ -11,7 +11,7 @@
 /* This file contains functions which didn't seem happy anywhere else */
 
 #ifndef lint
-static char rcsid[] = "$Id: misc.c,v 1.2 1993/08/02 17:53:56 mycroft Exp $";
+static char rcsid[] = "$Id: misc.c,v 1.3 1993/11/08 05:06:17 alm Exp $";
 #endif /* not lint */
 
 
@@ -88,7 +88,7 @@ char *fetchline(line)
 
 
 /* error message from the regexp code */
-void regerror(txt)
+void regerr(txt)
 	char	*txt;	/* an error message */
 {
 	msg("RE error: %s", txt);

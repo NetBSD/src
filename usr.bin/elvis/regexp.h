@@ -4,7 +4,7 @@
  * Caveat:  this is V8 regexp(3) [actually, a reimplementation thereof],
  * not the System V one.
  *
- *	$Id: regexp.h,v 1.2 1993/08/02 17:54:07 mycroft Exp $
+ *	$Id: regexp.h,v 1.3 1993/11/08 05:06:29 alm Exp $
  */
 #define NSUBEXP  10
 
@@ -20,4 +20,4 @@ typedef struct regexp {
 extern regexp *regcomp();
 extern int regexec();
 extern void regsub();
-extern void regerror();
+extern void regerr();

@@ -13,13 +13,17 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: cmd1.c,v 1.3 1993/08/02 17:53:43 mycroft Exp $";
+static char rcsid[] = "$Id: cmd1.c,v 1.4 1993/11/08 05:06:00 alm Exp $";
 #endif /* not lint */
 
 #include "config.h"
 #include "ctype.h"
 #include "vi.h"
-#include "regexp.h"
+#ifdef REGEX
+# include <regex.h>
+#else
+# include "regexp.h"
+#endif	/* REGEX */
 
 #ifndef NO_TAGSTACK
 /* These describe the current state of the tag related commands		  */
@@ -274,7 +278,11 @@ void cmd_shell(frommark, tomark, cmd, bang, extra)
 	int	bang;
 	char	*extra;
 {
+#ifdef BSD
+	static char	*prevextra = NULL;
+#else
 	static char	prevextra[80];
+#endif
 
 	/* special case: ":sh" means ":!sh" */
 	if (cmd == CMD_SHELL)
@@ -286,14 +294,32 @@ void cmd_shell(frommark, tomark, cmd, bang, extra)
 	/* if extra is "!", substitute previous command */
 	if (*extra == '!')
 	{
-		if (!*prevextra)
+#ifdef BSD
+		if (prevextra == NULL)
+#else
+		if (*prevextra == '\0')
+#endif
 		{
 			msg("No previous shell command to substitute for '!'");
 			return;
 		}
+#ifdef BSD
+		else if ((prevextra = (char *) realloc(prevextra, 
+		    strlen(prevextra) + strlen(extra))) != NULL) {
+			strcat(prevextra, extra + 1);
+			extra = prevextra;
+		}
+#else
 		extra = prevextra;
+#endif
+
 	}
-	else if (cmd == CMD_BANG && strlen(extra) < sizeof(prevextra) - 1)
+	else if (cmd == CMD_BANG &&
+#ifdef BSD
+	    (prevextra = (char *) realloc(prevextra, strlen(extra) + 1)) != NULL)
+#else
+	 strlen(extra) < sizeof(prevextra) - 1)
+#endif
 	{
 		strcpy(prevextra, extra);
 	}
@@ -337,7 +363,11 @@ void cmd_global(frommark, tomark, cmd, bang, extra)
 	long	l;		/* used as a counter to move through lines */
 	long	lqty;		/* quantity of lines to be scanned */
 	long	nchanged;	/* number of lines changed */
+#ifdef REGEX
+	regex_t *re, *optpat();
+#else
 	regexp	*re;		/* the compiled search expression */
+#endif
 
 	/* can't nest global commands */
 	if (doingglobal)
@@ -367,13 +397,16 @@ void cmd_global(frommark, tomark, cmd, bang, extra)
 		msg("Can't use empty regular expression with '%c' command", cmd == CMD_GLOBAL ? 'g' : 'v');
 		return;
 	}
+#ifdef REGEX
+	re = optpat(extra + 1);
+#else
 	re = regcomp(extra + 1);
+#endif
 	if (!re)
 	{
 		/* regcomp found & described an error */
 		return;
 	}
-
 	/* for each line in the range */
 	doingglobal = TRUE;
 	ChangeText
@@ -394,7 +427,11 @@ void cmd_global(frommark, tomark, cmd, bang, extra)
 			line = fetchline(nlines - l);
 
 			/* if it contains the search pattern... */
+#ifdef REGEX
+			if ((!regexec(re, line, 0, NULL, 0)) == (cmd == CMD_GLOBAL))
+#else
 			if ((!regexec(re, line, 1)) == (cmd != CMD_GLOBAL))
+#endif
 			{
 				/* move the cursor to that line */
 				cursor = MARK_AT_LINE(nlines - l);
@@ -411,8 +448,10 @@ void cmd_global(frommark, tomark, cmd, bang, extra)
 	}
 	doingglobal = FALSE;
 
+#ifndef REGEX
 	/* free the regexp */
 	_free_(re);
+#endif
 
 	/* Reporting...*/
 	rptlines = nchanged;

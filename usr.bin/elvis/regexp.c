@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: regexp.c,v 1.3 1993/08/02 17:54:06 mycroft Exp $";
+static char rcsid[] = "$Id: regexp.c,v 1.4 1993/11/08 05:06:24 alm Exp $";
 #endif /* not lint */
 
 
@@ -38,10 +38,69 @@ static char rcsid[] = "$Id: regexp.c,v 1.3 1993/08/02 17:54:06 mycroft Exp $";
 #include "config.h"
 #include "ctype.h"
 #include "vi.h"
-#include "regexp.h"
+#ifdef REGEX
+# include <regex.h>
+#else
+# include "regexp.h"
+#endif
 
 
+#ifdef REGEX
+extern int patlock;		/* from cmd_substitute() module */
 
+static regex_t	*previous = NULL;	/* the previous regexp, used when null regexp is given */
+
+regex_t *
+optpat(s)
+	char *s;
+{
+	static char *neuter();
+
+	int n;
+	if (*s == '\0') {
+		if (!previous) regerr("RE error: no previous pattern");
+		return previous;
+	} else if (previous && !patlock)
+		regfree(previous);
+	else if ((previous = (regex_t *) malloc(sizeof(regex_t))) == NULL) {
+		regerr("RE error: out of memory");
+		return previous;
+	}
+	patlock = 0;
+	if (n = regcomp(previous, *o_magic ? s : neuter(s), 
+	    *o_ignorecase ? REG_ICASE : 0)) {
+		regerr("RE error: %d", n);
+		free(previous);
+		return previous = NULL;
+	}
+	return previous;
+}
+
+/* escape BRE meta-characters in a string */
+static char *
+neuter(s)
+	char *s;
+{
+	static char *hd = NULL;
+
+	char *t;
+	int n = strlen(s);
+
+	free(hd);
+	if ((hd = t = (char *) malloc(n + n + 1)) == NULL)
+		return NULL;
+	if (*s == '^')
+		*t++ = *s++;
+	while (*s) {
+		if (*s == '.' || *s == '\\' || *s == '[' || *s == '*')
+			*t++ = '\\';
+		*t++ = *s++;
+	}
+	*t = '\0';
+	return hd;
+}
+
+#else
 static char	*previous;	/* the previous regexp, used when null regexp is given */
 
 
@@ -83,7 +142,7 @@ static char	*retext;	/* points to the text being compiled */
 
 /* error-handling stuff */
 jmp_buf	errorhandler;
-#define FAIL(why)	regerror(why); longjmp(errorhandler, 1)
+#define FAIL(why)	regerr(why); longjmp(errorhandler, 1)
 
 
 
@@ -844,7 +903,7 @@ regexp *regcomp(exp)
 #endif
 	if (!re)
 	{
-		regerror("Could not malloc a regexp structure");
+		regerr("Could not malloc a regexp structure");
 		return (regexp *)0;
 	}
 
@@ -894,7 +953,7 @@ regexp *regcomp(exp)
 			}
 			else
 			{
-				regerror("extra \\ at end of regular expression");
+				regerr("extra \\ at end of regular expression");
 			}
 			break;
 
@@ -974,3 +1033,4 @@ int regexec(prog, string, bolflag)
 	return rc == 1;
 }
 #endif
+#endif /* !REGEX */
