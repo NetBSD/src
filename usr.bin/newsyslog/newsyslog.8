@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.16 2000/07/18 15:59:24 ad Exp $
+.\"	$NetBSD: newsyslog.8,v 1.17 2000/08/09 13:57:22 ad Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -161,8 +161,7 @@ If a time is specified, the log file will only be trimmed if
 is run within one hour of the specified time.  If an 
 interval is specified, the log file will be trimmed if that many hours have
 passed since the last rotation.  When both a time and an interval are
-specified, both conditions must be satisfied for the rotation to take
-place.
+specified, the log will be trimmed if either condition is met.
 .Pp
 There is no provision for specification of a timezone.  There is
 little point in specifying an explicit minutes or seconds component in
