@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.h,v 1.7 2003/01/21 04:06:08 matt Exp $ */
+/*	$NetBSD: mach_thread.h,v 1.8 2003/01/26 12:39:32 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -101,6 +101,5 @@ typedef struct {
 int mach_thread_policy(struct mach_trap_args *);
 int mach_thread_create_running(struct mach_trap_args *);
 void mach_create_thread_child(void *);
-void mach_copy_right(struct lwp *, struct lwp *);
 
 #endif /* _MACH_THREAD_H_ */
