@@ -1,4 +1,4 @@
-/*	$NetBSD: check_bound.c,v 1.1 2000/06/02 23:15:41 fvdl Exp $	*/
+/*	$NetBSD: check_bound.c,v 1.1.2.1 2000/06/23 08:15:13 hannken Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -92,12 +92,15 @@ check_bound(struct fdlist *fdl, char *uaddr)
 		return (TRUE); /* punt, should never happen */
 
 	fd = __rpc_nconf2fd(fdl->nconf);
-	if (fd < 0)
+	if (fd < 0) {
+		free(na);
 		return (TRUE);
+	}
 
 	ans = bind(fd, (struct sockaddr *)na->buf, na->len);
 
 	close(fd);
+	free(na);
 
 	return (ans == 0 ? FALSE : TRUE);
 }
@@ -154,7 +157,7 @@ char *
 mergeaddr(SVCXPRT *xprt, char *netid, char *uaddr, char *saddr)
 {
 	struct fdlist *fdl;
-	char *c_uaddr, *s_uaddr, *m_uaddr;
+	char *c_uaddr, *s_uaddr, *m_uaddr, *allocated_uaddr = NULL;
 
 	for (fdl = fdhead; fdl; fdl = fdl->next)
 		if (strcmp(fdl->nconf->nc_netid, netid) == 0)
@@ -178,6 +181,7 @@ mergeaddr(SVCXPRT *xprt, char *netid, char *uaddr, char *saddr)
 				fdl->nconf->nc_netid);
 			return (NULL);
 		}
+		allocated_uaddr = c_uaddr;
 	}
 
 #ifdef ND_DEBUG
@@ -201,6 +205,8 @@ mergeaddr(SVCXPRT *xprt, char *netid, char *uaddr, char *saddr)
 		fprintf(stderr, "mergeaddr: uaddr = %s, merged uaddr = %s\n",
 				uaddr, m_uaddr);
 #endif
+	if (allocated_uaddr != NULL)
+		free(allocated_uaddr);
 	return (m_uaddr);
 }
 
