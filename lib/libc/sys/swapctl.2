@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.2,v 1.7 1997/10/16 23:13:24 christos Exp $
+.\"	$NetBSD: swapctl.2,v 1.8 1998/02/03 15:37:36 perry Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" Copyright (c) 1980, 1991, 1993
@@ -137,12 +137,12 @@ command is used.
 If the
 .Fa cmd
 parameter is
-.Dv SWAP_NSTATS
+.Dv SWAP_NSWAP
 or
 .Dv SWAP_STATS ,
 .Fn swapctl
 returns the number of swap devices, if successful.  The
-.Dv SWAP_NSTATS
+.Dv SWAP_NSWAP
 command is always successful.  Otherwise it returns 0 on success and -1
 on failure, setting the global variable
 .Va errno
