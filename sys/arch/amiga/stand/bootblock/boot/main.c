@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.8 1998/05/08 23:03:49 chopps Exp $
+ * $NetBSD: main.c,v 1.9 1998/10/31 22:40:27 is Exp $
  *
  *
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -79,7 +79,7 @@ int get_cpuid __P((u_int32_t *));
 static long get_number(char **);
 
 const char version[] = "2.0";
-char default_command[] = "netbsd -AS";
+char default_command[] = "netbsd -ASn2";
 
 int
 pain()
@@ -110,7 +110,7 @@ pain()
 
 	caddr_t kp;
 	u_int16_t *kvers;
-	struct exec *eh;
+	struct exec ehs;
 	int	textsz, ksize;
 	void	*esym = 0;
 	int32_t *nkcd;
@@ -320,35 +320,30 @@ pain()
 	if (io < 0)
 		goto err;
 
-	eh = alloc(sizeof(*eh));
-	if (!eh) {
-		errno = ENOMEM;
-		goto err;
-	}
-	if (read(io, eh, sizeof(*eh)) != sizeof(*eh)) {
+	if (read(io, &ehs, sizeof(ehs)) != sizeof(ehs)) {
 		errno = ENOEXEC;
 		goto err;
 	}
 
-	if ((N_GETMAGIC(*eh) != NMAGIC) || (N_GETMID(*eh) != MID_M68K)) {
+	if ((N_GETMAGIC(ehs) != NMAGIC) || (N_GETMID(ehs) != MID_M68K)) {
 		errno = ENOEXEC;
 		goto err;
 	}
 		
-	textsz = (eh->a_text + __LDPGSZ - 1) & (-__LDPGSZ);
+	textsz = (ehs.a_text + __LDPGSZ - 1) & (-__LDPGSZ);
 	esym = 0;
 
-	ksize = textsz + eh->a_data + eh->a_bss 
+	ksize = textsz + ehs.a_data + ehs.a_bss 
 	    + sizeof(*nkcd) + ncd*sizeof(*cd)
 	    + sizeof(*nkcd) + nseg * sizeof(struct boot_memseg);
 
-	if (S_flag && eh->a_syms) {
-		if (lseek(io, eh->a_text+ eh->a_data+ eh->a_syms, SEEK_CUR)
+	if (S_flag && ehs.a_syms) {
+		if (lseek(io, ehs.a_text+ ehs.a_data+ ehs.a_syms, SEEK_CUR)
 		    <= 0
 		    || read(io, &stringsz, 4) != 4
-		    || lseek(io, sizeof(*eh), SEEK_SET) < 0)
+		    || lseek(io, sizeof(ehs), SEEK_SET) < 0)
 			goto err;
-		ksize += eh->a_syms + 4 + ((stringsz + 3) & ~3);
+		ksize += ehs.a_syms + 4 + ((stringsz + 3) & ~3);
 	}
 
 	kp = alloc(ksize + 256 + ((u_char *)startit_end - (u_char *)startit));
@@ -357,17 +352,17 @@ pain()
 		goto err;
 	}
 
-	printf("%ld", eh->a_text);
-	if (read(io, kp, eh->a_text) != eh->a_text)
+	printf("%ld", ehs.a_text);
+	if (read(io, kp, ehs.a_text) != ehs.a_text)
 		goto err;
 
-	printf("+%ld", eh->a_data);
-	if (read(io, kp + textsz, eh->a_data) != eh->a_data)
+	printf("+%ld", ehs.a_data);
+	if (read(io, kp + textsz, ehs.a_data) != ehs.a_data)
 		goto err;
 
-	printf("+%ld", eh->a_bss);
+	printf("+%ld", ehs.a_bss);
 
-	kvers = (u_short *)(kp + eh->a_entry - 2);
+	kvers = (u_short *)(kp + ehs.a_entry - 2);
 
 	if (*kvers > KERNEL_STARTUP_VERSION_MAX && *kvers != 0x4e73) {
                 printf("\nnewer bootblock required: %ld\n", (long)*kvers);
@@ -382,19 +377,19 @@ pain()
 		printf("\nKernel V%ld newer than bootblock V%ld\n",
 		    (long)*kvers, (long)KERNEL_STARTUP_VERSION);
 #endif
-        nkcd = (int *)(kp + textsz + eh->a_data + eh->a_bss);
-        if (*kvers != 0x4e73 && *kvers > 1 && S_flag && eh->a_syms) {
-                *nkcd++ = eh->a_syms;
-		printf("+[%ld", eh->a_syms);
-                if (read(io, (char *)nkcd, eh->a_syms) != eh->a_syms)
+        nkcd = (int *)(kp + textsz + ehs.a_data + ehs.a_bss);
+        if (*kvers != 0x4e73 && *kvers > 1 && S_flag && ehs.a_syms) {
+                *nkcd++ = ehs.a_syms;
+		printf("+[%ld", ehs.a_syms);
+                if (read(io, (char *)nkcd, ehs.a_syms) != ehs.a_syms)
 			goto err;
-                nkcd = (int *)((char *)nkcd + eh->a_syms);
+                nkcd = (int *)((char *)nkcd + ehs.a_syms);
 		printf("+%ld]", stringsz);
                 if (read(io, (char *)nkcd, stringsz) != stringsz)
 			goto err;
                 nkcd = (int*)((char *)nkcd + ((stringsz + 3) & ~3));
-                esym = (char *)(textsz + eh->a_data + eh->a_bss
-                    + eh->a_syms + 4 + ((stringsz + 3) & ~3));
+                esym = (char *)(textsz + ehs.a_data + ehs.a_bss
+                    + ehs.a_syms + 4 + ((stringsz + 3) & ~3));
         }
 	putchar('\n');
 
@@ -434,7 +429,7 @@ pain()
 		"fmem=0x%lx, fmemsz=%ld, cmemsz=%ld\n"
 		"boothow=0x%lx, esym=0x%lx, cpuid=0x%lx, eclock=%ld\n"
 		"amigaflags=0x%lx, I_flags=0x%lx, ok?\n",
-	    (u_long)kp, (u_long)ksize, eh->a_entry,
+	    (u_long)kp, (u_long)ksize, ehs.a_entry,
 	    (u_long)fmem, (u_long)fmemsz, (u_long)cmemsz,
 	    (u_long)boothowto, (u_long)esym, (u_long)cpuid, (u_long)eclock,
 	    (u_long)amiga_flags, (u_long)I_flag);
@@ -446,14 +441,13 @@ pain()
 #endif
 	(void)getchar();
 
-	start_it(kp, ksize, eh->a_entry, (void *)fmem, fmemsz, cmemsz,
+	start_it(kp, ksize, ehs.a_entry, (void *)fmem, fmemsz, cmemsz,
 	    boothowto, esym, cpuid, eclock, amiga_flags, I_flag,
 	    aio_base >> 9, 1);
 	/*NOTREACHED*/
 
 freeall:
 	free(kp, ksize);
-	free(eh, sizeof(*eh));
 err:
 	printf("\nError %ld\n", (long)errno);
 	close(io);
