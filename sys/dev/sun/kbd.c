@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.18 1997/11/03 05:05:45 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.19 1997/11/03 20:18:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1416,7 +1416,7 @@ kbd_set_leds(k, new_leds)
 	ks->kbd_leds = new_leds;
 
 	/* Only type 4 and later has LEDs anyway. */
-	if (ks->kbd_id < 4)
+	if (ks->kbd_id < KB_SUN4)
 		return;
 
 	kbd_output(k, KBD_CMD_SETLED);
