@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 1994/12/06 10:39:40 pk Exp $ */
+/*	$NetBSD: boot.c,v 1.9 1994/12/11 15:18:34 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@ copyunix(io, addr)
 			reset_twiddle();
 			addr += i;
 		}
-		printf("%d] ", i);
+		printf("%d]", i);
 		esym = KERNBASE +
 			(((int)addr + sizeof(int) - 1) & ~(sizeof(int) - 1));
 	}
