@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.27 2000/09/13 02:11:15 nisimura Exp $ */
+/* $NetBSD: tfb.c,v 1.28 2000/10/27 07:24:04 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.27 2000/09/13 02:11:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.28 2000/10/27 07:24:04 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,7 +385,9 @@ tfbattach(parent, self, aux)
 	struct tfb_softc *sc = (struct tfb_softc *)self;
 	struct tc_attach_args *ta = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	int console;
+	struct hwcmap256 *cm;
+	const u_int8_t *p;
+	int console, index;
 
 	console = (ta->ta_addr == tfb_consaddr);
 	if (console) {
@@ -399,7 +401,13 @@ tfbattach(parent, self, aux)
 	}
 	printf(": %d x %d, 8,24bpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht);
 
-	memcpy(&sc->sc_cmap, rasops_cmap, sizeof(struct hwcmap256));
+	cm = &sc->sc_cmap;
+	p = rasops_cmap;
+	for (index = 0; index < CMAP_SIZE; index++, p += 3) {
+		cm->r[index] = p[0];
+		cm->g[index] = p[1];
+		cm->b[index] = p[2];
+	}
 
 	sc->sc_cursor.cc_magic.x = TX_MAGIC_X;
 	sc->sc_cursor.cc_magic.y = TX_MAGIC_Y;
@@ -662,6 +670,7 @@ tfbinit(dc)
 	caddr_t tfbbase = (caddr_t)dc->dc_vaddr;
 	void *vdac = (void *)(tfbbase + TX_BT463_OFFSET);
 	void *curs = (void *)(tfbbase + TX_BT431_OFFSET);
+	const u_int8_t *p;
 	int i;
 
 	SELECT463(vdac, BT463_IREG_COMMAND_0);
@@ -695,13 +704,11 @@ tfbinit(dc)
 #endif
 
 	SELECT463(vdac, BT463_IREG_CPALETTE_RAM);
-	for (i = 0; i < 256; i++) {
-		BYTE(vdac, bt_cmap) = rasops_cmap[3 * i + 0];
-		tc_wmb();
-		BYTE(vdac, bt_cmap) = rasops_cmap[3 * i + 1];
-		tc_wmb();
-		BYTE(vdac, bt_cmap) = rasops_cmap[3 * i + 2];
-		tc_wmb();
+	p = rasops_cmap;
+	for (i = 0; i < 256; i++, p += 3) {
+		BYTE(vdac, bt_cmap) = p[0];	tc_wmb();
+		BYTE(vdac, bt_cmap) = p[1];	tc_wmb();
+		BYTE(vdac, bt_cmap) = p[2];	tc_wmb();
 	}
 
 	/* !? Eeeh !? */
