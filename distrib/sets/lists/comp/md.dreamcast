@@ -1,4 +1,4 @@
-# $NetBSD: md.dreamcast,v 1.1 2002/04/26 19:17:38 groo Exp $
+# $NetBSD: md.dreamcast,v 1.2 2002/05/03 12:10:57 wiz Exp $
 ./usr/include/dreamcast				comp-c-include
 ./usr/include/dreamcast/_G_config.h		comp-c-include
 ./usr/include/dreamcast/ansi.h			comp-c-include
@@ -45,4 +45,3 @@
 ./usr/include/dreamcast/types.h			comp-c-include
 ./usr/include/dreamcast/varargs.h		comp-c-include
 ./usr/include/dreamcast/vmparam.h		comp-c-include
-
