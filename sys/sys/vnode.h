@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.48 1998/03/01 02:24:16 fvdl Exp $	*/
+/*	$NetBSD: vnode.h,v 1.49 1998/03/01 09:35:52 ross Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -228,18 +228,25 @@ extern int		vttoif_tab[];
 #define	VREF(vp)	vref(vp)
 
 #ifdef DIAGNOSTIC
+#define	ilstatic
+#else
+#define	ilstatic static
+#endif
+
+ilstatic void holdrele __P((struct vnode *));
+ilstatic void vhold __P((struct vnode *));
+ilstatic void vref __P((struct vnode *));
+
+#ifdef DIAGNOSTIC
+void vattr_null __P((struct vattr *));
 #define	VATTR_NULL(vap)	vattr_null(vap)
-void	holdrele __P((struct vnode *));
-void	vattr_null __P((struct vattr *));
-void	vhold __P((struct vnode *));
-void	vref __P((struct vnode *));
 #else
 #define	VATTR_NULL(vap)	(*(vap) = va_null)	/* initialize a vattr */
 
 /*
  * decrease buf or page ref
  */
-static __inline
+static __inline void
 holdrele(vp)
 	struct vnode *vp;
 {
@@ -251,7 +258,7 @@ holdrele(vp)
 /*
  * increase buf or page ref
  */
-static __inline
+static __inline void
 vhold(vp)
 	struct vnode *vp;
 {
@@ -263,7 +270,7 @@ vhold(vp)
 /*
  * increase reference
  */
-static __inline
+static __inline void
 vref(vp)
 	struct vnode *vp;
 {
