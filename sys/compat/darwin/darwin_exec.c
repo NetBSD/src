@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.35 2004/06/24 17:02:06 drochner Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.36 2004/07/03 00:14:30 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.35 2004/06/24 17:02:06 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.36 2004/07/03 00:14:30 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.35 2004/06/24 17:02:06 drochner Ex
 
 #include <dev/wscons/wsconsio.h>
 
+#include <machine/darwin_machdep.h>
+
 #include <compat/common/compat_util.h>
 
 #include <compat/mach/mach_types.h>
@@ -65,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.35 2004/06/24 17:02:06 drochner Ex
 #include <compat/mach/mach_port.h>
 
 #include <compat/darwin/darwin_exec.h>
+#include <compat/darwin/darwin_commpage.h>
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscall.h>
 #include <compat/darwin/darwin_sysctl.h>
@@ -144,6 +147,15 @@ exec_darwin_copyargs(p, pack, arginfo, stackp, argp)
 	long argc, envc;
 	int error;
 
+	/* 
+	 * Prepare the comm pages
+	 */
+	if ((error = darwin_commpage_map(p)) != 0)
+		return error;
+
+	/*
+	 * Set up the stack
+	 */
 	*stackp = (char *)(((unsigned long)*stackp - 1) & ~0xfUL);
 
 	emea = (struct exec_macho_emul_arg *)pack->ep_emul_arg;
@@ -384,4 +396,48 @@ darwin_e_proc_exit(p)
 	mach_e_proc_exit(p);
 
 	return;
+}
+
+int
+darwin_exec_setup_stack(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	u_long max_stack_size;
+	u_long access_linear_min, access_size;
+	u_long noaccess_linear_min, noaccess_size;
+
+	if (epp->ep_flags & EXEC_32) {
+		epp->ep_minsaddr = DARWIN_USRSTACK32;
+		max_stack_size = MAXSSIZ;
+	} else {
+		epp->ep_minsaddr = DARWIN_USRSTACK;
+		max_stack_size = MAXSSIZ;
+	}
+	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr, 
+		max_stack_size);
+	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+
+	/*
+	 * set up commands for stack.  note that this takes *two*, one to
+	 * map the part of the stack which we can access, and one to map
+	 * the part which we can't.
+	 *
+	 * arguably, it could be made into one, but that would require the
+	 * addition of another mapping proc, which is unnecessary
+	 */
+	access_size = epp->ep_ssize;
+	access_linear_min = (u_long)STACK_ALLOC(epp->ep_minsaddr, access_size);
+	noaccess_size = max_stack_size - access_size;
+	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr, 
+	    access_size), noaccess_size);
+	if (noaccess_size > 0) {
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
+		    noaccess_linear_min, NULL, 0, VM_PROT_NONE);
+	}
+	KASSERT(access_size > 0);
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
+	    access_linear_min, NULL, 0, VM_PROT_READ | VM_PROT_WRITE);
+
+	return 0;
 }
