@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.17 1998/10/29 20:12:56 bad Exp $
+.\"	$NetBSD: shutdown.8,v 1.17.10.1 2000/07/20 18:48:57 jdolecek Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)shutdown.8	8.2 (Berkeley) 4/27/95
 .\"
-.Dd January 20, 1998
+.Dd July 20, 2000
 .Dt SHUTDOWN 8
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl Ddfhknpr
+.Op Fl T Ar timeout
 .Ar time
 .Op Ar message ... | Ar -
 .Sh DESCRIPTION
@@ -69,6 +70,13 @@ flags are specified, then
 .Fl d
 also implies
 .Fl r .
+.It Fl D
+Prevents
+.Nm
+from detaching from the tty with
+.Xr fork 2
+and
+.Xr exit 3 .
 .It Fl f
 .Nm
 arranges, in the manner of
@@ -110,12 +118,12 @@ when
 .Nm
 execs
 .Xr reboot 8 .
-.It Fl D
-Prevents
-.Nm
-from detaching from the tty with
-.Xr fork 2 /
-.Xr exit 3 .
+.It Fl T
+Timeout in seconds to wait for
+.Pa /etc/rc.shutdown
+to finish. After
+this period, the script is killed and system shutdown proceeds.
+Default is 300 seconds (5 minutes).
 .It Ar time
 .Ar Time
 is the time at which
@@ -169,8 +177,12 @@ time of shutdown, who initiated the shutdown and the reason.
 Next a message is printed announcing the start of the system shutdown hooks.
 Then the shutdown hooks in
 .Pa /etc/rc.shutdown
-are run.
-And a message is printed indicating that they have completed.
+are run. If they don't complete within timeout (see
+.Fl T ,
+default 5 minutes), the script is killed and
+.Nm
+proceeds with system shutdown.
+In either case, a message is printed indicating that they have completed.
 After a short delay a terminate
 signal is then sent to
 .Xr init 8
@@ -204,3 +216,9 @@ The
 .Nm
 command appeared in
 .Bx 4.0 .
+Running of shutdown hooks in
+.Pa /etc/rc.shutdown
+and
+.Fl T
+option have been added in
+.Nx 1.5 .
