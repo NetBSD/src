@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.49 2002/03/21 00:48:43 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.49.2.1 2002/03/26 17:20:11 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,6 +115,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+#include <sys/properties.h>
 
 #include <machine/bus.h>
 #include <sparc64/sparc64/cache.h>
@@ -128,6 +129,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/sparc64.h>
+#include <machine/openfirm.h>
 
 #ifdef DEBUG
 #define SDB_DVMA	0x1
@@ -152,7 +154,7 @@ static int _sbus_bus_map __P((
 		int,			/*flags*/
 		vaddr_t,			/* XXX unused -- compat w/sparc */
 		bus_space_handle_t *));
-static void *sbus_intr_establish __P((
+static void *_sbus_intr_establish __P((
 		bus_space_tag_t,
 		int,			/*Sbus interrupt level*/
 		int,			/*`device class' priority*/
@@ -192,25 +194,6 @@ int sbus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 			 int nsegs, size_t size, caddr_t *kvap, int flags));
 void sbus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 			    size_t size));
-
-/*
- * Child devices receive the Sbus interrupt level in their attach
- * arguments. We translate these to CPU IPLs using the following
- * tables. Note: obio bus interrupt levels are identical to the
- * processor IPL.
- *
- * The second set of tables is used when the Sbus interrupt level
- * cannot be had from the PROM as an `interrupt' property. We then
- * fall back on the `intr' property which contains the CPU IPL.
- */
-
-/*
- * This value is or'ed into the attach args' interrupt level cookie
- * if the interrupt level comes from an `intr' property, i.e. it is
- * not an Sbus interrupt level.
- */
-#define SBUS_INTR_COMPAT	0x80000000
-
 
 /*
  * Print the location of some sbus-attached device (called just
@@ -266,8 +249,8 @@ sbus_attach(parent, self, aux)
 	int ipl;
 	char *name;
 	int node = ma->ma_node;
-
 	int node0, error;
+	size_t size;
 	bus_space_tag_t sbt;
 	struct sbus_attach_args sa;
 
@@ -299,24 +282,37 @@ sbus_attach(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 
-		25*1000*1000);
+	if (dev_getprop(self, "clock-frequency", &sc->sc_clockfreq,
+		sizeof (sc->sc_clockfreq), NULL, 0) != 
+		sizeof (sc->sc_clockfreq))
+		sc->sc_clockfreq = 25*1000*1000;
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbt = sbus_alloc_bustag(sc);
+	dev_setprop(self, "bustag", &sbt, sizeof(sbt), PROP_INT, 0);
 	sc->sc_dmatag = sbus_alloc_dmatag(sc);
+	dev_setprop(self, "dmatag", &sc->sc_dmatag, sizeof(sc->sc_dmatag), 
+		PROP_INT, 0);
 
 	/*
 	 * Get the SBus burst transfer size if burst transfers are supported
 	 */
-	sc->sc_burst = PROM_getpropint(node, "burst-sizes", 0);
+	sc->sc_burst = 0;
+	dev_getprop(self, "burst-sizes", &sc->sc_burst,	sizeof (sc->sc_burst), 
+		NULL, 0);
 
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = PROM_getprop(node, "ranges", sizeof(struct sbus_range),
-			 &sc->sc_nrange, (void **)&sc->sc_range);
-	if (error)
+	size = dev_getprop(self, "ranges", NULL, 0, 0, 0);
+#ifdef DIAGNOSTIC
+	if (size == -1 || size % sizeof (struct sbus_range) != 0)
+		panic("sbus_attach: bogus \"ranges\" size %lx", size);
+#endif
+	sc->sc_nrange = size / sizeof (struct sbus_range);
+	sc->sc_range = malloc(size, M_DEVBUF, M_NOWAIT);
+	error = dev_getprop(self, "ranges", sc->sc_range, size, NULL, 0);
+	if (error != size)
 		panic("%s: error getting ranges property", sc->sc_dev.dv_xname);
 
 	/* initialize the IOMMU */
@@ -372,44 +368,61 @@ sbus_attach(parent, self, aux)
 	 * `specials' is an array of device names that are treated
 	 * specially:
 	 */
-	node0 = firstchild(node);
-	for (node = node0; node; node = nextsibling(node)) {
-		char *name = PROM_getpropstring(node, "name");
+	dev_setprop(self, "bus-tag", &sbt, sizeof(sbt), PROP_INT, 0);
+	dev_setprop(self, "dma-tag", &sc->sc_dmatag, sizeof(sc->sc_dmatag), 
+		PROP_INT, 0);
 
-		if (sbus_setup_attach_args(sc, sbt, sc->sc_dmatag,
-					   node, &sa) != 0) {
+	node0 = OF_child(node);
+	for (node = node0; node; node = OF_peer(node)) {
+		struct device *child;
+
+		if ((child = sbus_setup_attach_args(self, sbt, sc->sc_dmatag,
+						    node, &sa)) == 0) {
+			char name[32];
+
+			OF_getprop(node, "name", name, sizeof(name));
+			name[sizeof(name) -1] = 0;
 			printf("sbus_attach: %s: incomplete\n", name);
 			continue;
 		}
-		(void) config_found(&sc->sc_dev, (void *)&sa, sbus_print);
+		(void) config_found_sad(self, (void *)&sa, sbus_print, 
+					NULL, child);
 		sbus_destroy_attach_args(&sa);
 	}
 }
 
-int
-sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
-	struct sbus_softc	*sc;
+struct device *
+sbus_setup_attach_args(parent, bustag, dmatag, node, sa)
+	struct device		*parent;
 	bus_space_tag_t		bustag;
 	bus_dma_tag_t		dmatag;
 	int			node;
 	struct sbus_attach_args	*sa;
 {
-	/*struct	sbus_reg sbusreg;*/
-	/*int	base;*/
+	struct sbus_softc	*sc = DEV_PRIVATE(parent);
+	struct device *dev;
 	int	error;
 	int n;
 
+	dev = dev_config_create(parent, 1);
+	if (!dev) 
+		return (NULL);
 	bzero(sa, sizeof(struct sbus_attach_args));
+
+	/* Get the "name" property. */
 	error = PROM_getprop(node, "name", 1, &n, (void **)&sa->sa_name);
 	if (error != 0)
-		return (error);
+		return (NULL);
 	sa->sa_name[n] = '\0';
 
 	sa->sa_bustag = bustag;
 	sa->sa_dmatag = dmatag;
 	sa->sa_node = node;
+	/* Node must be registered since we need that to query the PROM */
+	dev_setprop(dev, "node", &node, sizeof(node), PROP_INT, 0);
 	sa->sa_frequency = sc->sc_clockfreq;
 
+	/* Get the "reg" property */
 	error = PROM_getprop(node, "reg", sizeof(struct sbus_reg),
 			 &sa->sa_nreg, (void **)&sa->sa_reg);
 	if (error != 0) {
@@ -417,8 +430,10 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 		if (error != ENOENT ||
 		    !node_has_property(node, "device_type") ||
 		    strcmp(PROM_getpropstringA(node, "device_type", buf),
-			   "hierarchical") != 0)
-			return (error);
+			   "hierarchical") != 0) {
+			config_detach(dev, 0);
+			return (NULL);
+		}
 	}
 	for (n = 0; n < sa->sa_nreg; n++) {
 		/* Convert to relative addressing, if necessary */
@@ -428,17 +443,41 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 			sa->sa_reg[n].sbr_offset = SBUS_ABS_TO_OFFSET(base);
 		}
 	}
+	/* Whole `reg' for those w/multiple registers */
+#if 0
+	dev_setprop(dev, "reg", (void *)sa->sa_reg, 
+		    sa->sa_nreg * sizeof(struct sbus_reg), PROP_AGGREGATE, 0);
+#endif
+
+	dev_setprop(dev, "slot", (void *)&sa->sa_reg[0].sbr_slot, 
+		    sizeof(sa->sa_reg[0].sbr_slot), PROP_INT, 0);
+	dev_setprop(dev, "offset", (void *)&sa->sa_reg[0].sbr_offset, 
+		    sizeof(sa->sa_reg[0].sbr_offset), PROP_INT, 0);
+	dev_setprop(dev, "size", (void *)&sa->sa_reg[0].sbr_size, 
+		    sizeof(sa->sa_reg[0].sbr_size), PROP_INT, 0);
 
 	if ((error = sbus_get_intr(sc, node, &sa->sa_intr, &sa->sa_nintr,
-	    sa->sa_slot)) != 0)
-		return (error);
+				   sa->sa_slot)) != 0) {
+		config_detach(dev, 0);
+		return (NULL);
+	}
+	if (sa->sa_nintr > 0)
+		dev_setprop(dev, "pri", (void *)&sa->sa_pri,
+		    sizeof(&sa->sa_pri), PROP_INT, 0);
 
 	error = PROM_getprop(node, "address", sizeof(u_int32_t),
-			 &sa->sa_npromvaddrs, (void **)&sa->sa_promvaddrs);
-	if (error != 0 && error != ENOENT)
-		return (error);
+		&sa->sa_npromvaddrs, (void **)&sa->sa_promvaddrs);
+#if 0
+	if (sa->sa_npromvaddrs)
+		dev_setprop(dev, "address", (void *)sa->sa_promvaddrs,
+			sa->sa_npromvaddrs * sizeof(u_int32_t), PROP_INT, 0);
+#endif
+	if (error != 0 && error != ENOENT) {
+		config_detach(dev, 0);
+		return (NULL);
+	}
 
-	return (0);
+	return (dev);
 }
 
 void
@@ -513,7 +552,6 @@ sbus_bus_addr(t, btype, offset)
 		baddr = sc->sc_range[i].poffset + offset;
 		baddr |= ((bus_addr_t)sc->sc_range[i].pspace<<32);
 	}
-
 	return (baddr);
 }
 
@@ -613,7 +651,8 @@ sbus_get_intr(sc, node, ipp, np, slot)
 	 * The `interrupts' property contains the Sbus interrupt level.
 	 */
 	ipl = NULL;
-	if (PROM_getprop(node, "interrupts", sizeof(int), np, (void **)&ipl) == 0) {
+	if (PROM_getprop(node, "interrupts", sizeof(int), np, (void **)&ipl) == 
+		0) {
 		struct sbus_intr *ip;
 		int pri;
 
@@ -672,7 +711,110 @@ sbus_get_intr(sc, node, ipp, np, slot)
  * Install an interrupt handler for an Sbus device.
  */
 void *
-sbus_intr_establish(t, pri, level, flags, handler, arg)
+sbus_intr_establish(self, pri, index, handler, arg)
+	struct device *self;
+	int pri;	/* S/W priority */
+	int index;	/* Index into "interrupts" property */
+	int (*handler) __P((void *));
+	void *arg;
+{
+	struct sbus_softc *sc = (struct sbus_softc *)
+		DEV_PRIVATE(self->dv_parent);
+	struct intrhand *ih;
+	long vec;
+
+	ih = (struct intrhand *)
+		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
+	if (ih == NULL)
+		return (NULL);
+
+	if (index != -1) {
+		int interrupts[8];
+		int err;
+
+#ifdef DIAGNOSTIC
+		if (index > 7) panic("sbus_intr_establish: index > 7");
+#endif
+		err = dev_getprop(self, "interrupts", &interrupts, 
+			sizeof(interrupts), NULL, 0);
+		if ((err == -1) || (index > (err / sizeof (int)))) {
+			panic("sbus_intr_establish: cannot get interrupts: %x",
+				err);
+		}
+
+		/* Decode and remove IPL */
+		vec = interrupts[index];
+		DPRINTF(SDB_INTR,
+		    ("\nsbus: intr[%ld]%lx: %lx\nHunting for IRQ...\n",
+		    (long)pri, (long)vec, (u_long)intrlev[vec]));
+		if ((vec & INTMAP_OBIO) == 0) {
+			/* We're in an SBUS slot */
+			/* Register the map and clear intr registers */
+			int slot = INTSLOT(pri);
+
+			ih->ih_map = &(&sc->sc_sysio->sbus_slot0_int)[slot];
+			ih->ih_clr = &sc->sc_sysio->sbus0_clr_int[vec];
+#ifdef DEBUG
+			if (sbus_debug & SDB_INTR) {
+				int64_t intrmap = *ih->ih_map;
+				
+				printf("SBUS %lx IRQ as %llx in slot %d\n", 
+				       (long)vec, (long long)intrmap, slot);
+				printf("\tmap addr %p clr addr %p\n",
+				    ih->ih_map, ih->ih_clr);
+			}
+#endif
+			/* Enable the interrupt */
+			vec |= INTMAP_V;
+			/* Insert IGN */
+			vec |= sc->sc_ign;
+			/* XXXX */
+			*(ih->ih_map) = vec;
+		} else {
+			int64_t *intrptr = &sc->sc_sysio->scsi_int_map;
+			int64_t intrmap = 0;
+			int i;
+
+			/* Insert IGN */
+			vec |= sc->sc_ign;
+			for (i = 0; &intrptr[i] <=
+			    (int64_t *)&sc->sc_sysio->reserved_int_map &&
+			    INTVEC(intrmap = intrptr[i]) != INTVEC(vec); i++)
+				;
+			if (INTVEC(intrmap) == INTVEC(vec)) {
+				DPRINTF(SDB_INTR,
+				    ("OBIO %lx IRQ as %lx in slot %d\n", 
+				    vec, (long)intrmap, i));
+				/* Register the map and clear intr registers */
+				ih->ih_map = &intrptr[i];
+				intrptr = (int64_t *)
+					&sc->sc_sysio->scsi_clr_int;
+				ih->ih_clr = &intrptr[i];
+				/* Enable the interrupt */
+				intrmap |= INTMAP_V;
+				/* XXXX */
+				*(ih->ih_map) = intrmap;
+			} else
+				panic("IRQ not found!");
+		}
+	}
+#ifdef DEBUG
+	if (sbus_debug & SDB_INTR) { long i; for (i = 0; i < 400000000; i++); }
+#endif
+
+	ih->ih_fun = handler;
+	ih->ih_arg = arg;
+	ih->ih_number = vec;
+	ih->ih_pil = (1<<pri);
+	intr_establish(pri, ih);
+	return (ih);
+}
+
+/*
+ * Install an interrupt handler for an Sbus device.
+ */
+void *
+_sbus_intr_establish(t, pri, level, flags, handler, arg)
 	bus_space_tag_t t;
 	int pri;
 	int level;
@@ -692,8 +834,6 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 
 	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) != 0)
 		ipl = vec;
-	else if ((vec & SBUS_INTR_COMPAT) != 0)
-		ipl = vec & ~SBUS_INTR_COMPAT;
 	else {
 		/* Decode and remove IPL */
 		ipl = INTLEV(vec);
@@ -781,7 +921,7 @@ sbus_alloc_bustag(sc)
 	sbt->type = SBUS_BUS_SPACE;
 	sbt->sparc_bus_map = _sbus_bus_map;
 	sbt->sparc_bus_mmap = sc->sc_bustag->sparc_bus_mmap;
-	sbt->sparc_intr_establish = sbus_intr_establish;
+	sbt->sparc_intr_establish = _sbus_intr_establish;
 	return (sbt);
 }
 
@@ -931,3 +1071,4 @@ sbus_dmamem_unmap(tag, kva, size)
 
 	iommu_dvmamem_unmap(tag, &sc->sc_is, kva, size);
 }
+
