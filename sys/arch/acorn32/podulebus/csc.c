@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.9 2002/10/05 17:16:34 chs Exp $	*/
+/*	$NetBSD: csc.c,v 1.10 2003/04/01 02:13:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
@@ -155,7 +158,7 @@ cscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_config_flags = SFAS_NO_DMA /*| SFAS_NF_DEBUG*/;
 	sc->sc_softc.sc_host_id      = 7;    /* Should check the jumpers */
 
-	sc->sc_softc.sc_bump_sz = NBPG;
+	sc->sc_softc.sc_bump_sz = PAGE_SIZE;
 	sc->sc_softc.sc_bump_pa = 0x0;
 
 	sfasinitialize((struct sfas_softc *)sc);
