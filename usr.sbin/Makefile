@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 1997/01/08 21:59:52 veego Exp $
+#	$NetBSD: Makefile,v 1.73 1997/01/13 23:33:15 cjs Exp $
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
 
 # not yet done: catman
@@ -10,8 +10,9 @@ SUBDIR=	ac accton amd arp bootpd bootpgw bootpef bootptest chown \
 	netgroup_mkdb portmap pppd pstat pwd_mkdb quot quotaon \
 	rarpd rbootd rdate repquota rmt rpc.bootparamd rpc.pcnfsd \
 	rpc.yppasswdd rwhod sa sendmail sliplogin slstats spray \
-	sysctl syslogd tcpdump timed traceroute trpt trsp update \
-	vipw vnconfig ypbind yppoll ypserv ypset zdump zic
+	sysctl syslogd tcpdchk tcpdmatch tcpdump timed traceroute \
+	trpt trsp update vipw vnconfig ypbind yppoll ypserv ypset \
+	zdump zic
 
 .if   make(clean) || make(cleandir)
 SUBDIR+=apm apmd bad144 config.old dbsym eeprom grfconfig grfinfo hilinfo \
