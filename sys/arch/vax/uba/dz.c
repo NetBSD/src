@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.6 1998/01/24 14:16:35 ragge Exp $	*/
+/*	$NetBSD: dz.c,v 1.7 1998/05/17 18:51:13 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -57,6 +57,9 @@
 #include <vax/uba/ubavar.h>
 
 #include <vax/uba/dzreg.h>
+#include <vax/uba/dzvar.h>
+
+#include "ioconf.h"
 
 /* A DZ-11 has 8 ports while a DZV/DZQ-11 has only 4. We use 8 by default */
 
@@ -65,19 +68,6 @@
 #define DZ_C2I(c)	((c)<<3)	/* convert controller # to index */
 #define DZ_I2C(c)	((c)>>3)	/* convert minor to controller # */
 #define DZ_PORT(u)	((u)&07)	/* extract the port # */
-
-struct	dz_softc {
-	struct	device	sc_dev;		/* Autoconf blaha */
-	dzregs *	sc_addr;	/* controller reg address */
-	int		sc_type;	/* DZ11 or DZV11? */
-	int		sc_rxint;	/* Receive interrupt count XXX */
-	u_char		sc_brk;		/* Break asserted on some lines */
-	struct {
-		struct	tty *	dz_tty;		/* what we work on */
-		caddr_t		dz_mem;		/* pointers to clist output */
-		caddr_t		dz_end;		/*   allowing pdma action */
-	} sc_dz[NDZLINE];
-};
 
 /* Flags used to monitor modem bits, make them understood outside driver */
 
@@ -104,120 +94,42 @@ static struct speedtab dzspeedtab[] =
   {    4800,	DZ_LPR_B4800	},
   {    7200,	DZ_LPR_B7200	},
   {    9600,	DZ_LPR_B9600	},
+  {   19200,	DZ_LPR_B19200	},
   {      -1,	-1		}
 };
 
-static	int	dz_match __P((struct device *, struct cfdata *, void *));
-static	void	dz_attach __P((struct device *, struct device *, void *));
-static	void	dzrint __P((int));
-static	void	dzxint __P((int));
 static	void	dzstart __P((struct tty *));
 static	int	dzparam __P((struct tty *, struct termios *));
 static unsigned	dzmctl __P((struct dz_softc *, int, int, int));
 static	void	dzscan __P((void *));
-struct	tty *	dztty __P((dev_t));
-	int	dzopen __P((dev_t, int, int, struct proc *));
-	int	dzclose __P((dev_t, int, int, struct proc *));
-	int	dzread __P((dev_t, struct uio *, int));
-	int	dzwrite __P((dev_t, struct uio *, int));
-	int	dzioctl __P((dev_t, int, caddr_t, int, struct proc *));
-	void	dzstop __P((struct tty *, int));
-
-struct	cfattach dz_ca = {
-	sizeof(struct dz_softc), dz_match, dz_attach
-};
-
-extern struct cfdriver dz_cd;
+cdev_decl(dz);
 
 /*
  * The DZ series doesn't interrupt on carrier transitions,
  * so we have to use a timer to watch it.
  */
-static int	dz_timer = 0;	/* true if timer started */
+int	dz_timer = 0;	/* true if timer started */
 
 #define DZ_DZ	8		/* Unibus DZ-11 board linecount */
 #define DZ_DZV	4		/* Q-bus DZV-11 or DZQ-11 */
 
-/* Autoconfig handles: setup the controller to interrupt, */
-/* then complete the housecleaning for full operation */
-
-static int
-dz_match (parent, cf, aux)
-        struct device *parent;
-	struct cfdata *cf;
-        void *aux;
+void
+dzattach(sc)
+        struct dz_softc *sc;
 {
-	struct uba_attach_args *ua = aux;
-	register dzregs *dzaddr;
 	register int n;
-
-	dzaddr = (dzregs *) ua->ua_addr;
-
-	/* Reset controller to initialize, enable TX interrupts */
-	/* to catch floating vector info elsewhere when completed */
-
-	dzaddr->dz_csr = (DZ_CSR_MSE | DZ_CSR_TXIE);
-	dzaddr->dz_tcr = 1;	/* Force a TX interrupt */
-
-	DELAY(100000);	/* delay 1/10 second */
-
-	dzaddr->dz_csr = DZ_CSR_RESET;
-
-	/* Now wait up to 3 seconds for reset/clear to complete. */
-
-	for (n = 0; n < 300; n++) {
-		DELAY(10000);
-		if ((dzaddr->dz_csr & DZ_CSR_RESET) == 0)
-			break;
-	}
-
-	/* If the RESET did not clear after 3 seconds, */
-	/* the controller must be broken. */
-
-	if (n >= 300)
-		return (0);
-
-	/* Register the TX interrupt handler */
-
-	ua->ua_ivec = dzxint;
-
-       	return (1);
-}
-
-static void
-dz_attach (parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
-{
-	struct uba_softc *uh = (void *)parent;
-	struct	dz_softc *sc = (void *)self;
-	register struct uba_attach_args *ua = aux;
-	register dzregs *dzaddr;
-	register int n;
-
-	dzaddr = (dzregs *) ua->ua_addr;
-	sc->sc_addr = dzaddr;
-
-#ifdef QBA
-	if (uh->uh_type == QBA)
-		sc->sc_type = DZ_DZV;
-	else
-#endif
-		sc->sc_type = DZ_DZ;
 
 	sc->sc_rxint = sc->sc_brk = 0;
 
-	dzaddr->dz_csr = (DZ_CSR_MSE | DZ_CSR_RXIE | DZ_CSR_TXIE);
-	dzaddr->dz_dtr = 0;	/* Make sure DTR bits are zero */
-	dzaddr->dz_break = 0;	/* Status of BREAK bits, all off */
+	sc->sc_dr.dr_tcrw = (void *)sc->sc_dr.dr_tcr;
+	*sc->sc_dr.dr_csr = (DZ_CSR_MSE | DZ_CSR_RXIE | DZ_CSR_TXIE);
+	*sc->sc_dr.dr_dtr = 0;	/* Make sure DTR bits are zero */
+	*sc->sc_dr.dr_break = 0;	/* Status of BREAK bits, all off */
 
 	/* Initialize our softc structure. Should be done in open? */
 
 	for (n = 0; n < sc->sc_type; n++)
 		sc->sc_dz[n].dz_tty = ttymalloc();
-
-	/* Now register the RX interrupt handler */
-	ubasetvec(self, ua->ua_cvec-1, dzrint);
 
 	/* Alas no interrupt on modem bit changes, so we manually scan */
 
@@ -225,19 +137,17 @@ dz_attach (parent, self, aux)
 		dz_timer = 1;
 		timeout(dzscan, (void *)0, hz);
 	}
-
 	printf("\n");
 	return;
 }
 
 /* Receiver Interrupt */
 
-static void
+void
 dzrint(cntlr)
 	int cntlr;
 {
 	struct	dz_softc *sc = dz_cd.cd_devs[cntlr];
-	volatile dzregs *dzaddr;
 	register struct tty *tp;
 	register int cc, line;
 	register unsigned c;
@@ -245,9 +155,7 @@ dzrint(cntlr)
 
 	sc->sc_rxint++;
 
-	dzaddr = sc->sc_addr;
-
-	while ((c = dzaddr->dz_rbuf) & DZ_RBUF_DATA_VALID) {
+	while ((c = *sc->sc_dr.dr_rbuf) & DZ_RBUF_DATA_VALID) {
 		cc = c & 0xFF;
 		line = DZ_PORT(c>>8);
 		tp = sc->sc_dz[line].dz_tty;
@@ -275,17 +183,15 @@ dzrint(cntlr)
 
 /* Transmitter Interrupt */
 
-static void
+void
 dzxint(cntlr)
 	int cntlr;
 {
-	volatile dzregs *dzaddr;
 	register struct dz_softc *sc = dz_cd.cd_devs[cntlr];
 	register struct tty *tp;
-	register unsigned csr;
-	register int line;
-
-	dzaddr = sc->sc_addr;
+	register struct clist *cl;
+	register line, ch, csr;
+	u_char tcr;
 
 	/*
 	 * Switch to POLLED mode.
@@ -299,54 +205,44 @@ dzxint(cntlr)
 	 *   Each UART is double buffered, so if the scanner
 	 *  is quick enough and timing works out, we can even
 	 *  feed the same port twice.
+	 *
+	 * Ragge 980517:
+	 * Do not need to turn off interrupts, already at interrupt level.
+	 * Remove the pdma stuff; no great need of it right now.
 	 */
 
-	dzaddr->dz_csr &= ~(DZ_CSR_TXIE);
-
-	while (((csr = dzaddr->dz_csr) & DZ_CSR_TX_READY) != 0) {
+	while (((csr = *sc->sc_dr.dr_csr) & DZ_CSR_TX_READY) != 0) {
 
 		line = DZ_PORT(csr>>8);
 
-		if (sc->sc_dz[line].dz_mem < sc->sc_dz[line].dz_end) {
-			dzaddr->dz_tbuf = *sc->sc_dz[line].dz_mem++; 
-			continue;
-		}
-
-		/*
-		 * Turn off this TX port as all pending output
-		 * has been completed - thus freeing the scanner
-		 * on the controller to hopefully find another
-		 * pending TX operation we can service now.
-		 * (avoiding the overhead of another interrupt)
-		 */
-
-		dzaddr->dz_tcr &= ~(1 << line);
-
 		tp = sc->sc_dz[line].dz_tty;
-
+		cl = &tp->t_outq;
 		tp->t_state &= ~TS_BUSY;
+
+		/* Just send out a char if we have one */
+		/* As long as we can fill the chip buffer, we just loop here */
+		if (cl->c_cc) {
+			tp->t_state |= TS_BUSY;
+			ch = getc(cl);
+			*sc->sc_dr.dr_tbuf = ch;
+			continue;
+		} 
+		/* Nothing to send; clear the scan bit */
+		/* Clear xmit scanner bit; dzstart may set it again */
+		tcr = *sc->sc_dr.dr_tcrw & 255;
+		tcr &= ~(1 << line);
+		*sc->sc_dr.dr_tcr = tcr;
 
 		if (tp->t_state & TS_FLUSH)
 			tp->t_state &= ~TS_FLUSH;
-		else {
-			ndflush (&tp->t_outq, (sc->sc_dz[line].dz_mem -
-					(caddr_t)tp->t_outq.c_cf));
-			sc->sc_dz[line].dz_end = sc->sc_dz[line].dz_mem =
-			    tp->t_outq.c_cf;
-		}
+		else
+			ndflush (&tp->t_outq, cl->c_cc);
 
 		if (tp->t_line)
 			(*linesw[tp->t_line].l_start)(tp);
 		else
 			dzstart(tp);
 	}
-
-	/*
-	 * Re-enable TX interrupts.
-	 */
-
-	dzaddr->dz_csr |= (DZ_CSR_TXIE);
-	return;
 }
 
 int
@@ -362,7 +258,6 @@ dzopen(dev, flag, mode, p)
 
 	unit = DZ_I2C(minor(dev));
 	line = DZ_PORT(minor(dev));
-
 	if (unit >= dz_cd.cd_ndevs ||  dz_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
 
@@ -378,7 +273,6 @@ dzopen(dev, flag, mode, p)
 	tp->t_param   = dzparam;
 	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
 			tp->t_iflag = TTYDEF_IFLAG;
@@ -397,21 +291,26 @@ dzopen(dev, flag, mode, p)
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
-		tp->t_state |= TS_WOPEN;
+		tp->t_wopen++;
 		error = ttysleep(tp, (caddr_t)&tp->t_rawq,
 				TTIPRI | PCATCH, ttopen, 0);
+		tp->t_wopen--;
 		if (error)
 			break;
 	}
 	(void) splx(s);
 	if (error)
 		return (error);
+	if (sc->sc_rxon)
+		(*sc->sc_rxon)();
+	if (sc->sc_txon)
+		(*sc->sc_txon)();
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
 }
 
 /*ARGSUSED*/
 int
-dzclose (dev, flag, mode, p)
+dzclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
@@ -433,8 +332,7 @@ dzclose (dev, flag, mode, p)
 	(void) dzmctl(sc, line, DML_BRK, DMBIC);
 
 	/* Do a hangup if so required. */
-	if ((tp->t_cflag & HUPCL) || (tp->t_state & TS_WOPEN) ||
-	    !(tp->t_state & TS_ISOPEN))
+	if ((tp->t_cflag & HUPCL) || tp->t_wopen || !(tp->t_state & TS_ISOPEN))
 		(void) dzmctl(sc, line, 0, DMSET);
 
 	return (ttyclose(tp));
@@ -472,7 +370,7 @@ dzwrite (dev, uio, flag)
 int
 dzioctl (dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -549,63 +447,39 @@ void
 dzstop(tp, flag)
 	register struct tty *tp;
 {
-	register struct dz_softc *sc;
-	int unit, line, s;
-
-	unit = DZ_I2C(minor(tp->t_dev));
-	line = DZ_PORT(minor(tp->t_dev));
-	sc = dz_cd.cd_devs[unit];
-
-	s = spltty();
-
-	if (tp->t_state & TS_BUSY) {
-		sc->sc_dz[line].dz_end = sc->sc_dz[line].dz_mem;
+	if (tp->t_state & TS_BUSY)
 		if (!(tp->t_state & TS_TTSTOP))
 			tp->t_state |= TS_FLUSH;
-	}
-	(void) splx(s);
 }
 
-static void
-dzstart (tp)
+void
+dzstart(tp)
 	register struct tty *tp;
 {
 	register struct dz_softc *sc;
-	register dzregs *dzaddr;
+	register struct clist *cl;
 	register int unit, line;
-	register int cc;
-	int s;
 
 	unit = DZ_I2C(minor(tp->t_dev));
 	line = DZ_PORT(minor(tp->t_dev));
 	sc = dz_cd.cd_devs[unit];
 
-	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
-		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
+		return;
+	cl = &tp->t_outq;
+	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((caddr_t)cl);
 		}
 		selwakeup(&tp->t_wsel);
 	}
-	if (tp->t_outq.c_cc == 0)
-		goto out;
-	cc = ndqb(&tp->t_outq, 0);
-	if (cc == 0) 
-		goto out;
+	if (cl->c_cc == 0)
+		return;
 
 	tp->t_state |= TS_BUSY;
 
-	dzaddr = sc->sc_addr;
-
-	sc->sc_dz[line].dz_end = sc->sc_dz[line].dz_mem = tp->t_outq.c_cf;
-	sc->sc_dz[line].dz_end += cc;
-	dzaddr->dz_tcr |= (1 << line);	/* Enable this TX port */
-
-out:
-	(void) splx(s);
+	*sc->sc_dr.dr_tcr = ((*sc->sc_dr.dr_tcrw) & 255) |(1 << line);
 	return;
 }
 
@@ -615,7 +489,6 @@ dzparam(tp, t)
 	register struct termios *t;
 {
 	struct	dz_softc *sc;
-	register dzregs *dzaddr;
 	register int cflag = t->c_cflag;
 	int unit, line;
 	int ispeed = ttspeedtab(t->c_ispeed, dzspeedtab);
@@ -641,7 +514,6 @@ dzparam(tp, t)
 	}
 
 	s = spltty();
-	dzaddr = sc->sc_addr;
 
 	lpr = DZ_LPR_RX_ENABLE | ((ispeed&0xF)<<8) | line;
 
@@ -667,7 +539,7 @@ dzparam(tp, t)
 	if (cflag & CSTOPB)
 		lpr |= DZ_LPR_2_STOP;
 
-	dzaddr->dz_lpr = lpr;
+	*sc->sc_dr.dr_lpr = lpr;
 
 	(void) splx(s);
 	return (0);
@@ -678,7 +550,6 @@ dzmctl(sc, line, bits, how)
 	register struct dz_softc *sc;
 	int line, bits, how;
 {
-	register dzregs *dzaddr;
 	register unsigned status;
 	register unsigned mbits;
 	register unsigned bit;
@@ -686,27 +557,25 @@ dzmctl(sc, line, bits, how)
 
 	s = spltty();
 
-	dzaddr = sc->sc_addr;
-
 	mbits = 0;
 
 	bit = (1 << line);
 
 	/* external signals as seen from the port */
 
-	status = dzaddr->dz_dcd;
+	status = (*sc->sc_dr.dr_dcd | sc->sc_dsr);
 
 	if (status & bit)
 		mbits |= DML_DCD;
 
-	status = dzaddr->dz_ring;
+	status = *sc->sc_dr.dr_ring;
 
 	if (status & bit)
 		mbits |= DML_RI;
 
 	/* internal signals/state delivered to port */
 
-	status = dzaddr->dz_dtr;
+	status = *sc->sc_dr.dr_dtr;
 
 	if (status & bit)
 		mbits |= DML_DTR;
@@ -734,14 +603,14 @@ dzmctl(sc, line, bits, how)
 	}
 
 	if (mbits & DML_DTR)
-		dzaddr->dz_dtr |= bit;
+		*sc->sc_dr.dr_dtr |= bit;
 	else
-		dzaddr->dz_dtr &= ~bit;
+		*sc->sc_dr.dr_dtr &= ~bit;
 
 	if (mbits & DML_BRK)
-		dzaddr->dz_break = (sc->sc_brk |= bit);
+		*sc->sc_dr.dr_break = (sc->sc_brk |= bit);
 	else
-		dzaddr->dz_break = (sc->sc_brk &= ~bit);
+		*sc->sc_dr.dr_break = (sc->sc_brk &= ~bit);
 
 	(void) splx(s);
 	return (mbits);
@@ -755,7 +624,6 @@ static void
 dzscan(arg)
 	void *arg;
 {
-	register dzregs *dzaddr;
 	register struct dz_softc *sc;
 	register struct tty *tp;
 	register int n, bit, port;
@@ -773,18 +641,16 @@ dzscan(arg)
 
 		for (port = 0; port < sc->sc_type; port++) {
 
-			dzaddr = sc->sc_addr;
 			tp = sc->sc_dz[port].dz_tty;
 			bit = (1 << port);
 	
-			if (dzaddr->dz_dcd & bit) { /* carrier present */
-
+			if ((*sc->sc_dr.dr_dcd | sc->sc_dsr) & bit) {
 				if (!(tp->t_state & TS_CARR_ON))
-					(void)(*linesw[tp->t_line].l_modem)
-					    (tp, 1);
+					(*linesw[tp->t_line].l_modem) (tp, 1);
 			} else if ((tp->t_state & TS_CARR_ON) &&
-				(*linesw[tp->t_line].l_modem)(tp, 0) == 0)
-				    dzaddr->dz_tcr &= ~bit;
+			    (*linesw[tp->t_line].l_modem)(tp, 0) == 0)
+				*sc->sc_dr.dr_tcr =
+				    ((*sc->sc_dr.dr_tcrw)&255) & ~bit;
 	    	}
 
 		/*
@@ -796,16 +662,14 @@ dzscan(arg)
 		 *  if off unless the rate is appropriately low.
 		 */
 
-		dzaddr = sc->sc_addr;
-
-		csr = dzaddr->dz_csr;
+		csr = *sc->sc_dr.dr_csr;
 
 		if (sc->sc_rxint > (16*10)) {
 			if ((csr & DZ_CSR_SAE) == 0)
-				dzaddr->dz_csr = (csr | DZ_CSR_SAE);
+				*sc->sc_dr.dr_csr = (csr | DZ_CSR_SAE);
 	    	} else if ((csr & DZ_CSR_SAE) != 0)
 			if (sc->sc_rxint < 10)
-				dzaddr->dz_csr = (csr & ~(DZ_CSR_SAE));
+				*sc->sc_dr.dr_csr = (csr & ~(DZ_CSR_SAE));
 
 		sc->sc_rxint = 0;
 	}
