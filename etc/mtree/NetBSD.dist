@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.103 2000/05/02 11:49:16 simonb Exp $
+#	$NetBSD: NetBSD.dist,v 1.104 2000/05/03 09:24:23 itojun Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -42,6 +42,11 @@ kerberosIV
 # ./etc/kerberosV
 kerberosV
 # ./etc/kerberosV
+..
+
+# ./etc/mail
+mail
+# ./etc/mail
 ..
 
 # ./etc/mtree
