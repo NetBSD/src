@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.9 1996/08/09 10:32:26 mrg Exp $	*/
+/*	$NetBSD: reboot.c,v 1.10 1996/08/10 00:20:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: reboot.c,v 1.9 1996/08/09 10:32:26 mrg Exp $";
+static char rcsid[] = "$NetBSD: reboot.c,v 1.10 1996/08/10 00:20:58 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,7 @@ main(argc, argv)
 		*bootstr = '\0';
 		for (av = argv; *av; av++)
 			strcpy(bootstr, *av);
+		howto |= RB_STRING;
 	} else
 		bootstr = NULL;
 
