@@ -1,4 +1,0 @@
-#	$NetBSD: NEWNC,v 1.1 1998/06/30 12:22:36 msaitoh Exp $
-include "arch/x68k/conf/ALL"
-
-options 	MACHINE_NEW_NONCONTIG

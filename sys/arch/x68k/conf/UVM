@@ -1,5 +1,0 @@
-#	$NetBSD: UVM,v 1.2 1998/09/07 14:11:09 minoura Exp $
-include "arch/x68k/conf/GENERIC"
-
-options 	UVM
-#options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
