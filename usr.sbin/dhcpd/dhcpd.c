@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.1.1.1 1996/10/03 06:33:25 mrg Exp $ Copyright 1995, 1996 The Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.2 1996/10/03 06:57:19 mrg Exp $ Copyright 1995, 1996 The Internet Software Consortium.";
 #endif
 
 static char copyright[] =
@@ -103,9 +103,11 @@ int main (argc, argv, envp)
 	setlogmask (LOG_UPTO (LOG_INFO));
 #endif
 #endif	
+#ifndef __NetBSD__
 	note (message);
 	note (copyright);
 	note (arr);
+#endif
 
 	for (i = 1; i < argc; i++) {
 		if (!strcmp (argv [i], "-p")) {

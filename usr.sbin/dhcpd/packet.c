@@ -42,15 +42,21 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: packet.c,v 1.1.1.1 1996/10/03 06:33:25 mrg Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: packet.c,v 1.2 1996/10/03 06:57:21 mrg Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 #if defined (PACKET_ASSEMBLY) || defined (PACKET_DECODING)
 #include <netinet/in_systm.h>
+#ifdef __NetBSD__
+#include <netinet/ip.h>
+#include <netinet/udp.h>
+#include <netinet/if_ether.h>
+#else
 #include "includes/netinet/ip.h"
 #include "includes/netinet/udp.h"
 #include "includes/netinet/if_ether.h"
+#endif
 
 static u_int32_t checksum PROTO ((unsigned char *, int, u_int32_t));
 static u_int32_t wrapsum PROTO ((u_int32_t));
