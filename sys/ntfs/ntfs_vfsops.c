@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.2 1999/05/06 15:43:20 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.3 1999/05/18 00:22:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -174,7 +174,7 @@ ntfs_mount (
 	struct nameidata *ndp,
 	struct proc *p )
 {
-	u_int		size;
+	size_t		size;
 	int		err = 0;
 	struct vnode	*devvp;
 	struct ntfs_args args;
