@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.46 2004/12/20 03:12:20 dbj Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.47 2005/01/23 19:37:05 rumble Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.46 2004/12/20 03:12:20 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47 2005/01/23 19:37:05 rumble Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -55,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.46 2004/12/20 03:12:20 dbj Exp $");
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
+#ifdef UFS_DIRHASH
+#include <ufs/ufs/dirhash.h>
+#endif
 
 #include <uvm/uvm.h>
 
@@ -172,6 +175,10 @@ ufs_reclaim(vp, p)
 			}
 		}
 	}
+#endif
+#ifdef UFS_DIRHASH
+	if (ip->i_dirhash != NULL)
+		ufsdirhash_free(ip);
 #endif
 	return (0);
 }

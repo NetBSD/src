@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.3 2004/05/25 14:54:58 hannken Exp $
+#	$NetBSD: files.ufs,v 1.4 2005/01/23 19:37:05 rumble Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -50,6 +50,7 @@ file	ufs/mfs/mfs_vfsops.c		mfs
 file	ufs/mfs/mfs_vnops.c		mfs
 
 file	ufs/ufs/ufs_bmap.c		ffs | lfs | mfs | ext2fs
+file	ufs/ufs/ufs_dirhash.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_ihash.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_inode.c		ffs | lfs | mfs
 file	ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs

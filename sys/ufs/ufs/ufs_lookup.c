@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.60 2004/09/17 14:11:27 skrll Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.61 2005/01/23 19:37:05 rumble Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.60 2004/09/17 14:11:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.61 2005/01/23 19:37:05 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.60 2004/09/17 14:11:27 skrll Exp $"
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
+#ifdef UFS_DIRHASH
+#include <ufs/ufs/dirhash.h>
+#endif
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
@@ -143,6 +146,7 @@ ufs_lookup(v)
 	*vpp = NULL;
 	lockparent = flags & LOCKPARENT;
 	wantparent = flags & (LOCKPARENT|WANTPARENT);
+	endsearch = 0; /* silence compiler warning */
 	/*
 	 * Check accessiblity of directory.
 	 */
@@ -189,6 +193,46 @@ ufs_lookup(v)
 	 * of simplicity.
 	 */
 	bmask = vdp->v_mount->mnt_stat.f_iosize - 1;
+
+#ifdef UFS_DIRHASH
+	/*
+	 * Use dirhash for fast operations on large directories. The logic
+	 * to determine whether to hash the directory is contained within
+	 * ufsdirhash_build(); a zero return means that it decided to hash
+	 * this directory and it successfully built up the hash table.
+	 */
+	if (ufsdirhash_build(dp) == 0) {
+		/* Look for a free slot if needed. */
+		enduseful = dp->i_size;
+		if (slotstatus != FOUND) {
+			slotoffset = ufsdirhash_findfree(dp, slotneeded,
+			    &slotsize);
+			if (slotoffset >= 0) {
+				slotstatus = COMPACT;
+				enduseful = ufsdirhash_enduseful(dp);
+				if (enduseful < 0)
+					enduseful = dp->i_size;
+			}
+		}
+		/* Look up the component. */
+		numdirpasses = 1;
+		entryoffsetinblock = 0; /* silence compiler warning */
+		switch (ufsdirhash_lookup(dp, cnp->cn_nameptr, cnp->cn_namelen,
+		    &dp->i_offset, &bp, nameiop == DELETE ? &prevoff : NULL)) {
+		case 0:
+			ep = (struct direct *)((char *)bp->b_data +
+			    (dp->i_offset & bmask));
+			goto foundentry;
+		case ENOENT:
+			dp->i_offset = roundup(dp->i_size, dirblksiz);
+			goto notfound;
+		default:
+			/* Something failed; just do a linear search. */
+			break;
+		}
+	}
+#endif /* UFS_DIRHASH */
+
 	if (nameiop != LOOKUP || dp->i_diroff == 0 ||
 	    dp->i_diroff >= dp->i_size) {
 		entryoffsetinblock = 0;
@@ -300,6 +344,9 @@ searchloop:
 			if (namlen == cnp->cn_namelen &&
 			    !memcmp(cnp->cn_nameptr, ep->d_name,
 			    (unsigned)namlen)) {
+#ifdef UFS_DIRHASH
+foundentry:
+#endif
 				/*
 				 * Save directory entry's inode number and
 				 * reclen in ndp->ni_ufs area, and release
@@ -776,6 +823,14 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 		blkoff = dp->i_offset & (ump->um_mountp->mnt_stat.f_iosize - 1);
 		memcpy((caddr_t)bp->b_data + blkoff, (caddr_t)dirp,
 		    newentrysize);
+#ifdef UFS_DIRHASH
+		if (dp->i_dirhash != NULL) {
+			ufsdirhash_newblk(dp, dp->i_offset);
+			ufsdirhash_add(dp, dirp, dp->i_offset);
+			ufsdirhash_checkblock(dp, (char *)bp->b_data + blkoff,
+			    dp->i_offset);
+		}
+#endif
 		if (DOINGSOFTDEP(dvp)) {
 			/*
 			 * Ensure that the entire newly allocated block is a
@@ -876,6 +931,12 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 		dsize = DIRSIZ(FSFMT(dvp), nep, needswap);
 		spacefree += ufs_rw16(nep->d_reclen, needswap) - dsize;
 		loc += ufs_rw16(nep->d_reclen, needswap);
+#ifdef UFS_DIRHASH
+		if (dp->i_dirhash != NULL)
+			ufsdirhash_move(dp, nep,
+			    dp->i_offset + ((char *)nep - dirbuf),
+			    dp->i_offset + ((char *)ep - dirbuf));
+#endif
 		if (DOINGSOFTDEP(dvp))
 			softdep_change_directoryentry_offset(dp, dirbuf,
 			    (caddr_t)nep, (caddr_t)ep, dsize);
@@ -912,7 +973,18 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 			dirp->d_type = tmp;
 		}
 	}
+#ifdef UFS_DIRHASH
+	if (dp->i_dirhash != NULL && (ep->d_ino == 0 ||
+	    dirp->d_reclen == spacefree))
+		ufsdirhash_add(dp, dirp, dp->i_offset + ((char *)ep - dirbuf));
+#endif
 	memcpy((caddr_t)ep, (caddr_t)dirp, (u_int)newentrysize);
+#ifdef UFS_DIRHASH
+	if (dp->i_dirhash != NULL)
+		ufsdirhash_checkblock(dp, dirbuf -
+		    (dp->i_offset & (dirblksiz - 1)),
+		    dp->i_offset & ~(dirblksiz - 1));
+#endif
 	if (DOINGSOFTDEP(dvp)) {
 		softdep_setup_directory_add(bp, dp,
 		    dp->i_offset + (caddr_t)ep - dirbuf,
@@ -932,6 +1004,10 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	if (error == 0 && dp->i_endoff && dp->i_endoff < dp->i_size) {
 		if (DOINGSOFTDEP(dvp) && (tvp != NULL))
 			VOP_UNLOCK(tvp, 0);
+#ifdef UFS_DIRHASH
+		if (dp->i_dirhash != NULL)
+			ufsdirhash_dirtrunc(dp, dp->i_endoff);
+#endif
 		(void) VOP_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr, p);
 		if (DOINGSOFTDEP(dvp) && (tvp != NULL))
 			vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
@@ -983,6 +1059,16 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 	    (off_t)(dp->i_offset - dp->i_count), (void *)&ep, &bp)) != 0)
 		return (error);
 
+#ifdef UFS_DIRHASH
+	/*
+	 * Remove the dirhash entry. This is complicated by the fact
+	 * that `ep' is the previous entry when dp->i_count != 0.
+	 */
+	if (dp->i_dirhash != NULL)
+		ufsdirhash_remove(dp, (dp->i_count == 0) ? ep :
+		   (struct direct *)((char *)ep + ep->d_reclen), dp->i_offset);
+#endif
+
 	if (dp->i_count == 0) {
 		/*
 		 * First entry in block: set d_ino to zero.
@@ -996,6 +1082,16 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 		    ufs_rw16(ufs_rw16(ep->d_reclen, needswap) + dp->i_reclen,
 			needswap);
 	}
+
+#ifdef UFS_DIRHASH
+	if (dp->i_dirhash != NULL) {
+		int dirblksiz = ip->i_ump->um_dirblksiz;
+		ufsdirhash_checkblock(dp, (char *)ep -
+		    ((dp->i_offset - dp->i_count) & (dirblksiz - 1)),
+		    dp->i_offset & ~(dirblksiz - 1));
+	}
+#endif
+
 out:
 	if (DOINGSOFTDEP(dvp)) {
 		if (ip) {
