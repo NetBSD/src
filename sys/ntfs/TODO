@@ -32,3 +32,9 @@ NTFS - list of things to do in no particular order:
 	(from Klaus Klein)
 
 - make ntfs nfs exportable, for the completeness sake
+
+- mountroot support
+
+- implement writing into resident attributes, so it would be possible
+   to write into "small" files (<30KB) too
+	(from Semen Ustimenko <semenu@FreeBSD.org>)
