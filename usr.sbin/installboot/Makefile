@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/04/24 01:35:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2002/04/26 16:23:15 lukem Exp $
 #
 
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ MAN=	installboot.8
 
 WARNS?=	3
 
-UFSSRC=		${_SRC_TOP_}/sys/ufs
+UFSSRC=		${NETBSDSRCDIR}/sys/ufs
 CPPFLAGS+=	-I${.CURDIR} -I.
 .PATH:		${.CURDIR}/arch ${UFSSRC}/ffs
 

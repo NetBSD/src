@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.215 2002/04/26 15:43:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.216 2002/04/26 16:23:14 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -366,7 +366,8 @@ snap_kern: check_DESTDIR check_RELEASEDIR
 					echo "./$${kernel}.$${s} type=file"; \
 				fi; \
 			done; \
-		done ) | GZIP=-9 ${PAX} -zwM ${UNPRIVED:D-N${_SRC_TOP_}/etc} \
+		done ) | GZIP=-9 ${PAX} -zw \
+		    -M ${UNPRIVED:D-N${NETBSDSRCDIR}/etc} \
 		    -f ${RELEASEDIR}/binary/sets/kern-${configfile}.tgz
 .endfor # make kernel sets
 .for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}
