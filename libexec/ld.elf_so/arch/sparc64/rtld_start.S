@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.6 2002/05/06 18:53:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -53,7 +53,10 @@
  * NB:	We are violating the ELF spec by passing a pointer to the ps strings in
  * 	%g1 instead of a termination routine.
  */
-	
+
+	.register	%g2,#scratch
+	.register	%g3,#scratch
+
 /* Offset of ARGC from bottom of stack */
 #define	ARGC	(16*8)			
 	
