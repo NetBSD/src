@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.6 2000/09/19 22:01:59 fvdl Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.7 2000/10/06 19:08:00 jdolecek Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -51,7 +51,7 @@
 int syncer_maxdelay = SYNCER_MAXDELAY;	/* maximum delay time */
 time_t syncdelay = 30;			/* max time to delay syncing data */ 
 time_t filedelay = 30;			/* time to delay syncing files */
-time_t dirdelay  = 15;			/* time to dely syncing directories */
+time_t dirdelay  = 15;			/* time to delay syncing directories */
 time_t metadelay = 10;			/* time to delay syncing metadata */
 
 struct lock syncer_lock;		/* used to freeze syncer */
