@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.2 2003/02/20 22:39:43 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.3 2003/03/09 18:33:29 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.2 2003/02/20 22:39:43 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.3 2003/03/09 18:33:29 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,8 +60,30 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.2 2003/02/20 22:39:43 man
 struct mach_iokit_devclass darwin_ioframebuffer_devclass = {
 	"<dict ID=\"0\"><key>IOProviderClass</key>"
 	    "<string ID=\"1\">IOFramebuffer</string></dict>",
+	"<dict ID=\"0\"><key>IOClass</key>"
+	    "<string ID=\"1\">AppleBacklightDisplay</string>"
+	    "<key>IOProbeScore</key>"
+	    "<integer size=\"32\" ID=\"2\">0xbb8</integer>"
+	    "<key>IOProviderClass</key>"
+	    "<string ID=\"3\">IODisplayConnect</string>"
+	    "<key>CFBundleIdentifier</key>"
+	    "<string ID=\"4\">com.apple.iokit.IOGraphicsFamily</string>"
+	    "<key>IOMatchCategory</key>"
+	    "<string ID=\"5\">IODefaultMatchCategory</string>"
+	    "<key>IODisplayConnectFlags</key>"
+	    "<data ID=\"6\">AAAIxA==</data>"
+	    "<key>AppleDisplayType</key>"
+	    "<integer size=\"32\" ID=\"7\">0x2</integer>"
+	    "<key>AppleSense</key>"
+	    "<integer size=\"32\" ID=\"8\">0x400</integer>"
+	    "<key>DisplayVendorID</key>"
+	    "<integer size=\"32\" ID=\"9\">0x756e6b6e</integer>"
+	    "<key>DisplayProductID</key>"
+	    "<integer size=\"32\" ID=\"10\">0x20000</integer>"
+	    "<key>IODisplayParameters</key>"
+	    "</dict>",
 	darwin_ioframebuffer_registry_entry_get_property,
-	NULL,
+	darwin_ioframebuffer_connect_method_scalari_scalaro,
 	"IOFramebuffer",
 };
 
@@ -114,5 +136,29 @@ darwin_ioframebuffer_registry_entry_get_property(args)
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+darwin_ioframebuffer_connect_method_scalari_scalaro(args)
+	struct mach_trap_args *args;
+{
+	mach_io_connect_method_scalari_scalaro_request_t *req = args->smsg;
+	mach_io_connect_method_scalari_scalaro_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+
+#ifdef DEBUG_DARWIN
+	printf("darwin_ioframebuffer_connect_method_scalari_scalaro()\n");
+#endif
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_outcount = 1;
+	rep->rep_out[0] = 1;
+	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
+
+	*msglen = sizeof(*rep) - ((4096 + rep->rep_outcount) * sizeof(int));
 	return 0;
 }

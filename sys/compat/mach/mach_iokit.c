@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.8 2003/02/20 22:39:42 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.9 2003/03/09 18:33:28 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.8 2003/02/20 22:39:42 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.9 2003/03/09 18:33:28 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,6 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.8 2003/02/20 22:39:42 manu Exp $");
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_map.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -295,6 +298,12 @@ mach_io_connect_get_service(args)
 		mp->mp_data = mr->mr_port->mp_data;
 	}
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
+
+	/* 
+	 * XXX Bump the refcount to workaround an emulation bug
+	 * that causes Windowserver to release the port too early.
+	 */
+	mr->mr_refcount++;
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
@@ -608,6 +617,70 @@ mach_io_registry_entry_get_location_in_plane(args)
 	/* XXX Just return a dummy name for now */ 
 	rep->rep_locationcount = sizeof(location);
 	memcpy(&rep->rep_location, location, sizeof(location));
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_io_registry_entry_get_properties(args)
+	struct mach_trap_args *args;
+{
+	mach_io_registry_entry_get_properties_request_t *req = args->smsg;
+	mach_io_registry_entry_get_properties_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+	struct lwp *l = args->l;
+	int error;
+	vaddr_t va;
+	size_t size;
+	mach_port_t mn;
+	struct mach_right *mr;
+	struct mach_iokit_devclass *mid;
+
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EPERM);
+	
+	if (mr->mr_port->mp_datatype != MACH_MP_IOKIT_DEVCLASS) 
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
+
+	mid = mr->mr_port->mp_data;
+	if (mid->mid_properties == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
+	size = round_page(strlen(mid->mid_properties));
+
+	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
+	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, size,
+	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL,
+	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
+		return mach_msg_error(args, error);
+
+#ifdef DEBUG_MACH
+	printf("pid %d.%d: copyout iokit properties at %p\n",
+		    l->l_proc->p_pid, l->l_lid, (void *)va);
+#endif
+	if ((error = copyout(mid->mid_properties, (void *)va, size)) != 0) {
+#ifdef DEBUG_MACH
+		printf("pid %d.%d: copyout iokit properties failed\n",
+		    l->l_proc->p_pid, l->l_lid);
+#endif
+	}
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_properties.address = (void *)va;
+	rep->rep_properties.size = size;
+	rep->rep_properties.deallocate = 0; /* XXX */
+	rep->rep_properties.copy = 2; /* XXX */
+	rep->rep_properties.pad1 = 1; /* XXX */
+	rep->rep_properties.type = 1; /* XXX */
+	rep->rep_count = size;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);

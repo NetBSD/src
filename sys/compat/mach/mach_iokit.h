@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.7 2003/02/20 22:39:42 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.8 2003/03/09 18:33:29 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -301,6 +301,21 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_io_registry_entry_get_location_in_plane_reply_t;
 
+/* io_registry_entry_get_properties */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+} mach_io_registry_entry_get_properties_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_ool_descriptor_t rep_properties;
+	mach_ndr_record_t rep_ndr;
+	mach_msg_type_number_t rep_count;
+	mach_msg_trailer_t rep_trailer;
+} mach_io_registry_entry_get_properties_reply_t;
+
 int mach_io_service_get_matching_services(struct mach_trap_args *);
 int mach_io_iterator_next(struct mach_trap_args *);
 int mach_io_service_open(struct mach_trap_args *);
@@ -316,6 +331,7 @@ int mach_io_registry_entry_get_child_iterator(struct mach_trap_args *);
 int mach_io_registry_entry_get_name_in_plane(struct mach_trap_args *);
 int mach_io_object_get_class(struct mach_trap_args *);
 int mach_io_registry_entry_get_location_in_plane(struct mach_trap_args *);
+int mach_io_registry_entry_get_properties(struct mach_trap_args *);
 
 extern struct mach_iokit_devclass *mach_iokit_devclasses[];
 
@@ -326,6 +342,7 @@ struct mach_device_iterator {
 
 struct mach_iokit_devclass {
 	char *mid_string;
+	char *mid_properties;
 	int (*mid_registry_entry_get_property)(struct mach_trap_args *);
 	int (*mid_connect_method_scalari_scalaro)(struct mach_trap_args *);
 	char *mid_name;
