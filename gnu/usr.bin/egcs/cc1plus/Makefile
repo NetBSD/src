@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/03/29 11:34:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1998/04/01 01:50:02 tv Exp $
 
 
 PROG=	cc1plus
@@ -19,7 +19,7 @@ parse.c parse.h: parse.y
 
 # XXX needs to be before dist/gcc or tree.c comes from the
 # wrong place..
-.PATH: $(.CURDIR)/../../../dist/gcc/cp
+.PATH: $(.OBJDIR) $(.CURDIR)/../../../dist/gcc/cp
 
 .include "../Makefile.cc1"
 
