@@ -42,7 +42,7 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: conf.c,v 1.15 93/05/05 09:43:29 torek Exp  (LBL)
- * $Id: conf.c,v 1.9 1994/02/27 08:44:12 deraadt Exp $
+ * $Id: conf.c,v 1.10 1994/03/02 20:05:58 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -264,7 +264,8 @@ cdev_decl(cgthree);
 cdev_decl(vn);
 #define	cdev_vn_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), 0, 0, 0, seltrue, 0, vnstrategy }
+	dev_init(c,n,write), dev_init(c,n,ioctl), 0, 0, 0, seltrue, 0, \
+	dev_init(c,n,strategy) }
 
 #ifdef LKM
 #define NLKM 1
