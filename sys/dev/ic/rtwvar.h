@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.7 2004/12/23 08:27:38 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.8 2004/12/25 06:58:37 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -37,20 +37,38 @@
 #include <sys/callout.h>
 
 #ifdef RTW_DEBUG
+#define	RTW_DEBUG_TUNE		0x00001
+#define	RTW_DEBUG_PKTFILT	0x00002
+#define	RTW_DEBUG_XMIT		0x00004
+#define	RTW_DEBUG_XMIT_DESC	0x00008
+#define	RTW_DEBUG_NODE		0x00010
+#define	RTW_DEBUG_PWR		0x00020
+#define	RTW_DEBUG_ATTACH	0x00040
+#define	RTW_DEBUG_REGDUMP	0x00080
+#define	RTW_DEBUG_ACCESS	0x00100
+#define	RTW_DEBUG_RESET		0x00200
+#define	RTW_DEBUG_INIT		0x00400
+#define	RTW_DEBUG_IOSTATE	0x00800
+#define	RTW_DEBUG_RECV		0x01000
+#define	RTW_DEBUG_RECV_DESC	0x02000
+#define	RTW_DEBUG_IO_KICK	0x04000
+#define	RTW_DEBUG_INTR		0x08000
+#define	RTW_DEBUG_PHY		0x10000
+#define	RTW_DEBUG_PHYIO		0x20000
+#define	RTW_DEBUG_PHYBITIO	0x40000
+#define	RTW_DEBUG_TIMEOUT	0x80000
+
+#define	RTW_DEBUG_MAX		0x7ffff
+
 extern int rtw_debug;
-#define RTW_DPRINTF(x)	if (rtw_debug > 0) printf x
-#define RTW_DPRINTF2(x)	if (rtw_debug > 1) printf x
-#define RTW_DPRINTF3(x)	if (rtw_debug > 2) printf x
-#define	DPRINTF(sc, x)	if ((sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) printf x
-#define	DPRINTF2(sc, x)	if ((sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) RTW_DPRINTF2(x)
-#define	DPRINTF3(sc, x)	if ((sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) RTW_DPRINTF3(x)
+#define RTW_DPRINTF(__flags, __x)	\
+	if ((rtw_debug & (__flags)) != 0) printf __x
+#define	DPRINTF(__sc, __flags, __x)				\
+	if (((__sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) != 0)	\
+		RTW_DPRINTF(__flags, __x)
 #else /* RTW_DEBUG */
-#define RTW_DPRINTF(x)
-#define RTW_DPRINTF2(x)
-#define RTW_DPRINTF3(x)
-#define	DPRINTF(sc, x)
-#define	DPRINTF2(sc, x)
-#define	DPRINTF3(sc, x)
+#define RTW_DPRINTF(__x)
+#define	DPRINTF(__sc, __x)
 #endif /* RTW_DEBUG */
 
 #if 0
@@ -127,37 +145,28 @@ struct rtw_txctl {
 #define RTW_TXPRIHI	2
 #define RTW_TXPRIBCN	3	/* beacon priority */
 
-#define RTW_MAXPKTSEGS		32	/* max 32 segments per Tx packet */
+#define RTW_MAXPKTSEGS		64	/* Max 64 segments per Tx packet */
 
 #define CASSERT(cond, complaint) complaint[(cond) ? 0 : -1] = complaint[(cond) ? 0 : -1]
 
-#define RTW_NTXDESC_ROUNDUP(n) \
-    roundup(n, RTW_DESC_ALIGNMENT / sizeof(struct rtw_txdesc))
-
-#define RTW_TXQLEN_ROUNDUP(n) \
-    (RTW_NTXDESC_ROUNDUP(n * RTW_MAXPKTSEGS) / RTW_MAXPKTSEGS)
-
-#define RTW_RXQLEN_ROUNDUP(n) \
-    roundup(n, RTW_DESC_ALIGNMENT / sizeof(struct rtw_rxdesc))
-
-/* The descriptor rings must begin on RTW_DESC_ALIGNMENT boundaries.
- * I allocate them consecutively from one buffer, so just round up.
+/* Note well: the descriptor rings must begin on RTW_DESC_ALIGNMENT
+ * boundaries.  I allocate them consecutively from one buffer, so
+ * just round up.
  */
-#define RTW_TXQLENLO	RTW_TXQLEN_ROUNDUP(64)	/* low-priority queue length */
-#define RTW_TXQLENMD	RTW_TXQLEN_ROUNDUP(32)	/* medium-priority */
-#define RTW_TXQLENHI	RTW_TXQLEN_ROUNDUP(16)	/* high-priority */
-#define RTW_TXQLENBCN	1			/* beacon */
+#define RTW_TXQLENLO	64	/* low-priority queue length */
+#define RTW_TXQLENMD	64	/* medium-priority */
+#define RTW_TXQLENHI	64	/* high-priority */
+#define RTW_TXQLENBCN	1	/* beacon */
 
-#define RTW_NTXDESCLO	(RTW_TXQLENLO * RTW_MAXPKTSEGS)
-#define RTW_NTXDESCMD	(RTW_TXQLENMD * RTW_MAXPKTSEGS)
-#define RTW_NTXDESCHI	(RTW_TXQLENHI * RTW_MAXPKTSEGS)
-#define RTW_NTXDESCBCN	(RTW_TXQLENBCN * RTW_MAXPKTSEGS)
+#define RTW_NTXDESCLO	RTW_TXQLENLO
+#define RTW_NTXDESCMD	RTW_TXQLENMD
+#define RTW_NTXDESCHI	RTW_TXQLENHI
+#define RTW_NTXDESCBCN	RTW_TXQLENBCN
 
 #define RTW_NTXDESCTOTAL	(RTW_NTXDESCLO + RTW_NTXDESCMD + \
 				 RTW_NTXDESCHI + RTW_NTXDESCBCN)
 
-#define RTW_RXQLEN	RTW_RXQLEN_ROUNDUP(32)
-#define RTW_NRXDESC	RTW_RXQLEN
+#define RTW_RXQLEN	64
 
 struct rtw_txdesc_blk {
 	u_int			htc_ndesc;
@@ -189,7 +198,7 @@ struct rtw_descs {
 	struct rtw_txdesc	hd_txlo[RTW_NTXDESCLO];
 	struct rtw_txdesc	hd_txmd[RTW_NTXDESCMD];
 	struct rtw_txdesc	hd_txhi[RTW_NTXDESCMD];
-	struct rtw_rxdesc	hd_rx[RTW_NRXDESC];
+	struct rtw_rxdesc	hd_rx[RTW_RXQLEN];
 	struct rtw_txdesc	hd_bcn[RTW_NTXDESCBCN];
 };
 #define RTW_DESC_OFFSET(ring, i)	offsetof(struct rtw_descs, ring[i])
