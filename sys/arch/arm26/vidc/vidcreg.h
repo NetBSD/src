@@ -1,6 +1,7 @@
-/* $NetBSD: vidcreg.h,v 1.1 2000/05/09 21:56:04 bjh21 Exp $ */
+/* $NetBSD: vidcreg.h,v 1.2 2001/01/12 00:12:38 bjh21 Exp $ */
+
 /*-
- * Copyright (c) 1998 Ben Harris
+ * Copyright (c) 1998, 2001 Ben Harris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -127,5 +128,27 @@
 #define VIDC_CTL_TEST_MODE3	0x00000100
 
 #define VIDC_WRITE(value)	*(volatile u_int32_t *)MEMC_VIDC_BASE = value
+
+/*
+ * VIDC audio format is mu-law, but with the bits in a strange order.
+ *
+ * VIDC1 has:
+ * D[7]   sign
+ * D[6:4] chord select
+ * D[3:0] point on chord
+ * so 0x00 -> +0, 0x7f -> +inf, 0x80 -> -0, 0xff -> -inf
+ *
+ * VIDC2 has:
+ * D[7:5] chord select
+ * D[4:1] point on chord
+ * D[0]   sign
+ * so 0x00 -> +0, 0xfe -> +inf, 0x01 -> -0, 0xff -> -inf
+ *
+ * Normal mu-law appears to have:
+ * 0x00 -> -inf, 0x7f -> -0, 0x80 -> +inf, 0xff -> +0
+ * Thus VIDC1 is NOT(mu-law), while VIDC2 is NOT(mu-law)<<1 | NOT(mu-law)>>7.
+ *
+ * I think the A500 uses VIDC1 and the Archimedes uses VIDC2.
+ */
 
 #endif
