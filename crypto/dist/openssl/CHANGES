@@ -2,6 +2,12 @@
  OpenSSL CHANGES
  _______________
 
+  *) Fix ASN1 checks. Check for overflow by comparing with LONG_MAX
+     and get fix the header length calculation.
+     [Florian Weimer <Weimer@CERT.Uni-Stuttgart.DE>,
+      Alon Kantor <alonk@checkpoint.com> (and others),
+      Steve Henson]
+
  Changes between 0.9.6d and 0.9.6e  [30 Jul 2002]
 
   *) Fix cipher selection routines: ciphers without encryption had no flags
