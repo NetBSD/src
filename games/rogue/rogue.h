@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.11 1999/09/13 17:14:08 jsm Exp $	*/
+/*	$NetBSD: rogue.h,v 1.12 2001/02/05 01:04:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -602,7 +602,6 @@ void	md_sleep __P((int));
 void	md_slurp __P((void));
 void	message __P((const char *, boolean));
 void	mix_colors __P((void));
-void	mix_colors __P((void));
 void	mix_random_rooms __P((void));
 int	mon_can_go __P((const object *, int, int));
 int	mon_damage __P((object *, short));
@@ -634,7 +633,6 @@ short	party_objects __P((int));
 void	place_at __P((object *, int, int));
 void	plant_gold __P((int, int, boolean));
 void	play_level __P((void));
-void	player_init __P((void));
 void	player_init __P((void));
 void	potion_heal __P((int));
 int	pr_com_id __P((int));
@@ -698,11 +696,9 @@ void	sound_bell __P((void));
 void	special_hit __P((object *));
 void	srrandom __P((int));
 void	start_window __P((void));
-void	start_window __P((void));
 void	steal_gold __P((object *));
 void	steal_item __P((object *));
 void	sting __P((object *));
-void	stop_window __P((void));
 void	stop_window __P((void));
 void	take_a_nap __P((void));
 void	take_from_pack __P((object *, object *));
