@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.24 2000/03/12 05:23:07 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.25 2000/03/18 02:41:59 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.56 2000/03/02 07:11:00 itojun Exp $	*/
 
 /*
@@ -644,6 +644,7 @@ in6_control(so, cmd, data, ifp, p)
 
 	case SIOCSIFADDR_IN6:
 		error = in6_ifinit(ifp, ia, &ifr->ifr_addr, 1);
+#if 0
   undo:
 		if (error && newifaddr) {
 			TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
@@ -664,6 +665,7 @@ in6_control(so, cmd, data, ifp, p)
 			}
 			IFAFREE(&ia->ia_ifa);
 		}
+#endif
 		return error;
 
 #ifdef COMPAT_IN6IFIOCTL		/* XXX should be unused */
@@ -746,8 +748,10 @@ in6_control(so, cmd, data, ifp, p)
 		}
 		if (hostIsNew || prefixIsNew) {
 			error = in6_ifinit(ifp, ia, &ifra->ifra_addr, 0);
+#if 0
 			if (error)
 				goto undo;
+#endif
 		}
 		if (hostIsNew && (ifp->if_flags & IFF_MULTICAST)) {
 			int error_local = 0;
