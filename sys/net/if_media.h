@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.36 2003/10/13 05:06:44 dyoung Exp $	*/
+/*	$NetBSD: if_media.h,v 1.37 2004/02/19 11:58:30 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ struct ifmedia_entry *ifmedia_match __P((struct ifmedia *, u_int, u_int));
 void	ifmedia_delete_instance __P((struct ifmedia *, u_int));
 
 /* Compute baudrate for a given media. */
-int	ifmedia_baudrate __P((int));
+u_quad_t	ifmedia_baudrate(int);
 #endif /*_KERNEL */
 
 /*
@@ -178,6 +178,7 @@ int	ifmedia_baudrate __P((int));
 #define	IFM_1000_CX	15		/* 1000baseCX - 150ohm STP */
 #define	IFM_1000_T	16		/* 1000baseT - 4 pair cat 5 */
 #define	IFM_HPNA_1	17		/* HomePNA 1.0 (1Mb/s) */
+#define	IFM_10G_LR	18		/* 10GbaseLR - single-mode fiber */
 
 #define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
 
@@ -391,6 +392,8 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_1000_T,		"1000BASE-T" },			\
 	{ IFM_ETHER|IFM_HPNA_1,		"HomePNA1" },			\
 	{ IFM_ETHER|IFM_HPNA_1,		"HPNA1" },			\
+	{ IFM_ETHER|IFM_10G_LR,		"10GbaseLR" },			\
+	{ IFM_ETHER|IFM_10G_LR,		"10GLR" },			\
 									\
 	{ IFM_TOKEN|IFM_TOK_STP4,	"DB9/4Mbit" },			\
 	{ IFM_TOKEN|IFM_TOK_STP4,	"4STP" },			\
@@ -487,7 +490,7 @@ struct ifmedia_description {
  */
 struct ifmedia_baudrate {
 	int	ifmb_word;		/* media word */
-	int	ifmb_baudrate;		/* corresponding baudrate */
+	u_quad_t	ifmb_baudrate;		/* corresponding baudrate */
 };
 
 #define	IFM_BAUDRATE_DESCRIPTIONS {					\
@@ -506,6 +509,7 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER|IFM_1000_CX,	IF_Mbps(1000) },		\
 	{ IFM_ETHER|IFM_1000_T,		IF_Mbps(1000) },		\
 	{ IFM_ETHER|IFM_HPNA_1,		IF_Mbps(1) },			\
+	{ IFM_ETHER|IFM_10G_LR,		IF_Gbps(10ULL) },			\
 									\
 	{ IFM_TOKEN|IFM_TOK_STP4,	IF_Mbps(4) },			\
 	{ IFM_TOKEN|IFM_TOK_STP16,	IF_Mbps(16) },			\
