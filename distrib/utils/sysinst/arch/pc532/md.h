@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.7 1999/06/20 06:08:21 cgd Exp $	*/
+/*	$NetBSD: md.h,v 1.8 1999/06/20 06:42:07 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,7 +70,7 @@ EXTERN	char *disk_names[]
 /* Legal start character for a disk for checking input. */
 #define ISDISKSTART(dn)	(dn == 's')
 
-/* Definition of files to retreive from ftp. */
+/* Definition of files to retrieve from ftp. */
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {

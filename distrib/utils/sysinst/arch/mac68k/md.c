@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 1999/06/20 06:08:20 cgd Exp $ */
+/*	$NetBSD: md.c,v 1.7 1999/06/20 06:42:06 cgd Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -417,7 +417,7 @@ disp_selected_part(sel)
 }
 
 /*
- * check for any anomolies on the requested setup
+ * check for any anomalies on the requested setup
  */
 int
 check_for_errors()
@@ -439,7 +439,7 @@ check_for_errors()
 }
 
 /*
- * check for and report anomolies on the requested setup
+ * check for and report anomalies on the requested setup
  */
 void
 report_errors()
@@ -480,7 +480,7 @@ report_errors()
 	}
     }
     if (!errs)
-	msg_printf_add ("** No errors or anomolies found in disk setup.\n");
+	msg_printf_add ("** No errors or anomalies found in disk setup.\n");
     return;
 }
 
@@ -646,7 +646,7 @@ md_pre_disklabel()
      */
     if ((fd = open(devname, O_WRONLY, 0)) < 0) {
 	endwin();
-	fprintf(stderr, "Can't open %s to re-write the Disk Map\n", devname);
+	fprintf(stderr, "Can't open %s to rewrite the Disk Map\n", devname);
 	exit (1);
     }
     /*
@@ -671,7 +671,7 @@ md_pre_disklabel()
     }
     if (lseek (fd, (off_t)1 * bsize, SEEK_SET) < 0) {
 	endwin();
-	fprintf (stderr, "Can't position disk to re-write Disk Map\n");
+	fprintf (stderr, "Can't position disk to rewrite Disk Map\n");
 	close (fd);
 	exit (1);
     }
@@ -732,7 +732,7 @@ md_make_bsd_partitions(void)
 	 * Scan for any problems and report them before continuing.
 	 *  The user can abort installation and we'll take them back
 	 *  to the main menu; continue ignoring the warnings, or
-	 *  ask to re-edit the Disk Partition Map.
+	 *  ask to reedit the Disk Partition Map.
 	 */
 	while (1) {
 	    if (check_for_errors()) {
