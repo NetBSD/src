@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.15 2004/12/06 04:15:03 briggs Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.16 2004/12/08 03:07:03 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.15 2004/12/06 04:15:03 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.16 2004/12/08 03:07:03 briggs Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -440,10 +440,11 @@ cpu_setup(self, ci)
 	case MPC604ev:
 	case MPC750:
 	case IBM750FX:
+	case MPC7400:
 	case MPC7410:
-        case MPC7450:
-        case MPC7455:
-        case MPC7457:
+	case MPC7450:
+	case MPC7455:
+	case MPC7457:
 		aprint_normal("%s: ", self->dv_xname);
 		cpu_print_speed();
 
