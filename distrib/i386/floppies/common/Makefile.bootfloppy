@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.12 2002/05/12 10:48:35 lukem Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.13 2002/10/14 16:20:40 lukem Exp $
 #
 # Makefile snippet to create a set of USTAR floppies
 #
@@ -7,10 +7,10 @@
 # Required variables:
 #	FLOPPYBASE	Basename of floppies. Floppy number ${n} will
 #			be generated as ${FLOPPYBASE}${n}.fs
-#	FLOPPYKERNDIR	${FLOPPYKERNEL} is from ${.CURDIR}/../${FLOPPYKERNDIR}
 #	FLOPPYKERNEL	Kernel to copy
 #
 # Optional variables:
+#	FLOPPYKERNDIR	${FLOPPYKERNEL} is from ${.CURDIR}/../${FLOPPYKERNDIR}
 #	FLOPPY_BOOT	Bootstrap to use.  [${DESTDIR}/usr/mdec/biosboot.sym]
 #
 
@@ -23,6 +23,7 @@ FLOPPYMETAFILE!=	printf "USTAR.volsize.%o" ${FLOPPYSIZE}
 .else
 FLOPPYSIZE=	2880
 .endif
+FLOPPYKERNDIR?=		instkernel
 FLOPPYSUFFIX?=		.fs
 MDEC=			${DESTDIR}/usr/mdec
 #	XXXDISTRIB: need MI installboot for i386
