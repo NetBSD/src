@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)basename.c	5.1 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$Id: basename.c,v 1.4 1993/10/01 22:41:28 jtc Exp $";
+static char rcsid[] = "$Id: basename.c,v 1.5 1993/11/19 19:58:46 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -59,7 +59,7 @@ main(argc, argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
 		case '?':
 		default:
