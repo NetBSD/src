@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.13 2000/05/18 14:00:46 mrg Exp $	*/
+/*	$NetBSD: hme.c,v 1.14 2000/06/15 15:34:32 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1317,7 +1317,26 @@ hme_setladrf(sc)
 	u_char *cp;
 	u_int32_t crc;
 	u_int32_t hash[4];
+	u_int32_t v;
 	int len;
+
+	/* Clear hash table */
+	hash[3] = hash[2] = hash[1] = hash[0] = 0;
+
+	/* Get current RX configuration */
+	v = bus_space_read_4(t, mac, HME_MACI_RXCFG);
+
+	if ((ifp->if_flags & IFF_PROMISC) != 0) {
+		/* Turn on promiscuous mode; turn off the hash filter */
+		v |= HME_MAC_RXCFG_PMISC;
+		v &= ~HME_MAC_RXCFG_HENABLE;
+		ifp->if_flags |= IFF_ALLMULTI;
+		goto chipit;
+	}
+
+	/* Turn off promiscuous mode; turn on the hash filter */
+	v &= ~HME_MAC_RXCFG_PMISC;
+	v |= HME_MAC_RXCFG_HENABLE;
 
 	/*
 	 * Set up multicast address filter by passing all multicast addresses
@@ -1327,15 +1346,6 @@ hme_setladrf(sc)
 	 * the word.
 	 */
 
-	if ((ifp->if_flags & IFF_PROMISC) != 0) {
-		u_int32_t v = bus_space_read_4(t, mac, HME_MACI_RXCFG);
-		v |= HME_MAC_RXCFG_PMISC;
-		bus_space_write_4(t, mac, HME_MACI_RXCFG, v);
-		goto allmulti;
-	}
-
-	/* Clear hash table */
-	hash[3] = hash[2] = hash[1] = hash[0] = 0;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (ether_cmp(enm->enm_addrlo, enm->enm_addrhi)) {
@@ -1347,7 +1357,9 @@ hme_setladrf(sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
-			goto allmulti;
+			hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto chipit;
 		}
 
 		cp = enm->enm_addrlo;
@@ -1376,21 +1388,15 @@ hme_setladrf(sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
-	/* Now load the hash table onto the chip */
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+chipit:
+	/* Now load the hash table into the chip */
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB0, hash[0]);
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB1, hash[1]);
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB2, hash[2]);
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB3, hash[3]);
-
-	ifp->if_flags &= ~IFF_ALLMULTI;
-	return;
-
-allmulti:
-	ifp->if_flags |= IFF_ALLMULTI;
-	bus_space_write_4(t, mac, HME_MACI_HASHTAB0, 0xffff);
-	bus_space_write_4(t, mac, HME_MACI_HASHTAB1, 0xffff);
-	bus_space_write_4(t, mac, HME_MACI_HASHTAB2, 0xffff);
-	bus_space_write_4(t, mac, HME_MACI_HASHTAB3, 0xffff);
+	bus_space_write_4(t, mac, HME_MACI_RXCFG, v);
 }
 
 /*
