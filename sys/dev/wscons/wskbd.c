@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.39 2000/10/01 03:29:13 takemura Exp $ */
+/* $NetBSD: wskbd.c,v 1.40 2001/03/23 04:22:36 lukem Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.39 2000/10/01 03:29:13 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.40 2001/03/23 04:22:36 lukem Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,6 +114,10 @@ __KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.39 2000/10/01 03:29:13 takemura Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
+
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
 
 #ifdef WSKBD_DEBUG
 #define DPRINTF(x)	if (wskbddebug) printf x
@@ -1331,10 +1335,16 @@ internal_command(sc, type, ksym, ksym2)
 		return (0);
 
 	switch (ksym) {
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 	case KS_Cmd_Debugger:
-		if (sc->sc_isconsole)
+		if (sc->sc_isconsole) {
+#ifdef DDB
 			console_debugger();
+#endif
+#ifdef KGDB
+			kgdb_connect(1);
+#endif
+		}
 		/* discard this key (ddb discarded command modifiers) */
 		*type = WSCONS_EVENT_KEY_UP;
 		return (1);
