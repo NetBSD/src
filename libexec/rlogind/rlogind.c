@@ -39,13 +39,13 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rlogind.c	5.53 (Berkeley) 4/20/91";*/
-static char rcsid[] = "$Id: rlogind.c,v 1.2 1993/08/01 18:29:55 mycroft Exp $";
+static char rcsid[] = "$Id: rlogind.c,v 1.3 1994/05/19 22:54:28 pk Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
 /* From:
  *	$Source: /cvsroot/src/libexec/rlogind/rlogind.c,v $
- *	$Header: /cvsroot/src/libexec/rlogind/rlogind.c,v 1.2 1993/08/01 18:29:55 mycroft Exp $
+ *	$Header: /cvsroot/src/libexec/rlogind/rlogind.c,v 1.3 1994/05/19 22:54:28 pk Exp $
  */
 #endif
 
@@ -117,7 +117,7 @@ main(argc, argv)
 	char **argv;
 {
 	extern int opterr, optind;
-	extern int _check_rhosts_file;
+	extern int __check_rhosts_file;
 	int ch;
 	int on = 1, fromlen;
 	struct sockaddr_in from;
@@ -131,7 +131,7 @@ main(argc, argv)
 			check_all = 1;
 			break;
 		case 'l':
-			_check_rhosts_file = 0;
+			__check_rhosts_file = 0;
 			break;
 		case 'n':
 			keepalive = 0;
