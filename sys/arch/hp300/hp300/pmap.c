@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 1995/04/12 08:18:56 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 1995/05/12 12:54:53 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -347,7 +347,6 @@ pmap_init(phys_start, phys_end)
 	vm_offset_t	addr, addr2;
 	vm_size_t	s;
 	int		rv;
-	extern char kstack[];
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -372,13 +371,6 @@ pmap_init(phys_start, phys_end)
 	 * page table map.   Need to adjust pmap_size() in hp300_init.c.
 	 */
 	if (addr != (vm_offset_t)Sysmap)
-		goto bogons;
-
-	addr = (vm_offset_t) kstack;
-	vm_object_reference(kernel_object);
-	(void) vm_map_find(kernel_map, kernel_object, addr,
-			   &addr, USPACE, FALSE);
-	if (addr != (vm_offset_t)kstack)
 bogons:
 		panic("pmap_init: bogons in the VM system!\n");
 
