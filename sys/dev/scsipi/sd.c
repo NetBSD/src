@@ -1,7 +1,7 @@
-/*	$NetBSD: sd.c,v 1.64 1995/03/25 19:45:22 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.65 1995/03/29 23:04:52 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles Hannum.
+ *	This product includes software developed by Charles M. Hannum.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -193,8 +193,14 @@ sdattach(parent, self, aux)
 		    dp->heads, dp->sectors, dp->blksize);
 }
 
+/*
+ * Wait interruptibly for an exclusive lock.
+ *
+ * XXX
+ * Several drivers do this; it should be abstracted and made MP-safe.
+ */
 int
-sdlockwait(sd)
+sdlock(sd)
 	struct sd_softc *sd;
 {
 	int error;
@@ -204,9 +210,13 @@ sdlockwait(sd)
 		if ((error = tsleep(sd, PRIBIO | PCATCH, "sdlck", 0)) != 0)
 			return error;
 	}
+	sd->flags |= SDF_LOCKED;
 	return 0;
 }
 
+/*
+ * Unlock and wake up any waiters.
+ */
 void
 sdunlock(sd)
 	struct sd_softc *sd;
@@ -227,10 +237,10 @@ sdopen(dev, flag, fmt)
 	dev_t dev;
 	int flag, fmt;
 {
-	int error;
-	int unit, part;
 	struct sd_softc *sd;
 	struct scsi_link *sc_link;
+	int unit, part;
+	int error;
 
 	unit = SDUNIT(dev);
 	if (unit >= sdcd.cd_ndevs)
@@ -239,14 +249,13 @@ sdopen(dev, flag, fmt)
 	if (!sd)
 		return ENXIO;
 
-	part = SDPART(dev);
 	sc_link = sd->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1,
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    sdcd.cd_ndevs, part));
 
-	if (error = sdlockwait(sd))
+	if (error = sdlock(sd))
 		return error;
 
 	if (sd->sc_dk.dk_openmask != 0) {
@@ -257,8 +266,6 @@ sdopen(dev, flag, fmt)
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0)
 			return ENXIO;
 	} else {
-		sd->flags |= SDF_LOCKED;
-
 		/* Check that it is still responding and ok. */
 		if (error = scsi_test_unit_ready(sc_link,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_NOT_READY))
@@ -290,9 +297,9 @@ sdopen(dev, flag, fmt)
 			sdgetdisklabel(sd);
 			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel loaded "));
 		}
-
-		sdunlock(sd);
 	}
+
+	part = SDPART(dev);
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
@@ -314,6 +321,7 @@ sdopen(dev, flag, fmt)
 	sd->sc_dk.dk_openmask = sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
+	sdunlock(sd);
 	return 0;
 
 bad2:
@@ -324,11 +332,10 @@ bad:
 		scsi_prevent(sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 		sc_link->flags &= ~SDEV_OPEN;
-
-bad3:
-		sdunlock(sd);
 	}
 
+bad3:
+	sdunlock(sd);
 	return error;
 }
 
@@ -343,7 +350,10 @@ sdclose(dev, flag, fmt)
 {
 	struct sd_softc *sd = sdcd.cd_devs[SDUNIT(dev)];
 	int part = SDPART(dev);
-	int s;
+	int error;
+
+	if (error = sdlock(sd))
+		return error;
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -356,29 +366,14 @@ sdclose(dev, flag, fmt)
 	sd->sc_dk.dk_openmask = sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	if (sd->sc_dk.dk_openmask == 0) {
-		/*
-		 * If we're closing the last partition, nobody else could be
-		 * holding the lock, so don't bother to check.
-		 */
-		sd->flags |= SDF_LOCKED;
-
-#if 0
-		s = splbio();
-		while (...) {
-			sd->flags |= SDF_WAITING;
-			if ((error = tsleep(sd, PRIBIO | PCATCH, "sdcls", 0)) != 0)
-				return error;
-		}
-		splx(s);
-#endif
+		/* XXXX Must wait for I/O to complete! */
 
 		scsi_prevent(sd->sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 		sd->sc_link->flags &= ~SDEV_OPEN;
-
-		sdunlock(sd);
 	}
 
+	sdunlock(sd);
 	return 0;
 }
 
@@ -601,9 +596,9 @@ sdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		if (error = sdlockwait(sd))
+		if (error = sdlock(sd))
 			return error;
-		sd->flags |= SDF_LOCKED | SDF_LABELLING;
+		sd->flags |= SDF_LABELLING;
 
 		error = setdisklabel(&sd->sc_dk.dk_label,
 		    (struct disklabel *)addr, /*sd->sc_dk.dk_openmask : */0,
