@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.26 2001/09/24 13:22:32 wiz Exp $	*/
+/*	$NetBSD: trace.c,v 1.27 2002/11/30 04:04:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -41,13 +41,14 @@
 #include <fcntl.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: trace.c,v 1.26 2001/09/24 13:22:32 wiz Exp $");
+__RCSID("$NetBSD: trace.c,v 1.27 2002/11/30 04:04:24 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
-__RCSID("Revision: 2.23 ");
-#ident "Revision: 2.23 "
+__RCSID("Revision: 2.27 ");
+#ident "Revision: 2.27 "
 #endif
+
 
 #ifdef sgi
 /* use *stat64 for files on large filesystems */
@@ -646,9 +647,15 @@ trace_if(const char *act,
 			       ifp->int_mask, 1));
 	if (ifp->int_metric != 0)
 		(void)fprintf(ftrace, "metric=%d ", ifp->int_metric);
+	if (ifp->int_adj_inmetric != 0)
+		(void)fprintf(ftrace, "adj_inmetric=%u ",
+			      ifp->int_adj_inmetric);
+	if (ifp->int_adj_outmetric != 0)
+		(void)fprintf(ftrace, "adj_outmetric=%u ",
+			      ifp->int_adj_outmetric);
 	if (!IS_RIP_OUT_OFF(ifp->int_state)
 	    && ifp->int_d_metric != 0)
-		(void)fprintf(ftrace, "fake_default=%d ", ifp->int_d_metric);
+		(void)fprintf(ftrace, "fake_default=%u ", ifp->int_d_metric);
 	trace_bits(if_bits, ifp->int_if_flags, 0);
 	trace_bits(is_bits, ifp->int_state, 0);
 	(void)fputc('\n',ftrace);

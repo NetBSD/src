@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.21 2001/11/02 05:30:56 lukem Exp $	*/
+/*	$NetBSD: defs.h,v 1.22 2002/11/30 04:04:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -35,7 +35,7 @@
  *	@(#)defs.h	8.1 (Berkeley) 6/5/93
  *
  *	$FreeBSD$
- *	"Revision: 2.23 "
+ *	"Revision: 2.27 "
  */
 
 /* Definitions for RIPv2 routing process.
@@ -133,7 +133,7 @@
 
 /* Turn on if IP_DROP_MEMBERSHIP and IP_ADD_MEMBERSHIP do not look at
  * the dstaddr of point-to-point interfaces.
-#undef MCAST_PPP_BUG
+ * #define MCAST_PPP_BUG
  */
 #ifdef MCAST_IFINDEX
 #undef MCAST_PPP_BUG
@@ -303,7 +303,9 @@ struct interface {
 	time_t	int_query_time;
 	u_short	int_transitions;	/* times gone up-down */
 	char	int_metric;
-	char	int_d_metric;		/* for faked default route */
+	u_char	int_d_metric;		/* for faked default route */
+	u_char	int_adj_inmetric;	/* adjust advertised metrics */
+	u_char	int_adj_outmetric;	/*    instead of interface metric */
 	struct int_data {
 		u_int	ipackets;	/* previous network stats */
 		u_int	ierrors;
@@ -412,7 +414,9 @@ extern struct parm {
 	naddr	parm_net;
 	naddr	parm_mask;
 
-	char	parm_d_metric;
+	u_char	parm_d_metric;
+	u_char	parm_adj_inmetric;
+	u_char	parm_adj_outmetric;
 	u_int	parm_int_state;
 	int	parm_rdisc_pref;	/* signed IRDP preference */
 	int	parm_rdisc_int;		/* IRDP advertising interval */
@@ -470,6 +474,7 @@ extern int	rt_sock;		/* routing socket */
 extern int	rt_sock_seqno;
 extern int	rdisc_sock;		/* router-discovery raw socket */
 
+extern int	seqno;			/* sequence number for messages */
 extern int	supplier;		/* process should supply updates */
 extern int	supplier_set;		/* -s or -q requested */
 extern int	lookforinterfaces;	/* 1=probe for new up interfaces */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: routed.8,v 1.38 2002/10/03 15:41:46 wiz Exp $
+.\"	$NetBSD: routed.8,v 1.39 2002/11/30 04:04:23 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -114,11 +114,18 @@ The
 packet generated contains a list of known routes, each marked
 with a "hop count" metric (a count of 16 or greater is
 considered "infinite").
-Advertised metrics reflect the metric associated with interface
+The advertised metric for a route reflects the metrics associated
+with interfaces
 (see
-.Xr ifconfig 8 ) ,
+.Xr ifconfig 8 )
+though which it is received and sent,
 so setting the metric on an interface
 is an effective way to steer traffic.
+See also
+.Cm adj_inmetric
+and
+.Cm adj_outmetric
+parameters below.
 .Pp
 Responses do not include routes with a first hop on the requesting
 network to implement in part
@@ -206,10 +213,11 @@ It continues listening to RIP while using Router Discovery
 if multi-homed to ensure all interfaces are used.
 .Pp
 The Router Discovery standard requires that advertisements
-have a default "lifetime" of 30 minutes.
-That means should something happen,
-a client can be without a good route for 30 minutes.
 It is a good idea to reduce the default to 45 seconds using
+have a default "lifetime" of 30 minutes.  That means should
+something happen, a client can be without a good route for
+30 minutes.  It is a good idea to reduce the default to 45
+seconds using
 .Fl P Cm rdisc_interval=45
 on the command line or
 .Cm rdisc_interval=45
@@ -223,7 +231,7 @@ is received), there is a single default route and a variable number of
 redirected host routes in the kernel table.
 On a host with more than one network interface,
 this default route will be via only one of the interfaces.
-Thus, multi-homed hosts running with
+Thus, multi-homed hosts running with \f3\-q\f1 might need
 .Fl q
 might need
 .Cm no_rdisc
@@ -247,7 +255,6 @@ The following options are available:
 force
 .Nm
 to supply routing information.
-This is the default if multiple network interfaces are present on which
 RIP or Router Discovery have not been disabled, and if the sysctl
 net.inet.ip.forwarding=1.
 .It Fl q
@@ -280,8 +287,8 @@ default route.
 This is typically used on a gateway to the Internet,
 or on a gateway that uses another routing protocol whose routes
 are not reported to other local routers.
-Notice that because a metric of 1 is used, this feature is dangerous.
-It is more commonly accidentally used to create chaos with a
+Notice that because a metric of 1 is used, this feature is
+dangerous.  It is more commonly accidentally used to create chaos with a
 routing loop than to solve problems.
 .It Fl h
 cause host or point-to-point routes to not be advertised,
@@ -428,7 +435,7 @@ to the same destination.
 .Pp
 The
 .Pa /etc/gateways
-file consists of a series of lines, each in
+file is comprised of a series of lines, each in
 one of the following two formats or consist of parameters described later.
 Blank lines and lines starting with '#' are comments.
 .Pp
@@ -508,6 +515,7 @@ a line starting with
 .Cm if=alias(Hname) ,
 .Cm if=remote(Hname) ,
 etc. should be used.
+.Ss Parameters
 .Pp
 Lines that start with neither "net" nor "host" must consist of one
 or more of the following parameter settings, separated by commas or
@@ -528,8 +536,7 @@ This parameter must appear by itself on a line.
 The network number must specify a full, 32-bit value, as in 192.0.2.0
 instead of 192.0.2.
 .Pp
-Do not use this feature unless necessary.
-It is dangerous.
+Do not use this feature unless necessary.  It is dangerous.
 .It Cm ripv1_mask Ns \&= Ns Ar nname/mask1,mask2
 specifies that netmask of the network of which
 .Cm nname/mask1
@@ -564,7 +571,8 @@ all passwords have expired, in which case the password that expired most
 recently is used, or unless no passwords are valid yet, in which case
 no password is output.
 Incoming packets can carry any password that is valid, will
-be valid within 24 hours, or that was valid within 24 hours.
+be valid within the next 24 hours, or that was valid within the preceding
+24 hours.
 To protect the secrets, the passwd settings are valid only in the
 .Em /etc/gateways
 file and only when that file is readable only by UID 0.
@@ -651,18 +659,49 @@ Unless modified with
 .Cm fake_default ,
 the default route is broadcast with a metric of 14.
 That serves as a "poor man's router discovery" protocol.
+.It Cm adj_inmetric Ns \&= Ns Ar delta
+adjusts the hop count or metric of received RIP routes by
+.Ar delta .
+The metric of every received RIP route is increased by the sum
+of two values associated with the interface.
+One is the adj_inmetric value and the other is the interface
+metric set with
+.Xr ifconfig 8 .
+.It Cm adj_outmetric Ns \&= Ns Ar delta
+adjusts the hop count or metric of advertised RIP routes by
+.Ar delta .
+The metric of every received RIP route is increased by the metric
+associated with the interface by which it was received, or by 1 if
+the interface does not have a non-zero metric.
+The metric of the received route is then increased by the
+adj_outmetric associated with the interface.
+Every advertised route is increased by a total of four
+values,
+the metric set for the interface by which it was received with
+.Xr ifconfig 8 ,
+the
+.Cm adj_inmetric Ar delta
+of the receiving interface,
+the metric set for the interface by which it is transmitted with
+.Xr ifconfig 8 ,
+and the
+.Cm adj_outmetric Ar delta
+of the transmitting interface.
 .It Cm trust_gateway Ns \&= Ns Ar rname[|net1/mask1|net2/mask2|...]
-causes RIP packets from that router and other routers named in
-other
+causes RIP packets from router
+.Ar rname
+and other routers named in other
 .Cm trust_gateway
 keywords to be accepted, and packets from other routers to be ignored.
 If networks are specified, then routes to other networks will be ignored
 from that router.
 .It Cm redirect_ok
-causes RIP to allow ICMP Redirect messages when the system is acting
+allows the kernel to listen ICMP Redirect messages when the system is acting
 as a router and forwarding packets.
-Otherwise, ICMP Redirect messages are overridden.
+Otherwise, ICMP Redirect messages are overridden and deleted when the
+system is acting as a router.
 .El
+.Pp
 .Sh FILES
 .Bl -tag -width /etc/gateways -compact
 .It Pa /etc/gateways
@@ -677,11 +716,11 @@ for distant gateways
 .%R XSIS 028112
 .%Q Xerox System Integration Standard
 .Re
+.Sh BUGS
+It does not always detect unidirectional failures in network interfaces,
+for example, when the output side fails.
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.2 .
-.Sh BUGS
-It does not always detect unidirectional failures in network interfaces,
-for example, when the output side fails.
