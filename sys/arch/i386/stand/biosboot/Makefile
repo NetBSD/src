@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1997/03/14 04:59:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 1997/05/07 16:15:01 mycroft Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -25,10 +25,9 @@ SRCS+= ls.c
 ${PROG}: ${PROG}.sym
 	@# do nothing
 
-install:
+proginstall::
 	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${PROG}.sym ${DESTDIR}${BINDIR}
-
 
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no
 
