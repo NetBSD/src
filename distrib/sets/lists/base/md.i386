@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.60 2000/01/24 07:25:02 mycroft Exp $
+# $NetBSD: md.i386,v 1.61 2000/03/22 17:32:03 tron Exp $
 ./dev/audio
 ./dev/audioctl
 ./dev/mixer
@@ -7,6 +7,7 @@
 ./usr/bin/fdformat
 ./usr/bin/fontedit
 ./usr/bin/vttest
+./usr/lib/libi386.so
 ./usr/lib/libi386.so.0
 ./usr/lib/libi386.so.0.2
 ./usr/lib/libm387.so
