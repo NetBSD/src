@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.27 2005/02/17 19:15:38 tron Exp $	*/
+/*	$NetBSD: setenv.c,v 1.28 2005/02/17 19:58:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.27 2005/02/17 19:15:38 tron Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.28 2005/02/17 19:58:21 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ setenv(name, value, rewrite)
 	static char **saveenv;	/* copy of previously allocated space */
 	char *c, **newenv;
 	const char *cc;
-	size_t l_value;
+	size_t l_value, size;
 	int offset;
 
 	_DIAGASSERT(name != NULL);
@@ -88,33 +88,34 @@ setenv(name, value, rewrite)
 		if (strlen(c) >= l_value)	/* old larger; copy over */
 			goto copy;
 	} else {					/* create new slot */
-		size_t cnt, siz;
+		size_t cnt;
 
 		for (cnt = 0; *environ[cnt]; ++cnt)
 			continue;
-		siz = (size_t)(sizeof(char *) * (cnt + 2));
+		size = (size_t)(sizeof(char *) * (cnt + 2));
 		if (saveenv == environ) {		/* just increase size */
-			if ((newenv = realloc(saveenv, siz)) == NULL)
+			if ((newenv = realloc(saveenv, size)) == NULL)
 				goto bad;
 			saveenv = newenv;
 		} else {				/* get new space */
 			free(saveenv);
-			if ((saveenv = malloc(siz)) == NULL)
+			if ((saveenv = malloc(size)) == NULL)
 				goto bad;
 			(void)memcpy(saveenv, environ, cnt * sizeof(char *));
 		}
 		environ = saveenv;
 		environ[cnt + 1] = NULL;
-		offset = cnt;
+		offset = (int)cnt;
 	}
 	for (cc = name; *cc && *cc != '='; ++cc)	/* no `=' in name */
 		continue;
-	if (!(environ[offset] =			/* name + `=' + value */
-	    malloc((size_t)((int)(cc - name) + l_value + 2))))
+	size = cc - name;
+	/* name + `=' + value */
+	if ((environ[offset] = malloc(size + l_value + 2)) == NULL)
 		goto bad;
 	c = environ[offset];
-	(void)memcpy(c, name, (size_t)(cc - name));
-	c += cc - name;
+	(void)memcpy(c, name, size);
+	c += size;
 	*c++ = '=';
 copy:
 	(void)memcpy(c, value, l_value + 1);
