@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.1 2001/02/22 18:37:56 uch Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.2 2001/02/24 19:52:22 uch Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -423,6 +423,35 @@ static const keysym_t sigmarion_cmdmap[] = {
 };
 #endif /* hpcmips */
 
+#ifdef hpcsh
+/* HP Jornada 690 (Japanese) */
+const u_int8_t jornada690_jp_keytrans[] = {
+/*      0    1    2    3    4    5    6    7 */       
+/* 0 */ 59 , 45 , 31 , 17 , 3  , UNK, 29 , UNK, /* ctrl 29 */
+/* 1 */ 60 , 46 , 32 , 18 , 4  , 42 , UNK, UNK, /* shift L 42 */
+/* 2 */ 61 , 47 , 33 , 19 , 5  , UNK, 57 , UNK,
+/* 3 */ 66 , 52 , 38 , 24 , 10 , UNK, 14 , 203,
+/* 4 */ 65 , 51 , 37 , 23 , 9  , UNK, 115, UNK,
+/* 5 */ 64 , 50 , 36 , 22 , 8  , UNK, 121, UNK,
+/* 6 */ 62 , 48 , 34 , 20 , 6  , UNK, UNK, 56 , /* alt 56 */
+/* 7 */ 63 , 49 , 35 , 21 , 7  , UNK, UNK, 123,
+/* 8 */ IGN, 53 , 39 , 25 , 11 , 200, UNK, 208,
+/* 9 */ 112, 40 , 27 , 26 , 12 , 125, UNK, 205,
+/*10 */ 41 , 28 , 43 , 14 , 13 , 54 , UNK, UNK, /* shift R 54 */
+/*11 */ SPL, IGN, IGN, IGN, IGN, IGN, IGN, IGN,
+/*12 */ 1  , 44 , 30 , 16 , 2  , 15 , 221, UNK,
+/*13 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
+/*14 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
+/*15 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
+};
+
+const int jornada690_jp_special_keymap[] = {
+	[KEY_SPECIAL_OFF]	= 88,
+	[KEY_SPECIAL_LIGHT]	= -1
+};
+
+#endif /* hpcsh */
+
 const struct hpckbd_keymap_table {
 	platid_t	*ht_platform;
 	const u_int8_t	*ht_keymap;
@@ -520,5 +549,12 @@ const struct hpckbd_keymap_table {
 		NULLCMDMAP,
 		KB_JP },
 #endif /* hpcmips */
+#ifdef hpcsh
+	{	&platid_mask_MACH_HP_JORNADA_690JP,
+		jornada690_jp_keytrans,
+		jornada690_jp_special_keymap,
+		NULLCMDMAP,
+		KB_JP },
+#endif /* hpcsh */
 	{ NULL } /* end mark */
 };
