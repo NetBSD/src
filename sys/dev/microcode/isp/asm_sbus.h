@@ -1,4 +1,4 @@
-/*	$NetBSD: asm_sbus.h,v 1.2 1997/03/12 21:07:34 cgd Exp $	*/
+/*	$NetBSD: asm_sbus.h,v 1.3 1997/03/13 03:33:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 by Matthew Jacob 
@@ -11,7 +11,7 @@
  */
 
 #define	ISP_CODE_ORG	0x1000
-static unsigned short ISP_RISC_CODE[] = {
+static const unsigned short ISP_RISC_CODE[] = {
 	0x0078, 0x1030, 0x0000, 0x231f, 0x0000, 0x12ff, 0x2043, 0x4f50,
 	0x5952, 0x4947, 0x4854, 0x2031, 0x3939, 0x312c, 0x3139, 0x3932,
 	0x2c31, 0x3939, 0x332c, 0x3139, 0x3934, 0x2051, 0x4c4f, 0x4749,
