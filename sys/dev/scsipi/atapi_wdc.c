@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.40 2001/04/25 17:53:38 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.41 2001/05/15 13:53:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -380,6 +380,7 @@ wdc_atapi_scsipi_request(chan, req, arg)
 
 	default:
 		/* Not supported, nothing to do. */
+		;
 	}
 }
 
