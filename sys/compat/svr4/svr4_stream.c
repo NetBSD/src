@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.37 2000/04/12 02:46:41 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.38 2000/04/12 15:12:13 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -436,8 +436,8 @@ si_ogetudata(fp, fd, ioc, p)
 	struct svr4_si_sockparms pa;
 
 	if (ioc->len != sizeof(ud) && ioc->len != sizeof(ud) - sizeof(int)) {
-		DPRINTF(("SI_OGETUDATA: Wrong size %d != %d\n",
-			 sizeof(ud), ioc->len));
+		DPRINTF(("SI_OGETUDATA: Wrong size %ld != %d\n",
+		    (unsigned long)sizeof(ud), ioc->len));
 		return EINVAL;
 	}
 
@@ -571,8 +571,8 @@ si_getudata(fp, fd, ioc, p)
 	struct svr4_si_udata ud;
 
 	if (sizeof(ud) != ioc->len) {
-		DPRINTF(("SI_GETUDATA: Wrong size %d != %d\n",
-			 sizeof(ud), ioc->len));
+		DPRINTF(("SI_GETUDATA: Wrong size %ld != %d\n",
+		    (unsigned long)sizeof(ud), ioc->len));
 		return EINVAL;
 	}
 
@@ -629,8 +629,8 @@ si_shutdown(fp, fd, ioc, p)
 	register_t retval;
 
 	if (ioc->len != sizeof(SCARG(&ap, how))) {
-		DPRINTF(("SI_SHUTDOWN: Wrong size %d != %d\n",
-			 sizeof(SCARG(&ap, how)), ioc->len));
+		DPRINTF(("SI_SHUTDOWN: Wrong size %ld != %d\n",
+		    (unsigned long)sizeof(SCARG(&ap, how)), ioc->len));
 		return EINVAL;
 	}
 
@@ -1522,8 +1522,8 @@ svr4_sys_putmsg(p, v, retval)
 	}
 
 	if (ctl.len > sizeof(sc)) {
-		DPRINTF(("putmsg: Bad control size %d != %d\n", ctl.len,
-			 sizeof(struct svr4_strmcmd)));
+		DPRINTF(("putmsg: Bad control size %ld != %d\n",
+		    (unsigned long)sizeof(struct svr4_strmcmd), ctl.len));
 		return EINVAL;
 	}
 
