@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.10 1998/02/28 15:52:04 mrg Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.11 1999/10/22 10:38:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.10 1998/02/28 15:52:04 mrg Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.11 1999/10/22 10:38:41 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1019,11 +1019,6 @@ set_crc(arcn, fd)
 	unsigned long crc = 0L;
 	char tbuf[FILEBLK];
 	struct stat sb;
-
-#ifdef __GNUC__
-	/* This outrageous construct just to shut up a GCC warning. */
-	(void) &cpcnt;
-#endif
 
 	if (fd < 0) {
 		/*
