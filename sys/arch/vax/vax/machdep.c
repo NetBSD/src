@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.91 1999/12/11 17:51:34 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.92 2000/01/16 12:43:52 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -347,6 +347,8 @@ compat_13_sys_sigreturn(p, v, retval)
 
 	scf = p->p_addr->u_pcb.framep;
 	cntx = SCARG(uap, sigcntxp);
+	if (uvm_useracc((caddr_t)cntx, sizeof (*cntx), B_READ) == 0)
+		return EINVAL;
 
 	/* Compatibility mode? */
 	if ((cntx->sc_ps & (PSL_IPL | PSL_IS)) ||
@@ -386,6 +388,8 @@ sys___sigreturn14(p, v, retval)
 	scf = p->p_addr->u_pcb.framep;
 	cntx = SCARG(uap, sigcntxp);
 
+	if (uvm_useracc((caddr_t)cntx, sizeof (*cntx), B_READ) == 0)
+		return EINVAL;
 	/* Compatibility mode? */
 	if ((cntx->sc_ps & (PSL_IPL | PSL_IS)) ||
 	    ((cntx->sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
