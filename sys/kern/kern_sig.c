@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.170 2003/10/25 09:06:51 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.171 2003/10/25 16:50:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.170 2003/10/25 09:06:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.171 2003/10/25 16:50:37 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -469,7 +469,7 @@ siginit(struct proc *p)
 		SIGACTION_PS(ps, signum).sa_flags = SA_RESTART;
 	}
 	sigemptyset(&p->p_sigctx.ps_sigcatch);
-	p->p_sigctx.ps_sigwaited = 0;
+	p->p_sigctx.ps_sigwaited = NULL;
 	p->p_flag &= ~P_NOCLDSTOP;
 
 	/*
@@ -516,7 +516,7 @@ execsigs(struct proc *p)
 		SIGACTION_PS(ps, signum).sa_flags = SA_RESTART;
 	}
 	sigemptyset(&p->p_sigctx.ps_sigcatch);
-	p->p_sigctx.ps_sigwaited = 0;
+	p->p_sigctx.ps_sigwaited = NULL;
 	p->p_flag &= ~P_NOCLDSTOP;
 
 	/*
@@ -1062,33 +1062,29 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 	if (prop & SA_STOP)
 		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
 
-	sigaddset(&p->p_sigctx.ps_siglist, signum);
-
-	/* CHECKSIGS() is "inlined" here. */
-	p->p_sigctx.ps_sigcheck = 1;
-
 	/*
 	 * If the signal doesn't have SA_CANTMASK (no override for SIGKILL,
-	 * please!), check if anything waits on it. If yes, clear the
-	 * pending signal from siglist set, save it to ps_sigwaited,
-	 * clear sigwait list, and wakeup any sigwaiters.
+	 * please!), check if anything waits on it. If yes, save the
+	 * info into provided ps_sigwaited, and wake-up the waiter.
 	 * The signal won't be processed further here.
 	 */
 	if ((prop & SA_CANTMASK) == 0
-	    && p->p_sigctx.ps_sigwaited < 0
-	    && sigismember(&p->p_sigctx.ps_sigwait, signum)
+	    && p->p_sigctx.ps_sigwaited
+	    && sigismember(p->p_sigctx.ps_sigwait, signum)
 	    && p->p_stat != SSTOP) {
-		if (action == SIG_CATCH)
-			ksiginfo_put(p, ksi);
-		sigdelset(&p->p_sigctx.ps_siglist, signum);
-		p->p_sigctx.ps_sigwaited = signum;
-		sigemptyset(&p->p_sigctx.ps_sigwait);
+		p->p_sigctx.ps_sigwaited->ksi_info = ksi->ksi_info;
+		p->p_sigctx.ps_sigwaited = NULL;
 		if (dolock)
 			wakeup_one(&p->p_sigctx.ps_sigwait);
 		else
 			sched_wakeup(&p->p_sigctx.ps_sigwait);
 		return;
 	}
+
+	sigaddset(&p->p_sigctx.ps_siglist, signum);
+
+	/* CHECKSIGS() is "inlined" here. */
+	p->p_sigctx.ps_sigcheck = 1;
 
 	/*
 	 * Defer further processing for signals which are held,
@@ -2174,6 +2170,7 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 	int timo = 0;
 	struct timeval tvstart;
 	struct timespec ts;
+	ksiginfo_t *ksi;
 
 	if ((error = copyin(SCARG(uap, set), &waitset, sizeof(waitset))))
 		return (error);
@@ -2194,6 +2191,15 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 	if ((signum = firstsig(&twaitset))) {
 		/* found pending signal */
 		sigdelset(&p->p_sigctx.ps_siglist, signum);
+		ksi = ksiginfo_get(p, signum);
+		if (!ksi) {
+			/* No queued siginfo, manufacture one */
+			ksi = pool_get(&ksiginfo_pool, PR_WAITOK);
+			KSI_INIT(ksi);
+			ksi->ksi_info._signo = signum;
+			ksi->ksi_info._code = SI_USER;
+		}
+			
 		goto sig;
 	}
 
@@ -2225,8 +2231,9 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * Setup ps_sigwait list.
 	 */
-	p->p_sigctx.ps_sigwaited = -1;
-	p->p_sigctx.ps_sigwait = waitset;
+	ksi = pool_get(&ksiginfo_pool, PR_WAITOK);
+	p->p_sigctx.ps_sigwaited = ksi;
+	p->p_sigctx.ps_sigwait = &waitset;
 
 	/*
 	 * Wait for signal to arrive. We can either be woken up or
@@ -2235,22 +2242,25 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 	error = tsleep(&p->p_sigctx.ps_sigwait, PPAUSE|PCATCH, "sigwait", timo);
 
 	/*
-	 * Check if a signal from our wait set has arrived, or if it
-	 * was mere wakeup.
+	 * Need to find out if we woke as a result of lwp_wakeup()
+	 * or a signal outside our wait set.
 	 */
-	if (!error) {
-		if ((signum = p->p_sigctx.ps_sigwaited) <= 0) {
-			/* wakeup via _lwp_wakeup() */
-			error = ECANCELED;
-		}
+	if (error == EINTR && p->p_sigctx.ps_sigwaited
+	    && !firstsig(&p->p_sigctx.ps_siglist)) {
+		/* wakeup via _lwp_wakeup() */
+		error = ECANCELED;
+	} else if (!error && p->p_sigctx.ps_sigwaited) {
+		/* spurious wakeup - arrange for syscall restart */
+		error = ERESTART;
+		goto fail;
 	}
 
 	/*
-	 * On error, clear sigwait indication. psignal1() sets it
+	 * On error, clear sigwait indication. psignal1() clears it
 	 * in !error case.
 	 */
 	if (error) {
-		p->p_sigctx.ps_sigwaited = 0;
+		p->p_sigctx.ps_sigwaited = NULL;
 
 		/*
 		 * If the sleep was interrupted (either by signal or wakeup),
@@ -2273,37 +2283,36 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 			/* substract passed time from timeout */
 			timersub(&tvtimo, &tvnow, &tvtimo);
 
-			if (tvtimo.tv_sec < 0)
-				return (EAGAIN);
-			
+			if (tvtimo.tv_sec < 0) {
+				error = EAGAIN;
+				goto fail;
+			}
+
 			TIMEVAL_TO_TIMESPEC(&tvtimo, &ts);
 
 			/* copy updated timeout to userland */
-			if ((err = copyout(&ts, SCARG(uap, timeout), sizeof(ts))))
-				return (err);
+			if ((err = copyout(&ts, SCARG(uap, timeout), sizeof(ts)))) {
+				error = err;
+				goto fail;
+			}
 		}
 
-		return (error);
+		goto fail;
 	}
 
 	/*
 	 * If a signal from the wait set arrived, copy it to userland.
-	 * XXX no queued signals for now
+	 * Copy only the used part of siginfo, the padding part is
+	 * left unchanged (userland is not supposed to touch it anyway).
 	 */
-	if (signum > 0) {
-		siginfo_t si;
-
  sig:
-		memset(&si, 0, sizeof(si));
-		si.si_signo = signum;
-		si.si_code = SI_USER;
+	error = copyout(&ksi->ksi_info, SCARG(uap, info), sizeof(ksi->ksi_info));
 
-		error = copyout(&si, SCARG(uap, info), sizeof(si));
-		if (error)
-			return (error);
-	}
+ fail:
+	pool_put(&ksiginfo_pool, ksi);
+	p->p_sigctx.ps_sigwait = NULL;
 
-	return (0);
+	return (error);
 }
 
 /*
