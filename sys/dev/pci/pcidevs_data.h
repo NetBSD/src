@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.6 1996/02/19 20:08:25 christos Exp 
+ *	NetBSD: pcidevs,v 1.7 1996/04/04 21:46:33 mycroft Exp 
  */
 
 /*
@@ -258,6 +258,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "NCR",
 	    "53c815",
+	},
+	{
+	    PCI_VENDOR_OLDNCR, PCI_PRODUCT_OLDNCR_810AP,
+	    0,
+	    "NCR",
+	    "53c810AP",
+	},
+	{
+	    PCI_VENDOR_OLDNCR, PCI_PRODUCT_OLDNCR_860,
+	    0,
+	    "NCR",
+	    "53c860",
+	},
+	{
+	    PCI_VENDOR_OLDNCR, PCI_PRODUCT_OLDNCR_875,
+	    0,
+	    "NCR",
+	    "53c875",
 	},
 	{
 	    PCI_VENDOR_NUMBER9, PCI_PRODUCT_NUMBER9_IMAG128,
