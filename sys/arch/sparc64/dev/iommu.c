@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.51.4.1 2002/06/13 02:47:21 lukem Exp $	*/
+/*	$NetBSD: iommu.c,v 1.51.4.2 2002/06/14 17:46:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -179,7 +179,7 @@ iommu_init(name, is, tsbsize, iovabase)
 	 */
 	if (is->is_sbvalid[0] || is->is_sbvalid[1])
 		(void)pmap_extract(pmap_kernel(), (vaddr_t)&is->is_flush[0],
-		    (paddr_t *)&is->is_flushpa);
+		    &is->is_flushpa);
 
 	/*
 	 * now actually start up the IOMMU
@@ -251,8 +251,8 @@ iommu_enter(is, va, pa, flags)
 		panic("iommu_enter: va %#lx not in DVMA space", va);
 #endif
 
-	tte = MAKEIOTTE(pa, !(flags&BUS_DMA_NOWRITE), !(flags&BUS_DMA_NOCACHE), 
-			(flags&BUS_DMA_STREAMING));
+	tte = MAKEIOTTE(pa, !(flags & BUS_DMA_NOWRITE), 
+		!(flags & BUS_DMA_NOCACHE), (flags & BUS_DMA_STREAMING));
 #ifdef DEBUG
 	tte |= (flags & 0xff000LL)<<(4*8);
 #endif
@@ -287,9 +287,9 @@ iommu_extract(is, dva)
 	if (dva >= is->is_dvmabase && dva < is->is_dvmaend)
 		tte = is->is_tsb[IOTSBSLOT(dva,is->is_tsbsize)];
 
-	if ((tte&IOTTE_V) == 0)
+	if ((tte & IOTTE_V) == 0)
 		return ((paddr_t)-1L);
-	return (tte&IOTTE_PAMASK);
+	return (tte & IOTTE_PAMASK);
 }
 
 /*
@@ -496,7 +496,7 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 	 */
 	err = extent_alloc(is->is_dvmamap, sgsize, align, 
 		(sgsize > boundary) ? 0 : boundary, 
-		EX_NOWAIT|EX_BOUNDZERO, (u_long *)&dvmaddr);
+		EX_NOWAIT|EX_BOUNDZERO, &dvmaddr);
 	splx(s);
 
 #ifdef DEBUG
@@ -585,7 +585,7 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 		    ("iommu_dvmamap_load: map %p loading va %p "
 			    "dva %lx at pa %lx\n",
 			    map, (void *)vaddr, (long)dvmaddr,
-			    (long)(curaddr&~(NBPG-1))));
+			    (long)(curaddr & ~(NBPG-1))));
 		iommu_enter(is, trunc_page(dvmaddr), trunc_page(curaddr),
 		    flags|0x4000);
 			
@@ -712,7 +712,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 	err = extent_alloc(is->is_dvmamap, sgsize, align,
 		(sgsize > boundary) ? 0 : boundary,
 		((flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT) |
-		EX_BOUNDZERO, (u_long *)&dvmaddr);
+		EX_BOUNDZERO, &dvmaddr);
 	splx(s);
 
 	if (err != 0)
@@ -762,10 +762,6 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 			if ((pa == prev_pa) && 
 				((offset != 0) || (end != offset))) {
 				/* We can re-use this mapping */
-#ifdef DEBUG
-if (iommudebug & 0x10) printf("reusing dva %lx prev %lx pa %lx prev %lx\n",
-	dvmaddr, prev_va, pa, prev_pa);
-#endif
 				dvmaddr = prev_va;
 			}
 
@@ -776,13 +772,6 @@ if (iommudebug & 0x10) printf("reusing dva %lx prev %lx pa %lx prev %lx\n",
 			if ((j > 0) && (end == offset) && 
 				((offset == 0) || (pa == prev_pa))) {
 				/* Just append to the previous segment. */
-#ifdef DEBUG
-if (iommudebug & 0x10) {
-printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
-	offset, pa, prev_pa, dvmaddr, prev_va);
-}
-#endif
-
 				map->dm_segs[--j].ds_len += left;
 				DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 					"appending seg %d start %lx size %lx\n", j,
@@ -833,16 +822,9 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 						(long)(pa)));
 				/* Enter it if we haven't before. */
 				if (prev_va != dvmaddr)
-#ifdef DEBUG
-{ if (iommudebug & 0x10) printf("seg %d:%d entering dvma %lx, prev %lx pa %lx\n", i,j, dvmaddr, prev_va, pa);
-#endif
 					iommu_enter(is, prev_va = dvmaddr,
 						prev_pa = pa,
 						flags|(++npg<<12));
-#ifdef DEBUG
-} else if (iommudebug & 0x10) printf("seg %d:%d skipping dvma %lx, prev %lx\n", i,j, dvmaddr, prev_va);
-#endif
-
 				dvmaddr += pagesz;
 				pa += pagesz;
 			}
