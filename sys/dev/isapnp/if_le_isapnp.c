@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.5 1997/06/06 23:46:39 thorpej Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.6 1997/10/28 21:28:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -278,7 +278,7 @@ le_isapnp_attach(parent, self, aux)
 		isa_dmacascade(parent->dv_parent, ipa->ipa_drq[0].num);
 
 	lesc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
-	    IST_EDGE, IPL_NET, le_isapnp_intredge, sc);
+	    ipa->ipa_irq[0].type, IPL_NET, le_isapnp_intredge, sc);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.7 1997/10/23 06:14:11 mikel Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.8 1997/10/28 21:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -113,5 +113,5 @@ com_isapnp_attach(parent, self, aux)
 	com_attach_subr(sc);
 
 	isc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
-	    IST_EDGE, IPL_SERIAL, comintr, sc);
+	    ipa->ipa_irq[0].type, IPL_SERIAL, comintr, sc);
 }
