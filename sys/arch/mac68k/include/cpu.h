@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51 1997/10/02 13:31:13 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52 1997/10/20 08:14:01 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -227,12 +227,16 @@ struct mac68k_machine_S {
 	int			do_graybars;
 	int			serial_boot_echo;
 	int			serial_console;
+
+	int			zs_chip;	/* what type of chip we've got */
 	int			modem_flags;
 	int			modem_cts_clk;
 	int			modem_dcd_clk;
+	int			modem_d_speed;
 	int			print_flags;
 	int			print_cts_clk;
 	int			print_dcd_clk;
+	int			print_d_speed;
 	/*
 	 * Misc. hardware info.
 	 */
@@ -240,8 +244,6 @@ struct mac68k_machine_S {
 	int			scsi96;		/* Has NCR 53C96 */
 	int			scsi96_2;	/* Has 2nd 53C96 */
 	int			sonic;		/* Has SONIC e-net */
-
-	int			sccClkConst;	/* "Constant" for SCC bps */
 };
 
 	/* What kind of model is this */
