@@ -1,4 +1,4 @@
-.\"	$NetBSD: realpath.3,v 1.5 1999/04/06 04:54:19 cgd Exp $
+.\"	$NetBSD: realpath.3,v 1.5.8.1 2003/03/15 20:41:32 he Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -85,14 +85,14 @@ is called.
 The
 .Fn realpath
 function returns
-.Fa resolved_name
+.Fa resolvedname
 on success.
 If an error occurs,
 .Fn realpath
 returns
 .Dv NULL ,
 and
-.Fa resolved_name
+.Fa resolvedname
 contains the pathname which caused the problem.
 .Sh ERRORS
 The function
@@ -117,7 +117,7 @@ The
 version always returns absolute pathnames,
 whereas the Solaris implementation will,
 under certain circumstances, return a relative
-.Fa resolved_path
+.Fa resolvedname
 when given a relative
 .Fa pathname .
 .Sh SEE ALSO
