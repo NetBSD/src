@@ -1,3 +1,4 @@
+/*	$NetBSD: syntax.h,v 1.2 2004/01/17 17:38:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
