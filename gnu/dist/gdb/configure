@@ -1948,6 +1948,7 @@ ns32k-umax-*)		gdb_host=umax ;;
 ns32k-utek-sysv*)	gdb_host=merlin ;;
 
 powerpc-*-aix*)		gdb_host=aix ;;
+powerpc-*-netbsd*)	gdb_host=nbsd ;;
 powerpcle-*-cygwin32)	gdb_host=cygwin32 ;;
 pn-*-*)			gdb_host=pn ;;
 
@@ -2152,6 +2153,7 @@ powerpc-*-netware*)	gdb_target=ppc-nw
 
 powerpc-*-aix4*)	gdb_target=aix4 ;;
 powerpc-*-aix*)		gdb_target=aix ;;
+powerpc-*-netbsd*)	gdb_target=nbsd ;;
 powerpcle-*-cygwin32)	gdb_target=cygwin32 ;;
 powerpc-*-eabi*)	gdb_target=ppc-eabi ;;
 powerpcle-*-eabi*)	gdb_target=ppcle-eabi ;;
