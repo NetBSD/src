@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.c,v 1.29 1998/08/18 17:31:25 thorpej Exp $	*/
+/*	$NetBSD: vm_kern.c,v 1.30 1998/08/28 20:05:48 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -455,16 +455,22 @@ kmem_free_wakeup(map, addr, size)
  */
 /* ARGSUSED */
 vaddr_t
-kmem_alloc_poolpage1(map)
+kmem_alloc_poolpage1(map, waitok)
 	vm_map_t	map;
+	boolean_t	waitok;
 {
 #if defined(PMAP_MAP_POOLPAGE)
 	vm_page_t pg;
 	vaddr_t va;
 
 	pg = vm_page_alloc1();
-	if (pg == NULL)
-		return (0);
+	if (pg == NULL) {
+		if (waitok) {
+			vm_wait("plpg");
+			goto again;
+		} else
+			return (0);
+	}
 	va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
 	if (va == 0)
 		vm_page_free1(pg);
@@ -474,7 +480,7 @@ kmem_alloc_poolpage1(map)
 	int s;
 
 	s = splimp();
-	va = kmem_malloc(map, PAGE_SIZE, 0);
+	va = kmem_malloc(map, PAGE_SIZE, waitok);
 	splx(s);
 	return (va);
 #endif /* PMAP_MAP_POOLPAGE */

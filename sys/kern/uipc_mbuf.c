@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.31 1998/08/13 19:15:33 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.32 1998/08/28 20:05:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -94,11 +94,13 @@ mclpool_alloc(sz, flags, mtype)
 	int flags;
 	int mtype;
 {
+	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
 #if defined(UVM)
-	return ((void *)uvm_km_alloc_poolpage1(mb_map, uvmexp.mb_object));
+	return ((void *)uvm_km_alloc_poolpage1(mb_map, uvmexp.mb_object,
+	    waitok));
 #else
-	return ((void *)kmem_alloc_poolpage1(mb_map));
+	return ((void *)kmem_alloc_poolpage1(mb_map, waitok));
 #endif
 }
 

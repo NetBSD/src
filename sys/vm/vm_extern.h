@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.40 1998/08/13 02:11:05 eeh Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.41 1998/08/28 20:05:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,10 +86,10 @@ void		 kmem_init __P((vaddr_t, vaddr_t));
 vaddr_t		 kmem_malloc __P((vm_map_t, vsize_t, boolean_t));
 vm_map_t	 kmem_suballoc __P((vm_map_t, vaddr_t *, vaddr_t *,
 				    vsize_t, boolean_t));
-vaddr_t		 kmem_alloc_poolpage1 __P((vm_map_t));
+vaddr_t		 kmem_alloc_poolpage1 __P((vm_map_t, boolean_t));
 void		 kmem_free_poolpage1 __P((vm_map_t, vaddr_t));
 
-#define	kmem_alloc_poolpage()		kmem_alloc_poolpage1(kmem_map)
+#define	kmem_alloc_poolpage(waitok)	kmem_alloc_poolpage1(kmem_map, (waitok))
 #define	kmem_free_poolpage(addr)	kmem_free_poolpage1(kmem_map, (addr))
 
 void		 loadav __P((struct loadavg *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.14 1998/08/13 02:11:01 eeh Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.15 1998/08/28 20:05:49 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -1003,17 +1003,24 @@ uvm_km_valloc_wait(map, size)
 
 /* ARGSUSED */
 vaddr_t
-uvm_km_alloc_poolpage1(map, obj)
+uvm_km_alloc_poolpage1(map, obj, waitok)
 	vm_map_t map;
 	struct uvm_object *obj;
+	boolean_t waitok;
 {
 #if defined(PMAP_MAP_POOLPAGE)
 	struct vm_page *pg;
 	vaddr_t va;
 
+ again:
 	pg = uvm_pagealloc(NULL, 0, NULL);
-	if (pg == NULL)
-		return (0);
+	if (pg == NULL) {
+		if (waitok) {
+			uvm_wait("plpg");
+			goto again;
+		} else
+			return (0);
+	}
 	va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
 	if (va == 0)
 		uvm_pagefree(pg);
@@ -1023,7 +1030,7 @@ uvm_km_alloc_poolpage1(map, obj)
 	int s;
 
 	s = splimp();
-	va = uvm_km_kmemalloc(map, obj, PAGE_SIZE, UVM_KMF_NOWAIT);
+	va = uvm_km_kmemalloc(map, obj, PAGE_SIZE, waitok ? 0 : UVM_KMF_NOWAIT);
 	splx(s);
 	return (va);
 #endif /* PMAP_MAP_POOLPAGE */
