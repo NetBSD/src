@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.171 2003/02/09 19:44:19 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.172 2003/02/10 18:23:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -1833,7 +1833,6 @@ intr_setup_msg:
 \
 	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
 	sethi	%hi(KERNBASE), %g5; \
-	membar	#Sync;						/* XXXX Should be taken care of by flush */ \
 	flush	%g5;						/* Some convenient address that won't trap */ \
 1:
 	
@@ -1905,7 +1904,6 @@ intr_setup_msg:
 	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
 	\
 	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
-	membar	#Sync;						/* XXXX Should be taken care of by flush */ \
 	\
 	flush	%g5;						/* Some convenient address that won't trap */ \
 1:
@@ -1976,7 +1974,6 @@ intr_setup_msg:
 	\
 	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
 	sethi	%hi(KERNBASE), %g5; \
-	membar	#Sync;						/* XXXX Should be taken care of by flush */ \
 	flush	%g5;						/* Some convenient address that won't trap */ \
 1:
 
@@ -2032,7 +2029,6 @@ intr_setup_msg:
 	sethi	%hi(KERNBASE), %g5; \
 	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
 	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
-	membar	#Sync;						/* XXXX Should be taken care of by flush */ \
 	flush	%g5;						/* Some convenient address that won't trap */ \
 1:
 #endif /* _LP64 */
@@ -2501,7 +2497,6 @@ winfixfill:
 	ldxa	[SFAR] %asi, %g2			! sync virt addr; must be read first
 	ldxa	[SFSR] %asi, %g3			! get sync fault status register
 	stxa	%g0, [SFSR] %asi			! Clear out fault now
-	membar	#Sync					! No real reason for this XXXX
 
 	TRAP_SETUP(-CC64FSZ-TF_SIZE)
 	saved						! Blow away that one register window we didn't ever use.
@@ -3025,7 +3020,6 @@ datafault:
 	ldxa	[SFAR] %asi, %g2			! sync virt addr; must be read first
 	ldxa	[SFSR] %asi, %g3			! get sync fault status register
 	stxa	%g0, [SFSR] %asi			! Clear out fault now
-	membar	#Sync					! No real reason for this XXXX
 
 	TRAP_SETUP(-CC64FSZ-TF_SIZE)
 Ldatafault_internal:
@@ -3039,7 +3033,6 @@ Ldatafault_internal:
 	ldxa	[%g0] ASI_AFSR, %o3			! get async fault status
 	mov	-1, %g7
 	stxa	%g7, [%g0] ASI_AFSR			! And clear this out, too
-	membar	#Sync					! No real reason for this XXXX
 
 #ifdef TRAPTRACE
 	rdpr	%tt, %o1				! find out what trap brought us here
@@ -3297,7 +3290,6 @@ textfault:
 	ldxa	[SFSR] %asi, %g3			! get sync fault status register
 	membar	#LoadStore
 	stxa	%g0, [SFSR] %asi			! Clear out old info
-	membar	#Sync					! No real reason for this XXXX
 
 	TRAP_SETUP(-CC64FSZ-TF_SIZE)
 	INCR(_C_LABEL(uvmexp)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1,%o2)
@@ -3309,7 +3301,6 @@ textfault:
 	ldxa	[%g0] ASI_AFAR, %o5			! get async fault address
 	mov	-1, %o0
 	stxa	%o0, [%g0] ASI_AFSR			! Clear this out
-	membar	#Sync					! No real reason for this XXXX
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + (1*8)]	! save g1
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + (2*8)]	! save g2
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + (3*8)]	! (sneak g3 in here)
@@ -5812,7 +5803,6 @@ _C_LABEL(cpu_initialize):
 	!!
 	mov	CTX_PRIMARY, %o0
 	stxa	%g0, [%o0] ASI_DMMU
-	membar	#Sync				! No real reason for this XXXX
 	flush	%o5
 	
 	!!
@@ -11665,114 +11655,6 @@ _C_LABEL(cpu_clockrate):
 	.xword	0
 	.text
 
-#if 0	/* XXX use MI microtime(), so should be removed */
-ENTRY(microtime)
-	sethi	%hi(timerreg_4u), %g3
-	sethi	%hi(_C_LABEL(time)), %g2
-	LDPTR	[%g3+%lo(timerreg_4u)], %g3			! usec counter
-	brz,pn	%g3, microtick					! If we have no counter-timer use %tick
-2:
-	!!  NB: if we could guarantee 128-bit alignment of these values we could do an atomic read
-	LDPTR	[%g2+%lo(_C_LABEL(time))], %o2			! time.tv_sec & time.tv_usec
-	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %o3		! time.tv_sec & time.tv_usec
-	ldx	[%g3], %o4					! Load usec timer valuse
-	LDPTR	[%g2+%lo(_C_LABEL(time))], %g1			! see if time values changed
-	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %g5		! see if time values changed
-	cmp	%g1, %o2
-	bne	2b						! if time.tv_sec changed
-	 cmp	%g5, %o3
-	bne	2b						! if time.tv_usec changed
-	 add	%o4, %o3, %o3					! Our timers have 1usec resolution
-
-	set	MICROPERSEC, %o5				! normalize usec value
-	sub	%o3, %o5, %o5					! Did we overflow?
-	brlz,pn	%o5, 4f
-	 nop
-	add	%o2, 1, %o2					! overflow
-	mov	%o5, %o3
-4:
-	STPTR	%o2, [%o0]					! (should be able to std here)
-	retl
-	 STPTR	%o3, [%o0+PTRSZ]
-
-microtick:
-#ifndef TICK_IS_TIME
-/*
- * The following code only works if %tick is reset each interrupt.
- */
-2:
-	!!  NB: if we could guarantee 128-bit alignment of these values we could do an atomic read
-	LDPTR	[%g2+%lo(_C_LABEL(time))], %o2			! time.tv_sec & time.tv_usec
-	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %o3		! time.tv_sec & time.tv_usec
-	rdpr	%tick, %o4					! Load usec timer value
-	LDPTR	[%g2+%lo(_C_LABEL(time))], %g1			! see if time values changed
-	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %g5		! see if time values changed
-	cmp	%g1, %o2
-	bne	2b						! if time.tv_sec changed
-	 cmp	%g5, %o3
-	bne	2b						! if time.tv_usec changed
-	 sethi	%hi(_C_LABEL(cpu_clockrate)), %g1
-	ldx	[%g1 + %lo(_C_LABEL(cpu_clockrate) + 8)], %o1
-	sethi	%hi(MICROPERSEC), %o5
-	brnz,pt	%o1, 3f
-	 or	%o5, %lo(MICROPERSEC), %o5
-
-	!! Calculate ticks/usec
-	ldx	[%g1 + %lo(_C_LABEL(cpu_clockrate))], %o1	! No, we need to calculate it
-	udivx	%o1, %o5, %o1
-	stx	%o1, [%g1 + %lo(_C_LABEL(cpu_clockrate) + 8)]	! Save it so we don't need to divide again
-3:
-	udivx	%o4, %o1, %o4					! Convert to usec
-	add	%o4, %o3, %o3
-
-	sub	%o3, %o5, %o5					! Did we overflow?
-	brlz,pn	%o5, 4f
-	 nop
-	add	%o2, 1, %o2					! overflow
-	mov	%o5, %o3
-4:
-	STPTR	%o2, [%o0]					! (should be able to std here)
-	retl
-	 STPTR	%o3, [%o0+PTRSZ]
-#else
-/*
- * The following code only works if %tick is synchronized with time.
- */
-2:
-	LDPTR	[%g2+%lo(_C_LABEL(time))], %o2			! time.tv_sec & time.tv_usec
-	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %o3		! time.tv_sec & time.tv_usec
-	rdpr	%tick, %o4					! Load usec timer value
-	LDPTR	[%g2+%lo(_C_LABEL(time))], %g1			! see if time values changed
-	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %g5		! see if time values changed
-	cmp	%g1, %o2
-	bne	2b						! if time.tv_sec changed
-	 cmp	%g5, %o3
-	bne	2b						! if time.tv_usec changed
-
-	 sethi	%hi(_C_LABEL(cpu_clockrate)), %o1
-	ldx	[%o1 + %lo(_C_LABEL(cpu_clockrate) + 8)], %g1	! Get scale factor
-	sethi	%hi(MICROPERSEC), %o5
-	brnz,pt	%g1, 1f						! Already scaled?
-	 or	%o5, %lo(MICROPERSEC), %o5
-
-	!! Calculate ticks/usec
-	ldx	[%o1 + %lo(_C_LABEL(cpu_clockrate))], %g1	! No, we need to calculate it
-	udivx	%g1, %o5, %g1					! Hz / 10^6 = MHz
-	stx	%g1, [%o1 + %lo(_C_LABEL(cpu_clockrate) + 8)]	! Save it so we don't need to divide again
-1:
-
-	STPTR	%o2, [%o0]					! Store seconds.
-	udivx	%o4, %g1, %o4					! Scale it: ticks / MHz = usec
-
-	udivx	%o4, %o5, %o2					! Now %o2 has seconds
-
-	mulx	%o2, %o5, %o5					! Now calculate usecs -- damn no remainder insn
-	sub	%o4, %o5, %o1					! %o1 has the remainder
-
-	retl
-	 STPTR	%o1, [%o0+PTRSZ]				! Save time_t low word
-#endif
-#endif
 
 /*
  * delay function
