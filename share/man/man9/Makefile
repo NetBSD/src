@@ -1,15 +1,17 @@
-#       $NetBSD: Makefile,v 1.68 2000/08/03 00:09:39 itojun Exp $
+#       $NetBSD: Makefile,v 1.69 2000/08/09 03:12:33 tv Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	access.9 arp.9 audio.9 bus_dma.9 bus_space.9 callout.9 copy.9 \
-	cpu_reboot.9 ctxsw.9 disk.9 disklabel.9 dopowerhooks.9 \
-	doshutdownhooks.9 ethersubr.9 evcnt.9 extent.9 fetch.9 fork1.9 \
-	humanize_number.9 inittodr.9 intro.9 ioctl.9 kprintf.9 \
-	lock.9 log.9 malloc.9 mbuf.9 microtime.9 panic.9 pfil.9 physio.9 \
-	pool.9 powerhook_establish.9 ppsratecheck.9 psignal.9 ratecheck.9 \
-	resettodr.9 rnd.9 rt_timer.9 shutdownhook_establish.9 \
-	sleep.9 softintr.9 spl.9 store.9 time.9 todr.9 uiomove.9 ucom.9 \
+MAN=	access.9 arp.9 audio.9 bitmask_snprintf.9 bus_dma.9 bus_space.9 \
+	callout.9 copy.9 cpu_reboot.9 ctxsw.9 disk.9 disklabel.9 \
+	dopowerhooks.9 doshutdownhooks.9 ethersubr.9 evcnt.9 \
+	extent.9 fetch.9 fork1.9 humanize_number.9 inittodr.9 \
+	intro.9 ioctl.9 kprintf.9 lock.9 log.9 malloc.9 mbuf.9 \
+	microtime.9 panic.9 pfil.9 physio.9 pool.9 \
+	powerhook_establish.9 ppsratecheck.9 psignal.9 \
+	ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
+	shutdownhook_establish.9 sleep.9 softintr.9 \
+	spl.9 store.9 time.9 todr.9 uiomove.9 ucom.9 \
 	usbdi.9 uvm.9 wdc.9
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
 MLINKS+=access.9 kernacc.9 access.9 useracc.9
@@ -77,8 +79,10 @@ MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
 MLINKS+=humanize_number.9 format_bytes.9
-MLINKS+=kprintf.9 printf.9 kprintf.9 sprintf.9 kprintf.9 vprintf.9 \
-	kprintf.9 uprintf.9 kprintf.9 ttyprintf.9
+MLINKS+=kprintf.9 printf.9 kprintf.9 sprintf.9 kprintf.9 snprintf.9 \
+	kprintf.9 vprintf.9 kprintf.9 vsprintf.9 kprintf.9 vsnprintf.9 \
+	kprintf.9 uprintf.9 kprintf.9 ttyprintf.9 \
+	kprintf.9 tprintf.9 kprintf.9 tprintf_open.9 kprintf.9 tprintf_close.9
 MLINKS+=lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
 	lock.9 simple_lock_try.9 lock.9 simple_lock_unlock.9 \
 	lock.9 simple_lock_freecheck.9 lock.9 simple_lock_dump.9  \
