@@ -8,7 +8,7 @@ all:
 	@echo "make tags, make links or init_sysent.c only"
 
 SYSCALLSRC = makesyscalls.sh syscalls.conf syscalls.master
-init_sysent.c syscalls.c ../sys/syscall.h: ${SYSCALLSRC}
+init_sysent.c syscalls.c ../sys/syscall.h ../sys/syscallargs.h: ${SYSCALLSRC}
 	-mv -f init_sysent.c init_sysent.c.bak
 	-mv -f syscalls.c syscalls.c.bak
 	-mv -f ../sys/syscall.h ../sys/syscall.h.bak
