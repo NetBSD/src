@@ -1,4 +1,4 @@
-/*	$NetBSD: tmp.c,v 1.7 2001/02/19 15:45:45 jdolecek Exp $	*/
+/*	$NetBSD: tmp.c,v 1.8 2001/02/23 08:59:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include <ctype.h>
 
 #ifndef lint
-__RCSID("$NetBSD: tmp.c,v 1.7 2001/02/19 15:45:45 jdolecek Exp $");
+__RCSID("$NetBSD: tmp.c,v 1.8 2001/02/23 08:59:49 jdolecek Exp $");
 __SCCSID("@(#)tmp.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ ftmp()
 	sigset_t set, oset;
 	FILE *fp;
 	int fd;
-	char pathb[_POSIX_PATH_MAX], *path;
+	char pathb[MAXPATHLEN], *path;
 
 	path = pathb;
 	(void)snprintf(path, sizeof(pathb), "%s%s%s", tmpdir,
@@ -74,9 +74,9 @@ ftmp()
 	sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 	if ((fd = mkstemp(path)) < 0)
-		err(2, "mkstemp(%s)", path);
+		err(2, "ftmp: mkstemp(\"%s\")", path);
 	if (!(fp = fdopen(fd, "w+")))
-		err(2, "fdopen(%s)", path);
+		err(2, "ftmp: fdopen(\"%s\")", path);
 	(void)unlink(path);
 
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
