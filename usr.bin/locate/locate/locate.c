@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.c,v 1.11 2003/04/05 16:36:38 perry Exp $	*/
+/*	$NetBSD: locate.c,v 1.12 2003/04/07 04:00:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)locate.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: locate.c,v 1.11 2003/04/05 16:36:38 perry Exp $");
+__RCSID("$NetBSD: locate.c,v 1.12 2003/04/07 04:00:59 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -84,6 +84,7 @@ __RCSID("$NetBSD: locate.c,v 1.11 2003/04/05 16:36:38 perry Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <err.h>
+#include <errno.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
 
@@ -94,7 +95,7 @@ __RCSID("$NetBSD: locate.c,v 1.11 2003/04/05 16:36:38 perry Exp $");
 struct locate_db {
 	LIST_ENTRY(locate_db) db_link;
 	FILE *db_fp;
-	char *db_path;
+	const char *db_path;
 };
 LIST_HEAD(db_list, locate_db) db_list;
 
@@ -102,46 +103,43 @@ LIST_HEAD(db_list, locate_db) db_list;
 # define NEW(type)      (type *) malloc(sizeof (type))
 #endif
 
-void	add_db __P((char *));
-int	fastfind __P((FILE *, char *));
-int	main __P((int, char **));
-char   *patprep __P((char *));
+static void add_db(const char *);
+static int fastfind(FILE *, char *);
+static char *patprep(const char *);
+
+int	main(int, char **);
 
 
-void
-add_db(path)
-	char *path;
+static void
+add_db(const char *path)
 {
 	FILE *fp;
 	struct locate_db *dbp;
-	struct stat s;
+	struct stat st;
 
-	if (!(path && *path))
-		path = _PATH_FCODES;
+	if (path == NULL || *path == '\0')
+		return;
 
-	if (stat(path, &s) == -1)
-		err(1, "can't open database `%s'", path);
-	if (S_ISDIR(s.st_mode))
-		errx(1, "can't open database `%s': is a directory", path);
-
-	if ((fp = fopen(path, "r"))) {
-		dbp = NEW(struct locate_db);
-		dbp->db_fp = fp;
-		dbp->db_path = path;
-		LIST_INSERT_HEAD(&db_list, dbp, db_link);
-	} else {
-		err(1, "can't open database `%s'", path);
+	if ((fp = fopen(path, "r")) == NULL)
+		err(1, "Can't open database `%s'", path);
+	if (fstat(fileno(fp), &st) == -1)
+		err(1, "Can't stat database `%s'", path);
+	if (S_ISDIR(st.st_mode)) {
+		errno = EISDIR;
+		err(1, "Can't use database `%s'", path);
 	}
+	dbp = NEW(struct locate_db);
+	dbp->db_fp = fp;
+	dbp->db_path = path;
+	LIST_INSERT_HEAD(&db_list, dbp, db_link);
 }
      
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
+	struct locate_db *dbp;
 	char *locate_path = getenv("LOCATE_PATH");
 	char *cp;
-	struct locate_db *dbp;
 	int c;
 	int rc;
 	int found = 0;
@@ -170,11 +168,10 @@ main(argc, argv)
 		}
 	}
 	add_db(locate_path);
-	if (db_list.lh_first == NULL)
+	if (LIST_EMPTY(&db_list))
 		exit(1);
 	for (; optind < argc; ++optind) {
-		for (dbp = db_list.lh_first; dbp != NULL;
-		     dbp = dbp->db_link.le_next) {
+		LIST_FOREACH(dbp, &db_list, db_link) {
 			rc = fastfind(dbp->db_fp, argv[optind]);
 			if (rc > 0) {
 				/* some results found */
@@ -189,17 +186,15 @@ main(argc, argv)
 	exit(found == 0);
 }
 
-int
-fastfind(fp, pathpart)
-	FILE *fp;
-	char *pathpart;
+static int
+fastfind(FILE *fp, char *pathpart)
 {
 	char *p, *s;
 	int c;
 	int count, found, globflag, printed;
 	char *cutoff, *patend, *q;
 	char bigram1[NBG], bigram2[NBG], path[MAXPATHLEN];
-	
+
 	rewind(fp);
 	
 	for (c = 0, p = bigram1, s = bigram2; c < NBG; c++)
@@ -215,19 +210,21 @@ fastfind(fp, pathpart)
 		/* overlay old path */
 		for (p = path + count; (c = getc(fp)) > SWITCH;) {
 			/* sanity check */
-			if (p < path || p >= path + sizeof(path))
-				return(-1);	/* invalid database file */
+			if (p < path || p >= path + sizeof(path) - 2)
+				return -1;	/* invalid database file */
 			if (c < PARITY)
 				*p++ = c;
 			else {		/* bigrams are parity-marked */
 				c &= PARITY - 1;
 				/* sanity check */
 				if (c < 0 || c >= sizeof(bigram1)) 
-					return(-1);	/* invalid database file */
+					return -1;	/* invalid database file */
 				*p++ = bigram1[c], *p++ = bigram2[c];
 			}
 		}
 		*p-- = '\0';
+		if (p < path || count < 0)
+			return -1;
 		cutoff = (found ? path : path + count);
 		for (found = 0, s = p; s >= cutoff; s--)
 			if (*s == *patend) {	/* fast first char check */
@@ -246,7 +243,7 @@ fastfind(fp, pathpart)
 				}
 			}
 	}
-	return (printed);
+	return printed;
 }
 
 /*
@@ -255,14 +252,14 @@ fastfind(fp, pathpart)
  */
 static char globfree[100];
 
-char *
-patprep(name)
-	char *name;
+static char *
+patprep(const char *name)
 {
-	char *endmark, *p, *subp;
+	const char *endmark, *p;
+	char *subp = globfree;
 
-	subp = globfree;
 	*subp++ = '\0';
+
 	p = name + strlen(name) - 1;
 	/* skip trailing metacharacters (and [] ranges) */
 	for (; p >= name; p--)
@@ -293,5 +290,5 @@ patprep(name)
 			*subp++ = *p++;
 	}
 	*subp = '\0';
-	return(--subp);
+	return --subp;
 }
