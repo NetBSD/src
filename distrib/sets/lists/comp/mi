@@ -3,6 +3,7 @@
 ./usr/bin/as
 ./usr/bin/asa
 ./usr/bin/c++
+./usr/bin/c89
 ./usr/bin/cc
 ./usr/bin/crunchgen
 ./usr/bin/crunchide
@@ -1078,6 +1079,7 @@
 ./usr/share/man/cat1/as.0
 ./usr/share/man/cat1/asa.0
 ./usr/share/man/cat1/c++.0
+./usr/share/man/cat1/c89.0
 ./usr/share/man/cat1/cc.0
 ./usr/share/man/cat1/cccp.0
 ./usr/share/man/cat1/crunchgen.0
@@ -2073,6 +2075,7 @@
 ./usr/share/man/man1/as.1
 ./usr/share/man/man1/asa.1
 ./usr/share/man/man1/c++.1
+./usr/share/man/man1/c89.1
 ./usr/share/man/man1/cc.1
 ./usr/share/man/man1/cccp.1
 ./usr/share/man/man1/crunchgen.1
