@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.22 2001/01/26 03:11:44 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.23 2001/01/27 09:19:09 jhawk Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -640,3 +640,30 @@ lib/libc/arch/i386/stdlib/ldiv.S		1.6
 gnu/dist/gcc/gcc.1				1.8
 
   Mention Objective C in .SH NAME section.
+
+gnu/usr.bin/gawk/Makefile			1.11
+
+  Use -msoft-quad-flat on the sparc64.
+
+sys/netinet/ip_output.c				1.80
+
+  Initialize len during getsokcopt() for IP_IPSEC_POLICY.
+
+sys/arch/sparc/dev/cgsix.c			patch
+sys/arch/sparc/dev/cgsixreg.h			patch
+
+  Initialize cgsix registers for machines that do not do so by themselves.
+  Fixes PR port-sparc/11944.
+
+share/termcap/termcap.src			1.64
+
+  Remove visual bell from xterm termcap, for compatibility. Fixes PR bin/11882.
+
+bin/ps/ps.1					1.40-1.42
+bin/ps/print.c					1.63-1.65
+
+  Clarify meaning of COMMANDs printed in parentheses. Addresses PR11930.
+
+distrib/sparc/miniroot/dot.profile		1.10
+
+  Do not reset the baud rate to 9600. Fixes PR11946.
