@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.14 2002/09/12 22:56:30 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.15 2002/09/17 07:29:49 junyoung Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -202,5 +202,32 @@ _rtld_relocate_plt_object(obj, rela, addrp)
 		*where = new_value;
 
 	*addrp = (caddr_t)new_value;
+	return 0;
+}
+
+int
+_rtld_relocate_plt_objects(const Obj_Entry *obj)
+{
+	const Elf_Rel *rel;
+	
+	for (rel = obj->pltrel; rel < obj->pltrellim; rel++) {
+		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
+		Elf_Addr target;
+		const Elf_Sym *def;
+		const Obj_Entry *defobj;
+		
+		assert(ELF_R_TYPE(rel->r_info) == R_TYPE(JMP_SLOT));
+		
+		def = _rtld_find_symdef(ELF_R_SYM(rel->r_info), obj, &defobj,
+		    true);
+		if (def == NULL)
+			return -1;
+		target = (Elf_Addr)(defobj->relocbase + def->st_value);
+		rdbg(("bind now/fixup in %s --> old=%p new=%p",
+		    defobj->strtab + def->st_name, (void *)*where, 
+		    (void *)target));
+		if (*where != target)
+			*where = target;
+	}
 	return 0;
 }
