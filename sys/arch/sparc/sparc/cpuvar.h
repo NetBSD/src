@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.16 1998/10/11 14:46:45 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.17 1998/10/12 20:56:48 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -208,6 +208,8 @@ struct cpu_info {
 	struct	pcb	*idle_u;
 	void		*redzone;		/* DEBUG: stack red zone */
 #define REDSIZE		(8*96)			/* some room for bouncing */
+
+	struct	pcb	*curpcb;		/* CPU's PCB & kernel stack */
 
 	/*
 	 * The following are function pointers to do interesting CPU-dependent
