@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 1997/10/29 03:06:35 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.4 1997/10/31 22:21:19 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,6 +49,13 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
+/*
+ * symbolic names for disk partitions
+ */
+#define PART_ROOT A
+#define PART_RAW  C
+#define PART_USR  D
 
 int	md_get_info (void)
 {	struct disklabel disklabel;
@@ -113,6 +120,16 @@ void md_make_bsd_partitions (void)
 	int remain;
 	char isize[20];
 
+	/*
+	 * Initialize global variables that track  space used on this disk.
+	 * Standard 4.3BSD 8-partition labels always cover whole disk.
+	 */
+	ptstart = 0;
+	ptsize = dlsize;
+	fsdsize = dlsize;	/* actually means `whole disk' */
+	fsptsize = dlsize;	/* netbsd partition -- same as above */
+	fsdmb = fsdsize / MEG;
+
 	/* Ask for layout type -- standard or special */
 	msg_display (MSG_layout,
 			(1.0*fsptsize*sectorsize)/MEG,
@@ -129,7 +146,7 @@ void md_make_bsd_partitions (void)
 
 	/* Build standard partitions */
 
-	/* Partitions C and D are predefined (whole disk and /usr). */
+	/* Partitions C is predefined (whole  disk). */
 	bsdlabel[C][D_FSTYPE] = T_UNUSED;
 	bsdlabel[C][D_OFFSET] = 0;
 	bsdlabel[C][D_SIZE] = dlsize;
@@ -137,22 +154,28 @@ void md_make_bsd_partitions (void)
 	/* Standard fstypes */
 	bsdlabel[A][D_FSTYPE] = T_42BSD;
 	bsdlabel[B][D_FSTYPE] = T_SWAP;
-	/* Conventionally, C is whole disk */
-	bsdlabel[D][D_FSTYPE] = T_42BSD;
-	bsdlabel[E][D_FSTYPE] = T_42BSD;
+	/* Conventionally, C is whole disk. */
+	bsdlabel[D][D_FSTYPE] = T_UNUSED;	/* fill out below */
+	bsdlabel[E][D_FSTYPE] = T_UNUSED;
 	bsdlabel[F][D_FSTYPE] = T_UNUSED;
 	bsdlabel[G][D_FSTYPE] = T_UNUSED;
 	bsdlabel[H][D_FSTYPE] = T_UNUSED;
 
+
 	switch (layoutkind) {
-	case 1: /* standard: a root, b swap, c/d "unused", e /usr */
-	case 2: /* standard X: a root, b swap (big), c/d "unused", e /usr */
+	case 1: /* standard: a root, b swap, c "unused", d /usr */
+	case 2: /* standard X: a root, b swap (big), c "unused", e /usr */
 		partstart = ptstart;
 
 		/* Root */
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
+#if 0
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 				   dlcylsize) - partstart;
+#else
+		/* By convention, NetBSD/pmax uses a 32Mbyte root */
+		partsize= NUMSEC(32, MEG/sectorsize, dlcylsize);
+#endif
 		bsdlabel[A][D_OFFSET] = partstart;
 		bsdlabel[A][D_SIZE] = partsize;
 		bsdlabel[A][D_BSIZE] = 8192;
@@ -171,11 +194,12 @@ void md_make_bsd_partitions (void)
 
 		/* /usr */
 		partsize = fsdsize - partstart;
-		bsdlabel[D][D_OFFSET] = partstart;
-		bsdlabel[D][D_SIZE] = partsize;
-		bsdlabel[D][D_BSIZE] = 8192;
-		bsdlabel[D][D_FSIZE] = 1024;
-		strcpy (fsmount[E], "/usr");
+		bsdlabel[PART_USR][D_FSTYPE] = T_42BSD;
+		bsdlabel[PART_USR][D_OFFSET] = partstart;
+		bsdlabel[PART_USR][D_SIZE] = partsize;
+		bsdlabel[PART_USR][D_BSIZE] = 8192;
+		bsdlabel[PART_USR][D_FSIZE] = 1024;
+		strcpy (fsmount[PART_USR], "/usr");
 
 
 		/* Verify Partitions. */
@@ -224,11 +248,12 @@ void md_make_bsd_partitions (void)
 		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
 		if (remain - partsize < sizemult)
 			partsize = remain;
-		bsdlabel[E][D_OFFSET] = partstart;
-		bsdlabel[E][D_SIZE] = partsize;
-		bsdlabel[E][D_BSIZE] = 8192;
-		bsdlabel[E][D_FSIZE] = 1024;
-		strcpy (fsmount[E], "/usr");
+		bsdlabel[PART_USR][D_FSTYPE] = T_42BSD;
+		bsdlabel[PART_USR][D_OFFSET] = partstart;
+		bsdlabel[PART_USR][D_SIZE] = partsize;
+		bsdlabel[PART_USR][D_BSIZE] = 8192;
+		bsdlabel[PART_USR][D_FSIZE] = 1024;
+		strcpy (fsmount[PART_USR], "/usr");
 		partstart += partsize;
 
 		/* Others ... */
