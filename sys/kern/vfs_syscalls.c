@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.97 1997/10/03 14:14:36 enami Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.98 1997/10/03 14:44:26 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1422,7 +1422,7 @@ sys_fchflags(p, v, retval)
 }
 
 /*
- * Change mode of a file given path name.
+ * Change mode of a file given path name; this version follows links.
  */
 /* ARGSUSED */
 int
@@ -1472,6 +1472,33 @@ sys_fchmod(p, v, retval)
 }
 
 /*
+ * Change mode of a file given path name; this version does not follow links.
+ */
+/* ARGSUSED */
+int
+sys_lchmod(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_lchmod_args /* {
+		syscallarg(const char *) path;
+		syscallarg(int) mode;
+	} */ *uap = v;
+	int error;
+	struct nameidata nd;
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+
+	error = change_mode(nd.ni_vp, SCARG(uap, mode), p);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+/*
  * Common routine to set mode given a vnode.
  */
 static int
@@ -1497,7 +1524,7 @@ change_mode(vp, mode, p)
 }
 
 /*
- * Set ownership given a path name.
+ * Set ownership given a path name; this version follows links.
  */
 /* ARGSUSED */
 int
@@ -1550,6 +1577,34 @@ sys_fchown(p, v, retval)
 }
 
 /*
+ * Set ownership given a path name; this version does not follow links.
+ */
+/* ARGSUSED */
+int
+sys_lchown(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_lchown_args /* {
+		syscallarg(const char *) path;
+		syscallarg(uid_t) uid;
+		syscallarg(gid_t) gid;
+	} */ *uap = v;
+	int error;
+	struct nameidata nd;
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+
+	error = change_owner(nd.ni_vp, SCARG(uap, uid), SCARG(uap, gid), p);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+/*
  * Common routine to set ownership given a vnode.
  */
 static int
@@ -1588,7 +1643,8 @@ out:
 }
 
 /*
- * Set the access and modification times given a path name.
+ * Set the access and modification times given a path name; this
+ * version follows links.
  */
 /* ARGSUSED */
 int
@@ -1636,6 +1692,34 @@ sys_futimes(p, v, retval)
 
 	return (change_utimes((struct vnode *)fp->f_data, SCARG(uap, tptr),
 	    p));
+}
+
+/*
+ * Set the access and modification times given a path name; this
+ * version does not follow links.
+ */
+/* ARGSUSED */
+int
+sys_lutimes(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_lutimes_args /* {
+		syscallarg(const char *) path;
+		syscallarg(const struct timeval *) tptr;
+	} */ *uap = v;
+	int error;
+	struct nameidata nd;
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+
+	error = change_utimes(nd.ni_vp, SCARG(uap, tptr), p);
+
+	vrele(nd.ni_vp);
+	return (error);
 }
 
 /*
