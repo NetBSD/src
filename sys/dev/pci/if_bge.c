@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.66.2.3 2004/05/29 09:00:24 tron Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.66.2.3.2.1 2005/01/24 21:41:20 he Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.66.2.3 2004/05/29 09:00:24 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.66.2.3.2.1 2005/01/24 21:41:20 he Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3583,7 +3583,8 @@ bge_ioctl(ifp, command, data)
 	default:
 		error = ether_ioctl(ifp, command, data);
 		if (error == ENETRESET) {
-			bge_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				bge_setmulti(sc);
 			error = 0;
 		}
 		break;
