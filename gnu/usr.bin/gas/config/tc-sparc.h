@@ -18,12 +18,11 @@
    to the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 /*
- * $Id: tc-sparc.h,v 1.2 1994/06/22 15:14:34 pk Exp $
+ * $Id: tc-sparc.h,v 1.3 1994/08/24 20:04:50 pk Exp $
  */
 
 #define TC_SPARC 1
 
-#define NO_LISTING
 #define LOCAL_LABELS_FB
 #define WORKING_DOT_WORD
 

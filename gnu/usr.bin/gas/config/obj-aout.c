@@ -21,9 +21,7 @@
 #include "obstack.h"
 
 
-#ifndef NO_LISTING
-#include "aout/stab_gnu.h"
-#endif /* NO_LISTING */
+#include <stab.h>
 
 /* in: segT   out: N_TYPE bits */
 const short seg_N_TYPE[] = {

@@ -4034,18 +4034,6 @@ print_frags()
 }
 #endif
 
-#ifdef DONTDEF
-/*VARARGS1*/
-panic(format,args)
-char *format;
-{
-	fputs("Internal error:",stderr);
-	_doprnt(format,&args,stderr);
-	(void)putc('\n',stderr);
-	as_where();
-	abort();
-}
-#endif
 
 /* We have no need to default values of symbols.  */
 

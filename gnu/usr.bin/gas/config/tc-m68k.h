@@ -29,8 +29,6 @@
 
 #define TC_M68K 1
 
-#define NO_LISTING
-
 #ifdef OLD_GAS
 #define REVERSE_SORT_RELOCS
 #endif /* OLD_GAS */
