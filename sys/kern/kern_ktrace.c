@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.80 2003/10/08 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.81 2003/11/02 12:01:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.80 2003/10/08 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.81 2003/11/02 12:01:40 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -429,8 +429,7 @@ ktrace_common(curp, ops, facs, pid, fp)
 	 */
 	if (KTROP(ops) == KTROP_CLEARFILE) {
 		proclist_lock_read();
-		for (p = LIST_FIRST(&allproc); p != NULL;
-		     p = LIST_NEXT(p, p_list)) {
+		LIST_FOREACH(p, &allproc, p_list) {
 			if (ktrsamefile(p->p_tracep, fp)) {
 				if (ktrcanset(curp, p))
 					ktrderef(p);
@@ -470,8 +469,7 @@ ktrace_common(curp, ops, facs, pid, fp)
 			error = ESRCH;
 			goto done;
 		}
-		for (p = LIST_FIRST(&pg->pg_members); p != NULL;
-		     p = LIST_NEXT(p, p_pglist)) {
+		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 			if (descend)
 				ret |= ktrsetchildren(curp, p, ops, facs, fp);
 			else 
@@ -744,7 +742,7 @@ ktrwrite(p, kth)
 		    "ktrace write failed, errno %d, tracing stopped\n",
 		    error);
 	proclist_lock_read();
-	for (p = LIST_FIRST(&allproc); p != NULL; p = LIST_NEXT(p, p_list)) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		if (ktrsamefile(p->p_tracep, fp))
 			ktrderef(p);
 	}
