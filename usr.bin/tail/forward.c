@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.18 2001/11/24 02:30:17 explorer Exp $	*/
+/*	$NetBSD: forward.c,v 1.19 2002/06/14 00:47:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.18 2001/11/24 02:30:17 explorer Exp $");
+__RCSID("$NetBSD: forward.c,v 1.19 2002/06/14 00:47:41 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: forward.c,v 1.18 2001/11/24 02:30:17 explorer Exp $");
 #include <string.h>
 #include "extern.h"
 
-static int rlines __P((FILE *, long, struct stat *));
+static int rlines(FILE *, long, struct stat *);
 
 /*
  * forward -- display the file, from an offset, forward.
@@ -83,11 +83,7 @@ static int rlines __P((FILE *, long, struct stat *));
  *	NOREG	cyclically read lines into a wrap-around array of buffers
  */
 void
-forward(fp, style, off, sbp)
-	FILE *fp;
-	enum STYLE style;
-	long off;
-	struct stat *sbp;
+forward(FILE *fp, enum STYLE style, long int off, struct stat *sbp)
 {
 	int ch;
 	struct timeval second;
@@ -244,10 +240,7 @@ forward(fp, style, off, sbp)
  * Non-zero return means than a (non-fatal) error occurred.
  */
 static int
-rlines(fp, off, sbp)
-	FILE *fp;
-	long off;
-	struct stat *sbp;
+rlines(FILE *fp, long int off, struct stat *sbp)
 {
 	off_t file_size;
 	off_t file_remaining;

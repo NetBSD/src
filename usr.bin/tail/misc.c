@@ -39,52 +39,38 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: misc.c,v 1.4 1997/10/19 23:45:09 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.5 2002/06/14 00:47:41 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <unistd.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "extern.h"
 
 void
-ierr()
+ierr(void)
 {
 	err(0, "%s: %s", fname, strerror(errno));
 }
 
 void
-oerr()
+oerr(void)
 {
 	err(1, "stdout: %s", strerror(errno));
 }
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#if __STDC__
 err(int fatal, const char *fmt, ...)
-#else
-err(fatal, fmt, va_alist)
-	int fatal;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#if __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)fprintf(stderr, "tail: ");
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
