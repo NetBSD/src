@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.131 2004/04/28 05:30:57 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.132 2004/04/28 05:32:41 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1389,3 +1389,10 @@ sbin/sysctl/sysctl.c				1.94
 	When converting a string to a number, also make sure that you didn't
 	convert an empty string to a zero. PR#25115
 	[atatat, ticket #192]
+
+sys/sys/sysctl.h				1.124
+sys/kern/kern_sysctl.c				1.172
+lib/libc/gen/sysctl.c				1.26
+
+	Remove dynamic sysctl node version 0 from the tree.
+	[atatat, ticket #193]
