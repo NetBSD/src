@@ -2,7 +2,7 @@ $set 1
 $ EPERM
 1 Handeling niet toegestaan
 $ ENOENT
-2 Bestand of schuif niet gevonden
+2 Bestand of directory niet gevonden
 $ ESRCH
 3 Taak bestaat niet
 $ EINTR
@@ -10,37 +10,37 @@ $ EINTR
 $ EIO
 5 Invoer/uitvoer fout
 $ ENXIO
-6 Toestel niet geconfigureerd
+6 Apparaat niet geconfigureerd
 $ E2BIG
 7 Argumenten lijst is te lang
 $ ENOEXEC
-8 Programmabestand kan niet worden uitgevoerd
+8 Programma kan niet worden uitgevoerd
 $ EBADF
 9 Ongeldige bestandsverwijzing
 $ ECHILD
-10 Er zijn geen spruiten meer
+10 Geen kind processen
 $ EDEADLK
 11 Een "deadlock" is vermeden
 $ ENOMEM
 12 Kan geen geheugen meer verkrijgen
 $ EACCES
-13 Toegang gewijgerd
+13 Toegang geweigerd
 $ EFAULT
 14 Ongeldig adres
 $ ENOTBLK
-15 Een "Block device" is vereist
+15 Een per blok adresseerbaar apparaat is vereist
 $ EBUSY
-16 Toestel is verlet
+16 Apparaat is bezig
 $ EEXIST
 17 Bestand bestaat reeds
 $ EXDEV
-18 Onmogelijke verbinding tussen apparaten
+18 Verwijzing tussen bestanden op verschillende bestandsystemen
 $ ENODEV
-19 Verrichting wordt door dit toestel niet ondersteund
+19 Handeling wordt door dit toestel niet ondersteund
 $ ENOTDIR
-20 Dit is geen schuif
+20 Dit is geen directory
 $ EISDIR
-21 Dit is een schuif
+21 Dit is een directory
 $ EINVAL
 22 Ongeldig argument
 $ ENFILE
@@ -48,53 +48,53 @@ $ ENFILE
 $ EMFILE
 24 Te veel open bestanden
 $ ENOTTY
-25 Ontoepasselijke ioctl voor dit toestel
+25 Ioctl niet van toepassing voor dit apparaat
 $ ETXTBSY
-26 Programma bestand is verlet
+26 Programma bestand is bezig
 $ EFBIG
 27 Bestand is te groot
 $ ENOSPC
-28 Geen ruimte meer op dit toestel
+28 Geen ruimte meer op dit apparaat
 $ ESPIPE
 29 Onuitvoerbare zoekopdracht
 $ EROFS
 30 Van dit bestandsysteem kan allen worden gelezen
 $ EMLINK
-31 Te veel verbindingen
+31 Te veel bestandsverwijzingen
 $ EPIPE
-32 Gebroken pijp
+32 Verbroken pijp
 $ EDOM
 33 Numeriek argument valt buiten domein
 $ ERANGE
 34 Resultaat te groot
 $ EAGAIN, EWOULDBLOCK
-35 Hulpmiddel tijdelijk onbeschikbaar
+35 Middel tijdelijk onbeschikbaar
 $ EINPROGRESS
 36 Bewerking in gang gezet
 $ EALREADY
 37 Bewerking is al in gang gezet
 $ ENOTSOCK
-38 Voor deze handeling is een contactdoos vereist
+38 Voor deze handeling is een contactpunt vereist
 $ EDESTADDRREQ
 39 Een bestemmingsadres is vereist
 $ EMSGSIZE
-40 Grote boodschap
+40 Te grote boodschap
 $ EPROTOTYPE
-41 Protocol past niet bij deze contactdoos
+41 Protocol past niet bij dit contactpunt
 $ ENOPROTOOPT
 42 Protocol is niet beschikbaar
 $ EPROTONOSUPPORT
 43 Protocol is niet ondersteund
 $ ESOCKTNOSUPPORT
-44 Stekerdoos model niet ondersteund
+44 Dit soort contactpunt is niet ondersteund
 $ EOPNOTSUPP
 45 Bewerking niet ondersteund
 $ EPFNOSUPPORT
 46 Protocol familie niet ondersteund
 $ EAFNOSUPPORT
-47 Addressen familie niet ondersteund door protocol familie
+47 Adressen familie niet ondersteund door protocol familie
 $ EADDRINUSE
-48 Addres is al in gebruik
+48 Adres is al in gebruik
 $ EADDRNOTAVAIL
 49 Het gevraagde adres kan niet worden toegekend
 $ ENETDOWN
@@ -110,27 +110,27 @@ $ ECONNRESET
 $ ENOBUFS
 55 Geen buffer ruimte meer beschikbaar
 $ EISCONN
-56 Deze contactdoos heeft al een verbinding aanwezig
+56 Dit contactpunt is al verbonden
 $ ENOTCONN
-57 Contactdoos is niet verbonden
+57 Contactpunt is niet verbonden
 $ ESHUTDOWN
-58 Een dichtgezette contactdoos kan geen gegevens meer verzenden
+58 Een afgesloten contactpunt kan geen gegevens meer verzenden
 $ ETOOMANYREFS
 59 Te veel verwijzingen: splitsen niet mogelijk
 $ ETIMEDOUT
-60 Verbinding "timed out"
+60 Verbinding te lang niet mogelijk
 $ ECONNREFUSED
-61 Verbinding gewijgerd
+61 Verbinding geweigerd
 $ ELOOP
 62 Te veel niveaus van symbolische verwijzingen
 $ ENAMETOOLONG
 63 Bestandsnaam te lang
 $ EHOSTDOWN
-64 Gastheer is terneergeslagen
+64 Bestemming niet actief
 $ EHOSTUNREACH
-65 Gastheer is onaanspreekbaar
+65 Bestemming niet bereikbaar
 $ ENOTEMPTY
-66 Deze schuif is niet leeg
+66 Directory is niet leeg
 $ EPROCLIM
 67 Te veel taken
 $ EUSERS
@@ -138,25 +138,25 @@ $ EUSERS
 $ EDQUOT
 69 Schijf quota overschreden
 $ ESTALE
-70 Verschaalde NFS bestandsverwijzing
+70 Verlopen NFS bestandsverwijzing
 $ EREMOTE
-71 Te veel televerwijzingen op dit pad
+71 Te veel verwijzingen op afstand in dit pad
 $ EBADRPC
-72 RPC struct is niet welgevormd
+72 RPC argument structuur is incorrect
 $ ERPCMISMATCH
 73 RPC versie is verkeerd
 $ EPROGUNAVAIL
-74 RPC prog. niet beschikbaar
+74 RPC programma niet beschikbaar
 $ EPROGMISMATCH
-75 Program versie is verkeerd
+75 Programma versie is verkeerd
 $ EPROCUNAVAIL
 76 Taak kan door dit programma niet worden uitgevoerd
 $ ENOLCK
-77 Geen versperringen beschikbaar
+77 Geen locks beschikbaar
 $ ENOSYS
-78 Deze function is niet verwezenlijkt
+78 Deze systeem functie is niet geimplementeerd
 $ EFTYPE
-79 Ontoepasselijk bestandsformaat
+79 Bestandsformaat niet van toepassing
 $set 2
 $ SIGHUP
 1 Opgehangen
@@ -175,7 +175,7 @@ $ SIGEMT
 $ SIGFPE
 8 Drijvende comma fout
 $ SIGKILL
-9 Killed
+9 Afgebroken
 $ SIGBUS
 10 Bus fout
 $ SIGSEGV
@@ -187,7 +187,7 @@ $ SIGPIPE
 $ SIGALRM
 14 Wekker
 $ SIGTERM
-15 Verscheiden
+15 Getermineerd
 $ SIGURG
 16 Dringende I/O opgemerkt
 $ SIGSTOP
@@ -197,7 +197,7 @@ $ SIGTSTP
 $ SIGCONT
 19 Voortgezet
 $ SIGCHLD
-20 Verscheiden spruit
+20 Kindproces beeindigd
 $ SIGTTIN
 21 Gestopt (tty invoer)
 $ SIGTTOU
@@ -205,7 +205,7 @@ $ SIGTTOU
 $ SIGIO
 23 I/O mogelijk
 $ SIGXCPU
-24 Te veel CVE tijd verbruikt
+24 Te veel CPU tijd verbruikt
 $ SIGXFSZ
 25 Maximum bestandsgrootte overschreden
 $ SIGVTALRM
@@ -213,10 +213,12 @@ $ SIGVTALRM
 $ SIGPROF
 27 Profiling wekker
 $ SIGWINCH
-28 Vensterafmeting veranderd
+28 Windowgrootte veranderd
 $ SIGINFO
 29 Informatie verzoek
 $ SIGUSR1
 30 Gebruikersignaal 1
 $ SIGUSR2
 31 Gebruikersignaal 2
+$ SIGPWR
+32 Stroom uitval/inschakeling
