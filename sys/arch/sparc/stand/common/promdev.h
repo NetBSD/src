@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.h,v 1.3 1998/09/05 15:11:22 pk Exp $ */
+/*	$NetBSD: promdev.h,v 1.4 1998/10/12 21:17:28 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,22 +69,3 @@ extern void	prom_init __P((void));
 extern char	*dvma_mapin __P((char *, size_t));
 extern char	*dvma_mapout __P((char *, size_t));
 extern char	*dvma_alloc __P((int));
-
-/*
- * duplicates from pmap.c for mapping device on "oldmon" machines.
- */
-#include <sparc/sparc/asm.h>
-
-#define getcontext()		lduba(AC_CONTEXT, ASI_CONTROL)
-#define setcontext(c)		stba(AC_CONTEXT, ASI_CONTROL, c)
-#define getsegmap(va)		(cputyp == CPU_SUN4C \
-					? lduba(va, ASI_SEGMAP) \
-					: lduha(va, ASI_SEGMAP))
-#define setsegmap(va, pmeg)	(cputyp == CPU_SUN4C \
-					? stba(va, ASI_SEGMAP, pmeg) \
-					: stha(va, ASI_SEGMAP, pmeg))
-#define getregmap(va)		((unsigned)lduha(va+2, ASI_REGMAP) >> 8)
-#define setregmap(va, smeg)	stha(va+2, ASI_REGMAP, (smeg << 8))
-
-#define getpte(va)		lda(va, ASI_PTE)
-#define setpte(va, pte)		sta(va, ASI_PTE, pte)
