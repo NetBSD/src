@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.23 2002/04/26 04:15:18 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.24 2003/04/01 02:20:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.23 2002/04/26 04:15:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.24 2003/04/01 02:20:14 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -109,11 +109,11 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	va = trunc_page(va);
 
 	boundary = map->_dm_boundary;
-	alignment = NBPG;
+	alignment = PAGE_SIZE;
 
 	sgvalen = (endva - va);
 	if (spill) {
-		sgvalen += NBPG;
+		sgvalen += PAGE_SIZE;
 
 		/*
 		 * ARGH!  If the addition of the spill page bumped us
@@ -164,7 +164,7 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		    map->dm_segs[seg].ds_addr);
 #endif
 
-	for (; va < endva; va += NBPG, pteidx++,
+	for (; va < endva; va += PAGE_SIZE, pteidx++,
 	     pte = &page_table[pteidx * SGMAP_PTE_SPACING]) {
 		/* Get the physical address for this segment. */
 		if (p != NULL)
@@ -414,11 +414,11 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 		osgva = sgva = trunc_page(sgva);
 
 		if (spill)
-			esgva += NBPG;
+			esgva += PAGE_SIZE;
 
 		/* Invalidate the PTEs for the mapping. */
 		for (pteidx = sgva >> SGMAP_ADDR_PTEIDX_SHIFT;
-		     sgva < esgva; sgva += NBPG, pteidx++) {
+		     sgva < esgva; sgva += PAGE_SIZE, pteidx++) {
 			pte = &page_table[pteidx * SGMAP_PTE_SPACING];
 #ifdef SGMAP_DEBUG
 			if (__C(SGMAP_TYPE,_debug))

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.196 2003/02/23 22:41:24 nathanw Exp $ */
+/* $NetBSD: pmap.c,v 1.197 2003/04/01 02:18:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -119,10 +119,6 @@
  *	table pages may be added.  User page table pages are
  *	dynamically allocated and freed.
  *
- *	This pmap implementation only supports NBPG == PAGE_SIZE.
- *	In practice, this is not a problem since PAGE_SIZE is
- *	initialized to the hardware page size in alpha_init().
- *
  * Bugs/misfeatures:
  *
  *	- Some things could be optimized.
@@ -153,7 +149,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.196 2003/02/23 22:41:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.197 2003/04/01 02:18:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -819,7 +815,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * for vm_fork().
 	 */
 	lev3mapsize = (VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
-		nbuf * MAXBSIZE + 16 * NCARGS + PAGER_MAP_SIZE) / NBPG +
+		nbuf * MAXBSIZE + 16 * NCARGS + PAGER_MAP_SIZE) / PAGE_SIZE +
 		(maxproc * UPAGES) + nkmempages;
 
 #ifdef SYSVSHM
@@ -845,7 +841,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	/*
 	 * Allocate a level 1 PTE table for the kernel.
 	 * This is always one page long.
-	 * IF THIS IS NOT A MULTIPLE OF NBPG, ALL WILL GO TO HELL.
+	 * IF THIS IS NOT A MULTIPLE OF PAGE_SIZE, ALL WILL GO TO HELL.
 	 */
 	kernel_lev1map = (pt_entry_t *)
 	    uvm_pageboot_alloc(sizeof(pt_entry_t) * NPTEPG);
@@ -853,7 +849,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	/*
 	 * Allocate a level 2 PTE table for the kernel.
 	 * These must map all of the level3 PTEs.
-	 * IF THIS IS NOT A MULTIPLE OF NBPG, ALL WILL GO TO HELL.
+	 * IF THIS IS NOT A MULTIPLE OF PAGE_SIZE, ALL WILL GO TO HELL.
 	 */
 	lev2mapsize = roundup(howmany(lev3mapsize, NPTEPG), NPTEPG);
 	lev2map = (pt_entry_t *)
