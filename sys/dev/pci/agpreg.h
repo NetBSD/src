@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.2 2002/12/13 11:32:51 scw Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.3 2003/06/09 12:16:42 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -39,7 +39,7 @@
 /*
  * Offsets from the AGP Capability pointer.
  */
-#define AGP_CAPID		0x02
+#define AGP_CAPID		0xa0
 #define AGP_CAPID_GET_MAJOR(x)		(((x) & 0x00f00000U) >> 20)
 #define AGP_CAPID_GET_MINOR(x)		(((x) & 0x000f0000U) >> 16)
 #define AGP_CAPID_GET_NEXT_PTR(x)	(((x) & 0x0000ff00U) >> 8)
@@ -49,12 +49,38 @@
 #define AGP_COMMAND		0x8
 
 /*
- * Config offsets for Intel AGP chipsets.
+ * Config registers for Intel AGP chipsets.
  */
+/* i845/855PM */
+#define	AGP_I845_AGPMISC	0x51
+# define AGPMISC_AAGN		(1U << 1)  /* Aperture AccessEN */
+
+/* i840/850/850E */
+#define AGP_I840_MCHCFG		0x50
+# define MCHCFG_AAGN		(1U << 9)  /* Aperture AccessEN */
+
+/* i82443LX/BX/GX */
 #define AGP_INTEL_NBXCFG	0x50
+# define NBXCFG_APAE		(1U << 10) /* AGPtoPCI AccessEN */
+# define NBXCFG_AAGN		(1U << 9)  /* Aperture AccessEN */
+
+/* Common register */
 #define AGP_INTEL_STS		0x90
+#define AGP_INTEL_AGPCMD	0xa8
+# define AGPCMD_SBA		(1U << 9)
+# define AGPCMD_AGPEN		(1U << 8)
+# define AGPCMD_FWEN		(1U << 4)
+# define AGPCMD_RATE_1X		(1U << 1)
+# define AGPCMD_RATE_2X		(1U << 2)
+# define AGPCMD_RATE_4X		(1U << 3)
+
 #define AGP_INTEL_AGPCTRL	0xb0
+# define AGPCTRL_AGPRSE		(1U << 13) /* AGPRSE (82443 only)*/
+# define AGPCTRL_GTLB		(1U << 7)  /* GTLB EN */
+
 #define AGP_INTEL_APSIZE	0xb4
+# define APSIZE_MASK		0x3f
+
 #define AGP_INTEL_ATTBASE	0xb8
 
 /*
