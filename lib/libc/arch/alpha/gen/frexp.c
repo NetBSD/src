@@ -1,4 +1,4 @@
-/*	$NetBSD: frexp.c,v 1.1 1995/02/10 17:50:22 cgd Exp $	*/
+/*	$NetBSD: frexp.c,v 1.2 1999/03/10 08:15:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -45,9 +45,9 @@ frexp(value, eptr)
 		u.v = value;
 		*eptr = u.s.dbl_exp - (DBL_EXP_BIAS - 1);
 		u.s.dbl_exp = DBL_EXP_BIAS - 1;
-		return(u.v);
+		return (u.v);
 	} else {
 		*eptr = 0;
-		return((double)0);
+		return (0.0);
 	}
 }
