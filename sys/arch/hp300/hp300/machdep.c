@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.34 1994/05/17 10:34:41 cgd Exp $
+ *	$Id: machdep.c,v 1.35 1994/05/18 06:50:24 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -60,6 +60,7 @@
 #include <sys/mount.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/vnode.h>
 #include <sys/sysctl.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
