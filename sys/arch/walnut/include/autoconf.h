@@ -1,7 +1,7 @@
-/*	$NetBSD: autoconf.h,v 1.1 2001/06/13 06:01:54 simonb Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 2002/03/13 19:19:49 eeh Exp $	*/
 
 /*
- * Copyright 2001 Wasabi Systems, Inc.
+ * Copyright 2001-2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Eduardo Horvath and Simon Burge for Wasabi Systems, Inc.
@@ -36,19 +36,13 @@
  */
 
 #include <machine/bus.h>
-#include <dev/pci/pcivar.h>
 
-struct real_mainbus_attach_args {
-	const char *rmb_name;
-	u_long rmb_addr;
-	int rmb_irq;
-	bus_dma_tag_t rmb_dmat;		/* DMA tag */
-};
-
-union mainbus_attach_args {
-	const char *mba_busname;
-	struct pcibus_attach_args mba_pba;
-	struct real_mainbus_attach_args mba_rmb;
+struct mainbus_attach_args {
+	const char *mb_name;
+	u_long mb_addr;
+	int mb_irq;
+	bus_space_tag_t mb_bt;		/* Bus space tag */
+	bus_dma_tag_t mb_dmat;		/* DMA tag */
 };
 
 void *mapiodev(paddr_t, psize_t);
