@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.313 1998/08/05 02:45:08 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.314 1998/08/13 21:36:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -247,10 +247,14 @@ int	dumpmem_high;
 int	boothowto;
 int	cpu_class;
 
-vm_offset_t msgbuf_vaddr, msgbuf_paddr;
-vm_offset_t idt_vaddr, idt_paddr;
+vaddr_t	msgbuf_vaddr;
+paddr_t msgbuf_paddr;
+
+vaddr_t	idt_vaddr;
+paddr_t	idt_paddr;
+
 #ifdef I586_CPU
-vm_offset_t pentium_idt_vaddr;
+vaddr_t	pentium_idt_vaddr;
 #endif
 
 #if defined(UVM)
@@ -262,10 +266,10 @@ vm_map_t buffer_map;
 #endif
 
 extern	int biosbasemem, biosextmem;
-extern	vm_offset_t avail_start, avail_end;
-extern	vm_offset_t hole_start, hole_end;
+extern	paddr_t avail_start, avail_end;
+extern	paddr_t hole_start, hole_end;
 #if !defined(MACHINE_NEW_NONCONTIG)
-static	vm_offset_t avail_next;
+static	paddr_t avail_next;
 #endif
 
 /*
@@ -298,7 +302,7 @@ int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
 void	identifycpu __P((void));
-void	init386 __P((vm_offset_t));
+void	init386 __P((paddr_t));
 
 #ifndef CONSDEVNAME
 #define CONSDEVNAME "pc"
@@ -356,7 +360,7 @@ int	i386_mem_add_mapping __P((bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *));
 
 int	_bus_dmamap_load_buffer __P((bus_dmamap_t, void *, bus_size_t,
-	    struct proc *, int, bus_addr_t, vm_offset_t *, int *, int));
+	    struct proc *, int, bus_addr_t, paddr_t *, int *, int));
 
 void cyrix6x86_cpu_setup __P((void));
 
@@ -384,8 +388,8 @@ cpu_startup()
 	caddr_t v;
 	int sz;
 	int base, residual;
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
+	vaddr_t minaddr, maxaddr;
+	vsize_t size;
 	struct pcb *pcb;
 	int x;
 #if NBIOSCALL > 0
@@ -404,11 +408,11 @@ cpu_startup()
 	/* msgbuf_paddr was init'd in pmap */
 #if defined(PMAP_NEW)
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
-		pmap_kenter_pa((vm_offset_t)msgbuf_vaddr + x * NBPG,
+		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * NBPG,
 		    msgbuf_paddr + x * NBPG, VM_PROT_ALL);
 #else
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbuf_vaddr + x * NBPG,
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbuf_vaddr + x * NBPG,
 		    msgbuf_paddr + x * NBPG, VM_PROT_ALL, TRUE);
 #endif
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
@@ -439,17 +443,17 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 #if defined(UVM)
-	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate VM for buffers");
-	minaddr = (vm_offset_t)buffers;
+	minaddr = (vaddr_t)buffers;
 #else
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
+	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
 				   &maxaddr, size, TRUE);
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+	minaddr = (vaddr_t)buffers;
+	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
 #endif
@@ -500,10 +504,10 @@ cpu_startup()
 	 * Finally, allocate mbuf cluster submap.
 	 */
 #if defined(UVM)
-	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE);
 #endif
 
@@ -538,15 +542,15 @@ cpu_startup()
 		  biostramp_image_size, NBPG);
 #endif
 #if defined(PMAP_NEW)
-	pmap_kenter_pa((vm_offset_t)BIOSTRAMP_BASE, /* virtual */
-		       (vm_offset_t)BIOSTRAMP_BASE, /* physical */
-		       VM_PROT_ALL);		    /* protection */
+	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
+		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
+		       VM_PROT_ALL);		/* protection */
 #else
 	pmap_enter(pmap_kernel(),
-		   (vm_offset_t)BIOSTRAMP_BASE, /* virtual */
-		   (vm_offset_t)BIOSTRAMP_BASE, /* physical */
-		   VM_PROT_ALL,		/* protection */
-		   TRUE);		/* wired down */
+		   (vaddr_t)BIOSTRAMP_BASE,	/* virtual */
+		   (paddr_t)BIOSTRAMP_BASE,	/* physical */
+		   VM_PROT_ALL,			/* protection */
+		   TRUE);			/* wired down */
 #endif
 	memcpy((caddr_t)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 #ifdef DEBUG
@@ -567,8 +571,8 @@ cpu_startup()
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
 #if defined(UVM)
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 		struct vm_page *pg;
 
 		/*
@@ -577,7 +581,7 @@ cpu_startup()
 		 * for the first "residual" buffers, and then we allocate
 		 * "base" pages for the rest.
 		 */
-		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
@@ -601,8 +605,8 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 #else
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 
 		/*
 		 * First <residual> buffers get (base+1) physical pages
@@ -611,7 +615,7 @@ cpu_startup()
 		 * The rest of each buffer occupies virtual space,
 		 * but has no physical memory allocated for it.
 		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
@@ -1477,11 +1481,11 @@ cpu_dumpconf()
  * the auto-restart code.
  */
 #define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
-static vm_offset_t dumpspace;
+static vaddr_t dumpspace;
 
-vm_offset_t
+vaddr_t
 reserve_dumppages(p)
-	vm_offset_t p;
+	vaddr_t p;
 {
 
 	dumpspace = p;
@@ -1719,7 +1723,7 @@ extern vector *IDTVEC(exceptions)[];
 
 void
 init386(first_avail)
-	vm_offset_t first_avail;
+	vaddr_t first_avail;
 {
 	int x;
 	struct region_descriptor region;
@@ -1800,7 +1804,7 @@ init386(first_avail)
 	hole_end = round_page(first_avail);
 
 	/* Call pmap initialization to make new kernel address space. */
-	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
+	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
 
 #if !defined(MACHINE_NEW_NONCONTIG)
 	/*
@@ -2058,7 +2062,7 @@ pmap_free_pages()
 
 int
 pmap_next_page(addrp)
-	vm_offset_t *addrp;
+	vaddr_t *addrp;
 {
 
 	if (avail_next + NBPG > avail_end)
@@ -2074,7 +2078,7 @@ pmap_next_page(addrp)
 
 int
 pmap_page_index(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 
 	if (pa >= avail_start && pa < hole_start)
@@ -2395,7 +2399,7 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 	bus_space_handle_t *bshp;
 {
 	u_long pa, endpa;
-	vm_offset_t va;
+	vaddr_t va;
 	pt_entry_t *pte;
 
 	pa = i386_trunc_page(bpa);
@@ -2596,7 +2600,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error;
 
 	/*
@@ -2628,7 +2632,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	struct mbuf *m0;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error, first;
 	struct mbuf *m;
 
@@ -2671,7 +2675,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
@@ -2847,7 +2851,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
 
@@ -2901,9 +2905,9 @@ _bus_dmamem_unmap(t, kva, size)
 	size = round_page(size);
 
 #if defined(UVM)
-	uvm_km_free(kernel_map, (vm_offset_t)kva, size);
+	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 #else
-	kmem_free(kernel_map, (vm_offset_t)kva, size);
+	kmem_free(kernel_map, (vaddr_t)kva, size);
 #endif
 }
 
@@ -2960,13 +2964,13 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, bounce_thresh, lastaddrp,
 	struct proc *p;
 	int flags;
 	bus_addr_t bounce_thresh;
-	vm_offset_t *lastaddrp;
+	paddr_t *lastaddrp;
 	int *segp;
 	int first;
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
-	vm_offset_t vaddr = (vm_offset_t)buf;
+	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
 	pmap_t pmap;
 
@@ -3060,10 +3064,10 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	int nsegs;
 	int *rsegs;
 	int flags;
-	vm_offset_t low;
-	vm_offset_t high;
+	paddr_t low;
+	paddr_t high;
 {
-	vm_offset_t curaddr, lastaddr;
+	paddr_t curaddr, lastaddr;
 	vm_page_t m;
 	struct pglist mlist;
 	int curseg, error;
