@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.19 1993/12/06 23:22:15 mycroft Exp $
+#	$Id: Makefile.inc,v 1.20 1993/12/06 23:39:42 mycroft Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
@@ -12,6 +12,7 @@ SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.S memchr.c memcmp.S memset.S \
 	rindex.S strcat.c strcmp.S strcpy.S strcspn.c strlen.S \
 	strncat.c strncmp.S strncpy.S strpbrk.c strsep.c \
 	strspn.c strstr.c swab.S
+SRCS+=	memmove.S
 .elif (${MACHINE_ARCH} == "i386")
 SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.S memchr.S memcmp.S memset.S \
 	rindex.S strcat.S strcmp.S strcpy.S strcspn.c strlen.S \
