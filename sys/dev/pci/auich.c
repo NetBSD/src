@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.14 2002/03/15 07:16:10 tacha Exp $	*/
+/*	$NetBSD: auich.c,v 1.15 2002/03/21 09:17:20 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.14 2002/03/15 07:16:10 tacha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.15 2002/03/21 09:17:20 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,21 +411,34 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_powerhook = powerhook_establish(auich_powerhook, sc);
 }
 
+#define ICH_CODECIO_INTERVAL	10
 int
 auich_read_codec(void *v, u_int8_t reg, u_int16_t *val)
 {
 	struct auich_softc *sc = v;
 	int i;
+	uint32_t status;
 
+	if (!(bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS) & ICH_PCR)) {
+		printf("auich_read_codec: codec is not ready.");
+		*val = 0xffff;
+		return -1;
+	}
 	/* wait for an access semaphore */
-	for (i = ICH_SEMATIMO; i-- &&
-	    bus_space_read_1(sc->iot, sc->aud_ioh, ICH_CAS) & 1; DELAY(1));
+	for (i = ICH_SEMATIMO / ICH_CODECIO_INTERVAL; i-- &&
+	    bus_space_read_1(sc->iot, sc->aud_ioh, ICH_CAS) & 1;
+	    DELAY(ICH_CODECIO_INTERVAL));
 
 	if (i > 0) {
 		*val = bus_space_read_2(sc->iot, sc->mix_ioh, reg);
 		DPRINTF(ICH_DEBUG_CODECIO,
 		    ("auich_read_codec(%x, %x)\n", reg, *val));
-
+		status = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
+		if (status & ICH_RCS) {
+			bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GSTS,
+					  status & ~(ICH_SRI|ICH_PRI|ICH_GSCI));
+			*val = 0xffff;
+		}
 		return 0;
 	} else {
 		DPRINTF(ICH_DEBUG_CODECIO,
@@ -441,10 +454,14 @@ auich_write_codec(void *v, u_int8_t reg, u_int16_t val)
 	int i;
 
 	DPRINTF(ICH_DEBUG_CODECIO, ("auich_write_codec(%x, %x)\n", reg, val));
-
+	if (!(bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS) & ICH_PCR)) {
+		printf("auich_write_codec: codec is not ready.");
+		return -1;
+	}
 	/* wait for an access semaphore */
-	for (i = ICH_SEMATIMO; i-- &&
-	    bus_space_read_1(sc->iot, sc->aud_ioh, ICH_CAS) & 1; DELAY(1));
+	for (i = ICH_SEMATIMO / ICH_CODECIO_INTERVAL; i-- &&
+	    bus_space_read_1(sc->iot, sc->aud_ioh, ICH_CAS) & 1;
+	    DELAY(ICH_CODECIO_INTERVAL));
 
 	if (i > 0) {
 		bus_space_write_2(sc->iot, sc->mix_ioh, reg, val);
@@ -469,10 +486,15 @@ void
 auich_reset_codec(void *v)
 {
 	struct auich_softc *sc = v;
+	int i;
 
 	bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GCTRL, 0);
 	DELAY(10);
 	bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GCTRL, ICH_CRESET);
+
+	for (i = 500000; i-- &&
+	       !(bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS) & ICH_PCR);
+	     DELAY(1));					/*       or ICH_SCR? */
 }
 
 int
