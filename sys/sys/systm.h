@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.80 1998/08/23 22:43:27 pk Exp $	*/
+/*	$NetBSD: systm.h,v 1.81 1998/09/29 21:03:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -169,6 +169,7 @@ void	printf __P((const char *, ...))
 int	sprintf __P((char *buf, const char *, ...))
     __attribute__((__format__(__printf__,2,3)));
 void	vprintf __P((const char *, _BSD_VA_LIST_));
+int	vsprintf __P((char *buf, const char *, _BSD_VA_LIST_));
 
 void	panic __P((const char *, ...))
 #ifdef __KPRINTF_ATTRIBUTE__
