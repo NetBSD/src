@@ -46,7 +46,6 @@
 	When this sector is loaded into 0000:7C00H, it will relocate itself
 	to somewhere else and then load the first sector of the active
 	partition into 0000:7C00H.  Both UNIX and DOS use the command "fdisk"
-[ 386bsd does not have an 'fdisk' (yet) ]
 	to install this first sector into the hard disk and to manipulate
 	the hard disk partitions.
 
@@ -64,7 +63,6 @@
 	first 29 sectors of the active partition is reserved for boot code
 	which will be loaded by the first stage boot.  All the disk types
 	recognized by BIOS are supported by this bootstrap loader. 
-[for 386bsd we load the second stage booter to 6000:0]
 
 
 
@@ -80,6 +78,8 @@
 	stage boot code will no longer be used at this moment, the memory
 	location of the first stage boot code (0000:1000H to 0000:1200H) will
 	be used as an internal buffer for BIOS calls.  Immediately after this 
+[For NetBSD, we have a different buffer which can hold an entire floppy
+track.]
 	internal buffer is the GDT table for the second stage boot loader. 
 	Since this boot loader needs to switch back and forth between protected
 	and real mode in order to use BIOS calls, the limit of the boot code
@@ -92,14 +92,10 @@
 	fromm the boot loader to the kernel are type of the boot device, size
 	of the base memory and size of the extended memory.
 
-[ 386bsd receives: howto, bootdev]
+[NetBSD receives: howto, bootdev, esym.]
 
-[ 386bsd is loaded where-ever the "MByte" bits of the load address specify,
-so if you link it for FE100000 it will load to 1MB, but if you link
-it for FE000000 it will load ad 0MB]
-
-[for machines with only 512KB normal ram the kernel will need to  be linked
-for 1MB and the bootblocks modified to run below 512KB. (8000:0)]
+[NetBSD is loaded where-ever the "MByte" bits of the load address specify;
+normally the load address is F8100000, so it loads at 1MB.]
 
 
 4. The UNIX Startup
@@ -111,7 +107,7 @@ for 1MB and the bootblocks modified to run below 512KB. (8000:0)]
 	the text and data segments start above 1MB.  Also, the boot loader
 	passes the infomation to the kernel through the stack.
 
-[MOST of what is mentionned below is NOT relevant to 386bsd]
+[MOST of what is mentionned below is NOT relevant to NetBSD.]
 
 5. Disk Layout and Bad Block Handling
    ---------------------------------
@@ -205,5 +201,5 @@ for 1MB and the bootblocks modified to run below 512KB. (8000:0)]
 
 	make -f boot.mk fdboot      (floppy boot loader)
 	make -f boot.mk hdboot      (wini boot loader)
-[to make 386bsd bootblocks  "make sd wd" (warning: they will be installed
-in /dev/mdec.. take backups)]
+[To make NetBSD bootblocks "make install" (warning: they will be installed
+in /usr/mdec.. make backups).]
