@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.12 2001/09/25 19:39:28 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.13 2001/12/30 02:18:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,18 +53,18 @@ static void	pthread__create_tramp(void *(*start)(void *), void *arg);
 
 static pthread_attr_t pthread_default_attr;
 
-pt_spin_t allqueue_lock;
-struct pt_queue_t allqueue;
+pthread_spin_t allqueue_lock;
+struct pthread_queue_t allqueue;
 static int nthreads;
 
-pt_spin_t deadqueue_lock;
-struct pt_queue_t deadqueue;
-struct pt_queue_t reidlequeue;
+pthread_spin_t deadqueue_lock;
+struct pthread_queue_t deadqueue;
+struct pthread_queue_t reidlequeue;
 
 
-extern struct pt_queue_t runqueue;
-extern struct pt_queue_t idlequeue;
-extern pt_spin_t runqueue_lock;
+extern struct pthread_queue_t runqueue;
+extern struct pthread_queue_t idlequeue;
+extern pthread_spin_t runqueue_lock;
 
 static int started;
 
@@ -141,6 +141,8 @@ pthread__initthread(pthread_t t)
 	t->pt_next = NULL;
 	t->pt_exitval = NULL;
 	t->pt_flags = 0;
+	t->pt_cancel = 0;
+	t->pt_errno = 0;
 	t->pt_parent = NULL;
 	t->pt_heldlock = NULL;
 	t->pt_switchto = NULL;
@@ -148,6 +150,7 @@ pthread__initthread(pthread_t t)
 	sigemptyset(&t->pt_siglist);
 	sigemptyset(&t->pt_sigmask);
 	PTQ_INIT(&t->pt_joiners);
+	PTQ_INIT(&t->pt_cleanup_stack);
 	memset(&t->pt_specific, 0, sizeof(int) * PTHREAD_KEYS_MAX);
 #ifdef PTHREAD__DEBUG
 	t->blocks = 0;
@@ -266,9 +269,17 @@ void
 pthread_exit(void *retval)
 {
 	pthread_t self, joiner;
+	struct pt_clean_t *cleanup;
 	int nt;
 
 	self = pthread__self();
+
+	/* Call any cancellation cleanup handlers */
+	while (!PTQ_EMPTY(&self->pt_cleanup_stack)) {
+		cleanup = PTQ_FIRST(&self->pt_cleanup_stack);
+		PTQ_REMOVE(&self->pt_cleanup_stack, cleanup, ptc_next);
+		(*cleanup->ptc_cleanup)(cleanup->ptc_arg);
+	}
 
 	/* Perform cleanup of thread-specific data */
 	pthread__destroy_tsd(self);
@@ -515,4 +526,143 @@ pthread_t
 pthread_self(void)
 {
 	return pthread__self();
+}
+
+
+int
+pthread_cancel(pthread_t thread)
+{
+	/* XXX finish */
+	return 0;
+}
+
+
+
+int
+pthread_setcancelstate(int state, int *oldstate)
+{
+	pthread_t self;
+	int flags;
+	
+	self = pthread__self();
+	flags = self->pt_flags;
+
+	if (oldstate != NULL) {
+		if (flags & PT_FLAG_CS_DISABLED)
+			*oldstate = PTHREAD_CANCEL_DISABLE;
+		else
+			*oldstate = PTHREAD_CANCEL_ENABLE;
+	}
+
+	if (state == PTHREAD_CANCEL_DISABLE)
+		flags |= PT_FLAG_CS_DISABLED;
+	else if (state == PTHREAD_CANCEL_ENABLE) {
+		flags &= ~PT_FLAG_CS_DISABLED;
+		/*
+		 * If a cancellation was requested while cancellation
+		 * was disabled, note that fact for future
+		 * cancellation tests.
+		 */
+		if (flags & PT_FLAG_CS_PENDING) {
+			self->pt_cancel = 1;
+			/* This is not a deferred cancellation point. */
+			if (flags & PT_FLAG_CS_ASYNC)
+				pthread_exit(PTHREAD_CANCELLED);
+		}
+	} else
+		return EINVAL;
+	
+	self->pt_flags = flags;
+
+	return 0;
+}
+
+
+int
+pthread_setcanceltype(int type, int *oldtype)
+{
+	pthread_t self;
+	int flags;
+	
+	self = pthread__self();
+	flags = self->pt_flags;
+
+	if (oldtype != NULL) {
+		if (flags & PT_FLAG_CS_ASYNC)
+			*oldtype = PTHREAD_CANCEL_ASYNCHRONOUS;
+		else
+			*oldtype = PTHREAD_CANCEL_DEFERRED;
+	}
+
+	if (type == PTHREAD_CANCEL_ASYNCHRONOUS) {
+		flags |= PT_FLAG_CS_ASYNC;
+		if (self->pt_cancel)
+			pthread_exit(PTHREAD_CANCELLED);
+	} else if (type == PTHREAD_CANCEL_DEFERRED)
+		flags &= ~PT_FLAG_CS_ASYNC;
+	else
+		return EINVAL;
+
+	self->pt_flags = flags;
+
+	return 0;
+}
+
+
+void
+pthread_testcancel()
+{
+	pthread_t self;
+	
+	self = pthread__self();
+	pthread__testcancel(self);
+}
+
+
+void
+pthread__testcancel(pthread_t self)
+{
+
+	if (self->pt_cancel)
+		pthread_exit(PTHREAD_CANCELLED);
+}
+
+void
+pthread__cleanup_push(void (*cleanup)(void *), void *arg, void *store)
+{
+	pthread_t self;
+	struct pt_clean_t *entry;
+	
+	self = pthread__self();
+	entry = store;
+	entry->ptc_cleanup = cleanup;
+	entry->ptc_arg = arg;
+	PTQ_INSERT_HEAD(&self->pt_cleanup_stack, entry, ptc_next);
+	
+}
+
+void
+pthread__cleanup_pop(int ex, void *store)
+{
+	pthread_t self;
+	struct pt_clean_t *entry;
+	
+	self = pthread__self();
+	entry = store;
+	
+	PTQ_REMOVE(&self->pt_cleanup_stack, entry, ptc_next);
+	if (ex)
+		(*entry->ptc_cleanup)(entry->ptc_arg);
+	
+}
+
+
+int *
+pthread__errno(void)
+{
+	pthread_t self;
+	
+	self = pthread__self();
+
+	return &(self->pt_errno);
 }
