@@ -12,14 +12,24 @@
 #define	MAXGDTSIZ	8192
 
 union descriptor *dynamic_gdt = gdt;
-int gdt_size = NGDT;
-int gdt_next = NGDT;
-int gdt_count = NGDT;
+int gdt_size = NGDT;		/* total number of GDT entries */
+int gdt_count = NGDT;		/* number of GDT entries in use */
+int gdt_next = NGDT;		/* next available slot for sweeping */
+int gdt_free = GNULL_SEL;	/* next free slot; terminated with GNULL_SEL */
 
 int gdt_flags;
 #define	GDT_LOCKED	0x1
 #define	GDT_WANTED	0x2
 
+/*
+ * Lock and unlock the GDT, to avoid races in case gdt_{ge,pu}t_slot() sleep
+ * waiting for memory.
+ *
+ * Note that the locking done here is not sufficient for multiprocessor
+ * systems.  A freshly allocated slot will still be of type SDT_SYSNULL for
+ * some time after the GDT is unlocked, so gdt_compact() could attempt to
+ * reclaim it.
+ */
 static inline void
 gdt_lock()
 {
@@ -42,6 +52,18 @@ gdt_unlock()
 	}
 }
 
+/*
+ * Compact the GDT as follows:
+ * 0) We partition the GDT into two areas, one of the slots before gdt_count,
+ *    and one of the slots after.  After compaction, the former part should be
+ *    completely filled, and the latter part should be completely empty.
+ * 1) Step through the process list, looking for TSS and LDT descriptors in
+ *    the second section, and swap them with empty slots in the first section.
+ * 2) Arrange for new allocations to sweep through the empty section.  Since
+ *    we're sweeping through all of the empty entries, and we'll create a free
+ *    list as things are deallocated, we do not need to create a new free list
+ *    here.
+ */
 void
 gdt_compact()
 {
@@ -58,7 +80,7 @@ gdt_compact()
 					panic("gdt_compact botch 1");
 			}
 			dynamic_gdt[slot] = dynamic_gdt[oslot];
-			dynamic_gdt[oslot] = dynamic_gdt[GNULL_SEL];
+			dynamic_gdt[oslot].gd.gd_type = SDT_SYSNULL;
 			pcb->pcb_tss_sel = GSEL(slot, SEL_KPL);
 		}
 		oslot = IDXSEL(pcb->pcb_ldt_sel);
@@ -68,19 +90,23 @@ gdt_compact()
 					panic("gdt_compact botch 2");
 			}
 			dynamic_gdt[slot] = dynamic_gdt[oslot];
-			dynamic_gdt[oslot] = dynamic_gdt[GNULL_SEL];
+			dynamic_gdt[oslot].gd.gd_type = SDT_SYSNULL;
 			pcb->pcb_ldt_sel = GSEL(slot, SEL_KPL);
 		}
 	}
 	for (; slot < gdt_count; slot++)
-		if (dynamic_gdt[slot].sd.sd_type == SDT_SYSNULL)
+		if (dynamic_gdt[slot].gd.gd_type == SDT_SYSNULL)
 			panic("gdt_compact botch 3");
 	for (slot = gdt_count; slot < gdt_size; slot++)
-		if (dynamic_gdt[slot].sd.sd_type != SDT_SYSNULL)
+		if (dynamic_gdt[slot].gd.gd_type != SDT_SYSNULL)
 			panic("gdt_compact botch 4");
 	gdt_next = gdt_count;
+	gdt_free = GNULL_SEL;
 }
 
+/*
+ * Grow or shrink the GDT.
+ */
 void
 gdt_resize(newsize)
 	int newsize;
@@ -109,8 +135,12 @@ gdt_resize(newsize)
 }
 
 /*
- * Get an unused slot from the end of the GDT.  Grow the GDT if there aren't
- * any available slots.
+ * Allocate a GDT slot as follows:
+ * 1) If there are entries on the free list, use those.
+ * 2) If there are fewer than gdt_size entries in use, there are free slots
+ *    near the end that we can sweep through.
+ * 3) As a last resort, we increase the size of the GDT, and sweep through
+ *    the new slots.
  */
 int
 gdt_get_slot()
@@ -119,24 +149,31 @@ gdt_get_slot()
 
 	gdt_lock();
 
-	if (gdt_next >= gdt_size) {
-		if (gdt_count >= gdt_size) {
+	if (gdt_free != GNULL_SEL) {
+		slot = gdt_free;
+		gdt_free = dynamic_gdt[slot].gd.gd_selector;
+	} else {
+		if (gdt_next != gdt_count)
+			panic("gdt_get_slot botch 1");
+		if (gdt_next >= gdt_size) {
 			if (gdt_size >= MAXGDTSIZ)
-				panic("gdt_get_slot botch");
+				panic("gdt_get_slot botch 2");
 			if (dynamic_gdt == gdt)
 				gdt_resize(GDTSTART);
 			else
 				gdt_resize(gdt_size * 2);
-		} else
-			gdt_compact();
+		}
+		slot = gdt_next++;
 	}
-	slot = gdt_next++;
 
 	gdt_count++;
 	gdt_unlock();
 	return (slot);
 }
 
+/*
+ * Deallocate a GDT slot, putting it on the free list.
+ */
 void
 gdt_put_slot(slot)
 	int slot;
@@ -145,7 +182,7 @@ gdt_put_slot(slot)
 	gdt_lock();
 	gdt_count--;
 
-	dynamic_gdt[slot] = dynamic_gdt[GNULL_SEL];
+	dynamic_gdt[slot].gd.gd_type = SDT_SYSNULL;
 	/* 
 	 * shrink the GDT if we're using less than 1/4 of it.
 	 * Shrinking at that point means we'll still have room for
@@ -155,6 +192,9 @@ gdt_put_slot(slot)
 	if (gdt_size > GDTSTART && gdt_count < gdt_size / 4) {
 		gdt_compact();
 		gdt_resize(gdt_size / 2);
+	} else {
+		dynamic_gdt[slot].gd.gd_selector = gdt_free;
+		gdt_free = slot;
 	}
 
 	gdt_unlock();
