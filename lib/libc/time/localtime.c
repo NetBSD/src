@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.24 2000/09/13 22:32:28 msaitoh Exp $	*/
+/*	$NetBSD: localtime.c,v 1.24.2.1 2001/08/08 16:27:45 nathanw Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.70";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.24 2000/09/13 22:32:28 msaitoh Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.24.2.1 2001/08/08 16:27:45 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -213,7 +213,7 @@ __aconst char *		tzname[2] = {
 	(__aconst char *)wildabbr
 };
 
-#ifdef _REENT
+#ifdef _REENTRANT
 static rwlock_t lcl_lock = RWLOCK_INITIALIZER;
 #endif
 
@@ -1147,7 +1147,7 @@ const time_t * const	timep;
 const long		offset;
 struct tm * const	tmp;
 {
-#ifdef _REENT
+#ifdef _REENTRANT
 	static mutex_t gmt_mutex = MUTEX_INITIALIZER;
 #endif
 

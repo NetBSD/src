@@ -1,4 +1,4 @@
-/*	$NetBSD: fflush.c,v 1.13 1999/09/20 04:39:26 lukem Exp $	*/
+/*	$NetBSD: fflush.c,v 1.13.10.1 2001/08/08 16:27:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fflush.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fflush.c,v 1.13 1999/09/20 04:39:26 lukem Exp $");
+__RCSID("$NetBSD: fflush.c,v 1.13.10.1 2001/08/08 16:27:44 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: fflush.c,v 1.13 1999/09/20 04:39:26 lukem Exp $");
 #include "local.h"
 #include "reentrant.h"
 
-#ifdef _REENT
+#ifdef _REENTRANT
 extern rwlock_t __sfp_lock;
 #endif
 

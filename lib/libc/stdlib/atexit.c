@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.12 1999/09/20 04:39:36 lukem Exp $	*/
+/*	$NetBSD: atexit.c,v 1.12.10.1 2001/08/08 16:27:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)atexit.c	8.2 (Berkeley) 7/3/94";
 #else
-__RCSID("$NetBSD: atexit.c,v 1.12 1999/09/20 04:39:36 lukem Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.12.10.1 2001/08/08 16:27:44 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: atexit.c,v 1.12 1999/09/20 04:39:36 lukem Exp $");
 
 struct atexit *__atexit;	/* points to head of LIFO stack */
 
-#ifdef _REENT
+#ifdef _REENTRANT
 mutex_t __atexit_mutex = MUTEX_INITIALIZER;
 #endif
 
