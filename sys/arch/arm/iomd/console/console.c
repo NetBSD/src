@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.8 2002/10/05 17:16:36 chs Exp $	*/
+/*	$NetBSD: console.c,v 1.9 2002/10/08 08:57:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -145,7 +145,7 @@ dev_type_mmap(physconmmap);
 
 const struct cdevsw physcon_cdevsw = {
 	physconopen, physconclose, physconread, physconwrite, physconioctl,
-	nostop, physcontty, physconpoll, physconmmap,
+	nostop, physcontty, physconpoll, physconmmap, D_TTY
 };
 
 /*
