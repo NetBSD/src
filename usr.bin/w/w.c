@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.62 2004/11/10 16:58:10 christos Exp $	*/
+/*	$NetBSD: w.c,v 1.63 2004/11/11 00:09:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.62 2004/11/10 16:58:10 christos Exp $");
+__RCSID("$NetBSD: w.c,v 1.63 2004/11/11 00:09:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,7 +209,7 @@ main(int argc, char **argv)
 			continue;
 		++nusers;
 		if (sel_user &&
-		    strncmp(utx->ut_name, sel_user, sizeof(utx->ut_name) != 0))
+		    strncmp(utx->ut_name, sel_user, sizeof(utx->ut_name)) != 0)
 			continue;
 		if ((ep = calloc(1, sizeof(struct entry))) == NULL)
 			err(1, NULL);
@@ -240,7 +240,7 @@ main(int argc, char **argv)
 			continue;
 
 		if (sel_user &&
-		    strncmp(ut->ut_name, sel_user, sizeof(ut->ut_name) != 0))
+		    strncmp(ut->ut_name, sel_user, sizeof(ut->ut_name)) != 0)
 			continue;
 
 		/* Don't process entries that we have utmpx for */
