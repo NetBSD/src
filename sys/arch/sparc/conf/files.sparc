@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.35 1997/02/27 01:17:09 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.36 1997/03/12 06:43:25 cgd Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -165,6 +165,11 @@ file	arch/sparc/dev/si.c		si | sw
 # device declaration in sys/conf/files
 attach  en at sbus with en_sbus
 file    arch/sparc/dev/if_en_sbus.c     en_sbus
+
+# Qlogic ISP 10x0 (Sbus) family
+# device declaration in sys/conf/files
+attach isp at sbus with isp_sbus
+file	arch/sparc/dev/isp_sbus.c	isp_sbus
 
 pseudo-device	kbd
 
