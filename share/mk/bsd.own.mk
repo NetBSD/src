@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.188 2001/10/20 06:05:00 jmc Exp $
+#	$NetBSD: bsd.own.mk,v 1.189 2001/10/20 06:11:21 jmc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -10,9 +10,13 @@ MAKECONF?=	/etc/mk.conf
 .endif
 
 # Temporary; this will become default when all platforms have migrated.
+.if defined(USE_NEW_TOOLCHAIN) && ${USE_NEW_TOOLCHAIN} == "no"
+.undef USE_NEW_TOOLCHAIN	# unset
+.else
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "sparc64"
-USE_NEW_TOOLCHAIN=	# set
+USE_NEW_TOOLCHAIN=yes	# set
+.endif
 .endif
 
 .if defined(BSD_PKG_MK) || !defined(USE_NEW_TOOLCHAIN)
