@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.14 1997/10/20 08:51:31 enami Exp $
+.\"	$NetBSD: df.1,v 1.15 1999/02/01 01:25:25 cjs Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,6 +62,12 @@ and
 .Fl t
 options below).
 .Pp
+Note that the printed count of available blocks takes
+.Va minfree
+into account, and thus will be negative when the number of free blocks
+on the filesystem is less than
+.Va minfree .
+.Pp
 The following options are available:
 .Bl -tag -width Ds
 .It Fl i
@@ -114,7 +120,9 @@ size block.
 .Xr getmntinfo 3 ,
 .Xr fstab 5 ,
 .Xr mount 8 ,
-.Xr quot 8
+.Xr quot 8 ,
+.Xr fs 5 ,
+.Xr tunefs 1
 .Sh HISTORY
 A
 .Nm
