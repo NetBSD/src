@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.56 2003/04/12 14:36:43 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.57 2003/08/11 16:44:35 pk Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.56 2003/04/12 14:36:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.57 2003/08/11 16:44:35 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1199,7 +1199,7 @@ gotpage:
 
 				swslot = uao_set_swslot(&aobj->u_obj, pageidx,
 							SWSLOT_BAD);
-				if (swslot != -1) {
+				if (swslot > 0) {
 					uvm_swap_markbad(swslot, 1);
 				}
 
@@ -1424,7 +1424,7 @@ uao_pagein_page(aobj, pageidx)
 	int pageidx;
 {
 	struct vm_page *pg;
-	int rv, slot, npages;
+	int rv, npages;
 
 	pg = NULL;
 	npages = 1;
@@ -1458,14 +1458,11 @@ uao_pagein_page(aobj, pageidx)
 	 * ok, we've got the page now.
 	 * mark it as dirty, clear its swslot and un-busy it.
 	 */
-
-	slot = uao_set_swslot(&aobj->u_obj, pageidx, 0);
-	uvm_swap_free(slot, 1);
+	uao_dropswap(&aobj->u_obj, pageidx);
 
 	/*
 	 * deactivate the page (to make sure it's on a page queue).
 	 */
-
 	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();
