@@ -56,7 +56,7 @@ extern "C" {
 #include "ansidecl.h"
 
 /* These two lines get substitutions done by commands in Makefile.in.  */
-#define BFD_VERSION  "2.11.2"
+#define BFD_VERSION  "2.11.2nb1"
 #define BFD_ARCH_SIZE 64
 #define BFD_HOST_64BIT_LONG 0
 #if 0

@@ -192,5 +192,5 @@
 /* #undef USE_BINARY_FOPEN */
 
 /* Configured target name. */
-#define TARGET "m68k-unknown-netbsdelfY"
+#define TARGET "m68k--netbsdelf"
 

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.50 2001/08/06 23:28:53 tv Exp $
+#	$NetBSD: Makefile,v 1.51 2001/12/19 23:54:29 tv Exp $
 
 .include <bsd.own.mk>
 
 .if defined(USE_NEW_TOOLCHAIN)
 
-SUBDIR=		gdb.new
+SUBDIR=		gdb.new # gdbreplay gdbserver
 
 .include <bsd.subdir.mk>
 

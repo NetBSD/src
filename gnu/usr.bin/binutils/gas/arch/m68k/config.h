@@ -234,19 +234,19 @@
 #define BFD_ASSEMBLER 1
 
 /* Target alias. */
-#define TARGET_ALIAS "m68k-unknown-netbsdelfY"
+#define TARGET_ALIAS "m68k--netbsdelf"
 
 /* Canonical target. */
-#define TARGET_CANONICAL "m68k-unknown-netbsdelfY"
+#define TARGET_CANONICAL "m68k--netbsdelf"
 
 /* Target CPU. */
 #define TARGET_CPU "m68k"
 
 /* Target vendor. */
-#define TARGET_VENDOR "unknown"
+#define TARGET_VENDOR ""
 
 /* Target OS. */
-#define TARGET_OS "netbsdelfY"
+#define TARGET_OS "netbsdelf"
 
 /* Define if you have the stpcpy function */
 /* #undef HAVE_STPCPY */

@@ -1,15 +1,13 @@
-#	$NetBSD: Makefile,v 1.15 2001/12/15 03:37:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.16 2001/12/19 23:54:20 tv Exp $
 
 .include <bsd.own.mk>
 
 .if defined(USE_NEW_TOOLCHAIN)
 
-.if !defined(BOOTSTRAP_NEW_TOOLCHAIN)
 .include "${.CURDIR}/common/arch/${MACHINE_ARCH}/defs.mk"
 
 SUBDIR=		common gas gprof ld ${G_PROGRAMS:C/-new$//:cxxfilt=c++filt}
 SUBDIR:=	${SUBDIR:O} # alphabetize
-.endif
 
 .else
 #
