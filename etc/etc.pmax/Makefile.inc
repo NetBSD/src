@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1999/04/27 04:36:25 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1999/04/27 12:32:08 simonb Exp $
 #
 #	etc.pmax/Makefile.inc -- pmax-specific etc Makefile targets
 #
@@ -14,19 +14,6 @@ BUILD_KERNELS+=INSTALL RAMDISK
 # Add any extra release directories to be made
 INSTALLATION_DIRS+=installation/diskimage installation/netboot
 
-# location of the source diskimage
-DISKIMAGE_DIR!=		cd ${.CURDIR}/../distrib/pmax/instkernel && ${MAKE} -s print-objdir
-DISKIMAGE=		${DISKIMAGE_DIR}/diskimage.gz
-
-# location of the source netboot diskimage tar file
-DISKIMAGE_TAR_DIR!=	cd ${.CURDIR}/../distrib/pmax/ramdisk && ${MAKE} -s print-objdir
-DISKIMAGE_TAR=		${DISKIMAGE_TAR_DIR}/diskimage.tgz
-
-# location of the ramdisk install kernel
-INSTALLKERN_DIR!=	cd ${.CURDIR}/../distrib/pmax/instkernel && ${MAKE} -s print-objdir
-INSTALLKERN=		${INSTALLKERN_DIR}/netbsd.gz
-INSTALLKERNNAME=	install.gz
-
 # location and name of the stripped down NFS install kernel
 NFSCONF=		INSTALL
 NFSKERNNAME=		nfsnetbsd
@@ -39,15 +26,5 @@ snap_md_post: ${DISKIMAGE} ${DISKIMAGE_TAR} ${INSTALLKERN}
 		-m ${BINMODE} ${NFSKERN}.ecoff \
 		${RELEASEDIR}/binary/kernel/${NFSKERNNAME}
 	gzip -9 ${RELEASEDIR}/binary/kernel/${NFSKERNNAME}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
-		-m ${BINMODE} ${INSTALLKERN} \
-		${RELEASEDIR}/binary/kernel/${INSTALLKERNNAME}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
-		-m ${NONBINMODE} ${DISKIMAGE} \
-		${RELEASEDIR}/installation/diskimage
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
-		-m ${NONBINMODE} ${DISKIMAGE_TAR} \
-		${RELEASEDIR}/installation/netboot
-
-${DISKIMAGE} ${DISKIMAGE_TAR} ${INSTALLKERN}:
-	cd ${.CURDIR}/../distrib/pmax && ${MAKE} ${_J}
+	(cd ${.CURDIR}/../distrib/pmax && \
+	    ${MAKE} depend && ${MAKE} ${_J} && ${MAKE} install)
