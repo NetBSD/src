@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.7 2003/02/13 14:16:27 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.8 2003/03/04 17:25:30 kochi Exp $");
 
 #define __UTOBJECT_C__
 

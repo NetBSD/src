@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsobject - Dispatcher object management routines
- *              xRevision: 113 $
+ *              xRevision: 114 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.5 2003/02/13 14:16:18 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.6 2003/03/04 17:25:13 kochi Exp $");
 
 #define __DSOBJECT_C__
 
@@ -501,7 +501,7 @@ AcpiDsCreateNode (
         return_ACPI_STATUS (Status);
     }
 
-    /* Re-type the object according to it's argument */
+    /* Re-type the object according to its argument */
 
     Node->Type = ACPI_GET_OBJECT_TYPE (ObjDesc);
 

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evxfevnt - External Interfaces, ACPI event disable/enable
- *              xRevision: 60 $
+ *              xRevision: 62 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evxfevnt.c,v 1.5 2003/02/13 14:16:19 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evxfevnt.c,v 1.6 2003/03/04 17:25:16 kochi Exp $");
 
 #define __EVXFEVNT_C__
 
@@ -248,6 +248,7 @@ AcpiEnableEvent (
 {
     ACPI_STATUS             Status = AE_OK;
     UINT32                  Value;
+    ACPI_GPE_EVENT_INFO     *GpeEventInfo;
 
 
     ACPI_FUNCTION_TRACE ("AcpiEnableEvent");
@@ -299,14 +300,15 @@ AcpiEnableEvent (
 
         /* Ensure that we have a valid GPE number */
 
-        if (AcpiEvGetGpeNumberIndex (Event) == ACPI_GPE_INVALID)
+        GpeEventInfo = AcpiEvGetGpeEventInfo (Event);
+        if (!GpeEventInfo)
         {
             return_ACPI_STATUS (AE_BAD_PARAMETER);
         }
 
         /* Enable the requested GPE number */
 
-        Status = AcpiHwEnableGpe (Event);
+        Status = AcpiHwEnableGpe (GpeEventInfo);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
@@ -314,7 +316,7 @@ AcpiEnableEvent (
 
         if (Flags & ACPI_EVENT_WAKE_ENABLE)
         {
-            AcpiHwEnableGpeForWakeup (Event);
+            AcpiHwEnableGpeForWakeup (GpeEventInfo);
         }
         break;
 
@@ -350,6 +352,7 @@ AcpiDisableEvent (
 {
     ACPI_STATUS             Status = AE_OK;
     UINT32                  Value;
+    ACPI_GPE_EVENT_INFO     *GpeEventInfo;
 
 
     ACPI_FUNCTION_TRACE ("AcpiDisableEvent");
@@ -399,7 +402,8 @@ AcpiDisableEvent (
 
         /* Ensure that we have a valid GPE number */
 
-        if (AcpiEvGetGpeNumberIndex (Event) == ACPI_GPE_INVALID)
+        GpeEventInfo = AcpiEvGetGpeEventInfo (Event);
+        if (!GpeEventInfo)
         {
             return_ACPI_STATUS (AE_BAD_PARAMETER);
         }
@@ -411,11 +415,11 @@ AcpiDisableEvent (
 
         if (Flags & ACPI_EVENT_WAKE_DISABLE)
         {
-            AcpiHwDisableGpeForWakeup (Event);
+            AcpiHwDisableGpeForWakeup (GpeEventInfo);
         }
         else
         {
-            Status = AcpiHwDisableGpe (Event);
+            Status = AcpiHwDisableGpe (GpeEventInfo);
         }
         break;
 
@@ -447,6 +451,7 @@ AcpiClearEvent (
     UINT32                  Type)
 {
     ACPI_STATUS             Status = AE_OK;
+    ACPI_GPE_EVENT_INFO     *GpeEventInfo;
 
 
     ACPI_FUNCTION_TRACE ("AcpiClearEvent");
@@ -478,12 +483,13 @@ AcpiClearEvent (
 
         /* Ensure that we have a valid GPE number */
 
-        if (AcpiEvGetGpeNumberIndex (Event) == ACPI_GPE_INVALID)
+        GpeEventInfo = AcpiEvGetGpeEventInfo (Event);
+        if (!GpeEventInfo)
         {
             return_ACPI_STATUS (AE_BAD_PARAMETER);
         }
 
-        Status = AcpiHwClearGpe (Event);
+        Status = AcpiHwClearGpe (GpeEventInfo);
         break;
 
 
@@ -519,6 +525,7 @@ AcpiGetEventStatus (
     ACPI_EVENT_STATUS       *EventStatus)
 {
     ACPI_STATUS             Status = AE_OK;
+    ACPI_GPE_EVENT_INFO     *GpeEventInfo;
 
 
     ACPI_FUNCTION_TRACE ("AcpiGetEventStatus");
@@ -554,7 +561,8 @@ AcpiGetEventStatus (
 
         /* Ensure that we have a valid GPE number */
 
-        if (AcpiEvGetGpeNumberIndex (Event) == ACPI_GPE_INVALID)
+        GpeEventInfo = AcpiEvGetGpeEventInfo (Event);
+        if (!GpeEventInfo)
         {
             return_ACPI_STATUS (AE_BAD_PARAMETER);
         }
@@ -571,4 +579,5 @@ AcpiGetEventStatus (
 
     return_ACPI_STATUS (Status);
 }
+
 
