@@ -43,6 +43,8 @@ divert(-1)
 include(`../m4/cf.m4')
 VERSIONID(`@(#)uucpproto.mc	8.3 (Berkeley) 8/21/93')
 
+OSTYPE(bsd4.4)dnl
+
 FEATURE(nodns)dnl
 
 MAILER(local)dnl
