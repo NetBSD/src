@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_kmem.c,v 1.2.4.1 2002/05/16 04:35:10 gehenna Exp $ */
+/*	$NetBSD: irix_kmem.c,v 1.2.4.2 2002/06/08 09:10:15 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.2.4.1 2002/05/16 04:35:10 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.2.4.2 2002/06/08 09:10:15 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.2.4.1 2002/05/16 04:35:10 gehenna Ex
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
+#include <sys/conf.h>
 
 #include <compat/irix/irix_kmem.h>
 #include <compat/irix/irix_sysmp.h>

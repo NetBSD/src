@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.c,v 1.1.10.1 2002/05/30 14:44:46 gehenna Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.1.10.2 2002/06/08 09:10:15 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.1.10.1 2002/05/30 14:44:46 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.1.10.2 2002/06/08 09:10:15 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.1.10.1 2002/05/30 14:44:46 gehenna 
 #include <sys/vnode.h>
 #include <sys/types.h>
 #include <sys/syscallargs.h>
+#include <sys/conf.h>
 
 #include <miscfs/specfs/specdev.h>
 
