@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.10 2001/04/09 10:08:51 jdolecek Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.11 2001/04/09 10:22:01 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -248,7 +248,7 @@ osf1_sys_fstat(p, v, retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp->f_data, &ub, p);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
 	FILE_UNUSE(fp, p);
 
 	osf1_cvt_stat_from_native(&ub, &oub);
@@ -281,7 +281,7 @@ osf1_sys_fstat2(p, v, retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp->f_data, &ub, p);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
 	FILE_UNUSE(fp, p);
 
 	osf1_cvt_stat2_from_native(&ub, &oub);

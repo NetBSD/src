@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.73 2001/04/07 09:00:57 jdolecek Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.74 2001/04/09 10:22:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -487,7 +487,7 @@ sys___fstat13(struct proc *p, void *v, register_t *retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp->f_data, &ub, p);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
 	FILE_UNUSE(fp, p);
 
 	if (error == 0)
