@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.16 2004/09/23 02:24:22 tls Exp $
+# $NetBSD: GENERIC,v 1.17 2004/11/10 17:25:23 christos Exp $
 # NetBSD: GENERIC,v 1.596 2004/04/07 13:13:59 augustss Exp 
 #
 # GENERIC machine description file
@@ -23,7 +23,7 @@ include 	"arch/xen/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 maxusers	32		# estimated number of users
 
@@ -122,6 +122,8 @@ options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
 #options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.33 2004/09/04 23:29:50 manu Exp $
+#	$NetBSD: GENERICSBC,v 1.34 2004/11/10 17:25:23 christos Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.33 $"
+#ident 		"GENERICSBC-$Revision: 1.34 $"
 
 maxusers	16		# estimated number of users
 
@@ -76,6 +76,7 @@ options 	EXEC_AOUT	# support for exec'ing a.out
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_SUNOS	# compatibility with SunOS 4.x binaries
 #options 	COMPAT_SVR4	# compatibility with SVR4 binaries
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
