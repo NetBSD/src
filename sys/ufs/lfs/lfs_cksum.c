@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_cksum.c,v 1.21 2003/02/17 23:48:18 perseant Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.22 2003/02/20 04:27:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.21 2003/02/17 23:48:18 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.22 2003/02/20 04:27:24 perseant Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL

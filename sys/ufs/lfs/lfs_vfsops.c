@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.95 2003/02/19 12:49:10 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.96 2003/02/20 04:27:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.95 2003/02/19 12:49:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.96 2003/02/20 04:27:25 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -125,7 +125,7 @@ static int lfs_mountfs(struct vnode *, struct mount *, struct proc *);
 extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc lfs_specop_opv_desc;
 extern const struct vnodeopv_desc lfs_fifoop_opv_desc;
-extern int lfs_subsys_pages;    
+extern int lfs_subsys_pages;	
 extern int  locked_queue_count;
 extern long locked_queue_bytes;
 extern struct simplelock lfs_subsys_lock;
@@ -301,7 +301,7 @@ lfs_mountroot()
 		return (ENODEV);
 
 	if (rootdev == NODEV)
-	  	return (ENODEV);
+		return (ENODEV);
 	/*
 	 * Get vnodes for swapdev and rootdev.
 	 */
@@ -654,7 +654,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
 					     ibp);
 				sup->su_nbytes += DINODE_SIZE;
 				LFS_WRITESEGENTRY(sup, fs,
-					          dtosn(fs, dbtofsb(fs, dbp->b_blkno)),
+						  dtosn(fs, dbtofsb(fs, dbp->b_blkno)),
 						  ibp);
 			}
 		}
@@ -690,10 +690,10 @@ check_segsum(struct lfs *fs, daddr_t offset,
 	 * of the segment, skip the superblock.
 	 */
 	if (sntod(fs, dtosn(fs, offset)) == offset) {
-       		LFS_SEGENTRY(sup, fs, dtosn(fs, offset), bp); 
-       		if (sup->su_flags & SEGUSE_SUPERBLOCK)
+		LFS_SEGENTRY(sup, fs, dtosn(fs, offset), bp); 
+		if (sup->su_flags & SEGUSE_SUPERBLOCK)
 			offset += btofsb(fs, LFS_SBPAD);
-       		brelse(bp);
+		brelse(bp);
 	}
 
 	/* Read in the segment summary */
@@ -902,7 +902,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	int error, i, ronly, secsize, fsbsize;
 	struct ucred *cred;
 	CLEANERINFO *cip;
-        SEGUSE *sup;
+	SEGUSE *sup;
 	int flags, dirty, do_rollforward;
 	daddr_t offset, oldoffset, lastgoodpseg, sb_addr;
 	int sn, curseg;
@@ -968,7 +968,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 			 * the case, get the real one, and try again.
 			 */
 			if (sb_addr != dfs->dlfs_sboffs[0] <<
-                                       dfs->dlfs_fsbtodb) {
+				       dfs->dlfs_fsbtodb) {
 /* #ifdef DEBUG_LFS */
 				printf("lfs_mountfs: sb daddr 0x%llx is not right, trying 0x%llx\n",
 					(long long)sb_addr, (long long)(dfs->dlfs_sboffs[0] <<
@@ -985,7 +985,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 
 	/*
 	 * Check the second superblock to see which is newer; then mount
-	 * using the older of the two.  This is necessary to ensure that
+	 * using the older of the two.	This is necessary to ensure that
 	 * the filesystem is valid if it was not unmounted cleanly.
 	 */
 
@@ -1015,8 +1015,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		/* Check the basics. */
 		if (tdfs->dlfs_magic != LFS_MAGIC ||
 		    tdfs->dlfs_bsize > MAXBSIZE ||
-	    	    tdfs->dlfs_version > LFS_VERSION ||
-	    	    tdfs->dlfs_bsize < sizeof(struct dlfs)) {
+		    tdfs->dlfs_version > LFS_VERSION ||
+		    tdfs->dlfs_bsize < sizeof(struct dlfs)) {
 #ifdef DEBUG_LFS
 			printf("lfs_mountfs: alt superblock sanity failed\n");
 #endif
@@ -1291,9 +1291,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	 * Mark the current segment as ACTIVE, since we're going to 
 	 * be writing to it.
 	 */
-        LFS_SEGENTRY(sup, fs, dtosn(fs, fs->lfs_offset), bp); 
-        sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
-        LFS_WRITESEGENTRY(sup, fs, dtosn(fs, fs->lfs_offset), bp);  /* Ifile */
+	LFS_SEGENTRY(sup, fs, dtosn(fs, fs->lfs_offset), bp); 
+	sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
+	LFS_WRITESEGENTRY(sup, fs, dtosn(fs, fs->lfs_offset), bp);  /* Ifile */
 
 	/* Now that roll-forward is done, unlock the Ifile */
 	vput(vp);
@@ -1326,9 +1326,9 @@ out:
 	}
 
 	/* Start the pagedaemon-anticipating daemon */
-        if (lfs_writer_daemon == 0 &&
+	if (lfs_writer_daemon == 0 &&
 	    kthread_create1(lfs_writerd, NULL, NULL, "lfs_writer") != 0)
-                panic("fork lfs_writer");
+		panic("fork lfs_writer");
 
 	return (error);
 }
@@ -1645,10 +1645,10 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	}
 	brelse(bp);
 
-        memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
-        for (i = 0; i < NDADDR; i++)
-                if (ip->i_ffs_db[i] != 0)
-                        ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
+	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
+	for (i = 0; i < NDADDR; i++)
+		if (ip->i_ffs_db[i] != 0)
+			ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.  In all

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.60 2003/02/19 12:49:10 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.61 2003/02/20 04:27:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.60 2003/02/19 12:49:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.61 2003/02/20 04:27:23 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.60 2003/02/19 12:49:10 yamt Exp $");
  */
 int	locked_queue_count   = 0;	/* Count of locked-down buffers. */
 long	locked_queue_bytes   = 0L;	/* Total size of locked buffers. */
-int	lfs_subsys_pages     = 0L;      /* Total number LFS-written pages */
-int	lfs_writing          = 0;	/* Set if already kicked off a writer
+int	lfs_subsys_pages     = 0L;	/* Total number LFS-written pages */
+int	lfs_writing	     = 0;	/* Set if already kicked off a writer
 					   because of buffer space */
 struct simplelock lfs_subsys_lock;	/* Lock on subsys_pages */
 extern int lfs_dostats;
@@ -332,7 +332,7 @@ lfs_bwrite(void *v)
 	struct buf *bp = ap->a_bp;
 
 #ifdef DIAGNOSTIC
-        if (VTOI(bp->b_vp)->i_lfs->lfs_ronly == 0 && (bp->b_flags & B_ASYNC)) {
+	if (VTOI(bp->b_vp)->i_lfs->lfs_ronly == 0 && (bp->b_flags & B_ASYNC)) {
 		panic("bawrite LFS buffer");
 	}
 #endif /* DIAGNOSTIC */
@@ -412,7 +412,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 * Don't write *any* blocks if we're mounted read-only.
 	 * In particular the cleaner can't write blocks either.
 	 */
-        if (VTOI(bp->b_vp)->i_lfs->lfs_ronly) {
+	if (VTOI(bp->b_vp)->i_lfs->lfs_ronly) {
 		bp->b_flags &= ~(B_DELWRI | B_READ | B_ERROR);
 		LFS_UNLOCK_BUF(bp);
 		if (LFS_IS_MALLOC_BUF(bp))
@@ -569,9 +569,9 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	 */
 	while (fs->lfs_dirops > 0 &&
 	       (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
-                locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
+		locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
 		lfs_subsys_pages > LFS_MAX_PAGES ||
-                lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0))
+		lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0))
 	{
 		++fs->lfs_diropwait;
 		tsleep(&fs->lfs_writer, PRIBIO+1, "bufdirop", 0);
@@ -618,7 +618,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		/*
 		 * lfs_flush might not flush all the buffers, if some of the
 		 * inodes were locked or if most of them were Ifile blocks
-		 * and we weren't asked to checkpoint.  Try flushing again
+		 * and we weren't asked to checkpoint.	Try flushing again
 		 * to keep us from blocking indefinitely.
 		 */
 		if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||

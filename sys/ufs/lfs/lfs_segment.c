@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.102 2003/02/19 12:02:38 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.103 2003/02/20 04:27:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.102 2003/02/19 12:02:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.103 2003/02/20 04:27:24 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -150,7 +150,7 @@ int	 lfs_writevnodes(struct lfs *fs, struct mount *mp,
 	    struct segment *sp, int dirops);
 
 int	lfs_allclean_wakeup;		/* Cleaner wakeup address. */
-int	lfs_writeindir = 1;             /* whether to flush indir on non-ckp */
+int	lfs_writeindir = 1;		/* whether to flush indir on non-ckp */
 int	lfs_clean_vnhead = 0;		/* Allow freeing to head of vn list */
 int	lfs_dirvcount = 0;		/* # active dirops */
 
@@ -162,12 +162,12 @@ extern int locked_queue_count;
 extern long locked_queue_bytes;
 
 /* op values to lfs_writevnodes */
-#define	VN_REG	        0
+#define	VN_REG		0
 #define	VN_DIROP	1
 #define	VN_EMPTY	2
-#define VN_CLEAN        3
+#define VN_CLEAN	3
 
-#define LFS_MAX_ACTIVE          10
+#define LFS_MAX_ACTIVE		10
 
 /*
  * XXX KS - Set modification time on the Ifile, so the cleaner can
@@ -310,7 +310,7 @@ lfs_vflush(struct vnode *vp)
 				bremfree(bp);
 				LFS_UNLOCK_BUF(bp);
 				bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI |
-                                         B_GATHERED);
+					 B_GATHERED);
 				bp->b_flags |= B_DONE;
 				reassignbuf(bp, vp);
 				brelse(bp);  
@@ -780,7 +780,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 		 * The same is true of the Ifile since checkpoints assume
 		 * that all valid Ifile blocks are written.
 		 */
-	   	if (IS_FLUSHING(fs,vp) || vp == fs->lfs_ivnode) {
+		if (IS_FLUSHING(fs,vp) || vp == fs->lfs_ivnode) {
 			lfs_gather(fs, sp, vp, lfs_match_data);
 			/*
 			 * Don't call VOP_PUTPAGES: if we're flushing,
@@ -928,7 +928,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 * If we are cleaning, ensure that we don't write UNWRITTEN disk
 	 * addresses to disk; possibly revert the inode size.
 	 * XXX By not writing these blocks, we are making the lfs_avail
-	 * XXX count on disk wrong by the same amount.  We should be
+	 * XXX count on disk wrong by the same amount.	We should be
 	 * XXX able to "borrow" from lfs_avail and return it after the
 	 * XXX Ifile is written.  See also in lfs_writeseg.
 	 */
@@ -1009,9 +1009,9 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 * The inode's last address should not be in the current partial
 	 * segment, except under exceptional circumstances (lfs_writevnodes
 	 * had to start over, and in the meantime more blocks were written
-	 * to a vnode).  Both inodes will be accounted to this segment
+	 * to a vnode).	 Both inodes will be accounted to this segment
 	 * in lfs_writeseg so we need to subtract the earlier version
-	 * here anyway.  The segment count can temporarily dip below
+	 * here anyway.	 The segment count can temporarily dip below
 	 * zero here; keep track of how many duplicates we have in 
 	 * "dupino" so we don't panic below.
 	 */
@@ -1365,7 +1365,7 @@ lfs_updatemeta(struct segment *sp)
 	 * that you cannot have fragments.
 	 *
 	 * XXX This last is a lie.  A cleaned fragment can coexist with
-	 * XXX a later indirect block.  This will continue to be
+	 * XXX a later indirect block.	This will continue to be
 	 * XXX true until lfs_markv is fixed to do everything with
 	 * XXX fake blocks (including fake inodes and fake indirect blocks).
 	 */
@@ -1385,7 +1385,7 @@ lfs_updatemeta(struct segment *sp)
 		/*
 		 * If we write a frag in the wrong place, the cleaner won't
 		 * be able to correctly identify its size later, and the
-		 * segment will be uncleanable.  (Even worse, it will assume
+		 * segment will be uncleanable.	 (Even worse, it will assume
 		 * that the indirect block that actually ends the list
 		 * is of a smaller size!)
 		 */
@@ -1474,7 +1474,7 @@ lfs_initseg(struct lfs *fs)
 #ifdef LFS_MALLOC_SUMMARY
 	sbp = *sp->cbpp = lfs_newbuf(fs, VTOI(fs->lfs_ivnode)->i_devvp,
 				     fsbtodb(fs, fs->lfs_offset), fs->lfs_sumsize, LFS_NB_SUMMARY);
-  	sp->segsum = (*sp->cbpp)->b_data;
+	sp->segsum = (*sp->cbpp)->b_data;
 #else
 	sbp = *sp->cbpp = getblk(VTOI(fs->lfs_ivnode)->i_devvp,
 				 fsbtodb(fs, fs->lfs_offset), NBPG, 0, 0);
@@ -1520,7 +1520,7 @@ lfs_newseg(struct lfs *fs)
 	
 	LFS_SEGENTRY(sup, fs, dtosn(fs, fs->lfs_nextseg), bp);
 #ifdef DEBUG_SU_NBYTES
-	printf("lfs_newseg: seg %d := 0 in newseg\n",   /* XXXDEBUG */
+	printf("lfs_newseg: seg %d := 0 in newseg\n",	/* XXXDEBUG */
 	       dtosn(fs, fs->lfs_nextseg)); /* XXXDEBUG */
 #endif
 	sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
@@ -1676,7 +1676,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	int i, s;
 	int do_again, nblocks, byteoffset;
 	size_t el_size;
- 	struct lfs_cluster *cl;
+	struct lfs_cluster *cl;
 	int (*strategy)(void *);
 	struct vop_strategy_args vop_strategy_a;
 	u_short ninos;
@@ -1733,7 +1733,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	
 	ninos = (ssp->ss_ninos + INOPB(fs) - 1) / INOPB(fs);
 #ifdef DEBUG_SU_NBYTES
-	printf("seg %d += %d for %d inodes\n",   /* XXXDEBUG */
+	printf("seg %d += %d for %d inodes\n",	 /* XXXDEBUG */
 	       sp->seg_number, ssp->ss_ninos * DINODE_SIZE,
 	       ssp->ss_ninos);
 #endif
@@ -1861,7 +1861,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 					bp->b_flags &= ~B_BUSY;
 					if (bp->b_flags & B_WANTED)
 						wakeup(bp);
-				 	splx(s);
+					splx(s);
 					/*
 					 * We have to re-decrement lfs_avail
 					 * since this block is going to come
@@ -1935,11 +1935,11 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	strategy = devvp->v_op[VOFFSET(vop_strategy)];
 
 	/*
-  	 * When we simply write the blocks we lose a rotation for every block
+	 * When we simply write the blocks we lose a rotation for every block
 	 * written.  To avoid this problem, we use pagemove to cluster
 	 * the buffers into a chunk and write the chunk.  CHUNKSIZE is the
-  	 * largest size I/O devices can handle.
-  	 *
+	 * largest size I/O devices can handle.
+	 *
 	 * XXX - right now MAXPHYS is only 64k; could it be larger?
 	 */
 
@@ -2038,10 +2038,10 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 				pagemove(bp->b_data, p, bp->b_bcount);
 				cbp->b_bufsize += bp->b_bcount;
 				bp->b_bufsize -= bp->b_bcount;
-  			} else {
+			} else {
 				bcopy(bp->b_data, p, bp->b_bcount);
 				/* printf("copy in %p\n", bp->b_data); */
-  			}
+			}
   
 			/*
 			 * XXX If we are *not* shifting, the summary
@@ -2068,7 +2068,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			 * Although it cannot be freed for reuse before the
 			 * cluster is written to disk, this buffer does not
 			 * need to be held busy.  Therefore we unbusy it,
-			 * while leaving it on the locked list.  It will
+			 * while leaving it on the locked list.	 It will
 			 * be freed or requeued by the callback depending
 			 * on whether it has had B_DELWRI set again in the
 			 * meantime.
@@ -2101,7 +2101,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			     (i > 1 && vp && *bpp && (*bpp)->b_vp != vp)) &&
 			    (bp = LIST_FIRST(&vp->v_dirtyblkhd)) != NULL &&
 			    vp->v_mount == fs->lfs_ivnode->v_mount)
-  			{
+			{
 				ip = VTOI(vp);
 #ifdef DEBUG_LFS
 				printf("lfs_writeseg: marking ino %d\n",
@@ -2320,7 +2320,7 @@ lfs_cluster_aiodone(struct buf *bp)
 		}
 
 		/*
-		 * We're done with tbp.  If it has not been re-dirtied since
+		 * We're done with tbp.	 If it has not been re-dirtied since
 		 * the cluster was written, free it.  Otherwise, keep it on
 		 * the locked list to be written again.
 		 */
@@ -2426,7 +2426,7 @@ lfs_generic_callback(struct buf *bp, void (*aiodone)(struct buf *))
 	/* reset b_iodone for when this is a single-buf i/o. */
 	bp->b_iodone = aiodone;
 
-	simple_lock(&uvm.aiodoned_lock);        /* locks uvm.aio_done */
+	simple_lock(&uvm.aiodoned_lock);	/* locks uvm.aio_done */
 	TAILQ_INSERT_TAIL(&uvm.aio_done, bp, b_freelist);
 	wakeup(&uvm.aiodoned);
 	simple_unlock(&uvm.aiodoned_lock);

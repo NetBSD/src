@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.36 2003/02/17 23:48:16 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.37 2003/02/20 04:27:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.36 2003/02/17 23:48:16 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.37 2003/02/20 04:27:23 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -154,7 +154,7 @@ lfs_balloc(void *v)
 	 * we're writing an entire block.
 	 *
 	 * Note, if the daddr is UNWRITTEN, the block already exists in
-	 * the cache (it was read or written earlier).  If so, make sure
+	 * the cache (it was read or written earlier).	If so, make sure
 	 * we don't count it as a new block or zero out its contents. If
 	 * it did not, make sure we allocate any necessary indirect
 	 * blocks.
