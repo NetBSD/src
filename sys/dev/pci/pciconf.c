@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.9 2001/08/31 01:00:16 briggs Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.10 2001/09/03 03:46:26 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,6 +40,9 @@
 
 /*
  * To do:
+ *    - Perform all data structure allocation dynamically, don't have
+ *	statically-sized arrays ("oops, you lose because you have too
+ *	many slots filled!")
  *    - Do this in 2 passes, with an MD hook to control the behavior:
  *		(1) Configure the bus (possibly including expansion
  *		    ROMs.
@@ -81,7 +84,7 @@ int pci_conf_debug = 0;
 #endif
 
 /* per-bus constants. */
-#define MAX_CONF_DEV	8			/* Arbitrary */
+#define MAX_CONF_DEV	32			/* Arbitrary */
 #define MAX_CONF_MEM	(3 * MAX_CONF_DEV)	/* Avg. 3 per device -- Arb. */
 #define MAX_CONF_IO	(3 * MAX_CONF_DEV)	/* Avg. 1 per device -- Arb. */
 
@@ -353,7 +356,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 
 	if (pb->io_total > 0) {
 		if (parent->niowin >= MAX_CONF_IO) {
-			printf("pciconf: too many I/O windows");
+			printf("pciconf: too many I/O windows\n");
 			goto err;
 		}
 		pb->io_total |= 0xfff;	/* Round up */
@@ -369,7 +372,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 
 	if (pb->mem_total > 0) {
 		if (parent->nmemwin >= MAX_CONF_MEM) {
-			printf("pciconf: too many MEM windows");
+			printf("pciconf: too many MEM windows\n");
 			goto err;
 		}
 		pb->mem_total |= 0xfffff;	/* Round up */
@@ -385,7 +388,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 
 	if (pb->pmem_total > 0) {
 		if (parent->nmemwin >= MAX_CONF_MEM) {
-			printf("pciconf: too many MEM windows");
+			printf("pciconf: too many MEM windows\n");
 			goto err;
 		}
 		pb->pmem_total |= 0xfffff;	/* Round up */
@@ -504,7 +507,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 			}
 
 			if (pb->niowin >= MAX_CONF_IO) {
-				printf("pciconf: too many I/O windows");
+				printf("pciconf: too many I/O windows\n");
 				return -1;
 			}
 
@@ -556,7 +559,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 			}
 
 			if (pb->nmemwin >= MAX_CONF_MEM) {
-				printf("pciconf: too many memory windows");
+				printf("pciconf: too many memory windows\n");
 				return -1;
 			}
 
@@ -588,7 +591,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 
 		if (mask != 0 && mask != 0xffffffff) {
 			if (pb->nmemwin >= MAX_CONF_MEM) {
-				printf("pciconf: too many memory windows");
+				printf("pciconf: too many memory windows\n");
 				return -1;
 			}
 			size = (u_int64_t) PCI_MAPREG_MEM_SIZE(mask);
