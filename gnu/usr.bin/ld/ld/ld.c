@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.73 2000/12/16 09:29:29 mycroft Exp $	*/
+/*	$NetBSD: ld.c,v 1.74 2000/12/26 01:29:03 jhawk Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,7 @@
 
 #ifndef lint
 /* from: "@(#)ld.c	6.10 (Berkeley) 5/22/91"; */
-__RCSID("$NetBSD: ld.c,v 1.73 2000/12/16 09:29:29 mycroft Exp $");
+__RCSID("$NetBSD: ld.c,v 1.74 2000/12/26 01:29:03 jhawk Exp $");
 #endif /* not lint */
 
 #define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
@@ -753,8 +753,12 @@ decode_command(argc, argv)
 		xmalloc(number_of_files * sizeof(struct file_entry));
 	bzero(p, number_of_files * sizeof(struct file_entry));
 
-	/* Now scan again and fill in file_table.  */
-	/* All options except -A and -l are ignored here.  */
+	/*
+	 * Now scan again and fill in file_table. 
+	 * Most options are ignored here, with the exception of:
+	 *   -A, -B (and suboptions), --whole-archive, --no-whole-archive,
+	 *   and -l (ell).
+         */
 
 	for (i = 1; i < argc; i++) {
 		char           *string;
