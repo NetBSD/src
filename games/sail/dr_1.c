@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.16 2001/01/04 05:34:56 jwise Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.17 2001/01/04 06:16:51 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.16 2001/01/04 05:34:56 jwise Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.17 2001/01/04 06:16:51 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,8 +196,8 @@ fightitout(struct ship *from, struct ship *to, int key)
 	}
 	if (fromstrength >= strengthto * 3 || count == 4) {
 		unboard(to, from, 0);
-		subtract(from, totalfrom, crewfrom, fromcap, pcfrom);
-		subtract(to, totalto, crewto, tocap, pcto);
+		subtract(from, fromcap, totalfrom, crewfrom, pcfrom);
+		subtract(to, tocap, totalto, crewto, pcto);
 		makemsg(from, "boarders from %s repelled", to->shipname);
 		sprintf(message, "killed in melee: %d.  %s: %d",
 			totalto, from->shipname, totalfrom);
@@ -206,8 +206,8 @@ fightitout(struct ship *from, struct ship *to, int key)
 			return 1;
 	} else if (strengthto >= fromstrength * 3) {
 		unboard(from, to, 0);
-		subtract(from, totalfrom, crewfrom, fromcap, pcfrom);
-		subtract(to, totalto, crewto, tocap, pcto);
+		subtract(from, fromcap, totalfrom, crewfrom, pcfrom);
+		subtract(to, tocap, totalto, crewto, pcto);
 		if (key) {
 			if (fromcap != from)
 				Write(W_POINTS, fromcap,
@@ -228,8 +228,8 @@ fightitout(struct ship *from, struct ship *to, int key)
 			Write(W_POINTS, to, topoints, 0, 0, 0);
 			mento = crewto[0] ? crewto[0] : crewto[1];
 			if (mento) {
-				subtract(to, mento, crewto, tocap, pcto);
-				subtract(from, - mento, crewfrom, to, 0);
+				subtract(to, tocap, mento, crewto, pcto);
+				subtract(from, to, - mento, crewfrom, 0);
 			}
 			sprintf(message, "captured by the %s!", to->shipname);
 			Writestr(W_SIGNAL, from, message);
@@ -400,7 +400,7 @@ compcombat(void)
 			if (hit >= 0) {
 				if (load != L_GRAPE)
 					hit = hit > 10 ? 10 : hit;
-				table(shootat, load, hit, closest, sp, dieroll());
+				table(sp, closest, shootat, load, hit, dieroll());
 			}
 		}
 	}

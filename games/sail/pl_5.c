@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.12 2001/01/04 04:41:42 jwise Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.13 2001/01/04 06:16:51 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.12 2001/01/04 04:41:42 jwise Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.13 2001/01/04 06:16:51 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: pl_5.c,v 1.12 2001/01/04 04:41:42 jwise Exp $");
 
 void	acceptmove(void);
 void	acceptboard(void);
-static void	parties(int *, struct ship *, int, int);
+static void	parties(struct ship *, int *, int, int);
 
 void
 acceptmove(void)
@@ -194,16 +194,16 @@ acceptboard(void)
 		if (meleeing(ms, sp) && crew[2]) {
 			c = sgetch("How many more to board the $$? ",
 				sp, 1);
-			parties(crew, sp, 0, c);
+			parties(sp, crew, 0, c);
 		} else if ((fouled2(ms, sp) || grappled2(ms, sp)) && crew[2]) {
 			c = sgetch("Crew sections to board the $$ (3 max) ?", sp, 1);
-			parties(crew, sp, 0, c);
+			parties(sp, crew, 0, c);
 		}
 	}
 	if (crew[2]) {
 		c = sgetch("How many sections to repel boarders? ",
 			(struct ship *)0, 1);
-		parties(crew, ms, 1, c);
+		parties(ms, crew, 1, c);
 	}
 	blockalarm();
 	draw_slot();
@@ -211,7 +211,7 @@ acceptboard(void)
 }
 
 static void
-parties(int *crew, struct ship *to, int isdefense, int buf)
+parties(struct ship *to, int *crew, int isdefense, int buf)
 {
 	int k, j, men; 
 	struct BP *ptr;

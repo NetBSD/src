@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.23 2001/01/04 05:34:56 jwise Exp $ */
+/*	$NetBSD: extern.h,v 1.24 2001/01/04 06:16:51 jwise Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -293,7 +293,7 @@ extern int people;
 extern int hasdriver;
 
 /* assorted.c */
-void table (int, int, int, struct ship *, struct ship *, int);
+void table (struct ship *, struct ship *, int, int, int, int);
 void Cleansnag (struct ship *, struct ship *, int, int);
 
 /* dr_1.c */
@@ -321,7 +321,7 @@ void ungrap (struct ship *, struct ship *);
 void grap (struct ship *, struct ship *);
 
 /* dr_5.c */
-void subtract (struct ship *, int, int [3], struct ship *, int);
+void subtract (struct ship *, struct ship *, int, int [3], int);
 int mensent (struct ship *, struct ship *, int[3], struct ship **, int *,
     int);
 

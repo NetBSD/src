@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_3.c,v 1.14 2001/01/04 04:41:41 jwise Exp $	*/
+/*	$NetBSD: pl_3.c,v 1.15 2001/01/04 06:16:51 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_3.c,v 1.14 2001/01/04 04:41:41 jwise Exp $");
+__RCSID("$NetBSD: pl_3.c,v 1.15 2001/01/04 06:16:51 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ acceptcombat(void)
 					hhits = 0;
 				}
 			}
-			table(shootat, load, hit, closest, ms, roll);
+			table(ms, closest, shootat, load, hit, roll);
 		}
 		Msg("Damage inflicted on the %s:", closest->shipname);
 		Msg("\t%d HULL, %d GUNS, %d CREW, %d RIGGING",
