@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_mod.c,v 1.3 1999/03/27 07:09:30 scottr Exp $	*/
+/*	$NetBSD: iwm_mod.c,v 1.4 1999/03/31 20:45:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -51,7 +51,7 @@ int lkmexists __P((struct lkm_table *));
 int lkmdispatch __P((struct lkm_table *, int));
 
 /* The module entry */
-int IWM_lkmentry __P((struct lkm_table *lkmtp, int cmd, int ver));
+int iwmfd_lkmentry __P((struct lkm_table *lkmtp, int cmd, int ver));
 
 /* local */
 static int load_module __P((struct lkm_table * lkmtp, int cmd));
@@ -98,7 +98,7 @@ static struct cdevsw oldCDevEntry;
 static struct lkm_misc _module = {
 	LM_MISC,
 	LKM_VERSION,
-	"IWM_lkmentry"
+	"iwmfd_lkmentry"
 };
 
 
@@ -199,7 +199,7 @@ unload_module(lkmtp, cmd)
 
 
 /*
- * IWM_lkmentry
+ * iwmfd_lkmentry
  *
  * External entry point; should generally match name of .o file.
  *
@@ -207,7 +207,7 @@ unload_module(lkmtp, cmd)
  * 	does not compile noiselessly with -Werror.
  */
 int
-IWM_lkmentry (lkmtp, cmd, ver)
+iwmfd_lkmentry (lkmtp, cmd, ver)
 	struct lkm_table *lkmtp;		  
 	int cmd;
 	int ver;
