@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.42 2004/08/20 20:35:22 hubertf Exp $
+.\"	$NetBSD: xfer,v 1.43 2004/08/20 20:52:36 hubertf Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -821,57 +821,5 @@ from scratch, go to the section on preparing your hard disk, below.
 If you're upgrading an existing installation, go directly to the section
 on upgrading.
 .\} \" ! \n[macppc]:\n[news68k]:\n[sgimips]
-.
-.if !\n[news68k] \{\
-.It Em Upgrade
-If you are upgrading
-.Nx ,
-you also have the option of installing
-.Nx
-by putting the new distribution sets somewhere in your existing
-file system, and using them from there.
-To do that, you must do the following:
-.Pp
-Place the distribution sets you wish to upgrade somewhere in
-your current file system tree.
-.if !\n[hp300]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
-Please note that the
-.Pa /dev
-on the floppy used for upgrades only knows about
-.Li wd0 ,
-.Li wd1 ,
-.Li wd2 ,
-.Li wd3 ,
-.Li sd0 ,
-.Li sd1 ,
-.Li sd2 ,
-.Li sd3 ,
-and
-.Li sd4 .
-If you have more than four IDE drives or more than five SCSI drives, you
-should take care not to place the sets on the high-numbered drives.
-.\} \" ! \n[hp300]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]
-.Pp
-At a bare minimum, you must upgrade the
-.Sy base
-and
-.Sy kern
-binary distributions, and so must put the
-.Sy base
-and
-.Sy kern
-sets somewhere in your file system.
-If you wish, you can do the other sets as well, but you should
-.Em not
-upgrade the
-.Sy etc
-distribution; it contains contains system configuration files
-that you should review and update by hand or with the help of the
-.Xr etcupdate
-command.
-.Pp
-Once you have done this, you can proceed to the next step in
-the upgrade process, actually upgrading your system.
-.\} \" ! \n[news68k]
 .
 .tag)
