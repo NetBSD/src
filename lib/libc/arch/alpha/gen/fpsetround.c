@@ -1,4 +1,4 @@
-/* $NetBSD: fpsetround.c,v 1.4 2001/04/26 03:23:18 ross Exp $ */
+/* $NetBSD: fpsetround.c,v 1.5 2001/04/26 04:18:32 ross Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -44,6 +44,7 @@ fpsetround(rnd_dir)
 	double fpcrval;
 	u_int64_t old, new;
 
+	__asm__("excb");
 	__asm__("mf_fpcr %0" : "=f" (fpcrval));
 	old = *(u_int64_t *)&fpcrval;
 
@@ -51,7 +52,6 @@ fpsetround(rnd_dir)
 	new = (long)rnd_dir << 58;
 	*(u_int64_t *)&fpcrval = new;
 
-	__asm__("excb");
 	__asm__("mt_fpcr %0" : : "f" (fpcrval));
 	__asm__("excb");
 
