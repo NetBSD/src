@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.6 1998/01/06 05:01:25 perry Exp $	*/
+/*	$NetBSD: res_data.c,v 1.7 1998/07/26 11:32:24 mycroft Exp $	*/
 
 /*
  * ++Copyright++ 1995
@@ -60,7 +60,7 @@
 #if 0
 static char rcsid[] = "Id: res_data.c,v 8.2 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_data.c,v 1.6 1998/01/06 05:01:25 perry Exp $");
+__RCSID("$NetBSD: res_data.c,v 1.7 1998/07/26 11:32:24 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,7 +83,7 @@ __RCSID("$NetBSD: res_data.c,v 1.6 1998/01/06 05:01:25 perry Exp $");
 # include "../conf/portability.h"
 #endif
 
-const char *_res_opcodes[] = {
+const char *const _res_opcodes[] = {
 	"QUERY",
 	"IQUERY",
 	"CQUERYM",
@@ -102,7 +102,7 @@ const char *_res_opcodes[] = {
 	"ZONEREF",
 };
 
-const char *_res_resultcodes[] = {
+const char *const _res_resultcodes[] = {
 	"NOERROR",
 	"FORMERR",
 	"SERVFAIL",

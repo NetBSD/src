@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.11 1998/02/28 00:09:45 perry Exp $	*/
+/*	$NetBSD: random.c,v 1.12 1998/07/26 11:28:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.11 1998/02/28 00:09:45 perry Exp $");
+__RCSID("$NetBSD: random.c,v 1.12 1998/07/26 11:28:40 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -150,8 +150,8 @@ __weak_alias(srandom,_srandom);
  */
 #define	MAX_TYPES	5		/* max number of types above */
 
-static int degrees[MAX_TYPES] =	{ DEG_0, DEG_1, DEG_2, DEG_3, DEG_4 };
-static int seps[MAX_TYPES] =	{ SEP_0, SEP_1, SEP_2, SEP_3, SEP_4 };
+static const int degrees[MAX_TYPES] =	{ DEG_0, DEG_1, DEG_2, DEG_3, DEG_4 };
+static const int seps[MAX_TYPES] =	{ SEP_0, SEP_1, SEP_2, SEP_3, SEP_4 };
 
 /*
  * Initially, everything is set up as if from:
