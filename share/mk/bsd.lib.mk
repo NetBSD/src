@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.152 1999/03/30 09:30:43 fair Exp $
+#	$NetBSD: bsd.lib.mk,v 1.153 1999/06/07 01:37:00 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -111,61 +111,97 @@ SHLIB_LDENDFILE= ${DESTDIR}/usr/lib/crtendS.o
 CFLAGS+=	${COPTS}
 
 .c.o:
+.if defined(COPTS) && !empty(COPTS:M*-g*)
+	${COMPILE.c} ${.IMPSRC}
+.else
 	@echo ${COMPILE.c:Q} ${.IMPSRC}
 	@${COMPILE.c} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
+.endif
 
 .c.po:
+.if defined(COPTS) && !empty(COPTS:M*-g*)
+	${COMPILE.c} -pg ${.IMPSRC} -o ${.TARGET}
+.else
 	@echo ${COMPILE.c:Q} -pg ${.IMPSRC} -o ${.TARGET}
 	@${COMPILE.c} -pg ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
+.endif
 
 .c.so:
+.if defined(COPTS) && !empty(COPTS:M*-g*)
+	${COMPILE.c} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+.else
 	@echo ${COMPILE.c:Q} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
 	@${COMPILE.c} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
+.endif
 
 .c.ln:
 	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
 .cc.o .C.o:
+.if defined(COPTS) && !empty(COPTS:M*-g*)
+	${COMPILE.cc} ${.IMPSRC}
+.else
 	@echo ${COMPILE.cc:Q} ${.IMPSRC}
 	@${COMPILE.cc} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
+.endif
 
 .cc.po .C.po:
+.if defined(COPTS) && !empty(COPTS:M*-g*)
+	${COMPILE.cc} -pg ${.IMPSRC} -o ${.TARGET}
+.else
 	@echo ${COMPILE.cc:Q} -pg ${.IMPSRC} -o ${.TARGET}
 	@${COMPILE.cc} -pg ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
+.endif
 
 .cc.so .C.so:
+.if defined(COPTS) && !empty(COPTS:M*-g*)
+	${COMPILE.cc} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+.else
 	@echo ${COMPILE.cc:Q} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
 	@${COMPILE.cc} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
+.endif
 
 .m.o:
+.if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
+	${COMPILE.m} ${.IMPSRC}
+.else
 	@echo ${COMPILE.m:Q} ${.IMPSRC}
 	@${COMPILE.m} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
+.endif
 
 .m.po:
+.if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
+	${COMPILE.m} -pg ${.IMPSRC} -o ${.TARGET}
+.else
 	@echo ${COMPILE.m:Q} -pg ${.IMPSRC} -o ${.TARGET}
 	@${COMPILE.m} -pg ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
+.endif
 
 .m.so:
+.if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
+	${COMPILE.m} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+.else
 	@echo ${COMPILE.m:Q} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
 	@${COMPILE.m} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
+.endif
 
 .S.o .s.o:
 	@echo ${COMPILE.S:Q} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC}
