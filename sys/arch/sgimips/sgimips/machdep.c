@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 2004/01/02 00:41:23 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70 2004/01/03 04:26:34 lonewolf Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2004/01/02 00:41:23 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2004/01/03 04:26:34 lonewolf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -248,7 +248,10 @@ mach_init(argc, argv, magic, btinfo)
 		kernend = round_page((vaddr_t) _end);
 	}
 
-	kernstartpfn = atop(MIPS_KSEG0_TO_PHYS((vaddr_t) kernel_text));
+	/* Leave 1 page before kernel untouched as that's where our initial
+	 * kernel stack is */
+	/* XXX We could free it in cpu_startup() though XXX */
+	kernstartpfn = atop(MIPS_KSEG0_TO_PHYS((vaddr_t) kernel_text)) - 1;
 	kernendpfn = atop(MIPS_KSEG0_TO_PHYS(kernend));
 
 	cpufreq = ARCBIOS->GetEnvironmentVariable("cpufreq");
@@ -441,52 +444,44 @@ mach_init(argc, argv, magic, btinfo)
 		case ARCBIOS_MEM_FreeContiguous:
 		case ARCBIOS_MEM_FreeMemory:
 		case ARCBIOS_MEM_LoadedProgram:
-			if (firstpfn <= kernstartpfn &&
-			    kernendpfn <= lastpfn) {
-				/*
-				 * Must compute the location of the kernel
-				 * within the segment.
-				 */
-#ifdef DEBUG
-				printf("Cluster %d contains kernel\n", i);
-#endif
-				if (firstpfn < kernstartpfn) {
-					/*
-					 * There is a chunk before the kernel.
-					 */
-#ifdef DEBUG
-					printf("Loading chunk before kernel: "
-					    "0x%x / 0x%x\n", firstpfn,
-					    kernstartpfn);
-#endif
-					uvm_page_physload(firstpfn,
-					    kernstartpfn,
-					    firstpfn, kernstartpfn,
-					    VM_FREELIST_DEFAULT);
-				}
-				if (kernendpfn < lastpfn) {
-					/*
-					 * There is a chunk after the kernel.
-					 */
-#ifdef DEBUG
-					printf("Loading chunk after kernel: "
-					    "0x%x / 0x%x\n", kernendpfn,
-					    lastpfn);
-#endif
-					uvm_page_physload(kernendpfn,
-					    lastpfn, kernendpfn,
-					    lastpfn, VM_FREELIST_DEFAULT);
-				}
-			} else {
-				/*
-				 * Just load this cluster as one chunk.
-				 */
+			if (kernstartpfn >= lastpfn ||
+			    kernendpfn <= firstpfn) {
+				/* Kernel is not in this cluster at all */
+				
 #ifdef DEBUG
 				printf("Loading cluster %d: 0x%x / 0x%x\n", i,
 				    firstpfn, lastpfn);
 #endif
 				uvm_page_physload(firstpfn, lastpfn,
 				    firstpfn, lastpfn, VM_FREELIST_DEFAULT);
+			} else {
+				if (firstpfn < kernstartpfn) {
+					/* There is space before kernel in this
+					 * cluster */
+
+#ifdef DEBUG
+					printf("Loading cluster %d (before "
+					    "kernel): 0x%x / 0x%x\n", i,
+					    firstpfn, kernstartpfn);
+#endif
+					uvm_page_physload(firstpfn,
+					    kernstartpfn, firstpfn,
+					    kernstartpfn, VM_FREELIST_DEFAULT);
+				}
+
+				if (lastpfn > kernendpfn) {
+					/* There is space after kernel in this
+					 * cluster */
+
+#ifdef DEBUG
+					printf("Loading cluster %d (after "
+					    "kernel): 0x%x / 0x%x\n", i,
+					    kernendpfn, lastpfn);
+#endif
+					uvm_page_physload(kernendpfn,
+					    lastpfn, kernendpfn,
+					    lastpfn, VM_FREELIST_DEFAULT);
+				}
 			}
 			mem_clusters[mem_cluster_cnt].start = first;
 			mem_clusters[mem_cluster_cnt].size = size;
