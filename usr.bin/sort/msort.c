@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.7 2001/01/11 14:05:24 jdolecek Exp $	*/
+/*	$NetBSD: msort.c,v 1.8 2001/01/13 10:33:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.7 2001/01/11 14:05:24 jdolecek Exp $");
+__RCSID("$NetBSD: msort.c,v 1.8 2001/01/13 10:33:30 jdolecek Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -52,6 +52,9 @@ __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #define DELETE (1)
 #define LALIGN(n) ((n+3) & ~3)
 
+/* Number of files merge() can merge in one pass. This should be power of two */
+#define MERGE_FNUM	16
+
 typedef struct mfile {
 	u_char *end;
 	short flno;
@@ -62,8 +65,9 @@ typedef struct tmfile {
 	short flno;
 	struct trecheader rec[1];
 } TMFILE;
-u_char *wts, *wts1 = 0;
-struct mfile *cfilebuf;
+
+static u_char *wts, *wts1 = 0;
+static struct mfile *cfilebuf;
 
 static int cmp __P((struct recheader *, struct recheader *));
 static int insert __P((struct mfile **, struct mfile **, int, int));
@@ -89,7 +93,7 @@ fmerge(binno, top, filelist, nfiles, get, outfp, fput, ftbl)
 	if (!cfilebuf)
 		cfilebuf = malloc(DEFLLEN + sizeof(TMFILE));
 
-	i = min(16, nfiles) * LALIGN(DEFLLEN+sizeof(TMFILE));
+	i = min(MERGE_FNUM, nfiles) * LALIGN(DEFLLEN+sizeof(TMFILE));
 	if (!buffer || i > bufsize) {
 		buffer = buffer ? realloc(buffer, i) : malloc(i);
 		if (!buffer)
@@ -106,14 +110,14 @@ fmerge(binno, top, filelist, nfiles, get, outfp, fput, ftbl)
 		l_fstack = fstack;
 	while (nfiles) {
 		put = putrec;
-		for (j = 0; j < nfiles; j += 16) {
-			if (nfiles <= 16) {
+		for (j = 0; j < nfiles; j += MERGE_FNUM) {
+			if (nfiles <= MERGE_FNUM) {
 				tout = outfp;
 				put = fput;
 			}
 			else
 				tout = ftmp();
-			last = min(16, nfiles - j);
+			last = min(MERGE_FNUM, nfiles - j);
 			if (binno < 0) {
 				FILE *fp;
 				for (i = 0; i < last; i++) { 
@@ -122,18 +126,19 @@ fmerge(binno, top, filelist, nfiles, get, outfp, fput, ftbl)
 						err(2, "%s",
 							filelist->names[j+i]);
 					}
-					l_fstack[i+MAXFCT-1-16].fp = fp;
+					l_fstack[i+MAXFCT-1-MERGE_FNUM].fp = fp;
 				}
-				merge(MAXFCT-1-16, last, get, tout, put, ftbl);
+				merge(MAXFCT-1-MERGE_FNUM, last, get, tout, put, ftbl);
 			}
 			else {
 				for (i = 0; i< last; i++)
 					rewind(l_fstack[i+j].fp);
 				merge(top+j, last, get, tout, put, ftbl);
 			}
-			if (nfiles > 16) l_fstack[j/16].fp = tout;
+			if (nfiles > MERGE_FNUM)
+				l_fstack[j/MERGE_FNUM].fp = tout;
 		}
-		nfiles = (nfiles + 15) / 16;
+		nfiles = (nfiles + (MERGE_FNUM - 1)) / MERGE_FNUM;
 		if (nfiles == 1)
 			nfiles = 0;
 		if (binno < 0) {
@@ -153,14 +158,15 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 	struct field *ftbl;
 {
 	int c, i, j;
-	struct mfile *flist[16], *cfile;
+	struct mfile *flist[MERGE_FNUM], *cfile;
+
 	for (i = j = 0; i < nfiles; i++) {
 		cfile = (MFILE *) (buffer +
 		    i * LALIGN(DEFLLEN + sizeof(TMFILE)));
-		cfile->flno = j + infl0;
+		cfile->flno = j;
 		cfile->end = cfile->rec->data + DEFLLEN;
 		for (c = 1; c == 1;) {
-			if (EOF == (c = get(j+infl0, 0, NULL, nfiles,
+			if (EOF == (c = get(infl0+j, 0, NULL, nfiles,
 			   cfile->rec, cfile->end, ftbl))) {
 				--i;
 				--nfiles;
@@ -178,7 +184,7 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 	cfile->end = cfile->rec->data + DEFLLEN;
 	while (nfiles) {
 		for (c = 1; c == 1;) {
-			if (EOF == (c = get(cfile->flno, 0, NULL, nfiles,
+			if (EOF == (c = get(infl0+cfile->flno, 0, NULL, nfiles,
 			   cfile->rec, cfile->end, ftbl))) {
 				put(flist[0]->rec, outfp);
 				memmove(flist, flist + 1,
@@ -201,10 +207,9 @@ insert(flist, rec, ttop, delete)
 	struct mfile **flist, **rec;
 	int delete, ttop;			/* delete = 0 or 1 */
 {
-	struct mfile *tmprec;
-	int top, mid, bot = 0, cmpv = 1;
-	tmprec = *rec;
-	top = ttop;
+	struct mfile *tmprec = *rec;
+	int mid, top = ttop, bot = 0, cmpv = 1;
+
 	for (mid = top/2; bot +1 != top; mid = (bot+top)/2) {
 		cmpv = cmp(tmprec->rec, flist[mid]->rec);
 		if (cmpv < 0)
@@ -212,11 +217,31 @@ insert(flist, rec, ttop, delete)
 		else if (cmpv > 0)
 			bot = mid;
 		else {
-			if (!UNIQUE)
+			if (UNIQUE)
+				break;
+
+			if (stable_sort) {
+				/*
+				 * Apply sort by fileno, to give priority
+				 * to earlier specified files, hence providing
+				 * more stable sort.
+				 * If fileno is same, the new record should
+				 * be put _after_ the previous entry.
+				 */
+				cmpv = tmprec->flno - flist[mid]->flno;
+				if (cmpv >= 0)
+					bot = mid;
+				else /* cmpv == 0 */
+					bot = mid - 1;
+			} else {
+				/* non-stable sort */
 				bot = mid - 1;
+			}
+
 			break;
 		}
 	}
+
 	if (delete) {
 		if (UNIQUE) {
 			if (!bot && cmpv)
@@ -229,10 +254,9 @@ insert(flist, rec, ttop, delete)
 			memmove(flist, flist+1, bot * sizeof(MFILE **));
 		flist[bot] = *rec;
 		*rec = tmprec;
-		(*rec)->flno = (*flist)->flno;
+		(*rec)->flno = flist[0]->flno;
 		return (0);
-	}
-	else {
+	} else {
 		if (!bot && !(UNIQUE && !cmpv)) {
 			cmpv = cmp(tmprec->rec, flist[0]->rec);
 			if (cmpv < 0)
@@ -270,7 +294,7 @@ order(filelist, get, ftbl)
 	prec_end = buffer + 2*(DEFLLEN + sizeof(TRECHEADER));
 	wts = ftbl->weights;
 	if (SINGL_FLD && (ftbl->flags & F))
-		wts1 = ftbl->flags & R ? Rascii : ascii;
+		wts1 = (ftbl->flags & R) ? Rascii : ascii;
 	else
 		wts1 = 0;
 	if (0 == get(-1, 0, filelist, 1, prec, prec_end, ftbl))
@@ -309,10 +333,11 @@ cmp(rec1, rec2)
 	for (cwts = wts; cwts; cwts = (cwts == wts1 ? 0 : wts1)) {
 		pos1 = rec1->data;
 		pos2 = rec2->data;
-		if (!SINGL_FLD && UNIQUE)
+		if (!SINGL_FLD && (UNIQUE || stable_sort))
 			end = pos1 + min(rec1->offset, rec2->offset);
 		else
 			end = pos1 + min(rec1->length, rec2->length);
+
 		for (; pos1 < end; ) {
 			if ((r = cwts[*pos1++] - cwts[*pos2++]))
 				return (r);
