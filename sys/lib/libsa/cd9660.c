@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.6 1999/02/11 09:10:44 pk Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.7 1999/03/26 15:41:38 dbj Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -199,22 +199,22 @@ cd9660_open(path, f)
 	
 	rc = ENOENT;
 	while (*path) {
-		if ((void *)pp >= buf + psize)
+		if ((caddr_t)pp >= (caddr_t)buf + psize)
 			break;
 		if (isonum_722(pp->parent) != parent)
 			break;
 		if (!pnmatch(path, pp)) {
-			pp = (struct ptable_ent *)((void *)pp + PTSIZE(pp));
+			pp = (struct ptable_ent *)((caddr_t)pp + PTSIZE(pp));
 			ent++;
 			continue;
 		}
 		path += isonum_711(pp->namlen) + 1;
 		parent = ent;
 		bno = isonum_732(pp->block) + isonum_711(pp->extlen);
-		while ((void *)pp < buf + psize) {
+		while ((caddr_t)pp < (caddr_t)buf + psize) {
 			if (isonum_722(pp->parent) == parent)
 				break;
-			pp = (struct ptable_ent *)((void *)pp + PTSIZE(pp));
+			pp = (struct ptable_ent *)((caddr_t)pp + PTSIZE(pp));
 			ent++;
 		}
 	}
@@ -250,7 +250,7 @@ cd9660_open(path, f)
 		if (dirmatch(path, dp))
 			break;
 		psize += isonum_711(dp->length);
-		dp = (struct iso_directory_record *)((void *)dp + isonum_711(dp->length));
+		dp = (struct iso_directory_record *)((caddr_t)dp + isonum_711(dp->length));
 	}
 
 	if (psize >= dsize) {
@@ -326,11 +326,11 @@ cd9660_read(f, start, size, resid)
 				read = off + size;
 			read -= off;
 			bcopy(buf + off, start, read);
-			start += read;
+			start = (caddr_t)start + read;
 			fp->off += read;
 			size -= read;
 		} else {
-			start += ISO_DEFAULT_BLOCK_SIZE;
+			start = (caddr_t)start + ISO_DEFAULT_BLOCK_SIZE;
 			fp->off += ISO_DEFAULT_BLOCK_SIZE;
 			size -= ISO_DEFAULT_BLOCK_SIZE;
 		}
