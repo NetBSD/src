@@ -1,4 +1,4 @@
-/* $NetBSD: next68k.c,v 1.1 2003/10/27 16:51:06 cl Exp $ */
+/* $NetBSD: next68k.c,v 1.2 2003/10/27 22:38:39 lukem Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,14 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: next68k.c,v 1.1 2003/10/27 16:51:06 cl Exp $");
-#endif /* __RCSID && !__lint */
-
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+#if !defined(__lint)
+__RCSID("$NetBSD: next68k.c,v 1.2 2003/10/27 22:38:39 lukem Exp $");
+#endif /* !__lint */
 
 #include <sys/param.h>
 
@@ -101,7 +101,7 @@ next68k_setboot(ib_params *params)
 
 	next68klabel = malloc(NEXT68K_LABEL_SIZE);
 	if (next68klabel == NULL) {
-		warnx("malloc");
+		warn("Allocating %lu bytes", (unsigned long)NEXT68K_LABEL_SIZE);
 		goto done;
 	}
 
@@ -125,7 +125,7 @@ next68k_setboot(ib_params *params)
 	}
 	if (nextstep_checksum (next68klabel, checksum) !=
 	    be16toh(*checksum)) {
-		warn("disklabel checksum invalid on `%s'",
+		warn("Disklabel checksum invalid on `%s'",
 		    params->filesystem);
 		goto done;
 	}
@@ -142,7 +142,7 @@ next68k_setboot(ib_params *params)
 
 	bootbuf = malloc(bootsize);
 	if (bootbuf == NULL) {
-		warn("malloc");
+		warn("Allocating %lu bytes", (unsigned long)bootsize);
 		goto done;
 	}
 	memset(bootbuf, 0, bootsize);
