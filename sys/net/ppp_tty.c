@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.21 2000/11/02 15:51:18 itojun Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.22 2000/12/12 18:00:31 thorpej Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -202,7 +202,7 @@ pppopen(dev, tp)
 
 #if NBPFILTER > 0
     /* Switch DLT to PPP-over-serial. */
-    bpf_change_type(&sc->sc_bpf, DLT_PPP_SERIAL, PPP_HDRLEN);
+    bpf_change_type(&sc->sc_if, DLT_PPP_SERIAL, PPP_HDRLEN);
 #endif
 
     sc->sc_ilen = 0;
@@ -267,7 +267,7 @@ pppasyncrelinq(sc)
 
 #if NBPFILTER > 0
     /* Change DLT to back none. */
-    bpf_change_type(&sc->sc_bpf, DLT_NULL, 0);
+    bpf_change_type(&sc->sc_if, DLT_NULL, 0);
 #endif
 
     s = spltty();

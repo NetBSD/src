@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.2 2000/11/10 03:45:09 enami Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.3 2000/12/12 18:00:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -167,9 +167,6 @@ fw_attach(struct device *parent, struct device *self, void *aux)
 	printf(": Id %s\n", ieee1394_sprintf(sc->sc_ic.ic_hwaddr.iha_uid));
 	if_attach(ifp);
 	ieee1394_ifattach(ifp, &sc->sc_ic.ic_hwaddr);
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, 14); /*XXX*/
-#endif
 	(*psc->sc1394_ifinreg)
 	    (sc->sc_dev.dv_parent, FW_FIFO_HI, FW_FIFO_LO, fw_input);
 
@@ -188,9 +185,6 @@ fw_detach(struct device *self, int flags)
 	if ((sc->sc_flags & FWF_ATTACHED) == 0)
 		return 0;
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 	ieee1394_ifdetach(ifp);
 	if_detach(ifp);
 	if (sc->sc_flags & FWF_ENABLED) {
