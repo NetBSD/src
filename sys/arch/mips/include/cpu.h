@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 1995/06/28 02:56:01 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13 1996/03/19 02:42:28 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #include <machine/machConst.h>
 
 /*
- * Exported definitions unique to pmax/mips cpu support.
+ * Exported definitions unique to NetBSD/mips cpu support.
  */
 
 /*
@@ -78,7 +78,7 @@ struct clockframe {
 
 /*
  * Give a profiling tick to the current process when the user profiling
- * buffer pages are invalid.  On the PMAX, request an ast to send us
+ * buffer pages are invalid.  On the MIPS, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
 #define	need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
@@ -125,22 +125,47 @@ union cpuprid {
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
 
+
 /*
  * MIPS CPU types (cp_imp).
  */
-#define	MIPS_R2000	0x01
-#define	MIPS_R3000	0x02
-#define	MIPS_R6000	0x03
-#define	MIPS_R4000	0x04
-#define	MIPS_R6000A	0x06
+#define	MIPS_R2000	0x01	/* MIPS R2000 CPU		ISA I   */
+#define	MIPS_R3000	0x02	/* MIPS R3000 CPU		ISA I   */
+#define	MIPS_R6000	0x03	/* MIPS R6000 CPU		ISA II	*/
+#define	MIPS_R4000	0x04	/* MIPS R4000/4400 CPU		ISA III	*/
+#define MIPS_R3LSI	0x05	/* LSI Logic R3000 derivate	ISA I	*/
+#define	MIPS_R6000A	0x06	/* MIPS R6000A CPU		ISA II	*/
+#define	MIPS_R3IDT	0x07	/* IDT R3000 derivate		ISA I	*/
+#define	MIPS_R10000	0x09	/* MIPS R10000/T5 CPU		ISA IV  */
+#define	MIPS_R4200	0x0a	/* MIPS R4200 CPU (ICE)		ISA III */
+#define MIPS_UNKC1	0x0b	/* unnanounced product cpu	ISA III */
+#define MIPS_UNKC2	0x0c	/* unnanounced product cpu	ISA III */
+#define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV  */
+#define	MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
+#define	MIPS_R3SONY	0x21	/* Sony R3000 based CPU		ISA I   */
+#define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based CPU	ISA I	*/
+#define	MIPS_R3NKK	0x23	/* NKK R3000 based CPU		ISA I   */
+
 
 /*
  * MIPS FPU types
  */
-#define	MIPS_R2010	0x02
-#define	MIPS_R3010	0x03
-#define	MIPS_R6010	0x04
-#define	MIPS_R4010	0x05
+#define	MIPS_SOFT	0x00	/* Software emulation		ISA I   */
+#define	MIPS_R2360	0x01	/* MIPS R2360 FPC		ISA I   */
+#define	MIPS_R2010	0x02	/* MIPS R2010 FPC		ISA I   */
+#define	MIPS_R3010	0x03	/* MIPS R3010 FPC		ISA I   */
+#define	MIPS_R6010	0x04	/* MIPS R6010 FPC		ISA II  */
+#define	MIPS_R4010	0x05	/* MIPS R4000/R4400 FPC		ISA II  */
+#define MIPS_R31LSI	0x06	/* LSI Logic derivate		ISA I	*/
+#define	MIPS_R10010	0x09	/* MIPS R10000/T5 FPU		ISA IV  */
+#define	MIPS_R4210	0x0a	/* MIPS R4200 FPC (ICE)		ISA III */
+#define MIPS_UNKF1	0x0b	/* unnanounced product cpu	ISA III */
+#define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV  */
+#define	MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
+#define	MIPS_R3SONY	0x21	/* Sony R3000 based FPU		ISA I   */
+#define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based FPU	ISA I	*/
+#define	MIPS_R3NKK	0x23	/* NKK R3000 based FPU		ISA I   */
+
 
 #ifdef _KERNEL
 union	cpuprid cpu;
