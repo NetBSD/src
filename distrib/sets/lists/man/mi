@@ -402,7 +402,10 @@
 ./usr/share/man/cat5/crontab.0
 ./usr/share/man/cat5/daily.conf.0
 ./usr/share/man/cat5/dhclient.conf.0
+./usr/share/man/cat5/dhclient.leases.0
+./usr/share/man/cat5/dhcp-options.0
 ./usr/share/man/cat5/dhcpd.conf.0
+./usr/share/man/cat5/dhcpd.leases.0
 ./usr/share/man/cat5/dir.0
 ./usr/share/man/cat5/dirent.0
 ./usr/share/man/cat5/disklabel.0
@@ -507,6 +510,7 @@
 ./usr/share/man/cat8/comsat.0
 ./usr/share/man/cat8/cron.0
 ./usr/share/man/cat8/dev_mkdb.0
+./usr/share/man/cat8/dhclient-script.0
 ./usr/share/man/cat8/dhclient.0
 ./usr/share/man/cat8/dhcpd.0
 ./usr/share/man/cat8/dhcrelay.0
@@ -681,11 +685,11 @@
 ./usr/share/man/cat8/stdhosts.0
 ./usr/share/man/cat8/sticky.0
 ./usr/share/man/cat8/strfile.0
-./usr/share/man/cat8/swapctl.0
-./usr/share/man/cat8/swapon.0
 ./usr/share/man/cat8/supfilesrv.0
 ./usr/share/man/cat8/supscan.0
 ./usr/share/man/cat8/supservers.0
+./usr/share/man/cat8/swapctl.0
+./usr/share/man/cat8/swapon.0
 ./usr/share/man/cat8/sync.0
 ./usr/share/man/cat8/sysctl.0
 ./usr/share/man/cat8/syslogd.0
@@ -1326,7 +1330,10 @@
 ./usr/share/man/man5/crontab.5
 ./usr/share/man/man5/daily.conf.5
 ./usr/share/man/man5/dhclient.conf.5
+./usr/share/man/man5/dhclient.leases.5
+./usr/share/man/man5/dhcp-options.5
 ./usr/share/man/man5/dhcpd.conf.5
+./usr/share/man/man5/dhcpd.leases.5
 ./usr/share/man/man5/dir.5
 ./usr/share/man/man5/dirent.5
 ./usr/share/man/man5/disklabel.5
@@ -1431,6 +1438,7 @@
 ./usr/share/man/man8/comsat.8
 ./usr/share/man/man8/cron.8
 ./usr/share/man/man8/dev_mkdb.8
+./usr/share/man/man8/dhclient-script.8
 ./usr/share/man/man8/dhclient.8
 ./usr/share/man/man8/dhcpd.8
 ./usr/share/man/man8/dhcrelay.8
