@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.10 1998/01/12 18:59:12 thorpej Exp $	*/
+/*	$NetBSD: joy.c,v 1.11 2001/06/13 10:46:01 wiz Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -21,7 +21,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
