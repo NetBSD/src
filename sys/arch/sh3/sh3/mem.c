@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14 2003/04/02 02:56:41 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.15 2003/06/14 16:08:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 
 	if (!__mm_mem_addr(off) && suser(p->p_ucred, &p->p_acflag) != 0)
 		return (-1);
-	return (trunc_page((paddr_t)off));
+	return (sh3_btop((paddr_t)off));
 }
 
 /*
